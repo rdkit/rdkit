@@ -37,7 +37,6 @@ unsigned int addOrder1Paths(PATH_LIST &paths, const ROMol &mol,
   double tol = fparams->getTolerance();
 
   PATH_LIST_CI pi;
-  INT_VECT_CI eti;
   double invar;
   int vid;
   for (pi = paths.begin(); pi != paths.end(); pi++) {
@@ -45,13 +44,13 @@ unsigned int addOrder1Paths(PATH_LIST &paths, const ROMol &mol,
     // loop over each order 1 path
     found = false;
     const INT_VECT &o1entries = fcat->getEntriesOfOrder(1);
-    for (eti = o1entries.begin(); eti != o1entries.end(); eti++) {
+    for (auto eti : o1entries) {
       // loop over all the order 1 entries all ready present in the catalog
-      entry = fcat->getEntryWithIdx(*eti);
+      entry = fcat->getEntryWithIdx(eti);
       if (nent->match(entry, tol)) {
         found = true;
         invar = computeIntVectPrimesProduct(*pi);
-        mapkm1[invar] = (*eti);
+        mapkm1[invar] = eti;
         delete nent;
         nent = nullptr;
         break;
@@ -130,10 +129,8 @@ unsigned int addHigherOrderPaths(const INT_PATH_LIST_MAP &allPaths,
 
       unsigned int scnt = 0;
       INT_VECT intersect, tmpVect;
-      INT_VECT_CI iti;
       invar = computeIntVectPrimesProduct(*pi);
       DOUBLE_VECT sinvarV;
-      DOUBLE_VECT_CI sci;
 
       // loop over the subpaths (order (k-1) ) (by ignoring one bond
       // at a time from consideration) and find out which entries int eh catalog
@@ -170,13 +167,12 @@ unsigned int addHigherOrderPaths(const INT_PATH_LIST_MAP &allPaths,
       }
 
       // now search through the intersection list to check if we already have a
-      // isomorphic
-      // entry in the catalog
-      for (iti = intersect.begin(); iti != intersect.end(); iti++) {
-        entry = fcat->getEntryWithIdx(*iti);
+      // isomorphic entry in the catalog
+      for (auto iti : intersect) {
+        entry = fcat->getEntryWithIdx(iti);
         if (nent->match(entry, tol)) {
           found = true;
-          mEntId = (*iti);
+          mEntId = iti;
           delete nent;
           nent = nullptr;
           break;
@@ -204,12 +200,12 @@ unsigned int addHigherOrderPaths(const INT_PATH_LIST_MAP &allPaths,
         nrem++;  // increment the fragment counter
         // loop over the entries corresponding to the subpaths and
         // add connections to them
-        for (sci = sinvarV.begin(); sci != sinvarV.end(); sci++) {
-          entId = mapkm1[*sci];
+        for (auto sci : sinvarV) {
+          entId = mapkm1[sci];
           fcat->addEdge(entId, vid);
         }
       }  // end of never seen this order k subgraph
-    }  // end of loop over order k paths in mol
+    }    // end of loop over order k paths in mol
     // overwrite mapkm1 with mapk before we move on to order k+1
     mapkm1 = mapk;
   }  // end of loop over path order

@@ -93,7 +93,7 @@ void SmilesWriter::dumpHeader() const {
       (*dp_ostream) << d_nameHeader << d_delim;
     }
 
-    if (d_props.size() > 0) {
+    if (!d_props.empty()) {
       auto pi = d_props.begin();
       (*dp_ostream) << (*pi);
       pi++;
@@ -123,8 +123,7 @@ void SmilesWriter::write(const ROMol &mol, int) {
   std::string smi = MolToSmiles(mol, df_isomericSmiles, df_kekuleSmiles);
   (*dp_ostream) << smi;
   if (d_nameHeader != "") {
-    if (!mol.getPropIfPresent(common_properties::_Name, name) ||
-        name.size() == 0) {
+    if (!mol.getPropIfPresent(common_properties::_Name, name) || name.empty()) {
       std::stringstream tstream;
       tstream << d_molid;
       name = tstream.str();
@@ -133,13 +132,12 @@ void SmilesWriter::write(const ROMol &mol, int) {
     (*dp_ostream) << d_delim << name;
   }
 
-  STR_VECT_CI pi;
-  for (pi = d_props.begin(); pi != d_props.end(); pi++) {
+  for (const auto &pi : d_props) {
     std::string pval;
     // FIX: we will assume that any property that the user requests is castable
     // to
     // a std::string
-    if (mol.getPropIfPresent(*pi, pval)) {
+    if (mol.getPropIfPresent(pi, pval)) {
       (*dp_ostream) << d_delim << pval;
     } else {
       (*dp_ostream) << d_delim << "";

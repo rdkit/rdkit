@@ -466,8 +466,8 @@ void computeInitialCoords(RDKit::ROMol &mol,
     if (mri == efrags.end()) {
       // we are out of embedded fragments, if there are any
       // non embedded atoms use them to start a fragment
-      auto mrank = static_cast<int>(RDKit::MAX_INT);
-      RDKit::INT_LIST_I mnri;
+      auto mrank = RDKit::MAX_INT;
+      auto mnri = nratms.end();
       for (auto nri = nratms.begin(); nri != nratms.end(); ++nri) {
         auto rank = atomRanks.at(*nri);
         rank *= mol.getNumAtoms();

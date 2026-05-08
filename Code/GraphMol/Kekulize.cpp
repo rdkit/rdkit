@@ -28,13 +28,12 @@ void backTrack(RWMol &mol, INT_INT_DEQ_MAP &, int lastOpt, INT_VECT &done,
   // remove on done list that comes after the lastOpt including itself
 
   auto ei = std::find(done.begin(), done.end(), lastOpt);
-  INT_VECT tdone;
-  tdone.insert(tdone.end(), done.begin(), ei);
+  INT_VECT tdone(done.begin(), ei);
 
-  INT_VECT_CRI eri = std::find(done.rbegin(), done.rend(), lastOpt);
+  auto eri = std::find(done.rbegin(), done.rend(), lastOpt);
   ++eri;
   // and push them back onto the stack
-  for (INT_VECT_CRI ri = done.rbegin(); ri != eri; ++ri) {
+  for (auto ri = done.rbegin(); ri != eri; ++ri) {
     aqueue.push_front(*ri);
   }
 
@@ -368,7 +367,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
             optsV.push_back(nbrIdx);
           }
         }  // end of curr atoms can have a double bond
-      }  // end of looping over neighbors
+      }    // end of looping over neighbors
 
       // Non-wedged options first, then wedged — both already in rank order
       // because nbrs was pre-sorted by lessByRank above.
@@ -449,15 +448,15 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
           return false;
         }
       }  // end of else try to backtrack
-    }  // end of curr atom atom being a cand for double bond
-  }  // end of while we are not done with all atoms
+    }    // end of curr atom atom being a cand for double bond
+  }      // end of while we are not done with all atoms
   return true;
 }
 
 class QuestionEnumerator {
  public:
   QuestionEnumerator(INT_VECT questions)
-      : d_questions(std::move(questions)), d_pos(1) {};
+      : d_questions(std::move(questions)), d_pos(1){};
   INT_VECT next() {
     INT_VECT res;
     if (d_pos >= (0x1u << d_questions.size())) {
@@ -479,8 +478,7 @@ class QuestionEnumerator {
 
 bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
                                boost::dynamic_bitset<> dBndCands,
-                               INT_VECT &questions,
-                               const UINT_VECT &atomRanks,
+                               INT_VECT &questions, const UINT_VECT &atomRanks,
                                unsigned int maxBackTracks) {
   boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms());
   for (int allAtm : allAtms) {
@@ -509,9 +507,8 @@ bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
       tCands[it] = 0;
     }
     // try kekulizing again:
-    kekulized =
-        kekulizeWorker(mol, allAtms, tCands, dBndAdds, done, atomRanks,
-                       maxBackTracks);
+    kekulized = kekulizeWorker(mol, allAtms, tCands, dBndAdds, done, atomRanks,
+                               maxBackTracks);
   }
   return kekulized;
 }
@@ -533,9 +530,8 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
   boost::dynamic_bitset<> dBndAdds(nbnds);
   markDbondCands(mol, allAtms, dBndCands, questions, done);
 
-  auto kekulized =
-      kekulizeWorker(mol, allAtms, dBndCands, dBndAdds, done, atomRanks,
-                     maxBackTracks);
+  auto kekulized = kekulizeWorker(mol, allAtms, dBndCands, dBndAdds, done,
+                                  atomRanks, maxBackTracks);
   if (!kekulized && questions.size()) {
     // we failed, but there are some dummy atoms we can try permuting.
     kekulized = permuteDummiesAndKekulize(mol, allAtms, dBndCands, questions,

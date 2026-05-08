@@ -57,7 +57,6 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
 
   // first deal with order 1 stuff
   PATH_LIST_CI pi;
-  INT_VECT_CI eti;
   const INT_VECT &o1entries = fcat.getEntriesOfOrder(1);
   const FragCatalogEntry *entry;
   int bitId;
@@ -73,14 +72,14 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
     // a match. This -1 initialization will be useful when we move onto higher
     // order stuff
     mapkm1[invar] = -1;
-    for (eti = o1entries.begin(); eti != o1entries.end(); eti++) {
-      entry = fcat.getEntryWithIdx(*eti);
+    for (auto eti : o1entries) {
+      entry = fcat.getEntryWithIdx(eti);
       if (nent->match(entry, tol)) {
         bitId = entry->getBitId();
         if (bitId >= 0) {
           fp->setBit(bitId);
         }
-        mapkm1[invar] = (*eti);
+        mapkm1[invar] = eti;
         break;
       }
     }
@@ -118,7 +117,6 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
       // << std::endl;
       int scnt = 0;
       INT_VECT intersect, tmpVect;
-      INT_VECT_CI iti;
       PATH_TYPE::const_iterator pii;
 
       // loop over the subpaths (order (k-1) ) (by ignoring one bond
@@ -159,12 +157,11 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
         }
       }
       // now search through the intersection list to check if we already have a
-      // isomorphic
-      // entry in the catalog
-      for (iti = intersect.begin(); iti != intersect.end(); iti++) {
-        entry = fcat.getEntryWithIdx(*iti);
+      // isomorphic entry in the catalog
+      for (auto iti : intersect) {
+        entry = fcat.getEntryWithIdx(iti);
         if (nent->match(entry, tol)) {
-          mapk[invar] = (*iti);
+          mapk[invar] = iti;
           bitId = entry->getBitId();
           if (bitId >= 0) {
             fp->setBit(bitId);
@@ -178,6 +175,5 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
     // overwrite mapkm1 with mapk before we move on to order k+1
     mapkm1 = mapk;
   }  // end of loop over path order
-
 }
 }  // namespace RDKit
