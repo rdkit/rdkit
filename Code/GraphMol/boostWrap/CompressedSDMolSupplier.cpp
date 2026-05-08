@@ -23,7 +23,7 @@ namespace io = boost::iostreams;
 
 // ours
 #include <GraphMol/FileParsers/MolSupplier.h>
-#include <GraphMol/Wrap/ContextManagers.h>
+#include <GraphMol/boostWrap/ContextManagers.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDBoost/Wrap.h>
 

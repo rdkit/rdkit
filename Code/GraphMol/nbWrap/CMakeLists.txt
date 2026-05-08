@@ -75,8 +75,8 @@ rdkit_nanobind_extension(rdmolfiles
 #  set_target_properties(rdmolfiles PROPERTIES DEFINE_SYMBOL SUPPORT_COMPRESSED_SUPPLIERS)
 #endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 #
-#add_pytest(pyGraphMolWrap
-#         ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)
+add_pytest(pyGraphMolWrap
+         ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)
 #
 #add_pytest(pyTestConformerWrap
 #         ${CMAKE_CURRENT_SOURCE_DIR}/testConformer.py)

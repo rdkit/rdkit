@@ -17,10 +17,10 @@
 #include <RDBoost/import_array.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
-#include <GraphMol/Fingerprints/Wrap/AtomPairWrapper.cpp>
-#include <GraphMol/Fingerprints/Wrap/MorganWrapper.cpp>
-#include <GraphMol/Fingerprints/Wrap/RDKitFPWrapper.cpp>
-#include <GraphMol/Fingerprints/Wrap/TopologicalTorsionWrapper.cpp>
+#include <GraphMol/Fingerprints/boostWrap/AtomPairWrapper.cpp>
+#include <GraphMol/Fingerprints/boostWrap/MorganWrapper.cpp>
+#include <GraphMol/Fingerprints/boostWrap/RDKitFPWrapper.cpp>
+#include <GraphMol/Fingerprints/boostWrap/TopologicalTorsionWrapper.cpp>
 #include <cstdint>
 
 #include <RDGeneral/RDThreads.h>

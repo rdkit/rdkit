@@ -11,7 +11,7 @@
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python.h>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
-#include <GraphMol/Wrap/substructmethods.h>
+#include <GraphMol/boostWrap/substructmethods.h>
 #include <RDBoost/python_streambuf.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL rdtautomerquery_array_API

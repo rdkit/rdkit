@@ -91,7 +91,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(v1 == v3)
 
     #pickle.dump(v1,file('lsiv.pkl','wb+'))
-    with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/Wrap/testData/lsiv.pkl'),
+    with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/boostWrap/testData/lsiv.pkl'),
               'r') as tf:
       buf = tf.read().replace('\r\n', '\n').encode('utf-8')
       tf.close()
@@ -119,7 +119,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(v1 == v3)
 
     #pickle.dump(v1,file('isiv.pkl','wb+'))
-    with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/Wrap/testData/isiv.pkl'),
+    with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/boostWrap/testData/isiv.pkl'),
               'r') as tf:
       buf = tf.read().replace('\r\n', '\n').encode('utf-8')
       tf.close()

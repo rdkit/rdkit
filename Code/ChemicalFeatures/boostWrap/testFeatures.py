@@ -86,8 +86,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(ptFeq(ffeat2.GetPos(), ffeat.GetPos()))
 
     # Check that the old pickled versions have not been broken
-    inTF = open(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/feat.pkl'),
-                'r')
+    inTF = open(
+      os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/boostWrap/testData/feat.pkl'), 'r')
     buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
     inTF.close()
     inF = io.BytesIO(buf)
@@ -101,9 +101,9 @@ class TestCase(unittest.TestCase):
 
     # uncomment the following to generate (overwrite) new version of pickled
     # data file
-    #pickle.dump(ffeat,file(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'wb+'))
-    inTF = open(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),
-                'r')
+    #pickle.dump(ffeat,file(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/boostWrap/testData/featv2.pkl'),'wb+'))
+    inTF = open(
+      os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/boostWrap/testData/featv2.pkl'), 'r')
     buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
     inTF.close()
     inF = io.BytesIO(buf)

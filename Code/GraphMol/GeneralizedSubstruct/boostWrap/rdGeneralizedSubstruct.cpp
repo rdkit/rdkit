@@ -13,7 +13,7 @@
 #include <RDBoost/Wrap.h>
 
 #include <GraphMol/GeneralizedSubstruct/XQMol.h>
-#include <GraphMol/Wrap/substructmethods.h>
+#include <GraphMol/boostWrap/substructmethods.h>
 
 namespace python = boost::python;
 using namespace RDKit;

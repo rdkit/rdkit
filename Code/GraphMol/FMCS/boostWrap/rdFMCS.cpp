@@ -9,7 +9,7 @@
 //
 #include <RDBoost/python.h>
 #include <GraphMol/ROMol.h>
-#include <GraphMol/Wrap/substructmethods.h>
+#include <GraphMol/boostWrap/substructmethods.h>
 #include <RDBoost/Wrap.h>
 #include <GraphMol/FMCS/FMCS.h>
 
@@ -764,7 +764,6 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                     &RDKit::PyMCSParameters::setStoreAll,
                     "toggles storage of degenerate MCSs")
       .def("__setattr__", &safeSetattr);
-      
 
   python::class_<RDKit::MCSAtomCompareParameters, boost::noncopyable>(
       "MCSAtomCompareParameters",

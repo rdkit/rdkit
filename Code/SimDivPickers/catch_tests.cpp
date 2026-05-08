@@ -34,7 +34,7 @@ TEST_CASE(
     "[LeaderPicker]") {
   std::string rdbase = getenv("RDBASE");
   std::string fName =
-      rdbase + "/Code/SimDivPickers/Wrap/test_data/chembl_cyps.head.fps";
+      rdbase + "/Code/SimDivPickers/boostWrap/test_data/chembl_cyps.head.fps";
   std::ifstream inf(fName);
   std::string fpsText;
   std::getline(inf, fpsText);

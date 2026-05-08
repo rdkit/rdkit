@@ -41,7 +41,7 @@ class TestCase(unittest.TestCase):
 
   def test3Pickles(self):
     #outF = file('../testData/rvvs.pkl','wb+')
-    with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/Wrap/testData/rvvs.pkl'),
+    with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/boostWrap/testData/rvvs.pkl'),
               'rb') as inF:
       v1 = ds.RealValueVect(30)
       for i in range(15):

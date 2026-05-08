@@ -24,7 +24,7 @@
 #include <GraphMol/Chirality.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
-#include <GraphMol/Wrap/substructmethods.h>
+#include <GraphMol/boostWrap/substructmethods.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
@@ -1876,7 +1876,8 @@ to the terminal dummy atoms.\n\
     - The molecule is modified in place.\n\
     )DOC";
     python::def("KekulizeIfPossible", kekulizeMolIfPossible,
-                (python::arg("mol"), python::arg("clearAromaticFlags") = false, python::arg("canonical")=true),
+                (python::arg("mol"), python::arg("clearAromaticFlags") = false,
+                 python::arg("canonical") = true),
                 docString.c_str());
     // ------------------------------------------------------------------------
     docString =

@@ -18,7 +18,7 @@
 #include <GraphMol/FileParsers/MultithreadedSmilesMolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
-#include <GraphMol/Wrap/ContextManagers.h>
+#include <GraphMol/boostWrap/ContextManagers.h>
 
 #include "MolSupplier.h"
 #include "MultithreadedMolSupplier.h"
@@ -102,8 +102,7 @@ struct multiSmiMolSup_wrap {
              python::return_internal_reference<>())
         .def("__exit__",
              (bool (*)(MultithreadedSmilesMolSupplier *, python::object,
-                       python::object, python::object)) &
-                 MolIOExit)
+                       python::object, python::object))&MolIOExit)
         .def("__next__",
              (ROMol * (*)(MultithreadedSmilesMolSupplier *)) &
                  MolForwardSupplNext,
@@ -115,13 +114,13 @@ struct multiSmiMolSup_wrap {
              python::args("self"),
              "Returns true if we have read all records else false.\n")
         .def("GetLastRecordId",
-             (unsigned int (*)(MultithreadedSmilesMolSupplier *)) &
-                 MTMolSupplLastId,
+             (unsigned int (*)(
+                 MultithreadedSmilesMolSupplier *))&MTMolSupplLastId,
              python::args("self"),
              "Returns the record id for the last extracted item.\n")
         .def("GetLastItemText",
-             (std::string(*)(MultithreadedSmilesMolSupplier *)) &
-                 MTMolSupplLastItem,
+             (std::string (*)(
+                 MultithreadedSmilesMolSupplier *))&MTMolSupplLastItem,
              python::args("self"),
              "Returns the text for the last extracted item.\n");
   };

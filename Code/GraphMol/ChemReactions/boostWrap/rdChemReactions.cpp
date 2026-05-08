@@ -32,7 +32,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #include <GraphMol/MolPickler.h>
-#include <GraphMol/Wrap/props.hpp>
+#include <GraphMol/boostWrap/props.hpp>
 #include <RDBoost/python.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
@@ -311,7 +311,8 @@ ChemicalReaction *ReactionFromSmarts(const char *smarts, python::dict replDict,
   return res;
 }
 
-ChemicalReaction *ReactionFromSmiles(const char *smiles, python::dict replDict) {
+ChemicalReaction *ReactionFromSmiles(const char *smiles,
+                                     python::dict replDict) {
   return ReactionFromSmarts(smiles, replDict, true);
 }
 
@@ -894,9 +895,10 @@ of the replacements argument.",
                   RDKit::ChemicalReactionToRxnSmarts,
               (python::arg("reaction")),
               "construct a reaction SMARTS string for a ChemicalReaction");
-  python::def("ReactionFromSmiles", RDKit::ReactionFromSmiles,
-              (python::arg("SMILES"), python::arg("replacements") = python::dict()), 
-              "construct a ChemicalReaction from a reaction SMILES string. \n\
+  python::def(
+      "ReactionFromSmiles", RDKit::ReactionFromSmiles,
+      (python::arg("SMILES"), python::arg("replacements") = python::dict()),
+      "construct a ChemicalReaction from a reaction SMILES string. \n\
 see the documentation for rdkit.Chem.MolFromSmiles for an explanation\n\
 of the replacements argument.",
       python::return_value_policy<python::manage_new_object>());

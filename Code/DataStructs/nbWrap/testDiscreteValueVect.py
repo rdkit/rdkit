@@ -129,7 +129,7 @@ class TestCase(unittest.TestCase):
 
   def test3Pickles(self):
     #outF = file('dvvs.pkl','wb+')
-    with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/Wrap/testData/dvvs.pkl'),
+    with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/boostWrap/testData/dvvs.pkl'),
               'r') as inTF:
       buf = inTF.read().replace('\r\n', '\n').encode('utf-8')
       inTF.close()

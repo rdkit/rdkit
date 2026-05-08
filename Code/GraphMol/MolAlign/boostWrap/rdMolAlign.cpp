@@ -16,7 +16,7 @@
 #include "numpy/arrayobject.h"
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/MolAlign/O3AAlignMolecules.h>
-#include <ForceField/Wrap/PyForceField.h>
+#include <ForceField/boostWrap/PyForceField.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/Descriptors/Crippen.h>
 #include <RDBoost/PySequenceHolder.h>
@@ -34,9 +34,9 @@ struct pyBestAlignmentParams : public BestAlignmentParams {
   pyBestAlignmentParams(int maxMatches_, bool symmetrizeTerminalGroups_,
                         bool ignoreHs_, int numThreads_, python::object map_,
                         python::object weights_)
-      : BestAlignmentParams{maxMatches_, symmetrizeTerminalGroups_, ignoreHs_,
-                            numThreads_, std::vector<MatchVectType>(),
-                            nullptr} {
+      : BestAlignmentParams{
+            maxMatches_, symmetrizeTerminalGroups_,    ignoreHs_,
+            numThreads_, std::vector<MatchVectType>(), nullptr} {
     unsigned int nAtms = 0;
     if (map_ != python::object()) {
       map = translateAtomMapSeq(map_);
