@@ -52,6 +52,6 @@ rdkit_headers(SLNAttribs.h
 rdkit_test(testSLNParse test.cpp
            LINK_LIBRARIES SLNParse SmilesParse SubstructMatch )
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
-add_subdirectory(Wrap)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+add_subdirectory(boostWrap)
 endif()

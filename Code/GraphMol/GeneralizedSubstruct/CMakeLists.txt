@@ -10,6 +10,6 @@ if(RDK_USE_BOOST_SERIALIZATION)
 rdkit_catch_test(generalizedSubstructCatch catch_tests.cpp LINK_LIBRARIES GenericGroups FileParsers GeneralizedSubstruct)
 endif()
 
-if (RDK_BUILD_PYTHON_WRAPPERS)
-    add_subdirectory(Wrap)
+if (RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+    add_subdirectory(boostWrap)
 endif ()

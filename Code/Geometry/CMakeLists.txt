@@ -23,8 +23,8 @@ rdkit_catch_test(geometryTestsCatch catch_tests.cpp
            LINK_LIBRARIES RDGeometryLib)
 
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
-add_subdirectory(Wrap)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+add_subdirectory(boostWrap)
 endif()
 
 if(RDK_BUILD_NANOBIND_WRAPPERS)

@@ -71,6 +71,6 @@ endif(RDK_BUILD_DESCRIPTORS3D)
 
 rdkit_catch_test(descriptorsTestCatch catch_tests.cpp LINK_LIBRARIES Descriptors SmilesParse FileParsers)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
-add_subdirectory(Wrap)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+add_subdirectory(boostWrap)
 endif()

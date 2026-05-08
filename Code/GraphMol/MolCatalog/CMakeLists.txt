@@ -10,8 +10,8 @@ rdkit_headers(MolCatalogEntry.h
 rdkit_test(testMolCatalog test1.cpp LINK_LIBRARIES 
 MolCatalog FileParsers SmilesParse DataStructs )
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
-add_subdirectory(Wrap)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+add_subdirectory(boostWrap)
 endif()
 
 

@@ -21,6 +21,6 @@ LINK_LIBRARIES MolTransforms ForceFieldHelpers SmilesParse FileParsers ForceFiel
 add_subdirectory(MMFF)
 add_subdirectory(UFF)
 add_subdirectory(CrystalFF)
-if(RDK_BUILD_PYTHON_WRAPPERS)
-add_subdirectory(Wrap)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+add_subdirectory(boostWrap)
 endif()

@@ -30,7 +30,7 @@ set(CMAKE_MODULE_PATH
 add_library(rdkit_base INTERFACE)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
-option(RDK_BUILD_PYTHON_WRAPPERS "build the python wrappers using boost.python" OFF )
+option(RDK_BUILD_BOOST_PYTHON_WRAPPERS "build the python wrappers using boost.python" OFF )
 option(RDK_BUILD_NANOBIND_WRAPPERS "build the python wrappers using nanobind" ON )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
@@ -311,8 +311,8 @@ endif(RDK_BUILD_INCHI_SUPPORT)
 
 if(RDK_BUILD_NANOBIND_WRAPPERS)
   add_library(rdkit_py_base INTERFACE)
-  if(RDK_BUILD_PYTHON_WRAPPERS)
-    message(FATAL_ERROR "RDK_BUILD_PYTHON_WRAPPERS and RDK_BUILD_NANOBIND_WRAPPERS are mutually exclusive.")
+  if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+    message(FATAL_ERROR "RDK_BUILD_BOOST_PYTHON_WRAPPERS and RDK_BUILD_NANOBIND_WRAPPERS are mutually exclusive.")
   endif()
 
 find_package(Python 3.9 COMPONENTS Interpreter ${DEV_MODULE} NumPy REQUIRED)
@@ -330,7 +330,7 @@ set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
 endif(RDK_BUILD_NANOBIND_WRAPPERS)
 
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   add_library(rdkit_py_base INTERFACE)
 
   #-------
@@ -426,9 +426,9 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     message("nbval not found, disabling the jupyter tests")
   endif()
 
-else(RDK_BUILD_PYTHON_WRAPPERS)
+else(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   find_package(Boost ${RDK_BOOST_VERSION} REQUIRED CONFIG)
-endif(RDK_BUILD_PYTHON_WRAPPERS)
+endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
 find_package(Eigen3)
 if(RDK_BUILD_DESCRIPTORS3D)
@@ -572,7 +572,7 @@ if(NOT RDK_INSTALL_INTREE)
       COMPONENT extras
       PATTERN ".svn" EXCLUDE
       )
-  if(RDK_BUILD_PYTHON_WRAPPERS)
+  if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     install(DIRECTORY Projects DESTINATION
         ${RDKit_ShareDir}
         COMPONENT extras
@@ -596,7 +596,7 @@ if(NOT RDK_INSTALL_INTREE)
     endif(RDK_INSTALL_PYTHON_TESTS)
 
 
-  endif(RDK_BUILD_PYTHON_WRAPPERS)
+  endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   install(FILES README.md license.txt
           DESTINATION ${RDKit_ShareDir}
           COMPONENT base
@@ -623,11 +623,11 @@ endif(MSVC)
 add_subdirectory(External)
 add_subdirectory(Code)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   add_subdirectory(Projects)
   add_subdirectory(rdkit)
   add_subdirectory(rdkit-stubs)
-endif(RDK_BUILD_PYTHON_WRAPPERS)
+endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
 if(RDK_BUILD_CONTRIB)
   add_subdirectory(Contrib)
@@ -661,7 +661,7 @@ install(FILES
     DESTINATION ${RDKit_LibDir}/cmake/rdkit)
 
 # then manage the targets for the python bindings
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   install(
     EXPORT ${RDKitPython_EXPORTED_TARGETS}
     FILE ${RDKitPython_EXPORTED_TARGETS}.cmake
@@ -683,7 +683,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     ${RDKit_BINARY_DIR}/rdkitpython-config.cmake
     ${RDKit_BINARY_DIR}/rdkitpython-config-version.cmake
     DESTINATION ${RDKit_LibDir}/cmake/rdkitpython)
-endif(RDK_BUILD_PYTHON_WRAPPERS)
+endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
 # Memory testing setup
 FIND_PROGRAM(MEMORYCHECK_COMMAND valgrind)

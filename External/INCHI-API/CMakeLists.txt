@@ -84,9 +84,9 @@ if(RDK_BUILD_INCHI_SUPPORT)
   target_compile_definitions(RDInchiLib PRIVATE RDKIT_RDINCHILIB_BUILD)
 
   rdkit_headers(inchi.h DEST GraphMol)
-  if(RDK_BUILD_PYTHON_WRAPPERS)
-    add_subdirectory(Wrap)
-  endif(RDK_BUILD_PYTHON_WRAPPERS)
+  if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+    add_subdirectory(boostWrap)
+  endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
   add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
 
@@ -96,7 +96,7 @@ if(RDK_BUILD_INCHI_SUPPORT)
     FileParsers SmilesParse )
 endif(RDK_BUILD_INCHI_SUPPORT)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   # we need an inchi.py... copy in the appropriate one
   if(RDK_BUILD_INCHI_SUPPORT)
    add_custom_command(TARGET inchi_support
@@ -112,4 +112,4 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   get_directory_property(extra_clean_files ADDITIONAL_MAKE_CLEAN_FILES)
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
           "${extra_clean_files};${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py")
-endif(RDK_BUILD_PYTHON_WRAPPERS)
+endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)

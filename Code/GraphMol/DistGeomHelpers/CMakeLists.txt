@@ -15,6 +15,6 @@ rdkit_catch_test(distGeomHelpersCatch catch_tests.cpp
 LINK_LIBRARIES DistGeomHelpers MolTransforms FileParsers SmilesParse )
 
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
-add_subdirectory(Wrap)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+add_subdirectory(boostWrap)
 endif()

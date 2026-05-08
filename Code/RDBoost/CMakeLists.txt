@@ -1,4 +1,4 @@
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 rdkit_library(RDBoost Wrap.cpp
               LINK_LIBRARIES RDGeneral rdkit_py_base)
 if(NOT WIN32 AND
@@ -21,7 +21,7 @@ rdkit_headers(Wrap.h PySequenceHolder.h
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.13.0")
    cmake_policy(SET CMP0079 NEW)
 endif()
-add_subdirectory(Wrap)
+add_subdirectory(boostWrap)
 endif()
 
 if(RDK_BUILD_NANOBIND_WRAPPERS)
@@ -38,7 +38,7 @@ add_subdirectory(Wrap2)
 endif()
 
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   # this is a particularly nasty little bit of hackery.
   # cmake (as of 2.8) ignores the ADDITIONAL_MAKE_CLEAN_FILES argument
   # unless it's in a directory that actually has a target. So in order to
@@ -51,4 +51,4 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   FILE(GLOB_RECURSE RDK_PROJECTSQLT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../../Projects/*.sqlt")
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
         "${RDK_PYC_FILES};${RDK_DATASQLT_FILES};${RDK_PROJECTSQLT_FILES}")
-endif(RDK_BUILD_PYTHON_WRAPPERS)
+endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)

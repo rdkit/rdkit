@@ -117,8 +117,8 @@ if (RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
     endif ()
 endif ()
 
-if (RDK_BUILD_PYTHON_WRAPPERS)
-    add_subdirectory(Wrap)
+if (RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+    add_subdirectory(boostWrap)
 endif ()
 
 if (RDK_BUILD_NANOBIND_WRAPPERS)

@@ -69,6 +69,6 @@ if(RDK_BUILD_QT_DEMO)
   add_subdirectory(Demo)
 endif(RDK_BUILD_QT_DEMO)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
-add_subdirectory(Wrap)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+add_subdirectory(boostWrap)
 endif()

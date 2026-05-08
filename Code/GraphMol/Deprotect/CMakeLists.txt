@@ -10,8 +10,8 @@ rdkit_library(Deprotect
 rdkit_headers(Deprotect.h
               DEST GraphMol/Deprotect)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
-  add_subdirectory(Wrap)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+  add_subdirectory(boostWrap)
 endif()
 
 rdkit_catch_test(deprotectTest deprotectTest.cpp LINK_LIBRARIES Deprotect )

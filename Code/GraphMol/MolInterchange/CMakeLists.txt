@@ -14,6 +14,6 @@ rdkit_test(molInterchangeTest1 test1.cpp
 rdkit_catch_test(molInterchangeCatchTest molinterchange_catch.cpp 
 LINK_LIBRARIES MolInterchange FileParsers SmilesParse )
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
-add_subdirectory(Wrap)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+add_subdirectory(boostWrap)
 endif()

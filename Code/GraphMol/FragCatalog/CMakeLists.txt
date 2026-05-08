@@ -13,6 +13,6 @@ rdkit_headers(FragCatalogEntry.h
 
 rdkit_test(testFragCatalog test1.cpp LINK_LIBRARIES FragCatalog FileParsers )
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
-add_subdirectory(Wrap)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+add_subdirectory(boostWrap)
 endif()

@@ -9,8 +9,8 @@ target_compile_definitions(StructChecker PRIVATE RDKIT_STRUCTCHECKER_BUILD)
 rdkit_headers(StructChecker.h Utilites.h Pattern.h Stereo.h StripSmallFragments.h ReCharge.h Tautomer.h
               DEST GraphMol/StructChecker)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
-add_subdirectory(Wrap)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+add_subdirectory(boostWrap)
 endif()
 
 rdkit_test(testStructChecker  testStructChecker.cpp 

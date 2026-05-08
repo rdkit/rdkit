@@ -56,6 +56,6 @@ rdkit_headers(PubChemShape.hpp DEST GraphMol)
 
 rdkit_catch_test(shape_test test.cpp LINK_LIBRARIES PubChemShape FileParsers MolAlign MolTransforms)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
-add_subdirectory(Wrap)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+add_subdirectory(boostWrap)
 endif()
