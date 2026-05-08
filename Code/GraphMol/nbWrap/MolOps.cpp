@@ -68,12 +68,12 @@ nb::tuple fragmentOnSomeBondsHelper(const ROMol &mol, nb::object pyBondIndices,
                                     nb::object pyBondTypes,
                                     bool returnCutsPerAtom) {
   auto bondIndices = pythonObjectToVect(pyBondIndices, mol.getNumBonds());
-  if (!bondIndices.get()) {
+  if (!bondIndices.get() || bondIndices->empty()) {
     throw ValueErrorException("empty bond indices");
   }
 
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
-  if (pyDummyLabels) {
+  if (!pyDummyLabels.is_none()) {
     unsigned int nVs = nb::len(pyDummyLabels);
     dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
@@ -83,7 +83,7 @@ nb::tuple fragmentOnSomeBondsHelper(const ROMol &mol, nb::object pyBondIndices,
     }
   }
   std::vector<Bond::BondType> *bondTypes = nullptr;
-  if (pyBondTypes) {
+  if (!pyBondTypes.is_none()) {
     unsigned int nVs = nb::len(pyBondTypes);
     if (nVs != bondIndices->size()) {
       throw ValueErrorException("bondTypes shorter than bondIndices");
@@ -141,13 +141,13 @@ nb::tuple getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
 
 ROMol *fragmentOnBondsHelper(const ROMol &mol, nb::object pyBondIndices,
                              bool addDummies, nb::object pyDummyLabels,
-                             nb::object pyBondTypes, nb::list pyCutsPerAtom) {
+                             nb::object pyBondTypes, nb::object pyCutsPerAtom) {
   auto bondIndices = pythonObjectToVect(pyBondIndices, mol.getNumBonds());
-  if (!bondIndices.get()) {
+  if (!bondIndices.get() || bondIndices->empty()) {
     throw ValueErrorException("empty bond indices");
   }
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
-  if (pyDummyLabels) {
+  if (!pyDummyLabels.is_none()) {
     unsigned int nVs = nb::len(pyDummyLabels);
     dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
@@ -157,7 +157,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, nb::object pyBondIndices,
     }
   }
   std::vector<Bond::BondType> *bondTypes = nullptr;
-  if (pyBondTypes) {
+  if (!pyBondTypes.is_none()) {
     unsigned int nVs = nb::len(pyBondTypes);
     if (nVs != bondIndices->size()) {
       throw ValueErrorException("bondTypes shorter than bondIndices");
@@ -168,7 +168,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, nb::object pyBondIndices,
     }
   }
   std::vector<unsigned int> *cutsPerAtom = nullptr;
-  if (pyCutsPerAtom) {
+  if (!pyCutsPerAtom.is_none()) {
     cutsPerAtom = new std::vector<unsigned int>;
     unsigned int nAts = nb::len(pyCutsPerAtom);
     if (nAts < mol.getNumAtoms()) {
@@ -2900,7 +2900,7 @@ EXAMPLES:\n\n\
 ";
     m.def("FragmentOnBonds", fragmentOnBondsHelper, "mol"_a, "bondIndices"_a,
           "addDummies"_a = true, "dummyLabels"_a = nb::none(),
-          "bondTypes"_a = nb::none(), "cutsPerAtom"_a = nb::list(),
+          "bondTypes"_a = nb::none(), "cutsPerAtom"_a = nb::none(),
           docString.c_str(), nb::rv_policy::take_ownership);
     docString = R"DOC(fragment on some bonds)DOC";
     m.def("FragmentOnSomeBonds", fragmentOnSomeBondsHelper, "mol"_a,

@@ -3529,206 +3529,206 @@ CAS<~>
       nSmi = Chem.MolToSmiles(m2, True)
       self.assertEqual(cSmi, nSmi)
 
-#   def test87FragmentOnBonds(self):
-#     m = Chem.MolFromSmiles('CC1CC(O)C1CCC1CC1')
-#     bis = m.GetSubstructMatches(Chem.MolFromSmarts('[!R][R]'))
-#     bs = []
-#     labels = []
-#     for bi in bis:
-#       b = m.GetBondBetweenAtoms(bi[0], bi[1])
-#       if b.GetBeginAtomIdx() == bi[0]:
-#         labels.append((10, 1))
-#       else:
-#         labels.append((1, 10))
-#       bs.append(b.GetIdx())
-#     nm = Chem.FragmentOnBonds(m, bs)
-#     frags = Chem.GetMolFrags(nm)
-#     self.assertEqual(len(frags), 5)
-#     self.assertEqual(frags,
-#                      ((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18), (8, 9, 10, 17)))
-#     smi = Chem.MolToSmiles(nm, True)
-#     self.assertEqual(smi, '*C1CC([4*])C1[6*].[1*]C.[3*]O.[5*]CC[8*].[7*]C1CC1')
+  def test87FragmentOnBonds(self):
+    m = Chem.MolFromSmiles('CC1CC(O)C1CCC1CC1')
+    bis = m.GetSubstructMatches(Chem.MolFromSmarts('[!R][R]'))
+    bs = []
+    labels = []
+    for bi in bis:
+      b = m.GetBondBetweenAtoms(bi[0], bi[1])
+      if b.GetBeginAtomIdx() == bi[0]:
+        labels.append((10, 1))
+      else:
+        labels.append((1, 10))
+      bs.append(b.GetIdx())
+    nm = Chem.FragmentOnBonds(m, bs)
+    frags = Chem.GetMolFrags(nm)
+    self.assertEqual(len(frags), 5)
+    self.assertEqual(frags,
+                     ((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18), (8, 9, 10, 17)))
+    smi = Chem.MolToSmiles(nm, True)
+    self.assertEqual(smi, '*C1CC([4*])C1[6*].[1*]C.[3*]O.[5*]CC[8*].[7*]C1CC1')
 
-#     nm = Chem.FragmentOnBonds(m, bs, dummyLabels=labels)
-#     frags = Chem.GetMolFrags(nm)
-#     self.assertEqual(len(frags), 5)
-#     self.assertEqual(frags,
-#                      ((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18), (8, 9, 10, 17)))
-#     smi = Chem.MolToSmiles(nm, True)
-#     self.assertEqual(smi, '[1*]C.[1*]CC[1*].[1*]O.[10*]C1CC([10*])C1[10*].[10*]C1CC1')
+    nm = Chem.FragmentOnBonds(m, bs, dummyLabels=labels)
+    frags = Chem.GetMolFrags(nm)
+    self.assertEqual(len(frags), 5)
+    self.assertEqual(frags,
+                     ((0, 12), (1, 2, 3, 5, 11, 14, 16), (4, 13), (6, 7, 15, 18), (8, 9, 10, 17)))
+    smi = Chem.MolToSmiles(nm, True)
+    self.assertEqual(smi, '[1*]C.[1*]CC[1*].[1*]O.[10*]C1CC([10*])C1[10*].[10*]C1CC1')
 
-#     m = Chem.MolFromSmiles('CCC(=O)CC(=O)C')
-#     bis = m.GetSubstructMatches(Chem.MolFromSmarts('C=O'))
-#     bs = []
-#     for bi in bis:
-#       b = m.GetBondBetweenAtoms(bi[0], bi[1])
-#       bs.append(b.GetIdx())
-#     bts = [Chem.BondType.DOUBLE] * len(bs)
-#     nm = Chem.FragmentOnBonds(m, bs, bondTypes=bts)
-#     frags = Chem.GetMolFrags(nm)
-#     self.assertEqual(len(frags), 3)
-#     smi = Chem.MolToSmiles(nm, True)
-#     self.assertEqual(smi, '[2*]=O.[3*]=C(CC)CC(=[6*])C.[5*]=O')
+    m = Chem.MolFromSmiles('CCC(=O)CC(=O)C')
+    bis = m.GetSubstructMatches(Chem.MolFromSmarts('C=O'))
+    bs = []
+    for bi in bis:
+      b = m.GetBondBetweenAtoms(bi[0], bi[1])
+      bs.append(b.GetIdx())
+    bts = [Chem.BondType.DOUBLE] * len(bs)
+    nm = Chem.FragmentOnBonds(m, bs, bondTypes=bts)
+    frags = Chem.GetMolFrags(nm)
+    self.assertEqual(len(frags), 3)
+    smi = Chem.MolToSmiles(nm, True)
+    self.assertEqual(smi, '[2*]=O.[3*]=C(CC)CC(=[6*])C.[5*]=O')
 
-#     # github issue 430:
-#     m = Chem.MolFromSmiles('OCCCCN')
-#     self.assertRaises(ValueError, lambda: Chem.FragmentOnBonds(m, ()))
+    # github issue 430:
+    m = Chem.MolFromSmiles('OCCCCN')
+    self.assertRaises(ValueError, lambda: Chem.FragmentOnBonds(m, ()))
 
-#   def test88QueryAtoms(self):
-#     from rdkit.Chem import rdqueries
-#     m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')
+  def test88QueryAtoms(self):
+    from rdkit.Chem import rdqueries
+    m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')
 
-#     qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (2, 4))
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (2, 4))
 
-#     qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True))
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (4, ))
+    qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True))
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (4, ))
 
-#     qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
-#     qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True),
-#                    how=Chem.CompositeQueryType.COMPOSITE_OR)
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (1, 2, 4))
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True),
+                   how=Chem.CompositeQueryType.COMPOSITE_OR)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 2, 4))
 
-#     qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
-#     qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True),
-#                    how=Chem.CompositeQueryType.COMPOSITE_XOR)
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (1, 2))
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True),
+                   how=Chem.CompositeQueryType.COMPOSITE_XOR)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 2))
 
-#     qa = rdqueries.ExplicitDegreeGreaterQueryAtom(2)
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (2, 4))
+    qa = rdqueries.ExplicitDegreeGreaterQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (2, 4))
 
-#     qa = rdqueries.ExplicitDegreeLessQueryAtom(2)
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (3, 6))
+    qa = rdqueries.ExplicitDegreeLessQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (3, 6))
 
-#     m = Chem.MolFromSmiles('N[CH][CH]')
-#     qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(0)
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (1, 2))
-#     qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(1)
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (2, ))
+    m = Chem.MolFromSmiles('N[CH][CH]')
+    qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(0)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 2))
+    qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(1)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (2, ))
 
-#     m = Chem.MolFromSmiles('F[C@H](Cl)C')
-#     qa = rdqueries.HasChiralTagQueryAtom()
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (1, ))
-#     qa = rdqueries.MissingChiralTagQueryAtom()
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, ())
+    m = Chem.MolFromSmiles('F[C@H](Cl)C')
+    qa = rdqueries.HasChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, ))
+    qa = rdqueries.MissingChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, ())
 
-#     m = Chem.MolFromSmiles('F[CH](Cl)C')
-#     qa = rdqueries.HasChiralTagQueryAtom()
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, ())
-#     qa = rdqueries.MissingChiralTagQueryAtom()
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (1, ))
+    m = Chem.MolFromSmiles('F[CH](Cl)C')
+    qa = rdqueries.HasChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, ())
+    qa = rdqueries.MissingChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, ))
 
-#     m = Chem.MolFromSmiles('CNCON')
-#     qa = rdqueries.NumHeteroatomNeighborsEqualsQueryAtom(2)
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (2, ))
-#     qa = rdqueries.NumHeteroatomNeighborsGreaterQueryAtom(0)
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (0, 2, 3, 4))
+    m = Chem.MolFromSmiles('CNCON')
+    qa = rdqueries.NumHeteroatomNeighborsEqualsQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (2, ))
+    qa = rdqueries.NumHeteroatomNeighborsGreaterQueryAtom(0)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (0, 2, 3, 4))
 
-#     m = Chem.MolFromSmiles('CC12CCN(CC1)C2')
-#     qa = rdqueries.IsBridgeheadQueryAtom()
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (1, 4))
+    m = Chem.MolFromSmiles('CC12CCN(CC1)C2')
+    qa = rdqueries.IsBridgeheadQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 4))
 
-#     m = Chem.MolFromSmiles('OCCOC')
-#     qa = rdqueries.NonHydrogenDegreeEqualsQueryAtom(2)
-#     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-#     self.assertEqual(l, (1, 2, 3))
+    m = Chem.MolFromSmiles('OCCOC')
+    qa = rdqueries.NonHydrogenDegreeEqualsQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 2, 3))
 
-#   def test89UnicodeInput(self):
-#     m = Chem.MolFromSmiles(u'c1ccccc1')
-#     self.assertTrue(m is not None)
-#     self.assertEqual(m.GetNumAtoms(), 6)
-#     m = Chem.MolFromSmarts(u'c1ccccc1')
-#     self.assertTrue(m is not None)
-#     self.assertEqual(m.GetNumAtoms(), 6)
+  def test89UnicodeInput(self):
+    m = Chem.MolFromSmiles(u'c1ccccc1')
+    self.assertTrue(m is not None)
+    self.assertEqual(m.GetNumAtoms(), 6)
+    m = Chem.MolFromSmarts(u'c1ccccc1')
+    self.assertTrue(m is not None)
+    self.assertEqual(m.GetNumAtoms(), 6)
 
-#   def test90FragmentOnSomeBonds(self):
-#     m = Chem.MolFromSmiles('OCCCCN')
-#     pieces = Chem.FragmentOnSomeBonds(m, (0, 2, 4), 2)
-#     self.assertEqual(len(pieces), 3)
+  def test90FragmentOnSomeBonds(self):
+    m = Chem.MolFromSmiles('OCCCCN')
+    pieces = Chem.FragmentOnSomeBonds(m, (0, 2, 4), 2)
+    self.assertEqual(len(pieces), 3)
 
-#     frags = Chem.GetMolFrags(pieces[0])
-#     self.assertEqual(len(frags), 3)
-#     self.assertEqual(len(frags[0]), 2)
-#     self.assertEqual(len(frags[1]), 4)
-#     self.assertEqual(len(frags[2]), 4)
+    frags = Chem.GetMolFrags(pieces[0])
+    self.assertEqual(len(frags), 3)
+    self.assertEqual(len(frags[0]), 2)
+    self.assertEqual(len(frags[1]), 4)
+    self.assertEqual(len(frags[2]), 4)
 
-#     frags = Chem.GetMolFrags(pieces[1])
-#     self.assertEqual(len(frags), 3)
-#     self.assertEqual(len(frags[0]), 2)
-#     self.assertEqual(len(frags[1]), 6)
-#     self.assertEqual(len(frags[2]), 2)
+    frags = Chem.GetMolFrags(pieces[1])
+    self.assertEqual(len(frags), 3)
+    self.assertEqual(len(frags[0]), 2)
+    self.assertEqual(len(frags[1]), 6)
+    self.assertEqual(len(frags[2]), 2)
 
-#     frags = Chem.GetMolFrags(pieces[2])
-#     self.assertEqual(len(frags), 3)
-#     self.assertEqual(len(frags[0]), 4)
-#     self.assertEqual(len(frags[1]), 4)
-#     self.assertEqual(len(frags[2]), 2)
+    frags = Chem.GetMolFrags(pieces[2])
+    self.assertEqual(len(frags), 3)
+    self.assertEqual(len(frags[0]), 4)
+    self.assertEqual(len(frags[1]), 4)
+    self.assertEqual(len(frags[2]), 2)
 
-#     pieces, cpa = Chem.FragmentOnSomeBonds(m, (0, 2, 4), 2, returnCutsPerAtom=True)
-#     self.assertEqual(len(pieces), 3)
-#     self.assertEqual(len(cpa), 3)
-#     self.assertEqual(len(cpa[0]), m.GetNumAtoms())
+    pieces, cpa = Chem.FragmentOnSomeBonds(m, (0, 2, 4), 2, returnCutsPerAtom=True)
+    self.assertEqual(len(pieces), 3)
+    self.assertEqual(len(cpa), 3)
+    self.assertEqual(len(cpa[0]), m.GetNumAtoms())
 
-#     # github issue 430:
-#     m = Chem.MolFromSmiles('OCCCCN')
-#     self.assertRaises(ValueError, lambda: Chem.FragmentOnSomeBonds(m, ()))
+    # github issue 430:
+    m = Chem.MolFromSmiles('OCCCCN')
+    self.assertRaises(ValueError, lambda: Chem.FragmentOnSomeBonds(m, ()))
 
-#     pieces = Chem.FragmentOnSomeBonds(m, (0, 2, 4), 0)
-#     self.assertEqual(len(pieces), 0)
+    pieces = Chem.FragmentOnSomeBonds(m, (0, 2, 4), 0)
+    self.assertEqual(len(pieces), 0)
 
-#   def test91RankAtoms(self):
-#     m = Chem.MolFromSmiles('ONCS.ONCS')
-#     ranks = Chem.CanonicalRankAtoms(m, breakTies=False)
-#     self.assertEqual(list(ranks[0:4]), list(ranks[4:]))
+  def test91RankAtoms(self):
+    m = Chem.MolFromSmiles('ONCS.ONCS')
+    ranks = Chem.CanonicalRankAtoms(m, breakTies=False)
+    self.assertEqual(list(ranks[0:4]), list(ranks[4:]))
 
-#     m = Chem.MolFromSmiles("c1ccccc1")
-#     ranks = Chem.CanonicalRankAtoms(m, breakTies=False)
-#     for x in ranks:
-#       self.assertEqual(x, 0)
+    m = Chem.MolFromSmiles("c1ccccc1")
+    ranks = Chem.CanonicalRankAtoms(m, breakTies=False)
+    for x in ranks:
+      self.assertEqual(x, 0)
 
-#     m = Chem.MolFromSmiles("C1NCN1")
-#     ranks = Chem.CanonicalRankAtoms(m, breakTies=False)
-#     self.assertEqual(ranks[0], ranks[2])
-#     self.assertEqual(ranks[1], ranks[3])
+    m = Chem.MolFromSmiles("C1NCN1")
+    ranks = Chem.CanonicalRankAtoms(m, breakTies=False)
+    self.assertEqual(ranks[0], ranks[2])
+    self.assertEqual(ranks[1], ranks[3])
 
-#   def test92RankAtomsInFragment(self):
-#     m = Chem.MolFromSmiles('ONCS.ONCS')
-#     ranks = Chem.CanonicalRankAtomsInFragment(m, [0, 1, 2, 3], [0, 1, 2])
+  def test92RankAtomsInFragment(self):
+    m = Chem.MolFromSmiles('ONCS.ONCS')
+    ranks = Chem.CanonicalRankAtomsInFragment(m, [0, 1, 2, 3], [0, 1, 2])
 
-#     ranks2 = Chem.CanonicalRankAtomsInFragment(m, [4, 5, 6, 7], [3, 4, 5])
-#     self.assertEqual(list(ranks[0:4]), list(ranks2[4:]))
-#     self.assertEqual(list(ranks[4:]), [-1] * 4)
-#     self.assertEqual(list(ranks2[0:4]), [-1] * 4)
+    ranks2 = Chem.CanonicalRankAtomsInFragment(m, [4, 5, 6, 7], [3, 4, 5])
+    self.assertEqual(list(ranks[0:4]), list(ranks2[4:]))
+    self.assertEqual(list(ranks[4:]), [-1] * 4)
+    self.assertEqual(list(ranks2[0:4]), [-1] * 4)
 
-#     # doc tests
-#     mol = Chem.MolFromSmiles('C1NCN1.C1NCN1')
-#     self.assertEqual(
-#       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False)),
-#       [4, 6, 4, 6, -1, -1, -1, -1])
-#     self.assertNotEqual(
-#       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=True)),
-#       [4, 6, 4, 6, -1, -1, -1, -1])
-#     self.assertEqual(
-#       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=False)),
-#       [-1, -1, -1, -1, 4, 6, 4, 6])
-#     self.assertNotEqual(
-#       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=True)),
-#       [-1, -1, -1, -1, 4, 6, 4, 6])
+    # doc tests
+    mol = Chem.MolFromSmiles('C1NCN1.C1NCN1')
+    self.assertEqual(
+      list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False)),
+      [4, 6, 4, 6, -1, -1, -1, -1])
+    self.assertNotEqual(
+      list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=True)),
+      [4, 6, 4, 6, -1, -1, -1, -1])
+    self.assertEqual(
+      list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=False)),
+      [-1, -1, -1, -1, 4, 6, 4, 6])
+    self.assertNotEqual(
+      list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=True)),
+      [-1, -1, -1, -1, 4, 6, 4, 6])
 
 #   def test93RWMolsAsROMol(self):
 #     """ test the RWMol class as a proper ROMol

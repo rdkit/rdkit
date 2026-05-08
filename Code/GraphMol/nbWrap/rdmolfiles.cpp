@@ -2458,10 +2458,11 @@ NB_MODULE(rdmolfiles, m) {
       a string
   )DOC";
   m.def("CanonicalRankAtomsInFragment", CanonicalRankAtomsInFragment, "mol"_a,
-        "atomsToUse"_a, "bondsToUse"_a = 0, "atomSymbols"_a = 0,
-        "breakTies"_a = true, "includeChirality"_a = true,
-        "includeIsotopes"_a = true, "includeAtomMaps"_a = true,
-        "includeChiralPresence"_a = false, docString.c_str());
+        "atomsToUse"_a, "bondsToUse"_a = nb::none(),
+        "atomSymbols"_a = nb::none(), "breakTies"_a = true,
+        "includeChirality"_a = true, "includeIsotopes"_a = true,
+        "includeAtomMaps"_a = true, "includeChiralPresence"_a = false,
+        docString.c_str());
 
   m.def("CanonicalizeEnhancedStereo", CanonicalizeEnhancedStereo, "mol"_a);
 
