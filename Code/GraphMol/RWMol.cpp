@@ -693,69 +693,98 @@ void RWMol::batchRemoveBonds() {
 
   auto &delBonds = *dp_delBonds;
   unsigned int min_idx = getNumBonds();
+
+  std::vector<RDKit::Bond *> bondsToDelete;
+  std::vector<std::pair<unsigned int, unsigned int>> atomPairsToRemove;
+
   for (unsigned int i = rdcast<unsigned int>(delBonds.size()); i > 0; --i) {
     if (!delBonds[i - 1]) {
       continue;
     }
     unsigned int idx = rdcast<unsigned int>(i - 1);
-    Bond *bnd = getBondWithIdx(idx);
-    if (!bnd) {
+    Bond *bondFromInput= getBondWithIdx(idx);
+    if (!bondFromInput) {
       continue;
     }
+    unsigned int firstAtomIdx = bondFromInput->getBeginAtomIdx(); 
+    unsigned int secondAtomIdx = bondFromInput->getEndAtomIdx();
 
-    min_idx = idx;
-    // remove any bookmarks which point to this bond:
-    BOND_BOOKMARK_MAP *marks = getBondBookmarks();
-    auto markI = marks->begin();
-    while (markI != marks->end()) {
-      BOND_PTR_LIST &bonds = markI->second;
-      // we need to copy the iterator then increment it, because the
-      // deletion we're going to do in clearBondBookmark will invalidate
-      // it.
-      auto tmpI = markI;
-      ++markI;
-      if (std::find(bonds.begin(), bonds.end(), bnd) != bonds.end()) {
-        clearBondBookmark(tmpI->first, bnd);
+    // find all bonds with the same two atom indices
+    
+    auto bondList = getBondsBetweenAtoms(firstAtomIdx, secondAtomIdx);
+    for (auto bnd : bondList) {
+
+      unsigned int bondIdx = bnd->getIdx();
+
+      if (bondIdx < min_idx) {
+        min_idx = bondIdx;
       }
-    }
 
-    // loop over neighboring double bonds and remove their stereo atom
-    //  information. This is definitely now invalid (was github issue 8)
-    auto beginAtm = bnd->getBeginAtom();
-    auto endAtm = bnd->getEndAtom();
-    std::vector<std::vector<Atom *>> bond_atoms = {{beginAtm, endAtm},
-                                                   {endAtm, beginAtm}};
-    for (const auto &atoms : bond_atoms) {
-      for (auto obnd : atomBonds(atoms[0])) {
-        if (obnd == bnd) {
-          continue;
+      // remove any bookmarks which point to this bond:
+      BOND_BOOKMARK_MAP *marks = getBondBookmarks();
+      auto markI = marks->begin();
+      while (markI != marks->end()) {
+        BOND_PTR_LIST &bonds = markI->second;
+        // we need to copy the iterator then increment it, because the
+        // deletion we're going to do in clearBondBookmark will invalidate
+        // it.
+        auto tmpI = markI;
+        ++markI;
+        if (std::find(bonds.begin(), bonds.end(), bnd) != bonds.end()) {
+          clearBondBookmark(tmpI->first, bnd);
         }
-        if (std::find(obnd->getStereoAtoms().begin(),
-                      obnd->getStereoAtoms().end(),
-                      atoms[1]->getIdx()) != obnd->getStereoAtoms().end()) {
-          // github #6900 if we remove stereo atoms we need to remove
-          //  the CIS and or TRANS since this requires stereo atoms
-          if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
-              obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
-            obnd->setStereo(Bond::BondStereo::STEREONONE);
+      }
+
+      // loop over neighboring double bonds and remove their stereo atom
+      //  information. This is definitely now invalid (was github issue 8)
+      auto beginAtm = bnd->getBeginAtom();
+      auto endAtm = bnd->getEndAtom();
+      std::vector<std::vector<Atom *>> bond_atoms = {{beginAtm, endAtm},
+                                                    {endAtm, beginAtm}};
+      for (const auto &atoms : bond_atoms) {
+        for (auto obnd : atomBonds(atoms[0])) {
+          if (obnd == bnd) {
+            continue;
           }
-          obnd->getStereoAtoms().clear();
+          if (std::find(obnd->getStereoAtoms().begin(),
+                        obnd->getStereoAtoms().end(),
+                        atoms[1]->getIdx()) != obnd->getStereoAtoms().end()) {
+            // github #6900 if we remove stereo atoms we need to remove
+            //  the CIS and or TRANS since this requires stereo atoms
+            if (obnd->getStereo() == Bond::BondStereo::STEREOCIS ||
+                obnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
+              obnd->setStereo(Bond::BondStereo::STEREONONE);
+            }
+            obnd->getStereoAtoms().clear();
+          }
         }
       }
+
+      removeSubstanceGroupsReferencingBond(*this, bondIdx);
+      // Remove this bond from any stereo group
+      removeBondFromGroups(bnd, d_stereo_groups);
+
+      if (std::find(bondsToDelete.begin(), bondsToDelete.end(), bnd)  == bondsToDelete.end()) {
+          bondsToDelete.push_back(bnd);
+      }
     }
-
-    removeSubstanceGroupsReferencingBond(*this, idx);
-    // Remove this bond from any stereo group
-    removeBondFromGroups(bnd, d_stereo_groups);
-
-    bnd->setOwningMol(nullptr);
-
-    auto vd1 = boost::vertex(bnd->getBeginAtomIdx(), d_graph);
-    auto vd2 = boost::vertex(bnd->getEndAtomIdx(), d_graph);
-    boost::remove_edge(vd1, vd2, d_graph);
-    delete bnd;
-    --numBonds;
+    auto bondAtomPair = std::pair<unsigned int, unsigned int>{firstAtomIdx, secondAtomIdx};
+    if (std::find(atomPairsToRemove.begin(), atomPairsToRemove.end(),bondAtomPair)  == atomPairsToRemove.end()) {
+        atomPairsToRemove.push_back(bondAtomPair);
+    }
   }
+
+  for (auto &bondPairToRemove : atomPairsToRemove) {
+    auto vd1 = boost::vertex(bondPairToRemove.first, d_graph);
+    auto vd2 = boost::vertex(bondPairToRemove.second, d_graph);
+    boost::remove_edge(vd1, vd2, d_graph);
+  }
+
+  for (auto &bondToDelete  : bondsToDelete) {
+    bondToDelete->setOwningMol(nullptr);
+    delete bondToDelete;
+  }
+  numBonds -= bondsToDelete.size();
 
   // loop over all bonds with higher indices than the minimum modified and
   // update their indices

@@ -188,7 +188,7 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
 
   MACROMol(std::unique_ptr<RWMol> &rwMol)
       : RWMol(std::move(*(rwMol.get()))), p_atomIdxToTemplateIdxIsStale(true) {
-    rwMol.release();
+    rwMol = nullptr;
   }
 
   ~MACROMol() {}

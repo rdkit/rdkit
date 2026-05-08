@@ -421,7 +421,8 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
       newTemplate->updatePropertyCache(false);
 
       res->addTemplate(newTemplate);
-      templateMol.release();
+      templateMol = nullptr;
+
     }
 
     tempStr = RDKit::FileParserUtils::getV3000Line(&inStream, line);
@@ -985,12 +986,13 @@ std::string MACROMolToSCSRMolBlock(MACROMol &macroMol,
   if (!hBonds.empty()) {
     localMol->beginBatchEdit();
     for (auto &hbondToRemove : hBonds) {
-      // the following call will delelte all bonds that have the same begin
+      // the following call will delete all bonds that have the same begin
       // and end atoms.
       localMol->removeBond(hbondToRemove.first, hbondToRemove.second);
     }
     localMol->commitBatchEdit();
 
+    localMol->beginBatchEdit();
     for (auto &hBond : hBonds) {
       // the following call adds one hbond back for each set that was removed
       localMol->addBond(hBond.first, hBond.second, Bond::BondType::HYDROGEN);
