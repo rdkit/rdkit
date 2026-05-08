@@ -49,7 +49,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(lmaxmin)
 
   def test1HierarchPick(self):
-    fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'SimDivPickers', 'Wrap', 'test_data',
+    fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'SimDivPickers', 'boostWrap', 'test_data',
                          'points.csv')
     with open(fname) as infil:
       lines = infil.readlines()
@@ -233,7 +233,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(list(mm1), list(mm2))
 
   def testBitVectorMaxMin3(self):
-    fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'SimDivPickers', 'Wrap', 'test_data',
+    fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'SimDivPickers', 'boostWrap', 'test_data',
                          'chembl_cyps.head.fps')
     fps = []
     with open(fname) as infil:
@@ -256,7 +256,7 @@ class TestCase(unittest.TestCase):
 
   def testBitVectorMaxMin4(self):
     # threshold tests
-    fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'SimDivPickers', 'Wrap', 'test_data',
+    fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'SimDivPickers', 'boostWrap', 'test_data',
                          'chembl_cyps.head.fps')
     fps = []
     with open(fname) as infil:
@@ -278,7 +278,7 @@ class TestCase(unittest.TestCase):
 
   def testBitVectorLeader1(self):
     # threshold tests
-    fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'SimDivPickers', 'Wrap', 'test_data',
+    fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'SimDivPickers', 'boostWrap', 'test_data',
                          'chembl_cyps.head.fps')
     fps = []
     with open(fname) as infil:

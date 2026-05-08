@@ -1288,7 +1288,7 @@ mol-4,CCOC
     smiSup = Chem.SmilesMolSupplier(fileN, delimiter=",", smilesColumn=1, nameColumn=0, titleLine=0)
     propNames = []
     propNames.append("Column_2")
-    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'outSmiles.txt')
     writer = Chem.SmilesWriter(ofile)
     writer.SetProps(propNames)
@@ -1301,7 +1301,7 @@ mol-4,CCOC
     props = [
       "34.14", "25.78", "106.51", "82.78", "60.16", "87.74", "37.38", "77.28", "65.18", "0.00"
     ]
-    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'outSmiles.txt')
     #ofile = "test_data/outSmiles.csv"
     smiSup = Chem.SmilesMolSupplier(ofile)
@@ -1316,7 +1316,7 @@ mol-4,CCOC
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf')
     #fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
-    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'outNCI_few.sdf')
     writer = Chem.SDWriter(ofile)
     sdSup = Chem.SDMolSupplier(fileN)
@@ -1326,7 +1326,7 @@ mol-4,CCOC
 
   def test29SDWriterLoop(self):
     self.writerSDFile()
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'outNCI_few.sdf')
     sdSup = Chem.SDMolSupplier(fileN)
     molNames = [
@@ -2084,7 +2084,7 @@ CAS<~>
     """ test issue 273: MolFileComments and MolFileInfo props ending up in SD files
 
     """
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'outNCI_few.sdf')
     suppl = Chem.SDMolSupplier(fileN)
     ms = [x for x in suppl]
@@ -2780,7 +2780,7 @@ CAS<~>
     self.assertTrue(m3.GetSubstructMatch(q1) == (2, 1))
 
   def test58Issue2983794(self):
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'issue2983794.sdf')
     m1 = Chem.MolFromMolFile(fileN)
     self.assertTrue(m1)
@@ -2806,7 +2806,7 @@ CAS<~>
     smiSup = Chem.SmilesMolSupplier(fileN, delimiter=",", smilesColumn=1, nameColumn=0, titleLine=0)
     ms = [x for x in smiSup]
 
-    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'outSmiles.txt')
     writer = Chem.SmilesWriter(ofile)
     for mol in ms:
@@ -5487,7 +5487,7 @@ M  END
 
   def testGitHub2082_2(self):
     # test a mol block that lies is 3D but labelled 2D
-    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'issue2082.mol')
     with open(ofile) as inf:
       ctab = inf.read()
@@ -7019,7 +7019,7 @@ M  END
     self.assertTrue((pos == pos2).all())
 
   def test_github3553(self):
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'github3553.sdf')
     sdSup = Chem.SDMolSupplier(fileN)
     for mol in sdSup:
@@ -7090,7 +7090,7 @@ M  END
   def testContextManagers(self):
     from rdkit import RDLogger
     RDLogger.DisableLog('rdApp.*')
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'github3553.sdf')
     with Chem.SDMolSupplier(fileN) as suppl:
       mols = [x for x in suppl if x is not None]
@@ -7466,7 +7466,7 @@ CAS<~>
     Chem.SetUseLegacyStereoPerception(False)
 
     mrvBlock = ""
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'DoubleBondRxn.mrv')
     with open(fileN) as f:
       mrvBlock = f.read()
@@ -7485,7 +7485,7 @@ CAS<~>
     Chem.SetUseLegacyStereoPerception(False)
 
     mrvBlock = ""
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'DoubleBondRxn2.mrv')
 
     with open(fileN) as f:
@@ -7504,7 +7504,7 @@ CAS<~>
     Chem.SetUseLegacyStereoPerception(False)
 
     mrvBlock = ""
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'DoubleBondAndChiralRxn.mrv')
     with open(fileN) as f:
       mrvBlock = f.read()
@@ -7522,7 +7522,7 @@ CAS<~>
     Chem.SetUseLegacyStereoPerception(False)
 
     rxnBlock = ""
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'DoubleBondAndChiralRxn.rxn')
     with open(fileN) as f:
       rxnBlock = f.read()
@@ -7574,7 +7574,7 @@ CAS<~>
   def testValidationMol(self):
     Chem.SetUseLegacyStereoPerception(False)
     molBlock = ""
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'DoubleBond2000.mol')
     with open(fileN) as f:
       molBlock = f.read()
@@ -7590,7 +7590,7 @@ CAS<~>
 
     # nowthe V3000 version
 
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'DoubleBond3000.mol')
     with open(fileN) as f:
       molBlock = f.read()
@@ -7605,7 +7605,7 @@ CAS<~>
 
     # now the chiral versions - the double bond should be chiral
 
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'DoubleBond2000Chiral.mol')
     with open(fileN) as f:
       molBlock = f.read()
@@ -7621,7 +7621,7 @@ CAS<~>
 
     # now the V3000 version
 
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'DoubleBond3000Chiral.mol')
     with open(fileN) as f:
       molBlock = f.read()
@@ -7639,7 +7639,7 @@ CAS<~>
   def testValidationMrv(self):
     Chem.SetUseLegacyStereoPerception(False)
     mrvBlock = ""
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'DoubleBond.mrv')
     with open(fileN) as f:
       mrvBlock = f.read()
@@ -7682,7 +7682,7 @@ CAS<~>
     title = "random test mol"
     mol.SetProp('_Name', title)
 
-    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'outMaeWriter.mae')
     writer1 = Chem.MaeWriter(ofile)
 
@@ -8213,7 +8213,7 @@ M  END
     title = "random test mol"
     mol.SetProp('_Name', title)
 
-    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'outMaeWriter.mae')
     writer1 = Chem.MaeWriter(ofile)
 

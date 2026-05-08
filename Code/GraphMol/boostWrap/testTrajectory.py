@@ -4,8 +4,8 @@ import unittest
 
 from rdkit import Chem, RDConfig
 from rdkit.Chem import ChemicalForceFields, rdtrajectory
-from rdkit.Chem.rdtrajectory import (ReadAmberTrajectory, ReadGromosTrajectory,
-                                     Snapshot, Trajectory)
+from rdkit.Chem.rdtrajectory import (ReadAmberTrajectory, ReadGromosTrajectory, Snapshot,
+                                     Trajectory)
 
 
 def feq(v1, v2, tol=1.0e-4):
@@ -411,7 +411,7 @@ class TestCase(unittest.TestCase):
     maxIts = 1000
     gradTol = 0.01
     rdbase = os.environ['RDBASE']
-    fName = os.path.join(rdbase, 'Code', 'GraphMol', 'Wrap', 'test_data',
+    fName = os.path.join(rdbase, 'Code', 'GraphMol', 'boostWrap', 'test_data',
                          'bilastine_trajectory.sdf')
     w = Chem.SDWriter(fName)
     field = ChemicalForceFields.MMFFGetMoleculeForceField(
