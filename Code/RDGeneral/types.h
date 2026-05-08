@@ -202,9 +202,9 @@ inline constexpr std::string_view _displayLabelW = "_displayLabelW";
 
 }  // namespace common_properties
 
-inline constexpr auto MAX_DOUBLE = std::numeric_limits<double>::max();
-inline constexpr auto EPS_DOUBLE = std::numeric_limits<double>::epsilon();
-inline constexpr auto MAX_INT = std::numeric_limits<int>::max();
+inline constexpr double MAX_DOUBLE = std::numeric_limits<double>::max();
+inline constexpr double EPS_DOUBLE = std::numeric_limits<double>::epsilon();
+inline constexpr int MAX_INT = std::numeric_limits<int>::max();
 
 typedef unsigned int UINT;
 typedef unsigned short USHORT;
