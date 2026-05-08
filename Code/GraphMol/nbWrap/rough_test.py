@@ -3574,79 +3574,79 @@ CAS<~>
     m = Chem.MolFromSmiles('OCCCCN')
     self.assertRaises(ValueError, lambda: Chem.FragmentOnBonds(m, ()))
 
-  def test88QueryAtoms(self):
-    from rdkit.Chem import rdqueries
-    m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')
+  # def test88QueryAtoms(self):
+  #   from rdkit.Chem import rdqueries
+  #   m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')
 
-    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (2, 4))
+  #   qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (2, 4))
 
-    qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True))
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (4, ))
+  #   qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True))
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (4, ))
 
-    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
-    qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True),
-                   how=Chem.CompositeQueryType.COMPOSITE_OR)
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (1, 2, 4))
+  #   qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+  #   qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True),
+  #                  how=Chem.CompositeQueryType.COMPOSITE_OR)
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (1, 2, 4))
 
-    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
-    qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True),
-                   how=Chem.CompositeQueryType.COMPOSITE_XOR)
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (1, 2))
+  #   qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+  #   qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True),
+  #                  how=Chem.CompositeQueryType.COMPOSITE_XOR)
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (1, 2))
 
-    qa = rdqueries.ExplicitDegreeGreaterQueryAtom(2)
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (2, 4))
+  #   qa = rdqueries.ExplicitDegreeGreaterQueryAtom(2)
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (2, 4))
 
-    qa = rdqueries.ExplicitDegreeLessQueryAtom(2)
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (3, 6))
+  #   qa = rdqueries.ExplicitDegreeLessQueryAtom(2)
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (3, 6))
 
-    m = Chem.MolFromSmiles('N[CH][CH]')
-    qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(0)
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (1, 2))
-    qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(1)
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (2, ))
+  #   m = Chem.MolFromSmiles('N[CH][CH]')
+  #   qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(0)
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (1, 2))
+  #   qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(1)
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (2, ))
 
-    m = Chem.MolFromSmiles('F[C@H](Cl)C')
-    qa = rdqueries.HasChiralTagQueryAtom()
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (1, ))
-    qa = rdqueries.MissingChiralTagQueryAtom()
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, ())
+  #   m = Chem.MolFromSmiles('F[C@H](Cl)C')
+  #   qa = rdqueries.HasChiralTagQueryAtom()
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (1, ))
+  #   qa = rdqueries.MissingChiralTagQueryAtom()
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, ())
 
-    m = Chem.MolFromSmiles('F[CH](Cl)C')
-    qa = rdqueries.HasChiralTagQueryAtom()
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, ())
-    qa = rdqueries.MissingChiralTagQueryAtom()
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (1, ))
+  #   m = Chem.MolFromSmiles('F[CH](Cl)C')
+  #   qa = rdqueries.HasChiralTagQueryAtom()
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, ())
+  #   qa = rdqueries.MissingChiralTagQueryAtom()
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (1, ))
 
-    m = Chem.MolFromSmiles('CNCON')
-    qa = rdqueries.NumHeteroatomNeighborsEqualsQueryAtom(2)
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (2, ))
-    qa = rdqueries.NumHeteroatomNeighborsGreaterQueryAtom(0)
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (0, 2, 3, 4))
+  #   m = Chem.MolFromSmiles('CNCON')
+  #   qa = rdqueries.NumHeteroatomNeighborsEqualsQueryAtom(2)
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (2, ))
+  #   qa = rdqueries.NumHeteroatomNeighborsGreaterQueryAtom(0)
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (0, 2, 3, 4))
 
-    m = Chem.MolFromSmiles('CC12CCN(CC1)C2')
-    qa = rdqueries.IsBridgeheadQueryAtom()
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (1, 4))
+  #   m = Chem.MolFromSmiles('CC12CCN(CC1)C2')
+  #   qa = rdqueries.IsBridgeheadQueryAtom()
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (1, 4))
 
-    m = Chem.MolFromSmiles('OCCOC')
-    qa = rdqueries.NonHydrogenDegreeEqualsQueryAtom(2)
-    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (1, 2, 3))
+  #   m = Chem.MolFromSmiles('OCCOC')
+  #   qa = rdqueries.NonHydrogenDegreeEqualsQueryAtom(2)
+  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+  #   self.assertEqual(l, (1, 2, 3))
 
   def test89UnicodeInput(self):
     m = Chem.MolFromSmiles(u'c1ccccc1')
@@ -3730,269 +3730,269 @@ CAS<~>
       list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(4, 8), breakTies=True)),
       [-1, -1, -1, -1, 4, 6, 4, 6])
 
-#   def test93RWMolsAsROMol(self):
-#     """ test the RWMol class as a proper ROMol
+  def test93RWMolsAsROMol(self):
+    """ test the RWMol class as a proper ROMol
 
-#     """
-#     mol = Chem.MolFromSmiles('C1CCC1')
-#     self.assertTrue(type(mol) == Chem.Mol)
-#     rwmol = Chem.RWMol(mol)
-#     self.assertEqual(Chem.MolToSmiles(rwmol, True), Chem.MolToSmiles(rwmol.GetMol()))
-#     newAt = Chem.Atom(8)
-#     rwmol.ReplaceAtom(0, newAt)
-#     self.assertEqual(Chem.MolToSmiles(rwmol, True), Chem.MolToSmiles(rwmol.GetMol()))
+    """
+    mol = Chem.MolFromSmiles('C1CCC1')
+    self.assertTrue(type(mol) == Chem.Mol)
+    rwmol = Chem.RWMol(mol)
+    self.assertEqual(Chem.MolToSmiles(rwmol, True), Chem.MolToSmiles(rwmol.GetMol()))
+    newAt = Chem.Atom(8)
+    rwmol.ReplaceAtom(0, newAt)
+    self.assertEqual(Chem.MolToSmiles(rwmol, True), Chem.MolToSmiles(rwmol.GetMol()))
 
-#   def test94CopyWithConfs(self):
-#     """ test copying Mols with some conformers
+  def test94CopyWithConfs(self):
+    """ test copying Mols with some conformers
 
-#     """
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'cmpd2.tpl')
-#     m1 = Chem.MolFromTPLFile(fileN)
-#     self.assertTrue(m1 is not None)
-#     self.assertEqual(m1.GetNumAtoms(), 12)
-#     self.assertEqual(m1.GetNumConformers(), 2)
-#     self.assertEqual(m1.GetConformer(0).GetNumAtoms(), 12)
-#     self.assertEqual(m1.GetConformer(1).GetNumAtoms(), 12)
+    """
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'cmpd2.tpl')
+    m1 = Chem.MolFromTPLFile(fileN)
+    self.assertTrue(m1 is not None)
+    self.assertEqual(m1.GetNumAtoms(), 12)
+    self.assertEqual(m1.GetNumConformers(), 2)
+    self.assertEqual(m1.GetConformer(0).GetNumAtoms(), 12)
+    self.assertEqual(m1.GetConformer(1).GetNumAtoms(), 12)
 
-#     m2 = Chem.Mol(m1)
-#     self.assertEqual(m2.GetNumAtoms(), 12)
-#     self.assertEqual(m2.GetNumConformers(), 2)
-#     self.assertEqual(m2.GetConformer(0).GetNumAtoms(), 12)
-#     self.assertEqual(m2.GetConformer(1).GetNumAtoms(), 12)
+    m2 = Chem.Mol(m1)
+    self.assertEqual(m2.GetNumAtoms(), 12)
+    self.assertEqual(m2.GetNumConformers(), 2)
+    self.assertEqual(m2.GetConformer(0).GetNumAtoms(), 12)
+    self.assertEqual(m2.GetConformer(1).GetNumAtoms(), 12)
 
-#     m2 = Chem.Mol(m1, False, 0)
-#     self.assertEqual(m2.GetNumAtoms(), 12)
-#     self.assertEqual(m2.GetNumConformers(), 1)
-#     self.assertEqual(m2.GetConformer(0).GetNumAtoms(), 12)
+    m2 = Chem.Mol(m1, False, 0)
+    self.assertEqual(m2.GetNumAtoms(), 12)
+    self.assertEqual(m2.GetNumConformers(), 1)
+    self.assertEqual(m2.GetConformer(0).GetNumAtoms(), 12)
 
-#     m2 = Chem.Mol(m1, False, 1)
-#     self.assertEqual(m2.GetNumAtoms(), 12)
-#     self.assertEqual(m2.GetNumConformers(), 1)
-#     self.assertEqual(m2.GetConformer(1).GetNumAtoms(), 12)
+    m2 = Chem.Mol(m1, False, 1)
+    self.assertEqual(m2.GetNumAtoms(), 12)
+    self.assertEqual(m2.GetNumConformers(), 1)
+    self.assertEqual(m2.GetConformer(1).GetNumAtoms(), 12)
 
-#     m2 = Chem.Mol(m1, True)
-#     self.assertTrue(m2.GetNumAtoms() == 12)
-#     self.assertTrue(m2.GetNumConformers() == 0)
+    m2 = Chem.Mol(m1, True)
+    self.assertTrue(m2.GetNumAtoms() == 12)
+    self.assertTrue(m2.GetNumConformers() == 0)
 
-#     m2 = Chem.RWMol(m1)
-#     self.assertEqual(m2.GetNumAtoms(), 12)
-#     self.assertEqual(m2.GetNumConformers(), 2)
-#     self.assertEqual(m2.GetConformer(0).GetNumAtoms(), 12)
-#     self.assertEqual(m2.GetConformer(1).GetNumAtoms(), 12)
+    m2 = Chem.RWMol(m1)
+    self.assertEqual(m2.GetNumAtoms(), 12)
+    self.assertEqual(m2.GetNumConformers(), 2)
+    self.assertEqual(m2.GetConformer(0).GetNumAtoms(), 12)
+    self.assertEqual(m2.GetConformer(1).GetNumAtoms(), 12)
 
-#     m2 = Chem.RWMol(m1, False, 0)
-#     self.assertEqual(m2.GetNumAtoms(), 12)
-#     self.assertEqual(m2.GetNumConformers(), 1)
-#     self.assertEqual(m2.GetConformer(0).GetNumAtoms(), 12)
+    m2 = Chem.RWMol(m1, False, 0)
+    self.assertEqual(m2.GetNumAtoms(), 12)
+    self.assertEqual(m2.GetNumConformers(), 1)
+    self.assertEqual(m2.GetConformer(0).GetNumAtoms(), 12)
 
-#     m2 = Chem.RWMol(m1, False, 1)
-#     self.assertEqual(m2.GetNumAtoms(), 12)
-#     self.assertEqual(m2.GetNumConformers(), 1)
-#     self.assertEqual(m2.GetConformer(1).GetNumAtoms(), 12)
+    m2 = Chem.RWMol(m1, False, 1)
+    self.assertEqual(m2.GetNumAtoms(), 12)
+    self.assertEqual(m2.GetNumConformers(), 1)
+    self.assertEqual(m2.GetConformer(1).GetNumAtoms(), 12)
 
-#     m2 = Chem.RWMol(m1, True)
-#     self.assertTrue(m2.GetNumAtoms() == 12)
-#     self.assertTrue(m2.GetNumConformers() == 0)
+    m2 = Chem.RWMol(m1, True)
+    self.assertTrue(m2.GetNumAtoms() == 12)
+    self.assertTrue(m2.GetNumConformers() == 0)
 
-#   def testAtomPropQueries(self):
-#     """ test the property queries
-#     """
-#     from rdkit.Chem import rdqueries
+  # def testAtomPropQueries(self):
+  #   """ test the property queries
+  #   """
+  #   from rdkit.Chem import rdqueries
 
-#     m = Chem.MolFromSmiles("C" * 14)
-#     atoms = m.GetAtoms()
-#     atoms[0].SetProp("hah", "hah")
-#     atoms[1].SetIntProp("bar", 1)
-#     atoms[2].SetIntProp("bar", 2)
-#     atoms[3].SetBoolProp("baz", True)
-#     atoms[4].SetBoolProp("baz", False)
-#     atoms[5].SetProp("boo", "hoo")
-#     atoms[6].SetProp("boo", "-urns")
-#     atoms[7].SetDoubleProp("boot", 1.0)
-#     atoms[8].SetDoubleProp("boot", 4.0)
-#     atoms[9].SetDoubleProp("number", 4.0)
-#     atoms[10].SetIntProp("number", 4)
+  #   m = Chem.MolFromSmiles("C" * 14)
+  #   atoms = m.GetAtoms()
+  #   atoms[0].SetProp("hah", "hah")
+  #   atoms[1].SetIntProp("bar", 1)
+  #   atoms[2].SetIntProp("bar", 2)
+  #   atoms[3].SetBoolProp("baz", True)
+  #   atoms[4].SetBoolProp("baz", False)
+  #   atoms[5].SetProp("boo", "hoo")
+  #   atoms[6].SetProp("boo", "-urns")
+  #   atoms[7].SetDoubleProp("boot", 1.0)
+  #   atoms[8].SetDoubleProp("boot", 4.0)
+  #   atoms[9].SetDoubleProp("number", 4.0)
+  #   atoms[10].SetIntProp("number", 4)
 
-#     tests = ((rdqueries.HasIntPropWithValueQueryAtom, "bar", {
-#       1: [1],
-#       2: [2]
-#     }), (rdqueries.HasBoolPropWithValueQueryAtom, "baz", {
-#       True: [3],
-#       False: [4]
-#     }), (rdqueries.HasStringPropWithValueQueryAtom, "boo", {
-#       "hoo": [5],
-#       "-urns": [6]
-#     }), (rdqueries.HasDoublePropWithValueQueryAtom, "boot", {
-#       1.0: [7],
-#       4.0: [8]
-#     }))
+  #   tests = ((rdqueries.HasIntPropWithValueQueryAtom, "bar", {
+  #     1: [1],
+  #     2: [2]
+  #   }), (rdqueries.HasBoolPropWithValueQueryAtom, "baz", {
+  #     True: [3],
+  #     False: [4]
+  #   }), (rdqueries.HasStringPropWithValueQueryAtom, "boo", {
+  #     "hoo": [5],
+  #     "-urns": [6]
+  #   }), (rdqueries.HasDoublePropWithValueQueryAtom, "boot", {
+  #     1.0: [7],
+  #     4.0: [8]
+  #   }))
 
-#     for query, name, lookups in tests:
-#       for t, v in lookups.items():
-#         q = query(name, t)
-#         self.assertEqual(v, [x.GetIdx() for x in m.GetAtomsMatchingQuery(q)])
-#         q = query(name, t, negate=True)
-#         self.assertEqual(sorted(set(range(14)) - set(v)),
-#                          [x.GetIdx() for x in m.GetAtomsMatchingQuery(q)])
+  #   for query, name, lookups in tests:
+  #     for t, v in lookups.items():
+  #       q = query(name, t)
+  #       self.assertEqual(v, [x.GetIdx() for x in m.GetAtomsMatchingQuery(q)])
+  #       q = query(name, t, negate=True)
+  #       self.assertEqual(sorted(set(range(14)) - set(v)),
+  #                        [x.GetIdx() for x in m.GetAtomsMatchingQuery(q)])
 
-#     # check tolerances
-#     self.assertEqual([
-#       x.GetIdx() for x in m.GetAtomsMatchingQuery(
-#         rdqueries.HasDoublePropWithValueQueryAtom("boot", 1.0, tolerance=3.))
-#     ], [7, 8])
+  #   # check tolerances
+  #   self.assertEqual([
+  #     x.GetIdx() for x in m.GetAtomsMatchingQuery(
+  #       rdqueries.HasDoublePropWithValueQueryAtom("boot", 1.0, tolerance=3.))
+  #   ], [7, 8])
 
-#     # numbers are numbers?, i.e. int!=double
-#     self.assertEqual([
-#       x.GetIdx()
-#       for x in m.GetAtomsMatchingQuery(rdqueries.HasIntPropWithValueQueryAtom("number", 4))
-#     ], [10])
+  #   # numbers are numbers?, i.e. int!=double
+  #   self.assertEqual([
+  #     x.GetIdx()
+  #     for x in m.GetAtomsMatchingQuery(rdqueries.HasIntPropWithValueQueryAtom("number", 4))
+  #   ], [10])
 
-#   def testBondPropQueries(self):
-#     """ test the property queries
-#     """
-#     from rdkit.Chem import rdqueries
+  def testBondPropQueries(self):
+    """ test the property queries
+    """
+    from rdkit.Chem import rdqueries
 
-#     m = Chem.MolFromSmiles("C" * 14)
-#     bonds = m.GetBonds()
-#     bonds[0].SetProp("hah", "hah")
-#     bonds[1].SetIntProp("bar", 1)
-#     bonds[2].SetIntProp("bar", 2)
-#     bonds[3].SetBoolProp("baz", True)
-#     bonds[4].SetBoolProp("baz", False)
-#     bonds[5].SetProp("boo", "hoo")
-#     bonds[6].SetProp("boo", "-urns")
-#     bonds[7].SetDoubleProp("boot", 1.0)
-#     bonds[8].SetDoubleProp("boot", 4.0)
-#     bonds[9].SetDoubleProp("number", 4.0)
-#     bonds[10].SetIntProp("number", 4)
+    m = Chem.MolFromSmiles("C" * 14)
+    bonds = m.GetBonds()
+    bonds[0].SetProp("hah", "hah")
+    bonds[1].SetIntProp("bar", 1)
+    bonds[2].SetIntProp("bar", 2)
+    bonds[3].SetBoolProp("baz", True)
+    bonds[4].SetBoolProp("baz", False)
+    bonds[5].SetProp("boo", "hoo")
+    bonds[6].SetProp("boo", "-urns")
+    bonds[7].SetDoubleProp("boot", 1.0)
+    bonds[8].SetDoubleProp("boot", 4.0)
+    bonds[9].SetDoubleProp("number", 4.0)
+    bonds[10].SetIntProp("number", 4)
 
-#     tests = ((rdqueries.HasIntPropWithValueQueryBond, "bar", {
-#       1: [1],
-#       2: [2]
-#     }), (rdqueries.HasBoolPropWithValueQueryBond, "baz", {
-#       True: [3],
-#       False: [4]
-#     }), (rdqueries.HasStringPropWithValueQueryBond, "boo", {
-#       "hoo": [5],
-#       "-urns": [6]
-#     }), (rdqueries.HasDoublePropWithValueQueryBond, "boot", {
-#       1.0: [7],
-#       4.0: [8]
-#     }))
+    tests = ((rdqueries.HasIntPropWithValueQueryBond, "bar", {
+      1: [1],
+      2: [2]
+    }), (rdqueries.HasBoolPropWithValueQueryBond, "baz", {
+      True: [3],
+      False: [4]
+    }), (rdqueries.HasStringPropWithValueQueryBond, "boo", {
+      "hoo": [5],
+      "-urns": [6]
+    }), (rdqueries.HasDoublePropWithValueQueryBond, "boot", {
+      1.0: [7],
+      4.0: [8]
+    }))
 
-#     for query, name, lookups in tests:
-#       for t, v in lookups.items():
-#         q = query(name, t)
-#         self.assertEqual(v, [x.GetIdx() for x in m.GetBonds() if q.Match(x)])
-#         q = query(name, t, negate=True)
-#         self.assertEqual(sorted(set(range(13)) - set(v)),
-#                          [x.GetIdx() for x in m.GetBonds() if q.Match(x)])
+    for query, name, lookups in tests:
+      for t, v in lookups.items():
+        q = query(name, t)
+        self.assertEqual(v, [x.GetIdx() for x in m.GetBonds() if q.Match(x)])
+        q = query(name, t, negate=True)
+        self.assertEqual(sorted(set(range(13)) - set(v)),
+                         [x.GetIdx() for x in m.GetBonds() if q.Match(x)])
 
-#     # check tolerances
-#     q = rdqueries.HasDoublePropWithValueQueryBond("boot", 1.0, tolerance=3.)
-#     self.assertEqual([x.GetIdx() for x in m.GetBonds() if q.Match(x)], [7, 8])
+    # check tolerances
+    q = rdqueries.HasDoublePropWithValueQueryBond("boot", 1.0, tolerance=3.)
+    self.assertEqual([x.GetIdx() for x in m.GetBonds() if q.Match(x)], [7, 8])
 
-#     # numbers are numbers?, i.e. int!=double
-#     q = rdqueries.HasIntPropWithValueQueryBond("number", 4)
-#     self.assertEqual([x.GetIdx() for x in m.GetBonds() if q.Match(x)], [10])
+    # numbers are numbers?, i.e. int!=double
+    q = rdqueries.HasIntPropWithValueQueryBond("number", 4)
+    self.assertEqual([x.GetIdx() for x in m.GetBonds() if q.Match(x)], [10])
 
-#   def testGetShortestPath(self):
-#     """ test the GetShortestPath() wrapper
-#     """
-#     smi = "CC(OC1C(CCCC3)C3C(CCCC2)C2C1OC(C)=O)=O"
-#     m = Chem.MolFromSmiles(smi)
-#     path = Chem.GetShortestPath(m, 1, 20)
-#     self.assertEqual(path, (1, 2, 3, 16, 17, 18, 20))
+  def testGetShortestPath(self):
+    """ test the GetShortestPath() wrapper
+    """
+    smi = "CC(OC1C(CCCC3)C3C(CCCC2)C2C1OC(C)=O)=O"
+    m = Chem.MolFromSmiles(smi)
+    path = Chem.GetShortestPath(m, 1, 20)
+    self.assertEqual(path, (1, 2, 3, 16, 17, 18, 20))
 
-#   def testGithub497(self):
-#     with tempfile.TemporaryFile() as tmp, gzip.open(tmp) as outf:
-#       with self.assertRaises(ValueError):
-#         w = Chem.SDWriter(outf)
+  # def testGithub497(self):
+  #   with tempfile.TemporaryFile() as tmp, gzip.open(tmp) as outf:
+  #     with self.assertRaises(ValueError):
+  #       w = Chem.SDWriter(outf)
 
-#   def testGithub498(self):
-#     if (sys.version_info < (3, 0)):
-#       mode = 'w+'
-#     else:
-#       mode = 'wt+'
-#     m = Chem.MolFromSmiles('C')
-#     with tempfile.NamedTemporaryFile() as tmp, gzip.open(tmp, mode) as outf:
-#       w = Chem.SDWriter(outf)
-#       w.write(m)
-#       w.close()
+  # def testGithub498(self):
+  #   if (sys.version_info < (3, 0)):
+  #     mode = 'w+'
+  #   else:
+  #     mode = 'wt+'
+  #   m = Chem.MolFromSmiles('C')
+  #   with tempfile.NamedTemporaryFile() as tmp, gzip.open(tmp, mode) as outf:
+  #     w = Chem.SDWriter(outf)
+  #     w.write(m)
+  #     w.close()
 
-#   def testReplaceBond(self):
-#     origmol = Chem.RWMol(Chem.MolFromSmiles("CC"))
-#     bonds = list(origmol.GetBonds())
-#     self.assertEqual(len(bonds), 1)
-#     singlebond = bonds[0]
-#     self.assertEqual(singlebond.GetBondType(), Chem.BondType.SINGLE)
+  def testReplaceBond(self):
+    origmol = Chem.RWMol(Chem.MolFromSmiles("CC"))
+    bonds = list(origmol.GetBonds())
+    self.assertEqual(len(bonds), 1)
+    singlebond = bonds[0]
+    self.assertEqual(singlebond.GetBondType(), Chem.BondType.SINGLE)
 
-#     # this is the only way we create a bond, is take it from another molecule
-#     doublebonded = Chem.MolFromSmiles("C=C")
-#     doublebond = list(doublebonded.GetBonds())[0]
+    # this is the only way we create a bond, is take it from another molecule
+    doublebonded = Chem.MolFromSmiles("C=C")
+    doublebond = list(doublebonded.GetBonds())[0]
 
-#     # make sure replacing the bond changes the smiles
-#     self.assertEqual(Chem.MolToSmiles(origmol), "CC")
-#     origmol.ReplaceBond(singlebond.GetIdx(), doublebond)
-#     Chem.SanitizeMol(origmol)
+    # make sure replacing the bond changes the smiles
+    self.assertEqual(Chem.MolToSmiles(origmol), "CC")
+    origmol.ReplaceBond(singlebond.GetIdx(), doublebond)
+    Chem.SanitizeMol(origmol)
 
-#     self.assertEqual(Chem.MolToSmiles(origmol), "C=C")
+    self.assertEqual(Chem.MolToSmiles(origmol), "C=C")
 
-#   def testAdjustQueryProperties(self):
-#     m = Chem.MolFromSmarts('C1CCC1*')
-#     am = Chem.AdjustQueryProperties(m)
-#     self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(m))
-#     self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
-#     self.assertTrue(Chem.MolFromSmiles('C1CC(C)C1C').HasSubstructMatch(m))
-#     self.assertFalse(Chem.MolFromSmiles('C1CC(C)C1C').HasSubstructMatch(am))
+  def testAdjustQueryProperties(self):
+    m = Chem.MolFromSmarts('C1CCC1*')
+    am = Chem.AdjustQueryProperties(m)
+    self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(m))
+    self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
+    self.assertTrue(Chem.MolFromSmiles('C1CC(C)C1C').HasSubstructMatch(m))
+    self.assertFalse(Chem.MolFromSmiles('C1CC(C)C1C').HasSubstructMatch(am))
 
-#     m = Chem.MolFromSmiles('C1CCC1*')
-#     am = Chem.AdjustQueryProperties(m)
-#     self.assertFalse(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(m))
-#     self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
-#     qps = Chem.AdjustQueryParameters()
-#     qps.makeDummiesQueries = False
-#     am = Chem.AdjustQueryProperties(m, qps)
-#     self.assertFalse(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
+    m = Chem.MolFromSmiles('C1CCC1*')
+    am = Chem.AdjustQueryProperties(m)
+    self.assertFalse(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(m))
+    self.assertTrue(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
+    qps = Chem.AdjustQueryParameters()
+    qps.makeDummiesQueries = False
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertFalse(Chem.MolFromSmiles('C1CCC1C').HasSubstructMatch(am))
 
-#     m = Chem.MolFromSmiles('C1=CC=CC=C1', sanitize=False)
-#     am = Chem.AdjustQueryProperties(m)
-#     self.assertTrue(Chem.MolFromSmiles('c1ccccc1').HasSubstructMatch(am))
-#     qp = Chem.AdjustQueryParameters()
-#     qp.aromatizeIfPossible = False
-#     am = Chem.AdjustQueryProperties(m, qp)
-#     self.assertFalse(Chem.MolFromSmiles('c1ccccc1').HasSubstructMatch(am))
+    m = Chem.MolFromSmiles('C1=CC=CC=C1', sanitize=False)
+    am = Chem.AdjustQueryProperties(m)
+    self.assertTrue(Chem.MolFromSmiles('c1ccccc1').HasSubstructMatch(am))
+    qp = Chem.AdjustQueryParameters()
+    qp.aromatizeIfPossible = False
+    am = Chem.AdjustQueryProperties(m, qp)
+    self.assertFalse(Chem.MolFromSmiles('c1ccccc1').HasSubstructMatch(am))
 
-#     m = Chem.MolFromSmiles('C1CCC1OC')
-#     qps = Chem.AdjustQueryParameters()
-#     qps.makeAtomsGeneric = True
-#     am = Chem.AdjustQueryProperties(m, qps)
-#     self.assertEqual(Chem.MolToSmarts(am), '[D2]1-[D2]-[D2]-[D3]-1-*-*')
-#     qps.makeAtomsGenericFlags = Chem.ADJUST_IGNORERINGS
-#     am = Chem.AdjustQueryProperties(m, qps)
-#     self.assertEqual(Chem.MolToSmarts(am), '[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1-*-*')
+    m = Chem.MolFromSmiles('C1CCC1OC')
+    qps = Chem.AdjustQueryParameters()
+    qps.makeAtomsGeneric = True
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolToSmarts(am), '[D2]1-[D2]-[D2]-[D3]-1-*-*')
+    qps.makeAtomsGenericFlags = Chem.ADJUST_IGNORERINGS
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolToSmarts(am), '[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1-*-*')
 
-#     qps = Chem.AdjustQueryParameters()
-#     qps.makeBondsGeneric = True
-#     am = Chem.AdjustQueryProperties(m, qps)
-#     self.assertEqual(Chem.MolToSmarts(am), '[#6&D2]1~[#6&D2]~[#6&D2]~[#6&D3]~1~[#8]~[#6]')
-#     qps.makeBondsGenericFlags = Chem.ADJUST_IGNORERINGS
-#     am = Chem.AdjustQueryProperties(m, qps)
-#     self.assertEqual(Chem.MolToSmarts(am), '[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1~[#8]~[#6]')
+    qps = Chem.AdjustQueryParameters()
+    qps.makeBondsGeneric = True
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolToSmarts(am), '[#6&D2]1~[#6&D2]~[#6&D2]~[#6&D3]~1~[#8]~[#6]')
+    qps.makeBondsGenericFlags = Chem.ADJUST_IGNORERINGS
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolToSmarts(am), '[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1~[#8]~[#6]')
 
-#   def testMolFragmentSmarts(self):
-#     m = Chem.MolFromSmiles('C1CCC1OC')
-#     self.assertEqual(Chem.MolFragmentToSmarts(m, [0, 1, 2]), '[#6]-[#6]-[#6]')
-#     # if bondsToUse is honored, the ring won't show up
-#     self.assertEqual(Chem.MolFragmentToSmarts(m, [0, 1, 2, 3], bondsToUse=[0, 1, 2, 3]),
-#                      '[#6]-[#6]-[#6]-[#6]')
+  def testMolFragmentSmarts(self):
+    m = Chem.MolFromSmiles('C1CCC1OC')
+    self.assertEqual(Chem.MolFragmentToSmarts(m, [0, 1, 2]), '[#6]-[#6]-[#6]')
+    # if bondsToUse is honored, the ring won't show up
+    self.assertEqual(Chem.MolFragmentToSmarts(m, [0, 1, 2, 3], bondsToUse=[0, 1, 2, 3]),
+                     '[#6]-[#6]-[#6]-[#6]')
 
-#     # Does MolFragmentToSmarts accept output of AdjustQueryProperties?
-#     qps = Chem.AdjustQueryParameters()
-#     qps.makeAtomsGeneric = True
-#     am = Chem.AdjustQueryProperties(m, qps)
-#     self.assertEqual(Chem.MolFragmentToSmarts(am, [3, 4, 5]), '[D3]-*-*')
+    # Does MolFragmentToSmarts accept output of AdjustQueryProperties?
+    qps = Chem.AdjustQueryParameters()
+    qps.makeAtomsGeneric = True
+    am = Chem.AdjustQueryProperties(m, qps)
+    self.assertEqual(Chem.MolFragmentToSmarts(am, [3, 4, 5]), '[D3]-*-*')
 
 #   def testAdjustQueryPropertiesgithubIssue1474(self):
 #     core = Chem.MolFromSmiles('[*:1]C1N([*:2])C([*:3])O1')

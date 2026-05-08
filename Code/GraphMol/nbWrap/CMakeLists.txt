@@ -29,12 +29,12 @@ rdkit_nanobind_extension(rdmolops
                        FileParsers SubstructMatch Fingerprints ChemTransforms
                        Subgraphs SmilesParse MolTransforms GraphMol)
 
-#rdkit_python_extension(rdqueries
-#                       rdqueries.cpp Queries.cpp
-#                       DEST Chem
-#                       LINK_LIBRARIES
-#                       GraphMol)
-#
+rdkit_nanobind_extension(rdqueries
+                       rdqueries.cpp Queries.cpp
+                       DEST Chem
+                       LINK_LIBRARIES
+                       GraphMol)
+
 if(RDK_BUILD_MAEPARSER_SUPPORT)
     set (maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
     include_directories(${maeparser_INCLUDE_DIRS})

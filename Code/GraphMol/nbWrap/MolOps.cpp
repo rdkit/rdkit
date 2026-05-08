@@ -3071,7 +3071,8 @@ must be the core",
   - ADJUST_IGNOREMAPPED: mapped atoms will be ignored
   - ADJUST_IGNOREALL: everything will be ignored
 )DOC";
-    nb::enum_<MolOps::AdjustQueryWhichFlags>(m, "AdjustQueryWhichFlags")
+    nb::enum_<MolOps::AdjustQueryWhichFlags>(m, "AdjustQueryWhichFlags",
+                                             nb::is_arithmetic())
         .value("ADJUST_IGNORENONE", MolOps::ADJUST_IGNORENONE)
         .value("ADJUST_IGNORECHAINS", MolOps::ADJUST_IGNORECHAINS)
         .value("ADJUST_IGNORERINGS", MolOps::ADJUST_IGNORERINGS)
@@ -3099,6 +3100,7 @@ A note on the flags controlling which atoms/bonds are modified:
 )DOC";
     nb::class_<MolOps::AdjustQueryParameters>(m, "AdjustQueryParameters",
                                               docString.c_str())
+        .def(nb::init<>())
         .def_rw("adjustDegree", &MolOps::AdjustQueryParameters::adjustDegree,
                 "add degree queries")
         .def_rw("adjustDegreeFlags",

@@ -918,16 +918,12 @@ struct mol_wrapper {
         .def("GetAromaticAtoms", MolGetAromaticAtoms, nb::keep_alive<0, 1>(),
              "Returns a read-only sequence containing all of the molecule's "
              "aromatic Atoms.\n")
-               .def(
-            "GetAtomsMatchingQuery", MolGetQueryAtoms,
-            python::return_value_policy<
-                python::manage_new_object,
-                python::with_custodian_and_ward_postcall<0, 1>>(),
-            python::args("self", "qa"),
-            "Returns a read-only sequence containing all of the atoms in a "
-            "molecule that match the query atom. "
-            "Atom query options are defined in the rdkit.Chem.rdqueries module.\n")
-
+             .def(
+                  "GetAtomsMatchingQuery", MolGetQueryAtoms, "qa"_a,
+                  nb::rv_policy::reference_internal,
+                  R"DOC(Returns a read-only sequence containing all of the atoms in a molecule that match the query atom. 
+                  Atom query options are defined in the rdkit.Chem.rdqueries module.
+                  )DOC")
 #endif
 
         .def("ClearComputedProps", &ROMol::clearComputedProps,
