@@ -42,17 +42,6 @@ namespace nb = nanobind;
 using namespace nb::literals;
 using namespace RDKit;
 
-void rdBadFileExceptionTranslator(RDKit::BadFileException const &x) {
-  std::ostringstream ss;
-  ss << "File error: " << x.what();
-  PyErr_SetString(PyExc_IOError, ss.str().c_str());
-}
-void rdFileParseExceptionTranslator(RDKit::FileParseException const &x) {
-  std::ostringstream ss;
-  ss << "File parsing error: " << x.what();
-  PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
-}
-
 namespace RDKit {
 std::string pyObjectToString(nb::object input) {
   if (nb::isinstance<nb::str>(input)) {
@@ -876,6 +865,9 @@ NB_MODULE(rdmolfiles, m) {
   m.doc() =
       "Module containing RDKit functionality for working with molecular file "
       "formats.";
+  nb::exception<BadFileException>(m, "BadFileException", PyExc_IOError);
+  nb::exception<FileParseException>(m, "FileParseException",
+                                    PyExc_RuntimeError);
 
   docString =
       R"DOC(Construct a molecule from a TPL file.
