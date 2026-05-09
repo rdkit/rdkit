@@ -342,6 +342,20 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const ROMol &query,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
+  /*! Perform a shape similarity search with the given query molecule
+   * across the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.  Requires a query with at least
+   * 1 3D conformer.  Only the first conformer will be used in the search.
+   *
+   * @param query : query molecule
+   * @param callback: user-provided callback receiving chunks of ROMols.
+   * @param params : (optional) settings for the search
+   */
+  void shapeSearch(
+      const ROMol &query,
+      const SearchResultCallback &callback,
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
   /*! Take the contents of params.possibleHitsFile, which is assumed to have
    * been written by an earlier search, and extract those that are indeed
    * hits.  It makes sense that params is the same as the one used to

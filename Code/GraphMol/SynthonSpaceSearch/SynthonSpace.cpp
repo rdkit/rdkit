@@ -327,6 +327,27 @@ SearchResults SynthonSpace::shapeSearch(
   return ssss.search(ThreadMode::ThreadFragments);
 }
 
+void SynthonSpace::shapeSearch(const ROMol &query,
+                               const SearchResultCallback &cb,
+                               const SynthonSpaceSearchParams &params) {
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+
+  // It there's more than 1 fragment in the query, join them together with
+  // a zero-order bond between the closest atoms in each.  It makes the
+  // fragmentation work, but otherwise doesn't affect the final outcome.
+  std::vector<std::vector<int>> frags;
+  auto numFrags = MolOps::getMolFrags(query, frags);
+  std::unique_ptr<ROMol> queryCp;
+  if (numFrags > 1) {
+    queryCp = addZeroOrderBondsBetweenFrags(query, frags);
+  } else {
+    queryCp.reset(new RWMol(query));
+  }
+
+  SynthonSpaceShapeSearcher ssss(*queryCp, params, this);
+  ssss.search(cb, ThreadMode::ThreadFragments);
+}
+
 SearchResults SynthonSpace::shapeSearch(const ROMol &query,
                                         const SynthonSpaceSearchParams &params,
                                         std::uint64_t startLine,

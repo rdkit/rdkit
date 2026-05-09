@@ -180,6 +180,51 @@ TEST_CASE("Shape Small tests") {
   }
 }
 
+TEST_CASE("Shape Callback Version") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
+  std::string dbName = fullRoot + "amide_space_shapes.spc";
+  SynthonSpace synthonspace;
+  synthonspace.readDBFile(dbName);
+
+  ShapeBuildParams shapeBuildOptions;
+  shapeBuildOptions.numConfs = 100;
+  shapeBuildOptions.rmsThreshold = 0.5;
+  shapeBuildOptions.numThreads = 2;
+  shapeBuildOptions.shapeSimThreshold = 0.95;
+  shapeBuildOptions.randomSeed = 0xdac;
+
+  SynthonSpaceSearchParams params;
+  params.similarityCutoff = 0.8;
+  params.fragSimilarityAdjuster = 0.2;
+  params.approxSimilarityAdjuster = 0.2;
+  params.numConformers = shapeBuildOptions.numConfs;
+  params.numThreads = shapeBuildOptions.numThreads;
+  params.confRMSThreshold = shapeBuildOptions.rmsThreshold;
+  params.timeOut = 0;
+  params.randomSeed = shapeBuildOptions.randomSeed;
+  params.bestHit = true;
+  auto queryMol =
+      "O=C(c1ccccc1)N1CCCC1 |(0.0443291,-1.81486,-1.76886;0.0506321,-0.858174,-0.921491;1.37975,-0.430412,-0.483603;2.18964,-1.35506,0.144714;3.47088,-1.00454,0.585539;3.93803,0.297573,0.388032;3.1267,1.22739,-0.242406;1.85597,0.849751,-0.670531;-1.14837,-0.261434,-0.446583;-1.26073,0.836916,0.520219;-2.73583,1.04666,0.696614;-3.34033,-0.283345,0.290893;-2.46516,-0.679843,-0.874401)|"_smiles;
+
+  auto results = synthonspace.shapeSearch(*queryMol, params);
+  CHECK(results.getHitMolecules().size() == 3);
+
+  // A somewhat pointless example, as a 2D SMILES isn't hugely useful
+  // for a 3D search.
+  std::set<std::string> resSmi;
+  SearchResultCallback cb =
+      [&resSmi](const std::vector<std::unique_ptr<ROMol>> &r) {
+        for (auto &elem : r) {
+          resSmi.insert(MolToSmiles(*elem));
+        }
+        return false;
+      };
+  synthonspace.shapeSearch(*queryMol, cb, params);
+  CHECK(resSmi.size() == 3);
+}
+
 TEST_CASE("Shape DB Writer") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
