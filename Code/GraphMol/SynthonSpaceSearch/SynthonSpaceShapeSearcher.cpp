@@ -174,17 +174,6 @@ SynthonSpaceShapeSearcher::searchFragSet(
     fragShapes.push_back(shape);
   }
 
-  const auto connPatterns = details::getConnectorPatterns(fragSet);
-  const auto synthConnPatts = reaction.getSynthonConnectorPatterns();
-
-  // Get all the possible permutations of connector numbers compatible with
-  // the number of synthon sets in this reaction.  So if the
-  // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
-  // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
-  // that might be how they're labelled in the reaction database.
-  const auto connCombConnPatterns =
-      details::getConnectorPermutations(connPatterns, reaction.getConnectors());
-
   // Need to try all combinations of synthon orders.
   const auto synthonOrders =
       details::permMFromN(fragSet.size(), reaction.getSynthons().size());

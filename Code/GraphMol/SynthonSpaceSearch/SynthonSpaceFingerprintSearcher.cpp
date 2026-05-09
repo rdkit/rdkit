@@ -228,6 +228,7 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
       details::permMFromN(fragSet.size(), reaction.getSynthons().size());
 
   for (const auto &synthonOrder : synthonOrders) {
+#if 0
     for (auto &connCombPatt : connCombConnPatterns) {
       // Make sure that for this connector combination, the synthons in this
       // order have something similar.  All query fragment connectors must
@@ -244,22 +245,24 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
       if (skip) {
         continue;
       }
-
-      // It appears that for fingerprints, the isotope numbers are
-      // ignored so there's no need to worry about the connector numbers
-      // in the fingerprints.
-      auto theseSynthons = getHitSynthons(
-          fragFPs,
-          getParams().similarityCutoff - getParams().fragSimilarityAdjuster,
-          reaction, synthonOrder);
-      if (!theseSynthons.empty()) {
-        std::unique_ptr<SynthonSpaceHitSet> hs(
-            new SynthonSpaceFPHitSet(reaction, theseSynthons, fragSet));
-        if (hs->numHits) {
-          results.push_back(std::move(hs));
-        }
+#endif
+    // It appears that for fingerprints, the isotope numbers are
+    // ignored so there's no need to worry about the connector numbers
+    // in the fingerprints.
+    auto theseSynthons = getHitSynthons(
+        fragFPs,
+        getParams().similarityCutoff - getParams().fragSimilarityAdjuster,
+        reaction, synthonOrder);
+    if (!theseSynthons.empty()) {
+      std::unique_ptr<SynthonSpaceHitSet> hs(
+          new SynthonSpaceFPHitSet(reaction, theseSynthons, fragSet));
+      if (hs->numHits) {
+        results.push_back(std::move(hs));
       }
     }
+#if 0
+    }
+#endif
   }
   return results;
 }

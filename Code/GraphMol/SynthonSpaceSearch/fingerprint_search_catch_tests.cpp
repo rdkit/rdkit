@@ -89,7 +89,7 @@ TEST_CASE("FP Small tests") {
       "C[C@@H]1CC(NC(=O)NC2COC2)CN(C(=O)c2nccnc2F)C1",
   };
 
-  std::vector<size_t> expNumHits{2, 3, 4};
+  std::vector<size_t> expNumHits{2, 4, 4};
 
   for (size_t i = 0; i < libNames.size(); i++) {
     SynthonSpace synthonspace;
@@ -130,18 +130,7 @@ TEST_CASE("FP Small tests") {
     for (const auto &r : names) {
       fullSmis.insert(MolToSmiles(*mols[r]));
     }
-    if (i != 1) {
-      CHECK(resSmis == fullSmis);
-    } else {
-      // In the triazole library, one of the hits found by the brute force
-      // method (triazole-1_1-1_2-2_3-1) is missed by the SynthonSpaceSearch
-      // because it requires that the fragment [1*]n([3*])C1CCCC1 is similar
-      // to synthon c1ccccc1-n([3*])[1*] which it isn't.  Instead, make sure
-      // all the ones that are found are in the brute force results.
-      for (const auto &rs : resSmis) {
-        CHECK(fullSmis.find(rs) != fullSmis.end());
-      }
-    }
+    CHECK(resSmis == fullSmis);
   }
 }
 
@@ -240,16 +229,21 @@ TEST_CASE("Hit Filters") {
   {
     SynthonSpaceSearchParams params;
     params.similarityCutoff = 0.45;
-    params.approxSimilarityAdjuster = 0.1;
+    params.approxSimilarityAdjuster = 0.2;
+    params.fragSimilarityAdjuster = 0.2;
+    // The brute force search for this query gives 210 hits.  It's the
+    // fragSimilarityAdjuster that does the damage.  Setting it to 0.4
+    // gets all the hits at the expense of pretty much a full
+    // enumerated search.
     auto chiralQuery = "Cc1nccn1CCc1ccsc1COO[C@@H]1CCC[C@H](N)C1"_smiles;
     results = synthonspace.fingerprintSearch(*chiralQuery, *fpGen, params);
-    CHECK(results.getHitMolecules().size() == 17);
+    CHECK(results.getHitMolecules().size() == 92);
     params.minHitChiralAtoms = 1;
     results = synthonspace.fingerprintSearch(*chiralQuery, *fpGen, params);
-    CHECK(results.getHitMolecules().size() == 11);
+    CHECK(results.getHitMolecules().size() == 74);
     params.maxHitChiralAtoms = 1;
     results = synthonspace.fingerprintSearch(*chiralQuery, *fpGen, params);
-    CHECK(results.getHitMolecules().size() == 4);
+    CHECK(results.getHitMolecules().size() == 17);
     for (const auto &r : results.getHitMolecules()) {
       auto numChiralAtoms = details::countChiralAtoms(*r);
       CHECK((numChiralAtoms >= 1 && numChiralAtoms <= 1));

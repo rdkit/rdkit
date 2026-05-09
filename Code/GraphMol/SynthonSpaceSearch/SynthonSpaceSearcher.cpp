@@ -667,8 +667,6 @@ void SynthonSpaceSearcher::buildAllHits(
   for (const auto &hitset : hitsets) {
     numPossHits += hitset->numHits;
   }
-  std::cout << "Number of possible hits : "
-            << formattedIntegerString(numPossHits) << std::endl;
   if (!getParams().possibleHitsFile.empty()) {
     // The file will be appended to, so clear it out at the start.
     std::ofstream ofs(getParams().possibleHitsFile);
