@@ -105,7 +105,8 @@ RDKIT_DATASTRUCTS_EXPORT double TanimotoSimilarity(const T1 &bv1,
 
 //! returns the Cosine similarity between two bit vects
 /*!
-  \return <tt>(bv1&bv2)_o / sqrt(bv1_o + bv2_o)</tt>
+  Also known as the Ochiai coefficient.
+  \return <tt>(bv1&bv2)_o / sqrt(bv1_o * bv2_o)</tt>
 */
 template <typename T1, typename T2>
 RDKIT_DATASTRUCTS_EXPORT double CosineSimilarity(const T1 &bv1, const T2 &bv2);
@@ -157,6 +158,7 @@ RDKIT_DATASTRUCTS_EXPORT double McConnaugheySimilarity(const T1 &bv1,
 
 //! returns the Asymmetric similarity between two bit vects
 /*!
+  Also known as the **Simpson similarity** or **Overlap coefficient**.
   \return <tt>(bv1&bv2)_o / min(bv1_o,bv2_o)</tt>
 */
 template <typename T1, typename T2>
@@ -209,8 +211,12 @@ RDKIT_DATASTRUCTS_EXPORT int NumBitsInCommon(const ExplicitBitVect &bv1,
                                              const ExplicitBitVect &bv2);
 
 //! returns the common-bit similarity (on and off) between two bit vects
-//! This is also called Manhattan similarity.
 /*!
+  Also known as:
+  - **Simple Matching Coefficient**
+  - **Rand similarity**
+  - **Sokal–Michener similarity**
+
   \return <tt>[bv1_n - (bv1^bv2)_o] / bv1_n</tt>
 */
 template <typename T1, typename T2>
