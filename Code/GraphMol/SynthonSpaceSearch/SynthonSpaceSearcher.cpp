@@ -213,9 +213,6 @@ void checkPossibleHitsPart(
     std::vector<const std::string *> synthNamePtrs;
     dismantleName(name, rxnId, synthNames, synthNamePtrs);
     if (searcher->verifyHit(*prod, rxnId, synthNamePtrs)) {
-      std::cout << "It was a hit : " << prod->getProp<double>("Similarity")
-                << " : " << prod->getProp<std::string>(common_properties::_Name)
-                << " on line " << nextLine << std::endl;
       allResultMols[nextLine] = std::move(prod);
     }
     if (pbar) {
@@ -249,6 +246,9 @@ SearchResults SynthonSpaceSearcher::checkPossibleHits(
   }
   auto checkLines =
       readPossHitsLines(getParams().possibleHitsFile, startLine, finishLine);
+  if (checkLines.size() < finishLine) {
+    finishLine = checkLines.size();
+  }
   std::cout << "Checking " << checkLines.size() << " lines from " << startLine
             << " to " << finishLine << " of " << getParams().possibleHitsFile
             << std::endl;
@@ -283,6 +283,7 @@ SearchResults SynthonSpaceSearcher::checkPossibleHits(
                                     return !static_cast<bool>(r);
                                   }),
                    resultMols.end());
+  sortHits(resultMols);
 
   return SearchResults{std::move(resultMols), std::move(d_bestHitFound),
                        checkLines.size(), false,
@@ -436,7 +437,6 @@ SynthonSpaceSearcher::assembleHitSets(const TimePoint *endTime, bool &timedOut,
   auto fragments = details::splitMolecule(
       d_query, getNumQueryFragmentsRequired(), d_params.maxNumFragSets, endTime,
       d_params.numThreads, d_fragSetUniquifyMode, timedOut);
-  std::cout << "number of fragment sets : " << fragments.size() << std::endl;
   if (timedOut || ControlCHandler::getGotSignal()) {
     return {};
   }

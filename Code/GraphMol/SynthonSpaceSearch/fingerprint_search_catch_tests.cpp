@@ -156,6 +156,8 @@ TEST_CASE("FP Binary File") {
   SearchResults results;
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
   SynthonSpaceSearchParams params;
+  std::cout << params.similarityCutoff << " and "
+            << params.approxSimilarityAdjuster << std::endl;
   for (auto numThreads : std::vector<int>{1, 2, -1}) {
     synthonspace.readDBFile(libName, numThreads);
     params.numThreads = numThreads;
@@ -279,4 +281,48 @@ TEST_CASE("FP Best Hit Found") {
   REQUIRE(bestHit);
   CHECK_NOTHROW(bestHit->getProp<std::string>(common_properties::_Name));
   CHECK(bestHit->getProp<double>("Similarity") < 0.8);
+}
+
+unsigned int countFileLines(const std::string &filename) {
+  std::ifstream ifs(filename.c_str());
+  ifs.unsetf(std::ios_base::skipws);
+  unsigned int numLines = std::count(std::istream_iterator<char>(ifs),
+                                     std::istream_iterator<char>(), '\n');
+  ifs.close();
+  return numLines;
+}
+
+TEST_CASE("FP Write Possible Hits") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  SynthonSpace synthonspace;
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
+
+  auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
+  synthonspace.readDBFile(libName, 1);
+  SynthonSpaceSearchParams params;
+  params.numThreads = 1;
+  params.possibleHitsFile = "fp_poss_hits_1.txt";
+  params.writePossibleHitsAndStop = true;
+  SearchResults results;
+  CHECK_NOTHROW(results =
+                    synthonspace.fingerprintSearch(*queryMol, *fpGen, params));
+  CHECK(results.getHitMolecules().size() == 0);
+  CHECK(results.getMaxNumResults() == 420);
+  CHECK(countFileLines("fp_poss_hits_1.txt") == 400);
+
+  auto newResults =
+      synthonspace.fingerprintSearch(*queryMol, *fpGen, params, 0);
+  // Note that there are a lot more hits here than in test "FP Binary File",
+  // where the search is the same, because the default approxSimilarityAdjuster
+  // of 0.1 screens loads out.  It isn't applied here.
+  CHECK(newResults.getHitMolecules().size() == 92);
+  CHECK_THAT(newResults.getHitMolecules()[0]->getProp<double>("Similarity"),
+             Catch::Matchers::WithinAbs(0.751, 0.001));
+  CHECK_THAT(newResults.getHitMolecules()[91]->getProp<double>("Similarity"),
+             Catch::Matchers::WithinAbs(0.5, 0.001));
+  std::remove("fp_poss_hits_1.txt");
 }

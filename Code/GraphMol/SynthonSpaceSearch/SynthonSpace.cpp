@@ -40,6 +40,7 @@
 #include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/RDThreads.h>
 #include <RDGeneral/StreamOps.h>
+#include <sys/stat.h>
 
 namespace RDKit {
 namespace SynthonSpaceSearch {
@@ -167,6 +168,58 @@ SearchResults SynthonSpace::substructureSearch(
   UNDER_CONSTRUCTION("unrecognized type in ExtendedQueryMol");
 }
 
+SearchResults SynthonSpace::substructureSearch(
+    const ROMol &query, const SubstructMatchParameters &matchParams,
+    const SynthonSpaceSearchParams &params, std::uint64_t startLine,
+    std::uint64_t finishLine) {
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  PRECONDITION(startLine < finishLine,
+               "Search startLine must be less than finishLine.");
+  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, nullptr);
+  return ssss.checkPossibleHits(startLine, finishLine);
+}
+
+SearchResults SynthonSpace::substructureSearch(
+    const GeneralizedSubstruct::ExtendedQueryMol &query,
+    const SubstructMatchParameters &matchParams,
+    const SynthonSpaceSearchParams &params, std::uint64_t startLine,
+    std::uint64_t finishLine) {
+  PRECONDITION(startLine < finishLine,
+               "Search startLine must be less than finishLine.");
+  if (std::holds_alternative<GeneralizedSubstruct::ExtendedQueryMol::RWMol_T>(
+          query.xqmol)) {
+    return substructureSearch(
+        *std::get<GeneralizedSubstruct::ExtendedQueryMol::RWMol_T>(query.xqmol),
+        matchParams, params, startLine, finishLine);
+  }
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  if (std::holds_alternative<
+          GeneralizedSubstruct::ExtendedQueryMol::MolBundle_T>(query.xqmol)) {
+    return extendedSearch(
+        *std::get<GeneralizedSubstruct::ExtendedQueryMol::MolBundle_T>(
+            query.xqmol),
+        matchParams, params, startLine, finishLine);
+  }
+  if (std::holds_alternative<
+          GeneralizedSubstruct::ExtendedQueryMol::TautomerQuery_T>(
+          query.xqmol)) {
+    return extendedSearch(
+        *std::get<GeneralizedSubstruct::ExtendedQueryMol::TautomerQuery_T>(
+            query.xqmol),
+        matchParams, params, startLine, finishLine);
+  }
+  if (std::holds_alternative<
+          GeneralizedSubstruct::ExtendedQueryMol::TautomerBundle_T>(
+          query.xqmol)) {
+    return extendedSearch(
+        std::get<GeneralizedSubstruct::ExtendedQueryMol::TautomerBundle_T>(
+            query.xqmol),
+        matchParams, params, startLine, finishLine);
+  }
+#endif
+  UNDER_CONSTRUCTION("unrecognized type in ExtendedQueryMol");
+}
+
 SearchResults SynthonSpace::fingerprintSearch(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
     const SynthonSpaceSearchParams &params) {
@@ -186,6 +239,17 @@ void SynthonSpace::fingerprintSearch(
   ssss.search(cb, ThreadMode::ThreadFragments);
 }
 
+SearchResults SynthonSpace::fingerprintSearch(
+    const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
+    const SynthonSpaceSearchParams &params, std::uint64_t startLine,
+    std::uint64_t finishLine) {
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  PRECONDITION(startLine < finishLine,
+               "Search startLine must be less than finishLine.");
+  SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, nullptr);
+  return ssss.checkPossibleHits(startLine, finishLine);
+}
+
 SearchResults SynthonSpace::rascalSearch(
     const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
     const SynthonSpaceSearchParams &params) {
@@ -201,6 +265,15 @@ void SynthonSpace::rascalSearch(const ROMol &query,
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   SynthonSpaceRascalSearcher ssss(query, rascalOptions, params, this);
   ssss.search(cb, ThreadMode::ThreadFragments);
+}
+
+SearchResults SynthonSpace::rascalSearch(
+    const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
+    const SynthonSpaceSearchParams &params, std::uint64_t startLine,
+    std::uint64_t finishLine) {
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  SynthonSpaceRascalSearcher ssrs(query, rascalOptions, params, this);
+  return ssrs.checkPossibleHits(startLine, finishLine);
 }
 
 namespace {
@@ -984,7 +1057,7 @@ SearchResults SynthonSpace::extendedSearch(
   SearchResults results;
   SynthonSpaceSearchParams tmpParams(params);
   for (const auto &tq : *query) {
-    auto theseResults = extendedSearch(*tq, matchParams, params);
+    auto theseResults = extendedSearch(*tq, matchParams, tmpParams);
     if (tmpParams.maxHits != -1) {
       tmpParams.maxHits -= theseResults.getHitMolecules().size();
     }
@@ -999,7 +1072,59 @@ SearchResults SynthonSpace::extendedSearch(
   SearchResults results;
   SynthonSpaceSearchParams tmpParams(params);
   for (const auto &tq : query.getTautomers()) {
-    auto theseResults = substructureSearch(*tq, matchParams, params);
+    auto theseResults = substructureSearch(*tq, matchParams, tmpParams);
+    if (tmpParams.maxHits != -1) {
+      tmpParams.maxHits -= theseResults.getHitMolecules().size();
+    }
+    results.mergeResults(theseResults);
+  }
+  return results;
+}
+
+SearchResults SynthonSpace::extendedSearch(
+    const MolBundle &query, const SubstructMatchParameters &matchParams,
+    const SynthonSpaceSearchParams &params, std::uint64_t startLine,
+    std::uint64_t finishLine) {
+  SearchResults results;
+  SynthonSpaceSearchParams tmpParams(params);
+  for (unsigned int i = 0; i < query.size(); ++i) {
+    auto theseResults = substructureSearch(*query[i], matchParams, tmpParams,
+                                           startLine, finishLine);
+    if (tmpParams.maxHits != -1) {
+      tmpParams.maxHits -= theseResults.getHitMolecules().size();
+    }
+    results.mergeResults(theseResults);
+  }
+  return results;
+}
+
+SearchResults SynthonSpace::extendedSearch(
+    const GeneralizedSubstruct::ExtendedQueryMol::TautomerBundle_T &query,
+    const SubstructMatchParameters &matchParams,
+    const SynthonSpaceSearchParams &params, std::uint64_t startLine,
+    std::uint64_t finishLine) {
+  SearchResults results;
+  SynthonSpaceSearchParams tmpParams(params);
+  for (const auto &tq : *query) {
+    auto theseResults =
+        extendedSearch(*tq, matchParams, tmpParams, startLine, finishLine);
+    if (tmpParams.maxHits != -1) {
+      tmpParams.maxHits -= theseResults.getHitMolecules().size();
+    }
+    results.mergeResults(theseResults);
+  }
+  return results;
+}
+
+SearchResults SynthonSpace::extendedSearch(
+    const TautomerQuery &query, const SubstructMatchParameters &matchParams,
+    const SynthonSpaceSearchParams &params, std::uint64_t startLine,
+    std::uint64_t finishLine) {
+  SearchResults results;
+  SynthonSpaceSearchParams tmpParams(params);
+  for (const auto &tq : query.getTautomers()) {
+    auto theseResults =
+        substructureSearch(*tq, matchParams, tmpParams, startLine, finishLine);
     if (tmpParams.maxHits != -1) {
       tmpParams.maxHits -= theseResults.getHitMolecules().size();
     }

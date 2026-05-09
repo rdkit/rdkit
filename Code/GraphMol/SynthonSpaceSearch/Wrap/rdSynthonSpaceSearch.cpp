@@ -156,6 +156,60 @@ static void substructureSearch_helper3(SynthonSpaceSearch::SynthonSpace &self,
   self.substructureSearch(query, callback, smParams, params);
 }
 
+SynthonSpaceSearch::SearchResults substructureSearch_helper4(
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    const python::object &py_smParams, const python::object &py_params,
+    int startLine, int finishLine) {
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  SubstructMatchParameters smParams;
+  if (!py_smParams.is_none()) {
+    smParams = python::extract<SubstructMatchParameters>(py_smParams);
+  }
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+
+  SynthonSpaceSearch::SearchResults results;
+  {
+    NOGIL gil;
+    results =
+        self.substructureSearch(query, smParams, params, startLine, finishLine);
+  }
+  if (results.getCancelled()) {
+    PyErr_SetString(PyExc_KeyboardInterrupt, "SubstructureSearch cancelled");
+    python::throw_error_already_set();
+  }
+  return results;
+}
+
+SynthonSpaceSearch::SearchResults substructureSearch_helper5(
+    SynthonSpaceSearch::SynthonSpace &self,
+    const GeneralizedSubstruct::ExtendedQueryMol &query,
+    const python::object &py_smParams, const python::object &py_params,
+    int startLine, int finishLine) {
+  SubstructMatchParameters smParams;
+  if (!py_smParams.is_none()) {
+    smParams = python::extract<SubstructMatchParameters>(py_smParams);
+  }
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  SynthonSpaceSearch::SearchResults results;
+  {
+    NOGIL gil;
+    results =
+        self.substructureSearch(query, smParams, params, startLine, finishLine);
+  }
+  if (results.getCancelled()) {
+    PyErr_SetString(PyExc_KeyboardInterrupt, "SubstructureSearch cancelled");
+    python::throw_error_already_set();
+  }
+  return results;
+}
+
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const python::object &fingerprintGenerator,
@@ -197,6 +251,31 @@ static void fingerprintSearch_helper_2(
   self.fingerprintSearch(query, *fpGen, callback, params);
 }
 
+SynthonSpaceSearch::SearchResults fingerprintSearch_helper_3(
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    const python::object &fingerprintGenerator, int startLine, int finishLine,
+    const python::object &py_params) {
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  const FingerprintGenerator<std::uint64_t> *fpGen =
+      python::extract<FingerprintGenerator<std::uint64_t> *>(
+          fingerprintGenerator);
+  SynthonSpaceSearch::SearchResults results;
+  {
+    NOGIL gil;
+    results =
+        self.fingerprintSearch(query, *fpGen, params, startLine, finishLine);
+  }
+  if (results.getCancelled()) {
+    PyErr_SetString(PyExc_KeyboardInterrupt, "FingerprintSearch cancelled");
+    python::throw_error_already_set();
+  }
+  return results;
+}
+
 SynthonSpaceSearch::SearchResults rascalSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const python::object &py_rascalOptions, const python::object &py_params) {
@@ -214,6 +293,46 @@ SynthonSpaceSearch::SearchResults rascalSearch_helper(
   }
   if (results.getCancelled()) {
     PyErr_SetString(PyExc_KeyboardInterrupt, "RascalSearch cancelled");
+    python::throw_error_already_set();
+  }
+  return results;
+}
+
+static void rascalSearch_helper_2(SynthonSpaceSearch::SynthonSpace &self,
+                                  const ROMol &query,
+                                  const python::object &py_rascalOptions,
+                                  python::object py_callable,
+                                  const python::object &py_params) {
+  RascalMCES::RascalOptions rascalOptions;
+  rascalOptions = python::extract<RascalMCES::RascalOptions>(py_rascalOptions);
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  CallbackAdapter callback{py_callable};
+  self.rascalSearch(query, rascalOptions, callback, params);
+}
+
+SynthonSpaceSearch::SearchResults rascalSearch_helper_3(
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    const python::object &py_rascalOptions, const python::object &py_params,
+    int startLine, int finishLine) {
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  RascalMCES::RascalOptions rascalOptions;
+  rascalOptions = python::extract<RascalMCES::RascalOptions>(py_rascalOptions);
+  SynthonSpaceSearch::SearchResults results;
+  {
+    NOGIL gil;
+    results =
+        self.rascalSearch(query, rascalOptions, params, startLine, finishLine);
+  }
+  if (results.getCancelled()) {
+    PyErr_SetString(PyExc_KeyboardInterrupt, "FingerprintSearch cancelled");
     python::throw_error_already_set();
   }
   return results;
@@ -257,22 +376,6 @@ SynthonSpaceSearch::SearchResults shapeSearch_helper_3(
     python::throw_error_already_set();
   }
   return results;
-}
-
-static void rascalSearch_helper_2(SynthonSpaceSearch::SynthonSpace &self,
-                                  const ROMol &query,
-                                  const python::object &py_rascalOptions,
-                                  python::object py_callable,
-                                  const python::object &py_params) {
-  RascalMCES::RascalOptions rascalOptions;
-  rascalOptions = python::extract<RascalMCES::RascalOptions>(py_rascalOptions);
-  SynthonSpaceSearch::SynthonSpaceSearchParams params;
-  if (!py_params.is_none()) {
-    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
-        py_params);
-  }
-  CallbackAdapter callback{py_callable};
-  self.rascalSearch(query, rascalOptions, callback, params);
 }
 
 void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
@@ -674,6 +777,30 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            "Does a substructure search in the SynthonSpace using an"
            " extended query.")
       .def(
+          "SubstructureSearch", &helpers::substructureSearch_helper4,
+          (python::arg("self"), python::arg("query"),
+           python::arg("substructMatchParams") = python::object(),
+           python::arg("params") = python::object(), python::arg("startLine"),
+           python::arg("finishLine")),
+          "Take the contents of params.possibleHitsFile, which is assumed to have"
+          " been written by an earlier search, and extract those that are indeed"
+          " hits.  It makes sense that params is the same as the one used to"
+          " generate the possible hits, but this is not essential.  You could search"
+          " at a higher similarity threshold than used to create the possible hits,"
+          " for example.")
+      .def(
+          "SubstructureSearch", &helpers::substructureSearch_helper5,
+          (python::arg("self"), python::arg("query"),
+           python::arg("substructMatchParams") = python::object(),
+           python::arg("params") = python::object(), python::arg("startLine"),
+           python::arg("finishLine")),
+          "Take the contents of params.possibleHitsFile, which is assumed to have"
+          " been written by an earlier search, and extract those that are indeed"
+          " hits.  It makes sense that params is the same as the one used to"
+          " generate the possible hits, but this is not essential.  You could search"
+          " at a higher similarity threshold than used to create the possible hits,"
+          " for example.")
+      .def(
           "SubstructureSearchIncremental", &helpers::substructureSearch_helper3,
           (python::arg("self"), python::arg("query"), python::arg("callback"),
            python::arg("substructMatchParams") = python::object(),
@@ -685,6 +812,19 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
             python::arg("params") = python::object()),
            "Does a fingerprint search in the SynthonSpace using the"
            " FingerprintGenerator passed in.")
+      .def(
+          "FingerprintSearch", &helpers::fingerprintSearch_helper_3,
+          (python::arg("self"), python::arg("query"),
+           python::arg("fingerprintGenerator"), python::arg("params"),
+           python::arg("startLine"), python::arg("finishLine")),
+          "Take the contents of params.possibleHitsFile, which is assumed to have"
+          " been written by an earlier search, and extract those that are indeed"
+          " hits.  It makes sense that params is the same as the one used to"
+          " generate the possible hits, but this is not essential.  You could search"
+          " at a higher similarity threshold than used to create the possible hits,"
+          " for example."
+          " Duplicate SMILES strings produced by different reactions will"
+          " be returned.")
       .def("FingerprintSearchIncremental", &helpers::fingerprintSearch_helper_2,
            (python::arg("self"), python::arg("query"),
             python::arg("fingerprintGenerator"), python::arg("callback"),
@@ -698,6 +838,19 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            "Does a search using the Rascal similarity score.  The similarity"
            " threshold used is provided by rascalOptions, and the one in"
            " params is ignored.")
+      .def(
+          "RascalSearch", &helpers::rascalSearch_helper_3,
+          (python::arg("self"), python::arg("query"),
+           python::arg("rascalOptions"), python::arg("params"),
+           python::arg("startLine"), python::arg("finishLine")),
+          "Take the contents of params.possibleHitsFile, which is assumed to have"
+          " been written by an earlier search, and extract those that are indeed"
+          " hits.  It makes sense that params is the same as the one used to"
+          " generate the possible hits, but this is not essential.  You could search"
+          " at a higher similarity threshold than used to create the possible hits,"
+          " for example."
+          " Duplicate SMILES strings produced by different reactions will"
+          " be returned.")
       .def("RascalSearchIncremental", &helpers::rascalSearch_helper_2,
            (python::arg("self"), python::arg("query"),
             python::arg("rascalOptions"), python::arg("callback"),
@@ -716,7 +869,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       .def(
           "ShapeSearch", &helpers::shapeSearch_helper_3,
           (python::arg("self"), python::arg("query"), python::arg("startLine"),
-           python::arg("finishLine"), python::arg("params") = python::object()),
+           python::arg("finishLine"), python::arg("params")),
           "Take the contents of params.possibleHitsFile, which is assumed to have"
           " been written by an earlier search, and extract those that are indeed"
           " hits.  It makes sense that params is the same as the one used to"

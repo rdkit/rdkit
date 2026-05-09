@@ -104,8 +104,6 @@ class TestCase(unittest.TestCase):
         assert False, "Expected exception"
     self.assertEqual(2, len(mols))
 
-
-
   def testFingerprintSearch(self):
     fName = self.sssDir / "idorsia_toy_space_a.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
@@ -126,7 +124,26 @@ class TestCase(unittest.TestCase):
       params)
     self.assertEqual(278, len(mols))
     
+  def testFingerprintPossibleHitsWrite(self):
+    fName = self.sssDir / "idorsia_toy_space_a.spc"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadDBFile(fName)
+    self.assertEqual(6, synthonspace.GetNumReactions())
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.maxHits = -1
+    params.similarityCutoff = 0.45
+    params.possibleHitsFile = "fp_poss_hits_a.txt"
+    params.writePossibleHitsAndStop = True
+    query = Chem.MolFromSmiles("O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1") 
+    fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
+    results = synthonspace.FingerprintSearch(query, fpgen, params)
+    self.assertEqual(0, len(results.GetHitMolecules()))
 
+    results = synthonspace.FingerprintSearch(query, fpgen, params, 0, 200)
+    self.assertEqual(196, len(results.GetHitMolecules()))
+
+    Path(params.possibleHitsFile).unlink()
+    
   def testEnumerate(self):
     fName = self.sssDir / "amide_space.txt"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
@@ -169,6 +186,24 @@ class TestCase(unittest.TestCase):
                                              rascalOpts, params)
     self.assertEqual(10, len(results.GetHitMolecules()))
 
+  def testRascalPossibleHitsWrite(self):
+    fName = self.sssDir / "Syntons_5567.csv"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadTextFile(fName)
+    self.assertEqual(10, synthonspace.GetNumReactions())
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.possibleHitsFile = "r_poss_hits_a.txt"
+    params.writePossibleHitsAndStop = True
+    rascalOpts = rdRascalMCES.RascalOptions()
+    results = synthonspace.RascalSearch(Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"),
+                                             rascalOpts, params)
+    self.assertEqual(0, len(results.GetHitMolecules()))
+
+    results = synthonspace.RascalSearch(Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"),
+                                             rascalOpts, params, 0, 100)
+    self.assertEqual(10, len(results.GetHitMolecules()))
+    
+
   def testExtendedSubsructureSearch(self):
     fName = self.sssDir / "extended_query.csv"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
@@ -179,6 +214,46 @@ class TestCase(unittest.TestCase):
     results = synthonspace.SubstructureSearch(xqry)
     self.assertEqual(12, len(results.GetHitMolecules()))
 
+  def testSubstructurePossibleHitsWrite(self):
+
+    fName = self.sssDir / "idorsia_toy_space_a.spc"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadDBFile(fName)
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.possibleHitsFile = "s_poss_hits_a.txt"
+    params.writePossibleHitsAndStop = True
+    query = Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1")
+    results = synthonspace.SubstructureSearch(query, params=params)
+    self.assertEqual(0, len(results.GetHitMolecules()))
+    smParams = Chem.SubstructMatchParameters()
+    results = synthonspace.SubstructureSearch(query,
+                                              substructMatchParams=smParams,
+                                              params=params)
+    self.assertEqual(0, len(results.GetHitMolecules()))
+    results = synthonspace.SubstructureSearch(query,
+                                              substructMatchParams=smParams,
+                                              params=params, startLine=0,
+                                              finishLine=1000)
+    self.assertEqual(220, len(results.GetHitMolecules()))
+    Path(params.possibleHitsFile).unlink()
+    
+    fName = self.sssDir / "extended_query.csv"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadTextFile(fName)
+    self.assertEqual(7, synthonspace.GetNumReactions())
+    m = Chem.MolFromSmarts('[#6]-*.c1nc2cccnc2n1 |m:1:3.10|')
+    xqry = rdGeneralizedSubstruct.CreateExtendedQueryMol(m)
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.maxHits = -1
+    params.possibleHitsFile = "s_poss_hits_b.txt"
+    params.writePossibleHitsAndStop = True
+    results = synthonspace.SubstructureSearch(xqry, smParams, params)
+    self.assertEqual(0, len(results.GetHitMolecules()))
+
+    results = synthonspace.SubstructureSearch(xqry, smParams, params, 0, 10)
+    self.assertEqual(10, len(results.GetHitMolecules()))
+    Path(params.possibleHitsFile).unlink()
+    
   def testHeavyAtomCutoffs(self):
     fName = self.sssDir / "idorsia_toy_space_a.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
@@ -222,30 +297,33 @@ class TestCase(unittest.TestCase):
     self.assertEqual(10, len(results.GetHitMolecules()))
 
   def testBestHit(self):
-    fName = self.sssDir / "small_freedom_shapes.spc"
+    fName = self.sssDir / "triazole_space_shapes.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadDBFile(fName)
     
-    query = Chem.MolFromSmiles("CCC(C(=O)NCc1ccco1)N(Cc1sccc1C)C(C)C |(1.19967,-2.26511,-1.8853;-0.0674677,-1.53728,-1.54329;-0.0395195,-0.735921,-0.2957;0.978688,0.316536,-0.356493;0.610079,1.54481,-0.391485;2.37979,0.114038,-0.377756;3.31574,1.24811,-0.443092;4.723,0.774447,-0.458657;5.58509,0.534718,0.592748;6.76773,0.108395,-0.00740365;6.56938,0.109237,-1.38929;5.34763,0.509833,-1.60401;-1.33892,-0.260032,0.0922388;-2.08764,0.476264,-0.832263;-3.39845,0.92709,-0.383151;-4.99177,0.223473,-0.828611;-5.94415,1.34626,0.133161;-5.00918,2.1798,0.729651;-3.7235,1.96002,0.462253;-2.60368,2.81164,1.05297;-1.99138,-1.01276,1.09008;-1.10607,-0.965532,2.34165;-2.26411,-2.45544,0.780694)|")
+    query = Chem.MolFromSmiles("C[C@H]1CCN(c2nnc(CO)n2C2CCCC2)C1 |(3.88187,-1.9608,1.02401;3.40947,-0.556473,0.685633;3.49763,-0.278493,-0.787477;2.18424,0.313597,-1.21035;1.39217,0.480256,0.0110759;0.36454,1.42337,0.278193;0.656593,2.66561,0.766052;-0.477075,3.33073,0.923413;-1.48168,2.52297,0.540741;-2.93641,2.8664,0.551747;-3.33354,3.43671,-0.657732;-0.965924,1.32594,0.134935;-1.71735,0.224133,-0.333621;-1.11549,-0.643316,-1.37025;-2.26431,-1.65079,-1.54776;-2.58926,-1.96617,-0.0975393;-2.00229,-0.836476,0.740437;1.90383,-0.551243,0.906815),wD:1.0|")
     ssparams = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     ssparams.maxHits = -1
     ssparams.numThreads = 1
     ssparams.numConformers = 200
     ssparams.confRMSThreshold = 0.25
     ssparams.randomSeed = 0xdac
+    ssparams.bestHit = True
     
-    ssparams.fragSimilarityAdjuster = 0.1
-    ssparams.approxSimilarityAdjuster = 0.1
-    ssparams.similarityCutoff = 1.0
+    ssparams.fragSimilarityAdjuster = 0.2
+    ssparams.approxSimilarityAdjuster = 0.2
+    ssparams.similarityCutoff = 0.97
     ssparams.timeOut = 0
     
     results = synthonspace.ShapeSearch(query, ssparams)
     print(f"Number of hits : {len(results.GetHitMolecules())}")
     self.assertEqual(len(results.GetHitMolecules()), 0)
+    for hit in results.GetHitMolecules():
+      print(f"{hit.GetProp('_Name')} : {hit.GetProp('Similarity')}")
 
     bestHit = results.GetBestHit()
     self.assertIsNotNone(bestHit)
-    self.assertLess(float(bestHit.GetProp('Similarity')), 1.0)
+    self.assertLess(float(bestHit.GetProp('Similarity')), 0.97)
 
   def testUserConfGen(self):
     def makeConformers(smiles, numConfs):
@@ -264,7 +342,7 @@ class TestCase(unittest.TestCase):
     synthonspace2.ReadTextFile(fName)
     synthonspace2.BuildSynthonShapes(buildParams)
     # There's not an easy test for this, but we can at least
-    # check there's there correct number of reactions and products.
+    # check there's the correct number of reactions and products.
     self.assertEqual(synthonspace2.GetNumReactions(), 1)
     self.assertEqual(synthonspace2.GetNumProducts(), 12)
 
@@ -296,10 +374,10 @@ class TestCase(unittest.TestCase):
     comb_4aji_4aj1 = Chem.MolFromSmiles("CNc1nc2ccc(NC(C)=O)cc2s1.COc1ccc(CC(C(=O)O)C(=O)O)cc1OC |(23.956,-7.951,-4.055;24.081,-7.139,-2.841;23.068,-6.904,-1.967;23.237,-6.265,-0.838;22.03,-6.164,-0.135;21.811,-5.548,1.089;20.55,-5.531,1.66;19.465,-6.131,1.009;18.155,-6.121,1.583;17.318,-7.197,1.736;16.262,-7.032,2.809;17.43,-8.221,1.058;19.663,-6.743,-0.207;20.934,-6.758,-0.767;21.422,-7.467,-2.285;16.331,-12.235,6.625;15.378,-13.287,6.54;14.89,-13.803,7.711;15.669,-14.364,8.712;15.068,-14.88,9.87;13.688,-14.822,10.03;13.008,-15.402,11.226;12.32,-16.745,10.932;13.341,-17.807,10.61;14.399,-17.852,11.169;12.961,-18.68,9.696;11.481,-17.202,12.095;11.812,-18.168,12.768;10.397,-16.444,12.327;12.917,-14.275,9.014;13.494,-13.757,7.872;12.793,-13.19,6.852;11.466,-12.683,7.147)|")
 
     hits = synthonspace.ShapeSearch(comb_4aji_4aj1, ssparams)
-    self.assertEqual(len(hits.GetHitMolecules()), 1)
+    self.assertEqual(len(hits.GetHitMolecules()), 2)
     
 
-  def testPossibleHitsWrite(self):
+  def testShapePossibleHitsWrite(self):
     fName = self.sssDir / "amide_space_shapes.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadDBFile(fName)
@@ -314,7 +392,7 @@ class TestCase(unittest.TestCase):
     ssparams.bestHit = True
     ssparams.similarityCutoff = 0.8
     ssparams.maxMeanExcludedVolume = 5.0
-    ssparams.possibleHitsFile = "amide_space_shapes_poss_hits.txt"
+    ssparams.possibleHitsFile = "amide_space_shapes_poss_hits_a.txt"
     ssparams.writePossibleHitsAndStop = True
 
     query = Chem.MolFromSmiles("O=C(c1ccccc1)N1CCCC1 |(0.0443291,-1.81486,-1.76886;0.0506321,-0.858174,-0.921491;1.37975,-0.430412,-0.483603;2.18964,-1.35506,0.144714;3.47088,-1.00454,0.585539;3.93803,0.297573,0.388032;3.1267,1.22739,-0.242406;1.85597,0.849751,-0.670531;-1.14837,-0.261434,-0.446583;-1.26073,0.836916,0.520219;-2.73583,1.04666,0.696614;-3.34033,-0.283345,0.290893;-2.46516,-0.679843,-0.874401)|")
@@ -323,10 +401,12 @@ class TestCase(unittest.TestCase):
     phf = Path(ssparams.possibleHitsFile)
     self.assertTrue(phf.exists())
 
-    hits = synthonspace.ShapeSearch(query, ssparams, 0, -1)
+    hits = synthonspace.ShapeSearch(query, 0, -1, ssparams)
     self.assertEqual(len(hits.GetHitMolecules()), 3)
     phf.unlink()
     
 
 if __name__ == "__main__":
   unittest.main()
+
+  

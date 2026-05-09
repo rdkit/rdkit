@@ -628,14 +628,11 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
   if (timedOut || ControlCHandler::getGotSignal()) {
     return fragments;
   }
-  std::cout << "Number of raw fragment sets : " << tmpFrags.size() << std::endl;
   switch (uniquifyMode) {
     case FragSetUniquifyMode::BySmiles:
-      std::cout << "uniquify by smiles" << std::endl;
       uniquifyFragsBySmiles(tmpFrags, maxNumFragSets);
       break;
     case FragSetUniquifyMode::ByAtoms:
-      std::cout << "uniquify by atoms" << std::endl;
       uniquifyFragsByAtoms(tmpFrags, maxNumFragSets);
       break;
   }

@@ -650,7 +650,7 @@ Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
   }
 }
 
-TEST_CASE("Write possible hits") {
+TEST_CASE("Shape Write possible hits") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
