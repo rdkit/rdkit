@@ -2712,6 +2712,43 @@ CAS<~>
     fp3 = Chem.LayeredFingerprint(m1, setOnlyBits=fp4, atomCounts=atomCounts)
     self.assertEqual(atomCounts, [3, 6, 3, 3])
 
+  def test55PatternFingerprint(self):
+    m1 = Chem.MolFromSmiles('CC(C)C')
+    fp1 = Chem.PatternFingerprint(m1)
+    self.assertEqual(len(fp1), 2048)
+
+    m2 = Chem.MolFromSmiles('CCC')
+    fp2 = Chem.PatternFingerprint(m2)
+    self.assertEqual(len(fp2), 2048)
+    self.assertTrue(DataStructs.AllProbeBitsMatch(fp2, fp1))
+
+    # atomCounts = [0] * m1.GetNumAtoms()
+    # fp2 = Chem.PatternFingerprint(m1, atomCounts=atomCounts)
+    # self.assertEqual(fp1, fp2)
+    # self.assertEqual(atomCounts, [4, 7, 4, 4])
+
+    # fp2 = Chem.PatternFingerprint(m1, atomCounts=atomCounts)
+    # self.assertEqual(fp1, fp2)
+    # self.assertEqual(atomCounts, [8, 14, 8, 8])
+
+    # pbv = DataStructs.ExplicitBitVect(2048)
+    # fp3 = Chem.PatternFingerprint(m1, setOnlyBits=pbv)
+    # self.assertEqual(fp3.GetNumOnBits(), 0)
+
+    # fp3 = Chem.PatternFingerprint(m1, setOnlyBits=fp2)
+    # self.assertEqual(fp3, fp2)
+
+    # m2 = Chem.MolFromSmiles('CC')
+    # fp4 = Chem.PatternFingerprint(m2)
+    # atomCounts = [0] * m1.GetNumAtoms()
+    # fp3 = Chem.PatternFingerprint(m1, setOnlyBits=fp4, atomCounts=atomCounts)
+    # self.assertEqual(atomCounts, [1, 3, 1, 1])
+
+    # fp4 = Chem.PatternFingerprint(m2)
+    # atomCounts = [0] * m1.GetNumAtoms()
+    # fp3 = Chem.PatternFingerprint(m1, setOnlyBits=fp4, atomCounts=atomCounts)
+    # self.assertEqual(atomCounts, [3, 6, 3, 3])
+
   def test56LazySDMolSupplier(self):
     if not hasattr(Chem, 'CompressedSDMolSupplier'):
       return

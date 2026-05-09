@@ -663,7 +663,7 @@ nb::tuple GetMolFrags(const ROMol &mol, bool asMols, bool sanitizeFrags) {
 ExplicitBitVect *wrapLayeredFingerprint(
     const ROMol &mol, unsigned int layerFlags, unsigned int minPath,
     unsigned int maxPath, unsigned int fpSize, nb::object atomCounts,
-    std::optional<ExplicitBitVect *> includeOnlyBits, bool branchedPaths,
+    ExplicitBitVect *includeOnlyBits, bool branchedPaths,
     nb::object fromAtoms) {
   std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
@@ -681,9 +681,9 @@ ExplicitBitVect *wrapLayeredFingerprint(
   }
 
   ExplicitBitVect *res;
-  res = RDKit::LayeredFingerprintMol(
-      mol, layerFlags, minPath, maxPath, fpSize, atomCountsV.get(),
-      includeOnlyBits.value_or(nullptr), branchedPaths, lFromAtoms.get());
+  res = RDKit::LayeredFingerprintMol(mol, layerFlags, minPath, maxPath, fpSize,
+                                     atomCountsV.get(), includeOnlyBits,
+                                     branchedPaths, lFromAtoms.get());
 
   if (atomCountsV) {
     for (unsigned int i = 0; i < atomCountsV->size(); ++i) {
@@ -693,10 +693,10 @@ ExplicitBitVect *wrapLayeredFingerprint(
 
   return res;
 }
-ExplicitBitVect *wrapPatternFingerprint(
-    const ROMol &mol, unsigned int fpSize, nb::list atomCounts,
-    std::optional<ExplicitBitVect *> includeOnlyBits,
-    bool tautomerFingerprints) {
+ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
+                                        nb::object atomCounts,
+                                        ExplicitBitVect *includeOnlyBits,
+                                        bool tautomerFingerprints) {
   std::vector<unsigned int> *atomCountsV = nullptr;
   if (!atomCounts.is_none()) {
     atomCountsV = new std::vector<unsigned int>;
@@ -711,8 +711,7 @@ ExplicitBitVect *wrapPatternFingerprint(
   }
 
   ExplicitBitVect *res;
-  res = RDKit::PatternFingerprintMol(mol, fpSize, atomCountsV,
-                                     includeOnlyBits.value_or(nullptr),
+  res = RDKit::PatternFingerprintMol(mol, fpSize, atomCountsV, includeOnlyBits,
                                      tautomerFingerprints);
 
   if (atomCountsV) {
@@ -2578,7 +2577,7 @@ ARGUMENTS:\n\
   NOTE: This function is experimental. The API or results may change from\n\
     release to release.\n";
     m.def("PatternFingerprint", wrapPatternFingerprint, "mol"_a,
-          "fpSize"_a = 2048, "atomCounts"_a = nb::list(),
+          "fpSize"_a = 2048, "atomCounts"_a = nb::none(),
           "setOnlyBits"_a = nb::none(), "tautomerFingerprints"_a = false,
           docString.c_str(), nb::rv_policy::take_ownership);
     m.attr("_PatternFingerprint_version") = RDKit::PatternFingerprintMolVersion;
