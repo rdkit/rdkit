@@ -202,6 +202,13 @@ inline constexpr std::string_view _displayLabelW = "_displayLabelW";
 
 }  // namespace common_properties
 
+#ifdef max
+#undef max  // FUCK I hate this nonsense
+#endif
+#ifdef min
+#undef min  // FUCK I hate this nonsense
+#endif
+
 inline constexpr double MAX_DOUBLE = std::numeric_limits<double>::max();
 inline constexpr double EPS_DOUBLE = std::numeric_limits<double>::epsilon();
 inline constexpr int MAX_INT = std::numeric_limits<int>::max();
