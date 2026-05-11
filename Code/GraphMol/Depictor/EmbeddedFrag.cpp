@@ -627,6 +627,7 @@ static bool atomHasDegreeConstraint(const RDKit::Atom *atom) {
 // Helper: Create a relaxed query atom without degree constraints
 static RDKit::QueryAtom *createRelaxedQueryAtom(
     const RDKit::Atom *templateAtom) {
+  constexpr int DUMMY_ATOMIC_NUM = 200;
   auto *relaxedAtom = new RDKit::QueryAtom();
 
   // Preserve atomic number if specified
@@ -649,6 +650,12 @@ static RDKit::QueryAtom *createRelaxedQueryAtom(
   if (!relaxedAtom->hasQuery()) {
     relaxedAtom->setQuery(RDKit::makeAtomNullQuery());
   }
+
+  // Always exclude dummy atoms (atomic number 200) from matching
+  auto *notDummyQuery = RDKit::makeAtomNumQuery(DUMMY_ATOMIC_NUM);
+  notDummyQuery->setNegation(true);
+  relaxedAtom->expandQuery(notDummyQuery, Queries::COMPOSITE_AND);
+
   return relaxedAtom;
 }
 
@@ -1001,18 +1008,8 @@ static std::pair<std::vector<TemplateMatch>, bool> processTemplateMatches(
       RDKit::SubstructMatch(ringMol, *cachedInfo.relaxed_query, params);
 
   for (const auto &match : matches) {
-    // First check: all matched atoms must be in the macrocycle ring
-    bool allInMacrocycle = true;
-    std::unordered_set<int> macrocycleSet(macrocycleRing.begin(), macrocycleRing.end());
-    for (const auto &[templateIdx, molIdx] : match) {
-      if (macrocycleSet.find(molIdx) == macrocycleSet.end()) {
-        allInMacrocycle = false;
-        break;
-      }
-    }
-    if (!allInMacrocycle) {
-      continue;  // Skip matches that include atoms outside the macrocycle
-    }
+    // The query already excludes dummy atoms (atomic number 200), so all
+    // matched atoms are guaranteed to be in the macrocycle ring
 
     if (!checkStereoChemistry(ringMol, *tmpl, match)) {
       continue;
