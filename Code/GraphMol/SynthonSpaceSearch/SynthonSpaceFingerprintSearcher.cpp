@@ -212,40 +212,11 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
     fragFPs.push_back(it->second);
   }
 
-  const auto connPatterns = details::getConnectorPatterns(fragSet);
-  const auto synthConnPatts = reaction.getSynthonConnectorPatterns();
-
-  // Get all the possible permutations of connector numbers compatible with
-  // the number of synthon sets in this reaction.  So if the
-  // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
-  // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
-  // that might be how they're labelled in the reaction database.
-  const auto connCombConnPatterns =
-      details::getConnectorPermutations(connPatterns, reaction.getConnectors());
-
   // Need to try all combinations of synthon orders.
   const auto synthonOrders =
       details::permMFromN(fragSet.size(), reaction.getSynthons().size());
 
   for (const auto &synthonOrder : synthonOrders) {
-#if 0
-    for (auto &connCombPatt : connCombConnPatterns) {
-      // Make sure that for this connector combination, the synthons in this
-      // order have something similar.  All query fragment connectors must
-      // match something in the corresponding synthon.  The synthon can
-      // have unused connectors.
-      bool skip = false;
-      for (size_t i = 0; i < connCombPatt.size(); ++i) {
-        if ((connCombPatt[i] & synthConnPatts[synthonOrder[i]]).count() <
-            connCombPatt[i].count()) {
-          skip = true;
-          break;
-        }
-      }
-      if (skip) {
-        continue;
-      }
-#endif
     // It appears that for fingerprints, the isotope numbers are
     // ignored so there's no need to worry about the connector numbers
     // in the fingerprints.
@@ -260,9 +231,6 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
         results.push_back(std::move(hs));
       }
     }
-#if 0
-    }
-#endif
   }
   return results;
 }

@@ -161,52 +161,18 @@ SynthonSpaceRascalSearcher::searchFragSet(
     return results;
   }
 
-  const auto connPatterns = details::getConnectorPatterns(fragSet);
-  boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
-  for (auto &connPattern : connPatterns) {
-    conns |= connPattern;
-  }
-
-  auto synthConnPatts = reaction.getSynthonConnectorPatterns();
-
-  // Get all the possible permutations of connector numbers compatible with
-  // the number of synthon sets in this reaction.  So if the
-  // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
-  // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
-  // that might be how they're labelled in the reaction database.
-  const auto connCombConnPatterns =
-      details::getConnectorPermutations(connPatterns, reaction.getConnectors());
-
   // Need to try all combinations of synthon orders.
   auto synthonOrders =
       details::permMFromN(fragSet.size(), reaction.getSynthons().size());
   for (const auto &synthonOrder : synthonOrders) {
-    for (auto &connCombPatt : connCombConnPatterns) {
-      // Make sure that for this connector combination, the synthons in this
-      // order have something similar.  All query fragment connectors must
-      // match something in the corresponding synthon.  The synthon can
-      // have unused connectors.
-      bool skip = false;
-      for (size_t i = 0; i < connCombPatt.size(); ++i) {
-        if ((connCombPatt[i] & synthConnPatts[synthonOrder[i]]).count() <
-            connCombPatt[i].count()) {
-          skip = true;
-          break;
-        }
-      }
-      if (skip) {
-        continue;
-      }
-
-      // Rascal ignores isotope numbers, which makes things easier.
-      auto theseSynthons =
-          getHitSynthons(fragSet, d_rascalFragOptions, reaction, synthonOrder);
-      if (!theseSynthons.empty()) {
-        std::unique_ptr<SynthonSpaceHitSet> hs(
-            new SynthonSpaceFPHitSet(reaction, theseSynthons, fragSet));
-        if (hs->numHits) {
-          results.push_back(std::move(hs));
-        }
+    // Rascal ignores isotope numbers, which makes things easier.
+    auto theseSynthons =
+        getHitSynthons(fragSet, d_rascalFragOptions, reaction, synthonOrder);
+    if (!theseSynthons.empty()) {
+      std::unique_ptr<SynthonSpaceHitSet> hs(
+          new SynthonSpaceFPHitSet(reaction, theseSynthons, fragSet));
+      if (hs->numHits) {
+        results.push_back(std::move(hs));
       }
     }
   }
