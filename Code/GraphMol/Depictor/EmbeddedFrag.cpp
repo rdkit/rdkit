@@ -469,20 +469,50 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
   return true;
 }
 
-void EmbeddedFrag::applyTemplateCoordinates(
-    const std::shared_ptr<RDKit::ROMol> &templateMol,
-    const RDKit::MatchVectType &match) {
-  // Copy coordinates from template to embedded atoms
-  const auto &conf = templateMol->getConformer();
-  for (const auto &[templateAidx, molAidx] : match) {
-    EmbeddedAtom new_at(molAidx, conf.getAtomPos(templateAidx));
-    new_at.df_fixed = true;
-    d_eatoms.emplace(molAidx, new_at);
+void EmbeddedFrag::applyCoordinates(
+    const RDKit::INT_VECT &atomIndices,
+    const std::vector<RDGeom::Point2D> &coordinates) {
+  PRECONDITION(atomIndices.size() == coordinates.size(),
+               "atomIndices and coordinates must be same size");
+
+  // Copy coordinates to embedded atoms (update existing or create new)
+  for (size_t i = 0; i < atomIndices.size(); ++i) {
+    int atomIdx = atomIndices[i];
+    auto it = d_eatoms.find(atomIdx);
+    if (it != d_eatoms.end()) {
+      // Update existing atom
+      it->second.loc = coordinates[i];
+      it->second.df_fixed = true;
+    } else {
+      // Create new atom
+      EmbeddedAtom new_at(atomIdx, coordinates[i]);
+      new_at.df_fixed = true;
+      d_eatoms.emplace(atomIdx, new_at);
+    }
   }
 
   // Setup neighbors and attachment points
   this->setupNewNeighs();
   this->setupAttachmentPoints();
+}
+
+void EmbeddedFrag::applyCoordinates(
+    const std::shared_ptr<RDKit::ROMol> &templateMol,
+    const RDKit::MatchVectType &match) {
+  // Extract atom indices and coordinates from template match
+  RDKit::INT_VECT atomIndices;
+  std::vector<RDGeom::Point2D> coordinates;
+  atomIndices.reserve(match.size());
+  coordinates.reserve(match.size());
+
+  const auto &conf = templateMol->getConformer();
+  for (const auto &[templateAidx, molAidx] : match) {
+    atomIndices.push_back(molAidx);
+    coordinates.push_back(conf.getAtomPos(templateAidx));
+  }
+
+  // Delegate to the overload
+  applyCoordinates(atomIndices, coordinates);
 }
 
 bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms) {
@@ -571,7 +601,7 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms) {
     return false;
   }
 
-  applyTemplateCoordinates(templateMol, match);
+  applyCoordinates(templateMol, match);
   return true;
 }
 
@@ -829,13 +859,14 @@ static SubstituentInfo computeSubstituentInfo(
   SubstituentInfo info;
   info.smallestSize = -1;
 
-  for (auto ringAtomIdx : macrocycleRing) {
+  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
+    auto ringAtomIdx = macrocycleRing[i];
     auto atom = mol->getAtomWithIdx(ringAtomIdx);
     for (auto nbr : mol->atomNeighbors(atom)) {
       unsigned int nbrIdx = nbr->getIdx();
-      if (!ringAtoms.test(nbrIdx) && info.sizes.count(nbrIdx) == 0) {
+      if (!ringAtoms.test(nbrIdx) && info.sizesByPosition.count(nbrIdx) == 0) {
         int size = computeSubstituentSize(mol, nbrIdx, ringAtomIdx, ringAtoms);
-        info.sizes[nbrIdx] = size;
+        info.sizesByPosition[i] += size;  // Also track by position
         if (info.smallestSize == -1 || size < info.smallestSize) {
           info.smallestSize = size;
         }
@@ -848,10 +879,9 @@ static SubstituentInfo computeSubstituentInfo(
 // Helper: Calculate score for a template match based on internal penalty
 // Returns negative score (lower penalty = higher score)
 static double scoreTemplateMatch(
-    const RDKit::ROMol *mol, const RDKit::MatchVectType &match,
-    const CachedTemplateInfo &cachedInfo,
-    const boost::dynamic_bitset<> &ringAtoms,
-    const std::unordered_map<unsigned int, int> &substituentSizes) {
+    const RDKit::MatchVectType &match, const CachedTemplateInfo &cachedInfo,
+    const std::unordered_map<unsigned int, size_t> &atomToPosition,
+    const std::map<size_t, int> &sizesByPosition) {
   const double PENALTY_PER_ATOM = 10.0;
   double internalPenalty = 0.0;
 
@@ -859,16 +889,13 @@ static double scoreTemplateMatch(
     // If this template position has a degree constraint, it's internal
     if (static_cast<size_t>(templateAidx) < cachedInfo.is_internal.size() &&
         cachedInfo.is_internal[templateAidx]) {
-      auto mol_atom = mol->getAtomWithIdx(molAidx);
-      for (auto nbr : mol->atomNeighbors(mol_atom)) {
-        unsigned int nbrIdx = nbr->getIdx();
-        if (!ringAtoms.test(nbrIdx)) {
-          // Use find() instead of at() to safely handle missing keys
-          auto it = substituentSizes.find(nbrIdx);
-          if (it != substituentSizes.end()) {
-            int subSize = it->second;
-            internalPenalty += subSize * PENALTY_PER_ATOM;
-          }
+      // Find macrocycle position for this molecule atom
+      auto posIt = atomToPosition.find(molAidx);
+      if (posIt != atomToPosition.end()) {
+        // Look up total substituent size at this position
+        auto sizeIt = sizesByPosition.find(posIt->second);
+        if (sizeIt != sizesByPosition.end()) {
+          internalPenalty += sizeIt->second * PENALTY_PER_ATOM;
         }
       }
     }
@@ -1001,6 +1028,12 @@ static std::pair<std::vector<TemplateMatch>, bool> processTemplateMatches(
     return {validMatches, false};
   }
 
+  // Create reverse map: atom index -> macrocycle position
+  std::unordered_map<unsigned int, size_t> atomToPosition;
+  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
+    atomToPosition[macrocycleRing[i]] = i;
+  }
+
   RDKit::SubstructMatchParameters params;
   params.maxMatches = 100;
   params.uniquify = false;  // Don't uniquify - we want ALL rotations
@@ -1025,8 +1058,8 @@ static std::pair<std::vector<TemplateMatch>, bool> processTemplateMatches(
     }
 
     // Score this match
-    double score =
-        scoreTemplateMatch(mol, match, cachedInfo, ringAtoms, subInfo.sizes);
+    double score = scoreTemplateMatch(match, cachedInfo, atomToPosition,
+                                      subInfo.sizesByPosition);
 
     // Store this match
     validMatches.push_back({tmpl, match, score});
@@ -1122,15 +1155,9 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
   if (!best) {
     return false;
   }
-  int count = 0;
-  for (const auto &[templateIdx, molIdx] : best->match) {
-    std::cerr << "t" << templateIdx << "->m" << molIdx << " ";
-    if (++count >= 10) break;
-  }
-  std::cerr << std::endl;
 
   // Apply template coordinates
-  applyTemplateCoordinates(best->templateMol, best->match);
+  applyCoordinates(best->templateMol, best->match);
   maybeRefineTemplateMatchedMacrocycle(macrocycleRing, allRings);
   // check if fused rings can be flipped to place substitutions outside of the
   // macrocycle
@@ -1143,18 +1170,13 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
     bool useJacobianRefinement, const SubstituentInfo &subInfo) {
   PRECONDITION(dp_mol, "");
 
-  std::cerr << ">>> INSIDE generateMacrocycleCoordinates: ring_size="
-            << macrocycleRing.size() << ", allRings.size=" << allRings.size()
-            << ", useJacobian=" << useJacobianRefinement << std::endl;
-
   // Only attempt for macrocycles (size > MACROCYCLE_SIZE_THRESHOLD)
   if (macrocycleRing.size() <= MACROCYCLE_SIZE_THRESHOLD) {
-    std::cerr << ">>> EARLY EXIT: ring too small" << std::endl;
     return false;
   }
 
   // Create MacrocycleGenerator with Jacobian flag
-  MacrocycleGenerator generator(macrocycleRing.size(), 1.5,
+  MacrocycleGenerator generator(macrocycleRing.size(), BOND_LEN,
                                 useJacobianRefinement);
 
   // Convert allRings to std::vector<std::vector<int>> for helper function
@@ -1173,34 +1195,9 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
     generator.addAngleConstraint(angleConstraint);
   }
 
-  // Use pre-computed substituent info (passed as parameter)
-  // Build map: macrocycle position -> total substituent size at that position
-  std::map<size_t, int> substituentSizes;
-  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
-    int ring_atom_idx = macrocycleRing[i];
-    auto atom = dp_mol->getAtomWithIdx(ring_atom_idx);
-
-    int totalSize = 0;
-    for (auto nbr : dp_mol->atomNeighbors(atom)) {
-      unsigned int nbrIdx = nbr->getIdx();
-      // subInfo.sizes only contains substituents (neighbors outside ring
-      // system)
-      auto it = subInfo.sizes.find(nbrIdx);
-      if (it != subInfo.sizes.end()) {
-        totalSize += it->second;
-      }
-    }
-
-    if (totalSize > 0) {
-      substituentSizes[i] = totalSize;
-    }
-  }
-
-  // For de-novo generation: R - L = 6 (or 5 for odd), so R is always majority
-  // L turns are inner (pointing toward center) - minority turns point inward
-  int innerTurnSign = -1;  // L is always inner for de-novo generation
-
-  generator.setSubstituentInfo(substituentSizes, innerTurnSign);
+  // Use pre-computed substituent sizes by position
+  generator.setSubstituentInfo(subInfo.sizesByPosition,
+                               -1);  // -1 = L turns point inward
 
   // Add turn constraints for fused rings
   // Pattern: first turn = R, middle turns = L, last turn = R
@@ -1449,17 +1446,8 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
   std::cerr << ">>> APPLYING DE-NOVO COORDINATES to " << macrocycleRing.size()
             << " atoms" << std::endl;
 
-  // Apply coordinates to embedded fragment
-  // coords[i] is the position of atom i (turn[i] is the turn AT atom i)
-  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
-    int aidx = macrocycleRing[i];
-    EmbeddedAtom new_at(aidx, coords[i]);
-    new_at.df_fixed = true;
-    d_eatoms.emplace(aidx, new_at);
-  }
-
-  this->setupNewNeighs();
-  this->setupAttachmentPoints();
+  // Apply de-novo coordinates using the shared helper function
+  applyCoordinates(macrocycleRing, coords);
 
   // check if fused rings can be flipped to place substitutions outside of the
   // macrocycle
@@ -1540,30 +1528,24 @@ void EmbeddedFrag::maybeRefineTemplateMatchedMacrocycle(
   std::vector<int> macrocycleRingVec(macrocycleRing.begin(),
                                      macrocycleRing.end());
 
-  // 1. Identify angle constraints for fused small rings
+  // Identify angle constraints for fused small rings
   auto angleConstraints = RDDepict::identifyAngleConstraintsForFusedRings(
       macrocycleRingVec, allRingsVec);
   if (angleConstraints.empty()) {
     return;  // No constraints needed, keep original template coordinates
   }
-  // 2. Extract template coordinates
+  // Extract template coordinates
   std::vector<RDGeom::Point2D> templateCoords;
   for (size_t i = 0; i < macrocycleRing.size(); ++i) {
     int atomIdx = macrocycleRing[i];
     templateCoords.push_back(d_eatoms[atomIdx].loc);
   }
-  // 3. Refine with angle constraints
+  // Refine with angle constraints
   auto refinedCoords = RDDepict::refineMacrocycleWithAngleConstraints(
       templateCoords, angleConstraints, 1.5);
-  // 4. Replace template coordinates with refined coordinates
-  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
-    int atomIdx = macrocycleRing[i];
-    d_eatoms[atomIdx].loc = refinedCoords[i];
-    d_eatoms[atomIdx].df_fixed = true;  // Keep as fixed
-  }
-  // 5. Update neighbors and attachment points
-  setupNewNeighs();
-  setupAttachmentPoints();
+
+  // Apply refined coordinates using the shared helper function
+  applyCoordinates(macrocycleRing, refinedCoords);
 }
 
 // find any atoms in the ring that are in trans double bonds

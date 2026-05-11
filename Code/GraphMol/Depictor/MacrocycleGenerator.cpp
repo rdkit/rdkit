@@ -1276,9 +1276,10 @@ bool verifyAndReorderSharedPositions(std::vector<size_t> &sharedPositions,
 
 void trackEndpoint(
     std::map<size_t, std::vector<EndpointInfo>> &endpointPositions, size_t pos,
-    int ringSize) {
+    int ringSize, const std::vector<int> &ringAtoms) {
   EndpointInfo info;
   info.ringSize = ringSize;
+  info.ringAtoms = ringAtoms;
   endpointPositions[pos].push_back(info);
 }
 
@@ -1292,23 +1293,43 @@ AngleConstraint computeSharedEndpointConstraint(
   }
   int ringSize1 = endpoints[0].ringSize;
   int ringSize2 = endpoints[1].ringSize;
+  const auto &ring1Atoms = endpoints[0].ringAtoms;
+  const auto &ring2Atoms = endpoints[1].ringAtoms;
 
-  // At a shared endpoint, three rings meet: ring1, ring2, and the macrocycle
-  // The sum of their internal angles must be 2π (360°)
-  // Internal angle = π - |turn_angle|
-  // So: (π - |turn1|) + (π - |turn2|) + macrocycle_internal = 2π
-  // Therefore: macrocycle_internal = 2π - (π - |turn1|) - (π - |turn2|)
-  //                                 = |turn1| + |turn2|
-  // And macrocycle_turn = π - macrocycle_internal = π - (|turn1| + |turn2|)
+  // Count shared atoms between the two small rings
+  std::set<int> ring1Set(ring1Atoms.begin(), ring1Atoms.end());
+  size_t sharedCount = 0;
+  for (int atom : ring2Atoms) {
+    if (ring1Set.count(atom)) {
+      ++sharedCount;
+    }
+  }
 
   // Get the ideal turn magnitude for each ring
   double turn1 = computeIdealAngle(ringSize1);
   double turn2 = computeIdealAngle(ringSize2);
 
-  // Macrocycle internal angle = |turn1| + |turn2|
-  double macrocycleInternal = turn1 + turn2;
-  // Macrocycle turn angle = π - macrocycle_internal
-  double combinedAngle = M_PI - macrocycleInternal;
+  double combinedAngle;
+  if (sharedCount == 1) {
+    // Spiro fusion: the two rings are spiro-connected at this macrocycle
+    // position The total angle is half of the remaining space, so the
+    // connection is symmetrical
+
+    double macrocycleInternal = (turn1 + turn2) / 2.0;
+    combinedAngle = M_PI - macrocycleInternal;
+  } else if (sharedCount == 2) {
+    // Edge fusion (2 shared atoms): the two rings share an edge
+    // At a shared endpoint, three rings meet: ring1, ring2, and the macrocycle
+    // The sum of their internal angles must be 2π (360°)
+    // Internal angle = π - |turn_angle|
+    // So: (π - |turn1|) + (π - |turn2|) + macrocycle_internal = 2π
+    // Therefore: macrocycle_internal = 2π - (π - |turn1|) - (π - |turn2|)
+    //                                 = |turn1| + |turn2|
+    // And macrocycle_turn = π - macrocycle_internal = π - (|turn1| + |turn2|)
+    double macrocycleInternal = turn1 + turn2;
+    combinedAngle = M_PI - macrocycleInternal;
+  }
+
   constraint.position = pos;
   constraint.targetAngle = combinedAngle;
   return constraint;
@@ -1352,15 +1373,8 @@ std::vector<AngleConstraint> identifyAngleConstraintsForFusedRings(
     size_t firstPos = sharedPositions[0];
     size_t lastPos = sharedPositions[numShared - 1];
 
-    // Adjacent to first endpoint: next position if internals exist, else itself
-    size_t adjacentToFirst = (numShared >= 3) ? sharedPositions[1] : firstPos;
-    trackEndpoint(endpointPositions, firstPos, ring.size());
-
-    // Adjacent to last endpoint: previous position if internals exist, else
-    // itself
-    size_t adjacentToLast =
-        (numShared >= 3) ? sharedPositions[numShared - 2] : lastPos;
-    trackEndpoint(endpointPositions, lastPos, ring.size());
+    trackEndpoint(endpointPositions, firstPos, ring.size(), ring);
+    trackEndpoint(endpointPositions, lastPos, ring.size(), ring);
 
     // Add constraints for internal positions (only when numShared >= 3)
     // Loop runs 0 times when numShared == 2 (since 1 < 2-1 is false)
@@ -1399,7 +1413,9 @@ void refineWithJacobian(std::vector<RDGeom::Point2D> &coords,
   size_t N = coords.size() - 1;  // Last element is dummy atom
   double initialGap = (coords[0] - coords[N]).length();
 
-  if (initialGap < 1e-6) {
+  const double gapThreshold = 0.01;  // Stop if gap < 0.01 Å
+
+  if (initialGap < gapThreshold) {
     return;  // Already closed
   }
 
@@ -1407,9 +1423,8 @@ void refineWithJacobian(std::vector<RDGeom::Point2D> &coords,
   std::vector<double> angleAdjustments(N, 0.0);
 
   // Iterative refinement with damping
-  const int maxIters = 3;
-  const double damping = 0.8;        // Apply 80% of computed correction
-  const double gapThreshold = 0.01;  // Stop if gap < 0.01 Å
+  const int maxIters = 4;
+  const double damping = 0.8;  // Apply 80% of computed correction
 
   for (int iter = 0; iter < maxIters; ++iter) {
     // Rebuild coordinates with current angle adjustments
@@ -1510,7 +1525,7 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
     const std::vector<AngleConstraint> &angleConstraints, double bondLength) {
   size_t N = templateCoords.size();
 
-  // 1. Extract current turn angles from template coordinates
+  // Extract current turn angles from template coordinates
   std::vector<double> currentAngles(N);
 
   // Initialize with the direction of the last bond (from N-1 to 0)
@@ -1520,9 +1535,6 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
   double dx_initial = templateCoords[0].x - templateCoords[prev].x;
   double dy_initial = templateCoords[0].y - templateCoords[prev].y;
   double currentDirection = std::atan2(dy_initial, dx_initial);
-
-  std::cerr << ">>> EXTRACTING ANGLES FROM TEMPLATE (N=" << N << ")"
-            << std::endl;
 
   for (size_t i = 0; i < N; ++i) {
     size_t next = (i + 1) % N;
@@ -1543,78 +1555,30 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
     currentDirection = newDirection;
   }
 
-  std::cerr << ">>> EXTRACTED ANGLES (radians and degrees):" << std::endl;
-  for (size_t i = 0; i < N; ++i) {
-    double degrees = currentAngles[i] * 180.0 / M_PI;
-    std::cerr << "  pos[" << i << "]: " << currentAngles[i]
-              << " rad = " << degrees << "°" << std::endl;
-  }
-
-  // 2. Determine template chirality by counting angle signs
-  //    Most prevalent sign = internal/convex turns (R or L depending on
-  //    direction)
-  int positiveCount = 0;
-  int negativeCount = 0;
-  for (double angle : currentAngles) {
-    if (angle > 0)
-      positiveCount++;
-    else if (angle < 0)
-      negativeCount++;
-  }
-
-  // If majority is negative, template goes CCW (R turns are negative)
-  // If majority is positive, template goes CW (L turns are positive)
-  bool templateIsCCW = (negativeCount > positiveCount);
-  // Constraints are generated assuming CCW with turnSign=-1 for L turns
-  // For CCW template: L turns are positive, so flip constraint sign
-  // For CW template: L turns are negative, so keep constraint sign
-  int signMultiplier = templateIsCCW ? -1 : 1;
-
-  // 3. Apply angle constraints and compute angular difference
-  //    Adjust constraint signs based on template chirality
+  // Apply angle constraints and compute angular difference
+  //    Adjust constraint signs based on template
   std::vector<double> adjustedAngles = currentAngles;
   double constraintDelta = 0.0;
   std::set<size_t> constrainedPositions;
-
-  std::cerr << ">>> Template chirality: " << (templateIsCCW ? "CCW" : "CW")
-            << ", signMultiplier=" << signMultiplier << std::endl;
-
   for (const auto &constraint : angleConstraints) {
     size_t pos = constraint.position;
-    double oldAngle = adjustedAngles[pos];
+    double oldAngle = currentAngles[pos];
 
-    // CRITICAL FIX: Preserve the sign of the template's existing angle
-    // Only adjust the magnitude, don't flip the turn direction
-    // Template angle sign tells us if this is R (+) or L (-) in this specific
-    // template
-    double templateSign = (currentAngles[pos] >= 0) ? 1.0 : -1.0;
+    // preserve the sign of the template's existing angle, only adjust the
+    // magnitude
+    double templateSign = (oldAngle >= 0) ? 1.0 : -1.0;
     double newAngle = templateSign * std::abs(constraint.targetAngle);
-
-    std::cerr << "  Constraint at pos[" << pos
-              << "]: " << (oldAngle * 180.0 / M_PI) << "° → "
-              << (newAngle * 180.0 / M_PI) << "° (target magnitude was "
-              << (std::abs(constraint.targetAngle) * 180.0 / M_PI)
-              << "°, preserved template sign)" << std::endl;
 
     adjustedAngles[pos] = newAngle;
     constraintDelta += (newAngle - oldAngle);
     constrainedPositions.insert(pos);
   }
 
-  std::cerr << ">>> Total constraintDelta = "
-            << (constraintDelta * 180.0 / M_PI) << "°" << std::endl;
-
-  // 4. Distribute angular difference across non-constrained angles
-  //    to preserve total angular sum
+  // Distribute angular difference across non-constrained angles to preserve
+  // total angular sum
   size_t numFree = N - constrainedPositions.size();
   if (numFree > 0) {
     double adjustmentPerFree = -constraintDelta / numFree;
-
-    std::cerr << ">>> Distributing " << (-constraintDelta * 180.0 / M_PI)
-              << "° across " << numFree
-              << " free positions = " << (adjustmentPerFree * 180.0 / M_PI)
-              << "° per position" << std::endl;
-
     for (size_t i = 0; i < N; ++i) {
       if (constrainedPositions.count(i) == 0) {
         adjustedAngles[i] += adjustmentPerFree;
@@ -1622,18 +1586,7 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
     }
   }
 
-  std::cerr << ">>> ADJUSTED ANGLES (after constraints):" << std::endl;
-  for (size_t i = 0; i < N; ++i) {
-    double degrees = adjustedAngles[i] * 180.0 / M_PI;
-    std::cerr << "  pos[" << i << "]: " << adjustedAngles[i]
-              << " rad = " << degrees << "°";
-    if (constrainedPositions.count(i)) {
-      std::cerr << " [CONSTRAINED]";
-    }
-    std::cerr << std::endl;
-  }
-
-  // 5. Generate coordinates from adjusted angles
+  // Generate coordinates from adjusted angles
   std::vector<RDGeom::Point2D> coords(N + 1);  // N atoms + 1 dummy
   coords[0] = RDGeom::Point2D(0, 0);
 
@@ -1647,11 +1600,11 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
     coords[i + 1] = pos;
   }
 
-  // 6. Close gap using Jacobian minimization
+  // Close gap using Jacobian minimization
   refineWithJacobian(coords, adjustedAngles, constrainedPositions, bondLength,
                      N % 2 == 1);
 
-  // 7. Remove dummy atom and return
+  // Remove dummy atom and return
   coords.pop_back();
   return coords;
 }

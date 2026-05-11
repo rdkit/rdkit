@@ -28,9 +28,9 @@ typedef boost::shared_array<double> DOUBLE_SMART_PTR;
 
 //! Struct to hold substituent size information
 struct SubstituentInfo {
-  std::unordered_map<unsigned int, int>
-      sizes;         //!< Map: neighbor atom idx -> substituent size
-  int smallestSize;  //!< Smallest substituent size in the molecule
+  std::map<size_t, int>
+      sizesByPosition;  //!< Map: macrocycle position -> total substituent size
+  int smallestSize;     //!< Smallest substituent size in the molecule
 };
 
 //! Class that contains the data for an atoms that has already been embedded
@@ -400,9 +400,16 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
     \param templateMol the template molecule with conformer coordinates
     \param match the mapping from template atom indices to molecule atom indices
   */
-  void applyTemplateCoordinates(
-      const std::shared_ptr<RDKit::ROMol> &templateMol,
-      const RDKit::MatchVectType &match);
+  void applyCoordinates(const std::shared_ptr<RDKit::ROMol> &templateMol,
+                        const RDKit::MatchVectType &match);
+
+  //! Copy coordinates directly into embedded atoms
+  /*!
+    \param atomIndices the atom indices to set coordinates for
+    \param coordinates the 2D coordinates (must be same size as atomIndices)
+  */
+  void applyCoordinates(const RDKit::INT_VECT &atomIndices,
+                        const std::vector<RDGeom::Point2D> &coordinates);
 
   // returns true if macrocycle coordinates were successfully generated
   bool generateMacrocycleCoordinates(const RDKit::INT_VECT &macrocycleRing,

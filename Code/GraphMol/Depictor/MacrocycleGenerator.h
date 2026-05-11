@@ -270,7 +270,8 @@ class MacrocycleGenerator {
 
 //! Endpoint information for shared vertex constraint computation
 struct EndpointInfo {
-  int ringSize;  //!< Size of the small ring
+  int ringSize;                 //!< Size of the small ring
+  std::vector<int> ringAtoms;   //!< Atoms in the small ring (to check overlap)
 };
 
 // ============================================================================
@@ -319,7 +320,7 @@ bool verifyAndReorderSharedPositions(std::vector<size_t> &sharedPositions,
 */
 void trackEndpoint(
     std::map<size_t, std::vector<EndpointInfo>> &endpointPositions, size_t pos,
-    int ringSize);
+    int ringSize, const std::vector<int> &ringAtoms);
 
 //! Compute angle constraint for a shared endpoint (where two small rings meet)
 /*!
