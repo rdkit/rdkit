@@ -26,7 +26,14 @@ nb::tuple getFingerprintsHelper(
     const GeneralMolSupplier::SupplierOptions &options) {
   FingerprintGenerator<OutputType> *generator = nullptr;
   if (!pyGenerator.is_none()) {
-    generator = nb::cast<FingerprintGenerator<OutputType> *>(pyGenerator);
+    // nb::cast throws std::bad_cast (not nb::cast_error) on type mismatch,
+    // which nanobind won't catch during overload resolution. Re-throw as
+    // nb::next_overload() so the other OutputType overload gets a chance.
+    try {
+      generator = nb::cast<FingerprintGenerator<OutputType> *>(pyGenerator);
+    } catch (...) {
+      throw nb::next_overload();
+    }
   }
 
   std::vector<std::unique_ptr<ExplicitBitVect>> fps;
