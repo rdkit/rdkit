@@ -1678,13 +1678,10 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
   return coords;
 }
 
-// Reflect middle atoms for axially-fused small rings to avoid steric clashes
-void reflectMiddleAtomsForAxialFusion(
-    const RDKit::ROMol &mol,
-    const RDKit::INT_VECT &macrocycleRing,
-    const RDKit::VECT_INT_VECT &fusedRings,
-    RDGeom::INT_POINT2D_MAP &eatoms) {
-
+void maybeReflectSymmetricFusedRings(const RDKit::ROMol &mol,
+                                     const RDKit::INT_VECT &macrocycleRing,
+                                     const RDKit::VECT_INT_VECT &fusedRings,
+                                     RDGeom::INT_POINT2D_MAP &eatoms) {
   // Convert to std::vector<int> for helper functions
   std::vector<int> macrocycleRingVec(macrocycleRing.begin(),
                                      macrocycleRing.end());
@@ -1696,7 +1693,7 @@ void reflectMiddleAtomsForAxialFusion(
       continue;
     }
 
-    // Use existing helper to find shared positions in macrocycle
+    // find shared positions in macrocycle
     std::vector<int> ringVec(ring.begin(), ring.end());
     std::vector<size_t> sharedPositions =
         findSharedPositions(macrocycleRingVec, ringVec);
@@ -1724,7 +1721,6 @@ void reflectMiddleAtomsForAxialFusion(
         middleShared.push_back(macrocycleRing[sharedPositions[i]]);
       }
 
-      // Non-shared atoms
       std::unordered_set<int> sharedSet;
       for (auto pos : sharedPositions) {
         sharedSet.insert(macrocycleRing[pos]);
@@ -1736,23 +1732,18 @@ void reflectMiddleAtomsForAxialFusion(
         }
       }
 
-      // Count substituents on middle shared atoms (excluding bonds in
-      // macrocycle which are also the fused ring bonds)
+      // Count substituents on middle shared atoms (degree - 2)
       int middleSubstituents = 0;
       for (int atom : middleShared) {
         const auto *ratom = mol.getAtomWithIdx(atom);
-        int degree = ratom->getDegree();
-        // Subtract 2 for the ring bonds (same bonds are in both rings)
-        middleSubstituents += std::max(0, degree - 2);
+        middleSubstituents += ratom->getDegree() - 2;
       }
 
-      // Count substituents on non-shared atoms (excluding bonds in fused ring)
+      // Count substituents on non-shared atoms
       int nonSharedSubstituents = 0;
       for (int atom : nonSharedAtoms) {
         const auto *ratom = mol.getAtomWithIdx(atom);
-        int degree = ratom->getDegree();
-        // Subtract 2 for fused ring bonds
-        nonSharedSubstituents += std::max(0, degree - 2);
+        nonSharedSubstituents += ratom->getDegree() - 2;
       }
 
       // If middle shared atoms are more substituted, reflect them
@@ -1763,7 +1754,9 @@ void reflectMiddleAtomsForAxialFusion(
           const auto &pin1 = eatoms[axial1];
           const auto &pin2 = eatoms[axial2];
 
-          // Reflect middle shared atoms
+          // Reflect middle shared atoms. Non shared atoms are not placed yet so
+          // there's no need to flip them, they will fall in the right place
+          // when the small ring is embedded later
           for (int atom : middleShared) {
             if (eatoms.find(atom) != eatoms.end()) {
               eatoms[atom] = reflectPoint(eatoms[atom], pin1, pin2);

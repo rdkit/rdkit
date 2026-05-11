@@ -388,22 +388,22 @@ void refineWithJacobian(std::vector<RDGeom::Point2D> &coords,
                         const std::set<size_t> &constrainedPositions,
                         double bondLength, bool isOddRing);
 
-//! Reflect middle atoms for axially-fused small rings to avoid steric clashes
+//! Flip certain fused rings if it improves the geometry
 /*!
   For macrocycles with 4 or 6-membered rings fused at axial positions (1,3 or
   1,4), checks if the middle shared atoms are more substituted than the
-  non-shared atoms. If so, reflects just the middle atoms across the axial bond.
+  non-shared atoms. If so, reflects the ring across the axial axis to ensure
+  substitutions point outward, improving geometry and reducing clashes.
 
   \param mol: The molecule
   \param macrocycleRing: The macrocycle ring atoms
   \param fusedRings: All fused rings in the system
   \param eatoms: Embedded atom coordinates (modified in-place)
 */
-void reflectMiddleAtomsForAxialFusion(
-    const RDKit::ROMol &mol,
-    const RDKit::INT_VECT &macrocycleRing,
-    const RDKit::VECT_INT_VECT &fusedRings,
-    RDGeom::INT_POINT2D_MAP &eatoms);
+void maybeReflectSymmetricFusedRings(const RDKit::ROMol &mol,
+                                     const RDKit::INT_VECT &macrocycleRing,
+                                     const RDKit::VECT_INT_VECT &fusedRings,
+                                     RDGeom::INT_POINT2D_MAP &eatoms);
 
 }  // namespace RDDepict
 

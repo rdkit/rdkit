@@ -416,12 +416,10 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
       const RDKit::VECT_INT_VECT &allRings);
 
   // Reflect middle atoms for axially-fused small rings (wrapper)
-  void reflectMiddleAtomsForAxialFusion(
-      const RDKit::INT_VECT &macrocycleRing,
-      const RDKit::VECT_INT_VECT &fusedRings);
+  void maybeReflectSymmetricFusedRings(const RDKit::INT_VECT &macrocycleRing,
+                                       const RDKit::VECT_INT_VECT &fusedRings);
 
-  void embedMacrocycleWithFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
-                                     const RDKit::VECT_INT_VECT &coreRings,
+  void embedMacrocycleWithFusedRings(const RDKit::VECT_INT_VECT &coreRings,
                                      const RDKit::INT_VECT &coreRingsIds,
                                      RDKit::INT_VECT &doneRings,
                                      bool useJacobianRefinement);

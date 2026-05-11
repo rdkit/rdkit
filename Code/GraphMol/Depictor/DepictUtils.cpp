@@ -300,6 +300,13 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
   PRECONDITION(doneRings.size() > 0, "");
   PRECONDITION(fusedRings.size() > 1, "");
 
+  std::cerr << "\n>>> findNextRingToEmbed: doneRings.size()=" << doneRings.size() << ", fusedRings.size()=" << fusedRings.size() << std::endl;
+  std::cerr << "  doneRings: ";
+  for (auto idx : doneRings) {
+    std::cerr << idx << " ";
+  }
+  std::cerr << std::endl;
+
   RDKit::INT_VECT commonAtoms, res, doneAtoms, notDone;
   for (int i = 0; i < rdcast<int>(fusedRings.size()); i++) {
     if (std::find(doneRings.begin(), doneRings.end(), i) == doneRings.end()) {
@@ -307,7 +314,19 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
     }
   }
 
+  std::cerr << "  notDone: ";
+  for (auto idx : notDone) {
+    std::cerr << idx << " ";
+  }
+  std::cerr << std::endl;
+
   RDKit::Union(fusedRings, doneAtoms, &notDone);
+
+  std::cerr << "  doneAtoms: ";
+  for (auto idx : doneAtoms) {
+    std::cerr << idx << " ";
+  }
+  std::cerr << std::endl;
 
   int maxCommonAtoms = 0;
 
