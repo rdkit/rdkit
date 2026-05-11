@@ -7,16 +7,17 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/python.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolHash/MolHash.h>
-#include <RDBoost/Wrap.h>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
-
 std::string MolHashHelper(const ROMol &mol, MolHash::HashFunction func,
                           bool useCXSmiles, unsigned cxFlagsToSkip) {
   RWMol cpy(mol);
@@ -24,11 +25,10 @@ std::string MolHashHelper(const ROMol &mol, MolHash::HashFunction func,
 }
 }  // namespace
 
-BOOST_PYTHON_MODULE(rdMolHash) {
-  python::scope().attr("__doc__") =
-      "Module containing functions to generate hashes for molecules";
+NB_MODULE(rdMolHash, m) {
+  m.doc() = "Module containing functions to generate hashes for molecules";
 
-  python::enum_<MolHash::HashFunction>("HashFunction")
+  nb::enum_<MolHash::HashFunction>(m, "HashFunction")
       .value("AnonymousGraph", MolHash::HashFunction::AnonymousGraph)
       .value("ElementGraph", MolHash::HashFunction::ElementGraph)
       .value("CanonicalSmiles", MolHash::HashFunction::CanonicalSmiles)
@@ -48,12 +48,10 @@ BOOST_PYTHON_MODULE(rdMolHash) {
       .value("ArthorSubstructureOrder",
              MolHash::HashFunction::ArthorSubstructureOrder)
       .value("HetAtomTautomerv2", MolHash::HashFunction::HetAtomTautomerv2)
-      .value("HetAtomProtomerv2", MolHash::HashFunction::HetAtomProtomerv2);
+      .value("HetAtomProtomerv2", MolHash::HashFunction::HetAtomProtomerv2)
+      .export_values();
 
-  python::def(
-      "MolHash", MolHashHelper,
-      (python::arg("mol"), python::arg("func"),
-       python::arg("useCxSmiles") = false, python::arg("cxFlagsToSkip") = 0),
-      "Generate a hash for a molecule. The func argument determines "
-      "which hash is generated.");
+  m.def("MolHash", MolHashHelper, "mol"_a, "func"_a,
+        "useCxSmiles"_a = false, "cxFlagsToSkip"_a = 0u,
+        R"DOC(Generate a hash for a molecule. The func argument determines which hash is generated.)DOC");
 }
