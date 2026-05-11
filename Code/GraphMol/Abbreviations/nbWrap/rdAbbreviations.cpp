@@ -34,7 +34,8 @@ NB_MODULE(rdAbbreviations, m) {
               "the label in a drawing when the bond comes from the west")
       .def_rw(
           "mol", &Abbreviations::AbbreviationDefinition::mol,
-          "the query molecule (should have a dummy as the first atom if includesXBonds is true)")
+          "the query molecule (should have a dummy as the first atom if "
+          "includesXBonds is true)")
       .def_rw("includesXBonds",
               &Abbreviations::AbbreviationDefinition::includesXBonds,
               "whether or not the abbreviation definition includes "
