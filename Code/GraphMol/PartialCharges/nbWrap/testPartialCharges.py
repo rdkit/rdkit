@@ -18,12 +18,12 @@ class TestCase(unittest.TestCase):
 
   def test0HalgrenSet(self):
     smiSup = Chem.SmilesMolSupplier(
-      os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges', 'boostWrap',
+      os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges', 'nbWrap',
                    'test_data', 'halgren.smi'), delimiter='\t')
 
     # parse the original file
     with open(
-        os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges', 'boostWrap',
+        os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges', 'nbWrap',
                      'test_data', 'halgren_out.txt'), 'r') as infil:
       lines = infil.readlines()
 
@@ -48,13 +48,13 @@ class TestCase(unittest.TestCase):
       i += 1
 
   def test1PPDataset(self):
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges', 'boostWrap',
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges', 'nbWrap',
                          'test_data', 'PP_descrs_regress.2.csv')
     infil = open(fileN, 'r')
     lines = infil.readlines()
     infil.close()
 
-    infile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges', 'boostWrap',
+    infile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'PartialCharges', 'nbWrap',
                           'test_data', 'PP_combi_charges.pkl')
     with open(infile, 'r') as cchtFile:
       buf = cchtFile.read().replace('\r\n', '\n').encode('utf-8')
@@ -129,7 +129,7 @@ class TestCase(unittest.TestCase):
       float(at.GetProp('_GasteigerCharge'))
 
   def testGithub2480(self):
-    with self.assertRaisesRegex(Exception, "^Python argument types"):
+    with self.assertRaises(TypeError):
       rdPartialCharges.ComputeGasteigerCharges(None)
 
 
