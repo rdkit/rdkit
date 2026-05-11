@@ -7,16 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <string>
+#include <nanobind/nanobind.h>
 
-#include <RDBoost/python.h>
 #include <GraphMol/GraphMol.h>
-#include <RDBoost/Wrap.h>
+#include <GraphMol/DetermineBonds/DetermineBonds.h>
 #include <RDGeneral/ControlCHandler.h>
 
-#include <GraphMol/DetermineBonds/DetermineBonds.h>
-
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
@@ -26,6 +24,7 @@ void determineConnectivityHelper(ROMol &mol, bool useHueckel, int charge,
   auto &wmol = static_cast<RWMol &>(mol);
   determineConnectivity(wmol, useHueckel, charge, covFactor, useVdw);
 }
+
 void determineBondOrdersHelper(ROMol &mol, int charge,
                                bool allowChargedFragments, bool embedChiral,
                                bool useAtomMap, size_t maxIterations) {
@@ -34,9 +33,10 @@ void determineBondOrdersHelper(ROMol &mol, int charge,
                       useAtomMap, maxIterations);
   if (ControlCHandler::getGotSignal()) {
     PyErr_SetString(PyExc_KeyboardInterrupt, "Determine Bond Orders cancelled");
-    boost::python::throw_error_already_set();
+    throw nb::python_error();
   }
 }
+
 void determineBondsHelper(ROMol &mol, bool useHueckel, int charge,
                           double covFactor, bool allowChargedFragments,
                           bool embedChiral, bool useAtomMap, bool useVdw,
@@ -46,9 +46,10 @@ void determineBondsHelper(ROMol &mol, bool useHueckel, int charge,
                  embedChiral, useAtomMap, useVdw, maxIterations);
   if (ControlCHandler::getGotSignal()) {
     PyErr_SetString(PyExc_KeyboardInterrupt, "Determine Bond Orders cancelled");
-    boost::python::throw_error_already_set();
+    throw nb::python_error();
   }
 }
+
 bool hueckelSupportEnabled() {
 #ifdef RDK_BUILD_YAEHMOP_SUPPORT
   return true;
@@ -58,21 +59,24 @@ bool hueckelSupportEnabled() {
 }
 }  // namespace
 
-void rdMaxFindBondOrdersItersExceededTranslator(
-    const RDKit::MaxFindBondOrdersItersExceeded &x) {
-  PyErr_SetString(PyExc_RuntimeError, x.what());
-}
+NB_MODULE(rdDetermineBonds, m) {
+  m.doc() =
+      "Module containing a C++ implementation of the xyz2mol algorithm. This "
+      "is based on xyz2mol: https://github.com/jensengroup/xyz2mol";
 
-BOOST_PYTHON_MODULE(rdDetermineBonds) {
-  python::scope().attr("__doc__") =
-      "Module containing a C++ implementation of the xyz2mol algorithm. This is based on xyz2mol: https://github.com/jensengroup/xyz2mol";
+  nb::register_exception_translator(
+      [](const std::exception_ptr &p, void *) {
+        try {
+          std::rethrow_exception(p);
+        } catch (const RDKit::MaxFindBondOrdersItersExceeded &e) {
+          PyErr_SetString(PyExc_RuntimeError, e.what());
+        }
+      });
 
-  python::register_exception_translator<RDKit::MaxFindBondOrdersItersExceeded>(
-      &rdMaxFindBondOrdersItersExceededTranslator);
-
-  std::string docs;
-  docs =
-      R"DOC(Assigns atomic connectivity to a molecule using atomic coordinates,
+  m.def("DetermineConnectivity", &determineConnectivityHelper, "mol"_a,
+        "useHueckel"_a = false, "charge"_a = 0, "covFactor"_a = 1.3,
+        "useVdw"_a = false,
+        R"DOC(Assigns atomic connectivity to a molecule using atomic coordinates,
 disregarding pre-existing bonds
 
 Args:
@@ -86,15 +90,13 @@ Args:
        radius if the van der Waals method is used
    useVdw: (optional) if this is false, the connect-the-dots method
        will be used instead of the van der Waals method
-)DOC";
-  python::def("DetermineConnectivity", &determineConnectivityHelper,
-              (python::arg("mol"), python::arg("useHueckel") = false,
-               python::arg("charge") = 0, python::arg("covFactor") = 1.3,
-               python::arg("useVdw") = false),
-              docs.c_str());
+)DOC");
 
-  docs =
-      R"DOC(Assigns atomic connectivity to a molecule using atomic coordinates,
+  m.def("DetermineBondOrders", &determineBondOrdersHelper, "mol"_a,
+        "charge"_a = 0, "allowChargedFragments"_a = true,
+        "embedChiral"_a = true, "useAtomMap"_a = false,
+        "maxIterations"_a = size_t(0),
+        R"DOC(Assigns atomic connectivity to a molecule using atomic coordinates,
 disregarding pre-existing bonds
 
 Args:
@@ -112,17 +114,14 @@ Args:
    maxIterations: (optional) maximum number of iterations to run in the bond order
    determination algorithm, after which a MaxFindBondOrdersItersExceeded
    exception will be thrown. Defaults to 0 (no limit)
-)DOC";
-  python::def(
-      "DetermineBondOrders", &determineBondOrdersHelper,
-      (python::arg("mol"), python::arg("charge") = 0,
-       python::arg("allowChargedFragments") = true,
-       python::arg("embedChiral") = true, python::arg("useAtomMap") = false,
-       python::arg("maxIterations") = 0),
-      docs.c_str());
+)DOC");
 
-  docs =
-      R"DOC(Assigns atomic connectivity to a molecule using atomic coordinates,
+  m.def("DetermineBonds", &determineBondsHelper, "mol"_a,
+        "useHueckel"_a = false, "charge"_a = 0, "covFactor"_a = 1.3,
+        "allowChargedFragments"_a = true, "embedChiral"_a = true,
+        "useAtomMap"_a = false, "useVdw"_a = false,
+        "maxIterations"_a = size_t(0),
+        R"DOC(Assigns atomic connectivity to a molecule using atomic coordinates,
 disregarding pre-existing bonds
 
 Args:
@@ -147,15 +146,8 @@ Args:
    maxIterations: (optional) maximum number of iterations to run in the bond order
    determination algorithm, after which a MaxFindBondOrdersItersExceeded
    exception will be thrown. Defaults to 0 (no limit)
-)DOC";
-  python::def(
-      "DetermineBonds", &determineBondsHelper,
-      (python::arg("mol"), python::arg("useHueckel") = false,
-       python::arg("charge") = 0, python::arg("covFactor") = 1.3,
-       python ::arg("allowChargedFragments") = true,
-       python::arg("embedChiral") = true, python::arg("useAtomMap") = false,
-       python::arg("useVdw") = false, python::arg("maxIterations") = 0),
-      docs.c_str());
-  python::def("hueckelEnabled", &hueckelSupportEnabled,
-              "whether or not the RDKit was compiled with YAeHMOP support");
+)DOC");
+
+  m.def("hueckelEnabled", &hueckelSupportEnabled,
+        "whether or not the RDKit was compiled with YAeHMOP support");
 }
