@@ -8,35 +8,37 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <string>
+#include <nanobind/nanobind.h>
 
-#include <RDBoost/Wrap.h>
-#include <RDBoost/python.h>
+#include <boost/dynamic_bitset.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
-#include <GraphMol/FileParsers/FileParsers.h>
 #include "RDGeneral/ControlCHandler.h"
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 using RDKit::CIPLabeler::assignCIPLabels;
 
-void rdMaxIterationsExceededTranslator(
-    RDKit::CIPLabeler::MaxIterationsExceeded const &x) {
-  std::ostringstream ss;
-  ss << x.what();
-  PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
+namespace {
+boost::dynamic_bitset<> pyObjToBitset(nb::object obj, size_t n) {
+  boost::dynamic_bitset<> result(n);
+  if (!obj.is_none()) {
+    for (nb::handle h : nb::iter(obj)) {
+      result.set(nb::cast<size_t>(h));
+    }
+  }
+  return result;
 }
 
-void assignCIPLabelsWrapHelper(RDKit::ROMol &mol,
-                               const python::object &atomsToLabel,
-                               const python::object &bondsToLabel,
-                               unsigned int maxRecursiveIterations) {
-  auto atoms = pythonObjectToDynBitset(atomsToLabel, mol.getNumAtoms());
-  auto bonds = pythonObjectToDynBitset(bondsToLabel, mol.getNumBonds());
+void assignCIPLabelsHelper(RDKit::ROMol &mol, nb::object atomsToLabel,
+                           nb::object bondsToLabel,
+                           unsigned int maxRecursiveIterations) {
+  auto atoms = pyObjToBitset(atomsToLabel, mol.getNumAtoms());
+  auto bonds = pyObjToBitset(bondsToLabel, mol.getNumBonds());
 
   // If both atoms and bonds are None, assign all the mol.
-  if (!atomsToLabel && !bondsToLabel) {
+  if (atomsToLabel.is_none() && bondsToLabel.is_none()) {
     atoms.set();
     bonds.set();
   }
@@ -44,12 +46,13 @@ void assignCIPLabelsWrapHelper(RDKit::ROMol &mol,
   assignCIPLabels(mol, atoms, bonds, maxRecursiveIterations);
   if (RDKit::ControlCHandler::getGotSignal()) {
     PyErr_SetString(PyExc_KeyboardInterrupt, "Assign CIP labels cancelled");
-    boost::python::throw_error_already_set();
+    throw nb::python_error();
   }
 }
+}  // namespace
 
-BOOST_PYTHON_MODULE(rdCIPLabeler) {
-  python::scope().attr("__doc__") =
+NB_MODULE(rdCIPLabeler, m) {
+  m.doc() =
       "Module containing a function to assign stereochemical labels based "
       "on an accurate CIP rules implementation. This algoritm is a port "
       "of https://github.com/SiMolecule/centres, which was originally "
@@ -59,28 +62,32 @@ BOOST_PYTHON_MODULE(rdCIPLabeler) {
       "Stereochemistry:\nProposals for Revised Rules and a Guide for Machine "
       "Implementation.\nJ. Chem. Inf. Model. 2018, 58, 1755-1765.\n";
 
-  python::register_exception_translator<
-      RDKit::CIPLabeler::MaxIterationsExceeded>(
-      &rdMaxIterationsExceededTranslator);
+  nb::register_exception_translator(
+      [](const std::exception_ptr &p, void *) {
+        try {
+          std::rethrow_exception(p);
+        } catch (const RDKit::CIPLabeler::MaxIterationsExceeded &e) {
+          std::string msg = e.what();
+          PyErr_SetString(PyExc_RuntimeError, msg.c_str());
+        }
+      });
 
-  std::string docString =
-      "New implementation of Stereo assignment using a true CIP ranking.\n"
-      "On return:  The molecule to contains CIP flags\n"
-      "Errors:  when maxRecursiveIterations is exceeded, throws a "
-      "MaxIterationsExceeded error\nARGUMENTS:\n\n"
-      " - mol: the molecule\n"
-      " - atomsToLabel: (optional) list of atoms to label\n"
-      " - bondsToLabel: (optional) list of bonds to label\n"
-      " - maxRecursiveIterations: (optional) protects against pseudo-infinite\n"
-      "recursion for highly symmetrical structures.\n A value of 1,250,000 take"
-      " about 1 second.  Most structures requires less than 10,000"
-      "iterations.\n A peptide with MW~3000 took about 100 iterations, and a "
-      "20,000 mw protein took about 600 iterations\n(0 = default - no limit)\n";
+  m.def(
+      "AssignCIPLabels", assignCIPLabelsHelper, "mol"_a,
+      "atomsToLabel"_a = nb::none(), "bondsToLabel"_a = nb::none(),
+      "maxRecursiveIterations"_a = 0u,
+      R"DOC(New implementation of Stereo assignment using a true CIP ranking.
+On return:  The molecule to contains CIP flags
+Errors:  when maxRecursiveIterations is exceeded, throws a MaxIterationsExceeded error
+ARGUMENTS:
 
-  python::def(
-      "AssignCIPLabels", assignCIPLabelsWrapHelper,
-      (python::arg("mol"), python::arg("atomsToLabel") = python::object(),
-       python::arg("bondsToLabel") = python::object(),
-       python::arg("maxRecursiveIterations") = 0),
-      docString.c_str());
+ - mol: the molecule
+ - atomsToLabel: (optional) list of atoms to label
+ - bondsToLabel: (optional) list of bonds to label
+ - maxRecursiveIterations: (optional) protects against pseudo-infinite
+recursion for highly symmetrical structures.
+ A value of 1,250,000 take about 1 second.  Most structures requires less than 10,000iterations.
+ A peptide with MW~3000 took about 100 iterations, and a 20,000 mw protein took about 600 iterations
+(0 = default - no limit)
+)DOC");
 }
