@@ -297,8 +297,7 @@ Note that this does not update properties, CStates or Attachment Points.)DOC")
 )DOC");
 
     m.def("GetMolSubstanceGroups", &getMolSubstanceGroups, "mol"_a,
-          R"DOC(returns a copy of the molecule's SubstanceGroups (if any))DOC",
-          nb::keep_alive<0, 1>());
+          R"DOC(returns a copy of the molecule's SubstanceGroups (if any))DOC");
     m.def("GetMolSubstanceGroupWithIdx", &getMolSubstanceGroupWithIdx, "mol"_a,
           "idx"_a,
           R"DOC(returns a particular SubstanceGroup from the molecule)DOC",
