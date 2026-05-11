@@ -253,8 +253,8 @@ static void fingerprintSearch_helper_2(
 
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper_3(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const python::object &fingerprintGenerator, int startLine, int finishLine,
-    const python::object &py_params) {
+    const python::object &fingerprintGenerator, const python::object &py_params,
+    int startLine, int finishLine) {
   SynthonSpaceSearch::SynthonSpaceSearchParams params;
   if (!py_params.is_none()) {
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
