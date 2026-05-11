@@ -1069,13 +1069,10 @@ static const TemplateMatch *selectBestMatch(
 bool EmbeddedFrag::matchToTemplateMacrocycle(
     const RDKit::INT_VECT &macrocycleRing, const RDKit::VECT_INT_VECT &allRings,
     const SubstituentInfo &subInfo) {
-  std::cerr << ">>> matchToTemplateMacrocycle called for ring size " << macrocycleRing.size() << std::endl;
-
   // Return early if no template of this size exists
   CoordinateTemplates &coordinateTemplates =
       CoordinateTemplates::getRingSystemTemplates();
   if (!coordinateTemplates.hasTemplateOfSize(macrocycleRing.size())) {
-    std::cerr << ">>> No templates of this size, returning false" << std::endl;
     return false;
   }
 
@@ -1123,18 +1120,8 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
     best = selectBestMatch(all_validMatches);
   }
   if (!best) {
-    std::cerr << ">>> No best match found, returning false" << std::endl;
     return false;
   }
-
-  std::cerr << ">>> Found best match, applying template coordinates" << std::endl;
-  std::cerr << ">>> Macrocycle ring atoms: ";
-  for (auto idx : macrocycleRing) {
-    std::cerr << idx << " ";
-  }
-  std::cerr << std::endl;
-
-  std::cerr << ">>> Template match (first 10): ";
   int count = 0;
   for (const auto &[templateIdx, molIdx] : best->match) {
     std::cerr << "t" << templateIdx << "->m" << molIdx << " ";
@@ -1144,23 +1131,10 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
 
   // Apply template coordinates
   applyTemplateCoordinates(best->templateMol, best->match);
-
-  std::cerr << ">>> After applyTemplateCoordinates, d_eatoms.size()=" << d_eatoms.size() << std::endl;
-  std::cerr << ">>> Embedded atoms: ";
-  for (const auto &ea : d_eatoms) {
-    std::cerr << ea.first << " ";
-  }
-  std::cerr << std::endl;
-
-  std::cerr << ">>> Calling maybeRefineTemplateMatchedMacrocycle" << std::endl;
   maybeRefineTemplateMatchedMacrocycle(macrocycleRing, allRings);
-
-  std::cerr << ">>> Calling maybeReflectSymmetricFusedRings" << std::endl;
   // check if fused rings can be flipped to place substitutions outside of the
   // macrocycle
   maybeReflectSymmetricFusedRings(macrocycleRing, allRings);
-
-  std::cerr << ">>> matchToTemplateMacrocycle returning TRUE" << std::endl;
   return true;
 }
 
@@ -1801,21 +1775,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
   // now loop over the remaining rings and attach them one at a time
   // the order is determined by how many atoms a ring has in common with
   // the atoms already embedded
-  while (d_eatoms.size() < funion.size()) {  // ) {
-    std::cerr << "\n>>> Loop iteration: d_eatoms.size()=" << d_eatoms.size() << ", funion.size()=" << funion.size() << ", doneRings.size()=" << doneRings.size() << "/" << fusedRings.size() << std::endl;
-
-    // Check if all rings are done
-    if (doneRings.size() >= fusedRings.size()) {
-      std::cerr << ">>> ERROR: All rings are done but d_eatoms.size() < funion.size()!" << std::endl;
-      std::cerr << ">>> Missing atoms:" << std::endl;
-      for (auto atomIdx : funion) {
-        if (d_eatoms.find(atomIdx) == d_eatoms.end()) {
-          std::cerr << "  atom " << atomIdx << " not in d_eatoms" << std::endl;
-        }
-      }
-      break;  // Exit to avoid infinite loop
-    }
-
+  while (d_eatoms.size() < funion.size()) {
     int nextId;
     // we will take the ring with maximum number of common atoms with
     // with atoms already done

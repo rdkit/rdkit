@@ -270,10 +270,7 @@ class MacrocycleGenerator {
 
 //! Endpoint information for shared vertex constraint computation
 struct EndpointInfo {
-  int ringSize;                //!< Size of the small ring
-  size_t adjacentInternalPos;  //!< Adjacent internal shared position (for turn
-                               //!< direction)
-  bool isFirst;  //!< Whether this is the first endpoint of the pattern
+  int ringSize;  //!< Size of the small ring
 };
 
 // ============================================================================
@@ -286,10 +283,9 @@ struct EndpointInfo {
   For square (n=4): 90°, pentagon (n=5): 72°, hexagon (n=6): 60°
 
   \param ringSize: Number of atoms in the ring
-  \param turnSign: +1 for R turn, -1 for L turn
   \return Turn angle in radians
 */
-double computeIdealAngle(int ringSize, int turnSign);
+double computeIdealAngle(int ringSize);
 
 //! Find positions where a small ring shares atoms with the macrocycle
 /*!
@@ -320,13 +316,10 @@ bool verifyAndReorderSharedPositions(std::vector<size_t> &sharedPositions,
   \param endpointPositions: Map from position to vector of endpoint infos
   \param pos: Position of the endpoint in the macrocycle
   \param ringSize: Size of the small ring
-  \param adjacentInternalPos: Adjacent internal shared position (for turn
-  direction)
-  \param isFirst: Whether this is the first endpoint of the pattern
 */
 void trackEndpoint(
     std::map<size_t, std::vector<EndpointInfo>> &endpointPositions, size_t pos,
-    int ringSize, size_t adjacentInternalPos, bool isFirst);
+    int ringSize);
 
 //! Compute angle constraint for a shared endpoint (where two small rings meet)
 /*!

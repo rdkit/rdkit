@@ -1173,9 +1173,8 @@ void MacrocycleGenerator::adjustAnglesForClosure(
 // Helper Functions for Angle Constraint Detection and Refinement
 // ============================================================================
 
-double computeIdealAngle(int ringSize, int turnSign) {
-  double turnAngle = 2.0 * M_PI / ringSize;  // 360/n degrees
-  return turnSign * turnAngle;
+double computeIdealAngle(int ringSize) {
+  return 2.0 * M_PI / ringSize;  // 360/n degrees
 }
 
 // Find positions in the macrocycle ring that correspond to atoms shared with
@@ -1277,11 +1276,9 @@ bool verifyAndReorderSharedPositions(std::vector<size_t> &sharedPositions,
 
 void trackEndpoint(
     std::map<size_t, std::vector<EndpointInfo>> &endpointPositions, size_t pos,
-    int ringSize, size_t adjacentInternalPos, bool isFirst) {
+    int ringSize) {
   EndpointInfo info;
   info.ringSize = ringSize;
-  info.adjacentInternalPos = adjacentInternalPos;
-  info.isFirst = isFirst;
   endpointPositions[pos].push_back(info);
 }
 
@@ -1293,9 +1290,6 @@ AngleConstraint computeSharedEndpointConstraint(
   if (endpoints.size() != 2) {
     return constraint;  // Only valid for exactly 2 endpoints
   }
-
-  size_t adj1 = endpoints[0].adjacentInternalPos;
-  size_t adj2 = endpoints[1].adjacentInternalPos;
   int ringSize1 = endpoints[0].ringSize;
   int ringSize2 = endpoints[1].ringSize;
 
@@ -1307,14 +1301,9 @@ AngleConstraint computeSharedEndpointConstraint(
   //                                 = |turn1| + |turn2|
   // And macrocycle_turn = π - macrocycle_internal = π - (|turn1| + |turn2|)
 
-  bool ring1HasInternal = (adj1 != pos);
-  bool ring2HasInternal = (adj2 != pos);
-
   // Get the ideal turn magnitude for each ring
-  double turn1 =
-      std::abs(computeIdealAngle(ringSize1, ring1HasInternal ? -1 : 1));
-  double turn2 =
-      std::abs(computeIdealAngle(ringSize2, ring2HasInternal ? -1 : 1));
+  double turn1 = computeIdealAngle(ringSize1);
+  double turn2 = computeIdealAngle(ringSize2);
 
   // Macrocycle internal angle = |turn1| + |turn2|
   double macrocycleInternal = turn1 + turn2;
@@ -1338,10 +1327,8 @@ std::vector<AngleConstraint> identifyAngleConstraintsForFusedRings(
   std::map<size_t, std::vector<EndpointInfo>> endpointPositions;
 
   // Process each ring to find fusions with the macrocycle
-  int ringIdx = 0;
   for (const auto &ring : allRings) {
     if (ring.size() > MACROCYCLE_SIZE_THRESHOLD) {
-      ringIdx++;
       continue;
     }
     // Find shared atoms between this ring and the macrocycle
@@ -1351,51 +1338,42 @@ std::vector<AngleConstraint> identifyAngleConstraintsForFusedRings(
     // Need at least 1 shared atom (spiro or fusion)
     // Skip if more than 4 shared atoms (unusual/complex fusion)
     if (sharedPositions.size() < 1 || sharedPositions.size() > 4) {
-      ringIdx++;
       continue;
     }
 
     // Verify shared atoms are contiguous and reorder if needed
     if (!verifyAndReorderSharedPositions(sharedPositions,
                                          macrocycleRing.size())) {
-      ringIdx++;
       continue;
     }
     size_t numShared = sharedPositions.size();
 
     // Track endpoints for this fused ring
-    // For numShared == 2: no internal positions, so adjacent = position itself
-    // For numShared >= 3: has internal positions, so adjacent = actual internal
-    // position
     size_t firstPos = sharedPositions[0];
     size_t lastPos = sharedPositions[numShared - 1];
 
     // Adjacent to first endpoint: next position if internals exist, else itself
     size_t adjacentToFirst = (numShared >= 3) ? sharedPositions[1] : firstPos;
-    trackEndpoint(endpointPositions, firstPos, ring.size(), adjacentToFirst,
-                  true);
+    trackEndpoint(endpointPositions, firstPos, ring.size());
 
     // Adjacent to last endpoint: previous position if internals exist, else
     // itself
     size_t adjacentToLast =
         (numShared >= 3) ? sharedPositions[numShared - 2] : lastPos;
-    trackEndpoint(endpointPositions, lastPos, ring.size(), adjacentToLast,
-                  false);
+    trackEndpoint(endpointPositions, lastPos, ring.size());
 
     // Add constraints for internal positions (only when numShared >= 3)
     // Loop runs 0 times when numShared == 2 (since 1 < 2-1 is false)
     for (size_t i = 1; i < numShared - 1; ++i) {
       size_t pos = sharedPositions[i];
       int turnSign = -1;  // L turn
-      double idealAngle = computeIdealAngle(ring.size(), turnSign);
+      double idealAngle = computeIdealAngle(ring.size()) * turnSign;
 
       AngleConstraint angleConstraint;
       angleConstraint.position = pos;
       angleConstraint.targetAngle = idealAngle;
       angleConstraints.push_back(angleConstraint);
     }
-
-    ringIdx++;
   }
   // Process shared endpoints: positions that are endpoints of exactly 2 small
   // rings
