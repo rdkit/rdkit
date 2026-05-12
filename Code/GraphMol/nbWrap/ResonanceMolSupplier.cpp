@@ -121,6 +121,9 @@ class PyResonanceMolSupplierCallback : public ResonanceMolSupplierCallback {
   bool operator()() override {
     PyGILStateHolder h;
     auto override = getCallbackOverride();
+    std::cerr << "getCallbackOverride called\n";
+    std::cerr << "  " << override.is_valid() << " " << override.is_none()
+              << std::endl;
     if (!override.is_valid() || override.is_none()) {
       throw nb::attribute_error(
           "The __call__ attribute in the rdchem.ResonanceMolSupplierCallback "
@@ -155,7 +158,11 @@ void setProgressCallbackHelper(ResonanceMolSupplier &suppl,
   try {
     auto *cb = nb::cast<PyResonanceMolSupplierCallback *>(callback);
     auto override = cb->getCallbackOverride();
-    if (!override.is_valid() || !PyCallable_Check(override.ptr())) {
+    std::cerr << "setProgressCallbackHelper called\n";
+    std::cerr << "  " << override.is_valid() << " " << override.is_none()
+              << " ? " << PyCallable_Check(override.ptr()) << std::endl;
+    if (!override.is_valid() ||
+        override.is_none()) {  //|| !PyCallable_Check(override.ptr())) {
       throw nb::attribute_error(
           "The __call__ attribute in the rdchem.ResonanceMolSupplierCallback "
           "subclass must exist and be a callable method");
@@ -219,7 +226,8 @@ std::string resonanceMolSupplierClassDoc =
 )DOC";
 struct resmolsup_wrap {
   static void wrap(nb::module_ &m) {
-    nb::enum_<ResonanceMolSupplier::ResonanceFlags>(m, "ResonanceFlags")
+    nb::enum_<ResonanceMolSupplier::ResonanceFlags>(m, "ResonanceFlags",
+                                                    nb::is_arithmetic())
         .value("ALLOW_INCOMPLETE_OCTETS",
                ResonanceMolSupplier::ALLOW_INCOMPLETE_OCTETS)
         .value("ALLOW_CHARGE_SEPARATION",

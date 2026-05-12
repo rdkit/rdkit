@@ -19,6 +19,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
+#include "ContextManagers.h"
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -69,21 +70,6 @@ ROMol *MolSupplGetItem(T *suppl, int idx) {
     }
   }
   return res;
-}
-
-template <typename T>
-T *MolIOEnter(T *self) {
-  return self;
-}
-
-template <typename T>
-bool MolIOExit(T *self, nb::object exc_type, nb::object exc_val,
-               nb::object traceback) {
-  RDUNUSED_PARAM(exc_type);
-  RDUNUSED_PARAM(exc_val);
-  RDUNUSED_PARAM(traceback);
-  self->close();
-  return false;
 }
 
 void setDataHelper(SDMolSupplier &self, const std::string &text, bool sanitize,
@@ -149,7 +135,15 @@ struct sdmolsup_wrap {
              "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true)
         .def("__enter__", &MolIOEnter<SDMolSupplier>,
              nb::rv_policy::reference_internal)
-        .def("__exit__", &MolIOExit<SDMolSupplier>)
+        .def("__exit__",
+             [](SDMolSupplier *self, nb::object exc_type, nb::object exc_val,
+                nb::object traceback) {
+               RDUNUSED_PARAM(exc_type);
+               RDUNUSED_PARAM(exc_val);
+               RDUNUSED_PARAM(traceback);
+               self->close();
+               return false;
+             })
         .def("__iter__", &MolSupplIter<SDMolSupplier>,
              nb::rv_policy::reference_internal)
         .def(

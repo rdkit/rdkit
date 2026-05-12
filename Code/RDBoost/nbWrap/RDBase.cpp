@@ -1,5 +1,5 @@
 
-// Copyright (c) 2004-2019 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2004-2026 greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,6 +17,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/operators.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/string.h>
 
 #include <RDGeneral/RDLog.h>
 

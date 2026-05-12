@@ -19,6 +19,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <RDBoost/python_streambuf_nb.h>
 #include <RDGeneral/FileParseException.h>
+#include "ContextManagers.h"
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -90,21 +91,6 @@ ROMol *MolSupplGetItem(T *suppl, int idx) {
   return res;
 }
 
-template <typename T>
-T *MolIOEnter(T *self) {
-  return self;
-}
-
-template <typename T>
-bool MolIOExit(T *self, nb::object exc_type, nb::object exc_val,
-               nb::object traceback) {
-  RDUNUSED_PARAM(exc_type);
-  RDUNUSED_PARAM(exc_val);
-  RDUNUSED_PARAM(traceback);
-  self->close();
-  return false;
-}
-
 }  // namespace
 
 namespace RDKit {
@@ -137,9 +123,9 @@ struct maemolsup_wrap {
     nb::class_<LocalMaeMolSupplier>(m, "MaeMolSupplier",
                                     maeMolSupplierClassDoc.c_str())
         .def(nb::init<>())
-        .def(nb::init<nb::object, bool, bool>(), "fileobj"_a,
-             "sanitize"_a = true, "removeHs"_a = true)
         .def(nb::init<std::string, bool, bool>(), "filename"_a,
+             "sanitize"_a = true, "removeHs"_a = true)
+        .def(nb::init<nb::object, bool, bool>(), "fileobj"_a,
              "sanitize"_a = true, "removeHs"_a = true)
         .def("__enter__", &MolIOEnter<LocalMaeMolSupplier>,
              nb::rv_policy::reference_internal)
