@@ -4,5 +4,5 @@ rdkit_nanobind_extension(rdAbbreviations
                        LINK_LIBRARIES Abbreviations
                                       GraphMol)
 
-add_pytest(pyAbbreviations ${CMAKE_CURRENT_SOURCE_DIR}/testAbbreviations.py)
+add_pytest(pyAbbreviations ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testAbbreviations.py)
 
