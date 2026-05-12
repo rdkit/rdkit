@@ -3,4 +3,4 @@ rdkit_nanobind_extension(rdSLNParse rdSLNParse.cpp
                          DEST Chem
                          LINK_LIBRARIES SLNParse)
 
-add_pytest(pySLNParse ${CMAKE_CURRENT_SOURCE_DIR}/testSLN.py)
+add_pytest(pySLNParse ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testSLN.py)

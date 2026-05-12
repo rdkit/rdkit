@@ -1,6 +1,8 @@
 // $Id$
 //
-//  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2008-2026, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,19 +45,6 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 
-namespace RDKit {
-static ROMol *MolFromSLN(std::string sln, bool sanitize = true,
-                         bool debugParser = false) {
-  RWMol *newM = SLNToMol(sln, sanitize, debugParser);
-  return static_cast<ROMol *>(newM);
-}
-static ROMol *MolFromQuerySLN(std::string sln, bool mergeHs = true,
-                               bool debugParser = false) {
-  RWMol *newM = SLNQueryToMol(sln, mergeHs, debugParser);
-  return static_cast<ROMol *>(newM);
-}
-}  // namespace RDKit
-
 NB_MODULE(rdSLNParse, m) {
   m.doc() =
       "Module containing classes and functions for working with Sybyl line "
@@ -71,9 +60,15 @@ NB_MODULE(rdSLNParse, m) {
         }
       });
 
-  m.def("MolFromSLN", &RDKit::MolFromSLN, "SLN"_a, "sanitize"_a = true,
-        "debugParser"_a = false, nb::rv_policy::take_ownership,
-        R"DOC(Construct a molecule from an SLN string.
+  m.def(
+      "MolFromSLN",
+      [](std::string sln, bool sanitize, bool debugParser) -> RDKit::ROMol * {
+        return static_cast<RDKit::ROMol *>(
+            RDKit::SLNToMol(sln, sanitize, debugParser));
+      },
+      "SLN"_a, "sanitize"_a = true, "debugParser"_a = false,
+      nb::rv_policy::take_ownership,
+      R"DOC(Construct a molecule from an SLN string.
 
     ARGUMENTS:
 
@@ -90,10 +85,15 @@ NB_MODULE(rdSLNParse, m) {
     query from SLN, use MolFromQuerySLN.
 )DOC");
 
-  m.def("MolFromQuerySLN", &RDKit::MolFromQuerySLN, "SLN"_a,
-        "mergeHs"_a = true, "debugParser"_a = false,
-        nb::rv_policy::take_ownership,
-        R"DOC(Construct a query molecule from an SLN string.
+  m.def(
+      "MolFromQuerySLN",
+      [](std::string sln, bool mergeHs, bool debugParser) -> RDKit::ROMol * {
+        return static_cast<RDKit::ROMol *>(
+            RDKit::SLNQueryToMol(sln, mergeHs, debugParser));
+      },
+      "SLN"_a, "mergeHs"_a = true, "debugParser"_a = false,
+      nb::rv_policy::take_ownership,
+      R"DOC(Construct a query molecule from an SLN string.
 
   ARGUMENTS:
 
