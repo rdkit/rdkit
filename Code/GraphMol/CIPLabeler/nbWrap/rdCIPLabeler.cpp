@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2020 Schrödinger, LLC
+//  Copyright (C) 2020-2026 Schrödinger, LLC and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
