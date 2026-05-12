@@ -1,15 +1,19 @@
 rdkit_library(Abbreviations
               Abbreviations.cpp
               AbbreviationsUtils.cpp
-              LINK_LIBRARIES SmilesParse 
+              LINK_LIBRARIES SmilesParse
               SubstructMatch GraphMol RDGeneral)
 target_compile_definitions(Abbreviations PRIVATE RDKIT_ABBREVIATIONS_BUILD)
 
 rdkit_headers(Abbreviations.h DEST GraphMol/Abbreviations)
 
-rdkit_catch_test(testAbbreviations catch_tests.cpp 
+rdkit_catch_test(testAbbreviations catch_tests.cpp
 LINK_LIBRARIES Abbreviations SmilesParse FileParsers )
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   add_subdirectory(Wrap)
+endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
 endif()
