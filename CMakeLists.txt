@@ -335,26 +335,26 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
   #-------
   # pull in python:
-  find_package(Python3 COMPONENTS Interpreter Development.Module NumPy)
-  target_include_directories(rdkit_py_base INTERFACE ${Python3_INCLUDE_DIRS})
-  target_include_directories(rdkit_py_base INTERFACE ${Python3_NumPy_INCLUDE_DIRS})
+  find_package(Python COMPONENTS Interpreter Development.Module NumPy)
+  target_include_directories(rdkit_py_base INTERFACE ${Python_INCLUDE_DIRS})
+  target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
 
   # determine linkage of python
   execute_process(
       COMMAND
-      ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
+      ${Python_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
       OUTPUT_VARIABLE Py_ENABLE_SHARED
       OUTPUT_STRIP_TRAILING_WHITESPACE
   )
 
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
-    target_link_libraries(rdkit_py_base INTERFACE ${Python3_LIBRARIES} )
+    target_link_libraries(rdkit_py_base INTERFACE ${Python_LIBRARIES} )
   endif()
 
 
-  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" REQUIRED CONFIG)
+  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}" "numpy${Python_VERSION_MAJOR}${Python_VERSION_MINOR}" REQUIRED CONFIG)
 
-  target_link_libraries(rdkit_py_base INTERFACE "Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")
+  target_link_libraries(rdkit_py_base INTERFACE "Boost::python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}" "Boost::numpy${Python_VERSION_MAJOR}${Python_VERSION_MINOR}")
 
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
@@ -363,7 +363,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
       # Determine correct installation directory for Python bindings
       execute_process(
         COMMAND
-        ${Python3_EXECUTABLE} -c "import sys; import sysconfig; \
+        ${Python_EXECUTABLE} -c "import sys; import sysconfig; \
           base_key = 'base' if sys.platform == 'win32' else 'platbase'; \
           schema = 'nt' if sys.platform == 'win32' else 'posix_prefix'; \
           print(sysconfig.get_path('platlib', schema, vars={base_key: '${CMAKE_INSTALL_PREFIX}'}))"
@@ -404,7 +404,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     # We strip off the first word though (which will be the compiler name).
     execute_process(
         COMMAND
-        ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
+        ${Python_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
         OUTPUT_VARIABLE PYTHON_LDSHARED
         OUTPUT_STRIP_TRAILING_WHITESPACE
      )
@@ -417,7 +417,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   # check to see if we can find nbval,
   execute_process(
     COMMAND
-    ${Python3_EXECUTABLE} -c "import nbval"
+    ${Python_EXECUTABLE} -c "import nbval"
     ERROR_VARIABLE nbvalERR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT nbvalERR)

@@ -10,6 +10,8 @@ endif(NOT RDK_USE_BOOST_IOSTREAMS)
 if(RDK_BUILD_MAEPARSER_SUPPORT)
     set(MAEPARSER_LIB maeparser)
     set(maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
+    message("WHO: ${RDK_MAEPARSER_LIBS}")
+
     if ("${RDK_MAEPARSER_LIBS}" STREQUAL "")
         # if we're not building maeparser as part of the RDKit build), then find
         # the imported package
@@ -18,6 +20,7 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
     else()
         # if we built maeparser as part of the RDKit build, then we need to use
         # the headers from the source directory
+        message("WOT: ${maeparser_INCLUDE_DIRS}")
         include_directories(${maeparser_INCLUDE_DIRS})
     endif()
 endif()
