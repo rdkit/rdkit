@@ -12,7 +12,7 @@ from scipy.optimize import linear_sum_assignment
 from rdkit import Chem
 from rdkit.Chem import rdmolops
 
-BOND_TYPE_CODES = {
+_bondTypeCodes = {
   Chem.rdchem.BondType.SINGLE: 1,
   Chem.rdchem.BondType.DOUBLE: 2,
   Chem.rdchem.BondType.TRIPLE: 3,
@@ -20,9 +20,9 @@ BOND_TYPE_CODES = {
 }
 _BONDSYMBOL_ = {1: '-', 2: '=', 3: '#', 4: ':'}
 
-#ATOM_HASH_MODULUS = 217 # 108*2+1
-ATOM_HASH_MODULUS = 223  # Gobbi code actually uses the first prime higher than 217, not 217 itself
-BOND_HASH_MODULUS = 5
+#atomHashModulus = 217 # 108*2+1
+atomHashModulus = 223  # Gobbi code actually uses the first prime higher than 217, not 217 itself
+bondHashModulus = 5
 
 #def FindAllPathsOfLengthN_Gobbi(mol, length, rootedAtAtom=-1, uniquepaths=True):
 #	return FindAllPathsOfLengthMToN(mol, length, length, rootedAtAtom=rootedAtAtom, uniquepaths=uniquepaths)
@@ -60,12 +60,12 @@ def _FindAllPathsOfLengthMToN_Gobbi(atom, path, minlength, maxlength, visited, p
       if len(path) >= minlength and len(path) <= maxlength:
         paths.append(tuple(path))
       if len(path) < maxlength:
-        begin_atom = bond.GetBeginAtom()
-        end_atom = bond.GetEndAtom()
-        if begin_atom.GetIdx() == atom.GetIdx():
-          nextatom = end_atom
+        beginAtom = bond.GetBeginAtom()
+        endAtom = bond.GetEndAtom()
+        if beginAtom.GetIdx() == atom.GetIdx():
+          nextatom = endAtom
         else:
-          nextatom = begin_atom
+          nextatom = beginAtom
         nextatomidx = nextatom.GetIdx()
         if nextatomidx not in visited:
           visited.add(nextatomidx)
@@ -78,7 +78,7 @@ def getpathintegers(m1, uptolength=7):
   '''returns a list of integers describing the paths for molecule m1.  This uses numpy 16 bit unsigned integers to reproduce the data in the Gobbi paper.  The returned list is sorted'''
   bondtypelookup = {}
   for b in m1.GetBonds():
-    bondtypelookup[b.GetIdx()] = BOND_TYPE_CODES[b.GetBondType()], b.GetBeginAtom(), b.GetEndAtom()
+    bondtypelookup[b.GetIdx()] =  _bondTypeCodes[b.GetBondType()], b.GetBeginAtom(), b.GetEndAtom()
   pathintegers = {}
   for a in m1.GetAtoms():
     idx = a.GetIdx()
@@ -87,40 +87,32 @@ def getpathintegers(m1, uptolength=7):
     #			for path in rdmolops.FindAllPathsOfLengthN(m1, pathlength, rootedAtAtom=idx):
     for ipath, path in enumerate(
         FindAllPathsOfLengthMToN_Gobbi(m1, 1, uptolength, rootedAtAtom=idx, uniquepaths=False)):
-      strpath = []
       currentidx = idx
       res = []
       for ip, p in enumerate(path):
-        bond_type_code, begin_atom, end_atom = bondtypelookup[p]
-        strpath.append(_BONDSYMBOL_[bond_type_code])
-        if begin_atom.GetIdx() == currentidx:
-          a = end_atom
+        bondTypeCode, beginAtom, endAtom = bondtypelookup[p]
+        if beginAtom.GetIdx() == currentidx:
+          a = endAtom
         else:
-          a = begin_atom
-        neighbor_atom_code = a.GetAtomicNum()
+          a = beginAtom
+        neighborAtomCode = a.GetAtomicNum()
         if a.GetIsAromatic():
-          neighbor_atom_code += 108
+          neighborAtomCode += 108
 #trying to get the same behaviour as the Gobbi test code - it looks like a circular path includes the bond, but not the closure atom - this fix works
         if a.GetIdx() == idx:
-          neighbor_atom_code = None
-        if neighbor_atom_code is not None:
-          astr = a.GetSymbol()
-          if a.GetIsAromatic():
-            strpath.append(astr.lower())
-          else:
-            strpath.append(astr)
-        res.append((bond_type_code, neighbor_atom_code))
+          neighborAtomCode = None
+        res.append((bondTypeCode, neighborAtomCode))
         currentidx = a.GetIdx()
       pathuniqueint = numpy.ushort(0)  # work with 16 bit unsigned integers and ignore overflow...
-      for ires, (bond_value, atom_value) in enumerate(res):
+      for ires, (bondValue, atomValue) in enumerate(res):
         #use 16 bit unsigned integer arithmetic to reproduce the Gobbi ints
-        #					pathuniqueint = ((pathuniqueint+bond_value)*ATOM_HASH_MODULUS+atom_value)*BOND_HASH_MODULUS
-        val1 = pathuniqueint + numpy.ushort(bond_value)
-        val2 = val1 * numpy.ushort(ATOM_HASH_MODULUS)
+        #					pathuniqueint = ((pathuniqueint+bondValue)*atomHashModulus+atomValue)*bondHashModulus
+        val1 = pathuniqueint + numpy.ushort(bondValue)
+        val2 = val1 * numpy.ushort(atomHashModulus)
         #trying to get the same behaviour as the Gobbi test code - it looks like a circular path includes the bond, but not the closure atom - this fix works
-        if atom_value is not None:
-          val3 = val2 + numpy.ushort(atom_value)
-          val4 = val3 * numpy.ushort(BOND_HASH_MODULUS)
+        if atomValue is not None:
+          val3 = val2 + numpy.ushort(atomValue)
+          val4 = val3 * numpy.ushort(bondHashModulus)
         else:
           val4 = val2
         pathuniqueint = val4
@@ -133,20 +125,20 @@ def getpathintegers(m1, uptolength=7):
   return pathintegers
 
 
-def getcommon(l1: list[int], ll1: int, l2: list[int], ll2: int) -> int:
+def getcommon(l1, ll1, l2, ll2):
   '''returns the number of items sorted lists l1 and l2 have in common.  ll1 and ll2 are the list lengths'''
   ncommon = 0
   ix1 = 0
   ix2 = 0
   while (ix1 < ll1) and (ix2 < ll2):
-    begin_atom = l1[ix1]
-    end_atom = l2[ix2]
-    #begin_atom is < or > more often that ==
-    if begin_atom < end_atom:
+    beginAtom = l1[ix1]
+    endAtom = l2[ix2]
+    #beginAtom is < or > more often that ==
+    if beginAtom < endAtom:
       ix1 += 1
-    elif begin_atom > end_atom:
+    elif beginAtom > endAtom:
       ix2 += 1
-    else:  # begin_atom == end_atom:
+    else:  # beginAtom == endAtom:
       ncommon += 1
       ix1 += 1
       ix2 += 1
@@ -187,7 +179,8 @@ def gethungarianmappings(simmatrixarray):
   '''return a mapping of the atoms in the similarity matrix - the Hungarian algorithm is used because it is invariant to atom ordering.  Requires scipy'''
   costarray = numpy.ones(simmatrixarray.shape) - simmatrixarray
   row_ind, col_ind = linear_sum_assignment(costarray)
-  return list(zip(row_ind, col_ind))
+  res = zip(row_ind, col_ind)
+  return res
   
 
 
@@ -205,23 +198,23 @@ def getsimab(mappings, simmatrixdict):
 def getsimmatrix(m1, m1pathintegers, m2, m2pathintegers):
   '''generate a matrix of atom atom similarities.  See Figure 4'''
 
-  aidata = [((atom_value.GetAtomicNum(), atom_value.GetIsAromatic()), atom_value.GetIdx()) for atom_value in m1.GetAtoms()]
+  aidata = [((atomValue.GetAtomicNum(), atomValue.GetIsAromatic()), atomValue.GetIdx()) for atomValue in m1.GetAtoms()]
   bjdata = [((bj.GetAtomicNum(), bj.GetIsAromatic()), bj.GetIdx()) for bj in m2.GetAtoms()]
 
   simmatrixarray = numpy.zeros((len(aidata), len(bjdata)))
 
-  for atom_value, (aitype, aiidx) in enumerate(aidata):
+  for atomValue, (aitype, aiidx) in enumerate(aidata):
     aipaths = m1pathintegers[aiidx]
     naipaths = len(aipaths)
     for bj, (bjtype, bjidx) in enumerate(bjdata):
       if aitype == bjtype:
         bjpaths = m2pathintegers[bjidx]
         nbjpaths = len(bjpaths)
-        simmatrixarray[atom_value][bj] = getsimaibj(aipaths, bjpaths, naipaths, nbjpaths)
+        simmatrixarray[atomValue][bj] = getsimaibj(aipaths, bjpaths, naipaths, nbjpaths)
   return simmatrixarray
 
 
-def AtomAtomPathSimilarity(m1:Chem.Mol , m2: Chem.Mol ,m1pathintegers=None, m2pathintegers=None) -> float:
+def AtomAtomPathSimilarity(m1 , m2 ,m1pathintegers=None, m2pathintegers=None):
   '''compute the Atom Atom Path Similarity for a pair of RDKit molecules.  See Gobbi et al, J. ChemInf (2015) 7:11
       the most expensive part of the calculation is computing the path integers - we can precompute these and pass them in as an argument'''
   if m1pathintegers is None:
