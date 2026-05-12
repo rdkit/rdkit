@@ -382,7 +382,7 @@ BOOST_PYTHON_MODULE(rdBase) {
   python::scope().attr("rdkitVersion") = RDKit::rdkitVersion;
   python::scope().attr("boostVersion") = RDKit::boostVersion;
   python::scope().attr("rdkitBuild") = RDKit::rdkitBuild;
-  python::scope().a
+  python::scope().attr("_wrapperType") = "boost";
 
   python::scope().attr("_serializationEnabled") =
 #ifdef RDK_USE_BOOST_SERIALIZATION

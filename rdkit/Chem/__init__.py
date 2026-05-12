@@ -17,9 +17,12 @@ from rdkit.Chem import rdchem
 from rdkit.Geometry import rdGeometry
 
 _HasSubstructMatchStr = rdchem._HasSubstructMatchStr
-# from rdkit.Chem.inchi import *
+from rdkit.Chem.inchi import *
 from rdkit.Chem.rdchem import *
-# from rdkit.Chem.rdCIPLabeler import *
+try:
+  from rdkit.Chem.rdCIPLabeler import *
+except ImportError:
+  pass
 from rdkit.Chem.rdmolfiles import *
 from rdkit.Chem.rdmolops import *
 
@@ -41,65 +44,66 @@ else:
     templDir += '/'
   rdCoordGen.SetDefaultTemplateFileDir(templDir)
 
-# # Github Issue #6208: boost::python iterators are slower than they should
-# # (cause is that boost::python throws exceptions as actual C++ exceptions)
-# class _GetRDKitObjIterator:
+if rdBase._wrapperType == 'boost':
+  # Github Issue #6208: boost::python iterators are slower than they should
+  # (cause is that boost::python throws exceptions as actual C++ exceptions)
+  class _GetRDKitObjIterator:
 
-#   def _sizeCalc(self):
-#     raise NotImplementedError()
+    def _sizeCalc(self):
+      raise NotImplementedError()
 
-#   def _getRDKitItem(self, i):
-#     raise NotImplementedError()
+    def _getRDKitItem(self, i):
+      raise NotImplementedError()
 
-#   def __init__(self, mol):
-#     self._mol = mol
-#     self._pos = 0
-#     self._size = self._sizeCalc()
+    def __init__(self, mol):
+      self._mol = mol
+      self._pos = 0
+      self._size = self._sizeCalc()
 
-#   def __len__(self):
-#     if self._sizeCalc() != self._size:
-#       raise RuntimeError('size changed during iteration')
-#     return self._size
+    def __len__(self):
+      if self._sizeCalc() != self._size:
+        raise RuntimeError('size changed during iteration')
+      return self._size
 
-#   def __getitem__(self, i):
-#     if i < 0 or i >= len(self):
-#       raise IndexError('index out of range')
-#     return self._getRDKitItem(i)
+    def __getitem__(self, i):
+      if i < 0 or i >= len(self):
+        raise IndexError('index out of range')
+      return self._getRDKitItem(i)
 
-#   def __next__(self):
-#     if self._pos >= len(self):
-#       raise StopIteration
+    def __next__(self):
+      if self._pos >= len(self):
+        raise StopIteration
 
-#     ret = self[self._pos]
-#     self._pos += 1
-#     return ret
+      ret = self[self._pos]
+      self._pos += 1
+      return ret
 
-#   def __iter__(self):
-#     for i in range(0, len(self)):
-#       self._pos = i
-#       yield self[i]
-#     self._pos = self._size
+    def __iter__(self):
+      for i in range(0, len(self)):
+        self._pos = i
+        yield self[i]
+        self._pos = self._size
 
-# class _GetAtomsIterator(_GetRDKitObjIterator):
+  class _GetAtomsIterator(_GetRDKitObjIterator):
 
-#   def _sizeCalc(self):
-#     return self._mol.GetNumAtoms()
+    def _sizeCalc(self):
+      return self._mol.GetNumAtoms()
 
-#   def _getRDKitItem(self, i):
-#     return self._mol.GetAtomWithIdx(i)
+    def _getRDKitItem(self, i):
+      return self._mol.GetAtomWithIdx(i)
 
-# class _GetBondsIterator(_GetRDKitObjIterator):
+  class _GetBondsIterator(_GetRDKitObjIterator):
 
-#   def _sizeCalc(self):
-#     return self._mol.GetNumBonds()
+    def _sizeCalc(self):
+      return self._mol.GetNumBonds()
 
-#   def _getRDKitItem(self, i):
-#     return self._mol.GetBondWithIdx(i)
+    def _getRDKitItem(self, i):
+      return self._mol.GetBondWithIdx(i)
 
-# rdchem.Mol.GetAtoms = lambda self: _GetAtomsIterator(self)
-# rdchem.Mol.GetAtoms.__doc__ = """returns an iterator over the atoms in the molecule"""
-# rdchem.Mol.GetBonds = lambda self: _GetBondsIterator(self)
-# rdchem.Mol.GetBonds.__doc__ = """returns an iterator over the bonds in the molecule"""
+  rdchem.Mol.GetAtoms = lambda self: _GetAtomsIterator(self)
+  rdchem.Mol.GetAtoms.__doc__ = """returns an iterator over the atoms in the molecule"""
+  rdchem.Mol.GetBonds = lambda self: _GetBondsIterator(self)
+  rdchem.Mol.GetBonds.__doc__ = """returns an iterator over the bonds in the molecule"""
 
 
 def QuickSmartsMatch(smi, sma, unique=True, display=False):

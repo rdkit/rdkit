@@ -358,6 +358,7 @@ NB_MODULE(rdBase, m) {
   m.attr("rdkitVersion") = RDKit::rdkitVersion;
   m.attr("boostVersion") = RDKit::boostVersion;
   m.attr("rdkitBuild") = RDKit::rdkitBuild;
+  m.attr("_wrapperType") = "nanobind";
 
   m.attr("_serializationEnabled") =
 #ifdef RDK_USE_BOOST_SERIALIZATION
