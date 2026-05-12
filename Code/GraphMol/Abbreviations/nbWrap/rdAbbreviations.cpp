@@ -50,23 +50,23 @@ NB_MODULE(rdAbbreviations, m) {
       "ParseAbbreviations", &Abbreviations::Utils::parseAbbreviations,
       nb::arg("text"), nb::arg("removeExtraDummies") = false,
       nb::arg("allowConnectionToDummies") = false,
-      "Returns a set of abbreviation definitions from a string. "
-      "Format of the text data: A series of lines, each of which contains:\n"
-      "\n"
-      "* label\n"
-      "* SMARTS\n"
-      "* displayLabel\n"
-      "* displayLabelW\n"
-      "\n"
-      "Where 'label' is the label used for the abbreviation, "
-      "'SMARTS' is the SMARTS definition of the abbreviation, "
-      "'displayLabel' is used in drawings to render the abbreviations and "
-      "'displayLabelW' is the display label if a bond comes in from the right. "
-      "The 'displayLabel' and 'displayLabelW' fields are optional. "
-      "Use dummies in the SMARTS to indicate attachment points. The assumption "
-      "is that the first atom is a dummy (one will be added if this is not "
-      "true) and that the second atom is the surrogate for the rest of "
-      "the group.");
+      R"DOC(Returns a set of abbreviation definitions from a string.
+Format of the text data: A series of lines, each of which contains:
+
+* label
+* SMARTS
+* displayLabel
+* displayLabelW
+
+Where 'label' is the label used for the abbreviation,
+'SMARTS' is the SMARTS definition of the abbreviation,
+'displayLabel' is used in drawings to render the abbreviations and
+'displayLabelW' is the display label if a bond comes in from the right.
+The 'displayLabel' and 'displayLabelW' fields are optional.
+Use dummies in the SMARTS to indicate attachment points. The assumption
+is that the first atom is a dummy (one will be added if this is not
+true) and that the second atom is the surrogate for the rest of
+the group.)DOC");
   m.def("ParseLinkers", &Abbreviations::Utils::parseLinkers, nb::arg("text"),
         "Returns a set of linker definitions from a string. Equivalent to "
         "calling ParseAbbreviations(text, True True).");
