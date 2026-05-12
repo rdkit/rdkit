@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2022 Greg Landrum
+//  Copyright (C) 2022-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,48 +17,6 @@ namespace nb = nanobind;
 using namespace nb::literals;
 using namespace RDKit;
 
-namespace {
-
-void determineConnectivityHelper(ROMol &mol, bool useHueckel, int charge,
-                                 double covFactor, bool useVdw) {
-  auto &wmol = static_cast<RWMol &>(mol);
-  determineConnectivity(wmol, useHueckel, charge, covFactor, useVdw);
-}
-
-void determineBondOrdersHelper(ROMol &mol, int charge,
-                               bool allowChargedFragments, bool embedChiral,
-                               bool useAtomMap, size_t maxIterations) {
-  auto &wmol = static_cast<RWMol &>(mol);
-  determineBondOrders(wmol, charge, allowChargedFragments, embedChiral,
-                      useAtomMap, maxIterations);
-  if (ControlCHandler::getGotSignal()) {
-    PyErr_SetString(PyExc_KeyboardInterrupt, "Determine Bond Orders cancelled");
-    throw nb::python_error();
-  }
-}
-
-void determineBondsHelper(ROMol &mol, bool useHueckel, int charge,
-                          double covFactor, bool allowChargedFragments,
-                          bool embedChiral, bool useAtomMap, bool useVdw,
-                          size_t maxIterations) {
-  auto &wmol = static_cast<RWMol &>(mol);
-  determineBonds(wmol, useHueckel, charge, covFactor, allowChargedFragments,
-                 embedChiral, useAtomMap, useVdw, maxIterations);
-  if (ControlCHandler::getGotSignal()) {
-    PyErr_SetString(PyExc_KeyboardInterrupt, "Determine Bond Orders cancelled");
-    throw nb::python_error();
-  }
-}
-
-bool hueckelSupportEnabled() {
-#ifdef RDK_BUILD_YAEHMOP_SUPPORT
-  return true;
-#else
-  return false;
-#endif
-}
-}  // namespace
-
 NB_MODULE(rdDetermineBonds, m) {
   m.doc() =
       "Module containing a C++ implementation of the xyz2mol algorithm. This "
@@ -73,10 +31,16 @@ NB_MODULE(rdDetermineBonds, m) {
         }
       });
 
-  m.def("DetermineConnectivity", &determineConnectivityHelper, "mol"_a,
-        "useHueckel"_a = false, "charge"_a = 0, "covFactor"_a = 1.3,
-        "useVdw"_a = false,
-        R"DOC(Assigns atomic connectivity to a molecule using atomic coordinates,
+  m.def(
+      "DetermineConnectivity",
+      [](ROMol &mol, bool useHueckel, int charge, double covFactor,
+         bool useVdw) {
+        determineConnectivity(static_cast<RWMol &>(mol), useHueckel, charge,
+                              covFactor, useVdw);
+      },
+      "mol"_a, "useHueckel"_a = false, "charge"_a = 0, "covFactor"_a = 1.3,
+      "useVdw"_a = false,
+      R"DOC(Assigns atomic connectivity to a molecule using atomic coordinates,
 disregarding pre-existing bonds
 
 Args:
@@ -92,11 +56,23 @@ Args:
        will be used instead of the van der Waals method
 )DOC");
 
-  m.def("DetermineBondOrders", &determineBondOrdersHelper, "mol"_a,
-        "charge"_a = 0, "allowChargedFragments"_a = true,
-        "embedChiral"_a = true, "useAtomMap"_a = false,
-        "maxIterations"_a = size_t(0),
-        R"DOC(Assigns atomic connectivity to a molecule using atomic coordinates,
+  m.def(
+      "DetermineBondOrders",
+      [](ROMol &mol, int charge, bool allowChargedFragments, bool embedChiral,
+         bool useAtomMap, size_t maxIterations) {
+        determineBondOrders(static_cast<RWMol &>(mol), charge,
+                            allowChargedFragments, embedChiral, useAtomMap,
+                            maxIterations);
+        if (ControlCHandler::getGotSignal()) {
+          PyErr_SetString(PyExc_KeyboardInterrupt,
+                          "Determine Bond Orders cancelled");
+          throw nb::python_error();
+        }
+      },
+      "mol"_a, "charge"_a = 0, "allowChargedFragments"_a = true,
+      "embedChiral"_a = true, "useAtomMap"_a = false,
+      "maxIterations"_a = size_t(0),
+      R"DOC(Assigns atomic connectivity to a molecule using atomic coordinates,
 disregarding pre-existing bonds
 
 Args:
@@ -116,12 +92,25 @@ Args:
    exception will be thrown. Defaults to 0 (no limit)
 )DOC");
 
-  m.def("DetermineBonds", &determineBondsHelper, "mol"_a,
-        "useHueckel"_a = false, "charge"_a = 0, "covFactor"_a = 1.3,
-        "allowChargedFragments"_a = true, "embedChiral"_a = true,
-        "useAtomMap"_a = false, "useVdw"_a = false,
-        "maxIterations"_a = size_t(0),
-        R"DOC(Assigns atomic connectivity to a molecule using atomic coordinates,
+  m.def(
+      "DetermineBonds",
+      [](ROMol &mol, bool useHueckel, int charge, double covFactor,
+         bool allowChargedFragments, bool embedChiral, bool useAtomMap,
+         bool useVdw, size_t maxIterations) {
+        determineBonds(static_cast<RWMol &>(mol), useHueckel, charge,
+                       covFactor, allowChargedFragments, embedChiral,
+                       useAtomMap, useVdw, maxIterations);
+        if (ControlCHandler::getGotSignal()) {
+          PyErr_SetString(PyExc_KeyboardInterrupt,
+                          "Determine Bond Orders cancelled");
+          throw nb::python_error();
+        }
+      },
+      "mol"_a, "useHueckel"_a = false, "charge"_a = 0, "covFactor"_a = 1.3,
+      "allowChargedFragments"_a = true, "embedChiral"_a = true,
+      "useAtomMap"_a = false, "useVdw"_a = false,
+      "maxIterations"_a = size_t(0),
+      R"DOC(Assigns atomic connectivity to a molecule using atomic coordinates,
 disregarding pre-existing bonds
 
 Args:
@@ -148,6 +137,14 @@ Args:
    exception will be thrown. Defaults to 0 (no limit)
 )DOC");
 
-  m.def("hueckelEnabled", &hueckelSupportEnabled,
-        "whether or not the RDKit was compiled with YAeHMOP support");
+  m.def(
+      "hueckelEnabled",
+      []() {
+#ifdef RDK_BUILD_YAEHMOP_SUPPORT
+        return true;
+#else
+        return false;
+#endif
+      },
+      "whether or not the RDKit was compiled with YAeHMOP support");
 }
