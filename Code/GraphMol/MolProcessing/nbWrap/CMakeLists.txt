@@ -3,5 +3,4 @@ rdkit_nanobind_extension(rdMolProcessing
                          DEST Chem
                          LINK_LIBRARIES MolProcessing GraphMol)
 
-add_pytest(pyMolProcessing ${CMAKE_CURRENT_SOURCE_DIR}/testMolProcessing.py)
-
+add_pytest(pyMolProcessing ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testMolProcessing.py)
