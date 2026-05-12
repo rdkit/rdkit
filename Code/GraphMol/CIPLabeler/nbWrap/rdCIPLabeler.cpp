@@ -52,16 +52,15 @@ void assignCIPLabelsHelper(RDKit::ROMol &mol, nb::object atomsToLabel,
 }  // namespace
 
 NB_MODULE(rdCIPLabeler, m) {
-  m.doc() =
-      "Module containing a function to assign stereochemical labels based "
-      "on an accurate CIP rules implementation. This algoritm is a port "
-      "of https://github.com/SiMolecule/centres, which was originally "
-      "written by John Mayfield. The original algorithm is described in:\n\n"
-      "Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, "
-      "A., Redkin, D.\nAlgorithmic Analysis of Cahn--Ingold--Prelog Rules of "
-      "Stereochemistry:\nProposals for Revised Rules and a Guide for Machine "
-      "Implementation.\nJ. Chem. Inf. Model. 2018, 58, 1755-1765.\n";
+  m.doc() = R"DOC(Module containing a function to assign stereochemical labels"
+based on an accurate CIP rules implementation. This algoritm is a port of
+https://github.com/SiMolecule/centres, which was originally written by John
+Mayfield. The original algorithm is described in:
 
+Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A., Redkin, D.
+Algorithmic Analysis of Cahn--Ingold--Prelog Rules of Stereochemistry:
+Proposals for Revised Rules and a Guide for Machine Implementation.
+J. Chem. Inf. Model. 2018, 58, 1755-1765.)DOC";
   nb::register_exception_translator(
       [](const std::exception_ptr &p, void *) {
         try {
