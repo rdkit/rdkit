@@ -4,4 +4,4 @@ rdkit_nanobind_extension(rdMolHash
                          DEST Chem
                          LINK_LIBRARIES MolHash)
 
-add_pytest(pyMolHash ${CMAKE_CURRENT_SOURCE_DIR}/testMolHash.py)
+add_pytest(pyMolHash ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testMolHash.py)
