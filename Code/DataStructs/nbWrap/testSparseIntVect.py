@@ -92,12 +92,12 @@ class TestCase(unittest.TestCase):
 
     #pickle.dump(v1,file('lsiv.pkl','wb+'))
     if 0:
-      with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/boostWrap/testData/lsiv.pkl'),
+      with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/Wrap/testData/lsiv.pkl'),
                 'rb') as tf:
         v3 = pickle.load(tf)
         self.assertTrue(v3 == v1)
     if 0:
-      with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/boostWrap/testData/lsiv.pkl'),
+      with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/Wrap/testData/lsiv.pkl'),
                 'r') as tf:
         buf = tf.read().replace('\r\n', '\n').encode('utf-8')
         tf.close()
@@ -126,12 +126,12 @@ class TestCase(unittest.TestCase):
 
     #pickle.dump(v1,file('isiv.pkl','wb+'))
     if 0:
-      with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/boostWrap/testData/isiv.pkl'),
+      with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/Wrap/testData/isiv.pkl'),
                 'rb') as tf:
         v3 = pickle.load(tf)
         self.assertTrue(v3 == v1)
     if 0:
-      with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/boostWrap/testData/isiv.pkl'),
+      with open(os.path.join(RDConfig.RDBaseDir, 'Code/DataStructs/Wrap/testData/isiv.pkl'),
                 'r') as tf:
         buf = tf.read().replace('\r\n', '\n').encode('utf-8')
         tf.close()

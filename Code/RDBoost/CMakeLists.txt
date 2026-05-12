@@ -21,7 +21,7 @@ rdkit_headers(Wrap.h PySequenceHolder.h
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.13.0")
    cmake_policy(SET CMP0079 NEW)
 endif()
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()
 
 if(RDK_BUILD_NANOBIND_WRAPPERS)

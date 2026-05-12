@@ -16,5 +16,5 @@ LINK_LIBRARIES DistGeomHelpers MolTransforms FileParsers SmilesParse )
 
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()

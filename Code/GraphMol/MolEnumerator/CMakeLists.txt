@@ -10,5 +10,5 @@ rdkit_catch_test(testMolEnumerator enumerator_catch.cpp
 LINK_LIBRARIES MolEnumerator SmilesParse FileParsers )
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()

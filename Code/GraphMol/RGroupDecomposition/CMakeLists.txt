@@ -13,7 +13,7 @@ rdkit_headers(
   DEST GraphMol/RGroupDecomposition)
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-  add_subdirectory(boostWrap)
+  add_subdirectory(Wrap)
 endif()
 
 rdkit_catch_test(testRGroupDecomp testRGroupDecomp.cpp

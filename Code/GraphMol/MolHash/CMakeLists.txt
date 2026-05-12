@@ -10,6 +10,6 @@ rdkit_headers(MolHash.h nmmolhash.h
 rdkit_catch_test(molHashCatchTest catch_tests.cpp  LINK_LIBRARIES SmilesParse FileParsers MolHash)
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()
 

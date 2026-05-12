@@ -105,7 +105,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
   rdkit_headers(CoordGen.h DEST GraphMol)
 
   if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-    add_subdirectory(boostWrap)
+    add_subdirectory(Wrap)
   endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
   rdkit_test(testCoordGen test.cpp

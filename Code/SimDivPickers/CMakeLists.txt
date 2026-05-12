@@ -15,5 +15,5 @@ rdkit_catch_test(pickersTestsCatch catch_tests.cpp
 
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()

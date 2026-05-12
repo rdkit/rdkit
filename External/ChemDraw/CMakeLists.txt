@@ -224,6 +224,6 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   endif(RDK_BUILD_CPP_TESTS)
 
   if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-    add_subdirectory(boostWrap)
+    add_subdirectory(Wrap)
   endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 endif(RDK_BUILD_CHEMDRAW_SUPPORT)

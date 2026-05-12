@@ -14,6 +14,6 @@ rdkit_test(testFeatures testFeatures.cpp
            LINK_LIBRARIES MolChemicalFeatures FileParsers )
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()
 

@@ -92,5 +92,5 @@ rdkit_test(testAvalonLib1 test1.cpp
            LINK_LIBRARIES AvalonLib SubstructMatch )
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()

@@ -9,5 +9,5 @@ rdkit_catch_test(testMolProcessing processing_tests.cpp
   LINK_LIBRARIES MolProcessing )
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
- add_subdirectory(boostWrap)
+ add_subdirectory(Wrap)
 endif()

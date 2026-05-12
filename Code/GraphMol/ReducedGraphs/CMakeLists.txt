@@ -11,6 +11,6 @@ rdkit_test(testReducedGraphs test1.cpp LINK_LIBRARIES
            ReducedGraphs )
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()
 

@@ -10,7 +10,7 @@ rdkit_headers(StructChecker.h Utilites.h Pattern.h Stereo.h StripSmallFragments.
               DEST GraphMol/StructChecker)
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()
 
 rdkit_test(testStructChecker  testStructChecker.cpp 

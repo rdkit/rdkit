@@ -16,5 +16,5 @@ rdkit_test(testMMPA MMPA_UnitTest.cpp LINK_LIBRARIES
 
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()

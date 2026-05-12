@@ -178,5 +178,5 @@ rdkit_test(testFreeSASALib testFreeSASA.cpp
            LINK_LIBRARIES FreeSASALib FileParsers SmilesParse )
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()

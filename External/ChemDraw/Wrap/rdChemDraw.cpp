@@ -34,7 +34,7 @@
 #include <ChemDraw/chemdraw.h>
 #include <ChemDraw/chemdrawreaction.h>
 #include <GraphMol/MolPickler.h>
-#include <GraphMol/boostWrap/props.hpp>
+#include <GraphMol/Wrap/props.hpp>
 #include <RDBoost/python.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>

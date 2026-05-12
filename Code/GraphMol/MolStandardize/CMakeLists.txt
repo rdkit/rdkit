@@ -58,7 +58,7 @@ rdkit_headers(
         DEST GraphMol/MolStandardize/TautomerCatalog)
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()
 
 rdkit_test(molStandardizeTest test1.cpp LINK_LIBRARIES MolStandardize )

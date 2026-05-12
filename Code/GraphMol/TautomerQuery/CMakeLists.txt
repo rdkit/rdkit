@@ -11,7 +11,7 @@ rdkit_headers(TautomerQuery.h
               DEST GraphMol/TautomerQuery)
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()
 
 rdkit_catch_test(tautomerQueryTestCatch catch_tests.cpp LINK_LIBRARIES TautomerQuery )

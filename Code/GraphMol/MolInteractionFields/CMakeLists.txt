@@ -13,5 +13,5 @@ DataStructs RDGeometryLib RDGeneral
 ${RDKit_THREAD_LIBS} )
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-  add_subdirectory(boostWrap)
+  add_subdirectory(Wrap)
 endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)

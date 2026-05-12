@@ -15,7 +15,7 @@ rdkit_headers(SubstructLibrary.h
               DEST GraphMol/SubstructLibrary)
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(boostWrap)
+add_subdirectory(Wrap)
 endif()
 
 rdkit_catch_test(substructLibraryTest substructLibraryTest.cpp
