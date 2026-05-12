@@ -365,39 +365,14 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
         bond->getStereo() == RDKit::Bond::STEREONONE) {
       continue;
     }
-    // get the four atoms around the double bond
-    auto neighbors = bond->getStereoAtoms();
-    if (neighbors.size() != 2) {
+
+    // Extract all atoms around the double bond
+    auto stereoAtoms = RDDepict::getDoubleBondStereoAtoms(bond, &mol);
+    if (!stereoAtoms.valid) {
       continue;
     }
-    int atom1Neighbor1 = neighbors[0];
-    int atom2Neighbor1 = neighbors[1];
-    int atom1 = bond->getBeginAtomIdx();
-    int atom2 = bond->getEndAtomIdx();
 
-    // now get the other two atoms that are not part of the double bond (if any)
-    int atom1Neighbor2 = -1;
-    int atom2Neighbor2 = -1;
-    if (mol.getAtomWithIdx(atom1)->getDegree() > 2) {
-      for (auto neighbor : mol.atomNeighbors(mol.getAtomWithIdx(atom1))) {
-        if (static_cast<int>(neighbor->getIdx()) != atom1Neighbor1 &&
-            static_cast<int>(neighbor->getIdx()) != atom2) {
-          atom1Neighbor2 = neighbor->getIdx();
-          break;
-        }
-      }
-    }
-    if (mol.getAtomWithIdx(atom2)->getDegree() > 2) {
-      for (auto neighbor : mol.atomNeighbors(mol.getAtomWithIdx(atom2))) {
-        if (static_cast<int>(neighbor->getIdx()) != atom2Neighbor1 &&
-            static_cast<int>(neighbor->getIdx()) != atom1) {
-          atom2Neighbor2 = neighbor->getIdx();
-          break;
-        }
-      }
-    }
-
-    // find the template atoms that correspond to the four atoms
+    // find the template atoms that correspond to the six atoms
     int templateAtom1 = -1;
     int templateAtom2 = -1;
     int templateAtom1Neighbor1 = -1;
@@ -405,17 +380,19 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
     int templateAtom2Neighbor1 = -1;
     int templateAtom2Neighbor2 = -1;
     for (auto &[templateAidx, rsAidx] : match) {
-      if (rsAidx == atom1) {
+      if (rsAidx == stereoAtoms.atom1) {
         templateAtom1 = templateAidx;
-      } else if (rsAidx == atom2) {
+      } else if (rsAidx == stereoAtoms.atom2) {
         templateAtom2 = templateAidx;
-      } else if (rsAidx == atom1Neighbor1) {
+      } else if (rsAidx == stereoAtoms.atom1Neighbor1) {
         templateAtom1Neighbor1 = templateAidx;
-      } else if (rsAidx == atom2Neighbor1) {
+      } else if (rsAidx == stereoAtoms.atom2Neighbor1) {
         templateAtom2Neighbor1 = templateAidx;
-      } else if (rsAidx == atom1Neighbor2) {
+      } else if (stereoAtoms.atom1Neighbor2 != -1 &&
+                 rsAidx == stereoAtoms.atom1Neighbor2) {
         templateAtom1Neighbor2 = templateAidx;
-      } else if (rsAidx == atom2Neighbor2) {
+      } else if (stereoAtoms.atom2Neighbor2 != -1 &&
+                 rsAidx == stereoAtoms.atom2Neighbor2) {
         templateAtom2Neighbor2 = templateAidx;
       }
     }
@@ -1170,291 +1147,20 @@ bool EmbeddedFrag::generateMacrocycleCoordinates(
     bool useJacobianRefinement, const SubstituentInfo &subInfo) {
   PRECONDITION(dp_mol, "");
 
-  // Only attempt for macrocycles (size > MACROCYCLE_SIZE_THRESHOLD)
-  if (macrocycleRing.size() <= MACROCYCLE_SIZE_THRESHOLD) {
-    return false;
+  // Call the standalone function in MacrocycleGenerator.cpp
+  auto coords = RDDepict::generateMacrocycleCoordinates(
+      dp_mol, macrocycleRing, allRings, useJacobianRefinement,
+      subInfo.sizesByPosition, BOND_LEN);
+
+  if (coords.empty()) {
+    return false;  // Generation failed
   }
 
-  // Create MacrocycleGenerator with Jacobian flag
-  MacrocycleGenerator generator(macrocycleRing.size(), BOND_LEN,
-                                useJacobianRefinement);
-
-  // Convert allRings to std::vector<std::vector<int>> for helper function
-  std::vector<std::vector<int>> allRingsVec;
-  for (const auto &ring : allRings) {
-    std::vector<int> ringVec(ring.begin(), ring.end());
-    allRingsVec.push_back(ringVec);
-  }
-  std::vector<int> macrocycleRingVec(macrocycleRing.begin(),
-                                     macrocycleRing.end());
-
-  // Identify all angle constraints for fused small rings
-  auto angleConstraints = RDDepict::identifyAngleConstraintsForFusedRings(
-      macrocycleRingVec, allRingsVec);
-  for (const auto &angleConstraint : angleConstraints) {
-    generator.addAngleConstraint(angleConstraint);
-  }
-
-  // Use pre-computed substituent sizes by position
-  generator.setSubstituentInfo(subInfo.sizesByPosition,
-                               -1);  // -1 = L turns point inward
-
-  // Add turn constraints for fused rings
-  // Pattern: first turn = R, middle turns = L, last turn = R
-  // Examples: 2-atom fusion → RR, 3-atom → RLR, 4-atom → RLLR
-  for (const auto &ring : allRings) {
-    // Skip macrocycles
-    if (ring.size() > MACROCYCLE_SIZE_THRESHOLD) {
-      continue;
-    }
-
-    // Find shared atoms between this ring and the macrocycle
-    std::vector<size_t> sharedPositions = RDDepict::findSharedPositions(
-        macrocycleRingVec, std::vector<int>(ring.begin(), ring.end()));
-
-    // Need at least 1 shared atom (spiro or fusion)
-    // Skip if more than 4 shared atoms (unusual/complex fusion)
-    if (sharedPositions.size() < 1 || sharedPositions.size() > 4) {
-      continue;
-    }
-
-    // Verify shared atoms are contiguous and reorder if needed
-    if (!RDDepict::verifyAndReorderSharedPositions(sharedPositions,
-                                                   macrocycleRing.size())) {
-      continue;
-    }
-
-    // Create turn pattern based on number of shared atoms:
-    // Pattern length = N (number of shared atoms)
-    // First and last turn: R (convex, prevalent)
-    // Middle turns: L (concave)
-    // 1 shared atom: R
-    // 2 shared atoms: RR
-    // 3 shared atoms: RLR
-    // 4 shared atoms: RLLR
-    std::vector<int> pattern;
-    size_t numShared = sharedPositions.size();
-
-    if (numShared == 1) {
-      pattern.push_back(1);  // R
-    } else if (numShared == 2) {
-      // RR pattern for 2-atom fusion
-      pattern.push_back(1);  // R
-      pattern.push_back(1);  // R
-    } else {
-      // First turn: R (endpoint)
-      pattern.push_back(1);
-      // Middle turns: L
-      for (size_t i = 1; i < numShared - 1; ++i) {
-        pattern.push_back(-1);  // L
-      }
-      // Last turn: R (endpoint)
-      pattern.push_back(1);
-    }
-
-    // Add FIXED turn constraint
-    TurnConstraint constraint;
-    constraint.position = sharedPositions[0];
-    constraint.type = ConstraintType::FIXED;
-    constraint.pattern = pattern;
-    constraint.reason = "fused_ring_" + std::to_string(ring.size()) + "_at_" +
-                        std::to_string(sharedPositions[0]);
-
-    generator.addConstraint(constraint);
-  }
-
-  // Add constraints for double bonds with E/Z stereochemistry
-  // Based on the checkStereoChemistry function approach
-  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
-    size_t nextIdx = (i + 1) % macrocycleRing.size();
-    int atom1 = macrocycleRing[i];
-    int atom2 = macrocycleRing[nextIdx];
-
-    const RDKit::Bond *bond = dp_mol->getBondBetweenAtoms(atom1, atom2);
-    if (!bond || bond->getBondType() != RDKit::Bond::DOUBLE) {
-      continue;
-    }
-
-    auto stereoType = bond->getStereo();
-    if (stereoType == RDKit::Bond::STEREOANY ||
-        stereoType == RDKit::Bond::STEREONONE) {
-      continue;
-    }
-
-    // Get the stereo-defining atoms (based on CIP priority)
-    const auto &neighbors = bond->getStereoAtoms();
-    if (neighbors.size() != 2) {
-      continue;
-    }
-
-    // The stereo atoms might not be in order (atom1_neighbor, atom2_neighbor)
-    // We need to figure out which stereo atom is connected to which double bond
-    // atom
-    int atom1_neighbor1 = -1;
-    int atom2_neighbor1 = -1;
-
-    // Check if neighbors[0] is connected to atom1 or atom2
-    bool neighbor0_connected_to_atom1 =
-        dp_mol->getBondBetweenAtoms(atom1, neighbors[0]) != nullptr;
-    bool neighbor0_connected_to_atom2 =
-        dp_mol->getBondBetweenAtoms(atom2, neighbors[0]) != nullptr;
-
-    if (neighbor0_connected_to_atom1 && !neighbor0_connected_to_atom2) {
-      atom1_neighbor1 = neighbors[0];
-      atom2_neighbor1 = neighbors[1];
-    } else if (neighbor0_connected_to_atom2 && !neighbor0_connected_to_atom1) {
-      atom1_neighbor1 = neighbors[1];
-      atom2_neighbor1 = neighbors[0];
-    } else {
-      continue;
-    }
-
-    // Now get the other neighbors for each atom (if any)
-    // These would be substituents on the double bond atoms
-    int atom1_neighbor2 = -1;
-    int atom2_neighbor2 = -1;
-
-    if (dp_mol->getAtomWithIdx(atom1)->getDegree() > 2) {
-      for (auto neighbor :
-           dp_mol->atomNeighbors(dp_mol->getAtomWithIdx(atom1))) {
-        int nidx = neighbor->getIdx();
-        if (nidx != atom1_neighbor1 && nidx != atom2) {
-          atom1_neighbor2 = nidx;
-          break;
-        }
-      }
-    }
-
-    if (dp_mol->getAtomWithIdx(atom2)->getDegree() > 2) {
-      for (auto neighbor :
-           dp_mol->atomNeighbors(dp_mol->getAtomWithIdx(atom2))) {
-        int nidx = neighbor->getIdx();
-        if (nidx != atom2_neighbor1 && nidx != atom1) {
-          atom2_neighbor2 = nidx;
-          break;
-        }
-      }
-    }
-
-    // Determine the macrocycle ring neighbors
-    size_t prevIdx = (i - 1 + macrocycleRing.size()) % macrocycleRing.size();
-    size_t nextNextIdx = (i + 2) % macrocycleRing.size();
-    int macrocycle_atom1_neighbor = macrocycleRing[prevIdx];
-    int macrocycle_atom2_neighbor = macrocycleRing[nextNextIdx];
-
-    // Check if stereo-defining atoms match the macrocycle neighbors
-    // If they don't, we need to swap the interpretation
-    bool swapStereo = false;
-
-    // Check if atom1_neighbor1 is the macrocycle neighbor
-    // If not, use atom1_neighbor2 (if it exists)
-    int atom1_ring_neighbor = atom1_neighbor1;
-    if (atom1_neighbor1 != macrocycle_atom1_neighbor) {
-      if (atom1_neighbor2 == macrocycle_atom1_neighbor) {
-        atom1_ring_neighbor = atom1_neighbor2;
-        swapStereo = !swapStereo;
-      } else {
-        continue;
-      }
-    }
-
-    // Check if atom2_neighbor1 is the macrocycle neighbor
-    // If not, use atom2_neighbor2 (if it exists)
-    int atom2_ring_neighbor = atom2_neighbor1;
-    if (atom2_neighbor1 != macrocycle_atom2_neighbor) {
-      if (atom2_neighbor2 == macrocycle_atom2_neighbor) {
-        atom2_ring_neighbor = atom2_neighbor2;
-        swapStereo = !swapStereo;
-      } else {
-        continue;
-      }
-    }
-
-    // Verify we found the ring neighbors
-    if (atom1_ring_neighbor != macrocycle_atom1_neighbor ||
-        atom2_ring_neighbor != macrocycle_atom2_neighbor) {
-      continue;
-    }
-
-    // Determine expected stereochemistry
-    bool expected_cis = (stereoType == RDKit::Bond::STEREOZ ||
-                         stereoType == RDKit::Bond::STEREOCIS);
-
-    // Apply swap if needed
-    if (swapStereo) {
-      expected_cis = !expected_cis;
-    }
-
-    // Add constraint based on cis/trans relationship
-    // For a double bond at positions i → i+1 in the ring:
-    // The turns at positions i and i+1 determine the stereochemistry
-    // Cis: turns should be SAME
-    // Trans: turns should be OPPOSITE
-    // Note: OPPOSITE/SAME constraint at position X constrains positions X and
-    // X+1
-
-    TurnConstraint constraint;
-    constraint.position = i;  // This will constrain turns at i and i+1
-
-    if (expected_cis) {
-      constraint.type = ConstraintType::SAME;
-      constraint.reason = "cis_double_bond_at_" + std::to_string(i);
-    } else {
-      constraint.type = ConstraintType::OPPOSITE;
-      constraint.reason = "trans_double_bond_at_" + std::to_string(i);
-    }
-
-    generator.addConstraint(constraint);
-  }
-
-  // Get number of free positions before solving (for threshold scaling)
-  size_t numFreePositions = generator.getNumFreePositions();
-
-  // Solve for optimal turn sequence
-  if (!generator.solve()) {
-    return false;  // No solution found
-  }
-
-  // Check closure quality
-  double closureError = generator.getClosureError();
-  // For even-numbered rings: expect near-perfect closure (~0 Å)
-  // For odd-numbered rings: expect ~1.5 Å gap (one bond length)
-  // For constrained rings: closure may be worse but still acceptable
-  // For rings with many free positions: fast heuristic creates larger gaps that
-  // Jacobian will close
-  double MAX_CLOSURE_ERROR = 6.0;  // base threshold in Angstroms
-
-  // Scale threshold based on number of free turn positions (not total ring
-  // size) Fast heuristic is used when free positions > 15, creating approximate
-  // patterns
-  if (numFreePositions > 15) {
-    // Allow proportionally larger initial closure errors for fast heuristic
-    // Jacobian refinement will close the gap
-    MAX_CLOSURE_ERROR = numFreePositions * 1.5;  // ~1.5 Å per free position
-  }
-
-  if (closureError > MAX_CLOSURE_ERROR) {
-    std::cerr << "Closure error too large: " << closureError << " Angstroms "
-              << "(threshold=" << MAX_CLOSURE_ERROR << " for "
-              << numFreePositions << " free positions)" << std::endl;
-    return false;  // Closure error too large
-  }
-
-  // Generate 2D coordinates
-  auto coords = generator.generateCoordinates();
-
-  std::cerr << ">>> APPLYING DE-NOVO COORDINATES to " << macrocycleRing.size()
-            << " atoms" << std::endl;
-
-  // Apply de-novo coordinates using the shared helper function
+  // Apply generated coordinates
   applyCoordinates(macrocycleRing, coords);
 
-  // check if fused rings can be flipped to place substitutions outside of the
-  // macrocycle
+  // Check if fused rings can be flipped to place substitutions outside
   maybeReflectSymmetricFusedRings(macrocycleRing, allRings);
-
-  std::cerr << ">>> SUCCESSFULLY APPLIED DE-NOVO COORDINATES, returning true"
-            << std::endl;
   return true;
 }
 

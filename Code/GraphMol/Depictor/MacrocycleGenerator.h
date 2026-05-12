@@ -17,6 +17,7 @@
 
 namespace RDKit {
 class ROMol;
+class Bond;
 }
 
 namespace RDDepict {
@@ -220,6 +221,25 @@ class MacrocycleGenerator {
   size_t getNumFreePositions() const;
 
  private:
+  //! Result of fast heuristic attempt
+  enum class FastHeuristicResult {
+    SUCCESS,   //!< Solved completely, solution in d_turns
+    FAILURE,   //!< Failed, cannot continue
+    CONTINUE   //!< Reduced problem size, continue with enumeration
+  };
+
+  //! Try fast heuristic for large rings with many free positions
+  /*!
+    For rings with >15 free positions, uses substituent-based pattern
+    and alternating assignment to reduce search space.
+
+    \param freePositions: Free positions (updated if CONTINUE)
+    \param numRight: Number of R turns needed (updated if CONTINUE)
+    \param numLeft: Number of L turns needed (updated if CONTINUE)
+    \return Result indicating success, failure, or continue with enumeration
+  */
+  FastHeuristicResult tryFastHeuristic(std::vector<size_t> &freePositions,
+                                       int &numRight, int &numLeft);
   //! Step 1: Distribute closure gap linearly
   void distributeClosureGap(std::vector<RDGeom::Point2D> &coords) const;
 
@@ -274,9 +294,47 @@ struct EndpointInfo {
   std::vector<int> ringAtoms;   //!< Atoms in the small ring (to check overlap)
 };
 
+//! Atoms around a double bond with stereochemistry
+struct DoubleBondStereoAtoms {
+  int atom1;            //!< First atom of the double bond
+  int atom2;            //!< Second atom of the double bond
+  int atom1Neighbor1;   //!< Stereo-controlling neighbor of atom1 (from
+                        //!< getStereoAtoms)
+  int atom2Neighbor1;   //!< Stereo-controlling neighbor of atom2 (from
+                        //!< getStereoAtoms)
+  int atom1Neighbor2;   //!< Other neighbor of atom1 (degree > 2), or -1
+  int atom2Neighbor2;   //!< Other neighbor of atom2 (degree > 2), or -1
+  bool swappedStereo;   //!< Whether stereo interpretation needs to be swapped
+  bool valid;           //!< Whether all required atoms were found
+
+  DoubleBondStereoAtoms()
+      : atom1(-1),
+        atom2(-1),
+        atom1Neighbor1(-1),
+        atom2Neighbor1(-1),
+        atom1Neighbor2(-1),
+        atom2Neighbor2(-1),
+        swappedStereo(false),
+        valid(false) {}
+};
+
 // ============================================================================
 // Helper Functions for Angle Constraint Detection and Refinement
 // ============================================================================
+
+//! Extract atoms around a double bond with stereochemistry
+/*!
+  Identifies all atoms involved in double bond stereochemistry:
+  - The two double bond atoms
+  - Their stereo-controlling neighbors (from getStereoAtoms)
+  - Additional neighbors if degree > 2
+
+  \param bond: The double bond with stereochemistry
+  \param mol: The molecule containing the bond
+  \return DoubleBondStereoAtoms struct with all atoms identified
+*/
+DoubleBondStereoAtoms getDoubleBondStereoAtoms(const RDKit::Bond *bond,
+                                               const RDKit::ROMol *mol);
 
 //! Compute ideal turn angle for a regular polygon small ring
 /*!
@@ -398,6 +456,25 @@ void maybeReflectSymmetricFusedRings(const RDKit::ROMol &mol,
                                      const RDKit::INT_VECT &macrocycleRing,
                                      const RDKit::VECT_INT_VECT &fusedRings,
                                      RDGeom::INT_POINT2D_MAP &eatoms);
+
+//! Generate de-novo 2D coordinates for a macrocycle using turn-based encoding
+/*!
+  Uses MacrocycleGenerator to create coordinates that satisfy geometric
+  constraints from fused rings, stereochemistry, and substituents.
+
+  \param mol: The molecule
+  \param macrocycleRing: Indices of atoms in the macrocycle ring
+  \param allRings: All rings in the molecule
+  \param useJacobianRefinement: Whether to use Jacobian angle adjustment
+  \param substituentSizesByPosition: Map of macrocycle position -> total substituent size
+  \param bondLength: Target bond length (default 1.5)
+  \return Coordinates for macrocycle atoms (empty if generation failed)
+*/
+std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
+    const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
+    const RDKit::VECT_INT_VECT &allRings, bool useJacobianRefinement,
+    const std::map<size_t, int> &substituentSizesByPosition,
+    double bondLength = 1.5);
 
 }  // namespace RDDepict
 

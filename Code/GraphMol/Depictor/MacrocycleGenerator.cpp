@@ -166,15 +166,13 @@ bool MacrocycleGenerator::solve() {
   bool isOddRing = (d_ringSize % 2) == 1;
 
   // Try different target differences with relaxation
-  // Normal: R-L = 6 (even) or 5 (odd)
-  // First relaxation: ±2 from normal
-  // Second relaxation (odd only): ±4 from normal
+  // Normal: R-L = 6 (even) or 5 (or 7) (odd)
   std::vector<int> targetDiffs;
 
   if (isOddRing) {
-    targetDiffs = {5, 3, 7, 1, 9};  // normal, then ±2, then ±4
+    targetDiffs = {5, 7, 3};
   } else {
-    targetDiffs = {6, 4, 8, 2, 10};  // normal, then ±2, then ±4
+    targetDiffs = {6, 4};
   }
 
   for (int targetDiff : targetDiffs) {
@@ -187,7 +185,6 @@ bool MacrocycleGenerator::solve() {
     }
   }
 
-  std::cerr << "SOLVE_FAILED: All targetDiff values failed" << std::endl;
   return false;
 }
 
@@ -207,36 +204,6 @@ bool MacrocycleGenerator::trySolveWithTargetDiff(int targetDiff) {
     }
   }
 
-  bool isOddRing = (d_ringSize % 2) == 1;
-
-  std::cerr << "CONSTRAINT_INFO: ringSize=" << d_ringSize
-            << ", isOddRing=" << isOddRing << ", targetDiff(R-L)=" << targetDiff
-            << std::endl;
-  std::cerr << "CONSTRAINT_INFO: decidedRight=" << decidedRight
-            << ", decidedLeft=" << decidedLeft << ", freeCount=" << freeCount
-            << std::endl;
-
-  // Show angle constraints
-  if (!d_angleConstraints.empty()) {
-    std::cerr << "ANGLE_CONSTRAINTS: " << d_angleConstraints.size()
-              << " constraints set:" << std::endl;
-    for (const auto &c : d_angleConstraints) {
-      int turn_sign = (c.targetAngle > 0) ? 1 : -1;
-      std::cerr << "  pos=" << c.position
-                << ", targetAngle=" << (c.targetAngle * 180.0 / M_PI)
-                << "°, turn=" << (turn_sign > 0 ? "R" : "L") << std::endl;
-    }
-  }
-
-  // Show which positions are already decided (constrained to R or L)
-  std::cerr << "DECIDED_TURNS: ";
-  for (size_t i = 0; i < d_turns.size(); ++i) {
-    if (d_turns[i] != 0) {
-      std::cerr << " [" << i << "]=" << (d_turns[i] == 1 ? "R" : "L");
-    }
-  }
-  std::cerr << std::endl;
-
   // We need: (decidedRight + freeRight) - (decidedLeft + freeLeft) = targetDiff
   // Where: freeRight + freeLeft = freeCount
   // Solving: freeRight = (targetDiff - decidedRight + decidedLeft + freeCount)
@@ -245,66 +212,171 @@ bool MacrocycleGenerator::trySolveWithTargetDiff(int targetDiff) {
   int totalRight = (d_ringSize + targetDiff) / 2;
   int totalLeft = (d_ringSize - targetDiff) / 2;
 
-  std::cerr << "SOLVE_CALC: totalRight=" << totalRight
-            << ", totalLeft=" << totalLeft << std::endl;
-
   // Check parity
   if ((d_ringSize + targetDiff) % 2 != 0) {
-    std::cerr << "SOLVE_FAILED: Parity mismatch" << std::endl;
     return false;  // Parity mismatch - no integer solution
   }
 
   // Check if solution is possible
   if (totalRight < 0 || totalLeft < 0) {
-    std::cerr << "SOLVE_FAILED: Negative total (totalRight=" << totalRight
-              << ", totalLeft=" << totalLeft << ")" << std::endl;
     return false;  // Ring too small for angular closure
   }
 
   int freeRight = totalRight - decidedRight;
   int freeLeft = totalLeft - decidedLeft;
 
-  std::cerr << "SOLVE_CALC: freeRight=" << freeRight
-            << ", freeLeft=" << freeLeft << std::endl;
-
   if (freeRight < 0 || freeLeft < 0) {
-    std::cerr << "SOLVE_FAILED: Negative free (freeRight=" << freeRight
-              << ", freeLeft=" << freeLeft << ")" << std::endl;
     return false;  // Constraints over-constrain the solution
   }
 
   if (freeRight + freeLeft != freeCount) {
-    std::cerr << "SOLVE_FAILED: Sanity check (freeRight+freeLeft="
-              << (freeRight + freeLeft) << " != freeCount=" << freeCount << ")"
-              << std::endl;
     return false;  // Sanity check failed
   }
 
   // Find optimal turn sequence for free variables
-  std::cerr << "SOLVE: Calling findOptimalTurnSequence(freeRight=" << freeRight
-            << ", freeLeft=" << freeLeft << ")" << std::endl;
+
   d_solved = findOptimalTurnSequence(freeRight, freeLeft);
-  if (!d_solved) {
-    std::cerr << "SOLVE_FAILED: findOptimalTurnSequence returned false"
-              << std::endl;
-  } else {
-    std::cerr << "SOLVE_SUCCESS: Found valid turn sequence" << std::endl;
-  }
   return d_solved;
 }
 
 size_t MacrocycleGenerator::getNumFreePositions() const {
-  size_t count = 0;
-  for (size_t i = 0; i < d_ringSize; ++i) {
-    if (d_turns[i] == 0) {
-      count++;
+  return std::count(d_turns.begin(), d_turns.end(), 0);
+}
+
+MacrocycleGenerator::FastHeuristicResult MacrocycleGenerator::tryFastHeuristic(
+    std::vector<size_t> &freePositions, int &numRight, int &numLeft) {
+  size_t numFree = freePositions.size();
+
+  // Strategy: Use substituent info to reduce degrees of freedom
+  // Positions with big substituents (size > 1) should be outer turns
+  // This is both chemically sensible and reduces the search space
+  std::vector<int> candidate = d_turns;  // Start with constrained values
+
+  int outerTurn = -d_innerTurnSign;  // Outer turn is opposite of inner
+  int assignedRight = 0;
+  int assignedLeft = 0;
+
+  // Step 1: Assign outer turns for positions with big substituents (size > 1)
+  int substituentAssignments = 0;
+  for (size_t pos : freePositions) {
+    auto it = d_substituentSizes.find(pos);
+    if (it != d_substituentSizes.end() && it->second > 1) {
+      // Big substituent - force outer turn
+      candidate[pos] = outerTurn;
+      if (outerTurn == 1) {
+        assignedRight++;
+      } else {
+        assignedLeft++;
+      }
+      substituentAssignments++;
     }
   }
-  return count;
+
+  // Step 2: Check if we have capacity for these assignments
+  int remainingRight = numRight - assignedRight;
+  int remainingLeft = numLeft - assignedLeft;
+
+  if (remainingRight < 0 || remainingLeft < 0) {
+    return FastHeuristicResult::FAILURE;
+  }
+
+  // Step 3: If still too many free positions, use alternating for most, keep
+  // few truly free
+  std::vector<size_t> stillFree;
+  for (size_t pos : freePositions) {
+    if (candidate[pos] == 0) {
+      stillFree.push_back(pos);
+    }
+  }
+
+  const size_t MAX_ENUMERATION_SIZE = 10;  // Only enumerate over ~10 positions
+
+  if (stillFree.size() > MAX_ENUMERATION_SIZE) {
+    // How many to fix vs keep free
+    size_t numToFix = stillFree.size() - MAX_ENUMERATION_SIZE;
+
+    // Use alternating pattern for first numToFix positions
+    int currentTurn = (remainingRight >= remainingLeft) ? 1 : -1;
+    size_t fixed = 0;
+
+    for (size_t pos : stillFree) {
+      if (fixed >= numToFix) break;  // Leave the rest free
+
+      // Assign with alternating pattern
+      if (currentTurn == 1 && remainingRight > 0) {
+        candidate[pos] = 1;
+        remainingRight--;
+        currentTurn = -1;
+      } else if (currentTurn == -1 && remainingLeft > 0) {
+        candidate[pos] = -1;
+        remainingLeft--;
+        currentTurn = 1;
+      } else if (remainingRight > 0) {
+        candidate[pos] = 1;
+        remainingRight--;
+      } else if (remainingLeft > 0) {
+        candidate[pos] = -1;
+        remainingLeft--;
+      }
+      fixed++;
+    }
+    // Update d_turns with the fixed positions, then fall through to normal
+    // enumeration
+    d_turns = candidate;
+
+    // Recalculate free positions for enumeration
+    freePositions.clear();
+    for (size_t i = 0; i < d_ringSize; ++i) {
+      if (d_turns[i] == 0) {
+        freePositions.push_back(i);
+      }
+    }
+    // Update numRight and numLeft to reflect the remaining assignments needed
+    numRight = remainingRight;
+    numLeft = remainingLeft;
+
+    // Fall through to enumeration with reduced free positions
+    return FastHeuristicResult::CONTINUE;
+
+  } else {
+    // Few enough positions - just assign them all with alternating
+    int currentTurn = (remainingRight >= remainingLeft) ? 1 : -1;
+
+    for (size_t pos : stillFree) {
+      // Assign based on what we still need
+      if (currentTurn == 1 && remainingRight > 0) {
+        candidate[pos] = 1;
+        remainingRight--;
+        currentTurn = -1;  // Try to alternate
+      } else if (currentTurn == -1 && remainingLeft > 0) {
+        candidate[pos] = -1;
+        remainingLeft--;
+        currentTurn = 1;  // Try to alternate
+      } else if (remainingRight > 0) {
+        candidate[pos] = 1;
+        remainingRight--;
+      } else if (remainingLeft > 0) {
+        candidate[pos] = -1;
+        remainingLeft--;
+      }
+    }
+
+    // Validate and return (all positions assigned)
+    if (validateConstraints(candidate)) {
+      int minDistance = calculateMinDistance(candidate);
+      if (minDistance > 0) {
+        d_turns = candidate;
+        d_closureError = calculateClosureError(candidate);
+        return FastHeuristicResult::SUCCESS;
+      }
+    }
+    // All positions assigned but failed - can't enumerate further
+    return FastHeuristicResult::FAILURE;
+  }
 }
 
 bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
-  // Find positions of free variables (currently 0)
+  // Find positions of free variables
   std::vector<size_t> freePositions;
   for (size_t i = 0; i < d_ringSize; ++i) {
     if (d_turns[i] == 0) {
@@ -312,192 +384,20 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     }
   }
 
-  // Fast heuristic for large rings: use alternating pattern instead of
-  // enumeration When there are many free positions (>15), enumeration becomes
-  // computationally infeasible
   const size_t ENUMERATION_THRESHOLD = 15;
 
   if (freePositions.size() > ENUMERATION_THRESHOLD) {
-    size_t numFree = freePositions.size();
-    std::cerr << "FAST_HEURISTIC: Using substituent-based pattern for "
-              << numFree << " free positions" << std::endl;
-
-    // Strategy: Use substituent info to reduce degrees of freedom
-    // Positions with big substituents (size > 1) should be outer turns
-    // This is both chemically sensible and reduces the search space
-    std::vector<int> candidate = d_turns;  // Start with constrained values
-
-    int outerTurn = -d_innerTurnSign;  // Outer turn is opposite of inner
-    int assignedRight = 0;
-    int assignedLeft = 0;
-
-    std::cerr << "FAST_HEURISTIC: innerTurnSign=" << d_innerTurnSign
-              << ", outerTurn=" << (outerTurn == 1 ? "R" : "L") << std::endl;
-
-    // Step 1: Assign outer turns for positions with big substituents (size > 1)
-    int substituentAssignments = 0;
-    for (size_t pos : freePositions) {
-      auto it = d_substituentSizes.find(pos);
-      if (it != d_substituentSizes.end() && it->second > 1) {
-        // Big substituent - force outer turn
-        candidate[pos] = outerTurn;
-        if (outerTurn == 1) {
-          assignedRight++;
-        } else {
-          assignedLeft++;
-        }
-        substituentAssignments++;
-        std::cerr << "  pos[" << pos << "] subst_size=" << it->second
-                  << " -> OUTER (" << (outerTurn == 1 ? "R" : "L") << ")"
-                  << std::endl;
-      }
-    }
-
-    // Step 2: Check if we have capacity for these assignments
-    int remainingRight = numRight - assignedRight;
-    int remainingLeft = numLeft - assignedLeft;
-
-    std::cerr << "FAST_HEURISTIC: After " << substituentAssignments
-              << " substituent assignments: "
-              << "assignedR=" << assignedRight << " assignedL=" << assignedLeft
-              << ", remainingR=" << remainingRight
-              << " remainingL=" << remainingLeft << std::endl;
-
-    if (remainingRight < 0 || remainingLeft < 0) {
-      std::cerr
-          << "FAST_HEURISTIC: Substituent assignment exceeds required counts"
-          << std::endl;
-      return false;
-    }
-
-    // Step 3: If still too many free positions, use alternating for most, keep
-    // few truly free
-    std::vector<size_t> stillFree;
-    for (size_t pos : freePositions) {
-      if (candidate[pos] == 0) {
-        stillFree.push_back(pos);
-      }
-    }
-
-    const size_t MAX_ENUMERATION_SIZE =
-        10;  // Only enumerate over ~10 positions
-
-    if (stillFree.size() > MAX_ENUMERATION_SIZE) {
-      std::cerr
-          << "FAST_HEURISTIC: Still have " << stillFree.size()
-          << " free positions after substituents, fixing most with alternating"
-          << std::endl;
-
-      // How many to fix vs keep free
-      size_t numToFix = stillFree.size() - MAX_ENUMERATION_SIZE;
-
-      // Use alternating pattern for first numToFix positions
-      int currentTurn = (remainingRight >= remainingLeft) ? 1 : -1;
-      size_t fixed = 0;
-
-      for (size_t pos : stillFree) {
-        if (fixed >= numToFix) break;  // Leave the rest free
-
-        // Assign with alternating pattern
-        if (currentTurn == 1 && remainingRight > 0) {
-          candidate[pos] = 1;
-          remainingRight--;
-          currentTurn = -1;
-        } else if (currentTurn == -1 && remainingLeft > 0) {
-          candidate[pos] = -1;
-          remainingLeft--;
-          currentTurn = 1;
-        } else if (remainingRight > 0) {
-          candidate[pos] = 1;
-          remainingRight--;
-        } else if (remainingLeft > 0) {
-          candidate[pos] = -1;
-          remainingLeft--;
-        }
-        fixed++;
-      }
-
-      std::cerr << "FAST_HEURISTIC: Fixed " << fixed
-                << " positions with alternating, " << (stillFree.size() - fixed)
-                << " still free for enumeration" << std::endl;
-
-      // Update d_turns with the fixed positions, then fall through to normal
-      // enumeration
-      d_turns = candidate;
-
-      // Recalculate free positions for enumeration
-      freePositions.clear();
-      for (size_t i = 0; i < d_ringSize; ++i) {
-        if (d_turns[i] == 0) {
-          freePositions.push_back(i);
-        }
-      }
-
-      // Update numRight and numLeft to reflect the remaining assignments needed
-      numRight = remainingRight;
-      numLeft = remainingLeft;
-
-      // Fall through to enumeration with reduced free positions
-      std::cerr << "FAST_HEURISTIC: Reduced free positions from " << numFree
-                << " to " << freePositions.size() << ", need " << numRight
-                << " R and " << numLeft << " L"
-                << ", continuing with enumeration" << std::endl;
-
-      // Don't return - fall through to enumeration code below
-
-    } else {
-      // Few enough positions - just assign them all with alternating
-      std::cerr << "FAST_HEURISTIC: Only " << stillFree.size()
-                << " positions remain, assigning all with alternating"
-                << std::endl;
-
-      int currentTurn = (remainingRight >= remainingLeft) ? 1 : -1;
-
-      for (size_t pos : stillFree) {
-        // Assign based on what we still need
-        if (currentTurn == 1 && remainingRight > 0) {
-          candidate[pos] = 1;
-          remainingRight--;
-          currentTurn = -1;  // Try to alternate
-        } else if (currentTurn == -1 && remainingLeft > 0) {
-          candidate[pos] = -1;
-          remainingLeft--;
-          currentTurn = 1;  // Try to alternate
-        } else if (remainingRight > 0) {
-          candidate[pos] = 1;
-          remainingRight--;
-        } else if (remainingLeft > 0) {
-          candidate[pos] = -1;
-          remainingLeft--;
-        }
-      }
-
-      // Validate and return (all positions assigned)
-      if (validateConstraints(candidate)) {
-        int minDistance = calculateMinDistance(candidate);
-        if (minDistance > 0) {
-          d_turns = candidate;
-          d_closureError = calculateClosureError(candidate);
-
-          std::cerr << "FAST_HEURISTIC: Success (closureError="
-                    << d_closureError << ", minDist=" << minDistance << ")"
-                    << std::endl;
-          return true;
-        } else {
-          std::cerr << "FAST_HEURISTIC: Self-crossing detected (minDist=0)"
-                    << std::endl;
-        }
-      } else {
-        std::cerr << "FAST_HEURISTIC: Constraint validation failed"
-                  << std::endl;
-      }
-
-      // All positions assigned but failed - can't enumerate further
-      std::cerr << "FAST_HEURISTIC: Failed after assigning all " << numFree
-                << " free positions" << std::endl;
+    // Try fast heuristic for large rings
+    FastHeuristicResult heuristicResult =
+        tryFastHeuristic(freePositions, numRight, numLeft);
+    if (heuristicResult == FastHeuristicResult::SUCCESS) {
+      return true;
+    } else if (heuristicResult == FastHeuristicResult::FAILURE) {
       return false;
     }
   }
+
+  // Otherwise CONTINUE with enumeration
 
   // If no free variables, we're done (constraints fully determined the
   // solution)
@@ -1697,6 +1597,288 @@ void maybeReflectSymmetricFusedRings(const RDKit::ROMol &mol,
       }
     }
   }
+}
+
+// Helper: Add turn constraints for fused rings
+static void addFusedRingTurnConstraints(
+    MacrocycleGenerator &generator, const std::vector<int> &macrocycleRingVec,
+    const RDKit::VECT_INT_VECT &allRings) {
+  // Add turn constraints for fused rings
+  // Pattern: first turn = R, middle turns = L, last turn = R
+  // Examples: 2-atom fusion → RR, 3-atom → RLR, 4-atom → RLLR
+  for (const auto &ring : allRings) {
+    // Skip macrocycles
+    if (ring.size() > MACROCYCLE_SIZE_THRESHOLD) {
+      continue;
+    }
+
+    // Find shared atoms between this ring and the macrocycle
+    std::vector<size_t> sharedPositions = findSharedPositions(
+        macrocycleRingVec, std::vector<int>(ring.begin(), ring.end()));
+
+    // Need at least 1 shared atom (spiro or fusion)
+    // Skip if more than 4 shared atoms (unusual/complex fusion)
+    if (sharedPositions.size() < 1 || sharedPositions.size() > 4) {
+      continue;
+    }
+
+    // Verify shared atoms are contiguous and reorder if needed
+    if (!verifyAndReorderSharedPositions(sharedPositions,
+                                         macrocycleRingVec.size())) {
+      continue;
+    }
+
+    // Create turn pattern based on number of shared atoms:
+    // Pattern length = N (number of shared atoms)
+    // First and last turn: R (convex, prevalent)
+    // Middle turns: L (concave)
+    // 1 shared atom: R
+    // 2 shared atoms: RR
+    // 3 shared atoms: RLR
+    // 4 shared atoms: RLLR
+    std::vector<int> pattern;
+    size_t numShared = sharedPositions.size();
+
+    if (numShared == 1) {
+      pattern.push_back(1);  // R
+    } else if (numShared == 2) {
+      // RR pattern for 2-atom fusion
+      pattern.push_back(1);  // R
+      pattern.push_back(1);  // R
+    } else {
+      // First turn: R (endpoint)
+      pattern.push_back(1);
+      // Middle turns: L
+      for (size_t i = 1; i < numShared - 1; ++i) {
+        pattern.push_back(-1);  // L
+      }
+      // Last turn: R (endpoint)
+      pattern.push_back(1);
+    }
+
+    // Add FIXED turn constraint
+    TurnConstraint constraint;
+    constraint.position = sharedPositions[0];
+    constraint.type = ConstraintType::FIXED;
+    constraint.pattern = pattern;
+    constraint.reason = "fused_ring_" + std::to_string(ring.size()) + "_at_" +
+                        std::to_string(sharedPositions[0]);
+
+    generator.addConstraint(constraint);
+  }
+}
+
+DoubleBondStereoAtoms getDoubleBondStereoAtoms(const RDKit::Bond *bond,
+                                               const RDKit::ROMol *mol) {
+  DoubleBondStereoAtoms result;
+
+  // Get the double bond atoms
+  result.atom1 = bond->getBeginAtomIdx();
+  result.atom2 = bond->getEndAtomIdx();
+
+  // Get the stereo-defining atoms (based on CIP priority)
+  const auto &neighbors = bond->getStereoAtoms();
+  if (neighbors.size() != 2) {
+    return result;  // invalid
+  }
+
+  // Figure out which stereo atom is connected to which double bond atom
+  bool neighbor0ConnectedToAtom1 =
+      mol->getBondBetweenAtoms(result.atom1, neighbors[0]) != nullptr;
+  bool neighbor0ConnectedToAtom2 =
+      mol->getBondBetweenAtoms(result.atom2, neighbors[0]) != nullptr;
+
+  if (neighbor0ConnectedToAtom1 && !neighbor0ConnectedToAtom2) {
+    result.atom1Neighbor1 = neighbors[0];
+    result.atom2Neighbor1 = neighbors[1];
+  } else if (neighbor0ConnectedToAtom2 && !neighbor0ConnectedToAtom1) {
+    result.atom1Neighbor1 = neighbors[1];
+    result.atom2Neighbor1 = neighbors[0];
+  } else {
+    return result;  // invalid - ambiguous connectivity
+  }
+
+  // Find other neighbors for each atom (if degree > 2)
+  if (mol->getAtomWithIdx(result.atom1)->getDegree() > 2) {
+    for (auto neighbor :
+         mol->atomNeighbors(mol->getAtomWithIdx(result.atom1))) {
+      int nidx = neighbor->getIdx();
+      if (nidx != result.atom1Neighbor1 && nidx != result.atom2) {
+        result.atom1Neighbor2 = nidx;
+        break;
+      }
+    }
+  }
+
+  if (mol->getAtomWithIdx(result.atom2)->getDegree() > 2) {
+    for (auto neighbor :
+         mol->atomNeighbors(mol->getAtomWithIdx(result.atom2))) {
+      int nidx = neighbor->getIdx();
+      if (nidx != result.atom2Neighbor1 && nidx != result.atom1) {
+        result.atom2Neighbor2 = nidx;
+        break;
+      }
+    }
+  }
+
+  result.valid = true;
+  return result;
+}
+
+// Helper: Add stereochemistry constraints for double bonds
+static void addStereochemistryConstraints(
+    MacrocycleGenerator &generator, const RDKit::ROMol *mol,
+    const RDKit::INT_VECT &macrocycleRing) {
+  // Add constraints for double bonds with E/Z stereochemistry
+  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
+    size_t nextIdx = (i + 1) % macrocycleRing.size();
+    int atom1 = macrocycleRing[i];
+    int atom2 = macrocycleRing[nextIdx];
+
+    const RDKit::Bond *bond = mol->getBondBetweenAtoms(atom1, atom2);
+    if (!bond || bond->getBondType() != RDKit::Bond::DOUBLE) {
+      continue;
+    }
+
+    auto stereoType = bond->getStereo();
+    if (stereoType == RDKit::Bond::STEREOANY ||
+        stereoType == RDKit::Bond::STEREONONE) {
+      continue;
+    }
+
+    // Extract all atoms around the double bond
+    auto stereoAtoms = getDoubleBondStereoAtoms(bond, mol);
+    if (!stereoAtoms.valid) {
+      continue;
+    }
+
+    // Determine the macrocycle ring neighbors
+    size_t prevIdx = (i - 1 + macrocycleRing.size()) % macrocycleRing.size();
+    size_t nextNextIdx = (i + 2) % macrocycleRing.size();
+    int macrocycle_atom1_neighbor = macrocycleRing[prevIdx];
+    int macrocycle_atom2_neighbor = macrocycleRing[nextNextIdx];
+
+    // Check if stereo-defining atoms match the macrocycle neighbors
+    // If they don't, we need to swap the interpretation
+    bool swapStereo = false;
+
+    // Check if atom1_neighbor1 is the macrocycle neighbor
+    // If not, use atom1_neighbor2 (if it exists)
+    if (stereoAtoms.atom1Neighbor1 != macrocycle_atom1_neighbor) {
+      if (stereoAtoms.atom1Neighbor2 == macrocycle_atom1_neighbor) {
+        swapStereo = !swapStereo;
+      } else {
+        continue;
+      }
+    }
+
+    // Check if atom2_neighbor1 is the macrocycle neighbor
+    // If not, use atom2_neighbor2 (if it exists)
+    if (stereoAtoms.atom2Neighbor1 != macrocycle_atom2_neighbor) {
+      if (stereoAtoms.atom2Neighbor2 == macrocycle_atom2_neighbor) {
+        swapStereo = !swapStereo;
+      } else {
+        continue;
+      }
+    }
+
+    // Determine expected stereochemistry
+    bool expected_cis = (stereoType == RDKit::Bond::STEREOZ ||
+                         stereoType == RDKit::Bond::STEREOCIS);
+
+    // Apply swap if needed
+    if (swapStereo) {
+      expected_cis = !expected_cis;
+    }
+
+    // Add constraint based on cis/trans relationship
+    // For a double bond at positions i → i+1 in the ring:
+    // The turns at positions i and i+1 determine the stereochemistry
+    // Cis: turns should be SAME
+    // Trans: turns should be OPPOSITE
+    // Note: OPPOSITE/SAME constraint at position X constrains positions X and
+    // X+1
+
+    TurnConstraint constraint;
+    constraint.position = i;  // This will constrain turns at i and i+1
+
+    if (expected_cis) {
+      constraint.type = ConstraintType::SAME;
+      constraint.reason = "cis_double_bond_at_" + std::to_string(i);
+    } else {
+      constraint.type = ConstraintType::OPPOSITE;
+      constraint.reason = "trans_double_bond_at_" + std::to_string(i);
+    }
+
+    generator.addConstraint(constraint);
+  }
+}
+
+std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
+    const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
+    const RDKit::VECT_INT_VECT &allRings, bool useJacobianRefinement,
+    const std::map<size_t, int> &substituentSizesByPosition,
+    double bondLength) {
+  // Only attempt for macrocycles (size > MACROCYCLE_SIZE_THRESHOLD)
+  if (macrocycleRing.size() <= MACROCYCLE_SIZE_THRESHOLD) {
+    return {};
+  }
+
+  // Create MacrocycleGenerator with Jacobian flag
+  MacrocycleGenerator generator(macrocycleRing.size(), bondLength,
+                                useJacobianRefinement);
+
+  // Convert allRings to std::vector<std::vector<int>> for helper function
+  std::vector<std::vector<int>> allRingsVec;
+  for (const auto &ring : allRings) {
+    std::vector<int> ringVec(ring.begin(), ring.end());
+    allRingsVec.push_back(ringVec);
+  }
+  std::vector<int> macrocycleRingVec(macrocycleRing.begin(),
+                                     macrocycleRing.end());
+
+  // Identify all angle constraints for fused small rings
+  auto angleConstraints =
+      identifyAngleConstraintsForFusedRings(macrocycleRingVec, allRingsVec);
+  for (const auto &angleConstraint : angleConstraints) {
+    generator.addAngleConstraint(angleConstraint);
+  }
+
+  // Use pre-computed substituent sizes by position
+  generator.setSubstituentInfo(substituentSizesByPosition,
+                               -1);  // -1 = L turns point inward
+
+  // Add constraints for fused rings and stereochemistry
+  addFusedRingTurnConstraints(generator, macrocycleRingVec, allRings);
+  addStereochemistryConstraints(generator, mol, macrocycleRing);
+
+  // Get number of free positions before solving (for threshold scaling)
+  size_t numFreePositions = generator.getNumFreePositions();
+
+  // Solve for optimal turn sequence
+  if (!generator.solve()) {
+    return {};  // No solution found
+  }
+
+  // Check closure quality
+  double closureError = generator.getClosureError();
+  double MAX_CLOSURE_ERROR = 6.0;  // base threshold in Angstroms
+
+  // Scale threshold based on number of free turn positions (not total ring
+  // size) Fast heuristic is used when free positions > 15, creating approximate
+  // patterns
+  if (numFreePositions > 15) {
+    // Allow proportionally larger initial closure errors for fast heuristic
+    // Jacobian refinement will close the gap
+    MAX_CLOSURE_ERROR = numFreePositions * 1.5;  // ~1.5 Å per free position
+  }
+
+  if (closureError > MAX_CLOSURE_ERROR) {
+    return {};  // Closure error too large
+  }
+
+  // Generate and return 2D coordinates
+  return generator.generateCoordinates();
 }
 
 }  // namespace RDDepict
