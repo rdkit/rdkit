@@ -3,6 +3,7 @@ import os
 import sys
 
 from rdkit import Chem
+from rdkit.Chem import rdCIPLabeler
 
 EXPECTED_LABELS_OVERRIDES = {
   # p/m labels are filtered out on input, so they are not
@@ -56,7 +57,7 @@ def getLabels(mol):
     Calculates and extracts the CIP labels for the mol
     """
 
-  Chem.rdCIPLabeler.AssignCIPLabels(mol)
+  rdCIPLabeler.AssignCIPLabels(mol)
 
   labels = set()
   for atom in mol.GetAtoms():
