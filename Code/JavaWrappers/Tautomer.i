@@ -5,11 +5,12 @@
 #include <GraphMol/MolStandardize/Tautomer.h>
 %}
 
-%newobject tautomerEnumeratorFromParams;
-%newobject getV1TautomerEnumerator;
 %shared_ptr(RDKit::ROMol)
 %template(Sizet_Vect) std::vector<size_t>;
 %ignore RDKit::MolStandardize::TautomerScoringFunctions::makeOptimizedScorer;
+%shared_ptr(RDKit::MolStandardize::TautomerEnumerator)
+%newobject tautomerEnumeratorFromParams;
+%newobject getV1TautomerEnumerator;
 
 %include <GraphMol/MolStandardize/Tautomer.h>
 
