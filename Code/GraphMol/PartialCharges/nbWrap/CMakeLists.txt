@@ -4,4 +4,4 @@ rdkit_nanobind_extension(rdPartialCharges
                          DEST Chem
                          LINK_LIBRARIES PartialCharges)
 
-add_pytest(pyPartialCharges ${CMAKE_CURRENT_SOURCE_DIR}/testPartialCharges.py)
+add_pytest(pyPartialCharges ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testPartialCharges.py)
