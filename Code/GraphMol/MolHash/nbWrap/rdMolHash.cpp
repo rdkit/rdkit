@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2020-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,14 +16,6 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 using namespace RDKit;
-
-namespace {
-std::string MolHashHelper(const ROMol &mol, MolHash::HashFunction func,
-                          bool useCXSmiles, unsigned cxFlagsToSkip) {
-  RWMol cpy(mol);
-  return MolHash::MolHash(&cpy, func, useCXSmiles, cxFlagsToSkip);
-}
-}  // namespace
 
 NB_MODULE(rdMolHash, m) {
   m.doc() = "Module containing functions to generate hashes for molecules";
@@ -51,7 +43,13 @@ NB_MODULE(rdMolHash, m) {
       .value("HetAtomProtomerv2", MolHash::HashFunction::HetAtomProtomerv2)
       .export_values();
 
-  m.def("MolHash", MolHashHelper, "mol"_a, "func"_a,
-        "useCxSmiles"_a = false, "cxFlagsToSkip"_a = 0u,
-        R"DOC(Generate a hash for a molecule. The func argument determines which hash is generated.)DOC");
+  m.def(
+      "MolHash",
+      [](const ROMol &mol, MolHash::HashFunction func, bool useCXSmiles,
+         unsigned cxFlagsToSkip) {
+        RWMol cpy(mol);
+        return MolHash::MolHash(&cpy, func, useCXSmiles, cxFlagsToSkip);
+      },
+      "mol"_a, "func"_a, "useCxSmiles"_a = false, "cxFlagsToSkip"_a = 0u,
+      R"DOC(Generate a hash for a molecule. The func argument determines which hash is generated.)DOC");
 }
