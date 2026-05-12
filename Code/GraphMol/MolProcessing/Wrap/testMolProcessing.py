@@ -10,13 +10,12 @@
 import unittest
 
 #
-from rdkit import Chem
+from rdkit import Chem, rdBase
 from rdkit.Chem import rdMolProcessing
 try:
   from rdkit.Chem import rdFingerprintGenerator
-  _haveFPGen = True
 except ImportError:
-  _haveFPGen = False
+  pass
 from rdkit import DataStructs
 from rdkit import RDConfig
 
@@ -27,8 +26,9 @@ class TestCase(unittest.TestCase):
     self.smiFile = RDConfig.RDBaseDir + '/Regress/Data/zinc.leads.500.q.smi'
     self.sdFile = RDConfig.RDBaseDir + "/Data/NCI/first_200.props.sdf"
 
-  @unittest.skipUnless(_haveFPGen, "rdFingerprintGenerator not available")
   def test1(self):
+    if rdBase._wrapperType == 'nanobind':
+      self.skipTest("rdFingerprintGenerator not available in nanobind yet")
     fpg = rdFingerprintGenerator.GetMorganGenerator()
     fps = rdMolProcessing.GetFingerprintsForMolsInFile(self.smiFile)
     self.assertEqual(len(fps), 499)
@@ -45,8 +45,9 @@ class TestCase(unittest.TestCase):
     nfps = [fpg.GetFingerprint(m) for m in mols]
     self.assertAlmostEqual(DataStructs.TanimotoSimilarity(fps[0], fps[1]), 0.0638, places=3)
 
-  @unittest.skipUnless(_haveFPGen, "rdFingerprintGenerator not available")
   def test2(self):
+    if rdBase._wrapperType == 'nanobind':
+      self.skipTest("rdFingerprintGenerator not available in nanobind yet")
     fpg = rdFingerprintGenerator.GetMorganGenerator(radius=2)
 
     fps = rdMolProcessing.GetFingerprintsForMolsInFile(self.smiFile, generator=fpg)
