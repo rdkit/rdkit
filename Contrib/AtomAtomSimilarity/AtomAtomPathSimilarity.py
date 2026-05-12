@@ -20,9 +20,9 @@ _bondTypeCodes = {
 }
 _BONDSYMBOL_ = {1: '-', 2: '=', 3: '#', 4: ':'}
 
-#atomHashModulus = 217 # 108*2+1
-atomHashModulus = 223  # Gobbi code actually uses the first prime higher than 217, not 217 itself
-bondHashModulus = 5
+#_atomHashModulus = 217 # 108*2+1
+_atomHashModulus = 223  # Gobbi code actually uses the first prime higher than 217, not 217 itself
+_bondHashModulus = 5
 
 #def FindAllPathsOfLengthN_Gobbi(mol, length, rootedAtAtom=-1, uniquepaths=True):
 #	return FindAllPathsOfLengthMToN(mol, length, length, rootedAtAtom=rootedAtAtom, uniquepaths=uniquepaths)
@@ -106,13 +106,13 @@ def getpathintegers(m1, uptolength=7):
       pathuniqueint = numpy.ushort(0)  # work with 16 bit unsigned integers and ignore overflow...
       for ires, (bondValue, atomValue) in enumerate(res):
         #use 16 bit unsigned integer arithmetic to reproduce the Gobbi ints
-        #					pathuniqueint = ((pathuniqueint+bondValue)*atomHashModulus+atomValue)*bondHashModulus
+        #					pathuniqueint = ((pathuniqueint+bondValue)*_atomHashModulus+atomValue)*_bondHashModulus
         val1 = pathuniqueint + numpy.ushort(bondValue)
-        val2 = val1 * numpy.ushort(atomHashModulus)
+        val2 = val1 * numpy.ushort(_atomHashModulus)
         #trying to get the same behaviour as the Gobbi test code - it looks like a circular path includes the bond, but not the closure atom - this fix works
         if atomValue is not None:
           val3 = val2 + numpy.ushort(atomValue)
-          val4 = val3 * numpy.ushort(bondHashModulus)
+          val4 = val3 * numpy.ushort(_bondHashModulus)
         else:
           val4 = val2
         pathuniqueint = val4
