@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2025 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2026 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,33 +8,35 @@
 //  of the RDKit source tree.
 //
 
-#include <boost/python.hpp>
+#include <nanobind/nanobind.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
-#include <RDBoost/Wrap.h>
 
 using namespace RDKit;
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace RDKit {
 namespace TopologicalTorsionWrapper {
+
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getTopologicalTorsionFPGenerator(
     const bool includeChirality, const uint32_t torsionAtomCount,
-    const bool countSimulation, python::object &py_countBounds,
-    const std::uint32_t fpSize, python::object &py_atomInvGen) {
+    const bool countSimulation, nb::object py_countBounds,
+    const std::uint32_t fpSize, nb::object py_atomInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
 
-  python::extract<AtomInvariantsGenerator *> atomInvGen(py_atomInvGen);
-  if (atomInvGen.check() && atomInvGen()) {
-    atomInvariantsGenerator = atomInvGen();
-    atomInvariantsGenerator = atomInvariantsGenerator->clone();
+  if (!py_atomInvGen.is_none()) {
+    atomInvariantsGenerator =
+        nb::cast<AtomInvariantsGenerator *>(py_atomInvGen)->clone();
   }
 
   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
-  if (py_countBounds) {
-    auto tmp = pythonObjectToVect<std::uint32_t>(py_countBounds);
-    countBounds = *tmp;
+  if (!py_countBounds.is_none()) {
+    countBounds.clear();
+    for (auto item : py_countBounds) {
+      countBounds.push_back(nb::cast<std::uint32_t>(item));
+    }
   }
 
   return TopologicalTorsion::getTopologicalTorsionGenerator<OutputType>(
@@ -42,53 +44,45 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionFPGenerator(
       countSimulation, fpSize, countBounds, false);
 }
 
-void exportTopologicalTorsion() {
+void exportTopologicalTorsion(nb::module_ &m) {
   // Topological torsion fingerprint does not support 32 bit output yet
-  python::class_<TopologicalTorsion::TopologicalTorsionArguments,
-                 python::bases<FingerprintArguments>, boost::noncopyable>(
-      "TopologicalTorsionFingerprintOptions", python::no_init)
-      .def_readwrite(
+  nb::class_<TopologicalTorsion::TopologicalTorsionArguments,
+             FingerprintArguments>(m, "TopologicalTorsionFingerprintOptions")
+      .def_rw(
           "torsionAtomCount",
           &TopologicalTorsion::TopologicalTorsionArguments::d_torsionAtomCount,
           "number of atoms to be included in the paths")
-      .def_readwrite(
+      .def_rw(
           "onlyShortestPaths",
-          &TopologicalTorsion::TopologicalTorsionArguments::
-              df_onlyShortestPaths,
-          "whether or not to only include paths which are the shortest path between the start and end atoms");
+          &TopologicalTorsion::TopologicalTorsionArguments::df_onlyShortestPaths,
+          R"DOC(whether or not to only include paths which are the shortest path between the start and end atoms)DOC");
 
-  python::def(
+  m.def(
       "GetTopologicalTorsionGenerator",
       &getTopologicalTorsionFPGenerator<std::uint64_t>,
-      (python::arg("includeChirality") = false,
-       python::arg("torsionAtomCount") = 4,
-       python::arg("countSimulation") = true,
-       python::arg("countBounds") = python::object(),
-       python::arg("fpSize") = 2048,
-       python::arg("atomInvariantsGenerator") = python::object()),
-      "Get an atom pair fingerprint generator\n\n"
-      "  ARGUMENTS:\n"
-      "    - includeChirality: includeChirality argument for both the default "
-      "atom invariants generator and the fingerprint arguments\n"
-      "    - torsionAtomCount: the number of atoms to include in the "
-      "\"torsions\"\n"
-      "    - countSimulation:  if set, use count simulation while  "
-      "generating the fingerprint\n"
-      "    - countBounds: boundaries for count simulation, corresponding bit "
-      "will be  set if the count is higher than the number provided for that "
-      "spot\n"
-      "    - fpSize: size of the generated fingerprint, does not affect the "
-      "sparse versions\n"
-      "    - atomInvariantsGenerator: atom invariants to be used during "
-      "fingerprint generation\n\n"
-      "This generator supports the following AdditionalOutput types:\n"
-      "    - atomToBits: which bits each atom is involved in\n"
-      "    - atomCounts: how many bits each atom sets\n"
-      "    - bitPaths: map from bitId to vectors of atom indices\n\n"
-      "  RETURNS: FingerprintGenerator\n\n",
-      python::return_value_policy<python::manage_new_object>());
+      "includeChirality"_a = false, "torsionAtomCount"_a = 4,
+      "countSimulation"_a = true, "countBounds"_a = nb::none(),
+      "fpSize"_a = 2048, "atomInvariantsGenerator"_a = nb::none(),
+      R"DOC(Get an atom pair fingerprint generator
 
-  return;
+ARGUMENTS:
+    - includeChirality: includeChirality argument for both the default
+      atom invariants generator and the fingerprint arguments
+    - torsionAtomCount: the number of atoms to include in the "torsions"
+    - countSimulation: if set, use count simulation while generating the fingerprint
+    - countBounds: boundaries for count simulation, corresponding bit
+      will be set if the count is higher than the number provided for that spot
+    - fpSize: size of the generated fingerprint, does not affect the sparse versions
+    - atomInvariantsGenerator: atom invariants to be used during fingerprint generation
+
+This generator supports the following AdditionalOutput types:
+    - atomToBits: which bits each atom is involved in
+    - atomCounts: how many bits each atom sets
+    - bitPaths: map from bitId to vectors of atom indices
+
+RETURNS: FingerprintGenerator
+)DOC",
+      nb::rv_policy::take_ownership);
 }
 }  // namespace TopologicalTorsionWrapper
 

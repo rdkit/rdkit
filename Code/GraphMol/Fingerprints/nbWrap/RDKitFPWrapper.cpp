@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2026 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,34 +8,36 @@
 //  of the RDKit source tree.
 //
 
-#include <boost/python.hpp>
+#include <nanobind/nanobind.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
-#include <RDBoost/Wrap.h>
 
 using namespace RDKit;
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace RDKit {
 namespace RDKitFPWrapper {
+
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     unsigned int minPath, unsigned int maxPath, bool useHs, bool branchedPaths,
-    bool useBondOrder, bool countSimulation, python::object &py_countBounds,
+    bool useBondOrder, bool countSimulation, nb::object py_countBounds,
     std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
-    python::object &py_atomInvGen) {
+    nb::object py_atomInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
 
-  python::extract<AtomInvariantsGenerator *> atomInvGen(py_atomInvGen);
-  if (atomInvGen.check() && atomInvGen()) {
-    atomInvariantsGenerator = atomInvGen()->clone();
+  if (!py_atomInvGen.is_none()) {
+    atomInvariantsGenerator =
+        nb::cast<AtomInvariantsGenerator *>(py_atomInvGen)->clone();
   }
 
   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
-
-  if (py_countBounds) {
-    auto tmp = pythonObjectToVect<std::uint32_t>(py_countBounds);
-    countBounds = *tmp;
+  if (!py_countBounds.is_none()) {
+    countBounds.clear();
+    for (auto item : py_countBounds) {
+      countBounds.push_back(nb::cast<std::uint32_t>(item));
+    }
   }
 
   return RDKitFP::getRDKitFPGenerator<OutputType>(
@@ -44,70 +46,61 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
       numBitsPerFeature, true);
 }
 
-AtomInvariantsGenerator *getRDKitAtomInvGen() {
-  return new RDKitFP::RDKitFPAtomInvGenerator();
-}
+void exportRDKit(nb::module_ &m) {
+  nb::class_<RDKitFP::RDKitFPArguments, FingerprintArguments>(
+      m, "RDKitFingerprintOptions")
+      .def_rw("minPath", &RDKitFP::RDKitFPArguments::d_minPath,
+              "minimum path length (in bonds) to be included")
+      .def_rw("maxPath", &RDKitFP::RDKitFPArguments::d_maxPath,
+              "maximum path length (in bonds) to be included")
+      .def_rw("useHs", &RDKitFP::RDKitFPArguments::df_useHs,
+              "use explicit Hs in the paths (if molecule has explicit Hs)")
+      .def_rw("branchedPaths", &RDKitFP::RDKitFPArguments::df_branchedPaths,
+              "generate branched subgraphs, not just linear ones")
+      .def_rw("useBondOrder", &RDKitFP::RDKitFPArguments::df_useBondOrder,
+              "include bond orders in the path hashes");
 
-void exportRDKit() {
-  python::class_<RDKitFP::RDKitFPArguments, python::bases<FingerprintArguments>,
-                 boost::noncopyable>("RDKitFingerprintOptions", python::no_init)
-      .def_readwrite("minPath", &RDKitFP::RDKitFPArguments::d_minPath,
-                     "minimum path length (in bonds) to be included")
-      .def_readwrite("maxPath", &RDKitFP::RDKitFPArguments::d_maxPath,
-                     "maximum path length (in bonds) to be included")
-      .def_readwrite(
-          "useHs", &RDKitFP::RDKitFPArguments::df_useHs,
-          "use explicit Hs in the paths (if molecule has explicit Hs)")
-      .def_readwrite("branchedPaths",
-                     &RDKitFP::RDKitFPArguments::df_branchedPaths,
-                     "generate branched subgraphs, not just linear ones")
-      .def_readwrite("useBondOrder",
-                     &RDKitFP::RDKitFPArguments::df_useBondOrder,
-                     "include bond orders in the path hashes");
-  python::def(
+  m.def(
       "GetRDKitFPGenerator", &getRDKitFPGenerator<std::uint64_t>,
-      (python::arg("minPath") = 1, python::arg("maxPath") = 7,
-       python::arg("useHs") = true, python::arg("branchedPaths") = true,
-       python::arg("useBondOrder") = true,
-       python::arg("countSimulation") = false,
-       python::arg("countBounds") = python::object(),
-       python::arg("fpSize") = 2048, python::arg("numBitsPerFeature") = 2,
-       python::arg("atomInvariantsGenerator") = python::object()),
-      "Get an RDKit fingerprint generator\n\n"
-      "  ARGUMENTS:\n"
-      "    - minPath: the minimum path length (in bonds) to be included\n"
-      "    - maxPath: the maximum path length (in bonds) to be included\n"
-      "    - useHs: toggles inclusion of Hs in paths (if the molecule has "
-      "explicit Hs)\n"
-      "    - branchedPaths: toggles generation of branched subgraphs, not just "
-      "linear paths\n"
-      "    - useBondOrder: toggles inclusion of bond orders in the path "
-      "hashes\n"
-      "    - countSimulation:  if set, use count simulation while  "
-      "generating the fingerprint\n"
-      "    - countBounds: boundaries for count simulation, corresponding bit "
-      "will be  set if the count is higher than the number provided for that "
-      "spot\n"
-      "    - fpSize: size of the generated fingerprint, does not affect the "
-      "sparse versions\n"
-      "    - numBitsPerFeature: the number of bits set per path/subgraph "
-      "found\n"
-      "    - atomInvariantsGenerator: atom invariants to be used during "
-      "fingerprint generation\n\n"
-      "This generator supports the following AdditionalOutput types:\n"
-      "    - atomToBits: which bits each atom is involved in\n"
-      "    - atomCounts: how many bits each atom sets\n"
-      "    - bitPaths: map from bitId to vectors of bond indices for the "
-      "individual subgraphs\n\n"
-      "  RETURNS: FingerprintGenerator\n\n",
-      python::return_value_policy<python::manage_new_object>());
+      "minPath"_a = 1, "maxPath"_a = 7, "useHs"_a = true,
+      "branchedPaths"_a = true, "useBondOrder"_a = true,
+      "countSimulation"_a = false, "countBounds"_a = nb::none(),
+      "fpSize"_a = 2048, "numBitsPerFeature"_a = 2,
+      "atomInvariantsGenerator"_a = nb::none(),
+      R"DOC(Get an RDKit fingerprint generator
 
-  python::def("GetRDKitAtomInvGen", &getRDKitAtomInvGen,
-              "Get an RDKit atom invariants generator\n\n"
-              "  RETURNS: AtomInvariantsGenerator\n\n",
-              python::return_value_policy<python::manage_new_object>());
+ARGUMENTS:
+    - minPath: the minimum path length (in bonds) to be included
+    - maxPath: the maximum path length (in bonds) to be included
+    - useHs: toggles inclusion of Hs in paths (if the molecule has explicit Hs)
+    - branchedPaths: toggles generation of branched subgraphs, not just linear paths
+    - useBondOrder: toggles inclusion of bond orders in the path hashes
+    - countSimulation: if set, use count simulation while generating the fingerprint
+    - countBounds: boundaries for count simulation, corresponding bit
+      will be set if the count is higher than the number provided for that spot
+    - fpSize: size of the generated fingerprint, does not affect the sparse versions
+    - numBitsPerFeature: the number of bits set per path/subgraph found
+    - atomInvariantsGenerator: atom invariants to be used during fingerprint generation
 
-  return;
+This generator supports the following AdditionalOutput types:
+    - atomToBits: which bits each atom is involved in
+    - atomCounts: how many bits each atom sets
+    - bitPaths: map from bitId to vectors of bond indices for the individual subgraphs
+
+RETURNS: FingerprintGenerator
+)DOC",
+      nb::rv_policy::take_ownership);
+
+  m.def(
+      "GetRDKitAtomInvGen",
+      []() -> AtomInvariantsGenerator * {
+        return new RDKitFP::RDKitFPAtomInvGenerator();
+      },
+      R"DOC(Get an RDKit atom invariants generator
+
+RETURNS: AtomInvariantsGenerator
+)DOC",
+      nb::rv_policy::take_ownership);
 }
 }  // namespace RDKitFPWrapper
 

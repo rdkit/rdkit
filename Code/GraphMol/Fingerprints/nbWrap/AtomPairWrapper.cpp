@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2026 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,33 +8,36 @@
 //  of the RDKit source tree.
 //
 
-#include <boost/python.hpp>
+#include <nanobind/nanobind.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
-#include <RDBoost/Wrap.h>
 
 using namespace RDKit;
 using namespace RDKit::AtomPair;
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace RDKit {
 namespace AtomPairWrapper {
+
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getAtomPairGenerator(
     unsigned int minDistance, unsigned int maxDistance, bool includeChirality,
-    bool use2D, bool countSimulation, python::object &py_countBounds,
-    std::uint32_t fpSize, python::object &py_atomInvGen) {
+    bool use2D, bool countSimulation, nb::object py_countBounds,
+    std::uint32_t fpSize, nb::object py_atomInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
 
-  python::extract<AtomInvariantsGenerator *> atomInvGen(py_atomInvGen);
-  if (atomInvGen.check() && atomInvGen()) {
-    atomInvariantsGenerator = atomInvGen()->clone();
+  if (!py_atomInvGen.is_none()) {
+    atomInvariantsGenerator =
+        nb::cast<AtomInvariantsGenerator *>(py_atomInvGen)->clone();
   }
 
   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
-  if (py_countBounds) {
-    auto tmp = pythonObjectToVect<std::uint32_t>(py_countBounds);
-    countBounds = *tmp;
+  if (!py_countBounds.is_none()) {
+    countBounds.clear();
+    for (auto item : py_countBounds) {
+      countBounds.push_back(nb::cast<std::uint32_t>(item));
+    }
   }
 
   return AtomPair::getAtomPairGenerator<OutputType>(
@@ -42,66 +45,61 @@ FingerprintGenerator<OutputType> *getAtomPairGenerator(
       atomInvariantsGenerator, countSimulation, fpSize, countBounds, true);
 }
 
-AtomInvariantsGenerator *getAtomPairAtomInvGen(const bool includeChirality) {
-  return new AtomPairAtomInvGenerator(includeChirality);
-}
+void exportAtompair(nb::module_ &m) {
+  nb::class_<AtomPair::AtomPairArguments, FingerprintArguments>(
+      m, "AtomPairFingerprintOptions")
+      .def_rw("use2D", &AtomPair::AtomPairArguments::df_use2D,
+              "use 2D distances")
+      .def_rw("minDistance", &AtomPair::AtomPairArguments::d_minDistance,
+              "minimum distance to be included")
+      .def_rw("maxDistance", &AtomPair::AtomPairArguments::d_maxDistance,
+              "maximum distance to be included");
 
-void exportAtompair() {
-  python::class_<AtomPair::AtomPairArguments,
-                 python::bases<FingerprintArguments>, boost::noncopyable>(
-      "AtomPairFingerprintOptions", python::no_init)
-      .def_readwrite("use2D", &AtomPair::AtomPairArguments::df_use2D,
-                     "use 2D distances")
-      .def_readwrite("minDistance", &AtomPair::AtomPairArguments::d_minDistance,
-                     "minimum distance to be included")
-      .def_readwrite("maxDistance", &AtomPair::AtomPairArguments::d_maxDistance,
-                     "maximum distance to be included");
-
-  python::def(
+  m.def(
       "GetAtomPairGenerator", &getAtomPairGenerator<std::uint64_t>,
-      (python::arg("minDistance") = 1,
-       python::arg("maxDistance") = AtomPair::maxPathLen - 1,
-       python::arg("includeChirality") = false, python::arg("use2D") = true,
-       python::arg("countSimulation") = true,
-       python::arg("countBounds") = python::object(),
-       python::arg("fpSize") = 2048,
-       python::arg("atomInvariantsGenerator") = python::object()),
-      "Get an atom pair fingerprint generator\n\n"
-      "  ARGUMENTS:\n"
-      "    - minDistance: minimum distance between atoms to be considered in a "
-      "pair, default is 1 bond\n"
-      "    - maxDistance: maximum distance between atoms to be considered in a "
-      "pair, default is maxPathLen-1 bonds\n"
-      "    - includeChirality: if set, chirality will be used in the atom  "
-      "invariants, this is ignored if atomInvariantsGenerator is provided\n"
-      "    - use2D: if set, the 2D (topological) distance matrix  will be "
-      "used\n"
-      "    - countSimulation:  if set, use count simulation while  "
-      "generating the fingerprint\n"
-      "    - countBounds: boundaries for count simulation, corresponding bit "
-      "will be  set if the count is higher than the number provided for that "
-      "spot\n"
-      "    - fpSize: size of the generated fingerprint, does not affect the "
-      "sparse versions\n"
-      "    - atomInvariantsGenerator: atom invariants to be used during "
-      "fingerprint generation\n\n"
-      "This generator supports the following AdditionalOutput types:\n"
-      "    - atomToBits: which bits each atom is involved in\n"
-      "    - atomCounts: how many bits each atom sets\n"
-      "    - bitInfoMap: map from bitId to (atomId, radius) pairs\n\n"
-      "  RETURNS: FingerprintGenerator\n\n",
-      python::return_value_policy<python::manage_new_object>());
+      "minDistance"_a = 1,
+      "maxDistance"_a = (unsigned int)(AtomPair::maxPathLen - 1),
+      "includeChirality"_a = false, "use2D"_a = true,
+      "countSimulation"_a = true, "countBounds"_a = nb::none(),
+      "fpSize"_a = 2048, "atomInvariantsGenerator"_a = nb::none(),
+      R"DOC(Get an atom pair fingerprint generator
 
-  python::def("GetAtomPairAtomInvGen", &getAtomPairAtomInvGen,
-              (python::arg("includeChirality") = false),
-              "Get an atom pair atom-invariant generator\n\n"
-              "  ARGUMENTS:\n"
-              "    - includeChirality: if set, chirality will be taken into "
-              "account for invariants\n"
-              "  RETURNS: AtomInvariantsGenerator\n\n",
-              python::return_value_policy<python::manage_new_object>());
+ARGUMENTS:
+    - minDistance: minimum distance between atoms to be considered in a
+      pair, default is 1 bond
+    - maxDistance: maximum distance between atoms to be considered in a
+      pair, default is maxPathLen-1 bonds
+    - includeChirality: if set, chirality will be used in the atom
+      invariants, this is ignored if atomInvariantsGenerator is provided
+    - use2D: if set, the 2D (topological) distance matrix will be used
+    - countSimulation: if set, use count simulation while generating the fingerprint
+    - countBounds: boundaries for count simulation, corresponding bit
+      will be set if the count is higher than the number provided for that spot
+    - fpSize: size of the generated fingerprint, does not affect the sparse versions
+    - atomInvariantsGenerator: atom invariants to be used during fingerprint generation
 
-  return;
+This generator supports the following AdditionalOutput types:
+    - atomToBits: which bits each atom is involved in
+    - atomCounts: how many bits each atom sets
+    - bitInfoMap: map from bitId to (atomId, radius) pairs
+
+RETURNS: FingerprintGenerator
+)DOC",
+      nb::rv_policy::take_ownership);
+
+  m.def(
+      "GetAtomPairAtomInvGen",
+      [](const bool includeChirality) -> AtomInvariantsGenerator * {
+        return new AtomPairAtomInvGenerator(includeChirality);
+      },
+      "includeChirality"_a = false,
+      R"DOC(Get an atom pair atom-invariant generator
+
+ARGUMENTS:
+    - includeChirality: if set, chirality will be taken into account for invariants
+RETURNS: AtomInvariantsGenerator
+)DOC",
+      nb::rv_policy::take_ownership);
 }
 }  // namespace AtomPairWrapper
 
