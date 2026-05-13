@@ -248,7 +248,7 @@ void embedFusedSystems(const RDKit::ROMol &mol,
                        std::list<EmbeddedFrag> &efrags,
                        const RDGeom::INT_POINT2D_MAP *coordMap,
                        bool useRingTemplates,
-                       bool useJacobianRefinement) {
+                       bool useDeNovoMacrocycleGeneration) {
   RDKit::INT_INT_VECT_MAP neighMap;
   RingUtils::makeRingNeighborMap(arings, neighMap);
 
@@ -280,7 +280,8 @@ void embedFusedSystems(const RDKit::ROMol &mol,
       }
       allowRingTemplates = (coordMapAtoms.count() < 2);
     }
-    EmbeddedFrag efrag(&mol, frings, allowRingTemplates, useJacobianRefinement);
+    EmbeddedFrag efrag(&mol, frings, allowRingTemplates,
+                       useDeNovoMacrocycleGeneration);
     efrag.setupNewNeighs();
     efrags.push_back(efrag);
     size_t rix;
@@ -413,7 +414,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
                           const RDGeom::INT_POINT2D_MAP *coordMap,
                           std::list<EmbeddedFrag> &efrags,
                           bool useRingTemplates,
-                          bool useJacobianRefinement) {
+                          bool useDeNovoMacrocycleGeneration) {
   std::vector<int> atomRanks;
   atomRanks.resize(mol.getNumAtoms());
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
@@ -443,7 +444,8 @@ void computeInitialCoords(RDKit::ROMol &mol,
   if (arings.size() > 0) {
     // first deal with the fused rings
     DepictorLocal::embedFusedSystems(mol, arings, efrags, coordMap,
-                                     useRingTemplates, useJacobianRefinement);
+                                     useRingTemplates,
+                                     useDeNovoMacrocycleGeneration);
   }
 
   // do non-tetrahedral stereo
@@ -553,7 +555,8 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
                              unsigned int nFlipsPerSample,
                              unsigned int nSamples, int sampleSeed,
                              bool permuteDeg4Nodes, bool forceRDKit,
-                             bool useRingTemplates, bool useJacobianRefinement) {
+                             bool useRingTemplates,
+                             bool useDeNovoMacrocycleGeneration) {
   Compute2DCoordParameters params;
   params.coordMap = coordMap;
   params.canonOrient = canonOrient;
@@ -564,7 +567,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   params.permuteDeg4Nodes = permuteDeg4Nodes;
   params.forceRDKit = forceRDKit;
   params.useRingTemplates = useRingTemplates;
-  params.useJacobianRefinement = useJacobianRefinement;
+  params.useDeNovoMacrocycleGeneration = useDeNovoMacrocycleGeneration;
   return compute2DCoords(mol, params);
 }
 
@@ -602,7 +605,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
   computeInitialCoords(cp, params.coordMap, efrags, params.useRingTemplates,
-                      params.useJacobianRefinement);
+                       params.useDeNovoMacrocycleGeneration);
 
 #if 1
   // perform random sampling here to improve the density
@@ -705,7 +708,7 @@ unsigned int compute2DCoordsMimicDistMat(
     unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes, bool) {
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
-  computeInitialCoords(mol, nullptr, efrags, false, true);
+  computeInitialCoords(mol, nullptr, efrags, false, false);
 
   // now perform random flips of rotatable bonds so that we can sample the space
   // and try to mimic the distances in dmat

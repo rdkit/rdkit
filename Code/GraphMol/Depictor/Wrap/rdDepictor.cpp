@@ -37,7 +37,7 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
                              bool permuteDeg4Nodes = false,
                              double bondLength = -1.0, bool forceRDKit = false,
                              bool useRingTemplates = false,
-                             bool useJacobianRefinement = true) {
+                             bool useDeNovoMacrocycleGeneration = false) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
   python::list ks = coordMap.keys();
@@ -56,7 +56,7 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
   res = RDDepict::compute2DCoords(
       mol, &cMap, canonOrient, clearConfs, nFlipsPerSample, nSamples,
       sampleSeed, permuteDeg4Nodes, forceRDKit, useRingTemplates,
-      useJacobianRefinement);
+      useDeNovoMacrocycleGeneration);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
   }
@@ -354,7 +354,9 @@ BOOST_PYTHON_MODULE(rdDepictor) {
      forceRDKit - use RDKit to generate coordinates even if \n\
                   preferCoordGen is set to true\n\
      useRingTemplates - use templates to generate coordinates of complex\n\
-                  ring systems\n\n\
+                  ring systems\n\
+     useDeNovoMacrocycleGeneration - use de novo generation for large\n\
+                  macrocycles when templates fail (default: False)\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(
@@ -366,7 +368,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("sampleSeed") = 0, python::arg("permuteDeg4Nodes") = false,
        python::arg("bondLength") = -1.0, python::arg("forceRDKit") = false,
        python::arg("useRingTemplates") = false,
-       python::arg("useJacobianRefinement") = true),
+       python::arg("useDeNovoMacrocycleGeneration") = false),
       docString.c_str());
 
   docString =

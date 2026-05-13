@@ -196,11 +196,11 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
     \param fusedRings a vector of rings, each ring is a list of atom ids
     \param useRingTemplates whether to use ring system templates for generating
       initial coordinates
-    \param useJacobianRefinement whether to use Jacobian refinement for
-    macrocycles
+    \param useDeNovoMacrocycleGeneration whether to use de novo macrocycle
+      generation for large rings
   */
   EmbeddedFrag(const RDKit::ROMol *mol, const RDKit::VECT_INT_VECT &fusedRings,
-               bool useRingTemplates, bool useJacobianRefinement = true);
+               bool useRingTemplates, bool useDeNovoMacrocycleGeneration);
 
   //! Initializer for a cis/trans system using the double bond
   /*!
@@ -414,7 +414,6 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   // returns true if macrocycle coordinates were successfully generated
   bool generateMacrocycleCoordinates(const RDKit::INT_VECT &macrocycleRing,
                                      const RDKit::VECT_INT_VECT &allRings,
-                                     bool useJacobianRefinement,
                                      const SubstituentInfo &subInfo);
 
   // Template refinement with angle constraints
@@ -429,11 +428,11 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   void embedMacrocycleWithFusedRings(const RDKit::VECT_INT_VECT &coreRings,
                                      const RDKit::INT_VECT &coreRingsIds,
                                      RDKit::INT_VECT &doneRings,
-                                     bool useJacobianRefinement);
+                                     bool useDeNovoMacrocycleGeneration);
 
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
                        bool useRingTemplates,
-                       bool useJacobianRefinement = true);
+                       bool useDeNovoMacrocycleGeneration);
 
   void setupAttachmentPoints();
 

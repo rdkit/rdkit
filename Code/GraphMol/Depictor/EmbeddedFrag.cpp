@@ -68,12 +68,14 @@ EmbeddedFrag::EmbeddedFrag(unsigned int aid, const RDKit::ROMol *mol) {
 
 EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
                            const RDKit::VECT_INT_VECT &fusedRings,
-                           bool useRingTemplates, bool useJacobianRefinement) {
+                           bool useRingTemplates,
+                           bool useDeNovoMacrocycleGeneration) {
   PRECONDITION(mol, "");
   dp_mol = mol;
   d_eatoms.clear();
   d_attachPts.clear();
-  this->embedFusedRings(fusedRings, useRingTemplates, useJacobianRefinement);
+  this->embedFusedRings(fusedRings, useRingTemplates,
+                        useDeNovoMacrocycleGeneration);
   d_done = false;
 }
 
@@ -1144,13 +1146,12 @@ bool EmbeddedFrag::matchToTemplateMacrocycle(
 
 bool EmbeddedFrag::generateMacrocycleCoordinates(
     const RDKit::INT_VECT &macrocycleRing, const RDKit::VECT_INT_VECT &allRings,
-    bool useJacobianRefinement, const SubstituentInfo &subInfo) {
+    const SubstituentInfo &subInfo) {
   PRECONDITION(dp_mol, "");
 
   // Call the standalone function in MacrocycleGenerator.cpp
   auto coords = RDDepict::generateMacrocycleCoordinates(
-      dp_mol, macrocycleRing, allRings, useJacobianRefinement,
-      subInfo.sizesByPosition, BOND_LEN);
+      dp_mol, macrocycleRing, allRings, subInfo.sizesByPosition, BOND_LEN);
 
   if (coords.empty()) {
     return false;  // Generation failed
@@ -1191,18 +1192,27 @@ void EmbeddedFrag::maybeReflectSymmetricFusedRings(
 
 // For template-matched macrocycles with fused small rings, we can do a quick
 // refinement step to adjust the angles and ensure ideal geometry for the fused
-// rings. This is a simple local optimization that preserves the overall
-// template-matched coordinates but tweaks them to better accommodate the fused
-// small rings. We only apply this refinement if there are fused small rings,
+// rings and for triple bonds (which will become linear with this step). This is
+// a simple local optimization that preserves the overall template-matched
+// coordinates but tweaks them to better accommodate the fused small rings. We
+// only apply this refinement if there are triple bonds or fused small rings,
 // since those are the cases where the template match may not have ideal
-// geometry. For even-numbered macrocycles with only 6-membered fused rings, we
-// skip refinement since the original template coordinates should already be
-// ideal.
+// geometry. For even-numbered macrocycles with only 6-membered fused rings with
+// no triple bonds, we skip refinement since the original template coordinates
+// should already be ideal.
 void EmbeddedFrag::maybeRefineTemplateMatchedMacrocycle(
     const RDKit::INT_VECT &macrocycleRing,
     const RDKit::VECT_INT_VECT &allRings) {
   PRECONDITION(dp_mol, "");
-  // Check if we need angle constraint refinement
+
+  // Quick check for triple bonds - these always need refinement for 180° angles
+  std::vector<int> macrocycleRingVec(macrocycleRing.begin(),
+                                     macrocycleRing.end());
+  auto tripleBondConstraints = RDDepict::identifyAngleConstraintsForTripleBonds(
+      dp_mol, macrocycleRingVec);
+  bool hasTripleBonds = !tripleBondConstraints.empty();
+
+  // Check if we need angle constraint refinement for fused rings
   bool hasSmallRings = false;
   bool hasNonSixMemberedRings = false;
   for (const auto &ring : allRings) {
@@ -1216,13 +1226,15 @@ void EmbeddedFrag::maybeRefineTemplateMatchedMacrocycle(
     }
   }
 
-  if (!hasSmallRings) {
-    return;  // No small rings, no angle constraints needed, keep original
-             // template coordinates
+  // Early return if no constraints needed
+  if (!hasSmallRings && !hasTripleBonds) {
+    return;  // No small rings and no triple bonds, keep original template
+             // coordinates
   }
-  if (macrocycleRing.size() % 2 == 0 && !hasNonSixMemberedRings) {
-    return;  // Even-membered macrocycle with only 6-membered fused rings should
-             // already have ideal geometry from template, no refinement needed
+  if (macrocycleRing.size() % 2 == 0 && !hasNonSixMemberedRings &&
+      !hasTripleBonds) {
+    return;  // Even-membered macrocycle with only 6-membered fused rings and no
+             // triple bonds should already have ideal geometry from template
   }
 
   // Convert RDKit types to std::vector for helper functions
@@ -1231,12 +1243,16 @@ void EmbeddedFrag::maybeRefineTemplateMatchedMacrocycle(
     std::vector<int> ringVec(ring.begin(), ring.end());
     allRingsVec.push_back(ringVec);
   }
-  std::vector<int> macrocycleRingVec(macrocycleRing.begin(),
-                                     macrocycleRing.end());
 
   // Identify angle constraints for fused small rings
   auto angleConstraints = RDDepict::identifyAngleConstraintsForFusedRings(
       macrocycleRingVec, allRingsVec);
+
+  // Add triple bond constraints (already computed earlier for early return
+  // check)
+  angleConstraints.insert(angleConstraints.end(), tripleBondConstraints.begin(),
+                          tripleBondConstraints.end());
+
   if (angleConstraints.empty()) {
     return;  // No constraints needed, keep original template coordinates
   }
@@ -1321,7 +1337,7 @@ static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
 // the macrocycle will be generated as a regular polygon in the caller code
 void EmbeddedFrag::embedMacrocycleWithFusedRings(
     const RDKit::VECT_INT_VECT &coreRings, const RDKit::INT_VECT &coreRingsIds,
-    RDKit::INT_VECT &doneRings, bool useJacobianRefinement) {
+    RDKit::INT_VECT &doneRings, bool useDeNovoMacrocycleGeneration) {
   PRECONDITION(dp_mol, "");
 
   // Find the macrocycle in coreRings
@@ -1349,10 +1365,10 @@ void EmbeddedFrag::embedMacrocycleWithFusedRings(
   if (foundTemplate) {
     doneRings.push_back(macrocycleIdx);
   }
-  if (doneRings.empty()) {
+  if (doneRings.empty() && useDeNovoMacrocycleGeneration) {
     // If template matching failed, try to generate coordinates on-the-fly
-    bool generated = generateMacrocycleCoordinates(
-        macrocycleRing, coreRings, useJacobianRefinement, subInfo);
+    bool generated =
+        generateMacrocycleCoordinates(macrocycleRing, coreRings, subInfo);
 
     if (generated) {
       // Mark macrocycle as done, then continue to attach small rings
@@ -1367,7 +1383,7 @@ void EmbeddedFrag::embedMacrocycleWithFusedRings(
 //
 void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
                                    bool useRingTemplates,
-                                   bool useJacobianRefinement) {
+                                   bool useDeNovoMacrocycleGeneration) {
   PRECONDITION(dp_mol, "");
   // Look for a template for the whole system. Failing that simplify the system
   // to a set of core atoms and  look for a template for those. If that fails,
@@ -1424,7 +1440,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
         });
     if (!foundTemplate && hasMacrocycle) {
       embedMacrocycleWithFusedRings(coreRings, coreRingsIds, doneRings,
-                                    useJacobianRefinement);
+                                    useDeNovoMacrocycleGeneration);
     }
   }
 

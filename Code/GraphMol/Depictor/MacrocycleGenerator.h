@@ -14,11 +14,12 @@
 #include <vector>
 #include <string>
 #include <Geometry/point.h>
+#include "DepictUtils.h"
 
 namespace RDKit {
 class ROMol;
 class Bond;
-}
+}  // namespace RDKit
 
 namespace RDDepict {
 
@@ -97,11 +98,8 @@ class MacrocycleGenerator {
   /*!
     \param ringSize: Number of atoms in the macrocycle
     \param bondLength: Length of each bond (default 1.5 Å)
-    \param useJacobianRefinement: Whether to use Jacobian angle adjustment to
-    close gaps (default true)
   */
-  MacrocycleGenerator(size_t ringSize, double bondLength = 1.5,
-                      bool useJacobianRefinement = true);
+  MacrocycleGenerator(size_t ringSize, double bondLength = 1.5);
 
   //! Add a structural constraint
   /*!
@@ -223,9 +221,9 @@ class MacrocycleGenerator {
  private:
   //! Result of fast heuristic attempt
   enum class FastHeuristicResult {
-    SUCCESS,   //!< Solved completely, solution in d_turns
-    FAILURE,   //!< Failed, cannot continue
-    CONTINUE   //!< Reduced problem size, continue with enumeration
+    SUCCESS,  //!< Solved completely, solution in d_turns
+    FAILURE,  //!< Failed, cannot continue
+    CONTINUE  //!< Reduced problem size, continue with enumeration
   };
 
   //! Try fast heuristic for large rings with many free positions
@@ -285,27 +283,26 @@ class MacrocycleGenerator {
                            //!< for L)
   double d_closureError;   //!< Positional closure error
   bool d_solved;           //!< Whether solve() has been called successfully
-  bool d_useJacobianRefinement;  //!< Whether to use Jacobian angle adjustment
 };
 
 //! Endpoint information for shared vertex constraint computation
 struct EndpointInfo {
-  int ringSize;                 //!< Size of the small ring
-  std::vector<int> ringAtoms;   //!< Atoms in the small ring (to check overlap)
+  int ringSize;                //!< Size of the small ring
+  std::vector<int> ringAtoms;  //!< Atoms in the small ring (to check overlap)
 };
 
 //! Atoms around a double bond with stereochemistry
 struct DoubleBondStereoAtoms {
-  int atom1;            //!< First atom of the double bond
-  int atom2;            //!< Second atom of the double bond
-  int atom1Neighbor1;   //!< Stereo-controlling neighbor of atom1 (from
-                        //!< getStereoAtoms)
-  int atom2Neighbor1;   //!< Stereo-controlling neighbor of atom2 (from
-                        //!< getStereoAtoms)
-  int atom1Neighbor2;   //!< Other neighbor of atom1 (degree > 2), or -1
-  int atom2Neighbor2;   //!< Other neighbor of atom2 (degree > 2), or -1
-  bool swappedStereo;   //!< Whether stereo interpretation needs to be swapped
-  bool valid;           //!< Whether all required atoms were found
+  int atom1;           //!< First atom of the double bond
+  int atom2;           //!< Second atom of the double bond
+  int atom1Neighbor1;  //!< Stereo-controlling neighbor of atom1 (from
+                       //!< getStereoAtoms)
+  int atom2Neighbor1;  //!< Stereo-controlling neighbor of atom2 (from
+                       //!< getStereoAtoms)
+  int atom1Neighbor2;  //!< Other neighbor of atom1 (degree > 2), or -1
+  int atom2Neighbor2;  //!< Other neighbor of atom2 (degree > 2), or -1
+  bool swappedStereo;  //!< Whether stereo interpretation needs to be swapped
+  bool valid;          //!< Whether all required atoms were found
 
   DoubleBondStereoAtoms()
       : atom1(-1),
@@ -408,6 +405,16 @@ std::vector<AngleConstraint> identifyAngleConstraintsForFusedRings(
     const std::vector<int> &macrocycleRing,
     const std::vector<std::vector<int>> &allRings);
 
+//! Identify angle constraints for triple bonds in macrocycle
+/*!
+  \param mol: The molecule
+  \param macrocycleRing: Vector of atom indices in the macrocycle
+  \return Vector of angle constraints for triple bonds (180° angles)
+*/
+RDKIT_DEPICTOR_EXPORT
+std::vector<AngleConstraint> identifyAngleConstraintsForTripleBonds(
+    const RDKit::ROMol *mol, const std::vector<int> &macrocycleRing);
+
 //! Refine macrocycle coordinates with angle constraints
 /*!
   Takes existing coordinates, applies angle constraints, and uses Jacobian
@@ -422,7 +429,7 @@ std::vector<AngleConstraint> identifyAngleConstraintsForFusedRings(
 std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
     const std::vector<RDGeom::Point2D> &templateCoords,
     const std::vector<AngleConstraint> &angleConstraints,
-    double bondLength = 1.5);
+    double bondLength = RDDepict::BOND_LEN);
 
 //! Close gap using Jacobian pseudo-inverse minimization
 /*!
@@ -465,16 +472,15 @@ void maybeReflectSymmetricFusedRings(const RDKit::ROMol &mol,
   \param mol: The molecule
   \param macrocycleRing: Indices of atoms in the macrocycle ring
   \param allRings: All rings in the molecule
-  \param useJacobianRefinement: Whether to use Jacobian angle adjustment
-  \param substituentSizesByPosition: Map of macrocycle position -> total substituent size
-  \param bondLength: Target bond length (default 1.5)
-  \return Coordinates for macrocycle atoms (empty if generation failed)
+  \param substituentSizesByPosition: Map of macrocycle position -> total
+  substituent size \param bondLength: Target bond length (default 1.5) \return
+  Coordinates for macrocycle atoms (empty if generation failed)
 */
 std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
     const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
-    const RDKit::VECT_INT_VECT &allRings, bool useJacobianRefinement,
+    const RDKit::VECT_INT_VECT &allRings,
     const std::map<size_t, int> &substituentSizesByPosition,
-    double bondLength = 1.5);
+    double bondLength = RDDepict::BOND_LEN);
 
 }  // namespace RDDepict
 
