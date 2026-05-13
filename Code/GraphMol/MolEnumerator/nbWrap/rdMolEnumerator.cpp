@@ -75,8 +75,8 @@ NB_MODULE(rdMolEnumerator, m) {
       },
       "mol"_a, "maxPerOperation"_a = 0u,
       R"DOC(do an enumeration and return a MolBundle.
-  If maxPerOperation is >0 that will be used as the maximum number of molecules which
-    can be returned by any given operation.
+If maxPerOperation is >0 that will be used as the maximum number of molecules which
+can be returned by any given operation.
 Limitations:
   - the current implementation does not support molecules which include both
     SRUs and LINKNODEs
