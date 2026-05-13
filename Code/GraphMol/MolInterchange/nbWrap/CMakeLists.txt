@@ -1,7 +1,7 @@
 remove_definitions(-DRDKIT_MOLINTERCHANGE_BUILD)
-rdkit_python_extension(rdMolInterchange
-                       rdMolInterchange.cpp
-                       DEST Chem
-                       LINK_LIBRARIES MolInterchange)
+rdkit_nanobind_extension(rdMolInterchange
+                         rdMolInterchange.cpp
+                         DEST Chem
+                         LINK_LIBRARIES MolInterchange)
 
-add_pytest(pyMolInterchange ${CMAKE_CURRENT_SOURCE_DIR}/testMolInterchange.py)
+add_pytest(pyMolInterchange ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testMolInterchange.py)

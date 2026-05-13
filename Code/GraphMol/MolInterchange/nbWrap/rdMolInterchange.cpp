@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Greg Landrum
+//  Copyright (C) 2018-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,129 +7,113 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/python.h>
-#include <GraphMol/GraphMol.h>
-#include <RDBoost/Wrap.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <RDBoost/boost_shared_ptr.h>
 
+#include <GraphMol/GraphMol.h>
 #include <GraphMol/MolInterchange/MolInterchange.h>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
-namespace {
-python::tuple JSONToMols(const std::string &jsonBlock,
-                         python::object pyparams) {
-  RDKit::MolInterchange::JSONParseParameters params;
-  if (pyparams) {
-    params =
-        python::extract<RDKit::MolInterchange::JSONParseParameters>(pyparams);
-  } else {
-    params = RDKit::MolInterchange::defaultJSONParseParameters;
-  }
-  auto mols = RDKit::MolInterchange::JSONDataToMols(jsonBlock, params);
-  python::list result;
-  for (auto &mol : mols) {
-    result.append(mol);
-  }
-  return python::tuple(result);
-}
+NB_MODULE(rdMolInterchange, m) {
+  m.doc() = R"DOC(Module containing functions for interchange of molecules.
+Note that this should be considered beta and that the format
+and API will very likely change in future releases.)DOC";
 
-std::string MolsToJSON(const python::object &mols,
-                       const python::object pyparams) {
-  auto pymols = pythonObjectToVect<const RDKit::ROMol *>(mols);
-  if (!pymols) {
-    return "";
-  }
-  RDKit::MolInterchange::JSONWriteParameters params =
-      RDKit::MolInterchange::defaultJSONWriteParameters;
-  if (pyparams) {
-    params =
-        python::extract<RDKit::MolInterchange::JSONWriteParameters>(pyparams);
-  }
-  return RDKit::MolInterchange::MolsToJSONData(*pymols, params);
-}
-std::string MolToJSON(const RDKit::ROMol &mol, const python::object pyparams) {
-  RDKit::MolInterchange::JSONWriteParameters params =
-      RDKit::MolInterchange::defaultJSONWriteParameters;
-  if (pyparams) {
-    params =
-        python::extract<RDKit::MolInterchange::JSONWriteParameters>(pyparams);
-  }
-  return RDKit::MolInterchange::MolToJSONData(mol, params);
-}
+  nb::class_<RDKit::MolInterchange::JSONParseParameters>(
+      m, "JSONParseParameters", "Parameters controlling the JSON parser")
+      .def(nb::init<>())
+      .def_rw("setAromaticBonds",
+              &RDKit::MolInterchange::JSONParseParameters::setAromaticBonds,
+              "set bond types to aromatic for bonds flagged aromatic")
+      .def_rw("strictValenceCheck",
+              &RDKit::MolInterchange::JSONParseParameters::strictValenceCheck,
+              "be strict when checking atom valences")
+      .def_rw("parseConformers",
+              &RDKit::MolInterchange::JSONParseParameters::parseConformers,
+              "parse conformers in the JSON")
+      .def_rw("parseProperties",
+              &RDKit::MolInterchange::JSONParseParameters::parseProperties,
+              "parse molecular properties in the JSON")
+      .def_rw("useHCounts",
+              &RDKit::MolInterchange::JSONParseParameters::useHCounts,
+              R"DOC(use atomic H counts from the JSON. You may want to set
+this to False when parsing queries.)DOC");
 
-}  // namespace
+  nb::class_<RDKit::MolInterchange::JSONWriteParameters>(
+      m, "JSONWriteParameters", "Parameters controlling the JSON writer")
+      .def(nb::init<>())
+      .def_rw("useRDKitExtensions",
+              &RDKit::MolInterchange::JSONWriteParameters::useRDKitExtensions,
+              "use RDKit extensions to the commonchem format");
 
-BOOST_PYTHON_MODULE(rdMolInterchange) {
-  python::scope().attr("__doc__") =
-      "Module containing functions for interchange of molecules.\n"
-      "Note that this should be considered beta and that the format\n"
-      "  and API will very likely change in future releases.";
+  m.def(
+      "MolToJSON",
+      [](const RDKit::ROMol &mol, nb::object pyparams) {
+        RDKit::MolInterchange::JSONWriteParameters params =
+            RDKit::MolInterchange::defaultJSONWriteParameters;
+        if (!pyparams.is_none()) {
+          params =
+              nb::cast<RDKit::MolInterchange::JSONWriteParameters>(pyparams);
+        }
+        return RDKit::MolInterchange::MolToJSONData(mol, params);
+      },
+      "mol"_a, "params"_a = nb::none(),
+      R"DOC(Convert a single molecule to JSON
 
-  python::class_<RDKit::MolInterchange::JSONParseParameters,
-                 boost::noncopyable>("JSONParseParameters",
-                                     "Parameters controlling the JSON parser")
-      .def_readwrite(
-          "setAromaticBonds",
-          &RDKit::MolInterchange::JSONParseParameters::setAromaticBonds,
-          "set bond types to aromatic for bonds flagged aromatic")
-      .def_readwrite(
-          "strictValenceCheck",
-          &RDKit::MolInterchange::JSONParseParameters::strictValenceCheck,
-          "be strict when checking atom valences")
-      .def_readwrite(
-          "parseConformers",
-          &RDKit::MolInterchange::JSONParseParameters::parseConformers,
-          "parse conformers in the JSON")
-      .def_readwrite(
-          "parseProperties",
-          &RDKit::MolInterchange::JSONParseParameters::parseProperties,
-          "parse molecular properties in the JSON")
-      .def_readwrite("useHCounts",
-                     &RDKit::MolInterchange::JSONParseParameters::useHCounts,
-                     "use atomic H counts from the JSON. You may want to set "
-                     "this to False when parsing queries.")
-      .def("__setattr__", &safeSetattr);
+ARGUMENTS:
+  - mol: the molecule to work with
+RETURNS:
+  a string)DOC");
 
-  python::class_<RDKit::MolInterchange::JSONWriteParameters,
-                 boost::noncopyable>("JSONWriteParameters",
-                                     "Parameters controlling the JSON writer")
-      .def_readwrite(
-          "useRDKitExtensions",
-          &RDKit::MolInterchange::JSONWriteParameters::useRDKitExtensions,
-          "use RDKit extensions to the commonchem format")
-      .def("__setattr__", &safeSetattr);
+  m.def(
+      "MolsToJSON",
+      [](nb::object mols_obj, nb::object pyparams) {
+        std::vector<const RDKit::ROMol *> mols;
+        for (nb::handle h : nb::iter(mols_obj)) {
+          mols.push_back(nb::cast<const RDKit::ROMol *>(h));
+        }
+        RDKit::MolInterchange::JSONWriteParameters params =
+            RDKit::MolInterchange::defaultJSONWriteParameters;
+        if (!pyparams.is_none()) {
+          params =
+              nb::cast<RDKit::MolInterchange::JSONWriteParameters>(pyparams);
+        }
+        return RDKit::MolInterchange::MolsToJSONData(mols, params);
+      },
+      "mols"_a, "params"_a = nb::none(),
+      R"DOC(Convert a set of molecules to JSON
 
-  std::string docString;
-  docString =
-      "Convert a single molecule to JSON\n\
-\n\
-    ARGUMENTS:\n\
-      - mol: the molecule to work with\n\
-    RETURNS:\n\
-      a string\n";
-  python::def("MolToJSON", MolToJSON,
-              (python::arg("mol"), python::arg("params") = python::object()),
-              docString.c_str());
-  docString =
-      "Convert a set of molecules to JSON\n\
-\n\
-    ARGUMENTS:\n\
-      - mols: the molecules to work with\n\
-    RETURNS:\n\
-      a string\n";
-  python::def("MolsToJSON", MolsToJSON,
-              (python::arg("mols"), python::arg("params") = python::object()),
-              docString.c_str());
-  docString =
-      "Convert JSON to a tuple of molecules\n\
-\n\
-    ARGUMENTS:\n\
-      - jsonBlock: the molecule to work with\n\
-      - params: (optional) JSONParseParameters controlling the JSON parsing\n\
-    RETURNS:\n\
-      a tuple of Mols\n";
-  python::def(
-      "JSONToMols", JSONToMols,
-      (python::arg("jsonBlock"), python::arg("params") = python::object()),
-      docString.c_str());
+ARGUMENTS:
+  - mols: the molecules to work with
+RETURNS:
+  a string)DOC");
+
+  m.def(
+      "JSONToMols",
+      [](const std::string &jsonBlock, nb::object pyparams) {
+        RDKit::MolInterchange::JSONParseParameters params;
+        if (!pyparams.is_none()) {
+          params =
+              nb::cast<RDKit::MolInterchange::JSONParseParameters>(pyparams);
+        } else {
+          params = RDKit::MolInterchange::defaultJSONParseParameters;
+        }
+        auto mols = RDKit::MolInterchange::JSONDataToMols(jsonBlock, params);
+        nb::list result;
+        for (auto &mol : mols) {
+          result.append(mol);
+        }
+        return nb::steal<nb::tuple>(PySequence_Tuple(result.ptr()));
+      },
+      "jsonBlock"_a, "params"_a = nb::none(),
+      R"DOC(Convert JSON to a tuple of molecules
+
+ARGUMENTS:
+  - jsonBlock: the molecule to work with
+  - params: (optional) JSONParseParameters controlling the JSON parsing
+RETURNS:
+  a tuple of Mols)DOC");
 }
