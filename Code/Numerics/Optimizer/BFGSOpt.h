@@ -14,7 +14,7 @@
 #include <cstring>
 #include <vector>
 #include <algorithm>
-#ifdef __aarch64__
+#if defined(__linux__) && defined(__aarch64__)
   #include <sys/auxv.h>
   #include <asm/hwcap.h>
   #if defined(__has_include)
