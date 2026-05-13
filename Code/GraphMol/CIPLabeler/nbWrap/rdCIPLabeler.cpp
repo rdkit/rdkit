@@ -61,15 +61,7 @@ Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A., Redkin,
 Algorithmic Analysis of Cahn--Ingold--Prelog Rules of Stereochemistry:
 Proposals for Revised Rules and a Guide for Machine Implementation.
 J. Chem. Inf. Model. 2018, 58, 1755-1765.)DOC";
-  nb::register_exception_translator(
-      [](const std::exception_ptr &p, void *) {
-        try {
-          std::rethrow_exception(p);
-        } catch (const RDKit::CIPLabeler::MaxIterationsExceeded &e) {
-          std::string msg = e.what();
-          PyErr_SetString(PyExc_RuntimeError, msg.c_str());
-        }
-      });
+  nb::exception<RDKit::CIPLabeler::MaxIterationsExceeded>(m, "MaxIterationsExceeded",                                      PyExc_RuntimeError);
 
   m.def(
       "AssignCIPLabels", assignCIPLabelsHelper, "mol"_a,
