@@ -1044,15 +1044,12 @@ static std::pair<std::vector<TemplateMatch>, bool> processTemplateMatches(
     validMatches.push_back({tmpl, match, score});
 
     // Early exit: if we found the best possible match, return it
-    // Best possible = only smallest substituent on an internal position
     double internalPenalty = -score;
-    if (subInfo.smallestSize != -1 &&
-        internalPenalty <= PENALTY_PER_ATOM * subInfo.smallestSize) {
+    if (internalPenalty == 0.0) {
       // Signal that we found the best possible match
       return {validMatches, true};
     }
   }
-
   return {validMatches, false};
 }
 
