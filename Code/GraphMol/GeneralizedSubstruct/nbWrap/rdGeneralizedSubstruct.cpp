@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2023 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2023-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,36 +8,38 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/python.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
+#include <nanobind/stl/optional.h>
+#include <nanobind/stl/unique_ptr.h>
+
 #include <GraphMol/GraphMol.h>
-#include <RDBoost/Wrap.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <GraphMol/GeneralizedSubstruct/XQMol.h>
-#include <GraphMol/Wrap/substructmethods.h>
+#include <GraphMol/nbWrap/substructmethods.h>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 using namespace RDKit;
 using namespace RDKit::GeneralizedSubstruct;
 
 namespace {
 
-python::object XQMolToBinary(const ExtendedQueryMol &self) {
+nb::bytes XQMolToBinary(const ExtendedQueryMol &self) {
   std::string res;
   {
     NOGIL gil;
     res = self.toBinary();
   }
-  python::object retval = python::object(
-      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
-  return retval;
+  return nb::bytes(res.c_str(), res.length());
 }
 
 bool hasSubstructHelper(const ROMol &mol, const ExtendedQueryMol &query,
-                        SubstructMatchParameters *iparams) {
-  SubstructMatchParameters params;
-  if (iparams) {
-    params = *iparams;
-  }
+                        std::optional<SubstructMatchParameters> iparams) {
+  SubstructMatchParameters params =
+      iparams.value_or(SubstructMatchParameters());
   bool res;
   {
     NOGIL gil;
@@ -46,13 +48,12 @@ bool hasSubstructHelper(const ROMol &mol, const ExtendedQueryMol &query,
   return res;
 }
 
-PyObject *getSubstructHelper(const ROMol &mol, const ExtendedQueryMol &query,
-                             SubstructMatchParameters *iparams) {
+std::vector<int> getSubstructHelper(
+    const ROMol &mol, const ExtendedQueryMol &query,
+    std::optional<SubstructMatchParameters> iparams) {
   std::vector<MatchVectType> matches;
-  SubstructMatchParameters params;
-  if (iparams) {
-    params = *iparams;
-  }
+  SubstructMatchParameters params =
+      iparams.value_or(SubstructMatchParameters());
   {
     NOGIL gil;
     params.maxMatches = 1;
@@ -61,97 +62,93 @@ PyObject *getSubstructHelper(const ROMol &mol, const ExtendedQueryMol &query,
   if (matches.empty()) {
     matches.push_back(MatchVectType());
   }
-  return convertMatches(matches[0]);
+  return convertMatch(matches[0]);
 }
-PyObject *getSubstructsHelper(const ROMol &mol, const ExtendedQueryMol &query,
-                              SubstructMatchParameters *iparams) {
+
+std::vector<std::vector<int>> getSubstructsHelper(
+    const ROMol &mol, const ExtendedQueryMol &query,
+    std::optional<SubstructMatchParameters> iparams) {
   std::vector<MatchVectType> matches;
-  SubstructMatchParameters params;
-  if (iparams) {
-    params = *iparams;
-  }
+  SubstructMatchParameters params =
+      iparams.value_or(SubstructMatchParameters());
   {
     NOGIL gil;
     matches = SubstructMatch(mol, query, params);
   }
-
-  PyObject *res = PyTuple_New(matches.size());
-  for (auto idx = 0u; idx < matches.size(); idx++) {
-    PyTuple_SetItem(res, idx, convertMatches(matches[idx]));
+  std::vector<std::vector<int>> res;
+  res.reserve(matches.size());
+  for (const auto &match : matches) {
+    res.push_back(convertMatch(match));
   }
   return res;
 }
 
-ExtendedQueryMol *createExtendedQueryMolHelper(
-    const ROMol &mol, bool doEnumeration, bool doTautomers,
-    bool adjustQueryProperties, MolOps::AdjustQueryParameters *ps) {
-  MolOps::AdjustQueryParameters defaults;
-  if (!ps) {
-    ps = &defaults;
-  }
-  return new ExtendedQueryMol(createExtendedQueryMol(
-      mol, doEnumeration, doTautomers, adjustQueryProperties, *ps));
-}
-
 }  // namespace
 
-BOOST_PYTHON_MODULE(rdGeneralizedSubstruct) {
-  python::scope().attr("__doc__") =
-      "Module containing functions for generalized substructure searching";
+NB_MODULE(rdGeneralizedSubstruct, m) {
+  m.doc() =
+      R"DOC(Module containing functions for generalized substructure searching)DOC";
 
-  python::class_<ExtendedQueryMol, boost::noncopyable>(
-      "ExtendedQueryMol",
-      "Extended query molecule for use in generalized substructure searching.",
-      python::init<const std::string &, bool>(
-          (python::args("self"), python::args("text"),
-           python::args("isJSON") = false),
-          "constructor from either a binary string (from ToBinary()) or a JSON string."))
-      .def("InitFromBinary", &ExtendedQueryMol::initFromBinary,
-           python::args("self", "pkl"))
-      .def("InitFromJSON", &ExtendedQueryMol::initFromJSON,
-           python::args("self", "text"))
-      .def("ToBinary", XQMolToBinary, python::args("self"))
-      .def("ToJSON", &ExtendedQueryMol::toJSON, python::args("self"))
+  nb::class_<ExtendedQueryMol>(
+      m, "ExtendedQueryMol",
+      R"DOC(Extended query molecule for use in generalized substructure searching.)DOC")
+      .def(nb::init<const std::string &, bool>(), "text"_a, "isJSON"_a = false,
+           R"DOC(constructor from either a binary string (from ToBinary()) or a JSON string.)DOC")
+      .def(
+          "__init__",
+          [](ExtendedQueryMol &self, nb::bytes data) {
+            std::string s(data.c_str(), data.size());
+            new (&self) ExtendedQueryMol(s, false);
+          },
+          "data"_a,
+          R"DOC(constructor from binary data returned by ToBinary().)DOC")
+      .def("InitFromBinary", &ExtendedQueryMol::initFromBinary, "pkl"_a)
+      .def("InitFromJSON", &ExtendedQueryMol::initFromJSON, "text"_a)
+      .def("ToBinary", XQMolToBinary)
+      .def("ToJSON", &ExtendedQueryMol::toJSON)
       .def("PatternFingerprintQuery",
            &ExtendedQueryMol::patternFingerprintQuery,
-           (python::arg("self"), python::arg("fingerprintSize") = 2048));
+           "fingerprintSize"_a = 2048);
 
-  python::def(
-      "MolHasSubstructMatch", &hasSubstructHelper,
-      (python::arg("mol"), python::arg("query"),
-       python::arg("params") = python::object()),
-      "determines whether or not a molecule is a match to a generalized substructure query");
-  python::def(
-      "MolGetSubstructMatch", &getSubstructHelper,
-      (python::arg("mol"), python::arg("query"),
-       python::arg("params") = python::object()),
-      "returns first match (if any) of a molecule to a generalized substructure query");
-  python::def(
-      "MolGetSubstructMatches", &getSubstructsHelper,
-      (python::arg("mol"), python::arg("query"),
-       python::arg("params") = python::object()),
-      "returns all matches (if any) of a molecule to a generalized substructure query");
+  m.def(
+      "MolHasSubstructMatch", &hasSubstructHelper, "mol"_a, "query"_a,
+      "params"_a = nb::none(),
+      R"DOC(determines whether or not a molecule is a match to a generalized substructure query)DOC");
+  m.def(
+      "MolGetSubstructMatch", &getSubstructHelper, "mol"_a, "query"_a,
+      "params"_a = nb::none(),
+      R"DOC(returns first match (if any) of a molecule to a generalized substructure query)DOC");
+  m.def(
+      "MolGetSubstructMatches", &getSubstructsHelper, "mol"_a, "query"_a,
+      "params"_a = nb::none(),
+      R"DOC(returns all matches (if any) of a molecule to a generalized substructure query)DOC");
 
-  python::def(
-      "PatternFingerprintTarget", &patternFingerprintTargetMol,
-      (python::arg("target"), python::arg("fingerprintSize") = 2048),
-      "Creates a pattern fingerprint for a target molecule that is compatible with an extended query");
+  m.def(
+      "PatternFingerprintTarget", &patternFingerprintTargetMol, "target"_a,
+      "fingerprintSize"_a = 2048,
+      R"DOC(Creates a pattern fingerprint for a target molecule that is compatible with an extended query)DOC");
 
-  python::def("CreateExtendedQueryMol", createExtendedQueryMolHelper,
-              (python::arg("mol"), python::arg("doEnumeration") = true,
-               python::arg("doTautomers") = true,
-               python::arg("adjustQueryProperties") = false,
-               python::arg("adjustQueryParameters") = python::object()),
-              python::return_value_policy<python::manage_new_object>(),
-              R"DOC(Creates an ExtendedQueryMol from the input molecule
+  m.def(
+      "CreateExtendedQueryMol",
+      [](const ROMol &mol, bool doEnumeration, bool doTautomers,
+         bool adjustQueryProperties,
+         std::optional<MolOps::AdjustQueryParameters> ps) {
+        MolOps::AdjustQueryParameters defaults;
+        return createExtendedQueryMol(mol, doEnumeration, doTautomers,
+                                      adjustQueryProperties,
+                                      ps.value_or(defaults));
+      },
+      "mol"_a, "doEnumeration"_a = true, "doTautomers"_a = true,
+      "adjustQueryProperties"_a = false, "adjustQueryParameters"_a = nb::none(),
+      R"DOC(Creates an ExtendedQueryMol from the input molecule
 
-  This takes a query molecule and, conceptually, performs the following steps to
-  produce an ExtendedQueryMol:
+This takes a query molecule and, conceptually, performs the following steps to
+produce an ExtendedQueryMol:
 
-    1. Enumerates features like Link Nodes and SRUs
-    2. Converts everything into TautomerQueries
-    3. Runs adjustQueryProperties()
+  1. Enumerates features like Link Nodes and SRUs
+  2. Converts everything into TautomerQueries
+  3. Runs adjustQueryProperties()
 
-  Each step is optional
+Each step is optional
 )DOC");
 }
