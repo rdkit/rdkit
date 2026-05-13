@@ -620,7 +620,7 @@ bool wroteEnoughPossibleHits(const SynthonSpaceSearchParams &params) {
     return false;
   }
   auto numLines = countLinesInFile(params.possibleHitsFile);
-  return numLines > params.maxPossibleHitsToWrite;
+  return numLines >= params.maxPossibleHitsToWrite;
 }
 }  // namespace
 

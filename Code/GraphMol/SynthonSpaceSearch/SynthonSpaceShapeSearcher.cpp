@@ -381,9 +381,6 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
   auto queryCp = std::make_unique<RWMol>(getQuery(), false, -1);
   std::vector<GaussianShape::CustomFeature> allFeatures;
   buildQueryShape(*queryCp, allFeatures);
-  std::cout << "initial query shape : "
-            << MolToCXSmiles(*dp_queryShape->getShapes().shapeToMol())
-            << std::endl;
 
   // Organise the fragments into a map where each entry is a set of fragments
   // from the same atoms in the query.  SMILES strings aren't good enough for
@@ -1133,7 +1130,6 @@ bool checkBondLengths(const ROMol &mol) {
 bool SynthonSpaceShapeSearcher::verifyHit(
     ROMol &hit, const std::string &rxnId,
     const std::vector<const std::string *> &synthNames) {
-  std::cout << "Verifying hit " << MolToCXSmiles(hit) << std::endl;
   std::array<double, 3> initScores{-1.0, -1.0, -1.0};
   if (hit.getNumConformers()) {
     initScores = GaussianShape::AlignMolecule(
@@ -1217,12 +1213,6 @@ bool SynthonSpaceShapeSearcher::verifyHit(
       }
     }
   }
-  // if (foundHit) {
-  //   std::cout << "Hit : " << MolToCXSmiles(hit) << std::endl;
-  //   std::cout << "Hit similarity : " << hit.getProp<double>("Similarity")
-  //             << " : " << hit.getProp<std::string>(common_properties::_Name)
-  //             << std::endl;
-  // }
   return foundHit;
 }
 
