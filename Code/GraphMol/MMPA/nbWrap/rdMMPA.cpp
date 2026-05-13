@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,133 +7,134 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#define PY_ARRAY_UNIQUE_SYMBOL rdmmpa_array_API
-#include <boost/python.hpp>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <RDBoost/boost_shared_ptr.h>
+#include <RDBoost/Wrap_nb.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <RDBoost/Wrap.h>
 #include <GraphMol/MMPA/MMPA.h>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace {
-python::tuple fragmentMolHelper(const RDKit::ROMol &mol, unsigned int maxCuts,
-                                unsigned int maxCutBonds,
-                                const std::string &pattern,
-                                bool resultsAsMols) {
+
+nb::tuple fragmentMolHelper(const RDKit::ROMol &mol, unsigned int maxCuts,
+                            unsigned int maxCutBonds,
+                            const std::string &pattern, bool resultsAsMols) {
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, maxCuts, maxCutBonds, pattern);
-  python::list pyres;
+  nb::list pyres;
   if (ok) {
-    for (std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>>::
-             const_iterator pr = tres.begin();
-         pr != tres.end(); ++pr) {
-      python::list lres;
+    for (const auto &pr : tres) {
+      nb::list lres;
       if (resultsAsMols) {
-        lres.append(pr->first);
-        lres.append(pr->second);
-      } else {
-        if (pr->first) {
-          lres.append(RDKit::MolToSmiles(*(pr->first), true));
+        if (pr.first) {
+          lres.append(pr.first);
         } else {
-          lres.append("");
+          lres.append(nb::none());
         }
-        lres.append(RDKit::MolToSmiles(*(pr->second), true));
+        lres.append(pr.second);
+      } else {
+        if (pr.first) {
+          lres.append(RDKit::MolToSmiles(*(pr.first), true));
+        } else {
+          lres.append(std::string(""));
+        }
+        lres.append(RDKit::MolToSmiles(*(pr.second), true));
       }
-      pyres.append(python::tuple(lres));
+      pyres.append(nb::tuple(lres));
     }
   }
-  return python::tuple(pyres);
+  return nb::steal<nb::tuple>(PySequence_Tuple(pyres.ptr()));
 }
 
-python::tuple fragmentMolHelper2(const RDKit::ROMol &mol, unsigned int minCuts,
-                                 unsigned int maxCuts, unsigned int maxCutBonds,
-                                 const std::string &pattern,
-                                 bool resultsAsMols) {
+nb::tuple fragmentMolHelper2(const RDKit::ROMol &mol, unsigned int minCuts,
+                             unsigned int maxCuts, unsigned int maxCutBonds,
+                             const std::string &pattern, bool resultsAsMols) {
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, minCuts, maxCuts, maxCutBonds,
                                      pattern);
-  python::list pyres;
+  nb::list pyres;
   if (ok) {
-    for (std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>>::
-             const_iterator pr = tres.begin();
-         pr != tres.end(); ++pr) {
-      python::list lres;
+    for (const auto &pr : tres) {
+      nb::list lres;
       if (resultsAsMols) {
-        lres.append(pr->first);
-        lres.append(pr->second);
-      } else {
-        if (pr->first) {
-          lres.append(RDKit::MolToSmiles(*(pr->first), true));
+        if (pr.first) {
+          lres.append(pr.first);
         } else {
-          lres.append("");
+          lres.append(nb::none());
         }
-        lres.append(RDKit::MolToSmiles(*(pr->second), true));
+        lres.append(pr.second);
+      } else {
+        if (pr.first) {
+          lres.append(RDKit::MolToSmiles(*(pr.first), true));
+        } else {
+          lres.append(std::string(""));
+        }
+        lres.append(RDKit::MolToSmiles(*(pr.second), true));
       }
-      pyres.append(python::tuple(lres));
+      pyres.append(nb::tuple(lres));
     }
   }
-  return python::tuple(pyres);
+  return nb::steal<nb::tuple>(PySequence_Tuple(pyres.ptr()));
 }
 
-python::tuple fragmentMolHelper3(const RDKit::ROMol &mol, python::object ob,
-                                 unsigned int minCuts, unsigned int maxCuts,
-                                 bool resultsAsMols) {
-  std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
+nb::tuple fragmentMolHelper3(const RDKit::ROMol &mol, nb::object ob,
+                             unsigned int minCuts, unsigned int maxCuts,
+                             bool resultsAsMols) {
   std::unique_ptr<std::vector<unsigned int>> v =
       pythonObjectToVect<unsigned int>(ob);
   if (!v) {
-    throw_value_error("bondsToCut must be non-empty");
+    throw nb::value_error("bondsToCut must be non-empty");
   }
+  std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, *v, minCuts, maxCuts);
-  python::list pyres;
+  nb::list pyres;
   if (ok) {
-    for (std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>>::
-             const_iterator pr = tres.begin();
-         pr != tres.end(); ++pr) {
-      python::list lres;
+    for (const auto &pr : tres) {
+      nb::list lres;
       if (resultsAsMols) {
-        lres.append(pr->first);
-        lres.append(pr->second);
-      } else {
-        if (pr->first) {
-          lres.append(RDKit::MolToSmiles(*(pr->first), true));
+        if (pr.first) {
+          lres.append(pr.first);
         } else {
-          lres.append("");
+          lres.append(nb::none());
         }
-        lres.append(RDKit::MolToSmiles(*(pr->second), true));
+        lres.append(pr.second);
+      } else {
+        if (pr.first) {
+          lres.append(RDKit::MolToSmiles(*(pr.first), true));
+        } else {
+          lres.append(std::string(""));
+        }
+        lres.append(RDKit::MolToSmiles(*(pr.second), true));
       }
-      pyres.append(python::tuple(lres));
+      pyres.append(nb::tuple(lres));
     }
   }
-  return python::tuple(pyres);
+  return nb::steal<nb::tuple>(PySequence_Tuple(pyres.ptr()));
 }
 
 }  // namespace
 
-BOOST_PYTHON_MODULE(rdMMPA) {
-  python::scope().attr("__doc__") =
-      "Module containing a C++ implementation of code for doing MMPA";
+NB_MODULE(rdMMPA, m) {
+  m.doc() = "Module containing a C++ implementation of code for doing MMPA";
 
-  std::string docString =
-      "Does the fragmentation necessary for an MMPA analysis";
-  python::def("FragmentMol", fragmentMolHelper,
-              (python::arg("mol"), python::arg("maxCuts") = 3,
-               python::arg("maxCutBonds") = 20,
-               python::arg("pattern") = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]",
-               python::arg("resultsAsMols") = true),
-              docString.c_str());
+  m.def("FragmentMol", fragmentMolHelper,
+        "mol"_a, "maxCuts"_a = 3, "maxCutBonds"_a = 20,
+        "pattern"_a = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]",
+        "resultsAsMols"_a = true,
+        R"DOC(Does the fragmentation necessary for an MMPA analysis)DOC");
 
-  python::def("FragmentMol", fragmentMolHelper2,
-              (python::arg("mol"), python::arg("minCuts"),
-               python::arg("maxCuts"), python::arg("maxCutBonds"),
-               python::arg("pattern") = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]",
-               python::arg("resultsAsMols") = true),
-              docString.c_str());
+  m.def("FragmentMol", fragmentMolHelper2,
+        "mol"_a, "minCuts"_a, "maxCuts"_a, "maxCutBonds"_a,
+        "pattern"_a = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]",
+        "resultsAsMols"_a = true,
+        R"DOC(Does the fragmentation necessary for an MMPA analysis)DOC");
 
-  python::def("FragmentMol", fragmentMolHelper3,
-              (python::arg("mol"), python::arg("bondsToCut"),
-               python::arg("minCuts") = 1, python::arg("maxCuts") = 3,
-               python::arg("resultsAsMols") = true),
-              docString.c_str());
+  m.def("FragmentMol", fragmentMolHelper3,
+        "mol"_a, "bondsToCut"_a, "minCuts"_a = 1, "maxCuts"_a = 3,
+        "resultsAsMols"_a = true,
+        R"DOC(Does the fragmentation necessary for an MMPA analysis)DOC");
 }
