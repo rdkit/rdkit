@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Greg Landrum
+//  Copyright (C) 2013-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,92 +8,78 @@
 //  of the RDKit source tree.
 //
 
-#define PY_ARRAY_UNIQUE_SYMBOL rdreducedgraphs_array_API
-#include <RDBoost/python.h>
-#include <RDBoost/boost_numpy.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
 
-#include <RDBoost/Wrap.h>
 #include <GraphMol/GraphMol.h>
-#include <RDBoost/import_array.h>
-
 #include <GraphMol/ReducedGraphs/ReducedGraphs.h>
 #include <Numerics/Vector.h>
 
-#include <vector>
-
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace {
-RDKit::ROMol *GenerateMolExtendedReducedGraphHelper(const RDKit::ROMol &mol,
-                                                    python::object atomTypes) {
-  if (atomTypes) {
-    throw_value_error("specification of atom types not yet supported");
-  }
-  RDKit::ROMol *res =
-      RDKit::ReducedGraphs::generateMolExtendedReducedGraph(mol);
-  return res;
-}
-PyObject *GenerateErGFingerprintForReducedGraphHelper(const RDKit::ROMol &mol,
-                                                      python::object atomTypes,
-                                                      double fuzzIncrement,
-                                                      int minPath,
-                                                      int maxPath) {
-  if (atomTypes) {
-    throw_value_error("specification of atom types not yet supported");
-  }
-  RDNumeric::DoubleVector *dv =
-      RDKit::ReducedGraphs::generateErGFingerprintForReducedGraph(
-          mol, nullptr, fuzzIncrement, minPath, maxPath);
-  npy_intp dim = dv->size();
-  auto *res = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
-  memcpy(static_cast<void *>(PyArray_DATA(res)),
-         static_cast<void *>(dv->getData()), dv->size() * sizeof(double));
+
+nb::ndarray<nb::numpy, double, nb::ndim<1>> dvToNumpyArray(
+    RDNumeric::DoubleVector *dv) {
+  size_t n = dv->size();
+  double *data = new double[n];
+  memcpy(data, dv->getData(), n * sizeof(double));
   delete dv;
-  return PyArray_Return(res);
+  nb::capsule owner(data, [](void *p) noexcept {
+    delete[] reinterpret_cast<double *>(p);
+  });
+  return nb::ndarray<nb::numpy, double, nb::ndim<1>>(data, {n}, owner);
 }
-PyObject *GetErGFingerprintHelper(const RDKit::ROMol &mol,
-                                  python::object atomTypes,
-                                  double fuzzIncrement, int minPath,
-                                  int maxPath) {
-  if (atomTypes) {
-    throw_value_error("specification of atom types not yet supported");
-  }
-  RDNumeric::DoubleVector *dv = RDKit::ReducedGraphs::getErGFingerprint(
-      mol, nullptr, fuzzIncrement, minPath, maxPath);
-  npy_intp dim = dv->size();
-  auto *res = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
-  memcpy(static_cast<void *>(PyArray_DATA(res)),
-         static_cast<void *>(dv->getData()), dv->size() * sizeof(double));
-  delete dv;
-  return PyArray_Return(res);
-}
+
 }  // namespace
 
-BOOST_PYTHON_MODULE(rdReducedGraphs) {
-  python::scope().attr("__doc__") =
+NB_MODULE(rdReducedGraphs, m) {
+  m.doc() =
       "Module containing functions to generate and work with reduced graphs";
 
-  rdkit_import_array();
+  m.def(
+      "GenerateMolExtendedReducedGraph",
+      [](const RDKit::ROMol &mol, nb::object atomTypes) -> RDKit::ROMol * {
+        if (!atomTypes.is_none()) {
+          throw std::invalid_argument(
+              "specification of atom types not yet supported");
+        }
+        return RDKit::ReducedGraphs::generateMolExtendedReducedGraph(mol);
+      },
+      "mol"_a, "atomTypes"_a = nb::none(), nb::rv_policy::take_ownership,
+      "Returns the reduced graph for a molecule");
 
-  std::string docString = "";
+  m.def(
+      "GenerateErGFingerprintForReducedGraph",
+      [](const RDKit::ROMol &mol, nb::object atomTypes, double fuzzIncrement,
+         int minPath, int maxPath) {
+        if (!atomTypes.is_none()) {
+          throw std::invalid_argument(
+              "specification of atom types not yet supported");
+        }
+        auto *dv =
+            RDKit::ReducedGraphs::generateErGFingerprintForReducedGraph(
+                mol, nullptr, fuzzIncrement, minPath, maxPath);
+        return dvToNumpyArray(dv);
+      },
+      "mol"_a, "atomTypes"_a = nb::none(), "fuzzIncrement"_a = 0.3,
+      "minPath"_a = 1, "maxPath"_a = 15,
+      "Returns the ErG fingerprint vector for a reduced graph");
 
-  docString = "Returns the reduced graph for a molecule";
-  python::def(
-      "GenerateMolExtendedReducedGraph", GenerateMolExtendedReducedGraphHelper,
-      (python::arg("mol"), python::arg("atomTypes") = 0), docString.c_str(),
-      python::return_value_policy<python::manage_new_object>());
-
-  docString = "Returns the ErG fingerprint vector for a reduced graph";
-  python::def("GenerateErGFingerprintForReducedGraph",
-              GenerateErGFingerprintForReducedGraphHelper,
-              (python::arg("mol"), python::arg("atomTypes") = 0,
-               python::arg("fuzzIncrement") = 0.3, python::arg("minPath") = 1,
-               python::arg("maxPath") = 15),
-              docString.c_str());
-  docString = "Returns the ErG fingerprint vector for a molecule";
-  python::def("GetErGFingerprint", GetErGFingerprintHelper,
-              (python::arg("mol"), python::arg("atomTypes") = 0,
-               python::arg("fuzzIncrement") = 0.3, python::arg("minPath") = 1,
-               python::arg("maxPath") = 15),
-              docString.c_str());
+  m.def(
+      "GetErGFingerprint",
+      [](const RDKit::ROMol &mol, nb::object atomTypes, double fuzzIncrement,
+         int minPath, int maxPath) {
+        if (!atomTypes.is_none()) {
+          throw std::invalid_argument(
+              "specification of atom types not yet supported");
+        }
+        auto *dv = RDKit::ReducedGraphs::getErGFingerprint(
+            mol, nullptr, fuzzIncrement, minPath, maxPath);
+        return dvToNumpyArray(dv);
+      },
+      "mol"_a, "atomTypes"_a = nb::none(), "fuzzIncrement"_a = 0.3,
+      "minPath"_a = 1, "maxPath"_a = 15,
+      "Returns the ErG fingerprint vector for a molecule");
 }
