@@ -50,15 +50,8 @@ NB_MODULE(rdSLNParse, m) {
       "Module containing classes and functions for working with Sybyl line "
       "notation (SLN).";
 
-  nb::register_exception_translator(
-      [](const std::exception_ptr &p, void *) {
-        try {
-          std::rethrow_exception(p);
-        } catch (const RDKit::SLNParseException &e) {
-          std::string msg = std::string("SLNParseException: ") + e.what();
-          PyErr_SetString(PyExc_ValueError, msg.c_str());
-        }
-      });
+  nb::exception<RDKit::SLNParseException>(m, "SLNParseException",
+                                          PyExc_ValueError);
 
   m.def(
       "MolFromSLN",
