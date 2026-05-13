@@ -473,7 +473,7 @@ N#CCc(cncc1)c1[2*]	689988332-107515102	2	urea-3)");
   REQUIRE(queryMol);
   SynthonSpaceSearchParams spaceSearchParams;
   spaceSearchParams.userConformerGenerator = generateConfs;
-  spaceSearchParams.useProgressBar = 60;
+  spaceSearchParams.useProgressBar = 0;
   spaceSearchParams.timeOut = 0;
   spaceSearchParams.similarityCutoff = 0.7;
   spaceSearchParams.bestHit = true;
@@ -703,22 +703,15 @@ TEST_CASE("Shape Write possible hits") {
   SynthonSpace synthonspace;
   synthonspace.readDBFile(dbName);
 
-  ShapeBuildParams shapeBuildOptions;
-  shapeBuildOptions.numConfs = 100;
-  shapeBuildOptions.rmsThreshold = 0.5;
-  shapeBuildOptions.numThreads = 2;
-  shapeBuildOptions.shapeSimThreshold = 0.95;
-  shapeBuildOptions.randomSeed = 0xdac;
-
   SynthonSpaceSearchParams params;
   params.similarityCutoff = 0.8;
   params.fragSimilarityAdjuster = 0.2;
   params.approxSimilarityAdjuster = 0.2;
-  params.numConformers = shapeBuildOptions.numConfs;
-  params.numThreads = shapeBuildOptions.numThreads;
-  params.confRMSThreshold = shapeBuildOptions.rmsThreshold;
+  params.numConformers = 100;
+  params.numThreads = 2;
+  params.confRMSThreshold = 0.5;
   params.timeOut = 0;
-  params.randomSeed = shapeBuildOptions.randomSeed;
+  params.randomSeed = 0xdac;
   params.bestHit = true;
   params.possibleHitsFile = "amide_space_shapes_poss_hits.txt";
   params.writePossibleHitsAndStop = false;
@@ -736,14 +729,9 @@ TEST_CASE("Shape Write possible hits") {
 
   auto checkResults = synthonspace.shapeSearch(
       *queryMol, params, 0, std::numeric_limits<std::uint64_t>::max());
-  std::cout << "Number of check results : "
-            << checkResults.getHitMolecules().size() << std::endl;
   CHECK(checkResults.getHitMolecules().size() == 3);
 
-  std::cout << "shortResults" << std::endl;
   auto shortResults = synthonspace.shapeSearch(*queryMol, params, 1, 3);
-  std::cout << "Number of short results : "
-            << shortResults.getHitMolecules().size() << std::endl;
   CHECK(shortResults.getHitMolecules().size() == 2);
   std::remove(params.possibleHitsFile.c_str());
 
