@@ -78,7 +78,7 @@ def getpathintegers(m1, uptolength=7):
   '''returns a list of integers describing the paths for molecule m1.  This uses numpy 16 bit unsigned integers to reproduce the data in the Gobbi paper.  The returned list is sorted'''
   bondtypelookup = {}
   for b in m1.GetBonds():
-    bondtypelookup[b.GetIdx()] =  _bondTypeCodes[b.GetBondType()], b.GetBeginAtom(), b.GetEndAtom()
+    bondtypelookup[b.GetIdx()] = _bondTypeCodes[b.GetBondType()], b.GetBeginAtom(), b.GetEndAtom()
   pathintegers = {}
   for a in m1.GetAtoms():
     idx = a.GetIdx()
@@ -181,7 +181,6 @@ def gethungarianmappings(simmatrixarray):
   row_ind, col_ind = linear_sum_assignment(costarray)
   res = zip(row_ind, col_ind)
   return res
-  
 
 
 def getsimab(mappings, simmatrixdict):
@@ -198,7 +197,8 @@ def getsimab(mappings, simmatrixdict):
 def getsimmatrix(m1, m1pathintegers, m2, m2pathintegers):
   '''generate a matrix of atom atom similarities.  See Figure 4'''
 
-  aidata = [((atomValue.GetAtomicNum(), atomValue.GetIsAromatic()), atomValue.GetIdx()) for atomValue in m1.GetAtoms()]
+  aidata = [((atomValue.GetAtomicNum(), atomValue.GetIsAromatic()), atomValue.GetIdx())
+            for atomValue in m1.GetAtoms()]
   bjdata = [((bj.GetAtomicNum(), bj.GetIsAromatic()), bj.GetIdx()) for bj in m2.GetAtoms()]
 
   simmatrixarray = numpy.zeros((len(aidata), len(bjdata)))
@@ -214,7 +214,7 @@ def getsimmatrix(m1, m1pathintegers, m2, m2pathintegers):
   return simmatrixarray
 
 
-def AtomAtomPathSimilarity(m1 , m2 ,m1pathintegers=None, m2pathintegers=None):
+def AtomAtomPathSimilarity(m1, m2, m1pathintegers=None, m2pathintegers=None):
   '''compute the Atom Atom Path Similarity for a pair of RDKit molecules.  See Gobbi et al, J. ChemInf (2015) 7:11
       the most expensive part of the calculation is computing the path integers - we can precompute these and pass them in as an argument'''
   if m1pathintegers is None:
