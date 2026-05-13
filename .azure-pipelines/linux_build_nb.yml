@@ -11,12 +11,12 @@ steps:
         libboost=$(boost_version) \
         libboost-headers=$(boost_version) \
         nanobind \
-        numpy=2.4 pillow eigen pandas=3 matplotlib-base=3.8 \
+        numpy=2.4 pillow eigen pandas=3 matplotlib-base=3.10 \
         cairo
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
-    conda install -c conda-forge --override-channels  ipython=8.20 jupyter nbval ipykernel>=6.0
+    conda install -c conda-forge --override-channels  ipython=9.8 jupyter nbval ipykernel>=6.0
   displayName: Setup build environment (no Qt due to versioning problems)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
