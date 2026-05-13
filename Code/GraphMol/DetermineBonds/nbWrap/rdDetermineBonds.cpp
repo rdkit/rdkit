@@ -22,14 +22,8 @@ NB_MODULE(rdDetermineBonds, m) {
       "Module containing a C++ implementation of the xyz2mol algorithm. This "
       "is based on xyz2mol: https://github.com/jensengroup/xyz2mol";
 
-  nb::register_exception_translator(
-      [](const std::exception_ptr &p, void *) {
-        try {
-          std::rethrow_exception(p);
-        } catch (const RDKit::MaxFindBondOrdersItersExceeded &e) {
-          PyErr_SetString(PyExc_RuntimeError, e.what());
-        }
-      });
+  nb::exception<MaxFindBondOrdersItersExceeded>(
+      m, "MaxFindBondOrdersItersExceeded", PyExc_RuntimeError);
 
   m.def(
       "DetermineConnectivity",
