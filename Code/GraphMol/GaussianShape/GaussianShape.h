@@ -26,6 +26,7 @@ class ROMol;
 class Conformer;
 
 namespace GaussianShape {
+RDKIT_GAUSSIANSHAPE_EXPORT
 
 //! Align a shape onto a reference shape.
 /*!

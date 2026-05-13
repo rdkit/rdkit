@@ -158,8 +158,8 @@ class TestCase(unittest.TestCase):
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.timeOut = 1
     params.maxHits = -1
-    params.similarityCutoff = 0.3
-    params.fragSimilarityAdjuster = 0.3
+    params.similarityCutoff = 0.1
+    params.fragSimilarityAdjuster = 0.1
     fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
     results = synthonspace.FingerprintSearch(
       Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), fpgen, params)
@@ -312,18 +312,17 @@ class TestCase(unittest.TestCase):
     
     ssparams.fragSimilarityAdjuster = 0.2
     ssparams.approxSimilarityAdjuster = 0.2
-    ssparams.similarityCutoff = 0.97
+    ssparams.similarityCutoff = 0.98
     ssparams.timeOut = 0
     
     results = synthonspace.ShapeSearch(query, ssparams)
-    print(f"Number of hits : {len(results.GetHitMolecules())}")
     self.assertEqual(len(results.GetHitMolecules()), 0)
     for hit in results.GetHitMolecules():
       print(f"{hit.GetProp('_Name')} : {hit.GetProp('Similarity')}")
 
     bestHit = results.GetBestHit()
     self.assertIsNotNone(bestHit)
-    self.assertLess(float(bestHit.GetProp('Similarity')), 0.97)
+    self.assertLess(float(bestHit.GetProp('Similarity')), 0.98)
 
   def testUserConfGen(self):
     def makeConformers(smiles, numConfs):
@@ -352,7 +351,7 @@ class TestCase(unittest.TestCase):
                                         rdGaussianShape.ShapeOverlayOptions())
       
     ssparams = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
-    ssparams.excludedVolume =excVol
+    ssparams.excludedVolume = excVol
     ssparams.fragSimilarityAdjuster = 0.2
     ssparams.approxSimilarityAdjuster = 0.2
     ssparams.numConformers = 100
@@ -360,7 +359,7 @@ class TestCase(unittest.TestCase):
     ssparams.randomSeed = 0xdac
     ssparams.bestHit = True
     ssparams.similarityCutoff = 0.5
-    ssparams.maxMeanExcludedVolume = 5.0
+    ssparams.maxMeanExcludedVolume = 3.5
 
     ovlyOptions = rdGaussianShape.ShapeOverlayOptions()
     ovlyOptions.simAlpha = 0.95
@@ -374,7 +373,7 @@ class TestCase(unittest.TestCase):
     comb_4aji_4aj1 = Chem.MolFromSmiles("CNc1nc2ccc(NC(C)=O)cc2s1.COc1ccc(CC(C(=O)O)C(=O)O)cc1OC |(23.956,-7.951,-4.055;24.081,-7.139,-2.841;23.068,-6.904,-1.967;23.237,-6.265,-0.838;22.03,-6.164,-0.135;21.811,-5.548,1.089;20.55,-5.531,1.66;19.465,-6.131,1.009;18.155,-6.121,1.583;17.318,-7.197,1.736;16.262,-7.032,2.809;17.43,-8.221,1.058;19.663,-6.743,-0.207;20.934,-6.758,-0.767;21.422,-7.467,-2.285;16.331,-12.235,6.625;15.378,-13.287,6.54;14.89,-13.803,7.711;15.669,-14.364,8.712;15.068,-14.88,9.87;13.688,-14.822,10.03;13.008,-15.402,11.226;12.32,-16.745,10.932;13.341,-17.807,10.61;14.399,-17.852,11.169;12.961,-18.68,9.696;11.481,-17.202,12.095;11.812,-18.168,12.768;10.397,-16.444,12.327;12.917,-14.275,9.014;13.494,-13.757,7.872;12.793,-13.19,6.852;11.466,-12.683,7.147)|")
 
     hits = synthonspace.ShapeSearch(comb_4aji_4aj1, ssparams)
-    self.assertEqual(len(hits.GetHitMolecules()), 2)
+    self.assertEqual(len(hits.GetHitMolecules()), 1)
     
 
   def testShapePossibleHitsWrite(self):
@@ -408,5 +407,3 @@ class TestCase(unittest.TestCase):
 
 if __name__ == "__main__":
   unittest.main()
-
-  

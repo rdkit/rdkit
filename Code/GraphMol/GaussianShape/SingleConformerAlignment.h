@@ -187,25 +187,22 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
 // gradients is null, they won't be calculated.  They are assumed to be
 // initialised correctly.
 // This is for the atoms/shape features.  Negative alphas are skipped.
-double calcVolAndGrads(const double *ref, const double *refAlphas,
-                       int numRefPts,
-                       const boost::dynamic_bitset<> *refCarbonRadii,
-                       const double *fit, const double *fitAlphas,
-                       int numFitPts,
-                       const boost::dynamic_bitset<> *fitCarbonRadii,
-                       std::vector<double> &gradConverters,
-                       const bool useCutoff, const double distCutoff2,
-                       const double *quat = nullptr,
-                       double *gradients = nullptr);
+RDKIT_GAUSSIANSHAPE_EXPORT double calcVolAndGrads(
+    const double *ref, const double *refAlphas, int numRefPts,
+    const boost::dynamic_bitset<> *refCarbonRadii, const double *fit,
+    const double *fitAlphas, int numFitPts,
+    const boost::dynamic_bitset<> *fitCarbonRadii,
+    std::vector<double> &gradConverters, const bool useCutoff,
+    const double distCutoff2, const double *quat = nullptr,
+    double *gradients = nullptr);
 // This one is for the features, and only calculates values if the types
 // of 2 features match.  Negative alphas are skipped.
-double calcVolAndGrads(const double *ref, const double *refAlphas,
-                       int numRefPts, const int *refTypes, const double *fit,
-                       const double *fitAlphas, int numFitPts,
-                       const int *fitTypes, int numFitShape,
-                       std::vector<double> &gradConverters,
-                       const bool useCutoff, const double distCutoff2,
-                       const double *quat, double *gradients);
+RDKIT_GAUSSIANSHAPE_EXPORT double calcVolAndGrads(
+    const double *ref, const double *refAlphas, int numRefPts,
+    const int *refTypes, const double *fit, const double *fitAlphas,
+    int numFitPts, const int *fitTypes, int numFitShape,
+    std::vector<double> &gradConverters, const bool useCutoff,
+    const double distCutoff2, const double *quat, double *gradients);
 
 }  // namespace GaussianShape
 }  // namespace RDKit

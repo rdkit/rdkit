@@ -250,8 +250,8 @@ SearchResults SynthonSpaceSearcher::checkPossibleHits(
     finishLine = checkLines.size();
   }
   std::cout << "Checking " << checkLines.size() << " lines from " << startLine
-            << " to " << finishLine << " of " << getParams().possibleHitsFile
-            << std::endl;
+            << " to " << startLine + finishLine << " of "
+            << getParams().possibleHitsFile << std::endl;
   if (checkLines.empty()) {
     return SearchResults();
   }

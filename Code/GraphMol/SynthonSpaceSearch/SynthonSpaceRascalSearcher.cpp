@@ -37,8 +37,12 @@ size_t findSynthonSearchStart(unsigned int fragAtomsAndBonds,
   size_t last = reaction.getSynthons()[synthonSetNum].size();
   while (first < last) {
     size_t mid = first + (last - first) / 2;
-    const auto &synthSM = reaction.getRascalOrderedSynthon(synthonSetNum, mid)
-                              .second->getSearchMol();
+    const auto &[miss, synth] =
+        reaction.getRascalOrderedSynthon(synthonSetNum, mid);
+    if (!synth) {
+      break;
+    }
+    const auto &synthSM = synth->getSearchMol();
     if (synthSM->getNumAtoms() + synthSM->getNumBonds() < minAtomsAndBonds) {
       first = mid + 1;
     } else {
