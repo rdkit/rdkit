@@ -11,6 +11,8 @@
 %shared_ptr(RDKit::MolStandardize::TautomerEnumerator)
 %newobject RDKit::MolStandardize::tautomerEnumeratorFromParams;
 %newobject RDKit::MolStandardize::getV1TautomerEnumerator;
+%newobject RDKit::MolStandardize::TautomerEnumerator::pickCanonical;
+%newobject RDKit::MolStandardize::TautomerEnumerator::canonicalize;
 
 %include <GraphMol/MolStandardize/Tautomer.h>
 
