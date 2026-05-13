@@ -245,7 +245,21 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
       for (size_t i = 0; i < count; ++i) {
         ss >> index;
         // atoms are 1 indexed in molfiles
-        atoms.push_back(mol->getAtomWithIdx(index - 1));
+        auto atom = mol->getAtomWithIdx(index - 1);
+        if (std::ranges::find(atoms, atom) != atoms.end()) {
+          std::string message =
+              (boost::format(
+                   "Atom %1% appears more than once in stereo group specification on line %2%!") %
+               index % line)
+                  .str();
+          if (strictParsing) {
+            throw FileParseException(message);
+          } else {
+            BOOST_LOG(rdWarningLog) << message << std::endl;
+          }
+        } else {
+          atoms.push_back(atom);
+        }
       }
       std::vector<Bond *> newBonds;
       groups.emplace_back(grouptype, std::move(atoms), std::move(newBonds),

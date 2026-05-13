@@ -416,6 +416,39 @@ M  END"""
       self.assertIsNotNone(ff)
       self.assertTrue(hasattr(ff, "CalcEnergy"))
 
+  def testMMFFMolPropertiesScalarGetters(self):
+    mol = Chem.AddHs(Chem.MolFromSmiles("CCO"))
+    mp = ChemicalForceFields.MMFFGetMoleculeProperties(mol)
+    self.assertIsNotNone(mp)
+
+    mp.SetMMFFVariant("MMFF94s")
+    self.assertEqual(mp.GetMMFFVariant(), "MMFF94s")
+    mp.SetMMFFVariant("MMFF94")
+    self.assertEqual(mp.GetMMFFVariant(), "MMFF94")
+
+    mp.SetMMFFDielectricConstant(2.5)
+    self.assertAlmostEqual(mp.GetMMFFDielectricConstant(), 2.5)
+
+    mp.SetMMFFDielectricModel(2)
+    self.assertEqual(mp.GetMMFFDielectricModel(), 2)
+    mp.SetMMFFDielectricModel(1)
+    self.assertEqual(mp.GetMMFFDielectricModel(), 1)
+
+    term_pairs = [
+        (mp.SetMMFFBondTerm, mp.GetMMFFBondTerm),
+        (mp.SetMMFFAngleTerm, mp.GetMMFFAngleTerm),
+        (mp.SetMMFFStretchBendTerm, mp.GetMMFFStretchBendTerm),
+        (mp.SetMMFFOopTerm, mp.GetMMFFOopTerm),
+        (mp.SetMMFFTorsionTerm, mp.GetMMFFTorsionTerm),
+        (mp.SetMMFFVdWTerm, mp.GetMMFFVdWTerm),
+        (mp.SetMMFFEleTerm, mp.GetMMFFEleTerm),
+    ]
+    for setter, getter in term_pairs:
+      setter(False)
+      self.assertFalse(getter())
+      setter(True)
+      self.assertTrue(getter())
+
 
 if __name__ == "__main__":
   unittest.main()

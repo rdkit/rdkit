@@ -28,7 +28,11 @@ typedef boost::shared_array<double> DOUBLE_SMART_PTR;
 //! Class that contains the data for an atoms that has already been embedded
 class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
  public:
-  typedef enum { UNSPECIFIED = 0, CISTRANS, RING } EAtomType;
+  typedef enum {
+    UNSPECIFIED = 0,
+    CISTRANS,
+    RING
+  } EAtomType;
 
   EmbeddedAtom() { neighs.clear(); }
 
@@ -372,8 +376,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   double totalDensity();
 
   // returns true if fused rings found a template
-  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
-                       unsigned int ring_count);
+  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms);
 
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
                        bool useRingTemplates);
