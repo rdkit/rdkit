@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,11 +8,12 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/python.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/vector.h>
+#include <nanobind/stl/pair.h>
+#include <nanobind/stl/map.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL DistGeom_array_API
-#include <RDBoost/Wrap.h>
-#include <RDBoost/pyint_api.h>
 #include <RDBoost/import_array.h>
 
 #include <Geometry/point.h>
@@ -30,13 +30,15 @@
 #include <vector>
 #include <map>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace RDKit {
-bool doTriangleSmoothing(python::object boundsMatArg, double tol) {
+
+bool doTriangleSmoothing(nb::object boundsMatArg, double tol) {
   PyObject *boundsMatObj = boundsMatArg.ptr();
   if (!PyArray_Check(boundsMatObj)) {
-    throw_value_error("Argument isn't an array");
+    throw nb::value_error("Argument isn't an array");
   }
 
   auto *boundsMat = reinterpret_cast<PyArrayObject *>(boundsMatObj);
@@ -44,13 +46,13 @@ bool doTriangleSmoothing(python::object boundsMatArg, double tol) {
   int nrows = PyArray_DIM(boundsMat, 0);
   int ncols = PyArray_DIM(boundsMat, 1);
   if (nrows != ncols) {
-    throw_value_error("The array has to be square");
+    throw nb::value_error("The array has to be square");
   }
   if (nrows <= 0) {
-    throw_value_error("The array has to have a nonzero size");
+    throw nb::value_error("The array has to have a nonzero size");
   }
   if (PyArray_DESCR(boundsMat)->type_num != NPY_DOUBLE) {
-    throw_value_error("Only double arrays are currently supported");
+    throw nb::value_error("Only double arrays are currently supported");
   }
 
   unsigned int dSize = nrows * nrows;
@@ -67,14 +69,14 @@ bool doTriangleSmoothing(python::object boundsMatArg, double tol) {
   return res;
 }
 
-PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
+PyObject *embedBoundsMatrix(nb::object boundsMatArg, int maxIters = 10,
                             bool randomizeOnFailure = false,
                             int numZeroFail = 2,
-                            python::list weights = python::list(),
+                            nb::list weights = nb::list(),
                             int randomSeed = -1) {
   PyObject *boundsMatObj = boundsMatArg.ptr();
   if (!PyArray_Check(boundsMatObj)) {
-    throw_value_error("Argument isn't an array");
+    throw nb::value_error("Argument isn't an array");
   }
 
   auto *boundsMat = reinterpret_cast<PyArrayObject *>(boundsMatObj);
@@ -82,13 +84,13 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
   unsigned int nrows = PyArray_DIM(boundsMat, 0);
   unsigned int ncols = PyArray_DIM(boundsMat, 1);
   if (nrows != ncols) {
-    throw_value_error("The array has to be square");
+    throw nb::value_error("The array has to be square");
   }
   if (nrows <= 0) {
-    throw_value_error("The array has to have a nonzero size");
+    throw nb::value_error("The array has to have a nonzero size");
   }
   if (PyArray_DESCR(boundsMat)->type_num != NPY_DOUBLE) {
-    throw_value_error("Only double arrays are currently supported");
+    throw nb::value_error("Only double arrays are currently supported");
   }
 
   unsigned int dSize = nrows * nrows;
@@ -127,28 +129,17 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
 
   if (gotCoords) {
     std::map<std::pair<int, int>, double> weightMap;
-    unsigned int nElems = PySequence_Size(weights.ptr());
+    unsigned int nElems = nb::len(weights);
     for (unsigned int entryIdx = 0; entryIdx < nElems; entryIdx++) {
-      PyObject *entry = PySequence_GetItem(weights.ptr(), entryIdx);
-      if (!PySequence_Check(entry) || PySequence_Size(entry) != 3) {
-        Py_DecRef(entry);
-        throw_value_error("weights argument must be a sequence of 3-sequences");
+      nb::object entry = weights[entryIdx];
+      nb::sequence seq = nb::cast<nb::sequence>(entry);
+      if (nb::len(seq) != 3) {
+        throw nb::value_error(
+            "weights argument must be a sequence of 3-sequences");
       }
-
-      PyObject *obj = PySequence_GetItem(entry, 0);
-      int idx1 = PyInt_AsLong(obj);
-      Py_DecRef(obj);
-
-      obj = PySequence_GetItem(entry, 1);
-      int idx2 = PyInt_AsLong(obj);
-      Py_DecRef(obj);
-
-      obj = PySequence_GetItem(entry, 2);
-      double w = PyFloat_AsDouble(obj);
-      Py_DecRef(obj);
-
-      Py_DecRef(entry);
-
+      int idx1 = nb::cast<int>(seq[0]);
+      int idx2 = nb::cast<int>(seq[1]);
+      double w = nb::cast<double>(seq[2]);
       weightMap[std::make_pair(idx1, idx2)] = w;
     }
     DistGeom::VECT_CHIRALSET csets;
@@ -164,7 +155,7 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
     }
     delete field;
   } else {
-    throw_value_error("could not embed matrix");
+    throw nb::value_error("could not embed matrix");
   }
 
   // ---- ---- ---- ---- ---- ---- ---- ---- ----
@@ -177,57 +168,54 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
   for (unsigned int i = 0; i < nrows; i++) {
     unsigned int iTab = i * 3;
     for (unsigned int j = 0; j < 3; ++j) {
-      resData[iTab + j] = positions[i][j];  //.x;
+      resData[iTab + j] = positions[i][j];
     }
   }
 
   return PyArray_Return(res);
 }
+
 }  // namespace RDKit
 
-BOOST_PYTHON_MODULE(DistGeom) {
-  python::scope().attr("__doc__") =
-      "Module containing functions for basic distance geometry operations";
-
+NB_MODULE(DistGeom, m) {
   rdkit_import_array();
 
-  std::string docString;
+  m.doc() = "Module containing functions for basic distance geometry operations";
 
-  docString =
-      "Do triangle smoothing on a bounds matrix\n\n\
- \n\
- ARGUMENTS:\n\n\
-    - mat: a square Numeric array of doubles containing the bounds matrix, this matrix\n\
-           *is* modified by the smoothing\n\
- \n\
- RETURNS:\n\n\
-    a boolean indicating whether or not the smoothing worked.\n\
-\n";
-  python::def("DoTriangleSmoothing", RDKit::doTriangleSmoothing,
-              (python::arg("boundsMatrix"), python::arg("tol") = 0.),
-              docString.c_str());
+  m.def(
+      "DoTriangleSmoothing", &RDKit::doTriangleSmoothing,
+      "boundsMatrix"_a, "tol"_a = 0.,
+      R"DOC(Do triangle smoothing on a bounds matrix
 
-  docString =
-      "Embed a bounds matrix and return the coordinates\n\n\
- \n\
- ARGUMENTS:\n\n\
-    - boundsMatrix: a square Numeric array of doubles containing the bounds matrix, this matrix\n\
-           should already be smoothed\n\
-    - maxIters: (optional) the maximum number of random distance matrices to try\n\
-    - randomizeOnFailure: (optional) toggles using random coords if a matrix fails to embed\n\
-    - numZeroFail: (optional) sets the number of zero eigenvalues to be considered a failure\n\
-    - weights: (optional) a sequence of 3 sequences (i,j,weight) indicating elements of \n\
-       the bounds matrix whose weights should be adjusted\n\
-    - randomSeed: (optional) sets the random number seed used for embedding\n\
- \n\
- RETURNS:\n\n\
-    a Numeric array of doubles with the coordinates\n\
-\n";
-  python::def(
-      "EmbedBoundsMatrix", RDKit::embedBoundsMatrix,
-      (python::arg("boundsMatrix"), python::arg("maxIters") = 10,
-       python::arg("randomizeOnFailure") = false,
-       python::arg("numZeroFail") = 2, python::arg("weights") = python::list(),
-       python::arg("randomSeed") = -1),
-      docString.c_str());
+ARGUMENTS:
+
+   - mat: a square Numeric array of doubles containing the bounds matrix, this matrix
+          *is* modified by the smoothing
+
+RETURNS:
+
+   a boolean indicating whether or not the smoothing worked.
+)DOC");
+
+  m.def(
+      "EmbedBoundsMatrix", &RDKit::embedBoundsMatrix,
+      "boundsMatrix"_a, "maxIters"_a = 10, "randomizeOnFailure"_a = false,
+      "numZeroFail"_a = 2, "weights"_a = nb::list(), "randomSeed"_a = -1,
+      R"DOC(Embed a bounds matrix and return the coordinates
+
+ARGUMENTS:
+
+   - boundsMatrix: a square Numeric array of doubles containing the bounds matrix, this matrix
+          should already be smoothed
+   - maxIters: (optional) the maximum number of random distance matrices to try
+   - randomizeOnFailure: (optional) toggles using random coords if a matrix fails to embed
+   - numZeroFail: (optional) sets the number of zero eigenvalues to be considered a failure
+   - weights: (optional) a sequence of 3 sequences (i,j,weight) indicating elements of
+      the bounds matrix whose weights should be adjusted
+   - randomSeed: (optional) sets the random number seed used for embedding
+
+RETURNS:
+
+   a Numeric array of doubles with the coordinates
+)DOC");
 }
