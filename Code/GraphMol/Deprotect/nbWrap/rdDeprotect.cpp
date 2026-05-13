@@ -16,6 +16,7 @@
 #include <GraphMol/Deprotect/Deprotect.h>
 #include <RDBoost/Wrap_nb.h>
 
+using namespace nb::literals;
 using namespace RDKit;
 
 NB_MODULE(rdDeprotect, m) {
