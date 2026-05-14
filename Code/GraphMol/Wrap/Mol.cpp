@@ -225,10 +225,8 @@ class ReadWriteMol : public RWMol {
     beginBatchEdit();
     return this;
   }
-  bool exit(python::object exc_type, python::object exc_val,
-            python::object traceback) {
-    RDUNUSED_PARAM(exc_val);
-    RDUNUSED_PARAM(traceback);
+  bool exit(python::object exc_type, [[maybe_unused]] python::object exc_val,
+            [[maybe_unused]] python::object traceback) {
     if (exc_type != python::object()) {
       // exception thrown, abort the edits
       rollbackBatchEdit();
