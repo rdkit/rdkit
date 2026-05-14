@@ -227,15 +227,64 @@ class MacrocycleGenerator {
  private:
   //! Simplify the system by adding constraints for large rings
   /*!
-    For rings with >15 free positions, uses substituent-based constraints
-    and OPPOSITE constraints to reduce search space.
+    Reduces enumeration space by fixing positions and adding constraints.
 
-    \param freePositions: Free positions
-    \param numRight: Number of R turns needed
-    \param numLeft: Number of L turns needed
+    Two mechanisms are used:
+    1. Direct assignment: Big substituents are fixed to outer turns (chemically
+    sensible) 2. Constraint addition: OPPOSITE constraints create dependencies
+    between positions
+       - One position in each pair is "independent" (enumerated)
+       - The other is "dependent" (computed as opposite of its pair)
+
+    \param freePositions [in/out]: Initially all free positions, returns only
+    independent ones \param numRight [in/out]: Number of right turns needed,
+    updated for independent positions \param numLeft [in/out]: Number of left
+    turns needed, updated for independent positions
   */
   void simplifySystem(std::vector<size_t> &freePositions, int &numRight,
                       int &numLeft);
+
+  //! Phase 1: Add FIXED constraints for big substituents to outer turns
+  /*!
+    Instead of directly modifying turns, adds FIXED constraints to d_constraints
+    that will be applied by applyConstraints(). This provides symmetry with
+    other constraint types.
+
+    \param freePositions: Positions currently free
+    \return Number of FIXED constraints added
+  */
+  size_t addBigSubstituentConstraints(const std::vector<size_t> &freePositions);
+
+  //! Phase 2: Add OPPOSITE constraints to reduce enumeration space
+  /*!
+    Scans free positions for consecutive pairs in the ring and adds OPPOSITE
+    constraints between them.
+
+    \param freePositions: Positions currently free
+    \param constraintsNeeded: How many OPPOSITE constraints to try to add
+    \return Number of OPPOSITE constraints actually added
+  */
+  size_t addOppositeConstraintsToReduce(const std::vector<size_t> &freePositions,
+                                        size_t constraintsNeeded);
+
+  //! Build map of dependent positions via OPPOSITE constraints
+  /*!
+    Analyzes OPPOSITE constraints to determine which positions are dependent
+    (their value is determined by another position's value).
+
+    \param freePositions: Positions still free
+    \return Map from dependent position to its controlling independent position
+  */
+  std::map<size_t, size_t> buildDependencyMap(
+      const std::vector<size_t> &freePositions) const;
+
+  //! Collect all positions where turn value is 0 (undecided)
+  /*!
+    \param turns: Turn sequence to scan
+    \return Vector of positions with turn value 0
+  */
+  std::vector<size_t> collectFreePositions(
+      const std::vector<int> &turns) const;
   //! Step 1: Distribute closure gap linearly
   void distributeClosureGap(std::vector<RDGeom::Point2D> &coords) const;
 
@@ -268,6 +317,10 @@ class MacrocycleGenerator {
 
   //! Helper: generate next combination
   bool nextCombination(std::vector<size_t> &positions, size_t n);
+
+  //! Maximum number of independent positions for enumeration
+  //! Systems with more free positions will be simplified via constraints
+  static constexpr size_t MAX_ENUMERATION_POSITIONS = 15;
 
   size_t d_ringSize;         //!< Number of atoms in the ring
   double d_bondLength;       //!< Length of each bond

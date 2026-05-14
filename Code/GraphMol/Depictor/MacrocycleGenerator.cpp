@@ -245,111 +245,64 @@ size_t MacrocycleGenerator::getNumFreePositions() const {
   return std::count(d_turns.begin(), d_turns.end(), 0);
 }
 
-void MacrocycleGenerator::simplifySystem(std::vector<size_t> &freePositions,
-                                         int &numRight, int &numLeft) {
-  size_t numFree = freePositions.size();
-
-  // Save the total number of R/L needed for the whole ring
-  int totalRight = numRight;
-  int totalLeft = numLeft;
-
-  // Constrain positions with "big" substituents (size > 1 atom) to be outside
-  // of the macrocycle. This is both chemically sensible and reduces the search
-  // space
-  std::vector<int> candidate = d_turns;  // Start with constrained values
-
+size_t MacrocycleGenerator::addBigSubstituentConstraints(
+    const std::vector<size_t> &freePositions) {
   int outerTurn = -d_innerTurnSign;  // Outer turn is opposite of inner
-  int assignedRight = 0;
-  int assignedLeft = 0;
+  size_t constraintsAdded = 0;
 
-  int substituentAssignments = 0;
   for (size_t pos : freePositions) {
     auto it = d_substituentSizes.find(pos);
     if (it != d_substituentSizes.end() && it->second > 1) {
-      // Big substituent - force outer turn
-      candidate[pos] = outerTurn;
-      if (outerTurn == 1) {
-        assignedRight++;
-      } else {
-        assignedLeft++;
-      }
-      substituentAssignments++;
-    }
-  }
-  int remainingRight = numRight - assignedRight;
-  int remainingLeft = numLeft - assignedLeft;
-
-  // Note: if remainingRight or remainingLeft < 0, enumeration will fail later
-  // but we still continue to add constraints
-
-  // Find positions still free after substituent assignments
-  std::vector<size_t> stillFree;
-  for (size_t pos : freePositions) {
-    if (candidate[pos] == 0) {
-      stillFree.push_back(pos);
+      // Big substituent - add FIXED constraint to force outer turn
+      TurnConstraint constraint;
+      constraint.position = pos;
+      constraint.type = ConstraintType::FIXED;
+      constraint.pattern = {outerTurn};
+      constraint.reason = "big_substituent_outer";
+      d_constraints.push_back(constraint);
+      constraintsAdded++;
     }
   }
 
-  const size_t TARGET_INDEPENDENT =
-      15;  // Target number of independent positions
+  return constraintsAdded;
+}
 
-  // Scan through free positions and add OPPOSITE constraints between
-  // consecutive pairs until we reach the target number of independent
-  // positions. This freezes portions of the ring in a zigzag pattern, which
-  // maintains flexibility while reducing the search space for enumeration.
-  if (stillFree.size() > TARGET_INDEPENDENT) {
-    size_t constraintsAdded = 0;
-    std::set<size_t>
-        constrainedPositions;  // Track positions already constrained
+size_t MacrocycleGenerator::addOppositeConstraintsToReduce(
+    const std::vector<size_t> &freePositions, size_t constraintsNeeded) {
+  if (constraintsNeeded == 0) {
+    return 0;
+  }
 
-    // Calculate how many constraints we need to add
-    // Each OPPOSITE constraint between two free positions creates one
-    // dependency
-    size_t targetConstraints = stillFree.size() - TARGET_INDEPENDENT;
+  size_t constraintsAdded = 0;
+  std::set<size_t> constrainedPositions;  // Track positions already constrained
 
-    // Scan through stillFree looking for consecutive pairs in the ring
-    for (size_t vectorIdx = 0; vectorIdx + 1 < stillFree.size() &&
-                               constraintsAdded < targetConstraints;
-         ++vectorIdx) {
-      size_t pos1 = stillFree[vectorIdx];
-      size_t pos2 = stillFree[vectorIdx + 1];
+  // Scan through freePositions looking for consecutive pairs in the ring
+  for (size_t vectorIdx = 0;
+       vectorIdx + 1 < freePositions.size() && constraintsAdded < constraintsNeeded;
+       ++vectorIdx) {
+    size_t pos1 = freePositions[vectorIdx];
+    size_t pos2 = freePositions[vectorIdx + 1];
 
-      // Only add if consecutive in the ring and we haven't already constrained
-      // this pair
-      if (pos2 == (pos1 + 1) % d_ringSize &&
-          !constrainedPositions.count(pos1)) {
-        TurnConstraint constraint;
-        constraint.position = pos1;
-        constraint.type = ConstraintType::OPPOSITE;
-        constraint.reason = "reduce_to_target";
-        d_constraints.push_back(constraint);
-        constraintsAdded++;
-        constrainedPositions.insert(pos1);
-      }
+    // Only add if consecutive in the ring and we haven't already constrained
+    // this pair
+    if (pos2 == (pos1 + 1) % d_ringSize && !constrainedPositions.count(pos1)) {
+      TurnConstraint constraint;
+      constraint.position = pos1;
+      constraint.type = ConstraintType::OPPOSITE;
+      constraint.reason = "reduce_to_target";
+      d_constraints.push_back(constraint);
+      constraintsAdded++;
+      constrainedPositions.insert(pos1);
     }
   }
 
-  // Update d_turns with all assignments
-  d_turns = candidate;
+  return constraintsAdded;
+}
 
-  // Apply the new OPPOSITE constraints to propagate fixed values through chains
-  // This will fix positions that were "free" but are now determined by OPPOSITE
-  // constraints chaining from fixed substituent positions
-  applyConstraints(d_turns);
-
-  // Recalculate free positions (after propagation from fixed positions)
-  std::vector<size_t> stillFreeAfterPropagation;
-  for (size_t i = 0; i < d_ringSize; ++i) {
-    if (d_turns[i] == 0) {
-      stillFreeAfterPropagation.push_back(i);
-    }
-  }
-
-  // Now apply dependency logic: OPPOSITE constraints between free positions
-  // mean one is dependent on the other, so only count independent ones
+std::map<size_t, size_t> MacrocycleGenerator::buildDependencyMap(
+    const std::vector<size_t> &freePositions) const {
   std::map<size_t, size_t> dependentMap;
-  std::set<size_t> freeSet(stillFreeAfterPropagation.begin(),
-                           stillFreeAfterPropagation.end());
+  std::set<size_t> freeSet(freePositions.begin(), freePositions.end());
 
   for (const auto &constraint : d_constraints) {
     if (constraint.type == ConstraintType::OPPOSITE) {
@@ -366,7 +319,62 @@ void MacrocycleGenerator::simplifySystem(std::vector<size_t> &freePositions,
     }
   }
 
-  // Rebuild freePositions with only independent positions
+  return dependentMap;
+}
+
+std::vector<size_t> MacrocycleGenerator::collectFreePositions(
+    const std::vector<int> &turns) const {
+  std::vector<size_t> freePositions;
+  for (size_t i = 0; i < turns.size(); ++i) {
+    if (turns[i] == 0) {
+      freePositions.push_back(i);
+    }
+  }
+  return freePositions;
+}
+
+void MacrocycleGenerator::simplifySystem(std::vector<size_t> &freePositions,
+                                         int &numRight, int &numLeft) {
+  // Calculate how many constraints we need to add upfront
+  size_t initialFreeCount = freePositions.size();
+  if (initialFreeCount <= MAX_ENUMERATION_POSITIONS) {
+    // Already small enough, no simplification needed
+    return;
+  }
+
+  size_t constraintsNeeded = initialFreeCount - MAX_ENUMERATION_POSITIONS;
+  std::cerr << "Simplification: need to add " << constraintsNeeded
+            << " constraints to reduce from " << initialFreeCount << " to "
+            << MAX_ENUMERATION_POSITIONS << std::endl;
+
+  // Phase 1: Add FIXED constraints for big substituents to outer turns
+  size_t fixedAdded = addBigSubstituentConstraints(freePositions);
+  std::cerr << "  Phase 1: added " << fixedAdded
+            << " FIXED constraints for big substituents" << std::endl;
+
+  // Phase 2: Add OPPOSITE constraints for remaining positions
+  size_t remainingNeeded =
+      (constraintsNeeded > fixedAdded) ? (constraintsNeeded - fixedAdded) : 0;
+  size_t oppositeAdded =
+      addOppositeConstraintsToReduce(freePositions, remainingNeeded);
+  std::cerr << "  Phase 2: added " << oppositeAdded
+            << " OPPOSITE constraints to reduce enumeration" << std::endl;
+
+  size_t totalAdded = fixedAdded + oppositeAdded;
+  std::cerr << "  Total: added " << totalAdded << " constraints (needed "
+            << constraintsNeeded << ")" << std::endl;
+
+  // Phase 3: Propagate all constraints and analyze dependencies
+  // Apply all constraints (FIXED substituents + OPPOSITE reductions)
+  applyConstraints(d_turns);
+
+  // Collect positions still free after all constraint propagation
+  std::vector<size_t> stillFreeAfterPropagation = collectFreePositions(d_turns);
+
+  // Build dependency map to identify independent vs dependent positions
+  auto dependentMap = buildDependencyMap(stillFreeAfterPropagation);
+
+  // Return only independent positions for enumeration
   freePositions.clear();
   for (size_t pos : stillFreeAfterPropagation) {
     if (!dependentMap.count(pos)) {
@@ -374,9 +382,13 @@ void MacrocycleGenerator::simplifySystem(std::vector<size_t> &freePositions,
     }
   }
 
-  // Recalculate numRight/numLeft based on what's actually independent
-  assignedRight = 0;
-  assignedLeft = 0;
+  std::cerr << "  Result: " << stillFreeAfterPropagation.size() << " free → "
+            << freePositions.size() << " independent ("
+            << dependentMap.size() << " dependent)" << std::endl;
+
+  // Recalculate R/L counts for independent positions
+  int assignedRight = 0;
+  int assignedLeft = 0;
   for (size_t i = 0; i < d_ringSize; ++i) {
     if (d_turns[i] == 1)
       assignedRight++;
@@ -384,8 +396,6 @@ void MacrocycleGenerator::simplifySystem(std::vector<size_t> &freePositions,
       assignedLeft++;
   }
 
-  // For remaining independent positions, distribute to maintain closure
-  int totalAssigned = assignedRight + assignedLeft;
   int independentCount = freePositions.size();
   numRight = (independentCount + 1) / 2;  // Roughly half
   numLeft = independentCount - numRight;
@@ -393,16 +403,9 @@ void MacrocycleGenerator::simplifySystem(std::vector<size_t> &freePositions,
 
 bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
   // Find positions of free variables
-  std::vector<size_t> freePositions;
-  for (size_t i = 0; i < d_ringSize; ++i) {
-    if (d_turns[i] == 0) {
-      freePositions.push_back(i);
-    }
-  }
+  std::vector<size_t> freePositions = collectFreePositions(d_turns);
 
-  const size_t ENUMERATION_THRESHOLD = 15;
-
-  if (freePositions.size() > ENUMERATION_THRESHOLD) {
+  if (freePositions.size() > MAX_ENUMERATION_POSITIONS) {
     // System is too complex for exhaustive search, simplify by adding
     // constraints
     std::cerr << "Free positions before simplifySystem: "
@@ -420,39 +423,17 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
   // This supports chaining: pos2 can depend on pos1, which itself depends on
   // pos0 dependentMap[pos] = the position that pos depends on (must be
   // opposite)
-  std::map<size_t, size_t> dependentMap;
-  std::set<size_t> freeSet(freePositions.begin(), freePositions.end());
-
-  for (const auto &constraint : d_constraints) {
-    if (constraint.type == ConstraintType::OPPOSITE) {
-      size_t pos1 = constraint.position % d_ringSize;
-      size_t pos2 = (constraint.position + 1) % d_ringSize;
-
-      // Both positions must be free (not already fixed)
-      if (freeSet.count(pos1) && freeSet.count(pos2)) {
-        // If pos2 is not already dependent on something else, make it depend on
-        // pos1 pos1 might be independent OR might itself be dependent - that's
-        // fine!
-        if (!dependentMap.count(pos2)) {
-          dependentMap[pos2] = pos1;
-        }
-      }
-    }
-  }
-
-  // Find truly independent positions: free but not dependent on anything
-  std::set<size_t> independentSet;
-  for (size_t pos : freePositions) {
-    if (!dependentMap.count(pos)) {
-      independentSet.insert(pos);
-    }
-  }
+  auto dependentMap = buildDependencyMap(freePositions);
 
   // Rebuild freePositions with only independent positions
   size_t originalFreeCount = freePositions.size();
-  freePositions.clear();
-  freePositions.insert(freePositions.end(), independentSet.begin(),
-                       independentSet.end());
+  std::vector<size_t> independentPositions;
+  for (size_t pos : freePositions) {
+    if (!dependentMap.count(pos)) {
+      independentPositions.push_back(pos);
+    }
+  }
+  freePositions = independentPositions;
 
   if (!dependentMap.empty()) {
     std::cerr << "Reduced enumeration: " << originalFreeCount << " → "
