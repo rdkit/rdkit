@@ -14,8 +14,8 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Deprotect/Deprotect.h>
-#include <RDBoost/Wrap_nb.h>
 
+namespace nb = nanobind;
 using namespace nb::literals;
 using namespace RDKit;
 
@@ -52,38 +52,25 @@ protecting groups from molecules.)DOC";
       .def("isValid", &Deprotect::DeprotectData::isValid,
            "Returns True if the DeprotectData has a valid reaction");
 
-  m.def(
-      "GetDeprotections",
-      []() { return Deprotect::getDeprotections(); },
-      "Return the default list of deprotections");
+  m.def("GetDeprotections", &Deprotect::getDeprotections,
+        "Return the default list of deprotections");
 
   m.def(
       "Deprotect",
-      [](const ROMol &mol, const nb::object &deprotections) {
-        if (!deprotections.is_none()) {
-          std::vector<Deprotect::DeprotectData> deprots;
-          pythonObjectToVect<Deprotect::DeprotectData>(deprotections, deprots);
-          return Deprotect::deprotect(mol, deprots);
-        } else {
-          return Deprotect::deprotect(mol, Deprotect::getDeprotections());
-        }
+      [](const ROMol &mol,
+         const std::vector<Deprotect::DeprotectData> &deprotections) {
+        return Deprotect::deprotect(mol, deprotections);
       },
-      "mol"_a, "deprotections"_a = nb::none(),
+      "mol"_a, "deprotections"_a = Deprotect::getDeprotections(),
       "Return the deprotected version of the molecule.");
 
   m.def(
       "DeprotectInPlace",
-      [](ROMol &mol, const nb::object &deprotections) {
-        RWMol &rwmol = static_cast<RWMol &>(mol);
-        if (!deprotections.is_none()) {
-          std::vector<Deprotect::DeprotectData> deprots;
-          pythonObjectToVect<Deprotect::DeprotectData>(deprotections, deprots);
-          return Deprotect::deprotectInPlace(rwmol, deprots);
-        } else {
-          return Deprotect::deprotectInPlace(rwmol,
-                                             Deprotect::getDeprotections());
-        }
+      [](ROMol &mol,
+         const std::vector<Deprotect::DeprotectData> &deprotections) {
+        return Deprotect::deprotectInPlace(static_cast<RWMol &>(mol),
+                                           deprotections);
       },
-      "mol"_a, "deprotections"_a = nb::none(),
+      "mol"_a, "deprotections"_a = Deprotect::getDeprotections(),
       "Deprotects the molecule in place.");
 }
