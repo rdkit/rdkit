@@ -54,11 +54,23 @@ namespace detail {
 std::pair<bool, INT_VECT> countChiralNbrs(const ROMol &mol, int noNbrs) {
   INT_VECT nChiralNbrs(mol.getNumAtoms(), noNbrs);
 
-  // start by looking for bonds that are already wedged
+  // start by looking for bonds that are already wedged. A wiggly bond with
+  // BondDir::NONE plus _UnknownStereo=1 (the state left by
+  // clearSingleBondDirFlags) is treated the same as one that still has
+  // BondDir::UNKNOWN: an intentional stereo annotation we should not overwrite.
   for (const auto bond : mol.bonds()) {
-    if (bond->getBondDir() == Bond::BEGINWEDGE ||
-        bond->getBondDir() == Bond::BEGINDASH ||
-        bond->getBondDir() == Bond::UNKNOWN) {
+    bool isDirected = bond->getBondDir() == Bond::BEGINWEDGE ||
+                      bond->getBondDir() == Bond::BEGINDASH ||
+                      bond->getBondDir() == Bond::UNKNOWN;
+    if (!isDirected) {
+      int unknownStereo = 0;
+      if (bond->getPropIfPresent(common_properties::_UnknownStereo,
+                                 unknownStereo) &&
+          unknownStereo) {
+        isDirected = true;
+      }
+    }
+    if (isDirected) {
       if (bond->getBeginAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
           bond->getBeginAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
         nChiralNbrs[bond->getBeginAtomIdx()] = noNbrs + 1;
