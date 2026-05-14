@@ -173,7 +173,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 #endif
   }
 
-  std::string getSmiles() const { return d_smiles; }
+  const std::string getSmiles() const { return d_smiles; }
   unsigned int getActiveShape() const { return d_activeShape; }
   //! Set the currently active conformation to the new value.
   //! @param newShape: the number of the conformation to be used
@@ -197,10 +197,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   std::vector<RDGeom::Point3D> getAtomPoints(bool includeColors = false) const;
   //! Return whether the coordinates for the current active shape are
   //! normalized.
-  bool getNormalized() const { return d_normalizeds[d_activeShape]; }
+  bool getIsNormalized() const { return d_normalizeds[d_activeShape]; }
   //! Return the feature types of all atoms/features in the shape.  Atoms
   //! have type 0.
-  const std::vector<int> &getTypes() const { return d_types; }
+  const std::vector<int> &getFeatureTypes() const { return d_types; }
   //! Get the number of atoms in the shape.
   unsigned int getNumAtoms() const { return d_numAtoms; }
   //! Get the number of color features in the shape.

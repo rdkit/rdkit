@@ -99,11 +99,12 @@ std::array<double, 4> getInitialRotationPlain(
       quats[index][0], quats[index][1], quats[index][2], quats[index][3],
       refDisp[0],      refDisp[1],      refDisp[2]};
   SingleConformerAlignment sca(
-      refShape.getCoords(), refShape.getAlphas(), refShape.getTypes().data(),
-      refShape.getCarbonRadii(), refShape.getNumAtoms(),
-      refShape.getNumFeatures(), refShape.getShapeVolume(),
-      refShape.getColorVolume(), fitShape.getCoords(), fitShape.getAlphas(),
-      fitShape.getTypes().data(), fitShape.getCarbonRadii(),
+      refShape.getCoords(), refShape.getAlphas(),
+      refShape.getFeatureTypes().data(), refShape.getCarbonRadii(),
+      refShape.getNumAtoms(), refShape.getNumFeatures(),
+      refShape.getShapeVolume(), refShape.getColorVolume(),
+      fitShape.getCoords(), fitShape.getAlphas(),
+      fitShape.getFeatureTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
       overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
@@ -147,11 +148,12 @@ std::array<double, 4> getInitialRotationWiggle(
   bool useColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   std::array<double, 7> tmpQuatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   SingleConformerAlignment sca(
-      refShape.getCoords(), refShape.getAlphas(), refShape.getTypes().data(),
-      refShape.getCarbonRadii(), refShape.getNumAtoms(),
-      refShape.getNumFeatures(), refShape.getShapeVolume(),
-      refShape.getColorVolume(), fitShape.getCoords(), fitShape.getAlphas(),
-      fitShape.getTypes().data(), fitShape.getCarbonRadii(),
+      refShape.getCoords(), refShape.getAlphas(),
+      refShape.getFeatureTypes().data(), refShape.getCarbonRadii(),
+      refShape.getNumAtoms(), refShape.getNumFeatures(),
+      refShape.getShapeVolume(), refShape.getColorVolume(),
+      fitShape.getCoords(), fitShape.getAlphas(),
+      fitShape.getFeatureTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), tmpQuatTrans,
       overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
@@ -319,11 +321,11 @@ std::array<double, 3> alignShape(ShapeInput &refShape, ShapeInput &fitShape,
                                      refDisp.x, refDisp.y, refDisp.z};
       aligners.emplace_back(std::make_unique<SingleConformerAlignment>(
           refShape.getCoords(), refShape.getAlphas(),
-          refShape.getTypes().data(), refShape.getCarbonRadii(),
+          refShape.getFeatureTypes().data(), refShape.getCarbonRadii(),
           refShape.getNumAtoms(), refShape.getNumFeatures(),
           refShape.getShapeVolume(), refShape.getColorVolume(),
           fitShape.getCoords(), fitShape.getAlphas(),
-          fitShape.getTypes().data(), fitShape.getCarbonRadii(),
+          fitShape.getFeatureTypes().data(), fitShape.getCarbonRadii(),
           fitShape.getNumAtoms(), fitShape.getNumFeatures(),
           fitShape.getShapeVolume(), fitShape.getColorVolume(), initQuat,
           overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
@@ -382,10 +384,10 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
   RDGeom::Transform3D moveToOrigin;
   RDGeom::Transform3D moveFromOrigin;
   if (overlayOpts.normalize) {
-    if (!workingRefShape->getNormalized()) {
+    if (!workingRefShape->getIsNormalized()) {
       workingRefShape->normalizeCoords();
     }
-    if (!workingFitShape->getNormalized()) {
+    if (!workingFitShape->getIsNormalized()) {
       workingFitShape->normalizeCoords();
     }
   } else {
@@ -490,11 +492,12 @@ std::array<double, 3> ScoreShape(const ShapeInput &refShape,
   auto fitWorking = fitShape.getCoords();
   std::array<double, 7> quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   SingleConformerAlignment sca(
-      refShape.getCoords(), refShape.getAlphas(), refShape.getTypes().data(),
-      refShape.getCarbonRadii(), refShape.getNumAtoms(),
-      refShape.getNumFeatures(), refShape.getShapeVolume(),
-      refShape.getColorVolume(), fitShape.getCoords(), fitShape.getAlphas(),
-      fitShape.getTypes().data(), fitShape.getCarbonRadii(),
+      refShape.getCoords(), refShape.getAlphas(),
+      refShape.getFeatureTypes().data(), refShape.getCarbonRadii(),
+      refShape.getNumAtoms(), refShape.getNumFeatures(),
+      refShape.getShapeVolume(), refShape.getColorVolume(),
+      fitShape.getCoords(), fitShape.getAlphas(),
+      fitShape.getFeatureTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
       overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,

@@ -788,10 +788,10 @@ TEST_CASE("Serialization") {
 
   GaussianShape::ShapeInput shape2(istr);
   CHECK(shape2.getCoords() == shape.getCoords());
-  CHECK(shape2.getTypes() == shape.getTypes());
+  CHECK(shape2.getFeatureTypes() == shape.getFeatureTypes());
   CHECK(shape2.getNumAtoms() == shape.getNumAtoms());
   CHECK(shape2.getNumFeatures() == shape.getNumFeatures());
-  CHECK(shape2.getNormalized() == shape.getNormalized());
+  CHECK(shape2.getIsNormalized() == shape.getIsNormalized());
   CHECK(shape2.calcExtremes() == shape.calcExtremes());
   CHECK(shape2.calcCanonicalRotation() == shape.calcCanonicalRotation());
   CHECK(shape2.calcCanonicalTranslation() == shape.calcCanonicalTranslation());
