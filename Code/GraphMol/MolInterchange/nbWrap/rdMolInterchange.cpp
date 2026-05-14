@@ -51,16 +51,12 @@ this to False when parsing queries.)DOC");
 
   m.def(
       "MolToJSON",
-      [](const RDKit::ROMol &mol, nb::object pyparams) {
-        RDKit::MolInterchange::JSONWriteParameters params =
-            RDKit::MolInterchange::defaultJSONWriteParameters;
-        if (!pyparams.is_none()) {
-          params =
-              nb::cast<RDKit::MolInterchange::JSONWriteParameters>(pyparams);
-        }
+      [](const RDKit::ROMol &mol,
+         const RDKit::MolInterchange::JSONWriteParameters &params) {
         return RDKit::MolInterchange::MolToJSONData(mol, params);
       },
-      "mol"_a, "params"_a = nb::none(),
+      "mol"_a,
+      "params"_a = RDKit::MolInterchange::defaultJSONWriteParameters,
       R"DOC(Convert a single molecule to JSON
 
 ARGUMENTS:
@@ -70,20 +66,16 @@ RETURNS:
 
   m.def(
       "MolsToJSON",
-      [](nb::object mols_obj, nb::object pyparams) {
+      [](nb::object mols_obj,
+         const RDKit::MolInterchange::JSONWriteParameters &params) {
         std::vector<const RDKit::ROMol *> mols;
         for (nb::handle h : nb::iter(mols_obj)) {
           mols.push_back(nb::cast<const RDKit::ROMol *>(h));
         }
-        RDKit::MolInterchange::JSONWriteParameters params =
-            RDKit::MolInterchange::defaultJSONWriteParameters;
-        if (!pyparams.is_none()) {
-          params =
-              nb::cast<RDKit::MolInterchange::JSONWriteParameters>(pyparams);
-        }
         return RDKit::MolInterchange::MolsToJSONData(mols, params);
       },
-      "mols"_a, "params"_a = nb::none(),
+      "mols"_a,
+      "params"_a = RDKit::MolInterchange::defaultJSONWriteParameters,
       R"DOC(Convert a set of molecules to JSON
 
 ARGUMENTS:
@@ -93,14 +85,8 @@ RETURNS:
 
   m.def(
       "JSONToMols",
-      [](const std::string &jsonBlock, nb::object pyparams) {
-        RDKit::MolInterchange::JSONParseParameters params;
-        if (!pyparams.is_none()) {
-          params =
-              nb::cast<RDKit::MolInterchange::JSONParseParameters>(pyparams);
-        } else {
-          params = RDKit::MolInterchange::defaultJSONParseParameters;
-        }
+      [](const std::string &jsonBlock,
+         const RDKit::MolInterchange::JSONParseParameters &params) {
         auto mols = RDKit::MolInterchange::JSONDataToMols(jsonBlock, params);
         nb::list result;
         for (auto &mol : mols) {
@@ -108,7 +94,8 @@ RETURNS:
         }
         return nb::tuple(result);
       },
-      "jsonBlock"_a, "params"_a = nb::none(),
+      "jsonBlock"_a,
+      "params"_a = RDKit::MolInterchange::defaultJSONParseParameters,
       R"DOC(Convert JSON to a tuple of molecules
 
 ARGUMENTS:
