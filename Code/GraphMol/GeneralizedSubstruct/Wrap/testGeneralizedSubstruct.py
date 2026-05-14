@@ -127,11 +127,10 @@ class TestCase(unittest.TestCase):
     mol3 = Chem.MolFromSmiles('COOC1=NNC(C=C)=C1')
     mol4 = Chem.MolFromSmiles('COOC1=NNC(CC)=C1')
 
-    if rdBase._wrapperType == 'boost':
-      self.assertTrue(mol1.HasSubstructMatch(m, ps))
-      self.assertFalse(mol2.HasSubstructMatch(m, ps))
-      self.assertFalse(mol3.HasSubstructMatch(m, ps))
-      self.assertFalse(mol4.HasSubstructMatch(m, ps))
+    self.assertTrue(mol1.HasSubstructMatch(m, ps))
+    self.assertFalse(mol2.HasSubstructMatch(m, ps))
+    self.assertFalse(mol3.HasSubstructMatch(m, ps))
+    self.assertFalse(mol4.HasSubstructMatch(m, ps))
 
     xqm = rdGeneralizedSubstruct.CreateExtendedQueryMol(m)
     self.assertTrue(rdGeneralizedSubstruct.MolHasSubstructMatch(mol1, xqm, ps))

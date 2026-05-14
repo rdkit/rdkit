@@ -12,6 +12,7 @@
 #define RDKIT_SUBSTRUCT_METHODS_H
 #include <RDBoost/Wrap_nb.h>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/tuple.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
