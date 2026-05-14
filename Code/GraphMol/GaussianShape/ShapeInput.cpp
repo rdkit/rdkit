@@ -264,6 +264,11 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
 }
 
 void ShapeInput::merge(ShapeInput &other) {
+  if (d_smiles != other.d_smiles) {
+    BOOST_LOG(rdWarningLog)
+        << "Can't merge shapes as different SMILES strings.\n";
+    return;
+  }
   if (!d_coords.empty() &&
       d_coords.front().size() != other.d_coords.front().size()) {
     BOOST_LOG(rdWarningLog) << "Can't merge shapes as different sizes.\n";
