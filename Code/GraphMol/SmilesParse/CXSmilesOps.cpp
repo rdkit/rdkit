@@ -1628,10 +1628,9 @@ bool is_alphanumeric(char c) {
 
 // from:
 // https://docs.chemaxon.com/latest/formats_chemaxon-extended-smiles-and-smarts-cxsmiles-and-cxsmarts.html#escaping
-constexpr const char *sgroupAllowedSpecialChars = "><\"!@#$%()[]./\\?-+*^_~= ";
-constexpr const char *atomPropAllowedSpecialChars =
-    "><\"!@#$%()[]./\\?-+*^_~= ";
-constexpr const char *labelAllowedSpecialChars = "><\"!@#%()[]./\\?-+*^_~=,: ";
+const std::string sgroupAllowedSpecialChars = "><\"!@#$%()[]./\\?-+*^_~= ";
+const std::string atomPropAllowedSpecialChars = "><\"!@#$%()[]./\\?-+*^_~= ";
+const std::string labelAllowedSpecialChars = "><\"!@#%()[]./\\?-+*^_~=,: ";
 std::string quote_string(const std::string &txt,
                          std::string allowedSpecialChars) {
   std::string res;
