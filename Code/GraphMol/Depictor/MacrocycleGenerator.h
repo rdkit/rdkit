@@ -225,25 +225,17 @@ class MacrocycleGenerator {
   size_t getNumFreePositions() const;
 
  private:
-  //! Result of fast heuristic attempt
-  enum class FastHeuristicResult {
-    SUCCESS,  //!< Solved completely, solution in d_turns
-    FAILURE,  //!< Failed, cannot continue
-    CONTINUE  //!< Reduced problem size, continue with enumeration
-  };
-
-  //! Try fast heuristic for large rings with many free positions
+  //! Simplify the system by adding constraints for large rings
   /*!
-    For rings with >15 free positions, uses substituent-based pattern
-    and alternating assignment to reduce search space.
+    For rings with >15 free positions, uses substituent-based constraints
+    and OPPOSITE constraints to reduce search space.
 
-    \param freePositions: Free positions (updated if CONTINUE)
-    \param numRight: Number of R turns needed (updated if CONTINUE)
-    \param numLeft: Number of L turns needed (updated if CONTINUE)
-    \return Result indicating success, failure, or continue with enumeration
+    \param freePositions: Free positions
+    \param numRight: Number of R turns needed
+    \param numLeft: Number of L turns needed
   */
-  FastHeuristicResult tryFastHeuristic(std::vector<size_t> &freePositions,
-                                       int &numRight, int &numLeft);
+  void simplifySystem(std::vector<size_t> &freePositions, int &numRight,
+                      int &numLeft);
   //! Step 1: Distribute closure gap linearly
   void distributeClosureGap(std::vector<RDGeom::Point2D> &coords) const;
 
@@ -502,9 +494,10 @@ void maybeReflectSymmetricFusedRings(const RDKit::ROMol &mol,
   \param allRings: All rings in the molecule (macrocycle will be filtered out)
   \param coords: Coordinate map (modified in-place)
 */
-void maybeRefineTemplateMatchedMacrocycle(
-    const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
-    const RDKit::VECT_INT_VECT &allRings, RDGeom::INT_POINT2D_MAP &coords);
+void maybeRefineTemplateMatchedMacrocycle(const RDKit::ROMol *mol,
+                                          const RDKit::INT_VECT &macrocycleRing,
+                                          const RDKit::VECT_INT_VECT &allRings,
+                                          RDGeom::INT_POINT2D_MAP &coords);
 
 //! Generate de-novo 2D coordinates for a macrocycle using turn-based encoding
 /*!
