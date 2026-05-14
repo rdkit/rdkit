@@ -10,6 +10,7 @@
 //
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 
@@ -28,7 +29,7 @@ namespace {
 ScaffoldNetwork::ScaffoldNetwork createNetworkHelper(
     nb::object pmols,
     const ScaffoldNetwork::ScaffoldNetworkParams &params) {
-  auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
+  auto mols = pythonObjectToVect<std::shared_ptr<ROMol>>(pmols);
   ScaffoldNetwork::ScaffoldNetwork res;
   if (mols) {
     NOGIL gil;
@@ -40,7 +41,7 @@ ScaffoldNetwork::ScaffoldNetwork createNetworkHelper(
 void updateNetworkHelper(nb::object pmols,
                          ScaffoldNetwork::ScaffoldNetwork &net,
                          const ScaffoldNetwork::ScaffoldNetworkParams &params) {
-  auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
+  auto mols = pythonObjectToVect<std::shared_ptr<ROMol>>(pmols);
   if (mols) {
     NOGIL gil;
     updateScaffoldNetwork(*mols, net, params);
@@ -137,7 +138,33 @@ NB_MODULE(rdScaffoldNetwork, m) {
       .def_ro("molCounts", &ScaffoldNetwork::ScaffoldNetwork::molCounts,
               "the number of moleclues each node was found in.")
       .def_ro("edges", &ScaffoldNetwork::ScaffoldNetwork::edges,
-              "the sequence of network edges");
+              "the sequence of network edges")
+      .def("__getstate__",
+           [](const ScaffoldNetwork::ScaffoldNetwork &self) {
+             nb::list edges;
+             for (const auto &e : self.edges) {
+               edges.append(
+                   nb::make_tuple(e.beginIdx, e.endIdx, (int)e.type));
+             }
+             return nb::make_tuple(self.nodes, self.counts, self.molCounts,
+                                   edges);
+           })
+      .def("__setstate__",
+           [](ScaffoldNetwork::ScaffoldNetwork &self, nb::tuple state) {
+             if (nb::len(state) != 4) {
+               throw std::runtime_error("invalid ScaffoldNetwork pickle state");
+             }
+             new (&self) ScaffoldNetwork::ScaffoldNetwork();
+             self.nodes = nb::cast<std::vector<std::string>>(state[0]);
+             self.counts = nb::cast<std::vector<unsigned>>(state[1]);
+             self.molCounts = nb::cast<std::vector<unsigned>>(state[2]);
+             for (auto e : nb::cast<nb::list>(state[3])) {
+               auto et = nb::cast<nb::tuple>(e);
+               self.edges.emplace_back(
+                   nb::cast<size_t>(et[0]), nb::cast<size_t>(et[1]),
+                   static_cast<ScaffoldNetwork::EdgeType>(nb::cast<int>(et[2])));
+             }
+           });
 
   m.def("CreateScaffoldNetwork", &createNetworkHelper, "mols"_a, "params"_a,
         "create (and return) a new network from a sequence of molecules");
