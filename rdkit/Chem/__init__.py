@@ -137,7 +137,7 @@ def CanonSmiles(smi, useChiral=1):
 
   '''
   m = MolFromSmiles(smi)
-  return MolToSmiles(m, useChiral)
+  return MolToSmiles(m, bool(useChiral))
 
 
 def SupplierFromFilename(fileN, delim='', **kwargs):
