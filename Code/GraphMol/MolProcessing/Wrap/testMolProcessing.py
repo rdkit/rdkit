@@ -10,7 +10,7 @@
 import unittest
 
 #
-from rdkit import Chem
+from rdkit import Chem, rdBase
 from rdkit.Chem import rdMolProcessing
 from rdkit.Chem import rdFingerprintGenerator
 from rdkit import DataStructs
@@ -23,30 +23,36 @@ class TestCase(unittest.TestCase):
     self.smiFile = RDConfig.RDBaseDir + '/Regress/Data/zinc.leads.500.q.smi'
     self.sdFile = RDConfig.RDBaseDir + "/Data/NCI/first_200.props.sdf"
 
+  @unittest.skipIf(rdBase._wrapperType == 'nanobind',
+                   'nanobind does not handle clean exits from context managers'
+                   ' (NoneType args to __exit__)')
   def test1(self):
     fpg = rdFingerprintGenerator.GetMorganGenerator()
     fps = rdMolProcessing.GetFingerprintsForMolsInFile(self.smiFile)
     self.assertEqual(len(fps), 499)
-    suppl = Chem.SmilesMolSupplier(self.smiFile, delimiter='\t')
-    mols = [next(suppl) for _ in range(3)]
+    with Chem.SmilesMolSupplier(self.smiFile, delimiter='\t') as suppl:
+      mols = [next(suppl) for _ in range(3)]
     nfps = [fpg.GetFingerprint(m) for m in mols]
     self.assertEqual(DataStructs.TanimotoSimilarity(fps[0], fps[1]),
                      DataStructs.TanimotoSimilarity(nfps[0], nfps[1]))
 
     fps = rdMolProcessing.GetFingerprintsForMolsInFile(self.sdFile)
     self.assertEqual(len(fps), 200)
-    suppl = Chem.SDMolSupplier(self.sdFile)
-    mols = [next(suppl) for _ in range(3)]
+    with Chem.SDMolSupplier(self.sdFile) as suppl:
+      mols = [next(suppl) for _ in range(3)]
     nfps = [fpg.GetFingerprint(m) for m in mols]
     self.assertAlmostEqual(DataStructs.TanimotoSimilarity(fps[0], fps[1]), 0.0638, places=3)
 
+  @unittest.skipIf(rdBase._wrapperType == 'nanobind',
+                   'nanobind does not handle clean exits from context managers'
+                   ' (NoneType args to __exit__)')
   def test2(self):
     fpg = rdFingerprintGenerator.GetMorganGenerator(radius=2)
 
     fps = rdMolProcessing.GetFingerprintsForMolsInFile(self.smiFile, generator=fpg)
     self.assertEqual(len(fps), 499)
-    suppl = Chem.SmilesMolSupplier(self.smiFile, delimiter='\t')
-    mols = [next(suppl) for _ in range(3)]
+    with Chem.SmilesMolSupplier(self.smiFile, delimiter='\t') as suppl:
+      mols = [next(suppl) for _ in range(3)]
     nfps = [fpg.GetFingerprint(m) for m in mols]
     self.assertEqual(DataStructs.TanimotoSimilarity(fps[0], fps[1]),
                      DataStructs.TanimotoSimilarity(nfps[0], nfps[1]))
