@@ -9,28 +9,31 @@
 //
 
 #include <algorithm>
+#include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <list>
 #include <memory>
+#include <ranges>
 #include <regex>
 #include <thread>
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
 
-#include <RDGeneral/ControlCHandler.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
-#include <GraphMol/QueryBond.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
-#include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
+#include <GraphMol/SynthonSpaceSearch/ProgressBar.h>
+#include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/RDThreads.h>
+#include <SimDivPickers/LeaderPicker.h>
+#include <boost/variant2/variant.hpp>
 
 namespace RDKit::SynthonSpaceSearch::details {
 
@@ -332,7 +335,7 @@ void makeFragmentsForMol(
     size_t splitBondNum,
     const std::vector<std::pair<unsigned int, unsigned int>> &dummyLabels,
     const unsigned int maxNumFrags, const boost::dynamic_bitset<> &ringBonds,
-    std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> &fragments) {
+    std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> &fragments) {
   // first, see how many fragments we're going to get. The ring bonds
   // are paired so they will split the same ring.
   int numRingBonds = 0;
@@ -352,7 +355,7 @@ void makeFragmentsForMol(
                                                 true, &dummyLabels);
   const std::string fragSmi(MolToSmiles(*fragMol));
   fragments[splitBondNum] =
-      std::pair<std::string, std::unique_ptr<ROMol>>(fragSmi, fragMol);
+      std::pair<std::string, std::shared_ptr<ROMol>>(fragSmi, fragMol);
 }
 
 void doPartInitialFragmentation(
@@ -361,7 +364,7 @@ void doPartInitialFragmentation(
     const TimePoint *endTime, std::atomic<std::int64_t> &mostRecentRingBond,
     std::int64_t lastRingBond,
     const std::vector<std::pair<unsigned int, unsigned int>> &dummyLabels,
-    std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> &tmpFrags) {
+    std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> &tmpFrags) {
   int numTries = 100;
   bool timedOut = false;
   while (true) {
@@ -387,7 +390,7 @@ void doInitialFragmentation(
     const unsigned int maxNumFrags, const boost::dynamic_bitset<> &ringBonds,
     [[maybe_unused]] const int numThreads, const TimePoint *endTime,
     bool &timedOut,
-    std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> &tmpFrags) {
+    std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> &tmpFrags) {
   std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
   for (unsigned int i = 1; i <= MAX_CONNECTOR_NUM; ++i) {
     dummyLabels.emplace_back(i, i);
@@ -398,7 +401,6 @@ void doInitialFragmentation(
   // avoid duplicates.
   std::int64_t lastRingBond = splitBonds.size() - 1;
   std::atomic<std::int64_t> mostRecentRingBond = -1;
-#if RDK_BUILD_THREADSAFE_SSS
   if (const auto numThreadsToUse = getNumThreadsToUse(numThreads);
       numThreads > 1) {
     std::vector<std::thread> threads;
@@ -420,25 +422,18 @@ void doInitialFragmentation(
                                std::ref(mostRecentRingBond), lastRingBond,
                                dummyLabels, tmpFrags);
   }
-#else
-  doPartInitialFragmentation(mol, splitBonds, maxNumFrags, ringBonds, endTime,
-                             std::ref(mostRecentRingBond), lastRingBond,
-                             dummyLabels, tmpFrags);
-#endif
   timedOut = details::checkTimeOut(endTime);
 }
 
 void doPartFinalFragmentation(
-    const std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> &tmpFrags,
+    const std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> &tmpFrags,
     unsigned int maxNumFrags, const TimePoint *endTime,
     std::atomic<std::int64_t> &mostRecentFrag, std::int64_t lastFrag,
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments) {
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments) {
   int numTries = 100;
   bool timedOut = false;
   while (true) {
     std::int64_t thisFrag = ++mostRecentFrag;
-    // std::cout << "frag " << thisFrag << " of " << lastFrag << " and "
-    // << tmpFrags.size() << std::endl;
     if (thisFrag > lastFrag) {
       break;
     }
@@ -447,7 +442,10 @@ void doPartFinalFragmentation(
         maxNumFrags) {
       // The first fragment was made from the whole query and is already in
       // fragments.
-      fragments[thisFrag + 1] = std::move(molFrags);
+      fragments[thisFrag + 1].resize(molFrags.size());
+      for (unsigned int i = 0; i < molFrags.size(); ++i) {
+        fragments[thisFrag + 1][i].reset(molFrags[i].release());
+      }
     }
     --numTries;
     if (!numTries) {
@@ -461,13 +459,12 @@ void doPartFinalFragmentation(
 }
 
 void doFinalFragmentation(
-    const std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> &tmpFrags,
+    const std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> &tmpFrags,
     unsigned int maxNumFrags, [[maybe_unused]] int numThreads,
     const TimePoint *endTime, bool &timedOut,
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments) {
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments) {
   std::int64_t lastFrag = tmpFrags.size() - 1;
   std::atomic<std::int64_t> mostRecentFrag = -1;
-#if RDK_BUILD_THREADSAFE_SSS
   if (const auto numThreadsToUse = getNumThreadsToUse(numThreads);
       numThreads > 1) {
     std::vector<std::thread> threads;
@@ -485,15 +482,11 @@ void doFinalFragmentation(
     doPartFinalFragmentation(tmpFrags, maxNumFrags, endTime, mostRecentFrag,
                              lastFrag, fragments);
   }
-#else
-  doPartFinalFragmentation(tmpFrags, maxNumFrags, endTime, mostRecentFrag,
-                           lastFrag, fragments);
-#endif
   timedOut = details::checkTimeOut(endTime);
 }
 
-// Build all combinations of maxBondSplits sets of bondPairs into splitBonds,
-// removing any duplicate bonds.
+// Recursively build all combinations of maxBondSplits sets of
+// bondPairs into splitBonds, removing any duplicate bonds.
 void buildSplitBonds(
     const std::vector<std::pair<unsigned int, unsigned int>> &bondPairs,
     const unsigned int maxBondSplits,
@@ -530,12 +523,75 @@ void buildSplitBonds(
   splitBonds.erase(std::unique(splitBonds.begin(), splitBonds.end()),
                    splitBonds.end());
 }
+
+void uniquifyFragsBySmiles(
+    std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> &tmpFrags,
+    const std::atomic_uint64_t maxNumFragSets) {
+  // Keep unique SMILES only
+  std::sort(tmpFrags.begin(), tmpFrags.end(),
+            [](const auto &lhs, const auto &rhs) -> bool {
+              return lhs.first < rhs.first;
+            });
+  tmpFrags.erase(std::unique(tmpFrags.begin(), tmpFrags.end(),
+                             [](const auto &lhs, const auto &rhs) -> bool {
+                               return lhs.first == rhs.first;
+                             }),
+                 tmpFrags.end());
+  if (tmpFrags.size() > maxNumFragSets) {
+    tmpFrags.erase(tmpFrags.begin() + maxNumFragSets, tmpFrags.end());
+  }
+}
+
+void uniquifyFragsByAtoms(
+    std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> &tmpFrags,
+    const std::uint64_t maxNumFragSets) {
+  std::vector<std::pair<std::string, size_t>> fragsToKeep;
+  fragsToKeep.reserve(tmpFrags.size());
+  for (size_t i = 0; i < tmpFrags.size(); ++i) {
+    std::vector<std::vector<int>> molFrags;
+    MolOps::getMolFrags(*tmpFrags[i].second, molFrags);
+    std::vector<std::string> atStrings;
+    atStrings.reserve(molFrags.size());
+    for (auto &mf : molFrags) {
+      std::ranges::sort(mf);
+      atStrings.push_back(std::to_string(mf[0]));
+      for (unsigned int j = 1; j < mf.size(); ++j) {
+        atStrings.back() += "_" + std::to_string(mf[j]);
+      }
+    }
+    std::ranges::sort(atStrings);
+    std::string atString = atStrings.front();
+    for (unsigned int j = 1; j < atStrings.size(); ++j) {
+      atString += "." + atStrings[j];
+    }
+    fragsToKeep.emplace_back(atString, i);
+  }
+  std::sort(fragsToKeep.begin(), fragsToKeep.end(),
+            [](const auto &lhs, const auto &rhs) -> bool {
+              return lhs.first < rhs.first;
+            });
+  fragsToKeep.erase(std::unique(fragsToKeep.begin(), fragsToKeep.end(),
+                                [](const auto &lhs, const auto &rhs) -> bool {
+                                  return lhs.first == rhs.first;
+                                }),
+                    fragsToKeep.end());
+  std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> newTmpFrags(
+      fragsToKeep.size());
+  for (size_t i = 0;
+       i <
+       std::min(static_cast<std::uint64_t>(fragsToKeep.size()), maxNumFragSets);
+       ++i) {
+    newTmpFrags[i] = std::move(tmpFrags[fragsToKeep[i].second]);
+  }
+  tmpFrags = std::move(newTmpFrags);
+}
 }  // namespace
 
-std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
+std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxNumFrags,
     const std::uint64_t maxNumFragSets, const TimePoint *endTime,
-    const int numThreads, bool &timedOut) {
+    const int numThreads, const FragSetUniquifyMode &uniquifyMode,
+    bool &timedOut) {
   if (maxNumFrags < 1) {
     maxNumFrags = 1;
   }
@@ -551,39 +607,34 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   findBondPairsThatFragment(query, ringBonds, ringBlocks, bondPairs);
   // And all the non-ring bonds, which clearly can all make 2 fragments
   // when broken.  Put them in as pairs of the same value, for ease of
-  // processing below.
+  // processing below.  We also aren't interested in H atoms as a fragment.
   for (const auto b : query.bonds()) {
-    if (!ringBonds[b->getIdx()]) {
+    if (!ringBonds[b->getIdx()] && b->getBeginAtom()->getAtomicNum() != 1 &&
+        b->getEndAtom()->getAtomicNum() != 1) {
       bondPairs.push_back({b->getIdx(), b->getIdx()});
     }
   }
 
   std::vector<std::vector<unsigned int>> splitBonds;
   buildSplitBonds(bondPairs, maxNumFrags, splitBonds);
-  std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> tmpFrags(
+  std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> tmpFrags(
       splitBonds.size());
 
   // First split leaves the fragments in the same molecule, and returns
   // the SMILES for it.
   doInitialFragmentation(query, splitBonds, maxNumFrags, ringBonds, numThreads,
                          endTime, timedOut, tmpFrags);
-  std::vector<std::vector<std::unique_ptr<ROMol>>> fragments;
+  std::vector<std::vector<std::shared_ptr<ROMol>>> fragments;
   if (timedOut || ControlCHandler::getGotSignal()) {
     return fragments;
   }
-
-  // Keep unique SMILES only
-  std::sort(tmpFrags.begin(), tmpFrags.end(),
-            [](const auto &lhs, const auto &rhs) -> bool {
-              return lhs.first < rhs.first;
-            });
-  tmpFrags.erase(std::unique(tmpFrags.begin(), tmpFrags.end(),
-                             [](const auto &lhs, const auto &rhs) -> bool {
-                               return lhs.first == rhs.first;
-                             }),
-                 tmpFrags.end());
-  if (tmpFrags.size() > maxNumFragSets) {
-    tmpFrags.erase(tmpFrags.begin() + maxNumFragSets, tmpFrags.end());
+  switch (uniquifyMode) {
+    case FragSetUniquifyMode::BySmiles:
+      uniquifyFragsBySmiles(tmpFrags, maxNumFragSets);
+      break;
+    case FragSetUniquifyMode::ByAtoms:
+      uniquifyFragsByAtoms(tmpFrags, maxNumFragSets);
+      break;
   }
 
   // Keep the molecule itself (i.e. 0 splits).  It will probably produce
@@ -615,7 +666,7 @@ int countConnections(const ROMol &mol) {
 }
 
 std::vector<boost::dynamic_bitset<>> getConnectorPatterns(
-    const std::vector<std::unique_ptr<ROMol>> &mols) {
+    const std::vector<std::shared_ptr<ROMol>> &mols) {
   std::vector<boost::dynamic_bitset<>> connPatterns(
       mols.size(), boost::dynamic_bitset<>(MAX_CONNECTOR_NUM + 1));
   for (size_t i = 0; i < mols.size(); i++) {
@@ -630,7 +681,7 @@ std::vector<boost::dynamic_bitset<>> getConnectorPatterns(
 }
 
 boost::dynamic_bitset<> getConnectorPattern(
-    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
+    const std::vector<std::shared_ptr<ROMol>> &fragSet) {
   boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
   const auto connPatterns = getConnectorPatterns(fragSet);
   for (const auto &cp : connPatterns) {
@@ -811,6 +862,19 @@ std::string buildProductName(const std::string &reactionId,
   return prodName;
 }
 
+std::string buildProductName(const std::string &reactionId,
+                             const std::vector<const std::string *> &fragIds) {
+  std::string prodName = "";
+  for (const auto &fragId : fragIds) {
+    if (prodName != "") {
+      prodName += ";";
+    }
+    prodName += *fragId;
+  }
+  prodName += ";" + reactionId;
+  return prodName;
+}
+
 std::string buildProductName(
     const RDKit::SynthonSpaceSearch::SynthonSpaceHitSet *hitset,
     const std::vector<size_t> &fragNums) {
@@ -829,17 +893,25 @@ std::unique_ptr<ROMol> buildProduct(
     const std::vector<const ROMol *> &synthons) {
   MolzipParams mzparams;
   mzparams.label = MolzipLabel::Isotope;
+  mzparams.alignCoordinates = true;
   auto prodMol = std::make_unique<ROMol>(*synthons.front());
   for (size_t i = 1; i < synthons.size(); ++i) {
     prodMol.reset(combineMols(*prodMol, *synthons[i]));
   }
-  prodMol = molzip(*prodMol, mzparams);
-  MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
+  try {
+    prodMol = molzip(*prodMol, mzparams);
+    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
+  } catch (std::exception &e) {
+    std::cout << "AWOOGA :: Failed to zip " << MolToSmiles(*prodMol)
+              << " because " << std::endl
+              << e.what() << std::endl;
+    prodMol.reset();
+  }
   return prodMol;
 }
 
 std::map<std::string, std::vector<ROMol *>> mapFragsBySmiles(
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
     bool &cancelled) {
   std::map<std::string, std::vector<ROMol *>> fragSmiToFrag;
   for (auto &fragSet : fragSets) {
@@ -848,7 +920,7 @@ std::map<std::string, std::vector<ROMol *>> mapFragsBySmiles(
         cancelled = true;
         return fragSmiToFrag;
       }
-      // For the fingerprints, ring info is required.
+      // For the fingerprints and shapes, ring info is required.
       unsigned int otf;
       sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
                   MolOps::SANITIZE_SYMMRINGS);
@@ -889,6 +961,544 @@ unsigned int countChiralAtoms(ROMol &mol, unsigned int *numExcDummies) {
     }
   }
   return numChiralAtoms;
+}
+
+bool hasUnspecifiedStereo(ROMol &mol) {
+  auto sis = Chirality::findPotentialStereo(mol, true, true);
+  for (auto &si : sis) {
+    if (si.type == Chirality::StereoType::Atom_Tetrahedral ||
+        si.type == Chirality::StereoType::Atom_SquarePlanar ||
+        si.type == Chirality::StereoType::Atom_TrigonalBipyramidal ||
+        si.type == Chirality::StereoType::Atom_Octahedral) {
+      Atom *atom = mol.getAtomWithIdx(si.centeredOn);
+      if (atom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+        return true;
+      }
+    } else if (si.type == Chirality::StereoType::Bond_Double ||
+               si.type == Chirality::StereoType::Bond_Cumulene_Even ||
+               si.type == Chirality::StereoType::Bond_Atropisomer) {
+      Bond *bond = mol.getBondWithIdx(si.centeredOn);
+      if (bond->getStereo() == Bond::BondStereo::STEREONONE ||
+          bond->getStereo() == Bond::BondStereo::STEREOANY) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+namespace {
+void useUserConfGen(std::unique_ptr<RWMol> &mol, unsigned int numConformers,
+                    UserConfGenerator &userConfGenerator) {
+  auto newMol = userConfGenerator(MolToSmiles(*mol), numConformers);
+  // The mol has information that won't have survived, and it's not safe to
+  // assume the atom orders have survived.
+  MatchVectType res;
+  if (SubstructMatch(*newMol, *mol, res)) {
+    std::map<unsigned int, unsigned int> query2Mol;
+    std::ranges::copy(res, std::inserter(query2Mol, query2Mol.end()));
+    for (const auto &p : res) {
+      auto currAt = mol->getAtomWithIdx(p.first);
+      auto newAt = newMol->getAtomWithIdx(p.second);
+      if (currAt->hasProp("molNum")) {
+        newAt->setProp<unsigned int>("molNum",
+                                     currAt->getProp<unsigned int>("molNum"));
+      }
+      if (currAt->hasProp("idx")) {
+        newAt->setProp<unsigned int>("idx",
+                                     currAt->getProp<unsigned int>("idx"));
+      }
+      if (currAt->hasProp("HoldsJoin")) {
+        newAt->setProp<std::string>("HoldsJoin",
+                                    currAt->getProp<std::string>("HoldsJoin"));
+      }
+      for (const auto &nbr : mol->atomNeighbors(currAt)) {
+        if (auto it = query2Mol.find(nbr->getIdx()); it != query2Mol.end()) {
+          auto oldBond = mol->getBondBetweenAtoms(p.first, nbr->getIdx());
+          auto newBond = newMol->getBondBetweenAtoms(p.second, it->second);
+          if (oldBond->hasProp("molNum")) {
+            newBond->setProp<unsigned int>(
+                "molNum", oldBond->getProp<unsigned int>("molNum"));
+          }
+          if (oldBond->hasProp("idx")) {
+            newBond->setProp<unsigned int>(
+                "idx", oldBond->getProp<unsigned int>("idx"));
+          }
+          if (oldBond->hasProp("HoldsJoin")) {
+            newBond->setProp<std::string>(
+                "HoldsJoin", oldBond->getProp<std::string>("HoldsJoin"));
+          }
+        }
+      }
+    }
+  } else {
+    // Bit weird!
+    BOOST_LOG(rdErrorLog) << "Couldn't generate conformers for isomer "
+                          << MolToCXSmiles(*mol) << " of molecule."
+                          << std::endl;
+    mol.reset();
+    return;
+  }
+  if (mol->hasProp(common_properties::_Name)) {
+    newMol->setProp<std::string>(
+        common_properties::_Name,
+        mol->getProp<std::string>(common_properties::_Name));
+  }
+  mol.reset(newMol.release());
+}
+
+void useDefaultConfGen(std::unique_ptr<RWMol> &mol, unsigned int numConformers,
+                       DGeomHelpers::EmbedParameters &dgParams) {
+  MolOps::addHs(*mol);
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, numConformers, dgParams);
+  if (cids.empty() || !mol->getNumConformers()) {
+    BOOST_LOG(rdErrorLog) << "Couldn't generate conformers for isomer "
+                          << MolToCXSmiles(*mol) << " of molecule."
+                          << std::endl;
+    mol.reset();
+  } else {
+    MolOps::removeHs(*mol);
+  }
+}
+
+}  // namespace
+std::vector<std::unique_ptr<RWMol>> generateIsomerConformers(
+    const ROMol &mol, unsigned int numConformers, bool enumerateStereo,
+    const EnumerateStereoisomers::StereoEnumerationOptions &enumOpts,
+    DGeomHelpers::EmbedParameters &dgParams,
+    UserConfGenerator &userConfGenerator, unsigned int maxStereoCenters) {
+  std::vector<std::unique_ptr<RWMol>> confMols;
+  if (enumerateStereo) {
+    EnumerateStereoisomers::StereoisomerEnumerator enu(mol, enumOpts);
+    unsigned int i = 0;
+    while (auto isomer = enu.next()) {
+      confMols.emplace_back(static_cast<RWMol *>(isomer.release()));
+      if (++i == maxStereoCenters) {
+        break;
+      }
+    }
+  } else {
+    confMols.push_back(std::make_unique<RWMol>(mol));
+  }
+  for (auto &cm : confMols) {
+    if (ControlCHandler::getGotSignal()) {
+      confMols.clear();
+      break;
+    }
+    if (userConfGenerator) {
+      useUserConfGen(cm, numConformers, userConfGenerator);
+    } else {
+      useDefaultConfGen(cm, numConformers, dgParams);
+    }
+    if (ControlCHandler::getGotSignal()) {
+      confMols.clear();
+      return confMols;
+    }
+    if (cm && !cm->getNumConformers()) {
+      cm.reset();
+    }
+  }
+  confMols.erase(std::remove_if(confMols.begin(), confMols.end(),
+                                [](const std::unique_ptr<RWMol> &m) -> bool {
+                                  return !m;
+                                }),
+                 confMols.end());
+  return confMols;
+}
+
+namespace {
+// For deciphering the contents of the HoldsJoin property on 2 atoms.
+// Used to decide the isotope number a dummy atom must be set to.
+unsigned int joinInCommon(const std::string &joins1,
+                          const std::string &joins2) {
+  // Each of the join strings will be a underscore-separated list of ints, with
+  // no more than 3 ints per string.  The ints will be between 1 and 4.
+  // So we don't need to do anything sophisticated.  We want the single
+  // number in common to both lists.
+  std::string j(" ");
+  for (auto c1 : joins1) {
+    if (c1 == '_') {
+      continue;
+    }
+    for (auto c2 : joins2) {
+      if (c1 == c2) {
+        j[0] = c1;
+        return std::stoi(std::string(j));
+      }
+    }
+  }
+  return 0;
+}
+
+void splitDummyDummyBonds(RWMol &mol) {
+  // Sometimes the atom subsetting leaves bonds between atoms not
+  // in molNum.  Once setDummyIsotopes has been called, they will
+  // be between dummy atoms and so can safely be removed.
+  mol.beginBatchEdit();
+  for (auto bond : mol.bonds()) {
+    if (!bond->getBeginAtom()->getAtomicNum() &&
+        !bond->getEndAtom()->getAtomicNum()) {
+      mol.removeBond(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
+    }
+  }
+  mol.commitBatchEdit();
+}
+}  // namespace
+
+std::unique_ptr<RWMol> trimSampleMol(const ROMol &mol, size_t molNum) {
+  auto ts = MolToCXSmiles(mol);
+  boost::dynamic_bitset<> molNumAtoms(mol.getNumAtoms());
+  unsigned int molNumProp;
+  for (auto atom : mol.atoms()) {
+    if (atom->getPropIfPresent<unsigned int>("molNum", molNumProp) &&
+        molNumProp == molNum) {
+      molNumAtoms[atom->getIdx()] = true;
+    }
+  }
+
+  auto ringInfo = mol.getRingInfo();
+  if (!ringInfo->isInitialized()) {
+    MolOps::findSSSR(mol);
+  }
+  for (const auto &atomRing : ringInfo->atomRings()) {
+    for (auto a : atomRing) {
+      if (molNumAtoms[a]) {
+        for (auto ap : atomRing) {
+          molNumAtoms[ap] = true;
+        }
+        break;
+      }
+    }
+  }
+
+  std::vector<unsigned int> bondsToGo;
+  for (auto bond : mol.bonds()) {
+    // Remove single non-cyclic bonds that aren't in molNumAtoms at either
+    // end.
+    if (bond->getBondType() == Bond::SINGLE &&
+        !ringInfo->numBondRings(bond->getIdx())) {
+      bool bondToGo = true;
+      auto begAtom = bond->getBeginAtom();
+      auto endAtom = bond->getEndAtom();
+      if (molNumAtoms[begAtom->getIdx()] || molNumAtoms[endAtom->getIdx()]) {
+        bondToGo = false;
+      }
+      // Deal with some special cases.  Don't break a S(=O)-[C,N] bond
+      // as that gives an odd-looking [SH](=O) product.
+      Atom *sAtom = nullptr;
+      Atom *otherAtom = nullptr;
+      if (bondToGo && begAtom->getAtomicNum() == 16) {
+        sAtom = begAtom;
+        otherAtom = endAtom;
+      }
+      if (bondToGo && endAtom->getAtomicNum() == 16) {
+        sAtom = endAtom;
+        otherAtom = begAtom;
+      }
+      if (sAtom &&
+          (otherAtom->getAtomicNum() == 6 || otherAtom->getAtomicNum() == 7)) {
+        unsigned int numOxy = 0;
+        for (const auto nbr : mol.atomNeighbors(sAtom)) {
+          if (nbr->getAtomicNum() == 8) {
+            auto bond = mol.getBondBetweenAtoms(sAtom->getIdx(), nbr->getIdx());
+            if (bond) {
+              numOxy++;
+            }
+          }
+        }
+        if (numOxy) {
+          bondToGo = false;
+        }
+      }
+      if (bondToGo) {
+        bondsToGo.push_back(bond->getIdx());
+      }
+    }
+  }
+  std::unique_ptr<RWMol> newMol(static_cast<RWMol *>(
+      MolFragmenter::fragmentOnBonds(mol, bondsToGo, false)));
+  std::vector<std::vector<int>> molFrags;
+  auto numFrags = MolOps::getMolFrags(*newMol, molFrags);
+  newMol->beginBatchEdit();
+  for (unsigned int i = 0; i < numFrags; i++) {
+    bool hoseFrag = true;
+    for (auto fa : molFrags[i]) {
+      auto a = newMol->getAtomWithIdx(fa);
+      if (a->hasProp("molNum") &&
+          a->getProp<unsigned int>("molNum") == molNum) {
+        hoseFrag = false;
+        break;
+      }
+    }
+    if (hoseFrag) {
+      for (auto fa : molFrags[i]) {
+        newMol->removeAtom(fa);
+      }
+    }
+  }
+  newMol->commitBatchEdit();
+
+  return newMol;
+}
+
+namespace {
+void setJoinIsotope(
+    const std::vector<std::tuple<Atom *, Atom *, unsigned int>> &atomIsotopes,
+    std::vector<std::pair<unsigned int, double>> &dummyRadii) {
+  for (auto &[atom, otherAtom, isotopeNum] : atomIsotopes) {
+    atom->setAtomicNum(0);
+    atom->setIsotope(isotopeNum);
+    atom->setNumExplicitHs(0);
+    dummyRadii.emplace_back(atom->getIdx(), GaussianShape::DUMMY_RAD);
+  }
+}
+
+void duplicateJoinIsotope(
+    RWMol &mol,
+    const std::vector<std::tuple<Atom *, Atom *, unsigned int>> &atomIsotopes,
+    std::vector<std::pair<unsigned int, double>> &dummyRadii,
+    std::vector<unsigned int> &fragAtoms) {
+  // Deal with something of an edge case.  The synthon was most likely a single
+  // atom that finished a ring, so had 2 connection points e.g.
+  // R1-[14C]([1*])[2*] and R2C([1*])CCC[2*] to give R1[14C]1C(R2)CCCC2. The
+  // shape needs to have 2 dummy atoms, so not R1[*]1C(R2)CCCC2 but
+  // R1[*]CCC[*]R2 with the 2 dummy atoms at the same coordinates.
+  // This needs to be done last thing before the shapes are created as
+  // it might break an aromatic system that will cause problems.
+  for (auto &[atom, otherAtom, isotopeNum] : atomIsotopes) {
+    if (!atom->getAtomicNum()) {
+      if (atom->getIsotope() == isotopeNum) {
+        continue;
+      }
+      Atom dummyAtom(0);
+      auto newAtomIdx = mol.addAtom(&dummyAtom);
+      auto newAtom = mol.getAtomWithIdx(newAtomIdx);
+      newAtom->setIsotope(isotopeNum);
+      // Remove the bond between this atom and otherAtom and make a bond
+      // between new atom and otherAtom.
+      auto bond = mol.getBondBetweenAtoms(atom->getIdx(), otherAtom->getIdx());
+      auto bt = bond->getBondType();
+      mol.removeBond(atom->getIdx(), otherAtom->getIdx());
+      mol.addBond(otherAtom->getIdx(), newAtomIdx, bt);
+      for (unsigned int i = 0; i < mol.getNumConformers(); i++) {
+        auto &conf = mol.getConformer(i);
+        auto atomPos = conf.getAtomPos(atom->getIdx());
+        conf.setAtomPos(newAtomIdx, atomPos);
+      }
+      fragAtoms.push_back(newAtomIdx);
+      dummyRadii.emplace_back(newAtomIdx, GaussianShape::DUMMY_RAD);
+    }
+  }
+}
+
+}  // namespace
+
+void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
+                       std::atomic<std::int64_t> &mostRecentMol,
+                       DGeomHelpers::EmbedParameters &dgParams,
+                       ShapeBuildParams &shapeBuildParams,
+                       std::unique_ptr<ProgressBar> &pbar) {
+  while (!ControlCHandler::getGotSignal()) {
+    size_t molNum = ++mostRecentMol;
+    if (molNum >= sampleMols.size()) {
+      return;
+    }
+    sampleMols[molNum]->d_mol = sampleMols[molNum]->d_synthonSet->buildMolecule(
+        sampleMols[molNum]->d_synthonNums);
+    if (!sampleMols[molNum]->d_mol) {
+      continue;
+    }
+    sampleMols[molNum]->d_mol = trimSampleMol(
+        *sampleMols[molNum]->d_mol, sampleMols[molNum]->d_synthonSetNum);
+    constexpr unsigned int maxStereoCentresToDo =
+        3;  // Don't enumerate more than 3 stereo centres
+    auto isomerConfs = generateIsomerConformers(
+        *sampleMols[molNum]->d_mol, shapeBuildParams.numConfs, true,
+        shapeBuildParams.stereoEnumOpts, dgParams,
+        shapeBuildParams.userConformerGenerator, maxStereoCentresToDo);
+    if (isomerConfs.empty()) {
+      // Sometimes we can get something from the un-enumerated isomers which
+      // will be better than nothing.
+      isomerConfs = generateIsomerConformers(
+          *sampleMols[molNum]->d_mol, shapeBuildParams.numConfs, false,
+          shapeBuildParams.stereoEnumOpts, dgParams,
+          shapeBuildParams.userConformerGenerator, maxStereoCentresToDo);
+      if (isomerConfs.empty()) {
+        BOOST_LOG(rdWarningLog)
+            << "No conformers generated for sample molecule "
+            << sampleMols[molNum]->d_mol->getProp<std::string>(
+                   common_properties::_Name)
+            << " : " << MolToSmiles(*sampleMols[molNum]->d_mol)
+            << " when generating conformers for synthon "
+            << sampleMols[molNum]->d_synthon->getSmiles() << std::endl;
+        continue;
+      }
+    }
+    std::unique_ptr<SynthonShapeInput> allShapes;
+    for (auto &isomer : isomerConfs) {
+      if (isomer->getNumConformers() == 0) {
+        continue;
+      }
+      std::vector<unsigned int> splitBonds;
+      std::vector<unsigned int> fragAtoms;
+      std::vector<std::pair<unsigned int, double>> dummyRadii;
+      std::vector<std::tuple<Atom *, Atom *, unsigned int>> atomIsotopes;
+      for (const auto &bond : isomer->bonds()) {
+        if (!bond->hasProp("molNum")) {
+          splitBonds.push_back(bond->getIdx());
+          if (!bond->getBeginAtom()->hasProp("molNum") ||
+              !bond->getEndAtom()->hasProp("molNum")) {
+            // Probably an explicit H added by the stereoisomer enumerator.
+            continue;
+          }
+          auto begMolNum =
+              bond->getBeginAtom()->getProp<unsigned int>("molNum");
+          auto endMolNum = bond->getEndAtom()->getProp<unsigned int>("molNum");
+          if (begMolNum == sampleMols[molNum]->d_synthonSetNum &&
+              endMolNum != sampleMols[molNum]->d_synthonSetNum) {
+            fragAtoms.push_back(bond->getBeginAtomIdx());
+            fragAtoms.push_back(bond->getEndAtomIdx());
+            // Set the atom as a dummy, so it shows up in the shape.
+            auto joinIsotope = joinInCommon(
+                bond->getEndAtom()->getProp<std::string>("HoldsJoin"),
+                bond->getBeginAtom()->getProp<std::string>("HoldsJoin"));
+            atomIsotopes.emplace_back(bond->getEndAtom(), bond->getBeginAtom(),
+                                      joinIsotope);
+          } else if (begMolNum != sampleMols[molNum]->d_synthonSetNum &&
+                     endMolNum == sampleMols[molNum]->d_synthonSetNum) {
+            fragAtoms.push_back(bond->getBeginAtomIdx());
+            fragAtoms.push_back(bond->getEndAtomIdx());
+            // Set the atom as a dummy, so it shows up in the shape.
+            auto joinIsotope = joinInCommon(
+                bond->getEndAtom()->getProp<std::string>("HoldsJoin"),
+                bond->getBeginAtom()->getProp<std::string>("HoldsJoin"));
+            atomIsotopes.emplace_back(bond->getBeginAtom(), bond->getEndAtom(),
+                                      joinIsotope);
+          }
+        } else {
+          if (bond->getProp<unsigned int>("molNum") ==
+              sampleMols[molNum]->d_synthonSetNum) {
+            fragAtoms.push_back(bond->getBeginAtomIdx());
+            fragAtoms.push_back(bond->getEndAtomIdx());
+          }
+        }
+      }
+      setJoinIsotope(atomIsotopes, dummyRadii);
+      std::ranges::sort(fragAtoms);
+      fragAtoms.erase(std::unique(fragAtoms.begin(), fragAtoms.end()),
+                      fragAtoms.end());
+      GaussianShape::ShapeInputOptions shapeOpts;
+      shapeOpts.shapePruneThreshold = shapeBuildParams.shapeSimThreshold;
+      // Make custom features for the atom subset.  Doing it from the
+      // parent molecule means that the atom types will be correct which
+      // may not be the case after the fragment is extracted.  There might
+      // be a split aromatic ring, for example.
+      shapeOpts.customFeatures.reserve(isomer->getNumConformers());
+      for (auto cfi = isomer->beginConformers(); cfi != isomer->endConformers();
+           ++cfi) {
+        std::vector<GaussianShape::CustomFeature> feats;
+        GaussianShape::findFeatures(*(*cfi), feats, fragAtoms);
+        shapeOpts.customFeatures.emplace_back(std::move(feats));
+      }
+      duplicateJoinIsotope(*isomer, atomIsotopes, dummyRadii, fragAtoms);
+      shapeOpts.atomRadii = dummyRadii;
+      shapeOpts.atomSubset = fragAtoms;
+      splitDummyDummyBonds(*isomer);
+      try {
+        GaussianShape::ShapeOverlayOptions ovlyOpts;
+        if (!allShapes) {
+          allShapes = std::make_unique<SynthonShapeInput>(*isomer, -1,
+                                                          shapeOpts, ovlyOpts);
+        } else {
+          auto shapes = std::make_unique<SynthonShapeInput>(
+              *isomer, -1, shapeOpts, ovlyOpts);
+          // Because stereoisomers should all have the same number of atoms and
+          // bonds, we can just combine the shapes into one set.  We don't need
+          // to keep track of which stereoisomer they came from.
+          allShapes->merge(*shapes);
+        }
+      } catch (ValueErrorException &e) {
+        // It throws an exception if it doesn't have a radius for an atom
+        // in the molecule.
+        BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+      } catch (Invar::Invariant &e) {
+        BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "No conformers generated for sample molecule "
+            << sampleMols[molNum]->d_mol->getProp<std::string>(
+                   common_properties::_Name)
+            << " : " << MolToSmiles(*sampleMols[molNum]->d_mol)
+            << " when generating conformers for synthon "
+            << sampleMols[molNum]->d_synthon->getSmiles()
+            << " with isomer : " << MolToSmiles(*isomer) << std::endl;
+        exit(1);
+      }
+    }
+    if (allShapes) {
+      if (isomerConfs.size() > 1) {
+        // allShapes will be the product of at least 1 merge, so prune.
+        allShapes->getShapes().pruneShapes(shapeBuildParams.shapeSimThreshold);
+      }
+      sampleMols[molNum]->d_synthon->setShapes(std::move(allShapes));
+    }
+    if (pbar) {
+      pbar->increment();
+    }
+  }
+}
+
+void makeShapesFromMols(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
+                        DGeomHelpers::EmbedParameters &dgParams,
+                        ShapeBuildParams &shapeBuildParams,
+                        std::unique_ptr<ProgressBar> &pbar) {
+  std::atomic<std::int64_t> mostRecentMol = -1;
+  if (const auto numThreadsToUse =
+          getNumThreadsToUse(shapeBuildParams.numThreads);
+      numThreadsToUse > 1) {
+    std::vector<std::thread> threads;
+    for (unsigned int i = 0u;
+         i < std::min(static_cast<size_t>(numThreadsToUse), sampleMols.size());
+         ++i) {
+      threads.emplace_back(makeShapesFromMol, std::ref(sampleMols),
+                           std::ref(mostRecentMol), std::ref(dgParams),
+                           std::ref(shapeBuildParams), std::ref(pbar));
+    }
+    for (auto &t : threads) {
+      t.join();
+    }
+  } else {
+    makeShapesFromMol(sampleMols, mostRecentMol, dgParams,
+                      std::ref(shapeBuildParams), pbar);
+  }
+}
+
+void sortAndUniquifyToTry(
+    std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
+        &toTry) {
+  // Uniquify on hit name, maintaining the order of the same name from
+  // different hitsets.  This is particularly important for shape searching
+  // where they should be in order of descending approx similarity.
+  std::vector<std::pair<size_t, std::string>> tmp;
+  tmp.reserve(toTry.size());
+  for (size_t i = 0; i < toTry.size(); i++) {
+    tmp.emplace_back(
+        i, details::buildProductName(toTry[i].first, toTry[i].second));
+  }
+  std::stable_sort(tmp.begin(), tmp.end(),
+                   [](const auto &lhs, const auto &rhs) -> bool {
+                     return lhs.second < rhs.second;
+                   });
+  tmp.erase(std::unique(tmp.begin(), tmp.end(),
+                        [](const auto &lhs, const auto &rhs) -> bool {
+                          return lhs.second == rhs.second;
+                        }),
+            tmp.end());
+  std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
+      newToTry;
+  newToTry.reserve(tmp.size());
+  std::transform(tmp.begin(), tmp.end(), back_inserter(newToTry),
+                 [&](const auto &p) -> auto { return toTry[p.first]; });
+  toTry = std::move(newToTry);
 }
 
 }  // namespace RDKit::SynthonSpaceSearch::details

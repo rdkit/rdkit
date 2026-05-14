@@ -8,8 +8,10 @@
 //  of the RDKit source tree.
 //
 
+#include <future>
 #include <random>
 #include <thread>
+#include <boost/algorithm/string.hpp>
 #include <boost/random/discrete_distribution.hpp>
 
 #include <GraphMol/Chirality.h>
@@ -17,8 +19,10 @@
 #include <GraphMol/CIPLabeler/Descriptor.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/FileParsers/FileWriters.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/SynthonSpaceSearch/ProgressBar.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
 #include <RDGeneral/ControlCHandler.h>
@@ -28,18 +32,14 @@ namespace RDKit::SynthonSpaceSearch {
 
 SynthonSpaceSearcher::SynthonSpaceSearcher(
     const ROMol &query, const SynthonSpaceSearchParams &params,
-    SynthonSpace &space)
+    SynthonSpace *space)
     : d_query(query), d_params(params), d_space(space) {
   if (d_params.randomSample && d_params.maxHits == -1) {
     throw std::runtime_error(
         "Random sample is incompatible with maxHits of -1.");
   }
-
   if (d_params.randomSample) {
     if (!d_randGen) {
-      // Use boost random number code because it is the same across
-      // different platforms, which isn't crucial but makes the tests
-      // work on all platforms.
       if (d_params.randomSeed == -1) {
         std::random_device rd;
         d_randGen = std::make_unique<std::mt19937>(rd());
@@ -48,13 +48,41 @@ SynthonSpaceSearcher::SynthonSpaceSearcher(
       }
     }
   }
+  // For the fragmentation, it is often useful to be able to keep track of the
+  // original indices.
+  for (const auto atom : getQuery().atoms()) {
+    atom->setProp<unsigned int>("ORIG_IDX", atom->getIdx());
+  }
+  for (const auto bond : getQuery().bonds()) {
+    bond->setProp<unsigned int>("ORIG_IDX", bond->getIdx());
+  }
 }
 
-void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
+SearchResults SynthonSpaceSearcher::search(const ThreadMode threadMode) {
+  ControlCHandler::reset();
+  std::vector<std::unique_ptr<ROMol>> results;
+  const TimePoint *endTime = nullptr;
+  TimePoint endTimePt;
+  if (d_params.timeOut > 0) {
+    endTimePt = Clock::now() + std::chrono::seconds(d_params.timeOut);
+    endTime = &endTimePt;
+  }
+  bool timedOut = false;
+  std::uint64_t totHits = 0;
+  auto allHits = assembleHitSets(endTime, timedOut, totHits, threadMode);
+  if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
+    buildHits(allHits, endTime, timedOut, results);
+  }
+  return SearchResults{std::move(results), std::move(d_bestHitFound), totHits,
+                       timedOut, ControlCHandler::getGotSignal()};
+}
+
+void SynthonSpaceSearcher::search(const SearchResultCallback &cb,
+                                  const ThreadMode threadMode) {
   bool timedOut = false;
   const TimePoint *endTime = nullptr;
   std::uint64_t totHits = 0;
-  auto allHits = assembleHitSets(endTime, timedOut, totHits);
+  auto allHits = assembleHitSets(endTime, timedOut, totHits, threadMode);
   std::sort(allHits.begin(), allHits.end(),
             [](const auto &hs1, const auto &hs2) -> bool {
               if (hs1->d_reaction->getId() == hs2->d_reaction->getId()) {
@@ -78,7 +106,7 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
     }
     details::Stepper stepper(numSynthons);
 
-    const auto &reaction = getSpace().getReaction(hitset->d_reaction->getId());
+    const auto &reaction = getSpace()->getReaction(hitset->d_reaction->getId());
     std::vector<size_t> theseSynthNums(reaction->getSynthons().size(), 0);
     // process the synthons
     while (stepper.d_currState[0] != numSynthons[0]) {
@@ -109,41 +137,183 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb) {
   }
 }
 
-SearchResults SynthonSpaceSearcher::search() {
-  std::vector<std::unique_ptr<ROMol>> results;
-  const TimePoint *endTime = nullptr;
-  TimePoint endTimePt;
-  if (d_params.timeOut > 0) {
-    endTimePt = Clock::now() + std::chrono::seconds(d_params.timeOut);
-    endTime = &endTimePt;
+namespace {
+std::vector<std::pair<std::string, std::string>> readPossHitsLines(
+    const std::string &possHitsFile, const std::uint64_t startLine,
+    std::uint64_t finishLine) {
+  std::vector<std::pair<std::string, std::string>> retLines;
+  std::ifstream ifs(possHitsFile.c_str());
+  if (!ifs) {
+    BOOST_LOG(rdErrorLog) << "Possible hits file " << possHitsFile
+                          << "not found, so no results generated." << std::endl;
+    return retLines;
   }
-  bool timedOut = false;
-  std::uint64_t totHits = 0;
-  auto allHits = assembleHitSets(endTime, timedOut, totHits);
-  if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
-    buildHits(allHits, endTime, timedOut, results);
+  std::string smiles, name;
+  for (std::uint64_t i = 0; i < startLine; ++i) {
+    std::getline(ifs, smiles);
+  }
+  for (std::uint64_t i = startLine; i < finishLine; ++i) {
+    ifs >> smiles >> name;
+    if (ifs.eof()) {
+      break;
+    }
+    retLines.push_back(std::make_pair(smiles, name));
+  }
+  return retLines;
+}
+
+void dismantleName(const std::string &name, std::string &rxnId,
+                   std::vector<std::string> &synthNames,
+                   std::vector<const std::string *> &synthNamesPtrs) {
+  boost::split(synthNames, name, boost::is_any_of(";"));
+  if (synthNames.empty()) {
+    rxnId = "InvalidName";
+    BOOST_LOG(rdWarningLog) << "Invalid product name " << name << std::endl;
+    return;
+  }
+  rxnId = synthNames.back();
+  synthNames.pop_back();
+  synthNamesPtrs.resize(synthNames.size());
+  std::ranges::transform(
+      synthNames, synthNamesPtrs.begin(),
+      [](const std::string &sn) -> const std::string * { return &sn; });
+}
+
+void checkPossibleHitsPart(
+    const std::vector<std::pair<std::string, std::string>> &checkLines,
+    std::atomic<std::int64_t> &mostRecentLine, SynthonSpaceSearcher *searcher,
+    std::vector<std::unique_ptr<ROMol>> &allResultMols,
+    std::unique_ptr<ProgressBar> &pbar) {
+  const std::int64_t lastLine = checkLines.size();
+  MolzipParams mzparams;
+  mzparams.label = MolzipLabel::Isotope;
+  mzparams.alignCoordinates = false;
+
+  while (true) {
+    const std::int64_t nextLine = ++mostRecentLine;
+    if (nextLine >= lastLine) {
+      break;
+    }
+    auto &[smiles, name] = checkLines[nextLine];
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    std::unique_ptr<ROMol> prod;
+    try {
+      prod = molzip(*mol, mzparams);
+      MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prod.get()));
+    } catch (std::exception &e) {
+      std::cout << "AWOOGA :: Failed to zip " << MolToSmiles(*prod) << " for "
+                << name << " because " << std::endl
+                << e.what() << std::endl;
+      continue;
+    }
+    prod->setProp<std::string>(common_properties::_Name, name);
+    // Verify hit needs a dismantled name
+    std::string rxnId;
+    std::vector<std::string> synthNames;
+    std::vector<const std::string *> synthNamePtrs;
+    dismantleName(name, rxnId, synthNames, synthNamePtrs);
+    if (searcher->verifyHit(*prod, rxnId, synthNamePtrs)) {
+      allResultMols[nextLine] = std::move(prod);
+    }
+    if (pbar) {
+      pbar->increment();
+    }
+  }
+}
+
+void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
+  if (!hits.empty() && hits.front()->hasProp("Similarity")) {
+    std::sort(hits.begin(), hits.end(),
+              [](const std::unique_ptr<ROMol> &lhs,
+                 const std::unique_ptr<ROMol> &rhs) {
+                const auto lsim = lhs->getProp<double>("Similarity");
+                const auto rsim = rhs->getProp<double>("Similarity");
+                if (lsim == rsim) {
+                  return lhs->getNumAtoms() < rhs->getNumAtoms();
+                }
+                return lsim > rsim;
+              });
+  }
+}
+}  // namespace
+
+SearchResults SynthonSpaceSearcher::checkPossibleHits(
+    std::uint64_t startLine, std::uint64_t finishLine) {
+  if (getParams().possibleHitsFile.empty()) {
+    BOOST_LOG(rdWarningLog)
+        << "No possible hits file given, so no results generated." << std::endl;
+    return SearchResults();
+  }
+  auto checkLines =
+      readPossHitsLines(getParams().possibleHitsFile, startLine, finishLine);
+  if (checkLines.size() < finishLine) {
+    finishLine = checkLines.size();
+  }
+  std::cout << "Checking " << checkLines.size() << " lines from " << startLine
+            << " to " << startLine + finishLine << " of "
+            << getParams().possibleHitsFile << std::endl;
+  if (checkLines.empty()) {
+    return SearchResults();
+  }
+  std::vector<std::unique_ptr<ROMol>> resultMols(checkLines.size());
+  std::atomic<std::int64_t> mostRecentLine = -1;
+  const unsigned int numThreads = getNumThreadsToUse(getParams().numThreads);
+  std::unique_ptr<ProgressBar> pbar;
+  if (getParams().useProgressBar) {
+    std::cout << "\nBuilding and checking " << checkLines.size()
+              << " potential hits." << std::endl;
+    pbar.reset(new ProgressBar(getParams().useProgressBar, checkLines.size()));
+  }
+  if (numThreads > 1) {
+    std::vector<std::future<void>> tg;
+    for (unsigned int i = 0; i < numThreads; ++i) {
+      tg.emplace_back(std::async(std::launch::async, checkPossibleHitsPart,
+                                 std::ref(checkLines), std::ref(mostRecentLine),
+                                 this, std::ref(resultMols), std::ref(pbar)));
+    }
+    for (auto &fut : tg) {
+      fut.get();
+    }
+  } else {
+    checkPossibleHitsPart(checkLines, mostRecentLine, this, resultMols, pbar);
   }
 
-  return SearchResults{std::move(results), totHits, timedOut,
+  resultMols.erase(std::remove_if(resultMols.begin(), resultMols.end(),
+                                  [](const std::unique_ptr<ROMol> &r) {
+                                    return !static_cast<bool>(r);
+                                  }),
+                   resultMols.end());
+  sortHits(resultMols);
+
+  return SearchResults{std::move(resultMols), std::move(d_bestHitFound),
+                       checkLines.size(), false,
                        ControlCHandler::getGotSignal()};
 }
 
-std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
-    const SynthonSpaceHitSet *hitset,
-    const std::vector<size_t> &synthNums) const {
+std::unique_ptr<ROMol> SynthonSpaceSearcher::buildHit(
+    const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
+    std::vector<const std::string *> &synthNames) const {
   std::vector<const ROMol *> synths(synthNums.size());
-  std::vector<std::string> synthNames(synthNums.size());
   for (size_t i = 0; i < synthNums.size(); i++) {
     synths[i] =
         hitset->synthonsToUse[i][synthNums[i]].second->getOrigMol().get();
-    synthNames[i] = hitset->synthonsToUse[i][synthNums[i]].first;
+    synthNames[i] = &hitset->synthonsToUse[i][synthNums[i]].first;
   }
+  return details::buildProduct(synths);
+}
 
+std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
+    const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums) {
   std::unique_ptr<ROMol> prod;
   if (!quickVerify(hitset, synthNums)) {
     return prod;
   }
-  prod = details::buildProduct(synths);
+  std::vector<const std::string *> synthNames(synthNums.size());
+  prod = buildHit(hitset, synthNums, synthNames);
+  if (!prod) {
+    return prod;
+  }
+
   // Do a final check of the whole thing.  It can happen that the
   // fragments match synthons but the final product doesn't match.
   // A key example is when the 2 synthons come together to form an
@@ -155,29 +325,27 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
   // when split is a match to the synthons (c1ccc(C[1*])o1 and [1*]N)
   // but the product the hydroxyquinazoline is aromatic, at least in
   // the RDKit model so the N in the query doesn't match.
-  if (!verifyHit(*prod)) {
+  if (!verifyHit(*prod, hitset->d_reaction->getId(), synthNames)) {
     prod.reset();
-  }
-  if (prod) {
-    const auto prodName =
-        details::buildProductName(hitset->d_reaction->getId(), synthNames);
-    prod->setProp<std::string>(common_properties::_Name, prodName);
   }
   return prod;
 }
 
 namespace {
-std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchReaction(
-    SynthonSpaceSearcher *searcher, const SynthonSet &reaction,
-    const TimePoint *endTime,
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments) {
-  std::vector<std::unique_ptr<SynthonSpaceHitSet>> hits;
 
-  int numTries = 100;
+void searchReactionPart(
+    const std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments,
+    const TimePoint *endTime, std::atomic<std::int64_t> &mostRecentFrag,
+    const SynthonSpaceSearcher *searcher, const SynthonSet &reaction,
+    std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> &allSetHits,
+    std::unique_ptr<ProgressBar> &pbar) {
   bool timedOut = false;
+  int numTries = 1;
 
-  for (auto &fragSet : fragments) {
-    if (ControlCHandler::getGotSignal()) {
+  const std::int64_t lastFrag = fragments.size();
+  while (true) {
+    const std::int64_t nextFrag = ++mostRecentFrag;
+    if (nextFrag >= lastFrag) {
       break;
     }
     --numTries;
@@ -188,11 +356,42 @@ std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchReaction(
     if (timedOut) {
       break;
     }
-    if (auto theseHits = searcher->searchFragSet(fragSet, reaction);
-        !theseHits.empty()) {
-      hits.insert(hits.end(), std::make_move_iterator(theseHits.begin()),
-                  std::make_move_iterator(theseHits.end()));
+    allSetHits[nextFrag] =
+        searcher->searchFragSet(fragments[nextFrag], reaction);
+    if (pbar) {
+      pbar->increment();
     }
+  }
+}
+
+std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchReaction(
+    SynthonSpaceSearcher *searcher, const SynthonSet &reaction,
+    const TimePoint *endTime, const unsigned numThreads,
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments,
+    std::unique_ptr<ProgressBar> &pbar) {
+  std::vector<std::unique_ptr<SynthonSpaceHitSet>> hits;
+  std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> allSetHits(
+      fragments.size());
+  std::atomic<std::int64_t> mostRecentFrag = -1;
+  if (numThreads > 1) {
+    std::vector<std::thread> threads;
+    for (unsigned int i = 0u;
+         i < std::min(static_cast<size_t>(numThreads), fragments.size()); ++i) {
+      threads.push_back(std::thread(searchReactionPart, std::ref(fragments),
+                                    endTime, std::ref(mostRecentFrag), searcher,
+                                    std::ref(reaction), std::ref(allSetHits),
+                                    std::ref(pbar)));
+    }
+    for (auto &t : threads) {
+      t.join();
+    }
+  } else {
+    searchReactionPart(fragments, endTime, mostRecentFrag, searcher, reaction,
+                       allSetHits, pbar);
+  }
+  for (auto &ash : allSetHits) {
+    hits.insert(hits.end(), std::make_move_iterator(ash.begin()),
+                std::make_move_iterator(ash.end()));
   }
 
   return hits;
@@ -201,15 +400,15 @@ std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchReaction(
 void processReactions(
     SynthonSpaceSearcher *searcher,
     const std::vector<std::string> &reactionNames,
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments,
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments,
     const TimePoint *endTime, std::atomic<std::int64_t> &mostRecentReaction,
-    std::int64_t lastReaction,
-    std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>>
-        &reactionHits) {
+    const std::int64_t lastReaction,
+    std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> &reactionHits,
+    std::unique_ptr<ProgressBar> &pbar) {
   bool timedOut = false;
 
   while (true) {
-    std::int64_t thisR = ++mostRecentReaction;
+    const std::int64_t thisR = ++mostRecentReaction;
     if (thisR > lastReaction) {
       break;
     }
@@ -218,71 +417,89 @@ void processReactions(
       break;
     }
     const auto &reaction =
-        searcher->getSpace().getReaction(reactionNames[thisR]);
-    auto theseHits = searchReaction(searcher, *reaction, endTime, fragments);
+        searcher->getSpace()->getReaction(reactionNames[thisR]);
+    auto theseHits =
+        searchReaction(searcher, *reaction, endTime, 1, fragments, pbar);
     reactionHits[thisR] = std::move(theseHits);
-    timedOut = details::checkTimeOut(endTime);
-    if (timedOut) {
-      break;
-    }
   }
 }
 }  // namespace
 
 unsigned int SynthonSpaceSearcher::getNumQueryFragmentsRequired() {
-  return getSpace().getMaxNumSynthons();
+  return getSpace()->getMaxNumSynthons();
 }
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceSearcher::assembleHitSets(const TimePoint *endTime, bool &timedOut,
-                                      std::uint64_t &totHits) {
+                                      std::uint64_t &totHits,
+                                      const ThreadMode threadMode) {
+  std::vector<std::unique_ptr<ROMol>> results;
   auto fragments = details::splitMolecule(
       d_query, getNumQueryFragmentsRequired(), d_params.maxNumFragSets, endTime,
-      d_params.numThreads, timedOut);
+      d_params.numThreads, d_fragSetUniquifyMode, timedOut);
   if (timedOut || ControlCHandler::getGotSignal()) {
     return {};
   }
-  extraSearchSetup(fragments);
-  if (ControlCHandler::getGotSignal()) {
+  if (!extraSearchSetup(fragments, endTime) ||
+      ControlCHandler::getGotSignal()) {
     return {};
   }
-
-  return doTheSearch(fragments, endTime, timedOut, totHits);
+  return doTheSearch(fragments, endTime, timedOut, totHits, threadMode);
 }
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceSearcher::doTheSearch(
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
-    const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits) {
-  auto reactionNames = getSpace().getReactionNames();
-  std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> reactionHits(
-      reactionNames.size());
-
-  std::int64_t lastReaction = reactionNames.size() - 1;
-  std::atomic<std::int64_t> mostRecentReaction = -1;
-#if RDK_BUILD_THREADSAFE_SSS
-  if (const auto numThreads = getNumThreadsToUse(d_params.numThreads);
-      numThreads > 1) {
-    std::vector<std::thread> threads;
-    for (unsigned int i = 0U;
-         i < std::min(static_cast<size_t>(numThreads), reactionNames.size());
-         ++i) {
-      threads.push_back(std::thread(processReactions, this,
-                                    std::ref(reactionNames), std::ref(fragSets),
-                                    endTime, std::ref(mostRecentReaction),
-                                    lastReaction, std::ref(reactionHits)));
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
+    const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits,
+    const ThreadMode threadMode) {
+  auto reactionNames = getSpace()->getReactionNames();
+  std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> reactionHits;
+  if (threadMode == ThreadMode::ThreadFragments) {
+    const unsigned int numThreads = getNumThreadsToUse(getParams().numThreads);
+    // Do the reactions one at a time, parallelising the fragSet searches.
+    // For the slower searches, this minimises the amount of time that
+    // threads are left idle.  ThreadReactions runs the risk of 1 thread
+    // doing all the work if all the hits come from 1 reaction.
+    std::unique_ptr<ProgressBar> pbar;
+    if (getParams().useProgressBar) {
+      std::cout << "\nSearching fragment sets" << std::endl;
+      pbar.reset(new ProgressBar(getParams().useProgressBar,
+                                 reactionNames.size() * fragSets.size()));
     }
-    for (auto &t : threads) {
-      t.join();
+    for (const auto &reactionName : reactionNames) {
+      const auto &reaction = getSpace()->getReaction(reactionName);
+      reactionHits.push_back(
+          searchReaction(this, *reaction, endTime, numThreads, fragSets, pbar));
+    }
+    if (pbar) {
+      std::cout << std::endl;
     }
   } else {
-    processReactions(this, reactionNames, fragSets, endTime, mostRecentReaction,
-                     lastReaction, reactionHits);
+    // Parallelise at the reaction level - each thread does all the fragSets
+    // for a reaction in one go.  This is quicker for substructure searches.
+    std::int64_t lastReaction = reactionNames.size() - 1;
+    std::atomic<std::int64_t> mostRecentReaction = -1;
+    reactionHits.resize(reactionNames.size());
+    std::unique_ptr<ProgressBar> pbar;
+    if (const auto numThreads = getNumThreadsToUse(d_params.numThreads);
+        numThreads > 1) {
+      std::vector<std::thread> threads;
+      for (unsigned int i = 0u;
+           i < std::min(static_cast<size_t>(numThreads), reactionNames.size());
+           ++i) {
+        threads.push_back(std::thread(
+            processReactions, this, std::ref(reactionNames), std::ref(fragSets),
+            endTime, std::ref(mostRecentReaction), lastReaction,
+            std::ref(reactionHits), std::ref(pbar)));
+      }
+      for (auto &t : threads) {
+        t.join();
+      }
+    } else {
+      processReactions(this, reactionNames, fragSets, endTime,
+                       mostRecentReaction, lastReaction, reactionHits, pbar);
+    }
   }
-#else
-  processReactions(this, reactionNames, fragSets, endTime, mostRecentReaction,
-                   lastReaction, reactionHits);
-#endif
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> allHits;
   totHits = 0;
@@ -310,8 +527,7 @@ bool SynthonSpaceSearcher::quickVerify(
     }
     if (numHeavyAtoms < getParams().minHitHeavyAtoms ||
         (getParams().maxHitHeavyAtoms > -1 &&
-         numHeavyAtoms >
-             static_cast<unsigned int>(getParams().maxHitHeavyAtoms))) {
+         std::cmp_greater(numHeavyAtoms, getParams().maxHitHeavyAtoms))) {
       return false;
     }
   }
@@ -338,23 +554,31 @@ bool SynthonSpaceSearcher::quickVerify(
     // the hit, numExcDummies the lower bound.
     if (numChiralAtoms < getParams().minHitChiralAtoms ||
         (getParams().maxHitChiralAtoms > -1 &&
-         numExcDummies >
-             static_cast<unsigned int>(getParams().maxHitChiralAtoms))) {
+         std::cmp_greater(numExcDummies, getParams().maxHitChiralAtoms))) {
       return false;
     }
   }
   return true;
 }
 
+void SynthonSpaceSearcher::updateBestHitSoFar(const ROMol &possBest,
+                                              const double sim) {
+  if (sim > d_bestSimilarity) {
+    d_bestSimilarity = sim;
+    d_bestHitFound.reset(new ROMol(possBest));
+    d_bestHitFound->setProp<double>("Similarity", sim);
+  }
+}
+
 // It's conceivable that building the full molecule has changed the
 // chiral atom count.
-bool SynthonSpaceSearcher::verifyHit(ROMol &mol) const {
+bool SynthonSpaceSearcher::verifyHit(ROMol &mol, const std::string &,
+                                     const std::vector<const std::string *> &) {
   if (getParams().minHitChiralAtoms || getParams().maxHitChiralAtoms) {
     auto numChiralAtoms = details::countChiralAtoms(mol);
     if (numChiralAtoms < getParams().minHitChiralAtoms ||
         (getParams().maxHitChiralAtoms > -1 &&
-         numChiralAtoms >
-             static_cast<unsigned int>(getParams().maxHitChiralAtoms))) {
+         std::cmp_greater(numChiralAtoms, getParams().maxHitChiralAtoms))) {
       return false;
     }
   }
@@ -362,47 +586,6 @@ bool SynthonSpaceSearcher::verifyHit(ROMol &mol) const {
 }
 
 namespace {
-void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
-  if (!hits.empty() && hits.front()->hasProp("Similarity")) {
-    std::sort(hits.begin(), hits.end(),
-              [](const std::unique_ptr<ROMol> &lhs,
-                 const std::unique_ptr<ROMol> &rhs) {
-                const auto lsim = lhs->getProp<double>("Similarity");
-                const auto rsim = rhs->getProp<double>("Similarity");
-                if (lsim == rsim) {
-                  return lhs->getNumAtoms() < rhs->getNumAtoms();
-                }
-                return lsim > rsim;
-              });
-  }
-}
-
-void sortAndUniquifyToTry(
-    std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
-        &toTry) {
-  std::vector<std::pair<size_t, std::string>> tmp;
-  tmp.reserve(toTry.size());
-  for (size_t i = 0; i < toTry.size(); i++) {
-    tmp.emplace_back(
-        i, details::buildProductName(toTry[i].first, toTry[i].second));
-  }
-  std::sort(tmp.begin(), tmp.end(),
-            [](const auto &lhs, const auto &rhs) -> bool {
-              return lhs.second < rhs.second;
-            });
-  tmp.erase(std::unique(tmp.begin(), tmp.end(),
-                        [](const auto &lhs, const auto &rhs) -> bool {
-                          return lhs.second == rhs.second;
-                        }),
-            tmp.end());
-  std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
-      newToTry;
-  newToTry.reserve(tmp.size());
-  std::transform(tmp.begin(), tmp.end(), back_inserter(newToTry),
-                 [&](const auto &p) -> auto { return toTry[p.first]; });
-  toTry = newToTry;
-}
-
 bool haveEnoughHits(const std::vector<std::unique_ptr<ROMol>> &results,
                     const std::int64_t maxHits, const std::int64_t hitStart) {
   const std::int64_t numHits = std::accumulate(
@@ -422,12 +605,29 @@ bool haveEnoughHits(const std::vector<std::unique_ptr<ROMol>> &results,
   return false;
 }
 
+std::uint64_t countLinesInFile(const std::string &fileName) {
+  // Find out how big the file is so far
+  std::ifstream ifs(fileName.c_str());
+  ifs.unsetf(std::ios_base::skipws);
+  std::uint64_t numLines = std::count(std::istream_iterator<char>(ifs),
+                                      std::istream_iterator<char>(), '\n');
+  ifs.close();
+  return numLines;
+}
+
+bool wroteEnoughPossibleHits(const SynthonSpaceSearchParams &params) {
+  if (!params.writePossibleHitsAndStop) {
+    return false;
+  }
+  auto numLines = countLinesInFile(params.possibleHitsFile);
+  return numLines >= params.maxPossibleHitsToWrite;
+}
 }  // namespace
 
 void SynthonSpaceSearcher::buildHits(
     std::vector<std::unique_ptr<SynthonSpaceHitSet>> &hitsets,
     const TimePoint *endTime, bool &timedOut,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    std::vector<std::unique_ptr<ROMol>> &results) {
   if (hitsets.empty()) {
     return;
   }
@@ -448,7 +648,7 @@ void SynthonSpaceSearcher::buildHits(
 void SynthonSpaceSearcher::buildAllHits(
     const std::vector<std::unique_ptr<SynthonSpaceHitSet>> &hitsets,
     const TimePoint *endTime, bool &timedOut,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    std::vector<std::unique_ptr<ROMol>> &results) {
   // toTry is the synthon numbers for a particular set of synthons
   // in the SynthonSet that will be zipped together to form a possible
   // hit molecule.  It will possibly hold possibilities from multiple
@@ -457,6 +657,21 @@ void SynthonSpaceSearcher::buildAllHits(
   // rejected as hits.
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> toTry;
   bool enoughHits = false;
+
+  if (hitsets.empty()) {
+    BOOST_LOG(rdWarningLog) << "No possible synthon matches." << std::endl;
+    return;
+  }
+
+  std::uint64_t numPossHits = 0;
+  for (const auto &hitset : hitsets) {
+    numPossHits += hitset->numHits;
+  }
+  if (!getParams().possibleHitsFile.empty()) {
+    // The file will be appended to, so clear it out at the start.
+    std::ofstream ofs(getParams().possibleHitsFile);
+    ofs.close();
+  }
 
   // Each hitset contains possible hits from a single SynthonSet.
   for (const auto &hitset : hitsets) {
@@ -468,12 +683,10 @@ void SynthonSpaceSearcher::buildAllHits(
     }
     details::Stepper stepper(numSynthons);
 
-    const auto &reaction = getSpace().getReaction(hitset->d_reaction->getId());
-    std::vector<size_t> theseSynthNums(reaction->getSynthons().size(), 0);
     // process the synthons
     while (stepper.d_currState[0] != numSynthons[0]) {
       toTry.emplace_back(hitset.get(), stepper.d_currState);
-      if (toTry.size() == static_cast<size_t>(d_params.toTryChunkSize)) {
+      if (std::cmp_equal(toTry.size(), d_params.toTryChunkSize)) {
         std::vector<std::unique_ptr<ROMol>> partResults;
         processToTrySet(toTry, endTime, partResults);
         results.insert(results.end(),
@@ -481,7 +694,8 @@ void SynthonSpaceSearcher::buildAllHits(
                        std::make_move_iterator(partResults.end()));
         partResults.clear();
         enoughHits =
-            haveEnoughHits(results, d_params.maxHits, d_params.hitStart);
+            haveEnoughHits(results, d_params.maxHits, d_params.hitStart) ||
+            wroteEnoughPossibleHits(d_params);
         timedOut = details::checkTimeOut(endTime);
         toTry.clear();
         if (enoughHits || timedOut || ControlCHandler::getGotSignal()) {
@@ -502,8 +716,8 @@ void SynthonSpaceSearcher::buildAllHits(
 
   sortHits(results);
   // The multi-threaded versions might produce more hits than requested.
-  if (d_params.maxHits != -1 && static_cast<std::int64_t>(results.size()) >
-                                    d_params.maxHits + d_params.hitStart) {
+  if (d_params.maxHits != -1 &&
+      std::cmp_greater(results.size(), d_params.maxHits + d_params.hitStart)) {
     results.erase(results.begin() + d_params.maxHits + d_params.hitStart,
                   results.end());
   }
@@ -513,7 +727,7 @@ void SynthonSpaceSearcher::buildAllHits(
   // no way of knowing whether it should be kept plus the threading makes it
   // very complicated to do otherwise.
   if (d_params.hitStart) {
-    if (d_params.hitStart < static_cast<std::int64_t>(results.size())) {
+    if (std::cmp_less(d_params.hitStart, results.size())) {
       std::for_each(results.begin(), results.begin() + d_params.hitStart,
                     [](std::unique_ptr<ROMol> &m) { m.reset(); });
       results.erase(std::remove_if(results.begin(), results.end(),
@@ -532,11 +746,11 @@ void processPartHitsFromDetails(
     const std::vector<
         std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> &toTry,
     const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results,
-    const SynthonSpaceSearcher *searcher,
-    std::atomic<std::int64_t> &mostRecentTry, std::int64_t lastTry) {
-  std::uint64_t numTries = 100;
+    SynthonSpaceSearcher *searcher, std::atomic<std::int64_t> &mostRecentTry,
+    const std::int64_t lastTry, std::unique_ptr<ProgressBar> &pbar) {
+  std::uint64_t numTries = 1;
   while (true) {
-    std::int64_t thisTry = ++mostRecentTry;
+    const std::int64_t thisTry = ++mostRecentTry;
     if (thisTry > lastTry) {
       break;
     }
@@ -556,51 +770,95 @@ void processPartHitsFromDetails(
         break;
       }
     }
+    if (pbar) {
+      pbar->increment();
+    }
     if (ControlCHandler::getGotSignal()) {
       break;
     }
   }
 }
+
+void writePossibleHits(const std::string &possHitsFile,
+                       const std::vector<std::pair<const SynthonSpaceHitSet *,
+                                                   std::vector<size_t>>> &toTry,
+                       const std::uint64_t maxToWrite) {
+  // Find out how big the file is so far
+  auto numLines = countLinesInFile(possHitsFile);
+  if (numLines >= maxToWrite) {
+    return;
+  }
+
+  std::ofstream outs(possHitsFile.c_str(), std::ios::app);
+  std::vector<const std::string *> synthNames;
+  for (const auto &[hitset, synthNums] : toTry) {
+    synthNames.resize(synthNums.size());
+    for (size_t i = 0; i < synthNums.size(); i++) {
+      outs << hitset->synthonsToUse[i][synthNums[i]].second->getSmiles();
+      if (synthNums.size() > 1 && i < synthNums.size() - 1) {
+        outs << ".";
+      }
+      synthNames[i] = &hitset->synthonsToUse[i][synthNums[i]].first;
+    }
+    outs << " "
+         << details::buildProductName(hitset->d_reaction->getId(), synthNames)
+         << std::endl;
+    if (++numLines == maxToWrite) {
+      break;
+    }
+  }
+}
+
 }  // namespace
 
 void SynthonSpaceSearcher::makeHitsFromToTry(
     const std::vector<
         std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> &toTry,
-    const TimePoint *endTime,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results) {
   results.resize(toTry.size());
   std::int64_t lastTry = toTry.size() - 1;
   std::atomic<std::int64_t> mostRecentTry = -1;
-
-#if RDK_BUILD_THREADSAFE_SSS
-  // This assumes that each chunk of the toTry list will take roughly the
-  // same amount of time to process.  To a first approximation, that's
-  // probably reasonable.  Some entries in toTry will fail quickVerify
-  // so the more time-consuming construction of the hit and final
-  // check in verifyHit won't be needed, so the chunks won't take exactly
-  // equal time. It can always be re-visited if the threads run for very
-  // different lengths of time in an average search.
-  if (const auto numThreads = getNumThreadsToUse(d_params.numThreads);
-      numThreads > 1) {
-    const size_t eachThread = 1 + toTry.size() / numThreads;
-    size_t start = 0;
-    std::vector<std::thread> threads;
-    for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
-      threads.push_back(std::thread(processPartHitsFromDetails, std::ref(toTry),
-                                    endTime, std::ref(results), this,
-                                    std::ref(mostRecentTry), lastTry));
-    }
-    for (auto &t : threads) {
-      t.join();
-    }
-  } else {
-    processPartHitsFromDetails(toTry, endTime, results, this, mostRecentTry,
-                               lastTry);
+  std::unique_ptr<ProgressBar> pbar;
+  if (getParams().useProgressBar) {
+    std::cout << "\nBuilding and checking " << toTry.size()
+              << " potential hits." << std::endl;
+    pbar.reset(new ProgressBar(getParams().useProgressBar, toTry.size()));
   }
-#else
-  processPartHitsFromDetails(toTry, endTime, results, this, mostRecentTry,
-                             lastTry);
-#endif
+  if (!getParams().possibleHitsFile.empty()) {
+    writePossibleHits(getParams().possibleHitsFile, toTry,
+                      getParams().maxPossibleHitsToWrite);
+  }
+
+  if (!getParams().writePossibleHitsAndStop) {
+    // This assumes that each chunk of the toTry list will take roughly the
+    // same amount of time to process.  To a first approximation, that's
+    // probably reasonable.  Some entries in toTry will fail quickVerify
+    // so the more time-consuming construction of the hit and final
+    // check in verifyHit won't be needed, so the chunks won't take exactly
+    // equal time. It can always be re-visited if the threads run for very
+    // different lengths of time in an average search.
+    if (const auto numThreads = getNumThreadsToUse(d_params.numThreads);
+        numThreads > 1) {
+      const size_t eachThread = 1 + toTry.size() / numThreads;
+      size_t start = 0;
+      std::vector<std::thread> threads;
+      for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
+        threads.push_back(
+            std::thread(processPartHitsFromDetails, std::ref(toTry), endTime,
+                        std::ref(results), this, std::ref(mostRecentTry),
+                        lastTry, std::ref(pbar)));
+      }
+      for (auto &t : threads) {
+        t.join();
+      }
+    } else {
+      processPartHitsFromDetails(toTry, endTime, results, this, mostRecentTry,
+                                 lastTry, pbar);
+    }
+    if (pbar) {
+      std::cout << std::endl;
+    }
+  }
 
   // Take out any gaps in the results set, where products didn't make the grade.
   results.erase(std::remove_if(results.begin(), results.end(),
@@ -610,19 +868,42 @@ void SynthonSpaceSearcher::makeHitsFromToTry(
                 results.end());
 }
 
+void SynthonSpaceSearcher::sortToTryByApproxSimilarity(
+    std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
+        &toTry) const {
+  std::vector<std::pair<size_t, double>> tmp;
+  // toTry will always have something in it at this point.
+  tmp.reserve(toTry.size());
+  for (size_t i = 0; i < toTry.size(); i++) {
+    tmp.emplace_back(i, approxSimilarity(toTry[i].first, toTry[i].second));
+  }
+  std::sort(tmp.begin(), tmp.end(),
+            [](const auto &lhs, const auto &rhs) -> bool {
+              return lhs.second > rhs.second;
+            });
+  BOOST_LOG(rdInfoLog) << "Best approx similarity : " << tmp.front().second
+                       << " and worst : " << tmp.back().second << std::endl;
+  std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
+      newToTry;
+  newToTry.reserve(tmp.size());
+  std::transform(tmp.begin(), tmp.end(), back_inserter(newToTry),
+                 [&](const auto &p) -> auto { return toTry[p.first]; });
+  toTry = newToTry;
+}
+
 void SynthonSpaceSearcher::processToTrySet(
     std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
         &toTry,
-    const TimePoint *endTime,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results) {
   // There are possibly duplicate entries in toTry, because 2
   // different fragmentations might produce overlapping synthon lists in
-  // the same reaction. The duplicates need to be removed.  Although
-  // when doing the job in batches this is less likely.
-  sortAndUniquifyToTry(toTry);
+  // the same reaction. The duplicates need to be removed.
+  details::sortAndUniquifyToTry(toTry);
 
   if (d_params.randomSample) {
     std::shuffle(toTry.begin(), toTry.end(), *d_randGen);
+  } else {
+    sortToTryByApproxSimilarity(toTry);
   }
   makeHitsFromToTry(toTry, endTime, results);
 }

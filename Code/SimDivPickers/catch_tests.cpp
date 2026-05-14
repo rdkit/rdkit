@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <random>
 #include <catch2/catch_all.hpp>
 #include <RDGeneral/types.h>
 #include <RDGeneral/test.h>
@@ -82,4 +83,34 @@ TEST_CASE(
     }
   }
 #endif
+}
+
+TEST_CASE("Only 1 should be picked") {
+  std::vector<std::vector<double>> dists(10, std::vector<double>(10, 2));
+  std::mt19937_64 rng;
+  rng.seed(1);
+  std::uniform_real_distribution<double> unif(0, 0.1);
+  for (int i = 0; i < 10; ++i) {
+    for (int j = 0; j < i; ++j) {
+      dists[i][j] -= unif(rng);
+      dists[j][i] = dists[i][j];
+    }
+  }
+  class DistFunctor {
+   public:
+    DistFunctor(const std::vector<std::vector<double>> &dists)
+        : d_dists(dists) {}
+    ~DistFunctor() = default;
+    double operator()(unsigned int i, unsigned int j) { return d_dists[i][j]; }
+    const std::vector<std::vector<double>> &d_dists;
+  };
+  RDPickers::LeaderPicker leaderPicker;
+  DistFunctor distFunctor(dists);
+
+  auto picks = leaderPicker.lazyPick(distFunctor, 10, 0, 1.8);
+  std::cout << "Picks : " << picks.size() << " :: ";
+  for (auto p : picks) {
+    std::cout << p << " ";
+  }
+  std::cout << std::endl;
 }

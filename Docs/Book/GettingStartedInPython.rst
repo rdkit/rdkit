@@ -3266,9 +3266,12 @@ Searching Synthon Spaces
 A number of companies, notably `Enamine <https://enamine.net>`_ and `ChemSpace <https://chem-space.com>`_,
 provide very large libraries of compounds in synthon form.  Enumerating and searching them is infeasible due
 to their enormous sizes, on the order of 10s of billions of compounds.  They can, however, be searched efficiently in
-synthon form.  Currently the RDKit can be used to query these libraries by substructure (returning those products
-that match a SMARTS string or MOL query) or fingerprint Tanimoto similarity (returning products which match a query
-molecule within a given Tanimoto similarity) using any of the available fingerprint generators.
+synthon form.  Currently the RDKit can be used to query these libraries by
+
+* substructure: returning those products that match a SMARTS string or MOL query
+* fingerprint Tanimoto similarity: returning products which match a query molecule within a given Tanimoto similarity using any of the available fingerprint generators.
+* RASCAL similarity: returning products which match a query molecule within a given Johnson similarity
+* shape similarity: uses the rdGaussianShape Tversky similarity to return products that match a query 3D conformer above a given threshold.
 
 How It Works
 ============
@@ -3321,9 +3324,14 @@ The databases are normally supplied in text form, and can be used as such:
   >>> print(f"Number of products : {synthonspace.GetNumProducts()}")
   Number of products : 12
 
-However, a large amount of pre-processing is required before the data are searchable which can be time consuming.
-For example, preparing the current REAL database (2024-09) of 70 billion compounds can take several hours.  It is
-therefore strongly recommended that a binary database is created before use.
+It is also possible to use an RDKit-specific binary format.
+If you are only going to do substructure searching, there's no great advantage in doing this.
+However, a large amount of pre-processing is required before the data are searchable by fingerprint or
+shape which can be time consuming. For example, preparing the fingerprints for the REAL database
+takes hours.  Preparing a database of shapes for the shape-searching option is even more time-consuming.  Each synthon
+is built into a small sample molecule using other relevant synthons in the database and a conformational
+expansion performed including enumeration of stereocentres if appropriate.  This all adds up to a lot of work per
+synthon.  It is therefore strongly recommended that a binary database is created before use in these cases.
 
 The fingerprints are written to the DB file, which means that the file must be searched using exactly the same type
 in order to get meaningful results.  This will be checked at runtime.  You may need to keep several versions of the
@@ -3341,9 +3349,10 @@ There is also a convenience function for performing the conversion in one go:
 .. doctest::
 
   >>> fpgen = rdFingerprintGenerator.GetMorganGenerator(fpSize=2048)
-  >>> rdSynthonSpaceSearch.ConvertTextToDBFile(textFile, dbFile, fpgen)
+  >>> shapeBuildOptions = rdSynthonSpaceSearch.ShapeBuildParams()
+  >>> rdSynthonSpaceSearch.ConvertTextToDBFile(textFile, dbFile, fpgen, shapeBuildOptions)
 
-although under the hood it does exactly the same steps.
+although under the hood it does exactly the same steps.  The same database can have fingerprints, shapes or both.
 
 The binary database is read using the appropriate function:
 
@@ -3396,8 +3405,8 @@ the following 1000 in the hit list.  The parameter `hitStart` allows this.
 As well as returning the first hits, the parameter `randomSample`, if set True, will return a random sampling of the
 possible hits.
 
-Similarity Searching
-====================
+Fingerprint Similarity Searching
+================================
 
 The synthon space can also be searched by fingerprint similarity.  The fingerprint generator used to make the query
 fingerprints must be exactly the same as that used to create the DB file.  The SynthonSpace can report the infoString
@@ -3409,7 +3418,8 @@ of using the infoString directly to create a fingerprint generator, so it must b
   >>> print(spc.GetSynthonFingerprintType())
   Common arguments : countSimulation=0 fpSize=2048 bitsPerFeature=2 includeChirality=0 --- RDKitFPArguments minPath=1 maxPath=7 useHs=1 branchedPaths=1 useBondOrder=1 --- RDKitFPEnvGenerator --- RDKitFPAtomInvGenerator --- No bond invariants generator
 
-The similarity metric is hard-coded to use the Tanimoto coefficient.  The default similarity cutoff for the search
+The similarity metric is hard-coded to use the Tversky coefficient with parameters defaulting to produce a Tanimoto
+coefficient.  The default similarity cutoff for the search
 is 0.5, which is a reasonable starting value for a Morgan fingerprint of radius 2.  Note that in the similarity search,
 you will get the first `maxHits` hits that pass the threshold, not necessarily the best hits.  The search attempts to
 bring the most similar matches towards the start of the hit list by ordering the synthons that match a fragment in
@@ -3457,6 +3467,77 @@ the molecules instead of the molecules themselves; when the callback returns, th
 the molecules is reclaimed.  In practice, choose a value for `toTryChunkSize` of at least 100
 in order to amortize the (small) overhead of invoking the callback function for each chunk.
 
+Possible Hits File
+==================
+
+As an alternative to an incremental search, there is the facility to write a possible hits file containing
+all the likely synthon combinations that have been assembled in the first stage of the search.  At this point
+the search can be stopped if desired:
+.. code-block:: python
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.possibleHitsFile = "possible_hits.txt"
+    params.writePossibleHitsAndStop = True
+
+The format of the file is a SMILES string and a molecule name i.e. standard SMILES format.  The SMILES string
+comprises the synthon SMILES, '.'-separated ready for input into `rdmolops.molzip` and the molecule name is the
+same as the final product would receive, i.e. a list of the synthon names and the reaction.
+
+Each of the searcher objects has an API point to read designated lines of this file and perform the appropriate
+verification of it as a hit.  In the example below, the first 100 lines of the possible hits file are read and
+checked using the RASCAL searcher.  It makes sense if the parameters used are the same as those used to create
+the possible hits file, but that is not enforced.
+.. code-block:: python
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.possibleHitsFile = "r_poss_hits_a.txt"
+    rascalOpts = rdRascalMCES.RascalOptions()
+    results = synthonspace.RascalSearch(Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"),
+                                             rascalOpts, params)
+    results = synthonspace.RascalSearch(Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"),
+                                             rascalOpts, params, 0, 100)
+
+The reason for the possible hits file is to allow large-scale parallelisation of the hit verification process.  If you
+are interested in more than a few hundred hits, the verification stage can be the time-consuming part.
+The FreedomSpace 5.0 database is some 300 billion structures - a similarity or substructure search of this is likely to
+result in several million possible hits for all but the most discriminating queries.  Zipping the synthons into the
+final structure can itself take some minutes for hit sets of this size, and then fingerprint or conformation generation
+and checking for similarity to the query takes longer again. Since the possible hits file is just a text file it is
+a trivial matter to divide it into pieces and run each piece as a separate process, doing all the pieces in parallel.
+
+Whilst there is the facility to perform the validation step with the relevant `SynthonSpaceSearcher` object, the
+validation step is just a combination of standard RDKit functions (e.g. fingerprint generation and Tanimoto calculation)
+so it can be done independently.  For example, if you have a GPU at hand, you could use the
+`NVIDIA nvMolKit code <https://greglandrum.github.io/rdkit-blog/posts/2026-02-28-nvmolkit-clustering.html>`_ for
+very rapid processing.
+
+Conformation Generators
+=======================
+The shape searching requires a conformation generator both to create the database of synthon shapes and also to
+generate conformers of the possible hits for checking against the query.  By default it uses the RDKit conformer
+generator, and there are various options available in the `ShapeBuildParams` and `SynthonSpaceSearchParams` parameter
+objects to control this.  However, if you want more control you can provide your own function which will be used
+instead.  This can be a more precisely controlled instance of the RDKit conformer generator or another one entirely,
+such as `CONFORGE <https://pubs.acs.org/doi/10.1021/acs.jcim.3c00563>`_.  The function should take two parameters, a SMILES
+string and the number of required conformers and return a Chem.Mol object.
+
+The hit verification code can be run in multi-threaded mode.  However, if you are running the search as a Python
+program rather than, for example, C++, the function you pass in will be a Python function that will capture the GIL
+which will severely hamper the parallel processing.  It is generally much more efficient in this case to use the
+`Possible Hits File`_ functionality and run the verification in parallel on chunks of the possible hits file rather
+than as a single multi-threaded python call.
+
+A final thing to note is that the hits recovered very much depend on the conformations generated both for the synthons
+and the final molecules.  The more conformers sampled at either of these stages, the more likely that you get a shape
+match to the query at the cost of increased memory use and run times.  This is especially pertinent for the RDKit's
+distance geometry conformation generator which, being
+a stochastic process, produces different conformations from run to run unless the same random number seed is used each
+time.  It is also occasionally the case that the same code compiled with different compilers (clang on macOS, gcc
+on Linux, for example) will produce different conformers even with the same seed.  Also, a synthon
+in one molecule will quite probably be put into different conformers from the same synthon in a different molecule
+even with the same random number seed given.  All this is to say that the hits from a given query are not definitive
+except under tightly controlled circumstances.  If you use the same query and same random number seeds on the same
+machine and the same shape database you will get the same hits each time.  If there is any variation in any of these,
+this is not guaranteed.  You should get similar hits, and the hit sets may even overlap, but you cannot expect exactly
+the same hits.
 
 Non-Chemical Functionality
 **************************

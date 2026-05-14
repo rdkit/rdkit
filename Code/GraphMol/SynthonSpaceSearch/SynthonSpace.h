@@ -26,6 +26,7 @@
      in future releases.
 */
 
+#include <limits>
 #include <map>
 #include <sstream>
 #include <string>
@@ -39,6 +40,8 @@
 #include <GraphMol/MolStandardize/Tautomer.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearchHelpers.h>
 
 namespace RDKit {
 class ROMol;
@@ -49,86 +52,6 @@ struct RascalOptions;
 
 namespace SynthonSpaceSearch {
 
-// This the maximum number of connectors that we can deal with at the moment.
-// In reality, there may be fewer than this.  However, the key limit is in
-// The symbols used for the connectors in Enamine REAL etc.
-const std::vector<std::string> CONNECTOR_SYMBOLS{"[U]", "[Np]", "[Pu]", "[Am]"};
-constexpr unsigned int MAX_CONNECTOR_NUM{4};
-
-struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
-  std::int64_t maxHits{1000};  // The maximum number of hits to return.
-                               // Use -1 for no maximum.
-  std::uint64_t maxNumFragSets{
-      100000};  // The maximum number of fragment sets the query can
-                // be broken into.  Big molecules will create huge
-                // numbers of fragment sets that may cause excessive
-                // memory use.  If the number of fragment sets hits this
-                // number, fragmentation stops and the search results
-                // will likely be incomplete.
-  std::int64_t toTryChunkSize{2500000};  // For similarity searching, especially
-  // fingerprint similarity, there can be a
-  // very large number of possible hits to
-  // screen which can use a lot of memory and
-  // crash the program.  It will also be very
-  // slow.  To alleviate the memory use, the
-  // possible hits are processed in chunks.
-  // This parameter sets the chunk size.
-
-  std::int64_t hitStart{0};  // Sequence number of hit to start from.  So that
-                             // you can return the next N hits of a search
-                             // having already obtained N-1.
-  bool randomSample{false};  // If true, returns a random sample of the hit
-                             // hits, up to maxHits in number.
-  int randomSeed{-1};        // Seed for random-number generator.  -1 means use
-                             // a random seed (std::random_device).
-  bool buildHits{true};  // If false, reports the maximum number of hits that
-                         // the search could produce, but doesn't return them.
-  int numRandomSweeps{10};  // The random sampling doesn't always produce the
-                            // required number of hits in 1 go.  This parameter
-                            // controls how many loops it makes to try and get
-                            // the hits before giving up.
-  double similarityCutoff{0.5};  // Similarity cutoff for returning hits by
-                                 // fingerprint similarity.  The default is
-                                 // appropriate for a Morgan fingerprint of
-                                 // radius=2, it may need changing for other
-                                 // fingerprint types.
-  double fragSimilarityAdjuster{
-      0.1};  // Similarity values for fragments are generally low
-             // due to low bit densities.  For the fragment
-             // matching, reduce the similarity cutoff
-             // by this amount.  A higher number will give slower search
-             // times, a lower number will give faster searches at the
-             // risk of missing some hits.  The value you use should have
-             // a positive correlation with your FOMO.
-  double approxSimilarityAdjuster{
-      0.1};  // The fingerprint search uses an approximate similarity method
-             // before building a product and doing a final check.  The
-             // similarityCutoff is reduced by this value for the approximate
-             // check.  A lower value will give faster run times at the
-             // risk of missing some hits.  The value you use should have a
-             // positive correlation with your FOMO.  The default is
-             // appropriate for Morgan fingerprints.  With RDKit fingerprints,
-             // 0.05 is adequate, and higher than that has been seen to
-             // produce long run times.
-  unsigned int minHitHeavyAtoms{0};  // Minimum number of heavy atoms in a hit.
-  int maxHitHeavyAtoms{-1};          // Maximum number of heavy atoms in a hit.
-                                     // -1 means no maximum.
-  double minHitMolWt{0};             // Minimum molecular weight for a hit.
-  double maxHitMolWt{0};  // Maximum molecular weight for a hit.  0.0 means
-                          // no maximum.
-  unsigned int minHitChiralAtoms{
-      0};                      // Minimum number of chiral atoms in a hit.
-  int maxHitChiralAtoms{-1};   // Maximum number of chiral atoms in a hit.
-                               // -1 means no maximum.
-  std::uint64_t timeOut{600};  // Maximum number of seconds to spend on a single
-                               // search.  0 means no maximum.
-  int numThreads = 1;  // The number of threads to use.  If > 0, will use that
-  // number.  If <= 0, will use the number of hardware
-  // threads plus this number.  So if the number of
-  // hardware threads is 8, and numThreads is -1, it will
-  // use 7 threads.
-};
-
 class Synthon;
 
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
@@ -137,6 +60,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   friend class SynthonSpaceFingerprintSearcher;
   friend class SynthonSpaceRascalSearcher;
   friend class SynthonSpaceSubstructureSearcher;
+  friend class SynthonSpaceShapeSearcher;
 
  public:
   explicit SynthonSpace() = default;
@@ -149,13 +73,21 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @return int
    */
   size_t getNumReactions() const;
+
+  /*!
+   * Get the number of unique synthons in the SynthonSpace.  Synthons
+   * can be used in more than 1 reaction.
+   *
+   * @return int
+   */
+  size_t getNumSynthons() const;
   /*!
    * Get a list of the names of all the reactions in the SynthonSpace.
    *
    * @return
    */
   std::vector<std::string> getReactionNames() const;
-  const std::shared_ptr<SynthonSet> getReaction(std::string reactionName);
+  std::shared_ptr<SynthonSet> getReaction(std::string reactionName);
   // The Synthons have a PatternFingerprint for screening in substructure
   // searches.  It's important that the screening process creates ones
   // of the same size, so this finds out what size that is.
@@ -187,6 +119,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * different reactions will be returned.
    *
    * @param query : query molecule
+   * @param matchParams: (optional) settings for the substructure search
    * @param params : (optional) settings for the search
    * @return : the hits as a SearchResults object.
    */
@@ -205,6 +138,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    *
    * @param query : query molecule
    * @param callback: user-provided callback receiving chunks of ROMols.
+   * @param matchParams: (optional) settings for the substructure search
    * @param params : (optional) settings for the search
    */
   void substructureSearch(
@@ -218,6 +152,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * produced by different reactions will be returned.
    *
    * @param query : query molecule
+   * @param matchParams: (optional) settings for the substructure search
    * @param params : (optional) settings for the search
    * @return : the hits as a SearchResults object.
    */
@@ -225,6 +160,49 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const GeneralizedSubstruct::ExtendedQueryMol &query,
       const SubstructMatchParameters &matchParams = SubstructMatchParameters(),
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
+  /*! Take the contents of params.possibleHitsFile, which is assumed to have
+   * been written by an earlier search, and extract those that are indeed
+   * hits.  It makes sense that params is the same as the one used to
+   * generate the possible hits, but this is not essential.  You could search
+   * at a higher similarity threshold than used to create the possible hits,
+   * for example.
+   * Duplicate SMILES strings produced by different reactions will
+   * be returned.
+   *
+   * @param query : query molecule
+   * @param matchParams: settings for the substructure search
+   * @param params : settings for the search
+   * @param startLine: the first line of the file to be considered
+   * @param finishLine: (optional) the last line of the file to be considered.
+   * @return : the hits as a SearchResults object.
+   */
+  SearchResults substructureSearch(
+      const ROMol &query, const SubstructMatchParameters &matchParams,
+      const SynthonSpaceSearchParams &params, std::uint64_t startLine,
+      std::uint64_t finishLine = std::numeric_limits<std::uint64_t>::max());
+
+  /*! Take the contents of params.possibleHitsFile, which is assumed to have
+   * been written by an earlier search, and extract those that are indeed
+   * hits.  It makes sense that params is the same as the one used to
+   * generate the possible hits, but this is not essential.  You could search
+   * at a higher similarity threshold than used to create the possible hits,
+   * for example.
+   * Duplicate SMILES strings produced by different reactions will
+   * be returned.
+   *
+   * @param query : query molecule
+   * @param matchParams: settings for the substructure search
+   * @param params : settings for the search
+   * @param startLine: the first line of the file to be considered
+   * @param finishLine: (optional) the last line of the file to be considered.
+   * @return : the hits as a SearchResults object.
+   */
+  SearchResults substructureSearch(
+      const GeneralizedSubstruct::ExtendedQueryMol &query,
+      const SubstructMatchParameters &matchParams,
+      const SynthonSpaceSearchParams &params, std::uint64_t startLine,
+      std::uint64_t finishLine = std::numeric_limits<std::uint64_t>::max());
 
   /*!
    * Perform a fingerprint similarity search with the given query molecule
@@ -260,10 +238,34 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const SearchResultCallback &callback,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
+  /*! Take the contents of params.possibleHitsFile, which is assumed to have
+   * been written by an earlier search, and extract those that are indeed
+   * hits.  It makes sense that params is the same as the one used to
+   * generate the possible hits, but this is not essential.  You could search
+   * at a higher similarity threshold than used to create the possible hits,
+   * for example.
+   * Duplicate SMILES strings produced by different reactions will
+   * be returned.
+   *
+   * @param query : query molecule
+   * @param fpGen: a FingerprintGenerator object that will provide the
+   *               fingerprints for the similarity calculation
+   * @param params : settings for the search
+   * @param startLine: the first line of the file to be considered
+   * @param finishLine: (optional) the last line of the file to be considered.
+   * @return : the hits as a SearchResults object.
+   */
+  SearchResults fingerprintSearch(
+      const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
+      const SynthonSpaceSearchParams &params, std::uint64_t startLine,
+      std::uint64_t finishLine = std::numeric_limits<std::uint64_t>::max());
+
   // Perform a RASCAL similarity search with the given query molecule
   // across the synthonspace library.  Duplicate SMILES strings produced by
   // different reactions will be returned.
-  /*!
+  /*! Perform a RASCAL similarity search with the given query molecule
+   * across the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.
    *
    * @param query : query molecule
    * @param rascalOptions: RASCAL options.  The similarityThreshold value
@@ -300,6 +302,81 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
       const SearchResultCallback &callback,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
+  /*! Take the contents of params.possibleHitsFile, which is assumed to have
+   * been written by an earlier search, and extract those that are indeed
+   * hits.  It makes sense that params is the same as the one used to
+   * generate the possible hits, but this is not essential.  You could search
+   * at a higher similarity threshold than used to create the possible hits,
+   * for example.
+   * Duplicate SMILES strings produced by different reactions will
+   * be returned.
+   *
+   * @param query : query molecule
+   * @param rascalOptions: RASCAL options.  The similarityThreshold value
+   *                       in the rascalOptions will be used rather than
+   *                       params.similarityCutoff,
+   *                       but params.fragSimilarityAdjuster will be used
+   *                       to adjust the threshold for the fragment
+   *                       comparisons.
+   * @param params : settings for the search
+   * @param startLine: the first line of the file to be considered
+   * @param finishLine: (optional) the last line of the file to be considered.
+   * @return : the hits as a SearchResults object.
+   */
+  SearchResults rascalSearch(
+      const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
+      const SynthonSpaceSearchParams &params, std::uint64_t startLine,
+      std::uint64_t finishLine = std::numeric_limits<std::uint64_t>::max());
+
+  /*! Perform a shape similarity search with the given query molecule
+   * across the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.  Requires a query with at least
+   * 1 3D conformer.  Only the first conformer will be used in the search.
+   *
+   * @param query : query molecule
+   * @param params : (optional) settings for the search
+   * @return : the hits as a SearchResults object.
+   */
+  SearchResults shapeSearch(
+      const ROMol &query,
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
+  /*! Perform a shape similarity search with the given query molecule
+   * across the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.  Requires a query with at least
+   * 1 3D conformer.  Only the first conformer will be used in the search.
+   *
+   * @param query : query molecule
+   * @param callback: user-provided callback receiving chunks of ROMols.
+   * @param params : (optional) settings for the search
+   */
+  void shapeSearch(
+      const ROMol &query,
+      const SearchResultCallback &callback,
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
+  /*! Take the contents of params.possibleHitsFile, which is assumed to have
+   * been written by an earlier search, and extract those that are indeed
+   * hits.  It makes sense that params is the same as the one used to
+   * generate the possible hits, but this is not essential.  You could search
+   * at a higher similarity threshold than used to create the possible hits,
+   * for example.
+   * Duplicate SMILES strings produced by different reactions will
+   * be returned.  Requires a query with at least 1 3D conformer.  Only
+   * the first conformer will be used in the search.
+   *
+   * @param query : query molecule
+   * @param params : settings for the search
+   * @param startLine: the first line of the file to be considered
+   * @param finishLine: (optional) the last line of the file to be considered.
+   * @return : the hits as a SearchResults object.
+   */
+  SearchResults shapeSearch(
+      const ROMol &query, const SynthonSpaceSearchParams &params,
+      std::uint64_t startLine,
+      std::uint64_t finishLine = std::numeric_limits<std::uint64_t>::max());
+
   /*!
    *
    * @param inFilename: name of the file containing the synthon-based library.
@@ -377,7 +454,20 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @param fpGen: a fingerprint generator of the appropriate type
    */
   void buildSynthonFingerprints(
-      const FingerprintGenerator<std::uint64_t> &fpGen);
+      const FingerprintGenerator<std::uint64_t> &fpGen,
+      unsigned int progressBarWidth = 0);
+
+  /*!
+   * Create conformers for the synthons ready for shape searching.  If a synthon
+   * has unspecified stereochemistry, all possibilities will be enumerated and
+   * shapes generated for each.
+   *
+   * @param shapeBuildParams: controls the shape generation for each synthon
+   */
+  void buildSynthonShapes(bool &cancelled, ShapeBuildParams &shapeBuildParams);
+
+  void reportSynthonUsage(std::ostream &os) const;
+  std::uint64_t getNumSynthonsWithShapes() const;
 
  protected:
   unsigned int getMaxNumSynthons() const { return d_maxNumSynthons; }
@@ -387,6 +477,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   bool hasAddAndSubstractFingerprints() const;
   // Return whether the space contains a ring-forming reaction.
   bool getHasRingFormer() const { return d_hasRingFormer; }
+
+  unsigned int getNumConformers() const;
+
   // Take the SMILES for a Synthon and if it's not in
   // d_synthonPool make it and add it.  If it is in the pool,
   // just look it up.  Either way, return a pointer to the
@@ -397,6 +490,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 
   // Just do the lookup, and return nullptr if not found.
   Synthon *getSynthonFromPool(const std::string &smiles) const;
+
+  void orderSynthonsForSearch();
 
  private:
   std::string d_fileName;
@@ -410,7 +505,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   unsigned int d_maxNumSynthons{0};
   std::uint64_t d_numProducts{0};
 
-  // This is actually 1000 * major version + 10 * minor version
+  // This is actually 1000 * major version + 10 * minor
   // and hence the full version number.
   std::int32_t d_fileMajorVersion{-1};
 
@@ -420,9 +515,17 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // for via first, which is its SMILES string.
   std::vector<std::pair<std::string, std::unique_ptr<Synthon>>> d_synthonPool;
 
-  // For the similarity search, this records the generator used for
-  // creating synthon fingerprints that are read from a binary file.
+  // This maps the Synthons (keyed by its SMILES) to the reactions/SynthonSets
+  // they're in.
+  std::unordered_map<std::string, std::vector<SynthonSet *>> d_synthonReactions;
+
+  // For the fingerprint similarity search, this records the generator
+  // used for creating synthon fingerprints that are read from a binary file.
   std::string d_fpType;
+  // For the shape similarity search, this records the number of conformers
+  // used.  It's not necessarily the same as the number of conformers each
+  // synthon has.
+  unsigned int d_numConformers{0};
 
   // Whether there is a ring-forming reaction in the space.
   bool d_hasRingFormer{false};
@@ -437,6 +540,37 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   SearchResults extendedSearch(const TautomerQuery &query,
                                const SubstructMatchParameters &matchParams,
                                const SynthonSpaceSearchParams &params);
+  SearchResults extendedSearch(const MolBundle &query,
+                               const SubstructMatchParameters &matchParams,
+                               const SynthonSpaceSearchParams &params,
+                               std::uint64_t startLine,
+                               std::uint64_t finishLine);
+  SearchResults extendedSearch(
+      const GeneralizedSubstruct::ExtendedQueryMol::TautomerBundle_T &query,
+      const SubstructMatchParameters &matchParams,
+      const SynthonSpaceSearchParams &params, std::uint64_t startLine,
+      std::uint64_t finishLine);
+  SearchResults extendedSearch(const TautomerQuery &query,
+                               const SubstructMatchParameters &matchParams,
+                               const SynthonSpaceSearchParams &params,
+                               std::uint64_t startLine,
+                               std::uint64_t finishLine);
+
+  // Fill up the d_synthonReactions object, listing all the reactions
+  // each synthon is found in.
+  void fillSynthonReactions();
+  // For each synthon, build a sample molecule for each reaction it's in,
+  // using d_synthonReactions.  Return them so the samples for a synthon
+  // are in descending order of size so that when building shapes, we
+  // do it on the smallest available example to save time, by popping
+  // them off the back.  If maxSynthonAtoms > 0 and the synthon has
+  // more heavy atoms than that (excluding dummy atoms) it is skipped.
+  // The actual molecules in the SampleMolRecs aren't built until they're
+  // needed, but all the information to do so is captured.
+  void buildSynthonSampleMolecules(
+      unsigned int maxSynthonAtoms,
+      std::vector<std::vector<std::unique_ptr<SampleMolRec>>> &sampleMols)
+      const;
 };
 
 /*!
@@ -448,11 +582,12 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
  * @param outFilename name of the binary file to write
  * @param cancelled whether it received a SIGINT
  * @param fpGen optional fingerprint generator
+ * @param shapeParams optional parameters for conformer generation
  */
 RDKIT_SYNTHONSPACESEARCH_EXPORT void convertTextToDBFile(
     const std::string &inFilename, const std::string &outFilename,
-    bool &cancelled,
-    const FingerprintGenerator<std::uint64_t> *fpGen = nullptr);
+    bool &cancelled, const FingerprintGenerator<std::uint64_t> *fpGen = nullptr,
+    ShapeBuildParams *shapeParams = nullptr);
 
 /*!
  * Format an integer with spaces every 3 digits for ease

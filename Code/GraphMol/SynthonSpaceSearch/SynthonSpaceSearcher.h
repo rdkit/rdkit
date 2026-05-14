@@ -16,9 +16,11 @@
 #define SYNTHONSPACESEARCHER_H
 
 #include <chrono>
+#include <functional>
 #include <random>
 
 #include <RDGeneral/export.h>
+#include <GraphMol/ROMol.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
@@ -28,7 +30,6 @@ using Clock = std::chrono::steady_clock;
 using TimePoint = std::chrono::time_point<Clock>;
 
 namespace RDKit {
-class ROMol;
 
 namespace SynthonSpaceSearch {
 
@@ -38,7 +39,7 @@ class SynthonSpaceSearcher {
   SynthonSpaceSearcher() = delete;
   SynthonSpaceSearcher(const ROMol &query,
                        const SynthonSpaceSearchParams &params,
-                       SynthonSpace &space);
+                       SynthonSpace *space);
   SynthonSpaceSearcher(const SynthonSpaceSearcher &other) = delete;
   SynthonSpaceSearcher(SynthonSpaceSearcher &&other) = delete;
   SynthonSpaceSearcher &operator=(const SynthonSpaceSearcher &other) = delete;
@@ -46,10 +47,15 @@ class SynthonSpaceSearcher {
 
   virtual ~SynthonSpaceSearcher() = default;
 
-  SearchResults search();
-  void search(const SearchResultCallback &cb);
+  SearchResults search(ThreadMode threadMode);
+  void search(const SearchResultCallback &cb, ThreadMode threadMode);
+  // Take the contents of d_params.possibleHitsFile between the
+  // given lines, build them, check against the query and return
+  // any that match.
+  SearchResults checkPossibleHits(std::uint64_t startLine,
+                                  std::uint64_t finishLine);
 
-  SynthonSpace &getSpace() const { return d_space; }
+  SynthonSpace *getSpace() const { return d_space; }
   const ROMol &getQuery() const { return d_query; }
   const SynthonSpaceSearchParams &getParams() const { return d_params; }
 
@@ -57,7 +63,7 @@ class SynthonSpaceSearcher {
   // appropriate way, for example by substructure or fingerprint
   // similarity.
   virtual std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
-      const std::vector<std::unique_ptr<ROMol>> &fragSet,
+      const std::vector<std::shared_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const = 0;
 
   // Make the hit, constructed from a specific combination of
@@ -66,14 +72,29 @@ class SynthonSpaceSearcher {
   // for each synthon list in the hitset.  Returns an empty pointer
   // if the hit isn't accepted for whatever reason.
   std::unique_ptr<ROMol> buildAndVerifyHit(
-      const SynthonSpaceHitSet *hitset,
-      const std::vector<size_t> &synthNums) const;
+      const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums);
 
- protected:
   // Checks that the given molecule is definitely a hit according to
   // the derived class' criteria.  This function checks the chiralAtomCount
-  // if appropriate, which required a non-const ROMol.
-  virtual bool verifyHit(ROMol &mol) const;
+  // if appropriate, which required a non-const ROMol.  Some derived classes
+  // will also update d_bestHitFound.
+  virtual bool verifyHit(ROMol &mol, const std::string &,
+                         const std::vector<const std::string *> &);
+
+ protected:
+  // Build the hit, as used by buildAndVerifyHit.  Fills in the synthon
+  // names, assuming the vector is already the correct size.
+  virtual std::unique_ptr<ROMol> buildHit(
+      const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
+      std::vector<const std::string *> &synthNames) const;
+
+  // Compute an approximate similarity between the hit and query.  It's used
+  // to sort the possible hits in descending approximate similarity to try
+  // and get the most similar hits to the top of the list.  It will probably
+  // be the same one as used in quickVerify, if appropriate.
+  virtual double approxSimilarity(
+      const SynthonSpaceHitSet *hitset,
+      const std::vector<size_t> &synthNums) const = 0;
 
   // Do a check against number of heavy atoms etc. if options call for it
   // which can be done without having to build the full molecule from the
@@ -83,12 +104,28 @@ class SynthonSpaceSearcher {
   virtual bool quickVerify(const SynthonSpaceHitSet *hitset,
                            const std::vector<size_t> &synthNums) const;
 
+  // If the similarity found is greater than d_bestSimilarity, replace
+  // d_bestHitFound with a copy of possBest and update d_bestSimilarity.
+  void updateBestHitSoFar(const ROMol &possBest, double sim);
+  double getBestSimilaritySoFar() const { return d_bestSimilarity; }
+
+  void makeHitsFromToTry(
+      const std::vector<
+          std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> &toTry,
+      const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results);
+
+  // Passed to details::splitMolecule to determine how the fragment
+  // sets are uniquified.
+  FragSetUniquifyMode d_fragSetUniquifyMode{FragSetUniquifyMode::BySmiles};
+
  private:
   std::unique_ptr<std::mt19937> d_randGen;
 
-  const ROMol &d_query;
-  const SynthonSpaceSearchParams &d_params;
-  SynthonSpace &d_space;
+  ROMol d_query;
+  SynthonSpaceSearchParams d_params;
+  SynthonSpace *d_space;
+  std::unique_ptr<ROMol> d_bestHitFound;
+  double d_bestSimilarity{0.0};
 
   // Generally, the search needs the query fragmented into no more than
   // the largest number synthon sets in any reaction.  Substructure search
@@ -98,16 +135,19 @@ class SynthonSpaceSearcher {
   // sets.  The FingerprintSearcher, for example, needs fingerprints
   // for all the fragments.  The SubstructureSearcher needs connector
   // regions and information about them.
-  virtual void extraSearchSetup(
-      [[maybe_unused]] std::vector<std::vector<std::unique_ptr<ROMol>>>
-          &fragSets) {}
+  virtual bool extraSearchSetup(
+      std::vector<std::vector<std::shared_ptr<ROMol>>> &, const TimePoint *) {
+    return true;
+  }
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> assembleHitSets(
-      const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits);
+      const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits,
+      ThreadMode threadMode);
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> doTheSearch(
-      std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
-      const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits);
+      std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
+      const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits,
+      ThreadMode threadMode);
 
   // Build the molecules from the synthons identified in hitsets.
   // Checks that all the results produced match the
@@ -116,21 +156,18 @@ class SynthonSpaceSearcher {
   // Hitsets will be re-ordered on exit.
   void buildHits(std::vector<std::unique_ptr<SynthonSpaceHitSet>> &hitsets,
                  const TimePoint *endTime, bool &timedOut,
-                 std::vector<std::unique_ptr<ROMol>> &results) const;
+                 std::vector<std::unique_ptr<ROMol>> &results);
   void buildAllHits(
       const std::vector<std::unique_ptr<SynthonSpaceHitSet>> &hitsets,
       const TimePoint *endTime, bool &timedOut,
-      std::vector<std::unique_ptr<ROMol>> &results) const;
-  void makeHitsFromToTry(
-      const std::vector<
-          std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> &toTry,
-      const TimePoint *endTime,
-      std::vector<std::unique_ptr<ROMol>> &results) const;
-  void processToTrySet(
+      std::vector<std::unique_ptr<ROMol>> &results);
+  void sortToTryByApproxSimilarity(
+      std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
+          &toTry) const;
+  virtual void processToTrySet(
       std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
           &toTry,
-      const TimePoint *endTime,
-      std::vector<std::unique_ptr<ROMol>> &results) const;
+      const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results);
 
   // get the subset of synthons for the given reaction to use for this
   // enumeration.

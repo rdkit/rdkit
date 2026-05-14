@@ -65,16 +65,18 @@ std::map<std::string, std::string> loadLibrary(const std::string inFilename) {
 };
 
 TEST_CASE("Test splits 1") {
-  const std::vector<std::string> smiles{"c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
-                                        "CC(C)OCc1nnc(N2CC(C)CC2)n1C1CCCC1",
-                                        "c1ccccc1Oc1cccc2[nH]ccc12"};
+  const std::vector<std::string> smiles{
+      "c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
+      "CC(C)OCc1nnc(N2CC(C)CC2)n1C1CCCC1", "c1ccccc1Oc1cccc2[nH]ccc12",
+      "COc1ccc2nc([nH]c2c1)[S@](=O)Cc1ncc(C)c(OC)c1C"};
   std::vector<std::vector<size_t>> expCounts{
-      {1, 47, 1020, 0}, {1, 37, 562, 0}, {1, 29, 397, 0}};
+      {1, 47, 1020, 0}, {1, 37, 562, 0}, {1, 29, 397, 0}, {1, 41, 689, 0}};
   for (size_t i = 0; i < smiles.size(); ++i) {
     auto mol = v2::SmilesParse::MolFromSmiles(smiles[i]);
     REQUIRE(mol);
     bool timedOut = false;
-    auto fragments = splitMolecule(*mol, 3, 100000, nullptr, 1, timedOut);
+    auto fragments = splitMolecule(*mol, 3, 100000, nullptr, 1,
+                                   FragSetUniquifyMode::BySmiles, timedOut);
     CHECK(fragments.size() ==
           std::accumulate(expCounts[i].begin(), expCounts[i].end(), size_t(0)));
     // The first fragment set should just be the molecule itself.  There
@@ -83,7 +85,7 @@ TEST_CASE("Test splits 1") {
       const auto numFragSets = std::accumulate(
           fragments.begin(), fragments.end(), static_cast<size_t>(0),
           [&](size_t prevRes,
-              const std::vector<std::unique_ptr<ROMol>> &frags) {
+              const std::vector<std::shared_ptr<ROMol>> &frags) {
             if (frags.size() == j + 1) {
               return prevRes + 1;
             }
@@ -890,11 +892,9 @@ TEST_CASE("Github 9007") {
 
     auto res1 = space.substructureSearch(*q1);
     CHECK(res1.getHitMolecules().size() == 2);
-
     auto res2 = space.substructureSearch(*q2);
     CHECK(res2.getHitMolecules().size() == 1);
-
-    // Simpler case of just 1 dangling subsituent
+    // Simpler case of just 1 dangling substituent
     auto q6 = "O=c1ncncc1c"_smarts;
     REQUIRE(q6);
     auto res6 = space.substructureSearch(*q6);
@@ -945,5 +945,71 @@ TEST_CASE("Github 9007") {
     REQUIRE(q5);
     auto res5 = space.substructureSearch(*q5);
     CHECK(res5.getHitMolecules().size() == 1);
+  }
+}
+
+unsigned int countFileLines(const std::string &filename) {
+  std::ifstream ifs(filename.c_str());
+  ifs.unsetf(std::ios_base::skipws);
+  unsigned int numLines = std::count(std::istream_iterator<char>(ifs),
+                                     std::istream_iterator<char>(), '\n');
+  ifs.close();
+  return numLines;
+}
+
+TEST_CASE("S Write Possible Hits") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  SynthonSpace synthonspace;
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
+  synthonspace.readDBFile(libName);
+
+  SynthonSpaceSearchParams params;
+  SubstructMatchParameters matchParams;
+  params.numThreads = 1;
+  {
+    params.possibleHitsFile = "s_poss_hits_1.txt";
+    params.writePossibleHitsAndStop = true;
+    auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
+    SearchResults results;
+    CHECK_NOTHROW(results = synthonspace.substructureSearch(
+                      *queryMol, matchParams, params));
+    CHECK(results.getHitMolecules().size() == 0);
+    CHECK(results.getMaxNumResults() == 220);
+    CHECK(countFileLines("s_poss_hits_1.txt") == 220);
+    CHECK(results.getHitMolecules().size() == 0);
+
+    auto newResults =
+        synthonspace.substructureSearch(*queryMol, matchParams, params, 0, 110);
+    CHECK(newResults.getHitMolecules().size() == 110);
+    std::remove("s_poss_hits_1.txt");
+  }
+
+  {
+    std::string libName =
+        fName + "/Code/GraphMol/SynthonSpaceSearch/data/extended_query.csv";
+    SynthonSpace synthonspace;
+    bool cancelled = false;
+    synthonspace.readTextFile(libName, cancelled);
+
+    auto queryMol =
+        v2::SmilesParse::MolFromSmarts("[#6]-*.c1nc2cccnc2n1 |m:1:3.10|");
+    REQUIRE(queryMol);
+    auto xrq = GeneralizedSubstruct::createExtendedQueryMol(*queryMol);
+    params.possibleHitsFile = "s_poss_hits_2.txt";
+    params.writePossibleHitsAndStop = true;
+#ifdef RDK_USE_BOOST_SERIALIZATION
+    auto results = synthonspace.substructureSearch(xrq, matchParams, params);
+    CHECK(results.getHitMolecules().size() == 0);
+    CHECK(countFileLines("s_poss_hits_2.txt") == 10);
+
+    auto newResults =
+        synthonspace.substructureSearch(xrq, matchParams, params, 0);
+    CHECK(newResults.getHitMolecules().size() == 10);
+    std::remove("s_poss_hits_2.txt");
+#else
+    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq), Invar::Invariant);
+#endif
   }
 }

@@ -16,21 +16,25 @@
 // screening.
 
 #include <cmath>
+#include <numeric>
 #include <random>
 #include <regex>
-
-#include <boost/random/discrete_distribution.hpp>
+#include <unordered_map>
 
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/CIPLabeler/Descriptor.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/DistGeomHelpers/Embedder.h>
+#include <GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h>
+#include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/ControlCHandler.h>
+#include <RDGeneral/RDThreads.h>
 
 namespace RDKit::SynthonSpaceSearch {
 
@@ -52,6 +56,59 @@ const std::unique_ptr<ExplicitBitVect> &SynthonSet::getSubtractFP() const {
   return d_subtractFP;
 }
 
+const std::pair<std::string, Synthon *>
+SynthonSet::getSubstructureOrderedSynthon(size_t setNum,
+                                          size_t synthonNum) const {
+  if (setNum >= d_synthons.size() || synthonNum >= d_synthons[setNum].size()) {
+    return std::make_pair("", nullptr);
+  }
+  return d_synthons[setNum][d_substructureSearchOrders[setNum][synthonNum]];
+}
+
+const std::pair<std::string, Synthon *>
+SynthonSet::getFingerprintOrderedSynthon(size_t setNum,
+                                         size_t synthonNum) const {
+  if (setNum >= d_synthons.size() || synthonNum >= d_synthons[setNum].size()) {
+    return std::make_pair("", nullptr);
+  }
+  return d_synthons[setNum][d_fingerprintSearchOrders[setNum][synthonNum]];
+}
+
+const std::pair<std::string, Synthon *> SynthonSet::getRascalOrderedSynthon(
+    size_t setNum, size_t synthonNum) const {
+  if (setNum >= d_synthons.size() || synthonNum >= d_synthons[setNum].size()) {
+    return std::make_pair("", nullptr);
+  }
+  return d_synthons[setNum][d_rascalSearchOrders[setNum][synthonNum]];
+}
+
+size_t SynthonSet::getSubstructureOrderedSynthonNum(size_t setNum,
+                                                    size_t synthonNum) const {
+  if (setNum >= d_synthons.size() || synthonNum >= d_synthons[setNum].size()) {
+    // Obviously this will be a very large number.
+    return -1;
+  }
+  return d_substructureSearchOrders[setNum][synthonNum];
+}
+
+size_t SynthonSet::getFingerprintOrderedSynthonNum(size_t setNum,
+                                                   size_t synthonNum) const {
+  if (setNum >= d_synthons.size() || synthonNum >= d_synthons[setNum].size()) {
+    // Obviously this will be a very large number.
+    return -1;
+  }
+  return d_fingerprintSearchOrders[setNum][synthonNum];
+}
+
+size_t SynthonSet::getRascalOrderedSynthonNum(size_t setNum,
+                                              size_t synthonNum) const {
+  if (setNum >= d_synthons.size() || synthonNum >= d_synthons[setNum].size()) {
+    // Obviously this will be a very large number.
+    return -1;
+  }
+  return d_rascalSearchOrders[setNum][synthonNum];
+}
+
 namespace {
 void writeBitSet(std::ostream &os, const boost::dynamic_bitset<> &bitset) {
   streamWrite(os, bitset.size());
@@ -60,6 +117,16 @@ void writeBitSet(std::ostream &os, const boost::dynamic_bitset<> &bitset) {
       streamWrite(os, true);
     } else {
       streamWrite(os, false);
+    }
+  }
+}
+void writeSearchOrderSet(std::ostream &os,
+                         const std::vector<std::vector<size_t>> &orderSet) {
+  streamWrite(os, static_cast<std::uint64_t>(orderSet.size()));
+  for (unsigned int i = 0; i < orderSet.size(); ++i) {
+    streamWrite(os, static_cast<std::uint64_t>(orderSet[i].size()));
+    for (const auto v : orderSet[i]) {
+      streamWrite(os, static_cast<std::uint64_t>(v));
     }
   }
 }
@@ -103,6 +170,9 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
   for (const auto &c : d_numConnectors) {
     streamWrite(os, c);
   }
+  writeSearchOrderSet(os, d_substructureSearchOrders);
+  writeSearchOrderSet(os, d_fingerprintSearchOrders);
+  writeSearchOrderSet(os, d_rascalSearchOrders);
 }
 
 namespace {
@@ -114,6 +184,22 @@ void readBitSet(std::istream &is, boost::dynamic_bitset<> &bitset) {
   for (size_t i = 0; i < bsSize; ++i) {
     streamRead(is, s);
     bitset[i] = s;
+  }
+}
+void readSearchOrderSet(std::istream &is,
+                        std::vector<std::vector<size_t>> &orderSet) {
+  std::uint64_t s;
+  streamRead(is, s);
+  orderSet.resize(s);
+  for (size_t i = 0; i < s; ++i) {
+    std::uint64_t t;
+    streamRead(is, t);
+    orderSet[i].resize(t);
+    for (size_t j = 0; j < t; ++j) {
+      std::uint64_t u;
+      streamRead(is, u);
+      orderSet[i][j] = u;
+    }
   }
 }
 }  // namespace
@@ -187,6 +273,14 @@ void SynthonSet::readFromDBStream(std::istream &is, const SynthonSpace &space,
   for (unsigned int i = 0; i < numConns; ++i) {
     streamRead(is, d_numConnectors[i]);
   }
+
+  if (version < 3020) {
+    initializeSearchOrders();
+  } else {
+    readSearchOrderSet(is, d_substructureSearchOrders);
+    readSearchOrderSet(is, d_fingerprintSearchOrders);
+    readSearchOrderSet(is, d_rascalSearchOrders);
+  }
 }
 
 void SynthonSet::enumerateToStream(std::ostream &os) const {
@@ -205,61 +299,56 @@ void SynthonSet::enumerateToStream(std::ostream &os) const {
 
 void SynthonSet::addSynthon(const int synthonSetNum, Synthon *newSynthon,
                             const std::string &synthonId) {
-  if (static_cast<size_t>(synthonSetNum) >= d_synthons.size()) {
+  if (std::cmp_greater_equal(synthonSetNum, d_synthons.size())) {
     d_synthons.resize(synthonSetNum + 1);
   }
   d_synthons[synthonSetNum].push_back(std::make_pair(synthonId, newSynthon));
 }
 
-namespace {
-
-// Take the synthons and build molecules from them.  longVecNum is the number
-// of the vector containing the synthon set of interest.  The other members
-// of synthon are assumed to be a single molecule, and each product is
-// a molecule made from the corresponding member of longVecNum and the first
-// element of the other vectors.
-std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
-    const std::vector<std::vector<std::unique_ptr<RWMol>>> &synthons,
-    const size_t longVecNum, const SynthonSet &reaction) {
+std::vector<std::unique_ptr<ROMol>> SynthonSet::buildSampleMolecules(
+    const std::vector<std::vector<std::unique_ptr<RWMol>>> &synthonMols,
+    size_t longVecNum) const {
   std::vector<std::unique_ptr<ROMol>> sampleMolecules;
-  sampleMolecules.reserve(synthons[longVecNum].size());
+  sampleMolecules.reserve(d_synthons[longVecNum].size());
+
+  // Find a small synthon in each of the non-longVecNum sets.
+  std::vector<size_t> exSynthons(synthonMols.size(), 0);
+  for (size_t i = 0; i < synthonMols.size(); ++i) {
+    if (i == longVecNum) {
+      continue;
+    }
+    unsigned int minAtoms = synthonMols[i][0]->getNumAtoms();
+    for (size_t j = 1; j < synthonMols[i].size(); ++j) {
+      if (synthonMols[i][j]->getNumAtoms() < minAtoms) {
+        minAtoms = synthonMols[i][j]->getNumAtoms();
+        exSynthons[i] = j;
+      }
+    }
+  }
 
   MolzipParams mzparams;
   mzparams.label = MolzipLabel::Isotope;
 
-  for (size_t i = 0; i < synthons[longVecNum].size(); ++i) {
-    auto combMol = std::make_unique<ROMol>();
-    for (size_t j = 0; j < synthons.size(); ++j) {
-      if (j == longVecNum) {
-        combMol.reset(combineMols(*combMol, *synthons[j][i]));
-      } else {
-        combMol.reset(combineMols(*combMol, *synthons[j].front()));
-      }
-    }
-    try {
-      auto sampleMol = molzip(*combMol, mzparams);
-      MolOps::sanitizeMol(*dynamic_cast<RWMol *>(sampleMol.get()));
-      sampleMolecules.push_back(std::move(sampleMol));
-    } catch (std::exception &e) {
-      const auto &synths = reaction.getSynthons();
-      std::string msg("Error:: in reaction " + reaction.getId() +
-                      " :: building molecule from synthons :");
-      for (size_t j = 0; j < synthons.size(); ++j) {
-        std::string sep = j ? " and " : " ";
-        if (j == longVecNum) {
-          msg += sep + synths[j][i].first + " (" +
-                 synths[j][i].second->getSmiles() + ")";
-        } else {
-          msg += sep + synths[j].front().first + " (" +
-                 synths[j].front().second->getSmiles() + ")";
-        }
-      }
-      msg += "\n" + std::string(e.what()) + "\n";
-      BOOST_LOG(rdErrorLog) << msg;
-      throw(e);
-    }
+  for (size_t i = 0; i < d_synthons[longVecNum].size(); ++i) {
+    exSynthons[longVecNum] = i;
+    auto sampleMol = buildMolecule(exSynthons);
+    sampleMolecules.push_back(std::move(sampleMol));
   }
   return sampleMolecules;
+}
+
+namespace {
+int findMolNumFrag(const std::vector<std::unique_ptr<ROMol>> &molFrags,
+                   size_t molNum) {
+  for (size_t i = 0; i < molFrags.size(); ++i) {
+    for (const auto &atom : molFrags[i]->atoms()) {
+      if (atom->hasProp("molNum") &&
+          atom->getProp<unsigned int>("molNum") == molNum) {
+        return i;
+      }
+    }
+  }
+  return -1;
 }
 }  // namespace
 
@@ -270,26 +359,7 @@ void SynthonSet::makeSynthonSearchMols() {
   // when a query molecule is split up, the fragments should be
   // consistent with those of the corresponding synthons.
 
-  // Synthons are shared, so we need to copy the molecules into a new
-  // set that we can fiddle with without upsetting anything else.
-  std::vector<std::vector<std::unique_ptr<RWMol>>> synthonMolCopies(
-      d_synthons.size());
-  for (size_t i = 0; i < d_synthons.size(); ++i) {
-    synthonMolCopies[i].reserve(d_synthons[i].size());
-    for (size_t j = 0; j < d_synthons[i].size(); ++j) {
-      synthonMolCopies[i].emplace_back(
-          new RWMol(*d_synthons[i][j].second->getOrigMol().get()));
-      for (auto &atom : synthonMolCopies[i][j]->atoms()) {
-        atom->setProp<int>("molNum", i);
-        atom->setProp<int>("idx", atom->getIdx());
-      }
-      for (auto &bond : synthonMolCopies[i][j]->bonds()) {
-        bond->setProp<int>("molNum", i);
-        bond->setProp<int>("idx", bond->getIdx());
-      }
-    }
-  }
-
+  auto synthonMolCopies = copySynthons();
   std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
   for (unsigned int i = 1; i <= MAX_CONNECTOR_NUM; ++i) {
     dummyLabels.emplace_back(i, i);
@@ -297,8 +367,7 @@ void SynthonSet::makeSynthonSearchMols() {
 
   // Now build sets of sample molecules using each synthon set in turn.
   for (size_t synthSetNum = 0; synthSetNum < d_synthons.size(); ++synthSetNum) {
-    auto sampleMols =
-        buildSampleMolecules(synthonMolCopies, synthSetNum, *this);
+    auto sampleMols = buildSampleMolecules(synthonMolCopies, synthSetNum);
     for (size_t j = 0; j < sampleMols.size(); ++j) {
       std::vector<unsigned int> splitBonds;
       for (const auto &bond : sampleMols[j]->bonds()) {
@@ -311,19 +380,7 @@ void SynthonSet::makeSynthonSearchMols() {
           *sampleMols[j], splitBonds, true, &dummyLabels));
       std::vector<std::unique_ptr<ROMol>> molFrags;
       MolOps::getMolFrags(*fragMol, molFrags, false);
-      int fragWeWant = -1;
-      for (size_t i = 0; i < molFrags.size(); ++i) {
-        for (const auto &atom : molFrags[i]->atoms()) {
-          if (atom->hasProp("molNum") &&
-              atom->getProp<unsigned int>("molNum") == synthSetNum) {
-            fragWeWant = i;
-            break;
-          }
-        }
-        if (fragWeWant != -1) {
-          break;
-        }
-      }
+      int fragWeWant = findMolNumFrag(molFrags, synthSetNum);
       unsigned int otf;
       sanitizeMol(*static_cast<RWMol *>(molFrags[fragWeWant].get()), otf,
                   MolOps::SANITIZE_SYMMRINGS);
@@ -552,6 +609,187 @@ std::unique_ptr<ROMol> SynthonSet::buildProduct(
     synths[i] = d_synthons[i][synthNums[i]].second->getOrigMol().get();
   }
   return details::buildProduct(synths);
+}
+
+std::unique_ptr<RWMol> SynthonSet::copySynthon(size_t synthonSetNum,
+                                               size_t synthonIdx) const {
+  std::unique_ptr<RWMol> synthon(new RWMol(
+      *d_synthons[synthonSetNum][synthonIdx].second->getOrigMol().get()));
+  for (auto &atom : synthon->atoms()) {
+    atom->setProp<unsigned int>("molNum", synthonSetNum);
+    atom->setProp<unsigned int>("idx", atom->getIdx());
+  }
+  for (auto &bond : synthon->bonds()) {
+    bond->setProp<unsigned int>("molNum", synthonSetNum);
+    bond->setProp<unsigned int>("idx", bond->getIdx());
+  }
+
+  return synthon;
+}
+
+std::vector<std::vector<std::unique_ptr<RWMol>>> SynthonSet::copySynthons()
+    const {
+  // Synthons are shared, so we need to copy the molecules into a new
+  // set that we can fiddle with without upsetting anything else.
+  std::vector<std::vector<std::unique_ptr<RWMol>>> synthonMolCopies(
+      d_synthons.size());
+  for (size_t i = 0; i < d_synthons.size(); ++i) {
+    synthonMolCopies[i].reserve(d_synthons[i].size());
+    for (size_t j = 0; j < d_synthons[i].size(); ++j) {
+      synthonMolCopies[i].emplace_back(copySynthon(i, j));
+    }
+  }
+  return synthonMolCopies;
+}
+
+void SynthonSet::initializeSearchOrders() {
+  if (d_substructureSearchOrders.empty()) {
+    d_substructureSearchOrders = orderSynthonsForSearch(
+        [](const Synthon *synth1, const Synthon *synth2) -> bool {
+          return synth1->getSearchMol()->getNumAtoms() <
+                 synth2->getSearchMol()->getNumAtoms();
+        });
+  }
+  if (d_rascalSearchOrders.empty()) {
+    d_rascalSearchOrders = orderSynthonsForSearch(
+        [](const Synthon *synth1, const Synthon *synth2) -> bool {
+          return synth1->getSearchMol()->getNumAtoms() +
+                     synth1->getSearchMol()->getNumBonds() <
+                 synth2->getSearchMol()->getNumAtoms() +
+                     synth2->getSearchMol()->getNumBonds();
+        });
+  }
+  if (hasFingerprints() && d_fingerprintSearchOrders.empty()) {
+    d_fingerprintSearchOrders = orderSynthonsForSearch(
+        [](const Synthon *synth1, const Synthon *synth2) -> bool {
+          return synth1->getFP()->getNumOnBits() <
+                 synth2->getFP()->getNumOnBits();
+        });
+  }
+}
+
+std::vector<std::vector<size_t>> SynthonSet::orderSynthonsForSearch(
+    const std::function<bool(const Synthon *synth1, const Synthon *synth2)>
+        &cmp) {
+  std::vector<std::vector<size_t>> synthonOrders(d_synthons.size());
+  for (size_t i = 0; i < d_synthons.size(); ++i) {
+    synthonOrders[i].resize(d_synthons[i].size());
+    std::iota(synthonOrders[i].begin(), synthonOrders[i].end(), 0);
+  }
+
+  for (size_t i = 0; i < d_synthons.size(); ++i) {
+    std::vector<std::pair<const Synthon *, size_t>> synthons(
+        d_synthons[i].size());
+    for (size_t j = 0; j < d_synthons[i].size(); ++j) {
+      synthons[j] = std::make_pair(d_synthons[i][j].second, j);
+    }
+    std::ranges::sort(synthons,
+                      [&](const std::pair<const Synthon *, size_t> &a,
+                          const std::pair<const Synthon *, size_t> &b) -> bool {
+                        return cmp(a.first, b.first);
+                      });
+    synthonOrders[i].resize(synthons.size());
+    for (size_t j = 0; j < d_synthons[i].size(); ++j) {
+      synthonOrders[i][j] = synthons[j].second;
+    }
+  }
+  return synthonOrders;
+}
+
+std::unique_ptr<SampleMolRec> SynthonSet::makeSampleMolecule(
+    Synthon *synthon) const {
+  size_t synthonSetNum = 0;
+  size_t synthonIdx = 0;
+  bool foundIt = false;
+  for (size_t i = 0; i < d_synthons.size(); ++i) {
+    for (size_t j = 0; j < d_synthons[i].size(); ++j) {
+      if (synthon == d_synthons[i][j].second) {
+        synthonSetNum = i;
+        synthonIdx = j;
+        foundIt = true;
+        break;
+      }
+    }
+    if (foundIt) {
+      break;
+    }
+  }
+  auto sampleMol = std::make_unique<SampleMolRec>();
+  if (!foundIt) {
+    return sampleMol;
+  }
+
+  std::vector<size_t> exSynthons(d_synthons.size(), 0);
+  exSynthons[synthonSetNum] = synthonIdx;
+  if (!d_substructureSearchOrders.empty()) {
+    for (size_t i = 0; i < d_substructureSearchOrders.size(); ++i) {
+      if (i != synthonSetNum) {
+        exSynthons[i] = d_substructureSearchOrders[i].front();
+      }
+    }
+  }
+  sampleMol->d_synthonSet = this;
+  sampleMol->d_synthonNums = exSynthons;
+  sampleMol->d_synthon = synthon;
+  sampleMol->d_synthonSetNum = synthonSetNum;
+  for (size_t i = 0; i < d_synthons.size(); ++i) {
+    sampleMol->d_numAtoms +=
+        d_synthons[i][exSynthons[i]].second->getNumHeavyAtoms();
+  }
+
+  return sampleMol;
+}
+
+namespace {
+void addJoinInfo(Atom *atom, unsigned int isotopeNum) {
+  if (!atom->hasProp("HoldsJoin")) {
+    atom->setProp<std::string>("HoldsJoin", std::to_string(isotopeNum));
+  } else {
+    std::string joins = atom->getProp<std::string>("HoldsJoin");
+    joins += "_" + std::to_string(isotopeNum);
+    atom->setProp<std::string>("HoldsJoin", joins);
+  }
+}
+
+}  // namespace
+
+std::unique_ptr<ROMol> SynthonSet::buildMolecule(
+    const std::vector<size_t> &synthonNums) const {
+  auto combMol = std::make_unique<ROMol>();
+  std::string molName = "";
+  for (size_t i = 0; i < synthonNums.size(); ++i) {
+    auto synthMol = copySynthon(i, synthonNums[i]);
+    for (auto atom : synthMol->atoms()) {
+      if (!atom->getAtomicNum() && atom->getIsotope()) {
+        for (auto nbr : synthMol->atomNeighbors(atom)) {
+          addJoinInfo(nbr, atom->getIsotope());
+          addJoinInfo(atom, atom->getIsotope());
+        }
+      }
+    }
+    combMol.reset(combineMols(*combMol, *synthMol));
+    std::string sep = i ? ";" : "";
+    molName += sep + d_synthons[i][synthonNums[i]].first;
+  }
+  MolzipParams mzparams;
+  mzparams.label = MolzipLabel::Isotope;
+  combMol->setProp<std::string>(common_properties::_Name, molName);
+  try {
+    auto sampleMol = molzip(*combMol, mzparams);
+    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(sampleMol.get()));
+    return sampleMol;
+  } catch (std::exception &e) {
+    std::string msg("Error:: in reaction " + getId() +
+                    " :: building molecule from synthons :");
+    for (size_t i = 0; i < synthonNums.size(); ++i) {
+      std::string sep = i ? " and " : " ";
+      msg += sep + d_synthons[i][synthonNums[i]].first + " (" +
+             d_synthons[i][synthonNums[i]].second->getSmiles() + ")";
+    }
+    msg += "\n" + std::string(e.what()) + "\n";
+    BOOST_LOG(rdErrorLog) << msg;
+    throw(e);
+  }
 }
 
 void SynthonSet::assessRingFormers() {

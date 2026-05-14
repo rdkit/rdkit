@@ -12,8 +12,10 @@
 #define RDKIT_SYNTHONSPACESEARCHDETAILS_H
 
 #include <chrono>
+#include <limits>
 #include <vector>
 
+#include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
 #include <RDGeneral/export.h>
 #include <DataStructs/ExplicitBitVect.h>
@@ -23,7 +25,11 @@ using TimePoint = std::chrono::time_point<Clock>;
 
 namespace RDKit {
 class ROMol;
-namespace SynthonSpaceSearch::details {
+class ProgressBar;
+namespace SynthonSpaceSearch {
+struct SampleMolRec;
+
+namespace details {
 
 RDKIT_SYNTHONSPACESEARCH_EXPORT bool checkTimeOut(const TimePoint *endTime);
 
@@ -41,21 +47,22 @@ permMFromN(unsigned int m, unsigned int n);
 // the search space as there's no point making more fragments than that.
 // Any complex query atoms will be stripped out of the fragments and replaced
 // by a simple atom query.
-RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::shared_ptr<ROMol>>>
 splitMolecule(const ROMol &query, unsigned int maxNumFrags,
               const std::uint64_t maxNumFragSets, const TimePoint *endTime,
-              const int numThreads, bool &timedOut);
+              const int numThreads, const FragSetUniquifyMode &uniquifyMode,
+              bool &timedOut);
 // Counts the number of [1*], [2*]...[4*] in the string.
 RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const ROMol &mol);
 
 // Return a bitset for each fragment giving the connector patterns
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<boost::dynamic_bitset<>>
-getConnectorPatterns(const std::vector<std::unique_ptr<ROMol>> &fragSet);
+getConnectorPatterns(const std::vector<std::shared_ptr<ROMol>> &fragSet);
 
 // Return a bitset giving the different connector types in this
 // molecule.
 RDKIT_SYNTHONSPACESEARCH_EXPORT boost::dynamic_bitset<> getConnectorPattern(
-    const std::vector<std::unique_ptr<ROMol>> &fragSet);
+    const std::vector<std::shared_ptr<ROMol>> &fragSet);
 
 // Gets the permutations of connector numbers and the atoms they should
 // be applied to in the molFrags.
@@ -76,7 +83,7 @@ std::vector<std::vector<boost::dynamic_bitset<>>> getConnectorPermutations(
     const std::vector<boost::dynamic_bitset<>> &fragConnPatts,
     const boost::dynamic_bitset<> &reactionConns);
 
-// If all bits in one of the bitsets is unset, it means that nothing matched
+// If all bits in one of the bitsets is unset, it means that no fragemnt matched
 // that synthon.  If at least one of the bitsets has a set bit, all products
 // incorporating the synthon with no bits set must match the query so
 // should be used because the query matches products that don't incorporate
@@ -145,6 +152,9 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT bool removeQueryAtoms(RWMol &mol);
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
     const std::string &reactionId, const std::vector<std::string> &fragIds);
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
+    const std::string &reactionId,
+    const std::vector<const std::string *> &fragIds);
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
     const RDKit::SynthonSpaceSearch::SynthonSpaceHitSet *hitset,
     const std::vector<size_t> &fragNums);
 // Zip the fragments together to make a molecule.  Assumes the connection
@@ -155,7 +165,7 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> buildProduct(
 // Make a map that has all the fragments with the same SMILES
 // in a vector keyed by that SMILES.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::map<std::string, std::vector<ROMol *>>
-mapFragsBySmiles(std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
+mapFragsBySmiles(std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
                  bool &cancelled);
 
 // Count the number of chiral atoms, both specified and unspecified i.e. any
@@ -170,7 +180,44 @@ mapFragsBySmiles(std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
 RDKIT_SYNTHONSPACESEARCH_EXPORT unsigned int countChiralAtoms(
     ROMol &mol, unsigned int *numExcDummies = nullptr);
 
-}  // namespace SynthonSpaceSearch::details
+// Check if there's an atom or bond that findPotentialStereo
+// reports that doesn't have a specified configuration.
+RDKIT_SYNTHONSPACESEARCH_EXPORT bool hasUnspecifiedStereo(ROMol &mol);
+
+// Make sure the shapes are at least simThreshold combination tanimoto apart.
+RDKIT_SYNTHONSPACESEARCH_EXPORT void pruneShapes(ShapeSet &shapeSet,
+                                                 double simThreshold);
+
+// Generate conformers for the molecule passed in, including enumerating
+// stereoisomers if requested.
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::unique_ptr<RWMol>>
+generateIsomerConformers(
+    const ROMol &mol, unsigned int numConformers, bool enumerateStereo,
+    const EnumerateStereoisomers::StereoEnumerationOptions &enumOpts,
+    DGeomHelpers::EmbedParameters &dgParams,
+    UserConfGenerator &userConfGenerator,
+    unsigned int maxStereoCenters = std::numeric_limits<unsigned int>::max());
+
+// Trim the molecule down to the minimum needed to do a sensible conformation
+// expansion for the atoms with property molNum=molNum.
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<RWMol> trimSampleMol(
+    const ROMol &mol, size_t molNum);
+
+// Make the synthon shapes for the given molecules based on the passed in
+// synthons.  The synthon of interest in each molecule is from the
+// synthSetNum vector of the synthons.  Works in parallel on the number of
+// threads given in shapeParams.
+RDKIT_SYNTHONSPACESEARCH_EXPORT void makeShapesFromMols(
+    std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
+    DGeomHelpers::EmbedParameters &dgParams, ShapeBuildParams &shapeBuildParams,
+    std::unique_ptr<ProgressBar> &pbar);
+
+RDKIT_SYNTHONSPACESEARCH_EXPORT void sortAndUniquifyToTry(
+    std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
+        &toTry);
+
+}  // namespace details
+}  // namespace SynthonSpaceSearch
 }  // namespace RDKit
 
 #endif  // RDKIT_SYNTHONSPACESEARCHDETAILS_H

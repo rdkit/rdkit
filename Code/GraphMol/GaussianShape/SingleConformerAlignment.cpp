@@ -22,21 +22,21 @@
 #include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
 #include <GraphMol/GaussianShape/SingleConformerAlignment.h>
 
-constexpr int D = 4;
-
 namespace RDKit {
 namespace GaussianShape {
 
 SingleConformerAlignment::SingleConformerAlignment(
-    const std::vector<double> &ref, const int *refTypes,
-    const boost::dynamic_bitset<> *refCarbonRadii, int nRefShape, int nRefColor,
-    double refShapeVol, double refColorVol, const std::vector<double> &fit,
+    const std::vector<double> &ref, const std::vector<double> &refAlphas,
+    const int *refTypes, const boost::dynamic_bitset<> *refCarbonRadii,
+    int nRefShape, int nRefColor, double refShapeVol, double refColorVol,
+    const std::vector<double> &fit, const std::vector<double> &fitAlphas,
     const int *fitTypes, const boost::dynamic_bitset<> *fitCarbonRadii,
     int nFitShape, int nFitColor, double fitShapeVol, double fitColorVol,
     const std::array<double, 7> &initQuatTrans, OptimMode optimMode,
     double simAlpha, double simBeta, double mixingParam, bool useCutoff,
     double distCutoff, double shapeConvergenceCriterion, unsigned int maxIts)
     : d_ref(ref),
+      d_refAlphas(refAlphas),
       d_refTypes(refTypes),
       d_refCarbonRadii(refCarbonRadii),
       d_nRefShape(nRefShape),
@@ -44,6 +44,7 @@ SingleConformerAlignment::SingleConformerAlignment(
       d_refShapeVol(refShapeVol),
       d_refColorVol(refColorVol),
       d_fit(fit),
+      d_fitAlphas(fitAlphas),
       d_fitTypes(fitTypes),
       d_fitCarbonRadii(fitCarbonRadii),
       d_nFitShape(nFitShape),
@@ -88,16 +89,18 @@ void SingleConformerAlignment::getFinalQuatTrans(
 std::array<double, 5> SingleConformerAlignment::calcScores(
     const double *ref, const double *fit, const bool includeColor) {
   std::array<double, 5> scores{0.0, 0.0, 0.0, 0.0, 0.0};
-  scores[3] = calcVolAndGrads(ref, d_nRefShape, d_refCarbonRadii, fit,
+  scores[3] = calcVolAndGrads(ref, d_refAlphas.data(), d_nRefShape,
+                              d_refCarbonRadii, fit, d_fitAlphas.data(),
                               d_nFitShape, d_fitCarbonRadii, d_gradConverters,
                               d_useCutoff, d_distCutoff2, nullptr, nullptr);
   if (d_nRefColor && d_nFitColor &&
       (d_optimMode == OptimMode::SHAPE_PLUS_COLOR || includeColor)) {
-    scores[4] = calcVolAndGrads(ref + d_nRefShape * D, d_nRefColor,
-                                d_refTypes + d_nRefShape, fit + d_nFitShape * D,
-                                d_nFitColor, d_fitTypes + d_nFitShape,
-                                d_nFitShape, d_gradConverters, d_useCutoff,
-                                d_distCutoff2, nullptr, nullptr);
+    scores[4] = calcVolAndGrads(
+        ref + d_nRefShape * 3, d_refAlphas.data() + d_nRefShape, d_nRefColor,
+        d_refTypes + d_nRefShape, fit + d_nFitShape * 3,
+        d_fitAlphas.data() + d_nFitShape, d_nFitColor, d_fitTypes + d_nFitShape,
+        d_nFitShape, d_gradConverters, d_useCutoff, d_distCutoff2, nullptr,
+        nullptr);
   }
   scores = calcScores(scores[3], scores[4], includeColor);
   return scores;
@@ -144,8 +147,8 @@ void cartToQuatGrads(const double *quat, const double *mol, const int numBPts,
   const auto s = quat[2];
   const auto u = quat[3];
   const auto coef = 1.0 / (q * q + r * r + s * s + u * u);
-  for (int i = 0, j = gradConvOffset, k = 12 * gradConvOffset; i < 4 * numBPts;
-       i += 4, ++j, k += 12) {
+  for (int i = 0, j = gradConvOffset, k = 12 * gradConvOffset; i < 3 * numBPts;
+       i += 3, ++j, k += 12) {
     const auto x = mol[i];
     const auto y = mol[i + 1];
     const auto z = mol[i + 2];
@@ -178,9 +181,11 @@ void cartToQuatGrads(const double *quat, const double *mol, const int numBPts,
 }  // namespace
 
 // atoms/shape features
-double calcVolAndGrads(const double *ref, const int numRefPts,
+double calcVolAndGrads(const double *ref, const double *refAlphas,
+                       const int numRefPts,
                        const boost::dynamic_bitset<> *refCarbonRadii,
-                       const double *fit, const int numFitPts,
+                       const double *fit, const double *fitAlphas,
+                       const int numFitPts,
                        const boost::dynamic_bitset<> *fitCarbonRadii,
                        std::vector<double> &gradConverters,
                        const bool useCutoff, const double distCutoff2,
@@ -197,10 +202,13 @@ double calcVolAndGrads(const double *ref, const int numRefPts,
   // both as being all carbon.  There isn't enough information to do
   // otherwise.
   const bool allCarbon = !refCarbonRadii || !fitCarbonRadii;
-  for (int i = 0, i_idx = 0; i < numRefPts * 4; i += 4, i_idx++) {
-    const auto ai = ref[i + 3];
-    for (int j = 0, j_idx = 0, k = 0; j < numFitPts * 4;
-         j += 4, j_idx++, k += 12) {
+  for (int i = 0, i_idx = 0; i < numRefPts * 3; i += 3, i_idx++) {
+    const auto ai = refAlphas[i_idx];
+    if (ai < 0.0) {
+      continue;
+    }
+    for (int j = 0, j_idx = 0, k = 0; j < numFitPts * 3;
+         j += 3, j_idx++, k += 12) {
       const auto dx = ref[i] - fit[j];
       const auto dy = ref[i + 1] - fit[j + 1];
       const auto dz = ref[i + 2] - fit[j + 2];
@@ -208,7 +216,10 @@ double calcVolAndGrads(const double *ref, const int numRefPts,
       if (useCutoff && d2 > distCutoff2) {
         continue;
       }
-      const auto aj = fit[j + 3];
+      const auto aj = fitAlphas[j_idx];
+      if (aj < 0.0) {
+        continue;
+      }
       const auto mult = -(ai * aj) / (ai + aj);
       const auto kij = exp(mult * d2);
       if (allCarbon || ((*refCarbonRadii)[i_idx] && (*fitCarbonRadii)[j_idx])) {
@@ -247,8 +258,9 @@ double calcVolAndGrads(const double *ref, const int numRefPts,
 }
 
 // color features
-double calcVolAndGrads(const double *ref, const int numRefPts,
-                       const int *refTypes, const double *fit,
+double calcVolAndGrads(const double *ref, const double *refAlphas,
+                       const int numRefPts, const int *refTypes,
+                       const double *fit, const double *fitAlphas,
                        const int numFitPts, const int *fitTypes,
                        const int numFitShape,
                        std::vector<double> &gradConverters,
@@ -259,11 +271,11 @@ double calcVolAndGrads(const double *ref, const int numRefPts,
     cartToQuatGrads(quat, fit, numFitPts, gradConverters, numFitShape);
   }
 
-  for (int i = 0, i_idx = 0; i < numRefPts * 4; i += 4, i_idx++) {
-    const auto ai = ref[i + 3];
+  for (int i = 0, i_idx = 0; i < numRefPts * 3; i += 3, i_idx++) {
+    const auto ai = refAlphas[i_idx];
     const auto aType = refTypes[i_idx];
-    for (int j = 0, j_idx = 0, k = 0; j < numFitPts * 4;
-         j += 4, j_idx++, k += 12) {
+    for (int j = 0, j_idx = 0, k = 0; j < numFitPts * 3;
+         j += 3, j_idx++, k += 12) {
       const auto bType = fitTypes[j_idx];
       if (aType != bType) {
         continue;
@@ -275,7 +287,7 @@ double calcVolAndGrads(const double *ref, const int numRefPts,
       if (useCutoff && d2 > distCutoff2) {
         continue;
       }
-      const auto aj = fit[j + 3];
+      const auto aj = fitAlphas[j_idx];
       const auto mult = -(ai * aj) / (ai + aj);
       const auto kij = exp(mult * d2);
 
@@ -333,14 +345,16 @@ void SingleConformerAlignment::calcVolumeAndGradients(
   gradients[0] = gradients[1] = gradients[2] = gradients[3] = gradients[4] =
       gradients[5] = gradients[6] = 0.0;
   shapeOvlpVol = calcVolAndGrads(
-      d_refTemp.data(), d_nRefShape, d_refCarbonRadii, d_fitTemp.data(),
-      d_nFitShape, d_fitCarbonRadii, d_gradConverters, d_useCutoff,
-      d_distCutoff2, quatTrans.data(), gradients.data());
+      d_refTemp.data(), d_refAlphas.data(), d_nRefShape, d_refCarbonRadii,
+      d_fitTemp.data(), d_fitAlphas.data(), d_nFitShape, d_fitCarbonRadii,
+      d_gradConverters, d_useCutoff, d_distCutoff2, quatTrans.data(),
+      gradients.data());
   if (d_optimMode == OptimMode::SHAPE_PLUS_COLOR) {
     std::array<double, 7> colorGrads{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     colorOvlpVol = calcVolAndGrads(
-        d_refTemp.data() + 4 * d_nRefShape, d_nRefColor,
-        d_refTypes + d_nRefShape, d_fitTemp.data() + 4 * d_nFitShape,
+        d_refTemp.data() + 3 * d_nRefShape, d_refAlphas.data() + d_nRefShape,
+        d_nRefColor, d_refTypes + d_nRefShape,
+        d_fitTemp.data() + 3 * d_nFitShape, d_fitAlphas.data() + d_nFitShape,
         d_nFitColor, d_fitTypes + d_nFitShape, d_nFitShape, d_gradConverters,
         d_useCutoff, d_distCutoff2, quatTrans.data(), colorGrads.data());
     // The color gradients are normally dwarfed by the shape gradients, so
@@ -559,7 +573,7 @@ void reduceStep(const std::array<double, 7> &grad,
 // code from
 // https://github.com/ncbi/pubchem-align3d/blob/main/shape_neighbor.cpp
 // Original Authors:  Evan Bolton, Leonid Zaslavsky, Paul Thiessen
-bool SingleConformerAlignment::optimise(unsigned int maxIters) {
+bool SingleConformerAlignment::optimise(const unsigned int maxIters) {
   const double maxQuaternionStep = 0.075;   // Maximum step size for quaternion
   const double maxTranslationStep = 0.500;  // Maximum step size for translation
   const double minQuaternionStep =

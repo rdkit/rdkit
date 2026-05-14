@@ -15,6 +15,7 @@
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/RascalMCES/RascalMCES.h>
@@ -23,6 +24,7 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <boost/multiprecision/number.hpp>
 #include <boost/parameter/aux_/pp_impl/match.hpp>
 
 #include <catch2/catch_all.hpp>
@@ -151,6 +153,7 @@ TEST_CASE("S Random Hits") {
   params.maxHits = 100;
   params.randomSample = true;
   params.randomSeed = 1;
+  params.numThreads = -1;
   auto results =
       synthonspace.substructureSearch(*queryMol, matchParams, params);
   std::map<std::string, int> libCounts;
@@ -186,6 +189,7 @@ TEST_CASE("S Later hits") {
   SubstructMatchParameters matchParams;
   SynthonSpaceSearchParams params;
   params.maxHits = 200;
+  params.numThreads = -1;
   auto results =
       synthonspace.substructureSearch(*queryMol, matchParams, params);
   std::vector<std::string> hitNames1;
@@ -232,6 +236,7 @@ TEST_CASE("S Complex query") {
   SubstructMatchParameters matchParams;
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
+  params.numThreads = -1;
   auto results =
       synthonspace.substructureSearch(*queryMol, matchParams, params);
   CHECK(results.getHitMolecules().size() == 7649);
@@ -264,6 +269,7 @@ TEST_CASE("FP Biggy") {
   SynthonSpaceSearchParams params;
   params.approxSimilarityAdjuster = 0.2;
   params.maxHits = -1;
+  params.numThreads = -1;
   for (size_t i = 0; i < smis.size(); ++i) {
     auto queryMol = v2::SmilesParse::MolFromSmiles(smis[i]);
     auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
@@ -287,6 +293,8 @@ TEST_CASE("FP Random Hits") {
   params.maxHits = 100;
   params.randomSample = true;
   params.randomSeed = 1;
+  params.numThreads = -1;
+  params.approxSimilarityAdjuster = 0.1;
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
@@ -319,6 +327,7 @@ TEST_CASE("Timeout") {
   params.similarityCutoff = 0.3;
   params.fragSimilarityAdjuster = 0.3;
   params.timeOut = 2;
+  params.numThreads = -1;
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
 
@@ -345,12 +354,11 @@ TEST_CASE("FP Approx Similarity") {
   SynthonSpace synthonspace;
   synthonspace.readDBFile(binName);
   SynthonSpaceSearchParams params;
-  // The addFP and subtractFP are built from a random selection of
-  // products so do occasionally vary, so use a fixed seed.
   params.randomSeed = 1;
   params.similarityCutoff = 0.5;
   params.timeOut = 0;
   params.maxHits = 1000;
+  params.numThreads = -1;
 
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       RDKitFP::getRDKitFPGenerator<std::uint64_t>());
@@ -361,7 +369,7 @@ TEST_CASE("FP Approx Similarity") {
   params.approxSimilarityAdjuster = 0.05;
   auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(results.getHitMolecules().size() == 546);
-  CHECK(results.getMaxNumResults() == 1467);
+  CHECK(results.getMaxNumResults() == 1478);
 
   // A tighter adjuster misses more hits.
   params.approxSimilarityAdjuster = 0.01;
@@ -370,6 +378,7 @@ TEST_CASE("FP Approx Similarity") {
 
   // This is the actual number of hits achievable.
   params.approxSimilarityAdjuster = 0.25;
+  params.maxHits = -1;
   results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(results.getHitMolecules().size() == 981);
   tidy5567Binary();
@@ -392,7 +401,7 @@ TEST_CASE("Rascal Biggy") {
   const std::vector<size_t> maxRes{376110, 278747, 79833, 34817, 190, 45932};
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
-  params.numThreads = 1;
+  params.numThreads = -1;
   RascalOptions rascalOptions;
 
   for (size_t i = 0; i < smis.size(); ++i) {
@@ -402,65 +411,3 @@ TEST_CASE("Rascal Biggy") {
     CHECK(results.getMaxNumResults() == maxRes[i]);
   }
 }
-
-#if 0
-// Whilst the code is still under active development, it's convenient to have this
-// in here.  It can come out later.
-TEST_CASE("FP Binary File2") {
-  REQUIRE(rdbase);
-  std::string fName(rdbase);
-  SynthonSpace synthonspace;
-  std::string libName =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
-  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
-      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
-  synthonspace.readDBFile(libName, -1);
-  CHECK(synthonspace.getNumReactions() == 1008);
-  CHECK(synthonspace.getNumProducts() == 70575407790);
-  std::cout << synthonspace.getNumReactions() << std::endl;
-  std::cout << synthonspace.getNumProducts() << std::endl;
-  SearchResults results;
-  auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-  CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
-  CHECK(results.getHitMolecules().size() == 211);
-  CHECK(results.getMaxNumResults() == 1397664);
-}
-#endif
-
-#if 0
-// Whilst the code is still under active development, it's convenient to have this
-// in here.  It can come out later.
-TEST_CASE("FP Freedom Space") {
-  std::string libName =
-      "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit.spc";
-  // std::string libName =
-  // "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
-  // libName =
-  // "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_1_rdkit.spc";
-  SynthonSpace synthonspace;
-  synthonspace.readDBFile(libName);
-  auto m =
-      "C=CC(=O)Nc1cc(Nc2nccc(-c3cn(C)c4ccccc34)n2)c(OC)cc1N(C)CCN(C)C"_smiles;
-  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
-      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
-  SynthonSpaceSearchParams params;
-  params.similarityCutoff = 0.4;
-  params.maxHits = 1000;
-  params.fragSimilarityAdjuster = 0.01;
-  params.approxSimilarityAdjuster = 0.05;
-  params.numThreads = -1;
-  SearchResults results;
-  results = synthonspace.fingerprintSearch(*m, *fpGen, params);
-  std::cout << "Number of results : " << results.getHitMolecules().size()
-            << std::endl;
-  int i = 0;
-  for (const auto &mol : results.getHitMolecules()) {
-    if (i < 10 || i > params.maxHits - 10) {
-      std::cout << i << " : " << MolToSmiles(*mol) << " : "
-                << mol->getProp<std::string>(common_properties::_Name) << "  "
-                << mol->getProp<double>("Similarity") << std::endl;
-    }
-    ++i;
-  }
-}
-#endif

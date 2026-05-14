@@ -14,6 +14,8 @@
 #include <string>
 
 #include <RDGeneral/export.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonShapeInput.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearchHelpers.h>
 
 namespace RDKit {
 class Atom;
@@ -51,7 +53,11 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
     return d_numChiralAtomsExcDummies;
   }
   double getMolWt() const { return d_molWt; }
-
+  void updateMaxSynthonSetSize(unsigned int newVal);
+  unsigned int getMaxSynthonSetSize() const { return d_maxSynthonSetSize; }
+  void clearShapes();
+  void setShapes(std::unique_ptr<SynthonShapeInput> shapes);
+  const std::unique_ptr<SynthonShapeInput> &getShapes() const;
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
   void readFromDBStream(std::istream &is, std::uint32_t version);
@@ -72,6 +78,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   // searching.  Its type is known by the SynthonSpace that holds the
   // Synthon.
   std::unique_ptr<ExplicitBitVect> dp_FP{nullptr};
+  std::unique_ptr<SynthonShapeInput> dp_shapes;
+
   // SMILES strings of any connector regions.  Normally there will only
   // be 1 or 2.  These are derived from the search mol.
   std::vector<std::shared_ptr<ROMol>> d_connRegions;
@@ -84,6 +92,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   // more dummies attached.
   unsigned int d_numChiralAtomsExcDummies{0};
   double d_molWt{0.0};
+  // The smallest SynthonSet size this synthon is in, where the SynthonSet
+  // size is the number of Synthons in 1 reaction, so 2-4 probably.
+  unsigned int d_maxSynthonSetSize{0};
 
   // Once the search molecule has been added, get the connector regions,
   // connector fingerprint etc.
