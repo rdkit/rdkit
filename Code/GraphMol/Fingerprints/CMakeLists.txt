@@ -37,3 +37,7 @@ rdkit_catch_test(fpGenTestCatch fpgen_catch_tests.cpp LINK_LIBRARIES Fingerprint
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()
