@@ -3348,9 +3348,8 @@ There is also a convenience function for performing the conversion in one go:
 
 .. doctest::
 
-  >>> from rdkit.Chem import rdGaussianShape
   >>> fpgen = rdFingerprintGenerator.GetMorganGenerator(fpSize=2048)
-  >>> shapeBuildOptions = rdGaussianShape.ShapeBuildParams()
+  >>> shapeBuildOptions = rdSynthonSpaceSearch.ShapeBuildParams()
   >>> rdSynthonSpaceSearch.ConvertTextToDBFile(textFile, dbFile, fpgen, shapeBuildOptions)
 
 although under the hood it does exactly the same steps.  The same database can have fingerprints, shapes or both.
