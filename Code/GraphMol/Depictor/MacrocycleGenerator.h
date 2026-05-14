@@ -76,6 +76,12 @@ struct AngleConstraint {
   double targetAngle;  //!< Target angle in radians
 };
 
+//! Struct to hold substituent size information
+struct SubstituentInfo {
+  std::map<size_t, int>
+      sizesByPosition;  //!< Map: macrocycle position -> total substituent size
+};
+
 //! Generate 2D coordinates for macrocycles using turn-based encoding
 /*!
   This class generates macrocycle coordinates by encoding them as a sequence
@@ -365,6 +371,28 @@ std::vector<size_t> findSharedPositions(const std::vector<int> &macrocycleRing,
 bool verifyAndReorderSharedPositions(std::vector<size_t> &sharedPositions,
                                      size_t macrocycleSize);
 
+//! Generate turn constraints for fused rings
+/*!
+  Generates ready-to-use TurnConstraint objects for fused ring geometry.
+  Pattern: first=external(R), middle=internal(L), last=external(R)
+
+  For small rings: returns 1 constraint with full pattern
+  For macrocycles: returns 2 constraints (first and last positions only)
+
+  \param sharedPositions: Positions in macrocycle where fusion occurs (must be
+  contiguous) \param ringSize: Size of the fused ring (for labeling) \param
+  isMacrocycle: True if the fused ring is a macrocycle \return Vector of
+  TurnConstraint objects ready to add to MacrocycleGenerator
+
+  Examples:
+  - Small ring, 2 shared atoms: 1 constraint with pattern {R, R}
+  - Small ring, 3 shared atoms: 1 constraint with pattern {R, L, R}
+  - Macrocycle, 3 shared atoms: 2 constraints (first pos: {R}, last pos: {R})
+*/
+std::vector<TurnConstraint> generateFusionConstraints(
+    const std::vector<size_t> &sharedPositions, size_t ringSize,
+    bool isMacrocycle);
+
 //! Track endpoint information for shared vertex constraint computation
 /*!
   Records information about an endpoint of a shared pattern (RR, RLR, RLLR).
@@ -464,6 +492,20 @@ void maybeReflectSymmetricFusedRings(const RDKit::ROMol &mol,
                                      const RDKit::VECT_INT_VECT &fusedRings,
                                      RDGeom::INT_POINT2D_MAP &eatoms);
 
+//! Refine template-matched macrocycle coordinates with angle constraints
+/*!
+  For template-matched macrocycles with fused small rings or triple bonds,
+  applies angle constraint refinement to ensure ideal geometry.
+
+  \param mol: The molecule
+  \param macrocycleRing: Atom indices in the macrocycle
+  \param allRings: All rings in the molecule (macrocycle will be filtered out)
+  \param coords: Coordinate map (modified in-place)
+*/
+void maybeRefineTemplateMatchedMacrocycle(
+    const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
+    const RDKit::VECT_INT_VECT &allRings, RDGeom::INT_POINT2D_MAP &coords);
+
 //! Generate de-novo 2D coordinates for a macrocycle using turn-based encoding
 /*!
   Uses MacrocycleGenerator to create coordinates that satisfy geometric
@@ -481,6 +523,24 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
     const RDKit::VECT_INT_VECT &allRings,
     const std::map<size_t, int> &substituentSizesByPosition,
     double bondLength = RDDepict::BOND_LEN);
+
+//! Match macrocycle to a template and extract coordinates
+/*!
+  Attempts to match the macrocycle to a template from the coordinate template
+  library. If a match is found, the coordinates are extracted and refined.
+
+  \param mol: The molecule
+  \param macrocycleRing: Atom indices in the macrocycle
+  \param allRings: All rings in the molecule
+  \param substituentSizesByPosition: Map of position -> total substituent size
+  \param coords: Output coordinate map (populated on success)
+  \return true if a template match was found, false otherwise
+*/
+bool matchToTemplateMacrocycle(
+    const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
+    const RDKit::VECT_INT_VECT &allRings,
+    const std::map<size_t, int> &substituentSizesByPosition,
+    RDGeom::INT_POINT2D_MAP &coords);
 
 }  // namespace RDDepict
 

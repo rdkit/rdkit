@@ -778,9 +778,10 @@ struct TemplateMatch {
   double score;
 };
 
-// Helper: Identify all small rings fused to the macrocycle
-// Returns vector of FusedRingInfo for each small ring
-static std::vector<FusedRingInfo> identifyFusedSmallRings(
+// Helper: Identify all rings fused to the macrocycle
+// Returns vector of FusedRingInfo for each fused ring (both small rings and
+// macrocycles)
+static std::vector<FusedRingInfo> identifyFusedRings(
     const RDKit::INT_VECT &macrocycleRing,
     const RDKit::VECT_INT_VECT &allRings) {
   std::vector<FusedRingInfo> fusedRings;
@@ -790,21 +791,30 @@ static std::vector<FusedRingInfo> identifyFusedSmallRings(
   }
 
   for (const auto &ring : allRings) {
-    // Skip any macrocycles
-    if (ring.size() > MACROCYCLE_SIZE_THRESHOLD) {
-      continue;
-    }
+    size_t ring_size = ring.size();
 
     // Find shared atoms
     RDKit::INT_VECT shared;
     RDKit::Intersect(macrocycleRing, ring, shared);
-
-    // Check if small ring (3-7 atoms) with 2, 3, or 4 shared atoms
-    size_t ring_size = ring.size();
     size_t sharedCount = shared.size();
 
-    if (ring_size >= 3 && ring_size <= 7 &&
-        (sharedCount == 2 || sharedCount == 3 || sharedCount == 4)) {
+    bool isMacrocycle = (ring.size() > MACROCYCLE_SIZE_THRESHOLD);
+
+    // Check fusion criteria based on ring type
+
+    // Accept different criteria for small rings vs macrocycles
+    bool validFusion = false;
+    if (isMacrocycle) {
+      // Macrocycle: accept any number of shared atoms (at least 1)
+      validFusion = (sharedCount >= 1);
+    } else {
+      // Small ring: 3-7 atoms with 2, 3, or 4 shared atoms
+      validFusion =
+          (ring_size >= 3 && ring_size <= 7 &&
+           (sharedCount == 2 || sharedCount == 3 || sharedCount == 4));
+    }
+
+    if (validFusion) {
       // Find positions of shared atoms in macrocycle
       std::vector<size_t> positions;
       positions.reserve(sharedCount);
@@ -836,7 +846,6 @@ static SubstituentInfo computeSubstituentInfo(
     const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
     const boost::dynamic_bitset<> &ringAtoms) {
   SubstituentInfo info;
-  info.smallestSize = -1;
 
   for (size_t i = 0; i < macrocycleRing.size(); ++i) {
     auto ringAtomIdx = macrocycleRing[i];
@@ -846,9 +855,6 @@ static SubstituentInfo computeSubstituentInfo(
       if (!ringAtoms.test(nbrIdx) && info.sizesByPosition.count(nbrIdx) == 0) {
         int size = computeSubstituentSize(mol, nbrIdx, ringAtomIdx, ringAtoms);
         info.sizesByPosition[i] += size;  // Also track by position
-        if (info.smallestSize == -1 || size < info.smallestSize) {
-          info.smallestSize = size;
-        }
       }
     }
   }
@@ -883,6 +889,61 @@ static double scoreTemplateMatch(
   return -internalPenalty;
 }
 
+// Helper: Validate fusion constraints against molecule indices
+// Returns true if all constraints match expected geometry (external vs
+// internal)
+template <typename PositionChecker>
+static bool validateFusionConstraints(
+    const std::vector<RDDepict::TurnConstraint> &fusionConstraints,
+    const std::vector<int> &molIndices, size_t sharedCount, bool isMacrocycle,
+    const PositionChecker &positionMatchesType) {
+  if (isMacrocycle) {
+    // Macrocycle: validate only constrained positions (first and last)
+    for (const auto &constraint : fusionConstraints) {
+      // Get the position index (0 to sharedCount-1)
+      size_t posIdx = constraint.position;
+      if (posIdx >= sharedCount) {
+        return false;  // Position out of bounds
+      }
+
+      // Pattern should have exactly 1 element (R or L)
+      if (constraint.pattern.size() != 1) {
+        return false;  // Unexpected pattern size
+      }
+
+      // Check if this position should be internal
+      // R (1) = external, L (-1) = internal
+      bool shouldBeInternal = (constraint.pattern[0] == -1);
+
+      if (!positionMatchesType(molIndices[posIdx], shouldBeInternal)) {
+        return false;  // Invalid fusion geometry
+      }
+    }
+  } else {
+    // Small ring: validate all positions using the pattern
+    if (fusionConstraints.size() != 1) {
+      return false;  // Expected exactly 1 constraint for small rings
+    }
+
+    const auto &pattern = fusionConstraints[0].pattern;
+    if (pattern.size() != sharedCount) {
+      return false;  // Pattern size mismatch
+    }
+
+    // Validate each shared position against expected pattern
+    // R (1) = external, L (-1) = internal
+    for (size_t i = 0; i < sharedCount; ++i) {
+      bool shouldBeInternal = (pattern[i] == -1);
+
+      if (!positionMatchesType(molIndices[i], shouldBeInternal)) {
+        return false;  // Invalid fusion geometry
+      }
+    }
+  }
+
+  return true;  // All constraints validated
+}
+
 // Helper: Check if fusion geometry forms valid pattern to embed fused rings
 // Pattern: first angle is convex, middle angle(s) are concave, last angle is
 // convex This creates a concave indentation where the small ring can fit
@@ -904,10 +965,15 @@ static bool validateFusionGeometry(
   // Check each fused ring
   for (const auto &fused : fusedRings) {
     size_t sharedCount = fused.sharedAtoms.size();
+    bool isMacrocycle = (fused.ringSize > RDDepict::MACROCYCLE_SIZE_THRESHOLD);
 
-    // We handle 2, 3, or 4 shared atoms
-    if (sharedCount != 2 && sharedCount != 3 && sharedCount != 4) {
-      continue;  // Safety check
+    // For small rings: handle 2, 3, or 4 shared atoms
+    // For macrocycles: allow more shared atoms
+    if (!isMacrocycle && (sharedCount < 2 || sharedCount > 4)) {
+      continue;  // Small ring with unusual shared count
+    }
+    if (sharedCount < 1) {
+      continue;  // Need at least 1 shared atom
     }
 
     // Get positions in macrocycle sequence (should match the sequence they have
@@ -918,19 +984,12 @@ static bool validateFusionGeometry(
       continue;  // Safety check
     }
 
-    // make sure positions are consecutive
-    size_t shiftedBy = 0u;
-    for (size_t i = 1; i < positions.size(); ++i) {
-      size_t expected_next = (positions[i - 1] + 1);
-      if (positions[i] != expected_next) {
-        shiftedBy = i;
-        break;
-      }
-    }
-    std::rotate(positions.begin(), positions.begin() + shiftedBy,
-                positions.end());
-
     size_t N = macrocycleRing.size();
+
+    // Verify positions are contiguous and reorder if needed
+    if (!RDDepict::verifyAndReorderSharedPositions(positions, N)) {
+      continue;  // Positions not contiguous, skip this fused ring
+    }
 
     // Helper to check if position matches expected type (internal or external)
     // Uses cachedInfo.is_internal to determine if position should be internal
@@ -973,19 +1032,32 @@ static bool validateFusionGeometry(
       points.push_back(conf.getAtomPos(it->second));
     }
 
-    // Check pattern - only validate the shared atoms
-    // molIndices = [A1(i=0), A2(i=1), ..., An(i=sharedCount-1)]
-    // Pattern for shared atoms only:
-    // - 2 shared (RR): A1=external, A2=external
-    // - 3 shared (RLR): A1=external, A2=internal, A3=external
-    // - 4 shared (RLLR): A1=external, A2=internal, A3=internal, A4=external
-    for (size_t i = 0; i < sharedCount; ++i) {
-      // First and last shared atoms are external, middle are internal
-      bool shouldBeInternal = (i != 0 && i != sharedCount - 1);
+    // Check pattern - validate the shared atoms using same logic as constraint
+    // generation molIndices = [A1(i=0), A2(i=1), ..., An(i=sharedCount-1)]
+    // Expected pattern from generateFusionConstraints():
+    // Small rings:
+    // - 2 shared: A1=external, A2=external
+    // - 3 shared: A1=external, A2=internal, A3=external
+    // - 4 shared: A1=external, A2=internal, A3=internal, A4=external
+    // Macrocycles:
+    // - Only first and last positions are validated (middle unconstrained)
 
-      if (!positionMatchesType(molIndices[i], shouldBeInternal)) {
-        return false;  // Invalid fusion geometry
-      }
+    // Generate dummy shared positions just to extract pattern
+    std::vector<size_t> dummyPositions(sharedCount);
+    for (size_t i = 0; i < sharedCount; ++i) {
+      dummyPositions[i] = i;
+    }
+
+    // Get fusion constraints
+    // For small rings: 1 constraint with full pattern
+    // For macrocycles: 2 constraints (first and last positions)
+    auto fusionConstraints = RDDepict::generateFusionConstraints(
+        dummyPositions, fused.ringSize, isMacrocycle);
+
+    // Validate the constraints against template geometry
+    if (!validateFusionConstraints(fusionConstraints, molIndices, sharedCount,
+                                   isMacrocycle, positionMatchesType)) {
+      return false;  // Invalid fusion geometry
     }
   }
   return true;  // All fusions have valid geometry
@@ -1067,204 +1139,6 @@ static const TemplateMatch *selectBestMatch(
                          return a.score < b.score;
                        });
   return &(*bestMatch);
-}
-
-// attempt to match the macrocycle to a template, even if it means leaving small
-// substituents on internal positions. Fusion geometries are still validated, so
-// that any fused small rings will be put in the correct position outside the
-// macrocycle. If a match is found the angles will be refined to ensure fused
-// small rings have perfectly regular geometries. Returns true if a template was
-// successfully applied, false otherwise.
-bool EmbeddedFrag::matchToTemplateMacrocycle(
-    const RDKit::INT_VECT &macrocycleRing, const RDKit::VECT_INT_VECT &allRings,
-    const SubstituentInfo &subInfo) {
-  // Return early if no template of this size exists
-  CoordinateTemplates &coordinateTemplates =
-      CoordinateTemplates::getRingSystemTemplates();
-  if (!coordinateTemplates.hasTemplateOfSize(macrocycleRing.size())) {
-    return false;
-  }
-
-  // Build ring mol and setup
-  boost::dynamic_bitset<> macrocycleAtoms(dp_mol->getNumAtoms());
-  for (auto aidx : macrocycleRing) {
-    macrocycleAtoms.set(aidx);
-  }
-  RDKit::RWMol ringMol = buildRingMol(dp_mol, macrocycleAtoms);
-
-  // For scoring: include all rings in ringAtoms to match computeSubstituentInfo
-  boost::dynamic_bitset<> ringAtoms = macrocycleAtoms;
-  for (const auto &ring : allRings) {
-    for (auto aidx : ring) {
-      ringAtoms.set(aidx);
-    }
-  }
-
-  // Identify fused rings for geometry validation
-  std::vector<FusedRingInfo> fusedRings;
-  if (!allRings.empty()) {
-    fusedRings = identifyFusedSmallRings(macrocycleRing, allRings);
-  }
-
-  const TemplateMatch *best = nullptr;
-
-  // Process all templates and collect valid matches
-  std::vector<TemplateMatch> all_validMatches;
-  for (const auto &tmpl :
-       coordinateTemplates.getMatchingTemplates(macrocycleRing.size())) {
-    const auto &cachedInfo = getCachedTemplateInfo(tmpl);
-
-    auto [matches, foundBestMatch] =
-        processTemplateMatches(dp_mol, ringMol, tmpl, cachedInfo,
-                               macrocycleRing, fusedRings, ringAtoms, subInfo);
-
-    all_validMatches.insert(all_validMatches.end(), matches.begin(),
-                            matches.end());
-    if (foundBestMatch && !matches.empty()) {
-      best = &all_validMatches.back();
-      break;  // No need to check other templates if we found the best match
-    }
-  }
-  if (best == nullptr) {
-    best = selectBestMatch(all_validMatches);
-  }
-  if (!best) {
-    return false;
-  }
-
-  // Apply template coordinates
-  applyCoordinates(best->templateMol, best->match);
-  maybeRefineTemplateMatchedMacrocycle(macrocycleRing, allRings);
-  // check if fused rings can be flipped to place substitutions outside of the
-  // macrocycle
-  maybeReflectSymmetricFusedRings(macrocycleRing, allRings);
-  return true;
-}
-
-bool EmbeddedFrag::generateMacrocycleCoordinates(
-    const RDKit::INT_VECT &macrocycleRing, const RDKit::VECT_INT_VECT &allRings,
-    const SubstituentInfo &subInfo) {
-  PRECONDITION(dp_mol, "");
-
-  // Call the standalone function in MacrocycleGenerator.cpp
-  auto coords = RDDepict::generateMacrocycleCoordinates(
-      dp_mol, macrocycleRing, allRings, subInfo.sizesByPosition, BOND_LEN);
-
-  if (coords.empty()) {
-    return false;  // Generation failed
-  }
-
-  // Apply generated coordinates
-  applyCoordinates(macrocycleRing, coords);
-
-  // Check if fused rings can be flipped to place substitutions outside
-  maybeReflectSymmetricFusedRings(macrocycleRing, allRings);
-  return true;
-}
-
-// Wrapper function to reflect middle atoms for axially-fused small rings
-// Handles conversion between d_eatoms and INT_POINT2D_MAP
-void EmbeddedFrag::maybeReflectSymmetricFusedRings(
-    const RDKit::INT_VECT &macrocycleRing,
-    const RDKit::VECT_INT_VECT &fusedRings) {
-  PRECONDITION(dp_mol, "");
-
-  // Convert d_eatoms to INT_POINT2D_MAP
-  RDGeom::INT_POINT2D_MAP coordMap;
-  for (const auto &ea : d_eatoms) {
-    coordMap[ea.first] = ea.second.loc;
-  }
-
-  // Call the MacrocycleGenerator function
-  RDDepict::maybeReflectSymmetricFusedRings(*dp_mol, macrocycleRing, fusedRings,
-                                            coordMap);
-
-  // Update d_eatoms with reflected coordinates
-  for (const auto &coord : coordMap) {
-    if (d_eatoms.find(coord.first) != d_eatoms.end()) {
-      d_eatoms[coord.first].loc = coord.second;
-    }
-  }
-}
-
-// For template-matched macrocycles with fused small rings, we can do a quick
-// refinement step to adjust the angles and ensure ideal geometry for the fused
-// rings and for triple bonds (which will become linear with this step). This is
-// a simple local optimization that preserves the overall template-matched
-// coordinates but tweaks them to better accommodate the fused small rings. We
-// only apply this refinement if there are triple bonds or fused small rings,
-// since those are the cases where the template match may not have ideal
-// geometry. For even-numbered macrocycles with only 6-membered fused rings with
-// no triple bonds, we skip refinement since the original template coordinates
-// should already be ideal.
-void EmbeddedFrag::maybeRefineTemplateMatchedMacrocycle(
-    const RDKit::INT_VECT &macrocycleRing,
-    const RDKit::VECT_INT_VECT &allRings) {
-  PRECONDITION(dp_mol, "");
-
-  // Quick check for triple bonds - these always need refinement for 180° angles
-  std::vector<int> macrocycleRingVec(macrocycleRing.begin(),
-                                     macrocycleRing.end());
-  auto tripleBondConstraints = RDDepict::identifyAngleConstraintsForTripleBonds(
-      dp_mol, macrocycleRingVec);
-  bool hasTripleBonds = !tripleBondConstraints.empty();
-
-  // Check if we need angle constraint refinement for fused rings
-  bool hasSmallRings = false;
-  bool hasNonSixMemberedRings = false;
-  for (const auto &ring : allRings) {
-    if (ring.size() > MACROCYCLE_SIZE_THRESHOLD) {
-      continue;  // Skip large rings
-    }
-    hasSmallRings = true;  // Found at least one small ring
-    if (ring.size() != 6) {
-      hasNonSixMemberedRings = true;
-      break;
-    }
-  }
-
-  // Early return if no constraints needed
-  if (!hasSmallRings && !hasTripleBonds) {
-    return;  // No small rings and no triple bonds, keep original template
-             // coordinates
-  }
-  if (macrocycleRing.size() % 2 == 0 && !hasNonSixMemberedRings &&
-      !hasTripleBonds) {
-    return;  // Even-membered macrocycle with only 6-membered fused rings and no
-             // triple bonds should already have ideal geometry from template
-  }
-
-  // Convert RDKit types to std::vector for helper functions
-  std::vector<std::vector<int>> allRingsVec;
-  for (const auto &ring : allRings) {
-    std::vector<int> ringVec(ring.begin(), ring.end());
-    allRingsVec.push_back(ringVec);
-  }
-
-  // Identify angle constraints for fused small rings
-  auto angleConstraints = RDDepict::identifyAngleConstraintsForFusedRings(
-      macrocycleRingVec, allRingsVec);
-
-  // Add triple bond constraints (already computed earlier for early return
-  // check)
-  angleConstraints.insert(angleConstraints.end(), tripleBondConstraints.begin(),
-                          tripleBondConstraints.end());
-
-  if (angleConstraints.empty()) {
-    return;  // No constraints needed, keep original template coordinates
-  }
-  // Extract template coordinates
-  std::vector<RDGeom::Point2D> templateCoords;
-  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
-    int atomIdx = macrocycleRing[i];
-    templateCoords.push_back(d_eatoms[atomIdx].loc);
-  }
-  // Refine with angle constraints
-  auto refinedCoords = RDDepict::refineMacrocycleWithAngleConstraints(
-      templateCoords, angleConstraints, 1.5);
-
-  // Apply refined coordinates using the shared helper function
-  applyCoordinates(macrocycleRing, refinedCoords);
 }
 
 // find any atoms in the ring that are in trans double bonds
@@ -1356,18 +1230,59 @@ void EmbeddedFrag::embedMacrocycleWithFusedRings(
   }
   auto subInfo = computeSubstituentInfo(dp_mol, macrocycleRing, ring_atoms);
 
+  auto fusedRings = coreRings;
+  // remove the macrocycle itself from the fused rings list
+  fusedRings.erase(fusedRings.begin() + macrocycleIdxInCoreRings);
+
   // Try template matching with fusion validation
-  bool foundTemplate =
-      matchToTemplateMacrocycle(macrocycleRing, coreRings, subInfo);
+  RDGeom::INT_POINT2D_MAP coordMap;
+  for (const auto &ea : d_eatoms) {
+    coordMap[ea.first] = ea.second.loc;
+  }
+
+  bool foundTemplate = RDDepict::matchToTemplateMacrocycle(
+      dp_mol, macrocycleRing, fusedRings, subInfo.sizesByPosition, coordMap);
+
   if (foundTemplate) {
+    // Update d_eatoms with matched coordinates
+    for (const auto &coord : coordMap) {
+      if (d_eatoms.find(coord.first) != d_eatoms.end()) {
+        d_eatoms[coord.first].loc = coord.second;
+      } else {
+        EmbeddedAtom new_at;
+        new_at.aid = coord.first;
+        new_at.loc = coord.second;
+        new_at.df_fixed = true;
+        d_eatoms.emplace(coord.first, new_at);
+      }
+    }
+    this->setupNewNeighs();
+    this->setupAttachmentPoints();
     doneRings.push_back(macrocycleIdx);
   }
+
   if (doneRings.empty() && useDeNovoMacrocycleGeneration) {
     // If template matching failed, try to generate coordinates on-the-fly
-    bool generated =
-        generateMacrocycleCoordinates(macrocycleRing, coreRings, subInfo);
+    auto coords = RDDepict::generateMacrocycleCoordinates(
+        dp_mol, macrocycleRing, fusedRings, subInfo.sizesByPosition, BOND_LEN);
 
-    if (generated) {
+    if (!coords.empty()) {
+      // Apply generated coordinates
+      applyCoordinates(macrocycleRing, coords);
+
+      // Reflect fused rings if needed
+      RDGeom::INT_POINT2D_MAP coordMap;
+      for (const auto &ea : d_eatoms) {
+        coordMap[ea.first] = ea.second.loc;
+      }
+      RDDepict::maybeReflectSymmetricFusedRings(*dp_mol, macrocycleRing,
+                                                fusedRings, coordMap);
+      for (const auto &coord : coordMap) {
+        if (d_eatoms.find(coord.first) != d_eatoms.end()) {
+          d_eatoms[coord.first].loc = coord.second;
+        }
+      }
+
       // Mark macrocycle as done, then continue to attach small rings
       doneRings.push_back(macrocycleIdx);
     }

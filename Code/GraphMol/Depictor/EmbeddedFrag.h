@@ -15,6 +15,7 @@
 #include <Geometry/Transform2D.h>
 #include <Geometry/point.h>
 #include "DepictUtils.h"
+#include "MacrocycleGenerator.h"
 #include <boost/smart_ptr.hpp>
 #include <unordered_map>
 
@@ -25,13 +26,6 @@ class Bond;
 
 namespace RDDepict {
 typedef boost::shared_array<double> DOUBLE_SMART_PTR;
-
-//! Struct to hold substituent size information
-struct SubstituentInfo {
-  std::map<size_t, int>
-      sizesByPosition;  //!< Map: macrocycle position -> total substituent size
-  int smallestSize;     //!< Smallest substituent size in the molecule
-};
 
 //! Class that contains the data for an atoms that has already been embedded
 class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
@@ -388,13 +382,6 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   // returns true if fused rings found a template
   bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms);
 
-  // returns true if macrocycle found a template
-  // this uses a more relaxed matching that allows for small substituents to be
-  // put on internal positions, pointing towards the center of the macrocycle
-  bool matchToTemplateMacrocycle(const RDKit::INT_VECT &macrocycleRing,
-                                 const RDKit::VECT_INT_VECT &allRings,
-                                 const SubstituentInfo &subInfo);
-
   //! Copy coordinates from a template match into embedded atoms
   /*!
     \param templateMol the template molecule with conformer coordinates
@@ -410,20 +397,6 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   */
   void applyCoordinates(const RDKit::INT_VECT &atomIndices,
                         const std::vector<RDGeom::Point2D> &coordinates);
-
-  // returns true if macrocycle coordinates were successfully generated
-  bool generateMacrocycleCoordinates(const RDKit::INT_VECT &macrocycleRing,
-                                     const RDKit::VECT_INT_VECT &allRings,
-                                     const SubstituentInfo &subInfo);
-
-  // Template refinement with angle constraints
-  void maybeRefineTemplateMatchedMacrocycle(
-      const RDKit::INT_VECT &macrocycleRing,
-      const RDKit::VECT_INT_VECT &allRings);
-
-  // Reflect middle atoms for axially-fused small rings (wrapper)
-  void maybeReflectSymmetricFusedRings(const RDKit::INT_VECT &macrocycleRing,
-                                       const RDKit::VECT_INT_VECT &fusedRings);
 
   void embedMacrocycleWithFusedRings(const RDKit::VECT_INT_VECT &coreRings,
                                      const RDKit::INT_VECT &coreRingsIds,
