@@ -26,30 +26,23 @@ using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
+
 ScaffoldNetwork::ScaffoldNetwork createNetworkHelper(
-    nb::object pmols,
+    const std::vector<std::shared_ptr<ROMol>> &mols,
     const ScaffoldNetwork::ScaffoldNetworkParams &params) {
-  auto mols = pythonObjectToVect<std::shared_ptr<ROMol>>(pmols);
   ScaffoldNetwork::ScaffoldNetwork res;
-  if (mols) {
+  {
     NOGIL gil;
-    updateScaffoldNetwork(*mols, res, params);
+    ScaffoldNetwork::updateScaffoldNetwork(mols, res, params);
   }
   return res;
 }
 
-void updateNetworkHelper(nb::object pmols,
+void updateNetworkHelper(const std::vector<std::shared_ptr<ROMol>> &mols,
                          ScaffoldNetwork::ScaffoldNetwork &net,
                          const ScaffoldNetwork::ScaffoldNetworkParams &params) {
-  auto mols = pythonObjectToVect<std::shared_ptr<ROMol>>(pmols);
-  if (mols) {
-    NOGIL gil;
-    updateScaffoldNetwork(*mols, net, params);
-  }
-}
-
-ScaffoldNetwork::ScaffoldNetworkParams getBRICSParams() {
-  return ScaffoldNetwork::getBRICSNetworkParams();
+  NOGIL gil;
+  ScaffoldNetwork::updateScaffoldNetwork(mols, net, params);
 }
 
 }  // namespace
@@ -63,10 +56,9 @@ NB_MODULE(rdScaffoldNetwork, m) {
            "bondBreakerSmartsList"_a,
            "Constructor taking a list of Reaction SMARTS for the fragmentation "
            "reactions")
-      .def_rw(
-          "includeGenericScaffolds",
-          &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericScaffolds,
-          "include scaffolds with all atoms replaced by dummies")
+      .def_rw("includeGenericScaffolds",
+              &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericScaffolds,
+              "include scaffolds with all atoms replaced by dummies")
       .def_rw(
           "includeGenericBondScaffolds",
           &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericBondScaffolds,
@@ -105,8 +97,7 @@ NB_MODULE(rdScaffoldNetwork, m) {
       .def_rw("collectMolCounts",
               &ScaffoldNetwork::ScaffoldNetworkParams::collectMolCounts,
               "keep track of the number of molecules each scaffold was "
-              "found in")
-      .def("__setattr__", &safeSetattr);
+              "found in");
 
   nb::enum_<ScaffoldNetwork::EdgeType>(m, "EdgeType")
       .value("Fragment", ScaffoldNetwork::EdgeType::Fragment)
@@ -120,8 +111,7 @@ NB_MODULE(rdScaffoldNetwork, m) {
               "index of the begin node in node list")
       .def_ro("endIdx", &ScaffoldNetwork::NetworkEdge::endIdx,
               "index of the end node in node list")
-      .def_ro("type", &ScaffoldNetwork::NetworkEdge::type,
-              "type of the edge")
+      .def_ro("type", &ScaffoldNetwork::NetworkEdge::type, "type of the edge")
       .def("__str__", [](const ScaffoldNetwork::NetworkEdge &self) {
         std::ostringstream oss;
         oss << self;
@@ -143,8 +133,8 @@ NB_MODULE(rdScaffoldNetwork, m) {
            [](const ScaffoldNetwork::ScaffoldNetwork &self) {
              nb::list edges;
              for (const auto &e : self.edges) {
-               edges.append(
-                   nb::make_tuple(e.beginIdx, e.endIdx, (int)e.type));
+               edges.append(nb::make_tuple(e.beginIdx, e.endIdx,
+                                           static_cast<int>(e.type)));
              }
              return nb::make_tuple(self.nodes, self.counts, self.molCounts,
                                    edges);
@@ -152,7 +142,7 @@ NB_MODULE(rdScaffoldNetwork, m) {
       .def("__setstate__",
            [](ScaffoldNetwork::ScaffoldNetwork &self, nb::tuple state) {
              if (nb::len(state) != 4) {
-               throw std::runtime_error("invalid ScaffoldNetwork pickle state");
+               throw nb::value_error("invalid ScaffoldNetwork pickle state");
              }
              new (&self) ScaffoldNetwork::ScaffoldNetwork();
              self.nodes = nb::cast<std::vector<std::string>>(state[0]);
@@ -162,7 +152,8 @@ NB_MODULE(rdScaffoldNetwork, m) {
                auto et = nb::cast<nb::tuple>(e);
                self.edges.emplace_back(
                    nb::cast<size_t>(et[0]), nb::cast<size_t>(et[1]),
-                   static_cast<ScaffoldNetwork::EdgeType>(nb::cast<int>(et[2])));
+                   static_cast<ScaffoldNetwork::EdgeType>(
+                       nb::cast<int>(et[2])));
              }
            });
 
@@ -170,7 +161,7 @@ NB_MODULE(rdScaffoldNetwork, m) {
         "create (and return) a new network from a sequence of molecules");
   m.def("UpdateScaffoldNetwork", &updateNetworkHelper, "mols"_a, "network"_a,
         "params"_a, "update an existing network by adding molecules");
-  m.def("BRICSScaffoldParams", &getBRICSParams,
+  m.def("BRICSScaffoldParams", &ScaffoldNetwork::getBRICSNetworkParams,
         "Returns parameters for generating scaffolds using BRICS "
         "fragmentation rules");
 }
