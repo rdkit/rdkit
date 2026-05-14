@@ -11,7 +11,6 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
-#include <nanobind/stl/optional.h>
 #include <nanobind/stl/unique_ptr.h>
 
 #include <GraphMol/GraphMol.h>
@@ -37,9 +36,7 @@ nb::bytes XQMolToBinary(const ExtendedQueryMol &self) {
 }
 
 bool hasSubstructHelper(const ROMol &mol, const ExtendedQueryMol &query,
-                        std::optional<SubstructMatchParameters> iparams) {
-  SubstructMatchParameters params =
-      iparams.value_or(SubstructMatchParameters());
+                        const SubstructMatchParameters &params) {
   bool res;
   {
     NOGIL gil;
@@ -48,12 +45,10 @@ bool hasSubstructHelper(const ROMol &mol, const ExtendedQueryMol &query,
   return res;
 }
 
-std::vector<int> getSubstructHelper(
-    const ROMol &mol, const ExtendedQueryMol &query,
-    std::optional<SubstructMatchParameters> iparams) {
+std::vector<int> getSubstructHelper(const ROMol &mol,
+                                    const ExtendedQueryMol &query,
+                                    SubstructMatchParameters params) {
   std::vector<MatchVectType> matches;
-  SubstructMatchParameters params =
-      iparams.value_or(SubstructMatchParameters());
   {
     NOGIL gil;
     params.maxMatches = 1;
@@ -67,10 +62,8 @@ std::vector<int> getSubstructHelper(
 
 std::vector<std::vector<int>> getSubstructsHelper(
     const ROMol &mol, const ExtendedQueryMol &query,
-    std::optional<SubstructMatchParameters> iparams) {
+    const SubstructMatchParameters &params) {
   std::vector<MatchVectType> matches;
-  SubstructMatchParameters params =
-      iparams.value_or(SubstructMatchParameters());
   {
     NOGIL gil;
     matches = SubstructMatch(mol, query, params);
@@ -112,15 +105,15 @@ NB_MODULE(rdGeneralizedSubstruct, m) {
 
   m.def(
       "MolHasSubstructMatch", &hasSubstructHelper, "mol"_a, "query"_a,
-      "params"_a = nb::none(),
+      "params"_a = SubstructMatchParameters(),
       R"DOC(determines whether or not a molecule is a match to a generalized substructure query)DOC");
   m.def(
       "MolGetSubstructMatch", &getSubstructHelper, "mol"_a, "query"_a,
-      "params"_a = nb::none(),
+      "params"_a = SubstructMatchParameters(),
       R"DOC(returns first match (if any) of a molecule to a generalized substructure query)DOC");
   m.def(
       "MolGetSubstructMatches", &getSubstructsHelper, "mol"_a, "query"_a,
-      "params"_a = nb::none(),
+      "params"_a = SubstructMatchParameters(),
       R"DOC(returns all matches (if any) of a molecule to a generalized substructure query)DOC");
 
   m.def(
@@ -132,14 +125,13 @@ NB_MODULE(rdGeneralizedSubstruct, m) {
       "CreateExtendedQueryMol",
       [](const ROMol &mol, bool doEnumeration, bool doTautomers,
          bool adjustQueryProperties,
-         std::optional<MolOps::AdjustQueryParameters> ps) {
-        MolOps::AdjustQueryParameters defaults;
+         const MolOps::AdjustQueryParameters &ps) {
         return createExtendedQueryMol(mol, doEnumeration, doTautomers,
-                                      adjustQueryProperties,
-                                      ps.value_or(defaults));
+                                      adjustQueryProperties, ps);
       },
       "mol"_a, "doEnumeration"_a = true, "doTautomers"_a = true,
-      "adjustQueryProperties"_a = false, "adjustQueryParameters"_a = nb::none(),
+      "adjustQueryProperties"_a = false,
+      "adjustQueryParameters"_a = MolOps::AdjustQueryParameters(),
       R"DOC(Creates an ExtendedQueryMol from the input molecule
 
 This takes a query molecule and, conceptually, performs the following steps to
