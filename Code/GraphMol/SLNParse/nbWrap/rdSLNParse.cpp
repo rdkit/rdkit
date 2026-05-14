@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2008-2026, Novartis Institutes for BioMedical Research Inc.
 //  and other RDKit contributors
