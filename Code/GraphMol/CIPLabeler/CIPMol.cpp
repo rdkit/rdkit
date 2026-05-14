@@ -16,7 +16,10 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-CIPMol::CIPMol(ROMol &mol) : d_mol{mol} {}
+CIPMol::CIPMol(ROMol &mol) : d_mol{mol} {
+  d_bonds.reserve(mol.getNumBonds());
+  std::ranges::copy(mol.bonds(), std::back_inserter(d_bonds));
+}
 
 boost::rational<int> CIPMol::getFractionalAtomicNum(Atom *atom) const {
   PRECONDITION(atom, "bad atom")
@@ -36,7 +39,7 @@ CXXAtomIterator<MolGraph, Atom *> CIPMol::atoms() const {
   return d_mol.atoms();
 }
 
-Bond *CIPMol::getBond(int idx) const { return d_mol.getBondWithIdx(idx); };
+Bond *CIPMol::getBond(int idx) const { return d_bonds[idx]; };
 
 CIPMolSpan<Bond *, ROMol::OEDGE_ITER> CIPMol::getBonds(Atom *atom) const {
   PRECONDITION(atom, "bad atom")
