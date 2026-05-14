@@ -80,8 +80,13 @@ std::vector<std::vector<size_t>> getHitSynthons(
   for (const auto &synthonSet : reaction.getSynthons()) {
     synthonsToUse.emplace_back(synthonSet.size());
   }
+  unsigned int maxBits = 0;
   for (size_t i = 0; i < synthonSetOrder.size(); i++) {
-    unsigned int maxBits = 1 + fragFPs[i]->getNumOnBits() / similarityCutoff;
+    if (similarityCutoff <= 0.0) {
+      maxBits = fragFPs[i]->getNumBits();
+    } else {
+      maxBits = 1 + fragFPs[i]->getNumOnBits() / similarityCutoff;
+    }
     auto start =
         findSynthonSearchStart(fragFPs[i]->getNumOnBits(), similarityCutoff,
                                synthonSetOrder[i], reaction);
