@@ -106,7 +106,7 @@ RETURNS:
         for (auto &mol : mols) {
           result.append(mol);
         }
-        return nb::steal<nb::tuple>(PySequence_Tuple(result.ptr()));
+        return nb::tuple(result);
       },
       "jsonBlock"_a, "params"_a = nb::none(),
       R"DOC(Convert JSON to a tuple of molecules
