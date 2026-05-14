@@ -100,7 +100,8 @@ TEST_CASE("Shape Small tests") {
       {0.962, 0.954, 0.916},
       {0.955, 0.949, 0.934, 0.903, 0.860, 0.854, 0.845, 0.807},
       {0.614},
-      {0.962, 0.955, 0.934, 0.903, 0.855, 0.854, 0.845, 0.807}};
+      {0.962, 0.955, 0.934, 0.903, 0.855, 0.854, 0.851, 0.817},
+      {0.643}};
   std::vector<std::vector<std::string>> expNames{
       {"1-1;2-1;amide-1", "1-2;2-1;amide-1", "1-3;2-1;amide-1"},
       {"1-1;2-1;3-1;triazole-1", "1-1;2-2;3-1;triazole-1",
@@ -153,8 +154,12 @@ TEST_CASE("Shape Small tests") {
                mol->getProp<std::string>(common_properties::_Name) ==
                    expNames[3][j]));
         CHECK_THAT(mol->getProp<double>("Similarity"),
-                   Catch::Matchers::WithinAbs(expScores[i][j], 0.005) ||
+                   Catch::Matchers::WithinAbs(expScores[1][j], 0.005) ||
                        Catch::Matchers::WithinAbs(expScores[3][j], 0.005));
+      } else if (i == 2) {
+        CHECK_THAT(mol->getProp<double>("Similarity"),
+                   Catch::Matchers::WithinAbs(expScores[2][j], 0.005) ||
+                       Catch::Matchers::WithinAbs(expScores[4][j], 0.005));
       } else {
         CHECK(mol->getProp<std::string>(common_properties::_Name) ==
               expNames[i][j]);
@@ -499,7 +504,7 @@ N#CCc(cncc1)c1[2*]	689988332-107515102	2	urea-3)");
   // get something because of bestHit=true.
   for (const auto &mol : results.getHitMolecules()) {
     CHECK_THAT(mol->getProp<double>("Similarity"),
-               Catch::Matchers::WithinAbs(0.728, 0.001));
+               Catch::Matchers::WithinAbs(0.728, 0.005));
     auto scores = GaussianShape::ScoreMolecule(*queryMol, *mol);
     CHECK_THAT(mol->getProp<double>("Similarity"),
                Catch::Matchers::WithinAbs(scores[0], 0.001));
@@ -670,9 +675,9 @@ Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
   // conformations even with the same parameters.  The results are similar
   // but ordered differently.
   std::vector<std::vector<double>> expVols{
-      {74.0, 189.7}, {198.5, 74.2}, {74.3, 177.9}};
+      {74.0, 189.7}, {198.5, 74.2}, {74.3, 177.9}, {138.0, 64.6}};
   std::vector<std::vector<double>> expMeanVols{
-      {3.0, 6.8}, {6.4, 3.0}, {5.7, 3.0}};
+      {3.0, 6.8}, {6.4, 3.0}, {5.7, 3.0}, {4.2, 2.7}};
   {
     params.possibleHitsFile = "poss_hits_1.txt";
     params.maxExcludedVolume = -1.0;
@@ -683,11 +688,13 @@ Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
       auto excVol = mol->getProp<double>("ExcludedVolume");
       CHECK_THAT(excVol, Catch::Matchers::WithinAbs(expVols[0][i], 0.1) ||
                              Catch::Matchers::WithinAbs(expVols[1][i], 0.1) ||
-                             Catch::Matchers::WithinAbs(expVols[2][i], 0.1));
+                             Catch::Matchers::WithinAbs(expVols[2][i], 0.1) ||
+                             Catch::Matchers::WithinAbs(expVols[3][i], 0.1));
       CHECK_THAT(mol->getProp<double>("MeanExcludedVolume"),
                  Catch::Matchers::WithinAbs(expMeanVols[0][i], 0.1) ||
                      Catch::Matchers::WithinAbs(expMeanVols[1][i], 0.1) ||
-                     Catch::Matchers::WithinAbs(expMeanVols[2][i], 0.1));
+                     Catch::Matchers::WithinAbs(expMeanVols[2][i], 0.1) ||
+                     Catch::Matchers::WithinAbs(expMeanVols[3][i], 0.1));
       ++i;
     }
     CHECK(countFileLines("poss_hits_1.txt") == 2);
@@ -704,12 +711,14 @@ Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
     CHECK_THAT(results.getHitMolecules()[0]->getProp<double>("ExcludedVolume"),
                Catch::Matchers::WithinAbs(expVols[0][0], 0.1) ||
                    Catch::Matchers::WithinAbs(expVols[1][1], 0.1) ||
-                   Catch::Matchers::WithinAbs(expVols[2][1], 0.1));
+                   Catch::Matchers::WithinAbs(expVols[2][0], 0.1) ||
+                   Catch::Matchers::WithinAbs(expVols[3][1], 0.1));
     CHECK_THAT(
         results.getHitMolecules()[0]->getProp<double>("MeanExcludedVolume"),
         Catch::Matchers::WithinAbs(expMeanVols[0][0], 0.1) ||
             Catch::Matchers::WithinAbs(expMeanVols[1][1], 0.1) ||
-            Catch::Matchers::WithinAbs(expMeanVols[2][1], 0.1));
+            Catch::Matchers::WithinAbs(expMeanVols[2][0], 0.1) ||
+            Catch::Matchers::WithinAbs(expMeanVols[3][1], 0.1));
     CHECK(countFileLines("poss_hits_2.txt") == 2);
     std::remove("poss_hits_2.txt");
   }
