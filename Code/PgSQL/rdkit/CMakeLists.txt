@@ -94,8 +94,13 @@ if(MSVC)
   endif()
 endif(MSVC)
 if(APPLE)
-  set(CMAKE_EXE_LINKER_FLAGS "-bundle -multiply_defined suppress"
-              "-Wl,-dead_strip_dylibs -bundle_loader ${PG_BINDIR}/postgres")
+  # Append (rather than replace) so any toolchain-provided flags survive --
+  # in particular `-stdlib=libc++ -L${PREFIX}/lib -Wl,-rpath,${PREFIX}/lib`
+  # from conda-forge's clang_osx-64 / clangxx_osx-64 packages. Without these,
+  # the link picks up the wrong libc++ and fails to resolve ABI-tagged symbols
+  # (e.g. `vtable for std::__1::basic_stringstream` with `[abi:ne190107]`)
+  # on libc++ 19+ toolchains.
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -bundle -multiply_defined suppress -Wl,-dead_strip_dylibs -bundle_loader ${PG_BINDIR}/postgres")
   add_executable("${EXTENSION}${EXTENSION_SUFFIX}"
               adapter.cpp bfp_op.c cache.c guc.c low_gist.c mol_op.c
               rdkit_gist.c bfp_gist.c bfp_gin.c bitstring.c rdkit_io.c rxn_op.c sfp_op.c)
