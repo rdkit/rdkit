@@ -3348,6 +3348,7 @@ There is also a convenience function for performing the conversion in one go:
 
 .. doctest::
 
+  >>> from rdkit.Chem import rdGaussianShape
   >>> fpgen = rdFingerprintGenerator.GetMorganGenerator(fpSize=2048)
   >>> shapeBuildOptions = rdGaussianShape.ShapeBuildParams()
   >>> rdSynthonSpaceSearch.ConvertTextToDBFile(textFile, dbFile, fpgen, shapeBuildOptions)

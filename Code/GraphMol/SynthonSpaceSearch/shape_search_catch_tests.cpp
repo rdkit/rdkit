@@ -15,6 +15,7 @@
 #include <GraphMol/GaussianShape/GaussianShape.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonShapeInput.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
