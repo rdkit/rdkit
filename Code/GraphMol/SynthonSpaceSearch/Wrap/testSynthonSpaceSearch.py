@@ -123,7 +123,7 @@ class TestCase(unittest.TestCase):
       lambda results: mols.extend(results),
       params)
     self.assertEqual(278, len(mols))
-    
+
   def testFingerprintPossibleHitsWrite(self):
     fName = self.sssDir / "idorsia_toy_space_a.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
