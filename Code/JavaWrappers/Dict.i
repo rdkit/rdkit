@@ -35,8 +35,16 @@
 #include <RDGeneral/Dict.h>
 %}
 
+// This requires SWIG 4.2 or higher
+%include "std_string_view.i"
+
 %ignore RDKit::Dict::Pair;
 %ignore RDKit::PairHolder;
+%ignore RDKit::Dict::extend;
+%ignore RDKit::Dict::getRDValue;
+%ignore RDKit::Dict::begin;
+%ignore RDKit::Dict::end;
+%ignore RDKit::Dict::const_iterator;
 %include <RDGeneral/Dict.h>
 
 

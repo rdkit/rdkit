@@ -110,7 +110,7 @@ void InversionContrib::getGrad(double *pos, double *grad) const {
   double sinThetaSq = 1.0 - cosTheta * cosTheta;
   double sinTheta = std::max(sqrt(sinThetaSq), 1.0e-8);
   // sin(2 * W) = 2 * sin(W) * cos(W) = 2 * cos(Y) * sin(Y)
-  double dE_dW = -d_forceConstant * (d_C1 * cosY - 4.0 * d_C2 * cosY * sinY);
+  double dE_dW = -d_forceConstant * (d_C1 * cosY + 4.0 * d_C2 * cosY * sinY);
   RDGeom::Point3D t1 = rJL.crossProduct(rJK);
   RDGeom::Point3D t2 = rJI.crossProduct(rJL);
   RDGeom::Point3D t3 = rJK.crossProduct(rJI);

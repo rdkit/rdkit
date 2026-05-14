@@ -61,6 +61,9 @@ endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 add_pytest(pyGraphMolWrap
          ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)
 
+add_pytest(pyTestGetPropDefault
+         ${CMAKE_CURRENT_SOURCE_DIR}/testGetPropDefault.py)
+
 add_pytest(pyTestConformerWrap
          ${CMAKE_CURRENT_SOURCE_DIR}/testConformer.py)
 
@@ -93,3 +96,6 @@ add_pytest(pyCDXMLTest
 
 add_pytest(pySubsetTest
          ${CMAKE_CURRENT_SOURCE_DIR}/test_subset.py)
+
+add_pytest(pyTestLazyNumpy
+         ${CMAKE_CURRENT_SOURCE_DIR}/test_lazy_numpy.py)

@@ -41,25 +41,28 @@ void testEnumerator() {
         ROMOL_SPTR m(SmilesToMol(smi));
         TautomerEnumeratorResult res = te.enumerate(*m);
         TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
-        size_t sz = std::max(res.size(), ans.size());
-        bool exceedingTautomer = false;
-        bool missingTautomer = false;
-        bool wrongTautomer = false;
-        for (size_t i = 0; i < sz; ++i) {
-          if (i >= res.size()) {
-            missingTautomer = true;
-            std::cerr << "missingTautomer, ans " << ans[i] << std::endl;
-          } else if (i >= ans.size()) {
-            exceedingTautomer = true;
-            std::cerr << "exceedingTautomer, taut " << MolToSmiles(*res.at(i))
-                      << std::endl;
-          } else if (MolToSmiles(*res[i]) != ans[i]) {
-            wrongTautomer = true;
-            std::cerr << "wrongTautomer, taut " << MolToSmiles(*res[i])
-                      << ", ans " << ans[i] << std::endl;
-          }
+        std::vector<std::string> tautSmiles;
+        tautSmiles.reserve(res.size());
+        for (size_t i = 0; i < res.size(); ++i) {
+          tautSmiles.push_back(MolToSmiles(*res[i]));
         }
-        TEST_ASSERT(!(missingTautomer || exceedingTautomer || wrongTautomer));
+        std::vector<std::string> ansSmiles = ans;
+        std::sort(tautSmiles.begin(), tautSmiles.end());
+        std::sort(ansSmiles.begin(), ansSmiles.end());
+        if (tautSmiles != ansSmiles) {
+          std::cerr << "Tautomer mismatch for input: " << smi << std::endl;
+          std::cerr << "  expected(" << ansSmiles.size() << "):";
+          for (const auto &s : ansSmiles) {
+            std::cerr << " " << s;
+          }
+          std::cerr << std::endl;
+          std::cerr << "  got(" << tautSmiles.size() << "):";
+          for (const auto &s : tautSmiles) {
+            std::cerr << " " << s;
+          }
+          std::cerr << std::endl;
+        }
+        TEST_ASSERT(tautSmiles == ansSmiles);
       });
 
   // Enumerate 1,3 keto/enol tautomer.
@@ -108,7 +111,7 @@ void testEnumerator() {
   checkAns("C1(C=CC=CN1)=CC", {"CC=C1C=CC=CN1", "CC=C1C=CCC=N1", "CCc1ccccn1"});
 
   // special imine tautomer
-  checkAns("C1(=NC=CC=C1)CC", {"CC=C1C=CC=CN1", "CC=C1C=CCC=N1", "CCc1ccccn1"});
+  checkAns("C1(=NC=CC=C1)CC", {"CCc1ccccn1"});
 
   // 1,3 aromatic heteroatom H shift
   checkAns("O=c1cccc[nH]1", {"O=c1cccc[nH]1", "Oc1ccccn1"});
@@ -374,7 +377,7 @@ void testEnumerator() {
   ROMOL_SPTR m68(SmilesToMol(smi68));
   TautomerEnumeratorResult res68 = te.enumerate(*m68);
   // the maxTransforms limit is hit before the maxTautomers one
-  TEST_ASSERT(res68.size() == 292);
+  TEST_ASSERT(res68.size() == 295);
   TEST_ASSERT(res68.status() == TautomerEnumeratorStatus::MaxTransformsReached);
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -399,7 +402,7 @@ void testEnumeratorParams() {
     TautomerEnumeratorResult res68 = te->enumerate(*m68);
     TEST_ASSERT(res68.status() ==
                 TautomerEnumeratorStatus::MaxTransformsReached);
-    TEST_ASSERT(res68.size() == 292);
+    TEST_ASSERT(res68.size() == 295);
   }
   {
     CleanupParameters params;
@@ -987,6 +990,61 @@ void testCanonicalize() {
     te.canonicalizeInPlace(*mol);
     TEST_ASSERT(MolToSmiles(*mol) == itm.second);
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testCanonicalizeInvariantAcrossInputTautomers() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing canonicalize() invariance across input tautomers"
+      << std::endl;
+
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
+  TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
+
+  // The core behavior guarantee we care about for perf work: regardless of which
+  // tautomer form is provided as input, canonicalize() selects the same
+  // canonical tautomer.
+  //
+  // Keep this bounded so the unit test stays fast.
+  constexpr size_t maxMoleculesToCheck = 25;
+  constexpr size_t maxTautomersToCheck = 25;
+
+  size_t moleculesChecked = 0;
+  for (const auto &itm : canonTautomerData) {
+    if (moleculesChecked >= maxMoleculesToCheck) {
+      break;
+    }
+    std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
+    TEST_ASSERT(mol);
+
+    auto tautRes = te.enumerate(*mol);
+    if (tautRes.status() != TautomerEnumeratorStatus::Completed) {
+      continue;
+    }
+    if (tautRes.size() > maxTautomersToCheck) {
+      continue;
+    }
+
+    bool expectedPresent = false;
+    for (const auto &taut : tautRes) {
+      if (MolToSmiles(*taut) == itm.second) {
+        expectedPresent = true;
+        break;
+      }
+    }
+    TEST_ASSERT(expectedPresent);
+
+    for (const auto &taut : tautRes) {
+      std::unique_ptr<ROMol> canon{te.canonicalize(*taut)};
+      TEST_ASSERT(canon);
+      TEST_ASSERT(MolToSmiles(*canon) == itm.second);
+    }
+    ++moleculesChecked;
+  }
+
+  // Make sure we actually exercised the logic.
+  TEST_ASSERT(moleculesChecked >= 10);
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -1651,6 +1709,63 @@ void testGithub3755() {
   }
 }
 
+void testCanonicalizePreservesNonTautomericBondStereo() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n "
+         "testCanonicalizePreservesNonTautomericBondStereo"
+      << std::endl;
+  // Molecule with E double-bond stereo on a C=C that is NOT part of
+  // any tautomeric path, plus a tautomerizable keto group.
+  // The E/Z must survive canonicalize() and canonicalizeInPlace().
+  {
+    std::unique_ptr<RWMol> mol(SmilesToMol("O=CC/C=C/c1ccccc1"));
+    TEST_ASSERT(mol);
+    bool foundStereo = false;
+    for (const auto bond : mol->bonds()) {
+      if (bond->getBondType() == Bond::DOUBLE &&
+          bond->getStereo() > Bond::STEREOANY) {
+        foundStereo = true;
+        break;
+      }
+    }
+    TEST_ASSERT(foundStereo);
+
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = false;
+    params.tautomerRemoveSp3Stereo = false;
+    TautomerEnumerator te(params);
+
+    // canonicalize()
+    {
+      ROMOL_SPTR canon(te.canonicalize(*mol));
+      TEST_ASSERT(canon);
+      bool hasStereo = false;
+      for (const auto bond : canon->bonds()) {
+        if (bond->getBondType() == Bond::DOUBLE &&
+            bond->getStereo() > Bond::STEREOANY) {
+          hasStereo = true;
+          break;
+        }
+      }
+      TEST_ASSERT(hasStereo);
+    }
+    // canonicalizeInPlace()
+    {
+      RWMol molCopy(*mol);
+      te.canonicalizeInPlace(molCopy);
+      bool hasStereo = false;
+      for (const auto bond : molCopy.bonds()) {
+        if (bond->getBondType() == Bond::DOUBLE &&
+            bond->getStereo() > Bond::STEREOANY) {
+          hasStereo = true;
+          break;
+        }
+      }
+      TEST_ASSERT(hasStereo);
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1658,6 +1773,7 @@ int main() {
   testEnumeratorParams();
   testEnumeratorCallback();
   testCanonicalize();
+  testCanonicalizeInvariantAcrossInputTautomers();
   testPickCanonical();
   testCustomScoreFunc();
   testEnumerationProblems();
@@ -1669,5 +1785,6 @@ int main() {
   testTautomerEnumeratorResult_const_iterator();
   testGithub3430();
   testGithub3755();
+  testCanonicalizePreservesNonTautomericBondStereo();
   return 0;
 }

@@ -22,7 +22,7 @@ std::string NodeType(CDXNodeType nodetype) {
     case kCDXNodeType_Fragment:
       return "Fragment";
     case kCDXNodeType_Formula:
-      return "Forumla";
+      return "Formula";
     case kCDXNodeType_GenericNickname:
       return "GenericNickname";
     case kCDXNodeType_AnonymousAlternativeGroup:
@@ -48,7 +48,7 @@ void scaleBonds(const ROMol &mol, Conformer &conf, double targetBondLength,
                 double bondLength) {
   double avg_bond_length = 0.0;
   if (bondLength < 0) {
-    // If we don't have a bond length for any reason, just scale the avgerage
+    // If we don't have a bond length for any reason, just scale the average
     // bond length
     for (auto &bond : mol.bonds()) {
       avg_bond_length += (conf.getAtomPos(bond->getBeginAtomIdx()) -
@@ -87,7 +87,7 @@ void set_fuse_label(Atom *atm, unsigned int idx) {
 struct FragmentReplacement {
   // R = Replacement
   // F = Fragment
-  // C = Conneciton
+  // C = Connection
   //                    C R C F     F
   //                    N=*=C.*=CCC=*
   //  label               1   1     1
@@ -101,7 +101,9 @@ struct FragmentReplacement {
   std::vector<Atom *> fragment_atoms;
 
   bool replace(RWMol &mol) {
-    if (!replacement_atom) return true;
+    if (!replacement_atom) {
+      return true;
+    }
 
     auto bond_ordering =
         replacement_atom->getProp<std::vector<int>>(CDX_BOND_ORDERING);
@@ -109,11 +111,10 @@ struct FragmentReplacement {
     // The "addBond" lower in the loop potentially modifies the atomBonds
     // iterator. To ensure safety, we copy the bonds first.
     std::vector<Bond *> replacement_bonds(
-        mol.atomBonds(replacement_atom).begin(),
-        mol.atomBonds(replacement_atom).end());
+                                          mol.atomBonds(replacement_atom).begin(),
+                                          mol.atomBonds(replacement_atom).end());
 
-    std::vector<Bond *>
-        xbonds;  // Reuse this vector to reduce repeated allocations
+    std::vector<Bond *> xbonds;  // Reuse this vector to reduce repeated allocations
 
     // Find the connecting atoms and and do the replacement
     for (auto bond : replacement_bonds) {
@@ -126,10 +127,11 @@ struct FragmentReplacement {
         return false;
       }
       auto it = std::find(bond_ordering.begin(), bond_ordering.end(), bond_id);
-      if (it == bond_ordering.end()) return false;
+      if (it == bond_ordering.end()) {
+        return false;
+      }
 
       auto pos = std::distance(bond_ordering.begin(), it);
-
       if (pos < 0 || (size_t)pos >= fragment_atoms.size()) {
         BOOST_LOG(rdWarningLog)
             << "bond ordering and number of atoms in fragment mismatch, can't attach fragment at bond:"
@@ -142,7 +144,8 @@ struct FragmentReplacement {
 
       // The "addBond" lower in the loop potentially modifies the atomBonds
       // iterator. To ensure safety, we copy the bonds first.
-      xbonds.assign(mol.atomBonds(xatom).begin(), mol.atomBonds(xatom).end());
+      xbonds.assign(mol.atomBonds(xatom).begin(),
+                    mol.atomBonds(xatom).end());
 
       for (auto &xbond : xbonds) {
         // xatom is the fragment dummy atom

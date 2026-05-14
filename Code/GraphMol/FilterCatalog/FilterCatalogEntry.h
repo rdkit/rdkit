@@ -32,6 +32,7 @@
 #include <RDGeneral/export.h>
 #ifndef __RD_FILTER_CATALOG_H__
 #define __RD_FILTER_CATALOG_H__
+#include <string_view>
 #include <utility>
 
 #include <RDGeneral/types.h>  // For Dict
@@ -110,13 +111,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
      \param val the value to be stored
    */
   template <typename T>
-  void setProp(const char *key, T val) {
-    std::string what(key);
-    setProp(what, val);
-  }
-  //! \overload
-  template <typename T>
-  void setProp(const std::string &key, T val) {
+  void setProp(const std::string_view key, T val) {
     d_props.setVal(key, val);
   }
 
@@ -137,52 +132,27 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
 
   */
   template <typename T>
-  void getProp(const char *key, T &res) const {
+  void getProp(const std::string_view key, T &res) const {
     d_props.getVal(key, res);
   }
   //! \overload
   template <typename T>
-  void getProp(const std::string &key, T &res) const {
-    d_props.getVal(key, res);
-  }
-  //! \overload
-  template <typename T>
-  T getProp(const char *key) const {
-    return d_props.getVal<T>(key);
-  }
-  //! \overload
-  template <typename T>
-  T getProp(const std::string &key) const {
+  T getProp(const std::string_view key) const {
     return d_props.getVal<T>(key);
   }
 
   //! returns whether or not we have a \c property with name \c key
   //!  and assigns the value if we do
   template <typename T>
-  bool getPropIfPresent(const char *key, T &res) const {
-    return d_props.getValIfPresent(key, res);
-  }
-  //! \overload
-  template <typename T>
-  bool getPropIfPresent(const std::string &key, T &res) const {
+  bool getPropIfPresent(const std::string_view key, T &res) const {
     return d_props.getValIfPresent(key, res);
   }
 
   //! returns whether or not we have a \c property with name \c key
-  bool hasProp(const char *key) const { return d_props.hasVal(key); }
-  //! \overload
-  bool hasProp(const std::string &key) const {
-    return d_props.hasVal(key);
-    // return hasProp(key.c_str());
-  }
+  bool hasProp(const std::string_view key) const { return d_props.hasVal(key); }
 
   //! clears the value of a \c property
-  void clearProp(const char *key) {
-    std::string what(key);
-    clearProp(what);
-  }
-  //! \overload
-  void clearProp(const std::string &key) { d_props.clearVal(key); }
+  void clearProp(const std::string_view key) { d_props.clearVal(key); }
 
   // -------------------------------------------
   //!  Properties usually contain the reference and source

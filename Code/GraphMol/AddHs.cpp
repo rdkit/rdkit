@@ -722,7 +722,7 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
           PeriodicTable::getTable()->getValenceList(heavyAtomNum);
       if (((heavyAtomNum == 7 || heavyAtomNum == 15 ||
             may_need_extra_H(mol, heavyAtom)) &&
-           heavyAtom->getIsAromatic()) ||
+           isAromaticAtom(*heavyAtom)) ||
           (std::find(defaultVs.begin() + 1, defaultVs.end(),
                      heavyAtom->getTotalValence()) != defaultVs.end())) {
         heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs() + 1);

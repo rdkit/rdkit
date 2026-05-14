@@ -44,10 +44,17 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Transform3D
       d_data[id] = 1.0;
     }
   }
+  Transform3D(const Transform3D &t) = default;
+  Transform3D(Transform3D &&t) = default;
+  ~Transform3D() = default;
+
+  Transform3D &operator=(const Transform3D &t) = default;
+  Transform3D &operator=(Transform3D &&t) = default;
 
   void setToIdentity();
 
   void TransformPoint(Point3D &pt) const;
+  void TransformPoint(double *pt) const;
 
   /*! \brief Set the translation vector
    */

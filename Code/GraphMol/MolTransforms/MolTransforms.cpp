@@ -37,9 +37,8 @@ void transformAtom(Atom *atom, RDGeom::Transform3D &tform) {
 void transformMolsAtoms(ROMol *mol, RDGeom::Transform3D &tform) {
   PRECONDITION(mol, "no molecule");
 
-  ROMol::AtomIterator atomIt;
-  for (atomIt = mol->beginAtoms(); atomIt != mol->endAtoms(); atomIt++) {
-    transformAtom(*atomIt, tform);
+  for (auto atom : mol->atoms()) {
+    transformAtom(atom, tform);
   }
 }
 
@@ -74,16 +73,15 @@ void computeCovarianceTerms(const Conformer &conf,
   xx = xy = xz = yy = yz = zz = 0.0;
   const ROMol &mol = conf.getOwningMol();
   double wSum = 0.0;
-  for (ROMol::ConstAtomIterator cai = mol.beginAtoms(); cai != mol.endAtoms();
-       cai++) {
-    if (((*cai)->getAtomicNum() == 1) && (ignoreHs)) {
+  for (const auto atom : mol.atoms()) {
+    if ((atom->getAtomicNum() == 1) && (ignoreHs)) {
       continue;
     }
-    RDGeom::Point3D loc = conf.getAtomPos((*cai)->getIdx());
+    RDGeom::Point3D loc = conf.getAtomPos(atom->getIdx());
     loc -= center;
     double w = 1.0;
     if (weights) {
-      w = (*weights)[(*cai)->getIdx()];
+      w = (*weights)[atom->getIdx()];
     }
     wSum += w;
     xx += w * loc.x * loc.x;
@@ -130,16 +128,15 @@ void computeInertiaTerms(const Conformer &conf, const RDGeom::Point3D &center,
 
   xx = xy = xz = yy = yz = zz = 0.0;
   const ROMol &mol = conf.getOwningMol();
-  for (ROMol::ConstAtomIterator cai = mol.beginAtoms(); cai != mol.endAtoms();
-       cai++) {
-    if (((*cai)->getAtomicNum() == 1) && (ignoreHs)) {
+  for (const auto atom : mol.atoms()) {
+    if ((atom->getAtomicNum() == 1) && (ignoreHs)) {
       continue;
     }
-    RDGeom::Point3D loc = conf.getAtomPos((*cai)->getIdx());
+    RDGeom::Point3D loc = conf.getAtomPos(atom->getIdx());
     loc -= center;
     double w = 1.0;
     if (weights) {
-      w = (*weights)[(*cai)->getIdx()];
+      w = (*weights)[atom->getIdx()];
     }
     xx += w * (loc.y * loc.y + loc.z * loc.z);
     yy += w * (loc.x * loc.x + loc.z * loc.z);
@@ -247,8 +244,10 @@ bool computePrincipalAxesAndMomentsFromGyrationMatrix(
     return true;
   }
   auto origin = computeCentroid(conf, ignoreHs, weights);
+  // Note that this may not return a right-handed axis.
   bool res = getEigenValEigenVectFromCovMat(conf, axes, moments, origin,
                                             ignoreHs, true, weights);
+
   if (res && !weights) {
     conf.getOwningMol().setProp(axesPropName, axes, true);
     conf.getOwningMol().setProp(momentsPropName, moments, true);
@@ -259,7 +258,8 @@ bool computePrincipalAxesAndMomentsFromGyrationMatrix(
 RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
                                                const RDGeom::Point3D *center,
                                                bool normalizeCovar,
-                                               bool ignoreHs) {
+                                               bool ignoreHs,
+                                               double *eigenValues) {
   constexpr unsigned int DIM = 3;
   RDGeom::Point3D origin;
   if (!center) {
@@ -271,8 +271,8 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
   auto *trans = new RDGeom::Transform3D;
   trans->setToIdentity();
 
-  // if we have a single atom system we don't need to do anyhting setting
-  // translation is sufficient
+  // If we have a single atom system we don't need to do anything setting
+  // translation is sufficient.
   if (nAtms > 1) {
     Eigen::Matrix3d eigVecs;
     Eigen::Vector3d eigVals;
@@ -291,6 +291,9 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
                 });
       for (unsigned int col = 0; col < DIM; ++col) {
         unsigned int colSorted = eigValsSorted.at(col).first;
+        if (eigenValues) {
+          eigenValues[colSorted] = eigValsSorted.at(col).second;
+        }
         for (unsigned int row = 0; row < DIM; ++row) {
           trans->setVal(col, row, eigVecs(row, colSorted));
         }
@@ -327,7 +330,8 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
 RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
                                                const RDGeom::Point3D *center,
                                                bool normalizeCovar,
-                                               bool ignoreHs) {
+                                               bool ignoreHs,
+                                               double *retEigenValues) {
   RDGeom::Point3D origin;
   if (!center) {
     origin = computeCentroid(conf, ignoreHs);
@@ -339,7 +343,7 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
   // find the eigen values and eigen vectors for the covMat
   RDNumeric::DoubleMatrix eigVecs(3, 3);
   RDNumeric::DoubleVector eigVals(3);
-  // if we have a single atom system we don't need to do anyhting other than
+  // if we have a single atom system we don't need to do anything other than
   // setting translation
   // translation
   unsigned int nAtms = conf.getNumAtoms();
@@ -348,11 +352,16 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
   // set the translation
   origin *= -1.0;
   // trans->SetTranslation(origin);
-  // if we have a single atom system we don't need to do anyhting setting
+  // if we have a single atom system we don't need to do anything setting
   // translation is sufficient
   if (nAtms > 1) {
     RDNumeric::EigenSolvers::powerEigenSolver(3, *covMat, eigVals, eigVecs,
                                               conf.getNumAtoms());
+    if (retEigenValues) {
+      retEigenValues[0] = eigVals[0];
+      retEigenValues[1] = eigVals[1];
+      retEigenValues[2] = eigVals[2];
+    }
     // deal with zero eigen value systems
     unsigned int i, j, dim = 3;
     for (i = 0; i < 3; ++i) {

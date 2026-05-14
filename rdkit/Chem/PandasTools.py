@@ -67,7 +67,7 @@ because the ">=" operator has been modified to work as a substructure check.
 Such the antibiotics containing the beta-lactam ring "C1C(=O)NC1" can be obtained by
 
 >>> beta_lactam = Chem.MolFromSmiles('C1C(=O)NC1')
->>> beta_lactam_antibiotics = antibiotics[antibiotics['Molecule'] >= beta_lactam] 
+>>> beta_lactam_antibiotics = antibiotics[antibiotics['Molecule'] >= beta_lactam]
 >>> print(beta_lactam_antibiotics[['Name','Smiles']])
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
@@ -136,6 +136,7 @@ import rdkit
 from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem, Draw, SDWriter, rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
+from rdkit.Chem.Draw import rdMolDraw2D
 
 InteractiveRenderer = None
 drawOptions = None
@@ -239,17 +240,35 @@ else:
 
   def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False,
               isomericSmiles=True, smilesName=None, embedProps=False, removeHs=True,
-              strictParsing=True, sanitize=True):
+              strictParsing=True, sanitize=True, autoConvertStrings=False):
     '''Read file in SDF format and return as Pandas data frame.
-      If embedProps=True all properties also get embedded in Mol objects in the molecule column.
-      If molColName=None molecules would not be present in resulting DataFrame (only properties
-      would be read).
       
-      Sanitize boolean is passed on to Chem.ForwardSDMolSupplier sanitize. 
+      Arguments:
+      
+       - filename: path to the SDF file or a file-like object.
+       - idName: name of the column to be used for the molecule title. Defaults to "ID".
+       - molColName: name of the column to be used for the RDKit molecule objects. If None, molecules will not be included in resulting DataFrame. Defaults to "ROMol".
+       - includeFingerprints: if True, precompute fingerprints and store them within the molecule objects to accelerate substructure matching. Defaults to False.
+       - isomericSmiles: if True, generated SMILES will include isomeric information. Defaults to True.
+       - smilesName: if set, add a column with the specified name to the DataFrame that contains the SMILES representation of the molecule. If None, SMILES will not be included in final DataFrame. Defaults to None.
+       - embedProps: if True, properties will also be embedded in the molecule objects instead of only being added as separate columns to the Dataframe. Defaults to False.
+       - removeHs: if True, explicit hydrogens will be removed from the molecules. Defaults to True.
+       - strictParsing: if True, an exception will be raised if a molecule cannot be parsed; if False, unparseable molecules will be skipped. Defaults to True.
+       - sanitize: if True, molecules will be sanitized during parsing. It is passed on to Chem.ForwardSDMolSupplier sanitize. Defaults to True.
+       - autoConvertStrings: if True, allows to automatically convert properties to numeric or boolean types where possible. Properties that cannot be converted are left as strings. Defaults to False.
+
+
+      Returns:
+      
+        A pandas DataFrame containing the data from the SDF file.
+      
+      
+      Note:
+      
       If neither molColName nor smilesName are set, sanitize=false.
       '''
     if isinstance(filename, str):
-      if filename.lower()[-3:] == ".gz":
+      if filename.lower().endswith("gz"):
         import gzip
         f = gzip.open(filename, "rb")
       else:
@@ -267,7 +286,7 @@ else:
                                   strictParsing=strictParsing)):
       if mol is None:
         continue
-      row = dict((k, mol.GetProp(k)) for k in mol.GetPropNames())
+      row = mol.GetPropsAsDict(autoConvertStrings=autoConvertStrings)
       if molColName is not None and not embedProps:
         for prop in mol.GetPropNames():
           mol.ClearProp(prop)
@@ -415,7 +434,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
     '''
   close = None
   if isinstance(out, str):
-    if out.lower()[-3:] == ".gz":
+    if out.lower().endswith("gz"):
       import gzip
       out = gzip.open(out, "wt")
       close = out.close
@@ -561,7 +580,7 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300), dpi=XLSX_
           worksheet.insert_image(row_idx_actual, col_idx, "f", {'image_data': image_data})
           worksheet.set_column_pixels(col_idx, col_idx, width=size[0])
           continue
-      if str(dataTypes[col]) == "object":
+      if str(dataTypes[col]) in ("object", "str"):
         # string length is limited in xlsx
         worksheet.write_string(row_idx_actual, col_idx,
                                str(row[col])[:32000], cell_formats['write_string'])
@@ -672,7 +691,10 @@ import unittest
 
 class TestCase(unittest.TestCase):
 
-  @unittest.skipIf(xlsxwriter is None or pd is None, 'pandas/xlsxwriter not installed')
+  # SaveXlsxFromFrame creates PNG images using MolToImage, which requires
+  # MolDraw2DCairo to be available
+  @unittest.skipIf(xlsxwriter is None or pd is None or
+    not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'pandas/xlsxwriter not installed')
   def testGithub1507(self):
     import os
     from rdkit import RDConfig
@@ -706,7 +728,10 @@ if __name__ == '__main__':  # pragma: nocover
 
   class TestCase(unittest.TestCase):
 
-    @unittest.skipIf(xlsxwriter is None or pd is None, 'pandas/xlsxwriter not installed')
+    # SaveXlsxFromFrame creates PNG images using MolToImage, which requires
+    # MolDraw2DCairo to be available
+    @unittest.skipIf(xlsxwriter is None or pd is None or
+      not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'pandas/xlsxwriter not installed')
     def testGithub1507(self):
       import os
 

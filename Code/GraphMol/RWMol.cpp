@@ -813,10 +813,11 @@ void RWMol::batchRemoveAtoms() {
       Bond *bond = d_graph[*beg++];
       if (bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
                                  sprop)) {
-        // This would ideally use ParseV3000Array but I'm buggered if I can get
-        // the linker to find it.
+        // This would ideally use ParseV3000Array but I'm buggered if I can
+        // get the linker to find it.
         //      std::vector<unsigned int> oats =
-        //          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(sprop);
+        //          RDKit::SGroupParsing::ParseV3000Array<unsigned
+        //          int>(sprop);
         if ('(' == sprop.front() && ')' == sprop.back()) {
           sprop = sprop.substr(1, sprop.length() - 2);
 

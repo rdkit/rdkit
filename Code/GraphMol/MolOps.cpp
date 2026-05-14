@@ -598,7 +598,7 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   // kekulizations
   operationThatFailed = SANITIZE_KEKULIZE;
   if (sanitizeOps & operationThatFailed) {
-    Kekulize(mol);
+    Kekulize(mol, true, false);
   }
 
   // look for radicals:
@@ -692,7 +692,7 @@ std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
   operation = SANITIZE_KEKULIZE;
   if (sanitizeOps & operation) {
     try {
-      Kekulize(mol);
+      Kekulize(mol, true, false);
     } catch (const MolSanitizeException &e) {
       res.emplace_back(e.copy());
     }
@@ -1011,15 +1011,15 @@ template RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
     bool sanitizeFrags, const std::vector<unsigned int> *, bool);
 
 int getFormalCharge(const ROMol &mol) {
-  int accum = 0;
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    accum += (*atomIt)->getFormalCharge();
-  }
-  return accum;
+  auto res = std::accumulate(mol.atoms().begin(), mol.atoms().end(), 0,
+                             [](int accum, const auto atom) {
+                               return accum + atom->getFormalCharge();
+                             });
+  return res;
 };
 
-unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
+unsigned getNumAtomsWithDistinctProperty(const ROMol &mol,
+                                         const std::string_view &prop) {
   unsigned numPropAtoms = 0;
   for (const auto atom : mol.atoms()) {
     if (atom->hasProp(prop)) {
@@ -1116,7 +1116,7 @@ std::vector<std::vector<unsigned int>> contiguousAtoms(
 // add to the molecule a dummy atom centred on the
 // atoms passed in, with a dative bond from it to the metal atom.
 void addHapticBond(RWMol &mol, unsigned int metalIdx,
-                   std::vector<unsigned int> hapticAtoms) {
+                   const std::vector<unsigned int> &hapticAtoms) {
   // So there is a * in the V3000 file as the symbol for the atom.
   auto dummyAt = new QueryAtom(0);
   dummyAt->setQuery(makeAtomNullQuery());

@@ -208,6 +208,25 @@ class BlockLogs : public boost::noncopyable {
   std::unique_ptr<RDLog::LogStateSetter> m_log_setter;
 };
 
+struct PyCaptureErrorLog : boost::noncopyable {
+  PyCaptureErrorLog *enter() { return this; }
+  void exit(python::object /*exc_type*/, python::object /*exc_val*/,
+            python::object /*traceback*/) {
+    if (m_capturer) {
+      m_messages = m_capturer->messages();
+      m_capturer.reset();
+    }
+  }
+  std::string messages() const {
+    return m_capturer ? m_capturer->messages() : m_messages;
+  }
+
+ private:
+  std::unique_ptr<RDLog::CaptureErrorLog> m_capturer{
+      new RDLog::CaptureErrorLog};
+  std::string m_messages;
+};
+
 namespace {
 struct python_streambuf_wrapper {
   typedef boost_adaptbx::python::streambuf wt;
@@ -234,6 +253,86 @@ struct python_ostream_wrapper {
 };
 
 void seedRNG(unsigned int seed) { std::srand(seed); }
+
+/// Simple Boost.Python custom converter from pathlib.Path to std::string
+template <typename T = std::string>
+struct path_converter {
+  path_converter() {
+    python::converter::registry::push_back(&path_converter::convertible,
+                                           &path_converter::construct,
+                                           boost::python::type_id<T>());
+  }
+
+  /// Check PyObject is a pathlib.Path
+  static void *convertible(PyObject *object) {
+    // paranoia
+    if (object == nullptr) {
+      return nullptr;
+    }
+    python::object boost_object(python::handle<>(python::borrowed(object)));
+
+    std::string object_classname = boost::python::extract<std::string>(
+        boost_object.attr("__class__").attr("__name__"));
+    // pathlib.Path is always specialized to the below derived classes
+    if (object_classname == "WindowsPath" || object_classname == "PosixPath") {
+      return object;
+    }
+
+    return nullptr;
+  }
+
+  /// Construct a std::string from pathlib.Path using its own __str__ attribute
+  static void construct(
+      PyObject *object,
+      boost::python::converter::rvalue_from_python_stage1_data *data) {
+    void *storage =
+        ((boost::python::converter::rvalue_from_python_storage<T> *)data)
+            ->storage.bytes;
+    python::object boost_object{python::handle<>{python::borrowed(object)}};
+    new (storage)
+        T{boost::python::extract<std::string>{boost_object.attr("__str__")()}};
+    data->convertible = storage;
+  }
+};
+
+/// Convert a Python str to a std::string_view
+template <typename T = std::string_view>
+struct string_view_from_python_converter {
+  string_view_from_python_converter() {
+    python::converter::registry::push_back(
+        &string_view_from_python_converter::convertible,
+        &string_view_from_python_converter::construct, python::type_id<T>());
+  }
+
+  /// Check PyObject is a str
+  static void *convertible(PyObject *object) {
+    if (object != nullptr && PyUnicode_Check(object)) {
+      return object;
+    }
+    return nullptr;
+  }
+
+  /// Construct a std::string_view from the internal string of the PyObject.
+  /// This shouldn´t fail, as we block the Python thread until the C++ code
+  /// returns, so the PyObject and the internal string should remain valid.
+  static void construct(
+      PyObject *object,
+      python::converter::rvalue_from_python_stage1_data *data) {
+    const char *tmp = PyUnicode_AsUTF8(object);
+
+    void *storage = ((python::converter::rvalue_from_python_storage<T> *)data)
+                        ->storage.bytes;
+    new (storage) T{tmp};
+    data->convertible = storage;
+  }
+};
+
+struct string_view_to_python_converter {
+  static PyObject *convert(const std::string_view &s) {
+    return python::incref(python::str(s.data(), s.size()).ptr());
+  }
+};
+
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdBase) {
@@ -256,6 +355,7 @@ BOOST_PYTHON_MODULE(rdBase) {
   RegisterVectorConverter<std::pair<int, int>>("MatchTypeVect");
 
   path_converter();
+  string_view_from_python_converter();
 
   RegisterListConverter<int>();
   RegisterListConverter<std::vector<int>>();
@@ -272,6 +372,9 @@ BOOST_PYTHON_MODULE(rdBase) {
   python::register_exception_translator<Invar::Invariant>(
       &translate_invariant_error);
 #endif
+
+  boost::python::to_python_converter<std::string_view,
+                                     string_view_to_python_converter>();
 
   python::def("_version", _version,
               "Deprecated, use the constant rdkitVersion instead");
@@ -344,4 +447,21 @@ BOOST_PYTHON_MODULE(rdBase) {
       .def("__enter__", &BlockLogs::enter,
            python::return_internal_reference<>())
       .def("__exit__", &BlockLogs::exit);
+
+  python::class_<PyCaptureErrorLog, boost::noncopyable>(
+      "CaptureErrorLog",
+      "Captures messages from rdErrorLog while this instance is in scope.\n"
+      "Can be used as a context manager. The ``messages`` property is\n"
+      "accessible both inside the context and after it exits.\n"
+      "Nesting is supported: inner captures shadow outer ones.\n\n"
+      "Example::\n\n"
+      "  with rdBase.CaptureErrorLog() as capture:\n"
+      "      rdkit_function_that_may_fail()\n"
+      "  print(capture.messages)\n",
+      python::init<>(python::args("self")))
+      .def("__enter__", &PyCaptureErrorLog::enter,
+           python::return_internal_reference<>())
+      .def("__exit__", &PyCaptureErrorLog::exit)
+      .add_property("messages", &PyCaptureErrorLog::messages,
+                    "Messages captured from rdErrorLog.");
 }

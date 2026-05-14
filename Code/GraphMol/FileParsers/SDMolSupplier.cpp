@@ -62,6 +62,10 @@ void SDMolSupplier::init() {
   ForwardSDMolSupplier::init();
   d_len = -1;
   d_last = 0;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
+  d_molCache.clear();
 }
 
 void SDMolSupplier::setData(const std::string &text) {
@@ -124,7 +128,6 @@ void SDMolSupplier::peekCheckForEnd(char *bufPtr, char *bufEnd,
   PRECONDITION(dp_inStream, "no stream");
   int emptyLines = 0;
   char *p = bufPtr;
-
   while (p < bufEnd) {
     if (!std::isspace(*p)) {
       return;
@@ -196,6 +199,9 @@ std::unique_ptr<RWMol> SDMolSupplier::next() {
 
 std::string SDMolSupplier::getItemText(unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  const std::lock_guard<std::mutex> guard(d_readMutex);
+#endif
   unsigned int holder = d_last;
   moveTo(idx);
   std::streampos begP = d_molpos[idx];
@@ -219,7 +225,6 @@ std::string SDMolSupplier::getItemText(unsigned int idx) {
 
 void SDMolSupplier::moveTo(unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
-
   // dp_inStream->seekg() is called for all idx values
   // and earlier calls to next() may have put the stream into a bad state
   dp_inStream->clear();
@@ -257,9 +262,43 @@ void SDMolSupplier::moveTo(unsigned int idx) {
 
 std::unique_ptr<RWMol> SDMolSupplier::operator[](unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  const std::lock_guard<std::mutex> guard(d_readMutex);
+#endif
+  // std::cerr << "get molecule with index " << idx << std::endl;
   // get the molecule with index idx
   moveTo(idx);
-  return next();
+  auto res = next();
+  return res;
+}
+
+std::shared_ptr<RWMol> SDMolSupplier::getShared(unsigned int idx) {
+  PRECONDITION(dp_inStream, "no stream");
+  if (d_cacheMolecules) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
+    if (d_molCache.size() > idx && d_molCache[idx]) {
+      return d_molCache[idx].value();
+    }
+  }
+  std::shared_ptr<RWMol> res;
+  {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_readMutex);
+#endif
+    // get the molecule with index idx
+    moveTo(idx);
+    res.reset(next().release());
+  }
+  if (d_cacheMolecules) {
+    if (d_molCache.size() <= idx) {
+      constexpr unsigned int molCacheAllocChunkSize = 1000;
+      d_molCache.resize(idx + molCacheAllocChunkSize);
+    }
+    d_molCache[idx] = res;
+  }
+  return res;
 }
 
 unsigned int SDMolSupplier::length() {
@@ -307,6 +346,7 @@ void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
     char *bufStart = &buffer[0];
     char *bufEnd = bufStart + OVERLAP + bytesRead;
     char *ptr = bufStart + 1;
+    bool needEOL = false;
 
     while (true) {
       constexpr char dollarSigns[]{"$$$$"};
@@ -316,15 +356,23 @@ void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
       }
       if (*(match - 1) == '\n') {  // ensure $$$$ is at start of line
         char *nlPos = match + 4;
-        while (nlPos < bufEnd && *nlPos != '\n') {
-          ++nlPos;
-        }
-        if (nlPos < bufEnd) {
-          ++nlPos;
+        if (nlPos == bufEnd) {
+          // corner case, $$$$ is EXACTLY at the end of the buffer
+          //  we need the next char in the stream to be a "\n", this is resolved
+          //  below.
+          needEOL = true;
+        } else {
+          while (nlPos < bufEnd && *nlPos != '\n') {
+            ++nlPos;
+          }
+          if (nlPos < bufEnd) {
+            ++nlPos;
+          }
         }
 
         std::streampos posHold;
-        if (isBinaryLike) {  // fast path, math checks out, no need to seek
+        if (isBinaryLike &&
+            !needEOL) {  // fast path, math checks out, no need to seek
           posHold = chunkStartPos + std::streamoff(nlPos - bufStart - OVERLAP);
         } else {  // slow path, there is byte translation going on, need to seek
                   // and use the std translation magic to find the actual byte
@@ -344,6 +392,13 @@ void SDMolSupplier::buildIndexTo(unsigned int targetIdx) {
             (bytesRead < static_cast<std::streamsize>(CHUNK_SIZE)) &&
             (nlPos >= bufEnd);
         if (!atTrueEOF) {
+          if (needEOL) {
+            char c = dp_inStream->peek();
+            if (c == '\n') {
+              posHold = posHold + std::streamoff(1);
+              needEOL = false;
+            }
+          }
           this->peekCheckForEnd(nlPos, bufEnd,
                                 posHold);  // the optimized peek version
           if (!this->df_end) {

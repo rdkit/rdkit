@@ -35,30 +35,31 @@
 
 #include "Reaction.h"
 #include <string>
+#include <string_view>
 #include <exception>
 
 namespace RDKit {
 
 RDKIT_CHEMREACTIONS_EXPORT bool preprocessReaction(
     ChemicalReaction &rxn,
-    const std::string &propName = common_properties::molFileValue);
+    const std::string_view &propName = common_properties::molFileValue);
 
 RDKIT_CHEMREACTIONS_EXPORT bool preprocessReaction(
     ChemicalReaction &rxn, unsigned int &numWarnings, unsigned int &numErrors,
     std::vector<std::vector<std::pair<unsigned int, std::string>>>
         &reactantLabels,
-    const std::string &propName = common_properties::molFileValue);
+    const std::string_view &propName = common_properties::molFileValue);
 
 RDKIT_CHEMREACTIONS_EXPORT bool preprocessReaction(
     ChemicalReaction &rxn, const std::map<std::string, ROMOL_SPTR> &queries,
-    const std::string &propName = common_properties::molFileValue);
+    const std::string_view &propName = common_properties::molFileValue);
 
 RDKIT_CHEMREACTIONS_EXPORT bool preprocessReaction(
     ChemicalReaction &rxn, unsigned int &numWarnings, unsigned int &numErrors,
     std::vector<std::vector<std::pair<unsigned int, std::string>>>
         &reactantLabels,
     const std::map<std::string, ROMOL_SPTR> &queries,
-    const std::string &propName = common_properties::molFileValue);
+    const std::string_view &propName = common_properties::molFileValue);
 }  // namespace RDKit
 
 #endif

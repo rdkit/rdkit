@@ -1570,12 +1570,11 @@ TEST_CASE("Testing Issue 183") {
   REQUIRE(m2->getBondWithIdx(10)->getStereo() == Bond::STEREOZ);
 
   refSmi = MolToSmiles(*m2, 1);
-  BOOST_LOG(rdInfoLog) << "ref: " << refSmi << std::endl;
+  CHECK(refSmi == R"SMI(C/C(F)=C(C)/C(=C(/C)Cl)C(/F)=C(/C)F)SMI");
   m = SmilesToMol(refSmi);
   REQUIRE(m);
   smi = MolToSmiles(*m, 1);
-  BOOST_LOG(rdInfoLog) << "smi: " << smi << std::endl;
-  REQUIRE(refSmi == smi);
+  CHECK(refSmi == smi);
 
   int nEs = 0, nZs = 0, nDbl = 0;
   for (RWMol::BondIterator bondIt = m->beginBonds(); bondIt != m->endBonds();
@@ -3430,7 +3429,8 @@ TEST_CASE("Testing sf.net issue 2316677 : canonicalization error") {
   REQUIRE(m);
   std::string smi = MolToSmiles(*m, true);
   std::cerr << "smi: " << smi << std::endl;
-  REQUIRE(smi == "Cc1ccc(S(=O)(=O)/N=C2\\CC(=N\\C(C)(C)C)/C2=N\\C(C)(C)C)cc1");
+  REQUIRE(smi ==
+          R"SMI(Cc1ccc(S(=O)(=O)\N=C2/CC(=N\C(C)(C)C)/C2=N\C(C)(C)C)cc1)SMI");
   delete m;
 }
 
@@ -6384,7 +6384,7 @@ TEST_CASE("Testing github #805 : Pre-condition Violation: bad bond type") {
     REQUIRE(m->getBondBetweenAtoms(3, 10)->getBondType() == Bond::DOUBLE);
     REQUIRE(m->getBondBetweenAtoms(3, 10)->getStereo() != Bond::STEREONONE);
     std::string smi = MolToSmiles(*m, true);
-    REQUIRE(smi == R"SMI(CCO/[P+]([O-])=C1CSC(c2cccs2)C\1=[P+](\[O-])OCC)SMI");
+    REQUIRE(smi == R"SMI(CCO/[P+]([O-])=C1\CSC(c2cccs2)\C1=[P+](\[O-])OCC)SMI");
     delete m;
   }
   {
@@ -7754,7 +7754,6 @@ M  END)CTAB";
   REQUIRE(v86.dotProduct(v16) < -1e-4);
 }
 
-#ifdef RDK_USE_URF
 TEST_CASE("Testing ring family calculation") {
   {
     constexpr const char *smiles = "C(C1C2C3C41)(C2C35)C45";  // cubane
@@ -7799,7 +7798,6 @@ TEST_CASE("Testing ring family calculation") {
     delete m;
   }
 }
-#endif
 
 TEST_CASE("Testing adding coordinates to a terminal atom") {
   auto mol = R"CTAB(

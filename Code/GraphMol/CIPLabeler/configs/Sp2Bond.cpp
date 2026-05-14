@@ -88,6 +88,8 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
   const auto &focus1 = getFoci()[0];
   const auto &focus2 = getFoci()[1];
 
+  const bool is_constitutional = comp.getNumSubRules() == 3;
+
   d_ranked_anchors.clear();
 
   const auto &internal = findInternalEdge(root1->getEdges(), focus1, focus2);
@@ -110,11 +112,11 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
 
   digraph.changeRoot(root1);
   const auto &priority1 = comp.sort(root1, edges1);
-  if (!priority1.isUnique()) {
+  if (!priority1.isUnique() && !is_constitutional) {
     return Descriptor::UNKNOWN;
   }
   // swap
-  if (edges1.size() > 1 && carriers[0] == edges1[1]->getEnd()->getAtom()) {
+  if (edges1.size() > 1 && carriers[0] != edges1[0]->getEnd()->getAtom()) {
     if (config == Bond::STEREOCIS) {
       config = Bond::STEREOTRANS;
     } else {
@@ -123,11 +125,11 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
   }
   digraph.changeRoot(root2);
   const auto &priority2 = comp.sort(root2, edges2);
-  if (!priority2.isUnique()) {
+  if (!priority2.isUnique() || !priority1.isUnique()) {
     return Descriptor::UNKNOWN;
   }
   // swap
-  if (edges2.size() > 1 && carriers[1] == edges2[1]->getEnd()->getAtom()) {
+  if (edges2.size() > 1 && carriers[1] != edges2[0]->getEnd()->getAtom()) {
     if (config == Bond::STEREOCIS) {
       config = Bond::STEREOTRANS;
     } else {

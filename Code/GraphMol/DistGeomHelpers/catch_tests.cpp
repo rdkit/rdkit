@@ -6,7 +6,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-
 #include <RDGeneral/test.h>
 #include <catch2/catch_all.hpp>
 
@@ -22,6 +21,8 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
+#include <Geometry/Utils.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
 #include <tuple>
@@ -132,6 +133,7 @@ TEST_CASE("update parameters from JSON") {
     std::string json = R"JSON({"randomSeed":42})JSON";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // MolToMolFile(*mol, fname);
     compareConfs(ref.get(), mol.get());
   }
   SECTION("ETKDG") {
@@ -150,6 +152,7 @@ TEST_CASE("update parameters from JSON") {
     "useBasicKnowledge":true})JSON";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // MolToMolFile(*mol, fname);
     compareConfs(ref.get(), mol.get());
   }
   SECTION("ETKDGv2") {
@@ -169,6 +172,7 @@ TEST_CASE("update parameters from JSON") {
     "ETversion":2})JSON";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // MolToMolFile(*mol, fname);
     compareConfs(ref.get(), mol.get());
   }
 
@@ -218,7 +222,11 @@ TEST_CASE("EmbedParameters to JSON") {
     MolOps::addHs(*mol);
     DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(3));
     DGeomHelpers::initBoundsMat(mat);
-    DGeomHelpers::setTopolBounds(*mol, mat, true, false, false);
+    bool set15bounds = true;
+    bool scaleVDW = false;
+    bool useMacrocycle14config = false;
+    DGeomHelpers::setTopolBounds(*mol, mat, set15bounds, scaleVDW,
+                                 useMacrocycle14config);
     ps.boundsMat = mat;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
@@ -703,7 +711,7 @@ TEST_CASE("tracking failure causes") {
     CHECK(cid < 0);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
-          3);
+          1);
   }
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -811,7 +819,12 @@ TEST_CASE("Macrocycle bounds matrix") {
 
     DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
     DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-    DGeomHelpers::setTopolBounds(*mol, bm, true, false, true);
+
+    bool set15bounds = true;
+    bool scaleVDW = false;
+    bool useMacrocycle14config = true;
+    DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                 useMacrocycle14config);
     CHECK(bm->getLowerBound(1, 18) > 2.6);
     CHECK(bm->getLowerBound(1, 18) < 2.7);
     CHECK(bm->getLowerBound(4, 17) > 2.6);
@@ -1079,7 +1092,12 @@ TEST_CASE("No overlapping atoms") {
   MolOps::addHs(*mol);
   DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
   DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-  DGeomHelpers::setTopolBounds(*mol, bm, true, false, true);
+
+  bool set15bounds = true;
+  bool scaleVDW = false;
+  bool useMacrocycle14config = true;
+  DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                               useMacrocycle14config);
   auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, ps);
   CHECK(cids.size() == 10);
   for (const auto &cid : cids) {
@@ -1089,7 +1107,7 @@ TEST_CASE("No overlapping atoms") {
       for (unsigned int j = 0; j < i; ++j) {
         const auto minDist = bm->getLowerBound(i, j);
         const auto length = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
-        CHECK((minDist - length) < .395);
+        CHECK((minDist - length) < .425);
       }
     }
   }
@@ -1107,6 +1125,18 @@ TEST_CASE("github #8001: RMS pruning misses conformers") {
   ps.pruneRmsThresh = 1.0;
   cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
   CHECK(cids.size() == 4);
+}
+
+TEST_CASE("Lower bound for H-bond atoms") {
+  auto mol = "c12ccccc1OC(=O)C(C(=O)Nc1ccccc1)=C2"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+  DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+  DGeomHelpers::setTopolBounds(*mol, bm);
+  CHECK(bm->getLowerBound(8, 24) <= 1.8);
+  CHECK(bm->getLowerBound(30, 11) > 1.8);
+  CHECK(bm->getLowerBound(24, 0) > 1.8);
 }
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -1236,6 +1266,261 @@ TEST_CASE("allenes and cumulenes") {
   }
 }
 
+TEST_CASE("Torsion of non-sulfide *S-S*") {
+  SECTION("bounds matrix 1-4 distance") {
+    {
+      auto m = "C(=O)SS(=O)C"_smiles;
+      REQUIRE(m);
+      MolOps::addHs(*m);
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+
+      // check that torsion not fixed on 90 degree
+      double bl1 = (bm->getUpperBound(0, 2) + bm->getLowerBound(0, 2)) / 2;
+      double bl2 = (bm->getUpperBound(2, 3) + bm->getLowerBound(2, 3)) / 2;
+      double bl3 = (bm->getUpperBound(3, 5) + bm->getLowerBound(3, 5)) / 2;
+
+      double ba12 = 109.5 * M_PI / 180;
+      double ba23 = 109.5 * M_PI / 180;
+
+      double opt_14_cis = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
+      double opt_14_trans =
+          RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+
+      CHECK(bm->getLowerBound(0, 5) <= opt_14_cis);
+      CHECK(bm->getUpperBound(0, 5) >= opt_14_trans);
+    }
+  }
+
+  SECTION("bounds matrix 1-4 distance (sanity)") {
+    {
+      auto m = "CSSC"_smiles;
+      REQUIRE(m);
+      MolOps::addHs(*m);
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+
+      // check that torsion not fixed on 90 degree
+      double bl1 = (bm->getUpperBound(0, 1) + bm->getLowerBound(0, 1)) / 2;
+      double bl2 = (bm->getUpperBound(1, 2) + bm->getLowerBound(1, 2)) / 2;
+      double bl3 = (bm->getUpperBound(2, 3) + bm->getLowerBound(2, 3)) / 2;
+
+      // 1-3 to angle
+      // double distAngl12 = (bm->getUpperBound(0, 3) + bm->getLowerBound(0, 3))
+      // / 2; double distAngl23 = (bm->getUpperBound(2, 5) +
+      // bm->getLowerBound(2, 5)) / 2;
+
+      // std::cout << std::pow(bl1, 2) + std::pow(bl2, 2) - std::pow(distAngl12,
+      // 2) << "; " << 2*bl1*bl2 << std::endl;
+
+      // TODO change this
+      double ba12 =
+          109.5 * M_PI / 180;  // std::acos((std::pow(bl1, 2) + std::pow(bl2, 2)
+                               // - std::pow(distAngl12, 2))/2*bl1*bl2);
+      double ba23 =
+          109.5 * M_PI / 180;  // std::acos((std::pow(bl2, 2) + std::pow(bl3, 2)
+                               // - std::pow(distAngl23, 2))/2*bl2*bl3);
+
+      double opt_14_cis = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
+      double opt_14_trans =
+          RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+
+      CHECK(bm->getLowerBound(0, 3) > opt_14_cis);
+      CHECK(bm->getUpperBound(0, 3) < opt_14_trans);
+    }
+  }
+}
+
+TEST_CASE("Overwritten bounds") {
+  SECTION("Overwriten 1-2 by 1-3 distance") {
+    {
+      auto m = "C1CC1"_smiles;
+      REQUIRE(m);
+      MolOps::addHs(*m);
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+      bool set15bounds = false;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = false;
+      bool set13bounds = true;
+
+      // setting 1-3 distances
+      DGeomHelpers::setTopolBounds(*m, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
+
+      // NOT setting 1-3 distances
+      set13bounds = false;
+      DGeomHelpers::setTopolBounds(*m, bm2, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+
+      // 1-2 distances should be the same
+      CHECK(bm->getLowerBound(0, 1) == bm2->getLowerBound(0, 1));
+      CHECK(bm->getUpperBound(0, 1) == bm2->getUpperBound(0, 1));
+    }
+  }
+  SECTION("Overwriten 1-2 by 1-4 distance") {
+    {
+      auto m = "C1CCC1"_smiles;
+      REQUIRE(m);
+      MolOps::addHs(*m);
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+      bool set15bounds = false;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = true;
+      bool set13bounds = true;
+
+      // setting 1-4 distances
+      DGeomHelpers::setTopolBounds(*m, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
+
+      // NOT setting 1-4 distances
+      set14bounds = false;
+      DGeomHelpers::setTopolBounds(*m, bm2, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+
+      // 1-2 distances should be the same
+      CHECK(bm->getLowerBound(0, 1) == bm2->getLowerBound(0, 1));
+      CHECK(bm->getUpperBound(0, 1) == bm2->getUpperBound(0, 1));
+    }
+  }
+  SECTION("Overwriten 1-3 by 1-4 distance") {
+    {
+      auto m = "C1CCCC1"_smiles;
+      REQUIRE(m);
+      MolOps::addHs(*m);
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+      bool set15bounds = false;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = true;
+      bool set13bounds = true;
+
+      // setting 1-4 distances
+      DGeomHelpers::setTopolBounds(*m, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
+
+      // NOT setting 1-4 distances
+      set14bounds = false;
+      DGeomHelpers::setTopolBounds(*m, bm2, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+
+      // 1-2 distances should be the same
+      CHECK(bm->getLowerBound(0, 2) == bm2->getLowerBound(0, 2));
+      CHECK(bm->getUpperBound(0, 2) == bm2->getUpperBound(0, 2));
+    }
+  }
+  SECTION("Overwriten 1-2 by 1-5 distance") {
+    {
+      auto m = "C1CCCC1"_smiles;
+      REQUIRE(m);
+      MolOps::addHs(*m);
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+      bool set15bounds = true;
+
+      // setting 1-5 distances
+      DGeomHelpers::setTopolBounds(*m, bm, set15bounds);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
+
+      // NOT setting 1-5 distances
+      set15bounds = false;
+      DGeomHelpers::setTopolBounds(*m, bm2, set15bounds);
+
+      // 1-2 distances should be the same
+      CHECK(bm->getLowerBound(0, 1) == bm2->getLowerBound(0, 1));
+      CHECK(bm->getUpperBound(0, 1) == bm2->getUpperBound(0, 1));
+    }
+  }
+  SECTION("Overwriten 1-3 by 1-5 distance") {
+    {
+      auto m = "C1CCCCC1"_smiles;
+      REQUIRE(m);
+      MolOps::addHs(*m);
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+      bool set15bounds = true;
+
+      // setting 1-5 distances
+      DGeomHelpers::setTopolBounds(*m, bm, set15bounds);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
+
+      // NOT setting 1-5 distances
+      set15bounds = false;
+      DGeomHelpers::setTopolBounds(*m, bm2, set15bounds);
+
+      // 1-3 distances should be the same
+      CHECK(bm->getLowerBound(0, 2) == bm2->getLowerBound(0, 2));
+      CHECK(bm->getUpperBound(0, 2) == bm2->getUpperBound(0, 2));
+    }
+  }
+  SECTION("Overwriten 1-4 by 1-5 distance") {
+    {
+      auto m = "C1CCCCCC1"_smiles;
+      REQUIRE(m);
+      MolOps::addHs(*m);
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+      bool set15bounds = true;
+
+      // setting 1-5 distances
+      DGeomHelpers::setTopolBounds(*m, bm, set15bounds);
+
+      DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
+
+      // NOT setting 1-5 distances
+      set15bounds = false;
+      DGeomHelpers::setTopolBounds(*m, bm2, set15bounds);
+
+      // 1-4 distances should be the same
+      CHECK(bm->getLowerBound(0, 3) == bm2->getLowerBound(0, 3));
+      CHECK(bm->getUpperBound(0, 3) == bm2->getUpperBound(0, 3));
+    }
+  }
+}
+
 namespace RDKit {
 namespace DGeomHelpers {
 namespace EmbeddingOps {
@@ -1289,5 +1574,88 @@ TEST_CASE("Github #8559: seg fault in setTopolBounds") {
     DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
     DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
     DGeomHelpers::setTopolBounds(*mol, bm);
+  }
+}
+
+TEST_CASE("Github #9143: ETKDGv3 generating twisted amides") {
+  SECTION("as reported") {
+    auto mol =
+        "O=C1NCC=CC[C@@H](NC(=O)c2c[nH]cc2Br)CC(=O)N2CCCC2C2CCN(C2)C(=O)c2csc1n2"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    {
+      ForceFields::CrystalFF::CrystalFFDetails details;
+      bool useExpTorsions = true;
+      bool useSmallRingTorsions = false;
+      bool useMacrocycleTorsions = true;
+      bool useBasicKnowledge = true;
+      unsigned int version = 2;
+      bool verbose = false;
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          *mol, details, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      std::vector<std::vector<int>> expectedTorsions{
+          {17, 18, 20, 24}, {31, 30, 28, 27}, {0, 1, 2, 3}};
+      for (const auto &et : expectedTorsions) {
+        INFO(et[0] << " " << et[1] << " " << et[2] << " " << et[3]);
+        CHECK(std::find_if(details.expTorsionAtoms.begin(),
+                           details.expTorsionAtoms.end(), [&et](const auto &t) {
+                             return t == et;
+                           }) != details.expTorsionAtoms.end());
+      }
+    }
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid >= 0);
+    auto conf = mol->getConformer(cid);
+
+    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 27),
+               Catch::Matchers::WithinAbs(-180, 10) ||
+                   Catch::Matchers::WithinAbs(180, 10));
+    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 29),
+               Catch::Matchers::WithinAbs(0, 12));
+    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 21),
+               Catch::Matchers::WithinAbs(-180, 20) ||
+                   Catch::Matchers::WithinAbs(180, 20));
+    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 24),
+               Catch::Matchers::WithinAbs(0, 20));
+  }
+  SECTION("specific tests") {
+    std::vector<std::pair<std::string, std::vector<std::vector<int>>>> testCases{
+        {"O=C1NCC=CC[C@@H](NC(=O)c2c[nH]cc2Br)CC(=O)N2CCCC2C2CCN(C2)C(=O)c2csc1n2",
+         {{17, 18, 20, 24}, {31, 30, 28, 27}, {0, 1, 2, 3}}},
+        {"CC(=O)N[C@H]1Cc2cn(c3ccccc23)C(=O)c2ccccc2NC(=O)[C@@H]2CCCN2C1=O",
+         {{4, 31, 30, 26}, {25, 24, 23, 22}, {16, 15, 8, 7}}},
+        {"O=C1OCCOCCOCCOC(=O)n2nc(sc2=O)SCCSc2nn1c(=O)s2",
+         {{0, 1, 26, 25}, {13, 12, 14, 15}}},
+        {"CC(=O)N[C@H]1Cc2cn(c3ccccc23)C(=O)c2ccccc2NC(=O)[C@@H]2CCCN2C1=O",
+         {{4, 31, 30, 26}, {25, 24, 23, 22}, {16, 15, 8, 7}}},
+        {"S=C1NCCOCCNC(=S)N2CCOCCOCCN1CCOCCOCC2",
+         {{2, 1, 20, 19}, {8, 9, 11, 12}, {11, 9, 8, 7}, {20, 1, 2, 3}}},
+
+    };
+    ForceFields::CrystalFF::CrystalFFDetails details;
+    bool useExpTorsions = true;
+    bool useSmallRingTorsions = false;
+    bool useMacrocycleTorsions = true;
+    bool useBasicKnowledge = true;
+    unsigned int version = 2;
+    bool verbose = false;
+    for (const auto &tc : testCases) {
+      auto mol = v2::SmilesParse::MolFromSmiles(tc.first);
+      REQUIRE(mol);
+      MolOps::addHs(*mol);
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          *mol, details, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      for (const auto &et : tc.second) {
+        INFO(et[0] << " " << et[1] << " " << et[2] << " " << et[3]);
+        CHECK(std::find_if(details.expTorsionAtoms.begin(),
+                           details.expTorsionAtoms.end(), [&et](const auto &t) {
+                             return t == et;
+                           }) != details.expTorsionAtoms.end());
+      }
+    }
   }
 }

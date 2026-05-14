@@ -452,8 +452,7 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
   return true;
 }
 
-bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
-                                   unsigned int ring_count) {
+bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms) {
   CoordinateTemplates &coordinate_templates =
       CoordinateTemplates::getRingSystemTemplates();
 
@@ -494,8 +493,6 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     // To reduce how often we have to do substructure matches, check ring info
     // and bond count first
     if (mol->getNumBonds() != numBonds) {
-      continue;
-    } else if (mol->getRingInfo()->numRings() != ring_count) {
       continue;
     }
     // also check if the mol atoms have the same connectivity as the template
@@ -629,9 +626,12 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
 
   RDKit::INT_VECT funion;
   // look for a template that matches the entire fused ring system
-  if (useRingTemplates && fusedRings.size() > 1) {
+  // For single rings, only use templates for macrocycles (size > 8)
+  if (useRingTemplates &&
+      (fusedRings.size() > 1 ||
+       (fusedRings.size() == 1 && fusedRings[0].size() > 8))) {
     RDKit::Union(fusedRings, funion);
-    bool found_template = matchToTemplate(funion, fusedRings.size());
+    bool found_template = matchToTemplate(funion);
     if (found_template) {
       // we are done
       return;
@@ -653,7 +653,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
     if (coreRings.size() > 1 && coreRings.size() < fusedRings.size()) {
       // look for a template that matches the core ring system
       RDKit::Union(coreRings, funion);
-      bool found_template = matchToTemplate(funion, coreRings.size());
+      bool found_template = matchToTemplate(funion);
       if (found_template) {
         doneRings = coreRingsIds;
       }

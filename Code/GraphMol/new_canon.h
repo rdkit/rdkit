@@ -694,12 +694,13 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
 
 template <typename CompareFunc>
 void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
-                      int mode, int *order, int *count, int &activeset,
-                      int *next, int *changed, char *touchedPartitions) {
+                      int mode, std::vector<int> &order,
+                      std::vector<int> &count, int &activeset,
+                      std::vector<int> &next, std::vector<int> &changed,
+                      std::vector<char> &touchedPartitions) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
   int symclass = 0;
-  int *start;
   int offset;
   int index;
   int len;
@@ -725,10 +726,10 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
 
     len = count[partition];
     offset = atoms[partition].index;
-    start = order + offset;
+    auto start = std::span<int>(&order[offset], len);
     // std::cerr<<"\n\n**************************************************************"<<std::endl;
-    // std::cerr<<"  sort - class:"<<atoms[partition].index<<" len: "<<len<<":";
-    // for(unsigned int ii=0;ii<len;++ii){
+    // std::cerr<<"  sort - class:"<<atoms[partition].index<<" len:
+    // "<<len<<":"; for(unsigned int ii=0;ii<len;++ii){
     //   std::cerr<<" "<<order[offset+ii]+1;
     // }
     // std::cerr<<std::endl;
@@ -736,7 +737,7 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
     //   std::cerr<<order[ii]+1<<" count: "<<count[order[ii]]<<" index:
     //   "<<atoms[order[ii]].index<<std::endl;
     // }
-    hanoisort(start, len, count, changed, compar);
+    hanoisort(start, count, changed, compar);
     // std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
     // std::cerr<<"  result:";
     // for(unsigned int ii=0;ii<nAtoms;++ii){
@@ -791,8 +792,10 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
 
 template <typename CompareFunc>
 void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
-               int mode, int *order, int *count, int &activeset, int *next,
-               int *changed, char *touchedPartitions) {
+               int mode, std::vector<int> &order, std::vector<int> &count,
+               int &activeset, std::vector<int> &next,
+               std::vector<int> &changed,
+               std::vector<char> &touchedPartitions) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
   int offset;
@@ -842,12 +845,13 @@ void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
 }  // end of BreakTies()
 
 RDKIT_GRAPHMOL_EXPORT void CreateSinglePartition(unsigned int nAtoms,
-                                                 int *order, int *count,
+                                                 std::vector<int> &order,
+                                                 std::vector<int> &count,
                                                  canon_atom *atoms);
 
-RDKIT_GRAPHMOL_EXPORT void ActivatePartitions(unsigned int nAtoms, int *order,
-                                              int *count, int &activeset,
-                                              int *next, int *changed);
+RDKIT_GRAPHMOL_EXPORT void ActivatePartitions(
+    unsigned int nAtoms, std::vector<int> &order, std::vector<int> &count,
+    int &activeset, std::vector<int> &next, std::vector<int> &changed);
 
 //! Note that atom maps on dummy atoms will always be used
 RDKIT_GRAPHMOL_EXPORT void rankMolAtoms(
@@ -899,7 +903,7 @@ void initFragmentCanonAtoms(const ROMol &mol,
                             const boost::dynamic_bitset<> &bondsInPlay,
                             bool needsInit);
 template <typename T>
-void rankWithFunctor(T &ftor, bool breakTies, int *order,
+void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
                      bool useSpecial = false, bool useChirality = false,
                      bool includeRingStereo = true,
                      const boost::dynamic_bitset<> *atomsInPlay = nullptr,

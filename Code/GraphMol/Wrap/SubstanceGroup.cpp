@@ -211,38 +211,39 @@ struct sgroup_wrap {
              python::args("self"))
 
         .def("SetProp",
-             (void (RDProps::*)(const std::string &, std::string, bool) const) &
+             (void (RDProps::*)(const std::string_view, std::string, bool)
+                  const) &
                  SubstanceGroup::setProp<std::string>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "sets the value of a particular property")
         .def("SetDoubleProp",
-             (void (RDProps::*)(const std::string &, double, bool) const) &
+             (void (RDProps::*)(const std::string_view, double, bool) const) &
                  SubstanceGroup::setProp<double>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "sets the value of a particular property")
         .def("SetIntProp",
-             (void (RDProps::*)(const std::string &, int, bool) const) &
+             (void (RDProps::*)(const std::string_view, int, bool) const) &
                  SubstanceGroup::setProp<int>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "sets the value of a particular property")
-        .def(
-            "SetUnsignedProp",
-            (void (RDProps::*)(const std::string &, unsigned int, bool) const) &
-                SubstanceGroup::setProp<unsigned int>,
-            (python::arg("self"), python::arg("key"), python::arg("val"),
-             python::arg("computed") = false),
-            "sets the value of a particular property")
+        .def("SetUnsignedProp",
+             (void (RDProps::*)(const std::string_view, unsigned int, bool)
+                  const) &
+                 SubstanceGroup::setProp<unsigned int>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "sets the value of a particular property")
         .def("SetBoolProp",
-             (void (RDProps::*)(const std::string &, bool, bool) const) &
+             (void (RDProps::*)(const std::string_view, bool, bool) const) &
                  SubstanceGroup::setProp<bool>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "sets the value of a particular property")
         .def("HasProp",
-             (bool (RDProps::*)(const std::string &) const) &
+             (bool (RDProps::*)(const std::string_view) const) &
                  SubstanceGroup::hasProp,
              python::args("self", "key"),
              "returns whether or not a particular property exists")
@@ -259,30 +260,64 @@ struct sgroup_wrap {
             "    - If the property has not been set, a KeyError exception "
             "will be raised.\n",
             boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def(
+            "GetProp", GetPyPropOrDefault<SubstanceGroup>,
+            (python::arg("self"), python::arg("key"),
+             python::arg("autoConvert") = false,
+             python::arg("default")),
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - autoConvert: if True attempt to convert the property into a python object\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: the property value, or default if the property is not present.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetIntProp",
-             (int (RDProps::*)(const std::string &) const) &
+             (int (RDProps::*)(const std::string_view) const) &
                  SubstanceGroup::getProp<int>,
              python::args("self", "key"),
              "returns the value of a particular property")
+        .def("GetIntProp", GetPropOrDefault<SubstanceGroup, int>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "returns the value of a particular property, or default if not present",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetUnsignedProp",
-             (unsigned int (RDProps::*)(const std::string &) const) &
+             (unsigned int (RDProps::*)(const std::string_view) const) &
                  SubstanceGroup::getProp<unsigned int>,
              python::args("self", "key"),
              "returns the value of a particular property")
+        .def("GetUnsignedProp", GetPropOrDefault<SubstanceGroup, unsigned int>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "returns the value of a particular property, or default if not present",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetDoubleProp",
-             (double (RDProps::*)(const std::string &) const) &
+             (double (RDProps::*)(const std::string_view) const) &
                  SubstanceGroup::getProp<double>,
              python::args("self", "key"),
              "returns the value of a particular property")
+        .def("GetDoubleProp", GetPropOrDefault<SubstanceGroup, double>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "returns the value of a particular property, or default if not present",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetBoolProp",
-             (bool (RDProps::*)(const std::string &) const) &
+             (bool (RDProps::*)(const std::string_view) const) &
                  SubstanceGroup::getProp<bool>,
              python::args("self", "key"),
              "returns the value of a particular property")
+        .def("GetBoolProp", GetPropOrDefault<SubstanceGroup, bool>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "returns the value of a particular property, or default if not present",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetUnsignedVectProp",
-             (std::vector<unsigned int> (RDProps::*)(const std::string &)
+             (std::vector<unsigned int> (RDProps::*)(const std::string_view)
                   const) &
                  SubstanceGroup::getProp<std::vector<unsigned int>>,
+             python::args("self", "key"),
+             "returns the value of a particular property")
+        .def("GetStringVectProp",
+             (std::vector<std::string> (RDProps::*)(const std::string_view)
+                  const) &
+                 SubstanceGroup::getProp<std::vector<std::string>>,
              python::args("self", "key"),
              "returns the value of a particular property")
         .def(
@@ -304,7 +339,7 @@ struct sgroup_wrap {
              "SubstanceGroup.\n"
              " n.b. some properties cannot be converted to python types.\n")
         .def("ClearProp",
-             (void (RDProps::*)(const std::string &) const) &
+             (void (RDProps::*)(const std::string_view) const) &
                  SubstanceGroup::clearProp,
              python::args("self", "key"),
              "Removes a particular property (does nothing if not set).\n\n");

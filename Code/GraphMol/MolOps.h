@@ -725,6 +725,30 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
    settings on both the Bonds and Atoms are turned to false following the
    Kekulization, otherwise they are left alone in their original state.
 
+   \param canonical  controls atom traversal order during kekulization:
+   - \c false (the default): traverses atoms in atom-index order
+     (std::iota). Fast, but the resulting Kekulé bond assignment depends on
+     the order atoms appear in the molecule.
+   - \c true: uses canonical atom ranking (Canon::rankFragmentAtoms with a
+     wedge-end heuristic) so that the Kekulé bond assignment is independent
+     of atom ordering.  Use this in output writers and any code that requires
+     a reproducible, chemistry-based Kekulé form.
+
+   \note <b>Behavioural difference from releases prior to 2026.03.1:</b>
+   Before the \c canonical parameter was added (i.e. in 2025.09.1 and
+   earlier), Kekulize traversed atoms in an order determined by the SSSR
+   ring-membership and adjacency-list iteration order — neither pure
+   atom-index order (\c canonical=false) nor rank-based order
+   (\c canonical=true).  Tests and expected outputs written against those
+   releases may differ from both new modes; \c canonical=true is the closest
+   match for output-writer use cases, while \c canonical=false gives a
+   deterministic but potentially different Kekulé form from the old default.
+
+   Note that the canonical mode only really makes sense when the molecule's
+   chemistry is sane, like after sanitization. If stereochemistry hasn't
+   been perceived, the chemistry of the molecule is inconsistent, and
+   "canonical" atom ranks are only a technical artifact.
+
    \param maxBackTracks   the maximum number of attempts at back-tracking. The
    algorithm uses a back-tracking procedure to revisit a previous setting of
    double bond if we hit a wall in the kekulization process
@@ -738,6 +762,7 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
 
 */
 RDKIT_GRAPHMOL_EXPORT void Kekulize(RWMol &mol, bool markAtomsBonds = true,
+                                    bool canonical = true,
                                     unsigned int maxBackTracks = 100);
 //! Kekulizes the molecule if possible. If the kekulization fails the molecule
 //! will not be modified
@@ -748,6 +773,11 @@ RDKIT_GRAPHMOL_EXPORT void Kekulize(RWMol &mol, bool markAtomsBonds = true,
    \param markAtomsBonds  if this is set to true, \c isAromatic boolean
    settings on both the Bonds and Atoms are turned to false following the
    Kekulization, otherwise they are left alone in their original state.
+
+   \param canonical  controls atom traversal order; see the full description
+   on \c Kekulize() for the three-way distinction between \c canonical=false
+   (atom-index order, default), \c canonical=true (rank-based, order-
+   independent), and the pre-PR master behaviour.
 
    \param maxBackTracks   the maximum number of attempts at back-tracking. The
    algorithm uses a back-tracking procedure to revisit a previous setting of
@@ -763,6 +793,7 @@ RDKIT_GRAPHMOL_EXPORT void Kekulize(RWMol &mol, bool markAtomsBonds = true,
 */
 RDKIT_GRAPHMOL_EXPORT bool KekulizeIfPossible(RWMol &mol,
                                               bool markAtomsBonds = true,
+                                              bool canonical = true,
                                               unsigned int maxBackTracks = 100);
 
 //! flags the molecule's conjugated bonds
@@ -1201,7 +1232,7 @@ RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFromMolParity(
 
 //! returns the number of atoms which have a particular property set
 RDKIT_GRAPHMOL_EXPORT unsigned getNumAtomsWithDistinctProperty(
-    const ROMol &mol, std::string prop);
+    const ROMol &mol, const std::string_view &prop);
 
 //! returns whether or not a molecule needs to have Hs added to it.
 RDKIT_GRAPHMOL_EXPORT bool needsHs(const ROMol &mol);
@@ -1283,7 +1314,7 @@ namespace details {
 RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
     RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     boost::dynamic_bitset<> bondsToUse, bool markAtomsBonds = true,
-    unsigned int maxBackTracks = 100);
+    bool canonical = true, unsigned int maxBackTracks = 100);
 
 // If the bond is dative, and it has a common_properties::MolFileBondEndPts
 // prop, returns a vector of the indices of the atoms mentioned in the prop.

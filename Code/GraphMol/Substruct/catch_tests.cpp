@@ -1105,3 +1105,21 @@ TEST_CASE("extra atom and bond queries") {
     }
   }
 }
+TEST_CASE("quick return when the query has more atoms than the molecule") {
+  SECTION("basics") {
+    SubstructMatchParameters ps;
+    bool touched = false;
+    auto atomQuery = [&touched](const Atom &, const Atom &) -> bool {
+      touched = true;
+      return true;
+    };
+    ps.extraAtomCheck = atomQuery;
+    auto mol = "CC"_smiles;
+    REQUIRE(mol);
+    auto qry = "CCC"_smarts;
+    REQUIRE(qry);
+    auto matches = SubstructMatch(*mol, *qry, ps);
+    CHECK(matches.empty());
+    CHECK(!touched);
+  }
+}

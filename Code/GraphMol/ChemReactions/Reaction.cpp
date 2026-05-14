@@ -107,11 +107,9 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
   for (auto molIter = this->beginReactantTemplates();
        molIter != this->endReactantTemplates(); ++molIter) {
     bool thisMolMapped = false;
-    for (ROMol::AtomIterator atomIt = (*molIter)->beginAtoms();
-         atomIt != (*molIter)->endAtoms(); ++atomIt) {
+    for (const auto atom : (*molIter)->atoms()) {
       int mapNum;
-      if ((*atomIt)->getPropIfPresent(common_properties::molAtomMapNumber,
-                                      mapNum)) {
+      if (atom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
         thisMolMapped = true;
         if (std::find(mapNumbersSeen.begin(), mapNumbersSeen.end(), mapNum) !=
             mapNumbersSeen.end()) {
@@ -123,7 +121,7 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
           res = false;
         } else {
           mapNumbersSeen.push_back(mapNum);
-          reactingAtoms[mapNum] = *atomIt;
+          reactingAtoms[mapNum] = atom;
         }
       }
     }
@@ -143,27 +141,24 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
        molIter != this->endProductTemplates(); ++molIter) {
     // clear out some possible cached properties to prevent
     // misleading warnings
-    for (ROMol::AtomIterator atomIt = (*molIter)->beginAtoms();
-         atomIt != (*molIter)->endAtoms(); ++atomIt) {
-      if ((*atomIt)->hasProp(common_properties::_QueryFormalCharge)) {
-        (*atomIt)->clearProp(common_properties::_QueryFormalCharge);
+    for (auto atom : (*molIter)->atoms()) {
+      if (atom->hasProp(common_properties::_QueryFormalCharge)) {
+        atom->clearProp(common_properties::_QueryFormalCharge);
       }
-      if ((*atomIt)->hasProp(common_properties::_QueryHCount)) {
-        (*atomIt)->clearProp(common_properties::_QueryHCount);
+      if (atom->hasProp(common_properties::_QueryHCount)) {
+        atom->clearProp(common_properties::_QueryHCount);
       }
-      if ((*atomIt)->hasProp(common_properties::_QueryMass)) {
-        (*atomIt)->clearProp(common_properties::_QueryMass);
+      if (atom->hasProp(common_properties::_QueryMass)) {
+        atom->clearProp(common_properties::_QueryMass);
       }
-      if ((*atomIt)->hasProp(common_properties::_QueryIsotope)) {
-        (*atomIt)->clearProp(common_properties::_QueryIsotope);
+      if (atom->hasProp(common_properties::_QueryIsotope)) {
+        atom->clearProp(common_properties::_QueryIsotope);
       }
     }
     bool thisMolMapped = false;
-    for (ROMol::AtomIterator atomIt = (*molIter)->beginAtoms();
-         atomIt != (*molIter)->endAtoms(); ++atomIt) {
+    for (auto atom : (*molIter)->atoms()) {
       int mapNum;
-      if ((*atomIt)->getPropIfPresent(common_properties::molAtomMapNumber,
-                                      mapNum)) {
+      if (atom->getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
         thisMolMapped = true;
         bool seenAlready =
             std::find(productNumbersSeen.begin(), productNumbersSeen.end(),
@@ -180,8 +175,8 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
           // ------------
           const Atom *rAtom = reactingAtoms[mapNum];
           CHECK_INVARIANT(rAtom, "missing atom");
-          if (rAtom->getDegree() != (*atomIt)->getDegree()) {
-            (*atomIt)->setProp(common_properties::_ReactionDegreeChanged, 1);
+          if (rAtom->getDegree() != atom->getDegree()) {
+            atom->setProp(common_properties::_ReactionDegreeChanged, 1);
           }
 
         } else {
@@ -205,8 +200,8 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
           // ------------
           const Atom *rAtom = reactingAtoms[mapNum];
           CHECK_INVARIANT(rAtom, "missing atom");
-          if (rAtom->getDegree() != (*atomIt)->getDegree()) {
-            (*atomIt)->setProp(common_properties::_ReactionDegreeChanged, 1);
+          if (rAtom->getDegree() != atom->getDegree()) {
+            atom->setProp(common_properties::_ReactionDegreeChanged, 1);
           }
         }
       }
@@ -214,9 +209,9 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
       // ------------
       //    Deal with queries
       // ------------
-      if ((*atomIt)->hasQuery()) {
+      if (atom->hasQuery()) {
         std::list<const Atom::QUERYATOM_QUERY *> queries;
-        queries.push_back((*atomIt)->getQuery());
+        queries.push_back(atom->getQuery());
         while (!queries.empty()) {
           const Atom::QUERYATOM_QUERY *query = queries.front();
           queries.pop_front();
@@ -229,74 +224,72 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
             int qval;
             int neg =
                 query->getDescription() == "AtomNegativeFormalCharge" ? -1 : 1;
-            if ((*atomIt)->getPropIfPresent(
-                    common_properties::_QueryFormalCharge, qval) &&
+            if (atom->getPropIfPresent(common_properties::_QueryFormalCharge,
+                                       qval) &&
                 (neg * qval) !=
                     static_cast<const ATOM_EQUALS_QUERY *>(query)->getVal()) {
               if (!silent) {
                 BOOST_LOG(rdWarningLog)
-                    << "atom " << (*atomIt)->getIdx() << " in product "
-                    << molIdx << " has multiple charge specifications.\n";
+                    << "atom " << atom->getIdx() << " in product " << molIdx
+                    << " has multiple charge specifications.\n";
               }
               numWarnings++;
             } else {
               int neg = query->getDescription() == "AtomNegativeFormalCharge"
                             ? -1
                             : 1;
-              (*atomIt)->setProp(
+              atom->setProp(
                   common_properties::_QueryFormalCharge,
                   neg *
                       static_cast<const ATOM_EQUALS_QUERY *>(query)->getVal());
             }
           } else if (query->getDescription() == "AtomHCount") {
             int qval;
-            if ((*atomIt)->getPropIfPresent(common_properties::_QueryHCount,
-                                            qval) &&
+            if (atom->getPropIfPresent(common_properties::_QueryHCount, qval) &&
                 qval !=
                     static_cast<const ATOM_EQUALS_QUERY *>(query)->getVal()) {
               if (!silent) {
                 BOOST_LOG(rdWarningLog)
-                    << "atom " << (*atomIt)->getIdx() << " in product "
-                    << molIdx << " has multiple H count specifications.\n";
+                    << "atom " << atom->getIdx() << " in product " << molIdx
+                    << " has multiple H count specifications.\n";
               }
               numWarnings++;
             } else {
-              (*atomIt)->setProp(
+              atom->setProp(
                   common_properties::_QueryHCount,
                   static_cast<const ATOM_EQUALS_QUERY *>(query)->getVal());
             }
           } else if (query->getDescription() == "AtomMass") {
             int qval;
-            if ((*atomIt)->getPropIfPresent(common_properties::_QueryMass,
-                                            qval) &&
+            if (atom->getPropIfPresent(common_properties::_QueryMass, qval) &&
                 qval !=
                     static_cast<const ATOM_EQUALS_QUERY *>(query)->getVal()) {
               if (!silent) {
                 BOOST_LOG(rdWarningLog)
-                    << "atom " << (*atomIt)->getIdx() << " in product "
-                    << molIdx << " has multiple mass specifications.\n";
+                    << "atom " << atom->getIdx() << " in product " << molIdx
+                    << " has multiple mass specifications.\n";
               }
               numWarnings++;
             } else {
-              (*atomIt)->setProp(
+              atom->setProp(
                   common_properties::_QueryMass,
                   static_cast<const ATOM_EQUALS_QUERY *>(query)->getVal() /
                       massIntegerConversionFactor);
             }
           } else if (query->getDescription() == "AtomIsotope") {
             int qval;
-            if ((*atomIt)->getPropIfPresent(common_properties::_QueryIsotope,
-                                            qval) &&
+            if (atom->getPropIfPresent(common_properties::_QueryIsotope,
+                                       qval) &&
                 qval !=
                     static_cast<const ATOM_EQUALS_QUERY *>(query)->getVal()) {
               if (!silent) {
                 BOOST_LOG(rdWarningLog)
-                    << "atom " << (*atomIt)->getIdx() << " in product "
-                    << molIdx << " has multiple isotope specifications.\n";
+                    << "atom " << atom->getIdx() << " in product " << molIdx
+                    << " has multiple isotope specifications.\n";
               }
               numWarnings++;
             } else {
-              (*atomIt)->setProp(
+              atom->setProp(
                   common_properties::_QueryIsotope,
                   static_cast<const ATOM_EQUALS_QUERY *>(query)->getVal());
             }
@@ -448,7 +441,7 @@ bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol) {
 
 void addRecursiveQueriesToReaction(
     ChemicalReaction &rxn, const std::map<std::string, ROMOL_SPTR> &queries,
-    const std::string &propName,
+    const std::string_view &propName,
     std::vector<std::vector<std::pair<unsigned int, std::string>>>
         *reactantLabels) {
   if (!rxn.isInitialized()) {

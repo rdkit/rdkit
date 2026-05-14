@@ -493,12 +493,12 @@ M  END
     0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
    -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  0
-  2  3  1  0
-  3  4  2  0
-  4  5  1  0
-  5  6  2  0
-  6  1  1  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  1  2  0
   6  8  1  0
   7  8  1  0
   8  9  1  0
@@ -592,12 +592,12 @@ M  END
     0.1342    0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.5467   -0.1796    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
    -0.6907    0.5348    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  0
-  2  3  1  0
-  3  4  2  0
-  4  5  1  0
-  5  6  2  0
-  6  1  1  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  1  2  0
   6  8  1  0
   7  8  1  0
   8  9  1  0
@@ -6204,7 +6204,7 @@ void check_roundtripped_properties(RDProps &original, RDProps &roundtrip) {
   REQUIRE(std::includes(roundtripPropNames.begin(), roundtripPropNames.end(),
                         originalPropNames.begin(), originalPropNames.end()));
 
-  for (const auto &o : original.getDict().getData()) {
+  for (const auto &o : original.getDict()) {
     if (o.key == detail::computedPropName) {
       continue;
     }
@@ -8001,4 +8001,106 @@ $$$$
     REQUIRE_THROWS_AS(MolBlockToMol(mb, sanitize, removeHs, strictParsing),
                       FileParseException);
   }
+}
+
+TEST_CASE(
+    "V3000 aromatic bonds with explicit H: kekulization after H removal") {
+  // The V3000 parser sets aromatic flags on bonds but not atoms.
+  // When removeHs strips an explicit H from aromatic N, molRemoveH must
+  // still recognise the atom as aromatic (via its bond flags) so that
+  // numExplicitHs is incremented.  Without that, the kekuliser cannot
+  // distinguish pyrrole N from pyridine N and kekulization fails.
+  auto molblock = R"MOL(
+  ChemDraw03022611582D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.452059 0.404789 0.000000 0
+M  V30 2 C 0.667439 0.149850 0.000000 0
+M  V30 3 N 0.412500 -0.634772 0.000000 0
+M  V30 4 C -0.412500 -0.634772 0.000000 0
+M  V30 5 N -0.667438 0.149850 0.000000 0
+M  V30 6 C -0.000000 0.634772 0.000000 0
+M  V30 7 H -1.452059 0.404790 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 4 5
+M  V30 5 4 5 6
+M  V30 6 4 2 6
+M  V30 7 1 5 7
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)MOL";
+
+  SECTION("default sanitize + removeHs") {
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    CHECK(MolToSmiles(*mol) == "Cc1c[nH]cn1");
+  }
+
+  SECTION("pyrrole N has correct explicit H count after H removal") {
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+    REQUIRE(mol);
+    // Atom 4 in the original block is the [nH] nitrogen (index 4 after
+    // H removal and reindexing — find it by checking for aromatic N with H).
+    bool foundPyrroleN = false;
+    for (const auto atom : mol->atoms()) {
+      if (atom->getAtomicNum() == 7 && atom->getIsAromatic() &&
+          atom->getTotalNumHs() == 1) {
+        CHECK(atom->getNumExplicitHs() == 1);
+        foundPyrroleN = true;
+      }
+    }
+    CHECK(foundPyrroleN);
+  }
+}
+
+TEST_CASE("duplicates in stereo groups") {
+  auto ctab = R"CTAB(
+  Mrv1642508181718102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.2222 4.7778 0 0 CFG=2
+M  V30 2 Br -6.9685 5.5478 0 0
+M  V30 3 C -5.0557 3.2468 0 0
+M  V30 4 C -3.9796 5.6874 0 0 CFG=2
+M  V30 5 C -2.5705 5.0661 0 0 CFG=1
+M  V30 6 F -1.3279 5.9758 0 0
+M  V30 7 C -4.1461 7.2184 0 0
+M  V30 8 C -2.404 3.5352 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 4
+M  V30 3 1 4 5
+M  V30 4 1 5 6
+M  V30 5 1 4 7 CFG=1
+M  V30 6 1 5 8 CFG=1
+M  V30 7 1 1 3 CFG=1
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEREL1 ATOMS=(2 4 4)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+)CTAB";
+  // CHECK_THROWS_AS(v2::FileParsers::MolFromMolBlock(ctab),
+  // FileParseException);
+  v2::FileParsers::MolFileParserParams params;
+  params.strictParsing = false;
+  auto m = v2::FileParsers::MolFromMolBlock(ctab, params);
+  REQUIRE(m);
+  const auto &stgs = m->getStereoGroups();
+  REQUIRE(stgs.size() == 1);
+  CHECK(stgs.front().getGroupType() == StereoGroupType::STEREO_OR);
+  CHECK(stgs.front().getAtoms().size() == 1);
 }
