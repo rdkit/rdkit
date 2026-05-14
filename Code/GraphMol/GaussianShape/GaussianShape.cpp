@@ -17,6 +17,7 @@
 // https://github.com/ncbi/pubchem-align3d/blob/main/shape_neighbor.cpp.
 
 #include <cmath>
+#include <numbers>
 
 #include <Geometry/Transform3D.h>
 #include <GraphMol/ROMol.h>
@@ -26,8 +27,6 @@
 
 #include <GraphMol/GaussianShape/ShapeInput.h>
 #include <GraphMol/GaussianShape/SingleConformerAlignment.h>
-#include <GraphMol/MolTransforms/MolTransforms.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
 
 namespace RDKit {
 namespace GaussianShape {
@@ -40,7 +39,7 @@ RDGeom::Transform3D computeFinalTransform(
     const std::array<double, 3> &inRefTrans,
     const std::array<double, 9> &inRefRot,
     const std::array<double, 3> &inFitTrans,
-    const std::array<double, 9> &inFitRot, RDGeom::Transform3D &ovXform) {
+    const std::array<double, 9> &inFitRot, const RDGeom::Transform3D &ovXform) {
   // Move to fitShape's initial centroid and principal axes
   RDGeom::Transform3D transform0;
   transform0.SetTranslation(
@@ -85,7 +84,7 @@ std::array<double, 4> getInitialRotationPlain(
     int index, const ShapeInput &refShape, const ShapeInput &fitShape,
     const RDGeom::Point3D &refDisp, const ShapeOverlayOptions &overlayOpts,
     double &score) {
-  static const double sinpi_4 = std::sin(std::atan(1.0));
+  static const double sinpi_4 = std::sin(std::numbers::pi / 4.0);
   const static std::vector<std::array<double, 4>> quats{
       {1.0, 0.0, 0.0, 0.0},          {0.0, 1.0, 0.0, 0.0},
       {0.0, 0.0, 1.0, 0.0},          {0.0, 0.0, 0.0, 1.0},
@@ -95,22 +94,23 @@ std::array<double, 4> getInitialRotationPlain(
       {sinpi_4, 0.0, 0.0, sinpi_4},  {0.0, -sinpi_4, sinpi_4, 0.0},
       {sinpi_4, 0.0, sinpi_4, 0.0},  {0.0, sinpi_4, 0.0, sinpi_4},
       {0.0, -sinpi_4, 0.0, sinpi_4}, {sinpi_4, 0.0, -sinpi_4, 0.0}};
-  bool useColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
-  std::array<double, 7> quatTrans{
+  const bool useColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
+  const std::array<double, 7> quatTrans{
       quats[index][0], quats[index][1], quats[index][2], quats[index][3],
       refDisp[0],      refDisp[1],      refDisp[2]};
   SingleConformerAlignment sca(
-      refShape.getCoords(), refShape.getTypes().data(),
-      refShape.getCarbonRadii(), refShape.getNumAtoms(),
-      refShape.getNumFeatures(), refShape.getShapeVolume(),
-      refShape.getColorVolume(), fitShape.getCoords(),
-      fitShape.getTypes().data(), fitShape.getCarbonRadii(),
+      refShape.getCoords(), refShape.getAlphas(),
+      refShape.getFeatureTypes().data(), refShape.getCarbonRadii(),
+      refShape.getNumAtoms(), refShape.getNumFeatures(),
+      refShape.getShapeVolume(), refShape.getColorVolume(),
+      fitShape.getCoords(), fitShape.getAlphas(),
+      fitShape.getFeatureTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
       overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
       overlayOpts.optParam, overlayOpts.useDistCutoff, overlayOpts.distCutoff,
       overlayOpts.shapeConvergenceCriterion, overlayOpts.nSteps);
-  auto scores = sca.calcScores(useColor);
+  const auto scores = sca.calcScores(useColor);
   score = scores[0];
   return quats[index];
 }
@@ -148,11 +148,12 @@ std::array<double, 4> getInitialRotationWiggle(
   bool useColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   std::array<double, 7> tmpQuatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   SingleConformerAlignment sca(
-      refShape.getCoords(), refShape.getTypes().data(),
-      refShape.getCarbonRadii(), refShape.getNumAtoms(),
-      refShape.getNumFeatures(), refShape.getShapeVolume(),
-      refShape.getColorVolume(), fitShape.getCoords(),
-      fitShape.getTypes().data(), fitShape.getCarbonRadii(),
+      refShape.getCoords(), refShape.getAlphas(),
+      refShape.getFeatureTypes().data(), refShape.getCarbonRadii(),
+      refShape.getNumAtoms(), refShape.getNumFeatures(),
+      refShape.getShapeVolume(), refShape.getColorVolume(),
+      fitShape.getCoords(), fitShape.getAlphas(),
+      fitShape.getFeatureTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), tmpQuatTrans,
       overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
@@ -180,7 +181,7 @@ RDGeom::Point3D getInitialTranslation(int index, ShapeInput &refShape,
                                       ShapeInput fitShape) {
   auto getDisp = [](ShapeInput &shape, size_t i) -> RDGeom::Point3D {
     const double *coord =
-        shape.getCoords().data() + shape.calcExtremes()[i] * 4;
+        shape.getCoords().data() + shape.calcExtremes()[i] * 3;
     return RDGeom::Point3D(coord[0], coord[1], coord[2]);
   };
   RDGeom::Point3D disp;
@@ -230,17 +231,17 @@ unsigned int calculateQrat(const std::array<double, 3> &eigenValues) {
                          eigenValues[0] + eigenValues[1] - eigenValues[2]};
   std::sort(double_ev_oe, double_ev_oe + 3, std::greater<double>());
 
-  const static double qrat_threshold = 0.7225;  // 0.85*0.85;
+  constexpr static double qrat_threshold = 0.7225;  // 0.85*0.85;
   unsigned int qrat = 1000;
-  unsigned int u_rqyx, u_rqzy;
 
   if (double_ev_oe[1] > 0) {
-    if (qrat_threshold < (double_ev_oe[1] / double_ev_oe[0])) {
+    unsigned int u_rqyx, u_rqzy;
+    if (qrat_threshold < double_ev_oe[1] / double_ev_oe[0]) {
       u_rqyx = 1;
     } else {
       u_rqyx = 0;
     }
-    if (qrat_threshold < (double_ev_oe[2] / double_ev_oe[1])) {
+    if (qrat_threshold < double_ev_oe[2] / double_ev_oe[1]) {
       u_rqzy = 1;
     } else {
       u_rqzy = 0;
@@ -251,12 +252,12 @@ unsigned int calculateQrat(const std::array<double, 3> &eigenValues) {
   return qrat;
 }
 
-StartMode decideStartModeFromEigenValues(ShapeInput &refShape,
-                                         ShapeInput &fitShape) {
+StartMode decideStartModeFromEigenValues(const ShapeInput &refShape,
+                                         const ShapeInput &fitShape) {
   // The PubChem code uses the moments of inertia for this, rather than the
   // canonical transformation.
-  auto rqratwf = calculateQrat(refShape.calcMomentsOfInertia(true));
-  auto fqratwf = calculateQrat(fitShape.calcMomentsOfInertia(true));
+  const auto rqratwf = calculateQrat(refShape.calcMomentsOfInertia(true));
+  const auto fqratwf = calculateQrat(fitShape.calcMomentsOfInertia(true));
   StartMode startModeWF{StartMode::ROTATE_180_WIGGLE};
   if (rqratwf > 0 || fqratwf > 0) {
     startModeWF = StartMode::ROTATE_45;
@@ -319,11 +320,12 @@ std::array<double, 3> alignShape(ShapeInput &refShape, ShapeInput &fitShape,
       std::array<double, 7> initQuat{quat[0],   quat[1],   quat[2],  quat[3],
                                      refDisp.x, refDisp.y, refDisp.z};
       aligners.emplace_back(std::make_unique<SingleConformerAlignment>(
-          refShape.getCoords(), refShape.getTypes().data(),
-          refShape.getCarbonRadii(), refShape.getNumAtoms(),
-          refShape.getNumFeatures(), refShape.getShapeVolume(),
-          refShape.getColorVolume(), fitShape.getCoords(),
-          fitShape.getTypes().data(), fitShape.getCarbonRadii(),
+          refShape.getCoords(), refShape.getAlphas(),
+          refShape.getFeatureTypes().data(), refShape.getCarbonRadii(),
+          refShape.getNumAtoms(), refShape.getNumFeatures(),
+          refShape.getShapeVolume(), refShape.getColorVolume(),
+          fitShape.getCoords(), fitShape.getAlphas(),
+          fitShape.getFeatureTypes().data(), fitShape.getCarbonRadii(),
           fitShape.getNumAtoms(), fitShape.getNumFeatures(),
           fitShape.getShapeVolume(), fitShape.getColorVolume(), initQuat,
           overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
@@ -343,20 +345,20 @@ std::array<double, 3> alignShape(ShapeInput &refShape, ShapeInput &fitShape,
                       });
     std::vector<std::pair<double, unsigned int>> nextBestScoreForStart;
     nextBestScoreForStart.reserve(finalTransIndex * finalRotIndex);
-    for (const auto &[bssf, k] : bestScoreForStart) {
+    for (const auto &[bssf, m] : bestScoreForStart) {
       if (cycle == 1) {
         if (bssf < 0.7 * bestScore[0]) {
           continue;
         }
       }
       std::array<double, 20> outScores;
-      aligners[k]->doOverlay(outScores, cycle);
-      nextBestScoreForStart.emplace_back(outScores[0], k);
+      aligners[m]->doOverlay(outScores, cycle);
+      nextBestScoreForStart.emplace_back(outScores[0], m);
       if (outScores[0] > bestTotal) {
         bestTotal = outScores[0];
         bestScore =
             std::array<double, 3>{outScores[0], outScores[1], outScores[2]};
-        aligners[k]->getFinalQuatTrans(bestXform);
+        aligners[m]->getFinalQuatTrans(bestXform);
       }
     }
     bestScoreForStart = nextBestScoreForStart;
@@ -373,45 +375,40 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
   // example) but they might need to be.
   auto workingRefShape = std::make_unique<ShapeInput>(refShape);
   auto workingFitShape = std::make_unique<ShapeInput>(fitShape);
-  auto inRefTrans = workingRefShape->calcCanonicalTranslation();
-  auto inRefRot = workingRefShape->calcCanonicalRotation();
-  auto inFitTrans = workingFitShape->calcCanonicalTranslation();
-  auto inFitRot = workingFitShape->calcCanonicalRotation();
+  const auto inRefTrans = workingRefShape->calcCanonicalTranslation();
+  const auto inRefRot = workingRefShape->calcCanonicalRotation();
+  const auto inFitTrans = workingFitShape->calcCanonicalTranslation();
+  const auto inFitRot = workingFitShape->calcCanonicalRotation();
   // If we're not normalizing, translate both shapes so that the fit
   // is at the origin, so the rotations work.
   RDGeom::Transform3D moveToOrigin;
   RDGeom::Transform3D moveFromOrigin;
   if (overlayOpts.normalize) {
-    if (!workingRefShape->getNormalized()) {
+    if (!workingRefShape->getIsNormalized()) {
       workingRefShape->normalizeCoords();
     }
-    if (!workingFitShape->getNormalized()) {
+    if (!workingFitShape->getIsNormalized()) {
       workingFitShape->normalizeCoords();
     }
   } else {
+    const auto &canonTrans = workingFitShape->calcCanonicalTranslation();
     moveToOrigin.SetTranslation(
-        RDGeom::Point3D{workingFitShape->calcCanonicalTranslation()[0],
-                        workingFitShape->calcCanonicalTranslation()[1],
-                        workingFitShape->calcCanonicalTranslation()[2]});
+        RDGeom::Point3D{canonTrans[0], canonTrans[1], canonTrans[2]});
     moveFromOrigin.SetTranslation(
-        RDGeom::Point3D{-workingFitShape->calcCanonicalTranslation()[0],
-                        -workingFitShape->calcCanonicalTranslation()[1],
-                        -workingFitShape->calcCanonicalTranslation()[2]});
+        RDGeom::Point3D{-canonTrans[0], -canonTrans[1], -canonTrans[2]});
     workingFitShape->transformCoords(moveToOrigin);
     workingRefShape->transformCoords(moveToOrigin);
   }
 
   RDGeom::Transform3D bestXform;
-  auto scores =
+  const auto scores =
       alignShape(*workingRefShape, *workingFitShape, bestXform, overlayOpts);
   if (!overlayOpts.normalize) {
     // Shove it back again.
-    auto finalXform = moveFromOrigin * bestXform * moveToOrigin;
-    bestXform = finalXform;
+    bestXform = moveFromOrigin * bestXform * moveToOrigin;
   } else {
-    auto finalXform = computeFinalTransform(inRefTrans, inRefRot, inFitTrans,
-                                            inFitRot, bestXform);
-    bestXform = finalXform;
+    bestXform = computeFinalTransform(inRefTrans, inRefRot, inFitTrans,
+                                      inFitRot, bestXform);
   }
   fitShape.transformCoords(bestXform);
   if (xform) {
@@ -428,7 +425,7 @@ std::array<double, 3> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
                                     int fitConfId) {
   auto fitShape = ShapeInput(fit, fitConfId, fitOpts, overlayOpts);
   RDGeom::Transform3D tmpXform;
-  auto scores = AlignShape(refShape, fitShape, &tmpXform, overlayOpts);
+  const auto scores = AlignShape(refShape, fitShape, &tmpXform, overlayOpts);
   MolTransforms::transformConformer(fit.getConformer(fitConfId), tmpXform);
   if (xform) {
     *xform = tmpXform;
@@ -442,32 +439,77 @@ std::array<double, 3> AlignMolecule(const ROMol &ref, ROMol &fit,
                                     RDGeom::Transform3D *xform,
                                     const ShapeOverlayOptions &overlayOpts,
                                     int refConfId, int fitConfId) {
-  auto refShape = ShapeInput(ref, refConfId, refOpts, overlayOpts);
-  auto scores =
+  const auto refShape = ShapeInput(ref, refConfId, refOpts, overlayOpts);
+  const auto scores =
       AlignMolecule(refShape, fit, fitOpts, xform, overlayOpts, fitConfId);
   return scores;
 }
 
+void ScoreMoleculeAllConformers(const ROMol &ref, const ROMol &fit,
+                                int &refConfId, int &fitConfId,
+                                std::vector<std::vector<double>> &combScores,
+                                const ShapeInputOptions &refOpts,
+                                const ShapeInputOptions &fitOpts,
+                                const ShapeOverlayOptions &overlayOpts,
+                                RDGeom::Transform3D *xform) {
+  // Pruning the shapes wastes time and obviously removes the correspondence
+  // between conformers and shapes.
+  auto refOptsCp = refOpts;
+  refOptsCp.shapePruneThreshold = -1;
+  refOptsCp.sortShapes = false;
+  auto fitOptsCp = fitOpts;
+  fitOptsCp.shapePruneThreshold = -1;
+  fitOptsCp.sortShapes = false;
+  auto refShape = ShapeInput(ref, -1, refOptsCp, overlayOpts);
+  auto fitShape = ShapeInput(fit, -1, fitOptsCp, overlayOpts);
+  combScores = std::vector<std::vector<double>>(
+      refShape.getNumShapes(), std::vector<double>(fitShape.getNumShapes()));
+  double bestScore = -1.0;
+  for (unsigned int i = 0; i < refShape.getNumShapes(); i++) {
+    refShape.setActiveShape(i);
+    for (unsigned int j = 0; j < fitShape.getNumShapes(); j++) {
+      fitShape.setActiveShape(j);
+      RDGeom::Transform3D thisXform;
+      auto scores = AlignShape(refShape, fitShape, &thisXform, overlayOpts);
+      combScores[i][j] = scores[0];
+      if (scores[0] > bestScore) {
+        bestScore = scores[0];
+        refConfId = i;
+        fitConfId = j;
+        if (xform) {
+          *xform = thisXform;
+        }
+      }
+    }
+  }
+}
+
 std::array<double, 3> ScoreShape(const ShapeInput &refShape,
                                  const ShapeInput &fitShape,
-                                 const ShapeOverlayOptions &overlayOpts) {
+                                 const ShapeOverlayOptions &overlayOpts,
+                                 std::array<double, 2> *overlapVols) {
   auto refWorking = refShape.getCoords();
   auto fitWorking = fitShape.getCoords();
   std::array<double, 7> quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   SingleConformerAlignment sca(
-      refShape.getCoords(), refShape.getTypes().data(),
-      refShape.getCarbonRadii(), refShape.getNumAtoms(),
-      refShape.getNumFeatures(), refShape.getShapeVolume(),
-      refShape.getColorVolume(), fitShape.getCoords(),
-      fitShape.getTypes().data(), fitShape.getCarbonRadii(),
+      refShape.getCoords(), refShape.getAlphas(),
+      refShape.getFeatureTypes().data(), refShape.getCarbonRadii(),
+      refShape.getNumAtoms(), refShape.getNumFeatures(),
+      refShape.getShapeVolume(), refShape.getColorVolume(),
+      fitShape.getCoords(), fitShape.getAlphas(),
+      fitShape.getFeatureTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
       overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
       overlayOpts.optParam, overlayOpts.useDistCutoff, overlayOpts.distCutoff,
       overlayOpts.shapeConvergenceCriterion, overlayOpts.nSteps);
-  bool includeColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
-  auto scores = sca.calcScores(refShape.getCoords().data(),
-                               fitShape.getCoords().data(), includeColor);
+  const bool includeColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
+  const auto scores = sca.calcScores(refShape.getCoords().data(),
+                                     fitShape.getCoords().data(), includeColor);
+  if (overlapVols) {
+    (*overlapVols)[0] = scores[3];
+    (*overlapVols)[1] = scores[4];
+  }
   return std::array{scores[0], scores[1], scores[2]};
 }
 
@@ -475,16 +517,18 @@ std::array<double, 3> ScoreMolecule(const ShapeInput &refShape,
                                     const ROMol &fit,
                                     const ShapeInputOptions &fitOpts,
                                     const ShapeOverlayOptions &overlayOpts,
-                                    int fitConfId) {
-  auto fitShape = ShapeInput(fit, fitConfId, fitOpts, overlayOpts);
-  return ScoreShape(refShape, fitShape, overlayOpts);
+                                    int fitConfId,
+                                    std::array<double, 2> *overlapVols) {
+  const auto fitShape = ShapeInput(fit, fitConfId, fitOpts, overlayOpts);
+  return ScoreShape(refShape, fitShape, overlayOpts, overlapVols);
 }
 
 std::array<double, 3> ScoreMolecule(const ROMol &ref, const ROMol &fit,
                                     const ShapeInputOptions &refOpts,
                                     const ShapeInputOptions &fitOpts,
                                     const ShapeOverlayOptions &overlayOpts,
-                                    int refConfId, int fitConfId) {
+                                    int refConfId, int fitConfId,
+                                    std::array<double, 2> *overlapVols) {
   ShapeOverlayOptions tmpOpts = overlayOpts;
   tmpOpts.normalize = false;
   tmpOpts.startMode = StartMode::ROTATE_0;
@@ -492,9 +536,9 @@ std::array<double, 3> ScoreMolecule(const ROMol &ref, const ROMol &fit,
   auto refShape = ShapeInput(ref, refConfId, refOpts, tmpOpts);
 
   ShapeInputOptions tmpFitOpts = fitOpts;
-  auto fitShape = ShapeInput(fit, fitConfId, fitOpts, tmpOpts);
+  const auto fitShape = ShapeInput(fit, fitConfId, fitOpts, tmpOpts);
 
-  return ScoreShape(refShape, fitShape, tmpOpts);
+  return ScoreShape(refShape, fitShape, tmpOpts, overlapVols);
 }
 }  // namespace GaussianShape
 }  // namespace RDKit
