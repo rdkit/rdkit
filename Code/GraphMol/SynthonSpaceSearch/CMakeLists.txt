@@ -9,7 +9,7 @@ rdkit_library(SynthonSpaceSearch
         EnumerateStereoisomers GaussianShape)
 target_compile_definitions(SynthonSpaceSearch PRIVATE RDKIT_SYNTHONSPACESEARCH_BUILD)
 
-rdkit_headers(SynthonSpace.h SynthonSet.h Synthon.h SearchResults.h
+rdkit_headers(SynthonSpace.h SynthonSet.h Synthon.h SearchResults.h SynthonShapeInput.h
         SynthonSpaceSearcher.h SynthonSpaceSubstructureSearcher.h SynthonSpaceFingerprintSearcher.h
         SynthonSpaceRascalSearcher.h SynthonSpaceShapeSearcher.h ProgressBar.h DEST GraphMol/SynthonSpaceSearch)
 
