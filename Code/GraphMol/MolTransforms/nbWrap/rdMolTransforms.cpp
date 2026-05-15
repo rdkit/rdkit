@@ -10,7 +10,6 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/ndarray.h>
-#include <RDBoost/import_array.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
@@ -127,8 +126,6 @@ void transConformer(Conformer &conf,
 }  // namespace RDKit
 
 NB_MODULE(rdMolTransforms, m) {
-  rdkit_import_array();
-
   m.doc() = R"DOC(Module containing functions to perform 3D operations like rotate and
 translate conformations)DOC";
 
