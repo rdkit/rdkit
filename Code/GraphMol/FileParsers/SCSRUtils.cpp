@@ -451,12 +451,11 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
   for (unsigned int atomIdx = 0; atomIdx < atomCount; ++atomIdx) {
     auto atom = res->getAtomWithIdx(atomIdx);
 
-    auto templateMolIdx = res->atomIdxToTemplateIdx(atomIdx);
-    if (templateMolIdx == UINT_MAX) {
+    auto templateMol = res->atomIdxToTemplatePtr(atomIdx);
+    if (templateMol == nullptr) {
       continue;  // no template for this atom - regular atom
     }
 
-    auto templateMol = res->getTemplate(templateMolIdx);
     auto mainSup = templateMol->getMainSgroup();
 
     std::vector<std::pair<unsigned int, std::string>> attchOrds;
@@ -503,7 +502,7 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
   // involved in an h-bond. fix the template to have the standard hbond
   // attachment names (Hb1, Hb2, Hb3)
 
-  std::map<unsigned int, SCSRHbondData> baseTemplateHbondData;
+  std::map<MACROMolTemplate *, SCSRHbondData> baseTemplateHbondData;
 
   for (auto bond : res->bonds()) {
     if (bond->hasProp(common_properties::_MolFileBondAttachPt1) ||
@@ -526,8 +525,8 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
       auto otherAtomId =
           (atomToCheck == atom1) ? atom2->getIdx() : atom1->getIdx();
 
-      auto templateIdx = res->atomIdxToTemplateIdx(atomToCheck->getIdx());
-      if (templateIdx == UINT_MAX) {
+      auto templatePtr = res->atomIdxToTemplatePtr(atomToCheck->getIdx());
+      if (templatePtr == nullptr) {
         continue;  // not a template atom
       }
 
@@ -564,21 +563,21 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
       }
 
       if (hbondAttachName != "") {
-        baseTemplateHbondData[templateIdx] =
+        baseTemplateHbondData[templatePtr] =
             SCSRHbondData(hbondAttachName);  // no donor flags yet
         atomToCheck->setProp(RDKit::common_properties::molAttachOrderTemplate,
                              newAttachOrds);  // remove the references to the
                                               // h-bond attach points
       } else {  // it is an h-bond to a template ref, but no atom attach point
                 // references it
-        baseTemplateHbondData[templateIdx] = SCSRHbondData(
+        baseTemplateHbondData[templatePtr] = SCSRHbondData(
             std::string(""));  // no attach point name (nor donor flags yet)
       }
     }
   }
 
   for (auto &hbondData : baseTemplateHbondData) {
-    auto templateMol = res->getTemplate(hbondData.first);
+    auto templateMol = hbondData.first;
     auto &saps = templateMol->getMainSgroup()->getAttachPoints();
     std::vector<RDKit::SubstanceGroup::AttachPoint> newSaps;
     bool sapsChanged = false;
@@ -669,18 +668,18 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
     auto atom1Idx = atom1->getIdx();
     auto atom2Idx = atom2->getIdx();
 
-    auto templateIdx1 = res->atomIdxToTemplateIdx(atom1Idx);
-    auto templateIdx2 = res->atomIdxToTemplateIdx(atom2Idx);
+    auto templatePtr1 = res->atomIdxToTemplatePtr(atom1Idx);
+    auto templatePtr2 = res->atomIdxToTemplatePtr(atom2Idx);
 
     if (bond->getBondType() == Bond::BondType::HYDROGEN &&
-        templateIdx1 != UINT_MAX && templateIdx2 != UINT_MAX &&
-        baseTemplateHbondData.contains(templateIdx1) &&
-        baseTemplateHbondData.contains(templateIdx2)) {
+        templatePtr1 != nullptr && templatePtr2 != nullptr &&
+        baseTemplateHbondData.contains(templatePtr1) &&
+        baseTemplateHbondData.contains(templatePtr2)) {
       // hydrogen bond between base template atoms
 
       if (SCSRBaseHbondOptions::Ignore != scsrBaseHbondOptions) {
-        auto donorFlags1 = baseTemplateHbondData[templateIdx1].donorFlags;
-        auto donorFlags2 = baseTemplateHbondData[templateIdx2].donorFlags;
+        auto donorFlags1 = baseTemplateHbondData[templatePtr1].donorFlags;
+        auto donorFlags2 = baseTemplateHbondData[templatePtr2].donorFlags;
 
         makeHydrogenBonds(atom1Idx, atom2Idx, donorFlags1, donorFlags2,
                           hBondsToAdd);
@@ -697,7 +696,7 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
         auto otherAtomId =
             (atomToCheck == atom1) ? atom2->getIdx() : atom1->getIdx();
 
-        if (res->atomIdxToTemplateIdx(atomToCheck->getIdx()) == UINT_MAX) {
+        if (res->atomIdxToTemplatePtr(atomToCheck->getIdx()) == nullptr) {
           continue;  // not a template atom
         }
 
@@ -868,14 +867,14 @@ std::string MACROMolToSCSRMolBlock(MACROMol &macroMol,
 
   // for each BASE tempate, the list of
   // h-bond connection point names to fix
-  std::map<unsigned int, std::vector<std::string>> templateHbondConnections;
+  std::map<MACROMolTemplate *, std::vector<std::string>> templateHbondConnections;
 
   // for each BASE tempate, the list of
   // h-bond connection point name BASES to fix
   // for sets of hbond connections like Hb1, Hb2, Hb3, this would be "Hb"
   // THis allows us to change all such connections even when only one or two
   // are used in the main mol
-  std::map<unsigned int, std::vector<std::string>> templateHbondConnectionBases;
+  std::map<MACROMolTemplate *, std::vector<std::string>> templateHbondConnectionBases;
 
   std::vector<std::pair<unsigned int, unsigned int>>
       hBonds;  // the bonds to keep (re-add).
@@ -931,21 +930,21 @@ std::string MACROMolToSCSRMolBlock(MACROMol &macroMol,
 
         // mark which templates need to be fixed so the attach points are "Hb"
 
-        auto templateIdx = macroMol.atomIdxToTemplateIdx(atomToCheck->getIdx());
-        if (!templateHbondConnections.contains(templateIdx)) {
-          templateHbondConnections[templateIdx] = std::vector<std::string>();
+        auto templatePtr = macroMol.atomIdxToTemplatePtr(atomToCheck->getIdx());
+        if (!templateHbondConnections.contains(templatePtr)) {
+          templateHbondConnections[templatePtr] = std::vector<std::string>();
         }
-        if (!templateHbondConnectionBases.contains(templateIdx)) {
-          templateHbondConnectionBases[templateIdx] =
+        if (!templateHbondConnectionBases.contains(templatePtr)) {
+          templateHbondConnectionBases[templatePtr] =
               std::vector<std::string>();
         }
 
         auto attrName = bond->getProp<std::string>(attrToCheck);
-        templateHbondConnections[templateIdx].push_back(attrName);
+        templateHbondConnections[templatePtr].push_back(attrName);
         auto attrNameBase = attrName;
         if (isdigit(attrName[attrName.size() - 1])) {
           // change Hb1, Hb2, etc to Hb
-          templateHbondConnectionBases[templateIdx].push_back(
+          templateHbondConnectionBases[templatePtr].push_back(
               attrName.substr(0, attrName.size() - 1));
         }
 
@@ -1005,7 +1004,7 @@ std::string MACROMolToSCSRMolBlock(MACROMol &macroMol,
   // now write out all of the templates
 
   res += "M  V30 BEGIN TEMPLATE\n";
-  for (unsigned int templateId = 0; templateId < macroMol.getTemplateCount();
+  for (unsigned int templateId = 0; templateId < macroMol.getNumTemplates();
        ++templateId) {
     auto macroMolTemplate = macroMol.getTemplate(templateId);
     std::string templateClass;
@@ -1051,13 +1050,13 @@ std::string MACROMolToSCSRMolBlock(MACROMol &macroMol,
     // connections. if we are keeping them, they are changed to "Hb" if not
     // keeping them, they are removed from the template definition
 
-    if (templateHbondConnections.contains(templateId) ||
-        templateHbondConnectionBases.contains(templateId)) {
+    if (templateHbondConnections.contains(macroMolTemplate) ||
+        templateHbondConnectionBases.contains(macroMolTemplate)) {
       tMol.reset(new RWMol(*macroMolTemplate));
       molToUse = tMol.get();
 
-      auto &hbondConnections = templateHbondConnections[templateId];
-      auto &hbondConnectionBases = templateHbondConnectionBases[templateId];
+      auto &hbondConnections = templateHbondConnections[macroMolTemplate];
+      auto &hbondConnectionBases = templateHbondConnectionBases[macroMolTemplate];
       auto &sgroups = RDKit::getSubstanceGroups(*(tMol.get()));
       auto &localMainSgroup =
           sgroups[macroMolTemplate->getMainSgroup()->getProp<unsigned int>(

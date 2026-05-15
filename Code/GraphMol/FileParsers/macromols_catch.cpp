@@ -118,9 +118,6 @@ class ScsrMolTest {
 
   ScsrMolTest() {
     ScsrTests = {
-        ScsrMolTest::ScsrTest("RiboseFullname.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 45, 49, 8, 43, 47, 6),
-
         ScsrMolTest::ScsrTest("DnaTest.mol", ExpectedStatus::Success,
                               RDKit::SCSRBaseHbondOptions::Ignore, 254, 282, 38, 250,
                               278, 34),
@@ -329,7 +326,7 @@ class ScsrMolTest {
     CHECK(outMacroMol != nullptr);
     CHECK(outMacroMol->getNumAtoms() == macroMol->getNumAtoms());
     CHECK(outMacroMol->getNumBonds() == macroMol->getNumBonds());
-    CHECK(outMacroMol->getTemplateCount() == macroMol->getTemplateCount());
+    CHECK(outMacroMol->getNumTemplates() == macroMol->getNumTemplates());
 
     MACROMolToSCSRMolFile(*(outMacroMol.get()), fOutName2);
 

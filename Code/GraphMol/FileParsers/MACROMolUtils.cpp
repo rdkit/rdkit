@@ -136,12 +136,12 @@ class MolFromMACROMolConverter {
     if (newConf) {
       newConf->resize(
           newConf->getNumAtoms() +
-          macroMol->atomIdxToMACROMolTemplate(atomIdx)->getNumAtoms());
+          macroMol->atomIdxToTemplatePtr(atomIdx)->getNumAtoms());
     }
 
     for (auto templateAtomIdx : sgroup.getAtoms()) {
       auto templateAtom =
-          macroMol->atomIdxToMACROMolTemplate(atomIdx)->getAtomWithIdx(
+          macroMol->atomIdxToTemplatePtr(atomIdx)->getAtomWithIdx(
               templateAtomIdx);
       auto newAtom = new Atom(*templateAtom);
 
@@ -154,7 +154,7 @@ class MolFromMACROMolConverter {
       if (newConf) {
         newConf->setAtomPos(
             newAtom->getIdx(),
-            coordOffset + macroMol->atomIdxToMACROMolTemplate(atomIdx)
+            coordOffset + macroMol->atomIdxToTemplatePtr(atomIdx)
                               ->getConformer()
                               .getAtomPos(templateAtomIdx));
       }
@@ -206,7 +206,7 @@ class MolFromMACROMolConverter {
     // that simply expands the orginal macro atom coords to be big
     // enough to hold any expanded macro atom. No attempt is made to
     // make this look nice, or to avoid overlaps.
-    std::vector<RDGeom::Point3D> templateCentroids;
+    std::map<const MACROMolTemplate *, RDGeom::Point3D> templateCentroids;
     double maxSize = 0.0;
 
     const Conformer *conf = nullptr;
@@ -216,9 +216,20 @@ class MolFromMACROMolConverter {
       newConf.reset(new Conformer(macroMol->getNumAtoms()));
       newConf->set3D(conf->is3D());
 
-      for (unsigned int templateIdx = 0;
-           templateIdx < macroMol->getTemplateCount(); ++templateIdx) {
-        auto templateMol = macroMol->getTemplate(templateIdx);
+
+      // loop over all main mol atoms and make a list of the templates used
+      // external libs could have thousands of tempaltes, most not used by the 
+      // current macro mol
+
+      std::set<const MACROMolTemplate *> templatesInUse;
+      for (unsigned int atomIdx = 0 ; atomIdx != macroMol->getNumAtoms(); ++atomIdx) {
+         auto templatePtr = macroMol->atomIdxToTemplatePtr(atomIdx);
+         if (templatePtr != nullptr && !templatesInUse.contains(templatePtr)) {
+          templatesInUse.insert(templatePtr);
+         }
+      }
+
+      for (auto templateMol : templatesInUse) {
         RDGeom::Point3D sumOfCoords;
         const RDKit::Conformer *templateConf = nullptr;
         auto confCount = templateMol->getNumConformers();
@@ -253,7 +264,7 @@ class MolFromMACROMolConverter {
             minCoord.z = atomCoord.z;
           }
         }
-        templateCentroids.push_back(sumOfCoords / templateMol->getNumAtoms());
+        templateCentroids[templateMol] = (sumOfCoords / templateMol->getNumAtoms());
         if (maxCoord.x - minCoord.x > maxSize) {
           maxSize = maxCoord.x - minCoord.x;
         }
@@ -326,8 +337,7 @@ class MolFromMACROMolConverter {
         atom->getPropIfPresent(common_properties::molAtomSeqId, seqId);
         atom->getPropIfPresent(common_properties::molAtomSeqName, seqName);
 
-        auto templateIdx = macroMol->atomIdxToTemplateIdx(atomIdx);
-        auto templateMol = macroMol->atomIdxToMACROMolTemplate(atomIdx);
+        auto templateMol= macroMol->atomIdxToTemplatePtr(atomIdx);
         std::vector<std::string> templateNames;
         std::string templateNameToUse;
 
@@ -375,8 +385,8 @@ class MolFromMACROMolConverter {
 
         RDGeom::Point3D coordOffset;
         if (conf) {
-          auto coordOffset = (conf->getAtomPos(atomIdx) * maxSize) -
-                           templateCentroids[templateIdx];
+          coordOffset = (conf->getAtomPos(atomIdx) * maxSize) -
+                           templateCentroids[templateMol];
         }
 
         copySgroupIntoResult(atomIdx, *sgroup, sgroupName, newSgroups,
@@ -811,7 +821,7 @@ void MolToMACROMol(MACROMol *res,
   std::map<unsigned int, unsigned int> atomMap;
   std::map<BondConnectionDef, std::string> bondConnectionMap;
   for (unsigned int templateIndex = 0;
-       templateIndex < templates.getTemplateCount(); ++templateIndex) {
+       templateIndex < templates.getNumTemplates(); ++templateIndex) {
     auto templateMol = templates.getTemplate(templateIndex);
     templateMol->updatePropertyCache(false);
     std::vector<std::string> templateNames;
@@ -890,7 +900,7 @@ void MolToMACROMol(MACROMol *res,
         // add the template to the MACROMol
         std::unique_ptr<MACROMolTemplate> tempTemplate(
             new MACROMolTemplate(*templateMol));
-        res->addTemplate(tempTemplate, true /* take ownershp  */);
+        res->addTemplate(tempTemplate);
         templateCopied = true;
       }
 

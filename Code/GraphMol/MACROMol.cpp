@@ -11,7 +11,7 @@ namespace RDKit {
 
 void RDKit::MACROMolTemplate::findMainSgroupForTemplate(
     std::string className, std::string templateName) const {
-  p_mainSgroupIdx = UINT_MAX;
+  d_mainSgroupIdx = UINT_MAX;
 
   auto sgroups = RDKit::getSubstanceGroups(*this);
 
@@ -22,12 +22,12 @@ void RDKit::MACROMolTemplate::findMainSgroupForTemplate(
     if (sgroupToTest.getPropIfPresent("TYPE", sup) && sup == "SUP" &&
         sgroupToTest.getPropIfPresent("CLASS", sgroupAtomClass) &&
         sgroupAtomClass == className) {
-      p_mainSgroupIdx = sgroupIdx;
+      d_mainSgroupIdx = sgroupIdx;
       break;
     }
   }
 
-  if (p_mainSgroupIdx == UINT_MAX) {
+  if (d_mainSgroupIdx == UINT_MAX) {
     std::ostringstream errout;
     errout << "No main sgroup found for template: " << className << "/"
            << templateName;
@@ -48,7 +48,7 @@ void RDKit::MACROMolTemplate::init(std::string className,
     this->setProp(templateAttr.first, templateAttr.second);
 
   }
-  p_mainSgroupIdx = UINT_MAX;
+  d_mainSgroupIdx = UINT_MAX;
 }
 
 MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
@@ -61,7 +61,7 @@ MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
 
 MACROMolTemplate::MACROMolTemplate(const MACROMolTemplate &other)
     : RWMol(other) {
-  p_mainSgroupIdx = UINT_MAX;
+  d_mainSgroupIdx = UINT_MAX;
 }
 
 MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
@@ -75,9 +75,9 @@ MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
   MACROMolTemplate::init(className, templateNames, templateAttrs);
 }
 
-RDKit::SubstanceGroup *MACROMolTemplate::getMainSgroup() {
+ RDKit::SubstanceGroup *MACROMolTemplate::getMainSgroup() {
     
-    std::call_once(p_mainSgroupIdxOnceFlag, [this]() {
+    std::call_once(d_mainSgroupIdxOnceFlag, [this]() {
       std::string className = "";
       std::vector<std::string> templateNames;
       if (!getPropIfPresent(RDKit::common_properties::molAtomClass,
@@ -94,7 +94,7 @@ RDKit::SubstanceGroup *MACROMolTemplate::getMainSgroup() {
 
       findMainSgroupForTemplate(className, templateNames[0]);
     });
-    return &RDKit::getSubstanceGroups(*this)[p_mainSgroupIdx];
+    return &RDKit::getSubstanceGroups(*this)[d_mainSgroupIdx];
   }
 
 
@@ -106,7 +106,7 @@ unsigned int RDKit::MACROMol::addMacroAtom(std::string className,
 
   atom->setProp(common_properties::dummyLabel, templateName);
   atom->setProp(common_properties::molAtomClass, className);
-  p_atomIdxToTemplateIdxIsStale = true;
+  d_atomIdxToTemplatePtrIsStale = true;
   return this->addAtom(atom, false, true);
 }
 
@@ -127,56 +127,61 @@ void RDKit::MACROMol::addMacroBond(unsigned int fromAtomIdx,
     bond->setProp(common_properties::_MolFileBondAttachPt1,
                   fromConnectionPoint);
   }
-   }
+}
 
-unsigned int RDKit::MACROMol::atomIdxToTemplateIdx(unsigned int atomIdx) const {
-  if (p_atomIdxToTemplateIdxIsStale) {
+ MACROMolTemplate *RDKit::MACROMol::atomIdxToTemplatePtr(unsigned int atomIdx) const {
+  if (d_atomIdxToTemplatePtrIsStale) {
     // rebuild the map
-    p_atomIdxToTemplateIdx.clear();
+    d_atomIdxToTemplatePtr.clear();
 
     for (auto atom : this->atoms()) {
       std::string atomClass;
       std::string dummyLabel = "";
 
+      d_atomIdxToTemplatePtr[atom->getIdx()] = nullptr;
+
       if (!atom->getPropIfPresent(common_properties::dummyLabel, dummyLabel) ||
           dummyLabel == "" ||
           !atom->getPropIfPresent(common_properties::molAtomClass, atomClass) ||
           atomClass == "") {
-        p_atomIdxToTemplateIdx[atom->getIdx()] = UINT_MAX;
         continue;
       }
 
-      p_atomIdxToTemplateIdx[atom->getIdx()]  = this->d_templateLibrary.getMACROMolTemplateIndex(atomClass, dummyLabel);
-  
+      // first look in the local temmplates, if any
+      bool foundTemplate = false;
+      if (d_templateLibrary.libContains(atomClass, dummyLabel)) {
+        d_atomIdxToTemplatePtr[atom->getIdx()]  = this->d_templateLibrary.getTemplate(atomClass, dummyLabel);
+        foundTemplate = true;
+      } else {
+        // try all the external libs
+
+        for (const auto extLib :  d_externalTemplateLibs) {
+          if( extLib->libContains(atomClass, dummyLabel)) {
+            d_atomIdxToTemplatePtr[atom->getIdx()]  = extLib->getTemplate(atomClass, dummyLabel);
+            foundTemplate = true;
+            break;
+          }
+        }
+      }
+      if (!foundTemplate) {
+          std::ostringstream errout;
+          errout << "Template not found for atom " << dummyLabel;
+          throw RDKit::FileParseException(errout.str());
+      }
     }
 
-    p_atomIdxToTemplateIdxIsStale = false;
+
+    d_atomIdxToTemplatePtrIsStale = false;
   }
-  return p_atomIdxToTemplateIdx[atomIdx];
+  return d_atomIdxToTemplatePtr[atomIdx];
 }
 
-MACROMolTemplate *RDKit::MACROMol::atomIdxToMACROMolTemplate(
-    unsigned int atomIdx) const {
-  return this->getTemplate(this->atomIdxToTemplateIdx(atomIdx));
-}
+void MACROMolTemplateLib::addTemplate(std::unique_ptr<MACROMolTemplate> &templateMolToAdd) {
+    PRECONDITION(templateMolToAdd, "bad template molecule");
 
- void MACROMolTemplateLib::addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol, bool takeOwnership) {
-    PRECONDITION(templateMol, "bad template molecule");
+    this->push_back(std::move(templateMolToAdd));
 
-    addTemplate(templateMol.get());
-
-    if (takeOwnership) {
-      this->ownedTemplates.emplace_back(std::move(templateMol));
-    }
- }
-
-
-  void MACROMolTemplateLib::addTemplate(MACROMolTemplate *templateMol) {
-    PRECONDITION(templateMol, "bad template molecule");
-
-    this->push_back(templateMol);
-
-
+    auto templateMol = this->back().get();
     std::string templateClass;
     std::vector<std::string> templateNames;
     templateMol->getPropIfPresent<std::string>(
@@ -191,38 +196,23 @@ MACROMolTemplate *RDKit::MACROMol::atomIdxToMACROMolTemplate(
     }
   }
 
-  void MACROMolTemplateLib::addTemplateLib(MACROMolTemplateLib &libToAdd, bool takeOwnership) {
-    for (auto libTemplate : libToAdd) {
+  void MACROMolTemplateLib::addTemplateLib(MACROMolTemplateLib &libToAdd) {
+    for (auto &libTemplate : libToAdd) {
       addTemplate(libTemplate);
-    }
-
-    if (takeOwnership) {
-      for (auto &libTemplate : libToAdd.ownedTemplates) {
-        ownedTemplates.emplace_back(std::move(libTemplate));
-      }
-      libToAdd.ownedTemplates.clear();
     }
   }
 
   void MACROMolTemplateLib::copyTemplateLib(const MACROMolTemplateLib &libToCopy){
     this->clearTemplateLib();
 
-    // copy and add the ownedTemplates
+  
     
-    for (const auto &templateToCopy :libToCopy.ownedTemplates) {
+    for (auto &templateToCopy : libToCopy) {
       // make a copy of the template
 
       auto templateCopy = std::unique_ptr<MACROMolTemplate>(new MACROMolTemplate(*(templateToCopy.get())));
-      this->addTemplate(templateCopy, true /* take ownership*/);
+      this->addTemplate(templateCopy);
 
-    }
-
-    //Copy the non-owned ones (from a global or external library)
-
-    for (auto templateToCopy : libToCopy) {
-      if (!libToCopy.isTemplateOwnedByLib(templateToCopy)) {
-        this->addTemplate(templateToCopy);
-      }
     }
 
   }
