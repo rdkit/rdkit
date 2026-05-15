@@ -32,12 +32,6 @@ struct RDKIT_FILEPARSERS_EXPORT MolWriterParams {
                                            the mol block */
 };
 
-const std::vector<std::string> ScsrClasses{
-    "AA",        "dAA",     "DNA",      "RNA",      "SUGAR",    "BASE",
-    "PHOSPHATE", "LINKER",  "CHEM",     "MODAA",    "MODdAA",   "MODDNA",
-    "MODRNA",    "XLINKAA", "XLINKdAA", "XLINKDNA", "XLINKRNA",
-};
-
 // \brief generates an MDL mol block for a molecule
 /*!
  *   \param mol             - the molecule in question
@@ -257,13 +251,6 @@ RDKIT_FILEPARSERS_EXPORT void MolToPDBFile(const ROMol &mol,
 RDKIT_FILEPARSERS_EXPORT void prepareMol(
     RWMol &trwmol, const MolWriterParams &params,
     boost::dynamic_bitset<> &aromaticBonds);
-
-// \brief Writes an SCSR molecule to an SCSRMol block
-/*!
- *   \param scsrMol         - the SCSR molecule in question
- *   \param MolWriterParams - parameter struct with write options
- *   \param confId          - selects the conformer to be used
- */
 
 }  // namespace RDKit
 

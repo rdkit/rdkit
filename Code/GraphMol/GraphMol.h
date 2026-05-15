@@ -19,5 +19,4 @@
 #include "ROMol.h"
 #include "RWMol.h"
 
-
 #endif

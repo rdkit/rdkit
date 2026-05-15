@@ -353,8 +353,8 @@ TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
     }
 
     {
-      // note that things aren't quite as nice here since we don't actually
-      // have TBP UFF parameters
+      // note that things aren't quite as nice here since we don't actually have
+      // TBP UFF parameters
       auto m = "Cl[Pt@TB1]([35Cl])([36Cl])([37Cl])[38Cl]"_smiles;
       REQUIRE(m);
       CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),

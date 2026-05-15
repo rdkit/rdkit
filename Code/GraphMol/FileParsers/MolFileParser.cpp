@@ -3559,7 +3559,6 @@ std::unique_ptr<RWMol> MolFromMolDataStream(std::istream &inStream,
     res = nullptr;
     return res;
   }
-  // auto res = std::make_unique<RWMol>();
   res->setProp(common_properties::_Name, tempStr);
 
   // info
