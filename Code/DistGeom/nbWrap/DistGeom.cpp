@@ -9,9 +9,6 @@
 //
 
 #include <nanobind/nanobind.h>
-#include <nanobind/stl/vector.h>
-#include <nanobind/stl/pair.h>
-#include <nanobind/stl/map.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL DistGeom_array_API
 #include <RDBoost/import_array.h>
@@ -69,11 +66,11 @@ bool doTriangleSmoothing(nb::object boundsMatArg, double tol) {
   return res;
 }
 
-PyObject *embedBoundsMatrix(nb::object boundsMatArg, int maxIters = 10,
-                            bool randomizeOnFailure = false,
-                            int numZeroFail = 2,
-                            nb::list weights = nb::list(),
-                            int randomSeed = -1) {
+nb::object embedBoundsMatrix(nb::object boundsMatArg, int maxIters = 10,
+                             int randomizeOnFailure = 0,
+                             int numZeroFail = 2,
+                             nb::list weights = nb::list(),
+                             int randomSeed = -1) {
   PyObject *boundsMatObj = boundsMatArg.ptr();
   if (!PyArray_Check(boundsMatObj)) {
     throw nb::value_error("Argument isn't an array");
@@ -119,7 +116,7 @@ PyObject *embedBoundsMatrix(nb::object boundsMatArg, int maxIters = 10,
 
     // and embed it:
     gotCoords = DistGeom::computeInitialCoords(
-        distMat, posPtrs, randomizeOnFailure, numZeroFail, randomSeed);
+        distMat, posPtrs, (bool)randomizeOnFailure, numZeroFail, randomSeed);
 
     // update the seed:
     if (randomSeed >= 0) {
@@ -172,7 +169,7 @@ PyObject *embedBoundsMatrix(nb::object boundsMatArg, int maxIters = 10,
     }
   }
 
-  return PyArray_Return(res);
+  return nb::steal<nb::object>((PyObject *)res);
 }
 
 }  // namespace RDKit
@@ -199,7 +196,7 @@ RETURNS:
 
   m.def(
       "EmbedBoundsMatrix", &RDKit::embedBoundsMatrix,
-      "boundsMatrix"_a, "maxIters"_a = 10, "randomizeOnFailure"_a = false,
+      "boundsMatrix"_a, "maxIters"_a = 10, "randomizeOnFailure"_a = 0,
       "numZeroFail"_a = 2, "weights"_a = nb::list(), "randomSeed"_a = -1,
       R"DOC(Embed a bounds matrix and return the coordinates
 
