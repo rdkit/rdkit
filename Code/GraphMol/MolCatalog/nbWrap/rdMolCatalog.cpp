@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2006 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2006-2026 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,7 +9,6 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
-#include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 
 #include <GraphMol/RDKitBase.h>
@@ -85,26 +84,23 @@ NB_MODULE(rdMolCatalog, m) {
       .def("GetNumEntries", &MolCatalog::getNumEntries)
       .def("GetFPLength", &MolCatalog::getFPLength)
       .def("Serialize", &MolCatalog::Serialize)
-      .def("GetBitDescription", GetBitDescription, "self"_a, "idx"_a)
-      .def("GetBitEntryId", GetBitEntryId, "self"_a, "idx"_a)
-      .def("GetEntryBitId", GetEntryBitId, "self"_a, "idx"_a)
-      .def("GetEntryDescription", GetEntryDescription, "self"_a, "idx"_a)
-      .def("GetEntryDownIds", GetEntryDownIds, "self"_a, "idx"_a)
-      .def("AddEntry", AddEntry, "self"_a, "entry"_a)
-      .def("AddEdge", &MolCatalog::addEdge, "self"_a, "id1"_a, "id2"_a)
+      .def("GetBitDescription", GetBitDescription, "idx"_a)
+      .def("GetBitEntryId", GetBitEntryId, "idx"_a)
+      .def("GetEntryBitId", GetEntryBitId, "idx"_a)
+      .def("GetEntryDescription", GetEntryDescription, "idx"_a)
+      .def("GetEntryDownIds", GetEntryDownIds, "idx"_a)
+      .def("AddEntry", AddEntry, "entry"_a)
+      .def("AddEdge", &MolCatalog::addEdge, "id1"_a, "id2"_a)
       // pickle support
       .def("__getstate__",
            [](const MolCatalog &self) {
              const auto pkl = self.Serialize();
-             return std::make_tuple(nb::bytes(pkl.c_str(), pkl.size()));
+             return nb::bytes(pkl.c_str(), pkl.size());
            })
-      .def("__setstate__",
-           [](MolCatalog &self, const std::tuple<nb::bytes> &state) {
-             std::string pkl(
-                 static_cast<const char *>(std::get<0>(state).data()),
-                 static_cast<size_t>(std::get<0>(state).size()));
-             new (&self) MolCatalog(pkl);
-           });
+      .def("__setstate__", [](MolCatalog &self, const nb::bytes &state) {
+        new (&self) MolCatalog(std::string(
+            static_cast<const char *>(state.data()), state.size()));
+      });
 
   nb::class_<MolCatalogEntry>(m, "MolCatalogEntry")
       .def(nb::init<>())
@@ -119,14 +115,12 @@ NB_MODULE(rdMolCatalog, m) {
       .def("__getstate__",
            [](const MolCatalogEntry &self) {
              const auto pkl = self.Serialize();
-             return std::make_tuple(nb::bytes(pkl.c_str(), pkl.size()));
+             return nb::bytes(pkl.c_str(), pkl.size());
            })
       .def("__setstate__",
-           [](MolCatalogEntry &self, const std::tuple<nb::bytes> &state) {
-             std::string pkl(
-                 static_cast<const char *>(std::get<0>(state).data()),
-                 static_cast<size_t>(std::get<0>(state).size()));
-             new (&self) MolCatalogEntry(pkl);
+           [](MolCatalogEntry &self, const nb::bytes &state) {
+             new (&self) MolCatalogEntry(std::string(
+                 static_cast<const char *>(state.data()), state.size()));
            });
 
   m.def("CreateMolCatalog", createMolCatalog, nb::rv_policy::take_ownership);
