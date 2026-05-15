@@ -17,9 +17,23 @@ else()
     message("-- Found RingDecomposerLib source in ${URFLIB_DIR}")
 endif()
 
+# Override the C qsort function: the C spec does not make any guarantees about the implementation
+# or stability of qsort (it doesn't even have to implement quicksort!), and this causes URF
+# to yield different SSSR results on different platforms.
+# Overriding it with the C++ stable_sort (there's no stable sort function in C!) ensures
+# that the SSSR results will be consistent on all platforms.
+foreach(file_name IN ITEMS "${URFLIB_DIR}/RDLcycleFams.c" "${URFLIB_DIR}/RDLdimacs.c")
+    file(READ ${file_name} file_data)
+    if (NOT "${file_data}" MATCHES "#include \"stable_sort.h\"")
+        string(REGEX REPLACE "#include[ ]+<stdio.h>" "#include <stdio.h>\n#include \"stable_sort.h\"" file_data "${file_data}")
+        string(REGEX REPLACE "qsort\\(" "stable_sort(" file_data "${file_data}")
+        file(WRITE ${file_name} "${file_data}")
+    endif()
+endforeach()
+
 set(urflib_INCLUDE_DIRS ${URFLIB_DIR}
     CACHE STRING "RingDecomposerLib Include Dir" FORCE)
-file(GLOB URFSOURCES "${URFLIB_DIR}/*.c")
+file(GLOB URFSOURCES "${URFLIB_DIR}/*.c" "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
 if(WIN32)
     set (ringdecomposerlib_h ${URFLIB_DIR}/RingDecomposerLib.h)
@@ -32,6 +46,12 @@ if(WIN32)
 endif()
 
 rdkit_library(RingDecomposerLib ${URFSOURCES} SHARED)
+target_include_directories(RingDecomposerLib PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/")
+
+if (TARGET RingDecomposerLib_static)
+    target_include_directories(RingDecomposerLib_static PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/")
+endif()
+
 if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32 AND (NOT RDK_INSTALL_STATIC_LIBS)))
     target_compile_definitions(RingDecomposerLib PRIVATE RDKIT_URFLIB_BUILD)
 endif()
