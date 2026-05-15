@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-from rdkit import Chem, DataStructs, RDConfig
+from rdkit import Chem, DataStructs, RDConfig, rdBase
 from rdkit.Chem import rdMolTransforms as rdmt
 from rdkit.Geometry import rdGeometry as geom
 
@@ -237,6 +237,9 @@ M  END
       exceptionRaised = True
     self.assertTrue(exceptionRaised)
 
+  @unittest.skipIf(rdBase._wrapperType == 'nanobind',
+                   'nanobind does not handle clean exits from context managers'
+                   ' (NoneType args to __exit__)')
   def testEigen3CanonicalTransformAgainstNumpy(self):
 
     def canonicalize_conf_rdkit(mol, conf_id=-1):

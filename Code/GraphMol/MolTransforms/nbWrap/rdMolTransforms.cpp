@@ -21,6 +21,22 @@ using namespace nb::literals;
 
 namespace RDKit {
 
+RDGeom::Point3D computeCentroidHelper(const Conformer &conf, bool ignoreHs,
+                                      nb::object weights) {
+  std::vector<double> *weightsVecPtr = nullptr;
+  std::vector<double> weightsVec;
+  if (!weights.is_none()) {
+    size_t numElements = nb::len(weights);
+    weightsVec.resize(numElements);
+    size_t i = 0;
+    for (nb::handle h : weights) {
+      weightsVec[i++] = nb::cast<double>(h);
+    }
+    weightsVecPtr = &weightsVec;
+  }
+  return MolTransforms::computeCentroid(conf, ignoreHs, weightsVecPtr);
+}
+
 auto computeCanonTrans(const Conformer &conf,
                        const RDGeom::Point3D *center = nullptr,
                        bool normalizeCovar = false, bool ignoreHs = true) {
@@ -130,9 +146,8 @@ NB_MODULE(rdMolTransforms, m) {
 translate conformations)DOC";
 
   m.def(
-      "ComputeCentroid", MolTransforms::computeCentroid, "conf"_a,
-      "ignoreHs"_a = true,
-      "weights"_a = static_cast<const std::vector<double> *>(nullptr),
+      "ComputeCentroid", RDKit::computeCentroidHelper, "conf"_a,
+      "ignoreHs"_a = true, "weights"_a = nb::none(),
       R"DOC(Compute the centroid of the conformation - hydrogens are ignored and no attention
 is paid to the difference in sizes of the heavy atoms; however,
 an optional vector of weights can be passed.)DOC");
