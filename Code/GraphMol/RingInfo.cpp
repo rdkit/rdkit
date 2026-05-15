@@ -288,6 +288,12 @@ unsigned int RingInfo::addRingFamily(const INT_VECT &atomIndices,
   return rdcast<unsigned int>(d_atomRingFamilies.size());
 }
 
+void RingInfo::resetRingFamilies() {
+  d_atomRingFamilies.clear();
+  d_bondRingFamilies.clear();
+  dp_urfData.reset();
+}
+
 void RingInfo::initialize(RDKit::FIND_RING_TYPE ringType) {
   df_init = true;
   df_find_type_type = ringType;
@@ -302,9 +308,7 @@ void RingInfo::reset() {
   d_bondMembers.clear();
   d_atomRings.clear();
   d_bondRings.clear();
-
-  d_atomRingFamilies.clear();
-  d_bondRingFamilies.clear();
+  resetRingFamilies();
 }
 void RingInfo::preallocate(unsigned int numAtoms, unsigned int numBonds) {
   d_atomMembers.resize(numAtoms);

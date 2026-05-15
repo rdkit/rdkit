@@ -1420,13 +1420,16 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   // -------------------
   streamRead(ss, tag, version);
   bool ringFound = false;
+  bool ringFamiliesFound = false;
   FIND_RING_TYPE ringType =
       RDKit::FIND_RING_TYPE::FIND_RING_TYPE_OTHER_OR_UNKNOWN;
   if (tag == BEGINSSSR) {
     ringFound = true;
+    ringFamiliesFound = true;
     ringType = FIND_RING_TYPE::FIND_RING_TYPE_SSSR;
   } else if (tag == BEGINSYMMSSSR) {
     ringFound = true;
+    ringFamiliesFound = true;
     ringType = FIND_RING_TYPE::FIND_RING_TYPE_SYMM_SSSR;
   } else if (tag == BEGINFASTFIND) {
     ringFound = true;
@@ -1438,6 +1441,12 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   if (ringFound) {
     _addRingInfoFromPickle<T>(ss, mol, version, directMap, ringType);
     streamRead(ss, tag, version);
+  }
+  if (ringFamiliesFound) {
+    // findSSSR now initializes ring families, so make sure
+    // unpickled mols have done this to prevent issues with
+    // code that expects ring families to be initialized.
+    MolOps::findRingFamilies(*mol);
   }
 
   // -------------------
