@@ -44,6 +44,7 @@ steps:
     -DRDK_BUILD_CFFI_LIB=ON ^
     -DRDK_SWIG_STATIC=OFF ^
     -DRDK_TEST_MULTITHREADED=ON ^
+    -DRDK_USE_PRECOMPILED_HEADERS=ON ^
     -DCMAKE_INCLUDE_PATH=%CONDA_PREFIX%/Library/include ^
     -DCMAKE_LIBRARY_PATH="%CONDA_PREFIX%/Library/lib
   displayName: Configure build (Run CMake)
