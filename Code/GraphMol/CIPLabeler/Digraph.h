@@ -62,8 +62,8 @@ class Digraph {
   int getNumNodes() const;
 
   /**
-   * Get all nodes which refer to `atom` in order of
-   * distance from the root.
+   * Get all seen nodes which refer to `atom` in order of
+   * distance from the current root.
    */
   std::vector<Node *> getNodes(Atom *atom) const;
 
