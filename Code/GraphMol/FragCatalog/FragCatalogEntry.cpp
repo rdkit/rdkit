@@ -16,10 +16,12 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
+#include <RDGeneral/hash/hash.hpp>
+
+#include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <fstream>
-#include <cstdint>
-#include <RDGeneral/hash/hash.hpp>
 #include <tuple>
 
 namespace RDKit {
@@ -65,19 +67,17 @@ FragCatalogEntry::FragCatalogEntry(const std::string &pickle) {
 
 void FragCatalogEntry::setDescription(const FragCatParams *params) {
   PRECONDITION(params, "");
-  INT_INT_VECT_MAP::const_iterator fMapIt;
-  for (fMapIt = d_aToFmap.begin(); fMapIt != d_aToFmap.end(); fMapIt++) {
-    int atIdx = fMapIt->first;
-    INT_VECT fGroups = fMapIt->second;
-    std::string label = "", temp;
+  for (auto &[atIdx, fGroups] : d_aToFmap) {
+    std::string label;
+    std::string temp;
 
-    INT_VECT::const_iterator fGroupIdx = fGroups.begin();
-    const ROMol *fGroup;
+    const ROMol *fGroup = nullptr;
+    auto fGroupIdx = fGroups.cbegin();
     for (unsigned int i = 0; i < fGroups.size() - 1; i++) {
       fGroup = params->getFuncGroup(*fGroupIdx);
       fGroup->getProp(common_properties::_Name, temp);
       label += "(<" + temp + ">)";
-      fGroupIdx++;
+      ++fGroupIdx;
     }
     fGroup = params->getFuncGroup(*fGroupIdx);
     fGroup->getProp(common_properties::_Name, temp);
@@ -85,37 +85,32 @@ void FragCatalogEntry::setDescription(const FragCatParams *params) {
     dp_mol->getAtomWithIdx(atIdx)->setProp(
         common_properties::_supplementalSmilesLabel, label);
   }
-  std::string smi = MolToSmiles(*dp_mol);
-  // std::cerr << "----" << smi << "----" << std::endl;
-  d_descrip = smi;
+
+  d_descrip = MolToSmiles(*dp_mol);
 };
 
 bool FragCatalogEntry::match(const FragCatalogEntry *other, double tol) const {
   PRECONDITION(other, "bad fragment to compare");
-  // std::cerr << " MATCH: "<<d_order<<" " << other->getOrder()<<std::endl;
+
   if (d_order != other->getOrder()) {
     return false;
   }
   // now check if both the entries have the same number of functional groups
   const INT_INT_VECT_MAP &oFgpMap = other->getFuncGroupMap();
-  // std::cerr << "     "<<oFgpMap.size() <<" " <<d_aToFmap.size()<<std::endl;
+
   if (oFgpMap.size() != d_aToFmap.size()) {
     return false;
   }
 
   // now check if the IDs are the same
-  INT_INT_VECT_MAP_CI tfi, ofi;
-  for (tfi = d_aToFmap.begin(); tfi != d_aToFmap.end(); tfi++) {
+  for (const auto &tfi : d_aToFmap) {
     bool found = false;
-    // std::cerr << "     "<< (tfi->second[0]) << ":";
-    for (ofi = oFgpMap.begin(); ofi != oFgpMap.end(); ofi++) {
-      // std::cerr << " "<< (ofi->second[0]);
-      if (tfi->second == ofi->second) {
+    for (const auto &ofi : oFgpMap) {
+      if (tfi.second == ofi.second) {
         found = true;
         break;
       }
     }
-    // std::cerr<<std::endl;
     if (!found) {
       return false;
     }
@@ -129,15 +124,11 @@ bool FragCatalogEntry::match(const FragCatalogEntry *other, double tol) const {
   tdiscs = this->getDiscrims();
   // REVIEW: need an overload of feq that handles tuples in MolOps, or wherever
   // DiscrimTuple is defined
-  if (!(feq(std::get<0>(tdiscs), std::get<0>(odiscs), tol)) ||
-      !(feq(std::get<1>(tdiscs), std::get<1>(odiscs), tol)) ||
-      !(feq(std::get<2>(tdiscs), std::get<2>(odiscs), tol))) {
-    return false;
-  }
-
   // FIX: this may not be enough
   // we may have to do the actual isomorphism mapping
-  return true;
+  return feq(std::get<0>(tdiscs), std::get<0>(odiscs), tol) &&
+         feq(std::get<1>(tdiscs), std::get<1>(odiscs), tol) &&
+         feq(std::get<2>(tdiscs), std::get<2>(odiscs), tol);
 }
 
 Subgraphs::DiscrimTuple FragCatalogEntry::getDiscrims() const {
@@ -145,15 +136,13 @@ Subgraphs::DiscrimTuple FragCatalogEntry::getDiscrims() const {
   if (this->hasProp(common_properties::Discrims)) {
     this->getProp(common_properties::Discrims, res);
   } else {
-    PATH_TYPE path;
-    for (unsigned int i = 0; i < dp_mol->getNumBonds(); ++i) {
-      path.push_back(i);
-    }
+    PATH_TYPE path(dp_mol->getNumBonds(), 0);
+    std::iota(path.begin(), path.end(), 0);
 
     // create invariant additions to reflect the functional groups attached to
     // the atoms
-    std::vector<std::uint32_t> funcGpInvars;
     gboost::hash<INT_VECT> vectHasher;
+    std::vector<std::uint32_t> funcGpInvars(dp_mol->getNumAtoms(), 0);
     for (unsigned int aid = 0; aid < dp_mol->getNumAtoms(); ++aid) {
       std::uint32_t invar = 0;
       auto mapPos = d_aToFmap.find(aid);
@@ -162,7 +151,7 @@ Subgraphs::DiscrimTuple FragCatalogEntry::getDiscrims() const {
         std::sort(fGroups.begin(), fGroups.end());
         invar = vectHasher(fGroups);
       }
-      funcGpInvars.push_back(invar);
+      funcGpInvars[aid] = invar;
     }
     res = Subgraphs::calcPathDiscriminators(*dp_mol, path, true, &funcGpInvars);
     this->setProp(common_properties::Discrims, res);
@@ -196,8 +185,7 @@ void FragCatalogEntry::toStream(std::ostream &ss) const {
     INT_VECT tmpVect = iivmci.second;
     tmpInt = tmpVect.size();
     streamWrite(ss, tmpInt);
-    for (INT_VECT_CI ivci = tmpVect.begin(); ivci != tmpVect.end(); ivci++) {
-      tmpInt = *ivci;
+    for (auto tmpInt : tmpVect) {
       streamWrite(ss, tmpInt);
     }
   }

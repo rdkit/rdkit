@@ -125,13 +125,12 @@ void TDTWriter::write(const ROMol &mol, int confId) {
     (*dp_ostream) << ";>\n";
   }
   // now write the properties
-  STR_VECT_CI pi;
-  if (d_props.size() > 0) {
+  if (!d_props.empty()) {
     // check if we have any properties the user specified to write out
     // in which loop over them and write them out
-    for (pi = d_props.begin(); pi != d_props.end(); pi++) {
-      if (mol.hasProp(*pi)) {
-        writeProperty(mol, (*pi));
+    for (const auto &pi : d_props) {
+      if (mol.hasProp(pi)) {
+        writeProperty(mol, pi);
       }
     }
   } else {
@@ -141,19 +140,18 @@ void TDTWriter::write(const ROMol &mol, int confId) {
     STR_VECT compLst;
     mol.getPropIfPresent(RDKit::detail::computedPropName, compLst);
 
-    STR_VECT_CI pi;
-    for (pi = properties.begin(); pi != properties.end(); pi++) {
+    for (const auto &pi : properties) {
       // ignore any of the following properties
-      if (((*pi) == RDKit::detail::computedPropName) ||
-          ((*pi) == common_properties::_Name) || ((*pi) == "_MolFileInfo") ||
-          ((*pi) == "_MolFileComments") ||
-          ((*pi) == common_properties::_MolFileChiralFlag)) {
+      if (pi == RDKit::detail::computedPropName ||
+          pi == common_properties::_Name || pi == "_MolFileInfo" ||
+          pi == "_MolFileComments" ||
+          pi == common_properties::_MolFileChiralFlag) {
         continue;
       }
 
       // check if this property is not computed
-      if (std::find(compLst.begin(), compLst.end(), (*pi)) == compLst.end()) {
-        writeProperty(mol, (*pi));
+      if (std::find(compLst.begin(), compLst.end(), pi) == compLst.end()) {
+        writeProperty(mol, pi);
       }
     }
   }
