@@ -2283,7 +2283,7 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
   // are neither stereocenters nor bonds that we need to consider.
   // The exception to this is when flagPossibleStereoCenters is
   // true; then we always need to do the work
-  bool hasStereoAtoms = false;  // flagPossibleStereoCenters;
+  bool hasStereoAtoms = flagPossibleStereoCenters;
   bool hasPotentialStereoAtoms = false;
   for (auto atom : mol.atoms()) {
     if (cleanIt) {
