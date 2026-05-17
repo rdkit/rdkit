@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016-2023 Greg Landrum
+//  Copyright (C) 2016-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -477,15 +477,51 @@ TEST_CASE("enhanced stereo") {
 TEST_CASE("HTML char codes") {
   {
     std::string smiles = R"(CCCC* |$;;;;_AP1$,Sg:n:2:2&#44;6-7:ht|)";
-    SmilesParserParams params;
+    v2::SmilesParse::SmilesParserParams params;
     params.allowCXSMILES = true;
 
-    ROMol *m = SmilesToMol(smiles, params);
+    auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
     REQUIRE(m);
 
     CHECK(m->getNumAtoms() == 5);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
+  }
+  {
+    auto m = R"CTAB(
+  Mrv2222 05072606252D          
 
-    delete m;
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.31 -1.3337 0 0
+M  V30 2 C 1.54 -0 0 0
+M  V30 3 C -0 -0 0 0
+M  V30 4 C -0.77 1.3337 0 0 ATTCHPT=1
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(1 3) XBONDS=(2 2 3) BRKXYZ=(9 -1.1173 0.0872 0 0.4832 -
+M  V30 1.0112 0 0 0 0) BRKXYZ=(9 0.6341 0.924 0 0.6341 -0.924 0 0 0 0) -
+M  V30 CONNECT=HT LABEL="2,6-7"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 4);
+    m->clearConformers();
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi == "CCCC |atomProp:3.molAttchpt.1,Sg:n:2:2&#44;6-7:ht:::|");
   }
 }
 
@@ -1094,8 +1130,7 @@ TEST_CASE("testAtropisomersInCXSmiles") {
     };
 
     for (auto smiTest : smiTests) {
-      printf("Test\n\n %s\n\n", smiTest.fileName.c_str());
-      // RDDepict::preferCoordGen = true;
+      INFO(smiTest.fileName);
       testOneAtropisomers(&smiTest);
     }
   }
@@ -1112,7 +1147,7 @@ TEST_CASE("testAtropisomersInCXSmilesCanon") {
     };
 
     for (auto smiTest : smiTests) {
-      printf("Test\n\n %s\n\n", smiTest.fileName.c_str());
+      INFO(smiTest.fileName);
       testOneAtropisomersCanon(&smiTest);
     }
   }
@@ -1128,7 +1163,7 @@ TEST_CASE("test3DChiral") {
   };
 
   for (auto smiTest : smiTests) {
-    printf("Test\n\n %s\n\n", smiTest.fileName.c_str());
+    INFO(smiTest.fileName);
     // RDDepict::preferCoordGen = true;
     testOne3dChiral(&smiTest);
   }
@@ -1738,5 +1773,36 @@ TEST_CASE("duplicate atoms in StereoGroup") {
     std::string smiles = "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,3|";
 
     CHECK_THROWS_AS(SmilesToMol(smiles), SmilesParseException);
+  }
+}
+
+TEST_CASE("Github #9231: quoting in CXSMILES") {
+  auto m = "CCCCC"_smiles;
+  REQUIRE(m);
+  SECTION("as reported") {
+    m->getAtomWithIdx(0)->setProp("p1", "1,2");
+    m->getAtomWithIdx(0)->setProp("p2", "0");
+    m->getAtomWithIdx(0)->setProp("p3", "|");
+    m->getAtomWithIdx(0)->setProp("p4,5", "foo");
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi ==
+          "CCCCC |atomProp:0.p1.1&#44;2:0.p2.0:0.p3.&#124;:0.p4&#44;5.foo|");
+    auto nmol = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(nmol);
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p1") == "1,2");
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p2") == "0");
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p3") == "|");
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p4,5") == "foo");
+  }
+  SECTION("perverse example") {
+    // bp-kelley came up with this beauty. :-)
+    m->getAtomWithIdx(0)->setProp("cxsmiles", "C |atomProp:0.apKa.7.54|");
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi ==
+          "CCCCC |atomProp:0.cxsmiles.C &#124;atomProp&#58;0.apKa.7.54&#124;|");
+    auto nmol = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(nmol);
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("cxsmiles") ==
+          "C |atomProp:0.apKa.7.54|");
   }
 }

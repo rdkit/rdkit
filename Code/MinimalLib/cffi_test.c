@@ -2897,7 +2897,7 @@ M  END\n\
                                          "{\"CX_ALL_BUT_COORDS\":true}");
   assert(cxsmiles_with_atom_prop);
   assert(!strcmp(cxsmiles_with_atom_prop,
-                 "NC1CC2CC(O)C1C2 |atomProp:5.atomProp.1&#46;234|"));
+                 "NC1CC2CC(O)C1C2 |atomProp:5.atomProp.1.234|"));
   free(cxsmiles_with_atom_prop);
   free(mpkl_atom_prop);
   free(mpkl);
@@ -2920,13 +2920,13 @@ M  END\n\
     smarts = get_cxsmarts(mpkl, mpkl_size, empty_json[i]);
     assert(smarts);
     assert(!strcmp(
-        smarts, "N-[C@&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|"));
+        smarts, "N-[C@&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1.234|"));
     free(smarts);
   }
   smarts = get_cxsmarts(mpkl, mpkl_size, "{\"doIsomericSmiles\":false}");
   assert(smarts);
   assert(!strcmp(smarts,
-                 "N-[C&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|"));
+                 "N-[C&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1.234|"));
   free(smarts);
   free(mpkl);
 }
