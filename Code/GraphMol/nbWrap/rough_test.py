@@ -7125,83 +7125,83 @@ $$$$
 #     p.enforceValenceRules = False
 #     c = Chem.molzip(a, b, p)
 
-#   def testContextManagers(self):
-#     from rdkit import RDLogger
-#     RDLogger.DisableLog('rdApp.*')
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
-#                          'github3553.sdf')
-#     with Chem.SDMolSupplier(fileN) as suppl:
-#       mols = [x for x in suppl if x is not None]
-#     sio = StringIO()
-#     with Chem.SDWriter(sio) as w:
-#       for m in mols:
-#         w.write(m)
-#     txt = sio.getvalue()
-#     self.assertEqual(txt.count('$$$$'), len(mols))
-#     with self.assertRaises(RuntimeError):
-#       w.write(mols[0])
+  def testContextManagers(self):
+    from rdkit import RDLogger
+    RDLogger.DisableLog('rdApp.*')
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'github3553.sdf')
+    with Chem.SDMolSupplier(fileN) as suppl:
+      mols = [x for x in suppl if x is not None]
+    sio = StringIO()
+    with Chem.SDWriter(sio) as w:
+      for m in mols:
+        w.write(m)
+    txt = sio.getvalue()
+    self.assertEqual(txt.count('$$$$'), len(mols))
+    with self.assertRaises(RuntimeError):
+      w.write(mols[0])
 
-#     with Chem.ForwardSDMolSupplier(fileN) as suppl:
-#       mols = [x for x in suppl if x is not None]
+    with Chem.ForwardSDMolSupplier(fileN) as suppl:
+      mols = [x for x in suppl if x is not None]
 
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'first_200.tpsa.csv')
-#     with Chem.SmilesMolSupplier(fileN, ",", 0, -1) as suppl:
-#       ms = [x for x in suppl if x is not None]
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'first_200.tpsa.csv')
+    with Chem.SmilesMolSupplier(fileN, ",", 0, -1) as suppl:
+      ms = [x for x in suppl if x is not None]
 
-#     sio = StringIO()
-#     with Chem.SmilesWriter(sio) as w:
-#       for m in mols:
-#         w.write(m)
-#     txt = sio.getvalue()
-#     self.assertEqual(txt.count('\n'), len(mols) + 1)
-#     with self.assertRaises(RuntimeError):
-#       w.write(mols[0])
+    sio = StringIO()
+    with Chem.SmilesWriter(sio) as w:
+      for m in mols:
+        w.write(m)
+    txt = sio.getvalue()
+    self.assertEqual(txt.count('\n'), len(mols) + 1)
+    with self.assertRaises(RuntimeError):
+      w.write(mols[0])
 
-#     data = """$SMI<Cc1nnc(N)nc1C>
-# CAS<17584-12-2>
-# |
-# $SMI<Cc1n[nH]c(=O)nc1N>
-# CAS<~>
-# |
-# $SMI<Cc1n[nH]c(=O)[nH]c1=O>
-# CAS<932-53-6>
-# |
-# $SMI<Cc1nnc(NN)nc1O>
-# CAS<~>
-# |"""
-#     with Chem.TDTMolSupplier() as suppl:
-#       suppl.SetData(data, "CAS")
-#       ms = [x for x in suppl if x is not None]
-#     sio = StringIO()
-#     with Chem.TDTWriter(sio) as w:
-#       for m in mols:
-#         w.write(m)
-#     txt = sio.getvalue()
-#     self.assertEqual(txt.count('$SMI'), len(mols))
-#     with self.assertRaises(RuntimeError):
-#       w.write(mols[0])
+    data = """$SMI<Cc1nnc(N)nc1C>
+CAS<17584-12-2>
+|
+$SMI<Cc1n[nH]c(=O)nc1N>
+CAS<~>
+|
+$SMI<Cc1n[nH]c(=O)[nH]c1=O>
+CAS<932-53-6>
+|
+$SMI<Cc1nnc(NN)nc1O>
+CAS<~>
+|"""
+    with Chem.TDTMolSupplier() as suppl:
+      suppl.SetData(data, "CAS")
+      ms = [x for x in suppl if x is not None]
+    sio = StringIO()
+    with Chem.TDTWriter(sio) as w:
+      for m in mols:
+        w.write(m)
+    txt = sio.getvalue()
+    self.assertEqual(txt.count('$SMI'), len(mols))
+    with self.assertRaises(RuntimeError):
+      w.write(mols[0])
 
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          '1CRN.pdb')
-#     m = Chem.MolFromPDBFile(fileN)
-#     mols = [m, m]
-#     sio = StringIO()
-#     with Chem.PDBWriter(sio) as w:
-#       for m in mols:
-#         w.write(m)
-#     txt = sio.getvalue()
-#     self.assertEqual(txt.count('COMPND    CRAMBIN'), len(mols))
-#     with self.assertRaises(RuntimeError):
-#       w.write(mols[0])
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         '1CRN.pdb')
+    m = Chem.MolFromPDBFile(fileN)
+    mols = [m, m]
+    sio = StringIO()
+    with Chem.PDBWriter(sio) as w:
+      for m in mols:
+        w.write(m)
+    txt = sio.getvalue()
+    self.assertEqual(txt.count('COMPND    CRAMBIN'), len(mols))
+    with self.assertRaises(RuntimeError):
+      w.write(mols[0])
 
-#     if hasattr(Chem, 'MaeMolSupplier'):
-#       fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                            'NCI_aids_few.mae')
-#       with Chem.MaeMolSupplier(fileN) as suppl:
-#         ms = [x for x in suppl if x is not None]
+    if hasattr(Chem, 'MaeMolSupplier'):
+      fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                           'NCI_aids_few.mae')
+      with Chem.MaeMolSupplier(fileN) as suppl:
+        ms = [x for x in suppl if x is not None]
 
-#     RDLogger.EnableLog('rdApp.*')
+    RDLogger.EnableLog('rdApp.*')
 
 #   def testInsertMol(self):
 #     m = Chem.MolFromSmiles("CNO")

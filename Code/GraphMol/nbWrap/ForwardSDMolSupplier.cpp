@@ -152,9 +152,9 @@ struct forwardsdmolsup_wrap {
   static void wrap(nb::module_ &m) {
     nb::class_<LocalForwardSDMolSupplier>(m, "ForwardSDMolSupplier",
                                           fsdMolSupplierClassDoc.c_str())
-        .def(nb::init<nb::object, bool, bool, bool>(), "fileobj"_a,
-             "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true)
         .def(nb::init<std::string, bool, bool, bool>(), "filename"_a,
+             "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true)
+        .def(nb::init<nb::object, bool, bool, bool>(), "fileobj"_a,
              "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true)
         .def("__enter__",
              (LocalForwardSDMolSupplier * (*)(LocalForwardSDMolSupplier *)) &

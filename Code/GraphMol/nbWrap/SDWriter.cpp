@@ -86,12 +86,12 @@ struct sdwriter_wrap {
 )DOC")
         .def(nb::init<std::string>(), "fileName"_a,
              R"DOC(Constructor.
-        .def(nb::init<nb::object>(), "fileObj"_a)
 
-   If a string argument is provided, it will be treated as the name of the
-   output file. If a file-like object is provided, output will be sent there.
+If a string argument is provided, it will be treated as the name of the
+output file. If a file-like object is provided, output will be sent there.
 
 )DOC")
+        .def(nb::init<nb::object>(), "fileObj"_a)
         .def("__enter__", &MolIOEnter<LocalSDWriter>,
              nb::rv_policy::reference_internal)
         .def("__exit__", &MolIOExit<LocalSDWriter>, "excType"_a = nb::none(),
