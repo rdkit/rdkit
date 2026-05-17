@@ -18,6 +18,7 @@
 #include <GraphMol/FileParsers/MultithreadedSmilesMolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
+#include "ContextManagers.h"
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -60,20 +61,6 @@ std::string MTMolSupplLastItem(T *suppl) {
   return suppl->getLastItemText();
 }
 
-template <typename T>
-T *MolIOEnter(T *self) {
-  return self;
-}
-
-template <typename T>
-bool MolIOExit(T *self, nb::object exc_type, nb::object exc_val,
-               nb::object traceback) {
-  RDUNUSED_PARAM(exc_type);
-  RDUNUSED_PARAM(exc_val);
-  RDUNUSED_PARAM(traceback);
-  self->close();
-  return false;
-}
 }  // namespace
 
 std::string multiSmilesMolSupplierClassDoc =

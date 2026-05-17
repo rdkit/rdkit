@@ -17,6 +17,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
+#include "ContextManagers.h"
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -69,20 +70,6 @@ ROMol *MolSupplGetItem(T *suppl, int idx) {
   return res;
 }
 
-template <typename T>
-T *MolIOEnter(T *self) {
-  return self;
-}
-
-template <typename T>
-bool MolIOExit(T *self, nb::object exc_type, nb::object exc_val,
-               nb::object traceback) {
-  RDUNUSED_PARAM(exc_type);
-  RDUNUSED_PARAM(exc_val);
-  RDUNUSED_PARAM(traceback);
-  self->close();
-  return false;
-}
 }  // namespace
 
 std::string tdtMolSupplierClassDoc =

@@ -15,6 +15,7 @@
 // ours
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/RDKitBase.h>
+#include "ContextManagers.h"
 #include <RDBoost/python_streambuf_nb.h>
 
 namespace nb = nanobind;
@@ -23,21 +24,6 @@ using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
 namespace {
-template <typename T>
-T *MolIOEnter(T *self) {
-  return self;
-}
-
-template <typename T>
-bool MolIOExit(T *self, nb::object exc_type, nb::object exc_val,
-               nb::object traceback) {
-  RDUNUSED_PARAM(exc_type);
-  RDUNUSED_PARAM(exc_val);
-  RDUNUSED_PARAM(traceback);
-  self->close();
-  return false;
-}
-
 class LocalPDBWriter : public PDBWriter {
  public:
   LocalPDBWriter(nb::object fileObj, unsigned int flavor = 0)
