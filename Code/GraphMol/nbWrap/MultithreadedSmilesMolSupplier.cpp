@@ -145,7 +145,9 @@ struct multiSmiMolSup_wrap {
              nb::rv_policy::reference_internal)
         .def("__enter__", &MolIOEnter<MultithreadedSmilesMolSupplier>,
              nb::rv_policy::reference_internal)
-        .def("__exit__", &MolIOExit<MultithreadedSmilesMolSupplier>)
+        .def("__exit__", &MolIOExit<MultithreadedSmilesMolSupplier>,
+             "excType"_a = nb::none(), "excValue"_a = nb::none(),
+             "traceback"_a = nb::none())
         .def(
             "__next__", &MolForwardSupplNext<MultithreadedSmilesMolSupplier>,
             nb::rv_policy::take_ownership,

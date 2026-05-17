@@ -231,7 +231,7 @@ class ReadWriteMol : public RWMol {
     beginBatchEdit();
     return this;
   }
-  bool exit(nb::object exc_type, nb::object exc_val, nb::object traceback) {
+  bool exit(nb::object exc_type, nb::object *exc_val, nb::object traceback) {
     RDUNUSED_PARAM(exc_val);
     RDUNUSED_PARAM(traceback);
     if (!exc_type.is_none()) {
@@ -1032,7 +1032,8 @@ it's probably not of general interest.
         .def("__deepcopy__", &generic__deepcopy__<ReadWriteMol>, "memo"_a)
         .def("__enter__", &ReadWriteMol::enter,
              nb::rv_policy::reference_internal)
-        .def("__exit__", &ReadWriteMol::exit)
+        .def("__exit__", &ReadWriteMol::exit, "excType"_a = nb::none(),
+             "excValue"_a = nb::none(), "traceback"_a = nb::none())
         .def("RemoveAtom", &ReadWriteMol::RemoveAtom, "idx"_a,
              "Remove the specified atom from the molecule")
         .def("RemoveBond", &ReadWriteMol::RemoveBond, "idx1"_a, "idx2"_a,

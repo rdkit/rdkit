@@ -159,7 +159,9 @@ struct smimolsup_wrap {
         .def(nb::init<>())
         .def("__enter__", &MolIOEnter<SmilesMolSupplier>,
              nb::rv_policy::reference_internal)
-        .def("__exit__", &MolIOExit<SmilesMolSupplier>)
+        .def("__exit__", &MolIOExit<SmilesMolSupplier>,
+             "excType"_a = nb::none(), "excValue"_a = nb::none(),
+             "traceback"_a = nb::none())
         .def("__iter__", &MolSupplIter<SmilesMolSupplier>,
              nb::rv_policy::reference_internal)
         .def(

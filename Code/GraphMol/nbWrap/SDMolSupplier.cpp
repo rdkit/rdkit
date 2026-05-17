@@ -135,15 +135,18 @@ struct sdmolsup_wrap {
              "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true)
         .def("__enter__", &MolIOEnter<SDMolSupplier>,
              nb::rv_policy::reference_internal)
-        .def("__exit__",
-             [](SDMolSupplier *self, nb::object exc_type, nb::object exc_val,
-                nb::object traceback) {
-               RDUNUSED_PARAM(exc_type);
-               RDUNUSED_PARAM(exc_val);
-               RDUNUSED_PARAM(traceback);
-               self->close();
-               return false;
-             })
+        .def(
+            "__exit__",
+            [](SDMolSupplier *self, nb::object exc_type, nb::object exc_val,
+               nb::object traceback) {
+              RDUNUSED_PARAM(exc_type);
+              RDUNUSED_PARAM(exc_val);
+              RDUNUSED_PARAM(traceback);
+              self->close();
+              return false;
+            },
+            "excType"_a = nb::none(), "excValue"_a = nb::none(),
+            "traceback"_a = nb::none())
         .def("__iter__", &MolSupplIter<SDMolSupplier>,
              nb::rv_policy::reference_internal)
         .def(

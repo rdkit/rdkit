@@ -94,7 +94,8 @@ struct sdwriter_wrap {
 )DOC")
         .def("__enter__", &MolIOEnter<LocalSDWriter>,
              nb::rv_policy::reference_internal)
-        .def("__exit__", &MolIOExit<LocalSDWriter>)
+        .def("__exit__", &MolIOExit<LocalSDWriter>, "excType"_a = nb::none(),
+             "excValue"_a = nb::none(), "traceback"_a = nb::none())
         .def("SetProps", &SDWriter::setProps, "props"_a,
              R"DOC(Sets the properties to be written to the output file
 

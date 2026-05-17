@@ -63,7 +63,8 @@ struct tdtwriter_wrap {
         .def(nb::init<nb::object>(), "fileObj"_a)
         .def("__enter__", &MolIOEnter<LocalTDTWriter>,
              nb::rv_policy::reference_internal)
-        .def("__exit__", &MolIOExit<LocalTDTWriter>)
+        .def("__exit__", &MolIOExit<LocalTDTWriter>, "excType"_a = nb::none(),
+             "excValue"_a = nb::none(), "traceback"_a = nb::none())
         .def("SetProps", &TDTWriter::setProps, "props"_a,
              R"DOC(Sets the properties to be written to the output file
 

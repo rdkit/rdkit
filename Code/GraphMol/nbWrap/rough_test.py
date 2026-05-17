@@ -4785,7 +4785,6 @@ $$$$
         self.assertTrue(nm.HasProp(pn))
         self.assertEqual(m.GetProp(pn), nm.GetProp(pn))
 
-
 #   def testUnfoldedRDKFingerprint(self):
 #     from rdkit.Chem import AllChem
 
@@ -7242,23 +7241,24 @@ $$$$
 #       nmol = rwmol.GetMol()
 #       self.assertEqual(Chem.MolToSmiles(nmol), "C1CCOC1")
 
-#   def testBatchEditContextManager(self):
-#     mol = Chem.MolFromSmiles("C1CCCO1")
-#     with Chem.RWMol(mol) as rwmol:
-#       rwmol.RemoveAtom(2)
-#       rwmol.RemoveAtom(3)
-#       # make sure we haven't actually changed anything yet:
-#       self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
-#     self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms() - 2)
+  def testBatchEditContextManager(self):
+    mol = Chem.MolFromSmiles("C1CCCO1")
+    with Chem.RWMol(mol) as rwmol:
+      rwmol.RemoveAtom(2)
+      rwmol.RemoveAtom(3)
+      # make sure we haven't actually changed anything yet:
+      self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
+    self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms() - 2)
 
-#     # make sure no changes get made if we throw an exception
-#     try:
-#       with Chem.RWMol(mol) as rwmol:
-#         rwmol.RemoveAtom(2)
-#         rwmol.RemoveAtom(6)
-#     except Exception:
-#       pass
-#     self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
+    # make sure no changes get made if we throw an exception
+    try:
+      with Chem.RWMol(mol) as rwmol:
+        rwmol.RemoveAtom(2)
+        rwmol.RemoveAtom(6)
+    except Exception:
+      pass
+    self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
+
 
 #   def testGithub4138(self):
 #     m = Chem.MolFromSmiles('C1CCCO1')

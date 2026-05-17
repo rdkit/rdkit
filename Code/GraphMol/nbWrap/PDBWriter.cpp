@@ -66,7 +66,8 @@ struct pdbwriter_wrap {
         .def(nb::init<nb::object, unsigned int>(), "fileObj"_a, "flavor"_a = 0)
         .def("__enter__", &MolIOEnter<LocalPDBWriter>,
              nb::rv_policy::reference_internal)
-        .def("__exit__", &MolIOExit<LocalPDBWriter>)
+        .def("__exit__", &MolIOExit<LocalPDBWriter>, "excType"_a = nb::none(),
+             "excValue"_a = nb::none(), "traceback"_a = nb::none())
         .def("write", &PDBWriter::write, "mol"_a, "confId"_a = -1,
              R"DOC(Writes a molecule to the output file.
 

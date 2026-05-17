@@ -137,7 +137,9 @@ struct multiSDMolSup_wrap {
              nb::rv_policy::reference_internal)
         .def("__enter__", &MolIOEnter<MultithreadedSDMolSupplier>,
              nb::rv_policy::reference_internal)
-        .def("__exit__", &MolIOExit<MultithreadedSDMolSupplier>)
+        .def("__exit__", &MolIOExit<MultithreadedSDMolSupplier>,
+             "excType"_a = nb::none(), "excValue"_a = nb::none(),
+             "traceback"_a = nb::none())
         .def(
             "__next__", &MolForwardSupplNext<MultithreadedSDMolSupplier>,
             nb::rv_policy::take_ownership,

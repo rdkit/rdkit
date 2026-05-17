@@ -128,7 +128,8 @@ struct tdtmolsup_wrap {
              "sanitize"_a = true)
         .def("__enter__", &MolIOEnter<TDTMolSupplier>,
              nb::rv_policy::reference_internal)
-        .def("__exit__", &MolIOExit<TDTMolSupplier>)
+        .def("__exit__", &MolIOExit<TDTMolSupplier>, "excType"_a = nb::none(),
+             "excValue"_a = nb::none(), "traceback"_a = nb::none())
         .def("__iter__", &MolSupplIter<TDTMolSupplier>,
              nb::rv_policy::reference_internal)
         .def(

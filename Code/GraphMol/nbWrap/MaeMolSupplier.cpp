@@ -129,7 +129,9 @@ struct maemolsup_wrap {
              "sanitize"_a = true, "removeHs"_a = true)
         .def("__enter__", &MolIOEnter<LocalMaeMolSupplier>,
              nb::rv_policy::reference_internal)
-        .def("__exit__", &MolIOExit<LocalMaeMolSupplier>)
+        .def("__exit__",
+             &MolIOExit < LocalMaeMolSupplier >, "excType"_a = nb::none(),
+             "excValue"_a = nb::none(), "traceback"_a = nb::none())
         .def("__iter__", &FwdMolSupplIter, nb::rv_policy::reference_internal)
         .def(
             "__next__", &MolSupplNext<LocalMaeMolSupplier>,

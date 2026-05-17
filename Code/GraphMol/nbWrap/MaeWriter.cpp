@@ -103,7 +103,8 @@ struct wrap_maewriter {
         .def(nb::init<std::string>(), "filename"_a)
         .def("__enter__", &MolIOEnter<LocalMaeWriter>,
              nb::rv_policy::reference_internal)
-        .def("__exit__", &MolIOExit<LocalMaeWriter>)
+        .def("__exit__", &MolIOExit<LocalMaeWriter>, "excType"_a = nb::none(),
+             "excValue"_a = nb::none(), "traceback"_a = nb::none())
         .def(
             "SetProps", &LocalMaeWriter::setProps, "props_list"_a,
             R"DOC(Sets the atom and molecule properties to be written to the output file.

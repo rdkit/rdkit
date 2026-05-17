@@ -160,8 +160,11 @@ struct forwardsdmolsup_wrap {
              (LocalForwardSDMolSupplier * (*)(LocalForwardSDMolSupplier *)) &
                  MolIOEnter,
              nb::rv_policy::reference_internal)
-        .def("__exit__", (bool (*)(LocalForwardSDMolSupplier *, nb::object,
-                                   nb::object, nb::object))&MolIOExit)
+        .def("__exit__",
+             (bool (*)(LocalForwardSDMolSupplier *, nb::object, nb::object,
+                       nb::object))&MolIOExit,
+             "excType"_a = nb::none(), "excValue"_a = nb::none(),
+             "traceback"_a = nb::none())
         .def(
             "__next__",
             (ROMol * (*)(LocalForwardSDMolSupplier *)) & MolForwardSupplNext,

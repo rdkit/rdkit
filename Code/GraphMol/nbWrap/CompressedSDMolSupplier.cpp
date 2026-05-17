@@ -126,7 +126,9 @@ struct compressedsdmolsup_wrap {
              nb::rv_policy::reference_internal)
         .def("__enter__", &MolIOEnter<ForwardSDMolSupplier>,
              nb::rv_policy::reference_internal)
-        .def("__exit__", &MolIOExit<ForwardSDMolSupplier>)
+        .def("__exit__", &MolIOExit<ForwardSDMolSupplier>,
+             "excType"_a = nb::none(), "excValue"_a = nb::none(),
+             "traceback"_a = nb::none())
         .def(
             "__next__", &ForwardMolSupplNext, nb::rv_policy::take_ownership,
             R"DOC(Returns the next molecule in the file. Raises _StopIteration_ on EOF.
