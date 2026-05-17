@@ -10,7 +10,7 @@ rdkit_catch_test(testShapeHelpers testShapeHelpers.cpp
            LINK_LIBRARIES ShapeHelpers FileParsers MolAlign
 SmilesParse FileParsers SubstructMatch )
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
 

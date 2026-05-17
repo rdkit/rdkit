@@ -2,8 +2,8 @@ if(NOT RDK_USE_BOOST_SERIALIZATION)
     message("== Making FilterCatalog without boost Serialization support")
 endif()
 
-find_package(Python3 COMPONENTS Interpreter)
-if (Python3::Interpreter)
+find_package(Python COMPONENTS Interpreter)
+if (Python::Interpreter)
         message("== Updating Filters.cpp from pains file")
         execute_process(
           COMMAND
@@ -34,7 +34,7 @@ rdkit_headers(FilterCatalogEntry.h
               FunctionalGroupHierarchy.h
               DEST GraphMol/FilterCatalog)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
 

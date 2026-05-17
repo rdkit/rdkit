@@ -1876,7 +1876,8 @@ to the terminal dummy atoms.\n\
     - The molecule is modified in place.\n\
     )DOC";
     python::def("KekulizeIfPossible", kekulizeMolIfPossible,
-                (python::arg("mol"), python::arg("clearAromaticFlags") = false, python::arg("canonical")=true),
+                (python::arg("mol"), python::arg("clearAromaticFlags") = false,
+                 python::arg("canonical") = true),
                 docString.c_str());
     // ------------------------------------------------------------------------
     docString =

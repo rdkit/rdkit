@@ -3,7 +3,7 @@ import os
 import pickle
 import unittest
 
-from rdkit import Chem, RDConfig
+from rdkit import Chem, rdBase, RDConfig
 from rdkit.Chem import rdPartialCharges
 
 
@@ -129,8 +129,14 @@ class TestCase(unittest.TestCase):
       float(at.GetProp('_GasteigerCharge'))
 
   def testGithub2480(self):
-    with self.assertRaisesRegex(Exception, "^Python argument types"):
-      rdPartialCharges.ComputeGasteigerCharges(None)
+    if rdBase._wrapperType == 'boost':
+      with self.assertRaisesRegex(Exception, "^Python argument types"):
+        rdPartialCharges.ComputeGasteigerCharges(None)
+    elif rdBase._wrapperType == 'nanobind':
+      with self.assertRaises(TypeError):
+        rdPartialCharges.ComputeGasteigerCharges(None)
+    else:
+      self.fail("unknown wrapper type: %s" % rdBase._wrapperType)
 
 
 if __name__ == '__main__':

@@ -57,7 +57,7 @@ rdkit_headers(
     TautomerCatalog/TautomerCatalogUtils.h
         DEST GraphMol/MolStandardize/TautomerCatalog)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
 

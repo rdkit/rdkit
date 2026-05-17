@@ -10,6 +10,7 @@ endif(NOT RDK_USE_BOOST_IOSTREAMS)
 if(RDK_BUILD_MAEPARSER_SUPPORT)
     set(MAEPARSER_LIB maeparser)
     set(maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
+
     if ("${RDK_MAEPARSER_LIBS}" STREQUAL "")
         # if we're not building maeparser as part of the RDKit build), then find
         # the imported package

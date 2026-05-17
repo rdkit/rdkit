@@ -306,7 +306,7 @@ The `PYTHON_EXECUTABLE` part is optional if the correct python is the first vers
 You can completely disable building of the python wrappers:
 
 ```
-cmake -DRDK_BUILD_PYTHON_WRAPPERS=OFF ..
+cmake -DRDK_BUILD_BOOST_PYTHON_WRAPPERS=OFF ..
 ```
 
 ##### Recommended extras
@@ -456,7 +456,7 @@ This section assumes that python is installed in `C:\Python36 that the boost lib
 
 -   Create a directory `C:\RDKit\build` and cd into it
 -   Run cmake. Here's an example basic command line for 64bit windows that will download the InChI and Avalon toolkit sources from the InChI Trust and SourceForge repositories, respectively, and build the PostgreSQL cartridge for the installed version of PostgreSQL:
-  `cmake -DRDK_BUILD_PYTHON_WRAPPERS=ON -DBOOST_ROOT=C:/boost -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_AVALON_SUPPORT=ON -DRDK_BUILD_PGSQL=ON -DPostgreSQL_ROOT="C:\Program Files\PostgreSQL\9.5" -G"Visual Studio 14 2015 Win64" ..`
+  `cmake -DRDK_BUILD_BOOST_PYTHON_WRAPPERS=ON -DBOOST_ROOT=C:/boost -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_AVALON_SUPPORT=ON -DRDK_BUILD_PGSQL=ON -DPostgreSQL_ROOT="C:\Program Files\PostgreSQL\9.5" -G"Visual Studio 14 2015 Win64" ..`
 -   Build the code. Here's an example command line:
   `C:/Windows/Microsoft.NET/Framework64/v4.0.30319/MSBuild.exe /m:4 /p:Configuration=Release INSTALL.vcxproj`
 -   If you have built in PostgreSQL support, you will need to open a shell with administrator privileges, stop the PostgreSQL service, run the `pgsql_install.bat` installation script, then restart the PostgreSQL service (please refer to `%RDBASE%\Code\PgSQL\rdkit\README` for further details):

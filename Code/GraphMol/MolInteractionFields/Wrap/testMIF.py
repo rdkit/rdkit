@@ -53,8 +53,7 @@ class TestCase(unittest.TestCase):
     rdMIF.WriteToCubeFile(
       grd,
       os.path.join(RDConfig.RDBaseDir,
-                   'Code/GraphMol/MolInteractionFields/Wrap/testData/test3.cube'),
-      mol)
+                   'Code/GraphMol/MolInteractionFields/Wrap/testData/test3.cube'), mol)
 
     grd2, mol2 = rdMIF.ReadFromCubeFile(
       os.path.join(RDConfig.RDBaseDir,

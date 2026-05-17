@@ -13,20 +13,20 @@
 
 #include <RDGeneral/Invariant.h>
 
-#include <RDGeneral/BoostStartInclude.h>
 #include <Numerics/Vector.h>
+#include <RDGeneral/BoostStartInclude.h>
 //
 // Generic Wrapper utility functionality
 //
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <memory>
 
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-#include <cstdint>
 #include "list_indexing_suite.hpp"
 #include <RDGeneral/BoostEndInclude.h>
+#include <memory>
+#include <cstdint>
 
 #include <list>
 #include <string_view>

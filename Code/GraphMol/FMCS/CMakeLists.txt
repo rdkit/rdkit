@@ -12,7 +12,7 @@ rdkit_test(testFMCS testFMCS_Unit.cpp LINK_LIBRARIES
 FMCS )
 rdkit_catch_test(testFMCSCatch testFMCS_catch_tests.cpp LINK_LIBRARIES FMCS)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
 add_subdirectory(Test)
