@@ -10,7 +10,7 @@
 import unittest
 
 #
-from rdkit import Chem, rdBase
+from rdkit import Chem
 from rdkit.Chem import rdMolProcessing
 from rdkit.Chem import rdFingerprintGenerator
 from rdkit import DataStructs
@@ -23,9 +23,6 @@ class TestCase(unittest.TestCase):
     self.smiFile = RDConfig.RDBaseDir + '/Regress/Data/zinc.leads.500.q.smi'
     self.sdFile = RDConfig.RDBaseDir + "/Data/NCI/first_200.props.sdf"
 
-  @unittest.skipIf(rdBase._wrapperType == 'nanobind',
-                   'nanobind does not handle clean exits from context managers'
-                   ' (NoneType args to __exit__)')
   def test1(self):
     fpg = rdFingerprintGenerator.GetMorganGenerator()
     fps = rdMolProcessing.GetFingerprintsForMolsInFile(self.smiFile)
@@ -43,9 +40,6 @@ class TestCase(unittest.TestCase):
     nfps = [fpg.GetFingerprint(m) for m in mols]
     self.assertAlmostEqual(DataStructs.TanimotoSimilarity(fps[0], fps[1]), 0.0638, places=3)
 
-  @unittest.skipIf(rdBase._wrapperType == 'nanobind',
-                   'nanobind does not handle clean exits from context managers'
-                   ' (NoneType args to __exit__)')
   def test2(self):
     fpg = rdFingerprintGenerator.GetMorganGenerator(radius=2)
 
