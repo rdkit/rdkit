@@ -929,8 +929,8 @@ struct mol_wrapper {
                   R"DOC(Returns a read-only sequence containing all of the atoms in a molecule that match the query atom. 
                   Atom query options are defined in the rdkit.Chem.rdqueries module.
                   )DOC")
-#endif
 
+#endif
         .def("ClearComputedProps", &ROMol::clearComputedProps,
              "includeRings"_a = true,
              R"DOC(Removes all computed properties from the molecule.

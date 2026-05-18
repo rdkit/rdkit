@@ -11,6 +11,7 @@
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/list.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/stl/map.h>
 #include <RDBoost/boost_shared_ptr.h>
 
 #include <string>
@@ -792,7 +793,7 @@ ExplicitBitVect *wrapRDKFingerprintMol(
 SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
     const ROMol &mol, unsigned int minPath, unsigned int maxPath, bool useHs,
     bool branchedPaths, bool useBondOrder, nb::object atomInvariants,
-    nb::object fromAtoms, nb::object atomBits, nb::object bitInfo) {
+    nb::object fromAtoms, nb::list atomBits, nb::dict bitInfo) {
   std::unique_ptr<std::vector<unsigned int>> lAtomInvariants =
       pythonObjectToVect<unsigned int>(atomInvariants);
   std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
@@ -800,7 +801,6 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
   std::vector<std::vector<boost::uint64_t>> *lAtomBits = nullptr;
   std::map<boost::uint64_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
 
-  // if(!(atomBits.is_none())){
   if (!atomBits.is_none()) {
     lAtomBits =
         new std::vector<std::vector<boost::uint64_t>>(mol.getNumAtoms());
@@ -814,19 +814,17 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
       mol, minPath, maxPath, useHs, branchedPaths, useBondOrder,
       lAtomInvariants.get(), lFromAtoms.get(), lAtomBits, lBitInfo);
 
-  if (lAtomBits) {
-    auto &pyl = static_cast<nb::list &>(atomBits);
+  if (!atomBits.is_none()) {
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       nb::list tmp;
       for (auto v : (*lAtomBits)[i]) {
         tmp.append(v);
       }
-      pyl.append(tmp);
+      atomBits.append(tmp);
     }
     delete lAtomBits;
   }
-  if (lBitInfo) {
-    auto &pyd = static_cast<nb::dict &>(bitInfo);
+  if (!bitInfo.is_none()) {
     for (auto &it : (*lBitInfo)) {
       nb::list temp;
       std::vector<std::vector<int>>::iterator itset;
@@ -837,7 +835,7 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
         }
         temp.append(temp2);
       }
-      pyd[it.first] = temp;
+      bitInfo[it.first] = temp;
     }
     delete lBitInfo;
   }
@@ -2501,9 +2499,9 @@ ARGUMENTS:\n\
     m.def("UnfoldedRDKFingerprintCountBased", wrapUnfoldedRDKFingerprintMol,
           "mol"_a, "minPath"_a = 1, "maxPath"_a = 7, "useHs"_a = true,
           "branchedPaths"_a = true, "useBondOrder"_a = true,
-          "atomInvariants"_a = 0, "fromAtoms"_a = 0, "atomBits"_a = nb::none(),
-          "bitInfo"_a = nb::none(), docString.c_str(),
-          nb::rv_policy::take_ownership);
+          "atomInvariants"_a = nb::none(), "fromAtoms"_a = nb::none(),
+          "atomBits"_a = nb::none(), "bitInfo"_a = nb::none(),
+          docString.c_str(), nb::rv_policy::take_ownership);
 
     // ------------------------------------------------------------------------
     docString =

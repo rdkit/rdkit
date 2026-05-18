@@ -3085,8 +3085,7 @@ CAS<~>
 
     with Chem.MaeMolSupplier() as suppl:
       suppl.SetData(maeBlock)
-      self.assertRaisesRegex(RuntimeError, r'Indexed block not found: m_atom',
-                             lambda: next(suppl))
+      self.assertRaisesRegex(RuntimeError, r'Indexed block not found: m_atom', lambda: next(suppl))
 
     def test66StreamSupplierIter(self):
       fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -3228,7 +3227,7 @@ CAS<~>
       txt = osio.getvalue()
       self.assertEqual(txt.count('ID'), 6)
       self.assertEqual(txt.count('NAME'), 6)
-      
+
   def test73SanitizationOptions(self):
     m = Chem.MolFromSmiles('c1ccccc1', sanitize=False)
     res = Chem.SanitizeMol(m, catchErrors=True)
@@ -3946,21 +3945,21 @@ CAS<~>
     path = Chem.GetShortestPath(m, 1, 20)
     self.assertEqual(path, (1, 2, 3, 16, 17, 18, 20))
 
-  # def testGithub497(self):
-  #   with tempfile.TemporaryFile() as tmp, gzip.open(tmp) as outf:
-  #     with self.assertRaises(ValueError):
-  #       w = Chem.SDWriter(outf)
+  def testGithub497(self):
+    with tempfile.TemporaryFile() as tmp, gzip.open(tmp) as outf:
+      with self.assertRaises(ValueError):
+        w = Chem.SDWriter(outf)
 
-  # def testGithub498(self):
-  #   if (sys.version_info < (3, 0)):
-  #     mode = 'w+'
-  #   else:
-  #     mode = 'wt+'
-  #   m = Chem.MolFromSmiles('C')
-  #   with tempfile.NamedTemporaryFile() as tmp, gzip.open(tmp, mode) as outf:
-  #     w = Chem.SDWriter(outf)
-  #     w.write(m)
-  #     w.close()
+  def testGithub498(self):
+    if (sys.version_info < (3, 0)):
+      mode = 'w+'
+    else:
+      mode = 'wt+'
+    m = Chem.MolFromSmiles('C')
+    with tempfile.NamedTemporaryFile() as tmp, gzip.open(tmp, mode) as outf:
+      w = Chem.SDWriter(outf)
+      w.write(m)
+      w.close()
 
   def testReplaceBond(self):
     origmol = Chem.RWMol(Chem.MolFromSmiles("CC"))
@@ -4504,274 +4503,274 @@ $$$$
   #   print(len(resMolSuppl))
   #   self.assertTrue(resMolSuppl.WasCanceled())
 
-#   def testAtomBondProps(self):
-#     origVal = Chem.GetUseLegacyStereoPerception()
-#     Chem.SetUseLegacyStereoPerception(True)
-#     m = Chem.MolFromSmiles('c1ccccc1C(C)C')
-#     for atom in m.GetAtoms():
-#       d = atom.GetPropsAsDict()
-#       self.assertEqual(set(d.keys()), set(['_CIPRank', '__computedProps']))
-#       self.assertEqual(type(d['_CIPRank']), int)
-#       self.assertEqual(list(d['__computedProps']), ['_CIPRank'])
+  def testAtomBondProps(self):
+    origVal = Chem.GetUseLegacyStereoPerception()
+    Chem.SetUseLegacyStereoPerception(True)
+    m = Chem.MolFromSmiles('c1ccccc1C(C)C')
+    for atom in m.GetAtoms():
+      d = atom.GetPropsAsDict()
+      self.assertEqual(set(d.keys()), set(['_CIPRank', '__computedProps']))
+      self.assertEqual(type(d['_CIPRank']), int)
+      self.assertEqual(list(d['__computedProps']), ['_CIPRank'])
 
-#     m = Chem.MolFromSmiles('c1ccccc1')
-#     self.assertEqual(Chem.ComputeAtomCIPRanks(m), (0, 0, 0, 0, 0, 0))
-#     for atom in m.GetAtoms():
-#       d = atom.GetPropsAsDict()
-#       self.assertEqual(set(d.keys()), set(['_CIPRank', '__computedProps']))
-#       self.assertEqual(d['_CIPRank'], 0)
-#       self.assertEqual(list(d['__computedProps']), ['_CIPRank'])
+    m = Chem.MolFromSmiles('c1ccccc1')
+    self.assertEqual(Chem.ComputeAtomCIPRanks(m), (0, 0, 0, 0, 0, 0))
+    for atom in m.GetAtoms():
+      d = atom.GetPropsAsDict()
+      self.assertEqual(set(d.keys()), set(['_CIPRank', '__computedProps']))
+      self.assertEqual(d['_CIPRank'], 0)
+      self.assertEqual(list(d['__computedProps']), ['_CIPRank'])
 
-#     Chem.SetUseLegacyStereoPerception(origVal)
+    Chem.SetUseLegacyStereoPerception(origVal)
 
-#     for bond in m.GetBonds():
-#       self.assertEqual(bond.GetPropsAsDict(), {})
+    for bond in m.GetBonds():
+      self.assertEqual(bond.GetPropsAsDict(), {})
 
-#   def testSDProps(self):
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'NCI_aids_few.sdf')
-#     #fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
-#     sddata = [
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000    48',
-#         'NSC': 48,
-#         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t2.46E-05\t3',
-#         '_Name': 48,
-#         'CAS_RN': '15716-70-8',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '15716-70-8',
-#         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t3',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000    78',
-#         'NSC': 78,
-#         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t9.80E-05\t3',
-#         '_Name': 78,
-#         'CAS_RN': '6290-84-2',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '6290-84-2',
-#         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t3',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   128',
-#         'NSC': 128,
-#         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t4.60E-05\t4',
-#         '_Name': 128,
-#         'CAS_RN': '5395-10-8',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '5395-10-8',
-#         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   163',
-#         'NSC': 163,
-#         'NCI_AIDS_Antiviral_Screen_IC50': '6.75E-04\tM\t>\t6.75E-04\t2',
-#         '_Name': 163,
-#         'CAS_RN': '81-11-8',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '81-11-8',
-#         'NCI_AIDS_Antiviral_Screen_EC50': '6.75E-04\tM\t>\t6.75E-04\t2',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   164',
-#         'NSC': 164,
-#         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t2',
-#         '_Name': 164,
-#         'CAS_RN': '5325-43-9',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '5325-43-9',
-#         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   170',
-#         'NSC': 170,
-#         '_Name': 170,
-#         'CAS_RN': '999-99-9',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '999-99-9',
-#         'NCI_AIDS_Antiviral_Screen_EC50': '9.47E-04\tM\t>\t9.47E-04\t1',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   180',
-#         'NSC': 180,
-#         'NCI_AIDS_Antiviral_Screen_IC50':
-#         '6.46E-04\tM\t=\t5.80E-04\t2\n1.81E-03\tM\t=\t6.90E-04\t2',
-#         '_Name': 180,
-#         'CAS_RN': '69-72-7',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '69-72-7',
-#         'NCI_AIDS_Antiviral_Screen_EC50':
-#         '6.46E-04\tM\t>\t6.46E-04\t2\n1.81E-03\tM\t>\t1.81E-03\t2',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   186',
-#         'NSC': 186,
-#         'NCI_AIDS_Antiviral_Screen_IC50': '1.44E-04\tM\t=\t2.49E-05\t2',
-#         '_Name': 186,
-#         'CAS_RN': '518-75-2',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '518-75-2',
-#         'NCI_AIDS_Antiviral_Screen_EC50': '1.44E-04\tM\t>\t1.44E-04\t2',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   192',
-#         'NSC': 192,
-#         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t3.38E-06\t2',
-#         '_Name': 192,
-#         'CAS_RN': '2217-55-2',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '2217-55-2',
-#         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   203',
-#         'NSC': 203,
-#         '_Name': 203,
-#         'CAS_RN': '1155-00-6',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '1155-00-6',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   210',
-#         'NSC': 210,
-#         'NCI_AIDS_Antiviral_Screen_IC50': '1.33E-03\tM\t>\t1.33E-03\t2',
-#         '_Name': 210,
-#         'CAS_RN': '5325-75-7',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '5325-75-7',
-#         'NCI_AIDS_Antiviral_Screen_EC50': '1.33E-03\tM\t>\t1.33E-03\t2',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   211',
-#         'NSC': 211,
-#         'NCI_AIDS_Antiviral_Screen_IC50':
-#         '2.00E-04\tM\t>\t2.00E-04\t8\n2.00E-03\tM\t=\t1.12E-03\t2',
-#         '_Name': 211,
-#         'CAS_RN': '5325-76-8',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '5325-76-8',
-#         'NCI_AIDS_Antiviral_Screen_EC50':
-#         '2.00E-04\tM\t>\t7.42E-05\t8\n2.00E-03\tM\t=\t6.35E-05\t2',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CM'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   213',
-#         'NSC': 213,
-#         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4',
-#         '_Name': 213,
-#         'CAS_RN': '119-80-2',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '119-80-2',
-#         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   220',
-#         'NSC': 220,
-#         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4',
-#         '_Name': 220,
-#         'CAS_RN': '5325-83-7',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '5325-83-7',
-#         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   229',
-#         'NSC': 229,
-#         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t2',
-#         '_Name': 229,
-#         'CAS_RN': '5325-88-2',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '5325-88-2',
-#         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#       {
-#         '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   256',
-#         'NSC': 256,
-#         'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4',
-#         '_Name': 256,
-#         'CAS_RN': '5326-06-7',
-#         '_MolFileChiralFlag': 0,
-#         '_MolFileComments': '5326-06-7',
-#         'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
-#         'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
-#       },
-#     ]
-#     sdSup = Chem.SDMolSupplier(fileN)
-#     for i, mol in enumerate(sdSup):
-#       self.assertEqual(mol.GetPropsAsDict(includePrivate=True), sddata[i])
+  def testSDProps(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.sdf')
+    #fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
+    sddata = [
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000    48',
+        'NSC': 48,
+        'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t2.46E-05\t3',
+        '_Name': 48,
+        'CAS_RN': '15716-70-8',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '15716-70-8',
+        'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t3',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000    78',
+        'NSC': 78,
+        'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t9.80E-05\t3',
+        '_Name': 78,
+        'CAS_RN': '6290-84-2',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '6290-84-2',
+        'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t3',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   128',
+        'NSC': 128,
+        'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t4.60E-05\t4',
+        '_Name': 128,
+        'CAS_RN': '5395-10-8',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '5395-10-8',
+        'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   163',
+        'NSC': 163,
+        'NCI_AIDS_Antiviral_Screen_IC50': '6.75E-04\tM\t>\t6.75E-04\t2',
+        '_Name': 163,
+        'CAS_RN': '81-11-8',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '81-11-8',
+        'NCI_AIDS_Antiviral_Screen_EC50': '6.75E-04\tM\t>\t6.75E-04\t2',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   164',
+        'NSC': 164,
+        'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t2',
+        '_Name': 164,
+        'CAS_RN': '5325-43-9',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '5325-43-9',
+        'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   170',
+        'NSC': 170,
+        '_Name': 170,
+        'CAS_RN': '999-99-9',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '999-99-9',
+        'NCI_AIDS_Antiviral_Screen_EC50': '9.47E-04\tM\t>\t9.47E-04\t1',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   180',
+        'NSC': 180,
+        'NCI_AIDS_Antiviral_Screen_IC50':
+        '6.46E-04\tM\t=\t5.80E-04\t2\n1.81E-03\tM\t=\t6.90E-04\t2',
+        '_Name': 180,
+        'CAS_RN': '69-72-7',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '69-72-7',
+        'NCI_AIDS_Antiviral_Screen_EC50':
+        '6.46E-04\tM\t>\t6.46E-04\t2\n1.81E-03\tM\t>\t1.81E-03\t2',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   186',
+        'NSC': 186,
+        'NCI_AIDS_Antiviral_Screen_IC50': '1.44E-04\tM\t=\t2.49E-05\t2',
+        '_Name': 186,
+        'CAS_RN': '518-75-2',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '518-75-2',
+        'NCI_AIDS_Antiviral_Screen_EC50': '1.44E-04\tM\t>\t1.44E-04\t2',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   192',
+        'NSC': 192,
+        'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t=\t3.38E-06\t2',
+        '_Name': 192,
+        'CAS_RN': '2217-55-2',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '2217-55-2',
+        'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   203',
+        'NSC': 203,
+        '_Name': 203,
+        'CAS_RN': '1155-00-6',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '1155-00-6',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   210',
+        'NSC': 210,
+        'NCI_AIDS_Antiviral_Screen_IC50': '1.33E-03\tM\t>\t1.33E-03\t2',
+        '_Name': 210,
+        'CAS_RN': '5325-75-7',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '5325-75-7',
+        'NCI_AIDS_Antiviral_Screen_EC50': '1.33E-03\tM\t>\t1.33E-03\t2',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   211',
+        'NSC': 211,
+        'NCI_AIDS_Antiviral_Screen_IC50':
+        '2.00E-04\tM\t>\t2.00E-04\t8\n2.00E-03\tM\t=\t1.12E-03\t2',
+        '_Name': 211,
+        'CAS_RN': '5325-76-8',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '5325-76-8',
+        'NCI_AIDS_Antiviral_Screen_EC50':
+        '2.00E-04\tM\t>\t7.42E-05\t8\n2.00E-03\tM\t=\t6.35E-05\t2',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CM'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   213',
+        'NSC': 213,
+        'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4',
+        '_Name': 213,
+        'CAS_RN': '119-80-2',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '119-80-2',
+        'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   220',
+        'NSC': 220,
+        'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4',
+        '_Name': 220,
+        'CAS_RN': '5325-83-7',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '5325-83-7',
+        'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   229',
+        'NSC': 229,
+        'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t2',
+        '_Name': 229,
+        'CAS_RN': '5325-88-2',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '5325-88-2',
+        'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t2',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+      {
+        '_MolFileInfo': 'BBtclserve11129916382D 0   0.00000     0.00000   256',
+        'NSC': 256,
+        'NCI_AIDS_Antiviral_Screen_IC50': '2.00E-04\tM\t>\t2.00E-04\t4',
+        '_Name': 256,
+        'CAS_RN': '5326-06-7',
+        '_MolFileChiralFlag': 0,
+        '_MolFileComments': '5326-06-7',
+        'NCI_AIDS_Antiviral_Screen_EC50': '2.00E-04\tM\t>\t2.00E-04\t4',
+        'NCI_AIDS_Antiviral_Screen_Conclusion': 'CI'
+      },
+    ]
+    sdSup = Chem.SDMolSupplier(fileN)
+    for i, mol in enumerate(sdSup):
+      self.assertEqual(mol.GetPropsAsDict(includePrivate=True), sddata[i])
 
-#   def testGetSetProps(self):
-#     m = Chem.MolFromSmiles("CC")
-#     errors = {
-#       "int":
-#       r"key `foo` exists but does not result in an integer value reason: [B,b]ad any[\ ,_]cast",
-#       "uint overflow":
-#       "key `foo` exists but does not result in an unsigned integer value reason: bad numeric conversion: negative overflow",
-#       "int overflow":
-#       "key `foo` exists but does not result in an integer value reason: bad numeric conversion: positive overflow",
-#       "double":
-#       r"key `foo` exists but does not result in a double value reason: [B,b]ad any[\ ,_]cast",
-#       "bool":
-#       r"key `foo` exists but does not result in a True or False value reason: [B,b]ad any[\ ,_]cast"
-#     }
+  def testGetSetProps(self):
+    m = Chem.MolFromSmiles("CC")
+    errors = {
+      "int":
+      r"key `foo` exists but does not result in an integer value reason: [B,b]ad any[\ ,_]cast",
+      "uint overflow":
+      "key `foo` exists but does not result in an unsigned integer value reason: bad numeric conversion: negative overflow",
+      "int overflow":
+      "key `foo` exists but does not result in an integer value reason: bad numeric conversion: positive overflow",
+      "double":
+      r"key `foo` exists but does not result in a double value reason: [B,b]ad any[\ ,_]cast",
+      "bool":
+      r"key `foo` exists but does not result in a True or False value reason: [B,b]ad any[\ ,_]cast"
+    }
 
-#     for ob in [m, list(m.GetAtoms())[0], list(m.GetBonds())[0]]:
-#       ob.SetDoubleProp("foo", 2.0)
-#       with self.assertRaises(ValueError) as e:
-#         ob.GetBoolProp("foo")
-#       self.assertRegex(str(e.exception), errors["bool"])
+    for ob in [m, list(m.GetAtoms())[0], list(m.GetBonds())[0]]:
+      ob.SetDoubleProp("foo", 2.0)
+      with self.assertRaises(ValueError) as e:
+        ob.GetBoolProp("foo")
+      self.assertRegex(str(e.exception), errors["bool"])
 
-#       with self.assertRaises(ValueError) as e:
-#         ob.GetIntProp("foo")
-#       self.assertRegex(str(e.exception), errors["int"])
+      with self.assertRaises(ValueError) as e:
+        ob.GetIntProp("foo")
+      self.assertRegex(str(e.exception), errors["int"])
 
-#       ob.SetBoolProp("foo", True)
-#       with self.assertRaises(ValueError) as e:
-#         ob.GetDoubleProp("foo")
-#       self.assertRegex(str(e.exception), errors["double"])
+      ob.SetBoolProp("foo", True)
+      with self.assertRaises(ValueError) as e:
+        ob.GetDoubleProp("foo")
+      self.assertRegex(str(e.exception), errors["double"])
 
-#       with self.assertRaises(ValueError) as e:
-#         ob.GetIntProp("foo")
-#       self.assertRegex(str(e.exception), errors["int"])
+      with self.assertRaises(ValueError) as e:
+        ob.GetIntProp("foo")
+      self.assertRegex(str(e.exception), errors["int"])
 
-#       ob.SetIntProp("foo", -1)
-#       with self.assertRaises(ValueError) as e:
-#         ob.GetUnsignedProp("foo")
-#       self.assertEqual(str(e.exception), errors["uint overflow"])
+      ob.SetIntProp("foo", -1)
+      with self.assertRaises(ValueError) as e:
+        ob.GetUnsignedProp("foo")
+      self.assertEqual(str(e.exception), errors["uint overflow"])
 
-#       ob.SetUnsignedProp("foo", 4294967295)
-#       self.assertEqual(ob.GetUnsignedProp("foo"), 4294967295)
-#       with self.assertRaises(ValueError) as e:
-#         ob.GetIntProp("foo")
-#       self.assertEqual(str(e.exception), errors["int overflow"])
+      ob.SetUnsignedProp("foo", 4294967295)
+      self.assertEqual(ob.GetUnsignedProp("foo"), 4294967295)
+      with self.assertRaises(ValueError) as e:
+        ob.GetIntProp("foo")
+      self.assertEqual(str(e.exception), errors["int overflow"])
 
-#   def testInvariantException(self):
-#     m = Chem.MolFromSmiles("C")
-#     try:
-#       m.GetAtomWithIdx(3)
-#     except RuntimeError as e:
-#       import platform
-#       details = str(e)
-#       if platform.system() == 'Windows':
-#         details = details.replace('\\', '/')
-#       self.assertTrue("Code/GraphMol/ROMol.cpp".lower() in details.lower())
-#       self.assertTrue("Failed Expression: 3 < 1" in details)
-#       self.assertTrue("RDKIT:" in details)
-#       self.assertTrue(__version__ in details)
+  def testInvariantException(self):
+    m = Chem.MolFromSmiles("C")
+    try:
+      m.GetAtomWithIdx(3)
+    except RuntimeError as e:
+      import platform
+      details = str(e)
+      if platform.system() == 'Windows':
+        details = details.replace('\\', '/')
+      self.assertTrue("Code/GraphMol/ROMol.cpp".lower() in details.lower())
+      self.assertTrue("Failed Expression: 3 < 1" in details)
+      self.assertTrue("RDKIT:" in details)
+      self.assertTrue(__version__ in details)
 
   def testGetSDText(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -4788,57 +4787,55 @@ $$$$
         self.assertTrue(nm.HasProp(pn))
         self.assertEqual(m.GetProp(pn), nm.GetProp(pn))
 
-#   def testUnfoldedRDKFingerprint(self):
-#     from rdkit.Chem import AllChem
+  # def testUnfoldedRDKFingerprint(self):
+  #   m = Chem.MolFromSmiles('c1ccccc1N')
+  #   fp = Chem.UnfoldedRDKFingerprintCountBased(m)
+  #   fpDict = fp.GetNonzeroElements()
+  #   self.assertEqual(len(fpDict.items()), 19)
+  #   self.assertTrue(374073638 in fpDict)
+  #   self.assertEqual(fpDict[374073638], 6)
+  #   self.assertTrue(464351883 in fpDict)
+  #   self.assertEqual(fpDict[464351883], 2)
+  #   self.assertTrue(1949583554 in fpDict)
+  #   self.assertEqual(fpDict[1949583554], 6)
+  #   self.assertTrue(4105342207 in fpDict)
+  #   self.assertEqual(fpDict[4105342207], 1)
+  #   self.assertTrue(794080973 in fpDict)
+  #   self.assertEqual(fpDict[794080973], 1)
+  #   self.assertTrue(3826517238 in fpDict)
+  #   self.assertEqual(fpDict[3826517238], 2)
 
-#     m = Chem.MolFromSmiles('c1ccccc1N')
-#     fp = AllChem.UnfoldedRDKFingerprintCountBased(m)
-#     fpDict = fp.GetNonzeroElements()
-#     self.assertEqual(len(fpDict.items()), 19)
-#     self.assertTrue(374073638 in fpDict)
-#     self.assertEqual(fpDict[374073638], 6)
-#     self.assertTrue(464351883 in fpDict)
-#     self.assertEqual(fpDict[464351883], 2)
-#     self.assertTrue(1949583554 in fpDict)
-#     self.assertEqual(fpDict[1949583554], 6)
-#     self.assertTrue(4105342207 in fpDict)
-#     self.assertEqual(fpDict[4105342207], 1)
-#     self.assertTrue(794080973 in fpDict)
-#     self.assertEqual(fpDict[794080973], 1)
-#     self.assertTrue(3826517238 in fpDict)
-#     self.assertEqual(fpDict[3826517238], 2)
+  #   m = Chem.MolFromSmiles('Cl')
+  #   fp = Chem.UnfoldedRDKFingerprintCountBased(m)
+  #   fpDict = fp.GetNonzeroElements()
+  #   self.assertEqual(len(fpDict.items()), 0)
 
-#     m = Chem.MolFromSmiles('Cl')
-#     fp = AllChem.UnfoldedRDKFingerprintCountBased(m)
-#     fpDict = fp.GetNonzeroElements()
-#     self.assertEqual(len(fpDict.items()), 0)
+  #   m = Chem.MolFromSmiles('CCCO')
+  #   aBits = {}
+  #   fp = Chem.UnfoldedRDKFingerprintCountBased(m, bitInfo=aBits)
+  #   fpDict = fp.GetNonzeroElements()
+  #   self.assertEqual(len(fpDict.items()), 5)
+  #   self.assertTrue(1524090560 in fpDict)
+  #   self.assertEqual(fpDict[1524090560], 1)
+  #   self.assertTrue(1940446997 in fpDict)
+  #   self.assertEqual(fpDict[1940446997], 1)
+  #   self.assertTrue(3977409745 in fpDict)
+  #   self.assertEqual(fpDict[3977409745], 1)
+  #   self.assertTrue(4274652475 in fpDict)
+  #   self.assertEqual(fpDict[4274652475], 1)
+  #   self.assertTrue(4275705116 in fpDict)
+  #   self.assertEqual(fpDict[4275705116], 2)
 
-#     m = Chem.MolFromSmiles('CCCO')
-#     aBits = {}
-#     fp = AllChem.UnfoldedRDKFingerprintCountBased(m, bitInfo=aBits)
-#     fpDict = fp.GetNonzeroElements()
-#     self.assertEqual(len(fpDict.items()), 5)
-#     self.assertTrue(1524090560 in fpDict)
-#     self.assertEqual(fpDict[1524090560], 1)
-#     self.assertTrue(1940446997 in fpDict)
-#     self.assertEqual(fpDict[1940446997], 1)
-#     self.assertTrue(3977409745 in fpDict)
-#     self.assertEqual(fpDict[3977409745], 1)
-#     self.assertTrue(4274652475 in fpDict)
-#     self.assertEqual(fpDict[4274652475], 1)
-#     self.assertTrue(4275705116 in fpDict)
-#     self.assertEqual(fpDict[4275705116], 2)
-
-#     self.assertTrue(1524090560 in aBits)
-#     self.assertEqual(aBits[1524090560], [[1, 2]])
-#     self.assertTrue(1940446997 in aBits)
-#     self.assertEqual(aBits[1940446997], [[0, 1]])
-#     self.assertTrue(3977409745 in aBits)
-#     self.assertEqual(aBits[3977409745], [[0, 1, 2]])
-#     self.assertTrue(4274652475 in aBits)
-#     self.assertEqual(aBits[4274652475], [[2]])
-#     self.assertTrue(4275705116 in aBits)
-#     self.assertEqual(aBits[4275705116], [[0], [1]])
+  #   self.assertTrue(1524090560 in aBits)
+  #   self.assertEqual(aBits[1524090560], [[1, 2]])
+  #   self.assertTrue(1940446997 in aBits)
+  #   self.assertEqual(aBits[1940446997], [[0, 1]])
+  #   self.assertTrue(3977409745 in aBits)
+  #   self.assertEqual(aBits[3977409745], [[0, 1, 2]])
+  #   self.assertTrue(4274652475 in aBits)
+  #   self.assertEqual(aBits[4274652475], [[2]])
+  #   self.assertTrue(4275705116 in aBits)
+  #   self.assertEqual(aBits[4275705116], [[0], [1]])
 
 #   def testRDKFingerprintBitInfo(self):
 

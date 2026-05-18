@@ -346,7 +346,14 @@ NB_MODULE(rdBase, m) {
                                      PyExc_ValueError);
   nb::exception<KeyErrorException>(m, "KeyErrorException", PyExc_KeyError);
 #if INVARIANT_EXCEPTION_METHOD
-  nb::exception<Invar::Invariant>(m, "InvariantException", PyExc_RuntimeError);
+  nb::register_exception_translator(
+      [](const std::exception_ptr &p, void * /* unused */) {
+        try {
+          std::rethrow_exception(p);
+        } catch (const Invar::Invariant &e) {
+          PyErr_SetString(PyExc_RuntimeError, e.toUserString().c_str());
+        }
+      });
 #endif
 
   // boost::python::to_python_converter<std::string_view,
