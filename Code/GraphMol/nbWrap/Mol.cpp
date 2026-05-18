@@ -577,6 +577,90 @@ struct mol_wrapper {
              "Returns if any atom or bond in molecule has a query")
 
         // substructures
+        // params-based overloads are registered first so nanobind's overload
+        // resolution prefers them over the bool-based overloads when a
+        // SubstructMatchParameters object is passed (nanobind coerces any
+        // Python object to bool via PyObject_IsTrue, which would otherwise
+        // shadow this overload)
+        .def(
+            "HasSubstructMatch",
+            (bool (*)(const ROMol &m, const ROMol &query,
+                      const std::optional<SubstructMatchParameters>))
+                helpHasSubstructMatch,
+            "query"_a, "params"_a = nb::none(),
+            R"DOC(Queries whether or not the molecule contains a particular substructure.
+
+          ARGUMENTS:
+          - query: a Molecule
+
+          - params: parameters controlling the substructure match
+
+          RETURNS: True or False
+          )DOC")
+
+        .def(
+            "GetSubstructMatch",
+            (std::vector<int> (*)(
+                const ROMol &m, const ROMol &query,
+                const std::optional<SubstructMatchParameters>))
+                helpGetSubstructMatch,
+            "query"_a, "params"_a = nb::none(),
+            R"DOC(Returns the indices of the molecule's atoms that match a substructure query.
+
+  ARGUMENTS:
+    - query: a Molecule
+
+    - params: parameters controlling the substructure match
+
+  RETURNS: a list of integers
+
+  NOTES:
+     - only a single match is returned
+     - the ordering of the indices corresponds to the atom ordering
+         in the query. For example, the first index is for the atom in
+         this molecule that matches the first atom in the query.
+)DOC")
+
+        .def(
+            "GetSubstructMatches",
+            (std::vector<std::vector<int>> (*)(
+                const ROMol &m, const ROMol &query,
+                const std::optional<SubstructMatchParameters>))
+                helpGetSubstructMatches,
+            "query"_a, "params"_a = nb::none(),
+            R"DOC(Returns lists of the indices of the molecule's atoms that match a substructure query.
+
+  ARGUMENTS:
+    - query: a Molecule.
+
+    - params: parameters controlling the substructure match
+
+  RETURNS: a list of lists of integers
+
+  NOTE:
+     - the ordering of the indices corresponds to the atom ordering
+         in the query. For example, the first index is for the atom in
+         this molecule that matches the first atom in the query.
+)DOC")
+        //    .def("HasSubstructMatch",
+        //         (bool (*)(const ROMol &m, const MolBundle &query,
+        //                   const SubstructMatchParameters
+        //                   &))helpHasSubstructMatch,
+        //         "query"_a, "params"_a = SubstructMatchParameters())
+        //    .def("GetSubstructMatch",
+        //         (PyObject * (*)(const ROMol &m, const MolBundle &query,
+        //                         const SubstructMatchParameters &))
+        //             helpGetSubstructMatch,
+        //         (python::arg("self"), python::arg("query"),
+        //         python::arg("params")))
+        //    .def("GetSubstructMatches",
+        //         (PyObject * (*)(const ROMol &m, const MolBundle &query,
+        //                         const SubstructMatchParameters &))
+        //             helpGetSubstructMatches,
+        //         (python::arg("self"), python::arg("query"),
+        //         python::arg("params")))
+
+        //--------------------------------------------
         .def(
             "HasSubstructMatch",
             (bool (*)(const ROMol &m, const ROMol &query, bool, bool,
@@ -686,85 +770,6 @@ struct mol_wrapper {
         //          python::arg("useChirality") = false,
         //          python::arg("useQueryQueryMatches") = false,
         //          python::arg("maxMatches") = 1000))
-
-        //--------------------------------------------
-        .def(
-            "HasSubstructMatch",
-            (bool (*)(const ROMol &m, const ROMol &query,
-                      const std::optional<SubstructMatchParameters>))
-                helpHasSubstructMatch,
-            "query"_a, "params"_a = nb::none(),
-            R"DOC(Queries whether or not the molecule contains a particular substructure.
-          
-          ARGUMENTS:
-          - query: a Molecule
-          
-          - params: parameters controlling the substructure match
-          
-          RETURNS: True or False
-          )DOC")
-
-        .def(
-            "GetSubstructMatch",
-            (std::vector<int> (*)(
-                const ROMol &m, const ROMol &query,
-                const std::optional<SubstructMatchParameters>))
-                helpGetSubstructMatch,
-            "query"_a, "params"_a = nb::none(),
-            R"DOC(Returns the indices of the molecule's atoms that match a substructure query.
-
-  ARGUMENTS:
-    - query: a Molecule
-
-    - params: parameters controlling the substructure match
-
-  RETURNS: a list of integers
-
-  NOTES:
-     - only a single match is returned
-     - the ordering of the indices corresponds to the atom ordering
-         in the query. For example, the first index is for the atom in
-         this molecule that matches the first atom in the query.
-)DOC")
-
-        .def(
-            "GetSubstructMatches",
-            (std::vector<std::vector<int>> (*)(
-                const ROMol &m, const ROMol &query,
-                const std::optional<SubstructMatchParameters>))
-                helpGetSubstructMatches,
-            "query"_a, "params"_a = nb::none(),
-            R"DOC(Returns lists of the indices of the molecule's atoms that match a substructure query.
-
-  ARGUMENTS:
-    - query: a Molecule.
-
-    - params: parameters controlling the substructure match
-
-  RETURNS: a list of lists of integers
-
-  NOTE:
-     - the ordering of the indices corresponds to the atom ordering
-         in the query. For example, the first index is for the atom in
-         this molecule that matches the first atom in the query.
-)DOC")
-        //    .def("HasSubstructMatch",
-        //         (bool (*)(const ROMol &m, const MolBundle &query,
-        //                   const SubstructMatchParameters
-        //                   &))helpHasSubstructMatch,
-        //         "query"_a, "params"_a = SubstructMatchParameters())
-        //    .def("GetSubstructMatch",
-        //         (PyObject * (*)(const ROMol &m, const MolBundle &query,
-        //                         const SubstructMatchParameters &))
-        //             helpGetSubstructMatch,
-        //         (python::arg("self"), python::arg("query"),
-        //         python::arg("params")))
-        //    .def("GetSubstructMatches",
-        //         (PyObject * (*)(const ROMol &m, const MolBundle &query,
-        //                         const SubstructMatchParameters &))
-        //             helpGetSubstructMatches,
-        //         (python::arg("self"), python::arg("query"),
-        //         python::arg("params")))
 
         // properties
         .def("SetProp", MolSetProp<ROMol, std::string>, "key"_a, "val"_a,
