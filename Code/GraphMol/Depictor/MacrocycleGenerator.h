@@ -191,21 +191,6 @@ class MacrocycleGenerator {
   */
   int calculateMinDistance(const std::vector<int> &turns) const;
 
-  //! Analytically refine coordinates to fix closure gap and geometry
-  /*!
-    Applies three analytical steps to improve coordinate quality:
-    1. Distribute closure gap linearly across all atoms
-    2. Adjust bond lengths to exactly bondLength
-    3. Distribute angular error evenly across all angles
-
-    Non-iterative - runs in a single pass (~0.1-0.5ms).
-
-    \param coords: Input coordinates (modified in-place)
-    \return Final closure error after refinement (should be < 0.02 Å)
-  */
-  double refineCoordinatesAnalytical(
-      std::vector<RDGeom::Point2D> &coords) const;
-
   //! Adjust angles analytically to close the gap (O(N) least-squares solution)
   /*!
     Uses Jacobian pseudo-inverse to compute minimal angle adjustments that close
@@ -264,8 +249,8 @@ class MacrocycleGenerator {
     \param constraintsNeeded: How many OPPOSITE constraints to try to add
     \return Number of OPPOSITE constraints actually added
   */
-  size_t addOppositeConstraintsToReduce(const std::vector<size_t> &freePositions,
-                                        size_t constraintsNeeded);
+  size_t addOppositeConstraintsToReduce(
+      const std::vector<size_t> &freePositions, size_t constraintsNeeded);
 
   //! Build map of dependent positions via OPPOSITE constraints
   /*!
@@ -283,8 +268,7 @@ class MacrocycleGenerator {
     \param turns: Turn sequence to scan
     \return Vector of positions with turn value 0
   */
-  std::vector<size_t> collectFreePositions(
-      const std::vector<int> &turns) const;
+  std::vector<size_t> collectFreePositions(const std::vector<int> &turns) const;
   //! Step 1: Distribute closure gap linearly
   void distributeClosureGap(std::vector<RDGeom::Point2D> &coords) const;
 
