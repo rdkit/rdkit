@@ -10,7 +10,8 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/shared_ptr.h>
 
-#include <boost/dynamic_bitset.hpp>
+#include <vector>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolChemicalFeatures/MolChemicalFeature.h>
 #include <GraphMol/MolChemicalFeatures/MolChemicalFeatureFactory.h>
@@ -24,7 +25,7 @@ nb::object GetAtomMatch(nb::object featMatch, int maxAts = 1024) {
   nb::list res;
   auto nEntries = nb::len(featMatch);
 
-  boost::dynamic_bitset<> indices(maxAts);
+  std::vector<bool> indices(maxAts, false);
   for (size_t i = 0; i < static_cast<size_t>(nEntries); ++i) {
     auto feat = nb::cast<MolChemicalFeature *>(featMatch[i]);
     nb::list local;
@@ -33,7 +34,7 @@ nb::object GetAtomMatch(nb::object featMatch, int maxAts = 1024) {
       if (indices[idx]) {
         return nb::list();
       } else {
-        indices[idx] = 1;
+        indices[idx] = true;
       }
       local.append(idx);
     }
