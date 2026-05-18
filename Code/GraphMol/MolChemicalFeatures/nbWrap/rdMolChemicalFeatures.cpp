@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2026 Rational Discovery LLC and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,66 +7,59 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/Wrap.h>
-#include <GraphMol/MolChemicalFeatures/MolChemicalFeature.h>
-#include <GraphMol/MolChemicalFeatures/MolChemicalFeatureFactory.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/shared_ptr.h>
+#include <nanobind/stl/string.h>
+
 #include <fstream>
 #include <sstream>
+
 #include <GraphMol/MolChemicalFeatures/FeatureParser.h>
-namespace python = boost::python;
+#include <GraphMol/MolChemicalFeatures/MolChemicalFeature.h>
+#include <GraphMol/MolChemicalFeatures/MolChemicalFeatureFactory.h>
+
+namespace nb = nanobind;
+using namespace nb::literals;
 using namespace RDKit;
 
-void wrap_MolChemicalFeat();
-void wrap_factory();
-void wrap_ChemicalFeatureUtils();
+void wrap_MolChemicalFeat(nb::module_ &m);
+void wrap_factory(nb::module_ &m);
+void wrap_ChemicalFeatureUtils(nb::module_ &m);
 
-namespace RDKit {
-MolChemicalFeatureFactory *buildFeatFactory(std::string fileName) {
-  std::ifstream inStream(fileName.c_str());
+namespace {
+MolChemicalFeatureFactory *buildFeatFactory(const std::string &fileName) {
+  std::ifstream inStream(fileName);
   if (!inStream.is_open()) {
-    std::string errorstring = "File: " + fileName + " could not be opened.";
-    PyErr_SetString(PyExc_IOError, errorstring.c_str());
-    python::throw_error_already_set();
+    PyErr_SetString(PyExc_IOError,
+                    ("File: " + fileName + " could not be opened.").c_str());
+    throw nb::python_error();
   }
-  auto &instrm = static_cast<std::istream &>(inStream);
-  return buildFeatureFactory(instrm);
+  return buildFeatureFactory(static_cast<std::istream &>(inStream));
 }
 
-MolChemicalFeatureFactory *buildFeatFactoryFromString(std::string fdefString) {
+MolChemicalFeatureFactory *buildFeatFactoryFromString(
+    const std::string &fdefString) {
   std::istringstream inStream(fdefString);
-  auto &instrm = static_cast<std::istream &>(inStream);
-  return buildFeatureFactory(instrm);
+  return buildFeatureFactory(static_cast<std::istream &>(inStream));
 }
-}  // namespace RDKit
+}  // namespace
 
-void translate_FeatureFileParse_error(
-    RDKit::FeatureFileParseException const &e) {
-  std::stringstream err;
-  err << "Error parsing feature file at line " << e.lineNo() << ":"
-      << std::endl;
-  err << e.what() << std::endl;
-  PyErr_SetString(PyExc_ValueError, err.str().c_str());
-  python::throw_error_already_set();
-}
+NB_MODULE(rdMolChemicalFeatures, m) {
+  m.doc() =
+      R"DOC(Module containing from chemical feature and functions to generate the)DOC";
 
-BOOST_PYTHON_MODULE(rdMolChemicalFeatures) {
-  python::scope().attr("__doc__") =
-      "Module containing from chemical feature and functions to generate the";
-  python::register_exception_translator<RDKit::FeatureFileParseException>(
-      &translate_FeatureFileParse_error);
+  nb::exception<FeatureFileParseException>(m, "FeatureFileParseException",
+                                           PyExc_ValueError);
 
-  python::def(
-      "BuildFeatureFactory", RDKit::buildFeatFactory,
-      "Construct a feature factory given a feature definition in a file",
-      python::return_value_policy<python::manage_new_object>(),
-      python::args("fileName"));
-  python::def("BuildFeatureFactoryFromString",
-              RDKit::buildFeatFactoryFromString,
-              "Construct a feature factory given a feature definition block",
-              python::return_value_policy<python::manage_new_object>(),
-              python::args("fdefString"));
+  m.def("BuildFeatureFactory", buildFeatFactory, "fileName"_a,
+        "Construct a feature factory given a feature definition in a file",
+        nb::rv_policy::take_ownership);
+  m.def("BuildFeatureFactoryFromString", buildFeatFactoryFromString,
+        "fdefString"_a,
+        "Construct a feature factory given a feature definition block",
+        nb::rv_policy::take_ownership);
 
-  wrap_MolChemicalFeat();
-  wrap_factory();
-  wrap_ChemicalFeatureUtils();
+  wrap_MolChemicalFeat(m);
+  wrap_factory(m);
+  wrap_ChemicalFeatureUtils(m);
 }
