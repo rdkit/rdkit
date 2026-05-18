@@ -2722,6 +2722,8 @@ CAS<~>
     self.assertEqual(len(fp2), 2048)
     self.assertTrue(DataStructs.AllProbeBitsMatch(fp2, fp1))
 
+    # the atom counts argument doesn't currently work with
+    # PatternFingerprints.
     # atomCounts = [0] * m1.GetNumAtoms()
     # fp2 = Chem.PatternFingerprint(m1, atomCounts=atomCounts)
     # self.assertEqual(fp1, fp2)
@@ -3056,176 +3058,177 @@ CAS<~>
 
     self.assertEqual(i, 15)
 
-  # @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
-  # def testMaeFileSupplierGetItem(self):
-  #   fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-  #                        'NCI_aids_few.mae')
-  #   molNames = [
-  #     "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
-  #     "220", "229", "256"
-  #   ]
-  #   with Chem.MaeMolSupplier(fileN) as suppl:
-  #     num_mols = len(suppl)
-  #     self.assertEqual(num_mols, 16)
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
+  def testMaeFileSupplierGetItem(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.mae')
+    molNames = [
+      "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
+      "220", "229", "256"
+    ]
+    with Chem.MaeMolSupplier(fileN) as suppl:
+      num_mols = len(suppl)
+      self.assertEqual(num_mols, 16)
 
-  #     for i in range(num_mols):
-  #       self.assertEqual(suppl[i].GetProp("_Name"), molNames[i])
+      for i in range(num_mols):
+        self.assertEqual(suppl[i].GetProp("_Name"), molNames[i])
 
-  #       j = -(i + 1)
-  #       self.assertEqual(suppl[j].GetProp("_Name"), molNames[j])
+        j = -(i + 1)
+        self.assertEqual(suppl[j].GetProp("_Name"), molNames[j])
 
-  #     for i in (num_mols, 2 * num_mols, -(num_mols + 1), -2 * (num_mols + 1)):
-  #       self.assertRaises(IndexError, lambda: suppl[i])
+      for i in (num_mols, 2 * num_mols, -(num_mols + 1), -2 * (num_mols + 1)):
+        self.assertRaises(IndexError, lambda: suppl[i])
 
-  # @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
-  # def testMaeFileSupplierExceptionMsgs(self):
-  #   maeBlock = "f_m_ct {\n  s_m_title\n  :::\n  " "\n  }\n}"
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not built with MAEParser support")
+  def testMaeFileSupplierExceptionMsgs(self):
+    maeBlock = "f_m_ct {\n  s_m_title\n  :::\n  " "\n  }\n}"
 
-  #   with Chem.MaeMolSupplier() as suppl:
-  #     suppl.SetData(maeBlock)
-  #     self.assertRaisesRegex(RuntimeError, r'File parsing error: Indexed block not found: m_atom',
-  #                            lambda: next(suppl))
+    with Chem.MaeMolSupplier() as suppl:
+      suppl.SetData(maeBlock)
+      self.assertRaisesRegex(RuntimeError, r'Indexed block not found: m_atom',
+                             lambda: next(suppl))
 
-  #   def test66StreamSupplierIter(self):
-  #     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-  #                          'NCI_aids_few.sdf.gz')
-  #     inf = gzip.open(fileN)
-  #     if 0:
-  #       sb = Chem.streambuf(inf)
-  #       suppl = Chem.ForwardSDMolSupplier(sb)
-  #     else:
-  #       suppl = Chem.ForwardSDMolSupplier(inf)
+    def test66StreamSupplierIter(self):
+      fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                           'NCI_aids_few.sdf.gz')
+      inf = gzip.open(fileN)
+      if 0:
+        sb = Chem.streambuf(inf)
+        suppl = Chem.ForwardSDMolSupplier(sb)
+      else:
+        suppl = Chem.ForwardSDMolSupplier(inf)
 
-  #     molNames = [
-  #       "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
-  #       "220", "229", "256"
-  #     ]
-  #     i = 0
-  #     for mol in suppl:
-  #       self.assertTrue(mol)
-  #       self.assertTrue(mol.GetProp("_Name") == molNames[i])
-  #       i += 1
-  #     self.assertEqual(i, 16)
+      molNames = [
+        "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
+        "220", "229", "256"
+      ]
+      i = 0
+      for mol in suppl:
+        self.assertTrue(mol)
+        self.assertTrue(mol.GetProp("_Name") == molNames[i])
+        i += 1
+      self.assertEqual(i, 16)
 
-  #   def test67StreamSupplierStringIO(self):
-  #     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-  #                          'NCI_aids_few.sdf.gz')
-  #     sio = BytesIO(gzip.open(fileN).read())
-  #     suppl = Chem.ForwardSDMolSupplier(sio)
-  #     molNames = [
-  #       "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
-  #       "220", "229", "256"
-  #     ]
-  #     i = 0
-  #     for mol in suppl:
-  #       self.assertTrue(mol)
-  #       self.assertTrue(mol.GetProp("_Name") == molNames[i])
-  #       i += 1
-  #     self.assertEqual(i, 16)
+    def test67StreamSupplierStringIO(self):
+      fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                           'NCI_aids_few.sdf.gz')
+      sio = BytesIO(gzip.open(fileN).read())
+      suppl = Chem.ForwardSDMolSupplier(sio)
+      molNames = [
+        "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
+        "220", "229", "256"
+      ]
+      i = 0
+      for mol in suppl:
+        self.assertTrue(mol)
+        self.assertTrue(mol.GetProp("_Name") == molNames[i])
+        i += 1
+      self.assertEqual(i, 16)
 
-  #   def test68ForwardSupplierUsingFilename(self):
-  #     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-  #                          'NCI_aids_few.sdf')
-  #     suppl = Chem.ForwardSDMolSupplier(fileN)
-  #     molNames = [
-  #       "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
-  #       "220", "229", "256"
-  #     ]
-  #     i = 0
-  #     for mol in suppl:
-  #       self.assertTrue(mol)
-  #       self.assertTrue(mol.GetProp("_Name") == molNames[i])
-  #       i += 1
-  #     self.assertEqual(i, 16)
+    def test68ForwardSupplierUsingFilename(self):
+      fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                           'NCI_aids_few.sdf')
+      suppl = Chem.ForwardSDMolSupplier(fileN)
+      molNames = [
+        "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
+        "220", "229", "256"
+      ]
+      i = 0
+      for mol in suppl:
+        self.assertTrue(mol)
+        self.assertTrue(mol.GetProp("_Name") == molNames[i])
+        i += 1
+      self.assertEqual(i, 16)
 
-  #     self.assertRaises(IOError, lambda: Chem.ForwardSDMolSupplier('nosuchfile.sdf'))
+      self.assertRaises(IOError, lambda: Chem.ForwardSDMolSupplier('nosuchfile.sdf'))
 
-  #   def test69StreamSupplierStreambuf(self):
-  #     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-  #                          'NCI_aids_few.sdf.gz')
-  #     sb = rdBase.streambuf(gzip.open(fileN))
-  #     suppl = Chem.ForwardSDMolSupplier(sb)
+    def test69StreamSupplierStreambuf(self):
+      fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                           'NCI_aids_few.sdf.gz')
+      sb = rdBase.streambuf(gzip.open(fileN))
+      suppl = Chem.ForwardSDMolSupplier(sb)
 
-  #     molNames = [
-  #       "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
-  #       "220", "229", "256"
-  #     ]
-  #     i = 0
-  #     for mol in suppl:
-  #       self.assertTrue(mol)
-  #       self.assertTrue(mol.GetProp("_Name") == molNames[i])
-  #       i += 1
-  #     self.assertEqual(i, 16)
+      molNames = [
+        "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
+        "220", "229", "256"
+      ]
+      i = 0
+      for mol in suppl:
+        self.assertTrue(mol)
+        self.assertTrue(mol.GetProp("_Name") == molNames[i])
+        i += 1
+      self.assertEqual(i, 16)
 
-  #   def test70StreamSDWriter(self):
-  #     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-  #                          'NCI_aids_few.sdf.gz')
-  #     inf = gzip.open(fileN)
-  #     suppl = Chem.ForwardSDMolSupplier(inf)
-  #     osio = StringIO()
-  #     w = Chem.SDWriter(osio)
-  #     molNames = [
-  #       "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
-  #       "220", "229", "256"
-  #     ]
-  #     i = 0
-  #     for mol in suppl:
-  #       self.assertTrue(mol)
-  #       self.assertTrue(mol.GetProp("_Name") == molNames[i])
-  #       w.write(mol)
-  #       i += 1
-  #     self.assertEqual(i, 16)
-  #     w.flush()
-  #     w = None
-  #     txt = osio.getvalue().encode()
-  #     isio = BytesIO(txt)
-  #     suppl = Chem.ForwardSDMolSupplier(isio)
-  #     i = 0
-  #     for mol in suppl:
-  #       self.assertTrue(mol)
-  #       self.assertTrue(mol.GetProp("_Name") == molNames[i])
-  #       i += 1
-  #     self.assertEqual(i, 16)
+    def test70StreamSDWriter(self):
+      fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                           'NCI_aids_few.sdf.gz')
+      inf = gzip.open(fileN)
+      suppl = Chem.ForwardSDMolSupplier(inf)
+      osio = StringIO()
+      w = Chem.SDWriter(osio)
+      molNames = [
+        "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
+        "220", "229", "256"
+      ]
+      i = 0
+      for mol in suppl:
+        self.assertTrue(mol)
+        self.assertTrue(mol.GetProp("_Name") == molNames[i])
+        w.write(mol)
+        i += 1
+      self.assertEqual(i, 16)
+      w.flush()
+      w = None
+      txt = osio.getvalue().encode()
+      isio = BytesIO(txt)
+      suppl = Chem.ForwardSDMolSupplier(isio)
+      i = 0
+      for mol in suppl:
+        self.assertTrue(mol)
+        self.assertTrue(mol.GetProp("_Name") == molNames[i])
+        i += 1
+      self.assertEqual(i, 16)
 
-  #   def test71StreamSmilesWriter(self):
-  #     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-  #                          'esters.sdf')
-  #     suppl = Chem.ForwardSDMolSupplier(fileN)
-  #     osio = StringIO()
-  #     w = Chem.SmilesWriter(osio)
-  #     ms = [x for x in suppl]
-  #     w.SetProps(ms[0].GetPropNames())
-  #     i = 0
-  #     for mol in ms:
-  #       self.assertTrue(mol)
-  #       w.write(mol)
-  #       i += 1
-  #     self.assertEqual(i, 6)
-  #     w.flush()
-  #     w = None
-  #     txt = osio.getvalue()
-  #     self.assertEqual(txt.count('ID'), 1)
-  #     self.assertEqual(txt.count('\n'), 7)
+    def test71StreamSmilesWriter(self):
+      fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                           'esters.sdf')
+      suppl = Chem.ForwardSDMolSupplier(fileN)
+      osio = StringIO()
+      w = Chem.SmilesWriter(osio)
+      ms = [x for x in suppl]
+      w.SetProps(ms[0].GetPropNames())
+      i = 0
+      for mol in ms:
+        self.assertTrue(mol)
+        w.write(mol)
+        i += 1
+      self.assertEqual(i, 6)
+      w.flush()
+      w = None
+      txt = osio.getvalue()
+      self.assertEqual(txt.count('ID'), 1)
+      self.assertEqual(txt.count('\n'), 7)
 
-  #   def test72StreamTDTWriter(self):
-  #     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-  #                          'esters.sdf')
-  #     suppl = Chem.ForwardSDMolSupplier(fileN)
-  #     osio = StringIO()
-  #     w = Chem.TDTWriter(osio)
-  #     ms = [x for x in suppl]
-  #     w.SetProps(ms[0].GetPropNames())
-  #     i = 0
-  #     for mol in ms:
-  #       self.assertTrue(mol)
-  #       w.write(mol)
-  #       i += 1
-  #     self.assertEqual(i, 6)
-  #     w.flush()
-  #     w = None
-  #     txt = osio.getvalue()
-  #     self.assertEqual(txt.count('ID'), 6)
-  #     self.assertEqual(txt.count('NAME'), 6)
+    def test72StreamTDTWriter(self):
+      fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                           'esters.sdf')
+      suppl = Chem.ForwardSDMolSupplier(fileN)
+      osio = StringIO()
+      w = Chem.TDTWriter(osio)
+      ms = [x for x in suppl]
+      w.SetProps(ms[0].GetPropNames())
+      i = 0
+      for mol in ms:
+        self.assertTrue(mol)
+        w.write(mol)
+        i += 1
+      self.assertEqual(i, 6)
+      w.flush()
+      w = None
+      txt = osio.getvalue()
+      self.assertEqual(txt.count('ID'), 6)
+      self.assertEqual(txt.count('NAME'), 6)
+      
   def test73SanitizationOptions(self):
     m = Chem.MolFromSmiles('c1ccccc1', sanitize=False)
     res = Chem.SanitizeMol(m, catchErrors=True)
