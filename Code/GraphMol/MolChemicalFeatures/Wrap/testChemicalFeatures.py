@@ -1,8 +1,14 @@
 import os
 import unittest
 
-from rdkit import Chem, DataStructs, Geometry, RDConfig
-from rdkit.Chem import AllChem, ChemicalFeatures, rdDistGeom
+from rdkit import Chem, RDConfig
+from rdkit.Chem import ChemicalFeatures, rdDistGeom
+
+try:
+  from rdkit.Chem import AllChem
+  haveAllChem = True
+except ImportError:
+  haveAllChem = False
 
 
 def lstFeq(l1, l2, tol=1.e-4):
@@ -194,6 +200,7 @@ EndFeature
     cfac = None
     self.assertEqual(feats[0].GetFamily(), 'Donor')
 
+  @unittest.skipIf(not haveAllChem, "AllChem not available in nanobind yet")
   def testGithub2530(self):
     cfac = ChemicalFeatures.BuildFeatureFactory(
       os.path.join(RDConfig.RDDataDir, "BaseFeatures.fdef"))

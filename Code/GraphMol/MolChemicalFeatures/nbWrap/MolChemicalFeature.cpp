@@ -30,8 +30,7 @@ nb::tuple getFeatAtomIds(const MolChemicalFeature &feat) {
 }  // namespace
 
 void wrap_MolChemicalFeat(nb::module_ &m) {
-  nb::class_<MolChemicalFeature, std::shared_ptr<MolChemicalFeature>>(
-      m, "MolChemicalFeature",
+  nb::class_<MolChemicalFeature>(m, "MolChemicalFeature",
       R"DOC(Class to represent a chemical feature.
 These chemical features may or may not have been derived from molecule object;
 i.e. it is possible to have a chemical feature that was created just from its type
