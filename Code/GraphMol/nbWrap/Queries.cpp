@@ -313,7 +313,7 @@ has the specified value +- tolerance)DOC",
 the atom which can then be modified, for example with additional query
 constraints added.  The new atom is otherwise a copy of the old.
 If the atom already has a query, nothing will be changed.)DOC",
-        nb::rv_policy::reference_internal);
+        nb::rv_policy::reference, nb::keep_alive<1, 0>());
     m.def(
         "foo",
         [](ROMol *mol, Atom *atom) {
