@@ -1422,8 +1422,8 @@ void test13() {
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 8);
   TEST_ASSERT(mol->getRingInfo()->numRings() == 2);
-  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size() == 6);
-  TEST_ASSERT(mol->getRingInfo()->atomRings()[1].size() == 4);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size() == 4);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[1].size() == 6);
 
   delete mol;
   sln = "C[1]H2(CH2(CH2(CH2(C[2]H(CH@1(CH2(CH2@2)))))))";
@@ -1431,8 +1431,8 @@ void test13() {
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 8);
   TEST_ASSERT(mol->getRingInfo()->numRings() == 2);
-  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size() == 6);
-  TEST_ASSERT(mol->getRingInfo()->atomRings()[1].size() == 4);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size() == 4);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[1].size() == 6);
 
   delete mol;
   sln = "C[1](CH2CH2CH(CH2CH2@1)CH2CH2@1)Cl";

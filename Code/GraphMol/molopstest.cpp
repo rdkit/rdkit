@@ -297,7 +297,7 @@ TEST_CASE("test3") {
   delete m;
 
   smi = "C(C1C2C3C41)(C2C35)C45";  // cubane
-  // smi = "C1(C2C3C4C5C6C72)C3C4C5C6C71"; // from Figureras paper
+  // smi = "C1(C2C3C4C5C6C72)C3C4C5C6C71"; // from Figueras paper
   // smi = "C17C5C4C3C2C1C6C2C3C4C5C67";
   // we cannot use the sanitization code, because that finds *symmetric*
   // rings, which will break this case:
@@ -310,12 +310,9 @@ TEST_CASE("test3") {
   bfs = MolOps::symmetrizeSSSR(*m, bfrs);
   REQUIRE(bfs == 6);
   BOOST_LOG(rdInfoLog) << "BFSR: " << bfs << "\n";
-  // VECT_INT_VECT_I ri;
-  // for (ri == bfrs.begin(); ri != bfrs.end(); ri++) {
   for (auto bring : bfrs) {
     INT_VECT_I mi;
     BOOST_LOG(rdInfoLog) << "( ";
-    // for (mi = (*ri).begin(); mi != (*ri).end(); mi++) {
     for (mi = bring.begin(); mi != bring.end(); mi++) {
       BOOST_LOG(rdInfoLog) << " " << (*mi);
     }
@@ -340,15 +337,19 @@ TEST_CASE("test3") {
   REQUIRE(bfs == 2);
   delete m;
 
-  // Counterexamples in ring perception figure 4:
+  // This was a counterexamples in ring perception figure 4:
   //  * The native Figueras algorithm cannot work on this molecule, it will
   //    fail after finding one ring. Naive modified Figueras finds a 6 membered
   //    ring, which is wrong.
+  // RingDecomposerLib uses an exhaustive search, and finds the correct SSSR,
+  // which Figueras didn't do.
   smi = "C123C4C5C6(C3)C7C1C8C2C4C5C6C78";
   m = SmilesToMol(smi, 0, 0);
   bfs = MolOps::findSSSR(*m);
-  REQUIRE(bfs == 7);
+  REQUIRE(bfs == 8);
   bfrs.resize(0);
+  // Running Figueras to find extra rings to be used in Symmetrization
+  // won't find any extra rings, and we keep the ones from the SSSR.
   bfs = MolOps::symmetrizeSSSR(*m, bfrs);
   REQUIRE(bfs == 8);
   for (auto bring : bfrs) {
@@ -372,8 +373,8 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 3);
-  REQUIRE(sssr[0].size() == 6);
-  REQUIRE(sssr[1].size() == 5);
+  REQUIRE(sssr[0].size() == 5);
+  REQUIRE(sssr[1].size() == 6);
   REQUIRE(sssr[2].size() == 6);
   BOOST_LOG(rdInfoLog) << smi << "\n";
   delete m;
@@ -413,9 +414,9 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 4);
-  REQUIRE(sssr[0].size() == 6);
+  REQUIRE(sssr[0].size() == 5);
   REQUIRE(sssr[1].size() == 5);
-  REQUIRE(sssr[2].size() == 5);
+  REQUIRE(sssr[2].size() == 6);
   REQUIRE(sssr[3].size() == 6);
   delete m;
 
@@ -424,8 +425,8 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 2);
-  REQUIRE(sssr[0].size() == 4);
-  REQUIRE(sssr[1].size() == 3);
+  REQUIRE(sssr[0].size() == 3);
+  REQUIRE(sssr[1].size() == 4);
 
   REQUIRE(m->getRingInfo()->numAtomRings(0) == 1);
   REQUIRE(m->getRingInfo()->isAtomInRingOfSize(0, 4));
@@ -6934,9 +6935,14 @@ TEST_CASE(
       REQUIRE(m);
       REQUIRE(m->getNumAtoms() == 204);
       REQUIRE(m->getNumBonds() == 244);
-      REQUIRE_THROWS_AS(MolOps::findSSSR(*m), ValueErrorException);
+      // FindSSSR now uses RingDecomposerLib, which doesn't fail on this
+      REQUIRE_NOTHROW(MolOps::findSSSR(*m));
     }
-    { REQUIRE_THROWS_AS(SmilesToMol(smiles), ValueErrorException); }
+    {
+      // symmetrizeSSSR (used in sanitization) still uses Figueras'
+      // algorithm, which throws because BFS goes too deep.
+      REQUIRE_THROWS_AS(SmilesToMol(smiles), ValueErrorException);
+    }
   }
 }
 
@@ -7760,8 +7766,7 @@ TEST_CASE("Testing ring family calculation") {
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 8);
-    REQUIRE(!m->getRingInfo()->areRingFamiliesInitialized());
-    MolOps::findRingFamilies(*m);
+    // findSSSR triggers ring family calculation
     REQUIRE(m->getRingInfo()->isInitialized());
     REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
     int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
@@ -7782,8 +7787,7 @@ TEST_CASE("Testing ring family calculation") {
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 28);
-    REQUIRE(!m->getRingInfo()->areRingFamiliesInitialized());
-    MolOps::findRingFamilies(*m);
+    // findSSSR triggers ring family calculation
     REQUIRE(m->getRingInfo()->isInitialized());
     REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
     int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
@@ -8004,4 +8008,21 @@ TEST_CASE("Testing isRingFused") {
     REQUIRE(std::count(fusedBonds.begin(), fusedBonds.end(), 1) == 2);
     REQUIRE(std::count(fusedBonds.begin(), fusedBonds.end(), 2) == 3);
   }
+}
+
+TEST_CASE("GitHub Issue #9064: Incorrect SMARTS matching") {
+  constexpr const char *smi = R"smi(c1ccc2c(c1)C3CC3C4CC5CC4CC25)smi";
+  constexpr const char *sma = R"sma(C!@c)sma";
+
+  v2::SmilesParse::SmilesParserParams p{.removeHs = false, .replacements = {}};
+  auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+  REQUIRE(m);
+
+  auto q = v2::SmilesParse::MolFromSmarts(sma);
+  REQUIRE(q);
+
+  CHECK(m->getRingInfo()->numRings() == 5);
+
+  auto matches = SubstructMatch(*m, *q);
+  CHECK(matches.empty());
 }
