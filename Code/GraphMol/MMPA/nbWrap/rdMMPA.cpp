@@ -52,7 +52,7 @@ nb::tuple fragmentMolHelper(const RDKit::ROMol &mol, unsigned int maxCuts,
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, maxCuts, maxCutBonds, pattern);
   if (!ok) {
-    return nb::tuple(nb::list());
+    return nb::tuple();
   }
   return buildFragmentResults(tres, resultsAsMols);
 }
@@ -64,7 +64,7 @@ nb::tuple fragmentMolHelper2(const RDKit::ROMol &mol, unsigned int minCuts,
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, minCuts, maxCuts, maxCutBonds,
                                      pattern);
   if (!ok) {
-    return nb::tuple(nb::list());
+    return nb::tuple();
   }
   return buildFragmentResults(tres, resultsAsMols);
 }
@@ -79,7 +79,7 @@ nb::tuple fragmentMolHelper3(const RDKit::ROMol &mol,
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, bondsToCut, minCuts, maxCuts);
   if (!ok) {
-    return nb::tuple(nb::list());
+    return nb::tuple();
   }
   return buildFragmentResults(tres, resultsAsMols);
 }
