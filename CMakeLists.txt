@@ -637,6 +637,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     FILE ${RDKitPython_EXPORTED_TARGETS}.cmake
     NAMESPACE RDKit::
     DESTINATION ${RDKit_LibDir}/cmake/rdkitpython
+    COMPONENT python
   )
 
   write_basic_package_version_file(
@@ -652,7 +653,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   install(FILES
     ${RDKit_BINARY_DIR}/rdkitpython-config.cmake
     ${RDKit_BINARY_DIR}/rdkitpython-config-version.cmake
-    DESTINATION ${RDKit_LibDir}/cmake/rdkitpython)
+    DESTINATION ${RDKit_LibDir}/cmake/rdkitpython
+    COMPONENT python)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 # Memory testing setup
