@@ -1,6 +1,6 @@
-// $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and  Rational Discovery LLC
+//  Copyright (C) 2003-2026 Greg Landrum and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -9,23 +9,21 @@
 //
 
 #define NO_IMPORT_ARRAY
-#include <RDBoost/python.h>
-
 #define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-#include <RDBoost/Wrap.h>
+#include <iostream>
+#include <nanobind/nanobind.h>
 #include <ML/InfoTheory/InfoBitRanker.h>
 #include <DataStructs/BitVects.h>
-#include <RDBoost/PySequenceHolder.h>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace RDInfoTheory {
 
-PyObject *getTopNbits(InfoBitRanker *ranker,
-                      int num) {  // int ignoreNoClass=-1) {
+nb::object getTopNbits(InfoBitRanker *ranker, int num) {
   double *dres = ranker->getTopN(num);
   npy_intp dims[2];
   dims[0] = num;
@@ -33,162 +31,152 @@ PyObject *getTopNbits(InfoBitRanker *ranker,
   auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
   memcpy(static_cast<void *>(PyArray_DATA(res)), static_cast<void *>(dres),
          dims[0] * dims[1] * sizeof(double));
-  return PyArray_Return(res);
+  return nb::steal<nb::object>(PyArray_Return(res));
 }
 
-void AccumulateVotes(InfoBitRanker *ranker, python::object bitVect, int label) {
-  python::extract<ExplicitBitVect> ebvWorks(bitVect);
-  python::extract<SparseBitVect> sbvWorks(bitVect);
-  if (ebvWorks.check()) {
-    ExplicitBitVect ev = python::extract<ExplicitBitVect>(bitVect);
-    ranker->accumulateVotes(ev, label);
-  } else if (sbvWorks.check()) {
-    SparseBitVect sv = python::extract<SparseBitVect>(bitVect);
-    ranker->accumulateVotes(sv, label);
+void AccumulateVotes(InfoBitRanker *ranker, nb::object bitVect, int label) {
+  if (nb::isinstance<ExplicitBitVect>(bitVect)) {
+    ranker->accumulateVotes(nb::cast<ExplicitBitVect &>(bitVect), label);
+  } else if (nb::isinstance<SparseBitVect>(bitVect)) {
+    ranker->accumulateVotes(nb::cast<SparseBitVect &>(bitVect), label);
   } else {
-    throw_value_error(
+    throw nb::value_error(
         "Accumulate Vote can only take a explicitBitVects or SparseBitvects");
   }
 }
 
-void SetBiasList(InfoBitRanker *ranker, python::object classList) {
+void SetBiasList(InfoBitRanker *ranker, nb::iterable classList) {
   RDKit::INT_VECT cList;
-  PySequenceHolder<int> bList(classList);
-  cList.reserve(bList.size());
-  for (unsigned int i = 0; i < bList.size(); i++) {
-    cList.push_back(bList[i]);
+  for (auto item : classList) {
+    cList.push_back(nb::cast<int>(item));
   }
   ranker->setBiasList(cList);
 }
 
-void SetMaskBits(InfoBitRanker *ranker, python::object maskBits) {
+void SetMaskBits(InfoBitRanker *ranker, nb::iterable maskBits) {
   RDKit::INT_VECT cList;
-  PySequenceHolder<int> bList(maskBits);
-  cList.reserve(bList.size());
-  for (unsigned int i = 0; i < bList.size(); i++) {
-    cList.push_back(bList[i]);
+  for (auto item : maskBits) {
+    cList.push_back(nb::cast<int>(item));
   }
   ranker->setMaskBits(cList);
 }
 
-void tester(InfoBitRanker *, python::object bitVect) {
-  python::extract<SparseBitVect> sbvWorks(bitVect);
-  if (sbvWorks.check()) {
-    SparseBitVect sv = python::extract<SparseBitVect>(bitVect);
-    std::cout << "Num of on bits: " << sv.getNumOnBits() << "\n";
+void tester(InfoBitRanker *, nb::object bitVect) {
+  if (nb::isinstance<SparseBitVect>(bitVect)) {
+    std::cout << "Num of on bits: "
+              << nb::cast<SparseBitVect &>(bitVect).getNumOnBits() << "\n";
   }
 }
 
-struct ranker_wrap {
-  static void wrap() {
-    std::string docString =
-        "A class to rank the bits from a series of labelled fingerprints\n"
-        "A simple demonstration may help clarify what this class does. \n"
-        "Here's a small set of vectors:\n\n"
-        ">>> for i,bv in enumerate(bvs): print(bv.ToBitString(),acts[i])\n"
-        "... \n"
-        "0001 0\n"
-        "0101 0\n"
-        "0010 1\n"
-        "1110 1\n"
-        "\n"
-        "Default ranker, using infogain:\n\n"
-        ">>> ranker = InfoBitRanker(4,2)  \n"
-        ">>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])\n"
-        "... \n"
-        ">>> for bit,gain,n0,n1 in ranker.GetTopN(3): "
-        "print(int(bit),'%.3f'%gain,int(n0),int(n1))\n"
-        "... \n"
-        "3 1.000 2 0\n"
-        "2 1.000 0 2\n"
-        "0 0.311 0 1\n"
-        "\n"
-        "Using the biased infogain:\n\n"
-        ">>> ranker = InfoBitRanker(4,2,InfoTheory.InfoType.BIASENTROPY)\n"
-        ">>> ranker.SetBiasList((1,))\n"
-        ">>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])\n"
-        "... \n"
-        ">>> for bit,gain,n0,n1 in ranker.GetTopN(3): print("
-        "int(bit),'%.3f'%gain,int(n0),int(n1))\n"
-        "... \n"
-        "2 1.000 0 2\n"
-        "0 0.311 0 1\n"
-        "1 0.000 1 1\n"
-        "\n"
-        "A chi squared ranker is also available:\n\n"
-        ">>> ranker = InfoBitRanker(4,2,InfoTheory.InfoType.CHISQUARE)\n"
-        ">>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])\n"
-        "... \n"
-        ">>> for bit,gain,n0,n1 in ranker.GetTopN(3): print("
-        "int(bit),'%.3f'%gain,int(n0),int(n1))\n"
-        "... \n"
-        "3 4.000 2 0\n"
-        "2 4.000 0 2\n"
-        "0 1.333 0 1\n"
-        "\n"
-        "As is a biased chi squared:\n\n"
-        ">>> ranker = InfoBitRanker(4,2,InfoTheory.InfoType.BIASCHISQUARE)\n"
-        ">>> ranker.SetBiasList((1,))\n"
-        ">>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])\n"
-        "... \n"
-        ">>> for bit,gain,n0,n1 in ranker.GetTopN(3): print("
-        "int(bit),'%.3f'%gain,int(n0),int(n1))\n"
-        "... \n"
-        "2 4.000 0 2\n"
-        "0 1.333 0 1\n"
-        "1 0.000 1 1\n";
-
-    python::class_<InfoBitRanker>(
-        "InfoBitRanker", docString.c_str(),
-        python::init<int, int>(python::args("self", "nBits", "nClasses")))
-        .def(python::init<int, int, InfoBitRanker::InfoType>(
-            python::args("self", "nBits", "nClasses", "infoType")))
-        .def("AccumulateVotes", AccumulateVotes,
-             python::args("self", "bitVect", "label"),
-             "Accumulate the votes for all the bits turned on in a bit "
-             "vector\n\n"
-             "ARGUMENTS:\n\n"
-             "  - bv : bit vector either ExplicitBitVect or SparseBitVect "
-             "operator\n"
-             "  - label : the class label for the bit vector. It is assumed "
-             "that 0 <= class < nClasses \n")
-        .def("SetBiasList", SetBiasList, python::args("self", "classList"),
-             "Set the classes to which the entropy calculation should be "
-             "biased\n\n"
-             "This list contains a set of class ids used when in the "
-             "BIASENTROPY mode of ranking bits. \n"
-             "In this mode, a bit must be correlated higher with one of the "
-             "biased classes than all the \n"
-             "other classes. For example, in a two class problem with actives "
-             "and inactives, the fraction of \n"
-             "actives that hit the bit has to be greater than the fraction of "
-             "inactives that hit the bit\n\n"
-             "ARGUMENTS: \n\n"
-             "  - classList : list of class ids that we want a bias towards\n")
-        .def("SetMaskBits", SetMaskBits, python::args("self", "maskBits"),
-             "Set the mask bits for the calculation\n\n"
-             "ARGUMENTS: \n\n"
-             "  - maskBits : list of mask bits to use\n")
-        .def("GetTopN", getTopNbits, python::args("self", "num"),
-             "Returns the top n bits ranked by the information metric\n"
-             "This is actually the function where most of the work of ranking "
-             "is happening\n\n"
-             "ARGUMENTS:\n\n"
-             "  - num : the number of top ranked bits that are required\n")
-        .def("WriteTopBitsToFile", &InfoBitRanker::writeTopBitsToFile,
-             python::args("self", "fileName"),
-             "Write the bits that have been ranked to a file")
-        .def("Tester", tester, python::args("self", "bitVect"));
-
-    python::enum_<InfoBitRanker::InfoType>("InfoType")
-        .value("ENTROPY", InfoBitRanker::ENTROPY)
-        .value("BIASENTROPY", InfoBitRanker::BIASENTROPY)
-        .value("CHISQUARE", InfoBitRanker::CHISQUARE)
-        .value("BIASCHISQUARE", InfoBitRanker::BIASCHISQUARE)
-        .export_values();
-    ;
-  };
-};
 }  // namespace RDInfoTheory
 
-void wrap_ranker() { RDInfoTheory::ranker_wrap::wrap(); }
+void wrap_ranker(nb::module_ &m) {
+  nb::class_<RDInfoTheory::InfoBitRanker>(m, "InfoBitRanker",
+      R"DOC(A class to rank the bits from a series of labelled fingerprints
+A simple demonstration may help clarify what this class does.
+Here's a small set of vectors:
+
+>>> for i,bv in enumerate(bvs): print(bv.ToBitString(),acts[i])
+...
+0001 0
+0101 0
+0010 1
+1110 1
+
+Default ranker, using infogain:
+
+>>> ranker = InfoBitRanker(4,2)
+>>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])
+...
+>>> for bit,gain,n0,n1 in ranker.GetTopN(3): print(int(bit),'%.3f'%gain,int(n0),int(n1))
+...
+3 1.000 2 0
+2 1.000 0 2
+0 0.311 0 1
+
+Using the biased infogain:
+
+>>> ranker = InfoBitRanker(4,2,InfoTheory.InfoType.BIASENTROPY)
+>>> ranker.SetBiasList((1,))
+>>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])
+...
+>>> for bit,gain,n0,n1 in ranker.GetTopN(3): print(int(bit),'%.3f'%gain,int(n0),int(n1))
+...
+2 1.000 0 2
+0 0.311 0 1
+1 0.000 1 1
+
+A chi squared ranker is also available:
+
+>>> ranker = InfoBitRanker(4,2,InfoTheory.InfoType.CHISQUARE)
+>>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])
+...
+>>> for bit,gain,n0,n1 in ranker.GetTopN(3): print(int(bit),'%.3f'%gain,int(n0),int(n1))
+...
+3 4.000 2 0
+2 4.000 0 2
+0 1.333 0 1
+
+As is a biased chi squared:
+
+>>> ranker = InfoBitRanker(4,2,InfoTheory.InfoType.BIASCHISQUARE)
+>>> ranker.SetBiasList((1,))
+>>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])
+...
+>>> for bit,gain,n0,n1 in ranker.GetTopN(3): print(int(bit),'%.3f'%gain,int(n0),int(n1))
+...
+2 4.000 0 2
+0 1.333 0 1
+1 0.000 1 1
+)DOC")
+      .def(nb::init<unsigned int, unsigned int>(), "nBits"_a, "nClasses"_a)
+      .def(nb::init<unsigned int, unsigned int, RDInfoTheory::InfoBitRanker::InfoType>(),
+           "nBits"_a, "nClasses"_a, "infoType"_a)
+      .def("AccumulateVotes", RDInfoTheory::AccumulateVotes, "bitVect"_a,
+           "label"_a,
+           R"DOC(Accumulate the votes for all the bits turned on in a bit vector
+
+ARGUMENTS:
+
+  - bv : bit vector either ExplicitBitVect or SparseBitVect operator
+  - label : the class label for the bit vector. It is assumed that 0 <= class < nClasses
+)DOC")
+      .def("SetBiasList", RDInfoTheory::SetBiasList, "classList"_a,
+           R"DOC(Set the classes to which the entropy calculation should be biased
+
+This list contains a set of class ids used when in the BIASENTROPY mode of ranking bits.
+In this mode, a bit must be correlated higher with one of the biased classes than all the
+other classes. For example, in a two class problem with actives and inactives, the fraction of
+actives that hit the bit has to be greater than the fraction of inactives that hit the bit
+
+ARGUMENTS:
+
+  - classList : list of class ids that we want a bias towards
+)DOC")
+      .def("SetMaskBits", RDInfoTheory::SetMaskBits, "maskBits"_a,
+           R"DOC(Set the mask bits for the calculation
+
+ARGUMENTS:
+
+  - maskBits : list of mask bits to use
+)DOC")
+      .def("GetTopN", RDInfoTheory::getTopNbits, "num"_a,
+           R"DOC(Returns the top n bits ranked by the information metric
+This is actually the function where most of the work of ranking is happening
+
+ARGUMENTS:
+
+  - num : the number of top ranked bits that are required
+)DOC")
+      .def("WriteTopBitsToFile", &RDInfoTheory::InfoBitRanker::writeTopBitsToFile,
+           "fileName"_a,
+           "Write the bits that have been ranked to a file")
+      .def("Tester", RDInfoTheory::tester, "bitVect"_a);
+
+  nb::enum_<RDInfoTheory::InfoBitRanker::InfoType>(m, "InfoType")
+      .value("ENTROPY", RDInfoTheory::InfoBitRanker::ENTROPY)
+      .value("BIASENTROPY", RDInfoTheory::InfoBitRanker::BIASENTROPY)
+      .value("CHISQUARE", RDInfoTheory::InfoBitRanker::CHISQUARE)
+      .value("BIASCHISQUARE", RDInfoTheory::InfoBitRanker::BIASCHISQUARE)
+      .export_values();
+}

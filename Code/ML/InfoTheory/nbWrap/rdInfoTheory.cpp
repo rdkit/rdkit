@@ -1,6 +1,6 @@
-// $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2026 Greg Landrum and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -8,19 +8,20 @@
 //  of the RDKit source tree.
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
-#include <RDBoost/Wrap.h>
+#include <nanobind/nanobind.h>
 #include <RDBoost/import_array.h>
 #include <ML/InfoTheory/InfoBitRanker.h>
 #include <ML/InfoTheory/InfoGainFuncs.h>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 using namespace RDInfoTheory;
 
 namespace RDInfoTheory {
-double infoEntropy(python::object resArr) {
+double infoEntropy(nb::object resArr) {
   PyObject *matObj = resArr.ptr();
   if (!PyArray_Check(matObj)) {
-    throw_value_error("Expecting a Numeric array object");
+    throw nb::value_error("Expecting a Numeric array object");
   }
   PyArrayObject *copy;
   copy = (PyArrayObject *)PyArray_ContiguousFromObject(
@@ -46,10 +47,10 @@ double infoEntropy(python::object resArr) {
   return res;
 }
 
-double infoGain(python::object resArr) {
+double infoGain(nb::object resArr) {
   PyObject *matObj = resArr.ptr();
   if (!PyArray_Check(matObj)) {
-    throw_value_error("Expecting a Numeric array object");
+    throw nb::value_error("Expecting a Numeric array object");
   }
   PyArrayObject *copy;
   copy = (PyArrayObject *)PyArray_ContiguousFromObject(
@@ -70,17 +71,17 @@ double infoGain(python::object resArr) {
     auto *data = (long int *)PyArray_DATA(copy);
     res = InfoEntropyGain(data, rows, cols);
   } else {
-    throw_value_error(
+    throw nb::value_error(
         "Numeric array object of type int or long or float or double");
   }
   Py_DECREF(copy);
   return res;
 }
 
-double chiSquare(python::object resArr) {
+double chiSquare(nb::object resArr) {
   PyObject *matObj = resArr.ptr();
   if (!PyArray_Check(matObj)) {
-    throw_value_error("Expecting a Numeric array object");
+    throw nb::value_error("Expecting a Numeric array object");
   }
   PyArrayObject *copy;
   copy = (PyArrayObject *)PyArray_ContiguousFromObject(
@@ -101,7 +102,7 @@ double chiSquare(python::object resArr) {
     auto *data = (long int *)PyArray_DATA(copy);
     res = ChiSquare(data, rows, cols);
   } else {
-    throw_value_error(
+    throw nb::value_error(
         "Numeric array object of type int or long or float or double");
   }
   Py_DECREF(copy);
@@ -109,55 +110,70 @@ double chiSquare(python::object resArr) {
 }
 }  // namespace RDInfoTheory
 
-void wrap_ranker();
-void wrap_corrmatgen();
+void wrap_ranker(nb::module_ &m);
+void wrap_corrmatgen(nb::module_ &m);
 
-BOOST_PYTHON_MODULE(rdInfoTheory) {
-  python::scope().attr("__doc__") =
+NB_MODULE(rdInfoTheory, m) {
+  m.doc() =
       "Module containing bunch of functions for information metrics and a "
       "ranker to rank bits";
 
   rdkit_import_array();
 
-  wrap_ranker();
-  wrap_corrmatgen();
+  wrap_ranker(m);
+  wrap_corrmatgen(m);
 
-  std::string docString =
-      "calculates the informational entropy of the values in an array\n\n\
-  ARGUMENTS:\n\
-    \n\
-    - resMat: pointer to a long int array containing the data\n\
-    - dim: long int containing the length of the _tPtr_ array.\n\n\
-  RETURNS:\n\n\
-    a double\n";
-  python::def("InfoEntropy", RDInfoTheory::infoEntropy, docString.c_str(),
-              python::args("resArr"));
+  m.def("InfoEntropy", RDInfoTheory::infoEntropy,
+        R"DOC(calculates the informational entropy of the values in an array
 
-  docString =
-      "Calculates the information gain for a variable\n\n\
-   ARGUMENTS:\n\n\
-     - varMat: a Numeric Array object\n\
-       varMat is a Numeric array with the number of possible occurrences\n\
-         of each result for reach possible value of the given variable.\n\n\
-       So, for a variable which adopts 4 possible values and a result which\n\
-         has 3 possible values, varMat would be 4x3\n\n\
-   RETURNS:\n\n\
-     - a Python float object\n\n\
-   NOTES\n\n\
-     - this is a dropin replacement for _PyInfoGain()_ in entropy.py\n";
-  python::def("InfoGain", RDInfoTheory::infoGain, docString.c_str(),
-              python::args("resArr"));
+ARGUMENTS:
 
-  docString =
-      "Calculates the chi squared value for a variable\n\n\
-   ARGUMENTS:\n\n\
-     - varMat: a Numeric Array object\n\
-       varMat is a Numeric array with the number of possible occurrences\n\
-         of each result for reach possible value of the given variable.\n\n\
-       So, for a variable which adopts 4 possible values and a result which\n\
-         has 3 possible values, varMat would be 4x3\n\n\
-   RETURNS:\n\n\
-     - a Python float object\n";
-  python::def("ChiSquare", RDInfoTheory::chiSquare, docString.c_str(),
-              python::args("resArr"));
+  - resMat: pointer to a long int array containing the data
+  - dim: long int containing the length of the _tPtr_ array.
+
+RETURNS:
+
+  a double
+)DOC",
+        "resArr"_a);
+
+  m.def("InfoGain", RDInfoTheory::infoGain,
+        R"DOC(Calculates the information gain for a variable
+
+ARGUMENTS:
+
+  - varMat: a Numeric Array object
+    varMat is a Numeric array with the number of possible occurrences
+      of each result for reach possible value of the given variable.
+
+    So, for a variable which adopts 4 possible values and a result which
+      has 3 possible values, varMat would be 4x3
+
+RETURNS:
+
+  - a Python float object
+
+NOTES
+
+  - this is a dropin replacement for _PyInfoGain()_ in entropy.py
+)DOC",
+        "resArr"_a);
+
+  m.def("ChiSquare", RDInfoTheory::chiSquare,
+        R"DOC(Calculates the chi squared value for a variable
+
+ARGUMENTS:
+
+  - varMat: a Numeric Array object
+    varMat is a Numeric array with the number of possible occurrences
+      of each result for reach possible value of the given variable.
+
+    So, for a variable which adopts 4 possible values and a result which
+      has 3 possible values, varMat would be 4x3
+
+RETURNS:
+
+  - a Python float object
+)DOC",
+        "resArr"_a);
 }
