@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2026 Rational Discovery LLC and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,19 +7,21 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "rdfragcatalog.h"
-#include <RDBoost/python.h>
+#include <nanobind/nanobind.h>
 
-namespace python = boost::python;
+namespace nb = nanobind;
 
-void wrap_fragcat();
-void wrap_fragparams();
-void wrap_fragcatgen();
-void wrap_fragFPgen();
+void wrap_fragcat(nb::module_ &m);
+void wrap_fragparams(nb::module_ &m);
+void wrap_fragcatgen(nb::module_ &m);
+void wrap_fragFPgen(nb::module_ &m);
 
-BOOST_PYTHON_MODULE(rdfragcatalog) {
-  wrap_fragcat();
-  wrap_fragparams();
-  wrap_fragcatgen();
-  wrap_fragFPgen();
+NB_MODULE(rdfragcatalog, m) {
+  m.doc() = R"DOC(Module containing FragCatalog, FragCatParams, FragCatGenerator,
+and FragFPGenerator classes for fragment-based catalog generation and
+fingerprinting.)DOC";
+  wrap_fragcat(m);
+  wrap_fragparams(m);
+  wrap_fragcatgen(m);
+  wrap_fragFPgen(m);
 }

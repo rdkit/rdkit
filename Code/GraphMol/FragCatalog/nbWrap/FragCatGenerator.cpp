@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2026 Rational Discovery LLC and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,21 +7,17 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/python.h>
-#include <DataStructs/BitVects.h>
+#include <nanobind/nanobind.h>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FragCatalog/FragCatGenerator.h>
 
-namespace python = boost::python;
-namespace RDKit {
-struct fragcatgen_wrapper {
-  static void wrap() {
-    python::class_<FragCatGenerator>("FragCatGenerator",
-                                     python::init<>(python::args("self")))
-        .def("AddFragsFromMol", &FragCatGenerator::addFragsFromMol,
-             python::args("self", "mol", "fcat"));
-  };
-};  // end of struct
-}  // namespace RDKit
+namespace nb = nanobind;
+using namespace nb::literals;
 
-void wrap_fragcatgen() { RDKit::fragcatgen_wrapper::wrap(); }
+void wrap_fragcatgen(nb::module_ &m) {
+  nb::class_<RDKit::FragCatGenerator>(m, "FragCatGenerator")
+      .def(nb::init<>())
+      .def("AddFragsFromMol", &RDKit::FragCatGenerator::addFragsFromMol,
+           "mol"_a, "fcat"_a);
+}
