@@ -21,7 +21,7 @@ using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
-nb::object GetAtomMatch(nb::object featMatch, int maxAts = 1024) {
+nb::list GetAtomMatch(nb::object featMatch, int maxAts = 1024) {
   nb::list res;
   auto nEntries = nb::len(featMatch);
 

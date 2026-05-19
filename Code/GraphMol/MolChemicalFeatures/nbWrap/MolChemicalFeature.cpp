@@ -52,10 +52,10 @@ and location.
            "Get the IDs of the atoms that participate in the feature")
       .def("GetMol", &MolChemicalFeature::getMol,
            "Get the molecule used to derive the features",
-           nb::rv_policy::reference)
+           nb::rv_policy::reference_internal)
       .def("GetFactory", &MolChemicalFeature::getFactory,
            "Get the factory used to generate this feature",
-           nb::rv_policy::reference)
+           nb::rv_policy::reference_internal)
       .def("ClearCache", &MolChemicalFeature::clearCache,
            "Clears the cache used to store position information.")
       .def("SetActiveConformer", &MolChemicalFeature::setActiveConformer,
