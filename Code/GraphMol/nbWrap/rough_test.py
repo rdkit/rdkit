@@ -5246,402 +5246,407 @@ M  END
     b.AddMol(Chem.MolFromSmiles('CCCC'))
     self.assertEqual(b.Size(), 4)
 
-#   def testGithub1622(self):
-#     nonaromatics = (
-#       "C1=C[N]C=C1",  # radicals are not two electron donors
-#       "O=C1C=CNC=C1",  # exocyclic double bonds don't steal electrons
-#       "C1=CS(=O)C=C1",  # not sure how to classify this example from the
-#       # OEChem docs
-#       "C1#CC=CC=C1"  # benzyne
-#       # 5-membered heterocycles
-#       "C1=COC=C1",  # furan
-#       "C1=CSC=C1",  # thiophene
-#       "C1=CNC=C1",  #pyrrole
-#       "C1=COC=N1",  # oxazole
-#       "C1=CSC=N1",  # thiazole
-#       "C1=CNC=N1",  # imidazole
-#       "C1=CNN=C1",  # pyrazole
-#       "C1=CON=C1",  # isoxazole
-#       "C1=CSN=C1",  # isothiazole
-#       "C1=CON=N1",  # 1,2,3-oxadiazole
-#       "C1=CNN=N1",  # 1,2,3-triazole
-#       "N1=CSC=N1",  # 1,3,4-thiadiazole
-#       # not outside the second rows
-#       "C1=CC=C[Si]=C1",
-#       "C1=CC=CC=P1",
-#       # 5-membered heterocycles outside the second row
-#       "C1=C[Se]C=C1",
-#       'C1=C[Te]C=C1')
-#     for smi in nonaromatics:
-#       m = Chem.MolFromSmiles(smi, sanitize=False)
-#       Chem.SanitizeMol(m, Chem.SANITIZE_ALL ^ Chem.SANITIZE_SETAROMATICITY)
-#       Chem.SetAromaticity(m, Chem.AROMATICITY_MDL)
-#       self.assertFalse(m.GetAtomWithIdx(0).GetIsAromatic())
-#     aromatics = (
-#       "C1=CC=CC=C1",  # benzene, of course
-#       # hetrocyclics
-#       "N1=CC=CC=C1",  # pyridine
-#       "N1=CC=CC=N1",  # pyridazine
-#       "N1=CC=CN=C1",  # pyrimidine
-#       "N1=CC=NC=C1",  # pyrazine
-#       "N1=CN=CN=C1",  # 1,3,5-triazine
-#       # polycyclic aromatics
-#       "C1=CC2=CC=CC=CC2=C1",  # azulene
-#       "C1=CC=CC2=CC=CC=C12",
-#       "C1=CC2=CC=CC=CC=C12",
-#       "C1=CC=C2C(=C1)N=CC=N2",
-#       "C1=CN=CC2C=CC=CC1=2",
-#       "C1=CC=C2C(=C1)N=C3C=CC=CC3=N2",
-#       "C1=CN=NC2C=CC=CC1=2",
-#       # macrocycle aromatics
-#       "C1=CC=CC=CC=CC=C1",
-#       "C1=CC=CC=CC=CC=CC=CC=CC=CC=C1",
-#       "N1=CN=NC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=C1")
-#     for smi in aromatics:
-#       m = Chem.MolFromSmiles(smi, sanitize=False)
-#       Chem.SanitizeMol(m, Chem.SANITIZE_ALL ^ Chem.SANITIZE_SETAROMATICITY)
-#       Chem.SetAromaticity(m, Chem.AROMATICITY_MDL)
-#       self.assertTrue(m.GetAtomWithIdx(0).GetIsAromatic())
+  def testGithub1622(self):
+    nonaromatics = (
+      "C1=C[N]C=C1",  # radicals are not two electron donors
+      "O=C1C=CNC=C1",  # exocyclic double bonds don't steal electrons
+      "C1=CS(=O)C=C1",  # not sure how to classify this example from the
+      # OEChem docs
+      "C1#CC=CC=C1"  # benzyne
+      # 5-membered heterocycles
+      "C1=COC=C1",  # furan
+      "C1=CSC=C1",  # thiophene
+      "C1=CNC=C1",  #pyrrole
+      "C1=COC=N1",  # oxazole
+      "C1=CSC=N1",  # thiazole
+      "C1=CNC=N1",  # imidazole
+      "C1=CNN=C1",  # pyrazole
+      "C1=CON=C1",  # isoxazole
+      "C1=CSN=C1",  # isothiazole
+      "C1=CON=N1",  # 1,2,3-oxadiazole
+      "C1=CNN=N1",  # 1,2,3-triazole
+      "N1=CSC=N1",  # 1,3,4-thiadiazole
+      # not outside the second rows
+      "C1=CC=C[Si]=C1",
+      "C1=CC=CC=P1",
+      # 5-membered heterocycles outside the second row
+      "C1=C[Se]C=C1",
+      'C1=C[Te]C=C1')
+    for smi in nonaromatics:
+      m = Chem.MolFromSmiles(smi, sanitize=False)
+      Chem.SanitizeMol(m, Chem.SANITIZE_ALL ^ Chem.SANITIZE_SETAROMATICITY)
+      Chem.SetAromaticity(m, Chem.AROMATICITY_MDL)
+      self.assertFalse(m.GetAtomWithIdx(0).GetIsAromatic())
+    aromatics = (
+      "C1=CC=CC=C1",  # benzene, of course
+      # hetrocyclics
+      "N1=CC=CC=C1",  # pyridine
+      "N1=CC=CC=N1",  # pyridazine
+      "N1=CC=CN=C1",  # pyrimidine
+      "N1=CC=NC=C1",  # pyrazine
+      "N1=CN=CN=C1",  # 1,3,5-triazine
+      # polycyclic aromatics
+      "C1=CC2=CC=CC=CC2=C1",  # azulene
+      "C1=CC=CC2=CC=CC=C12",
+      "C1=CC2=CC=CC=CC=C12",
+      "C1=CC=C2C(=C1)N=CC=N2",
+      "C1=CN=CC2C=CC=CC1=2",
+      "C1=CC=C2C(=C1)N=C3C=CC=CC3=N2",
+      "C1=CN=NC2C=CC=CC1=2",
+      # macrocycle aromatics
+      "C1=CC=CC=CC=CC=C1",
+      "C1=CC=CC=CC=CC=CC=CC=CC=CC=C1",
+      "N1=CN=NC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=CC=C1")
+    for smi in aromatics:
+      m = Chem.MolFromSmiles(smi, sanitize=False)
+      Chem.SanitizeMol(m, Chem.SANITIZE_ALL ^ Chem.SANITIZE_SETAROMATICITY)
+      Chem.SetAromaticity(m, Chem.AROMATICITY_MDL)
+      self.assertTrue(m.GetAtomWithIdx(0).GetIsAromatic())
 
-#   def testMolBlockChirality(self):
-#     m = Chem.MolFromSmiles('C[C@H](Cl)Br')
-#     mb = Chem.MolToMolBlock(m)
-#     m2 = Chem.MolFromMolBlock(mb)
-#     csmi1 = Chem.MolToSmiles(m, isomericSmiles=True)
-#     csmi2 = Chem.MolToSmiles(m2, isomericSmiles=True)
-#     self.assertEqual(csmi1, csmi2)
+  def testMolBlockChirality(self):
+    m = Chem.MolFromSmiles('C[C@H](Cl)Br')
+    mb = Chem.MolToMolBlock(m)
+    m2 = Chem.MolFromMolBlock(mb)
+    csmi1 = Chem.MolToSmiles(m, isomericSmiles=True)
+    csmi2 = Chem.MolToSmiles(m2, isomericSmiles=True)
+    self.assertEqual(csmi1, csmi2)
 
-#   def testIssue1735(self):
-#     # this shouldn't seg fault...
-#     m = Chem.RWMol()
-#     ranks = Chem.CanonicalRankAtoms(m, breakTies=False)
-#     ranks = Chem.CanonicalRankAtoms(m, breakTies=True)
+  def testIssue1735(self):
+    # this shouldn't seg fault...
+    m = Chem.RWMol()
+    ranks = Chem.CanonicalRankAtoms(m, breakTies=False)
+    ranks = Chem.CanonicalRankAtoms(m, breakTies=True)
 
-#   def testGithub1615(self):
-#     mb = """Issue399a.mol
-#   ChemDraw04050615582D
+  def testGithub1615(self):
+    mb = """Issue399a.mol
+  ChemDraw04050615582D
 
-#   4  4  0  0  0  0  0  0  0  0999 V2000
-#    -0.7697    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.0553    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.7697    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.7697   -0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-#   2  1  1  0
-#   2  3  1  0
-#   3  4  1  0
-#   2  4  1  0
-# M  END"""
-#     m = Chem.MolFromMolBlock(mb)
-#     self.assertFalse(m.GetAtomWithIdx(1).HasProp("_CIPCode"))
-#     self.assertEqual(m.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.NONE)
-#     self.assertEqual(m.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
-#     m.GetAtomWithIdx(1).SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CW)
-#     Chem.AssignStereochemistry(m, force=True)
-#     self.assertTrue(m.GetAtomWithIdx(1).HasProp("_CIPCode"))
-#     self.assertEqual(m.GetAtomWithIdx(1).GetProp("_CIPCode"), "S")
-#     self.assertEqual(m.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.NONE)
-#     Chem.WedgeBond(m.GetBondWithIdx(0), 1, m.GetConformer())
-#     self.assertEqual(m.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.BEGINWEDGE)
+  4  4  0  0  0  0  0  0  0  0999 V2000
+   -0.7697    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0553    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7697    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7697   -0.4125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0
+  2  3  1  0
+  3  4  1  0
+  2  4  1  0
+M  END"""
+    m = Chem.MolFromMolBlock(mb)
+    self.assertFalse(m.GetAtomWithIdx(1).HasProp("_CIPCode"))
+    self.assertEqual(m.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.NONE)
+    self.assertEqual(m.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+    m.GetAtomWithIdx(1).SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+    Chem.AssignStereochemistry(m, force=True)
+    self.assertTrue(m.GetAtomWithIdx(1).HasProp("_CIPCode"))
+    self.assertEqual(m.GetAtomWithIdx(1).GetProp("_CIPCode"), "S")
+    self.assertEqual(m.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.NONE)
+    Chem.WedgeBond(m.GetBondWithIdx(0), 1, m.GetConformer())
+    self.assertEqual(m.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.BEGINWEDGE)
 
-#   def testSmilesToAtom(self):
-#     a = Chem.AtomFromSmiles("C")
-#     self.assertEqual(a.GetAtomicNum(), 6)
-#     b = Chem.BondFromSmiles("=")
-#     self.assertEqual(b.GetBondType(), Chem.BondType.DOUBLE)
-#     a = Chem.AtomFromSmiles("error")
-#     self.assertIs(a, None)
-#     b = Chem.BondFromSmiles("d")
-#     self.assertIs(b, None)
+  def testSmilesToAtom(self):
+    a = Chem.AtomFromSmiles("C")
+    self.assertEqual(a.GetAtomicNum(), 6)
+    b = Chem.BondFromSmiles("=")
+    self.assertEqual(b.GetBondType(), Chem.BondType.DOUBLE)
+    a = Chem.AtomFromSmiles("error")
+    self.assertIs(a, None)
+    b = Chem.BondFromSmiles("d")
+    self.assertIs(b, None)
 
-#     a = Chem.AtomFromSmarts("C")
-#     self.assertEqual(a.GetAtomicNum(), 6)
-#     b = Chem.BondFromSmarts("=")
-#     self.assertEqual(b.GetBondType(), Chem.BondType.DOUBLE)
-#     a = Chem.AtomFromSmarts("error")
-#     self.assertIs(a, None)
-#     b = Chem.BondFromSmarts("d")
-#     self.assertIs(b, None)
+    a = Chem.AtomFromSmarts("C")
+    self.assertEqual(a.GetAtomicNum(), 6)
+    b = Chem.BondFromSmarts("=")
+    self.assertEqual(b.GetBondType(), Chem.BondType.DOUBLE)
+    a = Chem.AtomFromSmarts("error")
+    self.assertIs(a, None)
+    b = Chem.BondFromSmarts("d")
+    self.assertIs(b, None)
 
-#   def testSVGParsing(self):
-#     svg = """<?xml version='1.0' encoding='iso-8859-1'?>
-# <svg version='1.1' baseProfile='full'
-#               xmlns='http://www.w3.org/2000/svg'
-#                       xmlns:rdkit='http://www.rdkit.org/xml'
-#                       xmlns:xlink='http://www.w3.org/1999/xlink'
-#                   xml:space='preserve'
-# width='200px' height='200px' >
-# <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='200' height='200' x='0' y='0'> </rect>
-# <path d='M 9.09091,89.4974 24.2916,84.7462' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 24.2916,84.7462 39.4923,79.9949' style='fill:none;fill-rule:evenodd;stroke:#0000FF;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 86.2908,106.814 75.1709,93.4683 72.0765,96.8285 86.2908,106.814' style='fill:#000000;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 75.1709,93.4683 57.8622,86.8431 64.051,80.1229 75.1709,93.4683' style='fill:#0000FF;fill-rule:evenodd;stroke:#0000FF;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 75.1709,93.4683 72.0765,96.8285 57.8622,86.8431 75.1709,93.4683' style='fill:#0000FF;fill-rule:evenodd;stroke:#0000FF;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 86.2908,106.814 82.1459,125.293' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 82.1459,125.293 78.0009,143.772' style='fill:none;fill-rule:evenodd;stroke:#00CC00;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 86.2908,106.814 129.89,93.1862' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 134.347,94.186 138.492,75.7069' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 138.492,75.7069 142.637,57.2277' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 125.432,92.1865 129.577,73.7074' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 129.577,73.7074 133.722,55.2282' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 129.89,93.1862 142.557,104.852' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 142.557,104.852 155.224,116.517' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <text x='39.4923' y='83.483' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#0000FF' ><tspan>NH</tspan></text>
-# <text x='67.6656' y='158.998' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#00CC00' ><tspan>Cl</tspan></text>
-# <text x='132.777' y='56.228' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>O</tspan></text>
-# <text x='149.782' y='131.743' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text>
-# <text x='89.9952' y='194' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>m1</tspan></text>
-# <metadata>
-# <rdkit:mol xmlns:rdkit = "http://www.rdkit.org/xml" version="0.9">
-# <rdkit:atom idx="1" atom-smiles="[CH3]" drawing-x="9.09091" drawing-y="89.4974" x="-2.78651" y="0.295614" z="0" />
-# <rdkit:atom idx="2" atom-smiles="[NH]" drawing-x="52.6897" drawing-y="75.8699" x="-1.35482" y="0.743114" z="0" />
-# <rdkit:atom idx="3" atom-smiles="[C@H]" drawing-x="86.2908" drawing-y="106.814" x="-0.251428" y="-0.273019" z="0" />
-# <rdkit:atom idx="4" atom-smiles="[Cl]" drawing-x="76.2932" drawing-y="151.385" x="-0.579728" y="-1.73665" z="0" />
-# <rdkit:atom idx="5" atom-smiles="[C]" drawing-x="129.89" drawing-y="93.1862" x="1.18027" y="0.174481" z="0" />
-# <rdkit:atom idx="6" atom-smiles="[O]" drawing-x="139.887" drawing-y="48.6148" x="1.50857" y="1.63811" z="0" />
-# <rdkit:atom idx="7" atom-smiles="[OH]" drawing-x="163.491" drawing-y="124.13" x="2.28366" y="-0.841652" z="0" />
-# <rdkit:bond idx="1" begin-atom-idx="1" end-atom-idx="2" bond-smiles="-" />
-# <rdkit:bond idx="2" begin-atom-idx="2" end-atom-idx="3" bond-smiles="-" />
-# <rdkit:bond idx="3" begin-atom-idx="3" end-atom-idx="4" bond-smiles="-" />
-# <rdkit:bond idx="4" begin-atom-idx="3" end-atom-idx="5" bond-smiles="-" />
-# <rdkit:bond idx="5" begin-atom-idx="5" end-atom-idx="6" bond-smiles="=" />
-# <rdkit:bond idx="6" begin-atom-idx="5" end-atom-idx="7" bond-smiles="-" />
-# </rdkit:mol></metadata>
-# </svg>"""
-#     mol = Chem.MolFromRDKitSVG(svg)
-#     self.assertEqual(mol.GetNumAtoms(), 7)
-#     self.assertEqual(Chem.MolToSmiles(mol), 'CN[C@H](Cl)C(=O)O')
+  def testSVGParsing(self):
+    svg = """<?xml version='1.0' encoding='iso-8859-1'?>
+<svg version='1.1' baseProfile='full'
+              xmlns='http://www.w3.org/2000/svg'
+                      xmlns:rdkit='http://www.rdkit.org/xml'
+                      xmlns:xlink='http://www.w3.org/1999/xlink'
+                  xml:space='preserve'
+width='200px' height='200px' >
+<rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='200' height='200' x='0' y='0'> </rect>
+<path d='M 9.09091,89.4974 24.2916,84.7462' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 24.2916,84.7462 39.4923,79.9949' style='fill:none;fill-rule:evenodd;stroke:#0000FF;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 86.2908,106.814 75.1709,93.4683 72.0765,96.8285 86.2908,106.814' style='fill:#000000;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 75.1709,93.4683 57.8622,86.8431 64.051,80.1229 75.1709,93.4683' style='fill:#0000FF;fill-rule:evenodd;stroke:#0000FF;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 75.1709,93.4683 72.0765,96.8285 57.8622,86.8431 75.1709,93.4683' style='fill:#0000FF;fill-rule:evenodd;stroke:#0000FF;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 86.2908,106.814 82.1459,125.293' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 82.1459,125.293 78.0009,143.772' style='fill:none;fill-rule:evenodd;stroke:#00CC00;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 86.2908,106.814 129.89,93.1862' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 134.347,94.186 138.492,75.7069' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 138.492,75.7069 142.637,57.2277' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 125.432,92.1865 129.577,73.7074' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 129.577,73.7074 133.722,55.2282' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 129.89,93.1862 142.557,104.852' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 142.557,104.852 155.224,116.517' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<text x='39.4923' y='83.483' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#0000FF' ><tspan>NH</tspan></text>
+<text x='67.6656' y='158.998' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#00CC00' ><tspan>Cl</tspan></text>
+<text x='132.777' y='56.228' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>O</tspan></text>
+<text x='149.782' y='131.743' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text>
+<text x='89.9952' y='194' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>m1</tspan></text>
+<metadata>
+<rdkit:mol xmlns:rdkit = "http://www.rdkit.org/xml" version="0.9">
+<rdkit:atom idx="1" atom-smiles="[CH3]" drawing-x="9.09091" drawing-y="89.4974" x="-2.78651" y="0.295614" z="0" />
+<rdkit:atom idx="2" atom-smiles="[NH]" drawing-x="52.6897" drawing-y="75.8699" x="-1.35482" y="0.743114" z="0" />
+<rdkit:atom idx="3" atom-smiles="[C@H]" drawing-x="86.2908" drawing-y="106.814" x="-0.251428" y="-0.273019" z="0" />
+<rdkit:atom idx="4" atom-smiles="[Cl]" drawing-x="76.2932" drawing-y="151.385" x="-0.579728" y="-1.73665" z="0" />
+<rdkit:atom idx="5" atom-smiles="[C]" drawing-x="129.89" drawing-y="93.1862" x="1.18027" y="0.174481" z="0" />
+<rdkit:atom idx="6" atom-smiles="[O]" drawing-x="139.887" drawing-y="48.6148" x="1.50857" y="1.63811" z="0" />
+<rdkit:atom idx="7" atom-smiles="[OH]" drawing-x="163.491" drawing-y="124.13" x="2.28366" y="-0.841652" z="0" />
+<rdkit:bond idx="1" begin-atom-idx="1" end-atom-idx="2" bond-smiles="-" />
+<rdkit:bond idx="2" begin-atom-idx="2" end-atom-idx="3" bond-smiles="-" />
+<rdkit:bond idx="3" begin-atom-idx="3" end-atom-idx="4" bond-smiles="-" />
+<rdkit:bond idx="4" begin-atom-idx="3" end-atom-idx="5" bond-smiles="-" />
+<rdkit:bond idx="5" begin-atom-idx="5" end-atom-idx="6" bond-smiles="=" />
+<rdkit:bond idx="6" begin-atom-idx="5" end-atom-idx="7" bond-smiles="-" />
+</rdkit:mol></metadata>
+</svg>"""
+    mol = Chem.MolFromRDKitSVG(svg)
+    self.assertEqual(mol.GetNumAtoms(), 7)
+    self.assertEqual(Chem.MolToSmiles(mol), 'CN[C@H](Cl)C(=O)O')
 
-#     svg2 = """<?xml version='1.0' encoding='iso-8859-1'?>
-# <svg version='1.1' baseProfile='full'
-#           xmlns='http://www.w3.org/2000/svg'
-#                   xmlns:rdkit='http://www.rdkit.org/xml'
-#                   xmlns:xlink='http://www.w3.org/1999/xlink'
-#               xml:space='preserve'
-# width='200px' height='200px' >
-# <rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='200' height='200' x='0' y='0'> </rect>
-# <path d='M 9.09091,89.4974 24.2916,84.7462' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 24.2916,84.7462 39.4923,79.9949' style='fill:none;fill-rule:evenodd;stroke:#0000FF;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 86.2908,106.814 75.1709,93.4683 72.0765,96.8285 86.2908,106.814' style='fill:#000000;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 75.1709,93.4683 57.8622,86.8431 64.051,80.1229 75.1709,93.4683' style='fill:#0000FF;fill-rule:evenodd;stroke:#0000FF;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 75.1709,93.4683 72.0765,96.8285 57.8622,86.8431 75.1709,93.4683' style='fill:#0000FF;fill-rule:evenodd;stroke:#0000FF;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 86.2908,106.814 82.1459,125.293' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 82.1459,125.293 78.0009,143.772' style='fill:none;fill-rule:evenodd;stroke:#00CC00;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 86.2908,106.814 129.89,93.1862' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 134.347,94.186 138.492,75.7069' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 138.492,75.7069 142.637,57.2277' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 125.432,92.1865 129.577,73.7074' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 129.577,73.7074 133.722,55.2282' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 129.89,93.1862 142.557,104.852' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <path d='M 142.557,104.852 155.224,116.517' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
-# <text x='39.4923' y='83.483' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#0000FF' ><tspan>NH</tspan></text>
-# <text x='67.6656' y='158.998' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#00CC00' ><tspan>Cl</tspan></text>
-# <text x='132.777' y='56.228' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>O</tspan></text>
-# <text x='149.782' y='131.743' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text>
-# <text x='89.9952' y='194' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>m1</tspan></text>
-# </svg>"""
-#     mol = Chem.MolFromRDKitSVG(svg2)
-#     self.assertTrue(mol is None)
+    svg2 = """<?xml version='1.0' encoding='iso-8859-1'?>
+<svg version='1.1' baseProfile='full'
+          xmlns='http://www.w3.org/2000/svg'
+                  xmlns:rdkit='http://www.rdkit.org/xml'
+                  xmlns:xlink='http://www.w3.org/1999/xlink'
+              xml:space='preserve'
+width='200px' height='200px' >
+<rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='200' height='200' x='0' y='0'> </rect>
+<path d='M 9.09091,89.4974 24.2916,84.7462' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 24.2916,84.7462 39.4923,79.9949' style='fill:none;fill-rule:evenodd;stroke:#0000FF;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 86.2908,106.814 75.1709,93.4683 72.0765,96.8285 86.2908,106.814' style='fill:#000000;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 75.1709,93.4683 57.8622,86.8431 64.051,80.1229 75.1709,93.4683' style='fill:#0000FF;fill-rule:evenodd;stroke:#0000FF;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 75.1709,93.4683 72.0765,96.8285 57.8622,86.8431 75.1709,93.4683' style='fill:#0000FF;fill-rule:evenodd;stroke:#0000FF;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 86.2908,106.814 82.1459,125.293' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 82.1459,125.293 78.0009,143.772' style='fill:none;fill-rule:evenodd;stroke:#00CC00;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 86.2908,106.814 129.89,93.1862' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 134.347,94.186 138.492,75.7069' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 138.492,75.7069 142.637,57.2277' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 125.432,92.1865 129.577,73.7074' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 129.577,73.7074 133.722,55.2282' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 129.89,93.1862 142.557,104.852' style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<path d='M 142.557,104.852 155.224,116.517' style='fill:none;fill-rule:evenodd;stroke:#FF0000;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' />
+<text x='39.4923' y='83.483' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#0000FF' ><tspan>NH</tspan></text>
+<text x='67.6656' y='158.998' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#00CC00' ><tspan>Cl</tspan></text>
+<text x='132.777' y='56.228' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>O</tspan></text>
+<text x='149.782' y='131.743' style='font-size:15px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#FF0000' ><tspan>OH</tspan></text>
+<text x='89.9952' y='194' style='font-size:12px;font-style:normal;font-weight:normal;fill-opacity:1;stroke:none;font-family:sans-serif;text-anchor:start;fill:#000000' ><tspan>m1</tspan></text>
+</svg>"""
+    mol = Chem.MolFromRDKitSVG(svg2)
+    self.assertTrue(mol is None)
 
-#     with self.assertRaises(RuntimeError):
-#       mol = Chem.MolFromRDKitSVG("bad svg")
+    with self.assertRaises(RuntimeError):
+      mol = Chem.MolFromRDKitSVG("bad svg")
 
-#   def testAssignChiralTypesFromBondDirs(self):
-#     """
-#     Just check to see that AssignChiralTypesFromBondDirs is wrapped.
-#     Critical tests of the underlying C++ function already exist
-#     in SD file reader tests.
-#     """
-#     mol = Chem.MolFromSmiles('C(F)(Cl)Br')
-#     rdkit.Chem.rdDepictor.Compute2DCoords(mol)
-#     atom0 = mol.GetAtomWithIdx(0)
-#     self.assertEqual(atom0.GetChiralTag(), Chem.rdchem.ChiralType.CHI_UNSPECIFIED)
-#     bond = mol.GetBondBetweenAtoms(0, 1)
-#     bond.SetBondDir(Chem.rdchem.BondDir.BEGINWEDGE)
-#     Chem.AssignChiralTypesFromBondDirs(mol)
-#     self.assertEqual(atom0.GetChiralTag(), Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CCW)
+  # def testAssignChiralTypesFromBondDirs(self):
+  #   """
+  #   Just check to see that AssignChiralTypesFromBondDirs is wrapped.
+  #   Critical tests of the underlying C++ function already exist
+  #   in SD file reader tests.
+  #   """
+  #   mol = Chem.MolFromSmiles('C(F)(Cl)Br')
+  #   Chem.rdDepictor.Compute2DCoords(mol)
+  #   atom0 = mol.GetAtomWithIdx(0)
+  #   self.assertEqual(atom0.GetChiralTag(), Chem.rdchem.ChiralType.CHI_UNSPECIFIED)
+  #   bond = mol.GetBondBetweenAtoms(0, 1)
+  #   bond.SetBondDir(Chem.rdchem.BondDir.BEGINWEDGE)
+  #   Chem.AssignChiralTypesFromBondDirs(mol)
+  #   self.assertEqual(atom0.GetChiralTag(), Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CCW)
 
-#   def testAssignStereochemistryFrom3D(self):
+  def testAssignStereochemistryFrom3D(self):
 
-#     def _stereoTester(mol, expectedTag, expectedStereo):
-#       Chem.AssignStereochemistryFrom3D(mol)
-#       self.assertEqual(mol.GetNumAtoms(), 9)
-#       self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), expectedTag)
-#       self.assertEqual(mol.GetBondWithIdx(3).GetStereo(), expectedStereo)
+    def _stereoTester(mol, expectedTag, expectedStereo):
+      Chem.AssignStereochemistryFrom3D(mol)
+      self.assertEqual(mol.GetNumAtoms(), 9)
+      self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), expectedTag)
+      self.assertEqual(mol.GetBondWithIdx(3).GetStereo(), expectedStereo)
 
-#     origVal = Chem.GetUseLegacyStereoPerception()
-#     for useLegacy in (True, False):
-#       Chem.SetUseLegacyStereoPerception(useLegacy)
+    origVal = Chem.GetUseLegacyStereoPerception()
+    for useLegacy in (True, False):
+      Chem.SetUseLegacyStereoPerception(useLegacy)
 
-#       fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'test_data', 'stereochem.sdf')
-#       suppl = Chem.SDMolSupplier(fileN, sanitize=False)
-#       if useLegacy:
-#         expected = (
-#           (Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.BondStereo.STEREOZ),
-#           (Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.BondStereo.STEREOE),
-#           (Chem.ChiralType.CHI_TETRAHEDRAL_CCW, Chem.BondStereo.STEREOZ),
-#           (Chem.ChiralType.CHI_TETRAHEDRAL_CCW, Chem.BondStereo.STEREOE),
-#         )
-#       else:
-#         expected = (
-#           (Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.BondStereo.STEREOCIS),
-#           (Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.BondStereo.STEREOTRANS),
-#           (Chem.ChiralType.CHI_TETRAHEDRAL_CCW, Chem.BondStereo.STEREOCIS),
-#           (Chem.ChiralType.CHI_TETRAHEDRAL_CCW, Chem.BondStereo.STEREOTRANS),
-#         )
+      fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'test_data', 'stereochem.sdf')
+      suppl = Chem.SDMolSupplier(fileN, sanitize=False)
+      if useLegacy:
+        expected = (
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.BondStereo.STEREOZ),
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.BondStereo.STEREOE),
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CCW, Chem.BondStereo.STEREOZ),
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CCW, Chem.BondStereo.STEREOE),
+        )
+      else:
+        expected = (
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.BondStereo.STEREOCIS),
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.BondStereo.STEREOTRANS),
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CCW, Chem.BondStereo.STEREOCIS),
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CCW, Chem.BondStereo.STEREOTRANS),
+        )
 
-#       for i, mol in enumerate(suppl):
-#         cip, stereo = expected[i]
-#         _stereoTester(mol, cip, stereo)
-#     Chem.SetUseLegacyStereoPerception(origVal)
+      for i, mol in enumerate(suppl):
+        cip, stereo = expected[i]
+        _stereoTester(mol, cip, stereo)
+    Chem.SetUseLegacyStereoPerception(origVal)
 
-#   def testGitHub2082(self):
-#     ctab = """
-#   MJ150720
+  def testGitHub2082(self):
+    ctab = """
+  MJ150720
 
-#   9  9  0  0  0  0  0  0  0  0999 V2000
-#     2.5687   -0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     2.1562    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     2.5687    0.7144    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-#     1.3312    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.9187   -0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.0937   -0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.3187    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.0937    0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.9187    0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#   2  1  1  6
-#   2  3  1  0
-#   2  4  1  0
-#   4  5  2  0
-#   5  6  1  0
-#   6  7  2  0
-#   7  8  1  0
-#   8  9  2  0
-#   9  4  1  0
-# M  END
-# """
-#     mol = Chem.MolFromMolBlock(ctab)
-#     self.assertFalse(mol.GetConformer().Is3D())
-#     self.assertTrue("@" in Chem.MolToSmiles(mol, True))
+  9  9  0  0  0  0  0  0  0  0999 V2000
+    2.5687   -0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1562    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5687    0.7144    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3312    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9187   -0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0937   -0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3187    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0937    0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9187    0.7144    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  6
+  2  3  1  0
+  2  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  7  2  0
+  7  8  1  0
+  8  9  2  0
+  9  4  1  0
+M  END
+"""
+    mol = Chem.MolFromMolBlock(ctab)
+    self.assertFalse(mol.GetConformer().Is3D())
+    self.assertTrue("@" in Chem.MolToSmiles(mol, True))
 
-#   def testGitHub2082_2(self):
-#     # test a mol block that lies is 3D but labelled 2D
-#     ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
-#                          'issue2082.mol')
-#     with open(ofile) as inf:
-#       ctab = inf.read()
-#     m = Chem.MolFromMolBlock(ctab)
-#     self.assertTrue(m.GetConformer().Is3D())
+  def testGitHub2082_2(self):
+    # test a mol block that lies is 3D but labelled 2D
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'issue2082.mol')
+    with open(ofile) as inf:
+      ctab = inf.read()
+    m = Chem.MolFromMolBlock(ctab)
+    self.assertTrue(m.GetConformer().Is3D())
 
-#   def testSetQuery(self):
-#     from rdkit.Chem import rdqueries
-#     pat = Chem.MolFromSmarts("[C]")
-#     self.assertFalse(Chem.MolFromSmiles("c1ccccc1").HasSubstructMatch(pat))
+  def testSetQuery(self):
+    from rdkit.Chem import rdqueries
+    pat = Chem.MolFromSmarts("[C]")
+    self.assertFalse(Chem.MolFromSmiles("c1ccccc1").HasSubstructMatch(pat))
 
-#     q = rdqueries.AtomNumEqualsQueryAtom(6)
-#     for atom in pat.GetAtoms():
-#       atom.SetQuery(q)
+    q = rdqueries.AtomNumEqualsQueryAtom(6)
+    for atom in pat.GetAtoms():
+      atom.SetQuery(q)
 
-#     self.assertTrue(Chem.MolFromSmiles("c1ccccc1").HasSubstructMatch(pat))
+    self.assertTrue(Chem.MolFromSmiles("c1ccccc1").HasSubstructMatch(pat))
 
-#   def testGetQueryType(self):
-#     query_a = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                            'query_A.mol')
-#     m = next(Chem.SDMolSupplier(query_a))
-#     self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
-#     self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "A")
+  def testGetQueryType(self):
+    query_a = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                           'query_A.mol')
+    m = next(Chem.SDMolSupplier(query_a))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "A")
 
-#     query_a_v3k = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                                'query_A.v3k.mol')
-#     m = next(Chem.SDMolSupplier(query_a_v3k))
-#     self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
-#     self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "A")
+    query_a_v3k = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                               'query_A.v3k.mol')
+    m = next(Chem.SDMolSupplier(query_a_v3k))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "A")
 
-#     query_q = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                            'query_Q.mol')
-#     m = next(Chem.SDMolSupplier(query_q))
-#     self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
-#     self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "Q")
+    query_q = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                           'query_Q.mol')
+    m = next(Chem.SDMolSupplier(query_q))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "Q")
 
-#     query_q_v3k = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                                'query_Q.v3k.mol')
-#     m = next(Chem.SDMolSupplier(query_q_v3k))
-#     self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
-#     self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "Q")
+    query_q_v3k = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                               'query_Q.v3k.mol')
+    m = next(Chem.SDMolSupplier(query_q_v3k))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "Q")
 
-#     m = Chem.MolFromSmiles("*CC")
-#     params = Chem.rdmolops.AdjustQueryParameters.NoAdjustments()
-#     params.makeDummiesQueries = True
-#     m = Chem.rdmolops.AdjustQueryProperties(m, params)
-#     self.assertTrue(m.GetAtomWithIdx(0).HasQuery())
-#     self.assertTrue(m.GetAtomWithIdx(0).GetQueryType() == "")
+    m = Chem.MolFromSmiles("*CC")
+    params = Chem.rdmolops.AdjustQueryParameters.NoAdjustments()
+    params.makeDummiesQueries = True
+    m = Chem.rdmolops.AdjustQueryProperties(m, params)
+    self.assertTrue(m.GetAtomWithIdx(0).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(0).GetQueryType() == "")
 
-#   def testBondSetQuery(self):
-#     pat = Chem.MolFromSmarts('[#6]=[#6]')
-#     mol = Chem.MolFromSmiles("c1ccccc1")
-#     self.assertFalse(mol.HasSubstructMatch(pat))
-#     pat2 = Chem.MolFromSmarts('C:C')
-#     for bond in pat.GetBonds():
-#       bond.SetQuery(pat2.GetBondWithIdx(0))
-#     self.assertTrue(mol.HasSubstructMatch(pat))
+  def testBondSetQuery(self):
+    pat = Chem.MolFromSmarts('[#6]=[#6]')
+    mol = Chem.MolFromSmiles("c1ccccc1")
+    self.assertFalse(mol.HasSubstructMatch(pat))
+    pat2 = Chem.MolFromSmarts('C:C')
+    for bond in pat.GetBonds():
+      bond.SetQuery(pat2.GetBondWithIdx(0))
+    self.assertTrue(mol.HasSubstructMatch(pat))
 
-#   def testBondExpandQuery(self):
-#     pat = Chem.MolFromSmarts('C-C')
-#     mol = Chem.MolFromSmiles("C=C-C")
-#     self.assertEqual(len(mol.GetSubstructMatches(pat)), 1)
-#     pat2 = Chem.MolFromSmarts('C=C')
-#     for bond in pat.GetBonds():
-#       bond.ExpandQuery(pat2.GetBondWithIdx(0), Chem.CompositeQueryType.COMPOSITE_OR)
-#     self.assertEqual(len(mol.GetSubstructMatches(pat)), 2)
+  def testBondExpandQuery(self):
+    pat = Chem.MolFromSmarts('C-C')
+    mol = Chem.MolFromSmiles("C=C-C")
+    self.assertEqual(len(mol.GetSubstructMatches(pat)), 1)
+    pat2 = Chem.MolFromSmarts('C=C')
+    for bond in pat.GetBonds():
+      bond.ExpandQuery(pat2.GetBondWithIdx(0), Chem.CompositeQueryType.COMPOSITE_OR)
+    self.assertEqual(len(mol.GetSubstructMatches(pat)), 2)
 
-#   def testGitHub1985(self):
-#     # simple check, this used to throw an exception
-#     try:
-#       Chem.MolToSmarts(Chem.MolFromSmarts("[C@]"))
-#     except Exception:
-#       self.fail("[C@] caused an exception when roundtripping smarts")
+  def testGitHub1985(self):
+    # simple check, this used to throw an exception
+    try:
+      Chem.MolToSmarts(Chem.MolFromSmarts("[C@]"))
+    except Exception:
+      self.fail("[C@] caused an exception when roundtripping smarts")
 
-#   def testGetEnhancedStereo(self):
+  def testGetEnhancedStereo(self):
 
-#     rdbase = os.environ['RDBASE']
-#     filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/two_centers_or.mol')
-#     m = Chem.MolFromMolFile(filename)
+    rdbase = os.environ['RDBASE']
+    filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/two_centers_or.mol')
+    m = Chem.MolFromMolFile(filename)
 
-#     sg = m.GetStereoGroups()
-#     self.assertEqual(len(sg), 2)
-#     group1 = sg[1]
-#     self.assertEqual(group1.GetGroupType(), Chem.StereoGroupType.STEREO_OR)
-#     stereo_atoms = group1.GetAtoms()
-#     self.assertEqual(len(stereo_atoms), 2)
-#     # file is 1 indexed and says 5
-#     self.assertEqual(stereo_atoms[1].GetIdx(), 4)
+    sg = m.GetStereoGroups()
+    self.assertEqual(len(sg), 2)
+    group1 = sg[1]
+    self.assertEqual(group1.GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    stereo_atoms = group1.GetAtoms()
+    self.assertEqual(len(stereo_atoms), 2)
+    # file is 1 indexed and says 5
+    self.assertEqual(stereo_atoms[1].GetIdx(), 4)
 
-#     # no bonds here:
-#     stereo_bonds = group1.GetBonds()
-#     self.assertEqual(len(stereo_bonds), 0)
+    # no bonds here:
+    stereo_bonds = group1.GetBonds()
+    self.assertEqual(len(stereo_bonds), 0)
 
-#     # make sure the atoms are connected to the parent molecule
-#     stereo_atoms[1].SetProp("foo", "bar")
-#     self.assertTrue(m.GetAtomWithIdx(4).HasProp("foo"))
+    # make sure the atoms are connected to the parent molecule
+    stereo_atoms[1].SetProp("foo", "bar")
+    self.assertTrue(m.GetAtomWithIdx(4).HasProp("foo"))
 
-#     # make sure that we can iterate over the atoms:
-#     for at in stereo_atoms:
-#       at.SetProp("foo2", "bar2")
-#       self.assertTrue(m.GetAtomWithIdx(at.GetIdx()).HasProp("foo2"))
+    # make sure that we can iterate over the atoms:
+    for at in stereo_atoms:
+      at.SetProp("foo2", "bar2")
+      self.assertTrue(m.GetAtomWithIdx(at.GetIdx()).HasProp("foo2"))
 
-#   def testGetEnhancedStereoAtrop(self):
+  def testGetEnhancedStereoAtrop(self):
 
-#     m = Chem.MolFromSmiles('Cc1cccc(O)c1-c1c(C)cccc1F |wU:7.7,&1:7|')
+    m = Chem.MolFromSmiles('Cc1cccc(O)c1-c1c(C)cccc1F |wU:7.7,&1:7|')
 
-#     sg = m.GetStereoGroups()
-#     self.assertEqual(len(sg), 1)
-#     group1 = sg[0]
-#     self.assertEqual(group1.GetGroupType(), Chem.StereoGroupType.STEREO_AND)
-#     stereo_atoms = group1.GetAtoms()
-#     self.assertEqual(len(stereo_atoms), 0)
+    sg = m.GetStereoGroups()
+    self.assertEqual(len(sg), 1)
+    group1 = sg[0]
+    self.assertEqual(group1.GetGroupType(), Chem.StereoGroupType.STEREO_AND)
+    stereo_atoms = group1.GetAtoms()
+    self.assertEqual(len(stereo_atoms), 0)
 
-#     stereo_bonds = group1.GetBonds()
-#     self.assertEqual(len(stereo_bonds), 1)
-#     self.assertEqual(stereo_bonds[0].GetIdx(), 7)
+    stereo_bonds = group1.GetBonds()
+    self.assertEqual(len(stereo_bonds), 1)
+    self.assertEqual(stereo_bonds[0].GetIdx(), 7)
+
+    # test lifetime control
+    smi = Chem.MolToCXSmiles(m)
+    del m
+    self.assertEqual(smi, Chem.MolToCXSmiles(stereo_bonds[0].GetOwningMol()))
 
 #   def testEnhancedStereoPreservesMol(self):
 #     """

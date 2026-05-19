@@ -908,11 +908,24 @@ struct mol_wrapper {
         .def("GetPropsAsDict", GetPropsAsDict<ROMol>,
              "includePrivate"_a = false, "includeComputed"_a = false,
              "autoConvertStrings"_a = true, getPropsAsDictDocString.c_str())
+        //         .def(
+        //             "GetStereoGroups", [](nb::object &self) {
+        //                ROMol *m = nb::cast<ROMol *>(self);
+        //                nb::list result;
+        //                for(auto &sg : m->getStereoGroups()) {
+        //                  result.append(
+        //                      nb::cast(&sg,
+        //                      nb::rv_policy::reference_internal,self));
+        //                }
+        //                return result;
+        //             },
+        //             R"DOC(Returns a list of StereoGroups defining the
+        //             relative stereochemistry of the atoms.
+        // )DOC")
         .def(
             "GetStereoGroups", &ROMol::getStereoGroups,
-            R"DOC(Returns a list of StereoGroups defining the relative stereochemistry of the atoms.
-)DOC",
-            nb::keep_alive<0, 1>(), nb::rv_policy::reference_internal)
+            nb::rv_policy::reference_internal,
+            R"DOC(Returns a list of StereoGroups defining the relative stereochemistry of the atoms.))DOC")
 #if 0
         .def("GetAromaticAtoms", MolGetAromaticAtoms, nb::keep_alive<0, 1>(),
              "Returns a read-only sequence containing all of the molecule's "
