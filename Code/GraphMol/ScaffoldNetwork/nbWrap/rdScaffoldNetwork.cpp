@@ -12,6 +12,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 
 #include <sstream>
@@ -129,33 +130,34 @@ NB_MODULE(rdScaffoldNetwork, m) {
               "the number of moleclues each node was found in.")
       .def_ro("edges", &ScaffoldNetwork::ScaffoldNetwork::edges,
               "the sequence of network edges")
+#ifdef RDK_USE_BOOST_SERIALIZATION
       .def("__getstate__",
            [](const ScaffoldNetwork::ScaffoldNetwork &self) {
-             nb::list edges;
-             for (const auto &e : self.edges) {
-               edges.append(nb::make_tuple(e.beginIdx, e.endIdx,
-                                           static_cast<int>(e.type)));
-             }
-             return nb::make_tuple(self.nodes, self.counts, self.molCounts,
-                                   edges);
+             std::stringstream oss;
+             boost::archive::text_oarchive oa(oss);
+             oa << self;
+             const std::string res = oss.str();
+             return std::make_tuple(res);
            })
-      .def("__setstate__",
-           [](ScaffoldNetwork::ScaffoldNetwork &self, nb::tuple state) {
-             if (nb::len(state) != 4) {
-               throw nb::value_error("invalid ScaffoldNetwork pickle state");
-             }
-             new (&self) ScaffoldNetwork::ScaffoldNetwork();
-             self.nodes = nb::cast<std::vector<std::string>>(state[0]);
-             self.counts = nb::cast<std::vector<unsigned>>(state[1]);
-             self.molCounts = nb::cast<std::vector<unsigned>>(state[2]);
-             for (auto e : nb::cast<nb::list>(state[3])) {
-               auto et = nb::cast<nb::tuple>(e);
-               self.edges.emplace_back(
-                   nb::cast<size_t>(et[0]), nb::cast<size_t>(et[1]),
-                   static_cast<ScaffoldNetwork::EdgeType>(
-                       nb::cast<int>(et[2])));
-             }
+      .def("__setstate__", [](ScaffoldNetwork::ScaffoldNetwork &self,
+                              const std::tuple<std::string> &state) {
+        const std::string &pkl = std::get<0>(state);
+        new (&self) ScaffoldNetwork::ScaffoldNetwork(pkl);
+      });
+#else
+      .def("__getstate__",
+           [](const ScaffoldNetwork::ScaffoldNetwork &self) {
+             throw nb::runtime_error(
+                 "Pickling of ScaffoldNetwork instances is not "
+                 "enabled in this build");
+           })
+      .def("__setstate__", [](ScaffoldNetwork::ScaffoldNetwork &self,
+                              const std::tuple<std::string> &state) {
+             throw nb::runtime_error(
+                 "Pickling of ScaffoldNetwork instances is not "
+                 "enabled in this build");
            });
+#endif
 
   m.def("CreateScaffoldNetwork", &createNetworkHelper, "mols"_a, "params"_a,
         "create (and return) a new network from a sequence of molecules");
