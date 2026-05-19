@@ -56,7 +56,13 @@ struct molbundle_wrap {
   static void wrap(nb::module_ &m) {
     nb::class_<MolBundle>(m, "MolBundle", molBundleClassDoc.c_str())
         .def(nb::init<>())
-        .def(nb::init<const std::string &>(), "pkl"_a)
+        .def(
+            "__init__",
+            [](MolBundle *t, nb::bytes b) {
+              new (t) MolBundle(std::string(static_cast<const char *>(b.data()),
+                                            static_cast<size_t>(b.size())));
+            },
+            "Constructor from a binary string", "pklString"_a)
         .def("ToBinary", BundleToBinary,
              R"DOC(Returns a binary string representation of the MolBundle.
 )DOC")

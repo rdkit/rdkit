@@ -642,23 +642,23 @@ struct mol_wrapper {
          in the query. For example, the first index is for the atom in
          this molecule that matches the first atom in the query.
 )DOC")
-        //    .def("HasSubstructMatch",
-        //         (bool (*)(const ROMol &m, const MolBundle &query,
-        //                   const SubstructMatchParameters
-        //                   &))helpHasSubstructMatch,
-        //         "query"_a, "params"_a = SubstructMatchParameters())
-        //    .def("GetSubstructMatch",
-        //         (PyObject * (*)(const ROMol &m, const MolBundle &query,
-        //                         const SubstructMatchParameters &))
-        //             helpGetSubstructMatch,
-        //         (python::arg("self"), python::arg("query"),
-        //         python::arg("params")))
-        //    .def("GetSubstructMatches",
-        //         (PyObject * (*)(const ROMol &m, const MolBundle &query,
-        //                         const SubstructMatchParameters &))
-        //             helpGetSubstructMatches,
-        //         (python::arg("self"), python::arg("query"),
-        //         python::arg("params")))
+        .def("HasSubstructMatch",
+             (bool (*)(const ROMol &m, const MolBundle &query,
+                       const std::optional<SubstructMatchParameters>))
+                 helpHasSubstructMatch,
+             "query"_a, "params"_a = nb::none())
+        .def("GetSubstructMatch",
+             (std::vector<int> (*)(
+                 const ROMol &m, const MolBundle &query,
+                 const std::optional<SubstructMatchParameters>))
+                 helpGetSubstructMatch,
+             "query"_a, "params"_a = nb::none())
+        .def("GetSubstructMatches",
+             (std::vector<std::vector<int>> (*)(
+                 const ROMol &m, const MolBundle &query,
+                 const std::optional<SubstructMatchParameters>))
+                 helpGetSubstructMatches,
+             "query"_a, "params"_a = nb::none())
 
         //--------------------------------------------
         .def(
@@ -747,29 +747,23 @@ struct mol_wrapper {
                              first atom in the query.
         )DOC")
 
-        //    .def("HasSubstructMatch",
-        //         (bool (*)(const ROMol &m, const MolBundle &query, bool, bool,
-        //                   bool))HasSubstructMatch,
-        //         (python::arg("self"), python::arg("query"),
-        //          python::arg("recursionPossible") = true,
-        //          python::arg("useChirality") = false,
-        //          python::arg("useQueryQueryMatches") = false))
-        //    .def("GetSubstructMatch",
-        //         (PyObject * (*)(const ROMol &m, const MolBundle &query, bool,
-        //                         bool)) GetSubstructMatch,
-        //         (python::arg("self"), python::arg("query"),
-        //          python::arg("useChirality") = false,
-        //          python::arg("useQueryQueryMatches") = false))
+        .def("HasSubstructMatch",
+             (bool (*)(const ROMol &m, const MolBundle &query, bool, bool,
+                       bool))HasSubstructMatch,
+             "query"_a, "recursionPossible"_a = true, "useChirality"_a = false,
+             "useQueryQueryMatches"_a = false)
+        .def("GetSubstructMatch",
+             (std::vector<int> (*)(const ROMol &m, const MolBundle &query, bool,
+                                   bool))GetSubstructMatch,
+             "query"_a, "useChirality"_a = false,
+             "useQueryQueryMatches"_a = false)
 
-        //    .def("GetSubstructMatches",
-        //         (PyObject * (*)(const ROMol &m, const MolBundle &query, bool,
-        //         bool,
-        //                         bool, unsigned int)) GetSubstructMatches,
-        //         (python::arg("self"), python::arg("query"),
-        //          python::arg("uniquify") = true,
-        //          python::arg("useChirality") = false,
-        //          python::arg("useQueryQueryMatches") = false,
-        //          python::arg("maxMatches") = 1000))
+        .def("GetSubstructMatches",
+             (std::vector<std::vector<int>> (*)(
+                 const ROMol &m, const MolBundle &query, bool, bool, bool,
+                 unsigned int))GetSubstructMatches,
+             "query"_a, "uniquify"_a = true, "useChirality"_a = false,
+             "useQueryQueryMatches"_a = false, "maxMatches"_a = 1000)
 
         // properties
         .def("SetProp", MolSetProp<ROMol, std::string>, "key"_a, "val"_a,

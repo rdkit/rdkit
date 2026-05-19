@@ -5028,223 +5028,223 @@ $$$$
       self.assertFalse(atom.HasProp("_foo"))
       self.assertFalse(atom.HasProp("foo"))
 
-#   def testGithub1352(self):
-#     self.assertTrue('SP' in Chem.HybridizationType.names)
-#     self.assertTrue('S' in Chem.HybridizationType.names)
-#     m = Chem.MolFromSmiles('CC(=O)O.[Na]')
-#     self.assertEqual(m.GetAtomWithIdx(0).GetHybridization().name, 'SP3')
-#     self.assertEqual(m.GetAtomWithIdx(4).GetHybridization().name, 'S')
+  def testGithub1352(self):
+    self.assertTrue(hasattr(Chem.HybridizationType, 'SP'))
+    self.assertTrue(hasattr(Chem.HybridizationType, 'S'))
+    m = Chem.MolFromSmiles('CC(=O)O.[Na]')
+    self.assertEqual(m.GetAtomWithIdx(0).GetHybridization().name, 'SP3')
+    self.assertEqual(m.GetAtomWithIdx(4).GetHybridization().name, 'S')
 
-#   def testGithub1366(self):
-#     mol = Chem.MolFromSmiles('*C*')
-#     mol = Chem.RWMol(mol)
-#     ats = iter(mol.GetAtoms())
-#     atom = next(ats)
-#     mol.RemoveAtom(atom.GetIdx())
-#     self.assertRaises(RuntimeError, next, ats)
+  # def testGithub1366(self):
+  #   mol = Chem.MolFromSmiles('*C*')
+  #   mol = Chem.RWMol(mol)
+  #   ats = iter(mol.GetAtoms())
+  #   atom = next(ats)
+  #   mol.RemoveAtom(atom.GetIdx())
+  #   self.assertRaises(RuntimeError, next, ats)
 
-#     mol = Chem.MolFromSmiles('*C*')
-#     mol = Chem.RWMol(mol)
-#     bonds = iter(mol.GetBonds())
-#     bond = next(bonds)
-#     mol.RemoveBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
-#     self.assertRaises(RuntimeError, next, bonds)
+  #   mol = Chem.MolFromSmiles('*C*')
+  #   mol = Chem.RWMol(mol)
+  #   bonds = iter(mol.GetBonds())
+  #   bond = next(bonds)
+  #   mol.RemoveBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
+  #   self.assertRaises(RuntimeError, next, bonds)
 
-#   def testGithub1478(self):
-#     data = """
-#   MJ150720
+  def testGithub1478(self):
+    data = """
+  MJ150720
 
-#   8  8  0  0  0  0  0  0  0  0999 V2000
-#    -0.4242   -1.4883    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.2901   -1.0758    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#     1.0046    0.9865    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
-#     1.0046    0.1614    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.2901   -0.2508    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.4243    0.1614    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
-#    -0.4243    0.9865    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
-#     0.2901    1.3990    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
-#   7  6  4  0  0  0  0
-#   8  7  4  0  0  0  0
-#   6  5  4  0  0  0  0
-#   5  4  4  0  0  0  0
-#   5  2  1  0  0  0  0
-#   4  3  4  0  0  0  0
-#   8  3  4  0  0  0  0
-#   2  1  2  0  0  0  0
-# M  END
-# """
-#     pattern = Chem.MolFromMolBlock(data)
-#     m = Chem.MolFromSmiles("c1ccccc1C=O")
-#     self.assertTrue(m.HasSubstructMatch(pattern))
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -0.4242   -1.4883    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2901   -1.0758    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0046    0.9865    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0046    0.1614    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2901   -0.2508    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4243    0.1614    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4243    0.9865    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2901    1.3990    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+  7  6  4  0  0  0  0
+  8  7  4  0  0  0  0
+  6  5  4  0  0  0  0
+  5  4  4  0  0  0  0
+  5  2  1  0  0  0  0
+  4  3  4  0  0  0  0
+  8  3  4  0  0  0  0
+  2  1  2  0  0  0  0
+M  END
+"""
+    pattern = Chem.MolFromMolBlock(data)
+    m = Chem.MolFromSmiles("c1ccccc1C=O")
+    self.assertTrue(m.HasSubstructMatch(pattern))
 
-#   def testGithub1320(self):
-#     import pickle
-#     mol = Chem.MolFromSmiles('N[C@@H](C)O')
-#     mol2 = pickle.loads(pickle.dumps(mol))
-#     self.assertEqual(Chem.MolToSmiles(mol, isomericSmiles=True),
-#                      Chem.MolToSmiles(mol2, isomericSmiles=True))
-#     Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AtomProps
-#                                     | Chem.PropertyPickleOptions.BondProps
-#                                     | Chem.PropertyPickleOptions.MolProps
-#                                     | Chem.PropertyPickleOptions.PrivateProps
-#                                     | Chem.PropertyPickleOptions.ComputedProps)
-#     mol3 = pickle.loads(pickle.dumps(mol))
+  def testGithub1320(self):
+    import pickle
+    mol = Chem.MolFromSmiles('N[C@@H](C)O')
+    mol2 = pickle.loads(pickle.dumps(mol))
+    self.assertEqual(Chem.MolToSmiles(mol, isomericSmiles=True),
+                     Chem.MolToSmiles(mol2, isomericSmiles=True))
+    Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AtomProps
+                                    | Chem.PropertyPickleOptions.BondProps
+                                    | Chem.PropertyPickleOptions.MolProps
+                                    | Chem.PropertyPickleOptions.PrivateProps
+                                    | Chem.PropertyPickleOptions.ComputedProps)
+    mol3 = pickle.loads(pickle.dumps(mol))
 
-#     for a1, a2 in zip(mol.GetAtoms(), mol3.GetAtoms()):
-#       d1 = a1.GetPropsAsDict()
-#       d2 = a2.GetPropsAsDict()
-#       if "__computedProps" in d1:
-#         c1 = list(d1["__computedProps"])
-#         c2 = list(d2["__computedProps"])
-#         del d1["__computedProps"]
-#         del d2["__computedProps"]
-#         self.assertEqual(c1, c2)
+    for a1, a2 in zip(mol.GetAtoms(), mol3.GetAtoms()):
+      d1 = a1.GetPropsAsDict()
+      d2 = a2.GetPropsAsDict()
+      if "__computedProps" in d1:
+        c1 = list(d1["__computedProps"])
+        c2 = list(d2["__computedProps"])
+        del d1["__computedProps"]
+        del d2["__computedProps"]
+        self.assertEqual(c1, c2)
 
-#       assert d1 == d2
+      assert d1 == d2
 
-#     for a1, a2 in zip(mol.GetBonds(), mol3.GetBonds()):
-#       d1 = a1.GetPropsAsDict()
-#       d2 = a2.GetPropsAsDict()
-#       if "__computedProps" in d1:
-#         c1 = list(d1["__computedProps"])
-#         c2 = list(d2["__computedProps"])
-#         del d1["__computedProps"]
-#         del d2["__computedProps"]
-#         self.assertEqual(c1, c2)
+    for a1, a2 in zip(mol.GetBonds(), mol3.GetBonds()):
+      d1 = a1.GetPropsAsDict()
+      d2 = a2.GetPropsAsDict()
+      if "__computedProps" in d1:
+        c1 = list(d1["__computedProps"])
+        c2 = list(d2["__computedProps"])
+        del d1["__computedProps"]
+        del d2["__computedProps"]
+        self.assertEqual(c1, c2)
 
-#       assert d1 == d2
+      assert d1 == d2
 
-#     self.assertEqual(Chem.MolToSmiles(mol, isomericSmiles=True),
-#                      Chem.MolToSmiles(mol3, isomericSmiles=True))
+    self.assertEqual(Chem.MolToSmiles(mol, isomericSmiles=True),
+                     Chem.MolToSmiles(mol3, isomericSmiles=True))
 
-#   def testOldPropPickles(self):
-#     data = 'crdkit.Chem.rdchem\nMol\np0\n(S\'\\xef\\xbe\\xad\\xde\\x00\\x00\\x00\\x00\\x08\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00)\\x00\\x00\\x00-\\x00\\x00\\x00\\x80\\x01\\x06\\x00`\\x00\\x00\\x00\\x01\\x03\\x07\\x00`\\x00\\x00\\x00\\x02\\x01\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x06\\x00`\\x00\\x00\\x00\\x01\\x03\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00h\\x00\\x00\\x00\\x03\\x02\\x01\\x06 4\\x00\\x00\\x00\\x02\\x01\\x04\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00(\\x00\\x00\\x00\\x03\\x03\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00h\\x00\\x00\\x00\\x03\\x02\\x01\\x06 4\\x00\\x00\\x00\\x02\\x01\\x04\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06\\x00`\\x00\\x00\\x00\\x03\\x01\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x0b\\x00\\x01\\x00\\x01\\x02\\x00\\x02\\x03\\x00\\x02\\x04\\x00\\x04\\x05(\\x02\\x04\\x06 \\x06\\x07\\x00\\x07\\x08\\x00\\x08\\t(\\x02\\x08\\n \\n\\x0b\\x00\\x0b\\x0c\\x00\\x0c\\r\\x00\\r\\x0e \\x0e\\x0fh\\x0c\\x0f\\x10h\\x0c\\x10\\x11h\\x0c\\x11\\x12h\\x0c\\x12\\x13h\\x0c\\x0c\\x14\\x00\\x14\\x15\\x00\\x15\\x16\\x00\\x16\\x17(\\x02\\x16\\x18 \\x18\\x19\\x00\\x19\\x1a\\x00\\x1a\\x1b\\x00\\x1b\\x1c\\x00\\x1c\\x1d\\x00\\x1d\\x1eh\\x0c\\x1e\\x1fh\\x0c\\x1f h\\x0c !h\\x0c!"h\\x0c\\x07#\\x00#$\\x00$%\\x00%&\\x00&\\\'\\x00\\\'(\\x00\\x15\\n\\x00"\\x19\\x00(#\\x00\\x13\\x0eh\\x0c"\\x1dh\\x0c\\x14\\x05\\x05\\x0b\\n\\x15\\x14\\x0c\\x06\\x0f\\x10\\x11\\x12\\x13\\x0e\\x06\\x1a\\x1b\\x1c\\x1d"\\x19\\x06\\x1e\\x1f !"\\x1d\\x06$%&\\\'(#\\x17\\x00\\x00\\x00\\x00\\x12\\x03\\x00\\x00\\x00\\x07\\x00\\x00\\x00numArom\\x01\\x02\\x00\\x00\\x00\\x0f\\x00\\x00\\x00_StereochemDone\\x01\\x01\\x00\\x00\\x00\\x03\\x00\\x00\\x00foo\\x00\\x03\\x00\\x00\\x00bar\\x13:\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x12\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x000\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1d\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x001\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x15\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x002\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x00\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x003\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1a\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x004\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02"\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x005\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x006\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x16\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x007\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1c\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x008\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02$\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x009\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02 \\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0010\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x13\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0011\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x18\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0012\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02!\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0013\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x19\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0014\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0015\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0016\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x08\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0017\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0018\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0019\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x07\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0020\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x17\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0021\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0022\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02#\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0023\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1e\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0024\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x14\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00R\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0025\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x06\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0026\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x03\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0027\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x05\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0028\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x10\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0029\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0c\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0030\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\t\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0031\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\n\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0032\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\r\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0033\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x11\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0034\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0e\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0035\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x04\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0036\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x02\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0037\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x01\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0038\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x02\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0039\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x04\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0040\\x13\\x16\'\np1\ntp2\nRp3\n.'
-#     import pickle
+  def testOldPropPickles(self):
+    data = 'crdkit.Chem.rdchem\nMol\np0\n(S\'\\xef\\xbe\\xad\\xde\\x00\\x00\\x00\\x00\\x08\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00)\\x00\\x00\\x00-\\x00\\x00\\x00\\x80\\x01\\x06\\x00`\\x00\\x00\\x00\\x01\\x03\\x07\\x00`\\x00\\x00\\x00\\x02\\x01\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x06\\x00`\\x00\\x00\\x00\\x01\\x03\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00h\\x00\\x00\\x00\\x03\\x02\\x01\\x06 4\\x00\\x00\\x00\\x02\\x01\\x04\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00(\\x00\\x00\\x00\\x03\\x03\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00h\\x00\\x00\\x00\\x03\\x02\\x01\\x06 4\\x00\\x00\\x00\\x02\\x01\\x04\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06\\x00`\\x00\\x00\\x00\\x03\\x01\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x0b\\x00\\x01\\x00\\x01\\x02\\x00\\x02\\x03\\x00\\x02\\x04\\x00\\x04\\x05(\\x02\\x04\\x06 \\x06\\x07\\x00\\x07\\x08\\x00\\x08\\t(\\x02\\x08\\n \\n\\x0b\\x00\\x0b\\x0c\\x00\\x0c\\r\\x00\\r\\x0e \\x0e\\x0fh\\x0c\\x0f\\x10h\\x0c\\x10\\x11h\\x0c\\x11\\x12h\\x0c\\x12\\x13h\\x0c\\x0c\\x14\\x00\\x14\\x15\\x00\\x15\\x16\\x00\\x16\\x17(\\x02\\x16\\x18 \\x18\\x19\\x00\\x19\\x1a\\x00\\x1a\\x1b\\x00\\x1b\\x1c\\x00\\x1c\\x1d\\x00\\x1d\\x1eh\\x0c\\x1e\\x1fh\\x0c\\x1f h\\x0c !h\\x0c!"h\\x0c\\x07#\\x00#$\\x00$%\\x00%&\\x00&\\\'\\x00\\\'(\\x00\\x15\\n\\x00"\\x19\\x00(#\\x00\\x13\\x0eh\\x0c"\\x1dh\\x0c\\x14\\x05\\x05\\x0b\\n\\x15\\x14\\x0c\\x06\\x0f\\x10\\x11\\x12\\x13\\x0e\\x06\\x1a\\x1b\\x1c\\x1d"\\x19\\x06\\x1e\\x1f !"\\x1d\\x06$%&\\\'(#\\x17\\x00\\x00\\x00\\x00\\x12\\x03\\x00\\x00\\x00\\x07\\x00\\x00\\x00numArom\\x01\\x02\\x00\\x00\\x00\\x0f\\x00\\x00\\x00_StereochemDone\\x01\\x01\\x00\\x00\\x00\\x03\\x00\\x00\\x00foo\\x00\\x03\\x00\\x00\\x00bar\\x13:\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x12\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x000\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1d\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x001\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x15\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x002\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x00\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x003\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1a\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x004\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02"\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x005\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x006\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x16\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x007\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1c\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x008\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02$\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x009\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02 \\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0010\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x13\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0011\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x18\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0012\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02!\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0013\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x19\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0014\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0015\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0016\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x08\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0017\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0018\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0019\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x07\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0020\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x17\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0021\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0022\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02#\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0023\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1e\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0024\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x14\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00R\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0025\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x06\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0026\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x03\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0027\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x05\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0028\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x10\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0029\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0c\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0030\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\t\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0031\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\n\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0032\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\r\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0033\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x11\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0034\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0e\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0035\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x04\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0036\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x02\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0037\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x01\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0038\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x02\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0039\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x04\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0040\\x13\\x16\'\np1\ntp2\nRp3\n.'
+    import pickle
 
-#     # bonds were broken in v1
-#     m2 = pickle.loads(data.encode("utf-8"), encoding='bytes')
+    # bonds were broken in v1
+    m2 = pickle.loads(data.encode("utf-8"), encoding='bytes')
 
-#     self.assertEqual(m2.GetProp("foo"), "bar")
-#     for atom in m2.GetAtoms():
-#       self.assertEqual(atom.GetProp("myidx"), str(atom.GetIdx()))
+    self.assertEqual(m2.GetProp("foo"), "bar")
+    for atom in m2.GetAtoms():
+      self.assertEqual(atom.GetProp("myidx"), str(atom.GetIdx()))
 
-#     self.assertEqual(
-#       Chem.MolToSmiles(m2, True),
-#       Chem.MolToSmiles(
-#         Chem.MolFromSmiles(
-#           "CN[C@@H](C)C(=O)N[C@H](C(=O)N1C[C@@H](Oc2ccccc2)C[C@H]1C(=O)N[C@@H]1CCCc2ccccc21)C1CCCCC1"
-#         ), True))
+    self.assertEqual(
+      Chem.MolToSmiles(m2, True),
+      Chem.MolToSmiles(
+        Chem.MolFromSmiles(
+          "CN[C@@H](C)C(=O)N[C@H](C(=O)N1C[C@@H](Oc2ccccc2)C[C@H]1C(=O)N[C@@H]1CCCc2ccccc21)C1CCCCC1"
+        ), True))
 
-#   def testGithub1461(self):
-#     # this is simple, it should throw a precondition and not seg fault
-#     m = Chem.RWMol()
-#     try:
-#       m.AddBond(0, 1, Chem.BondType.SINGLE)
-#       self.assertFalse(True)  # shouldn't get here
-#     except RuntimeError:
-#       pass
+  def testGithub1461(self):
+    # this is simple, it should throw a precondition and not seg fault
+    m = Chem.RWMol()
+    try:
+      m.AddBond(0, 1, Chem.BondType.SINGLE)
+      self.assertFalse(True)  # shouldn't get here
+    except RuntimeError:
+      pass
 
-#   def testMolBundles1(self):
-#     b = Chem.MolBundle()
-#     smis = ('CC(Cl)(F)CC(F)(Br)', 'C[C@](Cl)(F)C[C@H](F)(Br)', 'C[C@](Cl)(F)C[C@@H](F)(Br)')
-#     for smi in smis:
-#       b.AddMol(Chem.MolFromSmiles(smi))
-#     self.assertEqual(len(b), 3)
-#     self.assertEqual(b.Size(), 3)
-#     self.assertRaises(IndexError, lambda: b[4])
-#     self.assertEqual(Chem.MolToSmiles(b[1], isomericSmiles=True),
-#                      Chem.MolToSmiles(Chem.MolFromSmiles(smis[1]), isomericSmiles=True))
-#     self.assertTrue(b.HasSubstructMatch(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'),
-#                                         useChirality=True))
-#     self.assertTrue(
-#       b.HasSubstructMatch(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'), useChirality=True))
-#     self.assertTrue(
-#       b.HasSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'), useChirality=False))
-#     self.assertFalse(
-#       b.HasSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'), useChirality=True))
+  def testMolBundles1(self):
+    b = Chem.MolBundle()
+    smis = ('CC(Cl)(F)CC(F)(Br)', 'C[C@](Cl)(F)C[C@H](F)(Br)', 'C[C@](Cl)(F)C[C@@H](F)(Br)')
+    for smi in smis:
+      b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b), 3)
+    self.assertEqual(b.Size(), 3)
+    self.assertRaises(IndexError, lambda: b[4])
+    self.assertEqual(Chem.MolToSmiles(b[1], isomericSmiles=True),
+                     Chem.MolToSmiles(Chem.MolFromSmiles(smis[1]), isomericSmiles=True))
+    self.assertTrue(b.HasSubstructMatch(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'),
+                                        useChirality=True))
+    self.assertTrue(
+      b.HasSubstructMatch(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'), useChirality=True))
+    self.assertTrue(
+      b.HasSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'), useChirality=False))
+    self.assertFalse(
+      b.HasSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'), useChirality=True))
 
-#     self.assertEqual(
-#       len(b.GetSubstructMatch(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'), useChirality=True)), 8)
-#     self.assertEqual(
-#       len(b.GetSubstructMatch(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'), useChirality=True)),
-#       8)
-#     self.assertEqual(
-#       len(b.GetSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),
-#                               useChirality=False)), 8)
-#     self.assertEqual(
-#       len(b.GetSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),
-#                               useChirality=True)), 0)
+    self.assertEqual(
+      len(b.GetSubstructMatch(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'), useChirality=True)), 8)
+    self.assertEqual(
+      len(b.GetSubstructMatch(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'), useChirality=True)),
+      8)
+    self.assertEqual(
+      len(b.GetSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),
+                              useChirality=False)), 8)
+    self.assertEqual(
+      len(b.GetSubstructMatch(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),
+                              useChirality=True)), 0)
 
-#     self.assertEqual(
-#       len(b.GetSubstructMatches(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'), useChirality=True)), 1)
-#     self.assertEqual(
-#       len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),
-#                                 useChirality=True)), 1)
-#     self.assertEqual(
-#       len(
-#         b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),
-#                               useChirality=False)), 1)
-#     self.assertEqual(
-#       len(
-#         b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),
-#                               useChirality=True)), 0)
-#     self.assertEqual(
-#       len(b.GetSubstructMatches(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'), useChirality=True)[0]), 8)
-#     self.assertEqual(
-#       len(
-#         b.GetSubstructMatches(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),
-#                               useChirality=True)[0]), 8)
-#     self.assertEqual(
-#       len(
-#         b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),
-#                               useChirality=False)[0]), 8)
+    self.assertEqual(
+      len(b.GetSubstructMatches(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'), useChirality=True)), 1)
+    self.assertEqual(
+      len(b.GetSubstructMatches(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),
+                                useChirality=True)), 1)
+    self.assertEqual(
+      len(
+        b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),
+                              useChirality=False)), 1)
+    self.assertEqual(
+      len(
+        b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),
+                              useChirality=True)), 0)
+    self.assertEqual(
+      len(b.GetSubstructMatches(Chem.MolFromSmiles('CC(Cl)(F)CC(F)(Br)'), useChirality=True)[0]), 8)
+    self.assertEqual(
+      len(
+        b.GetSubstructMatches(Chem.MolFromSmiles('C[C@](Cl)(F)C[C@@H](F)(Br)'),
+                              useChirality=True)[0]), 8)
+    self.assertEqual(
+      len(
+        b.GetSubstructMatches(Chem.MolFromSmiles('C[C@@](Cl)(F)C[C@@H](F)(Br)'),
+                              useChirality=False)[0]), 8)
 
-#     if Chem.MolBundleCanSerialize():
-#       for b2 in (pickle.loads(pickle.dumps(b)), Chem.MolBundle(b.ToBinary())):
-#         self.assertEqual(len(b2), len(b))
-#         for m, m2 in zip(b, b2):
-#           self.assertEqual(Chem.MolToSmiles(m), Chem.MolToSmiles(m2))
+    if Chem.MolBundleCanSerialize():
+      for b2 in (pickle.loads(pickle.dumps(b)), Chem.MolBundle(b.ToBinary())):
+        self.assertEqual(len(b2), len(b))
+        for m, m2 in zip(b, b2):
+          self.assertEqual(Chem.MolToSmiles(m), Chem.MolToSmiles(m2))
 
-#   def testMolBundles2(self):
-#     b = Chem.MolBundle()
-#     smis = ('Fc1c(Cl)cccc1', 'Fc1cc(Cl)ccc1', 'Fc1ccc(Cl)cc1')
-#     for smi in smis:
-#       b.AddMol(Chem.MolFromSmiles(smi))
-#     self.assertEqual(len(b), 3)
-#     self.assertEqual(b.Size(), 3)
-#     self.assertTrue(Chem.MolFromSmiles('Fc1c(Cl)cccc1').HasSubstructMatch(b))
-#     self.assertTrue(Chem.MolFromSmiles('Fc1cc(Cl)ccc1').HasSubstructMatch(b))
-#     self.assertTrue(Chem.MolFromSmiles('Fc1c(Cl)cccc1C').HasSubstructMatch(b))
-#     self.assertTrue(Chem.MolFromSmiles('Fc1cc(Cl)ccc1C').HasSubstructMatch(b))
-#     self.assertFalse(Chem.MolFromSmiles('Fc1c(Br)cccc1').HasSubstructMatch(b))
+  def testMolBundles2(self):
+    b = Chem.MolBundle()
+    smis = ('Fc1c(Cl)cccc1', 'Fc1cc(Cl)ccc1', 'Fc1ccc(Cl)cc1')
+    for smi in smis:
+      b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b), 3)
+    self.assertEqual(b.Size(), 3)
+    self.assertTrue(Chem.MolFromSmiles('Fc1c(Cl)cccc1').HasSubstructMatch(b))
+    self.assertTrue(Chem.MolFromSmiles('Fc1cc(Cl)ccc1').HasSubstructMatch(b))
+    self.assertTrue(Chem.MolFromSmiles('Fc1c(Cl)cccc1C').HasSubstructMatch(b))
+    self.assertTrue(Chem.MolFromSmiles('Fc1cc(Cl)ccc1C').HasSubstructMatch(b))
+    self.assertFalse(Chem.MolFromSmiles('Fc1c(Br)cccc1').HasSubstructMatch(b))
 
-#     self.assertEqual(len(Chem.MolFromSmiles('Fc1c(Cl)cccc1').GetSubstructMatch(b)), 8)
-#     self.assertEqual(len(Chem.MolFromSmiles('Fc1c(Cl)cccc1').GetSubstructMatches(b)), 1)
-#     self.assertEqual(len(Chem.MolFromSmiles('Fc1c(Cl)cccc1').GetSubstructMatches(b)[0]), 8)
-#     self.assertEqual(len(Chem.MolFromSmiles('Fc1ccc(Cl)cc1').GetSubstructMatches(b)), 1)
-#     self.assertEqual(
-#       len(Chem.MolFromSmiles('Fc1ccc(Cl)cc1').GetSubstructMatches(b, uniquify=False)), 2)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(Cl)cccc1').GetSubstructMatch(b)), 8)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(Cl)cccc1').GetSubstructMatches(b)), 1)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(Cl)cccc1').GetSubstructMatches(b)[0]), 8)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1ccc(Cl)cc1').GetSubstructMatches(b)), 1)
+    self.assertEqual(
+      len(Chem.MolFromSmiles('Fc1ccc(Cl)cc1').GetSubstructMatches(b, uniquify=False)), 2)
 
-#     self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatch(b)), 0)
-#     self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatches(b)), 0)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatch(b)), 0)
+    self.assertEqual(len(Chem.MolFromSmiles('Fc1c(C)cccc1').GetSubstructMatches(b)), 0)
 
-#   def testMolBundles3(self):
-#     smis = ('CCC', 'CCO', 'CCN')
-#     b = Chem.FixedMolSizeMolBundle()
-#     for smi in smis:
-#       b.AddMol(Chem.MolFromSmiles(smi))
-#     self.assertEqual(len(b), 3)
-#     self.assertEqual(b.Size(), 3)
-#     with self.assertRaises(ValueError):
-#       b.AddMol(Chem.MolFromSmiles('CCCC'))
+  def testMolBundles3(self):
+    smis = ('CCC', 'CCO', 'CCN')
+    b = Chem.FixedMolSizeMolBundle()
+    for smi in smis:
+      b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b), 3)
+    self.assertEqual(b.Size(), 3)
+    with self.assertRaises(ValueError):
+      b.AddMol(Chem.MolFromSmiles('CCCC'))
 
-#     b = Chem.MolBundle()
-#     for smi in smis:
-#       b.AddMol(Chem.MolFromSmiles(smi))
-#     self.assertEqual(len(b), 3)
-#     self.assertEqual(b.Size(), 3)
-#     b.AddMol(Chem.MolFromSmiles('CCCC'))
-#     self.assertEqual(b.Size(), 4)
+    b = Chem.MolBundle()
+    for smi in smis:
+      b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b), 3)
+    self.assertEqual(b.Size(), 3)
+    b.AddMol(Chem.MolFromSmiles('CCCC'))
+    self.assertEqual(b.Size(), 4)
 
 #   def testGithub1622(self):
 #     nonaromatics = (
