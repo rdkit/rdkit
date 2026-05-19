@@ -114,7 +114,7 @@ RDKIT_GRAPHMOL_EXPORT extern const int ci_ATOM_HOLDER;
 
 template <class Graph, class Vertex,
           class Iterator = typename Graph::vertex_iterator,
-          bool Checked = false>
+          bool CheckedAtoms = false, bool CheckedBonds = false>
 struct CXXAtomIterator {
   Graph *graph;
   Iterator vstart, vend;
@@ -129,34 +129,38 @@ struct CXXAtomIterator {
 
     Graph *graph = nullptr;
     Iterator pos;
-    size_t osize{0};
+    size_t osizeAtoms{0};
+    size_t osizeBonds{0};
+
+    inline void checkIterator() const {
+      if ((CheckedAtoms && boost::num_vertices(*graph) != osizeAtoms) ||
+          (CheckedBonds && boost::num_edges(*graph) != osizeBonds)) {
+        throw std::runtime_error("molecule modified during iteration");
+      }
+    }
 
     CXXAtomIter() {};
 
     CXXAtomIter(Graph *graph, Iterator pos) : graph(graph), pos(pos) {
-      if (Checked) {
-        osize = boost::num_vertices(*graph);
+      if (CheckedAtoms) {
+        osizeAtoms = boost::num_vertices(*graph);
+      }
+      if (CheckedBonds) {
+        osizeBonds = boost::num_edges(*graph);
       }
     }
 
     // we only return const references since we don't want clients modifying the
     // graph itself through these iterators
     const_reference operator*() const {
-      if (Checked) {
-        if (boost::num_vertices(*graph) != osize) {
-          throw std::runtime_error("molecule modified during iteration");
-        }
-      }
+      checkIterator();
       return (*graph)[*pos];
     }
+
     // we only return const references since we don't want clients modifying the
     // graph itself through these iterators
     const_reference operator[](difference_type n) const {
-      if (Checked) {
-        if (boost::num_vertices(*graph) != osize) {
-          throw std::runtime_error("molecule modified during iteration");
-        }
-      }
+      checkIterator();
       return (*graph)[*(pos + n)];
     }
 
@@ -431,16 +435,16 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     return {&d_graph, pr.first, pr.second};
   }
 
-  // returns an iterator that will throw if the number of atoms changes during
-  // iteration
+  // returns an iterator that will throw if the number of atoms or bonds changes
+  // during iteration
   CXXAtomIterator<const MolGraph, Atom *const, MolGraph::adjacency_iterator,
-                  true>
+                  true, true>
   checkedAtomNeighbors(Atom const *at) const {
     auto pr = getAtomNeighbors(at);
     return {&d_graph, pr.first, pr.second};
   }
   // \overload
-  CXXAtomIterator<MolGraph, Atom *, MolGraph::adjacency_iterator, true>
+  CXXAtomIterator<MolGraph, Atom *, MolGraph::adjacency_iterator, true, true>
   checkedAtomNeighbors(Atom const *at) {
     auto pr = getAtomNeighbors(at);
     return {&d_graph, pr.first, pr.second};
@@ -1049,6 +1053,5 @@ typedef std::vector<ROMOL_SPTR> MOL_SPTR_VECT;
 
 typedef MOL_PTR_VECT::const_iterator MOL_PTR_VECT_CI;
 typedef MOL_PTR_VECT::iterator MOL_PTR_VECT_I;
-
 };  // namespace RDKit
 #endif

@@ -59,10 +59,22 @@ TEST_CASE("mol.checkedAtoms()") {
     }
   }
   CHECK(ccount == 4);
-  auto atoms = m->checkedAtoms();
-  auto beg = atoms.begin();
-  m->removeAtom(m->getAtomWithIdx(2));
-  CHECK_THROWS_AS(*beg, std::runtime_error);
+  {
+    RWMol m2(*m);
+    auto atoms = m2.checkedAtoms();
+    auto beg = atoms.begin();
+    m2.removeAtom(m2.getAtomWithIdx(2));
+    CHECK_THROWS_AS(*beg, std::runtime_error);
+  }
+  {
+    RWMol m2(*m);
+    auto atoms = m2.checkedAtoms();
+    auto beg = atoms.begin();
+    // with checked atom iterators we can safely delete bonds
+    m2.removeBond(1, 2);
+    auto at = *beg;
+    CHECK(at->getAtomicNum() == 6);
+  }
 }
 
 TEST_CASE("mol.bonds()") {
@@ -134,10 +146,20 @@ TEST_CASE("mol.checkedAtomNeighbors()") {
   }
   CHECK(count == 4);
 
-  auto nbrs = m->checkedAtomNeighbors(m->getAtomWithIdx(1));
-  auto beg = nbrs.begin();
-  m->removeAtom(m->getAtomWithIdx(2));
-  CHECK_THROWS_AS(*beg, std::runtime_error);
+  {
+    RWMol m2(*m);
+    auto nbrs = m2.checkedAtomNeighbors(m2.getAtomWithIdx(1));
+    auto beg = nbrs.begin();
+    m2.removeAtom(m2.getAtomWithIdx(2));
+    CHECK_THROWS_AS(*beg, std::runtime_error);
+  }
+  {
+    RWMol m2(*m);
+    auto nbrs = m2.checkedAtomNeighbors(m2.getAtomWithIdx(1));
+    auto beg = nbrs.begin();
+    m2.removeBond(1, 2);
+    CHECK_THROWS_AS(*beg, std::runtime_error);
+  }
 }
 
 TEST_CASE("mol.atomBonds()") {
@@ -163,10 +185,13 @@ TEST_CASE("mol.checkedAtomBonds()") {
     count += bond->getBondTypeAsDouble();
   }
   CHECK(count == 4);
-  auto bonds = m->checkedAtomBonds(m->getAtomWithIdx(1));
-  auto beg = bonds.begin();
-  m->removeBond(1, 2);
-  CHECK_THROWS_AS(*beg, std::runtime_error);
+  {
+    RWMol m2(*m);
+    auto bonds = m2.checkedAtomBonds(m2.getAtomWithIdx(1));
+    auto beg = bonds.begin();
+    m2.removeBond(1, 2);
+    CHECK_THROWS_AS(*beg, std::runtime_error);
+  }
 }
 
 TEST_CASE("ranges") {
