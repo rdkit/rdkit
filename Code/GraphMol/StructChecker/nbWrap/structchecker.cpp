@@ -21,7 +21,8 @@ using namespace RDKit;
 using namespace RDKit::StructureCheck;
 
 NB_MODULE(rdStructChecker, m) {
-  nb::enum_<StructChecker::StructureFlags>(m, "StructureFlags")
+  nb::enum_<StructChecker::StructureFlags>(m, "StructureFlags",
+                                            nb::is_arithmetic())
       .value("NO_CHANGE", StructChecker::NO_CHANGE)
       .value("BAD_MOLECULE", StructChecker::BAD_MOLECULE)
       .value("ALIAS_CONVERSION_FAILED", StructChecker::ALIAS_CONVERSION_FAILED)
@@ -70,9 +71,8 @@ path)DOC");
       .def(nb::init<const StructCheckerOptions &>())
       .def(
           "CheckMolStructure",
-          [](const StructChecker &checker, ROMol &mol) {
-            return static_cast<StructChecker::StructureFlags>(
-                checker.checkMolStructure(static_cast<RWMol &>(mol)));
+          [](const StructChecker &checker, ROMol &mol) -> unsigned {
+            return checker.checkMolStructure(static_cast<RWMol &>(mol));
           },
           "mol"_a, "Check the structure and return a set of structure flags")
       .def_static("StructureFlagsToString",
