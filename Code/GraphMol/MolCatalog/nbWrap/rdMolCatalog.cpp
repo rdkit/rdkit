@@ -9,6 +9,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 
 #include <GraphMol/RDKitBase.h>
@@ -80,10 +81,20 @@ MolCatalog *createMolCatalog() {
 
 NB_MODULE(rdMolCatalog, m) {
   nb::class_<MolCatalog>(m, "MolCatalog")
-      .def(nb::init<const std::string &>(), "pickle"_a)
+      .def(
+          "__init__",
+          [](MolCatalog &self, nb::bytes pickle) {
+            new (&self) MolCatalog(std::string(
+                static_cast<const char *>(pickle.data()), pickle.size()));
+          },
+          "pickle"_a)
       .def("GetNumEntries", &MolCatalog::getNumEntries)
       .def("GetFPLength", &MolCatalog::getFPLength)
-      .def("Serialize", &MolCatalog::Serialize)
+      .def("Serialize",
+           [](const MolCatalog &self) {
+             const auto pkl = self.Serialize();
+             return nb::bytes(pkl.c_str(), pkl.size());
+           })
       .def("GetBitDescription", GetBitDescription, "idx"_a)
       .def("GetBitEntryId", GetBitEntryId, "idx"_a)
       .def("GetEntryBitId", GetEntryBitId, "idx"_a)
@@ -95,32 +106,54 @@ NB_MODULE(rdMolCatalog, m) {
       .def("__getstate__",
            [](const MolCatalog &self) {
              const auto pkl = self.Serialize();
-             return nb::bytes(pkl.c_str(), pkl.size());
+             return std::make_tuple(nb::bytes(pkl.c_str(), pkl.size()));
            })
-      .def("__setstate__", [](MolCatalog &self, const nb::bytes &state) {
-        new (&self) MolCatalog(std::string(
-            static_cast<const char *>(state.data()), state.size()));
-      });
+      .def("__setstate__",
+           [](MolCatalog &self, const std::tuple<nb::bytes> &state) {
+             const auto &pkl = std::get<0>(state);
+             new (&self) MolCatalog(std::string(
+                 static_cast<const char *>(pkl.data()), pkl.size()));
+           })
+      .def("__setstate__",
+           [](MolCatalog &self, const std::tuple<std::string> &state) {
+             new (&self) MolCatalog(std::get<0>(state));
+           });
 
   nb::class_<MolCatalogEntry>(m, "MolCatalogEntry")
       .def(nb::init<>())
-      .def(nb::init<const std::string &>(), "pickle"_a)
+      .def(
+          "__init__",
+          [](MolCatalogEntry &self, nb::bytes pickle) {
+            new (&self) MolCatalogEntry(std::string(
+                static_cast<const char *>(pickle.data()), pickle.size()));
+          },
+          "pickle"_a)
       .def("GetDescription", &MolCatalogEntry::getDescription)
       .def("SetDescription", &MolCatalogEntry::setDescription, "val"_a)
       .def("GetMol", catalogEntryGetMol, nb::rv_policy::reference_internal)
       .def("SetMol", catalogEntrySetMol, "mol"_a)
       .def("GetOrder", &MolCatalogEntry::getOrder)
       .def("SetOrder", &MolCatalogEntry::setOrder, "order"_a)
-      // pickle support
-      .def("__getstate__",
+      .def("Serialize",
            [](const MolCatalogEntry &self) {
              const auto pkl = self.Serialize();
              return nb::bytes(pkl.c_str(), pkl.size());
            })
+      // pickle support
+      .def("__getstate__",
+           [](const MolCatalogEntry &self) {
+             const auto pkl = self.Serialize();
+             return std::make_tuple(nb::bytes(pkl.c_str(), pkl.size()));
+           })
       .def("__setstate__",
-           [](MolCatalogEntry &self, const nb::bytes &state) {
+           [](MolCatalogEntry &self, const std::tuple<nb::bytes> &state) {
+             const auto &pkl = std::get<0>(state);
              new (&self) MolCatalogEntry(std::string(
-                 static_cast<const char *>(state.data()), state.size()));
+                 static_cast<const char *>(pkl.data()), pkl.size()));
+           })
+      .def("__setstate__",
+           [](MolCatalogEntry &self, const std::tuple<std::string> &state) {
+             new (&self) MolCatalogEntry(std::get<0>(state));
            });
 
   m.def("CreateMolCatalog", createMolCatalog, nb::rv_policy::take_ownership);
