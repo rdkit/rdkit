@@ -1569,6 +1569,7 @@ NB_MODULE(rdmolfiles, m) {
 
   nb::class_<RDKit::SmilesParserParams>(m, "SmilesParserParams",
                                         "Parameters controlling SMILES parsing")
+      .def(nb::init<>())
       .def_rw("debugParse", &RDKit::SmilesParserParams::debugParse,
               "controls the amount of debugging information produced")
       .def_rw("parseName", &RDKit::SmilesParserParams::parseName,

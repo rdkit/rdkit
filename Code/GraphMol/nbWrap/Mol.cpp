@@ -278,8 +278,8 @@ struct mol_wrapper {
     nb::exception<ConformerException>(m, "ConformerException",
                                       PyExc_ValueError);
 
-    nb::enum_<RDKit::PicklerOps::PropertyPickleOptions>(m,
-                                                        "PropertyPickleOptions")
+    nb::enum_<RDKit::PicklerOps::PropertyPickleOptions>(
+        m, "PropertyPickleOptions", nb::is_arithmetic())
         .value("NoProps", RDKit::PicklerOps::NoProps)
         .value("MolProps", RDKit::PicklerOps::MolProps)
         .value("AtomProps", RDKit::PicklerOps::AtomProps)
