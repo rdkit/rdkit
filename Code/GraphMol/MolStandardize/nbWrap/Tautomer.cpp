@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Greg Landrum
+//  Copyright (C) 2020-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,25 +7,38 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#define NO_IMPORT_ARRAY
-#include <boost/python/suite/indexing/map_indexing_suite.hpp>
-#include <RDBoost/Wrap.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/shared_ptr.h>
+#include <nanobind/stl/bind_vector.h>
+#include <nanobind/trampoline.h>
+#include <nanobind/make_iterator.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/MolStandardize.h>
 #include <GraphMol/MolStandardize/Tautomer.h>
 #include <sstream>
 
-namespace python = boost::python;
+NB_MAKE_OPAQUE(std::vector<RDKit::MolStandardize::TautomerScoringFunctions::SubstructTerm>);
+
+#include <nanobind/stl/vector.h>
+
+namespace nb = nanobind;
+using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
+
+std::shared_ptr<RDKit::ROMol> toStd(const RDKit::ROMOL_SPTR &bptr) {
+  return {bptr.get(), [b = bptr](RDKit::ROMol *) {}};
+}
+
 class PyTautomerEnumeratorResult {
  public:
   PyTautomerEnumeratorResult(const MolStandardize::TautomerEnumeratorResult &tr)
       : d_tr(new MolStandardize::TautomerEnumeratorResult(std::move(tr))) {
-    python::list atList;
-    python::list bndList;
+    nb::list atList;
+    nb::list bndList;
     for (unsigned int i = 0; i < d_tr->modifiedAtoms().size(); ++i) {
       if (d_tr->modifiedAtoms().test(i)) {
         atList.append(i);
@@ -36,14 +49,18 @@ class PyTautomerEnumeratorResult {
         bndList.append(i);
       }
     }
-    d_atTuple = python::tuple(atList);
-    d_bndTuple = python::tuple(bndList);
+    d_atTuple = nb::tuple(atList);
+    d_bndTuple = nb::tuple(bndList);
   }
-  inline const std::vector<ROMOL_SPTR> *tautomers() const {
-    return new std::vector<ROMOL_SPTR>(d_tr->tautomers());
+  inline std::vector<std::shared_ptr<RDKit::ROMol>> tautomers() const {
+    std::vector<std::shared_ptr<RDKit::ROMol>> out;
+    for (const auto &sptr : d_tr->tautomers()) {
+      out.push_back(toStd(sptr));
+    }
+    return out;
   }
-  inline const std::vector<std::string> *smiles() const {
-    return new std::vector<std::string>(d_tr->smiles());
+  inline std::vector<std::string> smiles() const {
+    return std::vector<std::string>(d_tr->smiles());
   }
   inline const MolStandardize::SmilesTautomerMap &smilesTautomerMap() const {
     return d_tr->smilesTautomerMap();
@@ -51,8 +68,8 @@ class PyTautomerEnumeratorResult {
   inline MolStandardize::TautomerEnumeratorStatus status() const {
     return d_tr->status();
   }
-  inline python::tuple modifiedAtoms() const { return d_atTuple; }
-  inline python::tuple modifiedBonds() const { return d_bndTuple; }
+  inline nb::tuple modifiedAtoms() const { return d_atTuple; }
+  inline nb::tuple modifiedBonds() const { return d_bndTuple; }
   inline const MolStandardize::TautomerEnumeratorResult::const_iterator begin()
       const {
     return d_tr->begin();
@@ -68,158 +85,131 @@ class PyTautomerEnumeratorResult {
     }
     if (pos < 0 || pos >= size()) {
       PyErr_SetString(PyExc_IndexError, "index out of bounds");
-      python::throw_error_already_set();
-      return nullptr;
+      throw nb::python_error();
     }
     return new RDKit::ROMol(*d_tr->at(pos));
   }
   const MolStandardize::TautomerEnumeratorResult *get() { return d_tr.get(); }
 
  private:
-  boost::shared_ptr<MolStandardize::TautomerEnumeratorResult> d_tr;
-  python::tuple d_atTuple;
-  python::tuple d_bndTuple;
+  std::shared_ptr<MolStandardize::TautomerEnumeratorResult> d_tr;
+  nb::tuple d_atTuple;
+  nb::tuple d_bndTuple;
 };
 
-class PyTautomerEnumeratorCallback
-    : public MolStandardize::TautomerEnumeratorCallback,
-      public python::wrapper<MolStandardize::TautomerEnumeratorCallback> {
- public:
-  PyTautomerEnumeratorCallback() {}
-  PyTautomerEnumeratorCallback(const python::object &pyCallbackObject) {
-    PyTautomerEnumeratorCallback *pyCallback =
-        python::extract<PyTautomerEnumeratorCallback *>(pyCallbackObject);
-    *this = *pyCallback;
-    d_pyCallbackObject = pyCallbackObject;
-    pyCallback->d_cppCallback = this;
-  }
-  inline python::object getCallbackOverride() const {
-    return get_override("__call__");
-  }
-  bool operator()(
-      const ROMol &mol,
-      const MolStandardize::TautomerEnumeratorResult &res) override {
-    PyTautomerEnumeratorResult pyRes(res);
-    return getCallbackOverride()(boost::ref(mol), boost::ref(pyRes));
-  }
-  python::object getPyCallbackObject() { return d_pyCallbackObject; }
+struct TautomerEnumeratorCallbackTrampoline
+    : MolStandardize::TautomerEnumeratorCallback {
+  NB_TRAMPOLINE(MolStandardize::TautomerEnumeratorCallback, 1);
 
- private:
-  PyTautomerEnumeratorCallback *d_cppCallback;
-  python::object d_pyCallbackObject;
+  bool operator()(const ROMol &mol,
+                  const MolStandardize::TautomerEnumeratorResult &res) override {
+    nb::gil_scoped_acquire guard;
+    nb::object self = nb::find(this);
+    auto *pyRes = new PyTautomerEnumeratorResult(res);
+    nb::object pyResObj = nb::cast(pyRes, nb::rv_policy::take_ownership);
+    return nb::cast<bool>(self.attr("__call__")(mol, pyResObj));
+  }
 };
 
-typedef boost::shared_ptr<MolStandardize::Tautomer> TAUT_SPTR;
+// Wrapper to hold a Python callback object without needing to copy trampolines
+struct PyCallbackWrapper : MolStandardize::TautomerEnumeratorCallback {
+  nb::object d_pyObj;
+  explicit PyCallbackWrapper(nb::object obj) : d_pyObj(std::move(obj)) {}
+  bool operator()(const ROMol &mol,
+                  const MolStandardize::TautomerEnumeratorResult &res) override {
+    nb::gil_scoped_acquire guard;
+    auto *pyRes = new PyTautomerEnumeratorResult(res);
+    nb::object pyResObj = nb::cast(pyRes, nb::rv_policy::take_ownership);
+    return nb::cast<bool>(d_pyObj(mol, pyResObj));
+  }
+};
 
-ROMol *getTautomerHelper(const TAUT_SPTR &self) {
-  return new ROMol(*self->tautomer);
-}
-
-ROMol *getKekulizedHelper(const TAUT_SPTR &self) {
-  return new ROMol(*self->getKekulized());
-}
-
-python::tuple smilesTautomerMapKeysHelper(
+nb::tuple smilesTautomerMapKeysHelper(
     const MolStandardize::SmilesTautomerMap &self) {
-  python::list keys;
+  nb::list keys;
   for (const auto &pair : self) {
     keys.append(pair.first);
   }
-  return python::tuple(keys);
+  return nb::tuple(keys);
 }
 
-python::tuple smilesTautomerMapValuesHelper(
+nb::tuple smilesTautomerMapValuesHelper(
     const MolStandardize::SmilesTautomerMap &self) {
-  python::list values;
+  nb::list values;
   for (const auto &pair : self) {
-    values.append(TAUT_SPTR(new MolStandardize::Tautomer(pair.second)));
+    auto *t = new MolStandardize::Tautomer(pair.second);
+    values.append(nb::cast(t, nb::rv_policy::take_ownership));
   }
-  return python::tuple(values);
+  return nb::tuple(values);
 }
 
-python::tuple smilesTautomerMapItemsHelper(
+nb::tuple smilesTautomerMapItemsHelper(
     const MolStandardize::SmilesTautomerMap &self) {
-  python::list items;
+  nb::list items;
   for (const auto &pair : self) {
-    items.append(python::make_tuple(
-        pair.first, TAUT_SPTR(new MolStandardize::Tautomer(pair.second))));
+    auto *t = new MolStandardize::Tautomer(pair.second);
+    items.append(nb::make_tuple(
+        pair.first, nb::cast(t, nb::rv_policy::take_ownership)));
   }
-  return python::tuple(items);
+  return nb::tuple(items);
 }
 
-python::object getCallbackHelper(const MolStandardize::TautomerEnumerator &te) {
-  PyTautomerEnumeratorCallback *cppCallback =
-      dynamic_cast<PyTautomerEnumeratorCallback *>(te.getCallback());
-  python::object res;
+nb::object getCallbackHelper(const MolStandardize::TautomerEnumerator &te) {
+  PyCallbackWrapper *cppCallback =
+      dynamic_cast<PyCallbackWrapper *>(te.getCallback());
   if (cppCallback) {
-    res = cppCallback->getPyCallbackObject();
+    return cppCallback->d_pyObj;
   }
-  return res;
-};
+  return nb::none();
+}
 
 void setCallbackHelper(MolStandardize::TautomerEnumerator &te,
-                       PyObject *callback) {
-  PRECONDITION(callback, "callback must not be NULL");
-  if (callback == Py_None) {
+                       nb::object callback) {
+  if (callback.is_none()) {
     te.setCallback(nullptr);
     return;
   }
-  python::object callbackObject(python::handle<>(python::borrowed(callback)));
-  python::extract<PyTautomerEnumeratorCallback *> extractCallback(
-      callbackObject);
-  if (extractCallback.check()) {
-    if (!PyCallable_Check(extractCallback()->getCallbackOverride().ptr())) {
-      PyErr_SetString(PyExc_AttributeError,
-                      "The __call__ attribute in the "
-                      "rdMolStandardize.TautomerEnumeratorCallback subclass "
-                      "must exist and be a callable method");
-      python::throw_error_already_set();
-    } else {
-      te.setCallback(new PyTautomerEnumeratorCallback(callbackObject));
-    }
-  } else {
-    PyErr_SetString(PyExc_TypeError,
-                    "Expected an instance of a "
-                    "rdMolStandardize.TautomerEnumeratorCallback subclass");
-    python::throw_error_already_set();
+  if (!nb::isinstance(
+          callback,
+          nb::type<MolStandardize::TautomerEnumeratorCallback>())) {
+    throw nb::type_error(
+        "Expected an instance of a "
+        "rdMolStandardize.TautomerEnumeratorCallback subclass");
   }
-}
-
-std::string tautomerEnumeratorCallbackClassDoc =
-    R"DOC(Create a derived class from this abstract base class and
-    implement the __call__() method.
-    The __call__() method is called in the innermost loop of the
-    algorithm, and provides a mechanism to monitor or stop
-    its progress.
-
-    To have your callback called, pass an instance of your
-    derived class to TautomerEnumerator.SetCallback())DOC";
-
-MolStandardize::TautomerEnumerator *EnumeratorFromParams(
-    const MolStandardize::CleanupParameters &params) {
-  return new MolStandardize::TautomerEnumerator(params);
-}
-
-MolStandardize::TautomerEnumerator *createDefaultEnumerator() {
-  MolStandardize::CleanupParameters ps;
-  return EnumeratorFromParams(ps);
-}
-
-MolStandardize::TautomerEnumerator *copyEnumerator(
-    const MolStandardize::TautomerEnumerator &other) {
-  return new MolStandardize::TautomerEnumerator(other);
+  // Verify that the Python subclass has a properly overridden __call__:
+  // - it must be defined in the immediate class dict (not just inherited)
+  // - it must be callable
+  nb::object cls_dict =
+      nb::borrow<nb::object>(PyObject_Type(callback.ptr())).attr("__dict__");
+  if (!nb::cast<bool>(cls_dict.attr("__contains__")("__call__"))) {
+    throw nb::attribute_error(
+        "TautomerEnumeratorCallback subclass must override __call__");
+  }
+  nb::object call_attr = cls_dict.attr("__getitem__")("__call__");
+  nb::object builtins = nb::module_::import_("builtins");
+  if (!nb::cast<bool>(builtins.attr("callable")(call_attr))) {
+    throw nb::attribute_error(
+        "TautomerEnumeratorCallback.__call__ must be callable");
+  }
+  te.setCallback(new PyCallbackWrapper(callback));
 }
 
 class pyobjFunctor {
  public:
-  pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
+  pyobjFunctor(nb::object obj) : dp_obj(std::move(obj)) {}
   ~pyobjFunctor() = default;
   int operator()(const ROMol &m) {
-    return python::extract<int>(dp_obj(boost::ref(m)));
+    nb::object result = dp_obj(m);
+    try {
+      return nb::cast<int>(result);
+    } catch (const nb::cast_error &) {
+      throw nb::type_error(
+          "scoring function must return a numeric value");
+    }
   }
 
  private:
-  python::object dp_obj;
+  nb::object dp_obj;
 };
 
 ROMol *canonicalizeHelper(const MolStandardize::TautomerEnumerator &self,
@@ -228,39 +218,52 @@ ROMol *canonicalizeHelper(const MolStandardize::TautomerEnumerator &self,
 }
 
 ROMol *canonicalizeHelper2(const MolStandardize::TautomerEnumerator &self,
-                           const ROMol &mol, python::object scoreFunc) {
+                           const ROMol &mol, nb::object scoreFunc) {
   pyobjFunctor ftor(scoreFunc);
   return self.canonicalize(mol, ftor);
 }
 
-inline std::vector<ROMOL_SPTR> extractPythonIterable(const python::object &o) {
-  if (!PyObject_HasAttrString(o.ptr(), "__iter__")) {
-    PyErr_SetString(PyExc_TypeError,
-                    "the passed object should be an iterable of Mol objects");
-    python::throw_error_already_set();
-    return std::vector<ROMOL_SPTR>();
+inline std::vector<ROMOL_SPTR> extractPythonIterable(const nb::object &o) {
+  if (!nb::hasattr(o, "__iter__")) {
+    throw nb::type_error(
+        "the passed object should be an iterable of Mol objects");
   }
-  return std::vector<ROMOL_SPTR>(python::stl_input_iterator<ROMOL_SPTR>(o),
-                                 python::stl_input_iterator<ROMOL_SPTR>());
+  std::vector<ROMOL_SPTR> result;
+  for (nb::handle h : o) {
+    RDKit::ROMol *molPtr = nullptr;
+    try {
+      molPtr = nb::cast<RDKit::ROMol *>(h);
+    } catch (const nb::cast_error &) {
+      throw nb::type_error(
+          "the passed object should be an iterable of Mol objects");
+    }
+    // Copy the molecule so the vector owns its lifetime independently of Python
+    result.push_back(ROMOL_SPTR(new RDKit::ROMol(*molPtr)));
+  }
+  return result;
 }
 
 ROMol *pickCanonicalHelper(const MolStandardize::TautomerEnumerator &self,
-                           const python::object &o) {
-  python::extract<PyTautomerEnumeratorResult *> e(o);
-  if (e.check()) {
-    return self.pickCanonical(*e()->get());
+                           const nb::object &o) {
+  try {
+    PyTautomerEnumeratorResult *e =
+        nb::cast<PyTautomerEnumeratorResult *>(o);
+    return self.pickCanonical(*e->get());
+  } catch (const nb::cast_error &) {
+    return self.pickCanonical(extractPythonIterable(o));
   }
-  return self.pickCanonical(extractPythonIterable(o));
 }
 
 ROMol *pickCanonicalHelper2(const MolStandardize::TautomerEnumerator &self,
-                            const python::object &o, python::object scoreFunc) {
+                            const nb::object &o, nb::object scoreFunc) {
   pyobjFunctor ftor(scoreFunc);
-  python::extract<PyTautomerEnumeratorResult *> e(o);
-  if (e.check()) {
-    return self.pickCanonical(*e()->get(), ftor);
+  try {
+    PyTautomerEnumeratorResult *e =
+        nb::cast<PyTautomerEnumeratorResult *>(o);
+    return self.pickCanonical(*e->get(), ftor);
+  } catch (const nb::cast_error &) {
+    return self.pickCanonical(extractPythonIterable(o), ftor);
   }
-  return self.pickCanonical(extractPythonIterable(o), ftor);
 }
 
 PyTautomerEnumeratorResult *enumerateHelper(
@@ -277,286 +280,269 @@ GetDefaultTautomerSubstructsHelper() {
   }
   return terms;
 }
-  
 
 }  // namespace
 
-// This indicates that the scoreSubstructs takes a minimum of 1 argument and a maximum of 2
-// so we can call it ScoreSubstructs(mol) or ScoreSubstructs(mol, terms)
-BOOST_PYTHON_FUNCTION_OVERLOADS(scoreSubstructs_overloads,
-				RDKit::MolStandardize::TautomerScoringFunctions::scoreSubstructs, 1, 2)
+void wrap_tautomer(nb::module_ &m) {
+  nb::enum_<MolStandardize::TautomerEnumeratorStatus>(
+      m, "TautomerEnumeratorStatus")
+      .value("Completed",
+             MolStandardize::TautomerEnumeratorStatus::Completed)
+      .value("MaxTautomersReached",
+             MolStandardize::TautomerEnumeratorStatus::MaxTautomersReached)
+      .value("MaxTransformsReached",
+             MolStandardize::TautomerEnumeratorStatus::MaxTransformsReached)
+      .value("Canceled",
+             MolStandardize::TautomerEnumeratorStatus::Canceled);
 
-struct tautomer_wrapper {
-  static void wrap() {
-    python::enum_<MolStandardize::TautomerEnumeratorStatus>(
-        "TautomerEnumeratorStatus")
-        .value("Completed", MolStandardize::TautomerEnumeratorStatus::Completed)
-        .value("MaxTautomersReached",
-               MolStandardize::TautomerEnumeratorStatus::MaxTautomersReached)
-        .value("MaxTransformsReached",
-               MolStandardize::TautomerEnumeratorStatus::MaxTransformsReached)
-        .value("Canceled", MolStandardize::TautomerEnumeratorStatus::Canceled);
+  nb::class_<MolStandardize::TautomerEnumeratorCallback,
+             TautomerEnumeratorCallbackTrampoline>(
+      m, "TautomerEnumeratorCallback",
+      R"DOC(Create a derived class from this abstract base class and
+implement the __call__() method.
+The __call__() method is called in the innermost loop of the
+algorithm, and provides a mechanism to monitor or stop
+its progress.
 
-    python::class_<PyTautomerEnumeratorCallback, boost::noncopyable>(
-        "TautomerEnumeratorCallback",
-        tautomerEnumeratorCallbackClassDoc.c_str(),
-        python::init<>(python::args("self")))
-        .def("__call__",
-             python::pure_virtual(&PyTautomerEnumeratorCallback::operator()),
-             python::args("self", "mol", "res"),
-             "This must be implemented in the derived class. "
-             "Return True if the tautomer enumeration should continue; "
-             "False if the tautomer enumeration should stop.\n");
+To have your callback called, pass an instance of your
+derived class to TautomerEnumerator.SetCallback())DOC")
+      .def(nb::init<>())
+      .def("__call__",
+           &MolStandardize::TautomerEnumeratorCallback::operator(), "mol"_a,
+           "res"_a,
+           "This must be implemented in the derived class. "
+           "Return True if the tautomer enumeration should continue; "
+           "False if the tautomer enumeration should stop.\n");
 
-    python::class_<MolStandardize::Tautomer, TAUT_SPTR>(
-        "Tautomer",
-        "used to hold the aromatic and kekulized versions "
-        "of each tautomer",
-        python::no_init)
-        .add_property(
-            "tautomer",
-            python::make_function(
-                &getTautomerHelper,
-                python::return_value_policy<python::manage_new_object>()),
-            "aromatic version of the tautomer")
-        .add_property(
-            "kekulized",
-            python::make_function(
-                &getKekulizedHelper,
-                python::return_value_policy<python::manage_new_object>()),
-            "kekulized version of the tautomer");
+  nb::class_<MolStandardize::Tautomer>(
+      m, "Tautomer",
+      "used to hold the aromatic and kekulized versions of each tautomer")
+      .def_prop_ro("tautomer",
+                   [](const MolStandardize::Tautomer &self) {
+                     return new ROMol(*self.tautomer);
+                   },
+                   nb::rv_policy::take_ownership,
+                   "aromatic version of the tautomer")
+      .def_prop_ro("kekulized",
+                   [](const MolStandardize::Tautomer &self) {
+                     return new ROMol(*self.getKekulized());
+                   },
+                   nb::rv_policy::take_ownership,
+                   "kekulized version of the tautomer");
 
-    python::class_<MolStandardize::SmilesTautomerMap, boost::noncopyable>(
-        "SmilesTautomerMap",
-        "maps SMILES strings to the respective Tautomer objects",
-        python::no_init)
-        .def(python::map_indexing_suite<MolStandardize::SmilesTautomerMap,
-                                        true>())
-        .def("keys", &smilesTautomerMapKeysHelper, python::args("self"))
-        .def("values", &smilesTautomerMapValuesHelper, python::args("self"))
-        .def("items", &smilesTautomerMapItemsHelper, python::args("self"));
+  nb::class_<MolStandardize::SmilesTautomerMap>(
+      m, "SmilesTautomerMap",
+      "maps SMILES strings to the respective Tautomer objects")
+      .def("keys", &smilesTautomerMapKeysHelper)
+      .def("values", &smilesTautomerMapValuesHelper)
+      .def("items", &smilesTautomerMapItemsHelper)
+      .def("__len__",
+           [](const MolStandardize::SmilesTautomerMap &self) {
+             return self.size();
+           });
 
-    python::class_<PyTautomerEnumeratorResult, boost::noncopyable>(
-        "TautomerEnumeratorResult",
-        "used to return tautomer enumeration results", python::no_init)
-        .add_property(
-            "tautomers",
-            python::make_function(
-                &PyTautomerEnumeratorResult::tautomers,
-                python::return_value_policy<python::manage_new_object>()),
-            "tautomers generated by the enumerator")
-        .add_property(
-            "smiles",
-            python::make_function(
-                &PyTautomerEnumeratorResult::smiles,
-                python::return_value_policy<python::manage_new_object>()),
-            "SMILES of tautomers generated by the enumerator")
-        .add_property("smilesTautomerMap",
-                      python::make_function(
-                          &PyTautomerEnumeratorResult::smilesTautomerMap,
-                          python::return_value_policy<
-                              python::reference_existing_object>()),
-                      "dictionary mapping SMILES strings to the respective "
-                      "Tautomer objects")
-        .add_property("status", &PyTautomerEnumeratorResult::status,
-                      "whether the enumeration completed or not; see "
-                      "TautomerEnumeratorStatus for possible values")
-        .add_property(
-            "modifiedAtoms",
-            python::make_function(&PyTautomerEnumeratorResult::modifiedAtoms),
-            "tuple of atom indices modified by the transforms")
-        .add_property(
-            "modifiedBonds",
-            python::make_function(&PyTautomerEnumeratorResult::modifiedBonds),
-            "tuple of bond indices modified by the transforms")
-        .def("__call__", &PyTautomerEnumeratorResult::tautomers,
-             python::return_value_policy<python::manage_new_object>(),
-             python::args("self"), "tautomers generated by the enumerator")
-        .def("__iter__", python::range(&PyTautomerEnumeratorResult::begin,
-                                       &PyTautomerEnumeratorResult::end))
-        .def("__getitem__", &PyTautomerEnumeratorResult::at,
-             python::return_value_policy<python::manage_new_object>(),
-             python::args("self", "pos"))
-        .def("__len__", &PyTautomerEnumeratorResult::size,
-             python::args("self"));
+  nb::class_<PyTautomerEnumeratorResult>(
+      m, "TautomerEnumeratorResult",
+      "used to return tautomer enumeration results")
+      .def_prop_ro("tautomers", &PyTautomerEnumeratorResult::tautomers,
+                   "tautomers generated by the enumerator")
+      .def_prop_ro("smiles", &PyTautomerEnumeratorResult::smiles,
+                   "SMILES of tautomers generated by the enumerator")
+      .def_prop_ro(
+          "smilesTautomerMap",
+          &PyTautomerEnumeratorResult::smilesTautomerMap,
+          nb::rv_policy::reference_internal,
+          "dictionary mapping SMILES strings to the respective Tautomer objects")
+      .def_prop_ro("status", &PyTautomerEnumeratorResult::status,
+                   "whether the enumeration completed or not; see "
+                   "TautomerEnumeratorStatus for possible values")
+      .def_prop_ro("modifiedAtoms", &PyTautomerEnumeratorResult::modifiedAtoms,
+                   "tuple of atom indices modified by the transforms")
+      .def_prop_ro("modifiedBonds", &PyTautomerEnumeratorResult::modifiedBonds,
+                   "tuple of bond indices modified by the transforms")
+      .def("__call__",
+           [](PyTautomerEnumeratorResult &self) { return self.tautomers(); },
+           "tautomers generated by the enumerator")
+      .def("__iter__",
+           [](PyTautomerEnumeratorResult &self) {
+             auto taus = self.tautomers();
+             nb::list result;
+             for (const auto &mol : taus) {
+               result.append(nb::cast(mol));
+             }
+             return result.attr("__iter__")();
+           })
+      .def("__getitem__",
+           [](PyTautomerEnumeratorResult &self, int pos) {
+             return self.at(pos);
+           },
+           "pos"_a, nb::rv_policy::take_ownership)
+      .def("__len__", &PyTautomerEnumeratorResult::size);
 
-    python::class_<MolStandardize::TautomerEnumerator, boost::noncopyable>(
-        "TautomerEnumerator", python::no_init)
-        .def("__init__", python::make_constructor(createDefaultEnumerator))
-        .def("__init__", python::make_constructor(EnumeratorFromParams))
-        .def("__init__", python::make_constructor(copyEnumerator))
-        .def("Enumerate", &enumerateHelper,
-             (python::arg("self"), python::arg("mol")),
-             python::return_value_policy<python::manage_new_object>(),
-             R"DOC(Generates the tautomers for a molecule.
-             
-  The enumeration rules are inspired by the publication:
-  M. Sitzmann et al., “Tautomerism in Large Databases.”, JCAMD 24:521 (2010)
-  https://doi.org/10.1007/s10822-010-9346-4
-  
-  Note: the definitions used here are that the atoms modified during
-  tautomerization are the atoms at the beginning and end of each tautomer
-  transform (the H "donor" and H "acceptor" in the transform) and the bonds
-  modified during transformation are any bonds whose order is changed during
-  the tautomer transform (these are the bonds between the "donor" and the
-  "acceptor").)DOC")
-        .def("Canonicalize", &canonicalizeHelper,
-             (python::arg("self"), python::arg("mol")),
-             python::return_value_policy<python::manage_new_object>(),
-             R"DOC(Returns the canonical tautomer for a molecule.
+  nb::class_<MolStandardize::TautomerEnumerator>(m, "TautomerEnumerator")
+      .def(nb::init<>())
+      .def(nb::init<const MolStandardize::CleanupParameters &>(), "params"_a)
+      .def(nb::init<const MolStandardize::TautomerEnumerator &>(), "other"_a)
+      .def("Enumerate", &enumerateHelper, "mol"_a,
+           nb::rv_policy::take_ownership,
+           R"DOC(Generates the tautomers for a molecule.
 
-  The default scoring scheme is inspired by the publication:
-  M. Sitzmann et al., “Tautomerism in Large Databases.”, JCAMD 24:521 (2010)
-  https://doi.org/10.1007/s10822-010-9346-4
+The enumeration rules are inspired by the publication:
+M. Sitzmann et al., "Tautomerism in Large Databases.", JCAMD 24:521 (2010)
+https://doi.org/10.1007/s10822-010-9346-4
 
-  Note that the canonical tautomer is very likely not the most stable tautomer
-  for any given conditions. The default scoring rules are designed to produce
-  "reasonable" tautomers, but the primary concern is that the results are
-  canonical: you always get the same canonical tautomer for a molecule
-  regardless of what the input tautomer or atom ordering were.)DOC")
-        .def(
-            "Canonicalize", &canonicalizeHelper2,
-            (python::arg("self"), python::arg("mol"), python::arg("scoreFunc")),
-            python::return_value_policy<python::manage_new_object>(),
-            "picks the canonical tautomer from an iterable of molecules "
-            "using a custom scoring function")
-        .def("PickCanonical", &pickCanonicalHelper,
-             (python::arg("self"), python::arg("iterable")),
-             python::return_value_policy<python::manage_new_object>(),
-             "picks the canonical tautomer from an iterable of molecules")
-        .def("PickCanonical", &pickCanonicalHelper2,
-             (python::arg("self"), python::arg("iterable"),
-              python::arg("scoreFunc")),
-             python::return_value_policy<python::manage_new_object>(),
-             "returns the canonical tautomer for a molecule using a custom "
-             "scoring function")
-        .def("ScoreTautomer",
-             &MolStandardize::TautomerScoringFunctions::scoreTautomer,
-             (python::arg("mol")),
-             "returns the score for a tautomer using the default scoring "
-             "scheme.")
-        .staticmethod("ScoreTautomer")
-        .def("SetMaxTautomers",
-             &MolStandardize::TautomerEnumerator::setMaxTautomers,
-             (python::arg("self"), python::arg("maxTautomers")),
-             "set the maximum number of tautomers to be generated.")
-        .def("GetMaxTautomers",
-             &MolStandardize::TautomerEnumerator::getMaxTautomers,
-             (python::arg("self")),
-             "returns the maximum number of tautomers to be generated.")
-        .def("SetMaxTransforms",
-             &MolStandardize::TautomerEnumerator::setMaxTransforms,
-             (python::arg("self"), python::arg("maxTransforms")),
-             "set the maximum number of transformations to be applied. "
-             "This limit is usually hit earlier than the maxTautomers limit "
-             "and leads to a more linear scaling of CPU time with increasing "
-             "number of tautomeric centers (see Sitzmann et al.).")
-        .def("GetMaxTransforms",
-             &MolStandardize::TautomerEnumerator::getMaxTransforms,
-             (python::arg("self")),
-             "returns the maximum number of transformations to be applied.")
-        .def("SetRemoveSp3Stereo",
-             &MolStandardize::TautomerEnumerator::setRemoveSp3Stereo,
-             (python::arg("self"), python::arg("removeSp3Stereo")),
-             "set to True if you wish stereochemistry information "
-             "to be removed from sp3 atoms involved in tautomerism. "
-             "This means that S-aminoacids will lose their stereochemistry "
-             "after going through tautomer enumeration because of the "
-             "amido-imidol tautomerism. This defaults to True in RDKit, "
-             "and to False in the workflow described by Sitzmann et al.")
-        .def("GetRemoveSp3Stereo",
-             &MolStandardize::TautomerEnumerator::getRemoveSp3Stereo,
-             (python::arg("self")),
-             "returns whether stereochemistry information will be removed from "
-             "sp3 atoms involved in tautomerism.")
-        .def("SetRemoveBondStereo",
-             &MolStandardize::TautomerEnumerator::setRemoveBondStereo,
-             (python::arg("self"), python::arg("removeBondStereo")),
-             "set to True if you wish stereochemistry information "
-             "to be removed from double bonds involved in tautomerism. "
-             "This means that enols will lose their E/Z stereochemistry "
-             "after going through tautomer enumeration because of the "
-             "keto-enolic tautomerism. This defaults to True in the "
-             "RDKit and also in the workflow described by Sitzmann et al.")
-        .def("GetRemoveBondStereo",
-             &MolStandardize::TautomerEnumerator::getRemoveBondStereo,
-             (python::arg("self")),
-             "returns whether stereochemistry information "
-             "will be removed from double bonds involved in tautomerism.")
-        .def("SetReassignStereo",
-             &MolStandardize::TautomerEnumerator::setReassignStereo,
-             (python::arg("self"), python::arg("reassignStereo")),
-             "set to True if you wish AssignStereochemistry to be called "
-             "on each tautomer generated by the Enumerate() method. "
-             "This defaults to True.")
-        .def("GetReassignStereo",
-             &MolStandardize::TautomerEnumerator::getReassignStereo,
-             (python::arg("self")),
-             "returns whether AssignStereochemistry will be called "
-             "on each tautomer generated by the Enumerate() method.")
-        .def("SetCallback", &setCallbackHelper,
-             python::args("self", "callback"),
-             "Pass an instance of a class derived from\n"
-             "TautomerEnumeratorCallback, which must implement the\n"
-             "__call__() method.")
-        .def("GetCallback", &getCallbackHelper, python::args("self"),
-             "Get the TautomerEnumeratorCallback subclass instance,\n"
-             "or None if none was set.")
-        .def_readonly(
-            "tautomerScoreVersion",
-            MolStandardize::TautomerScoringFunctions::tautomerScoringVersion);
-    python::def("GetV1TautomerEnumerator",
-                MolStandardize::getV1TautomerEnumerator,
-                "return a TautomerEnumerator using v1 of the enumeration rules",
-                python::return_value_policy<python::manage_new_object>());
+Note: the definitions used here are that the atoms modified during
+tautomerization are the atoms at the beginning and end of each tautomer
+transform (the H "donor" and H "acceptor" in the transform) and the bonds
+modified during transformation are any bonds whose order is changed during
+the tautomer transform (these are the bonds between the "donor" and the
+"acceptor").)DOC")
+      .def("Canonicalize", &canonicalizeHelper, "mol"_a,
+           nb::rv_policy::take_ownership,
+           R"DOC(Returns the canonical tautomer for a molecule.
 
-    std::string docString =
+The default scoring scheme is inspired by the publication:
+M. Sitzmann et al., "Tautomerism in Large Databases.", JCAMD 24:521 (2010)
+https://doi.org/10.1007/s10822-010-9346-4
+
+Note that the canonical tautomer is very likely not the most stable tautomer
+for any given conditions. The default scoring rules are designed to produce
+"reasonable" tautomers, but the primary concern is that the results are
+canonical: you always get the same canonical tautomer for a molecule
+regardless of what the input tautomer or atom ordering were.)DOC")
+      .def("Canonicalize", &canonicalizeHelper2, "mol"_a, "scoreFunc"_a,
+           nb::rv_policy::take_ownership,
+           "picks the canonical tautomer from an iterable of molecules "
+           "using a custom scoring function")
+      .def("PickCanonical", &pickCanonicalHelper, "iterable"_a,
+           nb::rv_policy::take_ownership,
+           "picks the canonical tautomer from an iterable of molecules")
+      .def("PickCanonical", &pickCanonicalHelper2, "iterable"_a,
+           "scoreFunc"_a, nb::rv_policy::take_ownership,
+           "returns the canonical tautomer for a molecule using a custom "
+           "scoring function")
+      .def_static(
+          "ScoreTautomer",
+          &MolStandardize::TautomerScoringFunctions::scoreTautomer, "mol"_a,
+          "returns the score for a tautomer using the default scoring scheme.")
+      .def("SetMaxTautomers",
+           &MolStandardize::TautomerEnumerator::setMaxTautomers,
+           "maxTautomers"_a,
+           "set the maximum number of tautomers to be generated.")
+      .def("GetMaxTautomers",
+           &MolStandardize::TautomerEnumerator::getMaxTautomers,
+           "returns the maximum number of tautomers to be generated.")
+      .def("SetMaxTransforms",
+           &MolStandardize::TautomerEnumerator::setMaxTransforms,
+           "maxTransforms"_a,
+           "set the maximum number of transformations to be applied. "
+           "This limit is usually hit earlier than the maxTautomers limit "
+           "and leads to a more linear scaling of CPU time with increasing "
+           "number of tautomeric centers (see Sitzmann et al.).")
+      .def("GetMaxTransforms",
+           &MolStandardize::TautomerEnumerator::getMaxTransforms,
+           "returns the maximum number of transformations to be applied.")
+      .def("SetRemoveSp3Stereo",
+           &MolStandardize::TautomerEnumerator::setRemoveSp3Stereo,
+           "removeSp3Stereo"_a,
+           "set to True if you wish stereochemistry information "
+           "to be removed from sp3 atoms involved in tautomerism. "
+           "This means that S-aminoacids will lose their stereochemistry "
+           "after going through tautomer enumeration because of the "
+           "amido-imidol tautomerism. This defaults to True in RDKit, "
+           "and to False in the workflow described by Sitzmann et al.")
+      .def("GetRemoveSp3Stereo",
+           &MolStandardize::TautomerEnumerator::getRemoveSp3Stereo,
+           "returns whether stereochemistry information will be removed from "
+           "sp3 atoms involved in tautomerism.")
+      .def("SetRemoveBondStereo",
+           &MolStandardize::TautomerEnumerator::setRemoveBondStereo,
+           "removeBondStereo"_a,
+           "set to True if you wish stereochemistry information "
+           "to be removed from double bonds involved in tautomerism. "
+           "This means that enols will lose their E/Z stereochemistry "
+           "after going through tautomer enumeration because of the "
+           "keto-enolic tautomerism. This defaults to True in the "
+           "RDKit and also in the workflow described by Sitzmann et al.")
+      .def("GetRemoveBondStereo",
+           &MolStandardize::TautomerEnumerator::getRemoveBondStereo,
+           "returns whether stereochemistry information "
+           "will be removed from double bonds involved in tautomerism.")
+      .def("SetReassignStereo",
+           &MolStandardize::TautomerEnumerator::setReassignStereo,
+           "reassignStereo"_a,
+           "set to True if you wish AssignStereochemistry to be called "
+           "on each tautomer generated by the Enumerate() method. "
+           "This defaults to True.")
+      .def("GetReassignStereo",
+           &MolStandardize::TautomerEnumerator::getReassignStereo,
+           "returns whether AssignStereochemistry will be called "
+           "on each tautomer generated by the Enumerate() method.")
+      .def("SetCallback", &setCallbackHelper, "callback"_a,
+           "Pass an instance of a class derived from\n"
+           "TautomerEnumeratorCallback, which must implement the\n"
+           "__call__() method.")
+      .def("GetCallback", &getCallbackHelper,
+           "Get the TautomerEnumeratorCallback subclass instance,\n"
+           "or None if none was set.")
+      .def_prop_ro_static(
+          "tautomerScoreVersion",
+          [](nb::handle) {
+            return MolStandardize::TautomerScoringFunctions::
+                tautomerScoringVersion;
+          });
+
+  m.def("GetV1TautomerEnumerator", MolStandardize::getV1TautomerEnumerator,
+        "return a TautomerEnumerator using v1 of the enumeration rules",
+        nb::rv_policy::take_ownership);
+
+  m.def("ScoreRings",
+        MolStandardize::TautomerScoringFunctions::scoreRings, "mol"_a,
         "scores the ring system of the tautomer for canonicalization\n"
-        "Aromatic rings score 100, all carbon aromatic rings score 250";
-    python::def("ScoreRings",
-                MolStandardize::TautomerScoringFunctions::scoreRings,
-                python::arg("mol"), docString.c_str());
+        "Aromatic rings score 100, all carbon aromatic rings score 250");
 
-    docString =
+  m.def("ScoreHeteroHs",
+        MolStandardize::TautomerScoringFunctions::scoreHeteroHs, "mol"_a,
         "scores the number of heteroHs of the tautomer for canonicalization\n"
-        "This gives a negative penalty to hydrogens attached to S,P, Se and Te";
-    python::def("ScoreHeteroHs",
-                MolStandardize::TautomerScoringFunctions::scoreHeteroHs,
-                python::arg("mol"), docString.c_str());
+        "This gives a negative penalty to hydrogens attached to S,P, Se and Te");
 
-    python::class_<MolStandardize::TautomerScoringFunctions::SubstructTerm>(
-        "SubstructTerm",
-        "Sets the score of this particular tautomer substructure, higher scores are more preferable\n"
-        "Aromatic rings score 100, all carbon aromatic rings score 250",
-        python::init<std::string, std::string, int>(
-            python::args("self", "name", "smarts", "score")))
-        .def_readonly(
-            "name",
-            &MolStandardize::TautomerScoringFunctions::SubstructTerm::name)
-        .def_readonly(
-            "smarts",
-            &MolStandardize::TautomerScoringFunctions::SubstructTerm::smarts)
-        .def_readonly(
-            "score",
-            &MolStandardize::TautomerScoringFunctions::SubstructTerm::score);
+  nb::class_<MolStandardize::TautomerScoringFunctions::SubstructTerm>(
+      m, "SubstructTerm",
+      "Sets the score of this particular tautomer substructure, higher scores "
+      "are more preferable\n"
+      "Aromatic rings score 100, all carbon aromatic rings score 250")
+      .def(nb::init<std::string, std::string, int>(), "name"_a, "smarts"_a,
+           "score"_a)
+      .def_ro(
+          "name",
+          &MolStandardize::TautomerScoringFunctions::SubstructTerm::name)
+      .def_ro(
+          "smarts",
+          &MolStandardize::TautomerScoringFunctions::SubstructTerm::smarts)
+      .def_ro(
+          "score",
+          &MolStandardize::TautomerScoringFunctions::SubstructTerm::score);
 
-    python::class_<
-        std::vector<MolStandardize::TautomerScoringFunctions::SubstructTerm>>(
-        "SubstructTermVector")
-        .def(python::vector_indexing_suite<std::vector<
-                 MolStandardize::TautomerScoringFunctions::SubstructTerm>>());
-    
-    docString = "scores the tautomer substructures";
-    python::def("ScoreSubstructs", &MolStandardize::TautomerScoringFunctions::scoreSubstructs,
-		scoreSubstructs_overloads((python::arg("mol"), python::arg("terms")),
-					  docString.c_str())
-		);
+  nb::bind_vector<
+      std::vector<MolStandardize::TautomerScoringFunctions::SubstructTerm>>(
+      m, "SubstructTermVector");
 
+  m.def(
+      "ScoreSubstructs",
+      [](const ROMol &mol,
+         nb::object terms) -> int {
+        if (terms.is_none()) {
+          return MolStandardize::TautomerScoringFunctions::scoreSubstructs(mol);
+        }
+        return MolStandardize::TautomerScoringFunctions::scoreSubstructs(
+            mol,
+            nb::cast<std::vector<
+                MolStandardize::TautomerScoringFunctions::SubstructTerm> &>(
+                terms));
+      },
+      "mol"_a, "terms"_a = nb::none(), "scores the tautomer substructures");
 
-    python::def("GetDefaultTautomerScoreSubstructs",
-                GetDefaultTautomerSubstructsHelper,
-                "Return the default tautomer substructure scoring terms");
-  }
-};
-
-void wrap_tautomer() { tautomer_wrapper::wrap(); }
+  m.def("GetDefaultTautomerScoreSubstructs",
+        GetDefaultTautomerSubstructsHelper,
+        "Return the default tautomer substructure scoring terms");
+}

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2026 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,12 +7,17 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/Wrap.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Charge.h>
 
-namespace python = boost::python;
+#include <sstream>
+
+namespace nb = nanobind;
+using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
@@ -28,19 +33,17 @@ ROMol *reionizeHelper(MolStandardize::Reionizer &self, const ROMol &mol) {
 void reionizeInPlaceHelper(MolStandardize::Reionizer &self, ROMol &mol) {
   self.reionizeInPlace(static_cast<RWMol &>(mol));
 }
+
 MolStandardize::Reionizer *reionizerFromData(const std::string &data,
-                                             python::object chargeCorrections) {
+                                             nb::object chargeCorrections) {
   std::istringstream sstr(data);
-  auto corrections =
-      pythonObjectToVect<MolStandardize::ChargeCorrection>(chargeCorrections);
-  MolStandardize::Reionizer *res;
-  if (corrections) {
-    res = new MolStandardize::Reionizer(sstr, *corrections);
-  } else {
-    res = new MolStandardize::Reionizer(
-        sstr, std::vector<MolStandardize::ChargeCorrection>());
+  std::vector<MolStandardize::ChargeCorrection> corrections;
+  if (!chargeCorrections.is_none()) {
+    for (nb::handle h : chargeCorrections) {
+      corrections.push_back(nb::cast<MolStandardize::ChargeCorrection>(h));
+    }
   }
-  return res;
+  return new MolStandardize::Reionizer(sstr, corrections);
 }
 
 void unchargeInPlaceHelper(MolStandardize::Uncharger &self, ROMol &mol) {
@@ -49,55 +52,38 @@ void unchargeInPlaceHelper(MolStandardize::Uncharger &self, ROMol &mol) {
 
 }  // namespace
 
-struct charge_wrapper {
-  static void wrap() {
-    python::scope().attr("__doc__") =
-        "Module containing functions for charge corrections";
+void wrap_charge(nb::module_ &m) {
+  nb::class_<MolStandardize::ChargeCorrection>(m, "ChargeCorrection")
+      .def(nb::init<std::string, std::string, int>(), "name"_a, "smarts"_a,
+           "charge"_a)
+      .def_rw("Name", &MolStandardize::ChargeCorrection::Name)
+      .def_rw("Smarts", &MolStandardize::ChargeCorrection::Smarts)
+      .def_rw("Charge", &MolStandardize::ChargeCorrection::Charge);
 
-    std::string docString = "";
+  m.def("CHARGE_CORRECTIONS", defaultChargeCorrections);
 
-    python::class_<MolStandardize::ChargeCorrection, boost::noncopyable>(
-        "ChargeCorrection",
-        python::init<std::string, std::string, int>(
-            python::args("self", "name", "smarts", "charge")))
-        .def_readwrite("Name", &MolStandardize::ChargeCorrection::Name)
-        .def_readwrite("Smarts", &MolStandardize::ChargeCorrection::Smarts)
-        .def_readwrite("Charge", &MolStandardize::ChargeCorrection::Charge);
+  nb::class_<MolStandardize::Reionizer>(m, "Reionizer")
+      .def(nb::init<>())
+      .def(nb::init<std::string>(), "acidbaseFile"_a)
+      .def(nb::init<std::string,
+                    std::vector<MolStandardize::ChargeCorrection>>(),
+           "acidbaseFile"_a, "ccs"_a)
+      .def("reionize", &reionizeHelper, "mol"_a, "",
+           nb::rv_policy::take_ownership)
+      .def("reionizeInPlace", reionizeInPlaceHelper, "mol"_a,
+           "modifies the input molecule");
 
-    python::def("CHARGE_CORRECTIONS", defaultChargeCorrections);
+  m.def("ReionizerFromData", &reionizerFromData, "paramData"_a,
+        "chargeCorrections"_a = nb::none(),
+        "creates a reionizer from a string containing parameter data "
+        "and a list of charge corrections",
+        nb::rv_policy::take_ownership);
 
-    python::class_<MolStandardize::Reionizer, boost::noncopyable>(
-        "Reionizer", python::init<>(python::args("self")))
-        .def(python::init<std::string>(python::args("self", "acidbaseFile")))
-        .def(python::init<std::string,
-                          std::vector<MolStandardize::ChargeCorrection>>(
-            python::args("self", "acidbaseFile", "ccs")))
-        .def("reionize", &reionizeHelper,
-             (python::arg("self"), python::arg("mol")), "",
-             python::return_value_policy<python::manage_new_object>())
-        .def("reionizeInPlace", reionizeInPlaceHelper,
-             (python::arg("self"), python::arg("mol")),
-             "modifies the input molecule");
-
-    python::def("ReionizerFromData", &reionizerFromData,
-                (python::arg("paramData"),
-                 python::arg("chargeCorrections") = python::list()),
-                "creates a reionizer from a string containing parameter data "
-                "and a list of charge corrections",
-                python::return_value_policy<python::manage_new_object>());
-    python::class_<MolStandardize::Uncharger, boost::noncopyable>(
-        "Uncharger",
-        python::init<bool, bool, bool>(
-            (python::arg("self"), python::arg("canonicalOrder") = true,
-             python::arg("force") = false,
-             python::arg("protonationOnly") = false)))
-        .def("uncharge", &MolStandardize::Uncharger::uncharge,
-             (python::arg("self"), python::arg("mol")), "",
-             python::return_value_policy<python::manage_new_object>())
-        .def("unchargeInPlace", unchargeInPlaceHelper,
-             (python::arg("self"), python::arg("mol")),
-             "modifies the input molecule");
-  }
-};
-
-void wrap_charge() { charge_wrapper::wrap(); }
+  nb::class_<MolStandardize::Uncharger>(m, "Uncharger")
+      .def(nb::init<bool, bool, bool>(), "canonicalOrder"_a = true,
+           "force"_a = false, "protonationOnly"_a = false)
+      .def("uncharge", &MolStandardize::Uncharger::uncharge, "mol"_a, "",
+           nb::rv_policy::take_ownership)
+      .def("unchargeInPlace", unchargeInPlaceHelper, "mol"_a,
+           "modifies the input molecule");
+}

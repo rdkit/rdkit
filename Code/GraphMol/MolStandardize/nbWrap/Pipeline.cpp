@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2023 Novartis Biomedical Research
+//  Copyright (C) 2023-2026 Novartis Biomedical Research and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,7 +7,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/Wrap.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/bind_vector.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Pipeline.h>
@@ -22,48 +24,49 @@ bool operator==(const PipelineLogEntry &lhs, const PipelineLogEntry &rhs) {
 }  // namespace MolStandardize
 }  // namespace RDKit
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 using namespace RDKit;
 
-void wrap_pipeline() {
-  python::class_<MolStandardize::PipelineOptions>("PipelineOptions")
-      .def_readwrite("strictParsing",
-                     &MolStandardize::PipelineOptions::strictParsing)
-      .def_readwrite("reportAllFailures",
-                     &MolStandardize::PipelineOptions::reportAllFailures)
-      .def_readwrite("allowEmptyMolecules",
-                     &MolStandardize::PipelineOptions::allowEmptyMolecules)
-      .def_readwrite("allowEnhancedStereo",
-                     &MolStandardize::PipelineOptions::allowEnhancedStereo)
-      .def_readwrite("allowAromaticBondType",
-                     &MolStandardize::PipelineOptions::allowAromaticBondType)
-      .def_readwrite("allowDativeBondType",
-                     &MolStandardize::PipelineOptions::allowDativeBondType)
-      .def_readwrite("is2DZeroThreshold",
-                     &MolStandardize::PipelineOptions::is2DZeroThreshold)
-      .def_readwrite("atomClashLimit",
-                     &MolStandardize::PipelineOptions::atomClashLimit)
-      .def_readwrite("minMedianBondLength",
-                     &MolStandardize::PipelineOptions::minMedianBondLength)
-      .def_readwrite("bondLengthLimit",
-                     &MolStandardize::PipelineOptions::bondLengthLimit)
-      .def_readwrite("allowLongBondsInRings",
-                     &MolStandardize::PipelineOptions::allowLongBondsInRings)
-      .def_readwrite(
-          "allowAtomBondClashExemption",
-          &MolStandardize::PipelineOptions::allowAtomBondClashExemption)
-      .def_readwrite("metalNof", &MolStandardize::PipelineOptions::metalNof)
-      .def_readwrite("metalNon", &MolStandardize::PipelineOptions::metalNon)
-      .def_readwrite("normalizerData",
-                     &MolStandardize::PipelineOptions::normalizerData)
-      .def_readwrite("normalizerMaxRestarts",
-                     &MolStandardize::PipelineOptions::normalizerMaxRestarts)
-      .def_readwrite("scaledMedianBondLength",
-                     &MolStandardize::PipelineOptions::scaledMedianBondLength)
-      .def_readwrite("outputV2000",
-                     &MolStandardize::PipelineOptions::outputV2000);
+void wrap_pipeline(nb::module_ &m) {
+  nb::class_<MolStandardize::PipelineOptions>(m, "PipelineOptions")
+      .def(nb::init<>())
+      .def_rw("strictParsing",
+               &MolStandardize::PipelineOptions::strictParsing)
+      .def_rw("reportAllFailures",
+               &MolStandardize::PipelineOptions::reportAllFailures)
+      .def_rw("allowEmptyMolecules",
+               &MolStandardize::PipelineOptions::allowEmptyMolecules)
+      .def_rw("allowEnhancedStereo",
+               &MolStandardize::PipelineOptions::allowEnhancedStereo)
+      .def_rw("allowAromaticBondType",
+               &MolStandardize::PipelineOptions::allowAromaticBondType)
+      .def_rw("allowDativeBondType",
+               &MolStandardize::PipelineOptions::allowDativeBondType)
+      .def_rw("is2DZeroThreshold",
+               &MolStandardize::PipelineOptions::is2DZeroThreshold)
+      .def_rw("atomClashLimit",
+               &MolStandardize::PipelineOptions::atomClashLimit)
+      .def_rw("minMedianBondLength",
+               &MolStandardize::PipelineOptions::minMedianBondLength)
+      .def_rw("bondLengthLimit",
+               &MolStandardize::PipelineOptions::bondLengthLimit)
+      .def_rw("allowLongBondsInRings",
+               &MolStandardize::PipelineOptions::allowLongBondsInRings)
+      .def_rw("allowAtomBondClashExemption",
+               &MolStandardize::PipelineOptions::allowAtomBondClashExemption)
+      .def_rw("metalNof", &MolStandardize::PipelineOptions::metalNof)
+      .def_rw("metalNon", &MolStandardize::PipelineOptions::metalNon)
+      .def_rw("normalizerData",
+               &MolStandardize::PipelineOptions::normalizerData)
+      .def_rw("normalizerMaxRestarts",
+               &MolStandardize::PipelineOptions::normalizerMaxRestarts)
+      .def_rw("scaledMedianBondLength",
+               &MolStandardize::PipelineOptions::scaledMedianBondLength)
+      .def_rw("outputV2000", &MolStandardize::PipelineOptions::outputV2000);
 
-  python::enum_<MolStandardize::PipelineStatus>("PipelineStatus")
+  nb::enum_<MolStandardize::PipelineStatus>(m, "PipelineStatus",
+                                             nb::is_arithmetic(), nb::is_flag())
       .value("NO_EVENT", MolStandardize::PipelineStatus::NO_EVENT)
       .value("INPUT_ERROR", MolStandardize::PipelineStatus::INPUT_ERROR)
       .value("PREPARE_FOR_VALIDATION_ERROR",
@@ -84,8 +87,9 @@ void wrap_pipeline() {
              MolStandardize::PipelineStatus::PREPARE_FOR_STANDARDIZATION_ERROR)
       .value("METAL_STANDARDIZATION_ERROR",
              MolStandardize::PipelineStatus::METAL_STANDARDIZATION_ERROR)
-      .value("NORMALIZER_STANDARDIZATION_ERROR",
-             MolStandardize::PipelineStatus::NORMALIZER_STANDARDIZATION_ERROR)
+      .value(
+          "NORMALIZER_STANDARDIZATION_ERROR",
+          MolStandardize::PipelineStatus::NORMALIZER_STANDARDIZATION_ERROR)
       .value("FRAGMENT_STANDARDIZATION_ERROR",
              MolStandardize::PipelineStatus::FRAGMENT_STANDARDIZATION_ERROR)
       .value("CHARGE_STANDARDIZATION_ERROR",
@@ -103,41 +107,44 @@ void wrap_pipeline() {
       .value("PROTONATION_CHANGED",
              MolStandardize::PipelineStatus::PROTONATION_CHANGED)
       .value("STRUCTURE_MODIFICATION",
-             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION);
+             MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION)
+;
 
-  python::enum_<MolStandardize::PipelineStage>("PipelineStage")
+  nb::enum_<MolStandardize::PipelineStage>(m, "PipelineStage")
       .value("PARSING_INPUT", MolStandardize::PipelineStage::PARSING_INPUT)
       .value("PREPARE_FOR_VALIDATION",
              MolStandardize::PipelineStage::PREPARE_FOR_VALIDATION)
       .value("VALIDATION", MolStandardize::PipelineStage::VALIDATION)
       .value("PREPARE_FOR_STANDARDIZATION",
              MolStandardize::PipelineStage::PREPARE_FOR_STANDARDIZATION)
-      .value("STANDARDIZATION", MolStandardize::PipelineStage::STANDARDIZATION)
+      .value("STANDARDIZATION",
+             MolStandardize::PipelineStage::STANDARDIZATION)
       .value("SERIALIZING_OUTPUT",
              MolStandardize::PipelineStage::SERIALIZING_OUTPUT)
       .value("COMPLETED", MolStandardize::PipelineStage::COMPLETED);
 
-  python::class_<MolStandardize::PipelineLogEntry>("PipelineLogEntry",
-                                                   python::no_init)
-      .def_readonly("status", &MolStandardize::PipelineLogEntry::status)
-      .def_readonly("detail", &MolStandardize::PipelineLogEntry::detail);
+  nb::class_<MolStandardize::PipelineLogEntry>(m, "PipelineLogEntry")
+      .def_ro("status", &MolStandardize::PipelineLogEntry::status)
+      .def_ro("detail", &MolStandardize::PipelineLogEntry::detail);
 
-  python::class_<MolStandardize::PipelineLog>("PipelineLog", python::no_init)
-      .def(python::vector_indexing_suite<MolStandardize::PipelineLog>());
+  nb::bind_vector<MolStandardize::PipelineLog>(m, "PipelineLog");
 
-  python::class_<MolStandardize::PipelineResult>("PipelineResult",
-                                                 python::no_init)
-      .def_readonly("status", &MolStandardize::PipelineResult::status)
-      .def_readonly("stage", &MolStandardize::PipelineResult::stage)
-      .def_readonly("log", &MolStandardize::PipelineResult::log)
-      .def_readonly("inputMolData",
-                    &MolStandardize::PipelineResult::inputMolData)
-      .def_readonly("outputMolData",
-                    &MolStandardize::PipelineResult::outputMolData)
-      .def_readonly("parentMolData",
-                    &MolStandardize::PipelineResult::parentMolData);
+  nb::class_<MolStandardize::PipelineResult>(m, "PipelineResult")
+      .def_ro("status", &MolStandardize::PipelineResult::status)
+      .def_prop_ro("stage",
+                   [](const MolStandardize::PipelineResult &self) {
+                     return static_cast<MolStandardize::PipelineStage>(
+                         self.stage);
+                   })
+      .def_ro("log", &MolStandardize::PipelineResult::log)
+      .def_ro("inputMolData", &MolStandardize::PipelineResult::inputMolData)
+      .def_ro("outputMolData",
+               &MolStandardize::PipelineResult::outputMolData)
+      .def_ro("parentMolData",
+               &MolStandardize::PipelineResult::parentMolData);
 
-  python::class_<MolStandardize::Pipeline>("Pipeline")
-      .def(python::init<const MolStandardize::PipelineOptions &>())
-      .def("run", &MolStandardize::Pipeline::run);
+  nb::class_<MolStandardize::Pipeline>(m, "Pipeline")
+      .def(nb::init<>())
+      .def(nb::init<const MolStandardize::PipelineOptions &>(), "options"_a)
+      .def("run", &MolStandardize::Pipeline::run, "molData"_a);
 }

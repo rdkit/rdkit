@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2026 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,12 +7,16 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/Wrap.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Fragment.h>
 
-namespace python = boost::python;
+#include <sstream>
+
+namespace nb = nanobind;
+using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
@@ -45,46 +49,27 @@ MolStandardize::FragmentRemover *removerFromParams(const std::string &data,
 
 }  // namespace
 
-struct fragment_wrapper {
-  static void wrap() {
-    python::scope().attr("__doc__") =
-        "Module containing tools for dealing with molecules with more than \
-					one covalently bonded unit";
+void wrap_fragment(nb::module_ &m) {
+  nb::class_<MolStandardize::FragmentRemover>(m, "FragmentRemover")
+      .def(nb::init<>())
+      .def(nb::init<std::string, bool, bool>(), "fragmentFilename"_a = "",
+           "leave_last"_a = true, "skip_if_all_match"_a = false)
+      .def("remove", &removeHelper, "mol"_a, "",
+           nb::rv_policy::take_ownership)
+      .def("removeInPlace", &removeInPlaceHelper, "mol"_a,
+           "modifies the molecule in place");
 
-    std::string docString = "";
-
-    python::class_<MolStandardize::FragmentRemover, boost::noncopyable>(
-        "FragmentRemover", python::init<>(python::args("self")))
-        .def(python::init<std::string, bool, bool>(
-            (python::arg("self"), python::arg("fragmentFilename") = "",
-             python::arg("leave_last") = true,
-             python::arg("skip_if_all_match") = false)))
-        .def("remove", &removeHelper, (python::arg("self"), python::arg("mol")),
-             "", python::return_value_policy<python::manage_new_object>())
-        .def("removeInPlace", &removeInPlaceHelper,
-             (python::arg("self"), python::arg("mol")),
-             "modifies the molecule in place");
-
-    python::def(
-        "FragmentRemoverFromData", &removerFromParams,
-        (python::arg("fragmentData"), python::arg("leave_last") = true,
-         python::arg("skip_if_all_match") = false),
+  m.def("FragmentRemoverFromData", &removerFromParams, "fragmentData"_a,
+        "leave_last"_a = true, "skip_if_all_match"_a = false,
         "creates a FragmentRemover from a string containing parameter data",
-        python::return_value_policy<python::manage_new_object>());
+        nb::rv_policy::take_ownership);
 
-    python::class_<MolStandardize::LargestFragmentChooser, boost::noncopyable>(
-        "LargestFragmentChooser",
-        python::init<bool>(
-            (python::arg("self"), python::arg("preferOrganic") = false)))
-        .def(python::init<const MolStandardize::CleanupParameters &>(
-            (python::arg("self"), python::arg("params"))))
-        .def("choose", &chooseHelper, (python::arg("self"), python::arg("mol")),
-             "", python::return_value_policy<python::manage_new_object>())
-        .def("chooseInPlace", &chooseInPlaceHelper,
-             (python::arg("self"), python::arg("mol")), "",
-             python::return_value_policy<python::manage_new_object>());
-    ;
-  }
-};
-
-void wrap_fragment() { fragment_wrapper::wrap(); }
+  nb::class_<MolStandardize::LargestFragmentChooser>(m,
+                                                      "LargestFragmentChooser")
+      .def(nb::init<bool>(), "preferOrganic"_a = false)
+      .def(nb::init<const MolStandardize::CleanupParameters &>(), "params"_a)
+      .def("choose", &chooseHelper, "mol"_a, "",
+           nb::rv_policy::take_ownership)
+      .def("chooseInPlace", &chooseInPlaceHelper, "mol"_a,
+           "modifies the molecule in place");
+}

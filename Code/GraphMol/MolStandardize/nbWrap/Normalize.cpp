@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2026 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,13 +7,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/Wrap.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Normalize.h>
 #include <sstream>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
@@ -34,34 +36,22 @@ MolStandardize::Normalizer *normalizerFromDataAndParams(
 
 }  // namespace
 
-struct normalize_wrapper {
-  static void wrap() {
-    python::scope().attr("__doc__") =
-        "Module containing tools for normalizing molecules defined by SMARTS "
-        "patterns";
+void wrap_normalize(nb::module_ &m) {
+  nb::class_<MolStandardize::Normalizer>(m, "Normalizer")
+      .def(nb::init<>())
+      .def(nb::init<std::string, unsigned int>(), "normalizeFilename"_a,
+           "maxRestarts"_a)
+      .def("normalize", &normalizeHelper, "mol"_a, "",
+           nb::rv_policy::take_ownership)
+      .def("normalizeInPlace", &normalizeInPlaceHelper, "mol"_a,
+           "modifies the input molecule");
 
-    std::string docString = "";
-
-    python::class_<MolStandardize::Normalizer, boost::noncopyable>(
-        "Normalizer", python::init<>(python::args("self")))
-        .def(python::init<std::string, unsigned int>(
-            python::args("self", "normalizeFilename", "maxRestarts")))
-        .def("normalize", &normalizeHelper,
-             (python::arg("self"), python::arg("mol")), "",
-             python::return_value_policy<python::manage_new_object>())
-        .def("normalizeInPlace", &normalizeInPlaceHelper,
-             (python::arg("self"), python::arg("mol")),
-             "modifies the input molecule");
-    python::def(
-        "NormalizerFromData", &normalizerFromDataAndParams,
-        (python::arg("paramData"), python::arg("params")),
+  m.def("NormalizerFromData", &normalizerFromDataAndParams, "paramData"_a,
+        "params"_a,
         "creates a Normalizer from a string containing normalization SMARTS",
-        python::return_value_policy<python::manage_new_object>());
-    python::def("NormalizerFromParams", &MolStandardize::normalizerFromParams,
-                (python::arg("params")),
-                "creates a Normalizer from CleanupParameters",
-                python::return_value_policy<python::manage_new_object>());
-  }
-};
+        nb::rv_policy::take_ownership);
 
-void wrap_normalize() { normalize_wrapper::wrap(); }
+  m.def("NormalizerFromParams", &MolStandardize::normalizerFromParams,
+        "params"_a, "creates a Normalizer from CleanupParameters",
+        nb::rv_policy::take_ownership);
+}

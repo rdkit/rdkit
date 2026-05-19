@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2026 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,31 +7,33 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/Wrap.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/MolStandardize/Metal.h>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace {
 
 class MetalDisconnectorWrap {
  public:
-  MetalDisconnectorWrap(python::object options = python::object()) {
+  MetalDisconnectorWrap(nb::object options = nb::none()) {
     if (options.is_none()) {
       md_.reset(new RDKit::MolStandardize::MetalDisconnector());
     } else {
       RDKit::MolStandardize::MetalDisconnectorOptions md_opts;
       md_opts.splitGrignards =
-          python::extract<bool>(options.attr("splitGrignards"));
+          nb::cast<bool>(options.attr("splitGrignards"));
       md_opts.splitAromaticC =
-          python::extract<bool>(options.attr("splitAromaticC"));
+          nb::cast<bool>(options.attr("splitAromaticC"));
       md_opts.adjustCharges =
-          python::extract<bool>(options.attr("adjustCharges"));
+          nb::cast<bool>(options.attr("adjustCharges"));
       md_opts.removeHapticDummies =
-          python::extract<bool>(options.attr("removeHapticDummies"));
+          nb::cast<bool>(options.attr("removeHapticDummies"));
       md_.reset(new RDKit::MolStandardize::MetalDisconnector(md_opts));
     }
   }
@@ -69,66 +71,46 @@ void setMetalNofHelper(MetalDisconnectorWrap &self, const RDKit::ROMol &mol) {
 }
 }  // namespace
 
-struct metal_wrapper {
-  static void wrap() {
-    python::scope().attr("__doc__") =
-        "Module containing functions for molecular standardization";
+void wrap_metal(nb::module_ &m) {
+  nb::class_<RDKit::MolStandardize::MetalDisconnectorOptions>(
+      m, "MetalDisconnectorOptions", "Metal Disconnector Options")
+      .def(nb::init<>())
+      .def_rw("splitGrignards",
+               &RDKit::MolStandardize::MetalDisconnectorOptions::splitGrignards,
+               "Whether to split Grignard-type complexes. Default false.")
+      .def_rw("splitAromaticC",
+               &RDKit::MolStandardize::MetalDisconnectorOptions::splitAromaticC,
+               "Whether to split metal-aromatic C bonds.  Default false.")
+      .def_rw("adjustCharges",
+               &RDKit::MolStandardize::MetalDisconnectorOptions::adjustCharges,
+               "Whether to adjust charges on ligand atoms.  Default true.")
+      .def_rw("removeHapticDummies",
+               &RDKit::MolStandardize::MetalDisconnectorOptions::
+                   removeHapticDummies,
+               "Whether to remove the dummy atoms representing haptic"
+               " bonds.  Such dummies are bonded to the metal with a"
+               " bond that has the MolFileBondEndPts prop set."
+               "  Default false.");
 
-    std::string docString = "Metal Disconnector Options";
-    python::class_<RDKit::MolStandardize::MetalDisconnectorOptions>(
-        "MetalDisconnectorOptions", docString.c_str(),
-        python::init<>(python::args("self")))
-        .def_readwrite(
-            "splitGrignards",
-            &RDKit::MolStandardize::MetalDisconnectorOptions::splitGrignards,
-            "Whether to split Grignard-type complexes. Default false.")
-        .def_readwrite(
-            "splitAromaticC",
-            &RDKit::MolStandardize::MetalDisconnectorOptions::splitAromaticC,
-            "Whether to split metal-aromatic C bonds.  Default false.")
-        .def_readwrite(
-            "adjustCharges",
-            &RDKit::MolStandardize::MetalDisconnectorOptions::adjustCharges,
-            "Whether to adjust charges on ligand atoms.  Default true.")
-        .def_readwrite("removeHapticDummies",
-                       &RDKit::MolStandardize::MetalDisconnectorOptions::
-                           removeHapticDummies,
-                       "Whether to remove the dummy atoms representing haptic"
-                       " bonds.  Such dummies are bonded to the metal with a"
-                       " bond that has the MolFileBondEndPts prop set."
-                       "  Default false.");
-
-    docString =
-        "a class to disconnect metals that are defined as covalently bonded to"
-        " non-metals";
-    python::class_<MetalDisconnectorWrap, boost::noncopyable>(
-        "MetalDisconnector", docString.c_str(),
-        python::init<python::optional<python::object>>(
-            (python::arg("self"), python::arg("options") = python::object())))
-        .add_property("MetalNof", &getMetalNofHelper,
-                      "SMARTS defining the metals to disconnect if attached to "
-                      "Nitrogen, Oxygen or Fluorine")
-        .add_property(
-            "MetalNon", &getMetalNonHelper,
-            "SMARTS defining the metals to disconnect other inorganic elements")
-        .def(
-            "SetMetalNon", &setMetalNonHelper,
-            (python::arg("self"), python::arg("mol")),
-            "Set the query molecule defining the metals to disconnect from other"
-            " inorganic elements.")
-        .def(
-            "SetMetalNof", &setMetalNofHelper,
-            (python::arg("self"), python::arg("mol")),
-            "Set the query molecule defining the metals to disconnect if attached"
-            " to Nitrogen, Oxygen or Fluorine.")
-        .def("Disconnect", &MetalDisconnectorWrap::disconnect,
-             (python::arg("self"), python::arg("mol")),
-             "performs the disconnection",
-             python::return_value_policy<python::manage_new_object>())
-        .def("DisconnectInPlace", &MetalDisconnectorWrap::disconnectInPlace,
-             (python::arg("self"), python::arg("mol")),
-             "performs the disconnection, modifies the input molecule");
-  }
-};
-
-void wrap_metal() { metal_wrapper::wrap(); }
+  nb::class_<MetalDisconnectorWrap>(
+      m, "MetalDisconnector",
+      "a class to disconnect metals that are defined as covalently bonded to"
+      " non-metals")
+      .def(nb::init<nb::object>(), "options"_a = nb::none())
+      .def_prop_ro("MetalNof", &getMetalNofHelper,
+                   "SMARTS defining the metals to disconnect if attached to "
+                   "Nitrogen, Oxygen or Fluorine")
+      .def_prop_ro(
+          "MetalNon", &getMetalNonHelper,
+          "SMARTS defining the metals to disconnect other inorganic elements")
+      .def("SetMetalNon", &setMetalNonHelper, "mol"_a,
+           "Set the query molecule defining the metals to disconnect from other"
+           " inorganic elements.")
+      .def("SetMetalNof", &setMetalNofHelper, "mol"_a,
+           "Set the query molecule defining the metals to disconnect if "
+           "attached to Nitrogen, Oxygen or Fluorine.")
+      .def("Disconnect", &MetalDisconnectorWrap::disconnect, "mol"_a,
+           "performs the disconnection", nb::rv_policy::take_ownership)
+      .def("DisconnectInPlace", &MetalDisconnectorWrap::disconnectInPlace,
+           "mol"_a, "performs the disconnection, modifies the input molecule");
+}
