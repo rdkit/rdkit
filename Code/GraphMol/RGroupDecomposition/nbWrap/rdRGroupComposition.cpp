@@ -1,4 +1,4 @@
-//  Copyright (c) 2017-2021, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2017-2026, Novartis Institutes for BioMedical Research Inc.
 //  and other RDKit contributors
 //
 //  All rights reserved.
@@ -30,13 +30,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#define NO_IMPORT_ARRAY
-#include <RDBoost/python.h>
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
-#include <boost/python/list.hpp>
-#include <string>
-#include <cmath>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/shared_ptr.h>
 #include <chrono>
 
 #include <RDGeneral/Exceptions.h>
@@ -44,11 +40,16 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 #include <GraphMol/RGroupDecomposition/RGroupUtils.h>
-#include <RDBoost/Wrap.h>
-#include <RDBoost/python_streambuf.h>
+#include <RDBoost/Wrap_nb.h>
 
-namespace python = boost::python;
-using boost_adaptbx::python::streambuf;
+namespace nb = nanobind;
+using namespace nb::literals;
+
+namespace {
+std::shared_ptr<RDKit::ROMol> toStd(const RDKit::ROMOL_SPTR &bptr) {
+  return {bptr.get(), [b = bptr](RDKit::ROMol *) {}};
+}
+}  // namespace
 
 namespace RDKit {
 
@@ -56,21 +57,21 @@ class RGroupDecompositionHelper {
   std::unique_ptr<RGroupDecomposition> decomp;
 
  public:
-  RGroupDecompositionHelper(python::object cores,
+  RGroupDecompositionHelper(nb::object cores,
                             const RGroupDecompositionParameters &params =
                                 RGroupDecompositionParameters()) {
-    python::extract<ROMol> isROMol(cores);
-    if (isROMol.check()) {
-      decomp.reset(new RGroupDecomposition(isROMol(), params));
-    } else {
+    try {
+      const ROMol &mol = nb::cast<const ROMol &>(cores);
+      decomp.reset(new RGroupDecomposition(mol, params));
+    } catch (const nb::cast_error &) {
       MOL_SPTR_VECT coreMols;
-      python::stl_input_iterator<ROMOL_SPTR> iter(cores), end;
-      while (iter != end) {
-        if (!*iter) {
-          throw_value_error("reaction called with None reactants");
+      for (nb::handle h : nb::iter(cores)) {
+        auto *mol_ptr = nb::cast<ROMol *>(h);
+        if (!mol_ptr) {
+          throw nb::value_error("reaction called with None reactants");
         }
-        coreMols.push_back(*iter);
-        ++iter;
+        ROMOL_SPTR sptr(mol_ptr, [](ROMol *) {});
+        coreMols.push_back(sptr);
       }
       decomp.reset(new RGroupDecomposition(coreMols, params));
     }
@@ -80,54 +81,57 @@ class RGroupDecompositionHelper {
     NOGIL gil;
     return decomp->add(mol);
   }
-  int GetMatchingCoreIdx(const ROMol &mol, python::object &matches) {
+
+  int GetMatchingCoreIdx(const ROMol &mol, nb::object matches) {
     std::vector<MatchVectType> matchVect;
     int coreIdx;
     {
       NOGIL gil;
       coreIdx = decomp->getMatchingCoreIdx(mol, &matchVect);
     }
-    if (!matches.is_none() && PySequence_Check(matches.ptr())) {
-      auto &matchesList = reinterpret_cast<python::list &>(matches);
+    if (!matches.is_none() && nb::isinstance<nb::list>(matches)) {
       for (const auto &match : matchVect) {
-        python::list atomMap;
+        nb::list atomMap;
         for (const auto &pair : match) {
-          atomMap.append(python::make_tuple(pair.first, pair.second));
+          atomMap.append(nb::make_tuple(pair.first, pair.second));
         }
-        matchesList.append(python::tuple(atomMap));
+        matches.attr("append")(nb::tuple(atomMap));
       }
     }
     return coreIdx;
   }
+
   bool Process() {
     NOGIL gil;
     return decomp->process();
   }
-  python::tuple ProcessAndScore() {
+
+  nb::tuple ProcessAndScore() {
     NOGIL gil;
     auto result = decomp->processAndScore();
-    return python::make_tuple(result.success, result.score);
+    return nb::make_tuple(result.success, result.score);
   }
 
-  python::list GetRGroupLabels() {
-    python::list result;
+  nb::list GetRGroupLabels() {
+    nb::list result;
     std::vector<std::string> labels = decomp->getRGroupLabels();
-    for (auto label : labels) {
+    for (const auto &label : labels) {
       result.append(label);
     }
     return result;
   }
-  python::list GetRGroupsAsRows(bool asSmiles = false) {
+
+  nb::list GetRGroupsAsRows(bool asSmiles = false) {
     const RGroupRows &groups = decomp->getRGroupsAsRows();
-    python::list result;
+    nb::list result;
 
     for (const auto &side_chains : groups) {
-      python::dict dict;
+      nb::dict dict;
       for (const auto &[lbl, mol] : side_chains) {
         if (asSmiles) {
-          dict[lbl] = MolToSmiles(*mol, true);
+          dict[nb::cast(lbl)] = nb::cast(MolToSmiles(*mol, true));
         } else {
-          dict[lbl] = mol;
+          dict[nb::cast(lbl)] = nb::cast(toStd(mol));
         }
       }
       result.append(dict);
@@ -135,55 +139,55 @@ class RGroupDecompositionHelper {
     return result;
   }
 
-  python::dict GetRGroupsAsColumns(bool asSmiles = false) {
-    python::dict result;
+  nb::dict GetRGroupsAsColumns(bool asSmiles = false) {
+    nb::dict result;
 
     RGroupColumns groups = decomp->getRGroupsAsColumns();
 
     for (RGroupColumns::const_iterator it = groups.begin(); it != groups.end();
          ++it) {
-      python::list col;
+      nb::list col;
 
       for (const auto &cit : it->second) {
         if (asSmiles) {
-          col.append(MolToSmiles(*cit, true));
+          col.append(nb::cast(MolToSmiles(*cit, true)));
         } else {
-          col.append(cit);
+          col.append(nb::cast(toStd(cit)));
         }
       }
-      result[it->first] = col;
+      result[nb::cast(it->first)] = col;
     }
     return result;
   }
 };
 
-python::object RGroupDecomp(python::object cores, python::object mols,
-                            bool asSmiles = false, bool asRows = true,
-                            const RGroupDecompositionParameters &options =
-                                RGroupDecompositionParameters()) {
+nb::object RGroupDecomp(nb::object cores, nb::object mols,
+                        bool asSmiles = false, bool asRows = true,
+                        const RGroupDecompositionParameters &options =
+                            RGroupDecompositionParameters()) {
   auto t0 = std::chrono::steady_clock::now();
   RGroupDecompositionHelper decomp(cores, options);
-  python::list unmatched;
+  nb::list unmatched;
 
-  python::stl_input_iterator<ROMOL_SPTR> iter(mols), end;
   unsigned int idx = 0;
-  while (iter != end) {
-    if (!*iter) {
-      throw_value_error("reaction called with None reactants");
+  for (nb::handle h : nb::iter(mols)) {
+    auto *mol_ptr = nb::cast<ROMol *>(h);
+    if (!mol_ptr) {
+      throw nb::value_error("reaction called with None reactants");
     }
-    if (decomp.Add(*(*iter)) == -1) {
+    ROMOL_SPTR sptr(mol_ptr, [](ROMol *) {});
+    if (decomp.Add(*sptr) == -1) {
       unmatched.append(idx);
     }
-    ++iter;
     ++idx;
     checkForTimeout(t0, options.timeout);
   }
 
   decomp.Process();
   if (asRows) {
-    return make_tuple(decomp.GetRGroupsAsRows(asSmiles), unmatched);
+    return nb::cast(nb::make_tuple(decomp.GetRGroupsAsRows(asSmiles), unmatched));
   } else {
-    return make_tuple(decomp.GetRGroupsAsColumns(asSmiles), unmatched);
+    return nb::cast(nb::make_tuple(decomp.GetRGroupsAsColumns(asSmiles), unmatched));
   }
 }
 
@@ -193,270 +197,240 @@ void relabelMappedDummiesHelper(ROMol &mol, unsigned int inputLabels,
                        static_cast<RGroupLabelling>(outputLabels));
 }
 
-struct rgroupdecomp_wrapper {
-  static void wrap() {
-    bool noproxy = true;
-    RegisterVectorConverter<RDKit::ROMOL_SPTR>("MOL_SPTR_VECT", noproxy);
-
-    std::string docString = "";
-    python::enum_<RDKit::RGroupLabels>("RGroupLabels")
-        .value("IsotopeLabels", RDKit::IsotopeLabels)
-        .value("AtomMapLabels", RDKit::AtomMapLabels)
-        .value("AtomIndexLabels", RDKit::AtomIndexLabels)
-        .value("RelabelDuplicateLabels", RDKit::RelabelDuplicateLabels)
-        .value("MDLRGroupLabels", RDKit::MDLRGroupLabels)
-        .value("DummyAtomLabels", RDKit::DummyAtomLabels)
-        .value("AutoDetect", RDKit::AutoDetect)
-        .export_values();
-
-    python::enum_<RDKit::RGroupMatching>("RGroupMatching")
-        .value("Greedy", RDKit::Greedy)
-        .value("GreedyChunks", RDKit::GreedyChunks)
-        .value("Exhaustive", RDKit::Exhaustive)
-        .value("NoSymmetrization", RDKit::NoSymmetrization)
-        .value("GA", RDKit::GA)
-        .export_values();
-
-    python::enum_<RDKit::RGroupLabelling>("RGroupLabelling")
-        .value("AtomMap", RDKit::AtomMap)
-        .value("Isotope", RDKit::Isotope)
-        .value("MDLRGroup", RDKit::MDLRGroup)
-        .export_values();
-
-    python::enum_<RDKit::RGroupCoreAlignment>("RGroupCoreAlignment")
-        // DEPRECATED, remove the following line in release 2021.03
-        .value("None", RDKit::NoAlignment)
-        .value("NoAlignment", RDKit::NoAlignment)
-        .value("MCS", RDKit::MCS)
-        .export_values();
-
-    python::enum_<RDKit::RGroupScore>("RGroupScore")
-        .value("Match", RDKit::Match)
-        .value("FingerprintVariance", RDKit::FingerprintVariance)
-        .export_values();
-
-    docString =
-        "RGroupDecompositionParameters controls how the RGroupDecomposition "
-        "sets labelling and matches structures\n"
-        "  OPTIONS:\n"
-        "    - RGroupCoreAlignment: can be one of RGroupCoreAlignment.None_ or "
-        "RGroupCoreAlignment.MCS\n"
-        "                           If set to MCS, cores labels are mapped to "
-        "each other using their\n"
-        "                           Maximum common substructure overlap.\n"
-        "    - RGroupLabels: optionally set where the rgroup labels to use are "
-        "encoded.\n"
-        "                     RGroupLabels.IsotopeLabels - labels are stored "
-        "on isotopes\n"
-        "                     RGroupLabels.AtomMapLabels - labels are stored "
-        "on atommaps\n"
-        "                     RGroupLabels.MDLRGroupLabels - labels are stored "
-        "on MDL R-groups\n"
-        "                     RGroupLabels.DummyAtomLabels - labels are stored "
-        "on dummy atoms\n"
-        "                     RGroupLabels.AtomIndexLabels - use the atom "
-        "index "
-        "as the label\n"
-        "                     RGroupLabels.RelabelDuplicateLabels - fix any "
-        "duplicate labels\n"
-        "                     RGroupLabels.AutoDetect - auto detect the label "
-        "[default]\n"
-        "       Note: in all cases, any rgroups found on unlabelled atoms will "
-        "be automatically\n"
-        "              labelled.\n"
-        "    - RGroupLabelling: choose where the rlabels are stored on the "
-        "decomposition\n"
-        "                        RGroupLabelling.AtomMap - store rgroups as atom "
-        "maps (for smiles)\n"
-        "                        RGroupLabelling.Isotope - store rgroups on the "
-        "isotope\n"
-        "                        RGroupLabelling.MDLRGroup - store rgroups as mdl "
-        "rgroups (for molblocks)\n"
-        "                       default: AtomMap | MDLRGroup\n"
-        "    - onlyMatchAtRGroups: only allow rgroup decomposition at the "
-        "specified rgroups\n"
-        "    - removeAllHydrogenRGroups: remove all user-defined rgroups that "
-        "only have hydrogens\n"
-        "    - removeAllHydrogenRGroupsAndLabels: remove all user-defined "
-        "rgroups that only have hydrogens, and also remove the corresponding "
-        "labels from the core\n"
-        "    - removeHydrogensPostMatch: remove all hydrogens from the output "
-        "molecules\n"
-        "    - allowNonTerminalRGroups: allow labelled Rgroups of degree 2 or "
-        "more\n"
-        "    - doTautomers: match all tautomers of a core against each "
-        "input structure\n"
-        "    - doEnumeration: expand input cores into enumerated mol bundles\n"
-        "    - allowMultipleRGroupsOnUnlabelled: permit more than one rgroup to "
-        "be attached to an unlabelled core atom\n"
-        "    - allowMultipleCoresInSameMol: permit a core to match more than"
-        " once in the same molecule if the sets of matched atoms are not equal"
-        " (default=False)";
-    python::class_<RDKit::RGroupDecompositionParameters>(
-        "RGroupDecompositionParameters", docString.c_str(),
-        python::init<>(python::args("self"), "Constructor, takes no arguments"))
-
-        .def_readwrite("labels", &RDKit::RGroupDecompositionParameters::labels)
-        .def_readwrite("matchingStrategy",
-                       &RDKit::RGroupDecompositionParameters::matchingStrategy)
-        .def_readwrite("scoreMethod",
-                       &RDKit::RGroupDecompositionParameters::scoreMethod)
-        .def_readwrite("rgroupLabelling",
-                       &RDKit::RGroupDecompositionParameters::rgroupLabelling)
-        .def_readwrite("alignment",
-                       &RDKit::RGroupDecompositionParameters::alignment)
-        .def_readwrite("chunkSize",
-                       &RDKit::RGroupDecompositionParameters::chunkSize)
-        .def_readwrite(
-            "onlyMatchAtRGroups",
-            &RDKit::RGroupDecompositionParameters::onlyMatchAtRGroups)
-        .def_readwrite(
-            "removeAllHydrogenRGroups",
-            &RDKit::RGroupDecompositionParameters::removeAllHydrogenRGroups)
-        .def_readwrite(
-            "removeHydrogensPostMatch",
-            &RDKit::RGroupDecompositionParameters::removeHydrogensPostMatch)
-        .def_readwrite("timeout",
-                       &RDKit::RGroupDecompositionParameters::timeout)
-        .def_readwrite("gaPopulationSize",
-                       &RDKit::RGroupDecompositionParameters::gaPopulationSize)
-        .def_readwrite(
-            "gaMaximumOperations",
-            &RDKit::RGroupDecompositionParameters::gaMaximumOperations)
-        .def_readwrite("gaNumberOperationsWithoutImprovement",
-                       &RDKit::RGroupDecompositionParameters::
-                           gaNumberOperationsWithoutImprovement)
-        .def_readwrite("gaRandomSeed",
-                       &RDKit::RGroupDecompositionParameters::gaRandomSeed)
-        .def_readwrite("gaNumberRuns",
-                       &RDKit::RGroupDecompositionParameters::gaNumberRuns)
-        .def_readwrite("gaParallelRuns",
-                       &RDKit::RGroupDecompositionParameters::gaParallelRuns)
-        .def_readwrite(
-            "allowNonTerminalRGroups",
-            &RDKit::RGroupDecompositionParameters::allowNonTerminalRGroups)
-        .def_readwrite("removeAllHydrogenRGroupsAndLabels",
-                       &RDKit::RGroupDecompositionParameters::
-                           removeAllHydrogenRGroupsAndLabels)
-        .def_readwrite("allowMultipleRGroupsOnUnlabelled",
-                       &RDKit::RGroupDecompositionParameters::
-                           allowMultipleRGroupsOnUnlabelled)
-        .def_readwrite(
-            "allowMultipleCoresInSameMol",
-            &RDKit::RGroupDecompositionParameters::allowMultipleCoresInSameMol)
-        .def_readwrite("doTautomers",
-                       &RDKit::RGroupDecompositionParameters::doTautomers)
-        .def_readwrite("doEnumeration",
-                       &RDKit::RGroupDecompositionParameters::doEnumeration)
-        .def_readonly(
-            "substructMatchParams",
-            &RDKit::RGroupDecompositionParameters::substructmatchParams)
-        .def_readwrite(
-            "includeTargetMolInResults",
-            &RDKit::RGroupDecompositionParameters::includeTargetMolInResults)
-        .def("__setattr__", &safeSetattr);
-
-    python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
-        "RGroupDecomposition",
-        python::init<python::object>(
-            python::args("self", "cores"),
-            "Construct from a molecule or sequence of molecules"))
-        .def(
-            python::init<python::object, const RGroupDecompositionParameters &>(
-                python::args("self", "cores", "params"),
-                "Construct from a molecule or sequence of molecules and a "
-                "parameters object"))
-        .def("Add", &RGroupDecompositionHelper::Add,
-             python::args("self", "mol"))
-        .def("GetMatchingCoreIdx",
-             &RGroupDecompositionHelper::GetMatchingCoreIdx,
-             ((python::arg("self"), python::arg("mol")),
-              python::arg("matches") = python::object()))
-        .def("Process", &RGroupDecompositionHelper::Process,
-             python::args("self"),
-             "Process the rgroups (must be done prior to "
-             "GetRGroupsAsRows/Columns and GetRGroupLabels)")
-        .def("ProcessAndScore", &RGroupDecompositionHelper::ProcessAndScore,
-             python::args("self"),
-             "Process the rgroups and returns the score (must be done prior to "
-             "GetRGroupsAsRows/Columns and GetRGroupLabels)")
-        .def("GetRGroupLabels", &RGroupDecompositionHelper::GetRGroupLabels,
-             python::args("self"),
-             "Return the current list of found rgroups.\n"
-             "Note, Process() should be called first")
-        .def("GetRGroupsAsRows", &RGroupDecompositionHelper::GetRGroupsAsRows,
-             (python::arg("self"), python::arg("asSmiles") = false),
-             "Return the rgroups as rows (note: can be fed directly into a "
-             "pandas datatable)\n"
-             "  ARGUMENTS:\n"
-             "   - asSmiles: if True return smiles strings, otherwise return "
-             "molecules [default: False]\n"
-             "    Row structure:\n"
-             "       rows[idx] = {rgroup_label: molecule_or_smiles}\n")
-        .def("GetRGroupsAsColumns",
-             &RGroupDecompositionHelper::GetRGroupsAsColumns,
-             (python::arg("self"), python::arg("asSmiles") = false),
-             "Return the rgroups as columns (note: can be fed directly into a "
-             "pandas datatable)\n"
-             "  ARGUMENTS:\n"
-             "   - asSmiles: if True return smiles strings, otherwise return "
-             "molecules [default: False]\n"
-             "    Column structure:\n"
-             "       columns[rgroup_label] = [ mols_or_smiles ]\n");
-
-    docString =
-        "Decompose a collection of molecules into their Rgroups\n"
-        "  ARGUMENTS:\n"
-        "    - cores: a set of cores from most to least specific.\n"
-        "             See RGroupDecompositionParameters for more details\n"
-        "             on how the cores can be labelled\n"
-        "    - mols: the molecules to be decomposed\n"
-        "    - asSmiles: if True return smiles strings, otherwise return "
-        "molecules [default: False]\n"
-        "    - asRows: return the results as rows (default) otherwise return "
-        "columns\n"
-        "    - options: RGroupDecompositionParameters object that defines "
-        "the parameters for the decomposition.\n"
-        "             See RGroupDecompositionParameters for defaults\n"
-        "\n"
-        "  RETURNS: row_or_column_results, unmatched\n"
-        "\n"
-        "    Row structure:\n"
-        "       rows[idx] = {rgroup_label: molecule_or_smiles}\n"
-        "    Column structure:\n"
-        "       columns[rgroup_label] = [ mols_or_smiles ]\n"
-        "\n"
-        "    unmatched is a vector of indices in the input mols that were not "
-        "matched.\n";
-    python::def("RGroupDecompose", RGroupDecomp,
-                (python::arg("cores"), python::arg("mols"),
-                 python::arg("asSmiles") = false, python::arg("asRows") = true,
-                 python::arg("options") = RGroupDecompositionParameters()),
-                docString.c_str());
-
-    docString =
-        "Relabel dummy atoms bearing an R-group mapping (as\n"
-        "atom map number, isotope or MDLRGroup label) such that\n"
-        "they will be displayed by the rendering code as R# rather\n"
-        "than #*, *:#, #*:#, etc. By default, only the MDLRGroup label\n"
-        "is retained on output; this may be configured through the\n"
-        "outputLabels parameter.\n"
-        "In case there are multiple potential R-group mappings,\n"
-        "the priority on input is Atom map number > Isotope > MDLRGroup.\n"
-        "The inputLabels parameter allows to configure which mappings\n"
-        "are taken into consideration.\n";
-    python::def("RelabelMappedDummies", relabelMappedDummiesHelper,
-                (python::arg("mol"),
-                 python::arg("inputLabels") = static_cast<RGroupLabelling>(
-                     AtomMap | Isotope | MDLRGroup),
-                 python::arg("outputLabels") = MDLRGroup),
-                docString.c_str());
-  };
-};
 }  // namespace RDKit
 
-BOOST_PYTHON_MODULE(rdRGroupDecomposition) {
-  python::scope().attr("__doc__") =
-      "Module containing RGroupDecomposition classes and functions.";
-  RDKit::rgroupdecomp_wrapper::wrap();
+NB_MODULE(rdRGroupDecomposition, m) {
+  m.doc() = R"DOC(TEST!!! Module containing RGroupDecomposition classes and functions.)DOC";
+
+  nb::enum_<RDKit::RGroupLabels>(m, "RGroupLabels", nb::is_arithmetic())
+      .value("IsotopeLabels", RDKit::IsotopeLabels)
+      .value("AtomMapLabels", RDKit::AtomMapLabels)
+      .value("AtomIndexLabels", RDKit::AtomIndexLabels)
+      .value("RelabelDuplicateLabels", RDKit::RelabelDuplicateLabels)
+      .value("MDLRGroupLabels", RDKit::MDLRGroupLabels)
+      .value("DummyAtomLabels", RDKit::DummyAtomLabels)
+      .value("AutoDetect", RDKit::AutoDetect);
+
+  nb::enum_<RDKit::RGroupMatching>(m, "RGroupMatching", nb::is_arithmetic())
+      .value("Greedy", RDKit::Greedy)
+      .value("GreedyChunks", RDKit::GreedyChunks)
+      .value("Exhaustive", RDKit::Exhaustive)
+      .value("NoSymmetrization", RDKit::NoSymmetrization)
+      .value("GA", RDKit::GA);
+
+  nb::enum_<RDKit::RGroupLabelling>(m, "RGroupLabelling", nb::is_arithmetic())
+      .value("AtomMap", RDKit::AtomMap)
+      .value("Isotope", RDKit::Isotope)
+      .value("MDLRGroup", RDKit::MDLRGroup);
+
+  nb::enum_<RDKit::RGroupCoreAlignment>(m, "RGroupCoreAlignment",
+                                        nb::is_arithmetic())
+      // DEPRECATED, remove the following line in release 2021.03
+      .value("None", RDKit::NoAlignment)
+      .value("NoAlignment", RDKit::NoAlignment)
+      .value("MCS", RDKit::MCS);
+
+  nb::enum_<RDKit::RGroupScore>(m, "RGroupScore", nb::is_arithmetic())
+      .value("Match", RDKit::Match)
+      .value("FingerprintVariance", RDKit::FingerprintVariance);
+
+  nb::class_<RDKit::RGroupDecompositionParameters>(
+      m, "RGroupDecompositionParameters",
+      R"DOC(RGroupDecompositionParameters controls how the RGroupDecomposition
+sets labelling and matches structures
+OPTIONS:
+  - RGroupCoreAlignment: can be one of RGroupCoreAlignment.None_ or
+RGroupCoreAlignment.MCS
+                         If set to MCS, cores labels are mapped to
+each other using their
+                         Maximum common substructure overlap.
+  - RGroupLabels: optionally set where the rgroup labels to use are
+encoded.
+                   RGroupLabels.IsotopeLabels - labels are stored
+on isotopes
+                   RGroupLabels.AtomMapLabels - labels are stored
+on atommaps
+                   RGroupLabels.MDLRGroupLabels - labels are stored
+on MDL R-groups
+                   RGroupLabels.DummyAtomLabels - labels are stored
+on dummy atoms
+                   RGroupLabels.AtomIndexLabels - use the atom index
+as the label
+                   RGroupLabels.RelabelDuplicateLabels - fix any
+duplicate labels
+                   RGroupLabels.AutoDetect - auto detect the label
+[default]
+     Note: in all cases, any rgroups found on unlabelled atoms will
+be automatically
+            labelled.
+  - RGroupLabelling: choose where the rlabels are stored on the
+decomposition
+                      RGroupLabelling.AtomMap - store rgroups as atom
+maps (for smiles)
+                      RGroupLabelling.Isotope - store rgroups on the
+isotope
+                      RGroupLabelling.MDLRGroup - store rgroups as mdl
+rgroups (for molblocks)
+                     default: AtomMap | MDLRGroup
+  - onlyMatchAtRGroups: only allow rgroup decomposition at the
+specified rgroups
+  - removeAllHydrogenRGroups: remove all user-defined rgroups that
+only have hydrogens
+  - removeAllHydrogenRGroupsAndLabels: remove all user-defined
+rgroups that only have hydrogens, and also remove the corresponding
+labels from the core
+  - removeHydrogensPostMatch: remove all hydrogens from the output
+molecules
+  - allowNonTerminalRGroups: allow labelled Rgroups of degree 2 or
+more
+  - doTautomers: match all tautomers of a core against each
+input structure
+  - doEnumeration: expand input cores into enumerated mol bundles
+  - allowMultipleRGroupsOnUnlabelled: permit more than one rgroup to
+be attached to an unlabelled core atom
+  - allowMultipleCoresInSameMol: permit a core to match more than
+once in the same molecule if the sets of matched atoms are not equal
+(default=False))DOC")
+      .def(nb::init<>(), "Constructor, takes no arguments")
+      .def_rw("labels", &RDKit::RGroupDecompositionParameters::labels)
+      .def_rw("matchingStrategy",
+              &RDKit::RGroupDecompositionParameters::matchingStrategy)
+      .def_rw("scoreMethod",
+              &RDKit::RGroupDecompositionParameters::scoreMethod)
+      .def_rw("rgroupLabelling",
+              &RDKit::RGroupDecompositionParameters::rgroupLabelling)
+      .def_rw("alignment",
+              &RDKit::RGroupDecompositionParameters::alignment)
+      .def_rw("chunkSize",
+              &RDKit::RGroupDecompositionParameters::chunkSize)
+      .def_rw("onlyMatchAtRGroups",
+              &RDKit::RGroupDecompositionParameters::onlyMatchAtRGroups)
+      .def_rw("removeAllHydrogenRGroups",
+              &RDKit::RGroupDecompositionParameters::removeAllHydrogenRGroups)
+      .def_rw("removeHydrogensPostMatch",
+              &RDKit::RGroupDecompositionParameters::removeHydrogensPostMatch)
+      .def_rw("timeout",
+              &RDKit::RGroupDecompositionParameters::timeout)
+      .def_rw("gaPopulationSize",
+              &RDKit::RGroupDecompositionParameters::gaPopulationSize)
+      .def_rw("gaMaximumOperations",
+              &RDKit::RGroupDecompositionParameters::gaMaximumOperations)
+      .def_rw("gaNumberOperationsWithoutImprovement",
+              &RDKit::RGroupDecompositionParameters::
+                  gaNumberOperationsWithoutImprovement)
+      .def_rw("gaRandomSeed",
+              &RDKit::RGroupDecompositionParameters::gaRandomSeed)
+      .def_rw("gaNumberRuns",
+              &RDKit::RGroupDecompositionParameters::gaNumberRuns)
+      .def_rw("gaParallelRuns",
+              &RDKit::RGroupDecompositionParameters::gaParallelRuns)
+      .def_rw("allowNonTerminalRGroups",
+              &RDKit::RGroupDecompositionParameters::allowNonTerminalRGroups)
+      .def_rw("removeAllHydrogenRGroupsAndLabels",
+              &RDKit::RGroupDecompositionParameters::
+                  removeAllHydrogenRGroupsAndLabels)
+      .def_rw("allowMultipleRGroupsOnUnlabelled",
+              &RDKit::RGroupDecompositionParameters::
+                  allowMultipleRGroupsOnUnlabelled)
+      .def_rw("allowMultipleCoresInSameMol",
+              &RDKit::RGroupDecompositionParameters::allowMultipleCoresInSameMol)
+      .def_rw("doTautomers",
+              &RDKit::RGroupDecompositionParameters::doTautomers)
+      .def_rw("doEnumeration",
+              &RDKit::RGroupDecompositionParameters::doEnumeration)
+      .def_ro("substructMatchParams",
+              &RDKit::RGroupDecompositionParameters::substructmatchParams)
+      .def_rw("includeTargetMolInResults",
+              &RDKit::RGroupDecompositionParameters::includeTargetMolInResults)
+      .def("__setattr__", &safeSetattr);
+
+  nb::class_<RDKit::RGroupDecompositionHelper>(m, "RGroupDecomposition")
+      .def(nb::init<nb::object>(), "cores"_a,
+           "Construct from a molecule or sequence of molecules")
+      .def(nb::init<nb::object, const RDKit::RGroupDecompositionParameters &>(),
+           "cores"_a, "params"_a,
+           "Construct from a molecule or sequence of molecules and a "
+           "parameters object")
+      .def("Add", &RDKit::RGroupDecompositionHelper::Add, "mol"_a)
+      .def("GetMatchingCoreIdx",
+           &RDKit::RGroupDecompositionHelper::GetMatchingCoreIdx,
+           "mol"_a, "matches"_a = nb::none())
+      .def("Process", &RDKit::RGroupDecompositionHelper::Process,
+           "Process the rgroups (must be done prior to "
+           "GetRGroupsAsRows/Columns and GetRGroupLabels)")
+      .def("ProcessAndScore",
+           &RDKit::RGroupDecompositionHelper::ProcessAndScore,
+           "Process the rgroups and returns the score (must be done prior to "
+           "GetRGroupsAsRows/Columns and GetRGroupLabels)")
+      .def("GetRGroupLabels",
+           &RDKit::RGroupDecompositionHelper::GetRGroupLabels,
+           R"DOC(Return the current list of found rgroups.
+Note, Process() should be called first)DOC")
+      .def("GetRGroupsAsRows",
+           &RDKit::RGroupDecompositionHelper::GetRGroupsAsRows,
+           "asSmiles"_a = false,
+           R"DOC(Return the rgroups as rows (note: can be fed directly into a
+pandas datatable)
+ARGUMENTS:
+ - asSmiles: if True return smiles strings, otherwise return
+molecules [default: False]
+  Row structure:
+     rows[idx] = {rgroup_label: molecule_or_smiles}
+)DOC")
+      .def("GetRGroupsAsColumns",
+           &RDKit::RGroupDecompositionHelper::GetRGroupsAsColumns,
+           "asSmiles"_a = false,
+           R"DOC(Return the rgroups as columns (note: can be fed directly into a
+pandas datatable)
+ARGUMENTS:
+ - asSmiles: if True return smiles strings, otherwise return
+molecules [default: False]
+  Column structure:
+     columns[rgroup_label] = [ mols_or_smiles ]
+)DOC");
+
+  m.def("RGroupDecompose", &RDKit::RGroupDecomp,
+        "cores"_a, "mols"_a, "asSmiles"_a = false, "asRows"_a = true,
+        "options"_a = RDKit::RGroupDecompositionParameters(),
+        R"DOC(Decompose a collection of molecules into their Rgroups
+ARGUMENTS:
+  - cores: a set of cores from most to least specific.
+           See RGroupDecompositionParameters for more details
+           on how the cores can be labelled
+  - mols: the molecules to be decomposed
+  - asSmiles: if True return smiles strings, otherwise return
+molecules [default: False]
+  - asRows: return the results as rows (default) otherwise return
+columns
+  - options: RGroupDecompositionParameters object that defines
+the parameters for the decomposition.
+           See RGroupDecompositionParameters for defaults
+
+RETURNS: row_or_column_results, unmatched
+
+  Row structure:
+     rows[idx] = {rgroup_label: molecule_or_smiles}
+  Column structure:
+     columns[rgroup_label] = [ mols_or_smiles ]
+
+  unmatched is a vector of indices in the input mols that were not
+matched.
+)DOC");
+
+  m.def("RelabelMappedDummies", &RDKit::relabelMappedDummiesHelper,
+        "mol"_a,
+        "inputLabels"_a = static_cast<unsigned int>(
+            RDKit::AtomMap | RDKit::Isotope | RDKit::MDLRGroup),
+        "outputLabels"_a = static_cast<unsigned int>(RDKit::MDLRGroup),
+        R"DOC(Relabel dummy atoms bearing an R-group mapping (as
+atom map number, isotope or MDLRGroup label) such that
+they will be displayed by the rendering code as R# rather
+than #*, *:#, #*:#, etc. By default, only the MDLRGroup label
+is retained on output; this may be configured through the
+outputLabels parameter.
+In case there are multiple potential R-group mappings,
+the priority on input is Atom map number > Isotope > MDLRGroup.
+The inputLabels parameter allows to configure which mappings
+are taken into consideration.
+)DOC");
 }
