@@ -1,29 +1,32 @@
 //
 // Created by Gareth Jones on 5/30/2020.
 //
-// Copyright 2020-2022 Schrodinger, Inc and other RDKit contributors
+// Copyright 2020-2026 Schrodinger, Inc and other RDKit contributors
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 
-#include <RDBoost/Wrap.h>
-#include <RDBoost/python.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/shared_ptr.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
+#include <nanobind/stl/tuple.h>
+
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
-#include <GraphMol/Wrap/substructmethods.h>
-#include <RDBoost/python_streambuf.h>
+#include <GraphMol/nbWrap/substructmethods.h>
+#include <RDBoost/python_streambuf_nb.h>
 
-#define PY_ARRAY_UNIQUE_SYMBOL rdtautomerquery_array_API
-
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 using boost_adaptbx::python::streambuf;
 using namespace RDKit;
 
 namespace {
 
-TautomerQuery *createDefaultTautomerQuery(const ROMol &mol) {
-  return TautomerQuery::fromMol(mol);
+std::shared_ptr<RDKit::ROMol> toStd(const RDKit::ROMOL_SPTR &bptr) {
+  return {bptr.get(), [b = bptr](RDKit::ROMol *) {}};
 }
 
 bool tautomerIsSubstructOf(const TautomerQuery &self, const ROMol &target,
@@ -40,61 +43,54 @@ bool tautomerIsSubstructOfWithParams(const TautomerQuery &self,
   return helpHasSubstructMatch(target, self, params);
 }
 
-PyObject *tautomerGetSubstructMatch(const TautomerQuery &self,
-                                    const ROMol &target,
-                                    bool useChirality = false,
-                                    bool useQueryQueryMatches = false) {
+std::vector<int> tautomerGetSubstructMatch(const TautomerQuery &self,
+                                           const ROMol &target,
+                                           bool useChirality = false,
+                                           bool useQueryQueryMatches = false) {
   return GetSubstructMatch(target, self, useChirality, useQueryQueryMatches);
 }
 
-PyObject *tautomerGetSubstructMatchWithParams(
+std::vector<int> tautomerGetSubstructMatchWithParams(
     const TautomerQuery &self, const ROMol &target,
     const SubstructMatchParameters &params) {
   return helpGetSubstructMatch(target, self, params);
 }
 
-PyObject *tautomerGetSubstructMatchesWithParams(
+std::vector<std::vector<int>> tautomerGetSubstructMatchesWithParams(
     const TautomerQuery &self, const ROMol &target,
     const SubstructMatchParameters &params) {
   return helpGetSubstructMatches(target, self, params);
 }
 
-PyObject *tautomerGetSubstructMatches(const TautomerQuery &self,
-                                      const ROMol &target, bool uniquify = true,
-                                      bool useChirality = false,
-                                      bool useQueryQueryMatches = false,
-                                      unsigned int maxMatches = 1000) {
+std::vector<std::vector<int>> tautomerGetSubstructMatches(
+    const TautomerQuery &self, const ROMol &target, bool uniquify = true,
+    bool useChirality = false, bool useQueryQueryMatches = false,
+    unsigned int maxMatches = 1000) {
   return GetSubstructMatches(target, self, uniquify, useChirality,
                              useQueryQueryMatches, maxMatches);
 }
 
-PyObject *getTautomers(const TautomerQuery &self) {
-  auto tauts = self.getTautomers();
-  auto nTauts = tauts.size();
-  auto tuple = PyTuple_New(nTauts);
-  for (size_t i = 0; i < nTauts; i++) {
-    PyTuple_SetItem(tuple, i,
-                    python::converter::shared_ptr_to_python(tauts[i]));
-  }
-  return tuple;
+std::vector<std::shared_ptr<RDKit::ROMol>> getTautomers(
+    const TautomerQuery &self) {
+  std::vector<std::shared_ptr<RDKit::ROMol>> out;
+  for (const auto &sptr : self.getTautomers()) out.push_back(toStd(sptr));
+  return out;
 }
 
-PyObject *matchesWithTautomersToTuple(std::vector<MatchVectType> &matches,
-                                      const MOL_SPTR_VECT &matchingTautomers) {
-  int const numberMatches = matches.size();
-  PyObject *res = PyTuple_New(numberMatches);
-  for (int idx = 0; idx < numberMatches; idx++) {
-    PyObject *pair = PyTuple_New(2);
-    PyTuple_SetItem(pair, 0, convertMatches(matches[idx]));
-    PyTuple_SetItem(
-        pair, 1,
-        python::converter::shared_ptr_to_python(matchingTautomers[idx]));
-    PyTuple_SetItem(res, idx, pair);
+// Returns a list of (match, tautomer) pairs
+std::vector<std::tuple<std::vector<int>, std::shared_ptr<RDKit::ROMol>>>
+matchesWithTautomersToList(std::vector<MatchVectType> &matches,
+                           const MOL_SPTR_VECT &matchingTautomers) {
+  std::vector<std::tuple<std::vector<int>, std::shared_ptr<RDKit::ROMol>>> res;
+  res.reserve(matches.size());
+  for (size_t idx = 0; idx < matches.size(); ++idx) {
+    res.emplace_back(convertMatch(matches[idx]), toStd(matchingTautomers[idx]));
   }
   return res;
 }
 
-PyObject *tautomerGetSubstructMatchesWithTautomersWithParams(
+std::vector<std::tuple<std::vector<int>, std::shared_ptr<RDKit::ROMol>>>
+tautomerGetSubstructMatchesWithTautomersWithParams(
     const TautomerQuery &self, const ROMol &target,
     const SubstructMatchParameters &params) {
   std::vector<MatchVectType> matches;
@@ -106,17 +102,19 @@ PyObject *tautomerGetSubstructMatchesWithTautomersWithParams(
     matches = self.substructOf(target, params, &matchingTautomers);
   } else {
     NOGIL gil;
-
     matches = self.substructOf(target, params, &matchingTautomers);
   }
 
-  return matchesWithTautomersToTuple(matches, matchingTautomers);
+  return matchesWithTautomersToList(matches, matchingTautomers);
 }
 
-PyObject *tautomerGetSubstructMatchesWithTautomers(
-    const TautomerQuery &self, const ROMol &target, bool uniquify = true,
-    bool useChirality = false, bool useQueryQueryMatches = false,
-    unsigned int maxMatches = 1000) {
+std::vector<std::tuple<std::vector<int>, std::shared_ptr<RDKit::ROMol>>>
+tautomerGetSubstructMatchesWithTautomers(const TautomerQuery &self,
+                                         const ROMol &target,
+                                         bool uniquify = true,
+                                         bool useChirality = false,
+                                         bool useQueryQueryMatches = false,
+                                         unsigned int maxMatches = 1000) {
   std::vector<MatchVectType> matches;
   std::vector<ROMOL_SPTR> matchingTautomers;
   SubstructMatchParameters params;
@@ -127,119 +125,221 @@ PyObject *tautomerGetSubstructMatchesWithTautomers(
 
   {
     NOGIL gil;
-
     matches = self.substructOf(target, params, &matchingTautomers);
   }
-  return matchesWithTautomersToTuple(matches, matchingTautomers);
+  return matchesWithTautomersToList(matches, matchingTautomers);
 }
 
-}  // namespace
+nb::bytes TQToBinary(const TautomerQuery &tq) {
+  auto res = tq.serialize();
+  return nb::bytes(res.c_str(), res.length());
+}
 
-namespace RDKit {
-struct tautomerquery_pickle_suite : rdkit_pickle_suite {
-  static python::tuple getinitargs(const TautomerQuery &self) {
-    if (!TautomerQueryCanSerialize()) {
-      throw_runtime_error("Pickling of TautomerQuery instances is not enabled");
-    }
-    auto res = self.serialize();
-    return python::make_tuple(python::object(python::handle<>(
-        PyBytes_FromStringAndSize(res.c_str(), res.length()))));
-  };
-};
-
-void toStream(const TautomerQuery &tq, python::object &fileobj) {
+void toStream(const TautomerQuery &tq, nb::object fileobj) {
   streambuf ss(fileobj, 't');
   streambuf::ostream ost(ss);
   tq.toStream(ost);
 }
 
-void initFromStream(TautomerQuery &tq, python::object &fileobj) {
+void initFromStream(TautomerQuery &tq, nb::object fileobj) {
   streambuf ss(fileobj,
                'b');  // python StringIO can't seek, so need binary data
   streambuf::istream is(ss);
   tq.initFromStream(is);
 }
 
-python::object TQToBinary(const TautomerQuery &tq) {
-  auto res = tq.serialize();
-  return python::object(
-      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+}  // namespace
+
+NB_MODULE(rdTautomerQuery, m) {
+  m.doc() = R"DOC(Module for tautomer-aware substructure searching.
+
+Provides the TautomerQuery class which enables substructure searching
+that accounts for tautomeric forms of the query molecule.
+)DOC";
+
+  nb::class_<TautomerQuery>(m, "TautomerQuery",
+    R"DOC(The Tautomer Query Class.
+Creates a query that enables structure search accounting for matching of
+Tautomeric forms
+)DOC")
+      .def(nb::init<const std::string &>(), "pickle"_a,
+           "Construct a TautomerQuery from a pickle string.")
+      .def("__init__",
+           [](TautomerQuery *self, nb::bytes pickle) {
+             new (self) TautomerQuery(std::string(
+                 static_cast<const char *>(pickle.data()), pickle.size()));
+           },
+           "pickle"_a, "Construct a TautomerQuery from a pickle bytes.")
+      .def("__init__",
+           [](TautomerQuery *self, const ROMol &mol,
+              const std::string &tautomerTransformFile) {
+             std::unique_ptr<TautomerQuery> tq(
+                 TautomerQuery::fromMol(mol, tautomerTransformFile));
+             new (self) TautomerQuery(*tq);
+           },
+           "mol"_a, "tautomerTransformFile"_a = std::string(),
+           "Construct a TautomerQuery from a molecule.")
+      .def("IsSubstructOf", tautomerIsSubstructOf, "target"_a,
+           "recursionPossible"_a = true, "useChirality"_a = false,
+           "useQueryQueryMatches"_a = false,
+           R"DOC(Check if this tautomer query is a substructure of the target molecule.
+
+ARGUMENTS:
+ - target: the target molecule
+ - recursionPossible: (optional) allow recursive queries (default True)
+ - useChirality: (optional) use chirality in matching (default False)
+ - useQueryQueryMatches: (optional) use query-query matching logic (default False)
+
+RETURNS: True or False
+)DOC")
+      .def("IsSubstructOf", tautomerIsSubstructOfWithParams, "target"_a,
+           "params"_a,
+           R"DOC(Check if this tautomer query is a substructure of the target molecule.
+
+ARGUMENTS:
+ - target: the target molecule
+ - params: SubstructMatchParameters object
+
+RETURNS: True or False
+)DOC")
+      .def("GetSubstructMatch", tautomerGetSubstructMatch, "target"_a,
+           "useChirality"_a = false, "useQueryQueryMatches"_a = false,
+           R"DOC(Return the first substructure match of this tautomer query in the target.
+
+ARGUMENTS:
+ - target: the target molecule
+ - useChirality: (optional) use chirality in matching (default False)
+ - useQueryQueryMatches: (optional) use query-query matching logic (default False)
+
+RETURNS: a tuple of atom indices on match, or empty tuple on no match
+)DOC")
+      .def("GetSubstructMatch", tautomerGetSubstructMatchWithParams, "target"_a,
+           "params"_a,
+           R"DOC(Return the first substructure match of this tautomer query in the target.
+
+ARGUMENTS:
+ - target: the target molecule
+ - params: SubstructMatchParameters object
+
+RETURNS: a tuple of atom indices on match, or empty tuple on no match
+)DOC")
+      .def("GetSubstructMatches", tautomerGetSubstructMatches, "target"_a,
+           "uniquify"_a = true, "useChirality"_a = false,
+           "useQueryQueryMatches"_a = false, "maxMatches"_a = 1000,
+           R"DOC(Return all substructure matches of this tautomer query in the target.
+
+ARGUMENTS:
+ - target: the target molecule
+ - uniquify: (optional) only return unique matches (default True)
+ - useChirality: (optional) use chirality in matching (default False)
+ - useQueryQueryMatches: (optional) use query-query matching logic (default False)
+ - maxMatches: (optional) maximum number of matches to return (default 1000)
+
+RETURNS: a tuple of tuples of atom indices
+)DOC")
+      .def("GetSubstructMatches", tautomerGetSubstructMatchesWithParams,
+           "target"_a, "params"_a,
+           R"DOC(Return all substructure matches of this tautomer query in the target.
+
+ARGUMENTS:
+ - target: the target molecule
+ - params: SubstructMatchParameters object
+
+RETURNS: a tuple of tuples of atom indices
+)DOC")
+      .def("GetSubstructMatchesWithTautomers",
+           tautomerGetSubstructMatchesWithTautomers, "target"_a,
+           "uniquify"_a = true, "useChirality"_a = false,
+           "useQueryQueryMatches"_a = false, "maxMatches"_a = 1000,
+           R"DOC(Return all substructure matches with their matching tautomers.
+
+ARGUMENTS:
+ - target: the target molecule
+ - uniquify: (optional) only return unique matches (default True)
+ - useChirality: (optional) use chirality in matching (default False)
+ - useQueryQueryMatches: (optional) use query-query matching logic (default False)
+ - maxMatches: (optional) maximum number of matches to return (default 1000)
+
+RETURNS: a list of (match, tautomer) pairs
+)DOC")
+      .def("GetSubstructMatchesWithTautomers",
+           tautomerGetSubstructMatchesWithTautomersWithParams, "target"_a,
+           "params"_a,
+           R"DOC(Return all substructure matches with their matching tautomers.
+
+ARGUMENTS:
+ - target: the target molecule
+ - params: SubstructMatchParameters object
+
+RETURNS: a list of (match, tautomer) pairs
+)DOC")
+      .def("PatternFingerprintTemplate",
+           &TautomerQuery::patternFingerprintTemplate,
+           "fingerprintSize"_a = 2048,
+           nb::rv_policy::take_ownership,
+           R"DOC(Return the pattern fingerprint of the template molecule.
+
+ARGUMENTS:
+ - fingerprintSize: (optional) size of the fingerprint (default 2048)
+
+RETURNS: an ExplicitBitVect fingerprint
+)DOC")
+      .def("GetTemplateMolecule", &TautomerQuery::getTemplateMolecule,
+           nb::rv_policy::reference_internal,
+           R"DOC(Return the template molecule used for substructure searching.
+)DOC")
+      .def("GetModifiedAtoms", &TautomerQuery::getModifiedAtoms,
+           R"DOC(Return the indices of tautomeric atoms.
+)DOC")
+      .def("GetModifiedBonds", &TautomerQuery::getModifiedBonds,
+           R"DOC(Return the indices of tautomeric bonds.
+)DOC")
+      .def("GetTautomers", getTautomers,
+           R"DOC(Return the list of tautomers of the query molecule.
+)DOC")
+      .def("ToBinary", TQToBinary,
+           R"DOC(Return a binary string (pickle) representation of this TautomerQuery.
+)DOC")
+      .def("ToStream", toStream, "fileobj"_a,
+           R"DOC(Serialize this TautomerQuery to a file-like object.
+)DOC")
+      .def("InitFromStream", initFromStream, "fileobj"_a,
+           R"DOC(Initialize this TautomerQuery from a file-like object.
+)DOC")
+      .def("__getstate__",
+           [](const TautomerQuery &tq) {
+             if (!TautomerQueryCanSerialize()) {
+               throw std::runtime_error(
+                   "Pickling of TautomerQuery instances is not enabled");
+             }
+             return std::make_tuple(TQToBinary(tq));
+           })
+      .def("__setstate__",
+           [](TautomerQuery &tq, const std::tuple<nb::bytes> &state) {
+             const auto &pkl = std::get<0>(state);
+             std::string s(static_cast<const char *>(pkl.data()), pkl.size());
+             new (&tq) TautomerQuery(s);
+           })
+      .def("__setstate__",
+           [](TautomerQuery &tq, const std::tuple<std::string> &state) {
+             new (&tq) TautomerQuery(std::get<0>(state));
+           });
+
+  m.def("PatternFingerprintTautomerTarget",
+        &TautomerQuery::patternFingerprintTarget, "target"_a,
+        "fingerprintSize"_a = 2048,
+        nb::rv_policy::take_ownership,
+        R"DOC(Return the pattern fingerprint of a target molecule for tautomer searching.
+
+ARGUMENTS:
+ - target: the target molecule
+ - fingerprintSize: (optional) size of the fingerprint (default 2048)
+
+RETURNS: an ExplicitBitVect fingerprint
+)DOC");
+
+  m.def("TautomerQueryCanSerialize", TautomerQueryCanSerialize,
+        R"DOC(Returns True if the TautomerQuery is serializable
+(requires that the RDKit was built with boost::serialization)
+)DOC");
 }
-}  // namespace RDKit
-
-struct TautomerQuery_wrapper {
-  static void wrap() {
-    auto docString =
-        "The Tautomer Query Class.\n\
-  Creates a query that enables structure search accounting for matching of\n\
-  Tautomeric forms\n";
-
-    python::class_<TautomerQuery, boost::noncopyable>(
-        "TautomerQuery", docString, python::no_init)
-        .def("__init__", python::make_constructor(createDefaultTautomerQuery))
-        .def("__init__", python::make_constructor(&TautomerQuery::fromMol))
-        .def(python::init<std::string>(python::args("self", "pickle")))
-        .def("IsSubstructOf", tautomerIsSubstructOf,
-             (python::arg("self"), python::arg("target"),
-              python::arg("recursionPossible") = true,
-              python::arg("useChirality") = false,
-              python::arg("useQueryQueryMatches") = false))
-        .def(
-            "IsSubstructOf", tautomerIsSubstructOfWithParams,
-            (python::arg("self"), python::arg("target"), python::arg("params")))
-        .def("GetSubstructMatch", tautomerGetSubstructMatch,
-             (python::arg("self"), python::arg("target"),
-              python::arg("useChirality") = false,
-              python::arg("useQueryQueryMatches") = false))
-        .def(
-            "GetSubstructMatch", tautomerGetSubstructMatchWithParams,
-            (python::arg("self"), python::arg("target"), python::arg("params")))
-        .def("GetSubstructMatches", tautomerGetSubstructMatches,
-             (python::arg("self"), python::arg("target"),
-              python::arg("uniquify") = true,
-              python::arg("useChirality") = false,
-              python::arg("useQueryQueryMatches") = false,
-              python::arg("maxMatches") = 1000))
-        .def(
-            "GetSubstructMatches", tautomerGetSubstructMatchesWithParams,
-            (python::arg("self"), python::arg("target"), python::arg("params")))
-        .def("GetSubstructMatchesWithTautomers",
-             tautomerGetSubstructMatchesWithTautomers,
-             (python::arg("self"), python::arg("target"),
-              python::arg("uniquify") = true,
-              python::arg("useChirality") = false,
-              python::arg("useQueryQueryMatches") = false,
-              python::arg("maxMatches") = 1000))
-        .def(
-            "GetSubstructMatchesWithTautomers",
-            tautomerGetSubstructMatchesWithTautomersWithParams,
-            (python::arg("self"), python::arg("target"), python::arg("params")))
-        .def("PatternFingerprintTemplate",
-             &TautomerQuery::patternFingerprintTemplate,
-             ((python::arg("self"), python::arg("fingerprintSize") = 2048)),
-             python::return_value_policy<python::manage_new_object>())
-        .def("GetTemplateMolecule", &TautomerQuery::getTemplateMolecule,
-             python::return_internal_reference<>(), python::args("self"))
-        .def("GetModifiedAtoms", &TautomerQuery::getModifiedAtoms,
-             python::args("self"))
-        .def("GetModifiedBonds", &TautomerQuery::getModifiedBonds,
-             python::args("self"))
-        .def("GetTautomers", getTautomers, python::args("self"))
-        .def("ToBinary", TQToBinary, python::args("self"))
-        .def_pickle(tautomerquery_pickle_suite());
-
-    python::def("PatternFingerprintTautomerTarget",
-                &TautomerQuery::patternFingerprintTarget,
-                (python::arg("target"), python::arg("fingerprintSize") = 2048),
-                python::return_value_policy<python::manage_new_object>());
-
-    python::def(
-        "TautomerQueryCanSerialize", TautomerQueryCanSerialize,
-        "Returns True if the TautomerQuery is serializable "
-        "(requires that the RDKit was built with boost::serialization)");
-  }
-};
-
-void wrap_TautomerQuery() { TautomerQuery_wrapper::wrap(); }
-
-BOOST_PYTHON_MODULE(rdTautomerQuery) { wrap_TautomerQuery(); }
