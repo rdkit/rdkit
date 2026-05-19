@@ -770,8 +770,8 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     }
     delete lAtomBits;
   }
-  if (lBitInfo) {
-    auto &pyd = static_cast<nb::dict &>(bitInfo);
+  if (!bitInfo.is_none()) {
+    nb::dict pyBitInfo = nb::cast<nb::dict>(bitInfo);
     for (auto &it : (*lBitInfo)) {
       nb::list temp;
       std::vector<std::vector<int>>::iterator itset;
@@ -782,7 +782,7 @@ ExplicitBitVect *wrapRDKFingerprintMol(
         }
         temp.append(temp2);
       }
-      pyd[it.first] = temp;
+      pyBitInfo[nb::int_(it.first)] = temp;
     }
     delete lBitInfo;
   }
