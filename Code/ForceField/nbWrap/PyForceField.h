@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2005-2006 Rational Discovery LLC
+//  Copyright (C) 2005-2026 Rational Discovery LLC and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,30 +12,30 @@
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <ForceField/MMFF/Params.h>
 #include <GraphMol/Trajectory/Snapshot.h>
-#include <boost/python/tuple.hpp>
-#include <boost/shared_ptr.hpp>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <memory>
 #include <vector>
 #include <algorithm>
 #include <Geometry/point.h>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
+
 namespace ForceFields {
 class PyForceField {
  public:
   PyForceField(ForceField *f) : field(f) {}
 
   ~PyForceField() {
-    // std::cerr << " *** destroy PyForce field " << std::endl;
     field.reset();
-    // std::cerr << " ***       reset DONE" << std::endl;
     extraPoints.clear();
-    // std::cerr << " *** destroy PyForce field DONE" << std::endl;
   }
 
   int addExtraPoint(double x, double y, double z, bool fixed = true) {
     PRECONDITION(this->field, "no force field");
     RDGeom::Point3D *pt = new RDGeom::Point3D(x, y, z);
-    this->extraPoints.push_back(boost::shared_ptr<RDGeom::Point3D>(pt));
+    this->extraPoints.push_back(std::shared_ptr<RDGeom::Point3D>(pt));
     unsigned int ptIdx = this->extraPoints.size() - 1;
     RDGeom::Point3D *ptr = this->extraPoints[ptIdx].get();
     this->field->positions().push_back(ptr);
@@ -47,21 +46,21 @@ class PyForceField {
     return idx;
   }
 
-  double calcEnergyWithPos(const python::object &pos = python::object());
+  double calcEnergyWithPos(nb::object pos = nb::none());
 
   double calcEnergy() { return calcEnergyWithPos(); }
 
-  PyObject *calcGradWithPos(const python::object &pos = python::object());
+  nb::tuple calcGradWithPos(nb::object pos = nb::none());
 
-  PyObject *positions();
+  nb::tuple positions();
 
   int minimize(int maxIts, double forceTol, double energyTol) {
     PRECONDITION(this->field, "no force field");
     return this->field->minimize(maxIts, forceTol, energyTol);
   }
 
-  boost::python::tuple minimizeTrajectory(unsigned int snapshotFreq, int maxIts,
-                                          double forceTol, double energyTol);
+  nb::tuple minimizeTrajectory(unsigned int snapshotFreq, int maxIts,
+                               double forceTol, double energyTol);
 
   void initialize() {
     PRECONDITION(this->field, "no force field");
@@ -79,8 +78,8 @@ class PyForceField {
   }
 
   // private:
-  std::vector<boost::shared_ptr<RDGeom::Point3D>> extraPoints;
-  boost::shared_ptr<ForceField> field;
+  std::vector<std::shared_ptr<RDGeom::Point3D>> extraPoints;
+  std::shared_ptr<ForceField> field;
 };
 
 class PyMMFFMolProperties {
@@ -98,29 +97,29 @@ class PyMMFFMolProperties {
   double getMMFFPartialCharge(unsigned int idx) const {
     return mmffMolProperties->getMMFFPartialCharge(idx);
   }
-  PyObject *getMMFFBondStretchParams(const RDKit::ROMol &mol,
-                                     const unsigned int idx1,
-                                     const unsigned int idx2) const;
-  PyObject *getMMFFAngleBendParams(const RDKit::ROMol &mol,
-                                   const unsigned int idx1,
-                                   const unsigned int idx2,
-                                   const unsigned int idx3) const;
-  PyObject *getMMFFStretchBendParams(const RDKit::ROMol &mol,
-                                     const unsigned int idx1,
-                                     const unsigned int idx2,
-                                     const unsigned int idx3) const;
-  PyObject *getMMFFTorsionParams(const RDKit::ROMol &mol,
-                                 const unsigned int idx1,
-                                 const unsigned int idx2,
-                                 const unsigned int idx3,
-                                 const unsigned int idx4) const;
-  PyObject *getMMFFOopBendParams(const RDKit::ROMol &mol,
-                                 const unsigned int idx1,
-                                 const unsigned int idx2,
-                                 const unsigned int idx3,
-                                 const unsigned int idx4) const;
-  PyObject *getMMFFVdWParams(const unsigned int idx1,
-                             const unsigned int idx2) const;
+  nb::object getMMFFBondStretchParams(const RDKit::ROMol &mol,
+                                      const unsigned int idx1,
+                                      const unsigned int idx2) const;
+  nb::object getMMFFAngleBendParams(const RDKit::ROMol &mol,
+                                    const unsigned int idx1,
+                                    const unsigned int idx2,
+                                    const unsigned int idx3) const;
+  nb::object getMMFFStretchBendParams(const RDKit::ROMol &mol,
+                                      const unsigned int idx1,
+                                      const unsigned int idx2,
+                                      const unsigned int idx3) const;
+  nb::object getMMFFTorsionParams(const RDKit::ROMol &mol,
+                                  const unsigned int idx1,
+                                  const unsigned int idx2,
+                                  const unsigned int idx3,
+                                  const unsigned int idx4) const;
+  nb::object getMMFFOopBendParams(const RDKit::ROMol &mol,
+                                  const unsigned int idx1,
+                                  const unsigned int idx2,
+                                  const unsigned int idx3,
+                                  const unsigned int idx4) const;
+  nb::object getMMFFVdWParams(const unsigned int idx1,
+                              const unsigned int idx2) const;
   void setMMFFDielectricModel(std::uint8_t dielModel) {
     mmffMolProperties->setMMFFDielectricModel(dielModel);
   }
@@ -176,23 +175,25 @@ class PyMMFFMolProperties {
   void setMMFFVerbosity(unsigned int verbosity) {
     mmffMolProperties->setMMFFVerbosity(verbosity);
   }
-  boost::shared_ptr<RDKit::MMFF::MMFFMolProperties> mmffMolProperties;
+  std::shared_ptr<RDKit::MMFF::MMFFMolProperties> mmffMolProperties;
 };
-PyObject *getUFFBondStretchParams(const RDKit::ROMol &mol,
-                                  const unsigned int idx1,
-                                  const unsigned int idx2);
-PyObject *getUFFAngleBendParams(const RDKit::ROMol &mol,
-                                const unsigned int idx1,
-                                const unsigned int idx2,
-                                const unsigned int idx3);
-PyObject *getUFFTorsionParams(const RDKit::ROMol &mol, const unsigned int idx1,
-                              const unsigned int idx2, const unsigned int idx3,
-                              const unsigned int idx4);
-PyObject *getUFFInversionParams(const RDKit::ROMol &mol,
-                                const unsigned int idx1,
-                                const unsigned int idx2,
-                                const unsigned int idx3,
-                                const unsigned int idx4);
-PyObject *getUFFVdWParams(const RDKit::ROMol &mol, const unsigned int idx1,
-                          const unsigned int idx2);
+nb::object getUFFBondStretchParams(const RDKit::ROMol &mol,
+                                   const unsigned int idx1,
+                                   const unsigned int idx2);
+nb::object getUFFAngleBendParams(const RDKit::ROMol &mol,
+                                 const unsigned int idx1,
+                                 const unsigned int idx2,
+                                 const unsigned int idx3);
+nb::object getUFFTorsionParams(const RDKit::ROMol &mol,
+                               const unsigned int idx1,
+                               const unsigned int idx2,
+                               const unsigned int idx3,
+                               const unsigned int idx4);
+nb::object getUFFInversionParams(const RDKit::ROMol &mol,
+                                 const unsigned int idx1,
+                                 const unsigned int idx2,
+                                 const unsigned int idx3,
+                                 const unsigned int idx4);
+nb::object getUFFVdWParams(const RDKit::ROMol &mol, const unsigned int idx1,
+                           const unsigned int idx2);
 }  // namespace ForceFields

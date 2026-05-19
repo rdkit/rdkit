@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2026 Rational Discovery LLC and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,8 +8,9 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/python.h>
-#include <RDBoost/Wrap.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <RDBoost/Wrap_nb.h>
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/GraphMol.h>
 #include <ForceField/ForceField.h>
@@ -22,10 +22,12 @@
 #include <ForceField/MMFF/AngleConstraint.h>
 #include <ForceField/MMFF/TorsionConstraint.h>
 #include <ForceField/MMFF/PositionConstraint.h>
+#include <GraphMol/Trajectory/Snapshot.h>
 #include "PyForceField.h"
 
 using namespace ForceFields;
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
 void ForceFieldAddDistanceConstraint(PyForceField *self, unsigned int idx1,
                                      unsigned int idx2, double minLen,
@@ -112,22 +114,19 @@ void MMFFAddPositionConstraint(PyForceField *self, unsigned int idx,
   self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
 }
 
-PyObject *ForceFieldGetExtraPointLoc(PyForceField *self, unsigned int idx) {
+nb::tuple ForceFieldGetExtraPointLoc(PyForceField *self, unsigned int idx) {
   if (idx >= self->extraPoints.size()) {
     throw IndexErrorException(idx);
   }
-  PyObject *res = PyTuple_New(3);
-  PyTuple_SetItem(res, 0, PyFloat_FromDouble(self->extraPoints[idx]->x));
-  PyTuple_SetItem(res, 1, PyFloat_FromDouble(self->extraPoints[idx]->y));
-  PyTuple_SetItem(res, 2, PyFloat_FromDouble(self->extraPoints[idx]->z));
-  return res;
+  return nb::make_tuple(self->extraPoints[idx]->x, self->extraPoints[idx]->y,
+                        self->extraPoints[idx]->z);
 }
 
-double PyForceField::calcEnergyWithPos(const python::object &pos) {
+double PyForceField::calcEnergyWithPos(nb::object pos) {
   PRECONDITION(this->field, "no force field");
-  if (pos != python::object()) {
+  if (!pos.is_none()) {
     size_t s = this->field->dimension() * this->field->numPoints();
-    unsigned int numElements = python::len(pos);
+    size_t numElements = nb::len(pos);
     if (s != numElements) {
       throw ValueErrorException(
           "The Python container must have length equal to Dimension() * "
@@ -135,7 +134,7 @@ double PyForceField::calcEnergyWithPos(const python::object &pos) {
     }
     std::vector<double> c(s);
     for (size_t i = 0; i < s; ++i) {
-      c[i] = python::extract<double>(pos[i]);
+      c[i] = nb::cast<double>(pos[nb::cast(i)]);
     }
     return this->field->calcEnergy(c.data());
   } else {
@@ -143,29 +142,24 @@ double PyForceField::calcEnergyWithPos(const python::object &pos) {
   }
 }
 
-PyObject *PyForceField::positions() {
+nb::tuple PyForceField::positions() {
   PRECONDITION(this->field, "no force field");
-  size_t s = this->field->dimension() * this->field->numPoints();
-  PyObject *coordTuple = PyTuple_New(s);
   const RDGeom::PointPtrVect &p = this->field->positions();
-  size_t i = 0;
-  PyObject *coordItem;
+  nb::list coordList;
   for (const auto pptr : p) {
     for (size_t j = 0; j < 3; ++j) {
-      coordItem = PyFloat_FromDouble((*pptr)[j]);
-      PyTuple_SetItem(coordTuple, i++, coordItem);
+      coordList.append((*pptr)[j]);
     }
   }
-  return coordTuple;
+  return nb::tuple(coordList);
 }
 
-PyObject *PyForceField::calcGradWithPos(const python::object &pos) {
+nb::tuple PyForceField::calcGradWithPos(nb::object pos) {
   PRECONDITION(this->field, "no force field");
   size_t s = this->field->dimension() * this->field->numPoints();
   std::vector<double> g(s, 0.0);
-  PyObject *gradTuple = PyTuple_New(s);
-  if (pos != python::object()) {
-    unsigned int numElements = python::len(pos);
+  if (!pos.is_none()) {
+    size_t numElements = nb::len(pos);
     if (s != numElements) {
       throw ValueErrorException(
           "The Python container must have length equal to Dimension() * "
@@ -173,72 +167,62 @@ PyObject *PyForceField::calcGradWithPos(const python::object &pos) {
     }
     std::vector<double> c(s);
     for (size_t i = 0; i < s; ++i) {
-      c[i] = python::extract<double>(pos[i]);
+      c[i] = nb::cast<double>(pos[nb::cast(i)]);
     }
     this->field->calcGrad(c.data(), g.data());
   } else {
     this->field->calcGrad(g.data());
   }
+  nb::list gradList;
   for (size_t i = 0; i < s; ++i) {
-    PyObject *coordItem = PyFloat_FromDouble(g[i]);
-    PyTuple_SetItem(gradTuple, i, coordItem);
+    gradList.append(g[i]);
   }
-  return gradTuple;
+  return nb::tuple(gradList);
 }
 
-python::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq,
-                                               int maxIts, double forceTol,
-                                               double energyTol) {
+nb::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq,
+                                           int maxIts, double forceTol,
+                                           double energyTol) {
   PRECONDITION(this->field, "no force field");
   RDKit::SnapshotVect snapshotVect;
   int resInt = this->field->minimize(snapshotFreq, &snapshotVect, maxIts,
                                      forceTol, energyTol);
-  python::list l;
-  boost::python::manage_new_object::apply<RDKit::Snapshot *>::type converter;
+  nb::list l;
   for (const auto &it : snapshotVect) {
-    // transfer ownership to python
-    python::handle<> handle(converter(new RDKit::Snapshot(it)));
-    l.append(handle);
+    l.append(nb::cast(new RDKit::Snapshot(it), nb::rv_policy::take_ownership));
   }
-  return python::make_tuple(resInt, l);
+  return nb::make_tuple(resInt, l);
 }
 
-PyObject *PyMMFFMolProperties::getMMFFBondStretchParams(
+nb::object PyMMFFMolProperties::getMMFFBondStretchParams(
     const RDKit::ROMol &mol, const unsigned int idx1,
     const unsigned int idx2) const {
-  PyObject *res = nullptr;
   unsigned int bondType;
   ForceFields::MMFF::MMFFBond mmffBondStretchParams;
   if (mmffMolProperties->getMMFFBondStretchParams(mol, idx1, idx2, bondType,
                                                   mmffBondStretchParams)) {
-    res = PyTuple_New(3);
-    PyTuple_SetItem(res, 0, PyInt_FromLong(bondType));
-    PyTuple_SetItem(res, 1, PyFloat_FromDouble(mmffBondStretchParams.kb));
-    PyTuple_SetItem(res, 2, PyFloat_FromDouble(mmffBondStretchParams.r0));
+    return nb::cast(nb::make_tuple((int)bondType, mmffBondStretchParams.kb,
+                                   mmffBondStretchParams.r0));
   }
-  return res;
-};
+  return nb::none();
+}
 
-PyObject *PyMMFFMolProperties::getMMFFAngleBendParams(
+nb::object PyMMFFMolProperties::getMMFFAngleBendParams(
     const RDKit::ROMol &mol, const unsigned int idx1, const unsigned int idx2,
     const unsigned int idx3) const {
-  PyObject *res = nullptr;
   unsigned int angleType;
   ForceFields::MMFF::MMFFAngle mmffAngleBendParams;
   if (mmffMolProperties->getMMFFAngleBendParams(
           mol, idx1, idx2, idx3, angleType, mmffAngleBendParams)) {
-    res = PyTuple_New(3);
-    PyTuple_SetItem(res, 0, PyInt_FromLong(angleType));
-    PyTuple_SetItem(res, 1, PyFloat_FromDouble(mmffAngleBendParams.ka));
-    PyTuple_SetItem(res, 2, PyFloat_FromDouble(mmffAngleBendParams.theta0));
+    return nb::cast(nb::make_tuple((int)angleType, mmffAngleBendParams.ka,
+                                   mmffAngleBendParams.theta0));
   }
-  return res;
-};
+  return nb::none();
+}
 
-PyObject *PyMMFFMolProperties::getMMFFStretchBendParams(
+nb::object PyMMFFMolProperties::getMMFFStretchBendParams(
     const RDKit::ROMol &mol, const unsigned int idx1, const unsigned int idx2,
     const unsigned int idx3) const {
-  PyObject *res = nullptr;
   unsigned int stretchBendType;
   ForceFields::MMFF::MMFFStbn mmffStretchBendParams;
   ForceFields::MMFF::MMFFBond mmffBondStretchParams[2];
@@ -246,320 +230,261 @@ PyObject *PyMMFFMolProperties::getMMFFStretchBendParams(
   if (mmffMolProperties->getMMFFStretchBendParams(
           mol, idx1, idx2, idx3, stretchBendType, mmffStretchBendParams,
           mmffBondStretchParams, mmffAngleBendParams)) {
-    res = PyTuple_New(3);
-    PyTuple_SetItem(res, 0, PyInt_FromLong(stretchBendType));
-    PyTuple_SetItem(res, 1, PyFloat_FromDouble(mmffStretchBendParams.kbaIJK));
-    PyTuple_SetItem(res, 2, PyFloat_FromDouble(mmffStretchBendParams.kbaKJI));
+    return nb::cast(nb::make_tuple((int)stretchBendType,
+                                   mmffStretchBendParams.kbaIJK,
+                                   mmffStretchBendParams.kbaKJI));
   }
-  return res;
-};
+  return nb::none();
+}
 
-PyObject *PyMMFFMolProperties::getMMFFTorsionParams(
+nb::object PyMMFFMolProperties::getMMFFTorsionParams(
     const RDKit::ROMol &mol, const unsigned int idx1, const unsigned int idx2,
     const unsigned int idx3, const unsigned int idx4) const {
-  PyObject *res = nullptr;
   unsigned int torType;
   ForceFields::MMFF::MMFFTor mmffTorsionParams;
   if (mmffMolProperties->getMMFFTorsionParams(mol, idx1, idx2, idx3, idx4,
                                               torType, mmffTorsionParams)) {
-    res = PyTuple_New(4);
-    PyTuple_SetItem(res, 0, PyInt_FromLong(torType));
-    PyTuple_SetItem(res, 1, PyFloat_FromDouble(mmffTorsionParams.V1));
-    PyTuple_SetItem(res, 2, PyFloat_FromDouble(mmffTorsionParams.V2));
-    PyTuple_SetItem(res, 3, PyFloat_FromDouble(mmffTorsionParams.V3));
+    return nb::cast(nb::make_tuple((int)torType, mmffTorsionParams.V1,
+                                   mmffTorsionParams.V2, mmffTorsionParams.V3));
   }
-  return res;
-};
+  return nb::none();
+}
 
-PyObject *PyMMFFMolProperties::getMMFFOopBendParams(
+nb::object PyMMFFMolProperties::getMMFFOopBendParams(
     const RDKit::ROMol &mol, const unsigned int idx1, const unsigned int idx2,
     const unsigned int idx3, const unsigned int idx4) const {
-  PyObject *res = nullptr;
   ForceFields::MMFF::MMFFOop mmffOopBendParams;
   if (mmffMolProperties->getMMFFOopBendParams(mol, idx1, idx2, idx3, idx4,
                                               mmffOopBendParams)) {
-    res = PyFloat_FromDouble(mmffOopBendParams.koop);
+    return nb::cast(mmffOopBendParams.koop);
   }
-  return res;
-};
+  return nb::none();
+}
 
-PyObject *PyMMFFMolProperties::getMMFFVdWParams(const unsigned int idx1,
-                                                const unsigned int idx2) const {
-  PyObject *res = nullptr;
+nb::object PyMMFFMolProperties::getMMFFVdWParams(const unsigned int idx1,
+                                                 const unsigned int idx2) const {
   ForceFields::MMFF::MMFFVdWRijstarEps mmffVdWParams;
   if (mmffMolProperties->getMMFFVdWParams(idx1, idx2, mmffVdWParams)) {
-    res = PyTuple_New(4);
-    PyTuple_SetItem(res, 0,
-                    PyFloat_FromDouble(mmffVdWParams.R_ij_starUnscaled));
-    PyTuple_SetItem(res, 1, PyFloat_FromDouble(mmffVdWParams.epsilonUnscaled));
-    PyTuple_SetItem(res, 2, PyFloat_FromDouble(mmffVdWParams.R_ij_star));
-    PyTuple_SetItem(res, 3, PyFloat_FromDouble(mmffVdWParams.epsilon));
+    return nb::cast(
+        nb::make_tuple(mmffVdWParams.R_ij_starUnscaled,
+                       mmffVdWParams.epsilonUnscaled, mmffVdWParams.R_ij_star,
+                       mmffVdWParams.epsilon));
   }
-  return res;
-};
+  return nb::none();
+}
 
-BOOST_PYTHON_MODULE(rdForceField) {
-  python::scope().attr("__doc__") = "Exposes the ForceField class";
+NB_MODULE(rdForceField, m) {
+  m.doc() = "Exposes the ForceField class";
 
-  std::string docString;
+  // Minimal Snapshot binding needed for MinimizeTrajectory return value.
+  // Full Snapshot bindings live in the Trajectory nbWrap (not yet migrated).
+  nb::class_<RDKit::Snapshot>(m, "Snapshot",
+                               "A snapshot of atomic coordinates from a "
+                               "minimization trajectory")
+      .def("GetPoint2D", &RDKit::Snapshot::getPoint2D, "pointNum"_a,
+           "Returns the coordinates at pointNum as a Point2D object; "
+           "requires the Trajectory dimension to be == 2")
+      .def("GetPoint3D", &RDKit::Snapshot::getPoint3D, "pointNum"_a,
+           "Returns the coordinates at pointNum as a Point3D object; "
+           "requires the Trajectory dimension to be >= 2")
+      .def("GetEnergy", &RDKit::Snapshot::getEnergy,
+           "Returns the energy for this Snapshot")
+      .def("SetEnergy", &RDKit::Snapshot::setEnergy, "energy"_a,
+           "Sets the energy for this Snapshot");
 
-  python::class_<PyForceField>("ForceField", "A force field", python::no_init)
-      .def("CalcEnergy",
-           (double(PyForceField::*)(const python::object &) const) &
-               PyForceField::calcEnergyWithPos,
-           ((python::arg("self"), python::arg("pos") = python::object())),
-           "Returns the energy (in kcal/mol) of the current arrangement\n"
-           "or of the supplied coordinate list (if non-empty)")
-      .def("CalcGrad", &PyForceField::calcGradWithPos,
-           ((python::arg("self"), python::arg("pos") = python::object())),
-           "Returns a tuple filled with the per-coordinate gradients\n"
-           "of the current arrangement or of the supplied coordinate list "
-           "(if non-empty)")
-      .def("Positions", &PyForceField::positions, python::args("self"),
-           "Returns a tuple filled with the coordinates of the\n"
-           "points the ForceField is handling")
-      .def("Dimension",
-           (unsigned int (PyForceField::*)() const) & PyForceField::dimension,
-           python::args("self"), "Returns the dimension of the ForceField")
-      .def("NumPoints",
-           (unsigned int (PyForceField::*)() const) & PyForceField::numPoints,
-           python::args("self"),
+  nb::class_<PyForceField>(m, "ForceField", "A force field")
+      .def("CalcEnergy", &PyForceField::calcEnergyWithPos,
+           "pos"_a = nb::none(),
+           R"DOC(Returns the energy (in kcal/mol) of the current arrangement
+or of the supplied coordinate list (if non-empty))DOC")
+      .def("CalcGrad", &PyForceField::calcGradWithPos, "pos"_a = nb::none(),
+           R"DOC(Returns a tuple filled with the per-coordinate gradients
+of the current arrangement or of the supplied coordinate list (if non-empty))DOC")
+      .def("Positions", &PyForceField::positions,
+           R"DOC(Returns a tuple filled with the coordinates of the
+points the ForceField is handling)DOC")
+      .def("Dimension", &PyForceField::dimension,
+           "Returns the dimension of the ForceField")
+      .def("NumPoints", &PyForceField::numPoints,
            "Returns the number of points the ForceField is handling")
-      .def("Minimize", &PyForceField::minimize,
-           ((python::arg("self"), python::arg("maxIts") = 200),
-            python::arg("forceTol") = 1e-4, python::arg("energyTol") = 1e-6),
+      .def("Minimize", &PyForceField::minimize, "maxIts"_a = 200,
+           "forceTol"_a = 1e-4, "energyTol"_a = 1e-6,
            "Runs some minimization iterations.\n\n  Returns 0 if the "
            "minimization succeeded.")
       .def("MinimizeTrajectory", &PyForceField::minimizeTrajectory,
-           ((python::arg("self"), python::arg("snapshotFreq")),
-            python::arg("maxIts") = 200, python::arg("forceTol") = 1e-4,
-            python::arg("energyTol") = 1e-6),
-           "Runs some minimization iterations, recording the minimization "
-           "trajectory every snapshotFreq steps.\n\n"
-           "Returns a (int, []) tuple; the int is 0 if the minimization "
-           "succeeded, "
-           "while the list contains Snapshot objects.")
+           "snapshotFreq"_a, "maxIts"_a = 200, "forceTol"_a = 1e-4,
+           "energyTol"_a = 1e-6,
+           R"DOC(Runs some minimization iterations, recording the minimization
+trajectory every snapshotFreq steps.
+
+Returns a (int, []) tuple; the int is 0 if the minimization succeeded,
+while the list contains Snapshot objects.)DOC")
       .def("AddDistanceConstraint", ForceFieldAddDistanceConstraint,
-           (python::arg("self"), python::arg("idx1"), python::arg("idx2"),
-            python::arg("minLen"), python::arg("maxLen"),
-            python::arg("forceConstant")),
+           "idx1"_a, "idx2"_a, "minLen"_a, "maxLen"_a, "forceConstant"_a,
            "Adds a distance constraint to the UFF force field "
            "(deprecated, use UFFAddDistanceConstraint instead).")
-      .def("AddFixedPoint", ForceFieldAddFixedPoint,
-           (python::arg("self"), python::arg("idx")),
+      .def("AddFixedPoint", ForceFieldAddFixedPoint, "idx"_a,
            "Adds a fixed point to the force field.")
       .def("UFFAddDistanceConstraint", UFFAddDistanceConstraint,
-           (python::arg("self"), python::arg("idx1"), python::arg("idx2"),
-            python::arg("relative"), python::arg("minLen"),
-            python::arg("maxLen"), python::arg("forceConstant")),
+           "idx1"_a, "idx2"_a, "relative"_a, "minLen"_a, "maxLen"_a,
+           "forceConstant"_a,
            "Adds a distance constraint to the UFF force field; if relative == "
-           "True, "
-           "then minLen and maxLen are intended as relative to the current "
-           "distance.")
-      .def("UFFAddAngleConstraint", UFFAddAngleConstraint,
-           (python::arg("self"), python::arg("idx1"), python::arg("idx2"),
-            python::arg("idx3"), python::arg("relative"),
-            python::arg("minAngleDeg"), python::arg("maxAngleDeg"),
-            python::arg("forceConstant")),
+           "True, then minLen and maxLen are intended as relative to the "
+           "current distance.")
+      .def("UFFAddAngleConstraint", UFFAddAngleConstraint, "idx1"_a,
+           "idx2"_a, "idx3"_a, "relative"_a, "minAngleDeg"_a, "maxAngleDeg"_a,
+           "forceConstant"_a,
            "Adds an angle constraint to the UFF force field; if relative == "
-           "True, "
-           "then minAngleDeg and maxAngleDeg are intended as relative to the "
-           "current angle.")
+           "True, then minAngleDeg and maxAngleDeg are intended as relative to "
+           "the current angle.")
       .def("UFFAddTorsionConstraint", UFFAddTorsionConstraint,
-           (python::arg("self"), python::arg("idx1"), python::arg("idx2"),
-            python::arg("idx3"), python::arg("idx4"), python::arg("relative"),
-            python::arg("minDihedralDeg"), python::arg("maxDihedralDeg"),
-            python::arg("forceConstant")),
+           "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a, "relative"_a,
+           "minDihedralDeg"_a, "maxDihedralDeg"_a, "forceConstant"_a,
            "Adds a dihedral angle constraint to the UFF force field; if "
-           "relative == True, "
-           "then minDihedralDeg and maxDihedralDeg are intended as relative to "
-           "the current "
-           "dihedral angle.")
+           "relative == True, then minDihedralDeg and maxDihedralDeg are "
+           "intended as relative to the current dihedral angle.")
       .def("UFFAddPositionConstraint", UFFAddPositionConstraint,
-           (python::arg("self"), python::arg("idx"), python::arg("maxDispl"),
-            python::arg("forceConstant")),
+           "idx"_a, "maxDispl"_a, "forceConstant"_a,
            "Adds a position constraint to the UFF force field.")
       .def("MMFFAddDistanceConstraint", MMFFAddDistanceConstraint,
-           (python::arg("self"), python::arg("idx1"), python::arg("idx2"),
-            python::arg("relative"), python::arg("minLen"),
-            python::arg("maxLen"), python::arg("forceConstant")),
+           "idx1"_a, "idx2"_a, "relative"_a, "minLen"_a, "maxLen"_a,
+           "forceConstant"_a,
            "Adds a distance constraint to the MMFF force field; if relative == "
-           "True, "
-           "then minLen and maxLen are intended as relative to the current "
-           "distance.")
-      .def("MMFFAddAngleConstraint", MMFFAddAngleConstraint,
-           (python::arg("self"), python::arg("idx1"), python::arg("idx2"),
-            python::arg("idx3"), python::arg("relative"),
-            python::arg("minAngleDeg"), python::arg("maxAngleDeg"),
-            python::arg("forceConstant")),
+           "True, then minLen and maxLen are intended as relative to the "
+           "current distance.")
+      .def("MMFFAddAngleConstraint", MMFFAddAngleConstraint, "idx1"_a,
+           "idx2"_a, "idx3"_a, "relative"_a, "minAngleDeg"_a, "maxAngleDeg"_a,
+           "forceConstant"_a,
            "Adds an angle constraint to the MMFF force field; if relative == "
-           "True, "
-           "then minAngleDeg and maxAngleDeg are intended as relative to the "
-           "current angle.")
+           "True, then minAngleDeg and maxAngleDeg are intended as relative to "
+           "the current angle.")
       .def("MMFFAddTorsionConstraint", MMFFAddTorsionConstraint,
-           (python::arg("self"), python::arg("idx1"), python::arg("idx2"),
-            python::arg("idx3"), python::arg("idx4"), python::arg("relative"),
-            python::arg("minDihedralDeg"), python::arg("maxDihedralDeg"),
-            python::arg("forceConstant")),
+           "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a, "relative"_a,
+           "minDihedralDeg"_a, "maxDihedralDeg"_a, "forceConstant"_a,
            "Adds a dihedral angle constraint to the MMFF force field; if "
-           "relative == True, "
-           "then minDihedralDeg and maxDihedralDeg are intended as relative to "
-           "the current "
-           "dihedral angle.")
+           "relative == True, then minDihedralDeg and maxDihedralDeg are "
+           "intended as relative to the current dihedral angle.")
       .def("MMFFAddPositionConstraint", MMFFAddPositionConstraint,
-           (python::arg("self"), python::arg("idx"), python::arg("maxDispl"),
-            python::arg("forceConstant")),
+           "idx"_a, "maxDispl"_a, "forceConstant"_a,
            "Adds a position constraint to the MMFF force field.")
-      .def("Initialize", &PyForceField::initialize, python::args("self"),
+      .def("Initialize", &PyForceField::initialize,
            "initializes the force field (call this before minimizing)")
-      .def("AddExtraPoint", &PyForceField::addExtraPoint,
-           (python::arg("self"), python::arg("x"), python::arg("y"),
-            python::arg("z"), python::arg("fixed") = true),
+      .def("AddExtraPoint", &PyForceField::addExtraPoint, "x"_a, "y"_a, "z"_a,
+           "fixed"_a = true,
            "Adds an extra point, this can be useful for adding constraints.")
-      .def("GetExtraPointPos", ForceFieldGetExtraPointLoc,
-           (python::arg("self"), python::arg("idx")),
+      .def("GetExtraPointPos", ForceFieldGetExtraPointLoc, "idx"_a,
            "returns the location of an extra point as a tuple");
-  python::class_<PyMMFFMolProperties>(
-      "MMFFMolProperties", "MMFF molecular properties", python::no_init)
-      .def("GetMMFFAtomType", &PyMMFFMolProperties::getMMFFAtomType,
-           (python::arg("self"), python::arg("idx")),
+
+  nb::class_<PyMMFFMolProperties>(m, "MMFFMolProperties",
+                                  "MMFF molecular properties")
+      .def("GetMMFFAtomType", &PyMMFFMolProperties::getMMFFAtomType, "idx"_a,
            "Retrieves MMFF atom type for atom with index idx")
       .def("GetMMFFFormalCharge", &PyMMFFMolProperties::getMMFFFormalCharge,
-           (python::arg("self"), python::arg("idx")),
-           "Retrieves MMFF formal charge for atom with index idx")
+           "idx"_a, "Retrieves MMFF formal charge for atom with index idx")
       .def("GetMMFFPartialCharge", &PyMMFFMolProperties::getMMFFPartialCharge,
-           (python::arg("self"), python::arg("idx")),
-           "Retrieves MMFF partial charge for atom with index idx")
+           "idx"_a, "Retrieves MMFF partial charge for atom with index idx")
       .def("GetMMFFBondStretchParams",
-           &PyMMFFMolProperties::getMMFFBondStretchParams,
-           (python::arg("self"), python::arg("mol"), python::arg("idx1"),
-            python::arg("idx2")),
+           &PyMMFFMolProperties::getMMFFBondStretchParams, "mol"_a, "idx1"_a,
+           "idx2"_a,
            "Retrieves MMFF bond stretch parameters for atoms with indexes "
-           "idx1, idx2 "
-           "as a (bondType, kb, r0) tuple, or None if no parameters could be "
-           "found")
-      .def("GetMMFFAngleBendParams",
-           &PyMMFFMolProperties::getMMFFAngleBendParams,
-           (python::arg("self"), python::arg("mol"), python::arg("idx1"),
-            python::arg("idx2"), python::arg("idx3")),
-           "Retrieves MMFF angle bend parameters for atoms with indexes idx1, "
-           "idx2, idx3 "
-           "as a (angleType, ka, theta0) tuple, or None if no parameters could "
-           "be found")
-      .def("GetMMFFStretchBendParams",
-           &PyMMFFMolProperties::getMMFFStretchBendParams,
-           (python::arg("self"), python::arg("mol"), python::arg("idx1"),
-            python::arg("idx2"), python::arg("idx3")),
-           "Retrieves MMFF stretch-bend parameters for atoms with indexes "
-           "idx1, idx2, idx3 "
-           "as a (stretchBendType, kbaIJK, kbaKJI) tuple, or None if no "
+           "idx1, idx2 as a (bondType, kb, r0) tuple, or None if no "
            "parameters could be found")
+      .def("GetMMFFAngleBendParams",
+           &PyMMFFMolProperties::getMMFFAngleBendParams, "mol"_a, "idx1"_a,
+           "idx2"_a, "idx3"_a,
+           "Retrieves MMFF angle bend parameters for atoms with indexes idx1, "
+           "idx2, idx3 as a (angleType, ka, theta0) tuple, or None if no "
+           "parameters could be found")
+      .def("GetMMFFStretchBendParams",
+           &PyMMFFMolProperties::getMMFFStretchBendParams, "mol"_a, "idx1"_a,
+           "idx2"_a, "idx3"_a,
+           "Retrieves MMFF stretch-bend parameters for atoms with indexes "
+           "idx1, idx2, idx3 as a (stretchBendType, kbaIJK, kbaKJI) tuple, "
+           "or None if no parameters could be found")
       .def("GetMMFFTorsionParams", &PyMMFFMolProperties::getMMFFTorsionParams,
-           (python::arg("self"), python::arg("mol"), python::arg("idx1"),
-            python::arg("idx2"), python::arg("idx3"), python::arg("idx4")),
+           "mol"_a, "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a,
            "Retrieves MMFF torsion parameters for atoms with indexes idx1, "
-           "idx2, idx3, idx4 "
-           "as a (torsionType, V1, V2, V3) tuple, or None if no parameters "
-           "could be found")
+           "idx2, idx3, idx4 as a (torsionType, V1, V2, V3) tuple, or None "
+           "if no parameters could be found")
       .def("GetMMFFOopBendParams", &PyMMFFMolProperties::getMMFFOopBendParams,
-           (python::arg("self"), python::arg("mol"), python::arg("idx1"),
-            python::arg("idx2"), python::arg("idx3"), python::arg("idx4")),
+           "mol"_a, "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a,
            "Retrieves MMFF out-of-plane bending force constant for atoms with "
-           "indexes "
-           "idx1, idx2, idx3, idx4 as a koop float value")
-      .def("GetMMFFVdWParams", &PyMMFFMolProperties::getMMFFVdWParams,
-           (python::arg("self"), python::arg("idx1"), python::arg("idx2")),
+           "indexes idx1, idx2, idx3, idx4 as a koop float value")
+      .def("GetMMFFVdWParams", &PyMMFFMolProperties::getMMFFVdWParams, "idx1"_a,
+           "idx2"_a,
            "Retrieves MMFF van der Waals parameters for atoms with indexes "
            "idx1, idx2 as a (R_ij_starUnscaled, epsilonUnscaled, R_ij_star, "
-           "epsilon) tuple, "
-           "or None if no parameters could be found")
+           "epsilon) tuple, or None if no parameters could be found")
       .def("SetMMFFDielectricModel",
-           &PyMMFFMolProperties::setMMFFDielectricModel,
-           (python::arg("self"), python::arg("dielModel") = 1),
+           &PyMMFFMolProperties::setMMFFDielectricModel, "dielModel"_a = 1,
            "Sets the DielModel MMFF property (1: constant; 2: "
-           "distance-dependent; "
-           "defaults to constant)")
+           "distance-dependent; defaults to constant)")
       .def("GetMMFFDielectricModel",
-           &PyMMFFMolProperties::getMMFFDielectricModel, python::arg("self"),
+           &PyMMFFMolProperties::getMMFFDielectricModel,
            "Returns the currently configured MMFF dielectric model "
            "(1: constant; 2: distance-dependent).")
       .def("SetMMFFDielectricConstant",
-           &PyMMFFMolProperties::setMMFFDielectricConstant,
-           (python::arg("self"), python::arg("dielConst") = 1.0),
+           &PyMMFFMolProperties::setMMFFDielectricConstant, "dielConst"_a = 1.0,
            "Sets the DielConst MMFF property (defaults to 1.0)")
       .def("GetMMFFDielectricConstant",
-           &PyMMFFMolProperties::getMMFFDielectricConstant, python::arg("self"),
+           &PyMMFFMolProperties::getMMFFDielectricConstant,
            "Returns the currently configured MMFF dielectric constant.")
       .def("SetMMFFBondTerm", &PyMMFFMolProperties::setMMFFBondTerm,
-           (python::arg("self"), python::arg("state") = true),
-           "Sets the bond term to be included in the MMFF equation (defaults "
-           "to True)")
+           "state"_a = true,
+           "Sets the bond term to be included in the MMFF equation "
+           "(defaults to True)")
       .def("GetMMFFBondTerm", &PyMMFFMolProperties::getMMFFBondTerm,
-           python::arg("self"),
            "Returns whether the bond term is included in the MMFF equation.")
       .def("SetMMFFAngleTerm", &PyMMFFMolProperties::setMMFFAngleTerm,
-           (python::arg("self"), python::arg("state") = true),
-           "Sets the angle term to be included in the MMFF equation (defaults "
-           "to True)")
+           "state"_a = true,
+           "Sets the angle term to be included in the MMFF equation "
+           "(defaults to True)")
       .def("GetMMFFAngleTerm", &PyMMFFMolProperties::getMMFFAngleTerm,
-           python::arg("self"),
            "Returns whether the angle term is included in the MMFF equation.")
       .def("SetMMFFStretchBendTerm",
-           &PyMMFFMolProperties::setMMFFStretchBendTerm,
-           (python::arg("self"), python::arg("state") = true),
+           &PyMMFFMolProperties::setMMFFStretchBendTerm, "state"_a = true,
            "Sets the stretch-bend term to be included in the MMFF equation "
            "(defaults to True)")
       .def("GetMMFFStretchBendTerm",
-           &PyMMFFMolProperties::getMMFFStretchBendTerm, python::arg("self"),
+           &PyMMFFMolProperties::getMMFFStretchBendTerm,
            "Returns whether the stretch-bend term is included in the MMFF "
            "equation.")
       .def("SetMMFFOopTerm", &PyMMFFMolProperties::setMMFFOopTerm,
-           (python::arg("self"), python::arg("state") = true),
+           "state"_a = true,
            "Sets the out-of-plane bend term to be included in the MMFF "
            "equation (defaults to True)")
       .def("GetMMFFOopTerm", &PyMMFFMolProperties::getMMFFOopTerm,
-           python::arg("self"),
            "Returns whether the out-of-plane bend term is included in the "
            "MMFF equation.")
       .def("SetMMFFTorsionTerm", &PyMMFFMolProperties::setMMFFTorsionTerm,
-           (python::arg("self"), python::arg("state") = true),
+           "state"_a = true,
            "Sets the torsional term to be included in the MMFF equation "
            "(defaults to True)")
       .def("GetMMFFTorsionTerm", &PyMMFFMolProperties::getMMFFTorsionTerm,
-           python::arg("self"),
            "Returns whether the torsional term is included in the MMFF "
            "equation.")
       .def("SetMMFFVdWTerm", &PyMMFFMolProperties::setMMFFVdWTerm,
-           (python::arg("self"), python::arg("state") = true),
+           "state"_a = true,
            "Sets the Van der Waals term to be included in the MMFF equation "
            "(defaults to True)")
       .def("GetMMFFVdWTerm", &PyMMFFMolProperties::getMMFFVdWTerm,
-           python::arg("self"),
            "Returns whether the Van der Waals term is included in the MMFF "
            "equation.")
       .def("SetMMFFEleTerm", &PyMMFFMolProperties::setMMFFEleTerm,
-           (python::arg("self"), python::arg("state") = true),
+           "state"_a = true,
            "Sets the electrostatic term to be included in the MMFF equation "
            "(defaults to True)")
       .def("GetMMFFEleTerm", &PyMMFFMolProperties::getMMFFEleTerm,
-           python::arg("self"),
            "Returns whether the electrostatic term is included in the MMFF "
            "equation.")
       .def("SetMMFFVariant", &PyMMFFMolProperties::setMMFFVariant,
-           (python::arg("self"), python::arg("mmffVariant") = "MMFF94"),
+           "mmffVariant"_a = "MMFF94",
            "Sets the MMFF variant to be used (\"MMFF94\" or \"MMFF94s\"; "
            "defaults to \"MMFF94\")")
       .def("GetMMFFVariant", &PyMMFFMolProperties::getMMFFVariant,
-           python::arg("self"),
            "Returns the currently configured MMFF variant "
            "(\"MMFF94\" or \"MMFF94s\").")
       .def("SetMMFFVerbosity", &PyMMFFMolProperties::setMMFFVerbosity,
-           (python::arg("self"), python::arg("verbosity") = 0),
+           "verbosity"_a = 0,
            "Sets the MMFF verbosity (0: none; 1: low; 2: high; defaults to 0)");
 }
-/*
-    (python::arg("self"), python::arg("mol"), python::arg("idx1"),
-   python::arg("idx2")),
-    "Retrieves MMFF bond stretch parameters for atoms with indexes idx1, idx2; "
-    "as a tuple (bondType, kb, r0)")
-*/
