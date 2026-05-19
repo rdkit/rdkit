@@ -49,6 +49,22 @@ TEST_CASE("mol.atoms()") {
   CHECK(ccount == 4);
 }
 
+TEST_CASE("mol.checkedAtoms()") {
+  const auto m = "CC(C)CO"_smiles;
+  REQUIRE(m);
+  unsigned int ccount = 0;
+  for (const auto atom : m->checkedAtoms()) {
+    if (atom->getAtomicNum() == 6) {
+      ++ccount;
+    }
+  }
+  CHECK(ccount == 4);
+  auto atoms = m->checkedAtoms();
+  auto beg = atoms.begin();
+  m->removeAtom(m->getAtomWithIdx(2));
+  CHECK_THROWS_AS(*beg, std::runtime_error);
+}
+
 TEST_CASE("mol.bonds()") {
   const auto m = "OC(=O)C(=O)O"_smiles;
   REQUIRE(m);
@@ -78,6 +94,22 @@ TEST_CASE("mol.bonds()") {
   CHECK(doubleBondCount == 2);
 }
 
+TEST_CASE("mol.checkedBonds()") {
+  const auto m = "OC(=O)C(=O)O"_smiles;
+  REQUIRE(m);
+  unsigned int doubleBondCount = 0;
+  for (const auto bond : m->checkedBonds()) {
+    if (bond->getBondType() == Bond::DOUBLE) {
+      ++doubleBondCount;
+    }
+  }
+  CHECK(doubleBondCount == 2);
+  auto bonds = m->checkedBonds();
+  auto beg = bonds.begin();
+  m->removeBond(1, 2);
+  CHECK_THROWS_AS(*beg, std::runtime_error);
+}
+
 TEST_CASE("mol.atomNeighbors()") {
   const auto m = "CC(C)CO"_smiles;
   REQUIRE(m);
@@ -93,6 +125,21 @@ TEST_CASE("mol.atomNeighbors()") {
   CHECK(MolToSmiles(*m) == "NC(N)NO");
 }
 
+TEST_CASE("mol.checkedAtomNeighbors()") {
+  const auto m = "CC(C)CO"_smiles;
+  REQUIRE(m);
+  unsigned int count = 0;
+  for (const auto atom : m->checkedAtomNeighbors(m->getAtomWithIdx(1))) {
+    count += atom->getDegree();
+  }
+  CHECK(count == 4);
+
+  auto nbrs = m->checkedAtomNeighbors(m->getAtomWithIdx(1));
+  auto beg = nbrs.begin();
+  m->removeAtom(m->getAtomWithIdx(2));
+  CHECK_THROWS_AS(*beg, std::runtime_error);
+}
+
 TEST_CASE("mol.atomBonds()") {
   const auto m = "CC(=C)CO"_smiles;
   REQUIRE(m);
@@ -106,6 +153,20 @@ TEST_CASE("mol.atomBonds()") {
   }
   MolOps::sanitizeMol(*m);
   CHECK(MolToSmiles(*m) == "CC(C)CO");
+}
+
+TEST_CASE("mol.checkedAtomBonds()") {
+  const auto m = "CC(=C)CO"_smiles;
+  REQUIRE(m);
+  double count = 0;
+  for (const auto bond : m->checkedAtomBonds(m->getAtomWithIdx(1))) {
+    count += bond->getBondTypeAsDouble();
+  }
+  CHECK(count == 4);
+  auto bonds = m->checkedAtomBonds(m->getAtomWithIdx(1));
+  auto beg = bonds.begin();
+  m->removeBond(1, 2);
+  CHECK_THROWS_AS(*beg, std::runtime_error);
 }
 
 TEST_CASE("ranges") {
