@@ -18,8 +18,8 @@
 
 namespace nb = nanobind;
 using namespace nb::literals;
-
-namespace RDKit {
+using namespace RDKit;
+namespace {
 
 RDGeom::Point3D computeCentroidHelper(const Conformer &conf, bool ignoreHs,
                                       nb::object weights) {
@@ -139,21 +139,21 @@ void transConformer(Conformer &conf,
   MolTransforms::transformConformer(conf, transform);
 }
 
-}  // namespace RDKit
+}  // namespace
 
 NB_MODULE(rdMolTransforms, m) {
   m.doc() = R"DOC(Module containing functions to perform 3D operations like rotate and
 translate conformations)DOC";
 
   m.def(
-      "ComputeCentroid", RDKit::computeCentroidHelper, "conf"_a,
+      "ComputeCentroid", computeCentroidHelper, "conf"_a,
       "ignoreHs"_a = true, "weights"_a = nb::none(),
       R"DOC(Compute the centroid of the conformation - hydrogens are ignored and no attention
 is paid to the difference in sizes of the heavy atoms; however,
 an optional vector of weights can be passed.)DOC");
 
   m.def(
-      "ComputeCanonicalTransform", RDKit::computeCanonTrans, "conf"_a,
+      "ComputeCanonicalTransform", computeCanonTrans, "conf"_a,
       "center"_a = static_cast<RDGeom::Point3D *>(nullptr),
       "normalizeCovar"_a = false, "ignoreHs"_a = true,
       R"DOC(Compute the transformation required to align a conformer so that
@@ -166,7 +166,7 @@ ARGUMENTS:
 
 #ifdef RDK_HAS_EIGEN3
   m.def(
-      "ComputePrincipalAxesAndMoments", RDKit::computePrincAxesMoments,
+      "ComputePrincipalAxesAndMoments", computePrincAxesMoments,
       "conf"_a, "ignoreHs"_a = true, "weights"_a = nb::none(),
       R"DOC(Compute principal axes and moments of inertia for a conformer.
 These values are calculated from the inertia tensor:
@@ -183,7 +183,7 @@ Returns a (principal axes, principal moments) tuple)DOC");
 
   m.def(
       "ComputePrincipalAxesAndMomentsFromGyrationMatrix",
-      RDKit::computePrincAxesMomentsFromGyrationMatrix, "conf"_a,
+      computePrincAxesMomentsFromGyrationMatrix, "conf"_a,
       "ignoreHs"_a = true, "weights"_a = nb::none(),
       R"DOC(Compute principal axes and moments from the gyration matrix of a conformer.
 These values are calculated from the gyration matrix/tensor:
@@ -199,7 +199,7 @@ ARGUMENTS:
 Returns a (principal axes, principal moments) tuple)DOC");
 #endif
 
-  m.def("TransformConformer", RDKit::transConformer, "conf"_a, "trans"_a,
+  m.def("TransformConformer", transConformer, "conf"_a, "trans"_a,
         "Transform the coordinates of a conformer");
 
   m.def(
