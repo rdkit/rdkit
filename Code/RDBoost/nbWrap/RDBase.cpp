@@ -344,7 +344,14 @@ NB_MODULE(rdBase, m) {
                                      PyExc_IndexError);
   nb::exception<ValueErrorException>(m, "ValueErrorException",
                                      PyExc_ValueError);
-  nb::exception<KeyErrorException>(m, "KeyErrorException", PyExc_KeyError);
+  nb::register_exception_translator(
+      [](const std::exception_ptr &p, void * /* unused */) {
+        try {
+          std::rethrow_exception(p);
+        } catch (const KeyErrorException &e) {
+          PyErr_SetString(PyExc_KeyError, e.key().c_str());
+        }
+      });
 #if INVARIANT_EXCEPTION_METHOD
   nb::register_exception_translator(
       [](const std::exception_ptr &p, void * /* unused */) {

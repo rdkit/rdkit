@@ -41,6 +41,12 @@ from rdkit import Chem, Geometry, RDConfig, rdBase
 from rdkit.Chem import AllChem, rdChemReactions
 from rdkit.Chem.SimpleEnum import Enumerator
 
+try:
+  from rdkit.Chem import FilterCatalog
+  haveFilterCatalog = True
+except (ImportError, AttributeError):
+  haveFilterCatalog = False
+
 
 def feq(v1, v2, tol2=1e-4):
   return abs(v1 - v2) <= tol2
@@ -50,8 +56,8 @@ def ptEq(pt1, pt2, tol=1e-4):
   return feq(pt1.x, pt2.x, tol) and feq(pt1.y, pt2.y, tol) and feq(pt1.z, pt2.z, tol)
 
 
-# Boost functions are NOT found by doctest, this "fixes" them
-#  by adding the doctests to a fake module
+# C extension functions (Boost.Python and nanobind) are not found by doctest
+#  directly, so add their doctests to a fake module
 spec = importlib.util.spec_from_loader("TestPreprocess", loader=None)
 TestPreprocess = importlib.util.module_from_spec(spec)
 code = """
@@ -482,6 +488,7 @@ M  END
     labels = rxn.AddRecursiveQueriesToReaction(qs, 'query', getLabels=True)
     self.assertTrue(len(labels), 1)
 
+  @unittest.skipIf(not haveFilterCatalog, "FilterCatalog not available in nanobind yet")
   def test17bAddRecursiveQueriesToReaction(self):
     from rdkit.Chem import FilterCatalog
     rxn = rdChemReactions.ReactionFromSmarts("[C:1][O:2].[N:3]>>[C:1][N:2]")

@@ -36,7 +36,7 @@ import sys
 import time
 import unittest
 
-from rdkit import Chem, Geometry, RDConfig, rdBase
+from rdkit import Chem, Geometry, RDConfig
 from rdkit.Chem import AllChem, rdChemReactions
 
 test_data = [
