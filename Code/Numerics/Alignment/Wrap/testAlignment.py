@@ -180,6 +180,25 @@ class TestCase(unittest.TestCase):
     self.assertRaises(ValueError, lambda: rdAlg.GetAlignmentTransform(refPts, prbPts))
 
 
+  def test6NumpyInputs(self):
+    # numpy arrays are supported as points and weights via the sequence protocol
+    refPts = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], float)
+    prbPts = np.array([[2.0, 2.0, 3.0], [3.0, 2.0, 3.0], [2.0, 3.0, 3.0], [2.0, 2.0, 4.0]], float)
+    wts = np.array([1.0, 1.0, 1.0, 1.0], float)
+
+    res = rdAlg.GetAlignmentTransform(refPts, prbPts, wts)
+    self.assertTrue(feq(res[0], 0.0))
+
+    # reflect accepts bool or int
+    res_bool = rdAlg.GetAlignmentTransform(refPts, prbPts, wts, reflect=True)
+    res_int = rdAlg.GetAlignmentTransform(refPts, prbPts, wts, reflect=1)
+    self.assertTrue(feq(res_bool[0], res_int[0]))
+
+    res_bool = rdAlg.GetAlignmentTransform(refPts, prbPts, wts, reflect=False)
+    res_int = rdAlg.GetAlignmentTransform(refPts, prbPts, wts, reflect=0)
+    self.assertTrue(feq(res_bool[0], res_int[0]))
+
+
 if __name__ == '__main__':
   print("Testing Alignment Wrapper code:")
   unittest.main()
