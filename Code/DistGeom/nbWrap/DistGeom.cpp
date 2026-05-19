@@ -28,7 +28,8 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 
-namespace RDKit {
+using namespace RDKit;
+namespace {
 
 bool doTriangleSmoothing(
     nb::ndarray<nb::numpy, double, nb::ndim<2>, nb::c_contig> boundsMat,
@@ -57,7 +58,7 @@ bool doTriangleSmoothing(
 
 nb::ndarray<nb::numpy, double, nb::ndim<2>> embedBoundsMatrix(
     nb::ndarray<nb::numpy, double, nb::ndim<2>, nb::c_contig> boundsMat,
-    int maxIters = 10, int randomizeOnFailure = 0, int numZeroFail = 2,
+    int maxIters = 10, bool randomizeOnFailure = false, int numZeroFail = 2,
     nb::list weights = nb::list(), int randomSeed = -1) {
   if (boundsMat.shape(0) != boundsMat.shape(1)) {
     throw nb::value_error("The array has to be square");
@@ -93,7 +94,7 @@ nb::ndarray<nb::numpy, double, nb::ndim<2>> embedBoundsMatrix(
 
     // and embed it:
     gotCoords = DistGeom::computeInitialCoords(
-        distMat, posPtrs, (bool)randomizeOnFailure, numZeroFail, randomSeed);
+        distMat, posPtrs, randomizeOnFailure, numZeroFail, randomSeed);
 
     // update the seed:
     if (randomSeed >= 0) {
@@ -148,13 +149,13 @@ nb::ndarray<nb::numpy, double, nb::ndim<2>> embedBoundsMatrix(
                                                      owner);
 }
 
-}  // namespace RDKit
+}  // namespace
 
 NB_MODULE(DistGeom, m) {
   m.doc() = "Module containing functions for basic distance geometry operations";
 
   m.def(
-      "DoTriangleSmoothing", &RDKit::doTriangleSmoothing,
+      "DoTriangleSmoothing", &doTriangleSmoothing,
       "boundsMatrix"_a, "tol"_a = 0.,
       R"DOC(Do triangle smoothing on a bounds matrix
 
@@ -169,8 +170,8 @@ RETURNS:
 )DOC");
 
   m.def(
-      "EmbedBoundsMatrix", &RDKit::embedBoundsMatrix,
-      "boundsMatrix"_a, "maxIters"_a = 10, "randomizeOnFailure"_a = 0,
+      "EmbedBoundsMatrix", &embedBoundsMatrix,
+      "boundsMatrix"_a, "maxIters"_a = 10, "randomizeOnFailure"_a = false,
       "numZeroFail"_a = 2, "weights"_a = nb::list(), "randomSeed"_a = -1,
       R"DOC(Embed a bounds matrix and return the coordinates
 
