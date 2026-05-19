@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2026 Rational Discovery LLC and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,17 +8,17 @@
 //  of the RDKit source tree.
 //
 
-#include <RDBoost/Wrap.h>
-#include <ChemicalFeatures/FreeChemicalFeature.h>
-#include <RDBoost/PySequenceHolder.h>
+#include <nanobind/nanobind.h>
 
-void wrap_freefeat();
+namespace nb = nanobind;
 
-BOOST_PYTHON_MODULE(rdChemicalFeatures) {
-  python::scope().attr("__doc__") =
-      "Module containing free chemical feature functionality\n\
-     These are features that are not associated with molecules. They are \n\
-     typically derived from pharmacophores and site-maps.\n";
+void wrap_freefeat(nb::module_ &m);
 
-  wrap_freefeat();
+NB_MODULE(rdChemicalFeatures, m) {
+  m.doc() = R"DOC(Module containing free chemical feature functionality
+These are features that are not associated with molecules. They are
+typically derived from pharmacophores and site-maps.
+)DOC";
+
+  wrap_freefeat(m);
 }
