@@ -1,13 +1,17 @@
 import os
-
-from rdkit import Chem, RDConfig, rdBase
-from rdkit.Chem import AllChem
-from rdkit.Chem import rdMolDescriptors as rdMD
-
-haveDescrs3D = hasattr(rdMD, 'CalcAUTOCORR3D')
-
 import time
 import unittest
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import rdMolDescriptors as rdMD
+
+try:
+  from rdkit.Chem import AllChem
+  haveAllChem = True
+except ImportError:
+  haveAllChem = False
+
+haveDescrs3D = hasattr(rdMD, 'CalcAUTOCORR3D')
 
 
 def _gen3D(m, is3d, calculator):
@@ -19,6 +23,7 @@ def _gen3D(m, is3d, calculator):
   return calculator(m)
 
 
+@unittest.skipIf(not haveAllChem, "AllChem not available")
 class TestCase(unittest.TestCase):
 
   def setUp(self):
