@@ -288,7 +288,7 @@ struct bond_wrapper {
 
         .doc() = bondClassDoc.c_str();
 
-    nb::enum_<Bond::BondType>(m, "BondType")
+    nb::enum_<Bond::BondType>(m, "BondType", nb::is_arithmetic())
         .value("UNSPECIFIED", Bond::UNSPECIFIED)
         .value("SINGLE", Bond::SINGLE)
         .value("DOUBLE", Bond::DOUBLE)
