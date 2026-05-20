@@ -5823,127 +5823,127 @@ M  END
     # the copy mol is not affected
     self.assertEqual(stgs2[0].GetWriteId(), 7)
 
-#   def testSubstructParametersBundles(self):
-#     b = Chem.MolBundle()
-#     smis = ('C[C@](F)(Cl)O', 'C[C@](Br)(Cl)O', 'C[C@](I)(Cl)O')
-#     for smi in smis:
-#       b.AddMol(Chem.MolFromSmiles(smi))
-#     self.assertEqual(len(b), 3)
-#     self.assertEqual(b.Size(), 3)
-#     ps = Chem.SubstructMatchParameters()
-#     ps.useChirality = True
-#     self.assertTrue(Chem.MolFromSmiles('C[C@](F)(Cl)OCC').HasSubstructMatch(b, ps))
-#     self.assertFalse(Chem.MolFromSmiles('C[C@@](F)(Cl)OCC').HasSubstructMatch(b, ps))
-#     self.assertTrue(Chem.MolFromSmiles('C[C@](I)(Cl)OCC').HasSubstructMatch(b, ps))
-#     self.assertFalse(Chem.MolFromSmiles('C[C@@](I)(Cl)OCC').HasSubstructMatch(b, ps))
+  def testSubstructParametersBundles(self):
+    b = Chem.MolBundle()
+    smis = ('C[C@](F)(Cl)O', 'C[C@](Br)(Cl)O', 'C[C@](I)(Cl)O')
+    for smi in smis:
+      b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b), 3)
+    self.assertEqual(b.Size(), 3)
+    ps = Chem.SubstructMatchParameters()
+    ps.useChirality = True
+    self.assertTrue(Chem.MolFromSmiles('C[C@](F)(Cl)OCC').HasSubstructMatch(b, ps))
+    self.assertFalse(Chem.MolFromSmiles('C[C@@](F)(Cl)OCC').HasSubstructMatch(b, ps))
+    self.assertTrue(Chem.MolFromSmiles('C[C@](I)(Cl)OCC').HasSubstructMatch(b, ps))
+    self.assertFalse(Chem.MolFromSmiles('C[C@@](I)(Cl)OCC').HasSubstructMatch(b, ps))
 
-#     self.assertEqual(
-#       Chem.MolFromSmiles('C[C@](F)(Cl)OCC').GetSubstructMatch(b, ps), (0, 1, 2, 3, 4))
-#     self.assertEqual(Chem.MolFromSmiles('C[C@@](F)(Cl)OCC').GetSubstructMatch(b, ps), ())
-#     self.assertEqual(
-#       Chem.MolFromSmiles('C[C@](I)(Cl)OCC').GetSubstructMatch(b, ps), (0, 1, 2, 3, 4))
-#     self.assertEqual(Chem.MolFromSmiles('C[C@@](I)(Cl)OCC').GetSubstructMatch(b, ps), ())
+    self.assertEqual(
+      Chem.MolFromSmiles('C[C@](F)(Cl)OCC').GetSubstructMatch(b, ps), [0, 1, 2, 3, 4])
+    self.assertEqual(Chem.MolFromSmiles('C[C@@](F)(Cl)OCC').GetSubstructMatch(b, ps), [])
+    self.assertEqual(
+      Chem.MolFromSmiles('C[C@](I)(Cl)OCC').GetSubstructMatch(b, ps), [0, 1, 2, 3, 4])
+    self.assertEqual(Chem.MolFromSmiles('C[C@@](I)(Cl)OCC').GetSubstructMatch(b, ps), [])
 
-#     self.assertEqual(
-#       Chem.MolFromSmiles('C[C@](F)(Cl)OCC').GetSubstructMatches(b, ps), ((0, 1, 2, 3, 4), ))
-#     self.assertEqual(Chem.MolFromSmiles('C[C@@](F)(Cl)OCC').GetSubstructMatches(b, ps), ())
-#     self.assertEqual(
-#       Chem.MolFromSmiles('C[C@](I)(Cl)OCC').GetSubstructMatches(b, ps), ((0, 1, 2, 3, 4), ))
-#     self.assertEqual(Chem.MolFromSmiles('C[C@@](I)(Cl)OCC').GetSubstructMatches(b, ps), ())
+    self.assertEqual(
+      Chem.MolFromSmiles('C[C@](F)(Cl)OCC').GetSubstructMatches(b, ps), [[0, 1, 2, 3, 4]])
+    self.assertEqual(Chem.MolFromSmiles('C[C@@](F)(Cl)OCC').GetSubstructMatches(b, ps), [])
+    self.assertEqual(
+      Chem.MolFromSmiles('C[C@](I)(Cl)OCC').GetSubstructMatches(b, ps), [[0, 1, 2, 3, 4]])
+    self.assertEqual(Chem.MolFromSmiles('C[C@@](I)(Cl)OCC').GetSubstructMatches(b, ps), [])
 
-#   def testSubstructParametersBundles2(self):
-#     b = Chem.MolBundle()
-#     smis = ('C[C@](F)(Cl)O', 'C[C@](Br)(Cl)O', 'C[C@](I)(Cl)O')
-#     for smi in smis:
-#       b.AddMol(Chem.MolFromSmiles(smi))
-#     self.assertEqual(len(b), 3)
-#     b2 = Chem.MolBundle()
-#     smis = ('C[C@@](F)(Cl)O', 'C[C@@](Br)(Cl)O', 'C[C@@](I)(Cl)O')
-#     for smi in smis:
-#       b2.AddMol(Chem.MolFromSmiles(smi))
-#     self.assertEqual(len(b2), 3)
-#     ps = Chem.SubstructMatchParameters()
-#     ps.useChirality = True
-#     self.assertTrue(b.HasSubstructMatch(b, ps))
-#     self.assertFalse(b.HasSubstructMatch(b2, ps))
-#     self.assertFalse(b2.HasSubstructMatch(b, ps))
+  def testSubstructParametersBundles2(self):
+    b = Chem.MolBundle()
+    smis = ('C[C@](F)(Cl)O', 'C[C@](Br)(Cl)O', 'C[C@](I)(Cl)O')
+    for smi in smis:
+      b.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b), 3)
+    b2 = Chem.MolBundle()
+    smis = ('C[C@@](F)(Cl)O', 'C[C@@](Br)(Cl)O', 'C[C@@](I)(Cl)O')
+    for smi in smis:
+      b2.AddMol(Chem.MolFromSmiles(smi))
+    self.assertEqual(len(b2), 3)
+    ps = Chem.SubstructMatchParameters()
+    ps.useChirality = True
+    self.assertTrue(b.HasSubstructMatch(b, ps))
+    self.assertFalse(b.HasSubstructMatch(b2, ps))
+    self.assertFalse(b2.HasSubstructMatch(b, ps))
 
-#     self.assertEqual(b.GetSubstructMatch(b, ps), (0, 1, 2, 3, 4))
-#     self.assertEqual(b.GetSubstructMatch(b2, ps), ())
-#     self.assertEqual(b2.GetSubstructMatch(b, ps), ())
+    self.assertEqual(b.GetSubstructMatch(b, ps), [0, 1, 2, 3, 4])
+    self.assertEqual(b.GetSubstructMatch(b2, ps), [])
+    self.assertEqual(b2.GetSubstructMatch(b, ps), [])
 
-#     self.assertEqual(b.GetSubstructMatches(b, ps), ((0, 1, 2, 3, 4), ))
-#     self.assertEqual(b.GetSubstructMatches(b2, ps), ())
-#     self.assertEqual(b2.GetSubstructMatches(b, ps), ())
+    self.assertEqual(b.GetSubstructMatches(b, ps), [[0, 1, 2, 3, 4]])
+    self.assertEqual(b.GetSubstructMatches(b2, ps), [])
+    self.assertEqual(b2.GetSubstructMatches(b, ps), [])
 
-#   def testSubstructMatchAtomProperties(self):
-#     m = Chem.MolFromSmiles("CCCCCCCCC")
-#     query = Chem.MolFromSmiles("CCC")
-#     m.GetAtomWithIdx(0).SetProp("test_prop", "1")
-#     query.GetAtomWithIdx(0).SetProp("test_prop", "1")
-#     ps = Chem.SubstructMatchParameters()
-#     ps.atomProperties = ["test_prop"]
+  def testSubstructMatchAtomProperties(self):
+    m = Chem.MolFromSmiles("CCCCCCCCC")
+    query = Chem.MolFromSmiles("CCC")
+    m.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    query.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    ps = Chem.SubstructMatchParameters()
+    ps.atomProperties = ["test_prop"]
 
-#     self.assertEqual(len(m.GetSubstructMatches(query)), 7)
-#     self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+    self.assertEqual(len(m.GetSubstructMatches(query)), 7)
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
 
-#     # more than one property works as well
-#     m.GetAtomWithIdx(1).SetProp("test_prop2", "1")
-#     query.GetAtomWithIdx(1).SetProp("test_prop2", "1")
-#     ps.atomProperties = ["test_prop", "test_prop2"]
-#     self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+    # more than one property works as well
+    m.GetAtomWithIdx(1).SetProp("test_prop2", "1")
+    query.GetAtomWithIdx(1).SetProp("test_prop2", "1")
+    ps.atomProperties = ["test_prop", "test_prop2"]
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
 
-#   def testSubstructMatchBondProperties(self):
-#     m = Chem.MolFromSmiles("CCCCCCCCC")
-#     query = Chem.MolFromSmiles("CCC")
-#     m.GetBondWithIdx(0).SetProp("test_prop", "1")
-#     query.GetBondWithIdx(0).SetProp("test_prop", "1")
-#     ps = Chem.SubstructMatchParameters()
-#     ps.bondProperties = ["test_prop"]
+  def testSubstructMatchBondProperties(self):
+    m = Chem.MolFromSmiles("CCCCCCCCC")
+    query = Chem.MolFromSmiles("CCC")
+    m.GetBondWithIdx(0).SetProp("test_prop", "1")
+    query.GetBondWithIdx(0).SetProp("test_prop", "1")
+    ps = Chem.SubstructMatchParameters()
+    ps.bondProperties = ["test_prop"]
 
-#     self.assertEqual(len(m.GetSubstructMatches(query)), 7)
-#     self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+    self.assertEqual(len(m.GetSubstructMatches(query)), 7)
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
 
-#     # more than one property works as well
-#     m.GetBondWithIdx(1).SetProp("test_prop2", "1")
-#     query.GetBondWithIdx(1).SetProp("test_prop2", "1")
-#     ps.bondProperties = ["test_prop", "test_prop2"]
-#     self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+    # more than one property works as well
+    m.GetBondWithIdx(1).SetProp("test_prop2", "1")
+    query.GetBondWithIdx(1).SetProp("test_prop2", "1")
+    ps.bondProperties = ["test_prop", "test_prop2"]
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
 
-#     # atom and bond properties work together
-#     m.GetAtomWithIdx(0).SetProp("test_prop", "1")
-#     query.GetAtomWithIdx(0).SetProp("test_prop", "1")
-#     ps.atomProperties = ["test_prop"]
-#     self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
+    # atom and bond properties work together
+    m.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    query.GetAtomWithIdx(0).SetProp("test_prop", "1")
+    ps.atomProperties = ["test_prop"]
+    self.assertEqual(len(m.GetSubstructMatches(query, ps)), 1)
 
-#   def testGithub2285(self):
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'github2285.sdf')
+  def testGithub2285(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'github2285.sdf')
 
-#     supp = Chem.ForwardSDMolSupplier(fileN, removeHs=False)
-#     if hasattr(supp, "__next__"):
-#       self.assertTrue(supp.__next__() is not None)
-#     else:
-#       self.assertTrue(supp.next() is not None)
+    supp = Chem.ForwardSDMolSupplier(fileN, removeHs=False)
+    if hasattr(supp, "__next__"):
+      self.assertTrue(supp.__next__() is not None)
+    else:
+      self.assertTrue(supp.next() is not None)
 
-#   def testBitVectProp(self):
-#     bv = DataStructs.ExplicitBitVect(100)
-#     m = Chem.MolFromSmiles("CC")
-#     for atom in m.GetAtoms():
-#       bv.SetBit(atom.GetIdx())
-#       atom.SetExplicitBitVectProp("prop", bv)
+  def testBitVectProp(self):
+    bv = DataStructs.ExplicitBitVect(100)
+    m = Chem.MolFromSmiles("CC")
+    for atom in m.GetAtoms():
+      bv.SetBit(atom.GetIdx())
+      atom.SetExplicitBitVectProp("prop", bv)
 
-#     for atom in m.GetAtoms():
-#       bv = atom.GetExplicitBitVectProp("prop")
-#       self.assertTrue(bv.GetBit(atom.GetIdx()))
+    for atom in m.GetAtoms():
+      bv = atom.GetExplicitBitVectProp("prop")
+      self.assertTrue(bv.GetBit(atom.GetIdx()))
 
-#   def testBitVectQuery(self):
-#     bv = DataStructs.ExplicitBitVect(4)
-#     bv.SetBit(0)
-#     bv.SetBit(2)
+  def testBitVectQuery(self):
+    bv = DataStructs.ExplicitBitVect(4)
+    bv.SetBit(0)
+    bv.SetBit(2)
 
-#     # wow, what a mouthfull..
-#     qa = rdqueries.HasBitVectPropWithValueQueryAtom("prop", bv, tolerance=0.0)
+    # wow, what a mouthfull..
+    qa = rdqueries.HasBitVectPropWithValueQueryAtom("prop", bv, tolerance=0.0)
 
 #     m = Chem.MolFromSmiles("CC")
 #     for atom in m.GetAtoms():
@@ -5989,20 +5989,20 @@ M  END
 #     res = m.GetSubstructMatches(sma)
 #     self.assertEqual(res, ((0, ), (1, )))
 
-#   def testGithub2441(self):
-#     m = Chem.MolFromSmiles("CC")
-#     conf = Chem.Conformer(2)
-#     m.AddConformer(conf, assignId=False)
-#     m.GetConformer().SetIntProp("foo", 1)
-#     m.GetConformer().SetProp("bar", "foo")
-#     self.assertTrue(m.GetConformer().HasProp("foo"))
-#     self.assertFalse(m.GetConformer().HasProp("food"))
-#     d = m.GetConformer().GetPropsAsDict()
-#     self.assertTrue('foo' in d)
-#     self.assertTrue('bar' in d)
-#     self.assertEqual(d['bar'], 'foo')
-#     self.assertEqual(m.GetConformer().GetProp("bar"), "foo")
-#     self.assertEqual(m.GetConformer().GetIntProp("foo"), 1)
+  def testGithub2441(self):
+    m = Chem.MolFromSmiles("CC")
+    conf = Chem.Conformer(2)
+    m.AddConformer(conf, assignId=False)
+    m.GetConformer().SetIntProp("foo", 1)
+    m.GetConformer().SetProp("bar", "foo")
+    self.assertTrue(m.GetConformer().HasProp("foo"))
+    self.assertFalse(m.GetConformer().HasProp("food"))
+    d = m.GetConformer().GetPropsAsDict()
+    self.assertTrue('foo' in d)
+    self.assertTrue('bar' in d)
+    self.assertEqual(d['bar'], 'foo')
+    self.assertEqual(m.GetConformer().GetProp("bar"), "foo")
+    self.assertEqual(m.GetConformer().GetIntProp("foo"), 1)
 
 #   def testGithub2479(self):
 #     # Chemistry failure in last entry

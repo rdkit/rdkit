@@ -535,9 +535,16 @@ struct mol_wrapper {
         .def("GetNumConformers", &ROMol::getNumConformers,
              "Return the number of conformations on the molecule")
 
-        .def("AddConformer", &ROMol::addConformer, "conf"_a,
-             "assignId"_a = false,
-             "Add a conformer to the molecule and return the conformer ID")
+        .def(
+            "AddConformer",
+            [](ROMol &mol, Conformer &conf, bool assignId) {
+              // C++ takes ownership of the new Conformer.
+              // There's no way for python to relenquish ownerhship,
+              // so we need to copy.
+              return mol.addConformer(new Conformer(conf), assignId);
+            },
+            "conf"_a, "assignId"_a = false,
+            "Add a conformer to the molecule and return the conformer ID")
 
         .def("GetConformer",
              (Conformer & (ROMol::*)(int)) & ROMol::getConformer, "id"_a = -1,
