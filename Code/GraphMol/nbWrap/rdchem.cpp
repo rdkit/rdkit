@@ -11,6 +11,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/unique_ptr.h>
+#include <nanobind/stl/vector.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SanitException.h>
@@ -108,6 +109,9 @@ NB_MODULE(rdchem, m) {
                                       PyExc_ValueError);
   // FIX: we should have inheritance here, but I haven't figured out how to do
   // that in nanobind yet
+  // here's a discussion post that shows how to define the kind of custom
+  // excepions we need using pybind11, it's probably adaptable to nanobind:
+  // https://github.com/pybind/pybind11/issues/1281#issuecomment-1815721395
   nb::exception<AtomSanitizeException>(m, "AtomSanitizeException",
                                        PyExc_ValueError);
   nb::exception<AtomValenceException>(m, "AtomValenceException",
@@ -116,6 +120,20 @@ NB_MODULE(rdchem, m) {
                                        PyExc_ValueError);
   nb::exception<KekulizeException>(m, "KekulizeException", PyExc_ValueError);
 
+  nb::class_<MolSanitizeException>(m, "_cppMolSanitizeException",
+                                   "exception arising from sanitization")
+      .def("Message", &MolSanitizeException::what)
+      .def("GetType", &MolSanitizeException::getType);
+  nb::class_<AtomSanitizeException, MolSanitizeException>(
+      m, "_cppAtomSanitizeException", "exception arising from sanitization")
+      .def("GetAtomIdx", &AtomSanitizeException::getAtomIdx);
+  nb::class_<AtomValenceException, AtomSanitizeException>(
+      m, "_cppAtomValenceException", "exception arising from sanitization");
+  nb::class_<AtomKekulizeException, AtomSanitizeException>(
+      m, "_cppAtomKekulizeException", "exception arising from sanitization");
+  nb::class_<KekulizeException, MolSanitizeException>(
+      m, "_cppKekulizeException", "exception arising from sanitization")
+      .def("GetAtomIndices", &KekulizeException::getAtomIndices);
 #if 0
   // this is one of those parts where I think I wish that I knew how to do
   // template meta-programming

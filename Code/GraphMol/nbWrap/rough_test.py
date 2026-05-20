@@ -6004,237 +6004,237 @@ M  END
     self.assertEqual(m.GetConformer().GetProp("bar"), "foo")
     self.assertEqual(m.GetConformer().GetIntProp("foo"), 1)
 
-#   def testGithub2479(self):
-#     # Chemistry failure in last entry
-#     smi2 = '''c1ccccc  duff
-# c1ccccc1 ok
-# c1ccncc1 pyridine
-# C(C garbage
-# C1CC1 ok2
-# C1C(Cl)C1 ok3
-# CC(C)(C)(C)C duff2
-# '''
-#     suppl2 = Chem.SmilesMolSupplier()
-#     suppl2.SetData(smi2, titleLine=False, nameColumn=1)
-#     l = [x for x in suppl2]
-#     self.assertEqual(len(l), 7)
-#     self.assertTrue(l[6] is None)
+  def testGithub2479(self):
+    # Chemistry failure in last entry
+    smi2 = '''c1ccccc  duff
+c1ccccc1 ok
+c1ccncc1 pyridine
+C(C garbage
+C1CC1 ok2
+C1C(Cl)C1 ok3
+CC(C)(C)(C)C duff2
+'''
+    suppl2 = Chem.SmilesMolSupplier()
+    suppl2.SetData(smi2, titleLine=False, nameColumn=1)
+    l = [x for x in suppl2]
+    self.assertEqual(len(l), 7)
+    self.assertTrue(l[6] is None)
 
-#     # SMILES failure in last entry
-#     smi2 = '''c1ccccc  duff
-# c1ccccc1 ok
-# c1ccncc1 pyridine
-# C(C garbage
-# C1CC1 ok2
-# C1C(Cl)C1 ok3
-# C1C(Cl)CCCC duff2
-# '''
-#     suppl2 = Chem.SmilesMolSupplier()
-#     suppl2.SetData(smi2, titleLine=False, nameColumn=1)
-#     l = [x for x in suppl2]
-#     self.assertEqual(len(l), 7)
-#     self.assertTrue(l[6] is None)
+    # SMILES failure in last entry
+    smi2 = '''c1ccccc  duff
+c1ccccc1 ok
+c1ccncc1 pyridine
+C(C garbage
+C1CC1 ok2
+C1C(Cl)C1 ok3
+C1C(Cl)CCCC duff2
+'''
+    suppl2 = Chem.SmilesMolSupplier()
+    suppl2.SetData(smi2, titleLine=False, nameColumn=1)
+    l = [x for x in suppl2]
+    self.assertEqual(len(l), 7)
+    self.assertTrue(l[6] is None)
 
-#     sdf = b"""
-#   Mrv1810 06051911332D
+    sdf = b"""
+  Mrv1810 06051911332D
 
-#   3  2  0  0  0  0            999 V2000
-#   -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#   -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-#   -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0  0  0  0
-#   2  3  1  0  0  0  0
-# M  END
-# $$$$
+  3  2  0  0  0  0            999 V2000
+  -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
 
-#   Mrv1810 06051911332D
+  Mrv1810 06051911332D
 
-#   3  2  0  0  0  0            999 V2000
-#   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -9.6408    5.3345    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
-#    -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0  0  0  0
-#   2  3  1  0  0  0  0
-# M  END
-# $$$$
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6408    5.3345    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+$$$$
 
-#   Mrv1810 06051911332D
+  Mrv1810 06051911332D
 
-#   3  2  0  0  0  0            999 V2000
-#   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -9.6"""
-#     suppl3 = Chem.SDMolSupplier()
-#     suppl3.SetData(sdf)
-#     l = [x for x in suppl3]
-#     self.assertEqual(len(l), 3)
-#     self.assertTrue(l[1] is None)
-#     self.assertTrue(l[2] is None)
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6"""
+    suppl3 = Chem.SDMolSupplier()
+    suppl3.SetData(sdf)
+    l = [x for x in suppl3]
+    self.assertEqual(len(l), 3)
+    self.assertTrue(l[1] is None)
+    self.assertTrue(l[2] is None)
 
-#     sio = BytesIO(sdf)
-#     suppl3 = Chem.ForwardSDMolSupplier(sio)
-#     l = [x for x in suppl3]
-#     self.assertEqual(len(l), 3)
-#     self.assertTrue(l[1] is None)
-#     self.assertTrue(l[2] is None)
+    sio = BytesIO(sdf)
+    suppl3 = Chem.ForwardSDMolSupplier(sio)
+    l = [x for x in suppl3]
+    self.assertEqual(len(l), 3)
+    self.assertTrue(l[1] is None)
+    self.assertTrue(l[2] is None)
 
-#     sdf = b"""
-#   Mrv1810 06051911332D
+    sdf = b"""
+  Mrv1810 06051911332D
 
-#   3  2  0  0  0  0            999 V2000
-#   -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#   -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-#   -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0  0  0  0
-#   2  3  1  0  0  0  0
-# M  END
-# >  <pval>  (1)
-# [1,2,]
+  3  2  0  0  0  0            999 V2000
+  -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.7066    5.4343    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.0654    4.9151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+>  <pval>  (1)
+[1,2,]
 
-# $$$$
+$$$$
 
-#   Mrv1810 06051911332D
+  Mrv1810 06051911332D
 
-#   3  2  0  0  0  0            999 V2000
-#   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#    -9.6408    5.3345    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-#    -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-#   1  2  1  0  0  0  0
-#   2  3  1  0  0  0  0
-# M  END
-# >  <pval>  (1)
-# [1,2,]
-# """
-#     suppl3 = Chem.SDMolSupplier()
-#     suppl3.SetData(sdf)
-#     l = [x for x in suppl3]
-#     self.assertEqual(len(l), 2)
-#     self.assertTrue(l[0] is not None)
-#     self.assertTrue(l[1] is not None)
+  3  2  0  0  0  0            999 V2000
+  -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.6408    5.3345    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0277    4.7825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+>  <pval>  (1)
+[1,2,]
+"""
+    suppl3 = Chem.SDMolSupplier()
+    suppl3.SetData(sdf)
+    l = [x for x in suppl3]
+    self.assertEqual(len(l), 2)
+    self.assertTrue(l[0] is not None)
+    self.assertTrue(l[1] is not None)
 
-#     sio = BytesIO(sdf)
-#     suppl3 = Chem.ForwardSDMolSupplier(sio)
-#     l = [x for x in suppl3]
-#     self.assertEqual(len(l), 2)
-#     self.assertTrue(l[0] is not None)
-#     self.assertTrue(l[1] is not None)
+    sio = BytesIO(sdf)
+    suppl3 = Chem.ForwardSDMolSupplier(sio)
+    l = [x for x in suppl3]
+    self.assertEqual(len(l), 2)
+    self.assertTrue(l[0] is not None)
+    self.assertTrue(l[1] is not None)
 
-#   def testCMLWriter(self):
-#     self.maxDiff = None  # XXX
-#     conf = Chem.Conformer(11)
+  def testCMLWriter(self):
+    self.maxDiff = None  # XXX
+    conf = Chem.Conformer(11)
 
-#     conf.SetAtomPosition(0, [-0.95330, 0.60416, 1.01609])
-#     conf.SetAtomPosition(1, [-1.00832, 1.68746, 0.83520])
-#     conf.SetAtomPosition(2, [-1.96274, 0.16103, 0.94471])
-#     conf.SetAtomPosition(3, [-0.57701, 0.44737, 2.04167])
-#     conf.SetAtomPosition(4, [0.00000, 0.00000, 0.00000])
-#     conf.SetAtomPosition(5, [-0.43038, 0.18596, -1.01377])
-#     conf.SetAtomPosition(6, [0.22538, -1.36531, 0.19373])
-#     conf.SetAtomPosition(7, [1.21993, -1.33937, 0.14580])
-#     conf.SetAtomPosition(8, [1.38490, 0.73003, 0.00000])
-#     conf.SetAtomPosition(9, [1.38490, 1.96795, 0.00000])
-#     conf.SetAtomPosition(10, [2.35253, -0.07700, 0.00000])
+    conf.SetAtomPosition(0, [-0.95330, 0.60416, 1.01609])
+    conf.SetAtomPosition(1, [-1.00832, 1.68746, 0.83520])
+    conf.SetAtomPosition(2, [-1.96274, 0.16103, 0.94471])
+    conf.SetAtomPosition(3, [-0.57701, 0.44737, 2.04167])
+    conf.SetAtomPosition(4, [0.00000, 0.00000, 0.00000])
+    conf.SetAtomPosition(5, [-0.43038, 0.18596, -1.01377])
+    conf.SetAtomPosition(6, [0.22538, -1.36531, 0.19373])
+    conf.SetAtomPosition(7, [1.21993, -1.33937, 0.14580])
+    conf.SetAtomPosition(8, [1.38490, 0.73003, 0.00000])
+    conf.SetAtomPosition(9, [1.38490, 1.96795, 0.00000])
+    conf.SetAtomPosition(10, [2.35253, -0.07700, 0.00000])
 
-#     emol = Chem.EditableMol(Chem.Mol())
-#     for z in [6, 1, 1, 1, 6, 1, 8, 1, 6, 8, 8]:
-#       emol.AddAtom(Chem.Atom(z))
+    emol = Chem.EditableMol(Chem.Mol())
+    for z in [6, 1, 1, 1, 6, 1, 8, 1, 6, 8, 8]:
+      emol.AddAtom(Chem.Atom(z))
 
-#     emol.AddBond(0, 1, Chem.BondType.SINGLE)
-#     emol.AddBond(0, 2, Chem.BondType.SINGLE)
-#     emol.AddBond(0, 3, Chem.BondType.SINGLE)
-#     emol.AddBond(0, 4, Chem.BondType.SINGLE)
-#     emol.AddBond(4, 5, Chem.BondType.SINGLE)
-#     emol.AddBond(4, 6, Chem.BondType.SINGLE)
-#     emol.AddBond(4, 8, Chem.BondType.SINGLE)
-#     emol.AddBond(6, 7, Chem.BondType.SINGLE)
-#     emol.AddBond(8, 9, Chem.BondType.DOUBLE)
-#     emol.AddBond(8, 10, Chem.BondType.SINGLE)
+    emol.AddBond(0, 1, Chem.BondType.SINGLE)
+    emol.AddBond(0, 2, Chem.BondType.SINGLE)
+    emol.AddBond(0, 3, Chem.BondType.SINGLE)
+    emol.AddBond(0, 4, Chem.BondType.SINGLE)
+    emol.AddBond(4, 5, Chem.BondType.SINGLE)
+    emol.AddBond(4, 6, Chem.BondType.SINGLE)
+    emol.AddBond(4, 8, Chem.BondType.SINGLE)
+    emol.AddBond(6, 7, Chem.BondType.SINGLE)
+    emol.AddBond(8, 9, Chem.BondType.DOUBLE)
+    emol.AddBond(8, 10, Chem.BondType.SINGLE)
 
-#     mol = emol.GetMol()
-#     mol.SetProp('_Name', 'S-lactic acid')
-#     mol.AddConformer(conf)
+    mol = emol.GetMol()
+    mol.SetProp('_Name', 'S-lactic acid')
+    mol.AddConformer(conf)
 
-#     mol.GetAtomWithIdx(7).SetIsotope(2)
-#     mol.GetAtomWithIdx(10).SetFormalCharge(-1)
+    mol.GetAtomWithIdx(7).SetIsotope(2)
+    mol.GetAtomWithIdx(10).SetFormalCharge(-1)
 
-#     mol.GetAtomWithIdx(4).SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+    mol.GetAtomWithIdx(4).SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
 
-#     cmlblock_expected = """<?xml version="1.0" encoding="utf-8"?>
-# <cml xmlns="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
-#   <molecule id="m-1" formalCharge="-1" spinMultiplicity="1">
-#     <name>S-lactic acid</name>
-#     <atomArray>
-#       <atom id="a0" elementType="C" formalCharge="0" hydrogenCount="3" x3="-0.953300" y3="0.604160" z3="1.016090"/>
-#       <atom id="a1" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.008320" y3="1.687460" z3="0.835200"/>
-#       <atom id="a2" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.962740" y3="0.161030" z3="0.944710"/>
-#       <atom id="a3" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.577010" y3="0.447370" z3="2.041670"/>
-#       <atom id="a4" elementType="C" formalCharge="0" hydrogenCount="1" x3="0.000000" y3="0.000000" z3="0.000000">
-#         <atomParity atomRefs4="a0 a5 a6 a8">1</atomParity>
-#       </atom>
-#       <atom id="a5" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.430380" y3="0.185960" z3="-1.013770"/>
-#       <atom id="a6" elementType="O" formalCharge="0" hydrogenCount="1" x3="0.225380" y3="-1.365310" z3="0.193730"/>
-#       <atom id="a7" elementType="H" formalCharge="0" hydrogenCount="0" isotopeNumber="2" x3="1.219930" y3="-1.339370" z3="0.145800"/>
-#       <atom id="a8" elementType="C" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="0.730030" z3="0.000000"/>
-#       <atom id="a9" elementType="O" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="1.967950" z3="0.000000"/>
-#       <atom id="a10" elementType="O" formalCharge="-1" hydrogenCount="0" x3="2.352530" y3="-0.077000" z3="0.000000"/>
-#     </atomArray>
-#     <bondArray>
-#       <bond atomRefs2="a0 a1" id="b0" order="S"/>
-#       <bond atomRefs2="a0 a2" id="b1" order="S"/>
-#       <bond atomRefs2="a0 a3" id="b2" order="S"/>
-#       <bond atomRefs2="a0 a4" id="b3" order="S"/>
-#       <bond atomRefs2="a4 a5" id="b4" order="S" bondStereo="H"/>
-#       <bond atomRefs2="a4 a6" id="b5" order="S"/>
-#       <bond atomRefs2="a4 a8" id="b6" order="S"/>
-#       <bond atomRefs2="a6 a7" id="b7" order="S"/>
-#       <bond atomRefs2="a8 a9" id="b8" order="D"/>
-#       <bond atomRefs2="a8 a10" id="b9" order="S"/>
-#     </bondArray>
-#   </molecule>
-# </cml>
-# """
+    cmlblock_expected = """<?xml version="1.0" encoding="utf-8"?>
+<cml xmlns="http://www.xml-cml.org/schema" xmlns:convention="http://www.xml-cml.org/convention/" convention="convention:molecular">
+  <molecule id="m-1" formalCharge="-1" spinMultiplicity="1">
+    <name>S-lactic acid</name>
+    <atomArray>
+      <atom id="a0" elementType="C" formalCharge="0" hydrogenCount="3" x3="-0.953300" y3="0.604160" z3="1.016090"/>
+      <atom id="a1" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.008320" y3="1.687460" z3="0.835200"/>
+      <atom id="a2" elementType="H" formalCharge="0" hydrogenCount="0" x3="-1.962740" y3="0.161030" z3="0.944710"/>
+      <atom id="a3" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.577010" y3="0.447370" z3="2.041670"/>
+      <atom id="a4" elementType="C" formalCharge="0" hydrogenCount="1" x3="0.000000" y3="0.000000" z3="0.000000">
+        <atomParity atomRefs4="a0 a5 a6 a8">1</atomParity>
+      </atom>
+      <atom id="a5" elementType="H" formalCharge="0" hydrogenCount="0" x3="-0.430380" y3="0.185960" z3="-1.013770"/>
+      <atom id="a6" elementType="O" formalCharge="0" hydrogenCount="1" x3="0.225380" y3="-1.365310" z3="0.193730"/>
+      <atom id="a7" elementType="H" formalCharge="0" hydrogenCount="0" isotopeNumber="2" x3="1.219930" y3="-1.339370" z3="0.145800"/>
+      <atom id="a8" elementType="C" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="0.730030" z3="0.000000"/>
+      <atom id="a9" elementType="O" formalCharge="0" hydrogenCount="0" x3="1.384900" y3="1.967950" z3="0.000000"/>
+      <atom id="a10" elementType="O" formalCharge="-1" hydrogenCount="0" x3="2.352530" y3="-0.077000" z3="0.000000"/>
+    </atomArray>
+    <bondArray>
+      <bond atomRefs2="a0 a1" id="b0" order="S"/>
+      <bond atomRefs2="a0 a2" id="b1" order="S"/>
+      <bond atomRefs2="a0 a3" id="b2" order="S"/>
+      <bond atomRefs2="a0 a4" id="b3" order="S"/>
+      <bond atomRefs2="a4 a5" id="b4" order="S" bondStereo="H"/>
+      <bond atomRefs2="a4 a6" id="b5" order="S"/>
+      <bond atomRefs2="a4 a8" id="b6" order="S"/>
+      <bond atomRefs2="a6 a7" id="b7" order="S"/>
+      <bond atomRefs2="a8 a9" id="b8" order="D"/>
+      <bond atomRefs2="a8 a10" id="b9" order="S"/>
+    </bondArray>
+  </molecule>
+</cml>
+"""
 
-#     self.assertEqual(Chem.MolToCMLBlock(mol), cmlblock_expected)
+    self.assertEqual(Chem.MolToCMLBlock(mol), cmlblock_expected)
 
-#   def testXYZ(self):
-#     conf = Chem.Conformer(5)
-#     conf.SetAtomPosition(0, [0.000, 0.000, 0.000])
-#     conf.SetAtomPosition(1, [-0.635, -0.635, 0.635])
-#     conf.SetAtomPosition(2, [-0.635, 0.635, -0.635])
-#     conf.SetAtomPosition(3, [0.635, -0.635, -0.635])
-#     conf.SetAtomPosition(4, [0.635, 0.635, 0.635])
+  def testXYZ(self):
+    conf = Chem.Conformer(5)
+    conf.SetAtomPosition(0, [0.000, 0.000, 0.000])
+    conf.SetAtomPosition(1, [-0.635, -0.635, 0.635])
+    conf.SetAtomPosition(2, [-0.635, 0.635, -0.635])
+    conf.SetAtomPosition(3, [0.635, -0.635, -0.635])
+    conf.SetAtomPosition(4, [0.635, 0.635, 0.635])
 
-#     emol = Chem.EditableMol(Chem.Mol())
-#     for z in [6, 1, 1, 1, 1]:
-#       emol.AddAtom(Chem.Atom(z))
-#     mol = emol.GetMol()
-#     mol.SetProp('_Name', 'methane\nthis part should not be output')
-#     mol.AddConformer(conf)
+    emol = Chem.EditableMol(Chem.Mol())
+    for z in [6, 1, 1, 1, 1]:
+      emol.AddAtom(Chem.Atom(z))
+    mol = emol.GetMol()
+    mol.SetProp('_Name', 'methane\nthis part should not be output')
+    mol.AddConformer(conf)
 
-#     xyzblock_expected = """5
-# methane
-# C      0.000000    0.000000    0.000000
-# H     -0.635000   -0.635000    0.635000
-# H     -0.635000    0.635000   -0.635000
-# H      0.635000   -0.635000   -0.635000
-# H      0.635000    0.635000    0.635000
-# """
+    xyzblock_expected = """5
+methane
+C      0.000000    0.000000    0.000000
+H     -0.635000   -0.635000    0.635000
+H     -0.635000    0.635000   -0.635000
+H      0.635000   -0.635000   -0.635000
+H      0.635000    0.635000    0.635000
+"""
 
-#     self.assertEqual(Chem.MolToXYZBlock(mol), xyzblock_expected)
+    self.assertEqual(Chem.MolToXYZBlock(mol), xyzblock_expected)
 
-#   def testSanitizationExceptionBasics(self):
-#     try:
-#       Chem.SanitizeMol(Chem.MolFromSmiles('CFC', sanitize=False))
-#     except Chem.AtomValenceException as exc:
-#       self.assertEqual(exc.cause.GetAtomIdx(), 1)
-#     else:
-#       self.assertFalse(True)
+  # def testSanitizationExceptionBasics(self):
+  #   try:
+  #     Chem.SanitizeMol(Chem.MolFromSmiles('CFC', sanitize=False))
+  #   except Chem.AtomValenceException as exc:
+  #     self.assertEqual(exc.cause.GetAtomIdx(), 1)
+  #   else:
+  #     self.assertFalse(True)
 
-#     try:
-#       Chem.SanitizeMol(Chem.MolFromSmiles('c1cc1', sanitize=False))
-#     except Chem.KekulizeException as exc:
-#       self.assertEqual(exc.cause.GetAtomIndices(), (0, 1, 2))
-#     else:
-#       self.assertFalse(True)
+  #   try:
+  #     Chem.SanitizeMol(Chem.MolFromSmiles('c1cc1', sanitize=False))
+  #   except Chem.KekulizeException as exc:
+  #     self.assertEqual(exc.cause.GetAtomIndices(), (0, 1, 2))
+  #   else:
+  #     self.assertFalse(True)
 
 #   def testSanitizationExceptionHierarchy(self):
 #     with self.assertRaises(Chem.AtomValenceException):
@@ -6253,73 +6253,73 @@ M  END
 #     with self.assertRaises(ValueError):
 #       Chem.SanitizeMol(Chem.MolFromSmiles('c1cc1', sanitize=False))
 
-#   def testNoExceptionSmilesParserParams(self):
-#     """
-#     MolFromSmiles should catch exceptions even when SmilesParserParams
-#     is provided.
-#     """
-#     smiles_params = Chem.SmilesParserParams()
-#     mol = Chem.MolFromSmiles("C1CC", smiles_params)
-#     self.assertIsNone(mol)
+  def testNoExceptionSmilesParserParams(self):
+    """
+    MolFromSmiles should catch exceptions even when SmilesParserParams
+    is provided.
+    """
+    smiles_params = Chem.SmilesParserParams()
+    mol = Chem.MolFromSmiles("C1CC", smiles_params)
+    self.assertIsNone(mol)
 
-#   def testDetectChemistryProblems(self):
-#     m = Chem.MolFromSmiles('CFCc1cc1FC', sanitize=False)
-#     ps = Chem.DetectChemistryProblems(m)
-#     self.assertEqual(len(ps), 3)
-#     self.assertEqual([x.GetType() for x in ps],
-#                      ['AtomValenceException', 'AtomValenceException', 'KekulizeException'])
-#     self.assertEqual(ps[0].GetAtomIdx(), 1)
-#     self.assertEqual(ps[1].GetAtomIdx(), 6)
-#     self.assertEqual(ps[2].GetAtomIndices(), (3, 4, 5))
+  def testDetectChemistryProblems(self):
+    m = Chem.MolFromSmiles('CFCc1cc1FC', sanitize=False)
+    ps = Chem.DetectChemistryProblems(m)
+    self.assertEqual(len(ps), 3)
+    self.assertEqual([x.GetType() for x in ps],
+                     ['AtomValenceException', 'AtomValenceException', 'KekulizeException'])
+    self.assertEqual(ps[0].GetAtomIdx(), 1)
+    self.assertEqual(ps[1].GetAtomIdx(), 6)
+    self.assertEqual(ps[2].GetAtomIndices(), [3, 4, 5])
 
-#   def testGithub2611(self):
-#     mol = Chem.MolFromSmiles('ONCS.ONCS')
-#     for atom in mol.GetAtoms():
-#       atom.SetIsotope(atom.GetIdx())
+  def testGithub2611(self):
+    mol = Chem.MolFromSmiles('ONCS.ONCS')
+    for atom in mol.GetAtoms():
+      atom.SetIsotope(atom.GetIdx())
 
-#     order1 = list(
-#       Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False,
-#                                         includeIsotopes=True))
-#     order2 = list(
-#       Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 8), breakTies=False,
-#                                         includeIsotopes=False))
-#     self.assertNotEqual(order1[:4], order2[4:])
-#     # ensure that the orders are ignored in the second batch
-#     self.assertEqual(order2[:4], order2[4:])
+    order1 = list(
+      Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False,
+                                        includeIsotopes=True))
+    order2 = list(
+      Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 8), breakTies=False,
+                                        includeIsotopes=False))
+    self.assertNotEqual(order1[:4], order2[4:])
+    # ensure that the orders are ignored in the second batch
+    self.assertEqual(order2[:4], order2[4:])
 
-#     for smi in ['ONCS.ONCS', 'F[C@@H](Br)[C@H](F)Cl']:
-#       mol = Chem.MolFromSmiles(smi)
-#       for atom in mol.GetAtoms():
-#         atom.SetIsotope(atom.GetIdx())
+    for smi in ['ONCS.ONCS', 'F[C@@H](Br)[C@H](F)Cl']:
+      mol = Chem.MolFromSmiles(smi)
+      for atom in mol.GetAtoms():
+        atom.SetIsotope(atom.GetIdx())
 
-#         for iso, chiral in [(True, True), (True, False), (False, True), (False, False)]:
-#           order1 = list(
-#             Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, mol.GetNumAtoms()),
-#                                               bondsToUse=range(0,
-#                                                                mol.GetNumBonds()), breakTies=False,
-#                                               includeIsotopes=iso, includeChirality=chiral))
-#           order2 = list(
-#             Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, mol.GetNumAtoms()),
-#                                               bondsToUse=range(0,
-#                                                                mol.GetNumBonds()), breakTies=True,
-#                                               includeIsotopes=iso, includeChirality=chiral))
-#           order3 = list(
-#             Chem.CanonicalRankAtoms(mol, breakTies=False, includeIsotopes=iso,
-#                                     includeChirality=chiral))
-#           order4 = list(
-#             Chem.CanonicalRankAtoms(mol, breakTies=True, includeIsotopes=iso,
-#                                     includeChirality=chiral))
-#           self.assertEqual(order1, order3)
-#           self.assertEqual(order2, order4)
+        for iso, chiral in [(True, True), (True, False), (False, True), (False, False)]:
+          order1 = list(
+            Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, mol.GetNumAtoms()),
+                                              bondsToUse=range(0,
+                                                               mol.GetNumBonds()), breakTies=False,
+                                              includeIsotopes=iso, includeChirality=chiral))
+          order2 = list(
+            Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, mol.GetNumAtoms()),
+                                              bondsToUse=range(0,
+                                                               mol.GetNumBonds()), breakTies=True,
+                                              includeIsotopes=iso, includeChirality=chiral))
+          order3 = list(
+            Chem.CanonicalRankAtoms(mol, breakTies=False, includeIsotopes=iso,
+                                    includeChirality=chiral))
+          order4 = list(
+            Chem.CanonicalRankAtoms(mol, breakTies=True, includeIsotopes=iso,
+                                    includeChirality=chiral))
+          self.assertEqual(order1, order3)
+          self.assertEqual(order2, order4)
 
-#   def testRankAtomsInFragmentsWithoutBonds(self):
-#     mol = Chem.MolFromSmiles('ONCO')
-#     order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False))
-#     order2 = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
-#     self.assertNotEqual(order1[:4], order2[4:])
-#     order3 = list(
-#       Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), bondsToUse=(0, 1, 2),
-#                                         breakTies=False))
+  def testRankAtomsInFragmentsWithoutBonds(self):
+    mol = Chem.MolFromSmiles('ONCO')
+    order1 = list(Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), breakTies=False))
+    order2 = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
+    self.assertNotEqual(order1[:4], order2[4:])
+    order3 = list(
+      Chem.CanonicalRankAtomsInFragment(mol, atomsToUse=range(0, 4), bondsToUse=(0, 1, 2),
+                                        breakTies=False))
 
 #   def testSetBondStereoFromDirections(self):
 #     m1 = Chem.MolFromMolBlock(
