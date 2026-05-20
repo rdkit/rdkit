@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#define PY_ARRAY_UNIQUE_SYMBOL rdpicker_nb_array_API
 #include <RDBoost/import_array.h>
 
 namespace nb = nanobind;
