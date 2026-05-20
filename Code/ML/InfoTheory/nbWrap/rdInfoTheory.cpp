@@ -15,7 +15,6 @@
 
 namespace nb = nanobind;
 using namespace nb::literals;
-using namespace RDInfoTheory;
 
 namespace RDInfoTheory {
 double infoEntropy(nb::object resArr) {

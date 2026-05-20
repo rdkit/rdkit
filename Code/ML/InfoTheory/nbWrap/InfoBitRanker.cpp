@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
 #include <ML/InfoTheory/InfoBitRanker.h>
 #include <DataStructs/BitVects.h>
 
