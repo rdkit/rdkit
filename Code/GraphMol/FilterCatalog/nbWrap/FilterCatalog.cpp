@@ -1,35 +1,21 @@
-//  Copyright (c) 2015, Novartis Institutes for BioMedical Research Inc.
-//  All rights reserved.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+//  Copyright (C) 2015-2026 Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
 //
-//     * Redistributions of source code must retain the above copyright
-//       notice, this list of conditions and the following disclaimer.
-//     * Redistributions in binary form must reproduce the above
-//       copyright notice, this list of conditions and the following
-//       disclaimer in the documentation and/or other materials provided
-//       with the distribution.
-//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
-//       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written
-//       permission.
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-#include <RDBoost/python.h>
-#include <RDBoost/Wrap.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
+#include <nanobind/stl/pair.h>
+#include <nanobind/stl/tuple.h>
+#include <nanobind/stl/map.h>
+#include <nanobind/trampoline.h>
+#include <RDBoost/boost_shared_ptr.h>
 
 #include <GraphMol/FilterCatalog/FilterCatalogEntry.h>
 #include <GraphMol/FilterCatalog/FilterCatalog.h>
@@ -37,52 +23,69 @@
 #include <GraphMol/FilterCatalog/FilterMatchers.h>
 #include <GraphMol/FilterCatalog/FunctionalGroupHierarchy.h>
 #include <GraphMol/RDKitBase.h>
+#include <RDBoost/Wrap_nb.h>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace RDKit {
 
-struct filtercatalog_pickle_suite : rdkit_pickle_suite {
-  static python::tuple getinitargs(const FilterCatalog &self) {
-    std::string res;
-    if (!FilterCatalogCanSerialize()) {
-      throw_runtime_error("Pickling of FilterCatalog instances is not enabled");
+// Trampoline class to allow Python subclassing of FilterMatcherBase.
+// We hold a strong nb::object reference to the Python side to keep it alive,
+// which is necessary when the C++ copy() method creates a copied instance
+// (e.g. FilterCatalogEntry stores a copy).
+struct FilterMatcherBaseTrampoline : FilterMatcherBase {
+  NB_TRAMPOLINE(FilterMatcherBase, 4);
+  // Strong reference to the Python object — keeps it alive when the C++
+  // side is held in a boost::shared_ptr without a Python wrapper.
+  mutable nb::object d_pyObject;
+
+  bool isValid() const override {
+    nb::gil_scoped_acquire gil;
+    nb::object pyObj = d_pyObject.is_valid() ? d_pyObject : nb::borrow<nb::object>(nb_trampoline.base());
+    return nb::cast<bool>(pyObj.attr("IsValid")());
+  }
+
+  std::string getName() const override {
+    nb::gil_scoped_acquire gil;
+    nb::object pyObj = d_pyObject.is_valid() ? d_pyObject : nb::borrow<nb::object>(nb_trampoline.base());
+    return nb::cast<std::string>(pyObj.attr("GetName")());
+  }
+
+  bool getMatches(const ROMol &mol,
+                  std::vector<FilterMatch> &matchVect) const override {
+    // Call Python's GetMatches(mol, vect) where vect is a Python list.
+    // The Python implementation appends FilterMatch objects to vect.
+    // We then copy those back into the C++ matchVect.
+    nb::gil_scoped_acquire gil;
+    nb::object pyObj = d_pyObject.is_valid() ? d_pyObject : nb::borrow<nb::object>(nb_trampoline.base());
+    nb::list pyVect;
+    nb::object result = pyObj.attr("GetMatches")(mol, pyVect);
+    bool matched = nb::cast<bool>(result);
+    if (matched) {
+      for (auto item : pyVect) {
+        matchVect.push_back(nb::cast<FilterMatch>(item));
+      }
     }
-    res = self.Serialize();
-    return python::make_tuple(python::object(python::handle<>(
-        PyBytes_FromStringAndSize(res.c_str(), res.length()))));
-  };
+    return matched;
+  }
+
+  bool hasMatch(const ROMol &mol) const override {
+    nb::gil_scoped_acquire gil;
+    nb::object pyObj = d_pyObject.is_valid() ? d_pyObject : nb::borrow<nb::object>(nb_trampoline.base());
+    return nb::cast<bool>(pyObj.attr("HasMatch")(mol));
+  }
+
+  boost::shared_ptr<FilterMatcherBase> copy() const override {
+    nb::gil_scoped_acquire gil;
+    // Capture the Python object so the copy keeps it alive.
+    nb::object pyObj = d_pyObject.is_valid() ? d_pyObject : nb::borrow<nb::object>(nb_trampoline.base());
+    auto *copy = new FilterMatcherBaseTrampoline(*this);
+    copy->d_pyObject = pyObj;
+    return boost::shared_ptr<FilterMatcherBase>(copy);
+  }
 };
 
-template <typename T>
-void python_to_vector(boost::python::object o, std::vector<T> &v) {
-  python::stl_input_iterator<T> begin(o);
-  python::stl_input_iterator<T> end;
-  v.clear();
-  v.insert(v.end(), begin, end);
-}
-
-void SetOffPatterns(ExclusionList &fc, boost::python::object list) {
-  std::vector<FilterMatcherBase *> vect;
-  // python_to_vector<FilterMatcherBase*>(list, vect);
-  python::stl_input_iterator<FilterMatcherBase *> begin(list);
-  python::stl_input_iterator<FilterMatcherBase *> end;
-
-  std::vector<boost::shared_ptr<FilterMatcherBase>> temp;
-
-  for (; begin != end; ++begin) {
-    temp.push_back((*begin)->copy());
-  }
-  fc.setExclusionPatterns(temp);
-}
-/*
-std::vector<const FilterCatalogEntry*> *GetMatches(FilterCatalog &fc, const
-ROMol &mol) {
-  std::vector<boost::shared_ptr<FilterCatalogEntry> > *result =        \
-    new std::vector<const FilterCatalogEntry*>(fc.getMatches(mol));
-  return result;
-}
-*/
 std::vector<FilterMatch> FilterMatcherBaseGetMatches(FilterMatcherBase &fm,
                                                      const ROMol &mol) {
   std::vector<FilterMatch> matches;
@@ -100,207 +103,35 @@ std::vector<FilterMatch> FilterCatalogEntryGetMatches(FilterCatalogEntry &fm,
   }
   return std::vector<FilterMatch>();
 }
-/*
-std::vector<MatchVectType> GetFilterMatchAtomPairs(FilterMatch &fm) {
-  return fm.atomPairs;
-}
-*/
-python::object FilterCatalogEntry_Serialize(const FilterCatalogEntry &cat) {
-  std::string res = cat.Serialize();
-  python::object retval = python::object(
-      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
-  return retval;
-}
 
-python::object FilterCatalog_Serialize(const FilterCatalog &cat) {
-  std::string res = cat.Serialize();
-  python::object retval = python::object(
-      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
-  return retval;
-}
-
-int GetMatchVectItem(std::pair<int, int> &pair, size_t idx) {
-  static const int def = 0xDEADBEEF;
-  if (idx == 0) {
-    return pair.first;
-  } else if (idx == 1) {
-    return pair.second;
+void SetOffPatterns(ExclusionList &fc, nb::object list) {
+  std::vector<boost::shared_ptr<FilterMatcherBase>> temp;
+  for (auto item : list) {
+    FilterMatcherBase *matcher = nb::cast<FilterMatcherBase *>(item);
+    temp.push_back(matcher->copy());
   }
-  PyErr_SetString(PyExc_IndexError, "Index out of bounds");
-  python::throw_error_already_set();
-  return def;
+  fc.setExclusionPatterns(temp);
 }
 
 void filter_catalog_add_entry(FilterCatalog &catalog,
                               FilterCatalogEntry *entry) {
-  // these are cheap to copy, so we do this to avoid memory management
-  //  issues from python as the catalog will own the ptr
   catalog.addEntry(new FilterCatalogEntry(*entry));
 }
 
-class PythonFilterMatch : public FilterMatcherBase {
-  PyObject *functor;
-  bool incref;
-
- public:
-  PythonFilterMatch(PyObject *callback)
-      : FilterMatcherBase("Python Filter Matcher"),
-        functor(callback),
-        incref(false) {};
-
-  // ONLY CALLED FROM C++ from the copy operation
-  PythonFilterMatch(const PythonFilterMatch &rhs)
-      : FilterMatcherBase(rhs), functor(rhs.functor), incref(true) {
-    python::incref(functor);
-  }
-
-  ~PythonFilterMatch() override {
-    PyGILStateHolder h;
-    if (incref) {
-      python::decref(functor);
-    }
-  }
-  bool isValid() const override {
-    PyGILStateHolder h;
-    return python::call_method<bool>(functor, "IsValid");
-  }
-
-  std::string getName() const override {
-    PyGILStateHolder h;
-    return python::call_method<std::string>(functor, "GetName");
-  }
-
-  bool getMatches(const ROMol &mol,
-                  std::vector<FilterMatch> &matchVect) const override {
-    PyGILStateHolder h;
-    return python::call_method<bool>(functor, "GetMatches", boost::ref(mol),
-                                     boost::ref(matchVect));
-  }
-
-  bool hasMatch(const ROMol &mol) const override {
-    PyGILStateHolder h;
-    return python::call_method<bool>(functor, "HasMatch", boost::ref(mol));
-  }
-
-  boost::shared_ptr<FilterMatcherBase> copy() const override {
-    return boost::shared_ptr<FilterMatcherBase>(new PythonFilterMatch(*this));
-  }
-};
-
-bool FilterCatalogRemoveEntry(FilterCatalog &fc,
-                              const boost::python::object &obj) {
+bool FilterCatalogRemoveEntry(FilterCatalog &fc, nb::object obj) {
   if (PyLong_Check(obj.ptr())) {
-    return fc.removeEntry(python::extract<unsigned int>(obj));
+    return fc.removeEntry(nb::cast<unsigned int>(obj));
   }
-  unsigned int idx =
-      fc.getIdxForEntry(python::extract<FilterCatalogEntry *>(obj));
+  unsigned int idx = fc.getIdxForEntry(nb::cast<FilterCatalogEntry *>(obj));
   return fc.removeEntry(idx);
 }
 
-const char *FilterMatchDoc =
-    "Object that holds the result of running FilterMatcherBase::GetMatches\n\n"
-    " - filterMatch holds the FilterMatchBase that triggered the match\n"
-    " - atomParis holds the [ (query_atom_idx, target_atom_idx) ] pairs for "
-    "the matches.\n"
-    "\n\n"
-    "Note that some matches may not have atom pairs (especially matches that "
-    "use FilterMatchOps.Not";
-
-const char *FilterMatcherBaseDoc =
-    "Base class for matching molecules to filters.\n\n"
-    " A FilterMatcherBase supplies the following API \n"
-    " - IsValid() returns True if the matcher is valid for use, False "
-    "otherwise\n"
-    " - HasMatch(mol) returns True if the molecule matches the filter\n"
-    " - GetMatches(mol) -> [FilterMatch, FilterMatch] returns all the "
-    "FilterMatch data\n"
-    "       that matches the molecule\n"
-    "\n\nprint( FilterMatcherBase ) will print user-friendly information about "
-    "the filter"
-    "\nNote that a FilterMatcherBase can be combined from may "
-    "FilterMatcherBases"
-    "\nThis is why GetMatches can return multiple FilterMatcherBases.\n"
-    ">>> from rdkit.Chem.FilterCatalog import *\n"
-    ">>> carbon_matcher = SmartsMatcher('Carbon', '[#6]', 0, 1)\n"
-    ">>> oxygen_matcher = SmartsMatcher('Oxygen', '[#8]', 0, 1)\n"
-    ">>> co_matcher = FilterMatchOps.Or(carbon_matcher, oxygen_matcher)\n"
-    ">>> mol = Chem.MolFromSmiles('C')\n"
-    ">>> matches = co_matcher.GetMatches(mol)\n"
-    ">>> len(matches)\n"
-    "1\n"
-    ">>> print(matches[0].filterMatch)\n"
-    "Carbon\n\n";
-
-const char *SmartsMatcherDoc =
-    "Smarts Matcher Filter\n"
-    " basic constructors: \n"
-    "   SmartsMatcher( name, smarts_pattern, minCount=1, maxCount=UINT_MAX )\n"
-    "   SmartsMatcher( name, molecule, minCount=1, maxCount=UINT_MAX )\n\n"
-    "  note: If the supplied smarts pattern is not valid, the IsValid() "
-    "function will\n"
-    "   return False\n"
-    ">>> from rdkit.Chem.FilterCatalog import *\n"
-    ">>> minCount, maxCount = 1,2\n"
-    ">>> carbon_matcher = SmartsMatcher('Carbon', '[#6]', minCount, maxCount)\n"
-    ">>> print (carbon_matcher.HasMatch(Chem.MolFromSmiles('CC')))\n"
-    "True\n"
-    ">>> print (carbon_matcher.HasMatch(Chem.MolFromSmiles('CCC')))\n"
-    "False\n"
-    ">>> carbon_matcher.SetMinCount(2)\n"
-    ">>> print (carbon_matcher.HasMatch(Chem.MolFromSmiles('C')))\n"
-    "False\n"
-    ">>> carbon_matcher.SetMaxCount(3)\n"
-    ">>> print (carbon_matcher.HasMatch(Chem.MolFromSmiles('CCC')))\n"
-    "True\n"
-    "\n";
-
-const char *FilterHierarchyMatcherDoc =
-    "Hierarchical Filter\n"
-    " basic constructors: \n"
-    "   FilterHierarchyMatcher( matcher )\n"
-    "   where can be any FilterMatcherBase (SmartsMatcher, etc)\n"
-    " FilterHierarchyMatcher's have children and can form matching\n"
-    "  trees.  then GetFilterMatches is called, the most specific (\n"
-    "  i.e. lowest node in a branch) is returned.\n\n"
-    " n.b. A FilterHierarchicalMatcher of functional groups is returned\n"
-    "  by calling GetFunctionalGroupHierarchy()\n\n"
-    ">>> from rdkit.Chem import MolFromSmiles\n"
-    ">>> from rdkit.Chem.FilterCatalog import *\n"
-    ">>> functionalGroups = GetFunctionalGroupHierarchy()\n"
-    ">>> [match.filterMatch.GetName() \n"
-    "...     for match in functionalGroups.GetFilterMatches(\n"
-    "...         MolFromSmiles('c1ccccc1Cl'))]\n"
-    "['Halogen.Aromatic', 'Halogen.NotFluorine.Aromatic']\n"
-    "\n";
-
-const char *FilterCatalogEntryDoc =
-    "FilterCatalogEntry\n"
-    "A filter catalog entry is an entry in a filter catalog.\n"
-    "Each filter is named and is used to flag a molecule usually for some\n"
-    "undesirable property.\n\n"
-    "For example, a PAINS (Pan Assay INterference) catalog entry be appear as\n"
-    "follows:\n\n"
-    ">>> from rdkit.Chem.FilterCatalog import *\n"
-    ">>> params = FilterCatalogParams()\n"
-    ">>> params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_A)\n"
-    "True\n"
-    ">>> catalog = FilterCatalog(params)\n"
-    ">>> mol = "
-    "Chem.MolFromSmiles('O=C(Cn1cnc2c1c(=O)n(C)c(=O)n2C)N/N=C/"
-    "c1c(O)ccc2c1cccc2')\n"
-    ">>> entry = catalog.GetFirstMatch(mol)\n"
-    ">>> print (entry.GetProp('Scope'))\n"
-    "PAINS filters (family A)\n"
-    ">>> print (entry.GetDescription())\n"
-    "hzone_phenol_A(479)\n"
-    "\n\n";
-
-python::dict GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
+nb::dict GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
   const std::map<std::string, ROMOL_SPTR> &flattened =
       GetFlattenedFunctionalGroupHierarchy(normalize);
-  python::dict dict;
+  nb::dict dict;
   for (const auto &it : flattened) {
-    dict[it.first] = it.second;
+    dict[it.first.c_str()] = it.second;
   }
   return dict;
 }
@@ -313,298 +144,334 @@ RunFilterCatalogWrapper(const FilterCatalog &fc,
   return RunFilterCatalog(fc, smiles, numThreads);
 }
 
-struct filtercat_wrapper {
-  static void wrap() {
-    python::class_<std::pair<int, int>>("IntPair")
-        .def(python::init<const int &, const int &>(
-            python::args("self", "query", "target")))
-        .def_readwrite("query", &std::pair<int, int>::first)
-        .def_readwrite("target", &std::pair<int, int>::second)
-        .def("__getitem__", &GetMatchVectItem, python::args("self", "idx"));
+void wrap_filtercat(nb::module_ &m) {
+  // MatchTypeVect is a Python list (std::vector<std::pair<int,int>> auto-converts).
+  m.attr("MatchTypeVect") = nb::module_::import_("builtins").attr("list");
+  // IntPair is a factory that takes two ints and returns a (int, int) tuple.
+  m.def("IntPair", [](int a, int b) { return std::make_pair(a, b); },
+        "a"_a, "b"_a, "Create an integer pair (tuple) for use in MatchTypeVect");
 
-    python::class_<FilterMatch, boost::shared_ptr<FilterMatch>>(
-        "FilterMatch", FilterMatchDoc,
-        python::init<boost::shared_ptr<FilterMatcherBase>, MatchVectType>(
-            python::args("self", "filter", "atomPairs")))
-        .def_readonly("filterMatch", &FilterMatch::filterMatch)
-        .def_readonly("atomPairs", &FilterMatch::atomPairs);
+  nb::class_<FilterMatch>(m, "FilterMatch",
+      R"DOC(Object that holds the result of running FilterMatcherBase::GetMatches
 
-    RegisterVectorConverter<FilterMatch>("VectFilterMatch");
+ - filterMatch holds the FilterMatchBase that triggered the match
+ - atomPairs holds the [ (query_atom_idx, target_atom_idx) ] pairs for the matches.
 
-    python::class_<FilterMatcherBase, boost::shared_ptr<FilterMatcherBase>,
-                   boost::noncopyable>("FilterMatcherBase",
-                                       FilterMatcherBaseDoc, python::no_init)
-        .def("IsValid", &FilterMatcherBase::isValid, python::args("self"),
-             "Return True if the filter matcher is valid, False otherwise")
-        .def("HasMatch", &FilterMatcherBase::hasMatch,
-             ((python::arg("self"), python::arg("mol"))),
-             "Returns True if mol matches the filter")
-        .def("GetMatches", &FilterMatcherBaseGetMatches,
-             ((python::arg("self"), python::arg("mol"))),
-             "Returns the list of matching subfilters mol matches any filter")
+Note that some matches may not have atom pairs (especially matches that
+use FilterMatchOps.Not)DOC")
+      .def(nb::init<boost::shared_ptr<FilterMatcherBase>, MatchVectType>(),
+           "filter"_a, "atomPairs"_a)
+      .def_ro("filterMatch", &FilterMatch::filterMatch)
+      .def_ro("atomPairs", &FilterMatch::atomPairs);
 
-        .def("GetName", &FilterMatcherBase::getName, python::args("self"))
-        .def("__str__", &FilterMatcherBase::getName, python::args("self"));
+  nb::class_<FilterMatcherBase, FilterMatcherBaseTrampoline>(m, "FilterMatcher",
+      R"DOC(Base class for matching molecules to filters.
 
-    python::class_<SmartsMatcher, python::bases<FilterMatcherBase>>(
-        "SmartsMatcher", SmartsMatcherDoc,
-        python::init<const std::string &>(python::args("self", "name")))
-        .def(python::init<const ROMol &>(python::args("self", "rhs"),
-                                         "Construct from a molecule"))
-        .def(python::init<const std::string &, const ROMol &, unsigned int,
-                          unsigned int>(
-            (python::arg("self"), python::arg("name"), python::arg("mol"),
-             python::arg("minCount") = 1, python::arg("maxCount") = UINT_MAX),
-            "Construct from a name, molecule, "
-            "minimum and maximum count"))
+ A FilterMatcherBase supplies the following API
+ - IsValid() returns True if the matcher is valid for use, False otherwise
+ - HasMatch(mol) returns True if the molecule matches the filter
+ - GetMatches(mol) -> [FilterMatch, FilterMatch] returns all the FilterMatch data
+       that matches the molecule
 
-        .def(python::init<const std::string &, const std::string &,
-                          unsigned int, unsigned int>(
-            (python::arg("self"), python::arg("name"), python::arg("smarts"),
-             python::arg("minCount") = 1, python::arg("maxCount") = UINT_MAX),
-            "Construct from a name,smarts pattern, minimum and "
-            "maximum count"))
+print( FilterMatcherBase ) will print user-friendly information about the filter
+Note that a FilterMatcherBase can be combined from many FilterMatcherBases
+This is why GetMatches can return multiple FilterMatcherBases.
+>>> from rdkit.Chem.FilterCatalog import *
+>>> carbon_matcher = SmartsMatcher('Carbon', '[#6]', 0, 1)
+>>> oxygen_matcher = SmartsMatcher('Oxygen', '[#8]', 0, 1)
+>>> co_matcher = FilterMatchOps.Or(carbon_matcher, oxygen_matcher)
+>>> mol = Chem.MolFromSmiles('C')
+>>> matches = co_matcher.GetMatches(mol)
+>>> len(matches)
+1
+>>> print(matches[0].filterMatch)
+Carbon
+)DOC")
+      .def(nb::init<const std::string &>(), "name"_a)
+      .def("IsValid", &FilterMatcherBase::isValid,
+           "Return True if the filter matcher is valid, False otherwise")
+      .def("HasMatch", &FilterMatcherBase::hasMatch, "mol"_a,
+           "Returns True if mol matches the filter")
+      .def("GetMatches", &FilterMatcherBaseGetMatches, "mol"_a,
+           "Returns the list of matching subfilters mol matches any filter")
+      .def("GetName", &FilterMatcherBase::getName)
+      .def("__str__", &FilterMatcherBase::getName);
 
-        .def("IsValid", &SmartsMatcher::isValid, python::args("self"),
-             "Returns True if the SmartsMatcher is valid")
-        .def("SetPattern",
-             (void (SmartsMatcher::*)(const ROMol &))&SmartsMatcher::setPattern,
-             python::args("self", "pat"),
-             "Set the pattern molecule for the SmartsMatcher")
-        .def("SetPattern",
-             (void (SmartsMatcher::*)(
-                 const std::string &))&SmartsMatcher::setPattern,
-             python::args("self", "pat"),
-             "Set the smarts pattern for the Smarts Matcher (warning: "
-             "MinimumCount is not reset)")
-        .def("GetPattern", &SmartsMatcher::getPattern,
-             python::return_value_policy<python::return_by_value>(),
-             python::args("self"))
-        .def("GetMinCount", &SmartsMatcher::getMinCount, python::args("self"),
-             "Get the minimum times pattern must appear for the filter to "
-             "match")
-        .def("SetMinCount", &SmartsMatcher::setMinCount,
-             ((python::arg("self"), python::arg("count"))),
-             "Set the minimum times pattern must appear to match")
+  // Also expose FilterMatcherBase and PythonFilterMatcher under their original names for compatibility
+  m.attr("FilterMatcherBase") = m.attr("FilterMatcher");
+  m.attr("PythonFilterMatcher") = m.attr("FilterMatcher");
 
-        .def("GetMaxCount", &SmartsMatcher::getMaxCount, python::args("self"),
-             "Get the maximum times pattern can appear for the filter to match")
-        .def(
-            "SetMaxCount", &SmartsMatcher::setMaxCount,
-            ((python::arg("self"), python::arg("count"))),
-            "Set the maximum times pattern can appear for the filter to match");
+  nb::class_<SmartsMatcher, FilterMatcherBase>(m, "SmartsMatcher",
+      R"DOC(Smarts Matcher Filter
+ basic constructors:
+   SmartsMatcher( name, smarts_pattern, minCount=1, maxCount=UINT_MAX )
+   SmartsMatcher( name, molecule, minCount=1, maxCount=UINT_MAX )
 
-    python::class_<ExclusionList, python::bases<FilterMatcherBase>>(
-        "ExclusionList", python::init<>(python::args("self")))
-        .def("SetExclusionPatterns", &SetOffPatterns,
-             python::args("self", "list"),
-             "Set a list of FilterMatcherBases that should not appear in a "
-             "molecule")
-        .def("AddPattern", &ExclusionList::addPattern,
-             python::args("self", "base"),
-             "Add a FilterMatcherBase that should not appear in a molecule");
+  note: If the supplied smarts pattern is not valid, the IsValid() function will
+   return False
+>>> from rdkit.Chem.FilterCatalog import *
+>>> minCount, maxCount = 1,2
+>>> carbon_matcher = SmartsMatcher('Carbon', '[#6]', minCount, maxCount)
+>>> print (carbon_matcher.HasMatch(Chem.MolFromSmiles('CC')))
+True
+>>> print (carbon_matcher.HasMatch(Chem.MolFromSmiles('CCC')))
+False
+>>> carbon_matcher.SetMinCount(2)
+>>> print (carbon_matcher.HasMatch(Chem.MolFromSmiles('C')))
+False
+>>> carbon_matcher.SetMaxCount(3)
+>>> print (carbon_matcher.HasMatch(Chem.MolFromSmiles('CCC')))
+True
+)DOC")
+      .def(nb::init<const std::string &>(), "name"_a)
+      .def(nb::init<const ROMol &>(), "rhs"_a, "Construct from a molecule")
+      .def(nb::init<const std::string &, const ROMol &, unsigned int,
+                    unsigned int>(),
+           "name"_a, "mol"_a, "minCount"_a = 1, "maxCount"_a = UINT_MAX,
+           "Construct from a name, molecule, minimum and maximum count")
+      .def(nb::init<const std::string &, const std::string &, unsigned int,
+                    unsigned int>(),
+           "name"_a, "smarts"_a, "minCount"_a = 1, "maxCount"_a = UINT_MAX,
+           "Construct from a name, smarts pattern, minimum and maximum count")
+      .def("IsValid", &SmartsMatcher::isValid,
+           "Returns True if the SmartsMatcher is valid")
+      .def("SetPattern",
+           nb::overload_cast<const ROMol &>(&SmartsMatcher::setPattern),
+           "pat"_a, "Set the pattern molecule for the SmartsMatcher")
+      .def("SetPattern",
+           nb::overload_cast<const std::string &>(&SmartsMatcher::setPattern),
+           "pat"_a,
+           "Set the smarts pattern for the Smarts Matcher (warning: "
+           "MinimumCount is not reset)")
+      .def("GetPattern", &SmartsMatcher::getPattern)
+      .def("GetMinCount", &SmartsMatcher::getMinCount,
+           "Get the minimum times pattern must appear for the filter to match")
+      .def("SetMinCount", &SmartsMatcher::setMinCount, "count"_a,
+           "Set the minimum times pattern must appear to match")
+      .def("GetMaxCount", &SmartsMatcher::getMaxCount,
+           "Get the maximum times pattern can appear for the filter to match")
+      .def("SetMaxCount", &SmartsMatcher::setMaxCount, "count"_a,
+           "Set the maximum times pattern can appear for the filter to match");
 
-    python::class_<FilterHierarchyMatcher,
-                   boost::shared_ptr<FilterHierarchyMatcher>,
-                   python::bases<FilterMatcherBase>>(
-        "FilterHierarchyMatcher", FilterHierarchyMatcherDoc,
-        python::init<>(python::args("self")))
-        .def(python::init<const FilterMatcherBase &>(
-            python::args("self", "matcher"), "Construct from a filtermatcher"))
-        .def("SetPattern", &FilterHierarchyMatcher::setPattern,
-             python::args("self", "matcher"),
-             "Set the filtermatcher pattern for this node.  An empty node is "
-             "considered "
-             "a root node and passes along the matches to the children.")
-        .def("AddChild", &FilterHierarchyMatcher::addChild,
-             python::args("self", "hierarchy"),
-             "Add a child node to this hierarchy.");
+  nb::class_<ExclusionList, FilterMatcherBase>(m, "ExclusionList")
+      .def(nb::init<>())
+      .def("SetExclusionPatterns", &SetOffPatterns, "list"_a,
+           "Set a list of FilterMatcherBases that should not appear in a "
+           "molecule")
+      .def("AddPattern", &ExclusionList::addPattern, "base"_a,
+           "Add a FilterMatcherBase that should not appear in a molecule");
 
-    if (!is_python_converter_registered<
-            boost::shared_ptr<const FilterHierarchyMatcher>>()) {
-      python::register_ptr_to_python<
-          boost::shared_ptr<const FilterHierarchyMatcher>>();
-    }
+  nb::class_<FilterHierarchyMatcher, FilterMatcherBase>(
+      m, "FilterHierarchyMatcher",
+      R"DOC(Hierarchical Filter
+ basic constructors:
+   FilterHierarchyMatcher( matcher )
+   where can be any FilterMatcherBase (SmartsMatcher, etc)
+ FilterHierarchyMatcher's have children and can form matching
+  trees.  When GetFilterMatches is called, the most specific (
+  i.e. lowest node in a branch) is returned.
 
-    bool noproxy = true;
-    RegisterVectorConverter<RDKit::ROMol *>("MolList", noproxy);
+ n.b. A FilterHierarchicalMatcher of functional groups is returned
+  by calling GetFunctionalGroupHierarchy()
 
-    python::class_<FilterCatalogEntry, boost::shared_ptr<FilterCatalogEntry>,
-                   boost::shared_ptr<const FilterCatalogEntry>>(
-        "FilterCatalogEntry", FilterCatalogEntryDoc,
-        python::init<>(python::args("self")))
-        .def(python::init<const std::string &, FilterMatcherBase &>(
-            python::args("self", "name", "matcher")))
-        .def("IsValid", &FilterCatalogEntry::isValid, python::args("self"))
+>>> from rdkit.Chem import MolFromSmiles
+>>> from rdkit.Chem.FilterCatalog import *
+>>> functionalGroups = GetFunctionalGroupHierarchy()
+>>> [match.filterMatch.GetName()
+...     for match in functionalGroups.GetFilterMatches(
+...         MolFromSmiles('c1ccccc1Cl'))]
+['Halogen.Aromatic', 'Halogen.NotFluorine.Aromatic']
+)DOC")
+      .def(nb::init<>())
+      .def(nb::init<const FilterMatcherBase &>(), "matcher"_a,
+           "Construct from a filtermatcher")
+      .def("SetPattern", &FilterHierarchyMatcher::setPattern, "matcher"_a,
+           R"DOC(Set the filtermatcher pattern for this node. An empty node is
+considered a root node and passes along the matches to the children.)DOC")
+      .def("AddChild", &FilterHierarchyMatcher::addChild, "hierarchy"_a,
+           "Add a child node to this hierarchy.");
 
-        .def("GetDescription", &FilterCatalogEntry::getDescription,
-             python::args("self"), "Get the description of the catalog entry")
-        .def("SetDescription", &FilterCatalogEntry::setDescription,
-             ((python::arg("self"), python::arg("description"))),
-             "Set the description of the catalog entry")
-        .def("GetFilterMatches", &FilterCatalogEntryGetMatches,
-             (python::args("self", "mol")),
-             "Retrieve the list of filters that match the molecule")
-        .def("HasFilterMatch", &FilterCatalogEntry::hasFilterMatch,
-             (python::args("self", "mol")),
-             "Returns True if the catalog entry contains filters that match "
-             "the molecule")
+  nb::class_<FilterCatalogEntry>(m, "FilterCatalogEntry",
+      R"DOC(FilterCatalogEntry
+A filter catalog entry is an entry in a filter catalog.
+Each filter is named and is used to flag a molecule usually for some
+undesirable property.
 
-        .def("Serialize", &FilterCatalogEntry_Serialize, python::args("self"))
-        .def("GetPropList", &FilterCatalogEntry::getPropList,
-             python::args("self"))
-        .def("SetProp",
-             (void (FilterCatalogEntry::*)(
-                 const std::string_view,
-                 std::string))&FilterCatalogEntry::setProp<std::string>,
-             python::args("self", "key", "val"))
-        .def("GetProp",
-             (std::string (FilterCatalogEntry::*)(const std::string_view)
-                  const) &
-                 FilterCatalogEntry::getProp<std::string>,
-             python::args("self", "key"))
-        .def("ClearProp",
-             (void (FilterCatalogEntry::*)(
-                 const std::string_view))&FilterCatalogEntry::clearProp,
-             python::args("self", "key"));
+For example, a PAINS (Pan Assay INterference) catalog entry be appear as
+follows:
 
-    python::def(
-        "GetFunctionalGroupHierarchy", GetFunctionalGroupHierarchy,
+>>> from rdkit.Chem.FilterCatalog import *
+>>> params = FilterCatalogParams()
+>>> params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_A)
+True
+>>> catalog = FilterCatalog(params)
+>>> mol = Chem.MolFromSmiles('O=C(Cn1cnc2c1c(=O)n(C)c(=O)n2C)N/N=C/c1c(O)ccc2c1cccc2')
+>>> entry = catalog.GetFirstMatch(mol)
+>>> print (entry.GetProp('Scope'))
+PAINS filters (family A)
+>>> print (entry.GetDescription())
+hzone_phenol_A(479)
+)DOC")
+      .def(nb::init<>())
+      .def(nb::init<const std::string &, FilterMatcherBase &>(), "name"_a,
+           "matcher"_a)
+      .def("IsValid", &FilterCatalogEntry::isValid)
+      .def("GetDescription", &FilterCatalogEntry::getDescription,
+           "Get the description of the catalog entry")
+      .def("SetDescription", &FilterCatalogEntry::setDescription,
+           "description"_a, "Set the description of the catalog entry")
+      .def("GetFilterMatches", &FilterCatalogEntryGetMatches, "mol"_a,
+           "Retrieve the list of filters that match the molecule")
+      .def("HasFilterMatch", &FilterCatalogEntry::hasFilterMatch, "mol"_a,
+           "Returns True if the catalog entry contains filters that match "
+           "the molecule")
+      .def("Serialize",
+           [](const FilterCatalogEntry &cat) {
+             const auto res = cat.Serialize();
+             return nb::bytes(res.c_str(), res.size());
+           })
+      .def("GetPropList", &FilterCatalogEntry::getPropList)
+      .def("SetProp",
+           [](FilterCatalogEntry &entry, const std::string &key, const std::string &val) {
+             entry.setProp<std::string>(key, val);
+           },
+           "key"_a, "val"_a)
+      .def("GetProp",
+           [](const FilterCatalogEntry &entry, const std::string &key) {
+             return entry.getProp<std::string>(key);
+           },
+           "key"_a)
+      .def("ClearProp",
+           [](FilterCatalogEntry &entry, const std::string &key) {
+             entry.clearProp(key);
+           },
+           "key"_a);
+
+  m.def("GetFunctionalGroupHierarchy", &GetFunctionalGroupHierarchy,
         "Returns the functional group hierarchy filter catalog",
-        python::return_value_policy<python::reference_existing_object>());
-    python::def(
-        "GetFlattenedFunctionalGroupHierarchy",
-        GetFlattenedFunctionalGroupHierarchyHelper,
-        (python::args("normalized") = false),
+        nb::rv_policy::reference);
+  m.def("GetFlattenedFunctionalGroupHierarchy",
+        &GetFlattenedFunctionalGroupHierarchyHelper, "normalized"_a = false,
         "Returns the flattened functional group hierarchy as a dictionary "
         " of name:ROMOL_SPTR substructure items");
 
-    if (!is_python_converter_registered<
-            boost::shared_ptr<const FilterCatalogEntry>>()) {
-      python::register_ptr_to_python<
-          boost::shared_ptr<const FilterCatalogEntry>>();
-    }
+  {
+    nb::class_<FilterCatalogParams> params_class(m, "FilterCatalogParams");
+    params_class
+        .def(nb::init<>())
+        .def(nb::init<FilterCatalogParams::FilterCatalogs>(), "catalogs"_a,
+             "Construct from a FilterCatalogs identifier (i.e. "
+             "FilterCatalogParams.PAINS)")
+        .def("AddCatalog", &FilterCatalogParams::addCatalog, "catalogs"_a);
 
-    noproxy = true;
-    RegisterVectorConverter<boost::shared_ptr<FilterCatalogEntry const>>(
-        "FilterCatalogEntryList", noproxy);
+    nb::enum_<FilterCatalogParams::FilterCatalogs>(params_class,
+                                                   "FilterCatalogs",
+                                                   nb::is_arithmetic())
+        .value("PAINS_A", FilterCatalogParams::PAINS_A)
+        .value("PAINS_B", FilterCatalogParams::PAINS_B)
+        .value("PAINS_C", FilterCatalogParams::PAINS_C)
+        .value("PAINS", FilterCatalogParams::PAINS)
+        .value("BRENK", FilterCatalogParams::BRENK)
+        .value("NIH", FilterCatalogParams::NIH)
+        .value("ZINC", FilterCatalogParams::ZINC)
+        .value("CHEMBL_Glaxo", FilterCatalogParams::CHEMBL_Glaxo)
+        .value("CHEMBL_Dundee", FilterCatalogParams::CHEMBL_Dundee)
+        .value("CHEMBL_BMS", FilterCatalogParams::CHEMBL_BMS)
+        .value("CHEMBL_SureChEMBL", FilterCatalogParams::CHEMBL_SureChEMBL)
+        .value("CHEMBL_MLSMR", FilterCatalogParams::CHEMBL_MLSMR)
+        .value("CHEMBL_Inpharmatica", FilterCatalogParams::CHEMBL_Inpharmatica)
+        .value("CHEMBL_LINT", FilterCatalogParams::CHEMBL_LINT)
+        .value("CHEMBL", FilterCatalogParams::CHEMBL)
+        .value("ALL", FilterCatalogParams::ALL);
+  }
 
-    RegisterVectorConverter<
-        std::vector<boost::shared_ptr<FilterCatalogEntry const>>>(
-        "FilterCatalogListOfEntryList");
+  nb::class_<FilterCatalog>(m, "FilterCatalog")
+      .def(nb::init<>())
+      .def("__init__",
+           [](FilterCatalog &self, nb::bytes pkl) {
+             new (&self) FilterCatalog(std::string(
+                 static_cast<const char *>(pkl.data()), pkl.size()));
+           },
+           "binStr"_a)
+      .def(nb::init<const std::string &>(), "binStr"_a)
+      .def(nb::init<const FilterCatalogParams &>(), "params"_a)
+      .def(nb::init<FilterCatalogParams::FilterCatalogs>(), "catalogs"_a)
+      .def("Serialize",
+           [](const FilterCatalog &cat) {
+             if (!FilterCatalogCanSerialize()) {
+               throw std::runtime_error(
+                   "Pickling of FilterCatalog instances is not enabled");
+             }
+             const auto res = cat.Serialize();
+             return nb::bytes(res.c_str(), res.size());
+           })
+      .def("AddEntry", &filter_catalog_add_entry, "entry"_a,
+           "Add a FilterCatalogEntry to the catalog")
+      .def("RemoveEntry", &FilterCatalogRemoveEntry, "obj"_a,
+           "Remove the given entry from the catalog")
+      .def("GetNumEntries", &FilterCatalog::getNumEntries,
+           "Returns the number of entries in the catalog")
+      .def("GetEntryWithIdx", &FilterCatalog::getEntry, "idx"_a,
+           "Return the FilterCatalogEntry at the specified index")
+      .def("GetEntry", &FilterCatalog::getEntry, "idx"_a,
+           "Return the FilterCatalogEntry at the specified index")
+      .def("HasMatch", &FilterCatalog::hasMatch, "mol"_a,
+           "Returns True if the catalog has an entry that matches mol")
+      .def("GetFirstMatch", &FilterCatalog::getFirstMatch, "mol"_a,
+           "Return the first catalog entry that matches mol")
+      .def("GetMatches", &FilterCatalog::getMatches, "mol"_a,
+           "Return all catalog entries that match mol")
+      .def("GetFilterMatches", &FilterCatalog::getFilterMatches, "mol"_a,
+           "Return every matching filter from all catalog entries that match "
+           "mol")
+      .def("__getstate__",
+           [](const FilterCatalog &cat) {
+             if (!FilterCatalogCanSerialize()) {
+               throw std::runtime_error(
+                   "Pickling of FilterCatalog instances is not enabled");
+             }
+             const auto res = cat.Serialize();
+             return std::make_tuple(nb::bytes(res.c_str(), res.size()));
+           })
+      .def("__setstate__",
+           [](FilterCatalog &cat, const std::tuple<nb::bytes> &state) {
+             const auto &pkl = std::get<0>(state);
+             new (&cat) FilterCatalog(std::string(
+                 static_cast<const char *>(pkl.data()), pkl.size()));
+           })
+      .def("__setstate__",
+           [](FilterCatalog &cat, const std::tuple<std::string> &state) {
+             new (&cat) FilterCatalog(std::get<0>(state));
+           });
 
-    {
-      python::scope in_FilterCatalogParams =
-          python::class_<FilterCatalogParams,
-                         boost::shared_ptr<FilterCatalogParams>>(
-              "FilterCatalogParams", python::init<>(python::args("self")))
-              .def(python::init<FilterCatalogParams::FilterCatalogs>(
-                  python::args("self", "catalogs"),
-                  "Construct from a FilterCatalogs identifier (i.e. "
-                  "FilterCatalogParams.PAINS)"))
-              .def("AddCatalog", &FilterCatalogParams::addCatalog,
-                   python::args("self", "catalogs"));
+  m.def("FilterCatalogCanSerialize", FilterCatalogCanSerialize,
+        "Returns True if the FilterCatalog is serializable "
+        "(requires boost serialization)");
 
-      python::enum_<FilterCatalogParams::FilterCatalogs>("FilterCatalogs")
-          .value("PAINS_A", FilterCatalogParams::PAINS_A)
-          .value("PAINS_B", FilterCatalogParams::PAINS_B)
-          .value("PAINS_C", FilterCatalogParams::PAINS_C)
-          .value("PAINS", FilterCatalogParams::PAINS)
-          .value("BRENK", FilterCatalogParams::BRENK)
-          .value("NIH", FilterCatalogParams::NIH)
-          .value("ZINC", FilterCatalogParams::ZINC)
-          .value("CHEMBL_Glaxo", FilterCatalogParams::CHEMBL_Glaxo)
-          .value("CHEMBL_Dundee", FilterCatalogParams::CHEMBL_Dundee)
-          .value("CHEMBL_BMS", FilterCatalogParams::CHEMBL_BMS)
-          .value("CHEMBL_SureChEMBL", FilterCatalogParams::CHEMBL_SureChEMBL)
-          .value("CHEMBL_MLSMR", FilterCatalogParams::CHEMBL_MLSMR)
-          .value("CHEMBL_Inpharmatica",
-                 FilterCatalogParams::CHEMBL_Inpharmatica)
-          .value("CHEMBL_LINT", FilterCatalogParams::CHEMBL_LINT)
-          .value("CHEMBL", FilterCatalogParams::CHEMBL)
-          .value("ALL", FilterCatalogParams::ALL);
-    }
+  m.def("RunFilterCatalog", &RunFilterCatalogWrapper, "filterCatalog"_a,
+        "smiles"_a, "numThreads"_a = 1,
+        R"DOC(Run the filter catalog on the input list of smiles strings.
+Use numThreads=0 to use all available processors.
+Returns a vector of vectors. For each input smiles, a vector of
+FilterCatalogEntry objects are returned for each matched filter. If a
+molecule matches no filter, the vector will be empty. If a smiles string
+can't be parsed, a 'Bad smiles' entry is returned.)DOC");
 
-    python::class_<FilterCatalog>("FilterCatalog",
-                                  python::init<>(python::args("self")))
-        .def(python::init<const std::string &>(python::args("self", "binStr")))
-        .def(python::init<const FilterCatalogParams &>(
-            python::args("self", "params")))
-        .def(python::init<FilterCatalogParams::FilterCatalogs>(
-            python::args("self", "catalogs")))
-        .def("Serialize", &FilterCatalog_Serialize, python::args("self"))
-        .def("AddEntry", &filter_catalog_add_entry,
-             (python::args("entry"), python::args("updateFPLength") = false),
-             "Add a FilterCatalogEntry to the catalog")
-        .def("RemoveEntry", &FilterCatalogRemoveEntry,
-             python::args("self", "obj"),
-             "Remove the given entry from the catalog")
-        .def("GetNumEntries", &FilterCatalog::getNumEntries,
-             python::args("self"),
-             "Returns the number of entries in the catalog")
-        .def("GetEntryWithIdx", &FilterCatalog::getEntry,
-             ((python::arg("self"), python::arg("idx"))),
-             "Return the FilterCatalogEntry at the specified index")
-        .def("GetEntry", &FilterCatalog::getEntry,
-             ((python::arg("self"), python::arg("idx"))),
-             "Return the FilterCatalogEntry at the specified index")
-        .def("HasMatch", &FilterCatalog::hasMatch,
-             ((python::arg("self"), python::arg("mol"))),
-             "Returns True if the catalog has an entry that matches mol")
-        .def("GetFirstMatch", &FilterCatalog::getFirstMatch,
-             ((python::arg("self"), python::arg("mol"))),
-             "Return the first catalog entry that matches mol")
-        .def("GetMatches", &FilterCatalog::getMatches,
-             ((python::arg("self"), python::arg("mol"))),
-             "Return all catalog entries that match mol")
-        .def("GetFilterMatches", &FilterCatalog::getFilterMatches,
-             ((python::arg("self"), python::arg("mol"))),
-             "Return every matching filter from all catalog entries that match "
-             "mol")
-        // enable pickle support
-        .def_pickle(filtercatalog_pickle_suite());
+  // Create the FilterMatchOps submodule
+  nb::module_ ops_module(nb::steal<nb::module_>(
+      PyImport_AddModule("rdkit.Chem.rdfiltercatalog.FilterMatchOps")));
+  m.attr("FilterMatchOps") = ops_module;
 
-    python::class_<PythonFilterMatch, python::bases<FilterMatcherBase>>(
-        "PythonFilterMatcher",
-        python::init<PyObject *>(python::args("self", "callback")));
+  nb::class_<FilterMatchOps::And, FilterMatcherBase>(ops_module, "And")
+      .def(nb::init<FilterMatcherBase &, FilterMatcherBase &>(), "arg1"_a,
+           "arg2"_a);
 
-    python::def("FilterCatalogCanSerialize", FilterCatalogCanSerialize,
-                "Returns True if the FilterCatalog is serializable "
-                "(requires boost serialization");
+  nb::class_<FilterMatchOps::Or, FilterMatcherBase>(ops_module, "Or")
+      .def(nb::init<FilterMatcherBase &, FilterMatcherBase &>(), "arg1"_a,
+           "arg2"_a);
 
-    python::def("RunFilterCatalog", RunFilterCatalogWrapper,
-                (python::arg("filterCatalog"), python::arg("smiles"),
-                 python::arg("numThreads") = 1),
-                "Run the filter catalog on the input list of smiles "
-                "strings.\nUse numThreads=0 to use all available processors. "
-                "Returns a vector of vectors.  For each input smiles, a vector "
-                "of FilterCatalogEntry objects are "
-                "returned for each matched filter.  If a molecule matches no "
-                "filter, the vector will be empty. "
-                "If a smiles string can't be parsed, a 'Bad smiles' entry is "
-                "returned.");
-
-    auto scope = python::scope();
-    std::string nested_name = python::extract<std::string>(
-        scope.attr("__name__") + ".FilterMatchOps");
-    python::object nested_module(python::handle<>(
-        python::borrowed(PyImport_AddModule(nested_name.c_str()))));
-    python::scope().attr("FilterMatchOps") = nested_module;
-    python::scope parent = nested_module;
-
-    python::class_<FilterMatchOps::And, python::bases<FilterMatcherBase>>(
-        "And", python::init<FilterMatcherBase &, FilterMatcherBase &>(
-                   python::args("self", "arg1", "arg2")));
-
-    python::class_<FilterMatchOps::Or, python::bases<FilterMatcherBase>>(
-        "Or", python::init<FilterMatcherBase &, FilterMatcherBase &>(
-                  python::args("self", "arg1", "arg2")));
-
-    python::class_<FilterMatchOps::Not, python::bases<FilterMatcherBase>>(
-        "Not", python::init<FilterMatcherBase &>(python::args("self", "arg1")));
-  };
-};
+  nb::class_<FilterMatchOps::Not, FilterMatcherBase>(ops_module, "Not")
+      .def(nb::init<FilterMatcherBase &>(), "arg1"_a);
+}
 
 }  // namespace RDKit
-
-void wrap_filtercat() { RDKit::filtercat_wrapper::wrap(); }
