@@ -6573,85 +6573,86 @@ M  END
     for at in m.GetAtoms():
       self.assertNotEqual(at.GetAtomicNum(), 1)
 
-#   def testPickleCoordsAsDouble(self):
-#     import pickle
-#     m = Chem.MolFromSmiles('C')
-#     test_num = 1e50
-#     conf = Chem.Conformer(1)
-#     conf.SetAtomPosition(0, (test_num, 0.0, 0.0))
-#     m.AddConformer(conf)
+    def testPickleCoordsAsDouble(self):
+      import pickle
+      m = Chem.MolFromSmiles('C')
+      test_num = 1e50
+      conf = Chem.Conformer(1)
+      conf.SetAtomPosition(0, (test_num, 0.0, 0.0))
+      m.AddConformer(conf)
 
-#     opts = Chem.GetDefaultPickleProperties()
-#     Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.NoProps)
-#     self.assertNotEqual(pickle.loads(pickle.dumps(m)).GetConformer().GetAtomPosition(0).x, test_num)
+      opts = Chem.GetDefaultPickleProperties()
+      Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.NoProps)
+      self.assertNotEqual(pickle.loads(pickle.dumps(m)).GetConformer().GetAtomPosition(0).x, test_num)
 
-#     try:
-#       Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.CoordsAsDouble)
-#       self.assertEqual(pickle.loads(pickle.dumps(m)).GetConformer().GetAtomPosition(0).x, test_num)
-#     finally:
-#       Chem.SetDefaultPickleProperties(opts)
+      try:
+        Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.CoordsAsDouble)
+        self.assertEqual(pickle.loads(pickle.dumps(m)).GetConformer().GetAtomPosition(0).x, test_num)
+      finally:
+        Chem.SetDefaultPickleProperties(opts)
 
-#   def testCustomSubstructMatchCheck(self):
+  # def testCustomSubstructMatchCheck(self):
 
-#     def accept_none(mol, vect):
-#       return False
+  #   def accept_none(mol, vect):
+  #     return False
 
-#     def accept_all(mol, vect):
-#       return True
+  #   def accept_all(mol, vect):
+  #     return True
 
-#     def accept_large(mol, vect):
-#       return sum(vect) > 5
+  #   def accept_large(mol, vect):
+  #     return sum(vect) > 5
 
-#     m = Chem.MolFromSmiles('CCOCC')
-#     p = Chem.MolFromSmiles('CCO')
-#     ps = Chem.SubstructMatchParameters()
-#     self.assertEqual(len(m.GetSubstructMatches(p, ps)), 2)
+  #   m = Chem.MolFromSmiles('CCOCC')
+  #   p = Chem.MolFromSmiles('CCO')
+  #   ps = Chem.SubstructMatchParameters()
+  #   self.assertEqual(len(m.GetSubstructMatches(p, ps)), 2)
 
-#     ps.setExtraFinalCheck(accept_none)
-#     self.assertEqual(len(m.GetSubstructMatches(p, ps)), 0)
-#     self.assertEqual(len(m.GetSubstructMatch(p, ps)), 0)
-#     self.assertFalse(m.HasSubstructMatch(p, ps))
+  #   ps.setExtraFinalCheck(accept_none)
+  #   print('go go go',file=sys.stderr)
+  #   self.assertEqual(len(m.GetSubstructMatches(p, ps)), 0)
+  #   self.assertEqual(len(m.GetSubstructMatch(p, ps)), 0)
+  #   self.assertFalse(m.HasSubstructMatch(p, ps))
 
-#     ps.setExtraFinalCheck(accept_all)
-#     self.assertEqual(len(m.GetSubstructMatches(p, ps)), 2)
-#     self.assertEqual(len(m.GetSubstructMatch(p, ps)), 3)
-#     self.assertTrue(m.HasSubstructMatch(p, ps))
+  #   ps.setExtraFinalCheck(accept_all)
+  #   self.assertEqual(len(m.GetSubstructMatches(p, ps)), 2)
+  #   self.assertEqual(len(m.GetSubstructMatch(p, ps)), 3)
+  #   self.assertTrue(m.HasSubstructMatch(p, ps))
 
-#     ps.setExtraFinalCheck(accept_large)
-#     self.assertEqual(len(m.GetSubstructMatches(p, ps)), 1)
-#     self.assertEqual(len(m.GetSubstructMatch(p, ps)), 3)
-#     self.assertTrue(m.HasSubstructMatch(p, ps))
+  #   ps.setExtraFinalCheck(accept_large)
+  #   self.assertEqual(len(m.GetSubstructMatches(p, ps)), 1)
+  #   self.assertEqual(len(m.GetSubstructMatch(p, ps)), 3)
+  #   self.assertTrue(m.HasSubstructMatch(p, ps))
 
-#   def testMostSubstitutedCoreMatch(self):
-#     core = Chem.MolFromSmarts("[*:1]c1cc([*:2])ccc1[*:3]")
-#     orthoMeta = Chem.MolFromSmiles("c1ccc(-c2ccc(-c3ccccc3)c(-c3ccccc3)c2)cc1")
-#     ortho = Chem.MolFromSmiles("c1ccc(-c2ccccc2-c2ccccc2)cc1")
-#     meta = Chem.MolFromSmiles("c1ccc(-c2cccc(-c3ccccc3)c2)cc1")
-#     biphenyl = Chem.MolFromSmiles("c1ccccc1-c1ccccc1")
-#     phenyl = Chem.MolFromSmiles("c1ccccc1")
+  def testMostSubstitutedCoreMatch(self):
+    core = Chem.MolFromSmarts("[*:1]c1cc([*:2])ccc1[*:3]")
+    orthoMeta = Chem.MolFromSmiles("c1ccc(-c2ccc(-c3ccccc3)c(-c3ccccc3)c2)cc1")
+    ortho = Chem.MolFromSmiles("c1ccc(-c2ccccc2-c2ccccc2)cc1")
+    meta = Chem.MolFromSmiles("c1ccc(-c2cccc(-c3ccccc3)c2)cc1")
+    biphenyl = Chem.MolFromSmiles("c1ccccc1-c1ccccc1")
+    phenyl = Chem.MolFromSmiles("c1ccccc1")
 
-#     def numHsMatchingDummies(mol, core, match):
-#       return sum([
-#         1 for qi, ai in enumerate(match) if core.GetAtomWithIdx(qi).GetAtomicNum() == 0
-#         and mol.GetAtomWithIdx(ai).GetAtomicNum() == 1
-#       ])
+    def numHsMatchingDummies(mol, core, match):
+      return sum([
+        1 for qi, ai in enumerate(match) if core.GetAtomWithIdx(qi).GetAtomicNum() == 0
+        and mol.GetAtomWithIdx(ai).GetAtomicNum() == 1
+      ])
 
-#     for mol, res in ((orthoMeta, 0), (ortho, 1), (meta, 1), (biphenyl, 2), (phenyl, 3)):
-#       mol = Chem.AddHs(mol)
-#       matches = mol.GetSubstructMatches(core)
-#       bestMatch = Chem.GetMostSubstitutedCoreMatch(mol, core, matches)
-#       self.assertEqual(numHsMatchingDummies(mol, core, bestMatch), res)
-#       ctrlCounts = sorted([numHsMatchingDummies(mol, core, match) for match in matches])
-#       sortedCounts = [
-#         numHsMatchingDummies(mol, core, match)
-#         for match in Chem.SortMatchesByDegreeOfCoreSubstitution(mol, core, matches)
-#       ]
-#       self.assertEqual(len(ctrlCounts), len(sortedCounts))
-#       self.assertTrue(all(ctrl == sortedCounts[i] for i, ctrl in enumerate(ctrlCounts)))
-#     with self.assertRaises(ValueError):
-#       Chem.GetMostSubstitutedCoreMatch(orthoMeta, core, [])
-#     with self.assertRaises(ValueError):
-#       Chem.SortMatchesByDegreeOfCoreSubstitution(orthoMeta, core, [])
+    for mol, res in ((orthoMeta, 0), (ortho, 1), (meta, 1), (biphenyl, 2), (phenyl, 3)):
+      mol = Chem.AddHs(mol)
+      matches = mol.GetSubstructMatches(core)
+      bestMatch = Chem.GetMostSubstitutedCoreMatch(mol, core, matches)
+      self.assertEqual(numHsMatchingDummies(mol, core, bestMatch), res)
+      ctrlCounts = sorted([numHsMatchingDummies(mol, core, match) for match in matches])
+      sortedCounts = [
+        numHsMatchingDummies(mol, core, match)
+        for match in Chem.SortMatchesByDegreeOfCoreSubstitution(mol, core, matches)
+      ]
+      self.assertEqual(len(ctrlCounts), len(sortedCounts))
+      self.assertTrue(all(ctrl == sortedCounts[i] for i, ctrl in enumerate(ctrlCounts)))
+    with self.assertRaises(ValueError):
+      Chem.GetMostSubstitutedCoreMatch(orthoMeta, core, [])
+    with self.assertRaises(ValueError):
+      Chem.SortMatchesByDegreeOfCoreSubstitution(orthoMeta, core, [])
 
 #   def testSetCoordsTerminalAtom(self):
 #     mol = Chem.MolFromMolBlock("""
