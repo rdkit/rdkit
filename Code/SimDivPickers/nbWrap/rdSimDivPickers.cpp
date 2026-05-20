@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <RDBoost/import_array.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -18,6 +19,8 @@ void wrap_HierarchCP(nb::module_ &m);
 
 NB_MODULE(rdSimDivPickers, m) {
   m.doc() = "Module containing the diversity and similarity pickers";
+
+  rdkit_import_array();
 
   wrap_maxminpick(m);
   wrap_leaderpick(m);

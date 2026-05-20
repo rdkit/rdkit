@@ -143,6 +143,7 @@ void wrap_maxminpick(nb::module_ &m) {
   nb::class_<RDPickers::MaxMinPicker>(
       m, "MaxMinPicker",
       "A class for diversity picking of items using the MaxMin Algorithm\n")
+      .def(nb::init<>())
       .def("Pick", RDPickers::MaxMinPicks,
            "distMat"_a, "poolSize"_a, "pickSize"_a,
            "firstPicks"_a = nb::tuple(), "seed"_a = -1,

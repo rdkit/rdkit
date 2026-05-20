@@ -73,6 +73,7 @@ currently unpublished, but a description is available in this
 presentation from the 2019 RDKit UGM:
 https://github.com/rdkit/UGM_2019/raw/master/Presentations/Sayle_Clustering.pdf
 )DOC")
+      .def(nb::init<>())
       .def("LazyBitVectorPick", RDPickers::LazyVectorLeaderPicks,
            "objects"_a, "poolSize"_a, "threshold"_a,
            "pickSize"_a = 0, "firstPicks"_a = nb::tuple(),
