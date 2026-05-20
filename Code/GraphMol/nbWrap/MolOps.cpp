@@ -1478,6 +1478,7 @@ struct molops_wrapper {
     docString = R"DOC(Parameters controlling which Hs are removed.)DOC";
     nb::class_<MolOps::RemoveHsParameters>(m, "RemoveHsParameters",
                                            docString.c_str())
+        .def(nb::init<>())
         .def_rw("removeDegreeZero",
                 &MolOps::RemoveHsParameters::removeDegreeZero,
                 "hydrogens that have no bonds")
