@@ -25,17 +25,13 @@ using namespace nb::literals;
 namespace ForceFields {
 class PyForceField {
  public:
-  PyForceField(ForceField *f) : field(f) {}
+  PyForceField(std::unique_ptr<ForceField> f) : field(std::move(f)) {}
 
-  ~PyForceField() {
-    field.reset();
-    extraPoints.clear();
-  }
+  ~PyForceField() = default;
 
   int addExtraPoint(double x, double y, double z, bool fixed = true) {
     PRECONDITION(this->field, "no force field");
-    RDGeom::Point3D *pt = new RDGeom::Point3D(x, y, z);
-    this->extraPoints.push_back(std::shared_ptr<RDGeom::Point3D>(pt));
+    this->extraPoints.push_back(std::make_unique<RDGeom::Point3D>(x, y, z));
     unsigned int ptIdx = this->extraPoints.size() - 1;
     RDGeom::Point3D *ptr = this->extraPoints[ptIdx].get();
     this->field->positions().push_back(ptr);
@@ -78,14 +74,14 @@ class PyForceField {
   }
 
   // private:
-  std::vector<std::shared_ptr<RDGeom::Point3D>> extraPoints;
-  std::shared_ptr<ForceField> field;
+  std::vector<std::unique_ptr<RDGeom::Point3D>> extraPoints;
+  std::unique_ptr<ForceField> field;
 };
 
 class PyMMFFMolProperties {
  public:
-  PyMMFFMolProperties(RDKit::MMFF::MMFFMolProperties *mp)
-      : mmffMolProperties(mp) {}
+  PyMMFFMolProperties(std::unique_ptr<RDKit::MMFF::MMFFMolProperties> mp)
+      : mmffMolProperties(std::move(mp)) {}
   ~PyMMFFMolProperties() = default;
 
   unsigned int getMMFFAtomType(unsigned int idx) const {
@@ -175,7 +171,7 @@ class PyMMFFMolProperties {
   void setMMFFVerbosity(unsigned int verbosity) {
     mmffMolProperties->setMMFFVerbosity(verbosity);
   }
-  std::shared_ptr<RDKit::MMFF::MMFFMolProperties> mmffMolProperties;
+  std::unique_ptr<RDKit::MMFF::MMFFMolProperties> mmffMolProperties;
 };
 nb::object getUFFBondStretchParams(const RDKit::ROMol &mol,
                                    const unsigned int idx1,

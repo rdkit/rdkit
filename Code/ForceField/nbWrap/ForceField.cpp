@@ -10,7 +10,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
-#include <RDBoost/Wrap_nb.h>
+#include <nanobind/stl/unique_ptr.h>
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/GraphMol.h>
 #include <ForceField/ForceField.h>
@@ -274,7 +274,7 @@ nb::object PyMMFFMolProperties::getMMFFVdWParams(const unsigned int idx1,
 }
 
 NB_MODULE(rdForceField, m) {
-  m.doc() = "Exposes the ForceField class";
+  m.doc() = "TEST!!! Exposes the ForceField class";
 
   // Minimal Snapshot binding needed for MinimizeTrajectory return value.
   // Full Snapshot bindings live in the Trajectory nbWrap (not yet migrated).
