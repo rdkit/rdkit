@@ -121,6 +121,14 @@ NB_MODULE(rdScaffoldNetwork, m) {
 
   nb::class_<ScaffoldNetwork::ScaffoldNetwork>(m, "ScaffoldNetwork")
       .def(nb::init<>(), "Default constructor")
+#ifdef RDK_USE_BOOST_SERIALIZATION
+      .def("__init__",
+           [](ScaffoldNetwork::ScaffoldNetwork &self, nb::bytes pkl) {
+             std::string s(static_cast<const char *>(pkl.data()), pkl.size());
+             new (&self) ScaffoldNetwork::ScaffoldNetwork(s);
+           },
+           "pkl"_a)
+#endif
       .def_ro("nodes", &ScaffoldNetwork::ScaffoldNetwork::nodes,
               "the sequence of SMILES defining the nodes")
       .def_ro("counts", &ScaffoldNetwork::ScaffoldNetwork::counts,
@@ -137,13 +145,17 @@ NB_MODULE(rdScaffoldNetwork, m) {
              boost::archive::text_oarchive oa(oss);
              oa << self;
              const std::string res = oss.str();
-             return std::make_tuple(res);
+             return std::make_tuple(nb::bytes(res.c_str(), res.size()));
            })
-      .def("__setstate__", [](ScaffoldNetwork::ScaffoldNetwork &self,
-                              const std::tuple<std::string> &state) {
-        const std::string &pkl = std::get<0>(state);
-        new (&self) ScaffoldNetwork::ScaffoldNetwork(pkl);
-      });
+      .def("__setstate__",
+           [](ScaffoldNetwork::ScaffoldNetwork &self, nb::tuple state) {
+             if (nb::len(state) != 1) {
+               throw nb::value_error("invalid ScaffoldNetwork pickle state");
+             }
+             auto b = nb::cast<nb::bytes>(state[0]);
+             std::string pkl(static_cast<const char *>(b.data()), b.size());
+             new (&self) ScaffoldNetwork::ScaffoldNetwork(pkl);
+           });
 #else
       .def("__getstate__",
            [](const ScaffoldNetwork::ScaffoldNetwork &self) {
@@ -151,8 +163,8 @@ NB_MODULE(rdScaffoldNetwork, m) {
                  "Pickling of ScaffoldNetwork instances is not "
                  "enabled in this build");
            })
-      .def("__setstate__", [](ScaffoldNetwork::ScaffoldNetwork &self,
-                              const std::tuple<std::string> &state) {
+      .def("__setstate__",
+           [](ScaffoldNetwork::ScaffoldNetwork &self, nb::tuple state) {
              throw nb::runtime_error(
                  "Pickling of ScaffoldNetwork instances is not "
                  "enabled in this build");

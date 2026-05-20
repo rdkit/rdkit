@@ -7,3 +7,4 @@ rdkit_nanobind_extension(rdScaffoldNetwork
 
 add_pytest(pyScaffoldNetwork ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testScaffoldNetwork.py)
 add_pytest(pyScaffoldNetworkPickling ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testPickleScaffoldNetwork.py)
+add_pytest(pyNbScaffoldNetworkPickling ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testNbPickleScaffoldNetwork.py)
