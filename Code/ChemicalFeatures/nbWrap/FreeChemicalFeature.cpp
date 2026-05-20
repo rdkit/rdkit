@@ -29,6 +29,13 @@ to molecular features
       .def(nb::init<>(), "Default Constructor")
       .def(nb::init<const std::string &>(), "pickle"_a,
            "Constructor from a pickle string")
+      .def(
+          "__init__",
+          [](FreeChemicalFeature *self, nb::bytes pkl) {
+            new (self) FreeChemicalFeature(
+                std::string(static_cast<const char *>(pkl.data()), pkl.size()));
+          },
+          "pickle"_a, "Constructor from a pickle bytes")
       .def(nb::init<std::string, std::string, const RDGeom::Point3D &, int>(),
            "family"_a, "type"_a, "loc"_a, "id"_a = -1,
            "Constructor with family, type and location specified")
