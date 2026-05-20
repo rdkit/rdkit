@@ -5648,179 +5648,180 @@ M  END
     del m
     self.assertEqual(smi, Chem.MolToCXSmiles(stereo_bonds[0].GetOwningMol()))
 
-#   def testEnhancedStereoPreservesMol(self):
-#     """
-#     Check that the stereo group (and the atoms therein) preserve the lifetime
-#     of the associated mol.
-#     """
-#     rdbase = os.environ['RDBASE']
-#     filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/two_centers_or.mol')
-#     m = Chem.MolFromMolFile(filename)
+  def testEnhancedStereoPreservesMol(self):
+    """
+    Check that the stereo group (and the atoms therein) preserve the lifetime
+    of the associated mol.
+    """
+    rdbase = os.environ['RDBASE']
+    filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/two_centers_or.mol')
+    m = Chem.MolFromMolFile(filename)
 
-#     sg = m.GetStereoGroups()
-#     m = None
-#     gc.collect()
-#     self.assertEqual(len(sg), 2)
-#     group1 = sg[1]
-#     stereo_atoms = group1.GetAtoms()
-#     sg = None
-#     gc.collect()
-#     self.assertEqual(stereo_atoms[1].GetIdx(), 4)
-#     self.assertEqual(stereo_atoms[1].GetOwningMol().GetNumAtoms(), 8)
+    sg = m.GetStereoGroups()
+    m = None
+    gc.collect()
+    self.assertEqual(len(sg), 2)
+    group1 = sg[1]
+    stereo_atoms = group1.GetAtoms()
+    sg = None
+    gc.collect()
+    self.assertEqual(stereo_atoms[1].GetIdx(), 4)
+    self.assertEqual(stereo_atoms[1].GetOwningMol().GetNumAtoms(), 8)
 
-#   def testSetEnhancedStereoGroup(self):
-#     m = Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl |o1:1|')
-#     m2 = Chem.RWMol(m)
+  def testSetEnhancedStereoGroup(self):
+    m = Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl |o1:1|')
+    m2 = Chem.RWMol(m)
 
-#     groups = m2.GetStereoGroups()
-#     self.assertEqual(len(groups), 1)
-#     # Can clear the StereoGroups by setting to an empty list
-#     m2.SetStereoGroups([])
-#     self.assertEqual(len(m2.GetStereoGroups()), 0)
+    groups = m2.GetStereoGroups()
+    self.assertEqual(len(groups), 1)
+    # Can clear the StereoGroups by setting to an empty list
+    m2.SetStereoGroups([])
+    self.assertEqual(len(m2.GetStereoGroups()), 0)
 
-#     # Can add new StereoGroups
-#     group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m2, [1])
-#     m2.SetStereoGroups([group1])
-#     self.assertEqual(len(m2.GetStereoGroups()), 1)
+    # Can add new StereoGroups
+    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m2, [1])
+    m2.SetStereoGroups([group1])
+    self.assertEqual(len(m2.GetStereoGroups()), 1)
 
-#     #test creation of bond-only stereogroup
-#     m = Chem.MolFromSmiles('Cc1cccc(F)c1-c1c(C)cc([C@H](C)O)cc1Cl |wU:7.7|')
-#     m2 = Chem.RWMol(m)
+    #test creation of bond-only stereogroup
+    m = Chem.MolFromSmiles('Cc1cccc(F)c1-c1c(C)cc([C@H](C)O)cc1Cl |wU:7.7|')
+    m2 = Chem.RWMol(m)
 
-#     groups = m2.GetStereoGroups()
-#     self.assertEqual(len(groups), 0)
+    groups = m2.GetStereoGroups()
+    self.assertEqual(len(groups), 0)
 
-#     #Creating new StereoGroup with no atoms or bonds should not be allowed
-#     try:
-#       group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [],
-#                                              [])
-#     except ValueError:
-#       ok = 1
-#     else:
-#       ok = 0
-#     self.assertTrue(ok)
+    #Creating new StereoGroup with no atoms or bonds should not be allowed
+    try:
+      group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [],
+                                             [])
+    except ValueError:
+      ok = 1
+    else:
+      ok = 0
+    self.assertTrue(ok)
 
-#     # Can add new bond-only StereoGroups
-#     group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [], [7])
-#     m2.SetStereoGroups([group1])
-#     self.assertEqual(len(m2.GetStereoGroups()), 1)
+    # Can add new bond-only StereoGroups
+    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [], [7])
+    m2.SetStereoGroups([group1])
+    self.assertEqual(len(m2.GetStereoGroups()), 1)
 
-#     #test creation of bond&atom stereogroup
-#     m = Chem.MolFromSmiles('Cc1cccc(F)c1-c1c(C)cc([C@H](C)O)cc1Cl |wU:7.7|')
-#     m2 = Chem.RWMol(m)
+    #test creation of bond&atom stereogroup
+    m = Chem.MolFromSmiles('Cc1cccc(F)c1-c1c(C)cc([C@H](C)O)cc1Cl |wU:7.7|')
+    m2 = Chem.RWMol(m)
 
-#     groups = m2.GetStereoGroups()
-#     self.assertEqual(len(groups), 0)
+    groups = m2.GetStereoGroups()
+    self.assertEqual(len(groups), 0)
 
-#     # Can add new atom&bond StereoGroup
-#     group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [13],
-#                                            [7])
-#     m2.SetStereoGroups([group1])
-#     self.assertEqual(len(m2.GetStereoGroups()), 1)
+    # Can add new atom&bond StereoGroup
+    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [13],
+                                           [7])
+    m2.SetStereoGroups([group1])
+    self.assertEqual(len(m2.GetStereoGroups()), 1)
 
-#   def testSetEnhancedStereoGroupOwnershipCheck(self):
-#     # make sure that the object returned by CreateStereoGroup()
-#     # preserves the owning molecule:
-#     m = Chem.RWMol(Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl'))
-#     group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [1])
-#     m.SetStereoGroups([group1])
-#     self.assertEqual(len(m.GetStereoGroups()), 1)
+  def testSetEnhancedStereoGroupOwnershipCheck(self):
+    # make sure that the object returned by CreateStereoGroup()
+    # preserves the owning molecule:
+    m = Chem.RWMol(Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl'))
+    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [1])
+    m.SetStereoGroups([group1])
+    self.assertEqual(len(m.GetStereoGroups()), 1)
 
-#     m = None
-#     gc.collect()
-#     stereo_atoms = group1.GetAtoms()
-#     self.assertEqual(stereo_atoms[0].GetIdx(), 1)
-#     return
-#     self.assertEqual(stereo_atoms[0].GetOwningMol().GetNumAtoms(), 6)
+    m = None
+    gc.collect()
+    stereo_atoms = group1.GetAtoms()
+    self.assertEqual(stereo_atoms[0].GetIdx(), 1)
+    return
+    self.assertEqual(stereo_atoms[0].GetOwningMol().GetNumAtoms(), 6)
 
-#     # make sure we can't add StereoGroups constructed from one molecule
-#     # to a different one:
-#     m2 = Chem.RWMol(Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl'))
-#     with self.assertRaises(ValueError):
-#       m2.SetStereoGroups([group1])
+    # make sure we can't add StereoGroups constructed from one molecule
+    # to a different one:
+    m2 = Chem.RWMol(Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl'))
+    with self.assertRaises(ValueError):
+      m2.SetStereoGroups([group1])
 
-#   def testSetEnhancedStereoTypeChecking(self):
-#     m = Chem.RWMol(Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl'))
+  def testSetEnhancedStereoTypeChecking(self):
+    m = Chem.RWMol(Chem.MolFromSmiles('F[C@@H](Br)[C@H](F)Cl'))
 
-#     # List or tuple should be allowed:
-#     group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [1, 3])
-#     group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, (1, 3))
+    # List or tuple should be allowed:
+    group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [1, 3])
+    group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, (1, 3))
 
-#     # Python ValueError (range error) with index past the end
-#     with self.assertRaises(ValueError):
-#       group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [100])
+    # Python ValueError (range error) with index past the end
+    with self.assertRaises(ValueError):
+      group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [100])
 
-#     # Mol is None
-#     with self.assertRaises(TypeError):
-#       group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, None, [1])
+    # Mol is None
+    with self.assertRaises(TypeError):
+      group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, None, [1])
 
-#     # Atom indices must be numbers
-#     with self.assertRaises(TypeError):
-#       group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [1, 'text'])
+    # Atom indices must be numbers
+    with self.assertRaises(RuntimeError):
+      group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, [1, 'text'])
 
-#   def testSubstructParameters(self):
-#     m = Chem.MolFromSmiles('C[C@](F)(Cl)OCC')
-#     p1 = Chem.MolFromSmiles('C[C@](F)(Cl)O')
-#     p2 = Chem.MolFromSmiles('C[C@@](F)(Cl)O')
-#     p3 = Chem.MolFromSmiles('CC(F)(Cl)O')
+  def testSubstructParameters(self):
+    m = Chem.MolFromSmiles('C[C@](F)(Cl)OCC')
+    p1 = Chem.MolFromSmiles('C[C@](F)(Cl)O')
+    p2 = Chem.MolFromSmiles('C[C@@](F)(Cl)O')
+    p3 = Chem.MolFromSmiles('CC(F)(Cl)O')
 
-#     ps = Chem.SubstructMatchParameters()
-#     self.assertTrue(m.HasSubstructMatch(p1, ps))
-#     self.assertTrue(m.HasSubstructMatch(p2, ps))
-#     self.assertTrue(m.HasSubstructMatch(p3, ps))
-#     self.assertEqual(m.GetSubstructMatch(p1, ps), (0, 1, 2, 3, 4))
-#     self.assertEqual(m.GetSubstructMatch(p2, ps), (0, 1, 2, 3, 4))
-#     self.assertEqual(m.GetSubstructMatch(p3, ps), (0, 1, 2, 3, 4))
-#     self.assertEqual(m.GetSubstructMatches(p1, ps), ((0, 1, 2, 3, 4), ))
-#     self.assertEqual(m.GetSubstructMatches(p2, ps), ((0, 1, 2, 3, 4), ))
-#     self.assertEqual(m.GetSubstructMatches(p3, ps), ((0, 1, 2, 3, 4), ))
-#     ps.useChirality = True
-#     self.assertTrue(m.HasSubstructMatch(p1, ps))
-#     self.assertFalse(m.HasSubstructMatch(p2, ps))
-#     self.assertTrue(m.HasSubstructMatch(p3, ps))
-#     self.assertEqual(m.GetSubstructMatch(p1, ps), (0, 1, 2, 3, 4))
-#     self.assertEqual(m.GetSubstructMatch(p2, ps), ())
-#     self.assertEqual(m.GetSubstructMatch(p3, ps), (0, 1, 2, 3, 4))
-#     self.assertEqual(m.GetSubstructMatches(p1, ps), ((0, 1, 2, 3, 4), ))
-#     self.assertEqual(m.GetSubstructMatches(p2, ps), ())
-#     self.assertEqual(m.GetSubstructMatches(p3, ps), ((0, 1, 2, 3, 4), ))
+    ps = Chem.SubstructMatchParameters()
+    self.assertTrue(m.HasSubstructMatch(p1, ps))
+    self.assertTrue(m.HasSubstructMatch(p2, ps))
+    self.assertTrue(m.HasSubstructMatch(p3, ps))
+    self.assertEqual(m.GetSubstructMatch(p1, ps), [0, 1, 2, 3, 4])
+    self.assertEqual(m.GetSubstructMatch(p2, ps), [0, 1, 2, 3, 4])
+    self.assertEqual(m.GetSubstructMatch(p3, ps), [0, 1, 2, 3, 4])
+    self.assertEqual(m.GetSubstructMatches(p1, ps), [[0, 1, 2, 3, 4]])
+    self.assertEqual(m.GetSubstructMatches(p2, ps), [[0, 1, 2, 3, 4]])
+    self.assertEqual(m.GetSubstructMatches(p3, ps), [[0, 1, 2, 3, 4]])
+    ps.useChirality = True
+    self.assertTrue(m.HasSubstructMatch(p1, ps))
+    self.assertFalse(m.HasSubstructMatch(p2, ps))
+    self.assertTrue(m.HasSubstructMatch(p3, ps))
+    self.assertEqual(m.GetSubstructMatch(p1, ps), [0, 1, 2, 3, 4])
+    self.assertEqual(m.GetSubstructMatch(p2, ps), [])
+    self.assertEqual(m.GetSubstructMatch(p3, ps), [0, 1, 2, 3, 4])
+    self.assertEqual(m.GetSubstructMatches(p1, ps), [[0, 1, 2, 3, 4]])
+    self.assertEqual(m.GetSubstructMatches(p2, ps), [])
+    self.assertEqual(m.GetSubstructMatches(p3, ps), [[0, 1, 2, 3, 4]])
 
-#   def testForwardEnhancedStereoGroupIds(self):
-#     m = Chem.MolFromSmiles('C[C@H](O)Cl |o5:1|')
-#     self.assertIsNotNone(m)
+  def testForwardEnhancedStereoGroupIds(self):
+    m = Chem.MolFromSmiles('C[C@H](O)Cl |o5:1|')
+    self.assertIsNotNone(m)
 
-#     # StereoGroup id is read, but not forwarded to "write id"
-#     stgs = m.GetStereoGroups()
-#     self.assertEqual(len(stgs), 1)
-#     self.assertEqual(stgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
-#     self.assertEqual(stgs[0].GetReadId(), 5)
-#     self.assertEqual(stgs[0].GetWriteId(), 0)
+    # StereoGroup id is read, but not forwarded to "write id"
+    stgs = m.GetStereoGroups()
+    self.assertEqual(len(stgs), 1)
+    self.assertEqual(stgs[0].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    self.assertEqual(stgs[0].GetReadId(), 5)
+    self.assertEqual(stgs[0].GetWriteId(), 0)
 
-#     self.assertEqual(Chem.MolToCXSmiles(m), 'C[C@H](O)Cl |o1:1|')
+    self.assertEqual(Chem.MolToCXSmiles(m), 'C[C@H](O)Cl |o1:1|')
 
-#     stgs[0].SetWriteId(7)
-#     self.assertEqual(stgs[0].GetWriteId(), 7)
-#     self.assertEqual(Chem.MolToCXSmiles(m), 'C[C@H](O)Cl |o7:1|')
+    stgs[0].SetWriteId(7)
+    self.assertEqual(stgs[0].GetWriteId(), 7)
+    self.assertEqual(Chem.MolToCXSmiles(m), 'C[C@H](O)Cl |o7:1|')
 
-#     # ids are forwarded to copies of the mol
-#     m2 = Chem.RWMol(m)
-#     self.assertIsNotNone(m2)
+    # ids are forwarded to copies of the mol
+    m2 = Chem.RWMol(m)
+    self.assertIsNotNone(m2)
 
-#     stgs2 = m2.GetStereoGroups()
-#     self.assertEqual(len(stgs), 1)
-#     self.assertEqual(stgs2[0].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
-#     self.assertEqual(stgs2[0].GetReadId(), 5)
-#     self.assertEqual(stgs2[0].GetWriteId(), 7)
+    stgs2 = m2.GetStereoGroups()
+    self.assertEqual(len(stgs), 1)
+    self.assertEqual(stgs2[0].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
+    self.assertEqual(stgs2[0].GetReadId(), 5)
+    self.assertEqual(stgs2[0].GetWriteId(), 7)
 
-#     self.assertEqual(Chem.MolToCXSmiles(m2), 'C[C@H](O)Cl |o7:1|')
+    self.assertEqual(Chem.MolToCXSmiles(m2), 'C[C@H](O)Cl |o7:1|')
 
-#     # Forwardings the ids overrides the WriteId
-#     Chem.ForwardStereoGroupIds(m)
-#     self.assertEqual(stgs[0].GetWriteId(), 5)
-#     self.assertEqual(Chem.MolToCXSmiles(m), 'C[C@H](O)Cl |o5:1|')
+    # Forwardings the ids overrides the WriteId
+    Chem.ForwardStereoGroupIds(m)
+    stgs = m.GetStereoGroups()
+    self.assertEqual(stgs[0].GetWriteId(), 5)
+    self.assertEqual(Chem.MolToCXSmiles(m), 'C[C@H](O)Cl |o5:1|')
 
-#     # the copy mol is not affected
-#     self.assertEqual(stgs2[0].GetWriteId(), 7)
+    # the copy mol is not affected
+    self.assertEqual(stgs2[0].GetWriteId(), 7)
 
 #   def testSubstructParametersBundles(self):
 #     b = Chem.MolBundle()
