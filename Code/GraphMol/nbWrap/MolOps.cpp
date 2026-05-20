@@ -931,7 +931,7 @@ nb::tuple detectChemistryProblemsHelper(const ROMol &mol,
   auto probs = MolOps::detectChemistryProblems(mol, sanitizeOps);
   nb::list res;
   for (const auto &exc_ptr : probs) {
-    res.append(boost::shared_ptr<MolSanitizeException>(exc_ptr->copy()));
+    res.append(exc_ptr->copy());
   }
   return nb::tuple(res);
 }
