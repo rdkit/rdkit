@@ -59,7 +59,7 @@ void fillPointVec(nb::object seq, std::vector<RDGeom::Point3D> &pts) {
 
 nb::tuple AlignPointPairs(nb::object refPoints, nb::object probePoints,
                           nb::object weights = nb::none(),
-                          int reflect = 0,
+                          bool reflect = false,
                           unsigned int maxIterations = 50) {
   std::vector<RDGeom::Point3D> refOwned, probeOwned;
   fillPointVec(refPoints, refOwned);
@@ -90,8 +90,7 @@ nb::tuple AlignPointPairs(nb::object refPoints, nb::object probePoints,
 
   RDGeom::Transform3D trans;
   double ssd = RDNumeric::Alignments::AlignPoints(refPts, probePts, trans,
-                                                   wtsVec.get(),
-                                                   static_cast<bool>(reflect),
+                                                   wtsVec.get(), reflect,
                                                    maxIterations);
 
   const double *tdata = trans.getData();
@@ -114,7 +113,7 @@ NB_MODULE(rdAlignment, m) {
 
   m.def(
       "GetAlignmentTransform", &AlignPointPairs, "refPoints"_a,
-      "probePoints"_a, "weights"_a = nb::none(), "reflect"_a = 0,
+      "probePoints"_a, "weights"_a = nb::none(), "reflect"_a = false,
       "maxIterations"_a = 50,
       R"DOC(Compute the optimal alignment (minimum RMSD) between two set of points using the quaternion algorithm
 
