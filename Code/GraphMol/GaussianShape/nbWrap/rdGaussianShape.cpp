@@ -10,199 +10,56 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
-#include <string>
-
-#include <boost/python.hpp>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/tuple.h>
+#include <nanobind/stl/vector.h>
 
 #include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/GaussianShape/GaussianShape.h>
 #include <GraphMol/GaussianShape/ShapeInput.h>
 #include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
-#include <RDBoost/Wrap.h>
+#include <RDBoost/Wrap_nb.h>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace RDKit {
 
 namespace helpers {
-void set_customFeatures(GaussianShape::ShapeInputOptions &shp,
-                        const python::object &s) {
+
+void set_customFeatures(GaussianShape::ShapeInputOptions &shp, nb::object s) {
   shp.customFeatures.clear();
-  auto len = python::len(s);
+  auto len = nb::len(s);
   shp.customFeatures.reserve(len);
   for (auto i = 0u; i < len; ++i) {
     const auto elem = s[i];
-    unsigned int featType = python::extract<unsigned int>(elem[0]);
-    RDGeom::Point3D pos = python::extract<RDGeom::Point3D>(elem[1]);
-    double radius = python::extract<double>(elem[2]);
+    unsigned int featType = nb::cast<unsigned int>(elem[0]);
+    RDGeom::Point3D pos = nb::cast<RDGeom::Point3D>(elem[1]);
+    double radius = nb::cast<double>(elem[2]);
     shp.customFeatures.emplace_back(featType, pos, radius);
   }
 }
-python::tuple get_customFeatures(const GaussianShape::ShapeInputOptions &shp) {
-  python::list py_list;
+
+nb::tuple get_customFeatures(const GaussianShape::ShapeInputOptions &shp) {
+  nb::list py_list;
   for (const auto &val : shp.customFeatures) {
-    python::list elem;
+    nb::list elem;
     elem.append(static_cast<int>(std::get<0>(val)));
     elem.append(std::get<1>(val));
     elem.append(std::get<2>(val));
-    py_list.append(python::tuple(elem));
+    py_list.append(nb::tuple(elem));
   }
-  return python::tuple(py_list);
-}
-
-python::tuple alignMol1(const ROMol &ref, ROMol &fit,
-                        const python::object &py_refOpts,
-                        const python::object &py_fitOpts,
-                        const python::object &py_overlayOpts, int refConfId,
-                        int fitConfId) {
-  GaussianShape::ShapeInputOptions refOpts, fitOpts;
-  if (!py_refOpts.is_none()) {
-    refOpts = python::extract<GaussianShape::ShapeInputOptions>(py_refOpts);
-  }
-  if (!py_fitOpts.is_none()) {
-    fitOpts = python::extract<GaussianShape::ShapeInputOptions>(py_fitOpts);
-  }
-  GaussianShape::ShapeOverlayOptions overlayOpts;
-  if (!py_overlayOpts.is_none()) {
-    overlayOpts =
-        python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
-  }
-  auto results = GaussianShape::AlignMolecule(
-      ref, fit, refOpts, fitOpts, nullptr, overlayOpts, refConfId, fitConfId);
-  return python::make_tuple(results[0], results[1], results[2]);
-}
-
-python::tuple alignMol2(const GaussianShape::ShapeInput &refShape, ROMol &fit,
-                        const python::object &py_fitOpts,
-                        const python::object &py_overlayOpts, int fitConfId) {
-  GaussianShape::ShapeInputOptions fitOpts;
-  if (!py_fitOpts.is_none()) {
-    fitOpts = python::extract<GaussianShape::ShapeInputOptions>(py_fitOpts);
-  }
-  GaussianShape::ShapeOverlayOptions overlayOpts;
-  if (!py_overlayOpts.is_none()) {
-    overlayOpts =
-        python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
-  }
-  auto results = GaussianShape::AlignMolecule(refShape, fit, fitOpts, nullptr,
-                                              overlayOpts, fitConfId);
-  return python::make_tuple(results[0], results[1], results[2]);
-}
-
-python::tuple alignShapes(const GaussianShape::ShapeInput &refShape,
-                          GaussianShape::ShapeInput &fitShape,
-                          const python::object &py_overlayOpts) {
-  GaussianShape::ShapeOverlayOptions overlayOpts;
-  if (!py_overlayOpts.is_none()) {
-    overlayOpts =
-        python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
-  }
-  RDGeom::Transform3D xform;
-  auto results =
-      GaussianShape::AlignShape(refShape, fitShape, &xform, overlayOpts);
-  python::list pyMatrix;
-  for (int i = 0; i < 4; ++i) {
-    for (int j = 0; j < 4; ++j) {
-      pyMatrix.append(xform.getValUnchecked(i, j));
-    }
-  }
-  return python::make_tuple(results[0], results[1], results[2], pyMatrix);
-}
-
-python::tuple scoreMol1(const ROMol &ref, const ROMol &fit,
-                        const python::object &py_refOpts,
-                        const python::object &py_fitOpts,
-                        const python::object &py_overlayOpts, int refConfId,
-                        int fitConfId) {
-  GaussianShape::ShapeInputOptions refOpts, fitOpts;
-  if (!py_refOpts.is_none()) {
-    refOpts = python::extract<GaussianShape::ShapeInputOptions>(py_refOpts);
-  }
-  if (!py_fitOpts.is_none()) {
-    fitOpts = python::extract<GaussianShape::ShapeInputOptions>(py_fitOpts);
-  }
-  GaussianShape::ShapeOverlayOptions overlayOpts;
-  if (!py_overlayOpts.is_none()) {
-    overlayOpts =
-        python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
-  }
-  auto results = GaussianShape::ScoreMolecule(
-      ref, fit, refOpts, fitOpts, overlayOpts, refConfId, fitConfId);
-  return python::make_tuple(results[0], results[1], results[2]);
-}
-
-python::tuple scoreMol2(const GaussianShape::ShapeInput &refShape,
-                        const ROMol &fit, const python::object &py_fitOpts,
-                        const python::object &py_overlayOpts, int fitConfId) {
-  GaussianShape::ShapeInputOptions fitOpts;
-  if (!py_fitOpts.is_none()) {
-    fitOpts = python::extract<GaussianShape::ShapeInputOptions>(py_fitOpts);
-  }
-  GaussianShape::ShapeOverlayOptions overlayOpts;
-  if (!py_overlayOpts.is_none()) {
-    overlayOpts =
-        python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
-  }
-  auto results = GaussianShape::ScoreMolecule(refShape, fit, fitOpts,
-                                              overlayOpts, fitConfId);
-  return python::make_tuple(results[0], results[1], results[2]);
-}
-
-python::tuple scoreShape(const GaussianShape::ShapeInput &refShape,
-                         const GaussianShape::ShapeInput &fitShape,
-                         const python::object &py_overlayOpts) {
-  GaussianShape::ShapeOverlayOptions overlayOpts;
-  if (!py_overlayOpts.is_none()) {
-    overlayOpts =
-        python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
-  }
-  auto results = GaussianShape::ScoreShape(refShape, fitShape, overlayOpts);
-  return python::make_tuple(results[0], results[1], results[2]);
-}
-
-void set_atomSubset(GaussianShape::ShapeInputOptions &opts,
-                    const python::object &as) {
-  pythonObjectToVect<unsigned int>(as, opts.atomSubset);
-}
-
-python::tuple get_atomSubset(const GaussianShape::ShapeInputOptions &opts) {
-  python::list py_list;
-  for (const auto &val : opts.atomSubset) {
-    py_list.append(val);
-  }
-  return python::tuple(py_list);
-}
-
-void set_atomRadii(GaussianShape::ShapeInputOptions &opts,
-                   const python::object &ar) {
-  int len = python::len(ar);
-  opts.atomRadii.resize(len);
-  for (int i = 0; i < len; i++) {
-    unsigned int atomIdx = python::extract<unsigned int>(ar[i][0]);
-    double radius = python::extract<double>(ar[i][1]);
-    opts.atomRadii[i] = std::make_pair(atomIdx, radius);
-  }
-}
-
-python::tuple get_atomRadii(const GaussianShape::ShapeInputOptions &opts) {
-  python::list py_list;
-  for (const auto &val : opts.atomRadii) {
-    py_list.append(python::make_tuple(static_cast<int>(val.first), val.second));
-  }
-  return python::tuple(py_list);
+  return nb::tuple(py_list);
 }
 
 }  // namespace helpers
 
-void wrap_rdGaussianShape() {
-  python::scope().attr("__doc__") =
-      "Module containing implementation of Gaussian-based shape overlay and"
-      " scoring."
-      "NOTE: This functionality is experimental and the API"
-      " and/or results may change in future releases.";
+NB_MODULE(rdGaussianShape, m) {
+  m.doc() = R"DOC(Module containing implementation of Gaussian-based shape overlay and scoring.
+NOTE: This functionality is experimental and the API and/or results may change in future releases.)DOC";
 
-  python::enum_<RDKit::GaussianShape::StartMode>("StartMode")
+  nb::enum_<RDKit::GaussianShape::StartMode>(m, "StartMode")
       .value("ROTATE_0", RDKit::GaussianShape::StartMode::ROTATE_0)
       .value("ROTATE_180", RDKit::GaussianShape::StartMode::ROTATE_180)
       .value("ROTATE_180_WIGGLE",
@@ -217,7 +74,7 @@ void wrap_rdGaussianShape() {
       .value("A_LA_PUBCHEM", GaussianShape::StartMode::A_LA_PUBCHEM)
       .export_values();
 
-  python::enum_<RDKit::GaussianShape::OptimMode>("OptimMode")
+  nb::enum_<RDKit::GaussianShape::OptimMode>(m, "OptimMode")
       .value("SHAPE_ONLY", RDKit::GaussianShape::OptimMode::SHAPE_ONLY)
       .value("SHAPE_PLUS_COLOR_SCORE",
              RDKit::GaussianShape::OptimMode::SHAPE_PLUS_COLOR_SCORE)
@@ -225,120 +82,165 @@ void wrap_rdGaussianShape() {
              RDKit::GaussianShape::OptimMode::SHAPE_PLUS_COLOR)
       .export_values();
 
-  python::class_<GaussianShape::ShapeInputOptions, boost::noncopyable>(
-      "ShapeInputOptions",
+  nb::class_<GaussianShape::ShapeInputOptions>(
+      m, "ShapeInputOptions",
       "ShapeInputOptions - options for setting up ShapeInput objects.")
-      .def_readwrite("useColors", &GaussianShape::ShapeInputOptions::useColors,
-                     "Whether to use color features in overlay.  Default=True.")
-      .def_readwrite(
+      .def(nb::init<>())
+      .def_rw("useColors", &GaussianShape::ShapeInputOptions::useColors,
+              "Whether to use color features in overlay.  Default=True.")
+      .def_rw(
           "allCarbonRadii", &GaussianShape::ShapeInputOptions::allCarbonRadii,
-          "Whether to use the same radius, appropriate for Carbon, for all atoms.  There is a"
-          " slight accuracy penalty but significant speed gain if used.  Default=True.")
-      .add_property(
-          "atomSubset", &helpers::get_atomSubset, &helpers::set_atomSubset,
+          R"DOC(Whether to use the same radius, appropriate for Carbon, for all atoms.  There is a
+slight accuracy penalty but significant speed gain if used.  Default=True.)DOC")
+      .def_prop_rw(
+          "atomSubset",
+          [](const GaussianShape::ShapeInputOptions &opts) {
+            nb::list py_list;
+            for (const auto &val : opts.atomSubset) {
+              py_list.append(val);
+            }
+            return nb::tuple(py_list);
+          },
+          [](GaussianShape::ShapeInputOptions &opts, nb::object as) {
+            pythonObjectToVect<unsigned int>(as, opts.atomSubset);
+          },
           "If not empty, use just these atoms in the molecule to form the ShapeInput object.")
-      .add_property(
+      .def_prop_rw(
           "customFeatures", &helpers::get_customFeatures,
           &helpers::set_customFeatures,
-          "Custom features for the shape.  Requires a list of tuples of"
-          " int (the feature type), Point3D (the coordinates) and float (the radius).")
-      .add_property(
-          "atomRadii", &helpers::get_atomRadii, &helpers::set_atomRadii,
-          "Non-standard radii to use for the atoms specified by their indices"
-          " in the molecule.  Not all atoms need have a radius specified."
-          "  A list of tuples of [int, float].")
-      .def("__setattr__", &safeSetattr);
+          R"DOC(Custom features for the shape.  Requires a list of tuples of
+int (the feature type), Point3D (the coordinates) and float (the radius).)DOC")
+      .def_prop_rw(
+          "atomRadii",
+          [](const GaussianShape::ShapeInputOptions &opts) {
+            nb::list py_list;
+            for (const auto &val : opts.atomRadii) {
+              py_list.append(
+                  nb::make_tuple(static_cast<int>(val.first), val.second));
+            }
+            return nb::tuple(py_list);
+          },
+          [](GaussianShape::ShapeInputOptions &opts, nb::object ar) {
+            int len = nb::len(ar);
+            opts.atomRadii.resize(len);
+            for (int i = 0; i < len; i++) {
+              unsigned int atomIdx = nb::cast<unsigned int>(ar[i][0]);
+              double radius = nb::cast<double>(ar[i][1]);
+              opts.atomRadii[i] = std::make_pair(atomIdx, radius);
+            }
+          },
+          R"DOC(Non-standard radii to use for the atoms specified by their indices
+in the molecule.  Not all atoms need have a radius specified.
+A list of tuples of [int, float].)DOC");
 
-  python::class_<GaussianShape::ShapeOverlayOptions, boost::noncopyable>(
-      "ShapeOverlayOptions",
+  nb::class_<GaussianShape::ShapeOverlayOptions>(
+      m, "ShapeOverlayOptions",
       "ShapeOverlayOptions - options for controlling the shape overlay process.")
-      .def_readwrite(
+      .def(nb::init<>())
+      .def_rw(
           "startMode", &RDKit::GaussianShape::ShapeOverlayOptions::startMode,
-          "Start modes for optimisation.  Default is A_LA_PUBCHEM - as used by the"
-          " PubChem code - either ROTATE_180_WIGGLE or ROTATE_45 depending on the shape"
-          " of the two molecules.  ROTATE_180_WIGGLE means 180 rotations about"
-          " the x, y and z axes, then a small"
-          " rotation about each axis from that point, using the best scoring one of"
-          " those. ROTATE_180 uses 180 degree rotations for 4 start points,"
-          " ROTATE_45 uses 45 degree rotations for 9 start points and ROTATE_0"
-          " leaves the relative orientations of the 2 molecules as passed in before"
-          " optimisation.  There are also ROTATE_0_FRAGMENT, ROTATE_45_FRAGMENT"
-          " and ROTATE_180_FRAGMENT that as well as the above move the fit"
-          " molecule to the ends of each of the principal axes and then does"
-          " the appropriate rotations.  This is useful when the fit molecule is"
-          " a lot smaller than the reference molecule, but requires a large number"
-          " of optimisations so is relatively slow.")
-      .def_readwrite(
+          R"DOC(Start modes for optimisation.  Default is A_LA_PUBCHEM - as used by the
+PubChem code - either ROTATE_180_WIGGLE or ROTATE_45 depending on the shape
+of the two molecules.  ROTATE_180_WIGGLE means 180 rotations about
+the x, y and z axes, then a small
+rotation about each axis from that point, using the best scoring one of
+those. ROTATE_180 uses 180 degree rotations for 4 start points,
+ROTATE_45 uses 45 degree rotations for 9 start points and ROTATE_0
+leaves the relative orientations of the 2 molecules as passed in before
+optimisation.  There are also ROTATE_0_FRAGMENT, ROTATE_45_FRAGMENT
+and ROTATE_180_FRAGMENT that as well as the above move the fit
+molecule to the ends of each of the principal axes and then does
+the appropriate rotations.  This is useful when the fit molecule is
+a lot smaller than the reference molecule, but requires a large number
+of optimisations so is relatively slow.)DOC")
+      .def_rw(
           "optimMode", &GaussianShape::ShapeOverlayOptions::optimMode,
-          "Optimisation mode, controlling what parameters are used"
-          " to drive the overlay.  Default=SHAPE_PLUS_COLOR_SCORE which"
-          " optimises using just the overlap of shape, but uses the"
-          " color to decide which is the best overlay.  Other options"
-          " are SHAPE_ONLY and SHAPE_AND_COLOR with the latter using"
-          " the overlap of color features as well. ")
-      .def_readwrite(
+          R"DOC(Optimisation mode, controlling what parameters are used
+to drive the overlay.  Default=SHAPE_PLUS_COLOR_SCORE which
+optimises using just the overlap of shape, but uses the
+color to decide which is the best overlay.  Other options
+are SHAPE_ONLY and SHAPE_AND_COLOR with the latter using
+the overlap of color features as well. )DOC")
+      .def_rw(
           "simAlpha", &GaussianShape::ShapeOverlayOptions::simAlpha,
-          "When doing a Tversky similarity, the alpha value.  If alpha and"
-          " beta are both the default 1.0, it's a Tanimoto similarity.  A"
-          " high alpha and low beta emphasize the fit volume in the"
-          " similarity and vice versa. Tversky is O / (A * (R - O) + B * (F"
-          " - O) + O) where O is the overlap volume, R is the reference's"
-          " volume and F is the fit's volume.  This is different from that"
-          " used by OpenEye (O / (A * R + B * F)).")
-      .def_readwrite("simBeta", &GaussianShape::ShapeOverlayOptions::simBeta,
-                     "When doing a Tversky similarity, the beta value.")
-      .def_readwrite(
+          R"DOC(When doing a Tversky similarity, the alpha value.  If alpha and
+beta are both the default 1.0, it's a Tanimoto similarity.  A
+high alpha and low beta emphasize the fit volume in the
+similarity and vice versa. Tversky is O / (A * (R - O) + B * (F
+- O) + O) where O is the overlap volume, R is the reference's
+volume and F is the fit's volume.  This is different from that
+used by OpenEye (O / (A * R + B * F)).)DOC")
+      .def_rw("simBeta", &GaussianShape::ShapeOverlayOptions::simBeta,
+              "When doing a Tversky similarity, the beta value.")
+      .def_rw(
           "optParam", &GaussianShape::ShapeOverlayOptions::optParam,
-          "If using colors, the relative weights of the shape and color scores,"
-          " as a fraction of 1.  Default=0.5.")
-      .def_readwrite(
+          R"DOC(If using colors, the relative weights of the shape and color scores,
+as a fraction of 1.  Default=0.5.)DOC")
+      .def_rw(
           "nSteps", &GaussianShape::ShapeOverlayOptions::nSteps,
           "Maximum number of steps for the shape overlay process. Default=100.")
-      .def_readwrite(
+      .def_rw(
           "normalize", &GaussianShape::ShapeOverlayOptions::normalize,
-          "Whether to normalize the shapes before overlay by putting them into their"
-          " canonical orientation (centred on the origin, aligned along its"
-          " principal axes.  Default=True.")
-      .def_readwrite(
+          R"DOC(Whether to normalize the shapes before overlay by putting them into their
+canonical orientation (centred on the origin, aligned along its
+principal axes.  Default=True.)DOC")
+      .def_rw(
           "useDistCutoff", &GaussianShape::ShapeOverlayOptions::useDistCutoff,
-          "Whether to use distance cutoff when calculating the shape volumes.  If used,"
-          " there will be a small penalty in accuracy but a significant increase in speed."
-          "  Default=True.")
-      .def_readwrite(
+          R"DOC(Whether to use distance cutoff when calculating the shape volumes.  If used,
+there will be a small penalty in accuracy but a significant increase in speed.
+Default=True.)DOC")
+      .def_rw(
           "distCutoff", &GaussianShape::ShapeOverlayOptions::distCutoff,
-          "If using a distance cutoff, this is the value used.  Default=4.5 of whatever"
-          " units the coordinates are in.")
-      .def_readwrite(
+          R"DOC(If using a distance cutoff, this is the value used.  Default=4.5 of whatever
+units the coordinates are in.)DOC")
+      .def_rw(
           "shapeConvergenceCriterion",
           &GaussianShape::ShapeOverlayOptions::shapeConvergenceCriterion,
-          "Optimisation stops when the shape Tversky score changes by less"
-          " than this amount after an optimisation step.  A larger number is"
-          " faster but gives less precise overlays.  Default=0.001.")
+          R"DOC(Optimisation stops when the shape Tversky score changes by less
+than this amount after an optimisation step.  A larger number is
+faster but gives less precise overlays.  Default=0.001.)DOC");
+
+  nb::class_<GaussianShape::ShapeInput>(m, "ShapeInput", "ShapeInput object")
+      .def(nb::init<const ROMol &, int,
+                   const GaussianShape::ShapeInputOptions &,
+                   const GaussianShape::ShapeOverlayOptions &>(),
+           "mol"_a, "confId"_a = -1,
+           "shapeOpt"_a = GaussianShape::ShapeInputOptions(),
+           "overlayOpts"_a = GaussianShape::ShapeOverlayOptions())
+      .def_prop_ro("NumAtoms", &GaussianShape::ShapeInput::getNumAtoms,
+                   "Get the number of atoms defining the shape.")
+      .def_prop_ro("NumFeatures", &GaussianShape::ShapeInput::getNumFeatures,
+                   "Get the number of features in the shape.")
+      .def_prop_ro("ShapeVolume", &GaussianShape::ShapeInput::getShapeVolume,
+                   "Get the shape's volume due to the atoms.")
+      .def_prop_ro("ColorVolume", &GaussianShape::ShapeInput::getColorVolume,
+                   "Get the volume of the shape's color features.")
       .def("__setattr__", &safeSetattr);
 
-  std::string docString("ShapeInput object");
-  python::class_<GaussianShape::ShapeInput, boost::noncopyable>(
-      "ShapeInput", docString.c_str(),
-      python::init<const ROMol &, int, const GaussianShape::ShapeInputOptions &,
-                   const GaussianShape::ShapeOverlayOptions &>(
-          python::args("self", "confId", "shapeOpt", "overlayOpts")))
-      .add_property("NumAtoms", &GaussianShape::ShapeInput::getNumAtoms,
-                    "Get the number of atoms defining the shape.")
-      .add_property("NumFeatures", &GaussianShape::ShapeInput::getNumFeatures,
-                    "Get the number of features in the shape.")
-      .add_property("ShapeVolume", &GaussianShape::ShapeInput::getShapeVolume,
-                    "Get the shape's volume due to the atoms.")
-      .add_property("ColorVolume", &GaussianShape::ShapeInput::getColorVolume,
-                    "Get the volume of the shape's color features.")
-      .def("__setattr__", &safeSetattr);
-
-  python::def(
-      "AlignMol", &helpers::alignMol1,
-      (python::arg("ref"), python::arg("fit"),
-       python::arg("refOpts") = python::object(),
-       python::arg("fitOpts") = python::object(),
-       python::arg("overlayOpts") = python::object(),
-       python::arg("refConfId") = -1, python::arg("fitConfId") = -1),
+  m.def(
+      "AlignMol",
+      [](const ROMol &ref, ROMol &fit, nb::object py_refOpts,
+         nb::object py_fitOpts, nb::object py_overlayOpts, int refConfId,
+         int fitConfId) {
+        GaussianShape::ShapeInputOptions refOpts, fitOpts;
+        if (!py_refOpts.is_none()) {
+          refOpts = nb::cast<GaussianShape::ShapeInputOptions>(py_refOpts);
+        }
+        if (!py_fitOpts.is_none()) {
+          fitOpts = nb::cast<GaussianShape::ShapeInputOptions>(py_fitOpts);
+        }
+        GaussianShape::ShapeOverlayOptions overlayOpts;
+        if (!py_overlayOpts.is_none()) {
+          overlayOpts =
+              nb::cast<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
+        }
+        auto results = GaussianShape::AlignMolecule(
+            ref, fit, refOpts, fitOpts, nullptr, overlayOpts, refConfId,
+            fitConfId);
+        return nb::make_tuple(results[0], results[1], results[2]);
+      },
+      "ref"_a, "fit"_a, "refOpts"_a = nb::none(), "fitOpts"_a = nb::none(),
+      "overlayOpts"_a = nb::none(), "refConfId"_a = -1, "fitConfId"_a = -1,
       R"DOC(Aligns a fit molecule onto a reference molecule.  The fit is modified.
 
 Parameters
@@ -366,12 +268,26 @@ Returns
     be the same.
 )DOC");
 
-  python::def(
-      "AlignMol", &helpers::alignMol2,
-      (python::arg("refShape"), python::arg("fit"),
-       python::arg("fitOpts") = python::object(),
-       python::arg("overlayOpts") = python::object(),
-       python::arg("fitConfId") = -1),
+  m.def(
+      "AlignMol",
+      [](const GaussianShape::ShapeInput &refShape, ROMol &fit,
+         nb::object py_fitOpts, nb::object py_overlayOpts, int fitConfId) {
+        GaussianShape::ShapeInputOptions fitOpts;
+        if (!py_fitOpts.is_none()) {
+          fitOpts = nb::cast<GaussianShape::ShapeInputOptions>(py_fitOpts);
+        }
+        GaussianShape::ShapeOverlayOptions overlayOpts;
+        if (!py_overlayOpts.is_none()) {
+          overlayOpts =
+              nb::cast<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
+        }
+        auto results = GaussianShape::AlignMolecule(refShape, fit, fitOpts,
+                                                    nullptr, overlayOpts,
+                                                    fitConfId);
+        return nb::make_tuple(results[0], results[1], results[2]);
+      },
+      "refShape"_a, "fit"_a, "fitOpts"_a = nb::none(),
+      "overlayOpts"_a = nb::none(), "fitConfId"_a = -1,
       R"DOC(Aligns a fit molecule onto a reference shape.  The fit is modified.
 
 Parameters
@@ -394,10 +310,27 @@ Returns
     0.0 if color features not used, in which case combo_score and shape_score will
     be the same.)DOC");
 
-  python::def(
-      "AlignShapes", &helpers::alignShapes,
-      (python::arg("refShape"), python::arg("fitShape"),
-       python::arg("overlayOpts") = python::object()),
+  m.def(
+      "AlignShapes",
+      [](const GaussianShape::ShapeInput &refShape,
+         GaussianShape::ShapeInput &fitShape, nb::object py_overlayOpts) {
+        GaussianShape::ShapeOverlayOptions overlayOpts;
+        if (!py_overlayOpts.is_none()) {
+          overlayOpts =
+              nb::cast<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
+        }
+        RDGeom::Transform3D xform;
+        auto results =
+            GaussianShape::AlignShape(refShape, fitShape, &xform, overlayOpts);
+        nb::list pyMatrix;
+        for (int i = 0; i < 4; ++i) {
+          for (int j = 0; j < 4; ++j) {
+            pyMatrix.append(xform.getValUnchecked(i, j));
+          }
+        }
+        return nb::make_tuple(results[0], results[1], results[2], pyMatrix);
+      },
+      "refShape"_a, "fitShape"_a, "overlayOpts"_a = nb::none(),
       R"DOC(Aligns a fit shape to a reference shape. The fit is modified.
 
 Parameters
@@ -417,13 +350,30 @@ Returns
     The matrix is a 16-float list giving the transformation matrix that
     overlays the fit onto the reference.)DOC");
 
-  python::def("ScoreMol", &helpers::scoreMol1,
-              (python::arg("ref"), python::arg("fit"),
-               python::arg("refOpts") = python::object(),
-               python::arg("fitOpts") = python::object(),
-               python::arg("overlayOpts") = python::object(),
-               python::arg("refConfId") = -1, python::arg("fitConfId") = -1),
-              R"DOC(Calculates the scores between a reference molecule and a fit
+  m.def(
+      "ScoreMol",
+      [](const ROMol &ref, const ROMol &fit, nb::object py_refOpts,
+         nb::object py_fitOpts, nb::object py_overlayOpts, int refConfId,
+         int fitConfId) {
+        GaussianShape::ShapeInputOptions refOpts, fitOpts;
+        if (!py_refOpts.is_none()) {
+          refOpts = nb::cast<GaussianShape::ShapeInputOptions>(py_refOpts);
+        }
+        if (!py_fitOpts.is_none()) {
+          fitOpts = nb::cast<GaussianShape::ShapeInputOptions>(py_fitOpts);
+        }
+        GaussianShape::ShapeOverlayOptions overlayOpts;
+        if (!py_overlayOpts.is_none()) {
+          overlayOpts =
+              nb::cast<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
+        }
+        auto results = GaussianShape::ScoreMolecule(
+            ref, fit, refOpts, fitOpts, overlayOpts, refConfId, fitConfId);
+        return nb::make_tuple(results[0], results[1], results[2]);
+      },
+      "ref"_a, "fit"_a, "refOpts"_a = nb::none(), "fitOpts"_a = nb::none(),
+      "overlayOpts"_a = nb::none(), "refConfId"_a = -1, "fitConfId"_a = -1,
+      R"DOC(Calculates the scores between a reference molecule and a fit
 molecule without overlay.
 
 Parameters
@@ -451,12 +401,25 @@ Returns
     be the same.
 )DOC");
 
-  python::def(
-      "ScoreMol", &helpers::scoreMol2,
-      (python::arg("refShape"), python::arg("fit"),
-       python::arg("fitOpts") = python::object(),
-       python::arg("overlayOpts") = python::object(),
-       python::arg("fitConfId") = -1),
+  m.def(
+      "ScoreMol",
+      [](const GaussianShape::ShapeInput &refShape, const ROMol &fit,
+         nb::object py_fitOpts, nb::object py_overlayOpts, int fitConfId) {
+        GaussianShape::ShapeInputOptions fitOpts;
+        if (!py_fitOpts.is_none()) {
+          fitOpts = nb::cast<GaussianShape::ShapeInputOptions>(py_fitOpts);
+        }
+        GaussianShape::ShapeOverlayOptions overlayOpts;
+        if (!py_overlayOpts.is_none()) {
+          overlayOpts =
+              nb::cast<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
+        }
+        auto results = GaussianShape::ScoreMolecule(refShape, fit, fitOpts,
+                                                    overlayOpts, fitConfId);
+        return nb::make_tuple(results[0], results[1], results[2]);
+      },
+      "refShape"_a, "fit"_a, "fitOpts"_a = nb::none(),
+      "overlayOpts"_a = nb::none(), "fitConfId"_a = -1,
       R"DOC(Calculates the scores between a reference shape and a fit molecule
 without overlay.
 
@@ -481,10 +444,20 @@ Returns
     be the same.
 )DOC");
 
-  python::def(
-      "ScoreShape", &helpers::scoreShape,
-      (python::arg("refShape"), python::arg("fitShape"),
-       python::arg("overlayOpts") = python::object()),
+  m.def(
+      "ScoreShape",
+      [](const GaussianShape::ShapeInput &refShape,
+         const GaussianShape::ShapeInput &fitShape, nb::object py_overlayOpts) {
+        GaussianShape::ShapeOverlayOptions overlayOpts;
+        if (!py_overlayOpts.is_none()) {
+          overlayOpts =
+              nb::cast<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
+        }
+        auto results =
+            GaussianShape::ScoreShape(refShape, fitShape, overlayOpts);
+        return nb::make_tuple(results[0], results[1], results[2]);
+      },
+      "refShape"_a, "fitShape"_a, "overlayOpts"_a = nb::none(),
       R"DOC(Calculates the scores between a reference shape and a fit shape without
 overlay.
 
@@ -507,7 +480,5 @@ Returns
     be the same.
 )DOC");
 }
-
-BOOST_PYTHON_MODULE(rdGaussianShape) { wrap_rdGaussianShape(); }
 
 }  // namespace RDKit
