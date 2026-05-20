@@ -1,6 +1,5 @@
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
-//  Copyright (C) 2019 Greg Landrum
+//  Copyright (C) 2003-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,23 +7,19 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#define PY_ARRAY_UNIQUE_SYMBOL rdpicker_array_API
-#include <RDBoost/Wrap.h>
-#include <RDBoost/import_array.h>
+#include <nanobind/nanobind.h>
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
-void wrap_maxminpick();
-void wrap_leaderpick();
-void wrap_HierarchCP();
+void wrap_maxminpick(nb::module_ &m);
+void wrap_leaderpick(nb::module_ &m);
+void wrap_HierarchCP(nb::module_ &m);
 
-BOOST_PYTHON_MODULE(rdSimDivPickers) {
-  python::scope().attr("__doc__") =
-      "Module containing the diversity and similarity pickers";
+NB_MODULE(rdSimDivPickers, m) {
+  m.doc() = "Module containing the diversity and similarity pickers";
 
-  rdkit_import_array();
-
-  wrap_maxminpick();
-  wrap_leaderpick();
-  wrap_HierarchCP();
+  wrap_maxminpick(m);
+  wrap_leaderpick(m);
+  wrap_HierarchCP(m);
 }

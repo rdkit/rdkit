@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019  Greg Landrum
+//  Copyright (C) 2019-2026 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -12,6 +12,9 @@
 
 #include <vector>
 #include <DataStructs/BitOps.h>
+#include <nanobind/nanobind.h>
+
+namespace nb = nanobind;
 
 // NOTE: TANIMOTO and DICE provably return the same results for the diversity
 // picking this is still here just in case we ever later want to support other
@@ -34,7 +37,7 @@ class pyBVFunctor {
         res = 1. - DiceSimilarity(*d_obj[i], *d_obj[j]);
         break;
       default:
-        throw_value_error("unsupported similarity value");
+        throw nb::value_error("unsupported similarity value");
     }
     return res;
   }
@@ -46,14 +49,14 @@ class pyBVFunctor {
 
 class pyobjFunctor {
  public:
-  pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
+  pyobjFunctor(nb::object obj) : dp_obj(std::move(obj)) {}
   ~pyobjFunctor() = default;
   double operator()(unsigned int i, unsigned int j) {
-    return python::extract<double>(dp_obj(i, j));
+    return nb::cast<double>(dp_obj(i, j));
   }
 
  private:
-  python::object dp_obj;
+  nb::object dp_obj;
 };
 
 #endif  // RDKIT_PICKERHELPERS_H
