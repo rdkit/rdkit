@@ -28,7 +28,7 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles("C")
     conf = Chem.Conformer(1)
     conf.SetAtomPosition(0, (4.0, 5.0, 6.0))
-    mol.AddConformer(conf, 1)
+    mol.AddConformer(conf, True)
 
     conf = mol.GetConformer()
     pt = rdmt.ComputeCentroid(conf)

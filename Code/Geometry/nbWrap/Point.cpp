@@ -158,6 +158,14 @@ void wrap_point(nb::module_ &m) {
            "(between 0 and 2*PI)")
       .def("DirectionVector", &Point3D::directionVector,
            "return a normalized direction vector from this point to another")
+      .def(
+          "Distance",
+          [](const Point3D &self, const Point3D &other) {
+            Point3D tmp(self);
+            tmp -= other;
+            return tmp.length();
+          },
+          "pt2"_a, "Distance from this point to another point")
       .def("__getstate__",
            [](const Point3D &pt) { return std::make_tuple(pt.x, pt.y, pt.z); })
       .def("__setstate__",
