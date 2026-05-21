@@ -29,7 +29,7 @@ from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
 from rdkit.Chem import rdqueries
 
 # from rdkit.Chem import AllChem, rdqueries
-# from rdkit.Chem.Scaffolds import MurckoScaffold
+from rdkit.Chem.Scaffolds import MurckoScaffold
 
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
@@ -8037,6 +8037,7 @@ M  END
     smi2 = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
     self.assertTrue(smi == smi2)
 
+
 # FIX
 #   def test_picklingWithAddedAttribs(self):
 #     m = Chem.MolFromSmiles("C")
@@ -8498,63 +8499,62 @@ M  END
     Chem.CleanupStereoGroups(m)
     self.assertEqual(len(m.GetStereoGroups()), 0)
 
+  def testClearPropertyCache(self):
+    m = Chem.MolFromSmiles("CC")
+    self.assertFalse(m.NeedsUpdatePropertyCache())
+    for atom in m.GetAtoms():
+      self.assertFalse(atom.NeedsUpdatePropertyCache())
+    m.ClearPropertyCache()
+    self.assertTrue(m.NeedsUpdatePropertyCache())
+    for atom in m.GetAtoms():
+      self.assertTrue(atom.NeedsUpdatePropertyCache())
 
-#   def testClearPropertyCache(self):
-#     m = Chem.MolFromSmiles("CC")
-#     self.assertFalse(m.NeedsUpdatePropertyCache())
-#     for atom in m.GetAtoms():
-#       self.assertFalse(atom.NeedsUpdatePropertyCache())
-#     m.ClearPropertyCache()
-#     self.assertTrue(m.NeedsUpdatePropertyCache())
-#     for atom in m.GetAtoms():
-#       self.assertTrue(atom.NeedsUpdatePropertyCache())
+  def testGithub8877(self):
+    m = Chem.MolFromSmarts('CC')
+    self.assertRaises(ValueError, lambda: m.GetAtomWithIdx(0).SetQuery(None))
+    self.assertRaises(ValueError, lambda: m.GetAtomWithIdx(0).ExpandQuery(None))
+    self.assertRaises(ValueError, lambda: m.GetBondWithIdx(0).SetQuery(None))
+    self.assertRaises(ValueError, lambda: m.GetBondWithIdx(0).ExpandQuery(None))
 
-#   def testGithub8877(self):
-#     m = Chem.MolFromSmarts('CC')
-#     self.assertRaises(ValueError, lambda: m.GetAtomWithIdx(0).SetQuery(None))
-#     self.assertRaises(ValueError, lambda: m.GetAtomWithIdx(0).ExpandQuery(None))
-#     self.assertRaises(ValueError, lambda: m.GetBondWithIdx(0).SetQuery(None))
-#     self.assertRaises(ValueError, lambda: m.GetBondWithIdx(0).ExpandQuery(None))
+  def testBondChiralityInversion(self):
+    mol1 = Chem.MolFromSmiles("Cc1cccc(F)c1-c1c(C)cccc1Cl |wU:7.7,&1:7|")
+    mol2 = Chem.MolFromSmiles("Cc1cccc(F)c1-c1c(C)cccc1Cl |wU:7.6,&1:7|")
+    self.assertNotEqual(mol1.GetBonds()[7].GetStereo(), mol2.GetBonds()[7].GetStereo())
+    mol1.GetBonds()[7].InvertChirality()
+    self.assertEqual(mol1.GetBonds()[7].GetStereo(), mol2.GetBonds()[7].GetStereo())
 
-#   def testBondChiralityInversion(self):
-#     mol1 = Chem.MolFromSmiles("Cc1cccc(F)c1-c1c(C)cccc1Cl |wU:7.7,&1:7|")
-#     mol2 = Chem.MolFromSmiles("Cc1cccc(F)c1-c1c(C)cccc1Cl |wU:7.6,&1:7|")
-#     self.assertNotEqual(mol1.GetBonds()[7].GetStereo(), mol2.GetBonds()[7].GetStereo())
-#     mol1.GetBonds()[7].InvertChirality()
-#     self.assertEqual(mol1.GetBonds()[7].GetStereo(), mol2.GetBonds()[7].GetStereo())
+  def testVerifyWedges(self):
+    rdbase = os.environ['RDBASE']
+    filename = os.path.join(rdbase,
+                            'Code/GraphMol/FileParsers/test_data/wedgeTests/StereoGroupError.mol')
+    m = Chem.MolFromMolFile(filename)
+    self.assertIsNotNone(m)
+    Chem.ReapplyMolBlockWedging(m)
+    numWedges = sum(1 for b in m.GetBonds()
+                    if b.GetBondDir() in (Chem.BondDir.BEGINWEDGE, Chem.BondDir.BEGINDASH))
+    self.assertEqual(numWedges, 2)
 
-#   def testVerifyWedges(self):
-#     rdbase = os.environ['RDBASE']
-#     filename = os.path.join(rdbase,
-#                             'Code/GraphMol/FileParsers/test_data/wedgeTests/StereoGroupError.mol')
-#     m = Chem.MolFromMolFile(filename)
-#     self.assertIsNotNone(m)
-#     Chem.ReapplyMolBlockWedging(m)
-#     numWedges = sum(1 for b in m.GetBonds()
-#                     if b.GetBondDir() in (Chem.BondDir.BEGINWEDGE, Chem.BondDir.BEGINDASH))
-#     self.assertEqual(numWedges, 2)
+    Chem.ReapplyMolBlockWedging(m, verify=True)
+    numWedges = sum(1 for b in m.GetBonds()
+                    if b.GetBondDir() in (Chem.BondDir.BEGINWEDGE, Chem.BondDir.BEGINDASH))
+    self.assertEqual(numWedges, 1)
 
-#     Chem.ReapplyMolBlockWedging(m, verify=True)
-#     numWedges = sum(1 for b in m.GetBonds()
-#                     if b.GetBondDir() in (Chem.BondDir.BEGINWEDGE, Chem.BondDir.BEGINDASH))
-#     self.assertEqual(numWedges, 1)
+  def testGithub9101(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'rdkit_chunk_boundary_bug.sdf')
+    sdSup = Chem.SDMolSupplier(fileN)
+    mols = list(sdSup)
+    self.assertEqual(len(mols[0].GetPropsAsDict()["comment"]), 65369)
+    self.assertTrue(mols[1] != None)
 
-#   def testGithub9101(self):
-#     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-#                          'rdkit_chunk_boundary_bug.sdf')
-#     sdSup = Chem.SDMolSupplier(fileN)
-#     mols = list(sdSup)
-#     self.assertEqual(len(mols[0].GetPropsAsDict()["comment"]), 65369)
-#     self.assertTrue(mols[1] != None)
+  def testGithub9125(self):
+    m1 = Chem.MolFromSmiles('c1ncc(C)nc1')
+    Chem.Kekulize(m1)
+    self.assertEqual(m1.GetBondBetweenAtoms(3, 5).GetBondType(), Chem.BondType.DOUBLE)
 
-#   def testGithub9125(self):
-#     m1 = Chem.MolFromSmiles('c1ncc(C)nc1')
-#     Chem.Kekulize(m1)
-#     self.assertEqual(m1.GetBondBetweenAtoms(3, 5).GetBondType(), Chem.BondType.DOUBLE)
-
-#     m1 = Chem.MolFromSmiles('c1ncc(C)nc1')
-#     Chem.Kekulize(m1, canonical=False)
-#     self.assertEqual(m1.GetBondBetweenAtoms(3, 5).GetBondType(), Chem.BondType.SINGLE)
+    m1 = Chem.MolFromSmiles('c1ncc(C)nc1')
+    Chem.Kekulize(m1, canonical=False)
+    self.assertEqual(m1.GetBondBetweenAtoms(3, 5).GetBondType(), Chem.BondType.SINGLE)
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
