@@ -46,15 +46,20 @@ double InversionContribs::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
   double accum = 0;
+  const std::size_t dimension = dp_forceField->dimension();
   for (const auto &contrib : d_contribs) {
-    const RDGeom::Point3D p1(pos[3 * contrib.idx1], pos[3 * contrib.idx1 + 1],
-                             pos[3 * contrib.idx1 + 2]);
-    const RDGeom::Point3D p2(pos[3 * contrib.idx2], pos[3 * contrib.idx2 + 1],
-                             pos[3 * contrib.idx2 + 2]);
-    const RDGeom::Point3D p3(pos[3 * contrib.idx3], pos[3 * contrib.idx3 + 1],
-                             pos[3 * contrib.idx3 + 2]);
-    const RDGeom::Point3D p4(pos[3 * contrib.idx4], pos[3 * contrib.idx4 + 1],
-                             pos[3 * contrib.idx4 + 2]);
+    const RDGeom::Point3D p1(pos[dimension * contrib.idx1],
+                             pos[dimension * contrib.idx1 + 1],
+                             pos[dimension * contrib.idx1 + 2]);
+    const RDGeom::Point3D p2(pos[dimension * contrib.idx2],
+                             pos[dimension * contrib.idx2 + 1],
+                             pos[dimension * contrib.idx2 + 2]);
+    const RDGeom::Point3D p3(pos[dimension * contrib.idx3],
+                             pos[dimension * contrib.idx3 + 1],
+                             pos[dimension * contrib.idx3 + 2]);
+    const RDGeom::Point3D p4(pos[dimension * contrib.idx4],
+                             pos[dimension * contrib.idx4 + 1],
+                             pos[dimension * contrib.idx4 + 2]);
     const double cosY = Utils::calculateCosY(p1, p2, p3, p4);
     const double sinYSq = 1.0 - cosY * cosY;
     const double sinY = ((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0);
@@ -66,23 +71,51 @@ double InversionContribs::getEnergy(double *pos) const {
   return accum;
 }
 
+double InversionContribs::getEnergy(const RDGeom::Point3DPtrVect &positions,
+                                    std::vector<double> &energies) const {
+  PRECONDITION(dp_forceField, "no owner");
+  energies.resize(d_contribs.size());
+  double totalE = 0.0;
+  for (std::size_t i = 0; i < d_contribs.size(); ++i) {
+    const auto &contrib = d_contribs[i];
+    const double cosY = Utils::calculateCosY(
+        *positions[contrib.idx1], *positions[contrib.idx2],
+        *positions[contrib.idx3], *positions[contrib.idx4]);
+    const double sinYSq = 1.0 - cosY * cosY;
+    const double sinY = ((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0);
+    // cos(2 * W) = 2 * cos(W) * cos(W) - 1 = 2 * sin(W) * sin(W) - 1
+    const double cos2W = 2.0 * sinY * sinY - 1.0;
+    const double e = contrib.forceConstant *
+                     (contrib.C0 + contrib.C1 * sinY + contrib.C2 * cos2W);
+
+    energies[i] = e;
+    totalE += e;
+  }
+  return totalE;
+}
+
 void InversionContribs::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
   PRECONDITION(grad, "bad vector");
+  const std::size_t dimension = dp_forceField->dimension();
   for (const auto &contrib : d_contribs) {
-    const RDGeom::Point3D p1(pos[3 * contrib.idx1], pos[3 * contrib.idx1 + 1],
-                             pos[3 * contrib.idx1 + 2]);
-    const RDGeom::Point3D p2(pos[3 * contrib.idx2], pos[3 * contrib.idx2 + 1],
-                             pos[3 * contrib.idx2 + 2]);
-    const RDGeom::Point3D p3(pos[3 * contrib.idx3], pos[3 * contrib.idx3 + 1],
-                             pos[3 * contrib.idx3 + 2]);
-    const RDGeom::Point3D p4(pos[3 * contrib.idx4], pos[3 * contrib.idx4 + 1],
-                             pos[3 * contrib.idx4 + 2]);
-    double *g1 = &(grad[3 * contrib.idx1]);
-    double *g2 = &(grad[3 * contrib.idx2]);
-    double *g3 = &(grad[3 * contrib.idx3]);
-    double *g4 = &(grad[3 * contrib.idx4]);
+    const RDGeom::Point3D p1(pos[dimension * contrib.idx1],
+                             pos[dimension * contrib.idx1 + 1],
+                             pos[dimension * contrib.idx1 + 2]);
+    const RDGeom::Point3D p2(pos[dimension * contrib.idx2],
+                             pos[dimension * contrib.idx2 + 1],
+                             pos[dimension * contrib.idx2 + 2]);
+    const RDGeom::Point3D p3(pos[dimension * contrib.idx3],
+                             pos[dimension * contrib.idx3 + 1],
+                             pos[dimension * contrib.idx3 + 2]);
+    const RDGeom::Point3D p4(pos[dimension * contrib.idx4],
+                             pos[dimension * contrib.idx4 + 1],
+                             pos[dimension * contrib.idx4 + 2]);
+    double *g1 = &(grad[dimension * contrib.idx1]);
+    double *g2 = &(grad[dimension * contrib.idx2]);
+    double *g3 = &(grad[dimension * contrib.idx3]);
+    double *g4 = &(grad[dimension * contrib.idx4]);
     RDGeom::Point3D rJI = p1 - p2;
     RDGeom::Point3D rJK = p3 - p2;
     RDGeom::Point3D rJL = p4 - p2;

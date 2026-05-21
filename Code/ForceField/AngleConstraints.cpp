@@ -106,11 +106,36 @@ double AngleConstraintContribs::getEnergy(double *pos) const {
   return accum;
 }
 
+double AngleConstraintContribs::getEnergy(
+    const RDGeom::Point3DPtrVect &positions,
+    std::vector<double> &energies) const {
+  PRECONDITION(dp_forceField, "no owner");
+  energies.resize(d_contribs.size());
+  double totalE = 0.0;
+  for (std::size_t i = 0; i < d_contribs.size(); ++i) {
+    const auto &contrib = d_contribs[i];
+    const auto &p1 = *positions[contrib.idx1];
+    const auto &p2 = *positions[contrib.idx2];
+    const auto &p3 = *positions[contrib.idx3];
+    const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
+    const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
+                                 std::max(1.0e-5, r[1].lengthSq())};
+    double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
+    cosTheta = std::clamp(cosTheta, -1.0, 1.0);
+    const double angle = RAD2DEG * acos(cosTheta);
+    const double angleTerm = computeAngleTerm(angle, contrib);
+    const double e = contrib.forceConstant * angleTerm * angleTerm;
+    energies[i] = e;
+    totalE += e;
+  }
+  return totalE;
+}
+
 void AngleConstraintContribs::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
   PRECONDITION(grad, "bad vector");
-  const unsigned int dim = dp_forceField->dimension();
+  const std::size_t dim = dp_forceField->dimension();
   for (const auto &contrib : d_contribs) {
     const RDGeom::Point3D p1(pos[dim * contrib.idx1],
                              pos[dim * contrib.idx1 + 1],

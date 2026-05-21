@@ -11,6 +11,7 @@
 #ifndef RD_UFFINVERSIONS_H
 #define RD_UFFINVERSIONS_H
 #include <ForceField/Contrib.h>
+#include <Geometry/point.h>
 #include <vector>
 
 namespace ForceFields {
@@ -42,7 +43,7 @@ struct RDKIT_FORCEFIELD_EXPORT InversionContribsParams {
         C0(C0),
         C1(C1),
         C2(C2),
-        forceConstant(forceConstant) {};
+        forceConstant(forceConstant){};
 };
 //! A term to capture all Inversion Contributionss.
 class RDKIT_FORCEFIELD_EXPORT InversionContribs : public ForceFieldContrib {
@@ -75,6 +76,14 @@ class RDKIT_FORCEFIELD_EXPORT InversionContribs : public ForceFieldContrib {
     \param pos  positions of the atoms in the current state
   */
   double getEnergy(double *pos) const override;
+  //! return the contribution of this contrib to the energy of a given state
+  /*!
+    \param pos  positions of the atoms in the current state
+    \param energies Will resize and write the energies of every single contrib
+    of this contribs object to the energies vector
+  */
+  double getEnergy(const RDGeom::Point3DPtrVect &positions,
+                   std::vector<double> &energies) const;
   //! calculate the contribution of this contrib to the gradient at a given
   /// state
   /*!
