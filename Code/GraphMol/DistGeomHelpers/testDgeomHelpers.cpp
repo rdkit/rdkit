@@ -65,7 +65,6 @@ void test1() {
     ps.maxIterations = 10;
     ps.randomSeed = 1;
     ps.optimizerForceTol = 1e-2;
-    ps.checkForClashes = false;
     int cid = DGeomHelpers::EmbedMolecule(*m, ps);
     CHECK_INVARIANT(cid >= 0, "");
     ROMol *m2 = sdsup.next();
@@ -343,8 +342,8 @@ void test4() {
       "c1cc(C(F)(F)F)ccc1/C=N/NC(=O)c(n2)c[n]3cc(C(F)(F)F)cc(c23)Cl";
   ROMol *m = SmilesToMol(smi, 0, 1);
   DGeomHelpers::EmbedMolecule(*m, 10, 1);  // etCoords(*m, iter);
-  std::string fname = "test.mol";
-  MolToMolFile(*m, fname);
+  // std::string fname = "test.mol";
+  // MolToMolFile(*m, fname);
   delete m;
   boost::logging::enable_logs("rdApp.warning");
 }
@@ -857,7 +856,6 @@ void testRandomCoords() {
     ps.useRandomCoords = true;
     ps.randomSeed = 1;
     ps.optimizerForceTol = 1e-2;
-    ps.checkForClashes = false;
     int cid = DGeomHelpers::EmbedMolecule(*m, ps);
     CHECK_INVARIANT(cid >= 0, "");
     // writer.write(*m);
@@ -1673,12 +1671,14 @@ M  END)CTAB";
   }
 }
 
-void testEmbedParameters() {
+void testEmbedParameters(const bool legacy) {
   std::string rdbase = getenv("RDBASE");
   {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.dg.mol";
+    std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+    if (!legacy) {
+      fname += "AIO/";
+    }
+    fname += "simple_torsion.dg.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("OCCC");
@@ -1687,20 +1687,21 @@ void testEmbedParameters() {
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 42;
-    params.useLegacyImplementation = true;
+    params.useLegacyImplementation = legacy;
     TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
     // std::cerr << fname << std::endl;
     compareConfs(ref, mol);
-
     delete ref;
     delete mol;
   }
   {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etdg.mol";
+    std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+    if (!legacy) {
+      fname += "AIO/";
+    }
+    fname += "simple_torsion.etdg.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("OCCC");
@@ -1710,7 +1711,7 @@ void testEmbedParameters() {
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 42;
     params.useExpTorsionAnglePrefs = true;
-    params.useLegacyImplementation = true;
+    params.useLegacyImplementation = legacy;
     TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -1721,9 +1722,11 @@ void testEmbedParameters() {
     delete mol;
   }
   {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etkdg.mol";
+    std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+    if (!legacy) {
+      fname += "AIO/";
+    }
+    fname += "simple_torsion.etkdg.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("OCCC");
@@ -1734,7 +1737,7 @@ void testEmbedParameters() {
     params.randomSeed = 42;
     params.useExpTorsionAnglePrefs = true;
     params.useBasicKnowledge = true;
-    params.useLegacyImplementation = true;
+    params.useLegacyImplementation = legacy;
     TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -1745,9 +1748,11 @@ void testEmbedParameters() {
     delete mol;
   }
   {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/torsion.etkdg.v2.mol";
+    std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+    if (!legacy) {
+      fname += "AIO/";
+    }
+    fname += "torsion.etkdg.v2.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("n1cccc(C)c1ON");
@@ -1759,7 +1764,7 @@ void testEmbedParameters() {
     params.useExpTorsionAnglePrefs = true;
     params.useBasicKnowledge = true;
     params.ETversion = 2;
-    params.useLegacyImplementation = true;
+    params.useLegacyImplementation = legacy;
     TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -1770,9 +1775,11 @@ void testEmbedParameters() {
     delete mol;
   }
   {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.kdg.mol";
+    std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+    if (!legacy) {
+      fname += "AIO/";
+    }
+    fname += "simple_torsion.kdg.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("OCCC");
@@ -1782,7 +1789,7 @@ void testEmbedParameters() {
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 42;
     params.useBasicKnowledge = true;
-    params.useLegacyImplementation = true;
+    params.useLegacyImplementation = legacy;
     TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -1795,9 +1802,11 @@ void testEmbedParameters() {
   //------------
   // using the pre-defined parameter sets
   {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etdg.mol";
+    std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+    if (!legacy) {
+      fname += "AIO/";
+    }
+    fname += "simple_torsion.etdg.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("OCCC");
@@ -1806,7 +1815,7 @@ void testEmbedParameters() {
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params(DGeomHelpers::ETDG);
     params.randomSeed = 42;
-    params.useLegacyImplementation = true;
+    params.useLegacyImplementation = legacy;
     TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -1817,9 +1826,11 @@ void testEmbedParameters() {
     delete mol;
   }
   {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etkdg.mol";
+    std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+    if (!legacy) {
+      fname += "AIO/";
+    }
+    fname += "simple_torsion.etkdg.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("OCCC");
@@ -1828,7 +1839,7 @@ void testEmbedParameters() {
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
     params.randomSeed = 42;
-    params.useLegacyImplementation = true;
+    params.useLegacyImplementation = legacy;
     TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -1839,9 +1850,11 @@ void testEmbedParameters() {
     delete mol;
   }
   {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.kdg.mol";
+    std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+    if (!legacy) {
+      fname += "AIO/";
+    }
+    fname += "simple_torsion.kdg.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("OCCC");
@@ -1850,7 +1863,7 @@ void testEmbedParameters() {
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params(DGeomHelpers::KDG);
     params.randomSeed = 42;
-    params.useLegacyImplementation = true;
+    params.useLegacyImplementation = legacy;
     TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -1862,9 +1875,11 @@ void testEmbedParameters() {
   }
   // small ring torsions improvement test
   {
-    std::string fname = rdbase +
-                        "/Code/GraphMol/DistGeomHelpers/test_data/"
-                        "simple_torsion.smallring.etkdgv3.mol";
+    std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+    if (!legacy) {
+      fname += "AIO/";
+    }
+    fname += "simple_torsion.smallring.etkdgv3.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("C1CCCCC1");
@@ -1873,7 +1888,7 @@ void testEmbedParameters() {
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params(DGeomHelpers::srETKDGv3);
     params.randomSeed = 42;
-    params.useLegacyImplementation = true;
+    params.useLegacyImplementation = legacy;
     TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -1885,9 +1900,11 @@ void testEmbedParameters() {
   }
   // macrocycles torsions backward compatibility test
   {
-    std::string fname = rdbase +
-                        "/Code/GraphMol/DistGeomHelpers/test_data/"
-                        "simple_torsion.macrocycle.etkdg.mol";
+    std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+    if (!legacy) {
+      fname += "AIO/";
+    }
+    fname += "simple_torsion.macrocycle.etkdg.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("O=C1NCCCCCCCCC1");
@@ -1896,7 +1913,7 @@ void testEmbedParameters() {
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
     params.randomSeed = 42;
-    params.useLegacyImplementation = true;
+    params.useLegacyImplementation = legacy;
     TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -1908,9 +1925,11 @@ void testEmbedParameters() {
   }
   // macrocycles torsions improvement test
   {
-    std::string fname = rdbase +
-                        "/Code/GraphMol/DistGeomHelpers/test_data/"
-                        "simple_torsion.macrocycle.etkdgv3.mol";
+    std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+    if (!legacy) {
+      fname += "AIO/";
+    }
+    fname += "simple_torsion.macrocycle.etkdgv3.mol";
     RWMol *ref = MolFileToMol(fname, true, false);
     TEST_ASSERT(ref);
     RWMol *mol = SmilesToMol("C1NCCCCCCCCC1");
@@ -1919,7 +1938,7 @@ void testEmbedParameters() {
     TEST_ASSERT(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDGv3);
     params.randomSeed = 42;
-    params.useLegacyImplementation = true;
+    params.useLegacyImplementation = legacy;
     TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -2043,23 +2062,23 @@ void testGithub1240() {
     delete mol;
   }
 
-  // {
-  //   // CHEMBL43398
-  //   RWMol *mol =
-  //       SmilesToMol("C[C@@H]1[C@@H]2Cc3ccc(O)cc3[C@]1(C)CCN2CCN4CCCC4");
-  //   TEST_ASSERT(mol);
-  //   MolOps::addHs(*mol);
-  //   DGeomHelpers::EmbedParameters params;
-  //   params.randomSeed = 0xf00d;
-  //   int cid = DGeomHelpers::EmbedMolecule(*mol, params);
-  //   TEST_ASSERT(cid >= 0);
-  //   params = DGeomHelpers::ETKDG;
-  //   params.randomSeed = 0xf00d;
-  //   cid = DGeomHelpers::EmbedMolecule(*mol, params);
-  //   TEST_ASSERT(cid >= 0);
+  {
+      // CHEMBL43398
+      // RWMol *mol =
+      //     SmilesToMol("C[C@@H]1[C@@H]2Cc3ccc(O)cc3[C@]1(C)CCN2CCN4CCCC4");
+      // TEST_ASSERT(mol);
+      // MolOps::addHs(*mol);
+      // DGeomHelpers::EmbedParameters params;
+      // params.randomSeed = 0xf00d;
+      // int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+      // TEST_ASSERT(cid >= 0);
+      // params = DGeomHelpers::ETKDG;
+      // params.randomSeed = 0xf00d;
+      // cid = DGeomHelpers::EmbedMolecule(*mol, params);
+      // TEST_ASSERT(cid >= 0);
 
-  //   delete mol;
-  // }
+      // delete mol;
+  }
 
   {
     // CHEMBL290986
@@ -2295,7 +2314,7 @@ void testGithub3667() {
   delete mol;
 }
 
-void testForceTransAmides() {
+void testForceTransAmides(const bool legacy) {
   auto mol = "CC(=O)NC"_smiles;
   TEST_ASSERT(mol);
   bool updateLabel = true;
@@ -2310,6 +2329,7 @@ void testForceTransAmides() {
     params.randomSeed = 0xf00d;
     params.useExpTorsionAnglePrefs = false;
     params.useBasicKnowledge = true;
+    params.useLegacyImplementation = legacy;
     auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, params);
     for (auto cid : cids) {
       TEST_ASSERT(cid >= 0);
@@ -2362,15 +2382,17 @@ void testSymmetryPruning() {
     params.onlyHeavyAtomsForRMS = true;
     params.pruneRmsThresh = 0.5;
     params.randomSeed = 0xf00d;
+    params.useLegacyImplementation = false;
     auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
     // printf("%i\n", int(cids.size()));
     TEST_ASSERT(cids.size() == 3);
 
     params.useSymmetryForPruning = false;
     params.pruneRmsThresh = 0.5;
+    params.useLegacyImplementation = false;
     cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
     // printf("%i\n", int(cids.size()));
-    TEST_ASSERT(cids.size() == 9);
+    TEST_ASSERT(cids.size() == 8);
   }
 }
 
@@ -2396,16 +2418,17 @@ void testHydrogenBondBasics() {
   DGeomHelpers::initBoundsMat(mat.get());
   DGeomHelpers::setTopolBounds(*mol, mat);
   DistGeom::triangleSmoothBounds(mat.get());
-  TEST_ASSERT(mat->getVal(3, 4) > 1.8);
-  TEST_ASSERT(mat->getVal(3, 4) < 2.2);
-  TEST_ASSERT(mat->getVal(4, 3) > 1.0);
-  TEST_ASSERT(mat->getVal(4, 3) < 1.5);
+  TEST_ASSERT(mat->getUpperBound(3, 4) > 1.8);
+  TEST_ASSERT(mat->getUpperBound(3, 4) < 2.2);
+  TEST_ASSERT(mat->getLowerBound(4, 3) > 1.0);
+  TEST_ASSERT(mat->getLowerBound(4, 3) < 1.5);
 
   DGeomHelpers::EmbedParameters params = DGeomHelpers::ETKDGv3;
   params.randomSeed = 0xf00d;
   TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
   auto dist = MolTransforms::getBondLength(mol->getConformer(), 3, 4);
-  TEST_ASSERT(dist < 1.5);
+  TEST_ASSERT(dist < mat->getUpperBound(3, 4));
+  TEST_ASSERT(dist > mat->getLowerBound(3, 4));
 }
 
 int main() {
@@ -2576,8 +2599,12 @@ int main() {
   testGithub971();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test embed parameters structure.\n";
-  testEmbedParameters();
+  BOOST_LOG(rdInfoLog) << "\t test embed parameters structure legacy.\n";
+  testEmbedParameters(true);
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test embed parameters structure aio.\n";
+  testEmbedParameters(false);
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog)
@@ -2614,8 +2641,12 @@ int main() {
   testSymmetryPruning();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t Force trans amides.\n";
-  testForceTransAmides();
+  BOOST_LOG(rdInfoLog) << "\t Force trans amides legacy.\n";
+  testForceTransAmides(true);
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Force trans amides aio.\n";
+  testForceTransAmides(false);
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test missing Hs warning.\n";
