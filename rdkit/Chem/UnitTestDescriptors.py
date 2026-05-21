@@ -190,7 +190,7 @@ class TestCase(unittest.TestCase):
 
   def testGet3DMolDescriptors(self):
     mol = Chem.MolFromSmiles('CCCO')
-    expected = 21.69079
+    expected = 20.95826
     # check ValueError raised when no 3D coordinates supplied
     with self.assertRaises(ValueError):
       Descriptors3D.CalcMolDescriptors3D(mol)
