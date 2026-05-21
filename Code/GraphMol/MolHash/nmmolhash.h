@@ -22,6 +22,8 @@
 namespace RDKit {
 class RWMol;
 namespace MolHash {
+constexpr const char *excludeFromTautomerismProp =
+    "_MolHashExcludeFromTautomerism";
 enum class HashFunction {
   AnonymousGraph = 1,
   ElementGraph = 2,
