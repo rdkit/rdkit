@@ -194,6 +194,7 @@
      }
   }
   public byte[] MolToCDX() {
+    UChar_Vect vec = null;
     try {
        vec = MolToCDXHelper();
        byte[] res = new byte[vec.Count];
