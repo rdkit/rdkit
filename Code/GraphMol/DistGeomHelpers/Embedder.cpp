@@ -660,7 +660,7 @@ bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
   if (field->calcEnergy() > ERROR_TOL) {
     field->minimize(eargs.hac, embedParams.optimizerForceTol);
   }
-  DistGeom::addKTerms(field.get(), *eargs.etkdgDetails,
+  DistGeom::addTorsionTerms(field.get(), *eargs.etkdgDetails,
                       embedParams.useBasicKnowledge,
                       embedParams.useExpTorsionAnglePrefs);
   if (field->calcEnergy() > ERROR_TOL) {

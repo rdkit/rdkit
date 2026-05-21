@@ -246,7 +246,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
         *extraWeights = nullptr,
     const boost::dynamic_bitset<> *fixedPts = nullptr);
 
-RDKIT_DISTGEOMETRY_EXPORT void addKTerms(
+RDKIT_DISTGEOMETRY_EXPORT void addTorsionTerms(
     ForceFields::ForceField *field,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
     const bool doK, const bool doET);

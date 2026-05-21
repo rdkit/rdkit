@@ -760,7 +760,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
   return field;
 }
 
-RDKIT_DISTGEOMETRY_EXPORT void addKTerms(
+RDKIT_DISTGEOMETRY_EXPORT void addTorsionTerms(
     ForceFields::ForceField *field,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
     const bool doK, const bool doET) {
