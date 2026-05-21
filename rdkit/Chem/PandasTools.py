@@ -562,7 +562,7 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300), dpi=XLSX_
           worksheet.insert_image(row_idx_actual, col_idx, "f", {'image_data': image_data})
           worksheet.set_column_pixels(col_idx, col_idx, width=size[0])
           continue
-      if str(dataTypes[col]) == "object":
+      if str(dataTypes[col]) in ("object", "str"):
         # string length is limited in xlsx
         worksheet.write_string(row_idx_actual, col_idx,
                                str(row[col])[:32000], cell_formats['write_string'])

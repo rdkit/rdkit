@@ -114,7 +114,7 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
     return Descriptor::UNKNOWN;
   }
   // swap
-  if (edges1.size() > 1 && carriers[0] == edges1[1]->getEnd()->getAtom()) {
+  if (edges1.size() > 1 && carriers[0] != edges1[0]->getEnd()->getAtom()) {
     if (config == Bond::STEREOCIS) {
       config = Bond::STEREOTRANS;
     } else {
@@ -127,7 +127,7 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
     return Descriptor::UNKNOWN;
   }
   // swap
-  if (edges2.size() > 1 && carriers[1] == edges2[1]->getEnd()->getAtom()) {
+  if (edges2.size() > 1 && carriers[1] != edges2[0]->getEnd()->getAtom()) {
     if (config == Bond::STEREOCIS) {
       config = Bond::STEREOTRANS;
     } else {

@@ -367,9 +367,8 @@ void ParseChargeLine(RWMol *mol, const std::string &text, bool firstCall,
   // if this line is specified all the atom other than those specified
   // here should carry a charge of 0; but we should only do this once:
   if (firstCall) {
-    for (ROMol::AtomIterator ai = mol->beginAtoms(); ai != mol->endAtoms();
-         ++ai) {
-      (*ai)->setFormalCharge(0);
+    for (auto at : mol->atoms()) {
+      at->setFormalCharge(0);
     }
   }
 
@@ -408,9 +407,8 @@ void ParseRadicalLine(RWMol *mol, const std::string &text, bool firstCall,
   // if this line is specified all the atom other than those specified
   // here should carry a charge of 0; but we should only do this once:
   if (firstCall) {
-    for (ROMol::AtomIterator ai = mol->beginAtoms(); ai != mol->endAtoms();
-         ++ai) {
-      (*ai)->setFormalCharge(0);
+    for (auto at : mol->atoms()) {
+      at->setFormalCharge(0);
     }
   }
 

@@ -54,6 +54,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Transform3D
   void setToIdentity();
 
   void TransformPoint(Point3D &pt) const;
+  void TransformPoint(double *pt) const;
 
   /*! \brief Set the translation vector
    */

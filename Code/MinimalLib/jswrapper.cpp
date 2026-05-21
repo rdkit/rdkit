@@ -656,8 +656,20 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                     get_avalon_fp_as_uint8array))
 #endif
 #endif
-      .function("get_substruct_match", &JSMolBase::get_substruct_match)
-      .function("get_substruct_matches", &JSMolBase::get_substruct_matches)
+      .function("get_substruct_match",
+                select_overload<std::string(const JSMolBase &) const>(
+                    &JSMolBase::get_substruct_match))
+      .function(
+          "get_substruct_match",
+          select_overload<std::string(const JSMolBase &, const std::string &)
+                              const>(&JSMolBase::get_substruct_match))
+      .function("get_substruct_matches",
+                select_overload<std::string(const JSMolBase &) const>(
+                    &JSMolBase::get_substruct_matches))
+      .function(
+          "get_substruct_matches",
+          select_overload<std::string(const JSMolBase &, const std::string &)
+                              const>(&JSMolBase::get_substruct_matches))
       .function("get_descriptors", &JSMolBase::get_descriptors)
       .function("get_morgan_fp",
                 select_overload<std::string() const>(&JSMolBase::get_morgan_fp))

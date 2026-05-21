@@ -598,7 +598,7 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   // kekulizations
   operationThatFailed = SANITIZE_KEKULIZE;
   if (sanitizeOps & operationThatFailed) {
-    Kekulize(mol);
+    Kekulize(mol, true, false);
   }
 
   // look for radicals:
@@ -692,7 +692,7 @@ std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
   operation = SANITIZE_KEKULIZE;
   if (sanitizeOps & operation) {
     try {
-      Kekulize(mol);
+      Kekulize(mol, true, false);
     } catch (const MolSanitizeException &e) {
       res.emplace_back(e.copy());
     }
@@ -1011,12 +1011,11 @@ template RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
     bool sanitizeFrags, const std::vector<unsigned int> *, bool);
 
 int getFormalCharge(const ROMol &mol) {
-  int accum = 0;
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    accum += (*atomIt)->getFormalCharge();
-  }
-  return accum;
+  auto res = std::accumulate(mol.atoms().begin(), mol.atoms().end(), 0,
+                             [](int accum, const auto atom) {
+                               return accum + atom->getFormalCharge();
+                             });
+  return res;
 };
 
 unsigned getNumAtomsWithDistinctProperty(const ROMol &mol,

@@ -594,7 +594,7 @@ TEST_CASE(
   auto bond1 = m1->getBondWithIdx(1);
   REQUIRE(bond1);
   REQUIRE(bond1->hasQuery());
-  auto splitM1(
+  std::unique_ptr<ROMol> splitM1(
       MolFragmenter::fragmentOnBonds(*m1, std::vector<unsigned int>{1, 5}));
   REQUIRE(splitM1);
   auto nb1 = splitM1->getBondWithIdx(11);
@@ -622,7 +622,7 @@ TEST_CASE(
   auto bond2 = m2->getBondWithIdx(1);
   REQUIRE(bond2);
   REQUIRE(!bond2->hasQuery());
-  auto splitM2(
+  std::unique_ptr<ROMol> splitM2(
       MolFragmenter::fragmentOnBonds(*m2, std::vector<unsigned int>{1}));
   REQUIRE(splitM2);
   auto nb5 = splitM2->getBondWithIdx(5);
@@ -641,8 +641,8 @@ TEST_CASE(
   auto dummyLabels =
       std::vector<std::pair<unsigned int, unsigned int>>{{25, 26}};
   auto newTypes = std::vector<Bond::BondType>{Bond::DOUBLE};
-  auto splitM3(MolFragmenter::fragmentOnBonds(*m3, std::vector<unsigned int>{1},
-                                              true, &dummyLabels, &newTypes));
+  std::unique_ptr<ROMol> splitM3(MolFragmenter::fragmentOnBonds(
+      *m3, std::vector<unsigned int>{1}, true, &dummyLabels, &newTypes));
   REQUIRE(splitM3);
   auto nb7 = splitM3->getBondWithIdx(5);
   REQUIRE(nb7);

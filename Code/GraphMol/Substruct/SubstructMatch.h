@@ -107,6 +107,23 @@ RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const ROMol &query,
     const SubstructMatchParameters &params = SubstructMatchParameters());
 
+//! Count substructure matches for a query in a molecule without materializing
+//! the full match vectors.
+/*!
+    
+    
+    
+  \param mol         The ROMol to be searched
+  \param query       The query ROMol
+  \param matchParams Parameters controlling the matching
+
+  \return The number of matches found (capped by params.maxMatches)
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT unsigned int SubstructMatchCount(
+  const ROMol &mol, const ROMol &query,
+  const SubstructMatchParameters &params = SubstructMatchParameters());
+
 //! Find all substructure matches for a query in a ResonanceMolSupplier object
 /*!
     \param resMolSuppl The ResonanceMolSupplier object to be searched

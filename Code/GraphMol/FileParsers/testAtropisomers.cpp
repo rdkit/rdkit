@@ -485,7 +485,7 @@ class MolAtropTest {
                      17),
           KekuleTest(
               "CC1C=CC(O)=C(C)C=1N1C2C(=NC=CC=2OC2C=NC=CC=2)C(C(=O)N)=C1N |wD:8.7|",
-              "CC1=C(O)C=CC(C)=C1N1C(N)=C(C(N)=O)C2=NC=CC(OC3=CN=CC=C3)=C21 |wD:9.10|",
+              "CC1=C(O)C=CC(C)=C1N1C(N)=C(C(N)=O)C2=NC=CC(OC3=CC=CN=C3)=C21 |wD:9.10|",
               true, 29, 32),
       };
 

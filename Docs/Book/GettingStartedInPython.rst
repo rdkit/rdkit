@@ -252,9 +252,9 @@ MDL Mol blocks are also available:
   <BLANKLINE>
     4  4  0  0  0  0  0  0  0  0999 V2000
       1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -0.0000   -1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
       0.0000    1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+     -1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+     -0.0000   -1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     1  2  1  0
     2  3  1  0
     3  4  1  0
@@ -273,9 +273,9 @@ To include names in the mol blocks, set the molecule's “_Name” property:
   <BLANKLINE>
     4  4  0  0  0  0  0  0  0  0999 V2000
       1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -0.0000   -1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
       0.0000    1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+     -1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+     -0.0000   -1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     1  2  1  0
     2  3  1  0
     3  4  1  0
@@ -306,9 +306,9 @@ You can either include 2D coordinates (i.e. a depiction):
   <BLANKLINE>
     4  4  0  0  0  0  0  0  0  0999 V2000
       1.0607   -0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -0.0000   -1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
       0.0000    1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+     -1.0607    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+     -0.0000   -1.0607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     1  2  1  0
     2  3  1  0
     3  4  1  0
@@ -517,7 +517,7 @@ More detail about the smallest set of smallest rings (SSSR) is available:
   >>> list(ssr[0])
   [1, 2, 3]
   >>> list(ssr[1])
-  [4, 5, 2, 3]
+  [2, 3, 4, 5]
 
 As the name indicates, this is a symmetrized SSSR; if you are interested in the number of “true” SSSR, use the GetSSSR function (note that in this case there's no difference).
 
@@ -579,9 +579,9 @@ This can be changed with the :py:func:`rdkit.Chem.rdmolops.Kekulize` function:
   rdkit.Chem.rdchem.BondType.AROMATIC
   >>> Chem.Kekulize(m)
   >>> m.GetBondWithIdx(0).GetBondType()
-  rdkit.Chem.rdchem.BondType.DOUBLE
-  >>> m.GetBondWithIdx(1).GetBondType()
   rdkit.Chem.rdchem.BondType.SINGLE
+  >>> m.GetBondWithIdx(1).GetBondType()
+  rdkit.Chem.rdchem.BondType.DOUBLE
 
 By default, the bonds are still marked as being aromatic:
 
@@ -2916,7 +2916,7 @@ If the molecule has coordinates, then the features will also have reasonable loc
   >>> feats[0].GetPos()
   <rdkit.Geometry.rdGeometry.Point3D object at 0x...>
   >>> list(feats[0].GetPos())
-  [-2.999..., -1.558..., 0.0]
+  [-2.402..., -1.619..., 0.0]
 
 
 2D Pharmacophore Fingerprints

@@ -24,6 +24,27 @@ using RINGINVAR = boost::dynamic_bitset<>;
 using RINGINVAR_SET = std::set<RINGINVAR>;
 using RINGINVAR_INT_VECT_MAP = std::map<RINGINVAR, std::vector<int>>;
 
+namespace {
+using namespace RDKit;
+
+// normalizes a ring by rotating/reversing it so that the first atom
+// is the one with the smallest index, and the second atom is the neighbor
+// to the first one that again has the smallest index.
+// This change should have a small performance footprint while it helps
+// keeping test results consistent when making changes to ring detection.
+void normalize_ring(std::vector<int> &ring) {
+  auto newStart = std::ranges::min_element(ring);
+  std::ranges::rotate(ring, newStart);
+
+  if (ring.back() < ring[1]) {
+    // we don't need to move the central element!
+    auto numPairsToMove = (ring.size() - 1) / 2;
+    auto front = ring.begin() + 1;
+    std::swap_ranges(front, front + numPairsToMove, ring.rbegin());
+  }
+}
+}  // namespace
+
 namespace RingUtils {
 constexpr size_t MAX_BFSQ_SIZE = 200000;  // arbitrary huge value
 
@@ -976,6 +997,9 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
         return rdcast<int>(res.size());
       }
     }
+
+    std::ranges::for_each(fragRes, normalize_ring);
+
     // if we have more than expected we need to do some cleanup
     // otherwise do som clean up work
     if (ssiz > nexpt) {
@@ -1157,7 +1181,6 @@ void fastFindRings(const ROMol &mol) {
   FindRings::storeRingsInfo(mol, res);
 }
 
-#ifdef RDK_USE_URF
 void findRingFamilies(const ROMol &mol, bool includeDativeBonds,
                       bool includeHydrogenBonds) {
   if (mol.getRingInfo()->isInitialized()) {
@@ -1214,13 +1237,6 @@ void findRingFamilies(const ROMol &mol, bool includeDativeBonds,
     free(edges);
   }
 }
-#else
-void findRingFamilies(const ROMol &mol, bool includeDativeBonds,
-                      bool includeHydrogenBonds) {
-  BOOST_LOG(rdErrorLog)
-      << "This version of the RDKit was built without URF support" << std::endl;
-}
-#endif
 }  // namespace MolOps
 
 }  // namespace RDKit

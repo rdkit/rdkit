@@ -58,10 +58,9 @@ AtomInvariantsGenerator *getMorganAtomInvGen(const bool includeRingMembership) {
 
 AtomInvariantsGenerator *getMorganFeatureAtomInvGen(
     python::object &py_patterns) {
-  std::vector<const ROMol *> patterns;
   python::extract<std::vector<const ROMol *>> patternsE(py_patterns);
   if (patternsE.check()) {
-    patterns = patternsE();
+    const auto &patterns = patternsE();
     return new MorganFingerprint::MorganFeatureAtomInvGenerator(&patterns);
   } else {
     return new MorganFingerprint::MorganFeatureAtomInvGenerator(nullptr);
