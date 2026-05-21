@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021-2025 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2021-2026 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -131,8 +131,7 @@ TEST_CASE("update parameters from JSON LEGACY") {
     MolOps::addHs(*mol);
     CHECK(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params;
-    std::string json =
-        R"JSON({"randomSeed":42})JSON";
+    std::string json = R"JSON({"randomSeed":42})JSON";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // MolToMolFile(*mol, fname);

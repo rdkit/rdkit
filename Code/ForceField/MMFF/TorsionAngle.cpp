@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013-2025 Paolo Tosco and other RDKit contributors
+//  Copyright (C) 2013-2026 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.

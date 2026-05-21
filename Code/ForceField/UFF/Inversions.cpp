@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2024 Niels Maeder and other RDKit contributors
+//  Copyright (C) 2024-2026 Niels Maeder and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.

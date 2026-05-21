@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -580,7 +580,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite("useMacrocycle14config",
                      &PyEmbedParameters::useMacrocycle14config,
                      "use the 1-4 distance bounds from ETKDGv3")
-      .def_readwrite("useLegacyImplementation", &PyEmbedParameters::useLegacyImplementation,
+      .def_readwrite("useLegacyImplementation",
+                     &PyEmbedParameters::useLegacyImplementation,
                      "Whether to use the combined minimization approach")
       .def_readwrite(
           "boundsMatForceScaling", &PyEmbedParameters::boundsMatForceScaling,

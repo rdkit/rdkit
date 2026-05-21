@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2017-2023 Sereina Riniker and other RDKit contributors
+//  Copyright (C) 2017-2026 Sereina Riniker and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.

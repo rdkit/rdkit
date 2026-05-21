@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -661,8 +661,8 @@ bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
     field->minimize(eargs.hac, embedParams.optimizerForceTol);
   }
   DistGeom::addTorsionTerms(field.get(), *eargs.etkdgDetails,
-                      embedParams.useBasicKnowledge,
-                      embedParams.useExpTorsionAnglePrefs);
+                            embedParams.useBasicKnowledge,
+                            embedParams.useExpTorsionAnglePrefs);
   if (field->calcEnergy() > ERROR_TOL) {
     std::size_t iter{0};
     int needMore = 1;
