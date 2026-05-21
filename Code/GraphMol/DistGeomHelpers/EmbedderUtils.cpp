@@ -23,7 +23,6 @@ namespace DGeomHelpers {
   X(basinThresh)                                  \
   X(boundsMatForceScaling)                        \
   X(boxSizeMult)                                  \
-  X(checkForClashes)                              \
   X(clearConfs)                                   \
   X(embedFragmentsSeparately)                     \
   X(enableSequentialRandomSeeds)                  \

@@ -147,8 +147,7 @@ void getExperimentalTorsions(
     std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
                            const ExpTorsionAngle *>> &torsionBonds,
     bool useExpTorsions, bool useSmallRingTorsions, bool useMacrocycleTorsions,
-    bool useBasicKnowledge, unsigned int version, bool verbose,
-    const bool useLegacyImplementation) {
+    bool useBasicKnowledge, unsigned int version, bool verbose) {
   torsionBonds.clear();
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -250,7 +249,14 @@ void getExperimentalTorsions(
           atoms[2] = aid3;
           atoms[3] = aid4;
           details.expTorsionAtoms.push_back(atoms);
-          details.expTorsionAngles.emplace_back(param.signs, param.V);
+          std::vector<double> V{param.V};
+          if (details.forceConsts.etTermScaling != 1.0) {
+            for (double &v : V) {
+              v *= details.forceConsts.etTermScaling;
+            }
+          }
+          details.expTorsionAngles.emplace_back(param.signs, V);
+
           if (verbose) {
             // using the stringstream seems redundant, but we don't want the
             // extra formatting provided by the logger after every entry;
@@ -264,7 +270,7 @@ void getExperimentalTorsions(
             BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
           }
         }  // if not donePaths
-      }  // end loop over matches
+      }    // end loop over matches
 
     }  // end loop over patterns
   }
@@ -352,8 +358,7 @@ void getExperimentalTorsions(
           std::vector<int> signs(6, 1);
           signs[1] = -1;  // MMFF sign for m = 2
           std::vector<double> fconsts(6, 0.0);
-          fconsts[1] = useLegacyImplementation ? LEGACY_AROMATIC_TORSION_FC
-                                               : AIO_AROMATIC_TORSION_FC;
+          fconsts[1] = details.forceConsts.kTermTorsion;
           details.expTorsionAngles.emplace_back(signs, fconsts);
           /*if (verbose) {
             std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 <<
@@ -362,22 +367,21 @@ void getExperimentalTorsions(
         }
 
       }  // loop over atoms in ring
-    }  // loop over rings
-  }  // if useBasicKnowledge
+    }    // loop over rings
+  }      // if useBasicKnowledge
 
 }  // end function
 
 void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
                              bool useExpTorsions, bool useSmallRingTorsions,
                              bool useMacrocycleTorsions, bool useBasicKnowledge,
-                             unsigned int version, bool verbose,
-                             const bool scale) {
+                             unsigned int version, bool verbose) {
   std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
                          const ExpTorsionAngle *>>
       torsionBonds;
   getExperimentalTorsions(mol, details, torsionBonds, useExpTorsions,
                           useSmallRingTorsions, useMacrocycleTorsions,
-                          useBasicKnowledge, version, verbose, scale);
+                          useBasicKnowledge, version, verbose);
 }
 
 }  // namespace CrystalFF

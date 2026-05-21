@@ -33,16 +33,6 @@ constexpr double EIGVAL_TOL = 0.001;
 constexpr double KNOWN_DIST_TOL = 0.01;
 constexpr double KNOWN_DIST_FORCE_CONSTANT = 100;
 
-namespace FC {
-constexpr double distance = 2.15;
-constexpr double dist1213 = 10.0;
-constexpr double chiral = 1.0;
-constexpr double fourD = 2.15;
-constexpr double KAngle = 0.01;
-constexpr double KPlanar = 0.0005;
-constexpr double ETTermScaling = 0.008;
-}  // namespace FC
-
 double pickRandomDistMat(const BoundsMatrix &mmat,
                          RDNumeric::SymmMatrix<double> &distMat, int seed) {
   if (seed > 0) {
@@ -193,10 +183,11 @@ bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
 }
 
 ForceFields::ForceField *constructForceField(
-    const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
-    const VECT_CHIRALSET &csets, double weightChiral, double weightFourthDim,
-    std::map<std::pair<int, int>, double> *extraWeights, double basinSizeTol,
-    boost::dynamic_bitset<> *fixedPts) {
+    const BoundsMatrix &mmat, const RDGeom::PointPtrVect &positions,
+    const VECT_CHIRALSET &csets, const double weightDistance,
+    const double weightChiral, const double weightFourthDim,
+    const std::map<std::pair<int, int>, double> *extraWeights,
+    const double basinSizeTol, const boost::dynamic_bitset<> *fixedPts) {
   unsigned int N = mmat.numRows();
   CHECK_INVARIANT(N == positions.size(), "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
@@ -209,7 +200,7 @@ ForceFields::ForceField *constructForceField(
       if (fixedPts != nullptr && (*fixedPts)[i] && (*fixedPts)[j]) {
         continue;
       }
-      double w = 1.0;
+      double w = weightDistance;
       double l = mmat.getLowerBound(i, j);
       double u = mmat.getUpperBound(i, j);
       bool includeIt = false;
@@ -333,7 +324,7 @@ void addExperimentalTorsionTerms(
     ForceFields::ForceField *ff,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
     boost::dynamic_bitset<> &atomPairs, const std::size_t numAtoms,
-    const double etTermScaling = 1.0) {
+    const bool excludeTorsions = true) {
   PRECONDITION(ff, "bad force field");
   auto torsionContribs =
       std::make_unique<ForceFields::CrystalFF::TorsionAngleContribs>(ff);
@@ -342,18 +333,10 @@ void addExperimentalTorsionTerms(
     const std::size_t j = etkdgDetails.expTorsionAtoms[t][1];
     const std::size_t k = etkdgDetails.expTorsionAtoms[t][2];
     const std::size_t l = etkdgDetails.expTorsionAtoms[t][3];
-    if (i < l) {
-      atomPairs[i * numAtoms + l] = 1;
-    } else {
-      atomPairs[l * numAtoms + i] = 1;
-    }
-    std::vector<double> V{etkdgDetails.expTorsionAngles[t].second};
-    if (etTermScaling != 1.0) {
-      for (auto &v : V) {
-        v *= etTermScaling;
-      }
-    }
-    torsionContribs->addContrib(i, j, k, l, V,
+    const std::size_t idx = i < l ? i * numAtoms + l : l * numAtoms + i;
+    atomPairs[idx] = excludeTorsions;
+    torsionContribs->addContrib(i, j, k, l,
+                                etkdgDetails.expTorsionAngles[t].second,
                                 etkdgDetails.expTorsionAngles[t].first);
   }
   if (!torsionContribs->empty()) {
@@ -440,7 +423,8 @@ void add13Terms(ForceFields::ForceField *ff,
     }
     // check for triple bonds
     if (useBasicKnowledge && angle[3]) {
-      angleContribs->addContrib(i, j, k, 179.0, 180.0, 1);
+      angleContribs->addContrib(i, j, k, 179.0, 180.0,
+                                etkdgDetails.forceConsts.kTermAngle);
     } else if (isImproperConstrained[j]) {
       distContribs->addContrib(i, k, mmat.getLowerBound(i, k),
                                mmat.getUpperBound(i, k), forceConstant);
@@ -528,8 +512,8 @@ ForceFields::ForceField *construct3DForceField(
   boost::dynamic_bitset<> isImproperConstrained(N);
 
   addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N);
-  addImproperTorsionTerms(field, 10.0, etkdgDetails.improperAtoms,
-                          isImproperConstrained);
+  addImproperTorsionTerms(field, etkdgDetails.forceConsts.kTermImproper,
+                          etkdgDetails.improperAtoms, isImproperConstrained);
   add12Terms(field, etkdgDetails, atomPairs, positions,
              KNOWN_DIST_FORCE_CONSTANT, N);
   add13Terms(field, etkdgDetails, atomPairs, positions,
@@ -624,7 +608,8 @@ ForceFields::ForceField *construct3DImproperForceField(
 
 // Add angle terms to a force field
 void addAngleTerms(ForceFields::ForceField *ff,
-                   const std::vector<std::vector<int>> &angles) {
+                   const std::vector<std::vector<int>> &angles,
+                   const double forceConst) {
   PRECONDITION(ff, "bad force field");
   auto angleContribs =
       std::make_unique<ForceFields::AngleConstraintContribs>(ff);
@@ -633,7 +618,7 @@ void addAngleTerms(ForceFields::ForceField *ff,
     const std::size_t j = angle[1];
     const std::size_t k = angle[2];
     if (angle[3]) {
-      angleContribs->addContrib(i, j, k, 179.0, 180.0, FC::KAngle);
+      angleContribs->addContrib(i, j, k, 179.0, 180.0, forceConst);
     }
   }
   if (!angleContribs->empty()) {
@@ -644,8 +629,9 @@ void addAngleTerms(ForceFields::ForceField *ff,
 // Add distance constraints between all atom pairs
 
 void addDistanceTerms(
-    ForceFields::ForceField *ff, const BoundsMatrix &mmat,
-    const std::size_t numAtoms, double boundsMatForceScaling,
+    ForceFields::ForceField *ff, const double forceConst,
+    const BoundsMatrix &mmat, const std::size_t numAtoms,
+    const double boundsMatForceScaling,
     const std::map<std::pair<unsigned int, unsigned int>, double> *extraWeights,
     const double *distMat, const boost::dynamic_bitset<> *fixedPts) {
   PRECONDITION(ff, "bad force field");
@@ -661,7 +647,7 @@ void addDistanceTerms(
       const double u = mmat.getUpperBound(i, j);
       const auto dist = distMat[i * numAtoms + j];
       const bool is1213 = (dist == 1.0 || dist == 2.0);
-      double w = is1213 ? FC::dist1213 : FC::distance;
+      double w = forceConst;
       w *= boundsMatForceScaling;
       if (extraWeights) {
         const auto mapIt = extraWeights->find(std::make_pair(i, j));
@@ -670,7 +656,7 @@ void addDistanceTerms(
         }
       }
       if (is1213) {
-        harmonicDistContribs->addContrib(i, j, l, u, w);
+        harmonicDistContribs->addContrib(i, j, l, u, 10.0);
         continue;
       }
       distContribs->addContrib(i, j, u, l, w);
@@ -685,15 +671,16 @@ void addDistanceTerms(
 }
 
 void addChiralityTerms(ForceFields::ForceField *ff, const VECT_CHIRALSET *csets,
-                       const std::size_t numAtoms) {
+                       const std::size_t numAtoms, const double weightChiral,
+                       const double weightFourD) {
   auto chiralContribs = std::make_unique<ChiralViolationContribs>(ff);
   auto fourdContribs = std::make_unique<FourthDimContribs>(ff);
 
   for (const auto &cset : *csets) {
-    chiralContribs->addContrib(cset.get(), FC::chiral);
+    chiralContribs->addContrib(cset.get(), weightChiral);
   }
   for (std::size_t i = 0; i < numAtoms; ++i) {
-    fourdContribs->addContrib(i, FC::fourD);
+    fourdContribs->addContrib(i, weightFourD);
   }
 
   if (!chiralContribs->empty()) {
@@ -704,7 +691,7 @@ void addChiralityTerms(ForceFields::ForceField *ff, const VECT_CHIRALSET *csets,
   }
 }
 
-void addPlanarityTerms(ForceFields::ForceField *ff,
+void addPlanarityTerms(ForceFields::ForceField *ff, const double forceConst,
                        const std::vector<std::vector<int>> &improperAtoms) {
   PRECONDITION(ff, "bad force field");
   auto inversionContribs =
@@ -715,7 +702,7 @@ void addPlanarityTerms(ForceFields::ForceField *ff,
     for (const auto [i0, i2, i3] : improperIndices) {
       inversionContribs->addContrib(improperAtom[i0], improperAtom[1],
                                     improperAtom[i2], improperAtom[i3],
-                                    FC::KPlanar);
+                                    forceConst);
     }
   }
   if (!inversionContribs->empty()) {
@@ -738,17 +725,15 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
   field->positions().insert(field->positions().begin(), positions.begin(),
                             positions.end());
-
-  boost::dynamic_bitset<> atomPairs(N * N);
-  addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N,
-                              FC::ETTermScaling);
-  addPlanarityTerms(field, etkdgDetails.improperAtoms);
-  addAngleTerms(field, etkdgDetails.angles);
+  addAngleTerms(field, etkdgDetails.angles,
+                etkdgDetails.forceConsts.kTermAngle);
   if (field->dimension() == 4) {
-    addChiralityTerms(field, csets, N);
+    addChiralityTerms(field, csets, N, etkdgDetails.forceConsts.chiral,
+                      etkdgDetails.forceConsts.fourthDim);
   }
-  addDistanceTerms(field, mmat, N, etkdgDetails.boundsMatForceScaling,
-                   extraWeights, etkdgDetails.distMat, fixedPts);
+  addDistanceTerms(field, etkdgDetails.forceConsts.distance, mmat, N,
+                   etkdgDetails.boundsMatForceScaling, extraWeights,
+                   etkdgDetails.distMat, fixedPts);
   return field;
 }
 
@@ -773,6 +758,21 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
   }
 
   return field;
+}
+
+RDKIT_DISTGEOMETRY_EXPORT void addKTerms(
+    ForceFields::ForceField *field,
+    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
+    const bool doK, const bool doET) {
+  if (doK) {
+    addPlanarityTerms(field, etkdgDetails.forceConsts.kTermImproper,
+                      etkdgDetails.improperAtoms);
+  }
+  if (doK or doET) {
+    const std::size_t N = field->positions().size();
+    boost::dynamic_bitset<> atomPairs(N * N);
+    addExperimentalTorsionTerms(field, etkdgDetails, atomPairs, N, false);
+  }
 }
 
 }  // namespace DistGeom

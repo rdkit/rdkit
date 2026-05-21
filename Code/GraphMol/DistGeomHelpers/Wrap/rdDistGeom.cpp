@@ -580,9 +580,6 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite("useMacrocycle14config",
                      &PyEmbedParameters::useMacrocycle14config,
                      "use the 1-4 distance bounds from ETKDGv3")
-      .def_readwrite(
-          "checkForClashes", &PyEmbedParameters::checkForClashes,
-          "Whether to discard conformers that have atoms that are too close")
       .def_readwrite("useLegacyImplementation", &PyEmbedParameters::useLegacyImplementation,
                      "Whether to use the combined minimization approach")
       .def_readwrite(
