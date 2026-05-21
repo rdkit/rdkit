@@ -8511,10 +8511,10 @@ M  END
 
   def testGithub8877(self):
     m = Chem.MolFromSmarts('CC')
-    self.assertRaises(ValueError, lambda: m.GetAtomWithIdx(0).SetQuery(None))
-    self.assertRaises(ValueError, lambda: m.GetAtomWithIdx(0).ExpandQuery(None))
-    self.assertRaises(ValueError, lambda: m.GetBondWithIdx(0).SetQuery(None))
-    self.assertRaises(ValueError, lambda: m.GetBondWithIdx(0).ExpandQuery(None))
+    self.assertRaises(TypeError, lambda: m.GetAtomWithIdx(0).SetQuery(None))
+    self.assertRaises(TypeError, lambda: m.GetAtomWithIdx(0).ExpandQuery(None))
+    self.assertRaises(TypeError, lambda: m.GetBondWithIdx(0).SetQuery(None))
+    self.assertRaises(TypeError, lambda: m.GetBondWithIdx(0).ExpandQuery(None))
 
   def testBondChiralityInversion(self):
     mol1 = Chem.MolFromSmiles("Cc1cccc(F)c1-c1c(C)cccc1Cl |wU:7.7,&1:7|")
