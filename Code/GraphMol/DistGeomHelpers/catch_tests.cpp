@@ -213,20 +213,7 @@ TEST_CASE("update parameters from JSON AIO") {
         R"JSON({"randomSeed":42,"useLegacyImplementation":false})JSON";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
-    std::cerr << MolToMolBlock(*mol) << std::endl;
     compareConfs(ref.get(), mol.get());
-    DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(3));
-    DGeomHelpers::initBoundsMat(mat);
-    bool set15bounds = true;
-    bool scaleVDW = false;
-    bool useMacrocycle14config = false;
-    DGeomHelpers::setTopolBounds(*mol, mat, set15bounds, scaleVDW,
-                                 useMacrocycle14config);
-    ps.boundsMat = mat;
-    auto json = DGeomHelpers::embedParametersToJSON(ps);
-    std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6573654663221247"],["0.98025420400136154","1.5773654663221246","0"]]})JSON";
-    CHECK(json == goal);
   }
   SECTION("ETKDG") {
     std::string fname =
@@ -245,7 +232,6 @@ TEST_CASE("update parameters from JSON AIO") {
     "useLegacyImplementation": false})JSON";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
-    std::cerr << MolToMolBlock(*mol) << std::endl;
     compareConfs(ref.get(), mol.get());
   }
   SECTION("ETKDGv2") {
@@ -266,7 +252,6 @@ TEST_CASE("update parameters from JSON AIO") {
     "useLegacyImplementation": false})JSON";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
-    std::cerr << MolToMolBlock(*mol) << std::endl;
     compareConfs(ref.get(), mol.get());
   }
   SECTION("setting atommap") {
@@ -315,7 +300,11 @@ TEST_CASE("EmbedParameters to JSON") {
     MolOps::addHs(*mol);
     DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(3));
     DGeomHelpers::initBoundsMat(mat);
-    DGeomHelpers::setTopolBounds(*mol, mat, true, false, false);
+    bool set15bounds = true;
+    bool scaleVDW = false;
+    bool useMacrocycle14config = false;
+    DGeomHelpers::setTopolBounds(*mol, mat, set15bounds, scaleVDW,
+                                 useMacrocycle14config);
     ps.boundsMat = mat;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
