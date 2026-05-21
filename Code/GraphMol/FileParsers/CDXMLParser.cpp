@@ -917,22 +917,13 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 std::string MolToCDXMLBlock(
     const RWMol &mol,
     CDXMLFormat format) {
-    CDXFormat cdx_format;
-    switch(format) {
-    case CDXMLFormat::CDX: {
+  
+    CDXFormat cdx_format = CDXFormat::CDXML;
+
+    if (format == CDXMLFormat::CDX) {
       cdx_format = CDXFormat::CDX;
-      break;
     }
-    case CDXMLFormat::CDXML: {
-      cdx_format = CDXFormat::CDXML;
-      break;
-    }
-    case CDXMLFormat::Auto:
-      {
-	cdx_format = CDXFormat::CDXML;
-	break;
-      }
-    }
+
     return MolToChemDrawBlock(mol, cdx_format);
 }
 }
