@@ -77,9 +77,8 @@ void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
   if (ringBondCount >= 0) {
     queryAtom->expandQuery(makeAtomRingBondCountQuery(ringBondCount));
   } else if (ringBondCountAtLeast) {
-    queryAtom->expandQuery(makeAtomRangeQuery(
-        4, -1, false, false, queryAtomRingBondCount,
-        "range_AtomRingBondCount"));
+    queryAtom->expandQuery(makeAtomRingBondCountQuery<ATOM_LESSEQUAL_QUERY>(
+        4, "less_AtomRingBondCount"));
   }
   if (substituentCount >= 0) {
     queryAtom->expandQuery(makeAtomExplicitDegreeQuery(substituentCount));

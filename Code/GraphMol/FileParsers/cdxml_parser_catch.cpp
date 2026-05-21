@@ -15,6 +15,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/FileParseException.h>
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
@@ -1111,6 +1112,32 @@ TEST_CASE("CDXML external connection fragment queries") {
   auto mols = MolsFromCDXMLFileAsQueries(fname);
   REQUIRE(mols.size() == 1);
   CHECK(MolToSmarts(*mols[0]) == "[#6]-[#6]=[#6]=[#6](-[#6])-[#6]");
+}
+
+TEST_CASE("CDXML spiro ring-bond-count queries") {
+  const auto queryBase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/queries/";
+  const auto fname = queryBase + "qrestrict_ringbond_spiro.cdxml";
+  auto mols = MolsFromCDXMLFileAsQueries(fname);
+  REQUIRE(mols.size() == 1);
+  CHECK(MolToSmarts(*mols[0]) == "[#6]1-[#6]-[#7]-[#6&x{4-}]-[#6]-[#6]-1");
+
+  std::unique_ptr<ROMol> piperidine{SmilesToMol("N1CCCCC1")};
+  std::unique_ptr<ROMol> wrongRegioSpiro{SmilesToMol("N1CCC2(CC1)CCCC2")};
+  std::unique_ptr<ROMol> spiro{SmilesToMol("N1C2(CCCCC2)CCCC1")};
+  std::unique_ptr<ROMol> fused{SmilesToMol("N1CCC2CCCCC2C1")};
+  REQUIRE(piperidine);
+  REQUIRE(wrongRegioSpiro);
+  REQUIRE(spiro);
+  REQUIRE(fused);
+  MatchVectType match;
+  CHECK(!SubstructMatch(*piperidine, *mols[0], match));
+  match.clear();
+  CHECK(!SubstructMatch(*wrongRegioSpiro, *mols[0], match));
+  match.clear();
+  CHECK(SubstructMatch(*spiro, *mols[0], match));
+  match.clear();
+  CHECK(!SubstructMatch(*fused, *mols[0], match));
 }
 
 TEST_CASE("atropisomers") {

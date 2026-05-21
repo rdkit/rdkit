@@ -465,6 +465,20 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmarts(mols[0]), '[#6]-[#6]=[#6]=[#6](-[#6])-[#6]')
 
+  def test_cdxml_spiro_ring_bond_count_query(self):
+    rdbase = os.environ['RDBASE']
+    query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')
+    mols = Chem.MolsFromCDXMLFileAsQueries(
+      os.path.join(query_base, 'qrestrict_ringbond_spiro.cdxml'),
+      Chem.CDXMLParserParams())
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(Chem.MolToSmarts(mols[0]), '[#6]1-[#6]-[#7]-[#6&x{4-}]-[#6]-[#6]-1')
+
+    self.assertFalse(Chem.MolFromSmiles('N1CCCCC1').HasSubstructMatch(mols[0]))
+    self.assertFalse(Chem.MolFromSmiles('N1CCC2(CC1)CCCC2').HasSubstructMatch(mols[0]))
+    self.assertTrue(Chem.MolFromSmiles('N1C2(CCCCC2)CCCC1').HasSubstructMatch(mols[0]))
+    self.assertFalse(Chem.MolFromSmiles('N1CCC2CCCCC2C1').HasSubstructMatch(mols[0]))
+
   def test_cdxml_atom_restriction_queries(self):
     rdbase = os.environ['RDBASE']
     query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')
