@@ -86,8 +86,8 @@ struct wrap_maewriter {
   isotopes, or even dummy atoms. Note that these are not supported by
   MaeMolSupplier either.
 )DOC")
-        .def(nb::init<nb::object>(), "fileobj"_a)
         .def(nb::init<std::string>(), "filename"_a)
+        .def(nb::init<nb::object>(), "fileobj"_a)
         .def("__enter__", &MolIOEnter<LocalMaeWriter>,
              nb::rv_policy::reference_internal)
         .def("__exit__", &MolIOExit<LocalMaeWriter>, "excType"_a = nb::none(),

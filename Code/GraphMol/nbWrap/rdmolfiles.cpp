@@ -813,11 +813,7 @@ void CanonicalizeEnhancedStereo(ROMol &mol) {
 
 std::string MolToV2KMolBlockHelper(const ROMol &mol,
                                    const MolWriterParams *params, int confId) {
-  MolWriterParams localParams;
-  if (!params) {
-    localParams = *params;
-  }
-  return MolToV2KMolBlock(mol, localParams, confId);
+  return MolToV2KMolBlock(mol, params ? *params : MolWriterParams(), confId);
 }
 
 }  // namespace RDKit
@@ -1576,6 +1572,7 @@ NB_MODULE(rdmolfiles, m) {
       .def("__setattr__", &safeSetattr);
   nb::class_<RDKit::SmartsParserParams>(m, "SmartsParserParams",
                                         "Parameters controlling SMARTS parsing")
+      .def(nb::init<>())
       .def_rw("debugParse", &RDKit::SmartsParserParams::debugParse,
               "controls the amount of debugging information produced")
       .def_rw("parseName", &RDKit::SmartsParserParams::parseName,
@@ -1697,6 +1694,7 @@ NB_MODULE(rdmolfiles, m) {
 
   nb::class_<RDKit::SmilesWriteParams>(m, "SmilesWriteParams",
                                        "Parameters controlling SMILES writing")
+      .def(nb::init<>())
       .def_rw("doIsomericSmiles", &RDKit::SmilesWriteParams::doIsomericSmiles,
               "include stereochemistry and isotope information")
       .def_rw("doKekule", &RDKit::SmilesWriteParams::doKekule,
@@ -1856,7 +1854,8 @@ NB_MODULE(rdmolfiles, m) {
         "allBondsExplicit"_a = false, "allHsExplicit"_a = false,
         docString.c_str());
 
-  nb::enum_<RDKit::SmilesWrite::CXSmilesFields>(m, "CXSmilesFields")
+  nb::enum_<RDKit::SmilesWrite::CXSmilesFields>(m, "CXSmilesFields",
+                                                nb::is_arithmetic())
       .value("CX_NONE", RDKit::SmilesWrite::CXSmilesFields::CX_NONE)
       .value("CX_ATOM_LABELS",
              RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_LABELS)

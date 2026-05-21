@@ -424,6 +424,7 @@ NB_MODULE(rdBase, m) {
       m, "BlockLogs",
       "Temporarily block logs from outputting while this instance is in scope.")
       .def(nb::init<>())
-      .def("__enter__", &BlockLogs::enter, nb::rv_policy::reference)
-      .def("__exit__", &BlockLogs::exit);
+      .def("__enter__", &BlockLogs::enter, nb::rv_policy::reference_internal)
+      .def("__exit__", &BlockLogs::exit, "excType"_a = nb::none(),
+           "excValue"_a = nb::none(), "traceback"_a = nb::none());
 }
