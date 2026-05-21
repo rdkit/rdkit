@@ -423,6 +423,20 @@ TEST_CASE("CDXML Advanced") {
       }
     }
     {
+      auto fname = cdxmlbase + "query-any-labels.cdxml";
+      std::vector<std::string> expected_smarts = {
+          "[#6]-[!#1]",
+          "[#6]-[!#1]",
+          "[#6]-*",
+          "[#6]-*",
+      };
+      auto mols = MolsFromChemDrawFile(fname);
+      REQUIRE(mols.size() == expected_smarts.size());
+      for (size_t i = 0; i < mols.size(); ++i) {
+        CHECK(MolToSmarts(*mols[i]) == expected_smarts[i]);
+      }
+    }
+    {
       auto fname = cdxmlbase + "anybond.cdxml";
       auto mols = MolsFromChemDrawFile(fname);
       CHECK(mols.size() == 1);

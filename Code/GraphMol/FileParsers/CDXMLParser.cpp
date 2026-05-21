@@ -127,6 +127,18 @@ Atom *addquery(Q *qry, std::string symbol, RWMol &mol, unsigned int idx) {
   return res;
 }
 
+bool isRQueryLabel(const std::string &label) {
+  return !label.empty() && label[0] == 'R';
+}
+
+bool isAnyNonHydrogenQueryLabel(const std::string &label) {
+  return label == "A" || label == "a";
+}
+
+bool isWildcardQueryLabel(const std::string &label) {
+  return label == "*" || isRQueryLabel(label);
+}
+
 enum class AtomUnsaturationConstraint { None, MustBeAbsent, MustBePresent };
 
 constexpr auto CDXML_FREE_SITES_PROP = "_cdxmlFreeSites";
@@ -578,14 +590,14 @@ bool parse_fragment(RWMol &mol, ptree &frag,
                     if (snode.first == "s") {
                       auto s = snode.second.data();
                       if (s.size()) {
-                        if (s[0] == 'R') {
+                        if (isRQueryLabel(s)) {
                           if (s.size() > 1) {
                             rgroup_num = stoi(s.substr(1));
                           }
                           elemno = 0;
                           query_label =
                               generic_nickname.empty() ? "R" : generic_nickname;
-                        } else if (s == "A") {
+                        } else if (isAnyNonHydrogenQueryLabel(s)) {
                           query_label = s;
                           elemno = 0;
                         } else if (s == "Q") {
@@ -598,6 +610,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
                           query_label = s;
                           elemno = 0;
                         } else if (s == "MH") {
+                          query_label = s;
+                          elemno = 0;
+                        } else if (s == "*") {
                           query_label = s;
                           elemno = 0;
                         }
@@ -728,15 +743,16 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       }
       if (nodetype == "GenericNickname" && query_label.empty() &&
           generic_nickname.size()) {
-        if (generic_nickname[0] == 'R') {
+        if (isRQueryLabel(generic_nickname)) {
           if (generic_nickname.size() > 1) {
             rgroup_num = stoi(generic_nickname.substr(1));
           }
           query_label = generic_nickname;
           elemno = 0;
-        } else if (generic_nickname == "A" || generic_nickname == "Q" ||
-                   generic_nickname == "X" || generic_nickname == "M" ||
-                   generic_nickname == "MH") {
+        } else if (isAnyNonHydrogenQueryLabel(generic_nickname) ||
+                   generic_nickname == "Q" || generic_nickname == "X" ||
+                   generic_nickname == "M" || generic_nickname == "MH" ||
+                   generic_nickname == "*") {
           query_label = generic_nickname;
           elemno = 0;
         }
@@ -769,9 +785,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       const bool takeOwnership = true;
       auto idx = mol.addAtom(rd_atom, updateLabels, takeOwnership);
       if (query_label.size()) {
-        if (query_label[0] == 'R') {
+        if (isWildcardQueryLabel(query_label)) {
           rd_atom = addquery(makeAtomNullQuery(), query_label, mol, idx);
-        } else if (query_label == "A") {
+        } else if (isAnyNonHydrogenQueryLabel(query_label)) {
           rd_atom = addquery(makeAAtomQuery(), query_label, mol, idx);
         } else if (query_label == "Q") {
           rd_atom = addquery(makeQAtomQuery(), query_label, mol, idx);

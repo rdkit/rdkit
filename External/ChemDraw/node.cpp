@@ -37,6 +37,18 @@ namespace ChemDraw {
 namespace {
 enum class AtomUnsaturationConstraint { None, MustBeAbsent, MustBePresent };
 
+bool isRQueryLabel(const std::string &label) {
+  return !label.empty() && label[0] == 'R';
+}
+
+bool isAnyNonHydrogenQueryLabel(const std::string &label) {
+  return label == "A" || label == "a";
+}
+
+bool isWildcardQueryLabel(const std::string &label) {
+  return label == "*" || isRQueryLabel(label);
+}
+
 void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
                                 const PageData &pagedata,
                                 bool restrictImplicitHydrogens,
@@ -223,23 +235,21 @@ bool parseNode(
     }
     case kCDXNodeType_GenericNickname: {
       if (node.m_genericNickname.size()) {
-        switch (node.m_genericNickname[0]) {
-          case 'R': {
-            checkForRGroup = true;
-            elemno = 0;
-            query_label = node.m_genericNickname;
-            break;
-          }
-          case 'A':
-          case 'Q':
-          case 'X':
-          case 'M': {
-            elemno = 0;
-            query_label = node.m_genericNickname;
-          } break;
-          default:
-            std::cerr << "Unhandled generic nickname: "
-                      << node.m_genericNickname << std::endl;
+        if (isRQueryLabel(node.m_genericNickname)) {
+          checkForRGroup = true;
+          elemno = 0;
+          query_label = node.m_genericNickname;
+        } else if (isAnyNonHydrogenQueryLabel(node.m_genericNickname) ||
+                   node.m_genericNickname == "Q" ||
+                   node.m_genericNickname == "X" ||
+                   node.m_genericNickname == "M" ||
+                   node.m_genericNickname == "MH" ||
+                   node.m_genericNickname == "*") {
+          elemno = 0;
+          query_label = node.m_genericNickname;
+        } else {
+          std::cerr << "Unhandled generic nickname: "
+                    << node.m_genericNickname << std::endl;
         }
       }
       break;
@@ -384,9 +394,9 @@ bool parseNode(
   const bool takeOwnership = true;
   auto idx = mol.addAtom(rd_atom, updateLabels, takeOwnership);
   if (query_label.size()) {
-    if (query_label[0] == 'R') {
+    if (isWildcardQueryLabel(query_label)) {
       rd_atom = addquery(makeAtomNullQuery(), query_label, mol, idx);
-    } else if (query_label == "A") {
+    } else if (isAnyNonHydrogenQueryLabel(query_label)) {
       rd_atom = addquery(makeAAtomQuery(), query_label, mol, idx);
     } else if (query_label == "Q") {
       rd_atom = addquery(makeQAtomQuery(), query_label, mol, idx);
