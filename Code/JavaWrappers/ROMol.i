@@ -162,6 +162,7 @@
     }
   }
 %}
+
 %typemap(cscode) RDKit::ROMol %{
   public static ROMol FromByteArray(byte[] pkl) {
     UChar_Vect vec = null;
@@ -191,8 +192,8 @@
          vec.Dispose();
        }
      }
-   }
-   byte[] MolToCDX() {
+  }
+  public byte[] MolToCDX() {
     try {
        vec = MolToCDXHelper();
        byte[] res = new byte[vec.Count];
@@ -203,9 +204,9 @@
          vec.Dispose();
        }
      }
-   }
   }
 %}
+
 %include <GraphMol/ROMol.h>
 
 %ignore SubstructMatch;
