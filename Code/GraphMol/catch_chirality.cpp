@@ -6554,3 +6554,80 @@ TEST_CASE(
   REQUIRE(m);
   CHECK(*labels_reference == get_bond_stereo_labels(*m));
 }
+
+TEST_CASE(
+    "WedgeMolBonds does not steal a wiggly bond from an adjacent chiral "
+    "atom across clearSingleBondDirFlags") {
+  // CC[C@@H](Cl)N: atom 2 (C@@H) is the chiral center; atom 4 (N) is a
+  // degree-1 terminal neighbor. The existing countChiralNbrs handling for
+  // BondDir::UNKNOWN treats a wiggly bond as the stereo annotation for the
+  // adjacent chiral atom and pre-skips it. After clearSingleBondDirFlags,
+  // the bond's BondDir is NONE and only _UnknownStereo=1 remains as a
+  // marker; countChiralNbrs must recognize that marker so the same
+  // pre-skip behavior applies. Without this, pickBondToWedge would pick
+  // the wiggly bond (terminal neighbors are preferred) and the caller's
+  // subsequent restore of BondDir::UNKNOWN would erase the wedge, leaving
+  // the chiral atom with no visible stereo.
+  std::string smi =
+      "CC[C@@H](Cl)N "
+      "|(-2.078461,0.000000,;-0.779423,0.750000,;0.519615,-0.000000,;"
+      "0.519615,-1.500000,;1.818653,0.750000,)|";
+  std::unique_ptr<RWMol> m{SmilesToMol(smi)};
+  REQUIRE(m);
+
+  auto *chiralAtom = m->getAtomWithIdx(2);
+  REQUIRE(chiralAtom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED);
+  const auto originalChiralTag = chiralAtom->getChiralTag();
+
+  // Mark the bond to N (atom 4, terminal) as a wiggly bond
+  auto *wigglyBond = m->getBondBetweenAtoms(2, 4);
+  REQUIRE(wigglyBond != nullptr);
+  wigglyBond->setBondDir(Bond::BondDir::UNKNOWN);
+
+  // Simulate the typical re-wedging pattern: clearSingleBondDirFlags saves
+  // _UnknownStereo=1 for bonds with BondDir::UNKNOWN and then clears BondDir
+  // to NONE, so that stale wedge directions are removed before re-wedging.
+  MolOps::clearSingleBondDirFlags(*m);
+  REQUIRE(wigglyBond->getBondDir() == Bond::BondDir::NONE);
+
+  Chirality::wedgeMolBonds(*m, &m->getConformer());
+
+  // No bond at the chiral center should be wedged: the wiggly bond is the
+  // intentional stereo annotation, matching the BondDir::UNKNOWN behavior
+  // before clearSingleBondDirFlags.
+  for (const auto b : m->atomBonds(chiralAtom)) {
+    CHECK(b->getBondDir() != Bond::BondDir::BEGINWEDGE);
+    CHECK(b->getBondDir() != Bond::BondDir::BEGINDASH);
+  }
+
+  // Round-trip preserves the chiral tag itself; only the visual wedging
+  // representation is affected by the wiggly-bond annotation.
+  CHECK(chiralAtom->getChiralTag() == originalChiralTag);
+}
+
+TEST_CASE(
+    "pickBondsToWedge respects _UnknownStereo=1 marker when called directly") {
+  // pickBondsToWedge is part of the public API (Chirality.h); callers can
+  // invoke it without going through wedgeMolBonds, so the recognition of
+  // the _UnknownStereo=1 marker has to live in countChiralNbrs itself.
+  std::string smi =
+      "CC[C@@H](Cl)N "
+      "|(-2.078461,0.000000,;-0.779423,0.750000,;0.519615,-0.000000,;"
+      "0.519615,-1.500000,;1.818653,0.750000,)|";
+  std::unique_ptr<RWMol> m{SmilesToMol(smi)};
+  REQUIRE(m);
+
+  auto *wigglyBond = m->getBondBetweenAtoms(2, 4);
+  REQUIRE(wigglyBond != nullptr);
+  wigglyBond->setBondDir(Bond::BondDir::UNKNOWN);
+  MolOps::clearSingleBondDirFlags(*m);
+  REQUIRE(wigglyBond->getBondDir() == Bond::BondDir::NONE);
+
+  auto wedgeBonds =
+      Chirality::pickBondsToWedge(*m, nullptr, &m->getConformer());
+
+  // The chiral atom's stereo is already expressed by the wiggly bond, so
+  // pickBondsToWedge must not pick any bond to wedge for it. The molecule
+  // has no atropisomers, so the returned map should be empty.
+  CHECK(wedgeBonds.empty());
+}
