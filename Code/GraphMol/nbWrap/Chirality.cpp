@@ -29,7 +29,8 @@ struct chirality_wrapper {
         .value("Bond_Cumulene_Even", Chirality::StereoType::Bond_Cumulene_Even)
         .value("Bond_Atropisomer", Chirality::StereoType::Bond_Atropisomer)
         .export_values();
-    nb::enum_<Chirality::StereoSpecified>(m, "StereoSpecified")
+    nb::enum_<Chirality::StereoSpecified>(m, "StereoSpecified",
+                                          nb::is_arithmetic())
         .value("Unspecified", Chirality::StereoSpecified::Unspecified)
         .value("Specified", Chirality::StereoSpecified::Specified)
         .value("Unknown", Chirality::StereoSpecified::Unknown)

@@ -14,6 +14,7 @@
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/pair.h>
+#include <nanobind/stl/shared_ptr.h>
 
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
@@ -563,14 +564,11 @@ ROMol *MolFromPNGFile(const std::string &filename,
   return newM;
 }
 
-ROMol *MolFromPNGString(nb::object png, SmilesParserParams *pyParams) {
-  SmilesParserParams params;
-  if (pyParams) {
-    params = *pyParams;
-  }
+ROMol *MolFromPNGString(nb::bytes png, SmilesParserParams *params) {
   ROMol *newM = nullptr;
   try {
-    newM = PNGStringToMol(pyObjectToString(png), params);
+    std::string pngStr(static_cast<const char *>(png.data()), png.size());
+    newM = PNGStringToMol(pngStr, params ? *params : SmilesParserParams());
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
@@ -578,18 +576,17 @@ ROMol *MolFromPNGString(nb::object png, SmilesParserParams *pyParams) {
   return newM;
 }
 
-nb::object addMolToPNGFileHelperParams(const ROMol &mol, nb::object fname,
+nb::object addMolToPNGFileHelperParams(const ROMol &mol,
+                                       const std::string &fname,
                                        const PNGMetadataParams &params) {
-  std::string cstr = nb::cast<std::string>(fname);
-
-  auto res = addMolToPNGFile(mol, cstr, params);
+  auto res = addMolToPNGFile(mol, fname, params);
 
   nb::object retval = nb::object(nb::steal<nb::object>(
       PyBytes_FromStringAndSize(res.c_str(), res.length())));
   return retval;
 }
 
-nb::object addMolToPNGFileHelper(const ROMol &mol, nb::object fname,
+nb::object addMolToPNGFileHelper(const ROMol &mol, const std::string &fname,
                                  bool includePkl, bool includeSmiles,
                                  bool includeMol) {
   PNGMetadataParams params;
@@ -599,18 +596,17 @@ nb::object addMolToPNGFileHelper(const ROMol &mol, nb::object fname,
   return addMolToPNGFileHelperParams(mol, fname, params);
 }
 
-nb::object addMolToPNGStringHelperParams(const ROMol &mol, nb::object png,
+nb::object addMolToPNGStringHelperParams(const ROMol &mol, nb::bytes png,
                                          const PNGMetadataParams &params) {
-  std::string cstr = nb::cast<std::string>(png);
-
-  auto res = addMolToPNGString(mol, cstr, params);
+  std::string pngStr(static_cast<const char *>(png.data()), png.size());
+  auto res = addMolToPNGString(mol, pngStr, params);
 
   nb::object retval = nb::object(nb::steal<nb::object>(
       PyBytes_FromStringAndSize(res.c_str(), res.length())));
   return retval;
 }
 
-nb::object addMolToPNGStringHelper(const ROMol &mol, nb::object png,
+nb::object addMolToPNGStringHelper(const ROMol &mol, nb::bytes png,
                                    bool includePkl, bool includeSmiles,
                                    bool includeMol) {
   PNGMetadataParams params;
@@ -620,54 +616,48 @@ nb::object addMolToPNGStringHelper(const ROMol &mol, nb::object png,
   return addMolToPNGStringHelperParams(mol, png, params);
 }
 
-nb::object addMetadataToPNGFileHelper(nb::dict pymetadata, nb::object fname) {
-  std::string cstr = nb::cast<std::string>(fname);
-
+std::vector<std::pair<std::string, std::string>> dictToMetadata(
+    nb::dict pymetadata) {
   std::vector<std::pair<std::string, std::string>> metadata;
 
-  const auto items = pymetadata.items();
-  for (unsigned int i = 0; i < nb::len(items); ++i) {
-    const auto item = items[i];
-    std::string key = nb::cast<std::string>(item[0]);
-    std::string val = nb::cast<std::string>(item[1]);
+  for (const auto &[k, v] : pymetadata) {
+    std::string key;
+    if (!nb::try_cast<std::string>(k, key)) {
+      throw nb::type_error("metadata keys must be strings");
+    }
+    std::string val;
+    if (!nb::try_cast<std::string>(v, val)) {
+      throw nb::type_error("metadata values must be strings");
+    }
     metadata.push_back(std::make_pair(key, val));
   }
-
-  auto res = addMetadataToPNGFile(cstr, metadata);
-
-  nb::object retval = nb::object(nb::steal<nb::object>(
-      PyBytes_FromStringAndSize(res.c_str(), res.length())));
-  return retval;
+  return metadata;
 }
 
-nb::object addMetadataToPNGStringHelper(nb::dict pymetadata, nb::object png) {
-  std::string cstr = nb::cast<std::string>(png);
+nb::object addMetadataToPNGFileHelper(nb::dict pymetadata,
+                                      const std::string &fname) {
+  auto metadata = dictToMetadata(pymetadata);
 
-  std::vector<std::pair<std::string, std::string>> metadata;
-  const auto items = pymetadata.items();
-  for (unsigned int i = 0; i < nb::len(items); ++i) {
-    const auto item = items[i];
-    std::string key = nb::cast<std::string>(item[0]);
-    std::string val = nb::cast<std::string>(item[1]);
-    metadata.push_back(std::make_pair(key, val));
-  }
+  auto res = addMetadataToPNGFile(fname, metadata);
 
-  auto res = addMetadataToPNGString(cstr, metadata);
+  nb::bytes retval(res.c_str(), res.length());
+  return retval;
+}
+nb::bytes addMetadataToPNGStringHelper(nb::dict pymetadata, nb::bytes png) {
+  auto metadata = dictToMetadata(pymetadata);
+  std::string pngStr(static_cast<const char *>(png.data()), png.size());
+  auto res = addMetadataToPNGString(pngStr, metadata);
 
-  nb::object retval = nb::object(nb::steal<nb::object>(
-      PyBytes_FromStringAndSize(res.c_str(), res.length())));
+  nb::bytes retval(res.c_str(), res.length());
   return retval;
 }
 
 nb::object MolsFromPNGFile(const std::string &filename, const std::string &tag,
-                           SmilesParserParams *pyParams) {
-  SmilesParserParams params;
-  if (pyParams) {
-    params = *pyParams;
-  }
+                           SmilesParserParams *params) {
   std::vector<std::unique_ptr<ROMol>> mols;
   try {
-    mols = PNGFileToMols(filename, tag, params);
+    mols =
+        PNGFileToMols(filename, tag, params ? *params : SmilesParserParams());
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -678,23 +668,21 @@ nb::object MolsFromPNGFile(const std::string &filename, const std::string &tag,
   nb::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
-    ROMOL_SPTR sptr(mol.release());
+    std::shared_ptr<ROMol> sptr(mol.release());
     res.append(sptr);
   }
   return nb::tuple(res);
 }
 
-nb::tuple MolsFromPNGString(nb::object png, const std::string &tag,
-                            SmilesParserParams *pyParams) {
-  SmilesParserParams params;
-  if (pyParams) {
-    params = *pyParams;
-  }
-  auto mols = PNGStringToMols(pyObjectToString(png), tag, params);
+nb::tuple MolsFromPNGString(nb::bytes png, const std::string &tag,
+                            SmilesParserParams *params) {
+  std::string pngStr(static_cast<const char *>(png.data()), png.size());
+  auto mols =
+      PNGStringToMols(pngStr, tag, params ? *params : SmilesParserParams());
   nb::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
-    ROMOL_SPTR sptr(mol.release());
+    std::shared_ptr<ROMol> sptr(mol.release());
     res.append(sptr);
   }
   return nb::tuple(res);
@@ -715,7 +703,7 @@ nb::object MolsFromCDXMLFile(const std::string &filename, bool sanitize,
   nb::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
-    ROMOL_SPTR sptr(static_cast<ROMol *>(mol.release()));
+    std::shared_ptr<ROMol> sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
   return nb::tuple(res);
@@ -732,7 +720,7 @@ nb::tuple MolsFromCDXMLHelper(
   nb::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
-    ROMOL_SPTR sptr(static_cast<ROMol *>(mol.release()));
+    std::shared_ptr<ROMol> sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
   return nb::tuple(res);
@@ -759,7 +747,7 @@ nb::object MolsFromCDXMLFileHelper(
   nb::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
-    ROMOL_SPTR sptr(static_cast<ROMol *>(mol.release()));
+    std::shared_ptr<ROMol> sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
   return nb::tuple(res);
@@ -770,7 +758,7 @@ nb::tuple MolsFromCDXML(nb::object cdxml, bool sanitize, bool removeHs) {
   nb::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
-    ROMOL_SPTR sptr(static_cast<ROMol *>(mol.release()));
+    std::shared_ptr<ROMol> sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
   return nb::tuple(res);
@@ -810,8 +798,8 @@ nb::object MetadataFromPNGFile(nb::object fname, bool asList) {
   return translateMetadataToDict(metadata);
 }
 
-nb::object MetadataFromPNGString(nb::object png, bool asList) {
-  std::string cstr = nb::cast<std::string>(png);
+nb::object MetadataFromPNGString(nb::bytes png, bool asList) {
+  std::string cstr(static_cast<const char *>(png.data()), png.size());
   auto metadata = PNGStringToMetadata(cstr);
   if (asList) {
     return translateMetadataToList(metadata);
@@ -2515,6 +2503,7 @@ NB_MODULE(rdmolfiles, m) {
   nb::class_<RDKit::PNGMetadataParams>(
       m, "PNGMetadataParams",
       "Parameters controlling metadata included in PNG images")
+      .def(nb::init<>())
       .def_rw("includePkl", &RDKit::PNGMetadataParams::includePkl,
               "toggles inclusion of molecule pickle (default=True)")
       .def_rw("includeSmiles", &RDKit::PNGMetadataParams::includeSmiles,

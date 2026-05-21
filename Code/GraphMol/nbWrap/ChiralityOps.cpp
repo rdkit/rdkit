@@ -27,8 +27,7 @@ struct chiralityops_wrapper {
         "mol"_a, "cleanIt"_a = false, "flagPossible"_a = true,
         R"DOC(find potential stereo elements in a molecule and returns them as StereoInfo objects
 Note that this function is still somewhat experimental and the API
-and results may change in a future release.)DOC",
-        nb::keep_alive<0, 1>());
+and results may change in a future release.)DOC");
     m.def(
         "CleanupStereoGroups", &Chirality::cleanupStereoGroups, "mol"_a,
         R"DOC(removes atoms without specified chirality from stereo groups)DOC");

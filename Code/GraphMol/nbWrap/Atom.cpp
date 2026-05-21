@@ -167,6 +167,9 @@ struct atom_wrapper {
         .def(nb::init<unsigned int>(), "num"_a,
              "Constructor, takes the atomic number")
 
+        .def_ro_static("NOATOM", &Atom::NOATOM,
+                       "marker for unspecified int values")
+
         .def("__copy__", &Atom::copy, nb::rv_policy::take_ownership,
              "Create a copy of the atom")
 
