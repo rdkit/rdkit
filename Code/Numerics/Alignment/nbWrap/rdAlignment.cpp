@@ -28,31 +28,27 @@ void fillPointVec(nb::object seq, std::vector<RDGeom::Point3D> &pts) {
     throw nb::value_error("expected a non-empty sequence of points");
   }
 
-  // Determine mode from the first element: Point3D objects (detected via
-  // duck-typing) vs. coordinate sequences (lists, tuples, numpy rows, etc.)
-  auto first = s[0];
-  bool point3dMode =
-      nb::hasattr(first, "x") && nb::hasattr(first, "y") && nb::hasattr(first, "z");
+  // Determine mode by trying to cast the first element to Point3D
+  RDGeom::Point3D testPt;
+  bool point3dMode = nb::try_cast<RDGeom::Point3D>(s[0], testPt);
 
   for (auto item : s) {
     if (point3dMode) {
-      if (!nb::hasattr(item, "x") || !nb::hasattr(item, "y") ||
-          !nb::hasattr(item, "z")) {
+      RDGeom::Point3D pt;
+      if (!nb::try_cast<RDGeom::Point3D>(item, pt)) {
         throw nb::value_error("non-Point3D found in sequence of points");
       }
-      pts.emplace_back(nb::cast<double>(item.attr("x")),
-                       nb::cast<double>(item.attr("y")),
-                       nb::cast<double>(item.attr("z")));
+      pts.push_back(pt);
     } else {
       if (!nb::isinstance<nb::sequence>(item)) {
         throw nb::value_error("non-sequence found in sequence of points");
       }
-      auto s = nb::cast<nb::sequence>(item);
-      if (nb::len(s) != 3) {
+      auto coords = nb::cast<nb::sequence>(item);
+      if (nb::len(coords) != 3) {
         throw nb::value_error("each point must have 3 coordinates");
       }
-      pts.emplace_back(nb::cast<double>(s[0]), nb::cast<double>(s[1]),
-                       nb::cast<double>(s[2]));
+      pts.emplace_back(nb::cast<double>(coords[0]), nb::cast<double>(coords[1]),
+                       nb::cast<double>(coords[2]));
     }
   }
 }
