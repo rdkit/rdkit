@@ -8,10 +8,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/vector.h>
-#define NO_IMPORT_ARRAY
-#define PY_ARRAY_UNIQUE_SYMBOL rdpicker_nb_array_API
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
+#include <nanobind/ndarray.h>
 
 #include <SimDivPickers/DistPicker.h>
 #include <SimDivPickers/HierarchicalClusterPicker.h>
@@ -23,47 +20,24 @@ namespace RDPickers {
 
 // REVIEW: the poolSize can be pulled from the numeric array
 RDKit::INT_VECT HierarchicalPicks(HierarchicalClusterPicker *picker,
-                                  nb::object distMat, int poolSize,
-                                  int pickSize) {
+                                  nb::ndarray<nb::numpy, const double,
+                                              nb::ndim<1>, nb::c_contig> distMat,
+                                  int poolSize, int pickSize) {
   if (pickSize >= poolSize) {
     throw nb::value_error("pickSize must be less than poolSize");
   }
-  if (!PyArray_Check(distMat.ptr())) {
-    throw nb::value_error("distance mat argument must be a numpy matrix");
-  }
 
-  PyArrayObject *copy;
-  // it's painful to have to copy the input matrix, but the
-  // picker itself will step on the distance matrix, so use
-  // CopyFromObject here instead of ContiguousFromObject
-  copy =
-      (PyArrayObject *)PyArray_CopyFromObject(distMat.ptr(), NPY_DOUBLE, 1, 1);
-  auto *dMat = (double *)PyArray_DATA(copy);
-  RDKit::INT_VECT res = picker->pick(dMat, poolSize, pickSize);
-  Py_DECREF(copy);
-  return res;
+  std::vector<double> dMatCopy(distMat.data(), distMat.data() + distMat.shape(0));
+  return picker->pick(dMatCopy.data(), poolSize, pickSize);
 }
 
 // REVIEW: the poolSize can be pulled from the numeric array
 RDKit::VECT_INT_VECT HierarchicalClusters(HierarchicalClusterPicker *picker,
-                                          nb::object distMat, int poolSize,
-                                          int pickSize) {
-  if (!PyArray_Check(distMat.ptr())) {
-    throw nb::value_error("distance mat argument must be a numpy matrix");
-  }
-
-  // REVIEW: check pickSize < poolSize, otherwise throw value error
-  PyArrayObject *copy;
-  // it's painful to have to copy the input matrix, but the
-  // picker itself will step on the distance matrix, so use
-  // CopyFromObject here instead of ContiguousFromObject
-  copy =
-      (PyArrayObject *)PyArray_CopyFromObject(distMat.ptr(), NPY_DOUBLE, 1, 1);
-  auto *dMat = (double *)PyArray_DATA(copy);
-
-  RDKit::VECT_INT_VECT res = picker->cluster(dMat, poolSize, pickSize);
-  Py_DECREF(copy);
-  return res;
+                                          nb::ndarray<nb::numpy, const double,
+                                                      nb::ndim<1>, nb::c_contig> distMat,
+                                          int poolSize, int pickSize) {
+  std::vector<double> dMatCopy(distMat.data(), distMat.data() + distMat.shape(0));
+  return picker->cluster(dMatCopy.data(), poolSize, pickSize);
 }
 
 }  // namespace RDPickers

@@ -9,10 +9,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/tuple.h>
-#define NO_IMPORT_ARRAY
-#define PY_ARRAY_UNIQUE_SYMBOL rdpicker_nb_array_API
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
+#include <nanobind/ndarray.h>
 
 #include "PickerHelpers.h"
 
@@ -29,36 +26,23 @@ using namespace nb::literals;
 namespace RDPickers {
 
 // REVIEW: the poolSize can be pulled from the numeric array
-RDKit::INT_VECT MaxMinPicks(MaxMinPicker *picker, nb::object distMat,
+RDKit::INT_VECT MaxMinPicks(MaxMinPicker *picker,
+                            nb::ndarray<nb::numpy, double, nb::ndim<1>,
+                                        nb::c_contig> distMat,
                             int poolSize, int pickSize,
                             nb::object firstPicks, int seed) {
   if (pickSize >= poolSize) {
     throw nb::value_error("pickSize must be less than poolSize");
   }
 
-  if (!PyArray_Check(distMat.ptr())) {
-    throw nb::value_error("distance mat argument must be a numpy matrix");
-  }
-
-  PyArrayObject *copy;
-  copy = (PyArrayObject *)PyArray_ContiguousFromObject(distMat.ptr(),
-                                                       NPY_DOUBLE, 1, 1);
-  auto *dMat = (double *)PyArray_DATA(copy);
+  auto *dMat = distMat.data();
 
   RDKit::INT_VECT firstPickVect;
   auto len = nb::len(firstPicks);
   for (size_t i = 0; i < len; ++i) {
     firstPickVect.push_back(nb::cast<int>(firstPicks[i]));
   }
-  RDKit::INT_VECT res;
-  try {
-    res = picker->pick(dMat, poolSize, pickSize, firstPickVect, seed);
-  } catch (...) {
-    Py_DECREF(copy);
-    throw;
-  }
-  Py_DECREF(copy);
-  return res;
+  return picker->pick(dMat, poolSize, pickSize, firstPickVect, seed);
 }
 
 namespace {
