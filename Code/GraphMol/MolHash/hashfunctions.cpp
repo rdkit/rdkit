@@ -384,7 +384,8 @@ std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles,
 }
 
 namespace details {
-
+constexpr std::uint64_t atomFlagProperty =
+    1;  //*< atom has the exclude property
 constexpr std::uint64_t bondFlagCarboxyl =
     1;  //*< bond involved in in carboxyl, amide, etc.
 constexpr std::uint64_t bondFlagProperty =
@@ -643,7 +644,9 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
   atomFlags.reserve(mol->getNumAtoms());
   std::ranges::transform(mol->atoms(), std::back_inserter(atomFlags),
                          [](const auto &atom) {
-                           return atom->hasProp(excludeFromTautomerismProp);
+                           return atom->hasProp(excludeFromTautomerismProp)
+                                      ? details::atomFlagProperty
+                                      : 0;
                          });
   auto bondFlags = details::getBondFlags(*mol);
 
