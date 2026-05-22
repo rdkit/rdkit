@@ -8,13 +8,9 @@
 //  of the RDKit source tree.
 //
 
-#define NO_IMPORT_ARRAY
-#define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
-
 #include <iostream>
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
 #include <ML/InfoTheory/InfoBitRanker.h>
 #include <DataStructs/BitVects.h>
@@ -24,15 +20,19 @@ using namespace nb::literals;
 
 namespace RDInfoTheory {
 
-nb::object getTopNbits(InfoBitRanker *ranker, int num) {
+nb::ndarray<nb::numpy, double, nb::ndim<2>> getTopNbits(InfoBitRanker *ranker,
+                                                         int num) {
   double *dres = ranker->getTopN(num);
-  npy_intp dims[2];
-  dims[0] = num;
-  dims[1] = ranker->getNumClasses() + 2;
-  auto *res = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
-  memcpy(static_cast<void *>(PyArray_DATA(res)), static_cast<void *>(dres),
-         dims[0] * dims[1] * sizeof(double));
-  return nb::steal<nb::object>(PyArray_Return(res));
+  size_t ncols = ranker->getNumClasses() + 2;
+  size_t nrows = (size_t)num;
+  auto *data = new double[nrows * ncols];
+  memcpy(static_cast<void *>(data), static_cast<void *>(dres),
+         nrows * ncols * sizeof(double));
+  nb::capsule owner(data, [](void *f) noexcept {
+    delete[] reinterpret_cast<double *>(f);
+  });
+  return nb::ndarray<nb::numpy, double, nb::ndim<2>>(data, {nrows, ncols},
+                                                     owner);
 }
 
 void AccumulateVotes(InfoBitRanker *ranker, nb::object bitVect, int label) {

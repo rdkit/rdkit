@@ -7,12 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#define NO_IMPORT_ARRAY
-#define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
-
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
 #include <ML/InfoTheory/CorrMatGenerator.h>
 #include <RDGeneral/types.h>
 
@@ -21,14 +17,18 @@ using namespace nb::literals;
 
 namespace RDInfoTheory {
 
-nb::object getCorrMatrix(BitCorrMatGenerator *cmGen) {
+nb::ndarray<nb::numpy, double, nb::ndim<1>> getCorrMatrix(
+    BitCorrMatGenerator *cmGen) {
   double *dres = cmGen->getCorrMat();
   unsigned int nb_size = cmGen->getCorrBitList().size();
-  npy_intp dim = nb_size * (nb_size - 1) / 2;
-  auto *res = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
-  memcpy(static_cast<void *>(PyArray_DATA(res)), static_cast<void *>(dres),
+  size_t dim = (size_t)nb_size * (nb_size - 1) / 2;
+  auto *data = new double[dim];
+  memcpy(static_cast<void *>(data), static_cast<void *>(dres),
          dim * sizeof(double));
-  return nb::steal<nb::object>(PyArray_Return(res));
+  nb::capsule owner(data, [](void *f) noexcept {
+    delete[] reinterpret_cast<double *>(f);
+  });
+  return nb::ndarray<nb::numpy, double, nb::ndim<1>>(data, {dim}, owner);
 }
 
 void setBitList(BitCorrMatGenerator *cmGen, nb::iterable bitList) {

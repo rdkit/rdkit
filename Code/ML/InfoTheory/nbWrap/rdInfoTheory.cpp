@@ -7,9 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
 #include <nanobind/nanobind.h>
-#include <RDBoost/import_array.h>
+#include <nanobind/ndarray.h>
 #include <ML/InfoTheory/InfoBitRanker.h>
 #include <ML/InfoTheory/InfoGainFuncs.h>
 
@@ -17,96 +16,76 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 namespace RDInfoTheory {
-double infoEntropy(nb::object resArr) {
-  PyObject *matObj = resArr.ptr();
-  if (!PyArray_Check(matObj)) {
-    throw nb::value_error("Expecting a Numeric array object");
-  }
-  PyArrayObject *copy;
-  copy = (PyArrayObject *)PyArray_ContiguousFromObject(
-      matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 1, 1);
-  double res = 0.0;
-  // we are expecting a 1 dimensional array
-  auto ncols = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
+
+template <class T>
+double infoEntropyHelper(nb::ndarray<nb::numpy, nb::ndim<1>> arr) {
+  auto ncols = (long int)arr.shape(0);
   CHECK_INVARIANT(ncols > 0, "");
-  if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
-    auto *data = (double *)PyArray_DATA(copy);
-    res = InfoEntropy(data, ncols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
-    auto *data = (float *)PyArray_DATA(copy);
-    res = InfoEntropy(data, ncols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
-    int *data = (int *)PyArray_DATA(copy);
-    res = InfoEntropy(data, ncols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
-    auto *data = (long int *)PyArray_DATA(copy);
-    res = InfoEntropy(data, ncols);
-  }
-  Py_DECREF(copy);
-  return res;
+  auto *data = reinterpret_cast<T *>(arr.data());
+  return InfoEntropy(data, ncols);
 }
 
-double infoGain(nb::object resArr) {
-  PyObject *matObj = resArr.ptr();
-  if (!PyArray_Check(matObj)) {
-    throw nb::value_error("Expecting a Numeric array object");
+double infoEntropy(nb::ndarray<nb::numpy, nb::ndim<1>> resArr) {
+  if (resArr.dtype() == nb::dtype<double>()) {
+    return infoEntropyHelper<double>(resArr);
+  } else if (resArr.dtype() == nb::dtype<float>()) {
+    return infoEntropyHelper<float>(resArr);
+  } else if (resArr.dtype() == nb::dtype<int>()) {
+    return infoEntropyHelper<int>(resArr);
+  } else if (resArr.dtype() == nb::dtype<long int>()) {
+    return infoEntropyHelper<long int>(resArr);
+  } else {
+    throw nb::value_error(
+        "Expecting a Numeric array object of type int, long, float, or double");
   }
-  PyArrayObject *copy;
-  copy = (PyArrayObject *)PyArray_ContiguousFromObject(
-      matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 2, 2);
-  auto rows = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
-  auto cols = (long int)PyArray_DIM((PyArrayObject *)matObj, 1);
-  double res = 0.0;
-  if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
-    auto *data = (double *)PyArray_DATA(copy);
-    res = InfoEntropyGain(data, rows, cols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
-    auto *data = (float *)PyArray_DATA(copy);
-    res = InfoEntropyGain(data, rows, cols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
-    int *data = (int *)PyArray_DATA(copy);
-    res = InfoEntropyGain(data, rows, cols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
-    auto *data = (long int *)PyArray_DATA(copy);
-    res = InfoEntropyGain(data, rows, cols);
+}
+
+template <class T>
+double infoGainHelper(nb::ndarray<nb::numpy, nb::ndim<2>> arr) {
+  auto rows = (long int)arr.shape(0);
+  auto cols = (long int)arr.shape(1);
+  auto *data = reinterpret_cast<T *>(arr.data());
+  return InfoEntropyGain(data, rows, cols);
+}
+
+double infoGain(nb::ndarray<nb::numpy, nb::ndim<2>> resArr) {
+  if (resArr.dtype() == nb::dtype<double>()) {
+    return infoGainHelper<double>(resArr);
+  } else if (resArr.dtype() == nb::dtype<float>()) {
+    return infoGainHelper<float>(resArr);
+  } else if (resArr.dtype() == nb::dtype<int>()) {
+    return infoGainHelper<int>(resArr);
+  } else if (resArr.dtype() == nb::dtype<long int>()) {
+    return infoGainHelper<long int>(resArr);
   } else {
     throw nb::value_error(
         "Numeric array object of type int or long or float or double");
   }
-  Py_DECREF(copy);
-  return res;
 }
 
-double chiSquare(nb::object resArr) {
-  PyObject *matObj = resArr.ptr();
-  if (!PyArray_Check(matObj)) {
-    throw nb::value_error("Expecting a Numeric array object");
-  }
-  PyArrayObject *copy;
-  copy = (PyArrayObject *)PyArray_ContiguousFromObject(
-      matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 2, 2);
-  auto rows = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
-  auto cols = (long int)PyArray_DIM((PyArrayObject *)matObj, 1);
-  double res = 0.0;
-  if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
-    auto *data = (double *)PyArray_DATA(copy);
-    res = ChiSquare(data, rows, cols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
-    auto *data = (float *)PyArray_DATA(copy);
-    res = ChiSquare(data, rows, cols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
-    int *data = (int *)PyArray_DATA(copy);
-    res = ChiSquare(data, rows, cols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
-    auto *data = (long int *)PyArray_DATA(copy);
-    res = ChiSquare(data, rows, cols);
+template <class T>
+double chiSquareHelper(nb::ndarray<nb::numpy, nb::ndim<2>> arr) {
+  auto rows = (long int)arr.shape(0);
+  auto cols = (long int)arr.shape(1);
+  auto *data = reinterpret_cast<T *>(arr.data());
+  return ChiSquare(data, rows, cols);
+}
+
+double chiSquare(nb::ndarray<nb::numpy, nb::ndim<2>> resArr) {
+  if (resArr.dtype() == nb::dtype<double>()) {
+    return chiSquareHelper<double>(resArr);
+  } else if (resArr.dtype() == nb::dtype<float>()) {
+    return chiSquareHelper<float>(resArr);
+  } else if (resArr.dtype() == nb::dtype<int>()) {
+    return chiSquareHelper<int>(resArr);
+  } else if (resArr.dtype() == nb::dtype<long int>()) {
+    return chiSquareHelper<long int>(resArr);
   } else {
     throw nb::value_error(
         "Numeric array object of type int or long or float or double");
   }
-  Py_DECREF(copy);
-  return res;
 }
+
 }  // namespace RDInfoTheory
 
 void wrap_ranker(nb::module_ &m);
@@ -116,8 +95,6 @@ NB_MODULE(rdInfoTheory, m) {
   m.doc() =
       "Module containing bunch of functions for information metrics and a "
       "ranker to rank bits";
-
-  rdkit_import_array();
 
   wrap_ranker(m);
   wrap_corrmatgen(m);
