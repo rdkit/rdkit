@@ -12,7 +12,12 @@ import unittest
 import numpy as np
 
 from rdkit import Chem, Geometry, RDConfig
-from rdkit.Chem import rdDepictor, rdMolAlign, rdMolTransforms
+from rdkit.Chem import rdDepictor, rdMolTransforms
+try:
+  from rdkit.Chem import rdMolAlign
+  _have_rdMolAlign = True
+except ImportError:
+  _have_rdMolAlign = False
 from rdkit.Chem.ChemUtils import AlignDepict
 
 
@@ -461,6 +466,7 @@ M  END""")
         msd /= len(atomMap)
         self.assertLess(msd, 5.e-3 if alignOnly else 1.e-4)
 
+  @unittest.skipIf(not _have_rdMolAlign, "rdMolAlign not available; skipping")
   def testNormalizeStraighten(self):
     noradrenalineMJ = Chem.MolFromMolBlock("""
   MJ201100
