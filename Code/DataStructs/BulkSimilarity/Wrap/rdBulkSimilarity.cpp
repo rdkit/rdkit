@@ -22,12 +22,38 @@
 #include <DataStructs/ExplicitBitVect.h>
 
 #include <cstdint>
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <mutex>
+#endif
 #include <string>
 #include <vector>
 
 namespace python = boost::python;
 
 namespace {
+
+// Lazy numpy initialization: rdkit_import_array() (which calls numpy's
+// import_array() and therefore `import numpy`) is intentionally NOT called
+// during module init, so `from rdkit import DataStructs` does not pull
+// numpy into sys.modules. Instead it runs at most once on first use of a
+// numpy-returning entry point. This matches the pattern in
+// DataStructs/Wrap/DataStructs.cpp and is required by the
+// test_lazy_numpy tests in Code/GraphMol/Wrap/.
+#ifdef RDK_BUILD_THREADSAFE_SSS
+std::once_flag s_bulksim_numpy_init_flag;
+#endif
+
+void ensureNumpy() {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::call_once(s_bulksim_numpy_init_flag, rdkit_import_array);
+#else
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    rdkit_import_array();
+  }
+#endif
+}
 
 //! RAII handle for a PyArrayObject. Decrefs on scope exit unless release()
 //! is called. Used to make sure half-built result arrays don't leak when
@@ -71,6 +97,7 @@ std::vector<const ExplicitBitVect *> extractFps(python::object seq,
 }
 
 PyObject *tanimotoMatrixPy(python::object probes, python::object targets) {
+  ensureNumpy();
   const auto probeFps = extractFps(probes, "probes");
   const auto targetFps = extractFps(targets, "targets");
 
@@ -108,7 +135,10 @@ PyObject *tanimotoMatrixPy(python::object probes, python::object targets) {
 }  // namespace
 
 BOOST_PYTHON_MODULE(cBulkSimilarity) {
-  rdkit_import_array();
+  // Note: rdkit_import_array() is intentionally NOT called here. numpy is
+  // loaded lazily on the first call to BulkTanimotoMatrix via
+  // ensureNumpy(), so that `from rdkit import DataStructs` does not pull
+  // numpy into sys.modules. See test_lazy_numpy.py in Code/GraphMol/Wrap/.
 
   python::scope().attr("__doc__") =
       "Bulk Tanimoto similarity over many ExplicitBitVect fingerprints.\n"
