@@ -75,7 +75,7 @@ namespace RdkitTests
 	  string smi = "c1ccccc1[C@](F)(Cl)Br";	
 	  ROMol mol = RWMol.MolFromSmiles(smi);
 	  byte[] pkl = mol.MolToCDX();
-	  vars mols = RWMol.MolsFromCDXMLByteArray(pkl);
+	  var mols = RWMol.MolsFromCDXMLByteArray(pkl);
 	  Assert.True(mol.MolToSmiles() == mols[0].MolToSmiles());
 
 	  string cdxml = mol.MolToCDXML();
