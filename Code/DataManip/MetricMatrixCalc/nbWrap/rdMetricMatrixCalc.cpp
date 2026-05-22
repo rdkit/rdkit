@@ -7,12 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#define PY_ARRAY_UNIQUE_SYMBOL rdmetric_array_API
 #include <nanobind/nanobind.h>
-
-#include <numpy/ndarraytypes.h>
-#include <numpy/npy_common.h>
-#include <RDBoost/import_array.h>
+#include <nanobind/ndarray.h>
 
 #include <RDGeneral/types.h>
 
@@ -46,7 +42,8 @@ class NbSequenceHolder {
   nb::object d_seq;
 };
 
-nb::object getEuclideanDistMat(nb::object descripMat) {
+nb::ndarray<nb::numpy, double, nb::ndim<1>> getEuclideanDistMat(
+    nb::object descripMat) {
   // Bit of a pain involved here, we accept three types of PyObjects here
   // 1. A Numeric Array
   //     - first find what 'type' of entry we have (float, double and int is all
@@ -76,84 +73,78 @@ nb::object getEuclideanDistMat(nb::object descripMat) {
   //  OK my brain is going to explode now
 
   // first deal with situation where we have a Numeric Array
-  PyObject *descMatObj = descripMat.ptr();
-  PyArrayObject *distResRaw = nullptr;
-  if (PyArray_Check(descMatObj)) {
+  nb::ndarray<nb::numpy, nb::ndim<2>> maybeArr;
+  bool isNumpyArray =
+      nb::try_cast<nb::ndarray<nb::numpy, nb::ndim<2>>>(descripMat, maybeArr);
+  if (isNumpyArray) {
     // get the dimensions of the array
-    int nrows = PyArray_DIM((PyArrayObject *)descMatObj, 0);
-    int ncols = PyArray_DIM((PyArrayObject *)descMatObj, 1);
+    auto nrows = static_cast<int>(maybeArr.shape(0));
+    auto ncols = static_cast<int>(maybeArr.shape(1));
     int i;
     CHECK_INVARIANT((nrows > 0) && (ncols > 0), "");
 
-    npy_intp dMatLen = nrows * (nrows - 1) / 2;
+    size_t dMatLen = static_cast<size_t>(nrows) * (nrows - 1) / 2;
 
-    // now that we have the dimensions declare the distance matrix which is
-    // always a 1D double array
-    distResRaw = (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
+    // allocate the output array; guard prevents leaks on early throw
+    auto *dMat = new double[dMatLen];
+    std::unique_ptr<double[]> guard(dMat);
 
-    // grab a pointer to the data in the array so that we can directly put
-    // values in there and avoid copying
-    auto *dMat = (double *)PyArray_DATA(distResRaw);
+    nb::dlpack::dtype dtype = maybeArr.dtype();
 
-    PyArrayObject *copyRaw = (PyArrayObject *)PyArray_ContiguousFromObject(
-        descMatObj, PyArray_DESCR((PyArrayObject *)descMatObj)->type_num, 2, 2);
-
-    // if we have a double array
-    if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num == NPY_DOUBLE) {
-      auto *desc = (double *)PyArray_DATA((PyArrayObject *)descMatObj);
+    if (dtype == nb::dtype<double>()) {
+      auto arr2d = nb::cast<
+          nb::ndarray<nb::numpy, double, nb::ndim<2>, nb::c_contig>>(
+          descripMat);
+      const double *desc = arr2d.data();
 
       // here is the 2D array trick so that when the distance calculator
       // asks for desc2D[i] we basically get the ith row as double*
       std::unique_ptr<double *[]> desc2D(new double *[nrows]);
       for (i = 0; i < nrows; i++) {
-        desc2D[i] = desc;
+        desc2D[i] = const_cast<double *>(desc);
         desc += ncols;
       }
       MetricMatrixCalc<double **, double *> mmCalc;
       mmCalc.setMetricFunc(&EuclideanDistanceMetric<double *, double *>);
       mmCalc.calcMetricMatrix(desc2D.get(), nrows, ncols, dMat);
-
-      Py_XDECREF((PyObject *)copyRaw);
-      // we got the distance matrix, we are happy so return
-      return nb::steal<nb::object>(PyArray_Return(distResRaw));
-    }
-
-    // if we have a float array
-    else if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num == NPY_FLOAT) {
-      auto *desc = (float *)PyArray_DATA(copyRaw);
+    } else if (dtype == nb::dtype<float>()) {
+      auto arr2d =
+          nb::cast<nb::ndarray<nb::numpy, float, nb::ndim<2>, nb::c_contig>>(
+              descripMat);
+      const float *desc = arr2d.data();
       std::unique_ptr<float *[]> desc2D(new float *[nrows]);
       for (i = 0; i < nrows; i++) {
-        desc2D[i] = desc;
+        desc2D[i] = const_cast<float *>(desc);
         desc += ncols;
       }
       MetricMatrixCalc<float **, float *> mmCalc;
       mmCalc.setMetricFunc(&EuclideanDistanceMetric<float *, float *>);
       mmCalc.calcMetricMatrix(desc2D.get(), nrows, ncols, dMat);
-      Py_XDECREF((PyObject *)copyRaw);
-      return nb::steal<nb::object>(PyArray_Return(distResRaw));
-    }
-
-    // if we have an integer array
-    else if (PyArray_DESCR((PyArrayObject *)descMatObj)->type_num == NPY_INT) {
-      int *desc = (int *)PyArray_DATA(copyRaw);
+    } else if (dtype == nb::dtype<int>()) {
+      auto arr2d =
+          nb::cast<nb::ndarray<nb::numpy, int, nb::ndim<2>, nb::c_contig>>(
+              descripMat);
+      const int *desc = arr2d.data();
       std::unique_ptr<int *[]> desc2D(new int *[nrows]);
       for (i = 0; i < nrows; i++) {
-        desc2D[i] = desc;
+        desc2D[i] = const_cast<int *>(desc);
         desc += ncols;
       }
       MetricMatrixCalc<int **, int *> mmCalc;
       mmCalc.setMetricFunc(&EuclideanDistanceMetric<int *, int *>);
       mmCalc.calcMetricMatrix(desc2D.get(), nrows, ncols, dMat);
-      Py_XDECREF((PyObject *)copyRaw);
-      return nb::steal<nb::object>(PyArray_Return(distResRaw));
     } else {
-      Py_XDECREF((PyObject *)copyRaw);
-      Py_XDECREF((PyObject *)distResRaw);
       // unrecognized type for the matrix, throw up
       throw nb::value_error(
           "The array has to be of type int, float, or double for "
           "GetEuclideanDistMat");
     }
+
+    guard.release();
+    nb::capsule owner(dMat, [](void *p) noexcept {
+      delete[] reinterpret_cast<double *>(p);
+    });
+    return nb::ndarray<nb::numpy, double, nb::ndim<1>>(dMat, {dMatLen}, owner);
   }  // done with an array input
   else {
     // we probably have a list or a tuple
@@ -162,9 +153,9 @@ nb::object getEuclideanDistMat(nb::object descripMat) {
     unsigned int nrows = static_cast<unsigned int>(nb::len(descripMat));
     CHECK_INVARIANT(nrows > 0, "Empty list passed in");
 
-    npy_intp dMatLen = nrows * (nrows - 1) / 2;
-    distResRaw = (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
-    auto *dMat = (double *)PyArray_DATA(distResRaw);
+    size_t dMatLen = static_cast<size_t>(nrows) * (nrows - 1) / 2;
+    auto *dMat = new double[dMatLen];
+    std::unique_ptr<double[]> guard(dMat);
 
     // assume that we have a list of list of values (that can be extracted to
     // double)
@@ -175,7 +166,6 @@ nb::object getEuclideanDistMat(nb::object descripMat) {
       if (i == 0) {
         ncols = row.size();
       } else if (row.size() != ncols) {
-        Py_XDECREF((PyObject *)distResRaw);
         throw nb::value_error("All subsequences must be the same length");
       }
       dData.push_back(std::move(row));
@@ -187,11 +177,17 @@ nb::object getEuclideanDistMat(nb::object descripMat) {
     mmCalc.setMetricFunc(&EuclideanDistanceMetric<NbSequenceHolder<double>,
                                                   NbSequenceHolder<double>>);
     mmCalc.calcMetricMatrix(dData, nrows, ncols, dMat);
+
+    guard.release();
+    nb::capsule owner(dMat, [](void *p) noexcept {
+      delete[] reinterpret_cast<double *>(p);
+    });
+    return nb::ndarray<nb::numpy, double, nb::ndim<1>>(dMat, {dMatLen}, owner);
   }
-  return nb::steal<nb::object>(PyArray_Return(distResRaw));
 }
 
-nb::object getTanimotoDistMat(nb::object bitVectList) {
+nb::ndarray<nb::numpy, double, nb::ndim<1>> getTanimotoDistMat(
+    nb::object bitVectList) {
   // we will assume here that we have a either a list of ExplicitBitVectors or
   // SparseBitVects
   unsigned int nrows = static_cast<unsigned int>(nb::len(bitVectList));
@@ -207,9 +203,9 @@ nb::object getTanimotoDistMat(nb::object bitVectList) {
         "SparseBitvects");
   }
 
-  npy_intp dMatLen = nrows * (nrows - 1) / 2;
-  auto *simRes = (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
-  auto *sMat = (double *)PyArray_DATA(simRes);
+  size_t dMatLen = static_cast<size_t>(nrows) * (nrows - 1) / 2;
+  auto *sMat = new double[dMatLen];
+  std::unique_ptr<double[]> guard(sMat);
 
   if (ebvWorks) {
     NbSequenceHolder<ExplicitBitVect> dData(bitVectList);
@@ -223,10 +219,16 @@ nb::object getTanimotoDistMat(nb::object bitVectList) {
     mmCalc.setMetricFunc(&TanimotoDistanceMetric<SparseBitVect, SparseBitVect>);
     mmCalc.calcMetricMatrix(dData, nrows, 0, sMat);
   }
-  return nb::steal<nb::object>(PyArray_Return(simRes));
+
+  guard.release();
+  nb::capsule owner(sMat, [](void *p) noexcept {
+    delete[] reinterpret_cast<double *>(p);
+  });
+  return nb::ndarray<nb::numpy, double, nb::ndim<1>>(sMat, {dMatLen}, owner);
 }
 
-nb::object getTanimotoSimMat(nb::object bitVectList) {
+nb::ndarray<nb::numpy, double, nb::ndim<1>> getTanimotoSimMat(
+    nb::object bitVectList) {
   // we will assume here that we have a either a list of ExplicitBitVectors or
   // SparseBitVects
   unsigned int nrows = static_cast<unsigned int>(nb::len(bitVectList));
@@ -242,9 +244,9 @@ nb::object getTanimotoSimMat(nb::object bitVectList) {
         "SparseBitvects");
   }
 
-  npy_intp dMatLen = nrows * (nrows - 1) / 2;
-  auto *simRes = (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
-  auto *sMat = (double *)PyArray_DATA(simRes);
+  size_t dMatLen = static_cast<size_t>(nrows) * (nrows - 1) / 2;
+  auto *sMat = new double[dMatLen];
+  std::unique_ptr<double[]> guard(sMat);
 
   if (ebvWorks) {
     NbSequenceHolder<ExplicitBitVect> dData(bitVectList);
@@ -259,13 +261,16 @@ nb::object getTanimotoSimMat(nb::object bitVectList) {
         &TanimotoSimilarityMetric<SparseBitVect, SparseBitVect>);
     mmCalc.calcMetricMatrix(dData, nrows, 0, sMat);
   }
-  return nb::steal<nb::object>(PyArray_Return(simRes));
+
+  guard.release();
+  nb::capsule owner(sMat, [](void *p) noexcept {
+    delete[] reinterpret_cast<double *>(p);
+  });
+  return nb::ndarray<nb::numpy, double, nb::ndim<1>>(sMat, {dMatLen}, owner);
 }
 }  // namespace RDDataManip
 
 NB_MODULE(rdMetricMatrixCalc, m) {
-  rdkit_import_array();
-
   m.doc() = R"DOC(Module containing the calculator for metric matrix calculation,
 e.g. similarity and distance matrices)DOC";
 
