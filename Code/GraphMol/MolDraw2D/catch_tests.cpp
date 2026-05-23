@@ -374,7 +374,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDrawingExtentsIncludeWithHighlights_default.svg", 1595689626U},
     {"testDrawingExtentsInclude_allButHighlights.svg", 1604243819U},
     {"testDrawingExtentsIncludeWithHighlights_allButHighlights.svg",
-     436783789U}};
+     436783789U},
+    {"test_Github9301_1.svg", 3573122884U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -4868,8 +4869,9 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
       y = std::stod(match[2].str());
       return true;
     }
-    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
-                       "(-?[0-9]+\\.?[0-9]*)");
+    std::regex pathRgx(
+        "class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+        "(-?[0-9]+\\.?[0-9]*)");
     if (std::regex_search(text, match, pathRgx) && match.size() == 3) {
       x = std::stod(match[1].str());
       y = std::stod(match[2].str());
@@ -4888,8 +4890,9 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
     if (!coords.empty()) {
       return coords;
     }
-    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
-                       "(-?[0-9]+\\.?[0-9]*)");
+    std::regex pathRgx(
+        "class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+        "(-?[0-9]+\\.?[0-9]*)");
     for (auto it = std::sregex_iterator(text.begin(), text.end(), pathRgx);
          it != std::sregex_iterator(); ++it) {
       coords.emplace_back(std::stod((*it)[1].str()), std::stod((*it)[2].str()));
@@ -4902,8 +4905,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   double right_x = 0.0, right_y = 0.0;
   SECTION("Top") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Top;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Top;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
@@ -4917,8 +4919,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   }
   SECTION("Left with vertical text") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
     drawer.drawOptions().legendVerticalText = true;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
@@ -4935,8 +4936,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   }
   SECTION("Left horizontal") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
     drawer.drawOptions().legendVerticalText = false;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
@@ -4950,8 +4950,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   }
   SECTION("Right horizontal") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Right;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Right;
     drawer.drawOptions().legendVerticalText = false;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
@@ -4980,8 +4979,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   SECTION("Long vertical side legend fits panel height") {
     const std::string longName(48, 'M');
     MolDraw2DSVG drawer(160, 90, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
     drawer.drawOptions().legendVerticalText = true;
     drawer.drawOptions().legendFraction = 0.22f;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, longName);
@@ -11363,4 +11361,35 @@ M  END
     }
     CHECK(checkCoords(referenceCoords, highlightCoords));
   }
+}
+
+TEST_CASE("Github9301 - reaction layout regression") {
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]"));
+  MolDraw2DSVG drawer(450, 200, 450, 200, NO_FREETYPE);
+  drawer.drawReaction(*rxn);
+  drawer.finishDrawing();
+  std::ofstream outs("test_Github9301_1.svg");
+  auto txt = drawer.getDrawingText();
+  outs << txt;
+  outs.close();
+  const static std::regex atom0(
+      "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-0'.* >C</text>");
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(txt.begin(), txt.end(), atom0),
+                    std::sregex_iterator()));
+  CHECK(match_count == 3);
+  auto match_begin = std::sregex_iterator(txt.begin(), txt.end(), atom0);
+  std::smatch match = *match_begin;
+  CHECK_THAT(stod(match[1]), Catch::Matchers::WithinAbs(40.2, 0.1));
+  CHECK_THAT(stod(match[2]), Catch::Matchers::WithinAbs(125.8, 0.1));
+  ++match_begin;
+  match = *match_begin;
+  CHECK_THAT(stod(match[1]), Catch::Matchers::WithinAbs(138.3, 0.1));
+  CHECK_THAT(stod(match[2]), Catch::Matchers::WithinAbs(104.5, 0.1));
+  ++match_begin;
+  match = *match_begin;
+  CHECK_THAT(stod(match[1]), Catch::Matchers::WithinAbs(355.9, 0.1));
+  CHECK_THAT(stod(match[2]), Catch::Matchers::WithinAbs(80.0, 0.1));
+  check_file_hash("test_Github9301_1.svg");
 }
