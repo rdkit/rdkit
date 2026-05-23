@@ -612,6 +612,7 @@ install(
   FILE ${RDKit_EXPORTED_TARGETS}.cmake
   NAMESPACE RDKit::
   DESTINATION ${RDKit_LibDir}/cmake/rdkit
+  COMPONENT dev
 )
 
 # create and install package configuration and version files
@@ -628,7 +629,8 @@ configure_file (
 install(FILES
     ${RDKit_BINARY_DIR}/rdkit-config.cmake
     ${RDKit_BINARY_DIR}/rdkit-config-version.cmake
-    DESTINATION ${RDKit_LibDir}/cmake/rdkit)
+    DESTINATION ${RDKit_LibDir}/cmake/rdkit
+    COMPONENT dev)
 
 # then manage the targets for the python bindings
 if(RDK_BUILD_PYTHON_WRAPPERS)
@@ -637,6 +639,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     FILE ${RDKitPython_EXPORTED_TARGETS}.cmake
     NAMESPACE RDKit::
     DESTINATION ${RDKit_LibDir}/cmake/rdkitpython
+    COMPONENT dev
   )
 
   write_basic_package_version_file(
@@ -652,7 +655,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   install(FILES
     ${RDKit_BINARY_DIR}/rdkitpython-config.cmake
     ${RDKit_BINARY_DIR}/rdkitpython-config-version.cmake
-    DESTINATION ${RDKit_LibDir}/cmake/rdkitpython)
+    DESTINATION ${RDKit_LibDir}/cmake/rdkitpython
+    COMPONENT dev)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 # Memory testing setup
