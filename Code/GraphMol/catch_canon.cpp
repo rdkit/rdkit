@@ -1767,3 +1767,106 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
 
   checkSmilesRoundtrip(smiles, shouldMatch);
 }
+
+TEST_CASE(
+    "Issue 9284: Infinite loop in BreakTies for disconnected/symmetric components",
+    "[canon][bug]") {
+  // Exact CTfile from the bug report - Ammonium iron(III) sulfate dodecahydrate
+  // Two identical SO4 groups + 13 isolated O atoms + isolated N + Fe
+  // caused BreakTies() to loop forever due to oscillating i -= 1
+  constexpr const char *ctab = R"ctab(
+     RDKit          2D
+
+ 24  8  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    1.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    2.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    3.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    4.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    5.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    6.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    6.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    8.2990    0.7500    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    9.5981    1.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    9.0490   -0.5490    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.5490    2.0490    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    7.5490    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    8.2990    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981    9.0490    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0490    7.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5490    9.5981    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   10.5981    0.0000    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
+ 14 15  6  0
+ 15 16  2  0
+ 15 17  2  0
+ 15 18  6  0
+ 19 20  6  0
+ 20 21  2  0
+ 20 22  2  0
+ 20 23  6  0
+V    1 N
+V    2 O
+V    3 O
+V    4 O
+V    5 O
+V    6 O
+V    7 O
+V    8 O
+V    9 O
+V   10 O
+V   11 O
+V   12 O
+V   13 O
+V   14 O
+V   15 S
+V   16 O
+V   17 O
+V   18 O
+V   19 O
+V   20 S
+V   21 O
+V   22 O
+V   23 O
+M  END
+)ctab";
+
+  SECTION("rankMolAtoms completes and returns correct number of ranks") {
+    auto m = v2::FileParsers::MolFromMolBlock(ctab);
+    REQUIRE(m);
+
+    std::vector<unsigned int> ranks;
+    RDKit::Canon::rankMolAtoms(*m, ranks);
+
+    CHECK(ranks.size() == m->getNumAtoms());
+  }
+
+  SECTION("rankMolAtoms is deterministic across two calls") {
+    auto m = v2::FileParsers::MolFromMolBlock(ctab);
+    REQUIRE(m);
+
+    std::vector<unsigned int> ranks1, ranks2;
+    RDKit::Canon::rankMolAtoms(*m, ranks1);
+    RDKit::Canon::rankMolAtoms(*m, ranks2);
+
+    CHECK(ranks1 == ranks2);
+  }
+
+  SECTION("Two identical molecules produce identical rankings") {
+    auto m1 = v2::FileParsers::MolFromMolBlock(ctab);
+    auto m2 = v2::FileParsers::MolFromMolBlock(ctab);
+    REQUIRE(m1);
+    REQUIRE(m2);
+
+    std::vector<unsigned int> ranks1, ranks2;
+    RDKit::Canon::rankMolAtoms(*m1, ranks1);
+    RDKit::Canon::rankMolAtoms(*m2, ranks2);
+
+    CHECK(ranks1 == ranks2);
+  }
+}

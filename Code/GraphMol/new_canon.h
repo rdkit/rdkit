@@ -797,15 +797,26 @@ void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
                std::vector<int> &changed,
                std::vector<char> &touchedPartitions) {
   unsigned int nAtoms = mol.getNumAtoms();
+  if (!nAtoms) {
+    return;
+  }
+
+  // Tracking bitset prevents infinite re-verification loops on symmetric pairs
+  boost::dynamic_bitset<> finishedClass(nAtoms);
+
   int partition;
   int offset;
   int index;
   int len;
-  int oldPart = 0;
 
   for (unsigned int i = 0; i < nAtoms; i++) {
     partition = order[i];
-    oldPart = atoms[partition].index;
+    unsigned int symClass = atoms[partition].index;
+
+    if (finishedClass[symClass]) {
+      continue;
+    }
+
     while (count[partition] > 1) {
       len = count[partition];
       offset = atoms[partition].index + len - 1;
@@ -814,33 +825,29 @@ void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
       count[partition] = len - 1;
       count[index] = 1;
 
-      // test for ions, water molecules with no
-      if (atoms[index].degree < 1) {
-        continue;
-      }
-      for (unsigned j = 0; j < atoms[index].degree; ++j) {
-        unsigned int nbor = atoms[index].nbrIds[j];
-        touchedPartitions[atoms[nbor].index] = 1;
-        changed[nbor] = 1;
-      }
-
-      for (unsigned int ii = 0; ii < nAtoms; ++ii) {
-        if (touchedPartitions[ii]) {
-          int npart = order[ii];
-          if ((count[npart] > 1) && (next[npart] == -2)) {
-            next[npart] = activeset;
-            activeset = npart;
-          }
-          touchedPartitions[ii] = 0;
+      if (atoms[index].degree >= 1) {
+        for (unsigned j = 0; j < atoms[index].degree; ++j) {
+          unsigned int nbor = atoms[index].nbrIds[j];
+          touchedPartitions[atoms[nbor].index] = 1;
+          changed[nbor] = 1;
         }
+
+        for (unsigned int ii = 0; ii < nAtoms; ++ii) {
+          if (touchedPartitions[ii]) {
+            int npart = order[ii];
+            if ((count[npart] > 1) && (next[npart] == -2)) {
+              next[npart] = activeset;
+              activeset = npart;
+            }
+            touchedPartitions[ii] = 0;
+          }
+        }
+        RefinePartitions(mol, atoms, compar, mode, order, count, activeset,
+                         next, changed, touchedPartitions);
       }
-      RefinePartitions(mol, atoms, compar, mode, order, count, activeset, next,
-                       changed, touchedPartitions);
+      partition = order[atoms[partition].index];
     }
-    // not sure if this works each time
-    if (atoms[partition].index != oldPart) {
-      i -= 1;
-    }
+    finishedClass[symClass] = 1;
   }
 }  // end of BreakTies()
 
