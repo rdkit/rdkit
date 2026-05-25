@@ -4868,8 +4868,9 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
       y = std::stod(match[2].str());
       return true;
     }
-    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
-                       "(-?[0-9]+\\.?[0-9]*)");
+    std::regex pathRgx(
+        "class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+        "(-?[0-9]+\\.?[0-9]*)");
     if (std::regex_search(text, match, pathRgx) && match.size() == 3) {
       x = std::stod(match[1].str());
       y = std::stod(match[2].str());
@@ -4888,8 +4889,9 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
     if (!coords.empty()) {
       return coords;
     }
-    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
-                       "(-?[0-9]+\\.?[0-9]*)");
+    std::regex pathRgx(
+        "class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+        "(-?[0-9]+\\.?[0-9]*)");
     for (auto it = std::sregex_iterator(text.begin(), text.end(), pathRgx);
          it != std::sregex_iterator(); ++it) {
       coords.emplace_back(std::stod((*it)[1].str()), std::stod((*it)[2].str()));
@@ -4902,8 +4904,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   double right_x = 0.0, right_y = 0.0;
   SECTION("Top") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Top;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Top;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
@@ -4917,8 +4918,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   }
   SECTION("Left with vertical text") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
     drawer.drawOptions().legendVerticalText = true;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
@@ -4935,8 +4935,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   }
   SECTION("Left horizontal") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
     drawer.drawOptions().legendVerticalText = false;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
@@ -4950,8 +4949,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   }
   SECTION("Right horizontal") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Right;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Right;
     drawer.drawOptions().legendVerticalText = false;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
@@ -4980,8 +4978,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   SECTION("Long vertical side legend fits panel height") {
     const std::string longName(48, 'M');
     MolDraw2DSVG drawer(160, 90, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
     drawer.drawOptions().legendVerticalText = true;
     drawer.drawOptions().legendFraction = 0.22f;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, longName);
@@ -11363,4 +11360,33 @@ M  END
     }
     CHECK(checkCoords(referenceCoords, highlightCoords));
   }
+}
+
+TEST_CASE("Uniform bond colour") {
+  auto m1 = "F[C@@H](Cl)Oc1ccc(N2CCc3nccc(C(=O)Nc4ccccn4)c3C2)nc1"_smiles;
+  REQUIRE(m1);
+  MolDraw2DSVG drawer(400, 400, -1, -1, NO_FREETYPE);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  drawer.drawOptions().addBondIndices = true;
+  drawer.drawOptions().singleColourBonds = true;
+  drawer.drawMolecule(*m1);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs("testUniformBondColour_1.svg");
+  outs << text;
+  outs.close();
+  // Bond 2 is C-O so in normal mode would have 2 lines, a black one and a
+  // red one.  Make sure there's only one.
+  const static std::regex bond2("<path class='bond-2 atom-1 atom-3'");
+  std::ptrdiff_t const match_count2(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), bond2),
+                    std::sregex_iterator()));
+  CHECK(match_count2 == 1);
+  // Bond 0 is a wedge to fluorine.  Make sure it is also all black, which
+  // involves 1 triangle not 2.
+  const static std::regex bond0("<path class='bond-0 atom-1 atom-0'");
+  std::ptrdiff_t const match_count0(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), bond2),
+                    std::sregex_iterator()));
+  CHECK(match_count0 == 1);
 }
