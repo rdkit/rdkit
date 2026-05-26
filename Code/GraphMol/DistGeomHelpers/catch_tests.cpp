@@ -950,7 +950,6 @@ TEST_CASE("Macrocycle bounds matrix") {
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid >= 0);
     const auto conf = mol->getConformer(cid);
-    MolToMolFile(*mol, "/localhome/maedern/projects/rdkit/macrocycle.sdf");
     RDGeom::Point3D pos_1 = conf.getAtomPos(1);
     RDGeom::Point3D pos_4 = conf.getAtomPos(4);
     CHECK((pos_1 - pos_4).length() < bm->getUpperBound(1, 4));
@@ -1142,8 +1141,6 @@ TEST_CASE("Github #7181: ET terms applied to constrained atoms") {
     for (auto &[ti, mi] : imatch) {
       std::swap(ti, mi);
     }
-    MolToMolFile(*templ, "/localhome/maedern/projects/rdkit/templ.mol");
-    MolToMolFile(*mol, "/localhome/maedern/projects/rdkit/mol.mol");
     auto rmsd = MolAlign::alignMol(*mol, *templ, cid, -1, &imatch);
     CHECK(rmsd < 0.2);
   }
