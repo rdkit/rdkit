@@ -254,6 +254,18 @@ ForceFields::ForceField *constructForceField(
   return field;
 }  // constructForceField
 
+RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructForceField(
+    const BoundsMatrix &mmat, const RDGeom::PointPtrVect &positions,
+    const VECT_CHIRALSET &csets, const double weightChiral,
+    const double weightFourthDim,
+    const std::map<std::pair<int, int>, double> *extraWeights,
+    const double basinSizeTol,
+    const boost::dynamic_bitset<> *fixedPts) {
+  return constructForceField(mmat, positions, csets, 1.0, weightChiral,
+                             weightFourthDim, extraWeights, basinSizeTol,
+                             fixedPts);
+}
+
 //! Add basic knowledge improper torsion contributions to a force field
 /*!
 

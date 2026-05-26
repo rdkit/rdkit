@@ -122,6 +122,39 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructForceField(
     const double basinSizeTol = 5.0,
     const boost::dynamic_bitset<> *fixedPts = nullptr);
 
+//! Setup the error function for violation of distance bounds as a forcefield
+/*!
+  This is based on function E3 on page 311 of "Distance Geometry in Molecular
+  Modeling" Jeffrey M.Blaney and J.Scott Dixon, Review in Computational
+  Chemistry,
+  Volume V
+
+  \param mmat            Distance bounds matrix
+  \param positions       A vector of pointers to Points to write out the
+  resulting coordinates
+  \param csets           The vector of chiral points (type: ChiralSet)
+  \param weightChiral    weight to be used to enforce chirality
+  \param weightFourthDim another chiral weight
+  \param extraWeights    an optional set of weights for distance bounds
+  violations
+  \param basinSizeTol  Optional: any distance bound with a basin (distance
+  between max and
+                       min bounds) larger than this value will not be included
+  in the force
+                       field used to cleanup the structure.
+
+  \return a pointer to a ForceField suitable for cleaning up the violations.
+    <b>NOTE:</b> the caller is responsible for deleting this force field.
+
+*/
+RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructForceField(
+    const BoundsMatrix &mmat, const RDGeom::PointPtrVect &positions,
+    const VECT_CHIRALSET &csets, const double weightChiral = 1.0,
+    const double weightFourthDim = 0.1,
+    const std::map<std::pair<int, int>, double> *extraWeights = nullptr,
+    const double basinSizeTol = 5.0,
+    const boost::dynamic_bitset<> *fixedPts = nullptr);
+
 //! Force field with experimental torsion angle preferences and 1-2/1-3 distance
 /// constraints
 /*!
