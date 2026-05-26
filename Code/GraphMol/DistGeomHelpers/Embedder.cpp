@@ -67,7 +67,6 @@ constexpr double MAX_MINIMIZED_E_PER_ATOM = 0.05;
 constexpr double MAX_MINIMIZED_E_PER_ATOM_AIO = 0.1;
 constexpr double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
 constexpr double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
-constexpr double CLASH_DIST2 = 0.8;
 inline bool haveOppositeSign(double a, double b) {
   return std::signbit(a) ^ std::signbit(b);
 }
