@@ -806,7 +806,6 @@ class TestCase(unittest.TestCase):
     params = AllChem.ETKDGv3()
     params.randomSeed = 0
     AllChem.EmbedMolecule(mol, params)
-    Chem.MolToMolFile(mol, "/localhome/maedern/projects/rdkit/05amide.mol")
     conf = mol.GetConformer(0)
     for torsion in get_atom_mapping(mol):
       a1, a2, a3, a4 = [conf.GetAtomPosition(i) for i in torsion]
