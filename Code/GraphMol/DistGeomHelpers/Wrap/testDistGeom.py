@@ -1,3 +1,4 @@
+from code import interact
 import copy
 import math
 import os
@@ -849,7 +850,7 @@ class TestCase(unittest.TestCase):
     AllChem.EmbedMolecule(mol, params)
     cnts = params.GetFailureCounts()
     self.assertGreater(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS], 5)
-    self.assertGreater(cnts[AllChem.EmbedFailureCauses.FIRST_MINIMIZATION], 10)
+    self.assertGreater(cnts[AllChem.EmbedFailureCauses.MINIMIZATION], 10)
 
   def testCoordMap(self):
     mol = Chem.AddHs(Chem.MolFromSmiles("OCCC"))
@@ -937,6 +938,18 @@ class TestCase(unittest.TestCase):
     goal = '{"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","coordMap":{"3":["1.100000","2.200000","3.300000"]},"boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6573654663221247"],["0.98025420400136154","1.5773654663221246","0"]]}'
     json = rdDistGeom.EmbedParametersToJSON(ps)
     self.assertEqual(json,goal)
+  
+  def testOrderedFailureCauses(self):
+    legacy = rdDistGeom.OrderedEmbedFailureCauses(True)
+    aio = rdDistGeom.OrderedEmbedFailureCauses(False)
+    legacy_set = {v[0] for v in legacy}
+    aio_set = {v[0] for v in aio}
+    ps= rdDistGeom.DG()
+    ps.trackFailures = True
+    mol = Chem.MolFromSmiles("C")
+    rdDistGeom.EmbedMolecule(mol, ps)
+    fc = ps.GetFailureCounts()
+    assert len (fc) == len(legacy_set.union(aio_set))
 
 if __name__ == '__main__':
   unittest.main()

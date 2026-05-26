@@ -118,12 +118,18 @@ void compareConfs(const ROMol *m, const ROMol *expected, int molConfId = -1,
 }
 }  // namespace
 
-TEST_CASE("update parameters from JSON LEGACY") {
-  std::string rdbase = getenv("RDBASE");
+TEST_CASE("update parameters from JSON") {
+  const bool legacy = GENERATE(true, false);
+  const auto getPath = [](const std::string file, const bool legacy) {
+    std::string rdbase = getenv("RDBASE");
+    std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+    if (!legacy) {
+      fname += "AIO/";
+    }
+    return fname + file;
+  };
   SECTION("DG") {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.dg.mol";
+    std::string fname = getPath("simple_torsion.dg.mol", legacy);
     std::unique_ptr<RWMol> ref{MolFileToMol(fname, true, false)};
     REQUIRE(ref);
     std::unique_ptr<RWMol> mol{SmilesToMol("OCCC")};
@@ -131,16 +137,16 @@ TEST_CASE("update parameters from JSON LEGACY") {
     MolOps::addHs(*mol);
     CHECK(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params;
-    std::string json = R"JSON({"randomSeed":42})JSON";
+    std::string json =
+        R"JSON({"randomSeed":42,"useLegacyImplementation":)JSON" +
+        std::string(legacy ? "true" : "false") + "}";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // MolToMolFile(*mol, fname);
     compareConfs(ref.get(), mol.get());
   }
   SECTION("ETKDG") {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/simple_torsion.etkdg.mol";
+    std::string fname = getPath("simple_torsion.etkdg.mol", legacy);
     std::unique_ptr<RWMol> ref{MolFileToMol(fname, true, false)};
     REQUIRE(ref);
     std::unique_ptr<RWMol> mol{SmilesToMol("OCCC")};
@@ -150,16 +156,15 @@ TEST_CASE("update parameters from JSON LEGACY") {
     DGeomHelpers::EmbedParameters params;
     std::string json = R"JSON({"randomSeed":42,
     "useExpTorsionAnglePrefs":true,
-    "useBasicKnowledge":true})JSON";
+    "useBasicKnowledge":true,"useLegacyImplementation":)JSON" +
+                       std::string(legacy ? "true" : "false") + "}";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // MolToMolFile(*mol, fname);
     compareConfs(ref.get(), mol.get());
   }
   SECTION("ETKDGv2") {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/torsion.etkdg.v2.mol";
+    std::string fname = getPath("torsion.etkdg.v2.mol", legacy);
     std::unique_ptr<RWMol> ref{MolFileToMol(fname, true, false)};
     REQUIRE(ref);
     std::unique_ptr<RWMol> mol{SmilesToMol("n1cccc(C)c1ON")};
@@ -170,7 +175,8 @@ TEST_CASE("update parameters from JSON LEGACY") {
     std::string json = R"JSON({"randomSeed":42,
     "useExpTorsionAnglePrefs":true,
     "useBasicKnowledge":true,
-    "ETversion":2})JSON";
+    "ETversion":2,"useLegacyImplementation":)JSON" +
+                       std::string(legacy ? "true" : "false") + "}";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // MolToMolFile(*mol, fname);
@@ -184,7 +190,8 @@ TEST_CASE("update parameters from JSON LEGACY") {
     {
       DGeomHelpers::EmbedParameters params;
       std::string json = R"JSON({"randomSeed":42,
-    "coordMap":{"0":[0,0,0],"1":[0,0,1.5],"2":[0,1.5,1.5]}})JSON";
+    "coordMap":{"0":[0,0,0],"1":[0,0,1.5],"2":[0,1.5,1.5]},"useLegacyImplementation":)JSON" +
+                         std::string(legacy ? "true" : "false") + "}";
       DGeomHelpers::updateEmbedParametersFromJSON(params, json);
       CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
       delete params.coordMap;
@@ -195,83 +202,7 @@ TEST_CASE("update parameters from JSON LEGACY") {
     }
   }
 }
-TEST_CASE("update parameters from JSON AIO") {
-  std::string rdbase = getenv("RDBASE");
-  SECTION("DG") {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/AIO/simple_torsion.dg.mol";
-    std::unique_ptr<RWMol> ref{MolFileToMol(fname, true, false)};
-    REQUIRE(ref);
-    std::unique_ptr<RWMol> mol{SmilesToMol("OCCC")};
-    REQUIRE(mol);
-    MolOps::addHs(*mol);
-    CHECK(ref->getNumAtoms() == mol->getNumAtoms());
-    DGeomHelpers::EmbedParameters params;
-    std::string json =
-        R"JSON({"randomSeed":42,"useLegacyImplementation":false})JSON";
-    DGeomHelpers::updateEmbedParametersFromJSON(params, json);
-    CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
-    compareConfs(ref.get(), mol.get());
-  }
-  SECTION("ETKDG") {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/AIO/simple_torsion.etkdg.mol";
-    std::unique_ptr<RWMol> ref{MolFileToMol(fname, true, false)};
-    REQUIRE(ref);
-    std::unique_ptr<RWMol> mol{SmilesToMol("OCCC")};
-    REQUIRE(mol);
-    MolOps::addHs(*mol);
-    CHECK(ref->getNumAtoms() == mol->getNumAtoms());
-    DGeomHelpers::EmbedParameters params;
-    std::string json = R"JSON({"randomSeed":42,
-    "useExpTorsionAnglePrefs":true,
-    "useBasicKnowledge":true,
-    "useLegacyImplementation": false})JSON";
-    DGeomHelpers::updateEmbedParametersFromJSON(params, json);
-    CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
-    compareConfs(ref.get(), mol.get());
-  }
-  SECTION("ETKDGv2") {
-    std::string fname =
-        rdbase +
-        "/Code/GraphMol/DistGeomHelpers/test_data/AIO/torsion.etkdg.v2.mol";
-    std::unique_ptr<RWMol> ref{MolFileToMol(fname, true, false)};
-    REQUIRE(ref);
-    std::unique_ptr<RWMol> mol{SmilesToMol("n1cccc(C)c1ON")};
-    REQUIRE(mol);
-    MolOps::addHs(*mol);
-    CHECK(ref->getNumAtoms() == mol->getNumAtoms());
-    DGeomHelpers::EmbedParameters params;
-    std::string json = R"JSON({"randomSeed":42,
-    "useExpTorsionAnglePrefs":true,
-    "useBasicKnowledge":true,
-    "ETversion":2,
-    "useLegacyImplementation": false})JSON";
-    DGeomHelpers::updateEmbedParametersFromJSON(params, json);
-    CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
-    compareConfs(ref.get(), mol.get());
-  }
-  SECTION("setting atommap") {
-    std::unique_ptr<RWMol> mol{SmilesToMol("OCCC")};
-    REQUIRE(mol);
-    MolOps::addHs(*mol);
-    {
-      DGeomHelpers::EmbedParameters params;
-      std::string json =
-          R"JSON({"randomSeed":42,"useLegacyImplementation":false,
-    "coordMap":{"0":[0,0,0],"1":[0,0,1.5],"2":[0,1.5,1.5]}})JSON";
-      DGeomHelpers::updateEmbedParametersFromJSON(params, json);
-      CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
-      delete params.coordMap;
-      auto conf = mol->getConformer();
-      auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
-      auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
-      CHECK(v1.angleTo(v2) == Catch::Approx(M_PI / 2).margin(0.15));
-    }
-  }
-}
+
 TEST_CASE("EmbedParameters to JSON") {
   SECTION("No map") {
     auto ps = DGeomHelpers::KDG;
@@ -802,7 +733,7 @@ SECTION("basicsAIO") {
   auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
   CHECK(cid < 0);
   CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 16);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] == 0);
+  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::KTERM_VIOLATION] == 0);
   auto fail_cp = ps.failures;
   // make sure we reset the counts each time
   cid = DGeomHelpers::EmbedMolecule(*mol, ps);
@@ -824,8 +755,7 @@ SECTION("chirality") {
   auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
   CHECK(cid < 0);
   CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 8);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FIRST_MINIMIZATION] ==
-        42);
+  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::MINIMIZATION] == 42);
 }
 
 #ifdef RDK_TEST_MULTITHREADED
