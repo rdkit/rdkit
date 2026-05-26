@@ -1101,7 +1101,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
         if (end_time != nullptr && Clock::now() > *end_time) {
           embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
         } else {
-          embedParams.failures[EmbedFailureCauses::FIRST_MINIMIZATION]++;
+          embedParams.failures[EmbedFailureCauses::MINIMIZATION]++;
         }
       }
       continue;
@@ -1123,7 +1123,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
 #ifdef RDK_BUILD_THREADSAFE_SSS
         std::lock_guard<std::mutex> lock(GetFailMutex());
 #endif
-        embedParams.failures[EmbedFailureCauses::ETK_MINIMIZATION]++;
+        embedParams.failures[EmbedFailureCauses::KTERM_VIOLATION]++;
       }
       continue;
     }

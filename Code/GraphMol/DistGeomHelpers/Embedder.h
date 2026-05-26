@@ -35,8 +35,10 @@ enum EmbedFailureCauses {
   BAD_DOUBLE_BOND_STEREO = 9,
   CHECK_CHIRAL_CENTERS2 = 10,
   EXCEEDED_TIMEOUT = 11,
-  CLASH = 12,
-  END_OF_ENUM = 13,
+  MINIMIZATION = 12,
+  KTERM_VIOLATION = 13,
+  CLASH = 14,
+  END_OF_ENUM = 15,
 };
 
 //! Parameter object for controlling embedding

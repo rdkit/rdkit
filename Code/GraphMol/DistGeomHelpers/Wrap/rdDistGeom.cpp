@@ -510,8 +510,49 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
              RDKit::DGeomHelpers::EmbedFailureCauses::CHECK_CHIRAL_CENTERS2)
       .value("EXCEEDED_TIMEOUT",
              RDKit::DGeomHelpers::EmbedFailureCauses::EXCEEDED_TIMEOUT)
+      .value("MINIMIZATION",
+             RDKit::DGeomHelpers::EmbedFailureCauses::MINIMIZATION)
+      .value("KTERM_VIOLATION",
+             RDKit::DGeomHelpers::EmbedFailureCauses::KTERM_VIOLATION)
       .value("CLASH", RDKit::DGeomHelpers::EmbedFailureCauses::CLASH)
       .export_values();
+
+  python::def(
+      "OrderedEmbedFailureCauses",
+      +[](const bool legacyImplementation = true) {
+        using E = RDKit::DGeomHelpers::EmbedFailureCauses;
+        using Ret_T = std::vector<std::pair<E, std::size_t>>;
+        python::list result;
+        Ret_T causes = legacyImplementation
+                           ? Ret_T{{E::INITIAL_COORDS, 0},
+                                   {E::FIRST_MINIMIZATION, 1},
+                                   {E::CHECK_TETRAHEDRAL_CENTERS, 2},
+                                   {E::CHECK_CHIRAL_CENTERS, 3},
+                                   {E::MINIMIZE_FOURTH_DIMENSION, 4},
+                                   {E::ETK_MINIMIZATION, 5},
+                                   {E::LINEAR_DOUBLE_BOND, 8},
+                                   {E::CHECK_CHIRAL_CENTERS2, 10},
+                                   {E::FINAL_CHIRAL_BOUNDS, 6},
+                                   {E::FINAL_CENTER_IN_VOLUME, 7},
+                                   {E::BAD_DOUBLE_BOND_STEREO, 9},
+                                   {E::EXCEEDED_TIMEOUT, 11}}
+                           : Ret_T{{E::INITIAL_COORDS, 0},
+                                   {E::MINIMIZATION, 1},
+                                   {E::KTERM_VIOLATION, 13},
+                                   {E::CHECK_TETRAHEDRAL_CENTERS, 2},
+                                   {E::FINAL_CHIRAL_BOUNDS, 6},
+                                   {E::FINAL_CENTER_IN_VOLUME, 7},
+                                   {E::CHECK_CHIRAL_CENTERS, 3},
+                                   {E::BAD_DOUBLE_BOND_STEREO, 9},
+                                   {E::CLASH, 14},
+                                   {E::LINEAR_DOUBLE_BOND, 9},
+                                   {E::EXCEEDED_TIMEOUT, 11}};
+        for (const auto &c : causes) {
+          result.append(python::make_tuple(c.first, c.second));
+        }
+        return result;
+      },
+      python::arg("legacyImplementation") = true);
 
   python::class_<PyEmbedParameters, boost::noncopyable>(
       "EmbedParameters", "Parameters controlling embedding")
