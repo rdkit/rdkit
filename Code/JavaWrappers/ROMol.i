@@ -98,6 +98,16 @@
 %ignore RDKit::ROMol::bonds();
 %ignore RDKit::ROMol::bonds() const;
 
+%ignore RDKit::ROMol::checkedAtomNeighbors(Atom const *at) const;
+%ignore RDKit::ROMol::checkedAtomNeighbors(Atom const *at);
+%ignore RDKit::ROMol::checkedAtoms() const;
+%ignore RDKit::ROMol::checkedAtoms();
+
+%ignore RDKit::ROMol::checkedAtomBonds(Atom const *at) const;
+%ignore RDKit::ROMol::checkedAtomBonds(Atom const *at);
+%ignore RDKit::ROMol::checkedBonds();
+%ignore RDKit::ROMol::checkedBonds() const;
+
 %ignore RDKit::ROMol::getVertices() ;
 %ignore RDKit::ROMol::getVertices() const ;
 %ignore RDKit::ROMol::getEdges() ;
