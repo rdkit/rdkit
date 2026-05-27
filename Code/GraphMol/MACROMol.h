@@ -161,8 +161,8 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
     }
     d_templateLibrary.copyTemplateLib(*other.getTemplateLibrary());
   }
-  MACROMol(MACROMol &&other) noexcept = default;
-  MACROMol &operator=(MACROMol &&other) noexcept = default;
+  MACROMol(MACROMol &&other) noexcept = delete;
+  MACROMol &operator=(MACROMol &&other) noexcept = delete;
 
   MACROMol &operator=(const MACROMol &) = delete;  // disable assignment
 
