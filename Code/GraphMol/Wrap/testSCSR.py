@@ -44,7 +44,8 @@ class TestCase(unittest.TestCase):
       self.assertEqual(len(sgs), 6)
 
     # check defaults:
-    for mol in (Chem.MolFromSCSRBlock(scsrBlock), Chem.MolFromSCSRFile(ofile)):
+    molFromMACROMolParamsDefault = Chem.MolFromMACROMolParams()
+    for mol in (Chem.MolFromSCSRBlock(scsrBlock,True,True, molFromMACROMolParamsDefault, scsrBaseHbondOptions), Chem.MolFromSCSRFile(ofile,True,True, molFromMACROMolParamsDefault,scsrBaseHbondOptions)):
       self.assertTrue(mol.GetNumAtoms() == 30)
       sgs = Chem.GetMolSubstanceGroups(mol)
       self.assertEqual(len(sgs), 6)
