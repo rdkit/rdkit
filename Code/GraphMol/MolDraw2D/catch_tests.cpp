@@ -374,7 +374,11 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDrawingExtentsIncludeWithHighlights_default.svg", 1595689626U},
     {"testDrawingExtentsInclude_allButHighlights.svg", 1604243819U},
     {"testDrawingExtentsIncludeWithHighlights_allButHighlights.svg",
-     436783789U}};
+     436783789U},
+    {"test_Github9280_1.0.svg", 1658116840U},
+    {"test_Github9280_2.0.svg", 1805554327U},
+    {"test_Github9280_0.3.svg", 893100468U},
+    {"test_Github9280_0.2.svg", 770838895U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -4250,7 +4254,7 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    CHECK_THAT(drawer.fontSize(), Catch::Matchers::WithinAbs(5.5, 0.2));
+    CHECK_THAT(drawer.fontSize(), Catch::Matchers::WithinAbs(6.0, 0.2));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.1b.svg");
     outs << text;
@@ -11362,6 +11366,63 @@ M  END
   }
 }
 
+TEST_CASE("Github 9280 - font scaling bug") {
+  auto mol = "CC(C)Oc1ccc(N2CCc3nccc(C(=O)Nc4ccccn4)c3C2)nc1"_smiles;
+  {
+    MolDraw2DSVG drawer(358, 290, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().baseFontSize = 1.0;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream ofs("test_Github9280_1.0.svg");
+    ofs << text;
+    ofs.close();
+    // With the bug, it snapped to maximum font size, 40 pixels.
+    CHECK(text.find("font-size:40px") == std::string::npos);
+    CHECK(text.find("font-size:24px") != std::string::npos);
+    check_file_hash("test_Github9280_1.0.svg");
+  }
+  {
+    // Check it still maxes out at 40 - font size would be 50 without.
+    MolDraw2DSVG drawer(358, 290, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().baseFontSize = 2.0;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream ofs("test_Github9280_2.0.svg");
+    ofs << text;
+    ofs.close();
+    CHECK(text.find("font-size:40px") != std::string::npos);
+    check_file_hash("test_Github9280_2.0.svg");
+  }
+  {
+    MolDraw2DSVG drawer(358, 290, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().baseFontSize = 0.3;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream ofs("test_Github9280_0.3.svg");
+    ofs << text;
+    ofs.close();
+    // With the bug, it snapped to minimum font size, 6 pixels.
+    CHECK(text.find("font-size:6px") == std::string::npos);
+    CHECK(text.find("font-size:7px") != std::string::npos);
+    check_file_hash("test_Github9280_0.3.svg");
+  }
+  {
+    MolDraw2DSVG drawer(358, 290, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().baseFontSize = 0.2;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream ofs("test_Github9280_0.2.svg");
+    ofs << text;
+    ofs.close();
+    // This should be the minimum font size
+    CHECK(text.find("font-size:6px") != std::string::npos);
+    check_file_hash("test_Github9280_0.2.svg");
+  }
+}
 TEST_CASE("Uniform bond colour") {
   auto m1 = "F[C@@H](Cl)Oc1ccc(N2CCc3nccc(C(=O)Nc4ccccn4)c3C2)nc1"_smiles;
   REQUIRE(m1);
