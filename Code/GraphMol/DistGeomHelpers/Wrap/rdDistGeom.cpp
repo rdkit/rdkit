@@ -537,7 +537,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                                    {E::BAD_DOUBLE_BOND_STEREO, 9},
                                    {E::EXCEEDED_TIMEOUT, 11}}
                            : Ret_T{{E::INITIAL_COORDS, 0},
-                                   {E::MINIMIZATION, 1},
+                                   {E::MINIMIZATION, 12},
                                    {E::KTERM_VIOLATION, 13},
                                    {E::CHECK_TETRAHEDRAL_CENTERS, 2},
                                    {E::FINAL_CHIRAL_BOUNDS, 6},
