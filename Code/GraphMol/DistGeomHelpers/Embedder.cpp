@@ -1075,7 +1075,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     // Get Initial positions
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
-    if (not gotCoords) {
+    if (!gotCoords) {
       if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
         std::lock_guard<std::mutex> lock(GetFailMutex());
@@ -1093,7 +1093,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     // run Minimization
     gotCoords =
         EmbeddingOps::minimizeAllInOne(positions, eargs, embedParams, end_time);
-    if (not gotCoords) {
+    if (!gotCoords) {
       if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
         std::lock_guard<std::mutex> lock(GetFailMutex());
@@ -1117,15 +1117,15 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       for (const auto &i : positions3D) {
         delete i;
       }
-    }
-    if (not gotCoords) {
-      if (embedParams.trackFailures) {
+      if (!gotCoords) {
+        if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
-        std::lock_guard<std::mutex> lock(GetFailMutex());
+          std::lock_guard<std::mutex> lock(GetFailMutex());
 #endif
-        embedParams.failures[EmbedFailureCauses::KTERM_VIOLATION]++;
+          embedParams.failures[EmbedFailureCauses::KTERM_VIOLATION]++;
+        }
+        continue;
       }
-      continue;
     }
 
     // check ctrl-C
@@ -1135,7 +1135,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
 
     // Check Tetrahedral Centers
     gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs);
-    if (not gotCoords) {
+    if (!gotCoords) {
       if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
         std::lock_guard<std::mutex> lock(GetFailMutex());
@@ -1145,21 +1145,9 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       continue;
     }
 
-    if (embedParams.enforceChirality) {
-    }
-
     // Check Chiral Centers
     if (embedParams.enforceChirality) {
-      gotCoords = distMatrixChiralityTest(positions, eargs, embedParams);
-      if (not gotCoords) {
-        continue;
-      }
-
-      gotCoords = _checkFinalCenterInVolume(positions, eargs, embedParams);
-      if (not gotCoords) {
-        continue;
-      }
-      if (eargs.chiralCenters->size() > 0) {
+      if (!eargs.chiralCenters->empty()) {
         gotCoords =
             EmbeddingOps::checkChiralCenters(positions, eargs, embedParams);
         if (!gotCoords) {
@@ -1171,11 +1159,22 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
           }
           continue;
         }
+
+        gotCoords = distMatrixChiralityTest(positions, eargs, embedParams);
+        if (!gotCoords) {
+          continue;
+        }
+
+        gotCoords = _checkFinalCenterInVolume(positions, eargs, embedParams);
+        if (!gotCoords) {
+          continue;
+        }
       }
+
       if (!eargs.stereoDoubleBonds->empty()) {
         gotCoords = EmbeddingOps::doubleBondStereoChecks(*positions, eargs,
                                                          embedParams);
-        if (not gotCoords) {
+        if (!gotCoords) {
           continue;
         }
       }
@@ -1183,7 +1182,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
 
     // Check for clashing atoms
     gotCoords = clashCheck(positions, eargs.mmat);
-    if (not gotCoords) {
+    if (!gotCoords) {
       if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
         std::lock_guard<std::mutex> lock(GetFailMutex());
@@ -1196,7 +1195,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     // Check Double Bond Geometry
     gotCoords =
         EmbeddingOps::doubleBondGeometryChecks(*positions, eargs, 3e-3, true);
-    if (not gotCoords) {
+    if (! gotCoords) {
       if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
         std::lock_guard<std::mutex> lock(GetFailMutex());
