@@ -827,15 +827,18 @@ void testIssue355() {
   delete m;
 }
 
-void testRandomCoords() {
+void testRandomCoords(const bool legacy) {
   std::string smiString =
       "CC1=C(C(C)=CC=C2)C2=CC=C1 c1ccccc1C C/C=C/CC \
                            C/12=C(\\CSC2)Nc3cc(n[n]3C1=O)c4ccccc4 C1CCCCS1(=O)(=O) c1ccccc1 \
                            C1CCCC1 C1CCCCC1 \
                            C1CC1(C)C C12(C)CC1CC2";
   std::string rdbase = getenv("RDBASE");
-  std::string fname =
-      rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/initCoords.random.sdf";
+  std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+  if (!legacy) {
+    fname += "AIO/";
+  }
+  fname += "initCoords.random.sdf";
   SDMolSupplier sdsup(fname, true, false);
   // SDWriter writer("foo.sdf");
   // SDWriter writer(fname);
@@ -856,6 +859,7 @@ void testRandomCoords() {
     ps.useRandomCoords = true;
     ps.randomSeed = 1;
     ps.optimizerForceTol = 1e-2;
+    ps.useLegacyImplementation = legacy;
     int cid = DGeomHelpers::EmbedMolecule(*m, ps);
     CHECK_INVARIANT(cid >= 0, "");
     // writer.write(*m);
@@ -1976,7 +1980,7 @@ void testGithub1227() {
   }
 }
 
-void testGithub1240() {
+void testGithub1240(const bool legacy) {
   {
     RWMol *mol = SmilesToMol("C1CCCCCCC1");
     TEST_ASSERT(mol);
@@ -1984,6 +1988,7 @@ void testGithub1240() {
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 42;
     params.maxIterations = 1;
+    params.useLegacyImplementation = legacy;
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     TEST_ASSERT(cid >= 0);
     delete mol;
@@ -1995,6 +2000,7 @@ void testGithub1240() {
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 42;
     params.maxIterations = 1;
+    params.useLegacyImplementation = legacy;
     boost::logging::disable_logs("rdApp.warning");
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     boost::logging::enable_logs("rdApp.warning");
@@ -2009,6 +2015,7 @@ void testGithub1240() {
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 0xf00d;
     params.maxIterations = 1;  // we should get this in one iteration
+    params.useLegacyImplementation = legacy;
 
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     TEST_ASSERT(cid >= 0);
@@ -2023,7 +2030,7 @@ void testGithub1240() {
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 0xf00d;
     params.maxIterations = 1;  // we should get this in one iteration
-
+    params.useLegacyImplementation = legacy;
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     TEST_ASSERT(cid >= 0);
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -2037,7 +2044,7 @@ void testGithub1240() {
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 0xf00d;
     params.maxIterations = 1;  // we should get this in one iteration
-
+    params.useLegacyImplementation = legacy;
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     TEST_ASSERT(cid >= 0);
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -2051,10 +2058,12 @@ void testGithub1240() {
     MolOps::addHs(*mol);
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 0xf00d;
+    params.useLegacyImplementation = legacy;
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     TEST_ASSERT(cid >= 0);
     params = DGeomHelpers::ETKDG;
     params.randomSeed = 0xf00d;
+    params.useLegacyImplementation = legacy;
     cid = DGeomHelpers::EmbedMolecule(*mol, params);
     TEST_ASSERT(cid >= 0);
 
@@ -2063,21 +2072,23 @@ void testGithub1240() {
   }
 
   {
-      // CHEMBL43398
-      // RWMol *mol =
-      //     SmilesToMol("C[C@@H]1[C@@H]2Cc3ccc(O)cc3[C@]1(C)CCN2CCN4CCCC4");
-      // TEST_ASSERT(mol);
-      // MolOps::addHs(*mol);
-      // DGeomHelpers::EmbedParameters params;
-      // params.randomSeed = 0xf00d;
-      // int cid = DGeomHelpers::EmbedMolecule(*mol, params);
-      // TEST_ASSERT(cid >= 0);
-      // params = DGeomHelpers::ETKDG;
-      // params.randomSeed = 0xf00d;
-      // cid = DGeomHelpers::EmbedMolecule(*mol, params);
-      // TEST_ASSERT(cid >= 0);
+    // CHEMBL43398
+    RWMol *mol =
+        SmilesToMol("C[C@@H]1[C@@H]2Cc3ccc(O)cc3[C@]1(C)CCN2CCN4CCCC4");
+    TEST_ASSERT(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    params.useLegacyImplementation = legacy;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
+    params = DGeomHelpers::ETKDG;
+    params.randomSeed = 0xf00d;
+    params.useLegacyImplementation = legacy;
+    cid = DGeomHelpers::EmbedMolecule(*mol, params);
+    TEST_ASSERT(cid >= 0);
 
-      // delete mol;
+    delete mol;
   }
 
   {
@@ -2089,11 +2100,13 @@ void testGithub1240() {
     MolOps::addHs(*mol);
     DGeomHelpers::EmbedParameters params;
     params.randomSeed = 0xf00d;
+    params.useLegacyImplementation = legacy;
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     TEST_ASSERT(cid >= 0);
     // std::cerr << "-----------------------------------" << std::endl;
     params = DGeomHelpers::ETKDG;
     params.randomSeed = 0xf00d;
+    params.useLegacyImplementation = legacy;
     cid = DGeomHelpers::EmbedMolecule(*mol, params);
     TEST_ASSERT(cid >= 0);
 
@@ -2511,8 +2524,12 @@ int main() {
   testIssue355();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t testRandomCoords \n\n";
-  testRandomCoords();
+  BOOST_LOG(rdInfoLog) << "\t testRandomCoords Legacy\n\n";
+  testRandomCoords(true);
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t testRandomCoords AIO\n\n";
+  testRandomCoords(false);
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 1989539 \n\n";
@@ -2612,8 +2629,12 @@ int main() {
   testGithub1227();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t Failure to embed larger aromatic rings.\n";
-  testGithub1240();
+  BOOST_LOG(rdInfoLog) << "\t Failure to embed larger aromatic rings Legacy.\n";
+  testGithub1240(true);
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Failure to embed larger aromatic rings AIO.\n";
+  testGithub1240(false);
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Deterministic with large random seeds\n";
