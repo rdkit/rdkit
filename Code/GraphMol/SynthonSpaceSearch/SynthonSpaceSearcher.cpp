@@ -529,8 +529,8 @@ void processPartHitsFromDetails(
     if (auto prod = searcher->buildAndVerifyHit(toTry[thisTry].first,
                                                 toTry[thisTry].second)) {
       results[thisTry] = std::move(prod);
-      if (maxHits != -1 &&
-          numHitsFound.fetch_add(1) + 1 >= maxHits + hitStart) {
+      ++numHitsFound;
+      if (maxHits != -1 && numHitsFound + 1 >= maxHits + hitStart) {
         break;
       }
     }
