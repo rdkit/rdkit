@@ -2389,7 +2389,7 @@ void DrawMol::makeWedgedBond(Bond *bond,
   auto at2 = bond->getEndAtom();
   auto col1 = cols.first;
   auto col2 = cols.second;
-  if (drawOptions_.singleColourWedgeBonds) {
+  if (drawOptions_.singleColourWedgeBonds || drawOptions_.singleColourBonds) {
     col1 = drawOptions_.symbolColour;
     col2 = drawOptions_.symbolColour;
   }
@@ -2574,8 +2574,12 @@ std::pair<DrawColour, DrawColour> DrawMol::getBondColours(Bond *bond) {
     col2 = bondColours_[bond->getIdx()].second;
   } else {
     if (!highlight_bond || drawOptions_.continuousHighlight) {
-      col1 = getColour(bond->getBeginAtomIdx());
-      col2 = getColour(bond->getEndAtomIdx());
+      if (drawOptions_.singleColourBonds) {
+        col1 = col2 = drawOptions_.symbolColour;
+      } else {
+        col1 = getColour(bond->getBeginAtomIdx());
+        col2 = getColour(bond->getEndAtomIdx());
+      }
     } else {
       if (highlightBondMap_.find(bond->getIdx()) != highlightBondMap_.end()) {
         col1 = col2 = highlightBondMap_.find(bond->getIdx())->second;
