@@ -519,7 +519,8 @@ void refineWithJacobian(std::vector<RDGeom::Point2D> &coords,
 void maybeReflectSymmetricFusedRings(const RDKit::ROMol &mol,
                                      const RDKit::INT_VECT &macrocycleRing,
                                      const RDKit::VECT_INT_VECT &fusedRings,
-                                     RDGeom::INT_POINT2D_MAP &eatoms);
+                                     RDGeom::INT_POINT2D_MAP &eatoms,
+                                     int currentRingIndex = -1);
 
 //! Refine template-matched macrocycle coordinates with angle constraints
 /*!
@@ -552,7 +553,8 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
     const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
     const RDKit::VECT_INT_VECT &allRings,
     const std::map<size_t, int> &substituentSizesByPosition,
-    double bondLength = RDDepict::BOND_LEN);
+    double bondLength = RDDepict::BOND_LEN,
+    int currentRingIndex = -1);
 
 //! Match macrocycle to a template and extract coordinates
 /*!
@@ -570,7 +572,8 @@ bool matchToTemplateMacrocycle(
     const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
     const RDKit::VECT_INT_VECT &allRings,
     const std::map<size_t, int> &substituentSizesByPosition,
-    RDGeom::INT_POINT2D_MAP &coords);
+    RDGeom::INT_POINT2D_MAP &coords,
+    int currentRingIndex = -1);
 
 }  // namespace RDDepict
 

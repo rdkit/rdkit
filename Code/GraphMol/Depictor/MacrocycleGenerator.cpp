@@ -844,7 +844,13 @@ void MacrocycleGenerator::adjustAnglesForClosure(
   size_t N = d_ringSize;
   double initialGap = (coords[0] - coords[N]).length();
 
+  std::cerr << "\n=== adjustAnglesForClosure ===" << std::endl;
+  std::cerr << "Ring size: " << N << std::endl;
+  std::cerr << "Initial gap: " << initialGap << std::endl;
+
   if (initialGap < 1e-6) {
+    std::cerr << "Gap too small, skipping refinement" << std::endl;
+    std::cerr << "=== End adjustAnglesForClosure ===" << std::endl << std::endl;
     return;
   }
 
@@ -865,12 +871,16 @@ void MacrocycleGenerator::adjustAnglesForClosure(
   const int maxIters = 3;
   const double damping = 0.8;  // Apply 80% of computed correction
 
+  std::cerr << "Constrained angles: " << numConstrained << ", Free angles: " << numFree << std::endl;
+  std::cerr << "Extra per atom (odd ring): " << extraPerAtom << std::endl;
+
   for (int iter = 0; iter < maxIters; ++iter) {
     // Rebuild coordinates with current adjustments
     RDGeom::Point2D pos(0, 0);
     coords[0] = pos;
 
     double direction = 0.0;
+    double maxAdjustment = 0.0;
 
     for (size_t i = 0; i < N; ++i) {
       double turnAngle;
@@ -887,6 +897,7 @@ void MacrocycleGenerator::adjustAnglesForClosure(
         } else {
           turnAngle = 0.0;
         }
+        maxAdjustment = std::max(maxAdjustment, std::abs(angleAdjustments[i]));
       }
 
       direction += turnAngle;
@@ -900,7 +911,11 @@ void MacrocycleGenerator::adjustAnglesForClosure(
     RDGeom::Point2D gap = coords[0] - coords[N];
     double gapMag = gap.length();
 
+    std::cerr << "  Iter " << iter << ": gap=" << gapMag
+              << ", max_adjustment=" << (maxAdjustment * 180.0 / M_PI) << "°" << std::endl;
+
     if (gapMag < 0.01) {
+      std::cerr << "  Converged!" << std::endl;
       break;
     }
 
@@ -962,6 +977,20 @@ void MacrocycleGenerator::adjustAnglesForClosure(
 
   // Final gap measurement
   double finalGap = (coords[0] - coords[N]).length();
+
+  // Check bond lengths
+  double minBondLen = 1e6, maxBondLen = 0.0;
+  for (size_t i = 0; i < N; ++i) {
+    size_t next = (i + 1) % N;
+    double bondLen = (coords[next] - coords[i]).length();
+    minBondLen = std::min(minBondLen, bondLen);
+    maxBondLen = std::max(maxBondLen, bondLen);
+  }
+
+  std::cerr << "Final gap: " << finalGap << std::endl;
+  std::cerr << "Bond lengths: min=" << minBondLen << ", max=" << maxBondLen
+            << ", target=" << d_bondLength << std::endl;
+  std::cerr << "=== End adjustAnglesForClosure ===" << std::endl << std::endl;
 }
 
 // ============================================================================
@@ -1407,14 +1436,21 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
 void maybeReflectSymmetricFusedRings(const RDKit::ROMol &mol,
                                      const RDKit::INT_VECT &macrocycleRing,
                                      const RDKit::VECT_INT_VECT &fusedRings,
-                                     RDGeom::INT_POINT2D_MAP &eatoms) {
+                                     RDGeom::INT_POINT2D_MAP &eatoms,
+                                     int currentRingIndex) {
   // Convert to std::vector<int> for helper functions
   std::vector<int> macrocycleRingVec(macrocycleRing.begin(),
                                      macrocycleRing.end());
 
   // Check each fused ring to see if it's a 4 or 6-membered ring fused at axial
   // positions
-  for (const auto &ring : fusedRings) {
+  for (size_t ringIdx = 0; ringIdx < fusedRings.size(); ++ringIdx) {
+    // Skip the current macrocycle by index
+    if (static_cast<int>(ringIdx) == currentRingIndex) {
+      continue;
+    }
+
+    const auto &ring = fusedRings[ringIdx];
     if (ring.size() != 4 && ring.size() != 6) {
       continue;
     }
@@ -1557,12 +1593,17 @@ std::vector<TurnConstraint> generateFusionConstraints(
 // Helper: Add turn constraints for fused rings
 static void addFusedRingTurnConstraints(
     MacrocycleGenerator &generator, const std::vector<int> &macrocycleRingVec,
-    const RDKit::VECT_INT_VECT &allRings) {
+    const RDKit::VECT_INT_VECT &allRings, int skipRingIndex = -1) {
   // Add turn constraints for fused rings (both small rings and macrocycles)
   // Pattern: first turn = R, middle turns = L, last turn = R
   // Examples: 2-atom fusion → RR, 3-atom → RLR, 4-atom → RLLR
 
   for (size_t ringIdx = 0; ringIdx < allRings.size(); ++ringIdx) {
+    // Skip the current macrocycle by index
+    if (static_cast<int>(ringIdx) == skipRingIndex) {
+      continue;
+    }
+
     const auto &ring = allRings[ringIdx];
 
     // Find shared atoms between this ring and the macrocycle
@@ -1790,7 +1831,7 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
     const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
     const RDKit::VECT_INT_VECT &allRings,
     const std::map<size_t, int> &substituentSizesByPosition,
-    double bondLength) {
+    double bondLength, int currentRingIndex) {
   // Only attempt for macrocycles (size > MACROCYCLE_SIZE_THRESHOLD)
   if (macrocycleRing.size() <= MACROCYCLE_SIZE_THRESHOLD) {
     return {};
@@ -1804,11 +1845,14 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
 
   // Convert allRings to std::vector<std::vector<int>> for helper function
   std::vector<std::vector<int>> allRingsVec;
-  RDKit::VECT_INT_VECT fusedRingsOnly;
-  for (const auto &ring : allRings) {
+  for (size_t i = 0; i < allRings.size(); ++i) {
+    // Skip the current macrocycle by index
+    if (static_cast<int>(i) == currentRingIndex) {
+      continue;
+    }
+    const auto &ring = allRings[i];
     std::vector<int> ringVec(ring.begin(), ring.end());
     allRingsVec.push_back(ringVec);
-    fusedRingsOnly.push_back(ring);
   }
 
   // Identify all angle constraints for fused small rings
@@ -1823,8 +1867,8 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
                                -1);  // -1 = L turns point inward
 
   // Add constraints for fused rings and stereochemistry
-  // Use fusedRingsOnly (macrocycle already filtered out)
-  addFusedRingTurnConstraints(generator, macrocycleRingVec, fusedRingsOnly);
+  // Pass allRings and currentRingIndex so function can skip the macrocycle
+  addFusedRingTurnConstraints(generator, macrocycleRingVec, allRings, currentRingIndex);
   addStereochemistryConstraints(generator, mol, macrocycleRing);
   addTripleBondAngleConstraints(generator, mol, macrocycleRing);
 
@@ -1860,7 +1904,8 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
 void maybeRefineTemplateMatchedMacrocycle(const RDKit::ROMol *mol,
                                           const RDKit::INT_VECT &macrocycleRing,
                                           const RDKit::VECT_INT_VECT &allRings,
-                                          RDGeom::INT_POINT2D_MAP &coords) {
+                                          RDGeom::INT_POINT2D_MAP &coords,
+                                          int currentRingIndex) {
   // Quick check for triple bonds - these always need refinement for 180° angles
   std::vector<int> macrocycleRingVec(macrocycleRing.begin(),
                                      macrocycleRing.end());
@@ -1868,10 +1913,15 @@ void maybeRefineTemplateMatchedMacrocycle(const RDKit::ROMol *mol,
       identifyAngleConstraintsForTripleBonds(mol, macrocycleRingVec);
   bool hasTripleBonds = !tripleBondConstraints.empty();
 
-  // Check if we need angle constraint refinement for fused rings
+  // Check if we need angle constraint refinement for fused rings (skip current macrocycle)
   bool hasSmallRings = false;
   bool hasNonSixMemberedRings = false;
-  for (const auto &ring : allRings) {
+  for (size_t ringIdx = 0; ringIdx < allRings.size(); ++ringIdx) {
+    // Skip the current macrocycle by index
+    if (static_cast<int>(ringIdx) == currentRingIndex) {
+      continue;
+    }
+    const auto &ring = allRings[ringIdx];
     if (ring.size() > MACROCYCLE_SIZE_THRESHOLD) {
       continue;  // Skip large rings
     }
@@ -1892,9 +1942,14 @@ void maybeRefineTemplateMatchedMacrocycle(const RDKit::ROMol *mol,
              // triple bonds should already have ideal geometry from template
   }
 
-  // Convert RDKit types to std::vector for helper functions
+  // Convert RDKit types to std::vector for helper functions (skip current macrocycle)
   std::vector<std::vector<int>> allRingsVec;
-  for (const auto &ring : allRings) {
+  for (size_t ringIdx = 0; ringIdx < allRings.size(); ++ringIdx) {
+    // Skip the current macrocycle by index
+    if (static_cast<int>(ringIdx) == currentRingIndex) {
+      continue;
+    }
+    const auto &ring = allRings[ringIdx];
     std::vector<int> ringVec(ring.begin(), ring.end());
     allRingsVec.push_back(ringVec);
   }
@@ -2219,14 +2274,20 @@ static int computeSubstituentSize(const RDKit::ROMol *mol,
 // Helper: Identify all rings fused to the macrocycle
 static std::vector<FusedRingInfo> identifyFusedRings(
     const RDKit::INT_VECT &macrocycleRing,
-    const RDKit::VECT_INT_VECT &allRings) {
+    const RDKit::VECT_INT_VECT &allRings, int skipRingIndex = -1) {
   std::vector<FusedRingInfo> fusedRings;
 
   if (allRings.empty()) {
     return fusedRings;
   }
 
-  for (const auto &ring : allRings) {
+  for (size_t ringIdx = 0; ringIdx < allRings.size(); ++ringIdx) {
+    // Skip the current macrocycle by index
+    if (static_cast<int>(ringIdx) == skipRingIndex) {
+      continue;
+    }
+
+    const auto &ring = allRings[ringIdx];
     size_t ring_size = ring.size();
 
     // Find shared atoms
@@ -2535,7 +2596,7 @@ bool matchToTemplateMacrocycle(
     const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
     const RDKit::VECT_INT_VECT &allRings,
     const std::map<size_t, int> &substituentSizesByPosition,
-    RDGeom::INT_POINT2D_MAP &coords) {
+    RDGeom::INT_POINT2D_MAP &coords, int currentRingIndex) {
   // Create SubstituentInfo from map
   SubstituentInfo subInfo;
   subInfo.sizesByPosition = substituentSizesByPosition;
@@ -2553,18 +2614,23 @@ bool matchToTemplateMacrocycle(
   }
   RDKit::RWMol ringMol = buildRingMol(mol, macrocycleAtoms);
 
-  // For scoring: include all fused rings in ringAtoms
+  // For scoring: include all fused rings in ringAtoms (skip current macrocycle)
   boost::dynamic_bitset<> ringAtoms = macrocycleAtoms;
-  for (const auto &ring : allRings) {
+  for (size_t ringIdx = 0; ringIdx < allRings.size(); ++ringIdx) {
+    // Skip the current macrocycle by index
+    if (static_cast<int>(ringIdx) == currentRingIndex) {
+      continue;
+    }
+    const auto &ring = allRings[ringIdx];
     for (auto aidx : ring) {
       ringAtoms.set(aidx);
     }
   }
 
-  // Identify fused rings for geometry validation
+  // Identify fused rings for geometry validation (skip current macrocycle)
   std::vector<FusedRingInfo> fusedRings;
   if (!allRings.empty()) {
-    fusedRings = identifyFusedRings(macrocycleRing, allRings);
+    fusedRings = identifyFusedRings(macrocycleRing, allRings, currentRingIndex);
   }
 
   const TemplateMatch *best = nullptr;
@@ -2600,10 +2666,10 @@ bool matchToTemplateMacrocycle(
   }
 
   // Refine template-matched coordinates
-  maybeRefineTemplateMatchedMacrocycle(mol, macrocycleRing, allRings, coords);
+  maybeRefineTemplateMatchedMacrocycle(mol, macrocycleRing, allRings, coords, currentRingIndex);
 
   // Check if fused rings can be flipped to place substitutions outside
-  maybeReflectSymmetricFusedRings(*mol, macrocycleRing, allRings, coords);
+  maybeReflectSymmetricFusedRings(*mol, macrocycleRing, allRings, coords, currentRingIndex);
 
   return true;
 }

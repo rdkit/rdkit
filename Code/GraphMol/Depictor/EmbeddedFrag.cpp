@@ -1230,18 +1230,16 @@ void EmbeddedFrag::embedMacrocycleWithFusedRings(
   }
   auto subInfo = computeSubstituentInfo(dp_mol, macrocycleRing, ring_atoms);
 
-  auto fusedRings = coreRings;
-  // remove the macrocycle itself from the fused rings list
-  fusedRings.erase(fusedRings.begin() + macrocycleIdxInCoreRings);
-
   // Try template matching with fusion validation
+  // Pass coreRings and macrocycleIdxInCoreRings so the function can skip the macrocycle
   RDGeom::INT_POINT2D_MAP coordMap;
   for (const auto &ea : d_eatoms) {
     coordMap[ea.first] = ea.second.loc;
   }
 
   bool foundTemplate = RDDepict::matchToTemplateMacrocycle(
-      dp_mol, macrocycleRing, fusedRings, subInfo.sizesByPosition, coordMap);
+      dp_mol, macrocycleRing, coreRings, subInfo.sizesByPosition, coordMap,
+      macrocycleIdxInCoreRings);
 
   if (foundTemplate) {
     // Update d_eatoms with matched coordinates
@@ -1263,8 +1261,10 @@ void EmbeddedFrag::embedMacrocycleWithFusedRings(
 
   if (doneRings.empty() && useDeNovoMacrocycleGeneration) {
     // If template matching failed, try to generate coordinates on-the-fly
+    // Pass coreRings and macrocycleIdxInCoreRings so the function can skip the macrocycle
     auto coords = RDDepict::generateMacrocycleCoordinates(
-        dp_mol, macrocycleRing, fusedRings, subInfo.sizesByPosition, BOND_LEN);
+        dp_mol, macrocycleRing, coreRings, subInfo.sizesByPosition, BOND_LEN,
+        macrocycleIdxInCoreRings);
 
     if (!coords.empty()) {
       // Apply generated coordinates
@@ -1276,7 +1276,8 @@ void EmbeddedFrag::embedMacrocycleWithFusedRings(
         coordMap[ea.first] = ea.second.loc;
       }
       RDDepict::maybeReflectSymmetricFusedRings(*dp_mol, macrocycleRing,
-                                                fusedRings, coordMap);
+                                                coreRings, coordMap,
+                                                macrocycleIdxInCoreRings);
       for (const auto &coord : coordMap) {
         if (d_eatoms.find(coord.first) != d_eatoms.end()) {
           d_eatoms[coord.first].loc = coord.second;
