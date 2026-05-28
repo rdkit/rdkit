@@ -63,6 +63,24 @@ double grad2(double *v, double *grad) {
   return 1.0;
 }
 
+// A quadratic whose value is always negative on the convergence path:
+//   f(x, y) = (x - 3)^2 + (y + 1)^2 - 100
+// The minimum is f = -100 at (3, -1). Useful for exercising the
+// gradient-convergence denominator when the energy is negative.
+double circ_neg(double *v) {
+  double dx = v[0] - 3.0;
+  double dy = v[1] + 1.0;
+  return dx * dx + dy * dy - 100.0;
+}
+
+double circ_neg_grad(double *v, double *grad) {
+  double dx = v[0] - 3.0;
+  double dy = v[1] + 1.0;
+  grad[0] = 2 * dx;
+  grad[1] = 2 * dy;
+  return 1.0;
+}
+
 TEST_CASE("testLinearSearch") {
   int dim = 2;
   double oLoc[2], oVal;
@@ -157,4 +175,21 @@ TEST_CASE("testBFGSOptimization") {
   REQUIRE_THAT(nVal, Catch::Matchers::WithinAbs(0.0, 1e-4));
   REQUIRE_THAT(oLoc[0], Catch::Matchers::WithinAbs(1.0, 1e-4));
   REQUIRE_THAT(oLoc[1], Catch::Matchers::WithinAbs(0.0, 1e-4));
+}
+
+// Regression test for the gradient-convergence denominator: when the
+// energy is negative the denominator used to be
+// std::max(funcVal * gradScale, 1.0), which clamps to 1.0 for any
+// funcVal < 0 and so over-tightens the test. With the fix
+// (std::max(fabs(funcVal) * gradScale, 1.0)) this case must still
+// converge to the analytic minimum.
+TEST_CASE("testBFGSOptimizationNegativeEnergy") {
+  unsigned int dim = 2;
+  double oLoc[2] = {0.0, 0.0};
+  double nVal = 0.0;
+  unsigned int nIters = 0;
+  BFGSOpt::minimize(dim, oLoc, 1e-4, nIters, nVal, circ_neg, circ_neg_grad);
+  REQUIRE_THAT(nVal, Catch::Matchers::WithinAbs(-100.0, 1e-4));
+  REQUIRE_THAT(oLoc[0], Catch::Matchers::WithinAbs(3.0, 1e-3));
+  REQUIRE_THAT(oLoc[1], Catch::Matchers::WithinAbs(-1.0, 1e-3));
 }
