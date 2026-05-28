@@ -639,7 +639,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     FILE ${RDKitPython_EXPORTED_TARGETS}.cmake
     NAMESPACE RDKit::
     DESTINATION ${RDKit_LibDir}/cmake/rdkitpython
-    COMPONENT dev
+    COMPONENT python
   )
 
   write_basic_package_version_file(
@@ -656,7 +656,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     ${RDKit_BINARY_DIR}/rdkitpython-config.cmake
     ${RDKit_BINARY_DIR}/rdkitpython-config-version.cmake
     DESTINATION ${RDKit_LibDir}/cmake/rdkitpython
-    COMPONENT dev)
+    COMPONENT python)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 # Memory testing setup
