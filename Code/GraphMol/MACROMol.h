@@ -41,10 +41,9 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplate : public RDKit::RWMol {
 
   MACROMolTemplate() = delete;
   MACROMolTemplate(const MACROMolTemplate &other);
-  MACROMolTemplate(MACROMolTemplate &&other) noexcept = delete;
-  MACROMolTemplate &operator=(MACROMolTemplate &&other) noexcept = delete;
-  MACROMolTemplate &operator=(const MACROMolTemplate &) =
-      delete;  // disable assignment
+  MACROMolTemplate(MACROMolTemplate &&other) noexcept;
+  MACROMolTemplate &operator=(MACROMolTemplate &&other) noexcept;
+  MACROMolTemplate &operator=(const MACROMolTemplate &); 
   ~MACROMolTemplate() {}
 
   RDKit::SubstanceGroup *getMainSgroup();

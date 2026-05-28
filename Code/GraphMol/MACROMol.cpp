@@ -64,6 +64,27 @@ MACROMolTemplate::MACROMolTemplate(const MACROMolTemplate &other)
   d_mainSgroupIdx = UINT_MAX;
 }
 
+MACROMolTemplate::MACROMolTemplate(MACROMolTemplate &&other) noexcept 
+  : RWMol(std::move(other)) {
+  d_mainSgroupIdx = UINT_MAX;
+}
+
+MACROMolTemplate &MACROMolTemplate::operator=(MACROMolTemplate &&other) noexcept {
+  MACROMolTemplate * res(new MACROMolTemplate(std::move(other)));
+  res->d_mainSgroupIdx = UINT_MAX;             
+
+  return *res;
+}
+
+MACROMolTemplate &MACROMolTemplate::operator=(const MACROMolTemplate &other) {
+  MACROMolTemplate * res(new MACROMolTemplate(other));
+  res->d_mainSgroupIdx = UINT_MAX;             
+
+  return *res;
+}
+
+
+
 MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
                                    std::string className,
                                    std::string templateName,
