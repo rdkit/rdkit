@@ -1403,6 +1403,7 @@ void DrawMol::shrinkToFit(bool withPadding) {
   } else {
     legendHeight_ = 0;
     molHeight_ = height_;
+    molWidth_ = drawWidth_;
     drawHeight_ = height_ * (1 - 2 * padding);
   }
 }
