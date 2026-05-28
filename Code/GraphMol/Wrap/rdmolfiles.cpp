@@ -2787,7 +2787,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
         a tuple of parsed Mol objects.)DOC";
   
   python::def("MolToCDXMLBlock", MolToCDXMLBlockHelper,
-              (python::arg("mol"), python::arg("format")), docString.c_str());
+              (python::arg("mol"), python::arg("format")=RDKit::v2::CDXMLParser::CDXMLFormat::CDXML), docString.c_str());
 
   docString = "Returns true if the RDKit is built with ChemDraw CDX support";
   python::def("HasChemDrawCDXSupport",
