@@ -937,7 +937,7 @@ void ShapeInput::sortShapesByVolumes() {
 }
 
 void findFeatures(const Conformer &conf, std::vector<CustomFeature> &features,
-                  const std::vector<unsigned int> &atomSubset) {
+                  const std::optional<std::vector<unsigned int>> &atomSubset) {
   unsigned pattIdx = 1;
   for (const auto &patts : *getPh4Patterns()) {
     for (const auto &patt : patts) {
@@ -950,10 +950,10 @@ void findFeatures(const Conformer &conf, std::vector<CustomFeature> &features,
         bool featOk = true;
         for (const auto &pr : match) {
           // make sure all the atoms are in the subset, if there is one
-          if (!atomSubset.empty()) {
-            if (std::ranges::find_if(atomSubset, [pr](const auto &p) -> bool {
+          if (atomSubset.has_value() && !atomSubset->empty()) {
+            if (std::ranges::find_if(*atomSubset, [pr](const auto &p) -> bool {
                   return p == static_cast<unsigned int>(pr.second);
-                }) == atomSubset.end()) {
+                }) == atomSubset->end()) {
               featOk = false;
               break;
             }

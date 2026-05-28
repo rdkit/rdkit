@@ -310,10 +310,16 @@ TEST_CASE("handling molecules with Hs") {
       CHECK((pos.x > -10 && pos.x < 10));
     }
     // Check the rescore
-    auto rescores = GaussianShape::ScoreMolecule(*ref, cp);
+    std::pair<double, double> overlapVols;
+    auto rescores = GaussianShape::ScoreMolecule(
+        *ref, cp, GaussianShape::ShapeInputOptions(),
+        GaussianShape::ShapeInputOptions(),
+        GaussianShape::ShapeOverlayOptions(), -1, -1, &overlapVols);
     CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
     CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.005));
     CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.005));
+    CHECK_THAT(overlapVols.first, Catch::Matchers::WithinAbs(355.566, 0.005));
+    CHECK_THAT(overlapVols.second, Catch::Matchers::WithinAbs(8.261, 0.005));
   }
 }
 
@@ -414,10 +420,15 @@ TEST_CASE("Score No Overlay") {
   }
   {
     auto shape = GaussianShape::ShapeInput(*pdb_trp_3tmn, -1, shapeOpts);
-    auto scores = ScoreMolecule(shape, *pdb_0zn_1tmn, shapeOpts);
+    std::pair<double, double> overlapVols;
+    auto scores =
+        ScoreMolecule(shape, *pdb_0zn_1tmn, shapeOpts,
+                      GaussianShape::ShapeOverlayOptions(), -1, &overlapVols);
     CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.307, 0.005));
     CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.349, 0.005));
     CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.265, 0.005));
+    CHECK_THAT(overlapVols.first, Catch::Matchers::WithinAbs(590.831, 0.005));
+    CHECK_THAT(overlapVols.second, Catch::Matchers::WithinAbs(26.736, 0.005));
   }
   {
     auto shape1 = GaussianShape::ShapeInput(*pdb_trp_3tmn, -1, shapeOpts);

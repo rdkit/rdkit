@@ -369,7 +369,7 @@ void ShapeInput::serialize(Archive &ar, const unsigned int) {
 // of atoms.
 RDKIT_GAUSSIANSHAPE_EXPORT void findFeatures(
     const Conformer &conf, std::vector<CustomFeature> &features,
-    const std::vector<unsigned int> &atomSubset = std::vector<unsigned int>());
+    const std::optional<std::vector<unsigned int>> &atomSubset = std::nullopt);
 
 // Calculate the mean position of the given atoms.
 RDKIT_GAUSSIANSHAPE_EXPORT RDGeom::Point3D computeFeaturePos(
