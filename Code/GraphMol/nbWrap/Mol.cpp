@@ -464,19 +464,14 @@ struct mol_wrapper {
         .def("__getitem__", &BondSeqHolder<AtomBondsIterator>::operator[],
              nb::rv_policy::reference_internal, "idx"_a);
     nb::class_<ROMol>(m, "Mol", nb::dynamic_attr())
-        .def(nb::new_([]() {
-               std::cerr << "new2!" << std::endl;
-               return new ROMol();
-             }),
+        .def(nb::new_([]() { return new ROMol(); }),
              "Constructor, takes no arguments")
         .def(nb::new_([](nb::bytes b) {
-               std::cerr << "new from pickle!" << std::endl;
                return new ROMol(std::string(static_cast<const char *>(b.data()),
                                             static_cast<size_t>(b.size())));
              }),
              "Constructor from a binary string", "pklString"_a)
         .def(nb::new_([](nb::bytes b, unsigned int propertyFlags) {
-               std::cerr << "new from pickle with flags!" << std::endl;
                return new ROMol(std::string(static_cast<const char *>(b.data()),
                                             static_cast<size_t>(b.size())),
                                 propertyFlags);
@@ -484,46 +479,10 @@ struct mol_wrapper {
              "Constructor from a binary string with property flags",
              "pklString"_a, "propertyFlags"_a)
         .def(nb::new_([](const ROMol &m, bool quickCopy, int confId) {
-               std::cerr << "new from copy!" << std::endl;
                return new ROMol(m, quickCopy, confId);
              }),
              "Constructor from another molecule", "mol"_a,
              "quickCopy"_a = false, "confId"_a = -1)
-        //    .def(nb::init<>(), "Constructor, takes no arguments")
-        //    .def(nb::new_([](nb::bytes bytes) {
-        //           std::cerr << "new with bytes!" << std::endl;
-        //           std::string pkl =
-        //               std::string(static_cast<const char *>(bytes.data()),
-        //                           static_cast<size_t>(bytes.size()));
-        //           auto res = new ROMol(pkl);
-        //           std::cerr << "constructed from bytes!" << std::endl;
-        //           return res;
-        //           // ROMol *self = nb::inst_ptr<ROMol>(typ);
-        //           // new (self) ROMol(pkl);
-        //         }),
-        //         "Constructor, takes no arguments")
-        //    .def(
-        //        "__init__",
-        //        [](ROMol *t, nb::bytes b) {
-        //          std::cerr << "init with bytes!" << std::endl;
-        //          new (t) ROMol(std::string(static_cast<const char
-        //          *>(b.data()),
-        //                                    static_cast<size_t>(b.size())));
-        //        },
-        //        "Constructor from a binary string", "pklString"_a)
-        //    .def(
-        //        "__init__",
-        //        [](ROMol *t, nb::bytes b, unsigned int propertyFlags) {
-        //          std::cerr << "init with bytes and flags!" << std::endl;
-        //          new (t) ROMol(std::string(static_cast<const char
-        //          *>(b.data()),
-        //                                    static_cast<size_t>(b.size())),
-        //                        propertyFlags);
-        //        },
-        //        "Constructor from a binary string", "pklString"_a,
-        //        "propertyFlags"_a)
-        //    .def(nb::init<const ROMol &, bool, int>(), "mol"_a,
-        //         "quickCopy"_a = false, "confId"_a = -1)
         .def("__copy__", &generic__copy__<ROMol>)
         .def("__deepcopy__", &generic__deepcopy__<ROMol>, "memo"_a)
         .def(
@@ -1026,100 +985,26 @@ struct mol_wrapper {
              R"DOC(Returns the number of molecule's RingInfo object.
 
 )DOC")
-        .def("__getinitargs__",
-             [](const ROMol &mol) {
-               std::cerr << "GETINITARGS" << std::endl;
-               const auto pkl = MolToBinary(mol);
-               return std::make_tuple(pkl);
-             })
-    //    .def("__reduce__",
-    //         [](const ROMol &mol) { std::cerr << "REDUCE" << std::endl; })
-#if 0
-        .def("__getstate__",
-             [](const nb::object &self) {
-               std::cerr << "GETSTATE" << std::endl;
-               nb::dict dict = nb::cast<nb::dict>(
-                   nb::getattr(self, "__dict__", nb::none()));
-               std::cerr << "DICT SIZE: " << dict.size() << std::endl;
-               // for (const auto &item : dict) {
-               //   std::cerr << " ITEM: " << nb::str(item.first).c_str()
-               //             << std::endl;
-               // }
-               // return nb::tuple(dict);
-               const ROMol &mol = nb::cast<const ROMol &>(self);
-               const auto pkl = MolToBinary(mol);
-               return std::make_tuple(dict);
-             })
-        .def("__getnewargs__",
-             [](const ROMol &self) {
-               std::cerr << "getnewargs" << std::endl;
-               const auto pkl = MolToBinary(self);
-               return std::make_tuple(pkl);
-             })
-        .def("__setstate__",
-             [](ROMol &mol, const nb::object state) {
-               // nb::tuple tpl;
-               // std::cerr << "CAST: " << nb::try_cast<nb::tuple>(state, tpl)
-               //           << std::endl;
-               auto bytes = nb::cast<nb::bytes>(state[0]);
-               std::cerr << "CASTED" << std::endl;
-               if (nb::len(state) > 1) {
-                 nb::dict dict = nb::cast<nb::dict>(state[1]);
-                 for (const auto &item : dict) {
-                   std::cerr << " ITEM: " << nb::str(item.first).c_str()
-                             << std::endl;
-                   //     nb::setattr(mol, item.first, item.second);
-                 }
-               }
-               std::string pkl =
-                   std::string(static_cast<const char *>(bytes.data()),
-                               static_cast<size_t>(bytes.size()));
-               std::cerr << "  PICKLE SIZE: " << pkl.size() << std::endl;
-               new (&mol) ROMol(pkl);
-               // std::string pkl = std::string(
-               //                    static_cast<const
-               //                    char*>(std::get<0>(state).data()),
-               //  static_cast<size_t>(std::get<0>(state).size()));
-               //                new (&mol) ROMol(pkl);
-             })
-#else
+
         .def("__getstate__",
              [](nb::object self) {
                const ROMol &mol = nb::cast<const ROMol &>(self);
-               std::cerr << "GETSTATE" << std::endl;
                const auto pkl = MolToBinary(mol);
                nb::dict dict = nb::cast<nb::dict>(
                    nb::getattr(self, "__dict__", nb::none()));
-               std::cerr << "DICT SIZE: " << dict.size() << std::endl;
-               if (dict.size()) {
-                 std::cerr << "including dict in state" << std::endl;
-               } else {
-                 std::cerr << "no dict in state" << std::endl;
-               }
                return std::make_tuple(pkl, dict);
              })
-        //    .def("__setstate__",
-        //         [](ROMol &mol, const std::tuple<nb::bytes> &state) {
-        //           std::cerr << "SETSTATE1" << std::endl;
-        //           std::string pkl = std::string(
-        //               static_cast<const char *>(std::get<0>(state).data()),
-        //               static_cast<size_t>(std::get<0>(state).size()));
-        //           new (&mol) ROMol(pkl);
-        //         })
         .def("__setstate__",
              [](nb::object mol, nb::object state) {
-               std::cerr << "SETSTATE2" << std::endl;
                ROMol *m = nullptr;
                if (!nb::try_cast<ROMol *>(mol, m)) {
                  throw nb::type_error("expected a ROMol pointer");
                }
                nb::tuple tpl;
                if (nb::try_cast<nb::tuple>(state, tpl)) {
-                 std::cerr << "  GOT TUPLE" << std::endl;
                  size_t tplPos = 0;
                  nb::bytes bytes;
                  if (nb::try_cast<nb::bytes>(tpl[tplPos], bytes)) {
-                   std::cerr << "  GOT BYTES" << std::endl;
                    std::string pkl =
                        std::string(static_cast<const char *>(bytes.data()),
                                    static_cast<size_t>(bytes.size()));
@@ -1134,16 +1019,11 @@ struct mol_wrapper {
                    if (nb::try_cast<nb::dict>(tpl[tplPos], dict)) {
                      nb::dict odict = nb::cast<nb::dict>(
                          nb::getattr(mol, "__dict__", nb::none()));
-                     std::cerr << "  GOT DICT" << std::endl;
                      odict.update(dict);
-                   } else {
-                     std::cerr << "  NOT A DICT" << std::endl;
                    }
                  }
                }
              })
-
-#endif
         .doc() = molClassDoc.c_str();
 
     m.def(
