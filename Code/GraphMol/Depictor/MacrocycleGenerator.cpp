@@ -169,6 +169,17 @@ bool MacrocycleGenerator::solve() {
     return false;  // Constraints conflict
   }
 
+  // Count turns after applying constraints
+  int constrainedR = 0, constrainedL = 0, free = 0;
+  for (int turn : d_turns) {
+    if (turn == 1)
+      constrainedR++;
+    else if (turn == -1)
+      constrainedL++;
+    else
+      free++;
+  }
+
   // Simplify system ONCE if needed (before trying different R-L targets)
   // The number of free positions is determined by structure, not by R-L ratio
   std::vector<size_t> freePositions = collectFreePositions(d_turns);
@@ -181,6 +192,19 @@ bool MacrocycleGenerator::solve() {
   // Save the post-simplification state for restoration between targetDiff
   // attempts
   std::vector<int> simplifiedTurns = d_turns;
+
+  // Count turns after simplification
+  constrainedR = 0;
+  constrainedL = 0;
+  free = 0;
+  for (int turn : d_turns) {
+    if (turn == 1)
+      constrainedR++;
+    else if (turn == -1)
+      constrainedL++;
+    else
+      free++;
+  }
 
   bool isOddRing = (d_ringSize % 2) == 1;
 
@@ -201,7 +225,6 @@ bool MacrocycleGenerator::solve() {
       return true;
     }
   }
-
   return false;
 }
 
@@ -421,18 +444,16 @@ void MacrocycleGenerator::simplifySystem(std::vector<size_t> &freePositions,
   }
 
   // Recalculate R/L counts for independent positions
-  int assignedRight = 0;
-  int assignedLeft = 0;
-  for (size_t i = 0; i < d_ringSize; ++i) {
-    if (d_turns[i] == 1)
-      assignedRight++;
-    else if (d_turns[i] == -1)
-      assignedLeft++;
-  }
-
+  // Note: numRight and numLeft were passed in as reference, so we need to
+  // preserve the R-L differential when reducing to independent positions
+  //
+  // KEY INSIGHT: OPPOSITE constraints create pairs where each contributes
+  // 1 R and 1 L, so R-L differential from independent positions equals
+  // the R-L differential from all free positions
+  int targetDiff = numRight - numLeft;  // Preserve R-L differential
   int independentCount = freePositions.size();
-  numRight = (independentCount + 1) / 2;  // Roughly half
-  numLeft = independentCount - numRight;
+  numRight = (independentCount + targetDiff) / 2;
+  numLeft = (independentCount - targetDiff) / 2;
 }
 
 bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
@@ -466,9 +487,16 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
   // IMPORTANT: Recalculate numRight/numLeft based on INDEPENDENT positions
   // only! The counts passed in were based on ALL free positions (including
   // dependents) But we only enumerate over independent positions
-  size_t numFree = freePositions.size();
-  numRight = (numFree + 1) / 2;  // Roughly half
-  numLeft = numFree - numRight;
+  //
+  // KEY INSIGHT: OPPOSITE constraints create pairs (independent, dependent)
+  // where dependent = -independent. Each pair contributes 1 R and 1 L, so
+  // R-L contribution is 0. Therefore, the R-L differential needed from
+  // independent positions equals the R-L differential needed from all free
+  // positions!
+  int targetDiff = numRight - numLeft;    // Preserve the R-L differential
+  size_t numFree = freePositions.size();  // independent positions only
+  numRight = (numFree + targetDiff) / 2;
+  numLeft = (numFree - targetDiff) / 2;
 
   // Enumerate ways to assign R/L to free positions
   std::vector<size_t> rightPositions(numRight);
@@ -1533,8 +1561,9 @@ static void addFusedRingTurnConstraints(
   // Add turn constraints for fused rings (both small rings and macrocycles)
   // Pattern: first turn = R, middle turns = L, last turn = R
   // Examples: 2-atom fusion → RR, 3-atom → RLR, 4-atom → RLLR
-  for (const auto &ring : allRings) {
-    // Process both small rings AND macrocycles
+
+  for (size_t ringIdx = 0; ringIdx < allRings.size(); ++ringIdx) {
+    const auto &ring = allRings[ringIdx];
 
     // Find shared atoms between this ring and the macrocycle
     std::vector<size_t> sharedPositions = findSharedPositions(
@@ -1559,7 +1588,6 @@ static void addFusedRingTurnConstraints(
     auto constraints =
         generateFusionConstraints(sharedPositions, ring.size(), isMacrocycle);
 
-    // Add all generated constraints to the generator
     for (const auto &constraint : constraints) {
       generator.addConstraint(constraint);
     }
