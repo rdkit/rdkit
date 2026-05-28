@@ -891,6 +891,7 @@ M  END''')
       d2d.drawOptions().addAtomIndices = True
       d2d.drawOptions().addBondIndices = True
       d2d.drawOptions().singleColourWedgeBonds = True  # test symbolColour
+      d2d.drawOptions().singleColourBonds = True # just test it's settable
       setattr(d2d.drawOptions(), attr, val)
       aval = getattr(d2d.drawOptions(), attr)
       for idx in range(4):
