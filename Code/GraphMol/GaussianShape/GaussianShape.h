@@ -97,7 +97,7 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> AlignMolecule(
 //! numbers of the two molecules that gave the best overlay and the
 //! transformation matrix for that overlay if requested.  The molecules
 //! themselves are not altered.  scores[0][1] is the score of aligning
-//! fit conformation 1 onto ref conformation 0
+//! fit conformer 1 onto ref conformer 0
 /*!
   \param ref           the reference molecule
   \param fit           the molecule to align

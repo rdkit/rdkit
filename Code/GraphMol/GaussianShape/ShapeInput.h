@@ -100,16 +100,16 @@ struct ShapeInputOptions {
               //! create features using the RDKit pharmacophore definitions.
 
   std::vector<std::vector<CustomFeature>>
-      customFeatures{};  //! Custom color features used verbatim.  One outer
-                         //! vector for each conformation in the molecule.
+      customFeatures;  //! Custom color features used verbatim.  One outer
+                       //! vector for each conformation in the molecule.
   std::vector<unsigned int>
-      atomSubset{};  //! If not empty, use just these atoms in the molecule to
-                     //! form the ShapeInput object.
+      atomSubset;  //! If not empty, use just these atoms in the molecule to
+                   //! form the ShapeInput object.
   std::vector<std::pair<unsigned int, double>>
-      atomRadii{};  //! Use these non-standard radii for these atoms. The int is
-                    //! for the atom index in the molecule, not the atomic
-                    //! number. Not all atoms need be specified; some radii
-                    //! can be over-ridden, with the rest left as standard.
+      atomRadii;  //! Use these non-standard radii for these atoms. The int is
+                  //! for the atom index in the molecule, not the atomic
+                  //! number. Not all atoms need be specified; some radii
+                  //! can be over-ridden, with the rest left as standard.
   bool allCarbonRadii{
       true};  //! Whether to use carbon radii for all atoms (which is quicker
               //! but less accurate) or vdw radii appropriate for the elements.
