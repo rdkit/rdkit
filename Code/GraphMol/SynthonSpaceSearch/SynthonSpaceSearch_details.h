@@ -147,6 +147,11 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
     const RDKit::SynthonSpaceSearch::SynthonSpaceHitSet *hitset,
     const std::vector<size_t> &fragNums);
+// Hash of the product identity — same byte sequence as buildProductName but
+// without allocating the concatenated string. Use as a dedup key.
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::size_t buildProductHash(
+    const RDKit::SynthonSpaceSearch::SynthonSpaceHitSet *hitset,
+    const std::vector<size_t> &fragNums);
 // Zip the fragments together to make a molecule.  Assumes the connection
 // points are marking by isotope numbers on dummy atoms.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> buildProduct(

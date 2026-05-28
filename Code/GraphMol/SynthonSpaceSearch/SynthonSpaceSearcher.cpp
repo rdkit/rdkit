@@ -11,6 +11,7 @@
 #include <random>
 #include <thread>
 #include <boost/random/discrete_distribution.hpp>
+#include <boost/unordered/unordered_flat_set.hpp>
 
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
@@ -380,27 +381,19 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
 void sortAndUniquifyToTry(
     std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
         &toTry) {
-  std::vector<std::pair<size_t, std::string>> tmp;
-  tmp.reserve(toTry.size());
-  for (size_t i = 0; i < toTry.size(); i++) {
-    tmp.emplace_back(
-        i, details::buildProductName(toTry[i].first, toTry[i].second));
-  }
-  std::sort(tmp.begin(), tmp.end(),
-            [](const auto &lhs, const auto &rhs) -> bool {
-              return lhs.second < rhs.second;
-            });
-  tmp.erase(std::unique(tmp.begin(), tmp.end(),
-                        [](const auto &lhs, const auto &rhs) -> bool {
-                          return lhs.second == rhs.second;
-                        }),
-            tmp.end());
-  std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
-      newToTry;
-  newToTry.reserve(tmp.size());
-  std::transform(tmp.begin(), tmp.end(), back_inserter(newToTry),
-                 [&](const auto &p) -> auto { return toTry[p.first]; });
-  toTry = newToTry;
+  // Two query fragmentations can map to the same (reaction, synthon-combo)
+  // pair; deduplicate so we don't build the same product twice.
+  boost::unordered_flat_set<std::size_t> seen;
+  seen.reserve(toTry.size());
+  toTry.erase(
+      std::remove_if(toTry.begin(), toTry.end(),
+                     [&seen](const auto &entry) {
+                       return !seen
+                                   .insert(details::buildProductHash(
+                                       entry.first, entry.second))
+                                   .second;
+                     }),
+      toTry.end());
 }
 
 bool haveEnoughHits(const std::vector<std::unique_ptr<ROMol>> &results,
