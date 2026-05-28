@@ -138,7 +138,7 @@ RDKIT_GAUSSIANSHAPE_EXPORT void ScoreMoleculeAllConformers(
 RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreShape(
     const ShapeInput &refShape, const ShapeInput &fitShape,
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
-    std::array<double, 2> *overlapVols = nullptr);
+    std::pair<double, double> *overlapVols = nullptr);
 
 //! Score the overlap of a molecule to a reference shape without moving
 //  either.
@@ -159,7 +159,8 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreMolecule(
     const ShapeInput &refShape, const ROMol &fit,
     const ShapeInputOptions &fitOpts = ShapeInputOptions(),
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
-    int fitConfId = -1, std::array<double, 2> *overlapVols = nullptr);
+    int fitConfId = -1,
+    std::pair<double, double> *overlapVols = nullptr);
 
 //! Score the overlap of a molecule to a reference molecule without moving
 //  either.
@@ -185,7 +186,7 @@ RDKIT_GAUSSIANSHAPE_EXPORT std::array<double, 3> ScoreMolecule(
     const ShapeInputOptions &fitOpts = ShapeInputOptions(),
     const ShapeOverlayOptions &overlayOpts = ShapeOverlayOptions(),
     int refConfId = -1, int fitConfId = -1,
-    std::array<double, 2> *overlapVols = nullptr);
+    std::pair<double, double> *overlapVols = nullptr);
 
 }  // namespace GaussianShape
 }  // namespace RDKit
