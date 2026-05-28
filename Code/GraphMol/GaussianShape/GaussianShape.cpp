@@ -487,7 +487,7 @@ void ScoreMoleculeAllConformers(const ROMol &ref, const ROMol &fit,
 std::array<double, 3> ScoreShape(const ShapeInput &refShape,
                                  const ShapeInput &fitShape,
                                  const ShapeOverlayOptions &overlayOpts,
-                                 std::array<double, 2> *overlapVols) {
+                                 std::pair<double, double> *overlapVols) {
   auto refWorking = refShape.getCoords();
   auto fitWorking = fitShape.getCoords();
   std::array<double, 7> quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -506,9 +506,10 @@ std::array<double, 3> ScoreShape(const ShapeInput &refShape,
   const bool includeColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   const auto scores = sca.calcScores(refShape.getCoords().data(),
                                      fitShape.getCoords().data(), includeColor);
+  std::cerr << "  scores: " << scores[0] << " " << scores[1] << " " << scores[2]
+            << " " << scores[3] << " " << scores[4] << std::endl;
   if (overlapVols) {
-    (*overlapVols)[0] = scores[3];
-    (*overlapVols)[1] = scores[4];
+    (*overlapVols) = std::make_pair(scores[3], scores[4]);
   }
   return std::array{scores[0], scores[1], scores[2]};
 }
@@ -518,7 +519,7 @@ std::array<double, 3> ScoreMolecule(const ShapeInput &refShape,
                                     const ShapeInputOptions &fitOpts,
                                     const ShapeOverlayOptions &overlayOpts,
                                     int fitConfId,
-                                    std::array<double, 2> *overlapVols) {
+                                    std::pair<double, double> *overlapVols) {
   const auto fitShape = ShapeInput(fit, fitConfId, fitOpts, overlayOpts);
   return ScoreShape(refShape, fitShape, overlayOpts, overlapVols);
 }
@@ -528,7 +529,7 @@ std::array<double, 3> ScoreMolecule(const ROMol &ref, const ROMol &fit,
                                     const ShapeInputOptions &fitOpts,
                                     const ShapeOverlayOptions &overlayOpts,
                                     int refConfId, int fitConfId,
-                                    std::array<double, 2> *overlapVols) {
+                                    std::pair<double, double> *overlapVols) {
   ShapeOverlayOptions tmpOpts = overlayOpts;
   tmpOpts.normalize = false;
   tmpOpts.startMode = StartMode::ROTATE_0;

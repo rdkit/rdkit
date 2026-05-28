@@ -226,11 +226,16 @@ TEST_CASE("shape alignment") {
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.760, 0.005));
   CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.235, 0.005));
   // This effectively checks that xform is correct.
-  auto rescores = GaussianShape::ScoreShape(refShape, probeShape);
+  std::pair<double, double> overlapVols;
+  std::cerr << "RESCORE" << std::endl;
+  auto rescores = GaussianShape::ScoreShape(
+      refShape, probeShape, GaussianShape::ShapeOverlayOptions(), &overlapVols);
   CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.001));
   CHECK_THAT(rescores[1], Catch::Matchers::WithinAbs(scores[1], 0.001));
   CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.001));
-
+  CHECK_THAT(rescores[2], Catch::Matchers::WithinAbs(scores[2], 0.001));
+  CHECK_THAT(overlapVols.first, Catch::Matchers::WithinAbs(579.649, 0.005));
+  CHECK_THAT(overlapVols.second, Catch::Matchers::WithinAbs(14.0792, 0.005));
   SmilesWriteParams params;
   params.canonical = false;
   // The input structure being from an SDF doesn't have the atoms in an order
@@ -575,24 +580,20 @@ TEST_CASE("custom feature points") {
     // each carbonyl O gets one feature:
     CHECK(shape1.getCoords().size() == 18);
     GaussianShape::ShapeInputOptions opts2;
-    opts2.customFeatures =
-        std::vector<std::vector<GaussianShape::CustomFeature>>{
-            {{1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
-              std::vector<unsigned int>{}},
-             {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
-              std::vector<unsigned int>{}}}};
+    opts2.customFeatures = {{{1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
+                              std::vector<unsigned int>{}},
+                             {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
+                              std::vector<unsigned int>{}}}};
     auto shape2 = GaussianShape::ShapeInput(*m1, -1, opts2);
     CHECK(shape2.getCoords().size() == 18);
 
     {
       // confirm that we don't add the features if not requested.
       GaussianShape::ShapeInputOptions topts;
-      topts.customFeatures =
-          std::vector<std::vector<GaussianShape::CustomFeature>>{
-              {{1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
-                std::vector<unsigned int>{}},
-               {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
-                std::vector<unsigned int>{}}}};
+      topts.customFeatures = {{{1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
+                                std::vector<unsigned int>{}},
+                               {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
+                                std::vector<unsigned int>{}}}};
       topts.useColors = false;
       auto tshape = GaussianShape::ShapeInput(*m1, -1, topts);
       CHECK(tshape.getCoords().size() == 12);
@@ -601,12 +602,10 @@ TEST_CASE("custom feature points") {
     // we'll swap the features on the second shape so that the alignment has to
     // be inverted
     GaussianShape::ShapeInputOptions opts3;
-    opts3.customFeatures =
-        std::vector<std::vector<GaussianShape::CustomFeature>>{
-            {{2, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
-              std::vector<unsigned int>{}},
-             {1, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
-              std::vector<unsigned int>{}}}};
+    opts3.customFeatures = {{{2, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
+                              std::vector<unsigned int>{}},
+                             {1, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
+                              std::vector<unsigned int>{}}}};
 
     auto m2 = ROMol(*m1);
     auto shape3 = GaussianShape::ShapeInput(m2, -1, opts3);
@@ -629,23 +628,19 @@ TEST_CASE("custom feature points") {
   }
   SECTION("using molecules") {
     GaussianShape::ShapeInputOptions opts2;
-    opts2.customFeatures =
-        std::vector<std::vector<GaussianShape::CustomFeature>>{
-            {{1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
-              std::vector<unsigned int>{}},
-             {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
-              std::vector<unsigned int>{}}}};
+    opts2.customFeatures = {{{1, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
+                              std::vector<unsigned int>{}},
+                             {2, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
+                              std::vector<unsigned int>{}}}};
 
     auto m2 = ROMol(*m1);
     // we'll swap the features on the second shape so that the alignment has to
     // be inverted
     GaussianShape::ShapeInputOptions opts3;
-    opts3.customFeatures =
-        std::vector<std::vector<GaussianShape::CustomFeature>>{
-            {{2, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
-              std::vector<unsigned int>{}},
-             {1, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
-              std::vector<unsigned int>{}}}};
+    opts3.customFeatures = {{{2, RDGeom::Point3D(-1.75978, 0.148897, 0), 1.0,
+                              std::vector<unsigned int>{}},
+                             {1, RDGeom::Point3D(1.7571, -0.120174, 0.1), 1.0,
+                              std::vector<unsigned int>{}}}};
 
     GaussianShape::ShapeOverlayOptions overlayOpts;
     overlayOpts.optParam = 0.5;
