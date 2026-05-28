@@ -227,7 +227,6 @@ TEST_CASE("shape alignment") {
   CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.235, 0.005));
   // This effectively checks that xform is correct.
   std::pair<double, double> overlapVols;
-  std::cerr << "RESCORE" << std::endl;
   auto rescores = GaussianShape::ScoreShape(
       refShape, probeShape, GaussianShape::ShapeOverlayOptions(), &overlapVols);
   CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.001));

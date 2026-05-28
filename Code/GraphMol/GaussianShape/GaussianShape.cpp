@@ -506,8 +506,6 @@ std::array<double, 3> ScoreShape(const ShapeInput &refShape,
   const bool includeColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   const auto scores = sca.calcScores(refShape.getCoords().data(),
                                      fitShape.getCoords().data(), includeColor);
-  std::cerr << "  scores: " << scores[0] << " " << scores[1] << " " << scores[2]
-            << " " << scores[3] << " " << scores[4] << std::endl;
   if (overlapVols) {
     (*overlapVols) = std::make_pair(scores[3], scores[4]);
   }
