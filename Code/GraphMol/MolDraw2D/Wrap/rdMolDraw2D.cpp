@@ -1069,6 +1069,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite(
           "stereoGroupAbsLabel", &RDKit::MolDrawOptions::stereoGroupAbsLabel,
           "String to use for enhanced stereo 'ABS' groups.  Default='abs'.")
+      .def_readwrite(
+          "addStereoGroupAnnotation",
+          &RDKit::MolDrawOptions::addStereoGroupAnnotation,
+          "Whether to add the enhanced stereo labels.  Default is True.")
       .def_readwrite("unspecifiedStereoIsUnknown",
                      &RDKit::MolDrawOptions::unspecifiedStereoIsUnknown,
                      "if true, double bonds with unspecified stereo are drawn"

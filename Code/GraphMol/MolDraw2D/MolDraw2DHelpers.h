@@ -316,6 +316,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   std::string stereoGroupAndLabel = "and"; // String to use for enhanced stereo 'AND' groups
   std::string stereoGroupOrLabel  = "or";  // String to use for enhanced stereo 'OR' groups
   std::string stereoGroupAbsLabel = "abs"; // String to use for enhanced stereo 'ABS' groups
+  bool addStereoGroupAnnotation = true; // Whether to add the enhanced stereo labels.
   bool unspecifiedStereoIsUnknown = false;  // if true, double bonds with
                                             // unspecified stereo are drawn
                                             // crossed, potential stereocenters

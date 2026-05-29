@@ -11498,36 +11498,73 @@ TEST_CASE("Configurable Stereo Labels") {
   MolDraw2DUtils::prepareMolForDrawing(*threonine_and);
   MolDraw2DUtils::prepareMolForDrawing(*threonine_or);
   MolDraw2DUtils::prepareMolForDrawing(*m1);
-  MolDraw2DSVG drawer(750, 200, 250, 200, NO_FREETYPE);
-  drawer.drawOptions().includeChiralFlagLabel = false;
-  drawer.drawOptions().stereoGroupAndLabel = "&";
-  drawer.drawOptions().stereoGroupOrLabel = "OR";
-  drawer.drawOptions().stereoGroupAbsLabel = "_AbS_";
-  drawer.drawMolecule(*threonine_and, "and");
-  drawer.setOffset(250, 0);
-  drawer.drawMolecule(*threonine_or, "or");
-  drawer.setOffset(500, 0);
-  drawer.drawMolecule(*m1, "abs");
-  drawer.finishDrawing();
-  std::string text = drawer.getDrawingText();
-  std::string svgName = nameBase + "_1.svg";
-  std::ofstream outs(svgName);
-  outs << text;
-  outs.flush();
-  outs.close();
-  const static std::regex amp(">&amp;</text>");
-  std::ptrdiff_t const amp_count(
-      std::distance(std::sregex_iterator(text.begin(), text.end(), amp),
-                    std::sregex_iterator()));
-  CHECK(amp_count == 2);
-  const static std::regex R(">R</text>");
-  std::ptrdiff_t const R_count(
-      std::distance(std::sregex_iterator(text.begin(), text.end(), R),
-                    std::sregex_iterator()));
-  CHECK(R_count == 2);
-  const static std::regex under(">_</text>");
-  std::ptrdiff_t const under_count(
-      std::distance(std::sregex_iterator(text.begin(), text.end(), under),
-                    std::sregex_iterator()));
-  CHECK(under_count == 2);
+  {
+    MolDraw2DSVG drawer(750, 200, 250, 200, NO_FREETYPE);
+    drawer.drawOptions().includeChiralFlagLabel = false;
+    drawer.drawOptions().stereoGroupAndLabel = "&";
+    drawer.drawOptions().stereoGroupOrLabel = "OR";
+    drawer.drawOptions().stereoGroupAbsLabel = "_AbS_";
+    drawer.drawMolecule(*threonine_and, "and");
+    drawer.setOffset(250, 0);
+    drawer.drawMolecule(*threonine_or, "or");
+    drawer.setOffset(500, 0);
+    drawer.drawMolecule(*m1, "abs");
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::string svgName = nameBase + "_1.svg";
+    std::ofstream outs(svgName);
+    outs << text;
+    outs.flush();
+    outs.close();
+    const static std::regex amp(">&amp;</text>");
+    std::ptrdiff_t const amp_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), amp),
+                      std::sregex_iterator()));
+    CHECK(amp_count == 2);
+    const static std::regex R(">R</text>");
+    std::ptrdiff_t const R_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), R),
+                      std::sregex_iterator()));
+    CHECK(R_count == 2);
+    const static std::regex under(">_</text>");
+    std::ptrdiff_t const under_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), under),
+                      std::sregex_iterator()));
+    CHECK(under_count == 2);
+  }
+  {
+    MolDraw2DSVG drawer(750, 200, 250, 200, NO_FREETYPE);
+    drawer.drawOptions().includeChiralFlagLabel = false;
+    drawer.drawOptions().stereoGroupAndLabel = "&";
+    drawer.drawOptions().stereoGroupOrLabel = "OR";
+    drawer.drawOptions().stereoGroupAbsLabel = "_AbS_";
+    drawer.drawOptions().addStereoGroupAnnotation = false;
+    drawer.drawMolecule(*threonine_and, "and");
+    drawer.setOffset(250, 0);
+    drawer.drawMolecule(*threonine_or, "or");
+    drawer.setOffset(500, 0);
+    drawer.drawMolecule(*m1, "abs");
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::string svgName = nameBase + "_2.svg";
+    std::ofstream outs(svgName);
+    outs << text;
+    outs.flush();
+    outs.close();
+    const static std::regex amp(">&amp;</text>");
+    std::ptrdiff_t const amp_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), amp),
+                      std::sregex_iterator()));
+    CHECK(amp_count == 0);
+    const static std::regex R(">R</text>");
+    std::ptrdiff_t const R_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), R),
+                      std::sregex_iterator()));
+    CHECK(R_count == 0);
+    const static std::regex under(">_</text>");
+    std::ptrdiff_t const under_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), under),
+                      std::sregex_iterator()));
+    CHECK(under_count == 0);
+  }
 }
