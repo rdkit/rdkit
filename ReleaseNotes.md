@@ -1,3 +1,70 @@
+# Release_2026.03.3
+(Changes relative to Release_2026.03.2)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Reza Bagheri Alashti, Marco Ballarotto, Kevin Boyd, David Cosgrove, Gareth
+Jones, Huw Jones, Steven Kearnes, Brian Kelley, Clay Moore, Dan Nealschneider,
+Emily Rhodes, Ricardo Rodriguez, Raul Sofia, Chris Von Bargen
+
+## New Features and Enhancements:
+  - CIP labeller performance: Don't calculate auxiliary descriptors unnecessarily
+ (github pull #9171 from d-b-w)
+  - Add optional default value to Mol.GetProp() in Python
+ (github issue #9241 from emilyrrhodes)
+  - CIPLabeler performance: Store vector of bonds
+ (github pull #9250 from d-b-w)
+  - Pandastools improvements
+ (github pull #9251 from marcobICR)
+  - Add MMFF Property Getter functions to python interface
+ (github issue #9253 from scal444)
+  - [bot] Update molecular templates header file
+ (github pull #9269 from github-actions[bot])
+  - Adds some features to the C# SWIG wrappers
+ (github pull #9274 from jones-gareth)
+  - MolDrawOptions: Option for Uniform Bond Colour with Coloured Atom Labels
+ (github issue #9282 from hdj-elixirsoftware)
+  - add checked atom and bond iterators
+ (github pull #9290 from greglandrum)
+  - Adds MolToCDXMLBlock to FileParsers
+ (github pull #9291 from bp-kelley)
+  - add ability to block atoms/bonds from participating in tautomer zones
+ (github pull #9297 from greglandrum)
+  - Improve synthon substructure search performance ~20%
+ (github pull #9305 from d-b-w)
+
+## Documentation:
+  - Docs: fix CosineSimilarity formula and clarify similarity metric names in BitOps.h
+ (github pull #9264 from rezabagher)
+
+## Bug Fixes:
+  - Extended fix for #9101
+ (github pull #9255 from RaulSofia)
+  - Segfault when calling MolToSmiles on submol
+ (github issue #9270 from ricrogz)
+  - DrawText::setFontScale Atom Font Scaling Issue
+ (github issue #9280 from hdj-elixirsoftware)
+  - PgSQL: preserve toolchain LDFLAGS on macOS
+ (github pull #9285 from skearnes)
+  - Build: tag dev-only install rules with COMPONENT dev
+ (github pull #9287 from skearnes)
+  - Build: tag rdkitpython install rules with COMPONENT python
+ (github pull #9288 from skearnes)
+  - Fix BFGS gradient-convergence denominator for negative energies
+ (github pull #9298 from mooreneural)
+  - Regression in layout of reaction drawings.
+ (github issue #9301 from DavidACosgrove)
+
+## Cleanup work:
+  - Refactor to stop using iterator definitions in types.h
+ (github pull #9275 from ricrogz)
+  - refactor: improve readability and maintainability of AAP similarity code
+ (github pull #9277 from rezabagher)
+
+
 # Release_2026.03.2
 (Changes relative to Release_2026.03.1)
 
