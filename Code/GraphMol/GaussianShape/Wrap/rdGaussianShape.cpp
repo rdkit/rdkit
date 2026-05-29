@@ -147,11 +147,11 @@ python::tuple scoreMol1(const ROMol &ref, const ROMol &fit,
     overlayOpts =
         python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
   }
-  std::array<double, 2> ovVols;
+  std::pair<double, double> ovVols;
   auto results = GaussianShape::ScoreMolecule(
       ref, fit, refOpts, fitOpts, overlayOpts, refConfId, fitConfId, &ovVols);
-  return python::make_tuple(results[0], results[1], results[2], ovVols[0],
-                            ovVols[1]);
+  return python::make_tuple(results[0], results[1], results[2], ovVols.first,
+                            ovVols.second);
 }
 
 python::tuple scoreMol2(const GaussianShape::ShapeInput &refShape,
@@ -166,11 +166,11 @@ python::tuple scoreMol2(const GaussianShape::ShapeInput &refShape,
     overlayOpts =
         python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
   }
-  std::array<double, 2> ovVols;
+  std::pair<double, double> ovVols;
   auto results = GaussianShape::ScoreMolecule(refShape, fit, fitOpts,
                                               overlayOpts, fitConfId, &ovVols);
-  return python::make_tuple(results[0], results[1], results[2], ovVols[0],
-                            ovVols[1]);
+  return python::make_tuple(results[0], results[1], results[2], ovVols.first,
+                            ovVols.second);
 }
 
 python::tuple scoreShape(const GaussianShape::ShapeInput &refShape,
@@ -181,11 +181,11 @@ python::tuple scoreShape(const GaussianShape::ShapeInput &refShape,
     overlayOpts =
         python::extract<GaussianShape::ShapeOverlayOptions>(py_overlayOpts);
   }
-  std::array<double, 2> ovVols;
+  std::pair<double, double> ovVols;
   auto results =
       GaussianShape::ScoreShape(refShape, fitShape, overlayOpts, &ovVols);
-  return python::make_tuple(results[0], results[1], results[2], ovVols[0],
-                            ovVols[1]);
+  return python::make_tuple(results[0], results[1], results[2], ovVols.first,
+                            ovVols.second);
 }
 
 void set_atomSubset(GaussianShape::ShapeInputOptions &opts,
