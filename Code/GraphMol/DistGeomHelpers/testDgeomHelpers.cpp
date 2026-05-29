@@ -1032,7 +1032,8 @@ TEST_CASE("testMultiThreadMultiConf") {
     for (unsigned int i = 0; i < pVect.size(); ++i) {
       const auto *p = dynamic_cast<const RDGeom::Point3D *>(pVect[i]);
       const auto *p2 = dynamic_cast<const RDGeom::Point3D *>(p2Vect[i]);
-      CHECK(p && p2);
+      REQUIRE(p);
+      REQUIRE(p2);
       msd += (*p - *p2).lengthSq();
     }
     msd /= static_cast<double>(pVect.size());
