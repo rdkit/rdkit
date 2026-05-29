@@ -384,9 +384,12 @@ std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles,
 }
 
 namespace details {
-
+constexpr std::uint64_t atomFlagProperty =
+    1;  //*< atom has the exclude property
 constexpr std::uint64_t bondFlagCarboxyl =
     1;  //*< bond involved in in carboxyl, amide, etc.
+constexpr std::uint64_t bondFlagProperty =
+    2;  //*< bond has the exclude property
 std::vector<std::uint64_t> getBondFlags(const ROMol &mol) {
   // FIX: oversimplified, but should work for now
   static std::vector<std::string> patterns{
@@ -412,7 +415,14 @@ std::vector<std::uint64_t> getBondFlags(const ROMol &mol) {
     }
   }
 
-  std::vector<std::uint64_t> bondFlags(mol.getNumBonds(), 0);
+  std::vector<std::uint64_t> bondFlags;
+  bondFlags.reserve(mol.getNumBonds());
+  std::ranges::transform(
+      mol.bonds(), std::back_inserter(bondFlags), [](const auto &bnd) {
+        return bnd->hasProp(MolHash::excludeFromTautomerismProp)
+                   ? details::bondFlagProperty
+                   : 0;
+      });
   for (const auto &qry : queries) {
     auto matches = SubstructMatch(mol, *qry);
     for (const auto &match : matches) {
@@ -466,7 +476,8 @@ bool isPossibleTautomericBond(const Bond *bptr,
 bool isPossibleStartingBond(const Bond *bptr,
                             const std::vector<std::uint64_t> &atomFlags,
                             const std::vector<std::uint64_t> &bondFlags) {
-  if (bondFlags[bptr->getIdx()]) {
+  if (bondFlags[bptr->getIdx()] || atomFlags[bptr->getBeginAtom()->getIdx()] ||
+      atomFlags[bptr->getEndAtom()->getIdx()]) {
     return false;
   }
   auto heteroBeg = isHeteroAtom(bptr->getBeginAtom()) &&
@@ -507,7 +518,7 @@ bool hasStartBond(const Atom *aptr, const boost::dynamic_bitset<> &startBonds) {
 // (indicating the stereocenter could become sp2 in a tautomer).
 // Aromatic atoms shouldn't pull in substituent stereocenters.
 bool shouldSkipChiralNeighbor(const Atom *sourceAtom, const Atom *targetAtom,
-                               const Bond *connectingBond) {
+                              const Bond *connectingBond) {
   if (targetAtom->getHybridization() != Atom::SP3 ||
       targetAtom->getTotalNumHs() != 1) {
     return false;
@@ -532,7 +543,8 @@ bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
                       const boost::dynamic_bitset<> &startBonds,
                       const std::vector<std::uint64_t> &atomFlags,
                       const std::vector<std::uint64_t> &bondFlags) {
-  if (bondFlags[nbrBond->getIdx()]) {
+  if (bondFlags[nbrBond->getIdx()] || atomFlags[otherAtom->getIdx()] ||
+      atomFlags[atom->getIdx()]) {
     return true;
   }
 
@@ -545,7 +557,7 @@ bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
   if (!nbrBond->getIsAromatic()) {
     const Atom *aromaticAtom = nullptr;
     const Atom *nonAromaticAtom = nullptr;
-    
+
     if (atom->getIsAromatic() && !otherAtom->getIsAromatic()) {
       aromaticAtom = atom;
       nonAromaticAtom = otherAtom;
@@ -553,7 +565,7 @@ bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
       aromaticAtom = otherAtom;
       nonAromaticAtom = atom;
     }
-    
+
     // If we have an aromatic->non-aromatic transition
     if (aromaticAtom && nonAromaticAtom) {
       // Aromatic atom must have no H and be carbon
@@ -561,7 +573,8 @@ bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
           aromaticAtom->getAtomicNum() == 6 &&
           nonAromaticAtom->getAtomicNum() == 6) {
         // Check if nonAromaticAtom is part of a C=C system
-        for (const auto &bnd : atom->getOwningMol().atomBonds(nonAromaticAtom)) {
+        for (const auto &bnd :
+             atom->getOwningMol().atomBonds(nonAromaticAtom)) {
           if (bnd->getBondType() == Bond::BondType::DOUBLE &&
               !bnd->getIsAromatic()) {
             auto otherEnd = bnd->getOtherAtom(nonAromaticAtom);
@@ -627,9 +640,14 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
   unsigned int hcount = 0;
   int charge = 0;
 
-  // we aren't current doing anything with atomFlags, but we have added them in
-  // analogy to the bondFlags as a kind of future proofing.
-  std::vector<std::uint64_t> atomFlags(mol->getNumAtoms(), 0);
+  std::vector<std::uint64_t> atomFlags;
+  atomFlags.reserve(mol->getNumAtoms());
+  std::ranges::transform(mol->atoms(), std::back_inserter(atomFlags),
+                         [](const auto &atom) {
+                           return atom->hasProp(excludeFromTautomerismProp)
+                                      ? details::atomFlagProperty
+                                      : 0;
+                         });
   auto bondFlags = details::getBondFlags(*mol);
 
   boost::dynamic_bitset<> bondsToModify(mol->getNumBonds());
@@ -922,10 +940,10 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
       if (!bondsToModify[bptr->getIdx()]) {
         continue;
       }
-      // Preserve E/Z stereo on exocyclic double bonds (one atom in ring, one not)
-      // to avoid merging distinct geometric isomers (e.g., E/Z hydrazones).
-      // For these bonds, keep them as DOUBLE bonds (not AROMATIC) so that
-      // E/Z stereo is preserved in the SMILES output.
+      // Preserve E/Z stereo on exocyclic double bonds (one atom in ring, one
+      // not) to avoid merging distinct geometric isomers (e.g., E/Z
+      // hydrazones). For these bonds, keep them as DOUBLE bonds (not AROMATIC)
+      // so that E/Z stereo is preserved in the SMILES output.
       bool isExocyclicWithStereo = false;
       if (bptr->getStereo() != Bond::BondStereo::STEREONONE) {
         bool beginInRing = queryIsAtomInRing(bptr->getBeginAtom());
