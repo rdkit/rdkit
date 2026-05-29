@@ -536,13 +536,15 @@ void DrawMol::extractStereoGroups() {
 
     switch (group.getGroupType()) {
       case RDKit::StereoGroupType::STEREO_ABSOLUTE:
-        stereoGroupType = "abs";
+        stereoGroupType = drawOptions_.stereoGroupAbsLabel;
         break;
       case RDKit::StereoGroupType::STEREO_OR:
-        stereoGroupType = "or" + std::to_string(++orCount);
+        stereoGroupType =
+            drawOptions_.stereoGroupOrLabel + std::to_string(++orCount);
         break;
       case RDKit::StereoGroupType::STEREO_AND:
-        stereoGroupType = "and" + std::to_string(++andCount);
+        stereoGroupType =
+            drawOptions_.stereoGroupAndLabel + std::to_string(++andCount);
         break;
       default:
         throw ValueErrorException("Unrecognized stereo group type");
