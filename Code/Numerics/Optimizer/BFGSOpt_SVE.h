@@ -2,14 +2,14 @@
 #define RDKIT_NUMERICS_OPTIMIZER_BFGSOPT_SVE_H
 
 #if defined(__linux__) && defined(__aarch64__)
-  #include <sys/auxv.h>
-  #include <asm/hwcap.h>
-  #if defined(__has_include)
-    #if __has_include(<arm_sve.h>)
-      #include <arm_sve.h>
-      #define RDK_SVE_AVAILABLE 1
-    #endif
-  #endif
+#include <sys/auxv.h>
+#include <asm/hwcap.h>
+#if defined(__has_include)
+#if __has_include(<arm_sve.h>)
+#include <arm_sve.h>
+#define RDK_SVE_AVAILABLE 1
+#endif
+#endif
 #endif
 
 namespace BFGSOpt {
@@ -27,9 +27,11 @@ static bool cpuHasSVE() {
 // ---------------------------------------------------------------------------
 // SVE kernel: initialise search direction xi = -grad and accumulate ||pos||^2
 // ---------------------------------------------------------------------------
-__attribute__((target("+sve")))
-static void sveInitXiAndSum(unsigned int dim, const double *grad,
-                             double *xi, const double *pos, double *outSum) {
+__attribute__((target("+sve"))) static void sveInitXiAndSum(unsigned int dim,
+                                                            const double *grad,
+                                                            double *xi,
+                                                            const double *pos,
+                                                            double *outSum) {
   svfloat64_t acc = svdup_f64(0.0);
   uint64_t i = 0;
   while (i < dim) {
@@ -58,12 +60,10 @@ static void sveInitXiAndSum(unsigned int dim, const double *grad,
 // saving two additional O(dim) traversals compared to separate dot-product
 // calls.
 // ---------------------------------------------------------------------------
-__attribute__((target("+sve")))
-static void sveHessianVecMul(unsigned int dim,
-                              const double *invHessian, const double *dGrad,
-                              double *hessDGrad, const double *xi,
-                              double *outFac, double *outFae,
-                              double *outSumDGrad, double *outSumXi) {
+__attribute__((target("+sve"))) static void sveHessianVecMul(
+    unsigned int dim, const double *invHessian, const double *dGrad,
+    double *hessDGrad, const double *xi, double *outFac, double *outFae,
+    double *outSumDGrad, double *outSumXi) {
   // Phase 1: matrix-vector multiply  invHessian * dGrad -> hessDGrad
   // Fully vectorised over both i and j.
   for (unsigned int i = 0; i < dim; i++) {
@@ -72,21 +72,20 @@ static void sveHessianVecMul(unsigned int dim,
     uint64_t j = 0;
     while (j < dim) {
       svbool_t pg = svwhilelt_b64(j, (uint64_t)dim);
-      acc = svmla_f64_m(pg, acc,
-                        svld1_f64(pg, row + j),
+      acc = svmla_f64_m(pg, acc, svld1_f64(pg, row + j),
                         svld1_f64(pg, dGrad + j));
       j += svcntd();
     }
     hessDGrad[i] = svaddv_f64(svptrue_b64(), acc);
   }
 
-  svfloat64_t vFac = svdup_f64(0.0), vFae     = svdup_f64(0.0);
-  svfloat64_t vSDG = svdup_f64(0.0), vSXi     = svdup_f64(0.0);
+  svfloat64_t vFac = svdup_f64(0.0), vFae = svdup_f64(0.0);
+  svfloat64_t vSDG = svdup_f64(0.0), vSXi = svdup_f64(0.0);
   uint64_t i = 0;
   while (i < dim) {
-    svbool_t    pg  = svwhilelt_b64(i, (uint64_t)dim);
-    svfloat64_t vdg = svld1_f64(pg, dGrad     + i);
-    svfloat64_t vxi = svld1_f64(pg, xi        + i);
+    svbool_t pg = svwhilelt_b64(i, (uint64_t)dim);
+    svfloat64_t vdg = svld1_f64(pg, dGrad + i);
+    svfloat64_t vxi = svld1_f64(pg, xi + i);
     svfloat64_t vhd = svld1_f64(pg, hessDGrad + i);
 
     vFac = svmla_f64_m(pg, vFac, vdg, vxi);
@@ -95,10 +94,10 @@ static void sveHessianVecMul(unsigned int dim,
     vSXi = svmla_f64_m(pg, vSXi, vxi, vxi);
     i += svcntd();
   }
-  *outFac      = svaddv_f64(svptrue_b64(), vFac);
-  *outFae      = svaddv_f64(svptrue_b64(), vFae);
+  *outFac = svaddv_f64(svptrue_b64(), vFac);
+  *outFae = svaddv_f64(svptrue_b64(), vFae);
   *outSumDGrad = svaddv_f64(svptrue_b64(), vSDG);
-  *outSumXi    = svaddv_f64(svptrue_b64(), vSXi);
+  *outSumXi = svaddv_f64(svptrue_b64(), vSXi);
 }
 
 // ---------------------------------------------------------------------------
@@ -111,29 +110,28 @@ static void sveHessianVecMul(unsigned int dim,
 // multiply and add into a single pipeline stage, reducing instruction count
 // and register pressure compared to separate multiply + add sequences.
 // ---------------------------------------------------------------------------
-__attribute__((target("+sve")))
-static void sveHessianRank1Update(unsigned int dim, double *invHessian,
-                                   const double *xi, const double *hessDGrad,
-                                   const double *dGrad,
-                                   double fac, double fad, double fae) {
+__attribute__((target("+sve"))) static void sveHessianRank1Update(
+    unsigned int dim, double *invHessian, const double *xi,
+    const double *hessDGrad, const double *dGrad, double fac, double fad,
+    double fae) {
   for (unsigned int i = 0; i < dim; i++) {
     // Broadcast scalar multipliers once per row to avoid redundant computation
-    svfloat64_t vpxi  = svdup_f64(fac * xi[i]);
+    svfloat64_t vpxi = svdup_f64(fac * xi[i]);
     svfloat64_t vhdgi = svdup_f64(fad * hessDGrad[i]);
-    svfloat64_t vdgi  = svdup_f64(fae * dGrad[i]);
+    svfloat64_t vdgi = svdup_f64(fae * dGrad[i]);
     double *row = invHessian + i * dim;
     // Start from column i to process only the upper triangle
     uint64_t j = i;
     while (j < dim) {
       svbool_t pg = svwhilelt_b64(j, (uint64_t)dim);
-      svfloat64_t vxj   = svld1_f64(pg, xi + j);
+      svfloat64_t vxj = svld1_f64(pg, xi + j);
       svfloat64_t vhdgj = svld1_f64(pg, hessDGrad + j);
-      svfloat64_t vdgj  = svld1_f64(pg, dGrad + j);
-      svfloat64_t vh    = svld1_f64(pg, row + j);
+      svfloat64_t vdgj = svld1_f64(pg, dGrad + j);
+      svfloat64_t vh = svld1_f64(pg, row + j);
       // Three fused multiply-adds apply all three BFGS update terms at once
-      vh = svmla_f64_m(pg, vh, vpxi,  vxj);
+      vh = svmla_f64_m(pg, vh, vpxi, vxj);
       vh = svmls_f64_m(pg, vh, vhdgi, vhdgj);
-      vh = svmla_f64_m(pg, vh, vdgi,  vdgj);
+      vh = svmla_f64_m(pg, vh, vdgi, vdgj);
       svst1_f64(pg, row + j, vh);
       j += svcntd();
     }
@@ -154,9 +152,9 @@ static void sveHessianRank1Update(unsigned int dim, double *invHessian,
 // negation pass. This keeps the loop body to one SVE FMA instruction
 // per iteration, maximising throughput on in-order SVE pipelines.
 // ---------------------------------------------------------------------------
-__attribute__((target("+sve")))
-static void sveHessianVecMulNeg(unsigned int dim, const double *invHessian,
-                                 const double *grad, double *xi) {
+__attribute__((target("+sve"))) static void sveHessianVecMulNeg(
+    unsigned int dim, const double *invHessian, const double *grad,
+    double *xi) {
   for (unsigned int i = 0; i < dim; i++) {
     const double *row = invHessian + i * dim;
     svfloat64_t acc = svdup_f64(0.0);

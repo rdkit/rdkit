@@ -119,9 +119,12 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
       tmpLambda = -slope / (2.0 * (newVal - oldVal - slope));
     } else {
       double rhs1 = newVal - oldVal - lambda * slope;
-      double rhs2 = val2  - oldVal - lambda2 * slope;
-      double a = (rhs1 / (lambda * lambda) - rhs2 / (lambda2 * lambda2)) / (lambda - lambda2);
-      double b = (-lambda2 * rhs1 / (lambda * lambda) + lambda * rhs2 / (lambda2 * lambda2)) / (lambda - lambda2);
+      double rhs2 = val2 - oldVal - lambda2 * slope;
+      double a = (rhs1 / (lambda * lambda) - rhs2 / (lambda2 * lambda2)) /
+                 (lambda - lambda2);
+      double b = (-lambda2 * rhs1 / (lambda * lambda) +
+                  lambda * rhs2 / (lambda2 * lambda2)) /
+                 (lambda - lambda2);
       if (a == 0.0) {
         tmpLambda = -slope / (2.0 * b);
       } else {
@@ -139,8 +142,8 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
       }
     }
     lambda2 = lambda;
-    val2    = newVal;
-    lambda  = std::max(tmpLambda, 0.1 * lambda);
+    val2 = newVal;
+    lambda = std::max(tmpLambda, 0.1 * lambda);
     ++it;
   }
   // nothing was done
@@ -192,7 +195,6 @@ int minimize(unsigned int dim, double *pos, double gradTol,
   std::unique_ptr<double[]> newPos(new double[dim]);
   snapshotFreq = std::min(snapshotFreq, maxIts);
 
-
   double fp = func(pos);
   gradFunc(pos, grad.data());
 
@@ -214,8 +216,8 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     for (unsigned int i = 0; i < dim; i++) {
       unsigned int itab = i * dim;
       invHessian[itab + i] = 1.0;
-      xi[i]  = -grad[i];
-      sum   += pos[i] * pos[i];
+      xi[i] = -grad[i];
+      sum += pos[i] * pos[i];
     }
   }
   double maxStep = MAXSTEP * std::max(sqrt(sum), static_cast<double>(dim));
@@ -224,8 +226,8 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     numIters = iter;
     int status = -1;
 
-    linearSearch(dim, pos, fp, grad.data(), xi.data(), newPos.get(),
-                 funcVal, func, maxStep, status);
+    linearSearch(dim, pos, fp, grad.data(), xi.data(), newPos.get(), funcVal,
+                 func, maxStep, status);
     CHECK_INVARIANT(status >= 0, "bad direction in linearSearch");
 
     // save the function value for the next search:
@@ -233,8 +235,8 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // set the direction of this line and save the gradient:
     double test = 0.0;
     for (unsigned int i = 0; i < dim; i++) {
-      xi[i]   = newPos[i] - pos[i];
-      pos[i]  = newPos[i];
+      xi[i] = newPos[i] - pos[i];
+      pos[i] = newPos[i];
       double temp = fabs(xi[i]) / std::max(fabs(pos[i]), 1.0);
       if (temp > test) {
         test = temp;
@@ -296,10 +298,10 @@ int minimize(unsigned int dim, double *pos, double gradTol,
         for (unsigned int j = 0; j < dim; ++j, ++ivh, ++dgj) {
           hdgradi += *ivh * *dgj;
         }
-        fac      += dGrad[i] * xi[i];
-        fae      += dGrad[i] * hessDGrad[i];
+        fac += dGrad[i] * xi[i];
+        fae += dGrad[i] * hessDGrad[i];
         sumDGrad += dGrad[i] * dGrad[i];
-        sumXi    += xi[i]    * xi[i];
+        sumXi += xi[i] * xi[i];
       }
     }
     if (fac > sqrt(EPS * sumDGrad * sumXi)) {
@@ -345,7 +347,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
         xi[i] = 0.0;
         double &pxi = xi[i];
         double *ivh = &(invHessian[itab]);
-        double *gj  = grad.data();
+        double *gj = grad.data();
         for (unsigned int j = 0; j < dim; ++j, ++ivh, ++gj) {
           pxi -= *ivh * *gj;
         }
