@@ -530,7 +530,7 @@ void processPartHitsFromDetails(
                                                 toTry[thisTry].second)) {
       results[thisTry] = std::move(prod);
       ++numHitsFound;
-      if (maxHits != -1 && numHitsFound + 1 >= maxHits + hitStart) {
+      if (maxHits != -1 && numHitsFound >= maxHits + hitStart) {
         break;
       }
     }
