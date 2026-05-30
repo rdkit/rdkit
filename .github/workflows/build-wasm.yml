@@ -1,0 +1,20 @@
+name: Build MinimalLib WASM
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build MinimalLib WASM
+        run: GET_SRC=copy_from_local bash Code/MinimalLib/scripts/build_rdkitjs.sh
