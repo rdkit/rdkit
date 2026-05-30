@@ -732,11 +732,12 @@ TEST_CASE("CXSMILES writer emits |w:| for STEREOANY double bonds") {
   }
 
   SECTION("|w:| roundtrip is idempotent and does not duplicate") {
-    // Parsing |w:| sets BondDir::UNKNOWN on the adjacent single bond. The
-    // STEREOANY double bond also gets set, but with no stereo atoms. The
-    // writer must emit |w:| exactly once (from the existing UNKNOWN path),
-    // not also from the new STEREOANY path.
-    auto m = "C/C=C/C |w:1.1|"_smiles;
+    // Parsing |w:0.0| sets BondDir::UNKNOWN on the adjacent single bond
+    // (bond 0) and STEREOANY on the double bond (bond 1). The writer must
+    // emit |w:| exactly once — the existing UNKNOWN path covers it, and
+    // the new STEREOANY path's alreadyHandled guard must suppress a
+    // second emission.
+    auto m = "CC=CC |w:0.0|"_smiles;
     REQUIRE(m);
     auto out = MolToCXSmiles(*m);
     auto firstW = out.find("w:");
