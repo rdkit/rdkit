@@ -14,7 +14,7 @@ mkdir -p $MINIMALLIB_OUTPUT_PATH
 # Build distribution files
 if [ "$GET_SRC" = copy_from_local ]; then
     echo "Building distribution files from local source tree"
-    docker-compose -f docker/docker_compose_build_minimallib.yml build \
+    docker compose -f docker/docker_compose_build_minimallib.yml build \
         --no-cache \
         --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions"
 else
