@@ -16,7 +16,7 @@ jobs:
       - name: Build WASM assets
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./Code/MinimalLib/docker
           file: Code/MinimalLib/docker/Dockerfile_1_deps
           outputs: type=local,dest=dist
           push: false
