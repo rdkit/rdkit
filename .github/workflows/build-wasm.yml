@@ -13,13 +13,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Build WASM assets
         uses: docker/build-push-action@v5
         with:
-          context: ./Code/MinimalLib
+          context: .
           file: Code/MinimalLib/docker/Dockerfile_1_deps
           outputs: type=local,dest=dist
           push: false
