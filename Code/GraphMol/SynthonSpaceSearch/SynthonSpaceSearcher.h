@@ -112,7 +112,8 @@ class SynthonSpaceSearcher {
       const std::vector<
           std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> &toTry,
       const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results,
-      std::atomic<std::int64_t> &numHitsFound);
+      std::atomic<std::int64_t> &numHitsFound,
+      std::uint64_t &numPossHitsWritten);
 
   // Passed to details::splitMolecule to determine how the fragment
   // sets are uniquified.
@@ -168,7 +169,8 @@ class SynthonSpaceSearcher {
       std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
           &toTry,
       const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results,
-      std::atomic<std::int64_t> &numHitsFound);
+      std::atomic<std::int64_t> &numHitsFound,
+      std::uint64_t &numPossHitsWritten);
 
   // get the subset of synthons for the given reaction to use for this
   // enumeration.
