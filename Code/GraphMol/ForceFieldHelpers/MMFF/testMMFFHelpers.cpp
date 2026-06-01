@@ -585,10 +585,9 @@ void testIssue242() {
   mol = MolFileToMol(pathName + "/Issue242-2.mol");
   TEST_ASSERT(mol);
 
-  mol2 = MolFileToMol(pathName + "/Issue242-2.mol");
+  mol2 = MolFileToMol(pathName + "/Issue242-2-embedded.mol");
   TEST_ASSERT(mol2);
 
-  TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol2, 30, 2370) >= 0);
   mb1 = MolToMolBlock(*mol);
   mb2 = MolToMolBlock(*mol2);
 
