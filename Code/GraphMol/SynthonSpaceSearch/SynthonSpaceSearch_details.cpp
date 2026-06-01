@@ -906,20 +906,20 @@ std::unique_ptr<ROMol> buildProduct(
   MolzipParams mzparams;
   mzparams.label = MolzipLabel::Isotope;
   mzparams.alignCoordinates = true;
-  auto prodMol = std::make_unique<ROMol>(*synthons.front());
+  auto prodMol = std::make_unique<RWMol>(*synthons.front());
   for (size_t i = 1; i < synthons.size(); ++i) {
-    prodMol.reset(combineMols(*prodMol, *synthons[i]));
+    prodMol->insertMol(*synthons[i]);
   }
+  std::unique_ptr<ROMol> zipProdMol;
   try {
-    prodMol = molzip(*prodMol, mzparams);
-    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
+    zipProdMol = molzip(*prodMol, mzparams);
+    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(zipProdMol.get()));
   } catch (std::exception &e) {
     std::cout << "AWOOGA :: Failed to zip " << MolToSmiles(*prodMol)
               << " because " << std::endl
               << e.what() << std::endl;
-    prodMol.reset();
   }
-  return prodMol;
+  return zipProdMol;
 }
 
 std::map<std::string, std::vector<ROMol *>> mapFragsBySmiles(
