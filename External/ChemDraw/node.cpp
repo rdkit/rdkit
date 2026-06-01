@@ -98,6 +98,32 @@ void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
 
   atom = queryAtom;
 }
+
+void applyExplicitHydrogenQueries(RWMol &mol, Atom *&atom,
+                                  const PageData &pagedata, bool explicitHs,
+                                  int numHydrogens) {
+  if (!pagedata.parseQueries || !explicitHs || numHydrogens <= 0) {
+    return;
+  }
+
+  const bool alreadyQueryAtom = atom->hasQuery();
+  auto *queryAtom =
+      alreadyQueryAtom
+          ? static_cast<QueryAtom *>(atom)
+          : static_cast<QueryAtom *>(
+                QueryOps::replaceAtomWithQueryAtom(&mol, atom));
+  if (!alreadyQueryAtom) {
+    queryAtom->setNoImplicit(false);
+  }
+  queryAtom->setNumExplicitHs(0);
+  for (int i = 0; i < numHydrogens; ++i) {
+    auto *hCountQuery = makeAtomHCountQuery(i);
+    hCountQuery->setNegation(true);
+    queryAtom->expandQuery(hCountQuery);
+  }
+
+  atom = queryAtom;
+}
 }  // namespace
 
 bool parseNode(
@@ -430,6 +456,8 @@ bool parseNode(
                              restrict_implicit_hydrogens, ring_bond_count,
                              ring_bond_count_at_least, substituent_count,
                              max_substituent_count, unsaturation);
+  applyExplicitHydrogenQueries(mol, rd_atom, pagedata, explicitHs,
+                               num_hydrogens);
   if (ring_bond_count_as_drawn) {
     rd_atom->setProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP, 1);
   }

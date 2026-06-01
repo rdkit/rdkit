@@ -185,6 +185,9 @@ void visit_children(
             unsigned int failedOp = 0;
             MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
             MolOps::detectBondStereochemistry(*res);
+            if (params.parseQueries && MolOps::hasQueryHs(*res).first) {
+              MolOps::mergeQueryHs(*res);
+            }
             MolOps::removeHs(*res);
           } else {
             MolOps::sanitizeMol(*res);

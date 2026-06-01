@@ -479,6 +479,28 @@ class TestCase(unittest.TestCase):
     self.assertTrue(Chem.MolFromSmiles('N1C2(CCCCC2)CCCC1').HasSubstructMatch(mols[0]))
     self.assertFalse(Chem.MolFromSmiles('N1CCC2CCCCC2C1').HasSubstructMatch(mols[0]))
 
+  def test_cdxml_explicit_hydrogen_minimum_queries(self):
+    rdbase = os.environ['RDBASE']
+    params = Chem.CDXMLParserParams()
+    params.parseQueries = True
+    params.strictQueryParsing = True
+
+    mols = Chem.MolsFromCDXMLFileAsQueries(
+      os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/query-atoms.cdxml'), params)
+    self.assertEqual(len(mols), 3)
+    self.assertIn('!H0', Chem.MolToSmarts(mols[0]))
+    self.assertTrue(Chem.MolFromSmiles('Cc1ccccc1').HasSubstructMatch(mols[0]))
+    self.assertFalse(Chem.MolFromSmiles('Cc1ccc(C)cc1').HasSubstructMatch(mols[0]))
+
+    mols = Chem.MolsFromCDXMLFileAsQueries(
+      os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/chirality1.cdxml'), params)
+    self.assertEqual(len(mols), 1)
+    smarts = Chem.MolToSmarts(mols[0])
+    self.assertIn('!H0', smarts)
+    self.assertIn('!H1', smarts)
+    self.assertTrue(Chem.MolFromSmiles('CC(N)CC(N)C').HasSubstructMatch(mols[0]))
+    self.assertFalse(Chem.MolFromSmiles('CC(N)CC(NC)C').HasSubstructMatch(mols[0]))
+
   def test_cdxml_atom_restriction_queries(self):
     rdbase = os.environ['RDBASE']
     query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')

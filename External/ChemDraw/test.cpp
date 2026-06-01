@@ -39,6 +39,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BadFileException.h>
@@ -435,6 +436,42 @@ TEST_CASE("CDXML Advanced") {
       for (size_t i = 0; i < mols.size(); ++i) {
         CHECK(MolToSmarts(*mols[i]) == expected_smarts[i]);
       }
+    }
+    {
+      auto fname = cdxmlbase + "query-atoms.cdxml";
+      auto params = ChemDrawParserParams(true, true, CDXFormat::CDXML, true,
+                                         true);
+      auto mols = MolsFromChemDrawFile(fname, params);
+      REQUIRE(mols.size() == 3);
+      auto smarts = MolToSmarts(*mols[0]);
+      CHECK(smarts.find("!H0") != std::string::npos);
+      auto monoSubstituted = std::unique_ptr<ROMol>(SmilesToMol("Cc1ccccc1"));
+      auto diSubstituted =
+          std::unique_ptr<ROMol>(SmilesToMol("Cc1ccc(C)cc1"));
+      REQUIRE(monoSubstituted);
+      REQUIRE(diSubstituted);
+      MatchVectType match;
+      CHECK(SubstructMatch(*monoSubstituted, *mols[0], match));
+      match.clear();
+      CHECK(!SubstructMatch(*diSubstituted, *mols[0], match));
+    }
+    {
+      auto fname = cdxmlbase + "chirality1.cdxml";
+      auto params = ChemDrawParserParams(true, true, CDXFormat::CDXML, true,
+                                         true);
+      auto mols = MolsFromChemDrawFile(fname, params);
+      REQUIRE(mols.size() == 1);
+      auto smarts = MolToSmarts(*mols[0]);
+      CHECK(smarts.find("!H0") != std::string::npos);
+      CHECK(smarts.find("!H1") != std::string::npos);
+      auto positive = std::unique_ptr<ROMol>(SmilesToMol("CC(N)CC(N)C"));
+      auto negative = std::unique_ptr<ROMol>(SmilesToMol("CC(N)CC(NC)C"));
+      REQUIRE(positive);
+      REQUIRE(negative);
+      MatchVectType match;
+      CHECK(SubstructMatch(*positive, *mols[0], match));
+      match.clear();
+      CHECK(!SubstructMatch(*negative, *mols[0], match));
     }
     {
       auto fname = cdxmlbase + "anybond.cdxml";
