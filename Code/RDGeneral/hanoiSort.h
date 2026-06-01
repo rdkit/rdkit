@@ -150,16 +150,6 @@ bool hanoi(int *base, int nel, int *temp, int *count, int *changed,
 }
 }  // namespace detail
 template <typename CompareFunc>
-[[deprecated("Use the overload that takes std::span and std::vector instead")]]
-void hanoisort(int *base, int nel, int *count, int *changed,
-               CompareFunc compar) {
-  assert(base);
-  std::vector<int> tempVec(nel);
-  if (detail::hanoi(base, nel, tempVec.data(), count, changed, compar)) {
-    memmove(base, tempVec.data(), nel * sizeof(int));
-  }
-}
-template <typename CompareFunc>
 void hanoisort(std::span<int> &base, std::vector<int> &count,
                std::vector<int> &changed, CompareFunc compar) {
   std::vector<int> tempVec(base.size());
