@@ -374,7 +374,12 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDrawingExtentsIncludeWithHighlights_default.svg", 1595689626U},
     {"testDrawingExtentsInclude_allButHighlights.svg", 1604243819U},
     {"testDrawingExtentsIncludeWithHighlights_allButHighlights.svg",
-     436783789U}};
+     436783789U},
+    {"test_Github9301_1.svg", 3573122884U},
+    {"test_Github9280_1.0.svg", 1658116840U},
+    {"test_Github9280_2.0.svg", 1805554327U},
+    {"test_Github9280_0.3.svg", 893100468U},
+    {"test_Github9280_0.2.svg", 770838895U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -1297,7 +1302,7 @@ TEST_CASE("github #3258: ", "[drawing][bug]") {
 TEST_CASE("adding png metadata", "[drawing][png]") {
   SECTION("molecule") {
     auto m1 = R"CTAB(
-  Mrv2014 08172015242D          
+  Mrv2014 08172015242D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1705,22 +1710,22 @@ TEST_CASE("drawMoleculeBrackets", "[extras]") {
 M  V30 BEGIN CTAB
 M  V30 COUNTS 5 4 1 0 0
 M  V30 BEGIN ATOM
-M  V30 1 C 7 -6.7813 0 0 
-M  V30 2 C 8.0229 -6.1907 0 0 CFG=3 
-M  V30 3 C 8.0229 -5.0092 0 0 
-M  V30 4 C 9.046 -6.7814 0 0 
-M  V30 5 C 10.0692 -6.1907 0 0 
+M  V30 1 C 7 -6.7813 0 0
+M  V30 2 C 8.0229 -6.1907 0 0 CFG=3
+M  V30 3 C 8.0229 -5.0092 0 0
+M  V30 4 C 9.046 -6.7814 0 0
+M  V30 5 C 10.0692 -6.1907 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
-M  V30 1 1 1 2 
-M  V30 2 1 2 3 
-M  V30 3 1 2 4 
-M  V30 4 1 4 5 
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 4 5
 M  V30 END BOND
 M  V30 BEGIN SGROUP
 M  V30 1 SRU 1 ATOMS=(3 3 2 4) XBONDS=(2 1 4) BRKXYZ=(9 7.51 -7.08 0 7.51 -
 M  V30 -5.9 0 0 0 0) BRKXYZ=(9 9.56 -5.9 0 9.56 -7.08 0 0 0 0) -
-M  V30 CONNECT=HT LABEL=n 
+M  V30 CONNECT=HT LABEL=n
 M  V30 END SGROUP
 M  V30 END CTAB
 M  END
@@ -1784,7 +1789,7 @@ M  END
   }
   SECTION("three brackets") {
     auto m = R"CTAB(three brackets
-  Mrv2014 11052006542D          
+  Mrv2014 11052006542D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1860,8 +1865,8 @@ M  END)CTAB"_ctab;
   }
   SECTION("ChEBI 59342") {
     // thanks to John Mayfield for pointing out the example
-    auto m = R"CTAB(ChEBI59342 
-Marvin  05041012302D          
+    auto m = R"CTAB(ChEBI59342
+Marvin  05041012302D
 
  29 30  0  0  1  0            999 V2000
    10.1615   -7.7974    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1924,7 +1929,7 @@ Marvin  05041012302D
  15 28  1  0  0  0  0
   1 29  1  0  0  0  0
 M  STY  1   1 SRU
-M  SCN  1   1 HT 
+M  SCN  1   1 HT
 M  SAL   1 15   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
 M  SAL   1 12  16  17  18  19  20  21  22  23  24  25  26  27
 M  SDI   1  4    9.4310   -4.9261    9.4165   -5.7510
@@ -1947,7 +1952,7 @@ M  END)CTAB"_ctab;
   SECTION("pathological bracket orientation") {
     {  // including the bonds
       auto m = R"CTAB(bogus
-  Mrv2014 11202009512D          
+  Mrv2014 11202009512D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1995,7 +2000,7 @@ M  END
     {  // no bonds in the sgroup, the bracket should point the other way
        // (towards the majority of the atoms in the sgroup)
       auto m = R"CTAB(bogus
-  Mrv2014 11202009512D          
+  Mrv2014 11202009512D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2048,22 +2053,22 @@ M  END
 M  V30 BEGIN CTAB
 M  V30 COUNTS 5 4 1 0 0
 M  V30 BEGIN ATOM
-M  V30 1 C 7 -6.7813 0 0 
-M  V30 2 C 8.0229 -6.1907 0 0 CFG=3 
-M  V30 3 C 8.0229 -5.0092 0 0 
-M  V30 4 C 9.046 -6.7814 0 0 
-M  V30 5 C 10.0692 -6.1907 0 0 
+M  V30 1 C 7 -6.7813 0 0
+M  V30 2 C 8.0229 -6.1907 0 0 CFG=3
+M  V30 3 C 8.0229 -5.0092 0 0
+M  V30 4 C 9.046 -6.7814 0 0
+M  V30 5 C 10.0692 -6.1907 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
-M  V30 1 1 1 2 
-M  V30 2 1 2 3 
-M  V30 3 1 2 4 
-M  V30 4 1 4 5 
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 4 5
 M  V30 END BOND
 M  V30 BEGIN SGROUP
 M  V30 1 SRU 1 ATOMS=(3 3 2 4) XBONDS=(2 1 4) BRKXYZ=(9 7.51 -7.08 0 7.51 -
 M  V30 -5.9 0 0 0 0) BRKXYZ=(9 9.56 -5.9 0 9.56 -7.08 0 0 0 0) -
-M  V30 CONNECT=HT LABEL=n 
+M  V30 CONNECT=HT LABEL=n
 M  V30 END SGROUP
 M  V30 END CTAB
 M  END
@@ -2184,7 +2189,7 @@ TEST_CASE("github #3543: Error adding PNG metadata when kekulize=False",
 TEST_CASE("SGroup Data") {
   SECTION("ABS") {
     auto m = R"CTAB(
-  Mrv2014 12072015352D          
+  Mrv2014 12072015352D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2245,7 +2250,7 @@ M  END
   }
   SECTION("REL") {
     auto m = R"CTAB(
-  Mrv2014 12072015352D          
+  Mrv2014 12072015352D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2469,7 +2474,7 @@ M  END
 TEST_CASE("position variation bonds", "[extras]") {
   SECTION("simple") {
     auto m = R"CTAB(
-  Mrv2014 12092006072D          
+  Mrv2014 12092006072D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2523,7 +2528,7 @@ M  END
   }
   SECTION("multiple") {
     auto m = R"CTAB(
-  Mrv2014 12092006082D          
+  Mrv2014 12092006082D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2578,7 +2583,7 @@ M  END
   }
   SECTION("non-contiguous") {
     auto m = R"CTAB(
-  Mrv2014 12092006102D          
+  Mrv2014 12092006102D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2621,7 +2626,7 @@ M  END
   }
   SECTION("larger mol") {
     auto m = R"CTAB(
-  Mrv2014 12092009152D          
+  Mrv2014 12092009152D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2730,8 +2735,8 @@ TEST_CASE("disable atom labels", "[feature]") {
 TEST_CASE("drawing query bonds", "[queries]") {
   SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2014 12072005332D          
-  
+  Mrv2014 12072005332D
+
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 14 14 0 0 0
@@ -2811,8 +2816,8 @@ M  END
   }
   SECTION("smaller drawing") {
     auto m = R"CTAB(
-  Mrv2014 12012004302D          
-  
+  Mrv2014 12012004302D
+
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 26 29 0 0 0
@@ -2892,7 +2897,7 @@ M  END
   }
   SECTION("two linknodes") {
     auto m = R"CTAB(two linknodes
-  Mrv2014 07072016412D          
+  Mrv2014 07072016412D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2956,8 +2961,8 @@ TEST_CASE("molecule annotations", "[extra]") {
   }
   SECTION("chiral flag") {
     auto m = R"CTAB(
-  Mrv2014 12152012512D          
- 
+  Mrv2014 12152012512D
+
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 8 8 0 0 1
@@ -3080,8 +3085,8 @@ M  END
   }
   SECTION("label placement") {
     auto m = R"CTAB(
-  Mrv2014 12162004412D          
- 
+  Mrv2014 12162004412D
+
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 16 15 0 0 0
@@ -3142,7 +3147,7 @@ M  END
 TEST_CASE("draw link nodes", "[extras]") {
   SECTION("one linknode") {
     auto m = R"CTAB(one linknode
-  Mrv2007 06222005102D          
+  Mrv2007 06222005102D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3276,7 +3281,7 @@ M  END)CTAB"));
 TEST_CASE("draw atom list queries", "[extras]") {
   SECTION("atom list") {
     auto m = R"CTAB(
-  Mrv2102 02112115002D          
+  Mrv2102 02112115002D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3307,7 +3312,7 @@ M  END
 
   SECTION("NOT atom list") {
     auto m = R"CTAB(
-  Mrv2102 02112115032D          
+  Mrv2102 02112115032D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3437,7 +3442,7 @@ TEST_CASE("test the options that toggle isotope labels", "[drawing]") {
 TEST_CASE("draw hydrogen bonds", "[drawing]") {
   SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2014 03022114422D          
+  Mrv2014 03022114422D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3555,7 +3560,7 @@ TEST_CASE("preserve Reaction coordinates", "[reactions]") {
   2  2  1
 $MOL
 
-  Mrv1682203132116452D          
+  Mrv1682203132116452D
 
   3  2  0  0  0  0            999 V2000
    -4.3304    2.5893    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3566,7 +3571,7 @@ $MOL
 M  END
 $MOL
 
-  Mrv1682203132116452D          
+  Mrv1682203132116452D
 
   2  1  0  0  0  0            999 V2000
    -2.1652    2.6339    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3575,7 +3580,7 @@ $MOL
 M  END
 $MOL
 
-  Mrv1682203132116452D          
+  Mrv1682203132116452D
 
   3  2  0  0  0  0            999 V2000
     3.6109    1.9512    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3586,7 +3591,7 @@ $MOL
 M  END
 $MOL
 
-  Mrv1682203132116452D          
+  Mrv1682203132116452D
 
   2  1  0  0  0  0            999 V2000
     4.9511    1.9959    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3595,7 +3600,7 @@ $MOL
 M  END
 $MOL
 
-  Mrv1682203132116452D          
+  Mrv1682203132116452D
 
   2  1  0  0  0  0            999 V2000
    -0.3571    2.7232    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3821,7 +3826,7 @@ TEST_CASE(
     "generation") {
   SECTION("Basics") {
     auto mol = R"CTAB(
-  Mrv2114 09132120172D          
+  Mrv2114 09132120172D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4250,7 +4255,7 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    CHECK_THAT(drawer.fontSize(), Catch::Matchers::WithinAbs(5.5, 0.2));
+    CHECK_THAT(drawer.fontSize(), Catch::Matchers::WithinAbs(6.0, 0.2));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.1b.svg");
     outs << text;
@@ -4770,7 +4775,7 @@ M  END)CTAB"_ctab;
 TEST_CASE("wedged bonds to metals drawn in the wrong direction") {
   SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2108 01092205442D          
+  Mrv2108 01092205442D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4868,8 +4873,9 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
       y = std::stod(match[2].str());
       return true;
     }
-    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
-                       "(-?[0-9]+\\.?[0-9]*)");
+    std::regex pathRgx(
+        "class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+        "(-?[0-9]+\\.?[0-9]*)");
     if (std::regex_search(text, match, pathRgx) && match.size() == 3) {
       x = std::stod(match[1].str());
       y = std::stod(match[2].str());
@@ -4888,8 +4894,9 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
     if (!coords.empty()) {
       return coords;
     }
-    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
-                       "(-?[0-9]+\\.?[0-9]*)");
+    std::regex pathRgx(
+        "class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+        "(-?[0-9]+\\.?[0-9]*)");
     for (auto it = std::sregex_iterator(text.begin(), text.end(), pathRgx);
          it != std::sregex_iterator(); ++it) {
       coords.emplace_back(std::stod((*it)[1].str()), std::stod((*it)[2].str()));
@@ -4902,8 +4909,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   double right_x = 0.0, right_y = 0.0;
   SECTION("Top") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Top;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Top;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
@@ -4917,8 +4923,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   }
   SECTION("Left with vertical text") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
     drawer.drawOptions().legendVerticalText = true;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
@@ -4935,8 +4940,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   }
   SECTION("Left horizontal") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
     drawer.drawOptions().legendVerticalText = false;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
@@ -4950,8 +4954,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   }
   SECTION("Right horizontal") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Right;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Right;
     drawer.drawOptions().legendVerticalText = false;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
@@ -4980,8 +4983,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   SECTION("Long vertical side legend fits panel height") {
     const std::string longName(48, 'M');
     MolDraw2DSVG drawer(160, 90, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
     drawer.drawOptions().legendVerticalText = true;
     drawer.drawOptions().legendFraction = 0.22f;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, longName);
@@ -7205,7 +7207,7 @@ TEST_CASE("Down/dashed wedge not visible on small canvas..") {
 TEST_CASE("Github6054: MDL query atoms should not trigger an exception") {
   SECTION("any heavy") {
     auto a = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   6  6  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7249,7 +7251,7 @@ TEST_CASE("Optionally depict complex query atoms in a more compact form") {
   };
   SECTION("any heavy") {
     auto a = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   6  6  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7297,7 +7299,7 @@ M  END
   }
   SECTION("any atom") {
     auto ah = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   6  6  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7345,7 +7347,7 @@ M  END
   }
   SECTION("any hetero") {
     auto q = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   6  6  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7393,7 +7395,7 @@ M  END
   }
   SECTION("any hetero or hydrogen") {
     auto qh = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   6  6  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7441,7 +7443,7 @@ M  END
   }
   SECTION("any halo") {
     auto x = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   7  7  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7491,7 +7493,7 @@ M  END
   }
   SECTION("any halo or hydrogen") {
     auto xh = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   7  7  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7541,7 +7543,7 @@ M  END
   }
   SECTION("any metal") {
     auto m = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   7  7  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7592,7 +7594,7 @@ M  END
   }
   SECTION("any metal or hydrogen") {
     auto mh = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   7  7  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -10088,7 +10090,7 @@ TEST_CASE("wedge non-single bonds") {
   SECTION(
       "basics 3: make sure reapplyMolBlockWedging is called before prepareMolForDrawing") {
     auto m = R"CTAB(
-  Mrv2311 05242408162D          
+  Mrv2311 05242408162D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -11363,4 +11365,121 @@ M  END
     }
     CHECK(checkCoords(referenceCoords, highlightCoords));
   }
+}
+
+TEST_CASE("Github9301 - reaction layout regression") {
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]"));
+  MolDraw2DSVG drawer(450, 200, 450, 200, NO_FREETYPE);
+  drawer.drawReaction(*rxn);
+  drawer.finishDrawing();
+  std::ofstream outs("test_Github9301_1.svg");
+  auto txt = drawer.getDrawingText();
+  outs << txt;
+  outs.close();
+  const static std::regex atom0(
+      "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-0'.* >C</text>");
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(txt.begin(), txt.end(), atom0),
+                    std::sregex_iterator()));
+  CHECK(match_count == 3);
+  auto match_begin = std::sregex_iterator(txt.begin(), txt.end(), atom0);
+  std::smatch match = *match_begin;
+  CHECK_THAT(stod(match[1]), Catch::Matchers::WithinAbs(40.2, 0.1));
+  CHECK_THAT(stod(match[2]), Catch::Matchers::WithinAbs(125.8, 0.1));
+  ++match_begin;
+  match = *match_begin;
+  CHECK_THAT(stod(match[1]), Catch::Matchers::WithinAbs(138.3, 0.1));
+  CHECK_THAT(stod(match[2]), Catch::Matchers::WithinAbs(104.5, 0.1));
+  ++match_begin;
+  match = *match_begin;
+  CHECK_THAT(stod(match[1]), Catch::Matchers::WithinAbs(355.9, 0.1));
+  CHECK_THAT(stod(match[2]), Catch::Matchers::WithinAbs(80.0, 0.1));
+  check_file_hash("test_Github9301_1.svg");
+}
+
+TEST_CASE("Github 9280 - font scaling bug") {
+  auto mol = "CC(C)Oc1ccc(N2CCc3nccc(C(=O)Nc4ccccn4)c3C2)nc1"_smiles;
+  {
+    MolDraw2DSVG drawer(358, 290, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().baseFontSize = 1.0;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream ofs("test_Github9280_1.0.svg");
+    ofs << text;
+    ofs.close();
+    // With the bug, it snapped to maximum font size, 40 pixels.
+    CHECK(text.find("font-size:40px") == std::string::npos);
+    CHECK(text.find("font-size:24px") != std::string::npos);
+    check_file_hash("test_Github9280_1.0.svg");
+  }
+  {
+    // Check it still maxes out at 40 - font size would be 50 without.
+    MolDraw2DSVG drawer(358, 290, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().baseFontSize = 2.0;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream ofs("test_Github9280_2.0.svg");
+    ofs << text;
+    ofs.close();
+    CHECK(text.find("font-size:40px") != std::string::npos);
+    check_file_hash("test_Github9280_2.0.svg");
+  }
+  {
+    MolDraw2DSVG drawer(358, 290, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().baseFontSize = 0.3;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream ofs("test_Github9280_0.3.svg");
+    ofs << text;
+    ofs.close();
+    // With the bug, it snapped to minimum font size, 6 pixels.
+    CHECK(text.find("font-size:6px") == std::string::npos);
+    CHECK(text.find("font-size:7px") != std::string::npos);
+    check_file_hash("test_Github9280_0.3.svg");
+  }
+  {
+    MolDraw2DSVG drawer(358, 290, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().baseFontSize = 0.2;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream ofs("test_Github9280_0.2.svg");
+    ofs << text;
+    ofs.close();
+    // This should be the minimum font size
+    CHECK(text.find("font-size:6px") != std::string::npos);
+    check_file_hash("test_Github9280_0.2.svg");
+  }
+}
+TEST_CASE("Uniform bond colour") {
+  auto m1 = "F[C@@H](Cl)Oc1ccc(N2CCc3nccc(C(=O)Nc4ccccn4)c3C2)nc1"_smiles;
+  REQUIRE(m1);
+  MolDraw2DSVG drawer(400, 400, -1, -1, NO_FREETYPE);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  drawer.drawOptions().addBondIndices = true;
+  drawer.drawOptions().singleColourBonds = true;
+  drawer.drawMolecule(*m1);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs("testUniformBondColour_1.svg");
+  outs << text;
+  outs.close();
+  // Bond 2 is C-O so in normal mode would have 2 lines, a black one and a
+  // red one.  Make sure there's only one.
+  const static std::regex bond2("<path class='bond-2 atom-1 atom-3'");
+  std::ptrdiff_t const match_count2(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), bond2),
+                    std::sregex_iterator()));
+  CHECK(match_count2 == 1);
+  // Bond 0 is a wedge to fluorine.  Make sure it is also all black, which
+  // involves 1 triangle not 2.
+  const static std::regex bond0("<path class='bond-0 atom-1 atom-0'");
+  std::ptrdiff_t const match_count0(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), bond2),
+                    std::sregex_iterator()));
+  CHECK(match_count0 == 1);
 }

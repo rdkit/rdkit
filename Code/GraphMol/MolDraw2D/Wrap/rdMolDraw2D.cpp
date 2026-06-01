@@ -926,11 +926,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite(
           "legendFraction", &RDKit::MolDrawOptions::legendFraction,
           "fraction of the draw panel to be used for the legend if present")
-      .def_readwrite(
-          "legendPosition", &RDKit::MolDrawOptions::legendPosition,
-          "legend position enum. Default=Bottom. "
-          "Values: LegendPosition.Bottom, LegendPosition.Top, "
-          "LegendPosition.Left, LegendPosition.Right.")
+      .def_readwrite("legendPosition", &RDKit::MolDrawOptions::legendPosition,
+                     "legend position enum. Default=Bottom. "
+                     "Values: LegendPosition.Bottom, LegendPosition.Top, "
+                     "LegendPosition.Left, LegendPosition.Right.")
       .def_readwrite(
           "legendVerticalText", &RDKit::MolDrawOptions::legendVerticalText,
           "when legend is Left or Right, draw text vertically (one char per line)")
@@ -1072,6 +1071,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "if true wedged and dashed bonds are drawn using symbolColour "
           "rather than inheriting their colour from the atoms. "
           "Default is false.")
+      .def_readwrite("singleColourBonds",
+                     &RDKit::MolDrawOptions::singleColourBonds,
+                     "if true all bonds are drawn using symbolColour "
+                     "rather than inheriting their colour from the atoms. "
+                     "Default is false.")
       .def_readwrite("useMolBlockWedging",
                      &RDKit::MolDrawOptions::useMolBlockWedging,
                      "If the molecule came from a MolBlock, prefer the wedging"

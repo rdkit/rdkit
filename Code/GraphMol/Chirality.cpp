@@ -1612,8 +1612,8 @@ void findChiralAtomSpecialCases(ROMol &mol,
             ringAtomEntry < 0 ? -ringAtomEntry - 1 : ringAtomEntry - 1;
         same[ringAtomIdx] = ringAtomEntry;
       }
-      for (INT_VECT_CI rae = ringStereoAtoms.begin();
-           rae != ringStereoAtoms.end(); ++rae) {
+      for (auto rae = ringStereoAtoms.begin(); rae != ringStereoAtoms.end();
+           ++rae) {
         int ringAtomEntry = *rae;
         int ringAtomIdx =
             ringAtomEntry < 0 ? -ringAtomEntry - 1 : ringAtomEntry - 1;
