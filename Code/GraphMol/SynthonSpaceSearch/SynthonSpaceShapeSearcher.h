@@ -123,8 +123,8 @@ class SynthonSpaceShapeSearcher : public SynthonSpaceSearcher {
   void processToTrySet(
       std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
           &toTry,
-      const TimePoint *endTime,
-      std::vector<std::unique_ptr<ROMol>> &results) override;
+      const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results,
+      std::atomic<std::int64_t> &numHitsFound) override;
 
   // Given the frag, return the corresponding frag shape.  Returns nullptr
   // if not found.
