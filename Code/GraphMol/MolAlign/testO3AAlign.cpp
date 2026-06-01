@@ -245,7 +245,7 @@ void testCrippenO3AConstraints() {
   auto fopts = v2::FileParsers::MolFileParserParams{.removeHs = false};
   auto m1 = v2::FileParsers::MolFromMolFile(path, fopts);
   TEST_ASSERT(m1);
-  MMFF::sanitizeMMFFMol((RWMol &)(*m1));
+  MMFF::sanitizeMMFFMol((*m1));
   MMFF::MMFFMolProperties mp(*m1);
   TEST_ASSERT(mp.isValid());
   ForceFields::ForceField *field = MMFF::constructForceField(*m1, &mp);

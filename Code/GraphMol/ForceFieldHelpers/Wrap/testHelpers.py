@@ -371,7 +371,6 @@ M  END"""
                            '-0.507066,-0.374147,0.326959;-1.58832,0.0750666,-0.285718)|')
     m = Chem.AddHs(m, addCoords=True)
     self.assertIsNotNone(m)
-    self.assertEqual(rdDistGeom.EmbedMolecule(m), 0)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
     before = ff.CalcEnergy()
@@ -429,9 +428,8 @@ M  END"""
     self.assertAlmostEqual((posa - posb).Length(), 100, delta=10e-5)
 
   def test_uff_get_forcefield_runs(self):
-    mol = Chem.MolFromSmiles("CCO")
-    mol = Chem.AddHs(mol)
-    rdDistGeom.EmbedMolecule(mol, randomSeed=42)
+    mol = Chem.MolFromSmiles('CCO |(1.21821,-0.254035,;-0.055315,0.546111,;-1.16289,-0.292076,)|')
+    mol = Chem.AddHs(mol, addCoords=True)
     ff = UFFGetMoleculeForceField(mol, ignoreInterfragInteractions=False)
     self.assertIsNotNone(ff)
     self.assertTrue(hasattr(ff, "CalcEnergy"))
