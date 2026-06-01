@@ -209,6 +209,19 @@ class MacrocycleGenerator {
   */
   size_t getNumFreePositions() const;
 
+  //! Print all constraints for debugging
+  void printConstraints() const;
+
+  //! Get number of constraints
+  size_t getNumConstraints() const;
+
+  //! Invert turn constraints (R↔L) in a range
+  /*!
+    \param startIdx: First constraint index to invert
+    \param endIdx: Last constraint index to invert (exclusive)
+  */
+  void invertConstraints(size_t startIdx, size_t endIdx);
+
  private:
   //! Simplify the system by adding constraints for large rings
   /*!
@@ -554,7 +567,8 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
     const RDKit::VECT_INT_VECT &allRings,
     const std::map<size_t, int> &substituentSizesByPosition,
     double bondLength = RDDepict::BOND_LEN,
-    int currentRingIndex = -1);
+    int currentRingIndex = -1,
+    const RDGeom::INT_POINT2D_MAP *existingCoords = nullptr);
 
 //! Match macrocycle to a template and extract coordinates
 /*!

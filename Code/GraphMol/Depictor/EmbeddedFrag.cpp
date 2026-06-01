@@ -1217,6 +1217,9 @@ void EmbeddedFrag::embedMacrocycleWithFusedRings(
   // Map back to fusedRings index
   int macrocycleIdx = coreRingsIds[macrocycleIdxInCoreRings];
 
+  std::cerr << "DEBUG: Processing first macrocycle (ring " << macrocycleIdx
+            << ", size=" << macrocycleRing.size() << ")" << std::endl;
+
   // Pre-compute substituent info once for both template matching and
   // generation
   boost::dynamic_bitset<> ring_atoms(dp_mol->getNumAtoms());
@@ -1397,6 +1400,49 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
     // we will take the ring with maximum number of common atoms with
     // with atoms already done
     auto commonAtomIds = findNextRingToEmbed(doneRings, fusedRings, nextId);
+
+    // If this ring is a macrocycle, generate its coordinates with fusion constraints
+    if (fusedRings[nextId].size() > MACROCYCLE_SIZE_THRESHOLD) {
+      std::cerr << "DEBUG: Processing subsequent macrocycle (ring " << nextId
+                << ", size=" << fusedRings[nextId].size() << ")" << std::endl;
+
+      // Build bitset of all atoms in fused system
+      boost::dynamic_bitset<> ring_atoms(dp_mol->getNumAtoms());
+      for (const auto &ring : fusedRings) {
+        for (auto aidx : ring) {
+          ring_atoms.set(aidx);
+        }
+      }
+
+      // Compute substituent info for this macrocycle
+      auto subInfo = computeSubstituentInfo(dp_mol, fusedRings[nextId], ring_atoms);
+
+      // Build coordinate map from already-embedded atoms (from first macrocycle)
+      // to constrain middle fusion positions to match existing angles
+      RDGeom::INT_POINT2D_MAP embeddedCoords;
+      for (const auto &ea : d_eatoms) {
+        embeddedCoords[ea.first] = ea.second.loc;
+      }
+
+      // Generate macrocycle coordinates with fusion constraints
+      auto coords_vec = RDDepict::generateMacrocycleCoordinates(
+          dp_mol, fusedRings[nextId], fusedRings, subInfo.sizesByPosition,
+          BOND_LEN, nextId, &embeddedCoords);
+
+      // Convert vector to map and update coords
+      if (!coords_vec.empty()) {
+        std::cerr << "DEBUG: Successfully generated " << coords_vec.size()
+                  << " coordinates for macrocycle " << nextId << std::endl;
+        RDGeom::INT_POINT2D_MAP macrocycle_coords;
+        for (size_t i = 0; i < coords_vec.size(); ++i) {
+          macrocycle_coords[fusedRings[nextId][i]] = coords_vec[i];
+        }
+        coords[nextId] = macrocycle_coords;
+      } else {
+        std::cerr << "DEBUG: Generation FAILED for macrocycle " << nextId
+                  << " - using fallback embedRing coordinates" << std::endl;
+      }
+    }
 
     RDGeom::Transform2D trans;
     EmbeddedFrag embRing;
