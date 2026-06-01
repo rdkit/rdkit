@@ -8,7 +8,6 @@ from rdkit.Chem import rdMolDescriptors as rdMD
 haveDescrs3D = hasattr(rdMD, 'CalcAUTOCORR3D')
 
 
-
 def _gen3D(m, calculator):
   return calculator(m)
 
