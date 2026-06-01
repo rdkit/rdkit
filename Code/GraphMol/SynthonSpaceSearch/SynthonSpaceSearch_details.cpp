@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
+#include <boost/functional/hash.hpp>
 
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
@@ -887,6 +888,17 @@ std::string buildProductName(
   }
   prodName += ";" + hitset->d_reaction->getId();
   return prodName;
+}
+
+std::size_t buildProductHash(
+    const RDKit::SynthonSpaceSearch::SynthonSpaceHitSet *hitset,
+    const std::vector<size_t> &fragNums) {
+  std::size_t seed = 0;
+  for (size_t i = 0; i < fragNums.size(); ++i) {
+    boost::hash_combine(seed, hitset->synthonsToUse[i][fragNums[i]].first);
+  }
+  boost::hash_combine(seed, hitset->d_reaction->getId());
+  return seed;
 }
 
 std::unique_ptr<ROMol> buildProduct(

@@ -13,6 +13,7 @@
 #include <thread>
 #include <boost/algorithm/string.hpp>
 #include <boost/random/discrete_distribution.hpp>
+#include <boost/unordered/unordered_flat_set.hpp>
 
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
@@ -586,6 +587,39 @@ bool SynthonSpaceSearcher::verifyHit(ROMol &mol, const std::string &,
 }
 
 namespace {
+void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
+  if (!hits.empty() && hits.front()->hasProp("Similarity")) {
+    std::sort(hits.begin(), hits.end(),
+              [](const std::unique_ptr<ROMol> &lhs,
+                 const std::unique_ptr<ROMol> &rhs) {
+                const auto lsim = lhs->getProp<double>("Similarity");
+                const auto rsim = rhs->getProp<double>("Similarity");
+                if (lsim == rsim) {
+                  return lhs->getNumAtoms() < rhs->getNumAtoms();
+                }
+                return lsim > rsim;
+              });
+  }
+}
+
+void sortAndUniquifyToTry(
+    std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
+        &toTry) {
+  // Two query fragmentations can map to the same (reaction, synthon-combo)
+  // pair; deduplicate so we don't build the same product twice.
+  boost::unordered_flat_set<std::size_t> seen;
+  seen.reserve(toTry.size());
+  toTry.erase(
+      std::remove_if(toTry.begin(), toTry.end(),
+                     [&seen](const auto &entry) {
+                       return !seen
+                                   .insert(details::buildProductHash(
+                                       entry.first, entry.second))
+                                   .second;
+                     }),
+      toTry.end());
+}
+
 bool haveEnoughHits(const std::vector<std::unique_ptr<ROMol>> &results,
                     const std::int64_t maxHits, const std::int64_t hitStart) {
   const std::int64_t numHits = std::accumulate(
