@@ -39,7 +39,7 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplate : public RDKit::RWMol {
                    std::string templateName,
                    std::vector<std::pair<std::string,std::string>> templateAttrs);
 
-  MACROMolTemplate() = delete;
+  MACROMolTemplate();
   MACROMolTemplate(const MACROMolTemplate &other);
   MACROMolTemplate(MACROMolTemplate &&other) noexcept;
   MACROMolTemplate &operator=(MACROMolTemplate &&other) noexcept;

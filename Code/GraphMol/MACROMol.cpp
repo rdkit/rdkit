@@ -59,6 +59,10 @@ MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
   init(className, templateNames, templateAttrs);
 }
 
+MACROMolTemplate::MACROMolTemplate() {
+   d_mainSgroupIdx = UINT_MAX;
+}
+
 MACROMolTemplate::MACROMolTemplate(const MACROMolTemplate &other)
     : RWMol(other) {
   d_mainSgroupIdx = UINT_MAX;
