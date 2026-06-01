@@ -1,22 +1,27 @@
 import os
 
-from rdkit import Chem, RDConfig, rdBase
-from rdkit.Chem import AllChem
+import unittest
+
+from rdkit import Chem, RDConfig
 from rdkit.Chem import rdMolDescriptors as rdMD
 
 haveDescrs3D = hasattr(rdMD, 'CalcAUTOCORR3D')
 
-import time
-import unittest
 
 
-def _gen3D(m, is3d, calculator):
-  if not is3d:
-    m = Chem.AddHs(m)
-    ps = AllChem.ETKDG()
-    ps.randomSeed = 0xf00d
-    AllChem.EmbedMolecule(m, ps)
+def _gen3D(m, calculator):
   return calculator(m)
+
+
+def _multiConfFromSDF(sdf):
+  """Reads SDF and creates a multi conf mol"""
+  returnMol = None
+  for mol in Chem.SDMolSupplier(sdf, removeHs=False):
+    if returnMol is None:
+      returnMol = Chem.Mol(mol)
+      continue
+    returnMol.AddConformer(mol.GetConformer(), assignId=True)
+  return returnMol
 
 
 class TestCase(unittest.TestCase):
@@ -52,7 +57,7 @@ class TestCase(unittest.TestCase):
         split = inl.split('\t')
         self.assertEqual(split[0], nm)
         split.pop(0)
-        vs = _gen3D(m, True, rdMD.CalcAUTOCORR3D)
+        vs = _gen3D(m, rdMD.CalcAUTOCORR3D)
         for rv, nv in zip(split, vs):
           self.assertAlmostEqual(float(rv), nv, delta=0.05)
 
@@ -67,7 +72,7 @@ class TestCase(unittest.TestCase):
         split = inl.split('\t')
         self.assertEqual(split[0], nm)
         split.pop(0)
-        vs = _gen3D(m, True, rdMD.CalcGETAWAY)
+        vs = _gen3D(m, rdMD.CalcGETAWAY)
         for rv, nv in zip(split, vs):
           self.assertAlmostEqual(float(rv), nv, delta=0.05)
 
@@ -82,7 +87,7 @@ class TestCase(unittest.TestCase):
         split = inl.split('\t')
         self.assertEqual(split[0], nm)
         split.pop(0)
-        vs = _gen3D(m, True, rdMD.CalcMORSE)
+        vs = _gen3D(m, rdMD.CalcMORSE)
         for rv, nv in zip(split, vs):
           ref = float(rv)
           self.assertTrue(ref < 1 or abs(ref - nv) / ref < 0.02)
@@ -98,7 +103,7 @@ class TestCase(unittest.TestCase):
         split = inl.split('\t')
         self.assertEqual(split[0], nm)
         split.pop(0)
-        vs = _gen3D(m, True, rdMD.CalcRDF)
+        vs = _gen3D(m, rdMD.CalcRDF)
         for rv, nv in zip(split, vs):
           ref = float(rv)
           self.assertTrue(ref < 0.5 or abs(ref - nv) / ref < 0.02)
@@ -114,18 +119,18 @@ class TestCase(unittest.TestCase):
         split = inl.split('\t')
         self.assertEqual(split[0], nm)
         split.pop(0)
-        vs = _gen3D(m, True, lambda x: rdMD.CalcWHIM(x, thresh=0.01))
+        vs = _gen3D(m, lambda x: rdMD.CalcWHIM(x, thresh=0.01))
         for rv, nv in zip(split, vs):
           self.assertAlmostEqual(float(rv), nv, delta=0.01)
 
   @unittest.skipIf(not haveDescrs3D, "3d descriptors not present")
   def testGithub2037(self):
-    m = Chem.AddHs(Chem.MolFromSmiles("CCCCCCC"))
-    cids = AllChem.EmbedMultipleConfs(m, 10)
+    m = _multiConfFromSDF(os.path.join(self.dataDir, "heptane.sdf"))
     # start with defaults (which does not cache results):
     npr1s = []
     npr2s = []
-    for cid in cids:
+    for c in m.GetConformers():
+      cid = c.GetId()
       npr1s.append(rdMD.CalcNPR1(m, confId=cid))
       npr2s.append(rdMD.CalcNPR2(m, confId=cid))
     for i in range(1, len(npr1s)):
@@ -135,7 +140,8 @@ class TestCase(unittest.TestCase):
     # now ensure that we can cache:
     npr1s = []
     npr2s = []
-    for cid in cids:
+    for c in m.GetConformers():
+      cid = c.GetId()
       npr1s.append(rdMD.CalcNPR1(m, confId=cid, force=False))
       npr2s.append(rdMD.CalcNPR2(m, confId=cid, force=False))
     for i in range(1, len(npr1s)):
