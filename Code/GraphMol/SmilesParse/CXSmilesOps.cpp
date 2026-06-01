@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2016-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,7 +9,6 @@
 //
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/RDKitBase.h>
@@ -28,6 +27,7 @@
 #include <array>
 #include <map>
 #include <string_view>
+#include <string>
 
 namespace SmilesParseOps {
 using namespace RDKit;
@@ -124,7 +124,7 @@ bool read_int(Iterator &first, Iterator last, unsigned int &res) {
   if (num.empty()) {
     return false;
   }
-  res = boost::lexical_cast<unsigned int>(num);
+  res = std::atoi(num.c_str());
   return true;
 }
 template <typename Iterator>
@@ -137,7 +137,7 @@ bool read_int_list(Iterator &first, Iterator last,
       ++first;
     }
     if (!num.empty()) {
-      res.push_back(boost::lexical_cast<unsigned int>(num));
+      res.push_back(std::atoi(num.c_str()));
     }
     if (first >= last || *first != sep) {
       break;
@@ -182,7 +182,7 @@ std::string read_text_to(Iterator &first, Iterator last, std::string delims) {
       }
       if (next > first + 2) {
         std::string blk = std::string(first + 2, next);
-        res += (char)(boost::lexical_cast<int>(blk));
+        res += (char)(std::atoi(blk.c_str()));
       }
       first = next + 1;
       start = first;
@@ -441,13 +441,13 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
         std::vector<std::string> tokens;
         boost::split(tokens, tkn, boost::is_any_of(std::string(",")));
         if (tokens.size() >= 1 && tokens[0].size()) {
-          pt.x = boost::lexical_cast<double>(tokens[0]);
+          pt.x = std::atof(tokens[0].c_str());
         }
         if (tokens.size() >= 2 && tokens[1].size()) {
-          pt.y = boost::lexical_cast<double>(tokens[1]);
+          pt.y = std::atof(tokens[1].c_str());
         }
         if (tokens.size() >= 3 && tokens[2].size()) {
-          pt.z = boost::lexical_cast<double>(tokens[2]);
+          pt.z = std::atof(tokens[2].c_str());
           is3D = true;
         }
       }
@@ -1621,17 +1621,23 @@ getSortedStereoGroupsAndIndices(
   return {std::move(sgs), std::move(sgAtomIdxs)};
 }
 
-std::string quote_string(const std::string &txt) {
-  // FIX
-  return txt;
+bool is_alphanumeric(char c) {
+  return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') ||
+         (c >= 'a' && c <= 'z');
 }
 
-std::string quote_atomprop_string(const std::string &txt) {
-  // at a bare minimum, . needs to be escaped
+// from:
+// https://docs.chemaxon.com/latest/formats_chemaxon-extended-smiles-and-smarts-cxsmiles-and-cxsmarts.html#escaping
+const std::string sgroupAllowedSpecialChars = "><\"!@#$%()[]./\\?-+*^_~= ";
+const std::string atomPropAllowedSpecialChars = "><\"!@#$%()[]./\\?-+*^_~= ";
+const std::string labelAllowedSpecialChars = "><\"!@#%()[]./\\?-+*^_~=,: ";
+std::string quote_string(const std::string &txt,
+                         std::string allowedSpecialChars) {
   std::string res;
   for (auto c : txt) {
-    if (c == '.') {
-      res += "&#46;";
+    if (!allowedSpecialChars.empty() && !is_alphanumeric(c) &&
+        allowedSpecialChars.find(c) == std::string::npos) {
+      res += "&#" + std::to_string(static_cast<unsigned int>(c)) + ";";
     } else {
       res += c;
     }
@@ -1801,7 +1807,7 @@ std::string get_sgroup_polymer_block(
       res << ":";
       std::string label;
       if (sg.getPropIfPresent("LABEL", label)) {
-        res << label;
+        res << quote_string(label, sgroupAllowedSpecialChars);
       }
       res << ":";
       std::string connect;
@@ -1876,13 +1882,13 @@ std::string get_sgroup_data_block(const ROMol &mol,
       res << ":";
       std::string prop;
       if (sg.getPropIfPresent("FIELDNAME", prop) && !prop.empty()) {
-        res << prop;
+        res << quote_string(prop, sgroupAllowedSpecialChars);
       }
       res << ":";
       std::vector<std::string> vprop;
       if (sg.getPropIfPresent("DATAFIELDS", vprop) && !vprop.empty()) {
         for (const auto &pv : vprop) {
-          res << pv << ",";
+          res << quote_string(pv, sgroupAllowedSpecialChars) << ",";
         }
         // remove the extra ",":
         res.seekp(-1, res.cur);
@@ -1893,11 +1899,11 @@ std::string get_sgroup_data_block(const ROMol &mol,
       }
       res << ":";
       if (sg.getPropIfPresent("FIELDINFO", prop) && !prop.empty()) {
-        res << prop;
+        res << quote_string(prop, sgroupAllowedSpecialChars);
       }
       res << ":";
       if (sg.getPropIfPresent("FIELDTAG", prop) && !prop.empty()) {
-        res << prop;
+        res << quote_string(prop, sgroupAllowedSpecialChars);
       }
       res << ":";
       // FIX: do something about the coordinates
@@ -1926,20 +1932,21 @@ std::string get_atomlabel_block(const ROMol &mol,
     const auto atom = mol.getAtomWithIdx(idx);
     if (atom->getPropIfPresent(common_properties::_QueryAtomGenericLabel,
                                lbl)) {
-      res += quote_string(lbl + "_p");
+      res += quote_string(lbl + "_p", labelAllowedSpecialChars);
     } else if (!atom->getAtomicNum() &&
                atom->getPropIfPresent(common_properties::dummyLabel, lbl) &&
                std::find(SmilesParseOps::pseudoatoms.begin(),
                          SmilesParseOps::pseudoatoms.end(),
                          lbl) != SmilesParseOps::pseudoatoms.end()) {
-      res += quote_string(lbl + "_p");
+      res += quote_string(lbl + "_p", labelAllowedSpecialChars);
     } else if (!atom->getAtomicNum() &&
                atom->getPropIfPresent(common_properties::_fromAttachPoint,
                                       val) &&
                (val == 1 || val == 2)) {
-      res += quote_string("_AP" + std::to_string(val));
+      res +=
+          quote_string("_AP" + std::to_string(val), labelAllowedSpecialChars);
     } else if (atom->getPropIfPresent(common_properties::atomLabel, lbl)) {
-      res += quote_string(lbl);
+      res += quote_string(lbl, labelAllowedSpecialChars);
     }
   }
   // if we didn't find anything return an empty string
@@ -1963,7 +1970,7 @@ std::string get_value_block(const ROMol &mol,
     }
     std::string lbl;
     if (mol.getAtomWithIdx(idx)->getPropIfPresent(prop, lbl)) {
-      res += quote_string(lbl);
+      res += quote_string(lbl, atomPropAllowedSpecialChars);
     }
   }
   return res;
@@ -2060,9 +2067,9 @@ std::string get_atom_props_block(const ROMol &mol,
         if (res.empty()) {
           res += "atomProp";
         }
-        res +=
-            boost::str(boost::format(":%d.%s.%s") % which %
-                       quote_atomprop_string(pn) % quote_atomprop_string(pv));
+        res += boost::str(boost::format(":%d.%s.%s") % which %
+                          quote_string(pn, atomPropAllowedSpecialChars) %
+                          quote_string(pv, atomPropAllowedSpecialChars));
       }
     }
     ++which;

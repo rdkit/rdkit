@@ -287,7 +287,8 @@ size_t MacrocycleGenerator::getNumFreePositions() const {
 }
 
 void MacrocycleGenerator::printConstraints() const {
-  std::cerr << "  Turn constraints (" << d_constraints.size() << " total):" << std::endl;
+  std::cerr << "  Turn constraints (" << d_constraints.size()
+            << " total):" << std::endl;
   for (size_t i = 0; i < d_constraints.size(); ++i) {
     const auto &c = d_constraints[i];
     std::cerr << "    [" << i << "] position=" << c.position;
@@ -309,7 +310,8 @@ void MacrocycleGenerator::printConstraints() const {
     std::cerr << std::endl;
   }
 
-  std::cerr << "  Angle constraints (" << d_angleConstraints.size() << " total):" << std::endl;
+  std::cerr << "  Angle constraints (" << d_angleConstraints.size()
+            << " total):" << std::endl;
   for (size_t i = 0; i < d_angleConstraints.size(); ++i) {
     const auto &c = d_angleConstraints[i];
     std::cerr << "    [" << i << "] position=" << c.position
@@ -319,7 +321,8 @@ void MacrocycleGenerator::printConstraints() const {
 
   std::cerr << "  Substituent sizes:" << std::endl;
   for (const auto &entry : d_substituentSizes) {
-    std::cerr << "    position=" << entry.first << " size=" << entry.second << std::endl;
+    std::cerr << "    position=" << entry.first << " size=" << entry.second
+              << std::endl;
   }
 }
 
@@ -604,7 +607,8 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
   auto evaluateCandidate = [&](const std::vector<int> &candidate) {
     if (validateConstraints(candidate)) {
       int minDistance = calculateMinDistance(candidate);
-      // Skip if self-crossing detected
+      // Skip if self-crossing detected (minDistance == 0)
+      // This applies to both even and odd rings using hex grid approximation
       if (minDistance > 0) {
         double closureError = calculateClosureError(candidate);
         double substituentPenalty = calculateSubstituentPenalty(candidate);
@@ -1012,7 +1016,6 @@ void MacrocycleGenerator::adjustAnglesForClosure(
       angleAdjustments[k] += damping * deltaTheta[k];
     }
   }
-
 }
 
 // ============================================================================
@@ -1627,7 +1630,8 @@ static void addFusedRingTurnConstraints(
   std::cerr << "DEBUG FUSION CONSTRAINTS: Processing macrocycle with "
             << macrocycleRingVec.size() << " atoms" << std::endl;
   std::cerr << "  Skipping ring index: " << skipRingIndex << std::endl;
-  std::cerr << "  Has existing coords: " << (existingCoords != nullptr) << std::endl;
+  std::cerr << "  Has existing coords: " << (existingCoords != nullptr)
+            << std::endl;
 
   for (size_t ringIdx = 0; ringIdx < allRings.size(); ++ringIdx) {
     // Skip the current macrocycle by index
@@ -1668,13 +1672,15 @@ static void addFusedRingTurnConstraints(
         generateFusionConstraints(sharedPositions, ring.size(), isMacrocycle);
 
     std::cerr << "  Ring " << ringIdx << " (size=" << ring.size()
-              << ", is_macro=" << isMacrocycle << "): " << sharedPositions.size()
+              << ", is_macro=" << isMacrocycle
+              << "): " << sharedPositions.size()
               << " shared atoms at positions [";
     for (size_t i = 0; i < sharedPositions.size(); ++i) {
       if (i > 0) std::cerr << ",";
       std::cerr << sharedPositions[i];
     }
-    std::cerr << "] -> " << constraints.size() << " constraints (before direction check): ";
+    std::cerr << "] -> " << constraints.size()
+              << " constraints (before direction check): ";
     for (size_t i = 0; i < constraints.size(); ++i) {
       if (i > 0) std::cerr << " ";
       std::cerr << "pos" << constraints[i].position << "=";
@@ -1710,7 +1716,8 @@ static void addFusedRingTurnConstraints(
       }
 
       if (allHaveCoords) {
-        std::cerr << "    Adding turn constraint from existing coords for middle fusion positions: ";
+        std::cerr
+            << "    Adding turn constraint from existing coords for middle fusion positions: ";
 
         // Detect if we need to invert turns based on traversal direction
         // Get shared atoms in the order they appear in THIS macrocycle
@@ -1719,12 +1726,14 @@ static void addFusedRingTurnConstraints(
           sharedAtomsInOrder.push_back(macrocycleRingVec[pos]);
         }
 
-        // Find these atoms in the OTHER macrocycle (the one with existing coords)
-        // and determine if they appear in the same or opposite order
+        // Find these atoms in the OTHER macrocycle (the one with existing
+        // coords) and determine if they appear in the same or opposite order
         bool shouldInvertTurns = false;
 
-        // Search through allRings to find the other macrocycle with these shared atoms
-        for (size_t otherRingIdx = 0; otherRingIdx < allRings.size(); ++otherRingIdx) {
+        // Search through allRings to find the other macrocycle with these
+        // shared atoms
+        for (size_t otherRingIdx = 0; otherRingIdx < allRings.size();
+             ++otherRingIdx) {
           if (static_cast<int>(otherRingIdx) == skipRingIndex) {
             continue;  // Skip current macrocycle
           }
@@ -1735,7 +1744,8 @@ static void addFusedRingTurnConstraints(
 
           // Check if this ring shares atoms with our macrocycle
           std::vector<int> otherRingVec(otherRing.begin(), otherRing.end());
-          auto otherSharedPositions = findSharedPositions(otherRingVec, macrocycleRingVec);
+          auto otherSharedPositions =
+              findSharedPositions(otherRingVec, macrocycleRingVec);
 
           if (otherSharedPositions.size() == sharedPositions.size()) {
             // Found the other macrocycle - get shared atoms in its order
@@ -1744,36 +1754,47 @@ static void addFusedRingTurnConstraints(
               sharedAtomsInOtherOrder.push_back(otherRingVec[pos]);
             }
 
-            // Compare directions: check if first 3 atoms appear in same or reverse order
-            // (We need at least 3 to determine direction unambiguously)
-            if (sharedAtomsInOrder.size() >= 3 && sharedAtomsInOtherOrder.size() >= 3) {
+            // Compare directions: check if first 3 atoms appear in same or
+            // reverse order (We need at least 3 to determine direction
+            // unambiguously)
+            if (sharedAtomsInOrder.size() >= 3 &&
+                sharedAtomsInOtherOrder.size() >= 3) {
               // Find where the first shared atom appears in the other sequence
               auto it = std::find(sharedAtomsInOtherOrder.begin(),
-                                sharedAtomsInOtherOrder.end(),
-                                sharedAtomsInOrder[0]);
+                                  sharedAtomsInOtherOrder.end(),
+                                  sharedAtomsInOrder[0]);
               if (it != sharedAtomsInOtherOrder.end()) {
                 size_t idx = std::distance(sharedAtomsInOtherOrder.begin(), it);
                 size_t next1 = (idx + 1) % sharedAtomsInOtherOrder.size();
                 size_t next2 = (idx + 2) % sharedAtomsInOtherOrder.size();
 
                 // Check if the next two atoms match in the same order
-                bool sameDirection = (sharedAtomsInOtherOrder[next1] == sharedAtomsInOrder[1] &&
-                                     sharedAtomsInOtherOrder[next2] == sharedAtomsInOrder[2]);
+                bool sameDirection =
+                    (sharedAtomsInOtherOrder[next1] == sharedAtomsInOrder[1] &&
+                     sharedAtomsInOtherOrder[next2] == sharedAtomsInOrder[2]);
 
-                shouldInvertTurns = !sameDirection;
+                shouldInvertTurns = sameDirection;
 
-                std::cerr << "\n    Direction check: shared atoms in this ring = [";
-                for (size_t i = 0; i < std::min(size_t(3), sharedAtomsInOrder.size()); ++i) {
+                std::cerr
+                    << "\n    Direction check: shared atoms in this ring = [";
+                for (size_t i = 0;
+                     i < std::min(size_t(3), sharedAtomsInOrder.size()); ++i) {
                   if (i > 0) std::cerr << ",";
                   std::cerr << sharedAtomsInOrder[i];
                 }
                 std::cerr << "...], in other ring = [";
-                for (size_t i = 0; i < std::min(size_t(3), sharedAtomsInOtherOrder.size()); ++i) {
+                for (size_t i = 0;
+                     i < std::min(size_t(3), sharedAtomsInOtherOrder.size());
+                     ++i) {
                   if (i > 0) std::cerr << ",";
-                  std::cerr << sharedAtomsInOtherOrder[(idx + i) % sharedAtomsInOtherOrder.size()];
+                  std::cerr << sharedAtomsInOtherOrder
+                          [(idx + i) % sharedAtomsInOtherOrder.size()];
                 }
                 std::cerr << "...] → " << (sameDirection ? "SAME" : "OPPOSITE")
-                          << " direction, " << (shouldInvertTurns ? "INVERTING all fusion constraints" : "keeping")
+                          << " direction, "
+                          << (shouldInvertTurns
+                                  ? "INVERTING all fusion constraints"
+                                  : "keeping")
                           << " turns" << std::endl;
               }
             }
@@ -1781,12 +1802,14 @@ static void addFusedRingTurnConstraints(
           }
         }
 
-        // If direction is opposite, invert ALL fusion constraints (first, last, and middle)
+        // If direction is opposite, invert ALL fusion constraints (first, last,
+        // and middle)
         if (shouldInvertTurns) {
           std::cerr << "    Inverting ALL fusion constraints at indices "
-                    << firstConstraintIdx << "-" << generator.getNumConstraints()
-                    << std::endl;
-          generator.invertConstraints(firstConstraintIdx, generator.getNumConstraints());
+                    << firstConstraintIdx << "-"
+                    << generator.getNumConstraints() << std::endl;
+          generator.invertConstraints(firstConstraintIdx,
+                                      generator.getNumConstraints());
         }
 
         // Build a single turn sequence for all middle positions
@@ -1823,7 +1846,7 @@ static void addFusedRingTurnConstraints(
           if (angle > 0) {
             turn = -1;  // L turn for positive internal angle
           } else {
-            turn = 1;   // R turn for negative internal angle
+            turn = 1;  // R turn for negative internal angle
           }
 
           // Invert turn if the macrocycles traverse in opposite directions
@@ -1832,7 +1855,7 @@ static void addFusedRingTurnConstraints(
           }
 
           turnSequence.push_back(turn);
-          std::cerr << "pos" << pos << "=" << (turn > 0 ? "R" : "L")
+          std::cerr << "pos" << pos << "=" << (turn > 0 ? "L" : "R")
                     << "(angle=" << (angle * 180.0 / M_PI) << "°) ";
         }
 
@@ -2054,9 +2077,8 @@ static void addTripleBondAngleConstraints(
 std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
     const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
     const RDKit::VECT_INT_VECT &allRings,
-    const std::map<size_t, int> &substituentSizesByPosition,
-    double bondLength, int currentRingIndex,
-    const RDGeom::INT_POINT2D_MAP *existingCoords) {
+    const std::map<size_t, int> &substituentSizesByPosition, double bondLength,
+    int currentRingIndex, const RDGeom::INT_POINT2D_MAP *existingCoords) {
   // Only attempt for macrocycles (size > MACROCYCLE_SIZE_THRESHOLD)
   if (macrocycleRing.size() <= MACROCYCLE_SIZE_THRESHOLD) {
     return {};
@@ -2094,7 +2116,8 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
   // Add constraints for fused rings and stereochemistry
   // Pass allRings and currentRingIndex so function can skip the macrocycle
   // Pass existingCoords to constrain middle fusion positions to existing angles
-  addFusedRingTurnConstraints(generator, macrocycleRingVec, allRings, currentRingIndex, existingCoords);
+  addFusedRingTurnConstraints(generator, macrocycleRingVec, allRings,
+                              currentRingIndex, existingCoords);
   addStereochemistryConstraints(generator, mol, macrocycleRing);
   addTripleBondAngleConstraints(generator, mol, macrocycleRing);
 
@@ -2102,7 +2125,8 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
   size_t numFreePositions = generator.getNumFreePositions();
 
   // Debug: Print all constraints
-  std::cerr << "\nDEBUG: Summary of all constraints for this macrocycle:" << std::endl;
+  std::cerr << "\nDEBUG: Summary of all constraints for this macrocycle:"
+            << std::endl;
   std::cerr << "  Macrocycle ring atoms: [";
   for (size_t i = 0; i < macrocycleRing.size(); ++i) {
     if (i > 0) std::cerr << ", ";
@@ -2124,6 +2148,16 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
   double closureError = generator.getClosureError();
   std::cerr << "DEBUG: Solver succeeded, closure error = " << closureError
             << " Å" << std::endl;
+
+  // Print winning turn sequence with atom indices
+  std::cerr << "DEBUG: Winning turn sequence:" << std::endl;
+  std::cerr << "  Position -> Atom | Turn" << std::endl;
+  const auto &turns = generator.getTurns();
+  for (size_t i = 0; i < turns.size(); ++i) {
+    std::cerr << "  pos" << i << " -> atom" << macrocycleRing[i] << " | "
+              << (turns[i] > 0 ? "R" : (turns[i] < 0 ? "L" : "?")) << std::endl;
+  }
+
   double MAX_CLOSURE_ERROR = 6.0;  // base threshold in Angstroms
 
   // Scale threshold based on number of free turn positions (not total ring
@@ -2136,8 +2170,9 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
   }
 
   if (closureError > MAX_CLOSURE_ERROR) {
-    std::cerr << "DEBUG: Macrocycle generation FAILED - closure error too large: "
-              << closureError << " > " << MAX_CLOSURE_ERROR << std::endl;
+    std::cerr
+        << "DEBUG: Macrocycle generation FAILED - closure error too large: "
+        << closureError << " > " << MAX_CLOSURE_ERROR << std::endl;
     return {};  // Closure error too large
   }
 
@@ -2157,7 +2192,8 @@ void maybeRefineTemplateMatchedMacrocycle(const RDKit::ROMol *mol,
       identifyAngleConstraintsForTripleBonds(mol, macrocycleRingVec);
   bool hasTripleBonds = !tripleBondConstraints.empty();
 
-  // Check if we need angle constraint refinement for fused rings (skip current macrocycle)
+  // Check if we need angle constraint refinement for fused rings (skip current
+  // macrocycle)
   bool hasSmallRings = false;
   bool hasNonSixMemberedRings = false;
   for (size_t ringIdx = 0; ringIdx < allRings.size(); ++ringIdx) {
@@ -2186,7 +2222,8 @@ void maybeRefineTemplateMatchedMacrocycle(const RDKit::ROMol *mol,
              // triple bonds should already have ideal geometry from template
   }
 
-  // Convert RDKit types to std::vector for helper functions (skip current macrocycle)
+  // Convert RDKit types to std::vector for helper functions (skip current
+  // macrocycle)
   std::vector<std::vector<int>> allRingsVec;
   for (size_t ringIdx = 0; ringIdx < allRings.size(); ++ringIdx) {
     // Skip the current macrocycle by index
@@ -2517,8 +2554,8 @@ static int computeSubstituentSize(const RDKit::ROMol *mol,
 
 // Helper: Identify all rings fused to the macrocycle
 static std::vector<FusedRingInfo> identifyFusedRings(
-    const RDKit::INT_VECT &macrocycleRing,
-    const RDKit::VECT_INT_VECT &allRings, int skipRingIndex = -1) {
+    const RDKit::INT_VECT &macrocycleRing, const RDKit::VECT_INT_VECT &allRings,
+    int skipRingIndex = -1) {
   std::vector<FusedRingInfo> fusedRings;
 
   if (allRings.empty()) {
@@ -2910,10 +2947,12 @@ bool matchToTemplateMacrocycle(
   }
 
   // Refine template-matched coordinates
-  maybeRefineTemplateMatchedMacrocycle(mol, macrocycleRing, allRings, coords, currentRingIndex);
+  maybeRefineTemplateMatchedMacrocycle(mol, macrocycleRing, allRings, coords,
+                                       currentRingIndex);
 
   // Check if fused rings can be flipped to place substitutions outside
-  maybeReflectSymmetricFusedRings(*mol, macrocycleRing, allRings, coords, currentRingIndex);
+  maybeReflectSymmetricFusedRings(*mol, macrocycleRing, allRings, coords,
+                                  currentRingIndex);
 
   return true;
 }
