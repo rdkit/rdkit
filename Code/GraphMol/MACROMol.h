@@ -81,7 +81,13 @@ public:
     MACROMolTemplateLib(MACROMolTemplateLib &&other) noexcept = delete;
     MACROMolTemplateLib &operator=(MACROMolTemplateLib &&other) noexcept = delete;
     MACROMolTemplateLib &operator=(const MACROMolTemplateLib &) = delete;  
-    ~MACROMolTemplateLib() {}
+    ~MACROMolTemplateLib() {
+      std::vector<std::unique_ptr<MACROMolTemplate>> &templateLib = *this;
+      for (auto &macroMolTemplateUPtr : templateLib) {
+        auto macroMol = macroMolTemplateUPtr.release();
+        delete macroMol;
+      }
+    }
 
     void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol);
     void addTemplateLib(MACROMolTemplateLib &libToAdd);
