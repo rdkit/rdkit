@@ -254,7 +254,7 @@ TEST_CASE("MolHash with CX extensions", "[molhash]") {
   }
   SECTION("no coordinates please") {
     auto mol = R"CTAB(
-  Mrv2108 03032205502D
+  Mrv2108 03032205502D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB

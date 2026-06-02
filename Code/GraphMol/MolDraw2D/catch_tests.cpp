@@ -1302,7 +1302,7 @@ TEST_CASE("github #3258: ", "[drawing][bug]") {
 TEST_CASE("adding png metadata", "[drawing][png]") {
   SECTION("molecule") {
     auto m1 = R"CTAB(
-  Mrv2014 08172015242D
+  Mrv2014 08172015242D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1710,22 +1710,22 @@ TEST_CASE("drawMoleculeBrackets", "[extras]") {
 M  V30 BEGIN CTAB
 M  V30 COUNTS 5 4 1 0 0
 M  V30 BEGIN ATOM
-M  V30 1 C 7 -6.7813 0 0
-M  V30 2 C 8.0229 -6.1907 0 0 CFG=3
-M  V30 3 C 8.0229 -5.0092 0 0
-M  V30 4 C 9.046 -6.7814 0 0
-M  V30 5 C 10.0692 -6.1907 0 0
+M  V30 1 C 7 -6.7813 0 0 
+M  V30 2 C 8.0229 -6.1907 0 0 CFG=3 
+M  V30 3 C 8.0229 -5.0092 0 0 
+M  V30 4 C 9.046 -6.7814 0 0 
+M  V30 5 C 10.0692 -6.1907 0 0 
 M  V30 END ATOM
 M  V30 BEGIN BOND
-M  V30 1 1 1 2
-M  V30 2 1 2 3
-M  V30 3 1 2 4
-M  V30 4 1 4 5
+M  V30 1 1 1 2 
+M  V30 2 1 2 3 
+M  V30 3 1 2 4 
+M  V30 4 1 4 5 
 M  V30 END BOND
 M  V30 BEGIN SGROUP
 M  V30 1 SRU 1 ATOMS=(3 3 2 4) XBONDS=(2 1 4) BRKXYZ=(9 7.51 -7.08 0 7.51 -
 M  V30 -5.9 0 0 0 0) BRKXYZ=(9 9.56 -5.9 0 9.56 -7.08 0 0 0 0) -
-M  V30 CONNECT=HT LABEL=n
+M  V30 CONNECT=HT LABEL=n 
 M  V30 END SGROUP
 M  V30 END CTAB
 M  END
@@ -1789,7 +1789,7 @@ M  END
   }
   SECTION("three brackets") {
     auto m = R"CTAB(three brackets
-  Mrv2014 11052006542D
+  Mrv2014 11052006542D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1865,8 +1865,8 @@ M  END)CTAB"_ctab;
   }
   SECTION("ChEBI 59342") {
     // thanks to John Mayfield for pointing out the example
-    auto m = R"CTAB(ChEBI59342
-Marvin  05041012302D
+    auto m = R"CTAB(ChEBI59342 
+Marvin  05041012302D          
 
  29 30  0  0  1  0            999 V2000
    10.1615   -7.7974    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1929,7 +1929,7 @@ Marvin  05041012302D
  15 28  1  0  0  0  0
   1 29  1  0  0  0  0
 M  STY  1   1 SRU
-M  SCN  1   1 HT
+M  SCN  1   1 HT 
 M  SAL   1 15   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
 M  SAL   1 12  16  17  18  19  20  21  22  23  24  25  26  27
 M  SDI   1  4    9.4310   -4.9261    9.4165   -5.7510
@@ -1952,7 +1952,7 @@ M  END)CTAB"_ctab;
   SECTION("pathological bracket orientation") {
     {  // including the bonds
       auto m = R"CTAB(bogus
-  Mrv2014 11202009512D
+  Mrv2014 11202009512D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2000,7 +2000,7 @@ M  END
     {  // no bonds in the sgroup, the bracket should point the other way
        // (towards the majority of the atoms in the sgroup)
       auto m = R"CTAB(bogus
-  Mrv2014 11202009512D
+  Mrv2014 11202009512D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2053,22 +2053,22 @@ M  END
 M  V30 BEGIN CTAB
 M  V30 COUNTS 5 4 1 0 0
 M  V30 BEGIN ATOM
-M  V30 1 C 7 -6.7813 0 0
-M  V30 2 C 8.0229 -6.1907 0 0 CFG=3
-M  V30 3 C 8.0229 -5.0092 0 0
-M  V30 4 C 9.046 -6.7814 0 0
-M  V30 5 C 10.0692 -6.1907 0 0
+M  V30 1 C 7 -6.7813 0 0 
+M  V30 2 C 8.0229 -6.1907 0 0 CFG=3 
+M  V30 3 C 8.0229 -5.0092 0 0 
+M  V30 4 C 9.046 -6.7814 0 0 
+M  V30 5 C 10.0692 -6.1907 0 0 
 M  V30 END ATOM
 M  V30 BEGIN BOND
-M  V30 1 1 1 2
-M  V30 2 1 2 3
-M  V30 3 1 2 4
-M  V30 4 1 4 5
+M  V30 1 1 1 2 
+M  V30 2 1 2 3 
+M  V30 3 1 2 4 
+M  V30 4 1 4 5 
 M  V30 END BOND
 M  V30 BEGIN SGROUP
 M  V30 1 SRU 1 ATOMS=(3 3 2 4) XBONDS=(2 1 4) BRKXYZ=(9 7.51 -7.08 0 7.51 -
 M  V30 -5.9 0 0 0 0) BRKXYZ=(9 9.56 -5.9 0 9.56 -7.08 0 0 0 0) -
-M  V30 CONNECT=HT LABEL=n
+M  V30 CONNECT=HT LABEL=n 
 M  V30 END SGROUP
 M  V30 END CTAB
 M  END
@@ -2189,7 +2189,7 @@ TEST_CASE("github #3543: Error adding PNG metadata when kekulize=False",
 TEST_CASE("SGroup Data") {
   SECTION("ABS") {
     auto m = R"CTAB(
-  Mrv2014 12072015352D
+  Mrv2014 12072015352D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2250,7 +2250,7 @@ M  END
   }
   SECTION("REL") {
     auto m = R"CTAB(
-  Mrv2014 12072015352D
+  Mrv2014 12072015352D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2474,7 +2474,7 @@ M  END
 TEST_CASE("position variation bonds", "[extras]") {
   SECTION("simple") {
     auto m = R"CTAB(
-  Mrv2014 12092006072D
+  Mrv2014 12092006072D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2528,7 +2528,7 @@ M  END
   }
   SECTION("multiple") {
     auto m = R"CTAB(
-  Mrv2014 12092006082D
+  Mrv2014 12092006082D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2583,7 +2583,7 @@ M  END
   }
   SECTION("non-contiguous") {
     auto m = R"CTAB(
-  Mrv2014 12092006102D
+  Mrv2014 12092006102D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2626,7 +2626,7 @@ M  END
   }
   SECTION("larger mol") {
     auto m = R"CTAB(
-  Mrv2014 12092009152D
+  Mrv2014 12092009152D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2735,8 +2735,8 @@ TEST_CASE("disable atom labels", "[feature]") {
 TEST_CASE("drawing query bonds", "[queries]") {
   SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2014 12072005332D
-
+  Mrv2014 12072005332D          
+  
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 14 14 0 0 0
@@ -2816,8 +2816,8 @@ M  END
   }
   SECTION("smaller drawing") {
     auto m = R"CTAB(
-  Mrv2014 12012004302D
-
+  Mrv2014 12012004302D          
+  
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 26 29 0 0 0
@@ -2897,7 +2897,7 @@ M  END
   }
   SECTION("two linknodes") {
     auto m = R"CTAB(two linknodes
-  Mrv2014 07072016412D
+  Mrv2014 07072016412D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2961,8 +2961,8 @@ TEST_CASE("molecule annotations", "[extra]") {
   }
   SECTION("chiral flag") {
     auto m = R"CTAB(
-  Mrv2014 12152012512D
-
+  Mrv2014 12152012512D          
+ 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 8 8 0 0 1
@@ -3085,8 +3085,8 @@ M  END
   }
   SECTION("label placement") {
     auto m = R"CTAB(
-  Mrv2014 12162004412D
-
+  Mrv2014 12162004412D          
+ 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 16 15 0 0 0
@@ -3147,7 +3147,7 @@ M  END
 TEST_CASE("draw link nodes", "[extras]") {
   SECTION("one linknode") {
     auto m = R"CTAB(one linknode
-  Mrv2007 06222005102D
+  Mrv2007 06222005102D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3281,7 +3281,7 @@ M  END)CTAB"));
 TEST_CASE("draw atom list queries", "[extras]") {
   SECTION("atom list") {
     auto m = R"CTAB(
-  Mrv2102 02112115002D
+  Mrv2102 02112115002D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3312,7 +3312,7 @@ M  END
 
   SECTION("NOT atom list") {
     auto m = R"CTAB(
-  Mrv2102 02112115032D
+  Mrv2102 02112115032D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3442,7 +3442,7 @@ TEST_CASE("test the options that toggle isotope labels", "[drawing]") {
 TEST_CASE("draw hydrogen bonds", "[drawing]") {
   SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2014 03022114422D
+  Mrv2014 03022114422D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3560,7 +3560,7 @@ TEST_CASE("preserve Reaction coordinates", "[reactions]") {
   2  2  1
 $MOL
 
-  Mrv1682203132116452D
+  Mrv1682203132116452D          
 
   3  2  0  0  0  0            999 V2000
    -4.3304    2.5893    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3571,7 +3571,7 @@ $MOL
 M  END
 $MOL
 
-  Mrv1682203132116452D
+  Mrv1682203132116452D          
 
   2  1  0  0  0  0            999 V2000
    -2.1652    2.6339    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3580,7 +3580,7 @@ $MOL
 M  END
 $MOL
 
-  Mrv1682203132116452D
+  Mrv1682203132116452D          
 
   3  2  0  0  0  0            999 V2000
     3.6109    1.9512    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3591,7 +3591,7 @@ $MOL
 M  END
 $MOL
 
-  Mrv1682203132116452D
+  Mrv1682203132116452D          
 
   2  1  0  0  0  0            999 V2000
     4.9511    1.9959    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3600,7 +3600,7 @@ $MOL
 M  END
 $MOL
 
-  Mrv1682203132116452D
+  Mrv1682203132116452D          
 
   2  1  0  0  0  0            999 V2000
    -0.3571    2.7232    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3826,7 +3826,7 @@ TEST_CASE(
     "generation") {
   SECTION("Basics") {
     auto mol = R"CTAB(
-  Mrv2114 09132120172D
+  Mrv2114 09132120172D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4775,7 +4775,7 @@ M  END)CTAB"_ctab;
 TEST_CASE("wedged bonds to metals drawn in the wrong direction") {
   SECTION("basics") {
     auto m = R"CTAB(
-  Mrv2108 01092205442D
+  Mrv2108 01092205442D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -7207,7 +7207,7 @@ TEST_CASE("Down/dashed wedge not visible on small canvas..") {
 TEST_CASE("Github6054: MDL query atoms should not trigger an exception") {
   SECTION("any heavy") {
     auto a = R"CTAB(
-  MJ201100
+  MJ201100                      
 
   6  6  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7251,7 +7251,7 @@ TEST_CASE("Optionally depict complex query atoms in a more compact form") {
   };
   SECTION("any heavy") {
     auto a = R"CTAB(
-  MJ201100
+  MJ201100                      
 
   6  6  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7299,7 +7299,7 @@ M  END
   }
   SECTION("any atom") {
     auto ah = R"CTAB(
-  MJ201100
+  MJ201100                      
 
   6  6  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7347,7 +7347,7 @@ M  END
   }
   SECTION("any hetero") {
     auto q = R"CTAB(
-  MJ201100
+  MJ201100                      
 
   6  6  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7395,7 +7395,7 @@ M  END
   }
   SECTION("any hetero or hydrogen") {
     auto qh = R"CTAB(
-  MJ201100
+  MJ201100                      
 
   6  6  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7443,7 +7443,7 @@ M  END
   }
   SECTION("any halo") {
     auto x = R"CTAB(
-  MJ201100
+  MJ201100                      
 
   7  7  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7493,7 +7493,7 @@ M  END
   }
   SECTION("any halo or hydrogen") {
     auto xh = R"CTAB(
-  MJ201100
+  MJ201100                      
 
   7  7  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7543,7 +7543,7 @@ M  END
   }
   SECTION("any metal") {
     auto m = R"CTAB(
-  MJ201100
+  MJ201100                      
 
   7  7  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -7594,7 +7594,7 @@ M  END
   }
   SECTION("any metal or hydrogen") {
     auto mh = R"CTAB(
-  MJ201100
+  MJ201100                      
 
   7  7  0  0  0  0  0  0  0  0999 V2000
    -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -10090,7 +10090,7 @@ TEST_CASE("wedge non-single bonds") {
   SECTION(
       "basics 3: make sure reapplyMolBlockWedging is called before prepareMolForDrawing") {
     auto m = R"CTAB(
-  Mrv2311 05242408162D
+  Mrv2311 05242408162D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
