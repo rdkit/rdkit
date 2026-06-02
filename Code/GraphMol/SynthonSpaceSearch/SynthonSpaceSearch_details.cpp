@@ -841,13 +841,13 @@ std::unique_ptr<ROMol> buildProduct(
     const std::vector<const ROMol *> &synthons) {
   MolzipParams mzparams;
   mzparams.label = MolzipLabel::Isotope;
-  auto prodMol = std::make_unique<ROMol>(*synthons.front());
+  auto prodMol = std::make_unique<RWMol>(*synthons.front());
   for (size_t i = 1; i < synthons.size(); ++i) {
-    prodMol.reset(combineMols(*prodMol, *synthons[i]));
+    prodMol->insertMol(*synthons[i]);
   }
-  prodMol = molzip(*prodMol, mzparams);
-  MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
-  return prodMol;
+  auto zipProdMol = molzip(*prodMol, mzparams);
+  MolOps::sanitizeMol(*dynamic_cast<RWMol *>(zipProdMol.get()));
+  return zipProdMol;
 }
 
 std::map<std::string, std::vector<ROMol *>> mapFragsBySmiles(
