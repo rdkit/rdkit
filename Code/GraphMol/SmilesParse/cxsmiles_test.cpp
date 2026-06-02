@@ -490,7 +490,7 @@ TEST_CASE("HTML char codes") {
   }
   {
     auto m = R"CTAB(
-  Mrv2222 05072606252D
+  Mrv2222 05072606252D          
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -711,7 +711,7 @@ class SmilesTest {
       : fileName(fileNameInit),
         expectedResult(expectedResultInit),
         atomCount(atomCountInit),
-        bondCount(bondCountInit){};
+        bondCount(bondCountInit) {};
 
   bool isRxnTest() const { return false; }
 };
@@ -1584,52 +1584,54 @@ TEST_CASE("cis/trans/unknown in CXSMILES incorrectly interpreted") {
   // This is #8365 and #8364
   UseLegacyStereoPerceptionFixture f(false);
   SECTION("in a ring") {
-    {{auto m = "FC1(=C(F)CCCCCCCCCC1) |c:1|"_smiles;
-    REQUIRE(m);
-    CHECK(m->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
-    CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    {
+      {
+        auto m = "FC1(=C(F)CCCCCCCCCC1) |c:1|"_smiles;
+        REQUIRE(m);
+        CHECK(m->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
+        CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+      }
+      {
+        auto m = "C1C(F)=C(F)CCCCCCCCC1 |c:2|"_smiles;
+        REQUIRE(m);
+        CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOCIS);
+        CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+      }
+    }
+    {
+      auto m = "FC1(=C(F)CCCCCCCCCC1) |t:1|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    }
+    {
+      auto m = "FC1(=C(F)CCCCCCCCCC1) |ctu:1|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::STEREOANY);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    }
   }
-  {
-    auto m = "C1C(F)=C(F)CCCCCCCCC1 |c:2|"_smiles;
-    REQUIRE(m);
-    CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOCIS);
-    CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+  SECTION("as reported") {
+    // technically these are only valid in rings, but we allow them elsewhere
+    {
+      auto m = "CC(F)=C(C)F |c:2|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOCIS);
+      CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+    }
+    {
+      auto m = "CC(F)=C(C)F |t:2|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOTRANS);
+      CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+    }
+    {
+      auto m = "CC(F)=C(C)F |ctu:2|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOANY);
+      CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+    }
   }
-}
-{
-  auto m = "FC1(=C(F)CCCCCCCCCC1) |t:1|"_smiles;
-  REQUIRE(m);
-  CHECK(m->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
-  CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
-}
-{
-  auto m = "FC1(=C(F)CCCCCCCCCC1) |ctu:1|"_smiles;
-  REQUIRE(m);
-  CHECK(m->getBondWithIdx(1)->getStereo() == Bond::STEREOANY);
-  CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
-}
-}
-SECTION("as reported") {
-  // technically these are only valid in rings, but we allow them elsewhere
-  {
-    auto m = "CC(F)=C(C)F |c:2|"_smiles;
-    REQUIRE(m);
-    CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOCIS);
-    CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
-  }
-  {
-    auto m = "CC(F)=C(C)F |t:2|"_smiles;
-    REQUIRE(m);
-    CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOTRANS);
-    CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
-  }
-  {
-    auto m = "CC(F)=C(C)F |ctu:2|"_smiles;
-    REQUIRE(m);
-    CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOANY);
-    CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
-  }
-}
 }
 
 TEST_CASE("Github #8348: Unable to write wiggly bond information by default") {
