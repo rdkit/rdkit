@@ -24,8 +24,6 @@
 #include <RDGeneral/RDThreads.h>
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
 
-std::mutex myMutex;
-
 namespace RDKit::SynthonSpaceSearch {
 
 SynthonSpaceShapeSearcher::SynthonSpaceShapeSearcher(
@@ -1188,7 +1186,6 @@ bool SynthonSpaceShapeSearcher::verifyHit(
           continue;
         }
         finalisedHit = true;
-        std::unique_lock lock1{myMutex};
         updateBestHitSoFar(hit, thisScore[0]);
       }
       if (thisScore[0] >= bestSim &&

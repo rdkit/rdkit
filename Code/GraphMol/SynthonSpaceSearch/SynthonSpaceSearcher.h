@@ -128,6 +128,8 @@ class SynthonSpaceSearcher {
   std::unique_ptr<ROMol> d_bestHitFound;
   double d_bestSimilarity{0.0};
 
+  std::mutex d_myMutex;
+
   // Generally, the search needs the query fragmented into no more than
   // the largest number synthon sets in any reaction.  Substructure search
   // needs more than that, sometimes.

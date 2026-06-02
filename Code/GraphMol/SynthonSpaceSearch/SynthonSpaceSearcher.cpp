@@ -578,6 +578,7 @@ bool SynthonSpaceSearcher::quickVerify(
 void SynthonSpaceSearcher::updateBestHitSoFar(const ROMol &possBest,
                                               const double sim) {
   if (sim > d_bestSimilarity) {
+    std::unique_lock lock1{d_myMutex};
     d_bestSimilarity = sim;
     d_bestHitFound.reset(new ROMol(possBest));
     d_bestHitFound->setProp<double>("Similarity", sim);
