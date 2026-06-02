@@ -39,11 +39,11 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplate : public RDKit::RWMol {
                    std::string templateName,
                    std::vector<std::pair<std::string,std::string>> templateAttrs);
 
-  MACROMolTemplate();
+  MACROMolTemplate() = delete;
   MACROMolTemplate(const MACROMolTemplate &other);
-  MACROMolTemplate(MACROMolTemplate &&other) noexcept;
-  MACROMolTemplate &operator=(MACROMolTemplate &&other) noexcept;
-  MACROMolTemplate &operator=(const MACROMolTemplate &); 
+  MACROMolTemplate(MACROMolTemplate &&other) noexcept = delete;
+  MACROMolTemplate &operator=(MACROMolTemplate &&other) noexcept = delete;
+  MACROMolTemplate &operator=(const MACROMolTemplate &) = delete; 
   ~MACROMolTemplate() {}
 
   RDKit::SubstanceGroup *getMainSgroup();
@@ -58,9 +58,11 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplate : public RDKit::RWMol {
 class MACROMolTemplateKey: public std::pair<std::string, std::string>{};
 
 
-class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib : protected std::vector<std::unique_ptr<MACROMolTemplate>> {
+class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib {
+  
   
     private:
+      std::vector<std::unique_ptr<MACROMolTemplate>> d_templates;
 
     //! Hash function for MonomerKey
     struct MACROMolTemplateKeyHash {
@@ -81,20 +83,25 @@ public:
     MACROMolTemplateLib(MACROMolTemplateLib &&other) noexcept = delete;
     MACROMolTemplateLib &operator=(MACROMolTemplateLib &&other) noexcept = delete;
     MACROMolTemplateLib &operator=(const MACROMolTemplateLib &) = delete;  
-    ~MACROMolTemplateLib() {
-      std::vector<std::unique_ptr<MACROMolTemplate>> &templateLib = *this;
-      for (auto &macroMolTemplateUPtr : templateLib) {
-        auto macroMol = macroMolTemplateUPtr.release();
-        delete macroMol;
-      }
+    ~MACROMolTemplateLib() {}
+
+    std::vector<std::unique_ptr<MACROMolTemplate>>::iterator begin() {
+      return d_templates.begin();
+    }
+    std::vector<std::unique_ptr<MACROMolTemplate>>::iterator end() {
+      return d_templates.end();
+    }std::vector<std::unique_ptr<MACROMolTemplate>>::const_iterator begin() const{
+      return d_templates.begin();
+    }
+    std::vector<std::unique_ptr<MACROMolTemplate>>::const_iterator end() const{
+      return d_templates.end();
     }
 
     void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol);
     void addTemplateLib(MACROMolTemplateLib &libToAdd);
     void copyTemplateLib(const MACROMolTemplateLib &libToCopy);
     void clearTemplateLib(){
-        std::vector<std::unique_ptr<MACROMolTemplate>> &templates(*this);
-        templates.clear();
+        d_templates.clear();
         d_keyToIndex.clear();
     }
     void setTemplateLib(MACROMolTemplateLib &libToSet) {
@@ -103,15 +110,15 @@ public:
     }
 
     unsigned int getNumTemplates(){
-      return this->size();
+      return d_templates.size();
     }
 
     unsigned int getNumTemplates() const { 
-      return this->size(); 
+      return d_templates.size(); 
     }
 
     RDKit::MACROMolTemplate *getTemplate(unsigned int index) const {
-      return this->at(index).get();
+      return d_templates.at(index).get();
     }
     
     unsigned int getMACROMolTemplateIndex(std::string templateClass, std::string templateName) const {
@@ -127,7 +134,7 @@ public:
       if (index == UINT_MAX) {
         return nullptr;
       }
-      return this->at(index).get();
+      return d_templates.at(index).get();
     }
 
     bool libContains(std::string templateClass, std::string templateName) const {
@@ -136,7 +143,7 @@ public:
     }
 
     bool doesLibHaveCoords() {
-      for (auto const &macroTemplate : *this) {
+      for (auto const &macroTemplate : d_templates) {
         if (macroTemplate->getNumConformers() == 0) {
           return false;
         }
