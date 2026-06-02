@@ -557,6 +557,7 @@ bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
   if (!nbrBond->getIsAromatic()) {
     const Atom *aromaticAtom = nullptr;
     const Atom *nonAromaticAtom = nullptr;
+
     if (atom->getIsAromatic() && !otherAtom->getIsAromatic()) {
       aromaticAtom = atom;
       nonAromaticAtom = otherAtom;
@@ -564,6 +565,7 @@ bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
       aromaticAtom = otherAtom;
       nonAromaticAtom = atom;
     }
+
     // If we have an aromatic->non-aromatic transition
     if (aromaticAtom && nonAromaticAtom) {
       // Aromatic atom must have no H and be carbon
