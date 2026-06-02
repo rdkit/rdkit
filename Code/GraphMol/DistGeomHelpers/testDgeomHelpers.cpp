@@ -2073,8 +2073,15 @@ void testGithub1240(const bool legacy) {
 
   {
     // CHEMBL43398
+    // RWMol *mol =
+    //     SmilesToMol("C[C@@H]1[C@@H]2Cc3ccc(O)cc3[C@]1(C)CCN2CCN4CCCC4");
+    // This SMILES from CHEMBL seems to be wrong since it produces conformers
+    // that do not match the 2D depictions in the papers:
+    // https://pubs.acs.org/doi/10.1021/jm970333f
+    // https://www.sciencedirect.com/science/article/pii/S0223523418305087?via%3Dihub
+    // This is now the correct smiles
     RWMol *mol =
-        SmilesToMol("C[C@@H]1[C@@H]2Cc3ccc(O)cc3[C@]1(C)CCN2CCN4CCCC4");
+        SmilesToMol("C[C@@H]1[C@@H]2Cc3ccc(O)cc3[C@@]1(C)CCN2CCN4CCCC4");
     TEST_ASSERT(mol);
     MolOps::addHs(*mol);
     DGeomHelpers::EmbedParameters params;
