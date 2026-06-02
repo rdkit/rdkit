@@ -147,22 +147,37 @@ std::vector<std::pair<std::string, std::string>> readPossHitsLines(
     const std::string &possHitsFile, const std::uint64_t startLine,
     std::uint64_t finishLine) {
   std::vector<std::pair<std::string, std::string>> retLines;
+  if (finishLine != std::numeric_limits<std::uint64_t>::max()) {
+    retLines.reserve(finishLine - startLine);
+  }
   std::ifstream ifs(possHitsFile.c_str());
   if (!ifs) {
     BOOST_LOG(rdErrorLog) << "Possible hits file " << possHitsFile
                           << "not found, so no results generated." << std::endl;
     return retLines;
   }
-  std::string smiles, name;
+  std::string smiles, name, wholeLine;
   for (std::uint64_t i = 0; i < startLine; ++i) {
-    std::getline(ifs, smiles);
+    std::getline(ifs, wholeLine);
   }
   for (std::uint64_t i = startLine; i < finishLine; ++i) {
-    ifs >> smiles >> name;
+    std::getline(ifs, wholeLine);
     if (ifs.eof()) {
       break;
     }
-    retLines.push_back(std::make_pair(smiles, name));
+    if (wholeLine.empty()) {
+      continue;
+    }
+    std::vector<std::string> lineBits;
+    boost::split(lineBits, wholeLine, boost::is_any_of("\t "),
+                 boost::token_compress_on);
+    if (lineBits.empty()) {
+      continue;
+    }
+    if (lineBits.size() == 1) {
+      lineBits.push_back("");
+    }
+    retLines.push_back(std::make_pair(lineBits[0], lineBits[1]));
   }
   return retLines;
 }
@@ -206,8 +221,8 @@ void checkPossibleHitsPart(
       prod = molzip(*mol, mzparams);
       MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prod.get()));
     } catch (std::exception &e) {
-      std::cout << "AWOOGA :: Failed to zip " << MolToSmiles(*prod) << " for "
-                << name << " because " << std::endl
+      std::cout << "Failed to zip " << MolToSmiles(*prod) << " for " << name
+                << " because " << std::endl
                 << e.what() << std::endl;
       continue;
     }
@@ -251,12 +266,6 @@ SearchResults SynthonSpaceSearcher::checkPossibleHits(
   }
   auto checkLines =
       readPossHitsLines(getParams().possibleHitsFile, startLine, finishLine);
-  if (checkLines.size() < finishLine) {
-    finishLine = checkLines.size();
-  }
-  std::cout << "Checking " << checkLines.size() << " lines from " << startLine
-            << " to " << startLine + finishLine << " of "
-            << getParams().possibleHitsFile << std::endl;
   if (checkLines.empty()) {
     return SearchResults();
   }
