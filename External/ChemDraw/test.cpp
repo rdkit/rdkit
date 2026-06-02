@@ -1303,6 +1303,9 @@ TEST_CASE("Round TRIP") {
       if (entry.path().string().find("ChemDraw") != std::string::npos) {
         continue;  // Skip ChemDraw directory
       }
+      if (entry.path().string().find("macromols") != std::string::npos) {
+        continue;  // Skip SCSR-macromols directory directory
+      }
       if (entry.path().string().find("build") != std::string::npos) {
         continue;
       }
