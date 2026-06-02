@@ -504,13 +504,66 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
   auto *conf = new RDKit::Conformer(mol.getNumAtoms());
   conf->set3D(false);
   std::list<EmbeddedFrag>::iterator eri;
+
+  // Debug: Track which atoms are set and from which efrag
+  std::map<int, int> atomSetCounts;  // atom index -> how many times it's been set
+  int efragIndex = 0;
+
   for (const auto &efrag : efrags) {
+    std::cerr << "\nDEBUG copyCoordinate: Processing efrag " << efragIndex << std::endl;
+    std::cerr << "  Number of embedded atoms: " << efrag.GetEmbeddedAtoms().size() << std::endl;
+
+    // Debug: Check bond lengths in THIS efrag's d_eatoms (before copying to conformer)
+    std::cerr << "  Checking bond lengths in efrag's d_eatoms for ring 1 atoms [4,5,6,7,8,9,10,11,16,17,18,19,20]:" << std::endl;
+    std::vector<int> ring1Atoms = {4, 5, 6, 7, 8, 9, 10, 11, 16, 17, 18, 19, 20};
+    const auto &eatoms = efrag.GetEmbeddedAtoms();
+    for (size_t i = 0; i < ring1Atoms.size(); ++i) {
+      int a1 = ring1Atoms[i];
+      int a2 = ring1Atoms[(i+1) % ring1Atoms.size()];
+
+      if (eatoms.find(a1) != eatoms.end() && eatoms.find(a2) != eatoms.end()) {
+        auto pos1 = eatoms.at(a1).loc;
+        auto pos2 = eatoms.at(a2).loc;
+        double dx = pos2.x - pos1.x;
+        double dy = pos2.y - pos1.y;
+        double dist = std::sqrt(dx * dx + dy * dy);
+        std::cerr << "    atom" << a1 << "-atom" << a2 << ": " << dist << " Å" << std::endl;
+      }
+    }
+
     for (const auto &eai : efrag.GetEmbeddedAtoms()) {
       const auto &cr = eai.second.loc;
       RDGeom::Point3D fcr(cr.x, cr.y, 0.0);
+
+      if (atomSetCounts[eai.first] > 0) {
+        std::cerr << "  WARNING: Atom " << eai.first << " being overwritten! (set count: "
+                  << atomSetCounts[eai.first] << ")" << std::endl;
+        std::cerr << "    New coord: (" << cr.x << ", " << cr.y << ")" << std::endl;
+        auto oldPos = conf->getAtomPos(eai.first);
+        std::cerr << "    Old coord: (" << oldPos.x << ", " << oldPos.y << ")" << std::endl;
+      }
+
       conf->setAtomPos(eai.first, fcr);
+      atomSetCounts[eai.first]++;
     }
+    efragIndex++;
   }
+
+  // Debug: Check bond lengths in conformer
+  std::cerr << "\nDEBUG copyCoordinate: Bond lengths in conformer:" << std::endl;
+  double minBond = 1e9, maxBond = 0.0;
+  for (const auto &bond : mol.bonds()) {
+    int a1 = bond->getBeginAtomIdx();
+    int a2 = bond->getEndAtomIdx();
+    auto pos1 = conf->getAtomPos(a1);
+    auto pos2 = conf->getAtomPos(a2);
+    double dx = pos2.x - pos1.x;
+    double dy = pos2.y - pos1.y;
+    double dist = std::sqrt(dx * dx + dy * dy);
+    minBond = std::min(minBond, dist);
+    maxBond = std::max(maxBond, dist);
+  }
+  std::cerr << "  Min: " << minBond << " Å, Max: " << maxBond << " Å\n" << std::endl;
   unsigned int confId = 0;
   if (clearConfs) {
     // clear all the conformation on the molecules and assign conf ID 0 to this
@@ -624,7 +677,29 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   for (auto &eri : efrags) {
     // if there are any remaining collisions
     eri.removeCollisionsOpenAngles();
-    eri.removeCollisionsShortenBonds();
+    std::cerr << "\nDEBUG: BEFORE removeCollisionsShortenBonds()" << std::endl;
+    std::cerr << "  Checking ring 1 bond atom4-atom5:" << std::endl;
+    const auto &eatoms1 = eri.GetEmbeddedAtoms();
+    if (eatoms1.find(4) != eatoms1.end() && eatoms1.find(5) != eatoms1.end()) {
+      auto p4 = eatoms1.at(4).loc;
+      auto p5 = eatoms1.at(5).loc;
+      double dist = std::sqrt((p5.x-p4.x)*(p5.x-p4.x) + (p5.y-p4.y)*(p5.y-p4.y));
+      std::cerr << "    Bond 4-5: " << dist << " Å" << std::endl;
+    }
+
+    // TODO: removeCollisionsShortenBonds() is DISABLED for fused macrocycles
+    // It was destroying the carefully constructed fusion coordinates
+    // Need to add logic to skip collision removal for fused macrocycles
+    // eri.removeCollisionsShortenBonds();
+
+    std::cerr << "DEBUG: AFTER removeCollisionsShortenBonds() [CURRENTLY DISABLED]" << std::endl;
+    const auto &eatoms2 = eri.GetEmbeddedAtoms();
+    if (eatoms2.find(4) != eatoms2.end() && eatoms2.find(5) != eatoms2.end()) {
+      auto p4 = eatoms2.at(4).loc;
+      auto p5 = eatoms2.at(5).loc;
+      double dist = std::sqrt((p5.x-p4.x)*(p5.x-p4.x) + (p5.y-p4.y)*(p5.y-p4.y));
+      std::cerr << "    Bond 4-5: " << dist << " Å" << std::endl;
+    }
   }
   if (!params.coordMap || !params.coordMap->size()) {
     if (params.canonOrient && efrags.size()) {
@@ -636,7 +711,30 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
       }
     }
   }
+
+  std::cerr << "\nDEBUG: BEFORE _shiftCoords()" << std::endl;
+  for (const auto &eri : efrags) {
+    const auto &eatoms3 = eri.GetEmbeddedAtoms();
+    if (eatoms3.find(4) != eatoms3.end() && eatoms3.find(5) != eatoms3.end()) {
+      auto p4 = eatoms3.at(4).loc;
+      auto p5 = eatoms3.at(5).loc;
+      double dist = std::sqrt((p5.x-p4.x)*(p5.x-p4.x) + (p5.y-p4.y)*(p5.y-p4.y));
+      std::cerr << "  Bond 4-5: " << dist << " Å" << std::endl;
+    }
+  }
+
   DepictorLocal::_shiftCoords(efrags);
+
+  std::cerr << "DEBUG: AFTER _shiftCoords()" << std::endl;
+  for (const auto &eri : efrags) {
+    const auto &eatoms4 = eri.GetEmbeddedAtoms();
+    if (eatoms4.find(4) != eatoms4.end() && eatoms4.find(5) != eatoms4.end()) {
+      auto p4 = eatoms4.at(4).loc;
+      auto p5 = eatoms4.at(5).loc;
+      double dist = std::sqrt((p5.x-p4.x)*(p5.x-p4.x) + (p5.y-p4.y)*(p5.y-p4.y));
+      std::cerr << "  Bond 4-5: " << dist << " Å\n" << std::endl;
+    }
+  }
 #endif
   // create a conformation on the molecule and copy the coordinates
   auto cid = copyCoordinate(mol, efrags, params.clearConfs);

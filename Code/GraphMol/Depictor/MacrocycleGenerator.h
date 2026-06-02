@@ -215,13 +215,6 @@ class MacrocycleGenerator {
   //! Get number of constraints
   size_t getNumConstraints() const;
 
-  //! Invert turn constraints (R↔L) in a range
-  /*!
-    \param startIdx: First constraint index to invert
-    \param endIdx: Last constraint index to invert (exclusive)
-  */
-  void invertConstraints(size_t startIdx, size_t endIdx);
-
  private:
   //! Simplify the system by adding constraints for large rings
   /*!
