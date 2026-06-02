@@ -277,30 +277,30 @@ SearchResults SynthonSpace::rascalSearch(
 }
 
 namespace {
+// Join the fragments by a zero-order bond between the 2 nearest atoms.
+// This is intended only for the query.
 std::unique_ptr<ROMol> addZeroOrderBondsBetweenFrags(
     const ROMol &query, const std::vector<std::vector<int>> &frags) {
+  PRECONDITION(frags.size() == 2, "The query can have at most 2 fragments.");
   auto retMol = std::make_unique<RWMol>(query);
   retMol->beginBatchEdit();
-  for (unsigned int i = 1; i < frags.size(); ++i) {
-    int nearestAtomi = -1;
-    int nearestAtomk = -1;
-    double nearestDist = 1.0e6;
-    for (unsigned int j = 0; j < frags[i].size(); ++j) {
-      auto atPosi = query.getConformer().getAtomPos(frags[i][j]);
-      for (unsigned int k = 0; k < i; ++k) {
-        for (unsigned int m = 0; m < frags[k].size(); ++m) {
-          auto atPosm = query.getConformer().getAtomPos(frags[k][m]);
-          auto d = (atPosi - atPosm).lengthSq();
-          if (d < nearestDist) {
-            nearestDist = d;
-            nearestAtomi = frags[i][j];
-            nearestAtomk = frags[k][m];
-          }
-        }
+  int nearestAtom0 = -1;
+  int nearestAtom1 = -1;
+  double nearestDist = 1.0e6;
+  for (unsigned int j = 0; j < frags[0].size(); ++j) {
+    auto atPosi = query.getConformer().getAtomPos(frags[0][j]);
+    for (unsigned int m = 0; m < frags[1].size(); ++m) {
+      auto atPosm = query.getConformer().getAtomPos(frags[1][m]);
+      auto d = (atPosi - atPosm).lengthSq();
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearestAtom0 = frags[0][j];
+        nearestAtom1 = frags[1][m];
       }
     }
-    retMol->addBond(nearestAtomi, nearestAtomk, Bond::ZERO);
   }
+
+  retMol->addBond(nearestAtom0, nearestAtom1, Bond::ZERO);
   retMol->commitBatchEdit();
   MolOps::sanitizeMol(*retMol);
   return retMol;
@@ -311,9 +311,11 @@ SearchResults SynthonSpace::shapeSearch(
     const ROMol &query, const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
 
-  // It there's more than 1 fragment in the query, join them together with
+  // It there's 2 fragments in the query, join them together with
   // a zero-order bond between the closest atoms in each.  It makes the
   // fragmentation work, but otherwise doesn't affect the final outcome.
+  // More than 2 fragments aren't allowed for now so an exception will be
+  // thrown in addZeroBonds... if there are.
   std::vector<std::vector<int>> frags;
   auto numFrags = MolOps::getMolFrags(query, frags);
   std::unique_ptr<ROMol> queryCp;
@@ -332,9 +334,11 @@ void SynthonSpace::shapeSearch(const ROMol &query,
                                const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
 
-  // It there's more than 1 fragment in the query, join them together with
+  // It there's 2 fragments in the query, join them together with
   // a zero-order bond between the closest atoms in each.  It makes the
   // fragmentation work, but otherwise doesn't affect the final outcome.
+  // More than 2 fragments aren't allowed for now so an exception will be
+  // thrown in addZeroBonds... if there are.
   std::vector<std::vector<int>> frags;
   auto numFrags = MolOps::getMolFrags(query, frags);
   std::unique_ptr<ROMol> queryCp;

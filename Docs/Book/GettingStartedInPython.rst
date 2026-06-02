@@ -3426,12 +3426,25 @@ bring the most similar matches towards the start of the hit list by ordering the
 descending order of similarity, but this does not always bring the most similar products to the fore.
 
 Once the search has assembled a set of likely synthon combinations that might match the query by similarity, a two stage
-screen is used.  The fingerprints of the synthons are added together and the Tanimoto similarity to the query fingerprint
+screen is used.  The fingerprints of the synthons are added together and the Tversky similarity to the query fingerprint
 calculated.  If this is above the threshold then the hit molecule is made, a fingerprint generated and that compared with
 the query fingerprint.  If that similarity passes the threshold, the hit is accepted.  The first, approximate,
 comparison may cause genuine hits to be missed, so there is a parameter `approxSimilarityAdjuster` that lowers the
 threshold for the first test.  It defaults to 0.1.  The higher the value the fewer hits will be missed, but at the
 expense of longer search times.
+
+Shape Similarity Searching
+==========================
+
+For shape searching, the query needs to have at least 1 3D conformer.  It will only search the first conformer, however,
+and will ignore any others.  The similarity value used is the combination similarity returned by rdGaussianShape - the
+Tversky similarities of the shape and color overlaps of the query and hit.  The search procedure is the same as for the
+other search types, but much slower.  Verifying the hits involves a conformation expansion and overlay with the query.
+As with the database preparation, a user-defined conformation generator may be supplied.  It makes sense that the
+same generator is used for database preparation and the subsequent searching but this is not checked or enforced.
+
+The query molecule can be in 1 or 2 unconnected pieces.  The latter case is intended for use in Fragment-Based Drug
+Design (FBDD) to find molecules that can connect 2 fragments in different pockets.
 
 Limiting Hits
 =============

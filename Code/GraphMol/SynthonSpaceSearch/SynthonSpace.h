@@ -346,14 +346,15 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * across the synthonspace library.  Duplicate SMILES strings produced by
    * different reactions will be returned.  Requires a query with at least
    * 1 3D conformer.  Only the first conformer will be used in the search.
+   * The query can have 2 non-connected fragments.  An exception will be
+   * thrown if there are more than 2 fragments.
    *
    * @param query : query molecule
    * @param callback: user-provided callback receiving chunks of ROMols.
    * @param params : (optional) settings for the search
    */
   void shapeSearch(
-      const ROMol &query,
-      const SearchResultCallback &callback,
+      const ROMol &query, const SearchResultCallback &callback,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
   /*! Take the contents of params.possibleHitsFile, which is assumed to have
@@ -365,6 +366,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * Duplicate SMILES strings produced by different reactions will
    * be returned.  Requires a query with at least 1 3D conformer.  Only
    * the first conformer will be used in the search.
+   * The query can have 2 non-connected fragments.  An exception will be
+   * thrown if there are more than 2 fragments.
    *
    * @param query : query molecule
    * @param params : settings for the search
