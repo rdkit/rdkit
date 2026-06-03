@@ -16,6 +16,7 @@
 #include <Geometry/point.h>
 #include "DepictUtils.h"
 #include <boost/smart_ptr.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
 class ROMol;
@@ -322,6 +323,12 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   */
   void flipAboutBond(unsigned int bondId, bool flipEnd = true);
 
+  //! \brief flip one ring of a spiro compound to resolve collisions
+  /*!
+    \param spiroAid - the spiro center atom index
+  */
+  void flipAboutSpiroCenter(unsigned int spiroAid);
+
   void openAngles(const double *dmat, unsigned int aid1, unsigned int aid2);
 
   std::vector<PAIR_I_I> findCollisions(const double *dmat,
@@ -341,9 +348,11 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
                                         double mimicDmatWt = 0.0,
                                         bool permuteDeg4Nodes = false);
 
-  //! Remove collisions in a structure by flipping rotatable bonds
+  //! Remove collisions in a structure by flipping rotatable bonds and spiro centers
   //! along the shortest path between two colliding atoms
-  void removeCollisionsBondFlip();
+  void removeCollisionsBondAndSpiroFlip();
+  
+  [[deprecated("please use removeCollisionsBondAndSpiroFlip()")]] void removeCollisionsBondFlip() { removeCollisionsBondAndSpiroFlip(); };
 
   //! Remove collision by opening angles at the offending atoms
   void removeCollisionsOpenAngles();
@@ -374,6 +383,22 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
 
  private:
   double totalDensity();
+
+  // Helper methods for collision resolution
+  bool tryResolvingCollisionWithBondFlip(
+      const std::pair<unsigned int, unsigned int> &cAids,
+      unsigned int ncols,
+      double prevDensity,
+      std::map<int, unsigned int> &doneBonds,
+      const double *dmat);
+
+  bool tryResolvingCollisionWithSpiroFlip(
+      const std::pair<unsigned int, unsigned int> &cAids,
+      unsigned int ncols,
+      double prevDensity,
+      std::map<int, unsigned int> &doneSpiros,
+      const boost::dynamic_bitset<> &spiroCenters,
+      const double *dmat);
 
   // returns true if fused rings found a template
   bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms);
