@@ -282,10 +282,10 @@ class ScsrMolTest {
                         "/Code/GraphMol/FileParsers/test_data/macromols/" +
                         ScsrTest->fileName;
     std::string fOutName = rdbase +
-                           "/Code/GraphMol/FileParsers/test_data/macromols/" +
+                           "/build/Testing/Temporary/" +
                            ScsrTest->fileName + ".out.mol";
     std::string fOutName2 = rdbase +
-                            "/Code/GraphMol/FileParsers/test_data/macromols/" +
+                            "/build/Testing/Temporary/" +
                             ScsrTest->fileName + ".scsrout.mol";
 
     RDKit::v2::FileParsers::MolFileParserParams pp;
