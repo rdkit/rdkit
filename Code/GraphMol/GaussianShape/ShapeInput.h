@@ -100,16 +100,16 @@ struct ShapeInputOptions {
               //! create features using the RDKit pharmacophore definitions.
 
   std::vector<std::vector<CustomFeature>>
-      customFeatures{};  //! Custom color features used verbatim.  One outer
-                         //! vector for each conformation in the molecule.
+      customFeatures;  //! Custom color features used verbatim.  One outer
+                       //! vector for each conformation in the molecule.
   std::vector<unsigned int>
-      atomSubset{};  //! If not empty, use just these atoms in the molecule to
-                     //! form the ShapeInput object.
+      atomSubset;  //! If not empty, use just these atoms in the molecule to
+                   //! form the ShapeInput object.
   std::vector<std::pair<unsigned int, double>>
-      atomRadii{};  //! Use these non-standard radii for these atoms. The int is
-                    //! for the atom index in the molecule, not the atomic
-                    //! number. Not all atoms need be specified; some radii
-                    //! can be over-ridden, with the rest left as standard.
+      atomRadii;  //! Use these non-standard radii for these atoms. The int is
+                  //! for the atom index in the molecule, not the atomic
+                  //! number. Not all atoms need be specified; some radii
+                  //! can be over-ridden, with the rest left as standard.
   bool allCarbonRadii{
       true};  //! Whether to use carbon radii for all atoms (which is quicker
               //! but less accurate) or vdw radii appropriate for the elements.
@@ -173,7 +173,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 #endif
   }
 
-  std::string getSmiles() const { return d_smiles; }
+  const std::string getSmiles() const { return d_smiles; }
   unsigned int getActiveShape() const { return d_activeShape; }
   //! Set the currently active conformation to the new value.
   //! @param newShape: the number of the conformation to be used
@@ -197,10 +197,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   std::vector<RDGeom::Point3D> getAtomPoints(bool includeColors = false) const;
   //! Return whether the coordinates for the current active shape are
   //! normalized.
-  bool getNormalized() const { return d_normalizeds[d_activeShape]; }
+  bool getIsNormalized() const { return d_normalizeds[d_activeShape]; }
   //! Return the feature types of all atoms/features in the shape.  Atoms
   //! have type 0.
-  const std::vector<int> &getTypes() const { return d_types; }
+  const std::vector<int> &getFeatureTypes() const { return d_types; }
   //! Get the number of atoms in the shape.
   unsigned int getNumAtoms() const { return d_numAtoms; }
   //! Get the number of color features in the shape.
@@ -369,7 +369,7 @@ void ShapeInput::serialize(Archive &ar, const unsigned int) {
 // of atoms.
 RDKIT_GAUSSIANSHAPE_EXPORT void findFeatures(
     const Conformer &conf, std::vector<CustomFeature> &features,
-    const std::vector<unsigned int> &atomSubset = std::vector<unsigned int>());
+    const std::optional<std::vector<unsigned int>> &atomSubset = std::nullopt);
 
 // Calculate the mean position of the given atoms.
 RDKIT_GAUSSIANSHAPE_EXPORT RDGeom::Point3D computeFeaturePos(

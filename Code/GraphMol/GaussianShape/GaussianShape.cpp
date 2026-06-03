@@ -99,11 +99,12 @@ std::array<double, 4> getInitialRotationPlain(
       quats[index][0], quats[index][1], quats[index][2], quats[index][3],
       refDisp[0],      refDisp[1],      refDisp[2]};
   SingleConformerAlignment sca(
-      refShape.getCoords(), refShape.getAlphas(), refShape.getTypes().data(),
-      refShape.getCarbonRadii(), refShape.getNumAtoms(),
-      refShape.getNumFeatures(), refShape.getShapeVolume(),
-      refShape.getColorVolume(), fitShape.getCoords(), fitShape.getAlphas(),
-      fitShape.getTypes().data(), fitShape.getCarbonRadii(),
+      refShape.getCoords(), refShape.getAlphas(),
+      refShape.getFeatureTypes().data(), refShape.getCarbonRadii(),
+      refShape.getNumAtoms(), refShape.getNumFeatures(),
+      refShape.getShapeVolume(), refShape.getColorVolume(),
+      fitShape.getCoords(), fitShape.getAlphas(),
+      fitShape.getFeatureTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
       overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
@@ -147,11 +148,12 @@ std::array<double, 4> getInitialRotationWiggle(
   bool useColor = overlayOpts.optimMode != OptimMode::SHAPE_ONLY;
   std::array<double, 7> tmpQuatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   SingleConformerAlignment sca(
-      refShape.getCoords(), refShape.getAlphas(), refShape.getTypes().data(),
-      refShape.getCarbonRadii(), refShape.getNumAtoms(),
-      refShape.getNumFeatures(), refShape.getShapeVolume(),
-      refShape.getColorVolume(), fitShape.getCoords(), fitShape.getAlphas(),
-      fitShape.getTypes().data(), fitShape.getCarbonRadii(),
+      refShape.getCoords(), refShape.getAlphas(),
+      refShape.getFeatureTypes().data(), refShape.getCarbonRadii(),
+      refShape.getNumAtoms(), refShape.getNumFeatures(),
+      refShape.getShapeVolume(), refShape.getColorVolume(),
+      fitShape.getCoords(), fitShape.getAlphas(),
+      fitShape.getFeatureTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), tmpQuatTrans,
       overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
@@ -319,11 +321,11 @@ std::array<double, 3> alignShape(ShapeInput &refShape, ShapeInput &fitShape,
                                      refDisp.x, refDisp.y, refDisp.z};
       aligners.emplace_back(std::make_unique<SingleConformerAlignment>(
           refShape.getCoords(), refShape.getAlphas(),
-          refShape.getTypes().data(), refShape.getCarbonRadii(),
+          refShape.getFeatureTypes().data(), refShape.getCarbonRadii(),
           refShape.getNumAtoms(), refShape.getNumFeatures(),
           refShape.getShapeVolume(), refShape.getColorVolume(),
           fitShape.getCoords(), fitShape.getAlphas(),
-          fitShape.getTypes().data(), fitShape.getCarbonRadii(),
+          fitShape.getFeatureTypes().data(), fitShape.getCarbonRadii(),
           fitShape.getNumAtoms(), fitShape.getNumFeatures(),
           fitShape.getShapeVolume(), fitShape.getColorVolume(), initQuat,
           overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
@@ -382,10 +384,10 @@ std::array<double, 3> AlignShape(const ShapeInput &refShape,
   RDGeom::Transform3D moveToOrigin;
   RDGeom::Transform3D moveFromOrigin;
   if (overlayOpts.normalize) {
-    if (!workingRefShape->getNormalized()) {
+    if (!workingRefShape->getIsNormalized()) {
       workingRefShape->normalizeCoords();
     }
-    if (!workingFitShape->getNormalized()) {
+    if (!workingFitShape->getIsNormalized()) {
       workingFitShape->normalizeCoords();
     }
   } else {
@@ -485,16 +487,17 @@ void ScoreMoleculeAllConformers(const ROMol &ref, const ROMol &fit,
 std::array<double, 3> ScoreShape(const ShapeInput &refShape,
                                  const ShapeInput &fitShape,
                                  const ShapeOverlayOptions &overlayOpts,
-                                 std::array<double, 2> *overlapVols) {
+                                 std::pair<double, double> *overlapVols) {
   auto refWorking = refShape.getCoords();
   auto fitWorking = fitShape.getCoords();
   std::array<double, 7> quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   SingleConformerAlignment sca(
-      refShape.getCoords(), refShape.getAlphas(), refShape.getTypes().data(),
-      refShape.getCarbonRadii(), refShape.getNumAtoms(),
-      refShape.getNumFeatures(), refShape.getShapeVolume(),
-      refShape.getColorVolume(), fitShape.getCoords(), fitShape.getAlphas(),
-      fitShape.getTypes().data(), fitShape.getCarbonRadii(),
+      refShape.getCoords(), refShape.getAlphas(),
+      refShape.getFeatureTypes().data(), refShape.getCarbonRadii(),
+      refShape.getNumAtoms(), refShape.getNumFeatures(),
+      refShape.getShapeVolume(), refShape.getColorVolume(),
+      fitShape.getCoords(), fitShape.getAlphas(),
+      fitShape.getFeatureTypes().data(), fitShape.getCarbonRadii(),
       fitShape.getNumAtoms(), fitShape.getNumFeatures(),
       fitShape.getShapeVolume(), fitShape.getColorVolume(), quatTrans,
       overlayOpts.optimMode, overlayOpts.simAlpha, overlayOpts.simBeta,
@@ -504,8 +507,7 @@ std::array<double, 3> ScoreShape(const ShapeInput &refShape,
   const auto scores = sca.calcScores(refShape.getCoords().data(),
                                      fitShape.getCoords().data(), includeColor);
   if (overlapVols) {
-    (*overlapVols)[0] = scores[3];
-    (*overlapVols)[1] = scores[4];
+    (*overlapVols) = std::make_pair(scores[3], scores[4]);
   }
   return std::array{scores[0], scores[1], scores[2]};
 }
@@ -515,7 +517,7 @@ std::array<double, 3> ScoreMolecule(const ShapeInput &refShape,
                                     const ShapeInputOptions &fitOpts,
                                     const ShapeOverlayOptions &overlayOpts,
                                     int fitConfId,
-                                    std::array<double, 2> *overlapVols) {
+                                    std::pair<double, double> *overlapVols) {
   const auto fitShape = ShapeInput(fit, fitConfId, fitOpts, overlayOpts);
   return ScoreShape(refShape, fitShape, overlayOpts, overlapVols);
 }
@@ -525,7 +527,7 @@ std::array<double, 3> ScoreMolecule(const ROMol &ref, const ROMol &fit,
                                     const ShapeInputOptions &fitOpts,
                                     const ShapeOverlayOptions &overlayOpts,
                                     int refConfId, int fitConfId,
-                                    std::array<double, 2> *overlapVols) {
+                                    std::pair<double, double> *overlapVols) {
   ShapeOverlayOptions tmpOpts = overlayOpts;
   tmpOpts.normalize = false;
   tmpOpts.startMode = StartMode::ROTATE_0;

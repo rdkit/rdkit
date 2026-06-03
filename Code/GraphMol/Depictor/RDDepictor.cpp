@@ -611,7 +611,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
           params.nFlipsPerSample, params.nSamples, params.sampleSeed, nullptr,
           0.0, params.permuteDeg4Nodes);
     } else {
-      eri.removeCollisionsBondFlip();
+      eri.removeCollisionsBondAndSpiroFlip();
     }
   }
   for (auto &eri : efrags) {

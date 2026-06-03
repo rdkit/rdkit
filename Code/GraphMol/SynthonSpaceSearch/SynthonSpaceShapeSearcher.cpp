@@ -914,9 +914,9 @@ double calcExcludedVolume(const ROMol &mol,
                           const GaussianShape::ShapeOverlayOptions &ovlyOpts) {
   GaussianShape::ShapeInput hitShape(
       mol, -1, GaussianShape::ShapeInputOptions(), ovlyOpts);
-  std::array<double, 2> excVols;
+  std::pair<double, double> excVols;
   GaussianShape::ScoreShape(hitShape, excVol, ovlyOpts, &excVols);
-  return excVols[0] + excVols[1];
+  return excVols.first + excVols.second;
 }
 
 unsigned int calcNumClashes(const ROMol &mol,
