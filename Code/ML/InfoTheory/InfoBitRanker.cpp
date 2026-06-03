@@ -35,7 +35,7 @@ void InfoBitRanker::setBiasList(RDKit::INT_VECT &classList) {
   d_biasList = classList;
   // make sure we don't have any duplicates
   std::sort(d_biasList.begin(), d_biasList.end());
-  RDKit::INT_VECT_CI bi = std::unique(d_biasList.begin(), d_biasList.end());
+  auto bi = std::unique(d_biasList.begin(), d_biasList.end());
   CHECK_INVARIANT(bi == d_biasList.end(),
                   "There are duplicates in the class bias list");
 
@@ -48,8 +48,8 @@ void InfoBitRanker::setBiasList(RDKit::INT_VECT &classList) {
 void InfoBitRanker::setMaskBits(RDKit::INT_VECT &maskBits) {
   delete dp_maskBits;
   dp_maskBits = new ExplicitBitVect(d_dims);
-  for (RDKit::INT_VECT_CI bi = maskBits.begin(); bi != maskBits.end(); ++bi) {
-    dp_maskBits->setBit(*bi);
+  for (auto bi : maskBits) {
+    dp_maskBits->setBit(bi);
   }
 }
 

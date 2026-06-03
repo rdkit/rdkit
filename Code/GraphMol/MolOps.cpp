@@ -871,8 +871,8 @@ unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags) {
     comMap[mi].push_back(i);
   }
 
-  for (INT_INT_VECT_MAP_CI mci = comMap.begin(); mci != comMap.end(); mci++) {
-    frags.push_back((*mci).second);
+  for (auto &mci : comMap) {
+    frags.push_back(std::move(mci.second));
   }
   return rdcast<unsigned int>(frags.size());
 }
@@ -1011,12 +1011,11 @@ template RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
     bool sanitizeFrags, const std::vector<unsigned int> *, bool);
 
 int getFormalCharge(const ROMol &mol) {
-  int accum = 0;
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    accum += (*atomIt)->getFormalCharge();
-  }
-  return accum;
+  auto res = std::accumulate(mol.atoms().begin(), mol.atoms().end(), 0,
+                             [](int accum, const auto atom) {
+                               return accum + atom->getFormalCharge();
+                             });
+  return res;
 };
 
 unsigned getNumAtomsWithDistinctProperty(const ROMol &mol,

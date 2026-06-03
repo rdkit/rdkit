@@ -332,6 +332,21 @@ class TestCase(unittest.TestCase):
     mols3 = Chem.MolsFromCDXML(data, params)
     smi3 = [Chem.MolToSmiles(m) for m in mols3]
     self.assertEqual(smi1, smi3)
+    if Chem.HasChemDrawCDXSupport():
+      # ensure we can round trip through CDXML, CDX
+      for smi, mol in zip(smi3, mols3):
+        cdxml = Chem.MolToCDXMLBlock(mol)
+        cdxml2 = Chem.MolToCDXMLBlock(mol, Chem.CDXMLFormat.CDXML)
+        # check default is cdxml
+        self.assertEqual(cdxml, cdxml2)
+        cdx = Chem.MolToCDXMLBlock(mol, Chem.CDXMLFormat.CDX)
+        self.assertEqual(type(cdx), bytes)
+
+        self.assertEqual(Chem.MolToSmiles(Chem.MolsFromCDXML(cdxml)[0]),
+                         smi)
+        self.assertEqual(Chem.MolToSmiles(Chem.MolsFromCDXML(cdx, params)[0]),
+                         smi)
+        
     
 
   def test_formats(self):

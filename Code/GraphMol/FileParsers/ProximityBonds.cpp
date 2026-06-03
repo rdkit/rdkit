@@ -534,9 +534,7 @@ static bool StandardPDBDoubleBond(RWMol *mol, Atom *beg, Atom *end) {
 }
 
 void StandardPDBResidueBondOrders(RWMol *mol) {
-  RWMol::BondIterator bondIt;
-  for (bondIt = mol->beginBonds(); bondIt != mol->endBonds(); ++bondIt) {
-    Bond *bond = *bondIt;
+  for (const auto bond : mol->bonds()) {
     if (bond->getBondType() == Bond::SINGLE) {
       Atom *beg = bond->getBeginAtom();
       Atom *end = bond->getEndAtom();

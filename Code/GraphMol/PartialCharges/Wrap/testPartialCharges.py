@@ -44,7 +44,7 @@ class TestCase(unittest.TestCase):
 
     i = 0
     for line in lines:
-      self.assertTrue(line.strip() == olst[i])
+      self.assertEqual(line.strip(), olst[i])
       i += 1
 
   def test1PPDataset(self):
@@ -92,7 +92,7 @@ class TestCase(unittest.TestCase):
     for i in range(m1.GetNumAtoms()):
       c1 = float(m1.GetAtomWithIdx(i).GetProp('_GasteigerCharge'))
       c2 = float(m2.GetAtomWithIdx(i).GetProp('_GasteigerCharge'))
-      self.assertTrue(feq(c1, c2, 1e-4))
+      self.assertAlmostEqual(c1, c2, 4)
 
   def test3Params(self):
     """ tests handling of Issue187 """
