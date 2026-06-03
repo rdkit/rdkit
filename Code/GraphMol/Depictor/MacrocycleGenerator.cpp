@@ -1919,11 +1919,10 @@ static bool addFusedRingTurnConstraints(
           turnSequence.push_back(turn);
 
           // TODO: Angle constraints disabled - they over-constrain the system
-          // causing closure errors and bond stretching. Even with correct geometric
-          // direction detection, exact angle constraints are too rigid.
-          // AngleConstraint angleConstraint;
-          // angleConstraint.position = pos;
-          // angleConstraint.targetAngle = -angle;
+          // causing closure errors and bond stretching. Even with correct
+          // geometric direction detection, exact angle constraints are too
+          // rigid. AngleConstraint angleConstraint; angleConstraint.position =
+          // pos; angleConstraint.targetAngle = -angle;
           // generator.addAngleConstraint(angleConstraint);
 
           std::cerr << "pos" << pos << "=" << (turn > 0 ? "R" : "L")
@@ -2183,8 +2182,6 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
   // If SAME direction detected, reverse the atom list
   // This makes the solver work in a canonical direction
   if (shouldReverse) {
-    std::cerr << "DEBUG: Reversing macrocycle atom list for canonical direction"
-              << std::endl;
     std::reverse(macrocycleRingVec.begin(), macrocycleRingVec.end());
 
     // Also rebuild the substituent sizes map with reversed positions
@@ -2231,39 +2228,13 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
   // Get number of free positions before solving (for threshold scaling)
   size_t numFreePositions = generator.getNumFreePositions();
 
-  // Debug: Print all constraints
-  std::cerr << "\nDEBUG: Summary of all constraints for this macrocycle:"
-            << std::endl;
-  std::cerr << "  Macrocycle ring atoms: [";
-  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
-    if (i > 0) std::cerr << ", ";
-    std::cerr << macrocycleRing[i];
-  }
-  std::cerr << "]" << std::endl;
-  std::cerr << "  Number of free positions: " << numFreePositions << std::endl;
-  generator.printConstraints();
-  std::cerr << std::endl;
-
   // Solve for optimal turn sequence
   if (!generator.solve()) {
-    std::cerr << "DEBUG: Macrocycle generation FAILED - no solution found"
-              << std::endl;
     return {};  // No solution found
   }
 
   // Check closure quality
   double closureError = generator.getClosureError();
-  std::cerr << "DEBUG: Solver succeeded, closure error = " << closureError
-            << " Å" << std::endl;
-
-  // Print winning turn sequence with atom indices
-  std::cerr << "DEBUG: Winning turn sequence:" << std::endl;
-  std::cerr << "  Position -> Atom | Turn" << std::endl;
-  const auto &turns = generator.getTurns();
-  for (size_t i = 0; i < turns.size(); ++i) {
-    std::cerr << "  pos" << i << " -> atom" << macrocycleRingVec[i] << " | "
-              << (turns[i] > 0 ? "R" : (turns[i] < 0 ? "L" : "?")) << std::endl;
-  }
 
   double MAX_CLOSURE_ERROR = 6.0;  // base threshold in Angstroms
 
@@ -2277,63 +2248,15 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
   }
 
   if (closureError > MAX_CLOSURE_ERROR) {
-    std::cerr
-        << "DEBUG: Macrocycle generation FAILED - closure error too large: "
-        << closureError << " > " << MAX_CLOSURE_ERROR << std::endl;
     return {};  // Closure error too large
   }
 
   // Generate 2D coordinates
   auto coordinates = generator.generateCoordinates();
 
-  // Debug: Calculate bond lengths after generation
-  std::cerr << "\nDEBUG: Bond lengths AFTER generation (before reversal):"
-            << std::endl;
-  double minBond = 1e9, maxBond = 0.0, sumBond = 0.0;
-  int bondCount = 0;
-  for (size_t i = 0; i < coordinates.size(); ++i) {
-    size_t j = (i + 1) % coordinates.size();
-    double dx = coordinates[j].x - coordinates[i].x;
-    double dy = coordinates[j].y - coordinates[i].y;
-    double dist = std::sqrt(dx * dx + dy * dy);
-    sumBond += dist;
-    bondCount++;
-    minBond = std::min(minBond, dist);
-    maxBond = std::max(maxBond, dist);
-    std::cerr << "  Bond " << i << "-" << j << ": " << dist << " Å"
-              << std::endl;
-  }
-  std::cerr << "  Min: " << minBond << " Å, Max: " << maxBond
-            << " Å, Avg: " << (sumBond / bondCount) << " Å\n"
-            << std::endl;
-
   // If we reversed the atom list, reverse the coordinates back
   if (shouldReverse) {
-    std::cerr << "DEBUG: Reversing coordinates back to original atom order"
-              << std::endl;
     std::reverse(coordinates.begin(), coordinates.end());
-
-    // Debug: Calculate bond lengths after reversal
-    std::cerr << "\nDEBUG: Bond lengths AFTER reversal:" << std::endl;
-    minBond = 1e9;
-    maxBond = 0.0;
-    sumBond = 0.0;
-    bondCount = 0;
-    for (size_t i = 0; i < coordinates.size(); ++i) {
-      size_t j = (i + 1) % coordinates.size();
-      double dx = coordinates[j].x - coordinates[i].x;
-      double dy = coordinates[j].y - coordinates[i].y;
-      double dist = std::sqrt(dx * dx + dy * dy);
-      sumBond += dist;
-      bondCount++;
-      minBond = std::min(minBond, dist);
-      maxBond = std::max(maxBond, dist);
-      std::cerr << "  Bond " << i << "-" << j << ": " << dist << " Å"
-                << std::endl;
-    }
-    std::cerr << "  Min: " << minBond << " Å, Max: " << maxBond
-              << " Å, Avg: " << (sumBond / bondCount) << " Å\n"
-              << std::endl;
   }
 
   return coordinates;
@@ -3105,10 +3028,8 @@ bool matchToTemplateMacrocycle(
     coords[molAidx] = conf.getAtomPos(templateAidx);
   }
 
-  // Refine template-matched coordinates
-  // DISABLED for testing
-  // maybeRefineTemplateMatchedMacrocycle(mol, macrocycleRing, allRings, coords,
-  //                                      currentRingIndex);
+  maybeRefineTemplateMatchedMacrocycle(mol, macrocycleRing, allRings, coords,
+                                       currentRingIndex);
 
   // Check if fused rings can be flipped to place substitutions outside
   maybeReflectSymmetricFusedRings(*mol, macrocycleRing, allRings, coords,
