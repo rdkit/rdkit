@@ -91,8 +91,8 @@ struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
   bool useRingTemplates = false;  //!< whether to use ring system templates for
                                   //!< generating initial coordinates
   bool useDeNovoMacrocycleGeneration = false;  //!< whether to use de novo
-                                                //!< macrocycle generation for
-                                                //!< large rings
+                                               //!< macrocycle generation for
+                                               //!< large rings
 };
 
 //! \brief Generate 2D coordinates (a depiction) for a molecule
@@ -468,7 +468,6 @@ RDKIT_DEPICTOR_EXPORT double normalizeDepiction(RDKit::ROMol &mol,
                                                 int confId = -1,
                                                 int canonicalize = 1,
                                                 double scaleFactor = -1.0);
-
 };  // namespace RDDepict
 
 #endif

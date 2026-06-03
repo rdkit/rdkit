@@ -505,22 +505,14 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
   conf->set3D(false);
   std::list<EmbeddedFrag>::iterator eri;
 
-  // Debug: Track which atoms are set and from which efrag
-  std::map<int, int>
-      atomSetCounts;  // atom index -> how many times it's been set
-  int efragIndex = 0;
-
   for (const auto &efrag : efrags) {
     for (const auto &eai : efrag.GetEmbeddedAtoms()) {
       const auto &cr = eai.second.loc;
       RDGeom::Point3D fcr(cr.x, cr.y, 0.0);
       conf->setAtomPos(eai.first, fcr);
-      atomSetCounts[eai.first]++;
     }
-    efragIndex++;
   }
 
-  // Debug: Check bond lengths in conformer
   unsigned int confId = 0;
   if (clearConfs) {
     // clear all the conformation on the molecules and assign conf ID 0 to this
@@ -646,9 +638,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
       }
     }
   }
-
   DepictorLocal::_shiftCoords(efrags);
-
 #endif
   // create a conformation on the molecule and copy the coordinates
   auto cid = copyCoordinate(mol, efrags, params.clearConfs);
