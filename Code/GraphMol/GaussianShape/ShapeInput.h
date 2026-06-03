@@ -159,7 +159,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 
   //! Merge the other ShapeInput, assuming it has the correct number
   //! of atoms etc.  Empties other, unless they can't be merged in which case
-  //! it returns unscathed.  The can only be done if other has the same
+  //! it returns unscathed.  The merge can only be done if other has the same
   // number of coordinates per conformer, and the feature types of the two
   // match.
   void merge(ShapeInput &&other);
