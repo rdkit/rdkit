@@ -217,11 +217,9 @@ typedef __int64 LONGINT;
 #undef min  // FUCK I hate this nonsense
 #endif
 
-RDKIT_RDGENERAL_EXPORT extern const double MAX_DOUBLE;
-RDKIT_RDGENERAL_EXPORT extern const double EPS_DOUBLE;
-RDKIT_RDGENERAL_EXPORT extern const double SMALL_DOUBLE;
-RDKIT_RDGENERAL_EXPORT extern const double MAX_INT;
-RDKIT_RDGENERAL_EXPORT extern const double MAX_LONGINT;
+inline constexpr double MAX_DOUBLE = std::numeric_limits<double>::max();
+inline constexpr double EPS_DOUBLE = std::numeric_limits<double>::epsilon();
+inline constexpr int MAX_INT = std::numeric_limits<int>::max();
 
 typedef unsigned int UINT;
 typedef unsigned short USHORT;
