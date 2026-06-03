@@ -559,8 +559,7 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
     const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
     const RDKit::VECT_INT_VECT &allRings,
     const std::map<size_t, int> &substituentSizesByPosition,
-    double bondLength = RDDepict::BOND_LEN,
-    int currentRingIndex = -1,
+    double bondLength = RDDepict::BOND_LEN, int currentRingIndex = -1,
     const RDGeom::INT_POINT2D_MAP *existingCoords = nullptr);
 
 //! Match macrocycle to a template and extract coordinates
@@ -579,8 +578,24 @@ bool matchToTemplateMacrocycle(
     const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
     const RDKit::VECT_INT_VECT &allRings,
     const std::map<size_t, int> &substituentSizesByPosition,
-    RDGeom::INT_POINT2D_MAP &coords,
-    int currentRingIndex = -1);
+    RDGeom::INT_POINT2D_MAP &coords, int currentRingIndex = -1);
+
+//! Check if a macrocycle ring vector should be reversed for fusion
+/*!
+  Determines if the macrocycle atom list should be reversed based on the
+  geometric layout (CW vs CCW) of an already-embedded fused macrocycle. This
+  ensures that when coordinates are generated for the second macrocycle, which
+  is always done CW, the shared atoms will be traversed in the correct order
+
+  \param macrocycleRing: Atom indices in the macrocycle to check
+  \param allRings: All rings in the molecule
+  \param currentRingIndex: Index of the current macrocycle in allRings
+  \param existingCoords: Coordinate map of already-embedded atoms
+  \return true if the ring should be reversed, false otherwise
+*/
+RDKIT_DEPICTOR_EXPORT bool shouldReverseMacrocycleForFusion(
+    const RDKit::INT_VECT &macrocycleRing, const RDKit::VECT_INT_VECT &allRings,
+    int currentRingIndex, const RDGeom::INT_POINT2D_MAP *existingCoords);
 
 }  // namespace RDDepict
 

@@ -1217,9 +1217,6 @@ void EmbeddedFrag::embedMacrocycleWithFusedRings(
   // Map back to fusedRings index
   int macrocycleIdx = coreRingsIds[macrocycleIdxInCoreRings];
 
-  std::cerr << "DEBUG: Processing first macrocycle (ring " << macrocycleIdx
-            << ", size=" << macrocycleRing.size() << ")" << std::endl;
-
   // Pre-compute substituent info once for both template matching and
   // generation
   boost::dynamic_bitset<> ring_atoms(dp_mol->getNumAtoms());
@@ -1234,7 +1231,8 @@ void EmbeddedFrag::embedMacrocycleWithFusedRings(
   auto subInfo = computeSubstituentInfo(dp_mol, macrocycleRing, ring_atoms);
 
   // Try template matching with fusion validation
-  // Pass coreRings and macrocycleIdxInCoreRings so the function can skip the macrocycle
+  // Pass coreRings and macrocycleIdxInCoreRings so the function can skip the
+  // macrocycle
   RDGeom::INT_POINT2D_MAP coordMap;
   for (const auto &ea : d_eatoms) {
     coordMap[ea.first] = ea.second.loc;
@@ -1264,7 +1262,8 @@ void EmbeddedFrag::embedMacrocycleWithFusedRings(
 
   if (doneRings.empty() && useDeNovoMacrocycleGeneration) {
     // If template matching failed, try to generate coordinates on-the-fly
-    // Pass coreRings and macrocycleIdxInCoreRings so the function can skip the macrocycle
+    // Pass coreRings and macrocycleIdxInCoreRings so the function can skip the
+    // macrocycle
     auto coords = RDDepict::generateMacrocycleCoordinates(
         dp_mol, macrocycleRing, coreRings, subInfo.sizesByPosition, BOND_LEN,
         macrocycleIdxInCoreRings);
@@ -1401,14 +1400,13 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
     // with atoms already done
     auto commonAtomIds = findNextRingToEmbed(doneRings, fusedRings, nextId);
 
-    // Track if this ring is a macrocycle that was successfully generated with fusion constraints
+    // Track if this ring is a macrocycle that was successfully generated with
+    // fusion constraints
     bool isMacrocycleWithFusionConstraints = false;
 
-    // If this ring is a macrocycle, generate its coordinates with fusion constraints
+    // If this ring is a macrocycle, generate its coordinates with fusion
+    // constraints
     if (fusedRings[nextId].size() > MACROCYCLE_SIZE_THRESHOLD) {
-      std::cerr << "DEBUG: Processing subsequent macrocycle (ring " << nextId
-                << ", size=" << fusedRings[nextId].size() << ")" << std::endl;
-
       // Build bitset of all atoms in fused system
       boost::dynamic_bitset<> ring_atoms(dp_mol->getNumAtoms());
       for (const auto &ring : fusedRings) {
@@ -1418,54 +1416,49 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
       }
 
       // Compute substituent info for this macrocycle
-      auto subInfo = computeSubstituentInfo(dp_mol, fusedRings[nextId], ring_atoms);
+      auto subInfo =
+          computeSubstituentInfo(dp_mol, fusedRings[nextId], ring_atoms);
 
-      // Build coordinate map from already-embedded atoms (from first macrocycle)
-      // to constrain middle fusion positions to match existing angles
+      // Build coordinate map from already-embedded atoms (from first
+      // macrocycle) to constrain middle fusion positions to match existing
+      // angles
       RDGeom::INT_POINT2D_MAP embeddedCoords;
       for (const auto &ea : d_eatoms) {
         embeddedCoords[ea.first] = ea.second.loc;
       }
 
+      // Check if we need to reverse the atom list based on the layout direction
+      // of the already-embedded macrocycle. This ensures we traverse the ring
+      // in the canonical CW direction.
+      RDKit::INT_VECT macrocycleRing = fusedRings[nextId];
+      bool shouldReverse = RDDepict::shouldReverseMacrocycleForFusion(
+          macrocycleRing, fusedRings, nextId, &embeddedCoords);
+      if (shouldReverse) {
+        std::reverse(macrocycleRing.begin(), macrocycleRing.end());
+        // Also reverse the substituent positions map
+        std::map<size_t, int> reversedSizes;
+        for (const auto &entry : subInfo.sizesByPosition) {
+          size_t reversedPos = macrocycleRing.size() - 1 - entry.first;
+          reversedSizes[reversedPos] = entry.second;
+        }
+        subInfo.sizesByPosition = reversedSizes;
+      }
+
       // Generate macrocycle coordinates with fusion constraints
       auto coords_vec = RDDepict::generateMacrocycleCoordinates(
-          dp_mol, fusedRings[nextId], fusedRings, subInfo.sizesByPosition,
-          BOND_LEN, nextId, &embeddedCoords);
+          dp_mol, macrocycleRing, fusedRings, subInfo.sizesByPosition, BOND_LEN,
+          nextId, &embeddedCoords);
 
       // Convert vector to map and update coords
       if (!coords_vec.empty()) {
-        std::cerr << "DEBUG: Successfully generated " << coords_vec.size()
-                  << " coordinates for macrocycle " << nextId << std::endl;
-
-        // Debug: Print the atom-to-coordinate mapping
-        std::cerr << "DEBUG: Atom-to-coordinate mapping for macrocycle " << nextId << ":" << std::endl;
-        std::cerr << "  Position -> Atom | Coordinate" << std::endl;
-
         RDGeom::INT_POINT2D_MAP macrocycle_coords;
         for (size_t i = 0; i < coords_vec.size(); ++i) {
-          int atomIdx = fusedRings[nextId][i];
+          int atomIdx = macrocycleRing[i];
           macrocycle_coords[atomIdx] = coords_vec[i];
-          std::cerr << "  pos" << i << " -> atom" << atomIdx
-                    << " | (" << coords_vec[i].x << ", " << coords_vec[i].y << ")" << std::endl;
         }
-
-        // Debug: Calculate bond lengths in the coordinate mapping
-        std::cerr << "\nDEBUG: Bond lengths in mapped coordinates:" << std::endl;
-        for (size_t i = 0; i < coords_vec.size(); ++i) {
-          size_t j = (i + 1) % coords_vec.size();
-          double dx = coords_vec[j].x - coords_vec[i].x;
-          double dy = coords_vec[j].y - coords_vec[i].y;
-          double dist = std::sqrt(dx * dx + dy * dy);
-          std::cerr << "  pos" << i << "-pos" << j << " (atom" << fusedRings[nextId][i]
-                    << "-atom" << fusedRings[nextId][j] << "): " << dist << " Å" << std::endl;
-        }
-        std::cerr << std::endl;
 
         coords[nextId] = macrocycle_coords;
         isMacrocycleWithFusionConstraints = true;
-      } else {
-        std::cerr << "DEBUG: Generation FAILED for macrocycle " << nextId
-                  << " - using fallback embedRing coordinates" << std::endl;
       }
     }
 
@@ -1473,25 +1466,6 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
     EmbeddedFrag embRing;
     embRing.initFromRingCoords(fusedRings[nextId], coords[nextId]);
     RDKit::INT_VECT pinAtoms;
-
-    // Debug: Check bond lengths BEFORE transformation
-    if (isMacrocycleWithFusionConstraints) {
-      std::cerr << "\nDEBUG: Bond lengths in embRing BEFORE transformation:" << std::endl;
-      double minBond = 1e9, maxBond = 0.0;
-      for (const auto &atom : embRing.GetEmbeddedAtoms()) {
-        int aid1 = atom.first;
-        if (atom.second.nbr1 >= 0) {
-          auto pos1 = atom.second.loc;
-          auto pos2 = embRing.GetEmbeddedAtom(atom.second.nbr1).loc;
-          double dx = pos2.x - pos1.x;
-          double dy = pos2.y - pos1.y;
-          double dist = std::sqrt(dx * dx + dy * dy);
-          minBond = std::min(minBond, dist);
-          maxBond = std::max(maxBond, dist);
-        }
-      }
-      std::cerr << "  Min: " << minBond << " Å, Max: " << maxBond << " Å" << std::endl;
-    }
 
     // REVIEW: using the average position of the shared atoms and the
     // centroid vector, we can make this a single case.
@@ -1509,89 +1483,17 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
       pinAtoms.push_back(aid1);
       pinAtoms.push_back(aid2);
 
-      // Debug: Show which atoms are being used for alignment
-      if (isMacrocycleWithFusionConstraints) {
-        std::cerr << "\nDEBUG: Computing transform to align atoms " << aid1 << " and " << aid2 << std::endl;
-        std::cerr << "  Atom " << aid1 << " current pos in embRing: ("
-                  << embRing.GetEmbeddedAtom(aid1).loc.x << ", "
-                  << embRing.GetEmbeddedAtom(aid1).loc.y << ")" << std::endl;
-        std::cerr << "  Atom " << aid1 << " target pos in d_eatoms: ("
-                  << d_eatoms[aid1].loc.x << ", "
-                  << d_eatoms[aid1].loc.y << ")" << std::endl;
-        std::cerr << "  Atom " << aid2 << " current pos in embRing: ("
-                  << embRing.GetEmbeddedAtom(aid2).loc.x << ", "
-                  << embRing.GetEmbeddedAtom(aid2).loc.y << ")" << std::endl;
-        std::cerr << "  Atom " << aid2 << " target pos in d_eatoms: ("
-                  << d_eatoms[aid2].loc.x << ", "
-                  << d_eatoms[aid2].loc.y << ")" << std::endl;
-      }
-
       trans.assign(this->computeTwoAtomTrans(aid1, aid2, coords[nextId]));
       embRing.Transform(trans);
-
-      // Debug: Check bond lengths AFTER transformation
-      if (isMacrocycleWithFusionConstraints) {
-        std::cerr << "\nDEBUG: Bond lengths in embRing AFTER transformation:" << std::endl;
-        double minBond = 1e9, maxBond = 0.0;
-        for (const auto &atom : embRing.GetEmbeddedAtoms()) {
-          int aid1 = atom.first;
-          if (atom.second.nbr1 >= 0) {
-            auto pos1 = atom.second.loc;
-            auto pos2 = embRing.GetEmbeddedAtom(atom.second.nbr1).loc;
-            double dx = pos2.x - pos1.x;
-            double dy = pos2.y - pos1.y;
-            double dist = std::sqrt(dx * dx + dy * dy);
-            minBond = std::min(minBond, dist);
-            maxBond = std::max(maxBond, dist);
-          }
-        }
-        std::cerr << "  Min: " << minBond << " Å, Max: " << maxBond << " Å\n" << std::endl;
-      }
 
       // Skip reflection for macrocycles generated with fusion constraints
       // (orientation already determined by fusion constraints)
       if (!isMacrocycleWithFusionConstraints) {
         reflectIfNecessaryDensity(embRing, aid1, aid2);
-      } else {
-        std::cerr << "DEBUG: Skipping reflection for macrocycle with fusion constraints" << std::endl;
-      }
-    }
-
-    // Debug: Check coordinates in embRing RIGHT BEFORE mergeRing
-    if (isMacrocycleWithFusionConstraints) {
-      std::cerr << "\nDEBUG: Coordinates in embRing RIGHT BEFORE mergeRing:" << std::endl;
-      std::vector<int> ring1Atoms = {4, 5, 6, 7, 8, 9, 10, 11, 16, 17, 18, 19, 20};
-      const auto &embAtoms = embRing.GetEmbeddedAtoms();
-      for (int a : ring1Atoms) {
-        if (embAtoms.find(a) != embAtoms.end()) {
-          auto pos = embAtoms.at(a).loc;
-          std::cerr << "  Atom " << a << ": (" << pos.x << ", " << pos.y << ")" << std::endl;
-        }
       }
     }
 
     this->mergeRing(embRing, commonAtomIds.size(), pinAtoms);
-
-    // Debug: Check bond lengths in d_eatoms after mergeRing
-    if (isMacrocycleWithFusionConstraints) {
-      std::cerr << "\nDEBUG: Bond lengths in d_eatoms AFTER mergeRing (checking ring bonds):" << std::endl;
-      double minBond = 1e9, maxBond = 0.0;
-      for (size_t i = 0; i < fusedRings[nextId].size(); ++i) {
-        int atom1 = fusedRings[nextId][i];
-        int atom2 = fusedRings[nextId][(i+1) % fusedRings[nextId].size()];
-
-        auto pos1 = d_eatoms[atom1].loc;
-        auto pos2 = d_eatoms[atom2].loc;
-        double dx = pos2.x - pos1.x;
-        double dy = pos2.y - pos1.y;
-        double dist = std::sqrt(dx * dx + dy * dy);
-        minBond = std::min(minBond, dist);
-        maxBond = std::max(maxBond, dist);
-        std::cerr << "  atom" << atom1 << "-atom" << atom2 << ": " << dist << " Å" << std::endl;
-      }
-      std::cerr << "  Min: " << minBond << " Å, Max: " << maxBond << " Å\n" << std::endl;
-    }
-
     doneRings.push_back(nextId);
   }
 }
@@ -1752,14 +1654,8 @@ void EmbeddedFrag::reflectIfNecessaryDensity(EmbeddedFrag &embFrag,
       }
     }
   }
-  std::cerr << "DEBUG reflectIfNecessaryDensity: densityNormal=" << densityNormal
-            << ", densityReflect=" << densityReflect
-            << ", diff=" << (densityNormal - densityReflect);
   if (densityNormal - densityReflect > 1.0e-4) {
-    std::cerr << " -> REFLECTING" << std::endl;
     embFrag.Reflect(pin1, pin2);
-  } else {
-    std::cerr << " -> keeping" << std::endl;
   }
 }
 
