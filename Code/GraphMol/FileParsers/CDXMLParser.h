@@ -79,15 +79,6 @@ RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
     const CDXMLParserParams &params = CDXMLParserParams(true, true,
                                                         CDXMLFormat::Auto));
 
-//! \brief construct query molecules from a CDXML file
-//! This is equivalent to calling MolsFromCDXMLFile() with
-//! CDXMLParserParams::parseQueries enabled.
-RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>>
-MolsFromCDXMLFileAsQueries(
-  const std::string &filename,
-  const CDXMLParserParams &params = CDXMLParserParams(true, true,
-                            CDXMLFormat::Auto));
-
 //! \brief construct molecules from a CDXML block
 //! The RDKit is optionally built with the Revvity ChemDraw parser
 //! If this is available, CDX and CDXML can be read, see CDXMLParserParams
@@ -105,14 +96,6 @@ RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
     const CDXMLParserParams &params =
         CDXMLParserParams(true, true, v2::CDXMLParser::CDXMLFormat::Auto));
 
-//! \brief construct query molecules from a CDXML block
-//! This is equivalent to calling MolsFromCDXML() with
-//! CDXMLParserParams::parseQueries enabled.
-RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>>
-MolsFromCDXMLAsQueries(
-  const std::string &cdxml,
-  const CDXMLParserParams &params =
-    CDXMLParserParams(true, true, v2::CDXMLParser::CDXMLFormat::Auto));
 }  // namespace CDXMLParser
 }  // namespace v2
 

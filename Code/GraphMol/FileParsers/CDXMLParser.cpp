@@ -1424,13 +1424,6 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
   return MolsFromCDXMLDataStream(ifs, params);
 }
 
-std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFileAsQueries(
-    const std::string &fileName, const CDXMLParserParams &params) {
-  auto queryParams = params;
-  queryParams.parseQueries = true;
-  return MolsFromCDXMLFile(fileName, queryParams);
-}
-
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 
 						  const std::string &cdxml, const CDXMLParserParams &params) {
@@ -1439,12 +1432,6 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
   return MolsFromCDXMLDataStream(iss, params);
 }
 
-std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLAsQueries(
-    const std::string &cdxml, const CDXMLParserParams &params) {
-  auto queryParams = params;
-  queryParams.parseQueries = true;
-  return MolsFromCDXML(cdxml, queryParams);
-}
 }  // namespace CDXMLParser
 }  // namespace v2
 }  // namespace RDKit
@@ -1506,25 +1493,12 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
   }
 }
 
-std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFileAsQueries(
-    const std::string &fileName, const CDXMLParserParams &params) {
-  auto queryParams = params;
-  queryParams.parseQueries = true;
-  return MolsFromCDXMLFile(fileName, queryParams);
-}
-
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
     const std::string &cdxml, const CDXMLParserParams &params) {
   std::stringstream iss(cdxml);
   return MolsFromCDXMLDataStream(iss, params);
 }
 
-std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLAsQueries(
-    const std::string &cdxml, const CDXMLParserParams &params) {
-  auto queryParams = params;
-  queryParams.parseQueries = true;
-  return MolsFromCDXML(cdxml, queryParams);
-}
 }
 }
 }

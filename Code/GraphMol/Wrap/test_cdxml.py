@@ -384,14 +384,14 @@ class TestCase(unittest.TestCase):
     params.parseQueries = True
     params.strictQueryParsing = True
 
-    file_mols = Chem.MolsFromCDXMLFileAsQueries(filename, params)
+    file_mols = Chem.MolsFromCDXMLFile(filename, params)
     self.assertEqual(len(file_mols), 1)
     self.assertEqual(Chem.MolToSmiles(file_mols[0]), 'c1ccccc1')
 
     with open(filename) as inf:
       block = inf.read()
 
-    block_mols = Chem.MolsFromCDXMLAsQueries(block, params)
+    block_mols = Chem.MolsFromCDXML(block, params)
     self.assertEqual(len(block_mols), 1)
     self.assertEqual(Chem.MolToSmiles(block_mols[0]), 'c1ccccc1')
 
@@ -412,13 +412,15 @@ class TestCase(unittest.TestCase):
       ('chain-topology', os.path.join(query_base, 'CCOC_Chn.cdxml'),
        'file', '[#8](-[#6]-&!@[#6])-[#6]'),
     ]
+    params = Chem.CDXMLParserParams()
+    params.parseQueries = True
 
     for _, filename, mode, expected_smarts in cases:
       if mode == 'file':
-        mols = Chem.MolsFromCDXMLFileAsQueries(filename, Chem.CDXMLParserParams())
+        mols = Chem.MolsFromCDXMLFile(filename, params)
       else:
         with open(filename) as inf:
-          mols = Chem.MolsFromCDXMLAsQueries(inf.read(), Chem.CDXMLParserParams())
+          mols = Chem.MolsFromCDXML(inf.read(), params)
 
       self.assertEqual(len(mols), 1)
       self.assertEqual(Chem.MolToSmarts(mols[0]), expected_smarts)
@@ -426,9 +428,11 @@ class TestCase(unittest.TestCase):
   def test_cdxml_hydrogen_bond_query(self):
     rdbase = os.environ['RDBASE']
     query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')
-    mols = Chem.MolsFromCDXMLFileAsQueries(
+    params = Chem.CDXMLParserParams()
+    params.parseQueries = True
+    mols = Chem.MolsFromCDXMLFile(
       os.path.join(query_base, 'qbond_hydrogen.cdxml'),
-      Chem.CDXMLParserParams())
+      params)
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmarts(mols[0]), '[#8][#8]')
     bond = mols[0].GetBondWithIdx(0)
@@ -439,7 +443,8 @@ class TestCase(unittest.TestCase):
     rdbase = os.environ['RDBASE']
     params = Chem.CDXMLParserParams()
     params.sanitize = False
-    mols = Chem.MolsFromCDXMLFileAsQueries(
+    params.parseQueries = True
+    mols = Chem.MolsFromCDXMLFile(
       os.path.join(rdbase, 'rdkit/Chem/test_data/ferrocene.cdxml'),
       params)
     self.assertEqual(len(mols), 1)
@@ -459,18 +464,22 @@ class TestCase(unittest.TestCase):
 
   def test_cdxml_external_connection_fragment_query(self):
     rdbase = os.environ['RDBASE']
-    mols = Chem.MolsFromCDXMLFileAsQueries(
+    params = Chem.CDXMLParserParams()
+    params.parseQueries = True
+    mols = Chem.MolsFromCDXMLFile(
       os.path.join(rdbase, 'External/ChemDraw/test_data/atom-to-fragment.cdxml'),
-      Chem.CDXMLParserParams())
+      params)
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmarts(mols[0]), '[#6]-[#6]=[#6]=[#6](-[#6])-[#6]')
 
   def test_cdxml_spiro_ring_bond_count_query(self):
     rdbase = os.environ['RDBASE']
     query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')
-    mols = Chem.MolsFromCDXMLFileAsQueries(
+    params = Chem.CDXMLParserParams()
+    params.parseQueries = True
+    mols = Chem.MolsFromCDXMLFile(
       os.path.join(query_base, 'qrestrict_ringbond_spiro.cdxml'),
-      Chem.CDXMLParserParams())
+      params)
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmarts(mols[0]), '[#6]1-[#6]-[#7]-[#6&x{4-}]-[#6]-[#6]-1')
 
@@ -485,14 +494,14 @@ class TestCase(unittest.TestCase):
     params.parseQueries = True
     params.strictQueryParsing = True
 
-    mols = Chem.MolsFromCDXMLFileAsQueries(
+    mols = Chem.MolsFromCDXMLFile(
       os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/query-atoms.cdxml'), params)
     self.assertEqual(len(mols), 3)
     self.assertIn('!H0', Chem.MolToSmarts(mols[0]))
     self.assertTrue(Chem.MolFromSmiles('Cc1ccccc1').HasSubstructMatch(mols[0]))
     self.assertFalse(Chem.MolFromSmiles('Cc1ccc(C)cc1').HasSubstructMatch(mols[0]))
 
-    mols = Chem.MolsFromCDXMLFileAsQueries(
+    mols = Chem.MolsFromCDXMLFile(
       os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/chirality1.cdxml'), params)
     self.assertEqual(len(mols), 1)
     smarts = Chem.MolToSmarts(mols[0])
@@ -526,14 +535,16 @@ class TestCase(unittest.TestCase):
       ('reaction-stereo', os.path.join(query_base, 'qrestrict_rxnstereo_inversion.cdxml'),
        'molInversionFlag', 1),
     ]
+    params = Chem.CDXMLParserParams()
+    params.parseQueries = True
 
     for _, filename, expected_smarts in smarts_cases:
-      mols = Chem.MolsFromCDXMLFileAsQueries(filename, Chem.CDXMLParserParams())
+      mols = Chem.MolsFromCDXMLFile(filename, params)
       self.assertEqual(len(mols), 1)
       self.assertEqual(Chem.MolToSmarts(mols[0]), expected_smarts)
 
     for _, filename, prop_name, expected_value in prop_cases:
-      mols = Chem.MolsFromCDXMLFileAsQueries(filename, Chem.CDXMLParserParams())
+      mols = Chem.MolsFromCDXMLFile(filename, params)
       self.assertEqual(len(mols), 1)
       if prop_name == '_molLinkNodes':
         self.assertTrue(mols[0].HasProp(prop_name))
@@ -543,9 +554,9 @@ class TestCase(unittest.TestCase):
         self.assertTrue(atom.HasProp(prop_name))
         self.assertEqual(atom.GetIntProp(prop_name), expected_value)
 
-    mols = Chem.MolsFromCDXMLFileAsQueries(
+    mols = Chem.MolsFromCDXMLFile(
       os.path.join(query_base, 'qvarattach.cdxml'),
-      Chem.CDXMLParserParams())
+      params)
     self.assertEqual(len(mols), 1)
     self.assertEqual(mols[0].GetAtomWithIdx(3).GetAtomicNum(), 0)
     bond = mols[0].GetBondBetweenAtoms(1, 3)
@@ -555,9 +566,9 @@ class TestCase(unittest.TestCase):
     self.assertTrue(bond.HasProp('_MolFileBondEndPts'))
     self.assertEqual(bond.GetProp('_MolFileBondEndPts'), '(2 1 3)')
 
-    mols = Chem.MolsFromCDXMLFileAsQueries(
+    mols = Chem.MolsFromCDXMLFile(
       os.path.join(query_base, 'qecp_rgroup.cdxml'),
-      Chem.CDXMLParserParams())
+      params)
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmarts(mols[0]), '[#6]-[*:1]')
     atom = mols[0].GetAtomWithIdx(1)

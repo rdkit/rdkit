@@ -503,9 +503,11 @@ TEST_CASE("CDXML") {
           {queryBase + "CCOC_Rng.cdxml", "[#8](-[#6]-&@[#6])-[#6]"},
           {queryBase + "CCOC_Chn.cdxml", "[#8](-[#6]-&!@[#6])-[#6]"},
       };
+      CDXMLParserParams params;
+      params.parseQueries = true;
 
       for (const auto &[fname, expectedSmarts] : cases) {
-        auto mols = MolsFromCDXMLFileAsQueries(fname);
+        auto mols = MolsFromCDXMLFile(fname, params);
         CHECK(mols.size() == 1);
         CHECK(MolToSmarts(*mols[0]) == expectedSmarts);
       }
@@ -531,9 +533,11 @@ TEST_CASE("CDXML") {
           {queryBase + "qrestrict_unsat_present.cdxml",
            "[#6]-[#6]-[!#1&$(*=,:,#*)]"},
       };
+      CDXMLParserParams params;
+      params.parseQueries = true;
 
       for (const auto &[fname, expectedSmarts] : cases) {
-        auto mols = MolsFromCDXMLFileAsQueries(fname);
+        auto mols = MolsFromCDXMLFile(fname, params);
         CHECK(mols.size() == 1);
         CHECK(MolToSmarts(*mols[0]) == expectedSmarts);
       }
@@ -544,7 +548,7 @@ TEST_CASE("CDXML") {
         };
 
       for (const auto &[fname, propName, expectedValue] : propCases) {
-        auto mols = MolsFromCDXMLFileAsQueries(fname);
+          auto mols = MolsFromCDXMLFile(fname, params);
         REQUIRE(mols.size() == 1);
         auto atom = mols[0]->getAtomWithIdx(2);
         CHECK(atom->hasProp(propName));
@@ -552,14 +556,14 @@ TEST_CASE("CDXML") {
       }
 
       auto linkNodeMols =
-          MolsFromCDXMLFileAsQueries(queryBase + "qlinknode_1_3.cdxml");
+          MolsFromCDXMLFile(queryBase + "qlinknode_1_3.cdxml", params);
       REQUIRE(linkNodeMols.size() == 1);
       CHECK(linkNodeMols[0]->hasProp(common_properties::molFileLinkNodes));
       CHECK(linkNodeMols[0]->getProp<std::string>(
                 common_properties::molFileLinkNodes) == "1 3 2 2 1 2 3");
 
       auto variableAttachmentMols =
-          MolsFromCDXMLFileAsQueries(queryBase + "qvarattach.cdxml");
+          MolsFromCDXMLFile(queryBase + "qvarattach.cdxml", params);
       REQUIRE(variableAttachmentMols.size() == 1);
       CHECK(variableAttachmentMols[0]->getAtomWithIdx(3)->getAtomicNum() == 0);
       auto bond = variableAttachmentMols[0]->getBondBetweenAtoms(1, 3);
@@ -572,7 +576,7 @@ TEST_CASE("CDXML") {
             "(2 1 3)");
 
       auto rgroupMols =
-          MolsFromCDXMLFileAsQueries(queryBase + "qecp_rgroup.cdxml");
+          MolsFromCDXMLFile(queryBase + "qecp_rgroup.cdxml", params);
       REQUIRE(rgroupMols.size() == 1);
       CHECK(MolToSmarts(*rgroupMols[0]) == "[#6]-[*:1]");
       auto atom = rgroupMols[0]->getAtomWithIdx(1);
@@ -1090,8 +1094,10 @@ TEST_CASE("CDXML") {
 TEST_CASE("CDXML hydrogen bond queries") {
   const auto queryBase =
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/queries/";
+  CDXMLParserParams params;
+  params.parseQueries = true;
   auto hydrogenBondMols =
-      MolsFromCDXMLFileAsQueries(queryBase + "qbond_hydrogen.cdxml");
+      MolsFromCDXMLFile(queryBase + "qbond_hydrogen.cdxml", params);
   REQUIRE(hydrogenBondMols.size() == 1);
   CHECK(MolToSmarts(*hydrogenBondMols[0]) == "[#8][#8]");
   auto hydrogenBond = hydrogenBondMols[0]->getBondWithIdx(0);
@@ -1106,7 +1112,8 @@ TEST_CASE("CDXML multiattachment queries") {
       std::string(getenv("RDBASE")) + "/rdkit/Chem/test_data/ferrocene.cdxml";
   CDXMLParserParams params;
   params.sanitize = false;
-  auto mols = MolsFromCDXMLFileAsQueries(fname, params);
+  params.parseQueries = true;
+  auto mols = MolsFromCDXMLFile(fname, params);
   REQUIRE(mols.size() == 1);
 
   size_t numDummyAtoms = 0;
@@ -1137,7 +1144,9 @@ TEST_CASE("CDXML multiattachment queries") {
 TEST_CASE("CDXML external connection fragment queries") {
   const auto fname = std::string(getenv("RDBASE")) +
                      "/External/ChemDraw/test_data/atom-to-fragment.cdxml";
-  auto mols = MolsFromCDXMLFileAsQueries(fname);
+  CDXMLParserParams params;
+  params.parseQueries = true;
+  auto mols = MolsFromCDXMLFile(fname, params);
   REQUIRE(mols.size() == 1);
   CHECK(MolToSmarts(*mols[0]) == "[#6]-[#6]=[#6]=[#6](-[#6])-[#6]");
 }
@@ -1146,7 +1155,9 @@ TEST_CASE("CDXML spiro ring-bond-count queries") {
   const auto queryBase =
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/queries/";
   const auto fname = queryBase + "qrestrict_ringbond_spiro.cdxml";
-  auto mols = MolsFromCDXMLFileAsQueries(fname);
+  CDXMLParserParams params;
+  params.parseQueries = true;
+  auto mols = MolsFromCDXMLFile(fname, params);
   REQUIRE(mols.size() == 1);
   CHECK(MolToSmarts(*mols[0]) == "[#6]1-[#6]-[#7]-[#6&x{4-}]-[#6]-[#6]-1");
 
