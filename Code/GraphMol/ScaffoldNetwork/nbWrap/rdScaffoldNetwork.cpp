@@ -46,6 +46,12 @@ void updateNetworkHelper(const std::vector<std::shared_ptr<ROMol>> &mols,
   ScaffoldNetwork::updateScaffoldNetwork(mols, net, params);
 }
 
+std::string serializeNetwork(const ScaffoldNetwork::ScaffoldNetwork &net) {
+  std::stringstream oss;
+  boost::archive::text_oarchive oa(oss);
+  oa << net;
+  return oss.str();
+}
 }  // namespace
 
 NB_MODULE(rdScaffoldNetwork, m) {
@@ -135,46 +141,8 @@ NB_MODULE(rdScaffoldNetwork, m) {
               "the sequence of network edges")
 #ifdef RDK_USE_BOOST_SERIALIZATION
       .def("__getstate__",
-           [](nb::object obj) {
-             const ScaffoldNetwork::ScaffoldNetwork &self =
-                 nb::cast<const ScaffoldNetwork::ScaffoldNetwork &>(obj);
-             std::stringstream oss;
-             boost::archive::text_oarchive oa(oss);
-             oa << self;
-             const std::string pkl = oss.str();
-             nb::dict dict;
-             if (nb::hasattr(obj, "__dict__")) {
-               dict = nb::cast<nb::dict>(nb::getattr(obj, "__dict__"));
-             }
-             auto pbytes = nb::bytes(pkl.c_str(), pkl.size());
-             return std::make_tuple(pbytes, dict);
-           })
-      .def("__setstate__", [](nb::object obj, nb::object state) {
-        ScaffoldNetwork::ScaffoldNetwork *self = nullptr;
-        if (!nb::try_cast<ScaffoldNetwork::ScaffoldNetwork *>(obj, self)) {
-          throw nb::value_error(
-              "invalid object type for ScaffoldNetwork __setstate__");
-        }
-        nb::tuple tpl;
-        if (nb::try_cast<nb::tuple>(state, tpl)) {
-          size_t tplPos = 0;
-          nb::bytes bytes;
-          if (nb::try_cast<nb::bytes>(tpl[tplPos], bytes)) {
-            auto pkl = std::string(static_cast<const char *>(bytes.data()),
-                                   bytes.size());
-            new (self) ScaffoldNetwork::ScaffoldNetwork(pkl);
-            tplPos++;
-          }
-          if (tplPos < nb::len(tpl)) {
-            nb::dict dict;
-            if (nb::hasattr(obj, "__dict__") &&
-                nb::try_cast<nb::dict>(tpl[tplPos], dict)) {
-              nb::dict odict = nb::cast<nb::dict>(nb::getattr(obj, "__dict__"));
-              odict.update(dict);
-            }
-          }
-        }
-      });
+           getObjectState<ScaffoldNetwork::ScaffoldNetwork, serializeNetwork>)
+      .def("__setstate__", setObjectState<ScaffoldNetwork::ScaffoldNetwork>);
 #else
       .def("__getstate__",
            [](const ScaffoldNetwork::ScaffoldNetwork &self) {
