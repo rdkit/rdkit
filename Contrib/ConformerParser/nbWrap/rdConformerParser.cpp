@@ -1,5 +1,6 @@
 //
-//  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2013-2026 Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,57 +30,52 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#include <boost/python.hpp>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 #include <GraphMol/GraphMol.h>
-#include <RDBoost/Wrap.h>
 
 #include "../ConformerParser.h"
 
-namespace python = boost::python;
+namespace nb = nanobind;
+using namespace nb::literals;
 
-namespace RDKit {
-
-INT_VECT AddConformersFromAmberTrajectory(ROMol &mol, std::string fName,
-                                          int numConfs, bool clearConfs) {
-  if (clearConfs) {
-    mol.clearConformers();
-  }
-  std::vector<std::vector<double>> coords;
-  ConformerParser::readAmberTrajectory(fName, coords, mol.getNumAtoms());
-  INT_VECT res = ConformerParser::addConformersFromList(mol, coords, numConfs);
-  if (numConfs < 0) {
-    numConfs = coords.size();
-  }
-  return res;
-}
-
-}  // namespace RDKit
-
-BOOST_PYTHON_MODULE(rdConformerParser) {
-  python::scope().attr("__doc__") =
+NB_MODULE(rdConformerParser, m) {
+  m.doc() =
       "Module containing functions to read conformations of a molecule from MD trajectories";
 
-  // import_array();
+  m.def(
+      "AddConformersFromAmberTrajectory",
+      [](RDKit::ROMol &mol, std::string fName, int numConfs, bool clearConfs) {
+        if (clearConfs) {
+          mol.clearConformers();
+        }
+        std::vector<std::vector<double>> coords;
+        RDKit::ConformerParser::readAmberTrajectory(fName, coords,
+                                                    mol.getNumAtoms());
+        INT_VECT res =
+            RDKit::ConformerParser::addConformersFromList(mol, coords, numConfs);
+        if (numConfs < 0) {
+          numConfs = coords.size();
+        }
+        return res;
+      },
+      "mol"_a, "traj"_a, "numConfs"_a = -1, "clearConfs"_a = true,
+      R"DOC(Read conformations of a molecule from
+an Amber trajectory
 
-  std::string docString =
-      "Read conformations of a molecule from \n\
- an Amber trajectory\n\n\
- \n\
- ARGUMENTS:\n\n\
-    - mol : the molecule of interest\n\
-    - traj : the filename of the trajectory \n\
-    - numConfs : number of conformations to read \n\
-                The default (-1) reads all. \n\
-    - clearConfs : clear all existing conformations on the molecule\n\
-                   The default is true. \n\
-\n\
- RETURNS:\n\n\
-    IDs of the new conformations added to the molecule \n\
-\n";
-  python::def("AddConformersFromAmberTrajectory",
-              RDKit::AddConformersFromAmberTrajectory,
-              (python::arg("mol"), python::arg("traj"),
-               python::arg("numConfs") = -1, python::arg("clearConfs") = true),
-              docString.c_str());
+ARGUMENTS:
+
+   - mol : the molecule of interest
+   - traj : the filename of the trajectory
+   - numConfs : number of conformations to read
+               The default (-1) reads all.
+   - clearConfs : clear all existing conformations on the molecule
+                  The default is true.
+
+RETURNS:
+
+   IDs of the new conformations added to the molecule
+)DOC");
 }
