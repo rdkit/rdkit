@@ -2,7 +2,15 @@
 # quick script for comparing SVGs in 2 different directories.
 import argparse
 import glob
+import hashlib
 from pathlib import Path
+
+def file_hash(path):
+    hasher = hashlib.sha256()
+    with open(path, 'rb') as file:
+        for chunk in iter(lambda: file.read(4096), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
 
 parser = argparse.ArgumentParser(description='Make an HTML table for comparing images.')
 parser.add_argument('--dir1', required=True, help='Name of first directory.')
@@ -12,13 +20,13 @@ parser.add_argument('--outfile', default='side_by_side.html', help='Name of HTML
 
 args = parser.parse_args()
 
-d1 = args.dir1
-d2 = args.dir2
+d1 = Path(args.dir1)
+d2 = Path(args.dir2)
 
-if not Path(d1).exists():
+if not d1.exists():
     print(f'Directory {d1} missing.')
     exit(1)
-if not Path(d2).exists():
+if not d2.exists():
     print(f'Directory {d2} missing.')
     exit(1)
 
@@ -48,8 +56,14 @@ with open(args.outfile, 'w') as f:
         fn = fp.name
         if not fn.endswith('.svg') and not fn.endswith('.png'):
             continue
+
         fns = fn.replace('.svg', '')
-        f.write(f'''      <tr>
+        hash1 = file_hash(d1 / fn)
+        hash2 = file_hash(d2 / fn)
+        if hash1 != hash2:
+            print(f"{fn} differ")
+            
+            f.write(f'''      <tr>
         <td>{fns}</td>
         <td><span style="float:right"><img src="{d1}/{fn}" alt="{fns}"/></span></td>
         <td><img src="{d2}/{fn}" alt="{fns}"/></td>
@@ -58,3 +72,5 @@ with open(args.outfile, 'w') as f:
     f.write('''    </table>
   </body>
 </html>\n''')
+
+    
