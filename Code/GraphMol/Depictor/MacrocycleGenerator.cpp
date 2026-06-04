@@ -167,13 +167,10 @@ bool MacrocycleGenerator::solve() {
     return false;  // Constraints conflict
   }
 
-  // Simplify system ONCE if needed (before trying different R-L targets)
-  // The number of free positions is determined by structure, not by R-L ratio
+  // If the system has too many degrees of freedom, simplify it
   std::vector<size_t> freePositions = collectFreePositions(d_turns);
   if (freePositions.size() > MAX_ENUMERATION_POSITIONS) {
-    int dummyRight = 0,
-        dummyLeft = 0;  // These will be recalculated per attempt
-    simplifySystem(freePositions, dummyRight, dummyLeft);
+    simplifySystem(freePositions);
   }
 
   // Save the post-simplification state for restoration between targetDiff
@@ -372,8 +369,7 @@ std::vector<size_t> MacrocycleGenerator::collectFreePositions(
   return freePositions;
 }
 
-void MacrocycleGenerator::simplifySystem(std::vector<size_t> &freePositions,
-                                         int &numRight, int &numLeft) {
+void MacrocycleGenerator::simplifySystem(std::vector<size_t> &freePositions) {
   // Calculate how many constraints we need to add upfront
   size_t initialFreeCount = freePositions.size();
   if (initialFreeCount <= MAX_ENUMERATION_POSITIONS) {
@@ -408,18 +404,6 @@ void MacrocycleGenerator::simplifySystem(std::vector<size_t> &freePositions,
       freePositions.push_back(pos);
     }
   }
-
-  // Recalculate R/L counts for independent positions
-  // Note: numRight and numLeft were passed in as reference, so we need to
-  // preserve the R-L differential when reducing to independent positions
-  //
-  // KEY INSIGHT: OPPOSITE constraints create pairs where each contributes
-  // 1 R and 1 L, so R-L differential from independent positions equals
-  // the R-L differential from all free positions
-  int targetDiff = numRight - numLeft;  // Preserve R-L differential
-  int independentCount = freePositions.size();
-  numRight = (independentCount + targetDiff) / 2;
-  numLeft = (independentCount - targetDiff) / 2;
 }
 
 bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {

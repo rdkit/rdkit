@@ -226,12 +226,9 @@ class MacrocycleGenerator {
        - The other is "dependent" (computed as opposite of its pair)
 
     \param freePositions [in/out]: Initially all free positions, returns only
-    independent ones \param numRight [in/out]: Number of right turns needed,
-    updated for independent positions \param numLeft [in/out]: Number of left
-    turns needed, updated for independent positions
+    independent ones
   */
-  void simplifySystem(std::vector<size_t> &freePositions, int &numRight,
-                      int &numLeft);
+  void simplifySystem(std::vector<size_t> &freePositions);
 
   //! Phase 1: Add FIXED constraints for big substituents to outer turns
   /*!
