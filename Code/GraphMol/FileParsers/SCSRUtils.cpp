@@ -418,7 +418,6 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
 
       std::unique_ptr<MACROMolTemplate> newTemplate(new MACROMolTemplate(
           templateMol, templateClass, templateNames, otherTokens));
-      newTemplate->updatePropertyCache(false);
 
       res->addTemplate(newTemplate);
       templateMol = nullptr;
@@ -1004,9 +1003,9 @@ std::string MACROMolToSCSRMolBlock(MACROMol &macroMol,
   // now write out all of the templates
 
   res += "M  V30 BEGIN TEMPLATE\n";
-  for (unsigned int templateId = 0; templateId < macroMol.getNumTemplates();
-       ++templateId) {
-    auto macroMolTemplate = macroMol.getTemplate(templateId);
+  unsigned int templateId = 0;
+  for (const auto &templatePtr : *macroMol.getTemplateLibrary()) {
+    auto macroMolTemplate = templatePtr.get();
     std::string templateClass;
     std::vector<std::string> templateNames;
     std::string natReplace = "";
@@ -1103,6 +1102,7 @@ std::string MACROMolToSCSRMolBlock(MACROMol &macroMol,
     prepareMol(*molToUse, localParams, aromaticBonds);
     res += FileParserUtils::getV3000CTAB(*molToUse, aromaticBonds, confId,
                                          localParams.precision);
+    ++templateId;
   }
 
   res += "M  V30 END TEMPLATE\n";

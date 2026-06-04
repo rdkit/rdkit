@@ -133,16 +133,14 @@ class MolFromMACROMolConverter {
 
     // copy the atoms of the sgroup into the new molecule
 
+    auto templatePtr = macroMol->atomIdxToTemplatePtr(atomIdx);
+
     if (newConf) {
-      newConf->resize(
-          newConf->getNumAtoms() +
-          macroMol->atomIdxToTemplatePtr(atomIdx)->getNumAtoms());
+      newConf->resize(newConf->getNumAtoms() + templatePtr->getNumAtoms());
     }
 
     for (auto templateAtomIdx : sgroup.getAtoms()) {
-      auto templateAtom =
-          macroMol->atomIdxToTemplatePtr(atomIdx)->getAtomWithIdx(
-              templateAtomIdx);
+      auto templateAtom = templatePtr->getAtomWithIdx(templateAtomIdx);
       auto newAtom = new Atom(*templateAtom);
 
       mol->addAtom(newAtom, true, true);
@@ -154,9 +152,8 @@ class MolFromMACROMolConverter {
       if (newConf) {
         newConf->setAtomPos(
             newAtom->getIdx(),
-            coordOffset + macroMol->atomIdxToTemplatePtr(atomIdx)
-                              ->getConformer()
-                              .getAtomPos(templateAtomIdx));
+            coordOffset +
+                templatePtr->getConformer().getAtomPos(templateAtomIdx));
       }
     }
   }
@@ -820,10 +817,8 @@ void MolToMACROMol(MACROMol *res,
 
   std::map<unsigned int, unsigned int> atomMap;
   std::map<BondConnectionDef, std::string> bondConnectionMap;
-  for (unsigned int templateIndex = 0;
-       templateIndex < templates.getNumTemplates(); ++templateIndex) {
-    auto templateMol = templates.getTemplate(templateIndex);
-    templateMol->updatePropertyCache(false);
+  for (const auto &templatePtr : templates) {
+    auto templateMol = templatePtr.get();
     std::vector<std::string> templateNames;
 
     std::string templateAtomClass;
@@ -898,7 +893,7 @@ void MolToMACROMol(MACROMol *res,
 
       if (!templateCopied) {
         // add the template to the MACROMol
-        std::unique_ptr<MACROMolTemplate> tempTemplate(
+        std::unique_ptr<const MACROMolTemplate> tempTemplate(
             new MACROMolTemplate(*templateMol));
         res->addTemplate(tempTemplate);
         templateCopied = true;
