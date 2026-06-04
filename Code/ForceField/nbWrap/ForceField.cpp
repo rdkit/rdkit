@@ -274,7 +274,7 @@ nb::object PyMMFFMolProperties::getMMFFVdWParams(const unsigned int idx1,
 }
 
 NB_MODULE(rdForceField, m) {
-  m.doc() = "TEST!!! Exposes the ForceField class";
+  m.doc() = "Exposes the ForceField class";
 
   // Minimal Snapshot binding needed for MinimizeTrajectory return value.
   // Full Snapshot bindings live in the Trajectory nbWrap (not yet migrated).
