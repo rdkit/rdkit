@@ -374,7 +374,12 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDrawingExtentsIncludeWithHighlights_default.svg", 1595689626U},
     {"testDrawingExtentsInclude_allButHighlights.svg", 1604243819U},
     {"testDrawingExtentsIncludeWithHighlights_allButHighlights.svg",
-     436783789U}};
+     436783789U},
+    {"test_Github9301_1.svg", 3573122884U},
+    {"test_Github9280_1.0.svg", 1658116840U},
+    {"test_Github9280_2.0.svg", 1805554327U},
+    {"test_Github9280_0.3.svg", 893100468U},
+    {"test_Github9280_0.2.svg", 770838895U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -4250,7 +4255,7 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    CHECK_THAT(drawer.fontSize(), Catch::Matchers::WithinAbs(5.5, 0.2));
+    CHECK_THAT(drawer.fontSize(), Catch::Matchers::WithinAbs(6.0, 0.2));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.1b.svg");
     outs << text;
@@ -4868,8 +4873,9 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
       y = std::stod(match[2].str());
       return true;
     }
-    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
-                       "(-?[0-9]+\\.?[0-9]*)");
+    std::regex pathRgx(
+        "class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+        "(-?[0-9]+\\.?[0-9]*)");
     if (std::regex_search(text, match, pathRgx) && match.size() == 3) {
       x = std::stod(match[1].str());
       y = std::stod(match[2].str());
@@ -4888,8 +4894,9 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
     if (!coords.empty()) {
       return coords;
     }
-    std::regex pathRgx("class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
-                       "(-?[0-9]+\\.?[0-9]*)");
+    std::regex pathRgx(
+        "class='legend' d='M (-?[0-9]+\\.?[0-9]*) "
+        "(-?[0-9]+\\.?[0-9]*)");
     for (auto it = std::sregex_iterator(text.begin(), text.end(), pathRgx);
          it != std::sregex_iterator(); ++it) {
       coords.emplace_back(std::stod((*it)[1].str()), std::stod((*it)[2].str()));
@@ -4902,8 +4909,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   double right_x = 0.0, right_y = 0.0;
   SECTION("Top") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Top;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Top;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
@@ -4917,8 +4923,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   }
   SECTION("Left with vertical text") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
     drawer.drawOptions().legendVerticalText = true;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
@@ -4935,8 +4940,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   }
   SECTION("Left horizontal") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
     drawer.drawOptions().legendVerticalText = false;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
@@ -4950,8 +4954,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   }
   SECTION("Right horizontal") {
     MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Right;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Right;
     drawer.drawOptions().legendVerticalText = false;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, legend);
     drawer.finishDrawing();
@@ -4980,8 +4983,7 @@ TEST_CASE("legend position Top Left Right and vertical text", "[drawing]") {
   SECTION("Long vertical side legend fits panel height") {
     const std::string longName(48, 'M');
     MolDraw2DSVG drawer(160, 90, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().legendPosition =
-        MolDrawOptions::LegendPosition::Left;
+    drawer.drawOptions().legendPosition = MolDrawOptions::LegendPosition::Left;
     drawer.drawOptions().legendVerticalText = true;
     drawer.drawOptions().legendFraction = 0.22f;
     MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, longName);
@@ -11363,4 +11365,121 @@ M  END
     }
     CHECK(checkCoords(referenceCoords, highlightCoords));
   }
+}
+
+TEST_CASE("Github9301 - reaction layout regression") {
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]"));
+  MolDraw2DSVG drawer(450, 200, 450, 200, NO_FREETYPE);
+  drawer.drawReaction(*rxn);
+  drawer.finishDrawing();
+  std::ofstream outs("test_Github9301_1.svg");
+  auto txt = drawer.getDrawingText();
+  outs << txt;
+  outs.close();
+  const static std::regex atom0(
+      "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-0'.* >C</text>");
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(txt.begin(), txt.end(), atom0),
+                    std::sregex_iterator()));
+  CHECK(match_count == 3);
+  auto match_begin = std::sregex_iterator(txt.begin(), txt.end(), atom0);
+  std::smatch match = *match_begin;
+  CHECK_THAT(stod(match[1]), Catch::Matchers::WithinAbs(40.2, 0.1));
+  CHECK_THAT(stod(match[2]), Catch::Matchers::WithinAbs(125.8, 0.1));
+  ++match_begin;
+  match = *match_begin;
+  CHECK_THAT(stod(match[1]), Catch::Matchers::WithinAbs(138.3, 0.1));
+  CHECK_THAT(stod(match[2]), Catch::Matchers::WithinAbs(104.5, 0.1));
+  ++match_begin;
+  match = *match_begin;
+  CHECK_THAT(stod(match[1]), Catch::Matchers::WithinAbs(355.9, 0.1));
+  CHECK_THAT(stod(match[2]), Catch::Matchers::WithinAbs(80.0, 0.1));
+  check_file_hash("test_Github9301_1.svg");
+}
+
+TEST_CASE("Github 9280 - font scaling bug") {
+  auto mol = "CC(C)Oc1ccc(N2CCc3nccc(C(=O)Nc4ccccn4)c3C2)nc1"_smiles;
+  {
+    MolDraw2DSVG drawer(358, 290, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().baseFontSize = 1.0;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream ofs("test_Github9280_1.0.svg");
+    ofs << text;
+    ofs.close();
+    // With the bug, it snapped to maximum font size, 40 pixels.
+    CHECK(text.find("font-size:40px") == std::string::npos);
+    CHECK(text.find("font-size:24px") != std::string::npos);
+    check_file_hash("test_Github9280_1.0.svg");
+  }
+  {
+    // Check it still maxes out at 40 - font size would be 50 without.
+    MolDraw2DSVG drawer(358, 290, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().baseFontSize = 2.0;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream ofs("test_Github9280_2.0.svg");
+    ofs << text;
+    ofs.close();
+    CHECK(text.find("font-size:40px") != std::string::npos);
+    check_file_hash("test_Github9280_2.0.svg");
+  }
+  {
+    MolDraw2DSVG drawer(358, 290, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().baseFontSize = 0.3;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream ofs("test_Github9280_0.3.svg");
+    ofs << text;
+    ofs.close();
+    // With the bug, it snapped to minimum font size, 6 pixels.
+    CHECK(text.find("font-size:6px") == std::string::npos);
+    CHECK(text.find("font-size:7px") != std::string::npos);
+    check_file_hash("test_Github9280_0.3.svg");
+  }
+  {
+    MolDraw2DSVG drawer(358, 290, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().baseFontSize = 0.2;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream ofs("test_Github9280_0.2.svg");
+    ofs << text;
+    ofs.close();
+    // This should be the minimum font size
+    CHECK(text.find("font-size:6px") != std::string::npos);
+    check_file_hash("test_Github9280_0.2.svg");
+  }
+}
+TEST_CASE("Uniform bond colour") {
+  auto m1 = "F[C@@H](Cl)Oc1ccc(N2CCc3nccc(C(=O)Nc4ccccn4)c3C2)nc1"_smiles;
+  REQUIRE(m1);
+  MolDraw2DSVG drawer(400, 400, -1, -1, NO_FREETYPE);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  drawer.drawOptions().addBondIndices = true;
+  drawer.drawOptions().singleColourBonds = true;
+  drawer.drawMolecule(*m1);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs("testUniformBondColour_1.svg");
+  outs << text;
+  outs.close();
+  // Bond 2 is C-O so in normal mode would have 2 lines, a black one and a
+  // red one.  Make sure there's only one.
+  const static std::regex bond2("<path class='bond-2 atom-1 atom-3'");
+  std::ptrdiff_t const match_count2(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), bond2),
+                    std::sregex_iterator()));
+  CHECK(match_count2 == 1);
+  // Bond 0 is a wedge to fluorine.  Make sure it is also all black, which
+  // involves 1 triangle not 2.
+  const static std::regex bond0("<path class='bond-0 atom-1 atom-0'");
+  std::ptrdiff_t const match_count0(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), bond2),
+                    std::sregex_iterator()));
+  CHECK(match_count0 == 1);
 }

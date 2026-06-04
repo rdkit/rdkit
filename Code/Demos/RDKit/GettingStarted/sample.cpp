@@ -32,16 +32,18 @@ using namespace RDKit;
 
 void BuildSimpleMolecule() {
   // build the molecule: C/C=C\C
-  RWMol *mol = new RWMol();
+  auto mol = std::make_unique<RWMol>();
 
   // add atoms and bonds:
-  mol->addAtom(new Atom(6));         // atom 0
-  mol->addAtom(new Atom(6));         // atom 1
-  mol->addAtom(new Atom(6));         // atom 2
-  mol->addAtom(new Atom(6));         // atom 3
-  mol->addBond(0, 1, Bond::SINGLE);  // bond 0
-  mol->addBond(1, 2, Bond::DOUBLE);  // bond 1
-  mol->addBond(2, 3, Bond::SINGLE);  // bond 2
+  constexpr bool updateLabel = false;
+  constexpr bool takeOwnership = true;
+  mol->addAtom(new Atom(6), updateLabel, takeOwnership);  // atom 0
+  mol->addAtom(new Atom(6), updateLabel, takeOwnership);  // atom 1
+  mol->addAtom(new Atom(6), updateLabel, takeOwnership);  // atom 2
+  mol->addAtom(new Atom(6), updateLabel, takeOwnership);  // atom 3
+  mol->addBond(0, 1, Bond::SINGLE);                       // bond 0
+  mol->addBond(1, 2, Bond::DOUBLE);                       // bond 1
+  mol->addBond(2, 3, Bond::SINGLE);                       // bond 2
   // setup the stereochem:
   mol->getBondWithIdx(0)->setBondDir(Bond::ENDUPRIGHT);
   mol->getBondWithIdx(2)->setBondDir(Bond::ENDDOWNRIGHT);
@@ -51,7 +53,7 @@ void BuildSimpleMolecule() {
 
   // Get the canonical SMILES, include stereochemistry:
   std::string smiles;
-  smiles = MolToSmiles(*(static_cast<ROMol *>(mol)), true);
+  smiles = MolToSmiles(*mol, true);
   BOOST_LOG(rdInfoLog) << " sample 1 SMILES: " << smiles << std::endl;
 }
 
@@ -107,11 +109,9 @@ void WorkWithRingInfo() {
   // can be played, but we won't
 
   // count the number of rings of size 5:
-  unsigned int nRingsSize5 = 0;
-  for (VECT_INT_VECT_CI ringIt = atomRings.begin(); ringIt != atomRings.end();
-       ++ringIt) {
-    if (ringIt->size() == 5) nRingsSize5++;
-  }
+  auto nRingsSize5 =
+      std::count_if(atomRings.begin(), atomRings.end(),
+                    [](const INT_VECT &ring) { return ring.size() == 5; });
   TEST_ASSERT(nRingsSize5 == 1);
   delete mol;
 
@@ -122,15 +122,13 @@ void WorkWithRingInfo() {
   atomRings = ringInfo->atomRings();
 
   unsigned int nMatchingAtoms = 0;
-  for (VECT_INT_VECT_CI ringIt = atomRings.begin(); ringIt != atomRings.end();
-       ++ringIt) {
-    if (ringIt->size() != 5) {
+  for (const auto &ring : atomRings) {
+    if (ring.size() != 5) {
       continue;
     }
     bool isAromatic = true;
-    for (INT_VECT_CI atomIt = ringIt->begin(); atomIt != ringIt->end();
-         ++atomIt) {
-      if (!mol->getAtomWithIdx(*atomIt)->getIsAromatic()) {
+    for (auto atom : ring) {
+      if (!mol->getAtomWithIdx(atom)->getIsAromatic()) {
         isAromatic = false;
         break;
       }
@@ -149,17 +147,17 @@ void WorkWithRingInfo() {
   bondRings = ringInfo->bondRings();
 
   unsigned int nAromaticRings = 0;
-  for (VECT_INT_VECT_CI ringIt = bondRings.begin(); ringIt != bondRings.end();
-       ++ringIt) {
+  for (const auto &ring : bondRings) {
     bool isAromatic = true;
-    for (INT_VECT_CI bondIt = ringIt->begin(); bondIt != ringIt->end();
-         ++bondIt) {
-      if (!mol->getBondWithIdx(*bondIt)->getIsAromatic()) {
+    for (auto bond : ring) {
+      if (!mol->getBondWithIdx(bond)->getIsAromatic()) {
         isAromatic = false;
         break;
       }
     }
-    if (isAromatic) nAromaticRings++;
+    if (isAromatic) {
+      ++nAromaticRings;
+    }
   }
   TEST_ASSERT(nAromaticRings == 1);
   delete mol;
@@ -207,21 +205,23 @@ void CleanupMolecule() {
   // calling the sanitizeMol function()
 
   // build: C1CC1C(:O):O
-  RWMol *mol = new RWMol();
+  auto mol = std::make_unique<RWMol>();
 
   // add atoms and bonds:
-  mol->addAtom(new Atom(6));           // atom 0
-  mol->addAtom(new Atom(6));           // atom 1
-  mol->addAtom(new Atom(6));           // atom 2
-  mol->addAtom(new Atom(6));           // atom 3
-  mol->addAtom(new Atom(8));           // atom 4
-  mol->addAtom(new Atom(8));           // atom 5
-  mol->addBond(3, 4, Bond::AROMATIC);  // bond 0
-  mol->addBond(3, 5, Bond::AROMATIC);  // bond 1
-  mol->addBond(3, 2, Bond::SINGLE);    // bond 2
-  mol->addBond(2, 1, Bond::SINGLE);    // bond 3
-  mol->addBond(1, 0, Bond::SINGLE);    // bond 4
-  mol->addBond(0, 2, Bond::SINGLE);    // bond 5
+  constexpr bool updateLabel = false;
+  constexpr bool takeOwnership = true;
+  mol->addAtom(new Atom(6), updateLabel, takeOwnership);  // atom 0
+  mol->addAtom(new Atom(6), updateLabel, takeOwnership);  // atom 1
+  mol->addAtom(new Atom(6), updateLabel, takeOwnership);  // atom 2
+  mol->addAtom(new Atom(6), updateLabel, takeOwnership);  // atom 3
+  mol->addAtom(new Atom(8), updateLabel, takeOwnership);  // atom 4
+  mol->addAtom(new Atom(8), updateLabel, takeOwnership);  // atom 5
+  mol->addBond(3, 4, Bond::AROMATIC);                     // bond 0
+  mol->addBond(3, 5, Bond::AROMATIC);                     // bond 1
+  mol->addBond(3, 2, Bond::SINGLE);                       // bond 2
+  mol->addBond(2, 1, Bond::SINGLE);                       // bond 3
+  mol->addBond(1, 0, Bond::SINGLE);                       // bond 4
+  mol->addBond(0, 2, Bond::SINGLE);                       // bond 5
 
   // instead of calling sanitize mol, which would generate an error,
   // we'll perceive the rings, then take care of aromatic bonds
@@ -249,7 +249,7 @@ void CleanupMolecule() {
 
   // Get the canonical SMILES, include stereochemistry:
   std::string smiles;
-  smiles = MolToSmiles(*(static_cast<ROMol *>(mol)), true);
+  smiles = MolToSmiles(*mol, true);
   BOOST_LOG(rdInfoLog) << " fixed SMILES: " << smiles << std::endl;
 }
 

@@ -17,8 +17,10 @@
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
+#include <GraphMol/test_fixtures.h>
 
 using namespace RDKit;
 
@@ -786,5 +788,33 @@ M  END)CTAB";
       CHECK(mol3->getAtomWithIdx(0)->getNumExplicitHs() == 0);
       CHECK(mol3->getAtomWithIdx(0)->getNumImplicitHs() == 1);
     }
+  }
+}
+
+TEST_CASE("GitHub #9270: Segfault when calling MolToSmiles on submol") {
+  SECTION("as reported") {
+    UseLegacyStereoPerceptionFixture useLegacyFixture(false);
+
+    auto mol =
+        "CC1/C=C(/C)[O][Ir]23(<-[O]=1)([c]1ccccc1c1cncc[n]->21)[c]1ccccc1c1cncc[n]->31"_smiles;
+    REQUIRE(mol);
+
+    auto dblBond = mol->getBondWithIdx(2);
+    REQUIRE(dblBond->getBondType() == Bond::BondType::DOUBLE);
+    REQUIRE(dblBond->getStereo() == Bond::BondStereo::STEREOTRANS);
+    REQUIRE(dblBond->getStereoAtoms() == std::vector<int>{1, 4});
+
+    constexpr unsigned int radius = 3;
+    constexpr unsigned int atomId = 7;
+    auto env = findAtomEnvironmentOfRadiusN(*mol, radius, atomId);
+    std::unique_ptr<ROMol> frag(Subgraphs::pathToSubmol(*mol, env));
+    REQUIRE(frag);
+
+    REQUIRE_NOTHROW(MolToSmiles(*frag));
+
+    dblBond = frag->getBondWithIdx(2);
+    REQUIRE(dblBond->getBondType() == Bond::BondType::DOUBLE);
+    REQUIRE(dblBond->getStereo() == Bond::BondStereo::STEREOCIS);
+    REQUIRE(dblBond->getStereoAtoms() == std::vector<int>{1, 4});
   }
 }

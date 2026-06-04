@@ -832,6 +832,21 @@ python::tuple MolsFromCDXML(python::object cdxml, bool sanitize,
   }
   return python::tuple(res);
 }
+
+python::object MolToCDXMLBlockHelper(const RDKit::ROMol &mol,
+				     RDKit::v2::CDXMLParser::CDXMLFormat format) {
+  auto block = RDKit::v2::CDXMLParser::MolToCDXMLBlock(mol, format);
+  // if CDXML return string
+  // if CDX return byteszo
+
+  if(format == RDKit::v2::CDXMLParser::CDXMLFormat::CDX) {
+    PyObject* py_bytes = PyBytes_FromStringAndSize(block.data(), block.size());
+    return python::object(python::handle<>(py_bytes));
+  } else {
+    return python::object(python::handle<>(PyUnicode_FromString(block.c_str())));
+  }
+}
+ 
 namespace {
 python::object translateMetadataToList(
     const std::vector<std::pair<std::string, std::string>> &metadata) {
@@ -2788,6 +2803,34 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
   python::def("MolsFromCDXML", MolsFromCDXMLHelper,
               (python::arg("cdxml"), python::arg("params")), docString.c_str());
+
+  docString =
+      R"DOC(brief write a CDX or CDXML block from a molecule
+
+      The RDKit is optionally built with the Revvity ChemDraw parser
+      If this is available, CDX and CDXML can be written
+        Note that the CDXML format is large and complex, the RDKit doesn't
+        support full functionality, just the base ones required for molecule and
+        reaction parsing.
+
+      Note: If the ChemDraw extensions are unavailable, an exception will be thrown
+       please use the support function HasChemDrawCDXSupport() to check
+       whether ChemDraw writing support is enabled.
+
+      Note: For CDXML this returns a UTF-8 string <str>
+            For CDX this returns a byte sting <bytes>
+
+      ARGUMENTS:
+
+        - mol: the molecule to write
+
+        - format: CDXMLFormat [default CDXML]
+
+      RETURNS:
+        a tuple of parsed Mol objects.)DOC";
+  
+  python::def("MolToCDXMLBlock", MolToCDXMLBlockHelper,
+              (python::arg("mol"), python::arg("format")=RDKit::v2::CDXMLParser::CDXMLFormat::CDXML), docString.c_str());
 
   docString = "Returns true if the RDKit is built with ChemDraw CDX support";
   python::def("HasChemDrawCDXSupport",
