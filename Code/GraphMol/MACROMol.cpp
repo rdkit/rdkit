@@ -78,27 +78,33 @@ MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
   MACROMolTemplate::init(className, templateNames, templateAttrs);
 }
 
- RDKit::SubstanceGroup *MACROMolTemplate::getMainSgroup() const {
-    
-    std::call_once(d_mainSgroupIdxOnceFlag, [this]() {
-      std::string className = "";
-      std::vector<std::string> templateNames;
-      if (!getPropIfPresent(RDKit::common_properties::molAtomClass,
-                                  className) ||
-          !getPropIfPresent(RDKit::common_properties::templateNames,
-                                  templateNames)) {
-        std::ostringstream errout;
-        errout << "Template molecule is missing required properties: "
-               << RDKit::common_properties::molAtomClass << " and/or "
-               << RDKit::common_properties::templateNames;
-        throw RDKit::FileParseException(errout.str());
-      }
-   
+void MACROMolTemplate::initMainSgroupIdx() const {
+  std::call_once(d_mainSgroupIdxOnceFlag, [this]() {
+    std::string className = "";
+    std::vector<std::string> templateNames;
+    if (!getPropIfPresent(RDKit::common_properties::molAtomClass, className) ||
+        !getPropIfPresent(RDKit::common_properties::templateNames,
+                          templateNames)) {
+      std::ostringstream errout;
+      errout << "Template molecule is missing required properties: "
+             << RDKit::common_properties::molAtomClass << " and/or "
+             << RDKit::common_properties::templateNames;
+      throw RDKit::FileParseException(errout.str());
+    }
 
-      findMainSgroupForTemplate(className, templateNames[0]);
-    });
-    return &RDKit::getSubstanceGroups(*this)[d_mainSgroupIdx];
-  }
+    findMainSgroupForTemplate(className, templateNames[0]);
+  });
+}
+
+RDKit::SubstanceGroup *MACROMolTemplate::getMainSgroup() {
+  initMainSgroupIdx();
+  return &RDKit::getSubstanceGroups(*this)[d_mainSgroupIdx];
+}
+
+const RDKit::SubstanceGroup *MACROMolTemplate::getMainSgroup() const {
+  initMainSgroupIdx();
+  return &RDKit::getSubstanceGroups(*this)[d_mainSgroupIdx];
+}
 
 
 
@@ -131,7 +137,7 @@ void RDKit::MACROMol::addMacroBond(unsigned int fromAtomIdx,
   }
 }
 
-MACROMolTemplate *RDKit::MACROMol::atomIdxToTemplatePtr(
+const MACROMolTemplate *RDKit::MACROMol::getTemplate(
     unsigned int atomIdx) const {
   const auto atom = this->getAtomWithIdx(atomIdx);
 
@@ -174,11 +180,13 @@ void MACROMolTemplateLib::addTemplate(std::unique_ptr<MACROMolTemplate> &templat
   }
 
   void MACROMolTemplateLib::copyTemplateLib(const MACROMolTemplateLib &libToCopy){
-    this->clearTemplateLib();
+    // clear any existing templates in this library
+    d_templates.clear();
+    d_keyToIndex.clear();
 
     for (auto &templateToCopy : libToCopy) {
       // make a copy of the template
-      auto templateCopy = std::unique_ptr<const MACROMolTemplate>(new MACROMolTemplate(*(templateToCopy.get())));
+      auto templateCopy = std::unique_ptr<MACROMolTemplate>(new MACROMolTemplate(*(templateToCopy.get())));
       this->addTemplate(templateCopy);
     }
 

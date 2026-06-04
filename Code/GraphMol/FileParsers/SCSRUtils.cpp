@@ -418,6 +418,9 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
 
       std::unique_ptr<MACROMolTemplate> newTemplate(new MACROMolTemplate(
           templateMol, templateClass, templateNames, otherTokens));
+      // update the property cache now, while the template is still mutable, so
+      // downstream consumers (which see it as const) can substructure-match it
+      newTemplate->updatePropertyCache(false);
 
       res->addTemplate(newTemplate);
       templateMol = nullptr;
@@ -450,7 +453,7 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
   for (unsigned int atomIdx = 0; atomIdx < atomCount; ++atomIdx) {
     auto atom = res->getAtomWithIdx(atomIdx);
 
-    auto templateMol = res->atomIdxToTemplatePtr(atomIdx);
+    auto templateMol = res->getTemplate(atomIdx);
     if (templateMol == nullptr) {
       continue;  // no template for this atom - regular atom
     }
@@ -501,7 +504,7 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
   // involved in an h-bond. fix the template to have the standard hbond
   // attachment names (Hb1, Hb2, Hb3)
 
-  std::map<MACROMolTemplate *, SCSRHbondData> baseTemplateHbondData;
+  std::map<const MACROMolTemplate *, SCSRHbondData> baseTemplateHbondData;
 
   for (auto bond : res->bonds()) {
     if (bond->hasProp(common_properties::_MolFileBondAttachPt1) ||
@@ -524,7 +527,7 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
       auto otherAtomId =
           (atomToCheck == atom1) ? atom2->getIdx() : atom1->getIdx();
 
-      auto templatePtr = res->atomIdxToTemplatePtr(atomToCheck->getIdx());
+      auto templatePtr = res->getTemplate(atomToCheck->getIdx());
       if (templatePtr == nullptr) {
         continue;  // not a template atom
       }
@@ -625,8 +628,6 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
            {HydrogenBondConnection(7, true),
             HydrogenBondConnection(9, false)}}};
 
-      templateMol->updatePropertyCache(false);
-
       for (const auto &querySmi : hbondQueries) {
         RDKit::SubstructMatchParameters params;
         auto match = SubstructMatch(*templateMol, *querySmi.dp_mol, params);
@@ -650,10 +651,14 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
     }
 
     if (sapsChanged) {
-      templateMol->getMainSgroup()->clearAttachPoints();
+      // need to update the SAPs on the template, typically not allowed since the template is const,
+      // but we are still in parsing and know that no one else has access to the template yet, so it
+      // is safe to modify it in place
+      auto *mutableTemplate = const_cast<MACROMolTemplate *>(templateMol);
+      mutableTemplate->getMainSgroup()->clearAttachPoints();
       for (auto &newSap : newSaps) {
-        templateMol->getMainSgroup()->addAttachPoint(newSap.aIdx, newSap.lvIdx,
-                                                     newSap.id);
+        mutableTemplate->getMainSgroup()->addAttachPoint(newSap.aIdx,
+                                                         newSap.lvIdx, newSap.id);
       }
     }
   }
@@ -667,8 +672,8 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
     auto atom1Idx = atom1->getIdx();
     auto atom2Idx = atom2->getIdx();
 
-    auto templatePtr1 = res->atomIdxToTemplatePtr(atom1Idx);
-    auto templatePtr2 = res->atomIdxToTemplatePtr(atom2Idx);
+    auto templatePtr1 = res->getTemplate(atom1Idx);
+    auto templatePtr2 = res->getTemplate(atom2Idx);
 
     if (bond->getBondType() == Bond::BondType::HYDROGEN &&
         templatePtr1 != nullptr && templatePtr2 != nullptr &&
@@ -695,7 +700,7 @@ std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRDataStream(
         auto otherAtomId =
             (atomToCheck == atom1) ? atom2->getIdx() : atom1->getIdx();
 
-        if (res->atomIdxToTemplatePtr(atomToCheck->getIdx()) == nullptr) {
+        if (res->getTemplate(atomToCheck->getIdx()) == nullptr) {
           continue;  // not a template atom
         }
 
@@ -866,14 +871,14 @@ std::string MACROMolToSCSRMolBlock(MACROMol &macroMol,
 
   // for each BASE tempate, the list of
   // h-bond connection point names to fix
-  std::map<MACROMolTemplate *, std::vector<std::string>> templateHbondConnections;
+  std::map<const MACROMolTemplate *, std::vector<std::string>> templateHbondConnections;
 
   // for each BASE tempate, the list of
   // h-bond connection point name BASES to fix
   // for sets of hbond connections like Hb1, Hb2, Hb3, this would be "Hb"
   // THis allows us to change all such connections even when only one or two
   // are used in the main mol
-  std::map<MACROMolTemplate *, std::vector<std::string>> templateHbondConnectionBases;
+  std::map<const MACROMolTemplate *, std::vector<std::string>> templateHbondConnectionBases;
 
   std::vector<std::pair<unsigned int, unsigned int>>
       hBonds;  // the bonds to keep (re-add).
@@ -929,7 +934,7 @@ std::string MACROMolToSCSRMolBlock(MACROMol &macroMol,
 
         // mark which templates need to be fixed so the attach points are "Hb"
 
-        auto templatePtr = macroMol.atomIdxToTemplatePtr(atomToCheck->getIdx());
+        auto templatePtr = macroMol.getTemplate(atomToCheck->getIdx());
         if (!templateHbondConnections.contains(templatePtr)) {
           templateHbondConnections[templatePtr] = std::vector<std::string>();
         }
@@ -1042,8 +1047,9 @@ std::string MACROMolToSCSRMolBlock(MACROMol &macroMol,
     // copy template mol so we can modify it for output without affecting the
     // original, if needed
 
-    RWMol *molToUse = macroMolTemplate;
-    std::unique_ptr<RWMol> tMol;
+    // work on a copy: prepareMol mutates the mol, and the template is const
+    std::unique_ptr<RWMol> tMol(new RWMol(*macroMolTemplate));
+    RWMol *molToUse = tMol.get();
 
     // check to see if the template need to be modified for hbonds
     // connections. if we are keeping them, they are changed to "Hb" if not
@@ -1051,9 +1057,6 @@ std::string MACROMolToSCSRMolBlock(MACROMol &macroMol,
 
     if (templateHbondConnections.contains(macroMolTemplate) ||
         templateHbondConnectionBases.contains(macroMolTemplate)) {
-      tMol.reset(new RWMol(*macroMolTemplate));
-      molToUse = tMol.get();
-
       auto &hbondConnections = templateHbondConnections[macroMolTemplate];
       auto &hbondConnectionBases = templateHbondConnectionBases[macroMolTemplate];
       auto &sgroups = RDKit::getSubstanceGroups(*(tMol.get()));

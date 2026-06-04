@@ -22,13 +22,6 @@
 namespace RDKit {
 
 class RDKIT_GRAPHMOL_EXPORT MACROMolTemplate : public RDKit::RWMol {
- private:
-  void init(std::string className,
-            std::vector<std::string> templateNames,
-            std::vector<std::pair<std::string,std::string>> templateAttrs);
-
-  void findMainSgroupForTemplate(std::string className,
-                                 std::string templateName) const;
 
  public:
   MACROMolTemplate(std::unique_ptr<RWMol> &mol, std::string className,
@@ -46,9 +39,17 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplate : public RDKit::RWMol {
   MACROMolTemplate &operator=(const MACROMolTemplate &) = delete; 
   ~MACROMolTemplate() {}
 
-  RDKit::SubstanceGroup *getMainSgroup() const;
+  RDKit::SubstanceGroup *getMainSgroup();
+  const RDKit::SubstanceGroup *getMainSgroup() const;
 
  private:
+  void init(std::string className,
+            std::vector<std::string> templateNames,
+            std::vector<std::pair<std::string,std::string>> templateAttrs);
+
+  void findMainSgroupForTemplate(std::string className,
+                                 std::string templateName) const;
+  void initMainSgroupIdx() const;
   mutable unsigned int d_mainSgroupIdx;
   mutable std::once_flag d_mainSgroupIdxOnceFlag;
 };
@@ -57,8 +58,9 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplate : public RDKit::RWMol {
 class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib {
 
   private:
-    // All templates in the library are owned by the library and cannot be changed
-    std::vector<std::unique_ptr<const MACROMolTemplate>> d_templates;
+    // All templates in the library are owned by the library. Consumers get
+    // const access; the library mutates them only during construction.
+    std::vector<std::unique_ptr<MACROMolTemplate>> d_templates;
 
     //! Key is (monomer_class, symbol)
     using MACROMolTemplateKey = std::pair<std::string, std::string>;
@@ -82,19 +84,15 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib {
     MACROMolTemplateLib &operator=(const MACROMolTemplateLib &) = delete;  
     ~MACROMolTemplateLib() {}
 
-    std::vector<std::unique_ptr<const MACROMolTemplate>>::const_iterator begin() const {
+    std::vector<std::unique_ptr<MACROMolTemplate>>::const_iterator begin() const {
       return d_templates.begin();
     }
-    std::vector<std::unique_ptr<const MACROMolTemplate>>::const_iterator end() const {
+    std::vector<std::unique_ptr<MACROMolTemplate>>::const_iterator end() const {
       return d_templates.end();
     }
 
-    void addTemplate(std::unique_ptr<const MACROMolTemplate> &templateMol);
+    void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol);
     void copyTemplateLib(const MACROMolTemplateLib &libToCopy);
-    void clearTemplateLib(){
-        d_templates.clear();
-        d_keyToIndex.clear();
-    }
 
     unsigned int size() const {
       return d_templates.size(); 
@@ -112,7 +110,7 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib {
       return d_keyToIndex.contains({templateClass, templateName});
     }
 
-    bool doesLibHaveCoords() {
+    bool doesLibHaveCoords() const {
       for (auto const &macroTemplate : d_templates) {
         if (macroTemplate->getNumConformers() == 0) {
           return false;
@@ -125,7 +123,7 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib {
 
 class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
  private:
-  // elements (MACROMolTemplate items) of the library are either owned by the library
+  // elements (MACROMolTemplate items) of the library are owned by the library
   MACROMolTemplateLib d_templateLibrary;
 
  public:
@@ -145,18 +143,14 @@ class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
 
   ~MACROMol() {}
 
-  MACROMolTemplate *atomIdxToTemplatePtr(unsigned int atomIdx) const;
+  const MACROMolTemplate *getTemplate(unsigned int atomIdx) const;
 
-  MACROMolTemplateLib *getTemplateLibrary() {
-    return &d_templateLibrary;
-  }
-  
   const MACROMolTemplateLib *getTemplateLibrary() const {
     return &d_templateLibrary;
   }
 
    // the following adds a template to the internal libraty for this MACROMol
-  void addTemplate(std::unique_ptr<const MACROMolTemplate> &templateMol) {
+  void addTemplate(std::unique_ptr<MACROMolTemplate> &templateMol) {
     PRECONDITION(templateMol, "bad template molecule");
     d_templateLibrary.addTemplate(templateMol);
   }

@@ -133,7 +133,7 @@ class MolFromMACROMolConverter {
 
     // copy the atoms of the sgroup into the new molecule
 
-    auto templatePtr = macroMol->atomIdxToTemplatePtr(atomIdx);
+    auto templatePtr = macroMol->getTemplate(atomIdx);
 
     if (newConf) {
       newConf->resize(newConf->getNumAtoms() + templatePtr->getNumAtoms());
@@ -220,7 +220,7 @@ class MolFromMACROMolConverter {
 
       std::set<const MACROMolTemplate *> templatesInUse;
       for (unsigned int atomIdx = 0 ; atomIdx != macroMol->getNumAtoms(); ++atomIdx) {
-         auto templatePtr = macroMol->atomIdxToTemplatePtr(atomIdx);
+         auto templatePtr = macroMol->getTemplate(atomIdx);
          if (templatePtr != nullptr && !templatesInUse.contains(templatePtr)) {
           templatesInUse.insert(templatePtr);
          }
@@ -334,7 +334,7 @@ class MolFromMACROMolConverter {
         atom->getPropIfPresent(common_properties::molAtomSeqId, seqId);
         atom->getPropIfPresent(common_properties::molAtomSeqName, seqName);
 
-        auto templateMol= macroMol->atomIdxToTemplatePtr(atomIdx);
+        auto templateMol= macroMol->getTemplate(atomIdx);
         std::vector<std::string> templateNames;
         std::string templateNameToUse;
 
@@ -794,7 +794,7 @@ bool isTemplateMatchAHit(
 }
 
 std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
-    const ROMol &mol, RDKit::MACROMolTemplateLib &templates,
+    const ROMol &mol, const RDKit::MACROMolTemplateLib &templates,
     MolToMACROParams molToMACROMolParams) {
   auto res = std::unique_ptr<MACROMol>(new MACROMol());
 
@@ -803,7 +803,7 @@ std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
 }
 
 void MolToMACROMol(MACROMol *res,
-    const ROMol &mol, RDKit::MACROMolTemplateLib &templates,
+    const ROMol &mol, const RDKit::MACROMolTemplateLib &templates,
     MolToMACROParams molToMACROMolParams) {
 
   Conformer *conf = nullptr;
@@ -893,7 +893,7 @@ void MolToMACROMol(MACROMol *res,
 
       if (!templateCopied) {
         // add the template to the MACROMol
-        std::unique_ptr<const MACROMolTemplate> tempTemplate(
+        std::unique_ptr<MACROMolTemplate> tempTemplate(
             new MACROMolTemplate(*templateMol));
         res->addTemplate(tempTemplate);
         templateCopied = true;
