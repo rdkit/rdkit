@@ -112,7 +112,6 @@ MatchVectType findFuncGroupsOnMol(const ROMol &mol, const FragCatParams *params,
   int aid;
   // const ROMol *fgrp;
 
-  INT_VECT_CI bi;
   aidFgrps.clear();
 
   int fid = 0;
@@ -154,10 +153,10 @@ MatchVectType findFuncGroupsOnMol(const ROMol &mol, const FragCatParams *params,
       // FIX: obviously we assume here that the function groups in params
       // come in decreasing order of size.
       bool allDone = true;
-      for (bi = bondIds.begin(); bi != bondIds.end(); bi++) {
-        if (std::find(fgBonds.begin(), fgBonds.end(), (*bi)) == fgBonds.end()) {
+      for (auto bi : bondIds) {
+        if (std::find(fgBonds.begin(), fgBonds.end(), bi) == fgBonds.end()) {
           allDone = false;
-          fgBonds.push_back(*bi);
+          fgBonds.push_back(bi);
         }
       }
 

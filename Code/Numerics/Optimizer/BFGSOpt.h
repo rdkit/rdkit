@@ -252,7 +252,12 @@ int minimize(unsigned int dim, double *pos, double gradTol,
 
     // is the gradient converged?
     test = 0.0;
-    double term = std::max(funcVal * gradScale, 1.0);
+    // Use |funcVal| so that negative energies (which arise routinely
+    // mid-minimization in force fields containing stabilizing
+    // electrostatic or dispersion terms) do not drive
+    // funcVal * gradScale below zero and clamp the denominator to 1.0,
+    // which would artificially tighten the gradient convergence test.
+    double term = std::max(fabs(funcVal) * gradScale, 1.0);
     for (unsigned int i = 0; i < dim; i++) {
       double temp = fabs(grad[i]) * std::max(fabs(pos[i]), 1.0);
       test = std::max(test, temp);

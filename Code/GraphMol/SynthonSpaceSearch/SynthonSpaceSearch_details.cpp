@@ -17,6 +17,7 @@
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
+#include <boost/functional/hash.hpp>
 
 #include <RDGeneral/ControlCHandler.h>
 #include <GraphMol/Chirality.h>
@@ -825,17 +826,28 @@ std::string buildProductName(
   return prodName;
 }
 
+std::size_t buildProductHash(
+    const RDKit::SynthonSpaceSearch::SynthonSpaceHitSet *hitset,
+    const std::vector<size_t> &fragNums) {
+  std::size_t seed = 0;
+  for (size_t i = 0; i < fragNums.size(); ++i) {
+    boost::hash_combine(seed, hitset->synthonsToUse[i][fragNums[i]].first);
+  }
+  boost::hash_combine(seed, hitset->d_reaction->getId());
+  return seed;
+}
+
 std::unique_ptr<ROMol> buildProduct(
     const std::vector<const ROMol *> &synthons) {
   MolzipParams mzparams;
   mzparams.label = MolzipLabel::Isotope;
-  auto prodMol = std::make_unique<ROMol>(*synthons.front());
+  auto prodMol = std::make_unique<RWMol>(*synthons.front());
   for (size_t i = 1; i < synthons.size(); ++i) {
-    prodMol.reset(combineMols(*prodMol, *synthons[i]));
+    prodMol->insertMol(*synthons[i]);
   }
-  prodMol = molzip(*prodMol, mzparams);
-  MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
-  return prodMol;
+  auto zipProdMol = molzip(*prodMol, mzparams);
+  MolOps::sanitizeMol(*dynamic_cast<RWMol *>(zipProdMol.get()));
+  return zipProdMol;
 }
 
 std::map<std::string, std::vector<ROMol *>> mapFragsBySmiles(

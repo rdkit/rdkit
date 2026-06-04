@@ -55,7 +55,8 @@ rdkit_headers(Exceptions.h
         DEST RDGeneral)
 
 if (NOT RDK_INSTALL_INTREE)
-    install(DIRECTORY hash DESTINATION ${RDKit_HdrDir}/RDGeneral)
+    install(DIRECTORY hash DESTINATION ${RDKit_HdrDir}/RDGeneral
+            COMPONENT dev)
 endif (NOT RDK_INSTALL_INTREE)
 
 rdkit_catch_test(testDict testDict.cpp LINK_LIBRARIES RDGeneral)
