@@ -2887,7 +2887,6 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
     bond_vec.normalize();
     bond_vecs.push_back(bond_vec);
   }
-
   Point2D ret_vec;
   if (bond_vecs.size() == 1) {
     if (!atomLabels_[atom->getIdx()]) {
@@ -2923,9 +2922,11 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
         double ang = acos(bond_vecs[i].dotProduct(bond_vecs[j]));
         if (ang < discrim) {
           ret_vec = bond_vecs[i] + bond_vecs[j];
-          ret_vec.normalize();
-          discrim = -1.0;
-          break;
+          if (ret_vec.length() > 1.0e-6) {
+            ret_vec.normalize();
+            discrim = -1.0;
+            break;
+          }
         }
       }
     }
