@@ -8,12 +8,10 @@
 import copy
 import math
 import os
-import sys
 import unittest
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem import (ChemicalForceFields, rdDistGeom, rdMolAlign, rdMolDescriptors,
-                        rdMolTransforms)
+from rdkit.Chem import (ChemicalForceFields, rdMolAlign, rdMolDescriptors, rdMolTransforms)
 
 
 def lstFeq(l1, l2, tol=1.e-4):
@@ -27,17 +25,6 @@ def lstFeq(l1, l2, tol=1.e-4):
 
 def feq(v1, v2, tol2=1e-4):
   return abs(v1 - v2) <= tol2
-
-
-def _multiConfFromSDF(sdf):
-  """Reads SDF and creates a multi conf mol"""
-  returnMol = None
-  for mol in Chem.SDMolSupplier(sdf, removeHs=False):
-    if returnMol is None:
-      returnMol = Chem.Mol(mol)
-      continue
-    returnMol.AddConformer(mol.GetConformer(), assignId=True)
-  return returnMol
 
 
 class TestCase(unittest.TestCase):
@@ -97,7 +84,7 @@ class TestCase(unittest.TestCase):
   def test4AlignConfs(self):
     sdf = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
                        'big_aromat.sdf')
-    mol = _multiConfFromSDF(sdf)
+    mol = Chem.MultiConfMolFromSDF(sdf, removeHs=False)
     for c in mol.GetConformers():
       ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, c.GetId())
       ff.Initialize()
@@ -395,7 +382,7 @@ class TestCase(unittest.TestCase):
     sdfi = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
                         'cyclohexyl_benzene_idea.sdf')
     reference = Chem.MolFromMolFile(sdfr, removeHs=False)
-    idea1 = _multiConfFromSDF(sdfi)
+    idea1 = Chem.MultiConfMolFromSDF(sdfi, removeHs=False)
 
     idea1_mols = _confsToAlignedMolsList(idea1)
     cids = [x.GetId() for x in idea1.GetConformers()]

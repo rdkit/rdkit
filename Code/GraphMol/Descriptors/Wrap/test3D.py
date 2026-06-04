@@ -12,17 +12,6 @@ def _gen3D(m, calculator):
   return calculator(m)
 
 
-def _multiConfFromSDF(sdf):
-  """Reads SDF and creates a multi conf mol"""
-  returnMol = None
-  for mol in Chem.SDMolSupplier(sdf, removeHs=False):
-    if returnMol is None:
-      returnMol = Chem.Mol(mol)
-      continue
-    returnMol.AddConformer(mol.GetConformer(), assignId=True)
-  return returnMol
-
-
 class TestCase(unittest.TestCase):
 
   def setUp(self):
@@ -124,7 +113,7 @@ class TestCase(unittest.TestCase):
 
   @unittest.skipIf(not haveDescrs3D, "3d descriptors not present")
   def testGithub2037(self):
-    m = _multiConfFromSDF(os.path.join(self.dataDir, "heptane.sdf"))
+    m = Chem.MultiConfMolFromSDF(os.path.join(self.dataDir, "heptane.sdf"), removeHs=False)
     # start with defaults (which does not cache results):
     npr1s = []
     npr2s = []

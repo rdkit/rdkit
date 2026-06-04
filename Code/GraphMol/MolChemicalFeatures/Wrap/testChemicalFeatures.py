@@ -18,17 +18,6 @@ def feq(v1, v2, tol2=1e-4):
   return abs(v1 - v2) <= tol2
 
 
-def _multiConfFromSDF(sdf):
-  """Reads SDF and creates a multi conf mol"""
-  returnMol = None
-  for mol in Chem.SDMolSupplier(sdf, removeHs=False):
-    if returnMol is None:
-      returnMol = Chem.Mol(mol)
-      continue
-    returnMol.AddConformer(mol.GetConformer(), assignId=True)
-  return returnMol
-
-
 class TestCase(unittest.TestCase):
 
   def setUp(self):
@@ -218,9 +207,9 @@ EndFeature
     self.assertEqual(feat_pos[2], feat_pos_default[2])
 
     # Conformers generation:
-    m2 = _multiConfFromSDF(
+    m2 = Chem.MultiConfMolFromSDF(
       os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolChemicalFeatures', 'test_data',
-                   'testGH2530.sdf'))
+                   'testGH2530.sdf'), removeHs=False)
 
     feats_0 = cfac.GetFeaturesForMol(m2, confId=-1)
     feats_5 = cfac.GetFeaturesForMol(m2, confId=5)

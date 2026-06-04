@@ -4,23 +4,12 @@ import unittest
 import numpy
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem import ChemicalForceFields, rdDistGeom
+from rdkit.Chem import ChemicalForceFields
 from rdkit.Chem.rdForceFieldHelpers import UFFGetMoleculeForceField
 
 
 def feq(v1, v2, tol2=1e-4):
   return abs(v1 - v2) <= tol2
-
-
-def _multiConfFromSDF(sdf):
-  """Reads SDF and creates a multi conf mol"""
-  returnMol = None
-  for mol in Chem.SDMolSupplier(sdf, removeHs=False):
-    if returnMol is None:
-      returnMol = Chem.Mol(mol)
-      continue
-    returnMol.AddConformer(mol.GetConformer(), assignId=True)
-  return returnMol
 
 
 class TestCase(unittest.TestCase):
@@ -360,7 +349,7 @@ M  END"""
     self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'MMFF',
                                 'test_data')
     fName = os.path.join(self.dirName, 'sodium.sdf')
-    m = _multiConfFromSDF(fName)
+    m = Chem.MultiConfMolFromSDF(fName, removeHs=False)
     res = ChemicalForceFields.MMFFOptimizeMoleculeConfs(m)
     self.assertEqual(len(res), 2)
     self.assertEqual(res[0], res[1])
@@ -384,7 +373,7 @@ M  END"""
     self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'MMFF',
                                 'test_data')
     fName = os.path.join(self.dirName, 'propanol.sdf')
-    m = _multiConfFromSDF(fName)
+    m = Chem.MultiConfMolFromSDF(fName, removeHs=False)
     self.assertEqual(m.GetNumConformers(), 10)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)

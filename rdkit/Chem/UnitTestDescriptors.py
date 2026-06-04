@@ -19,7 +19,7 @@ import unittest
 import numpy as np
 
 from rdkit import Chem
-from rdkit.Chem import AllChem, Descriptors, Descriptors3D, Lipinski, rdMolDescriptors
+from rdkit.Chem import AllChem, Descriptors, Descriptors3D, rdMolDescriptors
 
 
 def load_tests(loader, tests, ignore):
@@ -202,19 +202,9 @@ class TestCase(unittest.TestCase):
     self.assertTrue('InertialShapeFactor' in descs)
     self.assertAlmostEqual(descs['PMI1'], 20.9583, delta=1e-4)
 
-    def _multiConfFromSDF(sdf):
-      """Reads SDF and creates a multi conf mol"""
-      returnMol = None
-      for mol in Chem.SDMolSupplier(sdf, removeHs=False):
-        if returnMol is None:
-          returnMol = Chem.Mol(mol)
-          continue
-        returnMol.AddConformer(mol.GetConformer(), assignId=True)
-      return returnMol
-
     # test function returns expected outputs
     refFile = os.path.join(os.path.dirname(__file__), 'test_data', 'descriptors_multiconf.sdf')
-    mol = _multiConfFromSDF(refFile)
+    mol = Chem.MultiConfMolFromSDF(refFile, removeHs=False)
     descs = Descriptors3D.CalcMolDescriptors3D(mol)
     self.assertTrue('InertialShapeFactor' in descs)
     self.assertAlmostEqual(descs['PMI1'], 20.9595, delta=1e-4)
