@@ -122,11 +122,9 @@ class MacrocycleGenerator {
   //! Set substituent sizes at each position (for penalty scoring)
   /*!
     \param substituentSizes: Map from macrocycle position to total substituent
-    size \param innerTurnSign: Which turn direction points inward (+1 for R, -1
-    for L)
+    size
   */
-  void setSubstituentInfo(const std::map<size_t, int> &substituentSizes,
-                          int innerTurnSign);
+  void setSubstituentInfo(const std::map<size_t, int> &substituentSizes);
 
   //! Check if a position has an angle constraint
   /*!
@@ -320,10 +318,10 @@ class MacrocycleGenerator {
       d_angleConstraints;  //!< Angle constraints for small rings
   std::map<size_t, int>
       d_substituentSizes;  //!< Map: position -> total substituent size
-  int d_innerTurnSign;     //!< Which turn direction points inward (+1 for R, -1
-                           //!< for L)
-  double d_closureError;   //!< Positional closure error
-  bool d_solved;           //!< Whether solve() has been called successfully
+  const int d_innerTurnSign =
+      1;                  //!< Which turn direction points inward (+1 for R)
+  double d_closureError;  //!< Positional closure error
+  bool d_solved;          //!< Whether solve() has been called successfully
 };
 
 //! Endpoint information for shared vertex constraint computation

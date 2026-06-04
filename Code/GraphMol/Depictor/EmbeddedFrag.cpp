@@ -1073,7 +1073,6 @@ static std::pair<std::vector<TemplateMatch>, bool> processTemplateMatches(
     const std::vector<FusedRingInfo> &fusedRings,
     const boost::dynamic_bitset<> &ringAtoms, const SubstituentInfo &subInfo) {
   std::vector<TemplateMatch> validMatches;
-  const double PENALTY_PER_ATOM = 10.0;
 
   if (!cachedInfo.relaxed_query) {
     return {validMatches, false};

@@ -30,7 +30,6 @@ namespace RDDepict {
 MacrocycleGenerator::MacrocycleGenerator(size_t ringSize, double bondLength)
     : d_ringSize(ringSize),
       d_bondLength(bondLength),
-      d_innerTurnSign(0),
       d_closureError(std::numeric_limits<double>::max()),
       d_solved(false) {
   d_turns.resize(ringSize, 0);
@@ -56,9 +55,8 @@ void MacrocycleGenerator::addAngleConstraint(
 }
 
 void MacrocycleGenerator::setSubstituentInfo(
-    const std::map<size_t, int> &substituentSizes, int innerTurnSign) {
+    const std::map<size_t, int> &substituentSizes) {
   d_substituentSizes = substituentSizes;
-  d_innerTurnSign = innerTurnSign;
 }
 
 bool MacrocycleGenerator::hasAngleConstraint(size_t position) const {
@@ -169,17 +167,6 @@ bool MacrocycleGenerator::solve() {
     return false;  // Constraints conflict
   }
 
-  // Count turns after applying constraints
-  int constrainedR = 0, constrainedL = 0, free = 0;
-  for (int turn : d_turns) {
-    if (turn == 1)
-      constrainedR++;
-    else if (turn == -1)
-      constrainedL++;
-    else
-      free++;
-  }
-
   // Simplify system ONCE if needed (before trying different R-L targets)
   // The number of free positions is determined by structure, not by R-L ratio
   std::vector<size_t> freePositions = collectFreePositions(d_turns);
@@ -192,19 +179,6 @@ bool MacrocycleGenerator::solve() {
   // Save the post-simplification state for restoration between targetDiff
   // attempts
   std::vector<int> simplifiedTurns = d_turns;
-
-  // Count turns after simplification
-  constrainedR = 0;
-  constrainedL = 0;
-  free = 0;
-  for (int turn : d_turns) {
-    if (turn == 1)
-      constrainedR++;
-    else if (turn == -1)
-      constrainedL++;
-    else
-      free++;
-  }
 
   bool isOddRing = (d_ringSize % 2) == 1;
 
@@ -292,7 +266,7 @@ size_t MacrocycleGenerator::getNumConstraints() const {
 
 size_t MacrocycleGenerator::addBigSubstituentConstraints(
     const std::vector<size_t> &freePositions) {
-  int outerTurn = -d_innerTurnSign;  // Outer turn is opposite of inner
+  int outerTurn = -d_innerTurnSign;  // Outer turn is R
   size_t constraintsAdded = 0;
 
   for (size_t pos : freePositions) {
@@ -415,10 +389,7 @@ void MacrocycleGenerator::simplifySystem(std::vector<size_t> &freePositions,
   // Phase 2: Add OPPOSITE constraints for remaining positions
   size_t remainingNeeded =
       (constraintsNeeded > fixedAdded) ? (constraintsNeeded - fixedAdded) : 0;
-  size_t oppositeAdded =
-      addOppositeConstraintsToReduce(freePositions, remainingNeeded);
-
-  size_t totalAdded = fixedAdded + oppositeAdded;
+  addOppositeConstraintsToReduce(freePositions, remainingNeeded);
 
   // Phase 3: Propagate all constraints and analyze dependencies
   // Apply all constraints (FIXED substituents + OPPOSITE reductions)
@@ -429,15 +400,6 @@ void MacrocycleGenerator::simplifySystem(std::vector<size_t> &freePositions,
 
   // Build dependency map to identify independent vs dependent positions
   auto dependentMap = buildDependencyMap(stillFreeAfterPropagation);
-
-  // Count what we have
-  int numFixed = 0;
-  int numDependent = dependentMap.size();
-  for (size_t i = 0; i < d_ringSize; ++i) {
-    if (d_turns[i] != 0) {
-      numFixed++;
-    }
-  }
 
   // Return only independent positions for enumeration
   freePositions.clear();
@@ -472,7 +434,6 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
   auto dependentMap = buildDependencyMap(freePositions);
 
   // Rebuild freePositions with only independent positions
-  size_t originalFreeCount = freePositions.size();
   std::vector<size_t> independentPositions;
   for (size_t pos : freePositions) {
     if (!dependentMap.count(pos)) {
@@ -674,8 +635,8 @@ int MacrocycleGenerator::calculateMinDistance(
 
 double MacrocycleGenerator::calculateSubstituentPenalty(
     const std::vector<int> &turns) const {
-  if (d_substituentSizes.empty() || d_innerTurnSign == 0) {
-    return 0.0;  // No substituents or inner turn not set
+  if (d_substituentSizes.empty()) {
+    return 0.0;  // No substituents
   }
 
   // Calculate penalty for substituents on inner turns
@@ -2025,7 +1986,7 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
                               currentRingIndex, existingCoords);
 
   // Use the substituent sizes
-  generator.setSubstituentInfo(substituentSizesByPosition, -1);
+  generator.setSubstituentInfo(substituentSizesByPosition);
 
   // Identify all angle constraints for fused small rings
   auto angleConstraints =
