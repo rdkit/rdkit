@@ -64,37 +64,32 @@ NB_MODULE(rdScaffoldNetwork, m) {
           "includeGenericBondScaffolds",
           &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericBondScaffolds,
           "include scaffolds with all bonds replaced by single bonds")
-      .def_rw(
-          "includeScaffoldsWithoutAttachments",
-          &ScaffoldNetwork::ScaffoldNetworkParams::
-              includeScaffoldsWithoutAttachments,
-          "remove attachment points from scaffolds and include the result")
-      .def_rw(
-          "includeScaffoldsWithAttachments",
-          &ScaffoldNetwork::ScaffoldNetworkParams::
-              includeScaffoldsWithAttachments,
-          "Include the version of the scaffold with attachment points")
+      .def_rw("includeScaffoldsWithoutAttachments",
+              &ScaffoldNetwork::ScaffoldNetworkParams::
+                  includeScaffoldsWithoutAttachments,
+              "remove attachment points from scaffolds and include the result")
+      .def_rw("includeScaffoldsWithAttachments",
+              &ScaffoldNetwork::ScaffoldNetworkParams::
+                  includeScaffoldsWithAttachments,
+              "Include the version of the scaffold with attachment points")
       .def_rw("includeNames",
               &ScaffoldNetwork::ScaffoldNetworkParams::includeNames,
               "Include molecules names of the input molecules")
-      .def_rw(
-          "keepOnlyFirstFragment",
-          &ScaffoldNetwork::ScaffoldNetworkParams::keepOnlyFirstFragment,
-          "keep only the first fragment from the bond breaking rule")
-      .def_rw(
-          "pruneBeforeFragmenting",
-          &ScaffoldNetwork::ScaffoldNetworkParams::pruneBeforeFragmenting,
-          "Do a pruning/flattening step before starting fragmenting")
+      .def_rw("keepOnlyFirstFragment",
+              &ScaffoldNetwork::ScaffoldNetworkParams::keepOnlyFirstFragment,
+              "keep only the first fragment from the bond breaking rule")
+      .def_rw("pruneBeforeFragmenting",
+              &ScaffoldNetwork::ScaffoldNetworkParams::pruneBeforeFragmenting,
+              "Do a pruning/flattening step before starting fragmenting")
       .def_rw("flattenIsotopes",
               &ScaffoldNetwork::ScaffoldNetworkParams::flattenIsotopes,
               "remove isotopes when flattening")
       .def_rw("flattenChirality",
               &ScaffoldNetwork::ScaffoldNetworkParams::flattenChirality,
               "remove chirality and bond stereo when flattening")
-      .def_rw(
-          "flattenKeepLargest",
-          &ScaffoldNetwork::ScaffoldNetworkParams::flattenKeepLargest,
-          "keep only the largest fragment when doing flattening")
+      .def_rw("flattenKeepLargest",
+              &ScaffoldNetwork::ScaffoldNetworkParams::flattenKeepLargest,
+              "keep only the largest fragment when doing flattening")
       .def_rw("collectMolCounts",
               &ScaffoldNetwork::ScaffoldNetworkParams::collectMolCounts,
               "keep track of the number of molecules each scaffold was "
@@ -120,13 +115,13 @@ NB_MODULE(rdScaffoldNetwork, m) {
       });
 
   nb::class_<ScaffoldNetwork::ScaffoldNetwork>(m, "ScaffoldNetwork")
-      .def(nb::init<>(), "Default constructor")
+      .def(nb::new_([]() { return new ScaffoldNetwork::ScaffoldNetwork(); }),
+           "Default constructor")
 #ifdef RDK_USE_BOOST_SERIALIZATION
-      .def("__init__",
-           [](ScaffoldNetwork::ScaffoldNetwork &self, nb::bytes pkl) {
+      .def(nb::new_([](nb::bytes pkl) {
              std::string s(static_cast<const char *>(pkl.data()), pkl.size());
-             new (&self) ScaffoldNetwork::ScaffoldNetwork(s);
-           },
+             return new ScaffoldNetwork::ScaffoldNetwork(s);
+           }),
            "pkl"_a)
 #endif
       .def_ro("nodes", &ScaffoldNetwork::ScaffoldNetwork::nodes,
@@ -140,22 +135,46 @@ NB_MODULE(rdScaffoldNetwork, m) {
               "the sequence of network edges")
 #ifdef RDK_USE_BOOST_SERIALIZATION
       .def("__getstate__",
-           [](const ScaffoldNetwork::ScaffoldNetwork &self) {
+           [](nb::object obj) {
+             const ScaffoldNetwork::ScaffoldNetwork &self =
+                 nb::cast<const ScaffoldNetwork::ScaffoldNetwork &>(obj);
              std::stringstream oss;
              boost::archive::text_oarchive oa(oss);
              oa << self;
-             const std::string res = oss.str();
-             return std::make_tuple(nb::bytes(res.c_str(), res.size()));
-           })
-      .def("__setstate__",
-           [](ScaffoldNetwork::ScaffoldNetwork &self, nb::tuple state) {
-             if (nb::len(state) != 1) {
-               throw nb::value_error("invalid ScaffoldNetwork pickle state");
+             const std::string pkl = oss.str();
+             nb::dict dict;
+             if (nb::hasattr(obj, "__dict__")) {
+               dict = nb::cast<nb::dict>(nb::getattr(obj, "__dict__"));
              }
-             auto b = nb::cast<nb::bytes>(state[0]);
-             std::string pkl(static_cast<const char *>(b.data()), b.size());
-             new (&self) ScaffoldNetwork::ScaffoldNetwork(pkl);
-           });
+             auto pbytes = nb::bytes(pkl.c_str(), pkl.size());
+             return std::make_tuple(pbytes, dict);
+           })
+      .def("__setstate__", [](nb::object obj, nb::object state) {
+        ScaffoldNetwork::ScaffoldNetwork *self = nullptr;
+        if (!nb::try_cast<ScaffoldNetwork::ScaffoldNetwork *>(obj, self)) {
+          throw nb::value_error(
+              "invalid object type for ScaffoldNetwork __setstate__");
+        }
+        nb::tuple tpl;
+        if (nb::try_cast<nb::tuple>(state, tpl)) {
+          size_t tplPos = 0;
+          nb::bytes bytes;
+          if (nb::try_cast<nb::bytes>(tpl[tplPos], bytes)) {
+            auto pkl = std::string(static_cast<const char *>(bytes.data()),
+                                   bytes.size());
+            new (self) ScaffoldNetwork::ScaffoldNetwork(pkl);
+            tplPos++;
+          }
+          if (tplPos < nb::len(tpl)) {
+            nb::dict dict;
+            if (nb::hasattr(obj, "__dict__") &&
+                nb::try_cast<nb::dict>(tpl[tplPos], dict)) {
+              nb::dict odict = nb::cast<nb::dict>(nb::getattr(obj, "__dict__"));
+              odict.update(dict);
+            }
+          }
+        }
+      });
 #else
       .def("__getstate__",
            [](const ScaffoldNetwork::ScaffoldNetwork &self) {
