@@ -21,7 +21,6 @@ except ImportError:
 from rdkit.Chem.ChemUtils import AlignDepict
 
 
-
 def feq(v1, v2, tol2=1e-4):
   return abs(v1 - v2) <= tol2
 
@@ -100,7 +99,8 @@ def stereoCompare(smilesFile):
     matches = nmol.GetSubstructMatches(mol, False)
     dbnds = [
       x for x in mol.GetBonds()
-      if (x.GetBondType() == Chem.BondType.DOUBLE and x.GetStereo().value > Chem.BondStereo.STEREOANY.value)
+      if (x.GetBondType() == Chem.BondType.DOUBLE and x.GetStereo() not in (
+        Chem.BondStereo.STEREOANY, Chem.BondStereo.STEREONONE))
     ]
     ok = True
     for match in matches:
