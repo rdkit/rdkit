@@ -5,25 +5,13 @@ import unittest
 from rdkit import Chem, RDConfig
 from rdkit.Chem import rdMolDescriptors as rdMD
 
-try:
-  from rdkit.Chem import AllChem
-  haveAllChem = True
-except ImportError:
-  haveAllChem = False
-
 haveDescrs3D = hasattr(rdMD, 'CalcAUTOCORR3D')
 
 
-def _gen3D(m, is3d, calculator):
-  if not is3d:
-    m = Chem.AddHs(m)
-    ps = AllChem.ETKDG()
-    ps.randomSeed = 0xf00d
-    AllChem.EmbedMolecule(m, ps)
+def _gen3D(m, calculator):
   return calculator(m)
 
 
-@unittest.skipIf(not haveAllChem, "AllChem not available")
 class TestCase(unittest.TestCase):
 
   def setUp(self):
@@ -129,8 +117,7 @@ class TestCase(unittest.TestCase):
     # start with defaults (which does not cache results):
     npr1s = []
     npr2s = []
-    for c in m.GetConformers():
-      cid = c.GetId()
+    for cid in range(m.GetNumConformers()):
       npr1s.append(rdMD.CalcNPR1(m, confId=cid))
       npr2s.append(rdMD.CalcNPR2(m, confId=cid))
     for i in range(1, len(npr1s)):
@@ -140,8 +127,7 @@ class TestCase(unittest.TestCase):
     # now ensure that we can cache:
     npr1s = []
     npr2s = []
-    for c in m.GetConformers():
-      cid = c.GetId()
+    for cid in range(m.GetNumConformers()):
       npr1s.append(rdMD.CalcNPR1(m, confId=cid, force=False))
       npr2s.append(rdMD.CalcNPR2(m, confId=cid, force=False))
     for i in range(1, len(npr1s)):
