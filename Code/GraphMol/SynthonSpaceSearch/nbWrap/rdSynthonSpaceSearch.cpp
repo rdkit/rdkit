@@ -16,6 +16,7 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/unique_ptr.h>
+#include <nanobind/stl/optional.h>
 
 #include <RDBoost/Wrap_nb.h>
 
@@ -41,20 +42,15 @@ nb::list hitMolecules_helper(const SynthonSpaceSearch::SearchResults &res) {
 
 SynthonSpaceSearch::SearchResults substructureSearch_helper1(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const nb::object &py_smParams, const nb::object &py_params) {
-  SynthonSpaceSearch::SynthonSpaceSearchParams params;
-  SubstructMatchParameters smParams;
-  if (!py_smParams.is_none()) {
-    smParams = nb::cast<SubstructMatchParameters>(py_smParams);
-  }
-  if (!py_params.is_none()) {
-    params = nb::cast<SynthonSpaceSearch::SynthonSpaceSearchParams>(py_params);
-  }
-
+    const std::optional<SubstructMatchParameters> &py_smParams,
+    const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
+        &py_params) {
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.substructureSearch(query, smParams, params);
+    results = self.substructureSearch(
+        query, py_smParams.value_or(SubstructMatchParameters()),
+        py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
   }
   if (results.getCancelled()) {
     throw std::runtime_error("SubstructureSearch cancelled");
@@ -65,19 +61,15 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper1(
 SynthonSpaceSearch::SearchResults substructureSearch_helper2(
     SynthonSpaceSearch::SynthonSpace &self,
     const GeneralizedSubstruct::ExtendedQueryMol &query,
-    const nb::object &py_smParams, const nb::object &py_params) {
-  SubstructMatchParameters smParams;
-  if (!py_smParams.is_none()) {
-    smParams = nb::cast<SubstructMatchParameters>(py_smParams);
-  }
-  SynthonSpaceSearch::SynthonSpaceSearchParams params;
-  if (!py_params.is_none()) {
-    params = nb::cast<SynthonSpaceSearch::SynthonSpaceSearchParams>(py_params);
-  }
+    const std::optional<SubstructMatchParameters> &py_smParams,
+    const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
+        &py_params) {
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.substructureSearch(query, smParams, params);
+    results = self.substructureSearch(
+        query, py_smParams.value_or(SubstructMatchParameters()),
+        py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
   }
   if (results.getCancelled()) {
     throw std::runtime_error("SubstructureSearch cancelled");
@@ -101,20 +93,16 @@ struct CallbackAdapter {
   }
 };
 
-void substructureSearch_helper3(SynthonSpaceSearch::SynthonSpace &self,
-                                const ROMol &query, nb::object py_callable,
-                                const nb::object &py_smParams,
-                                const nb::object &py_params) {
-  SynthonSpaceSearch::SynthonSpaceSearchParams params;
-  SubstructMatchParameters smParams;
-  if (!py_smParams.is_none()) {
-    smParams = nb::cast<SubstructMatchParameters>(py_smParams);
-  }
-  if (!py_params.is_none()) {
-    params = nb::cast<SynthonSpaceSearch::SynthonSpaceSearchParams>(py_params);
-  }
+void substructureSearch_helper3(
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    nb::object py_callable,
+    const std::optional<SubstructMatchParameters> &py_smParams,
+    const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
+        &py_params) {
   CallbackAdapter callback{py_callable};
-  self.substructureSearch(query, callback, smParams, params);
+  self.substructureSearch(
+      query, callback, py_smParams.value_or(SubstructMatchParameters()),
+      py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
 }
 
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
@@ -137,19 +125,17 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
   return results;
 }
 
-void fingerprintSearch_helper2(SynthonSpaceSearch::SynthonSpace &self,
-                               const ROMol &query,
-                               const nb::object &fingerprintGenerator,
-                               nb::object py_callable,
-                               const nb::object &py_params) {
-  SynthonSpaceSearch::SynthonSpaceSearchParams params;
-  if (!py_params.is_none()) {
-    params = nb::cast<SynthonSpaceSearch::SynthonSpaceSearchParams>(py_params);
-  }
+void fingerprintSearch_helper2(
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    const nb::object &fingerprintGenerator, nb::object py_callable,
+    const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
+        &py_params) {
   const FingerprintGenerator<std::uint64_t> *fpGen =
       nb::cast<FingerprintGenerator<std::uint64_t> *>(fingerprintGenerator);
   CallbackAdapter callback{py_callable};
-  self.fingerprintSearch(query, *fpGen, callback, params);
+  self.fingerprintSearch(
+      query, *fpGen, callback,
+      py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
 }
 
 SynthonSpaceSearch::SearchResults rascalSearch_helper(
@@ -167,19 +153,16 @@ SynthonSpaceSearch::SearchResults rascalSearch_helper(
   }
 }
 
-void rascalSearch_helper2(SynthonSpaceSearch::SynthonSpace &self,
-                          const ROMol &query,
-                          const nb::object &py_rascalOptions,
-                          nb::object py_callable,
-                          const nb::object &py_params) {
-  RascalMCES::RascalOptions rascalOptions =
-      nb::cast<RascalMCES::RascalOptions>(py_rascalOptions);
-  SynthonSpaceSearch::SynthonSpaceSearchParams params;
-  if (!py_params.is_none()) {
-    params = nb::cast<SynthonSpaceSearch::SynthonSpaceSearchParams>(py_params);
-  }
+void rascalSearch_helper2(
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    const std::optional<RascalMCES::RascalOptions> &py_rascalOptions,
+    nb::object py_callable,
+    const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
+        &py_params) {
   CallbackAdapter callback{py_callable};
-  self.rascalSearch(query, rascalOptions, callback, params);
+  self.rascalSearch(
+      query, py_rascalOptions.value_or(RascalMCES::RascalOptions()), callback,
+      py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
 }
 
 void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
@@ -191,13 +174,11 @@ void convertTextToDBFile_helper(const std::filesystem::path &inFilename,
                                 nb::object fpGen) {
   const FingerprintGenerator<std::uint64_t> *fpGenCpp = nullptr;
   if (!fpGen.is_none()) {
-    fpGenCpp =
-        nb::cast<FingerprintGenerator<std::uint64_t> *>(fpGen);
+    fpGenCpp = nb::cast<FingerprintGenerator<std::uint64_t> *>(fpGen);
   }
   bool cancelled = false;
-  SynthonSpaceSearch::convertTextToDBFile(inFilename.string(),
-                                          outFilename.string(), cancelled,
-                                          fpGenCpp);
+  SynthonSpaceSearch::convertTextToDBFile(
+      inFilename.string(), outFilename.string(), cancelled, fpGenCpp);
   if (cancelled) {
     throw std::runtime_error("Database conversion cancelled");
   }
@@ -244,9 +225,9 @@ synthons suggested they would.)DOC")
   nb::class_<SynthonSpaceSearch::SynthonSpaceSearchParams>(
       m, "SynthonSpaceSearchParams", "SynthonSpaceSearch parameters.")
       .def(nb::init<>())
-      .def_rw("maxHits",
-              &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHits,
-              R"DOC(The maximum number of hits to return.  Default=1000.Use -1 for no maximum.)DOC")
+      .def_rw(
+          "maxHits", &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHits,
+          R"DOC(The maximum number of hits to return.  Default=1000.Use -1 for no maximum.)DOC")
       .def_rw(
           "maxNumFrags",
           &SynthonSpaceSearch::SynthonSpaceSearchParams::maxNumFragSets,
@@ -255,31 +236,27 @@ synthons suggested they would.)DOC")
 excessive memory use.  If the number of fragments hits this number,
 fragmentation stops and the search results will likely be incomplete.
   Default=100000.)DOC")
-      .def_rw(
-          "hitStart",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::hitStart,
-          R"DOC(The sequence number of the hit to start from.  So that you
+      .def_rw("hitStart",
+              &SynthonSpaceSearch::SynthonSpaceSearchParams::hitStart,
+              R"DOC(The sequence number of the hit to start from.  So that you
 can return the next N hits of a search having already
 obtained N-1.  Default=0)DOC")
-      .def_rw(
-          "randomSample",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::randomSample,
-          R"DOC(If True, returns a random sample of the hits, up to maxHits
+      .def_rw("randomSample",
+              &SynthonSpaceSearch::SynthonSpaceSearchParams::randomSample,
+              R"DOC(If True, returns a random sample of the hits, up to maxHits
 in number.  Default=False.)DOC")
-      .def_rw(
-          "randomSeed",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::randomSeed,
-          R"DOC(If using randomSample, this seeds the random number
+      .def_rw("randomSeed",
+              &SynthonSpaceSearch::SynthonSpaceSearchParams::randomSeed,
+              R"DOC(If using randomSample, this seeds the random number
 generator so as to give reproducible results.  Default=-1
 means use a random seed.)DOC")
       .def_rw("buildHits",
               &SynthonSpaceSearch::SynthonSpaceSearchParams::buildHits,
               R"DOC(If false, reports the maximum number of hits that
 the search could produce, but doesn't return them.)DOC")
-      .def_rw(
-          "numRandomSweeps",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::numRandomSweeps,
-          R"DOC(The random sampling doesn't always produce the
+      .def_rw("numRandomSweeps",
+              &SynthonSpaceSearch::SynthonSpaceSearchParams::numRandomSweeps,
+              R"DOC(The random sampling doesn't always produce the
 required number of hits in 1 go.  This parameter
 controls how many loops it makes to try and get
 the hits before giving up.  Default=10.)DOC")
@@ -295,11 +272,10 @@ the hits before giving up.  Default=10.)DOC")
           R"DOC(Similarities of fragments are generally low due to low bit
 densities.  For the fragment matching, reduce the similarity cutoff
 off by this amount.  Default=0.1.)DOC")
-      .def_rw(
-          "approxSimilarityAdjuster",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::
-              approxSimilarityAdjuster,
-          R"DOC(The fingerprint search uses an approximate similarity method
+      .def_rw("approxSimilarityAdjuster",
+              &SynthonSpaceSearch::SynthonSpaceSearchParams::
+                  approxSimilarityAdjuster,
+              R"DOC(The fingerprint search uses an approximate similarity method
 before building a product and doing a final check.  The
 similarityCutoff is reduced by this value for the approximate
 check.  A lower value will give faster run times at the
@@ -308,10 +284,9 @@ positive correlation with your FOMO.  The default of 0.1 is
 appropriate for Morgan fingerprints.  With RDKit fingerprints,
 0.05 is adequate, and higher than that has been seen to
 produce long run times.)DOC")
-      .def_rw(
-          "minHitHeavyAtoms",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::minHitHeavyAtoms,
-          "Minimum number of heavy atoms in a hit.  Default=0.")
+      .def_rw("minHitHeavyAtoms",
+              &SynthonSpaceSearch::SynthonSpaceSearchParams::minHitHeavyAtoms,
+              "Minimum number of heavy atoms in a hit.  Default=0.")
       .def_rw(
           "maxHitHeavyAtoms",
           &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHitHeavyAtoms,
@@ -323,23 +298,20 @@ produce long run times.)DOC")
           "maxHitMolWt",
           &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHitMolWt,
           "Maximum molecular weight for a hit.  Default=0.0 mean no maximum.")
-      .def_rw(
-          "minHitChiralAtoms",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::minHitChiralAtoms,
-          "Minimum number of chiral atoms in a hit.  Default=0.")
+      .def_rw("minHitChiralAtoms",
+              &SynthonSpaceSearch::SynthonSpaceSearchParams::minHitChiralAtoms,
+              "Minimum number of chiral atoms in a hit.  Default=0.")
       .def_rw(
           "maxHitChiralAtoms",
           &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHitChiralAtoms,
           "Maximum number of chiral atoms in a hit.  Default=-1 means no maximum.")
       .def_rw(
-          "timeOut",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
+          "timeOut", &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
           R"DOC(Time limit for search, in seconds.  Default is 600s, 0 means no
 timeout.  Requires an integer)DOC")
-      .def_rw(
-          "toTryChunkSize",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::toTryChunkSize,
-          "Process possible hits using the given chunk size")
+      .def_rw("toTryChunkSize",
+              &SynthonSpaceSearch::SynthonSpaceSearchParams::toTryChunkSize,
+              "Process possible hits using the given chunk size")
       .def_rw(
           "numThreads",
           &SynthonSpaceSearch::SynthonSpaceSearchParams::numThreads,
@@ -358,9 +330,8 @@ use 7 threads.  Default=1.)DOC")
       .def(
           "ReadDBFile",
           [](SynthonSpaceSearch::SynthonSpace &self,
-             const std::filesystem::path &inFile, int numThreads) {
-            self.readDBFile(inFile.string(), numThreads);
-          },
+             const std::filesystem::path &inFile,
+             int numThreads) { self.readDBFile(inFile.string(), numThreads); },
           "inFile"_a, "numThreads"_a = 1,
           R"DOC(Reads binary database file.  Takes optional number of threads,default=1.)DOC")
       .def(
@@ -396,10 +367,11 @@ used to create this space.)DOC")
            "substructMatchParams"_a = nb::none(), "params"_a = nb::none(),
            R"DOC(Does a substructure search in the SynthonSpace using an
 extended query.)DOC")
-      .def("SubstructureSearchIncremental", &substructureSearch_helper3,
-           "query"_a, "callback"_a, "substructMatchParams"_a = nb::none(),
-           "params"_a = nb::none(),
-           "Does a substructure search in the SynthonSpace returning results in the callback.")
+      .def(
+          "SubstructureSearchIncremental", &substructureSearch_helper3,
+          "query"_a, "callback"_a, "substructMatchParams"_a = nb::none(),
+          "params"_a = nb::none(),
+          "Does a substructure search in the SynthonSpace returning results in the callback.")
       .def("FingerprintSearch", &fingerprintSearch_helper, "query"_a,
            "fingerprintGenerator"_a, "params"_a = nb::none(),
            R"DOC(Does a fingerprint search in the SynthonSpace using the
@@ -409,14 +381,16 @@ FingerprintGenerator passed in.)DOC")
            "params"_a = nb::none(),
            R"DOC(Does a fingerprint search in the SynthonSpace using the
 FingerprintGenerator passed in, returning results the callback.)DOC")
-      .def("RascalSearch", &rascalSearch_helper, "query"_a, "rascalOptions"_a,
-           "params"_a = nb::none(),
-           R"DOC(Does a search using the Rascal similarity score.  The similarity
+      .def(
+          "RascalSearch", &rascalSearch_helper, "query"_a, "rascalOptions"_a,
+          "params"_a = nb::none(),
+          R"DOC(Does a search using the Rascal similarity score.  The similarity
 threshold used is provided by rascalOptions, and the one in
 params is ignored.)DOC")
-      .def("RascalSearchIncremental", &rascalSearch_helper2, "query"_a,
-           "rascalOptions"_a, "callback"_a, "params"_a = nb::none(),
-           R"DOC(Does a search using the Rascal similarity score.  The similarity
+      .def(
+          "RascalSearchIncremental", &rascalSearch_helper2, "query"_a,
+          "rascalOptions"_a, "callback"_a, "params"_a = nb::none(),
+          R"DOC(Does a search using the Rascal similarity score.  The similarity
 threshold used is provided by rascalOptions, and the one in
 params is ignored.  Returns results iteratively in the callback.)DOC")
       .def(
