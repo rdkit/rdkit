@@ -42,8 +42,8 @@ double infoEntropy(nb::ndarray<nb::numpy, nb::ndim<1>> resArr) {
 
 template <class T>
 double infoGainHelper(nb::ndarray<nb::numpy, nb::ndim<2>> arr) {
-  auto rows = (long int)arr.shape(0);
-  auto cols = (long int)arr.shape(1);
+  auto rows = arr.shape(0);
+  auto cols = arr.shape(1);
   auto *data = reinterpret_cast<T *>(arr.data());
   return InfoEntropyGain(data, rows, cols);
 }
@@ -65,8 +65,8 @@ double infoGain(nb::ndarray<nb::numpy, nb::ndim<2>> resArr) {
 
 template <class T>
 double chiSquareHelper(nb::ndarray<nb::numpy, nb::ndim<2>> arr) {
-  auto rows = (long int)arr.shape(0);
-  auto cols = (long int)arr.shape(1);
+  auto rows = arr.shape(0);
+  auto cols = arr.shape(1);
   auto *data = reinterpret_cast<T *>(arr.data());
   return ChiSquare(data, rows, cols);
 }
