@@ -46,6 +46,12 @@ void updateNetworkHelper(const std::vector<std::shared_ptr<ROMol>> &mols,
   ScaffoldNetwork::updateScaffoldNetwork(mols, net, params);
 }
 
+std::string serializeNetwork(const ScaffoldNetwork::ScaffoldNetwork &net) {
+  std::stringstream oss;
+  boost::archive::text_oarchive oa(oss);
+  oa << net;
+  return oss.str();
+}
 }  // namespace
 
 NB_MODULE(rdScaffoldNetwork, m) {
@@ -64,37 +70,32 @@ NB_MODULE(rdScaffoldNetwork, m) {
           "includeGenericBondScaffolds",
           &ScaffoldNetwork::ScaffoldNetworkParams::includeGenericBondScaffolds,
           "include scaffolds with all bonds replaced by single bonds")
-      .def_rw(
-          "includeScaffoldsWithoutAttachments",
-          &ScaffoldNetwork::ScaffoldNetworkParams::
-              includeScaffoldsWithoutAttachments,
-          "remove attachment points from scaffolds and include the result")
-      .def_rw(
-          "includeScaffoldsWithAttachments",
-          &ScaffoldNetwork::ScaffoldNetworkParams::
-              includeScaffoldsWithAttachments,
-          "Include the version of the scaffold with attachment points")
+      .def_rw("includeScaffoldsWithoutAttachments",
+              &ScaffoldNetwork::ScaffoldNetworkParams::
+                  includeScaffoldsWithoutAttachments,
+              "remove attachment points from scaffolds and include the result")
+      .def_rw("includeScaffoldsWithAttachments",
+              &ScaffoldNetwork::ScaffoldNetworkParams::
+                  includeScaffoldsWithAttachments,
+              "Include the version of the scaffold with attachment points")
       .def_rw("includeNames",
               &ScaffoldNetwork::ScaffoldNetworkParams::includeNames,
               "Include molecules names of the input molecules")
-      .def_rw(
-          "keepOnlyFirstFragment",
-          &ScaffoldNetwork::ScaffoldNetworkParams::keepOnlyFirstFragment,
-          "keep only the first fragment from the bond breaking rule")
-      .def_rw(
-          "pruneBeforeFragmenting",
-          &ScaffoldNetwork::ScaffoldNetworkParams::pruneBeforeFragmenting,
-          "Do a pruning/flattening step before starting fragmenting")
+      .def_rw("keepOnlyFirstFragment",
+              &ScaffoldNetwork::ScaffoldNetworkParams::keepOnlyFirstFragment,
+              "keep only the first fragment from the bond breaking rule")
+      .def_rw("pruneBeforeFragmenting",
+              &ScaffoldNetwork::ScaffoldNetworkParams::pruneBeforeFragmenting,
+              "Do a pruning/flattening step before starting fragmenting")
       .def_rw("flattenIsotopes",
               &ScaffoldNetwork::ScaffoldNetworkParams::flattenIsotopes,
               "remove isotopes when flattening")
       .def_rw("flattenChirality",
               &ScaffoldNetwork::ScaffoldNetworkParams::flattenChirality,
               "remove chirality and bond stereo when flattening")
-      .def_rw(
-          "flattenKeepLargest",
-          &ScaffoldNetwork::ScaffoldNetworkParams::flattenKeepLargest,
-          "keep only the largest fragment when doing flattening")
+      .def_rw("flattenKeepLargest",
+              &ScaffoldNetwork::ScaffoldNetworkParams::flattenKeepLargest,
+              "keep only the largest fragment when doing flattening")
       .def_rw("collectMolCounts",
               &ScaffoldNetwork::ScaffoldNetworkParams::collectMolCounts,
               "keep track of the number of molecules each scaffold was "
@@ -120,13 +121,13 @@ NB_MODULE(rdScaffoldNetwork, m) {
       });
 
   nb::class_<ScaffoldNetwork::ScaffoldNetwork>(m, "ScaffoldNetwork")
-      .def(nb::init<>(), "Default constructor")
+      .def(nb::new_([]() { return new ScaffoldNetwork::ScaffoldNetwork(); }),
+           "Default constructor")
 #ifdef RDK_USE_BOOST_SERIALIZATION
-      .def("__init__",
-           [](ScaffoldNetwork::ScaffoldNetwork &self, nb::bytes pkl) {
+      .def(nb::new_([](nb::bytes pkl) {
              std::string s(static_cast<const char *>(pkl.data()), pkl.size());
-             new (&self) ScaffoldNetwork::ScaffoldNetwork(s);
-           },
+             return new ScaffoldNetwork::ScaffoldNetwork(s);
+           }),
            "pkl"_a)
 #endif
       .def_ro("nodes", &ScaffoldNetwork::ScaffoldNetwork::nodes,
@@ -140,22 +141,8 @@ NB_MODULE(rdScaffoldNetwork, m) {
               "the sequence of network edges")
 #ifdef RDK_USE_BOOST_SERIALIZATION
       .def("__getstate__",
-           [](const ScaffoldNetwork::ScaffoldNetwork &self) {
-             std::stringstream oss;
-             boost::archive::text_oarchive oa(oss);
-             oa << self;
-             const std::string res = oss.str();
-             return std::make_tuple(nb::bytes(res.c_str(), res.size()));
-           })
-      .def("__setstate__",
-           [](ScaffoldNetwork::ScaffoldNetwork &self, nb::tuple state) {
-             if (nb::len(state) != 1) {
-               throw nb::value_error("invalid ScaffoldNetwork pickle state");
-             }
-             auto b = nb::cast<nb::bytes>(state[0]);
-             std::string pkl(static_cast<const char *>(b.data()), b.size());
-             new (&self) ScaffoldNetwork::ScaffoldNetwork(pkl);
-           });
+           getObjectState<ScaffoldNetwork::ScaffoldNetwork, serializeNetwork>)
+      .def("__setstate__", setObjectState<ScaffoldNetwork::ScaffoldNetwork>);
 #else
       .def("__getstate__",
            [](const ScaffoldNetwork::ScaffoldNetwork &self) {
