@@ -4,8 +4,9 @@ import unittest
 import numpy
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem import ChemicalForceFields, rdDistGeom
+from rdkit.Chem import ChemicalForceFields
 from rdkit.Chem.rdForceFieldHelpers import UFFGetMoleculeForceField
+
 
 def feq(v1, v2, tol2=1e-4):
   return abs(v1 - v2) <= tol2
@@ -345,16 +346,20 @@ M  END"""
     self.assertIsNotNone(m)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     self.assertIsNone(mp)
-    rdDistGeom.EmbedMultipleConfs(m, 2)
+    self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'MMFF',
+                                'test_data')
+    fName = os.path.join(self.dirName, 'sodium.sdf')
+    m = Chem.MultiConfMolFromSDF(fName, removeHs=False)
     res = ChemicalForceFields.MMFFOptimizeMoleculeConfs(m)
     self.assertEqual(len(res), 2)
     self.assertEqual(res[0], res[1])
     self.assertEqual(res[0], (-1, -1.0))
 
   def testOptimizeMolecule(self):
-    m = Chem.AddHs(Chem.MolFromSmiles("CCCO"))
+    m = Chem.MolFromSmiles('COOO |(1.61312,-0.189863,-0.237094;0.482259,0.488944,0.195853;'
+                           '-0.507066,-0.374147,0.326959;-1.58832,0.0750666,-0.285718)|')
+    m = Chem.AddHs(m, addCoords=True)
     self.assertIsNotNone(m)
-    self.assertEqual(rdDistGeom.EmbedMolecule(m), 0)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
     before = ff.CalcEnergy()
@@ -365,12 +370,16 @@ M  END"""
   def testOptimizeMoleculeConfs(self):
     m = Chem.AddHs(Chem.MolFromSmiles("CCCO"))
     self.assertIsNotNone(m)
-    cids = rdDistGeom.EmbedMultipleConfs(m, numConfs=10)
-    self.assertEqual(len(cids), 10)
+    self.dirName = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ForceFieldHelpers', 'MMFF',
+                                'test_data')
+    fName = os.path.join(self.dirName, 'propanol.sdf')
+    m = Chem.MultiConfMolFromSDF(fName, removeHs=False)
+    self.assertEqual(m.GetNumConformers(), 10)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
     before = [
-      ChemicalForceFields.MMFFGetMoleculeForceField(m, mp, confId=cid).CalcEnergy() for cid in cids
+      ChemicalForceFields.MMFFGetMoleculeForceField(m, mp, confId=c.GetId()).CalcEnergy()
+      for c in m.GetConformers()
     ]
     res, after = tuple(zip(*ChemicalForceFields.OptimizeMoleculeConfs(m, ff, maxIters=200)))
     self.assertEqual(len(res), 10)
@@ -407,14 +416,12 @@ M  END"""
     posb = m.GetConformer().GetAtomPosition(1)
     self.assertAlmostEqual((posa - posb).Length(), 100, delta=10e-5)
 
-
   def test_uff_get_forcefield_runs(self):
-      mol = Chem.MolFromSmiles("CCO")
-      mol = Chem.AddHs(mol)
-      rdDistGeom.EmbedMolecule(mol, randomSeed=42)
-      ff = UFFGetMoleculeForceField(mol, ignoreInterfragInteractions=False)
-      self.assertIsNotNone(ff)
-      self.assertTrue(hasattr(ff, "CalcEnergy"))
+    mol = Chem.MolFromSmiles('CCO |(1.21821,-0.254035,;-0.055315,0.546111,;-1.16289,-0.292076,)|')
+    mol = Chem.AddHs(mol, addCoords=True)
+    ff = UFFGetMoleculeForceField(mol, ignoreInterfragInteractions=False)
+    self.assertIsNotNone(ff)
+    self.assertTrue(hasattr(ff, "CalcEnergy"))
 
   def testMMFFMolPropertiesScalarGetters(self):
     mol = Chem.AddHs(Chem.MolFromSmiles("CCO"))
@@ -435,13 +442,13 @@ M  END"""
     self.assertEqual(mp.GetMMFFDielectricModel(), 1)
 
     term_pairs = [
-        (mp.SetMMFFBondTerm, mp.GetMMFFBondTerm),
-        (mp.SetMMFFAngleTerm, mp.GetMMFFAngleTerm),
-        (mp.SetMMFFStretchBendTerm, mp.GetMMFFStretchBendTerm),
-        (mp.SetMMFFOopTerm, mp.GetMMFFOopTerm),
-        (mp.SetMMFFTorsionTerm, mp.GetMMFFTorsionTerm),
-        (mp.SetMMFFVdWTerm, mp.GetMMFFVdWTerm),
-        (mp.SetMMFFEleTerm, mp.GetMMFFEleTerm),
+      (mp.SetMMFFBondTerm, mp.GetMMFFBondTerm),
+      (mp.SetMMFFAngleTerm, mp.GetMMFFAngleTerm),
+      (mp.SetMMFFStretchBendTerm, mp.GetMMFFStretchBendTerm),
+      (mp.SetMMFFOopTerm, mp.GetMMFFOopTerm),
+      (mp.SetMMFFTorsionTerm, mp.GetMMFFTorsionTerm),
+      (mp.SetMMFFVdWTerm, mp.GetMMFFVdWTerm),
+      (mp.SetMMFFEleTerm, mp.GetMMFFEleTerm),
     ]
     for setter, getter in term_pairs:
       setter(False)
