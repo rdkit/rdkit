@@ -792,62 +792,66 @@ void DrawMol::extractBrackets() {
       // bracket is largely horizontal or largely vertical.
       const auto &brkShp = *postShapes_.back();
       Point2D longline = brkShp.points_[1] - brkShp.points_[2];
-      longline.normalize();
-      static const double cos45 = 1.0 / sqrt(2.0);
-      bool horizontal = fabs(longline.x) > cos45;
-      size_t labelBrk = postShapes_.size() - 1;
-      for (int i = 1; i < numBrackets; ++i) {
-        const auto &brkShp = *postShapes_[postShapes_.size() - i - 1];
-        if (horizontal) {
-          if (brkShp.points_[2].y > postShapes_[labelBrk]->points_[2].y) {
-            labelBrk = postShapes_.size() - i - 1;
+      try {
+        longline.normalize();
+        static const double cos45 = 1.0 / sqrt(2.0);
+        bool horizontal = fabs(longline.x) > cos45;
+        size_t labelBrk = postShapes_.size() - 1;
+        for (int i = 1; i < numBrackets; ++i) {
+          const auto &brkShp = *postShapes_[postShapes_.size() - i - 1];
+          if (horizontal) {
+            if (brkShp.points_[2].y > postShapes_[labelBrk]->points_[2].y) {
+              labelBrk = postShapes_.size() - i - 1;
+            }
+          } else {
+            if (brkShp.points_[2].x > postShapes_[labelBrk]->points_[2].x) {
+              labelBrk = postShapes_.size() - i - 1;
+            }
           }
-        } else {
-          if (brkShp.points_[2].x > postShapes_[labelBrk]->points_[2].x) {
-            labelBrk = postShapes_.size() - i - 1;
+        }
+        std::string connect;
+        if (sg.getPropIfPresent("CONNECT", connect)) {
+          // annotations go on the last bracket of an sgroup
+          const auto &brkShp = *postShapes_[labelBrk];
+          // CONNECT goes at the top, but that's now the bottom due to the y
+          // inversion
+          auto botPt = brkShp.points_[2];
+          auto brkPt = brkShp.points_[3];
+          if ((!horizontal && brkShp.points_[1].y < botPt.y) ||
+              (horizontal && brkShp.points_[1].x > botPt.x)) {
+            botPt = brkShp.points_[1];
+            brkPt = brkShp.points_[0];
+              }
+          DrawAnnotation *da = new DrawAnnotation(
+              connect, TextAlignType::MIDDLE, "connect",
+              drawOptions_.annotationFontScale, botPt + (botPt - brkPt),
+              DrawColour(0.0, 0.0, 0.0), textDrawer_);
+          // if we're to the right of the bracket, we need to left justify,
+          // otherwise things seem to work as is
+          if (brkPt.x < botPt.x) {
+            da->align_ = TextAlignType::START;
           }
+          annotations_.emplace_back(da);
         }
-      }
-      std::string connect;
-      if (sg.getPropIfPresent("CONNECT", connect)) {
-        // annotations go on the last bracket of an sgroup
-        const auto &brkShp = *postShapes_[labelBrk];
-        // CONNECT goes at the top, but that's now the bottom due to the y
-        // inversion
-        auto botPt = brkShp.points_[2];
-        auto brkPt = brkShp.points_[3];
-        if ((!horizontal && brkShp.points_[1].y < botPt.y) ||
-            (horizontal && brkShp.points_[1].x > botPt.x)) {
-          botPt = brkShp.points_[1];
-          brkPt = brkShp.points_[0];
-        }
-        DrawAnnotation *da = new DrawAnnotation(
-            connect, TextAlignType::MIDDLE, "connect",
-            drawOptions_.annotationFontScale, botPt + (botPt - brkPt),
-            DrawColour(0.0, 0.0, 0.0), textDrawer_);
-        // if we're to the right of the bracket, we need to left justify,
-        // otherwise things seem to work as is
-        if (brkPt.x < botPt.x) {
-          da->align_ = TextAlignType::START;
-        }
-        annotations_.emplace_back(da);
-      }
 
-      std::string label;
-      if (sg.getPropIfPresent("LABEL", label)) {
-        auto da = drawBottomLabel(label, *postShapes_[labelBrk], drawOptions_,
-                                  textDrawer_, horizontal);
-        annotations_.emplace_back(da);
-      } else if (sg.getPropIfPresent("TYPE", label)) {
-        if (label == "GEN") {
-          // ChemDraw doesn't draw the GEN (type=generic) label.
-          continue;
+        std::string label;
+        if (sg.getPropIfPresent("LABEL", label)) {
+          auto da = drawBottomLabel(label, *postShapes_[labelBrk], drawOptions_,
+                                    textDrawer_, horizontal);
+          annotations_.emplace_back(da);
+        } else if (sg.getPropIfPresent("TYPE", label)) {
+          if (label == "GEN") {
+            // ChemDraw doesn't draw the GEN (type=generic) label.
+            continue;
+          }
+          // draw the lowercase type if there's no label to go there.
+          std::transform(label.begin(), label.end(), label.begin(), ::tolower);
+          auto da = drawBottomLabel(label, *postShapes_[labelBrk], drawOptions_,
+                                    textDrawer_, horizontal);
+          annotations_.emplace_back(da);
         }
-        // draw the lowercase type if there's no label to go there.
-        std::transform(label.begin(), label.end(), label.begin(), ::tolower);
-        auto da = drawBottomLabel(label, *postShapes_[labelBrk], drawOptions_,
-                                  textDrawer_, horizontal);
-        annotations_.emplace_back(da);
+      } catch (std::runtime_error &e) {
+        // the bracket had no length so can be ignored.
       }
     }
   }
@@ -2878,13 +2882,12 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
     // If the nbr has the same coords as atom, bond_vec comes out as NaN, NaN
     // (issue 6559), so use a short arbitrary vector instead.
     Point2D bond_vec;
-    if ((at_cds - atCds_[nbr]).lengthSq() < 0.0001) {
-      bond_vec.x = 0.1;
-      bond_vec.y = 0.1;
-    } else {
+    try {
       bond_vec = at_cds.directionVector(atCds_[nbr]);
+    } catch (const std::runtime_error &e) {
+      bond_vec.x = 0.7071;
+      bond_vec.y = 0.7071;
     }
-    bond_vec.normalize();
     bond_vecs.push_back(bond_vec);
   }
 
@@ -3653,15 +3656,15 @@ Point2D DrawMol::doubleBondEnd(unsigned int at1, unsigned int at2,
   v23perp.normalize();
 
   Point2D bis = v21 + v23;
-  if (bis.lengthSq() < 1.0e-6) {
+  try {
+    bis.normalize();
+  } catch (std::exception &e) {
     // if the bonds are colinear, bis comes out as 0, and thus normalizes
     // to NaN which gives a very ugly result (Github #6027).  It's safe
-    // to use v23perp in this case, so long as is on the right side of the
+    // to use v23perp in this case, so long as it is on the right side of the
     // bond, which will be checked on return.
     return (atCds_[at2] - v23perp * offset);
   }
-
-  bis.normalize();
   if (v23perp.dotProduct(bis) < 0.0) {
     v23perp = v23perp * -1.0;
   }
