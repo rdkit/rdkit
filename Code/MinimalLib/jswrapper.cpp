@@ -341,7 +341,7 @@ emscripten::val get_frags_helper(const JSMolBase &self,
                                  const std::string &details) {
   auto res = self.get_frags(details);
   auto obj = emscripten::val::object();
-  obj.set("molList", emscripten::val(res.first, emscripten::allow_raw_pointers()));
+  obj.set("molList", emscripten::val(res.first));
   obj.set("mappings", res.second);
   return obj;
 }
@@ -452,8 +452,8 @@ emscripten::val get_mmpa_frags_helper(const JSMolBase &self,
                                       unsigned int maxCutBonds) {
   auto obj = emscripten::val::object();
   auto pairs = self.get_mmpa_frags(minCuts, maxCuts, maxCutBonds);
-  obj.set("cores", emscripten::val(pairs.first, emscripten::allow_raw_pointers()));
-  obj.set("sidechains", emscripten::val(pairs.second, emscripten::allow_raw_pointers()));
+  obj.set("cores", emscripten::val(pairs.first));
+  obj.set("sidechains", emscripten::val(pairs.second));
   return obj;
 }
 #endif
