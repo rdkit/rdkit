@@ -13,27 +13,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Dockerfile_1_deps
+      - name: Build WASM
         uses: docker/build-push-action@v5
         with:
-          context: ./Code/MinimalLib/docker
-          file: Code/MinimalLib/docker/Dockerfile_1_deps
+          context: .
+          file: Code/MinimalLib/docker/build-wasm.Dockerfile
+          target: export-stage
           outputs: type=local,dest=dist
           push: false
 
-      - name: Build Dockerfile_2_src
-        uses: docker/build-push-action@v5
-        with:
-          context: ./Code/MinimalLib/docker
-          file: Code/MinimalLib/docker/Dockerfile_2_rdkit_copy_from_local
-          outputs: type=local,dest=dist
-          push: false
-
-      - name: Build Dockerfile_3_build
-        uses: docker/build-push-action@v5
-        with:
-          context: ./Code/MinimalLib/docker
-          file: Code/MinimalLib/docker/Dockerfile_3_rdkit_build
-          outputs: type=local,dest=dist
-          push: false
+      - name: Test WASM artifacts
+        run: RDKIT_MINIMAL_JS=$PWD/dist/RDKit_minimal.js node Code/MinimalLib/tests/tests.js
 
