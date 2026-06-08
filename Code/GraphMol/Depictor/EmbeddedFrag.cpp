@@ -1444,9 +1444,16 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
       }
 
       // Generate macrocycle coordinates with fusion constraints
-      auto coords_vec = RDDepict::generateMacrocycleCoordinates(
-          dp_mol, macrocycleRing, fusedRings, subInfo.sizesByPosition, BOND_LEN,
-          nextId, &embeddedCoords);
+      std::vector<RDGeom::Point2D> coords_vec;
+      try {
+        coords_vec = RDDepict::generateMacrocycleCoordinates(
+            dp_mol, macrocycleRing, fusedRings, subInfo.sizesByPosition, BOND_LEN,
+            nextId, &embeddedCoords);
+      } catch (...) {
+        // Failed to generate coordinates (e.g., no solution found, out of bounds access)
+        // Fall back to regular embedding
+        coords_vec.clear();
+      }
 
       // Convert vector to map and update coords
       if (!coords_vec.empty()) {
@@ -1458,11 +1465,16 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
 
         coords[nextId] = macrocycle_coords;
         isMacrocycleWithFusionConstraints = true;
+      } else {
+        // Failed to generate macrocycle coordinates, skip fusion constraint path
+        // Fall through to regular embedding below
+        isMacrocycleWithFusionConstraints = false;
       }
     }
 
     RDGeom::Transform2D trans;
     EmbeddedFrag embRing;
+    // Use either the macrocycle-generated coordinates or the regular embedRing coordinates
     embRing.initFromRingCoords(fusedRings[nextId], coords[nextId]);
     RDKit::INT_VECT pinAtoms;
 

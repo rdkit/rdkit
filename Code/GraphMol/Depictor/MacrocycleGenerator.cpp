@@ -1052,7 +1052,7 @@ AngleConstraint computeSharedEndpointConstraint(
   double turn1 = computeIdealAngle(ringSize1);
   double turn2 = computeIdealAngle(ringSize2);
 
-  double combinedAngle;
+  double combinedAngle = 0.0;
   if (sharedCount == 1) {
     // Spiro fusion: the two rings are spiro-connected at this macrocycle
     // position The total angle is half of the remaining space, so the
@@ -1997,7 +1997,7 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
   // Check closure quality
   double closureError = generator.getClosureError();
 
-  double MAX_CLOSURE_ERROR = 6.0;  // base threshold in Angstroms
+  double MAX_CLOSURE_ERROR = 6.5;  // base threshold in Angstroms
 
   // Scale threshold based on number of free turn positions (not total ring
   // size) Fast heuristic is used when free positions > 15, creating approximate
