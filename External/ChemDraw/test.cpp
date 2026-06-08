@@ -1464,6 +1464,12 @@ TEST_CASE("Round TRIP") {
 	    std::cerr << "CXFAIL:" << entry.path() << " (mol)" << cxsmi1
                       << " != (mol-cdxml)" << cxsmi2 << std::endl;
             failed++;
+	    std::cerr << "========================================" << std::endl;
+	    mol->debugMol(std::cerr);
+	    std::cerr << "----------------------------------------" << std::endl;
+	    mols[0]->debugMol(std::cerr);
+	    std::cerr << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+	    std::cerr << cdx << std::endl;
 	  }
           delete mol;
         }
