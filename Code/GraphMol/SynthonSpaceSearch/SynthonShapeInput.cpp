@@ -39,8 +39,8 @@ SynthonShapeInput &SynthonShapeInput::operator=(
   return *this;
 }
 
-void SynthonShapeInput::merge(SynthonShapeInput &other) {
-  d_shapes->merge(*other.d_shapes);
+void SynthonShapeInput::merge(SynthonShapeInput &&other) {
+  d_shapes->merge(std::move(*other.d_shapes));
   d_dummyVolumes.reserve(d_dummyVolumes.size() + other.d_dummyVolumes.size());
   d_dummyVolumes.insert(d_dummyVolumes.end(),
                         std::make_move_iterator(other.d_dummyVolumes.begin()),

@@ -55,7 +55,7 @@ class SynthonShapeInput {
   // Merge the other SynthonShapeInput, assuming it has the correct number
   // of atoms etc.  Empties other, unless they can't be merged in which case
   // it returns unscathed.
-  void merge(SynthonShapeInput &other);
+  void merge(SynthonShapeInput &&other);
 
   std::string toString() const {
 #ifndef RDK_USE_BOOST_SERIALIZATION

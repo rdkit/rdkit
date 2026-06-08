@@ -1422,12 +1422,10 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
           allShapes = std::make_unique<SynthonShapeInput>(*isomer, -1,
                                                           shapeOpts, ovlyOpts);
         } else {
-          auto shapes = std::make_unique<SynthonShapeInput>(
-              *isomer, -1, shapeOpts, ovlyOpts);
           // Because stereoisomers should all have the same number of atoms and
           // bonds, we can just combine the shapes into one set.  We don't need
           // to keep track of which stereoisomer they came from.
-          allShapes->merge(*shapes);
+          allShapes->merge(SynthonShapeInput(*isomer, -1, shapeOpts, ovlyOpts));
         }
       } catch (ValueErrorException &e) {
         // It throws an exception if it doesn't have a radius for an atom
