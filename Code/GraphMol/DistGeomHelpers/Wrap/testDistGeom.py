@@ -419,64 +419,48 @@ class TestCase(unittest.TestCase):
       self.assertAlmostEqual((mp - rp).Length(), 0.0, 3)
 
   def test9EmbedParams(self):
-    mol = Chem.AddHs(Chem.MolFromSmiles('OCCC'))
-    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
-                      'simple_torsion.dg.mol')
-    ref = Chem.MolFromMolFile(fn, removeHs=False)
+    def runTest(filename, smiles, params):
+      mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
+      fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data', filename)
+      ref = Chem.MolFromMolFile(fn, removeHs=False)
+      params.randomSeed = 42
+      self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+      self._compareConfs(mol, ref, 0, 0)
+    
+    smiles = 'OCCC'
+    fn = 'simple_torsion.dg.mol'
     params = rdDistGeom.EmbedParameters()
-    params.randomSeed = 42
-    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
-    self._compareConfs(mol, ref, 0, 0)
+    runTest(fn, smiles, params)
 
-    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
-                      'simple_torsion.etdg.mol')
-    ref = Chem.MolFromMolFile(fn, removeHs=False)
+    fn = 'simple_torsion.etdg.mol'
     params = rdDistGeom.EmbedParameters()
-    params.randomSeed = 42
     params.useExpTorsionAnglePrefs = True
-    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
-    self._compareConfs(mol, ref, 0, 0)
+    runTest(fn, smiles, params)
+
     params = rdDistGeom.ETDG()
-    params.randomSeed = 42
-    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
-    self._compareConfs(mol, ref, 0, 0)
+    runTest(fn, smiles, params)
 
-    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
-                      'simple_torsion.etkdg.mol')
-    ref = Chem.MolFromMolFile(fn, removeHs=False)
+    fn = 'simple_torsion.etkdg.mol'
     params = rdDistGeom.EmbedParameters()
-    params.randomSeed = 42
     params.useExpTorsionAnglePrefs = True
     params.useBasicKnowledge = True
-    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
-    self._compareConfs(mol, ref, 0, 0)
+    runTest(fn, smiles, params)
+
     params = rdDistGeom.ETKDG()
-    params.randomSeed = 42
-    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
-    self._compareConfs(mol, ref, 0, 0)
+    runTest(fn, smiles, params)
 
-    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
-                      'simple_torsion.kdg.mol')
-    ref = Chem.MolFromMolFile(fn, removeHs=False)
+    fn = 'simple_torsion.kdg.mol'
     params = rdDistGeom.EmbedParameters()
-    params.randomSeed = 42
     params.useBasicKnowledge = True
-    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
-    self._compareConfs(mol, ref, 0, 0)
-    params = rdDistGeom.KDG()
-    params.randomSeed = 42
-    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
-    self._compareConfs(mol, ref, 0, 0)
+    runTest(fn, smiles, params)
 
-  def test10ETKDGv2(self):
-    mol = Chem.AddHs(Chem.MolFromSmiles('n1cccc(C)c1ON'))
-    fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
-                      'torsion.etkdg.v2.mol')
-    ref = Chem.MolFromMolFile(fn, removeHs=False)
+    params = rdDistGeom.KDG()
+    runTest(fn, smiles, params)
+
+    smiles = 'n1cccc(C)c1ON'
+    fn = 'torsion.etkdg.v2.mol'
     params = rdDistGeom.ETKDGv2()
-    params.randomSeed = 42
-    self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
-    self._compareConfs(mol, ref, 0, 0)
+    runTest(fn, smiles, params)
 
   def assertDeterministicWithSeed(self, seed):
     input_mol = Chem.MolFromSmiles('CN(Cc1cnc2nc(N)nc(N)c2n1)c1ccc(C(=O)NC(CCC(=O)O)C(=O)O)cc1')

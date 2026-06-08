@@ -68,6 +68,8 @@ with open(args.outfile, 'w') as f:
         <td><span style="float:right"><img src="{d1}/{fn}" alt="{fns}"/></span></td>
         <td><img src="{d2}/{fn}" alt="{fns}"/></td>
         </tr>\n''')
+        else:
+            print(f"{fn} the same")
 
     f.write('''    </table>
   </body>

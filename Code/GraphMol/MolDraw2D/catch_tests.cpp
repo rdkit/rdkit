@@ -381,6 +381,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_Github9280_0.3.svg", 893100468U},
     {"test_Github9280_0.2.svg", 770838895U},
     {"testGithub9310_1.svg", 3761885012U}};
+    {"test_Github9280_0.2.svg", 770838895U},
+    {"testGithub9329_1.svg", 2464826369U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -11508,4 +11510,20 @@ TEST_CASE("Github 9310 - SVG Backgrounds not cleared in grid display") {
                     std::sregex_iterator()));
   CHECK(clear_count == 1);
   check_file_hash(nameBase + "_1.svg", 0U);
+}
+
+TEST_CASE("Github 9329 - zero length vector") {
+  auto m1 = "CCO |(0.0, 0.0,;0.0,0.0,;1.0,0.0,;)|"_smiles;
+  REQUIRE(m1);
+  MolDraw2DSVG drawer(400, 400);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  drawer.drawMolecule(*m1);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs("testGithub9329_1.svg");
+  outs << text;
+  outs.close();
+  // It used to throw an exception, so the test is just that we got something.
+  CHECK(!text.empty());
+  check_file_hash("testGithub9329_1.svg");
 }
