@@ -794,64 +794,65 @@ void DrawMol::extractBrackets() {
       Point2D longline = brkShp.points_[1] - brkShp.points_[2];
       try {
         longline.normalize();
-        static const double cos45 = 1.0 / sqrt(2.0);
-        bool horizontal = fabs(longline.x) > cos45;
-        size_t labelBrk = postShapes_.size() - 1;
-        for (int i = 1; i < numBrackets; ++i) {
-          const auto &brkShp = *postShapes_[postShapes_.size() - i - 1];
-          if (horizontal) {
-            if (brkShp.points_[2].y > postShapes_[labelBrk]->points_[2].y) {
-              labelBrk = postShapes_.size() - i - 1;
-            }
-          } else {
-            if (brkShp.points_[2].x > postShapes_[labelBrk]->points_[2].x) {
-              labelBrk = postShapes_.size() - i - 1;
-            }
-          }
-        }
-        std::string connect;
-        if (sg.getPropIfPresent("CONNECT", connect)) {
-          // annotations go on the last bracket of an sgroup
-          const auto &brkShp = *postShapes_[labelBrk];
-          // CONNECT goes at the top, but that's now the bottom due to the y
-          // inversion
-          auto botPt = brkShp.points_[2];
-          auto brkPt = brkShp.points_[3];
-          if ((!horizontal && brkShp.points_[1].y < botPt.y) ||
-              (horizontal && brkShp.points_[1].x > botPt.x)) {
-            botPt = brkShp.points_[1];
-            brkPt = brkShp.points_[0];
-              }
-          DrawAnnotation *da = new DrawAnnotation(
-              connect, TextAlignType::MIDDLE, "connect",
-              drawOptions_.annotationFontScale, botPt + (botPt - brkPt),
-              DrawColour(0.0, 0.0, 0.0), textDrawer_);
-          // if we're to the right of the bracket, we need to left justify,
-          // otherwise things seem to work as is
-          if (brkPt.x < botPt.x) {
-            da->align_ = TextAlignType::START;
-          }
-          annotations_.emplace_back(da);
-        }
-
-        std::string label;
-        if (sg.getPropIfPresent("LABEL", label)) {
-          auto da = drawBottomLabel(label, *postShapes_[labelBrk], drawOptions_,
-                                    textDrawer_, horizontal);
-          annotations_.emplace_back(da);
-        } else if (sg.getPropIfPresent("TYPE", label)) {
-          if (label == "GEN") {
-            // ChemDraw doesn't draw the GEN (type=generic) label.
-            continue;
-          }
-          // draw the lowercase type if there's no label to go there.
-          std::transform(label.begin(), label.end(), label.begin(), ::tolower);
-          auto da = drawBottomLabel(label, *postShapes_[labelBrk], drawOptions_,
-                                    textDrawer_, horizontal);
-          annotations_.emplace_back(da);
-        }
       } catch (std::runtime_error &e) {
         // the bracket had no length so can be ignored.
+        continue;
+      }
+      static const double cos45 = 1.0 / sqrt(2.0);
+      bool horizontal = fabs(longline.x) > cos45;
+      size_t labelBrk = postShapes_.size() - 1;
+      for (int i = 1; i < numBrackets; ++i) {
+        const auto &brkShp = *postShapes_[postShapes_.size() - i - 1];
+        if (horizontal) {
+          if (brkShp.points_[2].y > postShapes_[labelBrk]->points_[2].y) {
+            labelBrk = postShapes_.size() - i - 1;
+          }
+        } else {
+          if (brkShp.points_[2].x > postShapes_[labelBrk]->points_[2].x) {
+            labelBrk = postShapes_.size() - i - 1;
+          }
+        }
+      }
+      std::string connect;
+      if (sg.getPropIfPresent("CONNECT", connect)) {
+        // annotations go on the last bracket of an sgroup
+        const auto &brkShp = *postShapes_[labelBrk];
+        // CONNECT goes at the top, but that's now the bottom due to the y
+        // inversion
+        auto botPt = brkShp.points_[2];
+        auto brkPt = brkShp.points_[3];
+        if ((!horizontal && brkShp.points_[1].y < botPt.y) ||
+            (horizontal && brkShp.points_[1].x > botPt.x)) {
+          botPt = brkShp.points_[1];
+          brkPt = brkShp.points_[0];
+        }
+        DrawAnnotation *da = new DrawAnnotation(
+            connect, TextAlignType::MIDDLE, "connect",
+            drawOptions_.annotationFontScale, botPt + (botPt - brkPt),
+            DrawColour(0.0, 0.0, 0.0), textDrawer_);
+        // if we're to the right of the bracket, we need to left justify,
+        // otherwise things seem to work as is
+        if (brkPt.x < botPt.x) {
+          da->align_ = TextAlignType::START;
+        }
+        annotations_.emplace_back(da);
+      }
+
+      std::string label;
+      if (sg.getPropIfPresent("LABEL", label)) {
+        auto da = drawBottomLabel(label, *postShapes_[labelBrk], drawOptions_,
+                                  textDrawer_, horizontal);
+        annotations_.emplace_back(da);
+      } else if (sg.getPropIfPresent("TYPE", label)) {
+        if (label == "GEN") {
+          // ChemDraw doesn't draw the GEN (type=generic) label.
+          continue;
+        }
+        // draw the lowercase type if there's no label to go there.
+        std::transform(label.begin(), label.end(), label.begin(), ::tolower);
+        auto da = drawBottomLabel(label, *postShapes_[labelBrk], drawOptions_,
+                                  textDrawer_, horizontal);
+        annotations_.emplace_back(da);
       }
     }
   }
