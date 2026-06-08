@@ -1437,6 +1437,8 @@ TEST_CASE("Round TRIP") {
             failed++;
             continue;
           }
+
+
           auto smi2 = MolToSmiles(*mols[0]);
           if (smi1 != smi2) {
             // std::cerr <<
@@ -1452,6 +1454,17 @@ TEST_CASE("Round TRIP") {
             // std::cerr << "PASS:" << entry.path() << std::endl;
           }
           // CHECK(smi1 == smi2);
+	  SmilesWriteParams ps;
+
+	  unsigned int flags = SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER |
+	                       SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
+	  auto cxsmi1 = MolToCXSmiles(*mol, ps, flags);
+	  auto cxsmi2 = MolToCXSmiles(*mols[0], ps, flags);
+	  if(cxsmi1 != cxsmi2) {
+	    std::cerr << "CXFAIL:" << entry.path() << " (mol)" << cxsmi1
+                      << " != (mol-cdxml)" << cxsmi2 << std::endl;
+            failed++;
+	  }
           delete mol;
         }
       }
