@@ -1659,6 +1659,7 @@ TEST_CASE("profileBoundsMatrixBuilder") {
     MolOps::addHs(*mol);
     DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
     DGeomHelpers::initBoundsMat(bm);
+    DGeomHelpers::setTopolBounds(*mol, bm);
   }
 
   auto end = std::chrono::high_resolution_clock::now();
