@@ -15,7 +15,7 @@ const {
   } = require('perf_hooks');
 // the default path to RDKit_minimal.js can be overridden through
 // the RDKIT_MINIMAL_JS variable if needed
-const minimalLib = process.env.RDKIT_MINIMAL_JS || '../demo/RDKit_minimal.js';
+const minimalLib = process.env.RDKIT_MINIMAL_JS || '../dist/RDKit_minimal.js';
 console.log('Loading ' + minimalLib);
 var initRDKitModule = require(minimalLib);
 var RDKitModule;
