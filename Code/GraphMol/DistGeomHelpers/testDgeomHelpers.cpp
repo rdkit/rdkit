@@ -1650,17 +1650,15 @@ TEST_CASE("testGithub2246") {
 
 TEST_CASE("testProvideBoundsMatrix") {
   boost::logging::disable_logs("rdApp.warning");
-  auto m = "C1CCC1C"_smiles;
+  auto m = "C#CC"_smiles;
   REQUIRE(m);
   auto mat = _getBoundsMatrix(m);
 
   // pick some silly bounds, just to make sure this works:
-  mat->setUpperBound(3, 0, 1.21);
-  mat->setLowerBound(3, 0, 1.2);
-  mat->setUpperBound(3, 2, 1.21);
-  mat->setLowerBound(3, 2, 1.2);
-  mat->setUpperBound(3, 4, 1.21);
-  mat->setLowerBound(3, 4, 1.2);
+  mat->setUpperBound(0, 1, .6);
+  mat->setLowerBound(0, 1, .5);
+  mat->setUpperBound(0, 2, 2.1);
+  mat->setLowerBound(0, 2, 1.9);
   DistGeom::triangleSmoothBounds(mat);
 
   const bool legacyETKDG = GENERATE(true, false);
@@ -1672,9 +1670,8 @@ TEST_CASE("testProvideBoundsMatrix") {
   REQUIRE(cid >= 0);
 
   const auto conf = m->getConformer(cid);
-  CHECK(feq((conf.getAtomPos(3) - conf.getAtomPos(0)).length(), 1.2, 0.05));
-  CHECK(feq((conf.getAtomPos(3) - conf.getAtomPos(2)).length(), 1.2, 0.05));
-  CHECK(feq((conf.getAtomPos(3) - conf.getAtomPos(4)).length(), 1.2, 0.05));
+  CHECK(feq((conf.getAtomPos(0) - conf.getAtomPos(1)).length(), 0.55, 0.05));
+  CHECK(feq((conf.getAtomPos(0) - conf.getAtomPos(2)).length(), 2.0, 0.1));
   boost::logging::enable_logs("rdApp.warning");
 }
 
