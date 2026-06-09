@@ -1819,7 +1819,7 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
       // with 4 membered rings
       // this is a fix for Issue 244
 
-      const unsigned int pid = std::min(aid1, aid5) * na + std::max(aid1, aid5);
+      const unsigned int pid = getUnifiedId(aid1, aid5, na);
 
       if (accumData.visitedBound(pid, DistType::DIST14)) {
         return;
@@ -1834,10 +1834,8 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
       }
 
       if (aid1 != aid5) {  // FIX: do we need this
-        unsigned int pid1 = aid1 * na + aid5;
-        unsigned int pid2 = aid5 * na + aid1;
         if ((mmat->getLowerBound(aid1, aid5) < DIST12_DELTA) ||
-            (accumData.set15Atoms[pid1]) || (accumData.set15Atoms[pid2])) {
+            accumData.set15Atoms[pid]) {
           d4 = accumData.bondLengths[i];
           ang34 = accumData.bondAngles->getVal(bid3, i);
           unsigned long pathId =
@@ -1908,8 +1906,8 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
 
           // std::cerr<<"3: "<<aid1<<"-"<<aid5<<std::endl;
           _checkAndSetBounds(aid1, aid5, dl, du, mmat);
-          accumData.set15Atoms[aid1 * na + aid5] = 1;
-          accumData.set15Atoms[aid5 * na + aid1] = 1;
+          accumData.set15Atoms.set(pid);
+          // accumData.set15Atoms[aid5 * na + aid1] = 1;
         }
       }
     }
