@@ -577,17 +577,9 @@ TEST_CASE("Fragment Mode") {
   // Use the smaller molecule as the probe
   auto scores = GaussianShape::AlignShape(refShape, probeShape, &xform, opts);
   // These are close to the values above for starting from the xtal structures.
-  #if defined(__aarch64__) || defined(_M_ARM64)
-  CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.332, 0.005));
-  #else
   CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.315, 0.005));
-  #endif
   CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.413, 0.005));
-  #if defined(__aarch64__) || defined(_M_ARM64)
-  CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.251, 0.005));
-  #else
   CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.220, 0.005));
-  #endif
 }
 
 TEST_CASE("custom feature points") {
