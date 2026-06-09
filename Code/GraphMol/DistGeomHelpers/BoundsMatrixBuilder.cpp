@@ -1364,8 +1364,6 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   std::uint64_t nb = mol.getNumBonds();
   boost::dynamic_bitset<> ringBondPairs(nb * nb);
   boost::dynamic_bitset<> donePaths(nb * nb * nb);
-  // std::unordered_set<std::uint64_t> ringBondPairs;
-  // std::unordered_set<std::uint64_t> donePaths;
   // first we will deal with 1-4 atoms that belong to the same ring
   for (const auto &bring : bondRings) {
     const auto rSize = bring.size();
@@ -1384,11 +1382,10 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
       if (rSize > 5) {
         if (useMacrocycle14config && rSize >= minMacrocycleRingSize) {
-          _set14BoundHelper(
-              //_setMacrocycleAllInSameRing14Bounds(
-              mol, mol.getBondWithIdx(bid1), mol.getBondWithIdx(bid2),
-              mol.getBondWithIdx(bid3), Type14::MACROCYCLE_ALL_IN_SAME_RING,
-              accumData, mmat, distMatrix, {});
+          _set14BoundHelper(mol, mol.getBondWithIdx(bid1),
+                            mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
+                            Type14::MACROCYCLE_ALL_IN_SAME_RING, accumData,
+                            mmat, distMatrix, {});
           bidIsMacrocycle.insert(bid2);
         } else {
           _set14BoundHelper(mol, mol.getBondWithIdx(bid1),
@@ -1414,20 +1411,12 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
           auto bid3 = bnd3->getIdx();
           if (bid3 != bid2) {
             auto id = getUnifiedId(bid1, bid2, bid3, nb);
-            // auto id2 = bid3 * nb * nb + bid2 * nb + bid1;
             if (!donePaths[id]) {  // == donePaths.end()) {
               // we haven't dealt with this path before
               auto pid1 = getUnifiedId(bid1, bid2, nb);
               auto pid2 = getUnifiedId(bid2, bid3, nb);
-              // auto pid2 = bid2 * nb + bid1;
-              // auto pid3 = bid2 * nb + bid3;
-              // auto pid4 = bid3 * nb + bid2;
 
-              if (ringBondPairs[pid1] ||
-                  ringBondPairs[pid2]  // != ringBondPairs.end()  //||
-                  // ringBondPairs.find(pid3) != ringBondPairs.end() ||
-                  // ringBondPairs.find(pid4) != ringBondPairs.end()
-              ) {
+              if (ringBondPairs[pid1] || ringBondPairs[pid2]) {
                 // either (bid1, bid2) or (bid2, bid3) are in the
                 // same ring (note all three cannot be in the same
                 // ring; we dealt with that before)
@@ -1907,7 +1896,6 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
           // std::cerr<<"3: "<<aid1<<"-"<<aid5<<std::endl;
           _checkAndSetBounds(aid1, aid5, dl, du, mmat);
           accumData.set15Atoms.set(pid);
-          // accumData.set15Atoms[aid5 * na + aid1] = 1;
         }
       }
     }
