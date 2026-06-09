@@ -11,3 +11,7 @@ rdkit_catch_test(testGaussianShape catch_tests.cpp LINK_LIBRARIES GaussianShape
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
 endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()
