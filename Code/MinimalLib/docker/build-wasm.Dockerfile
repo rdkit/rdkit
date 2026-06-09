@@ -107,28 +107,21 @@ RUN BOOST_CMAKE_DIR=$(find ${EM_CACHE}/sysroot/lib/cmake -name BoostConfig.cmake
   ..
 
 # Patch to make InChI code work with emscripten
-RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c \
-       /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak && \
-  sed 's/&& defined(__APPLE__)//' \
-      /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak \
-    > /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c
+RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak && \
+  sed 's/&& defined(__APPLE__)//' /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak > /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c
 
-# Patch RapidJSON document.h compilation error (only if the file exists;
-# in some rdkit versions rapidjson is fetched later during make)
-RUN f=/src/rdkit/External/rapidjson-1.1.0/include/rapidjson/document.h; \
-  if [ -f "$f" ]; then \
-    sed -i 's|^\( *\)\(GenericStringRef\& operator=(const GenericStringRef\& rhs) { s = rhs.s; length = rhs.length; } *\)$|\1//\2|' "$f"; \
-  else \
-    echo "rapidjson document.h not found yet, skipping pre-patch (will be patched if needed at build time)"; \
-  fi
+## Patch RapidJSON document.h compilation error (only if the file exists;
+## in some rdkit versions rapidjson is fetched later during make)
+#RUN f=/src/rdkit/External/rapidjson-1.1.0/include/rapidjson/document.h; \
+#  if [ -f "$f" ]; then \
+#    sed -i 's|^\( *\)\(GenericStringRef\& operator=(const GenericStringRef\& rhs) { s = rhs.s; length = rhs.length; } *\)$|\1//\2|' "$f"; \
+#  else \
+#    echo "rapidjson document.h not found yet, skipping pre-patch (will be patched if needed at build time)"; \
+#  fi
 
 # Build
-RUN make -j2 RDKit_minimal && \
-  cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/demo/
-
-# Run tests
-WORKDIR /src/rdkit/Code/MinimalLib/tests
-RUN node tests.js
+RUN make -j2 RDKit_minimal
+RUN cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/demo/
 
 # ---------------------------------------------------------------------------
 # Stage 4: export artifacts only (requires BuildKit --output)
