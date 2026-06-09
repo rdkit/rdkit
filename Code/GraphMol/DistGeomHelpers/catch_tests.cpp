@@ -1644,25 +1644,3 @@ TEST_CASE("Github #9143: ETKDGv3 generating twisted amides") {
     }
   }
 }
-
-TEST_CASE("profileBoundsMatrixBuilder") {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname =
-      rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/profiling_mols.sdf";
-  SDMolSupplier sdsup(fname);
-
-  auto start = std::chrono::high_resolution_clock::now();
-
-  for (auto i = 0u; i < sdsup.length(); ++i) {
-    std::unique_ptr<RWMol> mol(static_cast<RWMol *>(sdsup[i]));
-    REQUIRE(mol);
-    MolOps::addHs(*mol);
-    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
-    DGeomHelpers::initBoundsMat(bm);
-    DGeomHelpers::setTopolBounds(*mol, bm);
-  }
-
-  auto end = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
-  std::cout << duration.count() << std::endl;
-}
