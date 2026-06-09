@@ -1149,97 +1149,96 @@ bool _Valence3ClCleanUp1(RWMol &mol, Atom *atom) {
 }
 
 void cleanUp(RWMol &mol) {
-  ROMol::AtomIterator ai;
   bool aromHolder;
-  for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
-    switch ((*ai)->getAtomicNum()) {
+  for (const auto atom : mol.atoms()) {
+    switch (atom->getAtomicNum()) {
       case 7:
-        if ((*ai)->calcExplicitValence(false) == 4) {
-          if (_Valence4NCleanUp1(mol, *ai)) {
+        if (atom->calcExplicitValence(false) == 4) {
+          if (_Valence4NCleanUp1(mol, atom)) {
             continue;
           }
-          if ((*ai)->getFormalCharge() == -1) {
-            if (_Valence4NCleanUp2(mol, *ai)) {
+          if (atom->getFormalCharge() == -1) {
+            if (_Valence4NCleanUp2(mol, atom)) {
               continue;
             }
           }
           continue;
         }
 
-        if ((*ai)->getFormalCharge()) {
+        if (atom->getFormalCharge()) {
           continue;
         }
-        aromHolder = (*ai)->getIsAromatic();
-        (*ai)->setIsAromatic(0);
+        aromHolder = atom->getIsAromatic();
+        atom->setIsAromatic(0);
 
-        if ((*ai)->calcExplicitValence(false) == 5) {
+        if (atom->calcExplicitValence(false) == 5) {
           // rings CN1=CCN=CC=1, CN1=NCOCC=1, [N]=C1N=CN=N1, [N]=C1C=CN=N1
-          (_Valence5NCleanUp6(mol, *ai)) || (_Valence5NCleanUp7(mol, *ai)) ||
-              (_Valence5NCleanUp8(mol, *ai)) ||
-              (_Valence5NCleanUp9(mol, *ai)) ||
-              (_Valence5NCleanUpA(mol, *ai)) ||
+          (_Valence5NCleanUp6(mol, atom)) || (_Valence5NCleanUp7(mol, atom)) ||
+              (_Valence5NCleanUp8(mol, atom)) ||
+              (_Valence5NCleanUp9(mol, atom)) ||
+              (_Valence5NCleanUpA(mol, atom)) ||
               // try search for valence-5 N connected to a N+
-              (_Valence5NCleanUp1(mol, *ai)) ||
+              (_Valence5NCleanUp1(mol, atom)) ||
               // connected to N- through a tiple then single bond
-              (_Valence5NCleanUp2(mol, *ai)) ||
+              (_Valence5NCleanUp2(mol, atom)) ||
               // directly to a N
-              (_Valence5NCleanUp3(mol, *ai)) ||
+              (_Valence5NCleanUp3(mol, atom)) ||
               // to two Si- via double bonds
-              (_Valence5NCleanUp4(mol, *ai)) ||
+              (_Valence5NCleanUp4(mol, atom)) ||
               // alternating bonds to O
-              (_Valence5NCleanUp5(mol, *ai, 8)) ||
+              (_Valence5NCleanUp5(mol, atom, 8)) ||
               // alternating bonds to S
-              (_Valence5NCleanUp5(mol, *ai, 16)) ||
+              (_Valence5NCleanUp5(mol, atom, 16)) ||
               // alternating bonds to S
-              (_Valence5NCleanUp5(mol, *ai, 9)) ||
+              (_Valence5NCleanUp5(mol, atom, 9)) ||
               // alternating bonds to S
-              (_Valence5NCleanUp5(mol, *ai, 17)) ||
+              (_Valence5NCleanUp5(mol, atom, 17)) ||
               // last resort
-              (_Valence5NCleanUpB(mol, *ai));
+              (_Valence5NCleanUpB(mol, atom));
         }
         if (aromHolder) {
-          (*ai)->setIsAromatic(1);
+          atom->setIsAromatic(1);
         }
         break;
       case 17:
-        if ((*ai)->calcExplicitValence(false) == 8 &&
-            _Valence8ClCleanUp1(mol, *ai)) {
+        if (atom->calcExplicitValence(false) == 8 &&
+            _Valence8ClCleanUp1(mol, atom)) {
           continue;
         }
-        if ((*ai)->calcExplicitValence(false) == 5 &&
-            _Valence5ClCleanUp1(mol, *ai)) {
+        if (atom->calcExplicitValence(false) == 5 &&
+            _Valence5ClCleanUp1(mol, atom)) {
           continue;
         }
-        if ((*ai)->calcExplicitValence(false) == 3 &&
-            _Valence3ClCleanUp1(mol, *ai)) {
+        if (atom->calcExplicitValence(false) == 3 &&
+            _Valence3ClCleanUp1(mol, atom)) {
           continue;
         }
         break;
       case 16:
-        if ((*ai)->calcExplicitValence(false) == 7) {
-          if (_Valence7SCleanUp1(mol, *ai)) {
+        if (atom->calcExplicitValence(false) == 7) {
+          if (_Valence7SCleanUp1(mol, atom)) {
             continue;
           }
-          if (_Valence7SCleanUp2(mol, *ai)) {
+          if (_Valence7SCleanUp2(mol, atom)) {
             continue;
           }
-          if (_Valence7SCleanUp3(mol, *ai)) {
+          if (_Valence7SCleanUp3(mol, atom)) {
             continue;
           }
-          _Valence8SCleanUp1(mol, *ai);
-        } else if ((*ai)->calcExplicitValence(false) == 8) {
-          _Valence8SCleanUp1(mol, *ai);
+          _Valence8SCleanUp1(mol, atom);
+        } else if (atom->calcExplicitValence(false) == 8) {
+          _Valence8SCleanUp1(mol, atom);
         }
         break;
       case 35:
-        if ((*ai)->calcExplicitValence(false) == 3 &&
-            (*ai)->getFormalCharge() == 0) {
+        if (atom->calcExplicitValence(false) == 3 &&
+            atom->getFormalCharge() == 0) {
           // connected to Se. Example: PubChem 10787526
-          if ((*ai)->getDegree() == 1) {
+          if (atom->getDegree() == 1) {
             RWMol::ADJ_ITER nid, end;
-            boost::tie(nid, end) = mol.getAtomNeighbors(*ai);
+            boost::tie(nid, end) = mol.getAtomNeighbors(atom);
             if (mol.getAtomWithIdx(*nid)->getAtomicNum() == 34) {
-              mol.getBondBetweenAtoms((*ai)->getIdx(), *nid)
+              mol.getBondBetweenAtoms(atom->getIdx(), *nid)
                   ->setBondType(Bond::SINGLE);
             }
           }
@@ -1440,8 +1439,7 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
         Chirality::assignAtomCIPRanks(*m, ranks);
         for (unsigned int i = 0; i < numStereo0D; i++) {
           inchi_Stereo0D *stereo0DPtr = inchiOutput.stereo0D + i;
-          if (stereo0DPtr->parity == INCHI_PARITY_NONE ||
-              stereo0DPtr->parity == INCHI_PARITY_UNDEFINED) {
+          if (stereo0DPtr->parity == INCHI_PARITY_NONE) {
             continue;
           }
           switch (stereo0DPtr->type) {
@@ -1586,6 +1584,10 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
               break;
             }
             case INCHI_StereoType_Tetrahedral: {
+              if (stereo0DPtr->parity == INCHI_PARITY_UNDEFINED ||
+                  stereo0DPtr->parity == INCHI_PARITY_UNKNOWN) {
+                break;
+              }
               unsigned int c =
                   indexToAtomIndexMapping[stereo0DPtr->central_atom];
               Atom *atom = m->getAtomWithIdx(c);
@@ -2035,14 +2037,44 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
       stereo0D.type = INCHI_StereoType_DoubleBond;
       stereo0DEntries.push_back(stereo0D);
     } else if (bond->getStereo() == Bond::STEREOANY) {
-      // have to treat STEREOANY separately because RDKit will clear out
-      // StereoAtoms information.
-      // Here we just change the coordinates of the two end atoms - to bring
-      // them really close - so that InChI will not try to infer stereobond
-      // info from coordinates.
+      // Collapse coordinates so InChI cannot infer stereo from geometry,
+      // and send a proper stereo0D with UNKNOWN parity so that -SUU
+      // produces the correct unknown annotation. StereoAtoms may be
+      // cleared for STEREOANY, so we find neighbors by iterating bonds.
       inchiAtoms[atomIndex1].x = inchiAtoms[atomIndex2].x;
       inchiAtoms[atomIndex1].y = inchiAtoms[atomIndex2].y;
       inchiAtoms[atomIndex1].z = inchiAtoms[atomIndex2].z;
+      int leftNbr = -1;
+      int rightNbr = -1;
+      for (const auto &nbond : m->atomBonds(m->getAtomWithIdx(atomIndex1))) {
+        auto other = nbond->getOtherAtomIdx(atomIndex1);
+        if (other != static_cast<unsigned int>(atomIndex2)) {
+          leftNbr = other;
+          break;
+        }
+      }
+      for (const auto &nbond : m->atomBonds(m->getAtomWithIdx(atomIndex2))) {
+        auto other = nbond->getOtherAtomIdx(atomIndex2);
+        if (other != static_cast<unsigned int>(atomIndex1)) {
+          rightNbr = other;
+          break;
+        }
+      }
+      if (leftNbr >= 0 && rightNbr >= 0) {
+        inchi_Stereo0D stereo0D;
+        stereo0D.parity = INCHI_PARITY_UNKNOWN;
+        stereo0D.neighbor[0] = leftNbr;
+        stereo0D.neighbor[1] = atomIndex1;
+        stereo0D.neighbor[2] = atomIndex2;
+        stereo0D.neighbor[3] = rightNbr;
+        if (!m->getBondBetweenAtoms(stereo0D.neighbor[0],
+                                    stereo0D.neighbor[1])) {
+          std::swap(stereo0D.neighbor[0], stereo0D.neighbor[3]);
+        }
+        stereo0D.central_atom = NO_ATOM;
+        stereo0D.type = INCHI_StereoType_DoubleBond;
+        stereo0DEntries.push_back(stereo0D);
+      }
     }
 
     // number of bonds

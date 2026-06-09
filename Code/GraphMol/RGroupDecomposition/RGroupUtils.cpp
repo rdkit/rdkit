@@ -127,9 +127,8 @@ bool isAtomWithMultipleNeighborsOrNotDummyRGroupAttachment(const Atom &atom) {
 }
 
 bool hasDummy(const RWMol &core) {
-  for (RWMol::ConstAtomIterator atIt = core.beginAtoms();
-       atIt != core.endAtoms(); ++atIt) {
-    if ((*atIt)->getAtomicNum() == 0) {
+  for (auto atom : core.atoms()) {
+    if (atom->getAtomicNum() == 0) {
       return true;
     }
   }

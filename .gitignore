@@ -133,6 +133,8 @@ __pycache__/
 
 /Data/eht_parms.dat
 
+/External/pubchem_shape/test_data/bulk.pubchem_out.sdf
+
 /Projects/DbCLI/testData/bzr/
 
 /rdkit/sping/tests/testallps.ps

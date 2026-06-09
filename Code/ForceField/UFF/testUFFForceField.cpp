@@ -14,6 +14,7 @@
 #include <RDGeneral/utils.h>
 #include <Geometry/point.h>
 
+#include <ForceField/FiniteDifference.h>
 #include <ForceField/ForceField.h>
 #include <ForceField/UFF/Params.h>
 #include <ForceField/UFF/BondStretch.h>
@@ -1656,6 +1657,44 @@ M  END
   std::cerr << "  done" << std::endl;
 }
 
+void testFiniteDifference() {
+  std::cerr << "-------------------------------------" << std::endl;
+  std::cerr << "    Test finite difference gradient check (P(F)(F)F)."
+            << std::endl;
+
+  // Trigonal pyramidal PF3: P-F = 1.57 Å, F-P-F ≈ 97°
+  const char *molBlock = R"MOL(
+     RDKit          3D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.4410 P   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4348    0.0000   -0.3307 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7174    1.2428   -0.3307 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7174   -1.2428   -0.3307 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  1  0
+  1  4  1  0
+M  END
+)MOL";
+
+  std::unique_ptr<ROMol> mol(
+      MolBlockToMol(molBlock, /*sanitize=*/false, /*removeHs=*/false));
+  TEST_ASSERT(mol);
+
+  std::unique_ptr<ForceFields::ForceField> ff(UFF::constructForceField(*mol));
+  TEST_ASSERT(ff);
+  ff->initialize();
+
+  // Tetrahedral geometry (F-P-F ≈ 109.5°) is away from the UFF
+  // inversion equilibrium (w0 ≈ 84.4°), so the gradient is non-trivial.
+  TEST_ASSERT(ff->calcEnergy() > 1.0);
+
+  double delta = ForceFields::calcFiniteDifference(*ff);
+  TEST_ASSERT(delta < 1e-6);
+
+  std::cerr << "  done" << std::endl;
+}
+
 int main() {
   test1();
   testUFF1();
@@ -1673,4 +1712,5 @@ int main() {
   testUFFAllConstraints();
   testUFFCopy();
   testUFFButaneScan();
+  testFiniteDifference();
 }

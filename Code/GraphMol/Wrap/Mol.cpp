@@ -757,6 +757,18 @@ struct mol_wrapper {
             "  NOTE:\n"
             "    - If the property has not been set, a KeyError exception will be raised.\n",
             boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def(
+            "GetProp", GetPyPropOrDefault<ROMol>,
+            (python::arg("self"), python::arg("key"),
+             python::arg("autoConvert") = false,
+             python::arg("default")),
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - autoConvert: if True attempt to convert the property into a python object\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: the property value, or default if the property is not present.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetDoubleProp", GetProp<ROMol, double>,
              python::args("self", "key"),
              "Returns the double value of the property if possible.\n\n"
@@ -767,6 +779,14 @@ struct mol_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def("GetDoubleProp", GetPropOrDefault<ROMol, double>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "Returns the double value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "    - default: value to return if the property is not present.\n\n"
+             "  RETURNS: a double, or default if the property is not present.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetIntProp", GetProp<ROMol, int>, python::args("self", "key"),
              "Returns the integer value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
@@ -775,6 +795,14 @@ struct mol_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def("GetIntProp", GetPropOrDefault<ROMol, int>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "Returns the integer value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "    - default: value to return if the property is not present.\n\n"
+             "  RETURNS: an integer, or default if the property is not present.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetUnsignedProp", GetProp<ROMol, unsigned int>,
              python::args("self", "key"),
@@ -786,6 +814,14 @@ struct mol_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def("GetUnsignedProp", GetPropOrDefault<ROMol, unsigned int>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "Returns the unsigned int value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "    - default: value to return if the property is not present.\n\n"
+             "  RETURNS: an unsigned integer, or default if the property is not present.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetBoolProp", GetProp<ROMol, bool>, python::args("self", "key"),
              "Returns the Bool value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
@@ -794,6 +830,14 @@ struct mol_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def("GetBoolProp", GetPropOrDefault<ROMol, bool>,
+             (python::arg("self"), python::arg("key"), python::arg("default")),
+             "Returns the Bool value of the property if possible.\n\n"
+             "  ARGUMENTS:\n"
+             "    - key: the name of the property to return (a string).\n\n"
+             "    - default: value to return if the property is not present.\n\n"
+             "  RETURNS: a bool, or default if the property is not present.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("ClearProp", MolClearProp<ROMol>, python::args("self", "key"),
              "Removes a property from the molecule.\n\n"

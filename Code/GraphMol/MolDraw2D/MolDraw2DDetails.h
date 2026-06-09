@@ -162,6 +162,25 @@ RDKIT_MOLDRAW2D_EXPORT void adjustLineEndForEllipse(const Point2D &centre,
                                                     double yradius, Point2D p1,
                                                     Point2D &p2);
 
+//! Holds the text and position of a DAT SGroup label.
+struct SGroupDataLabel {
+  std::string text;  ///< label text
+  Point2D pos;       ///< position in molecule coordinates
+  bool positioned;   ///< true if pos came from FIELDDISP; false if pos is
+                     ///< the associated atom's conformer position (fallback)
+  int atomIdx;       ///< index of the associated atom (-1 if none)
+};
+
+//! Returns the text and positions of DAT SGroup labels for a molecule,
+//! using the same placement logic as the drawing code.
+/*!
+  \param mol    the molecule
+  \param rotate optional rotation angle in degrees (default 0.0)
+  \return a vector of SGroupDataLabel objects, one per rendered DAT SGroup
+*/
+RDKIT_MOLDRAW2D_EXPORT std::vector<SGroupDataLabel> getSGroupDataLabels(
+    const ROMol &mol, double rotate = 0.0);
+
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

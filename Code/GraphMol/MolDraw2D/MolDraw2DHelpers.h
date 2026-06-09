@@ -215,6 +215,13 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                               // BuiltinRobotoRegular.
   DrawColour legendColour{0, 0,
                           0};  // color to be used for the legend (if present)
+  //! Legend position relative to the molecule (only Bottom supported in
+  //! drawMolecules grid; all four work for single-molecule drawing).
+  enum class LegendPosition { Bottom, Top, Left, Right };
+  LegendPosition legendPosition = LegendPosition::Bottom;
+  //! When legend is Left or Right, draw text vertically (one character per
+  //! line). Ignored for Top/Bottom.
+  bool legendVerticalText = true;
   double multipleBondOffset = 0.15;  // offset for the extra lines
                                      // in a multiple bond as a fraction of
                                      // mean bond length
@@ -315,6 +322,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;                        // if true wedged and dashed bonds are drawn
                                     // using symbolColour rather than inheriting
                                     // their colour from the atoms
+  bool singleColourBonds = false;   // if true all bonds are drawn using
+                                    // symbolColour rather than inheriting their
+                                    // colour from the atoms
   bool useMolBlockWedging = false;  // If the molecule came from a MolBlock,
                                     // prefer the wedging information that
                                     // provides.  If false, use RDKit rules.

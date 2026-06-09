@@ -156,14 +156,10 @@ boost::property_tree::ptree molToPTree(const ROMol &mol, int confId,
   unsigned bond_id = 0u;
 
   auto &bondArray = molecule.add("bondArray", "");
-  for (auto atom_itr = rwmol.beginAtoms(), atom_itr_end = rwmol.endAtoms();
-       atom_itr != atom_itr_end; ++atom_itr) {
-    const auto &atom = *atom_itr;
+  for (auto atom : rwmol.atoms()) {
     PRECONDITION(atom, "bad atom");
     const auto src = atom->getIdx();
-    for (auto bond_itrs = rwmol.getAtomBonds(atom);
-         bond_itrs.first != bond_itrs.second; ++bond_itrs.first) {
-      auto *bptr = rwmol[*bond_itrs.first];
+    for (auto bptr : rwmol.atomBonds(atom)) {
       auto *nptr = bptr->getOtherAtom(atom);
       const auto dst = nptr->getIdx();
       if (dst < src) {

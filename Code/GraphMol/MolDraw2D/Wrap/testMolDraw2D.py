@@ -891,6 +891,7 @@ M  END''')
       d2d.drawOptions().addAtomIndices = True
       d2d.drawOptions().addBondIndices = True
       d2d.drawOptions().singleColourWedgeBonds = True  # test symbolColour
+      d2d.drawOptions().singleColourBonds = True # just test it's settable
       setattr(d2d.drawOptions(), attr, val)
       aval = getattr(d2d.drawOptions(), attr)
       for idx in range(4):
@@ -988,6 +989,15 @@ M  END
     text = drawer.GetDrawingText()
     highlightCoords = extractCoords(text)
     self.assertTrue(checkCoords(referenceCoords, highlightCoords))
+
+  def testLegendPosition(self):
+    mol = Chem.MolFromSmiles('CCO')
+    self.assertIsNotNone(mol)
+    opts = rdMolDraw2D.MolDrawOptions()
+    self.assertEqual(opts.legendPosition, rdMolDraw2D.LegendPosition.Bottom)
+    opts.legendPosition = rdMolDraw2D.LegendPosition.Top
+    svg = Draw.MolToSVG(mol, legend='Ethanol', drawOptions=opts)
+    self.assertIn("class='legend'", svg)
 
 
 if __name__ == "__main__":
