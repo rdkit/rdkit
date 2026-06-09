@@ -52,15 +52,39 @@ typedef INT_DOUBLE_MAP::const_iterator INT_DOUBLE_MAP_CI;
 
 typedef std::vector<long int> LINT_VECT;
 
+enum class TorsionType {
+  CIS = 0,
+  TRANS,
+  FLEXIBLE,
+  CUSTOM,
+  NONE  // don't set the bound
+};
+
+struct TorsionValue {
+  TorsionType type = TorsionType::NONE;
+  std::optional<double> value = {};
+  std::optional<double> extraDist = {};
+};
+
+enum class Type14 {
+  IN_CHAIN,
+  IN_RING,
+  TWO_IN_SAME_RING,
+  TWO_IN_DIFF_RING,
+  SHARE_RING_BOND,
+  MACROCYCLE_TWO_IN_SAME_RING,
+  MACROCYCLE_ALL_IN_SAME_RING
+};
+
 //! A structure used to store planar 14 paths - cis/trans
 struct Path14Configuration {
   unsigned int bid1, bid2, bid3;
-  typedef enum {
-    CIS = 0,
-    TRANS,
-    OTHER,
-  } Path14Type;
-  Path14Type type;
+  TorsionType type;
+};
+
+struct Optional14Info {
+  bool forceTransAmides = false;
+  std::size_t ringSize = 0;
 };
 
 typedef enum {
@@ -390,6 +414,7 @@ void _set13BoundsHelper(unsigned int aid1, unsigned int aid, unsigned int aid3,
   _checkAndSetBounds(aid1, aid3, dl, du, mmat);
 }
 
+// TODO this is not nice
 void _setRingAngle(Atom::HybridizationType aHyb, unsigned int ringSize,
                    double &angle) {
   // NOTE: this assumes that all angles in a ring are equal. This is
@@ -685,62 +710,15 @@ Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
   return stype;
 }
 
-void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
-                        const Bond *bnd3, ComputedData &accumData,
-                        DistGeom::BoundsMatPtr mmat, double *dmat,
-                        int ringSize) {
-  PRECONDITION(bnd1, "");
-  PRECONDITION(bnd2, "");
-  PRECONDITION(bnd3, "");
-  unsigned int bid1, bid2, bid3;
-  bid1 = bnd1->getIdx();
-  bid2 = bnd2->getIdx();
-  bid3 = bnd3->getIdx();
-  const Atom *atm2 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid1, bid2));
-  PRECONDITION(atm2, "");
+TorsionValue _getInRing14Type(const ROMol &mol, const Bond *bnd1,
+                              const Bond *bnd2, const Bond *bnd3,
+                              const Atom *atm1, const Atom *atm2,
+                              const Atom *atm3, const Atom *atm4,
+                              int ringSize) {
   Atom::HybridizationType ahyb2 = atm2->getHybridization();
-  const Atom *atm3 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid2, bid3));
-  PRECONDITION(atm3, "");
   Atom::HybridizationType ahyb3 = atm3->getHybridization();
 
-  unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
-  unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
-
-  const unsigned int pid =
-      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
-
-  if (accumData.visitedBound(pid, DistType::DIST13)) {
-    // if this is already a 1-3 or 1-2 distance; do not overwrite
-    return;
-  }
-
-  // check that this actually is a 1-4 contact:
-  if (dmat[std::max(aid1, aid4) * mmat->numRows() + std::min(aid1, aid4)] <
-      2.9) {
-    // std::cerr<<"skip: "<<aid1<<"-"<<aid4<<" because
-    // d="<<dmat[std::max(aid1,aid4)*mmat->numRows()+std::min(aid1,aid4)]<<std::endl;
-    return;
-  }
-
-  double bl1 = accumData.bondLengths[bid1];
-  double bl2 = accumData.bondLengths[bid2];
-  double bl3 = accumData.bondLengths[bid3];
-
-  double ba12 = accumData.bondAngles->getVal(bid1, bid2);
-  double ba23 = accumData.bondAngles->getVal(bid2, bid3);
-
-  CHECK_INVARIANT(ba12 > 0.0, "");
-  CHECK_INVARIANT(ba23 > 0.0, "");
-  double dl, du;
-  unsigned int nb = mol.getNumBonds();
-  // several special cases here
-  Path14Configuration path14;
-  path14.bid1 = bid1;
-  path14.bid2 = bid2;
-  path14.bid3 = bid3;
-  Bond::BondStereo stype = _getAtomStereo(bnd2, aid1, aid4);
-  bool preferCis = false;
-  bool preferTrans = false;
+  Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
 
   // we add a check for the ring size here because there's no reason to
   // assume cis bonds in bigger rings. This was part of github #1240:
@@ -748,190 +726,73 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   if (ringSize <= 8 && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
       (stype != Bond::STEREOE && stype != Bond::STEREOTRANS)) {
     // the ring check here was a big part of github #697
-    if (mol.getRingInfo()->numBondRings(bid2) > 1) {
-      if (mol.getRingInfo()->numBondRings(bid1) == 1 &&
-          mol.getRingInfo()->numBondRings(bid3) == 1) {
+    if (mol.getRingInfo()->numBondRings(bnd2->getIdx()) > 1) {
+      if (mol.getRingInfo()->numBondRings(bnd1->getIdx()) == 1 &&
+          mol.getRingInfo()->numBondRings(bnd3->getIdx()) == 1) {
         for (const auto &br : mol.getRingInfo()->bondRings()) {
-          if (std::find(br.begin(), br.end(), bid1) != br.end()) {
-            if (std::find(br.begin(), br.end(), bid3) != br.end()) {
-              preferCis = true;
+          if (std::find(br.begin(), br.end(), bnd1->getIdx()) != br.end()) {
+            if (std::find(br.begin(), br.end(), bnd3->getIdx()) != br.end()) {
+              return {TorsionType::CIS};
             }
             break;
           }
         }
       }
     } else {
-      preferCis = true;
+      return {TorsionType::CIS};
     }
   } else if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
-    preferCis = true;
+    return {TorsionType::CIS};
   } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
-    preferTrans = true;
+    return {TorsionType::TRANS};
   }
 
-  if (preferCis) {
-    path14.type = Path14Configuration::CIS;
-    accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                              bid2 * nb + bid3);
-    accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                              bid2 * nb + bid1);
-  } else if (preferTrans) {
-    path14.type = Path14Configuration::TRANS;
-    accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                                bid2 * nb + bid3);
-    accumData.transPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                                bid2 * nb + bid1);
-  } else {
-    path14.type = Path14Configuration::OTHER;
-  }
-
-  accumData.paths14.push_back(path14);
-
-  // std::cerr << "  torsion: " << aid1 << " " << aid4 << ": " << preferCis
-  // << "
-  // "
-  //           << preferTrans << std::endl;
-  if (preferCis) {
-    dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
-    du = dl + 2 * GEN_DIST_TOL;
-  } else if (preferTrans) {
-    dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
-    du = dl + 2 * GEN_DIST_TOL;
-  } else {
-    // basically we will assume 0 to 180 allowed
-    dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-    du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-    if (du < dl) {
-      std::swap(du, dl);
-    }
-    if (fabs(du - dl) < DIST12_DELTA) {
-      dl -= GEN_DIST_TOL;
-      du += GEN_DIST_TOL;
-    }
-  }
-  // std::cerr << "7: " << aid1 << "-" << aid4 << std::endl;
-
-  accumData.visited14Bounds.set(pid);
-  _checkAndSetBounds(aid1, aid4, dl, du, mmat);
+  return {TorsionType::FLEXIBLE};
 }
 
-void _setTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
-                               const Bond *bnd2, const Bond *bnd3,
-                               ComputedData &accumData,
-                               DistGeom::BoundsMatPtr mmat, double *dmat) {
-  PRECONDITION(bnd1, "");
-  PRECONDITION(bnd2, "");
-  PRECONDITION(bnd3, "");
-  unsigned int bid1, bid2, bid3;
-  bid1 = bnd1->getIdx();
-  bid2 = bnd2->getIdx();
-  bid3 = bnd3->getIdx();
-  const Atom *atm2 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid1, bid2));
-  PRECONDITION(atm2, "");
-  const Atom *atm3 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid2, bid3));
-  PRECONDITION(atm3, "");
-
-  unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
-  unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
-
-  const unsigned int pid =
-      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
-
-  if (accumData.visitedBound(pid, DistType::DIST13)) {
-    // if this is already a 1-3 or 1-2 distance; do not overwrite
-    return;
-  }
-
-  // check that this actually is a 1-4 contact:
-  if (dmat[std::max(aid1, aid4) * mmat->numRows() + std::min(aid1, aid4)] <
-      2.9) {
-    // std::cerr<<"skip: "<<aid1<<"-"<<aid4<<" because
-    // d="<<dmat[std::max(aid1,aid4)*mmat->numRows()+std::min(aid1,aid4)]<<std::endl;
-    return;
-  }
-
+TorsionValue _getTwoInSameRing14Type(const ROMol &mol, const Atom *atm1,
+                                     const Atom *atm2, const Atom *atm3,
+                                     const Atom *atm4) {
   // when we have fused rings, it can happen that this isn't actually a 1-4
   // contact,
   // (this was the cause of sf.net bug 2835784) check that now:
-  if (mol.getBondBetweenAtoms(aid1, atm3->getIdx()) ||
-      mol.getBondBetweenAtoms(aid4, atm2->getIdx())) {
-    return;
+  if (mol.getBondBetweenAtoms(atm1->getIdx(), atm3->getIdx()) ||
+      mol.getBondBetweenAtoms(atm4->getIdx(), atm2->getIdx())) {
+    return {TorsionType::NONE};
   }
 
   Atom::HybridizationType ahyb3 = atm3->getHybridization();
   Atom::HybridizationType ahyb2 = atm2->getHybridization();
 
-  double bl1 = accumData.bondLengths[bid1];
-  double bl2 = accumData.bondLengths[bid2];
-  double bl3 = accumData.bondLengths[bid3];
-
-  double ba12 = accumData.bondAngles->getVal(bid1, bid2);
-  double ba23 = accumData.bondAngles->getVal(bid2, bid3);
-  CHECK_INVARIANT(ba12 > 0.0, "");
-  CHECK_INVARIANT(ba23 > 0.0, "");
-  double dl, du;
-  Path14Configuration path14;
-  unsigned int nb = mol.getNumBonds();
-
-  path14.bid1 = bid1;
-  path14.bid2 = bid2;
-  path14.bid3 = bid3;
   if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2)) {  // FIX: check for trans
     // here we will assume 180 degrees: basically flat ring with an external
     // substituent
-    dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-    du = dl;
-    dl -= GEN_DIST_TOL;
-    du += GEN_DIST_TOL;
-    path14.type = Path14Configuration::TRANS;
-    accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                                bid2 * nb + bid3);
-    accumData.transPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                                bid2 * nb + bid1);
+    return {TorsionType::TRANS};
 
   } else {
     // here we will assume anything is possible
-    dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-    du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-
-    // in highly-strained situations these can get mixed up:
-    if (du < dl) {
-      double tmpD = dl;
-      dl = du;
-      du = tmpD;
-    }
-    if (fabs(du - dl) < DIST12_DELTA) {
-      dl -= GEN_DIST_TOL;
-      du += GEN_DIST_TOL;
-    }
-    path14.type = Path14Configuration::OTHER;
+    return {TorsionType::FLEXIBLE};
   }
-
-  // std::cerr << "1: " << aid1 << "-" << aid4 << ": " << dl << " -> " << du
-  //           << std::endl;
-  _checkAndSetBounds(aid1, aid4, dl, du, mmat);
-  accumData.paths14.push_back(path14);
-  accumData.visited14Bounds.set(pid);
 }
 
-void _setTwoInDiffRing14Bounds(const ROMol &mol, const Bond *bnd1,
-                               const Bond *bnd2, const Bond *bnd3,
-                               ComputedData &accumData,
-                               DistGeom::BoundsMatPtr mmat, double *dmat) {
+TorsionValue _getTwoInDiffRing14Type(const ROMol &mol, const Bond *bnd1,
+                                     const Bond *bnd2, const Bond *bnd3,
+                                     const Atom *atm1, const Atom *atm2,
+                                     const Atom *atm3, const Atom *atm4) {
   // this turns out to be very similar to all bonds in the same ring
   // situation.
   // There is probably some fine tuning that can be done when the atoms a2
   // and a3 are not sp2 hybridized, but we will not worry about that now;
   // simple use 0-180 deg for non-sp2 cases.
-  _setInRing14Bounds(mol, bnd1, bnd2, bnd3, accumData, mmat, dmat, 0);
+  return _getInRing14Type(mol, bnd1, bnd2, bnd3, atm1, atm2, atm3, atm4, 0);
 }
 
-void _setShareRingBond14Bounds(const ROMol &mol, const Bond *bnd1,
-                               const Bond *bnd2, const Bond *bnd3,
-                               ComputedData &accumData,
-                               DistGeom::BoundsMatPtr mmat, double *dmat) {
+TorsionValue _getShareRingBond14Type(const ROMol &mol, const Bond *bnd1,
+                                     const Bond *bnd2, const Bond *bnd3,
+                                     const Atom *atm1, const Atom *atm2,
+                                     const Atom *atm3, const Atom *atm4) {
   // once this turns out to be similar to bonds in the same ring
-  _setInRing14Bounds(mol, bnd1, bnd2, bnd3, accumData, mmat, dmat, 0);
+  return _getInRing14Type(mol, bnd1, bnd2, bnd3, atm1, atm2, atm3, atm4, 0);
 }
 
 bool _checkH2NX3H1OX2(const Atom *atm) {
@@ -1084,114 +945,35 @@ bool _checkAmideEster15(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
   return false;
 }
 
-void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
-                       const Bond *bnd3, ComputedData &accumData,
-                       DistGeom::BoundsMatPtr mmat, double *,
-                       bool forceTransAmides) {
-  PRECONDITION(bnd1, "");
-  PRECONDITION(bnd2, "");
-  PRECONDITION(bnd3, "");
-  unsigned int bid1, bid2, bid3;
-  bid1 = bnd1->getIdx();
-  bid2 = bnd2->getIdx();
-  bid3 = bnd3->getIdx();
-  const Atom *atm2 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid1, bid2));
-  PRECONDITION(atm2, "");
-  const Atom *atm3 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid2, bid3));
-  PRECONDITION(atm3, "");
-
-  unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
-  unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
-  const Atom *atm1 = mol.getAtomWithIdx(aid1);
-  const Atom *atm4 = mol.getAtomWithIdx(aid4);
-
-  const unsigned int pid =
-      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
-
-  if (accumData.visitedBound(pid, DistType::DIST13)) {
-    return;
-  }
-
-  double bl1 = accumData.bondLengths[bid1];
-  double bl2 = accumData.bondLengths[bid2];
-  double bl3 = accumData.bondLengths[bid3];
-
-  double ba12 = accumData.bondAngles->getVal(bid1, bid2);
-  double ba23 = accumData.bondAngles->getVal(bid2, bid3);
-  CHECK_INVARIANT(ba12 > 0.0, "");
-  CHECK_INVARIANT(ba23 > 0.0, "");
-  bool setTheBound = true;
-  double dl = 0.0, du = 0.0;
-
-  // if the middle bond is double
-  Path14Configuration path14;
-  path14.bid1 = bid1;
-  path14.bid2 = bid2;
-  path14.bid3 = bid3;
-  unsigned int nb = mol.getNumBonds();
+TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
+                             const Bond *bnd2, const Bond *bnd3,
+                             const Atom *atm1, const Atom *atm2,
+                             const Atom *atm3, const Atom *atm4,
+                             bool forceTransAmides) {
   switch (bnd2->getBondType()) {
     case Bond::DOUBLE:
       // if any of the other bonds are double - the torsion angle is zero
       // this is CC=C=C situation
       if ((bnd1->getBondType() == Bond::DOUBLE) ||
           (bnd3->getBondType() == Bond::DOUBLE)) {
-        dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
-        du = dl + 2 * GEN_DIST_TOL;
-        path14.type = Path14Configuration::CIS;
-        accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                                  bid2 * nb + bid3);
-        accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                                  bid2 * nb + bid1);
-        // BOOST_LOG(rdDebugLog) << "Special 5 " << aid1 << " " << aid4 <<
-        // "\n";
+        return {TorsionType::CIS};
       } else if (bnd2->getStereo() > Bond::STEREOANY) {
-        Bond::BondStereo stype = _getAtomStereo(bnd2, aid1, aid4);
+        Bond::BondStereo stype =
+            _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
         if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
-          dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) -
-               GEN_DIST_TOL;
-          du = dl + 2 * GEN_DIST_TOL;
-          path14.type = Path14Configuration::CIS;
-          // BOOST_LOG(rdDebugLog) << "Special 6 " <<  aid1 << " " << aid4
-          // <<
-          // "\n";
-          accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                                    bid2 * nb + bid3);
-          accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                                    bid2 * nb + bid1);
+          return {TorsionType::CIS};
         } else {
-          // BOOST_LOG(rdDebugLog) << "Special 7 " << aid1 << " " << aid4 <<
-          // "\n";
-          du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-          dl = du;
-          dl -= GEN_DIST_TOL;
-          du += GEN_DIST_TOL;
-          path14.type = Path14Configuration::TRANS;
-          accumData.transPaths.insert(
-              static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
-          accumData.transPaths.insert(
-              static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
+          return {TorsionType::TRANS};
         }
       } else {
-        // double bond with no stereo setting can be 0 or 180
-        dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-        du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-        if (fabs(du - dl) < DIST12_DELTA) {
-          dl -= GEN_DIST_TOL;
-          du += GEN_DIST_TOL;
-        }
-        path14.type = Path14Configuration::OTHER;
+        return {TorsionType::FLEXIBLE};
       }
       break;
     case Bond::SINGLE:
       if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16) &&
           (atm2->getDegree() == 2) && (atm3->getDegree() == 2)) {
         // this is *S-S* situation
-        dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23, M_PI / 2) -
-             GEN_DIST_TOL;
-        du = dl + 2 * GEN_DIST_TOL;
-        path14.type = Path14Configuration::OTHER;
-        // BOOST_LOG(rdDebugLog) << "Special 9 " << aid1 << " " << aid4 <<
-        // "\n";
+        return {TorsionType::CUSTOM, M_PI / 2.0};
       } else if ((_checkAmideEster14(bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
                  (_checkAmideEster14(bnd3, bnd1, atm4, atm3, atm2, atm1))) {
         // It's an amide or ester:
@@ -1225,27 +1007,12 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
               (atm4->getAtomicNum() == 1 && atm3->getAtomicNum() == 7 &&
                atm3->getDegree() == 3 && atm3->getTotalNumHs(true) == 1)) {
             // secondary amide, this is the H, it should be trans to the O
-            dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-            path14.type = Path14Configuration::TRANS;
-            accumData.transPaths.insert(
-                static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
-            accumData.transPaths.insert(
-                static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
+            return {TorsionType::TRANS};
           } else {
-            dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-            path14.type = Path14Configuration::CIS;
-            accumData.cisPaths.insert(
-                static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
-            accumData.cisPaths.insert(
-                static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
+            return {TorsionType::CIS};
           }
-          du = dl;
-          dl -= GEN_DIST_TOL;
-          du += GEN_DIST_TOL;
         } else {
-          dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-          du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-          path14.type = Path14Configuration::OTHER;
+          return {TorsionType::FLEXIBLE};
         }
       } else if ((_checkAmideEster15(mol, bnd1, bnd3, atm1, atm2, atm3,
                                      atm4)) ||
@@ -1271,48 +1038,19 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
               (atm4->getAtomicNum() == 1 && atm3->getAtomicNum() == 7 &&
                atm3->getDegree() == 3 && atm3->getTotalNumHs(true) == 1)) {
             // secondary amide, this is the H, it's cis to atom 5
-            dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-            path14.type = Path14Configuration::CIS;
-            accumData.cisPaths.insert(
-                static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
-            accumData.cisPaths.insert(
-                static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
+            return {TorsionType::CIS};
           } else {
-            dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-            path14.type = Path14Configuration::TRANS;
-            accumData.transPaths.insert(
-                static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
-            accumData.transPaths.insert(
-                static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
+            return {TorsionType::TRANS};
           }
-          du = dl;
-          dl -= GEN_DIST_TOL;
-          du += GEN_DIST_TOL;
         } else {
-          dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-          du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-          path14.type = Path14Configuration::OTHER;
+          return {TorsionType::FLEXIBLE};
         }
       } else {
-        dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-        du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-        path14.type = Path14Configuration::OTHER;
+        return {TorsionType::FLEXIBLE};
       }
       break;
     default:
-      dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-      du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-
-      path14.type = Path14Configuration::OTHER;
-  }
-  if (setTheBound) {
-    if (fabs(du - dl) < DIST12_DELTA) {
-      dl -= GEN_DIST_TOL;
-      du += GEN_DIST_TOL;
-    }
-    _checkAndSetBounds(aid1, aid4, dl, du, mmat);
-    accumData.paths14.push_back(path14);
-    accumData.visited14Bounds.set(pid);
+      return {TorsionType::FLEXIBLE};
   }
 }
 
@@ -1330,13 +1068,13 @@ void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
   path14.bid2 = bid2;
   path14.bid3 = bid3;
   if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2)) {  // FIX: check for trans
-    path14.type = Path14Configuration::CIS;
+    path14.type = TorsionType::CIS;
     accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
                               bid2 * nb + bid3);
     accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
                               bid2 * nb + bid1);
   } else {
-    path14.type = Path14Configuration::OTHER;
+    path14.type = TorsionType::FLEXIBLE;
   }
   accumData.paths14.push_back(path14);
 }
@@ -1369,296 +1107,224 @@ bool _checkMacrocycleTwoInSameRingAmideEster14(
          (a2Num == 8 || a2Num == 7);
 }
 
-void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
-                                         const Bond *bnd2, const Bond *bnd3,
-                                         ComputedData &accumData,
-                                         DistGeom::BoundsMatPtr mmat,
-                                         double *dmat) {
-  PRECONDITION(bnd1, "");
-  PRECONDITION(bnd2, "");
-  PRECONDITION(bnd3, "");
-  unsigned int bid1, bid2, bid3;
-  bid1 = bnd1->getIdx();
-  bid2 = bnd2->getIdx();
-  bid3 = bnd3->getIdx();
-  const Atom *atm2 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid1, bid2));
-  PRECONDITION(atm2, "");
-  const Atom *atm3 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid2, bid3));
-  PRECONDITION(atm3, "");
-
-  unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
-  unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
-  const Atom *atm1 = mol.getAtomWithIdx(aid1);
-  const Atom *atm4 = mol.getAtomWithIdx(aid4);
-
-  const unsigned int pid =
-      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
-
-  if (accumData.visitedBound(pid, DistType::DIST13)) {
-    // if this is already a 1-3 or 1-2 distance; do not overwrite
-    return;
-  }
-
-  // check that this actually is a 1-4 contact:
-  if (dmat[std::max(aid1, aid4) * mmat->numRows() + std::min(aid1, aid4)] <
-      2.9) {
-    // std::cerr<<"skip: "<<aid1<<"-"<<aid4<<" because
-    // d="<<dmat[std::max(aid1,aid4)*mmat->numRows()+std::min(aid1,aid4)]<<std::endl;
-    return;
-  }
-
+TorsionValue _getMacrocycleTwoInSameRing14Type(
+    const ROMol &mol, const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
+    const Atom *atm2, const Atom *atm3, const Atom *atm4) {
   // when we have fused rings, it can happen that this isn't actually a 1-4
   // contact,
   // (this was the cause of sf.net bug 2835784) check that now:
-  if (mol.getBondBetweenAtoms(aid1, atm3->getIdx()) ||
-      mol.getBondBetweenAtoms(aid4, atm2->getIdx())) {
-    return;
+  if (mol.getBondBetweenAtoms(atm1->getIdx(), atm3->getIdx()) ||
+      mol.getBondBetweenAtoms(atm4->getIdx(), atm2->getIdx())) {
+    return {TorsionType::NONE};
   }
 
-  double bl1 = accumData.bondLengths[bid1];
-  double bl2 = accumData.bondLengths[bid2];
-  double bl3 = accumData.bondLengths[bid3];
-
-  double ba12 = accumData.bondAngles->getVal(bid1, bid2);
-  double ba23 = accumData.bondAngles->getVal(bid2, bid3);
-  CHECK_INVARIANT(ba12 > 0.0, "");
-  CHECK_INVARIANT(ba23 > 0.0, "");
-  double dl, du;
-  Path14Configuration path14;
-  unsigned int nb = mol.getNumBonds();
-
-  path14.bid1 = bid1;
-  path14.bid2 = bid2;
-  path14.bid3 = bid3;
   if ((_checkMacrocycleTwoInSameRingAmideEster14(bnd1, bnd3, atm1, atm2, atm3,
                                                  atm4)) ||
       (_checkMacrocycleTwoInSameRingAmideEster14(bnd3, bnd1, atm4, atm3, atm2,
                                                  atm1))) {
-    dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-    path14.type = Path14Configuration::CIS;
-    accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                              bid2 * nb + bid3);
-    accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                              bid2 * nb + bid1);
-    du = dl;
-    dl -= GEN_DIST_TOL;
-    du += GEN_DIST_TOL;
+    return {TorsionType::CIS};
   } else {
     // here we will assume anything is possible
-    dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-    du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-
-    // in highly-strained situations these can get mixed up:
-    if (du < dl) {
-      double tmpD = dl;
-      dl = du;
-      du = tmpD;
-    }
-    if (fabs(du - dl) < DIST12_DELTA) {
-      dl -= GEN_DIST_TOL;
-      du += GEN_DIST_TOL;
-    }
-    path14.type = Path14Configuration::OTHER;
+    return {TorsionType::FLEXIBLE};
   }
-  // std::cerr << "1: " << aid1 << "-" << aid4 << ": " << dl << " -> " << du
-  //           << std::endl;
-  _checkAndSetBounds(aid1, aid4, dl, du, mmat);
-  accumData.paths14.push_back(path14);
-  accumData.visited14Bounds.set(pid);
 }
 
-void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
-                                         const Bond *bnd2, const Bond *bnd3,
-                                         ComputedData &accumData,
-                                         DistGeom::BoundsMatPtr mmat,
-                                         double *) {
-  // This is adapted from `_setChain14Bounds`, with changes on how trans amide
-  // is handled
-  PRECONDITION(bnd1, "");
-  PRECONDITION(bnd2, "");
-  PRECONDITION(bnd3, "");
-  unsigned int bid1, bid2, bid3;
-  bid1 = bnd1->getIdx();
-  bid2 = bnd2->getIdx();
-  bid3 = bnd3->getIdx();
-  const Atom *atm2 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid1, bid2));
-  PRECONDITION(atm2, "");
-  const Atom *atm3 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid2, bid3));
-  PRECONDITION(atm3, "");
-
-  unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
-  unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
-
-  const unsigned int pid =
-      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
-
-  if (accumData.visitedBound(pid, DistType::DIST13)) {
-    // if this is already a 1-3 or 1-2 distance; do not overwrite
-    return;
-  }
-
-  const Atom *atm1 = mol.getAtomWithIdx(aid1);
-  const Atom *atm4 = mol.getAtomWithIdx(aid4);
-
-  double bl1 = accumData.bondLengths[bid1];
-  double bl2 = accumData.bondLengths[bid2];
-  double bl3 = accumData.bondLengths[bid3];
-
-  double ba12 = accumData.bondAngles->getVal(bid1, bid2);
-  double ba23 = accumData.bondAngles->getVal(bid2, bid3);
-  CHECK_INVARIANT(ba12 > 0.0, "");
-  CHECK_INVARIANT(ba23 > 0.0, "");
-  bool setTheBound = true;
-  double dl = 0.0, du = 0.0;
-
-  // if the middle bond is double
-  Path14Configuration path14;
-  path14.bid1 = bid1;
-  path14.bid2 = bid2;
-  path14.bid3 = bid3;
-  unsigned int nb = mol.getNumBonds();
+TorsionValue _getMacrocycleAllInSameRing14Type(
+    const ROMol &mol, const Bond *bnd1, const Bond *bnd2, const Bond *bnd3,
+    const Atom *atm1, const Atom *atm2, const Atom *atm3, const Atom *atm4) {
   switch (bnd2->getBondType()) {
     case Bond::DOUBLE:
       // if any of the other bonds are double - the torsion angle is zero
       // this is CC=C=C situation
       if ((bnd1->getBondType() == Bond::DOUBLE) ||
           (bnd3->getBondType() == Bond::DOUBLE)) {
-        dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
-        du = dl + 2 * GEN_DIST_TOL;
-        path14.type = Path14Configuration::CIS;
-        accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                                  bid2 * nb + bid3);
-        accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                                  bid2 * nb + bid1);
-        // BOOST_LOG(rdDebugLog) << "Special 5 " << aid1 << " " << aid4 <<
-        // "\n";
+        return {TorsionType::CIS};
       } else if (bnd2->getStereo() > Bond::STEREOANY) {
-        Bond::BondStereo stype = _getAtomStereo(bnd2, aid1, aid4);
+        Bond::BondStereo stype =
+            _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
         if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
-          dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) -
-               GEN_DIST_TOL;
-          du = dl + 2 * GEN_DIST_TOL;
-          path14.type = Path14Configuration::CIS;
-          // BOOST_LOG(rdDebugLog) << "Special 6 " <<  aid1 << " " << aid4 <<
-          // "\n";
-          accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                                    bid2 * nb + bid3);
-          accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                                    bid2 * nb + bid1);
+          return {TorsionType::CIS};
         } else {
-          // BOOST_LOG(rdDebugLog) << "Special 7 " << aid1 << " " << aid4 <<
-          // "\n";
-          du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-          dl = du;
-          dl -= GEN_DIST_TOL;
-          du += GEN_DIST_TOL;
-          path14.type = Path14Configuration::TRANS;
-          accumData.transPaths.insert(
-              static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
-          accumData.transPaths.insert(
-              static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
+          return {TorsionType::TRANS};
         }
       } else {
-        // double bond with no stereo setting can be 0 or 180
-        dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-        du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-        if (fabs(du - dl) < DIST12_DELTA) {
-          dl -= GEN_DIST_TOL;
-          du += GEN_DIST_TOL;
-        }
-        path14.type = Path14Configuration::OTHER;
+        return {TorsionType::FLEXIBLE};
       }
       break;
     case Bond::SINGLE:
       if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16) &&
           (atm2->getDegree() == 2) && (atm3->getDegree() == 2)) {
         // this is *S-S* situation
-        dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23, M_PI / 2) -
-             GEN_DIST_TOL;
-        du = dl + 2 * GEN_DIST_TOL;
-        path14.type = Path14Configuration::OTHER;
-        // BOOST_LOG(rdDebugLog) << "Special 9 " << aid1 << " " << aid4 <<
-        // "\n";
+        return {TorsionType::CUSTOM, M_PI / 2.0};
+
       } else if ((_checkMacrocycleAllInSameRingAmideEster14(
                      mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
                  (_checkMacrocycleAllInSameRingAmideEster14(
                      mol, bnd3, bnd1, atm4, atm3, atm2, atm1))) {
-        dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) +
-             0.1;  // we saw that the currently defined max distance for trans
-                   // is still a bit too short, thus we add an additional 0.1,
-                   // which is the max that works without triangular smoothing
-                   // error
-        path14.type = Path14Configuration::TRANS;
-        accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                                    bid2 * nb + bid3);
-        accumData.transPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                                    bid2 * nb + bid1);
-
-        du = dl;
-        dl -= GEN_DIST_TOL;
-        du += GEN_DIST_TOL;
-
-        // BOOST_LOG(rdDebugLog) << "  amide: " << aid1 << " " << aid4 << ": "
-        // << dl << "->" << du << "\n";
+        return {.type = TorsionType::TRANS, .extraDist = 0.1};  // TODO add 0.1
+        // we saw that the currently defined max distance for trans
+        // is still a bit too short, thus we add an additional 0.1,
+        // which is the max that works without triangular smoothing
+        // error
       } else if ((_checkAmideEster15(mol, bnd1, bnd3, atm1, atm2, atm3,
                                      atm4)) ||
                  (_checkAmideEster15(mol, bnd3, bnd1, atm4, atm3, atm2,
                                      atm1))) {
 #ifdef FORCE_TRANS_AMIDES
         // amide is trans, we're cis:
-        dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-        path14.type = Path14Configuration::CIS;
-        accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                                  bid2 * nb + bid3);
-        accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                                  bid2 * nb + bid1);
+        return {Path14Configuration::CIS};
 #else
         // amide is cis, we're trans:
         if (atm2->getAtomicNum() == 7 && atm2->getDegree() == 3 &&
             atm1->getAtomicNum() == 1 && atm2->getTotalNumHs(true) == 1) {
           // secondary amide, this is the H
-          setTheBound = false;
+          return {TorsionType::NONE};  // TODO
         } else {
-          dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-          path14.type = Path14Configuration::TRANS;
-          accumData.transPaths.insert(
-              static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
-          accumData.transPaths.insert(
-              static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
+          return {TorsionType::TRANS};
         }
 #endif
-        du = dl;
-        dl -= GEN_DIST_TOL;
-        du += GEN_DIST_TOL;
-        // BOOST_LOG(rdDebugLog) << "    amide neighbor: " << aid1 << " " <<
-        // aid4 << ": " << dl << "->" << du << "\n";
       } else {
-        dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-        du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-        path14.type = Path14Configuration::OTHER;
+        return {TorsionType::FLEXIBLE};
       }
       break;
     default:
-      // BOOST_LOG(rdDebugLog) << "Special 12 " << aid1 << " " << aid4 <<
-      // "\n";
+      return {TorsionType::FLEXIBLE};
+  }
+}
+
+void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
+                       const Bond *bnd3, const Type14 type,
+                       ComputedData &accumData, DistGeom::BoundsMatPtr mmat,
+                       double *dmat, const Optional14Info info) {
+  PRECONDITION(bnd1, "");
+  PRECONDITION(bnd2, "");
+  PRECONDITION(bnd3, "");
+
+  unsigned int bid1 = bnd1->getIdx();
+  unsigned int bid2 = bnd2->getIdx();
+  unsigned int bid3 = bnd3->getIdx();
+
+  const Atom *atm2 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid1, bid2));
+  PRECONDITION(atm2, "");
+  const Atom *atm3 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid2, bid3));
+  PRECONDITION(atm3, "");
+
+  unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
+  unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
+
+  const unsigned int pid =
+      std::min(aid1, aid4) * mol.getNumAtoms() + std::max(aid1, aid4);
+
+  // check that the bound was not set before and this actually is a 1-4 contact:
+  if (accumData.visitedBound(pid, DistType::DIST13) ||
+
+      dmat[std::max(aid1, aid4) * mmat->numRows() + std::min(aid1, aid4)] <
+          2.9) {
+    return;
+  }
+
+  double bl1 = accumData.bondLengths[bid1];
+  double bl2 = accumData.bondLengths[bid2];
+  double bl3 = accumData.bondLengths[bid3];
+
+  double ba12 = accumData.bondAngles->getVal(bid1, bid2);
+  double ba23 = accumData.bondAngles->getVal(bid2, bid3);
+
+  CHECK_INVARIANT(ba12 > 0.0, "");
+  CHECK_INVARIANT(ba23 > 0.0, "");
+
+  const Atom *atm1 = mol.getAtomWithIdx(aid1);
+  const Atom *atm4 = mol.getAtomWithIdx(aid4);
+
+  TorsionValue torsionValue;
+
+  switch (type) {
+    case Type14::IN_CHAIN:
+      torsionValue = _getChain14Type(mol, bnd1, bnd2, bnd3, atm1, atm2, atm3,
+                                     atm4, info.forceTransAmides);
+      break;
+    case Type14::IN_RING:
+      torsionValue = _getInRing14Type(mol, bnd1, bnd2, bnd3, atm1, atm2, atm3,
+                                      atm4, info.ringSize);
+      break;
+    case Type14::MACROCYCLE_ALL_IN_SAME_RING:
+      torsionValue = _getMacrocycleAllInSameRing14Type(mol, bnd1, bnd2, bnd3,
+                                                       atm1, atm2, atm3, atm4);
+      break;
+    case Type14::MACROCYCLE_TWO_IN_SAME_RING:
+      torsionValue = _getMacrocycleTwoInSameRing14Type(mol, bnd1, bnd3, atm1,
+                                                       atm2, atm3, atm4);
+      break;
+    case Type14::SHARE_RING_BOND:
+      torsionValue = _getShareRingBond14Type(mol, bnd1, bnd2, bnd3, atm1, atm2,
+                                             atm3, atm4);
+      break;
+    case Type14::TWO_IN_DIFF_RING:
+      torsionValue = _getTwoInDiffRing14Type(mol, bnd1, bnd2, bnd3, atm1, atm2,
+                                             atm3, atm4);
+      break;
+    case Type14::TWO_IN_SAME_RING:
+      torsionValue = _getTwoInSameRing14Type(mol, atm1, atm2, atm3, atm4);
+      break;
+  }
+
+  double dl = 0.0, du = 0.0;
+
+  unsigned int nb = mol.getNumBonds();
+
+  switch (torsionValue.type) {
+    case TorsionType::CIS:
+      dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) +
+           torsionValue.extraDist.value_or(0.0) - GEN_DIST_TOL;
+      du = dl + 2 * GEN_DIST_TOL;
+      accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                                bid2 * nb + bid3);
+      accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                                bid2 * nb + bid1);
+      break;
+    case TorsionType::TRANS:
+      dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) +
+           torsionValue.extraDist.value_or(0.0) - GEN_DIST_TOL;
+      du = dl + 2 * GEN_DIST_TOL;
+      accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                                  bid2 * nb + bid3);
+      accumData.transPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                                  bid2 * nb + bid1);
+      break;
+    case TorsionType::FLEXIBLE:
       dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
       du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-
-      path14.type = Path14Configuration::OTHER;
+      // in highly-strained situations these can get mixed up:
+      if (du < dl) {
+        std::swap(du, dl);
+      }
+      if (fabs(du - dl) < DIST12_DELTA) {
+        dl -= GEN_DIST_TOL;
+        du += GEN_DIST_TOL;
+      }
+      break;
+    case TorsionType::CUSTOM:
+      if (torsionValue.value) {
+        dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23,
+                                     *torsionValue.value) -
+             GEN_DIST_TOL;
+        du = dl + 2 * GEN_DIST_TOL;
+        break;
+      } else {
+        std::cerr << "This should not happen" << std::endl;
+        return;
+      }
+    default:  // NONE  => do not set the bounds => nothing more to do
+      return;
   }
 
-  if (setTheBound) {
-    if (fabs(du - dl) < DIST12_DELTA) {
-      dl -= GEN_DIST_TOL;
-      du += GEN_DIST_TOL;
-    }
-    // std::cerr<<"2: "<<aid1<<"-"<<aid4<<std::endl;
+  Path14Configuration path14 = {
+      .bid1 = bid1, .bid2 = bid2, .bid3 = bid3, .type = torsionValue.type};
 
-    // we only overwrite bounds if they are not 1-2 nor 1-3 distances
-    _checkAndSetBounds(aid1, aid4, dl, du, mmat);
-    accumData.paths14.push_back(path14);
-    accumData.visited14Bounds.set(pid);
-  }
+  // we only overwrite bounds if they are not 1-2 nor 1-3 distances
+  _checkAndSetBounds(aid1, aid4, dl, du, mmat);
+  accumData.paths14.push_back(path14);
+  accumData.visited14Bounds.set(pid);
 }
 
 void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
@@ -1704,14 +1370,17 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
       if (rSize > 5) {
         if (useMacrocycle14config && rSize >= minMacrocycleRingSize) {
-          _setMacrocycleAllInSameRing14Bounds(
+          _set14BoundHelper(
+              //_setMacrocycleAllInSameRing14Bounds(
               mol, mol.getBondWithIdx(bid1), mol.getBondWithIdx(bid2),
-              mol.getBondWithIdx(bid3), accumData, mmat, distMatrix);
+              mol.getBondWithIdx(bid3), Type14::MACROCYCLE_ALL_IN_SAME_RING,
+              accumData, mmat, distMatrix, {});
           bidIsMacrocycle.insert(bid2);
         } else {
-          _setInRing14Bounds(mol, mol.getBondWithIdx(bid1),
-                             mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
-                             accumData, mmat, distMatrix, rSize);
+          _set14BoundHelper(mol, mol.getBondWithIdx(bid1),
+                            mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
+                            Type14::IN_RING, accumData, mmat, distMatrix,
+                            {.ringSize = rSize});
         }
       } else {
         _record14Path(mol, bid1, bid2, bid3, accumData);
@@ -1749,11 +1418,13 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                 // ring; we dealt with that before)
                 if (useMacrocycle14config &&
                     bidIsMacrocycle.find(bid2) != bidIsMacrocycle.end()) {
-                  _setMacrocycleTwoInSameRing14Bounds(
-                      mol, bnd1, bond, bnd3, accumData, mmat, distMatrix);
+                  _set14BoundHelper(mol, bnd1, bond, bnd3,
+                                    Type14::MACROCYCLE_TWO_IN_SAME_RING,
+                                    accumData, mmat, distMatrix, {});
                 } else {
-                  _setTwoInSameRing14Bounds(mol, bnd1, bond, bnd3, accumData,
-                                            mmat, distMatrix);
+                  _set14BoundHelper(mol, bnd1, bond, bnd3,
+                                    Type14::TWO_IN_SAME_RING, accumData, mmat,
+                                    distMatrix, {});
                 }
               } else if (((rinfo->numBondRings(bid1) > 0) &&
                           (rinfo->numBondRings(bid2) > 0)) ||
@@ -1767,19 +1438,21 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                 // bid2 are ring bonds that belong to ring r1 and
                 // r2, then bid3 is either an external bond or
                 // belongs to a third ring r3.
-                _setTwoInDiffRing14Bounds(mol, bnd1, bond, bnd3, accumData,
-                                          mmat, distMatrix);
+                _set14BoundHelper(mol, bnd1, bond, bnd3,
+                                  Type14::TWO_IN_DIFF_RING, accumData, mmat,
+                                  distMatrix, {});
               } else if (rinfo->numBondRings(bid2) > 0) {
                 // the middle bond is a ring bond and the other
                 // two do not belong to the same ring or are
                 // non-ring bonds
-
-                _setShareRingBond14Bounds(mol, bnd1, bond, bnd3, accumData,
-                                          mmat, distMatrix);
+                _set14BoundHelper(mol, bnd1, bond, bnd3,
+                                  Type14::SHARE_RING_BOND, accumData, mmat,
+                                  distMatrix, {});
               } else {
                 // middle bond not a ring
-                _setChain14Bounds(mol, bnd1, bond, bnd3, accumData, mmat,
-                                  distMatrix, forceTransAmides);
+                _set14BoundHelper(mol, bnd1, bond, bnd3, Type14::IN_CHAIN,
+                                  accumData, mmat, distMatrix,
+                                  {.forceTransAmides = forceTransAmides});
               }
             }
           }
@@ -2104,7 +1777,7 @@ double _compute15DistsTransCis(double d1, double d2, double d3, double d4,
 }
 
 void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
-                        unsigned int bid3, unsigned int type,
+                        unsigned int bid3, TorsionType type,
                         ComputedData &accumData, DistGeom::BoundsMatPtr mmat,
                         double *dmat) {
   unsigned int i, aid1, aid2, aid3, aid4, aid5;
@@ -2154,7 +1827,7 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
           ang34 = accumData.bondAngles->getVal(bid3, i);
           unsigned long pathId =
               static_cast<unsigned long>(bid2) * nb * nb + (bid3)*nb + i;
-          if (type == 0) {
+          if (type == TorsionType::CIS) {
             if (accumData.cisPaths.find(pathId) != accumData.cisPaths.end()) {
               dl = _compute15DistsCisCis(d1, d2, d3, d4, ang12, ang23, ang34);
               du = dl + DIST15_TOL;
@@ -2172,7 +1845,7 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
                   DIST15_TOL;
             }
 
-          } else if (type == 1) {
+          } else if (type == TorsionType::TRANS) {
             if (accumData.cisPaths.find(pathId) != accumData.cisPaths.end()) {
               dl = _compute15DistsTransCis(d1, d2, d3, d4, ang12, ang23, ang34);
               du = dl + DIST15_TOL;
@@ -2232,7 +1905,8 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
 void set15Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                  ComputedData &accumData, double *distMatrix) {
   PATH14_VECT_CI pti;
-  unsigned int bid1, bid2, bid3, type;
+  unsigned int bid1, bid2, bid3;
+  TorsionType type;
   for (pti = accumData.paths14.begin(); pti != accumData.paths14.end(); pti++) {
     bid1 = pti->bid1;
     bid2 = pti->bid2;
