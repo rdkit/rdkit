@@ -256,7 +256,8 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles][cxsmiles]") {
     CHECK(mol->getAtomWithIdx(1)->getProp<std::string>("p1") == "v1;2;3");
 
     auto smi = MolToCXSmiles(*mol);
-    CHECK(smi == "CC1CN1 |atomProp:2.p2.v2:2.p1.v1;2;3:3.p2.v2:3.p1.v1|");
+    CHECK(smi ==
+          "CC1CN1 |atomProp:2.p2.v2:2.p1.v1&#59;2&#59;3:3.p2.v2:3.p1.v1|");
   }
   SECTION("atom props and values") {
     //"CN |$_AV:atomv0;atomv1$,atomProp:0.p2.v2:1.p2.v1|";
@@ -2005,12 +2006,12 @@ TEST_CASE("github #5466 writing floating point atom props cxsmiles",
 
     mol->getAtomWithIdx(0)->setProp<std::string>("foo", "7.6");
     auto smi = MolToCXSmiles(*mol);
-    CHECK(smi == "C |atomProp:0.foo.7&#46;6|");
+    CHECK(smi == "C |atomProp:0.foo.7.6|");
 
     // 7.5 is exactly representable in IEEE so this helps :)
     mol->getAtomWithIdx(0)->setProp<double>("foo", 7.5);
     smi = MolToCXSmiles(*mol);
-    CHECK(smi == "C |atomProp:0.foo.7&#46;5|");
+    CHECK(smi == "C |atomProp:0.foo.7.5|");
   }
   SECTION("label with .") {
     auto mol = "C"_smiles;
@@ -2018,7 +2019,7 @@ TEST_CASE("github #5466 writing floating point atom props cxsmiles",
 
     mol->getAtomWithIdx(0)->setProp<int>("foo.foo", 7);
     auto smi = MolToCXSmiles(*mol);
-    CHECK(smi == "C |atomProp:0.foo&#46;foo.7|");
+    CHECK(smi == "C |atomProp:0.foo.foo.7|");
   }
 }
 

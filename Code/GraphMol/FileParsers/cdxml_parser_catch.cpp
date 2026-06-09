@@ -1434,6 +1434,27 @@ TEST_CASE("CDX and Formats") {
       }
     }
   }
+
+  SECTION("Check MolToCDXMLBlock") {
+    if(hasChemDrawCDXSupport()) {
+      auto mol = "c1ccccc1"_smiles;
+      REQUIRE(mol);
+      
+      auto block = MolToCDXMLBlock(*mol);    
+      CHECK(block.find("<CDXML") != std::string::npos);
+      
+      auto cdx = MolToCDXMLBlock(*mol, CDXMLFormat::CDX);
+      CHECK(cdx.find("<CDXML") == std::string::npos);
+      
+      auto mols = MolsFromCDXML(block, {true, true, CDXMLFormat::CDXML});
+      CHECK(mols.size() == 1);
+      CHECK(MolToSmiles(*mols[0]) == "c1ccccc1");
+      
+      mols = MolsFromCDXML(cdx, {true, true, CDXMLFormat::CDX});
+      CHECK(mols.size() == 1);
+      CHECK(MolToSmiles(*mols[0]) == "c1ccccc1");
+    }
+  }
 }
 #endif
 	 

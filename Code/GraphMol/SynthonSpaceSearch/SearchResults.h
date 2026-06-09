@@ -12,6 +12,7 @@
 #define RDKIT_SYNTHONSPACE_SEARCHRESULTS_H
 
 #include <functional>
+#include <boost/unordered/unordered_flat_set.hpp>
 #include <RDGeneral/export.h>
 #include <GraphMol/ROMol.h>
 
@@ -77,7 +78,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
   std::vector<std::unique_ptr<ROMol>> d_hitMolecules;
   // Only used when merging in another set, so will be
   // filled in then if needed, empty otherwise.
-  std::unordered_set<std::string> d_molNames;
+  boost::unordered_flat_set<std::string> d_molNames;
 
   std::uint64_t d_maxNumResults;
   bool d_timedOut{false};

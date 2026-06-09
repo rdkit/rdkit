@@ -85,7 +85,7 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
     } else if (elementSymbol == "O") {
       anum = 8;
     } else {
-      STR_UINT_MAP::const_iterator iter = byname.find(elementSymbol);
+      auto iter = byname.find(elementSymbol);
       if (iter != byname.end()) {
         anum = iter->second;
       }

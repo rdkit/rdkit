@@ -98,6 +98,16 @@
 %ignore RDKit::ROMol::bonds();
 %ignore RDKit::ROMol::bonds() const;
 
+%ignore RDKit::ROMol::checkedAtomNeighbors(Atom const *at) const;
+%ignore RDKit::ROMol::checkedAtomNeighbors(Atom const *at);
+%ignore RDKit::ROMol::checkedAtoms() const;
+%ignore RDKit::ROMol::checkedAtoms();
+
+%ignore RDKit::ROMol::checkedAtomBonds(Atom const *at) const;
+%ignore RDKit::ROMol::checkedAtomBonds(Atom const *at);
+%ignore RDKit::ROMol::checkedBonds();
+%ignore RDKit::ROMol::checkedBonds() const;
+
 %ignore RDKit::ROMol::getVertices() ;
 %ignore RDKit::ROMol::getVertices() const ;
 %ignore RDKit::ROMol::getEdges() ;
@@ -116,6 +126,17 @@
   $result = JCALL1(NewByteArray, jenv, $1.size());
   JCALL4(SetByteArrayRegion, jenv, $result, 0, $1.size(), (const jbyte*)$1.c_str());
 }
+%typemap(jni) std::string RDKit::ROMol::MolToCDX "jbyteArray"
+%typemap(jtype) std::string RDKit::ROMol::MolToCDX "byte[]"
+%typemap(jstype) std::string RDKit::ROMol::MolToCDX "byte[]"
+%typemap(javaout) std::string RDKit::ROMol::MolToCDX {
+  return $jnicall;
+}
+%typemap(out) std::string RDKit::ROMol::MolToCDX {
+  $result = JCALL1(NewByteArray, jenv, $1.size());
+  JCALL4(SetByteArrayRegion, jenv, $result, 0, $1.size(), (const jbyte*)$1.c_str());
+}
+
 #endif
 
 /*
@@ -152,6 +173,7 @@
     }
   }
 %}
+
 %typemap(cscode) RDKit::ROMol %{
   public static ROMol FromByteArray(byte[] pkl) {
     UChar_Vect vec = null;
@@ -181,8 +203,22 @@
          vec.Dispose();
        }
      }
-   }
+  }
+  public byte[] MolToCDX() {
+    UChar_Vect vec = null;
+    try {
+       vec = MolToCDXHelper();
+       byte[] res = new byte[vec.Count];
+       vec.CopyTo(res);
+       return res;
+     } finally {
+       if (vec != null) {
+         vec.Dispose();
+       }
+     }
+  }
 %}
+
 %include <GraphMol/ROMol.h>
 
 %ignore SubstructMatch;
@@ -260,6 +296,7 @@ void setAllowNontetrahedralChirality(bool);
 #ifdef SWIGCSHARP
 %csmethodmodifiers RDKit::ROMol::fromUCharVect "private";
 %csmethodmodifiers RDKit::ROMol::toUCharVect "private";
+%csmethodmodifiers RDKit::ROMol::MolToCDXHelper "private";
 #endif
 
 %{
@@ -339,6 +376,16 @@ unsigned int getDefaultPickleProperties();
     RDKit::MolToXYZFile(*($self), fName, confId);
   }
 
+  static bool hasChemDrawCDXSupport() {
+    return RDKit::v2::CDXMLParser::hasChemDrawCDXSupport();
+  }
+  
+  std::string MolToCDXML() {
+    return RDKit::v2::CDXMLParser::MolToCDXMLBlock(
+        *($self),
+	RDKit::v2::CDXMLParser::CDXMLFormat::CDXML);
+  }
+  
   bool hasSubstructMatch(RDKit::ROMol &query,bool useChirality=false){
     RDKit::MatchVectType mv;
     return SubstructMatch(*($self),query,mv,true,useChirality);
@@ -654,6 +701,11 @@ unsigned int getDefaultPickleProperties();
     }
     return sres;
   }
+  const std::string MolToCDX() {
+    return RDKit::v2::CDXMLParser::MolToCDXMLBlock(
+        *($self),
+	RDKit::v2::CDXMLParser::CDXMLFormat::CDX);
+  }
 #endif
 #ifdef SWIGCSHARP
   const std::vector<unsigned char> toUCharVect(int propertyFlags=-1) {
@@ -664,6 +716,13 @@ unsigned int getDefaultPickleProperties();
       RDKit::MolPickler::pickleMol(*($self),sres);
     }
     const std::vector<unsigned char> vec(sres.begin(), sres.end());
+    return vec;
+  }
+  const std::vector<unsigned char> MolToCDXHelper() {
+    std::string cdx = RDKit::v2::CDXMLParser::MolToCDXMLBlock(
+			     *($self),
+			     RDKit::v2::CDXMLParser::CDXMLFormat::CDX);
+    const std::vector<unsigned char> vec(cdx.begin(), cdx.end());
     return vec;
   }
 #endif
