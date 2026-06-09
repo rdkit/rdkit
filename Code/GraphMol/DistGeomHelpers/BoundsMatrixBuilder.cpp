@@ -23,6 +23,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
 #include <unordered_set>
+#include <ranges>
 
 const double DIST12_DELTA = 0.01;
 // const double ANGLE_DELTA = 0.0837;
@@ -259,6 +260,28 @@ void _checkAndSetBounds(unsigned int i, unsigned int j, double lb, double ub,
   }
 }
 
+inline std::size_t getUnifiedId(const unsigned int id1, const unsigned int id2,
+                                const unsigned int n) {
+  // returns an id for (id1, id2) independed of order within range (0, 2*n - 1)
+  // assuming id1 < n and id2 < n
+  return id1 < id2 ? (id1 * n + id2) : (id2 * n + id1);
+}
+
+inline std::size_t getUnifiedId(const unsigned int id1, const unsigned int id2,
+                                const unsigned int id3, const unsigned int n) {
+  // returns an id for (id1, id2, id3) independed of order of id1, id3 within
+  // range (0, 3*(n) - 1) assuming id1 < n, id2 < n and id3 < n
+  return id1 < id3 ? (id1 * n * n + id2 * n + id3)
+                   : (id3 * n * n + id2 * n + id1);
+}
+
+inline bool squishBond(const ROMol &mol, const Bond *bond) {
+  return bond->getIsConjugated() &&
+         (bond->getBeginAtom()->getAtomicNum() > 10 ||
+          bond->getEndAtom()->getAtomicNum() > 10) &&
+         mol.getRingInfo()->isBondInRingOfSize(bond->getIdx(), 5);
+}
+
 void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                  ComputedData &accumData) {
   unsigned int npt = mmat->numRows();
@@ -272,15 +295,16 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   boost::dynamic_bitset<> squishAtoms(mol.getNumAtoms());
   // find larger heteroatoms in conjugated 5 rings, because we need to add a bit
   // of extra flex for them
-  for (const auto bond : mol.bonds()) {
-    if (bond->getIsConjugated() &&
-        (bond->getBeginAtom()->getAtomicNum() > 10 ||
-         bond->getEndAtom()->getAtomicNum() > 10) &&
-        mol.getRingInfo() && mol.getRingInfo()->isInitialized() &&
-        mol.getRingInfo()->isBondInRingOfSize(bond->getIdx(), 5)) {
-      squishAtoms.set(bond->getBeginAtomIdx());
-      squishAtoms.set(bond->getEndAtomIdx());
-    }
+  if (mol.getRingInfo() && mol.getRingInfo()->isInitialized()) {
+    // we only set them, if we can determine the ring information
+    auto setBitsIfSquishBond = [&squishAtoms, &mol](const Bond *bond) {
+      if (squishBond(mol, bond)) {
+        squishAtoms.set(bond->getBeginAtomIdx());
+        squishAtoms.set(bond->getEndAtomIdx());
+      }
+    };
+
+    std::ranges::for_each(mol.bonds(), setBitsIfSquishBond);
   }
 
   for (const auto bond : mol.bonds()) {
@@ -318,15 +342,15 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
 }
 
-bool isHBondAcceptor(const Atom *atom) {
+inline bool isHBondAcceptor(const Atom *atom) {
   return (atom->getAtomicNum() == 7 || atom->getAtomicNum() == 8);
 }
 
-bool isHBondDonor(const Atom *atom) {
+inline bool isHBondDonor(const Atom *atom) {
   return isHBondAcceptor(atom) && atom->getTotalNumHs() > 0;
 }
 
-bool isHinHBondDonor(const Atom *atom, const ROMol &mol) {
+inline bool isHinHBondDonor(const Atom *atom, const ROMol &mol) {
   if (atom->getAtomicNum() != 1) {
     return false;
   }
@@ -385,58 +409,57 @@ void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool,
 }
 
 namespace {
-bool isLargerSP2Atom(const Atom *atom) {
+inline bool isLargerSP2Atom(const Atom *atom) {
   return atom->getAtomicNum() > 13 && atom->getHybridization() == Atom::SP2 &&
          atom->getOwningMol().getRingInfo()->numAtomRings(atom->getIdx());
 }
 }  // namespace
-void _set13BoundsHelper(unsigned int aid1, unsigned int aid, unsigned int aid3,
-                        double angle, const ComputedData &accumData,
+void _set13BoundsHelper(const unsigned int aid1, const unsigned int aid,
+                        const unsigned int aid3, const double angle,
+                        const ComputedData &accumData,
                         DistGeom::BoundsMatPtr mmat, const ROMol &mol) {
-  auto bid1 = mol.getBondBetweenAtoms(aid1, aid)->getIdx();
-  auto bid2 = mol.getBondBetweenAtoms(aid, aid3)->getIdx();
-  auto dl = RDGeom::compute13Dist(accumData.bondLengths[bid1],
-                                  accumData.bondLengths[bid2], angle);
-  auto distTol = DIST13_TOL;
-  // Now increase the tolerance if we're outside of the first row of the
+  const auto bid1 = mol.getBondBetweenAtoms(aid1, aid)->getIdx();
+  const auto bid2 = mol.getBondBetweenAtoms(aid, aid3)->getIdx();
+
+  // We increase the tolerance if we're outside of the first row of the
   // periodic table.
-  if (isLargerSP2Atom(mol.getAtomWithIdx(aid1))) {
-    distTol *= 2;
-  }
-  if (isLargerSP2Atom(mol.getAtomWithIdx(aid))) {
-    distTol *= 2;
-  }
-  if (isLargerSP2Atom(mol.getAtomWithIdx(aid3))) {
-    distTol *= 2;
-  }
-  auto du = dl + distTol;
-  dl -= distTol;
+
+  const auto distTol =
+      DIST13_TOL * (1u << isLargerSP2Atom(mol.getAtomWithIdx(aid1))
+                       << isLargerSP2Atom(mol.getAtomWithIdx(aid))
+                       << isLargerSP2Atom(mol.getAtomWithIdx(aid3)));
+
+  const auto dl = RDGeom::compute13Dist(accumData.bondLengths[bid1],
+                                        accumData.bondLengths[bid2], angle) -
+                  distTol;
+
+  const auto du = dl + 2.0 * distTol;
   _checkAndSetBounds(aid1, aid3, dl, du, mmat);
 }
 
-// TODO this is not nice
-void _setRingAngle(Atom::HybridizationType aHyb, unsigned int ringSize,
-                   double &angle) {
+double _getRingAngle(const Atom *atom, const unsigned int ringSize) {
   // NOTE: this assumes that all angles in a ring are equal. This is
   // certainly not always the case, particular in aromatic rings with
   // heteroatoms
   // like s1cncc1. This led to GitHub55, which was fixed elsewhere.
 
+  const Atom::HybridizationType aHyb = atom->getHybridization();
+
   if ((aHyb == Atom::SP2 && ringSize <= 8) || (ringSize == 3) ||
       (ringSize == 4)) {
-    angle = M_PI * (1 - 2.0 / ringSize);
+    return M_PI * (1.0 - 2.0 / static_cast<double>(ringSize));
   } else if (aHyb == Atom::SP3) {
     if (ringSize == 5) {
-      angle = 104 * M_PI / 180;
+      return 104 * M_PI / 180;
     } else {
-      angle = 109.5 * M_PI / 180;
+      return 109.5 * M_PI / 180;
     }
   } else if (aHyb == Atom::SP3D) {
-    angle = 105.0 * M_PI / 180;
+    return 105.0 * M_PI / 180;
   } else if (aHyb == Atom::SP3D2) {
-    angle = 90.0 * M_PI / 180;
+    return 90.0 * M_PI / 180;
   } else {
-    angle = 120 * M_PI / 180;
+    return 120 * M_PI / 180;
   }
 }
 
@@ -473,7 +496,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   auto atomRings = rinfo->atomRings();
   std::sort(atomRings.begin(), atomRings.end(), lessVector);
   // sort the rings based on the ring size
-  INT_VECT visited(npt, 0);
+  std::vector<unsigned int> visited(npt, 0u);
 
   DOUBLE_VECT angleTaken(npt, 0.0);
   auto nb = mol.getNumBonds();
@@ -495,20 +518,17 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       CHECK_INVARIANT(b2, "no bond found");
       bid1 = b1->getIdx();
       bid2 = b2->getIdx();
-      auto id1 = nb * bid1 + bid2;
-      auto id2 = nb * bid2 + bid1;
+      const auto bondPairId = getUnifiedId(bid1, bid2, nb);
 
-      const auto pid =
-          std::min(aid1, aid3) * mol.getNumAtoms() + std::max(aid1, aid3);
-
-      if ((!donePaths[id1]) && (!donePaths[id2])) {
+      if (!donePaths[bondPairId]) {
         // this invar stuff is to deal with bridged systems (Issue 215). In
         // bridged
         // systems we may be covering the same 13 (ring) paths multiple
         // times and unnecessarily increasing the angleTaken at the central
         // atom.
-        _setRingAngle(mol.getAtomWithIdx(aid2)->getHybridization(), rSize,
-                      angle);
+        angle = _getRingAngle(mol.getAtomWithIdx(aid2), rSize);
+
+        const auto pid = getUnifiedId(aid1, aid3, mol.getNumAtoms());
 
         if (!accumData.visitedBound(pid, DistType::DIST12)) {
           _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
@@ -519,9 +539,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         accumData.bondAdj->setVal(bid1, bid2, aid2);
         visited[aid2] += 1;
         angleTaken[aid2] += angle;
-        donePaths[id1] = 1;
-        donePaths[id2] = 1;
-        // donePaths.push_back(invar);
+        donePaths.set(bondPairId);
       }
       aid1 = aid2;
     }
@@ -532,7 +550,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     const auto atom = mol.getAtomWithIdx(aid2);
     auto deg = atom->getDegree();
     auto n13 = deg * (deg - 1) / 2;
-    if (n13 == static_cast<unsigned int>(visited[aid2])) {
+    if (n13 == visited[aid2]) {
       // we are done with this atom
       continue;
     }
@@ -594,7 +612,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
             }
 
             const unsigned int pid =
-                std::min(aid1, aid3) * mol.getNumAtoms() + std::max(aid1, aid3);
+                getUnifiedId(aid1, aid3, mol.getNumAtoms());
 
             if (!accumData.visitedBound(pid, DistType::DIST12)) {
               _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
@@ -1304,16 +1322,13 @@ void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       }
       break;
     case TorsionType::CUSTOM:
-      if (torsionValue.value) {
-        dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23,
-                                     *torsionValue.value) -
-             GEN_DIST_TOL;
-        du = dl + 2 * GEN_DIST_TOL;
-        break;
-      } else {
-        std::cerr << "This should not happen" << std::endl;
-        return;
-      }
+      CHECK_INVARIANT(torsionValue.value,
+                      "Missing value for custom torsion type");
+      dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23,
+                                   *torsionValue.value) -
+           GEN_DIST_TOL;
+      du = dl + 2 * GEN_DIST_TOL;
+      break;
     default:  // NONE  => do not set the bounds => nothing more to do
       return;
   }
@@ -1345,9 +1360,12 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   const auto &bondRings = rinfo->bondRings();
 
   std::unordered_set<unsigned int> bidIsMacrocycle;
-  std::unordered_set<std::uint64_t> ringBondPairs;
-  std::unordered_set<std::uint64_t> donePaths;
+
   std::uint64_t nb = mol.getNumBonds();
+  boost::dynamic_bitset<> ringBondPairs(nb * nb);
+  boost::dynamic_bitset<> donePaths(nb * nb * nb);
+  // std::unordered_set<std::uint64_t> ringBondPairs;
+  // std::unordered_set<std::uint64_t> donePaths;
   // first we will deal with 1-4 atoms that belong to the same ring
   for (const auto &bring : bondRings) {
     const auto rSize = bring.size();
@@ -1358,15 +1376,11 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     for (auto i = 0u; i < rSize; i++) {
       auto bid2 = bring[i];
       auto bid3 = bring[(i + 1) % rSize];
-      auto pid1 = bid1 * nb + bid2;
-      auto pid2 = bid2 * nb + bid1;
-      auto id1 = bid1 * nb * nb + bid2 * nb + bid3;
-      auto id2 = bid3 * nb * nb + bid2 * nb + bid1;
+      auto pid = getUnifiedId(bid1, bid2, nb);
+      auto id = getUnifiedId(bid1, bid2, bid3, nb);
 
-      ringBondPairs.insert(pid1);
-      ringBondPairs.insert(pid2);
-      donePaths.insert(id1);
-      donePaths.insert(id2);
+      ringBondPairs.set(pid);
+      donePaths.set(id);
 
       if (rSize > 5) {
         if (useMacrocycle14config && rSize >= minMacrocycleRingSize) {
@@ -1399,20 +1413,21 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         for (const auto bnd3 : mol.atomBonds(mol.getAtomWithIdx(aid3))) {
           auto bid3 = bnd3->getIdx();
           if (bid3 != bid2) {
-            auto id1 = bid1 * nb * nb + bid2 * nb + bid3;
-            auto id2 = bid3 * nb * nb + bid2 * nb + bid1;
-            if (donePaths.find(id1) == donePaths.end() &&
-                donePaths.find(id2) == donePaths.end()) {
+            auto id = getUnifiedId(bid1, bid2, bid3, nb);
+            // auto id2 = bid3 * nb * nb + bid2 * nb + bid1;
+            if (!donePaths[id]) {  // == donePaths.end()) {
               // we haven't dealt with this path before
-              auto pid1 = bid1 * nb + bid2;
-              auto pid2 = bid2 * nb + bid1;
-              auto pid3 = bid2 * nb + bid3;
-              auto pid4 = bid3 * nb + bid2;
+              auto pid1 = getUnifiedId(bid1, bid2, nb);
+              auto pid2 = getUnifiedId(bid2, bid3, nb);
+              // auto pid2 = bid2 * nb + bid1;
+              // auto pid3 = bid2 * nb + bid3;
+              // auto pid4 = bid3 * nb + bid2;
 
-              if (ringBondPairs.find(pid1) != ringBondPairs.end() ||
-                  ringBondPairs.find(pid2) != ringBondPairs.end() ||
-                  ringBondPairs.find(pid3) != ringBondPairs.end() ||
-                  ringBondPairs.find(pid4) != ringBondPairs.end()) {
+              if (ringBondPairs[pid1] ||
+                  ringBondPairs[pid2]  // != ringBondPairs.end()  //||
+                  // ringBondPairs.find(pid3) != ringBondPairs.end() ||
+                  // ringBondPairs.find(pid4) != ringBondPairs.end()
+              ) {
                 // either (bid1, bid2) or (bid2, bid3) are in the
                 // same ring (note all three cannot be in the same
                 // ring; we dealt with that before)
