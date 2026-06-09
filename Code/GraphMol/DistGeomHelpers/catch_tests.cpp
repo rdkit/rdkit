@@ -1651,19 +1651,14 @@ TEST_CASE("profileBoundsMatrixBuilder") {
       rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/profiling_mols.sdf";
   SDMolSupplier sdsup(fname);
 
-  auto params = DGeomHelpers::ETKDGv3;
-  params.randomSeed = 0xf00d + 1;
-  params.maxIterations = 1;
-  params.numThreads = 1;
-
   auto start = std::chrono::high_resolution_clock::now();
 
   for (auto i = 0u; i < sdsup.length(); ++i) {
     std::unique_ptr<RWMol> mol(static_cast<RWMol *>(sdsup[i]));
     REQUIRE(mol);
     MolOps::addHs(*mol);
-    unsigned int nconfs = 1;
-    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, nconfs, params);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm);
   }
 
   auto end = std::chrono::high_resolution_clock::now();
