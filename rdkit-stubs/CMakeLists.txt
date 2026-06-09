@@ -14,13 +14,14 @@ set(CONCURRENCY "")
 if (DEFINED ENV{CMAKE_BUILD_PARALLEL_LEVEL})
   set(CONCURRENCY "--concurrency $ENV{CMAKE_BUILD_PARALLEL_LEVEL} ")
 endif()
+string(REGEX REPLACE "\\\\" "/" Python3_EXECUTABLE_FWDSLASH ${Python3_EXECUTABLE})
 string(CONCAT RUN_GEN_RDKIT_STUBS_PY "message("
   "\"-- Building and Installing rdkit-stubs into the following director${DIR_OR_DIRS}: ${STUB_LOCATIONS}\")\n"
   "set (SEPARATOR \"=====================================================================\n\")\n"
   "set (COMMON_FILENAME ${CMAKE_CURRENT_BINARY_DIR_FWDSLASH}/gen_rdkit_stubs)\n"
   "execute_process("
   "COMMAND "
-  "${Python3_EXECUTABLE} -m Scripts.gen_rdkit_stubs ${CONCURRENCY}"
+  "${Python3_EXECUTABLE_FWDSLASH} -m Scripts.gen_rdkit_stubs ${CONCURRENCY}"
   "${CMAKE_SOURCE_DIR_FWDSLASH_QUOTED}${PYTHON_INSTDIR_FWDSLASH_QUOTED}"
   "WORKING_DIRECTORY \"${CMAKE_SOURCE_DIR_FWDSLASH}\" "
   "OUTPUT_FILE \"\${COMMON_FILENAME}.out\" "

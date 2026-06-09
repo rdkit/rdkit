@@ -926,11 +926,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite(
           "legendFraction", &RDKit::MolDrawOptions::legendFraction,
           "fraction of the draw panel to be used for the legend if present")
-      .def_readwrite(
-          "legendPosition", &RDKit::MolDrawOptions::legendPosition,
-          "legend position enum. Default=Bottom. "
-          "Values: LegendPosition.Bottom, LegendPosition.Top, "
-          "LegendPosition.Left, LegendPosition.Right.")
+      .def_readwrite("legendPosition", &RDKit::MolDrawOptions::legendPosition,
+                     "legend position enum. Default=Bottom. "
+                     "Values: LegendPosition.Bottom, LegendPosition.Top, "
+                     "LegendPosition.Left, LegendPosition.Right.")
       .def_readwrite(
           "legendVerticalText", &RDKit::MolDrawOptions::legendVerticalText,
           "when legend is Left or Right, draw text vertically (one char per line)")
@@ -1072,6 +1071,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "if true wedged and dashed bonds are drawn using symbolColour "
           "rather than inheriting their colour from the atoms. "
           "Default is false.")
+      .def_readwrite("singleColourBonds",
+                     &RDKit::MolDrawOptions::singleColourBonds,
+                     "if true all bonds are drawn using symbolColour "
+                     "rather than inheriting their colour from the atoms. "
+                     "Default is false.")
       .def_readwrite("useMolBlockWedging",
                      &RDKit::MolDrawOptions::useMolBlockWedging,
                      "If the molecule came from a MolBlock, prefer the wedging"
@@ -1203,8 +1207,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("FillPolys", &RDKit::MolDraw2D::fillPolys, python::args("self"),
            "returns whether or not polygons are being filled")
       .def("DrawLine",
-           (void(RDKit::MolDraw2D::*)(const Point2D &, const Point2D &, bool)) &
-               RDKit::MolDraw2D::drawLine,
+           (void (RDKit::MolDraw2D::*)(const Point2D &, const Point2D &,
+                                       bool))&RDKit::MolDraw2D::drawLine,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("rawCoords") = false),
            "draws a line with the current drawing style. The coordinates "
@@ -1253,9 +1257,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "are in the molecule frame unless rawCoords is true, "
            "in which case the coordinates are in pixels.")
       .def("DrawArc",
-           (void(RDKit::MolDraw2D::*)(const Point2D &, double, double, double,
-                                      bool)) &
-               RDKit::MolDraw2D::drawArc,
+           (void (RDKit::MolDraw2D::*)(const Point2D &, double, double, double,
+                                       bool))&RDKit::MolDraw2D::drawArc,
            (python::arg("self"), python::arg("center"), python::arg("radius"),
             python::arg("angle1"), python::arg("angle2"),
             python::arg("rawCoords") = false),
@@ -1284,9 +1287,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "are in the molecule frame unless rawCoords is true, "
            "in which case the coordinates are in pixels.")
       .def("DrawString",
-           (void(RDKit::MolDraw2D::*)(const std::string &,
-                                      const RDGeom::Point2D &, bool)) &
-               RDKit::MolDraw2D::drawString,
+           (void (RDKit::MolDraw2D::*)(const std::string &,
+                                       const RDGeom::Point2D &,
+                                       bool))&RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos"),
             python::arg("rawCoords") = false),
            "add text to the canvas. The coordinates "
@@ -1301,14 +1304,14 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "are in the molecule frame unless rawCoords is true, "
            "in which case the coordinates are in pixels.")
       .def("GetDrawCoords",
-           (RDGeom::Point2D(RDKit::MolDraw2D::*)(const RDGeom::Point2D &)
+           (RDGeom::Point2D (RDKit::MolDraw2D::*)(const RDGeom::Point2D &)
                 const) &
                RDKit::MolDraw2D::getDrawCoords,
            (python::arg("self"), python::arg("point")),
            "get the coordinates in drawing space for a particular point in "
            "molecule space")
       .def("GetDrawCoords",
-           (RDGeom::Point2D(RDKit::MolDraw2D::*)(int) const) &
+           (RDGeom::Point2D (RDKit::MolDraw2D::*)(int) const) &
                RDKit::MolDraw2D::getDrawCoords,
            (python::arg("self"), python::arg("atomIndex")),
            "get the coordinates in drawing space for a particular atom")
@@ -1338,7 +1341,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            python::args("self"),
            "add the last bits of SVG to finish the drawing")
       .def("AddMoleculeMetadata",
-           (void(RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
+           (void (RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
                RDKit::MolDraw2DSVG::addMoleculeMetadata,
            ((python::arg("self"), python::arg("mol")),
             python::arg("confId") = -1),
@@ -1591,10 +1594,9 @@ https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_draw
               (python::arg("mol"), python::arg("confId") = -1),
               "Calculate the mean bond length for the molecule.");
   python::def("SetDarkMode",
-              (void (*)(RDKit::MolDrawOptions &)) & RDKit::setDarkMode,
+              (void (*)(RDKit::MolDrawOptions &))&RDKit::setDarkMode,
               python::args("d2d"), "set dark mode for a MolDrawOptions object");
-  python::def("SetDarkMode",
-              (void (*)(RDKit::MolDraw2D &)) & RDKit::setDarkMode,
+  python::def("SetDarkMode", (void (*)(RDKit::MolDraw2D &))&RDKit::setDarkMode,
               python::args("d2d"), "set dark mode for a MolDraw2D object");
   python::def("SetMonochromeMode", RDKit::setMonochromeMode_helper1,
               (python::arg("options"), python::arg("fgColour"),

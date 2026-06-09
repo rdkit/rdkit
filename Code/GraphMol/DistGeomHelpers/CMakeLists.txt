@@ -7,7 +7,7 @@ target_compile_definitions(DistGeomHelpers PRIVATE RDKIT_DISTGEOMHELPERS_BUILD)
 rdkit_headers(BoundsMatrixBuilder.h
               Embedder.h DEST GraphMol/DistGeomHelpers)
 
-rdkit_test(testDistGeomHelpers testDgeomHelpers.cpp
+rdkit_catch_test(testDistGeomHelpers testDgeomHelpers.cpp
            LINK_LIBRARIES
            DistGeomHelpers MolTransforms FileParsers SmilesParse  )
 

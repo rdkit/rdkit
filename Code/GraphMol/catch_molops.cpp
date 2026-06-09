@@ -769,3 +769,108 @@ TEST_CASE("Test findRingFamilies") {
     CHECK(r->bondRingFamilies().size() == numRings);
   }
 }
+
+TEST_CASE("GitHub #9270: Segfault when calling MolToSmiles on submol") {
+  SECTION("both atoms mapped") {
+    // Legacy Stereo perceives double bond stereo as E/Z,
+    // modern stereo as CIS/TRANS, but both should result
+    // in the same output
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture useLegacyFixture(useLegacy);
+
+    auto mol = "C/C=C/CC"_smiles;
+    REQUIRE(mol);
+
+    auto dblBond = mol->getBondWithIdx(1);
+    REQUIRE(dblBond->getBondType() == Bond::BondType::DOUBLE);
+
+    if (useLegacy) {
+      REQUIRE(dblBond->getStereo() == Bond::BondStereo::STEREOE);
+    } else {
+      REQUIRE(dblBond->getStereo() == Bond::BondStereo::STEREOTRANS);
+    }
+    REQUIRE(dblBond->getStereoAtoms() == std::vector<int>{0, 3});
+
+    // Extract all atoms and bond except the last atom;
+    // both stereo atoms should be mapped
+    std::vector<unsigned int> atoms{0, 1, 2, 3};
+    std::vector<unsigned int> bonds{0, 1, 2};
+    auto subset = copyMolSubset(*mol, atoms, bonds);
+    REQUIRE(subset);
+
+    dblBond = subset->getBondWithIdx(1);
+    REQUIRE(dblBond->getBondType() == Bond::BondType::DOUBLE);
+    REQUIRE(dblBond->getStereo() == Bond::BondStereo::STEREOTRANS);
+    REQUIRE(dblBond->getStereoAtoms() == std::vector<int>{0, 3});
+  }
+
+  SECTION("one stereo atom replaced with alternative") {
+    UseLegacyStereoPerceptionFixture useLegacyFixture(false);
+
+    auto mol = "OC(/C)=C/C"_smiles;
+    REQUIRE(mol);
+
+    auto dblBond = mol->getBondWithIdx(2);
+    REQUIRE(dblBond->getBondType() == Bond::BondType::DOUBLE);
+    REQUIRE(dblBond->getStereo() == Bond::BondStereo::STEREOTRANS);
+    REQUIRE(dblBond->getStereoAtoms() == std::vector<int>{0, 4});
+
+    // Extract all atoms and bonds except the first stereo atom (atom 0)
+    std::vector<unsigned int> atoms{1, 2, 3, 4};
+    std::vector<unsigned int> bonds{1, 2, 3};
+    auto subset = copyMolSubset(*mol, atoms, bonds);
+    REQUIRE(subset);
+
+    dblBond = subset->getBondWithIdx(1);
+    REQUIRE(dblBond->getBondType() == Bond::BondType::DOUBLE);
+    REQUIRE(dblBond->getStereo() == Bond::BondStereo::STEREOCIS);
+    REQUIRE(dblBond->getStereoAtoms() == std::vector<int>{1, 3});
+  }
+
+  SECTION("both atoms on one side removed") {
+    UseLegacyStereoPerceptionFixture useLegacyFixture(false);
+
+    auto mol = "OC(/C)=C/C"_smiles;
+    REQUIRE(mol);
+
+    auto dblBond = mol->getBondWithIdx(2);
+    REQUIRE(dblBond->getBondType() == Bond::BondType::DOUBLE);
+    REQUIRE(dblBond->getStereo() == Bond::BondStereo::STEREOTRANS);
+    REQUIRE(dblBond->getStereoAtoms() == std::vector<int>{0, 4});
+
+    // Extract double bond and second stereo atom
+    std::vector<unsigned int> atoms{1, 3, 4};
+    std::vector<unsigned int> bonds{2, 3};
+    auto subset = copyMolSubset(*mol, atoms, bonds);
+    REQUIRE(subset);
+
+    dblBond = subset->getBondWithIdx(0);
+    REQUIRE(dblBond->getBondType() == Bond::BondType::DOUBLE);
+    REQUIRE(dblBond->getStereo() == Bond::BondStereo::STEREONONE);
+    REQUIRE(dblBond->getStereoAtoms().empty());
+  }
+
+  SECTION("both atoms replaced - double swap") {
+    UseLegacyStereoPerceptionFixture useLegacyFixture(false);
+
+    auto mol = "OC(/C)=C(/C)N"_smiles;
+    REQUIRE(mol);
+
+    auto dblBond = mol->getBondWithIdx(2);
+    REQUIRE(dblBond->getBondType() == Bond::BondType::DOUBLE);
+    REQUIRE(dblBond->getStereo() == Bond::BondStereo::STEREOTRANS);
+    REQUIRE(dblBond->getStereoAtoms() == std::vector<int>{0, 4});
+
+    // Extract all atoms and bonds except the first stereo atom (atom 0)
+    std::vector<unsigned int> atoms{1, 2, 3, 5};
+    std::vector<unsigned int> bonds{1, 2, 4};
+    auto subset = copyMolSubset(*mol, atoms, bonds);
+    REQUIRE(subset);
+
+    dblBond = subset->getBondWithIdx(1);
+    REQUIRE(dblBond->getBondType() == Bond::BondType::DOUBLE);
+    REQUIRE(dblBond->getStereo() == Bond::BondStereo::STEREOTRANS);
+    REQUIRE(dblBond->getStereoAtoms() == std::vector<int>{1, 3});
+  }
+}

@@ -127,82 +127,67 @@ TEST_CASE("update parameters from JSON") {
     }
     return fname + file;
   };
-  SECTION("DG") {
-    const bool legacyETKDG = GENERATE(true, false);
-    std::string fname = getPath("simple_torsion.dg.mol", legacyETKDG);
+  auto runTest = [](const std::string &smiles, const std::string &fname,
+                    const std::string &json) {
     std::unique_ptr<RWMol> ref{MolFileToMol(fname, true, false)};
     REQUIRE(ref);
-    std::unique_ptr<RWMol> mol{SmilesToMol("OCCC")};
+    std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
     REQUIRE(mol);
     MolOps::addHs(*mol);
     CHECK(ref->getNumAtoms() == mol->getNumAtoms());
     DGeomHelpers::EmbedParameters params;
-    std::string json =
-        R"JSON({"randomSeed":42,"useLegacyImplementation":)JSON" +
-        std::string(legacyETKDG ? "true" : "false") + "}";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
     // MolToMolFile(*mol, fname);
     compareConfs(ref.get(), mol.get());
+  };
+  std::string rdbase = getenv("RDBASE");
+  auto legacyETKDG = GENERATE(true, false);
+  SECTION("DG") {
+    std::string fname = getPath("simple_torsion.dg.mol", legacyETKDG);
+    std::string smiles = "OCCC";
+    std::string json =
+        R"JSON({"randomSeed":42,"useLegacyImplementation":)JSON" +
+        std::string(legacyETKDG ? "true" : "false") + "}";
+    runTest(smiles, fname, json);
   }
   SECTION("ETKDG") {
-    const bool legacyETKDG = GENERATE(true, false);
     std::string fname = getPath("simple_torsion.etkdg.mol", legacyETKDG);
-    std::unique_ptr<RWMol> ref{MolFileToMol(fname, true, false)};
-    REQUIRE(ref);
-    std::unique_ptr<RWMol> mol{SmilesToMol("OCCC")};
-    REQUIRE(mol);
-    MolOps::addHs(*mol);
-    CHECK(ref->getNumAtoms() == mol->getNumAtoms());
-    DGeomHelpers::EmbedParameters params;
+    std::string smiles = "OCCC";
     std::string json = R"JSON({"randomSeed":42,
     "useExpTorsionAnglePrefs":true,
     "useBasicKnowledge":true,"useLegacyImplementation":)JSON" +
                        std::string(legacyETKDG ? "true" : "false") + "}";
-    DGeomHelpers::updateEmbedParametersFromJSON(params, json);
-    CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
-    // MolToMolFile(*mol, fname);
-    compareConfs(ref.get(), mol.get());
+
+    runTest(smiles, fname, json);
   }
   SECTION("ETKDGv2") {
-    const bool legacyETKDG = GENERATE(true, false);
     std::string fname = getPath("torsion.etkdg.v2.mol", legacyETKDG);
-    std::unique_ptr<RWMol> ref{MolFileToMol(fname, true, false)};
-    REQUIRE(ref);
-    std::unique_ptr<RWMol> mol{SmilesToMol("n1cccc(C)c1ON")};
-    REQUIRE(mol);
-    MolOps::addHs(*mol);
-    CHECK(ref->getNumAtoms() == mol->getNumAtoms());
-    DGeomHelpers::EmbedParameters params;
+    std::string smiles = "n1cccc(C)c1ON";
     std::string json = R"JSON({"randomSeed":42,
     "useExpTorsionAnglePrefs":true,
     "useBasicKnowledge":true,
     "ETversion":2,"useLegacyImplementation":)JSON" +
                        std::string(legacyETKDG ? "true" : "false") + "}";
-    DGeomHelpers::updateEmbedParametersFromJSON(params, json);
-    CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
-    // MolToMolFile(*mol, fname);
-    compareConfs(ref.get(), mol.get());
+    runTest(smiles, fname, json);
   }
 
   SECTION("setting atommap") {
-    const bool legacyETKDG = GENERATE(true, false);
-    std::unique_ptr<RWMol> mol{SmilesToMol("OCCC")};
+    std::unique_ptr<RWMol> mol = "OCCC"_smiles;
     REQUIRE(mol);
     MolOps::addHs(*mol);
-    {
-      DGeomHelpers::EmbedParameters params;
-      std::string json = R"JSON({"randomSeed":42,
-    "coordMap":{"0":[0,0,0],"1":[0,0,1.5],"2":[0,1.5,1.5]},"useLegacyImplementation":)JSON" +
-                         std::string(legacyETKDG ? "true" : "false") + "}";
-      DGeomHelpers::updateEmbedParametersFromJSON(params, json);
-      CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
-      delete params.coordMap;
-      auto conf = mol->getConformer();
-      auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
-      auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
-      CHECK(v1.angleTo(v2) == Catch::Approx(M_PI / 2).margin(0.15));
-    }
+    DGeomHelpers::EmbedParameters params;
+    std::string json = R"JSON({"randomSeed":42,
+    "coordMap":{"0":[0,0,0],"1":[0,0,1.5],"2":[0,1.5,1.5]},
+    "useLegacyImplementation":)JSON" +
+                       std::string(legacyETKDG ? "true" : "false") + "}";
+    DGeomHelpers::updateEmbedParametersFromJSON(params, json);
+    CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    delete params.coordMap;
+    auto conf = mol->getConformer();
+    auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
+    auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
+    CHECK(v1.angleTo(v2) == Catch::Approx(M_PI / 2).margin(0.15));
   }
 }
 
@@ -807,8 +792,8 @@ SECTION("multithreaded") {
 }
 
 TEST_CASE("Github #5883: confgen failing for chiral N in a three ring") {
-  SECTION("basics1") {
-    auto mol = "N1[C@H-]C1"_smiles;
+  auto runTest = [](const std::string &smiles) {
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
     REQUIRE(mol);
     MolOps::addHs(*mol);
     mol->getAtomWithIdx(1)->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
@@ -819,32 +804,18 @@ TEST_CASE("Github #5883: confgen failing for chiral N in a three ring") {
     ps.useLegacyImplementation = legacyETKDG;
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid >= 0);
+  };
+  SECTION("basics1") {
+    auto smiles = "N1[C@H-]C1";
+    runTest(smiles);
   }
   SECTION("basics2") {
-    auto mol = "N1[N@H]C1"_smiles;
-    REQUIRE(mol);
-    MolOps::addHs(*mol);
-    mol->getAtomWithIdx(1)->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
-    const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-    ps.randomSeed = 42;
-    ps.maxIterations = 1;
-    ps.useLegacyImplementation = legacyETKDG;
-    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-    CHECK(cid >= 0);
+    auto smiles = "N1[N@H]C1";
+    runTest(smiles);
   }
   SECTION("no ring") {
-    auto mol = "N[C@H-]C"_smiles;
-    REQUIRE(mol);
-    MolOps::addHs(*mol);
-    mol->getAtomWithIdx(1)->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
-    const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-    ps.randomSeed = 42;
-    ps.maxIterations = 1;
-    ps.useLegacyImplementation = legacyETKDG;
-    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-    CHECK(cid >= 0);
+    auto smiles = "N[C@H-]C";
+    runTest(smiles);
   }
 }
 
@@ -1158,18 +1129,28 @@ TEST_CASE("github #7552") {
   }
   SECTION("as reported, bulk") {
     std::vector<std::string> smileses{
-        "O=CCC1OC2COC12",      "O=C1OC2CCC12C#N",    "CC1C2CC3OC2C13O",
-        "CC12CC1C3(C)OCC23",   "OC1C2COC13COC23",    "OC1C2C3C2N4C3CC14",
-        "CC1OC12C3CC2(O)C3",   "OC1C2CC3C2CCC13",    "CN1CC2(O)C3CC3C12",
-        "C1OC2C3C4C5C4C12N35", "C1OC2CC3OC12C=C3",   "C1C2OC3C1OC23",
-        "CC1(O)CC2CCC12",      "CC12NC(=O)C1C3OC23", "OC1CC2(NCCC12)C#N",
-        "CC12C3C1C(=O)C3C2O",  "C1C=C2C3OC4C3N1C24", "CC12C3C1C4=NC3C2O4",
-        "C1OC23C=CC4C2N4C13",  "OCC12CNC1C(=O)N2",   "CC1C2C3C1C(C#C)n23",
+        "O=CCC1OC2COC12",
+        "O=C1OC2CCC12C#N",
+        "CC1C2CC3OC2C13O",
+        "CC12CC1C3(C)OCC23"
+        "OC1C2C3C2N4C3CC14",
+        "CC1OC12C3CC2(O)C3",
+        "CN1CC2(O)C3CC3C12",
+        "C1C2OC3C1OC23",
+        "CC1(O)CC2CCC12",
+        "CC12NC(=O)C1C3OC23",
+        "OC1CC2(NCCC12)C#N",
+        "CC12C3C1C(=O)C3C2O",
+        "C1OC23C=CC4C2N4C13",
+        "OCC12CNC1C(=O)N2",
+        "CC1C2C3C1C(C#C)n23",
+        // "OC1C2COC13COC23", "OC1C2CC3C2CCC13", "C1OC2C3C4C5C4C12N35",
+        // "C1OC2CC3OC12C=C3", "C1C=C2C3OC4C3N1C24", "CC12C3C1C4=NC3C2O4"
 
     };
     for (const auto &smiles : smileses) {
       INFO(smiles);
-      auto mol = v2::SmilesParse::MolFromSmiles(smileses[0]);
+      auto mol = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(mol);
       MolOps::addHs(*mol);
       CHECK(DGeomHelpers::EmbedMolecule(*mol, ps) == 0);

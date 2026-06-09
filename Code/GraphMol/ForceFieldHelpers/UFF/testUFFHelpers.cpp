@@ -924,20 +924,24 @@ void testMissingParams() {
     UFF::AtomicParamVect types;
     bool foundAll;
 
-    std::unique_ptr<ROMol> mol(SmilesToMol("[Cu](C)(C)(C)(C)C"));
+    auto mol =
+        "[Cu](C)(C)(C)(C)C |("
+        "2.58728,0.448114,-0.523559;0.542223,0.0858326,1.06249;"
+        "-1.54059,-0.992661,0.0475935;0.773308,-0.927694,0.0840352;"
+        "-1.04555,-0.452058,-0.628937;-1.31668,1.83847,-0.0416183)|"_smiles;
     TEST_ASSERT(mol);
-    std::unique_ptr<ROMol> mol2(MolOps::addHs(*mol));
+    auto params = MolOps::AddHsParameters{.addCoords = true};
+    MolOps::addHs(*mol, params);
+    TEST_ASSERT(mol);
 
-    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol2) >= 0);
-
-    boost::tie(types, foundAll) = UFF::getAtomTypes(*mol2);
+    boost::tie(types, foundAll) = UFF::getAtomTypes(*mol);
     TEST_ASSERT(!foundAll);
-    TEST_ASSERT(types.size() == mol2->getNumAtoms());
+    TEST_ASSERT(types.size() == mol->getNumAtoms());
     TEST_ASSERT(!types[0]);
 
     // make sure we can optimize anyway:
     std::unique_ptr<ForceFields::ForceField> field(
-        UFF::constructForceField(*mol2, types));
+        UFF::constructForceField(*mol, types));
     TEST_ASSERT(field);
     field->initialize();
     double e1 = field->calcEnergy();
@@ -1002,18 +1006,17 @@ void testGitHubIssue62() {
     double energyValues[] = {
         38.687, 174.698, 337.986, 115.248, 2.482,   1.918,  10.165,  99.492,
         41.016, 267.236, 15.747,  203.398, 206.852, 20.044, 218.879, 79.614};
-    SmilesMolSupplier smiSupplier(pathName + "/Issue62.smi");
+    v2::FileParsers::MolFileParserParams params{.removeHs = false};
+    v2::FileParsers::SDMolSupplier supplier(pathName + "/Issue62_dg.sdf",
+                                            params);
     SDWriter *sdfWriter = new SDWriter(pathName + "/Issue62.sdf");
-    for (unsigned int i = 0; i < smiSupplier.length(); ++i) {
-      auto *tmp = smiSupplier[i];
-      ROMol *mol = MolOps::addHs(*tmp);
-      delete tmp;
+    for (unsigned int i = 0; i < supplier.length(); ++i) {
+      auto mol = supplier[i];
       TEST_ASSERT(mol);
       std::string molName = "";
       if (mol->hasProp(common_properties::_Name)) {
         mol->getProp(common_properties::_Name, molName);
       }
-      DGeomHelpers::EmbedMolecule(*mol);
       ForceFields::ForceField *field = UFF::constructForceField(*mol);
       TEST_ASSERT(field);
       field->initialize();
@@ -1024,7 +1027,6 @@ void testGitHubIssue62() {
       BOOST_LOG(rdErrorLog) << molName << " " << e << std::endl;
       TEST_ASSERT(fabs(e - energyValues[i]) < 1.);
       delete field;
-      delete mol;
     }
     sdfWriter->close();
     delete sdfWriter;
