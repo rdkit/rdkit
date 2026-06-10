@@ -137,6 +137,20 @@ macro(rdkit_library)
                         ARCHIVE_OUTPUT_DIRECTORY ${RDK_ARCHIVE_OUTPUT_DIRECTORY}
                         RUNTIME_OUTPUT_DIRECTORY ${RDK_RUNTIME_OUTPUT_DIRECTORY}
                         LIBRARY_OUTPUT_DIRECTORY ${RDK_LIBRARY_OUTPUT_DIRECTORY})
+  if(RDK_USE_UNITY_BUILDS)
+    # Jumbo/unity builds: concatenate the library's sources into a few larger
+    # translation units so shared headers are parsed once per batch instead of
+    # once per file. Opt-in (default OFF) since it can surface ODR/macro issues.
+    # Libraries listed in RDK_UNITY_BUILD_EXCLUDED_LIBRARIES are skipped because
+    # they still have file-local symbol collisions to resolve.
+    list(FIND RDK_UNITY_BUILD_EXCLUDED_LIBRARIES ${RDKLIB_NAME} _rdkUnityExcluded)
+    if(_rdkUnityExcluded EQUAL -1)
+      set_target_properties(${RDKLIB_NAME} PROPERTIES UNITY_BUILD ON)
+      if(TARGET ${RDKLIB_NAME}_static)
+        set_target_properties(${RDKLIB_NAME}_static PROPERTIES UNITY_BUILD ON)
+      endif()
+    endif()
+  endif()
 endmacro(rdkit_library)
 
 macro(rdkit_headers)
