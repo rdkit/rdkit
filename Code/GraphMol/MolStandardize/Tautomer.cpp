@@ -343,6 +343,9 @@ int scoreHeteroHs(const ROMol &mol) {
 
 namespace {
 const RingInfo *getFastRingInfo(ROMol &mol) {
+  // We only need to know whether the bond is in a ring; avoid forcing
+  // SymmSSSR here since that has a performance cost.
+  // this might be not precise enough for large rings like 9-or-more macrocycles
   auto ringInfo = mol.getRingInfo();
   if (!ringInfo || !ringInfo->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
@@ -351,7 +354,8 @@ const RingInfo *getFastRingInfo(ROMol &mol) {
   return ringInfo;
 }
 
-bool isTautomerDoubleBondInRing(const RingInfo *ringInfo, const Bond &bond) {
+bool isTautomerBondAtRing(const RingInfo *ringInfo, const Bond &bond) {
+  // either inside a ring or connecting two ring atoms
   const bool bondInRing = ringInfo && ringInfo->numBondRings(bond.getIdx()) != 0;
   const bool beginInRing =
       ringInfo && ringInfo->numAtomRings(bond.getBeginAtomIdx()) != 0;
@@ -363,7 +367,7 @@ bool isTautomerDoubleBondInRing(const RingInfo *ringInfo, const Bond &bond) {
 Bond::BondStereo getClearedTautomerBondStereo(const RingInfo *ringInfo,
                                               const Bond &bond) {
   return (bond.getBondType() == Bond::DOUBLE &&
-          !isTautomerDoubleBondInRing(ringInfo, bond))
+          !isTautomerBondAtRing(ringInfo, bond))
              ? Bond::STEREOANY
              : Bond::STEREONONE;
 }
@@ -463,7 +467,8 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     if (tautBond->getBondType() != Bond::DOUBLE || d_removeBondStereo ||
         !hasValidSpecifiedDoubleBondStereo(*bond)) {
       // When bond stereo is being removed for bonds involved in tautomerism,
-      // use STEREOANY (for *non-ring* double bonds) instead of STEREONONE.
+      // use STEREOANY (for double bonds not in rings or connecting two ring atoms)
+      // instead of STEREONONE.
       // This prevents downstream tools (notably InChI) from inferring a specific E/Z
       // assignment from 2D coordinates after bond orders have been changed.
       const RingInfo *ringInfo =
