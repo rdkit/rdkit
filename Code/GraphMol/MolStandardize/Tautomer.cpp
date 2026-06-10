@@ -475,8 +475,7 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
           tautBond->getBondType() == Bond::DOUBLE ? getFastRingInfo(taut)
                                                   : nullptr;
       const auto targetStereo = getClearedTautomerBondStereo(ringInfo, *tautBond);
-      modified |= (tautBond->getStereo() != targetStereo ||
-                   !tautBond->getStereoAtoms().empty());
+      modified |= (tautBond->getStereo() != targetStereo);
       tautBond->setStereo(targetStereo);
       tautBond->getStereoAtoms().clear();
       for (auto bi : bondsToClearDirs) {

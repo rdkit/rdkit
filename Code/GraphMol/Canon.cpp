@@ -32,7 +32,7 @@ namespace {
 static bool isCanonicalizableStereoDoubleBond(const Bond &bond) {
   const auto stereo = bond.getStereo();
   return bond.getBondType() == Bond::DOUBLE && stereo >= Bond::STEREOZ &&
-         stereo <= Bond::STEREOTRANS && bond.getStereoAtoms().size() >= 2;
+         stereo <= Bond::STEREOTRANS && bond.getStereoAtoms().size() == 2;
 }
 
 static constexpr Bond::BondDir flipStereoBondDir(Bond::BondDir bondDir) {
