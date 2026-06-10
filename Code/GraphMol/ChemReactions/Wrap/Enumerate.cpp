@@ -35,7 +35,6 @@
 #include <GraphMol/ChemReactions/Enumerate/RandomSampleAllBBs.h>
 #include <GraphMol/ChemReactions/Enumerate/EvenSamplePairs.h>
 #include <GraphMol/ChemReactions/Enumerate/Enumerate.h>
-#include <boost/python/stl_iterator.hpp>
 #include <cstdint>
 
 namespace python = boost::python;
