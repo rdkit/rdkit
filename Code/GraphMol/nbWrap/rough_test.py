@@ -8037,16 +8037,15 @@ M  END
     smi2 = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
     self.assertTrue(smi == smi2)
 
+  def test_picklingWithAddedAttribs(self):
+    m = Chem.MolFromSmiles("C")
+    m.foo = 1
+    m.SetIntProp("bar", 2)
+    pkl = pickle.dumps(m)
+    nm = pickle.loads(pkl)
+    self.assertEqual(nm.GetIntProp("bar"), 2)
+    self.assertEqual(nm.foo, 1)
 
-# FIX
-#   def test_picklingWithAddedAttribs(self):
-#     m = Chem.MolFromSmiles("C")
-#     m.foo = 1
-#     m.SetIntProp("bar", 2)
-#     pkl = pickle.dumps(m)
-#     nm = pickle.loads(pkl)
-#     self.assertEqual(nm.GetIntProp("bar"), 2)
-#     self.assertEqual(nm.foo, 1)
 
 #   def testGithubIssue6306(self):
 #     # test of unpickling
