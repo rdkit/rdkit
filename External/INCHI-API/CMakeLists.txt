@@ -87,6 +87,9 @@ if(RDK_BUILD_INCHI_SUPPORT)
   if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
   endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+  if(RDK_BUILD_NANOBIND_WRAPPERS)
+    add_subdirectory(nbWrap)
+  endif()
 
   add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
 
