@@ -1,3 +1,16 @@
+# Release_2026.03.4
+(Changes relative to Release_2026.03.3)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+## Backwards incompatible changes:
+- `MolTransforms.h` now includes `<Eigen/Core>` instead of `<Eigen/Dense>`. C++
+code that included `MolTransforms.h` and relied on it to transitively pull in the
+Eigen dense modules (LU/QR/SVD/etc.) must now include `<Eigen/Dense>` directly.
+
 # Release_2026.03.3
 (Changes relative to Release_2026.03.2)
 
