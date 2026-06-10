@@ -5,3 +5,7 @@ target_compile_definitions(InfoTheory PRIVATE RDKIT_INFOTHEORY_BUILD)
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()
