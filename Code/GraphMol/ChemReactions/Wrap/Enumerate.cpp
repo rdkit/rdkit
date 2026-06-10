@@ -125,14 +125,6 @@ class EnumerateLibraryWrap : public RDKit::EnumerateLibrary {
       : RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), enumerator, params) {}
 };
 
-namespace {
-template <typename T>
-inline std::vector<T> to_std_vector(const python::object &iterable) {
-  return std::vector<T>(python::stl_input_iterator<T>(iterable),
-                        python::stl_input_iterator<T>());
-}
-}  // namespace
-
 void ToBBS(EnumerationStrategyBase &rgroup, ChemicalReaction &rxn,
            python::list ob) {
   rgroup.initialize(rxn, ConvertToVect(ob));
