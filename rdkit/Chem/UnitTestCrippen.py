@@ -15,7 +15,6 @@
 import io
 import os
 import pickle
-import sys
 import unittest
 
 import numpy
