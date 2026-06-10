@@ -10,6 +10,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/optional.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <CoordGen/CoordGen.h>
@@ -30,12 +31,10 @@ void SetCoordMap(CoordGen::CoordGenParams *self, nb::dict coordMap) {
   }
 }
 
-void addCoordsHelper(ROMol &mol, nb::object params) {
-  CoordGen::CoordGenParams *ps = nullptr;
-  if (!params.is_none()) {
-    ps = nb::cast<CoordGen::CoordGenParams *>(params);
-  }
-  CoordGen::addCoords(mol, ps);
+void addCoordsHelper(ROMol &mol,
+                     std::optional<CoordGen::CoordGenParams> params) {
+  CoordGen::CoordGenParams ps;
+  CoordGen::addCoords(mol, params.has_value() ? &params.value() : &ps);
 }
 
 void SetTemplateMol(CoordGen::CoordGenParams *self, const ROMol *templ) {
@@ -53,8 +52,8 @@ void SetDefaultTemplateFileDir(const std::string &dir) {
 NB_MODULE(rdCoordGen, m) {
   m.doc() = "Module containing interface to the CoordGen library.";
 
-  nb::class_<RDKit::CoordGen::CoordGenParams>(m, "CoordGenParams",
-                                               "Parameters controlling coordinate generation")
+  nb::class_<RDKit::CoordGen::CoordGenParams>(
+      m, "CoordGenParams", "Parameters controlling coordinate generation")
       .def(nb::init<>())
       .def("SetCoordMap", &RDKit::SetCoordMap, "coordMap"_a,
            "expects a dictionary of Point2D objects with template coordinates")
@@ -74,9 +73,10 @@ NB_MODULE(rdCoordGen, m) {
       .def_ro("sketcherBestPrecision",
               &RDKit::CoordGen::CoordGenParams::sketcherBestPrecision,
               "highest quality (and slowest) precision setting")
-      .def_ro("sketcherStandardPrecision",
-              &RDKit::CoordGen::CoordGenParams::sketcherStandardPrecision,
-              "standard quality precision setting, the default for the coordgen project")
+      .def_ro(
+          "sketcherStandardPrecision",
+          &RDKit::CoordGen::CoordGenParams::sketcherStandardPrecision,
+          "standard quality precision setting, the default for the coordgen project")
       .def_ro("sketcherQuickPrecision",
               &RDKit::CoordGen::CoordGenParams::sketcherQuickPrecision,
               "faster precision setting")
@@ -88,16 +88,15 @@ coordinates most of the time, this is the default setting for the RDKit)DOC")
               &RDKit::CoordGen::CoordGenParams::minimizerPrecision,
               "controls sketcher precision")
       .def_rw("treatNonterminalBondsToMetalAsZOBs",
-              &RDKit::CoordGen::CoordGenParams::treatNonterminalBondsToMetalAsZeroOrder)
+              &RDKit::CoordGen::CoordGenParams::
+                  treatNonterminalBondsToMetalAsZeroOrder)
       .def("__setattr__", &safeSetattr);
 
   m.def("SetDefaultTemplateFileDir", &RDKit::SetDefaultTemplateFileDir,
         "dir"_a);
 
-  m.def(
-      "AddCoords", &RDKit::addCoordsHelper,
-      "mol"_a, "params"_a = nb::none(),
-      R"DOC(Add 2D coordinates.
+  m.def("AddCoords", &RDKit::addCoordsHelper, "mol"_a, "params"_a = nb::none(),
+        R"DOC(Add 2D coordinates.
 ARGUMENTS:
    - mol: molecule to modify
    - params: (optional) parameters controlling the coordinate generation
