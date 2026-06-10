@@ -1906,8 +1906,7 @@ NB_MODULE(rdmolfiles, m) {
       (std::string (*)(const ROMol &, const SmilesWriteParams &, std::uint32_t,
                        RestoreBondDirOption))RDKit::MolToCXSmiles,
       "mol"_a, "params"_a,
-      "flags"_a = static_cast<std::uint32_t>(
-          RDKit::SmilesWrite::CXSmilesFields::CX_ALL),
+      "flags"_a = RDKit::SmilesWrite::CXSmilesFields::CX_ALL,
       "restoreBondDirs"_a =
           RDKit::RestoreBondDirOption::RestoreBondDirOptionClear,
       "Returns the CXSMILES string for a molecule");
