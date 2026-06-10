@@ -59,3 +59,7 @@ rdkit_catch_test(shape_test test.cpp LINK_LIBRARIES PubChemShape FileParsers Mol
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()

@@ -477,35 +477,40 @@ TEST_CASE("tautomer v2") {
             // different hashes. Previously the algorithm incorrectly treated
             // aromatic heteroatoms like pyridine N as tautomeric candidates,
             // causing stereo to be stripped.
-            {{"c1ccccc1/C=C/c1ncccc1"}, // in ChEMBL (CHEMBL1877619)
+            {{"c1ccccc1/C=C/c1ncccc1"},  // in ChEMBL (CHEMBL1877619)
              {"c1ccccc1/C=C\\c1ncccc1", "c1ccccc1C=Cc1ncccc1"}},
             // 5-benzylidenerhodanine: E/Z isomers are NOT tautomers and should
             // have different hashes. The exocyclic C=C to phenyl should
             // preserve stereochemistry.
-            {{"O=C1NC(=S)S/C1=C/c2ccccc2"}, // in ChEMBL (CHEMBL4796170)
+            {{"O=C1NC(=S)S/C1=C/c2ccccc2"},  // in ChEMBL (CHEMBL4796170)
              {"O=C1NC(=S)S/C1=C\\c2ccccc2", "O=C1NC(=S)SC1=Cc2ccccc2"}},
             // E/Z hydrazones with exocyclic C=N to a ring: E and Z isomers
             // are NOT tautomers and should have different hashes.
-            {{"c1ccccc1N/N=C2\\CCCCC2C"}, // in SureChEMBL (11696321)
-             {"c1ccccc1N/N=C2/CCCCC2C",
-              "c1ccccc1NN=C2CCCCC2C"}},
+            {{"c1ccccc1N/N=C2\\CCCCC2C"},  // in SureChEMBL (11696321)
+             {"c1ccccc1N/N=C2/CCCCC2C", "c1ccccc1NN=C2CCCCC2C"}},
             // ---------------------------
             // stereocenters near amide bonds should not be destroyed
             // by extension through flagged bonds
             // ---------------------------
             // proline-like stereocenter between two amide C=O groups
             {{"NC(=O)[C@H]1CCCN1C=O"},
-            {"NC(=O)[C@@H]1CCCN1C=O"}}, // in SureChEMBL (8959051)
+             {"NC(=O)[C@@H]1CCCN1C=O"}},  // in SureChEMBL (8959051)
             // stereocenters near amide bonds on pyrrolidine ring
-            {{"CC(=O)N[C@H]1CCNC1"}, {"CC(=O)N[C@@H]1CCNC1", "CC(=O)NC1CCNC1"}}, // in SureChEMBL (39850)
-            // stereocenter adjacent to pyrimidine/pyrazole: enantiomers should differ
-            // (stereocenter connected via single non-conjugated N-C bond)
-            {{"C[C@H](c1ccccc1)Nc2ncc(c(n2)Nc3cc([nH]n3)C4CC4)Cl"}, // in SureChEMBL (4072338)
+            {{"CC(=O)N[C@H]1CCNC1"},
+             {"CC(=O)N[C@@H]1CCNC1",
+              "CC(=O)NC1CCNC1"}},  // in SureChEMBL (39850)
+            // stereocenter adjacent to pyrimidine/pyrazole: enantiomers should
+            // differ (stereocenter connected via single non-conjugated N-C
+            // bond)
+            {{"C[C@H](c1ccccc1)Nc2ncc(c(n2)Nc3cc([nH]n3)C4CC4)Cl"},  // in
+                                                                     // SureChEMBL
+                                                                     // (4072338)
              {"C[C@@H](c1ccccc1)Nc2ncc(c(n2)Nc3cc([nH]n3)C4CC4)Cl"}},
-            // diastereomers on indole ring: aromatic C should not pull in stereocenters
+            // diastereomers on indole ring: aromatic C should not pull in
+            // stereocenters
             {{"C[C@@H]1Cc2c3ccccc3[nH]c2[C@@H](N1CC(F)(F)F)c4cc(ccc4Cl)OCCNCCCF"},
-             {"C[C@@H]1Cc2c3ccccc3[nH]c2[C@H](N1CC(F)(F)F)c4cc(ccc4Cl)OCCNCCCF"}}, // in ChEMBL CHEMBL5972799
-            };
+             {"C[C@@H]1Cc2c3ccccc3[nH]c2[C@H](N1CC(F)(F)F)c4cc(ccc4Cl)OCCNCCCF"}},  // in ChEMBL CHEMBL5972799
+        };
     for (const auto &[same, diff] : data) {
       std::unique_ptr<RWMol> m{SmilesToMol(same[0])};
       REQUIRE(m);
@@ -1139,6 +1144,81 @@ TEST_CASE("github #8654: stereogroups incorrectly included in hash") {
           MolHash::MolHash(m2.get(), MolHash::HashFunction::HetAtomTautomerv2,
                            useCxSmiles, cxToSkip);
       CHECK(hsh1 == hsh2);
+    }
+  }
+}
+
+TEST_CASE("exclude atoms with properties") {
+  SECTION("basics") {
+    auto m = "OC=CC"_smiles;
+    REQUIRE(m);
+    RWMol m2(*m);
+    auto hsh1 = MolHash::MolHash(&m2, MolHash::HashFunction::HetAtomTautomerv2);
+    CHECK(hsh1 == "[CH3]-[C]:[C]:[O]_3_0");
+
+    for (auto i : {0, 1, 2}) {
+      INFO("excluding atom " + std::to_string(i));
+      RWMol m3(*m);
+      m3.getAtomWithIdx(i)->setProp(MolHash::excludeFromTautomerismProp, "1");
+      auto hsh2 =
+          MolHash::MolHash(&m3, MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh2 == "[CH3]-[CH]=[CH]-[OH]_0_0");
+    }
+  }
+  SECTION("more complex example") {
+    auto m = "OC=CC=C"_smiles;
+    REQUIRE(m);
+    RWMol m2(*m);
+    auto hsh1 = MolHash::MolHash(&m2, MolHash::HashFunction::HetAtomTautomerv2);
+    CHECK(hsh1 == "[C]:[C]:[C]:[C]:[O]_6_0");
+
+    {
+      RWMol m3(*m);
+      m3.getAtomWithIdx(3)->setProp(MolHash::excludeFromTautomerismProp, "1");
+      auto hsh2 =
+          MolHash::MolHash(&m3, MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh2 == "[CH2]=[CH]-[C]:[C]:[O]_3_0");
+    }
+    {
+      RWMol m3(*m);
+      m3.getAtomWithIdx(4)->setProp(MolHash::excludeFromTautomerismProp, "1");
+      auto hsh2 =
+          MolHash::MolHash(&m3, MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh2 == "[CH2]=[C]:[C]:[C]:[O]_4_0");
+    }
+  }
+}
+
+TEST_CASE("exclude bonds with properties") {
+  SECTION("basics") {
+    auto m = "OC=CC"_smiles;
+    REQUIRE(m);
+    RWMol m2(*m);
+    auto hsh1 = MolHash::MolHash(&m2, MolHash::HashFunction::HetAtomTautomerv2);
+    CHECK(hsh1 == "[CH3]-[C]:[C]:[O]_3_0");
+
+    for (auto i : {0, 1}) {
+      INFO("excluding bond " + std::to_string(i));
+      RWMol m3(*m);
+      m3.getBondWithIdx(i)->setProp(MolHash::excludeFromTautomerismProp, "1");
+      auto hsh2 =
+          MolHash::MolHash(&m3, MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh2 == "[CH3]-[CH]=[CH]-[OH]_0_0");
+    }
+  }
+  SECTION("more complex example") {
+    auto m = "OC=CC=C"_smiles;
+    REQUIRE(m);
+    RWMol m2(*m);
+    auto hsh1 = MolHash::MolHash(&m2, MolHash::HashFunction::HetAtomTautomerv2);
+    CHECK(hsh1 == "[C]:[C]:[C]:[C]:[O]_6_0");
+
+    {
+      RWMol m3(*m);
+      m3.getBondWithIdx(2)->setProp(MolHash::excludeFromTautomerismProp, "1");
+      auto hsh2 =
+          MolHash::MolHash(&m3, MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh2 == "[CH2]=[CH]-[C]:[C]:[O]_3_0");
     }
   }
 }

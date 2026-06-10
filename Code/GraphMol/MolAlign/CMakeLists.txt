@@ -24,3 +24,7 @@ rdkit_catch_test(molAlignCatchTest catch_tests.cpp
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()

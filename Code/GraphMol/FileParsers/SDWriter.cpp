@@ -125,13 +125,12 @@ void _MolToSDStream(std::ostream *dp_ostream, const ROMol &mol, int confId,
   (*dp_ostream) << MolToMolBlock(mol, true, confId, df_kekulize, df_forceV3000);
 
   // now write the properties
-  STR_VECT_CI pi;
-  if (props && props->size() > 0) {
+  if (props && !props->empty()) {
     // check if we have any properties the user specified to write out
     // in which loop over them and write them out
-    for (pi = props->begin(); pi != props->end(); pi++) {
-      if (mol.hasProp(*pi)) {
-        _writePropToStream(dp_ostream, mol, (*pi), d_molid);
+    for (const auto &pi : *props) {
+      if (mol.hasProp(pi)) {
+        _writePropToStream(dp_ostream, mol, pi, d_molid);
       }
     }
   } else {
@@ -141,19 +140,18 @@ void _MolToSDStream(std::ostream *dp_ostream, const ROMol &mol, int confId,
     STR_VECT compLst;
     mol.getPropIfPresent(RDKit::detail::computedPropName, compLst);
 
-    STR_VECT_CI pi;
-    for (pi = properties.begin(); pi != properties.end(); pi++) {
+    for (const auto &pi : properties) {
       // ignore any of the following properties
-      if (((*pi) == RDKit::detail::computedPropName) ||
-          ((*pi) == common_properties::_Name) || ((*pi) == "_MolFileInfo") ||
-          ((*pi) == "_MolFileComments") ||
-          ((*pi) == common_properties::_MolFileChiralFlag)) {
+      if (pi == RDKit::detail::computedPropName ||
+          pi == common_properties::_Name || pi == "_MolFileInfo" ||
+          pi == "_MolFileComments" ||
+          pi == common_properties::_MolFileChiralFlag) {
         continue;
       }
 
       // check if this property is not computed
-      if (std::find(compLst.begin(), compLst.end(), (*pi)) == compLst.end()) {
-        _writePropToStream(dp_ostream, mol, (*pi), d_molid);
+      if (std::find(compLst.begin(), compLst.end(), pi) == compLst.end()) {
+        _writePropToStream(dp_ostream, mol, pi, d_molid);
       }
     }
   }
