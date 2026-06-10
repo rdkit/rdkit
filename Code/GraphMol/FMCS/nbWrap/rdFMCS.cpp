@@ -21,12 +21,6 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 
-namespace {
-std::shared_ptr<RDKit::ROMol> toStd(const RDKit::ROMOL_SPTR &bptr) {
-  return {bptr.get(), [b = bptr](RDKit::ROMol *) {}};
-}
-}  // namespace
-
 namespace RDKit {
 
 // Helper: build atom index match tuple from FinalMatchCheck c-arrays
@@ -37,34 +31,30 @@ static nb::tuple buildAtomIdxMatchTuple(const std::uint32_t c1[],
   auto numMcsAtoms = boost::num_vertices(query);
   nb::list atomList;
   for (unsigned int i = 0; i < numMcsAtoms; ++i) {
-    atomList.append(nb::make_tuple(
-        (long)query[c1[boost::vertex(i, query)]],
-        (long)target[c2[boost::vertex(i, query)]]));
+    atomList.append(nb::make_tuple((long)query[c1[boost::vertex(i, query)]],
+                                   (long)target[c2[boost::vertex(i, query)]]));
   }
   return nb::tuple(atomList);
 }
 
 // Helper: build bond index match tuple from FinalMatchCheck c-arrays
-static nb::tuple buildBondIdxMatchTuple(const std::uint32_t c1[],
-                                        const std::uint32_t c2[],
-                                        const ROMol &mol1,
-                                        const FMCS::Graph &query,
-                                        const ROMol &mol2,
-                                        const FMCS::Graph &target) {
+static nb::tuple buildBondIdxMatchTuple(
+    const std::uint32_t c1[], const std::uint32_t c2[], const ROMol &mol1,
+    const FMCS::Graph &query, const ROMol &mol2, const FMCS::Graph &target) {
   auto numMcsBonds = boost::num_edges(query);
   auto queryBondIt = boost::edges(query).first;
   nb::list bondList;
   for (unsigned int i = 0; i < numMcsBonds; ++i, ++queryBondIt) {
-    const auto queryBond = mol1.getBondBetweenAtoms(
-        query[c1[boost::source(*queryBondIt, query)]],
-        query[c1[boost::target(*queryBondIt, query)]]);
+    const auto queryBond =
+        mol1.getBondBetweenAtoms(query[c1[boost::source(*queryBondIt, query)]],
+                                 query[c1[boost::target(*queryBondIt, query)]]);
     CHECK_INVARIANT(queryBond, "");
     const auto targetBond = mol2.getBondBetweenAtoms(
         target[c2[boost::source(*queryBondIt, query)]],
         target[c2[boost::target(*queryBondIt, query)]]);
     CHECK_INVARIANT(targetBond, "");
-    bondList.append(nb::make_tuple((long)queryBond->getIdx(),
-                                   (long)targetBond->getIdx()));
+    bondList.append(
+        nb::make_tuple((long)queryBond->getIdx(), (long)targetBond->getIdx()));
   }
   return nb::tuple(bondList);
 }
@@ -275,8 +265,8 @@ class PyMCSParameters {
     } else {
       // Require that the Python class itself (not an inherited base) defines a
       // callable __call__ method.
-      PyObject *callInDict =
-          PyDict_GetItemString(Py_TYPE(atomComp.ptr())->tp_dict, COMPARE_FUNC_NAME);
+      PyObject *callInDict = PyDict_GetItemString(
+          Py_TYPE(atomComp.ptr())->tp_dict, COMPARE_FUNC_NAME);
       if (!callInDict || !PyCallable_Check(callInDict)) {
         throw nb::type_error(
             "AtomTyper must be an AtomCompare enum value or an instance of a "
@@ -313,8 +303,8 @@ class PyMCSParameters {
     } else {
       // Require that the Python class itself (not an inherited base) defines a
       // callable __call__ method.
-      PyObject *callInDict =
-          PyDict_GetItemString(Py_TYPE(bondComp.ptr())->tp_dict, COMPARE_FUNC_NAME);
+      PyObject *callInDict = PyDict_GetItemString(
+          Py_TYPE(bondComp.ptr())->tp_dict, COMPARE_FUNC_NAME);
       if (!callInDict || !PyCallable_Check(callInDict)) {
         throw nb::type_error(
             "BondTyper must be a BondCompare enum value or an instance of a "
@@ -345,8 +335,9 @@ class PyMCSParameters {
     PyObject *callInDict = PyDict_GetItemString(
         Py_TYPE(progress.ptr())->tp_dict, CALLBACK_FUNC_NAME);
     if (!callInDict || !PyCallable_Check(callInDict)) {
-      throw nb::type_error("The __call__() method must be overridden in "
-                           "the rdFMCS.MCSProgress subclass");
+      throw nb::type_error(
+          "The __call__() method must be overridden in "
+          "the rdFMCS.MCSProgress subclass");
     }
     p->ProgressCallbackUserData = &pcud;
     p->ProgressCallback = MCSProgressCallbackPyFunc;
@@ -363,8 +354,9 @@ class PyMCSParameters {
     PyObject *callInDict = PyDict_GetItemString(
         Py_TYPE(finalMatchCheck.ptr())->tp_dict, CALLBACK_FUNC_NAME);
     if (!callInDict || !PyCallable_Check(callInDict)) {
-      throw nb::type_error("The __call__() method must be overridden in "
-                           "the rdFMCS.MCSFinalMatchCheck subclass");
+      throw nb::type_error(
+          "The __call__() method must be overridden in "
+          "the rdFMCS.MCSFinalMatchCheck subclass");
     }
     p->FinalMatchChecker = MCSFinalMatchCheckPyFunc;
     p->FinalMatchCheckerUserData = &fmud;
@@ -381,8 +373,9 @@ class PyMCSParameters {
     PyObject *callInDict = PyDict_GetItemString(
         Py_TYPE(mcsAcceptance.ptr())->tp_dict, CALLBACK_FUNC_NAME);
     if (!callInDict || !PyCallable_Check(callInDict)) {
-      throw nb::type_error("The __call__() method must be overridden in "
-                           "the rdFMCS.MCSAcceptance subclass");
+      throw nb::type_error(
+          "The __call__() method must be overridden in "
+          "the rdFMCS.MCSAcceptance subclass");
     }
     p->ShouldAcceptMCS = MCSAcceptancePyFunc;
     p->ShouldAcceptMCSUserData = &afud;
@@ -579,10 +572,8 @@ NB_MODULE(rdFMCS, m) {
 
   // MCSResult
   nb::class_<RDKit::MCSResult>(m, "MCSResult", "used to return MCS results")
-      .def_ro("numAtoms", &RDKit::MCSResult::NumAtoms,
-              "number of atoms in MCS")
-      .def_ro("numBonds", &RDKit::MCSResult::NumBonds,
-              "number of bonds in MCS")
+      .def_ro("numAtoms", &RDKit::MCSResult::NumAtoms, "number of atoms in MCS")
+      .def_ro("numBonds", &RDKit::MCSResult::NumBonds, "number of bonds in MCS")
       .def_prop_ro(
           "queryMol",
           [](const RDKit::MCSResult &self) { return toStd(self.QueryMol); },
@@ -623,27 +614,23 @@ NB_MODULE(rdFMCS, m) {
       .value("StrictRingFusion", RDKit::StrictRingFusion);
 
   // FindMCS (simple parameter version)
-  m.def("FindMCS", RDKit::FindMCSWrapper,
-        "mols"_a, "maximizeBonds"_a = true, "threshold"_a = 1.0,
-        "timeout"_a = 3600, "verbose"_a = false, "matchValences"_a = false,
-        "ringMatchesRingOnly"_a = false, "completeRingsOnly"_a = false,
-        "matchChiralTag"_a = false,
+  m.def("FindMCS", RDKit::FindMCSWrapper, "mols"_a, "maximizeBonds"_a = true,
+        "threshold"_a = 1.0, "timeout"_a = 3600, "verbose"_a = false,
+        "matchValences"_a = false, "ringMatchesRingOnly"_a = false,
+        "completeRingsOnly"_a = false, "matchChiralTag"_a = false,
         "atomCompare"_a = RDKit::AtomCompareElements,
         "bondCompare"_a = RDKit::BondCompareOrder,
         "ringCompare"_a = RDKit::IgnoreRingFusion, "seedSmarts"_a = "",
-        "Find the MCS for a set of molecules",
-        nb::rv_policy::take_ownership);
+        "Find the MCS for a set of molecules", nb::rv_policy::take_ownership);
 
   // MCSParameters
   nb::class_<RDKit::PyMCSParameters>(
-      m, "MCSParameters",
-      "Parameters controlling how the MCS is constructed")
+      m, "MCSParameters", "Parameters controlling how the MCS is constructed")
       .def(nb::init<>())
-      .def_prop_rw(
-          "MaximizeBonds", &RDKit::PyMCSParameters::getMaximizeBonds,
-          &RDKit::PyMCSParameters::setMaximizeBonds,
-          "toggles maximizing the number of bonds (instead of the "
-          "number of atoms)")
+      .def_prop_rw("MaximizeBonds", &RDKit::PyMCSParameters::getMaximizeBonds,
+                   &RDKit::PyMCSParameters::setMaximizeBonds,
+                   "toggles maximizing the number of bonds (instead of the "
+                   "number of atoms)")
       .def_prop_rw("Threshold", &RDKit::PyMCSParameters::getThreshold,
                    &RDKit::PyMCSParameters::setThreshold,
                    "fraction of the dataset that must contain the MCS")
@@ -654,7 +641,8 @@ NB_MODULE(rdFMCS, m) {
                    &RDKit::PyMCSParameters::setVerbose, "toggles verbose mode")
       .def_prop_rw(
           "AtomCompareParameters",
-          [](RDKit::PyMCSParameters &self) -> RDKit::MCSAtomCompareParameters & {
+          [](RDKit::PyMCSParameters &self)
+              -> RDKit::MCSAtomCompareParameters & {
             return const_cast<RDKit::MCSAtomCompareParameters &>(
                 self.getAtomCompareParameters());
           },
@@ -662,7 +650,8 @@ NB_MODULE(rdFMCS, m) {
           "parameters for comparing atoms")
       .def_prop_rw(
           "BondCompareParameters",
-          [](RDKit::PyMCSParameters &self) -> RDKit::MCSBondCompareParameters & {
+          [](RDKit::PyMCSParameters &self)
+              -> RDKit::MCSBondCompareParameters & {
             return const_cast<RDKit::MCSBondCompareParameters &>(
                 self.getBondCompareParameters());
           },
@@ -708,8 +697,7 @@ user-defined subclass of rdFMCS.MCSAcceptance)DOC")
       m, "MCSAtomCompareParameters",
       "Parameters controlling how atom-atom matching is done")
       .def(nb::init<>())
-      .def_rw("MatchValences",
-              &RDKit::MCSAtomCompareParameters::MatchValences,
+      .def_rw("MatchValences", &RDKit::MCSAtomCompareParameters::MatchValences,
               "include atom valences in the match")
       .def_rw("MatchChiralTag",
               &RDKit::MCSAtomCompareParameters::MatchChiralTag,
@@ -725,8 +713,7 @@ user-defined subclass of rdFMCS.MCSAcceptance)DOC")
       .def_rw("CompleteRingsOnly",
               &RDKit::MCSAtomCompareParameters::CompleteRingsOnly,
               "results cannot include lone ring atoms")
-      .def_rw("MatchIsotope",
-              &RDKit::MCSAtomCompareParameters::MatchIsotope,
+      .def_rw("MatchIsotope", &RDKit::MCSAtomCompareParameters::MatchIsotope,
               "use isotope atom queries in MCSResults")
       .def("__setattr__", &safeSetattr);
 
@@ -757,20 +744,18 @@ won't match cyclodecane)DOC")
 
   // MCSProgressData
   nb::class_<RDKit::PyMCSProgressData>(m, "MCSProgressData",
-                                        "Information about the MCS progress")
+                                       "Information about the MCS progress")
       .def(nb::init<>())
       .def_prop_ro("numAtoms", &RDKit::PyMCSProgressData::getNumAtoms,
                    "number of atoms in MCS")
       .def_prop_ro("numBonds", &RDKit::PyMCSProgressData::getNumBonds,
                    "number of bonds in MCS")
-      .def_prop_ro("seedProcessed",
-                   &RDKit::PyMCSProgressData::getSeedProcessed,
+      .def_prop_ro("seedProcessed", &RDKit::PyMCSProgressData::getSeedProcessed,
                    "number of processed seeds");
 
   // MCSAtomCompare base class — users subclass and override __call__
-  nb::class_<RDKit::PyMCSAtomCompare>(
-      m, "MCSAtomCompare",
-      R"DOC(Base class. Subclass and override
+  nb::class_<RDKit::PyMCSAtomCompare>(m, "MCSAtomCompare",
+                                      R"DOC(Base class. Subclass and override
 MCSAtomCompare.__call__() to define custom
 atom compare functions, then set MCSParameters.AtomTyper
 to an instance of the subclass)DOC")
@@ -781,26 +766,25 @@ to an instance of the subclass)DOC")
       .def("CheckAtomCharge", &RDKit::PyMCSAtomCompare::checkAtomCharge,
            "parameters"_a, "mol1"_a, "atom1"_a, "mol2"_a, "atom2"_a,
            "Return True if both atoms have the same formal charge")
-      .def("CheckAtomChirality",
-           &RDKit::PyMCSAtomCompare::checkAtomChirality,
+      .def("CheckAtomChirality", &RDKit::PyMCSAtomCompare::checkAtomChirality,
            "parameters"_a, "mol1"_a, "atom1"_a, "mol2"_a, "atom2"_a,
            "Return True if both atoms have, or have not, a chiral tag")
-      .def(COMPARE_FUNC_NAME,
-           [](RDKit::PyMCSAtomCompare &,
-              const RDKit::MCSAtomCompareParameters &, const RDKit::ROMol &,
-              unsigned int, const RDKit::ROMol &, unsigned int) -> bool {
-             PyErr_SetString(PyExc_AttributeError,
-                             "The __call__() method must be overridden in the "
-                             "rdFMCS.MCSAtomCompare subclass");
-             throw nb::python_error();
-           },
-           "parameters"_a, "mol1"_a, "atom1"_a, "mol2"_a, "atom2"_a,
-           "override to implement custom atom comparison");
+      .def(
+          COMPARE_FUNC_NAME,
+          [](RDKit::PyMCSAtomCompare &, const RDKit::MCSAtomCompareParameters &,
+             const RDKit::ROMol &, unsigned int, const RDKit::ROMol &,
+             unsigned int) -> bool {
+            PyErr_SetString(PyExc_AttributeError,
+                            "The __call__() method must be overridden in the "
+                            "rdFMCS.MCSAtomCompare subclass");
+            throw nb::python_error();
+          },
+          "parameters"_a, "mol1"_a, "atom1"_a, "mol2"_a, "atom2"_a,
+          "override to implement custom atom comparison");
 
   // MCSBondCompare base class
-  nb::class_<RDKit::PyMCSBondCompare>(
-      m, "MCSBondCompare",
-      R"DOC(Base class. Subclass and override
+  nb::class_<RDKit::PyMCSBondCompare>(m, "MCSBondCompare",
+                                      R"DOC(Base class. Subclass and override
 MCSBondCompare.__call__() to define custom
 bond compare functions, then set MCSParameters.BondTyper
 to an instance of the subclass)DOC")
@@ -811,79 +795,79 @@ to an instance of the subclass)DOC")
       .def("CheckBondRingMatch", &RDKit::PyMCSBondCompare::checkBondRingMatch,
            "parameters"_a, "mol1"_a, "bond1"_a, "mol2"_a, "bond2"_a,
            "Return True if both bonds are, or are not, part of a ring")
-      .def(COMPARE_FUNC_NAME,
-           [](RDKit::PyMCSBondCompare &,
-              const RDKit::MCSBondCompareParameters &, const RDKit::ROMol &,
-              unsigned int, const RDKit::ROMol &, unsigned int) -> bool {
-             PyErr_SetString(PyExc_AttributeError,
-                             "The __call__() method must be overridden in the "
-                             "rdFMCS.MCSBondCompare subclass");
-             throw nb::python_error();
-           },
-           "parameters"_a, "mol1"_a, "bond1"_a, "mol2"_a, "bond2"_a,
-           "override to implement custom bond comparison");
+      .def(
+          COMPARE_FUNC_NAME,
+          [](RDKit::PyMCSBondCompare &, const RDKit::MCSBondCompareParameters &,
+             const RDKit::ROMol &, unsigned int, const RDKit::ROMol &,
+             unsigned int) -> bool {
+            PyErr_SetString(PyExc_AttributeError,
+                            "The __call__() method must be overridden in the "
+                            "rdFMCS.MCSBondCompare subclass");
+            throw nb::python_error();
+          },
+          "parameters"_a, "mol1"_a, "bond1"_a, "mol2"_a, "bond2"_a,
+          "override to implement custom bond comparison");
 
   // MCSProgress base class — users subclass and override __call__(stat, params)
   // The callback is stored as a Python object in PyMCSParameters and invoked
   // via nb::object::attr(CALLBACK_FUNC_NAME)(); no C++ base class dispatch.
   struct MCSProgress {};
-  nb::class_<MCSProgress>(
-      m, "MCSProgress",
-      R"DOC(Base class. Subclass and override
+  nb::class_<MCSProgress>(m, "MCSProgress",
+                          R"DOC(Base class. Subclass and override
 MCSProgress.__call__()
 to define a custom callback function)DOC")
       .def(nb::init<>())
-      .def(CALLBACK_FUNC_NAME,
-           [](MCSProgress &, const RDKit::PyMCSProgressData &,
-              const RDKit::PyMCSParameters &) -> bool {
-             PyErr_SetString(PyExc_AttributeError,
-                             "The __call__() method must be overridden in the "
-                             "rdFMCS.MCSProgress subclass");
-             throw nb::python_error();
-           },
-           "stat"_a, "parameters"_a,
-           "override to implement a custom progress callback");
+      .def(
+          CALLBACK_FUNC_NAME,
+          [](MCSProgress &, const RDKit::PyMCSProgressData &,
+             const RDKit::PyMCSParameters &) -> bool {
+            PyErr_SetString(PyExc_AttributeError,
+                            "The __call__() method must be overridden in the "
+                            "rdFMCS.MCSProgress subclass");
+            throw nb::python_error();
+          },
+          "stat"_a, "parameters"_a,
+          "override to implement a custom progress callback");
 
   // MCSFinalMatchCheck base class
   struct MCSFinalMatchCheck {};
-  nb::class_<MCSFinalMatchCheck>(
-      m, "MCSFinalMatchCheck",
-      R"DOC(Base class. Subclass and override
+  nb::class_<MCSFinalMatchCheck>(m, "MCSFinalMatchCheck",
+                                 R"DOC(Base class. Subclass and override
 MCSFinalMatchCheck.__call__()
 to define a custom boolean callback function.
 Returning True will cause the growing seed to be accepted,
 False to be rejected)DOC")
       .def(nb::init<>())
-      .def(CALLBACK_FUNC_NAME,
-           [](MCSFinalMatchCheck &) -> bool {
-             PyErr_SetString(PyExc_AttributeError,
-                             "The __call__() method must be overridden in the "
-                             "rdFMCS.MCSFinalMatchCheck subclass");
-             throw nb::python_error();
-           },
-           "override to implement a custom seed final match checker callback");
+      .def(
+          CALLBACK_FUNC_NAME,
+          [](MCSFinalMatchCheck &) -> bool {
+            PyErr_SetString(PyExc_AttributeError,
+                            "The __call__() method must be overridden in the "
+                            "rdFMCS.MCSFinalMatchCheck subclass");
+            throw nb::python_error();
+          },
+          "override to implement a custom seed final match checker callback");
 
   // MCSAcceptance base class
   struct MCSAcceptance {};
-  nb::class_<MCSAcceptance>(
-      m, "MCSAcceptance",
-      R"DOC(Base class. Subclass and override
+  nb::class_<MCSAcceptance>(m, "MCSAcceptance",
+                            R"DOC(Base class. Subclass and override
 MCSAcceptance.__call__()
 to define a custom boolean callback function.
 Returning True will cause the MCS candidate to be accepted,
 False to be rejected)DOC")
       .def(nb::init<>())
-      .def(CALLBACK_FUNC_NAME,
-           [](MCSAcceptance &) -> bool {
-             PyErr_SetString(PyExc_AttributeError,
-                             "The __call__() method must be overridden in the "
-                             "rdFMCS.MCSAcceptance subclass");
-             throw nb::python_error();
-           },
-           "override to implement a custom MCS acceptance callback");
+      .def(
+          CALLBACK_FUNC_NAME,
+          [](MCSAcceptance &) -> bool {
+            PyErr_SetString(PyExc_AttributeError,
+                            "The __call__() method must be overridden in the "
+                            "rdFMCS.MCSAcceptance subclass");
+            throw nb::python_error();
+          },
+          "override to implement a custom MCS acceptance callback");
 
   // FindMCS (MCSParameters version)
   m.def("FindMCS", RDKit::FindMCSWrapper2, "mols"_a, "parameters"_a,
-        "Find the MCS for a set of molecules",
-        nb::rv_policy::take_ownership);
+        "Find the MCS for a set of molecules", nb::rv_policy::take_ownership);
 }

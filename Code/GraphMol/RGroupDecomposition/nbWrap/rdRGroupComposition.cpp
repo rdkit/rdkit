@@ -45,12 +45,6 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 
-namespace {
-std::shared_ptr<RDKit::ROMol> toStd(const RDKit::ROMOL_SPTR &bptr) {
-  return {bptr.get(), [b = bptr](RDKit::ROMol *) {}};
-}
-}  // namespace
-
 namespace RDKit {
 
 class RGroupDecompositionHelper {
@@ -185,9 +179,11 @@ nb::object RGroupDecomp(nb::object cores, nb::object mols,
 
   decomp.Process();
   if (asRows) {
-    return nb::cast(nb::make_tuple(decomp.GetRGroupsAsRows(asSmiles), unmatched));
+    return nb::cast(
+        nb::make_tuple(decomp.GetRGroupsAsRows(asSmiles), unmatched));
   } else {
-    return nb::cast(nb::make_tuple(decomp.GetRGroupsAsColumns(asSmiles), unmatched));
+    return nb::cast(
+        nb::make_tuple(decomp.GetRGroupsAsColumns(asSmiles), unmatched));
   }
 }
 
@@ -200,7 +196,8 @@ void relabelMappedDummiesHelper(ROMol &mol, unsigned int inputLabels,
 }  // namespace RDKit
 
 NB_MODULE(rdRGroupDecomposition, m) {
-  m.doc() = R"DOC(TEST!!! Module containing RGroupDecomposition classes and functions.)DOC";
+  m.doc() =
+      R"DOC(TEST!!! Module containing RGroupDecomposition classes and functions.)DOC";
 
   nb::enum_<RDKit::RGroupLabels>(m, "RGroupLabels", nb::is_arithmetic())
       .value("IsotopeLabels", RDKit::IsotopeLabels)
@@ -295,22 +292,18 @@ once in the same molecule if the sets of matched atoms are not equal
       .def_rw("labels", &RDKit::RGroupDecompositionParameters::labels)
       .def_rw("matchingStrategy",
               &RDKit::RGroupDecompositionParameters::matchingStrategy)
-      .def_rw("scoreMethod",
-              &RDKit::RGroupDecompositionParameters::scoreMethod)
+      .def_rw("scoreMethod", &RDKit::RGroupDecompositionParameters::scoreMethod)
       .def_rw("rgroupLabelling",
               &RDKit::RGroupDecompositionParameters::rgroupLabelling)
-      .def_rw("alignment",
-              &RDKit::RGroupDecompositionParameters::alignment)
-      .def_rw("chunkSize",
-              &RDKit::RGroupDecompositionParameters::chunkSize)
+      .def_rw("alignment", &RDKit::RGroupDecompositionParameters::alignment)
+      .def_rw("chunkSize", &RDKit::RGroupDecompositionParameters::chunkSize)
       .def_rw("onlyMatchAtRGroups",
               &RDKit::RGroupDecompositionParameters::onlyMatchAtRGroups)
       .def_rw("removeAllHydrogenRGroups",
               &RDKit::RGroupDecompositionParameters::removeAllHydrogenRGroups)
       .def_rw("removeHydrogensPostMatch",
               &RDKit::RGroupDecompositionParameters::removeHydrogensPostMatch)
-      .def_rw("timeout",
-              &RDKit::RGroupDecompositionParameters::timeout)
+      .def_rw("timeout", &RDKit::RGroupDecompositionParameters::timeout)
       .def_rw("gaPopulationSize",
               &RDKit::RGroupDecompositionParameters::gaPopulationSize)
       .def_rw("gaMaximumOperations",
@@ -332,10 +325,10 @@ once in the same molecule if the sets of matched atoms are not equal
       .def_rw("allowMultipleRGroupsOnUnlabelled",
               &RDKit::RGroupDecompositionParameters::
                   allowMultipleRGroupsOnUnlabelled)
-      .def_rw("allowMultipleCoresInSameMol",
-              &RDKit::RGroupDecompositionParameters::allowMultipleCoresInSameMol)
-      .def_rw("doTautomers",
-              &RDKit::RGroupDecompositionParameters::doTautomers)
+      .def_rw(
+          "allowMultipleCoresInSameMol",
+          &RDKit::RGroupDecompositionParameters::allowMultipleCoresInSameMol)
+      .def_rw("doTautomers", &RDKit::RGroupDecompositionParameters::doTautomers)
       .def_rw("doEnumeration",
               &RDKit::RGroupDecompositionParameters::doEnumeration)
       .def_ro("substructMatchParams",
@@ -353,8 +346,8 @@ once in the same molecule if the sets of matched atoms are not equal
            "parameters object")
       .def("Add", &RDKit::RGroupDecompositionHelper::Add, "mol"_a)
       .def("GetMatchingCoreIdx",
-           &RDKit::RGroupDecompositionHelper::GetMatchingCoreIdx,
-           "mol"_a, "matches"_a = nb::none())
+           &RDKit::RGroupDecompositionHelper::GetMatchingCoreIdx, "mol"_a,
+           "matches"_a = nb::none())
       .def("Process", &RDKit::RGroupDecompositionHelper::Process,
            "Process the rgroups (must be done prior to "
            "GetRGroupsAsRows/Columns and GetRGroupLabels)")
@@ -389,8 +382,8 @@ molecules [default: False]
      columns[rgroup_label] = [ mols_or_smiles ]
 )DOC");
 
-  m.def("RGroupDecompose", &RDKit::RGroupDecomp,
-        "cores"_a, "mols"_a, "asSmiles"_a = false, "asRows"_a = true,
+  m.def("RGroupDecompose", &RDKit::RGroupDecomp, "cores"_a, "mols"_a,
+        "asSmiles"_a = false, "asRows"_a = true,
         "options"_a = RDKit::RGroupDecompositionParameters(),
         R"DOC(Decompose a collection of molecules into their Rgroups
 ARGUMENTS:
@@ -417,8 +410,7 @@ RETURNS: row_or_column_results, unmatched
 matched.
 )DOC");
 
-  m.def("RelabelMappedDummies", &RDKit::relabelMappedDummiesHelper,
-        "mol"_a,
+  m.def("RelabelMappedDummies", &RDKit::relabelMappedDummiesHelper, "mol"_a,
         "inputLabels"_a = static_cast<unsigned int>(
             RDKit::AtomMap | RDKit::Isotope | RDKit::MDLRGroup),
         "outputLabels"_a = static_cast<unsigned int>(RDKit::MDLRGroup),
