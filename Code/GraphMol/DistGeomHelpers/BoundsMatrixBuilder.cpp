@@ -36,7 +36,6 @@ const double VDW_SCALE_15 = 0.7;
 constexpr double H_BOND_LENGTH = 1.8;
 const double MAX_UPPER = 1000.0;
 static const double minMacrocycleRingSize = 9;
-#include <map>
 
 namespace RDKit {
 namespace DGeomHelpers {
@@ -47,9 +46,6 @@ typedef boost::shared_ptr<RDNumeric::DoubleSymmMatrix> SymmDoubleMatPtr;
 typedef boost::dynamic_bitset<> BIT_SET;
 
 //! Bunch of functions to set distance bound based on topology
-
-typedef std::map<int, double> INT_DOUBLE_MAP;
-typedef INT_DOUBLE_MAP::const_iterator INT_DOUBLE_MAP_CI;
 
 typedef std::vector<long int> LINT_VECT;
 
@@ -264,15 +260,16 @@ inline std::size_t getUnifiedId(const unsigned int id1, const unsigned int id2,
                                 const unsigned int n) {
   // returns an id for (id1, id2) independed of order within range (0, 2*n - 1)
   // assuming id1 < n and id2 < n
-  return id1 < id2 ? (id1 * n + id2) : (id2 * n + id1);
+  return id1 < id2 ? (static_cast<std::size_t>(id1) * n + id2)
+                   : (static_cast<std::size_t>(id2) * n + id1);
 }
 
 inline std::size_t getUnifiedId(const unsigned int id1, const unsigned int id2,
                                 const unsigned int id3, const unsigned int n) {
   // returns an id for (id1, id2, id3) independed of order of id1, id3 within
   // range (0, 3*(n) - 1) assuming id1 < n, id2 < n and id3 < n
-  return id1 < id3 ? (id1 * n * n + id2 * n + id3)
-                   : (id3 * n * n + id2 * n + id1);
+  return id1 < id3 ? (static_cast<std::size_t>(id1) * n * n + id2 * n + id3)
+                   : (static_cast<std::size_t>(id3) * n * n + id2 * n + id1);
 }
 
 inline bool squishBond(const ROMol &mol, const Bond *bond) {
@@ -1087,10 +1084,7 @@ void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
   path14.bid3 = bid3;
   if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2)) {  // FIX: check for trans
     path14.type = TorsionType::CIS;
-    accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                              bid2 * nb + bid3);
-    accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                              bid2 * nb + bid1);
+    accumData.cisPaths.insert(getUnifiedId(bid1, bid2, bid3, nb));
   } else {
     path14.type = TorsionType::FLEXIBLE;
   }
@@ -1295,19 +1289,13 @@ void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) +
            torsionValue.extraDist.value_or(0.0) - GEN_DIST_TOL;
       du = dl + 2 * GEN_DIST_TOL;
-      accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                                bid2 * nb + bid3);
-      accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                                bid2 * nb + bid1);
+      accumData.cisPaths.insert(getUnifiedId(bid1, bid2, bid3, nb));
       break;
     case TorsionType::TRANS:
       dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) +
            torsionValue.extraDist.value_or(0.0) - GEN_DIST_TOL;
       du = dl + 2 * GEN_DIST_TOL;
-      accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
-                                  bid2 * nb + bid3);
-      accumData.transPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
-                                  bid2 * nb + bid1);
+      accumData.transPaths.insert(getUnifiedId(bid1, bid2, bid3, nb));
       break;
     case TorsionType::FLEXIBLE:
       dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
@@ -1827,8 +1815,7 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
             accumData.set15Atoms[pid]) {
           d4 = accumData.bondLengths[i];
           ang34 = accumData.bondAngles->getVal(bid3, i);
-          unsigned long pathId =
-              static_cast<unsigned long>(bid2) * nb * nb + (bid3)*nb + i;
+          unsigned long pathId = getUnifiedId(bid2, bid3, i, nb);
           if (type == TorsionType::CIS) {
             if (accumData.cisPaths.find(pathId) != accumData.cisPaths.end()) {
               dl = _compute15DistsCisCis(d1, d2, d3, d4, ang12, ang23, ang34);
