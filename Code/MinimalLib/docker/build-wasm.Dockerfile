@@ -118,6 +118,7 @@ RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c /src/rdkit/Extern
 
 # Build
 RUN make -j2 RDKit_minimal
+RUN mkdir -p ../Code/MinimalLib/dist/
 RUN cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/dist/
 
 # ---------------------------------------------------------------------------
