@@ -23,7 +23,8 @@ RUN apt-get update && apt-get upgrade -y && apt install -y \
     emscripten \
     libboost-dev \
     libeigen3-dev \
-    nodejs
+    nodejs \
+    node-typescript
 
 WORKDIR /src
 RUN wget -q https://download.savannah.gnu.org/releases/freetype/freetype-${FREETYPE_VERSION}.tar.gz \
@@ -109,7 +110,7 @@ RUN BOOST_CMAKE_DIR=$(find ${EM_CACHE}/sysroot/lib/cmake -name BoostConfig.cmake
         -DZLIB_LIBRARY="${EM_CACHE}/sysroot/lib/wasm32-emscripten/libz.a" \
         -DCMAKE_CXX_FLAGS="${EXCEPTION_HANDLING} -O3 -DNDEBUG" \
         -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING} -O3 -DNDEBUG -DCOMPILE_ANSI_ONLY" \
-        "-DCMAKE_EXE_LINKER_FLAGS=${EXCEPTION_HANDLING} -s STACK_OVERFLOW_CHECK=1 -s USE_PTHREADS=0 -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB -s MODULARIZE=1 -s EXPORT_NAME='initRDKitModule' -s USE_ZLIB=1" \
+        "-DCMAKE_EXE_LINKER_FLAGS=${EXCEPTION_HANDLING} -s STACK_OVERFLOW_CHECK=1 -s USE_PTHREADS=0 -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB -s MODULARIZE=1 -s EXPORT_NAME='initRDKitModule' -s USE_ZLIB=1 --emit-tsd RDKit_minimal.d.ts" \
         ..
 
 # Patch to make InChI code work with emscripten
@@ -120,6 +121,7 @@ RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c /src/rdkit/Extern
 RUN make -j2 RDKit_minimal
 RUN mkdir -p ../Code/MinimalLib/dist/
 RUN cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/dist/
+RUN cp Code/MinimalLib/RDKit_minimal.d.ts ../Code/MinimalLib/dist/
 
 # ---------------------------------------------------------------------------
 # Stage 4: export artifacts
