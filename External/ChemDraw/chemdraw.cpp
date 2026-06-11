@@ -183,7 +183,9 @@ void visit_children(
             // rings in bond stereo detection, and another in
             // sanitization's SSSR symmetrization).
             unsigned int failedOp = 0;
-            MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
+            MolOps::sanitizeMol(*res, failedOp,
+                                MolOps::SANITIZE_CLEANUP |
+                                    MolOps::SANITIZE_FINDRADICALS);
             MolOps::detectBondStereochemistry(*res);
             MolOps::removeHs(*res);
           } else {

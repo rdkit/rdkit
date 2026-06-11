@@ -187,6 +187,9 @@ bool parseNode(
   rd_atom->setFormalCharge(charge);
   rd_atom->setNumExplicitHs(num_hydrogens);
   rd_atom->setNoImplicit(explicitHs);
+  if (node.m_abnormalValence) {
+    rd_atom->setNoImplicit(true);
+  }
 
   rd_atom->setIsotope(isotope);
   if (rgroup_num >= 0) {
