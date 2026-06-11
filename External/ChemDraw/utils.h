@@ -32,7 +32,6 @@
 #ifndef CHEMDRAW_UTILS_H
 #define CHEMDRAW_UTILS_H
 
-#include <RDGeneral/export.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
@@ -104,8 +103,7 @@ struct StereoGroupInfo {
 
 // check to see if we have a tetrahedral flag and ChemDraw CIP set but no
 //  stereo assigned, if so check the bond ordering for CW and CCW
-void RDKIT_RDCHEMDRAWLIB_EXPORT
-checkChemDrawTetrahedralGeometries(RWMol &mol);
+void checkChemDrawTetrahedralGeometries(RWMol &mol);
 }  // namespace ChemDraw
 }  // namespace RDKit
 

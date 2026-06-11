@@ -31,7 +31,6 @@
 //
 
 #include "chemdraw.h"
-#include "utils.h"
 #include <catch2/catch_all.hpp>
 #include "RDGeneral/test.h"
 #include <RDGeneral/Invariant.h>
@@ -881,72 +880,25 @@ TEST_CASE("atropisomers") {
 }
 
 TEST_CASE("atrop endpoints do not become tetrahedral from CDX CIP") {
-  std::unique_ptr<RWMol> mol(MolBlockToMol(R"CTAB(
-     RDKit          2D
-
-  0  0  0  0  0  0  0  0  0  0999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 18 20 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C 12.508337 -35.122931 0.000000 0
-M  V30 2 C 12.508337 -36.617724 0.000000 0
-M  V30 3 C 13.804171 -37.363556 0.000000 0
-M  V30 4 C 15.097922 -36.617724 0.000000 0
-M  V30 5 C 15.097922 -35.122931 0.000000 0
-M  V30 6 C 13.804171 -34.375015 0.000000 0
-M  V30 7 N 13.492714 -32.913554 0.000000 0
-M  V30 8 C 12.007296 -32.757304 0.000000 0
-M  V30 9 N 11.397921 -34.121889 0.000000 0
-M  V30 10 C 16.390631 -32.880222 0.000000 0
-M  V30 11 C 16.390631 -34.375015 0.000000 0
-M  V30 12 C 17.686465 -35.122931 0.000000 0
-M  V30 13 C 18.980215 -34.375015 0.000000 0
-M  V30 14 C 18.980215 -32.880222 0.000000 0
-M  V30 15 C 17.686465 -32.134388 0.000000 0
-M  V30 16 Cl 15.097922 -32.134388 0.000000 0
-M  V30 17 F 17.686465 -36.617724 0.000000 0
-M  V30 18 C 11.257296 -31.458347 0.000000 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 1 2
-M  V30 2 2 2 3
-M  V30 3 1 3 4
-M  V30 4 2 5 4
-M  V30 5 1 5 6 CFG=1
-M  V30 6 2 6 1
-M  V30 7 1 6 7
-M  V30 8 2 7 8
-M  V30 9 1 8 9
-M  V30 10 1 9 1
-M  V30 11 1 10 11
-M  V30 12 2 11 12
-M  V30 13 1 12 13
-M  V30 14 2 13 14
-M  V30 15 1 14 15
-M  V30 16 2 15 10
-M  V30 17 1 10 16
-M  V30 18 1 12 17
-M  V30 19 1 5 11 CFG=1
-M  V30 20 1 8 18
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"));
-  REQUIRE(mol);
-  REQUIRE(mol->getAtomWithIdx(4)->getChiralTag() ==
+  auto path = std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
+  auto fname = path + "atrop-endpoint-cip.cdxml";
+  auto mols = MolsFromChemDrawFile(fname);
+  REQUIRE(mols.size() == 1);
+  auto &mol = *mols[0];
+  REQUIRE(mol.getAtomWithIdx(4)->getChiralTag() ==
           Atom::ChiralType::CHI_UNSPECIFIED);
-  REQUIRE(mol->getBondWithIdx(18)->getStereo() ==
+  REQUIRE(mol.getBondWithIdx(18)->getStereo() ==
           Bond::BondStereo::STEREOATROPCW);
+  CHECK(MolToSmiles(mol) == "Cc1nc2c(-c3c(F)cccc3Cl)cccc2[nH]1");
 
-  mol->getAtomWithIdx(4)->setProp<CDXAtomCIPType>(RDKit::ChemDraw::CDX_CIP,
-                                                  kCDXCIPAtom_R);
-  RDKit::ChemDraw::checkChemDrawTetrahedralGeometries(*mol);
+  std::unique_ptr<RWMol> roundtrip(MolBlockToMol(MolToV3KMolBlock(mol)));
+  REQUIRE(roundtrip);
 
-  CHECK(mol->getAtomWithIdx(4)->getChiralTag() ==
+  CHECK(roundtrip->getAtomWithIdx(4)->getChiralTag() ==
         Atom::ChiralType::CHI_UNSPECIFIED);
-  CHECK(mol->getBondWithIdx(18)->getStereo() ==
+  CHECK(roundtrip->getBondWithIdx(18)->getStereo() ==
         Bond::BondStereo::STEREOATROPCW);
-  CHECK(MolToSmiles(*mol) == "Cc1nc2c(-c3c(F)cccc3Cl)cccc2[nH]1");
+  CHECK(MolToSmiles(*roundtrip) == MolToSmiles(mol));
 }
 
 TEST_CASE("bad stereo in a natural product") {
