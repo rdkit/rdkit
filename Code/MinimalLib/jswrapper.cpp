@@ -533,59 +533,58 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("has_coords", &JSMolBase::has_coords)
       .function("get_smiles",
                 select_overload<std::string() const>(&JSMolBase::get_smiles))
-      .function("get_smiles",
+      .function("get_smiles(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_smiles))
       .function("get_cxsmiles",
                 select_overload<std::string() const>(&JSMolBase::get_cxsmiles))
-      .function("get_cxsmiles",
+      .function("get_cxsmiles(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_cxsmiles))
       .function("get_smarts",
                 select_overload<std::string() const>(&JSMolBase::get_smarts))
-      .function("get_smarts",
+      .function("get_smarts(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_smarts))
       .function("get_cxsmarts",
                 select_overload<std::string() const>(&JSMolBase::get_cxsmarts))
-      .function("get_cxsmarts",
+      .function("get_cxsmarts(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_cxsmarts))
       .function("get_molblock",
                 select_overload<std::string() const>(&JSMolBase::get_molblock))
-      .function("get_molblock",
+      .function("get_molblock(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_molblock))
       .function("get_v3Kmolblock", select_overload<std::string() const>(
                                        &JSMolBase::get_v3Kmolblock))
-      .function("get_v3Kmolblock",
+      .function("get_v3Kmolblock(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_v3Kmolblock))
       .function("get_v2Kmolblock", select_overload<std::string() const>(
                                        &JSMolBase::get_v2Kmolblock))
-      .function("get_v2Kmolblock",
+      .function("get_v2Kmolblock(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_v2Kmolblock))
       .function("get_as_uint8array", &get_as_uint8array)
       .function("get_as_uint8array", &get_as_uint8array_no_details)
 #ifdef RDK_BUILD_INCHI_SUPPORT
-      .function("get_inchi",
+      .function("get_inchi(options)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_inchi))
       .function("get_inchi",
                 select_overload<std::string() const>(&JSMolBase::get_inchi))
 #endif
       .function("get_json", &JSMolBase::get_json)
-      .function("get_svg",
-                select_overload<std::string() const>(&JSMolBase::get_svg))
-      .function("get_svg", select_overload<std::string(int, int) const>(
+      .function("get_svg", select_overload<std::string() const>(&JSMolBase::get_svg))
+      .function("get_svg(width, height)", select_overload<std::string(int, int) const>(
                                &JSMolBase::get_svg))
 
-      .function("get_svg_with_highlights", &JSMolBase::get_svg_with_highlights)
-      .function("combine_with", select_overload<std::string(const JSMolBase &)>(
+      .function("get_svg_with_highlights(details)", &JSMolBase::get_svg_with_highlights)
+      .function("combine_with(other)", select_overload<std::string(const JSMolBase &)>(
                                     &JSMolBase::combine_with))
       .function(
-          "combine_with",
+          "combine_with(other, details)",
           select_overload<std::string(const JSMolBase &, const std::string &)>(
               &JSMolBase::combine_with))
 #ifdef __EMSCRIPTEN__
@@ -600,7 +599,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function(
           "get_morgan_fp_as_uint8array",
           select_overload<val(const JSMolBase &)>(get_morgan_fp_as_uint8array))
-      .function("get_morgan_fp_as_uint8array",
+      .function("get_morgan_fp_as_uint8array(details)",
                 select_overload<val(const JSMolBase &, const std::string &)>(
                     get_morgan_fp_as_uint8array))
       .function("get_pattern_fp",
@@ -609,25 +608,25 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function(
           "get_pattern_fp_as_uint8array",
           select_overload<val(const JSMolBase &)>(get_pattern_fp_as_uint8array))
-      .function("get_pattern_fp_as_uint8array",
+      .function("get_pattern_fp_as_uint8array(param)",
                 select_overload<val(const JSMolBase &, const val &)>(
                     get_pattern_fp_as_uint8array_helper))
       .function("get_topological_torsion_fp_as_uint8array",
                 select_overload<val(const JSMolBase &)>(
                     get_topological_torsion_fp_as_uint8array))
-      .function("get_topological_torsion_fp_as_uint8array",
+      .function("get_topological_torsion_fp_as_uint8array(details)",
                 select_overload<val(const JSMolBase &, const std::string &)>(
                     get_topological_torsion_fp_as_uint8array))
       .function(
           "get_rdkit_fp_as_uint8array",
           select_overload<val(const JSMolBase &)>(get_rdkit_fp_as_uint8array))
-      .function("get_rdkit_fp_as_uint8array",
+      .function("get_rdkit_fp_as_uint8array(details)",
                 select_overload<val(const JSMolBase &, const std::string &)>(
                     get_rdkit_fp_as_uint8array))
       .function("get_atom_pair_fp_as_uint8array",
                 select_overload<val(const JSMolBase &)>(
                     get_atom_pair_fp_as_uint8array))
-      .function("get_atom_pair_fp_as_uint8array",
+      .function("get_atom_pair_fp_as_uint8array(details)",
                 select_overload<val(const JSMolBase &, const std::string &)>(
                     get_atom_pair_fp_as_uint8array))
       .function("get_maccs_fp_as_uint8array", &get_maccs_fp_as_uint8array)
@@ -643,7 +642,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
           select_overload<emscripten::val(
               const JSMolBase &, const std::string &, const std::string &)>(
               add_to_png_blob_helper))
-      .function("add_to_png_blob", select_overload<emscripten::val(
+      .function("add_to_png_blob(pngString)", select_overload<emscripten::val(
                                        const JSMolBase &, const std::string &)>(
                                        add_to_png_blob_helper))
       .function("get_coords", get_coords_helper)
@@ -656,24 +655,24 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                     get_avalon_fp_as_uint8array))
 #endif
 #endif
-      .function("get_substruct_match",
+      .function("get_substruct_match(mol)",
                 select_overload<std::string(const JSMolBase &) const>(
                     &JSMolBase::get_substruct_match))
       .function(
-          "get_substruct_match",
+          "get_substruct_match(mol, details)",
           select_overload<std::string(const JSMolBase &, const std::string &)
                               const>(&JSMolBase::get_substruct_match))
-      .function("get_substruct_matches",
+      .function("get_substruct_matches(mol)",
                 select_overload<std::string(const JSMolBase &) const>(
                     &JSMolBase::get_substruct_matches))
       .function(
-          "get_substruct_matches",
+          "get_substruct_matches(mol, details)",
           select_overload<std::string(const JSMolBase &, const std::string &)
                               const>(&JSMolBase::get_substruct_matches))
       .function("get_descriptors", &JSMolBase::get_descriptors)
       .function("get_morgan_fp",
                 select_overload<std::string() const>(&JSMolBase::get_morgan_fp))
-      .function("get_morgan_fp",
+      .function("get_morgan_fp(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_morgan_fp))
       .function("get_pattern_fp", select_overload<std::string() const>(
@@ -681,24 +680,24 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_topological_torsion_fp",
                 select_overload<std::string() const>(
                     &JSMolBase::get_topological_torsion_fp))
-      .function("get_topological_torsion_fp",
+      .function("get_topological_torsion_fp(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_topological_torsion_fp))
       .function("get_rdkit_fp",
                 select_overload<std::string() const>(&JSMolBase::get_rdkit_fp))
-      .function("get_rdkit_fp",
+      .function("get_rdkit_fp(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_rdkit_fp))
       .function("get_atom_pair_fp", select_overload<std::string() const>(
                                         &JSMolBase::get_atom_pair_fp))
-      .function("get_atom_pair_fp",
+      .function("get_atom_pair_fp(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_atom_pair_fp))
       .function("get_maccs_fp", &JSMolBase::get_maccs_fp)
 #ifdef RDK_BUILD_AVALON_SUPPORT
       .function("get_avalon_fp",
                 select_overload<std::string() const>(&JSMolBase::get_avalon_fp))
-      .function("get_avalon_fp",
+      .function("get_avalon_fp(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_avalon_fp))
 #endif
@@ -714,35 +713,35 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<bool()>(&JSMolBase::set_new_coords))
       .function("get_new_coords", select_overload<std::string() const>(
                                       &JSMolBase::get_new_coords))
-      .function("set_new_coords",
+      .function("set_new_coords(useCoordGen)",
                 select_overload<bool(bool)>(&JSMolBase::set_new_coords))
-      .function("get_new_coords", select_overload<std::string(bool) const>(
+      .function("get_new_coords(useCoordGen)", select_overload<std::string(bool) const>(
                                       &JSMolBase::get_new_coords))
-      .function("has_prop", &JSMolBase::has_prop)
-      .function("get_prop_list",
+      .function("has_prop(key)", &JSMolBase::has_prop)
+      .function("get_prop_list(includePrivate, includeComputed)",
                 select_overload<std::vector<std::string>(
                     bool includePrivate, bool includeComputed) const>(
                     &JSMolBase::get_prop_list))
       .function(
-          "get_prop_list",
+          "get_prop_list(includePrivate)",
           select_overload<std::vector<std::string>(bool includePrivate) const>(
               &JSMolBase::get_prop_list))
       .function("get_prop_list",
                 select_overload<std::vector<std::string>() const>(
                     &JSMolBase::get_prop_list))
       .function(
-          "set_prop",
+          "set_prop(key, val, computed)",
           select_overload<bool(const std::string &, const std::string &, bool)>(
               &JSMolBase::set_prop))
-      .function("set_prop",
+      .function("set_prop(key, val)",
                 select_overload<bool(const std::string &, const std::string &)>(
                     &JSMolBase::set_prop))
-      .function("get_prop", &JSMolBase::get_prop)
-      .function("clear_prop", &JSMolBase::clear_prop)
+      .function("get_prop(key)", &JSMolBase::get_prop)
+      .function("clear_prop(key)", &JSMolBase::clear_prop)
       .function(
           "condense_abbreviations",
           select_overload<std::string()>(&JSMolBase::condense_abbreviations))
-      .function("condense_abbreviations",
+      .function("condense_abbreviations(maxCoverage, useLinkers)",
                 select_overload<std::string(double, bool)>(
                     &JSMolBase::condense_abbreviations))
       .function("add_hs", &JSMolBase::add_hs)
@@ -759,15 +758,15 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<bool()>(&JSMolBase::remove_hs_in_place))
       .function("normalize_depiction",
                 select_overload<double()>(&JSMolBase::normalize_depiction))
-      .function("normalize_depiction",
+      .function("normalize_depiction(canonicalize)",
                 select_overload<double(int)>(&JSMolBase::normalize_depiction))
-      .function("normalize_depiction", select_overload<double(int, double)>(
+      .function("normalize_depiction(canonicalize, scaleFactor)", select_overload<double(int, double)>(
                                            &JSMolBase::normalize_depiction))
       .function("straighten_depiction",
                 select_overload<void()>(&JSMolBase::straighten_depiction))
-      .function("straighten_depiction",
+      .function("straighten_depiction(minimizeRotation)",
                 select_overload<void(bool)>(&JSMolBase::straighten_depiction))
-      .function("get_num_atoms", select_overload<unsigned int(bool) const>(
+      .function("get_num_atoms(heavyOnly)", select_overload<unsigned int(bool) const>(
                                      &JSMolBase::get_num_atoms))
       .function("get_num_atoms", select_overload<unsigned int() const>(
                                      &JSMolBase::get_num_atoms))
