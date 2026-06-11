@@ -2928,11 +2928,12 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
           ret_vec = bond_vecs[i] + bond_vecs[j];
           try {
             ret_vec.normalize();
-            discrim = -1.0;
-            break;
           } catch (const std::runtime_error &e) {
             // normalize throws on zero-length bond.
+            continue;
           }
+          discrim = -1.0;
+          break;
         }
       }
     }
