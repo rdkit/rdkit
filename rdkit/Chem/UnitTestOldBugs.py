@@ -15,7 +15,6 @@ relevant... but tests are tests
 
 """
 import os
-import pickle
 import unittest
 
 from rdkit import Chem, RDConfig

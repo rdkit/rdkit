@@ -5,7 +5,7 @@ from os import environ
 
 import numpy as np
 
-from rdkit import Chem, Geometry, RDConfig
+from rdkit import Chem, Geometry
 from rdkit.Chem import AllChem, Draw, rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
 
