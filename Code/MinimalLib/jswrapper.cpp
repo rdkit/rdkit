@@ -566,7 +566,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_v2Kmolblock(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_v2Kmolblock))
-      .function("get_as_uint8array", &get_as_uint8array)
+      .function("get_as_uint8array(details)", &get_as_uint8array)
       .function("get_as_uint8array", &get_as_uint8array_no_details)
 #ifdef RDK_BUILD_INCHI_SUPPORT
       .function("get_inchi(options)",
@@ -588,11 +588,11 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
           select_overload<std::string(const JSMolBase &, const std::string &)>(
               &JSMolBase::combine_with))
 #ifdef __EMSCRIPTEN__
-      .function("draw_to_canvas_with_offset", &draw_to_canvas_with_offset)
-      .function("draw_to_canvas", &draw_to_canvas)
-      .function("draw_to_canvas_with_highlights",
+      .function("draw_to_canvas_with_offset(canvas, offsetx, offsety, width, height)", &draw_to_canvas_with_offset)
+      .function("draw_to_canvas(canvas, width, height)", &draw_to_canvas)
+      .function("draw_to_canvas_with_highlights(canvas, details)",
                 &draw_to_canvas_with_highlights)
-      .function("generate_aligned_coords",
+      .function("generate_aligned_coords(templateMol, param)",
                 select_overload<std::string(JSMolBase &, const JSMolBase &,
                                             const val &)>(
                     generate_aligned_coords_helper))
