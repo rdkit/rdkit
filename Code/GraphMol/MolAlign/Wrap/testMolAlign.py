@@ -8,12 +8,10 @@
 import copy
 import math
 import os
-import sys
 import unittest
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem import (ChemicalForceFields, rdDistGeom, rdMolAlign, rdMolDescriptors,
-                        rdMolTransforms)
+from rdkit.Chem import (ChemicalForceFields, rdMolAlign, rdMolDescriptors, rdMolTransforms)
 
 
 def lstFeq(l1, l2, tol=1.e-4):
@@ -84,13 +82,11 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(rmsd, 0.9513, 4)
 
   def test4AlignConfs(self):
-    mol = Chem.MolFromSmiles('C1CC1CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
-
-    cids = rdDistGeom.EmbedMultipleConfs(mol, 10, 30, 100)
-    #writer = Chem.SDWriter('mol_899.sdf')
-
-    for cid in cids:
-      ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, confId=cid)
+    sdf = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                       'big_aromat.sdf')
+    mol = Chem.MultiConfMolFromSDF(sdf, removeHs=False)
+    for c in mol.GetConformers():
+      ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, c.GetId())
       ff.Initialize()
       more = 1
       while more:
@@ -168,11 +164,9 @@ class TestCase(unittest.TestCase):
 
   def test7MMFFO3A(self):
     " make sure we generate an error if parameters are missing (github issue 158) "
-
-    m1 = Chem.MolFromSmiles('c1ccccc1Cl')
-    rdDistGeom.EmbedMolecule(m1)
-    m2 = Chem.MolFromSmiles('c1ccccc1B(O)O')
-    rdDistGeom.EmbedMolecule(m1)
+    sdf = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                       'aromats.sdf')
+    m1, m2 = tuple(Chem.SDMolSupplier(sdf))
 
     self.assertRaises(ValueError, lambda: rdMolAlign.GetO3A(m1, m2))
     self.assertRaises(ValueError, lambda: rdMolAlign.GetO3A(m2, m1))
@@ -184,9 +178,9 @@ class TestCase(unittest.TestCase):
     #1) the usual way
     #2) forcing the pyridine nitrogen to match with the para
     #   carbon of the phenyl ring
-    m = Chem.MolFromSmiles('n1ccc(cc1)-c1ccccc1')
-    m1 = Chem.AddHs(m)
-    rdDistGeom.EmbedMolecule(m1)
+    sdf = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                       '4_phenylpyridine.sdf')
+    m1 = Chem.MolFromMolFile(sdf, removeHs=False)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m1)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m1, mp)
     ff.Minimize()
@@ -298,9 +292,9 @@ class TestCase(unittest.TestCase):
     #1) the usual way
     #2) forcing the pyridine nitrogen to match with the para
     #   carbon of the phenyl ring
-    m = Chem.MolFromSmiles('n1ccc(cc1)-c1ccccc1')
-    m1 = Chem.AddHs(m)
-    rdDistGeom.EmbedMolecule(m1)
+    sdf = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                       '4_phenylpyridine.sdf')
+    m1 = Chem.MolFromMolFile(sdf, removeHs=False)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m1)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m1, mp)
     ff.Minimize()
@@ -343,8 +337,8 @@ class TestCase(unittest.TestCase):
     prbNum = 32
     refMol = molS[refNum]
     prbMol = molS[prbNum]
-    refPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
-    prbPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
+    _ = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
+    _ = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
     refSIdx = refMol.GetSubstructMatch(Chem.MolFromSmarts('S'))[0]
     prbOIdx = prbMol.GetSubstructMatch(Chem.MolFromSmarts('O'))[0]
     # molW = Chem.SDWriter(alignedSdf)
@@ -369,16 +363,6 @@ class TestCase(unittest.TestCase):
         O3A code generating incorrect results for multiconformer molecules
       """
 
-    def _multiConfFromSmiles(smiles, nConfs=10, maxIters=500):
-      """Adds hydrogens to molecule and optimises a chosen number of conformers.  Returns the optimised RDKit mol."""
-      idea = Chem.MolFromSmiles(smiles)
-      idea = Chem.AddHs(idea)
-      confs = rdDistGeom.EmbedMultipleConfs(idea, nConfs)
-
-      for conf in confs:
-        opt = ChemicalForceFields.MMFFOptimizeMolecule(idea, confId=conf, maxIters=maxIters)
-      return idea
-
     def _confsToAlignedMolsList(multiConfMol):
       """Input is a multiconformer RDKit mol.  Output is an aligned set of conformers as a list of RDKit mols."""
       rdMolAlign.AlignMolConformers(multiConfMol)
@@ -393,10 +377,12 @@ class TestCase(unittest.TestCase):
         ms.append(newmol)
       return ms
 
-    reference = Chem.MolFromSmiles("c1ccccc1N2CCC(NS(=O)(=O)C(F)(F)F)CC2")
-    reference = Chem.AddHs(reference)
-    rdDistGeom.EmbedMolecule(reference)
-    idea1 = _multiConfFromSmiles("c1ccccc1C2CCCCC2", 10)
+    sdfr = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                        'cyclohexyl_benzene_ref.sdf')
+    sdfi = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                        'cyclohexyl_benzene_idea.sdf')
+    reference = Chem.MolFromMolFile(sdfr, removeHs=False)
+    idea1 = Chem.MultiConfMolFromSDF(sdfi, removeHs=False)
 
     idea1_mols = _confsToAlignedMolsList(idea1)
     cids = [x.GetId() for x in idea1.GetConformers()]

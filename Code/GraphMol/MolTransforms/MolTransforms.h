@@ -15,7 +15,10 @@
 #include <Numerics/SymmMatrix.h>
 
 #ifdef RDK_HAS_EIGEN3
-#include <Eigen/Dense>
+// only the Matrix3d/Vector3d typedefs are needed in the declarations below;
+// Eigen/Core provides them and is far lighter than Eigen/Dense. The
+// implementation (MolTransforms.cpp) pulls in Eigen/Dense for the solver.
+#include <Eigen/Core>
 #endif
 
 namespace RDKit {

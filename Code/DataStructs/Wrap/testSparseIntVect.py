@@ -8,7 +8,6 @@ import io
 import os
 import pickle
 import random
-import sys
 import unittest
 
 from rdkit import DataStructs as ds
