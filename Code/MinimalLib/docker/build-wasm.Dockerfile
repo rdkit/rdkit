@@ -100,6 +100,7 @@ RUN BOOST_CMAKE_DIR=$(find ${EM_CACHE}/sysroot/lib/cmake -name BoostConfig.cmake
         -DRDK_BUILD_MINIMAL_LIB_MOLZIP=ON \
         -DRDK_BUILD_MINIMAL_LIB_MMPA=ON \
         -DRDK_BUILD_MINIMAL_LIB_RXN=ON \
+        -DRDK_BUILD_MINIMAL_LIB_RGROUPDECOMP=OFF \
         -DBoost_DIR="${BOOST_CMAKE_DIR}" \
         -Dboost_headers_DIR="${BOOST_HEADERS_CMAKE_DIR}" \
         -DRDK_BUILD_SLN_SUPPORT=OFF \

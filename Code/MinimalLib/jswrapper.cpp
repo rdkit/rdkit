@@ -602,7 +602,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_morgan_fp_as_uint8array(details)",
                 select_overload<val(const JSMolBase &, const std::string &)>(
                     get_morgan_fp_as_uint8array))
-      .function("get_pattern_fp",
+      .function("get_pattern_fp(param)",
                 select_overload<std::string(const JSMolBase &, const val &)>(
                     get_pattern_fp_helper))
       .function(
