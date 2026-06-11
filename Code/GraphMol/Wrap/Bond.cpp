@@ -220,7 +220,7 @@ struct bond_wrapper {
             "GetProp", GetPyPropOrDefault<Bond>,
             (python::arg("self"), python::arg("key"),
              python::arg("autoConvert") = false,
-             python::arg("default")),
+             python::arg("default") = python::object()),
             "Returns the value of the property.\n\n"
             "  ARGUMENTS:\n"
             "    - key: the name of the property to return (a string).\n\n"
