@@ -630,7 +630,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<val(const JSMolBase &, const std::string &)>(
                     get_atom_pair_fp_as_uint8array))
       .function("get_maccs_fp_as_uint8array", &get_maccs_fp_as_uint8array)
-      .function("get_frags",
+      .function("get_frags(details)",
                 select_overload<val(const JSMolBase &, const std::string &)>(
                     get_frags_helper),
                 allow_raw_pointers())
@@ -638,7 +638,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<val(const JSMolBase &)>(get_frags_helper),
                 allow_raw_pointers())
       .function(
-          "add_to_png_blob",
+          "add_to_png_blob(pngString, details)",
           select_overload<emscripten::val(
               const JSMolBase &, const std::string &, const std::string &)>(
               add_to_png_blob_helper))
@@ -746,12 +746,12 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                     &JSMolBase::condense_abbreviations))
       .function("add_hs", &JSMolBase::add_hs)
       .function("add_hs_in_place", &JSMolBase::add_hs_in_place)
-      .function("remove_hs",
+      .function("remove_hs(details)",
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::remove_hs))
       .function("remove_hs",
                 select_overload<std::string() const>(&JSMolBase::remove_hs))
-      .function("remove_hs_in_place",
+      .function("remove_hs_in_place(details)",
                 select_overload<bool(const std::string &)>(
                     &JSMolBase::remove_hs_in_place))
       .function("remove_hs_in_place",
