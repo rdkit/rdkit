@@ -173,6 +173,12 @@ bool MacrocycleGenerator::solve() {
     simplifySystem(freePositions);
   }
 
+  // Check if we have too many free positions to enumerate
+  // allow a small buffer above MAX_ENUMERATION_POSITIONS
+  if (freePositions.size() > MAX_ENUMERATION_POSITIONS + 5) {
+    return false;
+  }
+
   // Save the post-simplification state for restoration between targetDiff
   // attempts
   std::vector<int> simplifiedTurns = d_turns;
@@ -446,6 +452,12 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
   size_t numFree = freePositions.size();  // independent positions only
   numRight = (numFree + targetDiff) / 2;
   numLeft = (numFree - targetDiff) / 2;
+
+  // Check if the recalculated values are valid
+  if (numRight < 0 || numLeft < 0 ||
+      numRight + numLeft != static_cast<int>(numFree)) {
+    return false;
+  }
 
   // Enumerate ways to assign R/L to free positions
   std::vector<size_t> rightPositions(numRight);
