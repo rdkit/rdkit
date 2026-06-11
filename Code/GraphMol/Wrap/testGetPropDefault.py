@@ -1,7 +1,6 @@
 import pytest
 
 from rdkit import Chem
-from rdkit.Chem import AllChem
 
 
 # ---------------------------------------------------------------------------
@@ -99,8 +98,7 @@ def test_get_prop_default_on_bond():
 
 
 def test_get_prop_default_on_conformer():
-    m = Chem.MolFromSmiles("CC")
-    AllChem.EmbedMolecule(m, randomSeed=42)
+    m = Chem.MolFromSmiles('CC |(0.757776,0,;-0.757776,0,)|')
     conf = m.GetConformer()
     assert conf.GetProp("missing", default="x") == "x"
     with pytest.raises(KeyError):

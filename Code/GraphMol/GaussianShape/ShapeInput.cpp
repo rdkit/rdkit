@@ -126,8 +126,6 @@ ShapeInput::ShapeInput(const ROMol &mol, const int confId,
   PRECONDITION(mol.getNumConformers() > 0,
                "ShapeInput object needs the molecule to have conformers.  " +
                    mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
-  // std::cout << "making shape from " << MolToSmiles(mol) << " with "
-  // << mol.getNumConformers() << " confs" << std::endl;
   std::unique_ptr<RWMol> tmpMol;
   // Subsetting the molecule makes any bespoke atom radii, identified
   // by atom index, incorrect so stash them as atom properties.
@@ -142,7 +140,6 @@ ShapeInput::ShapeInput(const ROMol &mol, const int confId,
     tmpMol.reset(new RWMol(mol));
   }
   d_smiles = MolToSmiles(*tmpMol);
-  // std::cout << "shape smiles : " << d_smiles << std::endl;
   std::vector<unsigned int> atOrder;
   tmpMol->getProp(common_properties::_smilesAtomOutputOrder, atOrder);
   tmpMol.reset(dynamic_cast<RWMol *>(MolOps::renumberAtoms(*tmpMol, atOrder)));
@@ -263,12 +260,14 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   return *this;
 }
 
-void ShapeInput::merge(ShapeInput &other) {
-  PRECONDITION(d_smiles == other.d_smiles,
-               "Shapes have different SMILES strings.");
+void ShapeInput::merge(ShapeInput &&other) {
   if (!d_coords.empty() &&
       d_coords.front().size() != other.d_coords.front().size()) {
     BOOST_LOG(rdWarningLog) << "Can't merge shapes as different sizes.\n";
+    return;
+  }
+  if (d_types != other.d_types) {
+    BOOST_LOG(rdWarningLog) << "Can't merge shapes as different types.\n";
     return;
   }
   if (other.d_coords.empty()) {

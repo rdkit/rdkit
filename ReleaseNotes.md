@@ -12,6 +12,9 @@ GitHub)
 - Since #9208, atom rings are "normalized" so that the first atom in the ring
 definition is the one with the lowest index, and the second one is the neighbor
 to the first which also has the lowest index.
+- `MolTransforms.h` now includes `<Eigen/Core>` instead of `<Eigen/Dense>`. C++
+code that included `MolTransforms.h` and relied on it to transitively pull in the
+Eigen dense modules (LU/QR/SVD/etc.) must now include `<Eigen/Dense>` directly.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use

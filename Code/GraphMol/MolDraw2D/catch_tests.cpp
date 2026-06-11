@@ -379,7 +379,10 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_Github9280_1.0.svg", 1658116840U},
     {"test_Github9280_2.0.svg", 1805554327U},
     {"test_Github9280_0.3.svg", 893100468U},
-    {"test_Github9280_0.2.svg", 770838895U}};
+    {"test_Github9280_0.2.svg", 770838895U},
+    {"testZeroLengthBrackets.svg", 1120080272U},
+    {"test_Github9280_0.2.svg", 770838895U},
+    {"testGithub9329_1.svg", 2464826369U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -2154,6 +2157,48 @@ M  END
       outs << text;
       outs.close();
       check_file_hash("testBrackets-5768.svg");
+    }
+  }
+  SECTION("zero length bracket") {
+    auto m = R"CTAB(
+  ACCLDraw11042015112D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 7 -6.7813 0 0
+M  V30 2 C 8.0229 -6.1907 0 0 CFG=3
+M  V30 3 C 8.0229 -5.0092 0 0
+M  V30 4 C 9.046 -6.7814 0 0
+M  V30 5 C 10.0692 -6.1907 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 4 5
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 1 ATOMS=(3 3 2 4) XBONDS=(2 1 4) BRKXYZ=(9 7.51 -7.08 0 7.51 -
+M  V30 -5.9 0 0 0 0) BRKXYZ=(9 9.56 -5.9 0 9.56 -5.9 0 0 0 0) -
+M  V30 CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      // Before, it would throw a zero length exception, so the fact
+      // that it gives a file is test enough.
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testZeroLengthBrackets.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testZeroLengthBrackets.svg");
     }
   }
 }
@@ -11483,6 +11528,22 @@ TEST_CASE("Uniform bond colour") {
       std::distance(std::sregex_iterator(text.begin(), text.end(), bond2),
                     std::sregex_iterator()));
   CHECK(match_count0 == 1);
+}
+
+TEST_CASE("Github 9329 - zero length vector") {
+  auto m1 = "CCO |(0.0, 0.0,;0.0,0.0,;1.0,0.0,;)|"_smiles;
+  REQUIRE(m1);
+  MolDraw2DSVG drawer(400, 400);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  drawer.drawMolecule(*m1);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs("testGithub9329_1.svg");
+  outs << text;
+  outs.close();
+  // It used to throw an exception, so the test is just that we got something.
+  CHECK(!text.empty());
+  check_file_hash("testGithub9329_1.svg");
 }
 
 TEST_CASE("Configurable Stereo Labels") {
