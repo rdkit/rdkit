@@ -357,7 +357,7 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
 
 template <class RDOb>
 PyObject *GetPyPropOrDefault(const RDOb *obj, const std::string &key,
-                              bool autoConvert, python::object default_val) {
+                              python::object default_val, bool autoConvert) {
   return GetPyPropImpl(obj, key, autoConvert, &default_val);
 }
 

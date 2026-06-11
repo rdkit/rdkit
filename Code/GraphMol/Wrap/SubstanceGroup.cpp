@@ -263,13 +263,13 @@ struct sgroup_wrap {
         .def(
             "GetProp", GetPyPropOrDefault<SubstanceGroup>,
             (python::arg("self"), python::arg("key"),
-             python::arg("autoConvert") = false,
-             python::arg("default") = python::object()),
+             python::arg("default"),
+             python::arg("autoConvert") = false),
             "Returns the value of the property.\n\n"
             "  ARGUMENTS:\n"
             "    - key: the name of the property to return (a string).\n\n"
-            "    - autoConvert: if True attempt to convert the property into a python object\n\n"
             "    - default: value to return if the property is not present.\n\n"
+            "    - autoConvert: if True attempt to convert the property into a python object\n\n"
             "  RETURNS: the property value, or default if the property is not present.\n",
             boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetIntProp",
