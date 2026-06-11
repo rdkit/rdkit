@@ -357,6 +357,21 @@ public class WrapperTests extends GraphMolTest {
 		assertEquals(prods.get(idx).MolToSmiles(true), "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1");
 	    }
 	}
+
+	if(ROMol.hasChemDrawCDXSupport()) {
+	    String cdxml = prods.get(0).MolToCDXML();
+	    byte[] cdx = prods.get(0).MolToCDX();
+	    assertTrue(cdxml.indexOf("CDXML") != -1);
+	    
+	    prods = RWMol.MolsFromCDXML(cdxml, params);
+	    assertEquals(prods.get(0).MolToSmiles(true),
+			 "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1");
+	    
+	    params.setFormat(CDXMLFormat.CDX);
+	    prods = RWMol.MolsFromCDXMLByteArray(cdx);
+	    assertEquals(prods.get(0).MolToSmiles(true),
+			 "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1");
+	}
 	
     }    
     public static void main(String args[]) {

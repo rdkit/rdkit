@@ -513,16 +513,12 @@ void testMultipleConfs() {
   ROMol *m = SmilesToMol(smi, 0, 1);
   INT_VECT cids =
       DGeomHelpers::EmbedMultipleConfs(*m, 10, 30, 100, true, false, -1);
-  INT_VECT_CI ci;
-  // SDWriter writer("junk.sdf");
-  double energy;
 
-  for (ci = cids.begin(); ci != cids.end(); ci++) {
-    // writer.write(*m, *ci);
-    ForceFields::ForceField *ff = UFF::constructForceField(*m, 10, *ci);
+  for (auto ci : cids) {
+    ForceFields::ForceField *ff = UFF::constructForceField(*m, 10, ci);
     ff->initialize();
-    energy = ff->calcEnergy();
-    // BOOST_LOG(rdInfoLog) << energy << std::endl;
+    auto energy = ff->calcEnergy();
+
     TEST_ASSERT(energy > 100.0);
     TEST_ASSERT(energy < 300.0);
     delete ff;
@@ -539,16 +535,11 @@ void testMultipleConfsExpTors() {
       *m, 10, 30, 100, true, false, -1, true, 1, -1.0, nullptr, 1e-3, false,
       true, false, false, false, 5.0, false, 1, false, false);
 
-  INT_VECT_CI ci;
-  // SDWriter writer("junk.sdf");
-  double energy;
-
-  for (ci = cids.begin(); ci != cids.end(); ci++) {
-    // writer.write(*m, *ci);
-    ForceFields::ForceField *ff = UFF::constructForceField(*m, 10, *ci);
+  for (auto ci : cids) {
+    ForceFields::ForceField *ff = UFF::constructForceField(*m, 10, ci);
     ff->initialize();
-    energy = ff->calcEnergy();
-    // BOOST_LOG(rdInfoLog) << energy << std::endl;
+    auto energy = ff->calcEnergy();
+
     TEST_ASSERT(energy > 50.0);
     TEST_ASSERT(energy < 300.0);
     delete ff;
@@ -751,11 +742,10 @@ void testIssue285() {
   TEST_ASSERT(cids.size() == tgtNumber);
 
   std::vector<std::string> molBlocks;
-  for (INT_VECT_CI cid = cids.begin(); cid != cids.end(); ++cid) {
-    molBlocks.push_back(MolToMolBlock(*m, true, *cid));
+  for (auto cid : cids) {
+    molBlocks.push_back(MolToMolBlock(*m, true, cid));
   }
-  for (std::vector<std::string>::const_iterator mbI = molBlocks.begin();
-       mbI != molBlocks.end(); ++mbI) {
+  for (auto mbI = molBlocks.begin(); mbI != molBlocks.end(); ++mbI) {
     for (auto mbJ = mbI + 1; mbJ != molBlocks.end(); ++mbJ) {
       TEST_ASSERT((*mbI) != (*mbJ));
     }
@@ -941,7 +931,7 @@ void testConstrainedEmbedding() {
   }
 
   {
-    RWMol *test = static_cast<RWMol *>(sdsup.next());
+    auto test = static_cast<RWMol *>(sdsup.next());
     MolOps::addHs(*test);
     std::map<int, RDGeom::Point3D> coords;
     coords[4] = ref->getConformer().getAtomPos(0);
@@ -1377,16 +1367,15 @@ void testMultiThreadMultiConf() {
   ROMol m2(*m);
   DGeomHelpers::EmbedMultipleConfs(*m, cids, 200, 1, 30, 100, true, false, -1);
   DGeomHelpers::EmbedMultipleConfs(m2, cids, 200, 0, 30, 100, true, false, -1);
-  INT_VECT_CI ci;
 
-  for (ci = cids.begin(); ci != cids.end(); ci++) {
-    ForceFields::ForceField *ff = UFF::constructForceField(*m, 100, *ci);
+  for (auto ci : cids) {
+    ForceFields::ForceField *ff = UFF::constructForceField(*m, 100, ci);
     ff->initialize();
     double e1 = ff->calcEnergy();
     const RDGeom::PointPtrVect &pVect = ff->positions();
     TEST_ASSERT(e1 > 100.0);
     TEST_ASSERT(e1 < 300.0);
-    ForceFields::ForceField *ff2 = UFF::constructForceField(m2, 100, *ci);
+    ForceFields::ForceField *ff2 = UFF::constructForceField(m2, 100, ci);
     ff2->initialize();
     double e2 = ff2->calcEnergy();
     const RDGeom::PointPtrVect &p2Vect = ff2->positions();
