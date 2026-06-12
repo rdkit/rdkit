@@ -218,14 +218,10 @@ std::vector<unsigned int> getMatchesGIL(const SubstructLibrary &self,
 }
 
 template <class Query>
-std::vector<unsigned int> getMatchesRangeGIL(const SubstructLibrary &self,
-                                             const Query &query,
-                                             unsigned int startIdx,
-                                             unsigned int endIdx,
-                                             bool recursionPossible,
-                                             bool useChirality,
-                                             bool useQueryQueryMatches,
-                                             int numThreads, int maxResults) {
+std::vector<unsigned int> getMatchesRangeGIL(
+    const SubstructLibrary &self, const Query &query, unsigned int startIdx,
+    unsigned int endIdx, bool recursionPossible, bool useChirality,
+    bool useQueryQueryMatches, int numThreads, int maxResults) {
   NOGIL h;
   return self.getMatches(query, startIdx, endIdx, recursionPossible,
                          useChirality, useQueryQueryMatches, numThreads,
@@ -318,9 +314,9 @@ bool hasMatchParamsGIL(const SubstructLibrary &self, const Query &query,
 
 template <class Query>
 bool hasMatchRangeParamsGIL(const SubstructLibrary &self, const Query &query,
-                             unsigned int startIdx, unsigned int endIdx,
-                             const SubstructMatchParameters &params,
-                             int numThreads) {
+                            unsigned int startIdx, unsigned int endIdx,
+                            const SubstructMatchParameters &params,
+                            int numThreads) {
   NOGIL h;
   return self.hasMatch(query, startIdx, endIdx, params, numThreads);
 }
@@ -510,8 +506,8 @@ void wrap_substructlibrary(nb::module_ &m) {
           "Add a binary pickle to the molecule holder, no checking is done "
           "on the input data");
 
-  nb::class_<CachedSmilesMolHolder, MolHolderBase>(
-      m, "CachedSmilesMolHolder", CachedSmilesMolHolderDoc)
+  nb::class_<CachedSmilesMolHolder, MolHolderBase>(m, "CachedSmilesMolHolder",
+                                                   CachedSmilesMolHolderDoc)
       .def(nb::init<>())
       .def("AddSmiles", &CachedSmilesMolHolder::addSmiles, "smiles"_a,
            "Add a trusted smiles string to the molecule holder, no checking "
@@ -549,8 +545,8 @@ void wrap_substructlibrary(nb::module_ &m) {
       .def(nb::init<>())
       .def(nb::init<unsigned int>(), "numBits"_a);
 
-  nb::class_<TautomerPatternHolder, FPHolderBase>(
-      m, "TautomerPatternHolder", TautomerPatternHolderDoc)
+  nb::class_<TautomerPatternHolder, FPHolderBase>(m, "TautomerPatternHolder",
+                                                  TautomerPatternHolderDoc)
       .def(nb::init<>())
       .def(nb::init<unsigned int>(), "numBits"_a);
 
@@ -570,75 +566,65 @@ void wrap_substructlibrary(nb::module_ &m) {
     - indices: The indices of the keys)DOC");
 
   nb::class_<KeyFromPropHolder, KeyHolderBase>(m, "KeyFromPropHolder",
-                                              KeyHolderDoc)
+                                               KeyHolderDoc)
       .def(nb::init<>())
       .def(nb::init<const std::string &>(), "propname"_a)
       .def("GetPropName",
            nb::overload_cast<>(&KeyFromPropHolder::getPropName, nb::const_),
-           nb::rv_policy::copy,
-           "Return the key for the given molecule index");
+           nb::rv_policy::copy, "Return the key for the given molecule index");
 
   nb::class_<SubstructLibrary>(m, "SubstructLibrary", SubstructLibraryDoc)
-      .def(nb::init<>())
-      .def(
-          "__init__",
-          [](SubstructLibrary &self, nb::bytes pickle) {
-            new (&self) SubstructLibrary(std::string(
-                static_cast<const char *>(pickle.data()), pickle.size()));
-          },
-          "pickle"_a)
-      .def(
-          "__init__",
-          [](SubstructLibrary &self, nb::handle mols_h) {
-            MolHolderBase *mols = nb::cast<MolHolderBase *>(mols_h);
-            new (&self) SubstructLibrary(
-                nb::detail::shared_from_python<MolHolderBase>(mols, mols_h));
-          },
-          "molecules"_a)
-      .def(
-          "__init__",
-          [](SubstructLibrary &self, nb::handle mols_h, nb::handle second) {
-            // The second arg can be fingerprints (FPHolderBase) or keys
-            // (KeyHolderBase) or None.
-            MolHolderBase *mols = nb::cast<MolHolderBase *>(mols_h);
-            boost::shared_ptr<MolHolderBase> molPtr =
-                nb::detail::shared_from_python<MolHolderBase>(mols, mols_h);
-            if (second.is_none()) {
-              new (&self) SubstructLibrary(molPtr);
-            } else if (nb::isinstance<FPHolderBase>(second)) {
-              FPHolderBase *fps = nb::cast<FPHolderBase *>(second);
-              new (&self) SubstructLibrary(
-                  molPtr,
-                  nb::detail::shared_from_python<FPHolderBase>(fps, second));
-            } else {
-              KeyHolderBase *keys = nb::cast<KeyHolderBase *>(second);
-              new (&self) SubstructLibrary(
-                  molPtr,
-                  nb::detail::shared_from_python<KeyHolderBase>(keys, second));
-            }
-          },
-          "molecules"_a, "fingerprints_or_keys"_a.none())
-      .def(
-          "__init__",
-          [](SubstructLibrary &self, nb::handle mols_h, nb::handle fps_h,
-             nb::handle keys_h) {
-            MolHolderBase *mols = nb::cast<MolHolderBase *>(mols_h);
-            boost::shared_ptr<FPHolderBase> fpHolder;
-            if (!fps_h.is_none()) {
-              FPHolderBase *fps = nb::cast<FPHolderBase *>(fps_h);
-              fpHolder = nb::detail::shared_from_python<FPHolderBase>(fps, fps_h);
-            }
-            boost::shared_ptr<KeyHolderBase> keyHolder;
-            if (!keys_h.is_none()) {
-              KeyHolderBase *keys = nb::cast<KeyHolderBase *>(keys_h);
-              keyHolder =
-                  nb::detail::shared_from_python<KeyHolderBase>(keys, keys_h);
-            }
-            new (&self) SubstructLibrary(
-                nb::detail::shared_from_python<MolHolderBase>(mols, mols_h),
-                fpHolder, keyHolder);
-          },
-          "molecules"_a, "fingerprints"_a.none(), "keys"_a.none())
+      .def(nb::new_([]() { return new SubstructLibrary(); }))
+      .def(nb::new_([](nb::bytes b) {
+        return new SubstructLibrary(
+            std::string(static_cast<const char *>(b.data()), b.size()));
+      }))
+      .def(nb::new_([](nb::handle mols_h) {
+             MolHolderBase *mols = nb::cast<MolHolderBase *>(mols_h);
+             return new SubstructLibrary(
+                 nb::detail::shared_from_python<MolHolderBase>(mols, mols_h));
+           }),
+           "molecules"_a)
+      .def(nb::new_([](nb::handle mols_h, nb::handle second) {
+             // The second arg can be fingerprints (FPHolderBase) or keys
+             // (KeyHolderBase) or None.
+             MolHolderBase *mols = nb::cast<MolHolderBase *>(mols_h);
+             boost::shared_ptr<MolHolderBase> molPtr =
+                 nb::detail::shared_from_python<MolHolderBase>(mols, mols_h);
+             if (second.is_none()) {
+               return new SubstructLibrary(molPtr);
+             } else if (nb::isinstance<FPHolderBase>(second)) {
+               FPHolderBase *fps = nb::cast<FPHolderBase *>(second);
+               return new SubstructLibrary(
+                   molPtr,
+                   nb::detail::shared_from_python<FPHolderBase>(fps, second));
+             } else {
+               KeyHolderBase *keys = nb::cast<KeyHolderBase *>(second);
+               return new SubstructLibrary(
+                   molPtr,
+                   nb::detail::shared_from_python<KeyHolderBase>(keys, second));
+             }
+           }),
+           "molecules"_a, "fingerprints_or_keys"_a.none())
+      .def(nb::new_([](nb::handle mols_h, nb::handle fps_h, nb::handle keys_h) {
+             MolHolderBase *mols = nb::cast<MolHolderBase *>(mols_h);
+             boost::shared_ptr<MolHolderBase> molPtr =
+                 nb::detail::shared_from_python<MolHolderBase>(mols, mols_h);
+             boost::shared_ptr<FPHolderBase> fpHolder;
+             if (!fps_h.is_none()) {
+               FPHolderBase *fps = nb::cast<FPHolderBase *>(fps_h);
+               fpHolder =
+                   nb::detail::shared_from_python<FPHolderBase>(fps, fps_h);
+             }
+             boost::shared_ptr<KeyHolderBase> keyHolder;
+             if (!keys_h.is_none()) {
+               KeyHolderBase *keys = nb::cast<KeyHolderBase *>(keys_h);
+               keyHolder =
+                   nb::detail::shared_from_python<KeyHolderBase>(keys, keys_h);
+             }
+             return new SubstructLibrary(molPtr, fpHolder, keyHolder);
+           }),
+           "molecules"_a, "fingerprints"_a.none(), "keys"_a.none())
 
       .def("GetMolHolder",
            [](SubstructLibrary &self) { return self.getMolHolder(); })
@@ -738,26 +724,11 @@ so this requires opening a file in binary mode or using an io.ByteIO type object
   >>> with open('rdkit.sslib', 'rb') as f: lib.InitFromStream(f))DOC")
 
       .def("Serialize", SubstructLibrary_Serialize)
-      .def("__getstate__",
-           [](const SubstructLibrary &self) {
-             if (!SubstructLibraryCanSerialize()) {
-               throw std::runtime_error(
-                   "Pickling of SubstructLibrary instances is not enabled");
-             }
-             const auto pkl = self.Serialize();
-             return std::make_tuple(nb::bytes(pkl.c_str(), pkl.size()));
-           })
-      .def("__setstate__",
-           [](SubstructLibrary &self, const std::tuple<nb::bytes> &state) {
-             const auto &pkl = std::get<0>(state);
-             new (&self) SubstructLibrary(std::string(
-                 static_cast<const char *>(pkl.data()), pkl.size()));
-           })
-      .def("__setstate__",
-           [](SubstructLibrary &self,
-              const std::tuple<std::string> &state) {
-             new (&self) SubstructLibrary(std::get<0>(state));
-           });
+      .def("__getstate__", getObjectState<SubstructLibrary,
+                                          [](const SubstructLibrary &self) {
+                                            return self.Serialize();
+                                          }>)
+      .def("__setstate__", setObjectState<SubstructLibrary>);
 
   m.def("SubstructLibraryCanSerialize", SubstructLibraryCanSerialize,
         "Returns True if the SubstructLibrary is serializable "
