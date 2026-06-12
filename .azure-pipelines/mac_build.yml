@@ -63,6 +63,7 @@ steps:
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
     -DRDK_BUILD_CFFI_LIB=ON \
+    -DRDK_USE_PRECOMPILED_HEADERS=ON \
     -DCMAKE_OSX_SYSROOT=${SDKROOT} \
     -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform)
   displayName: Configure build (Run CMake)

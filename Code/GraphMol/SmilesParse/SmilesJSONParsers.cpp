@@ -8,12 +8,15 @@
 //  of the RDKit source tree.
 //
 
-#define USE_BETTER_ENUMS
-#include <RDGeneral/JSONHelpers.h>
+// Include order is deliberate: the boost property_tree headers are pulled in
+// before USE_BETTER_ENUMS switches <RDGeneral/JSONHelpers.h> over to the full
+// better-enums implementation (enum.h). Keep boost first.
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#define USE_BETTER_ENUMS
+#include <RDGeneral/JSONHelpers.h>
 #include "SmilesJSONParsers.h"
 
 namespace RDKit {
