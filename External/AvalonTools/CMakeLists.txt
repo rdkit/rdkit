@@ -75,7 +75,7 @@ set(avalon_clib_srcs ${AVALON_COMMON_PATH}/layout.c
 	${AVALON_COMMON_PATH}/hashcode.c
   )
 
-rdkit_library(avalon_clib ${avalon_clib_srcs})
+rdkit_library(avalon_clib ${avalon_clib_srcs} NO_PCH)
 target_compile_definitions(avalon_clib PRIVATE RDKIT_AVALONLIB_BUILD)
 if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
   set_target_properties(avalon_clib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)

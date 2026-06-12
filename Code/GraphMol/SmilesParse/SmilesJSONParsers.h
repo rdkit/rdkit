@@ -8,7 +8,8 @@
 //  of the RDKit source tree.
 //
 
-#pragma once
+#ifndef RD_SMILESPARSE_SMILESJSONPARSERS_H
+#define RD_SMILESPARSE_SMILESJSONPARSERS_H
 
 #include "SmilesWrite.h"
 
@@ -26,3 +27,5 @@ RDKIT_SMILESPARSE_EXPORT void updateCXSmilesFieldsFromJSON(
     const char *details_json);
 
 }  // end namespace RDKit
+
+#endif  // RD_SMILESPARSE_SMILESJSONPARSERS_H

@@ -40,6 +40,9 @@ add_subdirectory(yaehmop/tightbind EXCLUDE_FROM_ALL True)
 INSTALL(TARGETS yaehmop_eht EXPORT rdkit-targets
         DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
         COMPONENT runtime )
+if(RDK_USE_PRECOMPILED_HEADERS)
+set_target_properties(yaehmop_eht PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+endif(RDK_USE_PRECOMPILED_HEADERS)
 
 
 

@@ -1,7 +1,8 @@
 
 
-rdkit_library(hc hc.c hcdriver.c)
+rdkit_library(hc hc.c hcdriver.c NO_PCH)
 target_compile_definitions(hc PRIVATE RDKIT_HC_BUILD)
+
 
 set_target_properties(hc PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
