@@ -125,13 +125,11 @@ void wrap_fragcat(nb::module_ &m) {
   // FragCatGenerator
 
   nb::class_<RDKit::FragCatalog>(m, "FragCatalog")
-      .def(nb::init<RDKit::FragCatParams *>(), "params"_a)
-      .def("__init__",
-           [](RDKit::FragCatalog &self, const nb::bytes &pkl) {
-             new (&self) RDKit::FragCatalog(
+      .def(nb::new_([](RDKit::FragCatParams *fc){ return new RDKit::FragCatalog(fc);}),"params"_a)
+      .def(nb::new_([](const nb::bytes pkl){
+return new RDKit::FragCatalog(
                  std::string(static_cast<const char *>(pkl.data()), pkl.size()));
-           },
-           "pickle"_a)
+      }),"pickle"_a)
       .def("GetNumEntries", &RDKit::FragCatalog::getNumEntries)
       .def("GetFPLength", &RDKit::FragCatalog::getFPLength)
       .def("GetCatalogParams",
