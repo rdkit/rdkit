@@ -160,6 +160,7 @@ that accounts for tautomeric forms of the query molecule.
 Creates a query that enables structure search accounting for matching of
 Tautomeric forms
 )DOC")
+      .def(nb::new_([]() { return new TautomerQuery(); }))
       .def(nb::new_([](nb::bytes b) {
              return new TautomerQuery(
                  std::string(static_cast<const char *>(b.data()), b.size()));
