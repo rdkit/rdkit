@@ -228,12 +228,12 @@ std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
   mzparams.label = MolzipLabel::Isotope;
 
   for (size_t i = 0; i < synthons[longVecNum].size(); ++i) {
-    auto combMol = std::make_unique<ROMol>();
+    auto combMol = std::make_unique<RWMol>();
     for (size_t j = 0; j < synthons.size(); ++j) {
       if (j == longVecNum) {
-        combMol.reset(combineMols(*combMol, *synthons[j][i]));
+        combMol->insertMol(*synthons[j][i]);
       } else {
-        combMol.reset(combineMols(*combMol, *synthons[j].front()));
+        combMol->insertMol(*synthons[j].front());
       }
     }
     try {
