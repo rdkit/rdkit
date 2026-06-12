@@ -13,6 +13,7 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/pair.h>
 
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
 #include <GraphMol/nbWrap/substructmethods.h>
@@ -24,10 +25,6 @@ using boost_adaptbx::python::streambuf;
 using namespace RDKit;
 
 namespace {
-
-std::shared_ptr<RDKit::ROMol> toStd(const RDKit::ROMOL_SPTR &bptr) {
-  return {bptr.get(), [b = bptr](RDKit::ROMol *) {}};
-}
 
 bool tautomerIsSubstructOf(const TautomerQuery &self, const ROMol &target,
                            bool recursionPossible = true,
@@ -134,6 +131,7 @@ nb::bytes TQToBinary(const TautomerQuery &tq) {
   auto res = tq.serialize();
   return nb::bytes(res.c_str(), res.length());
 }
+std::string TQToString(const TautomerQuery &tq) { return tq.serialize(); }
 
 void toStream(const TautomerQuery &tq, nb::object fileobj) {
   streambuf ss(fileobj, 't');
@@ -158,31 +156,28 @@ that accounts for tautomeric forms of the query molecule.
 )DOC";
 
   nb::class_<TautomerQuery>(m, "TautomerQuery",
-    R"DOC(The Tautomer Query Class.
+                            R"DOC(The Tautomer Query Class.
 Creates a query that enables structure search accounting for matching of
 Tautomeric forms
 )DOC")
-      .def(nb::init<const std::string &>(), "pickle"_a,
-           "Construct a TautomerQuery from a pickle string.")
-      .def("__init__",
-           [](TautomerQuery *self, nb::bytes pickle) {
-             new (self) TautomerQuery(std::string(
-                 static_cast<const char *>(pickle.data()), pickle.size()));
-           },
+      .def(nb::new_([](nb::bytes b) {
+             return new TautomerQuery(
+                 std::string(static_cast<const char *>(b.data()), b.size()));
+           }),
            "pickle"_a, "Construct a TautomerQuery from a pickle bytes.")
-      .def("__init__",
-           [](TautomerQuery *self, const ROMol &mol,
-              const std::string &tautomerTransformFile) {
-             std::unique_ptr<TautomerQuery> tq(
-                 TautomerQuery::fromMol(mol, tautomerTransformFile));
-             new (self) TautomerQuery(*tq);
-           },
+      .def(nb::new_([](std::string pkl) { return new TautomerQuery(pkl); }),
+           "pickle"_a, "Construct a TautomerQuery from a pickle string.")
+      .def(nb::new_(
+               [](const ROMol &mol, const std::string &tautomerTransformFile) {
+                 return TautomerQuery::fromMol(mol, tautomerTransformFile);
+               }),
            "mol"_a, "tautomerTransformFile"_a = std::string(),
            "Construct a TautomerQuery from a molecule.")
-      .def("IsSubstructOf", tautomerIsSubstructOf, "target"_a,
-           "recursionPossible"_a = true, "useChirality"_a = false,
-           "useQueryQueryMatches"_a = false,
-           R"DOC(Check if this tautomer query is a substructure of the target molecule.
+      .def(
+          "IsSubstructOf", tautomerIsSubstructOf, "target"_a,
+          "recursionPossible"_a = true, "useChirality"_a = false,
+          "useQueryQueryMatches"_a = false,
+          R"DOC(Check if this tautomer query is a substructure of the target molecule.
 
 ARGUMENTS:
  - target: the target molecule
@@ -192,9 +187,10 @@ ARGUMENTS:
 
 RETURNS: True or False
 )DOC")
-      .def("IsSubstructOf", tautomerIsSubstructOfWithParams, "target"_a,
-           "params"_a,
-           R"DOC(Check if this tautomer query is a substructure of the target molecule.
+      .def(
+          "IsSubstructOf", tautomerIsSubstructOfWithParams, "target"_a,
+          "params"_a,
+          R"DOC(Check if this tautomer query is a substructure of the target molecule.
 
 ARGUMENTS:
  - target: the target molecule
@@ -202,9 +198,10 @@ ARGUMENTS:
 
 RETURNS: True or False
 )DOC")
-      .def("GetSubstructMatch", tautomerGetSubstructMatch, "target"_a,
-           "useChirality"_a = false, "useQueryQueryMatches"_a = false,
-           R"DOC(Return the first substructure match of this tautomer query in the target.
+      .def(
+          "GetSubstructMatch", tautomerGetSubstructMatch, "target"_a,
+          "useChirality"_a = false, "useQueryQueryMatches"_a = false,
+          R"DOC(Return the first substructure match of this tautomer query in the target.
 
 ARGUMENTS:
  - target: the target molecule
@@ -213,9 +210,10 @@ ARGUMENTS:
 
 RETURNS: a tuple of atom indices on match, or empty tuple on no match
 )DOC")
-      .def("GetSubstructMatch", tautomerGetSubstructMatchWithParams, "target"_a,
-           "params"_a,
-           R"DOC(Return the first substructure match of this tautomer query in the target.
+      .def(
+          "GetSubstructMatch", tautomerGetSubstructMatchWithParams, "target"_a,
+          "params"_a,
+          R"DOC(Return the first substructure match of this tautomer query in the target.
 
 ARGUMENTS:
  - target: the target molecule
@@ -223,10 +221,11 @@ ARGUMENTS:
 
 RETURNS: a tuple of atom indices on match, or empty tuple on no match
 )DOC")
-      .def("GetSubstructMatches", tautomerGetSubstructMatches, "target"_a,
-           "uniquify"_a = true, "useChirality"_a = false,
-           "useQueryQueryMatches"_a = false, "maxMatches"_a = 1000,
-           R"DOC(Return all substructure matches of this tautomer query in the target.
+      .def(
+          "GetSubstructMatches", tautomerGetSubstructMatches, "target"_a,
+          "uniquify"_a = true, "useChirality"_a = false,
+          "useQueryQueryMatches"_a = false, "maxMatches"_a = 1000,
+          R"DOC(Return all substructure matches of this tautomer query in the target.
 
 ARGUMENTS:
  - target: the target molecule
@@ -237,9 +236,10 @@ ARGUMENTS:
 
 RETURNS: a tuple of tuples of atom indices
 )DOC")
-      .def("GetSubstructMatches", tautomerGetSubstructMatchesWithParams,
-           "target"_a, "params"_a,
-           R"DOC(Return all substructure matches of this tautomer query in the target.
+      .def(
+          "GetSubstructMatches", tautomerGetSubstructMatchesWithParams,
+          "target"_a, "params"_a,
+          R"DOC(Return all substructure matches of this tautomer query in the target.
 
 ARGUMENTS:
  - target: the target molecule
@@ -275,8 +275,7 @@ RETURNS: a list of (match, tautomer) pairs
 )DOC")
       .def("PatternFingerprintTemplate",
            &TautomerQuery::patternFingerprintTemplate,
-           "fingerprintSize"_a = 2048,
-           nb::rv_policy::take_ownership,
+           "fingerprintSize"_a = 2048, nb::rv_policy::take_ownership,
            R"DOC(Return the pattern fingerprint of the template molecule.
 
 ARGUMENTS:
@@ -297,8 +296,9 @@ RETURNS: an ExplicitBitVect fingerprint
       .def("GetTautomers", getTautomers,
            R"DOC(Return the list of tautomers of the query molecule.
 )DOC")
-      .def("ToBinary", TQToBinary,
-           R"DOC(Return a binary string (pickle) representation of this TautomerQuery.
+      .def(
+          "ToBinary", TQToBinary,
+          R"DOC(Return a binary string (pickle) representation of this TautomerQuery.
 )DOC")
       .def("ToStream", toStream, "fileobj"_a,
            R"DOC(Serialize this TautomerQuery to a file-like object.
@@ -306,30 +306,13 @@ RETURNS: an ExplicitBitVect fingerprint
       .def("InitFromStream", initFromStream, "fileobj"_a,
            R"DOC(Initialize this TautomerQuery from a file-like object.
 )DOC")
-      .def("__getstate__",
-           [](const TautomerQuery &tq) {
-             if (!TautomerQueryCanSerialize()) {
-               throw std::runtime_error(
-                   "Pickling of TautomerQuery instances is not enabled");
-             }
-             return std::make_tuple(TQToBinary(tq));
-           })
-      .def("__setstate__",
-           [](TautomerQuery &tq, const std::tuple<nb::bytes> &state) {
-             const auto &pkl = std::get<0>(state);
-             std::string s(static_cast<const char *>(pkl.data()), pkl.size());
-             new (&tq) TautomerQuery(s);
-           })
-      .def("__setstate__",
-           [](TautomerQuery &tq, const std::tuple<std::string> &state) {
-             new (&tq) TautomerQuery(std::get<0>(state));
-           });
-
-  m.def("PatternFingerprintTautomerTarget",
-        &TautomerQuery::patternFingerprintTarget, "target"_a,
-        "fingerprintSize"_a = 2048,
-        nb::rv_policy::take_ownership,
-        R"DOC(Return the pattern fingerprint of a target molecule for tautomer searching.
+      .def("__getstate__", getObjectState<TautomerQuery, TQToString>)
+      .def("__setstate__", setObjectState<TautomerQuery>);
+  m.def(
+      "PatternFingerprintTautomerTarget",
+      &TautomerQuery::patternFingerprintTarget, "target"_a,
+      "fingerprintSize"_a = 2048, nb::rv_policy::take_ownership,
+      R"DOC(Return the pattern fingerprint of a target molecule for tautomer searching.
 
 ARGUMENTS:
  - target: the target molecule
