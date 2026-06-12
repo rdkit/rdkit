@@ -36,6 +36,7 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -1410,6 +1411,68 @@ TEST_CASE("Geometry") {
     auto mols = MolsFromChemDrawFile(fname);
     REQUIRE(mols.size());
     REQUIRE("C1[C@H]2C[C@@H]12" == MolToSmiles(*mols[0]));
+  }
+}
+
+TEST_CASE("Bond stereo") {
+  std::string path =
+      std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
+  const auto checkOximeStereoFixture =
+      [&](const std::string &fname, Bond::BondStereo expectedStereo) {
+    auto mols = MolsFromChemDrawFile(fname);
+    REQUIRE(mols.size() == 1);
+
+    auto &mol = *mols[0];
+    CHECK(MolToSmiles(mol, false) == "CC1C2CCC1CC(=NO)C2");
+
+    Bond *bond = nullptr;
+    for (auto candidate : mol.bonds()) {
+      if (candidate->getBondType() == Bond::BondType::DOUBLE) {
+        bond = candidate;
+        break;
+      }
+    }
+    REQUIRE(bond);
+    CHECK(bond->getStereo() == expectedStereo);
+    CHECK(bond->getStereoAtoms() == INT_VECT({0, 10}));
+
+    auto roundtrip = MolBlockToMol(MolToV3KMolBlock(mol));
+    REQUIRE(roundtrip);
+    Bond *roundtripBond = nullptr;
+    for (auto candidate : roundtrip->bonds()) {
+      if (candidate->getBondType() == Bond::BondType::DOUBLE) {
+        roundtripBond = candidate;
+        break;
+      }
+    }
+    REQUIRE(roundtripBond);
+    CHECK(roundtripBond->getStereo() == expectedStereo);
+    CHECK(roundtripBond->getStereoAtoms() == INT_VECT({0, 10}));
+
+    ChemDrawParserParams params;
+    params.sanitize = false;
+    auto rawMols = MolsFromChemDrawFile(fname, params);
+    REQUIRE(rawMols.size() == 1);
+    Bond *rawBond = nullptr;
+    for (auto candidate : rawMols[0]->bonds()) {
+      if (candidate->getBondType() == Bond::BondType::DOUBLE) {
+        rawBond = candidate;
+        break;
+      }
+    }
+    REQUIRE(rawBond);
+    CHECK(rawBond->getStereo() == expectedStereo);
+    CHECK(rawBond->getStereoAtoms() == INT_VECT({0, 10}));
+  };
+
+  SECTION("ChemDraw BS labels preserve oxime Z stereo") {
+    auto fname = path + "oxime-bond-stereo-z.cdxml";
+    checkOximeStereoFixture(fname, Bond::BondStereo::STEREOZ);
+  }
+
+  SECTION("ChemDraw BS labels preserve oxime E stereo") {
+    auto fname = path + "oxime-bond-stereo-e.cdxml";
+    checkOximeStereoFixture(fname, Bond::BondStereo::STEREOE);
   }
 }
 

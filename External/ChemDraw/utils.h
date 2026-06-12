@@ -58,6 +58,7 @@ const std::string CDX_ATOM_ID("_CDX_ATOM_ID");
 const std::string CDX_BOND_ID("_CDX_BOND_ID");
 const std::string CDX_BOND_ORDERING("CDX_BOND_ORDERING");
 const std::string CDX_CIP("CDX_CIP");
+const std::string CDX_BOND_CIP("CDX_BOND_CIP");
 const std::string CDX_IMPLICIT_HYDROGEN_STEREO("CDX_ATOM_STEREO");
 
 // Convert a ChemDrawNode to a string
@@ -104,6 +105,10 @@ struct StereoGroupInfo {
 // check to see if we have a tetrahedral flag and ChemDraw CIP set but no
 //  stereo assigned, if so check the bond ordering for CW and CCW
 void checkChemDrawTetrahedralGeometries(RWMol &mol);
+
+// check to see if we have a bond BS E/Z label and no stereo assigned, if so
+//  restore the ChemDraw bond stereo using CIP-ranked neighboring atoms
+void checkChemDrawDoubleBondGeometries(RWMol &mol);
 }  // namespace ChemDraw
 }  // namespace RDKit
 
