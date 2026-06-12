@@ -4,6 +4,7 @@ add_executable(bench EXCLUDE_FROM_ALL bench_common.cpp
   meta.cpp
   mol.cpp
   molops.cpp
+  reaction_enumerate.cpp
   pickle.cpp
   smiles.cpp
   stereo.cpp
@@ -13,6 +14,7 @@ target_link_libraries(bench rdkitCatch
   CIPLabeler
   Descriptors
   Fingerprints
+  ChemReactions
   SmilesParse
 )
 
