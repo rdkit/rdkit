@@ -131,6 +131,10 @@ RDKIT_CHEMREACTIONS_EXPORT ROMol *reduceProductToSideChains(
     const ROMOL_SPTR &product, bool addDummyAtoms = true);
 
 namespace ReactionRunnerUtils {
+RDKIT_CHEMREACTIONS_EXPORT VectMatchVectType getReactantMatchesToTemplate(
+  const ROMol &reactant, const ROMol &templ, unsigned int maxMatches,
+  const SubstructMatchParameters &ssparams);
+
 RDKIT_CHEMREACTIONS_EXPORT MOL_SPTR_VECT generateOneProductSet(
     const ChemicalReaction &rxn, const MOL_SPTR_VECT &reactants,
     const std::vector<MatchVectType> &reactantsMatch);

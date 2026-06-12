@@ -76,6 +76,10 @@ RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::BBS removeNonmatchingReagents(
     const ChemicalReaction &rxn, EnumerationTypes::BBS bbs,
     const EnumerationParams &params = EnumerationParams());
 
+RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::BBS removeNonmatchingReagents(
+  const ChemicalReaction &rxn, EnumerationTypes::BBS bbs,
+  const EnumerationParams &params, ReactantMatchCache *cache);
+
 //! This is a class for running reactions on sets of reagents.
 /*!
   This class is a fully self contained reaction engine that can be
@@ -111,8 +115,8 @@ RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::BBS removeNonmatchingReagents(
 
 class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
     : public EnumerateLibraryBase {
-  EnumerationTypes::BBS m_bbs;
   ReactantMatchCache m_matchCache;
+  EnumerationTypes::BBS m_bbs;
 
  public:
   EnumerateLibrary() : EnumerateLibraryBase(), m_bbs() {}
@@ -132,6 +136,8 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
   //! Return the reagents used in the library.  This may be fewer reagents than
   // the input as it is only those compatible with the reaction.
   const EnumerationTypes::BBS &getReagents() const { return m_bbs; }
+
+  size_t getMatchCacheSize() const { return m_matchCache.size(); }
 
   //! Get the next product set
   std::vector<MOL_SPTR_VECT> next() override;

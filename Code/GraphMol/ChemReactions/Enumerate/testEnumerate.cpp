@@ -189,6 +189,32 @@ EnumerationTypes::BBS makeEnumerationCacheBbs() {
   return bbs;
 }
 
+EnumerationTypes::BBS makeEnumerationCacheBbsWithNonMatches() {
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("CC")));
+  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("Clc1ccccc1")));
+  return bbs;
+}
+
+EnumerationTypes::BBS makeEnumerationCacheBbsWithProtectedAtoms() {
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbsWithNonMatches();
+  bbs[0][0]->getAtomWithIdx(0)->setProp(common_properties::_protected, 1);
+  bbs[1][0]->getAtomWithIdx(0)->setProp(common_properties::_protected, 1);
+  return bbs;
+}
+
+std::vector<std::multiset<std::string>> collectReagentSmiles(
+    const EnumerationTypes::BBS &bbs) {
+  std::vector<std::multiset<std::string>> results;
+  results.resize(bbs.size());
+  for (size_t i = 0; i < bbs.size(); ++i) {
+    for (const auto &mol : bbs[i]) {
+      results[i].insert(MolToSmiles(*mol, true));
+    }
+  }
+  return results;
+}
+
 std::multiset<std::string> collectEnumerationSmiles(EnumerateLibrary &en) {
   std::multiset<std::string> results;
   for (; (bool)en;) {
@@ -247,6 +273,87 @@ void testEnumerationCacheOutputUnchanged() {
 
   TEST_ASSERT(cachedResults == expected);
   TEST_ASSERT(viaLibraryResults == expected);
+}
+
+void testPrefilterResultsUnchanged() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbsWithNonMatches();
+
+  EnumerationParams params;
+  EnumerationTypes::BBS baseline = removeNonmatchingReagents(*rxn, bbs, params);
+  EnumerateLibrary library(*rxn, bbs, params);
+
+  TEST_ASSERT(collectReagentSmiles(library.getReagents()) ==
+              collectReagentSmiles(baseline));
+
+  params.reagentMaxMatchCount = 1;
+  baseline = removeNonmatchingReagents(*rxn, bbs, params);
+  EnumerateLibrary cappedLibrary(*rxn, bbs, params);
+  TEST_ASSERT(collectReagentSmiles(cappedLibrary.getReagents()) ==
+              collectReagentSmiles(baseline));
+}
+
+void testPrefilterPrimesSharedCache() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbsWithNonMatches();
+
+  EnumerateLibrary library(*rxn, bbs);
+  const EnumerationTypes::BBS &filtered = library.getReagents();
+  size_t expectedCacheSize = 0;
+  for (const auto &pool : filtered) {
+    expectedCacheSize += pool.size();
+  }
+
+  TEST_ASSERT(library.getMatchCacheSize() == expectedCacheSize);
+}
+
+void testPrefilterFullEnumerationOutputUnchanged() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbsWithNonMatches();
+
+  EnumerateLibrary library(*rxn, bbs);
+  const std::multiset<std::string> expected =
+      collectDirectProductSmiles(*rxn, library.getReagents());
+  const std::multiset<std::string> actual = collectEnumerationSmiles(library);
+
+  TEST_ASSERT(actual == expected);
+}
+
+void testPrefilterProtectedAtomFallback() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbsWithProtectedAtoms();
+
+  EnumerationParams params;
+  EnumerationTypes::BBS baseline = removeNonmatchingReagents(*rxn, bbs, params);
+  EnumerateLibrary library(*rxn, bbs, params);
+
+  // removal behavior must be identical to the 3-arg baseline even when some
+  // reagents carry a _protected atom (those take the countMatches fallback)
+  TEST_ASSERT(collectReagentSmiles(library.getReagents()) ==
+              collectReagentSmiles(baseline));
+
+  // reagents carrying a _protected atom are not primed into the shared cache;
+  // only the protected-free survivors take the fast path
+  size_t nonProtectedSurvivors = 0;
+  for (const auto &pool : library.getReagents()) {
+    for (const auto &mol : pool) {
+      bool hasProtected = false;
+      for (const auto atom : mol->atoms()) {
+        if (atom->hasProp(common_properties::_protected)) {
+          hasProtected = true;
+          break;
+        }
+      }
+      if (!hasProtected) {
+        ++nonProtectedSurvivors;
+      }
+    }
+  }
+  TEST_ASSERT(library.getMatchCacheSize() == nonProtectedSurvivors);
 }
 
 void testEnumerationCacheReuseAcrossReset() {
@@ -501,6 +608,10 @@ void testGithub1657() {}
 int main() {
   RDLog::InitLogs();
 #if 1
+  testPrefilterResultsUnchanged();
+  testPrefilterPrimesSharedCache();
+  testPrefilterFullEnumerationOutputUnchanged();
+  testPrefilterProtectedAtomFallback();
   testEnumerationCacheOutputUnchanged();
   testEnumerationCacheReuseAcrossReset();
   testEnumerationCacheNotSerialized();
