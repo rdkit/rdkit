@@ -219,6 +219,8 @@ EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
     : EnumerateLibraryBase(rxn, new CartesianProductStrategy),
       m_dedupeSymmetricMatches(params.dedupeSymmetricMatches),
       m_matchCache(),
+      m_cacheReactantGrafts(params.cacheReactantGrafts),
+      m_graftCache(),
       m_bbs(removeNonmatchingReagents(m_rxn, bbs, params, &m_matchCache)) {
   m_enumerator->initialize(m_rxn, m_bbs);  // getSizesFromBBs(bbs));
   m_initialEnumerator.reset(m_enumerator->copy());
@@ -230,6 +232,8 @@ EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
     : EnumerateLibraryBase(rxn),
       m_dedupeSymmetricMatches(params.dedupeSymmetricMatches),
       m_matchCache(),
+      m_cacheReactantGrafts(params.cacheReactantGrafts),
+      m_graftCache(),
       m_bbs(removeNonmatchingReagents(m_rxn, bbs, params, &m_matchCache)) {
   m_enumerator.reset(enumerator.copy());
   m_enumerator->initialize(m_rxn, m_bbs);
@@ -240,6 +244,8 @@ EnumerateLibrary::EnumerateLibrary(const EnumerateLibrary &rhs)
     : EnumerateLibraryBase(rhs),
       m_dedupeSymmetricMatches(rhs.m_dedupeSymmetricMatches),
       m_matchCache(rhs.m_matchCache),
+      m_cacheReactantGrafts(rhs.m_cacheReactantGrafts),
+      m_graftCache(rhs.m_graftCache),
       m_bbs(rhs.m_bbs) {}
 
 std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {
@@ -251,6 +257,10 @@ std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {
     reactants[i] = m_bbs[i][reactantIndices[i]];
   }
 
+  if (m_cacheReactantGrafts) {
+    return run_Reactants(m_rxn, reactants, m_matchCache, m_graftCache,
+                         m_dedupeSymmetricMatches);
+  }
   return run_Reactants(m_rxn, reactants, m_matchCache, m_dedupeSymmetricMatches);
 }
 

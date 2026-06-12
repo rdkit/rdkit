@@ -476,6 +476,134 @@ void testEnumerationCacheNotSerialized() {
 void testEnumerationCacheNotSerialized() {}
 #endif
 
+void testGraftCacheOutputUnchanged() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerationParams graftParams;
+  graftParams.cacheReactantGrafts = true;
+
+  EnumerateLibrary grafted(*rxn, bbs, graftParams);
+  EnumerateLibrary defaultOff(*rxn, bbs);
+
+  // the non-cached baseline is driven from the library's filtered reagents so
+  // the comparison stays valid even if removeNonmatchingReagents drops one
+  const std::multiset<std::string> expected =
+      collectDirectProductSmiles(*rxn, grafted.getReagents());
+  const std::multiset<std::string> graftedResults =
+      collectEnumerationSmiles(grafted);
+  const std::multiset<std::string> defaultResults =
+      collectEnumerationSmiles(defaultOff);
+
+  TEST_ASSERT(grafted.getCacheReactantGrafts());
+  TEST_ASSERT(!defaultOff.getCacheReactantGrafts());
+  TEST_ASSERT(graftedResults == expected);
+  TEST_ASSERT(defaultResults == expected);
+}
+
+void testGraftCachePopulatedAndReused() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerationParams graftParams;
+  graftParams.cacheReactantGrafts = true;
+  EnumerateLibrary library(*rxn, bbs, graftParams);
+
+  // every reagent matches its template exactly once, so the populated graft
+  // cache holds one graft per reagent (= the sum of the filtered pool sizes),
+  // even though the Cartesian product produces many more product sets.
+  size_t expectedGrafts = 0;
+  size_t productCount = 1;
+  for (const auto &pool : library.getReagents()) {
+    expectedGrafts += pool.size();
+    productCount *= pool.size();
+  }
+
+  TEST_ASSERT(library.getGraftCacheSize() == 0);
+  const std::multiset<std::string> products = collectEnumerationSmiles(library);
+
+  TEST_ASSERT(products.size() == productCount);
+  TEST_ASSERT(expectedGrafts < productCount);
+  TEST_ASSERT(library.getGraftCacheSize() == expectedGrafts);
+}
+
+void testGraftCacheReuseAcrossReset() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerationParams graftParams;
+  graftParams.cacheReactantGrafts = true;
+  EnumerateLibrary en(*rxn, bbs, graftParams);
+
+  const std::vector<std::string> firstPass = collectEnumerationSequence(en);
+  const size_t graftsAfterFirstPass = en.getGraftCacheSize();
+  TEST_ASSERT(graftsAfterFirstPass > 0);
+
+  en.reset();
+
+  const std::vector<std::string> secondPass = collectEnumerationSequence(en);
+  // the second pass replays the cached grafts; output is identical and no new
+  // grafts are extracted.
+  TEST_ASSERT(firstPass == secondPass);
+  TEST_ASSERT(en.getGraftCacheSize() == graftsAfterFirstPass);
+}
+
+void testGraftCachePreservedOnCopy() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerationParams graftParams;
+  graftParams.cacheReactantGrafts = true;
+  EnumerateLibrary en(*rxn, bbs, graftParams);
+
+  const std::vector<std::string> baseline = collectEnumerationSequence(en);
+  const size_t populatedGrafts = en.getGraftCacheSize();
+  TEST_ASSERT(populatedGrafts > 0);
+
+  // reset before copying so the copy's initial enumerator is the start; the
+  // populated graft cache is carried into the copy verbatim
+  en.reset();
+  EnumerateLibrary copy(en);
+  TEST_ASSERT(copy.getCacheReactantGrafts());
+  TEST_ASSERT(copy.getGraftCacheSize() == populatedGrafts);
+
+  const std::vector<std::string> copySequence = collectEnumerationSequence(copy);
+  TEST_ASSERT(copySequence == baseline);
+  TEST_ASSERT(copy.getGraftCacheSize() == populatedGrafts);
+}
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+void testGraftCacheNotSerialized() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerationParams graftParams;
+  graftParams.cacheReactantGrafts = true;
+  EnumerateLibrary en(*rxn, bbs, graftParams);
+  const std::vector<std::string> baseline = collectEnumerationSequence(en);
+  TEST_ASSERT(en.getGraftCacheSize() > 0);
+
+  en.reset();
+  std::string serialized = en.Serialize();
+  EnumerateLibrary reloaded(serialized);
+
+  // the flag survives serialization but the populated cache does not
+  TEST_ASSERT(reloaded.getCacheReactantGrafts());
+  TEST_ASSERT(reloaded.getGraftCacheSize() == 0);
+
+  const std::vector<std::string> reloadedSequence =
+      collectEnumerationSequence(reloaded);
+  TEST_ASSERT(reloadedSequence == baseline);
+}
+#else
+void testGraftCacheNotSerialized() {}
+#endif
+
 void testEnumerations() {
   EnumerationTypes::BBS bbs;
   bbs.resize(2);
@@ -704,6 +832,11 @@ int main() {
   testDedupCollapsesSymmetricReagent();
   testDedupFlagSerialized();
   testEnumerationCacheNotSerialized();
+  testGraftCacheOutputUnchanged();
+  testGraftCachePopulatedAndReused();
+  testGraftCacheReuseAcrossReset();
+  testGraftCachePreservedOnCopy();
+  testGraftCacheNotSerialized();
   testSamplers();
   testEvenSamplers();
   testEnumerations();

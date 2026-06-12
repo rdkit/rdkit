@@ -57,6 +57,11 @@ namespace RDKit {
   Collapse substructure matches that land on symmetry-equivalent reagent
   atoms, avoiding duplicate products for symmetric reagents.
 
+  cacheReactantGrafts [default false]
+  Cache and replay the per-reagent "graft" (the atoms/bonds a reagent
+  contributes to a product) across product combinations instead of
+  re-deriving it for every combination. Output is unchanged.
+
    sanePartialProducts [default false]
     If true, forces all products of the reagent plus the product templates\n\
      pass chemical sanitization.  Note that if the product template itself\n\
@@ -66,12 +71,14 @@ struct RDKIT_CHEMREACTIONS_EXPORT EnumerationParams {
   int reagentMaxMatchCount{INT_MAX};
   bool sanePartialProducts{false};
   bool dedupeSymmetricMatches{false};
+  bool cacheReactantGrafts{false};
   EnumerationParams() {}
 
   EnumerationParams(const EnumerationParams &rhs)
       : reagentMaxMatchCount(rhs.reagentMaxMatchCount),
         sanePartialProducts(rhs.sanePartialProducts),
-        dedupeSymmetricMatches(rhs.dedupeSymmetricMatches) {}
+        dedupeSymmetricMatches(rhs.dedupeSymmetricMatches),
+        cacheReactantGrafts(rhs.cacheReactantGrafts) {}
 };
 
 //!  Helper function, remove reagents that are incompatible
@@ -123,6 +130,8 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
     : public EnumerateLibraryBase {
   bool m_dedupeSymmetricMatches{false};
   ReactantMatchCache m_matchCache;
+  bool m_cacheReactantGrafts{false};
+  ReactionRunnerUtils::ReactantGraftCache m_graftCache;
   EnumerationTypes::BBS m_bbs;
 
  public:
@@ -150,6 +159,10 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
 
   size_t getMatchCacheSize() const { return m_matchCache.size(); }
 
+  bool getCacheReactantGrafts() const { return m_cacheReactantGrafts; }
+
+  size_t getGraftCacheSize() const { return m_graftCache.size(); }
+
   //! Get the next product set
   std::vector<MOL_SPTR_VECT> next() override;
 
@@ -176,6 +189,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
     }
 
     ar & m_dedupeSymmetricMatches;
+    ar & m_cacheReactantGrafts;
   }
   template <class Archive>
   void load(Archive &ar, const unsigned int version) {
@@ -203,7 +217,13 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
     } else {
       m_dedupeSymmetricMatches = false;
     }
+    if (version >= 2) {
+      ar & m_cacheReactantGrafts;
+    } else {
+      m_cacheReactantGrafts = false;
+    }
     m_matchCache.clear();
+    m_graftCache.clear();
   }
 
   BOOST_SERIALIZATION_SPLIT_MEMBER();
@@ -214,6 +234,6 @@ RDKIT_CHEMREACTIONS_EXPORT bool EnumerateLibraryCanSerialize();
 
 }  // namespace RDKit
 #ifdef RDK_USE_BOOST_SERIALIZATION
-BOOST_CLASS_VERSION(RDKit::EnumerateLibrary, 1)
+BOOST_CLASS_VERSION(RDKit::EnumerateLibrary, 2)
 #endif
 #endif
