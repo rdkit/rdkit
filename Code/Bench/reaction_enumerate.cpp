@@ -286,3 +286,74 @@ TEST_CASE("reaction enumeration assembly baseline", "[reaction][assembly]") {
     return benchmark_total_products;
   };
 }
+
+TEST_CASE("reaction enumeration assembly graft cache",
+          "[reaction][assembly]") {
+  // Cheap matching with long side chains makes product assembly the dominant
+  // cost. Reusing the graft cache across the Cartesian product extracts each
+  // reagent's graft once and replays it for every pairing, which is the win
+  // this benchmark measures.
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[C:1](=[O:2])[O;H1].[N:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  const auto acids = make_reagent_pool(8, std::string(18, 'C') + "(=O)O");
+  const auto amines = make_reagent_pool(8, std::string(18, 'C') + "N");
+
+  // correctness: the graft-cached path produces exactly the same unique
+  // products (and the same count) as the uncached path
+  auto collect_unique_product_smiles = [&](bool useGraftCache) {
+    std::set<std::string> product_smiles;
+    std::size_t product_set_count = 0;
+    ReactantMatchCache matchCache;
+    ReactionRunnerUtils::ReactantGraftCache graftCache;
+    for (const auto &acid : acids) {
+      for (const auto &amine : amines) {
+        MOL_SPTR_VECT reactants{acid, amine};
+        const auto products =
+            useGraftCache
+                ? run_Reactants(*rxn, reactants, matchCache, graftCache)
+                : run_Reactants(*rxn, reactants);
+        product_set_count += products.size();
+        for (const auto &product_set : products) {
+          for (const auto &product : product_set) {
+            product_smiles.insert(MolToSmiles(*product));
+          }
+        }
+      }
+    }
+    return std::make_pair(product_smiles, product_set_count);
+  };
+
+  const auto uncached = collect_unique_product_smiles(false);
+  const auto grafted = collect_unique_product_smiles(true);
+  CHECK(grafted.first == uncached.first);
+  CHECK(grafted.second == uncached.second);
+  CHECK(grafted.second == acids.size() * amines.size());
+
+  BENCHMARK("assemble products (no graft cache)") {
+    std::size_t benchmark_total_products = 0;
+    for (const auto &acid : acids) {
+      for (const auto &amine : amines) {
+        MOL_SPTR_VECT reactants{acid, amine};
+        benchmark_total_products += run_Reactants(*rxn, reactants).size();
+      }
+    }
+    return benchmark_total_products;
+  };
+
+  BENCHMARK("assemble products (graft cache)") {
+    ReactantMatchCache matchCache;
+    ReactionRunnerUtils::ReactantGraftCache graftCache;
+    std::size_t benchmark_total_products = 0;
+    for (const auto &acid : acids) {
+      for (const auto &amine : amines) {
+        MOL_SPTR_VECT reactants{acid, amine};
+        benchmark_total_products +=
+            run_Reactants(*rxn, reactants, matchCache, graftCache).size();
+      }
+    }
+    return benchmark_total_products;
+  };
+}
