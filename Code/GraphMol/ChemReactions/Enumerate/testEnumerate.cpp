@@ -219,9 +219,10 @@ std::multiset<std::string> collectEnumerationSmiles(EnumerateLibrary &en) {
   std::multiset<std::string> results;
   for (; (bool)en;) {
     std::vector<std::vector<std::string>> smiles = en.nextSmiles();
-    TEST_ASSERT(smiles.size() == 1);
-    TEST_ASSERT(smiles[0].size() == 1);
-    results.insert(smiles[0][0]);
+    for (const auto &productSet : smiles) {
+      TEST_ASSERT(productSet.size() == 1);
+      results.insert(productSet[0]);
+    }
   }
   return results;
 }
@@ -230,11 +231,29 @@ std::vector<std::string> collectEnumerationSequence(EnumerateLibrary &en) {
   std::vector<std::string> results;
   for (; (bool)en;) {
     std::vector<std::vector<std::string>> smiles = en.nextSmiles();
-    TEST_ASSERT(smiles.size() == 1);
-    TEST_ASSERT(smiles[0].size() == 1);
-    results.push_back(smiles[0][0]);
+    for (const auto &productSet : smiles) {
+      TEST_ASSERT(productSet.size() == 1);
+      results.push_back(productSet[0]);
+    }
   }
   return results;
+}
+
+std::set<std::string> collectUniqueSmiles(const std::vector<std::string> &seq) {
+  return std::set<std::string>(seq.begin(), seq.end());
+}
+
+ChemicalReaction *makeSymmetricDedupeRxn() {
+  return RxnSmartsToChemicalReaction("[N;H2:1]>>[N:1]C(=O)C");
+}
+
+EnumerationTypes::BBS makeSymmetricDedupBbs() {
+  EnumerationTypes::BBS bbs;
+  bbs.resize(1);
+
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCCN")));
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("CCN")));
+  return bbs;
 }
 
 std::multiset<std::string> collectDirectProductSmiles(
@@ -369,6 +388,73 @@ void testEnumerationCacheReuseAcrossReset() {
   const std::vector<std::string> secondPass = collectEnumerationSequence(en);
   TEST_ASSERT(firstPass == secondPass);
 }
+
+void testDedupOutputUnchangedWhenDisabled() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeSymmetricDedupeRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeSymmetricDedupBbs();
+
+  EnumerationParams params;
+  params.dedupeSymmetricMatches = false;
+
+  EnumerateLibrary explicitOff(*rxn, bbs, params);
+  EnumerateLibrary defaultOff(*rxn, bbs);
+
+  const std::vector<std::string> explicitOffSequence =
+      collectEnumerationSequence(explicitOff);
+  const std::vector<std::string> defaultOffSequence =
+      collectEnumerationSequence(defaultOff);
+
+  TEST_ASSERT(explicitOffSequence == defaultOffSequence);
+  TEST_ASSERT(collectUniqueSmiles(defaultOffSequence).size() <
+              defaultOffSequence.size());
+}
+
+void testDedupCollapsesSymmetricReagent() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeSymmetricDedupeRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeSymmetricDedupBbs();
+
+  EnumerationParams offParams;
+  offParams.dedupeSymmetricMatches = false;
+  EnumerateLibrary offLibrary(*rxn, bbs, offParams);
+  const std::vector<std::string> offSequence =
+      collectEnumerationSequence(offLibrary);
+
+  EnumerationParams onParams;
+  onParams.dedupeSymmetricMatches = true;
+  EnumerateLibrary onLibrary(*rxn, bbs, onParams);
+  const std::vector<std::string> onSequence =
+      collectEnumerationSequence(onLibrary);
+
+  TEST_ASSERT(offSequence.size() > onSequence.size());
+  TEST_ASSERT(collectUniqueSmiles(offSequence) ==
+              collectUniqueSmiles(onSequence));
+}
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+void testDedupFlagSerialized() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeSymmetricDedupeRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeSymmetricDedupBbs();
+
+  EnumerationParams params;
+  params.dedupeSymmetricMatches = true;
+  EnumerateLibrary en(*rxn, bbs, params);
+  const std::vector<std::string> baseline = collectEnumerationSequence(en);
+
+  en.reset();
+  std::string serialized = en.Serialize();
+  EnumerateLibrary reloaded(serialized);
+
+  TEST_ASSERT(reloaded.getDedupeSymmetricMatches());
+  const std::vector<std::string> reloadedSequence =
+      collectEnumerationSequence(reloaded);
+  TEST_ASSERT(reloadedSequence == baseline);
+}
+#else
+void testDedupFlagSerialized() {}
+#endif
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
 void testEnumerationCacheNotSerialized() {
@@ -614,6 +700,9 @@ int main() {
   testPrefilterProtectedAtomFallback();
   testEnumerationCacheOutputUnchanged();
   testEnumerationCacheReuseAcrossReset();
+  testDedupOutputUnchangedWhenDisabled();
+  testDedupCollapsesSymmetricReagent();
+  testDedupFlagSerialized();
   testEnumerationCacheNotSerialized();
   testSamplers();
   testEvenSamplers();

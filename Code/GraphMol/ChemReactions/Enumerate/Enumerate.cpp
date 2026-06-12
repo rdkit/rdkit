@@ -150,13 +150,17 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
           cache && params.reagentMaxMatchCount == INT_MAX &&
           !hasProtectedAtoms(*mol);
       if (canPrimeCache) {
-        const auto cacheKey =
-            std::make_tuple(static_cast<unsigned int>(reactant_idx), mol.get(),
-                  1000u, false);
-        const VectMatchVectType reactantMatches =
+        VectMatchVectType reactantMatches =
             ReactionRunnerUtils::getReactantMatchesToTemplate(
                 *mol.get(), *reactantTemplate.get(), 1000u,
                 rxn.getSubstructParams());
+        if (params.dedupeSymmetricMatches) {
+          reactantMatches = ReactionRunnerUtils::dedupeMatchesBySymmetry(
+              *mol.get(), reactantMatches);
+        }
+        const auto cacheKey = std::make_tuple(
+            static_cast<unsigned int>(reactant_idx), mol.get(), 1000u,
+            params.dedupeSymmetricMatches);
         matches = reactantMatches.size();
         if (matches) {
           cache->emplace(cacheKey, reactantMatches);
@@ -213,6 +217,7 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
 EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
                                    const EnumerationParams &params)
     : EnumerateLibraryBase(rxn, new CartesianProductStrategy),
+      m_dedupeSymmetricMatches(params.dedupeSymmetricMatches),
       m_matchCache(),
       m_bbs(removeNonmatchingReagents(m_rxn, bbs, params, &m_matchCache)) {
   m_enumerator->initialize(m_rxn, m_bbs);  // getSizesFromBBs(bbs));
@@ -223,6 +228,7 @@ EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
                                    const EnumerationStrategyBase &enumerator,
                                    const EnumerationParams &params)
     : EnumerateLibraryBase(rxn),
+      m_dedupeSymmetricMatches(params.dedupeSymmetricMatches),
       m_matchCache(),
       m_bbs(removeNonmatchingReagents(m_rxn, bbs, params, &m_matchCache)) {
   m_enumerator.reset(enumerator.copy());
@@ -231,7 +237,10 @@ EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
 }
 
 EnumerateLibrary::EnumerateLibrary(const EnumerateLibrary &rhs)
-    : EnumerateLibraryBase(rhs), m_matchCache(rhs.m_matchCache), m_bbs(rhs.m_bbs) {}
+    : EnumerateLibraryBase(rhs),
+      m_dedupeSymmetricMatches(rhs.m_dedupeSymmetricMatches),
+      m_matchCache(rhs.m_matchCache),
+      m_bbs(rhs.m_bbs) {}
 
 std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {
   PRECONDITION(static_cast<bool>(*this), "No more enumerations");
@@ -242,7 +251,7 @@ std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {
     reactants[i] = m_bbs[i][reactantIndices[i]];
   }
 
-  return run_Reactants(m_rxn, reactants, m_matchCache);
+  return run_Reactants(m_rxn, reactants, m_matchCache, m_dedupeSymmetricMatches);
 }
 
 void EnumerateLibrary::toStream(std::ostream &ss) const {

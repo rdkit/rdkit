@@ -121,12 +121,15 @@ RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::BBS removeNonmatchingReagents(
 
 class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
     : public EnumerateLibraryBase {
+  bool m_dedupeSymmetricMatches{false};
   ReactantMatchCache m_matchCache;
   EnumerationTypes::BBS m_bbs;
 
  public:
-  EnumerateLibrary() : EnumerateLibraryBase(), m_bbs() {}
-  EnumerateLibrary(const std::string &s) : EnumerateLibraryBase(), m_bbs() {
+  EnumerateLibrary()
+      : EnumerateLibraryBase(), m_dedupeSymmetricMatches(false), m_bbs() {}
+  EnumerateLibrary(const std::string &s)
+      : EnumerateLibraryBase(), m_dedupeSymmetricMatches(false), m_bbs() {
     initFromString(s);
   }
 
@@ -142,6 +145,8 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
   //! Return the reagents used in the library.  This may be fewer reagents than
   // the input as it is only those compatible with the reaction.
   const EnumerationTypes::BBS &getReagents() const { return m_bbs; }
+
+  bool getDedupeSymmetricMatches() const { return m_dedupeSymmetricMatches; }
 
   size_t getMatchCacheSize() const { return m_matchCache.size(); }
 
@@ -169,9 +174,11 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
         ar & pickle;
       }
     }
+
+    ar & m_dedupeSymmetricMatches;
   }
   template <class Archive>
-  void load(Archive &ar, const unsigned int /*version*/) {
+  void load(Archive &ar, const unsigned int version) {
     ar &boost::serialization::base_object<EnumerateLibraryBase>(*this);
 
     size_t sz;
@@ -191,6 +198,11 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
       }
     }
 
+    if (version >= 1) {
+      ar & m_dedupeSymmetricMatches;
+    } else {
+      m_dedupeSymmetricMatches = false;
+    }
     m_matchCache.clear();
   }
 
@@ -201,4 +213,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
 RDKIT_CHEMREACTIONS_EXPORT bool EnumerateLibraryCanSerialize();
 
 }  // namespace RDKit
+#ifdef RDK_USE_BOOST_SERIALIZATION
+BOOST_CLASS_VERSION(RDKit::EnumerateLibrary, 1)
+#endif
 #endif
