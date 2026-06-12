@@ -65,9 +65,7 @@ ROMol *renumberAtoms(const ROMol &mol,
   }
 
   // now the bonds:
-  for (ROMol::ConstBondIterator bi = mol.beginBonds(); bi != mol.endBonds();
-       ++bi) {
-    const Bond *oBond = (*bi);
+  for (const auto oBond : mol.bonds()) {
     Bond *nBond = oBond->copy();
     nBond->setBeginAtomIdx(revOrder[oBond->getBeginAtomIdx()]);
     nBond->setEndAtomIdx(revOrder[oBond->getEndAtomIdx()]);

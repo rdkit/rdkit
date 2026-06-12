@@ -450,6 +450,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   /// When Iterable is TautomerEnumeratorResult we use the other non-templated
   /// overload for efficiency (TautomerEnumeratorResult already has SMILES so no
   /// need to recompute them)
+  /// caller owns the pointer
   template <class Iterable,
             typename std::enable_if<
                 !std::is_same<Iterable, TautomerEnumeratorResult>::value,
@@ -505,6 +506,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   */
   /// When \p scoreFunc is empty (default), an optimized scorer is created
   /// that pre-filters substructure patterns once for the input molecule.
+  /// caller owns the pointer
   ROMol *canonicalize(
       const ROMol &mol,
       boost::function<int(const ROMol &mol)> scoreFunc = {}) const;

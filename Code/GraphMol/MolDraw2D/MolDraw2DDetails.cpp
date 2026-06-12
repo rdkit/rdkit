@@ -11,6 +11,10 @@
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/StringRect.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/FileParsers/FileParserUtils.h>
+#include <GraphMol/SubstanceGroup.h>
+#include <Geometry/Transform2D.h>
+#include <RDGeneral/types.h>
 
 #include <cmath>
 #ifndef M_PI
@@ -424,6 +428,100 @@ void adjustLineEndForEllipse(const Point2D &centre, double xradius,
     }
     p2 = t_to_point(t);
   }
+}
+
+// ****************************************************************************
+std::vector<SGroupDataLabel> getSGroupDataLabels(const ROMol &mol,
+                                                 double rotate) {
+  std::vector<SGroupDataLabel> result;
+  if (!mol.getNumConformers()) {
+    return result;
+  }
+  const auto &sgs = getSubstanceGroups(mol);
+  if (sgs.empty()) {
+    return result;
+  }
+
+  double rot = rotate * M_PI / 180.0;
+  RDGeom::Transform2D tform;
+  tform.SetTransform(Point2D(0.0, 0.0), rot);
+
+  const auto &conf = mol.getConformer();
+  for (const auto &sg : sgs) {
+    std::string typ;
+    if (!sg.getPropIfPresent("TYPE", typ) || typ != "DAT") {
+      continue;
+    }
+
+    std::string text;
+    if (sg.hasProp("DATAFIELDS")) {
+      STR_VECT dfs = sg.getProp<STR_VECT>("DATAFIELDS");
+      for (const auto &df : dfs) {
+        text += df + "|";
+      }
+      text.pop_back();
+    }
+    if (text.empty()) {
+      continue;
+    }
+
+    int atomIdx = -1;
+    if (!sg.getAtoms().empty()) {
+      atomIdx = sg.getAtoms()[0];
+    }
+
+    bool located = false;
+    std::string fieldDisp;
+    Point2D pos(0.0, 0.0);
+    if (sg.getPropIfPresent("FIELDDISP", fieldDisp)) {
+      double xp =
+          FileParserUtils::stripSpacesAndCast<double>(fieldDisp.substr(0, 10));
+      double yp =
+          FileParserUtils::stripSpacesAndCast<double>(fieldDisp.substr(10, 10));
+      // we always invert y for the molecule coords
+      pos = Point2D{xp, -yp};
+
+      if (fieldDisp[25] == 'R') {
+        if (atomIdx < 0) {
+          // no atom to anchor relative position to, skip
+          continue;
+        } else if (fabs(xp) > 1e-3 || fabs(yp) > 1e-3) {
+          // opposite sign for y
+          pos.x += conf.getAtomPos(atomIdx).x;
+          pos.y -= conf.getAtomPos(atomIdx).y;
+          located = true;
+        }
+      } else {
+        // Absolute position - check for centroid offset set by drawing pipeline
+        if (mol.hasProp("_centroidx")) {
+          Point2D centroid;
+          mol.getProp("_centroidx", centroid.x);
+          mol.getProp("_centroidy", centroid.y);
+          // opposite sign for y
+          pos.x += centroid.x;
+          pos.y -= centroid.y;
+        }
+        located = true;
+      }
+      tform.TransformPoint(pos);
+    }
+
+    if (!located) {
+      if (atomIdx >= 0) {
+        const auto &p = conf.getAtomPos(atomIdx);
+        pos = Point2D{p.x, p.y};
+      } else {
+        BOOST_LOG(rdWarningLog)
+            << "FIELDDISP info not found for DAT SGroup which isn't "
+               "associated with an atom. SGroup will not be included."
+            << std::endl;
+        continue;
+      }
+    }
+
+    result.push_back({text, pos, located, atomIdx});
+  }
+  return result;
 }
 
 }  // namespace MolDraw2D_detail

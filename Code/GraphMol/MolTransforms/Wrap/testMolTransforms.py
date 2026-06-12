@@ -1,11 +1,10 @@
 import math
 import os
-import sys
 import unittest
 
 import numpy as np
 
-from rdkit import Chem, DataStructs, RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem import rdMolTransforms as rdmt
 from rdkit.Geometry import rdGeometry as geom
 

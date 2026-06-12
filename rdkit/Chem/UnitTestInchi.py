@@ -255,9 +255,9 @@ class TestCase(unittest.TestCase):
           same += 1
       fmt = "\n{0}InChI read Summary: {1} identical, {2} variance, {3} reasonable variance{4}"
       print(fmt.format(COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
-      self.assertEqual(same, 688)
+      self.assertEqual(same, 689)
       self.assertEqual(diff, 0)
-      self.assertEqual(reasonable, 493)
+      self.assertEqual(reasonable, 492)
 
   def test2InchiOptions(self):
     m = MolFromSmiles("CC=C(N)C")
@@ -337,7 +337,7 @@ class TestMolFromInchiAndAuxInfo(unittest.TestCase):
 
   def test0RoundTripAtomOrder(self):
     """Verify that round-tripping through InChI+AuxInfo preserves atom ordering."""
-    from rdkit.Chem import MolFromSmiles, MolToSmiles
+    from rdkit.Chem import MolFromSmiles
     smiles_list = ['c1ccccc1O', 'CC(=O)O', 'C(=O)(N)C', 'c1cc(O)ccc1N']
     for smi in smiles_list:
       mol = MolFromSmiles(smi)

@@ -16,7 +16,7 @@ from rdkit import RDConfig
 from rdkit.RDLogger import logger
 
 logger = logger()
-from rdkit import Chem, DataStructs
+from rdkit import Chem
 from rdkit.Chem import FragmentCatalog
 
 

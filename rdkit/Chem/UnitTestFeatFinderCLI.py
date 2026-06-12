@@ -17,7 +17,8 @@ class TestCase(unittest.TestCase):
     parser = FeatFinderCLI.initParser()
     cmd = '-n 10 {0} {1}'.format(featureFile, smilesFile)
     with outputRedirect() as (out, err):
-      args = parser.parse_args(cmd.split())
+      args_list = ['-n', '10', featureFile, smilesFile]
+      args = parser.parse_args(args_list)
       FeatFinderCLI.processArgs(args, parser)
     out = out.getvalue()
     err = err.getvalue()
@@ -29,7 +30,8 @@ class TestCase(unittest.TestCase):
 
     cmd = '-n 2 -r {0} {1}'.format(featureFile, smilesFile)
     with outputRedirect() as (out, err):
-      args = parser.parse_args(cmd.split())
+      args_list = ['-n', '2', '-r', featureFile, smilesFile]
+      args = parser.parse_args(args_list)
       FeatFinderCLI.processArgs(args, parser)
     out = out.getvalue()
     err = err.getvalue()
@@ -46,13 +48,15 @@ class TestCase(unittest.TestCase):
     parser = FeatFinderCLI.initParser()
     cmd = '-n 10 {0} {1}'.format(smilesFile, smilesFile)
     with self.assertRaises(SystemExit), outputRedirect() as (_, err):
-      args = parser.parse_args(cmd.split())
+      args_list = ['-n', '10', smilesFile, smilesFile]
+      args = parser.parse_args(args_list)
       FeatFinderCLI.processArgs(args, parser)
     self.assertIn('error', err.getvalue())
 
     cmd = '-n 10 {0} {1}'.format(featureFile, 'incorrectFilename')
     with self.assertRaises(SystemExit), outputRedirect() as (_, err):
-      args = parser.parse_args(cmd.split())
+      args_list = ['-n', '10', featureFile, 'incorrectFilename']
+      args = parser.parse_args(args_list)
       FeatFinderCLI.processArgs(args, parser)
     self.assertIn('error', err.getvalue())
 

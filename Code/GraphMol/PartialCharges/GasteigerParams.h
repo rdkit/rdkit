@@ -22,10 +22,10 @@ extern std::string additionalParamData;
 
 // this is a constant used during the iteration procedure for the hydrogen atoms
 // for the remaining atoms it is computed on the fly
-const double IONXH = 20.02;
+constexpr double IONXH = 20.02;
 
-const double DAMP_SCALE = 0.5;
-const double DAMP = 0.5;
+constexpr double DAMP_SCALE = 0.5;
+constexpr double DAMP = 0.5;
 
 class RDKIT_PARTIALCHARGES_EXPORT GasteigerParams {
   /* \brief Container for all the partial charge parameters

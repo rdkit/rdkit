@@ -183,15 +183,14 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
 
   std::vector<std::uint32_t> atomCodes;
   atomCodes.reserve(lmol->getNumAtoms());
-  for (ROMol::ConstAtomIterator atomItI = lmol->beginAtoms();
-       atomItI != lmol->endAtoms(); ++atomItI) {
+  for (const auto atom : lmol->atoms()) {
     if (!atomInvariants) {
-      atomCodes.push_back(getAtomCode(*atomItI, 0, includeChirality));
+      atomCodes.push_back(getAtomCode(atom, 0, includeChirality));
     } else {
       // need to add to the atomCode here because we subtract off up to 2 below
       // as part of the branch correction
       atomCodes.push_back(
-          (*atomInvariants)[(*atomItI)->getIdx()] % ((1 << codeSize) - 1) + 2);
+          (*atomInvariants)[atom->getIdx()] % ((1 << codeSize) - 1) + 2);
     }
   }
 
@@ -204,7 +203,7 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
   }
   boost::dynamic_bitset<> *ignoreAtomsBV = nullptr;
   if (ignoreAtoms) {
-    ignoreAtomsBV = new boost::dynamic_bitset<>(mol.getNumAtoms());
+    ignoreAtomsBV = new boost::dynamic_bitset<>(lmol->getNumAtoms());
     for (auto fAt : *ignoreAtoms) {
       ignoreAtomsBV->set(fAt);
     }

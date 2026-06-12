@@ -482,12 +482,6 @@ std::string FragmentSmilesConstruct(
 
 }  // end of namespace SmilesWrite
 
-static bool SortBasedOnFirstElement(
-    const std::pair<std::string, std::vector<unsigned int>> &a,
-    const std::pair<std::string, std::vector<unsigned int>> &b) {
-  return a.first < b.first;
-}
-
 namespace SmilesWrite {
 namespace detail {
 std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,

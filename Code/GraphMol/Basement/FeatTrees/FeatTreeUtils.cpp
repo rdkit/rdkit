@@ -125,10 +125,9 @@ void mergeRingCycle(FeatTreeGraph &featGraph, FeatTreeGraph &featGraphCopy,
 void addRingsAndConnectors(const ROMol &mol, FeatTreeGraph &resGraph) {
   RingInfo *ringInfo = mol.getRingInfo();
   unsigned int ringIdxI = 0;
-  for (VECT_INT_VECT::const_iterator ringItI = ringInfo->atomRings().begin();
-       ringItI != ringInfo->atomRings().end(); ++ringItI, ++ringIdxI) {
-    UINT_SET s;
-    s.insert(ringItI->begin(), ringItI->end());
+  for (auto ringItI = ringInfo->atomRings().cbegin();
+       ringItI != ringInfo->atomRings().cend(); ++ringItI, ++ringIdxI) {
+    UINT_SET s(ringItI->begin(), ringItI->end());
     boost::add_vertex(FeatTreeNode(s), resGraph);
 
     // ------ ------ ------ ------
@@ -139,10 +138,10 @@ void addRingsAndConnectors(const ROMol &mol, FeatTreeGraph &resGraph) {
     INT_VECT ringI = *ringItI;
     std::sort(ringI.begin(), ringI.end());
     unsigned int ringIdxJ = 0;
-    for (VECT_INT_VECT::const_iterator ringItJ = ringInfo->atomRings().begin();
-         ringItJ != ringItI; ++ringItJ, ++ringIdxJ) {
-      for (INT_VECT::const_iterator ringJElem = ringItJ->begin();
-           ringJElem != ringItJ->end(); ++ringJElem) {
+    for (auto ringItJ = ringInfo->atomRings().cbegin(); ringItJ != ringItI;
+         ++ringItJ, ++ringIdxJ) {
+      for (auto ringJElem = ringItJ->cbegin(); ringJElem != ringItJ->cend();
+           ++ringJElem) {
         if (std::binary_search(ringI.begin(), ringI.end(), *ringJElem)) {
           // these two rings share a common atom, so set up an
           // edge between them in the feature tree:
