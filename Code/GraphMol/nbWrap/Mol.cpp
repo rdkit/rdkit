@@ -33,6 +33,15 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 namespace RDKit {
+template <typename T>
+std::string MolToString(const T &self) {
+  std::string res;
+  {
+    NOGIL gil;
+    MolPickler::pickleMol(self, res);
+  }
+  return res;
+}
 nb::bytes MolToBinary(const ROMol &self) {
   std::string res;
   {
@@ -464,24 +473,24 @@ struct mol_wrapper {
         .def("__getitem__", &BondSeqHolder<AtomBondsIterator>::operator[],
              nb::rv_policy::reference_internal, "idx"_a);
     nb::class_<ROMol>(m, "Mol", nb::dynamic_attr())
-        .def(nb::init<>(), "Constructor, takes no arguments")
-        .def(
-            "__init__",
-            [](ROMol *t, nb::bytes b) {
-              new (t) ROMol(std::string(static_cast<const char *>(b.data()),
-                                        static_cast<size_t>(b.size())));
-            },
-            "Constructor from a binary string", "pklString"_a)
-        .def(
-            "__init__",
-            [](ROMol *t, nb::bytes b, unsigned int propertyFlags) {
-              new (t) ROMol(std::string(static_cast<const char *>(b.data()),
-                                        static_cast<size_t>(b.size())),
-                            propertyFlags);
-            },
-            "Constructor from a binary string", "pklString"_a,
-            "propertyFlags"_a)
-        .def(nb::init<const ROMol &, bool, int>(), "mol"_a,
+        .def(nb::new_([]() { return new ROMol(); }),
+             "Constructor, takes no arguments")
+        .def(nb::new_([](nb::bytes b) {
+               return new ROMol(std::string(static_cast<const char *>(b.data()),
+                                            static_cast<size_t>(b.size())));
+             }),
+             "Constructor from a binary string", "pklString"_a)
+        .def(nb::new_([](nb::bytes b, unsigned int propertyFlags) {
+               return new ROMol(std::string(static_cast<const char *>(b.data()),
+                                            static_cast<size_t>(b.size())),
+                                propertyFlags);
+             }),
+             "Constructor from a binary string with property flags",
+             "pklString"_a, "propertyFlags"_a)
+        .def(nb::new_([](const ROMol &m, bool quickCopy, int confId) {
+               return new ROMol(m, quickCopy, confId);
+             }),
+             "Constructor from another molecule", "mol"_a,
              "quickCopy"_a = false, "confId"_a = -1)
         .def("__copy__", &generic__copy__<ROMol>)
         .def("__deepcopy__", &generic__deepcopy__<ROMol>, "memo"_a)
@@ -985,18 +994,9 @@ struct mol_wrapper {
              R"DOC(Returns the number of molecule's RingInfo object.
 
 )DOC")
-        .def("__getstate__",
-             [](const ROMol &mol) {
-               const auto pkl = MolToBinary(mol);
-               return std::make_tuple(pkl);
-             })
-        .def("__setstate__",
-             [](ROMol &mol, const std::tuple<nb::bytes> &state) {
-               std::string pkl = std::string(
-                   static_cast<const char *>(std::get<0>(state).data()),
-                   static_cast<size_t>(std::get<0>(state).size()));
-               new (&mol) ROMol(pkl);
-             })
+
+        .def("__getstate__", getObjectState<ROMol, MolToString<ROMol>>)
+        .def("__setstate__", setObjectState<ROMol>)
         .doc() = molClassDoc.c_str();
 
     m.def(
@@ -1018,34 +1018,27 @@ it's probably not of general interest.
     // ---------------------------------------------------------------------------------------------
 
     nb::class_<ReadWriteMol, ROMol>(m, "RWMol", nb::dynamic_attr())
-        .def(nb::init<>(), "default constructor, takes no arguments")
-        .def(
-            "__init__",
-            [](ReadWriteMol *t, nb::bytes b) {
-              new (t)
-                  ReadWriteMol(std::string(static_cast<const char *>(b.data()),
-                                           static_cast<size_t>(b.size())));
-            },
-            "pklString"_a, "Constructor from a binary string")
-
-        .def(
-            "__init__",
-            [](ReadWriteMol *t, nb::bytes b, unsigned int propertyFlags) {
-              new (t)
-                  ReadWriteMol(std::string(static_cast<const char *>(b.data()),
-                                           static_cast<size_t>(b.size())),
-                               propertyFlags);
-            },
-            "pklString"_a, "propertyFlags"_a,
-            "Constructor from a binary string")
-
-        .def(
-            "__init__",
-            [](ReadWriteMol *t, const ROMol &m, bool quickCopy, int confId) {
-              new (t) ReadWriteMol(m, quickCopy, confId);
-            },
-            "mol"_a, "quickCopy"_a = false, "confId"_a = -1,
-            "Constructor from a ROMol")
+        .def(nb::new_([]() { return new ReadWriteMol(); }),
+             "Constructor, takes no arguments")
+        .def(nb::new_([](nb::bytes b) {
+               return new ReadWriteMol(
+                   std::string(static_cast<const char *>(b.data()),
+                               static_cast<size_t>(b.size())));
+             }),
+             "Constructor from a binary string", "pklString"_a)
+        .def(nb::new_([](nb::bytes b, unsigned int propertyFlags) {
+               return new ReadWriteMol(
+                   std::string(static_cast<const char *>(b.data()),
+                               static_cast<size_t>(b.size())),
+                   propertyFlags);
+             }),
+             "Constructor from a binary string with property flags",
+             "pklString"_a, "propertyFlags"_a)
+        .def(nb::new_([](const ROMol &m, bool quickCopy, int confId) {
+               return new ReadWriteMol(m, quickCopy, confId);
+             }),
+             "Constructor from an ROMol", "mol"_a, "quickCopy"_a = false,
+             "confId"_a = -1)
 
         .def("__copy__", &generic__copy__<ReadWriteMol>)
         .def("__deepcopy__", &generic__deepcopy__<ReadWriteMol>, "memo"_a)
@@ -1089,19 +1082,9 @@ it's probably not of general interest.
              "cancels batch editing")
         .def("CommitBatchEdit", &RWMol::commitBatchEdit,
              "finishes batch editing and makes the actual changes")
-
         .def("__getstate__",
-             [](const ReadWriteMol &mol) {
-               const auto pkl = MolToBinary(mol);
-               return std::make_tuple(pkl);
-             })
-        .def("__setstate__",
-             [](ReadWriteMol &mol, const std::tuple<nb::bytes> &state) {
-               std::string pkl = std::string(
-                   static_cast<const char *>(std::get<0>(state).data()),
-                   static_cast<size_t>(std::get<0>(state).size()));
-               new (&mol) ReadWriteMol(pkl);
-             });
+             getObjectState<ReadWriteMol, MolToString<ReadWriteMol>>)
+        .def("__setstate__", setObjectState<ReadWriteMol>);
   }
 };
 }  // namespace RDKit

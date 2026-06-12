@@ -15,6 +15,7 @@
 #ifndef SYNTHONSPACESEARCHER_H
 #define SYNTHONSPACESEARCHER_H
 
+#include <atomic>
 #include <chrono>
 #include <random>
 
@@ -124,13 +125,13 @@ class SynthonSpaceSearcher {
   void makeHitsFromToTry(
       const std::vector<
           std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>> &toTry,
-      const TimePoint *endTime,
-      std::vector<std::unique_ptr<ROMol>> &results) const;
+      const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results,
+      std::atomic<std::int64_t> &numHitsFound) const;
   void processToTrySet(
       std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
           &toTry,
-      const TimePoint *endTime,
-      std::vector<std::unique_ptr<ROMol>> &results) const;
+      const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results,
+      std::atomic<std::int64_t> &numHitsFound) const;
 
   // get the subset of synthons for the given reaction to use for this
   // enumeration.

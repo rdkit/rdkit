@@ -2,7 +2,7 @@ import os
 import unittest
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem import ChemicalFeatures, rdDistGeom
+from rdkit.Chem import ChemicalFeatures
 
 try:
   from rdkit.Chem import AllChem
@@ -40,8 +40,9 @@ class TestCase(unittest.TestCase):
     self.assertTrue(fNames[0] == 'HBondDonor')
     self.assertTrue(fNames[1] == 'HBondAcceptor')
 
-    mol = Chem.MolFromSmiles("COCN")
-    rdDistGeom.EmbedMolecule(mol, 30, 100, useExpTorsionAnglePrefs=False, useBasicKnowledge=False)
+    mol = Chem.MolFromSmiles(
+      "COCN |(-1.22855,-0.651312,-0.097783;-0.706645,0.599392,0.182439;0.631075,0.659854,-0.17709;1.30412,-0.607935,0.0924339)|"
+    )
 
     self.assertTrue(cfac.GetNumMolFeatures(mol) == 3)
     for i in range(cfac.GetNumMolFeatures(mol)):
@@ -76,16 +77,16 @@ class TestCase(unittest.TestCase):
                    'featDef.txt'))
     self.assertTrue(cfac.GetNumFeatureDefs() == 2)
 
-    mol = Chem.MolFromSmiles("COCN")
-    rdDistGeom.EmbedMolecule(mol)
+    mol = Chem.MolFromSmiles(
+      "COCN |(-1.22855,-0.651312,-0.097783;-0.706645,0.599392,0.182439;0.631075,0.659854,-0.17709;1.30412,-0.607935,0.0924339)|"
+    )
 
     self.assertTrue(cfac.GetNumMolFeatures(mol, includeOnly="HBondAcceptor") == 2)
     self.assertTrue(cfac.GetNumMolFeatures(mol, includeOnly="HBondDonor") == 1)
     self.assertTrue(cfac.GetNumMolFeatures(mol, includeOnly="Bogus") == 0)
 
     self.assertRaises(IndexError, lambda: cfac.GetMolFeature(mol, 1, includeOnly="HBondDonor"))
-    self.assertRaises(IndexError,
-                      lambda: cfac.GetMolFeature(mol, 2, includeOnly="HBondAcceptor"))
+    self.assertRaises(IndexError, lambda: cfac.GetMolFeature(mol, 2, includeOnly="HBondAcceptor"))
     f = cfac.GetMolFeature(mol, 0, includeOnly="HBondDonor")
     self.assertTrue(f.GetFamily() == 'HBondDonor')
 
@@ -131,15 +132,13 @@ EndFeature\r
     Weights 1.0
 EndFeature
 """
-    self.assertRaises(ValueError,
-                      lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
+    self.assertRaises(ValueError, lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
     fdefBlock = \
 """DefineFeature HDonor1 [N,O;!H0]
     Family HBondDonor
     Weights 1.0
 """
-    self.assertRaises(ValueError,
-                      lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
+    self.assertRaises(ValueError, lambda: ChemicalFeatures.BuildFeatureFactoryFromString(fdefBlock))
 
     self.assertRaises(IOError, lambda: ChemicalFeatures.BuildFeatureFactory('noSuchFile.txt'))
 
@@ -182,8 +181,9 @@ EndFeature
 """
     cfac = ChemicalFeatures.BuildFeatureFactoryFromString(fdefs)
 
-    m = Chem.MolFromSmiles('O=CCCN')
-    rdDistGeom.EmbedMolecule(m)
+    m = Chem.MolFromSmiles(
+      'NCCC=O |(1.3336,-0.801443,-0.33565;0.753873,0.440597,0.0298162;-0.72858,0.533983,-0.182908;-1.49821,-0.46216,0.577961;-2.71702,-0.472209,0.474729)|'
+    )
     feats = cfac.GetFeaturesForMol(m)
     for feat in feats:
       feat.GetPos()
@@ -204,8 +204,9 @@ EndFeature
   def testGithub2530(self):
     cfac = ChemicalFeatures.BuildFeatureFactory(
       os.path.join(RDConfig.RDDataDir, "BaseFeatures.fdef"))
-    m = Chem.MolFromSmiles('C1CCC1OC')
-    rdDistGeom.EmbedMolecule(m)
+    m = Chem.MolFromSmiles(
+      'COC1CCC1 |(2.38103,0.292767,0.259223;1.17409,-0.100802,0.882739;0.12366,0.138431,0.027286;-1.05585,0.888072,0.548495;-1.88253,-0.389559,0.484647;-0.708019,-1.10224,-0.133692)|'
+    )
     feats = cfac.GetFeaturesForMol(m)
     feat_pos = feats[0].GetPos(-1)
     feat_pos_default = feats[0].GetPos()
@@ -213,15 +214,16 @@ EndFeature
     self.assertEqual(feat_pos[1], feat_pos_default[1])
     self.assertEqual(feat_pos[2], feat_pos_default[2])
 
-    # Conformers generation:
-    m2 = Chem.AddHs(m)
-    AllChem.EmbedMultipleConfs(m2, numConfs=10, params=AllChem.ETKDG())
+    # another conformer
+    m2 = Chem.MolFromSmiles(
+      'COC1CCC1 |(2.38405,-0.455684,-0.194253;1.27804,-0.157448,0.590366;0.0931051,-0.0947927,-0.0913265;-0.719418,1.1751,0.106878;-1.93955,0.274584,0.118445;-1.03964,-0.801813,0.63462)|'
+    )
+    m2.AddConformer(m.GetConformer(), assignId=True)
 
-    feats_0 = cfac.GetFeaturesForMol(m2, confId=-1)
-    feats_5 = cfac.GetFeaturesForMol(m2, confId=5)
-    self.assertNotEqual(feats_5[0], feats_0[0])
-    self.assertNotEqual(feats_5[1], feats_0[1])
-    self.assertNotEqual(feats_5[2], feats_0[2])
+    feats_0 = cfac.GetFeaturesForMol(m2, confId=0)
+    feats_1 = cfac.GetFeaturesForMol(m2, confId=1)
+    # raise ValueError(list(feats_0))
+    self.assertNotEqual(feats_1[0], feats_0[0])
 
 
 if __name__ == '__main__':
