@@ -1416,10 +1416,20 @@ TEST_CASE("Geometry") {
 }
 
 TEST_CASE("NeedsClean hydrogens") {
-  std::string path =
+  std::string chemdrawPath =
       std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
+  std::string cdxmlPath =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  auto molSmiles = [](const std::vector<std::unique_ptr<RWMol>> &mols) {
+    std::vector<std::string> smiles;
+    smiles.reserve(mols.size());
+    for (const auto &mol : mols) {
+      smiles.push_back(MolToSmiles(*mol));
+    }
+    return smiles;
+  };
   SECTION("Trusting the source preserves the literal zero-hydrogen radical") {
-    auto fname = path + "needsclean-carbamate-n.cdxml";
+    auto fname = chemdrawPath + "needsclean-carbamate-n.cdxml";
     auto mols = MolsFromChemDrawFile(fname);
     REQUIRE(mols.size() == 1);
     auto &mol = *mols[0];
@@ -1437,7 +1447,7 @@ TEST_CASE("NeedsClean hydrogens") {
     CHECK(nitrogens == 1);
   }
   SECTION("RelaxHydrogens lets RDKit recompute NeedsClean zero-H atoms") {
-    auto fname = path + "needsclean-carbamate-n.cdxml";
+    auto fname = chemdrawPath + "needsclean-carbamate-n.cdxml";
     ChemDrawParserParams params;
     params.needsCleanPolicy = NeedsCleanPolicy::RelaxHydrogens;
     auto mols = MolsFromChemDrawFile(fname, params);
@@ -1455,6 +1465,39 @@ TEST_CASE("NeedsClean hydrogens") {
       }
     }
     CHECK(nitrogens == 1);
+  }
+  SECTION("RelaxHydrogens ignores NeedsClean on fragment replacement nodes") {
+    auto fname = chemdrawPath + "atom-to-fragment.cdxml";
+    ChemDrawParserParams params;
+    params.needsCleanPolicy = NeedsCleanPolicy::RelaxHydrogens;
+    auto trust = MolsFromChemDrawFile(fname);
+    auto relax = MolsFromChemDrawFile(fname, params);
+    REQUIRE(molSmiles(trust) == std::vector<std::string>{"CC=C=C(C)C"});
+    CHECK(molSmiles(relax) == molSmiles(trust));
+  }
+  SECTION(
+      "RelaxHydrogens is a no-op when sanitization already agrees with zero-H "
+      "metadata") {
+    auto fname = chemdrawPath + "geometry-tetrahedral-4.cdxml";
+    ChemDrawParserParams params;
+    params.needsCleanPolicy = NeedsCleanPolicy::RelaxHydrogens;
+    auto trust = MolsFromChemDrawFile(fname);
+    auto relax = MolsFromChemDrawFile(fname, params);
+    REQUIRE(molSmiles(trust) ==
+            std::vector<std::string>{
+                "CC(=O)S[C@H]1CC2=CC(=O)CC[C@@]2(C)[C@@H]2CC[C@]3(C)[C@H](CC[C@]34CCC(=O)O4)[C@@H]12"});
+    CHECK(molSmiles(relax) == molSmiles(trust));
+  }
+  SECTION(
+      "RelaxHydrogens can salvage existing NeedsClean fragments when "
+      "sanitization can infer valid hydrogens") {
+    auto fname = cdxmlPath + "bad-cdxml.cdxml";
+    ChemDrawParserParams params;
+    params.needsCleanPolicy = NeedsCleanPolicy::RelaxHydrogens;
+    auto mols = MolsFromChemDrawFile(fname, params);
+    REQUIRE(mols.size() == 2);
+    CHECK(molSmiles(mols) ==
+          std::vector<std::string>{"*c1ccccc1", "*c1cccnc1"});
   }
 }
 
