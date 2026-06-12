@@ -42,13 +42,17 @@ struct FilterMatcherBaseTrampoline : FilterMatcherBase {
 
   bool isValid() const override {
     nb::gil_scoped_acquire gil;
-    nb::object pyObj = d_pyObject.is_valid() ? d_pyObject : nb::borrow<nb::object>(nb_trampoline.base());
+    nb::object pyObj = d_pyObject.is_valid()
+                           ? d_pyObject
+                           : nb::borrow<nb::object>(nb_trampoline.base());
     return nb::cast<bool>(pyObj.attr("IsValid")());
   }
 
   std::string getName() const override {
     nb::gil_scoped_acquire gil;
-    nb::object pyObj = d_pyObject.is_valid() ? d_pyObject : nb::borrow<nb::object>(nb_trampoline.base());
+    nb::object pyObj = d_pyObject.is_valid()
+                           ? d_pyObject
+                           : nb::borrow<nb::object>(nb_trampoline.base());
     return nb::cast<std::string>(pyObj.attr("GetName")());
   }
 
@@ -58,7 +62,9 @@ struct FilterMatcherBaseTrampoline : FilterMatcherBase {
     // The Python implementation appends FilterMatch objects to vect.
     // We then copy those back into the C++ matchVect.
     nb::gil_scoped_acquire gil;
-    nb::object pyObj = d_pyObject.is_valid() ? d_pyObject : nb::borrow<nb::object>(nb_trampoline.base());
+    nb::object pyObj = d_pyObject.is_valid()
+                           ? d_pyObject
+                           : nb::borrow<nb::object>(nb_trampoline.base());
     nb::list pyVect;
     nb::object result = pyObj.attr("GetMatches")(mol, pyVect);
     bool matched = nb::cast<bool>(result);
@@ -72,14 +78,18 @@ struct FilterMatcherBaseTrampoline : FilterMatcherBase {
 
   bool hasMatch(const ROMol &mol) const override {
     nb::gil_scoped_acquire gil;
-    nb::object pyObj = d_pyObject.is_valid() ? d_pyObject : nb::borrow<nb::object>(nb_trampoline.base());
+    nb::object pyObj = d_pyObject.is_valid()
+                           ? d_pyObject
+                           : nb::borrow<nb::object>(nb_trampoline.base());
     return nb::cast<bool>(pyObj.attr("HasMatch")(mol));
   }
 
   boost::shared_ptr<FilterMatcherBase> copy() const override {
     nb::gil_scoped_acquire gil;
     // Capture the Python object so the copy keeps it alive.
-    nb::object pyObj = d_pyObject.is_valid() ? d_pyObject : nb::borrow<nb::object>(nb_trampoline.base());
+    nb::object pyObj = d_pyObject.is_valid()
+                           ? d_pyObject
+                           : nb::borrow<nb::object>(nb_trampoline.base());
     auto *copy = new FilterMatcherBaseTrampoline(*this);
     copy->d_pyObject = pyObj;
     return boost::shared_ptr<FilterMatcherBase>(copy);
@@ -145,13 +155,16 @@ RunFilterCatalogWrapper(const FilterCatalog &fc,
 }
 
 void wrap_filtercat(nb::module_ &m) {
-  // MatchTypeVect is a Python list (std::vector<std::pair<int,int>> auto-converts).
+  // MatchTypeVect is a Python list (std::vector<std::pair<int,int>>
+  // auto-converts).
   m.attr("MatchTypeVect") = nb::module_::import_("builtins").attr("list");
   // IntPair is a factory that takes two ints and returns a (int, int) tuple.
-  m.def("IntPair", [](int a, int b) { return std::make_pair(a, b); },
-        "a"_a, "b"_a, "Create an integer pair (tuple) for use in MatchTypeVect");
+  m.def(
+      "IntPair", [](int a, int b) { return std::make_pair(a, b); }, "a"_a,
+      "b"_a, "Create an integer pair (tuple) for use in MatchTypeVect");
 
-  nb::class_<FilterMatch>(m, "FilterMatch",
+  nb::class_<FilterMatch>(
+      m, "FilterMatch",
       R"DOC(Object that holds the result of running FilterMatcherBase::GetMatches
 
  - filterMatch holds the FilterMatchBase that triggered the match
@@ -164,7 +177,8 @@ use FilterMatchOps.Not)DOC")
       .def_ro("filterMatch", &FilterMatch::filterMatch)
       .def_ro("atomPairs", &FilterMatch::atomPairs);
 
-  nb::class_<FilterMatcherBase, FilterMatcherBaseTrampoline>(m, "FilterMatcher",
+  nb::class_<FilterMatcherBase, FilterMatcherBaseTrampoline>(
+      m, "FilterMatcher",
       R"DOC(Base class for matching molecules to filters.
 
  A FilterMatcherBase supplies the following API
@@ -197,12 +211,13 @@ Carbon
       .def("GetName", &FilterMatcherBase::getName)
       .def("__str__", &FilterMatcherBase::getName);
 
-  // Also expose FilterMatcherBase and PythonFilterMatcher under their original names for compatibility
+  // Also expose FilterMatcherBase and PythonFilterMatcher under their original
+  // names for compatibility
   m.attr("FilterMatcherBase") = m.attr("FilterMatcher");
   m.attr("PythonFilterMatcher") = m.attr("FilterMatcher");
 
   nb::class_<SmartsMatcher, FilterMatcherBase>(m, "SmartsMatcher",
-      R"DOC(Smarts Matcher Filter
+                                               R"DOC(Smarts Matcher Filter
  basic constructors:
    SmartsMatcher( name, smarts_pattern, minCount=1, maxCount=UINT_MAX )
    SmartsMatcher( name, molecule, minCount=1, maxCount=UINT_MAX )
@@ -292,7 +307,7 @@ considered a root node and passes along the matches to the children.)DOC")
            "Add a child node to this hierarchy.");
 
   nb::class_<FilterCatalogEntry>(m, "FilterCatalogEntry",
-      R"DOC(FilterCatalogEntry
+                                 R"DOC(FilterCatalogEntry
 A filter catalog entry is an entry in a filter catalog.
 Each filter is named and is used to flag a molecule usually for some
 undesirable property.
@@ -331,21 +346,23 @@ hzone_phenol_A(479)
              return nb::bytes(res.c_str(), res.size());
            })
       .def("GetPropList", &FilterCatalogEntry::getPropList)
-      .def("SetProp",
-           [](FilterCatalogEntry &entry, const std::string &key, const std::string &val) {
-             entry.setProp<std::string>(key, val);
-           },
-           "key"_a, "val"_a)
-      .def("GetProp",
-           [](const FilterCatalogEntry &entry, const std::string &key) {
-             return entry.getProp<std::string>(key);
-           },
-           "key"_a)
-      .def("ClearProp",
-           [](FilterCatalogEntry &entry, const std::string &key) {
-             entry.clearProp(key);
-           },
-           "key"_a);
+      .def(
+          "SetProp",
+          [](FilterCatalogEntry &entry, const std::string &key,
+             const std::string &val) { entry.setProp<std::string>(key, val); },
+          "key"_a, "val"_a)
+      .def(
+          "GetProp",
+          [](const FilterCatalogEntry &entry, const std::string &key) {
+            return entry.getProp<std::string>(key);
+          },
+          "key"_a)
+      .def(
+          "ClearProp",
+          [](FilterCatalogEntry &entry, const std::string &key) {
+            entry.clearProp(key);
+          },
+          "key"_a);
 
   m.def("GetFunctionalGroupHierarchy", &GetFunctionalGroupHierarchy,
         "Returns the functional group hierarchy filter catalog",
@@ -357,16 +374,14 @@ hzone_phenol_A(479)
 
   {
     nb::class_<FilterCatalogParams> params_class(m, "FilterCatalogParams");
-    params_class
-        .def(nb::init<>())
+    params_class.def(nb::init<>())
         .def(nb::init<FilterCatalogParams::FilterCatalogs>(), "catalogs"_a,
              "Construct from a FilterCatalogs identifier (i.e. "
              "FilterCatalogParams.PAINS)")
         .def("AddCatalog", &FilterCatalogParams::addCatalog, "catalogs"_a);
 
-    nb::enum_<FilterCatalogParams::FilterCatalogs>(params_class,
-                                                   "FilterCatalogs",
-                                                   nb::is_arithmetic())
+    nb::enum_<FilterCatalogParams::FilterCatalogs>(
+        params_class, "FilterCatalogs", nb::is_arithmetic())
         .value("PAINS_A", FilterCatalogParams::PAINS_A)
         .value("PAINS_B", FilterCatalogParams::PAINS_B)
         .value("PAINS_C", FilterCatalogParams::PAINS_C)
@@ -386,16 +401,20 @@ hzone_phenol_A(479)
   }
 
   nb::class_<FilterCatalog>(m, "FilterCatalog")
-      .def(nb::init<>())
-      .def("__init__",
-           [](FilterCatalog &self, nb::bytes pkl) {
-             new (&self) FilterCatalog(std::string(
+      .def(nb::new_([]() { return new FilterCatalog(); }))
+      .def(nb::new_([](nb::bytes pkl) {
+             return new FilterCatalog(std::string(
                  static_cast<const char *>(pkl.data()), pkl.size()));
-           },
-           "binStr"_a)
-      .def(nb::init<const std::string &>(), "binStr"_a)
-      .def(nb::init<const FilterCatalogParams &>(), "params"_a)
-      .def(nb::init<FilterCatalogParams::FilterCatalogs>(), "catalogs"_a)
+           }),
+           "pickle"_a)
+      .def(nb::new_([](const FilterCatalogParams &ps) {
+             return new FilterCatalog(ps);
+           }),
+           "params"_a)
+      .def(nb::new_([](FilterCatalogParams::FilterCatalogs fcs) {
+             return new FilterCatalog(fcs);
+           }),
+           "catalogs"_a)
       .def("Serialize",
            [](const FilterCatalog &cat) {
              if (!FilterCatalogCanSerialize()) {
@@ -425,24 +444,16 @@ hzone_phenol_A(479)
            "Return every matching filter from all catalog entries that match "
            "mol")
       .def("__getstate__",
-           [](const FilterCatalog &cat) {
-             if (!FilterCatalogCanSerialize()) {
-               throw std::runtime_error(
-                   "Pickling of FilterCatalog instances is not enabled");
-             }
-             const auto res = cat.Serialize();
-             return std::make_tuple(nb::bytes(res.c_str(), res.size()));
-           })
-      .def("__setstate__",
-           [](FilterCatalog &cat, const std::tuple<nb::bytes> &state) {
-             const auto &pkl = std::get<0>(state);
-             new (&cat) FilterCatalog(std::string(
-                 static_cast<const char *>(pkl.data()), pkl.size()));
-           })
-      .def("__setstate__",
-           [](FilterCatalog &cat, const std::tuple<std::string> &state) {
-             new (&cat) FilterCatalog(std::get<0>(state));
-           });
+           getObjectState<
+               FilterCatalog,
+               [](const FilterCatalog &self) {
+                 if (!FilterCatalogCanSerialize()) {
+                   throw std::runtime_error(
+                       "Pickling of FilterCatalog instances is not enabled");
+                 }
+                 return self.Serialize();
+               }>)
+      .def("__setstate__", setObjectState<FilterCatalog>);
 
   m.def("FilterCatalogCanSerialize", FilterCatalogCanSerialize,
         "Returns True if the FilterCatalog is serializable "
