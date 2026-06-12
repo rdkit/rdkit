@@ -1,8 +1,10 @@
 #include <catch2/catch_all.hpp>
 
+#include <algorithm>
 #include <set>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <GraphMol/ChemReactions/Reaction.h>
@@ -355,5 +357,127 @@ TEST_CASE("reaction enumeration assembly graft cache",
       }
     }
     return benchmark_total_products;
+  };
+}
+
+TEST_CASE("reaction enumeration three-component symmetric monomers",
+          "[reaction][assembly][slow]") {
+  // A three-reactant reaction enumerated over symmetric diamine monomers.
+  // Each monomer is a 2-substituted 1,3-diaminopropane: two equivalent primary
+  // amines (the symmetric core) with an inert alkyl chain grown at the central
+  // carbon, a symmetry-neutral position. Every monomer therefore stays
+  // internally symmetric (so dedup collapses its two equivalent matches) while
+  // remaining distinct from the others, and the growing chain makes product
+  // assembly the dominant cost (so the graft cache pays off). The three modes
+  // compared are: no caching (and no dedup), dedup + match cache, and
+  // dedup + graft cache.
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[N;H2:1].[N;H2:2].[N;H2:3]>>[N:1]C.[N:2]C.[N:3]C"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  auto make_symmetric_diamines = [](unsigned int count) {
+    std::vector<ROMOL_SPTR> pool;
+    pool.reserve(count);
+    for (unsigned int i = 0; i < count; ++i) {
+      // H2N-CH2-CH(chain)-CH2-NH2 with a growing inert chain at the center
+      const std::string smiles = "NCC(" + std::string(i + 1, 'C') + ")CN";
+      auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(mol);
+      pool.push_back(ROMOL_SPTR(mol.release()));
+    }
+    return pool;
+  };
+
+  constexpr unsigned int POOL = 30;
+  const auto poolA = make_symmetric_diamines(POOL);
+  const auto poolB = make_symmetric_diamines(POOL);
+  const auto poolC = make_symmetric_diamines(POOL);
+
+  enum class Mode { Plain, DedupMatch, DedupGraft };
+
+  auto run_triple = [&](Mode mode, const ROMOL_SPTR &a, const ROMOL_SPTR &b,
+                        const ROMOL_SPTR &c, ReactantMatchCache &matchCache,
+                        ReactionRunnerUtils::ReactantGraftCache &graftCache) {
+    MOL_SPTR_VECT reactants{a, b, c};
+    switch (mode) {
+      case Mode::Plain:
+        return run_Reactants(*rxn, reactants);
+      case Mode::DedupMatch:
+        return run_Reactants(*rxn, reactants, matchCache, true);
+      case Mode::DedupGraft:
+        return run_Reactants(*rxn, reactants, matchCache, graftCache, true);
+    }
+    return std::vector<MOL_SPTR_VECT>{};
+  };
+
+  // correctness: on a small slice all three modes yield the same unique
+  // products; the no-dedup mode just produces extra symmetric duplicates
+  auto collect_unique = [&](Mode mode, unsigned int limit) {
+    std::set<std::string> uniqueProducts;
+    std::size_t setCount = 0;
+    ReactantMatchCache matchCache;
+    ReactionRunnerUtils::ReactantGraftCache graftCache;
+    for (unsigned int i = 0; i < limit; ++i) {
+      for (unsigned int j = 0; j < limit; ++j) {
+        for (unsigned int k = 0; k < limit; ++k) {
+          const auto products = run_triple(mode, poolA[i], poolB[j], poolC[k],
+                                           matchCache, graftCache);
+          setCount += products.size();
+          for (const auto &product_set : products) {
+            std::vector<std::string> parts;
+            parts.reserve(product_set.size());
+            for (const auto &product : product_set) {
+              parts.push_back(MolToSmiles(*product));
+            }
+            std::sort(parts.begin(), parts.end());
+            std::string joined;
+            for (const auto &part : parts) {
+              joined += part;
+              joined.push_back('.');
+            }
+            uniqueProducts.insert(joined);
+          }
+        }
+      }
+    }
+    return std::make_pair(uniqueProducts, setCount);
+  };
+
+  constexpr unsigned int CHECK_LIMIT = 4;
+  const auto plainCheck = collect_unique(Mode::Plain, CHECK_LIMIT);
+  const auto matchCheck = collect_unique(Mode::DedupMatch, CHECK_LIMIT);
+  const auto graftCheck = collect_unique(Mode::DedupGraft, CHECK_LIMIT);
+  CHECK(plainCheck.first == matchCheck.first);
+  CHECK(graftCheck.first == matchCheck.first);
+  // the symmetric core yields duplicate matches, so the no-dedup mode produces
+  // strictly more product sets than the deduped modes for the same unique set
+  CHECK(plainCheck.second > matchCheck.second);
+  CHECK(graftCheck.second == matchCheck.second);
+
+  // lean benchmark loop: full pools, no canonicalization so only assembly and
+  // caching are measured
+  auto bench_run = [&](Mode mode) {
+    ReactantMatchCache matchCache;
+    ReactionRunnerUtils::ReactantGraftCache graftCache;
+    std::size_t total = 0;
+    for (const auto &a : poolA) {
+      for (const auto &b : poolB) {
+        for (const auto &c : poolC) {
+          total += run_triple(mode, a, b, c, matchCache, graftCache).size();
+        }
+      }
+    }
+    return total;
+  };
+
+  BENCHMARK("three-component no caching") { return bench_run(Mode::Plain); };
+
+  BENCHMARK("three-component dedup + match cache") {
+    return bench_run(Mode::DedupMatch);
+  };
+
+  BENCHMARK("three-component dedup + graft cache") {
+    return bench_run(Mode::DedupGraft);
   };
 }
