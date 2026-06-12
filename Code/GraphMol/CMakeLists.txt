@@ -42,7 +42,6 @@ rdkit_headers(Atom.h
         Rings.h
         ROMol.h
         RWMol.h
-        SCSRMol.h
         MACROMol.h
         SanitException.h
         SubstanceGroup.h

@@ -59,7 +59,6 @@ rdkit_headers(CDXMLParser.h
     FileParsers.h
     FileParserUtils.h
     SCSRUtils.h
-    SCSRMolFileWriter.h
     MACROMolUtils.h
     MolFileStereochem.h
     FileWriters.h
