@@ -77,7 +77,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testFoundations_1.svg", 2283802316U},
     {"testFoundations_2.svg", 2468031318U},
     {"testTest_1.svg", 2468031318U},
-    {"testKekulizationProblems_1.svg", 2284161107U},
+    {"testKekulizationProblems_1.svg", 3457752008U},
     {"testAtomBondIndices_1.svg", 2702803018U},
     {"testAtomBondIndices_2.svg", 1564350363U},
     {"testAtomBondIndices_3.svg", 1346662812U},
@@ -170,50 +170,50 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4323_2.svg", 2120846759U},
     {"testGithub4323_3.svg", 4156867630U},
     {"testGithub4323_4.svg", 3824125601U},
-    {"testGithub4238_1.svg", 842841477U},
+    {"testGithub4238_1.svg", 1477013392U},
     {"testGithub4508_1.svg", 2047652713U},
     {"testGithub4508_1b.svg", 2681019776U},
     {"testGithub4508_2.svg", 1382076550U},
     {"testGithub4508_2b.svg", 4005636724U},
-    {"testGithub4538.svg", 2550818801U},
+    {"testGithub4538.svg", 2604123716U},
     {"testDarkMode.1.svg", 4157562958U},
     {"testMonochrome.1.svg", 482290994U},
     {"testMonochrome.2.svg", 2128285153U},
     {"testAvalon.1.svg", 477303888U},
     {"testCDK.1.svg", 1764612361U},
-    {"testGithub4519_1.svg", 736612670U},
-    {"testGithub4519_2.svg", 171503813U},
-    {"testGithub4519_3.svg", 3396792960U},
-    {"testGithub4519_4.svg", 3875957215U},
+    {"testGithub4519_1.svg", 2664633857U},
+    {"testGithub4519_2.svg", 4233313779U},
+    {"testGithub4519_3.svg", 848820494U},
+    {"testGithub4519_4.svg", 3804409413U},
     {"testBaseFontSize.1a.svg", 1295117205U},
     {"testBaseFontSize.1b.svg", 3595811515U},
     {"testBaseFontSize.2a.svg", 2958687877U},
     {"testBaseFontSize.2b.svg", 1786972332U},
-    {"testFlexiCanvas.1a.svg", 2633733362U},
-    {"testFlexiCanvas.1b.svg", 1541095928U},
-    {"testFlexiCanvas.1c.svg", 3204351481U},
-    {"testFlexiCanvas.1d.svg", 1753089731U},
-    {"testFlexiCanvas.2.svg", 665664909U},
-    {"testSemiFlexiCanvas.1a.svg", 1541095928U},
-    {"testSemiFlexiCanvas.1b.svg", 3020732451U},
+    {"testFlexiCanvas.1a.svg", 22565973U},
+    {"testFlexiCanvas.1b.svg", 264100941U},
+    {"testFlexiCanvas.1c.svg", 3178096832U},
+    {"testFlexiCanvas.1d.svg", 3052436416U},
+    {"testFlexiCanvas.2.svg", 937967046U},
+    {"testSemiFlexiCanvas.1a.svg", 264100941U},
+    {"testSemiFlexiCanvas.1b.svg", 2578007908U},
     {"testSemiFlexiCanvas.1c.svg", 4178696811U},
-    {"testFlexiCanvas.3.svg", 3544316588U},
-    {"testFlexiCanvas.4a.svg", 1486952473U},
-    {"testFlexiCanvas.4b.svg", 1957607740U},
-    {"testFlexiCanvas.4c.svg", 3955371857U},
-    {"testFlexiCanvas.4d.svg", 1137945621U},
-    {"testFlexiCanvas.5a.svg", 3968863584U},
-    {"testFlexiCanvas.5b.svg", 649567318U},
-    {"testFlexiCanvas.5c.svg", 1826396133U},
-    {"testFlexiCanvas.5d.svg", 1730603480U},
-    {"testFlexiCanvas.6a.svg", 3085867303U},
-    {"testFlexiCanvas.6b.svg", 2819164642U},
-    {"testFlexiCanvas.6c.svg", 3085867303U},
-    {"testFlexiCanvas.6d.svg", 3085867303U},
-    {"testFlexiCanvas.7a.svg", 514767495U},
-    {"testFlexiCanvas.7b.svg", 4275125955U},
-    {"testFlexiCanvas.7c.svg", 514767495U},
-    {"testFlexiCanvas.7d.svg", 514767495U},
+    {"testFlexiCanvas.3.svg", 2825616065U},
+    {"testFlexiCanvas.4a.svg", 2890365484U},
+    {"testFlexiCanvas.4b.svg", 1699806660U},
+    {"testFlexiCanvas.4c.svg", 2761686224U},
+    {"testFlexiCanvas.4d.svg", 2529848657U},
+    {"testFlexiCanvas.5a.svg", 2567646198U},
+    {"testFlexiCanvas.5b.svg", 204562314U},
+    {"testFlexiCanvas.5c.svg", 2804911186U},
+    {"testFlexiCanvas.5d.svg", 132533933U},
+    {"testFlexiCanvas.6a.svg", 4181382725U},
+    {"testFlexiCanvas.6b.svg", 1664102614U},
+    {"testFlexiCanvas.6c.svg", 4181382725U},
+    {"testFlexiCanvas.6d.svg", 4181382725U},
+    {"testFlexiCanvas.7a.svg", 3787644406U},
+    {"testFlexiCanvas.7b.svg", 4211184836U},
+    {"testFlexiCanvas.7c.svg", 3787644406U},
+    {"testFlexiCanvas.7d.svg", 3787644406U},
     {"testGithub4764.sz1.svg", 3611125861U},
     {"testGithub4764.sz2.svg", 1936114454U},
     {"testGithub4764.sz3.svg", 2712214121U},
@@ -298,18 +298,18 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github6160_2.svg", 3845316354U},
     {"test_github6160_3.svg", 332436229U},
     {"test_github6170.svg", 1561786551U},
-    {"test_getMolSize.svg", 894431558U},
+    {"test_getMolSize.svg", 4196092972U},
     {"test_github6200_1.svg", 1975293465U},
     {"test_github6200_2.svg", 2658818798U},
     {"test_queryColour_1.svg", 778322651U},
     {"test_queryColour_2.svg", 45913095U},
     {"github6336_1.svg", 612606818U},
     {"github6416.svg", 3814405016U},
-    {"test_github6397_1.svg", 4203615821U},
-    {"test_github6397_2.svg", 2405824082U},
-    {"test_github6397_3.svg", 759740391U},
-    {"test_github6397_4.svg", 3123896712U},
-    {"test_github6397_5.svg", 148587580U},
+    {"test_github6397_1.svg", 95073545U},
+    {"test_github6397_2.svg", 3804626664U},
+    {"test_github6397_3.svg", 4272638606U},
+    {"test_github6397_4.svg", 1201889628U},
+    {"test_github6397_5.svg", 4099773534U},
     {"test_github6400_1.svg", 2792561051U},
     {"github6504_1.svg", 3649936662U},
     {"github6504_2.svg", 106020287U},
@@ -323,13 +323,13 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"lasso_highlights_6.svg", 2113147733U},
     {"lasso_highlights_7.svg", 514868036U},
     {"lasso_highlights_8.svg", 3231367552U},
-    {"testGithub6685_1.svg", 1012747673U},
-    {"testGithub6685_2.svg", 4003431099U},
-    {"testGithub6685_3.svg", 3019254647U},
-    {"testGithub6685_4.svg", 1239628830U},
+    {"testGithub6685_1.svg", 571464576U},
+    {"testGithub6685_2.svg", 1140424880U},
+    {"testGithub6685_3.svg", 2420964772U},
+    {"testGithub6685_4.svg", 3883821521U},
     {"bad_lasso_1.svg", 726527516U},
-    {"AtropCanon1.svg", 1371378369U},
-    {"AtropManyChiralsEnhanced.svg", 2256768013U},
+    {"AtropCanon1.svg", 3762185420U},
+    {"AtropManyChiralsEnhanced.svg", 920164649U},
     {"testGithub6968.svg", 577496246U},
     {"testGithub7036_1.svg", 303621762U},
     {"testGithub7036_2.svg", 2411796331U},
@@ -361,7 +361,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testOptionalAtomListBrackets_3.svg", 2945415850U},
     {"testComponentPadding_1.svg", 2488754565U},
     {"testComponentPadding_2.svg", 2544322406U},
-    {"testReactionPanels.svg", 1616500155U},
+    {"testReactionPanels.svg", 3554202592U},
     {"testAtomAndBondLabels_1.svg", 288825710U},
     {"testAtomAndBondLabels_2.svg", 3501435082U},
     {"testAtomAndBondLabels_3.svg", 3056536314U},
@@ -369,7 +369,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testStandardColoursHighlightedAtoms_1.svg", 4265528904U},
     {"testStandardColoursHighlightedAtoms_2.svg", 2285000572U},
     {"testArrowheads.svg", 3318006834U},
-    {"testOffsetHighlightedMols.svg", 3147614756U},
+    {"testOffsetHighlightedMols.svg", 2260045213U},
     {"testDrawingExtentsInclude_default.svg", 1604243819U},
     {"testDrawingExtentsIncludeWithHighlights_default.svg", 1595689626U},
     {"testDrawingExtentsInclude_allButHighlights.svg", 1604243819U},
@@ -380,6 +380,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_Github9280_2.0.svg", 1805554327U},
     {"test_Github9280_0.3.svg", 893100468U},
     {"test_Github9280_0.2.svg", 770838895U},
+    {"testGithub9310_1.svg", 3761885012U},
     {"testZeroLengthBrackets.svg", 1120080272U},
     {"test_Github9280_0.2.svg", 770838895U},
     {"testGithub9329_1.svg", 2464826369U}};
@@ -4767,7 +4768,6 @@ TEST_CASE("Github #4764") {
       check_file_hash("testGithub4764.sz3.png");
     }
 #endif
-    // check_file_hash("testGithub4538.svg");
   }
 }
 
@@ -11522,6 +11522,32 @@ TEST_CASE("Uniform bond colour") {
       std::distance(std::sregex_iterator(text.begin(), text.end(), bond2),
                     std::sregex_iterator()));
   CHECK(match_count0 == 1);
+}
+
+TEST_CASE("Github 9310 - SVG Backgrounds not cleared in grid display") {
+  std::string nameBase = "testGithub9310";
+  auto threonine_and = "C[C@@H](O)[C@H](N)C(O)=O |&1:1,3|"_smiles;
+  auto threonine_or = "C[C@@H](O)[C@H](N)C(O)=O |o1:1,3|"_smiles;
+  MolDraw2DUtils::prepareMolForDrawing(*threonine_and);
+  MolDraw2DUtils::prepareMolForDrawing(*threonine_or);
+  MolDraw2DSVG drawer(500, 200, 250, 200, NO_FREETYPE);
+  drawer.drawMolecule(*threonine_and, "and");
+  drawer.setOffset(250, 0);
+  drawer.drawMolecule(*threonine_or, "or");
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::string svgName = nameBase + "_1.svg";
+  std::ofstream outs(svgName);
+  outs << text;
+  outs.flush();
+  outs.close();
+  const static std::regex clear(
+      "<rect style='opacity:1.0;fill:#FFFFFF;stroke:none' width='500.0' height='200.0' x='0.0' y='0.0'> </rect>");
+  std::ptrdiff_t const clear_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), clear),
+                    std::sregex_iterator()));
+  CHECK(clear_count == 1);
+  check_file_hash(nameBase + "_1.svg", 0U);
 }
 
 TEST_CASE("Github 9329 - zero length vector") {
