@@ -8,8 +8,10 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 
+#include <optional>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/MolStandardize/Metal.h>
@@ -21,20 +23,13 @@ namespace {
 
 class MetalDisconnectorWrap {
  public:
-  MetalDisconnectorWrap(nb::object options = nb::none()) {
-    if (options.is_none()) {
+  MetalDisconnectorWrap(
+      std::optional<RDKit::MolStandardize::MetalDisconnectorOptions *> options =
+          std::nullopt) {
+    if (!options.has_value() || !options.value()) {
       md_.reset(new RDKit::MolStandardize::MetalDisconnector());
     } else {
-      RDKit::MolStandardize::MetalDisconnectorOptions md_opts;
-      md_opts.splitGrignards =
-          nb::cast<bool>(options.attr("splitGrignards"));
-      md_opts.splitAromaticC =
-          nb::cast<bool>(options.attr("splitAromaticC"));
-      md_opts.adjustCharges =
-          nb::cast<bool>(options.attr("adjustCharges"));
-      md_opts.removeHapticDummies =
-          nb::cast<bool>(options.attr("removeHapticDummies"));
-      md_.reset(new RDKit::MolStandardize::MetalDisconnector(md_opts));
+      md_.reset(new RDKit::MolStandardize::MetalDisconnector(*options.value()));
     }
   }
 
@@ -76,27 +71,29 @@ void wrap_metal(nb::module_ &m) {
       m, "MetalDisconnectorOptions", "Metal Disconnector Options")
       .def(nb::init<>())
       .def_rw("splitGrignards",
-               &RDKit::MolStandardize::MetalDisconnectorOptions::splitGrignards,
-               "Whether to split Grignard-type complexes. Default false.")
+              &RDKit::MolStandardize::MetalDisconnectorOptions::splitGrignards,
+              "Whether to split Grignard-type complexes. Default false.")
       .def_rw("splitAromaticC",
-               &RDKit::MolStandardize::MetalDisconnectorOptions::splitAromaticC,
-               "Whether to split metal-aromatic C bonds.  Default false.")
+              &RDKit::MolStandardize::MetalDisconnectorOptions::splitAromaticC,
+              "Whether to split metal-aromatic C bonds.  Default false.")
       .def_rw("adjustCharges",
-               &RDKit::MolStandardize::MetalDisconnectorOptions::adjustCharges,
-               "Whether to adjust charges on ligand atoms.  Default true.")
-      .def_rw("removeHapticDummies",
-               &RDKit::MolStandardize::MetalDisconnectorOptions::
-                   removeHapticDummies,
-               "Whether to remove the dummy atoms representing haptic"
-               " bonds.  Such dummies are bonded to the metal with a"
-               " bond that has the MolFileBondEndPts prop set."
-               "  Default false.");
+              &RDKit::MolStandardize::MetalDisconnectorOptions::adjustCharges,
+              "Whether to adjust charges on ligand atoms.  Default true.")
+      .def_rw(
+          "removeHapticDummies",
+          &RDKit::MolStandardize::MetalDisconnectorOptions::removeHapticDummies,
+          "Whether to remove the dummy atoms representing haptic"
+          " bonds.  Such dummies are bonded to the metal with a"
+          " bond that has the MolFileBondEndPts prop set."
+          "  Default false.");
 
   nb::class_<MetalDisconnectorWrap>(
       m, "MetalDisconnector",
       "a class to disconnect metals that are defined as covalently bonded to"
       " non-metals")
-      .def(nb::init<nb::object>(), "options"_a = nb::none())
+      .def(nb::init<std::optional<
+               RDKit::MolStandardize::MetalDisconnectorOptions *>>(),
+           "options"_a = nb::none())
       .def_prop_ro("MetalNof", &getMetalNofHelper,
                    "SMARTS defining the metals to disconnect if attached to "
                    "Nitrogen, Oxygen or Fluorine")

@@ -8,9 +8,11 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 
+#include <optional>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Charge.h>
 
@@ -34,16 +36,14 @@ void reionizeInPlaceHelper(MolStandardize::Reionizer &self, ROMol &mol) {
   self.reionizeInPlace(static_cast<RWMol &>(mol));
 }
 
-MolStandardize::Reionizer *reionizerFromData(const std::string &data,
-                                             nb::object chargeCorrections) {
+MolStandardize::Reionizer *reionizerFromData(
+    const std::string &data,
+    const std::optional<std::vector<MolStandardize::ChargeCorrection>>
+        &chargeCorrections) {
   std::istringstream sstr(data);
-  std::vector<MolStandardize::ChargeCorrection> corrections;
-  if (!chargeCorrections.is_none()) {
-    for (nb::handle h : chargeCorrections) {
-      corrections.push_back(nb::cast<MolStandardize::ChargeCorrection>(h));
-    }
-  }
-  return new MolStandardize::Reionizer(sstr, corrections);
+  return new MolStandardize::Reionizer(
+      sstr, chargeCorrections.value_or(
+                std::vector<MolStandardize::ChargeCorrection>()));
 }
 
 void unchargeInPlaceHelper(MolStandardize::Uncharger &self, ROMol &mol) {

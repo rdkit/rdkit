@@ -8,18 +8,21 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/bind_vector.h>
 #include <nanobind/trampoline.h>
 #include <nanobind/make_iterator.h>
 
+#include <optional>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/MolStandardize.h>
 #include <GraphMol/MolStandardize/Tautomer.h>
 #include <sstream>
 
-NB_MAKE_OPAQUE(std::vector<RDKit::MolStandardize::TautomerScoringFunctions::SubstructTerm>);
+NB_MAKE_OPAQUE(std::vector<
+               RDKit::MolStandardize::TautomerScoringFunctions::SubstructTerm>);
 
 #include <nanobind/stl/vector.h>
 
@@ -101,8 +104,9 @@ struct TautomerEnumeratorCallbackTrampoline
     : MolStandardize::TautomerEnumeratorCallback {
   NB_TRAMPOLINE(MolStandardize::TautomerEnumeratorCallback, 1);
 
-  bool operator()(const ROMol &mol,
-                  const MolStandardize::TautomerEnumeratorResult &res) override {
+  bool operator()(
+      const ROMol &mol,
+      const MolStandardize::TautomerEnumeratorResult &res) override {
     nb::gil_scoped_acquire guard;
     nb::object self = nb::find(this);
     auto *pyRes = new PyTautomerEnumeratorResult(res);
@@ -115,8 +119,9 @@ struct TautomerEnumeratorCallbackTrampoline
 struct PyCallbackWrapper : MolStandardize::TautomerEnumeratorCallback {
   nb::object d_pyObj;
   explicit PyCallbackWrapper(nb::object obj) : d_pyObj(std::move(obj)) {}
-  bool operator()(const ROMol &mol,
-                  const MolStandardize::TautomerEnumeratorResult &res) override {
+  bool operator()(
+      const ROMol &mol,
+      const MolStandardize::TautomerEnumeratorResult &res) override {
     nb::gil_scoped_acquire guard;
     auto *pyRes = new PyTautomerEnumeratorResult(res);
     nb::object pyResObj = nb::cast(pyRes, nb::rv_policy::take_ownership);
@@ -148,8 +153,8 @@ nb::tuple smilesTautomerMapItemsHelper(
   nb::list items;
   for (const auto &pair : self) {
     auto *t = new MolStandardize::Tautomer(pair.second);
-    items.append(nb::make_tuple(
-        pair.first, nb::cast(t, nb::rv_policy::take_ownership)));
+    items.append(
+        nb::make_tuple(pair.first, nb::cast(t, nb::rv_policy::take_ownership)));
   }
   return nb::tuple(items);
 }
@@ -169,9 +174,8 @@ void setCallbackHelper(MolStandardize::TautomerEnumerator &te,
     te.setCallback(nullptr);
     return;
   }
-  if (!nb::isinstance(
-          callback,
-          nb::type<MolStandardize::TautomerEnumeratorCallback>())) {
+  if (!nb::isinstance(callback,
+                      nb::type<MolStandardize::TautomerEnumeratorCallback>())) {
     throw nb::type_error(
         "Expected an instance of a "
         "rdMolStandardize.TautomerEnumeratorCallback subclass");
@@ -203,8 +207,7 @@ class pyobjFunctor {
     try {
       return nb::cast<int>(result);
     } catch (const nb::cast_error &) {
-      throw nb::type_error(
-          "scoring function must return a numeric value");
+      throw nb::type_error("scoring function must return a numeric value");
     }
   }
 
@@ -246,8 +249,7 @@ inline std::vector<ROMOL_SPTR> extractPythonIterable(const nb::object &o) {
 ROMol *pickCanonicalHelper(const MolStandardize::TautomerEnumerator &self,
                            const nb::object &o) {
   try {
-    PyTautomerEnumeratorResult *e =
-        nb::cast<PyTautomerEnumeratorResult *>(o);
+    PyTautomerEnumeratorResult *e = nb::cast<PyTautomerEnumeratorResult *>(o);
     return self.pickCanonical(*e->get());
   } catch (const nb::cast_error &) {
     return self.pickCanonical(extractPythonIterable(o));
@@ -258,8 +260,7 @@ ROMol *pickCanonicalHelper2(const MolStandardize::TautomerEnumerator &self,
                             const nb::object &o, nb::object scoreFunc) {
   pyobjFunctor ftor(scoreFunc);
   try {
-    PyTautomerEnumeratorResult *e =
-        nb::cast<PyTautomerEnumeratorResult *>(o);
+    PyTautomerEnumeratorResult *e = nb::cast<PyTautomerEnumeratorResult *>(o);
     return self.pickCanonical(*e->get(), ftor);
   } catch (const nb::cast_error &) {
     return self.pickCanonical(extractPythonIterable(o), ftor);
@@ -286,14 +287,12 @@ GetDefaultTautomerSubstructsHelper() {
 void wrap_tautomer(nb::module_ &m) {
   nb::enum_<MolStandardize::TautomerEnumeratorStatus>(
       m, "TautomerEnumeratorStatus")
-      .value("Completed",
-             MolStandardize::TautomerEnumeratorStatus::Completed)
+      .value("Completed", MolStandardize::TautomerEnumeratorStatus::Completed)
       .value("MaxTautomersReached",
              MolStandardize::TautomerEnumeratorStatus::MaxTautomersReached)
       .value("MaxTransformsReached",
              MolStandardize::TautomerEnumeratorStatus::MaxTransformsReached)
-      .value("Canceled",
-             MolStandardize::TautomerEnumeratorStatus::Canceled);
+      .value("Canceled", MolStandardize::TautomerEnumeratorStatus::Canceled);
 
   nb::class_<MolStandardize::TautomerEnumeratorCallback,
              TautomerEnumeratorCallbackTrampoline>(
@@ -307,9 +306,8 @@ its progress.
 To have your callback called, pass an instance of your
 derived class to TautomerEnumerator.SetCallback())DOC")
       .def(nb::init<>())
-      .def("__call__",
-           &MolStandardize::TautomerEnumeratorCallback::operator(), "mol"_a,
-           "res"_a,
+      .def("__call__", &MolStandardize::TautomerEnumeratorCallback::operator(),
+           "mol"_a, "res"_a,
            "This must be implemented in the derived class. "
            "Return True if the tautomer enumeration should continue; "
            "False if the tautomer enumeration should stop.\n");
@@ -317,18 +315,18 @@ derived class to TautomerEnumerator.SetCallback())DOC")
   nb::class_<MolStandardize::Tautomer>(
       m, "Tautomer",
       "used to hold the aromatic and kekulized versions of each tautomer")
-      .def_prop_ro("tautomer",
-                   [](const MolStandardize::Tautomer &self) {
-                     return new ROMol(*self.tautomer);
-                   },
-                   nb::rv_policy::take_ownership,
-                   "aromatic version of the tautomer")
-      .def_prop_ro("kekulized",
-                   [](const MolStandardize::Tautomer &self) {
-                     return new ROMol(*self.getKekulized());
-                   },
-                   nb::rv_policy::take_ownership,
-                   "kekulized version of the tautomer");
+      .def_prop_ro(
+          "tautomer",
+          [](const MolStandardize::Tautomer &self) {
+            return new ROMol(*self.tautomer);
+          },
+          nb::rv_policy::take_ownership, "aromatic version of the tautomer")
+      .def_prop_ro(
+          "kekulized",
+          [](const MolStandardize::Tautomer &self) {
+            return new ROMol(*self.getKekulized());
+          },
+          nb::rv_policy::take_ownership, "kekulized version of the tautomer");
 
   nb::class_<MolStandardize::SmilesTautomerMap>(
       m, "SmilesTautomerMap",
@@ -336,10 +334,9 @@ derived class to TautomerEnumerator.SetCallback())DOC")
       .def("keys", &smilesTautomerMapKeysHelper)
       .def("values", &smilesTautomerMapValuesHelper)
       .def("items", &smilesTautomerMapItemsHelper)
-      .def("__len__",
-           [](const MolStandardize::SmilesTautomerMap &self) {
-             return self.size();
-           });
+      .def("__len__", [](const MolStandardize::SmilesTautomerMap &self) {
+        return self.size();
+      });
 
   nb::class_<PyTautomerEnumeratorResult>(
       m, "TautomerEnumeratorResult",
@@ -349,8 +346,7 @@ derived class to TautomerEnumerator.SetCallback())DOC")
       .def_prop_ro("smiles", &PyTautomerEnumeratorResult::smiles,
                    "SMILES of tautomers generated by the enumerator")
       .def_prop_ro(
-          "smilesTautomerMap",
-          &PyTautomerEnumeratorResult::smilesTautomerMap,
+          "smilesTautomerMap", &PyTautomerEnumeratorResult::smilesTautomerMap,
           nb::rv_policy::reference_internal,
           "dictionary mapping SMILES strings to the respective Tautomer objects")
       .def_prop_ro("status", &PyTautomerEnumeratorResult::status,
@@ -360,9 +356,10 @@ derived class to TautomerEnumerator.SetCallback())DOC")
                    "tuple of atom indices modified by the transforms")
       .def_prop_ro("modifiedBonds", &PyTautomerEnumeratorResult::modifiedBonds,
                    "tuple of bond indices modified by the transforms")
-      .def("__call__",
-           [](PyTautomerEnumeratorResult &self) { return self.tautomers(); },
-           "tautomers generated by the enumerator")
+      .def(
+          "__call__",
+          [](PyTautomerEnumeratorResult &self) { return self.tautomers(); },
+          "tautomers generated by the enumerator")
       .def("__iter__",
            [](PyTautomerEnumeratorResult &self) {
              auto taus = self.tautomers();
@@ -372,11 +369,12 @@ derived class to TautomerEnumerator.SetCallback())DOC")
              }
              return result.attr("__iter__")();
            })
-      .def("__getitem__",
-           [](PyTautomerEnumeratorResult &self, int pos) {
-             return self.at(pos);
-           },
-           "pos"_a, nb::rv_policy::take_ownership)
+      .def(
+          "__getitem__",
+          [](PyTautomerEnumeratorResult &self, int pos) {
+            return self.at(pos);
+          },
+          "pos"_a, nb::rv_policy::take_ownership)
       .def("__len__", &PyTautomerEnumeratorResult::size);
 
   nb::class_<MolStandardize::TautomerEnumerator>(m, "TautomerEnumerator")
@@ -417,8 +415,8 @@ regardless of what the input tautomer or atom ordering were.)DOC")
       .def("PickCanonical", &pickCanonicalHelper, "iterable"_a,
            nb::rv_policy::take_ownership,
            "picks the canonical tautomer from an iterable of molecules")
-      .def("PickCanonical", &pickCanonicalHelper2, "iterable"_a,
-           "scoreFunc"_a, nb::rv_policy::take_ownership,
+      .def("PickCanonical", &pickCanonicalHelper2, "iterable"_a, "scoreFunc"_a,
+           nb::rv_policy::take_ownership,
            "returns the canonical tautomer for a molecule using a custom "
            "scoring function")
       .def_static(
@@ -485,26 +483,24 @@ regardless of what the input tautomer or atom ordering were.)DOC")
       .def("GetCallback", &getCallbackHelper,
            "Get the TautomerEnumeratorCallback subclass instance,\n"
            "or None if none was set.")
-      .def_prop_ro_static(
-          "tautomerScoreVersion",
-          [](nb::handle) {
-            return MolStandardize::TautomerScoringFunctions::
-                tautomerScoringVersion;
-          });
+      .def_prop_ro_static("tautomerScoreVersion", [](nb::handle) {
+        return MolStandardize::TautomerScoringFunctions::tautomerScoringVersion;
+      });
 
   m.def("GetV1TautomerEnumerator", MolStandardize::getV1TautomerEnumerator,
         "return a TautomerEnumerator using v1 of the enumeration rules",
         nb::rv_policy::take_ownership);
 
-  m.def("ScoreRings",
-        MolStandardize::TautomerScoringFunctions::scoreRings, "mol"_a,
+  m.def("ScoreRings", MolStandardize::TautomerScoringFunctions::scoreRings,
+        "mol"_a,
         "scores the ring system of the tautomer for canonicalization\n"
         "Aromatic rings score 100, all carbon aromatic rings score 250");
 
-  m.def("ScoreHeteroHs",
-        MolStandardize::TautomerScoringFunctions::scoreHeteroHs, "mol"_a,
-        "scores the number of heteroHs of the tautomer for canonicalization\n"
-        "This gives a negative penalty to hydrogens attached to S,P, Se and Te");
+  m.def(
+      "ScoreHeteroHs", MolStandardize::TautomerScoringFunctions::scoreHeteroHs,
+      "mol"_a,
+      "scores the number of heteroHs of the tautomer for canonicalization\n"
+      "This gives a negative penalty to hydrogens attached to S,P, Se and Te");
 
   nb::class_<MolStandardize::TautomerScoringFunctions::SubstructTerm>(
       m, "SubstructTerm",
@@ -513,15 +509,12 @@ regardless of what the input tautomer or atom ordering were.)DOC")
       "Aromatic rings score 100, all carbon aromatic rings score 250")
       .def(nb::init<std::string, std::string, int>(), "name"_a, "smarts"_a,
            "score"_a)
-      .def_ro(
-          "name",
-          &MolStandardize::TautomerScoringFunctions::SubstructTerm::name)
-      .def_ro(
-          "smarts",
-          &MolStandardize::TautomerScoringFunctions::SubstructTerm::smarts)
-      .def_ro(
-          "score",
-          &MolStandardize::TautomerScoringFunctions::SubstructTerm::score);
+      .def_ro("name",
+              &MolStandardize::TautomerScoringFunctions::SubstructTerm::name)
+      .def_ro("smarts",
+              &MolStandardize::TautomerScoringFunctions::SubstructTerm::smarts)
+      .def_ro("score",
+              &MolStandardize::TautomerScoringFunctions::SubstructTerm::score);
 
   nb::bind_vector<
       std::vector<MolStandardize::TautomerScoringFunctions::SubstructTerm>>(
@@ -530,19 +523,17 @@ regardless of what the input tautomer or atom ordering were.)DOC")
   m.def(
       "ScoreSubstructs",
       [](const ROMol &mol,
-         nb::object terms) -> int {
-        if (terms.is_none()) {
+         const std::optional<std::vector<
+             MolStandardize::TautomerScoringFunctions::SubstructTerm>> &terms)
+          -> int {
+        if (!terms) {
           return MolStandardize::TautomerScoringFunctions::scoreSubstructs(mol);
         }
         return MolStandardize::TautomerScoringFunctions::scoreSubstructs(
-            mol,
-            nb::cast<std::vector<
-                MolStandardize::TautomerScoringFunctions::SubstructTerm> &>(
-                terms));
+            mol, *terms);
       },
       "mol"_a, "terms"_a = nb::none(), "scores the tautomer substructures");
 
-  m.def("GetDefaultTautomerScoreSubstructs",
-        GetDefaultTautomerSubstructsHelper,
+  m.def("GetDefaultTautomerScoreSubstructs", GetDefaultTautomerSubstructsHelper,
         "Return the default tautomer substructure scoring terms");
 }
