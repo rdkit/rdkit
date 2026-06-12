@@ -476,6 +476,205 @@ TEST_CASE("product assembly golden", "[reaction][assembly][golden]") {
     CHECK(MolToSmiles(*product, true) == "CCNC(C)=O");
   }
 
+TEST_CASE("graft cache products match uncached",
+          "[reaction][assembly][graft][cache]") {
+  SECTION("graftCacheProductsMatchUncached_battery") {
+    struct CaseData {
+      const char *smarts;
+      std::vector<const char *> reactants;
+      std::set<std::string> expected;
+    };
+    const std::vector<CaseData> cases = {
+        {"[C:1](=[O:2])[O;H1].[N:3]>>[C:1](=[O:2])[N:3]",
+         {"CC(=O)O", "CCN"},
+         {"CCNC(C)=O"}},
+        {"[C:1]=[C:2].[C:3]=[C:4][C:5]=[C:6]>>[C:1]1[C:2][C:3][C:4]=[C:5][C:6]"
+         "1",
+         {"ClC=C", "BrC=CC=C"},
+         {"ClC1CC=CC(Br)C1", "ClC1CCC=CC1Br"}},
+        {"[C@:1](F)(Cl)[Br:2]>>[C@:1](F)(Cl)[I:2]",
+         {"C[C@](F)(Cl)Br"},
+         {"C[C@@](F)(Cl)I"}},
+        {"[O:1]>>[O:1]C", {"C/C=C/CO"}, {"C/C=C/COC"}},
+        {"[C:1][O:2][C:3]>>[C:1][O:2].[C:3]",
+         {"CCOCCC"},
+         {"CCC", "CCO", "CC", "CCCO"}},
+    };
+    for (const auto &testCase : cases) {
+      std::unique_ptr<ChemicalReaction> rxn(
+          RxnSmartsToChemicalReaction(testCase.smarts));
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      MOL_SPTR_VECT reactants;
+      for (const auto *smi : testCase.reactants) {
+        reactants.push_back(ROMOL_SPTR(SmilesToMol(smi)));
+        REQUIRE(reactants.back());
+      }
+      const auto uncached = rxn->runReactants(reactants);
+      ReactantMatchCache matchCache;
+      ReactionRunnerUtils::ReactantGraftCache graftCache;
+      const auto cached =
+          run_Reactants(*rxn, reactants, matchCache, graftCache);
+      CHECK(collectCanonicalIsomericSmiles(cached) == testCase.expected);
+      CHECK(collectCanonicalIsomericSmiles(cached) ==
+            collectCanonicalIsomericSmiles(uncached));
+    }
+  }
+}
+
+TEST_CASE("graft cache reused across combinations",
+          "[reaction][assembly][graft][cache]") {
+  // A single acid match combined with two amine matches => two products, but
+  // the acid graft is extracted once and replayed for both products.
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[C:1](=[O:2])[O;H1].[N:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  MOL_SPTR_VECT reactants = {ROMOL_SPTR(SmilesToMol("CC(=O)O")),
+                             ROMOL_SPTR(SmilesToMol("NCCN"))};
+  REQUIRE(reactants[0]);
+  REQUIRE(reactants[1]);
+
+  ReactantMatchCache matchCache;
+  ReactionRunnerUtils::ReactantGraftCache graftCache;
+  const auto products = run_Reactants(*rxn, reactants, matchCache, graftCache);
+
+  // Two reactive nitrogens => two products.
+  CHECK(products.size() == 2);
+  // Grafts: one acid graft (reused) + one amine graft per match (2) = 3.
+  CHECK(graftCache.size() == 3);
+}
+
+TEST_CASE("graft cache key separates reagents and reuses identity",
+          "[reaction][assembly][graft][cache]") {
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[C:1](=[O:2])[O;H1].[N:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  auto amine = ROMOL_SPTR(SmilesToMol("CCN"));
+  auto acidA = ROMOL_SPTR(SmilesToMol("CC(=O)O"));
+  auto acidB = ROMOL_SPTR(SmilesToMol("CCC(=O)O"));
+  REQUIRE(amine);
+  REQUIRE(acidA);
+  REQUIRE(acidB);
+
+  ReactantMatchCache matchCache;
+  ReactionRunnerUtils::ReactantGraftCache graftCache;
+
+  MOL_SPTR_VECT firstReactants = {acidA, amine};
+  run_Reactants(*rxn, firstReactants, matchCache, graftCache);
+  // One acid graft + one amine graft.
+  CHECK(graftCache.size() == 2);
+
+  MOL_SPTR_VECT secondReactants = {acidB, amine};
+  run_Reactants(*rxn, secondReactants, matchCache, graftCache);
+  // acidB is a different reagent pointer => new graft; the amine graft is
+  // reused via pointer identity, so only one entry is added.
+  CHECK(graftCache.size() == 3);
+}
+
+TEST_CASE("graft cache empty side chain",
+          "[reaction][assembly][graft][cache]") {
+  // The reactant template covers the whole molecule, so the graft carries no
+  // surviving side-chain atoms.
+  std::unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction("[C:1][O:2]>>[C:1]=[O:2]"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  MOL_SPTR_VECT reactants = {ROMOL_SPTR(SmilesToMol("CO"))};
+  REQUIRE(reactants[0]);
+
+  const auto uncached = rxn->runReactants(reactants);
+  ReactantMatchCache matchCache;
+  ReactionRunnerUtils::ReactantGraftCache graftCache;
+  const auto cached = run_Reactants(*rxn, reactants, matchCache, graftCache);
+
+  CHECK(!cached.empty());
+  CHECK(collectCanonicalIsomericSmiles(cached) ==
+        collectCanonicalIsomericSmiles(uncached));
+  // Single reagent, single match => one graft.
+  CHECK(graftCache.size() == 1);
+}
+
+TEST_CASE("graft cache honors dedupeSymmetricMatches",
+          "[reaction][assembly][graft][cache]") {
+  // A symmetric diamine yields two equivalent nitrogen matches; with
+  // deduplication on, the cached path must collapse them exactly like the
+  // match-cache-only path (the flag participates in the graft cache key).
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[C:1](=[O:2])[O;H1].[N:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  MOL_SPTR_VECT reactants = {ROMOL_SPTR(SmilesToMol("CC(=O)O")),
+                             ROMOL_SPTR(SmilesToMol("NCCN"))};
+  REQUIRE(reactants[0]);
+  REQUIRE(reactants[1]);
+
+  ReactantMatchCache matchOnlyCache;
+  const auto matchOnly =
+      run_Reactants(*rxn, reactants, matchOnlyCache, /*dedupe=*/true);
+
+  ReactantMatchCache matchCache;
+  ReactionRunnerUtils::ReactantGraftCache graftCache;
+  const auto withGraft = run_Reactants(*rxn, reactants, matchCache, graftCache,
+                                       /*dedupe=*/true);
+
+  // deduplication collapses the two symmetric nitrogens to a single product
+  CHECK(matchOnly.size() == 1);
+  CHECK(withGraft.size() == 1);
+  CHECK(collectCanonicalIsomericSmiles(withGraft) ==
+        collectCanonicalIsomericSmiles(matchOnly));
+}
+
+TEST_CASE("graft cache preserves conformers",
+          "[reaction][assembly][graft][cache]") {
+  std::unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction("[O:1]>>[O:1]C"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  auto reactant = ROMOL_SPTR(SmilesToMol("CCO"));
+  REQUIRE(reactant);
+  auto *conf = new Conformer(reactant->getNumAtoms());
+  conf->set3D(true);
+  conf->setAtomPos(0, RDGeom::Point3D(0.0, 0.0, 0.0));
+  conf->setAtomPos(1, RDGeom::Point3D(1.5, 0.0, 0.0));
+  conf->setAtomPos(2, RDGeom::Point3D(2.7, 0.0, 0.0));
+  reactant->addConformer(conf, true);
+
+  MOL_SPTR_VECT reactants = {reactant};
+
+  const auto uncached = rxn->runReactants(reactants);
+  ReactantMatchCache matchCache;
+  ReactionRunnerUtils::ReactantGraftCache graftCache;
+  const auto cached = run_Reactants(*rxn, reactants, matchCache, graftCache);
+
+  REQUIRE(cached.size() == 1);
+  REQUIRE(cached[0].size() == 1);
+  CHECK(collectCanonicalIsomericSmiles(cached) ==
+        collectCanonicalIsomericSmiles(uncached));
+  // the cached graft must still carry the mapped oxygen's 3D coordinates
+  REQUIRE(cached[0][0]->getNumConformers() == 1);
+  const auto &cachedConf = cached[0][0]->getConformer();
+  CHECK(cachedConf.is3D());
+  const Atom *oxygen = nullptr;
+  for (const auto atom : cached[0][0]->atoms()) {
+    if (atom->getAtomicNum() == 8) {
+      oxygen = atom;
+      break;
+    }
+  }
+  REQUIRE(oxygen);
+  const auto pos = cachedConf.getAtomPos(oxygen->getIdx());
+  CHECK(pos.x == Catch::Approx(2.7));
+  CHECK(pos.y == Catch::Approx(0.0));
+  CHECK(pos.z == Catch::Approx(0.0));
+}
+
 TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction][StereoGroup][bug]") {
   SECTION("Reaction Preserves Stereo") {
     ROMOL_SPTR mol("F[C@H](Cl)Br |o1:1|"_smiles);

@@ -295,11 +295,14 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
 //  or were terminated.
 bool recurseOverReactantCombinations(
     const VectVectMatchVectType &matchesByReactant,
-    VectVectMatchVectType &matchesPerProduct, unsigned int level,
-    VectMatchVectType combination, unsigned int maxProducts) {
+    VectVectMatchVectType &matchesPerProduct,
+    std::vector<std::vector<unsigned int>> &matchIdxPerProduct,
+    unsigned int level, VectMatchVectType combination,
+    std::vector<unsigned int> idxCombination, unsigned int maxProducts) {
   unsigned int nReactants = matchesByReactant.size();
   URANGE_CHECK(level, nReactants);
   PRECONDITION(combination.size() == nReactants, "bad combination size");
+  PRECONDITION(idxCombination.size() == nReactants, "bad index combination size");
 
   if (maxProducts && matchesPerProduct.size() >= maxProducts) {
     return false;
@@ -310,6 +313,9 @@ bool recurseOverReactantCombinations(
        reactIt != matchesByReactant[level].end(); ++reactIt) {
     VectMatchVectType prod = combination;
     prod[level] = *reactIt;
+    std::vector<unsigned int> idxProd = idxCombination;
+    idxProd[level] = static_cast<unsigned int>(
+        reactIt - matchesByReactant[level].begin());
     if (level == nReactants - 1) {
       // this is the bottom of the recursion:
       if (maxProducts && matchesPerProduct.size() >= maxProducts) {
@@ -317,10 +323,12 @@ bool recurseOverReactantCombinations(
         break;
       }
       matchesPerProduct.push_back(prod);
+      matchIdxPerProduct.push_back(idxProd);
 
     } else {
       keepGoing = recurseOverReactantCombinations(
-          matchesByReactant, matchesPerProduct, level + 1, prod, maxProducts);
+          matchesByReactant, matchesPerProduct, matchIdxPerProduct, level + 1,
+          prod, idxProd, maxProducts);
     }
   }
   return keepGoing;
@@ -350,13 +358,18 @@ void updateImplicitAtomProperties(Atom *prodAtom, const Atom *reactAtom) {
 
 void generateReactantCombinations(
     const VectVectMatchVectType &matchesByReactant,
-    VectVectMatchVectType &matchesPerProduct, unsigned int maxProducts) {
+    VectVectMatchVectType &matchesPerProduct,
+    std::vector<std::vector<unsigned int>> &matchIdxPerProduct,
+    unsigned int maxProducts) {
   matchesPerProduct.clear();
+  matchIdxPerProduct.clear();
   VectMatchVectType tmp;
   tmp.clear();
   tmp.resize(matchesByReactant.size());
-  if (!recurseOverReactantCombinations(matchesByReactant, matchesPerProduct, 0,
-                                       tmp, maxProducts)) {
+  std::vector<unsigned int> idxTmp(matchesByReactant.size(), 0);
+  if (!recurseOverReactantCombinations(matchesByReactant, matchesPerProduct,
+                                       matchIdxPerProduct, 0, tmp, idxTmp,
+                                       maxProducts)) {
     BOOST_LOG(rdWarningLog) << "Maximum product count hit " << maxProducts
                             << ", stopping reaction early...\n";
   }
@@ -1763,9 +1776,14 @@ void copyTemplateStereoGroupsToMol(const ROMol &templateMol,
 MOL_SPTR_VECT
 generateOneProductSet(const ChemicalReaction &rxn,
                       const MOL_SPTR_VECT &reactants,
-                      const std::vector<MatchVectType> &reactantsMatch) {
+                      const std::vector<MatchVectType> &reactantsMatch,
+                      ReactantGraftCache *graftCache,
+                      const std::vector<unsigned int> *matchIdxs,
+                      bool dedupeSymmetricMatches) {
   PRECONDITION(reactants.size() == reactantsMatch.size(),
                "vector size mismatch");
+  PRECONDITION(!graftCache || (matchIdxs && matchIdxs->size() == reactants.size()),
+               "graft cache requires one match index per reactant");
 
   // if any of the reactants have a conformer, we'll go ahead and
   // generate conformers for the products:
@@ -1806,11 +1824,35 @@ generateOneProductSet(const ChemicalReaction &rxn,
     unsigned int reactantId = 0;
     for (auto iter = rxn.beginReactantTemplates();
          iter != rxn.endReactantTemplates(); ++iter, reactantId++) {
-      auto graft = extractReactantGraft(rxn, *pTemplIt, *iter,
-                                        reactants.at(reactantId),
-                                        reactantsMatch.at(reactantId),
-                                        reactantId, doConfs);
-      applyReactantGraft(product, conf, graft);
+      if (graftCache) {
+        // reuse (or populate) the graft this reagent/match contributes to this
+        // product template, keyed by reagent pointer identity + match index.
+        // dedupeSymmetricMatches and doConfs are part of the key because they
+        // determine, respectively, which match list the index refers to and
+        // whether the graft carries conformer coordinates.
+        auto key = std::make_tuple(prodId, reactantId,
+                                   reactants.at(reactantId).get(),
+                                   (*matchIdxs)[reactantId],
+                                   dedupeSymmetricMatches, doConfs);
+        auto cacheIt = graftCache->find(key);
+        if (cacheIt == graftCache->end()) {
+          cacheIt =
+              graftCache
+                  ->emplace(key, extractReactantGraft(
+                                     rxn, *pTemplIt, *iter,
+                                     reactants.at(reactantId),
+                                     reactantsMatch.at(reactantId), reactantId,
+                                     doConfs))
+                  .first;
+        }
+        applyReactantGraft(product, conf, cacheIt->second);
+      } else {
+        auto graft = extractReactantGraft(rxn, *pTemplIt, *iter,
+                                          reactants.at(reactantId),
+                                          reactantsMatch.at(reactantId),
+                                          reactantId, doConfs);
+        applyReactantGraft(product, conf, graft);
+      }
     }
 
     if (doConfs) {
@@ -1883,11 +1925,11 @@ void traverseToFindAtomsToRemove(const ROMol &reactant, const ROMol &templ,
 }  // namespace ReactionRunnerUtils
 
 namespace {
-std::vector<MOL_SPTR_VECT> run_ReactantsImpl(const ChemicalReaction &rxn,
-                                             const MOL_SPTR_VECT &reactants,
-                                             unsigned int maxProducts,
-                                             bool dedupeSymmetricMatches,
-                                             ReactantMatchCache *cache) {
+std::vector<MOL_SPTR_VECT> run_ReactantsImpl(
+    const ChemicalReaction &rxn, const MOL_SPTR_VECT &reactants,
+    unsigned int maxProducts, bool dedupeSymmetricMatches,
+    ReactantMatchCache *cache,
+    ReactionRunnerUtils::ReactantGraftCache *graftCache) {
   if (!rxn.isInitialized()) {
     throw ChemicalReactionException(
         "initMatchers() must be called before runReactants()");
@@ -1922,14 +1964,18 @@ std::vector<MOL_SPTR_VECT> run_ReactantsImpl(const ChemicalReaction &rxn,
   // we now have matches for each reactant, so we can start creating products:
   // start by doing the combinatorics on the matches:
   VectVectMatchVectType reactantMatchesPerProduct;
+  std::vector<std::vector<unsigned int>> matchIdxPerProduct;
   ReactionRunnerUtils::generateReactantCombinations(
-      matchesByReactant, reactantMatchesPerProduct, maxProducts);
+      matchesByReactant, reactantMatchesPerProduct, matchIdxPerProduct,
+      maxProducts);
   productMols.resize(reactantMatchesPerProduct.size());
 
   for (unsigned int productId = 0; productId != productMols.size();
        ++productId) {
     MOL_SPTR_VECT lProds = ReactionRunnerUtils::generateOneProductSet(
-        rxn, reactants, reactantMatchesPerProduct[productId]);
+        rxn, reactants, reactantMatchesPerProduct[productId], graftCache,
+        graftCache ? &matchIdxPerProduct[productId] : nullptr,
+        dedupeSymmetricMatches);
     productMols[productId] = lProds;
   }
 
@@ -1940,7 +1986,8 @@ std::vector<MOL_SPTR_VECT> run_ReactantsImpl(const ChemicalReaction &rxn,
 std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
                                          const MOL_SPTR_VECT &reactants,
                                          unsigned int maxProducts) {
-  return run_ReactantsImpl(rxn, reactants, maxProducts, false, nullptr);
+  return run_ReactantsImpl(rxn, reactants, maxProducts, false, nullptr,
+                           nullptr);
 }
 
 std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
@@ -1948,8 +1995,17 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
                                          ReactantMatchCache &cache,
                                          bool dedupeSymmetricMatches,
                                          unsigned int maxProducts) {
-  return run_ReactantsImpl(rxn, reactants, maxProducts,
-                           dedupeSymmetricMatches, &cache);
+  return run_ReactantsImpl(rxn, reactants, maxProducts, dedupeSymmetricMatches,
+                           &cache, nullptr);
+}
+
+std::vector<MOL_SPTR_VECT> run_Reactants(
+    const ChemicalReaction &rxn, const MOL_SPTR_VECT &reactants,
+    ReactantMatchCache &matchCache,
+    ReactionRunnerUtils::ReactantGraftCache &graftCache,
+    bool dedupeSymmetricMatches, unsigned int maxProducts) {
+  return run_ReactantsImpl(rxn, reactants, maxProducts, dedupeSymmetricMatches,
+                           &matchCache, &graftCache);
 }
 
 namespace {
