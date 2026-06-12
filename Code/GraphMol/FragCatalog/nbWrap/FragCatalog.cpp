@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDBoost/Wrap_nb.h>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <GraphMol/FragCatalog/FragCatGenerator.h>
 #include <GraphMol/FragCatalog/FragCatParams.h>
@@ -20,6 +20,12 @@
 
 namespace nb = nanobind;
 using namespace nb::literals;
+
+namespace {
+std::string serializeFragCatalog(const RDKit::FragCatalog &self) {
+  return self.Serialize();
+}
+}  // namespace
 
 namespace RDKit {
 
@@ -162,10 +168,8 @@ void wrap_fragcat(nb::module_ &m) {
       .def("GetBitDiscrims", &RDKit::GetBitDiscrims, "idx"_a)
 
       // enable pickle support
-      .def("__getstate__", getObjectState<RDKit::FragCatalog,
-                                          [](const RDKit::FragCatalog &self) {
-                                            return self.Serialize();
-                                          }>)
+      .def("__getstate__",
+           getObjectState<RDKit::FragCatalog, serializeFragCatalog>)
       .def("__setstate__", setObjectState<RDKit::FragCatalog>)
 
       ;

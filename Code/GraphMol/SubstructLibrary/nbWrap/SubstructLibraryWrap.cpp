@@ -25,6 +25,9 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 namespace RDKit {
+std::string serializeSubstructLibrary(const SubstructLibrary &self) {
+  return self.Serialize();
+}
 
 using GeneralizedSubstruct::ExtendedQueryMol;
 
@@ -724,10 +727,8 @@ so this requires opening a file in binary mode or using an io.ByteIO type object
   >>> with open('rdkit.sslib', 'rb') as f: lib.InitFromStream(f))DOC")
 
       .def("Serialize", SubstructLibrary_Serialize)
-      .def("__getstate__", getObjectState<SubstructLibrary,
-                                          [](const SubstructLibrary &self) {
-                                            return self.Serialize();
-                                          }>)
+      .def("__getstate__",
+           getObjectState<SubstructLibrary, serializeSubstructLibrary>)
       .def("__setstate__", setObjectState<SubstructLibrary>);
 
   m.def("SubstructLibraryCanSerialize", SubstructLibraryCanSerialize,

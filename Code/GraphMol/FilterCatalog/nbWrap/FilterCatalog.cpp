@@ -28,6 +28,12 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 
+namespace {
+std::string serializeFilterCatalog(const RDKit::FilterCatalog &catalog) {
+  return catalog.Serialize();
+}
+}  // namespace
+
 namespace RDKit {
 
 // Trampoline class to allow Python subclassing of FilterMatcherBase.
@@ -443,17 +449,9 @@ hzone_phenol_A(479)
       .def("GetFilterMatches", &FilterCatalog::getFilterMatches, "mol"_a,
            "Return every matching filter from all catalog entries that match "
            "mol")
+      .def("__setstate__", setObjectState<FilterCatalog>)
       .def("__getstate__",
-           getObjectState<
-               FilterCatalog,
-               [](const FilterCatalog &self) {
-                 if (!FilterCatalogCanSerialize()) {
-                   throw std::runtime_error(
-                       "Pickling of FilterCatalog instances is not enabled");
-                 }
-                 return self.Serialize();
-               }>)
-      .def("__setstate__", setObjectState<FilterCatalog>);
+           getObjectState<FilterCatalog, serializeFilterCatalog>);
 
   m.def("FilterCatalogCanSerialize", FilterCatalogCanSerialize,
         "Returns True if the FilterCatalog is serializable "
