@@ -9,3 +9,7 @@ rdkit_catch_test(testAlignment testAlignment.cpp LINK_LIBRARIES Alignment )
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()

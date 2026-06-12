@@ -70,9 +70,8 @@ RDKit::VECT_INT_VECT HierarchicalClusterPicker::cluster(
 
     // add the items from cluster cx2 to cx1
     // REVIEW: merge function???
-    for (RDKit::INT_VECT_CI cx2i = clusters[cx2].begin();
-         cx2i != clusters[cx2].end(); cx2i++) {
-      clusters[cx1].push_back(*cx2i);
+    for (const auto &cx2i : clusters[cx2]) {
+      clusters[cx1].push_back(cx2i);
     }
 
     // mark the second cluster as removed
@@ -88,7 +87,7 @@ RDKit::VECT_INT_VECT HierarchicalClusterPicker::cluster(
   // some error checking here, uniqueify removed and the vector should not
   // changed
   // REVIEW can we put this inside a #ifdef DEBUG?
-  RDKit::INT_VECT_CI nEnd = std::unique(removed.begin(), removed.end());
+  auto nEnd = std::unique(removed.begin(), removed.end());
   CHECK_INVARIANT(
       nEnd == removed.end(),
       "Somehow there are duplicates in the list of removed clusters");
@@ -118,12 +117,10 @@ RDKit::INT_VECT HierarchicalClusterPicker::pick(const double *distMat,
   for (unsigned int i = 0; i < pickSize; i++) {
     int pick;
     double minSumD2 = RDKit::MAX_DOUBLE;
-    for (RDKit::INT_VECT_CI cxi1 = clusters[i].begin();
-         cxi1 != clusters[i].end(); ++cxi1) {
+    for (auto cxi1 = clusters[i].begin(); cxi1 != clusters[i].end(); ++cxi1) {
       int curPick = (*cxi1);
       double d2sum = 0.0;
-      for (RDKit::INT_VECT_CI cxi2 = clusters[i].begin();
-           cxi2 != clusters[i].end(); ++cxi2) {
+      for (auto cxi2 = clusters[i].begin(); cxi2 != clusters[i].end(); ++cxi2) {
         if (cxi1 == cxi2) {
           continue;
         }

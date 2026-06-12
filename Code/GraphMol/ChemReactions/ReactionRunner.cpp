@@ -820,7 +820,7 @@ void checkProductChirality(Atom::ChiralType reactantChirality,
 void setReactantAtomPropertiesToProduct(Atom *productAtom,
                                         const Atom &reactantAtom,
                                         bool setImplicitProperties,
-					unsigned int reactantId) {
+                                        unsigned int reactantId) {
   // which properties need to be set from the reactant?
   if (productAtom->getAtomicNum() <= 0 ||
       productAtom->hasProp(common_properties::_MolFileAtomQuery)) {
@@ -849,7 +849,7 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
   productAtom->setProp<unsigned int>(common_properties::reactantAtomIdx,
                                      reactantAtom.getIdx());
   productAtom->setProp<unsigned int>(common_properties::reactantIdx,
-				     reactantId);
+                                     reactantId);
   if (setImplicitProperties) {
     updateImplicitAtomProperties(productAtom, &reactantAtom);
   }
@@ -879,7 +879,7 @@ Bond *addBondToProduct(const Bond &origB, RWMol &product,
     auto idx = product.addBond(begAtomIdx, endAtomIdx, origB.getBondType());
     return product.getBondWithIdx(idx - 1);
   } else {
-    QueryBond *qbond = new QueryBond(origB.getBondType());
+    auto *qbond = new QueryBond(origB.getBondType());
     qbond->setBeginAtomIdx(begAtomIdx);
     qbond->setEndAtomIdx(endAtomIdx);
     qbond->setQuery(origB.getQuery()->copy());
@@ -906,7 +906,8 @@ void addMissingProductBonds(const Bond &origB, RWMOL_SPTR product,
 void addMissingProductAtom(const Atom &reactAtom, unsigned reactNeighborIdx,
                            unsigned prodNeighborIdx, RWMOL_SPTR product,
                            const ROMol &reactant,
-                           ReactantProductAtomMapping *mapping, unsigned int reactantId) {
+                           ReactantProductAtomMapping *mapping,
+                           unsigned int reactantId) {
   Atom *newAtom = nullptr;
   if (!reactAtom.hasQuery()) {
     newAtom = new Atom(reactAtom);
@@ -916,8 +917,7 @@ void addMissingProductAtom(const Atom &reactAtom, unsigned reactNeighborIdx,
   unsigned reactAtomIdx = reactAtom.getIdx();
   newAtom->setProp<unsigned int>(common_properties::reactantAtomIdx,
                                  reactAtomIdx);
-  newAtom->setProp<unsigned int>(common_properties::reactantIdx,
-                                 reactantId);
+  newAtom->setProp<unsigned int>(common_properties::reactantIdx, reactantId);
   unsigned productIdx = product->addAtom(newAtom, false, true);
   mapping->reactProdAtomMap[reactAtomIdx].push_back(productIdx);
   mapping->prodReactAtomMap[productIdx] = reactAtomIdx;
@@ -1158,7 +1158,7 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
       if (reactantAtom.getDegree() > productAtom->getDegree()) {
         // we lost a bond from the reactant.
         // we can just remove the unmatched reactant bond from the list
-        INT_LIST::iterator rOrderIter = rOrder.begin();
+        auto rOrderIter = rOrder.begin();
         while (rOrderIter != rOrder.end() && rOrder.size() > pOrder.size()) {
           // we may invalidate the iterator so keep track of what comes next:
           auto thisOne = rOrderIter++;
@@ -1307,17 +1307,14 @@ void generateProductConformers(Conformer *productConf, const ROMol &reactant,
   if (reactConf.is3D()) {
     productConf->set3D(true);
   }
-  for (std::map<unsigned int, std::vector<unsigned int>>::const_iterator pr =
-           mapping->reactProdAtomMap.begin();
-       pr != mapping->reactProdAtomMap.end(); ++pr) {
-    std::vector<unsigned> prodIdxs = pr->second;
+  for (const auto &[pr, prodIdxs] : mapping->reactProdAtomMap) {
     if (prodIdxs.size() > 1) {
       BOOST_LOG(rdWarningLog) << "reactant atom match more than one product "
                                  "atom, coordinates need to be revised\n";
     }
     // is this reliable when multiple product atom mapping occurs????
     for (unsigned int prodIdx : prodIdxs) {
-      productConf->setAtomPos(prodIdx, reactConf.getAtomPos(pr->first));
+      productConf->setAtomPos(prodIdx, reactConf.getAtomPos(pr));
     }
   }
 }
@@ -1326,8 +1323,7 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
                               const ROMOL_SPTR reactantSptr,
                               const MatchVectType &match,
                               const ROMOL_SPTR reactantTemplate,
-                              Conformer *productConf,
-			      unsigned int reactantId) {
+                              Conformer *productConf, unsigned int reactantId) {
   // start by looping over all matches and marking the reactant atoms that
   // have already been "added" by virtue of being in the product. We'll also
   // mark "skipped" atoms: those that are in the match, but not in this
@@ -1367,7 +1363,8 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
         unsigned productAtomIdx = mapping->reactProdAtomMap[reactantAtomIdx][i];
         Atom *productAtom = product->getAtomWithIdx(productAtomIdx);
         setReactantAtomPropertiesToProduct(productAtom, *reactantAtom,
-                                           rxn.getImplicitPropertiesFlag(), reactantId);
+                                           rxn.getImplicitPropertiesFlag(),
+                                           reactantId);
         if (reactantAtom->hasQuery()) {
           // finally: if the reactant atom is a query we should copy over the
           // query information. We need to replace the atom to do this
@@ -1379,7 +1376,8 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
       }
       // now traverse:
       addReactantNeighborsToProduct(*reactant, *reactantAtom, product,
-                                    visitedAtoms, chiralAtomsToCheck, mapping, reactantId);
+                                    visitedAtoms, chiralAtomsToCheck, mapping,
+                                    reactantId);
 
       // now that we've added all the reactant's neighbors, check to see if
       // it is chiral in the reactant but is not in the reaction. If so
@@ -1529,7 +1527,8 @@ generateOneProductSet(const ChemicalReaction &rxn,
     for (auto iter = rxn.beginReactantTemplates();
          iter != rxn.endReactantTemplates(); ++iter, reactantId++) {
       addReactantAtomsAndBonds(rxn, product, reactants.at(reactantId),
-                               reactantsMatch.at(reactantId), *iter, conf, reactantId);
+                               reactantsMatch.at(reactantId), *iter, conf,
+                               reactantId);
     }
 
     if (doConfs) {
@@ -1966,11 +1965,10 @@ std::vector<MOL_SPTR_VECT> run_Reactant(const ChemicalReaction &rxn,
 namespace {
 int getAtomMapNo(ROMol::ATOM_BOOKMARK_MAP *map, Atom *atom) {
   if (map) {
-    for (ROMol::ATOM_BOOKMARK_MAP::const_iterator it = map->begin();
-         it != map->end(); ++it) {
-      for (auto ait = it->second.begin(); ait != it->second.end(); ++ait) {
-        if (*ait == atom) {
-          return it->first;
+    for (const auto &it : *map) {
+      for (auto ait : it.second) {
+        if (ait == atom) {
+          return it.first;
         }
       }
     }

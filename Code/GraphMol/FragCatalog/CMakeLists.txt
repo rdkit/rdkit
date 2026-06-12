@@ -16,3 +16,7 @@ rdkit_test(testFragCatalog test1.cpp LINK_LIBRARIES FragCatalog FileParsers )
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()

@@ -6,7 +6,11 @@ from os import environ
 import numpy as np
 
 from rdkit import Chem, Geometry, RDConfig
-from rdkit.Chem import AllChem, Draw, rdDepictor
+from rdkit.Chem import Draw, rdDepictor
+try:
+  from rdkit.Chem import rdChemReactions
+except ImportError:
+  rdChemReactions = None
 from rdkit.Chem.Draw import rdMolDraw2D
 
 
@@ -17,7 +21,7 @@ class TestCase(unittest.TestCase):
 
   def test1(self):
     m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
-    AllChem.Compute2DCoords(m)
+    rdDepictor.Compute2DCoords(m)
     d = Draw.MolDraw2DSVG(300, 300)
     d.DrawMolecule(m)
     d.FinishDrawing()
@@ -27,7 +31,7 @@ class TestCase(unittest.TestCase):
 
   def test2(self):
     m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
-    AllChem.Compute2DCoords(m)
+    rdDepictor.Compute2DCoords(m)
     d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
     do = d.drawOptions()
     do.atomLabels[3] = 'foolabel'
@@ -42,7 +46,7 @@ class TestCase(unittest.TestCase):
   @unittest.skipUnless(hasattr(Draw, 'MolDraw2DCairo'), 'Cairo support not enabled')
   def testGithubIssue571(self):
     m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
-    AllChem.Compute2DCoords(m)
+    rdDepictor.Compute2DCoords(m)
     d = Draw.MolDraw2DCairo(300, 300)
     d.DrawMolecule(m)
     d.FinishDrawing()
@@ -194,7 +198,7 @@ M  END""")
 
   def testGetDrawCoords(self):
     m = Chem.MolFromSmiles('c1ccc(C)c(C)c1C')
-    AllChem.Compute2DCoords(m)
+    rdDepictor.Compute2DCoords(m)
     d = Draw.MolDraw2DSVG(300, 300)
     d.DrawMolecule(m)
     conf = m.GetConformer()
@@ -206,8 +210,9 @@ M  END""")
       self.assertAlmostEqual(dpos1.x, dpos2.x, 6)
       self.assertAlmostEqual(dpos1.y, dpos2.y, 6)
 
+  @unittest.skipIf(rdChemReactions is None, 'Reaction support not enabled')
   def testReaction1(self):
-    rxn = AllChem.ReactionFromSmarts(
+    rxn = rdChemReactions.ReactionFromSmarts(
       '[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',
       useSmiles=True)
     d = Draw.MolDraw2DSVG(900, 300)
@@ -218,8 +223,9 @@ M  END""")
     self.assertTrue(txt.find("</svg>") != -1)
     # print(txt,file=open('blah1.svg','w+'))
 
+  @unittest.skipIf(rdChemReactions is None, 'Reaction support not enabled')
   def testReaction2(self):
-    rxn = AllChem.ReactionFromSmarts(
+    rxn = rdChemReactions.ReactionFromSmarts(
       '[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',
       useSmiles=True)
     d = Draw.MolDraw2DSVG(900, 300)
@@ -230,8 +236,9 @@ M  END""")
     self.assertTrue(txt.find("</svg>") != -1)
     # print(txt,file=open('blah2.svg','w+'))
 
+  @unittest.skipIf(rdChemReactions is None, 'Reaction support not enabled')
   def testReaction3(self):
-    rxn = AllChem.ReactionFromSmarts(
+    rxn = rdChemReactions.ReactionFromSmarts(
       '[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',
       useSmiles=True)
     colors = [(0.3, 0.7, 0.9), (0.9, 0.7, 0.9), (0.6, 0.9, 0.3), (0.9, 0.9, 0.1)]
@@ -242,8 +249,9 @@ M  END""")
     self.assertTrue(txt.find("<svg") != -1)
     self.assertTrue(txt.find("</svg>") != -1)
 
+  @unittest.skipIf(rdChemReactions is None, 'Reaction support not enabled')
   def testReaction4(self):
-    rxn = AllChem.ReactionFromSmarts(
+    rxn = rdChemReactions.ReactionFromSmarts(
       '[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',
       useSmiles=True)
     colors = [(100, 155, 245), (0, 45, 155)]
@@ -804,7 +812,7 @@ M  END''')
 
   def testACS1996Mode(self):
     m = Chem.MolFromSmiles("CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+]")
-    AllChem.Compute2DCoords(m)
+    rdDepictor.Compute2DCoords(m)
     rdMolDraw2D.PrepareMolForDrawing(m)
     svg = rdMolDraw2D.MolToACS1996SVG(m, "ACS Mode")
     with open("testACSMode_1.svg", 'w') as f:
@@ -833,7 +841,7 @@ M  END''')
 
   def testMolSize(self):
     m = Chem.MolFromSmiles("CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+]")
-    AllChem.Compute2DCoords(m)
+    rdDepictor.Compute2DCoords(m)
     rdMolDraw2D.PrepareMolForDrawing(m)
     d2d = rdMolDraw2D.MolDraw2DSVG(-1, -1)
     d2d.DrawMolecule(m)
@@ -891,6 +899,7 @@ M  END''')
       d2d.drawOptions().addAtomIndices = True
       d2d.drawOptions().addBondIndices = True
       d2d.drawOptions().singleColourWedgeBonds = True  # test symbolColour
+      d2d.drawOptions().singleColourBonds = True  # just test it's settable
       setattr(d2d.drawOptions(), attr, val)
       aval = getattr(d2d.drawOptions(), attr)
       for idx in range(4):

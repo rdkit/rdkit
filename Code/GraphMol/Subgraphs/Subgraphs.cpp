@@ -175,17 +175,6 @@ void recurseWalkRange(
   }
 }
 
-void dumpVIV(VECT_INT_VECT v) {
-  VECT_INT_VECT::iterator i;
-  INT_VECT::iterator j;
-  for (i = v.begin(); i != v.end(); i++) {
-    for (j = i->begin(); j != i->end(); j++) {
-      std::cout << *j << " ";
-    }
-    std::cout << std::endl;
-  }
-}
-
 PATH_LIST
 extendPaths(int *adjMat, unsigned int dim, const PATH_LIST &paths,
             int allowRingClosures = -1, double *distMat = nullptr) {

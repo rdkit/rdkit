@@ -322,6 +322,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;                        // if true wedged and dashed bonds are drawn
                                     // using symbolColour rather than inheriting
                                     // their colour from the atoms
+  bool singleColourBonds = false;   // if true all bonds are drawn using
+                                    // symbolColour rather than inheriting their
+                                    // colour from the atoms
   bool useMolBlockWedging = false;  // If the molecule came from a MolBlock,
                                     // prefer the wedging information that
                                     // provides.  If false, use RDKit rules.

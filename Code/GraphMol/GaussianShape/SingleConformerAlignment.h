@@ -25,6 +25,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <RDGeneral/export.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
 
 namespace RDKit {
@@ -34,16 +35,18 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// @brief Do the overlay for a single conformer of fit against a single
   /// conformer of ref.  The output in scores is the rotation and translation
   /// that moves fit to optimise its score with ref.
-  /// @param ref - the query molecule as 1D array of 4 * N entries. Each
-  /// block of 4 is the coords and atom radius
+  /// @param ref - the reference molecule as 1D array of 3 * N entries. Each
+  /// block of 3 is the coords
+  /// @param refAlphas - the alpha values for the reference
   /// @param refTypes - the feature types for molecule ref
   /// @param refCarbonRadii - whether each atom has a carbon radius
   /// @param nRefShape - the number of atoms in ref
   /// @param nRefColor - the number of features in ref
   /// @param refShapeVol - overlap volume of ref with itself
   /// @param refColorVol - color overlap of ref with itself
-  /// @param fit - the fit molecule as 1D array of 4 * N entries. Each
-  /// block of 4 is the coords and atom radius.
+  /// @param fit - the fit molecule as 1D array of 3 * N entries. Each
+  /// block of 3 is the coords.
+  /// @param fitAlphas - the alpha values for the fit
   /// @param fitTypes - the feature types for fit molecule
   /// @param fitCarbonRadii - whether each atom has a carbon radius
   /// @param nFitShape - the number of atoms in fit
@@ -60,12 +63,12 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   /// @param maxIts - maximum number of iterations for optimiser
   /// of optimiser
   SingleConformerAlignment(
-      const std::vector<double> &ref, const int *refTypes,
-      const boost::dynamic_bitset<> *refCarbonRadii, int nRefShape,
-      int nRefColor, double refShapeVol, double refColorVol,
-      const std::vector<double> &fit, const int *fitTypes,
-      const boost::dynamic_bitset<> *fitCarbonRadii, int nFitShape,
-      int nFitColor, double fitShapeVol, double fitColorVol,
+      const std::vector<double> &ref, const std::vector<double> &refAlphas,
+      const int *refTypes, const boost::dynamic_bitset<> *refCarbonRadii,
+      int nRefShape, int nRefColor, double refShapeVol, double refColorVol,
+      const std::vector<double> &fit, const std::vector<double> &fitAlphas,
+      const int *fitTypes, const boost::dynamic_bitset<> *fitCarbonRadii,
+      int nFitShape, int nFitColor, double fitShapeVol, double fitColorVol,
       const std::array<double, 7> &initQuatTrans, OptimMode optimMode,
       double simAlpha, double simBeta, double mixingParam, bool useCutoff,
       double distCutoff, double shapeConvergenceCriterion, unsigned int maxIts);
@@ -141,6 +144,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   bool optimise(unsigned int maxIters);
 
   std::vector<double> d_ref;
+  std::vector<double> d_refAlphas;
   std::vector<double> d_refTemp;
   const int *d_refTypes;
   const boost::dynamic_bitset<> *d_refCarbonRadii;
@@ -149,6 +153,7 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
   const double d_refShapeVol;
   const double d_refColorVol;
   std::vector<double> d_fit;
+  std::vector<double> d_fitAlphas;
   std::vector<double> d_fitTemp;
   const int *d_fitTypes;
   const boost::dynamic_bitset<> *d_fitCarbonRadii;
@@ -181,22 +186,23 @@ struct RDKIT_GAUSSIANSHAPE_EXPORT SingleConformerAlignment {
 // by the quaternion we're using to optimise the overlap volume.  If
 // gradients is null, they won't be calculated.  They are assumed to be
 // initialised correctly.
-// This is for the atoms/shape features.
-double calcVolAndGrads(const double *ref, int numRefPts,
-                       const boost::dynamic_bitset<> *refCarbonRadii,
-                       const double *fit, int numFitPts,
-                       const boost::dynamic_bitset<> *fitCarbonRadii,
-                       std::vector<double> &gradConverters,
-                       const bool useCutoff, const double distCutoff2,
-                       const double *quat = nullptr,
-                       double *gradients = nullptr);
+// This is for the atoms/shape features.  Negative alphas are skipped.
+RDKIT_GAUSSIANSHAPE_EXPORT double calcVolAndGrads(
+    const double *ref, const double *refAlphas, int numRefPts,
+    const boost::dynamic_bitset<> *refCarbonRadii, const double *fit,
+    const double *fitAlphas, int numFitPts,
+    const boost::dynamic_bitset<> *fitCarbonRadii,
+    std::vector<double> &gradConverters, const bool useCutoff,
+    const double distCutoff2, const double *quat = nullptr,
+    double *gradients = nullptr);
 // This one is for the features, and only calculates values if the types
-// of 2 features match.
-double calcVolAndGrads(const double *ref, int numRefPts, const int *refTypes,
-                       const double *fit, int numFitPts, const int *fitTypes,
-                       int numFitShape, std::vector<double> &gradConverters,
-                       const bool useCutoff, const double distCutoff2,
-                       const double *quat, double *gradients);
+// of 2 features match.  Negative alphas are skipped.
+RDKIT_GAUSSIANSHAPE_EXPORT double calcVolAndGrads(
+    const double *ref, const double *refAlphas, int numRefPts,
+    const int *refTypes, const double *fit, const double *fitAlphas,
+    int numFitPts, const int *fitTypes, int numFitShape,
+    std::vector<double> &gradConverters, const bool useCutoff,
+    const double distCutoff2, const double *quat, double *gradients);
 
 }  // namespace GaussianShape
 }  // namespace RDKit

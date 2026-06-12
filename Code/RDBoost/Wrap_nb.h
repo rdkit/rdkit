@@ -21,8 +21,22 @@
 #include <string_view>
 #include <vector>
 #include <RDGeneral/Exceptions.h>
+
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/tuple.h>
 namespace nb = nanobind;
+
+// pattern for this from the "Better alternative" section of this StackOverflow
+// answer: https://stackoverflow.com/a/71575543
+template <typename T>
+std::shared_ptr<T> toStd(boost::shared_ptr<T> bptr) {
+  if (!bptr) {
+    return nullptr;
+  }
+  auto resHolder = std::make_shared<boost::shared_ptr<T>>(std::move(bptr));
+  return {resHolder, resHolder.get()->get()};
+}
 
 // RDKIT_RDBOOST_EXPORT void throw_index_error(
 //     int key);  //!< construct and throw an \c IndexError
@@ -106,6 +120,47 @@ void pythonObjectToVect(const nb::object &obj, std::vector<T> &res) {
     res.clear();
   }
 }
+
+//------- used in the pickle implementation
+template <typename T, std::string (*SerializeFunc)(const T &)>
+auto getObjectState(nb::object obj) {
+  const T &self = nb::cast<const T &>(obj);
+  const std::string pkl = SerializeFunc(self);
+  nb::dict dict;
+  if (nb::hasattr(obj, "__dict__")) {
+    dict = nb::cast<nb::dict>(nb::getattr(obj, "__dict__"));
+  }
+  return std::make_tuple(nb::bytes(pkl.c_str(), pkl.size()), dict);
+}
+template <typename T>
+void setObjectState(nb::object obj, nb::object state) {
+  T *self = nullptr;
+  if (!nb::try_cast<T *>(obj, self)) {
+    throw nb::value_error("invalid object type for __setstate__");
+  }
+  nb::tuple tpl;
+  if (nb::try_cast<nb::tuple>(state, tpl)) {
+    size_t tplPos = 0;
+    nb::bytes bytes;
+    if (nb::try_cast<nb::bytes>(tpl[tplPos], bytes)) {
+      auto pkl =
+          std::string(static_cast<const char *>(bytes.data()), bytes.size());
+      new (self) T(pkl);
+      tplPos++;
+    }
+    if (tplPos < nb::len(tpl)) {
+      nb::dict dict;
+      if (nb::hasattr(obj, "__dict__") &&
+          nb::try_cast<nb::dict>(tpl[tplPos], dict)) {
+        nb::dict odict = nb::cast<nb::dict>(nb::getattr(obj, "__dict__"));
+        odict.update(dict);
+      }
+    }
+  } else {
+    throw nb::value_error("invalid state value for __setstate__");
+  }
+}
+//------- end of pickle implementation helpers
 
 #if 0
 
