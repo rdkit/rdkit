@@ -9,6 +9,9 @@
 ///
 #include <catch2/catch_all.hpp>
 
+#include <set>
+#include <tuple>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/QueryAtom.h>
@@ -65,6 +68,17 @@ static void clearAtomMappingProps(ROMol &mol) {
   for (auto &&a : mol.atoms()) {
     a->clear();
   }
+}
+
+static std::set<std::string> collectCanonicalSmiles(
+    const std::vector<MOL_SPTR_VECT> &products) {
+  std::set<std::string> res;
+  for (const auto &productSet : products) {
+    for (const auto &product : productSet) {
+      res.insert(MolToSmiles(*product));
+    }
+  }
+  return res;
 }
 
 TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction][StereoGroup][bug]") {
@@ -174,6 +188,57 @@ TEST_CASE("Github #2427 cannot set maxProducts>1000 in runReactants",
       CHECK(prods.size() == 2000);
       CHECK(prods[0].size() == 1);
     }
+  }
+}
+
+TEST_CASE("reactant match cache", "[Reaction][enumerate][cache]") {
+  SECTION("cached run_Reactants matches uncached") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[C:1](=[O:2])[OH].[N:3]>>[C:1](=[O:2])[N:3]"));
+    REQUIRE(rxn);
+
+    MOL_SPTR_VECT reactants = {ROMOL_SPTR(SmilesToMol("CC(=O)O")),
+                               ROMOL_SPTR(SmilesToMol("CN"))};
+    REQUIRE(reactants[0]);
+    REQUIRE(reactants[1]);
+
+    rxn->initReactantMatchers();
+    auto uncached = run_Reactants(*rxn, reactants);
+    ReactantMatchCache cache;
+    auto cached = run_Reactants(*rxn, reactants, cache);
+
+    CHECK(collectCanonicalSmiles(uncached) == collectCanonicalSmiles(cached));
+    CHECK(cache.size() == 2);
+  }
+
+  SECTION("cache populated and reused across combinations") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[C:1](=[O:2])[OH].[N:3]>>[C:1](=[O:2])[N:3]"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+
+    auto fixedReactant = ROMOL_SPTR(SmilesToMol("CC(=O)O"));
+    REQUIRE(fixedReactant);
+
+    const std::vector<ROMOL_SPTR> variableReactants = {
+      ROMOL_SPTR(SmilesToMol("CN")), ROMOL_SPTR(SmilesToMol("CCN")),
+      ROMOL_SPTR(SmilesToMol("CCCN"))};
+    for (const auto &reactant1 : variableReactants) {
+      REQUIRE(reactant1);
+    }
+
+    ReactantMatchCache cache;
+    MOL_SPTR_VECT reactants = {fixedReactant, variableReactants.front()};
+    for (const auto &reactant1 : variableReactants) {
+      reactants[1] = reactant1;
+      auto products = run_Reactants(*rxn, reactants, cache);
+      REQUIRE(!products.empty());
+      REQUIRE(!products[0].empty());
+    }
+
+    const auto fixedKey = std::make_tuple(0u, fixedReactant.get(), 1000u);
+    CHECK(cache.find(fixedKey) != cache.end());
+    CHECK(cache.size() == 4);
   }
 }
 

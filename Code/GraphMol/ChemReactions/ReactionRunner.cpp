@@ -48,7 +48,6 @@
 #include <GraphMol/QueryBond.h>
 
 namespace RDKit {
-typedef std::vector<MatchVectType> VectMatchVectType;
 typedef std::vector<VectMatchVectType> VectVectMatchVectType;
 
 namespace {
@@ -201,7 +200,8 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
                         const ChemicalReaction &rxn,
                         VectVectMatchVectType &matchesByReactant,
                         unsigned int maxMatches,
-                        unsigned int matchSingleReactant = MatchAll) {
+                        unsigned int matchSingleReactant = MatchAll,
+                        ReactantMatchCache *cache = nullptr) {
   PRECONDITION(reactants.size() == rxn.getNumReactantTemplates(),
                "reactant size mismatch");
 
@@ -213,9 +213,23 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
   for (auto iter = rxn.beginReactantTemplates();
        iter != rxn.endReactantTemplates(); ++iter, i++) {
     if (matchSingleReactant == MatchAll || matchSingleReactant == i) {
-      auto matches =
-          getReactantMatchesToTemplate(*reactants[i].get(), *iter->get(),
-                                       maxMatches, rxn.getSubstructParams());
+      const auto cacheKey = std::make_tuple(i, reactants[i].get(), maxMatches);
+      VectMatchVectType matches;
+      if (cache) {
+        auto cacheIt = cache->find(cacheKey);
+        if (cacheIt != cache->end()) {
+          matches = cacheIt->second;
+        } else {
+          matches = getReactantMatchesToTemplate(*reactants[i].get(),
+                                                 *iter->get(), maxMatches,
+                                                 rxn.getSubstructParams());
+          cache->emplace(cacheKey, matches);
+        }
+      } else {
+        matches = getReactantMatchesToTemplate(*reactants[i].get(), *iter->get(),
+                                               maxMatches,
+                                               rxn.getSubstructParams());
+      }
       if (matches.empty()) {
         // no point continuing if we don't match one of the reactants:
         res = false;
@@ -1600,9 +1614,11 @@ void traverseToFindAtomsToRemove(const ROMol &reactant, const ROMol &templ,
 
 }  // namespace ReactionRunnerUtils
 
-std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
-                                         const MOL_SPTR_VECT &reactants,
-                                         unsigned int maxProducts) {
+namespace {
+std::vector<MOL_SPTR_VECT> run_ReactantsImpl(const ChemicalReaction &rxn,
+                                             const MOL_SPTR_VECT &reactants,
+                                             unsigned int maxProducts,
+                                             ReactantMatchCache *cache) {
   if (!rxn.isInitialized()) {
     throw ChemicalReactionException(
         "initMatchers() must be called before runReactants()");
@@ -1628,7 +1644,7 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
   // find the matches for each reactant:
   VectVectMatchVectType matchesByReactant;
   if (!ReactionRunnerUtils::getReactantMatches(
-          reactants, rxn, matchesByReactant, maxProducts)) {
+      reactants, rxn, matchesByReactant, maxProducts, UINT_MAX, cache)) {
     // some reactants didn't find a match, return an empty product list:
     return productMols;
   }
@@ -1649,6 +1665,20 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
 
   return productMols;
 }  // end of ChemicalReaction::runReactants()
+}  // namespace
+
+std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
+                                         const MOL_SPTR_VECT &reactants,
+                                         unsigned int maxProducts) {
+  return run_ReactantsImpl(rxn, reactants, maxProducts, nullptr);
+}
+
+std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
+                                         const MOL_SPTR_VECT &reactants,
+                                         ReactantMatchCache &cache,
+                                         unsigned int maxProducts) {
+  return run_ReactantsImpl(rxn, reactants, maxProducts, &cache);
+}
 
 namespace {
 bool updateAtomsModifiedByReaction(
