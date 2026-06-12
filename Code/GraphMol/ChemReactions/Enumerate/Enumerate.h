@@ -33,6 +33,7 @@
 #ifndef RDKIT_ENUMERATE_H
 #define RDKIT_ENUMERATE_H
 #include "EnumerateBase.h"
+#include <GraphMol/ChemReactions/ReactionRunner.h>
 
 /*! \file Enumerate.h
 
@@ -111,6 +112,7 @@ RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::BBS removeNonmatchingReagents(
 class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
     : public EnumerateLibraryBase {
   EnumerationTypes::BBS m_bbs;
+  ReactantMatchCache m_matchCache;
 
  public:
   EnumerateLibrary() : EnumerateLibraryBase(), m_bbs() {}
@@ -176,6 +178,8 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
         m_bbs[i][j].reset(mol);
       }
     }
+
+    m_matchCache.clear();
   }
 
   BOOST_SERIALIZATION_SPLIT_MEMBER();

@@ -38,6 +38,10 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 
+#include <algorithm>
+#include <set>
+#include <sstream>
+
 #include <GraphMol/ChemReactions/Enumerate/CartesianProduct.h>
 #include <GraphMol/ChemReactions/Enumerate/EvenSamplePairs.h>
 #include <GraphMol/ChemReactions/Enumerate/RandomSample.h>
@@ -162,6 +166,122 @@ const char *smiresults[] = {
     "C=CCNC(=S)NCc1ncc(Cl)cc1Br",   "CC=CCNC(=S)NCc1ncc(Cl)cc1Br",
     "C=CCNC(=S)NCCc1ncc(Cl)cc1Br",  "CC=CCNC(=S)NCCc1ncc(Cl)cc1Br",
     "C=CCNC(=S)NCCCc1ncc(Cl)cc1Br", "CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br"};
+
+namespace {
+ChemicalReaction *makeEnumerationCacheRxn() {
+  return RxnSmartsToChemicalReaction(
+      "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);"
+      "!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:"
+      "2]");
+}
+
+EnumerationTypes::BBS makeEnumerationCacheBbs() {
+  EnumerationTypes::BBS bbs;
+  bbs.resize(2);
+
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("CC=CCN=C=S")));
+
+  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
+  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCCc1ncc(Cl)cc1Br")));
+  bbs[1].push_back(
+      boost::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
+  return bbs;
+}
+
+std::multiset<std::string> collectEnumerationSmiles(EnumerateLibrary &en) {
+  std::multiset<std::string> results;
+  for (; (bool)en;) {
+    std::vector<std::vector<std::string>> smiles = en.nextSmiles();
+    TEST_ASSERT(smiles.size() == 1);
+    TEST_ASSERT(smiles[0].size() == 1);
+    results.insert(smiles[0][0]);
+  }
+  return results;
+}
+
+std::vector<std::string> collectEnumerationSequence(EnumerateLibrary &en) {
+  std::vector<std::string> results;
+  for (; (bool)en;) {
+    std::vector<std::vector<std::string>> smiles = en.nextSmiles();
+    TEST_ASSERT(smiles.size() == 1);
+    TEST_ASSERT(smiles[0].size() == 1);
+    results.push_back(smiles[0][0]);
+  }
+  return results;
+}
+
+std::multiset<std::string> collectDirectProductSmiles(
+    const ChemicalReaction &rxn, const EnumerationTypes::BBS &bbs) {
+  std::multiset<std::string> results;
+  for (size_t i = 0; i < bbs[0].size(); ++i) {
+    for (size_t j = 0; j < bbs[1].size(); ++j) {
+      MOL_SPTR_VECT reactants;
+      reactants.push_back(bbs[0][i]);
+      reactants.push_back(bbs[1][j]);
+      std::vector<MOL_SPTR_VECT> products = rxn.runReactants(reactants);
+      TEST_ASSERT(products.size() == 1);
+      TEST_ASSERT(products[0].size() == 1);
+      results.insert(MolToSmiles(*products[0][0], true));
+    }
+  }
+  return results;
+}
+}  // namespace
+
+void testEnumerationCacheOutputUnchanged() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerateLibrary cached(*rxn, bbs);
+  EnumerateLibrary viaLibrary(*rxn, bbs);
+
+  // drive the non-cached baseline from the library's filtered reagents so the
+  // comparison stays valid even if removeNonmatchingReagents drops a reagent
+  const std::multiset<std::string> expected =
+      collectDirectProductSmiles(*rxn, cached.getReagents());
+  const std::multiset<std::string> cachedResults = collectEnumerationSmiles(cached);
+  const std::multiset<std::string> viaLibraryResults =
+      collectEnumerationSmiles(viaLibrary);
+
+  TEST_ASSERT(cachedResults == expected);
+  TEST_ASSERT(viaLibraryResults == expected);
+}
+
+void testEnumerationCacheReuseAcrossReset() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerateLibrary en(*rxn, bbs);
+  const std::vector<std::string> firstPass = collectEnumerationSequence(en);
+
+  en.reset();
+
+  const std::vector<std::string> secondPass = collectEnumerationSequence(en);
+  TEST_ASSERT(firstPass == secondPass);
+}
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+void testEnumerationCacheNotSerialized() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerateLibrary en(*rxn, bbs);
+  const std::vector<std::string> baseline = collectEnumerationSequence(en);
+
+  en.reset();
+  std::string serialized = en.Serialize();
+  EnumerateLibrary reloaded(serialized);
+
+  const std::vector<std::string> reloadedSequence = collectEnumerationSequence(reloaded);
+  TEST_ASSERT(reloadedSequence == baseline);
+}
+#else
+void testEnumerationCacheNotSerialized() {}
+#endif
 
 void testEnumerations() {
   EnumerationTypes::BBS bbs;
@@ -381,6 +501,9 @@ void testGithub1657() {}
 int main() {
   RDLog::InitLogs();
 #if 1
+  testEnumerationCacheOutputUnchanged();
+  testEnumerationCacheReuseAcrossReset();
+  testEnumerationCacheNotSerialized();
   testSamplers();
   testEvenSamplers();
   testEnumerations();

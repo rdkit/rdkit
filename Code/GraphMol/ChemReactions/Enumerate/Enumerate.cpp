@@ -206,7 +206,7 @@ std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {
     reactants[i] = m_bbs[i][reactantIndices[i]];
   }
 
-  return m_rxn.runReactants(reactants);
+  return run_Reactants(m_rxn, reactants, m_matchCache);
 }
 
 void EnumerateLibrary::toStream(std::ostream &ss) const {
