@@ -135,6 +135,9 @@ RDKIT_CHEMREACTIONS_EXPORT VectMatchVectType getReactantMatchesToTemplate(
   const ROMol &reactant, const ROMol &templ, unsigned int maxMatches,
   const SubstructMatchParameters &ssparams);
 
+RDKIT_CHEMREACTIONS_EXPORT VectMatchVectType dedupeMatchesBySymmetry(
+    const ROMol &reactant, const VectMatchVectType &matches);
+
 RDKIT_CHEMREACTIONS_EXPORT MOL_SPTR_VECT generateOneProductSet(
     const ChemicalReaction &rxn, const MOL_SPTR_VECT &reactants,
     const std::vector<MatchVectType> &reactantsMatch);

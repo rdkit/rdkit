@@ -37,8 +37,10 @@
 #include <GraphMol/QueryOps.h>
 #include <boost/dynamic_bitset.hpp>
 #include <map>
+#include <set>
 #include <algorithm>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include "GraphMol/ChemReactions/ReactionRunner.h"
 #include <RDGeneral/Invariant.h>
@@ -193,6 +195,42 @@ VectMatchVectType getReactantMatchesToTemplate(
       res.push_back(std::move(match));
     }
   }
+  return res;
+}
+
+VectMatchVectType dedupeMatchesBySymmetry(const ROMol &reactant,
+                                          const VectMatchVectType &matches) {
+  if (matches.size() < 2) {
+    return matches;
+  }
+
+  // Matches with the same rank tuple land on symmetry-equivalent reagent
+  // atoms, so they would generate identical products. Keep the first one.
+  std::vector<unsigned int> ranks;
+  Canon::rankMolAtoms(reactant, ranks, false);
+
+  std::set<std::vector<unsigned int>> seenKeys;
+  VectMatchVectType res;
+  res.reserve(matches.size());
+
+  for (const auto &match : matches) {
+    auto orderedMatch = match;
+    std::sort(orderedMatch.begin(), orderedMatch.end(),
+              [](const auto &lhs, const auto &rhs) {
+                return lhs.first < rhs.first;
+              });
+
+    std::vector<unsigned int> key;
+    key.reserve(orderedMatch.size());
+    for (const auto &pair : orderedMatch) {
+      key.push_back(ranks[pair.second]);
+    }
+
+    if (seenKeys.insert(std::move(key)).second) {
+      res.push_back(match);
+    }
+  }
+
   return res;
 }
 

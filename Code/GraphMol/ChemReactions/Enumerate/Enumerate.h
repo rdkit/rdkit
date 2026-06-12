@@ -53,6 +53,10 @@ namespace RDKit {
    reagentMaxMatchCount [default INT_MAX]
     This specifies how many times the reactant template can match a reagent.
 
+  dedupeSymmetricMatches [default false]
+  Collapse substructure matches that land on symmetry-equivalent reagent
+  atoms, avoiding duplicate products for symmetric reagents.
+
    sanePartialProducts [default false]
     If true, forces all products of the reagent plus the product templates\n\
      pass chemical sanitization.  Note that if the product template itself\n\
@@ -61,11 +65,13 @@ namespace RDKit {
 struct RDKIT_CHEMREACTIONS_EXPORT EnumerationParams {
   int reagentMaxMatchCount{INT_MAX};
   bool sanePartialProducts{false};
+  bool dedupeSymmetricMatches{false};
   EnumerationParams() {}
 
   EnumerationParams(const EnumerationParams &rhs)
       : reagentMaxMatchCount(rhs.reagentMaxMatchCount),
-        sanePartialProducts(rhs.sanePartialProducts) {}
+        sanePartialProducts(rhs.sanePartialProducts),
+        dedupeSymmetricMatches(rhs.dedupeSymmetricMatches) {}
 };
 
 //!  Helper function, remove reagents that are incompatible

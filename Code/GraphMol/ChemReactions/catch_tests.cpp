@@ -242,6 +242,54 @@ TEST_CASE("reactant match cache", "[Reaction][enumerate][cache]") {
   }
 }
 
+TEST_CASE("dedupeMatchesBySymmetry", "[reaction][dedupe]") {
+  SECTION("collapses symmetric matches") {
+    auto reagent = ROMOL_SPTR(SmilesToMol("NCCN"));
+    auto templ = ROMOL_SPTR(SmartsToMol("[N:1]"));
+    REQUIRE(reagent);
+    REQUIRE(templ);
+
+    auto raw = ReactionRunnerUtils::getReactantMatchesToTemplate(
+        *reagent, *templ, 1000, SubstructMatchParameters());
+    REQUIRE(raw.size() >= 2);
+
+    auto deduped = ReactionRunnerUtils::dedupeMatchesBySymmetry(*reagent, raw);
+    CHECK(deduped.size() < raw.size());
+    CHECK(deduped.size() == 1);
+  }
+
+  SECTION("keeps distinct asymmetric matches") {
+    auto reagent = ROMOL_SPTR(SmilesToMol("NCCO"));
+    auto templ = ROMOL_SPTR(SmartsToMol("[N,O:1]"));
+    REQUIRE(reagent);
+    REQUIRE(templ);
+
+    auto raw = ReactionRunnerUtils::getReactantMatchesToTemplate(
+        *reagent, *templ, 1000, SubstructMatchParameters());
+    REQUIRE(raw.size() >= 2);
+
+    auto deduped = ReactionRunnerUtils::dedupeMatchesBySymmetry(*reagent, raw);
+    CHECK(deduped.size() == raw.size());
+    CHECK(deduped.size() == 2);
+  }
+
+  SECTION("passes through fewer than two matches") {
+    auto reagent = ROMOL_SPTR(SmilesToMol("CC"));
+    REQUIRE(reagent);
+
+    VectMatchVectType emptyMatches;
+    auto emptyDeduped = ReactionRunnerUtils::dedupeMatchesBySymmetry(
+        *reagent, emptyMatches);
+    CHECK(emptyDeduped.empty());
+
+    VectMatchVectType singleMatch = {MatchVectType{{0, 0}}};
+    auto singleDeduped = ReactionRunnerUtils::dedupeMatchesBySymmetry(
+        *reagent, singleMatch);
+    REQUIRE(singleDeduped.size() == 1);
+    CHECK(singleDeduped[0] == singleMatch[0]);
+  }
+}
+
 TEST_CASE("negative charge queries. Part of testing changes for github #2604",
           "[Reaction]") {
   SECTION("no redundancy") {
