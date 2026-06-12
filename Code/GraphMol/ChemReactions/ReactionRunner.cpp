@@ -1386,6 +1386,223 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
                               const ROMOL_SPTR reactantSptr,
                               const MatchVectType &match,
                               const ROMOL_SPTR reactantTemplate,
+                              Conformer *productConf, unsigned int reactantId);
+
+Atom *cloneAtomForProduct(const Atom &srcAtom) {
+  if (!srcAtom.hasQuery()) {
+    return new Atom(srcAtom);
+  }
+  return new QueryAtom(dynamic_cast<const QueryAtom &>(srcAtom));
+}
+
+Bond *cloneBondForProduct(const Bond &srcBond) {
+  if (!srcBond.hasQuery()) {
+    return new Bond(srcBond);
+  }
+  return new QueryBond(dynamic_cast<const QueryBond &>(srcBond));
+}
+
+// Remap a copied bond's stereo-atom references (held in iso atom indices) to
+// the corresponding product atom indices. The bond already carries its stereo
+// and stereo-atom values from the copy constructor, so we only translate the
+// indices here, preserving their order (begin/end orientation is unchanged).
+void remapBondStereoAtoms(const Bond &isoBond, Bond *prodBond,
+                          const std::vector<int> &isoToProd) {
+  PRECONDITION(prodBond, "no bond");
+  const auto &stereoAtoms = isoBond.getStereoAtoms();
+  if (stereoAtoms.size() != 2) {
+    return;
+  }
+  CHECK_INVARIANT(isoToProd[stereoAtoms[0]] >= 0, "missing stereo atom map");
+  CHECK_INVARIANT(isoToProd[stereoAtoms[1]] >= 0, "missing stereo atom map");
+  prodBond->setStereoAtoms(rdcast<unsigned int>(isoToProd[stereoAtoms[0]]),
+                           rdcast<unsigned int>(isoToProd[stereoAtoms[1]]));
+}
+
+void copyStereoGroupsFromGraft(const ROMol &iso, RWMOL_SPTR product,
+                               const std::vector<int> &isoToProd) {
+  std::vector<StereoGroup> newStereoGroups;
+  for (const auto &sg : iso.getStereoGroups()) {
+    std::vector<Atom *> atoms;
+    std::vector<Bond *> bonds;
+    for (const auto &isoAtom : sg.getAtoms()) {
+      const auto mappedIdx = isoToProd[isoAtom->getIdx()];
+      if (mappedIdx < 0) {
+        continue;
+      }
+
+      auto productAtom = product->getAtomWithIdx(rdcast<unsigned int>(mappedIdx));
+      if (productAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+        continue;
+      }
+      int flagVal = 0;
+      productAtom->getPropIfPresent(common_properties::molInversionFlag,
+                                    flagVal);
+      if (flagVal == 4) {
+        continue;
+      }
+      atoms.push_back(productAtom);
+    }
+    if (!atoms.empty()) {
+      newStereoGroups.emplace_back(sg.getGroupType(), std::move(atoms),
+                                   std::move(bonds), sg.getReadId());
+    }
+  }
+
+  if (!newStereoGroups.empty()) {
+    auto &existing_sg = product->getStereoGroups();
+    newStereoGroups.insert(newStereoGroups.end(), existing_sg.begin(),
+                           existing_sg.end());
+    product->setStereoGroups(std::move(newStereoGroups));
+  }
+}
+
+ReactantGraft extractReactantGraft(const ChemicalReaction &rxn,
+                                   const ROMOL_SPTR &productTemplate,
+                                   const ROMOL_SPTR &reactantTemplate,
+                                   const ROMOL_SPTR &reactant,
+                                   const MatchVectType &match,
+                                   unsigned int reactantId, bool doConfs) {
+  ReactantGraft graft;
+  graft.iso = convertTemplateToMol(productTemplate);
+  graft.templateAtomCount = graft.iso->getNumAtoms();
+  graft.templateBondCount = graft.iso->getNumBonds();
+
+  Conformer *conf = nullptr;
+  if (doConfs) {
+    conf = new Conformer(graft.iso->getNumAtoms());
+    conf->set3D(false);
+  }
+
+  addReactantAtomsAndBonds(rxn, graft.iso, reactant, match, reactantTemplate,
+                           conf, reactantId);
+  if (doConfs) {
+    graft.iso->addConformer(conf, true);
+  }
+
+  std::set<unsigned int> reactantMapNums;
+  for (const auto atom : reactantTemplate->atoms()) {
+    const auto mapNum = atom->getAtomMapNum();
+    if (mapNum) {
+      reactantMapNums.insert(mapNum);
+    }
+  }
+
+  for (unsigned int atomIdx = 0; atomIdx < graft.templateAtomCount;
+       ++atomIdx) {
+    unsigned int mapNum = 0;
+    if (graft.iso->getAtomWithIdx(atomIdx)->getPropIfPresent(
+            common_properties::reactionMapNum, mapNum) &&
+        reactantMapNums.find(mapNum) != reactantMapNums.end()) {
+      graft.anchorAtomIdxs.push_back(atomIdx);
+    }
+  }
+
+  std::set<unsigned int> anchorAtoms(graft.anchorAtomIdxs.begin(),
+                                      graft.anchorAtomIdxs.end());
+  for (unsigned int bondIdx = 0; bondIdx < graft.templateBondCount; ++bondIdx) {
+    const auto bond = graft.iso->getBondWithIdx(bondIdx);
+    if (anchorAtoms.find(bond->getBeginAtomIdx()) != anchorAtoms.end() &&
+        anchorAtoms.find(bond->getEndAtomIdx()) != anchorAtoms.end()) {
+      graft.anchorBondIdxs.push_back(bondIdx);
+    }
+  }
+
+  return graft;
+}
+
+void applyReactantGraft(RWMOL_SPTR product, Conformer *productConf,
+                        const ReactantGraft &graft) {
+  PRECONDITION(product, "no product");
+
+  std::vector<int> isoToProd(graft.iso->getNumAtoms(), -1);
+  for (unsigned int atomIdx = 0; atomIdx < graft.templateAtomCount;
+       ++atomIdx) {
+    isoToProd[atomIdx] = rdcast<int>(atomIdx);
+  }
+
+  for (unsigned int atomIdx : graft.anchorAtomIdxs) {
+    auto *newAtom = cloneAtomForProduct(*graft.iso->getAtomWithIdx(atomIdx));
+    product->replaceAtom(atomIdx, newAtom, false, false);
+  }
+
+  for (unsigned int atomIdx = graft.templateAtomCount;
+       atomIdx < graft.iso->getNumAtoms(); ++atomIdx) {
+    auto *newAtom = cloneAtomForProduct(*graft.iso->getAtomWithIdx(atomIdx));
+    const auto prodIdx = product->addAtom(newAtom, false, true);
+    isoToProd[atomIdx] = rdcast<int>(prodIdx);
+  }
+
+  // Bond stereo atoms reference neighboring atoms; we can only retarget them
+  // once every bond exists in the product, so we record the (product bond,
+  // iso bond) pairs here and remap them in a final pass below.
+  std::vector<std::pair<unsigned int, const Bond *>> stereoBondsToRemap;
+
+  for (unsigned int bondIdx : graft.anchorBondIdxs) {
+    const auto *isoBond = graft.iso->getBondWithIdx(bondIdx);
+    auto *newBond = cloneBondForProduct(*isoBond);
+    // keepSGroups=true matches the original setReactantBondPropertiesToProduct
+    // path so any SGroup bond membership in the product template is preserved.
+    product->replaceBond(bondIdx, newBond, false, true);
+    if (isoBond->getStereoAtoms().size() == 2) {
+      stereoBondsToRemap.emplace_back(bondIdx, isoBond);
+    }
+  }
+
+  for (unsigned int bondIdx = graft.templateBondCount;
+       bondIdx < graft.iso->getNumBonds(); ++bondIdx) {
+    const auto *isoBond = graft.iso->getBondWithIdx(bondIdx);
+    const auto begIdx =
+        rdcast<unsigned int>(isoToProd[isoBond->getBeginAtomIdx()]);
+    const auto endIdx =
+        rdcast<unsigned int>(isoToProd[isoBond->getEndAtomIdx()]);
+    // Copy the bond verbatim (type, direction, stereo, stereo atoms, aromatic
+    // flag, and properties all come across via the copy constructor) and then
+    // retarget it onto the product atom indices.
+    auto *newBond = cloneBondForProduct(*isoBond);
+    newBond->setBeginAtomIdx(begIdx);
+    newBond->setEndAtomIdx(endIdx);
+    bool takeOwnership = true;
+    product->addBond(newBond, takeOwnership);
+    if (isoBond->getStereoAtoms().size() == 2) {
+      stereoBondsToRemap.emplace_back(product->getNumBonds() - 1, isoBond);
+    }
+  }
+
+  // now that all bonds are present, retarget the stereo-atom references
+  for (const auto &[prodBondIdx, isoBond] : stereoBondsToRemap) {
+    remapBondStereoAtoms(*isoBond, product->getBondWithIdx(prodBondIdx),
+                         isoToProd);
+  }
+
+  if (productConf && graft.iso->getNumConformers()) {
+    const auto &isoConf = graft.iso->getConformer();
+    if (isoConf.is3D()) {
+      productConf->set3D(true);
+    }
+    productConf->resize(product->getNumAtoms());
+    std::set<unsigned int> anchorAtoms(graft.anchorAtomIdxs.begin(),
+                                       graft.anchorAtomIdxs.end());
+    for (unsigned int atomIdx = 0; atomIdx < graft.iso->getNumAtoms();
+         ++atomIdx) {
+      if (atomIdx < graft.templateAtomCount &&
+          anchorAtoms.find(atomIdx) == anchorAtoms.end()) {
+        continue;
+      }
+      const auto prodIdx = isoToProd[atomIdx];
+      CHECK_INVARIANT(prodIdx >= 0, "missing atom map in graft application");
+      productConf->setAtomPos(rdcast<unsigned int>(prodIdx),
+                              isoConf.getAtomPos(atomIdx));
+    }
+  }
+
+  copyStereoGroupsFromGraft(*graft.iso, product, isoToProd);
+}
+
+void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
+                              const ROMOL_SPTR reactantSptr,
+                              const MatchVectType &match,
+                              const ROMOL_SPTR reactantTemplate,
                               Conformer *productConf, unsigned int reactantId) {
   // start by looping over all matches and marking the reactant atoms that
   // have already been "added" by virtue of being in the product. We'll also
@@ -1589,9 +1806,11 @@ generateOneProductSet(const ChemicalReaction &rxn,
     unsigned int reactantId = 0;
     for (auto iter = rxn.beginReactantTemplates();
          iter != rxn.endReactantTemplates(); ++iter, reactantId++) {
-      addReactantAtomsAndBonds(rxn, product, reactants.at(reactantId),
-                               reactantsMatch.at(reactantId), *iter, conf,
-                               reactantId);
+      auto graft = extractReactantGraft(rxn, *pTemplIt, *iter,
+                                        reactants.at(reactantId),
+                                        reactantsMatch.at(reactantId),
+                                        reactantId, doConfs);
+      applyReactantGraft(product, conf, graft);
     }
 
     if (doConfs) {

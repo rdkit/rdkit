@@ -102,6 +102,18 @@ static bool hasAnyChiralAtom(const ROMol &mol) {
   return false;
 }
 
+static std::set<unsigned int> collectReactionMapNums(const ROMol &mol,
+                                                    const std::vector<unsigned int> &atomIdxs) {
+  std::set<unsigned int> res;
+  for (auto atomIdx : atomIdxs) {
+    unsigned int mapNum = 0;
+    REQUIRE(mol.getAtomWithIdx(atomIdx)->getPropIfPresent(
+        common_properties::reactionMapNum, mapNum));
+    res.insert(mapNum);
+  }
+  return res;
+}
+
 TEST_CASE("product assembly golden", "[reaction][assembly][golden]") {
   SECTION("assemblyGolden_amide") {
     std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
@@ -266,8 +278,203 @@ TEST_CASE("product assembly golden", "[reaction][assembly][golden]") {
     REQUIRE(products[0].size() == 1);
     CHECK(products[0][0]->getNumConformers() == 1);
     CHECK(collectCanonicalSmiles(products) == std::set<std::string>{"CCOC"});
+    const auto &productConf = products[0][0]->getConformer();
+    CHECK(productConf.is3D());
+    // the mapped oxygen keeps its reactant coordinates in the product
+    const Atom *oxygen = nullptr;
+    for (const auto atom : products[0][0]->atoms()) {
+      if (atom->getAtomicNum() == 8) {
+        oxygen = atom;
+        break;
+      }
+    }
+    REQUIRE(oxygen);
+    const auto oxygenPos = productConf.getAtomPos(oxygen->getIdx());
+    CHECK(oxygenPos.x == Catch::Approx(2.7));
+    CHECK(oxygenPos.y == Catch::Approx(0.0));
+    CHECK(oxygenPos.z == Catch::Approx(0.0));
+  }
+
+  SECTION("assemblyGolden_queryBondAnchor") {
+    // the product template carries a query bond (~) between two anchor atoms,
+    // exercising the QueryBond clone+replace path in applyReactantGraft
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction("[C:1][N:2]>>[C:1]~[N:2]"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+
+    auto reactant = ROMOL_SPTR(SmilesToMol("CCN"));
+    REQUIRE(reactant);
+
+    MOL_SPTR_VECT reactants = {reactant};
+    const auto products = rxn->runReactants(reactants);
+    REQUIRE(products.size() == 1);
+    REQUIRE(products[0].size() == 1);
+    CHECK(collectCanonicalSmiles(products) == std::set<std::string>{"CCN"});
   }
 }
+
+  TEST_CASE("graft replay equals direct", "[reaction][assembly][graft]") {
+    SECTION("graftReplayEqualsDirect_battery") {
+    struct CaseData {
+      const char *smarts;
+      std::vector<const char *> reactants;
+      std::set<std::string> expected;
+    };
+
+    const std::vector<CaseData> cases = {
+      {"[C:1](=[O:2])[O;H1].[N:3]>>[C:1](=[O:2])[N:3]",
+       {"CC(=O)O", "CCN"}, {"CCNC(C)=O"}},
+      {"[C:1]=[C:2].[C:3]=[C:4][C:5]=[C:6]>>[C:1]1[C:2][C:3][C:4]=[C:5][C:6]1",
+       {"ClC=C", "BrC=CC=C"}, {"ClC1CC=CC(Br)C1", "ClC1CCC=CC1Br"}},
+      {"[C@:1](F)(Cl)[Br:2]>>[C@:1](F)(Cl)[I:2]",
+       {"C[C@](F)(Cl)Br"}, {"C[C@@](F)(Cl)I"}},
+      {"[O:1]>>[O:1]C", {"C/C=C/CO"}, {"C/C=C/COC"}},
+      {"[C@:1]>>[C@:1]", {"F[C@H](Cl)Br |o1:1|"}, {"F[C@H](Cl)Br"}},
+      {"[C:1][O:2][C:3]>>[C:1][O:2].[C:3]", {"CCOCCC"}, {"CCC", "CCO", "CC", "CCCO"}},
+      {"[#6:1]-[O:2]>>[#6:1]-[O:2]C", {"CCO"}, {"CCOC"}},
+    };
+
+    for (const auto &testCase : cases) {
+      std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(testCase.smarts));
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+
+      MOL_SPTR_VECT reactants;
+      for (const auto *smi : testCase.reactants) {
+      reactants.push_back(ROMOL_SPTR(SmilesToMol(smi)));
+      REQUIRE(reactants.back());
+      }
+
+      const auto direct = rxn->runReactants(reactants);
+      CHECK(collectCanonicalIsomericSmiles(direct) == testCase.expected);
+    }
+    }
+  }
+
+  TEST_CASE("extractReactantGraft_amideAnchors", "[reaction][assembly][graft]") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[C:1](=[O:2])[O;H1].[N:3]>>[C:1](=[O:2])[N:3]"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+
+    auto productTemplate = *rxn->beginProductTemplates();
+    auto acid = ROMOL_SPTR(SmilesToMol("CC(=O)O"));
+    auto amine = ROMOL_SPTR(SmilesToMol("CCN"));
+    REQUIRE(productTemplate);
+    REQUIRE(acid);
+    REQUIRE(amine);
+
+    const auto acidTemplate = *rxn->beginReactantTemplates();
+    const auto amineTemplate = *std::next(rxn->beginReactantTemplates());
+    auto acidMatches = ReactionRunnerUtils::getReactantMatchesToTemplate(
+      *acid, *acidTemplate, 1000, SubstructMatchParameters());
+    auto amineMatches = ReactionRunnerUtils::getReactantMatchesToTemplate(
+      *amine, *amineTemplate, 1000, SubstructMatchParameters());
+    REQUIRE(!acidMatches.empty());
+    REQUIRE(!amineMatches.empty());
+
+    auto acidGraft = ReactionRunnerUtils::extractReactantGraft(
+        *rxn, productTemplate, acidTemplate, acid,
+      acidMatches.front(), 0, false);
+    auto amineGraft = ReactionRunnerUtils::extractReactantGraft(
+        *rxn, productTemplate, amineTemplate, amine,
+      amineMatches.front(), 1, false);
+
+    CHECK(acidGraft.templateAtomCount == 3);
+    CHECK(acidGraft.iso->getNumAtoms() == 4);
+    CHECK(acidGraft.iso->getNumAtoms() - acidGraft.templateAtomCount == 1);
+    CHECK(collectReactionMapNums(*acidGraft.iso, acidGraft.anchorAtomIdxs) ==
+      std::set<unsigned int>{1, 2});
+    CHECK(acidGraft.iso->getAtomWithIdx(3)->getAtomicNum() == 6);
+
+      CHECK(amineGraft.templateAtomCount == 3);
+      CHECK(amineGraft.iso->getNumAtoms() == 5);
+      CHECK(amineGraft.iso->getNumAtoms() - amineGraft.templateAtomCount == 2);
+    CHECK(collectReactionMapNums(*amineGraft.iso, amineGraft.anchorAtomIdxs) ==
+      std::set<unsigned int>{3});
+      CHECK(amineGraft.iso->getAtomWithIdx(3)->getAtomicNum() == 6);
+      CHECK(amineGraft.iso->getAtomWithIdx(4)->getAtomicNum() == 6);
+  }
+
+  TEST_CASE("extractReactantGraft_ringClosureSurvivingAtoms",
+        "[reaction][assembly][graft]") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[C:1]=[C:2].[C:3]=[C:4][C:5]=[C:6]>>[C:1]1[C:2][C:3][C:4]=[C:5][C:6]1"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+
+    auto productTemplate = *rxn->beginProductTemplates();
+    auto first = ROMOL_SPTR(SmilesToMol("ClC=C"));
+    auto second = ROMOL_SPTR(SmilesToMol("BrC=CC=C"));
+    REQUIRE(productTemplate);
+    REQUIRE(first);
+    REQUIRE(second);
+
+    const auto firstTemplate = *rxn->beginReactantTemplates();
+    const auto secondTemplate = *std::next(rxn->beginReactantTemplates());
+    auto firstMatches = ReactionRunnerUtils::getReactantMatchesToTemplate(
+          *first, *firstTemplate, 1000, SubstructMatchParameters());
+    auto secondMatches = ReactionRunnerUtils::getReactantMatchesToTemplate(
+          *second, *secondTemplate, 1000, SubstructMatchParameters());
+    REQUIRE(!firstMatches.empty());
+    REQUIRE(!secondMatches.empty());
+
+    auto firstGraft = ReactionRunnerUtils::extractReactantGraft(
+        *rxn, productTemplate, firstTemplate, first,
+      firstMatches.front(), 0, false);
+    auto secondGraft = ReactionRunnerUtils::extractReactantGraft(
+        *rxn, productTemplate, secondTemplate, second,
+      secondMatches.front(), 1, false);
+
+    CHECK(firstGraft.iso->getNumAtoms() - firstGraft.templateAtomCount == 1);
+    CHECK(secondGraft.iso->getNumAtoms() - secondGraft.templateAtomCount == 1);
+    CHECK(firstGraft.iso->getAtomWithIdx(firstGraft.templateAtomCount)
+        ->getAtomicNum() == 17);
+    CHECK(secondGraft.iso->getAtomWithIdx(secondGraft.templateAtomCount)
+        ->getAtomicNum() == 35);
+  }
+
+  TEST_CASE("applyReactantGraft_indexOffsetCorrect",
+        "[reaction][assembly][graft]") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[C:1](=[O:2])[O;H1].[N:3]>>[C:1](=[O:2])[N:3]"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+
+    auto productTemplate = *rxn->beginProductTemplates();
+    auto acid = ROMOL_SPTR(SmilesToMol("CC(=O)O"));
+    auto amine = ROMOL_SPTR(SmilesToMol("CCN"));
+    REQUIRE(productTemplate);
+    REQUIRE(acid);
+    REQUIRE(amine);
+
+    const auto acidTemplate = *rxn->beginReactantTemplates();
+    const auto amineTemplate = *std::next(rxn->beginReactantTemplates());
+    auto acidMatches = ReactionRunnerUtils::getReactantMatchesToTemplate(
+        *acid, *acidTemplate, 1000, SubstructMatchParameters());
+    auto amineMatches = ReactionRunnerUtils::getReactantMatchesToTemplate(
+        *amine, *amineTemplate, 1000, SubstructMatchParameters());
+    REQUIRE(!acidMatches.empty());
+    REQUIRE(!amineMatches.empty());
+
+    auto product = ReactionRunnerUtils::convertTemplateToMol(productTemplate);
+    auto acidGraft = ReactionRunnerUtils::extractReactantGraft(
+        *rxn, productTemplate, acidTemplate, acid,
+      acidMatches.front(), 0, false);
+    ReactionRunnerUtils::applyReactantGraft(product, nullptr, acidGraft);
+    CHECK(product->getNumAtoms() == 4);
+
+    auto amineGraft = ReactionRunnerUtils::extractReactantGraft(
+        *rxn, productTemplate, amineTemplate, amine,
+      amineMatches.front(), 1, false);
+    ReactionRunnerUtils::applyReactantGraft(product, nullptr, amineGraft);
+
+    CHECK(product->getNumAtoms() == 6);
+    CHECK(product->getBondBetweenAtoms(2, 4));
+    CHECK(product->getBondBetweenAtoms(4, 5));
+    CHECK(MolToSmiles(*product, true) == "CCNC(C)=O");
+  }
 
 TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction][StereoGroup][bug]") {
   SECTION("Reaction Preserves Stereo") {

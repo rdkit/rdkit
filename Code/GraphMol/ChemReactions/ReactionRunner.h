@@ -133,6 +133,14 @@ RDKIT_CHEMREACTIONS_EXPORT ROMol *reduceProductToSideChains(
     const ROMOL_SPTR &product, bool addDummyAtoms = true);
 
 namespace ReactionRunnerUtils {
+struct ReactantGraft {
+  RWMOL_SPTR iso;
+  unsigned int templateAtomCount;
+  unsigned int templateBondCount;
+  std::vector<unsigned int> anchorAtomIdxs;
+  std::vector<unsigned int> anchorBondIdxs;
+};
+
 RDKIT_CHEMREACTIONS_EXPORT VectMatchVectType getReactantMatchesToTemplate(
   const ROMol &reactant, const ROMol &templ, unsigned int maxMatches,
   const SubstructMatchParameters &ssparams);
@@ -146,6 +154,15 @@ RDKIT_CHEMREACTIONS_EXPORT MOL_SPTR_VECT generateOneProductSet(
 
 RDKIT_CHEMREACTIONS_EXPORT RWMOL_SPTR
 convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr);
+
+RDKIT_CHEMREACTIONS_EXPORT ReactantGraft extractReactantGraft(
+  const ChemicalReaction &rxn, const ROMOL_SPTR &productTemplate,
+  const ROMOL_SPTR &reactantTemplate, const ROMOL_SPTR &reactant,
+  const MatchVectType &match, unsigned int reactantId, bool doConfs);
+
+RDKIT_CHEMREACTIONS_EXPORT void applyReactantGraft(RWMOL_SPTR product,
+                           Conformer *productConf,
+                           const ReactantGraft &graft);
 }  // namespace ReactionRunnerUtils
 
 }  // namespace RDKit
