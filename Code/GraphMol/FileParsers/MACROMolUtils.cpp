@@ -133,16 +133,14 @@ class MolFromMACROMolConverter {
 
     // copy the atoms of the sgroup into the new molecule
 
+    auto templatePtr = macroMol->getTemplate(atomIdx);
+
     if (newConf) {
-      newConf->resize(
-          newConf->getNumAtoms() +
-          macroMol->atomIdxToTemplatePtr(atomIdx)->getNumAtoms());
+      newConf->resize(newConf->getNumAtoms() + templatePtr->getNumAtoms());
     }
 
     for (auto templateAtomIdx : sgroup.getAtoms()) {
-      auto templateAtom =
-          macroMol->atomIdxToTemplatePtr(atomIdx)->getAtomWithIdx(
-              templateAtomIdx);
+      auto templateAtom = templatePtr->getAtomWithIdx(templateAtomIdx);
       auto newAtom = new Atom(*templateAtom);
 
       mol->addAtom(newAtom, true, true);
@@ -154,9 +152,8 @@ class MolFromMACROMolConverter {
       if (newConf) {
         newConf->setAtomPos(
             newAtom->getIdx(),
-            coordOffset + macroMol->atomIdxToTemplatePtr(atomIdx)
-                              ->getConformer()
-                              .getAtomPos(templateAtomIdx));
+            coordOffset +
+                templatePtr->getConformer().getAtomPos(templateAtomIdx));
       }
     }
   }
@@ -223,7 +220,7 @@ class MolFromMACROMolConverter {
 
       std::set<const MACROMolTemplate *> templatesInUse;
       for (unsigned int atomIdx = 0 ; atomIdx != macroMol->getNumAtoms(); ++atomIdx) {
-         auto templatePtr = macroMol->atomIdxToTemplatePtr(atomIdx);
+         auto templatePtr = macroMol->getTemplate(atomIdx);
          if (templatePtr != nullptr && !templatesInUse.contains(templatePtr)) {
           templatesInUse.insert(templatePtr);
          }
@@ -337,7 +334,7 @@ class MolFromMACROMolConverter {
         atom->getPropIfPresent(common_properties::molAtomSeqId, seqId);
         atom->getPropIfPresent(common_properties::molAtomSeqName, seqName);
 
-        auto templateMol= macroMol->atomIdxToTemplatePtr(atomIdx);
+        auto templateMol= macroMol->getTemplate(atomIdx);
         std::vector<std::string> templateNames;
         std::string templateNameToUse;
 
@@ -797,7 +794,7 @@ bool isTemplateMatchAHit(
 }
 
 std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
-    const ROMol &mol, RDKit::MACROMolTemplateLib &templates,
+    const ROMol &mol, const RDKit::MACROMolTemplateLib &templates,
     MolToMACROParams molToMACROMolParams) {
   auto res = std::unique_ptr<MACROMol>(new MACROMol());
 
@@ -806,7 +803,7 @@ std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
 }
 
 void MolToMACROMol(MACROMol *res,
-    const ROMol &mol, RDKit::MACROMolTemplateLib &templates,
+    const ROMol &mol, const RDKit::MACROMolTemplateLib &templates,
     MolToMACROParams molToMACROMolParams) {
 
   Conformer *conf = nullptr;
@@ -820,10 +817,8 @@ void MolToMACROMol(MACROMol *res,
 
   std::map<unsigned int, unsigned int> atomMap;
   std::map<BondConnectionDef, std::string> bondConnectionMap;
-  for (unsigned int templateIndex = 0;
-       templateIndex < templates.getNumTemplates(); ++templateIndex) {
-    auto templateMol = templates.getTemplate(templateIndex);
-    templateMol->updatePropertyCache(false);
+  for (const auto &templatePtr : templates) {
+    auto templateMol = templatePtr.get();
     std::vector<std::string> templateNames;
 
     std::string templateAtomClass;
