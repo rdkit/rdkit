@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDBoost/Wrap_nb.h>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
@@ -125,11 +126,16 @@ void wrap_fragcat(nb::module_ &m) {
   // FragCatGenerator
 
   nb::class_<RDKit::FragCatalog>(m, "FragCatalog")
-      .def(nb::new_([](RDKit::FragCatParams *fc){ return new RDKit::FragCatalog(fc);}),"params"_a)
-      .def(nb::new_([](const nb::bytes pkl){
-return new RDKit::FragCatalog(
-                 std::string(static_cast<const char *>(pkl.data()), pkl.size()));
-      }),"pickle"_a)
+      .def(nb::new_([]() { return new RDKit::FragCatalog(); }))
+      .def(nb::new_([](RDKit::FragCatParams *fc) {
+             return new RDKit::FragCatalog(fc);
+           }),
+           "params"_a)
+      .def(nb::new_([](const nb::bytes pkl) {
+             return new RDKit::FragCatalog(std::string(
+                 static_cast<const char *>(pkl.data()), pkl.size()));
+           }),
+           "pickle"_a)
       .def("GetNumEntries", &RDKit::FragCatalog::getNumEntries)
       .def("GetFPLength", &RDKit::FragCatalog::getFPLength)
       .def("GetCatalogParams",
@@ -156,20 +162,11 @@ return new RDKit::FragCatalog(
       .def("GetBitDiscrims", &RDKit::GetBitDiscrims, "idx"_a)
 
       // enable pickle support
-      .def("__getstate__",
-           [](const RDKit::FragCatalog &self) {
-             const auto pkl = self.Serialize();
-             return std::make_tuple(nb::bytes(pkl.c_str(), pkl.size()));
-           })
-      .def("__setstate__",
-           [](RDKit::FragCatalog &self, const std::tuple<nb::bytes> &state) {
-             const auto &pkl = std::get<0>(state);
-             new (&self) RDKit::FragCatalog(std::string(
-                 static_cast<const char *>(pkl.data()), pkl.size()));
-           })
-      .def("__setstate__",
-           [](RDKit::FragCatalog &self,
-              const std::tuple<std::string> &state) {
-             new (&self) RDKit::FragCatalog(std::get<0>(state));
-           });
+      .def("__getstate__", getObjectState<RDKit::FragCatalog,
+                                          [](const RDKit::FragCatalog &self) {
+                                            return self.Serialize();
+                                          }>)
+      .def("__setstate__", setObjectState<RDKit::FragCatalog>)
+
+      ;
 }
