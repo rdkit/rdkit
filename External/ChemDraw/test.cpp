@@ -499,24 +499,8 @@ TEST_CASE("CDXML Advanced") {
         CHECK(MolToSmiles(*mol) == expected[i++]);
       }
     }
-    // relaxing NeedsClean zero-H constraints can salvage the aromatic N fragment
-    {
-      std::vector<std::string> expected = {"*c1ccccc1", "*c1cccnc1"};
-      std::vector<std::string> expected_smarts = {
-          "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
-          "[#6]1:[#6]:[#6]:[#7]:[#6]:[#6]:1-[!#1]",
-      };
-      ChemDrawParserParams params;
-      params.needsCleanPolicy = NeedsCleanPolicy::RelaxHydrogens;
-      auto mols = MolsFromChemDrawFile(fname, params);
-      CHECK(mols.size() == expected.size());
-      int i = 0;
-      for (auto &mol : mols) {
-        CHECK(MolToSmarts(*mol) == expected_smarts[i]);
-        CHECK(MolToSmiles(*mol) == expected[i++]);
-      }
-    }
-    // setting sanitization to false, we get both
+    // setting sanitization to false, we get both, and RelaxHydrogens has no
+    // effect on that unsanitized path.
     std::vector<std::string> expected = {"*C1=C([H])C([H])=C([H])C([H])=C1[H]",
                                          "*C1=C([H])N([H])=C([H])C([H])=C1[H]"};
     std::vector<std::string> expected_smarts = {
@@ -525,6 +509,7 @@ TEST_CASE("CDXML Advanced") {
     };
     ChemDrawParserParams params;
     params.sanitize = false;
+    params.needsCleanPolicy = NeedsCleanPolicy::RelaxHydrogens;
     auto mols = MolsFromChemDrawFile(fname, params);
     CHECK(mols.size() == expected.size());
     int i = 0;

@@ -168,7 +168,8 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
 
        - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
 
-       - needsCleanPolicy: how to handle `NeedsClean` hydrogen metadata
+       - needsCleanPolicy: how to handle `NeedsClean` hydrogen metadata.
+         `RelaxHydrogens` is only applied when sanitize is True.
          [default TrustSource]
 
      RETURNS:
@@ -196,7 +197,8 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
 
        - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
 
-       - needsCleanPolicy: how to handle `NeedsClean` hydrogen metadata
+       - needsCleanPolicy: how to handle `NeedsClean` hydrogen metadata.
+         `RelaxHydrogens` is only applied when sanitize is True.
          [default TrustSource]
 
      RETURNS:
