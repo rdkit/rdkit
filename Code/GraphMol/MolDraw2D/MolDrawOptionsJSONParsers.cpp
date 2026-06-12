@@ -182,6 +182,7 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   PT_OPT_GET(simplifiedStereoGroupLabel);
   PT_OPT_GET(unspecifiedStereoIsUnknown);
   PT_OPT_GET(singleColourWedgeBonds);
+  PT_OPT_GET(singleColourBonds);
   PT_OPT_GET(useMolBlockWedging);
   PT_OPT_GET(scalingFactor);
   PT_OPT_GET(drawMolsSameScale);
@@ -213,7 +214,8 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   const auto drawingExtentsIncludeIt = pt.find("drawingExtentsInclude");
   if (drawingExtentsIncludeIt != pt.not_found()) {
     bool haveDrawElementFlags = false;
-    auto drawingExtentsInclude = flagsFromJson<DrawElement>(drawingExtentsIncludeIt->second, &haveDrawElementFlags);
+    auto drawingExtentsInclude = flagsFromJson<DrawElement>(
+        drawingExtentsIncludeIt->second, &haveDrawElementFlags);
     if (haveDrawElementFlags) {
       opts.drawingExtentsInclude = drawingExtentsInclude;
     }

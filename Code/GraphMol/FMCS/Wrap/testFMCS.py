@@ -4,18 +4,20 @@ import unittest
 from rdkit import Chem
 from rdkit.Chem import rdFMCS
 
+from collections import defaultdict
+
 
 class BondMatchOrderMatrix:
 
   def __init__(self, ignoreAromatization):
-    self.MatchMatrix = [[False] * (Chem.BondType.ZERO + 1) for i in range(Chem.BondType.ZERO + 1)]
-    for i in range(Chem.BondType.ZERO + 1):
+    self.MatchMatrix = defaultdict(lambda: defaultdict(bool))
+    for ti in Chem.BondType:
       # fill cells of the same and unspecified type
-      self.MatchMatrix[i][i] = True
-      self.MatchMatrix[Chem.BondType.UNSPECIFIED][i] = \
-          self.MatchMatrix[i][Chem.BondType.UNSPECIFIED] = True
-      self.MatchMatrix[Chem.BondType.ZERO][i] = \
-          self.MatchMatrix[i][Chem.BondType.ZERO] = True
+      self.MatchMatrix[ti][ti] = True
+      self.MatchMatrix[Chem.BondType.UNSPECIFIED][ti] = \
+          self.MatchMatrix[ti][Chem.BondType.UNSPECIFIED] = True
+      self.MatchMatrix[Chem.BondType.ZERO][ti] = \
+          self.MatchMatrix[ti][Chem.BondType.ZERO] = True
     if ignoreAromatization:
       self.MatchMatrix[Chem.BondType.SINGLE][Chem.BondType.AROMATIC] = \
           self.MatchMatrix[Chem.BondType.AROMATIC][Chem.BondType.SINGLE] = True
@@ -233,7 +235,7 @@ class Test21AcceptanceCallback(rdFMCS.MCSAcceptance):
     self.parent.assertEqual(params.ShouldAcceptMCS, self)
     for query_atom_idx, target_atom_idx in atom_idx_match:
       if query.GetAtomWithIdx(query_atom_idx).GetAtomicNum() == 0:
-        return True 
+        return True
       if target.GetAtomWithIdx(target_atom_idx).GetAtomicNum() == 0:
         return True
     for query_bond_idx, target_bond_idx in bond_idx_match:
@@ -1164,8 +1166,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(res.numBonds, 11)
     self.assertEqual(
       res.smartsString,
-      "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2"
-    )
+      "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2")
 
     params = rdFMCS.MCSParameters()
     params.AtomCompareParameters.CompleteRingsOnly = True
@@ -1176,8 +1177,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(res.numBonds, 11)
     self.assertEqual(
       res.smartsString,
-      "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2"
-    )
+      "[#6]1:&@[#6]:&@[#6]:&@[#6]2:&@[#6](:&@[#6]:&@1):&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2")
 
   def test19MCS3d(self):
     Common.test19MCS3d(self)
@@ -1202,28 +1202,27 @@ class TestCase(unittest.TestCase):
 
   def test21ShouldAcceptMCS(self):
     mols1 = [
-      Chem.MolFromSmiles(smi) for smi in [
-        "OC(=O)CCc1c(C)ccc2ccccc12",
-        "c1(C)cc(cccc2)c2c(*)c1"
-      ]
+      Chem.MolFromSmiles(smi) for smi in ["OC(=O)CCc1c(C)ccc2ccccc12", "c1(C)cc(cccc2)c2c(*)c1"]
     ]
     mols2 = [
-      Chem.MolFromSmiles(smi) for smi in [
-        "OC(=O)C(C1CC1)Cc1c(C)ccc2ccccc12",
-        "c1(C)cc(cccc2)c2c(C2CC2*)c1"
-      ]
+      Chem.MolFromSmiles(smi)
+      for smi in ["OC(=O)C(C1CC1)Cc1c(C)ccc2ccccc12", "c1(C)cc(cccc2)c2c(C2CC2*)c1"]
     ]
     params = rdFMCS.MCSParameters()
     params.AtomTyper = Test21AtomCompare()
     params.BondTyper = rdFMCS.BondCompare.CompareAny
-    self.assertRaises(TypeError,
-                      lambda params: setattr(params, "ShouldAcceptMCS", Test21AcceptanceCallbackCallbackIsInt()))
-    self.assertRaises(TypeError,
-                      lambda params: setattr(params, "ShouldAcceptMCS", Test21AcceptanceCallbackNoCallback()))
-    self.assertRaises(TypeError,
-                      lambda params: setattr(params, "FinalMatchChecker", Test21FinalMatchCheckCallbackCallbackIsInt()))
-    self.assertRaises(TypeError,
-                      lambda params: setattr(params, "FinalMatchChecker", Test21FinalMatchCheckCallbackNoCallback()))
+    self.assertRaises(
+      TypeError,
+      lambda params: setattr(params, "ShouldAcceptMCS", Test21AcceptanceCallbackCallbackIsInt()))
+    self.assertRaises(
+      TypeError,
+      lambda params: setattr(params, "ShouldAcceptMCS", Test21AcceptanceCallbackNoCallback()))
+    self.assertRaises(
+      TypeError, lambda params: setattr(params, "FinalMatchChecker",
+                                        Test21FinalMatchCheckCallbackCallbackIsInt()))
+    self.assertRaises(
+      TypeError, lambda params: setattr(params, "FinalMatchChecker",
+                                        Test21FinalMatchCheckCallbackNoCallback()))
     params.ShouldAcceptMCS = Test21AcceptanceCallback(self)
     params.ProgressCallback = Test21ProgressCallback(self)
     params.FinalMatchChecker = Test21FinalMatchCheckCallback(self)
@@ -1234,7 +1233,9 @@ class TestCase(unittest.TestCase):
     mcs = rdFMCS.FindMCS(mols1, params)
     self.assertEqual(mcs.numAtoms, 11)
     self.assertEqual(mcs.numBonds, 12)
-    self.assertEqual(mcs.smartsString, "[#6]1:&@[#6]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6](:&@[#6]:&@1)-&!@[#0,#6]")
+    self.assertEqual(
+      mcs.smartsString,
+      "[#6]1:&@[#6]:&@[#6]2:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@[#6]:&@2:&@[#6](:&@[#6]:&@1)-&!@[#0,#6]")
     self.assertGreater(params.ProgressCallback.callCount, 0)
     self.assertGreater(params.FinalMatchChecker.callCount, 0)
     params.AtomCompareParameters.RingMatchesRingOnly = True
@@ -1249,13 +1250,12 @@ class TestCase(unittest.TestCase):
     para = "CC1:C:C:C(N):C:C:1"
     ortho = "CC1:C:C:C:C:C:1N"
     if 1:
-      mols1 = [Chem.MolFromSmiles(smi) for smi in [
-        "Nc1ccc(cc1)C-Cc1c(N)cccc1",
-        "Nc1ccc(cc1)C=Cc1c(N)cccc1"]
+      mols1 = [
+        Chem.MolFromSmiles(smi)
+        for smi in ["Nc1ccc(cc1)C-Cc1c(N)cccc1", "Nc1ccc(cc1)C=Cc1c(N)cccc1"]
       ]
-      mols2 = [Chem.MolFromSmiles(smi) for smi in [
-        "Nc1ccccc1C-Cc1ccc(N)cc1",
-        "Nc1ccccc1C=Cc1ccc(N)cc1"]
+      mols2 = [
+        Chem.MolFromSmiles(smi) for smi in ["Nc1ccccc1C-Cc1ccc(N)cc1", "Nc1ccccc1C=Cc1ccc(N)cc1"]
       ]
       p = rdFMCS.MCSParameters()
       mcs1 = rdFMCS.FindMCS(mols1)
@@ -1290,15 +1290,16 @@ class TestCase(unittest.TestCase):
       self.assertEqual(mcs2.smartsString, "")
       self.assertIsNone(mcs2.queryMol)
       self.assertEqual(len(mcs2.degenerateSmartsQueryMolDict), 2)
-      degSmiles1 = sorted(Chem.MolToSmiles(Chem.MolFromSmarts(sma)) for sma in mcs1.degenerateSmartsQueryMolDict.keys())
-      degSmiles2 = sorted(Chem.MolToSmiles(Chem.MolFromSmarts(sma)) for sma in mcs2.degenerateSmartsQueryMolDict.keys())
+      degSmiles1 = sorted(
+        Chem.MolToSmiles(Chem.MolFromSmarts(sma))
+        for sma in mcs1.degenerateSmartsQueryMolDict.keys())
+      degSmiles2 = sorted(
+        Chem.MolToSmiles(Chem.MolFromSmarts(sma))
+        for sma in mcs2.degenerateSmartsQueryMolDict.keys())
       self.assertEqual(len(degSmiles1), 2)
       self.assertEqual(degSmiles1, degSmiles2)
     if 1:
-      mols = [Chem.MolFromSmiles(smi) for smi in [
-        "Nc1ccc(cc1)C-C",
-        "Nc1ccc(cc1)C=C"]
-      ]
+      mols = [Chem.MolFromSmiles(smi) for smi in ["Nc1ccc(cc1)C-C", "Nc1ccc(cc1)C=C"]]
       p = rdFMCS.MCSParameters()
       mcs1 = rdFMCS.FindMCS(mols)
       self.assertEqual(mcs1.numAtoms, 8)
@@ -1314,7 +1315,9 @@ class TestCase(unittest.TestCase):
       self.assertIsNone(mcs2.queryMol)
       self.assertEqual(mcs2.smartsString, "")
       self.assertEqual(len(mcs2.degenerateSmartsQueryMolDict), 1)
-      self.assertEqual(Chem.MolToSmiles(Chem.MolFromSmarts(tuple(mcs2.degenerateSmartsQueryMolDict.keys())[0])), para)
+      self.assertEqual(
+        Chem.MolToSmiles(Chem.MolFromSmarts(tuple(mcs2.degenerateSmartsQueryMolDict.keys())[0])),
+        para)
 
 
 if __name__ == "__main__":

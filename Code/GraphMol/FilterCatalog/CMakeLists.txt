@@ -38,5 +38,9 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
 
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()
+
 rdkit_test(filterCatalogTest filtercatalogtest.cpp
            LINK_LIBRARIES FilterCatalog SmilesParse FileParsers )

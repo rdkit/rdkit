@@ -126,7 +126,7 @@ class TestCase(unittest.TestCase):
     res = rdAlg.GetAlignmentTransform(refPts, prbPts, wts)
     self.assertTrue(feq(res[0], 1.0))
 
-    res = rdAlg.GetAlignmentTransform(refPts, prbPts, wts, 1)
+    res = rdAlg.GetAlignmentTransform(refPts, prbPts, wts, True)
     self.assertTrue(feq(res[0], 0.0))
     cnt = 0
     refLst = list(refPts)
