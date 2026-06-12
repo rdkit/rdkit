@@ -499,6 +499,23 @@ TEST_CASE("CDXML Advanced") {
         CHECK(MolToSmiles(*mol) == expected[i++]);
       }
     }
+    // relaxing NeedsClean zero-H constraints can salvage the aromatic N fragment
+    {
+      std::vector<std::string> expected = {"*c1ccccc1", "*c1cccnc1"};
+      std::vector<std::string> expected_smarts = {
+          "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
+          "[#6]1:[#6]:[#6]:[#7]:[#6]:[#6]:1-[!#1]",
+      };
+      ChemDrawParserParams params;
+      params.needsCleanPolicy = NeedsCleanPolicy::RelaxHydrogens;
+      auto mols = MolsFromChemDrawFile(fname, params);
+      CHECK(mols.size() == expected.size());
+      int i = 0;
+      for (auto &mol : mols) {
+        CHECK(MolToSmarts(*mol) == expected_smarts[i]);
+        CHECK(MolToSmiles(*mol) == expected[i++]);
+      }
+    }
     // setting sanitization to false, we get both
     std::vector<std::string> expected = {"*C1=C([H])C([H])=C([H])C([H])=C1[H]",
                                          "*C1=C([H])N([H])=C([H])C([H])=C1[H]"};
@@ -1410,6 +1427,49 @@ TEST_CASE("Geometry") {
     auto mols = MolsFromChemDrawFile(fname);
     REQUIRE(mols.size());
     REQUIRE("C1[C@H]2C[C@@H]12" == MolToSmiles(*mols[0]));
+  }
+}
+
+TEST_CASE("NeedsClean hydrogens") {
+  std::string path =
+      std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
+  SECTION("Trusting the source preserves the literal zero-hydrogen radical") {
+    auto fname = path + "needsclean-carbamate-n.cdxml";
+    auto mols = MolsFromChemDrawFile(fname);
+    REQUIRE(mols.size() == 1);
+    auto &mol = *mols[0];
+    CHECK(MolToSmiles(mol) == "C[N]C(=O)OC");
+
+    unsigned int nitrogens = 0;
+    for (const auto atom : mol.atoms()) {
+      if (atom->getSymbol() == "N") {
+        ++nitrogens;
+        CHECK(atom->getNumRadicalElectrons() == 1);
+        CHECK(atom->getTotalNumHs() == 0);
+        CHECK(atom->getNoImplicit());
+      }
+    }
+    CHECK(nitrogens == 1);
+  }
+  SECTION("RelaxHydrogens lets RDKit recompute NeedsClean zero-H atoms") {
+    auto fname = path + "needsclean-carbamate-n.cdxml";
+    ChemDrawParserParams params;
+    params.needsCleanPolicy = NeedsCleanPolicy::RelaxHydrogens;
+    auto mols = MolsFromChemDrawFile(fname, params);
+    REQUIRE(mols.size() == 1);
+    auto &mol = *mols[0];
+    CHECK(MolToSmiles(mol) == "CNC(=O)OC");
+
+    unsigned int nitrogens = 0;
+    for (const auto atom : mol.atoms()) {
+      if (atom->getSymbol() == "N") {
+        ++nitrogens;
+        CHECK(atom->getNumRadicalElectrons() == 0);
+        CHECK(atom->getTotalNumHs() == 1);
+        CHECK(!atom->getNoImplicit());
+      }
+    }
+    CHECK(nitrogens == 1);
   }
 }
 

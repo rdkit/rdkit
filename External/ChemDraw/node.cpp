@@ -29,21 +29,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // #include "node.h"
+#include "chemdraw.h"
 #include "fragment.h"
 #include "utils.h"
 
 namespace RDKit {
 namespace ChemDraw {
+namespace {
+bool shouldRelaxNeedsCleanHydrogens(
+    const CDXNode &node, int elemno, const v2::ChemDrawParserParams &params) {
+  return params.needsCleanPolicy == v2::NeedsCleanPolicy::RelaxHydrogens &&
+         node.m_nodeType == kCDXNodeType_Element && node.m_needsClean &&
+         elemno != 1 && node.m_numHydrogens == 0 &&
+         node.m_radical == kCDXRadical_None;
+}
+}  // namespace
+
 bool parseNode(
     RWMol &mol, unsigned int fragmentId, CDXNode &node, PageData &pagedata,
     std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
-    int &missingFragId, int externalAttachment) {
+    int &missingFragId, const v2::ChemDrawParserParams &params,
+    int externalAttachment) {
   int atom_id = node.GetObjectID();
   int elemno = node.m_elementNum;  // default to carbon
-  // UINT16 max is not addigned?
-  int num_hydrogens =
-      node.m_numHydrogens == kNumHydrogenUnspecified ? 0 : node.m_numHydrogens;
-  bool explicitHs = node.m_numHydrogens != kNumHydrogenUnspecified;
   int charge = 0;
   if ((node.m_charge & 0x00FFFFFF) == 0) {
     charge = node.m_charge >> 24;
@@ -183,6 +191,14 @@ bool parseNode(
   }
 
   CHECK_INVARIANT(atom_id != -1, "Uninitialized atom id in cdxml.");
+  // In the opt-in salvage mode, treat explicit zero-H counts on NeedsClean
+  // element atoms as advisory and let sanitization recompute hydrogens.
+  const bool relaxNeedsCleanHydrogens =
+      shouldRelaxNeedsCleanHydrogens(node, elemno, params);
+  bool explicitHs =
+      node.m_numHydrogens != kNumHydrogenUnspecified && !relaxNeedsCleanHydrogens;
+  // UINT16 max is not addigned?
+  int num_hydrogens = explicitHs ? node.m_numHydrogens : 0;
   Atom *rd_atom = new Atom(elemno);
   rd_atom->setFormalCharge(charge);
   rd_atom->setNumExplicitHs(num_hydrogens);
@@ -310,7 +326,7 @@ bool parseNode(
     for (auto fragment : node.ContainedObjects()) {
       if (fragment.second->GetTag() == kCDXObj_Fragment) {
         if (!parseFragment(mol, (CDXFragment &)(*fragment.second), pagedata,
-                           missingFragId, atom_id)) {
+                           missingFragId, params, atom_id)) {
           return false;
         }
         mol.setProp<bool>(NEEDS_FUSE, true);
