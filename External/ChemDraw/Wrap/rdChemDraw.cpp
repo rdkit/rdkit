@@ -152,6 +152,14 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
   python::scope().attr("__doc__") =
     "Module containing classes and functions for working with ChemDraw files.";
 
+  python::enum_<v2::CDXFormat>("CDXFormat")
+    .value("CDX", v2::CDXFormat::CDX)
+    .value("CDXML", v2::CDXFormat::CDXML);
+
+  python::enum_<v2::NeedsCleanPolicy>("NeedsCleanPolicy")
+      .value("TrustSource", v2::NeedsCleanPolicy::TrustSource)
+      .value("RelaxHydrogens", v2::NeedsCleanPolicy::RelaxHydrogens);
+
   // Molecule Interface
   std::string docString =
       R"DOC(Extract all molecules from a ChemDraw file.
@@ -259,14 +267,6 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
        python::arg("removeHs") = false),
       docString.c_str());
 
-
-  python::enum_<v2::CDXFormat>("CDXFormat")
-    .value("CDX", v2::CDXFormat::CDX)
-    .value("CDXML", v2::CDXFormat::CDXML);
-
-  python::enum_<v2::NeedsCleanPolicy>("NeedsCleanPolicy")
-      .value("TrustSource", v2::NeedsCleanPolicy::TrustSource)
-      .value("RelaxHydrogens", v2::NeedsCleanPolicy::RelaxHydrogens);
 
   docString =
       R"DOC(Convert a molecule into a chemdraw string using the specified format
