@@ -152,7 +152,7 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
       if (canPrimeCache) {
         const auto cacheKey =
             std::make_tuple(static_cast<unsigned int>(reactant_idx), mol.get(),
-                            1000u);
+                  1000u, false);
         const VectMatchVectType reactantMatches =
             ReactionRunnerUtils::getReactantMatchesToTemplate(
                 *mol.get(), *reactantTemplate.get(), 1000u,

@@ -239,7 +239,8 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
                         VectVectMatchVectType &matchesByReactant,
                         unsigned int maxMatches,
                         unsigned int matchSingleReactant = MatchAll,
-                        ReactantMatchCache *cache = nullptr) {
+                        ReactantMatchCache *cache = nullptr,
+                        bool dedupeSymmetricMatches = false) {
   PRECONDITION(reactants.size() == rxn.getNumReactantTemplates(),
                "reactant size mismatch");
 
@@ -251,7 +252,9 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
   for (auto iter = rxn.beginReactantTemplates();
        iter != rxn.endReactantTemplates(); ++iter, i++) {
     if (matchSingleReactant == MatchAll || matchSingleReactant == i) {
-      const auto cacheKey = std::make_tuple(i, reactants[i].get(), maxMatches);
+      const auto cacheKey =
+          std::make_tuple(i, reactants[i].get(), maxMatches,
+                          dedupeSymmetricMatches);
       VectMatchVectType matches;
       if (cache) {
         auto cacheIt = cache->find(cacheKey);
@@ -261,12 +264,20 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
           matches = getReactantMatchesToTemplate(*reactants[i].get(),
                                                  *iter->get(), maxMatches,
                                                  rxn.getSubstructParams());
+          if (dedupeSymmetricMatches) {
+            matches = ReactionRunnerUtils::dedupeMatchesBySymmetry(
+                *reactants[i].get(), matches);
+          }
           cache->emplace(cacheKey, matches);
         }
       } else {
         matches = getReactantMatchesToTemplate(*reactants[i].get(), *iter->get(),
                                                maxMatches,
                                                rxn.getSubstructParams());
+        if (dedupeSymmetricMatches) {
+          matches = ReactionRunnerUtils::dedupeMatchesBySymmetry(
+              *reactants[i].get(), matches);
+        }
       }
       if (matches.empty()) {
         // no point continuing if we don't match one of the reactants:
@@ -1656,6 +1667,7 @@ namespace {
 std::vector<MOL_SPTR_VECT> run_ReactantsImpl(const ChemicalReaction &rxn,
                                              const MOL_SPTR_VECT &reactants,
                                              unsigned int maxProducts,
+                                             bool dedupeSymmetricMatches,
                                              ReactantMatchCache *cache) {
   if (!rxn.isInitialized()) {
     throw ChemicalReactionException(
@@ -1682,7 +1694,8 @@ std::vector<MOL_SPTR_VECT> run_ReactantsImpl(const ChemicalReaction &rxn,
   // find the matches for each reactant:
   VectVectMatchVectType matchesByReactant;
   if (!ReactionRunnerUtils::getReactantMatches(
-      reactants, rxn, matchesByReactant, maxProducts, UINT_MAX, cache)) {
+      reactants, rxn, matchesByReactant, maxProducts, UINT_MAX, cache,
+      dedupeSymmetricMatches)) {
     // some reactants didn't find a match, return an empty product list:
     return productMols;
   }
@@ -1708,14 +1721,16 @@ std::vector<MOL_SPTR_VECT> run_ReactantsImpl(const ChemicalReaction &rxn,
 std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
                                          const MOL_SPTR_VECT &reactants,
                                          unsigned int maxProducts) {
-  return run_ReactantsImpl(rxn, reactants, maxProducts, nullptr);
+  return run_ReactantsImpl(rxn, reactants, maxProducts, false, nullptr);
 }
 
 std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
                                          const MOL_SPTR_VECT &reactants,
                                          ReactantMatchCache &cache,
+                                         bool dedupeSymmetricMatches,
                                          unsigned int maxProducts) {
-  return run_ReactantsImpl(rxn, reactants, maxProducts, &cache);
+  return run_ReactantsImpl(rxn, reactants, maxProducts,
+                           dedupeSymmetricMatches, &cache);
 }
 
 namespace {

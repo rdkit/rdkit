@@ -48,12 +48,13 @@ using VectMatchVectType = std::vector<MatchVectType>;
 //! Caches reactant-template substructure matches across run_Reactants() calls.
 /*!
   Keyed on (reactant template index, reagent pointer identity, effective
-  maxMatches). The ROMol objects whose raw pointers are used as keys must
-  outlive this cache and must not be structurally modified between calls,
-  otherwise stale match data may be returned. Not thread-safe.
+  maxMatches, dedupeSymmetricMatches). The ROMol objects whose raw pointers
+  are used as keys must outlive this cache and must not be structurally
+  modified between calls, otherwise stale match data may be returned.
+  Not thread-safe.
 */
 using ReactantMatchCache =
-    std::map<std::tuple<unsigned int, const ROMol *, unsigned int>,
+    std::map<std::tuple<unsigned int, const ROMol *, unsigned int, bool>,
              VectMatchVectType>;
 
 //! Runs the reaction on a set of reactants
@@ -77,16 +78,17 @@ RDKIT_CHEMREACTIONS_EXPORT std::vector<MOL_SPTR_VECT> run_Reactants(
     const ChemicalReaction &rxn, const MOL_SPTR_VECT &reactants,
     unsigned int maxProducts = 1000);
 
-//! Runs the reaction on a set of reactants using a reactant match cache
+//! Runs a reaction on a set of reactants using a reactant match cache
 /*!
   This overload reuses previously computed reactant-template matches for
   repeated reagent/template combinations. The cache key is the reactant
-  template index, the reagent pointer identity, and the effective
-  maxMatches/maxProducts value.
+  template index, the reagent pointer identity, the effective
+  maxMatches/maxProducts value, and whether symmetry deduplication is on.
 */
 RDKIT_CHEMREACTIONS_EXPORT std::vector<MOL_SPTR_VECT> run_Reactants(
     const ChemicalReaction &rxn, const MOL_SPTR_VECT &reactants,
-    ReactantMatchCache &cache, unsigned int maxProducts = 1000);
+    ReactantMatchCache &cache, bool dedupeSymmetricMatches = false,
+    unsigned int maxProducts = 1000);
 
 //! Runs a single reactant against a single reactant template
 /*!

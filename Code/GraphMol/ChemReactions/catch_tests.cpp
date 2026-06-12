@@ -236,7 +236,8 @@ TEST_CASE("reactant match cache", "[Reaction][enumerate][cache]") {
       REQUIRE(!products[0].empty());
     }
 
-    const auto fixedKey = std::make_tuple(0u, fixedReactant.get(), 1000u);
+    const auto fixedKey =
+      std::make_tuple(0u, fixedReactant.get(), 1000u, false);
     CHECK(cache.find(fixedKey) != cache.end());
     CHECK(cache.size() == 4);
   }
@@ -287,6 +288,59 @@ TEST_CASE("dedupeMatchesBySymmetry", "[reaction][dedupe]") {
         *reagent, singleMatch);
     REQUIRE(singleDeduped.size() == 1);
     CHECK(singleDeduped[0] == singleMatch[0]);
+  }
+}
+
+TEST_CASE("run_Reactants symmetric dedup", "[reaction][dedupe]") {
+  std::unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction("[N;H2:1]>>[N:1]C"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  MOL_SPTR_VECT reactants = {ROMOL_SPTR(SmilesToMol("NCCN"))};
+  REQUIRE(reactants[0]);
+
+  SECTION("dedupe drops duplicate symmetric products") {
+    auto noDedup = run_Reactants(*rxn, reactants);
+    ReactantMatchCache cache;
+    auto deduped = run_Reactants(*rxn, reactants, cache, true);
+
+    REQUIRE(noDedup.size() > deduped.size());
+
+    // the cached dedupe=false path must be count-equivalent to the uncached run
+    ReactantMatchCache noDedupCache;
+    auto noDedupCached = run_Reactants(*rxn, reactants, noDedupCache, false);
+    CHECK(noDedupCached.size() == noDedup.size());
+  }
+
+  SECTION("dedupe preserves unique product set") {
+    auto noDedup = run_Reactants(*rxn, reactants);
+    ReactantMatchCache cache;
+    auto deduped = run_Reactants(*rxn, reactants, cache, true);
+
+    CHECK(collectCanonicalSmiles(noDedup) == collectCanonicalSmiles(deduped));
+  }
+
+  SECTION("dedupe cache key separates modes") {
+    ReactantMatchCache cache;
+    auto noDedup = run_Reactants(*rxn, reactants, cache, false);
+    auto deduped = run_Reactants(*rxn, reactants, cache, true);
+
+    REQUIRE(noDedup.size() > deduped.size());
+
+    unsigned int falseCount = 0;
+    unsigned int trueCount = 0;
+    for (const auto &entry : cache) {
+      if (std::get<3>(entry.first)) {
+        ++trueCount;
+      } else {
+        ++falseCount;
+      }
+    }
+
+    CHECK(falseCount == 1);
+    CHECK(trueCount == 1);
+    CHECK(cache.size() == 2);
   }
 }
 
