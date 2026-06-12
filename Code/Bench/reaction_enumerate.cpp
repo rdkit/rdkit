@@ -1,5 +1,6 @@
 #include <catch2/catch_all.hpp>
 
+#include <set>
 #include <memory>
 #include <string>
 #include <vector>
@@ -9,6 +10,7 @@
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 using namespace RDKit;
 
@@ -167,6 +169,84 @@ TEST_CASE("reaction enumeration matching (recursive SMARTS)",
       for (const auto &amine : amines) {
         MOL_SPTR_VECT reactants{itc, amine};
         total_products += run_Reactants(*rxn, reactants, cache).size();
+      }
+    }
+    return total_products;
+  };
+}
+
+TEST_CASE("reaction enumeration matching (symmetric dedup)",
+          "[reaction][enumerate]") {
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[N;H2:1].[C:2](=[O:3])[O;H1]>>[N:1][C:2]=[O:3]"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  constexpr unsigned int POOL = 16;
+  std::vector<ROMOL_SPTR> diamines;
+  diamines.reserve(POOL);
+  for (unsigned int i = 0; i < POOL; ++i) {
+    auto mol = v2::SmilesParse::MolFromSmiles("N" + std::string(i + 1, 'C') +
+                                              "N");
+    REQUIRE(mol);
+    diamines.push_back(ROMOL_SPTR(mol.release()));
+  }
+  const auto acids = make_acid_pool(POOL);
+
+  auto collect_unique_product_smiles =
+      [&rxn, &diamines, &acids](bool dedupeSymmetricMatches) {
+        std::set<std::string> product_smiles;
+        ReactantMatchCache cache;
+        for (const auto &diamine : diamines) {
+          for (const auto &acid : acids) {
+            MOL_SPTR_VECT reactants{diamine, acid};
+            const auto products = run_Reactants(*rxn, reactants, cache,
+                                                dedupeSymmetricMatches);
+            for (const auto &product_set : products) {
+              for (const auto &product : product_set) {
+                product_smiles.insert(MolToSmiles(*product));
+              }
+            }
+          }
+        }
+        return product_smiles;
+      };
+
+  std::size_t dedupOff_total = 0;
+  std::size_t dedupOn_total = 0;
+  // the dedup flag is part of the cache key, so false/true entries never
+  // collide even when the same cache is shared between both modes here
+  ReactantMatchCache checkCache;
+  for (const auto &diamine : diamines) {
+    for (const auto &acid : acids) {
+      MOL_SPTR_VECT reactants{diamine, acid};
+      dedupOff_total += run_Reactants(*rxn, reactants, checkCache, false).size();
+      dedupOn_total += run_Reactants(*rxn, reactants, checkCache, true).size();
+    }
+  }
+  CHECK(dedupOn_total < dedupOff_total);
+  CHECK(collect_unique_product_smiles(false) ==
+        collect_unique_product_smiles(true));
+
+  BENCHMARK("runReactants dedupe off") {
+    ReactantMatchCache cache;
+    std::size_t total_products = 0;
+    for (const auto &diamine : diamines) {
+      for (const auto &acid : acids) {
+        MOL_SPTR_VECT reactants{diamine, acid};
+        total_products += run_Reactants(*rxn, reactants, cache, false).size();
+      }
+    }
+    return total_products;
+  };
+
+  BENCHMARK("runReactants dedupe on") {
+    ReactantMatchCache cache;
+    std::size_t total_products = 0;
+    for (const auto &diamine : diamines) {
+      for (const auto &acid : acids) {
+        MOL_SPTR_VECT reactants{diamine, acid};
+        total_products += run_Reactants(*rxn, reactants, cache, true).size();
       }
     }
     return total_products;
