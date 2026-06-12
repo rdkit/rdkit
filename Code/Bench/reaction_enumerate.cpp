@@ -252,3 +252,37 @@ TEST_CASE("reaction enumeration matching (symmetric dedup)",
     return total_products;
   };
 }
+
+TEST_CASE("reaction enumeration assembly baseline", "[reaction][assembly]") {
+  // Cheap matching with long side chains makes product assembly the dominant
+  // cost, which is the path we want to baseline before graft caching lands.
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[C:1](=[O:2])[O;H1].[N:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  const auto acids = make_reagent_pool(8, std::string(18, 'C') + "(=O)O");
+  const auto amines = make_reagent_pool(8, std::string(18, 'C') + "N");
+
+  std::size_t total_products = 0;
+  for (const auto &acid : acids) {
+    for (const auto &amine : amines) {
+      MOL_SPTR_VECT reactants{acid, amine};
+      total_products += run_Reactants(*rxn, reactants).size();
+    }
+  }
+  CHECK(total_products > 0);
+  // each acid+amine pair yields exactly one product set for this amide reaction
+  CHECK(total_products == acids.size() * amines.size());
+
+  BENCHMARK("assemble products (current)") {
+    std::size_t benchmark_total_products = 0;
+    for (const auto &acid : acids) {
+      for (const auto &amine : amines) {
+        MOL_SPTR_VECT reactants{acid, amine};
+        benchmark_total_products += run_Reactants(*rxn, reactants).size();
+      }
+    }
+    return benchmark_total_products;
+  };
+}

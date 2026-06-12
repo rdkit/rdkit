@@ -16,6 +16,7 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/MonomerInfo.h>
+#include <Geometry/point.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -79,6 +80,193 @@ static std::set<std::string> collectCanonicalSmiles(
     }
   }
   return res;
+}
+
+static std::set<std::string> collectCanonicalIsomericSmiles(
+    const std::vector<MOL_SPTR_VECT> &products) {
+  std::set<std::string> res;
+  for (const auto &productSet : products) {
+    for (const auto &product : productSet) {
+      res.insert(MolToSmiles(*product, true));
+    }
+  }
+  return res;
+}
+
+static bool hasAnyChiralAtom(const ROMol &mol) {
+  for (const auto atom : mol.atoms()) {
+    if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+      return true;
+    }
+  }
+  return false;
+}
+
+TEST_CASE("product assembly golden", "[reaction][assembly][golden]") {
+  SECTION("assemblyGolden_amide") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[C:1](=[O:2])[O;H1].[N:3]>>[C:1](=[O:2])[N:3]"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+
+    MOL_SPTR_VECT reactants = {ROMOL_SPTR(SmilesToMol("CC(=O)O")),
+                               ROMOL_SPTR(SmilesToMol("CCN"))};
+    REQUIRE(reactants[0]);
+    REQUIRE(reactants[1]);
+
+    const auto products = rxn->runReactants(reactants);
+    REQUIRE(products.size() == 1);
+    REQUIRE(products[0].size() == 1);
+    CHECK(collectCanonicalIsomericSmiles(products) ==
+          std::set<std::string>{"CCNC(C)=O"});
+  }
+
+  SECTION("assemblyGolden_ringClosure") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[C:1]=[C:2].[C:3]=[C:4][C:5]=[C:6]>>[C:1]1[C:2][C:3][C:4]=[C:5][C:6]1"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+
+    MOL_SPTR_VECT reactants = {ROMOL_SPTR(SmilesToMol("ClC=C")),
+                               ROMOL_SPTR(SmilesToMol("BrC=CC=C"))};
+    REQUIRE(reactants[0]);
+    REQUIRE(reactants[1]);
+
+    const auto products = rxn->runReactants(reactants);
+    REQUIRE(!products.empty());
+    CHECK(collectCanonicalSmiles(products) ==
+          std::set<std::string>{"ClC1CC=CC(Br)C1", "ClC1CCC=CC1Br"});
+  }
+
+  SECTION("assemblyGolden_chirality") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[C@:1](F)(Cl)[Br:2]>>[C@:1](F)(Cl)[I:2]"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+
+    auto reactant = ROMOL_SPTR(SmilesToMol("C[C@](F)(Cl)Br"));
+    REQUIRE(reactant);
+
+    MOL_SPTR_VECT reactants = {reactant};
+    const auto products = rxn->runReactants(reactants);
+    REQUIRE(products.size() == 1);
+    REQUIRE(products[0].size() == 1);
+    const auto &product = products[0][0];
+    CHECK(collectCanonicalIsomericSmiles(products) ==
+        std::set<std::string>{"C[C@@](F)(Cl)I"});
+    CHECK(hasAnyChiralAtom(*product));
+  }
+
+  SECTION("assemblyGolden_doubleBondStereo") {
+    std::unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction("[O:1]>>[O:1]C"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+
+    auto reactant = ROMOL_SPTR(SmilesToMol("C/C=C/CO"));
+    REQUIRE(reactant);
+
+    MOL_SPTR_VECT reactants = {reactant};
+    const auto products = rxn->runReactants(reactants);
+    REQUIRE(products.size() == 1);
+    REQUIRE(products[0].size() == 1);
+    const auto &product = products[0][0];
+    const auto smiles = MolToSmiles(*product, true);
+    CHECK(smiles == "C/C=C/COC");
+    const bool hasDirectionalBond =
+      smiles.find('/') != std::string::npos ||
+      smiles.find('\\') != std::string::npos;
+    CHECK(hasDirectionalBond);
+  }
+
+  SECTION("assemblyGolden_enhancedStereoGroup") {
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction("[C@:1]>>[C@:1]"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+
+    auto reactant = ROMOL_SPTR(SmilesToMol("F[C@H](Cl)Br |o1:1|"));
+    REQUIRE(reactant);
+
+    MOL_SPTR_VECT reactants = {reactant};
+    const auto products = rxn->runReactants(reactants);
+    REQUIRE(products.size() == 1);
+    REQUIRE(products[0].size() == 1);
+    const auto &product = products[0][0];
+
+    clearAtomMappingProps(*product);
+    CHECK(MolToCXSmiles(*product) == "F[C@H](Cl)Br |o1:1|");
+    CHECK(product->getStereoGroups().size() == 1);
+    CHECK(hasAnyChiralAtom(*product));
+  }
+
+  SECTION("assemblyGolden_multiProduct") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[C:1][O:2][C:3]>>[C:1][O:2].[C:3]"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+
+    auto reactant = ROMOL_SPTR(SmilesToMol("CCOCCC"));
+    REQUIRE(reactant);
+
+    MOL_SPTR_VECT reactants = {reactant};
+    const auto products = rxn->runReactants(reactants);
+        REQUIRE(products.size() == 2);
+        REQUIRE(products[0].size() == 2);
+        REQUIRE(products[1].size() == 2);
+    const auto productSet0 =
+      collectCanonicalSmiles(std::vector<MOL_SPTR_VECT>{products[0]});
+    const auto productSet1 =
+      collectCanonicalSmiles(std::vector<MOL_SPTR_VECT>{products[1]});
+    const std::set<std::string> expected0{"CCC", "CCO"};
+    const std::set<std::string> expected1{"CC", "CCCO"};
+    // order-agnostic: which match comes first is not a guaranteed invariant
+    const bool matchesCurrentBehavior =
+      (productSet0 == expected0 && productSet1 == expected1) ||
+      (productSet0 == expected1 && productSet1 == expected0);
+    CHECK(matchesCurrentBehavior);
+  }
+
+  SECTION("assemblyGolden_queryAtomReagent") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[#6:1]-[O:2]>>[#6:1]-[O:2]C"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+
+    auto reactant = ROMOL_SPTR(SmilesToMol("CCO"));
+    REQUIRE(reactant);
+
+    MOL_SPTR_VECT reactants = {reactant};
+    const auto products = rxn->runReactants(reactants);
+    REQUIRE(products.size() == 1);
+    REQUIRE(products[0].size() == 1);
+    CHECK(collectCanonicalSmiles(products) == std::set<std::string>{"CCOC"});
+  }
+
+  SECTION("assemblyGolden_withConformer") {
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction("[O:1]>>[O:1]C"));
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+
+    auto reactant = ROMOL_SPTR(SmilesToMol("CCO"));
+    REQUIRE(reactant);
+
+    auto *conf = new Conformer(reactant->getNumAtoms());
+    conf->set3D(true);
+    conf->setAtomPos(0, RDGeom::Point3D(0.0, 0.0, 0.0));
+    conf->setAtomPos(1, RDGeom::Point3D(1.5, 0.0, 0.0));
+    conf->setAtomPos(2, RDGeom::Point3D(2.7, 0.0, 0.0));
+    reactant->addConformer(conf, true);
+    REQUIRE(reactant->getNumConformers() == 1);
+
+    MOL_SPTR_VECT reactants = {reactant};
+    const auto products = rxn->runReactants(reactants);
+    REQUIRE(products.size() == 1);
+    REQUIRE(products[0].size() == 1);
+    CHECK(products[0][0]->getNumConformers() == 1);
+    CHECK(collectCanonicalSmiles(products) == std::set<std::string>{"CCOC"});
+  }
 }
 
 TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction][StereoGroup][bug]") {
