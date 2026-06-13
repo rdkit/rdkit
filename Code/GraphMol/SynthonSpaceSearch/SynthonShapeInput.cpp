@@ -51,10 +51,6 @@ void SynthonShapeInput::merge(SynthonShapeInput &&other) {
   other.d_dummyAtomsAndNbrs.clear();
 }
 
-GaussianShape::ShapeInput &SynthonShapeInput::getShapes() const {
-  return *d_shapes;
-}
-
 double SynthonShapeInput::getDummyVolume(unsigned int shapeNum) const {
   PRECONDITION(shapeNum < getShapes().getNumShapes(),
                "Invalid shape number (" + std::to_string(shapeNum) + " vs " +
