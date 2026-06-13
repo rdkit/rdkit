@@ -68,7 +68,7 @@ class SynthonShapeInput {
 #endif
   }
 
-  GaussianShape::ShapeInput &getShapes() const;
+  GaussianShape::ShapeInput &getShapes() const {}
 
   double getDummyVolume(unsigned int shapeNum) const;
   unsigned int getNumDummyAtoms() const;

@@ -37,9 +37,9 @@ import unittest
 
 from pathlib import Path
 
-from rdkit import Chem, rdBase
+from rdkit import Chem
 from rdkit.Chem import (rdSynthonSpaceSearch, rdFingerprintGenerator,
-                        rdRascalMCES, rdGeneralizedSubstruct, rdMolDescriptors,
+                        rdRascalMCES, rdGeneralizedSubstruct,
                         rdDistGeom, rdGaussianShape)
 
 
@@ -134,7 +134,7 @@ class TestCase(unittest.TestCase):
     params.similarityCutoff = 0.45
     params.possibleHitsFile = "fp_poss_hits_a.txt"
     params.writePossibleHitsAndStop = True
-    query = Chem.MolFromSmiles("O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1") 
+    query = Chem.MolFromSmiles("O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1")
     fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
     results = synthonspace.FingerprintSearch(query, fpgen, params)
     self.assertEqual(0, len(results.GetHitMolecules()))
@@ -143,7 +143,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(196, len(results.GetHitMolecules()))
 
     Path(params.possibleHitsFile).unlink()
-    
+
   def testEnumerate(self):
     fName = self.sssDir / "amide_space.txt"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
@@ -202,7 +202,7 @@ class TestCase(unittest.TestCase):
     results = synthonspace.RascalSearch(Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"),
                                              rascalOpts, params, 0, 100)
     self.assertEqual(10, len(results.GetHitMolecules()))
-    
+
 
   def testExtendedSubsructureSearch(self):
     fName = self.sssDir / "extended_query.csv"
@@ -236,7 +236,7 @@ class TestCase(unittest.TestCase):
                                               finishLine=1000)
     self.assertEqual(220, len(results.GetHitMolecules()))
     Path(params.possibleHitsFile).unlink()
-    
+
     fName = self.sssDir / "extended_query.csv"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadTextFile(fName)
@@ -253,7 +253,7 @@ class TestCase(unittest.TestCase):
     results = synthonspace.SubstructureSearch(xqry, smParams, params, 0, 10)
     self.assertEqual(10, len(results.GetHitMolecules()))
     Path(params.possibleHitsFile).unlink()
-    
+
   def testHeavyAtomCutoffs(self):
     fName = self.sssDir / "idorsia_toy_space_a.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
@@ -309,12 +309,12 @@ class TestCase(unittest.TestCase):
     ssparams.confRMSThreshold = 0.25
     ssparams.randomSeed = 0xdac
     ssparams.bestHit = True
-    
+
     ssparams.fragSimilarityAdjuster = 0.2
     ssparams.approxSimilarityAdjuster = 0.2
     ssparams.similarityCutoff = 0.98
     ssparams.timeOut = 0
-    
+
     results = synthonspace.ShapeSearch(query, ssparams)
     self.assertEqual(len(results.GetHitMolecules()), 0)
     for hit in results.GetHitMolecules():
@@ -336,7 +336,7 @@ class TestCase(unittest.TestCase):
     buildParams = rdSynthonSpaceSearch.ShapeBuildParams()
     buildParams.numThreads = 1
     buildParams.setUserConformerGenerator(makeConformers)
-    
+
     synthonspace2 = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace2.ReadTextFile(fName)
     synthonspace2.BuildSynthonShapes(buildParams)
@@ -349,7 +349,7 @@ class TestCase(unittest.TestCase):
     excVolMol = Chem.MolFromSmiles("C.C=O.CC.CC.CC(N)=O.CCC.CCC.CCC.CCC(=O)N[C@@H](C)C(=O)NCC=O.CCC(C)C.CCC(C)C.CCCC(=O)N[C@H](CN)CO.CCCCNC=O.CCCN[C@H](C=O)[C@@H](C)O.CCNC(=N)N.CNCC(N)=O.CNCCN.N.N.N=C(N)N.NC[C@H](CC(=O)O)NC=O.O.O.c1c[nH]cn1.CCC(C)C |(23.735,-5.551,4.831;10.558,-20.222,6.049;10.782,-19.593,7.082;25.756,-7.961,1.508;24.4,-8.595,1.992;7.488,-19.618,10.529;8.946,-19.661,10.098;16.988,-18.147,6.134;16.576,-18.196,7.564;15.432,-17.604,7.854;17.24,-18.815,8.408;15.229,-10.345,10.204;14.148,-9.909,9.204;13.16,-11.048,8.967;22.155,-3.456,-2.463;20.831,-2.784,-2.822;19.665,-3.765,-2.706;13.808,-17.366,17.137;12.337,-17.174,16.743;12.24,-16.466,15.411;18.52,-8.706,8.462;19.494,-9.564,7.605;19.097,-9.56,6.108;17.957,-9.849,5.775;20.037,-9.291,5.223;19.811,-9.168,3.789;20.952,-8.374,3.183;19.66,-10.496,3.038;20.161,-11.523,3.493;19.033,-10.416,1.856;18.853,-11.525,0.927;17.429,-11.999,0.744;16.5,-11.418,1.302;20.813,-11.741,-2.325;22.348,-11.427,-2.65;23.303,-11.616,-1.434;24.76,-11.817,-1.924;23.177,-10.46,-0.471;15.598,-14.535,14.266;14.867,-13.332,13.467;13.366,-13.102,13.804;13.147,-12.641,15.286;12.71,-12.136,12.79;18.012,-12.649,11.567;19.478,-12.385,11.172;20.187,-13.687,10.696;19.563,-14.252,9.404;18.599,-15.004,9.477;20.098,-13.86,8.229;19.648,-14.29,6.885;19.589,-15.803,6.809;18.634,-16.353,6.048;20.625,-13.781,5.83;20.759,-12.365,5.889;10.588,-11.836,3.288;11.37,-12.826,2.444;12.677,-13.19,3.171;13.48,-14.365,2.585;14.129,-13.976,1.342;15.412,-14.212,1.087;16.186,-14.727,1.907;7.421,-11.667,6.162;6.675,-12.99,6.581;6.654,-13.078,8.098;7.823,-13.191,8.731;7.885,-13.096,10.19;8.84,-11.926,10.495;9.77,-11.686,9.72;8.317,-14.401,10.877;7.872,-15.676,10.12;9.729,-14.357,11.106;13.973,-20.975,6.768;14.488,-21.058,8.204;13.543,-20.563,9.217;12.621,-21.314,9.805;11.859,-20.81,10.766;12.435,-22.565,9.423;14.659,-3.563,5.5;14.605,-4.881,5.293;13.35,-5.606,5.104;12.661,-5.673,6.457;11.536,-6.4,6.552;13.138,-5.069,7.429;21.154,-5.393,6.387;20.372,-4.647,5.612;19.099,-5.165,5.119;17.966,-4.53,5.886;17.138,-3.732,5.2;12.496,-8.081,8.665;12.367,-16.371,3.412;9.009,-17.463,14.046;9.374,-18.5,14.785;8.763,-18.749,15.936;10.373,-19.272,14.373;20.368,-1.798,-0.556;20.957,-1.177,0.463;20.595,-1.63,1.881;19.074,-1.555,2.174;18.319,-2.781,1.667;18.177,-2.926,0.433;17.852,-3.574,2.5;21.396,-0.863,2.83;21.647,-1.266,4.08;21.129,-2.256,4.588;26.022,-4.63,2.497;26.497,-10.537,-0.853;16.554,-20.899,12.518;16.264,-20.015,11.532;15.125,-19.344,11.93;14.762,-19.853,13.111;15.582,-20.814,13.498;27.715,-4.512,-2.12;27.605,-5.904,-2.016;28.301,-6.74,-2.887;29.098,-6.158,-3.87;28.228,-8.243,-2.741),wD:25.17,35.26,65.51,68.55,96.75,wU:40.30,49.38|")
     excVol = rdGaussianShape.ShapeInput(excVolMol, -1, rdGaussianShape.ShapeInputOptions(),
                                         rdGaussianShape.ShapeOverlayOptions())
-      
+
     ssparams = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     ssparams.excludedVolume = excVol
     ssparams.fragSimilarityAdjuster = 0.2
@@ -365,7 +365,7 @@ class TestCase(unittest.TestCase):
     ovlyOptions.simAlpha = 0.95
     ovlyOptions.simBeta = 0.05
     ssparams.shapeOverlayOptions = ovlyOptions
-    
+
     fName = self.sssDir / "4ala_shapes.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadDBFile(fName)
@@ -374,7 +374,7 @@ class TestCase(unittest.TestCase):
 
     hits = synthonspace.ShapeSearch(comb_4aji_4aj1, ssparams)
     self.assertEqual(len(hits.GetHitMolecules()), 1)
-    
+
 
   def testShapePossibleHitsWrite(self):
     fName = self.sssDir / "amide_space_shapes.spc"
@@ -403,7 +403,7 @@ class TestCase(unittest.TestCase):
     hits = synthonspace.ShapeSearch(query, 0, -1, ssparams)
     self.assertEqual(len(hits.GetHitMolecules()), 3)
     phf.unlink()
-    
+
 
 if __name__ == "__main__":
   unittest.main()
