@@ -61,6 +61,10 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
 
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()
+
 rdkit_test(molStandardizeTest test1.cpp LINK_LIBRARIES MolStandardize )
 rdkit_test(molNormalizeTest testNormalize.cpp LINK_LIBRARIES MolStandardize )
 rdkit_test(molValidateTest testValidate.cpp LINK_LIBRARIES MolStandardize )

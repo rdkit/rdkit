@@ -109,6 +109,9 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
   if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
   endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+  if(RDK_BUILD_NANOBIND_WRAPPERS)
+    add_subdirectory(nbWrap)
+  endif(RDK_BUILD_NANOBIND_WRAPPERS)
 
   rdkit_test(testCoordGen test.cpp
     LINK_LIBRARIES

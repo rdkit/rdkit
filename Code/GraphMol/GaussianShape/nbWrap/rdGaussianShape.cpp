@@ -36,20 +36,21 @@ void set_customFeatures(GaussianShape::ShapeInputOptions &shp, nb::object s) {
   auto numVecs = nb::len(s);
   shp.customFeatures.reserve(numVecs);
   for (auto i = 0u; i < numVecs; ++i) {
-    nb::object outVec = s[i];
-    auto numFeats = nb::len(outVec);
+    const nb::object vec = s[i];
+    auto numFeats = nb::len(vec);
     std::vector<GaussianShape::CustomFeature> feats;
     feats.reserve(numFeats);
     for (auto j = 0u; j < numFeats; ++j) {
-      nb::object feat = outVec[j];
+      const nb::object feat = vec[j];
       unsigned int featType = nb::cast<unsigned int>(feat[0]);
       RDGeom::Point3D pos = nb::cast<RDGeom::Point3D>(feat[1]);
       double radius = nb::cast<double>(feat[2]);
+
       std::vector<unsigned int> atoms;
       if (nb::len(feat) == 4) {
-        nb::object featAtoms = feat[3];
-        for (unsigned int k = 0; k < nb::len(featAtoms); ++k) {
-          atoms.push_back(nb::cast<unsigned int>(featAtoms[k]));
+        const nb::object atms = feat[3];
+        for (unsigned int k = 0; k < nb::len(atms); ++k) {
+          atoms.push_back(nb::cast<unsigned int>(atms[k]));
         }
       }
       feats.emplace_back(featType, pos, radius, atoms);
@@ -62,24 +63,24 @@ nb::tuple get_customFeatures(const GaussianShape::ShapeInputOptions &shp) {
   nb::list allFeatLists;
   for (const auto &feats : shp.customFeatures) {
     nb::list featList;
-    for (const auto &feat : feats) {
+    for (const auto &val : feats) {
       nb::list elem;
-      elem.append(static_cast<int>(feat.type));
-      elem.append(feat.pos);
-      elem.append(feat.rad);
-      elem.append(feat.atoms);
-      featList.append(elem);
+      elem.append(static_cast<int>(val.type));
+      elem.append(val.pos);
+      elem.append(val.rad);
+      elem.append(val.atoms);
+      featList.append(nb::tuple(elem));
     }
-    allFeatLists.append(featList);
+    allFeatLists.append(nb::tuple(featList));
   }
   return nb::tuple(allFeatLists);
 }
 
-double getShapeVolume_helper(const GaussianShape::ShapeInput &shape) {
+double getShapeVolumeHelper(const GaussianShape::ShapeInput &shape) {
   return shape.getShapeVolume();
 }
 
-double getColorVolume_helper(const GaussianShape::ShapeInput &shape) {
+double getColorVolumeHelper(const GaussianShape::ShapeInput &shape) {
   return shape.getColorVolume();
 }
 
@@ -92,14 +93,18 @@ nb::tuple bestSimilarity_helper(
   auto bestSim = refShape.bestSimilarity(
       fitShape, bestThisShape, bestFitShape, bestXform, threshold,
       py_overlayOpts.value_or(GaussianShape::ShapeOverlayOptions()));
+  nb::list results;
+  results.append(std::make_tuple(bestSim[0], bestSim[1], bestSim[2]));
+  results.append(bestThisShape);
+  results.append(bestFitShape);
   nb::list pyMatrix;
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 4; ++j) {
       pyMatrix.append(bestXform.getValUnchecked(i, j));
     }
   }
-  return nb::make_tuple(nb::make_tuple(bestSim[0], bestSim[1], bestSim[2]),
-                        bestThisShape, bestFitShape, pyMatrix);
+  results.append(pyMatrix);
+  return nb::tuple(results);
 }
 
 double maxPossibleSimilarity_helper(
@@ -120,6 +125,7 @@ nb::tuple scoreMolAllConfs_helper(
     std::optional<GaussianShape::ShapeInputOptions> py_refOpts,
     std::optional<GaussianShape::ShapeInputOptions> py_fitOpts,
     std::optional<GaussianShape::ShapeOverlayOptions> py_overlayOpts) {
+  nb::list results;
   std::vector<std::vector<double>> combScores;
   int bestRefConf, bestFitConf;
   RDGeom::Transform3D bestXform;
@@ -129,7 +135,6 @@ nb::tuple scoreMolAllConfs_helper(
       py_fitOpts.value_or(GaussianShape::ShapeInputOptions()),
       py_overlayOpts.value_or(GaussianShape::ShapeOverlayOptions()),
       &bestXform);
-
   nb::list pyScores;
   for (const auto &scores : combScores) {
     nb::list s;
@@ -138,14 +143,17 @@ nb::tuple scoreMolAllConfs_helper(
     }
     pyScores.append(s);
   }
-
+  results.append(pyScores);
+  results.append(bestRefConf);
+  results.append(bestFitConf);
   nb::list pyMatrix;
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 4; ++j) {
       pyMatrix.append(bestXform.getValUnchecked(i, j));
     }
   }
-  return nb::make_tuple(pyScores, bestRefConf, bestFitConf, pyMatrix);
+  results.append(pyMatrix);
+  return nb::tuple(results);
 }
 
 }  // namespace helpers
@@ -228,7 +236,7 @@ and optionally a list of indices of the atoms that the feature was derived from.
           },
           R"DOC(Non-standard radii to use for the atoms specified by their indices
 in the molecule.  Not all atoms need have a radius specified.
-    A list of tuples of [int, float].)DOC")
+A list of tuples of [int, float].)DOC")
       .def_rw(
           "shapePruneThreshold",
           &GaussianShape::ShapeInputOptions::shapePruneThreshold,
@@ -334,11 +342,10 @@ faster but gives less precise overlays.  Default=0.001.)DOC")
           "Get the number of shapes.  There will be a shape for each conformation "
           "of the input molecule, unless shape pruning was carried out in which case"
           " there may be fewer.")
-      .def_prop_ro("ShapeVolume", &helpers::getShapeVolume_helper,
-                   "Get the volume due to the atoms for the active shape.")
-      .def_prop_ro(
-          "ColorVolume", &helpers::getColorVolume_helper,
-          "Get the volume of the shape's color features for the active shape.")
+      .def_prop_ro("ShapeVolume", &helpers::getShapeVolumeHelper,
+                   "Get the shape's volume due to the atoms.")
+      .def_prop_ro("ColorVolume", &helpers::getColorVolumeHelper,
+                   "Get the volume of the shape's color features.")
       .def(
           "NormalizeCoords", &GaussianShape::ShapeInput::normalizeCoords,
           "Align the principal axes to the cartesian axes and centre on the origin."
@@ -351,8 +358,7 @@ faster but gives less precise overlays.  Default=0.001.)DOC")
           "  If includeColors is True, (default is False) the color features"
           " will be added as xenon atoms.  If withBonds is True (the default)"
           " a molecule with bonds will be created, if not then just atoms at the"
-          " appropriate positions will be produced.",
-          nb::rv_policy::take_ownership)
+          " appropriate positions will be produced.")
       .def(
           "BestSimilarity", &helpers::bestSimilarity_helper, "fitShape"_a,
           "threshold"_a = -1.0, "overlayOpts"_a = nb::none(),
@@ -619,8 +625,8 @@ Returns
 )DOC");
 
   m.def("ScoreMoleculeAllConformers", &helpers::scoreMolAllConfs_helper,
-        "ref"_a, "fit"_a, "refOpts"_a = nb::none(), "fitOpts"_a = nb::none(),
-        "overlayOpts"_a = nb::none(),
+        nb::arg("ref"), nb::arg("fit"), nb::arg("refOpts") = nb::none(),
+        nb::arg("fitOpts") = nb::none(), nb::arg("overlayOpts") = nb::none(),
         R"DOC(Calculate the scores for the alignment of all conformers
  of the fit molecule onto the reference.  The molecules themselves are not
  altered.
