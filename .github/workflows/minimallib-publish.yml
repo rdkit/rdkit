@@ -63,7 +63,7 @@ jobs:
           node-version: '22'
 
       - name: Run tests
-        run: RDKIT_MINIMAL_JS=$PWD/Code/MinimalLib/dist/RDKit_minimal.js node Code/MinimalLib/tests/tests.js
+        run: node Code/MinimalLib/tests/tests.js
 
   publish:
     runs-on: ubuntu-latest

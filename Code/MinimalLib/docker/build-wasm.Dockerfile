@@ -112,7 +112,7 @@ RUN BOOST_CMAKE_DIR=$(find ${EM_CACHE}/sysroot/lib/cmake -name BoostConfig.cmake
         -DZLIB_LIBRARY="${EM_CACHE}/sysroot/lib/wasm32-emscripten/libz.a" \
         -DCMAKE_CXX_FLAGS="${EXCEPTION_HANDLING} -O3 -DNDEBUG" \
         -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING} -O3 -DNDEBUG -DCOMPILE_ANSI_ONLY" \
-        "-DCMAKE_EXE_LINKER_FLAGS=${EXCEPTION_HANDLING} -s STACK_OVERFLOW_CHECK=1 -s USE_PTHREADS=0 -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB -s MODULARIZE=1 -s EXPORT_NAME='initRDKitModule' -s USE_ZLIB=1 --emit-tsd RDKit_minimal.d.ts" \
+        "-DCMAKE_EXE_LINKER_FLAGS=${EXCEPTION_HANDLING} -s STACK_OVERFLOW_CHECK=1 -s USE_PTHREADS=0 -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB -s MODULARIZE=1 -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=1 -s EXPORT_NAME='initRDKitModule' -s USE_ZLIB=1 --emit-tsd RDKit_minimal.d.ts" \
         ..
 
 # Patch to make InChI code work with emscripten

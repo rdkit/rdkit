@@ -42,4 +42,4 @@ jobs:
         run: mv Code/MinimalLib/dist/package.json Code/MinimalLib/package.json
 
       - name: Test WASM artifacts
-        run: RDKIT_MINIMAL_JS=$PWD/Code/MinimalLib/dist/RDKit_minimal.js node Code/MinimalLib/tests/tests.js
+        run: node Code/MinimalLib/tests/tests.js
