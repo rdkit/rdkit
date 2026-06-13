@@ -531,15 +531,16 @@ class TestCase(unittest.TestCase):
 
   def testPythonDescriptorFunctor(self):
 
-    class NumAtoms(Descriptors.PropertyFunctor):
+    def numAtoms(mol):
+      return mol.GetNumAtoms()
+
+    class NumAtoms(rdMD.PythonPropertyFunctor):
 
       def __init__(self):
-        Descriptors.PropertyFunctor.__init__(self, "CustomNumAtoms", "1.0.0")
-
-      def __call__(self, mol):
-        return mol.GetNumAtoms()
+        rdMD.PythonPropertyFunctor.__init__(self, numAtoms, "CustomNumAtoms", "1.0.0")
 
     numAtoms = NumAtoms()
+    # numAtoms2 = NumAtoms()
     rdMD.Properties.RegisterProperty(numAtoms)
     props = rdMD.Properties(["CustomNumAtoms"])
     self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
@@ -558,6 +559,39 @@ class TestCase(unittest.TestCase):
     properties = rdMD.Properties(['exactmw', 'lipinskiHBA'])
     for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
       print(name, value)
+
+  def testPythonDescriptorFunctor2(self):
+    ''' NOTE: this test causes leak warnings in the nanobind wrappers '''
+
+    class NumAtoms2(Descriptors.PropertyFunctor):
+
+      def __init__(self):
+        Descriptors.PropertyFunctor.__init__(self, "CustomNumAtoms2", "1.0.0")
+
+      def __call__(self, mol):
+        return mol.GetNumAtoms()
+
+    numAtoms2 = NumAtoms2()
+    # numAtoms2 = NumAtoms()
+    rdMD.Properties.RegisterProperty(numAtoms2)
+    props = rdMD.Properties(["CustomNumAtoms2"])
+    self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
+
+    self.assertTrue("CustomNumAtoms2" in rdMD.Properties.GetAvailableProperties())
+    # check memory
+    self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
+    self.assertTrue("CustomNumAtoms2" in rdMD.Properties.GetAvailableProperties())
+
+    m = Chem.MolFromSmiles("c1ccccc1")
+    properties = rdMD.Properties()
+    for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
+      print(name, value)
+
+    properties = rdMD.Properties(['exactmw', 'lipinskiHBA'])
+    for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
+      print(name, value)
+    import gc
+    gc.collect()
 
   def testPropertyRanges(self):
     query = rdMD.MakePropertyRangeQuery("exactmw", 0, 1000)
@@ -628,8 +662,7 @@ class TestCase(unittest.TestCase):
   def testGithub1761(self):
     mol = Chem.MolFromSmiles('CC(F)(Cl)C(F)(Cl)C')
     # nanobind raises TypeError for negative unsigned int args; boost raised OverflowError
-    self.assertRaises((OverflowError, TypeError),
-                      lambda: rdMD.GetMorganFingerprint(mol, -1))
+    self.assertRaises((OverflowError, TypeError), lambda: rdMD.GetMorganFingerprint(mol, -1))
     self.assertRaises((OverflowError, TypeError),
                       lambda: rdMD.GetHashedMorganFingerprint(mol, 0, -1))
     self.assertRaises(ValueError, lambda: rdMD.GetHashedMorganFingerprint(mol, 0, 0))
