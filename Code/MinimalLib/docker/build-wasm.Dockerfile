@@ -74,6 +74,7 @@ COPY CMakeLists.txt license.txt *.in *.md *.cmake /src/rdkit/
 # ---------------------------------------------------------------------------
 FROM src-stage AS build-stage
 ARG EXCEPTION_HANDLING
+ARG VERSION=0.0.0
 
 WORKDIR /src
 ENV RDBASE=/src/rdkit
@@ -119,10 +120,13 @@ RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c /src/rdkit/Extern
     && sed 's/&& defined(__APPLE__)//' /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak >/src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c
 
 # Build
+ENV DIST_DIR="../Code/MinimalLib/dist/"
 RUN make -j2 RDKit_minimal
-RUN mkdir -p ../Code/MinimalLib/dist/
-RUN cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/dist/
-RUN cp Code/MinimalLib/RDKit_minimal.d.ts ../Code/MinimalLib/dist/
+RUN mkdir -p $DIST_DIR
+RUN cp Code/MinimalLib/RDKit_minimal.* $DIST_DIR
+RUN cp Code/MinimalLib/RDKit_minimal.d.ts $DIST_DIR
+RUN cp ../Code/MinimalLib/assets/package.json $DIST_DIR
+RUN cd $DIST_DIR && node -e "const p=require('./package.json');p.version='${VERSION}';require('fs').writeFileSync('./package.json',JSON.stringify(p,null,2))"
 
 # ---------------------------------------------------------------------------
 # Stage 4: export artifacts
