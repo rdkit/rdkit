@@ -13,5 +13,8 @@
     },
     "./RDKit_minimal.wasm": "./RDKit_minimal.wasm"
   },
+  "files": [
+    "./RDKit_minimal.js", "./RDKit_minimal.wasm", "./RDKit_minimal.d.ts"
+  ],
   "license": "BSD-3-Clause"
 }
