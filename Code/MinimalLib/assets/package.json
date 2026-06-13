@@ -1,0 +1,16 @@
+{
+  "name": "@charnley/rdkit-minimal",
+  "version": "0.0.0",
+  "description": "RDKit MinimalLib compiled to WebAssembly",
+  "type": "module",
+  "main": "./RDKit_minimal.js",
+  "types": "./RDKit_minimal.d.ts",
+  "exports": {
+    ".": {
+      "import": "./RDKit_minimal.js",
+      "require": "./RDKit_minimal.js",
+      "default": "./RDKit_minimal.js"
+    }
+  },
+  "license": "BSD-3-Clause"
+}
