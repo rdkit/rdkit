@@ -1,2 +1,5 @@
 *.png
-dist
+dist/
+node_modules/
+*.tgz
+package.json
