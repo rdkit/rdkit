@@ -316,6 +316,19 @@ cmake -DRDK_BUILD_PYTHON_WRAPPERS=OFF ..
 - If you'd like to be able to generate high-quality PNGs for structure depiction, you should have cairo installed on your system and build the RDKit with cairo support enabled: `-DRDK_BUILD_CAIRO_SUPPORT=ON`
 - If you'd like to be able to use the 3D descriptors, you need to have a copy of eigen3 installed. Most operating systems have an appropriate package.
 
+##### Speeding up the build
+
+Compiling the RDKit from source can take a while. Two opt-in options can help:
+
+- **Precompiled headers.** Add `-DRDK_USE_PRECOMPILED_HEADERS=ON` to your cmake command line to precompile the common, heavy headers (Boost, the STL, core RDKit headers) once per library instead of once per translation unit. This is off by default. The effect is platform/compiler dependent: it tends to be the largest win with MSVC on Windows, while GCC and Clang see more modest gains and apply stricter rules (a precompiled header must be built with the same flags as the translation units that consume it, and a translation unit can use only one). PCH also raises peak memory and disk use during the build, so on memory-constrained machines you may need to reduce build parallelism.
+- **Compiler caching.** Installing [`ccache`](https://ccache.dev/) (or [`sccache`](https://github.com/mozilla/sccache)) and pointing cmake at it lets repeated builds reuse previously compiled objects, which is especially helpful when switching branches or rebuilding after small changes:
+
+  ```
+  cmake -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache ..
+  ```
+
+  The two can be combined, though note that precompiled headers and compiler caches interact: see your cache's documentation (e.g. `ccache`'s `pch_defines`/`time_macros` `sloppiness` settings) if you want cache hits across builds that use precompiled headers.
+
 ##### Building the Java wrappers
 
 *Additional Requirements*

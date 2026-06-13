@@ -18,6 +18,12 @@
 // translation units, so it must remain re-includable.
 
 #ifdef USE_BETTER_ENUMS
+// Gate on enum.h's own include guard: enum.h is #pragma once / guarded, so it
+// only supplies the real BETTER_ENUM on its first inclusion. Without this check,
+// a second better-enums-mode inclusion in the same TU (e.g. transitively, after
+// USE_BETTER_ENUMS is already defined) would #undef the real macro and then hit
+// a no-op #include "enum.h", leaving BETTER_ENUM undefined.
+#ifndef BETTER_ENUMS_ENUM_H
 // Re-entering in better-enums mode: discard any fallback macros left over from
 // an earlier default-mode inclusion before enum.h supplies the real ones.
 #ifdef BETTER_ENUM
@@ -28,6 +34,7 @@
 #endif
 #include "enum.h"
 #define BETTER_ENUM_CLASS BETTER_ENUM
+#endif
 #else
 // Fallback: plain enums. Guarded so a later better-enums inclusion can redefine.
 #ifndef BETTER_ENUM
