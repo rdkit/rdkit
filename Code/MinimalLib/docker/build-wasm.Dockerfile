@@ -126,6 +126,7 @@ RUN mkdir -p $DIST_DIR
 RUN cp Code/MinimalLib/RDKit_minimal.* $DIST_DIR
 RUN cp Code/MinimalLib/RDKit_minimal.d.ts $DIST_DIR
 RUN cp ../Code/MinimalLib/assets/package.json $DIST_DIR
+RUN cp ../Code/MinimalLib/README.md $DIST_DIR
 RUN cd $DIST_DIR && node -e "const p=require('./package.json');p.version='${VERSION}';require('fs').writeFileSync('./package.json',JSON.stringify(p,null,2))"
 
 # ---------------------------------------------------------------------------
