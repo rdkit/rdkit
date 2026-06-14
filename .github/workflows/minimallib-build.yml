@@ -38,8 +38,15 @@ jobs:
             --output type=local,dest=Code/MinimalLib/dist \
             .
 
-      - name: Stamp package.json
-        run: mv Code/MinimalLib/dist/package.json Code/MinimalLib/package.json
-
       - name: Test WASM artifacts
         run: node Code/MinimalLib/tests/tests.js
+
+      - name: Make package
+        run: |
+          cd Code/MinimalLib/dist
+          npm pack
+
+      - name: Dry Publish
+        run: |
+          cd Code/MinimalLib/dist
+          npm publish --dry-run

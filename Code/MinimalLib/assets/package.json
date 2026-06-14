@@ -14,7 +14,9 @@
     "./RDKit_minimal.wasm": "./RDKit_minimal.wasm"
   },
   "files": [
-    "./RDKit_minimal.js", "./RDKit_minimal.wasm", "./RDKit_minimal.d.ts"
+    "./RDKit_minimal.d.ts",
+    "./RDKit_minimal.js",
+    "./RDKit_minimal.wasm"
   ],
   "publishConfig": {
     "access": "public"

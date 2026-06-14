@@ -81,18 +81,18 @@ jobs:
           name: dist
           path: Code/MinimalLib/dist/
 
-      - name: Stamp package.json
-        run: mv Code/MinimalLib/dist/package.json Code/MinimalLib/package.json
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '26'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Upgrade npm
-        run: npm install -g npm@latest
+      - name: Make package
+        run: |
+          cd Code/MinimalLib/dist
+          npm pack
 
       - name: Publish to npm
-        working-directory: Code/MinimalLib
-        run: npm publish --access public
+        run: |
+          cd Code/MinimalLib/dist
+          npm publish --access public
