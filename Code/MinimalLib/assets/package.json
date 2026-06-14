@@ -16,5 +16,8 @@
   "files": [
     "./RDKit_minimal.js", "./RDKit_minimal.wasm", "./RDKit_minimal.d.ts"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "BSD-3-Clause"
 }
