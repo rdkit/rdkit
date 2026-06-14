@@ -24,13 +24,23 @@ jobs:
         run: |
           YEAR=$(grep -F 'set(RDKit_Year' CMakeLists.txt | cut -d'"' -f2)
           MONTH=$(grep -F 'set(RDKit_Month' CMakeLists.txt | cut -d'"' -f2)
-          MONTH=$((10#${MONTH}))
+          MONTH=$((10#$MONTH))
           REV=$(grep -F 'set(RDKit_Revision ' CMakeLists.txt | cut -d'"' -f2)
-          REV=$((10#${REV}))
-          MOD=$(grep -F 'set(RDKit_RevisionModifier' CMakeLists.txt | cut -d'"' -f2)
+          REV=$((10#$REV))
+
           VERSION="${YEAR}.${MONTH}.${REV}"
-          [ -n "$MOD" ] && VERSION="${VERSION}-${MOD}"
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+          MOD=$(grep -F 'set(RDKit_RevisionModifier' CMakeLists.txt | cut -d'"' -f2)
+
+          if [ -n "$MOD" ]; then
+            VERSION="${VERSION}-${MOD}"
+            IS_PRERELEASE="true"
+          else
+            IS_PRERELEASE="false"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -68,5 +78,12 @@ jobs:
       # use the trusted publishing flow. The npm documentation
       # recommends --provenance
       - name: Publish to npm
-        run: npm publish --provenance --access public
         working-directory: Code/MinimalLib/dist
+        run: |
+          IS_PRERELEASE="${{ steps.version.outputs.is_prerelease }}"
+
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            npm publish --provenance --access public --tag next
+          else
+            npm publish --provenance --access public
+          fi
