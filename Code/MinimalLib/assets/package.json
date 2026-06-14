@@ -18,6 +18,10 @@
     "./RDKit_minimal.js",
     "./RDKit_minimal.wasm"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/charnley/rdkit.git"
+  },
   "publishConfig": {
     "access": "public"
   },
