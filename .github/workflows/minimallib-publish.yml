@@ -46,6 +46,9 @@ jobs:
         working-directory: Code/MinimalLib/dist
         run: npm pack
 
+      # For Trusted Publishing (OIDC), npm expects the publish to
+      # use the trusted publishing flow. The npm documentation
+      # recommends --provenance
       - name: Publish to npm
-        run: npm publish --access public
+        run: npm publish --provenance --access public
         working-directory: Code/MinimalLib/dist
