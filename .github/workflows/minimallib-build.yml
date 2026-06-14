@@ -1,4 +1,4 @@
-name: Build MinimalLib WASM
+name: Build MinimalLib
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: Publish MinimalLib to npm
+name: Publish MinimalLib
 
 on:
   push:
@@ -44,12 +44,25 @@ jobs:
             --output type=local,dest=Code/MinimalLib/dist \
             .
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          registry-url: https://registry.npmjs.org
+
       - name: Test WASM artifacts
         run: node Code/MinimalLib/tests/tests.js
 
       - name: Make package
         working-directory: Code/MinimalLib/dist
         run: npm pack
+
+      - name: Debug npm and OIDC
+        run: |
+          npm --version
+          node --version
+          echo "OIDC URL: ${ACTIONS_ID_TOKEN_REQUEST_URL:+present}"
+          echo "OIDC TOKEN: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+present}"
 
       # For Trusted Publishing (OIDC), npm expects the publish to
       # use the trusted publishing flow. The npm documentation
