@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,61 +39,13 @@ jobs:
             --output type=local,dest=Code/MinimalLib/dist \
             .
 
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: Code/MinimalLib/dist/
-
-  test:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: Code/MinimalLib/dist/
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Run tests
+      - name: Test WASM artifacts
         run: node Code/MinimalLib/tests/tests.js
 
-  publish:
-    runs-on: ubuntu-latest
-    needs: test
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: Code/MinimalLib/dist/
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '26'
-          registry-url: 'https://registry.npmjs.org'
-
       - name: Make package
-        run: |
-          cd Code/MinimalLib/dist
-          npm pack
+        working-directory: Code/MinimalLib/dist
+        run: npm pack
 
       - name: Publish to npm
-        run: |
-          cd Code/MinimalLib/dist
-          npm publish --access public
+        run: npm publish --access public
+        working-directory: Code/MinimalLib/dist

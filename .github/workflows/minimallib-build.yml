@@ -42,11 +42,9 @@ jobs:
         run: node Code/MinimalLib/tests/tests.js
 
       - name: Make package
-        run: |
-          cd Code/MinimalLib/dist
-          npm pack
+        working-directory: Code/MinimalLib/dist
+        run: npm pack
 
       - name: Dry Publish
-        run: |
-          cd Code/MinimalLib/dist
-          npm publish --dry-run
+        working-directory: Code/MinimalLib/dist
+        run: npm publish --dry-run
