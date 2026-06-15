@@ -1180,7 +1180,7 @@ TorsionValue _getMacrocycleAllInSameRing14Type(
                      mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
                  (_checkMacrocycleAllInSameRingAmideEster14(
                      mol, bnd3, bnd1, atm4, atm3, atm2, atm1))) {
-        return {.type = TorsionType::TRANS, .extraDist = 0.1};  // TODO add 0.1
+        return {.type = TorsionType::TRANS, .extraDist = 0.1};
         // we saw that the currently defined max distance for trans
         // is still a bit too short, thus we add an additional 0.1,
         // which is the max that works without triangular smoothing
@@ -1197,7 +1197,7 @@ TorsionValue _getMacrocycleAllInSameRing14Type(
         if (atm2->getAtomicNum() == 7 && atm2->getDegree() == 3 &&
             atm1->getAtomicNum() == 1 && atm2->getTotalNumHs(true) == 1) {
           // secondary amide, this is the H
-          return {TorsionType::NONE};  // TODO
+          return {TorsionType::NONE};
         } else {
           return {TorsionType::TRANS};
         }
