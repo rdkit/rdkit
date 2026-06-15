@@ -1081,10 +1081,8 @@ TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
 void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
                    unsigned int bid3, ComputedData &accumData) {
   const Atom *atm2 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid1, bid2));
-  PRECONDITION(atm2, "");
   Atom::HybridizationType ahyb2 = atm2->getHybridization();
   const Atom *atm3 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid2, bid3));
-  PRECONDITION(atm3, "");
   Atom::HybridizationType ahyb3 = atm3->getHybridization();
   unsigned int nb = mol.getNumBonds();
   Path14Configuration path14;
@@ -1226,9 +1224,7 @@ void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   unsigned int bid3 = bnd3->getIdx();
 
   const Atom *atm2 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid1, bid2));
-  PRECONDITION(atm2, "");
   const Atom *atm3 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid2, bid3));
-  PRECONDITION(atm3, "");
 
   unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
   unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
@@ -1330,8 +1326,7 @@ void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       return;
   }
 
-  Path14Configuration path14 = {
-      .bid1 = bid1, .bid2 = bid2, .bid3 = bid3, .type = torsionValue.type};
+  Path14Configuration path14 = {bid1, bid2, bid3, torsionValue.type};
 
   // we only overwrite bounds if they are not 1-2 nor 1-3 distances
   _checkAndSetBounds(aid1, aid4, dl, du, mmat);
@@ -1408,7 +1403,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
           auto bid3 = bnd3->getIdx();
           if (bid3 != bid2) {
             auto id = getUnifiedId(bid1, bid2, bid3, nb);
-            if (!donePaths[id]) {  // == donePaths.end()) {
+            if (!donePaths[id]) {
               // we haven't dealt with this path before
               auto pid1 = getUnifiedId(bid1, bid2, nb);
               auto pid2 = getUnifiedId(bid2, bid3, nb);
