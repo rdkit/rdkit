@@ -65,12 +65,12 @@ class ScsrMolTest {
     unsigned int totalQueryBondCount;
     unsigned int querySgroupCount;
     ExpectedStatus expectedStatus;
-    RDKit::SCSRBaseHbondOptions scsrBaseHbondOptions;
+    SCSRUtils::SCSRBaseHbondOptions scsrBaseHbondOptions;
     std::vector<std::pair<unsigned int, Atom::ChiralType>> chiralChecks;
     std::vector<std::pair<unsigned int, Atom::ChiralType>> chiralChecksQuery;
 
     ScsrTest(std::string fileNameInit, ExpectedStatus expectedStatusInit,
-             SCSRBaseHbondOptions scsrBaseHbondOptions,
+             SCSRUtils::SCSRBaseHbondOptions scsrBaseHbondOptions,
              unsigned int totalAtomCountInit, unsigned int totalBondCountInit,
              unsigned int sgroupCountInit, unsigned int totalQueryAtomCountInit,
              unsigned int totalQueryBondCountInit,
@@ -119,11 +119,11 @@ class ScsrMolTest {
   ScsrMolTest() {
     ScsrTests = {
         ScsrMolTest::ScsrTest("DnaTest.mol", ExpectedStatus::Success,
-                              RDKit::SCSRBaseHbondOptions::Ignore, 254, 282, 38, 250,
+                              SCSRUtils::SCSRBaseHbondOptions::Ignore, 254, 282, 38, 250,
                               278, 34),
 
         ScsrMolTest::ScsrTest("DNASlurpErrorImport.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 81, 90, 13, 79, 88,
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 81, 90, 13, 79, 88,
                               11,
                               {{0, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
                                {22, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
@@ -134,7 +134,7 @@ class ScsrMolTest {
                                {41, Atom::ChiralType::CHI_TETRAHEDRAL_CW},
                                {61, Atom::ChiralType::CHI_TETRAHEDRAL_CW}}),
         ScsrMolTest::ScsrTest("DNASlurpErrorSketch.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 84, 93, 14, 82, 91,
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 84, 93, 14, 82, 91,
                               12,
                               {{51, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
                                {60, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
@@ -145,130 +145,130 @@ class ScsrMolTest {
                                {68, Atom::ChiralType::CHI_TETRAHEDRAL_CCW},
                                {76, Atom::ChiralType::CHI_TETRAHEDRAL_CCW}}),
         ScsrMolTest::ScsrTest("ValenceErrorScsr.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 38, 39, 6, 35, 36, 3),
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 38, 39, 6, 35, 36, 3),
 
         ScsrMolTest::ScsrTest("ValenceErrorScsr.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 38, 39, 6, 35, 36, 3),
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 38, 39, 6, 35, 36, 3),
         ScsrMolTest::ScsrTest("ValenceErrorScsr2.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 28, 28, 6, 25, 25, 3),
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 28, 28, 6, 25, 25, 3),
         ScsrMolTest::ScsrTest("RiboseFullname.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 45, 49, 8, 43, 47, 6),
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 45, 49, 8, 43, 47, 6),
         ScsrMolTest::ScsrTest("testSCSR.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 64, 66, 15, 57,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 64, 66, 15, 57,
                               59, 8),
 
         ScsrMolTest::ScsrTest("Conjugate.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 91, 91, 14, 87, 87,
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 91, 91, 14, 87, 87,
                               10),
         ScsrMolTest::ScsrTest("ModifiedPeptide2.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 438, 444, 81, 407,
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 438, 444, 81, 407,
                               413, 50),
         ScsrMolTest::ScsrTest("DnaBadPairs_NoCh.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 84, 94, 14, 80, 90,
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 84, 94, 14, 80, 90,
                               10),
         ScsrMolTest::ScsrTest("DnaBadPairs.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 84, 94, 14, 80,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 84, 94, 14, 80,
                               90, 10),
         ScsrMolTest::ScsrTest("DnaTest.mol", ExpectedStatus::FailsMolConversion,
-                              SCSRBaseHbondOptions::UseSapAll, 254, 300, 14,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 254, 300, 14,
                               250, 296, 10),
         ScsrMolTest::ScsrTest("wobblePairs2.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 169, 196, 26,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 169, 196, 26,
                               165, 192, 22),
         ScsrMolTest::ScsrTest("wobblePairs.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 169, 196, 26,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 169, 196, 26,
                               165, 192, 22),
         ScsrMolTest::ScsrTest("KellanRNA.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 299, 353, 44,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 299, 353, 44,
                               295, 349, 40),
         ScsrMolTest::ScsrTest("DnaTest2.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 83, 97, 14, 79,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 83, 97, 14, 79,
                               93, 10),
         ScsrMolTest::ScsrTest("DnaTest3.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 165, 194, 26,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 165, 194, 26,
                               161, 190, 22),
         ScsrMolTest::ScsrTest("KellanError.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 244, 263, 39,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 244, 263, 39,
                               236, 255, 31),
 
         ScsrMolTest::ScsrTest("TestRNA2_fixed.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 106, 117, 17,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 106, 117, 17,
                               104, 115, 15),
 
         ScsrMolTest::ScsrTest("DnaTest.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 254, 300, 38, 250,
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 254, 300, 38, 250,
                               296, 34),
         ScsrMolTest::ScsrTest("wobblePairs2.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 169, 196, 26, 165,
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 169, 196, 26, 165,
                               192, 22),
         ScsrMolTest::ScsrTest("wobblePairs.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 169, 196, 26, 165,
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 169, 196, 26, 165,
                               192, 22),
         ScsrMolTest::ScsrTest("DnaBadPairs.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 84, 94, 14, 80, 90,
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 84, 94, 14, 80, 90,
                               10),
         ScsrMolTest::ScsrTest("DnaTest2.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 83, 97, 14, 79, 93,
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 83, 97, 14, 79, 93,
                               10),
         ScsrMolTest::ScsrTest("DnaTest3.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 165, 194, 26, 161,
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 165, 194, 26, 161,
                               190, 22),
         ScsrMolTest::ScsrTest("KellanError.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 244, 263, 39, 236,
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 244, 263, 39, 236,
                               255, 31),
         ScsrMolTest::ScsrTest("TestRNA2_fixed.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::Auto, 106, 117, 17, 104,
+                              SCSRUtils::SCSRBaseHbondOptions::Auto, 106, 117, 17, 104,
                               115, 15),
 
         ScsrMolTest::ScsrTest(
             "TrastuzumabMaxPlus3Register.mol", ExpectedStatus::Success,
-            SCSRBaseHbondOptions::UseSapAll, 7606, 7793, 1451, 7080, 7267, 925),
+            SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 7606, 7793, 1451, 7080, 7267, 925),
         ScsrMolTest::ScsrTest(
             "TrastuzumabMaxRegister.mol", ExpectedStatus::Success,
-            SCSRBaseHbondOptions::UseSapAll, 7576, 7763, 1445, 7053, 7240, 922),
+            SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 7576, 7763, 1445, 7053, 7240, 922),
         ScsrMolTest::ScsrTest("Mixed.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 51, 54, 8, 51,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 51, 54, 8, 51,
                               54, 8),
         ScsrMolTest::ScsrTest("CrossLink.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 47, 48, 10, 45,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 47, 48, 10, 45,
                               46, 8),
         ScsrMolTest::ScsrTest("cyclic.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 45, 47, 8, 45,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 45, 47, 8, 45,
                               47, 8),
 
         ScsrMolTest::ScsrTest("Triplet.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 30, 30, 6, 27,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 30, 30, 6, 27,
                               27, 3),
         ScsrMolTest::ScsrTest("FromBioviaDoc.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 27, 26, 7, 25,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 27, 26, 7, 25,
                               24, 5),
         ScsrMolTest::ScsrTest("testSCSR.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 64, 66, 15, 57,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 64, 66, 15, 57,
                               59, 8),
         ScsrMolTest::ScsrTest(
             "badAtomName.mol", ExpectedStatus::FailsScsrParsing,
-            SCSRBaseHbondOptions::UseSapAll, 0, 0, 0, 0, 0, 0),
+            SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 0, 0, 0, 0, 0, 0),
         ScsrMolTest::ScsrTest("badClass.mol", ExpectedStatus::FailsScsrParsing,
-                              SCSRBaseHbondOptions::UseSapAll, 0, 0, 0, 0, 0,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 0, 0, 0, 0, 0,
                               0),
         ScsrMolTest::ScsrTest(
             "badClassTemplate.mol", ExpectedStatus::FailsScsrParsing,
-            SCSRBaseHbondOptions::UseSapAll, 0, 0, 0, 0, 0, 0),
+            SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 0, 0, 0, 0, 0, 0),
         ScsrMolTest::ScsrTest(
             "badMissingTemplate.mol", ExpectedStatus::FailsScsrParsing,
-            SCSRBaseHbondOptions::UseSapAll, 0, 0, 0, 0, 0, 0),
+            SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 0, 0, 0, 0, 0, 0),
         ScsrMolTest::ScsrTest("obj3dTest.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 27, 26, 7, 25,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 27, 26, 7, 25,
                               24, 5),
         ScsrMolTest::ScsrTest("obj3dTest2.mol", ExpectedStatus::Success,
-                              SCSRBaseHbondOptions::UseSapAll, 27, 26, 7, 25,
+                              SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 27, 26, 7, 25,
                               24, 5),
         ScsrMolTest::ScsrTest(
             "obj3dFoundTwice.mol", ExpectedStatus::FailsScsrParsing,
-            SCSRBaseHbondOptions::UseSapAll, 27, 26, 0, 27, 26, 0),
+            SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 27, 26, 0, 27, 26, 0),
         ScsrMolTest::ScsrTest(
             "SgroupFoundTwice.mol", ExpectedStatus::FailsScsrParsing,
-            SCSRBaseHbondOptions::UseSapAll, 0, 0, 0, 0, 0, 0),
+            SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 0, 0, 0, 0, 0, 0),
     };
   }
 
@@ -296,14 +296,14 @@ class ScsrMolTest {
     MolFromMACROMolParams molFromMACROMolParams;
     molFromMACROMolParams.includeLeavingGroups = true;
 
-    SCSRBaseHbondOptions scsrBaseHbondOptions = ScsrTest->scsrBaseHbondOptions;
+    SCSRUtils::SCSRBaseHbondOptions scsrBaseHbondOptions = ScsrTest->scsrBaseHbondOptions;
 
     std::unique_ptr<RDKit::ROMol> mol;
     if (ScsrTest->expectedStatus == ExpectedStatus::Success) {
-      REQUIRE_NOTHROW(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+      REQUIRE_NOTHROW(mol = SCSRUtils::MolFromSCSRFile(fName, pp, molFromMACROMolParams,
                                             scsrBaseHbondOptions));
     } else {
-      REQUIRE_THROWS(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+      REQUIRE_THROWS(mol = SCSRUtils::MolFromSCSRFile(fName, pp, molFromMACROMolParams,
                                            scsrBaseHbondOptions));
       return;
     }
@@ -317,7 +317,7 @@ class ScsrMolTest {
     MolWriterParams params;
     RDKit::MolToMolFile(*mol, fOutName, params, -1);
 
-    auto macroMol = MACROMolFromSCSRFile(fName, pp, scsrBaseHbondOptions);
+    auto macroMol = SCSRUtils::MACROMolFromSCSRFile(fName, pp, scsrBaseHbondOptions);
 
     MolToMACROParams molToMACROMolParams;
     auto outMacroMol = RDKit::MolToMACROMol(*(mol.get()), *(macroMol->getTemplateLibrary()),
@@ -328,9 +328,9 @@ class ScsrMolTest {
     CHECK(outMacroMol->getNumBonds() == macroMol->getNumBonds());
     CHECK(outMacroMol->size() == macroMol->size());
 
-    MACROMolToSCSRMolFile(*(outMacroMol.get()), fOutName2);
+    SCSRUtils::MACROMolToSCSRMolFile(*(outMacroMol.get()), fOutName2);
 
-    std::unique_ptr<RDKit::ROMol> molReadBackIn = MolFromSCSRFile(
+    std::unique_ptr<RDKit::ROMol> molReadBackIn = SCSRUtils::MolFromSCSRFile(
         fOutName2, pp, molFromMACROMolParams, scsrBaseHbondOptions);
 
     CHECK(molReadBackIn != nullptr);
@@ -348,10 +348,10 @@ class ScsrMolTest {
     molFromMACROMolParams.includeLeavingGroups = false;
     std::unique_ptr<RDKit::RWMol> molNoLeavingGroups;
     if (ScsrTest->expectedStatus == ExpectedStatus::Success) {
-      molNoLeavingGroups = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+      molNoLeavingGroups = SCSRUtils::MolFromSCSRFile(fName, pp, molFromMACROMolParams,
                                            scsrBaseHbondOptions);
     } else {
-      molNoLeavingGroups = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+      molNoLeavingGroups = SCSRUtils::MolFromSCSRFile(fName, pp, molFromMACROMolParams,
                                            scsrBaseHbondOptions);
       return;
     }
@@ -373,10 +373,10 @@ class ScsrMolTest {
     molFromMACROMolParams.includeLeavingGroups = true;
 
     if (ScsrTest->expectedStatus == ExpectedStatus::Success) {
-      REQUIRE_NOTHROW(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+      REQUIRE_NOTHROW(mol = SCSRUtils::MolFromSCSRFile(fName, pp, molFromMACROMolParams,
                                             scsrBaseHbondOptions));
     } else {
-      REQUIRE_THROWS(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+      REQUIRE_THROWS(mol = SCSRUtils::MolFromSCSRFile(fName, pp, molFromMACROMolParams,
                                            scsrBaseHbondOptions));
       return;
     }
@@ -407,14 +407,14 @@ class ScsrMolTest {
     MolFromMACROMolParams molFromMACROMolParams;
     molFromMACROMolParams.includeLeavingGroups = true;
     molFromMACROMolParams.macroTemplateNames = MACROTemplateNames::AsEntered;
-    SCSRBaseHbondOptions scsrBaseHbondOptions = ScsrTest->scsrBaseHbondOptions;
+    SCSRUtils::SCSRBaseHbondOptions scsrBaseHbondOptions = ScsrTest->scsrBaseHbondOptions;
 
     std::unique_ptr<RDKit::RWMol> mol;
     if (ScsrTest->expectedStatus == ExpectedStatus::Success) {
-      REQUIRE_NOTHROW(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+      REQUIRE_NOTHROW(mol = SCSRUtils::MolFromSCSRFile(fName, pp, molFromMACROMolParams,
                                             scsrBaseHbondOptions));
     } else {
-      REQUIRE_THROWS(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+      REQUIRE_THROWS(mol = SCSRUtils::MolFromSCSRFile(fName, pp, molFromMACROMolParams,
                                            scsrBaseHbondOptions));
       return;
     }
@@ -430,10 +430,10 @@ class ScsrMolTest {
     molFromMACROMolParams.macroTemplateNames = MACROTemplateNames::UseFirstName;
     std::unique_ptr<RWMol> mol2;
     if (ScsrTest->expectedStatus == ExpectedStatus::Success) {
-      REQUIRE_NOTHROW(mol2 = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+      REQUIRE_NOTHROW(mol2 = SCSRUtils::MolFromSCSRFile(fName, pp, molFromMACROMolParams,
                                              scsrBaseHbondOptions));
     } else {
-      REQUIRE_THROWS(mol2 = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+      REQUIRE_THROWS(mol2 = SCSRUtils::MolFromSCSRFile(fName, pp, molFromMACROMolParams,
                                             scsrBaseHbondOptions));
     }
 
@@ -473,10 +473,10 @@ TEST_CASE("nestedParens", "nestedParens") {
 
     MolFromMACROMolParams molFromMACROMolParams;
     molFromMACROMolParams.includeLeavingGroups = true;
-    SCSRBaseHbondOptions scsrBaseHbondOptions = SCSRBaseHbondOptions::Auto;
+    SCSRUtils::SCSRBaseHbondOptions scsrBaseHbondOptions = SCSRUtils::SCSRBaseHbondOptions::Auto;
 
     std::unique_ptr<RDKit::RWMol> mol;
-    REQUIRE_NOTHROW(mol = MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+    REQUIRE_NOTHROW(mol = SCSRUtils::MolFromSCSRFile(fName, pp, molFromMACROMolParams,
                                           scsrBaseHbondOptions));
 
     CHECK(mol != nullptr);
@@ -508,7 +508,7 @@ TEST_CASE("threeLetterCodeTest", "threeLetterCodeTest") {
     std::list<ScsrMolTest::ScsrTest> scsrTests{
         ScsrMolTest::ScsrTest(
             "PepTla.mol", ScsrMolTest::ExpectedStatus::Success,
-            SCSRBaseHbondOptions::UseSapAll, 26, 25, 7, 26, 25, 7),
+            SCSRUtils::SCSRBaseHbondOptions::UseSapAll, 26, 25, 7, 26, 25, 7),
 
     };
     ScsrMolTest scsrMolTest;

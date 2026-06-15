@@ -161,12 +161,12 @@ ROMol *MolFromMolBlockHelper(python::object imolBlock, bool sanitize,
 RDKit::ROMol *MolFromSCSRBlockHelper(const std::string &molBlock, bool sanitize,
                                      bool removeHs, python::object pyParams,
                                      python::object pyParams2) {
-  RDKit::SCSRBaseHbondOptions scsrBaseHbondOptions;
+  SCSRUtils::SCSRBaseHbondOptions scsrBaseHbondOptions;
   RDKit::MolFromMACROMolParams macroMolParams;
   if (pyParams) {
     macroMolParams = python::extract<RDKit::MolFromMACROMolParams>(pyParams);
     scsrBaseHbondOptions =
-        python::extract<RDKit::SCSRBaseHbondOptions>(pyParams2);
+        python::extract<SCSRUtils::SCSRBaseHbondOptions>(pyParams2);
   }
   std::istringstream inStream(molBlock);
   unsigned int line = 0;
@@ -175,7 +175,7 @@ RDKit::ROMol *MolFromSCSRBlockHelper(const std::string &molBlock, bool sanitize,
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = false;
-    auto mol = MolFromSCSRDataStream(inStream, line, params, macroMolParams,
+    auto mol = SCSRUtils::MolFromSCSRDataStream(inStream, line, params, macroMolParams,
                                      scsrBaseHbondOptions);
 
     return static_cast<ROMol *>(mol.release());
@@ -191,19 +191,19 @@ RDKit::ROMol *MolFromSCSRFileHelper(const std::string &molFilename,
                                     bool sanitize, bool removeHs,
                                     python::object pyParams,
                                     python::object pyParams2) {
-  RDKit::SCSRBaseHbondOptions scsrBaseHbondOptions;
+  SCSRUtils::SCSRBaseHbondOptions scsrBaseHbondOptions;
   RDKit::MolFromMACROMolParams macroMolParams;
   if (pyParams) {
     macroMolParams = python::extract<RDKit::MolFromMACROMolParams>(pyParams);
     scsrBaseHbondOptions =
-        python::extract<RDKit::SCSRBaseHbondOptions>(pyParams2);
+        python::extract<SCSRUtils::SCSRBaseHbondOptions>(pyParams2);
   }
   try {
     RDKit::v2::FileParsers::MolFileParserParams params;
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = false;
-    auto mol = RDKit::MolFromSCSRFile(molFilename, params, macroMolParams,
+    auto mol = SCSRUtils::MolFromSCSRFile(molFilename, params, macroMolParams,
                                       scsrBaseHbondOptions);
 
     return static_cast<ROMol *>(mol.release());
@@ -227,7 +227,7 @@ RDKit::MACROMol *MACROMolFromSCSRBlockHelper(const std::string &molBlock,
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = false;
-    auto scsrMol = RDKit::MACROMolFromSCSRDataStream(inStream, line, params);
+    auto scsrMol = SCSRUtils::MACROMolFromSCSRDataStream(inStream, line, params);
 
     return static_cast<MACROMol *>(scsrMol.release());
 
@@ -245,7 +245,7 @@ RDKit::MACROMol *MACROMolFromSCSRFileHelper(const std::string &molFilename,
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = false;
-    auto mol = RDKit::MACROMolFromSCSRFile(molFilename, params);
+    auto mol = SCSRUtils::MACROMolFromSCSRFile(molFilename, params);
 
     return static_cast<MACROMol *>(mol.release());
 
@@ -1996,11 +1996,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .value("CX_ALL_BUT_COORDS",
              RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
 
-  python::enum_<RDKit::SCSRBaseHbondOptions>("SCSRBaseHbondOptions")
-      .value("Ignore", RDKit::SCSRBaseHbondOptions::Ignore)
-      .value("UseSapAll", RDKit::SCSRBaseHbondOptions::UseSapAll)
-      .value("UseSapOne", RDKit::SCSRBaseHbondOptions::UseSapOne)
-      .value("Auto", RDKit::SCSRBaseHbondOptions::Auto);
+  python::enum_<SCSRUtils::SCSRBaseHbondOptions>("SCSRBaseHbondOptions")
+      .value("Ignore", SCSRUtils::SCSRBaseHbondOptions::Ignore)
+      .value("UseSapAll", SCSRUtils::SCSRBaseHbondOptions::UseSapAll)
+      .value("UseSapOne", SCSRUtils::SCSRBaseHbondOptions::UseSapOne)
+      .value("Auto", SCSRUtils::SCSRBaseHbondOptions::Auto);
 
   python::enum_<RDKit::MACROTemplateNames>("MACROTemplateNames")
       .value("UseFirstName", RDKit::MACROTemplateNames::UseFirstName)

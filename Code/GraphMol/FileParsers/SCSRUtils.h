@@ -26,80 +26,156 @@
 namespace RDKit {
 class RWMol;
 class Conformer;
+class SCSRUtils { // this class is a utility container - only static methods
+public:
+    // Delete the constructor to prevent instantiation
+    SCSRUtils() = delete;  //
 
-enum class SCSRBaseHbondOptions {
-  Ignore,     //<! Do not include base Hbonds in expanded output
-  UseSapAll,  //<!use all hbonds defined in SAPs
-              // can be more than one per base
-  UseSapOne,  //<!use only one SAP hbond per base
-              // If multiple SAPs are defined, use the first
-              // even if it is not the best
-              //(this just maintains the relationship between
-              // the to base pairs)
-  Auto        //<!For bases that are C,G,A,T,U,In (and
-              // derivatives) use the standard Watson-Crick
-              // Hbonding.  No SAPs need to be defined, and if
-              // defined, they are ignored.
-};
 
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromSCSRDataStream(
-    std::istream &inStream, unsigned int &line,
-    const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams =
-        RDKit::v2::FileParsers::MolFileParserParams(),
-    const RDKit::MolFromMACROMolParams &molFromMACROMolParams =
-        RDKit::MolFromMACROMolParams(),
-    const SCSRBaseHbondOptions scsrBaseHbondOptions =
-        SCSRBaseHbondOptions::Auto);
+    enum class SCSRBaseHbondOptions {
+    Ignore,     //<! Do not include base Hbonds in expanded output
+    UseSapAll,  //<!use all hbonds defined in SAPs
+                // can be more than one per base
+    UseSapOne,  //<!use only one SAP hbond per base
+                // If multiple SAPs are defined, use the first
+                // even if it is not the best
+                //(this just maintains the relationship between
+                // the to base pairs)
+    Auto        //<!For bases that are C,G,A,T,U,In (and
+                // derivatives) use the standard Watson-Crick
+                // Hbonding.  No SAPs need to be defined, and if
+                // defined, they are ignored.
+    };
 
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromSCSRBlock(
-    const std::string &molBlock,
-    const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams =
-        RDKit::v2::FileParsers::MolFileParserParams(),
-    const RDKit::MolFromMACROMolParams &molFromMACROMolParams =
-        RDKit::MolFromMACROMolParams(),
-    const SCSRBaseHbondOptions scsrBaseHbondOptions =
-        SCSRBaseHbondOptions::Auto);
 
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromSCSRFile(
-    const std::string &fName,
-    const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams =
-        RDKit::v2::FileParsers::MolFileParserParams(),
-    const RDKit::MolFromMACROMolParams &molFromMACROMolParams =
-        RDKit::MolFromMACROMolParams(),
-    const SCSRBaseHbondOptions scsrBaseHbondOptions =
-        SCSRBaseHbondOptions::Auto);
+private: 
+    class SCSRHbondData {
+    public:
+    std::string oldAttachLabel;
+    std::vector<bool> donorFlags;
+    SCSRHbondData() : oldAttachLabel("") {}
+    SCSRHbondData(const std::string &oldAttachLabel)
+        : oldAttachLabel(oldAttachLabel) {}
 
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MACROMol>
-MACROMolFromSCSRDataStream(
-    std::istream &inStream, unsigned int &line,
-    const RDKit::v2::FileParsers::MolFileParserParams &params =
-        RDKit::v2::FileParsers::MolFileParserParams(),
-    const SCSRBaseHbondOptions scsrBaseHbondOptions =
-        SCSRBaseHbondOptions::Auto);
+    SCSRHbondData(const SCSRHbondData &oldOne)
+        : oldAttachLabel(oldOne.oldAttachLabel), donorFlags(oldOne.donorFlags) {}
 
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRBlock(
-    const std::string &molBlock,
-    const RDKit::v2::FileParsers::MolFileParserParams &params =
-        RDKit::v2::FileParsers::MolFileParserParams(),
-    const SCSRBaseHbondOptions scsrBaseHbondOptions =
-        SCSRBaseHbondOptions::Auto);
+    SCSRHbondData &operator=(const SCSRHbondData &other) {
+        if (this == &other) {
+        return *this;
+        }
+        oldAttachLabel = other.oldAttachLabel;
+        donorFlags = other.donorFlags;
+        return *this;
+    }
+    };
 
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRFile(
-    const std::string &fName,
-    const RDKit::v2::FileParsers::MolFileParserParams &params =
-        RDKit::v2::FileParsers::MolFileParserParams(),
-    const SCSRBaseHbondOptions scsrBaseHbondOptions =
-        SCSRBaseHbondOptions::Auto);
+    struct HydrogenBondConnection {
+    unsigned int d_templateAtomIdx;
+    bool d_isDonor;
 
-RDKIT_FILEPARSERS_EXPORT std::string MACROMolToSCSRMolBlock(
-    MACROMol &macroMol,
-    const RDKit::MolWriterParams &params = RDKit::MolWriterParams(),
-    int confId = -1, bool keepBaseHbondInfo = true);
+    HydrogenBondConnection(unsigned int templateAtomIdx, bool isDonor)
+        : d_templateAtomIdx(templateAtomIdx), d_isDonor(isDonor) {}
+    };
 
-RDKIT_FILEPARSERS_EXPORT void MACROMolToSCSRMolFile(
-    RDKit::MACROMol &macroMol, const std::string &fName,
-    const RDKit::MolWriterParams &params = RDKit::MolWriterParams(),
-    int confId = -1);
+    struct BondToAdd {
+    unsigned int d_beginAtomIdx;
+    unsigned int d_endAtomIdx;
+    std::string d_attachPt1;
+    std::string d_attachPt2;
+    BondToAdd(unsigned int beginAtomIdx, unsigned int endAtomIdx,
+                const std::string &attachPt1, const std::string &attachPt2)
+        : d_beginAtomIdx(beginAtomIdx),
+            d_endAtomIdx(endAtomIdx),
+            d_attachPt1(attachPt1),
+            d_attachPt2(attachPt2) {}
+    auto getBeginAtomIdx() const { return d_beginAtomIdx; }
+    auto getEndAtomIdx() const { return d_endAtomIdx; }
+    auto getAttachPt1() const { return d_attachPt1; }
+    auto getAttachPt2() const { return d_attachPt2; }
+    };
+
+
+private:
+    static void skipSpaces(const char *&linePtr) ;
+
+    static std::string getToken(const char *&linePtr, char delim);
+
+
+    static void makeHydrogenBonds(unsigned int atom1Idx, unsigned int atom2Idx,
+                        std::vector<bool> donorFlags1,
+                        std::vector<bool> donorFlags2,
+                        std::vector<BondToAdd> &hBondsToAdd);
+
+    static std::string getQuotedToken(const char *&linePtr);
+
+    static void parseTemplateLine(std::string lineStr,
+                       unsigned int &line,  std::string &templateClass, std::vector<std::string> &templateNames, std::vector<std::pair<std::string,std::string>> &otherTokens);
+
+
+public:
+
+    static RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromSCSRDataStream(
+        std::istream &inStream, unsigned int &line,
+        const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams =
+            RDKit::v2::FileParsers::MolFileParserParams(),
+        const RDKit::MolFromMACROMolParams &molFromMACROMolParams =
+            RDKit::MolFromMACROMolParams(),
+        const SCSRBaseHbondOptions scsrBaseHbondOptions =
+            SCSRBaseHbondOptions::Auto);
+
+    static RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromSCSRBlock(
+        const std::string &molBlock,
+        const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams =
+            RDKit::v2::FileParsers::MolFileParserParams(),
+        const RDKit::MolFromMACROMolParams &molFromMACROMolParams =
+            RDKit::MolFromMACROMolParams(),
+        const SCSRBaseHbondOptions scsrBaseHbondOptions =
+            SCSRBaseHbondOptions::Auto);
+
+    static RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromSCSRFile(
+        const std::string &fName,
+        const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams =
+            RDKit::v2::FileParsers::MolFileParserParams(),
+        const RDKit::MolFromMACROMolParams &molFromMACROMolParams =
+            RDKit::MolFromMACROMolParams(),
+        const SCSRBaseHbondOptions scsrBaseHbondOptions =
+            SCSRBaseHbondOptions::Auto);
+
+    static RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MACROMol>
+    MACROMolFromSCSRDataStream(
+        std::istream &inStream, unsigned int &line,
+        const RDKit::v2::FileParsers::MolFileParserParams &params =
+            RDKit::v2::FileParsers::MolFileParserParams(),
+        const SCSRBaseHbondOptions scsrBaseHbondOptions =
+            SCSRBaseHbondOptions::Auto);
+
+    static RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRBlock(
+        const std::string &molBlock,
+        const RDKit::v2::FileParsers::MolFileParserParams &params =
+            RDKit::v2::FileParsers::MolFileParserParams(),
+        const SCSRBaseHbondOptions scsrBaseHbondOptions =
+            SCSRBaseHbondOptions::Auto);
+
+    static RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRFile(
+        const std::string &fName,
+        const RDKit::v2::FileParsers::MolFileParserParams &params =
+            RDKit::v2::FileParsers::MolFileParserParams(),
+        const SCSRBaseHbondOptions scsrBaseHbondOptions =
+            SCSRBaseHbondOptions::Auto);
+
+    static RDKIT_FILEPARSERS_EXPORT std::string MACROMolToSCSRMolBlock(
+        MACROMol &macroMol,
+        const RDKit::MolWriterParams &params = RDKit::MolWriterParams(),
+        int confId = -1, bool keepBaseHbondInfo = true);
+
+    static RDKIT_FILEPARSERS_EXPORT void MACROMolToSCSRMolFile(
+        RDKit::MACROMol &macroMol, const std::string &fName,
+        const RDKit::MolWriterParams &params = RDKit::MolWriterParams(),
+        int confId = -1);
+
+}; // end of class SCSRUtils
+
 }  // namespace RDKit
 
 #endif

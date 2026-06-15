@@ -137,6 +137,29 @@ void RDKit::MACROMol::addMacroBond(unsigned int fromAtomIdx,
   }
 }
 
+MACROMolTemplate *MACROMol::getMutableTemplate(
+    unsigned int atomIdx) {
+  const auto atom = this->getAtomWithIdx(atomIdx);
+
+  std::string atomClass;
+  std::string dummyLabel = "";
+  if (!atom->getPropIfPresent(common_properties::dummyLabel, dummyLabel) ||
+      dummyLabel == "" ||
+      !atom->getPropIfPresent(common_properties::molAtomClass, atomClass) ||
+      atomClass == "") {
+    return nullptr;  // ordinary atom, not a macro atom
+  }
+
+  auto templatePtr = d_templateLibrary.findMutable(atomClass, dummyLabel);
+  if (templatePtr == nullptr) {
+    std::ostringstream errout;
+    errout << "Template not found for atom " << dummyLabel;
+    throw RDKit::FileParseException(errout.str());
+  }
+  return templatePtr;
+}
+
+
 const MACROMolTemplate *RDKit::MACROMol::getTemplate(
     unsigned int atomIdx) const {
   const auto atom = this->getAtomWithIdx(atomIdx);

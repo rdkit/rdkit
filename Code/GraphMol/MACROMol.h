@@ -58,6 +58,8 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplate : public RDKit::RWMol {
 class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib {
 
   private:
+    friend class MACROMol;
+
     // All templates in the library are owned by the library. Consumers get
     // const access; the library mutates them only during construction.
     std::vector<std::unique_ptr<MACROMolTemplate>> d_templates;
@@ -75,6 +77,16 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib {
     };
 
     std::unordered_map<MACROMolTemplateKey, unsigned int, MACROMolTemplateKeyHash> d_keyToIndex;
+
+  protected:
+  
+    RDKit::MACROMolTemplate* findMutable(const std::string& templateClass, const std::string& templateName) {
+      auto iter = d_keyToIndex.find({templateClass, templateName}); 
+      if (iter == d_keyToIndex.end()) {
+        return nullptr;
+      }
+      return d_templates.at(iter->second).get();
+    }
 
   public:
     MACROMolTemplateLib() = default;
@@ -123,8 +135,13 @@ class RDKIT_GRAPHMOL_EXPORT MACROMolTemplateLib {
 
 class RDKIT_GRAPHMOL_EXPORT MACROMol : public RWMol {
  private:
+   friend class SCSRUtils;
   // elements (MACROMolTemplate items) of the library are owned by the library
   MACROMolTemplateLib d_templateLibrary;
+
+  protected:
+    // the following are used in SCSR parsing, where the templates are still being contructed, and should not be used by other callers
+    MACROMolTemplate *getMutableTemplate(unsigned int atomIdx);
 
  public:
   MACROMol() = default;
