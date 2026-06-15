@@ -30,7 +30,7 @@ rdkit_library(FileParsers
     CDXMLParser.cpp
     Mol2FileParser.cpp MolFileParser.cpp
     SCSRUtils.cpp
-    MACROMolUtils.cpp
+    MacroMolUtils.cpp
     MolSGroupParsing.cpp MolSGroupWriting.cpp
     MolFileStereochem.cpp MolFileWriter.cpp
     ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
@@ -59,7 +59,7 @@ rdkit_headers(CDXMLParser.h
     FileParsers.h
     FileParserUtils.h
     SCSRUtils.h
-    MACROMolUtils.h
+    MacroMolUtils.h
     MolFileStereochem.h
     FileWriters.h
     MolSupplier.h MolSupplier.v1API.h

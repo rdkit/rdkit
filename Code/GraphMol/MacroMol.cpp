@@ -4,12 +4,12 @@
 #include "FileParsers/FileParserUtils.h"
 
 
-#include "MACROMol.h"
+#include "MacroMol.h"
 #include "Atom.h"
 
 namespace RDKit {
 
-void RDKit::MACROMolTemplate::findMainSgroupForTemplate(
+void RDKit::MacroMolTemplate::findMainSgroupForTemplate(
     std::string className, std::string templateName) const {
   d_mainSgroupIdx = UINT_MAX;
 
@@ -35,7 +35,7 @@ void RDKit::MACROMolTemplate::findMainSgroupForTemplate(
   }
 }
 
-void RDKit::MACROMolTemplate::init(std::string className,
+void RDKit::MacroMolTemplate::init(std::string className,
                                    std::vector<std::string> templateNames,
                                    std::vector<std::pair<std::string,std::string>> templateAttrs) {
   PRECONDITION(className.empty() == false, "no className for template");
@@ -52,7 +52,7 @@ void RDKit::MACROMolTemplate::init(std::string className,
   this->updatePropertyCache(false);
 }
 
-MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
+MacroMolTemplate::MacroMolTemplate(std::unique_ptr<RWMol> &mol,
                                    std::string className,
                                    std::vector<std::string> templateNames,
                                    std::vector<std::pair<std::string,std::string>> templateAttrs)
@@ -61,13 +61,13 @@ MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
 }
 
 
-MACROMolTemplate::MACROMolTemplate(const MACROMolTemplate &other)
+MacroMolTemplate::MacroMolTemplate(const MacroMolTemplate &other)
     : RWMol(other) {
   d_mainSgroupIdx = UINT_MAX;
 }
 
 
-MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
+MacroMolTemplate::MacroMolTemplate(std::unique_ptr<RWMol> &mol,
                                    std::string className,
                                    std::string templateName,
                                    std::vector<std::pair<std::string,std::string>> templateAttrs)
@@ -75,10 +75,10 @@ MACROMolTemplate::MACROMolTemplate(std::unique_ptr<RWMol> &mol,
   PRECONDITION(!templateName.empty(), "no name for template");
 
   std::vector<std::string> templateNames(1, templateName);
-  MACROMolTemplate::init(className, templateNames, templateAttrs);
+  MacroMolTemplate::init(className, templateNames, templateAttrs);
 }
 
-void MACROMolTemplate::initMainSgroupIdx() const {
+void MacroMolTemplate::initMainSgroupIdx() const {
   std::call_once(d_mainSgroupIdxOnceFlag, [this]() {
     std::string className = "";
     std::vector<std::string> templateNames;
@@ -96,19 +96,19 @@ void MACROMolTemplate::initMainSgroupIdx() const {
   });
 }
 
-RDKit::SubstanceGroup *MACROMolTemplate::getMainSgroup() {
+RDKit::SubstanceGroup *MacroMolTemplate::getMainSgroup() {
   initMainSgroupIdx();
   return &RDKit::getSubstanceGroups(*this)[d_mainSgroupIdx];
 }
 
-const RDKit::SubstanceGroup *MACROMolTemplate::getMainSgroup() const {
+const RDKit::SubstanceGroup *MacroMolTemplate::getMainSgroup() const {
   initMainSgroupIdx();
   return &RDKit::getSubstanceGroups(*this)[d_mainSgroupIdx];
 }
 
 
 
-unsigned int RDKit::MACROMol::addMacroAtom(std::string className,
+unsigned int RDKit::MacroMol::addMacroAtom(std::string className,
                                            std::string templateName) {
   auto atom = new Atom(0);
   atom->setAtomicNum(0);
@@ -118,7 +118,7 @@ unsigned int RDKit::MACROMol::addMacroAtom(std::string className,
   return this->addAtom(atom, false, true);
 }
 
-void RDKit::MACROMol::addMacroBond(unsigned int fromAtomIdx,
+void RDKit::MacroMol::addMacroBond(unsigned int fromAtomIdx,
                                    unsigned int toAtomIdx,
                                    Bond::BondType bondType,
                                    std::string fromConnectionPoint,
@@ -137,7 +137,7 @@ void RDKit::MACROMol::addMacroBond(unsigned int fromAtomIdx,
   }
 }
 
-MACROMolTemplate *MACROMol::getMutableTemplate(
+MacroMolTemplate *MacroMol::getMutableTemplate(
     unsigned int atomIdx) {
   const auto atom = this->getAtomWithIdx(atomIdx);
 
@@ -160,7 +160,7 @@ MACROMolTemplate *MACROMol::getMutableTemplate(
 }
 
 
-const MACROMolTemplate *RDKit::MACROMol::getTemplate(
+const MacroMolTemplate *RDKit::MacroMol::getTemplate(
     unsigned int atomIdx) const {
   const auto atom = this->getAtomWithIdx(atomIdx);
 
@@ -182,7 +182,7 @@ const MACROMolTemplate *RDKit::MACROMol::getTemplate(
   return templatePtr;
 }
 
-void MACROMolTemplateLib::addTemplate(std::unique_ptr<MACROMolTemplate> &templateMolToAdd) {
+void MacroMolTemplateLib::addTemplate(std::unique_ptr<MacroMolTemplate> &templateMolToAdd) {
     PRECONDITION(templateMolToAdd, "bad template molecule");
 
     d_templates.push_back(std::move(templateMolToAdd));
@@ -196,20 +196,20 @@ void MACROMolTemplateLib::addTemplate(std::unique_ptr<MACROMolTemplate> &templat
         common_properties::templateNames, templateNames);
 
     for (auto templateName : templateNames){
-      MACROMolTemplateKey key(std::pair(templateClass, templateName));
+      MacroMolTemplateKey key(std::pair(templateClass, templateName));
 
       d_keyToIndex[key] = d_templates.size() - 1;
     }
   }
 
-  void MACROMolTemplateLib::copyTemplateLib(const MACROMolTemplateLib &libToCopy){
+  void MacroMolTemplateLib::copyTemplateLib(const MacroMolTemplateLib &libToCopy){
     // clear any existing templates in this library
     d_templates.clear();
     d_keyToIndex.clear();
 
     for (auto &templateToCopy : libToCopy) {
       // make a copy of the template
-      auto templateCopy = std::unique_ptr<MACROMolTemplate>(new MACROMolTemplate(*(templateToCopy.get())));
+      auto templateCopy = std::unique_ptr<MacroMolTemplate>(new MacroMolTemplate(*(templateToCopy.get())));
       this->addTemplate(templateCopy);
     }
 

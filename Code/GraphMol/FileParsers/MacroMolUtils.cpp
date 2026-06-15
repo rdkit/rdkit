@@ -19,11 +19,11 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/SubstanceGroup.h>
-#include <GraphMol/FileParsers/MACROMolUtils.h>
+#include <GraphMol/FileParsers/MacroMolUtils.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
-#include <GraphMol/MACROMol.h>
-#include <GraphMol/FileParsers/MACROMolUtils.h>
+#include <GraphMol/MacroMol.h>
+#include <GraphMol/FileParsers/MacroMolUtils.h>
 
 #include "MolSGroupParsing.h"
 #include <RDGeneral/StreamOps.h>
@@ -49,7 +49,7 @@ using namespace RDKit::SGroupParsing;
 
 namespace RDKit {
 
-class MolFromMACROMolConverter {
+class MolFromMacroMolConverter {
  private:
   class OriginAtomDef {
    public:
@@ -90,10 +90,10 @@ class MolFromMACROMolConverter {
     }
   };
 
-  const RDKit::MACROMol *macroMol;
+  const RDKit::MacroMol *macroMol;
   std::unique_ptr<RWMol> mol;
   const RDKit::v2::FileParsers::MolFileParserParams molFileParserParams;
-  const MolFromMACROMolParams molFromMACROMolParams;
+  const MolFromMacroMolParams molFromMacroMolParams;
 
   // maps main atom# and template atom# to new atom#
   std::map<OriginAtomDef, unsigned int> originAtomMap;
@@ -186,14 +186,14 @@ class MolFromMACROMolConverter {
   }
 
  public:
-  MolFromMACROMolConverter(
-      const MACROMol *macroMolInit,
+  MolFromMacroMolConverter(
+      const MacroMol *macroMolInit,
       const RDKit::v2::FileParsers::MolFileParserParams
           &molFileParserParamsInit,
-      const MolFromMACROMolParams &molFromMACROMolParamsInit)
+      const MolFromMacroMolParams &molFromMacroMolParamsInit)
       : macroMol(macroMolInit),
         molFileParserParams(molFileParserParamsInit),
-        molFromMACROMolParams(molFromMACROMolParamsInit) {}
+        molFromMacroMolParams(molFromMacroMolParamsInit) {}
 
   std::unique_ptr<RDKit::RWMol> convert() {
     mol.reset(new RWMol());
@@ -203,7 +203,7 @@ class MolFromMACROMolConverter {
     // that simply expands the orginal macro atom coords to be big
     // enough to hold any expanded macro atom. No attempt is made to
     // make this look nice, or to avoid overlaps.
-    std::map<const MACROMolTemplate *, RDGeom::Point3D> templateCentroids;
+    std::map<const MacroMolTemplate *, RDGeom::Point3D> templateCentroids;
     double maxSize = 0.0;
 
     const Conformer *conf = nullptr;
@@ -218,7 +218,7 @@ class MolFromMACROMolConverter {
       // external libs could have thousands of tempaltes, most not used by the 
       // current macro mol
 
-      std::set<const MACROMolTemplate *> templatesInUse;
+      std::set<const MacroMolTemplate *> templatesInUse;
       for (unsigned int atomIdx = 0 ; atomIdx != macroMol->getNumAtoms(); ++atomIdx) {
          auto templatePtr = macroMol->getTemplate(atomIdx);
          if (templatePtr != nullptr && !templatesInUse.contains(templatePtr)) {
@@ -340,7 +340,7 @@ class MolFromMACROMolConverter {
 
         templateMol->getProp<std::vector<std::string>>(
             common_properties::templateNames, templateNames);
-        switch (molFromMACROMolParams.macroTemplateNames) {
+        switch (molFromMacroMolParams.macroTemplateNames) {
           case MACROTemplateNames::UseFirstName:
             templateNameToUse = templateNames[0];
             break;
@@ -400,7 +400,7 @@ class MolFromMACROMolConverter {
             // fill in the tempate atom id for this attachPoint
 
             attachMap[key] = attachPoint.aIdx;
-          } else if (molFromMACROMolParams.includeLeavingGroups) {
+          } else if (molFromMacroMolParams.includeLeavingGroups) {
             // this attach point was not found, so the leaving group is
             // included in the output molecule (if there is one).
 
@@ -532,7 +532,7 @@ class MolFromMACROMolConverter {
 
     // copy the sgroups from the main mol for atoms not in a template
 
-    if (molFromMACROMolParams.outputSgroups) {
+    if (molFromMacroMolParams.outputSgroups) {
       for (auto &sg : getSubstanceGroups(*macroMol)) {
         if (sg.getIsValid()) {
           auto &atoms = sg.getAtoms();
@@ -655,12 +655,12 @@ class MolFromMACROMolConverter {
   }
 };
 
-std::unique_ptr<RDKit::RWMol> MolFromMACROMol(
-    const MACROMol *macroMol,
+std::unique_ptr<RDKit::RWMol> MolFromMacroMol(
+    const MacroMol *macroMol,
     const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams,
-    const RDKit::MolFromMACROMolParams &molFromMACROMolParams) {
-  MolFromMACROMolConverter converter(macroMol, molFileParserParams,
-                                     molFromMACROMolParams);
+    const RDKit::MolFromMacroMolParams &molFromMacroMolParams) {
+  MolFromMacroMolConverter converter(macroMol, molFileParserParams,
+                                     molFromMacroMolParams);
   return converter.convert();
 }
 
@@ -793,18 +793,18 @@ bool isTemplateMatchAHit(
   return true;
 }
 
-std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
-    const ROMol &mol, const RDKit::MACROMolTemplateLib &templates,
-    MolToMACROParams molToMACROMolParams) {
-  auto res = std::unique_ptr<MACROMol>(new MACROMol());
+std::unique_ptr<RDKit::MacroMol> MolToMacroMol(
+    const ROMol &mol, const RDKit::MacroMolTemplateLib &templates,
+    MolToMACROParams molToMacroMolParams) {
+  auto res = std::unique_ptr<MacroMol>(new MacroMol());
 
-  MolToMACROMol(res.get(),mol,templates, molToMACROMolParams);
+  MolToMacroMol(res.get(),mol,templates, molToMacroMolParams);
   return res;
 }
 
-void MolToMACROMol(MACROMol *res,
-    const ROMol &mol, const RDKit::MACROMolTemplateLib &templates,
-    MolToMACROParams molToMACROMolParams) {
+void MolToMacroMol(MacroMol *res,
+    const ROMol &mol, const RDKit::MacroMolTemplateLib &templates,
+    MolToMACROParams molToMacroMolParams) {
 
   Conformer *conf = nullptr;
   if (mol.getNumConformers() > 0 && templates.doesLibHaveCoords()) {
@@ -827,7 +827,7 @@ void MolToMACROMol(MACROMol *res,
                                                templateAtomClass);
     templateMol->getPropIfPresent<std::vector<std::string>>(
         common_properties::templateNames, templateNames);
-    switch (molToMACROMolParams.macroUseTemplateName) {
+    switch (molToMacroMolParams.macroUseTemplateName) {
       case MACROUseTemplateName::UseFirstName:
         templateNameToUse = templateNames[0];
         break;
@@ -883,7 +883,7 @@ void MolToMACROMol(MACROMol *res,
     for (const auto &match : matchVect) {
       std::vector<unsigned int> atomsInMatch;
 
-      // add this match to the MACROMol if it is a valid hit
+      // add this match to the MacroMol if it is a valid hit
 
       if (!isTemplateMatchAHit(match, mol, templateMol, queryMol.get(), atomMap,
                                supAttachPoints, bondConnectionMap,
@@ -892,9 +892,9 @@ void MolToMACROMol(MACROMol *res,
       }
 
       if (!templateCopied) {
-        // add the template to the MACROMol
-        std::unique_ptr<MACROMolTemplate> tempTemplate(
-            new MACROMolTemplate(*templateMol));
+        // add the template to the MacroMol
+        std::unique_ptr<MacroMolTemplate> tempTemplate(
+            new MacroMolTemplate(*templateMol));
         res->addTemplate(tempTemplate);
         templateCopied = true;
       }

@@ -18,8 +18,8 @@
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include "FileParsers.h"
-#include <GraphMol/MACROMol.h>
-#include <GraphMol/FileParsers/MACROMolUtils.h>
+#include <GraphMol/MacroMol.h>
+#include <GraphMol/FileParsers/MacroMolUtils.h>
 #include "SCSRUtils.h"
 #include <string_view>
 
@@ -119,8 +119,8 @@ public:
         std::istream &inStream, unsigned int &line,
         const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams =
             RDKit::v2::FileParsers::MolFileParserParams(),
-        const RDKit::MolFromMACROMolParams &molFromMACROMolParams =
-            RDKit::MolFromMACROMolParams(),
+        const RDKit::MolFromMacroMolParams &molFromMacroMolParams =
+            RDKit::MolFromMacroMolParams(),
         const SCSRBaseHbondOptions scsrBaseHbondOptions =
             SCSRBaseHbondOptions::Auto);
 
@@ -128,8 +128,8 @@ public:
         const std::string &molBlock,
         const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams =
             RDKit::v2::FileParsers::MolFileParserParams(),
-        const RDKit::MolFromMACROMolParams &molFromMACROMolParams =
-            RDKit::MolFromMACROMolParams(),
+        const RDKit::MolFromMacroMolParams &molFromMacroMolParams =
+            RDKit::MolFromMacroMolParams(),
         const SCSRBaseHbondOptions scsrBaseHbondOptions =
             SCSRBaseHbondOptions::Auto);
 
@@ -137,40 +137,40 @@ public:
         const std::string &fName,
         const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams =
             RDKit::v2::FileParsers::MolFileParserParams(),
-        const RDKit::MolFromMACROMolParams &molFromMACROMolParams =
-            RDKit::MolFromMACROMolParams(),
+        const RDKit::MolFromMacroMolParams &molFromMacroMolParams =
+            RDKit::MolFromMacroMolParams(),
         const SCSRBaseHbondOptions scsrBaseHbondOptions =
             SCSRBaseHbondOptions::Auto);
 
-    static RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MACROMol>
-    MACROMolFromSCSRDataStream(
+    static RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MacroMol>
+    MacroMolFromSCSRDataStream(
         std::istream &inStream, unsigned int &line,
         const RDKit::v2::FileParsers::MolFileParserParams &params =
             RDKit::v2::FileParsers::MolFileParserParams(),
         const SCSRBaseHbondOptions scsrBaseHbondOptions =
             SCSRBaseHbondOptions::Auto);
 
-    static RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRBlock(
+    static RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MacroMol> MacroMolFromSCSRBlock(
         const std::string &molBlock,
         const RDKit::v2::FileParsers::MolFileParserParams &params =
             RDKit::v2::FileParsers::MolFileParserParams(),
         const SCSRBaseHbondOptions scsrBaseHbondOptions =
             SCSRBaseHbondOptions::Auto);
 
-    static RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MACROMol> MACROMolFromSCSRFile(
+    static RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MacroMol> MacroMolFromSCSRFile(
         const std::string &fName,
         const RDKit::v2::FileParsers::MolFileParserParams &params =
             RDKit::v2::FileParsers::MolFileParserParams(),
         const SCSRBaseHbondOptions scsrBaseHbondOptions =
             SCSRBaseHbondOptions::Auto);
 
-    static RDKIT_FILEPARSERS_EXPORT std::string MACROMolToSCSRMolBlock(
-        MACROMol &macroMol,
+    static RDKIT_FILEPARSERS_EXPORT std::string MacroMolToSCSRMolBlock(
+        MacroMol &macroMol,
         const RDKit::MolWriterParams &params = RDKit::MolWriterParams(),
         int confId = -1, bool keepBaseHbondInfo = true);
 
-    static RDKIT_FILEPARSERS_EXPORT void MACROMolToSCSRMolFile(
-        RDKit::MACROMol &macroMol, const std::string &fName,
+    static RDKIT_FILEPARSERS_EXPORT void MacroMolToSCSRMolFile(
+        RDKit::MacroMol &macroMol, const std::string &fName,
         const RDKit::MolWriterParams &params = RDKit::MolWriterParams(),
         int confId = -1);
 

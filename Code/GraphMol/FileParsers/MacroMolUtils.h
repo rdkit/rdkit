@@ -18,7 +18,7 @@
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/FileParsers/FileParsers.h>
-#include <GraphMol/MACROMol.h>
+#include <GraphMol/MacroMol.h>
 
 #include <string_view>
 
@@ -35,7 +35,7 @@ enum class MACROTemplateNames {
   All             //<! use all names in the template def
 };
 
-struct RDKIT_FILEPARSERS_EXPORT MolFromMACROMolParams {
+struct RDKIT_FILEPARSERS_EXPORT MolFromMacroMolParams {
   bool includeLeavingGroups =
       true; /**< when true, leaving groups on atoms that are not exo-bonded
                are retained.  When false, no leaving groups are retained */
@@ -55,22 +55,22 @@ struct RDKIT_FILEPARSERS_EXPORT MolToMACROParams {
       MACROUseTemplateName::UseFirstName;
 };
 
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromMACROMol(
-    const MACROMol *macroMol,
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromMacroMol(
+    const MacroMol *macroMol,
     const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams,
-    const RDKit::MolFromMACROMolParams &molFromMACROMolParams);
+    const RDKit::MolFromMacroMolParams &molFromMacroMolParams);
 
-RDKIT_FILEPARSERS_EXPORT void MACROMolToSCSRMolFile(
-    RDKit::MACROMol &macroMol, const std::string &fName,
+RDKIT_FILEPARSERS_EXPORT void MacroMolToSCSRMolFile(
+    RDKit::MacroMol &macroMol, const std::string &fName,
     const RDKit::MolWriterParams &params, int confId);
 
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MACROMol> MolToMACROMol(
-    const ROMol &mol, const RDKit::MACROMolTemplateLib &templates,
-    MolToMACROParams molToMACROMolParams = MolToMACROParams());
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MacroMol> MolToMacroMol(
+    const ROMol &mol, const RDKit::MacroMolTemplateLib &templates,
+    MolToMACROParams molToMacroMolParams = MolToMACROParams());
 
-RDKIT_FILEPARSERS_EXPORT void MolToMACROMol(MACROMol *res,
-    const ROMol &mol, const RDKit::MACROMolTemplateLib &templates,
-    MolToMACROParams molToMACROMolParams = MolToMACROParams());
+RDKIT_FILEPARSERS_EXPORT void MolToMacroMol(MacroMol *res,
+    const ROMol &mol, const RDKit::MacroMolTemplateLib &templates,
+    MolToMACROParams molToMacroMolParams = MolToMACROParams());
 
 }  // namespace RDKit
 

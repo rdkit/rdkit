@@ -405,12 +405,12 @@ class MrvTests {
       pp.removeHs = false;
       pp.strictParsing = true;
 
-      MolFromMACROMolParams molFromMACROMolParams;
-      molFromMACROMolParams.includeLeavingGroups = true;
+      MolFromMacroMolParams molFromMacroMolParams;
+      molFromMacroMolParams.includeLeavingGroups = true;
       SCSRUtils::SCSRBaseHbondOptions scsrBaseHbondOptions = SCSRUtils::SCSRBaseHbondOptions::Auto;
 
       std::unique_ptr<RDKit::RWMol> mol;
-      mol = SCSRUtils::MolFromSCSRFile(fName, pp, molFromMACROMolParams,
+      mol = SCSRUtils::MolFromSCSRFile(fName, pp, molFromMacroMolParams,
                             scsrBaseHbondOptions);
 
       TEST_ASSERT(mol != nullptr);
