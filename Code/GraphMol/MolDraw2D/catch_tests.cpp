@@ -11497,6 +11497,7 @@ TEST_CASE("Github 9280 - font scaling bug") {
     check_file_hash("test_Github9280_0.2.svg");
   }
 }
+
 TEST_CASE("Uniform bond colour") {
   auto m1 = "F[C@@H](Cl)Oc1ccc(N2CCc3nccc(C(=O)Nc4ccccn4)c3C2)nc1"_smiles;
   REQUIRE(m1);
@@ -11584,4 +11585,88 @@ TEST_CASE("Github 9324 - zero length vector in drawing") {
   // It used to throw an exception, so the test is just that we got something.
   CHECK(!text.empty());
   check_file_hash("testGithub9324_1.svg");
+}
+
+TEST_CASE("Configurable Stereo Labels") {
+  std::string nameBase = "testConfigurableStereoLabels";
+  auto threonine_and = "C[C@@H](O)[C@H](N)C(O)=O |&1:1,3|"_smiles;
+  REQUIRE(threonine_and);
+  auto threonine_or = "C[C@@H](O)[C@H](N)C(O)=O |o1:1,3|"_smiles;
+  REQUIRE(threonine_or);
+  auto m1 =
+      "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5|"_smiles;
+  REQUIRE(m1);
+
+  MolDraw2DUtils::prepareMolForDrawing(*threonine_and);
+  MolDraw2DUtils::prepareMolForDrawing(*threonine_or);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  {
+    MolDraw2DSVG drawer(750, 200, 250, 200, NO_FREETYPE);
+    drawer.drawOptions().includeChiralFlagLabel = false;
+    drawer.drawOptions().stereoGroupAndLabel = "&";
+    drawer.drawOptions().stereoGroupOrLabel = "OR";
+    drawer.drawOptions().stereoGroupAbsLabel = "_AbS_";
+    drawer.drawMolecule(*threonine_and, "and");
+    drawer.setOffset(250, 0);
+    drawer.drawMolecule(*threonine_or, "or");
+    drawer.setOffset(500, 0);
+    drawer.drawMolecule(*m1, "abs");
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::string svgName = nameBase + "_1.svg";
+    std::ofstream outs(svgName);
+    outs << text;
+    outs.flush();
+    outs.close();
+    const static std::regex amp(">&amp;</text>");
+    std::ptrdiff_t const amp_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), amp),
+                      std::sregex_iterator()));
+    CHECK(amp_count == 2);
+    const static std::regex R(">R</text>");
+    std::ptrdiff_t const R_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), R),
+                      std::sregex_iterator()));
+    CHECK(R_count == 2);
+    const static std::regex under(">_</text>");
+    std::ptrdiff_t const under_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), under),
+                      std::sregex_iterator()));
+    CHECK(under_count == 2);
+  }
+  {
+    MolDraw2DSVG drawer(750, 200, 250, 200, NO_FREETYPE);
+    drawer.drawOptions().includeChiralFlagLabel = false;
+    drawer.drawOptions().stereoGroupAndLabel = "&";
+    drawer.drawOptions().stereoGroupOrLabel = "OR";
+    drawer.drawOptions().stereoGroupAbsLabel = "_AbS_";
+    drawer.drawOptions().addStereoGroupAnnotation = false;
+    drawer.drawMolecule(*threonine_and, "and");
+    drawer.setOffset(250, 0);
+    drawer.drawMolecule(*threonine_or, "or");
+    drawer.setOffset(500, 0);
+    drawer.drawMolecule(*m1, "abs");
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::string svgName = nameBase + "_2.svg";
+    std::ofstream outs(svgName);
+    outs << text;
+    outs.flush();
+    outs.close();
+    const static std::regex amp(">&amp;</text>");
+    std::ptrdiff_t const amp_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), amp),
+                      std::sregex_iterator()));
+    CHECK(amp_count == 0);
+    const static std::regex R(">R</text>");
+    std::ptrdiff_t const R_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), R),
+                      std::sregex_iterator()));
+    CHECK(R_count == 0);
+    const static std::regex under(">_</text>");
+    std::ptrdiff_t const under_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), under),
+                      std::sregex_iterator()));
+    CHECK(under_count == 0);
+  }
 }
