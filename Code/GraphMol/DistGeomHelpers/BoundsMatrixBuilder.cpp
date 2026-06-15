@@ -258,7 +258,7 @@ void _checkAndSetBounds(unsigned int i, unsigned int j, double lb, double ub,
 
 inline std::size_t getUnifiedId(const unsigned int id1, const unsigned int id2,
                                 const unsigned int n) {
-  // returns an id for (id1, id2) independed of order within range (0, 2*n - 1)
+  // returns an id for (id1, id2) independent of order within range (0, 2*n - 1)
   // assuming id1 < n and id2 < n
   return id1 < id2 ? (static_cast<std::size_t>(id1) * n + id2)
                    : (static_cast<std::size_t>(id2) * n + id1);
@@ -266,7 +266,7 @@ inline std::size_t getUnifiedId(const unsigned int id1, const unsigned int id2,
 
 inline std::size_t getUnifiedId(const unsigned int id1, const unsigned int id2,
                                 const unsigned int id3, const unsigned int n) {
-  // returns an id for (id1, id2, id3) independed of order of id1, id3 within
+  // returns an id for (id1, id2, id3) independent of order of id1, id3 within
   // range (0, 3*(n) - 1) assuming id1 < n, id2 < n and id3 < n
   return id1 < id3 ? (static_cast<std::size_t>(id1) * n * n + id2 * n + id3)
                    : (static_cast<std::size_t>(id3) * n * n + id2 * n + id1);
