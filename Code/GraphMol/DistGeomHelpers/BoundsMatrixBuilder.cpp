@@ -273,6 +273,9 @@ inline std::size_t getUnifiedId(const unsigned int id1, const unsigned int id2,
 }
 
 inline bool squishBond(const ROMol &mol, const Bond *bond) {
+  // determines whether the corresponding atoms are larger heteroatoms (at least
+  // of of them) in conjugated 5 rings, because we need to add a bit of extra
+  // flex for them
   return bond->getIsConjugated() &&
          (bond->getBeginAtom()->getAtomicNum() > 10 ||
           bond->getEndAtom()->getAtomicNum() > 10) &&
