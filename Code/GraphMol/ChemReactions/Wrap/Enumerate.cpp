@@ -203,6 +203,15 @@ Options:\n\
     If true, forces all products of the reagent plus the product templates\n\
      pass chemical sanitization.  Note that if the product template itself\n\
      does not pass sanitization, then none of the products will.\n\
+\n\
+  dedupeSymmetricMatches [default false]\n\
+    If true, collapses substructure matches that land on symmetry-equivalent\n\
+     reagent atoms, avoiding duplicate products for symmetric reagents.\n\
+\n\
+  cacheReactantGrafts [default false]\n\
+    If true, caches and replays the per-reagent graft (the atoms and bonds a\n\
+     reagent contributes to a product) across product combinations instead of\n\
+     re-deriving it for every combination.  The output is unchanged.\n\
 ";
 
     python::class_<RDKit::EnumerationParams,
@@ -213,7 +222,11 @@ Options:\n\
         .def_readwrite("reagentMaxMatchCount",
                        &RDKit::EnumerationParams::reagentMaxMatchCount)
         .def_readwrite("sanePartialProducts",
-                       &RDKit::EnumerationParams::sanePartialProducts);
+                       &RDKit::EnumerationParams::sanePartialProducts)
+        .def_readwrite("dedupeSymmetricMatches",
+                       &RDKit::EnumerationParams::dedupeSymmetricMatches)
+        .def_readwrite("cacheReactantGrafts",
+                       &RDKit::EnumerationParams::cacheReactantGrafts);
 
     docString =
         "EnumerateLibrary\n\
@@ -309,7 +322,25 @@ for result in itertools.islice(libary2, 1000):\n\
             " be smaller than the input reagent sets.",
             python::return_internal_reference<
                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
-            python::args("self"));
+            python::args("self"))
+        .def("GetDedupeSymmetricMatches",
+             &RDKit::EnumerateLibrary::getDedupeSymmetricMatches,
+             python::args("self"),
+             "Return whether symmetry-equivalent substructure matches are"
+             " collapsed for this library.")
+        .def("GetMatchCacheSize", &RDKit::EnumerateLibrary::getMatchCacheSize,
+             python::args("self"),
+             "Return the number of entries currently held in the reactant"
+             " match cache.")
+        .def("GetCacheReactantGrafts",
+             &RDKit::EnumerateLibrary::getCacheReactantGrafts,
+             python::args("self"),
+             "Return whether per-reagent grafts are cached and replayed across"
+             " product combinations for this library.")
+        .def("GetGraftCacheSize", &RDKit::EnumerateLibrary::getGraftCacheSize,
+             python::args("self"),
+             "Return the number of entries currently held in the reactant"
+             " graft cache.");
 
     // iterator_wrappers<EnumerateLibrary>().wrap("EnumerateLibraryIterator");
 

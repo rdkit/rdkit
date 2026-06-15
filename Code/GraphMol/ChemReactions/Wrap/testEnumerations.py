@@ -313,6 +313,50 @@ class TestCase(unittest.TestCase):
       i += 1
     self.assertEqual(i, 6)
 
+  def testEnumerationParamsCaching(self):
+    log("testEnumerationParamsCaching")
+    # symmetric diamine reagents so dedupeSymmetricMatches has an effect
+    rxn = rdChemReactions.ReactionFromSmarts(
+      "[N;H2:1].[C:2](=[O:3])[O;H1]>>[N:1][C:2]=[O:3]")
+    reagents = [[Chem.MolFromSmiles('NCCN'),
+                 Chem.MolFromSmiles('NCCCN')],
+                [Chem.MolFromSmiles('CC(=O)O'),
+                 Chem.MolFromSmiles('CCC(=O)O')]]
+
+    # defaults: both flags off
+    params = rdChemReactions.EnumerationParams()
+    self.assertFalse(params.dedupeSymmetricMatches)
+    self.assertFalse(params.cacheReactantGrafts)
+
+    baseline = rdChemReactions.EnumerateLibrary(rxn, reagents)
+    self.assertFalse(baseline.GetDedupeSymmetricMatches())
+    self.assertFalse(baseline.GetCacheReactantGrafts())
+    baseSmiles = sorted(Chem.MolToSmiles(mols[0])
+                        for prods in baseline for mols in prods)
+
+    # enable both flags through the params object
+    params = rdChemReactions.EnumerationParams()
+    params.dedupeSymmetricMatches = True
+    params.cacheReactantGrafts = True
+    self.assertTrue(params.dedupeSymmetricMatches)
+    self.assertTrue(params.cacheReactantGrafts)
+
+    cached = rdChemReactions.EnumerateLibrary(rxn, reagents, params)
+    self.assertTrue(cached.GetDedupeSymmetricMatches())
+    self.assertTrue(cached.GetCacheReactantGrafts())
+    self.assertEqual(cached.GetGraftCacheSize(), 0)
+
+    cachedSmiles = sorted(Chem.MolToSmiles(mols[0])
+                          for prods in cached for mols in prods)
+
+    # dedup collapses the symmetric diamine duplicates, so the cached run
+    # yields the same unique products with fewer total entries
+    self.assertEqual(set(cachedSmiles), set(baseSmiles))
+    self.assertTrue(len(cachedSmiles) < len(baseSmiles))
+    # the graft cache and match cache populated during enumeration
+    self.assertTrue(cached.GetGraftCacheSize() > 0)
+    self.assertTrue(cached.GetMatchCacheSize() > 0)
+
   def testRandomEnumerateLibrary(self):
     log("testRandomEnumerateLibrary")
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
