@@ -424,10 +424,16 @@ void _set13BoundsHelper(const unsigned int aid1, const unsigned int aid,
   // We increase the tolerance if we're outside of the first row of the
   // periodic table.
 
-  const auto distTol =
-      DIST13_TOL * (1u << isLargerSP2Atom(mol.getAtomWithIdx(aid1))
-                       << isLargerSP2Atom(mol.getAtomWithIdx(aid))
-                       << isLargerSP2Atom(mol.getAtomWithIdx(aid3)));
+  auto distTol = DIST13_TOL;
+  if (isLargerSP2Atom(mol.getAtomWithIdx(aid1))) {
+    distTol *= 2.0;
+  }
+  if (isLargerSP2Atom(mol.getAtomWithIdx(aid))) {
+    distTol *= 2.0;
+  }
+  if (isLargerSP2Atom(mol.getAtomWithIdx(aid3))) {
+    distTol *= 2.0;
+  }
 
   const auto dl = RDGeom::compute13Dist(accumData.bondLengths[bid1],
                                         accumData.bondLengths[bid2], angle) -
