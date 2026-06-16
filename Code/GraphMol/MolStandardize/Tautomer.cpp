@@ -347,9 +347,8 @@ const RingInfo *getFastRingInfo(ROMol &mol) {
   // SymmSSSR here since that has a performance cost.
   // this might be not precise enough for large rings like 9-or-more macrocycles
   auto ringInfo = mol.getRingInfo();
-  if (!ringInfo || !ringInfo->isFindFastOrBetter()) {
+  if (!ringInfo->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
-    ringInfo = mol.getRingInfo();
   }
   return ringInfo;
 }
