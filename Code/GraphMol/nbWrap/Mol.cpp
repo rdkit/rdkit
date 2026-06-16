@@ -108,21 +108,6 @@ Conformer *GetMolConformer(ROMol &mol, int id = -1) {
   return &(mol.getConformer(id));
 }
 
-// FIX: we should eventually figure out how to do iterators properly
-QueryAtomIterSeq *MolGetAromaticAtoms(const ROMOL_SPTR &mol) {
-  auto *qa = new QueryAtom();
-  qa->setQuery(makeAtomAromaticQuery());
-  QueryAtomIterSeq *res =
-      new QueryAtomIterSeq(mol, mol->beginQueryAtoms(qa), mol->endQueryAtoms(),
-                           AtomCountFunctor(mol));
-  return res;
-}
-QueryAtomIterSeq *MolGetQueryAtoms(const ROMOL_SPTR &mol, QueryAtom *qa) {
-  QueryAtomIterSeq *res =
-      new QueryAtomIterSeq(mol, mol->beginQueryAtoms(qa), mol->endQueryAtoms(),
-                           AtomCountFunctor(mol));
-  return res;
-}
 
 ConformerIterSeq *GetMolConformers(const ROMOL_SPTR &mol) {
   ConformerIterSeq *res =
@@ -145,6 +130,22 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
 #endif
 
 namespace {
+
+// // FIX: we should eventually figure out how to do iterators properly
+// QueryAtomIterSeq *MolGetAromaticAtoms(ROMol &mol) {
+//   auto *qa = new QueryAtom();
+//   qa->setQuery(makeAtomAromaticQuery());
+//   QueryAtomIterSeq *res = new QueryAtomIterSeq(
+//       mol, mol.beginQueryAtoms(qa), mol.endQueryAtoms(),
+//       AtomCountFunctor(mol));
+//   return res;
+// }
+// QueryAtomIterSeq *MolGetQueryAtoms(ROMol &mol, QueryAtom *qa) {
+//   QueryAtomIterSeq *res = new QueryAtomIterSeq(
+//       mol, mol.beginQueryAtoms(qa), mol.endQueryAtoms(),
+//       AtomCountFunctor(mol));
+//   return res;
+// }
 
 void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
                                  nb::object func) {
@@ -473,13 +474,26 @@ struct mol_wrapper {
         .def("__getitem__", &BondSeqHolder<AtomBondsIterator>::operator[],
              nb::rv_policy::reference_internal, "idx"_a);
     nb::class_<ConformerIterSeq>(
-        m, "_ConformerSeqHolder",
+        m, "_ROConformerSeq",
         "A sequence-like holder of a molecule's conformers")
         .def("__len__", &ConformerIterSeq::len)
-        .def("__iter__", &ConformerIterSeq::__iter__, nb::keep_alive<0, 1>())
+        .def("__iter__", &ConformerIterSeq::__iter__, nb::rv_policy::reference)
+        // .def("__iter__", [](ConformerIterSeq &c) { return c.__iter__(); },
+        // nb::keep_alive<0, 1>())
         .def("__getitem__", &ConformerIterSeq::get_item,
              nb::rv_policy::reference_internal, "idx"_a, nb::keep_alive<0, 1>())
         .def("__next__", &ConformerIterSeq::next, nb::keep_alive<0, 1>());
+    nb::class_<QueryAtomIterSeq>(
+        m, "_ROQAtomSeq",
+        "A sequence-like holder of atoms matching a query atom")
+        .def("__len__", &QueryAtomIterSeq::size)
+        .def(
+            "__iter__",
+            [](QueryAtomIterSeq &q) {
+              return nb::make_iterator(nb::type<QueryAtomIterSeq>(), "iterator",
+                                       q.begin(), q.end());
+            },
+            nb::keep_alive<0, 1>());
 
     nb::class_<ROMol>(m, "Mol", nb::dynamic_attr())
         .def(nb::new_([]() { return new ROMol(); }),
@@ -572,9 +586,10 @@ struct mol_wrapper {
         .def(
             "GetConformers",
             [](ROMol &self) {
-              return ConformerIterSeq(self, self.beginConformers(),
-                                      self.endConformers(),
-                                      ConformerCountFunctor(self));
+              return ConformerIterSeq(
+                  self, self.beginConformers(), self.endConformers(),
+                  ConformerCountFunctor(self),
+                  [](ROMol::ConformerIterator it) { return it->get(); });
             },
             nb::keep_alive<0, 1>(),
             R"DOC(Returns a read-only sequence containing all of the molecule's Conformers.)DOC")
@@ -952,14 +967,31 @@ struct mol_wrapper {
             "GetStereoGroups", &ROMol::getStereoGroups,
             nb::rv_policy::reference_internal,
             R"DOC(Returns a list of StereoGroups defining the relative stereochemistry of the atoms.))DOC")
-#if 0
-        .def("GetAromaticAtoms", MolGetAromaticAtoms, nb::keep_alive<0, 1>(),
-             "Returns a read-only sequence containing all of the molecule's "
-             "aromatic Atoms.\n")
-             .def(
-                  "GetAtomsMatchingQuery", MolGetQueryAtoms, "qa"_a,
-                  nb::rv_policy::reference_internal,
-                  R"DOC(Returns a read-only sequence containing all of the atoms in a molecule that match the query atom. 
+#if 1
+        //    .def("GetAromaticAtoms", MolGetAromaticAtoms, nb::keep_alive<0,
+        //    1>(),
+        //         "Returns a read-only sequence containing all of the
+        //         molecule's " "aromatic Atoms.\n")
+
+        //    .def(
+        //        "GetAtomsMatchingQuery", [](ROMol &self, QueryAtom *qa ) {
+        //            return QueryAtomIterSeq(
+        //  self, self.beginQueryAtoms(qa), self.endQueryAtoms(),
+        //  AtomCountFunctor(self));
+        //        },
+        //        "qa"_a,
+        //        nb::keep_alive<0, 1>(),
+        //        R"DOC(Returns a read-only sequence containing all of the atoms
+        //        in a molecule that match the query atom.
+        //              Atom query options are defined in the
+        //              rdkit.Chem.rdqueries module. )DOC")
+        .def(
+            "GetAtomsMatchingQuery",
+            [](const ROMol &self, const QueryAtom *qa) {
+              return QueryAtomIterSeq(self, qa);
+            },
+            "qa"_a, nb::keep_alive<0, 1>(),
+            R"DOC(Returns a read-only sequence containing all of the atoms in a molecule that match the query atom. 
                   Atom query options are defined in the rdkit.Chem.rdqueries module.
                   )DOC")
 

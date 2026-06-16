@@ -53,6 +53,15 @@ struct BondSeqHolder {
   }
 };
 
+class AtomCountFunctor {
+ private:
+  const ROMol &_mol;
+
+ public:
+  AtomCountFunctor(const ROMol &mol) : _mol(mol) {}
+  unsigned int operator()() const { return _mol.getNumAtoms(); }
+};
+
 class ConformerCountFunctor {
  private:
   const ROMol &_mol;
@@ -64,57 +73,71 @@ class ConformerCountFunctor {
 
 // Note: T1 should be some iterator type,
 //       T2 is the value when we dereference T
-template <class T1, class T2, class T3>
+template <class T1, class T2, class T3, class Mapper = std::function<T2(T1)>>
 class ReadOnlySeq {
  private:
   T1 _start, _end, _pos;
   int _size;
   T3 _lenFunc;
   size_t _origLen;
+  Mapper _mapper;
   const ROMol &_mol;
 
  public:
-  ~ReadOnlySeq() = default;
-  ReadOnlySeq(const ROMol &mol, T1 start, T1 end, T3 lenFunc)
+  ~ReadOnlySeq() {
+    std::cerr << "\n**** delete ReadOnlySeq ****" << this << std::endl;
+  }
+  // ~ReadOnlySeq() = default;
+  ReadOnlySeq(
+      const ROMol &mol, T1 start, T1 end, T3 lenFunc,
+      Mapper mapper = [](T1 it) { return *it; })
       : _start(start),
         _end(end),
         _pos(start),
         _size(-1),
         _lenFunc(lenFunc),
         _origLen(lenFunc()),
-        _mol(mol) {}
-  ReadOnlySeq(const ReadOnlySeq<T1, T2, T3> &other)
+        _mapper(mapper),
+        _mol(mol) {
+    std::cerr << "\n**** new ReadOnlySeq ****" << this << std::endl;
+  }
+  ReadOnlySeq(const ReadOnlySeq<T1, T2, T3, Mapper> &other)
       : _start(other._start),
         _end(other._end),
         _pos(other._pos),
         _size(other._size),
         _lenFunc(other._lenFunc),
         _origLen(other._origLen),
-        _mol(other._mol) {}
+        _mapper(other._mapper),
+        _mol(other._mol) {
+    std::cerr << "\n**** new ReadOnlySeq2 ****" << this << std::endl;
+  }
+  T1 begin() { return _start; }
+  T1 end() { return _end; }
   void reset() {
     // std::cerr << "**** reset ****" << this<< std::endl;
     _pos = _start;
   }
   ReadOnlySeq<T1, T2, T3> *__iter__() {
-    // std::cerr << "**** ITER ****" << this << std::endl;
+    std::cerr << "**** ITER ****" << this << std::endl;
     reset();
-    // std::cerr << "  finish ****" << this << std::endl;
+    std::cerr << "  finish ****" << this << std::endl;
     return this;
   }
   T2 next() {
-    // std::cerr << "\tnext: " << _pos._pos << " " << _end._pos << std::endl;
     if (_pos == _end) {
       throw nb::stop_iteration();
     }
+    std::cerr << "\tnext: " << std::endl;
     if (_lenFunc() != _origLen) {
       throw std::runtime_error("Sequence modified during iteration");
     }
-    T2 res = _pos->get();
+    T2 res = _mapper(_pos);
     ++_pos;
     return res;
   }
   T2 get_item(int which) {
-    // std::cerr << "get_item: " <<which<< std::endl;
+    std::cerr << "get_item: " << which << std::endl;
     if (which >= len()) {
       throw nb::index_error("End of sequence hit");
     }
@@ -125,22 +148,46 @@ class ReadOnlySeq {
     for (int i = 0; i < which; i++) {
       ++it;
     }
-    return it->get();
+    return _mapper(it);
   }
   int len() {
-    // std::cerr << "len " << std::endl;
+    std::cerr << "len " << std::endl;
     if (_size < 0) {
       _size = 0;
       for (T1 tmp = _start; tmp != _end; tmp++) {
-        // std::cerr << "\tincr: "  <<  std::endl;
+        std::cerr << "\tincr: " << std::endl;
         _size++;
       }
     }
-    // std::cerr << "\tret" << std::endl;
+    std::cerr << "\tret" << std::endl;
     return _size;
   }
 };
 using ConformerIterSeq =
-    ReadOnlySeq<ROMol::ConformerIterator, Conformer *, ConformerCountFunctor>;
+    ReadOnlySeq<ROMol::ConformerIterator, Conformer *, ConformerCountFunctor,
+                std::function<Conformer *(ROMol::ConformerIterator)>>;
+// using QueryAtomIterSeq =
+//     ReadOnlySeq<ROMol::QueryAtomIterator, Atom *, AtomCountFunctor>;
 
+class QueryAtomIterSeq {
+ private:
+  const ROMol &_mol;
+  const QueryAtom *_qa;
+  int _size = -1;
+
+ public:
+  QueryAtomIterSeq(const ROMol &mol, const QueryAtom *qa)
+      : _mol(mol), _qa(qa) {};
+  ROMol::ConstQueryAtomIterator begin() { return _mol.beginQueryAtoms(_qa); }
+  ROMol::ConstQueryAtomIterator end() { return _mol.endQueryAtoms(); }
+  size_t size() {
+    if (_size < 0) {
+      _size = 0;
+      for (auto it = begin(); it != end(); ++it) {
+        _size++;
+      }
+    }
+    return static_cast<size_t>(_size);
+  }
+};
 }  // namespace RDKit
