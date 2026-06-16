@@ -385,7 +385,7 @@ bool parse_atom_props(Iterator &first, Iterator last, RDKit::RWMol &mol,
       ++first;
     }
   }
-  if (first <= last && *first != '|' && *first != ',') {
+  if ((first > last) || (*first != '|' && *first != ',')) {
     return false;
   }
   if (*first != '|') {
