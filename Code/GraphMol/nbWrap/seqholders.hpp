@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryAtom.h>
 
 namespace RDKit {
 
@@ -174,10 +175,21 @@ class QueryAtomIterSeq {
   const ROMol &_mol;
   const QueryAtom *_qa;
   int _size = -1;
+  bool _ownsQA = false;
 
  public:
-  QueryAtomIterSeq(const ROMol &mol, const QueryAtom *qa)
-      : _mol(mol), _qa(qa) {};
+  QueryAtomIterSeq(const ROMol &mol, const QueryAtom *qa, bool ownsQA = false)
+      : _mol(mol), _qa(qa), _ownsQA(ownsQA) {};
+  QueryAtomIterSeq(const QueryAtomIterSeq &other)
+      : _mol(other._mol),
+        _qa(static_cast<const QueryAtom *>(other._qa->copy())),
+        _ownsQA(true) {};
+  QueryAtomIterSeq &operator=(const QueryAtomIterSeq &other) = delete;
+  ~QueryAtomIterSeq() {
+    if (_ownsQA) {
+      delete _qa;
+    }
+  }
   ROMol::ConstQueryAtomIterator begin() { return _mol.beginQueryAtoms(_qa); }
   ROMol::ConstQueryAtomIterator end() { return _mol.endQueryAtoms(); }
   size_t size() {

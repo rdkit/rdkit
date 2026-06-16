@@ -3614,6 +3614,12 @@ CAS<~>
     m = Chem.MolFromSmiles('OCCCCN')
     self.assertRaises(ValueError, lambda: Chem.FragmentOnBonds(m, ()))
 
+  def test88AromaticAtoms(self):
+    m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')
+    aromats = m.GetAromaticAtoms()
+    self.assertEqual(len(aromats), 5)
+    self.assertEqual(list(aromats), [0, 1, 2, 4, 7])
+
   def test88QueryAtoms(self):
     from rdkit.Chem import rdqueries
     m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')
