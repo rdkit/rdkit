@@ -19,7 +19,7 @@ using BondsIterator = CXXBondIterator<MolGraph, Bond *>;
 using AtomBondsIterator =
     CXXBondIterator<MolGraph, Bond *, MolGraph::out_edge_iterator>;
 
-template <typename IterT=AtomsIterator>
+template <typename IterT = AtomsIterator>
 struct AtomSeqHolder {
   IterT iter;
   ROMol *mol;
@@ -36,7 +36,7 @@ struct AtomSeqHolder {
   }
 };
 
-template <typename IterT=BondsIterator>
+template <typename IterT = BondsIterator>
 struct BondSeqHolder {
   IterT iter;
   ROMol *mol;
@@ -52,4 +52,95 @@ struct BondSeqHolder {
     return mol->getBondWithIdx(idx);
   }
 };
+
+class ConformerCountFunctor {
+ private:
+  const ROMol &_mol;
+
+ public:
+  ConformerCountFunctor(const ROMol &mol) : _mol(mol) {}
+  unsigned int operator()() const { return _mol.getNumConformers(); }
+};
+
+// Note: T1 should be some iterator type,
+//       T2 is the value when we dereference T
+template <class T1, class T2, class T3>
+class ReadOnlySeq {
+ private:
+  T1 _start, _end, _pos;
+  int _size;
+  T3 _lenFunc;
+  size_t _origLen;
+  const ROMol &_mol;
+
+ public:
+  ~ReadOnlySeq() = default;
+  ReadOnlySeq(const ROMol &mol, T1 start, T1 end, T3 lenFunc)
+      : _start(start),
+        _end(end),
+        _pos(start),
+        _size(-1),
+        _lenFunc(lenFunc),
+        _origLen(lenFunc()),
+        _mol(mol) {}
+  ReadOnlySeq(const ReadOnlySeq<T1, T2, T3> &other)
+      : _start(other._start),
+        _end(other._end),
+        _pos(other._pos),
+        _size(other._size),
+        _lenFunc(other._lenFunc),
+        _origLen(other._origLen),
+        _mol(other._mol) {}
+  void reset() {
+    // std::cerr << "**** reset ****" << this<< std::endl;
+    _pos = _start;
+  }
+  ReadOnlySeq<T1, T2, T3> *__iter__() {
+    // std::cerr << "**** ITER ****" << this << std::endl;
+    reset();
+    // std::cerr << "  finish ****" << this << std::endl;
+    return this;
+  }
+  T2 next() {
+    // std::cerr << "\tnext: " << _pos._pos << " " << _end._pos << std::endl;
+    if (_pos == _end) {
+      throw nb::stop_iteration();
+    }
+    if (_lenFunc() != _origLen) {
+      throw std::runtime_error("Sequence modified during iteration");
+    }
+    T2 res = _pos->get();
+    ++_pos;
+    return res;
+  }
+  T2 get_item(int which) {
+    // std::cerr << "get_item: " <<which<< std::endl;
+    if (which >= len()) {
+      throw nb::index_error("End of sequence hit");
+    }
+    if (_lenFunc() != _origLen) {
+      throw std::runtime_error("Sequence modified during iteration");
+    }
+    T1 it = _start;
+    for (int i = 0; i < which; i++) {
+      ++it;
+    }
+    return it->get();
+  }
+  int len() {
+    // std::cerr << "len " << std::endl;
+    if (_size < 0) {
+      _size = 0;
+      for (T1 tmp = _start; tmp != _end; tmp++) {
+        // std::cerr << "\tincr: "  <<  std::endl;
+        _size++;
+      }
+    }
+    // std::cerr << "\tret" << std::endl;
+    return _size;
+  }
+};
+using ConformerIterSeq =
+    ReadOnlySeq<ROMol::ConformerIterator, Conformer *, ConformerCountFunctor>;
+
 }  // namespace RDKit

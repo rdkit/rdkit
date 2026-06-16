@@ -7006,27 +7006,43 @@ M  END
     mols_list_compr = [m for m in sdSup]
     self.assertEqual(len(mols_list), len(mols_list_compr))
 
-  # def test_github3492(self):
+  def test_conformer_lifetime(self):
+    m = Chem.MolFromSmiles(
+      "Brc1csnn1 |(-2.31331,0,;-0.813314,0,;0.0683644,-1.21353,;1.49495,-0.75,;1.49495,0.75,;0.0683644,1.21353,)|"
+    )
+    m.AddConformer(m.GetConformer(), assignId=True)
+    m.AddConformer(m.GetConformer(), assignId=True)
+    confs = m.GetConformers()
+    m = None
+    # make sure the conformer keeps the molecule alive:
+    c0 = confs[0]
+    self.assertEqual(c0.GetOwningMol().GetNumAtoms(), 6)
+    # even if the sequence holding the conformers is gone:
+    confs = None
+    self.assertEqual(c0.GetOwningMol().GetNumAtoms(), 6)
 
-  #   def read_smile(s):
-  #     m = Chem.MolFromSmiles(s)
-  #     rdkit.Chem.rdDepictor.Compute2DCoords(m)
-  #     return m
+  def test_github3492(self):
 
-  #   def sq_dist(a, b):
-  #     ab = [a[i] - b[i] for i, _ in enumerate(a)]
-  #     return sum([d * d for d in ab])
+    def read_smile(s):
+      m = Chem.MolFromSmiles(s)
+      return m
 
-  #   self.assertIsNotNone(Chem.MolFromSmiles("OCCN").GetAtoms()[0].GetOwningMol())
-  #   self.assertEqual([Chem.MolFromSmiles("OCCN").GetAtoms()[i].GetAtomicNum() for i in range(4)],
-  #                    [8, 6, 6, 7])
-  #   self.assertIsNotNone(Chem.MolFromSmiles("O=CCC=N").GetBonds()[0].GetOwningMol())
-  #   self.assertEqual(
-  #     [Chem.MolFromSmiles("O=CCC=N").GetBonds()[i].GetBondType() for i in range(4)],
-  #     [Chem.BondType.DOUBLE, Chem.BondType.SINGLE, Chem.BondType.SINGLE, Chem.BondType.DOUBLE])
-  #   self.assertIsNotNone(read_smile("CCC").GetConformers()[0].GetOwningMol())
-  #   pos = read_smile("CCC").GetConformers()[0].GetPositions()
-  #   self.assertAlmostEqual(sq_dist(pos[0], pos[1]), sq_dist(pos[1], pos[2]))
+    def sq_dist(a, b):
+      ab = [a[i] - b[i] for i, _ in enumerate(a)]
+      return sum([d * d for d in ab])
+
+    self.assertIsNotNone(Chem.MolFromSmiles("OCCN").GetAtoms()[0].GetOwningMol())
+    self.assertEqual([Chem.MolFromSmiles("OCCN").GetAtoms()[i].GetAtomicNum() for i in range(4)],
+                     [8, 6, 6, 7])
+    self.assertIsNotNone(Chem.MolFromSmiles("O=CCC=N").GetBonds()[0].GetOwningMol())
+    self.assertEqual(
+      [Chem.MolFromSmiles("O=CCC=N").GetBonds()[i].GetBondType() for i in range(4)],
+      [Chem.BondType.DOUBLE, Chem.BondType.SINGLE, Chem.BondType.SINGLE, Chem.BondType.DOUBLE])
+    self.assertIsNotNone(
+      read_smile("CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|").GetConformers()[0].GetOwningMol())
+    pos = read_smile(
+      "CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|").GetConformers()[0].GetPositions()
+    self.assertAlmostEqual(sq_dist(pos[0], pos[1]), sq_dist(pos[1], pos[2]))
 
   def test_get_set_positions(self):
     m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
