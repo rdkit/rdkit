@@ -482,7 +482,7 @@ void testGraftCacheOutputUnchanged() {
   EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
 
   EnumerationParams graftParams;
-  graftParams.cacheReactantGrafts = true;
+  graftParams.cacheMode = ReactantCacheMode::Full;
 
   EnumerateLibrary grafted(*rxn, bbs, graftParams);
   EnumerateLibrary defaultOff(*rxn, bbs);
@@ -496,8 +496,8 @@ void testGraftCacheOutputUnchanged() {
   const std::multiset<std::string> defaultResults =
       collectEnumerationSmiles(defaultOff);
 
-  TEST_ASSERT(grafted.getCacheReactantGrafts());
-  TEST_ASSERT(!defaultOff.getCacheReactantGrafts());
+  TEST_ASSERT(grafted.getCacheMode() == ReactantCacheMode::Full);
+  TEST_ASSERT(defaultOff.getCacheMode() == ReactantCacheMode::MatchOnly);
   TEST_ASSERT(graftedResults == expected);
   TEST_ASSERT(defaultResults == expected);
 }
@@ -508,7 +508,7 @@ void testGraftCachePopulatedAndReused() {
   EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
 
   EnumerationParams graftParams;
-  graftParams.cacheReactantGrafts = true;
+  graftParams.cacheMode = ReactantCacheMode::Full;
   EnumerateLibrary library(*rxn, bbs, graftParams);
 
   // every reagent matches its template exactly once, so the populated graft
@@ -535,7 +535,7 @@ void testGraftCacheReuseAcrossReset() {
   EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
 
   EnumerationParams graftParams;
-  graftParams.cacheReactantGrafts = true;
+  graftParams.cacheMode = ReactantCacheMode::Full;
   EnumerateLibrary en(*rxn, bbs, graftParams);
 
   const std::vector<std::string> firstPass = collectEnumerationSequence(en);
@@ -557,7 +557,7 @@ void testGraftCachePreservedOnCopy() {
   EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
 
   EnumerationParams graftParams;
-  graftParams.cacheReactantGrafts = true;
+  graftParams.cacheMode = ReactantCacheMode::Full;
   EnumerateLibrary en(*rxn, bbs, graftParams);
 
   const std::vector<std::string> baseline = collectEnumerationSequence(en);
@@ -568,7 +568,7 @@ void testGraftCachePreservedOnCopy() {
   // populated graft cache is carried into the copy verbatim
   en.reset();
   EnumerateLibrary copy(en);
-  TEST_ASSERT(copy.getCacheReactantGrafts());
+  TEST_ASSERT(copy.getCacheMode() == ReactantCacheMode::Full);
   TEST_ASSERT(copy.getGraftCacheSize() == populatedGrafts);
 
   const std::vector<std::string> copySequence = collectEnumerationSequence(copy);
@@ -583,7 +583,7 @@ void testGraftCacheNotSerialized() {
   EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
 
   EnumerationParams graftParams;
-  graftParams.cacheReactantGrafts = true;
+  graftParams.cacheMode = ReactantCacheMode::Full;
   EnumerateLibrary en(*rxn, bbs, graftParams);
   const std::vector<std::string> baseline = collectEnumerationSequence(en);
   TEST_ASSERT(en.getGraftCacheSize() > 0);
@@ -593,7 +593,7 @@ void testGraftCacheNotSerialized() {
   EnumerateLibrary reloaded(serialized);
 
   // the flag survives serialization but the populated cache does not
-  TEST_ASSERT(reloaded.getCacheReactantGrafts());
+  TEST_ASSERT(reloaded.getCacheMode() == ReactantCacheMode::Full);
   TEST_ASSERT(reloaded.getGraftCacheSize() == 0);
 
   const std::vector<std::string> reloadedSequence =

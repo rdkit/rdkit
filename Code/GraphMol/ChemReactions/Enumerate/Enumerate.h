@@ -46,6 +46,23 @@ future releases.
 
 namespace RDKit {
 
+//! Controls what caching is applied during reaction enumeration.
+/*!
+  - None:      no caching (original baseline behavior)
+  - MatchOnly: cache reactant-template substructure matches; each
+               reagent/template pair is matched once and replayed
+               (default)
+  - Full:      cache matches and per-reagent product grafts; the
+               atom/bond subgraph each reagent contributes is extracted
+               once and replayed across all Cartesian-product
+               combinations (implies MatchOnly)
+*/
+enum class ReactantCacheMode {
+  None = 0,
+  MatchOnly = 1,
+  Full = 2
+};
+
 //! This is a class for providing enumeration options that control
 ///  how enumerations are performed.
 /*!
@@ -56,11 +73,11 @@ namespace RDKit {
   dedupeSymmetricMatches [default false]
   Collapse substructure matches that land on symmetry-equivalent reagent
   atoms, avoiding duplicate products for symmetric reagents.
+  Requires cacheMode >= MatchOnly.
 
-  cacheReactantGrafts [default false]
-  Cache and replay the per-reagent "graft" (the atoms/bonds a reagent
-  contributes to a product) across product combinations instead of
-  re-deriving it for every combination. Output is unchanged.
+  cacheMode [default MatchOnly]
+  Controls whether reactant-template matches and/or product grafts are
+  cached across enumeration steps. See ReactantCacheMode.
 
    sanePartialProducts [default false]
     If true, forces all products of the reagent plus the product templates\n\
@@ -71,14 +88,14 @@ struct RDKIT_CHEMREACTIONS_EXPORT EnumerationParams {
   int reagentMaxMatchCount{INT_MAX};
   bool sanePartialProducts{false};
   bool dedupeSymmetricMatches{false};
-  bool cacheReactantGrafts{false};
+  ReactantCacheMode cacheMode{ReactantCacheMode::MatchOnly};
   EnumerationParams() {}
 
   EnumerationParams(const EnumerationParams &rhs)
       : reagentMaxMatchCount(rhs.reagentMaxMatchCount),
         sanePartialProducts(rhs.sanePartialProducts),
         dedupeSymmetricMatches(rhs.dedupeSymmetricMatches),
-        cacheReactantGrafts(rhs.cacheReactantGrafts) {}
+        cacheMode(rhs.cacheMode) {}
 };
 
 //!  Helper function, remove reagents that are incompatible
@@ -130,7 +147,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
     : public EnumerateLibraryBase {
   bool m_dedupeSymmetricMatches{false};
   ReactantMatchCache m_matchCache;
-  bool m_cacheReactantGrafts{false};
+  ReactantCacheMode m_cacheMode{ReactantCacheMode::MatchOnly};
   ReactionRunnerUtils::ReactantGraftCache m_graftCache;
   EnumerationTypes::BBS m_bbs;
 
@@ -157,9 +174,9 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
 
   bool getDedupeSymmetricMatches() const { return m_dedupeSymmetricMatches; }
 
-  size_t getMatchCacheSize() const { return m_matchCache.size(); }
+  ReactantCacheMode getCacheMode() const { return m_cacheMode; }
 
-  bool getCacheReactantGrafts() const { return m_cacheReactantGrafts; }
+  size_t getMatchCacheSize() const { return m_matchCache.size(); }
 
   size_t getGraftCacheSize() const { return m_graftCache.size(); }
 
@@ -189,7 +206,8 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
     }
 
     ar & m_dedupeSymmetricMatches;
-    ar & m_cacheReactantGrafts;
+    int cacheModeInt = static_cast<int>(m_cacheMode);
+    ar & cacheModeInt;
   }
   template <class Archive>
   void load(Archive &ar, const unsigned int version) {
@@ -214,13 +232,12 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
 
     if (version >= 1) {
       ar & m_dedupeSymmetricMatches;
+      int cacheModeInt;
+      ar & cacheModeInt;
+      m_cacheMode = static_cast<ReactantCacheMode>(cacheModeInt);
     } else {
       m_dedupeSymmetricMatches = false;
-    }
-    if (version >= 2) {
-      ar & m_cacheReactantGrafts;
-    } else {
-      m_cacheReactantGrafts = false;
+      m_cacheMode = ReactantCacheMode::MatchOnly;
     }
     m_matchCache.clear();
     m_graftCache.clear();
@@ -234,6 +251,6 @@ RDKIT_CHEMREACTIONS_EXPORT bool EnumerateLibraryCanSerialize();
 
 }  // namespace RDKit
 #ifdef RDK_USE_BOOST_SERIALIZATION
-BOOST_CLASS_VERSION(RDKit::EnumerateLibrary, 2)
+BOOST_CLASS_VERSION(RDKit::EnumerateLibrary, 1)
 #endif
 #endif

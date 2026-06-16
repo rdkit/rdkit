@@ -326,24 +326,24 @@ class TestCase(unittest.TestCase):
     # defaults: both flags off
     params = rdChemReactions.EnumerationParams()
     self.assertFalse(params.dedupeSymmetricMatches)
-    self.assertFalse(params.cacheReactantGrafts)
+    self.assertEqual(params.cacheMode, rdChemReactions.ReactantCacheMode.MatchOnly)
 
     baseline = rdChemReactions.EnumerateLibrary(rxn, reagents)
     self.assertFalse(baseline.GetDedupeSymmetricMatches())
-    self.assertFalse(baseline.GetCacheReactantGrafts())
+    self.assertEqual(baseline.GetCacheMode(), rdChemReactions.ReactantCacheMode.MatchOnly)
     baseSmiles = sorted(Chem.MolToSmiles(mols[0])
                         for prods in baseline for mols in prods)
 
-    # enable both flags through the params object
+    # enable dedup and full caching through the params object
     params = rdChemReactions.EnumerationParams()
     params.dedupeSymmetricMatches = True
-    params.cacheReactantGrafts = True
+    params.cacheMode = rdChemReactions.ReactantCacheMode.Full
     self.assertTrue(params.dedupeSymmetricMatches)
-    self.assertTrue(params.cacheReactantGrafts)
+    self.assertEqual(params.cacheMode, rdChemReactions.ReactantCacheMode.Full)
 
     cached = rdChemReactions.EnumerateLibrary(rxn, reagents, params)
     self.assertTrue(cached.GetDedupeSymmetricMatches())
-    self.assertTrue(cached.GetCacheReactantGrafts())
+    self.assertEqual(cached.GetCacheMode(), rdChemReactions.ReactantCacheMode.Full)
     self.assertEqual(cached.GetGraftCacheSize(), 0)
 
     cachedSmiles = sorted(Chem.MolToSmiles(mols[0])
