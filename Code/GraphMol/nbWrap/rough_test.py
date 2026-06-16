@@ -3618,7 +3618,7 @@ CAS<~>
     m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')
     aromats = m.GetAromaticAtoms()
     self.assertEqual(len(aromats), 5)
-    self.assertEqual(list(aromats), [0, 1, 2, 4, 7])
+    self.assertEqual([x.GetIdx() for x in aromats], [0, 1, 2, 4, 7])
 
   def test88QueryAtoms(self):
     from rdkit.Chem import rdqueries

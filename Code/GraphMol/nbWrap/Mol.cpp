@@ -472,13 +472,16 @@ struct mol_wrapper {
     nb::class_<ConformerIterSeq>(
         m, "_ROConformerSeq",
         "A sequence-like holder of a molecule's conformers")
-        .def("__len__", &ConformerIterSeq::len)
-        .def("__iter__", &ConformerIterSeq::__iter__, nb::rv_policy::reference)
-        // .def("__iter__", [](ConformerIterSeq &c) { return c.__iter__(); },
-        // nb::keep_alive<0, 1>())
-        .def("__getitem__", &ConformerIterSeq::get_item,
-             nb::rv_policy::reference_internal, "idx"_a, nb::keep_alive<0, 1>())
-        .def("__next__", &ConformerIterSeq::next, nb::keep_alive<0, 1>());
+        .def("__len__", &ConformerIterSeq::size)
+        .def(
+            "__iter__",
+            [](ConformerIterSeq &c) {
+              return nb::make_iterator(nb::type<ConformerIterSeq>(), "iterator",
+                                       c.begin(), c.end());
+            },
+            nb::keep_alive<0, 1>())
+        .def("__getitem__", &ConformerIterSeq::operator[],
+             nb::rv_policy::reference_internal, "idx"_a);
     nb::class_<QueryAtomIterSeq>(
         m, "_ROQAtomSeq",
         "A sequence-like holder of atoms matching a query atom")
@@ -489,7 +492,9 @@ struct mol_wrapper {
               return nb::make_iterator(nb::type<QueryAtomIterSeq>(), "iterator",
                                        q.begin(), q.end());
             },
-            nb::keep_alive<0, 1>());
+            nb::keep_alive<0, 1>())
+        .def("__getitem__", &QueryAtomIterSeq::operator[],
+             nb::rv_policy::reference_internal, "idx"_a);
 
     nb::class_<ROMol>(m, "Mol", nb::dynamic_attr())
         .def(nb::new_([]() {
@@ -584,12 +589,7 @@ struct mol_wrapper {
 
         .def(
             "GetConformers",
-            [](ROMol &self) {
-      return ConformerIterSeq(
-          self, self.beginConformers(), self.endConformers(),
-          ConformerCountFunctor(self),
-          [](ROMol::ConformerIterator it) { return it->get(); });
-            },
+            [](ROMol &self) {return ConformerIterSeq(self);},
             nb::keep_alive<0, 1>(),
             R"DOC(Returns a read-only sequence containing all of the molecule's Conformers.)DOC")
 

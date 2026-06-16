@@ -164,11 +164,34 @@ class ReadOnlySeq {
     return _size;
   }
 };
-using ConformerIterSeq =
-    ReadOnlySeq<ROMol::ConformerIterator, Conformer *, ConformerCountFunctor,
-                std::function<Conformer *(ROMol::ConformerIterator)>>;
+// using ConformerIterSeq =
+//     ReadOnlySeq<ROMol::ConformerIterator, Conformer *, ConformerCountFunctor,
+//                 std::function<Conformer *(ROMol::ConformerIterator)>>;
 // using QueryAtomIterSeq =
 //     ReadOnlySeq<ROMol::QueryAtomIterator, Atom *, AtomCountFunctor>;
+
+class ConformerIterSeq {
+ private:
+  const ROMol &_mol;
+  std::vector<Conformer *> _confs;
+
+ public:
+  ConformerIterSeq(const ROMol &mol) : _mol(mol) {
+    _confs.reserve(mol.getNumConformers());
+    std::transform(mol.beginConformers(), mol.endConformers(),
+                   std::back_inserter(_confs),
+                   [](const CONFORMER_SPTR &conf) { return conf.get(); });
+  };
+  std::vector<Conformer *>::iterator begin() { return _confs.begin(); }
+  std::vector<Conformer *>::iterator end() { return _confs.end(); }
+  Conformer *operator[](int idx) {
+    if (idx < 0 || static_cast<size_t>(idx) >= _confs.size()) {
+      throw IndexErrorException(idx);
+    }
+    return _confs[idx];
+  }
+  size_t size() { return _confs.size(); }
+};
 
 class QueryAtomIterSeq {
  private:
@@ -200,6 +223,19 @@ class QueryAtomIterSeq {
       }
     }
     return static_cast<size_t>(_size);
+  }
+  const Atom *operator[](int idx) {
+    if (idx < 0) {
+      throw IndexErrorException(idx);
+    }
+    auto it = begin();
+    for (int i = 0; i < idx; i++) {
+      ++it;
+      if (it == end()) {
+        throw IndexErrorException(idx);
+      }
+    }
+    return *it;
   }
 };
 }  // namespace RDKit
