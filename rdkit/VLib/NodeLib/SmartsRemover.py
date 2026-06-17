@@ -95,7 +95,7 @@ class SmartsRemover(TransformNode):
   def transform(self, cmpd):
     # sys.stderr.write('\tTRANSFORM: %s\n'%(Chem.MolToSmiles(cmpd)))
     for patt in self._patterns:
-      cmpd = Chem.DeleteSubstructs(cmpd, patt, onlyFrags=self._wholeFragments)
+      cmpd = Chem.DeleteSubstructs(cmpd, patt, onlyFrags=bool(self._wholeFragments))
       # sys.stderr.write('\t\tAfter %s: %s\n'%(Chem.MolToSmiles(patt),Chem.MolToSmiles(cmpd)))
 
     return cmpd
