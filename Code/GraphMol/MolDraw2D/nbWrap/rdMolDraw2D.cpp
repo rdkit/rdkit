@@ -312,7 +312,7 @@ void drawMoleculesHelper2(MolDraw2D &self, nb::object pmols,
   }
   unsigned int nThere = mols->size();
   std::unique_ptr<std::vector<std::vector<int>>> highlightAtoms;
-  if (!highlight_atoms.is_none()) {
+  if (!highlight_atoms.is_none() && nb::len(highlight_atoms)) {
     if (nb::len(highlight_atoms) != nThere) {
       throw ValueErrorException(
           "If highlightAtoms is provided it must be the same length as the "
@@ -324,7 +324,7 @@ void drawMoleculesHelper2(MolDraw2D &self, nb::object pmols,
     }
   }
   std::unique_ptr<std::vector<std::vector<int>>> highlightBonds;
-  if (!highlight_bonds.is_none()) {
+  if (!highlight_bonds.is_none() && nb::len(highlight_bonds)) {
     if (nb::len(highlight_bonds) != nThere) {
       throw ValueErrorException(
           "If highlightBonds is provided it must be the same length as the "
@@ -337,7 +337,7 @@ void drawMoleculesHelper2(MolDraw2D &self, nb::object pmols,
   }
 
   std::unique_ptr<std::vector<ColourPalette>> highlightAtomMap;
-  if (!highlight_atom_map.is_none()) {
+  if (!highlight_atom_map.is_none() && nb::len(highlight_atom_map)) {
     if (nb::len(highlight_atom_map) != nThere) {
       throw ValueErrorException(
           "If highlightAtomMap is provided it must be the same length as the "
@@ -349,7 +349,7 @@ void drawMoleculesHelper2(MolDraw2D &self, nb::object pmols,
     }
   }
   std::unique_ptr<std::vector<ColourPalette>> highlightBondMap;
-  if (!highlight_bond_map.is_none()) {
+  if (!highlight_bond_map.is_none() && nb::len(highlight_bond_map)) {
     if (nb::len(highlight_bond_map) != nThere) {
       throw ValueErrorException(
           "If highlightBondMap is provided it must be the same length as the "
@@ -361,7 +361,7 @@ void drawMoleculesHelper2(MolDraw2D &self, nb::object pmols,
     }
   }
   std::unique_ptr<std::vector<std::map<int, double>>> highlightRadii;
-  if (!highlight_atom_radii.is_none()) {
+  if (!highlight_atom_radii.is_none() && nb::len(highlight_atom_radii)) {
     if (nb::len(highlight_atom_radii) != nThere) {
       throw ValueErrorException(
           "If highlightAtomRadii is provided it must be the same length as the "
