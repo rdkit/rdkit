@@ -326,11 +326,11 @@ class TestCase(unittest.TestCase):
     # defaults: both flags off
     params = rdChemReactions.EnumerationParams()
     self.assertFalse(params.dedupeSymmetricMatches)
-    self.assertEqual(params.cacheMode, rdChemReactions.ReactantCacheMode.MatchOnly)
+    self.assertEqual(params.cacheMode, rdChemReactions.ReactantCacheMode.NoCache)
 
     baseline = rdChemReactions.EnumerateLibrary(rxn, reagents)
     self.assertFalse(baseline.GetDedupeSymmetricMatches())
-    self.assertEqual(baseline.GetCacheMode(), rdChemReactions.ReactantCacheMode.MatchOnly)
+    self.assertEqual(baseline.GetCacheMode(), rdChemReactions.ReactantCacheMode.NoCache)
     baseSmiles = sorted(Chem.MolToSmiles(mols[0])
                         for prods in baseline for mols in prods)
 

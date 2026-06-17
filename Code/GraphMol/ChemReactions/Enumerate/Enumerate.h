@@ -48,10 +48,10 @@ namespace RDKit {
 
 //! Controls what caching is applied during reaction enumeration.
 /*!
-  - None:      no caching (original baseline behavior)
+  - None:      no caching (original baseline behavior, default)
   - MatchOnly: cache reactant-template substructure matches; each
                reagent/template pair is matched once and replayed
-               (default)
+               across all Cartesian-product combinations
   - Full:      cache matches and per-reagent product grafts; the
                atom/bond subgraph each reagent contributes is extracted
                once and replayed across all Cartesian-product
@@ -75,7 +75,7 @@ enum class ReactantCacheMode {
   atoms, avoiding duplicate products for symmetric reagents.
   Requires cacheMode >= MatchOnly.
 
-  cacheMode [default MatchOnly]
+  cacheMode [default None]
   Controls whether reactant-template matches and/or product grafts are
   cached across enumeration steps. See ReactantCacheMode.
 
@@ -88,7 +88,7 @@ struct RDKIT_CHEMREACTIONS_EXPORT EnumerationParams {
   int reagentMaxMatchCount{INT_MAX};
   bool sanePartialProducts{false};
   bool dedupeSymmetricMatches{false};
-  ReactantCacheMode cacheMode{ReactantCacheMode::MatchOnly};
+  ReactantCacheMode cacheMode{ReactantCacheMode::None};
   EnumerationParams() {}
 
   EnumerationParams(const EnumerationParams &rhs)
@@ -147,7 +147,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
     : public EnumerateLibraryBase {
   bool m_dedupeSymmetricMatches{false};
   ReactantMatchCache m_matchCache;
-  ReactantCacheMode m_cacheMode{ReactantCacheMode::MatchOnly};
+  ReactantCacheMode m_cacheMode{ReactantCacheMode::None};
   ReactionRunnerUtils::ReactantGraftCache m_graftCache;
   EnumerationTypes::BBS m_bbs;
 
@@ -237,7 +237,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
       m_cacheMode = static_cast<ReactantCacheMode>(cacheModeInt);
     } else {
       m_dedupeSymmetricMatches = false;
-      m_cacheMode = ReactantCacheMode::MatchOnly;
+      m_cacheMode = ReactantCacheMode::None;
     }
     m_matchCache.clear();
     m_graftCache.clear();

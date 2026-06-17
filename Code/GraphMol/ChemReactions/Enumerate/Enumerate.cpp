@@ -223,8 +223,10 @@ EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
       m_graftCache(),
       m_bbs(removeNonmatchingReagents(
           m_rxn, bbs, params,
-          params.cacheMode != ReactantCacheMode::None ? &m_matchCache
-                                                      : nullptr)) {
+          (params.cacheMode != ReactantCacheMode::None ||
+           params.dedupeSymmetricMatches)
+              ? &m_matchCache
+              : nullptr)) {
   m_enumerator->initialize(m_rxn, m_bbs);  // getSizesFromBBs(bbs))
   m_initialEnumerator.reset(m_enumerator->copy());
 }
@@ -239,8 +241,10 @@ EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
       m_graftCache(),
       m_bbs(removeNonmatchingReagents(
           m_rxn, bbs, params,
-          params.cacheMode != ReactantCacheMode::None ? &m_matchCache
-                                                      : nullptr)) {
+          (params.cacheMode != ReactantCacheMode::None ||
+           params.dedupeSymmetricMatches)
+              ? &m_matchCache
+              : nullptr)) {
   m_enumerator.reset(enumerator.copy());
   m_enumerator->initialize(m_rxn, m_bbs);
   m_initialEnumerator.reset(m_enumerator->copy());
@@ -267,7 +271,7 @@ std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {
     return run_Reactants(m_rxn, reactants, m_matchCache, m_graftCache,
                          m_dedupeSymmetricMatches);
   }
-  if (m_cacheMode == ReactantCacheMode::MatchOnly) {
+  if (m_cacheMode == ReactantCacheMode::MatchOnly || m_dedupeSymmetricMatches) {
     return run_Reactants(m_rxn, reactants, m_matchCache,
                          m_dedupeSymmetricMatches);
   }

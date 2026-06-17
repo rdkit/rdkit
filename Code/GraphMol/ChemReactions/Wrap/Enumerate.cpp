@@ -209,7 +209,7 @@ Options:\n\
      reagent atoms, avoiding duplicate products for symmetric reagents.\n\
      Requires cacheMode >= MatchOnly.\n\
 \n\
-  cacheMode [default MatchOnly]\n\
+  cacheMode [default None]\n\
     Controls whether reactant-template matches and/or product grafts are\n\
      cached across enumeration steps.\n\
     ReactantCacheMode.None:      no caching (baseline behavior).\n\

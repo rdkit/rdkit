@@ -318,7 +318,9 @@ void testPrefilterPrimesSharedCache() {
   rxn->initReactantMatchers();
   EnumerationTypes::BBS bbs = makeEnumerationCacheBbsWithNonMatches();
 
-  EnumerateLibrary library(*rxn, bbs);
+  EnumerationParams params;
+  params.cacheMode = ReactantCacheMode::MatchOnly;
+  EnumerateLibrary library(*rxn, bbs, params);
   const EnumerationTypes::BBS &filtered = library.getReagents();
   size_t expectedCacheSize = 0;
   for (const auto &pool : filtered) {
@@ -347,6 +349,7 @@ void testPrefilterProtectedAtomFallback() {
   EnumerationTypes::BBS bbs = makeEnumerationCacheBbsWithProtectedAtoms();
 
   EnumerationParams params;
+  params.cacheMode = ReactantCacheMode::MatchOnly;
   EnumerationTypes::BBS baseline = removeNonmatchingReagents(*rxn, bbs, params);
   EnumerateLibrary library(*rxn, bbs, params);
 
@@ -497,7 +500,7 @@ void testGraftCacheOutputUnchanged() {
       collectEnumerationSmiles(defaultOff);
 
   TEST_ASSERT(grafted.getCacheMode() == ReactantCacheMode::Full);
-  TEST_ASSERT(defaultOff.getCacheMode() == ReactantCacheMode::MatchOnly);
+  TEST_ASSERT(defaultOff.getCacheMode() == ReactantCacheMode::None);
   TEST_ASSERT(graftedResults == expected);
   TEST_ASSERT(defaultResults == expected);
 }
