@@ -60,10 +60,6 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromMacroMol(
     const RDKit::v2::FileParsers::MolFileParserParams &molFileParserParams,
     const RDKit::MolFromMacroMolParams &molFromMacroMolParams);
 
-RDKIT_FILEPARSERS_EXPORT void MacroMolToSCSRMolFile(
-    RDKit::MacroMol &macroMol, const std::string &fName,
-    const RDKit::MolWriterParams &params, int confId);
-
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::MacroMol> MolToMacroMol(
     const ROMol &mol, const RDKit::MacroMolTemplateLib &templates,
     MolToMACROParams molToMacroMolParams = MolToMACROParams());

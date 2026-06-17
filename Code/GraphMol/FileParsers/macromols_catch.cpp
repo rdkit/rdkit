@@ -520,3 +520,52 @@ TEST_CASE("threeLetterCodeTest", "threeLetterCodeTest") {
     }
   }
 }
+
+TEST_CASE("test primatves", "test primatves") {
+  SECTION("basics") {
+
+    MacroMol macroMol;
+    // add some templates
+    
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/macromols/Phe_4I.mol";
+    RDKit::v2::FileParsers::MolFileParserParams params;
+    std::vector<std::pair<std::string,std::string>> emptyAttrs;
+
+    auto mol = RDKit::v2::FileParsers::MolFromMolFile(fName, params);
+    auto templateMol = std::unique_ptr<MacroMolTemplate>(new MacroMolTemplate(mol, "AA", "Phe_4I", emptyAttrs));
+    macroMol.addTemplate(templateMol);
+
+    fName = rdbase + "/Code/GraphMol/FileParsers/test_data/macromols/cyaTemplate.mol";
+    mol = RDKit::v2::FileParsers::MolFromMolFile(fName, params);
+    templateMol = std::unique_ptr<MacroMolTemplate>(new MacroMolTemplate(mol, "AA", "cya", emptyAttrs));
+    macroMol.addTemplate(templateMol);
+
+    fName = rdbase + "/Code/GraphMol/FileParsers/test_data/macromols/dCTemplate.mol";
+    mol = RDKit::v2::FileParsers::MolFromMolFile(fName, params);
+    templateMol = std::unique_ptr<MacroMolTemplate>(new MacroMolTemplate(mol, "AA", "dC", emptyAttrs));
+    macroMol.addTemplate(templateMol);
+
+    
+    // add some atoms
+    macroMol.addMacroAtom("AA", "dC");
+    macroMol.addMacroAtom("AA", "Phe_4I");
+    macroMol.addMacroAtom("AA", "cya");
+
+    //add bonds
+
+    macroMol.addMacroBond(0, 1, Bond::BondType::SINGLE, "Br", "Al");
+    macroMol.addMacroBond(1, 2, Bond::BondType::SINGLE, "Br", "Al");
+   
+
+    // test conversion to mol
+    RDKit::v2::FileParsers::MolFileParserParams molFileParserParams;
+    RDKit::MolFromMacroMolParams molFromMacroMolParams;
+    auto outMol = MolFromMacroMol(&macroMol, molFileParserParams, molFromMacroMolParams) ;
+    
+    CHECK(outMol->getNumAtoms() == 30);
+    CHECK(outMol->getNumBonds() == 30);
+
+  }
+}

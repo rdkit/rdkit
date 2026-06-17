@@ -118,6 +118,25 @@ unsigned int RDKit::MacroMol::addMacroAtom(std::string className,
   return this->addAtom(atom, false, true);
 }
 
+void RDKit::MacroMol::addMacroBond(unsigned int fromAtomIdx,
+                                   unsigned int toAtomIdx,
+                                   Bond::BondType bondType,
+                                   std::string fromConnectionPoint,
+                                   std::string toConnectionPoint) {
+  auto bondIdx = this->addBond(fromAtomIdx, toAtomIdx, bondType) - 1;
+  auto bond = this->getBondWithIdx(bondIdx);
+  this->setBondBookmark(bond, bondIdx);
+
+  if (!toConnectionPoint.empty()) {
+    bond->setProp(common_properties::_MolFileBondAttachPt2, toConnectionPoint);
+  }
+
+  if (!fromConnectionPoint.empty()) {
+    bond->setProp(common_properties::_MolFileBondAttachPt1,
+                  fromConnectionPoint);
+  }
+}
+
 MacroMolTemplate *MacroMol::getMutableTemplate(
     unsigned int atomIdx) {
   const auto atom = this->getAtomWithIdx(atomIdx);
