@@ -741,7 +741,8 @@ M  END
     smiles = "CC(=O)O.OCC>Cl.OCC>CC(=O)OCC"
     rxn_smi = rdChemReactions.ReactionFromSmiles(smiles)
     rxn_smarts = rdChemReactions.ReactionFromSmarts(smiles, useSmiles=True)
-    self.assertEqual(rdChemReactions.ReactionToSmiles(rxn_smi), rdChemReactions.ReactionToSmiles(rxn_smarts))
+    self.assertEqual(rdChemReactions.ReactionToSmiles(rxn_smi),
+                     rdChemReactions.ReactionToSmiles(rxn_smarts))
 
   @unittest.skipUnless(hasattr(rdChemReactions, 'ReactionFromPNGFile'),
                        "RDKit not built with iostreams support")
@@ -1226,12 +1227,12 @@ M  END
       AllChem.ReactionToSmarts(rxn, params),
       "[C:1]-[C:2].[N&H3:3]-[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]-[#26:4]-[N&H2:5]")
 
+
 class CXExtensionsTests(unittest.TestCase):
+
   def test_cxsmarts_reaction(self):
-    CXSmarts_string = (
-      "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>"
-      "[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"
-    )
+    CXSmarts_string = ("[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>"
+                       "[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;;;;$|")
     rxnCXSmarts = rdChemReactions.ReactionFromSmarts(CXSmarts_string)
     self.assertIsNotNone(rxnCXSmarts)
 
@@ -1241,10 +1242,9 @@ class CXExtensionsTests(unittest.TestCase):
     rxnCXSmarts_string = rdChemReactions.ReactionToCXSmarts(rxnCXSmarts, params, flags)
     expected_rxnCXSmarts_string = (
       "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>O=C=O>"
-      "[C&H3:1][C&H1:2]([C&H3:3])[C&H2:6][O&H1:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"
-    )
+      "[C&H3:1][C&H1:2]([C&H3:3])[C&H2:6][O&H1:5] |$;;;_AP1;;;_AP1;;;;;;;;$|")
     self.assertEqual(rxnCXSmarts_string, expected_rxnCXSmarts_string)
-    
+
   def test_cxsmiles_reaction(self):
     reactant1 = '[CH3:1][CH:2]([CH3:3])[*:4]'
     reactant2 = '[OH:5][CH2:6][*:7]'
@@ -1260,10 +1260,10 @@ class CXExtensionsTests(unittest.TestCase):
 
     expected_cxsmiles_reaction_string = (
       "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>"
-      "[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_R1;;;_R2;;;;;;;;$|"
-    )
+      "[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_R1;;;_R2;;;;;;;;$|")
 
     self.assertEqual(cxsmiles_reaction_string, expected_cxsmiles_reaction_string)
 
+
 if __name__ == '__main__':
-  unittest.main(verbosity=True)
+  unittest.main(verbosity=2)

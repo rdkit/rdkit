@@ -40,12 +40,6 @@ using namespace nb::literals;
 
 void wrap_enumeration(nb::module_ &m);
 
-namespace {
-std::shared_ptr<RDKit::ROMol> toStd(const RDKit::ROMOL_SPTR &bptr) {
-  return {bptr.get(), [b = bptr](RDKit::ROMol *) {}};
-}
-}  // namespace
-
 namespace RDKit {
 
 std::string pyObjectToString(nb::object input) {
@@ -82,7 +76,7 @@ nb::tuple RunReactants(ChemicalReaction *self, nb::object reactants,
     if (mol_obj.is_none()) {
       throw nb::value_error("reaction called with None reactants");
     }
-    reacts[i] = ROMOL_SPTR(nb::cast<ROMol *>(mol_obj), [](ROMol *) {});
+    reacts[i] = ROMOL_SPTR(&nb::cast<ROMol &>(mol_obj), [](ROMol *) {});
   }
   std::vector<MOL_SPTR_VECT> mols;
   {
@@ -250,8 +244,7 @@ bool IsMoleculeProductOfReaction(const ChemicalReaction &rxn,
   return isMoleculeProductOfReaction(rxn, mol, which);
 }
 
-bool IsMoleculeAgentOfReaction(const ChemicalReaction &rxn,
-                                const ROMol &mol) {
+bool IsMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol) {
   unsigned int which;
   return isMoleculeAgentOfReaction(rxn, mol, which);
 }
@@ -299,7 +292,7 @@ ChemicalReaction *ReactionFromMrvBlock(nb::object imolBlock, bool sanitize,
 }
 
 nb::tuple ReactionsFromCDXMLFile(const char *filename, bool sanitize,
-                                  bool removeHs) {
+                                 bool removeHs) {
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {
     rxns = CDXMLFileToChemicalReactions(filename, sanitize, removeHs);
@@ -318,7 +311,7 @@ nb::tuple ReactionsFromCDXMLFile(const char *filename, bool sanitize,
 }
 
 nb::tuple ReactionsFromCDXMLBlock(nb::object imolBlock, bool sanitize,
-                                   bool removeHs) {
+                                  bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {
@@ -334,8 +327,7 @@ nb::tuple ReactionsFromCDXMLBlock(nb::object imolBlock, bool sanitize,
   return nb::tuple(res);
 }
 
-nb::tuple GetReactingAtoms(const ChemicalReaction &self,
-                            bool mappedAtomsOnly) {
+nb::tuple GetReactingAtoms(const ChemicalReaction &self, bool mappedAtomsOnly) {
   nb::list res;
   VECT_INT_VECT rAs = getReactingAtoms(self, mappedAtomsOnly);
   for (auto &rA : rAs) {
@@ -350,8 +342,7 @@ nb::tuple GetReactingAtoms(const ChemicalReaction &self,
 
 nb::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
                                          nb::dict queryDict,
-                                         std::string propName,
-                                         bool getLabels) {
+                                         std::string propName, bool getLabels) {
   std::map<std::string, ROMOL_SPTR> queries;
   for (auto [k, v] : queryDict) {
     ROMol *m = nb::cast<ROMol *>(v);
@@ -382,7 +373,7 @@ nb::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
 }
 
 nb::object PreprocessReaction(ChemicalReaction &reaction, nb::dict queryDict,
-                               std::string propName) {
+                              std::string propName) {
   std::map<std::string, ROMOL_SPTR> queries;
   unsigned int size = nb::len(queryDict);
   if (!size) {
@@ -440,9 +431,8 @@ nb::bytes addReactionToPNGStringHelper(const ChemicalReaction &rxn,
                                        bool includeSmiles, bool includeSmarts,
                                        bool includeRxn) {
   std::string cstr(static_cast<const char *>(png.data()), png.size());
-  auto res = addChemicalReactionToPNGString(rxn, cstr, includePkl,
-                                            includeSmiles, includeSmarts,
-                                            includeRxn);
+  auto res = addChemicalReactionToPNGString(
+      rxn, cstr, includePkl, includeSmiles, includeSmarts, includeRxn);
   return nb::bytes(res.c_str(), res.length());
 }
 
@@ -465,8 +455,8 @@ NB_MODULE(rdChemReactions, m) {
 
   nb::exception<RDKit::ChemicalReactionParserException>(
       m, "ChemicalReactionParserException", PyExc_ValueError);
-  nb::exception<RDKit::ChemicalReactionException>(m, "ChemicalReactionException",
-                                                   PyExc_ValueError);
+  nb::exception<RDKit::ChemicalReactionException>(
+      m, "ChemicalReactionException", PyExc_ValueError);
 
   nb::enum_<RDKit::FingerprintType>(m, "FingerprintType")
       .value("AtomPairFP", RDKit::FingerprintType::AtomPairFP)
@@ -475,7 +465,8 @@ NB_MODULE(rdChemReactions, m) {
       .value("RDKitFP", RDKit::FingerprintType::RDKitFP)
       .value("PatternFP", RDKit::FingerprintType::PatternFP);
 
-  nb::class_<RDKit::ReactionFingerprintParams>(m, "ReactionFingerprintParams",
+  nb::class_<RDKit::ReactionFingerprintParams>(
+      m, "ReactionFingerprintParams",
       R"DOC(A class for storing parameters to manipulate the calculation of
 fingerprints of chemical reactions.)DOC")
       .def(nb::init<>(), "Constructor, takes no arguments")
@@ -490,11 +481,11 @@ fingerprints of chemical reactions.)DOC")
       .def_rw("nonAgentWeight",
               &RDKit::ReactionFingerprintParams::nonAgentWeight)
       .def_rw("agentWeight", &RDKit::ReactionFingerprintParams::agentWeight)
-      .def_rw("includeAgents",
-              &RDKit::ReactionFingerprintParams::includeAgents)
+      .def_rw("includeAgents", &RDKit::ReactionFingerprintParams::includeAgents)
       .def("__setattr__", &safeSetattr);
 
-  nb::class_<RDKit::ChemicalReaction>(m, "ChemicalReaction",
+  nb::class_<RDKit::ChemicalReaction>(
+      m, "ChemicalReaction",
       R"DOC(A class for storing and applying chemical reactions.
 
 Sample Usage:
@@ -511,12 +502,13 @@ Sample Usage:
   'CN(C)C=O'
 )DOC")
       .def(nb::init<>(), "Constructor, takes no arguments")
-      .def("__init__",
-           [](RDKit::ChemicalReaction *self, nb::bytes b) {
-             new (self) RDKit::ChemicalReaction(
-                 std::string(static_cast<const char *>(b.data()), b.size()));
-           },
-           "binStr"_a)
+      .def(
+          "__init__",
+          [](RDKit::ChemicalReaction *self, nb::bytes b) {
+            new (self) RDKit::ChemicalReaction(
+                std::string(static_cast<const char *>(b.data()), b.size()));
+          },
+          "binStr"_a)
       .def(nb::init<const RDKit::ChemicalReaction &>(), "other"_a)
       .def("GetNumReactantTemplates",
            &RDKit::ChemicalReaction::getNumReactantTemplates,
@@ -527,50 +519,57 @@ Sample Usage:
       .def("GetNumAgentTemplates",
            &RDKit::ChemicalReaction::getNumAgentTemplates,
            "returns the number of agents this reaction expects")
-      .def("AddReactantTemplate",
-           [](RDKit::ChemicalReaction &rxn, std::shared_ptr<RDKit::ROMol> mol) -> unsigned int {
-             return rxn.addReactantTemplate(
-                 RDKit::ROMOL_SPTR(mol.get(), [m = std::move(mol)](RDKit::ROMol *) {}));
-           }, "mol"_a,
-           "adds a reactant (a Molecule) to the reaction")
-      .def("AddProductTemplate",
-           [](RDKit::ChemicalReaction &rxn, std::shared_ptr<RDKit::ROMol> mol) -> unsigned int {
-             return rxn.addProductTemplate(
-                 RDKit::ROMOL_SPTR(mol.get(), [m = std::move(mol)](RDKit::ROMol *) {}));
-           }, "mol"_a, "adds a product (a Molecule)")
-      .def("AddAgentTemplate",
-           [](RDKit::ChemicalReaction &rxn, std::shared_ptr<RDKit::ROMol> mol) -> unsigned int {
-             return rxn.addAgentTemplate(
-                 RDKit::ROMOL_SPTR(mol.get(), [m = std::move(mol)](RDKit::ROMol *) {}));
-           }, "mol"_a, "adds a agent (a Molecule)")
+      .def(
+          "AddReactantTemplate",
+          [](RDKit::ChemicalReaction &rxn, RDKit::ROMol &mol) -> unsigned int {
+            return rxn.addReactantTemplate(
+                RDKit::ROMOL_SPTR(&mol, [](RDKit::ROMol *) {}));
+          },
+          nb::keep_alive<1, 2>(), "mol"_a,
+          "adds a reactant (a Molecule) to the reaction")
+      .def(
+          "AddProductTemplate",
+          [](RDKit::ChemicalReaction &rxn, RDKit::ROMol &mol) -> unsigned int {
+            return rxn.addProductTemplate(
+                RDKit::ROMOL_SPTR(&mol, [](RDKit::ROMol *) {}));
+          },
+          nb::keep_alive<1, 2>(), "mol"_a, "adds a product (a Molecule)")
+      .def(
+          "AddAgentTemplate",
+          [](RDKit::ChemicalReaction &rxn, RDKit::ROMol &mol) -> unsigned int {
+            return rxn.addAgentTemplate(
+                RDKit::ROMOL_SPTR(&mol, [](RDKit::ROMol *) {}));
+          },
+          nb::keep_alive<1, 2>(), "mol"_a, "adds a agent (a Molecule)")
       .def("RemoveUnmappedReactantTemplates",
            RDKit::RemoveUnmappedReactantTemplates,
-           "thresholdUnmappedAtoms"_a = 0.2,
-           "moveToAgentTemplates"_a = true, "targetList"_a = nb::none(),
+           "thresholdUnmappedAtoms"_a = 0.2, "moveToAgentTemplates"_a = true,
+           "targetList"_a = nb::none(),
            R"DOC(Removes molecules with an atom mapping ratio below
 thresholdUnmappedAtoms from reactant templates to the agent
 templates or to a given targetList)DOC")
       .def("RemoveUnmappedProductTemplates",
            RDKit::RemoveUnmappedProductTemplates,
-           "thresholdUnmappedAtoms"_a = 0.2,
-           "moveToAgentTemplates"_a = true, "targetList"_a = nb::none(),
+           "thresholdUnmappedAtoms"_a = 0.2, "moveToAgentTemplates"_a = true,
+           "targetList"_a = nb::none(),
            R"DOC(Removes molecules with an atom mapping ratio below
 thresholdUnmappedAtoms from product templates to the agent
 templates or to a given targetList)DOC")
-      .def("RemoveAgentTemplates", RDKit::RemoveAgentTemplates,
-           "targetList"_a = nb::none(),
-           R"DOC(Removes agents from reaction. If targetList is provide the agents
+      .def(
+          "RemoveAgentTemplates", RDKit::RemoveAgentTemplates,
+          "targetList"_a = nb::none(),
+          R"DOC(Removes agents from reaction. If targetList is provide the agents
 will be transferred to that list.)DOC")
-      .def("RunReactants", RDKit::RunReactants,
-           "reactants"_a, "maxProducts"_a = 1000,
-           R"DOC(apply the reaction to a sequence of reactant molecules and return
+      .def(
+          "RunReactants", RDKit::RunReactants, "reactants"_a,
+          "maxProducts"_a = 1000,
+          R"DOC(apply the reaction to a sequence of reactant molecules and return
 the products as a tuple of tuples.  If maxProducts is not zero,
  stop the reaction when maxProducts have been generated [default=1000])DOC")
-      .def("RunReactant", RDKit::RunReactant,
-           "reactant"_a, "reactionIdx"_a,
+      .def("RunReactant", RDKit::RunReactant, "reactant"_a, "reactionIdx"_a,
            "apply the reaction to a single reactant")
-      .def("RunReactantInPlace", RDKit::RunReactantInPlace,
-           "reactant"_a, "removeUnmatchedAtoms"_a = true,
+      .def("RunReactantInPlace", RDKit::RunReactantInPlace, "reactant"_a,
+           "removeUnmatchedAtoms"_a = true,
            R"DOC(apply the reaction to a single reactant in place. The reactant
 itself is modified. This can only be used for single reactant -
 single product reactions.)DOC")
@@ -582,14 +581,14 @@ single product reactions.)DOC")
       .def("Validate", RDKit::ValidateReaction, "silent"_a = false,
            "checks the reaction for potential problems, returns "
            "(numWarnings,numErrors)")
-      .def("GetProductTemplate", RDKit::GetProductTemplate,
-           "which"_a, nb::rv_policy::reference_internal,
+      .def("GetProductTemplate", RDKit::GetProductTemplate, "which"_a,
+           nb::rv_policy::reference_internal,
            "returns one of our product templates")
-      .def("GetReactantTemplate", RDKit::GetReactantTemplate,
-           "which"_a, nb::rv_policy::reference_internal,
+      .def("GetReactantTemplate", RDKit::GetReactantTemplate, "which"_a,
+           nb::rv_policy::reference_internal,
            "returns one of our reactant templates")
-      .def("GetAgentTemplate", RDKit::GetAgentTemplate,
-           "which"_a, nb::rv_policy::reference_internal,
+      .def("GetAgentTemplate", RDKit::GetAgentTemplate, "which"_a,
+           nb::rv_policy::reference_internal,
            "returns one of our agent templates")
       .def("_setImplicitPropertiesFlag",
            &RDKit::ChemicalReaction::setImplicitPropertiesFlag, "val"_a,
@@ -601,28 +600,26 @@ single product reactions.)DOC")
            "properties")
       .def("ToBinary", RDKit::ReactionToBinary,
            "Returns a binary string representation of the reaction.")
-      .def("ToBinary",
-           [](const RDKit::ChemicalReaction &self, nb::object propertyFlags) {
-             unsigned int val;
-             if (nb::isinstance<nb::int_>(propertyFlags)) {
-               val = nb::cast<unsigned int>(propertyFlags);
-             } else {
-               val = nb::cast<unsigned int>(propertyFlags.attr("value"));
-             }
-             return RDKit::ReactionToBinaryWithProps(self, val);
-           },
-           "propertyFlags"_a,
-           "Returns a binary string representation of the reaction.")
-      .def("IsMoleculeReactant", RDKit::IsMoleculeReactantOfReaction,
-           "mol"_a,
+      .def(
+          "ToBinary",
+          [](const RDKit::ChemicalReaction &self, nb::object propertyFlags) {
+            unsigned int val;
+            if (nb::isinstance<nb::int_>(propertyFlags)) {
+              val = nb::cast<unsigned int>(propertyFlags);
+            } else {
+              val = nb::cast<unsigned int>(propertyFlags.attr("value"));
+            }
+            return RDKit::ReactionToBinaryWithProps(self, val);
+          },
+          "propertyFlags"_a,
+          "Returns a binary string representation of the reaction.")
+      .def("IsMoleculeReactant", RDKit::IsMoleculeReactantOfReaction, "mol"_a,
            "returns whether or not the molecule has a substructure match to "
            "one of the reactants.")
-      .def("IsMoleculeProduct", RDKit::IsMoleculeProductOfReaction,
-           "mol"_a,
+      .def("IsMoleculeProduct", RDKit::IsMoleculeProductOfReaction, "mol"_a,
            "returns whether or not the molecule has a substructure match to "
            "one of the products.")
-      .def("IsMoleculeAgent", RDKit::IsMoleculeAgentOfReaction,
-           "mol"_a,
+      .def("IsMoleculeAgent", RDKit::IsMoleculeAgentOfReaction, "mol"_a,
            "returns whether or not the molecule has a substructure match to "
            "one of the agents.")
       .def("GetReactingAtoms", RDKit::GetReactingAtoms,
@@ -630,46 +627,49 @@ single product reactions.)DOC")
            "returns a sequence of sequences with the atoms that change in the "
            "reaction")
       .def("AddRecursiveQueriesToReaction",
-           RDKit::AddRecursiveQueriesToReaction,
-           "queries"_a = nb::dict(),
+           RDKit::AddRecursiveQueriesToReaction, "queries"_a = nb::dict(),
            "propName"_a = "molFileValue", "getLabels"_a = false,
            "adds recursive queries and returns reactant labels")
-      .def("GetReactants",
-           [](const RDKit::ChemicalReaction &rxn) {
-             nb::list res;
-             for (const auto &mol : rxn.getReactants()) {
-               res.append(toStd(mol));
-             }
-             return res;
-           },
-           "get the reactant templates")
-      .def("GetProducts",
-           [](const RDKit::ChemicalReaction &rxn) {
-             nb::list res;
-             for (const auto &mol : rxn.getProducts()) {
-               res.append(toStd(mol));
-             }
-             return res;
-           },
-           "get the product templates")
-      .def("GetAgents",
-           [](const RDKit::ChemicalReaction &rxn) {
-             nb::list res;
-             for (const auto &mol : rxn.getAgents()) {
-               res.append(toStd(mol));
-             }
-             return res;
-           },
-           "get the agent templates")
-      .def("GetSubstructParams",
-           [](RDKit::ChemicalReaction &rxn) -> RDKit::SubstructMatchParameters & {
-             return rxn.getSubstructParams();
-           },
-           nb::rv_policy::reference_internal,
-           "get the parameter object controlling the substructure matching")
+      .def(
+          "GetReactants",
+          [](const RDKit::ChemicalReaction &rxn) {
+            nb::list res;
+            for (const auto &mol : rxn.getReactants()) {
+              res.append(toStd(mol));
+            }
+            return res;
+          },
+          "get the reactant templates")
+      .def(
+          "GetProducts",
+          [](const RDKit::ChemicalReaction &rxn) {
+            nb::list res;
+            for (const auto &mol : rxn.getProducts()) {
+              res.append(toStd(mol));
+            }
+            return res;
+          },
+          "get the product templates")
+      .def(
+          "GetAgents",
+          [](const RDKit::ChemicalReaction &rxn) {
+            nb::list res;
+            for (const auto &mol : rxn.getAgents()) {
+              res.append(toStd(mol));
+            }
+            return res;
+          },
+          "get the agent templates")
+      .def(
+          "GetSubstructParams",
+          [](RDKit::ChemicalReaction &rxn)
+              -> RDKit::SubstructMatchParameters & {
+            return rxn.getSubstructParams();
+          },
+          nb::rv_policy::reference_internal,
+          "get the parameter object controlling the substructure matching")
       // properties
-      .def("SetProp",
-           RDKit::MolSetProp<RDKit::ChemicalReaction, std::string>,
+      .def("SetProp", RDKit::MolSetProp<RDKit::ChemicalReaction, std::string>,
            "key"_a, "val"_a, "computed"_a = false,
            R"DOC(Sets a molecular property
 
@@ -678,8 +678,7 @@ single product reactions.)DOC")
     - value: the property value (a string).
     - computed: (optional) marks the property as being computed.
                 Defaults to False.)DOC")
-      .def("SetDoubleProp",
-           RDKit::MolSetProp<RDKit::ChemicalReaction, double>,
+      .def("SetDoubleProp", RDKit::MolSetProp<RDKit::ChemicalReaction, double>,
            "key"_a, "val"_a, "computed"_a = false,
            R"DOC(Sets a double valued molecular property
 
@@ -688,8 +687,7 @@ single product reactions.)DOC")
     - value: the property value as a double.
     - computed: (optional) marks the property as being computed.
                 Defaults to 0.)DOC")
-      .def("SetIntProp",
-           RDKit::MolSetProp<RDKit::ChemicalReaction, int>,
+      .def("SetIntProp", RDKit::MolSetProp<RDKit::ChemicalReaction, int>,
            "key"_a, "val"_a, "computed"_a = false,
            R"DOC(Sets an integer valued molecular property
 
@@ -699,8 +697,8 @@ single product reactions.)DOC")
     - computed: (optional) marks the property as being computed.
                 Defaults to False.)DOC")
       .def("SetUnsignedProp",
-           RDKit::MolSetProp<RDKit::ChemicalReaction, unsigned int>,
-           "key"_a, "val"_a, "computed"_a = false,
+           RDKit::MolSetProp<RDKit::ChemicalReaction, unsigned int>, "key"_a,
+           "val"_a, "computed"_a = false,
            R"DOC(Sets an unsigned integer valued molecular property
 
   ARGUMENTS:
@@ -708,8 +706,7 @@ single product reactions.)DOC")
     - value: the property value as an unsigned integer.
     - computed: (optional) marks the property as being computed.
                 Defaults to False.)DOC")
-      .def("SetBoolProp",
-           RDKit::MolSetProp<RDKit::ChemicalReaction, bool>,
+      .def("SetBoolProp", RDKit::MolSetProp<RDKit::ChemicalReaction, bool>,
            "key"_a, "val"_a, "computed"_a = false,
            R"DOC(Sets a boolean valued molecular property
 
@@ -718,13 +715,14 @@ single product reactions.)DOC")
     - value: the property value as a bool.
     - computed: (optional) marks the property as being computed.
                 Defaults to False.)DOC")
-      .def("HasProp", RDKit::MolHasProp<RDKit::ChemicalReaction>, "key"_a,
-           R"DOC(Queries a molecule to see if a particular property has been assigned.
+      .def(
+          "HasProp", RDKit::MolHasProp<RDKit::ChemicalReaction>, "key"_a,
+          R"DOC(Queries a molecule to see if a particular property has been assigned.
 
   ARGUMENTS:
     - key: the name of the property to check for (a string).)DOC")
-      .def("GetProp",
-           RDKit::GetProp<RDKit::ChemicalReaction, std::string>, "key"_a,
+      .def("GetProp", RDKit::GetProp<RDKit::ChemicalReaction, std::string>,
+           "key"_a,
            R"DOC(Returns the value of the property.
 
   ARGUMENTS:
@@ -734,8 +732,8 @@ single product reactions.)DOC")
 
   NOTE:
     - If the property has not been set, a KeyError exception will be raised.)DOC")
-      .def("GetDoubleProp",
-           RDKit::GetProp<RDKit::ChemicalReaction, double>, "key"_a,
+      .def("GetDoubleProp", RDKit::GetProp<RDKit::ChemicalReaction, double>,
+           "key"_a,
            R"DOC(Returns the double value of the property if possible.
 
   ARGUMENTS:
@@ -745,8 +743,7 @@ single product reactions.)DOC")
 
   NOTE:
     - If the property has not been set, a KeyError exception will be raised.)DOC")
-      .def("GetIntProp",
-           RDKit::GetProp<RDKit::ChemicalReaction, int>, "key"_a,
+      .def("GetIntProp", RDKit::GetProp<RDKit::ChemicalReaction, int>, "key"_a,
            R"DOC(Returns the integer value of the property if possible.
 
   ARGUMENTS:
@@ -767,8 +764,8 @@ single product reactions.)DOC")
 
   NOTE:
     - If the property has not been set, a KeyError exception will be raised.)DOC")
-      .def("GetBoolProp",
-           RDKit::GetProp<RDKit::ChemicalReaction, bool>, "key"_a,
+      .def("GetBoolProp", RDKit::GetProp<RDKit::ChemicalReaction, bool>,
+           "key"_a,
            R"DOC(Returns the Bool value of the property if possible.
 
   ARGUMENTS:
@@ -797,8 +794,7 @@ single product reactions.)DOC")
                       Defaults to 0.
 
   RETURNS: a tuple of strings)DOC")
-      .def("GetPropsAsDict",
-           RDKit::GetPropsAsDict<RDKit::ChemicalReaction>,
+      .def("GetPropsAsDict", RDKit::GetPropsAsDict<RDKit::ChemicalReaction>,
            "includePrivate"_a = false, "includeComputed"_a = false,
            "autoConvertStrings"_a = true,
            R"DOC(Returns a dictionary populated with the reaction's properties.
@@ -820,102 +816,99 @@ single product reactions.)DOC")
            [](RDKit::ChemicalReaction &self,
               const std::tuple<nb::bytes> &state) {
              const auto &pkl = std::get<0>(state);
-             new (&self) RDKit::ChemicalReaction(
-                 std::string(static_cast<const char *>(pkl.data()), pkl.size()));
+             new (&self) RDKit::ChemicalReaction(std::string(
+                 static_cast<const char *>(pkl.data()), pkl.size()));
            })
-      .def("__setstate__",
-           [](RDKit::ChemicalReaction &self,
-              const std::tuple<std::string> &state) {
-             new (&self) RDKit::ChemicalReaction(std::get<0>(state));
-           });
+      .def("__setstate__", [](RDKit::ChemicalReaction &self,
+                              const std::tuple<std::string> &state) {
+        new (&self) RDKit::ChemicalReaction(std::get<0>(state));
+      });
 
-  m.def("ReactionFromSmarts", RDKit::ReactionFromSmarts,
-        "SMARTS"_a, "replacements"_a = nb::dict(), "useSmiles"_a = false,
+  m.def("ReactionFromSmarts", RDKit::ReactionFromSmarts, "SMARTS"_a,
+        "replacements"_a = nb::dict(), "useSmiles"_a = false,
         R"DOC(construct a ChemicalReaction from a reaction SMARTS string.
 see the documentation for rdkit.Chem.MolFromSmiles for an explanation
 of the replacements argument.)DOC",
         nb::rv_policy::take_ownership);
 
   m.def("ReactionToSmarts",
-        (std::string (*)(const RDKit::ChemicalReaction &))
-            RDKit::ChemicalReactionToRxnSmarts,
+        (std::string(*)(
+            const RDKit::ChemicalReaction &))RDKit::ChemicalReactionToRxnSmarts,
         "reaction"_a,
         "construct a reaction SMARTS string for a ChemicalReaction");
 
-  m.def("ReactionFromSmiles", RDKit::ReactionFromSmiles,
-        "SMILES"_a, "replacements"_a = nb::dict(),
+  m.def("ReactionFromSmiles", RDKit::ReactionFromSmiles, "SMILES"_a,
+        "replacements"_a = nb::dict(),
         R"DOC(construct a ChemicalReaction from a reaction SMILES string.
 see the documentation for rdkit.Chem.MolFromSmiles for an explanation
 of the replacements argument.)DOC",
         nb::rv_policy::take_ownership);
 
   m.def("ReactionToSmiles",
-        (std::string (*)(const RDKit::ChemicalReaction &,
-                         bool))RDKit::ChemicalReactionToRxnSmiles,
+        (std::string(*)(const RDKit::ChemicalReaction &,
+                        bool))RDKit::ChemicalReactionToRxnSmiles,
         "reaction"_a, "canonical"_a = true,
         "construct a reaction SMILES string for a ChemicalReaction");
 
   m.def("ReactionToSmarts",
-        (std::string (*)(const RDKit::ChemicalReaction &,
-                         const RDKit::SmilesWriteParams &))
+        (std::string(*)(const RDKit::ChemicalReaction &,
+                        const RDKit::SmilesWriteParams &))
             RDKit::ChemicalReactionToRxnSmarts,
         "reaction"_a, "params"_a,
         "construct a reaction SMARTS string for a ChemicalReaction");
 
   m.def("ReactionToSmiles",
-        (std::string (*)(const RDKit::ChemicalReaction &,
-                         const RDKit::SmilesWriteParams &))
+        (std::string(*)(const RDKit::ChemicalReaction &,
+                        const RDKit::SmilesWriteParams &))
             RDKit::ChemicalReactionToRxnSmiles,
         "reaction"_a, "params"_a,
         "construct a reaction SMILES string for a ChemicalReaction");
 
   m.def("ReactionToCXSmarts",
-        (std::string (*)(const RDKit::ChemicalReaction &))
+        (std::string(*)(const RDKit::ChemicalReaction &))
             RDKit::ChemicalReactionToCXRxnSmarts,
         "reaction"_a,
         "construct a reaction SMARTS string for a ChemicalReaction");
 
   m.def("ReactionToCXSmiles",
-        (std::string (*)(const RDKit::ChemicalReaction &,
-                         bool))RDKit::ChemicalReactionToCXRxnSmiles,
+        (std::string(*)(const RDKit::ChemicalReaction &,
+                        bool))RDKit::ChemicalReactionToCXRxnSmiles,
         "reaction"_a, "canonical"_a = true,
         "construct a reaction SMILES string for a ChemicalReaction");
 
   m.def("ReactionToCXSmarts",
-        (std::string (*)(const RDKit::ChemicalReaction &,
-                         const RDKit::SmilesWriteParams &,
-                         std::uint32_t))RDKit::ChemicalReactionToCXRxnSmarts,
+        (std::string(*)(const RDKit::ChemicalReaction &,
+                        const RDKit::SmilesWriteParams &,
+                        std::uint32_t))RDKit::ChemicalReactionToCXRxnSmarts,
         "reaction"_a, "params"_a,
         "flags"_a = RDKit::SmilesWrite::CXSmilesFields::CX_ALL,
         "construct a reaction CXSMARTS string for a ChemicalReaction");
 
   m.def("ReactionToCXSmiles",
-        (std::string (*)(const RDKit::ChemicalReaction &,
-                         const RDKit::SmilesWriteParams &,
-                         std::uint32_t))RDKit::ChemicalReactionToCXRxnSmiles,
+        (std::string(*)(const RDKit::ChemicalReaction &,
+                        const RDKit::SmilesWriteParams &,
+                        std::uint32_t))RDKit::ChemicalReactionToCXRxnSmiles,
         "reaction"_a, "params"_a,
         "flags"_a = RDKit::SmilesWrite::CXSmilesFields::CX_ALL,
         "construct a reaction CXSMILES string for a ChemicalReaction");
 
-  m.def("ReactionFromRxnFile", RDKit::RxnFileToChemicalReaction,
-        "filename"_a, "sanitize"_a = false, "removeHs"_a = false,
-        "strictParsing"_a = true,
+  m.def("ReactionFromRxnFile", RDKit::RxnFileToChemicalReaction, "filename"_a,
+        "sanitize"_a = false, "removeHs"_a = false, "strictParsing"_a = true,
         "construct a ChemicalReaction from an MDL rxn file",
         nb::rv_policy::take_ownership);
 
-  m.def("ReactionFromRxnBlock", RDKit::RxnBlockToChemicalReaction,
-        "rxnblock"_a, "sanitize"_a = false, "removeHs"_a = false,
-        "strictParsing"_a = true,
+  m.def("ReactionFromRxnBlock", RDKit::RxnBlockToChemicalReaction, "rxnblock"_a,
+        "sanitize"_a = false, "removeHs"_a = false, "strictParsing"_a = true,
         "construct a ChemicalReaction from a string in MDL rxn format",
         nb::rv_policy::take_ownership);
 
-  m.def("ReactionFromMrvFile", RDKit::ReactionFromMrvFile,
-        "filename"_a, "sanitize"_a = false, "removeHs"_a = false,
+  m.def("ReactionFromMrvFile", RDKit::ReactionFromMrvFile, "filename"_a,
+        "sanitize"_a = false, "removeHs"_a = false,
         "construct a ChemicalReaction from an Marvin (mrv) rxn file",
         nb::rv_policy::take_ownership);
 
-  m.def("ReactionFromMrvBlock", RDKit::ReactionFromMrvBlock,
-        "rxnblock"_a, "sanitize"_a = false, "removeHs"_a = false,
+  m.def("ReactionFromMrvBlock", RDKit::ReactionFromMrvBlock, "rxnblock"_a,
+        "sanitize"_a = false, "removeHs"_a = false,
         "construct a ChemicalReaction from a string in Marvin (mrv) format",
         nb::rv_policy::take_ownership);
 
@@ -925,24 +918,24 @@ of the replacements argument.)DOC",
   m.def("MrvBlockIsReaction", RDKit::MrvBlockIsReaction, "mrvData"_a,
         "returns whether or not an MRV block contains reaction data");
 
-  m.def("ReactionsFromCDXMLFile", RDKit::ReactionsFromCDXMLFile,
-        "filename"_a, "sanitize"_a = false, "removeHs"_a = false,
+  m.def("ReactionsFromCDXMLFile", RDKit::ReactionsFromCDXMLFile, "filename"_a,
+        "sanitize"_a = false, "removeHs"_a = false,
         "construct a tuple of ChemicalReactions from a CDXML rxn file");
 
-  m.def("ReactionsFromCDXMLBlock", RDKit::ReactionsFromCDXMLBlock,
-        "rxnblock"_a, "sanitize"_a = false, "removeHs"_a = false,
+  m.def("ReactionsFromCDXMLBlock", RDKit::ReactionsFromCDXMLBlock, "rxnblock"_a,
+        "sanitize"_a = false, "removeHs"_a = false,
         "construct a tuple of ChemicalReactions from a string in CDXML format");
 
-  m.def("ReactionToRxnBlock", RDKit::ChemicalReactionToRxnBlock,
-        "reaction"_a, "separateAgents"_a = false, "forceV3000"_a = false,
+  m.def("ReactionToRxnBlock", RDKit::ChemicalReactionToRxnBlock, "reaction"_a,
+        "separateAgents"_a = false, "forceV3000"_a = false,
         "construct a string in MDL rxn format for a ChemicalReaction");
 
-  m.def("ReactionToMrvBlock", RDKit::ChemicalReactionToMrvBlock,
-        "reaction"_a, "prettyPrint"_a = false,
+  m.def("ReactionToMrvBlock", RDKit::ChemicalReactionToMrvBlock, "reaction"_a,
+        "prettyPrint"_a = false,
         "construct a string in Marvin (MRV) rxn format for a ChemicalReaction");
 
-  m.def("ReactionToMrvFile", RDKit::ChemicalReactionToMrvFile,
-        "reaction"_a, "filename"_a, "prettyPrint"_a = false,
+  m.def("ReactionToMrvFile", RDKit::ChemicalReactionToMrvFile, "reaction"_a,
+        "filename"_a, "prettyPrint"_a = false,
         "write a Marvin (MRV) rxn file for a ChemicalReaction");
 
   m.def("ReactionToV3KRxnBlock", RDKit::ChemicalReactionToV3KRxnBlock,
@@ -950,48 +943,44 @@ of the replacements argument.)DOC",
         "construct a string in MDL v3000 rxn format for a ChemicalReaction");
 
 #ifdef RDK_USE_BOOST_IOSTREAMS
-  m.def("ReactionFromPNGFile", RDKit::PNGFileToChemicalReaction,
-        "fname"_a,
+  m.def("ReactionFromPNGFile", RDKit::PNGFileToChemicalReaction, "fname"_a,
         "construct a ChemicalReaction from metadata in a PNG file",
         nb::rv_policy::take_ownership);
-  m.def("ReactionFromPNGString",
-        [](nb::bytes data) {
-          return RDKit::PNGStringToChemicalReaction(
-              std::string(static_cast<const char *>(data.data()), data.size()));
-        },
-        "data"_a,
-        "construct a ChemicalReaction from an string with PNG data",
-        nb::rv_policy::take_ownership);
-  m.def("ReactionMetadataToPNGFile", RDKit::addReactionToPNGFileHelper,
-        "mol"_a, "filename"_a, "includePkl"_a = true,
-        "includeSmiles"_a = true, "includeSmarts"_a = false,
-        "includeMol"_a = false,
-        R"DOC(Reads the contents of a PNG file and adds metadata about a reaction to
+  m.def(
+      "ReactionFromPNGString",
+      [](nb::bytes data) {
+        return RDKit::PNGStringToChemicalReaction(
+            std::string(static_cast<const char *>(data.data()), data.size()));
+      },
+      "data"_a, "construct a ChemicalReaction from an string with PNG data",
+      nb::rv_policy::take_ownership);
+  m.def(
+      "ReactionMetadataToPNGFile", RDKit::addReactionToPNGFileHelper, "mol"_a,
+      "filename"_a, "includePkl"_a = true, "includeSmiles"_a = true,
+      "includeSmarts"_a = false, "includeMol"_a = false,
+      R"DOC(Reads the contents of a PNG file and adds metadata about a reaction to
 it. The modified file contents are returned.)DOC");
   m.def("ReactionMetadataToPNGString", RDKit::addReactionToPNGStringHelper,
-        "mol"_a, "pngdata"_a, "includePkl"_a = true,
-        "includeSmiles"_a = true, "includeSmarts"_a = false,
-        "includeRxn"_a = false,
+        "mol"_a, "pngdata"_a, "includePkl"_a = true, "includeSmiles"_a = true,
+        "includeSmarts"_a = false, "includeRxn"_a = false,
         R"DOC(Adds metadata about a reaction to the PNG string passed in.
 The modified string is returned.)DOC");
 #endif
 
-  m.def("ReactionFromMolecule", RDKit::RxnMolToChemicalReaction,
-        "mol"_a,
+  m.def("ReactionFromMolecule", RDKit::RxnMolToChemicalReaction, "mol"_a,
         "construct a ChemicalReaction from an molecule if the RXN role "
         "property of the molecule is set",
         nb::rv_policy::take_ownership);
 
-  m.def("ReactionToMolecule", RDKit::ChemicalReactionToRxnMol,
-        "reaction"_a,
-        "construct a molecule for a ChemicalReaction with RXN role property set",
-        nb::rv_policy::take_ownership);
+  m.def(
+      "ReactionToMolecule", RDKit::ChemicalReactionToRxnMol, "reaction"_a,
+      "construct a molecule for a ChemicalReaction with RXN role property set",
+      nb::rv_policy::take_ownership);
 
   m.def("Compute2DCoordsForReaction", RDKit::Compute2DCoordsForReaction,
         "reaction"_a, "spacing"_a = 1.0, "updateProps"_a = true,
         "canonOrient"_a = true, "nFlipsPerSample"_a = 0, "nSample"_a = 0,
-        "sampleSeed"_a = 0, "permuteDeg4Nodes"_a = false,
-        "bondLength"_a = -1.0,
+        "sampleSeed"_a = 0, "permuteDeg4Nodes"_a = false, "bondLength"_a = -1.0,
         R"DOC(Compute 2D coordinates for a reaction.
   ARGUMENTS:
      - reaction - the reaction of interest
@@ -1011,24 +1000,22 @@ The modified string is returned.)DOC");
 )DOC");
 
   m.def("CreateDifferenceFingerprintForReaction",
-        RDKit::DifferenceFingerprintChemReaction,
-        "reaction"_a,
+        RDKit::DifferenceFingerprintChemReaction, "reaction"_a,
         "ReactionFingerPrintParams"_a = RDKit::DefaultDifferenceFPParams,
         R"DOC(construct a difference fingerprint for a ChemicalReaction by
 subtracting the reactant fingerprint from the product fingerprint)DOC",
         nb::rv_policy::take_ownership);
 
   m.def("CreateStructuralFingerprintForReaction",
-        RDKit::StructuralFingerprintChemReaction,
-        "reaction"_a,
+        RDKit::StructuralFingerprintChemReaction, "reaction"_a,
         "ReactionFingerPrintParams"_a = RDKit::DefaultStructuralFPParams,
         R"DOC(construct a structural fingerprint for a ChemicalReaction by
 concatenating the reactant fingerprint and the product fingerprint)DOC",
         nb::rv_policy::take_ownership);
 
   m.def("IsReactionTemplateMoleculeAgent",
-        RDKit::isReactionTemplateMoleculeAgent,
-        "molecule"_a, "agentThreshold"_a,
+        RDKit::isReactionTemplateMoleculeAgent, "molecule"_a,
+        "agentThreshold"_a,
         "tests if a molecule can be classified as an agent depending on "
         "the ratio of mapped atoms and a give threshold");
 
@@ -1039,49 +1026,48 @@ concatenating the reactant fingerprint and the product fingerprint)DOC",
         "reaction"_a, "queryReaction"_a, "includeAgents"_a = false,
         "tests if the queryReaction is a substructure of a reaction");
 
-  m.def("HasAgentTemplateSubstructMatch",
-        RDKit::hasAgentTemplateSubstructMatch,
+  m.def("HasAgentTemplateSubstructMatch", RDKit::hasAgentTemplateSubstructMatch,
         "reaction"_a, "queryReaction"_a,
         "tests if the agents of a queryReaction are the same as those of "
         "a reaction");
 
   m.def("HasProductTemplateSubstructMatch",
-        RDKit::hasProductTemplateSubstructMatch,
-        "reaction"_a, "queryReaction"_a,
+        RDKit::hasProductTemplateSubstructMatch, "reaction"_a,
+        "queryReaction"_a,
         "tests if the products of a queryReaction are substructures of "
         "the products of a reaction");
 
   m.def("HasReactantTemplateSubstructMatch",
-        RDKit::hasReactantTemplateSubstructMatch,
-        "reaction"_a, "queryReaction"_a,
+        RDKit::hasReactantTemplateSubstructMatch, "reaction"_a,
+        "queryReaction"_a,
         "tests if the reactants of a queryReaction are substructures of "
         "the reactants of a reaction");
 
-  m.def("UpdateProductsStereochemistry", RDKit::updateProductsStereochem,
-        "reaction"_a,
-        R"DOC(Caution: This is an expert-user function which will change a property (molInversionFlag) of your products.
+  m.def(
+      "UpdateProductsStereochemistry", RDKit::updateProductsStereochem,
+      "reaction"_a,
+      R"DOC(Caution: This is an expert-user function which will change a property (molInversionFlag) of your products.
           This function is called by default using the RXN or SMARTS parser for reactions and should really only be called if reactions have been constructed some other way.
           The function updates the stereochemistry of the product by considering 4 different cases: inversion, retention, removal, and introduction)DOC");
 
-  m.def("ReduceProductToSideChains",
-        [](std::shared_ptr<RDKit::ROMol> product, bool addDummyAtoms) {
-          RDKit::ROMOL_SPTR sptr(product.get(),
-                                 [p = std::move(product)](RDKit::ROMol *) {});
-          return RDKit::reduceProductToSideChains(sptr, addDummyAtoms);
-        },
-        "product"_a, "addDummyAtoms"_a = true,
-        R"DOC(reduce the product of a reaction to the side chains added by the reaction.
+  m.def(
+      "ReduceProductToSideChains",
+      [](RDKit::ROMol &product, bool addDummyAtoms) {
+        RDKit::ROMOL_SPTR sptr(&product, [](RDKit::ROMol *) {});
+        return RDKit::reduceProductToSideChains(sptr, addDummyAtoms);
+      },
+      "product"_a, "addDummyAtoms"_a = true,
+      R"DOC(reduce the product of a reaction to the side chains added by the reaction.
               The output is a molecule with attached wildcards indicating where the product was attached.
               The dummy atom has the same reaction-map number as the product atom (if available).)DOC",
-        nb::rv_policy::take_ownership);
+      nb::rv_policy::take_ownership);
 
   m.def("RemoveMappingNumbersFromReactions",
         RDKit::removeMappingNumbersFromReactions, "reaction"_a,
         "Removes the mapping numbers from the molecules of a reaction");
 
-  m.def("PreprocessReaction", RDKit::PreprocessReaction,
-        "reaction"_a, "queries"_a = nb::dict(),
-        "propName"_a = "molFileValue",
+  m.def("PreprocessReaction", RDKit::PreprocessReaction, "reaction"_a,
+        "queries"_a = nb::dict(), "propName"_a = "molFileValue",
         R"DOC(A function for preprocessing reactions with more specific queries.
 Queries are indicated by labels on atoms (molFileAlias property by default)
 When these labels are found, more specific queries are placed on the atoms.
@@ -1197,27 +1183,29 @@ One unrecognized group type in a comma-separated list makes the whole thing fail
         "(deprecated, see MatchOnlyAtRgroupsAdjustParams)\n\tReturns the "
         "chemdraw style adjustment parameters for reactant templates");
 
-  m.def("MatchOnlyAtRgroupsAdjustParams",
-        RDKit::RxnOps::MatchOnlyAtRgroupsAdjustParams,
-        "Only match at the specified rgroup locations in the reactant templates");
+  m.def(
+      "MatchOnlyAtRgroupsAdjustParams",
+      RDKit::RxnOps::MatchOnlyAtRgroupsAdjustParams,
+      "Only match at the specified rgroup locations in the reactant templates");
 
-  m.def("SanitizeRxn",
-        [](RDKit::ChemicalReaction &rxn, unsigned int sanitizeOps,
-           nb::object params, bool catchErrors) {
-          if (params.is_none()) {
-            return RDKit::sanitizeReaction(
-                rxn, sanitizeOps, RDKit::RxnOps::DefaultRxnAdjustParams(),
-                catchErrors);
-          }
+  m.def(
+      "SanitizeRxn",
+      [](RDKit::ChemicalReaction &rxn, unsigned int sanitizeOps,
+         nb::object params, bool catchErrors) {
+        if (params.is_none()) {
           return RDKit::sanitizeReaction(
-              rxn, sanitizeOps,
-              nb::cast<const RDKit::MolOps::AdjustQueryParameters &>(params),
+              rxn, sanitizeOps, RDKit::RxnOps::DefaultRxnAdjustParams(),
               catchErrors);
-        },
-        "rxn"_a,
-        "sanitizeOps"_a = static_cast<unsigned int>(RDKit::RxnOps::SANITIZE_ALL),
-        "params"_a = nb::none(), "catchErrors"_a = false,
-        R"DOC(Does some sanitization of the reactant and product templates of a reaction.
+        }
+        return RDKit::sanitizeReaction(
+            rxn, sanitizeOps,
+            nb::cast<const RDKit::MolOps::AdjustQueryParameters &>(params),
+            catchErrors);
+      },
+      "rxn"_a,
+      "sanitizeOps"_a = static_cast<unsigned int>(RDKit::RxnOps::SANITIZE_ALL),
+      "params"_a = nb::none(), "catchErrors"_a = false,
+      R"DOC(Does some sanitization of the reactant and product templates of a reaction.
 
     - The reaction is modified in place.
     - If sanitization fails, an exception will be thrown unless catchErrors is set
@@ -1244,10 +1232,10 @@ One unrecognized group type in a comma-separated list makes the whole thing fail
     4) fixHs(): merges explicit Hs in the reactant templates that don't map to heavy atoms
 )DOC");
 
-  m.def("SanitizeRxnAsMols", RDKit::RxnOps::sanitizeRxnAsMols,
-        "rxn"_a,
-        "sanitizeOps"_a = static_cast<unsigned int>(RDKit::MolOps::SANITIZE_ALL),
-        "Does the usual molecular sanitization on each reactant, agent, and product of the reaction");
+  m.def(
+      "SanitizeRxnAsMols", RDKit::RxnOps::sanitizeRxnAsMols, "rxn"_a,
+      "sanitizeOps"_a = static_cast<unsigned int>(RDKit::MolOps::SANITIZE_ALL),
+      "Does the usual molecular sanitization on each reactant, agent, and product of the reaction");
 
   wrap_enumeration(m);
 }
