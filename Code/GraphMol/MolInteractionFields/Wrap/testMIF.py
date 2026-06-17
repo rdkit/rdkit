@@ -1,15 +1,12 @@
 from __future__ import print_function
-import os, sys
+import os
 import unittest
 import copy
-from rdkit import DataStructs, RDConfig
+from rdkit import RDConfig
 from rdkit.Geometry import rdGeometry as geom
 from rdkit import Chem
 from rdkit.Chem import rdMIF
 from rdkit.Chem import rdPartialCharges
-import math
-import numpy as np
-import pickle
 
 
 def feq(v1, v2, tol=1.0e-4):

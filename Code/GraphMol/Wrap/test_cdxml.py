@@ -8,15 +8,8 @@ it's intended to be shallow, but broad
 
 """
 
-import doctest
-import gc
-import gzip
-import logging
 import os
-import sys
-import tempfile
 import unittest
-from io import StringIO
 
 from rdkit import Chem
 

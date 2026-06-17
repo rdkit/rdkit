@@ -1,8 +1,7 @@
 import unittest
-import numpy as np
 
 from rdkit import Chem
-from rdkit.Chem import rdGaussianShape, rdMolTransforms, rdDistGeom
+from rdkit.Chem import rdGaussianShape
 from rdkit import RDConfig
 from rdkit.Geometry import Point3D
 

@@ -33,11 +33,10 @@ import doctest
 import importlib.util
 import os
 import pickle
-import sys
 import unittest
 import tempfile
 
-from rdkit import Chem, Geometry, RDConfig, rdBase
+from rdkit import Chem, RDConfig
 from rdkit.Chem import AllChem, rdChemReactions
 from rdkit.Chem.SimpleEnum import Enumerator
 

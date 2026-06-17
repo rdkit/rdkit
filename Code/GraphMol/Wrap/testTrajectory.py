@@ -1,9 +1,8 @@
 import os
-import sys
 import unittest
 
-from rdkit import Chem, RDConfig
-from rdkit.Chem import ChemicalForceFields, rdtrajectory
+from rdkit import Chem
+from rdkit.Chem import ChemicalForceFields
 from rdkit.Chem.rdtrajectory import (ReadAmberTrajectory, ReadGromosTrajectory, Snapshot,
                                      Trajectory)
 

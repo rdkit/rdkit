@@ -226,4 +226,8 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
   endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+
+  if(RDK_BUILD_NANOBIND_WRAPPERS)
+    add_subdirectory(nbWrap)
+  endif()
 endif(RDK_BUILD_CHEMDRAW_SUPPORT)

@@ -108,21 +108,6 @@ Conformer *GetMolConformer(ROMol &mol, int id = -1) {
   return &(mol.getConformer(id));
 }
 
-// FIX: we should eventually figure out how to do iterators properly
-QueryAtomIterSeq *MolGetAromaticAtoms(const ROMOL_SPTR &mol) {
-  auto *qa = new QueryAtom();
-  qa->setQuery(makeAtomAromaticQuery());
-  QueryAtomIterSeq *res =
-      new QueryAtomIterSeq(mol, mol->beginQueryAtoms(qa), mol->endQueryAtoms(),
-                           AtomCountFunctor(mol));
-  return res;
-}
-QueryAtomIterSeq *MolGetQueryAtoms(const ROMOL_SPTR &mol, QueryAtom *qa) {
-  QueryAtomIterSeq *res =
-      new QueryAtomIterSeq(mol, mol->beginQueryAtoms(qa), mol->endQueryAtoms(),
-                           AtomCountFunctor(mol));
-  return res;
-}
 
 ConformerIterSeq *GetMolConformers(const ROMOL_SPTR &mol) {
   ConformerIterSeq *res =
@@ -145,6 +130,18 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
 #endif
 
 namespace {
+
+// QueryAtomIterSeq &MolGetAromaticAtoms(ROMol &mol) {
+//   auto *qa = new QueryAtom();
+//   qa->setQuery(makeAtomAromaticQuery());
+//   return QueryAtomIterSeq(mol, qa);
+// }
+// QueryAtomIterSeq *MolGetQueryAtoms(ROMol &mol, QueryAtom *qa) {
+//   QueryAtomIterSeq *res = new QueryAtomIterSeq(
+//       mol, mol.beginQueryAtoms(qa), mol.endQueryAtoms(),
+//       AtomCountFunctor(mol));
+//   return res;
+// }
 
 void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
                                  nb::object func) {
@@ -472,34 +469,64 @@ struct mol_wrapper {
             nb::keep_alive<0, 1>())
         .def("__getitem__", &BondSeqHolder<AtomBondsIterator>::operator[],
              nb::rv_policy::reference_internal, "idx"_a);
+    nb::class_<ConformerIterSeq>(
+        m, "_ROConformerSeq",
+        "A sequence-like holder of a molecule's conformers")
+        .def("__len__", &ConformerIterSeq::size)
+        .def(
+            "__iter__",
+            [](ConformerIterSeq &c) {
+              return nb::make_iterator(nb::type<ConformerIterSeq>(), "iterator",
+                                       c.begin(), c.end());
+            },
+            nb::keep_alive<0, 1>())
+        .def("__getitem__", &ConformerIterSeq::operator[],
+             nb::rv_policy::reference_internal, "idx"_a);
+    nb::class_<QueryAtomIterSeq>(
+        m, "_ROQAtomSeq",
+        "A sequence-like holder of atoms matching a query atom")
+        .def("__len__", &QueryAtomIterSeq::size)
+        .def(
+            "__iter__",
+            [](QueryAtomIterSeq &q) {
+              return nb::make_iterator(nb::type<QueryAtomIterSeq>(), "iterator",
+                                       q.begin(), q.end());
+            },
+            nb::keep_alive<0, 1>())
+        .def("__getitem__", &QueryAtomIterSeq::operator[],
+             nb::rv_policy::reference_internal, "idx"_a);
+
     nb::class_<ROMol>(m, "Mol", nb::dynamic_attr())
-        .def(nb::new_([]() { return new ROMol(); }),
+        .def(nb::new_([]() {
+      return new ROMol(); }),
              "Constructor, takes no arguments")
         .def(nb::new_([](nb::bytes b) {
-               return new ROMol(std::string(static_cast<const char *>(b.data()),
-                                            static_cast<size_t>(b.size())));
+      return new ROMol(std::string(static_cast<const char *>(b.data()),
+                                   static_cast<size_t>(b.size())));
              }),
              "Constructor from a binary string", "pklString"_a)
         .def(nb::new_([](nb::bytes b, unsigned int propertyFlags) {
-               return new ROMol(std::string(static_cast<const char *>(b.data()),
-                                            static_cast<size_t>(b.size())),
-                                propertyFlags);
+      return new ROMol(std::string(static_cast<const char *>(b.data()),
+                                   static_cast<size_t>(b.size())),
+                       propertyFlags);
              }),
              "Constructor from a binary string with property flags",
              "pklString"_a, "propertyFlags"_a)
         .def(nb::new_([](const ROMol &m, bool quickCopy, int confId) {
-               return new ROMol(m, quickCopy, confId);
+      return new ROMol(m, quickCopy, confId);
              }),
              "Constructor from another molecule", "mol"_a,
              "quickCopy"_a = false, "confId"_a = -1)
         .def("__copy__", &generic__copy__<ROMol>)
         .def("__deepcopy__", &generic__deepcopy__<ROMol>, "memo"_a)
         .def(
-            "GetAtoms", [](ROMol &mol) { return AtomSeqHolder<>(mol); },
+            "GetAtoms", [](ROMol &mol) {
+      return AtomSeqHolder<>(mol); },
             nb::keep_alive<0, 1>(),
             "Returns a sequence-like object of the molecule's atoms.")
         .def(
-            "GetBonds", [](ROMol &mol) { return BondSeqHolder<>(mol); },
+            "GetBonds", [](ROMol &mol) {
+      return BondSeqHolder<>(mol); },
             nb::keep_alive<0, 1>(),
             "Returns a sequence-like object of the molecule's bonds.")
         .def("GetNumAtoms",
@@ -547,10 +574,10 @@ struct mol_wrapper {
         .def(
             "AddConformer",
             [](ROMol &mol, Conformer &conf, bool assignId) {
-              // C++ takes ownership of the new Conformer.
-              // There's no way for python to relenquish ownerhship,
-              // so we need to copy.
-              return mol.addConformer(new Conformer(conf), assignId);
+      // C++ takes ownership of the new Conformer.
+      // There's no way for python to relenquish ownerhship,
+      // so we need to copy.
+      return mol.addConformer(new Conformer(conf), assignId);
             },
             "conf"_a, "assignId"_a = false,
             "Add a conformer to the molecule and return the conformer ID")
@@ -560,13 +587,11 @@ struct mol_wrapper {
              "Get the conformer with a specified ID",
              nb::rv_policy::reference_internal)
 
-        //    .def("GetConformers", GetMolConformers,
-        //         python::return_value_policy<
-        //             python::manage_new_object,
-        //             python::with_custodian_and_ward_postcall<0, 1>>(),
-        //         python::args("self"),
-        //         "Returns a read-only sequence containing all of the
-        //         molecule's " "Conformers.")
+        .def(
+            "GetConformers",
+            [](ROMol &self) {return ConformerIterSeq(self);},
+            nb::keep_alive<0, 1>(),
+            R"DOC(Returns a read-only sequence containing all of the molecule's Conformers.)DOC")
 
         .def("RemoveAllConformers", &ROMol::clearConformers,
              "Remove all the conformations on the molecule")
@@ -593,11 +618,11 @@ struct mol_wrapper {
              "Returns if any atom or bond in molecule has a query")
 
         // substructures
-        // params-based overloads are registered first so nanobind's overload
-        // resolution prefers them over the bool-based overloads when a
-        // SubstructMatchParameters object is passed (nanobind coerces any
-        // Python object to bool via PyObject_IsTrue, which would otherwise
-        // shadow this overload)
+        // params-based overloads are registered first so nanobind's
+        // overload resolution prefers them over the bool-based overloads
+        // when a SubstructMatchParameters object is passed (nanobind
+        // coerces any Python object to bool via PyObject_IsTrue, which
+        // would otherwise shadow this overload)
         .def(
             "HasSubstructMatch",
             (bool (*)(const ROMol &m, const ROMol &query,
@@ -616,9 +641,8 @@ struct mol_wrapper {
 
         .def(
             "GetSubstructMatch",
-            (std::vector<int> (*)(
-                const ROMol &m, const ROMol &query,
-                const std::optional<SubstructMatchParameters>))
+            (std::vector<int>(*)(const ROMol &m, const ROMol &query,
+                                 const std::optional<SubstructMatchParameters>))
                 helpGetSubstructMatch,
             "query"_a, "params"_a = nb::none(),
             R"DOC(Returns the indices of the molecule's atoms that match a substructure query.
@@ -639,7 +663,7 @@ struct mol_wrapper {
 
         .def(
             "GetSubstructMatches",
-            (std::vector<std::vector<int>> (*)(
+            (std::vector<std::vector<int>>(*)(
                 const ROMol &m, const ROMol &query,
                 const std::optional<SubstructMatchParameters>))
                 helpGetSubstructMatches,
@@ -663,14 +687,14 @@ struct mol_wrapper {
                        const std::optional<SubstructMatchParameters>))
                  helpHasSubstructMatch,
              "query"_a, "params"_a = nb::none())
-        .def("GetSubstructMatch",
-             (std::vector<int> (*)(
-                 const ROMol &m, const MolBundle &query,
-                 const std::optional<SubstructMatchParameters>))
-                 helpGetSubstructMatch,
-             "query"_a, "params"_a = nb::none())
+        .def(
+            "GetSubstructMatch",
+            (std::vector<int>(*)(const ROMol &m, const MolBundle &query,
+                                 const std::optional<SubstructMatchParameters>))
+                helpGetSubstructMatch,
+            "query"_a, "params"_a = nb::none())
         .def("GetSubstructMatches",
-             (std::vector<std::vector<int>> (*)(
+             (std::vector<std::vector<int>>(*)(
                  const ROMol &m, const MolBundle &query,
                  const std::optional<SubstructMatchParameters>))
                  helpGetSubstructMatches,
@@ -698,8 +722,8 @@ struct mol_wrapper {
 )DOC")
         .def(
             "GetSubstructMatch",
-            (std::vector<int> (*)(const ROMol &m, const ROMol &query, bool,
-                                  bool))GetSubstructMatch,
+            (std::vector<int>(*)(const ROMol &m, const ROMol &query, bool,
+                                 bool))GetSubstructMatch,
             "query"_a, "useChirality"_a = false,
             "useQueryQueryMatches"_a = false,
             R"DOC(Returns the indices of the molecule's atoms that match a substructure query.
@@ -721,7 +745,7 @@ struct mol_wrapper {
 )DOC")
 
         .def("GetSubstructMatches",
-             (std::vector<std::vector<int>> (*)(
+             (std::vector<std::vector<int>>(*)(
                  const ROMol &m, const ROMol &query, bool, bool, bool,
                  unsigned int))GetSubstructMatches,
              "query"_a, "uniquify"_a = true, "useChirality"_a = false,
@@ -769,13 +793,13 @@ struct mol_wrapper {
              "query"_a, "recursionPossible"_a = true, "useChirality"_a = false,
              "useQueryQueryMatches"_a = false)
         .def("GetSubstructMatch",
-             (std::vector<int> (*)(const ROMol &m, const MolBundle &query, bool,
-                                   bool))GetSubstructMatch,
+             (std::vector<int>(*)(const ROMol &m, const MolBundle &query, bool,
+                                  bool))GetSubstructMatch,
              "query"_a, "useChirality"_a = false,
              "useQueryQueryMatches"_a = false)
 
         .def("GetSubstructMatches",
-             (std::vector<std::vector<int>> (*)(
+             (std::vector<std::vector<int>>(*)(
                  const ROMol &m, const MolBundle &query, bool, bool, bool,
                  unsigned int))GetSubstructMatches,
              "query"_a, "uniquify"_a = true, "useChirality"_a = false,
@@ -942,14 +966,35 @@ struct mol_wrapper {
             "GetStereoGroups", &ROMol::getStereoGroups,
             nb::rv_policy::reference_internal,
             R"DOC(Returns a list of StereoGroups defining the relative stereochemistry of the atoms.))DOC")
-#if 0
-        .def("GetAromaticAtoms", MolGetAromaticAtoms, nb::keep_alive<0, 1>(),
-             "Returns a read-only sequence containing all of the molecule's "
-             "aromatic Atoms.\n")
-             .def(
-                  "GetAtomsMatchingQuery", MolGetQueryAtoms, "qa"_a,
-                  nb::rv_policy::reference_internal,
-                  R"DOC(Returns a read-only sequence containing all of the atoms in a molecule that match the query atom. 
+#if 1
+           .def("GetAromaticAtoms", [](const ROMol &self) {
+      auto *qa = new QueryAtom();
+      qa->setQuery(makeAtomAromaticQuery());
+      bool ownsQa = true;
+      return QueryAtomIterSeq(self, qa, ownsQa);
+            }, nb::keep_alive<0,1>(),
+                "Returns a read-only sequence containing all of the molecule's aromatic Atoms.\n")
+
+        //    .def(
+        //        "GetAtomsMatchingQuery", [](ROMol &self, QueryAtom *qa ) {
+        //            return QueryAtomIterSeq(
+        //  self, self.beginQueryAtoms(qa), self.endQueryAtoms(),
+        //  AtomCountFunctor(self));
+        //        },
+        //        "qa"_a,
+        //        nb::keep_alive<0, 1>(),
+        //        R"DOC(Returns a read-only sequence containing all of the atoms
+        //        in a molecule that match the query atom.
+        //              Atom query options are defined in the
+        //              rdkit.Chem.rdqueries module. )DOC")
+        .def(
+            "GetAtomsMatchingQuery",
+            [](const ROMol &self, const QueryAtom *qa) {
+      bool ownsQa = false;
+      return QueryAtomIterSeq(self, qa, ownsQa);
+            },
+            "qa"_a, nb::keep_alive<0, 1>(),
+            R"DOC(Returns a read-only sequence containing all of the atoms in a molecule that match the query atom. 
                   Atom query options are defined in the rdkit.Chem.rdqueries module.
                   )DOC")
 

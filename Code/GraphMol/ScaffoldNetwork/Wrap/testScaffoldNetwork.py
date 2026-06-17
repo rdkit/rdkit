@@ -8,7 +8,6 @@
 #  of the RDKit source tree.
 #
 
-import pickle
 import unittest
 
 from rdkit import Chem, rdBase

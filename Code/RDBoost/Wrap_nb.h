@@ -27,6 +27,17 @@
 #include <nanobind/stl/tuple.h>
 namespace nb = nanobind;
 
+// pattern for this from the "Better alternative" section of this StackOverflow
+// answer: https://stackoverflow.com/a/71575543
+template <typename T>
+std::shared_ptr<T> toStd(boost::shared_ptr<T> bptr) {
+  if (!bptr) {
+    return nullptr;
+  }
+  auto resHolder = std::make_shared<boost::shared_ptr<T>>(std::move(bptr));
+  return {resHolder, resHolder.get()->get()};
+}
+
 // RDKIT_RDBOOST_EXPORT void throw_index_error(
 //     int key);  //!< construct and throw an \c IndexError
 // RDKIT_RDBOOST_EXPORT void throw_value_error(

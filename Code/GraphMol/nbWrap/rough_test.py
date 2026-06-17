@@ -3614,79 +3614,85 @@ CAS<~>
     m = Chem.MolFromSmiles('OCCCCN')
     self.assertRaises(ValueError, lambda: Chem.FragmentOnBonds(m, ()))
 
-  # def test88QueryAtoms(self):
-  #   from rdkit.Chem import rdqueries
-  #   m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')
+  def test88AromaticAtoms(self):
+    m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')
+    aromats = m.GetAromaticAtoms()
+    self.assertEqual(len(aromats), 5)
+    self.assertEqual([x.GetIdx() for x in aromats], [0, 1, 2, 4, 7])
 
-  #   qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (2, 4))
+  def test88QueryAtoms(self):
+    from rdkit.Chem import rdqueries
+    m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')
 
-  #   qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True))
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (4, ))
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (2, 4))
 
-  #   qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
-  #   qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True),
-  #                  how=Chem.CompositeQueryType.COMPOSITE_OR)
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (1, 2, 4))
+    qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True))
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (4, ))
 
-  #   qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
-  #   qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True),
-  #                  how=Chem.CompositeQueryType.COMPOSITE_XOR)
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (1, 2))
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True),
+                   how=Chem.CompositeQueryType.COMPOSITE_OR)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 2, 4))
 
-  #   qa = rdqueries.ExplicitDegreeGreaterQueryAtom(2)
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (2, 4))
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True),
+                   how=Chem.CompositeQueryType.COMPOSITE_XOR)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 2))
 
-  #   qa = rdqueries.ExplicitDegreeLessQueryAtom(2)
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (3, 6))
+    qa = rdqueries.ExplicitDegreeGreaterQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (2, 4))
 
-  #   m = Chem.MolFromSmiles('N[CH][CH]')
-  #   qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(0)
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (1, 2))
-  #   qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(1)
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (2, ))
+    qa = rdqueries.ExplicitDegreeLessQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (3, 6))
 
-  #   m = Chem.MolFromSmiles('F[C@H](Cl)C')
-  #   qa = rdqueries.HasChiralTagQueryAtom()
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (1, ))
-  #   qa = rdqueries.MissingChiralTagQueryAtom()
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, ())
+    m = Chem.MolFromSmiles('N[CH][CH]')
+    qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(0)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 2))
+    qa = rdqueries.NumRadicalElectronsGreaterQueryAtom(1)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (2, ))
 
-  #   m = Chem.MolFromSmiles('F[CH](Cl)C')
-  #   qa = rdqueries.HasChiralTagQueryAtom()
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, ())
-  #   qa = rdqueries.MissingChiralTagQueryAtom()
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (1, ))
+    m = Chem.MolFromSmiles('F[C@H](Cl)C')
+    qa = rdqueries.HasChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, ))
+    qa = rdqueries.MissingChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, ())
 
-  #   m = Chem.MolFromSmiles('CNCON')
-  #   qa = rdqueries.NumHeteroatomNeighborsEqualsQueryAtom(2)
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (2, ))
-  #   qa = rdqueries.NumHeteroatomNeighborsGreaterQueryAtom(0)
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (0, 2, 3, 4))
+    m = Chem.MolFromSmiles('F[CH](Cl)C')
+    qa = rdqueries.HasChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, ())
+    qa = rdqueries.MissingChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, ))
 
-  #   m = Chem.MolFromSmiles('CC12CCN(CC1)C2')
-  #   qa = rdqueries.IsBridgeheadQueryAtom()
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (1, 4))
+    m = Chem.MolFromSmiles('CNCON')
+    qa = rdqueries.NumHeteroatomNeighborsEqualsQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (2, ))
+    qa = rdqueries.NumHeteroatomNeighborsGreaterQueryAtom(0)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (0, 2, 3, 4))
 
-  #   m = Chem.MolFromSmiles('OCCOC')
-  #   qa = rdqueries.NonHydrogenDegreeEqualsQueryAtom(2)
-  #   l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-  #   self.assertEqual(l, (1, 2, 3))
+    m = Chem.MolFromSmiles('CC12CCN(CC1)C2')
+    qa = rdqueries.IsBridgeheadQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 4))
+
+    m = Chem.MolFromSmiles('OCCOC')
+    qa = rdqueries.NonHydrogenDegreeEqualsQueryAtom(2)
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, 2, 3))
 
   def test89UnicodeInput(self):
     m = Chem.MolFromSmiles(u'c1ccccc1')
@@ -7006,27 +7012,43 @@ M  END
     mols_list_compr = [m for m in sdSup]
     self.assertEqual(len(mols_list), len(mols_list_compr))
 
-  # def test_github3492(self):
+  def test_conformer_lifetime(self):
+    m = Chem.MolFromSmiles(
+      "Brc1csnn1 |(-2.31331,0,;-0.813314,0,;0.0683644,-1.21353,;1.49495,-0.75,;1.49495,0.75,;0.0683644,1.21353,)|"
+    )
+    m.AddConformer(m.GetConformer(), assignId=True)
+    m.AddConformer(m.GetConformer(), assignId=True)
+    confs = m.GetConformers()
+    m = None
+    # make sure the conformer keeps the molecule alive:
+    c0 = confs[0]
+    self.assertEqual(c0.GetOwningMol().GetNumAtoms(), 6)
+    # even if the sequence holding the conformers is gone:
+    confs = None
+    self.assertEqual(c0.GetOwningMol().GetNumAtoms(), 6)
 
-  #   def read_smile(s):
-  #     m = Chem.MolFromSmiles(s)
-  #     rdkit.Chem.rdDepictor.Compute2DCoords(m)
-  #     return m
+  def test_github3492(self):
 
-  #   def sq_dist(a, b):
-  #     ab = [a[i] - b[i] for i, _ in enumerate(a)]
-  #     return sum([d * d for d in ab])
+    def read_smile(s):
+      m = Chem.MolFromSmiles(s)
+      return m
 
-  #   self.assertIsNotNone(Chem.MolFromSmiles("OCCN").GetAtoms()[0].GetOwningMol())
-  #   self.assertEqual([Chem.MolFromSmiles("OCCN").GetAtoms()[i].GetAtomicNum() for i in range(4)],
-  #                    [8, 6, 6, 7])
-  #   self.assertIsNotNone(Chem.MolFromSmiles("O=CCC=N").GetBonds()[0].GetOwningMol())
-  #   self.assertEqual(
-  #     [Chem.MolFromSmiles("O=CCC=N").GetBonds()[i].GetBondType() for i in range(4)],
-  #     [Chem.BondType.DOUBLE, Chem.BondType.SINGLE, Chem.BondType.SINGLE, Chem.BondType.DOUBLE])
-  #   self.assertIsNotNone(read_smile("CCC").GetConformers()[0].GetOwningMol())
-  #   pos = read_smile("CCC").GetConformers()[0].GetPositions()
-  #   self.assertAlmostEqual(sq_dist(pos[0], pos[1]), sq_dist(pos[1], pos[2]))
+    def sq_dist(a, b):
+      ab = [a[i] - b[i] for i, _ in enumerate(a)]
+      return sum([d * d for d in ab])
+
+    self.assertIsNotNone(Chem.MolFromSmiles("OCCN").GetAtoms()[0].GetOwningMol())
+    self.assertEqual([Chem.MolFromSmiles("OCCN").GetAtoms()[i].GetAtomicNum() for i in range(4)],
+                     [8, 6, 6, 7])
+    self.assertIsNotNone(Chem.MolFromSmiles("O=CCC=N").GetBonds()[0].GetOwningMol())
+    self.assertEqual(
+      [Chem.MolFromSmiles("O=CCC=N").GetBonds()[i].GetBondType() for i in range(4)],
+      [Chem.BondType.DOUBLE, Chem.BondType.SINGLE, Chem.BondType.SINGLE, Chem.BondType.DOUBLE])
+    self.assertIsNotNone(
+      read_smile("CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|").GetConformers()[0].GetOwningMol())
+    pos = read_smile(
+      "CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|").GetConformers()[0].GetPositions()
+    self.assertAlmostEqual(sq_dist(pos[0], pos[1]), sq_dist(pos[1], pos[2]))
 
   def test_get_set_positions(self):
     m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')

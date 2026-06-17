@@ -1,5 +1,4 @@
 import csv
-import doctest
 import os
 import unittest
 from random import Random
