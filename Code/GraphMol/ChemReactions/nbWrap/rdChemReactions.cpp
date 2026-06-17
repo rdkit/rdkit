@@ -61,6 +61,12 @@ nb::bytes ReactionToBinary(const ChemicalReaction &self) {
   return ReactionToBinaryWithProps(self,
                                    MolPickler::getDefaultPickleProperties());
 }
+std::string ReactionToBinaryString(const ChemicalReaction &self) {
+  std::string res;
+  ReactionPickler::pickleReaction(self, res,
+                                  MolPickler::getDefaultPickleProperties());
+  return res;
+}
 
 nb::tuple RunReactants(ChemicalReaction *self, nb::object reactants,
                        unsigned int maxProducts) {
@@ -501,15 +507,17 @@ Sample Usage:
   >>> Chem.MolToSmiles(products[0][0])
   'CN(C)C=O'
 )DOC")
-      .def(nb::init<>(), "Constructor, takes no arguments")
-      .def(
-          "__init__",
-          [](RDKit::ChemicalReaction *self, nb::bytes b) {
-            new (self) RDKit::ChemicalReaction(
-                std::string(static_cast<const char *>(b.data()), b.size()));
-          },
-          "binStr"_a)
-      .def(nb::init<const RDKit::ChemicalReaction &>(), "other"_a)
+      .def(nb::new_([]() { return new RDKit::ChemicalReaction(); }),
+           "Constructor, takes no arguments")
+      .def(nb::new_([](nb::bytes b) {
+             return new RDKit::ChemicalReaction(
+                 std::string(static_cast<const char *>(b.data()), b.size()));
+           }),
+           "binStr"_a)
+      .def(nb::new_([](const RDKit::ChemicalReaction &other) {
+             return new RDKit::ChemicalReaction(other);
+           }),
+           "other"_a)
       .def("GetNumReactantTemplates",
            &RDKit::ChemicalReaction::getNumReactantTemplates,
            "returns the number of reactants this reaction expects")
@@ -808,21 +816,9 @@ single product reactions.)DOC")
 
   RETURNS: a dictionary)DOC")
       // pickle support
-      .def("__getstate__",
-           [](const RDKit::ChemicalReaction &self) {
-             return std::make_tuple(RDKit::ReactionToBinary(self));
-           })
-      .def("__setstate__",
-           [](RDKit::ChemicalReaction &self,
-              const std::tuple<nb::bytes> &state) {
-             const auto &pkl = std::get<0>(state);
-             new (&self) RDKit::ChemicalReaction(std::string(
-                 static_cast<const char *>(pkl.data()), pkl.size()));
-           })
-      .def("__setstate__", [](RDKit::ChemicalReaction &self,
-                              const std::tuple<std::string> &state) {
-        new (&self) RDKit::ChemicalReaction(std::get<0>(state));
-      });
+      .def("__setstate__", setObjectState<RDKit::ChemicalReaction>)
+      .def("__getstate__", getObjectState<RDKit::ChemicalReaction,
+                                          RDKit::ReactionToBinaryString>);
 
   m.def("ReactionFromSmarts", RDKit::ReactionFromSmarts, "SMARTS"_a,
         "replacements"_a = nb::dict(), "useSmiles"_a = false,
