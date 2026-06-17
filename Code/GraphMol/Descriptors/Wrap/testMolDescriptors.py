@@ -3,10 +3,9 @@ from os import environ
 from pathlib import Path
 import re
 
-from rdkit import Chem, DataStructs, RDConfig
+from rdkit import Chem, DataStructs
 from rdkit.Chem import Descriptors
 from rdkit.Chem import rdMolDescriptors as rdMD
-from rdkit.Geometry import rdGeometry as rdG
 
 try:
   from rdkit.Chem import AllChem

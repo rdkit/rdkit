@@ -1071,6 +1071,17 @@ DrawElement items.  Default=DrawElement.ALL)DOC")
            "method for getting the colour of variable attachment points")
       .def("setVariableAttachmentColour", &setVariableAttachmentColour, "tpl"_a,
            "method for setting the colour of variable attachment points")
+      .def_rw("stereoGroupAndLabel",
+              &RDKit::MolDrawOptions::stereoGroupAndLabel,
+              "String to use for enhanced stereo 'AND' groups.  Default='and'.")
+      .def_rw("stereoGroupOrLabel", &RDKit::MolDrawOptions::stereoGroupOrLabel,
+              "String to use for enhanced stereo 'OR' groups.  Default='or'.")
+      .def_rw("stereoGroupAbsLabel",
+              &RDKit::MolDrawOptions::stereoGroupAbsLabel,
+              "String to use for enhanced stereo 'ABS' groups.  Default='abs'.")
+      .def_rw("addStereoGroupAnnotation",
+              &RDKit::MolDrawOptions::addStereoGroupAnnotation,
+              "Whether to add the enhanced stereo labels.  Default is True.")
       .def("__setattr__", &safeSetattr);
 
   nb::class_<RDKit::MolDraw2D>(m, "MolDraw2D", "Drawer abstract base class")
@@ -1138,8 +1149,8 @@ DrawElement items.  Default=DrawElement.ALL)DOC")
       .def("FillPolys", &RDKit::MolDraw2D::fillPolys,
            "returns whether or not polygons are being filled")
       .def("DrawLine",
-           (void (RDKit::MolDraw2D::*)(const Point2D &, const Point2D &,
-                                       bool))&RDKit::MolDraw2D::drawLine,
+           (void(RDKit::MolDraw2D::*)(const Point2D &, const Point2D &, bool)) &
+               RDKit::MolDraw2D::drawLine,
            "cds1"_a, "cds2"_a, "rawCoords"_a = false,
            "draws a line with the current drawing style. The coordinates "
            "are in the molecule frame unless rawCoords is true, "
@@ -1178,8 +1189,9 @@ The color is a tuple of 3 floats (0-1) in red, green, blue (RGB) order.)DOC")
            "are in the molecule frame unless rawCoords is true, "
            "in which case the coordinates are in pixels.")
       .def("DrawArc",
-           (void (RDKit::MolDraw2D::*)(const Point2D &, double, double, double,
-                                       bool))&RDKit::MolDraw2D::drawArc,
+           (void(RDKit::MolDraw2D::*)(const Point2D &, double, double, double,
+                                      bool)) &
+               RDKit::MolDraw2D::drawArc,
            "center"_a, "radius"_a, "angle1"_a, "angle2"_a,
            "rawCoords"_a = false,
            R"DOC(draws an arc with the current drawing style. The coordinates
@@ -1202,9 +1214,9 @@ The coordinates
 are in the molecule frame unless rawCoords is true,
 in which case the coordinates are in pixels.)DOC")
       .def("DrawString",
-           (void (RDKit::MolDraw2D::*)(const std::string &,
-                                       const RDGeom::Point2D &,
-                                       bool))&RDKit::MolDraw2D::drawString,
+           (void(RDKit::MolDraw2D::*)(const std::string &,
+                                      const RDGeom::Point2D &, bool)) &
+               RDKit::MolDraw2D::drawString,
            "string"_a, "pos"_a, "rawCoords"_a = false,
            "add text to the canvas. The coordinates "
            "are in the molecule frame unless rawCoords is true, "
@@ -1217,14 +1229,14 @@ The coordinates
 are in the molecule frame unless rawCoords is true,
 in which case the coordinates are in pixels.)DOC")
       .def("GetDrawCoords",
-           (RDGeom::Point2D (RDKit::MolDraw2D::*)(const RDGeom::Point2D &)
+           (RDGeom::Point2D(RDKit::MolDraw2D::*)(const RDGeom::Point2D &)
                 const) &
                RDKit::MolDraw2D::getDrawCoords,
            "point"_a,
            "get the coordinates in drawing space for a particular point in "
            "molecule space")
       .def("GetDrawCoords",
-           (RDGeom::Point2D (RDKit::MolDraw2D::*)(int) const) &
+           (RDGeom::Point2D(RDKit::MolDraw2D::*)(int) const) &
                RDKit::MolDraw2D::getDrawCoords,
            "atomIndex"_a,
            "get the coordinates in drawing space for a particular atom")
@@ -1245,7 +1257,7 @@ in which case the coordinates are in pixels.)DOC")
       .def("FinishDrawing", &RDKit::MolDraw2DSVG::finishDrawing,
            "add the last bits of SVG to finish the drawing")
       .def("AddMoleculeMetadata",
-           (void (RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
+           (void(RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
                RDKit::MolDraw2DSVG::addMoleculeMetadata,
            "mol"_a, "confId"_a = -1,
            "add RDKit-specific information to the bottom of the drawing")
@@ -1450,9 +1462,9 @@ Options changed are:
   m.def("MeanBondLength", &RDKit::MolDraw2DUtils::meanBondLength, "mol"_a,
         "confId"_a = -1, "Calculate the mean bond length for the molecule.");
 
-  m.def("SetDarkMode", (void (*)(RDKit::MolDrawOptions &))&RDKit::setDarkMode,
+  m.def("SetDarkMode", (void (*)(RDKit::MolDrawOptions &)) & RDKit::setDarkMode,
         "d2d"_a, "set dark mode for a MolDrawOptions object");
-  m.def("SetDarkMode", (void (*)(RDKit::MolDraw2D &))&RDKit::setDarkMode,
+  m.def("SetDarkMode", (void (*)(RDKit::MolDraw2D &)) & RDKit::setDarkMode,
         "d2d"_a, "set dark mode for a MolDraw2D object");
   m.def("SetMonochromeMode", &setMonochromeMode_helper1, "options"_a,
         "fgColour"_a, "bgColour"_a,

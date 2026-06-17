@@ -37,15 +37,9 @@ import unittest
 
 from pathlib import Path
 
-from rdkit import Chem, rdBase
-from rdkit.Chem import rdSynthonSpaceSearch
-
-from rdkit.Chem import rdFingerprintGenerator
-from rdkit.Chem import rdGeneralizedSubstruct
-try:
-  from rdkit.Chem import rdRascalMCES
-except ImportError:
-  rdRascalMCES = None
+from rdkit import Chem
+from rdkit.Chem import (rdSynthonSpaceSearch, rdFingerprintGenerator, rdRascalMCES,
+                        rdGeneralizedSubstruct)
 
 
 class TestCase(unittest.TestCase):

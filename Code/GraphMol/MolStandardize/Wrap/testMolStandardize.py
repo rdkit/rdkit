@@ -2,20 +2,18 @@
 # Copyright (C) 2018-2025 Susan H. Leung and other RDKit contributors
 #         All Rights Reserved
 #
-import math
 import os
 import sys
 import unittest
 from datetime import datetime, timedelta
 
-from rdkit import Chem, DataStructs, RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem import inchi
 
 haveInchi = hasattr(inchi, 'MolToInchi')
 from rdkit.Chem import rdCIPLabeler
 from rdkit.Chem.rdchem import Atom
-from rdkit.Geometry import rdGeometry as geom
 
 
 class TestCase(unittest.TestCase):

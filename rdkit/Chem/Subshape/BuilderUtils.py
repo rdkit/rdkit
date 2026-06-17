@@ -77,13 +77,6 @@ def FindTerminalPtsFromConformer(conf, winRad, nbrCount):
         nbrLists[i].append((j, pj))
         nbrLists[j].append((i, pi))
   termPts = []
-  # for i in range(nAts):
-  #  if not len(nbrLists[i]): continue
-  #  if len(nbrLists[i])>10:
-  #    print i+1,len(nbrLists[i])
-  #  else:
-  #    print i+1,len(nbrLists[i]),[x[0]+1 for x in nbrLists[i]]
-
   while 1:
     for i in range(nAts):
       if not nbrLists[i]:

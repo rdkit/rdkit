@@ -159,8 +159,10 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 
   //! Merge the other ShapeInput, assuming it has the correct number
   //! of atoms etc.  Empties other, unless they can't be merged in which case
-  //! it returns unscathed.
-  void merge(ShapeInput &other);
+  //! it returns unscathed.  The merge can only be done if other has the same
+  // number of coordinates per conformer, and the feature types of the two
+  // match.
+  void merge(ShapeInput &&other);
 
   std::string toString() const {
 #ifndef RDK_USE_BOOST_SERIALIZATION
@@ -309,8 +311,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // alpha is KAPPA / (r * r) where r is the radius
   // of the atom.  This is not used if using all_atoms_carbon mode.
   std::vector<int> d_types;  // The feature types.  The size is the same
-  // as the number of coordinates, padded with 0
-  // for the atoms.
+  // as the number of atoms and features, padded with 0 for the atoms.
   unsigned int d_numAtoms;                     // The number of atoms
   unsigned int d_numFeats;                     // The number of features
   std::vector<double> d_selfOverlapShapeVols;  // Shape volume
