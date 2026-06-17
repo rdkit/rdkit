@@ -635,6 +635,15 @@ class TestCase(unittest.TestCase):
     self.assertRaises(ValueError,
                       lambda: rdMD.GetMorganFingerprintAsBitVect(mol, 2, fromAtoms=[10]))
 
+  def testBitInfo(self):
+    m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
+    bi = {}
+    _ = rdMD.GetMorganFingerprintAsBitVect(m, radius=2, bitInfo=bi)
+    self.assertTrue(872 in bi)
+    bi = {}
+    _ = rdMD.GetMorganFingerprintAsBitVect(m, radius=2, fromAtoms=[0, 1, 2], bitInfo=bi)
+    self.assertTrue(1066 in bi)
+
   @unittest.skipIf(not haveAllChem, "AllChem not available")
   def testCustomVSA(self):
     mol = Chem.MolFromSmiles("c1ccccc1O")
