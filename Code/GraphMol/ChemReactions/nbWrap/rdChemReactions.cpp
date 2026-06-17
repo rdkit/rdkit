@@ -100,9 +100,9 @@ nb::tuple RunReactants(ChemicalReaction *self, nb::object reactants,
   return nb::tuple(res);
 }
 
-nb::tuple RunReactant(ChemicalReaction *self, nb::object reactant,
+nb::tuple RunReactant(ChemicalReaction *self, ROMol &reactant,
                       unsigned int reactionIdx) {
-  ROMOL_SPTR react(nb::cast<ROMol *>(reactant), [](ROMol *) {});
+  ROMOL_SPTR react(&reactant, [](ROMol *) {});
   std::vector<MOL_SPTR_VECT> mols;
   {
     NOGIL gil;
@@ -122,9 +122,9 @@ nb::tuple RunReactant(ChemicalReaction *self, nb::object reactant,
   return nb::tuple(res);
 }
 
-bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant,
+bool RunReactantInPlace(ChemicalReaction *self, ROMol &reactant,
                         bool removeUnmatchedAtoms) {
-  auto react = static_cast<RWMol *>(reactant);
+  auto react = static_cast<RWMol *>(&reactant);
   bool res = false;
   {
     NOGIL gil;
