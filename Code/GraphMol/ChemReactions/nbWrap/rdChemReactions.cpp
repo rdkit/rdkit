@@ -491,7 +491,7 @@ fingerprints of chemical reactions.)DOC")
       .def("__setattr__", &safeSetattr);
 
   nb::class_<RDKit::ChemicalReaction>(
-      m, "ChemicalReaction",
+      m, "ChemicalReaction", nb::dynamic_attr(),
       R"DOC(A class for storing and applying chemical reactions.
 
 Sample Usage:
