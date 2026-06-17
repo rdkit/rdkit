@@ -269,7 +269,7 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
             code = atm.GetProp("_CIPCode")
           else:
             if si.specified:
-              code = str(si.descriptor)
+              code = str(si.descriptor).replace("StereoDescriptor.", "")
             else:
               code = '?'
               atm.SetIntProp('_ChiralityPossible', 1)
