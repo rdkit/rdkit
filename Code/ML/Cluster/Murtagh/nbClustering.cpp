@@ -1,26 +1,25 @@
-// $Id$
 //
-//  Copyright (C) 2002-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2026 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#define PY_ARRAY_UNIQUE_SYMBOL Py_Array_API_Clustering
+#include <cstdlib>
 
-#include <RDBoost/Wrap.h>
-#include <cstdint>
+#include <RDGeneral/Invariant.h>
 
-namespace python = boost::python;
-
-#include <RDBoost/import_array.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
 
 typedef double real;
 
-extern "C" void distdriver_(boost::int64_t *n, boost::int64_t *len, real *dists,
-                            boost::int64_t *toggle, boost::int64_t *ia,
-                            boost::int64_t *ib, real *crit);
+namespace nb = nanobind;
+using namespace nb::literals;
+
+extern "C" void distdriver_(long *n, long *len, real *dists, long *toggle,
+                            long *ia, long *ib, real *crit);
 
 //
 // Rather than deal with any nonsense like trying to get
@@ -28,16 +27,15 @@ extern "C" void distdriver_(boost::int64_t *n, boost::int64_t *len, real *dists,
 // (thus drowning in the waves of f2c hate), we'll generate
 // the distance matrix on our own here and then call distdriver_
 //
-static void clusterit(real *dataP, boost::int64_t n, boost::int64_t m,
-                      boost::int64_t iopt, boost::int64_t *ia,
-                      boost::int64_t *ib, real *crit) {
+static void clusterit(const real *dataP, long n, long m, long iopt, long *ia,
+                      long *ib, real *crit) {
   real *dists;
-  boost::int64_t len;
-  boost::int64_t pos = 0;
-  boost::int64_t i, j, k, iTab, jTab;
+  long len;
+  long pos = 0;
+  long i, j, k, iTab, jTab;
   double tmp;
   len = (n * (n - 1)) / 2;
-  dists = (real *)calloc(len, sizeof(real));
+  dists = static_cast<real *>(calloc(static_cast<size_t>(len), sizeof(real)));
   CHECK_INVARIANT(dists, "failed to allocate memory");
   for (i = 1; i < n; i++) {
     iTab = i * m;
@@ -54,127 +52,112 @@ static void clusterit(real *dataP, boost::int64_t n, boost::int64_t m,
   free(dists);
 };
 
-static void capsule_cleanup(PyObject *capsule) {
-  void *ptr = PyCapsule_GetPointer(capsule, nullptr);
-  free(ptr);
+static nb::tuple Clustering_MurtaghCluster(
+    nb::ndarray<nb::numpy, const double, nb::ndim<2>, nb::c_contig> data,
+    int nPts, int sz, int option) {
+  auto dataRows = static_cast<long>(data.shape(0));
+  auto dataCols = static_cast<long>(data.shape(1));
+  CHECK_INVARIANT(dataRows == nPts, "data row count does not match nPts");
+  CHECK_INVARIANT(dataCols == sz, "data column count does not match sz");
+
+  auto *ia =
+      static_cast<long *>(calloc(static_cast<size_t>(nPts), sizeof(long)));
+  CHECK_INVARIANT(ia, "failed to allocate memory");
+  auto *ib =
+      static_cast<long *>(calloc(static_cast<size_t>(nPts), sizeof(long)));
+  CHECK_INVARIANT(ib, "failed to allocate memory");
+  auto *crit =
+      static_cast<real *>(calloc(static_cast<size_t>(nPts), sizeof(real)));
+  CHECK_INVARIANT(crit, "failed to allocate memory");
+
+  clusterit(data.data(), static_cast<long>(nPts), static_cast<long>(sz),
+            static_cast<long>(option), ia, ib, crit);
+
+  nb::list res;
+
+  nb::capsule iaOwner(ia, [](void *p) noexcept { free(p); });
+  res.append(nb::ndarray<nb::numpy, long, nb::ndim<1>>(
+      ia, {static_cast<size_t>(nPts)}, iaOwner));
+
+  nb::capsule ibOwner(ib, [](void *p) noexcept { free(p); });
+  res.append(nb::ndarray<nb::numpy, long, nb::ndim<1>>(
+      ib, {static_cast<size_t>(nPts)}, ibOwner));
+
+  nb::capsule critOwner(crit, [](void *p) noexcept { free(p); });
+  res.append(nb::ndarray<nb::numpy, double, nb::ndim<1>>(
+      crit, {static_cast<size_t>(nPts)}, critOwner));
+
+  return nb::tuple(res);
 }
 
-static PyObject *Clustering_MurtaghCluster(python::object data, int nPts,
-                                           int sz, int option) {
-  PyArrayObject *dataContig;
-  boost::int64_t *ia, *ib;
-  real *crit;
-  PyObject *res;
-  PyObject *tmp;
-  npy_intp dims[2];
-
-  if (PyArray_Check(data.ptr())) {
-    dataContig = reinterpret_cast<PyArrayObject *>(
-        PyArray_ContiguousFromObject(data.ptr(), NPY_DOUBLE, 2, 2));
-  } else {
-    throw_value_error("PyArray_Type expected as input");
-    return nullptr;
-  }
-
-  ia = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
-  auto ia_capsule = PyCapsule_New(ia, nullptr, capsule_cleanup);
-
-  ib = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
-  auto ib_capsule = PyCapsule_New(ib, nullptr, capsule_cleanup);
-
-  crit = (real *)calloc(nPts, sizeof(real));
-  auto crit_capsule = PyCapsule_New(crit, nullptr, capsule_cleanup);
-
-  clusterit((real *)PyArray_DATA(dataContig), nPts, sz, option, ia, ib, crit);
-
-  dims[0] = nPts;
-  res = PyTuple_New(3);
-
-  //  NOTE: these operations maintain pointers to the respective arrays,
-  //  that's why it's ok that we do not free them in this function,
-  //  Python will take care of it for us.
-  //
-  tmp = PyArray_SimpleNewFromData(1, dims, NPY_LONG, (void *)ia);
-  PyArray_SetBaseObject((PyArrayObject *)tmp, ia_capsule);
-  PyTuple_SetItem(res, 0, (PyObject *)tmp);
-
-  tmp = PyArray_SimpleNewFromData(1, dims, NPY_LONG, (void *)ib);
-  PyArray_SetBaseObject((PyArrayObject *)tmp, ib_capsule);
-  PyTuple_SetItem(res, 1, (PyObject *)tmp);
-
-  tmp = PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (void *)crit);
-  PyArray_SetBaseObject((PyArrayObject *)tmp, crit_capsule);
-  PyTuple_SetItem(res, 2, (PyObject *)tmp);
-
-  return res;
-};
-
-void distclusterit(real *dists, boost::int64_t n, boost::int64_t iopt,
-                   boost::int64_t *ia, boost::int64_t *ib, real *crit) {
-  boost::int64_t len;
+void distclusterit(real *dists, long n, long iopt, long *ia, long *ib,
+                   real *crit) {
+  long len;
 
   len = (n * (n - 1)) / 2;
   distdriver_(&n, &len, dists, &iopt, ia, ib, crit);
 };
 
-static PyObject *Clustering_MurtaghDistCluster(python::object data, int nPts,
-                                               int option) {
-  PyArrayObject *dataContig;
-  boost::int64_t *ia, *ib;
-  real *crit;
-  PyObject *res = PyTuple_New(3);
-  PyObject *tmp;
-  npy_intp dims[] = {1};
+static nb::tuple Clustering_MurtaghDistCluster(
+    nb::ndarray<nb::numpy, const double, nb::ndim<1>, nb::c_contig> data,
+    int nPts, int option) {
+  auto dataLen = static_cast<long>(data.shape(0));
+  CHECK_INVARIANT(dataLen > 0, "distance matrix must not be empty");
 
-  if (PyArray_Check(data.ptr())) {
-    dataContig = reinterpret_cast<PyArrayObject *>(
-        PyArray_ContiguousFromObject(data.ptr(), NPY_DOUBLE, 1, 1));
-  } else {
-    throw_value_error("PyArray_Type expected as input");
-    return nullptr;
-  }
+  auto *ia =
+      static_cast<long *>(calloc(static_cast<size_t>(nPts), sizeof(long)));
+  CHECK_INVARIANT(ia, "failed to allocate memory");
+  auto *ib =
+      static_cast<long *>(calloc(static_cast<size_t>(nPts), sizeof(long)));
+  CHECK_INVARIANT(ib, "failed to allocate memory");
+  auto *crit =
+      static_cast<real *>(calloc(static_cast<size_t>(nPts), sizeof(real)));
+  CHECK_INVARIANT(crit, "failed to allocate memory");
 
-  ia = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
-  auto ia_capsule = PyCapsule_New(ia, nullptr, capsule_cleanup);
+  distclusterit(const_cast<real *>(data.data()), static_cast<long>(nPts),
+                static_cast<long>(option), ia, ib, crit);
 
-  ib = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
-  auto ib_capsule = PyCapsule_New(ib, nullptr, capsule_cleanup);
+  nb::list res;
 
-  crit = (real *)calloc(nPts, sizeof(real));
-  auto crit_capsule = PyCapsule_New(crit, nullptr, capsule_cleanup);
+  nb::capsule iaOwner(ia, [](void *p) noexcept { free(p); });
+  res.append(nb::ndarray<nb::numpy, long, nb::ndim<1>>(
+      ia, {static_cast<size_t>(nPts)}, iaOwner));
 
-  distclusterit((real *)PyArray_DATA(dataContig), nPts, option, ia, ib, crit);
+  nb::capsule ibOwner(ib, [](void *p) noexcept { free(p); });
+  res.append(nb::ndarray<nb::numpy, long, nb::ndim<1>>(
+      ib, {static_cast<size_t>(nPts)}, ibOwner));
 
-  dims[0] = nPts;
+  nb::capsule critOwner(crit, [](void *p) noexcept { free(p); });
+  res.append(nb::ndarray<nb::numpy, double, nb::ndim<1>>(
+      crit, {static_cast<size_t>(nPts)}, critOwner));
 
-  //
-  //  NOTE: these operations maintain pointers to the respective arrays,
-  //  that's why it's ok that we do not free them in this function,
-  //  Python will take care of it for us.
-  //
-  tmp = PyArray_SimpleNewFromData(1, dims, NPY_LONG, (void *)ia);
-  PyArray_SetBaseObject((PyArrayObject *)tmp, ia_capsule);
-  PyTuple_SetItem(res, 0, tmp);
+  return nb::tuple(res);
+}
 
-  tmp = PyArray_SimpleNewFromData(1, dims, NPY_LONG, (void *)ib);
-  PyArray_SetBaseObject((PyArrayObject *)tmp, ib_capsule);
-  PyTuple_SetItem(res, 1, tmp);
+NB_MODULE(Clustering, m) {
+  m.def("MurtaghCluster", Clustering_MurtaghCluster, "data"_a, "nPts"_a, "sz"_a,
+        "option"_a,
+        R"DOC(Cluster points using Murtagh's hierarchical clustering algorithm.
 
-  tmp = PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (void *)crit);
-  PyArray_SetBaseObject((PyArrayObject *)tmp, crit_capsule);
-  PyTuple_SetItem(res, 2, tmp);
+ARGUMENTS:
+  - data: 2D NumPy array of point coordinates
+  - nPts: number of points in the array
+  - sz: number of coordinate values per point
+  - option: clustering option passed to the underlying driver
 
-  return res;
-};
+RETURNS:
+  - tuple of three 1D NumPy arrays containing the cluster results
+)DOC");
+  m.def("MurtaghDistCluster", Clustering_MurtaghDistCluster, "data"_a, "nPts"_a,
+        "option"_a,
+        R"DOC(Cluster using a precomputed condensed distance matrix.
 
-BOOST_PYTHON_MODULE(Clustering) {
-  rdkit_import_array();
+ARGUMENTS:
+  - data: 1D NumPy array containing the lower triangle of the distance matrix
+  - nPts: number of points in the array
+  - option: clustering option passed to the underlying driver
 
-  python::def("MurtaghCluster", Clustering_MurtaghCluster,
-              (python::arg("data"), python::arg("nPts"), python::arg("sz"),
-               python::arg("option")),
-              "TODO: provide docstring");
-  python::def("MurtaghDistCluster", Clustering_MurtaghDistCluster,
-              (python::arg("data"), python::arg("nPts"), python::arg("option")),
-              "TODO: provide docstring");
+RETURNS:
+  - tuple of three 1D NumPy arrays containing the cluster results
+)DOC");
 }
