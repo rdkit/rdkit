@@ -16,8 +16,12 @@
 #include <fstream>
 #include <cstdint>
 
-constexpr double OFFSET_TOL = 1.e-8;
-constexpr double SPACING_TOL = 1.e-8;
+namespace {
+// file-local tolerances; named distinctly from the same-purpose constants in
+// UniformRealValueGrid3D.cpp so the two don't become ambiguous under unity builds
+constexpr double GRID_OFFSET_TOL = 1.e-8;
+constexpr double GRID_SPACING_TOL = 1.e-8;
+}  // namespace
 
 using namespace RDKit;
 
@@ -170,12 +174,12 @@ bool UniformGrid3D::compareParams(const UniformGrid3D &other) const {
     return false;
   }
 
-  if (fabs(d_spacing - other.getSpacing()) > SPACING_TOL) {
+  if (fabs(d_spacing - other.getSpacing()) > GRID_SPACING_TOL) {
     return false;
   }
   Point3D dOffset = d_offSet;
   dOffset -= other.getOffset();
-  return dOffset.lengthSq() <= OFFSET_TOL;
+  return dOffset.lengthSq() <= GRID_OFFSET_TOL;
 }
 
 void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
