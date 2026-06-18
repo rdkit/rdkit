@@ -6790,11 +6790,11 @@ M  END
     self.assertEqual(ctrs, [(1, 'S')])
     ctrs = Chem.FindMolChiralCenters(mol, useLegacyImplementation=False, includeCIP=False)
     self.assertEqual(len(ctrs), 1)
-    self.assertEqual(ctrs, [(1, 'StereoDescriptor.Tet_CCW')])
+    self.assertEqual(ctrs, [(1, 'Tet_CCW')])
     ctrs = Chem.FindMolChiralCenters(mol, useLegacyImplementation=False, includeUnassigned=True,
                                      includeCIP=False)
     self.assertEqual(len(ctrs), 2)
-    self.assertEqual(ctrs, [(1, 'StereoDescriptor.Tet_CCW'), (5, '?')])
+    self.assertEqual(ctrs, [(1, 'Tet_CCW'), (5, '?')])
     ctrs = Chem.FindMolChiralCenters(mol, useLegacyImplementation=False, includeUnassigned=True,
                                      includeCIP=True)
     self.assertEqual(len(ctrs), 2)
