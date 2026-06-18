@@ -330,7 +330,6 @@ Compiling the RDKit from source can take a while. Several opt-in options can hel
 
   These options can be combined, though note that precompiled headers and compiler caches interact: see your cache's documentation (e.g. `ccache`'s `pch_defines`/`time_macros` `sloppiness` settings) if you want cache hits across builds that use precompiled headers.
 
-
 ##### Building the Java wrappers
 
 *Additional Requirements*
