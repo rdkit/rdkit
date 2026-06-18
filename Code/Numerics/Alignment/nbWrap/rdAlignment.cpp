@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
 
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
@@ -53,9 +54,17 @@ void fillPointVec(nb::object seq, std::vector<RDGeom::Point3D> &pts) {
   }
 }
 
+auto makeTransform4x4(const RDGeom::Transform3D &trans) {
+  double *resData = new double[16];
+  memcpy(resData, trans.getData(), 16 * sizeof(double));
+  nb::capsule owner(resData, [](void *f) noexcept {
+    delete[] reinterpret_cast<double *>(f);
+  });
+  return nb::ndarray<nb::numpy, double, nb::ndim<2>>(resData, {4, 4}, owner);
+}
+
 nb::tuple AlignPointPairs(nb::object refPoints, nb::object probePoints,
-                          nb::object weights = nb::none(),
-                          bool reflect = false,
+                          nb::object weights = nb::none(), bool reflect = false,
                           unsigned int maxIterations = 50) {
   std::vector<RDGeom::Point3D> refOwned, probeOwned;
   fillPointVec(refPoints, refOwned);
@@ -85,21 +94,10 @@ nb::tuple AlignPointPairs(nb::object refPoints, nb::object probePoints,
   }
 
   RDGeom::Transform3D trans;
-  double ssd = RDNumeric::Alignments::AlignPoints(refPts, probePts, trans,
-                                                   wtsVec.get(), reflect,
-                                                   maxIterations);
+  double ssd = RDNumeric::Alignments::AlignPoints(
+      refPts, probePts, trans, wtsVec.get(), reflect, maxIterations);
 
-  const double *tdata = trans.getData();
-  nb::list mat;
-  for (int i = 0; i < 4; i++) {
-    nb::list row;
-    for (int j = 0; j < 4; j++) {
-      row.append(tdata[i * 4 + j]);
-    }
-    mat.append(row);
-  }
-
-  return nb::make_tuple(ssd, mat);
+  return nb::make_tuple(ssd, makeTransform4x4(trans));
 }
 
 }  // namespace
@@ -108,9 +106,8 @@ NB_MODULE(rdAlignment, m) {
   m.doc() = "Module containing functions to align pairs of points in 3D";
 
   m.def(
-      "GetAlignmentTransform", &AlignPointPairs, "refPoints"_a,
-      "probePoints"_a, "weights"_a = nb::none(), "reflect"_a = false,
-      "maxIterations"_a = 50,
+      "GetAlignmentTransform", &AlignPointPairs, "refPoints"_a, "probePoints"_a,
+      "weights"_a = nb::none(), "reflect"_a = false, "maxIterations"_a = 50,
       R"DOC(Compute the optimal alignment (minimum RMSD) between two set of points using the quaternion algorithm
 
 ARGUMENTS:

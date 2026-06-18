@@ -9,6 +9,8 @@ import math
 import os
 import unittest
 
+import numpy
+
 from rdkit import Chem, RDConfig
 from rdkit.Chem import (ChemicalForceFields, rdMolAlign, rdMolDescriptors, rdMolTransforms)
 
@@ -63,6 +65,7 @@ class TestCase(unittest.TestCase):
       self.assertTrue(lstFeq(conf2.GetAtomPosition(i), conf3.GetAtomPosition(i)))
 
     rmsd, trans = rdMolAlign.GetAlignmentTransform(mol2, mol1)
+    self.assertIsInstance(trans, numpy.ndarray)
     self.assertAlmostEqual(rmsd, 0.6579, 4)
 
   def test2AtomMap(self):

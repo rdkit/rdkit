@@ -51,6 +51,7 @@ class TestCase(unittest.TestCase):
 
     res = rdAlg.GetAlignmentTransform(refPts, prbPts)
     self.assertTrue(feq(res[0], 0.0))
+    self.assertIsInstance(res[1], np.ndarray)
     refLst = list(refPts)
     cnt = 0
     for item in list(prbPts):
