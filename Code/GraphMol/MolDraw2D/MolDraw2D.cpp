@@ -48,12 +48,10 @@
 #include <boost/assign/list_of.hpp>
 #include <boost/format.hpp>
 
-// NOTE: no `using namespace boost;` here. This TU pulls in Eigen, whose
-// internal code uses unqualified `make_unsigned`. With a precompiled header
-// boost's type_traits (hence boost::make_unsigned) are already visible, so a
-// global boost using-directive makes that name ambiguous with std::make_unsigned
-// under MSVC's instantiation-time lookup. No boost names are used unqualified
-// here, so the directive is unnecessary anyway.
+// No `using namespace boost;` here: this TU pulls in Eigen, whose internals use
+// unqualified make_unsigned. With the PCH active boost::make_unsigned is already
+// visible, so a global boost using-directive makes it ambiguous with
+// std::make_unsigned under MSVC. No boost names are used unqualified here anyway.
 using namespace std;
 
 namespace RDKit {

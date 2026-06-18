@@ -13,13 +13,10 @@ rdkit_library(GraphMol
         LINK_LIBRARIES RDGeometryLib RDGeneral)
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
 
-# AtomIterators.cpp explicitly instantiates exported iterator templates
-# (template class RDKIT_GRAPHMOL_EXPORT AtomIterator_<...>). The precompiled
-# header (stdafx.h) is built on rdkit_base without RDKIT_GRAPHMOL_BUILD, so it
-# bakes AtomIterators.h in with the export macro resolved to dllimport; MSVC then
-# treats the explicit instantiations as dllimport and omits them from GraphMol.dll
-# (unlike ordinary members, which it still exports). Compile this TU without the
-# PCH so it re-parses the header with dllexport and the symbols are exported.
+# AtomIterators.cpp explicitly instantiates exported templates (template class
+# RDKIT_GRAPHMOL_EXPORT AtomIterator_<...>). The PCH is built on rdkit_base
+# without RDKIT_GRAPHMOL_BUILD, so it bakes the header in as dllimport and MSVC
+# then omits the instantiations from GraphMol.dll. Skip the PCH so it exports.
 if(RDK_USE_PRECOMPILED_HEADERS)
   set_source_files_properties(AtomIterators.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 endif()

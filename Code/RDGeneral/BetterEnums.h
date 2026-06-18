@@ -8,33 +8,27 @@
 //  of the RDKit source tree.
 //
 
-// NOTE: this header intentionally has no include guard / #pragma once.
-// What it expands to depends on whether USE_BETTER_ENUMS is defined at the
-// point of inclusion. A translation unit may include it once in the default
-// (plain-enum) mode -- e.g. transitively via RDKitBase.h, including when that is
-// baked into a precompiled header -- and then again after defining
-// USE_BETTER_ENUMS to pull in the full better-enums implementation. An include
-// guard would pin the file to whichever mode was seen first and break those
-// translation units, so it must remain re-includable.
+// This header intentionally has no include guard / #pragma once: what it expands
+// to depends on whether USE_BETTER_ENUMS is defined at the point of inclusion. A
+// TU may include it in plain-enum mode (e.g. transitively via RDKitBase.h, even
+// when baked into a precompiled header) and then again, after defining
+// USE_BETTER_ENUMS, to pull in the full better-enums implementation; a guard
+// would pin it to whichever mode was seen first.
 //
-// IMPORTANT: re-includability only un-pins this header. The headers that
-// actually *declare* the enums (e.g. MolOps.h's SanitizeFlags) are #pragma once,
-// so once one of them is baked into the precompiled header (stdafx.h, compiled
-// in plain-enum mode via RDKitBase.h) its enums are frozen as plain enums for
-// every TU that consumes the PCH -- re-including BetterEnums.h cannot turn them
-// back into better-enums. A TU that #defines USE_BETTER_ENUMS to get the real
-// implementation must therefore be compiled WITHOUT the PCH. Such sources are
-// marked SKIP_PRECOMPILE_HEADERS in their CMakeLists (search for this filename).
+// Re-includability only un-pins this header, though. The headers that declare
+// the enums (e.g. MolOps.h's SanitizeFlags) are #pragma once, so once one is
+// baked into the PCH in plain-enum mode its enums stay plain for every consumer.
+// A TU that #defines USE_BETTER_ENUMS must therefore skip the PCH; such sources
+// are marked SKIP_PRECOMPILE_HEADERS in their CMakeLists.
 
 #ifdef USE_BETTER_ENUMS
-// Gate on enum.h's own include guard: enum.h is #pragma once / guarded, so it
-// only supplies the real BETTER_ENUM on its first inclusion. Without this check,
-// a second better-enums-mode inclusion in the same TU (e.g. transitively, after
-// USE_BETTER_ENUMS is already defined) would #undef the real macro and then hit
-// a no-op #include "enum.h", leaving BETTER_ENUM undefined.
+// Gate on enum.h's own include guard (it is #pragma once): only the first
+// inclusion supplies the real BETTER_ENUM. Without this, a second
+// better-enums-mode inclusion in the same TU would #undef the real macro and
+// then hit a no-op #include "enum.h", leaving BETTER_ENUM undefined.
 #ifndef BETTER_ENUMS_ENUM_H
-// Re-entering in better-enums mode: discard any fallback macros left over from
-// an earlier default-mode inclusion before enum.h supplies the real ones.
+// Discard any fallback macros from an earlier plain-enum inclusion before
+// enum.h supplies the real ones.
 #ifdef BETTER_ENUM
 #undef BETTER_ENUM
 #endif
