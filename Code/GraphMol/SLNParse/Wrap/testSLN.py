@@ -33,10 +33,9 @@
 # Created by Greg Landrum, September 2006
 #
 import os
-import sys
 import unittest
 
-from rdkit import Chem, Geometry, RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem import rdSLNParse
 
 

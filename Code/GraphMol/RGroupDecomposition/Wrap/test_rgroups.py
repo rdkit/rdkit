@@ -956,6 +956,37 @@ M  END
     for row in rows:
       checkRow(row)
 
+  def testIncludeTargetMolInResultsWithMultipleCoresInSameMol(self):
+    core = Chem.MolFromSmarts("[*:1]c1c([*:2])cccc1")
+    self.assertIsNotNone(core)
+    mols = [
+      Chem.MolFromSmiles(smi) for smi in [
+        "c1ccc(C)c(N)c1",
+        "c1ccc(F)c(O)c1",
+        "c1ccc(c2ccccc2)c(N)c1",
+      ]
+    ]
+    self.assertTrue(all(mols))
+    ps = RGroupDecompositionParameters()
+    ps.allowMultipleCoresInSameMol = True
+    ps.includeTargetMolInResults = True
+    rgd = RGroupDecomposition(core, ps)
+    for mol in mols:
+      self.assertNotEqual(rgd.Add(mol), -1)
+    self.assertTrue(rgd.Process())
+
+    rows = rgd.GetRGroupsAsRows()
+    self.assertGreater(len(rows), len(mols))
+    for row in rows:
+      self.assertIn("Mol", row)
+      self.assertIn("Core", row)
+
+    cols = rgd.GetRGroupsAsColumns()
+    self.assertIn("Mol", cols)
+    self.assertIn("Core", cols)
+    self.assertEqual(len(cols["Mol"]), len(rows))
+    self.assertEqual(len(cols["Core"]), len(rows))
+
 
 if __name__ == '__main__':
   rdBase.DisableLog("rdApp.debug")

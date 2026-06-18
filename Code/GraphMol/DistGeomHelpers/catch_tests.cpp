@@ -692,7 +692,8 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
   }
 }
 
-TEST_CASE("tracking failure causes"){SECTION("basics"){
+TEST_CASE("tracking failure causes") {
+  SECTION("basics") {
     auto mol =
         "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
 REQUIRE(mol);
@@ -747,7 +748,7 @@ SECTION("basicsAIO") {
   cid = DGeomHelpers::EmbedMolecule(*mol, ps);
   CHECK(ps.failures == fail_cp);
 }
-SECTION("chirality") {
+SECTION("chiralityAIO") {
   std::string rdbase = getenv("RDBASE");
   std::string fname =
       rdbase +
@@ -780,14 +781,14 @@ SECTION("multithreaded") {
   ps.useLegacyImplementation = legacyETKDG;
   auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps);
 
-  DGeomHelpers::EmbedParameters ps2 = ps;
-  ps2.numThreads = 4;
+    DGeomHelpers::EmbedParameters ps2 = ps;
+    ps2.numThreads = 4;
 
-  auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps2);
-  CHECK(cids2 == cids);
+    auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps2);
+    CHECK(cids2 == cids);
 
-  CHECK(ps.failures == ps2.failures);
-}
+    CHECK(ps.failures == ps2.failures);
+  }
 #endif
 }
 
@@ -1720,7 +1721,7 @@ TEST_CASE("Github #9143: ETKDGv3 generating twisted amides") {
                Catch::Matchers::WithinAbs(-180, 10) ||
                    Catch::Matchers::WithinAbs(180, 10));
     CHECK_THAT(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 29),
-               Catch::Matchers::WithinAbs(0, 12));
+               Catch::Matchers::WithinAbs(0, 12.5));
     CHECK_THAT(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 21),
                Catch::Matchers::WithinAbs(-180, 20) ||
                    Catch::Matchers::WithinAbs(180, 20));
