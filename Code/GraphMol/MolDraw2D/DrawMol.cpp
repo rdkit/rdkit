@@ -221,7 +221,9 @@ void DrawMol::extractAll(double scale) {
   if (drawOptions_.addStereoAnnotation) {
     extractCIPCodes(drawOptions_.showAllCIPCodes);
   }
-  extractStereoGroups();  // always show StereoGroups
+  if (drawOptions_.addStereoGroupAnnotation) {
+    extractStereoGroups();
+  }
   extractBondNotes();
   extractRadicals();
   extractSGroupData();
@@ -536,13 +538,15 @@ void DrawMol::extractStereoGroups() {
 
     switch (group.getGroupType()) {
       case RDKit::StereoGroupType::STEREO_ABSOLUTE:
-        stereoGroupType = "abs";
+        stereoGroupType = drawOptions_.stereoGroupAbsLabel;
         break;
       case RDKit::StereoGroupType::STEREO_OR:
-        stereoGroupType = "or" + std::to_string(++orCount);
+        stereoGroupType =
+            drawOptions_.stereoGroupOrLabel + std::to_string(++orCount);
         break;
       case RDKit::StereoGroupType::STEREO_AND:
-        stereoGroupType = "and" + std::to_string(++andCount);
+        stereoGroupType =
+            drawOptions_.stereoGroupAndLabel + std::to_string(++andCount);
         break;
       default:
         throw ValueErrorException("Unrecognized stereo group type");
@@ -2891,7 +2895,6 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
     }
     bond_vecs.push_back(bond_vec);
   }
-
   Point2D ret_vec;
   if (bond_vecs.size() == 1) {
     if (!atomLabels_[atom->getIdx()]) {
@@ -2927,7 +2930,12 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
         double ang = acos(bond_vecs[i].dotProduct(bond_vecs[j]));
         if (ang < discrim) {
           ret_vec = bond_vecs[i] + bond_vecs[j];
-          ret_vec.normalize();
+          try {
+            ret_vec.normalize();
+          } catch (const std::runtime_error &e) {
+            // normalize throws on zero-length bond.
+            continue;
+          }
           discrim = -1.0;
           break;
         }
