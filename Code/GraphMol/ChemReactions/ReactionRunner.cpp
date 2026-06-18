@@ -1493,6 +1493,15 @@ ReactantGraft extractReactantGraft(const ChemicalReaction &rxn,
     graft.iso->addConformer(conf, true);
   }
 
+  // NOTE: we deliberately do NOT call graft.iso->updatePropertyCache() here.
+  // The only mutable state the graft needs to carry into every product is each
+  // atom's intrinsic input data (atomic number, charge, isotope, explicit H
+  // count, noImplicit flag, etc.), all of which is established by
+  // addReactantAtomsAndBonds above. The computed valence cache is recomputed
+  // per product by the updatePropertyCache() at the end of
+  // generateOneProductSet (which runs unconditionally), so finalizing the iso
+  // here would just be thrown away.
+
   std::set<unsigned int> reactantMapNums;
   for (const auto atom : reactantTemplate->atoms()) {
     const auto mapNum = atom->getAtomMapNum();
@@ -1560,6 +1569,21 @@ void applyReactantGraft(RWMOL_SPTR product, Conformer *productConf,
     if (isoBond->getStereoAtoms().size() == 2) {
       stereoBondsToRemap.emplace_back(bondIdx, isoBond);
     }
+  }
+
+  // RWMol::replaceBond (github #7128) decrements an atom's explicit H count
+  // whenever the replacement bond has a higher order than the bond it
+  // supersedes. Here the product-template anchor bonds are typically lower
+  // order (e.g. an unspecified/single query bond) than the fully resolved iso
+  // bonds (e.g. aromatic), so the anchor-bond replacements above can spuriously
+  // strip explicit Hs (for example the H on an aromatic [nH]). The direct
+  // assembly path sets bond properties in place and never triggers this, so we
+  // restore the anchor atoms' explicit-H state from the iso source of truth.
+  for (unsigned int atomIdx : graft.anchorAtomIdxs) {
+    const auto *isoAtom = graft.iso->getAtomWithIdx(atomIdx);
+    auto *prodAtom = product->getAtomWithIdx(atomIdx);
+    prodAtom->setNumExplicitHs(isoAtom->getNumExplicitHs());
+    prodAtom->setNoImplicit(isoAtom->getNoImplicit());
   }
 
   for (unsigned int bondIdx = graft.templateBondCount;
@@ -1847,11 +1871,13 @@ generateOneProductSet(const ChemicalReaction &rxn,
         }
         applyReactantGraft(product, conf, cacheIt->second);
       } else {
-        auto graft = extractReactantGraft(rxn, *pTemplIt, *iter,
-                                          reactants.at(reactantId),
-                                          reactantsMatch.at(reactantId),
-                                          reactantId, doConfs);
-        applyReactantGraft(product, conf, graft);
+        // No graft cache: assemble the product directly. This is the original
+        // (upstream) code path and is byte-for-byte faithful to it; the
+        // extract/apply graft machinery only pays off when a graft cache lets
+        // us replay an extracted graft across the reactant Cartesian product.
+        addReactantAtomsAndBonds(rxn, product, reactants.at(reactantId),
+                                 reactantsMatch.at(reactantId), *iter, conf,
+                                 reactantId);
       }
     }
 
