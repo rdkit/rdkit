@@ -120,7 +120,8 @@ or by indexing (i.e. bv[i] = 1 or if bv[i]).
 
 struct EBV_wrapper {
   static void wrap(nb::module_ &m) {
-    nb::class_<ExplicitBitVect>(m, "ExplicitBitVect", ebvClassDoc.c_str())
+    nb::class_<ExplicitBitVect>(m, "ExplicitBitVect", nb::dynamic_attr(),
+                                ebvClassDoc.c_str())
         .def(nb::init<unsigned int>(), "size"_a)
         .def(
             "__init__",

@@ -25,7 +25,7 @@ ptable = Chem.GetPeriodicTable()
 bondScaleFacts = [.1, 0, .2, .3]  # aromatic,single,double,triple
 
 
-def _LabuteHelper(mol, includeHs=1, force=0):
+def _LabuteHelper(mol, includeHs=True, force=False):
   """ *Internal Use Only*
     helper function for LabuteASA calculation
     returns an array of atomic contributions to the ASA
@@ -41,14 +41,14 @@ def _LabuteHelper(mol, includeHs=1, force=0):
     else:
       if res:
         return res
-  tpl = rdMolDescriptors._CalcLabuteASAContribs(mol, includeHs)
+  tpl = rdMolDescriptors._CalcLabuteASAContribs(mol, bool(includeHs))
   ats, hs = tpl
   Vi = [hs] + list(ats)
   mol._labuteContribs = Vi
   return Vi
 
 
-def _pyLabuteHelper(mol, includeHs=1, force=0):
+def _pyLabuteHelper(mol, includeHs=True, force=False):
   """ *Internal Use Only*
     helper function for LabuteASA calculation
     returns an array of atomic contributions to the ASA
@@ -115,7 +115,7 @@ def _pyLabuteHelper(mol, includeHs=1, force=0):
 mrBins = [1.29, 1.82, 2.24, 2.45, 2.75, 3.05, 3.63, 3.8, 4.0]
 
 
-def pySMR_VSA_(mol, bins=None, force=1):
+def pySMR_VSA_(mol, bins=None, force=True):
   """ *Internal Use Only*
   """
   if not force:
@@ -154,7 +154,7 @@ SMR_VSA_ = rdMolDescriptors.SMR_VSA_
 logpBins = [-0.4, -0.2, 0, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6]
 
 
-def pySlogP_VSA_(mol, bins=None, force=1):
+def pySlogP_VSA_(mol, bins=None, force=True):
   """ *Internal Use Only*
   """
   if not force:
@@ -189,7 +189,7 @@ SlogP_VSA_ = rdMolDescriptors.SlogP_VSA_
 chgBins = [-.3, -.25, -.20, -.15, -.10, -.05, 0, .05, .10, .15, .20, .25, .30]
 
 
-def pyPEOE_VSA_(mol, bins=None, force=1):
+def pyPEOE_VSA_(mol, bins=None, force=True):
   """ *Internal Use Only*
   """
   if not force:
@@ -294,7 +294,7 @@ def _InstallDescriptors():
 _InstallDescriptors()
 
 
-def pyLabuteASA(mol, includeHs=1):
+def pyLabuteASA(mol, includeHs=True):
   """ calculates Labute's Approximate Surface Area (ASA from MOE)
 
     Definition from P. Labute's article in the Journal of the Chemical Computing Group

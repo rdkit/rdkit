@@ -19,6 +19,7 @@ from rdkit import RDConfig
 from rdkit import rdBase
 from rdkit.Chem import rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
+from rdkit.Chem.Draw.rdMolDraw2D import *
 
 
 def _sip_available():

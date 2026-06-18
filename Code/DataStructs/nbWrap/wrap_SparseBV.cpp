@@ -113,7 +113,8 @@ or by indexing (i.e. bv[i] = 1 or if bv[i]).
 )DOC";
 struct SBV_wrapper {
   static void wrap(nb::module_ &m) {
-    nb::class_<SparseBitVect>(m, "SparseBitVect", sbvClassDoc.c_str())
+    nb::class_<SparseBitVect>(m, "SparseBitVect", nb::dynamic_attr(),
+                              sbvClassDoc.c_str())
         .def(nb::init<unsigned int>(), "size"_a)
         .def(
             "__init__",

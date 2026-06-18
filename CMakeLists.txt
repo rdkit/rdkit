@@ -315,18 +315,15 @@ if(RDK_BUILD_NANOBIND_WRAPPERS)
     message(FATAL_ERROR "RDK_BUILD_BOOST_PYTHON_WRAPPERS and RDK_BUILD_NANOBIND_WRAPPERS are mutually exclusive.")
   endif()
 
-find_package(Python 3.9 COMPONENTS Interpreter ${DEV_MODULE} NumPy REQUIRED)
-target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
+  find_package(Python 3.9 COMPONENTS Interpreter ${DEV_MODULE} NumPy REQUIRED)
+  target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
 
-# Detect the installed nanobind package and import it into CMake
-execute_process(
-  COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
-  OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
-find_package(nanobind CONFIG REQUIRED)
-set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
-
-
-
+  # Detect the installed nanobind package and import it into CMake
+  execute_process(
+    COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
+  find_package(nanobind CONFIG REQUIRED)
+  set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
 endif(RDK_BUILD_NANOBIND_WRAPPERS)
 
 

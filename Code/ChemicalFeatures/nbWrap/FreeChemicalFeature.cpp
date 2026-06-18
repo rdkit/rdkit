@@ -21,8 +21,9 @@ using namespace nb::literals;
 using ChemicalFeatures::FreeChemicalFeature;
 
 void wrap_freefeat(nb::module_ &m) {
-  nb::class_<FreeChemicalFeature>(m, "FreeChemicalFeature",
-                                  R"DOC(Class to represent free chemical features.
+  nb::class_<FreeChemicalFeature>(
+      m, "FreeChemicalFeature", nb::dynamic_attr(),
+      R"DOC(Class to represent free chemical features.
 These chemical features are not associated with a molecule, though they can be matched
 to molecular features
 )DOC")
@@ -63,15 +64,13 @@ to molecular features
              return std::make_tuple(nb::bytes(pkl.c_str(), pkl.size()));
            })
       .def("__setstate__",
-           [](FreeChemicalFeature &feat,
-              const std::tuple<nb::bytes> &state) {
+           [](FreeChemicalFeature &feat, const std::tuple<nb::bytes> &state) {
              const auto &pkl = std::get<0>(state);
              new (&feat) FreeChemicalFeature(std::string(
                  static_cast<const char *>(pkl.data()), pkl.size()));
            })
       .def("__setstate__",
-           [](FreeChemicalFeature &feat,
-              const std::tuple<std::string> &state) {
+           [](FreeChemicalFeature &feat, const std::tuple<std::string> &state) {
              new (&feat) FreeChemicalFeature(std::get<0>(state));
            });
 }
