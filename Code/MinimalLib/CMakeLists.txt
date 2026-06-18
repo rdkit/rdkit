@@ -1,5 +1,11 @@
 include_directories(${RDKit_ExternalDir})
 
+# JSONParsers.cpp #defines USE_BETTER_ENUMS and so is incompatible with the
+# plain-enum precompiled header; compile it without the PCH (see BetterEnums.h).
+if(RDK_USE_PRECOMPILED_HEADERS)
+    set_source_files_properties(JSONParsers.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+endif()
+
 if(RDK_BUILD_MINIMAL_LIB)
     set(MINIMAL_LIB_LIBRARIES "MolInterchange;Abbreviations;"
         "CIPLabeler;MolDraw2D;Depictor;"

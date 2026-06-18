@@ -8,6 +8,12 @@ rdkit_library(RGroupDecomposition RGroupDecomp.cpp RGroupDecompData.cpp
     GraphMol RDGeneral ga MolEnumerator TautomerQuery)
 target_compile_definitions(RGroupDecomposition PRIVATE RDKIT_RGROUPDECOMPOSITION_BUILD)
 
+# RGroupDecompJSONParsers.cpp #defines USE_BETTER_ENUMS and so is incompatible with
+# the plain-enum precompiled header; compile it without the PCH (see BetterEnums.h).
+if(RDK_USE_PRECOMPILED_HEADERS)
+  set_source_files_properties(RGroupDecompJSONParsers.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+endif()
+
 rdkit_headers(
   RGroupDecomp.h RGroupDecompParams.h RGroupDecompJSONParsers.h
   DEST GraphMol/RGroupDecomposition)
