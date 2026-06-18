@@ -78,7 +78,17 @@ If a string argument is provided, it will be treated as the name of the
 output file. If a file-like object is provided, output will be sent there.
 
 )DOC")
-        .def(nb::init<nb::object>(), "fileObj"_a)
+        .def(
+            "__init__",
+            [](LocalSDWriter *self, nb::object fileObj) {
+              if (!nb::hasattr(fileObj, "write")) {
+                nb::str fnStr(fileObj);
+                new (self) LocalSDWriter(fnStr.c_str());
+              } else {
+                new (self) LocalSDWriter(fileObj);
+              }
+            },
+            "fileObj"_a)
         .def("__enter__", &MolIOEnter<LocalSDWriter>,
              nb::rv_policy::reference_internal)
         .def("__exit__", &MolIOExit<LocalSDWriter>, "excType"_a = nb::none(),

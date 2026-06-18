@@ -144,6 +144,18 @@ struct smimolsup_wrap {
              "nameColumn"_a = 1, "titleLine"_a = true, "sanitize"_a = true,
              smsDocStr.c_str())
         .def(nb::init<>())
+        .def(
+            "__init__",
+            [](SmilesMolSupplier *self, nb::object fn, std::string delimiter,
+               int smilesColumn, int nameColumn, bool titleLine,
+               bool sanitize) {
+              nb::str fnStr(fn);
+              new (self) SmilesMolSupplier(fnStr.c_str(), delimiter.c_str(),
+                                           smilesColumn, nameColumn, titleLine,
+                                           sanitize);
+            },
+            "fileName"_a, "delimiter"_a = " ", "smilesColumn"_a = 0,
+            "nameColumn"_a = 1, "titleLine"_a = true, "sanitize"_a = true)
         .def("__enter__", &MolIOEnter<SmilesMolSupplier>,
              nb::rv_policy::reference_internal)
         .def("__exit__", &MolIOExit<SmilesMolSupplier>,

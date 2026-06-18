@@ -1164,6 +1164,7 @@ class TestCase(unittest.TestCase):
       i += 1
     self.assertTrue(i == 1)
 
+
   def test26SmiMolSupplier(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'first_200.tpsa.csv')
@@ -1275,6 +1276,19 @@ mol-4,CCOC
       '>>> This may result in an infinite loop.  It should finish almost instantly\n')
     self.assertEqual(len(smiSup), 4)
     sys.stderr.write('<<< OK, it finished.\n')
+
+  def testSuppliersFromPath(self):
+    from pathlib import Path
+    fileN = Path(
+      os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                   'NCI_aids_few.sdf'))
+    sdSup = Chem.SDMolSupplier(fileN)
+    self.assertTrue(len(sdSup) == 16)
+
+    fileN = Path(os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'first_200.tpsa.csv'))
+    smiSup = Chem.SmilesMolSupplier(fileN, ",", 0, -1)
+    self.assertTrue(len(smiSup) == 200)
 
   def test27SmilesWriter(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',

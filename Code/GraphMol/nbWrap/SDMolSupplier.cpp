@@ -133,6 +133,17 @@ struct sdmolsup_wrap {
         .def(nb::init<>())
         .def(nb::init<std::string, bool, bool, bool>(), "fileName"_a,
              "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true)
+        .def(
+            "__init__",
+            [](SDMolSupplier *self, nb::object fn, bool sanitize, bool removeHs,
+               bool strictParsing) {
+              nb::str fnStr(fn);
+              new (self) SDMolSupplier(fnStr.c_str(), sanitize, removeHs,
+                                       strictParsing);
+            },
+            "fileName"_a, "sanitize"_a = true, "removeHs"_a = true,
+            "strictParsing"_a = true)
+
         .def("__enter__", &MolIOEnter<SDMolSupplier>,
              nb::rv_policy::reference_internal)
         .def(
