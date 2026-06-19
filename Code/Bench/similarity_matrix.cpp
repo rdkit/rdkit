@@ -18,6 +18,7 @@
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -121,6 +122,12 @@ void benchNaive(const char *name, std::size_t numProbes,
 
 TEST_CASE("Similarity matrix: small (single-threaded, isolates SIMD)",
           "[similarity-matrix]") {
+  // Report the popcount kernel the runtime dispatcher actually selected
+  // (authoritative; CPUID-based, unlike grepping /proc/cpuinfo which some
+  // virtualized hosts mask).
+  std::cout << "[bulksim] active popcount kernel = "
+            << BulkSimilarity::activeKernel() << std::endl;
+
   benchNaive("naive nested TanimotoSimilarity (64 x 1024)", kProbeCountSmall,
              kTargetCountSmall);
   benchBulk("BulkSimilarity::tanimotoMatrix (64 x 1024)", kProbeCountSmall,
