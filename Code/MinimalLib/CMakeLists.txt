@@ -1,10 +1,10 @@
 include_directories(${RDKit_ExternalDir})
 
-# JSONParsers.cpp #defines USE_BETTER_ENUMS and so is incompatible with the
-# plain-enum precompiled header; compile it without the PCH (see BetterEnums.h).
-if(RDK_USE_PRECOMPILED_HEADERS)
-    set_source_files_properties(JSONParsers.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
-endif()
+# The targets below (RDKit_minimal, rdkitcffi, cffi_test) are executables / an
+# export-all shared lib rather than plain libraries, so they are kept off the
+# precompiled header (see rdkit_test in RDKitUtils.cmake). That also satisfies
+# JSONParsers.cpp's USE_BETTER_ENUMS requirement, and lets cffi_test.c (C) avoid
+# the C++ PCH.
 
 if(RDK_BUILD_MINIMAL_LIB)
     set(MINIMAL_LIB_LIBRARIES "MolInterchange;Abbreviations;"
@@ -49,6 +49,9 @@ if(RDK_BUILD_MINIMAL_LIB)
     endif()
     add_executable(RDKit_minimal jswrapper.cpp minilib.cpp JSONParsers.cpp)
     target_link_libraries(RDKit_minimal ${MINIMAL_LIB_LIBRARIES})
+    if(RDK_USE_PRECOMPILED_HEADERS)
+        set_target_properties(RDKit_minimal PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+    endif()
 
     set_target_properties(RDKit_minimal PROPERTIES LINK_FLAGS "--bind")
 endif(RDK_BUILD_MINIMAL_LIB)
@@ -81,6 +84,12 @@ if(RDK_BUILD_CFFI_LIB)
     add_library(rdkitcffi SHARED cffiwrapper.cpp JSONParsers.cpp)
     target_link_libraries(rdkitcffi PUBLIC rdkit_base)
     target_link_libraries(rdkitcffi PUBLIC ${LIBS_TO_USE})
+    # rdkitcffi uses WINDOWS_EXPORT_ALL_SYMBOLS (below) and statically bundles
+    # other libraries; their PCH object files carry _PchSym_ symbols that break
+    # the auto-generated export .def. Keep it off the PCH.
+    if(RDK_USE_PRECOMPILED_HEADERS)
+        set_target_properties(rdkitcffi PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+    endif()
     INSTALL(TARGETS rdkitcffi EXPORT rdkit-targets
             DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
             COMPONENT runtime )
@@ -101,6 +110,9 @@ endif()
     add_executable(cffi_test cffi_test.c)
     target_link_libraries(cffi_test rdkitcffi)
     set_target_properties(cffi_test PROPERTIES LINKER_LANGUAGE CXX)
+    if(RDK_USE_PRECOMPILED_HEADERS)
+        set_target_properties(cffi_test PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+    endif()
 
 #if(NOT MSVC)
     # doesn't work as a test on windows because the DLL needs to be either in the PATH OR

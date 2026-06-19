@@ -214,6 +214,10 @@ macro(rdkit_python_extension)
 
     target_link_libraries(${RDKPY_NAME} PUBLIC ${RDKPY_LINK_LIBRARIES}
                           RDBoost rdkit_py_base rdkit_base )
+    # The precompiled header is scoped to library targets (see rdkit_test).
+    if(RDK_USE_PRECOMPILED_HEADERS)
+      set_target_properties(${RDKPY_NAME} PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+    endif()
     if("${PYTHON_LDSHARED}" STREQUAL "")
     else()
       set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})
@@ -234,6 +238,12 @@ macro(rdkit_test)
   if(RDK_BUILD_CPP_TESTS)
     add_executable(${RDKTEST_NAME} ${RDKTEST_SOURCES})
     target_link_libraries(${RDKTEST_NAME} ${RDKTEST_LINK_LIBRARIES})
+    # The precompiled header is scoped to library targets. There are hundreds of
+    # test executables; a per-target PCH gains little and exhausts disk on
+    # Windows CI, so keep tests off the PCH.
+    if(RDK_USE_PRECOMPILED_HEADERS)
+      set_target_properties(${RDKTEST_NAME} PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+    endif()
     add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME})
   endif(RDK_BUILD_CPP_TESTS)
 endmacro(rdkit_test)
@@ -248,6 +258,10 @@ macro(rdkit_catch_test)
   if(RDK_BUILD_CPP_TESTS)
     add_executable(${RDKTEST_NAME} ${RDKTEST_SOURCES})
     target_link_libraries(${RDKTEST_NAME} PRIVATE rdkitCatch ${RDKTEST_LINK_LIBRARIES} Catch2::Catch2)
+    # The precompiled header is scoped to library targets (see rdkit_test).
+    if(RDK_USE_PRECOMPILED_HEADERS)
+      set_target_properties(${RDKTEST_NAME} PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+    endif()
     add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME})
   endif(RDK_BUILD_CPP_TESTS)
 endmacro(rdkit_catch_test)
