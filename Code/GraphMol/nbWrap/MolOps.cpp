@@ -664,7 +664,7 @@ nb::tuple GetMolFrags(const ROMol &mol, bool asMols, bool sanitizeFrags) {
 ExplicitBitVect *wrapLayeredFingerprint(
     const ROMol &mol, unsigned int layerFlags, unsigned int minPath,
     unsigned int maxPath, unsigned int fpSize, nb::object atomCounts,
-    ExplicitBitVect *includeOnlyBits, bool branchedPaths,
+    std::optional<ExplicitBitVect *> includeOnlyBits, bool branchedPaths,
     nb::object fromAtoms) {
   std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
@@ -682,9 +682,9 @@ ExplicitBitVect *wrapLayeredFingerprint(
   }
 
   ExplicitBitVect *res;
-  res = RDKit::LayeredFingerprintMol(mol, layerFlags, minPath, maxPath, fpSize,
-                                     atomCountsV.get(), includeOnlyBits,
-                                     branchedPaths, lFromAtoms.get());
+  res = RDKit::LayeredFingerprintMol(
+      mol, layerFlags, minPath, maxPath, fpSize, atomCountsV.get(),
+      includeOnlyBits.value_or(nullptr), branchedPaths, lFromAtoms.get());
 
   if (atomCountsV) {
     for (unsigned int i = 0; i < atomCountsV->size(); ++i) {
@@ -694,10 +694,10 @@ ExplicitBitVect *wrapLayeredFingerprint(
 
   return res;
 }
-ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
-                                        nb::object atomCounts,
-                                        ExplicitBitVect *includeOnlyBits,
-                                        bool tautomerFingerprints) {
+ExplicitBitVect *wrapPatternFingerprint(
+    const ROMol &mol, unsigned int fpSize, nb::object atomCounts,
+    std::optional<ExplicitBitVect *> includeOnlyBits,
+    bool tautomerFingerprints) {
   std::vector<unsigned int> *atomCountsV = nullptr;
   if (!atomCounts.is_none()) {
     atomCountsV = new std::vector<unsigned int>;
@@ -712,9 +712,9 @@ ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
   }
 
   ExplicitBitVect *res;
-  res = RDKit::PatternFingerprintMol(mol, fpSize, atomCountsV, includeOnlyBits,
+  res = RDKit::PatternFingerprintMol(mol, fpSize, atomCountsV,
+                                     includeOnlyBits.value_or(nullptr),
                                      tautomerFingerprints);
-
   if (atomCountsV) {
     for (unsigned int i = 0; i < atomCountsV->size(); ++i) {
       atomCounts[i] = (*atomCountsV)[i];
@@ -745,11 +745,10 @@ ExplicitBitVect *wrapRDKFingerprintMol(
   std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::vector<std::vector<std::uint32_t>> *lAtomBits = nullptr;
-  std::map<std::uint32_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
-  // if(!(atomBits.is_none())){
   if (!atomBits.is_none()) {
     lAtomBits = new std::vector<std::vector<std::uint32_t>>(mol.getNumAtoms());
   }
+  std::map<std::uint32_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
   if (!bitInfo.is_none()) {
     lBitInfo = new std::map<std::uint32_t, std::vector<std::vector<int>>>;
   }
@@ -760,7 +759,7 @@ ExplicitBitVect *wrapRDKFingerprintMol(
                                  lFromAtoms.get(), lAtomBits, lBitInfo);
 
   if (lAtomBits) {
-    auto &pyl = static_cast<nb::list &>(atomBits);
+    auto pyl = nb::cast<nb::list>(atomBits);
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       nb::list tmp;
       for (auto v : (*lAtomBits)[i]) {
@@ -793,18 +792,17 @@ ExplicitBitVect *wrapRDKFingerprintMol(
 SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
     const ROMol &mol, unsigned int minPath, unsigned int maxPath, bool useHs,
     bool branchedPaths, bool useBondOrder, nb::object atomInvariants,
-    nb::object fromAtoms, nb::list atomBits, nb::dict bitInfo) {
+    nb::object fromAtoms, nb::object atomBits, nb::object bitInfo) {
   std::unique_ptr<std::vector<unsigned int>> lAtomInvariants =
       pythonObjectToVect<unsigned int>(atomInvariants);
   std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::vector<std::vector<boost::uint64_t>> *lAtomBits = nullptr;
-  std::map<boost::uint64_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
-
   if (!atomBits.is_none()) {
     lAtomBits =
         new std::vector<std::vector<boost::uint64_t>>(mol.getNumAtoms());
   }
+  std::map<boost::uint64_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
   if (!bitInfo.is_none()) {
     lBitInfo = new std::map<boost::uint64_t, std::vector<std::vector<int>>>;
   }
@@ -814,17 +812,19 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
       mol, minPath, maxPath, useHs, branchedPaths, useBondOrder,
       lAtomInvariants.get(), lFromAtoms.get(), lAtomBits, lBitInfo);
 
-  if (!atomBits.is_none()) {
+  if (lAtomBits) {
+    auto pyl = nb::cast<nb::list>(atomBits);
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       nb::list tmp;
       for (auto v : (*lAtomBits)[i]) {
         tmp.append(v);
       }
-      atomBits.append(tmp);
+      pyl.append(tmp);
     }
     delete lAtomBits;
   }
   if (!bitInfo.is_none()) {
+    nb::dict pyBitInfo = nb::cast<nb::dict>(bitInfo);
     for (auto &it : (*lBitInfo)) {
       nb::list temp;
       std::vector<std::vector<int>>::iterator itset;
@@ -835,7 +835,7 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
         }
         temp.append(temp2);
       }
-      bitInfo[it.first] = temp;
+      pyBitInfo[nb::int_(it.first)] = temp;
     }
     delete lBitInfo;
   }
