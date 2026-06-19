@@ -15,6 +15,7 @@
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
+#include <nanobind/stl/optional.h>
 
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
@@ -162,11 +163,10 @@ ROMol *MolFromMolFile(const std::string &molFilename, bool sanitize,
 
 RDKit::ROMol *MolFromSCSRBlock(
     const std::string &molBlock, bool sanitize, bool removeHs,
-    RDKit::v2::FileParsers::MolFromSCSRParams *pyparams) {
-  RDKit::v2::FileParsers::MolFromSCSRParams scsrParams;
-  if (pyparams) {
-    scsrParams = *pyparams;
-  }
+    std::optional<RDKit::v2::FileParsers::MolFromSCSRParams> pyparams) {
+  auto scsrParams = pyparams.has_value()
+                        ? *pyparams
+                        : RDKit::v2::FileParsers::MolFromSCSRParams();
   std::istringstream inStream(molBlock);
   unsigned int line = 0;
   try {
@@ -188,11 +188,10 @@ RDKit::ROMol *MolFromSCSRBlock(
 
 RDKit::ROMol *MolFromSCSRFile(
     const std::string &molFilename, bool sanitize, bool removeHs,
-    RDKit::v2::FileParsers::MolFromSCSRParams *pyparams) {
-  RDKit::v2::FileParsers::MolFromSCSRParams scsrParams;
-  if (pyparams) {
-    scsrParams = *pyparams;
-  }
+    std::optional<RDKit::v2::FileParsers::MolFromSCSRParams> pyparams) {
+  auto scsrParams = pyparams.has_value()
+                        ? *pyparams
+                        : RDKit::v2::FileParsers::MolFromSCSRParams();
   try {
     RDKit::v2::FileParsers::MolFileParserParams params;
     params.sanitize = sanitize;
@@ -1180,68 +1179,67 @@ NB_MODULE(rdmolfiles, m) {
           "precision of coordinates (only available in V3000)(default=false)")
       .def("__setattr__", &safeSetattr);
 
-  // nb::class_<RDKit::v2::FileParsers::MolFromSCSRParams>(
-  //     m, "MolFromSCSRParams",
-  //     "Parameters controlling conversion of an SCSRMol to a Mol")
-  //     .def_rw("includeLeavingGroups",
-  //             &RDKit::v2::FileParsers::MolFromSCSRParams::includeLeavingGroups,
-  //             "include leaving groups atoms if not substited at that
-  //             position")
-  //     .def_rw(
-  //         "scsrTemplateNames",
-  //         &RDKit::v2::FileParsers::MolFromSCSRParams::scsrTemplateNames,
-  //         "If True, the first template name in the Sgroup is used as the
-  //         Sgroup label")
-  //     .def_rw("scsrBaseHbondOptions",
-  //             &RDKit::v2::FileParsers::MolFromSCSRParams::scsrBaseHbondOptions,
-  //             "One of Ignore, UseSapAll(default) , UseSapOne, Auto")
-  //     .def("__setattr__", &safeSetattr);
+  nb::class_<RDKit::v2::FileParsers::MolFromSCSRParams>(
+      m, "MolFromSCSRParams",
+      "Parameters controlling conversion of an SCSRMol to a Mol")
+      .def(nb::init<>())
+      .def_rw("includeLeavingGroups",
+              &RDKit::v2::FileParsers::MolFromSCSRParams::includeLeavingGroups,
+              "include leaving groups atoms if not substited at that position")
+      .def_rw(
+          "scsrTemplateNames",
+          &RDKit::v2::FileParsers::MolFromSCSRParams::scsrTemplateNames,
+          "If True, the first template name in the Sgroup is used as the Sgroup label")
+      .def_rw("scsrBaseHbondOptions",
+              &RDKit::v2::FileParsers::MolFromSCSRParams::scsrBaseHbondOptions,
+              "One of Ignore, UseSapAll(default) , UseSapOne, Auto")
+      .def("__setattr__", &safeSetattr);
 
-  // docString =
-  //     R"DOC(Construct a molecule from an SCSR Mol block.
-  //       ARGUMENTS:
+  docString =
+      R"DOC(Construct a molecule from an SCSR Mol block.
+        ARGUMENTS:
 
-  //         - molBlock: string containing the SCSR Mol block
+          - molBlock: string containing the SCSR Mol block
 
-  //         - sanitize: (optional) toggles sanitization of the molecule.
-  //           Defaults to True.
+          - sanitize: (optional) toggles sanitization of the molecule.
+            Defaults to True.
 
-  //         - removeHs: (optional) toggles removing hydrogens from the
-  //         molecule.
-  //           This only make sense when sanitization is done.
-  //           Defaults to true.
+          - removeHs: (optional) toggles removing hydrogens from the
+          molecule.
+            This only make sense when sanitization is done.
+            Defaults to true.
 
-  //         - molFromSCSRParams : MolFromSCSRParams to control conversion
-  //      RETURNS :
-  //      a Mol object, None on failure.
-  //      )DOC";
-  // m.def("MolFromSCSRBlock", RDKit::MolFromSCSRBlock, "molBlock"_a,
-  //       "sanitize"_a = true, "removeHs"_a = true,
-  //       "molFromSCSRParams"_a = nb::none(), docString.c_str(),
-  //       nb::rv_policy::take_ownership);
+          - molFromSCSRParams : MolFromSCSRParams to control conversion
+       RETURNS :
+       a Mol object, None on failure.
+       )DOC";
+  m.def("MolFromSCSRBlock", RDKit::MolFromSCSRBlock, "molBlock"_a,
+        "sanitize"_a = true, "removeHs"_a = true,
+        "molFromSCSRParams"_a = nb::none(), docString.c_str(),
+        nb::rv_policy::take_ownership);
 
-  // docString =
-  //     R"DOC(Construct a molecule from an SCSR Mol block.
-  //       ARGUMENTS:
+  docString =
+      R"DOC(Construct a molecule from an SCSR Mol block.
+        ARGUMENTS:
 
-  //         - filename: string containing the SCSR filename
+          - filename: string containing the SCSR filename
 
-  //         - sanitize: (optional) toggles sanitization of the molecule.
-  //           Defaults to True.
+          - sanitize: (optional) toggles sanitization of the molecule.
+            Defaults to True.
 
-  //         - removeHs: (optional) toggles removing hydrogens from the
-  //         molecule.
-  //           This only make sense when sanitization is done.
-  //           Defaults to true.
+          - removeHs: (optional) toggles removing hydrogens from the
+          molecule.
+            This only make sense when sanitization is done.
+            Defaults to true.
 
-  //         - molFromSCSRParams : MolFromSCSRParams to control conversion
-  //      RETURNS :
-  //      a Mol object, None on failure.
-  //      )DOC";
-  // m.def("MolFromSCSRFile", RDKit::MolFromSCSRFile, "filename"_a,
-  //       "sanitize"_a = true, "removeHs"_a = true,
-  //       "molFromSCSRParams"_a = nb::none(), docString.c_str(),
-  //       nb::rv_policy::take_ownership);
+          - molFromSCSRParams : MolFromSCSRParams to control conversion
+       RETURNS :
+       a Mol object, None on failure.
+       )DOC";
+  m.def("MolFromSCSRFile", RDKit::MolFromSCSRFile, "filename"_a,
+        "sanitize"_a = true, "removeHs"_a = true,
+        "molFromSCSRParams"_a = nb::none(), docString.c_str(),
+        nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Returns a Mol block for a molecule
