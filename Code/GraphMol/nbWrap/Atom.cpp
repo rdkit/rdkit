@@ -331,6 +331,19 @@ struct atom_wrapper {
   NOTE:
     - If the property has not been set, a KeyError exception will be raised.
 )DOC")
+        .def("GetProp", GetPyPropOrDefault<Atom>, "key"_a,
+             "autoConvert"_a = false, "default"_a = nb::none(),
+             R"DOC(Returns the value of the property.
+
+     ARGUMENTS:
+          - key: the name of the property to return (a string).
+
+          - autoConvert: if True attempt to convert the property into a python object
+
+          - default: value to return if the property is not present.
+
+     RETURNS: the property value, or default if the property is not present.
+)DOC")
 
         .def("SetIntProp", AtomSetProp<int>, "key"_a, "val"_a,
              R"DOC(Sets an atomic property
@@ -361,6 +374,16 @@ struct atom_wrapper {
   NOTE:
     - If the property has not been set, a KeyError exception will be raised.
 )DOC")
+        .def("GetIntProp", GetPropOrDefault<Atom, int>, "key"_a, "default"_a,
+             R"DOC(Returns the value of the property.
+
+     ARGUMENTS:
+          - key: the name of the property to return (an int).
+
+          - default: value to return if the property is not present.
+
+     RETURNS: an int, or default if the property is not present.
+)DOC")
 
         .def("GetUnsignedProp", GetProp<Atom, unsigned>, "key"_a,
              R"DOC(Returns the value of the property.
@@ -372,6 +395,17 @@ struct atom_wrapper {
 
   NOTE:
     - If the property has not been set, a KeyError exception will be raised.
+)DOC")
+        .def("GetUnsignedProp", GetPropOrDefault<Atom, unsigned>, "key"_a,
+             "default"_a,
+             R"DOC(Returns the value of the property.
+
+     ARGUMENTS:
+          - key: the name of the property to return (an unsigned integer).
+
+          - default: value to return if the property is not present.
+
+     RETURNS: an integer, or default if the property is not present.
 )DOC")
         .def("SetDoubleProp", AtomSetProp<double>, "key"_a, "val"_a,
              R"DOC(Sets an atomic property
@@ -393,6 +427,17 @@ struct atom_wrapper {
   NOTE:
     - If the property has not been set, a KeyError exception will be raised.
 )DOC")
+        .def("GetDoubleProp", GetPropOrDefault<Atom, double>, "key"_a,
+             "default"_a,
+             R"DOC(Returns the value of the property.
+
+     ARGUMENTS:
+          - key: the name of the property to return (a double).
+
+          - default: value to return if the property is not present.
+
+     RETURNS: a double, or default if the property is not present.
+)DOC")
 
         .def("SetBoolProp", AtomSetProp<bool>, "key"_a, "val"_a,
              R"DOC(Sets an atomic property
@@ -413,6 +458,16 @@ struct atom_wrapper {
 
   NOTE:
     - If the property has not been set, a KeyError exception will be raised.
+)DOC")
+        .def("GetBoolProp", GetPropOrDefault<Atom, bool>, "key"_a, "default"_a,
+             R"DOC(Returns the value of the property.
+
+     ARGUMENTS:
+          - key: the name of the property to return (a bool).
+
+          - default: value to return if the property is not present.
+
+     RETURNS: a bool, or default if the property is not present.
 )DOC")
 
         .def("SetExplicitBitVectProp", AtomSetProp<ExplicitBitVect>, "key"_a,

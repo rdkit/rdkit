@@ -48,6 +48,10 @@ namespace RDKit {
 std::string pyObjectToString(nb::object input) {
   if (nb::isinstance<nb::str>(input)) {
     return nb::cast<std::string>(input);
+  } else if (nb::isinstance<nb::bytes>(input)) {
+    nb::bytes b = nb::cast<nb::bytes>(input);
+    return std::string(static_cast<const char *>(b.data()),
+                       static_cast<size_t>(b.size()));
   }
   std::wstring ws = nb::cast<std::wstring>(input);
   return std::string(ws.begin(), ws.end());
@@ -762,6 +766,20 @@ nb::tuple MolsFromCDXML(nb::object cdxml, bool sanitize, bool removeHs) {
   }
   return nb::tuple(res);
 }
+
+nb::object MolToCDXMLBlockHelper(const RDKit::ROMol &mol,
+                                 RDKit::v2::CDXMLParser::CDXMLFormat format) {
+  auto block = RDKit::v2::CDXMLParser::MolToCDXMLBlock(mol, format);
+  // if CDXML return string
+  // if CDX return byteszo
+
+  if (format == RDKit::v2::CDXMLParser::CDXMLFormat::CDX) {
+    return nb::bytes(block.c_str(), block.size());
+  } else {
+    return nb::str(block.c_str());
+  }
+}
+
 namespace {
 nb::object translateMetadataToList(
     const std::vector<std::pair<std::string, std::string>> &metadata) {
@@ -2672,6 +2690,35 @@ NB_MODULE(rdmolfiles, m) {
          a tuple of parsed Mol objects.)DOC";
 
   m.def("MolsFromCDXML", MolsFromCDXMLHelper, "cdxml"_a, "params"_a,
+        docString.c_str());
+
+  docString =
+      R"DOC(brief write a CDX or CDXML block from a molecule
+
+      The RDKit is optionally built with the Revvity ChemDraw parser
+      If this is available, CDX and CDXML can be written
+        Note that the CDXML format is large and complex, the RDKit doesn't
+        support full functionality, just the base ones required for molecule and
+        reaction parsing.
+
+      Note: If the ChemDraw extensions are unavailable, an exception will be thrown
+       please use the support function HasChemDrawCDXSupport() to check
+       whether ChemDraw writing support is enabled.
+
+      Note: For CDXML this returns a UTF-8 string <str>
+            For CDX this returns a byte sting <bytes>
+
+      ARGUMENTS:
+
+        - mol: the molecule to write
+
+        - format: CDXMLFormat [default CDXML]
+
+      RETURNS:
+        the CDXML or CDX block)DOC";
+
+  m.def("MolToCDXMLBlock", MolToCDXMLBlockHelper, "mol"_a,
+        "format"_a = RDKit::v2::CDXMLParser::CDXMLFormat::CDXML,
         docString.c_str());
 
   docString =

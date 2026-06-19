@@ -880,6 +880,19 @@ struct mol_wrapper {
      NOTE:
           - If the property has not been set, a KeyError exception will be raised.
 )DOC")
+        .def("GetProp", GetPyPropOrDefault<ROMol>, "key"_a,
+             "autoConvert"_a=false, "default"_a = nb::none(),
+             R"DOC(Returns the value of the property.
+
+     ARGUMENTS:
+          - key: the name of the property to return (a string).
+
+          - autoConvert: if True attempt to convert the property into a python object
+
+          - default: value to return if the property is not present.
+
+     RETURNS: the property value, or default if the property is not present.
+)DOC")
         .def("GetDoubleProp", GetProp<ROMol, double>, "key"_a,
              R"DOC(Returns the double value of the property if possible.
 
@@ -890,6 +903,17 @@ struct mol_wrapper {
 
      NOTE:
           - If the property has not been set, a KeyError exception will be raised.
+)DOC")
+        .def("GetDoubleProp", GetPropOrDefault<ROMol, double>, "key"_a,
+             "default"_a,
+             R"DOC(Returns the double value of the property if possible.
+
+     ARGUMENTS:
+          - key: the name of the property to return (a string).
+
+          - default: value to return if the property is not present.
+
+     RETURNS: a double, or default if the property is not present.
 )DOC")
         .def("GetIntProp", GetProp<ROMol, int>, "key"_a,
              R"DOC(Returns the integer value of the property if possible.
@@ -902,6 +926,17 @@ struct mol_wrapper {
      NOTE:
           - If the property has not been set, a KeyError exception will be raised.
 )DOC")
+        .def("GetIntProp", GetPropOrDefault<ROMol, int>, "key"_a,
+             "default"_a,
+             R"DOC(Returns the integer value of the property if possible.
+
+     ARGUMENTS:
+          - key: the name of the property to return (a string).
+
+          - default: value to return if the property is not present.
+
+     RETURNS: an integer, or default if the property is not present.
+)DOC")
         .def("GetUnsignedProp", GetProp<ROMol, unsigned int>, "key"_a,
              R"DOC(Returns the unsigned int value of the property if possible.
 
@@ -913,6 +948,17 @@ struct mol_wrapper {
      NOTE:
           - If the property has not been set, a KeyError exception will be raised.
 )DOC")
+        .def("GetUnsignedProp", GetPropOrDefault<ROMol, unsigned int>,
+             "key"_a, "default"_a,
+             R"DOC(Returns the unsigned int value of the property if possible.
+
+     ARGUMENTS:
+          - key: the name of the property to return (a string).
+
+          - default: value to return if the property is not present.
+
+     RETURNS: an unsigned integer, or default if the property is not present.
+)DOC")
         .def("GetBoolProp", GetProp<ROMol, bool>, "key"_a,
              R"DOC(Returns the Bool value of the property if possible.
 
@@ -923,6 +969,17 @@ struct mol_wrapper {
 
      NOTE:
           - If the property has not been set, a KeyError exception will be raised.
+)DOC")
+        .def("GetBoolProp", GetPropOrDefault<ROMol, bool>, "key"_a,
+             "default"_a,
+             R"DOC(Returns the Bool value of the property if possible.
+
+     ARGUMENTS:
+          - key: the name of the property to return (a string).
+
+          - default: value to return if the property is not present.
+
+     RETURNS: a bool, or default if the property is not present.
 )DOC")
         .def("ClearProp", MolClearProp<ROMol>, "key"_a,
              R"DOC(Removes a property from the molecule.

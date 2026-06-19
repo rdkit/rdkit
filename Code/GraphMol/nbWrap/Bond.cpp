@@ -205,6 +205,15 @@ struct bond_wrapper {
             "  NOTE:\n"
             "    - If the property has not been set, a KeyError exception "
             "will be raised.\n")
+        .def(
+            "GetProp", GetPyPropOrDefault<Bond>, "key"_a,
+            "autoConvert"_a = false, "default"_a = nb::none(),
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - autoConvert: if True attempt to convert the property into a python object\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: the property value, or default if the property is not present.\n")
         .def("SetIntProp", BondSetProp<int>, "key"_a, "val"_a,
              "Sets a bond property\n\n"
              "  ARGUMENTS:\n"
@@ -225,6 +234,13 @@ struct bond_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
+        .def(
+            "GetIntProp", GetPropOrDefault<Bond, int>, "key"_a, "default"_a,
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (an int).\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: an int, or default if the property is not present.\n")
 
         .def("GetUnsignedProp", GetProp<Bond, unsigned int>, "key"_a,
              "Returns the value of the property.\n\n"
@@ -235,6 +251,14 @@ struct bond_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
+        .def(
+            "GetUnsignedProp", GetPropOrDefault<Bond, unsigned int>, "key"_a,
+            "default"_a,
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (an unsigned integer).\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: an integer, or default if the property is not present.\n")
 
         .def("SetDoubleProp", BondSetProp<double>, "key"_a, "val"_a,
              "Sets a bond property\n\n"
@@ -250,6 +274,14 @@ struct bond_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
+        .def(
+            "GetDoubleProp", GetPropOrDefault<Bond, double>, "key"_a,
+            "default"_a,
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a double).\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: a double, or default if the property is not present.\n")
 
         .def("SetBoolProp", BondSetProp<bool>, "key"_a, "val"_a,
              "Sets a bond property\n\n"
@@ -265,6 +297,13 @@ struct bond_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
+        .def(
+            "GetBoolProp", GetPropOrDefault<Bond, bool>, "key"_a, "default"_a,
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a boolean).\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: a bool, or default if the property is not present.\n")
 
         .def("HasProp", BondHasProp, "key"_a,
              "Queries a Bond to see if a particular property has been "

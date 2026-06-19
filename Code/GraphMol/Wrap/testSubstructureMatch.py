@@ -99,19 +99,19 @@ class TestCase(unittest.TestCase):
     params.setExtraAtomCheckFunc(coordMatcher)
     matches = m.GetSubstructMatches(patt, params)
     self.assertEqual(len(matches), 1)
-    self.assertEqual(matches[0], (3, 2))
+    self.assertEqual(tuple(matches[0]), (3, 2))
 
     # lifetime management 1:
     coordMatcher = None
     matches = m.GetSubstructMatches(patt, params)
     self.assertEqual(len(matches), 1)
-    self.assertEqual(matches[0], (3, 2))
+    self.assertEqual(tuple(matches[0]), (3, 2))
 
     # lifetime management 2:
     params.setExtraAtomCheckFunc(Chem.AtomCoordsMatcher(tol=.11))
     matches = m.GetSubstructMatches(patt, params)
     self.assertEqual(len(matches), 1)
-    self.assertEqual(matches[0], (3, 2))
+    self.assertEqual(tuple(matches[0]), (3, 2))
 
 
 if __name__ == '__main__':

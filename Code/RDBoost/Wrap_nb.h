@@ -121,6 +121,29 @@ void pythonObjectToVect(const nb::object &obj, std::vector<T> &res) {
   }
 }
 
+//--------- used to keep C++ objects alive when returning lists
+//   see:
+//   https://nanobind.readthedocs.io/en/latest/api_core.html#_CPPv4I0EN8nanobind11call_policyE
+
+template <size_t I>
+struct returns_references_to {
+  static void precall(PyObject **, size_t, nb::detail::cleanup_list *) {}
+
+  template <size_t N>
+  static void postcall(PyObject **args, std::integral_constant<size_t, N>,
+                       nb::handle ret) {
+    static_assert(I > 0 && I <= N,
+                  "I in returns_references_to<I> must be in the "
+                  "range [1, number of C++ function arguments]");
+    if (!nb::isinstance<nb::sequence>(ret)) {
+      throw std::runtime_error("return value should be a sequence");
+    }
+    for (nb::handle nurse : ret) {
+      nb::detail::keep_alive(nurse.ptr(), args[I - 1]);
+    }
+  }
+};
+
 //------- used in the pickle implementation
 template <typename T, std::string (*SerializeFunc)(const T &)>
 auto getObjectState(nb::object obj) {

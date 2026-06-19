@@ -23,6 +23,9 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 
+namespace {
+}  // namespace
+
 namespace RDKit {
 
 namespace {
@@ -256,6 +259,19 @@ Note that this does not update properties, CStates or Attachment Points.)DOC")
   NOTE:
     - If the property has not been set, a KeyError exception will be raised.
 )DOC")
+        .def("GetProp", GetPyPropOrDefault<SubstanceGroup>, "key"_a,
+             "autoConvert"_a = false, nb::arg("default").none(),
+             R"DOC(Returns the value of the property.
+
+  ARGUMENTS:
+    - key: the name of the property to return (a string).
+
+    - autoConvert: if True attempt to convert the property into a python object
+
+    - default: value to return if the property is not present.
+
+  RETURNS: the property value, or default if the property is not present.
+)DOC")
         .def(
             "GetIntProp",
             [](const SubstanceGroup &self, const std::string &key) {
@@ -263,11 +279,19 @@ Note that this does not update properties, CStates or Attachment Points.)DOC")
             },
             "key"_a, R"DOC(returns the value of a particular property)DOC")
         .def(
+            "GetIntProp", GetPropOrDefault<SubstanceGroup, int>, "key"_a,
+            "default"_a,
+            R"DOC(returns the value of a particular property, or default if not present)DOC")
+        .def(
             "GetUnsignedProp",
             [](const SubstanceGroup &self, const std::string &key) {
               return self.getProp<unsigned int>(key);
             },
             "key"_a, R"DOC(returns the value of a particular property)DOC")
+        .def(
+            "GetUnsignedProp", GetPropOrDefault<SubstanceGroup, unsigned int>,
+            "key"_a, "default"_a,
+            R"DOC(returns the value of a particular property, or default if not present)DOC")
         .def(
             "GetDoubleProp",
             [](const SubstanceGroup &self, const std::string &key) {
@@ -275,11 +299,19 @@ Note that this does not update properties, CStates or Attachment Points.)DOC")
             },
             "key"_a, R"DOC(returns the value of a particular property)DOC")
         .def(
+            "GetDoubleProp", GetPropOrDefault<SubstanceGroup, double>, "key"_a,
+            "default"_a,
+            R"DOC(returns the value of a particular property, or default if not present)DOC")
+        .def(
             "GetBoolProp",
             [](const SubstanceGroup &self, const std::string &key) {
               return self.getProp<bool>(key);
             },
             "key"_a, R"DOC(returns the value of a particular property)DOC")
+        .def(
+            "GetBoolProp", GetPropOrDefault<SubstanceGroup, bool>, "key"_a,
+            "default"_a,
+            R"DOC(returns the value of a particular property, or default if not present)DOC")
         .def(
             "GetUnsignedVectProp",
             [](const SubstanceGroup &self, const std::string &key) {
@@ -315,6 +347,7 @@ Note that this does not update properties, CStates or Attachment Points.)DOC")
 )DOC");
 
     m.def("GetMolSubstanceGroups", &getMolSubstanceGroups, "mol"_a,
+          nb::call_policy<returns_references_to<1>>(),
           R"DOC(returns a copy of the molecule's SubstanceGroups (if any))DOC");
     m.def("GetMolSubstanceGroupWithIdx", &getMolSubstanceGroupWithIdx, "mol"_a,
           "idx"_a,

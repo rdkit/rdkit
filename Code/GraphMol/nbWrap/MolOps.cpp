@@ -3312,6 +3312,7 @@ enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
     nb::bind_vector<std::vector<bool>>(m, "BoolVector");
 
     nb::class_<RDKit::SubsetOptions>(m, "SubsetOptions")
+        .def(nb::init<>())
         .def_rw("sanitize", &RDKit::SubsetOptions::sanitize,
                 "Sanitize the resulting subset")
         .def_rw("clearComputedProps", &RDKit::SubsetOptions::clearComputedProps,
@@ -3328,12 +3329,34 @@ enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
     nb::bind_map<std::map<unsigned int, unsigned int>>(m, "UIntUIntMap");
 
     nb::class_<RDKit::SubsetInfo>(m, "SubsetInfo")
+        .def(nb::init<>())
         .def_rw("atomMapping", &RDKit::SubsetInfo::atomMapping,
                 "mapping from the original atom index to the subset atom index")
         .def_rw(
             "bondMapping", &RDKit::SubsetInfo::bondMapping,
             " mapping from the original bond index to the subset bond index");
 
+    docString =
+        "Extract a subgraph from an ROMol. Bonds, atoms, substance groups and \n\
+            stereo groups are only extracted to the subgraph if all participant entities \n\
+            are contained within the given atoms and bonds. \n\
+            \n\
+            ARGUMENTS:\n\
+            - mol - starting mol \n\
+            - path - the indices of atoms or bonds to extract. If an index falls \n\
+                  outside of the acceptable indices, it is ignored.yes \n\
+                  Use SubsetMethod.BONDS to indicate a bond path and BONDS_BETWEEN_ATOMS \n\
+                  to indicate an atom path with any bond that includes atoms in the path. \n\
+            - subsetInfo - optional subsetInfo to record the atoms and bonds used \n\
+            - options - optional subset options, note the method is ignored since all the atoms and bonds are sp \n\
+            \n";
+
+    m.def("CopyMolSubset", copyMolSubsetHelper4, "mol"_a, "path"_a,
+          "subsetInfo"_a, "options"_a = nb::none(),
+          "copy a subset of a molecule", nb::rv_policy::take_ownership);
+    m.def("CopyMolSubset", copyMolSubsetHelper3, "mol"_a, "path"_a,
+          "options"_a = nb::none(), "copy a subset of a molecule",
+          nb::rv_policy::take_ownership);
     docString =
         "Extract a subgraph from an ROMol. Bonds, atoms, substance groups and \n\
 stereo groups are only extracted to the subgraph if all participant entities \n\
@@ -3347,34 +3370,13 @@ ARGUMENTS:\n\
  - options - optional subset options, note the method is ignored since all the atoms and bonds are sp \n\
 \n";
 
-    m.def("CopyMolSubset", copyMolSubsetHelper1, "mol"_a, "atomIndices"_a,
-          "bondIndices"_a, "options"_a = nb::none(), docString.c_str(),
-          nb::rv_policy::take_ownership);
     m.def("CopyMolSubset", copyMolSubsetHelper2, "mol"_a, "atomIndices"_a,
           "bondIndices"_a, "subsetInfo"_a, "options"_a = nb::none(),
           docString.c_str(), nb::rv_policy::take_ownership);
-
-    docString =
-        "Extract a subgraph from an ROMol. Bonds, atoms, substance groups and \n\
-stereo groups are only extracted to the subgraph if all participant entities \n\
-are contained within the given atoms and bonds. \n\
-\n\
-ARGUMENTS:\n\
- - mol - starting mol \n\
- - path - the indices of atoms or bonds to extract. If an index falls \n\
-          outside of the acceptable indices, it is ignored.yes \n\
-          Use SubsetMethod.BONDS to indicate a bond path and BONDS_BETWEEN_ATOMS \n\
-          to indicate an atom path with any bond that includes atoms in the path. \n\
- - subsetInfo - optional subsetInfo to record the atoms and bonds used \n\
- - options - optional subset options, note the method is ignored since all the atoms and bonds are sp \n\
-\n";
-
-    m.def("CopyMolSubset", copyMolSubsetHelper3, "mol"_a, "path"_a,
-          "options"_a = nb::none(), "copy a subset of a molecule",
+    m.def("CopyMolSubset", copyMolSubsetHelper1, "mol"_a, "atomIndices"_a,
+          "bondIndices"_a, "options"_a = nb::none(), docString.c_str(),
           nb::rv_policy::take_ownership);
-    m.def("CopyMolSubset", copyMolSubsetHelper4, "mol"_a, "path"_a,
-          "subsetInfo"_a, "options"_a = nb::none(),
-          "copy a subset of a molecule", nb::rv_policy::take_ownership);
+
 #endif
   }
 };

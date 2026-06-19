@@ -205,6 +205,15 @@ struct conformer_wrapper {
             "  NOTE:\n"
             "    - If the property has not been set, a KeyError exception "
             "will be raised.\n")
+        .def(
+            "GetProp", GetPyPropOrDefault<Conformer>, "key"_a,
+            "autoConvert"_a = false, "default"_a = nb::none(),
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - autoConvert: if True attempt to convert the property into a python object\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: the property value, or default if the property is not present.\n")
         .def("GetDoubleProp", GetProp<Conformer, double>, "key"_a,
              "Returns the double value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
@@ -213,6 +222,14 @@ struct conformer_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
+        .def(
+            "GetDoubleProp", GetPropOrDefault<Conformer, double>, "key"_a,
+            "default"_a,
+            "Returns the double value of the property if possible.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: a double, or default if the property is not present.\n")
         .def("GetIntProp", GetProp<Conformer, int>, "key"_a,
              "Returns the integer value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
@@ -221,6 +238,14 @@ struct conformer_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
+        .def(
+            "GetIntProp", GetPropOrDefault<Conformer, int>, "key"_a,
+            "default"_a,
+            "Returns the integer value of the property if possible.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: an integer, or default if the property is not present.\n")
         .def("GetUnsignedProp", GetProp<Conformer, unsigned int>, "key"_a,
              "Returns the unsigned int value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
@@ -229,6 +254,14 @@ struct conformer_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
+        .def(
+            "GetUnsignedProp", GetPropOrDefault<Conformer, unsigned int>,
+            "key"_a, "default"_a,
+            "Returns the unsigned int value of the property if possible.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: an unsigned integer, or default if the property is not present.\n")
         .def("GetBoolProp", GetProp<Conformer, bool>, "key"_a,
              "Returns the Bool value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
@@ -237,6 +270,14 @@ struct conformer_wrapper {
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n")
+        .def(
+            "GetBoolProp", GetPropOrDefault<Conformer, bool>, "key"_a,
+            "default"_a,
+            "Returns the Bool value of the property if possible.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: a bool, or default if the property is not present.\n")
         .def("ClearProp", MolClearProp<Conformer>, "key"_a,
              "Removes a property from the conformer.\n\n"
              "  ARGUMENTS:\n"

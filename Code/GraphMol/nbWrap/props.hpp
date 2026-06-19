@@ -182,29 +182,58 @@ nb::object GetProp(const RDOb *ob, const std::string &key) {
   return nb::cast(res);
 }
 
+template <class RDOb, class T>
+nb::object GetPropOrDefault(const RDOb *ob, const std::string &key,
+                            nb::object default_val) {
+  T res;
+  try {
+    if (!ob->getPropIfPresent(key, res)) {
+      return default_val;
+    }
+  } catch (const std::exception &e) {
+    auto msg = std::string("key `") + key + "` exists but does not result in " +
+               GetTypeName<T>() + " reason: " + e.what();
+    throw nb::value_error(msg.c_str());
+  }
+  return nb::cast(std::move(res));
+}
+
 template <class RDOb>
 nb::object autoConvertString(const RDOb *ob, const std::string &key) {
   int ivalue;
   double dvalue;
   std::string svalue;
 
-  if (ob->getPropIfPresent(key, ivalue))
-    return nb::cast(ivalue);
-  else if (ob->getPropIfPresent(key, dvalue))
-    return nb::cast(dvalue);
-  else if (ob->getPropIfPresent(key, svalue))
+  try {
+    if (ob->getPropIfPresent(key, ivalue)) {
+      return nb::cast(ivalue);
+    }
+  } catch (const std::bad_any_cast &) {
+  }
+
+  try {
+    if (ob->getPropIfPresent(key, dvalue)) {
+      return nb::cast(dvalue);
+    }
+  } catch (const std::bad_any_cast &) {
+  }
+
+  if (ob->getPropIfPresent(key, svalue)) {
     return nb::cast(svalue);
+  }
   return nb::none();
 }
 
 template <class RDOb>
-nb::object GetPyProp(const RDOb *obj, const std::string &key,
-                     bool autoConvert) {
+nb::object GetPyPropImpl(const RDOb *obj, const std::string &key,
+                         bool autoConvert, nb::object *default_val_ptr) {
   nb::object pobj;
   if (!autoConvert) {
     std::string res;
     if (obj->getPropIfPresent(key, res)) {
       return nb::cast(res);
+    } else if (default_val_ptr && !obj->hasProp(key)) {
+      return *default_val_ptr;
     } else {
       throw nb::key_error(key.c_str());
     }
@@ -223,6 +252,7 @@ nb::object GetPyProp(const RDOb *obj, const std::string &key,
             case RDTypeTag::StringTag:
               if (autoConvert) {
                 pobj = autoConvertString(obj, rdvalue.key);
+                return pobj;
               }
               return nb::cast(from_rdvalue<std::string>(rdvalue.val));
             case RDTypeTag::FloatTag:
@@ -277,7 +307,22 @@ nb::object GetPyProp(const RDOb *obj, const std::string &key,
       }
     }
   }
+  if (default_val_ptr && !obj->hasProp(key)) {
+    return *default_val_ptr;
+  }
   throw nb::key_error(key.c_str());
+}
+
+template <class RDOb>
+nb::object GetPyProp(const RDOb *obj, const std::string &key,
+                     bool autoConvert) {
+  return GetPyPropImpl(obj, key, autoConvert, nullptr);
+}
+
+template <class RDOb>
+nb::object GetPyPropOrDefault(const RDOb *obj, const std::string &key,
+                              bool autoConvert, nb::object default_val) {
+  return GetPyPropImpl(obj, key, autoConvert, &default_val);
 }
 
 template <class RDOb>

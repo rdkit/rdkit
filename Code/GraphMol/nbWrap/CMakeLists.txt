@@ -77,36 +77,39 @@ endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 #
 add_pytest(pyGraphMolWrap
          ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)
-#
-#add_pytest(pyTestConformerWrap
-#         ${CMAKE_CURRENT_SOURCE_DIR}/testConformer.py)
-#
+
+add_pytest(pyTestGetPropDefault
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testGetPropDefault.py)
+
+add_pytest(pyTestConformerWrap
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testConformer.py)
+
 #add_pytest(pyTestTrajectory
-#         ${CMAKE_CURRENT_SOURCE_DIR}/testTrajectory.py)
+#         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testTrajectory.py)
 #
-#add_pytest(pyTestSGroups
-#         ${CMAKE_CURRENT_SOURCE_DIR}/testSGroups.py)
+add_pytest(pyTestSGroups
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testSGroups.py)
+
+add_pytest(pyTestSCSR
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testSCSR.py)
+
+add_pytest(pySubstructureMatch
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testSubstructureMatch.py)
 #
-#add_pytest(pyTestSCSR
-#         ${CMAKE_CURRENT_SOURCE_DIR}/testSCSR.py)
-#
-#add_pytest(pySubstructureMatch
-#         ${CMAKE_CURRENT_SOURCE_DIR}/testSubstructureMatch.py)
 #
 #
-#
-#if (RDK_TEST_MULTITHREADED)
-#  add_pytest(pyTestThreads
-#           ${CMAKE_CURRENT_SOURCE_DIR}/testThreads.py)
-#  add_pytest(pyTestMultithreadedMolSupplier
-#         ${CMAKE_CURRENT_SOURCE_DIR}/testMultithreadedMolSupplier.py)
-#endif (RDK_TEST_MULTITHREADED)
-#
-#add_pytest(pyTestPropertyLists
-#         ${CMAKE_CURRENT_SOURCE_DIR}/testPropertyLists.py)
-#
-#add_pytest(pyCDXMLTest
-#         ${CMAKE_CURRENT_SOURCE_DIR}/test_cdxml.py)
-#
-#add_pytest(pySubsetTest
-#         ${CMAKE_CURRENT_SOURCE_DIR}/test_subset.py)
+if (RDK_TEST_MULTITHREADED)
+  add_pytest(pyTestThreads
+           ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testThreads.py)
+  add_pytest(pyTestMultithreadedMolSupplier
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testMultithreadedMolSupplier.py)
+endif (RDK_TEST_MULTITHREADED)
+
+add_pytest(pyTestPropertyLists
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testPropertyLists.py)
+
+add_pytest(pyCDXMLTest
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/test_cdxml.py)
+
+add_pytest(pySubsetTest
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/test_subset.py)
