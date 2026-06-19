@@ -1,6 +1,5 @@
-#  $Id$
 #
-#  Copyright (C) 2003 Rational Discovery LLC
+#  Copyright (C) 2003-2026 Greg Landrum and other RDKit contributors
 #     All Rights Reserved
 #
 from rdkit import Chem
@@ -117,13 +116,13 @@ biggerTest = """
 >>> m.GetNumAtoms()
 5
 >>> patts = [Chem.MolFromSmarts(x) for x in salts]
->>> m2 = Chem.DeleteSubstructs(m,patts[0],1)
+>>> m2 = Chem.DeleteSubstructs(m,patts[0],True)
 >>> m2.GetNumAtoms()
 5
->>> m2 = Chem.DeleteSubstructs(m2,patts[1],1)
+>>> m2 = Chem.DeleteSubstructs(m2,patts[1],True)
 >>> m2.GetNumAtoms()
 4
->>> m2 = Chem.DeleteSubstructs(m2,patts[2],1)
+>>> m2 = Chem.DeleteSubstructs(m2,patts[2],True)
 >>> m2.GetNumAtoms()
 4
 

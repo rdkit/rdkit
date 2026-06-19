@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (C) 2003-2006  Rational Discovery LLC
+#  Copyright (C) 2003-2026  Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -469,11 +468,11 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       for i in range(1, 6):
-        cnt = len(Chem.FindAllPathsOfLengthN(m, i, useBonds=1))
-        assert cnt == res[i], (smi, i, cnt, res[i], Chem.FindAllPathsOfLengthN(m, i, useBonds=1))
-        cnt = len(Chem.FindAllPathsOfLengthN(m, i + 1, useBonds=0))
+        cnt = len(Chem.FindAllPathsOfLengthN(m, i, useBonds=True))
+        assert cnt == res[i], (smi, i, cnt, res[i], Chem.FindAllPathsOfLengthN(m, i, useBonds=True))
+        cnt = len(Chem.FindAllPathsOfLengthN(m, i + 1, useBonds=False))
         assert cnt == res[i], (smi, i, cnt, res[i],
-                               Chem.FindAllPathsOfLengthN(m, i + 1, useBonds=1))
+                               Chem.FindAllPathsOfLengthN(m, i + 1, useBonds=False))
 
 
 class TestCase_python(unittest.TestCase):
