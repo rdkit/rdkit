@@ -274,19 +274,40 @@ void tanimotoMatrix(const std::uint64_t *probes, std::size_t numProbes,
   const std::size_t numWorkers =
       std::min({static_cast<std::size_t>(hwThreads), numProbes, workersByWork});
 
+  // Precompute each probe's popcount once. It is reused for every target and
+  // every target tile, so there is no need to recompute it in the inner loop.
+  std::vector<unsigned int> probePops(numProbes);
+  for (std::size_t i = 0; i < numProbes; ++i) {
+    probePops[i] = popcountFn(probes + i * words, words);
+  }
+
+  // Cache-block the targets. Streaming the whole target set once per probe row
+  // makes wide matrices memory-bandwidth bound: the target data no longer fits
+  // in cache and is refetched from memory for every probe row. Instead, walk
+  // the targets in tiles small enough to stay resident in L2 and reuse each
+  // tile across all of a worker's probe rows, which cuts target memory traffic
+  // by roughly the number of probe rows each worker handles.
+  constexpr std::size_t kTargetTileBytes = std::size_t{128} << 10;  // 128 KiB
+  const std::size_t bytesPerTarget = words * sizeof(std::uint64_t);
+  const std::size_t targetTile =
+      std::max<std::size_t>(1, kTargetTileBytes / bytesPerTarget);
+
   auto worker = [&](std::size_t probeStart, std::size_t probeEnd) {
-    for (std::size_t i = probeStart; i < probeEnd; ++i) {
-      const std::uint64_t *pRow = probes + i * words;
-      const unsigned int probePop = popcountFn(pRow, words);
-      double *outRow = out + i * numTargets;
-      for (std::size_t j = 0; j < numTargets; ++j) {
-        const std::uint64_t *tRow = targets + j * words;
-        unsigned int interPop = 0;
-        unsigned int targetPop = 0;
-        intersectFn(pRow, tRow, words, interPop, targetPop);
-        const unsigned int unionPop = probePop + targetPop - interPop;
-        outRow[j] =
-            unionPop == 0 ? 0.0 : static_cast<double>(interPop) / unionPop;
+    for (std::size_t jTile = 0; jTile < numTargets; jTile += targetTile) {
+      const std::size_t jEnd = std::min(jTile + targetTile, numTargets);
+      for (std::size_t i = probeStart; i < probeEnd; ++i) {
+        const std::uint64_t *pRow = probes + i * words;
+        const unsigned int probePop = probePops[i];
+        double *outRow = out + i * numTargets;
+        for (std::size_t j = jTile; j < jEnd; ++j) {
+          const std::uint64_t *tRow = targets + j * words;
+          unsigned int interPop = 0;
+          unsigned int targetPop = 0;
+          intersectFn(pRow, tRow, words, interPop, targetPop);
+          const unsigned int unionPop = probePop + targetPop - interPop;
+          outRow[j] =
+              unionPop == 0 ? 0.0 : static_cast<double>(interPop) / unionPop;
+        }
       }
     }
   };

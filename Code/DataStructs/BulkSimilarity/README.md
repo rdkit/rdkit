@@ -64,9 +64,17 @@ matrix = BulkTanimotoMatrix(probes, targets)   # numpy float64 (M, N)
   chosen from the matrix size: the kernel only spawns threads once there is
   enough work to amortize thread-creation cost (~2M word-ops per worker),
   and caps the count so each worker gets a coarse, contiguous block of probe
-  rows. Small matrices run single-threaded. The probe-row popcount is hoisted
-  out of the target loop so each `(probe, target)` pair costs two popcounts
-  instead of three.
+  rows. Small matrices run single-threaded.
+* Each probe's popcount is computed once up front and reused for every
+  target, so each `(probe, target)` pair costs two popcounts instead of
+  three.
+* The targets are **cache-blocked**: rather than streaming the whole target
+  set once per probe row (which makes wide matrices memory-bandwidth bound,
+  since the target data spills cache and is refetched from memory for every
+  probe), each worker walks the targets in ~128 KiB tiles that stay resident
+  in L2 and reuses each tile across all of its probe rows. This cuts target
+  memory traffic by roughly the number of probe rows per worker and keeps
+  large matrices compute-bound rather than bandwidth-bound.
 * Two implementations of the popcount step are provided:
   * a **scalar** path using `__builtin_popcountll` / `__popcnt64`;
   * an **AVX-512** path using `_mm512_popcnt_epi64`, which processes eight
