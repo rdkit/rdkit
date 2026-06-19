@@ -264,8 +264,9 @@ struct atom_wrapper {
         .def(
             "GetNeighbors",
             [](Atom &atom) {
-              return AtomSeqHolder(atom.getOwningMol(),
-                                   atom.getOwningMol().atomNeighbors(&atom));
+              return AtomSeqHolder(
+                  atom.getOwningMol(),
+                  atom.getOwningMol().checkedAtomNeighbors(&atom));
             },
             nb::keep_alive<0, 1>(),
             "Returns a sequence-like object of the atom's neighbors.")
@@ -274,18 +275,12 @@ struct atom_wrapper {
             "GetBonds",
             [](Atom &atom) {
               return BondSeqHolder(atom.getOwningMol(),
-                                   atom.getOwningMol().atomBonds(&atom));
+                                   atom.getOwningMol().checkedAtomBonds(&atom));
             },
             nb::keep_alive<0, 1>(),
             "Returns a sequence-like object of the atom's bonds.")
 
-        //    .def("GetNeighbors", AtomGetNeighbors, python::args("self"),
-        //         "Returns a read-only sequence of the atom's neighbors\n")
-
-        //    .def("GetBonds", AtomGetBonds, python::args("self"),
-        //         "Returns a read-only sequence of the atom's bonds\n")
-
-        .def("Match", (bool(Atom::*)(const Atom *) const) & Atom::Match,
+        .def("Match", (bool (Atom::*)(const Atom *) const) & Atom::Match,
              "other"_a,
              "Returns whether or not this atom matches another Atom.\n\n"
              "  Each Atom (or query Atom) has a query function which is\n"

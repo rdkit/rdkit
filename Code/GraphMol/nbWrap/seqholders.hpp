@@ -13,24 +13,26 @@
 
 namespace RDKit {
 
-using AtomsIterator = CXXAtomIterator<MolGraph, Atom *>;
+using AtomsIterator =
+    CXXAtomIterator<MolGraph, Atom *, MolGraph::vertex_iterator, true>;
 using AtomNeighborsIterator =
-    CXXAtomIterator<MolGraph, Atom *, MolGraph::adjacency_iterator>;
-using BondsIterator = CXXBondIterator<MolGraph, Bond *>;
+    CXXAtomIterator<MolGraph, Atom *, MolGraph::adjacency_iterator, true, true>;
+using BondsIterator =
+    CXXBondIterator<MolGraph, Bond *, MolGraph::edge_iterator, true>;
 using AtomBondsIterator =
-    CXXBondIterator<MolGraph, Bond *, MolGraph::out_edge_iterator>;
+    CXXBondIterator<MolGraph, Bond *, MolGraph::out_edge_iterator, true>;
 
 template <typename IterT = AtomsIterator>
 struct AtomSeqHolder {
   IterT iter;
   ROMol *mol;
-  AtomSeqHolder(ROMol &mol) : iter(mol.atoms()), mol(&mol) {};
+  AtomSeqHolder(ROMol &mol) : iter(mol.checkedAtoms()), mol(&mol) {};
   AtomSeqHolder(ROMol &mol, const IterT &iter) : iter(iter), mol(&mol) {};
   size_t size() const { return iter.size(); }
   typename IterT::CXXAtomIter begin() { return iter.begin(); }
   typename IterT::CXXAtomIter end() { return iter.end(); }
   Atom *operator[](int idx) {
-    if (idx < 0 || static_cast<size_t>(idx) >= mol->getNumAtoms()) {
+    if (idx < 0 || static_cast<size_t>(idx) >= iter.size()) {
       throw IndexErrorException(idx);
     }
     return mol->getAtomWithIdx(idx);
@@ -41,13 +43,13 @@ template <typename IterT = BondsIterator>
 struct BondSeqHolder {
   IterT iter;
   ROMol *mol;
-  BondSeqHolder(ROMol &mol) : iter(mol.bonds()), mol(&mol) {};
+  BondSeqHolder(ROMol &mol) : iter(mol.checkedBonds()), mol(&mol) {};
   BondSeqHolder(ROMol &mol, const IterT &iter) : iter(iter), mol(&mol) {};
   size_t size() const { return iter.size(); }
   typename IterT::CXXBondIter begin() { return iter.begin(); }
   typename IterT::CXXBondIter end() { return iter.end(); }
   Bond *operator[](int idx) {
-    if (idx < 0 || static_cast<size_t>(idx) >= mol->getNumBonds()) {
+    if (idx < 0 || static_cast<size_t>(idx) >= iter.size()) {
       throw IndexErrorException(idx);
     }
     return mol->getBondWithIdx(idx);

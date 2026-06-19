@@ -431,7 +431,6 @@ struct mol_wrapper {
              nb::rv_policy::reference_internal, "idx"_a);
     nb::class_<AtomSeqHolder<AtomNeighborsIterator>>(
         m, "_AtomSeqHolder2", "A sequence-like holder of an atom's neighbors")
-        //    .def(nb::init<ROMol &>(), "mol"_a)
         .def("__len__", &AtomSeqHolder<AtomNeighborsIterator>::size)
         .def(
             "__iter__",
