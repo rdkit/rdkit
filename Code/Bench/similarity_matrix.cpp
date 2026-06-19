@@ -64,17 +64,49 @@ std::vector<const ExplicitBitVect *> viewsOf(
   return views;
 }
 
-constexpr std::size_t kProbeCount = 64;
-constexpr std::size_t kTargetCount = 1024;
+// A "small" matrix: below the kernel's multi-threading work threshold, so
+// tanimotoMatrix runs single-threaded here. The small-matrix benchmarks
+// therefore isolate the SIMD / loop-structure win from the threading win.
+constexpr std::size_t kProbeCountSmall = 64;
+constexpr std::size_t kTargetCountSmall = 1024;
 
-}  // namespace
+// A "large" matrix: above the threshold, so tanimotoMatrix splits the work
+// across several worker threads. Comparing the large naive loop against the
+// large bulk call shows the combined SIMD + threading win.
+constexpr std::size_t kProbeCountLarge = 256;
+constexpr std::size_t kTargetCountLarge = 4096;
 
-TEST_CASE("Similarity matrix: naive nested TanimotoSimilarity loop",
-          "[similarity-matrix]") {
-  auto probes = buildPopulation(kProbeCount);
-  auto targets = buildPopulation(kTargetCount);
+// Runs a pre-packed tanimotoMatrix benchmark for the given dimensions.
+void benchBulk(const char *name, std::size_t numProbes,
+               std::size_t numTargets) {
+  auto probes = buildPopulation(numProbes);
+  auto targets = buildPopulation(numTargets);
+  auto probeViews = viewsOf(probes);
+  auto targetViews = viewsOf(targets);
 
-  BENCHMARK("nested TanimotoSimilarity (64 x 1024)") {
+  // Pre-pack so the benchmark times the inner loop, not the packing.
+  std::size_t probeBits = 0;
+  std::size_t targetBits = 0;
+  auto packedProbes = BulkSimilarity::packFingerprints(probeViews, probeBits);
+  auto packedTargets = BulkSimilarity::packFingerprints(targetViews, targetBits);
+  const std::size_t words = BulkSimilarity::wordsForBits(probeBits);
+  std::vector<double> out(probes.size() * targets.size(), 0.0);
+
+  BENCHMARK(name) {
+    BulkSimilarity::tanimotoMatrix(packedProbes.data(), probes.size(),
+                                   packedTargets.data(), targets.size(), words,
+                                   out.data());
+    return out[0];
+  };
+}
+
+// Runs the naive nested-loop reference for the given dimensions.
+void benchNaive(const char *name, std::size_t numProbes,
+                std::size_t numTargets) {
+  auto probes = buildPopulation(numProbes);
+  auto targets = buildPopulation(numTargets);
+
+  BENCHMARK(name) {
     double sum = 0.0;
     for (const auto &p : probes) {
       for (const auto &t : targets) {
@@ -85,27 +117,20 @@ TEST_CASE("Similarity matrix: naive nested TanimotoSimilarity loop",
   };
 }
 
-TEST_CASE("Similarity matrix: BulkSimilarity::tanimotoMatrix",
+}  // namespace
+
+TEST_CASE("Similarity matrix: small (single-threaded, isolates SIMD)",
           "[similarity-matrix]") {
-  auto probes = buildPopulation(kProbeCount);
-  auto targets = buildPopulation(kTargetCount);
-  auto probeViews = viewsOf(probes);
-  auto targetViews = viewsOf(targets);
+  benchNaive("naive nested TanimotoSimilarity (64 x 1024)", kProbeCountSmall,
+             kTargetCountSmall);
+  benchBulk("BulkSimilarity::tanimotoMatrix (64 x 1024)", kProbeCountSmall,
+            kTargetCountSmall);
+}
 
-  // Pre-pack so the benchmark times the inner loop, not the packing.
-  std::size_t probeBits = 0;
-  std::size_t targetBits = 0;
-  auto packedProbes =
-      BulkSimilarity::packFingerprints(probeViews, probeBits);
-  auto packedTargets =
-      BulkSimilarity::packFingerprints(targetViews, targetBits);
-  const std::size_t words = BulkSimilarity::wordsForBits(probeBits);
-  std::vector<double> out(probes.size() * targets.size(), 0.0);
-
-  BENCHMARK("BulkSimilarity::tanimotoMatrix (64 x 1024)") {
-    BulkSimilarity::tanimotoMatrix(packedProbes.data(), probes.size(),
-                                   packedTargets.data(), targets.size(),
-                                   words, out.data());
-    return out[0];
-  };
+TEST_CASE("Similarity matrix: large (multi-threaded, SIMD + threads)",
+          "[similarity-matrix]") {
+  benchNaive("naive nested TanimotoSimilarity (256 x 4096)", kProbeCountLarge,
+             kTargetCountLarge);
+  benchBulk("BulkSimilarity::tanimotoMatrix (256 x 4096)", kProbeCountLarge,
+            kTargetCountLarge);
 }

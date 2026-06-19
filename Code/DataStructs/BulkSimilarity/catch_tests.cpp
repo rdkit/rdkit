@@ -117,6 +117,41 @@ TEST_CASE("BulkSimilarity: matches per-pair TanimotoSimilarity reference",
   }
 }
 
+TEST_CASE("BulkSimilarity: large matrix exercises the multi-threaded path",
+          "[BulkSimilarity]") {
+  // The kernel only splits work across threads once the matrix exceeds an
+  // internal work threshold (~2M word-ops per worker). 130 x 4096 with
+  // 512-bit (8-word) fingerprints is ~4.3M word-ops, which crosses the
+  // threshold and uses >1 worker. Verifying the chunk-boundary rows against
+  // the per-pair reference catches any chunking or race regressions. To keep
+  // the test fast we fully check only a few representative rows (the first and
+  // last row of each of the two chunks) rather than all 4096 columns x 130
+  // rows.
+  std::mt19937 rng(0x5EED1234);
+  constexpr std::size_t nBits = 512;
+  constexpr std::size_t numProbes = 130;
+  constexpr std::size_t numTargets = 4096;
+  auto probes = makeRandomFps(numProbes, nBits, rng);
+  auto targets = makeRandomFps(numTargets, nBits, rng);
+  auto probeViews = asViews(probes);
+  auto targetViews = asViews(targets);
+
+  std::vector<double> matrix;
+  tanimotoMatrix(probeViews, targetViews, matrix);
+  REQUIRE(matrix.size() == numProbes * numTargets);
+
+  // Rows chosen to straddle the chunk split (chunk size is ceil(130/2)=65):
+  // 0 and 64 fall in the first worker's range, 65 and 129 in the second.
+  for (std::size_t i : {std::size_t{0}, std::size_t{64}, std::size_t{65},
+                        std::size_t{129}}) {
+    for (std::size_t j = 0; j < numTargets; ++j) {
+      const double expected = TanimotoSimilarity(*probes[i], *targets[j]);
+      const double actual = matrix[i * numTargets + j];
+      CHECK(actual == Catch::Approx(expected).margin(1e-12));
+    }
+  }
+}
+
 TEST_CASE("BulkSimilarity: handles fingerprint sizes that aren't 8-word "
           "multiples (exercises AVX-512 tail mask)",
           "[BulkSimilarity]") {

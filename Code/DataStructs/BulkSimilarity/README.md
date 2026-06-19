@@ -60,10 +60,13 @@ matrix = BulkTanimotoMatrix(probes, targets)   # numpy float64 (M, N)
 
 * The fingerprints are kept in a row-major packed layout of `uint64_t`
   words.
-* The inner loop is parallelised across probe rows over
-  `std::thread::hardware_concurrency()` workers; the probe-row popcount is
-  hoisted out of the target loop so each `(probe, target)` pair costs two
-  popcounts instead of three.
+* The inner loop is parallelised across probe rows. The worker count is
+  chosen from the matrix size: the kernel only spawns threads once there is
+  enough work to amortize thread-creation cost (~2M word-ops per worker),
+  and caps the count so each worker gets a coarse, contiguous block of probe
+  rows. Small matrices run single-threaded. The probe-row popcount is hoisted
+  out of the target loop so each `(probe, target)` pair costs two popcounts
+  instead of three.
 * Two implementations of the popcount step are provided:
   * a **scalar** path using `__builtin_popcountll` / `__popcnt64`;
   * an **AVX-512** path using `_mm512_popcnt_epi64`, which processes eight

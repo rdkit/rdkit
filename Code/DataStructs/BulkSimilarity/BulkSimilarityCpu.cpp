@@ -258,8 +258,21 @@ void tanimotoMatrix(const std::uint64_t *probes, std::size_t numProbes,
   if (hwThreads == 0) {
     hwThreads = 1;
   }
+  // Decide how many worker threads to use. Spawning a std::thread costs on
+  // the order of tens of microseconds, so threading only pays off once each
+  // worker has enough word-level popcount work to amortize that cost. Cap the
+  // worker count so every worker gets at least kMinWordOpsPerThread words of
+  // work; for small matrices this collapses to a single thread and avoids the
+  // spawn overhead entirely, which would otherwise dominate and can make a
+  // naive one-thread-per-row split slower than a plain serial loop.
+  constexpr std::size_t kMinWordOpsPerThread = std::size_t{1} << 21;  // ~2M
+  const std::size_t totalWordOps = numProbes * numTargets * words;
+  std::size_t workersByWork = totalWordOps / kMinWordOpsPerThread;
+  if (workersByWork < 1) {
+    workersByWork = 1;
+  }
   const std::size_t numWorkers =
-      std::max<std::size_t>(1, std::min<std::size_t>(numProbes, hwThreads));
+      std::min({static_cast<std::size_t>(hwThreads), numProbes, workersByWork});
 
   auto worker = [&](std::size_t probeStart, std::size_t probeEnd) {
     for (std::size_t i = probeStart; i < probeEnd; ++i) {
