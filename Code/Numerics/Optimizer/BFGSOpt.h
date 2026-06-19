@@ -7,6 +7,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#ifndef RD_BFGSOPT_H
+#define RD_BFGSOPT_H
+
 #include <RDGeneral/export.h>
 #include <cmath>
 #include <RDGeneral/Invariant.h>
@@ -357,3 +360,4 @@ int minimize(unsigned int dim, double *pos, double gradTol,
 }
 
 }  // namespace BFGSOpt
+#endif  // RD_BFGSOPT_H

@@ -316,6 +316,17 @@ cmake -DRDK_BUILD_BOOST_PYTHON_WRAPPERS=OFF ..
 - If you'd like to be able to generate high-quality PNGs for structure depiction, you should have cairo installed on your system and build the RDKit with cairo support enabled: `-DRDK_BUILD_CAIRO_SUPPORT=ON`
 - If you'd like to be able to use the 3D descriptors, you need to have a copy of eigen3 installed. Most operating systems have an appropriate package.
 
+##### Speeding up the build
+
+Compiling the RDKit from source can take a while. A couple of opt-in options can help:
+
+- **Unity (jumbo) builds.** Add `-DRDK_USE_UNITY_BUILDS=ON` to your cmake command line to have CMake concatenate each library's source files into a few larger translation units, so shared headers are parsed once per batch instead of once per file. This is off by default. A handful of libraries are excluded (see `RDK_UNITY_BUILD_EXCLUDED_LIBRARIES`) where unity builds don't pay off or cause symbol clashes. The effect is platform/compiler dependent and trades higher peak memory per translation unit for fewer of them, so on memory-constrained machines you may need to reduce build parallelism.
+- **Compiler caching.** Installing [`ccache`](https://ccache.dev/) (or [`sccache`](https://github.com/mozilla/sccache)) and pointing cmake at it lets repeated builds reuse previously compiled objects, which is especially helpful when switching branches or rebuilding after small changes:
+
+  ```
+  cmake -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache ..
+  ```
+
 ##### Building the Java wrappers
 
 *Additional Requirements*
