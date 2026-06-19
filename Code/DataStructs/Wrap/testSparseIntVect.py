@@ -1,6 +1,5 @@
-# $Id$
 #
-# Copyright (C) 2007,2008 Greg Landrum
+# Copyright (C) 2007-2026 Greg Landrum and other RDKit contributors
 #
 #  @@ All Rights Reserved @@
 #
@@ -12,6 +11,11 @@ import unittest
 
 from rdkit import DataStructs as ds
 from rdkit import RDConfig
+from rdkit import rdBase
+if hasattr(rdBase, '_wrapperType') and rdBase._wrapperType == 'nanobind':
+  usingNanobind = True
+else:
+  usingNanobind = False
 
 
 def feq(v1, v2, tol=1e-4):
@@ -70,7 +74,22 @@ class TestCase(unittest.TestCase):
     onVs = v1.GetNonzeroElements()
     self.assertTrue(onVs == {0: 1, 2: 2, 1 << 35: 3})
 
-  def test3Pickle1(self):
+  def testPickle1(self):
+    pkl = b'\x80\x04\x95\x80\x00\x00\x00\x00\x00\x00\x00\x8c\x1erdkit.DataStructs.cDataStructs\x94\x8c\x11LongSparseIntVect\x94\x93\x94C<\x01\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x03\x00\x00\x00\x94\x85\x94R\x94}\x94\x85\x94b.'
+    l = 1 << 42
+
+    v1 = ds.LongSparseIntVect(l)
+    self.assertRaises(IndexError, lambda: v1[l + 1])
+    v1[0] = 1
+    v1[2] = 2
+    v1[1 << 35] = 3
+
+    self.assertTrue(v1 == v1)
+    v2 = pickle.loads(pkl)
+    self.assertTrue(v2 == v1)
+
+  @unittest.skipIf(usingNanobind, "nanobind doesn't support legacy pickles")
+  def test3LegacyPickle1(self):
     """
 
     """
@@ -98,7 +117,8 @@ class TestCase(unittest.TestCase):
       v3 = pickle.load(f)
       self.assertTrue(v3 == v1)
 
-  def test3Pickle2(self):
+  @unittest.skipIf(usingNanobind, "nanobind doesn't support legacy pickles")
+  def test3LegacyPickle2(self):
     """
 
     """

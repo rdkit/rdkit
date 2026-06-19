@@ -15,6 +15,8 @@
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 
+#include <RDBoost/Wrap_nb.h>
+
 namespace nb = nanobind;
 using namespace nb::literals;
 
@@ -61,6 +63,7 @@ IntVect GetOnBits(const EBV &self) {
   return res;
 }
 
+std::string BVToString(const EBV &bv) { return bv.toString(); }
 nb::bytes BVToBinary(const EBV &bv) {
   std::string res = bv.toString();
   return nb::bytes(res.c_str(), res.length());
@@ -122,16 +125,20 @@ struct EBV_wrapper {
   static void wrap(nb::module_ &m) {
     nb::class_<ExplicitBitVect>(m, "ExplicitBitVect", nb::dynamic_attr(),
                                 ebvClassDoc.c_str())
-        .def(nb::init<unsigned int>(), "size"_a)
-        .def(
-            "__init__",
-            [](ExplicitBitVect *t, nb::bytes b) {
-              new (t) ExplicitBitVect(
-                  std::string(static_cast<const char *>(b.data()),
-                              static_cast<size_t>(b.size())));
-            },
-            "pkl"_a)
-        .def(nb::init<unsigned int, bool>(), "size"_a, "bitsSet"_a)
+        .def(nb::new_([]() { return new ExplicitBitVect(); }))
+        .def(nb::new_(
+                 [](unsigned int size) { return new ExplicitBitVect(size); }),
+             "size"_a)
+        .def(nb::new_([](nb::bytes b) {
+               return new ExplicitBitVect(
+                   std::string(static_cast<const char *>(b.data()),
+                               static_cast<size_t>(b.size())));
+             }),
+             "pkl"_a)
+        .def(nb::new_([](unsigned int size, bool bitsSet) {
+               return new ExplicitBitVect(size, bitsSet);
+             }),
+             "size"_a, "bitsSet"_a)
         .def(
             "SetBit", (bool (EBV::*)(unsigned int))&EBV::setBit, "which"_a,
             R"DOC(Turns on a particular bit. Returns the original state of the bit.
@@ -187,18 +194,8 @@ struct EBV_wrapper {
         .def(nb::self == nb::self)
         .def(nb::self != nb::self)
         .def(nb::self += nb::self)
-        .def("__getstate__",
-             [](const EBV &ebv) {
-               const auto pkl = ebv.toString();
-               return std::make_tuple(nb::bytes(pkl.c_str(), pkl.size()));
-             })
-        .def("__setstate__",
-             [](EBV &ebv, const std::tuple<nb::bytes> &state) {
-               std::string pkl = std::string(
-                   static_cast<const char *>(std::get<0>(state).data()),
-                   static_cast<size_t>(std::get<0>(state).size()));
-               new (&ebv) EBV(pkl);
-             })
+        .def("__getstate__", getObjectState<EBV, BVToString>)
+        .def("__setstate__", setObjectState<EBV>)
         .doc() = ebvClassDoc.c_str();
   }
 };

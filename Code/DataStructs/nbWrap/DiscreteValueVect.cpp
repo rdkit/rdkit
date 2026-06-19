@@ -14,10 +14,15 @@
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/string.h>
+#include <RDBoost/Wrap_nb.h>
 
 using namespace RDKit;
 namespace nb = nanobind;
 using namespace nb::literals;
+
+namespace {
+std::string dvvToString(const DiscreteValueVect &dvv) { return dvv.toString(); }
+}  // namespace
 
 std::string disValVectDoc =
     "A container class for storing unsigned integer\n\
@@ -49,14 +54,20 @@ struct discreteValVec_wrapper {
         .export_values();
 
     nb::class_<DiscreteValueVect>(m, "DiscreteValueVect")
-        .def(nb::init<DiscreteValueVect::DiscreteValueType, unsigned int>(),
-             "valType"_a, "length"_a, "Constructor")
-        .def("__init__",
-             [](DiscreteValueVect *t, nb::bytes b) {
-               new (t) DiscreteValueVect(
+        .def(nb::new_([]() {
+          return new DiscreteValueVect(DiscreteValueVect::ONEBITVALUE, 0);
+        }))
+        .def(nb::new_([](DiscreteValueVect::DiscreteValueType valType,
+                         unsigned int length) {
+               return new DiscreteValueVect(valType, length);
+             }),
+             "valType"_a, "length"_a)
+        .def(nb::new_([](nb::bytes b) {
+               return new DiscreteValueVect(
                    std::string(static_cast<const char *>(b.data()),
                                static_cast<size_t>(b.size())));
-             })
+             }),
+             "pkl"_a)
         .def("__len__", &DiscreteValueVect::getLength,
              "Get the number of entries in the vector")
         .def("__setitem__", &DiscreteValueVect::setVal, "i"_a, "val"_a,
@@ -83,20 +94,10 @@ struct discreteValVec_wrapper {
              "Get the sum of the values in the vector, basically L1 norm")
 
         // FIX: probably want to include helper functionality for
-        // working with ctors that expect binary strings. nanobind 
+        // working with ctors that expect binary strings. nanobind
         // works with bytes.
-        .def("__getstate__",
-             [](const DiscreteValueVect &dvv) {
-               const auto pkl = dvv.toString();
-               return std::make_tuple(nb::bytes(pkl.c_str(), pkl.size()));
-             })
-        .def("__setstate__",
-             [](DiscreteValueVect &dvv, const std::tuple<nb::bytes> &state) {
-               std::string pkl = std::string(
-                   static_cast<const char *>(std::get<0>(state).data()),
-                   static_cast<size_t>(std::get<0>(state).size()));
-               new (&dvv) DiscreteValueVect(pkl);
-             })
+        .def("__getstate__", getObjectState<DiscreteValueVect, dvvToString>)
+        .def("__setstate__", setObjectState<DiscreteValueVect>)
         .doc() = disValVectDoc.c_str()
         //
         ;

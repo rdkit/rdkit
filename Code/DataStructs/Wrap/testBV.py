@@ -1,5 +1,6 @@
 import pickle
 import random
+import sys
 import unittest
 
 import numpy
@@ -67,7 +68,7 @@ class TestCase(unittest.TestCase):
       x = random.randrange(0, nbits)
       bv1.SetBit(x)
 
-    pkl = pickle.dumps(bv1, 1)
+    pkl = pickle.dumps(bv1)
     bv2 = pickle.loads(pkl)
     for i in range(nbits):
       assert bv1[i] == bv2[i]
@@ -79,7 +80,7 @@ class TestCase(unittest.TestCase):
       x = random.randrange(0, nbits)
       bv1.SetBit(x)
 
-    pkl = pickle.dumps(bv1, 1)
+    pkl = pickle.dumps(bv1)
     bv2 = pickle.loads(pkl)
     for i in range(nbits):
       assert bv1[i] == bv2[i]

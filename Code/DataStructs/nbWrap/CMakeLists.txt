@@ -13,12 +13,12 @@ rdkit_nanobind_extension(cDataStructs
                        DataStructs)
 
 add_pytest(pyBV
-         ${CMAKE_CURRENT_SOURCE_DIR}/testBV.py)
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testBV.py)
 add_pytest(pyDiscreteValueVect
-         ${CMAKE_CURRENT_SOURCE_DIR}/testDiscreteValueVect.py)
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testDiscreteValueVect.py)
 add_pytest(pyRealValueVect
-         ${CMAKE_CURRENT_SOURCE_DIR}/testRealValueVect.py)
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testRealValueVect.py)
 add_pytest(pySparseIntVect
-         ${CMAKE_CURRENT_SOURCE_DIR}/testSparseIntVect.py)
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testSparseIntVect.py)
 add_pytest(pyFPB
-         ${CMAKE_CURRENT_SOURCE_DIR}/testFPB.py)
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testFPB.py)

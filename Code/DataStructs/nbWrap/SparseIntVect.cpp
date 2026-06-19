@@ -15,6 +15,7 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
+#include <RDBoost/Wrap_nb.h>
 
 using namespace RDKit;
 namespace nb = nanobind;
@@ -25,6 +26,10 @@ template <typename IndexType>
 nb::bytes SIVToBinaryText(const SparseIntVect<IndexType> &siv) {
   std::string res = siv.toString();
   return nb::bytes(res.c_str(), res.length());
+}
+template <typename IndexType>
+std::string SIVToString(const SparseIntVect<IndexType> &siv) {
+  return siv.toString();
 }
 }  // namespace
 
@@ -123,15 +128,18 @@ struct sparseIntVec_wrapper {
   template <typename IndexType>
   static void wrapOne(nb::module_ &m, const char *className) {
     nb::class_<SparseIntVect<IndexType>>(m, className, sparseIntVectDoc.c_str())
-        .def(nb::init<IndexType>(), R"DOC(Constructor)DOC")
-        .def(
-            "__init__",
-            [](SparseIntVect<IndexType> *t, nb::bytes b) {
-              new (t) SparseIntVect<IndexType>(
-                  std::string(static_cast<const char *>(b.data()),
-                              static_cast<size_t>(b.size())));
-            },
-            "pkl"_a)
+        .def(nb::new_([]() { return new SparseIntVect<IndexType>(); }),
+             R"DOC(Constructor)DOC")
+        .def(nb::new_([](nb::bytes b) {
+               return new SparseIntVect<IndexType>(
+                   std::string(static_cast<const char *>(b.data()),
+                               static_cast<size_t>(b.size())));
+             }),
+             "pkl"_a)
+        .def(nb::new_([](IndexType len) {
+               return new SparseIntVect<IndexType>(len);
+             }),
+             R"DOC(Constructor)DOC")
         // Note: we cannot support __len__ because, at least at the moment
         // (BPL v1.34.1), it must return an int.
         .def("__setitem__", &SparseIntVect<IndexType>::setVal,
@@ -173,23 +181,8 @@ struct sparseIntVec_wrapper {
         .def("ToList", pyToList<IndexType>,
              R"DOC(Return the SparseIntVect as a python list)DOC")
         .def("__getstate__",
-             [](const SparseIntVect<IndexType> &siv) {
-               const auto pkl = siv.toString();
-               return std::make_tuple(nb::bytes(pkl.c_str(), pkl.size()));
-             })
-        .def("__setstate__",
-             [](SparseIntVect<IndexType> &siv,
-                const std::tuple<nb::bytes> &state) {
-               std::string pkl = std::string(
-                   static_cast<const char *>(std::get<0>(state).data()),
-                   static_cast<size_t>(std::get<0>(state).size()));
-               new (&siv) SparseIntVect<IndexType>(pkl);
-             })
-        .def("__setstate__",
-             [](SparseIntVect<IndexType> &siv,
-                const std::tuple<std::string> &state) {
-               new (&siv) SparseIntVect<IndexType>(std::get<0>(state));
-             })
+             getObjectState<SparseIntVect<IndexType>, SIVToString<IndexType>>)
+        .def("__setstate__", setObjectState<SparseIntVect<IndexType>>)
         .doc() = sparseIntVectDoc.c_str();
 
     m.def("DiceSimilarity", &DiceSimilarity<IndexType>, "siv1"_a, "siv2"_a,

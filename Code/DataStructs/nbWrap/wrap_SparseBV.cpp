@@ -14,6 +14,7 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -65,6 +66,7 @@ nb::bytes BVToBinary(const SBV &bv) {
   std::string res = bv.toString();
   return nb::bytes(res.c_str(), res.length());
 }
+std::string BVToString(const SBV &bv) { return bv.toString(); }
 
 void InitFromBase64(SBV &self, const std::string &inD) {
   self.initFromText(inD.c_str(), inD.length(), true);
@@ -115,15 +117,17 @@ struct SBV_wrapper {
   static void wrap(nb::module_ &m) {
     nb::class_<SparseBitVect>(m, "SparseBitVect", nb::dynamic_attr(),
                               sbvClassDoc.c_str())
-        .def(nb::init<unsigned int>(), "size"_a)
+        .def(nb::new_([]() { return new SparseBitVect(); }))
         .def(
-            "__init__",
-            [](SparseBitVect *t, nb::bytes b) {
-              new (t)
-                  SparseBitVect(std::string(static_cast<const char *>(b.data()),
-                                            static_cast<size_t>(b.size())));
-            },
-            "pkl"_a)
+            nb::new_([](unsigned int size) { return new SparseBitVect(size); }),
+            "size"_a)
+        .def(nb::new_([](nb::bytes b) {
+               return new SparseBitVect(
+                   std::string(static_cast<const char *>(b.data()),
+                               static_cast<size_t>(b.size())));
+             }),
+
+             "pkl"_a)
         .def(
             "SetBit", (bool (SBV::*)(unsigned int))&SBV::setBit, "which"_a,
             R"DOC(Turns on a particular bit. Returns the original state of the bit.
@@ -176,18 +180,8 @@ struct SBV_wrapper {
         .def(~nb::self)
         .def(nb::self == nb::self)
         .def(nb::self != nb::self)
-        .def("__getstate__",
-             [](const SBV &sbv) {
-               const auto pkl = sbv.toString();
-               return std::make_tuple(nb::bytes(pkl.c_str(), pkl.size()));
-             })
-        .def("__setstate__",
-             [](SBV &sbv, const std::tuple<nb::bytes> &state) {
-               std::string pkl = std::string(
-                   static_cast<const char *>(std::get<0>(state).data()),
-                   static_cast<size_t>(std::get<0>(state).size()));
-               new (&sbv) SBV(pkl);
-             })
+        .def("__getstate__", getObjectState<SparseBitVect, BVToString>)
+        .def("__setstate__", setObjectState<SparseBitVect>)
         .doc() = sbvClassDoc.c_str();
   }
 };
