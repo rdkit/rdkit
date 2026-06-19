@@ -319,7 +319,7 @@ Note that this does not update properties, CStates or Attachment Points.)DOC")
     m.def("GetMolSubstanceGroupWithIdx", &getMolSubstanceGroupWithIdx, "mol"_a,
           "idx"_a,
           R"DOC(returns a particular SubstanceGroup from the molecule)DOC",
-          nb::rv_policy::reference_internal, nb::keep_alive<0, 1>());
+          nb::rv_policy::reference, nb::keep_alive<0, 1>());
     m.def("ClearMolSubstanceGroups", &clearMolSubstanceGroups, "mol"_a,
           R"DOC(removes all SubstanceGroups from a molecule (if any))DOC");
     m.def(
