@@ -1164,7 +1164,6 @@ class TestCase(unittest.TestCase):
       i += 1
     self.assertTrue(i == 1)
 
-
   def test26SmiMolSupplier(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'first_200.tpsa.csv')
@@ -1285,8 +1284,9 @@ mol-4,CCOC
     sdSup = Chem.SDMolSupplier(fileN)
     self.assertTrue(len(sdSup) == 16)
 
-    fileN = Path(os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-                         'first_200.tpsa.csv'))
+    fileN = Path(
+      os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                   'first_200.tpsa.csv'))
     smiSup = Chem.SmilesMolSupplier(fileN, ",", 0, -1)
     self.assertTrue(len(smiSup) == 200)
 
@@ -8590,6 +8590,23 @@ M  END
     m1 = Chem.MolFromSmiles('c1ncc(C)nc1')
     Chem.Kekulize(m1, canonical=False)
     self.assertEqual(m1.GetBondBetweenAtoms(3, 5).GetBondType(), Chem.BondType.SINGLE)
+
+  def testSubstanceGroupProperties(self):
+    m = Chem.MolFromSmiles('CCCCCCC |SgD:6:lambda max:250::nm::|')
+    sg = Chem.GetMolSubstanceGroups(m)[0]
+    self.assertTrue(sg.HasProp('FIELDINFO'))
+    self.assertEqual(sg.GetProp('FIELDINFO'), 'nm')
+    self.assertEqual(sg.GetStringVectProp('DATAFIELDS'), ['250'])
+    sg.SetIntProp('foo', 4)
+    self.assertEqual(sg.GetIntProp('foo'), 4)
+    sg.SetUnsignedProp('foo', 4)
+    self.assertEqual(sg.GetUnsignedProp('foo'), 4)
+    sg.SetDoubleProp('foo', 4.5)
+    self.assertEqual(sg.GetDoubleProp('foo'), 4.5)
+    sg.SetBoolProp('foo', True)
+    self.assertEqual(sg.GetBoolProp('foo'), True)
+    sg.ClearProp('foo')
+    self.assertFalse(sg.HasProp('foo'))
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

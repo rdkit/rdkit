@@ -204,38 +204,44 @@ Note that this does not update properties, CStates or Attachment Points.)DOC")
         .def("ClearAttachPoints", &SubstanceGroup::clearAttachPoints,
              R"DOC(Clear attachment points.)DOC")
 
-        .def("SetProp",
-             (void (RDProps::*)(const std::string_view, std::string, bool)
-                  const) &
-                 SubstanceGroup::setProp<std::string>,
-             "key"_a, "val"_a, "computed"_a = false,
-             R"DOC(sets the value of a particular property)DOC")
-        .def("SetDoubleProp",
-             (void (RDProps::*)(const std::string_view, double, bool) const) &
-                 SubstanceGroup::setProp<double>,
-             "key"_a, "val"_a, "computed"_a = false,
-             R"DOC(sets the value of a particular property)DOC")
-        .def("SetIntProp",
-             (void (RDProps::*)(const std::string_view, int, bool) const) &
-                 SubstanceGroup::setProp<int>,
-             "key"_a, "val"_a, "computed"_a = false,
-             R"DOC(sets the value of a particular property)DOC")
-        .def("SetUnsignedProp",
-             (void (RDProps::*)(const std::string_view, unsigned int, bool)
-                  const) &
-                 SubstanceGroup::setProp<unsigned int>,
-             "key"_a, "val"_a, "computed"_a = false,
-             R"DOC(sets the value of a particular property)DOC")
-        .def("SetBoolProp",
-             (void (RDProps::*)(const std::string_view, bool, bool) const) &
-                 SubstanceGroup::setProp<bool>,
-             "key"_a, "val"_a, "computed"_a = false,
-             R"DOC(sets the value of a particular property)DOC")
-        .def("HasProp",
-             (bool (RDProps::*)(const std::string_view) const) &
-                 SubstanceGroup::hasProp,
-             "key"_a,
-             R"DOC(returns whether or not a particular property exists)DOC")
+        .def(
+            "SetProp",
+            [](SubstanceGroup &self, const std::string &key,
+               const std::string &val,
+               bool computed) { self.setProp(key, val, computed); },
+            "key"_a, "val"_a, "computed"_a = false,
+            R"DOC(sets the value of a particular property)DOC")
+        .def(
+            "SetDoubleProp",
+            [](SubstanceGroup &self, const std::string &key, double val,
+               bool computed) { self.setProp(key, val, computed); },
+            "key"_a, "val"_a, "computed"_a = false,
+            R"DOC(sets the value of a particular property)DOC")
+        .def(
+            "SetIntProp",
+            [](SubstanceGroup &self, const std::string &key, int val,
+               bool computed) { self.setProp(key, val, computed); },
+            "key"_a, "val"_a, "computed"_a = false,
+            R"DOC(sets the value of a particular property)DOC")
+        .def(
+            "SetUnsignedProp",
+            [](SubstanceGroup &self, const std::string &key, unsigned int val,
+               bool computed) { self.setProp(key, val, computed); },
+            "key"_a, "val"_a, "computed"_a = false,
+            R"DOC(sets the value of a particular property)DOC")
+        .def(
+            "SetBoolProp",
+            [](SubstanceGroup &self, const std::string &key, bool val,
+               bool computed) { self.setProp(key, val, computed); },
+            "key"_a, "val"_a, "computed"_a = false,
+            R"DOC(sets the value of a particular property)DOC")
+        .def(
+            "HasProp",
+            [](const SubstanceGroup &self, const std::string &key) {
+              return self.hasProp(key);
+            },
+            "key"_a,
+            R"DOC(returns whether or not a particular property exists)DOC")
         .def("GetProp", GetPyProp<SubstanceGroup>, "key"_a,
              "autoConvert"_a = false,
              R"DOC(Returns the value of the property.
@@ -250,32 +256,42 @@ Note that this does not update properties, CStates or Attachment Points.)DOC")
   NOTE:
     - If the property has not been set, a KeyError exception will be raised.
 )DOC")
-        .def("GetIntProp",
-             (int (RDProps::*)(const std::string_view) const) &
-                 SubstanceGroup::getProp<int>,
-             "key"_a, R"DOC(returns the value of a particular property)DOC")
-        .def("GetUnsignedProp",
-             (unsigned int (RDProps::*)(const std::string_view) const) &
-                 SubstanceGroup::getProp<unsigned int>,
-             "key"_a, R"DOC(returns the value of a particular property)DOC")
-        .def("GetDoubleProp",
-             (double (RDProps::*)(const std::string_view) const) &
-                 SubstanceGroup::getProp<double>,
-             "key"_a, R"DOC(returns the value of a particular property)DOC")
-        .def("GetBoolProp",
-             (bool (RDProps::*)(const std::string_view) const) &
-                 SubstanceGroup::getProp<bool>,
-             "key"_a, R"DOC(returns the value of a particular property)DOC")
-        .def("GetUnsignedVectProp",
-             (std::vector<unsigned int> (RDProps::*)(const std::string_view)
-                  const) &
-                 SubstanceGroup::getProp<std::vector<unsigned int>>,
-             "key"_a, R"DOC(returns the value of a particular property)DOC")
-        .def("GetStringVectProp",
-             (std::vector<std::string> (RDProps::*)(const std::string_view)
-                  const) &
-                 SubstanceGroup::getProp<std::vector<std::string>>,
-             "key"_a, R"DOC(returns the value of a particular property)DOC")
+        .def(
+            "GetIntProp",
+            [](const SubstanceGroup &self, const std::string &key) {
+              return self.getProp<int>(key);
+            },
+            "key"_a, R"DOC(returns the value of a particular property)DOC")
+        .def(
+            "GetUnsignedProp",
+            [](const SubstanceGroup &self, const std::string &key) {
+              return self.getProp<unsigned int>(key);
+            },
+            "key"_a, R"DOC(returns the value of a particular property)DOC")
+        .def(
+            "GetDoubleProp",
+            [](const SubstanceGroup &self, const std::string &key) {
+              return self.getProp<double>(key);
+            },
+            "key"_a, R"DOC(returns the value of a particular property)DOC")
+        .def(
+            "GetBoolProp",
+            [](const SubstanceGroup &self, const std::string &key) {
+              return self.getProp<bool>(key);
+            },
+            "key"_a, R"DOC(returns the value of a particular property)DOC")
+        .def(
+            "GetUnsignedVectProp",
+            [](const SubstanceGroup &self, const std::string &key) {
+              return self.getProp<std::vector<unsigned int>>(key);
+            },
+            "key"_a, R"DOC(returns the value of a particular property)DOC")
+        .def(
+            "GetStringVectProp",
+            [](const SubstanceGroup &self, const std::string &key) {
+              return self.getProp<std::vector<std::string>>(key);
+            },
+            "key"_a, R"DOC(returns the value of a particular property)DOC")
         .def("GetPropNames", &SubstanceGroup::getPropList,
              "includePrivate"_a = false, "includeComputed"_a = false,
              R"DOC(Returns a list of the properties set on the SubstanceGroup.
@@ -288,11 +304,13 @@ Note that this does not update properties, CStates or Attachment Points.)DOC")
             R"DOC(Returns a dictionary of the properties set on the SubstanceGroup.
  n.b. some properties cannot be converted to python types.
 )DOC")
-        .def("ClearProp",
-             (void (RDProps::*)(const std::string_view) const) &
-                 SubstanceGroup::clearProp,
-             "key"_a,
-             R"DOC(Removes a particular property (does nothing if not set).
+        .def(
+            "ClearProp",
+            [](SubstanceGroup &self, const std::string &key) {
+              self.clearProp(key);
+            },
+            "key"_a,
+            R"DOC(Removes a particular property (does nothing if not set).
 
 )DOC");
 
