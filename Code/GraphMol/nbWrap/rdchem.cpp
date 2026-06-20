@@ -12,6 +12,7 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/unique_ptr.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/eval.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SanitException.h>
@@ -105,20 +106,22 @@ NB_MODULE(rdchem, m) {
   // RegisterListConverter<RDKit::CONFORMER_SPTR>();
   // rdkit_import_array();
   m.def("tossit", &RDKit::tossit);
-  nb::exception<MolSanitizeException>(m, "MolSanitizeException",
-                                      PyExc_ValueError);
+  //   nb::exec(R"PY(
+  // class _BaseSanitException(Exception):
+  //     pass
+  // )PY");
+  auto mse = nb::exception<MolSanitizeException>(m, "MolSanitizeException",
+                                                 PyExc_ValueError);
   // FIX: we should have inheritance here, but I haven't figured out how to do
   // that in nanobind yet
   // here's a discussion post that shows how to define the kind of custom
   // excepions we need using pybind11, it's probably adaptable to nanobind:
   // https://github.com/pybind/pybind11/issues/1281#issuecomment-1815721395
-  nb::exception<AtomSanitizeException>(m, "AtomSanitizeException",
-                                       PyExc_ValueError);
-  nb::exception<AtomValenceException>(m, "AtomValenceException",
-                                      PyExc_ValueError);
-  nb::exception<AtomKekulizeException>(m, "AtomKekulizeException",
-                                       PyExc_ValueError);
-  nb::exception<KekulizeException>(m, "KekulizeException", PyExc_ValueError);
+  auto ase =
+      nb::exception<AtomSanitizeException>(m, "AtomSanitizeException", mse);
+  nb::exception<AtomValenceException>(m, "AtomValenceException", ase);
+  nb::exception<AtomKekulizeException>(m, "AtomKekulizeException", ase);
+  nb::exception<KekulizeException>(m, "KekulizeException", mse);
 
   nb::class_<MolSanitizeException>(m, "_cppMolSanitizeException",
                                    "exception arising from sanitization")
