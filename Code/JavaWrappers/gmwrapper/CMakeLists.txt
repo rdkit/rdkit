@@ -125,8 +125,9 @@ SWIG_ADD_LIBRARY(GraphMolWrap TYPE MODULE LANGUAGE java SOURCES GraphMolJava.i )
 # link error if they aren't there.
 
 if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  find_package(EXPAT REQUIRED)
   SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
-      rdkit_base ${RDKit_THREAD_LIBS} ChemDraw expatpp expat)
+      rdkit_base ${RDKit_THREAD_LIBS} ChemDraw expatpp EXPAT::EXPAT)
 else ()
   SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
       rdkit_base ${RDKit_THREAD_LIBS})

@@ -82,8 +82,9 @@ SWIG_ADD_LIBRARY(RDKFuncs TYPE MODULE LANGUAGE CSharp SOURCES GraphMolCSharp.i )
 # as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
 # link error if they aren't there.
 if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  find_package(EXPAT REQUIRED)
   SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
-      rdkit_base ${RDKit_THREAD_LIBS} ChemDraw expatpp expat)
+      rdkit_base ${RDKit_THREAD_LIBS} ChemDraw expatpp EXPAT::EXPAT)
 else ()
   SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
       rdkit_base ${RDKit_THREAD_LIBS})
