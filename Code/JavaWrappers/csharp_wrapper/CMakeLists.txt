@@ -83,7 +83,7 @@ SWIG_ADD_LIBRARY(RDKFuncs TYPE MODULE LANGUAGE CSharp SOURCES GraphMolCSharp.i )
 # link error if they aren't there.
 if(RDK_BUILD_CHEMDRAW_SUPPORT)
   SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
-      rdkit_base ${RDKit_THREAD_LIBS} ChemDraw expat)
+      rdkit_base ${RDKit_THREAD_LIBS} ChemDraw expatpp expat)
 else ()
   SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
       rdkit_base ${RDKit_THREAD_LIBS})
