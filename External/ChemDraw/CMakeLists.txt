@@ -10,8 +10,8 @@ include(CMakePrintHelpers)
 # and will need to be fixed in the future
 if(RDK_BUILD_CHEMDRAW_SUPPORT)
   if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/chemdraw/CDXIO.h")
-    set(RELEASE_NO "1.0.13")
-    set(MD5 "b02e4fb4866d3c1e0882e7894d629d73")
+    set(RELEASE_NO "1.0.14")
+    set(MD5 "44be1a8e5bd41faaa238a6d584ca258b")
     downloadAndCheckMD5("https://codeload.github.com/Glysade/chemdraw/tar.gz/refs/tags/v${RELEASE_NO}"
       "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw-v${RELEASE_NO}.tar.gz" ${MD5})
 
