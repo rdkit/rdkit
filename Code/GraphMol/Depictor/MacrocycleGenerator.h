@@ -98,7 +98,7 @@ struct SubstituentInfo {
   constraint)
   - Fused rings: fixed turn patterns (FIXED constraint)
 */
-class MacrocycleGenerator {
+class RDKIT_DEPICTOR_EXPORT MacrocycleGenerator {
  public:
   //! Constructor
   /*!
