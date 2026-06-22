@@ -106,27 +106,99 @@ NB_MODULE(rdchem, m) {
   // RegisterListConverter<RDKit::CONFORMER_SPTR>();
   // rdkit_import_array();
   m.def("tossit", &RDKit::tossit);
-  //   nb::exec(R"PY(
-  // class _BaseSanitException(Exception):
-  //     pass
-  // )PY");
+  nb::object scope = m.attr("__dict__");
+
+  nb::exec(R"PY(
+class _BaseSanitException(ValueError):
+    def __init__(self, msg: str):
+        self.cause = self
+        self._msg = msg
+        super().__init__(msg)
+    def GetType(self) -> str:
+        return self._msg
+    def GetAtomIdx(self) -> int:
+        return getattr(self, "_atom_idx", None)
+    def GetAtomIndices(self) -> list[int]:
+        res = getattr(self, "_atom_indices", None)
+        if res is not None:
+          res = tuple(res)
+        return res
+)PY",
+           scope);
+  const auto exceptionBase = m.attr("_BaseSanitException");
+
   auto mse = nb::exception<MolSanitizeException>(m, "MolSanitizeException",
-                                                 PyExc_ValueError);
-  // FIX: we should have inheritance here, but I haven't figured out how to do
-  // that in nanobind yet
-  // here's a discussion post that shows how to define the kind of custom
-  // excepions we need using pybind11, it's probably adaptable to nanobind:
-  // https://github.com/pybind/pybind11/issues/1281#issuecomment-1815721395
+                                                 exceptionBase);
+
   auto ase =
       nb::exception<AtomSanitizeException>(m, "AtomSanitizeException", mse);
-  nb::exception<AtomValenceException>(m, "AtomValenceException", ase);
-  nb::exception<AtomKekulizeException>(m, "AtomKekulizeException", ase);
-  nb::exception<KekulizeException>(m, "KekulizeException", mse);
+  // pattern for this from https://mlir.llvm.org/doxygen/IRCore_8cpp_source.html
+  // it's gross that this needs to be done for every exception type,
+  // but I did not find a better way to do it
+  nb::register_exception_translator(
+      [](const std::exception_ptr &p, void *payload) {
+        try {
+          if (p) std::rethrow_exception(p);
+        } catch (AtomSanitizeException &e) {
+          nb::object ty = nb::borrow(static_cast<PyObject *>(payload));
+          nb::object obj = ty(e.what());
+          obj.attr("_type") = nb::cast(e.getType());
+          obj.attr("_atom_idx") = nb::cast(e.getAtomIdx());
+          PyErr_SetObject(static_cast<PyObject *>(payload), obj.ptr());
+        }
+      },
+      ase.ptr());
+  auto ave =
+      nb::exception<AtomValenceException>(m, "AtomValenceException", ase);
+  nb::register_exception_translator(
+      [](const std::exception_ptr &p, void *payload) {
+        try {
+          if (p) std::rethrow_exception(p);
+        } catch (AtomValenceException &e) {
+          nb::object ty = nb::borrow(static_cast<PyObject *>(payload));
+          nb::object obj = ty(e.what());
+          obj.attr("_type") = nb::cast(e.getType());
+          obj.attr("_atom_idx") = nb::cast(e.getAtomIdx());
+          PyErr_SetObject(static_cast<PyObject *>(payload), obj.ptr());
+        }
+      },
+      ave.ptr());
+  auto ake =
+      nb::exception<AtomKekulizeException>(m, "AtomKekulizeException", ase);
+  nb::register_exception_translator(
+      [](const std::exception_ptr &p, void *payload) {
+        try {
+          if (p) std::rethrow_exception(p);
+        } catch (AtomKekulizeException &e) {
+          nb::object ty = nb::borrow(static_cast<PyObject *>(payload));
+          nb::object obj = ty(e.what());
+          obj.attr("_type") = nb::cast(e.getType());
+          obj.attr("_atom_idx") = nb::cast(e.getAtomIdx());
+          PyErr_SetObject(static_cast<PyObject *>(payload), obj.ptr());
+        }
+      },
+      ake.ptr());
+  auto ke = nb::exception<KekulizeException>(m, "KekulizeException", mse);
+  nb::register_exception_translator(
+      [](const std::exception_ptr &p, void *payload) {
+        try {
+          if (p) std::rethrow_exception(p);
+        } catch (KekulizeException &e) {
+          nb::object ty = nb::borrow(static_cast<PyObject *>(payload));
+          nb::object obj = ty(e.what());
+          obj.attr("_type") = nb::cast(e.getType());
+          obj.attr("_atom_indices") = nb::cast(e.getAtomIndices());
+          PyErr_SetObject(static_cast<PyObject *>(payload), obj.ptr());
+        }
+      },
+      ke.ptr());
 
   nb::class_<MolSanitizeException>(m, "_cppMolSanitizeException",
                                    "exception arising from sanitization")
       .def("Message", &MolSanitizeException::what)
-      .def("GetType", &MolSanitizeException::getType);
+      .def("GetType", &MolSanitizeException::getType)
+      .def_prop_ro("cause",
+                   [](const MolSanitizeException &self) { return self; });
   nb::class_<AtomSanitizeException, MolSanitizeException>(
       m, "_cppAtomSanitizeException", "exception arising from sanitization")
       .def("GetAtomIdx", &AtomSanitizeException::getAtomIdx);
@@ -137,108 +209,6 @@ NB_MODULE(rdchem, m) {
   nb::class_<KekulizeException, MolSanitizeException>(
       m, "_cppKekulizeException", "exception arising from sanitization")
       .def("GetAtomIndices", &KekulizeException::getAtomIndices);
-#if 0
-  // this is one of those parts where I think I wish that I knew how to do
-  // template meta-programming
-  python::class_<MolSanitizeException>("_cppMolSanitizeException",
-                                       "exception arising from sanitization",
-                                       python::no_init)
-      .def("Message", &MolSanitizeException::what, python::args("self"))
-      .def("GetType", &MolSanitizeException::getType, python::args("self"));
-  python::register_ptr_to_python<boost::shared_ptr<MolSanitizeException>>();
-  molSanitizeExceptionType = createExceptionClass("MolSanitizeException");
-  python::register_exception_translator<RDKit::MolSanitizeException>(
-      [&](const MolSanitizeException &exc) {
-        sanitExceptionTranslator(exc, molSanitizeExceptionType);
-      });
-
-  python::class_<AtomSanitizeException, python::bases<MolSanitizeException>>(
-      "_cppAtomSanitizeException", "exception arising from sanitization",
-      python::no_init)
-      .def("GetAtomIdx", &AtomSanitizeException::getAtomIdx,
-           python::args("self"));
-  python::register_ptr_to_python<boost::shared_ptr<AtomSanitizeException>>();
-  atomSanitizeExceptionType =
-      createExceptionClass("AtomSanitizeException", molSanitizeExceptionType);
-  python::register_exception_translator<RDKit::AtomSanitizeException>(
-      [&](const AtomSanitizeException &exc) {
-        sanitExceptionTranslator(exc, atomSanitizeExceptionType);
-      });
-
-  python::class_<AtomValenceException, python::bases<AtomSanitizeException>>(
-      "_cppAtomValenceException", "exception arising from sanitization",
-      python::no_init);
-  python::register_ptr_to_python<boost::shared_ptr<AtomValenceException>>();
-  atomValenceExceptionType =
-      createExceptionClass("AtomValenceException", atomSanitizeExceptionType);
-  python::register_exception_translator<RDKit::AtomValenceException>(
-      [&](const AtomValenceException &exc) {
-        sanitExceptionTranslator(exc, atomValenceExceptionType);
-      });
-
-  python::class_<AtomKekulizeException, python::bases<AtomSanitizeException>>(
-      "_cppAtomKekulizeException", "exception arising from sanitization",
-      python::no_init);
-  python::register_ptr_to_python<boost::shared_ptr<AtomKekulizeException>>();
-  atomKekulizeExceptionType =
-      createExceptionClass("AtomKekulizeException", atomSanitizeExceptionType);
-  python::register_exception_translator<RDKit::AtomKekulizeException>(
-      [&](const AtomKekulizeException &exc) {
-        sanitExceptionTranslator(exc, atomKekulizeExceptionType);
-      });
-
-  python::class_<KekulizeException, python::bases<MolSanitizeException>>(
-      "_cppAtomKekulizeException", "exception arising from sanitization",
-      python::no_init)
-      .def("GetAtomIndices", &getAtomIndicesHelper);
-  python::register_ptr_to_python<boost::shared_ptr<KekulizeException>>();
-  kekulizeExceptionType =
-      createExceptionClass("KekulizeException", molSanitizeExceptionType);
-  python::register_exception_translator<RDKit::KekulizeException>(
-      [&](const KekulizeException &exc) {
-        sanitExceptionTranslator(exc, kekulizeExceptionType);
-      });
-      //*********************************************
-      //
-      //  Utility Classes
-      //
-      //*********************************************
-      python::class_<QueryAtomIterSeq>("_ROQAtomSeq",
-        "Read-only sequence of atoms matching a "
-        "query, not constructible from Python.",
-        python::no_init)
-        .def("__iter__", &QueryAtomIterSeq::__iter__,
-          python::return_internal_reference<
-          1, python::with_custodian_and_ward_postcall<0, 1>>(),
-          python::args("self"))
-          .def("__next__", &QueryAtomIterSeq::next,
-            python::return_internal_reference<
-            1, python::with_custodian_and_ward_postcall<0, 1>>(),
-            python::args("self"))
-            .def("__len__", &QueryAtomIterSeq::len, python::args("self"))
-            .def("__getitem__", &QueryAtomIterSeq::get_item,
-              python::return_internal_reference<
-              1, python::with_custodian_and_ward_postcall<0, 1>>(),
-              python::args("self", "which"));
-              python::class_<ConformerIterSeq>(
-                "_ROConformerSeq",
-                "Read-only sequence of conformers, not constructible from Python.",
-                python::no_init)
-                .def("__iter__", &ConformerIterSeq::__iter__,
-                  python::return_internal_reference<
-                  1, python::with_custodian_and_ward_postcall<0, 1>>(),
-                  python::args("self"))
-                  .def("__next__", next_ptr<ConformerIterSeq, Conformer>,
-                    python::return_internal_reference<
-                    1, python::with_custodian_and_ward_postcall<0, 1>>(),
-                    python::args("self"))
-                    
-                    .def("__len__", &ConformerIterSeq::len, python::args("self"))
-                    .def("__getitem__", get_item_ptr<ConformerIterSeq, Conformer>,
-                      python::return_internal_reference<
-                      1, python::with_custodian_and_ward_postcall<0, 1>>(),
-                      python::args("self", "i"));
-#endif
 
   //*********************************************
   //
