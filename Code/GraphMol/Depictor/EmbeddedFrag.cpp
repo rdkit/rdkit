@@ -1067,11 +1067,10 @@ static bool validateFusionGeometry(
 // Returns pair of <validMatches, foundBestMatch>
 // If foundBestMatch is true, the last element in validMatches is the best
 static std::pair<std::vector<TemplateMatch>, bool> processTemplateMatches(
-    const RDKit::ROMol *mol, const RDKit::RWMol &ringMol,
-    const std::shared_ptr<RDKit::ROMol> &tmpl,
+    const RDKit::RWMol &ringMol, const std::shared_ptr<RDKit::ROMol> &tmpl,
     const CachedTemplateInfo &cachedInfo, const RDKit::INT_VECT &macrocycleRing,
     const std::vector<FusedRingInfo> &fusedRings,
-    const boost::dynamic_bitset<> &ringAtoms, const SubstituentInfo &subInfo) {
+    const SubstituentInfo &subInfo) {
   std::vector<TemplateMatch> validMatches;
 
   if (!cachedInfo.relaxed_query) {
@@ -1447,11 +1446,11 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
       std::vector<RDGeom::Point2D> coords_vec;
       try {
         coords_vec = RDDepict::generateMacrocycleCoordinates(
-            dp_mol, macrocycleRing, fusedRings, subInfo.sizesByPosition, BOND_LEN,
-            nextId, &embeddedCoords);
+            dp_mol, macrocycleRing, fusedRings, subInfo.sizesByPosition,
+            BOND_LEN, nextId, &embeddedCoords);
       } catch (...) {
-        // Failed to generate coordinates (e.g., no solution found, out of bounds access)
-        // Fall back to regular embedding
+        // Failed to generate coordinates (e.g., no solution found, out of
+        // bounds access) Fall back to regular embedding
         coords_vec.clear();
       }
 
@@ -1466,15 +1465,16 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
         coords[nextId] = macrocycle_coords;
         isMacrocycleWithFusionConstraints = true;
       } else {
-        // Failed to generate macrocycle coordinates, skip fusion constraint path
-        // Fall through to regular embedding below
+        // Failed to generate macrocycle coordinates, skip fusion constraint
+        // path Fall through to regular embedding below
         isMacrocycleWithFusionConstraints = false;
       }
     }
 
     RDGeom::Transform2D trans;
     EmbeddedFrag embRing;
-    // Use either the macrocycle-generated coordinates or the regular embedRing coordinates
+    // Use either the macrocycle-generated coordinates or the regular embedRing
+    // coordinates
     embRing.initFromRingCoords(fusedRings[nextId], coords[nextId]);
     RDKit::INT_VECT pinAtoms;
 

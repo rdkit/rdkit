@@ -2658,11 +2658,10 @@ static bool validateFusionGeometry(
 
 // Helper: Process all matches for a single template
 static std::pair<std::vector<TemplateMatch>, bool> processTemplateMatches(
-    const RDKit::ROMol *mol, const RDKit::RWMol &ringMol,
-    const std::shared_ptr<RDKit::ROMol> &tmpl,
+    const RDKit::RWMol &ringMol, const std::shared_ptr<RDKit::ROMol> &tmpl,
     const CachedTemplateInfo &cachedInfo, const RDKit::INT_VECT &macrocycleRing,
     const std::vector<FusedRingInfo> &fusedRings,
-    const boost::dynamic_bitset<> &ringAtoms, const SubstituentInfo &subInfo) {
+    const SubstituentInfo &subInfo) {
   std::vector<TemplateMatch> validMatches;
 
   if (!cachedInfo.relaxed_query) {
@@ -2772,9 +2771,8 @@ bool matchToTemplateMacrocycle(
        coordinateTemplates.getMatchingTemplates(macrocycleRing.size())) {
     const auto &cachedInfo = getCachedTemplateInfo(tmpl);
 
-    auto [matches, foundBestMatch] =
-        processTemplateMatches(mol, ringMol, tmpl, cachedInfo, macrocycleRing,
-                               fusedRings, ringAtoms, subInfo);
+    auto [matches, foundBestMatch] = processTemplateMatches(
+        ringMol, tmpl, cachedInfo, macrocycleRing, fusedRings, subInfo);
 
     all_validMatches.insert(all_validMatches.end(), matches.begin(),
                             matches.end());
