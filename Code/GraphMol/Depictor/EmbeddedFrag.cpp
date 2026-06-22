@@ -496,12 +496,6 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms) {
 }
 
 // Cached template information for macrocycle matching
-struct CachedTemplateInfo {
-  std::shared_ptr<RDKit::ROMol>
-      relaxed_query;              // Query without degree constraints
-  std::vector<bool> is_internal;  // Which atoms have degree constraints
-};
-
 // Helper: Recursively check if a query has degree constraints
 
 // Helper: Check if a query atom has a degree constraint
