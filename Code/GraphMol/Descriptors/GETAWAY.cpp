@@ -67,16 +67,6 @@ double roundn(double in, int factor) {
   return std::round(in * pow(10., factor)) / pow(10., factor);
 }
 
-double *retreiveMat(MatrixXd matrix) {
-  double *arrayd = matrix.data();
-  return arrayd;
-}
-
-double *retreiveVect(VectorXd matrix) {
-  double *arrayd = matrix.data();
-  return arrayd;
-}
-
 VectorXd getEigenVect(std::vector<double> v) {
   double *varray_ptr = &v[0];
   Map<VectorXd> V(varray_ptr, v.size());
@@ -87,15 +77,6 @@ double round_to_n_digits_(double x, int n) {
   char buff[32];
   sprintf(buff, "%.*g", n, x);  // use g to have significant digits!
   return atof(buff);
-}
-
-double round_to_n_digits(double x, int n) {
-  double scale = pow(10.0, ceil(log10(fabs(x))) + n);
-  return std::round(x * scale) / scale;
-}
-
-bool IsClose(double a, double b, int n) {
-  return (fabs(a - b) <= pow(0.1, n) * 1.1);
 }
 
 int countZeros(std::string ta) {
@@ -146,65 +127,6 @@ bool IsClose2(double a, double b, unsigned int) {
     }
   }
   return isclose;
-}
-
-bool IsClose3(double a, double b, unsigned int) {
-  bool isclose = false;
-  std::string sa, sb;
-  std::string ta, tb;
-  std::stringstream outa, outb;
-  outa << a;
-  sa = outa.str();
-  outb << b;
-  sb = outb.str();
-  ta = sa.substr(sa.find('.') + 1);
-  tb = sb.substr(sb.find('.') + 1);
-  // same number of digits!
-  if (ta.length() == tb.length()) {
-    // last digit +/-1 deviation only!)
-    if (abs(atoi(ta.c_str()) - atoi(tb.c_str())) < 2) {
-      // std::cout << a << "," << b << " ta:"  << ta << "," << "tb:" << tb<<
-      // "\n";
-      isclose = true;
-    }
-  }
-  return isclose;
-}
-
-// need to clean that code to have always the same output which is not the case
-// the classes used the last 2 digit +/- 1 to cluster in the same group (with 3
-// digit precision)
-// 0.012 and 0.013 are in the same group while 0.014 are not!
-std::vector<double> clusterArray(std::vector<double> data, double precision) {
-  std::vector<double> Store;
-
-  // sort the input data
-  std::sort(data.begin(), data.end());
-
-  // find the difference between each number and its predecessor
-  std::vector<double> diffs;
-
-  std::adjacent_difference(data.begin(), data.end(), std::back_inserter(diffs));
-
-  // convert differences into percentage changes
-  // std::transform(diffs.begin(), diffs.end(), data.begin(), diffs.begin(),
-  //    std::divides<double>());
-
-  int count = 0;
-  for (unsigned int i = 0; i < data.size(); i++) {
-    // std::cout << diffs[i] << ",";
-    count++;
-    // if a difference exceeds 0.01 <=> 1%, start a new group: if transform is
-    // used!
-    // use diff not ratio (with 0.003 precision look like it's what it's used in
-    // Dragon 6!)
-    if (diffs[i] > pow(0.1, precision)) {
-      Store.push_back(count);
-      count = 0;
-    }
-  }
-
-  return Store;
 }
 
 // need to clean that code to have always the same output which is not the case
@@ -321,17 +243,6 @@ std::vector<int> GetHeavyList(const ROMol &mol) {
     HeavyList.push_back(int(atom->getAtomicNum() > 1));
   }
   return HeavyList;
-}
-
-double *AppendDouble(double *w, const double *Append, int length, int pos) {
-  PRECONDITION(w != nullptr, "bad array");
-  PRECONDITION(Append != nullptr, "bad array");
-
-  for (int i = pos; i < pos + length; i++) {
-    w[i] = Append[i - pos];
-  }
-
-  return w;
 }
 
 double getRCON(MatrixXd R, MatrixXd Adj, int numAtoms) {

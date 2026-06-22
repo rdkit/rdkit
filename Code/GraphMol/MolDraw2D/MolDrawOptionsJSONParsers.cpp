@@ -180,6 +180,10 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   PT_OPT_GET(variableAtomRadius);
   PT_OPT_GET(includeChiralFlagLabel);
   PT_OPT_GET(simplifiedStereoGroupLabel);
+  PT_OPT_GET(stereoGroupAndLabel);
+  PT_OPT_GET(stereoGroupOrLabel);
+  PT_OPT_GET(stereoGroupAbsLabel);
+  PT_OPT_GET(addStereoGroupAnnotation);
   PT_OPT_GET(unspecifiedStereoIsUnknown);
   PT_OPT_GET(singleColourWedgeBonds);
   PT_OPT_GET(singleColourBonds);

@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
-import os
 import sys
 
-from rdkit import Chem, RDConfig
+from rdkit import Chem
 from rdkit.Chem import AllChem, Draw
 
 suppl = Chem.SDMolSupplier()
