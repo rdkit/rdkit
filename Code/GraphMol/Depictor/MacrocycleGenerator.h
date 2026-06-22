@@ -560,7 +560,7 @@ std::vector<RDGeom::Point2D> generateMacrocycleCoordinates(
 //! Match macrocycle to a template and extract coordinates
 /*!
   Attempts to match the macrocycle to a template from the coordinate template
-  library. If a match is found, the coordinates are extracted and refined.
+  library. If a match is found, the coordinates are extracted and refined
 
   \param mol: The molecule
   \param macrocycleRing: Atom indices in the macrocycle
