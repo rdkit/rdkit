@@ -358,95 +358,6 @@ void EmbeddedFrag::setupAttachmentPoints() {
 
 // check if the stereochemistry of the template matches the stereochemistry of
 // the molecule
-static bool checkStereoChemistry(const RDKit::ROMol &mol,
-                                 const RDKit::ROMol &templateMol,
-                                 const RDKit::MatchVectType &match) {
-  for (auto bond : mol.bonds()) {
-    if (bond->getBondType() != RDKit::Bond::DOUBLE ||
-        bond->getStereo() == RDKit::Bond::STEREOANY ||
-        bond->getStereo() == RDKit::Bond::STEREONONE) {
-      continue;
-    }
-
-    // Extract all atoms around the double bond
-    auto stereoAtoms = RDDepict::getDoubleBondStereoAtoms(bond, &mol);
-    if (!stereoAtoms.valid) {
-      continue;
-    }
-
-    // find the template atoms that correspond to the six atoms
-    int templateAtom1 = -1;
-    int templateAtom2 = -1;
-    int templateAtom1Neighbor1 = -1;
-    int templateAtom1Neighbor2 = -1;
-    int templateAtom2Neighbor1 = -1;
-    int templateAtom2Neighbor2 = -1;
-    for (auto &[templateAidx, rsAidx] : match) {
-      if (rsAidx == stereoAtoms.atom1) {
-        templateAtom1 = templateAidx;
-      } else if (rsAidx == stereoAtoms.atom2) {
-        templateAtom2 = templateAidx;
-      } else if (rsAidx == stereoAtoms.atom1Neighbor1) {
-        templateAtom1Neighbor1 = templateAidx;
-      } else if (rsAidx == stereoAtoms.atom2Neighbor1) {
-        templateAtom2Neighbor1 = templateAidx;
-      } else if (stereoAtoms.atom1Neighbor2 != -1 &&
-                 rsAidx == stereoAtoms.atom1Neighbor2) {
-        templateAtom1Neighbor2 = templateAidx;
-      } else if (stereoAtoms.atom2Neighbor2 != -1 &&
-                 rsAidx == stereoAtoms.atom2Neighbor2) {
-        templateAtom2Neighbor2 = templateAidx;
-      }
-    }
-
-    // If either of the double bond atoms is not in the match, skip this bond.
-    // This is the case for side chain E/Z bonds outside the matched ring.
-    if (templateAtom1 == -1 || templateAtom2 == -1) {
-      continue;  // Skip this bond, check the next one
-    }
-
-    // there's a chance that the atoms controlling the double bond stereochem in
-    // the molecule are not the atoms that matched to the template, handle that
-    // here by swapping to the other atom
-    bool swapStereo = false;
-    if (templateAtom1Neighbor1 == -1) {
-      templateAtom1Neighbor1 = templateAtom1Neighbor2;
-      swapStereo = !swapStereo;
-    }
-    if (templateAtom2Neighbor1 == -1) {
-      templateAtom2Neighbor1 = templateAtom2Neighbor2;
-      swapStereo = !swapStereo;
-    }
-
-    // Both bond atoms are in the match. If we failed to detect the neighbors
-    // controlling the stereochemistry, fail the match.
-    if (templateAtom1Neighbor1 == -1 || templateAtom2Neighbor1 == -1) {
-      return false;
-    }
-
-    const auto &conf = templateMol.getConformer();
-    const auto &atom1Loc = conf.getAtomPos(templateAtom1);
-    const auto &atom2Loc = conf.getAtomPos(templateAtom2);
-    const auto &atom1NeighborLoc = conf.getAtomPos(templateAtom1Neighbor1);
-    const auto &atom2NeighborLoc = conf.getAtomPos(templateAtom2Neighbor1);
-    // check if the two neighbors are on the same side of the bond
-    const auto v12 = atom1NeighborLoc - atom1Loc;
-    const auto v42 = atom2NeighborLoc - atom1Loc;
-    const auto v32 = atom2Loc - atom1Loc;
-    auto cross1 = v32.x * v12.y - v32.y * v12.x;
-    auto cross2 = v32.x * v42.y - v32.y * v42.x;
-    bool is_cis = cross1 * cross2 > 0;
-    if (swapStereo) {
-      is_cis = !is_cis;
-    }
-    bool expected_cis = (bond->getStereo() == RDKit::Bond::STEREOZ ||
-                         bond->getStereo() == RDKit::Bond::STEREOCIS);
-    if (is_cis != expected_cis) {
-      return false;
-    }
-  }
-  return true;
-}
 
 void EmbeddedFrag::applyCoordinates(
     const RDKit::INT_VECT &atomIndices,
@@ -592,184 +503,20 @@ struct CachedTemplateInfo {
 };
 
 // Helper: Recursively check if a query has degree constraints
-static bool queryHasDegreeConstraint(
-    const Queries::Query<int, RDKit::Atom const *, true> *query) {
-  if (!query) {
-    return false;
-  }
-
-  std::string desc = query->getDescription();
-
-  // Check if this query node is a degree constraint
-  if (desc.find("Degree") != std::string::npos) {
-    return true;
-  }
-
-  // For composite queries (And, Or), check children
-  if (desc.find("And") != std::string::npos ||
-      desc.find("Or") != std::string::npos) {
-    // Iterate through children
-    auto children = query->endChildren();
-    for (auto it = query->beginChildren(); it != children; ++it) {
-      if (queryHasDegreeConstraint(it->get())) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
 
 // Helper: Check if a query atom has a degree constraint
 // We check by looking for degree-related descriptions in the query
-static bool atomHasDegreeConstraint(const RDKit::Atom *atom) {
-  if (!atom->hasQuery()) {
-    return false;
-  }
-  const auto *queryAtom = static_cast<const RDKit::QueryAtom *>(atom);
-
-  // Recursively check the query tree for degree constraints
-  bool hasDegree = queryHasDegreeConstraint(queryAtom->getQuery());
-  return hasDegree;
-}
 
 // Helper: Create a relaxed query atom without degree constraints
-static RDKit::QueryAtom *createRelaxedQueryAtom(
-    const RDKit::Atom *templateAtom) {
-  constexpr int DUMMY_ATOMIC_NUM = 200;
-  auto *relaxedAtom = new RDKit::QueryAtom();
-
-  // Preserve atomic number if specified
-  if (templateAtom->getAtomicNum() > 0) {
-    relaxedAtom->setQuery(
-        RDKit::makeAtomNumQuery(templateAtom->getAtomicNum()));
-  }
-
-  // Preserve aromaticity if the atom is aromatic
-  if (templateAtom->getIsAromatic()) {
-    auto *aromQuery = RDKit::makeAtomAromaticQuery();
-    if (relaxedAtom->hasQuery()) {
-      relaxedAtom->expandQuery(aromQuery, Queries::COMPOSITE_AND);
-    } else {
-      relaxedAtom->setQuery(aromQuery);
-    }
-  }
-
-  // If no query was set, make it a wildcard atom
-  if (!relaxedAtom->hasQuery()) {
-    relaxedAtom->setQuery(RDKit::makeAtomNullQuery());
-  }
-
-  // Always exclude dummy atoms (atomic number 200) from matching
-  auto *notDummyQuery = RDKit::makeAtomNumQuery(DUMMY_ATOMIC_NUM);
-  notDummyQuery->setNegation(true);
-  relaxedAtom->expandQuery(notDummyQuery, Queries::COMPOSITE_AND);
-
-  return relaxedAtom;
-}
 
 // Get cached template info (build cache on first access)
 // Cache is keyed by shared_ptr to prevent dangling pointer issues
-static const CachedTemplateInfo &getCachedTemplateInfo(
-    const std::shared_ptr<RDKit::ROMol> &tmpl) {
-  static std::map<std::shared_ptr<const RDKit::ROMol>, CachedTemplateInfo,
-                  std::owner_less<std::shared_ptr<const RDKit::ROMol>>>
-      cache;
-
-  auto it = cache.find(tmpl);
-  if (it != cache.end()) {
-    return it->second;
-  }
-
-  // Build cached info for this template
-  CachedTemplateInfo info;
-  info.is_internal.resize(tmpl->getNumAtoms(), false);
-
-  // Create relaxed query molecule by copying template and removing degree
-  // constraints
-  auto *relaxed = new RDKit::RWMol();
-
-  // Add atoms to relaxed query, checking for degree constraints
-  for (const auto &atom : tmpl->atoms()) {
-    unsigned int idx = atom->getIdx();
-
-    // Check if this atom has a degree constraint
-    info.is_internal[idx] = atomHasDegreeConstraint(atom);
-
-    // Create relaxed atom (preserves atom type and aromaticity, but no degree)
-    auto *relaxedAtom = createRelaxedQueryAtom(atom);
-    relaxed->addAtom(relaxedAtom, false, true);
-  }
-
-  // Copy bonds from template
-  for (const auto &bond : tmpl->bonds()) {
-    unsigned int beginIdx = bond->getBeginAtomIdx();
-    unsigned int endIdx = bond->getEndAtomIdx();
-
-    // Create bond with same type and aromaticity
-    unsigned int bondIdx =
-        relaxed->addBond(beginIdx, endIdx, bond->getBondType());
-    if (bond->getIsAromatic()) {
-      relaxed->getBondWithIdx(bondIdx)->setIsAromatic(true);
-    }
-  }
-  info.relaxed_query.reset(relaxed);
-  cache[tmpl] = std::move(info);
-  return cache[tmpl];
-}
 
 // Helper function: build a molecule with ring atoms preserved and non-ring
 // atoms replaced with dummy atoms (for template matching)
-static RDKit::RWMol buildRingMol(const RDKit::ROMol *mol,
-                                 const boost::dynamic_bitset<> &ringAtoms) {
-  constexpr int DUMMY_ATOMIC_NUM = 200;
-  RDKit::RWMol ringMol(*mol, true);
-  for (auto &at : ringMol.atoms()) {
-    if (!ringAtoms.test(at->getIdx())) {
-      at->setAtomicNum(DUMMY_ATOMIC_NUM);  // Non-ring atoms become dummy
-    }
-    // Ring atoms keep their original atom types for wildcard matching
-  }
-  return ringMol;
-}
 
 // Helper function: compute the size of a substituent attached to a ring atom
 // Uses BFS traversal starting from substituentRoot, avoiding ring atoms
-static int computeSubstituentSize(const RDKit::ROMol *mol,
-                                  unsigned int substituentRoot,
-                                  unsigned int ringAttachmentPoint,
-                                  const boost::dynamic_bitset<> &ringAtoms) {
-  std::vector<unsigned int> toVisit = {substituentRoot};
-  boost::dynamic_bitset<> visited(mol->getNumAtoms());
-  visited.set(ringAttachmentPoint);  // Don't traverse back into ring
-  int size = 0;
-
-  while (!toVisit.empty()) {
-    auto current = toVisit.back();
-    toVisit.pop_back();
-    if (visited.test(current) || ringAtoms.test(current)) {
-      continue;
-    }
-    visited.set(current);
-    size++;
-    auto current_atom = mol->getAtomWithIdx(current);
-    for (auto neighbor : mol->atomNeighbors(current_atom)) {
-      toVisit.push_back(neighbor->getIdx());
-    }
-  }
-  return size;
-}
-
-// Structure to hold information about a fused small ring
-struct FusedRingInfo {
-  RDKit::INT_VECT ringAtoms;    // All atoms in the fused ring
-  RDKit::INT_VECT sharedAtoms;  // Atoms shared with macrocycle, in the order
-                                // they appear in the macrocycle
-  size_t ringSize;
-
-  // For validation: positions of shared atoms in macrocycle sequence
-  std::vector<size_t> macrocyclePositions;
-};
 
 // Struct to hold template match with score
 struct TemplateMatch {
@@ -842,24 +589,6 @@ static std::vector<FusedRingInfo> identifyFusedRings(
 
 // Helper: Pre-compute substituent sizes for all ring atom neighbors
 // Returns SubstituentInfo containing sizes map and smallest substituent size
-static SubstituentInfo computeSubstituentInfo(
-    const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
-    const boost::dynamic_bitset<> &ringAtoms) {
-  SubstituentInfo info;
-
-  for (size_t i = 0; i < macrocycleRing.size(); ++i) {
-    auto ringAtomIdx = macrocycleRing[i];
-    auto atom = mol->getAtomWithIdx(ringAtomIdx);
-    for (auto nbr : mol->atomNeighbors(atom)) {
-      unsigned int nbrIdx = nbr->getIdx();
-      if (!ringAtoms.test(nbrIdx) && info.sizesByPosition.count(nbrIdx) == 0) {
-        int size = computeSubstituentSize(mol, nbrIdx, ringAtomIdx, ringAtoms);
-        info.sizesByPosition[i] += size;  // Also track by position
-      }
-    }
-  }
-  return info;
-}
 
 // Helper: Calculate score for a template match based on internal penalty
 // Returns negative score (lower penalty = higher score)

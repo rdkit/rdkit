@@ -351,6 +351,17 @@ struct DoubleBondStereoAtoms {
         valid(false) {}
 };
 
+//! Information about a small ring fused to a macrocycle
+struct FusedRingInfo {
+  RDKit::INT_VECT ringAtoms;    //!< All atoms in the fused ring
+  RDKit::INT_VECT sharedAtoms;  //!< Atoms shared with macrocycle, in the order
+                                //!< they appear in the macrocycle
+  size_t ringSize;
+
+  //! For validation: positions of shared atoms in macrocycle sequence
+  std::vector<size_t> macrocyclePositions;
+};
+
 // ============================================================================
 // Helper Functions for Angle Constraint Detection and Refinement
 // ============================================================================
@@ -498,12 +509,11 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
   \param angles: Turn angles (modified in-place)
   \param constrainedPositions: Set of positions that should not be adjusted
   \param bondLength: Target bond length
-  \param isOddRing: Whether this is an odd-numbered ring
 */
 void refineWithJacobian(std::vector<RDGeom::Point2D> &coords,
                         std::vector<double> &angles,
                         const std::set<size_t> &constrainedPositions,
-                        double bondLength, bool isOddRing);
+                        double bondLength);
 
 //! Flip certain fused rings if it improves the geometry
 /*!
@@ -574,6 +584,28 @@ bool matchToTemplateMacrocycle(
     const RDKit::VECT_INT_VECT &allRings,
     const std::map<size_t, int> &substituentSizesByPosition,
     RDGeom::INT_POINT2D_MAP &coords, int currentRingIndex = -1);
+
+//! Compute substituent sizes for all positions in a macrocycle
+/*!
+  \param mol: The molecule
+  \param macrocycleRing: Atom indices in the macrocycle
+  \param ringAtoms: Bitset of all atoms in rings
+  \return SubstituentInfo with size map by position
+*/
+SubstituentInfo computeSubstituentInfo(
+    const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
+    const boost::dynamic_bitset<> &ringAtoms);
+
+//! Check if stereochemistry of template matches molecule
+/*!
+  \param mol: The molecule being matched
+  \param templateMol: The template molecule
+  \param match: The match vector from substructure matching
+  \return true if stereochemistry is compatible
+*/
+bool checkStereoChemistry(const RDKit::ROMol &mol,
+                          const RDKit::ROMol &templateMol,
+                          const RDKit::MatchVectType &match);
 
 //! Check if a macrocycle ring vector should be reversed for fusion
 /*!

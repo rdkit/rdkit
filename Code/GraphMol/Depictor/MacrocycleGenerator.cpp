@@ -1161,7 +1161,7 @@ std::vector<AngleConstraint> identifyAngleConstraintsForFusedRings(
 void refineWithJacobian(std::vector<RDGeom::Point2D> &coords,
                         std::vector<double> &angles,
                         const std::set<size_t> &constrainedPositions,
-                        double bondLength, bool isOddRing) {
+                        double bondLength) {
   // Iterative Jacobian pseudo-inverse refinement to close the gap
   // coords has N+1 elements: [0, 1, ..., N-1, N_dummy]
 
@@ -1356,8 +1356,7 @@ std::vector<RDGeom::Point2D> refineMacrocycleWithAngleConstraints(
   }
 
   // Close gap using Jacobian minimization
-  refineWithJacobian(coords, adjustedAngles, constrainedPositions, bondLength,
-                     N % 2 == 1);
+  refineWithJacobian(coords, adjustedAngles, constrainedPositions, bondLength);
 
   // Remove dummy atom and return
   coords.pop_back();
@@ -2124,7 +2123,7 @@ void maybeRefineTemplateMatchedMacrocycle(const RDKit::ROMol *mol,
 
 // Check if the stereochemistry of the template matches the stereochemistry of
 // the molecule
-static bool checkStereoChemistry(const RDKit::ROMol &mol,
+bool checkStereoChemistry(const RDKit::ROMol &mol,
                                  const RDKit::ROMol &templateMol,
                                  const RDKit::MatchVectType &match) {
   for (auto bond : mol.bonds()) {
@@ -2219,17 +2218,6 @@ struct CachedTemplateInfo {
   std::shared_ptr<RDKit::ROMol>
       relaxed_query;              // Query without degree constraints
   std::vector<bool> is_internal;  // Which atoms have degree constraints
-};
-
-// Structure to hold information about a fused small ring
-struct FusedRingInfo {
-  RDKit::INT_VECT ringAtoms;    // All atoms in the fused ring
-  RDKit::INT_VECT sharedAtoms;  // Atoms shared with macrocycle, in the order
-                                // they appear in the macrocycle
-  size_t ringSize;
-
-  // For validation: positions of shared atoms in macrocycle sequence
-  std::vector<size_t> macrocyclePositions;
 };
 
 // Struct to hold template match with score
@@ -2377,7 +2365,7 @@ static RDKit::RWMol buildRingMol(const RDKit::ROMol *mol,
 }
 
 // Helper function: compute the size of a substituent attached to a ring atom
-static int computeSubstituentSize(const RDKit::ROMol *mol,
+int computeSubstituentSize(const RDKit::ROMol *mol,
                                   unsigned int substituentRoot,
                                   unsigned int ringAttachmentPoint,
                                   const boost::dynamic_bitset<> &ringAtoms) {
@@ -2467,7 +2455,7 @@ static std::vector<FusedRingInfo> identifyFusedRings(
 }
 
 // Helper: Pre-compute substituent sizes for all ring atom neighbors
-static SubstituentInfo computeSubstituentInfo(
+SubstituentInfo computeSubstituentInfo(
     const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
     const boost::dynamic_bitset<> &ringAtoms) {
   SubstituentInfo info;
