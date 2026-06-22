@@ -693,6 +693,7 @@ bool isTemplateMatchAHit(
   atomsInMatch.clear();
   // newAttachOrds.clear();
   std::map<unsigned int, unsigned int> molToQueryMap;
+  std::map<BondConnectionDef, std::string> localBondConnectionMap;
 
   // check to see if any of the atoms or bonds are already used
   for (auto pair : match) {
@@ -775,7 +776,7 @@ bool isTemplateMatchAHit(
               // save the attach point relative to the full atom molecule being
               // converted
 
-              bondConnectionMap[BondConnectionDef(atom->getIdx(), nbrAtomIdx)] =
+              localBondConnectionMap[BondConnectionDef(atom->getIdx(), nbrAtomIdx)] =
                   attachPoint.id;
             }
             break;
@@ -788,6 +789,10 @@ bool isTemplateMatchAHit(
         }
       }
     }
+  }
+
+  for (auto &connection : localBondConnectionMap) {
+    bondConnectionMap[connection.first] = connection.second;
   }
 
   return true;

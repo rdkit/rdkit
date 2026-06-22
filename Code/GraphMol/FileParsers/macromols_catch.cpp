@@ -569,3 +569,41 @@ TEST_CASE("test primatves", "test primatves") {
 
   }
 }
+
+TEST_CASE("MissingTemplate") {
+  SECTION("basic") {
+
+    std::string rdbase = getenv("RDBASE");
+    std::string fName = rdbase +
+                        "/Code/GraphMol/FileParsers/test_data/macromols/FromBioviaDoc.mol";
+    std::string templateFName = rdbase +
+                        "/Code/GraphMol/FileParsers/test_data/macromols/TwoHelmTemplates.mol";
+    
+    RDKit::v2::FileParsers::MolFileParserParams pp;
+    pp.sanitize = true;
+    pp.removeHs = false;
+    pp.strictParsing = true;
+
+    std::unique_ptr<RDKit::RWMol> mol;
+    std::unique_ptr<RDKit::MacroMol> templates;
+    RDKit::v2::FileParsers::MolFileParserParams params;
+    RDKit::MolFromMacroMolParams molFromMacroMolParams;
+    molFromMacroMolParams.includeLeavingGroups = true;
+
+    REQUIRE_NOTHROW(mol = SCSRUtils::MolFromSCSRFile(fName, params,molFromMacroMolParams,  SCSRUtils::SCSRBaseHbondOptions::Auto));
+    REQUIRE_NOTHROW(templates = SCSRUtils::MacroMolFromSCSRFile(templateFName, params,  SCSRUtils::SCSRBaseHbondOptions::Auto));
+
+
+    MolToMACROParams molToMacroMolParams;
+    auto res = std::unique_ptr<MacroMol>(new MacroMol());
+    auto macroMol = MolToMacroMol(*mol, *templates->getTemplateLibrary(), molToMacroMolParams);
+
+    auto molOut = SCSRUtils::MacroMolToSCSRMolBlock(*macroMol);
+    mol = SCSRUtils::MolFromSCSRBlock(molOut, params,molFromMacroMolParams,  SCSRUtils::SCSRBaseHbondOptions::Auto);
+     
+    CHECK(mol->getNumAtoms() == 27);
+    CHECK(mol->getNumBonds() == 26);
+    
+  }
+
+}
