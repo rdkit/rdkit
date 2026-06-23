@@ -495,30 +495,6 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms) {
   return true;
 }
 
-// Cached template information for macrocycle matching
-// Helper: Recursively check if a query has degree constraints
-
-// Helper: Check if a query atom has a degree constraint
-// We check by looking for degree-related descriptions in the query
-
-// Helper: Create a relaxed query atom without degree constraints
-
-// Get cached template info (build cache on first access)
-// Cache is keyed by shared_ptr to prevent dangling pointer issues
-
-// Helper function: build a molecule with ring atoms preserved and non-ring
-// atoms replaced with dummy atoms (for template matching)
-
-// Helper function: compute the size of a substituent attached to a ring atom
-// Uses BFS traversal starting from substituentRoot, avoiding ring atoms
-
-
-
-
-
-
-
-
 // find any atoms in the ring that are in trans double bonds
 // and mirror them into the ring
 static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
