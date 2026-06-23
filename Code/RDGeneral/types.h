@@ -77,6 +77,9 @@ inline constexpr std::string_view _CanonicalRankingNumber =
 inline constexpr std::string_view _ChiralityPossible = "_ChiralityPossible";
 inline constexpr std::string_view _CrippenLogP = "_CrippenLogP";
 inline constexpr std::string_view _CrippenMR = "_CrippenMR";
+inline constexpr std::string_view _MacroMolFromAttachPt =
+    "_MacroMolFromAttachPt";
+inline constexpr std::string_view _MacroMolToAttachPt = "_MacroMolToAttachPt";
 inline constexpr std::string_view _MMFFSanitized = "_MMFFSanitized";
 inline constexpr std::string_view _MolFileChiralFlag = "_MolFileChiralFlag";
 inline constexpr std::string_view MRV_SMA = "MRV SMA";
@@ -85,10 +88,6 @@ inline constexpr std::string_view _MolFileAtomQuery = "_MolFileAtomQuery";
 inline constexpr std::string_view _MolFileBondQuery = "_MolFileBondQuery";
 inline constexpr std::string_view _MolFileBondEndPts = "_MolFileBondEndPts";
 inline constexpr std::string_view _MolFileBondAttach = "_MolFileBondAttach";
-inline constexpr std::string_view _MolFileBondAttachPt1 =
-    "_MolFileBondAttachPt1";
-inline constexpr std::string_view _MolFileBondAttachPt2 =
-    "_MolFileBondAttachPt2";
 inline constexpr std::string_view _MolFileBondType = "_MolFileBondType";
 inline constexpr std::string_view _MolFileBondStereo = "_MolFileBondStereo";
 inline constexpr std::string_view _MolFileBondCfg = "_MolFileBondCfg";

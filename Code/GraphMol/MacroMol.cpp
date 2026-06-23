@@ -78,8 +78,8 @@ void MacroMol::addMacroBond(unsigned int fromAtomIdx, unsigned int toAtomIdx,
 
   this->setBondBookmark(bond, bondIdx);
 
-  bond->setProp(common_properties::_MolFileBondAttachPt2, toConnectionPoint);
-  bond->setProp(common_properties::_MolFileBondAttachPt1, fromConnectionPoint);
+  bond->setProp(common_properties::_MacroMolToAttachPt, toConnectionPoint);
+  bond->setProp(common_properties::_MacroMolFromAttachPt, fromConnectionPoint);
 }
 
 }  // namespace RDKit
