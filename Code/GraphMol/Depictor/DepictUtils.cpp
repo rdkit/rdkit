@@ -260,10 +260,10 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
       // remove them if the ring is fused to a macrocycle, because we need that
       // information in the macrocycle construction, to mark fused atoms as
       // "pointing out" of the macrocycle
-      bool shouldRemove =
-          ((nIntersectingAtoms == 1 || (nIntersectingAtoms == 2)) &&
-           mol.getBondBetweenAtoms(aid1, aid2) != nullptr &&
-           nIntersectingWithMacrocycle == 0);
+      bool shouldRemove = ((nIntersectingAtoms == 1 ||
+                            (nIntersectingAtoms == 2 &&
+                             mol.getBondBetweenAtoms(aid1, aid2) != nullptr)) &&
+                           nIntersectingWithMacrocycle == 0);
 
       //
       if (shouldRemove) {
