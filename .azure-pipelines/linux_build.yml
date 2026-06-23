@@ -58,14 +58,14 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    python Scripts/check_header_self_containment.py --build-dir build
-  displayName: Check header self-containment
-- bash: |
-    source ${CONDA}/etc/profile.d/conda.sh
-    conda activate rdkit_build
     cd build
     make -j $( $(number_of_cores) ) install
   displayName: Build
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    python Scripts/check_header_self_containment.py --build-dir build
+  displayName: Check header self-containment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
