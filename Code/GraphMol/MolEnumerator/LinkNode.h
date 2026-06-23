@@ -9,6 +9,7 @@
 //
 #ifndef RD_MOLENUMERATOR_LINKNODE_H
 #define RD_MOLENUMERATOR_LINKNODE_H
+#include <GraphMol/ROMol.h>
 
 #include <RDGeneral/Invariant.h>
 

@@ -10,6 +10,7 @@
 #include <RDGeneral/export.h>
 #ifndef RD_CDXML_FILEPARSERS_H
 #define RD_CDXML_FILEPARSERS_H
+#include <GraphMol/RWMol.h>
 
 #include <RDGeneral/types.h>
 #include <string>
