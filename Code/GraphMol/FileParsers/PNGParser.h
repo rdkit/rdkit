@@ -78,10 +78,8 @@ inline std::vector<std::pair<std::string, std::string>> PNGStringToMetadata(
 //! \brief adds metadata to a PNG stream.
 //! The modified PNG data is returned.
 /*!
-
-The compressed flag is ignored if the RDKit is not built with
-boost::iostreams support
-
+  \param compressed if true, metadata values are stored in compressed (zTXt)
+         PNG chunks; otherwise they are stored uncompressed (tEXt).
 */
 RDKIT_FILEPARSERS_EXPORT std::string addMetadataToPNGStream(
     std::istream &iStream,

@@ -24,18 +24,11 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
-#ifdef RDK_USE_BOOST_IOSTREAMS
-#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/filter/zlib.hpp>
-#endif
 #include <RDGeneral/BoostEndInclude.h>
-#if !defined(RDK_USE_BOOST_IOSTREAMS) && defined(RDK_USE_STANDALONE_ZLIB)
 #ifndef ZLIB_CONST
 #define ZLIB_CONST
 #endif
 #include <zlib.h>
-#endif
 
 namespace RDKit {
 
@@ -58,26 +51,6 @@ bool checkPNGHeader(std::istream &inStream) {
   return true;
 }
 
-#if defined(RDK_USE_BOOST_IOSTREAMS)
-std::string uncompressString(const std::string &ztext) {
-  std::stringstream compressed(ztext);
-  std::stringstream uncompressed;
-  boost::iostreams::filtering_streambuf<boost::iostreams::input> bioOutstream;
-  bioOutstream.push(boost::iostreams::zlib_decompressor());
-  bioOutstream.push(compressed);
-  boost::iostreams::copy(bioOutstream, uncompressed);
-  return uncompressed.str();
-}
-std::string compressString(const std::string &text) {
-  std::stringstream uncompressed(text);
-  std::stringstream compressed;
-  boost::iostreams::filtering_streambuf<boost::iostreams::input> bioOutstream;
-  bioOutstream.push(boost::iostreams::zlib_compressor());
-  bioOutstream.push(uncompressed);
-  boost::iostreams::copy(bioOutstream, compressed);
-  return compressed.str();
-}
-#elif defined(RDK_USE_STANDALONE_ZLIB)
 std::string zlibActOnString(const std::string &inText, bool compress) {
   static const char *deflatePrefix = "de";
   static const char *inflatePrefix = "in";
@@ -146,7 +119,6 @@ std::string uncompressString(const std::string &ztext) {
 std::string compressString(const std::string &text) {
   return zlibActOnString(text, true);
 }
-#endif
 }  // namespace
 
 std::vector<std::pair<std::string, std::string>> PNGStreamToMetadata(
@@ -177,9 +149,6 @@ std::vector<std::pair<std::string, std::string>> PNGStreamToMetadata(
         bytes[3] == 'D') {
       break;
     }
-#if !defined(RDK_USE_BOOST_IOSTREAMS) && !defined(RDK_USE_STANDALONE_ZLIB)
-    bool alreadyWarned = false;
-#endif
     if (blockLen > 0 &&
         ((bytes[0] == 't' && bytes[1] == 'E') ||
          (bytes[0] == 'z' && bytes[1] == 'T')) &&
@@ -199,23 +168,12 @@ std::vector<std::pair<std::string, std::string>> PNGStreamToMetadata(
           throw FileParseException("error when reading from PNG");
         }
       } else {
-#if defined(RDK_USE_BOOST_IOSTREAMS) || defined(RDK_USE_STANDALONE_ZLIB)
         value.resize(dataLen);
         inStream.read(&value.front(), dataLen);
         if (inStream.fail()) {
           throw FileParseException("error when reading from PNG");
         }
         value = uncompressString(value.substr(1, dataLen - 1));
-#else
-        value = "";
-        if (!alreadyWarned) {
-          BOOST_LOG(rdWarningLog)
-              << "compressed metadata found in PNG, but the RDKit was not "
-                 "compiled with support for this. Skipping it."
-              << std::endl;
-          alreadyWarned = true;
-        }
-#endif
       }
       if (!value.empty()) {
         res.emplace_back(key, value);
@@ -232,9 +190,6 @@ std::string addMetadataToPNGStream(
     std::istream &inStream,
     const std::vector<std::pair<std::string, std::string>> &metadata,
     bool compressed) {
-#if !defined(RDK_USE_BOOST_IOSTREAMS) && !defined(RDK_USE_STANDALONE_ZLIB)
-  compressed = false;
-#endif
   // confirm that it's a PNG file:
   if (!checkPNGHeader(inStream)) {
     throw FileParseException("PNG header not recognized");
@@ -281,7 +236,6 @@ std::string addMetadataToPNGStream(
       blk.write(key.c_str(), key.size() + 1);
       blk.write(value.c_str(), value.size());
     } else {
-#if defined(RDK_USE_BOOST_IOSTREAMS) || defined(RDK_USE_STANDALONE_ZLIB)
       blk.write("zTXt", 4);
       // write the name along with a zero
       blk.write(key.c_str(), key.size() + 1);
@@ -290,11 +244,6 @@ std::string addMetadataToPNGStream(
       blk.write("\0", 1);
       auto dest = compressString(value);
       blk.write((const char *)dest.c_str(), dest.size());
-#else
-      // we shouldn't get here since we disabled compressed at the beginning of
-      // the function, but check to be sure
-      CHECK_INVARIANT(0, "compression support not enabled");
-#endif
     }
     auto blob = blk.str();
     std::uint32_t blksize =

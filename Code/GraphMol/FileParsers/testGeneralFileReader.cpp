@@ -13,8 +13,6 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/test.h>
 
-#include <boost/iostreams/device/file.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
 #include <fstream>
 #include <map>
 #include <memory>
@@ -22,7 +20,6 @@
 
 #include "GeneralFileReader.h"
 
-namespace io = boost::iostreams;
 using namespace RDKit;
 using namespace GeneralMolSupplier;
 
@@ -102,7 +99,6 @@ void testSdf() {
   }
   TEST_ASSERT(i == 16);
 
-#ifdef RDK_USE_BOOST_IOSTREAMS
   //! Open compressed SDF file format
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf.gz";
   opt.takeOwnership = false;
@@ -117,7 +113,6 @@ void testSdf() {
     }
   }
   TEST_ASSERT(i == 16);
-#endif
 }
 
 void testSmi() {
@@ -216,7 +211,6 @@ void testMae() {
                 std::to_string(19 - i));
   }
   TEST_ASSERT(maesup->atEnd());
-#ifdef RDK_USE_BOOST_IOSTREAMS
   //! Open compressed MAE file, .maegz format
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/1kv1.maegz";
   auto cmaesup = getSupplier(fname, opt);
@@ -227,7 +221,6 @@ void testMae() {
   TEST_ASSERT(info->getResidueName() == "ARG ");
   TEST_ASSERT(info->getChainId() == "A");
   TEST_ASSERT(info->getResidueNumber() == 5);
-#endif
 #endif
 }
 

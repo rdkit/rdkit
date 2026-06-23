@@ -13,13 +13,9 @@
 #include <RDBoost/python.h>
 #include <string>
 
-#include <boost/iostreams/device/file.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
-#include <boost/iostreams/filter/bzip2.hpp>
+#include <fstream>
 #include <boost/algorithm/string.hpp>
-
-namespace io = boost::iostreams;
+#include <RDStreams/streams.h>
 
 // ours
 #include <GraphMol/FileParsers/MolSupplier.h>
@@ -62,34 +58,26 @@ ForwardSDMolSupplier *createForwardSupplier(std::string filename, bool sanitize,
                                             bool removeHs) {
   std::vector<std::string> splitName;
   boost::split(splitName, filename, boost::is_any_of("."));
-  std::unique_ptr<io::filtering_istream> strm(new io::filtering_istream());
-  if (splitName.back() == "sdf") {
-  } else if (splitName.back() == "gz") {
-#ifndef RDK_NOGZIP
-    strm->push(io::gzip_decompressor());
-#else
-    throw_value_error("gzip support not enabled");
-#endif
-  } else if (splitName.back() == "bz2") {
-#ifndef RDK_NOBZIP2
-    strm->push(io::bzip2_decompressor());
+  const std::string &ext = splitName.back();
+  std::istream *strm = nullptr;
+  if (ext == "sdf") {
+    strm = new std::ifstream(filename.c_str(), std::ios_base::binary);
+  } else if (ext == "gz") {
+    strm = new gzstream(filename);
+  } else if (ext == "bz2") {
+#ifdef RDK_USE_BZIP2
+    strm = new bz2stream(filename);
 #else
     throw_value_error("bzip2 support not enabled");
 #endif
   } else {
-    std::string errorTxt = "Unrecognized extension: " + splitName.back();
-    throw_value_error(errorTxt);
+    throw_value_error("Unrecognized extension: " + ext);
   }
-  io::file_source fileSource(filename);
-  if (!fileSource.is_open()) {
-    std::string errorTxt = "could not open file: " + filename;
-    throw_value_error(errorTxt);
+  if (!strm->good()) {
+    delete strm;
+    throw_value_error("could not open file: " + filename);
   }
-  strm->push(fileSource);
-
-  ForwardSDMolSupplier *res =
-      new ForwardSDMolSupplier(strm.release(), true, sanitize, removeHs);
-  return res;
+  return new ForwardSDMolSupplier(strm, true, sanitize, removeHs);
 }
 
 std::string csdMolSupplierClassDoc =
