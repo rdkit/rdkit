@@ -16,6 +16,8 @@
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/StreamOps.h>
 #include <GraphMol/Chirality.h>
+#include <memory>
+#include <string>
 #include <vector>
 
 #include "FileParsers.h"
