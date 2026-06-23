@@ -46,6 +46,7 @@ unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
   auto className = monomerClassToString(monomerClass);
   auto atom = new Atom(0);
 
+  atom->setProp(common_properties::isMacroAtom, true);
   atom->setProp(common_properties::dummyLabel, templateName);
   atom->setProp(common_properties::molAtomClass, className);
 
