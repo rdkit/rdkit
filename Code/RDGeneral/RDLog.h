@@ -19,6 +19,8 @@
 #include <cstdint>
 #include <ostream>
 #include <streambuf>
+#include <memory>
+#include <string>
 
 namespace boost {
 namespace logging {
