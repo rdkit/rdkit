@@ -33,11 +33,8 @@ stringToMonomerClass(const std::string &className);
 
 class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
  public:
-  unsigned int addMacroAtom(
-      MonomerClass monomerClass, std::string templateName,
-      std::optional<unsigned int> residueNumber = std::nullopt,
-      std::optional<std::string> chainId = std::nullopt,
-      std::optional<std::string> insertionCode = std::nullopt);
+  unsigned int addMacroAtom(MonomerClass monomerClass,
+                            std::string templateName);
 
   void addMacroBond(unsigned int fromAtomIdx, unsigned int toAtomIdx,
                     int fromConnectionPoint, int toConnectionPoint,

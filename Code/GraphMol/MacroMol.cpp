@@ -42,27 +42,12 @@ MonomerClass stringToMonomerClass(const std::string &className) {
 }
 
 unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
-                                    std::string templateName,
-                                    std::optional<unsigned int> residueNumber,
-                                    std::optional<std::string> chainId,
-                                    std::optional<std::string> insertionCode) {
+                                    std::string templateName) {
   auto className = monomerClassToString(monomerClass);
   auto atom = new Atom(0);
 
   atom->setProp(common_properties::dummyLabel, templateName);
   atom->setProp(common_properties::molAtomClass, className);
-
-  auto *monomer_info = new AtomMonomerInfo();
-  monomer_info->setResidueName(templateName);
-  monomer_info->setMonomerClass(className);
-  if (residueNumber) {
-    monomer_info->setResidueNumber(*residueNumber);
-  }
-  if (chainId) {
-    monomer_info->setChainId(*chainId);
-  }
-  // Save the insertion code within the monomer info
-  atom->setMonomerInfo(monomer_info);
 
   return this->addAtom(atom, false, true);
 }
