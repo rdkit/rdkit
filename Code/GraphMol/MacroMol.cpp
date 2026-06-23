@@ -54,10 +54,16 @@ unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
 
 void MacroMol::addMacroBond(unsigned int fromAtomIdx, unsigned int toAtomIdx,
                             int fromConnectionPoint, int toConnectionPoint,
+                            bool directional = true,
                             std::optional<Bond::BondType> bondType) {
-  const auto resolvedBondType = bondType.value_or(Bond::BondType::SINGLE);
+  if (directional) {
+    defaultBondType = Bond::BondType::DATIVE;
+  } else {
+    defaultBondType = Bond::BondType::SINGLE;
+  }
+  resolveBondType = bondType.value_or(defaultBondType);
 
-  auto bondIdx = this->addBond(fromAtomIdx, toAtomIdx, resolvedBondType) - 1;
+  auto bondIdx = this->addBond(fromAtomIdx, toAtomIdx, resolveBondType) - 1;
 
   auto bond = this->getBondWithIdx(bondIdx);
 
