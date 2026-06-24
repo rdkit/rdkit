@@ -73,17 +73,16 @@ molecule data as text (e.g. a SMILES or an MDL mol block).
 See the individual docstrings for more information.
 )DOC";
 
-  m.def(
-      "GetCanonSmiles",
-      (std::string(*)(RDKit::ROMol &, int))AvalonTools::getCanonSmiles,
-      "mol"_a, "flags"_a = -1,
-      R"DOC(returns canonical smiles for an RDKit molecule)DOC");
+  m.def("GetCanonSmiles",
+        (std::string (*)(RDKit::ROMol &, int))AvalonTools::getCanonSmiles,
+        "mol"_a, "flags"_a = -1,
+        R"DOC(returns canonical smiles for an RDKit molecule)DOC");
 
-  m.def(
-      "GetCanonSmiles",
-      (std::string(*)(const std::string &, bool, int))AvalonTools::getCanonSmiles,
-      "molData"_a, "isSmiles"_a, "flags"_a = -1,
-      R"DOC(Returns canonical smiles for some molecule data.
+  m.def("GetCanonSmiles",
+        (std::string (*)(const std::string &, bool,
+                         int))AvalonTools::getCanonSmiles,
+        "molData"_a, "isSmiles"_a, "flags"_a = -1,
+        R"DOC(Returns canonical smiles for some molecule data.
 If the isSmiles argument is true, the data is assumed to be SMILES, otherwise
 MDL mol data is assumed.)DOC");
 
@@ -111,22 +110,20 @@ MDL mol data is assumed.)DOC");
         return res;
       },
       "molData"_a, "isSmiles"_a, "nBits"_a = 512, "isQuery"_a = false,
-      "resetVect"_a = false,
-      "bitFlags"_a = AvalonTools::avalonSimilarityBits,
+      "resetVect"_a = false, "bitFlags"_a = AvalonTools::avalonSimilarityBits,
       R"DOC(returns the Avalon fingerprint for some molecule data.
 If the isSmiles argument is true, the data is assumed to be SMILES, otherwise
 MDL mol data is assumed.)DOC",
       nb::rv_policy::take_ownership);
 
-  m.def(
-      "Generate2DCoords",
-      (unsigned int (*)(RDKit::ROMol &, bool))AvalonTools::set2DCoords,
-      "mol"_a, "clearConfs"_a = true,
-      R"DOC(Generates 2d coordinates for an RDKit molecule)DOC");
+  m.def("Generate2DCoords",
+        (unsigned int (*)(RDKit::ROMol &, bool))AvalonTools::set2DCoords,
+        "mol"_a, "clearConfs"_a = true,
+        R"DOC(Generates 2d coordinates for an RDKit molecule)DOC");
 
   m.def(
       "Generate2DCoords",
-      (std::string(*)(const std::string &, bool))AvalonTools::set2DCoords,
+      (std::string (*)(const std::string &, bool))AvalonTools::set2DCoords,
       "molData"_a, "isSmiles"_a,
       R"DOC(returns an MDL mol block with 2D coordinates for some molecule data.
 If the isSmiles argument is true, the data is assumed to be SMILES, otherwise
@@ -168,7 +165,7 @@ MDL mol data is assumed.)DOC");
          bool isQuery, unsigned int bitFlags) {
         auto *res = new RDKit::SparseIntVect<uint32_t>(nBits);
         AvalonTools::getAvalonCountFP(data, isSmiles, *res, nBits, isQuery,
-                                     bitFlags);
+                                      bitFlags);
         return res;
       },
       "molData"_a, "isSmiles"_a, "nBits"_a = 512, "isQuery"_a = false,
@@ -192,17 +189,15 @@ MDL mol data is assumed.)DOC",
         return res;
       },
       "molData"_a, "isSmiles"_a, "nBits"_a = 512, "isQuery"_a = false,
-      "resetVect"_a = false,
-      "bitFlags"_a = AvalonTools::avalonSimilarityBits,
+      "resetVect"_a = false, "bitFlags"_a = AvalonTools::avalonSimilarityBits,
       R"DOC(returns the Avalon fingerprint for some molecule data as a list of ints.
 If the isSmiles argument is true, the data is assumed to be SMILES, otherwise
 MDL mol data is assumed.)DOC");
 
-  m.def(
-      "InitializeCheckMol",
-      (int (*)(const std::string &))AvalonTools::initCheckMol,
-      "options"_a = "",
-      R"DOC(initializes the structure checker.
+  m.def("InitializeCheckMol",
+        (int (*)(const std::string &))AvalonTools::initCheckMol,
+        "options"_a = "",
+        R"DOC(initializes the structure checker.
 The argument should contain option lines separated by embedded newlines.An empty string will be used if the argument is omitted.An non-zero error code is returned in case of failure.)DOC");
 
   m.def("CloseCheckMolFiles", AvalonTools::closeCheckMolFiles,
@@ -257,7 +252,7 @@ the return tuple.)DOC");
   m.attr("avalonSSSBits") = AvalonTools::avalonSSSBits;
   m.attr("avalonSimilarityBits") = AvalonTools::avalonSimilarityBits;
 
-  nb::enum_<StruChkFlag>(m, "StruChkFlag")
+  nb::enum_<StruChkFlag>(m, "StruChkFlag", nb::is_arithmetic())
       .value("bad_molecule", bad_molecule)
       .value("alias_conversion_failed", alias_conversion_failed)
       .value("transformed", transformed)
@@ -273,7 +268,8 @@ the return tuple.)DOC");
       .value("stereo_transformed", stereo_transformed)
       .value("template_transformed", template_transformed);
 
-  nb::enum_<StruChkResult>(m, "StruChkResult")
+  // is_arithmetic because these are used as ints in the MolKey code
+  nb::enum_<StruChkResult>(m, "StruChkResult", nb::is_arithmetic())
       .value("success", success)
       .value("bad_set", bad_set)
       .value("transformed_set", transformed_set);
