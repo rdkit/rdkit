@@ -482,6 +482,45 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     static const bool force = true;
     MolOps::assignStereochemistry(taut, cleanIt, force);
 
+    // assignStereochemistry(cleanIt=true) may clear CHI tags on sp3 atoms
+    // that are NOT involved in the tautomeric transformation (not in
+    // d_modifiedAtoms) when the atom's CIP environment changes in a
+    // particular tautomer (e.g., an exo-methylene intermediate makes both
+    // ring paths look symmetric).  This causes those tautomers to be stored
+    // without stereo; since the state key is stereo-blind, the stereo-
+    // bearing version of the same tautomer is later deduplicated away —
+    // making Canonicalize return a SMILES absent from the Enumerate set.
+    //
+    // Fix: tentatively restore the input-mol CHI for any sp3 atom not in
+    // d_modifiedAtoms whose CHI was cleared, then re-run
+    // assignStereochemistry.  Only keep restored CHI if the center gets a
+    // _CIPCode or _ringStereoAtoms property (truly chiral in this
+    // tautomer); otherwise leave it cleared.
+    if (!d_removeSp3Stereo) {
+      bool anyRestored = false;
+      for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
+        if (res.d_modifiedAtoms.test(idx)) {
+          continue;
+        }
+        const auto *molAtom = mol.getAtomWithIdx(idx);
+        auto *tautAtom = taut.getAtomWithIdx(idx);
+        if (molAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+          continue;
+        }
+        if (tautAtom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+          continue;
+        }
+        if (tautAtom->getHybridization() != Atom::SP3) {
+          continue;
+        }
+        tautAtom->setChiralTag(molAtom->getChiralTag());
+        anyRestored = true;
+      }
+      if (anyRestored) {
+        MolOps::assignStereochemistry(taut, cleanIt, force);
+      }
+    }
+
     // assignStereochemistry() can overwrite the explicit "undefined" bond
     // stereo (STEREOANY) that we set above in order to prevent downstream
     // coordinate-based E/Z inference. If bond stereo removal is enabled,
