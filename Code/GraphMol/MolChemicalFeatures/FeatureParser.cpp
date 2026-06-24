@@ -14,7 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -300,7 +300,7 @@ int parseFeatureData(std::istream &inStream,
         MolChemicalFeatureDef *fDef =
             Local::parseFeatureDef(inStream, inLine, lineNo, atomTypeDefs);
         if (fDef) {
-          res.push_back(boost::shared_ptr<MolChemicalFeatureDef>(fDef));
+          res.push_back(std::shared_ptr<MolChemicalFeatureDef>(fDef));
         }
       } else {
         throw FeatureFileParseException(lineNo, inLine,

@@ -37,12 +37,12 @@ class LocalStereoEnumerator {
   LocalStereoEnumerator &operator=(LocalStereoEnumerator &&other) = delete;
   ~LocalStereoEnumerator() = default;
 
-  boost::shared_ptr<RDKit::ROMol> next() {
+  std::shared_ptr<RDKit::ROMol> next() {
     auto iso = dp_enumerator->next();
     if (!iso) {
-      return boost::shared_ptr<RDKit::ROMol>();
+      return std::shared_ptr<RDKit::ROMol>();
     }
-    return boost::shared_ptr<RDKit::ROMol>(iso.release());
+    return std::shared_ptr<RDKit::ROMol>(iso.release());
   }
 
   unsigned int GetStereoisomerCount() {

@@ -129,14 +129,14 @@ struct sgroup_wrap {
     RegisterVectorConverter<SubstanceGroup>("SubstanceGroup_VECT");
 
     python::class_<SubstanceGroup::CState,
-                   boost::shared_ptr<SubstanceGroup::CState>>(
+                   std::shared_ptr<SubstanceGroup::CState>>(
         "SubstanceGroupCState", "CSTATE for a SubstanceGroup",
         python::init<>(python::args("self")))
         .def_readonly("bondIdx", &SubstanceGroup::CState::bondIdx)
         .def_readonly("vector", &SubstanceGroup::CState::vector);
 
     python::class_<SubstanceGroup::AttachPoint,
-                   boost::shared_ptr<SubstanceGroup::AttachPoint>>(
+                   std::shared_ptr<SubstanceGroup::AttachPoint>>(
         "SubstanceGroupAttach", "AttachPoint for a SubstanceGroup",
         python::init<>(python::args("self")))
         .def_readonly("aIdx", &SubstanceGroup::AttachPoint::aIdx,
@@ -145,7 +145,7 @@ struct sgroup_wrap {
                       "leaving atom or index (0 for implied)")
         .def_readonly("id", &SubstanceGroup::AttachPoint::id, "attachment id");
 
-    python::class_<SubstanceGroup, boost::shared_ptr<SubstanceGroup>>(
+    python::class_<SubstanceGroup, std::shared_ptr<SubstanceGroup>>(
         "SubstanceGroup", sGroupClassDoc.c_str(), python::no_init)
         .def("GetOwningMol", &SubstanceGroup::getOwningMol,
              "returns the molecule owning this SubstanceGroup",
