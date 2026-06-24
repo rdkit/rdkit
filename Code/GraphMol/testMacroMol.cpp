@@ -36,3 +36,28 @@ TEST_CASE("testBuildMacroMol") {
   }
   CHECK(sequence == "ACD");
 }
+
+TEST_CASE("testMultipleConnectionsSameMacroAtoms") {
+  // Build a MacroMol with two macro atoms and two bonds between them, and check
+  // that the MacroMol has the expected number of atoms and bonds, and that the
+  // MacroBondProps for each bond are as expected.
+  auto macro_mol = std::make_unique<MacroMol>();
+  auto macro_atom_1 = macro_mol->addMacroAtom(MonomerClass::AA, "C");
+  auto macro_atom_2 = macro_mol->addMacroAtom(MonomerClass::AA, "C");
+  macro_mol->addMacroBond(macro_atom_1, macro_atom_2, 2, 1);
+  macro_mol->addMacroBond(macro_atom_1, macro_atom_2, 3, 3, false);
+  CHECK(macro_mol->getNumAtoms() == 2);
+  CHECK(macro_mol->getNumBonds() == 1);
+  auto bond = macro_mol->getBondBetweenAtoms(macro_atom_1, macro_atom_2);
+  std::vector<MacroBondProps> propsList;
+  bond->getProp(common_properties::macroBondProps, propsList);
+  CHECK(propsList.size() == 2);
+  CHECK(propsList[0].beginAttachPt == 2);
+  CHECK(propsList[0].endAttachPt == 1);
+  CHECK(propsList[0].bondType == Bond::BondType::SINGLE);
+  CHECK(propsList[0].isDirectional == true);
+  CHECK(propsList[1].beginAttachPt == 3);
+  CHECK(propsList[1].endAttachPt == 3);
+  CHECK(propsList[1].bondType == Bond::BondType::SINGLE);
+  CHECK(propsList[1].isDirectional == false);
+}

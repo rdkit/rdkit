@@ -13,6 +13,7 @@
 
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "RWMol.h"
 
@@ -31,14 +32,38 @@ RDKIT_GRAPHMOL_EXPORT std::string monomerClassToString(
 RDKIT_GRAPHMOL_EXPORT MonomerClass
 stringToMonomerClass(const std::string &className);
 
+struct RDKIT_GRAPHMOL_EXPORT MacroBondProps {
+  int beginAttachPt;
+  int endAttachPt;
+  Bond::BondType bondType;
+  bool isDirectional;
+};
+
 class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
  public:
+  using RWMol::addBond;
+
   unsigned int addMacroAtom(MonomerClass monomerClass,
                             std::string templateName);
 
-  void addMacroBond(unsigned int fromAtomIdx, unsigned int toAtomIdx,
-                    int fromConnectionPoint, int toConnectionPoint,
-                    std::optional<Bond::BondType> bondType = std::nullopt);
+  void addMacroBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
+                    int beginAttachPt, int endAttachPt,
+                    bool isDirectional = true,
+                    Bond::BondType bondType = Bond::BondType::SINGLE);
+
+  void addAtomToMacroAtomBond(unsigned int beginAtomIdx,
+                              unsigned int endMacroAtomIdx, int endAttachPt,
+                              bool isDirectional = false,
+                              Bond::BondType bondType = Bond::BondType::SINGLE);
+
+  void addMacroAtomToAtomBond(unsigned int beginMacroAtomIdx,
+                              unsigned int endAtomIdx, int beginAttachPt,
+                              bool isDirectional = false,
+                              Bond::BondType bondType = Bond::BondType::SINGLE);
+
+  void addBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
+               int beginAttachPt, int endAttachPt,
+               std::optional<Bond::BondType> bondType = std::nullopt);
 };
 }  // namespace RDKit
 
