@@ -6554,3 +6554,133 @@ TEST_CASE(
   REQUIRE(m);
   CHECK(*labels_reference == get_bond_stereo_labels(*m));
 }
+
+TEST_CASE("Github #8108: assignStereochemistry should handle atropisomers",
+          "[chirality][atropisomers]") {
+  // CXSMILES with 2D coordinates and wedge bonds indicating atropisomer
+  // geometry. Both the coordinate variant and the no-coordinate variant use
+  // wD:4.3 (wedge-down from atom 4 to atom 3).
+  const std::string cxsmilesWithCoords =
+      "OC1=C(C)C(N2C3=C(C(C(=O)N)=C2N)C=C(C)C(C)=N3)=C(C)C=C1 "
+      "|(2.0992,3.5589,;2.2694,2.7517,;1.6554,2.2008,;0.8712,2.4571,;"
+      "1.8255,1.3935,;1.0637,0.4452,;0.8122,-0.3353,;-0.0126,-0.3353,;"
+      "-0.264,0.4452,;-1.0482,0.7015,;-1.6621,0.1505,;-1.2182,1.5087,;"
+      "0.3998,0.9266,;0.3998,1.7516,;-0.425,-1.0498,;-0.0126,-1.7642,;"
+      "-0.425,-2.4786,;0.8122,-1.7642,;1.2247,-2.4786,;1.2247,-1.0498,;"
+      "2.6096,1.1372,;2.7797,0.33,;3.2236,1.6882,;3.0535,2.4954,),wD:4.3|";
+  // Same molecule, without 2D coordinates: detection uses bond directions only
+  const std::string cxsmilesWithoutCoords =
+      "OC1=C(C)C(N2C3=C(C(C(=O)N)=C2N)C=C(C)C(C)=N3)=C(C)C=C1 |wD:4.3|";
+
+  SECTION("atropisomer stereo preserved by assignStereochemistry (SDF)") {
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/atropisomers/RP-6306_atrop1.sdf";
+    auto m = v2::FileParsers::MolFromMolFile(fName);
+    REQUIRE(m);
+    auto *atropBond = m->getBondWithIdx(3);
+    REQUIRE(atropBond->getStereo() == Bond::BondStereo::STEREOATROPCW);
+
+    // Stereo detected at parse time should be preserved (not overwritten or
+    // cleared) when assignStereochemistry is called on the parsed molecule.
+    MolOps::assignStereochemistry(*m, true, true);
+    CHECK(atropBond->getStereo() == Bond::BondStereo::STEREOATROPCW);
+  }
+
+  SECTION("assignStereochemistry detects atropisomers with 2D coordinates") {
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+
+    auto m = v2::SmilesParse::MolFromSmiles(cxsmilesWithCoords);
+    REQUIRE(m);
+    REQUIRE(m->getNumConformers() > 0);
+
+    Bond *atropBond = nullptr;
+    for (auto *bond : m->bonds()) {
+      if (bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+          bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+        atropBond = bond;
+        break;
+      }
+    }
+    REQUIRE(atropBond);
+    auto correctStereo = atropBond->getStereo();
+
+    // Clear stereo: assignStereochemistry should re-detect it with
+    // cleanIt=false
+    atropBond->setStereo(Bond::BondStereo::STEREONONE);
+    MolOps::assignStereochemistry(*m, false, true);
+    CHECK(atropBond->getStereo() == correctStereo);
+
+    // Reset and verify detection also works with cleanIt=true
+    atropBond->setStereo(Bond::BondStereo::STEREONONE);
+    MolOps::assignStereochemistry(*m, true, true);
+    CHECK(atropBond->getStereo() == correctStereo);
+  }
+
+  SECTION("assignStereochemistry detects atropisomers without conformer") {
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+
+    auto m = v2::SmilesParse::MolFromSmiles(cxsmilesWithoutCoords);
+    REQUIRE(m);
+    REQUIRE(m->getNumConformers() == 0);
+
+    Bond *atropBond = nullptr;
+    for (auto *bond : m->bonds()) {
+      if (bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+          bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+        atropBond = bond;
+        break;
+      }
+    }
+    REQUIRE(atropBond);
+    auto correctStereo = atropBond->getStereo();
+
+    // Clear stereo: assignStereochemistry should re-detect with cleanIt=false
+    atropBond->setStereo(Bond::BondStereo::STEREONONE);
+    MolOps::assignStereochemistry(*m, false, true);
+    CHECK(atropBond->getStereo() == correctStereo);
+
+    // Reset and verify detection also works with cleanIt=true
+    atropBond->setStereo(Bond::BondStereo::STEREONONE);
+    MolOps::assignStereochemistry(*m, true, true);
+    CHECK(atropBond->getStereo() == correctStereo);
+  }
+
+  SECTION("cleanIt=false preserves existing atropisomer stereo") {
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+
+    auto m = v2::SmilesParse::MolFromSmiles(cxsmilesWithoutCoords);
+    REQUIRE(m);
+    REQUIRE(m->getNumConformers() == 0);
+
+    Bond *atropBond = nullptr;
+    for (auto *bond : m->bonds()) {
+      if (bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+          bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+        atropBond = bond;
+        break;
+      }
+    }
+    REQUIRE(atropBond);
+    auto correctStereo = atropBond->getStereo();
+    auto wrongStereo = (correctStereo == Bond::BondStereo::STEREOATROPCW)
+                           ? Bond::BondStereo::STEREOATROPCCW
+                           : Bond::BondStereo::STEREOATROPCW;
+
+    // Set wrong stereo; cleanIt=false should NOT re-detect, leaving it wrong
+    atropBond->setStereo(wrongStereo);
+    MolOps::assignStereochemistry(*m, false, true);
+    CHECK(atropBond->getStereo() == wrongStereo);
+  }
+}

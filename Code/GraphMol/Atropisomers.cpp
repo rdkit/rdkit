@@ -533,6 +533,11 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
         if (nbrBond == bond) {
           continue;  // a bond is NOT its own neighbor
         }
+        // Ring bonds cannot be atropisomers (no free rotation)
+        if (mol.getRingInfo()->isInitialized() &&
+            mol.getRingInfo()->numBondRings(nbrBond->getIdx()) > 0) {
+          continue;
+        }
         bondsToTry.insert(nbrBond);
       }
     }
