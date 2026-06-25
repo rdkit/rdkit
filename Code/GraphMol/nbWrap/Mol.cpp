@@ -148,20 +148,17 @@ void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
   ps.extraFinalCheck = pyFinalMatchFunctor(func);
 }
 
-void setExtraAtomCheckFunc(
-    SubstructMatchParameters &ps,
-    std::function<bool(const Atom &queryAtom, const Atom &molAtom)> &func) {
-  ps.extraAtomCheck = func;
+void setExtraAtomCheckFunc(SubstructMatchParameters &ps, nb::object func) {
+  ps.extraAtomCheck = pyMatchFunctor<Atom>(func);
 }
+
 void setExtraAtomCheckFunc2(SubstructMatchParameters &ps,
                             const AtomCoordsMatchFunctor &ftor) {
   ps.extraAtomCheck = std::bind(&AtomCoordsMatchFunctor::operator(), &ftor,
                                 std::placeholders::_1, std::placeholders::_2);
 }
-void setExtraBondCheckFunc(
-    SubstructMatchParameters &ps,
-    std::function<bool(const Bond &queryBond, const Bond &molBond)> &func) {
-  ps.extraBondCheck = func;
+void setExtraBondCheckFunc(SubstructMatchParameters &ps, nb::object func) {
+  ps.extraBondCheck = pyMatchFunctor<Bond>(func);
 }
 
 }  // namespace
@@ -381,6 +378,13 @@ struct mol_wrapper {
            and a vector of atom IDs containing a potential match.
            The function should return true or false indicating whether or not
            that match should be accepted.)DOC")
+        .def(
+            "setExtraAtomCheckFunc", setExtraAtomCheckFunc2,
+            // FIX: This probably doesn't have the right custodian/ward
+            "atomCoordsMatcher"_a,
+            R"DOC(allows you to provide an AtomCoordsMatcher that will be called
+              for each atom pair that matches during substructure searching,
+              after all other comparisons have passed.)DOC")
         .def("setExtraAtomCheckFunc", setExtraAtomCheckFunc,
              // FIX: This probably doesn't have the right custodian/ward
              "func"_a,
@@ -389,13 +393,6 @@ struct mol_wrapper {
            after all other comparisons have passed.
            The function should return true or false indicating whether or not
            that atom-match should be accepted.)DOC")
-        .def(
-            "setExtraAtomCheckFunc", setExtraAtomCheckFunc2,
-            // FIX: This probably doesn't have the right custodian/ward
-            "atomCoordsMatcher"_a,
-            R"DOC(allows you to provide an AtomCoordsMatcher that will be called
-           for each atom pair that matches during substructure searching,
-           after all other comparisons have passed.)DOC")
         .def_rw(
             "extraAtomCheckOverridesDefaultCheck",
             &RDKit::SubstructMatchParameters::

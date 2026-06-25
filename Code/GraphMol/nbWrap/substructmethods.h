@@ -33,7 +33,7 @@ class pyFinalMatchFunctor : public pyFunctor {
     // boost::python doesn't handle std::span, so we need to convert the span to
     // a vector before calling into python:
     std::vector<unsigned int> matchVec(match.begin(), match.end());
-    return nb::cast<bool>(dp_obj(boost::ref(m), boost::ref(matchVec)));
+    return nb::cast<bool>(dp_obj(m, matchVec));
   }
 
  private:
@@ -47,7 +47,7 @@ class pyMatchFunctor : public pyFunctor {
   bool operator()(const T &a1, const T &a2) {
     // grab the GIL
     PyGILStateHolder h;
-    return nb::cast<bool>(dp_obj(boost::ref(a1), boost::ref(a2)));
+    return nb::cast<bool>(dp_obj(a1, a2));
   }
 
  private:

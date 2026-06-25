@@ -93,7 +93,7 @@ class PyResonanceMolSupplierCallback : public ResonanceMolSupplierCallback {
  public:
   PyResonanceMolSupplierCallback() : d_cppCallback(this) {}
   explicit PyResonanceMolSupplierCallback(nb::object pyCallbackObject)
-      : d_cppCallback(this), d_pyCallbackObject(std::move(pyCallbackObject)) {
+      : d_cppCallback(this), d_pyCallbackObject(pyCallbackObject) {
     auto *pyCallback =
         nb::cast<PyResonanceMolSupplierCallback *>(d_pyCallbackObject);
     pyCallback->d_cppCallback = this;
@@ -120,16 +120,12 @@ class PyResonanceMolSupplierCallback : public ResonanceMolSupplierCallback {
 
   bool operator()() override {
     PyGILStateHolder h;
-    auto override = getCallbackOverride();
-    std::cerr << "getCallbackOverride called\n";
-    std::cerr << "  " << override.is_valid() << " " << override.is_none()
-              << std::endl;
-    if (!override.is_valid() || override.is_none()) {
+    if (!d_pyCallbackObject.is_valid() || d_pyCallbackObject.is_none()) {
       throw nb::attribute_error(
           "The __call__ attribute in the rdchem.ResonanceMolSupplierCallback "
           "subclass must exist and be a callable method");
     }
-    return nb::cast<bool>(override());
+    return nb::cast<bool>(d_pyCallbackObject());
   }
   nb::object getPyCallbackObject() { return d_pyCallbackObject; }
 
@@ -156,16 +152,11 @@ void setProgressCallbackHelper(ResonanceMolSupplier &suppl,
     return;
   }
   try {
-    auto *cb = nb::cast<PyResonanceMolSupplierCallback *>(callback);
-    auto override = cb->getCallbackOverride();
-    std::cerr << "setProgressCallbackHelper called\n";
-    std::cerr << "  " << override.is_valid() << " " << override.is_none()
-              << " ? " << PyCallable_Check(override.ptr()) << std::endl;
-    if (!override.is_valid() ||
-        override.is_none()) {  //|| !PyCallable_Check(override.ptr())) {
+    nb::cast<PyResonanceMolSupplierCallback *>(callback);
+    if (!PyCallable_Check(callback.ptr())) {
       throw nb::attribute_error(
           "The __call__ attribute in the rdchem.ResonanceMolSupplierCallback "
-          "subclass must exist and be a callable method");
+          "subclass must be a callable method");
     }
     suppl.setProgressCallback(new PyResonanceMolSupplierCallback(callback));
   } catch (const nb::cast_error &) {
@@ -330,7 +321,8 @@ structures (defaults to 1; 0 selects the number of concurrent
 threads supported by the hardware; negative values are added
 to the number of concurrent threads supported by the hardware).
 )DOC")
-        .def("SetProgressCallback", &setProgressCallbackHelper, "callback"_a,
+        .def("SetProgressCallback", &setProgressCallbackHelper,
+             "callback"_a.none(),
              R"DOC(Pass an instance of a class derived from
 ResonanceMolSupplierCallback, which must implement the
 __call__() method.

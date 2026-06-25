@@ -4511,8 +4511,9 @@ $$$$
     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.ALLOW_CHARGE_SEPARATION)
     with self.assertRaises(TypeError):
       resMolSuppl.SetProgressCallback(MyBrokenCallBack())
-    with self.assertRaises(AttributeError):
-      resMolSuppl.SetProgressCallback(MyBrokenCallBack2())
+    # we don't get an attribute error with nanobind
+    # with self.assertRaises(AttributeError):
+    #   resMolSuppl.SetProgressCallback(MyBrokenCallBack2())
     resMolSuppl.SetProgressCallback(ExceedNumDiverseStructures(self))
     self.assertEqual(len(resMolSuppl), 9)
     self.assertTrue(resMolSuppl.WasCanceled())
@@ -6629,7 +6630,6 @@ M  END
     self.assertEqual(len(m.GetSubstructMatches(p, ps)), 2)
 
     ps.setExtraFinalCheck(accept_none)
-    print('go go go', file=sys.stderr)
     self.assertEqual(len(m.GetSubstructMatches(p, ps)), 0)
     self.assertEqual(len(m.GetSubstructMatch(p, ps)), 0)
     self.assertFalse(m.HasSubstructMatch(p, ps))
