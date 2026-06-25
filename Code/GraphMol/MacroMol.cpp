@@ -56,28 +56,21 @@ unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
 
 void MacroMol::addMacroBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
                             int beginAttachPt, int endAttachPt,
-                            bool isDirectional, Bond::BondType bondType) {
-  auto bond = this->getBondBetweenAtoms(beginAtomIdx, endAtomIdx);
-  if (!bond) {
-    auto bondIdx =
-        this->addBond(beginAtomIdx, endAtomIdx, Bond::BondType::ZERO) - 1;
-    bond = this->getBondWithIdx(bondIdx);
-  }
-  MacroBondProps props;
-  props.beginAttachPt = beginAttachPt;
-  props.endAttachPt = endAttachPt;
-  props.bondType = bondType;
-  props.isDirectional = isDirectional;
-
-  std::vector<MacroBondProps> propsList;
-  bond->getPropIfPresent(common_properties::macroBondProps, propsList);
-  propsList.push_back(props);
-  bond->setProp(common_properties::macroBondProps, propsList);
+                            Bond::BondType bondType) {
+  PRECONDITION((this->getAtomWithIdx(beginAtomIdx)
+                    ->hasProp(common_properties::isMacroAtom) ||
+                this->getAtomWithIdx(endAtomIdx)
+                    ->hasProp(common_properties::isMacroAtom)),
+               "at least one atom must be a macro atom");
+  auto bondIdx = this->addBond(beginAtomIdx, endAtomIdx, bondType) - 1;
+  auto bond = this->getBondWithIdx(bondIdx);
+  bond->setProp(common_properties::_MacroMolBeginAttachPt, beginAttachPt);
+  bond->setProp(common_properties::_MacroMolEndAttachPt, endAttachPt);
 }
 
 void MacroMol::addAtomToMacroAtomBond(unsigned int beginAtomIdx,
                                       unsigned int endMacroAtomIdx,
-                                      int endAttachPt, bool isDirectional,
+                                      int endAttachPt,
                                       Bond::BondType bondType) {
   PRECONDITION(this->getAtomWithIdx(endMacroAtomIdx)
                    ->hasProp(common_properties::isMacroAtom),
@@ -85,27 +78,24 @@ void MacroMol::addAtomToMacroAtomBond(unsigned int beginAtomIdx,
   PRECONDITION(!this->getAtomWithIdx(beginAtomIdx)
                     ->hasProp(common_properties::isMacroAtom),
                "begin atom is a macro atom");
-  addMacroBond(beginAtomIdx, endMacroAtomIdx, -1, endAttachPt, isDirectional,
-               bondType);
+  addMacroBond(beginAtomIdx, endMacroAtomIdx, -1, endAttachPt, bondType);
 }
 
-void MacroMol::addMacroAtomToAtomBond(unsigned int beginMacroAtomIdx,
-                                      unsigned int endAtomIdx,
-                                      int beginAttachPt, bool isDirectional,
-                                      Bond::BondType bondType) {
+void MacroMol::addMacroAtomToAtomBond(
+    unsigned int beginMacroAtomIdx, unsigned int endAtomIdx, int beginAttachPt,
+    Bond::BondType bondType) {
   PRECONDITION(this->getAtomWithIdx(beginMacroAtomIdx)
                    ->hasProp(common_properties::isMacroAtom),
                "begin atom is not a macro atom");
   PRECONDITION(!this->getAtomWithIdx(endAtomIdx)
                     ->hasProp(common_properties::isMacroAtom),
                "end atom is a macro atom");
-  addMacroBond(beginMacroAtomIdx, endAtomIdx, beginAttachPt, -1, isDirectional,
-               bondType);
+  addMacroBond(beginMacroAtomIdx, endAtomIdx, beginAttachPt, -1, bondType);
 }
 
 void MacroMol::addBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
                        int beginAttachPt, int endAttachPt,
-                       std::optional<Bond::BondType> bondType) {
+                       Bond::BondType bondType) {
   PRECONDITION(!this->getAtomWithIdx(beginAtomIdx)
                     ->hasProp(common_properties::isMacroAtom),
                "begin atom is a macro atom");
@@ -113,8 +103,7 @@ void MacroMol::addBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
                     ->hasProp(common_properties::isMacroAtom),
                "end atom is a macro atom");
 
-  auto bt = bondType.value_or(Bond::BondType::SINGLE);
-  RWMol::addBond(beginAtomIdx, endAtomIdx, bt);
+  RWMol::addBond(beginAtomIdx, endAtomIdx, bondType);
 }
 
 }  // namespace RDKit

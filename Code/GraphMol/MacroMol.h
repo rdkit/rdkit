@@ -11,7 +11,6 @@
 #ifndef RD_MACROMOL_H
 #define RD_MACROMOL_H
 
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -48,22 +47,19 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
 
   void addMacroBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
                     int beginAttachPt, int endAttachPt,
-                    bool isDirectional = true,
                     Bond::BondType bondType = Bond::BondType::SINGLE);
 
   void addAtomToMacroAtomBond(unsigned int beginAtomIdx,
                               unsigned int endMacroAtomIdx, int endAttachPt,
-                              bool isDirectional = false,
                               Bond::BondType bondType = Bond::BondType::SINGLE);
 
   void addMacroAtomToAtomBond(unsigned int beginMacroAtomIdx,
                               unsigned int endAtomIdx, int beginAttachPt,
-                              bool isDirectional = false,
                               Bond::BondType bondType = Bond::BondType::SINGLE);
 
   void addBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
                int beginAttachPt, int endAttachPt,
-               std::optional<Bond::BondType> bondType = std::nullopt);
+               Bond::BondType bondType = Bond::BondType::SINGLE);
 };
 }  // namespace RDKit
 
