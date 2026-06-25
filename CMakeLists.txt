@@ -336,6 +336,19 @@ if(RDK_BUILD_NANOBIND_WRAPPERS)
     OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
   find_package(nanobind CONFIG REQUIRED)
   set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
+
+  # check to see if we can find nbval,
+  execute_process(
+    COMMAND
+    ${Python_EXECUTABLE} -c "import nbval"
+    ERROR_VARIABLE nbvalERR
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT nbvalERR)
+    set(RDK_NBVAL_AVAILABLE ON)
+  else()
+    message("nbval not found, disabling the jupyter tests")
+  endif()
+
 endif(RDK_BUILD_NANOBIND_WRAPPERS)
 
 
