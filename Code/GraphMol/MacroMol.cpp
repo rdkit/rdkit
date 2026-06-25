@@ -46,10 +46,6 @@ unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
   atom->setProp(common_properties::isMacroAtom, true);
   atom->setProp(common_properties::dummyLabel, templateName);
   atom->setProp(common_properties::molAtomClass, className);
-  atom->setProp(common_properties::smilesSymbol, templateName);
-
-  static boost::hash<std::string> hasher;
-  atom->setIsotope(hasher(className + templateName));
 
   return this->addAtom(atom, false, true);
 }
@@ -81,9 +77,10 @@ void MacroMol::addAtomToMacroAtomBond(unsigned int beginAtomIdx,
   addMacroBond(beginAtomIdx, endMacroAtomIdx, -1, endAttachPt, bondType);
 }
 
-void MacroMol::addMacroAtomToAtomBond(
-    unsigned int beginMacroAtomIdx, unsigned int endAtomIdx, int beginAttachPt,
-    Bond::BondType bondType) {
+void MacroMol::addMacroAtomToAtomBond(unsigned int beginMacroAtomIdx,
+                                      unsigned int endAtomIdx,
+                                      int beginAttachPt,
+                                      Bond::BondType bondType) {
   PRECONDITION(this->getAtomWithIdx(beginMacroAtomIdx)
                    ->hasProp(common_properties::isMacroAtom),
                "begin atom is not a macro atom");

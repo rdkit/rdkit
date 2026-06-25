@@ -53,25 +53,3 @@ TEST_CASE("testMultipleConnectionsSameMacroAtoms") {
   CHECK_THROWS_AS(macro_mol->addMacroBond(macro_atom_1, macro_atom_2, 3, 3),
                   Invar::Invariant);
 }
-
-TEST_CASE("testSmilesCanonicalization") {
-  // Build a MacroMol with two macro atoms with the same template name and
-  // class name, and check that the smiles of the two macro atoms are the same
-  auto macro_mol_1 = std::make_unique<MacroMol>();
-  auto m1_atom_1 = macro_mol_1->addMacroAtom(MonomerClass::AA, "A");
-  auto m1_atom_2 = macro_mol_1->addMacroAtom(MonomerClass::AA, "C");
-  auto m1_atom_3 = macro_mol_1->addMacroAtom(MonomerClass::AA, "D");
-  macro_mol_1->addMacroBond(m1_atom_1, m1_atom_2, 2, 1);
-  macro_mol_1->addMacroBond(m1_atom_2, m1_atom_3, 2, 1);
-
-  auto macro_mol_2 = std::make_unique<MacroMol>();
-  auto m2_atom_1 = macro_mol_2->addMacroAtom(MonomerClass::AA, "C");
-  auto m2_atom_2 = macro_mol_2->addMacroAtom(MonomerClass::AA, "D");
-  auto m2_atom_3 = macro_mol_2->addMacroAtom(MonomerClass::AA, "A");
-  macro_mol_2->addMacroBond(m2_atom_1, m2_atom_2, 2, 1);
-  macro_mol_2->addMacroBond(m2_atom_3, m2_atom_1, 2, 1);
-
-  std::string m1_smiles = MolToSmiles(*macro_mol_1);
-  std::string m2_smiles = MolToSmiles(*macro_mol_2);
-  CHECK(m1_smiles == m2_smiles);
-}
