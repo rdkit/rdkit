@@ -127,7 +127,8 @@ Elements can be set and read using indexing (i.e. siv[i] = 4 or val=siv[i])
 struct sparseIntVec_wrapper {
   template <typename IndexType>
   static void wrapOne(nb::module_ &m, const char *className) {
-    nb::class_<SparseIntVect<IndexType>>(m, className, sparseIntVectDoc.c_str())
+    nb::class_<SparseIntVect<IndexType>>(m, className, sparseIntVectDoc.c_str(),
+                                         nb::dynamic_attr())
         .def(nb::new_([]() { return new SparseIntVect<IndexType>(); }),
              R"DOC(Constructor)DOC")
         .def(nb::new_([](nb::bytes b) {
