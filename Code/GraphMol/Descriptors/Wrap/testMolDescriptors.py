@@ -3,6 +3,7 @@ from os import environ
 from pathlib import Path
 import re
 
+from rdkit import rdBase
 from rdkit import Chem, DataStructs
 from rdkit.Chem import Descriptors
 from rdkit.Chem import rdMolDescriptors as rdMD
@@ -530,13 +531,24 @@ class TestCase(unittest.TestCase):
 
   def testPythonDescriptorFunctor(self):
 
-    def numAtoms(mol):
-      return mol.GetNumAtoms()
+    if hasattr(rdBase, '_wrapperType') and rdBase._wrapperType == 'nanobind':
 
-    class NumAtoms(rdMD.PythonPropertyFunctor):
+      def numAtoms(mol):
+        return mol.GetNumAtoms()
 
-      def __init__(self):
-        rdMD.PythonPropertyFunctor.__init__(self, numAtoms, "CustomNumAtoms", "1.0.0")
+      class NumAtoms(rdMD.PythonPropertyFunctor):
+
+        def __init__(self):
+          rdMD.PythonPropertyFunctor.__init__(self, numAtoms, "CustomNumAtoms", "1.0.0")
+    else:
+
+      class NumAtoms(Descriptors.PropertyFunctor):
+
+        def __init__(self):
+          Descriptors.PropertyFunctor.__init__(self, "CustomNumAtoms", "1.0.0")
+
+        def __call__(self, mol):
+          return mol.GetNumAtoms()
 
     numAtoms = NumAtoms()
     # numAtoms2 = NumAtoms()
