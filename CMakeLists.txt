@@ -652,7 +652,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
 if(RDK_BUILD_NANOBIND_WRAPPERS)
-  #add_subdirectory(Projects)
+  add_subdirectory(Projects)
   add_subdirectory(rdkit)
   #add_subdirectory(rdkit-stubs)
 endif(RDK_BUILD_NANOBIND_WRAPPERS)
