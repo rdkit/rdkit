@@ -10,7 +10,11 @@ class BondMatchOrderMatrix:
 
   def __init__(self, ignoreAromatization):
     self.MatchMatrix = defaultdict(lambda: defaultdict(bool))
-    for ti in Chem.BondType:
+    if hasattr(Chem.BondType, 'names'):
+      bts = list(Chem.BondType.names.values())
+    else:
+      bts = list(Chem.BondType)
+    for ti in bts:
       # fill cells of the same and unspecified type
       self.MatchMatrix[ti][ti] = True
       self.MatchMatrix[Chem.BondType.UNSPECIFIED][ti] = \
