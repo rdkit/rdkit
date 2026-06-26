@@ -7,7 +7,6 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import IPython
 import os
 import pathlib
 import re
@@ -447,4 +446,4 @@ class TestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main(verbosity=2)
+  unittest.main()
