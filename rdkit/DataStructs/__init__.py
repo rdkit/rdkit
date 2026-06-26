@@ -66,5 +66,14 @@ def getElementFromFlatMatrix(matrix, i, j):
   return matrix[j * (j - 1) // 2 + i]
 
 
-ExplicitBitVect.ToBitString = BitVectToText
-SparseBitVect.ToBitString = BitVectToText
+if rdBase._wrapperType == 'nanobind':
+  # nanobind free functions don't work when directly set as class methods,
+  # so we need to call them via a python function
+  def bvtotext(bv):
+    return BitVectToText(bv)
+
+  ExplicitBitVect.ToBitString = bvtotext
+  SparseBitVect.ToBitString = bvtotext
+else:
+  ExplicitBitVect.ToBitString = BitVectToText
+  SparseBitVect.ToBitString = BitVectToText

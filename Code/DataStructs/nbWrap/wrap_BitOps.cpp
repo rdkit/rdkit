@@ -327,21 +327,16 @@ struct BitOps_wrapper {
 vector defined by the pickle in the second argument.
 )DOC");
 
-    m.def("BitVectToText", (std::string (*)(const SBV &))BitVectToText,
-          "bv1"_a);
+    m.def("BitVectToText", BitVectToText<SBV>, "bv1"_a);
     m.def(
-        "BitVectToText", (std::string (*)(const EBV &))BitVectToText, "bv1"_a,
+        "BitVectToText", BitVectToText<EBV>, "bv1"_a,
         R"DOC(Returns a string of zeros and ones representing the bit vector.)DOC");
-    m.def("BitVectToFPSText", (std::string (*)(const SBV &))BitVectToFPSText,
-          "bv1"_a);
-    m.def("BitVectToFPSText", (std::string (*)(const EBV &))BitVectToFPSText,
-          "bv1"_a,
+    m.def("BitVectToFPSText", BitVectToFPSText<SBV>, "bv1"_a);
+    m.def("BitVectToFPSText", BitVectToFPSText<EBV>, "bv1"_a,
           R"DOC(Returns an FPS string representing the bit vector.)DOC");
-    m.def("BitVectToBinaryText", (nb::bytes (*)(const SBV &))BVToBinaryText,
-          "bv"_a);
+    m.def("BitVectToBinaryText", BVToBinaryText<SBV>, "bv"_a);
     m.def(
-        "BitVectToBinaryText", (nb::bytes (*)(const EBV &))BVToBinaryText,
-        "bv"_a,
+        "BitVectToBinaryText", BVToBinaryText<EBV>, "bv"_a,
         R"DOC(Returns a binary string (byte array) representing the bit vector.)DOC");
   }
 };
