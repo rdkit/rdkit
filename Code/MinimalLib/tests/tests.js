@@ -12,7 +12,7 @@
 import assert from 'assert';
 import fs from 'fs';
 import readline from 'readline';
-import initRDKitModule from '../dist/RDKit_minimal.js';
+import initRDKitModule from '../build/dist/RDKit_minimal.js';
 
 import { fileURLToPath } from 'url';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));

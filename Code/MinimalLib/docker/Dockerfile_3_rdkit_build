@@ -90,10 +90,6 @@ RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c /src/rdkit/Extern
 RUN make -j2 RDKit_minimal
 RUN cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/dist/
 
-# run the tests
-WORKDIR /src/rdkit/Code/MinimalLib/tests
-RUN /opt/emsdk/node/*/bin/node tests.js
-
 # Build package
 WORKDIR /src/rdkit/Code/MinimalLib
 RUN mkdir build
@@ -103,6 +99,10 @@ RUN cp -r ./dist ./build
 
 WORKDIR /src/rdkit/Code/MinimalLib/build
 RUN /opt/emsdk/node/*/bin/node -e "const p=require('./package.json');p.version='${VERSION}';require('fs').writeFileSync('./package.json',JSON.stringify(p,null,2))"
+
+# run the tests
+WORKDIR /src/rdkit/Code/MinimalLib/tests
+RUN /opt/emsdk/node/*/bin/node tests.js
 
 # Copy js and wasm rdkit files to use in browser
 # This feature requires the BuildKit backend
