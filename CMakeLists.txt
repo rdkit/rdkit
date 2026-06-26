@@ -716,7 +716,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     ${RDKit_BINARY_DIR}/rdkitpython-config-version.cmake
     DESTINATION ${RDKit_LibDir}/cmake/rdkitpython
     COMPONENT python)
-endif(RDK_BUILD_PYTHON_WRAPPERS)
+endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
 # Memory testing setup
 FIND_PROGRAM(MEMORYCHECK_COMMAND valgrind)
