@@ -50,12 +50,12 @@ class TestCase(unittest.TestCase):
     self.assertEqual(m, mol)
 
   def test_withUseChirality(self):
-    chiralRemover = SaltRemover(defnData="OC(=O)\C=C/C(O)=O\nOC(=O)/C=C/C(O)=O",
+    chiralRemover = SaltRemover(defnData="OC(=O)\\C=C/C(O)=O\nOC(=O)/C=C/C(O)=O",
                                 defnFormat=InputFormat.SMILES, useChirality=True)
-    remover = SaltRemover(defnData="OC(=O)\C=C/C(O)=O\nOC(=O)/C=C/C(O)=O",
+    remover = SaltRemover(defnData="OC(=O)\\C=C/C(O)=O\nOC(=O)/C=C/C(O)=O",
                           defnFormat=InputFormat.SMILES, useChirality=False)
 
-    maleaic_acid_smiles = Chem.MolToSmiles(Chem.MolFromSmiles('OC(=O)\C=C/C(O)=O'))
+    maleaic_acid_smiles = Chem.MolToSmiles(Chem.MolFromSmiles('OC(=O)\\C=C/C(O)=O'))
     fumaric_acid_smiles = Chem.MolToSmiles(Chem.MolFromSmiles('OC(=O)/C=C/C(O)=O'))
 
     m = Chem.MolFromSmiles('OC(=O)C=CC(O)=O')
