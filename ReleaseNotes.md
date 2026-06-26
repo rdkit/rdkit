@@ -15,6 +15,16 @@ to the first which also has the lowest index.
 - `MolTransforms.h` now includes `<Eigen/Core>` instead of `<Eigen/Dense>`. C++
 code that included `MolTransforms.h` and relied on it to transitively pull in the
 Eigen dense modules (LU/QR/SVD/etc.) must now include `<Eigen/Dense>` directly.
+- Compressed file I/O no longer depends on the compiled `boost_iostreams`
+library. gzip is provided directly on top of zlib, which is now a required
+dependency, and gzip support is always available. The `RDK_USE_BOOST_IOSTREAMS`
+CMake option has been removed (along with the `RDK_USE_STANDALONE_ZLIB` internal
+define). bzip2 (`.bz2`) decompression is provided directly on top of libbz2 and
+is controlled by the new `RDK_USE_BZIP2` option (default ON; auto-disabled when
+libbz2 is not found). In the installed CMake config, `RDKit_USE_BOOST_IOSTREAMS`
+has been replaced by `RDKit_USE_BZIP2`.
+- The undocumented `Chem._iostreamsEnabled` Python attribute has been removed;
+compressed (gzip) I/O is now always available.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use

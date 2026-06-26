@@ -106,12 +106,7 @@ inline std::unique_ptr<FileParsers::MolSupplier> getSupplier(
   if (compressionFormat.empty()) {
     strm = new std::ifstream(path.c_str(), std::ios::in | std::ios::binary);
   } else {
-#ifdef RDK_USE_BOOST_IOSTREAMS
     strm = new gzstream(path);
-#else
-    throw BadFileException(
-        "compressed files are only supported if the RDKit is built with boost::iostreams support");
-#endif
   }
 
   if ((!(*strm)) || strm->bad()) {

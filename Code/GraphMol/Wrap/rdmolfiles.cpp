@@ -2575,7 +2575,6 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("allHsExplicit") = false),
       "returns a list of SMILES generated using the randomSmiles algorithm");
 
-#ifdef RDK_USE_BOOST_IOSTREAMS
   python::class_<RDKit::PNGMetadataParams, boost::noncopyable>(
       "PNGMetadataParams",
       "Parameters controlling metadata included in PNG images")
@@ -2644,7 +2643,6 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               (python::arg("filename"), python::arg("tag") = PNGData::pklTag,
                python::arg("params") = python::object()),
               "returns a tuple of molecules constructed from the PNG file");
-#endif
 
   docString =
       R"DOC(Construct a molecule from a cdxml file.
@@ -2793,7 +2791,6 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::def("HasChemDrawCDXSupport",
               RDKit::v2::CDXMLParser::hasChemDrawCDXSupport, docString.c_str());
 
-#ifdef RDK_USE_BOOST_IOSTREAMS
   docString =
       R"DOC(Adds molecular metadata to PNG data read from a file.
 
@@ -2920,7 +2917,6 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               "strings, values are bytes. "
               "If asList is True, a list of (key, value) tuples is returned; "
               "this enables retrieving multiple values sharing the same key.");
-#endif
 /********************************************************
  * MolSupplier stuff
  *******************************************************/

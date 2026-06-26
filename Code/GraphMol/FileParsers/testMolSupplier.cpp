@@ -14,8 +14,6 @@
 #include <memory>
 #include <string>
 
-#include <boost/iostreams/device/file.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
 
 #include <catch2/catch_all.hpp>
 
@@ -35,7 +33,6 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 
-namespace io = boost::iostreams;
 
 static const std::string rdbase = getenv("RDBASE");
 
@@ -290,7 +287,6 @@ TEST_CASE("testMolSup") {
       REQUIRE(ok);
     }
 
-#if RDK_USE_BOOST_IOSTREAMS
     {  // Test Maestro PDB property reading
       fname = rdbase + "/Code/GraphMol/FileParsers/test_data/1kv1.maegz";
       auto *strm = new gzstream(fname);
@@ -305,7 +301,6 @@ TEST_CASE("testMolSup") {
       REQUIRE(info->getResidueNumber() == 5);
     }
 
-#endif
   }
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
 }
@@ -2058,11 +2053,9 @@ TEST_CASE("testForwardSDSupplier") {
     }
     REQUIRE(i == 16);
   }
-#ifdef RDK_USE_BOOST_IOSTREAMS
-  // make sure the boost::iostreams are working
+  // make sure reading through a plain std::istream works
   {
-    io::filtering_istream strm;
-    strm.push(io::file_source(fname));
+    std::ifstream strm(fname, std::ios_base::binary);
 
     unsigned int i = 0;
     while (!strm.eof()) {
@@ -2109,7 +2102,6 @@ TEST_CASE("testForwardSDSupplier") {
     }
     REQUIRE(i == 16);
   }
-#endif
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
   // Now test that Maestro parsing of gz files works
@@ -2118,8 +2110,7 @@ TEST_CASE("testForwardSDSupplier") {
   std::string maefname2 =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.maegz";
   {
-    io::filtering_istream strm;
-    strm.push(io::file_source(maefname));
+    std::ifstream strm(maefname, std::ios_base::binary);
 
     unsigned int i = 0;
     while (!strm.eof()) {
@@ -2134,7 +2125,6 @@ TEST_CASE("testForwardSDSupplier") {
     }
     REQUIRE(i == 1663);
   }
-#if RDK_USE_BOOST_IOSTREAMS
   {
     gzstream strm(maefname2);
 
@@ -2166,7 +2156,6 @@ TEST_CASE("testForwardSDSupplier") {
     }
     REQUIRE(i == 16);
   }
-#endif
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
 }
 

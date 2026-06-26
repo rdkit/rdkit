@@ -46,7 +46,7 @@ rdkit_python_extension(rdmolfiles
                        DEST Chem
                        LINK_LIBRARIES  SubstructMatch
                        SmilesParse FileParsers GraphMol
-                       MarvinParser
+                       MarvinParser RDStreams
                        RDGeometryLib RDGeneral RDBoost)
 
 rdkit_python_extension(rdtrajectory

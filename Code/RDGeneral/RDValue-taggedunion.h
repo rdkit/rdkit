@@ -38,13 +38,13 @@
 #include <sstream>
 #include <vector>
 #include <cstdint>
+#include <type_traits>
 #include <RDGeneral/BoostStartInclude.h>
 #include <cstdint>
 #include <any>
 #include <boost/utility.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
-#include <boost/type_traits/is_floating_point.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include "LocaleSwitcher.h"
 
@@ -399,15 +399,15 @@ inline bool rdvalue_is<std::any>(RDValue_cast_t v) {
 template <class T>
 inline T rdvalue_cast(RDValue_cast_t v) {
   // Disable reference and pointer casts to POD data.
-  BOOST_STATIC_ASSERT(!(
-      (boost::is_pointer<T>::value &&
-       (boost::is_integral<typename boost::remove_pointer<T>::type>::value ||
-        boost::is_floating_point<
-            typename boost::remove_pointer<T>::type>::value)) ||
-      (boost::is_reference<T>::value &&
-       (boost::is_integral<typename boost::remove_reference<T>::type>::value ||
-        boost::is_floating_point<
-            typename boost::remove_reference<T>::type>::value))));
+  static_assert(
+      !((std::is_pointer<T>::value &&
+         (std::is_integral<typename std::remove_pointer<T>::type>::value ||
+          std::is_floating_point<typename std::remove_pointer<T>::type>::value)) ||
+        (std::is_reference<T>::value &&
+         (std::is_integral<typename std::remove_reference<T>::type>::value ||
+          std::is_floating_point<
+              typename std::remove_reference<T>::type>::value))),
+      "rdvalue_cast cannot be used for pointer or reference casts to POD data");
 
   if (rdvalue_is<std::any>(v)) {
     return std::any_cast<T>(*v.ptrCast<std::any>());

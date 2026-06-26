@@ -8,6 +8,17 @@ generally include changes in results that arise due to bug fixes; we try to call
 those out in the release notes. The release notes, in general, contain a more
 comprehensive version of this list.
 
+## Release 2026.09
+
+### Compressed I/O no longer uses boost::iostreams
+
+gzip support is now provided directly on top of zlib (a required dependency) and
+is always available; bzip2 (`.bz2`) is provided on top of libbz2 and controlled by
+the new `RDK_USE_BZIP2` CMake option (default ON). The `RDK_USE_BOOST_IOSTREAMS`
+CMake option and the `RDKit_USE_BOOST_IOSTREAMS` variable in the installed CMake
+config have been removed (`RDKit_USE_BZIP2` is provided instead). The undocumented
+`Chem._iostreamsEnabled` Python attribute has been removed.
+
 ## Release 2023.09
 
 ### Changes in atomic stereochemistry perception

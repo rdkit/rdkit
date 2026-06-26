@@ -17,13 +17,10 @@
 #include <RDStreams/streams.h>
 
 #include <boost/dynamic_bitset.hpp>
-#include <boost/iostreams/device/file.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
 
 #include "MultithreadedSDMolSupplier.h"
 #include "MultithreadedSmilesMolSupplier.h"
 
-namespace io = boost::iostreams;
 using namespace RDKit;
 using namespace std::chrono;
 
@@ -153,14 +150,12 @@ void testSmiCorrectness() {
   expectedResult = 200;
   testSmiConcurrent(path, ",", 0, -1, true, true, 2, 5, 5, expectedResult);
 
-#ifdef RDK_USE_BOOST_IOSTREAMS
 
   path = rdbase + "/Regress/Data/znp.50k.smi.gz";
   std::istream *strm = new gzstream(path);
   expectedResult = 50000;
   testSmiConcurrent(strm, true, " \t", 0, 1, false, false, 3, 1000, 100,
                     expectedResult);
-#endif
   /*
 
      TEST PROPERTIES
@@ -290,14 +285,12 @@ void testSDCorrectness() {
   expectedResult = 1;
   testSDConcurrent(path, true, true, false, 2, 5, 5, expectedResult);
 
-#ifdef RDK_USE_BOOST_IOSTREAMS
 
   path = rdbase + "/Regress/Data/mols.1000.sdf.gz";
   std::istream *strm = new gzstream(path);
   expectedResult = 1000;
   testSDConcurrent(strm, true, false, true, true, 2, 5, 5, expectedResult);
 
-#endif
   /*
      TEST PROPERTIES
   */
@@ -339,7 +332,6 @@ void testPerformance() {
     std::cout << "Duration for SmilesMolSupplier: " << duration.count()
               << " (milliseconds) \n";
 
-#if RDK_USE_BOOST_IOSTREAMS
     for (unsigned int i = maxThreadCount; i >= 1; --i) {
       std::istream *strm = new gzstream(rdbase + gzpath);
       start = high_resolution_clock::now();
@@ -353,7 +345,6 @@ void testPerformance() {
                 << "  writer threads: " << duration.count()
                 << " (milliseconds) \n";
     }
-#endif
   }
 #endif
 
@@ -378,7 +369,6 @@ void testPerformance() {
     std::cout << "Duration for SDMolSupplier: " << duration.count()
               << " (milliseconds) \n";
 
-#if RDK_USE_BOOST_IOSTREAMS
     for (unsigned int i = maxThreadCount; i >= 1; --i) {
       std::istream *strm = new gzstream(rdbase + gzpath);
       bool takeOwnership = true;
@@ -391,7 +381,6 @@ void testPerformance() {
                 << "  writer threads: " << duration.count()
                 << " (milliseconds) \n";
     }
-#endif
   }
 }
 

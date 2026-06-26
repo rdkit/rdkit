@@ -72,7 +72,7 @@ RUN emcmake cmake -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
   -DRDK_BUILD_MINIMAL_LIB_MMPA=ON \
   -DBoost_DIR=/opt/boost/lib/cmake/Boost-${BOOST_DOT_VERSION} \
   -Dboost_headers_DIR=/opt/boost/lib/cmake/boost_headers-${BOOST_DOT_VERSION} \
-  -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_USE_BOOST_IOSTREAMS=OFF \
+  -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_USE_BZIP2=OFF \
   -DFREETYPE_INCLUDE_DIRS=/opt/freetype/include/freetype2 \
   -DFREETYPE_LIBRARY=/opt/freetype/lib/libfreetype.a \
   -DZLIB_INCLUDE_DIR=/opt/zlib/include \

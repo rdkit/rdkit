@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "RDLog.h"
+#include <algorithm>
 
 #if 1
 #include <iomanip>

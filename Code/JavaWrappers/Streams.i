@@ -49,7 +49,6 @@ namespace std {
 class istream;
 }
 
-#ifdef RDK_USE_BOOST_IOSTREAMS
 %extend RDKit::gzstream {
     std::istream* _GetStream() { return (std::istream*)$self; }
     std::string Dump() {
@@ -69,7 +68,6 @@ class istream;
      return streamRef;
   }
 %}
-#endif
 
 %include <../RDStreams/streams.h>
 
