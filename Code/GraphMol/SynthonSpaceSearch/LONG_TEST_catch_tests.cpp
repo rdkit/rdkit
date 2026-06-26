@@ -15,6 +15,7 @@
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/RascalMCES/RascalMCES.h>
@@ -23,6 +24,7 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <boost/multiprecision/number.hpp>
 #include <boost/parameter/aux_/pp_impl/match.hpp>
 
 #include <catch2/catch_all.hpp>
@@ -287,6 +289,7 @@ TEST_CASE("FP Random Hits") {
   params.maxHits = 100;
   params.randomSample = true;
   params.randomSeed = 1;
+  params.approxSimilarityAdjuster = 0.1;
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
@@ -345,8 +348,6 @@ TEST_CASE("FP Approx Similarity") {
   SynthonSpace synthonspace;
   synthonspace.readDBFile(binName);
   SynthonSpaceSearchParams params;
-  // The addFP and subtractFP are built from a random selection of
-  // products so do occasionally vary, so use a fixed seed.
   params.randomSeed = 1;
   params.similarityCutoff = 0.5;
   params.timeOut = 0;
@@ -361,7 +362,7 @@ TEST_CASE("FP Approx Similarity") {
   params.approxSimilarityAdjuster = 0.05;
   auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(results.getHitMolecules().size() == 546);
-  CHECK(results.getMaxNumResults() == 1467);
+  CHECK(results.getMaxNumResults() == 1478);
 
   // A tighter adjuster misses more hits.
   params.approxSimilarityAdjuster = 0.01;
@@ -370,6 +371,7 @@ TEST_CASE("FP Approx Similarity") {
 
   // This is the actual number of hits achievable.
   params.approxSimilarityAdjuster = 0.25;
+  params.maxHits = -1;
   results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(results.getHitMolecules().size() == 981);
   tidy5567Binary();
@@ -389,7 +391,7 @@ TEST_CASE("Rascal Biggy") {
       "c12ccccc1c(N)nc(N)n2", "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
       "c1n[nH]cn1",           "C(=O)NC(CC)C(=O)N(CC)C"};
   const std::vector<size_t> numRes{254, 89, 2, 34, 0, 14};
-  const std::vector<size_t> maxRes{376110, 278747, 79833, 34817, 190, 45932};
+  const std::vector<size_t> maxRes{376417, 279307, 79833, 35604, 190, 46017};
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
   params.numThreads = 1;

@@ -4,8 +4,10 @@
 #include "Geometry/Transform3D.h"
 
 #include <GraphMol/ROMol.h>
+#include <GraphMol/RWMol.h>
 #include <map>
 #include <vector>
+#include <boost/iostreams/filter/zlib.hpp>
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
 #include <RDGeneral/BoostStartInclude.h>
@@ -32,7 +34,7 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput {
   ShapeInput(ShapeInput &&other) = default;
   ShapeInput &operator=(const ShapeInput &other) = default;
   ShapeInput &operator=(ShapeInput &&other) = default;
-  ~ShapeInput() = default;
+  virtual ~ShapeInput() = default;
 
   std::string toString() const {
 #ifndef RDK_USE_BOOST_SERIALIZATION

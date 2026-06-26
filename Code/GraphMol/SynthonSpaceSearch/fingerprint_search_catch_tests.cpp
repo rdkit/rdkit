@@ -54,9 +54,8 @@ std::map<std::string, std::unique_ptr<ExplicitBitVect>> getFingerprints(
 
 std::set<std::string> bruteForceSearch(
     std::map<std::string, std::unique_ptr<ExplicitBitVect>> &fps,
-    const ROMol &queryMol, const double simCutoff) {
-  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen;
-  fpGen.reset(MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+    const ROMol &queryMol, const double simCutoff,
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> &fpGen) {
   const auto queryFP =
       std::unique_ptr<ExplicitBitVect>(fpGen->getFingerprint(queryMol));
   std::set<std::string> fullSmi;
@@ -90,7 +89,7 @@ TEST_CASE("FP Small tests") {
       "C[C@@H]1CC(NC(=O)NC2COC2)CN(C(=O)c2nccnc2F)C1",
   };
 
-  std::vector<size_t> expNumHits{2, 3, 4};
+  std::vector<size_t> expNumHits{2, 4, 4};
 
   for (size_t i = 0; i < libNames.size(); i++) {
     SynthonSpace synthonspace;
@@ -99,10 +98,11 @@ TEST_CASE("FP Small tests") {
     SynthonSpaceSearchParams params;
     params.randomSeed = 1;
     params.approxSimilarityAdjuster = 0.2;
+    params.numThreads = 1;
     auto queryMol = v2::SmilesParse::MolFromSmiles(querySmis[i]);
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
         MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
-
+    synthonspace.buildSynthonFingerprints(*fpGen);
     auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
     CHECK(results.getHitMolecules().size() == expNumHits[i]);
     std::set<std::string> resSmis;
@@ -124,23 +124,13 @@ TEST_CASE("FP Small tests") {
     // Do the enumerated library, just to check
     std::map<std::string, std::unique_ptr<RWMol>> mols;
     auto fps = getFingerprints(enumLibNames[i], mols, fpGen);
-    auto names = bruteForceSearch(fps, *queryMol, params.similarityCutoff);
+    auto names =
+        bruteForceSearch(fps, *queryMol, params.similarityCutoff, fpGen);
     std::set<std::string> fullSmis;
     for (const auto &r : names) {
       fullSmis.insert(MolToSmiles(*mols[r]));
     }
-    if (i != 1) {
-      CHECK(resSmis == fullSmis);
-    } else {
-      // In the triazole library, one of the hits found by the brute force
-      // method (triazole-1_1-1_2-2_3-1) is missed by the SynthonSpaceSearch
-      // because it requires that the fragment [1*]n([3*])C1CCCC1 is similar
-      // to synthon c1ccccc1-n([3*])[1*] which it isn't.  Instead, make sure
-      // all the ones that are found are in the brute force results.
-      for (const auto &rs : resSmis) {
-        CHECK(fullSmis.find(rs) != fullSmis.end());
-      }
-    }
+    CHECK(resSmis == fullSmis);
   }
 }
 
@@ -155,6 +145,8 @@ TEST_CASE("FP Binary File") {
   SearchResults results;
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
   SynthonSpaceSearchParams params;
+  std::cout << params.similarityCutoff << " and "
+            << params.approxSimilarityAdjuster << std::endl;
   for (auto numThreads : std::vector<int>{1, 2, -1}) {
     synthonspace.readDBFile(libName, numThreads);
     params.numThreads = numThreads;
@@ -204,10 +196,12 @@ TEST_CASE("Hit Filters") {
   synthonspace.readDBFile(libName);
   results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(results.getHitMolecules().size() == 18);
+
   {
     SynthonSpaceSearchParams params;
     params.minHitHeavyAtoms = 28;
     params.similarityCutoff = 0.45;
+    params.approxSimilarityAdjuster = 0.1;
     results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
     CHECK(results.getHitMolecules().size() == 13);
     params.maxHitHeavyAtoms = 29;
@@ -235,18 +229,94 @@ TEST_CASE("Hit Filters") {
   {
     SynthonSpaceSearchParams params;
     params.similarityCutoff = 0.45;
+    params.approxSimilarityAdjuster = 0.2;
+    params.fragSimilarityAdjuster = 0.2;
+    // The brute force search for this query gives 210 hits.  It's the
+    // fragSimilarityAdjuster that does the damage.  Setting it to 0.4
+    // gets all the hits at the expense of pretty much a full
+    // enumerated search.
     auto chiralQuery = "Cc1nccn1CCc1ccsc1COO[C@@H]1CCC[C@H](N)C1"_smiles;
     results = synthonspace.fingerprintSearch(*chiralQuery, *fpGen, params);
-    CHECK(results.getHitMolecules().size() == 17);
+    CHECK(results.getHitMolecules().size() == 92);
     params.minHitChiralAtoms = 1;
     results = synthonspace.fingerprintSearch(*chiralQuery, *fpGen, params);
-    CHECK(results.getHitMolecules().size() == 11);
+    CHECK(results.getHitMolecules().size() == 74);
     params.maxHitChiralAtoms = 1;
     results = synthonspace.fingerprintSearch(*chiralQuery, *fpGen, params);
-    CHECK(results.getHitMolecules().size() == 4);
+    CHECK(results.getHitMolecules().size() == 17);
     for (const auto &r : results.getHitMolecules()) {
       auto numChiralAtoms = details::countChiralAtoms(*r);
-      CHECK((numChiralAtoms >= 1 && numChiralAtoms <= 3));
+      CHECK((numChiralAtoms >= 1 && numChiralAtoms <= 1));
     }
   }
+}
+
+TEST_CASE("FP Best Hit Found") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  SynthonSpace synthonspace;
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
+  SearchResults results;
+  auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
+  SynthonSpaceSearchParams params;
+  params.similarityCutoff = 0.8;
+  // We need particularly generous leeway on the fragment and approx
+  // similarities to get a close miss for the test.
+  params.approxSimilarityAdjuster = 0.4;
+  params.fragSimilarityAdjuster = 0.4;
+  synthonspace.readDBFile(libName);
+  CHECK_NOTHROW(results =
+                    synthonspace.fingerprintSearch(*queryMol, *fpGen, params));
+  CHECK(results.getHitMolecules().empty());
+  auto &bestHit = results.getBestHit();
+  REQUIRE(bestHit);
+  CHECK_NOTHROW(bestHit->getProp<std::string>(common_properties::_Name));
+  CHECK(bestHit->getProp<double>("Similarity") < 0.8);
+}
+
+unsigned int countFileLines(const std::string &filename) {
+  std::ifstream ifs(filename.c_str());
+  ifs.unsetf(std::ios_base::skipws);
+  unsigned int numLines = std::count(std::istream_iterator<char>(ifs),
+                                     std::istream_iterator<char>(), '\n');
+  ifs.close();
+  return numLines;
+}
+
+TEST_CASE("FP Write Possible Hits") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  SynthonSpace synthonspace;
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
+
+  auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
+  synthonspace.readDBFile(libName, 1);
+  SynthonSpaceSearchParams params;
+  params.numThreads = 1;
+  params.possibleHitsFile = "fp_poss_hits_1.txt";
+  params.writePossibleHitsAndStop = true;
+  SearchResults results;
+  CHECK_NOTHROW(results =
+                    synthonspace.fingerprintSearch(*queryMol, *fpGen, params));
+  CHECK(results.getHitMolecules().size() == 0);
+  CHECK(results.getMaxNumResults() == 420);
+  CHECK(countFileLines("fp_poss_hits_1.txt") == 400);
+
+  auto newResults =
+      synthonspace.fingerprintSearch(*queryMol, *fpGen, params, 0);
+  // Note that there are a lot more hits here than in test "FP Binary File",
+  // where the search is the same, because the default approxSimilarityAdjuster
+  // of 0.1 screens loads out.  It isn't applied here.
+  CHECK(newResults.getHitMolecules().size() == 92);
+  CHECK_THAT(newResults.getHitMolecules()[0]->getProp<double>("Similarity"),
+             Catch::Matchers::WithinAbs(0.751, 0.001));
+  CHECK_THAT(newResults.getHitMolecules()[91]->getProp<double>("Similarity"),
+             Catch::Matchers::WithinAbs(0.5, 0.001));
+  std::remove("fp_poss_hits_1.txt");
 }
