@@ -86,6 +86,9 @@ std::vector<Node *> Digraph::getNodes(Atom *atom) const {
     if (atom == node->getAtom()) {
       result.push_back(node);
     }
+    if (!node->isExpanded()) {
+      continue;
+    }
     for (const auto &e : node->getEdges()) {
       if (!e->isBeg(node)) {
         continue;

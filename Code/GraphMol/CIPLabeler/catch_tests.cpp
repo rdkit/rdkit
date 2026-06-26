@@ -192,6 +192,7 @@ TEST_CASE("Digraph", "[accurateCIP]") {
 
   auto new_root_idx = 24u;
   auto new_root_atom = cipmol.getAtom(new_root_idx);
+  expandAll(g);
   auto new_root_nodes = g.getNodes(new_root_atom);
   CHECK(new_root_nodes.size() == 104);
 
