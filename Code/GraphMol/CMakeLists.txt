@@ -212,4 +212,4 @@ rdkit_catch_test(molopsTestsCatch catch_molops.cpp
         LINK_LIBRARIES FileParsers SmilesParse GraphMol)
 
 rdkit_catch_test(testMacroMolTemplate testMacroMolTemplate.cpp
-        LINK_LIBRARIES GraphMol)
+        LINK_LIBRARIES SmilesParse GraphMol)
