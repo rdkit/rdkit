@@ -2,21 +2,21 @@
   "name": "@charnley/rdkit-minimal",
   "version": "0.0.0",
   "description": "RDKit MinimalLib compiled to WebAssembly",
-  "main": "./RDKit_minimal.js",
+  "main": "./dist/RDKit_minimal.js",
   "type": "module",
-  "types": "./RDKit_minimal.d.ts",
+  "types": "./dist/RDKit_minimal.d.ts",
   "exports": {
     ".": {
-      "import": "./RDKit_minimal.js",
-      "require": "./RDKit_minimal.js",
-      "default": "./RDKit_minimal.js"
+      "import": "./dist/RDKit_minimal.js",
+      "require": "./dist/RDKit_minimal.js",
+      "default": "./dist/RDKit_minimal.js"
     },
-    "./RDKit_minimal.wasm": "./RDKit_minimal.wasm"
+    "./RDKit_minimal.wasm": "./dist/RDKit_minimal.wasm"
   },
   "files": [
-    "./RDKit_minimal.d.ts",
-    "./RDKit_minimal.js",
-    "./RDKit_minimal.wasm",
+    "./dist/RDKit_minimal.d.ts",
+    "./dist/RDKit_minimal.js",
+    "./dist/RDKit_minimal.wasm",
     "./README.md"
   ],
   "repository": {

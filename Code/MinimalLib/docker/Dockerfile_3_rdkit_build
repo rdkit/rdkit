@@ -56,6 +56,7 @@ ARG EXCEPTION_HANDLING="-fexceptions -sNO_DISABLE_EXCEPTION_CATCHING"
 
 FROM rdkit-minimallib-rdkit-src AS build-stage
 ARG EXCEPTION_HANDLING
+ARG VERSION=0.0.0
 
 LABEL maintainer="Greg Landrum <greg.landrum@t5informatics.com>"
 
@@ -86,16 +87,26 @@ RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c /src/rdkit/Extern
   sed 's/&& defined(__APPLE__)//' /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak > /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c
 
 # build and "install"
-RUN make -j2 RDKit_minimal && \
-  cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/demo/
+RUN make -j2 RDKit_minimal
+RUN cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/dist/
 
 # run the tests
 WORKDIR /src/rdkit/Code/MinimalLib/tests
 RUN /opt/emsdk/node/*/bin/node tests.js
 
+# Build package
+WORKDIR /src/rdkit/Code/MinimalLib
+RUN mkdir build
+RUN cp assets/package.json ./build
+RUN cp README.md ./build
+RUN cp -r ./dist ./build
+
+WORKDIR /src/rdkit/Code/MinimalLib/build
+RUN /opt/emsdk/node/*/bin/node -e "const p=require('./package.json');p.version='${VERSION}';require('fs').writeFileSync('./package.json',JSON.stringify(p,null,2))"
+
 # Copy js and wasm rdkit files to use in browser
 # This feature requires the BuildKit backend
 # https://docs.docker.com/engine/reference/commandline/build/#custom-build-outputs
 FROM scratch as export-stage
-COPY --from=build-stage /src/rdkit/Code/MinimalLib/demo /
+COPY --from=build-stage /src/rdkit/Code/MinimalLib/build /
 COPY --from=build-stage /src/rdkit/Code/MinimalLib/docs /

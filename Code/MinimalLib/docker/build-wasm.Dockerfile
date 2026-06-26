@@ -1,5 +1,6 @@
 # Compile WASM MinimalLib
 
+ARG EMSDK_VERSION="latest"
 ARG EXCEPTION_HANDLING="-fwasm-exceptions"
 ARG FREETYPE_VERSION="2.13.3"
 
@@ -7,6 +8,7 @@ ARG FREETYPE_VERSION="2.13.3"
 # Stage 1: build dependencies (emscripten, FreeType, zlib)
 # ---------------------------------------------------------------------------
 FROM debian:trixie AS deps-stage
+ARG EMSDK_VERSION
 ARG EXCEPTION_HANDLING
 ARG FREETYPE_VERSION
 
@@ -20,11 +22,18 @@ RUN apt-get update && apt-get upgrade -y && apt install -y \
     git \
     python3 \
     g++ \
-    emscripten \
     libboost-dev \
     libeigen3-dev \
     nodejs \
+    xz-utils \
     node-typescript
+
+# Setup emsdk
+WORKDIR /opt
+RUN git clone https://github.com/emscripten-core/emsdk.git emsdk.git
+WORKDIR /opt/emsdk.git
+RUN ./emsdk install ${EMSDK_VERSION} && ./emsdk activate ${EMSDK_VERSION}
+RUN echo "source /opt/emsdk/emsdk_env.sh > /dev/null 2>&1" >> ~/.bashrc
 
 WORKDIR /src
 RUN wget -q https://download.savannah.gnu.org/releases/freetype/freetype-${FREETYPE_VERSION}.tar.gz \
@@ -124,7 +133,6 @@ ENV DIST_DIR="../Code/MinimalLib/dist/"
 RUN make -j2 RDKit_minimal
 RUN mkdir -p $DIST_DIR
 RUN cp Code/MinimalLib/RDKit_minimal.* $DIST_DIR
-RUN cp Code/MinimalLib/RDKit_minimal.d.ts $DIST_DIR
 RUN cp ../Code/MinimalLib/assets/package.json $DIST_DIR
 RUN cp ../Code/MinimalLib/README.md $DIST_DIR
 RUN cd $DIST_DIR && node -e "const p=require('./package.json');p.version='${VERSION}';require('fs').writeFileSync('./package.json',JSON.stringify(p,null,2))"
