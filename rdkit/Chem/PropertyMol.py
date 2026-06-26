@@ -4,7 +4,14 @@
 #
 from rdkit import Chem
 from rdkit import rdBase
-from warnings import deprecated
+import sys
+if sys.version_info.minor >= 13:
+  from warnings import deprecated
+else:
+  def deprecated(msg):
+    def decorator(func):
+      return func
+    return decorator
 
 
 @deprecated(
