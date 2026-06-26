@@ -535,7 +535,6 @@ GetMorganFingerprintBV(const RDKit::ROMol &mol, unsigned int radius,
   if (bitInfoMap) {
     nb::dict biDict = nb::cast<nb::dict>(bitInfo);
     biDict.clear();
-    std::cerr << " copying! " << std::endl;
     for (RDKit::MorganFingerprints::BitInfoMap::const_iterator iter =
              bitInfoMap->begin();
          iter != bitInfoMap->end(); ++iter) {
