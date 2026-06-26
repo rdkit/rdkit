@@ -222,4 +222,4 @@ rdkit_catch_test(testMacroMol testMacroMol.cpp
 rdkit_catch_test(ringSystemsTest ring_systems_test.cpp LINK_LIBRARIES SmilesParse GraphMol RDStreams)
 
 rdkit_catch_test(testMacroMolTemplate testMacroMolTemplate.cpp
-        LINK_LIBRARIES GraphMol)
+        LINK_LIBRARIES SmilesParse GraphMol)
