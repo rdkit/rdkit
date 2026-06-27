@@ -22,6 +22,7 @@ logger.setLevel(1)
 tests = [1] * 1001
 if len(sys.argv) > 1:
   tests = [0] * 1001
+  tests[0] = 1
   for x in sys.argv[1:]:
     x = int(x)
     tests[x] = 1
