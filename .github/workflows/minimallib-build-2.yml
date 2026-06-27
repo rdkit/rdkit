@@ -1,4 +1,4 @@
-name: Build MinimalLib, apt-boost
+name: Build MinimalLib, local-boost single-docker
 
 on:
   push:
@@ -35,16 +35,16 @@ jobs:
             --build-arg VERSION=${{ steps.version.outputs.version }} \
             --file Code/MinimalLib/docker/build-wasm.Dockerfile \
             --target export-stage \
-            --output type=local,dest=Code/MinimalLib/dist \
+            --output type=local,dest=Code/MinimalLib/build \
             .
 
       - name: Test WASM artifacts
         run: node Code/MinimalLib/tests/tests.js
 
       - name: Make package
-        working-directory: Code/MinimalLib/dist
+        working-directory: Code/MinimalLib/build
         run: npm pack
 
       - name: Dry Publish
-        working-directory: Code/MinimalLib/dist
+        working-directory: Code/MinimalLib/build
         run: npm publish --dry-run

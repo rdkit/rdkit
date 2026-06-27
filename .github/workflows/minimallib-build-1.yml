@@ -1,4 +1,4 @@
-name: Build MinimalLib
+name: Build MinimalLib, compile-boost multi-docker 
 
 on:
   push:
@@ -38,9 +38,9 @@ jobs:
         run: node Code/MinimalLib/tests/tests.js
 
       - name: Make package
-        working-directory: Code/MinimalLib/dist
+        working-directory: Code/MinimalLib/build
         run: npm pack
 
       - name: Dry Publish
-        working-directory: Code/MinimalLib/dist
+        working-directory: Code/MinimalLib/build
         run: npm publish --dry-run

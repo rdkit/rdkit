@@ -10,7 +10,7 @@ cwd=$(realpath $0)
 cwd=$(dirname $cwd)
 cwd=$(dirname $cwd)
 cd $cwd
-MINIMALLIB_OUTPUT_PATH=$(realpath dist)
+MINIMALLIB_OUTPUT_PATH=$(realpath build)
 rm -rf $MINIMALLIB_OUTPUT_PATH
 mkdir -p $MINIMALLIB_OUTPUT_PATH
 
