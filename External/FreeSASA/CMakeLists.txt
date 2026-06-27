@@ -160,7 +160,7 @@ file(WRITE ${freesasa_h} "${freesasa_h_data}")
 add_definitions(-DUSE_THREADS=0)
 add_definitions(-DUSE_JSON=0)
 add_definitions(-DUSE_XML=0)
-rdkit_library(freesasa_clib ${freesasa_clib_srcs})
+rdkit_library(freesasa_clib ${freesasa_clib_srcs} NO_PCH)
 target_compile_definitions(freesasa_clib PRIVATE RDKIT_FREESASALIB_BUILD)
 
 if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))

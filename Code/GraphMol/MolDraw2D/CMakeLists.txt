@@ -49,6 +49,12 @@ rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
         SubstructMatch Subgraphs GraphMol EigenSolvers)
 target_compile_definitions(MolDraw2D PRIVATE RDKIT_MOLDRAW2D_BUILD)
 
+# MolDrawOptionsJSONParsers.cpp #defines USE_BETTER_ENUMS and so is incompatible with
+# the plain-enum precompiled header; compile it without the PCH (see BetterEnums.h).
+if(RDK_USE_PRECOMPILED_HEADERS)
+  set_source_files_properties(MolDrawOptionsJSONParsers.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+endif()
+
 # if(RDK_BUILD_QT_DEMO && !RDK_BUILD_QT_SUPPORT) error
 if (RDK_BUILD_QT_SUPPORT)
     add_subdirectory(Qt)
