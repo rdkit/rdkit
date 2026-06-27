@@ -139,4 +139,4 @@ RUN cd $DIST_DIR && node -e "const p=require('./package.json');p.version='${VERS
 
 # Stage: export artifacts
 FROM scratch AS export-stage
-COPY --from=build-stage /src/rdkit/Code/MinimalLib/dist /
+COPY --from=build-stage /src/rdkit/Code/MinimalLib/build /
