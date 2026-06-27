@@ -93,7 +93,7 @@ RUN cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/dist/
 
 # Build package
 WORKDIR /src/rdkit/Code/MinimalLib
-RUN mkdir build
+RUN mkdir -p build
 RUN cp assets/package.json ./build
 RUN cp README.md ./build
 RUN mv ./dist ./build
