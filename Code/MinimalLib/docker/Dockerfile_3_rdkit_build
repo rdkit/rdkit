@@ -88,6 +88,7 @@ RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c /src/rdkit/Extern
 
 # build and "install"
 RUN make -j2 RDKit_minimal
+RUN mkdir -p ../Code/MinimalLib/dist
 RUN cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/dist/
 
 # Build package
@@ -95,7 +96,7 @@ WORKDIR /src/rdkit/Code/MinimalLib
 RUN mkdir build
 RUN cp assets/package.json ./build
 RUN cp README.md ./build
-RUN cp -r ./dist ./build
+RUN mv ./dist ./build
 
 WORKDIR /src/rdkit/Code/MinimalLib/build
 RUN /opt/emsdk/node/*/bin/node -e "const p=require('./package.json');p.version='${VERSION}';require('fs').writeFileSync('./package.json',JSON.stringify(p,null,2))"
