@@ -294,6 +294,17 @@ bool getStereoAtomsFromGeometry(const Bond *bond, Bond::BondStereo stereo,
     }
   }
   return stereoAtoms.size() == 2u;
+
+bool hasAtropStereoBond(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  for (const auto bond : atom->getOwningMol().atomBonds(atom)) {
+    const auto stereo = bond->getStereo();
+    if (stereo == Bond::BondStereo::STEREOATROPCW ||
+        stereo == Bond::BondStereo::STEREOATROPCCW) {
+      return true;
+    }
+  }
+  return false;
 }
 
 Atom::ChiralType getChirality(ROMol &mol, Atom *center_atom, Conformer &conf) {
@@ -417,6 +428,10 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
   for (auto atom : mol.atoms()) {
     // only deal with unspecified chiralities
     if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
+      atom->clearProp(CDX_CIP);
+      continue;
+    }
+    if (hasAtropStereoBond(atom)) {
       atom->clearProp(CDX_CIP);
       continue;
     }
