@@ -189,6 +189,8 @@ bool parseNode(
   rd_atom->setNoImplicit(explicitHs);
   if (node.m_abnormalValence) {
     rd_atom->setNoImplicit(true);
+    mol.setProp<CDXMLSanitizationHint>(CDXML_SANITIZATION_HINTS,
+                                       CDXMLSanitizationHint::radical);
   }
 
   rd_atom->setIsotope(isotope);
