@@ -36,10 +36,10 @@
 namespace RDKit {
 namespace ChemDraw {
 namespace {
-bool shouldRelaxNeedsCleanHydrogens(
+bool shouldHonorNeedsCleanHydrogens(
     const CDXNode &node, int elemno, const v2::ChemDrawParserParams &params) {
   return params.sanitize &&
-         params.needsCleanPolicy == v2::NeedsCleanPolicy::RelaxHydrogens &&
+         params.needsCleanPolicy == v2::NeedsCleanPolicy::TrustSource &&
          node.m_nodeType == kCDXNodeType_Element && node.m_needsClean &&
          elemno != 1 && node.m_numHydrogens == 0 &&
          node.m_radical == kCDXRadical_None;
@@ -192,13 +192,14 @@ bool parseNode(
   }
 
   CHECK_INVARIANT(atom_id != -1, "Uninitialized atom id in cdxml.");
-  // In the opt-in salvage mode for sanitizing parses, treat explicit zero-H
-  // counts on NeedsClean element atoms as advisory and let sanitization
-  // recompute hydrogens.
-  const bool relaxNeedsCleanHydrogens =
-      shouldRelaxNeedsCleanHydrogens(node, elemno, params);
+  // In the default sanitized mode, treat explicit zero-H counts on NeedsClean
+  // element atoms as advisory and let sanitization recompute hydrogens.
+  // TrustExplicitHydrogens preserves the literal source metadata instead.
+  const bool honorNeedsCleanHydrogens =
+      shouldHonorNeedsCleanHydrogens(node, elemno, params);
   bool explicitHs =
-      node.m_numHydrogens != kNumHydrogenUnspecified && !relaxNeedsCleanHydrogens;
+      node.m_numHydrogens != kNumHydrogenUnspecified &&
+      !honorNeedsCleanHydrogens;
   // UINT16 max is not addigned?
   int num_hydrogens = explicitHs ? node.m_numHydrogens : 0;
   Atom *rd_atom = new Atom(elemno);

@@ -47,7 +47,7 @@ enum class CDXFormat {
 
 enum class NeedsCleanPolicy {
   TrustSource = 0,
-  RelaxHydrogens = 1,
+  TrustExplicitHydrogens = 1,
 };
 
 struct RDKIT_RDCHEMDRAWLIB_EXPORT ChemDrawParserParams {

@@ -158,7 +158,8 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
 
   python::enum_<v2::NeedsCleanPolicy>("NeedsCleanPolicy")
       .value("TrustSource", v2::NeedsCleanPolicy::TrustSource)
-      .value("RelaxHydrogens", v2::NeedsCleanPolicy::RelaxHydrogens);
+      .value("TrustExplicitHydrogens",
+             v2::NeedsCleanPolicy::TrustExplicitHydrogens);
 
   // Molecule Interface
   std::string docString =
@@ -177,8 +178,9 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
        - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
 
        - needsCleanPolicy: how to handle `NeedsClean` hydrogen metadata.
-         `RelaxHydrogens` is only applied when sanitize is True.
-         [default TrustSource]
+        `TrustSource` honors `NeedsClean` by allowing sanitization to
+        recompute hydrogens. `TrustExplicitHydrogens` preserves the literal
+        source metadata when sanitize is True. [default TrustSource]
 
      RETURNS:
        a tuple of parsed Mol objects.)DOC";
@@ -206,8 +208,9 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
        - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
 
        - needsCleanPolicy: how to handle `NeedsClean` hydrogen metadata.
-         `RelaxHydrogens` is only applied when sanitize is True.
-         [default TrustSource]
+        `TrustSource` honors `NeedsClean` by allowing sanitization to
+        recompute hydrogens. `TrustExplicitHydrogens` preserves the literal
+        source metadata when sanitize is True. [default TrustSource]
 
      RETURNS:
        a tuple of parsed Mol objects.)DOC";

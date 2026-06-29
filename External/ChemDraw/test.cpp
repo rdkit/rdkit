@@ -480,12 +480,10 @@ TEST_CASE("CDXML Advanced") {
 
   SECTION("Bad CDXML") {
     auto fname = cdxmlbase + "bad-cdxml.cdxml";
-    // Only one passes sanitization
+    // The default NeedsClean policy honors the source cleanup hint, so both
+    // fragments sanitize successfully.
     {
-      std::vector<std::string> expected = {"*c1ccccc1"};
-      std::vector<std::string> expected_smarts = {
-          "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
-      };
+      std::vector<std::string> expected = {"*c1ccccc1", "*c1cccnc1"};
       auto params = ChemDrawParserParams();
       auto mols = MolsFromChemDrawFile(fname, params);
       for (auto &mol : mols) {
@@ -495,12 +493,11 @@ TEST_CASE("CDXML Advanced") {
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
-        CHECK(MolToSmarts(*mol) == expected_smarts[i]);
         CHECK(MolToSmiles(*mol) == expected[i++]);
       }
     }
-    // setting sanitization to false, we get both, and RelaxHydrogens has no
-    // effect on that unsanitized path.
+    // setting sanitization to false leaves the source untouched, so we get the
+    // original unsanitized fragments regardless of the NeedsClean policy.
     std::vector<std::string> expected = {"*C1=C([H])C([H])=C([H])C([H])=C1[H]",
                                          "*C1=C([H])N([H])=C([H])C([H])=C1[H]"};
     std::vector<std::string> expected_smarts = {
@@ -509,7 +506,7 @@ TEST_CASE("CDXML Advanced") {
     };
     ChemDrawParserParams params;
     params.sanitize = false;
-    params.needsCleanPolicy = NeedsCleanPolicy::RelaxHydrogens;
+    params.needsCleanPolicy = NeedsCleanPolicy::TrustExplicitHydrogens;
     auto mols = MolsFromChemDrawFile(fname, params);
     CHECK(mols.size() == expected.size());
     int i = 0;
@@ -1428,29 +1425,9 @@ TEST_CASE("NeedsClean hydrogens") {
     }
     return smiles;
   };
-  SECTION("Trusting the source preserves the literal zero-hydrogen radical") {
+  SECTION("TrustSource honors NeedsClean zero-H atoms by default") {
     auto fname = chemdrawPath + "needsclean-carbamate-n.cdxml";
     auto mols = MolsFromChemDrawFile(fname);
-    REQUIRE(mols.size() == 1);
-    auto &mol = *mols[0];
-    CHECK(MolToSmiles(mol) == "C[N]C(=O)OC");
-
-    unsigned int nitrogens = 0;
-    for (const auto atom : mol.atoms()) {
-      if (atom->getSymbol() == "N") {
-        ++nitrogens;
-        CHECK(atom->getNumRadicalElectrons() == 1);
-        CHECK(atom->getTotalNumHs() == 0);
-        CHECK(atom->getNoImplicit());
-      }
-    }
-    CHECK(nitrogens == 1);
-  }
-  SECTION("RelaxHydrogens lets RDKit recompute NeedsClean zero-H atoms") {
-    auto fname = chemdrawPath + "needsclean-carbamate-n.cdxml";
-    ChemDrawParserParams params;
-    params.needsCleanPolicy = NeedsCleanPolicy::RelaxHydrogens;
-    auto mols = MolsFromChemDrawFile(fname, params);
     REQUIRE(mols.size() == 1);
     auto &mol = *mols[0];
     CHECK(MolToSmiles(mol) == "CNC(=O)OC");
@@ -1466,38 +1443,63 @@ TEST_CASE("NeedsClean hydrogens") {
     }
     CHECK(nitrogens == 1);
   }
-  SECTION("RelaxHydrogens ignores NeedsClean on fragment replacement nodes") {
-    auto fname = chemdrawPath + "atom-to-fragment.cdxml";
+  SECTION(
+      "TrustExplicitHydrogens preserves the literal zero-hydrogen radical") {
+    auto fname = chemdrawPath + "needsclean-carbamate-n.cdxml";
     ChemDrawParserParams params;
-    params.needsCleanPolicy = NeedsCleanPolicy::RelaxHydrogens;
-    auto trust = MolsFromChemDrawFile(fname);
-    auto relax = MolsFromChemDrawFile(fname, params);
-    REQUIRE(molSmiles(trust) == std::vector<std::string>{"CC=C=C(C)C"});
-    CHECK(molSmiles(relax) == molSmiles(trust));
+    params.needsCleanPolicy = NeedsCleanPolicy::TrustExplicitHydrogens;
+    auto mols = MolsFromChemDrawFile(fname, params);
+    REQUIRE(mols.size() == 1);
+    auto &mol = *mols[0];
+    CHECK(MolToSmiles(mol) == "C[N]C(=O)OC");
+
+    unsigned int nitrogens = 0;
+    for (const auto atom : mol.atoms()) {
+      if (atom->getSymbol() == "N") {
+        ++nitrogens;
+        CHECK(atom->getNumRadicalElectrons() == 1);
+        CHECK(atom->getTotalNumHs() == 0);
+        CHECK(atom->getNoImplicit());
+      }
+    }
+    CHECK(nitrogens == 1);
   }
   SECTION(
-      "RelaxHydrogens is a no-op when sanitization already agrees with zero-H "
-      "metadata") {
+      "TrustExplicitHydrogens ignores NeedsClean on fragment replacement "
+      "nodes") {
+    auto fname = chemdrawPath + "atom-to-fragment.cdxml";
+    ChemDrawParserParams params;
+    params.needsCleanPolicy = NeedsCleanPolicy::TrustExplicitHydrogens;
+    auto trust = MolsFromChemDrawFile(fname);
+    auto preserve = MolsFromChemDrawFile(fname, params);
+    REQUIRE(molSmiles(trust) == std::vector<std::string>{"CC=C=C(C)C"});
+    CHECK(molSmiles(preserve) == molSmiles(trust));
+  }
+  SECTION(
+      "TrustExplicitHydrogens is a no-op when sanitization already agrees with "
+      "zero-H metadata") {
     auto fname = chemdrawPath + "geometry-tetrahedral-4.cdxml";
     ChemDrawParserParams params;
-    params.needsCleanPolicy = NeedsCleanPolicy::RelaxHydrogens;
+    params.needsCleanPolicy = NeedsCleanPolicy::TrustExplicitHydrogens;
     auto trust = MolsFromChemDrawFile(fname);
-    auto relax = MolsFromChemDrawFile(fname, params);
+    auto preserve = MolsFromChemDrawFile(fname, params);
     REQUIRE(molSmiles(trust) ==
             std::vector<std::string>{
                 "CC(=O)S[C@H]1CC2=CC(=O)CC[C@@]2(C)[C@@H]2CC[C@]3(C)[C@H](CC[C@]34CCC(=O)O4)[C@@H]12"});
-    CHECK(molSmiles(relax) == molSmiles(trust));
+    CHECK(molSmiles(preserve) == molSmiles(trust));
   }
   SECTION(
-      "RelaxHydrogens can salvage existing NeedsClean fragments when "
+      "TrustSource can salvage existing NeedsClean fragments when "
       "sanitization can infer valid hydrogens") {
     auto fname = cdxmlPath + "bad-cdxml.cdxml";
+    auto trust = MolsFromChemDrawFile(fname);
     ChemDrawParserParams params;
-    params.needsCleanPolicy = NeedsCleanPolicy::RelaxHydrogens;
-    auto mols = MolsFromChemDrawFile(fname, params);
-    REQUIRE(mols.size() == 2);
-    CHECK(molSmiles(mols) ==
+    params.needsCleanPolicy = NeedsCleanPolicy::TrustExplicitHydrogens;
+    auto preserve = MolsFromChemDrawFile(fname, params);
+    REQUIRE(trust.size() == 2);
+    CHECK(molSmiles(trust) ==
           std::vector<std::string>{"*c1ccccc1", "*c1cccnc1"});
+    CHECK(molSmiles(preserve) == std::vector<std::string>{"*c1ccccc1"});
   }
 }
 
