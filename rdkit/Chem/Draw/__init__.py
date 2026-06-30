@@ -147,8 +147,7 @@ def MolToFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, im
     outf.close()
 
 
-def MolToSVG(mol, size=(300, 300), kekulize=True, wedgeBonds=True, drawOptions=None,
-              **kwargs):
+def MolToSVG(mol, size=(300, 300), kekulize=True, wedgeBonds=True, drawOptions=None, **kwargs):
   """Returns an SVG string containing a drawing of the molecule.
 
   Supports the same arguments as MolToImage for highlights and legend.
@@ -160,9 +159,8 @@ def MolToSVG(mol, size=(300, 300), kekulize=True, wedgeBonds=True, drawOptions=N
   """
   if not mol:
     raise ValueError('Null molecule provided')
-  return _moltoSVG(mol, size, kwargs.get('highlightAtoms', []), kwargs.get('legend', ''),
-                  kekulize, drawOptions=drawOptions,
-                  highlightBonds=kwargs.get('highlightBonds', []))
+  return _moltoSVG(mol, size, kwargs.get('highlightAtoms', []), kwargs.get('legend', ''), kekulize,
+                   drawOptions=drawOptions, highlightBonds=kwargs.get('highlightBonds', []))
 
 
 def ShowMol(mol, size=(300, 300), kekulize=True, wedgeBonds=True, title='RDKit Molecule',
@@ -274,6 +272,13 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
   # we already prepared the molecule:
   d2d.drawOptions().prepareMolsBeforeDrawing = False
   bondHighlights = kwargs.get('highlightBonds', None)
+  if highlights:
+    if isinstance(highlights[0], (list, tuple)):
+      # multiple highlights
+      tmp = []
+      for sublist in highlights:
+        tmp.extend(sublist)
+      highlights = tmp
   if bondHighlights is not None:
     d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [],
                      highlightBonds=bondHighlights)
