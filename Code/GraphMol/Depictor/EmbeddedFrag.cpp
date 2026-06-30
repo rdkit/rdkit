@@ -2304,4 +2304,332 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
     ++iter;
   }
 }
+
+// ============================================================================
+// Path Angle Expansion Collision Resolution
+// ============================================================================
+
+std::vector<unsigned int> EmbeddedFrag::getAtomsOnSide(unsigned int center,
+                                                       unsigned int sideStart,
+                                                       unsigned int exclude) {
+  //
+  // Use BFS to collect all atoms on one side of a bond/angle.
+  // Starting from sideStart, traverse the molecular graph without
+  // crossing through the center atom or the exclude atom.
+  //
+  // This partitions the molecule into two subgraphs separated by
+  // the bond between sideStart and center.
+  //
+
+  std::vector<unsigned int> result;
+  std::queue<unsigned int> queue;
+  std::set<unsigned int> visited;
+
+  // Don't cross these atoms
+  visited.insert(center);
+  visited.insert(exclude);
+
+  queue.push(sideStart);
+
+  while (!queue.empty()) {
+    auto current = queue.front();
+    queue.pop();
+
+    if (visited.count(current)) {
+      continue;
+    }
+    visited.insert(current);
+
+    // Only include atoms that have embedded coordinates
+    if (d_eatoms.find(current) != d_eatoms.end()) {
+      result.push_back(current);
+    }
+
+    // Add neighbors to queue
+    auto atom = dp_mol->getAtomWithIdx(current);
+    for (const auto bond : dp_mol->atomBonds(atom)) {
+      auto neighbor = bond->getOtherAtomIdx(current);
+      if (!visited.count(neighbor)) {
+        queue.push(neighbor);
+      }
+    }
+  }
+
+  return result;
+}
+
+bool EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
+                                        unsigned int centerAtom,
+                                        unsigned int nextAtom,
+                                        double angleIncrement,
+                                        const double *dmat) {
+  //
+  // Open the angle at centerAtom by rotating one side.
+  //
+  // Key: We want to make the angle LARGER (closer to 180°).
+  // This straightens out the chain and increases separation along the path.
+  //
+  // Strategy: Rotate the smaller fragment (fewer atoms) away from the
+  // other side to INCREASE the angle.
+  //
+
+  PRECONDITION(dp_mol, "");
+  PRECONDITION(dmat, "");
+
+  // Get vectors from center to the two neighbors
+  auto v1 = d_eatoms[prevAtom].loc - d_eatoms[centerAtom].loc;
+  auto v2 = d_eatoms[nextAtom].loc - d_eatoms[centerAtom].loc;
+
+  // Partition atoms into two sides
+  auto atomsSide1 = getAtomsOnSide(centerAtom, prevAtom, nextAtom);
+  auto atomsSide2 = getAtomsOnSide(centerAtom, nextAtom, prevAtom);
+
+  // Choose the smaller side to rotate (less disruptive)
+  bool rotateSide1 = atomsSide1.size() < atomsSide2.size();
+  auto &atomsToMove = rotateSide1 ? atomsSide1 : atomsSide2;
+
+  // Check if any atoms on the moving side are fixed
+  for (auto aid : atomsToMove) {
+    if (d_eatoms.at(aid).df_fixed) {
+      return false;  // Cannot rotate this side
+    }
+  }
+
+  // Calculate current angle
+  v1.normalize();
+  v2.normalize();
+  double currentAngle =
+      std::acos(std::max(-1.0, std::min(1.0, v1.dotProduct(v2))));
+
+  // Try both rotation directions and pick the one that makes the angle LARGER
+  RDGeom::Transform2D transPos, transNeg;
+  transPos.SetTransform(d_eatoms[centerAtom].loc, angleIncrement);
+  transNeg.SetTransform(d_eatoms[centerAtom].loc, -angleIncrement);
+
+  // Save current positions
+  std::map<unsigned int, RDGeom::Point2D> savedPositions;
+  for (auto aid : atomsToMove) {
+    savedPositions[aid] = d_eatoms[aid].loc;
+  }
+
+  // Try positive rotation
+  for (auto aid : atomsToMove) {
+    transPos.TransformPoint(d_eatoms[aid].loc);
+  }
+
+  auto v1_pos = d_eatoms[prevAtom].loc - d_eatoms[centerAtom].loc;
+  auto v2_pos = d_eatoms[nextAtom].loc - d_eatoms[centerAtom].loc;
+  v1_pos.normalize();
+  v2_pos.normalize();
+  double anglePosRot =
+      std::acos(std::max(-1.0, std::min(1.0, v1_pos.dotProduct(v2_pos))));
+
+  // Restore and try negative rotation
+  for (auto aid : atomsToMove) {
+    d_eatoms[aid].loc = savedPositions[aid];
+    transNeg.TransformPoint(d_eatoms[aid].loc);
+  }
+
+  auto v1_neg = d_eatoms[prevAtom].loc - d_eatoms[centerAtom].loc;
+  auto v2_neg = d_eatoms[nextAtom].loc - d_eatoms[centerAtom].loc;
+  v1_neg.normalize();
+  v2_neg.normalize();
+  double angleNegRot =
+      std::acos(std::max(-1.0, std::min(1.0, v1_neg.dotProduct(v2_neg))));
+
+  // Keep the rotation that makes the angle LARGER
+  if (anglePosRot > angleNegRot && anglePosRot > currentAngle) {
+    // Positive rotation is better - restore to positive
+    for (auto aid : atomsToMove) {
+      d_eatoms[aid].loc = savedPositions[aid];
+      transPos.TransformPoint(d_eatoms[aid].loc);
+    }
+    return true;
+  } else if (angleNegRot > anglePosRot && angleNegRot > currentAngle) {
+    // Negative rotation is better - already applied
+    return true;
+  } else {
+    // Neither direction increases the angle - restore original
+    for (auto aid : atomsToMove) {
+      d_eatoms[aid].loc = savedPositions[aid];
+    }
+    return false;
+  }
+}
+
+void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
+  //
+  // Path Angle Expansion collision resolution
+  //
+  // Runs after bond flipping, angle opening, and bond shortening.
+  // Works by systematically opening angles along the chain between colliding
+  // atoms.
+  //
+  // Algorithm:
+  //   1. Find shortest path between colliding atoms
+  //   2. Identify expandable angles in the path
+  //   3. Incrementally open angles at these positions
+  //   4. Rotate the smaller fragment on each side
+  //   5. Stop if collision resolved or max expansion reached
+  //
+  // Key constraints:
+  //   - Skip angles where all 3 atoms (prev-center-next) are in SAME ring
+  //   - This preserves ring geometry while allowing ring-chain junction
+  //   expansion
+  //   - Maximum 15° expansion per angle (prevents unrealistic geometries)
+  //   - 5° increments (small steps to detect new collisions early)
+  //   - Revert if expansion makes things worse
+  //
+
+  // OPTIMIZATION: Pre-compute ring membership for each atom
+  // Build a map: atom_id -> set of ring indices containing that atom
+  std::map<int, std::set<int>> atomRings;
+  auto ringInfo = dp_mol->getRingInfo();
+  for (size_t ringIdx = 0; ringIdx < ringInfo->atomRings().size(); ++ringIdx) {
+    const auto &ring = ringInfo->atomRings()[ringIdx];
+    for (auto atomId : ring) {
+      atomRings[atomId].insert(ringIdx);
+    }
+  }
+
+  auto dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
+  auto colls = this->findCollisions(dmat, 0);
+
+  // Track total rotation applied at each angle
+  // Key: (collision pair, atom index), Value: cumulative rotation in radians
+  std::map<std::pair<int, int>, std::map<unsigned int, double>> angleTotals;
+
+  unsigned int iter = 0;
+
+  while (iter < MAX_ANGLE_EXPANSION_ITERS && colls.size()) {
+    auto collision = colls[0];
+    auto aid1 = collision.first;
+    auto aid2 = collision.second;
+
+    // Find shortest path between colliding atoms
+    auto path = RDKit::MolOps::getShortestPath(*dp_mol, aid1, aid2);
+
+    if (path.size() < 3) {
+      colls.erase(colls.begin());
+      ++iter;
+      continue;
+    }
+
+    // Find expandable atoms: interior atoms where the angle can be expanded
+    // Skip angles where all three atoms (prev-center-next) are in the SAME ring
+    // This preserves ring geometry while allowing expansion at ring junctions
+    auto pathVec = std::vector<int>(path.begin(), path.end());
+    std::vector<unsigned int> expandablePositions;
+
+    for (size_t i = 1; i < pathVec.size() - 1; ++i) {
+      auto prevAtom = pathVec[i - 1];
+      auto centerAtom = pathVec[i];
+      auto nextAtom = pathVec[i + 1];
+
+      // Skip fixed atoms - they can't be moved
+      if (d_eatoms.at(centerAtom).df_fixed) {
+        continue;
+      }
+
+      // OPTIMIZATION: Check if all three atoms are in the SAME ring using set
+      // intersection Much faster than iterating through all rings and doing
+      // std::find
+      bool allInSameRing = false;
+      if (atomRings.count(prevAtom) && atomRings.count(centerAtom) &&
+          atomRings.count(nextAtom)) {
+        // Find intersection of ring sets
+        std::set<int> temp;
+        std::set_intersection(
+            atomRings[prevAtom].begin(), atomRings[prevAtom].end(),
+            atomRings[centerAtom].begin(), atomRings[centerAtom].end(),
+            std::inserter(temp, temp.begin()));
+
+        std::set<int> commonRings;
+        std::set_intersection(temp.begin(), temp.end(),
+                              atomRings[nextAtom].begin(),
+                              atomRings[nextAtom].end(),
+                              std::inserter(commonRings, commonRings.begin()));
+
+        allInSameRing = !commonRings.empty();
+      }
+
+      if (allInSameRing) {
+        // All three atoms in same ring - skip to preserve ring geometry
+        continue;
+      }
+
+      expandablePositions.push_back(i);
+    }
+
+    if (expandablePositions.empty()) {
+      colls.erase(colls.begin());
+      ++iter;
+      continue;
+    }
+
+    // OPTIMIZATION: Save state only once per collision (not every iteration)
+    auto prevCollisionCount = colls.size();
+    std::map<int, RDGeom::Point2D> savedPositions;
+
+    for (const auto &ea : d_eatoms) {
+      savedPositions[ea.first] = ea.second.loc;
+    }
+
+    // Try expanding each angle by one increment
+    bool anyExpanded = false;
+
+    for (auto pos : expandablePositions) {
+      auto centerAtom = pathVec[pos];
+
+      // Check if this angle has reached maximum expansion
+      if (angleTotals[collision][centerAtom] >= MAX_ANGLE_EXPANSION) {
+        continue;
+      }
+
+      auto prevAtom = pathVec[pos - 1];
+      auto nextAtom = pathVec[pos + 1];
+
+      // Try opening this angle (making it larger, towards 180°)
+      if (openAngleByIncrement(prevAtom, centerAtom, nextAtom,
+                               ANGLE_EXPANSION_INCREMENT, dmat)) {
+        angleTotals[collision][centerAtom] += ANGLE_EXPANSION_INCREMENT;
+        anyExpanded = true;
+      }
+    }
+
+    if (!anyExpanded) {
+      colls.erase(colls.begin());
+      ++iter;
+      continue;
+    }
+
+    // OPTIMIZATION: Only recompute distance matrix after atom positions changed
+    dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
+
+    // Check if expansion helped or made things worse
+    colls = this->findCollisions(dmat, 0);
+
+    if (colls.size() > prevCollisionCount) {
+      // Created MORE collisions - this is genuinely worse, revert
+
+      // Restore all atom positions
+      for (auto &ea : d_eatoms) {
+        ea.second.loc = savedPositions[ea.first];
+      }
+
+      // Clear rotation tracking for this collision and give up on it
+      angleTotals.erase(collision);
+
+      // OPTIMIZATION: Only recompute if we reverted
+      dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
+      colls = this->findCollisions(dmat, 0);
+      colls.erase(colls.begin());
+    } else {
+      // Accept if collision count same or better
+    }
+
+    ++iter;
+  }
+}
+
 }  // namespace RDDepict

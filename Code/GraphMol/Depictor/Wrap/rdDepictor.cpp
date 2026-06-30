@@ -36,7 +36,8 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
                              unsigned int nSamples = 100, int sampleSeed = 100,
                              bool permuteDeg4Nodes = false,
                              double bondLength = -1.0, bool forceRDKit = false,
-                             bool useRingTemplates = false) {
+                             bool useRingTemplates = false,
+                             bool usePathAngleExpansion = false) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
   python::list ks = coordMap.keys();
@@ -51,10 +52,21 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
   if (bondLength > 0) {
     RDDepict::BOND_LEN = bondLength;
   }
+
+  Compute2DCoordParameters params;
+  params.coordMap = cMap.empty() ? nullptr : &cMap;
+  params.canonOrient = canonOrient;
+  params.clearConfs = clearConfs;
+  params.nFlipsPerSample = nFlipsPerSample;
+  params.nSamples = nSamples;
+  params.sampleSeed = sampleSeed;
+  params.permuteDeg4Nodes = permuteDeg4Nodes;
+  params.forceRDKit = forceRDKit;
+  params.useRingTemplates = useRingTemplates;
+  params.usePathAngleExpansion = usePathAngleExpansion;
+
   unsigned int res;
-  res = RDDepict::compute2DCoords(
-      mol, &cMap, canonOrient, clearConfs, nFlipsPerSample, nSamples,
-      sampleSeed, permuteDeg4Nodes, forceRDKit, useRingTemplates);
+  res = RDDepict::compute2DCoords(mol, params);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
   }
@@ -363,7 +375,8 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("nFlipsPerSample") = 0, python::arg("nSample") = 0,
        python::arg("sampleSeed") = 0, python::arg("permuteDeg4Nodes") = false,
        python::arg("bondLength") = -1.0, python::arg("forceRDKit") = false,
-       python::arg("useRingTemplates") = false),
+       python::arg("useRingTemplates") = false,
+       python::arg("usePathAngleExpansion") = false),
       docString.c_str());
 
   docString =
