@@ -1,10 +1,22 @@
 #
-# Copyright (C) 2007-2010 Greg Landrum
+# Copyright (C) 2007-2026 Greg Landrum and other RDKit contributors
 # All Rights Reserved
 #
 from rdkit import Chem
+from rdkit import rdBase
+import sys
+if sys.version_info.minor >= 13:
+  from warnings import deprecated
+else:
+  def deprecated(msg):
+    def decorator(func):
+      return func
+    return decorator
 
 
+@deprecated(
+  "PropertyMol is deprecated, use Chem.Mol instead and set Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.MolProps) to preserve properties when pickling"
+)
 class PropertyMol(Chem.Mol):
   """ allows rdkit molecules to be pickled with their properties saved.
 
@@ -99,9 +111,6 @@ class PropertyMol(Chem.Mol):
     for pn in mol.GetPropNames(includePrivate=True):
       self.SetProp(pn, mol.GetProp(pn))
 
-  def SetProp(self, nm, val):
-    Chem.Mol.SetProp(self, nm, str(val))
-
   def __getstate__(self):
     pDict = {}
     for pn in self.GetPropNames(includePrivate=True):
@@ -113,12 +122,30 @@ class PropertyMol(Chem.Mol):
     for prop, val in stateD['propD'].items():
       self.SetProp(prop, val)
 
-    # ------------------------------------
-    #
-    #  doctest boilerplate
-    #
+  def SetProp(self, nm, val):
+    Chem.Mol.SetProp(self, nm, str(val))
 
 
+if hasattr(rdBase, '_wrapperType') and rdBase._wrapperType == 'nanobind':
+
+  def __getstate__(self):
+    oVal = Chem.GetDefaultPickleProperties()
+    Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.MolProps
+                                    | Chem.PropertyPickleOptions.PrivateProps
+                                    | Chem.PropertyPickleOptions.ComputedProps | oVal)
+    d = Chem.Mol.__getstate__(self)
+    Chem.SetDefaultPickleProperties(oVal)
+    return d
+
+  PropertyMol.__getstate__ = __getstate__
+  del PropertyMol.__init__
+  del PropertyMol.__setstate__
+
+
+# ------------------------------------
+#
+#  doctest boilerplate
+#
 def _test():
   import doctest
   import sys

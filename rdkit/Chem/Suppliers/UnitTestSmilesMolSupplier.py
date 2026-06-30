@@ -32,7 +32,7 @@ class TestCase(unittest.TestCase):
 
   def test_SmilesReaderIndex(self):
     # tests lazy reads
-    supp = Chem.SmilesMolSupplierFromText('\n'.join(self.smis), ',', 0, -1, 0)
+    supp = Chem.SmilesMolSupplierFromText('\n'.join(self.smis), ',', 0, -1, False)
     for i in range(4):
       self.assertMolecule(next(supp), i)
 
@@ -59,7 +59,7 @@ class TestCase(unittest.TestCase):
 
   def test_SmilesReaderIterator(self):
     # tests lazy reads using the iterator interface "
-    supp = Chem.SmilesMolSupplierFromText('\n'.join(self.smis), ',', 0, -1, 0)
+    supp = Chem.SmilesMolSupplierFromText('\n'.join(self.smis), ',', 0, -1, False)
 
     nDone = 0
     for mol in supp:
@@ -81,25 +81,25 @@ class TestCase(unittest.TestCase):
     RDLogger.DisableLog('rdApp.error')
 
     smis = ['CC', 'CCOC', 'fail', 'CCO']
-    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis), ',', 0, -1, 0)
+    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis), ',', 0, -1, False)
     self.assertEqual(len(supp), 4)
     self.assertIsNone(supp[2])
     self.assertIsNotNone(supp[3])
 
-    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis), ',', 0, -1, 0)
+    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis), ',', 0, -1, False)
     self.assertIsNone(supp[2])
     self.assertIsNotNone(supp[3])
     self.assertEqual(len(supp), 4)
     with self.assertRaises(IndexError):
       supp[4]
 
-    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis), ',', 0, -1, 0)
+    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis), ',', 0, -1, False)
     self.assertEqual(len(supp), 4)
     self.assertIsNotNone(supp[3])
     with self.assertRaises(IndexError):
       supp[4]
 
-    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis), ',', 0, -1, 0)
+    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis), ',', 0, -1, False)
     with self.assertRaises(IndexError):
       supp[4]
 

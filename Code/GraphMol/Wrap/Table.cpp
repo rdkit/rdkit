@@ -65,7 +65,7 @@ std::string periodicTableClassDoc =
 
 struct table_wrapper {
   static void wrap() {
-    python::class_<PeriodicTable>(
+    python::class_<PeriodicTable,  boost::noncopyable>(
         "PeriodicTable", periodicTableClassDoc.c_str(), python::no_init)
         .def("GetAtomicWeight",
              (double(PeriodicTable::*)(UINT) const) &

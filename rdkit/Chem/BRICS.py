@@ -30,7 +30,6 @@
 #
 # Created by Greg Landrum, Nov 2008
 import copy
-
 """ Implementation of the BRICS algorithm from Degen et al. ChemMedChem *3* 1503-7 (2008)
 
 """
@@ -308,6 +307,7 @@ def FindBRICSBonds(mol, randomizeOrder=False, silent=True):
       i1 = letter.sub('', i1)
       i2 = letter.sub('', i2)
       for match in matches:
+        match = tuple(match)
         if match not in bondsDone and (match[1], match[0]) not in bondsDone:
           bondsDone.add(match)
           yield (((match[0], match[1]), (i1, i2)))
@@ -453,7 +453,7 @@ def BRICSDecompose(mol, allNodes=None, minFragmentSize=1, onlyUseReactions=None,
 
     """
   global reactions
-  mSmi = Chem.MolToSmiles(mol, 1)
+  mSmi = Chem.MolToSmiles(mol)
 
   if allNodes is None:
     allNodes = set()
@@ -491,7 +491,7 @@ def BRICSDecompose(mol, allNodes=None, minFragmentSize=1, onlyUseReactions=None,
                 Chem.SanitizeMol(prod)
               except Exception:
                 continue
-              pSmi = Chem.MolToSmiles(prod, 1)
+              pSmi = Chem.MolToSmiles(prod)
               if minFragmentSize > 0:
                 nDummies = pSmi.count('*')
                 if nats - nDummies < minFragmentSize:

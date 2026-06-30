@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (C) 2003-2006  Rational Discovery LLC
+#  Copyright (C) 2003-2026  Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -114,7 +113,7 @@ class TestCase(unittest.TestCase):
     assert len(matches) == 3
     match = matches[0]
     assert len(match) == 2, 'bad match length'
-    matches = m.GetSubstructMatches(p, 0)
+    matches = m.GetSubstructMatches(p, uniquify=False)
     assert len(matches) == 3
     match = matches[0]
     assert len(match) == 2, 'bad match length'
@@ -123,7 +122,7 @@ class TestCase(unittest.TestCase):
     assert m.HasSubstructMatch(p)
     matches = m.GetSubstructMatches(p)
     assert len(matches) == 1
-    matches = m.GetSubstructMatches(p, 0)
+    matches = m.GetSubstructMatches(p, uniquify=False)
     assert len(matches) == 2
 
   def test4Pkl2(self):

@@ -193,6 +193,16 @@ class TestCase(unittest.TestCase):
       self.assertTrue(v1.GetTotalVal() == v2.GetTotalVal())
       self.assertTrue(v2.GetTotalVal() != 0)
 
+      v1 = ds.DiscreteValueVect(ds.DiscreteValueType.ONEBITVALUE, 30)
+      for i in range(15):
+        v1[2 * i] = 1
+      v2 = pickle.loads(
+        b'\x80\x04\x95`\x00\x00\x00\x00\x00\x00\x00\x8c\x1erdkit.DataStructs.cDataStructs\x94\x8c\x11DiscreteValueVect\x94\x93\x94C\x1c\xff\xff\xff\xff\x00\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x1e\x00\x00\x00\x01\x00\x00\x00UUU\x15\x94\x85\x94R\x94}\x94\x85\x94b.'
+      )
+      self.assertTrue(ds.ComputeL1Norm(v1, v2) == 0)
+      self.assertTrue(v1.GetTotalVal() == v2.GetTotalVal())
+      self.assertTrue(v2.GetTotalVal() != 0)
+
   def test4DiscreteVectOps(self):
     v1 = ds.DiscreteValueVect(ds.DiscreteValueType.TWOBITVALUE, 8)
     for i in range(4):

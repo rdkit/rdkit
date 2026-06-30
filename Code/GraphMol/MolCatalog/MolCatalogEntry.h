@@ -31,7 +31,11 @@ class RDKIT_MOLCATALOG_EXPORT MolCatalogEntry : public RDCatalog::CatalogEntry {
   MolCatalogEntry(const ROMol *omol);
 
   //! construct from a pickle
-  MolCatalogEntry(const std::string &pickle) { this->initFromString(pickle); }
+  MolCatalogEntry(const std::string &pickle) {
+    dp_mol = nullptr;
+    dp_props = nullptr;
+    this->initFromString(pickle);
+  }
 
   ~MolCatalogEntry() override;
 

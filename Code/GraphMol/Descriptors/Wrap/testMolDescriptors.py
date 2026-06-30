@@ -3,9 +3,16 @@ from os import environ
 from pathlib import Path
 import re
 
+from rdkit import rdBase
 from rdkit import Chem, DataStructs
-from rdkit.Chem import AllChem, Descriptors
+from rdkit.Chem import Descriptors
 from rdkit.Chem import rdMolDescriptors as rdMD
+
+try:
+  from rdkit.Chem import AllChem
+  haveAllChem = True
+except ImportError:
+  haveAllChem = False
 
 haveBCUT = hasattr(rdMD, 'BCUT2D')
 
@@ -266,6 +273,7 @@ class TestCase(unittest.TestCase):
     contribs = rdMD._CalcCrippenContribs(mol, force=True, atomTypeLabels=ls)
     self.assertEqual(ls, ['N11', 'C18', 'C18', 'C18', 'C18', 'C21', 'C10', 'O2'])
 
+  @unittest.skipIf(not haveAllChem, "AllChem not available")
   def testUSR(self):
     mol = Chem.MolFromSmiles("CC")
     AllChem.Compute2DCoords(mol)
@@ -307,6 +315,7 @@ class TestCase(unittest.TestCase):
     m2 = [4.39, 3.11, 1.36, 4.50, 4.44, 0.09, 8.34, 16.78, -23.20, 7.15, 16.52, 0.13]
     self.assertAlmostEqual(rdMD.GetUSRScore(m1, m2), 0.812, 2)
 
+  @unittest.skipIf(not haveAllChem, "AllChem not available")
   def testUSRCAT(self):
     mol = Chem.MolFromSmiles("CC")
     AllChem.Compute2DCoords(mol)
@@ -522,15 +531,27 @@ class TestCase(unittest.TestCase):
 
   def testPythonDescriptorFunctor(self):
 
-    class NumAtoms(Descriptors.PropertyFunctor):
+    if hasattr(rdBase, '_wrapperType') and rdBase._wrapperType == 'nanobind':
 
-      def __init__(self):
-        Descriptors.PropertyFunctor.__init__(self, "CustomNumAtoms", "1.0.0")
-
-      def __call__(self, mol):
+      def numAtoms(mol):
         return mol.GetNumAtoms()
 
+      class NumAtoms(rdMD.PythonPropertyFunctor):
+
+        def __init__(self):
+          rdMD.PythonPropertyFunctor.__init__(self, numAtoms, "CustomNumAtoms", "1.0.0")
+    else:
+
+      class NumAtoms(Descriptors.PropertyFunctor):
+
+        def __init__(self):
+          Descriptors.PropertyFunctor.__init__(self, "CustomNumAtoms", "1.0.0")
+
+        def __call__(self, mol):
+          return mol.GetNumAtoms()
+
     numAtoms = NumAtoms()
+    # numAtoms2 = NumAtoms()
     rdMD.Properties.RegisterProperty(numAtoms)
     props = rdMD.Properties(["CustomNumAtoms"])
     self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
@@ -549,6 +570,39 @@ class TestCase(unittest.TestCase):
     properties = rdMD.Properties(['exactmw', 'lipinskiHBA'])
     for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
       print(name, value)
+
+  def testPythonDescriptorFunctor2(self):
+    ''' NOTE: this test causes leak warnings in the nanobind wrappers '''
+
+    class NumAtoms2(Descriptors.PropertyFunctor):
+
+      def __init__(self):
+        Descriptors.PropertyFunctor.__init__(self, "CustomNumAtoms2", "1.0.0")
+
+      def __call__(self, mol):
+        return mol.GetNumAtoms()
+
+    numAtoms2 = NumAtoms2()
+    # numAtoms2 = NumAtoms()
+    rdMD.Properties.RegisterProperty(numAtoms2)
+    props = rdMD.Properties(["CustomNumAtoms2"])
+    self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
+
+    self.assertTrue("CustomNumAtoms2" in rdMD.Properties.GetAvailableProperties())
+    # check memory
+    self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
+    self.assertTrue("CustomNumAtoms2" in rdMD.Properties.GetAvailableProperties())
+
+    m = Chem.MolFromSmiles("c1ccccc1")
+    properties = rdMD.Properties()
+    for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
+      print(name, value)
+
+    properties = rdMD.Properties(['exactmw', 'lipinskiHBA'])
+    for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
+      print(name, value)
+    import gc
+    gc.collect()
 
   def testPropertyRanges(self):
     query = rdMD.MakePropertyRangeQuery("exactmw", 0, 1000)
@@ -593,6 +647,16 @@ class TestCase(unittest.TestCase):
     self.assertRaises(ValueError,
                       lambda: rdMD.GetMorganFingerprintAsBitVect(mol, 2, fromAtoms=[10]))
 
+  def testBitInfo(self):
+    m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
+    bi = {}
+    _ = rdMD.GetMorganFingerprintAsBitVect(m, radius=2, bitInfo=bi)
+    self.assertTrue(872 in bi)
+    bi = {}
+    _ = rdMD.GetMorganFingerprintAsBitVect(m, radius=2, fromAtoms=[0, 1, 2], bitInfo=bi)
+    self.assertTrue(1066 in bi)
+
+  @unittest.skipIf(not haveAllChem, "AllChem not available")
   def testCustomVSA(self):
     mol = Chem.MolFromSmiles("c1ccccc1O")
     peoe_vsa = rdMD.PEOE_VSA_(mol)
@@ -617,8 +681,10 @@ class TestCase(unittest.TestCase):
 
   def testGithub1761(self):
     mol = Chem.MolFromSmiles('CC(F)(Cl)C(F)(Cl)C')
-    self.assertRaises(OverflowError, lambda: rdMD.GetMorganFingerprint(mol, -1))
-    self.assertRaises(OverflowError, lambda: rdMD.GetHashedMorganFingerprint(mol, 0, -1))
+    # nanobind raises TypeError for negative unsigned int args; boost raised OverflowError
+    self.assertRaises((OverflowError, TypeError), lambda: rdMD.GetMorganFingerprint(mol, -1))
+    self.assertRaises((OverflowError, TypeError),
+                      lambda: rdMD.GetHashedMorganFingerprint(mol, 0, -1))
     self.assertRaises(ValueError, lambda: rdMD.GetHashedMorganFingerprint(mol, 0, 0))
 
   @unittest.skipIf(not haveBCUT, "BCUT descriptors not present")
@@ -698,7 +764,8 @@ class TestCase(unittest.TestCase):
       bcut2 = rdMD.BCUT2D(m, "property not existing on the atom")
       self.assertTrue(0, "Failed to handle not existing properties")
     except KeyError as e:
-      self.assertEqual(e.args, ("property not existing on the atom", ))
+      # nanobind wraps the key name with "Key Error: " prefix; boost does not
+      self.assertIn("property not existing on the atom", str(e))
 
     for atom in m.GetAtoms():
       atom.SetProp("bad_prop", "not a double")

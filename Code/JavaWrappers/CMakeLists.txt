@@ -5,6 +5,20 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${RDKit_CodeDir})
 include_directories(${Boost_INCLUDE_DIRS})
 
+if(RDK_BUILD_MAEPARSER_SUPPORT)
+    if ("${RDK_MAEPARSER_LIBS}" STREQUAL "")
+        # if we're not building maeparser as part of the RDKit build), then find
+        # the imported package
+        find_package(ZLIB QUIET)
+        find_package(${MAEPARSER_LIB})
+    else()
+        # if we built maeparser as part of the RDKit build, then we need to use
+        # the headers from the source directory
+        include_directories(${maeparser_INCLUDE_DIRS})
+    endif()
+endif()
+
+
 SET(CMAKE_SWIG_FLAGS "")
 
 

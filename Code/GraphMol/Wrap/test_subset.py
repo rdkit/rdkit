@@ -2,13 +2,16 @@
 #  Copyright (C) 2025 Hussein Faara, Brian Kelley and other RDKit contributors
 #         All Rights Reserved
 #
+import os
 import unittest
 
 from rdkit import Chem
 
+
 def check(info, selection):
-  for i,v in enumerate(selection):
+  for i, v in enumerate(selection):
     assert (v and i in info) or (i not in info)
+
 
 class TestCase(unittest.TestCase):
 
@@ -18,40 +21,39 @@ class TestCase(unittest.TestCase):
     N = list(range(6))
     sub = Chem.CopyMolSubset(m, N)
     self.assertEqual(Chem.MolToSmiles(sub), "c1ccccc1")
-    
+
     info = Chem.SubsetInfo()
     sub = Chem.CopyMolSubset(m, N, info)
-    check(info.atomMapping, [True]*6 + [False]*3)
-    check(info.bondMapping, 
-                     [True, True, True, True, True, False, False, False, True])
-    atoms = [(0,0),(1,1),(2,2),(3,3),(4,4),(5,5)]
-    bonds = [(0,0),(1,1),(2,2),(3,3),(4,4),(8,5)]
+    check(info.atomMapping, [True] * 6 + [False] * 3)
+    check(info.bondMapping, [True, True, True, True, True, False, False, False, True])
+    atoms = [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5)]
+    bonds = [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (8, 5)]
 
-    for src,dst in atoms:
+    for src, dst in atoms:
       self.assertEqual(info.atomMapping[src], dst)
-    for src,dst in bonds:
+    for src, dst in bonds:
       self.assertEqual(info.bondMapping[src], dst)
 
     opts = Chem.SubsetOptions()
-    opts.method = Chem.SubsetMethod.BONDS;
+    opts.method = Chem.SubsetMethod.BONDS
     sub = Chem.CopyMolSubset(m, N, opts)
     self.assertEqual(Chem.MolToSmiles(sub), "ccccccC")
 
     sub = Chem.CopyMolSubset(m, N, info, opts)
-    check(info.atomMapping, [True]*7 + [False]*2)
-    check(info.bondMapping, [True]*6 + [False]*3)
+    check(info.atomMapping, [True] * 7 + [False] * 2)
+    check(info.bondMapping, [True] * 6 + [False] * 3)
     for i in N:
       self.assertEqual(info.atomMapping[i], i)
-      self.assertEqual(info.bondMapping[i], i)                     
-    
-    N = list(range(6,11))
+      self.assertEqual(info.bondMapping[i], i)
+
+    N = list(range(6, 11))
     sub = Chem.CopyMolSubset(m, N)
     self.assertEqual(Chem.MolToSmiles(sub), "CCN")
     info = Chem.SubsetInfo()
     sub = Chem.CopyMolSubset(m, N, info)
     self.assertEqual(Chem.MolToSmiles(sub), "CCN")
-    check(info.atomMapping, [False]*6 + [True]*3)
-    check(info.bondMapping, [False]*6+ [True]*2 + [False])
+    check(info.atomMapping, [False] * 6 + [True] * 3)
+    check(info.bondMapping, [False] * 6 + [True] * 2 + [False])
 
     sub = Chem.CopyMolSubset(m, N, info, opts)
     self.assertEqual(Chem.MolToSmiles(sub), "CCN.cc")
@@ -65,3 +67,17 @@ class TestCase(unittest.TestCase):
     opts.clearComputedProps = True
     sub = Chem.CopyMolSubset(m, N, opts)
     self.assertFalse(sub.HasProp("foo"))
+
+
+if __name__ == '__main__':
+  import os
+  if "RDTESTCASE" in os.environ:
+    suite = unittest.TestSuite()
+    testcases = os.environ["RDTESTCASE"]
+    for name in testcases.split(':'):
+      suite.addTest(TestCase(name))
+
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
+  else:
+    unittest.main()

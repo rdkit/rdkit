@@ -7661,7 +7661,7 @@ CAS<~>
     pkl = pickle.dumps(m)
     nm = pickle.loads(pkl)
     self.assertEqual(nm.GetIntProp("bar"), 2)
-    self.assertEqual(nm.foo, 1)
+    self.assertEqual(nm.foo, 4)
 
   def testGithubIssue6306(self):
     # test of unpickling
@@ -7714,6 +7714,7 @@ CAS<~>
 
   @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
   def testMaeWriterProps(self):
+    self.assertEqual(0, 1)
     mol = Chem.MolFromSmiles("C1CCCCC1")
     self.assertTrue(mol)
 

@@ -40,6 +40,10 @@ rdkit_catch_test(testMultiFPB testMultiFPB.cpp
 rdkit_catch_test(catchDataStructs catch_tests.cpp
            LINK_LIBRARIES DataStructs )
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+add_subdirectory(nbWrap)
 endif()

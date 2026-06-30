@@ -57,6 +57,9 @@ rdkit_catch_test(ForceFieldsCatch
 
 add_subdirectory(UFF)
 add_subdirectory(MMFF)
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
 endif()

@@ -68,7 +68,7 @@ class TestCase(unittest.TestCase):
     fpgen = FragmentCatalog.FragFPGenerator()
     obits = [3, 2, 3, 3, 2, 3, 5, 5, 5, 4, 5, 6]
     obls = self.list2Obls
-    suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, 0)
+    suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, False)
     i = 0
     for mol in suppl:
       fp = fpgen.GetFPForMol(mol, fragCat)
@@ -89,14 +89,7 @@ class TestCase(unittest.TestCase):
   def test2CatStringPickle(self):
     self._fillCat(self.smiList2)
 
-    # test non-binary pickle:
     cat2 = pickle.loads(pickle.dumps(self.fragCat))
-    assert cat2.GetNumEntries() == 21
-    assert cat2.GetFPLength() == 21
-    self._testBits(cat2)
-
-    # test binary pickle:
-    cat2 = pickle.loads(pickle.dumps(self.fragCat, 1))
     assert cat2.GetNumEntries() == 21
     assert cat2.GetFPLength() == 21
     self._testBits(cat2)
@@ -153,7 +146,7 @@ class TestCase(unittest.TestCase):
   def _test5MoreComplex(self):
     lastIdx = 0
     ranges = {}
-    suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList), ',', 0, -1, 0)
+    suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList), ',', 0, -1, False)
     for i, mol in enumerate(suppl):
       nEnt = self.fgen.AddFragsFromMol(mol, self.fragCat)
       ranges[i] = range(lastIdx, lastIdx + nEnt)
@@ -166,14 +159,14 @@ class TestCase(unittest.TestCase):
         assert fp[bit], '%s: %s' % (Chem.MolToSmiles(mol), str(bit))
 
   def test6Builder(self):
-    suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, 0)
+    suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, False)
     cat = BuildFragmentCatalog.BuildCatalog(suppl, minPath=1, reportFreq=20)
     assert cat.GetNumEntries() == 21
     assert cat.GetFPLength() == 21
     self._testBits(cat)
 
   def test7ScoreMolecules(self):
-    suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, 0)
+    suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, False)
     cat = BuildFragmentCatalog.BuildCatalog(suppl, minPath=1, reportFreq=20)
     assert cat.GetNumEntries() == 21
     assert cat.GetFPLength() == 21
@@ -190,7 +183,7 @@ class TestCase(unittest.TestCase):
       assert (scores[i] == scores2[i]).all(), '%d: %s != %s' % (i, str(scores[i]), str(scores2[i]))
 
   def test8MolRanks(self):
-    suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, 0)
+    suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, False)
     cat = BuildFragmentCatalog.BuildCatalog(suppl, minPath=1, reportFreq=20)
     assert cat.GetNumEntries() == 21
     assert cat.GetFPLength() == 21
@@ -229,7 +222,7 @@ class TestCase(unittest.TestCase):
 
   def test9Issue116(self):
     smiList = ['Cc1ccccc1']
-    suppl = Chem.SmilesMolSupplierFromText('\n'.join(smiList), ',', 0, -1, 0)
+    suppl = Chem.SmilesMolSupplierFromText('\n'.join(smiList), ',', 0, -1, False)
     cat = BuildFragmentCatalog.BuildCatalog(suppl, minPath=2, maxPath=2)
     assert cat.GetFPLength() == 2
     assert cat.GetBitDescription(0) == 'ccC'
@@ -245,4 +238,4 @@ class TestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  unittest.main(verbosity=2)

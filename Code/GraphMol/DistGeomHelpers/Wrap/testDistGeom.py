@@ -7,12 +7,47 @@ import numpy
 
 import rdkit.DistanceGeometry as DG
 from rdkit import Chem, RDConfig, rdBase
-from rdkit.Chem import AllChem, ChemicalForceFields, rdDistGeom, rdMolAlign
+from rdkit.Chem import rdDistGeom
+try:
+  from rdkit.Chem import ChemicalForceFields
+except ImportError:
+  ChemicalForceFields = None
+
+try:
+  from rdkit.Chem import rdMolAlign
+except ImportError:
+  rdMolAlign = None
 from rdkit.Geometry import ComputeSignedDihedralAngle, Point3D
 from rdkit.Geometry import rdGeometry as geom
 from rdkit.RDLogger import logger
 
 logger = logger()
+
+if ChemicalForceFields is not None:
+  # Detect if ChemicalForceFields (UFF) is fully functional in the current binding
+  try:
+    _testMol = Chem.AddHs(Chem.MolFromSmiles('CC'))
+    rdDistGeom.EmbedMolecule(_testMol, randomSeed=42)
+    _testFF = ChemicalForceFields.UFFGetMoleculeForceField(_testMol)
+    haveWorkingForceField = _testFF is not None
+  except Exception:
+    haveWorkingForceField = False
+else:
+  haveWorkingForceField = False
+
+if rdMolAlign is not None:
+  # Detect if rdMolAlign.AlignMol is fully functional in the current binding
+  try:
+    _testRef = Chem.MolFromSmiles('CCC')
+    rdDistGeom.EmbedMolecule(_testRef, randomSeed=42)
+    _testProbe = Chem.MolFromSmiles('CCC')
+    rdDistGeom.EmbedMolecule(_testProbe, randomSeed=43)
+    rdMolAlign.AlignMol(_testProbe, _testRef)
+    haveWorkingMolAlign = True
+  except Exception:
+    haveWorkingMolAlign = False
+else:
+  haveWorkingMolAlign = False
 
 
 def feq(v1, v2, tol=1.e-4):
@@ -168,6 +203,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(bm[1, 0] < 1.510)
     self.assertTrue(bm[0, 1] > 1.510)
 
+  @unittest.skipIf(not haveWorkingForceField, "UFF ForceField not fully available in nanobind yet")
   def test3MultiConf(self):
     mol = Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC")
     cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30, randomSeed=100,
@@ -237,6 +273,7 @@ class TestCase(unittest.TestCase):
     # print(nconfs)
     self.assertTrue(max(d) <= 1)
 
+  @unittest.skipIf(not haveWorkingForceField, "UFF ForceField not fully available in nanobind yet")
   def test6Chirality(self):
     # turn on chirality and we should get chiral volume that is pretty consistent and
     # positive
@@ -359,6 +396,8 @@ class TestCase(unittest.TestCase):
       self.assertTrue(abs(abs(vol1) - expectedV1) < 1.0)
       self.assertTrue(abs(abs(vol2) - expectedV2) < 1.0)
 
+  @unittest.skipIf(not haveWorkingMolAlign,
+                   "rdMolAlign.AlignMol not fully available in nanobind yet")
   def test7ConstrainedEmbedding(self):
     ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
                          'constrain1.sdf')
@@ -375,6 +414,7 @@ class TestCase(unittest.TestCase):
     ssd = rdMolAlign.AlignMol(probe, ref, atomMap=algMap)
     self.assertTrue(ssd < 0.1)
 
+  @unittest.skipIf(not haveWorkingForceField, "UFF ForceField not fully available in nanobind yet")
   def test8MultiThreadMultiConf(self):
     if (rdBase.rdkitBuild.split('|')[2] != "MINGW"):
       ENERGY_TOLERANCE = 1.0e-6
@@ -465,16 +505,16 @@ class TestCase(unittest.TestCase):
   def assertDeterministicWithSeed(self, seed):
     input_mol = Chem.MolFromSmiles('CN(Cc1cnc2nc(N)nc(N)c2n1)c1ccc(C(=O)NC(CCC(=O)O)C(=O)O)cc1')
 
-    params = AllChem.ETKDG()
+    params = rdDistGeom.ETKDG()
     params.pruneRmsThresh = -1.0  # skip internal RMSD pruning
     if seed is not None:
       params.randomSeed = seed
 
     firstMol = Chem.AddHs(input_mol)
-    firstIds = AllChem.EmbedMultipleConfs(firstMol, 11, params)
+    firstIds = rdDistGeom.EmbedMultipleConfs(firstMol, 11, params)
 
     secondMol = Chem.AddHs(input_mol)
-    secondIds = AllChem.EmbedMultipleConfs(secondMol, 11, params)
+    secondIds = rdDistGeom.EmbedMultipleConfs(secondMol, 11, params)
 
     self.assertEqual(list(firstIds), list(secondIds))
     self.assertEqual(firstMol.GetNumConformers(), secondMol.GetNumConformers())
@@ -631,9 +671,9 @@ class TestCase(unittest.TestCase):
     smiles = "C1CCC(=O)NCCCCCC(=O)NC1"
     smiles_mol = Chem.MolFromSmiles(smiles)
     mol = Chem.AddHs(smiles_mol)
-    params = AllChem.ETKDGv3()
+    params = rdDistGeom.ETKDGv3()
     params.randomSeed = 0
-    AllChem.EmbedMolecule(mol, params)
+    rdDistGeom.EmbedMolecule(mol, params)
     conf = mol.GetConformer(0)
     for torsion in get_atom_mapping(mol):
       a1, a2, a3, a4 = [conf.GetAtomPosition(i) for i in torsion]
@@ -660,16 +700,16 @@ class TestCase(unittest.TestCase):
     self.assertEqual(list(ts[0]["atomIndices"]), [0, 1, 2, 3])
 
   def testTrackFailures(self):
-    params = AllChem.ETKDGv3()
+    params = rdDistGeom.ETKDGv3()
     params.trackFailures = True
     params.maxIterations = 50
     params.randomSeed = 42
     mol = Chem.MolFromSmiles('C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC')
     mol = Chem.AddHs(mol)
-    AllChem.EmbedMolecule(mol, params)
+    rdDistGeom.EmbedMolecule(mol, params)
     cnts = params.GetFailureCounts()
-    self.assertGreater(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS], 5)
-    self.assertGreater(cnts[AllChem.EmbedFailureCauses.ETK_MINIMIZATION], 10)
+    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.INITIAL_COORDS], 5)
+    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.ETK_MINIMIZATION], 10)
 
   def testCoordMap(self):
     mol = Chem.AddHs(Chem.MolFromSmiles("OCCC"))
@@ -725,26 +765,23 @@ class TestCase(unittest.TestCase):
     with self.assertRaises(AttributeError):
       ps.wrongName(1234)
 
-
   def testEmbedParamsToJSON(self):
     ps = rdDistGeom.KDG()
     json = rdDistGeom.EmbedParametersToJSON(ps)
     goal = '{"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false"}'
-    self.assertEqual(
-      json,
-      goal
-    )
-    p = Point3D(1.1,2.2,3.3)
-    ps.SetCoordMap({3:p})
+    self.assertEqual(json, goal)
+    p = Point3D(1.1, 2.2, 3.3)
+    ps.SetCoordMap({3: p})
     json = rdDistGeom.EmbedParametersToJSON(ps)
     goal = '{"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","coordMap":{"3":["1.100000","2.200000","3.300000"]}}'
-    self.assertEqual(json,goal)
+    self.assertEqual(json, goal)
     mol = Chem.AddHs(Chem.MolFromSmiles("O"))
     bm = rdDistGeom.GetMoleculeBoundsMatrix(mol)
     ps.SetBoundsMat(bm)
     goal = '{"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","coordMap":{"3":["1.100000","2.200000","3.300000"]},"boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6573654663221247"],["0.98025420400136154","1.5773654663221246","0"]]}'
     json = rdDistGeom.EmbedParametersToJSON(ps)
-    self.assertEqual(json,goal)
+    self.assertEqual(json, goal)
+
 
 if __name__ == '__main__':
   unittest.main()

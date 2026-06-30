@@ -40,6 +40,12 @@ from rdkit import Chem, RDConfig
 from rdkit.Chem import AllChem, rdChemReactions
 from rdkit.Chem.SimpleEnum import Enumerator
 
+try:
+  from rdkit.Chem import FilterCatalog
+  haveFilterCatalog = True
+except (ImportError, AttributeError):
+  haveFilterCatalog = False
+
 
 def feq(v1, v2, tol2=1e-4):
   return abs(v1 - v2) <= tol2
@@ -49,8 +55,8 @@ def ptEq(pt1, pt2, tol=1e-4):
   return feq(pt1.x, pt2.x, tol) and feq(pt1.y, pt2.y, tol) and feq(pt1.z, pt2.z, tol)
 
 
-# Boost functions are NOT found by doctest, this "fixes" them
-#  by adding the doctests to a fake module
+# C extension functions (Boost.Python and nanobind) are not found by doctest
+#  directly, so add their doctests to a fake module
 spec = importlib.util.spec_from_loader("TestPreprocess", loader=None)
 TestPreprocess = importlib.util.module_from_spec(spec)
 code = """
@@ -481,6 +487,7 @@ M  END
     labels = rxn.AddRecursiveQueriesToReaction(qs, 'query', getLabels=True)
     self.assertTrue(len(labels), 1)
 
+  @unittest.skipIf(not haveFilterCatalog, "FilterCatalog not available in nanobind yet")
   def test17bAddRecursiveQueriesToReaction(self):
     from rdkit.Chem import FilterCatalog
     rxn = rdChemReactions.ReactionFromSmarts("[C:1][O:2].[N:3]>>[C:1][N:2]")
@@ -734,7 +741,8 @@ M  END
     smiles = "CC(=O)O.OCC>Cl.OCC>CC(=O)OCC"
     rxn_smi = rdChemReactions.ReactionFromSmiles(smiles)
     rxn_smarts = rdChemReactions.ReactionFromSmarts(smiles, useSmiles=True)
-    self.assertEqual(rdChemReactions.ReactionToSmiles(rxn_smi), rdChemReactions.ReactionToSmiles(rxn_smarts))
+    self.assertEqual(rdChemReactions.ReactionToSmiles(rxn_smi),
+                     rdChemReactions.ReactionToSmiles(rxn_smarts))
 
   @unittest.skipUnless(hasattr(rdChemReactions, 'ReactionFromPNGFile'),
                        "RDKit not built with iostreams support")
@@ -1219,12 +1227,21 @@ M  END
       AllChem.ReactionToSmarts(rxn, params),
       "[C:1]-[C:2].[N&H3:3]-[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]-[#26:4]-[N&H2:5]")
 
+  def testPickleCompatibility(self):
+    pkl = b'\x80\x04\x95i\x03\x00\x00\x00\x00\x00\x00\x8c\x1ardkit.Chem.rdChemReactions\x94\x8c\x10ChemicalReaction\x94\x93\x94B\'\x03\x00\x00\xef\xbe\xad\xde\x10\'\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x11\'\x00\x00\xef\xbe\xad\xde\x00\x00\x00\x00\x10\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x80\x01\x06\x18\x08\x00\x00\x00\x00\x19\x08\x00\x00\x00AtomType!\x1a\x06\x00\x00\x00\x00\x00\x00\x00\x1c\x00+\x18\x01\x08\x18\x08\x00\x00\x00\x00\x19\x08\x00\x00\x00AtomType!\x1a\x08\x00\x00\x00\x00\x00\x00\x00\x1c\x00+\x18\x02\x0b\x00\x01\x18\x02\x19\t\x00\x00\x00BondOrderA\t\x00\x00\x00BondOrder!\x1a\x02\x00\x00\x00\x00\x00\x00\x00\x1c\x00+\x17\x04\x00\x00\x00\x00\x00\x00\x00\x16\x12\'\x00\x00\x13\'\x00\x00\xef\xbe\xad\xde\x00\x00\x00\x00\x10\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x80\x01\x06\x18\x08\x00\x00\x00\x00\x19\x08\x00\x00\x00AtomType!\x1a\x06\x00\x00\x00\x00\x00\x00\x00\x1c\x00+\x18\x01\x088\x18\x00\x00\x00\x00\x01\x19\x07\x00\x00\x00AtomAnd\x1e\x1c\x02\x08\x00\x00\x00AtomType!\x1a\x08\x00\x00\x00\x00\x00\x00\x00\x1c\x00\n\x00\x00\x00AtomHCount!\x1a\x01\x00\x00\x00\x00\x00\x00\x00\x1c\x00+\x18\x02\x0b\x00\x01\x10\x19\t\x00\x00\x00BondOrderA\t\x00\x00\x00BondOrder!\x1a\x01\x00\x00\x00\x00\x00\x00\x00\x1c\x00+\x17\x04\x00\x00\x00\x00\x00\x00\x00\x16\x14\'\x00\x00\x1a\'\x00\x00\x83\x01\x00\x00{\n    "useChirality": "false",\n    "useEnhancedStereo": "false",\n    "aromaticMatchesConjugated": "false",\n    "useQueryQueryMatches": "false",\n    "recursionPossible": "true",\n    "uniquify": "true",\n    "maxMatches": "1000",\n    "maxRecursiveMatches": "1000",\n    "numThreads": "1",\n    "specifiedStereoQueryMatchesUnspecified": "false",\n    "aromaticMatchesSingleOrDouble": "false"\n}\n\x1b\'\x00\x00\x17\'\x00\x00\x94\x85\x94R\x94}\x94\x85\x94b.'
+    import pickle
+    rxn = pickle.loads(pkl)
+    self.assertIsNotNone(rxn)
+    self.assertEqual(rxn.GetNumReactantTemplates(), 1)
+    self.assertEqual(rxn.GetNumProductTemplates(), 1)
+    self.assertEqual(rxn.GetNumAgentTemplates(), 0)
+
+
 class CXExtensionsTests(unittest.TestCase):
+
   def test_cxsmarts_reaction(self):
-    CXSmarts_string = (
-      "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>"
-      "[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"
-    )
+    CXSmarts_string = ("[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>"
+                       "[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;;;;$|")
     rxnCXSmarts = rdChemReactions.ReactionFromSmarts(CXSmarts_string)
     self.assertIsNotNone(rxnCXSmarts)
 
@@ -1234,10 +1251,9 @@ class CXExtensionsTests(unittest.TestCase):
     rxnCXSmarts_string = rdChemReactions.ReactionToCXSmarts(rxnCXSmarts, params, flags)
     expected_rxnCXSmarts_string = (
       "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>O=C=O>"
-      "[C&H3:1][C&H1:2]([C&H3:3])[C&H2:6][O&H1:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"
-    )
+      "[C&H3:1][C&H1:2]([C&H3:3])[C&H2:6][O&H1:5] |$;;;_AP1;;;_AP1;;;;;;;;$|")
     self.assertEqual(rxnCXSmarts_string, expected_rxnCXSmarts_string)
-    
+
   def test_cxsmiles_reaction(self):
     reactant1 = '[CH3:1][CH:2]([CH3:3])[*:4]'
     reactant2 = '[OH:5][CH2:6][*:7]'
@@ -1253,10 +1269,10 @@ class CXExtensionsTests(unittest.TestCase):
 
     expected_cxsmiles_reaction_string = (
       "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>"
-      "[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_R1;;;_R2;;;;;;;;$|"
-    )
+      "[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_R1;;;_R2;;;;;;;;$|")
 
     self.assertEqual(cxsmiles_reaction_string, expected_cxsmiles_reaction_string)
 
+
 if __name__ == '__main__':
-  unittest.main(verbosity=True)
+  unittest.main(verbosity=2)

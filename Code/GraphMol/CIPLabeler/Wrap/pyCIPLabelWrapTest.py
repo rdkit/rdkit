@@ -1,6 +1,6 @@
 import unittest
 
-from rdkit import Chem
+from rdkit import Chem, rdBase
 
 class TestCase(unittest.TestCase):
 
@@ -59,7 +59,8 @@ class TestCase(unittest.TestCase):
     self.assertEqual(bond3.GetProp("_CIPCode"), "Z")
 
   def doOneAtropIomerMandP(self,  inputSmiles , expected):
-
+    if rdBase._wrapperType == 'nanobind':
+      self.skipTest("SmilesParserParams constructor not available in nanobind yet")
     ps = Chem.SmilesParserParams()
     ps.allowCXSMILES = True
     ps.parseName = False
