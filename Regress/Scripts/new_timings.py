@@ -7,6 +7,8 @@ import time
 import rdkit
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from rdkit import DataStructs
+from rdkit.Chem import rdFingerprintGenerator
 from rdkit.RDLogger import logger
 
 dname = os.path.dirname(__file__)
@@ -189,16 +191,28 @@ if tests[12]:
   for mol in mols:
     Chem.RDKFingerprint(mol)
   t2 = time.time()
-  logger.info('Results16: %.2f seconds' % (t2 - t1))
+  logger.info('Results13: %.2f seconds' % (t2 - t1))
   ts.append(t2 - t1)
 
-if tests[13]:
+if tests[13] or tests[14]:
   logger.info('Generate morgan fingerprints')
   t1 = time.time()
-  for mol in mols:
-    AllChem.GetMorganFingerprint(mol, radius=2)
+
+  fpg = rdFingerprintGenerator.GetMorganGenerator()
+  fps = [fpg.GetFingerprint(mol) for mol in mols]
   t2 = time.time()
-  logger.info('Results16: %.2f seconds' % (t2 - t1))
+  logger.info('Results14: %.2f seconds' % (t2 - t1))
+  ts.append(t2 - t1)
+
+if tests[14]:
+  logger.info('Calculate similarities')
+  t1 = time.time()
+  tfps = fps[:5000]
+  for fp1 in tfps:
+    for fp2 in tfps:
+      DataStructs.TanimotoSimilarity(fp1, fp2)
+  t2 = time.time()
+  logger.info('Results15: %.2f seconds' % (t2 - t1))
   ts.append(t2 - t1)
 
 print(f"| {rdkit.__version__} | {' | '.join(['%.1f' % x for x in ts])} |")
