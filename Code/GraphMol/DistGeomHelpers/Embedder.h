@@ -13,11 +13,16 @@
 #define RD_EMBEDDER_H_GUARD
 
 #include <map>
+#include <memory>
 #include <utility>
 #include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
 #include <boost/shared_ptr.hpp>
 #include <DistGeom/BoundsMatrix.h>
+
+namespace ForceFields {
+class ForceField;
+}
 
 namespace RDKit {
 namespace DGeomHelpers {
@@ -468,6 +473,26 @@ RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv3;
 //! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
 //! (10.1021/acs.jcim.0c00025) - the small ring part
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters srETKDGv3;
+
+//! Exposed for testing only. ETKDG does not give meaningful energies and
+//! gradients outside the context of molecule embedding.
+namespace testing {
+
+//! Constructs the ETKDG 3D force field for a molecule with an existing
+//! conformer, using the same pipeline as EmbedMolecule's minimization stage.
+/*!
+  \param mol     molecule with at least one conformer
+  \param params  ETKDG embedding parameters (controls torsion preferences, etc.)
+  \param confId  which conformer to use (-1 for default)
+
+  \return the force field, or nullptr if bounds matrix setup fails
+*/
+RDKIT_DISTGEOMHELPERS_EXPORT std::unique_ptr<ForceFields::ForceField>
+getETKDGForceField(ROMol &mol, const EmbedParameters &params = ETKDGv3,
+                   int confId = -1);
+
+}  // namespace testing
+
 }  // namespace DGeomHelpers
 }  // namespace RDKit
 

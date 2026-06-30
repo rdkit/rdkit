@@ -18,6 +18,9 @@ rdkit_headers(CrystalFF/TorsionAngleM6.h CrystalFF/TorsionPreferences.h
 rdkit_catch_test(forceFieldHelpersCatch catch_tests.cpp 
 LINK_LIBRARIES MolTransforms ForceFieldHelpers SmilesParse FileParsers ForceField )
 
+rdkit_catch_test(forceFieldValidationCatch catch_ffValidation.cpp
+LINK_LIBRARIES ForceFieldHelpers DistGeomHelpers ForceField FileParsers SmilesParse)
+
 add_subdirectory(MMFF)
 add_subdirectory(UFF)
 add_subdirectory(CrystalFF)
