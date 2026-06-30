@@ -294,6 +294,7 @@ bool getStereoAtomsFromGeometry(const Bond *bond, Bond::BondStereo stereo,
     }
   }
   return stereoAtoms.size() == 2u;
+}
 
 bool hasAtropStereoBond(const Atom *atom) {
   PRECONDITION(atom, "bad atom");
