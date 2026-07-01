@@ -176,6 +176,9 @@ bool parseNode(
     }
   }
 
+  // AND and OR enhanced stereo have stereogroup numbers in the chemdraw format
+  //  ABSOLUTE does not, we need to store these and add them at the end
+  bool hasStereo = true;
   StereoGroupType grouptype = StereoGroupType::STEREO_ABSOLUTE;
   switch (node.m_enhancedStereoType) {
     case kCDXEnhancedStereo_Absolute:
@@ -188,6 +191,7 @@ bool parseNode(
       grouptype = StereoGroupType::STEREO_OR;
       break;
     default:
+      hasStereo = false;
       break;
   }
 
@@ -312,7 +316,13 @@ bool parseNode(
     }
   }
 
-  if (node.m_enhancedStereoGroupNum > 0) {
+  if (hasStereo) {
+    if(grouptype ==  StereoGroupType::STEREO_AND || grouptype ==  StereoGroupType::STEREO_OR) {
+      if(node.m_enhancedStereoGroupNum == 0) {
+	std::cerr << "Warning: Enhanced Stereo missing stereogroup number" << std::endl;
+      }
+    }
+    // All ABS stereo gets set to enhancedstereogroupnum 0
     auto key = std::make_pair(node.m_enhancedStereoGroupNum, grouptype);
     auto &stereo = sgroups[key];
     stereo.sgroup = node.m_enhancedStereoGroupNum;

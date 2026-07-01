@@ -878,6 +878,28 @@ TEST_CASE("atropisomers") {
   }
 }
 
+TEST_CASE("atrop endpoints do not become tetrahedral from CDX CIP") {
+  auto path = std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
+  auto fname = path + "atrop-endpoint-cip.cdxml";
+  auto mols = MolsFromChemDrawFile(fname);
+  REQUIRE(mols.size() == 1);
+  auto &mol = *mols[0];
+  REQUIRE(mol.getAtomWithIdx(4)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  REQUIRE(mol.getBondWithIdx(18)->getStereo() ==
+          Bond::BondStereo::STEREOATROPCW);
+  CHECK(MolToSmiles(mol) == "Cc1nc2c(-c3c(F)cccc3Cl)cccc2[nH]1");
+
+  std::unique_ptr<RWMol> roundtrip(MolBlockToMol(MolToV3KMolBlock(mol)));
+  REQUIRE(roundtrip);
+
+  CHECK(roundtrip->getAtomWithIdx(4)->getChiralTag() ==
+        Atom::ChiralType::CHI_UNSPECIFIED);
+  CHECK(roundtrip->getBondWithIdx(18)->getStereo() ==
+        Bond::BondStereo::STEREOATROPCW);
+  CHECK(MolToSmiles(*roundtrip) == MolToSmiles(mol));
+}
+
 TEST_CASE("bad stereo in a natural product") {
   std::string cdxmlbase =
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
@@ -1366,6 +1388,8 @@ TEST_CASE("Round TRIP") {
             failed++;
             continue;
           }
+
+
           auto smi2 = MolToSmiles(*mols[0]);
           if (smi1 != smi2) {
             // std::cerr <<
@@ -1381,6 +1405,23 @@ TEST_CASE("Round TRIP") {
             // std::cerr << "PASS:" << entry.path() << std::endl;
           }
           // CHECK(smi1 == smi2);
+	  SmilesWriteParams ps;
+
+	  unsigned int flags = SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER |
+	                       SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
+	  auto cxsmi1 = MolToCXSmiles(*mol, ps, flags);
+	  auto cxsmi2 = MolToCXSmiles(*mols[0], ps, flags);
+	  if(cxsmi1 != cxsmi2) {
+	    std::cerr << "CXFAIL:" << entry.path() << " (mol)" << cxsmi1
+                      << " != (mol-cdxml)" << cxsmi2 << std::endl;
+            failed++;
+	    std::cerr << "========================================" << std::endl;
+	    mol->debugMol(std::cerr);
+	    std::cerr << "----------------------------------------" << std::endl;
+	    mols[0]->debugMol(std::cerr);
+	    std::cerr << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+	    std::cerr << cdx << std::endl;
+	  }
           delete mol;
         }
       }
