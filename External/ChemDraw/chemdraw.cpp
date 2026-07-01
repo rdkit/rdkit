@@ -90,7 +90,7 @@ void visit_children(
     if (id == kCDXObj_Fragment) {
       std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
       if (!parseFragment(*mol, (CDXFragment &)(*frag.second), pagedata,
-                         missing_frag_id)) {
+                         missing_frag_id, params)) {
         continue;
       }
       unsigned int frag_id = mol->getProp<int>(CDX_FRAG_ID);
