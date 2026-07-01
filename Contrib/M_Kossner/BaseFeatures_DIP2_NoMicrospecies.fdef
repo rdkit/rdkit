@@ -1,5 +1,3 @@
-# $Id$
-#
 # FDef file contributed by Markus Kossner
 
 AtomType AcidicN	[$([NH,N-1](S(=O))(C(=O))),$([NH,N-1](C(=O))(C(=O))),$([NH,N-1](S(=O)(=O))c),$([NH2]S(=O)(=O)c)]
