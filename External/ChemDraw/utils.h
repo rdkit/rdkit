@@ -59,6 +59,9 @@ const std::string CDX_BOND_ID("_CDX_BOND_ID");
 const std::string CDX_BOND_ORDERING("CDX_BOND_ORDERING");
 const std::string CDX_CIP("CDX_CIP");
 const std::string CDX_IMPLICIT_HYDROGEN_STEREO("CDX_ATOM_STEREO");
+const std::string CDXML_SANITIZATION_HINTS("CDXML_SANITIZATION_HINTS");
+
+enum class CDXMLSanitizationHint { radical };
 
 // Convert a ChemDrawNode to a string
 std::string NodeType(CDXNodeType nodetype);
