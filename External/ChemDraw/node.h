@@ -44,11 +44,15 @@
 #include "fragment.h"
 
 namespace RDKit {
+namespace v2 {
+struct ChemDrawParserParams;
+}
 namespace ChemDraw {
 bool parseNode(
     RWMol &mol, unsigned int fragmentId, CDXNode &node, PageData &pagedata,
     std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
-    int &missingFragId, int externalAttachment);
+    int &missingFragId, const v2::ChemDrawParserParams &params,
+    int externalAttachment);
 }
 }  // namespace RDKit
 #endif
