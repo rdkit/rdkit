@@ -84,7 +84,7 @@ bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distMat,
                           unsigned int numZeroFail) {
   unsigned int N = distMat.numRows();
   unsigned int nPt = positions.size();
-  CHECK_INVARIANT(nPt == N, "Size mismatch");
+  PRECONDITION(nPt == N, "Size mismatch");
 
   unsigned int dim = positions.front()->dimension();
 
@@ -172,7 +172,7 @@ bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
 }
 bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize,
                          RDKit::double_source_type &rng) {
-  CHECK_INVARIANT(boxSize > 0.0, "bad boxSize");
+  PRECONDITION(boxSize > 0.0, "bad boxSize");
 
   for (auto pt : positions) {
     for (unsigned int i = 0; i < pt->dimension(); ++i) {
@@ -189,7 +189,7 @@ ForceFields::ForceField *constructForceField(
     const std::map<std::pair<int, int>, double> *extraWeights,
     const double basinSizeTol, const boost::dynamic_bitset<> *fixedPts) {
   unsigned int N = mmat.numRows();
-  CHECK_INVARIANT(N == positions.size(), "");
+  PRECONDITION(N == positions.size(), "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
   field->positions().insert(field->positions().begin(), positions.begin(),
                             positions.end());
@@ -259,8 +259,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructForceField(
     const VECT_CHIRALSET &csets, const double weightChiral,
     const double weightFourthDim,
     const std::map<std::pair<int, int>, double> *extraWeights,
-    const double basinSizeTol,
-    const boost::dynamic_bitset<> *fixedPts) {
+    const double basinSizeTol, const boost::dynamic_bitset<> *fixedPts) {
   return constructForceField(mmat, positions, csets, 1.0, weightChiral,
                              weightFourthDim, extraWeights, basinSizeTol,
                              fixedPts);
@@ -509,8 +508,8 @@ ForceFields::ForceField *construct3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
   unsigned int N = mmat.numRows();
-  CHECK_INVARIANT(N == positions.size(), "");
-  CHECK_INVARIANT(etkdgDetails.expTorsionAtoms.size() ==
+  PRECONDITION(N == positions.size(), "");
+  PRECONDITION(etkdgDetails.expTorsionAtoms.size() ==
                       etkdgDetails.expTorsionAngles.size(),
                   "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
@@ -559,8 +558,8 @@ ForceFields::ForceField *constructPlain3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
   unsigned int N = mmat.numRows();
-  CHECK_INVARIANT(N == positions.size(), "");
-  CHECK_INVARIANT(etkdgDetails.expTorsionAtoms.size() ==
+  PRECONDITION(N == positions.size(), "");
+  PRECONDITION(etkdgDetails.expTorsionAtoms.size() ==
                       etkdgDetails.expTorsionAngles.size(),
                   "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
@@ -592,7 +591,7 @@ ForceFields::ForceField *construct3DImproperForceField(
     const std::vector<int> &atomNums) {
   RDUNUSED_PARAM(atomNums);
   unsigned int N = mmat.numRows();
-  CHECK_INVARIANT(N == positions.size(), "");
+  PRECONDITION(N == positions.size(), "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
   field->positions().insert(field->positions().begin(), positions.begin(),
                             positions.end());
@@ -658,7 +657,7 @@ void addDistanceTerms(
       const double l = mmat.getLowerBound(i, j);
       const double u = mmat.getUpperBound(i, j);
       const auto dist = distMat[i * numAtoms + j];
-      const bool is1213 = (dist == 1.0 || dist == 2.0);
+      const bool is1213 = (fabs(dist - 1.0) < 1e-4 || fabs(dist - 2.0) < 1e-4);
       double w = forceConst;
       w *= boundsMatForceScaling;
       if (extraWeights) {
@@ -729,8 +728,8 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
     const std::map<std::pair<unsigned int, unsigned int>, double> *extraWeights,
     const boost::dynamic_bitset<> *fixedPts) {
   const std::size_t N = mmat.numRows();
-  CHECK_INVARIANT(N == positions.size(), "");
-  CHECK_INVARIANT(etkdgDetails.expTorsionAtoms.size() ==
+  PRECONDITION(N == positions.size(), "");
+  PRECONDITION(etkdgDetails.expTorsionAtoms.size() ==
                       etkdgDetails.expTorsionAngles.size(),
                   "");
 
@@ -760,7 +759,6 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
                                             csets, extraWeights, fixedPts);
 
   bool is1_4 = false;
-  // double dielConst = 1.0;
   boost::uint8_t dielModel = 1;
   auto *contrib = new ForceFields::MMFF::EleContrib(field);
   field->contribs().emplace_back(contrib);

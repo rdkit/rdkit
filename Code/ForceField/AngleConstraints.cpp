@@ -20,6 +20,31 @@
 namespace ForceFields {
 constexpr double RAD2DEG = 180.0 / M_PI;
 
+namespace {
+double computeAngleTerm(const double &angle,
+                        const AngleConstraintContribsParams &contrib) {
+  double angleTerm = 0.0;
+  if (angle < contrib.minAngle) {
+    angleTerm = angle - contrib.minAngle;
+  } else if (angle > contrib.maxAngle) {
+    angleTerm = angle - contrib.maxAngle;
+  }
+  return angleTerm;
+}
+double computeEnergy(const RDGeom::Point3D &p1, const RDGeom::Point3D &p2,
+                     const RDGeom::Point3D &p3,
+                     const AngleConstraintContribsParams &contrib) {
+  const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
+  const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
+                               std::max(1.0e-5, r[1].lengthSq())};
+  double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
+  cosTheta = std::clamp(cosTheta, -1.0, 1.0);
+  const double angle = RAD2DEG * acos(cosTheta);
+  const double angleTerm = computeAngleTerm(angle, contrib);
+  return contrib.forceConstant * angleTerm * angleTerm;
+}
+}  // namespace
+
 AngleConstraintContribs::AngleConstraintContribs(ForceField *owner) {
   PRECONDITION(owner, "bad owner");
   dp_forceField = owner;
@@ -68,17 +93,6 @@ void AngleConstraintContribs::addContrib(unsigned int idx1, unsigned int idx2,
                           forceConst);
 }
 
-double AngleConstraintContribs::computeAngleTerm(
-    const double &angle, const AngleConstraintContribsParams &contrib) const {
-  double angleTerm = 0.0;
-  if (angle < contrib.minAngle) {
-    angleTerm = angle - contrib.minAngle;
-  } else if (angle > contrib.maxAngle) {
-    angleTerm = angle - contrib.maxAngle;
-  }
-  return angleTerm;
-}
-
 double AngleConstraintContribs::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
@@ -94,14 +108,7 @@ double AngleConstraintContribs::getEnergy(double *pos) const {
     const RDGeom::Point3D p3(pos[dim * contrib.idx3],
                              pos[dim * contrib.idx3 + 1],
                              pos[dim * contrib.idx3 + 2]);
-    const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
-    const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
-                                 std::max(1.0e-5, r[1].lengthSq())};
-    double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
-    cosTheta = std::clamp(cosTheta, -1.0, 1.0);
-    const double angle = RAD2DEG * acos(cosTheta);
-    const double angleTerm = computeAngleTerm(angle, contrib);
-    accum += contrib.forceConstant * angleTerm * angleTerm;
+    accum += computeEnergy(p1, p2, p3, contrib);
   }
   return accum;
 }
@@ -114,17 +121,9 @@ double AngleConstraintContribs::getEnergy(
   double totalE = 0.0;
   for (std::size_t i = 0; i < d_contribs.size(); ++i) {
     const auto &contrib = d_contribs[i];
-    const auto &p1 = *positions[contrib.idx1];
-    const auto &p2 = *positions[contrib.idx2];
-    const auto &p3 = *positions[contrib.idx3];
-    const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
-    const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
-                                 std::max(1.0e-5, r[1].lengthSq())};
-    double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
-    cosTheta = std::clamp(cosTheta, -1.0, 1.0);
-    const double angle = RAD2DEG * acos(cosTheta);
-    const double angleTerm = computeAngleTerm(angle, contrib);
-    const double e = contrib.forceConstant * angleTerm * angleTerm;
+    const double e =
+        computeEnergy(*positions[contrib.idx1], *positions[contrib.idx2],
+                      *positions[contrib.idx3], contrib);
     energies[i] = e;
     totalE += e;
   }

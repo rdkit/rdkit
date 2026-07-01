@@ -32,7 +32,7 @@ struct RDKIT_FORCEFIELDHELPERS_EXPORT ExpTorsionAngle {
   unsigned int idx[4];
 };
 
-namespace FC {
+namespace ETKDGForceConsts {
 struct Params {
   double distance{1.0};
   double fourthDim{1.0};
@@ -66,7 +66,7 @@ struct CrystalFFDetails {
   double boundsMatForceScaling;
   boost::dynamic_bitset<> constrainedAtoms;
   double *distMat;
-  FC::Params forceConsts;
+  ETKDGForceConsts::Params forceConsts;
 };
 
 //! Get the experimental torsional angles in a molecule

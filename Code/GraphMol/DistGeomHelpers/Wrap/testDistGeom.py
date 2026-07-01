@@ -120,7 +120,7 @@ class TestCase(unittest.TestCase):
 
   def test1SmallLegacy(self):
     #writer = Chem.SDWriter("test.sdf")
-    # single double and tripple atoms cases should not fail
+    # single double and triple atoms cases should not fail
     mol = Chem.MolFromSmiles('O')
     rdDistGeom.EmbedMolecule(mol, _getParams())
     conf = mol.GetConformer()

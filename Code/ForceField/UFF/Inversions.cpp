@@ -24,6 +24,20 @@ InversionContribs::InversionContribs(ForceField *owner) {
   dp_forceField = owner;
 }
 
+namespace {
+double computeEnergy(const RDGeom::Point3D &p1, const RDGeom::Point3D &p2,
+                     const RDGeom::Point3D &p3, const RDGeom::Point3D &p4,
+                     const InversionContribsParams &contrib) {
+  const double cosY = Utils::calculateCosY(p1, p2, p3, p4);
+  const double sinYSq = 1.0 - cosY * cosY;
+  const double sinY = ((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0);
+  // cos(2 * W) = 2 * cos(W) * cos(W) - 1 = 2 * sin(W) * sin(W) - 1
+  const double cos2W = 2.0 * sinY * sinY - 1.0;
+  return contrib.forceConstant *
+         (contrib.C0 + contrib.C1 * sinY + contrib.C2 * cos2W);
+}
+}  // namespace
+
 void InversionContribs::addContrib(unsigned int idx1, unsigned int idx2,
                                    unsigned int idx3, unsigned int idx4,
                                    int at2AtomicNum, bool isCBoundToO,
@@ -60,13 +74,7 @@ double InversionContribs::getEnergy(double *pos) const {
     const RDGeom::Point3D p4(pos[dimension * contrib.idx4],
                              pos[dimension * contrib.idx4 + 1],
                              pos[dimension * contrib.idx4 + 2]);
-    const double cosY = Utils::calculateCosY(p1, p2, p3, p4);
-    const double sinYSq = 1.0 - cosY * cosY;
-    const double sinY = ((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0);
-    // cos(2 * W) = 2 * cos(W) * cos(W) - 1 = 2 * sin(W) * sin(W) - 1
-    const double cos2W = 2.0 * sinY * sinY - 1.0;
-    accum += contrib.forceConstant *
-             (contrib.C0 + contrib.C1 * sinY + contrib.C2 * cos2W);
+    accum += computeEnergy(p1, p2, p3, p4, contrib);
   }
   return accum;
 }
@@ -78,15 +86,9 @@ double InversionContribs::getEnergy(const RDGeom::Point3DPtrVect &positions,
   double totalE = 0.0;
   for (std::size_t i = 0; i < d_contribs.size(); ++i) {
     const auto &contrib = d_contribs[i];
-    const double cosY = Utils::calculateCosY(
+    const double e = computeEnergy(
         *positions[contrib.idx1], *positions[contrib.idx2],
-        *positions[contrib.idx3], *positions[contrib.idx4]);
-    const double sinYSq = 1.0 - cosY * cosY;
-    const double sinY = ((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0);
-    // cos(2 * W) = 2 * cos(W) * cos(W) - 1 = 2 * sin(W) * sin(W) - 1
-    const double cos2W = 2.0 * sinY * sinY - 1.0;
-    const double e = contrib.forceConstant *
-                     (contrib.C0 + contrib.C1 * sinY + contrib.C2 * cos2W);
+        *positions[contrib.idx3], *positions[contrib.idx4], contrib);
 
     energies[i] = e;
     totalE += e;

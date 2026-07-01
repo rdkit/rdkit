@@ -15,6 +15,10 @@ to the first which also has the lowest index.
 - `MolTransforms.h` now includes `<Eigen/Core>` instead of `<Eigen/Dense>`. C++
 code that included `MolTransforms.h` and relied on it to transitively pull in the
 Eigen dense modules (LU/QR/SVD/etc.) must now include `<Eigen/Dense>` directly.
+- The `DistGeomHelpers::EmbedParameters` struct no longer has a constructor that
+takes arguments in C++. If you want to initialize data members to non-default
+values, use the designated initialization syntax. This change does not affect
+Python.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use
@@ -77,10 +81,6 @@ wszqkzqk, Diogo, dehaenw
 - `RWMol::addBond()` no longer removes RingInfo from the molecule, but it does
   clear the property cache of the begin and end atoms. This does not affect the
   general rule that molecules should be sanitized after adding/removing bonds.
-- The `DistGeomHelpers::EmbedParameters` struct no longer has a constructor that
-  takes arguments in C++. If you want to initialize data members to non-default
-  values, use the designated initialization syntax. This change does not affect
-  Python.
 - The algorithm to canonicalize double bonds in SMILES output has changed to
   address a potential issue that could alter stereo. As a result, SMILES of
   mols contaning stereo bonds may have changed.

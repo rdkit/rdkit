@@ -335,8 +335,11 @@ bool clashCheck(const RDGeom::PointPtrVect *positions,
       for (std::size_t d = 0; d < 3; ++d) {
         dist2 += diff[d] * diff[d];
       }
+      if (dist2 >= (threshold2)) {
+        continue;
+      }
       const double lb = boundsMat->getLowerBound(i, j);
-      if (dist2 < threshold2 and dist2 < lb * lb) {
+      if (dist2 < lb * lb) {
         return false;
       }
     }
@@ -366,7 +369,14 @@ bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
     return std::ranges::any_of(energies,
                                [threshold](double e) { return e > threshold; });
   };
-
+  const double planarityTolerance = 0.7;
+  const std::size_t nCenters =
+      std::ranges::count_if(eargs.etkdgDetails->angles,
+                            [](const auto &angle) { return angle[3]; }) +
+      eargs.etkdgDetails->improperAtoms.size();
+  if (totalEnergy > (nCenters * planarityTolerance)){
+    return false;
+  }
   for (const auto &contrib : field->contribs()) {
     if (auto c = dynamic_cast<const ForceFields::AngleConstraintContribs *>(
             contrib.get())) {
@@ -381,12 +391,7 @@ bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
       }
     }
   }
-  const double planarityTolerance = 0.7;
-  const std::size_t nCenters =
-      std::ranges::count_if(eargs.etkdgDetails->angles,
-                            [](const auto &angle) { return angle[3]; }) +
-      eargs.etkdgDetails->improperAtoms.size();
-  return totalEnergy <= (nCenters * planarityTolerance);
+  return true;
 }
 
 namespace EmbeddingOps {
@@ -1195,7 +1200,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     // Check Double Bond Geometry
     gotCoords =
         EmbeddingOps::doubleBondGeometryChecks(*positions, eargs, 3e-3, true);
-    if (! gotCoords) {
+    if (!gotCoords) {
       if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
         std::lock_guard<std::mutex> lock(GetFailMutex());
@@ -1782,9 +1787,10 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     ForceFields::CrystalFF::CrystalFFDetails etkdgDetails;
     etkdgDetails.constrainedAtoms = constrainedAtoms;
     etkdgDetails.distMat = MolOps::getDistanceMat(*piece.get());
-    etkdgDetails.forceConsts = params.useLegacyImplementation
-                                   ? ForceFields::CrystalFF::FC::SEQ::Cosine
-                                   : ForceFields::CrystalFF::FC::AIO::Cosine;
+    etkdgDetails.forceConsts =
+        params.useLegacyImplementation
+            ? ForceFields::CrystalFF::ETKDGForceConsts::SEQ::Cosine
+            : ForceFields::CrystalFF::ETKDGForceConsts::AIO::Cosine;
 
     EmbeddingOps::initETKDG(piece.get(), params, etkdgDetails);
 

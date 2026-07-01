@@ -13,16 +13,17 @@
 #include <ForceField/Contrib.h>
 #include <ForceField/ForceField.h>
 #include <vector>
+#include <cstddef>
 
 namespace ForceFields {
 namespace CrystalFF {
 
 struct RDKIT_FORCEFIELDHELPERS_EXPORT PlanarityContribsParams {
-  std::size_t idx1{0};        //!< index of atom1 in the ForceField's positions
-  std::size_t idx2{0};        //!< index of atom2 in the ForceField's positions
-  std::size_t idx3{0};        //!< index of atom3 in the ForceField's positions
-  std::size_t idx4{0};        //!< index of atom4 in the ForceField's positions
-  double forceConstant{1.0};  //!< force constant
+  std::size_t idx1{0};
+  std::size_t idx2{0};
+  std::size_t idx3{0};
+  std::size_t idx4{0};
+  double forceConstant{1.0};
   PlanarityContribsParams(std::size_t idx1, std::size_t idx2, std::size_t idx3,
                           std::size_t idx4, double forceConstant = 1.0)
       : idx1(idx1),
@@ -45,11 +46,11 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT PlanarityContribs
   ~PlanarityContribs() override = default;
   //! Add contribution to this contrib.
   /*!
-    \param idx1        index of atom1 in the ForceField's positions
-    \param idx2        index of atom2 in the ForceField's positions
-    \param idx3        index of atom3 in the ForceField's positions
-    \param idx4        index of atom4 in the ForceField's positions
-    \param forceConst  scaling factor for force constant
+    \param idx1
+    \param idx2
+    \param idx3
+    \param idx4
+    \param forceConst
 
   */
   void addContrib(std::size_t idx1, std::size_t idx2, std::size_t idx3,

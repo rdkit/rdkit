@@ -715,7 +715,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
               "Returns an EmbedParameters object for the KDG method.",
               python::return_value_policy<python::manage_new_object>());
   python::def("DG", RDKit::getDG,
-              "REturns an EmbedParameters object for plain distance geometry.",
+              "Returns an EmbedParameters object for plain distance geometry.",
               python::return_value_policy<python::manage_new_object>());
 
   docString =

@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2004-2026 Greg Landrum and other RDKit Contributors
 //
