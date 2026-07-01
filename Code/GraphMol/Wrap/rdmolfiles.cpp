@@ -2703,6 +2703,10 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       python::init<>(python::args("self"), "Construct a default CDXMLFormat"))
       .def(python::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat>(
           python::args("self", "sanitize", "removeHs", "format")))
+      .def(python::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat, bool,
+              bool>(python::args("self", "sanitize", "removeHs",
+                         "format", "parseQueries",
+                         "strictQueryParsing")))
       .def_readwrite("sanitize",
                      &RDKit::v2::CDXMLParser::CDXMLParserParams::sanitize,
                      "controls whether or not the molecule is sanitized before "
@@ -2714,6 +2718,14 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "format", &RDKit::v2::CDXMLParser::CDXMLParserParams::format,
           "ChemDraw format One of Auto, CDXML, CDX.  For data streams, Auto defaults to CDXML")
+      .def_readwrite(
+        "parseQueries",
+        &RDKit::v2::CDXMLParser::CDXMLParserParams::parseQueries,
+        "controls whether CDXML query constructs are preserved as query atoms and bonds")
+      .def_readwrite(
+        "strictQueryParsing",
+        &RDKit::v2::CDXMLParser::CDXMLParserParams::strictQueryParsing,
+        "controls whether unsupported CDXML query constructs raise instead of warning")
       .def("__setattr__", &safeSetattr);
 
   docString =

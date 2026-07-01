@@ -34,10 +34,19 @@ struct RDKIT_FILEPARSERS_EXPORT CDXMLParserParams {
   bool sanitize = true;
   bool removeHs = true;
   CDXMLFormat format = CDXMLFormat::Auto;
+  bool parseQueries = false;
+  bool strictQueryParsing = false;
 
   CDXMLParserParams() = default;
   CDXMLParserParams(bool sanitize, bool removeHs, CDXMLFormat format)
       : sanitize(sanitize), removeHs(removeHs), format(format) {}
+  CDXMLParserParams(bool sanitize, bool removeHs, CDXMLFormat format,
+                    bool parseQueries, bool strictQueryParsing)
+      : sanitize(sanitize),
+        removeHs(removeHs),
+        format(format),
+        parseQueries(parseQueries),
+        strictQueryParsing(strictQueryParsing) {}
 };
 
 //! \brief construct molecules from a CDXML file
@@ -105,7 +114,6 @@ RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 RDKIT_FILEPARSERS_EXPORT std::string MolToCDXMLBlock(
     const RWMol &mol,
     CDXMLFormat format = CDXMLFormat::CDXML);
-
 }  // namespace CDXMLParser
 }  // namespace v2
 

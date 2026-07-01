@@ -112,9 +112,8 @@ bool parseBond(RWMol &mol, unsigned int fragmentId, CDXBond &bond,
       break;
     }
     case kCDXBondOrder_Hydrogen:
-      BOOST_LOG(rdErrorLog)
-          << "Unhandled bond order Hydrogen, skipping fragment" << std::endl;
-      return false;
+      order = Bond::BondType::HYDROGEN;
+      break;
     case kCDXBondOrder_ThreeCenter:
       BOOST_LOG(rdErrorLog)
           << "Unhandled bond order ThreeCenter, skipping fragment" << std::endl;
@@ -127,6 +126,26 @@ bool parseBond(RWMol &mol, unsigned int fragmentId, CDXBond &bond,
       BOOST_LOG(rdErrorLog) << "Bad bond, skipping fragment" << std::endl;
       return false;
   };
+
+  switch (bond.m_topology) {
+    case kCDXBondTopology_Unspecified:
+    case kCDXBondTopology_RingOrChain:
+      break;
+    case kCDXBondTopology_Ring:
+    case kCDXBondTopology_Chain: {
+      if (!qb) {
+        qb = std::make_unique<QueryBond>(order);
+      }
+      auto *topologyQuery = makeBondIsInRingQuery();
+      if (bond.m_topology == kCDXBondTopology_Chain) {
+        topologyQuery->setNegation(true);
+      }
+      qb->expandQuery(topologyQuery);
+      break;
+    }
+    default:
+      break;
+  }
 
   // The RDKit only supports one direction for wedges so
   //  normalize it

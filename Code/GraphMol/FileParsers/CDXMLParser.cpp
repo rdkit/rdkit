@@ -14,6 +14,7 @@
 #ifndef RDK_BUILD_CHEMDRAW_SUPPORT
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <algorithm>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
@@ -42,15 +43,27 @@ const std::string CDX_AGENT_ID("CDX_AGENT_ID");
 const std::string CDX_ATOM_POS("CDX_ATOM_POS");
 const std::string CDX_ATOM_ID("_CDX_ATOM_ID");
 const std::string CDX_BOND_ID("_CDX_BOND_ID");
+const std::string CDX_BOND_ORDERING("CDX_BOND_ORDERING");
 
 constexpr double RDKIT_DEPICT_BONDLENGTH = 1.5;
 
 struct BondInfo {
+  enum class QueryType {
+    None,
+    Any,
+    SingleOrDouble,
+    SingleOrAromatic,
+    DoubleOrAromatic,
+  };
+  enum class TopologyType { None, Ring, Chain };
+
   int bond_id = -1;
   int start = -1;
   int end = -1;
   Bond::BondType order;
   std::string display;
+  QueryType queryType = QueryType::None;
+  TopologyType topology = TopologyType::None;
   Bond::BondType getBondType() { return order; }
   bool validate(const std::map<unsigned int, Atom *> &ids,
                 unsigned int num_atoms) const {
@@ -114,6 +127,335 @@ Atom *addquery(Q *qry, std::string symbol, RWMol &mol, unsigned int idx) {
   return res;
 }
 
+bool isRQueryLabel(const std::string &label) {
+  return !label.empty() && label[0] == 'R';
+}
+
+bool isAnyNonHydrogenQueryLabel(const std::string &label) {
+  return label == "A" || label == "a";
+}
+
+bool isWildcardQueryLabel(const std::string &label) {
+  return label == "*" || isRQueryLabel(label);
+}
+
+enum class AtomUnsaturationConstraint { None, MustBeAbsent, MustBePresent };
+
+constexpr auto CDXML_FREE_SITES_PROP = "_cdxmlFreeSites";
+constexpr auto CDXML_RING_BOND_COUNT_AS_DRAWN_PROP = "_cdxmlRingBondCountAsDrawn";
+constexpr auto CDXML_LINK_NODE_MIN_REP_PROP = "_cdxmlLinkNodeMinRep";
+constexpr auto CDXML_LINK_NODE_MAX_REP_PROP = "_cdxmlLinkNodeMaxRep";
+constexpr auto CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP =
+  "_cdxmlVariableAttachmentEndpoints";
+
+void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
+                                const v2::CDXMLParser::CDXMLParserParams &params,
+                                bool restrictImplicitHydrogens,
+                                int ringBondCount,
+                                bool ringBondCountAtLeast,
+                                int substituentCount,
+                                int maxSubstituentCount,
+                                AtomUnsaturationConstraint unsaturation) {
+  if (!params.parseQueries) {
+    return;
+  }
+  if (!restrictImplicitHydrogens && ringBondCount < 0 &&
+      !ringBondCountAtLeast && substituentCount < 0 &&
+      maxSubstituentCount < 0 &&
+      unsaturation == AtomUnsaturationConstraint::None) {
+    return;
+  }
+
+  auto *queryAtom = static_cast<QueryAtom *>(
+      QueryOps::replaceAtomWithQueryAtom(&mol, atom));
+  queryAtom->setNoImplicit(true);
+
+  if (restrictImplicitHydrogens) {
+    queryAtom->expandQuery(makeAtomImplicitHCountQuery(0));
+  }
+  if (ringBondCount >= 0) {
+    queryAtom->expandQuery(makeAtomRingBondCountQuery(ringBondCount));
+  } else if (ringBondCountAtLeast) {
+    queryAtom->expandQuery(makeAtomRingBondCountQuery<ATOM_LESSEQUAL_QUERY>(
+        4, "less_AtomRingBondCount"));
+  }
+  if (substituentCount >= 0) {
+    queryAtom->expandQuery(makeAtomExplicitDegreeQuery(substituentCount));
+  }
+  if (maxSubstituentCount >= 0) {
+    queryAtom->expandQuery(makeAtomRangeQuery(
+        0, maxSubstituentCount, false, false, queryAtomExplicitDegree,
+        "range_AtomExplicitDegree"));
+  }
+  if (unsaturation != AtomUnsaturationConstraint::None) {
+    auto *unsaturationQuery = makeAtomUnsaturatedQuery();
+    if (unsaturation == AtomUnsaturationConstraint::MustBeAbsent) {
+      unsaturationQuery->setNegation(true);
+    }
+    queryAtom->expandQuery(unsaturationQuery);
+  }
+
+  atom = queryAtom;
+}
+
+void applyDeferredFreeSitesQueryRestrictions(RWMol &mol) {
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_FREE_SITES_PROP)) {
+      continue;
+    }
+
+    int freeSites = 0;
+    atom->getProp(CDXML_FREE_SITES_PROP, freeSites);
+    const auto minDegree = static_cast<int>(atom->getDegree());
+    auto *queryAtom = static_cast<QueryAtom *>(
+        QueryOps::replaceAtomWithQueryAtom(&mol, atom));
+    queryAtom->setNoImplicit(true);
+    queryAtom->expandQuery(makeAtomRangeQuery(
+        minDegree, minDegree + freeSites, false, false,
+        queryAtomExplicitDegree, "range_AtomExplicitDegree"));
+    queryAtom->clearProp(CDXML_FREE_SITES_PROP);
+  }
+}
+
+void applyDeferredRingBondCountAsDrawnQueryRestrictions(
+    RWMol &mol, const v2::CDXMLParser::CDXMLParserParams &params) {
+  if (!params.parseQueries) {
+    return;
+  }
+
+  bool hasDeferredRingBondCount = false;
+  for (auto atom : mol.atoms()) {
+    if (atom->hasProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP)) {
+      hasDeferredRingBondCount = true;
+      break;
+    }
+  }
+  if (!hasDeferredRingBondCount) {
+    return;
+  }
+
+  MolOps::fastFindRings(mol);
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP)) {
+      continue;
+    }
+
+    auto ringBondCount = 0;
+    for (const auto bond : mol.atomBonds(atom)) {
+      if (bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx())) {
+        ++ringBondCount;
+      }
+    }
+    auto *queryAtom = static_cast<QueryAtom *>(
+        QueryOps::replaceAtomWithQueryAtom(&mol, atom));
+    queryAtom->setNoImplicit(true);
+    queryAtom->expandQuery(makeAtomRingBondCountQuery(ringBondCount));
+    queryAtom->clearProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP);
+  }
+}
+
+void applyDeferredLinkNodeProperties(RWMol &mol) {
+  std::string linkNodes;
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_LINK_NODE_MIN_REP_PROP) ||
+        !atom->hasProp(CDXML_LINK_NODE_MAX_REP_PROP)) {
+      continue;
+    }
+
+    int minRep = 0;
+    int maxRep = 0;
+    atom->getProp(CDXML_LINK_NODE_MIN_REP_PROP, minRep);
+    atom->getProp(CDXML_LINK_NODE_MAX_REP_PROP, maxRep);
+    atom->clearProp(CDXML_LINK_NODE_MIN_REP_PROP);
+    atom->clearProp(CDXML_LINK_NODE_MAX_REP_PROP);
+    if (minRep <= 0 || maxRep < minRep) {
+      BOOST_LOG(rdWarningLog) << "Invalid LinkNode repeat range on atom "
+                              << atom->getIdx() << std::endl;
+      continue;
+    }
+
+    std::vector<unsigned int> neighborIdxs;
+    neighborIdxs.reserve(atom->getDegree());
+    for (const auto neighbor : mol.atomNeighbors(atom)) {
+      neighborIdxs.push_back(neighbor->getIdx());
+    }
+    if (neighborIdxs.size() != 2) {
+      BOOST_LOG(rdWarningLog)
+          << "Only LinkNodes with exactly two neighbors are supported on atom "
+          << atom->getIdx() << std::endl;
+      continue;
+    }
+    if (neighborIdxs[0] > neighborIdxs[1]) {
+      std::swap(neighborIdxs[0], neighborIdxs[1]);
+    }
+
+    if (!linkNodes.empty()) {
+      linkNodes += "|";
+    }
+    linkNodes += std::to_string(minRep) + " " + std::to_string(maxRep) +
+                 " 2 " + std::to_string(atom->getIdx() + 1) + " " +
+                 std::to_string(neighborIdxs[0] + 1) + " " +
+                 std::to_string(atom->getIdx() + 1) + " " +
+                 std::to_string(neighborIdxs[1] + 1);
+  }
+  if (!linkNodes.empty()) {
+    std::string existing;
+    if (mol.getPropIfPresent(common_properties::molFileLinkNodes, existing) &&
+        !existing.empty()) {
+      linkNodes = existing + "|" + linkNodes;
+    }
+    mol.setProp(common_properties::molFileLinkNodes, linkNodes);
+  }
+}
+
+void applyDeferredVariableAttachmentProperties(RWMol &mol) {
+  std::map<unsigned int, unsigned int> atomIdToIdx;
+  for (auto atom : mol.atoms()) {
+    unsigned int atomId = 0;
+    if (atom->getPropIfPresent(CDX_ATOM_ID, atomId)) {
+      atomIdToIdx[atomId] = atom->getIdx();
+    }
+  }
+
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP)) {
+      continue;
+    }
+
+    std::vector<unsigned int> attachmentIds;
+    atom->getProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP, attachmentIds);
+    atom->clearProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP);
+    if (attachmentIds.empty()) {
+      continue;
+    }
+    if (atom->getDegree() != 1) {
+      BOOST_LOG(rdWarningLog) << "Only attachment-point nodes with a single "
+                                 "substituent bond are supported on atom "
+                             << atom->getIdx() << std::endl;
+      continue;
+    }
+
+    auto bond = *mol.atomBonds(atom).begin();
+    std::string endPoints = "(" + std::to_string(attachmentIds.size());
+    bool missingAttachment = false;
+    for (auto attachmentId : attachmentIds) {
+      auto mappedIdx = atomIdToIdx.find(attachmentId);
+      if (mappedIdx == atomIdToIdx.end()) {
+        BOOST_LOG(rdWarningLog)
+            << "Attachment endpoint " << attachmentId
+            << " not found in molecule" << std::endl;
+        missingAttachment = true;
+        break;
+      }
+      endPoints += " " + std::to_string(mappedIdx->second + 1);
+    }
+    if (missingAttachment) {
+      continue;
+    }
+    endPoints += ")";
+    bond->setProp(common_properties::_MolFileBondEndPts, endPoints);
+    bond->setProp(common_properties::_MolFileBondAttach, "ANY");
+  }
+}
+
+struct FragmentReplacement {
+  int label = -1;
+  Atom *replacement_atom = nullptr;
+  std::vector<Atom *> fragment_atoms;
+
+  bool replace(RWMol &mol) {
+    if (!replacement_atom) {
+      return true;
+    }
+
+    auto bond_ordering =
+        replacement_atom->getProp<std::vector<int>>(CDX_BOND_ORDERING);
+    std::vector<Bond *> replacement_bonds(mol.atomBonds(replacement_atom).begin(),
+                                          mol.atomBonds(replacement_atom).end());
+
+    std::vector<Bond *> xbonds;
+    for (auto bond : replacement_bonds) {
+      unsigned bond_id = 0;
+      if (!bond->getPropIfPresent<unsigned>(CDX_BOND_ID, bond_id)) {
+        BOOST_LOG(rdWarningLog)
+            << "bond missing internal CDX BOND id, can't attach fragment at "
+               "bond"
+            << std::endl;
+        return false;
+      }
+      auto it = std::find(bond_ordering.begin(), bond_ordering.end(), bond_id);
+      if (it == bond_ordering.end()) {
+        return false;
+      }
+
+      auto pos = std::distance(bond_ordering.begin(), it);
+      if (pos < 0 || static_cast<size_t>(pos) >= fragment_atoms.size()) {
+        BOOST_LOG(rdWarningLog) << "bond ordering and number of atoms in "
+                                   "fragment mismatch, can't attach fragment at "
+                                   "bond:"
+                                << bond_id << std::endl;
+        return false;
+      }
+
+      auto &xatom = fragment_atoms[pos];
+      xbonds.assign(mol.atomBonds(xatom).begin(), mol.atomBonds(xatom).end());
+      for (auto xbond : xbonds) {
+        if (bond->getBeginAtom() == replacement_atom) {
+          mol.addBond(xbond->getOtherAtom(xatom), bond->getEndAtom(),
+                      bond->getBondType());
+        } else {
+          mol.addBond(bond->getBeginAtom(), xbond->getOtherAtom(xatom),
+                      bond->getBondType());
+        }
+      }
+    }
+
+    mol.removeAtom(replacement_atom);
+    for (auto atom : fragment_atoms) {
+      mol.removeAtom(atom);
+    }
+    return true;
+  }
+};
+
+bool replaceFragments(RWMol &mol) {
+  std::map<int, FragmentReplacement> replacements;
+
+  for (auto atom : mol.atoms()) {
+    auto label = static_cast<int>(get_fuse_label(atom));
+    if (!label) {
+      continue;
+    }
+    if (atom->hasProp(CDX_BOND_ORDERING)) {
+      auto &frag = replacements[label];
+      frag.label = label;
+      frag.replacement_atom = atom;
+    } else {
+      auto &frag = replacements[label];
+      frag.fragment_atoms.push_back(atom);
+    }
+  }
+
+  mol.beginBatchEdit();
+  for (auto &replacement : replacements) {
+    replacement.second.replace(mol);
+  }
+  mol.commitBatchEdit();
+  return true;
+}
+
+void clearInternalCDXProps(std::vector<std::unique_ptr<RWMol>> &mols) {
+  for (auto &mol : mols) {
+    for (auto atom : mol->atoms()) {
+      atom->clearProp(CDX_ATOM_ID);
+      atom->clearProp(CDX_BOND_ORDERING);
+    }
+    for (auto bond : mol->bonds()) {
+      bond->clearProp(CDX_BOND_ID);
+    }
+  }
+}
+
 template <class T>
 std::vector<T> to_vec(const std::string &s) {
   std::vector<T> n;
@@ -148,6 +490,7 @@ void scaleBonds(const ROMol &mol, Conformer &conf, double targetBondLength,
 }
 bool parse_fragment(RWMol &mol, ptree &frag,
                     std::map<unsigned int, Atom *> &ids, int &missing_frag_id,
+                    const v2::CDXMLParser::CDXMLParserParams &params,
                     int external_attachment = -1) {
   // XXX Need to put the fragid on the molecule so we can properly make
   // reactions
@@ -188,6 +531,22 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       std::vector<int> elementlist;
       std::vector<double> atom_coords;
       std::string nodetype = "";
+      std::string generic_nickname;
+      bool negative_elementlist = false;
+      bool restrict_implicit_hydrogens = false;
+      int ring_bond_count = -1;
+      bool ring_bond_count_at_least = false;
+      bool ring_bond_count_as_drawn = false;
+      int substituent_count = -1;
+      int max_substituent_count = -1;
+        int free_sites = -1;
+      int link_count_low = -1;
+      int link_count_high = -1;
+      std::vector<unsigned int> variable_attachment_ids;
+        bool restrict_rxn_change = false;
+        int rxn_stereo = 0;
+      AtomUnsaturationConstraint unsaturation =
+          AtomUnsaturationConstraint::None;
       for (auto &attr : node.second.get_child("<xmlattr>")) {
         try {
           if (attr.first == "id") {
@@ -230,16 +589,29 @@ bool parse_fragment(RWMol &mol, ptree &frag,
                     if (snode.first == "s") {
                       auto s = snode.second.data();
                       if (s.size()) {
-                        if (s[0] == 'R') {
+                        if (isRQueryLabel(s)) {
                           if (s.size() > 1) {
                             rgroup_num = stoi(s.substr(1));
                           }
                           elemno = 0;
-                          query_label = s;
-                        } else if (s == "A") {
+                          query_label =
+                              generic_nickname.empty() ? "R" : generic_nickname;
+                        } else if (isAnyNonHydrogenQueryLabel(s)) {
                           query_label = s;
                           elemno = 0;
                         } else if (s == "Q") {
+                          query_label = s;
+                          elemno = 0;
+                        } else if (s == "X") {
+                          query_label = s;
+                          elemno = 0;
+                        } else if (s == "M") {
+                          query_label = s;
+                          elemno = 0;
+                        } else if (s == "MH") {
+                          query_label = s;
+                          elemno = 0;
+                        } else if (s == "*") {
                           query_label = s;
                           elemno = 0;
                         }
@@ -252,9 +624,95 @@ bool parse_fragment(RWMol &mol, ptree &frag,
               }
             } else if (nodetype == "ElementList") {
               query_label = "ElementList";
+            } else if (nodetype == "LinkNode") {
+              link_count_low = 1;
+              link_count_high = 1;
+            } else if ((nodetype == "VariableAttachment" ||
+                        nodetype == "MultiAttachment") &&
+                       params.parseQueries) {
+              elemno = 0;
             }
+          } else if (attr.first == "GenericNickname") {
+            generic_nickname = attr.second.data();
+          } else if (attr.first == "LinkCountLow") {
+            link_count_low = stoi(attr.second.data());
+          } else if (attr.first == "LinkCountHigh") {
+            link_count_high = stoi(attr.second.data());
+          } else if (attr.first == "Attachments" &&
+                     (nodetype == "VariableAttachment" ||
+                      nodetype == "MultiAttachment") &&
+                     params.parseQueries) {
+            variable_attachment_ids = to_vec<unsigned int>(attr.second.data());
+          } else if (attr.first == "BondOrdering") {
+            bond_ordering = to_vec<int>(attr.second.data());
           } else if (attr.first == "ElementList") {
-            elementlist = to_vec<int>(attr.second.data());
+            auto elementListText = attr.second.data();
+            if (elementListText.rfind("NOT ", 0) == 0) {
+              negative_elementlist = true;
+              elementListText = elementListText.substr(4);
+            }
+            elementlist = to_vec<int>(elementListText);
+
+          } else if (attr.first == "ImplicitHydrogens") {
+            auto value = attr.second.data();
+            restrict_implicit_hydrogens =
+                value == "yes" || value == "true";
+
+          } else if (attr.first == "RingBondCount") {
+            auto value = attr.second.data();
+            if (value == "NoRingBonds") {
+              ring_bond_count = 0;
+            } else if (value == "SimpleRing") {
+              ring_bond_count = 2;
+            } else if (value == "Fusion") {
+              ring_bond_count = 3;
+            } else if (value == "SpiroOrHigher") {
+              ring_bond_count_at_least = true;
+            } else if (value == "AsDrawn") {
+              ring_bond_count_as_drawn = true;
+            } else if (value != "Unspecified") {
+              BOOST_LOG(rdWarningLog)
+                  << "Unhandled RingBondCount query value " << value
+                  << " ignoring" << std::endl;
+            }
+
+          } else if (attr.first == "UnsaturatedBonds") {
+            auto value = attr.second.data();
+            if (value == "MustBePresent") {
+              unsaturation = AtomUnsaturationConstraint::MustBePresent;
+            } else if (value == "MustBeAbsent") {
+              unsaturation = AtomUnsaturationConstraint::MustBeAbsent;
+            } else if (value != "Unspecified") {
+              BOOST_LOG(rdWarningLog)
+                  << "Unhandled UnsaturatedBonds query value " << value
+                  << " ignoring" << std::endl;
+            }
+
+          } else if (attr.first == "SubstituentsExactly") {
+            substituent_count = stoi(attr.second.data());
+
+          } else if (attr.first == "SubstituentsUpTo") {
+            max_substituent_count = stoi(attr.second.data());
+
+          } else if (attr.first == "FreeSites") {
+            free_sites = stoi(attr.second.data());
+
+          } else if (attr.first == "RxnChange") {
+            auto value = attr.second.data();
+            restrict_rxn_change =
+                value == "yes" || value == "true" || value == "1";
+
+          } else if (attr.first == "RxnStereo") {
+            auto value = attr.second.data();
+            if (value == "Inversion") {
+              rxn_stereo = 1;
+            } else if (value == "Retention") {
+              rxn_stereo = 2;
+            } else if (value != "Unspecified") {
+              BOOST_LOG(rdWarningLog)
+                  << "Unhandled RxnStereo query value " << value
+                  << " ignoring" << std::endl;
+            }
 
           } else if (attr.first == "p") {
             atom_coords = to_vec<double>(attr.second.data());
@@ -282,6 +740,22 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           return false;
         }
       }
+      if (nodetype == "GenericNickname" && query_label.empty() &&
+          generic_nickname.size()) {
+        if (isRQueryLabel(generic_nickname)) {
+          if (generic_nickname.size() > 1) {
+            rgroup_num = stoi(generic_nickname.substr(1));
+          }
+          query_label = generic_nickname;
+          elemno = 0;
+        } else if (isAnyNonHydrogenQueryLabel(generic_nickname) ||
+                   generic_nickname == "Q" || generic_nickname == "X" ||
+                   generic_nickname == "M" || generic_nickname == "MH" ||
+                   generic_nickname == "*") {
+          query_label = generic_nickname;
+          elemno = 0;
+        }
+      }
       // add the atom
       CHECK_INVARIANT(atom_id != -1, "Uninitialized atom id in cdxml.");
       Atom *rd_atom = new Atom(elemno);
@@ -294,6 +768,11 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         rd_atom->setAtomMapNum(rgroup_num);
       }
       set_fuse_label(rd_atom, atommap);
+      if (!bond_ordering.empty()) {
+        // This node may be completely replaced by the fragment
+        // i.e. [*:1]C[*:1].C[*:1]C => CCC
+        rd_atom->setProp<std::vector<int>>(CDX_BOND_ORDERING, bond_ordering);
+      }
       if (mergeparent > 0) {
         rd_atom->setProp<int>("MergeParent", mergeparent);
       }
@@ -305,12 +784,18 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       const bool takeOwnership = true;
       auto idx = mol.addAtom(rd_atom, updateLabels, takeOwnership);
       if (query_label.size()) {
-        if (query_label[0] == 'R') {
+        if (isWildcardQueryLabel(query_label)) {
           rd_atom = addquery(makeAtomNullQuery(), query_label, mol, idx);
-        } else if (query_label == "A") {
+        } else if (isAnyNonHydrogenQueryLabel(query_label)) {
           rd_atom = addquery(makeAAtomQuery(), query_label, mol, idx);
         } else if (query_label == "Q") {
           rd_atom = addquery(makeQAtomQuery(), query_label, mol, idx);
+        } else if (query_label == "X") {
+          rd_atom = addquery(makeXAtomQuery(), query_label, mol, idx);
+        } else if (query_label == "M") {
+          rd_atom = addquery(makeMAtomQuery(), query_label, mol, idx);
+        } else if (query_label == "MH") {
+          rd_atom = addquery(makeMHAtomQuery(), query_label, mol, idx);
         } else if (query_label == "ElementList") {
           if (!elementlist.size()) {
             BOOST_LOG(rdWarningLog)
@@ -322,12 +807,37 @@ bool parse_fragment(RWMol &mol, ptree &frag,
               q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(
                   makeAtomNumQuery(atNum)));
             }
+            q->setNegation(negative_elementlist);
             rd_atom = addquery(q, query_label, mol, idx);
             rd_atom->setAtomicNum(elementlist.front());
           }
         } else {
           rd_atom->setProp(common_properties::atomLabel, query_label);
         }
+      }
+      applyAtomQueryRestrictions(mol, rd_atom, params,
+                                 restrict_implicit_hydrogens, ring_bond_count,
+                                 ring_bond_count_at_least, substituent_count,
+                                 max_substituent_count, unsaturation);
+      if (ring_bond_count_as_drawn) {
+        rd_atom->setProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP, 1);
+      }
+      if (free_sites >= 0) {
+        rd_atom->setProp(CDXML_FREE_SITES_PROP, free_sites);
+      }
+      if (link_count_low > 0 && link_count_high >= link_count_low) {
+        rd_atom->setProp(CDXML_LINK_NODE_MIN_REP_PROP, link_count_low);
+        rd_atom->setProp(CDXML_LINK_NODE_MAX_REP_PROP, link_count_high);
+      }
+      if (!variable_attachment_ids.empty()) {
+        rd_atom->setProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP,
+                         variable_attachment_ids);
+      }
+      if (params.parseQueries && restrict_rxn_change) {
+        rd_atom->setProp(common_properties::molRxnExactChange, 1);
+      }
+      if (params.parseQueries && rxn_stereo) {
+        rd_atom->setProp(common_properties::molInversionFlag, rxn_stereo);
       }
       if (sgroup != -1) {
         auto key = std::make_pair(sgroup, grouptype);
@@ -341,6 +851,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         for (auto &fragment : node.second) {
           if (fragment.first == "fragment") {
             if (!parse_fragment(mol, fragment.second, ids, missing_frag_id,
+                                params,
                                 atom_id)) {
               skip_fragment = true;
               break;
@@ -358,6 +869,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       int end_atom = -1;
       Bond::BondType order = Bond::SINGLE;
       std::string display;
+      BondInfo::QueryType queryType = BondInfo::QueryType::None;
+      BondInfo::TopologyType topology = BondInfo::TopologyType::None;
       for (auto &attr : node.second.get_child("<xmlattr>")) {
         try {
           if (attr.first == "id") {
@@ -367,14 +880,42 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           } else if (attr.first == "E") {
             end_atom = stoi(attr.second.data());
           } else if (attr.first == "Order") {
-            if (attr.second.data() == "1.5") {
+            const auto orderText = attr.second.data();
+            const auto orderTokens = to_vec<std::string>(orderText);
+            if (orderTokens.size() == 1 && orderText == "1.5") {
               order = Bond::BondType::AROMATIC;
-            } else if (attr.second.data() == "any") {
+            } else if (orderTokens.size() == 1 && orderText == "any") {
               order = Bond::BondType::UNSPECIFIED;
-            } else if (attr.second.data() == "dative") {
+              queryType = BondInfo::QueryType::Any;
+            } else if (orderTokens.size() == 1 && orderText == "dative") {
               order = Bond::BondType::DATIVE;
+            } else if (orderTokens.size() == 1 &&
+                       (orderText == "hydrogen" || orderText == "Hydrogen")) {
+              order = Bond::BondType::HYDROGEN;
+            } else if (
+                orderTokens.size() == 2 &&
+                ((orderTokens[0] == "1" && orderTokens[1] == "2") ||
+                 (orderTokens[0] == "2" && orderTokens[1] == "1"))) {
+              order = Bond::BondType::SINGLE;
+              queryType = BondInfo::QueryType::SingleOrDouble;
+            } else if (
+                orderTokens.size() == 2 &&
+                ((orderTokens[0] == "1" &&
+                  (orderTokens[1] == "1.5" || orderTokens[1] == "4")) ||
+                 (orderTokens[1] == "1" &&
+                  (orderTokens[0] == "1.5" || orderTokens[0] == "4")))) {
+              order = Bond::BondType::SINGLE;
+              queryType = BondInfo::QueryType::SingleOrAromatic;
+            } else if (
+                orderTokens.size() == 2 &&
+                ((orderTokens[0] == "2" &&
+                  (orderTokens[1] == "1.5" || orderTokens[1] == "4")) ||
+                 (orderTokens[1] == "2" &&
+                  (orderTokens[0] == "1.5" || orderTokens[0] == "4")))) {
+              order = Bond::BondType::DOUBLE;
+              queryType = BondInfo::QueryType::DoubleOrAromatic;
             } else {
-              int bond_order = stoi(attr.second.data());
+              int bond_order = stoi(orderText);
 
               switch (bond_order) {
                 case 1:
@@ -393,6 +934,15 @@ bool parse_fragment(RWMol &mol, ptree &frag,
                   throw std::invalid_argument("Unhandled bond order");
               }
             }
+          } else if (attr.first == "Topology") {
+            if (attr.second.data() == "Ring") {
+              topology = BondInfo::TopologyType::Ring;
+            } else if (attr.second.data() == "Chain") {
+              topology = BondInfo::TopologyType::Chain;
+            } else if (attr.second.data() != "RingOrChain" &&
+                       attr.second.data() != "Unspecified") {
+              throw std::invalid_argument("Unhandled bond topology");
+            }
           } else if (attr.first ==
                      "Display") {  // gets wedge/hash stuff and probably more
             display = attr.second.data();
@@ -407,7 +957,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       }
       // CHECK_INVARIANT(start_atom>=0 && end_atom>=0 && start_atom != end_atom,
       // "Bad bond in CDXML");
-      BondInfo bond{bond_id, start_atom, end_atom, order, display};
+      BondInfo bond{bond_id, start_atom, end_atom, order, display, queryType,
+                    topology};
       if (!bond.validate(ids, mol.getNumAtoms())) {
         BOOST_LOG(rdErrorLog) << "Bad bond in CDXML skipping fragment "
                               << frag_id << "..." << std::endl;
@@ -441,12 +992,42 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         std::swap(startIdx, endIdx);
       }
       unsigned bondIdx = 0;
-      if (bond.order == Bond::BondType::UNSPECIFIED) {
-        auto qb = new QueryBond();
-        qb->setQuery(makeBondNullQuery());
+      std::unique_ptr<QueryBond> qb;
+      switch (bond.queryType) {
+        case BondInfo::QueryType::Any:
+          qb = std::make_unique<QueryBond>(bond.getBondType());
+          qb->setQuery(makeBondNullQuery());
+          break;
+        case BondInfo::QueryType::SingleOrDouble:
+          qb = std::make_unique<QueryBond>(bond.getBondType());
+          qb->setQuery(makeSingleOrDoubleBondQuery());
+          break;
+        case BondInfo::QueryType::SingleOrAromatic:
+          qb = std::make_unique<QueryBond>(bond.getBondType());
+          qb->setQuery(makeSingleOrAromaticBondQuery());
+          break;
+        case BondInfo::QueryType::DoubleOrAromatic:
+          qb = std::make_unique<QueryBond>(bond.getBondType());
+          qb->setQuery(makeDoubleOrAromaticBondQuery());
+          break;
+        case BondInfo::QueryType::None:
+          break;
+      }
+      if (bond.topology != BondInfo::TopologyType::None) {
+        if (!qb) {
+          qb = std::make_unique<QueryBond>(bond.getBondType());
+        }
+        auto *topologyQuery = makeBondIsInRingQuery();
+        if (bond.topology == BondInfo::TopologyType::Chain) {
+          topologyQuery->setNegation(true);
+        }
+        qb->expandQuery(topologyQuery);
+      }
+
+      if (qb) {
         qb->setBeginAtomIdx(startIdx);
         qb->setEndAtomIdx(endIdx);
-        bondIdx = mol.addBond(qb, true) - 1;
+        bondIdx = mol.addBond(qb.release(), true) - 1;
       } else {
         bondIdx = mol.addBond(startIdx, endIdx, bond.getBondType()) - 1;
       }
@@ -480,6 +1061,11 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         }
       }
     }
+
+    applyDeferredRingBondCountAsDrawnQueryRestrictions(mol, params);
+    applyDeferredFreeSitesQueryRestrictions(mol);
+    applyDeferredLinkNodeProperties(mol);
+    applyDeferredVariableAttachmentProperties(mol);
   }
 
   // Add the stereo groups
@@ -568,7 +1154,7 @@ void visit_children(
   for (auto &frag : node.second) {
     if (frag.first == "fragment") {  // chemical matter
       std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
-      if (!parse_fragment(*mol, frag.second, ids, missing_frag_id)) {
+      if (!parse_fragment(*mol, frag.second, ids, missing_frag_id, params)) {
         continue;
       }
       unsigned int frag_id = mol->getProp<int>(CDXML_FRAG_ID);
@@ -582,6 +1168,7 @@ void visit_children(
         mol->clearProp(NEEDS_FUSE);
         std::unique_ptr<ROMol> fused;
         try {
+          replaceFragments(*mol);
           fused = molzip(*mol, molzip_params);
         } catch (Invar::Invariant &) {
           BOOST_LOG(rdWarningLog) << "Failed fusion of fragment skipping... "
@@ -649,6 +1236,9 @@ void visit_children(
             unsigned int failedOp = 0;
             MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
             MolOps::detectBondStereochemistry(*res);
+            if (params.parseQueries && MolOps::hasQueryHs(*res).first) {
+              MolOps::mergeQueryHs(*res);
+            }
             MolOps::removeHs(*res);
           } else {
             MolOps::sanitizeMol(*res);
@@ -819,6 +1409,7 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
   }
 
   // what do we do with the reaction schemes here???
+  clearInternalCDXProps(mols);
   return mols;
 }
 
@@ -842,13 +1433,13 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 
 RDKIT_FILEPARSERS_EXPORT std::string MolToCDXMLBlock(
     const RWMol &,
-    CDXMLFormat ) {
+    CDXMLFormat) {
   std::ostringstream errout;
   errout << "RDKit build withoutChemDraw writing support. ";
   throw FileParseException(errout.str());
   return "";
 }
-  
+
 }  // namespace CDXMLParser
 }  // namespace v2
 }  // namespace RDKit
@@ -872,6 +1463,8 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
   ChemDrawParserParams chemdraw_params;
   chemdraw_params.sanitize = params.sanitize;
   chemdraw_params.removeHs = params.removeHs;
+  chemdraw_params.parseQueries = params.parseQueries;
+  chemdraw_params.strictQueryParsing = params.strictQueryParsing;
   switch(params.format) {
   case CDXMLFormat::CDX: {
     chemdraw_params.format = CDXFormat::CDX;
@@ -917,14 +1510,14 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 std::string MolToCDXMLBlock(
     const RWMol &mol,
     CDXMLFormat format) {
-  
-    CDXFormat cdx_format = CDXFormat::CDXML;
 
-    if (format == CDXMLFormat::CDX) {
-      cdx_format = CDXFormat::CDX;
-    }
+  CDXFormat cdx_format = CDXFormat::CDXML;
 
-    return MolToChemDrawBlock(mol, cdx_format);
+  if (format == CDXMLFormat::CDX) {
+    cdx_format = CDXFormat::CDX;
+  }
+
+  return MolToChemDrawBlock(mol, cdx_format);
 }
 }
 }

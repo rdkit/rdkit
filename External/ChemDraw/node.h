@@ -45,6 +45,14 @@
 
 namespace RDKit {
 namespace ChemDraw {
+inline constexpr auto CDXML_FREE_SITES_PROP = "_cdxmlFreeSites";
+inline constexpr auto CDXML_RING_BOND_COUNT_AS_DRAWN_PROP =
+    "_cdxmlRingBondCountAsDrawn";
+inline constexpr auto CDXML_LINK_NODE_MIN_REP_PROP = "_cdxmlLinkNodeMinRep";
+inline constexpr auto CDXML_LINK_NODE_MAX_REP_PROP = "_cdxmlLinkNodeMaxRep";
+inline constexpr auto CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP =
+    "_cdxmlVariableAttachmentEndpoints";
+
 bool parseNode(
     RWMol &mol, unsigned int fragmentId, CDXNode &node, PageData &pagedata,
     std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,

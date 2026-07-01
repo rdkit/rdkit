@@ -36,6 +36,166 @@
 namespace RDKit {
 namespace ChemDraw {
 namespace {
+void applyDeferredRingBondCountAsDrawnQueryRestrictions(
+    RWMol &mol, const PageData &pagedata) {
+  if (!pagedata.parseQueries) {
+    return;
+  }
+
+  bool hasDeferredRingBondCount = false;
+  for (auto atom : mol.atoms()) {
+    if (atom->hasProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP)) {
+      hasDeferredRingBondCount = true;
+      break;
+    }
+  }
+  if (!hasDeferredRingBondCount) {
+    return;
+  }
+
+  MolOps::fastFindRings(mol);
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP)) {
+      continue;
+    }
+
+    auto ringBondCount = 0;
+    for (const auto bond : mol.atomBonds(atom)) {
+      if (bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx())) {
+        ++ringBondCount;
+      }
+    }
+    auto *queryAtom = static_cast<QueryAtom *>(
+        QueryOps::replaceAtomWithQueryAtom(&mol, atom));
+    queryAtom->setNoImplicit(true);
+    queryAtom->expandQuery(makeAtomRingBondCountQuery(ringBondCount));
+    queryAtom->clearProp(CDXML_RING_BOND_COUNT_AS_DRAWN_PROP);
+  }
+}
+
+void applyDeferredFreeSitesQueryRestrictions(RWMol &mol) {
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_FREE_SITES_PROP)) {
+      continue;
+    }
+
+    int freeSites = 0;
+    atom->getProp(CDXML_FREE_SITES_PROP, freeSites);
+    const auto minDegree = static_cast<int>(atom->getDegree());
+    auto *queryAtom = static_cast<QueryAtom *>(
+        QueryOps::replaceAtomWithQueryAtom(&mol, atom));
+    queryAtom->setNoImplicit(true);
+    queryAtom->expandQuery(makeAtomRangeQuery(
+        minDegree, minDegree + freeSites, false, false,
+        queryAtomExplicitDegree, "range_AtomExplicitDegree"));
+    queryAtom->clearProp(CDXML_FREE_SITES_PROP);
+  }
+}
+
+void applyDeferredLinkNodeProperties(RWMol &mol) {
+  std::string linkNodes;
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_LINK_NODE_MIN_REP_PROP) ||
+        !atom->hasProp(CDXML_LINK_NODE_MAX_REP_PROP)) {
+      continue;
+    }
+
+    int minRep = 0;
+    int maxRep = 0;
+    atom->getProp(CDXML_LINK_NODE_MIN_REP_PROP, minRep);
+    atom->getProp(CDXML_LINK_NODE_MAX_REP_PROP, maxRep);
+    atom->clearProp(CDXML_LINK_NODE_MIN_REP_PROP);
+    atom->clearProp(CDXML_LINK_NODE_MAX_REP_PROP);
+    if (minRep <= 0 || maxRep < minRep) {
+      BOOST_LOG(rdWarningLog) << "Invalid LinkNode repeat range on atom "
+                              << atom->getIdx() << std::endl;
+      continue;
+    }
+
+    std::vector<unsigned int> neighborIdxs;
+    neighborIdxs.reserve(atom->getDegree());
+    for (const auto neighbor : mol.atomNeighbors(atom)) {
+      neighborIdxs.push_back(neighbor->getIdx());
+    }
+    if (neighborIdxs.size() != 2) {
+      BOOST_LOG(rdWarningLog)
+          << "Only LinkNodes with exactly two neighbors are supported on atom "
+          << atom->getIdx() << std::endl;
+      continue;
+    }
+    if (neighborIdxs[0] > neighborIdxs[1]) {
+      std::swap(neighborIdxs[0], neighborIdxs[1]);
+    }
+
+    if (!linkNodes.empty()) {
+      linkNodes += "|";
+    }
+    linkNodes += std::to_string(minRep) + " " + std::to_string(maxRep) +
+                 " 2 " + std::to_string(atom->getIdx() + 1) + " " +
+                 std::to_string(neighborIdxs[0] + 1) + " " +
+                 std::to_string(atom->getIdx() + 1) + " " +
+                 std::to_string(neighborIdxs[1] + 1);
+  }
+  if (!linkNodes.empty()) {
+    std::string existing;
+    if (mol.getPropIfPresent(common_properties::molFileLinkNodes, existing) &&
+        !existing.empty()) {
+      linkNodes = existing + "|" + linkNodes;
+    }
+    mol.setProp(common_properties::molFileLinkNodes, linkNodes);
+  }
+}
+
+void applyDeferredVariableAttachmentProperties(RWMol &mol) {
+  std::map<unsigned int, unsigned int> atomIdToIdx;
+  for (auto atom : mol.atoms()) {
+    unsigned int atomId = 0;
+    if (atom->getPropIfPresent(CDX_ATOM_ID, atomId)) {
+      atomIdToIdx[atomId] = atom->getIdx();
+    }
+  }
+
+  for (auto atom : mol.atoms()) {
+    if (!atom->hasProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP)) {
+      continue;
+    }
+
+    std::vector<unsigned int> attachmentIds;
+    atom->getProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP, attachmentIds);
+    atom->clearProp(CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP);
+    if (attachmentIds.empty()) {
+      continue;
+    }
+    if (atom->getDegree() != 1) {
+      BOOST_LOG(rdWarningLog) << "Only attachment-point nodes with a single "
+                                 "substituent bond are supported on atom "
+                             << atom->getIdx() << std::endl;
+      continue;
+    }
+
+    auto bond = *mol.atomBonds(atom).begin();
+    std::string endPoints = "(" + std::to_string(attachmentIds.size());
+    bool missingAttachment = false;
+    for (auto attachmentId : attachmentIds) {
+      auto mappedIdx = atomIdToIdx.find(attachmentId);
+      if (mappedIdx == atomIdToIdx.end()) {
+        BOOST_LOG(rdWarningLog)
+            << "Attachment endpoint " << attachmentId
+            << " not found in molecule" << std::endl;
+        missingAttachment = true;
+        break;
+      }
+      endPoints += " " + std::to_string(mappedIdx->second + 1);
+    }
+    if (missingAttachment) {
+      continue;
+    }
+    endPoints += ")";
+    bond->setProp(common_properties::_MolFileBondEndPts, endPoints);
+    bond->setProp(common_properties::_MolFileBondAttach, "ANY");
+  }
+}
+
 const char *sequenceTypeToName(CDXSeqType seqtype) {
   switch (seqtype) {
     case kCDXSeqType_Unknown:
@@ -1015,6 +1175,11 @@ bool parseFragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
         break;
     }
   }
+
+  applyDeferredRingBondCountAsDrawnQueryRestrictions(mol, pagedata);
+  applyDeferredFreeSitesQueryRestrictions(mol);
+  applyDeferredLinkNodeProperties(mol);
+  applyDeferredVariableAttachmentProperties(mol);
 
   // Add the stereo groups
   if (!sgroups.empty()) {

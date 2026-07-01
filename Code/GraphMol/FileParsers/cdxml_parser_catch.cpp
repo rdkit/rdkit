@@ -15,7 +15,9 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/FileParseException.h>
+#include <algorithm>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
@@ -444,11 +446,143 @@ TEST_CASE("CDXML") {
       }
     }
     {
+      auto fname = cdxmlbase + "query-any-labels.cdxml";
+      std::vector<std::string> expected_smarts = {
+          "[#6]-[!#1]",
+          "[#6]-[!#1]",
+          "[#6]-*",
+          "[#6]-*",
+      };
+      auto mols = MolsFromCDXMLFile(fname);
+      REQUIRE(mols.size() == expected_smarts.size());
+      for (size_t i = 0; i < mols.size(); ++i) {
+        CHECK(MolToSmarts(*mols[i]) == expected_smarts[i]);
+      }
+    }
+    {
+      auto fname = cdxmlbase + "query-atoms.cdxml";
+      auto params =
+          CDXMLParserParams(true, true, CDXMLFormat::CDXML, true, true);
+      auto mols = MolsFromCDXMLFile(fname, params);
+      REQUIRE(mols.size() == 3);
+      auto smarts = MolToSmarts(*mols[0]);
+      CHECK(smarts.find("!H0") != std::string::npos);
+      auto monoSubstituted = std::unique_ptr<ROMol>(SmilesToMol("Cc1ccccc1"));
+      auto diSubstituted =
+          std::unique_ptr<ROMol>(SmilesToMol("Cc1ccc(C)cc1"));
+      REQUIRE(monoSubstituted);
+      REQUIRE(diSubstituted);
+      MatchVectType match;
+      CHECK(SubstructMatch(*monoSubstituted, *mols[0], match));
+      match.clear();
+      CHECK(!SubstructMatch(*diSubstituted, *mols[0], match));
+    }
+    {
+      auto fname = cdxmlbase + "chirality1.cdxml";
+      auto params =
+          CDXMLParserParams(true, true, CDXMLFormat::CDXML, true, true);
+      auto mols = MolsFromCDXMLFile(fname, params);
+      REQUIRE(mols.size() == 1);
+      auto smarts = MolToSmarts(*mols[0]);
+      CHECK(smarts.find("!H0") == std::string::npos);
+      CHECK(smarts.find("!H1") == std::string::npos);
+    }
+    {
       auto fname = cdxmlbase + "anybond.cdxml";
       auto mols = MolsFromCDXMLFile(fname);
       CHECK(mols.size() == 1);
       CHECK(MolToSmiles(*mols[0]) == "C1CCC~CC1");
       CHECK(MolToSmarts(*mols[0]) == "[#6]1~[#6]-[#6]-[#6]-[#6]-[#6]-1");
+    }
+    {
+      const auto queryBase = cdxmlbase + "queries/";
+      const std::vector<std::pair<std::string, std::string>> cases = {
+          {queryBase + "furan_sd.cdxml", "[#8]1:[#6]-,=[#6]:[#6]-,=[#6]:1"},
+          {queryBase + "furan_sa.cdxml", "[#8]1:[#6][#6]:[#6][#6]:1"},
+          {queryBase + "furan_da.cdxml", "[#8]1:[#6]=,:[#6]:[#6]=,:[#6]:1"},
+          {queryBase + "CCOC_Rng.cdxml", "[#8](-[#6]-&@[#6])-[#6]"},
+          {queryBase + "CCOC_Chn.cdxml", "[#8](-[#6]-&!@[#6])-[#6]"},
+      };
+      CDXMLParserParams params;
+      params.parseQueries = true;
+
+      for (const auto &[fname, expectedSmarts] : cases) {
+        auto mols = MolsFromCDXMLFile(fname, params);
+        CHECK(mols.size() == 1);
+        CHECK(MolToSmarts(*mols[0]) == expectedSmarts);
+      }
+    }
+    {
+      const auto queryBase = std::string(getenv("RDBASE")) +
+                             "/Code/GraphMol/test_data/CDXML/queries/";
+      const std::vector<std::pair<std::string, std::string>> cases = {
+          {queryBase + "qrestrict_ringbond_asdrawn.cdxml",
+           "[#6]-[#6]-[!#1&x0]"},
+          {queryBase + "qrestrict_freesites_1.cdxml",
+           "[#6]-[#6]-[!#1&D{1-2}]"},
+          {queryBase + "qrestrict_implicit_hs.cdxml",
+           "[#6]-[#6]-[!#1&h0]"},
+          {queryBase + "qrestrict_ringbond_simple.cdxml",
+           "[#6]-[#6]-[!#1&x2]"},
+          {queryBase + "qatom_notlist.cdxml",
+            "[#6]-[#6]-[!#6&!#7&!#8]"},
+          {queryBase + "qrestrict_sub_exact_2.cdxml",
+           "[#6]-[#6]-[!#1&D2]"},
+          {queryBase + "qrestrict_sub_upto_2.cdxml",
+           "[#6]-[#6]-[!#1&D{0-2}]"},
+          {queryBase + "qrestrict_unsat_present.cdxml",
+           "[#6]-[#6]-[!#1&$(*=,:,#*)]"},
+      };
+      CDXMLParserParams params;
+      params.parseQueries = true;
+
+      for (const auto &[fname, expectedSmarts] : cases) {
+        auto mols = MolsFromCDXMLFile(fname, params);
+        CHECK(mols.size() == 1);
+        CHECK(MolToSmarts(*mols[0]) == expectedSmarts);
+      }
+
+        const std::vector<std::tuple<std::string, std::string, int>> propCases = {
+          {queryBase + "qrestrict_rxnstereo_inversion.cdxml",
+           std::string(common_properties::molInversionFlag), 1},
+        };
+
+      for (const auto &[fname, propName, expectedValue] : propCases) {
+          auto mols = MolsFromCDXMLFile(fname, params);
+        REQUIRE(mols.size() == 1);
+        auto atom = mols[0]->getAtomWithIdx(2);
+        CHECK(atom->hasProp(propName));
+        CHECK(atom->getProp<int>(propName) == expectedValue);
+      }
+
+      auto linkNodeMols =
+          MolsFromCDXMLFile(queryBase + "qlinknode_1_3.cdxml", params);
+      REQUIRE(linkNodeMols.size() == 1);
+      CHECK(linkNodeMols[0]->hasProp(common_properties::molFileLinkNodes));
+      CHECK(linkNodeMols[0]->getProp<std::string>(
+                common_properties::molFileLinkNodes) == "1 3 2 2 1 2 3");
+
+      auto variableAttachmentMols =
+          MolsFromCDXMLFile(queryBase + "qvarattach.cdxml", params);
+      REQUIRE(variableAttachmentMols.size() == 1);
+      CHECK(variableAttachmentMols[0]->getAtomWithIdx(3)->getAtomicNum() == 0);
+      auto bond = variableAttachmentMols[0]->getBondBetweenAtoms(1, 3);
+      REQUIRE(bond);
+      CHECK(bond->hasProp(common_properties::_MolFileBondAttach));
+      CHECK(bond->getProp<std::string>(common_properties::_MolFileBondAttach) ==
+        "ANY");
+      CHECK(bond->hasProp(common_properties::_MolFileBondEndPts));
+      CHECK(bond->getProp<std::string>(common_properties::_MolFileBondEndPts) ==
+            "(2 1 3)");
+
+      auto rgroupMols =
+          MolsFromCDXMLFile(queryBase + "qecp_rgroup.cdxml", params);
+      REQUIRE(rgroupMols.size() == 1);
+      CHECK(MolToSmarts(*rgroupMols[0]) == "[#6]-[*:1]");
+      auto atom = rgroupMols[0]->getAtomWithIdx(1);
+      CHECK(atom->getAtomMapNum() == 1);
+      CHECK(atom->hasProp(common_properties::atomLabel));
+      CHECK(atom->getProp<std::string>(common_properties::atomLabel) == "R");
     }
   }
   SECTION("ElementList") {
@@ -955,6 +1089,94 @@ TEST_CASE("CDXML") {
       CHECK(mols.size() == 0);
     }
   }
+}
+
+TEST_CASE("CDXML hydrogen bond queries") {
+  const auto queryBase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/queries/";
+  CDXMLParserParams params;
+  params.parseQueries = true;
+  auto hydrogenBondMols =
+      MolsFromCDXMLFile(queryBase + "qbond_hydrogen.cdxml", params);
+  REQUIRE(hydrogenBondMols.size() == 1);
+  CHECK(MolToSmarts(*hydrogenBondMols[0]) == "[#8][#8]");
+  auto hydrogenBond = hydrogenBondMols[0]->getBondWithIdx(0);
+  REQUIRE(hydrogenBond);
+  CHECK(hydrogenBond->getBondType() == Bond::BondType::HYDROGEN);
+  CHECK(MolToCXSmarts(*hydrogenBondMols[0]).find("H:0.0") !=
+        std::string::npos);
+}
+
+TEST_CASE("CDXML multiattachment queries") {
+  const auto fname =
+      std::string(getenv("RDBASE")) + "/rdkit/Chem/test_data/ferrocene.cdxml";
+  CDXMLParserParams params;
+  params.sanitize = false;
+  params.parseQueries = true;
+  auto mols = MolsFromCDXMLFile(fname, params);
+  REQUIRE(mols.size() == 1);
+
+  size_t numDummyAtoms = 0;
+  for (const auto atom : mols[0]->atoms()) {
+    if (atom->getAtomicNum() == 0) {
+      ++numDummyAtoms;
+    }
+  }
+  CHECK(numDummyAtoms == 2);
+
+  std::vector<std::string> endPointSets;
+  for (const auto bond : mols[0]->bonds()) {
+    if (!bond->hasProp(common_properties::_MolFileBondEndPts)) {
+      continue;
+    }
+    CHECK(bond->hasProp(common_properties::_MolFileBondAttach));
+    CHECK(bond->getProp<std::string>(common_properties::_MolFileBondAttach) ==
+          "ANY");
+    endPointSets.push_back(
+        bond->getProp<std::string>(common_properties::_MolFileBondEndPts));
+  }
+  std::sort(endPointSets.begin(), endPointSets.end());
+  REQUIRE(endPointSets.size() == 2);
+  CHECK(endPointSets[0] == "(5 1 2 3 4 5)");
+  CHECK(endPointSets[1] == "(5 6 7 8 9 10)");
+}
+
+TEST_CASE("CDXML external connection fragment queries") {
+  const auto fname = std::string(getenv("RDBASE")) +
+                     "/External/ChemDraw/test_data/atom-to-fragment.cdxml";
+  CDXMLParserParams params;
+  params.parseQueries = true;
+  auto mols = MolsFromCDXMLFile(fname, params);
+  REQUIRE(mols.size() == 1);
+  CHECK(MolToSmarts(*mols[0]) == "[#6]-[#6]=[#6]=[#6](-[#6])-[#6]");
+}
+
+TEST_CASE("CDXML spiro ring-bond-count queries") {
+  const auto queryBase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/queries/";
+  const auto fname = queryBase + "qrestrict_ringbond_spiro.cdxml";
+  CDXMLParserParams params;
+  params.parseQueries = true;
+  auto mols = MolsFromCDXMLFile(fname, params);
+  REQUIRE(mols.size() == 1);
+  CHECK(MolToSmarts(*mols[0]) == "[#6]1-[#6]-[#7]-[#6&x{4-}]-[#6]-[#6]-1");
+
+  std::unique_ptr<ROMol> piperidine{SmilesToMol("N1CCCCC1")};
+  std::unique_ptr<ROMol> wrongRegioSpiro{SmilesToMol("N1CCC2(CC1)CCCC2")};
+  std::unique_ptr<ROMol> spiro{SmilesToMol("N1C2(CCCCC2)CCCC1")};
+  std::unique_ptr<ROMol> fused{SmilesToMol("N1CCC2CCCCC2C1")};
+  REQUIRE(piperidine);
+  REQUIRE(wrongRegioSpiro);
+  REQUIRE(spiro);
+  REQUIRE(fused);
+  MatchVectType match;
+  CHECK(!SubstructMatch(*piperidine, *mols[0], match));
+  match.clear();
+  CHECK(!SubstructMatch(*wrongRegioSpiro, *mols[0], match));
+  match.clear();
+  CHECK(SubstructMatch(*spiro, *mols[0], match));
+  match.clear();
+  CHECK(!SubstructMatch(*fused, *mols[0], match));
 }
 
 TEST_CASE("atropisomers") {
