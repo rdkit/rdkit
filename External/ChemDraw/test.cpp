@@ -1454,6 +1454,35 @@ TEST_CASE("Geometry") {
   }
 }
 
+TEST_CASE("Abnormal valence") {
+  std::string path =
+      std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
+  SECTION("Cyclopentane radicals") {
+    auto fname = path + "abnormal-valence-cyclopentane.cdxml";
+    auto mols = MolsFromChemDrawFile(fname);
+    REQUIRE(mols.size() == 1);
+    auto &mol = *mols[0];
+
+    unsigned int radicalAtoms = 0;
+    for (const auto atom : mol.atoms()) {
+      if (atom->getNumRadicalElectrons() == 2) {
+        ++radicalAtoms;
+        CHECK(atom->getNoImplicit());
+      }
+    }
+    CHECK(radicalAtoms == 5);
+
+    const auto v3k = MolToV3KMolBlock(mol);
+    size_t val2Count = 0;
+    size_t pos = 0;
+    while ((pos = v3k.find(" VAL=2", pos)) != std::string::npos) {
+      ++val2Count;
+      pos += 6;
+    }
+    CHECK(val2Count == 5);
+  }
+}
+
 TEST_CASE("Test Reading Wrong File Format") {
   std::string path =
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
