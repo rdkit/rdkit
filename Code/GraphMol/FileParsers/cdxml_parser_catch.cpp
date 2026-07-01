@@ -800,6 +800,20 @@ TEST_CASE("CDXML") {
         "*.CC[SiH](CC)CC",
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@@H](C[C@@H](O)[C@@H](C)O)O[C@@]1(O)C(C)(C)/C=C/C=O",
         "C"};
+    if (!hasChemDrawCDXSupport()) {
+      expected[1] = "[B]";
+      expected[3] = "[C]";
+      expected[5] = "[B]";
+      expected[7] = "[C]";
+      expected[10] = "[C]";
+      expected[11] =
+          "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C";
+      expected[12] = "*.CC[Si](CC)CC";
+      expected[18] =
+          "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C";
+      expected[19] = "*.CC[Si](CC)CC";
+      expected[21] = "[C]";
+    }
     int i = 0;
     for (auto &mol : mols) {
       INFO(i);
@@ -837,6 +851,11 @@ TEST_CASE("CDXML") {
         "*",
         "C=C(C[C@H](O)C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
         "*.CC[SiH](CC)CC"};
+    if (!hasChemDrawCDXSupport()) {
+      expected[1] =
+          "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C";
+      expected[2] = "*.CC[Si](CC)CC";
+    }
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
