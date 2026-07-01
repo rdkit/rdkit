@@ -7,40 +7,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#define USE_BETTER_ENUMS
 #include "MacroMol.h"
 #include "Atom.h"
 
 namespace RDKit {
 
-std::string monomerClassToString(MonomerClass monomerClass) {
-  switch (monomerClass) {
-    case MonomerClass::AA:
-      return "AA";
-    case MonomerClass::NA:
-      return "NA";
-    case MonomerClass::CHEM:
-      return "CHEM";
-    case MonomerClass::OTHER:
-      return "OTHER";
-  }
-  return "OTHER";
-}
-
-MonomerClass stringToMonomerClass(const std::string &className) {
-  if (className == "AA") {
-    return MonomerClass::AA;
-  } else if (className == "NA") {
-    return MonomerClass::NA;
-  } else if (className == "CHEM") {
-    return MonomerClass::CHEM;
-  } else {
-    return MonomerClass::OTHER;
-  }
-}
-
 unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
                                     std::string symbol) {
-  auto className = monomerClassToString(monomerClass);
+  std::string className = monomerClass._to_string();
   auto atom = new Atom(0);
 
   atom->setProp(common_properties::isMacroAtom, true);
