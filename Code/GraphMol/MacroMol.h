@@ -42,20 +42,19 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
  public:
   using RWMol::addBond;
 
-  unsigned int addMacroAtom(MonomerClass monomerClass,
-                            std::string templateName);
+  unsigned int addMacroAtom(MonomerClass monomerClass, std::string symbol);
 
-  unsigned int addMacroBond(
-      unsigned int beginAtomIdx, unsigned int endAtomIdx, int beginAttachPt,
-      int endAttachPt, Bond::BondType bondType = Bond::BondType::SINGLE);
+  unsigned int addMacroBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
+                            int beginAttachPt, int endAttachPt,
+                            Bond::BondType bondType = Bond::BondType::SINGLE);
 
   unsigned int addAtomToMacroAtomBond(
       unsigned int beginAtomIdx, unsigned int endMacroAtomIdx, int endAttachPt,
       Bond::BondType bondType = Bond::BondType::SINGLE);
 
   unsigned int addMacroAtomToAtomBond(
-      unsigned int beginMacroAtomIdx, unsigned int endAtomIdx, int beginAttachPt,
-      Bond::BondType bondType = Bond::BondType::SINGLE);
+      unsigned int beginMacroAtomIdx, unsigned int endAtomIdx,
+      int beginAttachPt, Bond::BondType bondType = Bond::BondType::SINGLE);
 
   unsigned int addBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
                        Bond::BondType bondType = Bond::BondType::SINGLE);

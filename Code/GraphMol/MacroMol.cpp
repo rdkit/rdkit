@@ -39,12 +39,12 @@ MonomerClass stringToMonomerClass(const std::string &className) {
 }
 
 unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
-                                    std::string templateName) {
+                                    std::string symbol) {
   auto className = monomerClassToString(monomerClass);
   auto atom = new Atom(0);
 
   atom->setProp(common_properties::isMacroAtom, true);
-  atom->setProp(common_properties::dummyLabel, templateName);
+  atom->setProp(common_properties::dummyLabel, symbol);
   atom->setProp(common_properties::molAtomClass, className);
 
   return this->addAtom(atom, false, true);
@@ -52,8 +52,7 @@ unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
 
 unsigned int MacroMol::addMacroBond(unsigned int beginAtomIdx,
                                     unsigned int endAtomIdx, int beginAttachPt,
-                                    int endAttachPt,
-                                    Bond::BondType bondType) {
+                                    int endAttachPt, Bond::BondType bondType) {
   PRECONDITION((this->getAtomWithIdx(beginAtomIdx)
                     ->hasProp(common_properties::isMacroAtom) ||
                 this->getAtomWithIdx(endAtomIdx)
@@ -76,8 +75,7 @@ unsigned int MacroMol::addAtomToMacroAtomBond(unsigned int beginAtomIdx,
   PRECONDITION(!this->getAtomWithIdx(beginAtomIdx)
                     ->hasProp(common_properties::isMacroAtom),
                "begin atom is a macro atom");
-  return addMacroBond(beginAtomIdx, endMacroAtomIdx, -1, endAttachPt,
-                      bondType);
+  return addMacroBond(beginAtomIdx, endMacroAtomIdx, -1, endAttachPt, bondType);
 }
 
 unsigned int MacroMol::addMacroAtomToAtomBond(unsigned int beginMacroAtomIdx,
