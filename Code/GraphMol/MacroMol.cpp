@@ -47,7 +47,9 @@ unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
   atom->setProp(common_properties::dummyLabel, symbol);
   atom->setProp(common_properties::molAtomClass, className);
 
-  return this->addAtom(atom, false, true);
+  bool updateLabel = false;
+  bool takeOwnership = true;
+  return this->addAtom(atom, updateLabel, takeOwnership);
 }
 
 unsigned int MacroMol::addMacroBond(unsigned int beginAtomIdx,
