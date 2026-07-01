@@ -369,7 +369,7 @@ bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
     return std::ranges::any_of(energies,
                                [threshold](double e) { return e > threshold; });
   };
-  const double planarityTolerance = 0.7;
+  constexpr double planarityTolerance = 0.7;
   const std::size_t nCenters =
       std::ranges::count_if(eargs.etkdgDetails->angles,
                             [](const auto &angle) { return angle[3]; }) +
