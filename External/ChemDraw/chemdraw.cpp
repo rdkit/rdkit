@@ -102,6 +102,10 @@ void visit_children(
       }
 
       if (mol->hasProp(NEEDS_FUSE)) {
+        CDXMLSanitizationHint sanitizationHint;
+        const auto hasSanitizationHint =
+            mol->getPropIfPresent<CDXMLSanitizationHint>(
+                CDXML_SANITIZATION_HINTS, sanitizationHint);
         mol->clearProp(NEEDS_FUSE);
         std::unique_ptr<ROMol> fused;
         try {
@@ -113,6 +117,10 @@ void visit_children(
           // perhaps have an option to extract all fragments?
           // mols.push_back(std::move(mol));
           continue;
+        }
+        if (hasSanitizationHint) {
+          fused->setProp<CDXMLSanitizationHint>(CDXML_SANITIZATION_HINTS,
+                                                sanitizationHint);
         }
         fused->setProp<int>(CDX_FRAG_ID, static_cast<int>(frag_id));
         pagedata.mols.emplace_back(dynamic_cast<RWMol *>(fused.release()));
@@ -183,7 +191,14 @@ void visit_children(
             // rings in bond stereo detection, and another in
             // sanitization's SSSR symmetrization).
             unsigned int failedOp = 0;
-            MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
+            unsigned int sanitizeOps = MolOps::SANITIZE_CLEANUP;
+            CDXMLSanitizationHint sanitizationHint;
+            if (res->getPropIfPresent<CDXMLSanitizationHint>(
+                    CDXML_SANITIZATION_HINTS, sanitizationHint) &&
+                sanitizationHint == CDXMLSanitizationHint::radical) {
+              sanitizeOps |= MolOps::SANITIZE_FINDRADICALS;
+            }
+            MolOps::sanitizeMol(*res, failedOp, sanitizeOps);
             MolOps::detectBondStereochemistry(*res);
             MolOps::removeHs(*res);
           } else {
