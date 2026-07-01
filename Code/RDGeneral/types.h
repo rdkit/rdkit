@@ -77,6 +77,9 @@ inline constexpr std::string_view _CanonicalRankingNumber =
 inline constexpr std::string_view _ChiralityPossible = "_ChiralityPossible";
 inline constexpr std::string_view _CrippenLogP = "_CrippenLogP";
 inline constexpr std::string_view _CrippenMR = "_CrippenMR";
+inline constexpr std::string_view _MacroMolBeginAttachPt =
+    "_MacroMolBeginAttachPt";
+inline constexpr std::string_view _MacroMolEndAttachPt = "_MacroMolEndAttachPt";
 inline constexpr std::string_view _MMFFSanitized = "_MMFFSanitized";
 inline constexpr std::string_view _MolFileChiralFlag = "_MolFileChiralFlag";
 inline constexpr std::string_view MRV_SMA = "MRV SMA";
@@ -156,6 +159,7 @@ inline constexpr std::string_view _rgroupTargetBonds = "_rgroupTargetBonds";
 inline constexpr std::string_view dummyLabel = "dummyLabel";
 inline constexpr std::string_view extraRings = "extraRings";
 inline constexpr std::string_view isImplicit = "isImplicit";
+inline constexpr std::string_view isMacroAtom = "isMacroAtom";
 inline constexpr std::string_view maxAttachIdx = "maxAttachIdx";
 inline constexpr std::string_view molAtomMapNumber = "molAtomMapNumber";
 inline constexpr std::string_view molFileAlias = "molFileAlias";
