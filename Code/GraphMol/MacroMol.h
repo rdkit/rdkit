@@ -16,6 +16,7 @@
 
 #include <RDGeneral/BetterEnums.h>
 
+#include "MacroAtomInfo.h"
 #include "RWMol.h"
 
 namespace RDKit {

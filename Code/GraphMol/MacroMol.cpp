@@ -12,15 +12,18 @@
 #include "Atom.h"
 
 namespace RDKit {
+namespace {
+bool isMacroAtom(const Atom *atom) {
+  return atom->getMacroAtomInfo() != nullptr;
+}
+}  // namespace
 
 unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
                                     std::string symbol) {
   std::string className = monomerClass._to_string();
   auto atom = new Atom(0);
 
-  atom->setProp(common_properties::isMacroAtom, true);
-  atom->setProp(common_properties::dummyLabel, symbol);
-  atom->setProp(common_properties::molAtomClass, className);
+  atom->setMacroAtomInfo(new MacroAtomInfo(symbol, className));
 
   bool updateLabel = false;
   bool takeOwnership = true;
@@ -30,10 +33,8 @@ unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
 unsigned int MacroMol::addMacroBond(unsigned int beginAtomIdx,
                                     unsigned int endAtomIdx, int beginAttachPt,
                                     int endAttachPt, Bond::BondType bondType) {
-  PRECONDITION((this->getAtomWithIdx(beginAtomIdx)
-                    ->hasProp(common_properties::isMacroAtom) ||
-                this->getAtomWithIdx(endAtomIdx)
-                    ->hasProp(common_properties::isMacroAtom)),
+  PRECONDITION((isMacroAtom(this->getAtomWithIdx(beginAtomIdx)) ||
+                isMacroAtom(this->getAtomWithIdx(endAtomIdx))),
                "at least one atom must be a macro atom");
   auto bondIdx = RWMol::addBond(beginAtomIdx, endAtomIdx, bondType) - 1;
   auto bond = this->getBondWithIdx(bondIdx);
@@ -46,11 +47,9 @@ unsigned int MacroMol::addAtomToMacroAtomBond(unsigned int beginAtomIdx,
                                               unsigned int endMacroAtomIdx,
                                               int endAttachPt,
                                               Bond::BondType bondType) {
-  PRECONDITION(this->getAtomWithIdx(endMacroAtomIdx)
-                   ->hasProp(common_properties::isMacroAtom),
+  PRECONDITION(isMacroAtom(this->getAtomWithIdx(endMacroAtomIdx)),
                "end atom is not a macro atom");
-  PRECONDITION(!this->getAtomWithIdx(beginAtomIdx)
-                    ->hasProp(common_properties::isMacroAtom),
+  PRECONDITION(!isMacroAtom(this->getAtomWithIdx(beginAtomIdx)),
                "begin atom is a macro atom");
   return addMacroBond(beginAtomIdx, endMacroAtomIdx, -1, endAttachPt, bondType);
 }
@@ -59,11 +58,9 @@ unsigned int MacroMol::addMacroAtomToAtomBond(unsigned int beginMacroAtomIdx,
                                               unsigned int endAtomIdx,
                                               int beginAttachPt,
                                               Bond::BondType bondType) {
-  PRECONDITION(this->getAtomWithIdx(beginMacroAtomIdx)
-                   ->hasProp(common_properties::isMacroAtom),
+  PRECONDITION(isMacroAtom(this->getAtomWithIdx(beginMacroAtomIdx)),
                "begin atom is not a macro atom");
-  PRECONDITION(!this->getAtomWithIdx(endAtomIdx)
-                    ->hasProp(common_properties::isMacroAtom),
+  PRECONDITION(!isMacroAtom(this->getAtomWithIdx(endAtomIdx)),
                "end atom is a macro atom");
   return addMacroBond(beginMacroAtomIdx, endAtomIdx, beginAttachPt, -1,
                       bondType);
@@ -72,11 +69,9 @@ unsigned int MacroMol::addMacroAtomToAtomBond(unsigned int beginMacroAtomIdx,
 unsigned int MacroMol::addBond(unsigned int beginAtomIdx,
                                unsigned int endAtomIdx,
                                Bond::BondType bondType) {
-  PRECONDITION(!this->getAtomWithIdx(beginAtomIdx)
-                    ->hasProp(common_properties::isMacroAtom),
+  PRECONDITION(!isMacroAtom(this->getAtomWithIdx(beginAtomIdx)),
                "begin atom is a macro atom");
-  PRECONDITION(!this->getAtomWithIdx(endAtomIdx)
-                    ->hasProp(common_properties::isMacroAtom),
+  PRECONDITION(!isMacroAtom(this->getAtomWithIdx(endAtomIdx)),
                "end atom is a macro atom");
 
   return RWMol::addBond(beginAtomIdx, endAtomIdx, bondType);

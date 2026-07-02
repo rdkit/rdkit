@@ -31,12 +31,19 @@ TEST_CASE("testBuildMacroMol") {
   CHECK(macro_mol->getNumBonds() == 2);
   std::string sequence;
   for (const auto &atom : macro_mol->atoms()) {
-    std::string templateName =
-        atom->getProp<std::string>(common_properties::dummyLabel);
-    sequence += templateName;
-    CHECK(atom->getProp<std::string>(common_properties::molAtomClass) == "AA");
+    const auto *info = atom->getMacroAtomInfo();
+    REQUIRE(info);
+    sequence += info->getSymbol();
+    CHECK(info->getMonomerClass() == "AA");
   }
   CHECK(sequence == "ACD");
+
+  ROMol copied(*macro_mol);
+  const auto *copiedInfo =
+      copied.getAtomWithIdx(macro_atom_1)->getMacroAtomInfo();
+  REQUIRE(copiedInfo);
+  CHECK(copiedInfo->getSymbol() == "A");
+  CHECK(copiedInfo->getMonomerClass() == "AA");
 }
 
 TEST_CASE("testMultipleConnectionsSameMacroAtoms") {
@@ -68,9 +75,10 @@ TEST_CASE("testAddAtomToMacroAtomBond") {
   CHECK(atomMacroAtom->getNumAtoms() == 2);
   CHECK(atomMacroAtom->getNumBonds() == 1);
   auto macro_atom = atomMacroAtom->getAtomWithIdx(macro_atom_idx);
-  CHECK(macro_atom->getProp<std::string>(common_properties::dummyLabel) == "C");
-  CHECK(macro_atom->getProp<std::string>(common_properties::molAtomClass) ==
-        "AA");
+  const auto *macro_info = macro_atom->getMacroAtomInfo();
+  REQUIRE(macro_info);
+  CHECK(macro_info->getSymbol() == "C");
+  CHECK(macro_info->getMonomerClass() == "AA");
   auto bond = atomMacroAtom->getBondWithIdx(bond_idx);
   CHECK(bond->getBeginAtomIdx() == atom_idx);
   CHECK(bond->getEndAtomIdx() == macro_atom_idx);
@@ -90,9 +98,10 @@ TEST_CASE("testAddMacroAtomToAtomBond") {
   CHECK(macroAtomAtom->getNumAtoms() == 2);
   CHECK(macroAtomAtom->getNumBonds() == 1);
   auto macro_atom = macroAtomAtom->getAtomWithIdx(macro_atom_idx);
-  CHECK(macro_atom->getProp<std::string>(common_properties::dummyLabel) == "C");
-  CHECK(macro_atom->getProp<std::string>(common_properties::molAtomClass) ==
-        "AA");
+  const auto *macro_info = macro_atom->getMacroAtomInfo();
+  REQUIRE(macro_info);
+  CHECK(macro_info->getSymbol() == "C");
+  CHECK(macro_info->getMonomerClass() == "AA");
   auto bond = macroAtomAtom->getBondWithIdx(bond_idx);
   CHECK(bond->getBeginAtomIdx() == macro_atom_idx);
   CHECK(bond->getEndAtomIdx() == atom_idx);
