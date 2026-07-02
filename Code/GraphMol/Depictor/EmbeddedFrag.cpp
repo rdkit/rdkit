@@ -1591,7 +1591,20 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
     const DOUBLE_SMART_PTR *dmat, double mimicDmatWt, bool permuteDeg4Nodes) {
   PRECONDITION(dp_mol, "");
 
-  const auto &rotBonds = getAllRotatableBonds(*dp_mol);
+  const auto &allRotBonds = getAllRotatableBonds(*dp_mol);
+
+  // Filter to only include bonds where BOTH atoms are in this fragment
+  RDKit::INT_VECT rotBonds;
+  for (auto bid : allRotBonds) {
+    auto bond = dp_mol->getBondWithIdx(bid);
+    auto aid1 = bond->getBeginAtomIdx();
+    auto aid2 = bond->getEndAtomIdx();
+    if (d_eatoms.find(aid1) != d_eatoms.end() &&
+        d_eatoms.find(aid2) != d_eatoms.end()) {
+      rotBonds.push_back(bid);
+    }
+  }
+
   auto nb = rotBonds.size();  // number of rotatable bonds that can be flipped
 
   // if we also want to permute deg 4 nodes, find out how many of these are
@@ -1630,6 +1643,11 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
   unsigned int nt = nb + nd4;
 
   unsigned int nPerSample = std::min(nt, nBondsPerSample);
+
+  // Early exit if nothing to flip
+  if (nt == 0) {
+    return;
+  }
 
   auto &generator = RDKit::getRandomGenerator();
   if (seed > 0) {
@@ -2354,7 +2372,6 @@ std::vector<unsigned int> EmbeddedFrag::getAtomsOnSide(unsigned int center,
       }
     }
   }
-
   return result;
 }
 
@@ -2369,12 +2386,19 @@ bool EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
   // Key: We want to make the angle LARGER (closer to 180°).
   // This straightens out the chain and increases separation along the path.
   //
-  // Strategy: Rotate the smaller fragment (fewer atoms) away from the
-  // other side to INCREASE the angle.
+  // Strategy: Use cross product to determine orientation (CW/CCW) and predict
+  // which rotation direction will open the angle, avoiding trial-and-error.
   //
 
   PRECONDITION(dp_mol, "");
   PRECONDITION(dmat, "");
+
+  // Sanity check: all atoms must be in this fragment
+  if (d_eatoms.find(prevAtom) == d_eatoms.end() ||
+      d_eatoms.find(centerAtom) == d_eatoms.end() ||
+      d_eatoms.find(nextAtom) == d_eatoms.end()) {
+    return false;
+  }
 
   // Get vectors from center to the two neighbors
   auto v1 = d_eatoms[prevAtom].loc - d_eatoms[centerAtom].loc;
@@ -2388,73 +2412,34 @@ bool EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
   bool rotateSide1 = atomsSide1.size() < atomsSide2.size();
   auto &atomsToMove = rotateSide1 ? atomsSide1 : atomsSide2;
 
-  // Check if any atoms on the moving side are fixed
-  for (auto aid : atomsToMove) {
-    if (d_eatoms.at(aid).df_fixed) {
-      return false;  // Cannot rotate this side
-    }
-  }
+  // Use cross product to determine orientation
+  // cross = v1.x * v2.y - v1.y * v2.x
+  // If cross > 0: CCW orientation (prevAtom -> center -> nextAtom)
+  // If cross < 0: CW orientation
+  double cross = v1.x * v2.y - v1.y * v2.x;
 
-  // Calculate current angle
-  v1.normalize();
-  v2.normalize();
-  double currentAngle =
-      std::acos(std::max(-1.0, std::min(1.0, v1.dotProduct(v2))));
-
-  // Try both rotation directions and pick the one that makes the angle LARGER
-  RDGeom::Transform2D transPos, transNeg;
-  transPos.SetTransform(d_eatoms[centerAtom].loc, angleIncrement);
-  transNeg.SetTransform(d_eatoms[centerAtom].loc, -angleIncrement);
-
-  // Save current positions
-  std::map<unsigned int, RDGeom::Point2D> savedPositions;
-  for (auto aid : atomsToMove) {
-    savedPositions[aid] = d_eatoms[aid].loc;
-  }
-
-  // Try positive rotation
-  for (auto aid : atomsToMove) {
-    transPos.TransformPoint(d_eatoms[aid].loc);
-  }
-
-  auto v1_pos = d_eatoms[prevAtom].loc - d_eatoms[centerAtom].loc;
-  auto v2_pos = d_eatoms[nextAtom].loc - d_eatoms[centerAtom].loc;
-  v1_pos.normalize();
-  v2_pos.normalize();
-  double anglePosRot =
-      std::acos(std::max(-1.0, std::min(1.0, v1_pos.dotProduct(v2_pos))));
-
-  // Restore and try negative rotation
-  for (auto aid : atomsToMove) {
-    d_eatoms[aid].loc = savedPositions[aid];
-    transNeg.TransformPoint(d_eatoms[aid].loc);
-  }
-
-  auto v1_neg = d_eatoms[prevAtom].loc - d_eatoms[centerAtom].loc;
-  auto v2_neg = d_eatoms[nextAtom].loc - d_eatoms[centerAtom].loc;
-  v1_neg.normalize();
-  v2_neg.normalize();
-  double angleNegRot =
-      std::acos(std::max(-1.0, std::min(1.0, v1_neg.dotProduct(v2_neg))));
-
-  // Keep the rotation that makes the angle LARGER
-  if (anglePosRot > angleNegRot && anglePosRot > currentAngle) {
-    // Positive rotation is better - restore to positive
-    for (auto aid : atomsToMove) {
-      d_eatoms[aid].loc = savedPositions[aid];
-      transPos.TransformPoint(d_eatoms[aid].loc);
-    }
-    return true;
-  } else if (angleNegRot > anglePosRot && angleNegRot > currentAngle) {
-    // Negative rotation is better - already applied
-    return true;
+  // Determine rotation direction to open the angle:
+  // - If rotating side1 (prevAtom side) and CCW (cross > 0): rotate CCW
+  // (negative angle)
+  // - If rotating side1 (prevAtom side) and CW (cross < 0): rotate CW (positive
+  // angle)
+  // - If rotating side2 (nextAtom side): flip the sign
+  double rotationAngle;
+  if (rotateSide1) {
+    rotationAngle = (cross > 0) ? -angleIncrement : angleIncrement;
   } else {
-    // Neither direction increases the angle - restore original
-    for (auto aid : atomsToMove) {
-      d_eatoms[aid].loc = savedPositions[aid];
-    }
-    return false;
+    rotationAngle = (cross > 0) ? angleIncrement : -angleIncrement;
   }
+
+  // Apply the rotation
+  RDGeom::Transform2D trans;
+  trans.SetTransform(d_eatoms[centerAtom].loc, rotationAngle);
+
+  for (auto aid : atomsToMove) {
+    trans.TransformPoint(d_eatoms[aid].loc);
+  }
+
+  return true;
 }
 
 void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
@@ -2526,14 +2511,7 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
       auto centerAtom = pathVec[i];
       auto nextAtom = pathVec[i + 1];
 
-      // Skip fixed atoms - they can't be moved
-      if (d_eatoms.at(centerAtom).df_fixed) {
-        continue;
-      }
-
-      // OPTIMIZATION: Check if all three atoms are in the SAME ring using set
-      // intersection Much faster than iterating through all rings and doing
-      // std::find
+      // Check if all three atoms are in the SAME ring using set intersection
       bool allInSameRing = false;
       if (atomRings.count(prevAtom) && atomRings.count(centerAtom) &&
           atomRings.count(nextAtom)) {
@@ -2567,7 +2545,7 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
       continue;
     }
 
-    // OPTIMIZATION: Save state only once per collision (not every iteration)
+    // Save state only once per collision
     auto prevCollisionCount = colls.size();
     std::map<int, RDGeom::Point2D> savedPositions;
 

@@ -32,7 +32,7 @@ unsigned int NUM_BONDS_FLIPS = 3;
 
 // Path angle expansion parameters
 double ANGLE_EXPANSION_INCREMENT = 0.0873;  // 5 degrees per step
-double MAX_ANGLE_EXPANSION = 0.2619;        // 3 × 5° = 15 degrees max total per angle
+double MAX_ANGLE_EXPANSION = 3. * ANGLE_EXPANSION_INCREMENT;
 unsigned int MAX_ANGLE_EXPANSION_ITERS = 20;
 
 RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
