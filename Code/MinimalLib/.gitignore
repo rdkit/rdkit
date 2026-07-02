@@ -1,0 +1,6 @@
+*.png
+dist/
+build/
+node_modules/
+*.tgz
+package.json

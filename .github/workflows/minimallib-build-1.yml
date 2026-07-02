@@ -1,0 +1,46 @@
+name: Build MinimalLib, compile-boost multi-docker 
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract RDKit version
+        id: version
+        run: |
+          YEAR=$(grep -F 'set(RDKit_Year' CMakeLists.txt | cut -d'"' -f2)
+          MONTH=$(grep -F 'set(RDKit_Month' CMakeLists.txt | cut -d'"' -f2)
+          MONTH=$((10#${MONTH}))
+          REV=$(grep -F 'set(RDKit_Revision ' CMakeLists.txt | cut -d'"' -f2)
+          REV=$((10#${REV}))
+          MOD=$(grep -F 'set(RDKit_RevisionModifier' CMakeLists.txt | cut -d'"' -f2)
+          VERSION="${YEAR}.${MONTH}.${REV}"
+          [ -n "$MOD" ] && VERSION="${VERSION}-${MOD}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build WASM
+        run: |
+          cd ./Code/MinimalLib
+          NPM_VERSION=${{ steps.version.outputs.version }} GET_SRC=copy_from_local bash scripts/build_rdkitjs.sh
+
+      - name: Test WASM artifacts
+        run: node Code/MinimalLib/tests/tests.js
+
+      - name: Make package
+        working-directory: Code/MinimalLib/build
+        run: npm pack
+
+      - name: Dry Publish
+        working-directory: Code/MinimalLib/build
+        run: npm publish --dry-run

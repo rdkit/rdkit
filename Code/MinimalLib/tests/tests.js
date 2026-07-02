@@ -9,18 +9,15 @@
 //  of the RDKit source tree.
 //
 
-const assert = require('assert');
-const {
-    performance
-  } = require('perf_hooks');
-// the default path to RDKit_minimal.js can be overridden through
-// the RDKIT_MINIMAL_JS variable if needed
-const minimalLib = process.env.RDKIT_MINIMAL_JS || '../demo/RDKit_minimal.js';
-console.log('Loading ' + minimalLib);
-var initRDKitModule = require(minimalLib);
+import assert from 'assert';
+import fs from 'fs';
+import readline from 'readline';
+import initRDKitModule from '../build/dist/RDKit_minimal.js';
+
+import { fileURLToPath } from 'url';
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+
 var RDKitModule;
-const fs       = require('fs');
-const readline = require('readline');
 
 const extractBondCoords = (svg, bondDetail) => {
     const getStartEndCoords = (bond) => {
@@ -880,7 +877,7 @@ function test_get_mol_no_kekulize() {
         molIsValid = false;
     }
     assert(!molIsValid);
-    mol = RDKitModule.get_mol("c", JSON.stringify({kekulize: false}));
+    let mol = RDKitModule.get_mol("c", JSON.stringify({kekulize: false}));
     assert(mol !== null);
 }
 
@@ -909,7 +906,7 @@ M  RGP  2   7   1   8   2
 M  END
 `);
     assert(mol !== null);
-    smarts = mol.get_smarts();
+    let smarts = mol.get_smarts();
     assert(smarts == "[#6]1:[#6]:[#6]:[#6]:[#6](:[#6]:1-&!@*)-&!@*");
 }
 
@@ -938,7 +935,7 @@ M  RGP  2   7   1   8   2
 M  END
 `);
     assert(mol !== null);
-    cxsmarts = mol.get_cxsmarts();
+    let cxsmarts = mol.get_cxsmarts();
     assert(cxsmarts == "[#6]1:[#6]:[#6]:[#6]:[#6](:[#6]:1-&!@*)-&!@* |" +
         "(-1.0491,1.5839,;-1.7635,1.1714,;-1.7635,0.3463,;-1.0491,-0.0661,;" +
         "-0.3346,0.3463,;-0.3346,1.1714,;0.3798,1.5839,;0.3798,-0.0661,)," +
@@ -1097,7 +1094,7 @@ function test_sanitize() {
 
 function test_removehs() {
     const badValenceSmiles = 'N1C=CC(=O)c2ccc(N(C)(C)(C)(C)C)cc12';
-    mol = RDKitModule.get_mol(badValenceSmiles, JSON.stringify({ sanitize: false, removeHs: false }));
+    let mol = RDKitModule.get_mol(badValenceSmiles, JSON.stringify({ sanitize: false, removeHs: false }));
     assert(mol !== null);
 }
 
@@ -1315,7 +1312,7 @@ M  END
     assert.equal(mol.has_prop("test1"), true);
     assert.equal(mol.get_prop("test1"),"val");
     assert.equal(mol.set_prop("test2","val"), true);
-    props = mol.get_prop_list(false, false);
+    let props = mol.get_prop_list(false, false);
     assert.equal(props.get(0), "test1");
     assert.equal(props.get(1), "test2");
     assert.equal(mol.clear_prop("test3"), false);
@@ -2809,21 +2806,6 @@ function captureStdoutStderr(stdoutCallback, optStderrCallback) {
     };
 }
 
-function captureStdoutStderr(stdoutCallback, optStderrCallback) {
-    if (!stdoutCallback) {
-        return null;
-    }
-    const stderrCallback = optStderrCallback || stdoutCallback;
-    const origStdoutWrite = process.stdout.write;
-    const origStderrWrite = process.stderr.write;
-    process.stdout.write = (chunk) => stdoutCallback(chunk);
-    process.stderr.write = (chunk) => stderrCallback(chunk);
-    return () => {
-        process.stdout.write = origStdoutWrite;
-        process.stderr.write = origStderrWrite;
-    };
-}
-
 function test_capture_logs() {
     const PENTAVALENT_CARBON = 'CC(C)(C)(C)C';
     const PENTAVALENT_CARBON_VALENCE_ERROR = 'Explicit valence for atom # 1 C, 5, is greater than permitted';
@@ -3606,18 +3588,6 @@ function test_multicore_rgd() {
     }
 }
 
-function test_multi_highlights() {
-    const mol = RDKitModule.get_mol('[H]c1cc2c(-c3ccnc(Nc4ccc(F)c(F)c4)n3)c(-c3cccc(C(F)(F)F)c3)nn2nc1C', JSON.stringify({removeHs: false}));
-    const details = '{"width":250,"height":200,"highlightAtomMultipleColors":{"15":[[0.941,0.894,0.259]],"17":[[0,0.62,0.451]],"21":[[0.902,0.624,0]],"22":[[0.902,0.624,0]],"23":[[0.902,0.624,0]],"24":[[0.902,0.624,0]],"25":[[0.902,0.624,0]],"26":[[0.902,0.624,0]],"27":[[0.902,0.624,0]],"28":[[0.902,0.624,0]],"29":[[0.902,0.624,0]],"30":[[0.902,0.624,0]],"35":[[0.337,0.706,0.914]]},"highlightBondMultipleColors":{"14":[[0.941,0.894,0.259]],"16":[[0,0.62,0.451]],"20":[[0.902,0.624,0]],"21":[[0.902,0.624,0]],"22":[[0.902,0.624,0]],"23":[[0.902,0.624,0]],"24":[[0.902,0.624,0]],"25":[[0.902,0.624,0]],"26":[[0.902,0.624,0]],"27":[[0.902,0.624,0]],"28":[[0.902,0.624,0]],"29":[[0.902,0.624,0]],"34":[[0.337,0.706,0.914]],"38":[[0.902,0.624,0]]},"highlightAtomRadii":{"15":0.4,"17":0.4,"21":0.4,"22":0.4,"23":0.4,"24":0.4,"25":0.4,"26":0.4,"27":0.4,"28":0.4,"29":0.4,"30":0.4,"35":0.4},"highlightLineWidthMultipliers":{"14":2,"16":2,"20":2,"21":2,"22":2,"23":2,"24":2,"25":2,"26":2,"27":2,"28":2,"29":2,"34":2,"38":2}}';
-    const svgWithDetails = mol.get_svg_with_highlights(details);
-    assert(svgWithDetails.includes('ellipse'));
-    const COLORS = ['#009E73', '#55B4E9', '#E69F00', '#EFE342'];
-    assert(COLORS.every((color) => svgWithDetails.includes(color)));
-    const svgWithOutDetails = mol.get_svg_with_highlights('');
-    assert(!svgWithOutDetails.includes('ellipse'));
-    assert(!COLORS.some((color) => svgWithOutDetails.includes(color)));
-    mol.delete();
-}
 
 function test_bw_palette() {
     const mol = RDKitModule.get_mol('N');
@@ -3830,7 +3800,7 @@ function test_png_metadata() {
         "{\"includePkl\":false,\"includeSmiles\":false,\"includeMol\":true,\"sanitize\":false,\"removeHs\":false,\"assignStereo\":false,\"fastFindRings\":false}");
     assert(penicillin);
     assert.equal(penicillin.has_coords(), 2);
-    smi = penicillin.get_smiles();
+    let smi = penicillin.get_smiles();
     assert.notEqual(smi, BENZYLPENICILLIN_CAN_SMI);
     molSan = RDKitModule.get_mol(smi)
     assert.equal(molSan.get_smiles(), BENZYLPENICILLIN_CAN_SMI);
@@ -4213,7 +4183,7 @@ M  END`;
     var aboveTol;
     var mol = RDKitModule.get_mol(mb);
     assert(mol);
-    res = mol.get_svg_with_highlights(JSON.stringify({
+    let res = mol.get_svg_with_highlights(JSON.stringify({
         width: 300,
         height: 200,
         padding: 0.2,
