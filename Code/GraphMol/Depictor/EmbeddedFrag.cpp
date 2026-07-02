@@ -2375,7 +2375,7 @@ std::vector<unsigned int> EmbeddedFrag::getAtomsOnSide(unsigned int center,
   return result;
 }
 
-bool EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
+void EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
                                         unsigned int centerAtom,
                                         unsigned int nextAtom,
                                         double angleIncrement,
@@ -2392,13 +2392,6 @@ bool EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
 
   PRECONDITION(dp_mol, "");
   PRECONDITION(dmat, "");
-
-  // Sanity check: all atoms must be in this fragment
-  if (d_eatoms.find(prevAtom) == d_eatoms.end() ||
-      d_eatoms.find(centerAtom) == d_eatoms.end() ||
-      d_eatoms.find(nextAtom) == d_eatoms.end()) {
-    return false;
-  }
 
   // Get vectors from center to the two neighbors
   auto v1 = d_eatoms[prevAtom].loc - d_eatoms[centerAtom].loc;
@@ -2438,8 +2431,6 @@ bool EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
   for (auto aid : atomsToMove) {
     trans.TransformPoint(d_eatoms[aid].loc);
   }
-
-  return true;
 }
 
 void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
@@ -2545,7 +2536,7 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
       continue;
     }
 
-    // Save state only once per collision
+    // Save state
     auto prevCollisionCount = colls.size();
     std::map<int, RDGeom::Point2D> savedPositions;
 
@@ -2568,11 +2559,10 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
       auto nextAtom = pathVec[pos + 1];
 
       // Try opening this angle (making it larger, towards 180°)
-      if (openAngleByIncrement(prevAtom, centerAtom, nextAtom,
-                               ANGLE_EXPANSION_INCREMENT, dmat)) {
-        angleTotals[collision][centerAtom] += ANGLE_EXPANSION_INCREMENT;
-        anyExpanded = true;
-      }
+      openAngleByIncrement(prevAtom, centerAtom, nextAtom,
+                           ANGLE_EXPANSION_INCREMENT, dmat);
+      angleTotals[collision][centerAtom] += ANGLE_EXPANSION_INCREMENT;
+      anyExpanded = true;
     }
 
     if (!anyExpanded) {
@@ -2587,8 +2577,9 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
     // Check if expansion helped or made things worse
     colls = this->findCollisions(dmat, 0);
 
+    // accept if we have fewer or same collisions, otherwise revert
     if (colls.size() > prevCollisionCount) {
-      // Created MORE collisions - this is genuinely worse, revert
+      // Created MORE collisions - revert
 
       // Restore all atom positions
       for (auto &ea : d_eatoms) {
@@ -2602,10 +2593,8 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
       dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
       colls = this->findCollisions(dmat, 0);
       colls.erase(colls.begin());
-    } else {
-      // Accept if collision count same or better
     }
-
+    // Otherwise accept (fewer or same collisions)
     ++iter;
   }
 }

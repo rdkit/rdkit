@@ -424,8 +424,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   //! \param nextAtom - second atom forming the angle
   //! \param angleIncrement - amount to open the angle (radians)
   //! \param dmat - distance matrix (for reference)
-  //! \return true if angle was successfully opened, false if blocked by fixed atoms
-  bool openAngleByIncrement(unsigned int prevAtom,
+  //! \return void
+  void openAngleByIncrement(unsigned int prevAtom,
                             unsigned int centerAtom,
                             unsigned int nextAtom,
                             double angleIncrement,
