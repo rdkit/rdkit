@@ -1783,9 +1783,10 @@ void testValidRingSystemTemplates() {
       << std::endl;
   for (auto &smarts : TEMPLATE_SMARTS) {
     std::unique_ptr<ROMol> mol{SmartsToMol(smarts)};
-    // Initialize ring info using symmetrizeSSSR to match depictor ring counting
+    // Initialize ring info using findSSSR to match depictor ring counting
     RDKit::VECT_INT_VECT arings;
-    RDKit::MolOps::symmetrizeSSSR(*mol, arings);
+    bool includeDativeBonds = true;
+    RDKit::MolOps::findSSSR(*mol, arings, includeDativeBonds);
     RDDepict::CoordinateTemplates::assertValidTemplate(*mol, smarts);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
