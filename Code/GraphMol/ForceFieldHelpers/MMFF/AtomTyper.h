@@ -12,10 +12,13 @@
 #include <RDGeneral/export.h>
 #ifndef _RD_MMFFATOMTYPER_H__
 #define _RD_MMFFATOMTYPER_H__
+#include <boost/shared_ptr.hpp>
+#include <iostream>
 
 #include <vector>
 #include <string>
 #include <ForceField/MMFF/Params.h>
+#include <RDGeneral/types.h>
 #include <cstdint>
 
 namespace RDKit {

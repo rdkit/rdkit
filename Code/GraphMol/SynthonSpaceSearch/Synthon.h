@@ -10,6 +10,8 @@
 
 #ifndef RDKIT_REAGENT_H
 #define RDKIT_REAGENT_H
+#include <DataStructs/ExplicitBitVect.h>
+#include <memory>
 
 #include <string>
 
