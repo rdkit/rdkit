@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (C) 2002-2008  greg Landrum and Rational Discovery LLC
 #
 """ Various bits and pieces for calculating Molecular descriptors
