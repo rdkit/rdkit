@@ -37,8 +37,10 @@
 #include <GraphMol/QueryOps.h>
 #include <boost/dynamic_bitset.hpp>
 #include <map>
+#include <set>
 #include <algorithm>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include "GraphMol/ChemReactions/ReactionRunner.h"
 #include <RDGeneral/Invariant.h>
@@ -48,7 +50,6 @@
 #include <GraphMol/QueryBond.h>
 
 namespace RDKit {
-typedef std::vector<MatchVectType> VectMatchVectType;
 typedef std::vector<VectMatchVectType> VectVectMatchVectType;
 
 namespace {
@@ -197,11 +198,49 @@ VectMatchVectType getReactantMatchesToTemplate(
   return res;
 }
 
+VectMatchVectType dedupeMatchesBySymmetry(const ROMol &reactant,
+                                          const VectMatchVectType &matches) {
+  if (matches.size() < 2) {
+    return matches;
+  }
+
+  // Matches with the same rank tuple land on symmetry-equivalent reagent
+  // atoms, so they would generate identical products. Keep the first one.
+  std::vector<unsigned int> ranks;
+  Canon::rankMolAtoms(reactant, ranks, false);
+
+  std::set<std::vector<unsigned int>> seenKeys;
+  VectMatchVectType res;
+  res.reserve(matches.size());
+
+  for (const auto &match : matches) {
+    auto orderedMatch = match;
+    std::sort(orderedMatch.begin(), orderedMatch.end(),
+              [](const auto &lhs, const auto &rhs) {
+                return lhs.first < rhs.first;
+              });
+
+    std::vector<unsigned int> key;
+    key.reserve(orderedMatch.size());
+    for (const auto &pair : orderedMatch) {
+      key.push_back(ranks[pair.second]);
+    }
+
+    if (seenKeys.insert(std::move(key)).second) {
+      res.push_back(match);
+    }
+  }
+
+  return res;
+}
+
 bool getReactantMatches(const MOL_SPTR_VECT &reactants,
                         const ChemicalReaction &rxn,
                         VectVectMatchVectType &matchesByReactant,
                         unsigned int maxMatches,
-                        unsigned int matchSingleReactant = MatchAll) {
+                        unsigned int matchSingleReactant = MatchAll,
+                        ReactantMatchCache *cache = nullptr,
+                        bool dedupeSymmetricMatches = false) {
   PRECONDITION(reactants.size() == rxn.getNumReactantTemplates(),
                "reactant size mismatch");
 
@@ -213,9 +252,33 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
   for (auto iter = rxn.beginReactantTemplates();
        iter != rxn.endReactantTemplates(); ++iter, i++) {
     if (matchSingleReactant == MatchAll || matchSingleReactant == i) {
-      auto matches =
-          getReactantMatchesToTemplate(*reactants[i].get(), *iter->get(),
-                                       maxMatches, rxn.getSubstructParams());
+      const auto cacheKey =
+          std::make_tuple(i, reactants[i].get(), maxMatches,
+                          dedupeSymmetricMatches);
+      VectMatchVectType matches;
+      if (cache) {
+        auto cacheIt = cache->find(cacheKey);
+        if (cacheIt != cache->end()) {
+          matches = cacheIt->second;
+        } else {
+          matches = getReactantMatchesToTemplate(*reactants[i].get(),
+                                                 *iter->get(), maxMatches,
+                                                 rxn.getSubstructParams());
+          if (dedupeSymmetricMatches) {
+            matches = ReactionRunnerUtils::dedupeMatchesBySymmetry(
+                *reactants[i].get(), matches);
+          }
+          cache->emplace(cacheKey, matches);
+        }
+      } else {
+        matches = getReactantMatchesToTemplate(*reactants[i].get(), *iter->get(),
+                                               maxMatches,
+                                               rxn.getSubstructParams());
+        if (dedupeSymmetricMatches) {
+          matches = ReactionRunnerUtils::dedupeMatchesBySymmetry(
+              *reactants[i].get(), matches);
+        }
+      }
       if (matches.empty()) {
         // no point continuing if we don't match one of the reactants:
         res = false;
@@ -232,11 +295,14 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
 //  or were terminated.
 bool recurseOverReactantCombinations(
     const VectVectMatchVectType &matchesByReactant,
-    VectVectMatchVectType &matchesPerProduct, unsigned int level,
-    VectMatchVectType combination, unsigned int maxProducts) {
+    VectVectMatchVectType &matchesPerProduct,
+    std::vector<std::vector<unsigned int>> &matchIdxPerProduct,
+    unsigned int level, VectMatchVectType combination,
+    std::vector<unsigned int> idxCombination, unsigned int maxProducts) {
   unsigned int nReactants = matchesByReactant.size();
   URANGE_CHECK(level, nReactants);
   PRECONDITION(combination.size() == nReactants, "bad combination size");
+  PRECONDITION(idxCombination.size() == nReactants, "bad index combination size");
 
   if (maxProducts && matchesPerProduct.size() >= maxProducts) {
     return false;
@@ -247,6 +313,9 @@ bool recurseOverReactantCombinations(
        reactIt != matchesByReactant[level].end(); ++reactIt) {
     VectMatchVectType prod = combination;
     prod[level] = *reactIt;
+    std::vector<unsigned int> idxProd = idxCombination;
+    idxProd[level] = static_cast<unsigned int>(
+        reactIt - matchesByReactant[level].begin());
     if (level == nReactants - 1) {
       // this is the bottom of the recursion:
       if (maxProducts && matchesPerProduct.size() >= maxProducts) {
@@ -254,10 +323,12 @@ bool recurseOverReactantCombinations(
         break;
       }
       matchesPerProduct.push_back(prod);
+      matchIdxPerProduct.push_back(idxProd);
 
     } else {
       keepGoing = recurseOverReactantCombinations(
-          matchesByReactant, matchesPerProduct, level + 1, prod, maxProducts);
+          matchesByReactant, matchesPerProduct, matchIdxPerProduct, level + 1,
+          prod, idxProd, maxProducts);
     }
   }
   return keepGoing;
@@ -287,13 +358,18 @@ void updateImplicitAtomProperties(Atom *prodAtom, const Atom *reactAtom) {
 
 void generateReactantCombinations(
     const VectVectMatchVectType &matchesByReactant,
-    VectVectMatchVectType &matchesPerProduct, unsigned int maxProducts) {
+    VectVectMatchVectType &matchesPerProduct,
+    std::vector<std::vector<unsigned int>> &matchIdxPerProduct,
+    unsigned int maxProducts) {
   matchesPerProduct.clear();
+  matchIdxPerProduct.clear();
   VectMatchVectType tmp;
   tmp.clear();
   tmp.resize(matchesByReactant.size());
-  if (!recurseOverReactantCombinations(matchesByReactant, matchesPerProduct, 0,
-                                       tmp, maxProducts)) {
+  std::vector<unsigned int> idxTmp(matchesByReactant.size(), 0);
+  if (!recurseOverReactantCombinations(matchesByReactant, matchesPerProduct,
+                                       matchIdxPerProduct, 0, tmp, idxTmp,
+                                       maxProducts)) {
     BOOST_LOG(rdWarningLog) << "Maximum product count hit " << maxProducts
                             << ", stopping reaction early...\n";
   }
@@ -1323,6 +1399,247 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
                               const ROMOL_SPTR reactantSptr,
                               const MatchVectType &match,
                               const ROMOL_SPTR reactantTemplate,
+                              Conformer *productConf, unsigned int reactantId);
+
+Atom *cloneAtomForProduct(const Atom &srcAtom) {
+  if (!srcAtom.hasQuery()) {
+    return new Atom(srcAtom);
+  }
+  return new QueryAtom(dynamic_cast<const QueryAtom &>(srcAtom));
+}
+
+Bond *cloneBondForProduct(const Bond &srcBond) {
+  if (!srcBond.hasQuery()) {
+    return new Bond(srcBond);
+  }
+  return new QueryBond(dynamic_cast<const QueryBond &>(srcBond));
+}
+
+// Remap a copied bond's stereo-atom references (held in iso atom indices) to
+// the corresponding product atom indices. The bond already carries its stereo
+// and stereo-atom values from the copy constructor, so we only translate the
+// indices here, preserving their order (begin/end orientation is unchanged).
+void remapBondStereoAtoms(const Bond &isoBond, Bond *prodBond,
+                          const std::vector<int> &isoToProd) {
+  PRECONDITION(prodBond, "no bond");
+  const auto &stereoAtoms = isoBond.getStereoAtoms();
+  if (stereoAtoms.size() != 2) {
+    return;
+  }
+  CHECK_INVARIANT(isoToProd[stereoAtoms[0]] >= 0, "missing stereo atom map");
+  CHECK_INVARIANT(isoToProd[stereoAtoms[1]] >= 0, "missing stereo atom map");
+  prodBond->setStereoAtoms(rdcast<unsigned int>(isoToProd[stereoAtoms[0]]),
+                           rdcast<unsigned int>(isoToProd[stereoAtoms[1]]));
+}
+
+void copyStereoGroupsFromGraft(const ROMol &iso, RWMOL_SPTR product,
+                               const std::vector<int> &isoToProd) {
+  std::vector<StereoGroup> newStereoGroups;
+  for (const auto &sg : iso.getStereoGroups()) {
+    std::vector<Atom *> atoms;
+    std::vector<Bond *> bonds;
+    for (const auto &isoAtom : sg.getAtoms()) {
+      const auto mappedIdx = isoToProd[isoAtom->getIdx()];
+      if (mappedIdx < 0) {
+        continue;
+      }
+
+      auto productAtom = product->getAtomWithIdx(rdcast<unsigned int>(mappedIdx));
+      if (productAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+        continue;
+      }
+      int flagVal = 0;
+      productAtom->getPropIfPresent(common_properties::molInversionFlag,
+                                    flagVal);
+      if (flagVal == 4) {
+        continue;
+      }
+      atoms.push_back(productAtom);
+    }
+    if (!atoms.empty()) {
+      newStereoGroups.emplace_back(sg.getGroupType(), std::move(atoms),
+                                   std::move(bonds), sg.getReadId());
+    }
+  }
+
+  if (!newStereoGroups.empty()) {
+    auto &existing_sg = product->getStereoGroups();
+    newStereoGroups.insert(newStereoGroups.end(), existing_sg.begin(),
+                           existing_sg.end());
+    product->setStereoGroups(std::move(newStereoGroups));
+  }
+}
+
+ReactantGraft extractReactantGraft(const ChemicalReaction &rxn,
+                                   const ROMOL_SPTR &productTemplate,
+                                   const ROMOL_SPTR &reactantTemplate,
+                                   const ROMOL_SPTR &reactant,
+                                   const MatchVectType &match,
+                                   unsigned int reactantId, bool doConfs) {
+  ReactantGraft graft;
+  graft.iso = convertTemplateToMol(productTemplate);
+  graft.templateAtomCount = graft.iso->getNumAtoms();
+  graft.templateBondCount = graft.iso->getNumBonds();
+
+  Conformer *conf = nullptr;
+  if (doConfs) {
+    conf = new Conformer(graft.iso->getNumAtoms());
+    conf->set3D(false);
+  }
+
+  addReactantAtomsAndBonds(rxn, graft.iso, reactant, match, reactantTemplate,
+                           conf, reactantId);
+  if (doConfs) {
+    graft.iso->addConformer(conf, true);
+  }
+
+  // NOTE: we deliberately do NOT call graft.iso->updatePropertyCache() here.
+  // The only mutable state the graft needs to carry into every product is each
+  // atom's intrinsic input data (atomic number, charge, isotope, explicit H
+  // count, noImplicit flag, etc.), all of which is established by
+  // addReactantAtomsAndBonds above. The computed valence cache is recomputed
+  // per product by the updatePropertyCache() at the end of
+  // generateOneProductSet (which runs unconditionally), so finalizing the iso
+  // here would just be thrown away.
+
+  std::set<unsigned int> reactantMapNums;
+  for (const auto atom : reactantTemplate->atoms()) {
+    const auto mapNum = atom->getAtomMapNum();
+    if (mapNum) {
+      reactantMapNums.insert(mapNum);
+    }
+  }
+
+  for (unsigned int atomIdx = 0; atomIdx < graft.templateAtomCount;
+       ++atomIdx) {
+    unsigned int mapNum = 0;
+    if (graft.iso->getAtomWithIdx(atomIdx)->getPropIfPresent(
+            common_properties::reactionMapNum, mapNum) &&
+        reactantMapNums.find(mapNum) != reactantMapNums.end()) {
+      graft.anchorAtomIdxs.push_back(atomIdx);
+    }
+  }
+
+  std::set<unsigned int> anchorAtoms(graft.anchorAtomIdxs.begin(),
+                                      graft.anchorAtomIdxs.end());
+  for (unsigned int bondIdx = 0; bondIdx < graft.templateBondCount; ++bondIdx) {
+    const auto bond = graft.iso->getBondWithIdx(bondIdx);
+    if (anchorAtoms.find(bond->getBeginAtomIdx()) != anchorAtoms.end() &&
+        anchorAtoms.find(bond->getEndAtomIdx()) != anchorAtoms.end()) {
+      graft.anchorBondIdxs.push_back(bondIdx);
+    }
+  }
+
+  return graft;
+}
+
+void applyReactantGraft(RWMOL_SPTR product, Conformer *productConf,
+                        const ReactantGraft &graft) {
+  PRECONDITION(product, "no product");
+
+  std::vector<int> isoToProd(graft.iso->getNumAtoms(), -1);
+  for (unsigned int atomIdx = 0; atomIdx < graft.templateAtomCount;
+       ++atomIdx) {
+    isoToProd[atomIdx] = rdcast<int>(atomIdx);
+  }
+
+  for (unsigned int atomIdx : graft.anchorAtomIdxs) {
+    auto *newAtom = cloneAtomForProduct(*graft.iso->getAtomWithIdx(atomIdx));
+    product->replaceAtom(atomIdx, newAtom, false, false);
+  }
+
+  for (unsigned int atomIdx = graft.templateAtomCount;
+       atomIdx < graft.iso->getNumAtoms(); ++atomIdx) {
+    auto *newAtom = cloneAtomForProduct(*graft.iso->getAtomWithIdx(atomIdx));
+    const auto prodIdx = product->addAtom(newAtom, false, true);
+    isoToProd[atomIdx] = rdcast<int>(prodIdx);
+  }
+
+  // Bond stereo atoms reference neighboring atoms; we can only retarget them
+  // once every bond exists in the product, so we record the (product bond,
+  // iso bond) pairs here and remap them in a final pass below.
+  std::vector<std::pair<unsigned int, const Bond *>> stereoBondsToRemap;
+
+  for (unsigned int bondIdx : graft.anchorBondIdxs) {
+    const auto *isoBond = graft.iso->getBondWithIdx(bondIdx);
+    auto *newBond = cloneBondForProduct(*isoBond);
+    // keepSGroups=true matches the original setReactantBondPropertiesToProduct
+    // path so any SGroup bond membership in the product template is preserved.
+    product->replaceBond(bondIdx, newBond, false, true);
+    if (isoBond->getStereoAtoms().size() == 2) {
+      stereoBondsToRemap.emplace_back(bondIdx, isoBond);
+    }
+  }
+
+  // RWMol::replaceBond (github #7128) decrements an atom's explicit H count
+  // whenever the replacement bond has a higher order than the bond it
+  // supersedes. Here the product-template anchor bonds are typically lower
+  // order (e.g. an unspecified/single query bond) than the fully resolved iso
+  // bonds (e.g. aromatic), so the anchor-bond replacements above can spuriously
+  // strip explicit Hs (for example the H on an aromatic [nH]). The direct
+  // assembly path sets bond properties in place and never triggers this, so we
+  // restore the anchor atoms' explicit-H state from the iso source of truth.
+  for (unsigned int atomIdx : graft.anchorAtomIdxs) {
+    const auto *isoAtom = graft.iso->getAtomWithIdx(atomIdx);
+    auto *prodAtom = product->getAtomWithIdx(atomIdx);
+    prodAtom->setNumExplicitHs(isoAtom->getNumExplicitHs());
+    prodAtom->setNoImplicit(isoAtom->getNoImplicit());
+  }
+
+  for (unsigned int bondIdx = graft.templateBondCount;
+       bondIdx < graft.iso->getNumBonds(); ++bondIdx) {
+    const auto *isoBond = graft.iso->getBondWithIdx(bondIdx);
+    const auto begIdx =
+        rdcast<unsigned int>(isoToProd[isoBond->getBeginAtomIdx()]);
+    const auto endIdx =
+        rdcast<unsigned int>(isoToProd[isoBond->getEndAtomIdx()]);
+    // Copy the bond verbatim (type, direction, stereo, stereo atoms, aromatic
+    // flag, and properties all come across via the copy constructor) and then
+    // retarget it onto the product atom indices.
+    auto *newBond = cloneBondForProduct(*isoBond);
+    newBond->setBeginAtomIdx(begIdx);
+    newBond->setEndAtomIdx(endIdx);
+    bool takeOwnership = true;
+    product->addBond(newBond, takeOwnership);
+    if (isoBond->getStereoAtoms().size() == 2) {
+      stereoBondsToRemap.emplace_back(product->getNumBonds() - 1, isoBond);
+    }
+  }
+
+  // now that all bonds are present, retarget the stereo-atom references
+  for (const auto &[prodBondIdx, isoBond] : stereoBondsToRemap) {
+    remapBondStereoAtoms(*isoBond, product->getBondWithIdx(prodBondIdx),
+                         isoToProd);
+  }
+
+  if (productConf && graft.iso->getNumConformers()) {
+    const auto &isoConf = graft.iso->getConformer();
+    if (isoConf.is3D()) {
+      productConf->set3D(true);
+    }
+    productConf->resize(product->getNumAtoms());
+    std::set<unsigned int> anchorAtoms(graft.anchorAtomIdxs.begin(),
+                                       graft.anchorAtomIdxs.end());
+    for (unsigned int atomIdx = 0; atomIdx < graft.iso->getNumAtoms();
+         ++atomIdx) {
+      if (atomIdx < graft.templateAtomCount &&
+          anchorAtoms.find(atomIdx) == anchorAtoms.end()) {
+        continue;
+      }
+      const auto prodIdx = isoToProd[atomIdx];
+      CHECK_INVARIANT(prodIdx >= 0, "missing atom map in graft application");
+      productConf->setAtomPos(rdcast<unsigned int>(prodIdx),
+                              isoConf.getAtomPos(atomIdx));
+    }
+  }
+
+  copyStereoGroupsFromGraft(*graft.iso, product, isoToProd);
+}
+
+void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
+                              const ROMOL_SPTR reactantSptr,
+                              const MatchVectType &match,
+                              const ROMOL_SPTR reactantTemplate,
                               Conformer *productConf, unsigned int reactantId) {
   // start by looping over all matches and marking the reactant atoms that
   // have already been "added" by virtue of being in the product. We'll also
@@ -1483,9 +1800,14 @@ void copyTemplateStereoGroupsToMol(const ROMol &templateMol,
 MOL_SPTR_VECT
 generateOneProductSet(const ChemicalReaction &rxn,
                       const MOL_SPTR_VECT &reactants,
-                      const std::vector<MatchVectType> &reactantsMatch) {
+                      const std::vector<MatchVectType> &reactantsMatch,
+                      ReactantGraftCache *graftCache,
+                      const std::vector<unsigned int> *matchIdxs,
+                      bool dedupeSymmetricMatches) {
   PRECONDITION(reactants.size() == reactantsMatch.size(),
                "vector size mismatch");
+  PRECONDITION(!graftCache || (matchIdxs && matchIdxs->size() == reactants.size()),
+               "graft cache requires one match index per reactant");
 
   // if any of the reactants have a conformer, we'll go ahead and
   // generate conformers for the products:
@@ -1526,9 +1848,37 @@ generateOneProductSet(const ChemicalReaction &rxn,
     unsigned int reactantId = 0;
     for (auto iter = rxn.beginReactantTemplates();
          iter != rxn.endReactantTemplates(); ++iter, reactantId++) {
-      addReactantAtomsAndBonds(rxn, product, reactants.at(reactantId),
-                               reactantsMatch.at(reactantId), *iter, conf,
-                               reactantId);
+      if (graftCache) {
+        // reuse (or populate) the graft this reagent/match contributes to this
+        // product template, keyed by reagent pointer identity + match index.
+        // dedupeSymmetricMatches and doConfs are part of the key because they
+        // determine, respectively, which match list the index refers to and
+        // whether the graft carries conformer coordinates.
+        auto key = std::make_tuple(prodId, reactantId,
+                                   reactants.at(reactantId).get(),
+                                   (*matchIdxs)[reactantId],
+                                   dedupeSymmetricMatches, doConfs);
+        auto cacheIt = graftCache->find(key);
+        if (cacheIt == graftCache->end()) {
+          cacheIt =
+              graftCache
+                  ->emplace(key, extractReactantGraft(
+                                     rxn, *pTemplIt, *iter,
+                                     reactants.at(reactantId),
+                                     reactantsMatch.at(reactantId), reactantId,
+                                     doConfs))
+                  .first;
+        }
+        applyReactantGraft(product, conf, cacheIt->second);
+      } else {
+        // No graft cache: assemble the product directly. This is the original
+        // (upstream) code path and is byte-for-byte faithful to it; the
+        // extract/apply graft machinery only pays off when a graft cache lets
+        // us replay an extracted graft across the reactant Cartesian product.
+        addReactantAtomsAndBonds(rxn, product, reactants.at(reactantId),
+                                 reactantsMatch.at(reactantId), *iter, conf,
+                                 reactantId);
+      }
     }
 
     if (doConfs) {
@@ -1600,9 +1950,12 @@ void traverseToFindAtomsToRemove(const ROMol &reactant, const ROMol &templ,
 
 }  // namespace ReactionRunnerUtils
 
-std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
-                                         const MOL_SPTR_VECT &reactants,
-                                         unsigned int maxProducts) {
+namespace {
+std::vector<MOL_SPTR_VECT> run_ReactantsImpl(
+    const ChemicalReaction &rxn, const MOL_SPTR_VECT &reactants,
+    unsigned int maxProducts, bool dedupeSymmetricMatches,
+    ReactantMatchCache *cache,
+    ReactionRunnerUtils::ReactantGraftCache *graftCache) {
   if (!rxn.isInitialized()) {
     throw ChemicalReactionException(
         "initMatchers() must be called before runReactants()");
@@ -1628,7 +1981,8 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
   // find the matches for each reactant:
   VectVectMatchVectType matchesByReactant;
   if (!ReactionRunnerUtils::getReactantMatches(
-          reactants, rxn, matchesByReactant, maxProducts)) {
+      reactants, rxn, matchesByReactant, maxProducts, UINT_MAX, cache,
+      dedupeSymmetricMatches)) {
     // some reactants didn't find a match, return an empty product list:
     return productMols;
   }
@@ -1636,19 +1990,49 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
   // we now have matches for each reactant, so we can start creating products:
   // start by doing the combinatorics on the matches:
   VectVectMatchVectType reactantMatchesPerProduct;
+  std::vector<std::vector<unsigned int>> matchIdxPerProduct;
   ReactionRunnerUtils::generateReactantCombinations(
-      matchesByReactant, reactantMatchesPerProduct, maxProducts);
+      matchesByReactant, reactantMatchesPerProduct, matchIdxPerProduct,
+      maxProducts);
   productMols.resize(reactantMatchesPerProduct.size());
 
   for (unsigned int productId = 0; productId != productMols.size();
        ++productId) {
     MOL_SPTR_VECT lProds = ReactionRunnerUtils::generateOneProductSet(
-        rxn, reactants, reactantMatchesPerProduct[productId]);
+        rxn, reactants, reactantMatchesPerProduct[productId], graftCache,
+        graftCache ? &matchIdxPerProduct[productId] : nullptr,
+        dedupeSymmetricMatches);
     productMols[productId] = lProds;
   }
 
   return productMols;
 }  // end of ChemicalReaction::runReactants()
+}  // namespace
+
+std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
+                                         const MOL_SPTR_VECT &reactants,
+                                         unsigned int maxProducts) {
+  return run_ReactantsImpl(rxn, reactants, maxProducts, false, nullptr,
+                           nullptr);
+}
+
+std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
+                                         const MOL_SPTR_VECT &reactants,
+                                         ReactantMatchCache &cache,
+                                         bool dedupeSymmetricMatches,
+                                         unsigned int maxProducts) {
+  return run_ReactantsImpl(rxn, reactants, maxProducts, dedupeSymmetricMatches,
+                           &cache, nullptr);
+}
+
+std::vector<MOL_SPTR_VECT> run_Reactants(
+    const ChemicalReaction &rxn, const MOL_SPTR_VECT &reactants,
+    ReactantMatchCache &matchCache,
+    ReactionRunnerUtils::ReactantGraftCache &graftCache,
+    bool dedupeSymmetricMatches, unsigned int maxProducts) {
+  return run_ReactantsImpl(rxn, reactants, maxProducts, dedupeSymmetricMatches,
+                           &matchCache, &graftCache);
+}
 
 namespace {
 bool updateAtomsModifiedByReaction(
