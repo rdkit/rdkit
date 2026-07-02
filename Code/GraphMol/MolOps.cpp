@@ -560,6 +560,25 @@ void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
     Atropisomers::cleanupAtropisomerStereoGroups(mol);
   }
 }
+
+namespace {
+// Kekulize as part of sanitization. We normally use canonical=false here
+// because it's faster and sufficient for the vast majority of molecules.
+// The atom-index-order traversal it uses, however, is not guaranteed to
+// find a Kekule structure within the default back-tracking budget even
+// when one exists: for large, densely-fused aromatic ring systems, whether
+// that budget is enough can depend on the (arbitrary) order atoms were
+// numbered in, which in turn can depend on incidental details like which
+// atom a SMILES was rooted at (GitHub #8403). If the fast attempt fails,
+// fall back to the slower, order-independent canonical traversal before
+// concluding that the molecule really can't be kekulized.
+void kekulizeForSanitize(RWMol &mol) {
+  if (!MolOps::KekulizeIfPossible(mol, true, false)) {
+    MolOps::Kekulize(mol, true, true);
+  }
+}
+}  // namespace
+
 void sanitizeMol(RWMol &mol) {
   unsigned int failedOp = 0;
   sanitizeMol(mol, failedOp, SANITIZE_ALL);
@@ -598,7 +617,7 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   // kekulizations
   operationThatFailed = SANITIZE_KEKULIZE;
   if (sanitizeOps & operationThatFailed) {
-    Kekulize(mol, true, false);
+    kekulizeForSanitize(mol);
   }
 
   // look for radicals:
@@ -692,7 +711,7 @@ std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
   operation = SANITIZE_KEKULIZE;
   if (sanitizeOps & operation) {
     try {
-      Kekulize(mol, true, false);
+      kekulizeForSanitize(mol);
     } catch (const MolSanitizeException &e) {
       res.emplace_back(e.copy());
     }

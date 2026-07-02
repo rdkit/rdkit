@@ -4933,6 +4933,47 @@ M  END)CTAB"_ctab;
   }
 }
 
+TEST_CASE(
+    "github #8403: rootedAtAtom can produce SMILES that fail to kekulize on "
+    "re-parsing") {
+  // Large, densely-fused all-aromatic ring systems can require more than
+  // the default number of kekulization back-tracks when atoms are visited
+  // in atom-index order. Since rootedAtAtom changes which atom is written
+  // (and therefore re-numbered) first, some roots used to produce SMILES
+  // that MolFromSmiles couldn't kekulize, even though the molecule itself
+  // is unambiguously kekulizable.
+  SECTION("rootedAtAtom, from the issue") {
+    auto smiles =
+        "c1cc2ccc3c4c(ccc(c1)c24)c1c2c4ccc5cccc6ccc(c4c65)c4c5cccc6c7cccc8c9cc"
+        "cc%10c%11cccc%12c3c1c1c(c%11%12)c(c9%10)c(c87)c(c65)c1c42";
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    REQUIRE(mol);
+    for (auto i = 0u; i < mol->getNumAtoms(); ++i) {
+      SmilesWriteParams params;
+      params.rootedAtAtom = static_cast<int>(i);
+      auto rooted = MolToSmiles(*mol, params);
+      INFO("rootedAtAtom=" << i << " -> " << rooted);
+      auto rootedMol = v2::SmilesParse::MolFromSmiles(rooted);
+      CHECK(rootedMol);
+    }
+  }
+  SECTION("plain canonical round-trip, from discussion #8606") {
+    // Same root cause, but no rootedAtAtom needed: the atom order produced
+    // by canonicalization alone was already enough to blow the default
+    // back-tracking budget for this CAS-RN 133133-06-9 ring system.
+    // https://github.com/rdkit/rdkit/discussions/8606
+    auto smiles =
+        "O=c1c2c3c(c4c(c2c(=O)c2c5c(c6c(c12)c1c2c6cccc2ccc1)c1c2c5cccc2ccc1)c1"
+        "c2c4cccc2ccc1)c1c2c3cccc2ccc1";
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    REQUIRE(mol);
+    auto canonical = MolToSmiles(*mol);
+    INFO("canonical -> " << canonical);
+    auto roundTripped = v2::SmilesParse::MolFromSmiles(canonical);
+    CHECK(roundTripped);
+  }
+}
+
 TEST_CASE("large smiles benchmark") {
   std::string smiles(1000, 'C');
   auto m = v2::SmilesParse::MolFromSmiles(smiles);
