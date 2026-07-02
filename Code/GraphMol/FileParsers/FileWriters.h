@@ -18,16 +18,18 @@
 namespace RDKit {
 
 struct RDKIT_FILEPARSERS_EXPORT MolWriterParams {
-  bool includeStereo = true;  /**< toggles inclusion of stereochemistry
-                                   information*/
-  bool kekulize = true;       /**< triggers kekulization of the molecule before
-                                   it is written*/
-  bool forceV3000 = false;    /**< force generation a V3000 mol block (happens
-                                   automatically with more than 999 atoms or
-                                   bond or if the magnitude of the coordinates
-                                   are too large)*/
-  unsigned int precision = 6; /**< precision of coordinates (only available in
-                                   V3000)*/
+  bool includeStereo = true;   /**< toggles inclusion of stereochemistry
+                                    information*/
+  bool kekulize = true;        /**< triggers kekulization of the molecule before
+                                    it is written*/
+  bool forceV3000 = false;     /**< force generation a V3000 mol block (happens
+                                    automatically with more than 999 atoms or
+                                    bond or if the magnitude of the coordinates
+                                    are too large)*/
+  unsigned int precision = 6;  /**< precision of coordinates (only available in
+                                    V3000)*/
+  bool writeEndMolLine = true; /**< write the "M END" line at the end of
+                                           the mol block */
 };
 
 // \brief generates an MDL mol block for a molecule
@@ -238,6 +240,17 @@ RDKIT_FILEPARSERS_EXPORT void MolToPDBFile(const ROMol &mol,
                                            const std::string &fname,
                                            int confId = -1,
                                            unsigned int flavor = 0);
+
+// \brief Prepares a mol to be written - gets the aromatic bonds
+/*!
+ *   \param mol             - the molecule in question
+ *   \param MolWriterParams - parameter struct with write options
+ *   \param aromaticBonds   - the bond bitset to set from the mol
+ */
+
+RDKIT_FILEPARSERS_EXPORT void prepareMol(
+    RWMol &trwmol, const MolWriterParams &params,
+    boost::dynamic_bitset<> &aromaticBonds);
 
 }  // namespace RDKit
 
