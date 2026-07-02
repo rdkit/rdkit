@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2017-2023 Sereina Riniker and other RDKit contributors
+//  Copyright (C) 2017-2026 Sereina Riniker and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -32,6 +32,29 @@ struct RDKIT_FORCEFIELDHELPERS_EXPORT ExpTorsionAngle {
   unsigned int idx[4];
 };
 
+namespace ETKDGForceConsts {
+struct Params {
+  double distance{1.0};
+  double fourthDim{1.0};
+  double chiral{1.0};
+  double kTermAngle{1.0};
+  double kTermImproper{10.0};
+  double kTermTorsion{100.0};
+  double etTermScaling{1.0};
+};
+
+namespace SEQ {
+constexpr Params Cosine;
+}
+namespace AIO {
+constexpr Params Cosine = {.distance = 2.15,
+                           .fourthDim = 2.15,
+                           .kTermAngle = 0.1,
+                           .kTermImproper = .001,
+                           .kTermTorsion = 2.15,
+                           .etTermScaling = 0.1};
+}  // namespace AIO
+}  // namespace FC
 struct CrystalFFDetails {
   std::vector<std::vector<int>> expTorsionAtoms;
   std::vector<std::pair<std::vector<int>, std::vector<double>>>
@@ -42,6 +65,8 @@ struct CrystalFFDetails {
   std::vector<int> atomNums;
   double boundsMatForceScaling;
   boost::dynamic_bitset<> constrainedAtoms;
+  double *distMat;
+  ETKDGForceConsts::Params forceConsts;
 };
 
 //! Get the experimental torsional angles in a molecule

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2024 Niels Maeder and other RDKit contributors
+//  Copyright (C) 2024-2026 Niels Maeder and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,6 +19,31 @@
 
 namespace ForceFields {
 constexpr double RAD2DEG = 180.0 / M_PI;
+
+namespace {
+double computeAngleTerm(const double &angle,
+                        const AngleConstraintContribsParams &contrib) {
+  double angleTerm = 0.0;
+  if (angle < contrib.minAngle) {
+    angleTerm = angle - contrib.minAngle;
+  } else if (angle > contrib.maxAngle) {
+    angleTerm = angle - contrib.maxAngle;
+  }
+  return angleTerm;
+}
+double computeEnergy(const RDGeom::Point3D &p1, const RDGeom::Point3D &p2,
+                     const RDGeom::Point3D &p3,
+                     const AngleConstraintContribsParams &contrib) {
+  const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
+  const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
+                               std::max(1.0e-5, r[1].lengthSq())};
+  double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
+  cosTheta = std::clamp(cosTheta, -1.0, 1.0);
+  const double angle = RAD2DEG * acos(cosTheta);
+  const double angleTerm = computeAngleTerm(angle, contrib);
+  return contrib.forceConstant * angleTerm * angleTerm;
+}
+}  // namespace
 
 AngleConstraintContribs::AngleConstraintContribs(ForceField *owner) {
   PRECONDITION(owner, "bad owner");
@@ -68,51 +93,58 @@ void AngleConstraintContribs::addContrib(unsigned int idx1, unsigned int idx2,
                           forceConst);
 }
 
-double AngleConstraintContribs::computeAngleTerm(
-    const double &angle, const AngleConstraintContribsParams &contrib) const {
-  double angleTerm = 0.0;
-  if (angle < contrib.minAngle) {
-    angleTerm = angle - contrib.minAngle;
-  } else if (angle > contrib.maxAngle) {
-    angleTerm = angle - contrib.maxAngle;
-  }
-  return angleTerm;
-}
-
 double AngleConstraintContribs::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
   double accum = 0.0;
+  const unsigned int dim = dp_forceField->dimension();
   for (const auto &contrib : d_contribs) {
-    const RDGeom::Point3D p1(pos[3 * contrib.idx1], pos[3 * contrib.idx1 + 1],
-                             pos[3 * contrib.idx1 + 2]);
-    const RDGeom::Point3D p2(pos[3 * contrib.idx2], pos[3 * contrib.idx2 + 1],
-                             pos[3 * contrib.idx2 + 2]);
-    const RDGeom::Point3D p3(pos[3 * contrib.idx3], pos[3 * contrib.idx3 + 1],
-                             pos[3 * contrib.idx3 + 2]);
-    const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
-    const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
-                                 std::max(1.0e-5, r[1].lengthSq())};
-    double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
-    cosTheta = std::clamp(cosTheta, -1.0, 1.0);
-    const double angle = RAD2DEG * acos(cosTheta);
-    const double angleTerm = computeAngleTerm(angle, contrib);
-    accum += contrib.forceConstant * angleTerm * angleTerm;
+    const RDGeom::Point3D p1(pos[dim * contrib.idx1],
+                             pos[dim * contrib.idx1 + 1],
+                             pos[dim * contrib.idx1 + 2]);
+    const RDGeom::Point3D p2(pos[dim * contrib.idx2],
+                             pos[dim * contrib.idx2 + 1],
+                             pos[dim * contrib.idx2 + 2]);
+    const RDGeom::Point3D p3(pos[dim * contrib.idx3],
+                             pos[dim * contrib.idx3 + 1],
+                             pos[dim * contrib.idx3 + 2]);
+    accum += computeEnergy(p1, p2, p3, contrib);
   }
   return accum;
+}
+
+double AngleConstraintContribs::getEnergy(
+    const RDGeom::Point3DPtrVect &positions,
+    std::vector<double> &energies) const {
+  PRECONDITION(dp_forceField, "no owner");
+  energies.resize(d_contribs.size());
+  double totalE = 0.0;
+  for (std::size_t i = 0; i < d_contribs.size(); ++i) {
+    const auto &contrib = d_contribs[i];
+    const double e =
+        computeEnergy(*positions[contrib.idx1], *positions[contrib.idx2],
+                      *positions[contrib.idx3], contrib);
+    energies[i] = e;
+    totalE += e;
+  }
+  return totalE;
 }
 
 void AngleConstraintContribs::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
   PRECONDITION(grad, "bad vector");
+  const std::size_t dim = dp_forceField->dimension();
   for (const auto &contrib : d_contribs) {
-    const RDGeom::Point3D p1(pos[3 * contrib.idx1], pos[3 * contrib.idx1 + 1],
-                             pos[3 * contrib.idx1 + 2]);
-    const RDGeom::Point3D p2(pos[3 * contrib.idx2], pos[3 * contrib.idx2 + 1],
-                             pos[3 * contrib.idx2 + 2]);
-    const RDGeom::Point3D p3(pos[3 * contrib.idx3], pos[3 * contrib.idx3 + 1],
-                             pos[3 * contrib.idx3 + 2]);
+    const RDGeom::Point3D p1(pos[dim * contrib.idx1],
+                             pos[dim * contrib.idx1 + 1],
+                             pos[dim * contrib.idx1 + 2]);
+    const RDGeom::Point3D p2(pos[dim * contrib.idx2],
+                             pos[dim * contrib.idx2 + 1],
+                             pos[dim * contrib.idx2 + 2]);
+    const RDGeom::Point3D p3(pos[dim * contrib.idx3],
+                             pos[dim * contrib.idx3 + 1],
+                             pos[dim * contrib.idx3 + 2]);
     const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
     const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
                                  std::max(1.0e-5, r[1].lengthSq())};
@@ -130,8 +162,8 @@ void AngleConstraintContribs::getGrad(double *pos, double *grad) const {
     dedp[0] = r[0].crossProduct(rp) * t[0];
     dedp[2] = r[1].crossProduct(rp) * t[1];
     dedp[1] = -dedp[0] - dedp[2];
-    double *g[3] = {&(grad[3 * contrib.idx1]), &(grad[3 * contrib.idx2]),
-                    &(grad[3 * contrib.idx3])};
+    double *g[3] = {&(grad[dim * contrib.idx1]), &(grad[dim * contrib.idx2]),
+                    &(grad[dim * contrib.idx3])};
     for (unsigned int i = 0; i < 3; ++i) {
       g[i][0] += dedp[i].x;
       g[i][1] += dedp[i].y;
