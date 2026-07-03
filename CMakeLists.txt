@@ -64,7 +64,7 @@ option(RDK_BUILD_XYZ2MOL_SUPPORT "build in support for the RDKit's implementatio
 option(RDK_BUILD_STRUCTCHECKER_SUPPORT "build in support for the StructChecker alpha (not recommended, use the MolVS integration instead)" OFF )
 option(RDK_BUILD_PUBCHEMSHAPE_SUPPORT "build the rdkit wrapper around pubchem-align3d" ON )
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
-option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
+option(RDK_USE_BZIP2 "use libbz2 for bzip2 (.bz2) (de)compression support, if available" ON)
 option(RDK_USE_UNITY_BUILDS "build the RDKit libraries using CMake unity (jumbo) builds to reduce compile time" OFF)
 # Internal libraries that are not yet clean under unity builds (file-local
 # symbols with colliding names across files in the same library). They are
@@ -445,7 +445,7 @@ else()
 endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS serialization iostreams REQUIRED CONFIG)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS serialization REQUIRED CONFIG)
     target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_SERIALIZATION)
     if(NOT Boost_USE_STATIC_LIBS)
@@ -453,30 +453,17 @@ if(RDK_USE_BOOST_SERIALIZATION)
     endif()
 endif()
 
-if(RDK_USE_BOOST_IOSTREAMS)
-    target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_IOSTREAMS)
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS iostreams REQUIRED CONFIG)
-    target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
-
-    if (NOT Boost_USE_STATIC_LIBS)
-      target_compile_definitions(rdkit_base INTERFACE -DBOOST_IOSTREAMS_DYN_LINK)
-    endif()
-
-    # deal with zlib
-    if (WIN32)
-      find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS zlib CONFIG)
-      if(Boost_zlib_FOUND)
-        set(zlib_lib Boost::zlib)
-      endif()
+# bzip2 (.bz2) (de)compression is provided directly on top of libbz2 when it is
+# available. gzip support is provided on top of zlib (a required dependency) by
+# the RDStreams and FileParsers libraries.
+if(RDK_USE_BZIP2)
+    find_package(BZip2)
+    if(BZIP2_FOUND)
+      target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BZIP2)
     else()
-      if(Boost_USE_STATIC_LIBS)
-        # when we're doing static linkage of boost
-        # to also link against zlib (due to iostreams)
-        find_package(ZLIB)
-        set(zlib_lib ${ZLIB_LIBRARIES})
-     endif()
+      message(STATUS "libbz2 not found; disabling bzip2 (.bz2) support")
+      set(RDK_USE_BZIP2 OFF CACHE BOOL "use libbz2 for bzip2 (.bz2) (de)compression support, if available" FORCE)
     endif()
-    target_link_libraries(rdkit_base INTERFACE ${zlib_lib})
 endif()
 
 

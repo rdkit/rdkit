@@ -13,20 +13,55 @@
 #define RDLOG_H_29JUNE2005
 
 #if 1
-#include "BoostStartInclude.h"
-#include <boost/iostreams/tee.hpp>
-#include <boost/iostreams/stream.hpp>
-#include "BoostEndInclude.h"
 #include <fstream>
 #include <sstream>
 #include <vector>
 #include <cstdint>
+#include <ostream>
+#include <streambuf>
+#include <memory>
+#include <string>
 
 namespace boost {
 namespace logging {
 
-typedef boost::iostreams::tee_device<std::ostream, std::ostream> RDTee;
-typedef boost::iostreams::stream<RDTee> RDTeeStream;
+//! a streambuf that forwards everything written to it to two ostreams
+class RDTee : public std::streambuf {
+ public:
+  RDTee(std::ostream &dest1, std::ostream &dest2)
+      : d_dest1(dest1), d_dest2(dest2) {}
+
+ protected:
+  std::streamsize xsputn(const char *s, std::streamsize n) override {
+    d_dest1.write(s, n);
+    d_dest2.write(s, n);
+    return n;
+  }
+  int_type overflow(int_type c) override {
+    if (traits_type::eq_int_type(c, traits_type::eof())) {
+      return traits_type::not_eof(c);
+    }
+    char ch = traits_type::to_char_type(c);
+    d_dest1.put(ch);
+    d_dest2.put(ch);
+    return (d_dest1 && d_dest2) ? c : traits_type::eof();
+  }
+  int sync() override {
+    d_dest1.flush();
+    d_dest2.flush();
+    return (d_dest1 && d_dest2) ? 0 : -1;
+  }
+
+ private:
+  std::ostream &d_dest1;
+  std::ostream &d_dest2;
+};
+
+//! an ostream that writes through an RDTee to its two destinations
+class RDTeeStream : public std::ostream {
+ public:
+  explicit RDTeeStream(RDTee &tee) : std::ostream(&tee) {}
+};
 
 class RDKIT_RDGENERAL_EXPORT rdLogger {
  public:
@@ -135,8 +170,10 @@ namespace RDLog {
 RDKIT_RDGENERAL_EXPORT void InitLogs();
 
 using RDLoggerList = std::vector<RDLogger>;
-class RDKIT_RDGENERAL_EXPORT LogStateSetter : public boost::noncopyable {
+class RDKIT_RDGENERAL_EXPORT LogStateSetter {
  public:
+  LogStateSetter(const LogStateSetter &) = delete;
+  LogStateSetter &operator=(const LogStateSetter &) = delete;
   //! enables only the logs in the list, the current state will be restored when
   //! this object is destroyed
   LogStateSetter(RDLoggerList toEnable);
@@ -162,8 +199,10 @@ class RDKIT_RDGENERAL_EXPORT LogStateSetter : public boost::noncopyable {
 //!   functionThatMayFail();
 //!   std::string errs = capture.messages();
 //! \endcode
-class RDKIT_RDGENERAL_EXPORT CaptureLog : public boost::noncopyable {
+class RDKIT_RDGENERAL_EXPORT CaptureLog {
  public:
+  CaptureLog(const CaptureLog &) = delete;
+  CaptureLog &operator=(const CaptureLog &) = delete;
   explicit CaptureLog(RDLogger log);
   ~CaptureLog();
 

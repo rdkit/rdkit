@@ -2577,7 +2577,6 @@ M  END
   }
 }
 
-#ifdef RDK_USE_BOOST_IOSTREAMS
 TEST_CASE("read metadata from PNG", "[reader][PNG]") {
   std::string rdbase = getenv("RDBASE");
   SECTION("basics") {
@@ -2703,7 +2702,6 @@ TEST_CASE("read molecule from PNG", "[reader][PNG]") {
     REQUIRE_THROWS_AS(PNGFileToMol(fname), FileParseException);
   }
 }
-#endif
 
 TEST_CASE("write molecule to PNG", "[writer][PNG]") {
   std::string rdbase = getenv("RDBASE");
@@ -3029,7 +3027,6 @@ TEST_CASE("multiple molecules in the PNG, second example", "[writer][PNG]") {
   for (const auto &smi : smiles) {
     mols.emplace_back(SmilesToMol(smi));
   }
-#ifdef RDK_USE_BOOST_IOSTREAMS
   SECTION("pickles") {
     std::string fname =
         rdbase + "/Code/GraphMol/FileParsers/test_data/multiple_mols.png";
@@ -3040,7 +3037,6 @@ TEST_CASE("multiple molecules in the PNG, second example", "[writer][PNG]") {
       CHECK(MolToSmiles(*molsRead[i]) == MolToSmiles(*mols[i]));
     }
   }
-#endif
   SECTION("SMILES") {
     std::vector<std::pair<std::string, std::string>> metadata;
     for (const auto &mol : mols) {

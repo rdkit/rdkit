@@ -389,12 +389,6 @@ BOOST_PYTHON_MODULE(rdBase) {
 #else
       false;
 #endif
-  python::scope().attr("_iostreamsEnabled") =
-#ifdef RDK_USE_BOOST_IOSTREAMS
-      true;
-#else
-      false;
-#endif
   python::scope().attr("_multithreadedEnabled") =
 #ifdef RDK_BUILD_THREADSAFE_SSS
       true;
