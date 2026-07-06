@@ -260,21 +260,21 @@ bool getStereoAtomsFromGeometry(const Bond *bond, Bond::BondStereo stereo,
 
   const auto beginPos = conf.getAtomPos(bond->getBeginAtomIdx());
   const auto endPos = conf.getAtomPos(bond->getEndAtomIdx());
-  const auto bondDx = endPos.x - beginPos.x;
-  const auto bondDy = endPos.y - beginPos.y;
+  const auto bondVec = endPos - beginPos;
   double bestScore = -1.0;
 
   for (const auto beginAtom : beginAtoms) {
     const auto beginStereoPos = conf.getAtomPos(beginAtom->getIdx());
-    const auto beginSide = bondDx * (beginStereoPos.y - beginPos.y) -
-                           bondDy * (beginStereoPos.x - beginPos.x);
+    const auto beginVec = beginStereoPos - beginPos;
+    // Use the same signed 2D area test as Depictor/EmbeddedFrag.cpp.
+    const auto beginSide = bondVec.x * beginVec.y - bondVec.y * beginVec.x;
     if (std::abs(beginSide) < 1e-6) {
       continue;
     }
     for (const auto endAtom : endAtoms) {
       const auto endStereoPos = conf.getAtomPos(endAtom->getIdx());
-      const auto endSide = bondDx * (endStereoPos.y - beginPos.y) -
-                           bondDy * (endStereoPos.x - beginPos.x);
+      const auto endVec = endStereoPos - beginPos;
+      const auto endSide = bondVec.x * endVec.y - bondVec.y * endVec.x;
       if (std::abs(endSide) < 1e-6) {
         continue;
       }
