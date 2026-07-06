@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -32,6 +32,8 @@
 #include <DistGeom/ChiralSet.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
+#include <ForceField/AngleConstraints.h>
+#include <ForceField/UFF/Inversions.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <boost/dynamic_bitset.hpp>
@@ -62,6 +64,7 @@ constexpr double ERROR_TOL = 0.00001;
 // conformations but not so sensitive that a bunch of ok conformations get
 // filtered out, which slows down the whole conformation generation process
 constexpr double MAX_MINIMIZED_E_PER_ATOM = 0.05;
+constexpr double MAX_MINIMIZED_E_PER_ATOM_AIO = 0.1;
 constexpr double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
 constexpr double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
 inline bool haveOppositeSign(double a, double b) {
@@ -97,216 +100,56 @@ std::mutex &GetFailMutex() {
 namespace RDKit {
 namespace DGeomHelpers {
 
-//! Parameters corresponding to Sereina Riniker's KDG approach
-const EmbedParameters KDG(0,        // maxIterations
-                          1,        // numThreads
-                          -1,       // randomSeed
-                          true,     // clearConfs
-                          false,    // useRandomCoords
-                          2.0,      // boxSizeMult
-                          true,     // randNegEig
-                          1,        // numZeroFail
-                          nullptr,  // coordMap
-                          1e-3,     // optimizerForceTol
-                          false,    // ignoreSmoothingFailures
-                          true,     // enforceChirality
-                          false,    // useExpTorsionAnglePrefs
-                          true,     // useBasicKnowledge
-                          false,    // verbose
-                          5.0,      // basinThresh
-                          -1.0,     // pruneRmsThresh
-                          true,     // onlyHeavyAtomsForRMS
-                          1,        // ETversion
-                          nullptr,  // boundsMat
-                          true,     // embedFragmentsSeparately
-                          false,    // useSmallRingTorsions
-                          false,    // useMacrocycleTorsions
-                          false,    // useMacrocycle14config
-                          0,        // timeout
-                          nullptr,  // CPCI
-                          nullptr   // callback
-);
+const EmbedParameters DG{};
 
-//! Parameters corresponding to Sereina Riniker's ETDG approach
-const EmbedParameters ETDG(0,        // maxIterations
-                           1,        // numThreads
-                           -1,       // randomSeed
-                           true,     // clearConfs
-                           false,    // useRandomCoords
-                           2.0,      // boxSizeMult
-                           true,     // randNegEig
-                           1,        // numZeroFail
-                           nullptr,  // coordMap
-                           1e-3,     // optimizerForceTol
-                           false,    // ignoreSmoothingFailures
-                           false,    // enforceChirality
-                           true,     // useExpTorsionAnglePrefs
-                           false,    // useBasicKnowledge
-                           false,    // verbose
-                           5.0,      // basinThresh
-                           -1.0,     // pruneRmsThresh
-                           true,     // onlyHeavyAtomsForRMS
-                           1,        // ETversion
-                           nullptr,  // boundsMat
-                           true,     // embedFragmentsSeparately
-                           false,    // useSmallRingTorsions
-                           false,    // useMacrocycleTorsions
-                           false,    // useMacrocycle14config
-                           0,        // timeout
-                           nullptr,  // CPCI
-                           nullptr   // callback
-);
-//! Parameters corresponding to Sereina Riniker's ETDG approach with v2 of the
-//! torsion parameters
-const EmbedParameters ETDGv2(0,        // maxIterations
-                             1,        // numThreads
-                             -1,       // randomSeed
-                             true,     // clearConfs
-                             false,    // useRandomCoords
-                             2.0,      // boxSizeMult
-                             true,     // randNegEig
-                             1,        // numZeroFail
-                             nullptr,  // coordMap
-                             1e-3,     // optimizerForceTol
-                             false,    // ignoreSmoothingFailures
-                             false,    // enforceChirality
-                             true,     // useExpTorsionAnglePrefs
-                             false,    // useBasicKnowledge
-                             false,    // verbose
-                             5.0,      // basinThresh
-                             -1.0,     // pruneRmsThresh
-                             true,     // onlyHeavyAtomsForRMS
-                             2,        // ETversion
-                             nullptr,  // boundsMat
-                             true,     // embedFragmentsSeparately
-                             false,    // useSmallRingTorsions
-                             false,    // useMacrocycleTorsions
-                             false,    // useMacrocycle14config
-                             0,        // timeout
-                             nullptr,  // CPCI
-                             nullptr   // callback
-);
-//! Parameters corresponding to Sereina Riniker's ETKDG approach
-const EmbedParameters ETKDG(0,        // maxIterations
-                            1,        // numThreads
-                            -1,       // randomSeed
-                            true,     // clearConfs
-                            false,    // useRandomCoords
-                            2.0,      // boxSizeMult
-                            true,     // randNegEig
-                            1,        // numZeroFail
-                            nullptr,  // coordMap
-                            1e-3,     // optimizerForceTol
-                            false,    // ignoreSmoothingFailures
-                            true,     // enforceChirality
-                            true,     // useExpTorsionAnglePrefs
-                            true,     // useBasicKnowledge
-                            false,    // verbose
-                            5.0,      // basinThresh
-                            -1.0,     // pruneRmsThresh
-                            true,     // onlyHeavyAtomsForRMS
-                            1,        // ETversion
-                            nullptr,  // boundsMat
-                            true,     // embedFragmentsSeparately
-                            false,    // useSmallRingTorsions
-                            false,    // useMacrocycleTorsions
-                            false,    // useMacrocycle14config
-                            0,        // timeout
-                            nullptr,  // CPCI
-                            nullptr   // callback
-);
+const EmbedParameters KDG{.useExpTorsionAnglePrefs = false,
+                          .useBasicKnowledge = true,
+                          .ETversion = 1,
+                          .useSmallRingTorsions = false,
+                          .useMacrocycleTorsions = false,
+                          .useMacrocycle14config = false};
 
-//! Parameters corresponding to Sereina Riniker's ETKDG approach - version 2
-const EmbedParameters ETKDGv2(0,        // maxIterations
-                              1,        // numThreads
-                              -1,       // randomSeed
-                              true,     // clearConfs
-                              false,    // useRandomCoords
-                              2.0,      // boxSizeMult
-                              true,     // randNegEig
-                              1,        // numZeroFail
-                              nullptr,  // coordMap
-                              1e-3,     // optimizerForceTol
-                              false,    // ignoreSmoothingFailures
-                              true,     // enforceChirality
-                              true,     // useExpTorsionAnglePrefs
-                              true,     // useBasicKnowledge
-                              false,    // verbose
-                              5.0,      // basinThresh
-                              -1.0,     // pruneRmsThresh
-                              true,     // onlyHeavyAtomsForRMS
-                              2,        // ETversion
-                              nullptr,  // boundsMat
-                              true,     // embedFragmentsSeparately
-                              false,    // useSmallRingTorsions
-                              false,    // useMacrocycleTorsions
-                              false,    // useMacrocycle14config
-                              0,        // timeout
-                              nullptr,  // CPCI
-                              nullptr   // callback
-);
+const EmbedParameters ETDG{.useExpTorsionAnglePrefs = true,
+                           .useBasicKnowledge = false,
+                           .ETversion = 1,
+                           .useSmallRingTorsions = false,
+                           .useMacrocycleTorsions = false,
+                           .useMacrocycle14config = false};
 
-//! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
-//! (10.1021/acs.jcim.0c00025) - the macrocycle part
-const EmbedParameters ETKDGv3(0,        // maxIterations
-                              1,        // numThreads
-                              -1,       // randomSeed
-                              true,     // clearConfs
-                              false,    // useRandomCoords
-                              2.0,      // boxSizeMult
-                              true,     // randNegEig
-                              1,        // numZeroFail
-                              nullptr,  // coordMap
-                              1e-3,     // optimizerForceTol
-                              false,    // ignoreSmoothingFailures
-                              true,     // enforceChirality
-                              true,     // useExpTorsionAnglePrefs
-                              true,     // useBasicKnowledge
-                              false,    // verbose
-                              5.0,      // basinThresh
-                              -1.0,     // pruneRmsThresh
-                              true,     // onlyHeavyAtomsForRMS
-                              2,        // ETversion
-                              nullptr,  // boundsMat
-                              true,     // embedFragmentsSeparately
-                              false,    // useSmallRingTorsions
-                              true,     // useMacrocycleTorsions
-                              true,     // useMacrocycle14config
-                              0,        // timeout
-                              nullptr,  // CPCI
-                              nullptr   // callback
-);
+const EmbedParameters ETDGv2{.useExpTorsionAnglePrefs = true,
+                             .useBasicKnowledge = false,
+                             .ETversion = 2,
+                             .useSmallRingTorsions = false,
+                             .useMacrocycleTorsions = false,
+                             .useMacrocycle14config = false};
 
-//! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
-//! (10.1021/acs.jcim.0c00025) - the small ring part
-const EmbedParameters srETKDGv3(0,        // maxIterations
-                                1,        // numThreads
-                                -1,       // randomSeed
-                                true,     // clearConfs
-                                false,    // useRandomCoords
-                                2.0,      // boxSizeMult
-                                true,     // randNegEig
-                                1,        // numZeroFail
-                                nullptr,  // coordMap
-                                1e-3,     // optimizerForceTol
-                                false,    // ignoreSmoothingFailures
-                                true,     // enforceChirality
-                                true,     // useExpTorsionAnglePrefs
-                                true,     // useBasicKnowledge
-                                false,    // verbose
-                                5.0,      // basinThresh
-                                -1.0,     // pruneRmsThresh
-                                true,     // onlyHeavyAtomsForRMS
-                                2,        // ETversion
-                                nullptr,  // boundsMat
-                                true,     // embedFragmentsSeparately
-                                true,     // useSmallRingTorsions
-                                false,    // useMacrocycleTorsions
-                                false,    // useMacrocycle14config
-                                0,        // timeout
-                                nullptr,  // CPCI
-                                nullptr   // callback
-);
+const EmbedParameters ETKDG{.useExpTorsionAnglePrefs = true,
+                            .useBasicKnowledge = true,
+                            .ETversion = 1,
+                            .useSmallRingTorsions = false,
+                            .useMacrocycleTorsions = false,
+                            .useMacrocycle14config = false};
+
+const EmbedParameters ETKDGv2{.useExpTorsionAnglePrefs = true,
+                              .useBasicKnowledge = true,
+                              .ETversion = 2,
+                              .useSmallRingTorsions = false,
+                              .useMacrocycleTorsions = false,
+                              .useMacrocycle14config = false};
+
+const EmbedParameters ETKDGv3{.useExpTorsionAnglePrefs = true,
+                              .useBasicKnowledge = true,
+                              .ETversion = 2,
+                              .useSmallRingTorsions = false,
+                              .useMacrocycleTorsions = true,
+                              .useMacrocycle14config = true};
+
+const EmbedParameters srETKDGv3{.useExpTorsionAnglePrefs = true,
+                                .useBasicKnowledge = true,
+                                .ETversion = 2,
+                                .useSmallRingTorsions = true,
+                                .useMacrocycleTorsions = false,
+                                .useMacrocycle14config = false};
 
 namespace detail {
 struct EmbedArgs {
@@ -323,7 +166,9 @@ struct EmbedArgs {
   std::vector<std::pair<std::vector<unsigned int>, int>> const
       *stereoDoubleBonds;
   ForceFields::CrystalFF::CrystalFFDetails *etkdgDetails;
+  std::size_t hac;
 };
+
 }  // namespace detail
 
 bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
@@ -447,7 +292,7 @@ bool _centerInVolume(const DistGeom::ChiralSetPtr &chiralSet,
                          chiralSet->d_idx2, chiralSet->d_idx3,
                          chiralSet->d_idx4, positions, tol, verbose);
 }
-bool _boundsFulfilled(const std::vector<int> &atoms,
+bool _boundsFulfilled(const std::vector<std::size_t> &atoms,
                       const DistGeom::BoundsMatrix &mmat,
                       const RDGeom::PointPtrVect &positions) {
   // unsigned int N = mmat.numRows();
@@ -470,6 +315,78 @@ bool _boundsFulfilled(const std::vector<int> &atoms,
         std::cerr << a1 << " " << a2 << ":" << d2 << " " << lb << " " << ub
                   << " " << fabs(d2 - lb) << " " << fabs(d2 - ub) << std::endl;
 #endif
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+// Returns false if any atom pairs distance^2 is closer than threshold2
+bool clashCheck(const RDGeom::PointPtrVect *positions,
+                const DistGeom::BoundsMatPtr boundsMat,
+                const double threshold2 = 0.8) {
+  for (std::size_t i = 1; i < positions->size(); ++i) {
+    for (std::size_t j = 0; j < i; ++j) {
+      double dist2 = 0.0;
+      const RDGeom::PointND diff =
+          (*static_cast<RDGeom::PointND *>((*positions)[j]) -
+           *static_cast<RDGeom::PointND *>((*positions)[i]));
+      for (std::size_t d = 0; d < 3; ++d) {
+        dist2 += diff[d] * diff[d];
+      }
+      if (dist2 >= (threshold2)) {
+        continue;
+      }
+      const double lb = boundsMat->getLowerBound(i, j);
+      if (dist2 < lb * lb) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
+                  const detail::EmbedArgs &eargs) {
+  std::unique_ptr<ForceFields::ForceField> field(
+      DistGeom::construct3DImproperForceField(*eargs.mmat, positions,
+                                              *eargs.etkdgDetails));
+  double totalEnergy = 0.0;
+  std::vector<double> energies;
+
+  auto processContrib = [&totalEnergy, &positions, &energies](
+                            auto *c, [[maybe_unused]] const char *label,
+                            double threshold) {
+    totalEnergy += c->getEnergy(positions, energies);
+#ifdef DEBUG_EMBEDDING
+    std::cerr << label << " Energies: ";
+    for (const auto e : energies) {
+      std::cerr << e << ", ";
+    }
+    std::cerr << std::endl;
+#endif
+    return std::ranges::any_of(energies,
+                               [threshold](double e) { return e > threshold; });
+  };
+  constexpr double planarityTolerance = 0.7;
+  const std::size_t nCenters =
+      std::ranges::count_if(eargs.etkdgDetails->angles,
+                            [](const auto &angle) { return angle[3]; }) +
+      eargs.etkdgDetails->improperAtoms.size();
+  if (totalEnergy > (nCenters * planarityTolerance)){
+    return false;
+  }
+  for (const auto &contrib : field->contribs()) {
+    if (auto c = dynamic_cast<const ForceFields::AngleConstraintContribs *>(
+            contrib.get())) {
+      if (processContrib(c, "Angle Contrib", 0.05)) {
+        return false;
+      }
+    } else if (auto c =
+                   dynamic_cast<const ForceFields::UFF::InversionContribs *>(
+                       contrib.get())) {
+      if (processContrib(c, "Inversion Contrib", 5.0)) {
         return false;
       }
     }
@@ -526,7 +443,9 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
     }
   }
   std::unique_ptr<ForceFields::ForceField> field(DistGeom::constructForceField(
-      *eargs.mmat, *positions, *eargs.chiralCenters, 1.0, 0.1, nullptr,
+      *eargs.mmat, *positions, *eargs.chiralCenters,
+      eargs.etkdgDetails->forceConsts.distance,
+      eargs.etkdgDetails->forceConsts.chiral, 0.1, nullptr,
       embedParams.basinThresh, &fixedPts));
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
     for (const auto &v : *embedParams.coordMap) {
@@ -559,9 +478,9 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
   return gotCoords;
 }
 
-bool checkTetrahedralCenters(const RDGeom::PointPtrVect *positions,
-                             const detail::EmbedArgs &eargs,
-                             const EmbedParameters &) {
+bool checkTetrahedralCenters(
+    const RDGeom::PointPtrVect *positions, const detail::EmbedArgs &eargs,
+    const double tol = TETRAHEDRAL_CENTERINVOLUME_TOL) {
   // for each of the atoms in the "tetrahedralCarbons" list, make sure
   // that there is a minimum volume around them and that they are inside
   // that volume. (this is part of github #971)
@@ -570,13 +489,11 @@ bool checkTetrahedralCenters(const RDGeom::PointPtrVect *positions,
     // by the other
     // four points. That is also a fail.
     if (!_volumeTest(tetSet, *positions) ||
-        !_centerInVolume(tetSet, *positions, TETRAHEDRAL_CENTERINVOLUME_TOL)) {
+        !_centerInVolume(tetSet, *positions, tol)) {
 #ifdef DEBUG_EMBEDDING
       std::cerr << " fail2! (" << tetSet->d_idx0 << ") iter: "  //<< iter
                 << " vol: " << _volumeTest(tetSet, *positions, true)
-                << " center: "
-                << _centerInVolume(tetSet, *positions,
-                                   TETRAHEDRAL_CENTERINVOLUME_TOL, true)
+                << " center: " << _centerInVolume(tetSet, *positions, tol, true)
                 << std::endl;
 #endif
       return false;
@@ -605,6 +522,7 @@ bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
   }
   return true;
 }
+
 bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
                              const detail::EmbedArgs &eargs,
                              EmbedParameters &embedParams,
@@ -615,7 +533,9 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
   // increasing the weight on the fourth dimension
 
   std::unique_ptr<ForceFields::ForceField> field2(DistGeom::constructForceField(
-      *eargs.mmat, *positions, *eargs.chiralCenters, 0.2, 1.0, nullptr,
+      *eargs.mmat, *positions, *eargs.chiralCenters,
+      eargs.etkdgDetails->forceConsts.distance, 0.2,
+      eargs.etkdgDetails->forceConsts.fourthDim, nullptr,
       embedParams.basinThresh));
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
     for (const auto &v : *embedParams.coordMap) {
@@ -680,7 +600,6 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   }
   // std::cout << field->calcEnergy() << std::endl;
 
-  // check for planarity if ETKDG or KDG
   if (embedParams.useBasicKnowledge) {
     // create a force field with only the impropers
     std::unique_ptr<ForceFields::ForceField> field2(
@@ -694,7 +613,7 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
 
     field2->initialize();
     // check if the energy is low enough
-    double planarityTolerance = 0.7;
+    const double planarityTolerance = 0.7;
     if (field2->calcEnergy() >
         eargs.etkdgDetails->improperAtoms.size() * planarityTolerance) {
 #ifdef DEBUG_EMBEDDING
@@ -717,9 +636,55 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   return planar;
 }
 
+bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
+                      const detail::EmbedArgs &eargs,
+                      const EmbedParameters &embedParams, TimePoint *end_time) {
+  boost::dynamic_bitset<> fixedPts(positions->size());
+  if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
+    for (const auto &v : *embedParams.coordMap) {
+      fixedPts.set(v.first);
+    }
+  }
+  std::unique_ptr<ForceFields::ForceField> field;
+  if (embedParams.CPCI) {
+    field.reset(DistGeom::constructAllInOneForceField(
+        *eargs.mmat, *positions, *eargs.etkdgDetails, eargs.chiralCenters,
+        *embedParams.CPCI, nullptr, &fixedPts));
+  } else {
+    field.reset(DistGeom::constructAllInOneForceField(
+        *eargs.mmat, *positions, *eargs.etkdgDetails, eargs.chiralCenters,
+        nullptr, &fixedPts));
+  }
+  if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
+    for (const auto &v : *embedParams.coordMap) {
+      field->fixedPoints().push_back(v.first);
+    }
+  }
+  field->initialize();
+  if (field->calcEnergy() > ERROR_TOL) {
+    field->minimize(eargs.hac, embedParams.optimizerForceTol);
+  }
+  DistGeom::addTorsionTerms(field.get(), *eargs.etkdgDetails,
+                            embedParams.useBasicKnowledge,
+                            embedParams.useExpTorsionAnglePrefs);
+  if (field->calcEnergy() > ERROR_TOL) {
+    std::size_t iter{0};
+    int needMore = 1;
+    while (needMore and iter < 8) {
+      if (end_time != nullptr && Clock::now() > *end_time) {
+        return false;
+      }
+      needMore = field->minimize(100u, embedParams.optimizerForceTol);
+      ++iter;
+    }
+  }
+  return field->calcEnergy() / positions->size() < MAX_MINIMIZED_E_PER_ATOM_AIO;
+}
+
 bool doubleBondGeometryChecks(const RDGeom::PointPtrVect &positions,
-                              const detail::EmbedArgs &eargs, EmbedParameters &,
-                              double linearTol = 1e-3) {
+                              const detail::EmbedArgs &eargs,
+                              const double linearTol = 1e-3,
+                              const bool doSP2Centers = false) {
   if (eargs.doubleBondEnds) {
     for (const auto &itm : *eargs.doubleBondEnds) {
       const auto &a0 = *positions[std::get<0>(itm)];
@@ -746,11 +711,43 @@ bool doubleBondGeometryChecks(const RDGeom::PointPtrVect &positions,
       }
     }
   }
+  if (doSP2Centers and !eargs.etkdgDetails->improperAtoms.empty()) {
+    // this is the arrangement:
+    //     a0
+    //       \       [ilb]
+    //        a1 = a2
+    //       /       [ilb]
+    //     a3
+    // we want to be sure it's not actually:
+    //   ao - a1 = a2
+    //         |     [ilb]
+    //        a3
+    constexpr std::array<std::array<std::size_t, 3>, 3> triples{
+        {{{0, 1, 2}}, {{0, 1, 3}}, {{2, 1, 3}}}};
+    for (const auto &itm : eargs.etkdgDetails->improperAtoms) {
+      for (const auto [a, b, c] : triples) {
+        const auto &i = *positions[itm[a]];
+        const auto &j = *positions[itm[b]];
+        const auto &k = *positions[itm[c]];
+        const RDGeom::Point3D p1(i[0], i[1], i[2]);
+        const RDGeom::Point3D p2(j[0], j[1], j[2]);
+        const RDGeom::Point3D p3(k[0], k[1], k[2]);
+        RDGeom::Point3D p12 = p2 - p1;
+        RDGeom::Point3D p32 = p2 - p3;
+        p12.normalize();
+        p32.normalize();
+        if (p12.dotProduct(p32) + 1.0 < linearTol) {
+          return false;
+        }
+      }
+    }
+  }
   return true;
 }
 
 bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
-                            const detail::EmbedArgs &eargs, EmbedParameters &) {
+                            const detail::EmbedArgs &eargs,
+                            EmbedParameters &embedParams) {
   for (const auto &itm : *eargs.stereoDoubleBonds) {
     // itm is a pair with [controlling_atoms], sign
     // where the sign tells us about cis/trans
@@ -763,7 +760,6 @@ bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
     RDGeom::Point3D p1(a1[0], a1[1], a1[2]);
     RDGeom::Point3D p2(a2[0], a2[1], a2[2]);
     RDGeom::Point3D p3(a3[0], a3[1], a3[2]);
-
     // check the dihedral and be super permissive. Here's the logic of the
     // check:
     // The second element of the dihedralBond item contains 1 for trans
@@ -778,28 +774,23 @@ bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
     auto dihedral = RDGeom::computeDihedralAngle(p0, p1, p2, p3);
     if ((dihedral - M_PI_2) * itm.second < 0) {
       // closer to incorrect than correct... it's a bad geometry
+      if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+        embedParams.failures[EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO]++;
+      }
       return false;
     }
   }
   return true;
 }
 
-bool finalChiralChecks(RDGeom::PointPtrVect *positions,
-                       const detail::EmbedArgs &eargs,
-                       EmbedParameters &embedParams) {
-  // confirm chiral volumes
-  if (!checkChiralCenters(positions, eargs, embedParams)) {
-    if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-      std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-      embedParams.failures[EmbedFailureCauses::CHECK_CHIRAL_CENTERS2]++;
-    }
-    return false;
-  }
-
+bool distMatrixChiralityTest(RDGeom::PointPtrVect *positions,
+                             const detail::EmbedArgs &eargs,
+                             EmbedParameters &embedParams) {
   // "distance matrix" chirality test
-  std::set<int> atoms;
+  std::set<std::size_t> atoms;
   for (const auto &chiralSet : *eargs.chiralCenters) {
     if (chiralSet->d_idx0 != chiralSet->d_idx4) {
       atoms.insert(chiralSet->d_idx0);
@@ -809,7 +800,7 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
       atoms.insert(chiralSet->d_idx4);
     }
   }
-  std::vector<int> atomsToCheck(atoms.begin(), atoms.end());
+  std::vector<std::size_t> atomsToCheck(atoms.begin(), atoms.end());
   if (atomsToCheck.size() > 0) {
     if (!_boundsFulfilled(atomsToCheck, *eargs.mmat, *positions)) {
 #ifdef DEBUG_EMBEDDING
@@ -826,8 +817,12 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
       return false;
     }
   }
+  return true;
+}
 
-  // "center in volume" chirality test
+bool _checkFinalCenterInVolume(RDGeom::PointPtrVect *positions,
+                               const detail::EmbedArgs &eargs,
+                               EmbedParameters &embedParams) {
   for (const auto &chiralSet : *eargs.chiralCenters) {
     // it could happen that the centroid is outside the volume defined
     // by the other four points. That is also a fail.
@@ -849,6 +844,28 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
   // situations (e.g. atropisomers)?
 
   return true;
+}
+
+bool finalChiralChecks(RDGeom::PointPtrVect *positions,
+                       const detail::EmbedArgs &eargs,
+                       EmbedParameters &embedParams) {
+  // confirm chiral volumes
+  if (!checkChiralCenters(positions, eargs, embedParams)) {
+    if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+      std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+      embedParams.failures[EmbedFailureCauses::CHECK_CHIRAL_CENTERS2]++;
+    }
+    return false;
+  }
+
+  if (!distMatrixChiralityTest(positions, eargs, embedParams)) {
+    return false;
+  }
+
+  // "center in volume" chirality test
+  return _checkFinalCenterInVolume(positions, eargs, embedParams);
 }
 
 bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
@@ -921,8 +938,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
           embedParams.failures[EmbedFailureCauses::FIRST_MINIMIZATION]++;
         }
       } else {
-        gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs,
-                                                          embedParams);
+        gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs);
         if (!gotCoords) {
           if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -989,8 +1005,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
         }
       }
       if (gotCoords) {
-        gotCoords = EmbeddingOps::doubleBondGeometryChecks(*positions, eargs,
-                                                           embedParams);
+        gotCoords = EmbeddingOps::doubleBondGeometryChecks(*positions, eargs);
         if (!gotCoords && embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
           std::lock_guard<std::mutex> lock(GetFailMutex());
@@ -1009,12 +1024,6 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
         if (gotCoords && !eargs.stereoDoubleBonds->empty()) {
           gotCoords = EmbeddingOps::doubleBondStereoChecks(*positions, eargs,
                                                            embedParams);
-          if (!gotCoords && embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-            std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-            embedParams.failures[EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO]++;
-          }
         }
       }
     }
@@ -1023,6 +1032,194 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
 
   return gotCoords;
 }
+
+bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
+                    EmbedParameters &embedParams, int seed,
+                    TimePoint *end_time) {
+  PRECONDITION(positions, "bogus positions");
+  if (embedParams.maxIterations == 0) {
+    embedParams.maxIterations = 10 * positions->size();
+  }
+  if (embedParams.useRandomCoords) {
+    embedParams.basinThresh = 1e8;
+  }
+  RDNumeric::DoubleSymmMatrix distMat(positions->size(), 0.0);
+  std::unique_ptr<RDKit::rng_type> generator;
+  std::unique_ptr<RDKit::uniform_double> distrib;
+  std::unique_ptr<RDKit::double_source_type> rngMgr;
+
+  RDKit::double_source_type *rng = nullptr;
+  CHECK_INVARIANT(seed >= -1,
+                  "random seed must either be positive, zero, or negative one");
+  if (seed > -1) {
+    generator.reset(new RDKit::rng_type(42u));
+    generator->seed(seed);
+    distrib.reset(new RDKit::uniform_double(0.0, 1.0));
+    rngMgr.reset(new RDKit::double_source_type(*generator, *distrib));
+    rng = rngMgr.get();
+  } else {
+    rng = &RDKit::getDoubleRandomSource();
+  }
+
+  bool gotCoords = false;
+  unsigned int iter = 0;
+
+  while (iter < embedParams.maxIterations) {
+    ++iter;
+    if (end_time != nullptr && Clock::now() > *end_time) {
+      break;
+    }
+    // Clear trajectories in cases we write the minimization positions
+    if (embedParams.callback != nullptr) {
+      embedParams.callback(iter);
+    }
+    if (ControlCHandler::getGotSignal()) {
+      return false;
+    }
+
+    // Get Initial positions
+    gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
+                                                    embedParams, distMat, rng);
+    if (!gotCoords) {
+      if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+        embedParams.failures[EmbedFailureCauses::INITIAL_COORDS]++;
+      }
+      continue;
+    }
+
+    // check ctrl-C
+    if (ControlCHandler::getGotSignal()) {
+      return false;
+    }
+
+    // run Minimization
+    gotCoords =
+        EmbeddingOps::minimizeAllInOne(positions, eargs, embedParams, end_time);
+    if (!gotCoords) {
+      if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+        if (end_time != nullptr && Clock::now() > *end_time) {
+          embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
+        } else {
+          embedParams.failures[EmbedFailureCauses::MINIMIZATION]++;
+        }
+      }
+      continue;
+    }
+
+    // Check K Terms
+    if (embedParams.useBasicKnowledge) {
+      RDGeom::Point3DPtrVect positions3D;
+      for (const auto &p : *positions) {
+        positions3D.push_back(new RDGeom::Point3D((*p)[0], (*p)[1], (*p)[2]));
+      }
+      gotCoords = _checkKTerms(positions3D, eargs);
+      for (const auto &i : positions3D) {
+        delete i;
+      }
+      if (!gotCoords) {
+        if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+          std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+          embedParams.failures[EmbedFailureCauses::KTERM_VIOLATION]++;
+        }
+        continue;
+      }
+    }
+
+    // check ctrl-C
+    if (ControlCHandler::getGotSignal()) {
+      return false;
+    }
+
+    // Check Tetrahedral Centers
+    gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs);
+    if (!gotCoords) {
+      if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+        embedParams.failures[EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS]++;
+      }
+      continue;
+    }
+
+    // Check Chiral Centers
+    if (embedParams.enforceChirality) {
+      if (!eargs.chiralCenters->empty()) {
+        gotCoords =
+            EmbeddingOps::checkChiralCenters(positions, eargs, embedParams);
+        if (!gotCoords) {
+          if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+            std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+            embedParams.failures[EmbedFailureCauses::CHECK_CHIRAL_CENTERS]++;
+          }
+          continue;
+        }
+
+        gotCoords = distMatrixChiralityTest(positions, eargs, embedParams);
+        if (!gotCoords) {
+          continue;
+        }
+
+        gotCoords = _checkFinalCenterInVolume(positions, eargs, embedParams);
+        if (!gotCoords) {
+          continue;
+        }
+      }
+
+      if (!eargs.stereoDoubleBonds->empty()) {
+        gotCoords = EmbeddingOps::doubleBondStereoChecks(*positions, eargs,
+                                                         embedParams);
+        if (!gotCoords) {
+          continue;
+        }
+      }
+    }
+
+    // Check for clashing atoms
+    gotCoords = clashCheck(positions, eargs.mmat);
+    if (!gotCoords) {
+      if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+        embedParams.failures[EmbedFailureCauses::CLASH]++;
+      }
+      continue;
+    }
+
+    // Check Double Bond Geometry
+    gotCoords =
+        EmbeddingOps::doubleBondGeometryChecks(*positions, eargs, 3e-3, true);
+    if (!gotCoords) {
+      if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+        embedParams.failures[EmbedFailureCauses::LINEAR_DOUBLE_BOND]++;
+      }
+      continue;
+    }
+
+    // check ctrl-C
+    if (ControlCHandler::getGotSignal()) {
+      return false;
+    }
+    return true;
+  }
+
+  return false;
+}
+
 // export this since we are going to be testing it
 RDKIT_DISTGEOMHELPERS_EXPORT void findDoubleBonds(
     const ROMol &mol,
@@ -1424,8 +1621,12 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
     }
     CHECK_INVARIANT(new_seed >= -1,
                     "Something went wrong calculating a new seed");
-    bool gotCoords = EmbeddingOps::embedPoints(&positions, *eargs, *params,
-                                               new_seed, end_time);
+
+    const auto embedFunc = params->useLegacyImplementation
+                               ? EmbeddingOps::embedPoints
+                               : EmbeddingOps::embedPointsAIO;
+    const bool gotCoords =
+        embedFunc(&positions, *eargs, *params, new_seed, end_time);
 
     // copy the coordinates into the correct conformer
     if (gotCoords) {
@@ -1585,6 +1786,12 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 
     ForceFields::CrystalFF::CrystalFFDetails etkdgDetails;
     etkdgDetails.constrainedAtoms = constrainedAtoms;
+    etkdgDetails.distMat = MolOps::getDistanceMat(*piece.get());
+    etkdgDetails.forceConsts =
+        params.useLegacyImplementation
+            ? ForceFields::CrystalFF::ETKDGForceConsts::SEQ::Cosine
+            : ForceFields::CrystalFF::ETKDGForceConsts::AIO::Cosine;
+
     EmbeddingOps::initETKDG(piece.get(), params, etkdgDetails);
 
     DistGeom::BoundsMatPtr mmat;
@@ -1643,7 +1850,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                                fragIdx,         mmat,
                                &chiralCenters,  &tetrahedralCarbons,
                                &doubleBondEnds, &stereoDoubleBonds,
-                               &etkdgDetails};
+                               &etkdgDetails,   piece->getNumHeavyAtoms()};
     if (numThreads == 1) {
       detail::embedHelper_(0, 1, &eargs, &params, end_time);
     }

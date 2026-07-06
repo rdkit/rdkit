@@ -10,6 +10,10 @@ GitHub)
 - `MolTransforms.h` now includes `<Eigen/Core>` instead of `<Eigen/Dense>`. C++
 code that included `MolTransforms.h` and relied on it to transitively pull in the
 Eigen dense modules (LU/QR/SVD/etc.) must now include `<Eigen/Dense>` directly.
+- The `DistGeomHelpers::EmbedParameters` struct no longer has a constructor that
+takes arguments in C++. If you want to initialize data members to non-default
+values, use the designated initialization syntax. This change does not affect
+Python.
 
 # Release_2026.03.3
 (Changes relative to Release_2026.03.2)

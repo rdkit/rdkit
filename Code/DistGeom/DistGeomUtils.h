@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -99,6 +99,7 @@ RDKIT_DISTGEOMETRY_EXPORT bool computeRandomCoords(
   \param positions       A vector of pointers to Points to write out the
   resulting coordinates
   \param csets           The vector of chiral points (type: ChiralSet)
+  \param weightDistance  weight to be used for distance bounds
   \param weightChiral    weight to be used to enforce chirality
   \param weightFourthDim another chiral weight
   \param extraWeights    an optional set of weights for distance bounds
@@ -114,11 +115,45 @@ RDKIT_DISTGEOMETRY_EXPORT bool computeRandomCoords(
 
 */
 RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructForceField(
-    const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
-    const VECT_CHIRALSET &csets, double weightChiral = 1.0,
-    double weightFourthDim = 0.1,
-    std::map<std::pair<int, int>, double> *extraWeights = nullptr,
-    double basinSizeTol = 5.0, boost::dynamic_bitset<> *fixedPts = nullptr);
+    const BoundsMatrix &mmat, const RDGeom::PointPtrVect &positions,
+    const VECT_CHIRALSET &csets, const double weightDistance = 1.0,
+    const double weightChiral = 1.0, const double weightFourthDim = 0.1,
+    const std::map<std::pair<int, int>, double> *extraWeights = nullptr,
+    const double basinSizeTol = 5.0,
+    const boost::dynamic_bitset<> *fixedPts = nullptr);
+
+//! Setup the error function for violation of distance bounds as a forcefield
+/*!
+  This is based on function E3 on page 311 of "Distance Geometry in Molecular
+  Modeling" Jeffrey M.Blaney and J.Scott Dixon, Review in Computational
+  Chemistry,
+  Volume V
+
+  \param mmat            Distance bounds matrix
+  \param positions       A vector of pointers to Points to write out the
+  resulting coordinates
+  \param csets           The vector of chiral points (type: ChiralSet)
+  \param weightChiral    weight to be used to enforce chirality
+  \param weightFourthDim another chiral weight
+  \param extraWeights    an optional set of weights for distance bounds
+  violations
+  \param basinSizeTol  Optional: any distance bound with a basin (distance
+  between max and
+                       min bounds) larger than this value will not be included
+  in the force
+                       field used to cleanup the structure.
+
+  \return a pointer to a ForceField suitable for cleaning up the violations.
+    <b>NOTE:</b> the caller is responsible for deleting this force field.
+
+*/
+RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructForceField(
+    const BoundsMatrix &mmat, const RDGeom::PointPtrVect &positions,
+    const VECT_CHIRALSET &csets, const double weightChiral = 1.0,
+    const double weightFourthDim = 0.1,
+    const std::map<std::pair<int, int>, double> *extraWeights = nullptr,
+    const double basinSizeTol = 5.0,
+    const boost::dynamic_bitset<> *fixedPts = nullptr);
 
 //! Force field with experimental torsion angle preferences and 1-2/1-3 distance
 /// constraints
@@ -212,6 +247,43 @@ inline ForceFields::ForceField *construct3DImproperForceField(
       mmat, positions, etkdgDetails.improperAtoms, etkdgDetails.angles,
       etkdgDetails.atomNums);
 }
+
+//! Force Field for All-In-One Minimization
+/*!
+
+  \param mmat Distance bounds matrix
+  \param positions A vector of pointers to Points to place in the field
+  \param etkdgDetails Contains information about the ETKDG force field
+  \param csets The vector of chiral points (type: ChiralSet)
+  \param extraWeights mapping from atom pair indices to double to overwrite the
+  force constants for the distance terms
+
+  \return a pointer to a ForceField for the All in One optimization
+    <b>NOTE:</b> the caller is responsible for deleting this force field.
+
+*/
+RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
+    const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
+    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
+    const VECT_CHIRALSET *csets,
+    const std::map<std::pair<unsigned int, unsigned int>, double>
+        *extraWeights = nullptr,
+    const boost::dynamic_bitset<> *fixedPts = nullptr);
+
+RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
+    const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
+    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
+    const VECT_CHIRALSET *csets,
+    const std::map<std::pair<unsigned int, unsigned int>, double> &CPCI,
+    const std::map<std::pair<unsigned int, unsigned int>, double>
+        *extraWeights = nullptr,
+    const boost::dynamic_bitset<> *fixedPts = nullptr);
+
+RDKIT_DISTGEOMETRY_EXPORT void addTorsionTerms(
+    ForceFields::ForceField *field,
+    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
+    const bool doK, const bool doET);
+
 }  // namespace DistGeom
 
 #endif
