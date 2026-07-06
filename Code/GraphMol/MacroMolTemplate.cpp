@@ -79,13 +79,13 @@ SubstanceGroup *MacroMolTemplate::getMainSgroup() {
 }
 
 std::vector<const SubstanceGroup *> MacroMolTemplate::getLeavingGroups() const {
-  std::vector<const SubstanceGroup *> res;
+  std::vector<const SubstanceGroup *> leavingGroups;
   for (const auto &sgroup : getSubstanceGroups(*this)) {
     if (isLeavingGroup(sgroup)) {
-      res.push_back(&sgroup);
+      leavingGroups.push_back(&sgroup);
     }
   }
-  return res;
+  return leavingGroups;
 }
 
 void MacroMolTemplateLibrary::addEntry(
