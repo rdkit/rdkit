@@ -12,7 +12,6 @@
 #define RD_MACROMOL_H
 
 #include <string>
-#include <vector>
 
 #include <RDGeneral/BetterEnums.h>
 
@@ -27,13 +26,6 @@ namespace RDKit {
   generated \c _to_string() and \c _from_string() members.
 */
 BETTER_ENUM(MonomerClass, int, AA, NA, CHEM, OTHER);
-
-struct RDKIT_GRAPHMOL_EXPORT MacroBondProps {
-  int beginAttachPt;
-  int endAttachPt;
-  Bond::BondType bondType;
-  bool isDirectional;
-};
 
 class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
  public:
