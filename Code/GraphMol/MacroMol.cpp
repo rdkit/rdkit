@@ -7,12 +7,42 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#define USE_BETTER_ENUMS
 #include "MacroMol.h"
 #include "Atom.h"
 
+#include <array>
+#include <utility>
+
 namespace RDKit {
 namespace {
+const std::array<std::pair<MonomerClass, const char *>, 4> monomerClassNames = {{
+    {MonomerClass::AA, "AA"},
+    {MonomerClass::NA, "NA"},
+    {MonomerClass::CHEM, "CHEM"},
+    {MonomerClass::OTHER, "OTHER"},
+}};
+
+const char *monomerClassToString(MonomerClass monomerClass) {
+  for (const auto &[value, name] : monomerClassNames) {
+    if (value == monomerClass) {
+      return name;
+    }
+  }
+  PRECONDITION(false, "unknown monomer class");
+  return "";
+}
+
+MonomerClass monomerClassFromString(
+    const std::string &monomerClass) {
+  for (const auto &[value, name] : monomerClassNames) {
+    if (monomerClass == name) {
+      return value;
+    }
+  }
+  PRECONDITION(false, "unknown monomer class");
+  return MonomerClass::OTHER;
+}
+
 bool isMacroAtom(const Atom *atom) {
   return atom->getMacroAtomInfo() != nullptr;
 }
@@ -20,7 +50,7 @@ bool isMacroAtom(const Atom *atom) {
 
 unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
                                     std::string symbol) {
-  std::string className = monomerClass._to_string();
+  std::string className = monomerClassToString(monomerClass);
   auto atom = new Atom(0);
 
   atom->setMacroAtomInfo(new MacroAtomInfo(symbol, className));

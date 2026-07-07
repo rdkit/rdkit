@@ -13,8 +13,6 @@
 
 #include <string>
 
-#include <RDGeneral/BetterEnums.h>
-
 #include "MacroAtomInfo.h"
 #include "RWMol.h"
 
@@ -22,10 +20,15 @@ namespace RDKit {
 
 //! Classes of monomer that a macro atom can represent.
 /*!
-  Using a better_enum here gives us robust enum <-> string conversions via the
-  generated \c _to_string() and \c _from_string() members.
+  Supported monomer classes for macro atoms.
+
+  A regular enum is used here because MonomerClass appears in public MacroMol
+  method signatures. RDKit's BETTER_ENUM macro can expand to different C++
+  types depending on per-source-file preprocessor settings, which can cause
+  link errors in shared-library and unity builds. String conversion is kept in
+  MacroMol.cpp so the public header stays stable.
 */
-BETTER_ENUM(MonomerClass, int, AA, NA, CHEM, OTHER);
+enum MonomerClass : int { AA, NA, CHEM, OTHER };
 
 class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
  public:
