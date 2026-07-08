@@ -194,11 +194,11 @@ TEST_CASE("test1") {
           if (m->getBondBetweenAtoms(i, j)) {
             // BOOST_LOG(rdInfoLog) << ">1> " <<i<<","<<j<<":"<< d1 << " " << d2
             // << std::endl;
-            CHECK(fabs(d1 - d2) / d1 < 0.06);
+            CHECK(std::fabs(d1 - d2) / d1 < 0.06);
           } else {
             // BOOST_LOG(rdInfoLog) << ">2> " <<i<<","<<j<<":"<< d1 << " " << d2
-            // << " "<<fabs(d1-d2)/d1<<std::endl;
-            CHECK(fabs(d1 - d2) / d1 < 0.12);
+            // << " "<<std::fabs(d1-d2)/d1<<std::endl;
+            CHECK(std::fabs(d1 - d2) / d1 < 0.12);
           }
         }
       }
@@ -263,7 +263,7 @@ TEST_CASE("test2") {
     CHECK(bm->getUpperBound(0, 3) > dmat->getVal(0, 3));
     // this is kinda goofy but this linear molecule doesn't satisfy the bounds
     // completely
-    CHECK(fabs(bm->getLowerBound(0, 3) - dmat->getVal(0, 3)) < 0.2);
+    CHECK(std::fabs(bm->getLowerBound(0, 3) - dmat->getVal(0, 3)) < 0.2);
   }
   std::cerr << "-------------------------------------\n\n";
   SECTION("Ethene trans") {
@@ -683,9 +683,9 @@ TEST_CASE("testRandomCoords") {
           double d1 = (pt1j - pt1i).length();
           double d2 = (pt2j - pt2i).length();
           if (m->getBondBetweenAtoms(i, j)) {
-            CHECK(fabs(d1 - d2) / d1 < 0.05);
+            CHECK(std::fabs(d1 - d2) / d1 < 0.05);
           } else {
-            CHECK(fabs(d1 - d2) / d1 < 0.1);
+            CHECK(std::fabs(d1 - d2) / d1 < 0.1);
           }
         }
       }
@@ -1746,9 +1746,9 @@ TEST_CASE("testForceTransAmides") {
       REQUIRE(cid >= 0);
       auto conf = mol->getConformer(cid);
       auto tors = MolTransforms::getDihedralDeg(conf, 0, 1, 3, 4);
-      CHECK(fabs(fabs(tors) - 180) < 37);
+      CHECK(std::fabs(std::fabs(tors) - 180) < 37);
       tors = MolTransforms::getDihedralDeg(conf, 2, 1, 3, 5);
-      CHECK(fabs(fabs(tors) - 180) < 37);
+      CHECK(std::fabs(std::fabs(tors) - 180) < 37);
     }
   }
   SECTION("Get Cis") {  // make sure we can find at least one non-trans
@@ -1764,7 +1764,7 @@ TEST_CASE("testForceTransAmides") {
       REQUIRE(cid >= 0);
       auto conf = mol->getConformer(cid);
       auto tors = MolTransforms::getDihedralDeg(conf, 0, 1, 3, 4);
-      if (fabs(fabs(tors) - 180) > 50) {
+      if (std::fabs(std::fabs(tors) - 180) > 50) {
         foundOne = true;
         break;
       }

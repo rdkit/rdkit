@@ -235,7 +235,7 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
             const double cosTheta = MMFF::Utils::calcCosTheta(
                 p1, p2, p3, field->distance(idx[0], idx[1]),
                 field->distance(idx[1], idx[2]));
-            const double theta = RAD2DEG * acos(cosTheta);
+            const double theta = RAD2DEG * std::acos(cosTheta);
             const double angleBendEnergy = MMFF::Utils::calcAngleBendEnergy(
                 mmffAngleParams.theta0, mmffAngleParams.ka,
                 mmffPropParamsCentralAtom->linh, cosTheta);
@@ -366,7 +366,7 @@ void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                                      (*(points[idx[2]]))[2]);
             const double cosTheta =
                 MMFF::Utils::calcCosTheta(p1, p2, p3, dist1, dist2);
-            const double theta = RAD2DEG * acos(cosTheta);
+            const double theta = RAD2DEG * std::acos(cosTheta);
             const std::pair<double, double> forceConstants =
                 MMFF::Utils::calcStbnForceConstants(&mmffStbnParams);
             const std::pair<double, double> stretchBendEnergies =
@@ -705,7 +705,7 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                           << kAtomType << std::setw(5) << lAtomType
                           << std::setw(6) << torType << "  " << std::fixed
                           << std::setprecision(3) << std::setw(10)
-                          << RAD2DEG * acos(cosPhi) << std::setw(10)
+                          << RAD2DEG * std::acos(cosPhi) << std::setw(10)
                           << torsionEnergy << std::setw(10) << mmffTorParams.V1
                           << std::setw(10) << mmffTorParams.V2 << std::setw(10)
                           << mmffTorParams.V3 << std::endl;

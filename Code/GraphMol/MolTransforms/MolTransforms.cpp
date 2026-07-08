@@ -18,6 +18,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/Exceptions.h>
 
+#include <cmath>
 #ifdef RDK_HAS_EIGEN3
 // Eigen module headers (LU/QR/SVD/...) must be included at global scope, not
 // inside a namespace. MolTransforms.h only needs the Matrix3d/Vector3d typedefs
@@ -371,7 +372,7 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
     // deal with zero eigen value systems
     unsigned int i, j, dim = 3;
     for (i = 0; i < 3; ++i) {
-      if (fabs(eigVals.getVal(i)) < EIGEN_TOLERANCE) {
+      if (std::fabs(eigVals.getVal(i)) < EIGEN_TOLERANCE) {
         dim--;
       }
     }
@@ -648,8 +649,8 @@ double getDihedralRad(const Conformer &conf, unsigned int iAtomId,
   double nJKLSqLength = nJKL.lengthSq();
   RDGeom::Point3D m = nIJK.crossProduct(rJK);
   // we want a signed dihedral, that's why we use atan2 instead of acos
-  return -atan2(m.dotProduct(nJKL) / sqrt(nJKLSqLength * m.lengthSq()),
-                nIJK.dotProduct(nJKL) / sqrt(nIJKSqLength * nJKLSqLength));
+  return -std::atan2(m.dotProduct(nJKL) / std::sqrt(nJKLSqLength * m.lengthSq()),
+                nIJK.dotProduct(nJKL) / std::sqrt(nIJKSqLength * nJKLSqLength));
 }
 
 void setDihedralRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
@@ -690,8 +691,8 @@ void setDihedralRad(Conformer &conf, unsigned int iAtomId, unsigned int jAtomId,
   double nJKLSqLength = nJKL.lengthSq();
   RDGeom::Point3D m = nIJK.crossProduct(rJK);
   // we only need to rotate by delta with respect to the current dihedral value
-  value -= -atan2(m.dotProduct(nJKL) / sqrt(nJKLSqLength * m.lengthSq()),
-                  nIJK.dotProduct(nJKL) / sqrt(nIJKSqLength * nJKLSqLength));
+  value -= -std::atan2(m.dotProduct(nJKL) / std::sqrt(nJKLSqLength * m.lengthSq()),
+                  nIJK.dotProduct(nJKL) / std::sqrt(nIJKSqLength * nJKLSqLength));
   // our rotation axis is the (j,k) bond
   RDGeom::Point3D &rotAxisBegin = pos[jAtomId];
   RDGeom::Point3D &rotAxisEnd = pos[kAtomId];

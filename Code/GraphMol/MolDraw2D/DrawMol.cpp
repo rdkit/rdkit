@@ -36,6 +36,7 @@
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/Atropisomers.h>
 
+#include <cmath>
 namespace RDKit {
 namespace MolDraw2D_detail {
 
@@ -802,8 +803,8 @@ void DrawMol::extractBrackets() {
         // the bracket had no length so can be ignored.
         continue;
       }
-      static const double cos45 = 1.0 / sqrt(2.0);
-      bool horizontal = fabs(longline.x) > cos45;
+      static const double cos45 = 1.0 / std::sqrt(2.0);
+      bool horizontal = std::fabs(longline.x) > cos45;
       size_t labelBrk = postShapes_.size() - 1;
       for (int i = 1; i < numBrackets; ++i) {
         const auto &brkShp = *postShapes_[postShapes_.size() - i - 1];
@@ -1636,7 +1637,7 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
   // when they are drawn at the bottom of the molecule.
   // NB - this assumes that the atom coords have already been inverted
   // in Y to put them in the draw frame where N is down and S is up.
-  static const double VERT_SLOPE = tan(70.0 * M_PI / 180.0);
+  static const double VERT_SLOPE = std::tan(70.0 * M_PI / 180.0);
 
   auto &mol = atom.getOwningMol();
   const Point2D &at1_cds = atCds_[atom.getIdx()];
@@ -1649,10 +1650,10 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
   OrientType orient = OrientType::C;
   if (atom.getDegree()) {
     double islope = 1000.0;
-    if (fabs(nbr_sum.x) > 1.0e-4) {
+    if (std::fabs(nbr_sum.x) > 1.0e-4) {
       islope = nbr_sum.y / nbr_sum.x;
     }
-    if (fabs(islope) <= VERT_SLOPE) {
+    if (std::fabs(islope) <= VERT_SLOPE) {
       if (nbr_sum.x > 0.0) {
         orient = OrientType::W;
       } else {
@@ -1670,7 +1671,7 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
     // otherwise have it either as required.
     if (orient == OrientType::N || orient == OrientType::S) {
       if (atom.getDegree() == 1) {
-        if (fabs(islope) > VERT_SLOPE) {
+        if (std::fabs(islope) > VERT_SLOPE) {
           orient = OrientType::E;
         } else {
           if (nbr_sum.x > 0.0) {
@@ -1696,7 +1697,7 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
               break;
             }
           }
-          double ang = atan(bond_vec.y / bond_vec.x) * 180.0 / M_PI;
+          double ang = std::atan(bond_vec.y / bond_vec.x) * 180.0 / M_PI;
           if (ang > 80.0 && ang < 100.0 && orient == OrientType::S) {
             orient = OrientType::S;
             break;
@@ -2344,8 +2345,8 @@ void DrawMol::makeDoubleBondLines(
     auto l2 = (l2s - l2f).lengthSq();
     if ((bond->getBeginAtom()->getDegree() == 1 ||
          bond->getEndAtom()->getDegree() == 1) &&
-        cols.first != cols.second && fabs(l1 - l2) > 0.01) {
-      double midlen = sqrt(l1) / 2.0;
+        cols.first != cols.second && std::fabs(l1 - l2) > 0.01) {
+      double midlen = std::sqrt(l1) / 2.0;
       Point2D notMid;
       if (bond->getBeginAtom()->getDegree() == 1) {
         Point2D lineDir = l2s.directionVector(l2f);
@@ -2671,7 +2672,7 @@ void DrawMol::makeAtomEllipseHighlights(double lineWidth) {
         xMin = yMin = std::numeric_limits<double>::max();
         xMax = yMax = std::numeric_limits<double>::lowest();
         atomLabels_[thisIdx]->findExtremes(xMin, xMax, yMin, yMax);
-        static const double root_2 = sqrt(2.0);
+        static const double root_2 = std::sqrt(2.0);
         xradius = std::max(xradius, root_2 * 0.5 * (xMax - xMin));
         yradius = std::max(yradius, root_2 * 0.5 * (yMax - yMin));
         centre.x = 0.5 * (xMax + xMin);
@@ -2810,8 +2811,8 @@ void DrawMol::calcAnnotationPosition(const Atom *atom,
     // clear for the annotation.
     for (int i = 0; i < 12; ++i) {
       double ang = start_ang + i * 30.0 * M_PI / 180.0;
-      annot.pos_.x = atCds.x + cos(ang) * note_rad;
-      annot.pos_.y = atCds.y + sin(ang) * note_rad;
+      annot.pos_.x = atCds.x + std::cos(ang) * note_rad;
+      annot.pos_.y = atCds.y + std::sin(ang) * note_rad;
       int clashScore = doesNoteClash(annot);
       if (!clashScore) {
         return;
@@ -2927,7 +2928,7 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
     double discrim = 4.0 * M_PI / bond_vecs.size();
     for (size_t i = 0; i < bond_vecs.size() - 1; ++i) {
       for (size_t j = i + 1; j < bond_vecs.size(); ++j) {
-        double ang = acos(bond_vecs[i].dotProduct(bond_vecs[j]));
+        double ang = std::acos(bond_vecs[i].dotProduct(bond_vecs[j]));
         if (ang < discrim) {
           ret_vec = bond_vecs[i] + bond_vecs[j];
           try {
@@ -2948,7 +2949,7 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
   }
 
   // start angle is the angle between ret_vec and the x axis
-  return atan2(ret_vec.y, ret_vec.x);
+  return std::atan2(ret_vec.y, ret_vec.x);
 }
 
 // ****************************************************************************
@@ -3234,7 +3235,7 @@ void DrawMol::setTransformation(const DrawMol &sourceMol) {
 void DrawMol::setOffsets(double xOffset, double yOffset) {
   // Remove the existing offsets.  Presumably this will accumulate small
   // errors if it's done a lot.
-  if (fabs(xOffset_) > 1e-4 || fabs(yOffset_) > 1e-4) {
+  if (std::fabs(xOffset_) > 1e-4 || std::fabs(yOffset_) > 1e-4) {
     Point2D trans{-xOffset_, -yOffset_};
     transformAll(&trans, nullptr, nullptr);
   }
@@ -3638,7 +3639,7 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     // If at1->at2->at3 is a straight line, l2f may have ended up on the
     // wrong side of the other bond from l2s because there is no inner
     // side of the bond.  Do it again with a negative offset if so.
-    if (fabs(l1s.directionVector(l1f).dotProduct(l2s.directionVector(l2f))) <
+    if (std::fabs(l1s.directionVector(l1f).dotProduct(l2s.directionVector(l2f))) <
         0.9999) {
       l2f = doubleBondEnd(at1->getIdx(), at2->getIdx(), thirdAtom->getIdx(),
                           -offset, true);
@@ -3758,7 +3759,7 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
           atCds_[bond->getBeginAtomIdx()]);
       auto b2 = atCds_[bond1->getEndAtomIdx()].directionVector(
           atCds_[bond1->getBeginAtomIdx()]);
-      if (fabs(1.0 - b1.dotProduct(b2)) < 0.001) {
+      if (std::fabs(1.0 - b1.dotProduct(b2)) < 0.001) {
         continue;
       }
       DrawShape *wedge = nullptr;
@@ -3947,7 +3948,7 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
     auto end3Cds = atCds_[end1HighNbrs[0]->getIdx()];
     auto b1 = end2Cds.directionVector(end1Cds);
     auto b2 = end2Cds.directionVector(end3Cds);
-    if (1.0 - fabs(b1.dotProduct(b2)) < 1.0e-4) {
+    if (1.0 - std::fabs(b1.dotProduct(b2)) < 1.0e-4) {
       // move end3 by a small amount to create an inner and outer
       auto d32 = end3Cds - end2Cds;
       Point2D d32transp(d32.y, -d32.x);
@@ -4197,7 +4198,7 @@ double getHighlightBondWidth(
 Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2) {
   double bv[2] = {cds1.x - cds2.x, cds1.y - cds2.y};
   double perp[2] = {-bv[1], bv[0]};
-  double perp_len = sqrt(perp[0] * perp[0] + perp[1] * perp[1]);
+  double perp_len = std::sqrt(perp[0] * perp[0] + perp[1] * perp[1]);
   perp[0] /= perp_len;
   perp[1] /= perp_len;
 
@@ -4317,7 +4318,7 @@ bool areBondsParallel(const Point2D &at1, const Point2D &at2,
                       const Point2D &at3, const Point2D &at4, double tol) {
   Point2D v21 = at1.directionVector(at2);
   Point2D v34 = at4.directionVector(at3);
-  return (fabs(1.0 - fabs(v21.dotProduct(v34))) < tol);
+  return (std::fabs(1.0 - std::fabs(v21.dotProduct(v34))) < tol);
 }
 
 // ****************************************************************************

@@ -28,6 +28,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <ForceField/MMFF/Nonbonded.h>
 
+#include <cmath>
 namespace DistGeom {
 constexpr double EIGVAL_TOL = 0.001;
 constexpr double KNOWN_DIST_TOL = 0.01;
@@ -132,8 +133,8 @@ bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distMat,
   unsigned int zeroEigs = 0;
   for (unsigned int i = 0; i < dim; i++) {
     if (eigData[i] > EIGVAL_TOL) {
-      eigData[i] = sqrt(eigData[i]);
-    } else if (fabs(eigData[i]) < EIGVAL_TOL) {
+      eigData[i] = std::sqrt(eigData[i]);
+    } else if (std::fabs(eigData[i]) < EIGVAL_TOL) {
       eigData[i] = 0.0;
       zeroEigs++;
     } else {
@@ -657,7 +658,7 @@ void addDistanceTerms(
       const double l = mmat.getLowerBound(i, j);
       const double u = mmat.getUpperBound(i, j);
       const auto dist = distMat[i * numAtoms + j];
-      const bool is1213 = (fabs(dist - 1.0) < 1e-4 || fabs(dist - 2.0) < 1e-4);
+      const bool is1213 = (std::fabs(dist - 1.0) < 1e-4 || std::fabs(dist - 2.0) < 1e-4);
       double w = forceConst;
       w *= boundsMatForceScaling;
       if (extraWeights) {

@@ -48,17 +48,17 @@ TEST_CASE("testBasic") {
 TEST_CASE("testTriangle") {
   // try 3 point two equilateral triangles of different edge lengths
   RDGeom::Point3DConstPtrVect rpts;
-  RDGeom::Point3D rpt1(-cos(M_PI / 6), -sin(M_PI / 6), 0.0);
+  RDGeom::Point3D rpt1(-std::cos(M_PI / 6), -std::sin(M_PI / 6), 0.0);
   rpts.push_back(&rpt1);
-  RDGeom::Point3D rpt2(cos(M_PI / 6), -sin(M_PI / 6), 0.0);
+  RDGeom::Point3D rpt2(std::cos(M_PI / 6), -std::sin(M_PI / 6), 0.0);
   rpts.push_back(&rpt2);
   RDGeom::Point3D rpt3(0.0, 1.0, 0.0);
   rpts.push_back(&rpt3);
 
   RDGeom::Point3DConstPtrVect qpts;
-  RDGeom::Point3D qpt1(-2 * sin(M_PI / 6) + 3.0, 2 * cos(M_PI / 6), 4.0);
+  RDGeom::Point3D qpt1(-2 * std::sin(M_PI / 6) + 3.0, 2 * std::cos(M_PI / 6), 4.0);
   qpts.push_back(&qpt1);
-  RDGeom::Point3D qpt2(-2 * sin(M_PI / 6) + 3.0, -2 * cos(M_PI / 6), 4.0);
+  RDGeom::Point3D qpt2(-2 * std::sin(M_PI / 6) + 3.0, -2 * std::cos(M_PI / 6), 4.0);
   qpts.push_back(&qpt2);
   RDGeom::Point3D qpt3(5.0, 0.0, 4.0);
   qpts.push_back(&qpt3);

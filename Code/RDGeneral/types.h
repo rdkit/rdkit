@@ -279,7 +279,7 @@ struct RDKIT_RDGENERAL_EXPORT ltDouble {
  public:
   ltDouble() {}
   bool operator()(double d1, double d2) const {
-    if (fabs(d1 - d2) < _tol) {
+    if (std::fabs(d1 - d2) < _tol) {
       return false;
     } else {
       return (d1 < d2);

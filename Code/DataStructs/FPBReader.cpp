@@ -22,6 +22,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/scoped_array.hpp>
 
+#include <cmath>
 namespace RDKit {
 
 namespace detail {
@@ -445,10 +446,10 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
     // Inf. Model. 47, 302–317 (2007).
     // http://pubs.acs.org/doi/abs/10.1021/ci600358f
     auto minDbCount =
-        static_cast<boost::uint32_t>(floor(threshold * probeCount));
+        static_cast<boost::uint32_t>(std::floor(threshold * probeCount));
     boost::uint32_t maxDbCount =
         (threshold > 1e-6)
-            ? static_cast<boost::uint32_t>(ceil(probeCount / threshold))
+            ? static_cast<boost::uint32_t>(std::ceil(probeCount / threshold))
             : dp_impl->numBytesStoredPerFingerprint;
     // std::cerr << "probeCount: " << probeCount << " bounds: " << minDbCount
     //           << "-" << maxDbCount << std::endl;
@@ -499,12 +500,12 @@ void tverskyNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
     // Searches of Chemical Fingerprints in Linear and Sublinear Time. J. Chem.
     // Inf. Model. 47, 302–317 (2007).
     // http://pubs.acs.org/doi/abs/10.1021/ci600358f
-    auto minDbCount = static_cast<boost::uint32_t>(floor(
+    auto minDbCount = static_cast<boost::uint32_t>(std::floor(
         (threshold * probeCount * ca) / (1. - threshold + threshold * ca)));
     boost::uint32_t maxDbCount =
         ((threshold * cb) > 1e-6)
             ? static_cast<boost::uint32_t>(
-                  ceil(probeCount * (1 - threshold + threshold * cb) /
+                  std::ceil(probeCount * (1 - threshold + threshold * cb) /
                        (threshold * cb)))
             : dp_impl->numBytesStoredPerFingerprint;
     // std::cerr << "probeCount: " << probeCount << " bounds: " << minDbCount

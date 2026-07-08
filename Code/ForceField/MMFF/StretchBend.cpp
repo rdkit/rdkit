@@ -90,7 +90,7 @@ double StretchBendContrib::getEnergy(double *pos) const {
     std::pair<double, double> stretchBendEnergies =
         Utils::calcStretchBendEnergy(
             dist1 - d_restLen1s[i], dist2 - d_restLen2s[i],
-            RAD2DEG * acos(Utils::calcCosTheta(p1, p2, p3, dist1, dist2)) -
+            RAD2DEG * std::acos(Utils::calcCosTheta(p1, p2, p3, dist1, dist2)) -
                 d_theta0s[i],
             forceConstantsPair);
     totalEnergy += (stretchBendEnergies.first + stretchBendEnergies.second);
@@ -133,8 +133,8 @@ void StretchBendContrib::getGrad(double *pos, double *grad) const {
     double cosTheta = p12.dotProduct(p32);
     clipToOne(cosTheta);
     double sinThetaSq = 1.0 - cosTheta * cosTheta;
-    double sinTheta = std::max(sqrt(sinThetaSq), 1.0e-8);
-    double angleTerm = RAD2DEG * acos(cosTheta) - theta0;
+    double sinTheta = std::max(std::sqrt(sinThetaSq), 1.0e-8);
+    double angleTerm = RAD2DEG * std::acos(cosTheta) - theta0;
     double distTerm = RAD2DEG * (forceConstant1 * (dist1 - restLen1) +
                                  forceConstant2 * (dist2 - restLen2));
     double dCos_dS1 = 1.0 / dist1 * (p32.x - cosTheta * p12.x);

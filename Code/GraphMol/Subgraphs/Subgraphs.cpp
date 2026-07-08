@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 
+#include <cmath>
 namespace RDKit {
 namespace Subgraphs {
 void getNbrsList(const ROMol &mol, bool useHs, INT_INT_VECT_MAP &nbrs) {
@@ -465,7 +466,7 @@ findAllPathsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
     // if we have the distance matrix, we can just loop over that:
     for (auto i = 0; i < dim; ++i) {
       for (auto j = i + 1; j < dim; ++j) {
-        if (fabs(distMat[i * dim + j] - 1) < 1e-4) {
+        if (std::fabs(distMat[i * dim + j] - 1) < 1e-4) {
           adjMat[i * dim + j] = 1;
           adjMat[j * dim + i] = 1;
         }

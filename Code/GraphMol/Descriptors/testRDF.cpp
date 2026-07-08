@@ -20,6 +20,7 @@
 
 #include <GraphMol/Descriptors/RDF.h>
 
+#include <cmath>
 void testRDF() {
   std::cout << "=>start test rdf\n";
 
@@ -64,26 +65,26 @@ void testRDF() {
     for (size_t i = 0; i < drdf.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
 
-      if (fabs(ref) > 1) {
-        if (fabs((ref - drdf[i]) / ref) > 0.02) {
+      if (std::fabs(ref) > 1) {
+        if (std::fabs((ref - drdf[i]) / ref) > 0.02) {
           std::cerr << "value mismatch: pos" << i << " " << inm
                     << " dragon: " << ref << " rdkit: " << drdf[i] << std::endl;
         }
       }
 
-      if (fabs(ref) <= 1) {
-        if (fabs((ref - drdf[i])) > 0.02) {
+      if (std::fabs(ref) <= 1) {
+        if (std::fabs((ref - drdf[i])) > 0.02) {
           std::cerr << "value mismatch: pos" << i << " " << inm
                     << " dragon: " << ref << " rdkit: " << drdf[i] << std::endl;
         }
       }
       // FIX: this tolerance seems too high
-      if (ref > 0.5 && fabs(ref - drdf[i]) / ref >= 0.02) {
+      if (ref > 0.5 && std::fabs(ref - drdf[i]) / ref >= 0.02) {
         std::cerr << "value mismatch: pos" << i << " " << inm
                   << " dragon: " << ref << " rdkit: " << drdf[i] << " "
-                  << fabs(ref - drdf[i]) / ref << std::endl;
+                  << std::fabs(ref - drdf[i]) / ref << std::endl;
       }
-      TEST_ASSERT(ref < 0.5 || fabs(ref - drdf[i]) / ref < 0.02);
+      TEST_ASSERT(ref < 0.5 || std::fabs(ref - drdf[i]) / ref < 0.02);
     }
 
     delete m;

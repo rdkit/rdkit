@@ -25,6 +25,7 @@
 #include <RDGeneral/RDLog.h>
 #include <fstream>
 
+#include <cmath>
 constexpr bool GenerateExpectedFiles = false;
 
 using namespace RDKit;
@@ -49,12 +50,12 @@ TEST_CASE("reading 2D coordinates") {
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 2);
     CHECK(m->getNumConformers() == 1);
-    CHECK(fabs(m->getConformer().getAtomPos(0).x) < 1e-4);
-    CHECK(fabs(m->getConformer().getAtomPos(0).y - 0.75) < 1e-4);
-    CHECK(fabs(m->getConformer().getAtomPos(0).z) < 1e-4);
-    CHECK(fabs(m->getConformer().getAtomPos(1).x) < 1e-4);
-    CHECK(fabs(m->getConformer().getAtomPos(1).y + 0.75) < 1e-4);
-    CHECK(fabs(m->getConformer().getAtomPos(1).z) < 1e-4);
+    CHECK(std::fabs(m->getConformer().getAtomPos(0).x) < 1e-4);
+    CHECK(std::fabs(m->getConformer().getAtomPos(0).y - 0.75) < 1e-4);
+    CHECK(std::fabs(m->getConformer().getAtomPos(0).z) < 1e-4);
+    CHECK(std::fabs(m->getConformer().getAtomPos(1).x) < 1e-4);
+    CHECK(std::fabs(m->getConformer().getAtomPos(1).y + 0.75) < 1e-4);
+    CHECK(std::fabs(m->getConformer().getAtomPos(1).z) < 1e-4);
 
     delete m;
   }
@@ -66,12 +67,12 @@ TEST_CASE("reading 2D coordinates") {
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 2);
     CHECK(m->getNumConformers() == 1);
-    CHECK(fabs(m->getConformer().getAtomPos(0).x) < 1e-4);
-    CHECK(fabs(m->getConformer().getAtomPos(0).y) < 1e-4);
-    CHECK(fabs(m->getConformer().getAtomPos(0).z) < 1e-4);
-    CHECK(fabs(m->getConformer().getAtomPos(1).x) < 1e-4);
-    CHECK(fabs(m->getConformer().getAtomPos(1).y) < 1e-4);
-    CHECK(fabs(m->getConformer().getAtomPos(1).z + 0.75) < 1e-4);
+    CHECK(std::fabs(m->getConformer().getAtomPos(0).x) < 1e-4);
+    CHECK(std::fabs(m->getConformer().getAtomPos(0).y) < 1e-4);
+    CHECK(std::fabs(m->getConformer().getAtomPos(0).z) < 1e-4);
+    CHECK(std::fabs(m->getConformer().getAtomPos(1).x) < 1e-4);
+    CHECK(std::fabs(m->getConformer().getAtomPos(1).y) < 1e-4);
+    CHECK(std::fabs(m->getConformer().getAtomPos(1).z + 0.75) < 1e-4);
 
     delete m;
   }

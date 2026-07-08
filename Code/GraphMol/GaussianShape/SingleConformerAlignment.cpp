@@ -195,7 +195,7 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
   }
   static constexpr double CARBON_A = KAPPA / (1.7 * 1.7);
   static const double CARBON_BIT =
-      8.0 * pow(std::numbers::pi / (2 * CARBON_A), 1.5);
+      8.0 * std::pow(std::numbers::pi / (2 * CARBON_A), 1.5);
   double vol = 0.0;
   double vij;
   // If either of the carbon radii flags aren't supplied, treat them
@@ -221,7 +221,7 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
         continue;
       }
       const auto mult = -(ai * aj) / (ai + aj);
-      const auto kij = exp(mult * d2);
+      const auto kij = std::exp(mult * d2);
       if (allCarbon || ((*refCarbonRadii)[i_idx] && (*fitCarbonRadii)[j_idx])) {
         vij = kij * CARBON_BIT;
       } else {
@@ -289,7 +289,7 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
       }
       const auto aj = fitAlphas[j_idx];
       const auto mult = -(ai * aj) / (ai + aj);
-      const auto kij = exp(mult * d2);
+      const auto kij = std::exp(mult * d2);
 
       const auto pi_ai_aj = std::numbers::pi / (ai + aj);
       const auto vij = 8 * kij * pi_ai_aj * std::sqrt(pi_ai_aj);
@@ -359,10 +359,10 @@ void SingleConformerAlignment::calcVolumeAndGradients(
         d_useCutoff, d_distCutoff2, quatTrans.data(), colorGrads.data());
     // The color gradients are normally dwarfed by the shape gradients, so
     // normalize them and then mix by the same rule as the final score.
-    const auto shapeSum = sqrt(std::accumulate(
+    const auto shapeSum = std::sqrt(std::accumulate(
         gradients.begin() + 1, gradients.end(), 0.0,
         [](const auto init, const auto g) -> double { return init + g * g; }));
-    const auto colorSum = sqrt(std::accumulate(
+    const auto colorSum = std::sqrt(std::accumulate(
         colorGrads.begin() + 1, colorGrads.end(), 0.0,
         [](const auto init, const auto g) -> double { return init + g * g; }));
     const auto ratio = shapeSum / colorSum;
@@ -418,14 +418,14 @@ double oneStep(const double grad, const double stepSize, const double quatTrans,
                const double oldGrad, const double oldQuatTrans) {
   double step = 0.0;
   if (std::signbit(grad) != std::signbit(oldGrad)) {
-    step = (quatTrans * fabs(oldGrad) + oldQuatTrans * fabs(grad)) /
-               (fabs(oldGrad) + fabs(grad) + fabs(grad)) -
+    step = (quatTrans * std::fabs(oldGrad) + oldQuatTrans * std::fabs(grad)) /
+               (std::fabs(oldGrad) + std::fabs(grad) + std::fabs(grad)) -
            quatTrans;
     const double newStep = stepSize * grad;
-    if (fabs(step) > fabs(newStep)) {
+    if (std::fabs(step) > std::fabs(newStep)) {
       // This is definitely what the PubChem code says!  I read it as keeping
       // the sign of step, but the value of newStep.
-      step *= fabs(newStep / step);
+      step *= std::fabs(newStep / step);
     }
   } else {
     step = stepSize * grad;
@@ -464,16 +464,16 @@ void calcStep(const std::array<double, 7> &grad, const double qStepSize,
 }
 
 double constrainStep(const double maxStep, double *step, const bool checkSize) {
-  const double mStep = std::max({fabs(step[0]), fabs(step[1]), fabs(step[2])});
+  const double mStep = std::max({std::fabs(step[0]), std::fabs(step[1]), std::fabs(step[2])});
   if (mStep > maxStep) {
     const double scaleFactor = maxStep / mStep;
-    if (fabs(step[0]) > maxStep) {
+    if (std::fabs(step[0]) > maxStep) {
       step[0] *= scaleFactor;
     }
-    if (fabs(step[1]) > maxStep) {
+    if (std::fabs(step[1]) > maxStep) {
       step[1] *= scaleFactor;
     }
-    if (fabs(step[2]) > maxStep) {
+    if (std::fabs(step[2]) > maxStep) {
       step[2] *= scaleFactor;
     }
   }
@@ -511,22 +511,22 @@ double oneReduceStep(const double grad, const double oldGrad,
                      const double quatTrans, const double oldQuatTrans,
                      const double stepSize, double step) {
   if (std::signbit(grad) != std::signbit(oldGrad)) {
-    step = (quatTrans * fabs(oldGrad) + oldQuatTrans * fabs(grad)) /
-               (fabs(oldGrad) + fabs(grad)) -
+    step = (quatTrans * std::fabs(oldGrad) + oldQuatTrans * std::fabs(grad)) /
+               (std::fabs(oldGrad) + std::fabs(grad)) -
            quatTrans;
     const double newStep = stepSize * grad;
-    if (fabs(step) > fabs(newStep)) {
-      step *= fabs(newStep / step);
+    if (std::fabs(step) > std::fabs(newStep)) {
+      step *= std::fabs(newStep / step);
     }
-  } else if (fabs(grad) <= 1.0) {
+  } else if (std::fabs(grad) <= 1.0) {
     step = stepSize * grad;
-  } else if (fabs(grad) > fabs(oldGrad)) {
+  } else if (std::fabs(grad) > std::fabs(oldGrad)) {
     // Going wrong way relative to other components?
     step += stepSize * grad;
   } else {
     double delta = grad * (step / (oldGrad - grad));
-    if (fabs(delta) > fabs(step * 0.1) && fabs(delta) > 0.001) {
-      delta *= 0.0005 / fabs(delta);
+    if (std::fabs(delta) > std::fabs(step * 0.1) && std::fabs(delta) > 0.001) {
+      delta *= 0.0005 / std::fabs(delta);
     }
     step += delta;
   }
@@ -620,7 +620,7 @@ bool SingleConformerAlignment::optimise(unsigned int maxIters) {
       // relies on the other 3 components being small
       const double quatSquared =
           step[1] * step[1] + step[2] * step[2] + step[3] * step[3];
-      step[0] = sqrt(1.0 - quatSquared);
+      step[0] = std::sqrt(1.0 - quatSquared);
       // Update the quaternion with the step, multiplying them.
       auto newQuatTrans = combineQuatTrans(d_quatTrans, step);
       calcVolumeAndGradients(newQuatTrans, shapeOvlpVol, colorOvlpVol, grad);

@@ -51,13 +51,13 @@ void _compareCoords(const ROMol *mol1, unsigned int cid1, const ROMol *mol2,
     RDGeom::Point3D pt2 = conf2.getAtomPos(i);
     pt2 -= pt1;
 
-    if ((fabs(pt2.x) >= tol) || (fabs(pt2.y) >= tol)) {
+    if ((std::fabs(pt2.x) >= tol) || (std::fabs(pt2.y) >= tol)) {
       std::cerr << MolToMolBlock(*mol1, cid1) << std::endl;
       std::cerr << MolToMolBlock(*mol2, cid2) << std::endl;
       break;
     }
-    CHECK_INVARIANT(fabs(pt2.x) < tol, "");
-    CHECK_INVARIANT(fabs(pt2.y) < tol, "");
+    CHECK_INVARIANT(std::fabs(pt2.x) < tol, "");
+    CHECK_INVARIANT(std::fabs(pt2.y) < tol, "");
   }
 }
 
@@ -351,7 +351,7 @@ void tempTest() {
     pt2.normalize();
 
     cosT = -pt1.dotProduct(pt2);
-    sinT = sqrt(1.0 - cosT * cosT);
+    sinT = std::sqrt(1.0 - cosT * cosT);
     rotnAxis = pt1.crossProduct(pt2);
     rotnAxis.normalize();
     trans.setToIdentity();
@@ -359,7 +359,7 @@ void tempTest() {
     pt3 = pt2;
     trans.TransformPoint(pt3);
     dt = pt1.dotProduct(pt3);
-    if (fabs(dt + 1.0) > 1.0e-3) {
+    if (std::fabs(dt + 1.0) > 1.0e-3) {
       BOOST_LOG(rdInfoLog) << i << " (" << pt1 << ") (" << pt2 << ") (" << pt3
                            << ") (" << rotnAxis << ") " << dt << "\n";
     }
@@ -1057,8 +1057,8 @@ void testGithub2027() {
     const Conformer &conf = mol->getConformer();
     RDGeom::Point2D paccum(0, 0);
     for (const auto &pt : conf.getPositions()) {
-      paccum.x += fabs(pt.x);
-      paccum.y += fabs(pt.y);
+      paccum.x += std::fabs(pt.x);
+      paccum.y += std::fabs(pt.y);
     }
     TEST_ASSERT(paccum.x > paccum.y);
   }

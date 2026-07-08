@@ -39,6 +39,7 @@
 
 // if 0, turns off a lot of the FREETYPE TEST_ASSERT checks
 // because sometimes you want to look at all the pictures first.
+#include <cmath>
 #define DO_TEST_ASSERT 1
 
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
@@ -3726,18 +3727,18 @@ void testGithub2931() {
                   std::string::npos);
       // it's an ellipse, so different radii
       // significant variability with freetype version here
-      TEST_ASSERT(fabs(stod(match[1]) - 243.4) < 1.0);
-      TEST_ASSERT(fabs(stod(match[2]) - 103.7) < 1.0);
-      TEST_ASSERT(fabs(stod(match[3]) - 11.8) < 0.2);
-      TEST_ASSERT(fabs(stod(match[4]) - 12.1) < 0.2);
+      TEST_ASSERT(std::fabs(stod(match[1]) - 243.4) < 1.0);
+      TEST_ASSERT(std::fabs(stod(match[2]) - 103.7) < 1.0);
+      TEST_ASSERT(std::fabs(stod(match[3]) - 11.8) < 0.2);
+      TEST_ASSERT(std::fabs(stod(match[4]) - 12.1) < 0.2);
 #endif
 #else
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
-      TEST_ASSERT(fabs(stod(match[1]) - 243.4) < 0.1);
-      TEST_ASSERT(fabs(stod(match[2]) - 103.7) < 0.1);
-      TEST_ASSERT(fabs(stod(match[3]) - 9.5) < 0.1);
-      TEST_ASSERT(fabs(stod(match[4]) - 10.7) < 0.1);
+      TEST_ASSERT(std::fabs(stod(match[1]) - 243.4) < 0.1);
+      TEST_ASSERT(std::fabs(stod(match[2]) - 103.7) < 0.1);
+      TEST_ASSERT(std::fabs(stod(match[3]) - 9.5) < 0.1);
+      TEST_ASSERT(std::fabs(stod(match[4]) - 10.7) < 0.1);
 #endif
       check_file_hash("testGithub2931_1.svg");
     }
@@ -3763,18 +3764,18 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       // it's a circle
-      TEST_ASSERT(fabs(stod(match[1]) - 243.9) < 0.1);
-      TEST_ASSERT(fabs(stod(match[2]) - 104.7) < 0.1);
-      TEST_ASSERT(fabs(stod(match[3]) - 12.1) < 0.1);
-      TEST_ASSERT(fabs(stod(match[4]) - 12.1) < 0.1);
+      TEST_ASSERT(std::fabs(stod(match[1]) - 243.9) < 0.1);
+      TEST_ASSERT(std::fabs(stod(match[2]) - 104.7) < 0.1);
+      TEST_ASSERT(std::fabs(stod(match[3]) - 12.1) < 0.1);
+      TEST_ASSERT(std::fabs(stod(match[4]) - 12.1) < 0.1);
 #endif
 #else
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
-      TEST_ASSERT(fabs(stod(match[1]) - 243.9) < 0.1);
-      TEST_ASSERT(fabs(stod(match[2]) - 103.2) < 0.1);
-      TEST_ASSERT(fabs(stod(match[3]) - 12.1) < 0.1);
-      TEST_ASSERT(fabs(stod(match[4]) - 12.1) < 0.1);
+      TEST_ASSERT(std::fabs(stod(match[1]) - 243.9) < 0.1);
+      TEST_ASSERT(std::fabs(stod(match[2]) - 103.2) < 0.1);
+      TEST_ASSERT(std::fabs(stod(match[3]) - 12.1) < 0.1);
+      TEST_ASSERT(std::fabs(stod(match[4]) - 12.1) < 0.1);
 #endif
       check_file_hash("testGithub2931_2.svg");
     }

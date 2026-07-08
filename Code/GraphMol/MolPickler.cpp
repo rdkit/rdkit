@@ -25,6 +25,7 @@
 #include <string_view>
 #include <boost/algorithm/string.hpp>
 
+#include <cmath>
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
@@ -1608,7 +1609,7 @@ int32_t MolPickler::_pickleAtomData(std::ostream &tss, const Atom *atom) {
   char tmpChar;
   signed char tmpSchar;
   // tmpFloat=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
-  // if(fabs(tmpFloat)>.0001){
+  // if(std::fabs(tmpFloat)>.0001){
   //   propFlags |= 1;
   //   streamWrite(tss,tmpFloat);
   // }
@@ -1666,7 +1667,7 @@ void MolPickler::_unpickleAtomData(std::istream &ss, Atom *atom, int version) {
   if (propFlags & 1) {
     float tmpFloat;
     streamRead(ss, tmpFloat, version);
-    int iso = static_cast<int>(floor(tmpFloat + atom->getMass() + .0001));
+    int iso = static_cast<int>(std::floor(tmpFloat + atom->getMass() + .0001));
     atom->setIsotope(iso);
   }
 

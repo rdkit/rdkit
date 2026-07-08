@@ -64,7 +64,7 @@ namespace {
 MolData3Ddescriptors moldata3D;
 
 double roundn(double in, int factor) {
-  return std::round(in * pow(10., factor)) / pow(10., factor);
+  return std::round(in * std::pow(10., factor)) / std::pow(10., factor);
 }
 
 VectorXd getEigenVect(std::vector<double> v) {
@@ -226,7 +226,7 @@ MatrixXd GetRmatrix(MatrixXd H, MatrixXd DM, int numAtoms) {
   MatrixXd R = MatrixXd::Zero(numAtoms, numAtoms);
   for (int i = 0; i < numAtoms - 1; i++) {
     for (int j = i + 1; j < numAtoms; j++) {
-      R(i, j) = sqrt(H(i, i) * H(j, j)) / DM(i, j);
+      R(i, j) = std::sqrt(H(i, i) * H(j, j)) / DM(i, j);
       R(j, i) = R(i, j);
     }
   }
@@ -256,7 +256,7 @@ double getRCON(MatrixXd R, MatrixXd Adj, int numAtoms) {
     for (int j = i + 1; j < numAtoms; ++j) {
       if (Adj(i, j) > 0) {
         RCON +=
-            sqrt(VSR(i) * VSR(j));  // the sqrt is in the sum not over the sum!
+            std::sqrt(VSR(i) * VSR(j));  // the sqrt is in the sum not over the sum!
       }
     }
   }
@@ -299,10 +299,10 @@ void getGETAWAYDescCustom(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
   std::vector<double> Clus = clusterArray2(heavyLev, precision);
 
   double numHeavy = heavyLev.size();
-  double ITH0 = numHeavy * log(numHeavy) / log(2.0);
+  double ITH0 = numHeavy * std::log(numHeavy) / std::log(2.0);
   double ITH = ITH0;
   for (double Clu : Clus) {
-    ITH -= Clu * log(Clu) / log(2.0);
+    ITH -= Clu * std::log(Clu) / std::log(2.0);
   }
   res[0] = roundn(ITH, 3);  // issue sometime with this due to cluster
   double ISH = ITH / ITH0;
@@ -321,7 +321,7 @@ void getGETAWAYDescCustom(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
   // what about linear molecule ie (D=1) ?
   double HIC = 0.0;
   for (int i = 0; i < numAtoms; i++) {
-    HIC -= H(i, i) / D * log(H(i, i) / D) / log(2);
+    HIC -= H(i, i) / D * std::log(H(i, i) / D) / std::log(2);
   }
   res[2] = roundn(HIC, 3);
 
@@ -329,7 +329,7 @@ void getGETAWAYDescCustom(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
   for (int i = 0; i < numAtoms; i++) {
     HGM = HGM * H(i, i);
   }
-  HGM = 100.0 * pow(HGM, 1.0 / numAtoms);
+  HGM = 100.0 * std::pow(HGM, 1.0 / numAtoms);
   res[3] = roundn(HGM, 3);
 
   double RARS = R.rowwise().sum().sum() / numAtoms;
@@ -522,10 +522,10 @@ void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
   std::vector<double> Clus = clusterArray2(heavyLev, precision);
 
   double numHeavy = heavyLev.size();
-  double ITH0 = numHeavy * log(numHeavy) / log(2.0);
+  double ITH0 = numHeavy * std::log(numHeavy) / std::log(2.0);
   double ITH = ITH0;
   for (double Clu : Clus) {
-    ITH -= Clu * log(Clu) / log(2.0);
+    ITH -= Clu * std::log(Clu) / std::log(2.0);
   }
   res[0] = roundn(ITH, 3);  // issue sometime with this due to cluster
   double ISH = ITH / ITH0;
@@ -544,7 +544,7 @@ void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
   // what about linear molecule ie (D=1) ?
   double HIC = 0.0;
   for (int i = 0; i < numAtoms; i++) {
-    HIC -= H(i, i) / D * log(H(i, i) / D) / log(2.);
+    HIC -= H(i, i) / D * std::log(H(i, i) / D) / std::log(2.);
   }
   res[2] = roundn(HIC, 3);
 
@@ -552,7 +552,7 @@ void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
   for (int i = 0; i < numAtoms; i++) {
     HGM = HGM * H(i, i);
   }
-  HGM = 100.0 * pow(HGM, 1.0 / numAtoms);
+  HGM = 100.0 * std::pow(HGM, 1.0 / numAtoms);
   res[3] = roundn(HGM, 3);
 
   double RARS = R.rowwise().sum().sum() / numAtoms;

@@ -23,6 +23,7 @@
 
 #include <GraphMol/Descriptors/EEM.h>
 
+#include <cmath>
 void testEEM1() {
   std::cout << "=>start test EEM\n";
   std::string pathName = getenv("RDBASE");
@@ -72,14 +73,14 @@ void testEEM1() {
 
     for (int i = 0; i < numAtoms; i++) {
       double ref = atof(myrow[i + 2].c_str());
-      if (fabs(ref - charges[i]) >= 0.01) {
+      if (std::fabs(ref - charges[i]) >= 0.01) {
         std::cout << inm << ","
                   << "ref: " << ref << " ,val: " << charges[i]
                   << "Symbol: " << m->getAtomWithIdx(i)->getSymbol() << "\n";
         ++errorAtoms;
       }
 
-      // TEST_ASSERT(fabs(ref - charges[i]) < 0.01);
+      // TEST_ASSERT(std::fabs(ref - charges[i]) < 0.01);
     }
     // if (nDone>1) {break;}
     if (nDone % 100 == 0) {
@@ -155,14 +156,14 @@ void testEEM2() {
 
     for (int i = 0; i < numAtoms; i++) {
       double ref = atof(myrow[i + 2].c_str());
-      if (fabs(ref - charges[i]) >= 0.01) {
+      if (std::fabs(ref - charges[i]) >= 0.01) {
         std::cout << inm << ","
                   << "ref: " << ref << " ,val: " << charges[i]
                   << "Symbol: " << m->getAtomWithIdx(i)->getSymbol() << "\n";
         ++errorAtoms;
       }
 
-      TEST_ASSERT(fabs(ref - charges[i]) < 0.01);
+      TEST_ASSERT(std::fabs(ref - charges[i]) < 0.01);
     }
     if (nDone % 100 == 0) {
       std::cout << nDone << "\n";

@@ -9,7 +9,6 @@
 #include <map>
 #include <string>
 #include <iostream>
-#include <fstream>
 #include <cmath>
 #include <any>
 
@@ -141,7 +140,7 @@ TEST_CASE("testMapsAndLists") {
 }
 
 TEST_CASE("testNaN") {
-  double nan = sqrt(-1.0);
+  double nan = std::sqrt(-1.0);
   RDValue v(nan);
   REQUIRE(v.getTag() == RDTypeTag::DoubleTag);
   REQUIRE(std::isnan(rdvalue_cast<double>(v)));

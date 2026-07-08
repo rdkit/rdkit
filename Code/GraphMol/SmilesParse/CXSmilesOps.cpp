@@ -29,6 +29,7 @@
 #include <string_view>
 #include <string>
 
+#include <cmath>
 namespace SmilesParseOps {
 using namespace RDKit;
 
@@ -2010,7 +2011,7 @@ std::string get_radical_block(const ROMol &mol,
   return res;
 }
 double zero_small_vals(double val) {
-  if (fabs(val) < 1e-4) {
+  if (std::fabs(val) < 1e-4) {
     return 0.0;
   }
   return val;
