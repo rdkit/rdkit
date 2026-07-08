@@ -47,6 +47,10 @@ typedef std::priority_queue<PAIR_I_I, VECT_PII, gtIIPair> PR_QUEUE;
 typedef std::pair<double, PAIR_I_I> PAIR_D_I_I;
 typedef std::list<PAIR_D_I_I> LIST_PAIR_DII;
 
+//! Branch depth scoring for layout prioritization
+typedef std::pair<unsigned int, unsigned int> ATOM_NBR_PAIR;
+typedef std::map<ATOM_NBR_PAIR, unsigned int> BRANCH_DEPTH_MAP;
+
 //! Some utility functions used in generating 2D coordinates
 
 //! Embed a ring as a convex polygon in 2D
@@ -189,6 +193,34 @@ template <class T>
 RDKIT_DEPICTOR_EXPORT T rankAtomsByRank(const RDKit::ROMol &mol,
                                         const T &commAtms,
                                         bool ascending = true);
+
+//! Compute branch depths for all atom-neighbor pairs
+/*!
+  For each atom and each of its neighbors, counts the number of acyclic atoms
+  reachable in that direction (excluding ring atoms).
+
+  \param mol  molecule of interest
+
+  \return map from (atomIdx, neighborIdx) to subtree size
+*/
+RDKIT_DEPICTOR_EXPORT BRANCH_DEPTH_MAP computeBranchDepths(
+    const RDKit::ROMol &mol);
+
+//! Sort neighbors by branch depth for layout prioritization
+/*!
+  Sorts neighbors in descending order of branch depth (deepest first),
+  with ties broken by CIP rank.
+
+  \param depthMap   precomputed branch depth map
+  \param atomIdx    atom whose neighbors are being sorted
+  \param neighbors  list of neighbor atom indices
+  \param mol        molecule of interest
+
+  \return sorted neighbor list (deepest branches first)
+*/
+RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT sortNeighborsByDepth(
+    const BRANCH_DEPTH_MAP &depthMap, unsigned int atomIdx,
+    const RDKit::INT_VECT &neighbors, const RDKit::ROMol &mol);
 
 //! computes a subangle for an atom of given hybridization and degree
 /*!

@@ -48,6 +48,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
         ccw(true),
         rotDir(0),
         d_density(-1.0),
+        d_distanceFromStart(0),
         df_fixed(false) {
     loc = pos;
   }
@@ -67,6 +68,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
     ccw = other.ccw;
     neighs = other.neighs;
     d_density = other.d_density;
+    d_distanceFromStart = other.d_distanceFromStart;
     df_fixed = other.df_fixed;
     return *this;
   }
@@ -128,6 +130,9 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
   //   this atom. Used in the collision removal code
   // - initialized to -1.0
   double d_density{-1.0};
+
+  //! distance from the initial embedded atom/ring (for chain detection)
+  unsigned int d_distanceFromStart{0};
 
   //! if set this atom is fixed: further operations on the fragment may not
   //! move it.
@@ -576,6 +581,15 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
 
   // pointer to the owning molecule
   const RDKit::ROMol *dp_mol = nullptr;
+
+  // optional branch depth map for layout prioritization
+  const BRANCH_DEPTH_MAP *dp_branchDepths = nullptr;
+
+ public:
+  //! Set branch depth map for layout prioritization
+  void setBranchDepths(const BRANCH_DEPTH_MAP *depthMap) {
+    dp_branchDepths = depthMap;
+  }
 };
 }  // namespace RDDepict
 

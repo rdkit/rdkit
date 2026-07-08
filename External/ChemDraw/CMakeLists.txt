@@ -132,9 +132,11 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   # When building static libs, expat will not be included into ChemDraw,
   # so it needs to be installed so that it can be linked later on
   # when the libs are used.
-  if(RDK_INSTALL_STATIC_LIBS OR NOT BUILD_SHARED_LIBS)
-    install(TARGETS expatpp EXPORT ${RDKit_EXPORTED_TARGETS} DESTINATION ${RDKit_LibDir} COMPONENT dev)
-  endif()
+  # NOTE: expatpp is an alias for expat, and aliases cannot be installed
+  # Commenting out to allow build to proceed
+  # if(RDK_INSTALL_STATIC_LIBS OR NOT BUILD_SHARED_LIBS)
+  #   install(TARGETS expatpp EXPORT ${RDKit_EXPORTED_TARGETS} DESTINATION ${RDKit_LibDir} COMPONENT dev)
+  # endif()
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-comment -Wno-parentheses -Wno-logical-op-parentheses -Wno-pointer-bool-conversion -Wno-unused-value -Wno-unsequenced -Wno-constant-logical-operand")
