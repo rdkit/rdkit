@@ -4974,6 +4974,26 @@ TEST_CASE("github #9068: properties with empty names") {
   }
 }
 
+TEST_CASE("ROMol setName/getName") {
+  auto m = "CCO"_smiles;
+  REQUIRE(m);
+
+  CHECK_THROWS_AS(m->getName(), KeyErrorException);
+
+  m->setName("ethanol");
+  CHECK(m->hasProp(common_properties::_Name));
+  CHECK(m->getName() == "ethanol");
+  CHECK(m->getProp<std::string>(common_properties::_Name) == "ethanol");
+
+  m->setProp(common_properties::_Name, "updated name");
+  CHECK(m->getName() == "updated name");
+
+  const ROMol &cmol = *m;
+  cmol.setName("const name");
+  CHECK(cmol.getName() == "const name");
+  CHECK(cmol.getProp<std::string>(common_properties::_Name) == "const name");
+}
+
 TEST_CASE("canonical re-kekulization after sanitization preserves stereo",
           "[kekulization]") {
   // Sanitization kekulizes with canonical=false for performance (B1).

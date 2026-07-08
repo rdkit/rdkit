@@ -589,6 +589,14 @@ ROMol::ConstBondIterator ROMol::endBonds() const {
   return ConstBondIterator(this, end);
 }
 
+void ROMol::setName(const std::string &name) const {
+  setProp(common_properties::_Name, name);
+}
+
+std::string ROMol::getName() const {
+  return getProp<std::string>(common_properties::_Name);
+}
+
 void ROMol::clearComputedProps(bool includeRings) const {
   // the SSSR information:
   if (includeRings) {
