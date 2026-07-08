@@ -266,15 +266,41 @@ void EmbeddedFrag::updateNewNeighs(
                               hIndices.end());
 
   auto deg = getDepictDegree(dp_mol->getAtomWithIdx(aid));
-  // order the neighbors by their CIPranks, if the number is between > 0 but
-  // less than 3
-  if ((d_eatoms[aid].neighs.size() > 0) &&
-      ((deg < 4) || (d_eatoms[aid].neighs.size() < 3))) {
-    d_eatoms[aid].neighs = rankAtomsByRank(*dp_mol, d_eatoms[aid].neighs);
-  } else if ((deg >= 4) && (d_eatoms[aid].neighs.size() >= 3)) {
-    // now if we have more more than 2 neighbors change the order so that atoms
-    // with the highest rank fall on opposite sides of each other
-    d_eatoms[aid].neighs = setNbrOrder(aid, d_eatoms[aid].neighs, *dp_mol);
+
+  // If branch depths are available, sort neighbors by depth (deepest first)
+  if (dp_branchDepths && d_eatoms[aid].neighs.size() > 0) {
+    std::stable_sort(d_eatoms[aid].neighs.begin(), d_eatoms[aid].neighs.end(),
+                     [this, aid](int a, int b) {
+                       auto keyA = std::make_pair(aid, static_cast<unsigned int>(a));
+                       auto keyB = std::make_pair(aid, static_cast<unsigned int>(b));
+                       auto itA = dp_branchDepths->find(keyA);
+                       auto itB = dp_branchDepths->find(keyB);
+
+                       unsigned int depthA = (itA != dp_branchDepths->end()) ? itA->second : 0;
+                       unsigned int depthB = (itB != dp_branchDepths->end()) ? itB->second : 0;
+
+                       // Sort by depth descending (deepest first)
+                       if (depthA != depthB) {
+                         return depthA > depthB;
+                       }
+
+                       // Tie-break with CIP rank if available
+                       unsigned int rankA = 0, rankB = 0;
+                       dp_mol->getAtomWithIdx(a)->getPropIfPresent(RDKit::common_properties::_CIPRank, rankA);
+                       dp_mol->getAtomWithIdx(b)->getPropIfPresent(RDKit::common_properties::_CIPRank, rankB);
+                       return rankA < rankB;
+                     });
+  } else {
+    // Original logic: order the neighbors by their CIPranks, if the number is between > 0 but
+    // less than 3
+    if ((d_eatoms[aid].neighs.size() > 0) &&
+        ((deg < 4) || (d_eatoms[aid].neighs.size() < 3))) {
+      d_eatoms[aid].neighs = rankAtomsByRank(*dp_mol, d_eatoms[aid].neighs);
+    } else if ((deg >= 4) && (d_eatoms[aid].neighs.size() >= 3)) {
+      // now if we have more more than 2 neighbors change the order so that atoms
+      // with the highest rank fall on opposite sides of each other
+      d_eatoms[aid].neighs = setNbrOrder(aid, d_eatoms[aid].neighs, *dp_mol);
+    }
   }
 
   if (d_eatoms[aid].neighs.size() > 0) {
