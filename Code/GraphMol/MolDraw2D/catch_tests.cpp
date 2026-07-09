@@ -11559,7 +11559,7 @@ TEST_CASE("Github 9310 - SVG Backgrounds not cleared in grid display") {
 }
 
 TEST_CASE("Github 9329 - zero length vector") {
-  auto m1 = "CCO |(0.0, 0.0,;0.0,0.0,;1.0,0.0,;)|"_smiles;
+  auto m1 = "CCO |(0.0,0.0,;0.0,0.0,;1.0,0.0,;)|"_smiles;
   REQUIRE(m1);
   MolDraw2DSVG drawer(400, 400);
   MolDraw2DUtils::prepareMolForDrawing(*m1);
