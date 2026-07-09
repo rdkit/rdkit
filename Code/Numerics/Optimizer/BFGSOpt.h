@@ -17,6 +17,7 @@
 #include <cstring>
 #include <vector>
 #include <algorithm>
+#include "BFGSOpt_SVE.h"
 
 namespace BFGSOpt {
 RDKIT_OPTIMIZER_EXPORT extern int HEAD_ONLY_LIBRARY;
@@ -31,7 +32,6 @@ const double TOLX =
     4. * EPS;  //!< Default direction vector tolerance in the minimizer
 const double MAXSTEP = 100.0;  //!< Default maximum step size in the minimizer
 
-//! Do a Quasi-Newton minimization along a line.
 /*!
   See Numerical Recipes in C, Section 9.7 for a description of the algorithm.
 
@@ -73,7 +73,7 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
   }
   sum = std::sqrt(sum);
 
-  // rescale if we're trying to move too far:
+  // Rescale if we're trying to move too far
   if (sum > maxStep) {
     for (unsigned int i = 0; i < dim; i++) {
       dir[i] *= maxStep / sum;
@@ -102,9 +102,8 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
   lambda = 1.0;
   unsigned int it = 0;
   while (it < MAX_ITER_LINEAR_SEARCH) {
-    // std::cerr << "\t" << it<<" : "<<lambda << " " << lambdaMin << std::endl;
     if (lambda < lambdaMin) {
-      // the position change is too small
+      // Step size is below the position-scaled threshold; treat as converged
       resCode = 1;
       break;
     }
@@ -112,15 +111,14 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
       newPt[i] = oldPt[i] + lambda * dir[i];
     }
     newVal = func(newPt);
-
     if (newVal - oldVal <= FUNCTOL * lambda * slope) {
-      // we're converged on the function:
+      // Armijo sufficient-decrease condition satisfied; accept the step
       resCode = 0;
       return;
     }
     // if we made it this far, we need to backtrack:
     if (it == 0) {
-      // it's the first step:
+      // Quadratic model: only one prior function value available
       tmpLambda = -slope / (2.0 * (newVal - oldVal - slope));
     } else {
       double rhs1 = newVal - oldVal - lambda * slope;
@@ -152,7 +150,6 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
     ++it;
   }
   // nothing was done
-  // std::cerr<<"  RETURN AT END: "<<it<<" "<<resCode<<std::endl;
   for (unsigned int i = 0; i < dim; i++) {
     newPt[i] = oldPt[i];
   }
@@ -201,18 +198,30 @@ int minimize(unsigned int dim, double *pos, double gradTol,
   std::unique_ptr<double[]> newPos(new double[dim]);
   snapshotFreq = std::min(snapshotFreq, maxIts);
 
-  // evaluate the function and gradient in our current position:
   double fp = func(pos);
   gradFunc(pos, grad.data());
 
   double sum = 0.0;
-  for (unsigned int i = 0; i < dim; i++) {
-    unsigned int itab = i * dim;
-    // initialize the inverse hessian to be identity:
-    invHessian[itab + i] = 1.0;
-    // the first line dir is -grad:
-    xi[i] = -grad[i];
-    sum += pos[i] * pos[i];
+#ifdef RDK_SVE_AVAILABLE
+  if (cpuHasSVE()) {
+    // SVE path: initialise xi = -grad and compute ||pos||^2 in a single
+    // vectorised pass.  The identity inverse Hessian is initialised separately
+    // (scalar, O(dim)) since it is a simple diagonal write and does not benefit
+    // from vectorisation over rows.
+    sveInitXiAndSum(dim, grad.data(), xi.data(), pos, &sum);
+    for (unsigned int i = 0; i < dim; i++) invHessian[i * dim + i] = 1.0;
+  } else
+#endif
+  {
+    // Scalar path: initialise the inverse Hessian to the identity matrix,
+    // set the initial search direction xi = -grad (steepest descent step),
+    // and accumulate ||pos||^2 to set an appropriate maximum step size.
+    for (unsigned int i = 0; i < dim; i++) {
+      unsigned int itab = i * dim;
+      invHessian[itab + i] = 1.0;
+      xi[i] = -grad[i];
+      sum += pos[i] * pos[i];
+    }
   }
   // pick a max step size:
   double maxStep = MAXSTEP * std::max(std::sqrt(sum), static_cast<double>(dim));
@@ -221,14 +230,12 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     numIters = iter;
     int status = -1;
 
-    // do the line search:
-    linearSearch(dim, pos, fp, grad.data(), xi.data(), newPos.get(), funcVal, func,
-                 maxStep, status);
+    linearSearch(dim, pos, fp, grad.data(), xi.data(), newPos.get(), funcVal,
+                 func, maxStep, status);
     CHECK_INVARIANT(status >= 0, "bad direction in linearSearch");
 
     // save the function value for the next search:
     fp = funcVal;
-
     // set the direction of this line and save the gradient:
     double test = 0.0;
     for (unsigned int i = 0; i < dim; i++) {
@@ -240,20 +247,17 @@ int minimize(unsigned int dim, double *pos, double gradTol,
       }
       dGrad[i] = grad[i];
     }
-    // std::cerr<<"      iter: "<<iter<<" "<<fp<<" "<<test<<"
-    // "<<TOLX<<std::endl;
     if (test < TOLX) {
       if (snapshotVect && snapshotFreq) {
         RDKit::Snapshot s(boost::shared_array<double>(newPos.release()), fp);
         snapshotVect->push_back(s);
-              }
+      }
       return 0;
     }
 
     // update the gradient:
     double gradScale = gradFunc(pos, grad.data());
 
-    // is the gradient converged?
     test = 0.0;
     // Use |funcVal| so that negative energies (which arise routinely
     // mid-minimization in force fields containing stabilizing
@@ -267,8 +271,6 @@ int minimize(unsigned int dim, double *pos, double gradTol,
       dGrad[i] = grad[i] - dGrad[i];
     }
     test /= term;
-    // std::cerr<<"              "<<gradScale<<" "<<test<<"
-    // "<<gradTol<<std::endl;
     if (test < gradTol) {
       if (snapshotVect && snapshotFreq) {
         RDKit::Snapshot s(boost::shared_array<double>(newPos.release()), fp);
@@ -277,24 +279,34 @@ int minimize(unsigned int dim, double *pos, double gradTol,
       return 0;
     }
 
-    // for(unsigned int i=0;i<dim;i++){
-    // figure out how much the gradient changed:
-    //}
-
-    // compute hessian*dGrad:
+    // BFGS inverse Hessian update.
     double fac = 0, fae = 0, sumDGrad = 0, sumXi = 0;
-    for (unsigned int i = 0; i < dim; i++) {
-      double *ivh = &(invHessian[i * dim]);
-      double &hdgradi = hessDGrad[i];
-      double *dgj = dGrad.data();
-      hdgradi = 0.0;
-      for (unsigned int j = 0; j < dim; ++j, ++ivh, ++dgj) {
-        hdgradi += *ivh * *dgj;
+#ifdef RDK_SVE_AVAILABLE
+    if (cpuHasSVE()) {
+      // SVE path: matrix-vector multiply and all four dot products computed in
+      // one vectorised pass, saving two additional O(dim) traversals compared
+      // to separate scalar dot-product calls.
+      sveHessianVecMul(dim, invHessian.data(), dGrad.data(), hessDGrad.data(),
+                       xi.data(), &fac, &fae, &sumDGrad, &sumXi);
+    } else
+#endif
+    {
+      // Scalar path: fused matrix-vector multiply and dot-product accumulation.
+      // Pointer arithmetic (++ivh, ++dgj) avoids repeated index computations
+      // and helps the compiler generate efficient load sequences.
+      for (unsigned int i = 0; i < dim; i++) {
+        double *ivh = &(invHessian[i * dim]);
+        double &hdgradi = hessDGrad[i];
+        double *dgj = dGrad.data();
+        hdgradi = 0.0;
+        for (unsigned int j = 0; j < dim; ++j, ++ivh, ++dgj) {
+          hdgradi += *ivh * *dgj;
+        }
+        fac += dGrad[i] * xi[i];
+        fae += dGrad[i] * hessDGrad[i];
+        sumDGrad += dGrad[i] * dGrad[i];
+        sumXi += xi[i] * xi[i];
       }
-      fac += dGrad[i] * xi[i];
-      fae += dGrad[i] * hessDGrad[i];
-      sumDGrad += dGrad[i] * dGrad[i];
-      sumXi += xi[i] * xi[i];
     }
     if (fac > std::sqrt(EPS * sumDGrad * sumXi)) {
       fac = 1.0 / fac;
@@ -303,26 +315,46 @@ int minimize(unsigned int dim, double *pos, double gradTol,
         dGrad[i] = fac * xi[i] - fad * hessDGrad[i];
       }
 
-      for (unsigned int i = 0; i < dim; i++) {
-        unsigned int itab = i * dim;
-        double pxi = fac * xi[i], hdgi = fad * hessDGrad[i],
-               dgi = fae * dGrad[i];
-        double *pxj = &(xi[i]), *hdgj = &(hessDGrad[i]), *dgj = &(dGrad[i]);
-        for (unsigned int j = i; j < dim; ++j, ++pxj, ++hdgj, ++dgj) {
-          invHessian[itab + j] += pxi * *pxj - hdgi * *hdgj + dgi * *dgj;
-          invHessian[j * dim + i] = invHessian[itab + j];
+#ifdef RDK_SVE_AVAILABLE
+      if (cpuHasSVE()) {
+        // SVE path: symmetric rank-1 update with FMA, exploiting symmetry to
+        // halve memory writes and FLOPs versus a full-matrix update
+        sveHessianRank1Update(dim, invHessian.data(), xi.data(),
+                              hessDGrad.data(), dGrad.data(), fac, fad, fae);
+      } else
+#endif
+      {
+        // Scalar path: upper-triangle-only update (j >= i) followed by
+        // explicit symmetrisation. This halves the number of Hessian writes
+        // at the cost of one additional pass over a row to mirror elements.
+        for (unsigned int i = 0; i < dim; i++) {
+          unsigned int itab = i * dim;
+          double pxi = fac * xi[i], hdgi = fad * hessDGrad[i],
+                 dgi = fae * dGrad[i];
+          double *pxj = &(xi[i]), *hdgj = &(hessDGrad[i]), *dgj = &(dGrad[i]);
+          for (unsigned int j = i; j < dim; ++j, ++pxj, ++hdgj, ++dgj) {
+            invHessian[itab + j] += pxi * *pxj - hdgi * *hdgj + dgi * *dgj;
+            invHessian[j * dim + i] = invHessian[itab + j];
+          }
         }
       }
     }
-    // generate the next direction to move:
-    for (unsigned int i = 0; i < dim; i++) {
-      unsigned int itab = i * dim;
-      xi[i] = 0.0;
-      double &pxi = xi[i];
-      double *ivh = &(invHessian[itab]);
-      double *gj = grad.data();
-      for (unsigned int j = 0; j < dim; ++j, ++ivh, ++gj) {
-        pxi -= *ivh * *gj;
+
+#ifdef RDK_SVE_AVAILABLE
+    if (cpuHasSVE()) {
+      sveHessianVecMulNeg(dim, invHessian.data(), grad.data(), xi.data());
+    } else
+#endif
+    {
+      for (unsigned int i = 0; i < dim; i++) {
+        unsigned int itab = i * dim;
+        xi[i] = 0.0;
+        double &pxi = xi[i];
+        double *ivh = &(invHessian[itab]);
+        double *gj = grad.data();
+        for (unsigned int j = 0; j < dim; ++j, ++ivh, ++gj) {
+          pxi -= *ivh * *gj;
+        }
       }
     }
     if (snapshotVect && snapshotFreq && !(iter % snapshotFreq)) {

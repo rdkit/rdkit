@@ -330,11 +330,9 @@ bool clashCheck(const RDGeom::PointPtrVect *positions,
   for (std::size_t i = 1; i < positions->size(); ++i) {
     for (std::size_t j = 0; j < i; ++j) {
       double dist2 = 0.0;
-      const RDGeom::PointND diff =
-          (*static_cast<RDGeom::PointND *>((*positions)[j]) -
-           *static_cast<RDGeom::PointND *>((*positions)[i]));
       for (std::size_t d = 0; d < 3; ++d) {
-        dist2 += diff[d] * diff[d];
+        const double diff = (*(*positions)[j])[d] - (*(*positions)[i])[d];
+        dist2 += diff * diff;
       }
       if (dist2 >= (threshold2)) {
         continue;
