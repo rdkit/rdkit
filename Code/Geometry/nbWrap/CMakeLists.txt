@@ -12,5 +12,5 @@ rdkit_nanobind_extension(rdGeometryTest
 
 #-------
 
-add_pytest(testPyGeometry ${CMAKE_CURRENT_SOURCE_DIR}/testGeometry.py)
+add_pytest(testPyGeometry ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/testGeometry.py)
 
