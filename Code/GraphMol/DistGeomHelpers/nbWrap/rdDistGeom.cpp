@@ -101,13 +101,25 @@ static int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
   }
   std::map<int, RDGeom::Point3D> *pMapPtr = pMap.empty() ? nullptr : &pMap;
 
-  const double basinThresh = DGeomHelpers::EmbedParameters().basinThresh;
-  DGeomHelpers::EmbedParameters params(
-      maxAttempts, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
-      randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge,
-      printExpTorsionAngles, basinThresh, -1., false, ETversion, nullptr, true,
-      useSmallRingTorsions, useMacrocycleTorsions, useMacrocycle14config);
+  DGeomHelpers::EmbedParameters params{
+      .maxIterations = maxAttempts,
+      .randomSeed = seed,
+      .clearConfs = clearConfs,
+      .useRandomCoords = useRandomCoords,
+      .boxSizeMult = boxSizeMult,
+      .randNegEig = randNegEig,
+      .numZeroFail = numZeroFail,
+      .coordMap = pMapPtr,
+      .optimizerForceTol = forceTol,
+      .ignoreSmoothingFailures = ignoreSmoothingFailures,
+      .enforceChirality = enforceChirality,
+      .useExpTorsionAnglePrefs = useExpTorsionAnglePrefs,
+      .useBasicKnowledge = useBasicKnowledge,
+      .verbose = printExpTorsionAngles,
+      .ETversion = ETversion,
+      .useSmallRingTorsions = useSmallRingTorsions,
+      .useMacrocycleTorsions = useMacrocycleTorsions,
+      .useMacrocycle14config = useMacrocycle14config};
 
   int res;
   {
@@ -149,15 +161,29 @@ static INT_VECT EmbedMultipleConfs(
   }
   std::map<int, RDGeom::Point3D> *pMapPtr = pMap.empty() ? nullptr : &pMap;
 
-  const double basinThresh = DGeomHelpers::EmbedParameters().basinThresh;
-  DGeomHelpers::EmbedParameters params(
-      maxAttempts, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
-      randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge,
-      printExpTorsionAngles, basinThresh, pruneRmsThresh, false, ETversion,
-      nullptr, true, useSmallRingTorsions, useMacrocycleTorsions,
-      useMacrocycle14config);
-
+  bool onlyHeavyAtomsForRMS = false;
+  DGeomHelpers::EmbedParameters params{
+      .maxIterations = maxAttempts,
+      .numThreads = numThreads,
+      .randomSeed = seed,
+      .clearConfs = clearConfs,
+      .useRandomCoords = useRandomCoords,
+      .boxSizeMult = boxSizeMult,
+      .randNegEig = randNegEig,
+      .numZeroFail = numZeroFail,
+      .coordMap = pMapPtr,
+      .optimizerForceTol = forceTol,
+      .ignoreSmoothingFailures = ignoreSmoothingFailures,
+      .enforceChirality = enforceChirality,
+      .useExpTorsionAnglePrefs = useExpTorsionAnglePrefs,
+      .useBasicKnowledge = useBasicKnowledge,
+      .verbose = printExpTorsionAngles,
+      .pruneRmsThresh = pruneRmsThresh,
+      .onlyHeavyAtomsForRMS = onlyHeavyAtomsForRMS,
+      .ETversion = ETversion,
+      .useSmallRingTorsions = useSmallRingTorsions,
+      .useMacrocycleTorsions = useMacrocycleTorsions,
+      .useMacrocycle14config = useMacrocycle14config};
   INT_VECT res;
   {
     nb::gil_scoped_release release;
@@ -411,7 +437,49 @@ RETURNS:
              RDKit::DGeomHelpers::EmbedFailureCauses::CHECK_CHIRAL_CENTERS2)
       .value("EXCEEDED_TIMEOUT",
              RDKit::DGeomHelpers::EmbedFailureCauses::EXCEEDED_TIMEOUT)
+      .value("MINIMIZATION",
+             RDKit::DGeomHelpers::EmbedFailureCauses::MINIMIZATION)
+      .value("KTERM_VIOLATION",
+             RDKit::DGeomHelpers::EmbedFailureCauses::KTERM_VIOLATION)
+      .value("CLASH", RDKit::DGeomHelpers::EmbedFailureCauses::CLASH)
       .export_values();
+
+  m.def(
+      "OrderedEmbedFailureCauses",
+      +[](const bool legacyImplementation = true) {
+        using E = RDKit::DGeomHelpers::EmbedFailureCauses;
+        using Ret_T = std::vector<std::pair<E, std::size_t>>;
+        nb::list result;
+        Ret_T causes = legacyImplementation
+                           ? Ret_T{{E::INITIAL_COORDS, 0},
+                                   {E::FIRST_MINIMIZATION, 1},
+                                   {E::CHECK_TETRAHEDRAL_CENTERS, 2},
+                                   {E::CHECK_CHIRAL_CENTERS, 3},
+                                   {E::MINIMIZE_FOURTH_DIMENSION, 4},
+                                   {E::ETK_MINIMIZATION, 5},
+                                   {E::LINEAR_DOUBLE_BOND, 8},
+                                   {E::CHECK_CHIRAL_CENTERS2, 10},
+                                   {E::FINAL_CHIRAL_BOUNDS, 6},
+                                   {E::FINAL_CENTER_IN_VOLUME, 7},
+                                   {E::BAD_DOUBLE_BOND_STEREO, 9},
+                                   {E::EXCEEDED_TIMEOUT, 11}}
+                           : Ret_T{{E::INITIAL_COORDS, 0},
+                                   {E::MINIMIZATION, 12},
+                                   {E::KTERM_VIOLATION, 13},
+                                   {E::CHECK_TETRAHEDRAL_CENTERS, 2},
+                                   {E::CHECK_CHIRAL_CENTERS, 3},
+                                   {E::FINAL_CHIRAL_BOUNDS, 6},
+                                   {E::FINAL_CENTER_IN_VOLUME, 7},
+                                   {E::BAD_DOUBLE_BOND_STEREO, 9},
+                                   {E::CLASH, 14},
+                                   {E::LINEAR_DOUBLE_BOND, 9},
+                                   {E::EXCEEDED_TIMEOUT, 11}};
+        for (const auto &c : causes) {
+          result.append(nb::make_tuple(c.first, c.second));
+        }
+        return result;
+      },
+      "legacyImplementation"_a = true);
 
   nb::class_<PyEmbedParameters>(m, "EmbedParameters",
                                 "Parameters controlling embedding")
@@ -474,6 +542,9 @@ conformations that are at least this far apart from each other)DOC")
       .def_rw("useMacrocycle14config",
               &PyEmbedParameters::useMacrocycle14config,
               "use the 1-4 distance bounds from ETKDGv3")
+      .def_rw("useLegacyImplementation",
+              &PyEmbedParameters::useLegacyImplementation,
+              "whether to use the combined minimization approach")
       .def_rw(
           "boundsMatForceScaling", &PyEmbedParameters::boundsMatForceScaling,
           R"DOC(scale the weights of the atom pair distance restraints relative to
@@ -563,6 +634,9 @@ version 3 (macrocycles).)DOC");
   m.def(
       "KDG", []() { return PyEmbedParameters(RDKit::DGeomHelpers::KDG); },
       "Returns an EmbedParameters object for the KDG method.");
+  m.def(
+      "DG", []() { return PyEmbedParameters(RDKit::DGeomHelpers::DG); },
+      "Returns an EmbedParameters object for plain distance geometry.");
 
   m.def("GetMoleculeBoundsMatrix", &RDKit::getMolBoundsMatrix, "mol"_a,
         "set15bounds"_a = true, "scaleVDW"_a = false,
