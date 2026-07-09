@@ -1,4 +1,3 @@
-#
 #  Copyright (C) 2004-2026 Rational Discovery LLC and other RDKit contributors
 #
 #     @@  All Rights Reserved  @@

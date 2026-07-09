@@ -480,12 +480,10 @@ TEST_CASE("CDXML Advanced") {
 
   SECTION("Bad CDXML") {
     auto fname = cdxmlbase + "bad-cdxml.cdxml";
-    // Only one passes sanitization
+    // The default NeedsClean policy honors the source cleanup hint, so both
+    // fragments sanitize successfully.
     {
-      std::vector<std::string> expected = {"*c1ccccc1"};
-      std::vector<std::string> expected_smarts = {
-          "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
-      };
+      std::vector<std::string> expected = {"*c1ccccc1", "*c1cccnc1"};
       auto params = ChemDrawParserParams();
       auto mols = MolsFromChemDrawFile(fname, params);
       for (auto &mol : mols) {
@@ -495,11 +493,11 @@ TEST_CASE("CDXML Advanced") {
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
-        CHECK(MolToSmarts(*mol) == expected_smarts[i]);
         CHECK(MolToSmiles(*mol) == expected[i++]);
       }
     }
-    // setting sanitization to false, we get both
+    // setting sanitization to false leaves the source untouched, so we get the
+    // original unsanitized fragments regardless of the NeedsClean policy.
     std::vector<std::string> expected = {"*C1=C([H])C([H])=C([H])C([H])=C1[H]",
                                          "*C1=C([H])N([H])=C([H])C([H])=C1[H]"};
     std::vector<std::string> expected_smarts = {
@@ -508,6 +506,7 @@ TEST_CASE("CDXML Advanced") {
     };
     ChemDrawParserParams params;
     params.sanitize = false;
+    params.needsCleanPolicy = NeedsCleanPolicy::TrustExplicitHydrogens;
     auto mols = MolsFromChemDrawFile(fname, params);
     CHECK(mols.size() == expected.size());
     int i = 0;
@@ -553,70 +552,70 @@ TEST_CASE("CDXML Advanced") {
         talatisamine,  // 0
         "*",
         "C",
-        "[F]",
-        "[B]",
-        "[C]",
+        "F",
+        "B",
+        "C",
         "[2H]",
         talatisamine,
         "*",
         "C",
-        "[F]",  // 10
-        "[B]",
-        "[C]",
+        "F",  // 10
+        "B",
+        "C",
         "[2H]",
         talatisamine,
         "*",
         "C",
-        "[F]",
-        "[B]",
-        "[C]",
+        "F",
+        "B",
+        "C",
         "[2H]",  // 20
         talatisamine,
         "*",
         "C",
-        "[F]",
-        "[B]",
-        "[C]",
+        "F",
+        "B",
+        "C",
         "[2H]",
         talatisamine,
         "CCN1C[C@]2(COC)CC[C@H](OC)[C@]34C1C(C[C@H]23)[C@@]1(O)CC(OC)[C@H]2C[C@@H]4[C@@H]1[C@H]2O",
         "*",  // 30
-        "[B]",
-        "[C]",
+        "B",
+        "C",
         "[2H]",
         "C",
-        "[F]",
+        "F",
         "*",
         "C",
-        "[F]",
-        "[B]",
-        "[C]",  // 40
+        "F",
+        "B",
+        "C",  // 40
         "[2H]",
         talatisamine,
         "*",
         "C",
-        "[F]",
-        "[B]",
-        "[C]",
+        "F",
+        "B",
+        "C",
         "[2H]",
         talatisamine,
         "*",  // 50
         "C",
-        "[F]",
-        "[B]",
-        "[C]",
+        "F",
+        "B",
+        "C",
         "[2H]",
         "CC1CC[C@]2(O)[C@]3(C)C[C@]4(O)O[C@@]2([C@@H]1O)C1(O)C4(C)C(O)(C(C)C)[C@@H](O)[C@]13O",
         "CC1=C(C(C)C)[C@@H](O)[C@@]2(O)[C@@]3(C)CC(=O)O[C@@]4([C@H](O)C(C)CC[C@]34O)[C@@]12O",
         "CC1=C[C@@]23OC(=O)C[C@@](C)([C@@]2(O)CC1)[C@]1(O)[C@H](O)C2(C(C)C)OC2(C)[C@@]31O",
         "*",
-        "[B]",  // 60
-        "[C]",
+        "B",  // 60
+        "C",
         "CC1CC[C@@H]2[C@]3(C)C[C@@H]4O[C@@]2(C1)C1[C@@H]3CC(C(C)C)C14C",
         "[2H]",
         "*",
-        "[B]",
-        "[C]",
+        "B",
+        "C",
         "C",
         "CC1CC[C@]2(O)[C@]3(C)C[C@]4(O)O[C@@]2([C@@H]1O)C1(O)C4(C)C(O)(C(C)C)[C@@H](O)[C@]13O",
         "[2H]"};
@@ -636,27 +635,27 @@ TEST_CASE("CDXML Advanced") {
     auto mols = MolsFromChemDrawFile(fname);
     std::vector<std::string> expected = {
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
-        "[B]",
+        "B",
         "*",
-        "[C]",
+        "C",
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
-        "[B]",
+        "B",
         "*",
-        "[C]",
+        "C",
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@@H](C[C@@H](O)[C@@H](C)O)O[C@@]1(O)C(C)(C)/C=C/C=O",
         "*",
-        "[C]",
-        "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
-        "*.CC[Si](CC)CC",
+        "C",
+        "C=C(C[C@H](O)C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
+        "*.CC[SiH](CC)CC",
         "CC[Si](C)(CC)CC",
         "CC[Si](C)(CC)CC",
         "CC",
         "CC",
         "*",
-        "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
-        "*.CC[Si](CC)CC",
+        "C=C(C[C@H](O)C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
+        "*.CC[SiH](CC)CC",
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@@H](C[C@@H](O)[C@@H](C)O)O[C@@]1(O)C(C)(C)/C=C/C=O",
-        "[C]"};
+        "C"};
     int i = 0;
     for (auto &mol : mols) {
       INFO(i);
@@ -692,8 +691,8 @@ TEST_CASE("CDXML Advanced") {
     auto mols = MolsFromChemDrawFile(fname);
     std::vector<std::string> expected = {
         "*",
-        "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
-        "*.CC[Si](CC)CC"};
+        "C=C(C[C@H](O)C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
+        "*.CC[SiH](CC)CC"};
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -710,7 +709,7 @@ TEST_CASE("CDXML Advanced") {
     }
   }
 
-  SECTION("Aromatic ring (bondorder==4") {
+  SECTION("Aromatic ring (bondorder==4)") {
     auto fname = cdxmlbase + "aromatic.cdxml";
     auto mols = MolsFromChemDrawFile(fname);
     std::vector<std::string> expected = {"c1ccccc1"};
@@ -1247,7 +1246,7 @@ TEST_CASE("Synthesis-workshop") {
     auto mols = MolsFromChemDrawFile(fname);
     std::vector<std::string> expected = {
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
-        "[B]", "*", "[C]",
+        "B", "*", "C",
         "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",
         // this is may or may not be correct, but the structure is drawn
         // incorrectly.
@@ -1451,6 +1450,126 @@ TEST_CASE("Geometry") {
     auto mols = MolsFromChemDrawFile(fname);
     REQUIRE(mols.size());
     REQUIRE("C1[C@H]2C[C@@H]12" == MolToSmiles(*mols[0]));
+  }
+}
+
+TEST_CASE("NeedsClean hydrogens") {
+  std::string chemdrawPath =
+      std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
+  std::string cdxmlPath =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  auto molSmiles = [](const std::vector<std::unique_ptr<RWMol>> &mols) {
+    std::vector<std::string> smiles;
+    smiles.reserve(mols.size());
+    for (const auto &mol : mols) {
+      smiles.push_back(MolToSmiles(*mol));
+    }
+    return smiles;
+  };
+  SECTION("TrustSource honors NeedsClean zero-H atoms by default") {
+    auto fname = chemdrawPath + "needsclean-carbamate-n.cdxml";
+    auto mols = MolsFromChemDrawFile(fname);
+    REQUIRE(mols.size() == 1);
+    auto &mol = *mols[0];
+    CHECK(MolToSmiles(mol) == "CNC(=O)OC");
+
+    unsigned int nitrogens = 0;
+    for (const auto atom : mol.atoms()) {
+      if (atom->getSymbol() == "N") {
+        ++nitrogens;
+        CHECK(atom->getNumRadicalElectrons() == 0);
+        CHECK(atom->getTotalNumHs() == 1);
+        CHECK(!atom->getNoImplicit());
+      }
+    }
+    CHECK(nitrogens == 1);
+  }
+  SECTION(
+      "TrustExplicitHydrogens preserves the literal zero-hydrogen radical") {
+    auto fname = chemdrawPath + "needsclean-carbamate-n.cdxml";
+    ChemDrawParserParams params;
+    params.needsCleanPolicy = NeedsCleanPolicy::TrustExplicitHydrogens;
+    auto mols = MolsFromChemDrawFile(fname, params);
+    REQUIRE(mols.size() == 1);
+    auto &mol = *mols[0];
+    CHECK(MolToSmiles(mol) == "C[N]C(=O)OC");
+
+    unsigned int nitrogens = 0;
+    for (const auto atom : mol.atoms()) {
+      if (atom->getSymbol() == "N") {
+        ++nitrogens;
+        CHECK(atom->getNumRadicalElectrons() == 1);
+        CHECK(atom->getTotalNumHs() == 0);
+        CHECK(atom->getNoImplicit());
+      }
+    }
+    CHECK(nitrogens == 1);
+  }
+  SECTION(
+      "TrustExplicitHydrogens ignores NeedsClean on fragment replacement "
+      "nodes") {
+    auto fname = chemdrawPath + "atom-to-fragment.cdxml";
+    ChemDrawParserParams params;
+    params.needsCleanPolicy = NeedsCleanPolicy::TrustExplicitHydrogens;
+    auto trust = MolsFromChemDrawFile(fname);
+    auto preserve = MolsFromChemDrawFile(fname, params);
+    REQUIRE(molSmiles(trust) == std::vector<std::string>{"CC=C=C(C)C"});
+    CHECK(molSmiles(preserve) == molSmiles(trust));
+  }
+  SECTION(
+      "TrustExplicitHydrogens is a no-op when sanitization already agrees with "
+      "zero-H metadata") {
+    auto fname = chemdrawPath + "geometry-tetrahedral-4.cdxml";
+    ChemDrawParserParams params;
+    params.needsCleanPolicy = NeedsCleanPolicy::TrustExplicitHydrogens;
+    auto trust = MolsFromChemDrawFile(fname);
+    auto preserve = MolsFromChemDrawFile(fname, params);
+    REQUIRE(molSmiles(trust) ==
+            std::vector<std::string>{
+                "CC(=O)S[C@H]1CC2=CC(=O)CC[C@@]2(C)[C@@H]2CC[C@]3(C)[C@H](CC[C@]34CCC(=O)O4)[C@@H]12"});
+    CHECK(molSmiles(preserve) == molSmiles(trust));
+  }
+  SECTION(
+      "TrustSource can salvage existing NeedsClean fragments when "
+      "sanitization can infer valid hydrogens") {
+    auto fname = cdxmlPath + "bad-cdxml.cdxml";
+    auto trust = MolsFromChemDrawFile(fname);
+    ChemDrawParserParams params;
+    params.needsCleanPolicy = NeedsCleanPolicy::TrustExplicitHydrogens;
+    auto preserve = MolsFromChemDrawFile(fname, params);
+    REQUIRE(trust.size() == 2);
+    CHECK(molSmiles(trust) ==
+          std::vector<std::string>{"*c1ccccc1", "*c1cccnc1"});
+    CHECK(molSmiles(preserve) == std::vector<std::string>{"*c1ccccc1"});
+  }
+}
+
+TEST_CASE("Abnormal valence") {
+  std::string path =
+      std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
+  SECTION("Cyclopentane radicals") {
+    auto fname = path + "abnormal-valence-cyclopentane.cdxml";
+    auto mols = MolsFromChemDrawFile(fname);
+    REQUIRE(mols.size() == 1);
+    auto &mol = *mols[0];
+
+    unsigned int radicalAtoms = 0;
+    for (const auto atom : mol.atoms()) {
+      if (atom->getNumRadicalElectrons() == 2) {
+        ++radicalAtoms;
+        CHECK(atom->getNoImplicit());
+      }
+    }
+    CHECK(radicalAtoms == 5);
+
+    const auto v3k = MolToV3KMolBlock(mol);
+    size_t val2Count = 0;
+    size_t pos = 0;
+    while ((pos = v3k.find(" VAL=2", pos)) != std::string::npos) {
+      ++val2Count;
+      pos += 6;
+    }
+    CHECK(val2Count == 5);
   }
 }
 

@@ -66,12 +66,15 @@ std::string pyObjectToString(python::object input) {
   return std::string(ws.begin(), ws.end());
 }
 
-python::object MolsFromChemDrawBlockHelper(const std::string &filename,
-                                           bool sanitize, bool removeHs) {
+python::object MolsFromChemDrawBlockHelper(
+    const std::string &filename, bool sanitize, bool removeHs,
+    RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
+        RDKit::v2::NeedsCleanPolicy::TrustSource) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
     mols = RDKit::v2::MolsFromChemDrawBlock(
-        filename, {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML});
+        filename,
+        {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy});
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
@@ -88,11 +91,13 @@ python::object MolsFromChemDrawBlockHelper(const std::string &filename,
   return python::tuple(res);
 }
 
-python::tuple MolsFromChemDrawFileHelper(python::object cdxml, bool sanitize,
-                                         bool removeHs) {
+python::tuple MolsFromChemDrawFileHelper(
+    python::object cdxml, bool sanitize, bool removeHs,
+    RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
+        RDKit::v2::NeedsCleanPolicy::TrustSource) {
   auto mols = RDKit::v2::MolsFromChemDrawFile(
       pyObjectToString(cdxml),
-      {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML});
+      {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy});
   python::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
@@ -147,6 +152,15 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
   python::scope().attr("__doc__") =
       "Module containing classes and functions for working with ChemDraw files.";
 
+  python::enum_<v2::CDXFormat>("CDXFormat")
+      .value("CDX", v2::CDXFormat::CDX)
+      .value("CDXML", v2::CDXFormat::CDXML);
+
+  python::enum_<v2::NeedsCleanPolicy>("NeedsCleanPolicy")
+      .value("TrustSource", v2::NeedsCleanPolicy::TrustSource)
+      .value("TrustExplicitHydrogens",
+             v2::NeedsCleanPolicy::TrustExplicitHydrogens);
+
   // Molecule Interface
   std::string docString =
       R"DOC(Extract all molecules from a ChemDraw file.
@@ -163,13 +177,20 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
 
        - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
 
+       - needsCleanPolicy: how to handle `NeedsClean` hydrogen metadata.
+        `TrustSource` honors `NeedsClean` by allowing sanitization to
+        recompute hydrogens. `TrustExplicitHydrogens` preserves the literal
+        source metadata when sanitize is True. [default TrustSource]
+
      RETURNS:
        a tuple of parsed Mol objects.)DOC";
 
-  python::def("MolsFromChemDrawFile", MolsFromChemDrawFileHelper,
-              (python::arg("filename"), python::arg("sanitize") = true,
-               python::arg("removeHs") = true),
-              docString.c_str());
+  python::def(
+      "MolsFromChemDrawFile", MolsFromChemDrawFileHelper,
+      (python::arg("filename"), python::arg("sanitize") = true,
+       python::arg("removeHs") = true,
+       python::arg("needsCleanPolicy") = v2::NeedsCleanPolicy::TrustSource),
+      docString.c_str());
 
   docString =
       R"DOC(Extract all molecules from a ChemDraw file.
@@ -186,13 +207,20 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
 
        - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
 
+       - needsCleanPolicy: how to handle `NeedsClean` hydrogen metadata.
+        `TrustSource` honors `NeedsClean` by allowing sanitization to
+        recompute hydrogens. `TrustExplicitHydrogens` preserves the literal
+        source metadata when sanitize is True. [default TrustSource]
+
      RETURNS:
        a tuple of parsed Mol objects.)DOC";
 
-  python::def("MolsFromChemDrawBlock", MolsFromChemDrawBlockHelper,
-              (python::arg("block"), python::arg("sanitize") = true,
-               python::arg("removeHs") = true),
-              docString.c_str());
+  python::def(
+      "MolsFromChemDrawBlock", MolsFromChemDrawBlockHelper,
+      (python::arg("block"), python::arg("sanitize") = true,
+       python::arg("removeHs") = true,
+       python::arg("needsCleanPolicy") = v2::NeedsCleanPolicy::TrustSource),
+      docString.c_str());
 
   docString =
       R"DOC(Extract all reactions from a ChemDraw file.
@@ -240,10 +268,6 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
               (python::arg("rxnblock"), python::arg("sanitize") = false,
                python::arg("removeHs") = false),
               docString.c_str());
-
-  python::enum_<v2::CDXFormat>("CDXFormat")
-      .value("CDX", v2::CDXFormat::CDX)
-      .value("CDXML", v2::CDXFormat::CDXML);
 
   docString =
       R"DOC(Convert a molecule into a chemdraw string using the specified format

@@ -1,4 +1,3 @@
-#
 #  Copyright (C) 2003-2026  Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@

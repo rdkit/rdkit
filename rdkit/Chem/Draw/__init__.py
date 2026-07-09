@@ -12,6 +12,7 @@ import warnings
 from collections import namedtuple
 from importlib.util import find_spec
 from io import BytesIO
+import itertools
 
 import numpy
 from rdkit import Chem
@@ -271,6 +272,10 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
   # we already prepared the molecule:
   d2d.drawOptions().prepareMolsBeforeDrawing = False
   bondHighlights = kwargs.get('highlightBonds', None)
+  if highlights:
+    if isinstance(highlights[0], (list, tuple)):
+      # multiple highlights
+      highlights = list(itertools.chain.from_iterable(highlights))
   if bondHighlights is not None:
     d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [],
                      highlightBonds=bondHighlights)
