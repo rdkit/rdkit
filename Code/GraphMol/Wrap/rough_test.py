@@ -4718,8 +4718,7 @@ $$$$
         ob.GetIntProp("foo")
       self.assertEqual(str(e.exception), errors["int overflow"])
 
-    with self.assertRaises(KeyError):
-      m.GetName()
+    self.assertEqual(m.GetName(), "")
 
     m.SetName("ethane")
     self.assertEqual(m.GetName(), "ethane")
@@ -4729,8 +4728,7 @@ $$$$
     self.assertEqual(m.GetName(), "updated name")
 
     m.ClearProp("_Name")
-    with self.assertRaises(KeyError):
-      m.GetName()
+    self.assertEqual(m.GetName(), "")
 
     rwm = Chem.RWMol(m)
     rwm.SetName("editable ethane")

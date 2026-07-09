@@ -4978,7 +4978,7 @@ TEST_CASE("ROMol setName/getName") {
   auto m = "CCO"_smiles;
   REQUIRE(m);
 
-  CHECK_THROWS_AS(m->getName(), KeyErrorException);
+  CHECK(m->getName().empty());
 
   m->setName("ethanol");
   CHECK(m->hasProp(common_properties::_Name));
@@ -4987,6 +4987,9 @@ TEST_CASE("ROMol setName/getName") {
 
   m->setProp(common_properties::_Name, "updated name");
   CHECK(m->getName() == "updated name");
+
+  m->clearProp(common_properties::_Name);
+  CHECK(m->getName().empty());
 
   const ROMol &cmol = *m;
   cmol.setName("const name");

@@ -594,7 +594,9 @@ void ROMol::setName(const std::string &name) const {
 }
 
 std::string ROMol::getName() const {
-  return getProp<std::string>(common_properties::_Name);
+  std::string name;
+  getPropIfPresent(common_properties::_Name, name);
+  return name;
 }
 
 void ROMol::clearComputedProps(bool includeRings) const {
