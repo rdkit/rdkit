@@ -15,12 +15,14 @@
 
 namespace RDKit {
 namespace {
-const std::array<std::pair<MonomerClass, const char *>, 4> monomerClassNames = {{
-    {MonomerClass::AA, "AA"},
-    {MonomerClass::NA, "NA"},
-    {MonomerClass::CHEM, "CHEM"},
-    {MonomerClass::OTHER, "OTHER"},
-}};
+const std::array<std::pair<MonomerClass, const char *>, 4> monomerClassNames = {
+    {
+        {MonomerClass::AA, "AA"},
+        {MonomerClass::NA, "NA"},
+        {MonomerClass::CHEM, "CHEM"},
+        {MonomerClass::OTHER, "OTHER"},
+    }};
+}  // namespace
 
 const char *monomerClassToString(MonomerClass monomerClass) {
   for (const auto &[value, name] : monomerClassNames) {
@@ -32,8 +34,7 @@ const char *monomerClassToString(MonomerClass monomerClass) {
   return "";
 }
 
-MonomerClass monomerClassFromString(
-    const std::string &monomerClass) {
+MonomerClass monomerClassFromString(const std::string &monomerClass) {
   for (const auto &[value, name] : monomerClassNames) {
     if (monomerClass == name) {
       return value;
@@ -43,6 +44,7 @@ MonomerClass monomerClassFromString(
   return MonomerClass::OTHER;
 }
 
+namespace {
 bool isMacroAtom(const Atom *atom) {
   return atom->getMacroAtomInfo() != nullptr;
 }
@@ -50,10 +52,9 @@ bool isMacroAtom(const Atom *atom) {
 
 unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
                                     std::string symbol) {
-  std::string className = monomerClassToString(monomerClass);
   auto atom = new Atom(0);
 
-  atom->setMacroAtomInfo(new MacroAtomInfo(symbol, className));
+  atom->setMacroAtomInfo(new MacroAtomInfo(std::move(symbol), monomerClass));
 
   bool updateLabel = false;
   bool takeOwnership = true;
@@ -66,11 +67,12 @@ unsigned int MacroMol::addMacroBond(unsigned int beginAtomIdx,
   PRECONDITION((isMacroAtom(this->getAtomWithIdx(beginAtomIdx)) ||
                 isMacroAtom(this->getAtomWithIdx(endAtomIdx))),
                "at least one atom must be a macro atom");
-  auto bondIdx = RWMol::addBond(beginAtomIdx, endAtomIdx, bondType) - 1;
+  auto numBonds = RWMol::addBond(beginAtomIdx, endAtomIdx, bondType);
+  auto bondIdx = numBonds - 1;
   auto bond = this->getBondWithIdx(bondIdx);
   bond->setProp(common_properties::_MacroMolBeginAttachPt, beginAttachPt);
   bond->setProp(common_properties::_MacroMolEndAttachPt, endAttachPt);
-  return bondIdx;
+  return numBonds;
 }
 
 unsigned int MacroMol::addAtomToMacroAtomBond(unsigned int beginAtomIdx,
@@ -105,6 +107,21 @@ unsigned int MacroMol::addBond(unsigned int beginAtomIdx,
                "end atom is a macro atom");
 
   return RWMol::addBond(beginAtomIdx, endAtomIdx, bondType);
+}
+
+unsigned int MacroMol::addBond(Atom *beginAtom, Atom *endAtom,
+                               Bond::BondType bondType) {
+  PRECONDITION(beginAtom && endAtom, "NULL atom passed in");
+  return addBond(beginAtom->getIdx(), endAtom->getIdx(), bondType);
+}
+
+unsigned int MacroMol::addBond(Bond *bond, bool takeOwnership) {
+  PRECONDITION(bond, "NULL bond passed in");
+  PRECONDITION(!isMacroAtom(this->getAtomWithIdx(bond->getBeginAtomIdx())),
+               "begin atom is a macro atom");
+  PRECONDITION(!isMacroAtom(this->getAtomWithIdx(bond->getEndAtomIdx())),
+               "end atom is a macro atom");
+  return RWMol::addBond(bond, takeOwnership);
 }
 
 }  // namespace RDKit

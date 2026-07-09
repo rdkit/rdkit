@@ -18,22 +18,8 @@
 
 namespace RDKit {
 
-//! Classes of monomer that a macro atom can represent.
-/*!
-  Supported monomer classes for macro atoms.
-
-  A regular enum is used here because MonomerClass appears in public MacroMol
-  method signatures. RDKit's BETTER_ENUM macro can expand to different C++
-  types depending on per-source-file preprocessor settings, which can cause
-  link errors in shared-library and unity builds. String conversion is kept in
-  MacroMol.cpp so the public header stays stable.
-*/
-enum MonomerClass : int { AA, NA, CHEM, OTHER };
-
 class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
  public:
-  using RWMol::addBond;
-
   //! Adds a new macro atom to the molecule.
   /*!
     \param monomerClass the class of monomer the macro atom represents
@@ -53,11 +39,11 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
     \param endAttachPt   the attachment point on the end (macro) atom
     \param bondType      the type of the bond
 
-    \return the index of the newly added bond
+    \return the new number of bonds
   */
   unsigned int addMacroBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
                             int beginAttachPt, int endAttachPt,
-                            Bond::BondType bondType = Bond::BondType::SINGLE);
+                            Bond::BondType bondType = Bond::UNSPECIFIED);
 
   //! Adds a bond from a regular atom to a macro atom.
   /*!
@@ -66,11 +52,11 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
     \param endAttachPt      the attachment point on the end (macro) atom
     \param bondType         the type of the bond
 
-    \return the index of the newly added bond
+    \return the new number of bonds
   */
   unsigned int addAtomToMacroAtomBond(
       unsigned int beginAtomIdx, unsigned int endMacroAtomIdx, int endAttachPt,
-      Bond::BondType bondType = Bond::BondType::SINGLE);
+      Bond::BondType bondType = Bond::BondType::UNSPECIFIED);
 
   //! Adds a bond from a macro atom to a regular atom.
   /*!
@@ -79,11 +65,11 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
     \param beginAttachPt     the attachment point on the begin (macro) atom
     \param bondType          the type of the bond
 
-    \return the index of the newly added bond
+    \return the new number of bonds
   */
   unsigned int addMacroAtomToAtomBond(
       unsigned int beginMacroAtomIdx, unsigned int endAtomIdx,
-      int beginAttachPt, Bond::BondType bondType = Bond::BondType::SINGLE);
+      int beginAttachPt, Bond::BondType bondType = Bond::BondType::UNSPECIFIED);
 
   //! Adds a bond between two regular atoms.
   /*!
@@ -95,10 +81,15 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
     \param endAtomIdx   index of the atom where the bond ends
     \param bondType     the type of the bond
 
-    \return the index of the newly added bond
+    \return the new number of bonds
   */
   unsigned int addBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
-                       Bond::BondType bondType = Bond::BondType::SINGLE);
+                       Bond::BondType bondType = Bond::UNSPECIFIED);
+  //! \overload
+  unsigned int addBond(Atom *beginAtom, Atom *endAtom,
+                       Bond::BondType bondType = Bond::UNSPECIFIED);
+  //! \overload
+  unsigned int addBond(Bond *bond, bool takeOwnership = false);
 };
 }  // namespace RDKit
 

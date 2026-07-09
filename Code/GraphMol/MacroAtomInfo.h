@@ -12,15 +12,40 @@
   \brief Defines atom-level macro atom information
 
 */
-#include <RDGeneral/export.h>
 #ifndef RD_MACROATOMINFO_H
 #define RD_MACROATOMINFO_H
+
+#include <RDGeneral/export.h>
 
 #include <memory>
 #include <string>
 #include <utility>
 
 namespace RDKit {
+
+//! Classes of monomer that a macro atom can represent.
+/*!
+  Supported monomer classes for macro atoms.
+
+  A regular enum is used here because MonomerClass appears in public MacroMol
+  method signatures. RDKit's BETTER_ENUM macro can expand to different C++
+  types depending on per-source-file preprocessor settings, which can cause
+  link errors in shared-library and unity builds.
+*/
+enum MonomerClass : int {
+  AA,
+  NA,
+  CHEM,
+  OTHER
+};
+
+//! Converts a macro atom monomer class enum value to its recognized name.
+RDKIT_GRAPHMOL_EXPORT const char *monomerClassToString(
+    MonomerClass monomerClass);
+
+//! Converts a recognized macro atom monomer class name to its enum value.
+RDKIT_GRAPHMOL_EXPORT MonomerClass
+monomerClassFromString(const std::string &monomerClass);
 
 //! Captures atom-level information for macro atoms.
 /*!
@@ -38,8 +63,9 @@ class RDKIT_GRAPHMOL_EXPORT MacroAtomInfo {
     \param symbol       the symbol used to identify the monomer
     \param monomerClass the class of monomer the macro atom represents
   */
-  MacroAtomInfo(std::string symbol, std::string monomerClass = "")
-      : d_symbol(std::move(symbol)), d_monomerClass(std::move(monomerClass)) {}
+  MacroAtomInfo(std::string symbol,
+                MonomerClass monomerClass = MonomerClass::OTHER)
+      : d_symbol(std::move(symbol)), d_monomerClass(monomerClass) {}
   MacroAtomInfo(const MacroAtomInfo &other) = default;
 
   //! Returns the macro atom symbol.
@@ -52,13 +78,13 @@ class RDKIT_GRAPHMOL_EXPORT MacroAtomInfo {
   void setSymbol(const std::string &symbol) { d_symbol = symbol; }
 
   //! Returns the macro atom monomer class.
-  const std::string &getMonomerClass() const { return d_monomerClass; }
+  MonomerClass getMonomerClass() const { return d_monomerClass; }
 
   //! Sets the macro atom monomer class.
   /*!
     \param monomerClass the class of monomer the macro atom represents
   */
-  void setMonomerClass(const std::string &monomerClass) {
+  void setMonomerClass(MonomerClass monomerClass) {
     d_monomerClass = monomerClass;
   }
 
@@ -69,7 +95,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroAtomInfo {
 
  private:
   std::string d_symbol{""};
-  std::string d_monomerClass{""};
+  MonomerClass d_monomerClass{MonomerClass::OTHER};
 };
 }  // namespace RDKit
 
