@@ -58,12 +58,15 @@ std::string pyObjectToString(nb::object input) {
   return std::string(ws.begin(), ws.end());
 }
 
-nb::tuple MolsFromChemDrawBlockHelper(const std::string &block, bool sanitize,
-                                      bool removeHs) {
+nb::tuple MolsFromChemDrawBlockHelper(
+    const std::string &block, bool sanitize, bool removeHs,
+    RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
+        RDKit::v2::NeedsCleanPolicy::TrustSource) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
     mols = RDKit::v2::MolsFromChemDrawBlock(
-        block, {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML});
+        block,
+        {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy});
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -80,11 +83,13 @@ nb::tuple MolsFromChemDrawBlockHelper(const std::string &block, bool sanitize,
   return nb::tuple(res);
 }
 
-nb::tuple MolsFromChemDrawFileHelper(nb::object cdxml, bool sanitize,
-                                     bool removeHs) {
+nb::tuple MolsFromChemDrawFileHelper(
+    nb::object cdxml, bool sanitize, bool removeHs,
+    RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
+        RDKit::v2::NeedsCleanPolicy::TrustSource) {
   auto mols = RDKit::v2::MolsFromChemDrawFile(
       pyObjectToString(cdxml),
-      {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML});
+      {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy});
   nb::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
@@ -144,10 +149,15 @@ NB_MODULE(rdChemDraw, m) {
       .value("CDX", v2::CDXFormat::CDX)
       .value("CDXML", v2::CDXFormat::CDXML);
 
-  m.def(
-      "MolsFromChemDrawFile", MolsFromChemDrawFileHelper,
-      "filename"_a, "sanitize"_a = true, "removeHs"_a = true,
-      R"DOC(Extract all molecules from a ChemDraw file.
+  nb::enum_<v2::NeedsCleanPolicy>(m, "NeedsCleanPolicy")
+      .value("TrustSource", v2::NeedsCleanPolicy::TrustSource)
+      .value("TrustExplicitHydrogens",
+             v2::NeedsCleanPolicy::TrustExplicitHydrogens);
+
+  m.def("MolsFromChemDrawFile", MolsFromChemDrawFileHelper, "filename"_a,
+        "sanitize"_a = true, "removeHs"_a = true,
+        "needsCleanPolicy"_a = v2::NeedsCleanPolicy::TrustSource,
+        R"DOC(Extract all molecules from a ChemDraw file.
 
 Note that the ChemDraw format is large and complex, the RDKit doesn't support
 full functionality, just the base ones required for molecule and
@@ -161,13 +171,18 @@ ARGUMENTS:
 
   - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
 
+  - needsCleanPolicy: how to handle `NeedsClean` hydrogen metadata.
+  `TrustSource` honors `NeedsClean` by allowing sanitization to
+  recompute hydrogens. `TrustExplicitHydrogens` preserves the literal
+  source metadata when sanitize is True. [default TrustSource]
+
 RETURNS:
   a tuple of parsed Mol objects.)DOC");
 
-  m.def(
-      "MolsFromChemDrawBlock", MolsFromChemDrawBlockHelper,
-      "block"_a, "sanitize"_a = true, "removeHs"_a = true,
-      R"DOC(Extract all molecules from a ChemDraw file.
+  m.def("MolsFromChemDrawBlock", MolsFromChemDrawBlockHelper, "block"_a,
+        "sanitize"_a = true, "removeHs"_a = true,
+        "needsCleanPolicy"_a = v2::NeedsCleanPolicy::TrustSource,
+        R"DOC(Extract all molecules from a ChemDraw block.
 
 Note that the ChemDraw format is large and complex, the RDKit doesn't support
 full functionality, just the base ones required for molecule and
@@ -181,13 +196,17 @@ ARGUMENTS:
 
   - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
 
+  - needsCleanPolicy: how to handle `NeedsClean` hydrogen metadata.
+  `TrustSource` honors `NeedsClean` by allowing sanitization to
+  recompute hydrogens. `TrustExplicitHydrogens` preserves the literal
+  source metadata when sanitize is True. [default TrustSource]
+
 RETURNS:
   a tuple of parsed Mol objects.)DOC");
 
-  m.def(
-      "ReactionsFromChemDrawFile", ReactionsFromChemDrawFileHelper,
-      "filename"_a, "sanitize"_a = false, "removeHs"_a = false,
-      R"DOC(Extract all reactions from a ChemDraw file.
+  m.def("ReactionsFromChemDrawFile", ReactionsFromChemDrawFileHelper,
+        "filename"_a, "sanitize"_a = false, "removeHs"_a = false,
+        R"DOC(Extract all reactions from a ChemDraw file.
 
 Note that the ChemDraw format is large and complex, the RDKit doesn't support
 full functionality, just the base ones required for molecule and
@@ -204,10 +223,9 @@ ARGUMENTS:
 RETURNS:
   a tuple of parsed ChemicalReaction objects.)DOC");
 
-  m.def(
-      "ReactionsFromChemDrawBlock", ReactionsFromChemDrawBlockHelper,
-      "rxnblock"_a, "sanitize"_a = false, "removeHs"_a = false,
-      R"DOC(Extract all reactions from a ChemDraw text block.
+  m.def("ReactionsFromChemDrawBlock", ReactionsFromChemDrawBlockHelper,
+        "rxnblock"_a, "sanitize"_a = false, "removeHs"_a = false,
+        R"DOC(Extract all reactions from a ChemDraw text block.
 
 Note that the ChemDraw format is large and complex, the RDKit doesn't support
 full functionality, just the base ones required for molecule and
@@ -215,7 +233,7 @@ reaction parsing.
 
 ARGUMENTS:
 
-  - filename: the chemdraw filename (.cdx/.cdxml)
+  - rxnblock: the ChemDraw text block
 
   - sanitize: if True, sanitize the molecules [default True]
 
@@ -225,8 +243,8 @@ RETURNS:
   a tuple of parsed ChemicalReaction objects.)DOC");
 
   m.def(
-      "MolToChemDrawBlock", v2::MolToChemDrawBlock,
-      "mol"_a, "format"_a = v2::CDXFormat::CDXML,
+      "MolToChemDrawBlock", v2::MolToChemDrawBlock, "mol"_a,
+      "format"_a = v2::CDXFormat::CDXML,
       R"DOC(Convert a molecule into a chemdraw string using the specified format
 
 ARGUMENTS:
@@ -236,5 +254,5 @@ ARGUMENTS:
   - format: The ChemDraw format to use, CDXML/CDX [default CDXML]
 
 RETURNS:
-  an iterator of parsed ChemicalReaction objects.)DOC");
+  the ChemDraw string.)DOC");
 }
