@@ -77,9 +77,6 @@ inline constexpr std::string_view _CanonicalRankingNumber =
 inline constexpr std::string_view _ChiralityPossible = "_ChiralityPossible";
 inline constexpr std::string_view _CrippenLogP = "_CrippenLogP";
 inline constexpr std::string_view _CrippenMR = "_CrippenMR";
-inline constexpr std::string_view _MacroMolBeginAttachPt =
-    "_MacroMolBeginAttachPt";
-inline constexpr std::string_view _MacroMolEndAttachPt = "_MacroMolEndAttachPt";
 inline constexpr std::string_view _MMFFSanitized = "_MMFFSanitized";
 inline constexpr std::string_view _MolFileChiralFlag = "_MolFileChiralFlag";
 inline constexpr std::string_view MRV_SMA = "MRV SMA";

@@ -26,9 +26,9 @@ TEST_CASE("testBuildMacroMol") {
   auto macro_atom_2 = macro_mol->addMacroAtom(MonomerClass::AA, "C");
   auto macro_atom_3 = macro_mol->addMacroAtom(MonomerClass::AA, "D");
   auto num_bonds_1 = macro_mol->addMacroBond(macro_atom_1, macro_atom_2, 2, 1,
-                                             Bond::BondType::SINGLE);
+                                              Bond::BondType::SINGLE);
   auto num_bonds_2 = macro_mol->addMacroBond(macro_atom_2, macro_atom_3, 2, 1,
-                                             Bond::BondType::SINGLE);
+                                              Bond::BondType::SINGLE);
   auto bond_idx_1 = num_bonds_1 - 1;
   auto bond_idx_2 = num_bonds_2 - 1;
   auto bond_1 = macro_mol->getBondWithIdx(bond_idx_1);
@@ -42,11 +42,10 @@ TEST_CASE("testBuildMacroMol") {
   CHECK(bond_1->getIdx() == bond_idx_1);
   CHECK(bond_1->getBeginAtomIdx() == macro_atom_1);
   CHECK(bond_1->getEndAtomIdx() == macro_atom_2);
-  CHECK(bond_1->getBondType() == Bond::SINGLE);
   CHECK(bond_2->getIdx() == bond_idx_2);
   CHECK(bond_2->getBeginAtomIdx() == macro_atom_2);
   CHECK(bond_2->getEndAtomIdx() == macro_atom_3);
-  CHECK(bond_2->getBondType() == Bond::SINGLE);
+
   std::string sequence;
   for (const auto &atom : macro_mol->atoms()) {
     const auto *info = atom->getMacroAtomInfo();
@@ -55,28 +54,45 @@ TEST_CASE("testBuildMacroMol") {
     CHECK(info->getMonomerClass() == MonomerClass::AA);
   }
   CHECK(sequence == "ACD");
-
-  ROMol copied(*macro_mol);
-  const auto *copiedInfo =
-      copied.getAtomWithIdx(macro_atom_1)->getMacroAtomInfo();
-  REQUIRE(copiedInfo);
-  CHECK(copiedInfo->getSymbol() == "A");
-  CHECK(copiedInfo->getMonomerClass() == MonomerClass::AA);
+  for (auto bond : {bond_1, bond_2}) {
+    CHECK(bond->getBondType() == Bond::UNSPECIFIED);
+    const auto *info = bond->getMacroBondInfo();
+    REQUIRE(info);
+    CHECK(info->getNumBonds() == 1);
+    CHECK(info->getBond(0).beginAttachPt == 2);
+    CHECK(info->getBond(0).endAttachPt == 1);
+    CHECK(info->getBond(0).bondType ==
+          static_cast<unsigned int>(Bond::BondType::SINGLE));
+  }
 }
 
 TEST_CASE("testMultipleConnectionsSameMacroAtoms") {
   // Build a MacroMol with two macro atoms and two bonds between them. This
-  // results in an exception because the same macro atoms cannot be connected by
-  // multiple bonds. Eventually, we will want to allow this, but for now we
-  // raise an exception.
+  // results in one graph bond with two macro bond records.
   auto macro_mol = std::make_unique<MacroMol>();
   auto macro_atom_1 = macro_mol->addMacroAtom(MonomerClass::AA, "C");
   auto macro_atom_2 = macro_mol->addMacroAtom(MonomerClass::AA, "C");
-  macro_mol->addMacroBond(macro_atom_1, macro_atom_2, 2, 1);
-  // Raises an exception because the same macro atoms cannot be connected by
-  // multiple bonds
-  CHECK_THROWS_AS(macro_mol->addMacroBond(macro_atom_1, macro_atom_2, 3, 3),
-                  Invar::Invariant);
+  auto num_bonds_1 = macro_mol->addMacroBond(macro_atom_1, macro_atom_2, 2, 1);
+  auto num_bonds_2 = macro_mol->addMacroBond(macro_atom_1, macro_atom_2, 3, 3,
+                                            Bond::BondType::DOUBLE);
+  CHECK(num_bonds_1 == num_bonds_2);
+  auto bond_idx = num_bonds_1 - 1;
+  CHECK(macro_mol->getNumBonds() == 1);
+  auto graph_bond = macro_mol->getBondWithIdx(bond_idx);
+  CHECK(graph_bond->getBeginAtomIdx() == macro_atom_1);
+  CHECK(graph_bond->getEndAtomIdx() == macro_atom_2);
+  CHECK(graph_bond->getBondType() == Bond::BondType::UNSPECIFIED);
+  const auto *bond_info = graph_bond->getMacroBondInfo();
+  REQUIRE(bond_info);
+  REQUIRE(bond_info->getNumBonds() == 2);
+  CHECK(bond_info->getBond(0).beginAttachPt == 2);
+  CHECK(bond_info->getBond(0).endAttachPt == 1);
+  CHECK(bond_info->getBond(0).bondType ==
+        static_cast<unsigned int>(Bond::BondType::UNSPECIFIED));
+  CHECK(bond_info->getBond(1).beginAttachPt == 3);
+  CHECK(bond_info->getBond(1).endAttachPt == 3);
+  CHECK(bond_info->getBond(1).bondType ==
+        static_cast<unsigned int>(Bond::BondType::DOUBLE));
 }
 
 TEST_CASE("testAddAtomToMacroAtomBond") {
@@ -102,6 +118,14 @@ TEST_CASE("testAddAtomToMacroAtomBond") {
   auto bond = atomMacroAtom->getBondWithIdx(bond_idx);
   CHECK(bond->getBeginAtomIdx() == atom_idx);
   CHECK(bond->getEndAtomIdx() == macro_atom_idx);
+  CHECK(bond->getBondType() == Bond::BondType::UNSPECIFIED);
+  const auto *bond_info = bond->getMacroBondInfo();
+  REQUIRE(bond_info);
+  REQUIRE(bond_info->getNumBonds() == 1);
+  CHECK(bond_info->getBond(0).beginAttachPt == -1);
+  CHECK(bond_info->getBond(0).endAttachPt == 1);
+  CHECK(bond_info->getBond(0).bondType ==
+        static_cast<unsigned int>(Bond::BondType::UNSPECIFIED));
 }
 
 TEST_CASE("testAddMacroAtomToAtomBond") {
@@ -127,6 +151,14 @@ TEST_CASE("testAddMacroAtomToAtomBond") {
   auto bond = macroAtomAtom->getBondWithIdx(bond_idx);
   CHECK(bond->getBeginAtomIdx() == macro_atom_idx);
   CHECK(bond->getEndAtomIdx() == atom_idx);
+  CHECK(bond->getBondType() == Bond::BondType::UNSPECIFIED);
+  const auto *bond_info = bond->getMacroBondInfo();
+  REQUIRE(bond_info);
+  REQUIRE(bond_info->getNumBonds() == 1);
+  CHECK(bond_info->getBond(0).beginAttachPt == 1);
+  CHECK(bond_info->getBond(0).endAttachPt == -1);
+  CHECK(bond_info->getBond(0).bondType ==
+        static_cast<unsigned int>(Bond::BondType::UNSPECIFIED));
 }
 
 TEST_CASE("testAddBond") {
