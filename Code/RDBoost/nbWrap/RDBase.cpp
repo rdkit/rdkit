@@ -230,26 +230,6 @@ struct PyCaptureErrorLog : boost::noncopyable {
 };
 
 namespace {
-struct python_streambuf_wrapper {
-  typedef boost_adaptbx::python::streambuf wt;
-
-  static void wrap(nb::module_ &m) {
-    nb::class_<wt>(m, "streambuf")
-        .def(nb::init<nb::object &, std::size_t>(), "python_file_obj"_a,
-             "buffer_size"_a = 0, nb::keep_alive<1, 2>());
-  }
-};
-
-struct python_ostream_wrapper {
-  typedef boost_adaptbx::python::ostream wt;
-
-  static void wrap(nb::module_ &m) {
-    nb::class_<std::ostream>(m, "std_ostream");
-    nb::class_<wt, std::ostream>(m, "ostream")
-        .def(nb::init<nb::object &, std::size_t>(), "python_file_obj"_a,
-             "buffer_size"_a = 0);
-  }
-};
 
 void seedRNG(unsigned int seed) { std::srand(seed); }
 #if 0
@@ -442,9 +422,6 @@ NB_MODULE(rdBase, m) {
         "Provides a seed to the standard C random number generator\n"
         "This does not affect pure Python code, but is relevant to some "
         "of the RDKit C++ components.");
-
-  python_streambuf_wrapper::wrap(m);
-  python_ostream_wrapper::wrap(m);
 
   nb::class_<BlockLogs>(
       m, "BlockLogs",
