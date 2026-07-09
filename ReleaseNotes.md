@@ -6,6 +6,11 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
+Rody Arantes, Katharina Buchthal, David Cosgrove, Tad Hurst, Steven Kearnes,
+Brian Kelley, Niels Maeder, John Mayfield, Dan Nealschneider, Yakov Pechersky,
+Ricardo Rodriguez, Jon Swain, Rachel Walker, Inwan Yoo, Nic Zonta, ankar-dav,
+ajeyabsf, thomp-j, vwe-ibm
+
 ## Backwards incompatible changes:
 - `MolTransforms.h` now includes `<Eigen/Core>` instead of `<Eigen/Dense>`. C++
 code that included `MolTransforms.h` and relied on it to transitively pull in the
@@ -14,6 +19,79 @@ Eigen dense modules (LU/QR/SVD/etc.) must now include `<Eigen/Dense>` directly.
 takes arguments in C++. If you want to initialize data members to non-default
 values, use the designated initialization syntax. This change does not affect
 Python.
+
+## New Features and Enhancements:
+  - Add spiro flipping to 2D coord generation
+ (github pull #9204 from ZontaNicola)
+  - Adds SVE to BFGSOpt
+ (github pull #9216 from ajeyabsf)
+  - Multi conf gaussian shape
+ (github pull #9265 from DavidACosgrove)
+  - All-In-One coordinate refinement for ETKDG
+ (github pull #9292 from nmaeder)
+  - Synthon substructure search 2x performance
+ (github pull #9307 from d-b-w)
+  - Configurable stereo labels in MolDraw2D
+ (github pull #9311 from DavidACosgrove)
+  - Replace combineMols with RWMol::insertMol in SynthonSpaceSearch
+ (github pull #9319 from DavidACosgrove)
+  - Add opt-in unity (jumbo) builds + fix latent missing include guards
+ (github pull #9342 from skearnes)
+  - Make substructure search Ctrl+c interruptible
+ (github pull #9349 from ricrogz)
+
+## Documentation:
+  - `rdchem.pyi` typing issue: non-default parameter following default parameter
+ (github issue #9335 from ankar-dav)
+
+## Bug Fixes:
+  - Update RDKit_Book.rst
+ (github pull #7946 from johnmay)
+  - Drawing SVG panels only sets background for first one
+ (github issue #9310 from DavidACosgrove)
+  - Fix STEREOANY (wavy bond) loss during InChI roundtrip
+ (github pull #9315 from rodyarantes)
+  - Build: forward-slash Python3_EXECUTABLE when generating rdkit-stubs
+ (github pull #9318 from skearnes)
+  - Some minor changes to GaussianShape
+ (github pull #9321 from DavidACosgrove)
+  - DrawMoleculeWithHighlights: RuntimeError: Cannot normalize a zero length vector
+ (github issue #9324 from vwe-ibm)
+  - CDXML reads of atropisomer don't run AssignStereochem
+ (github issue #9330 from pechersky)
+  - Catch a few more potential zero length vectors.
+ (github pull #9333 from DavidACosgrove)
+  - Support ChemDraw abnormal valence import
+ (github pull #9348 from pechersky)
+  - Check OOB causing OSV-2022-1288
+ (github pull #9361 from thomp-j)
+  - rdRGroupDecomposition: error when using both allowMultipleCoresInSameMol and includeTargetMolInResults
+ (github issue #9363 from jonswain)
+  - Use the same libexpat as the current python when building
+ (github pull #9369 from bp-kelley)
+  - Remove duplicate experimental torsion entry
+ (github pull #9374 from nmaeder)
+  - fix rendering of mols with multiple highlights from PandasTools
+ (github pull #9377 from greglandrum)
+
+## Cleanup work:
+  - Clean up `DistGeomHelpers` tests
+ (github pull #9320 from nmaeder)
+  - Fix DistGeomHelpers tests on arm64
+ (github pull #9328 from tadhurst-cdd)
+  - Remove unused imports from python tests
+ (github pull #9336 from nmaeder)
+  - Refactor BoundsMatrixBuilder
+ (github pull #9337 from kabu00002)
+  - Trim heavy includes from public headers (Eigen/Dense, boost/format)
+ (github pull #9341 from skearnes)
+  - Fix latent -Wdeprecated-copy in Seed and SubstructTerm
+ (github pull #9352 from skearnes)
+  - Cleanup: Remove SVN leftovers
+ (github pull #9379 from nmaeder)
+  - remove a couple of compiler warnings when compiling with -fhardened
+ (github pull #9385 from greglandrum)
+
 
 # Release_2026.03.3
 (Changes relative to Release_2026.03.2)
