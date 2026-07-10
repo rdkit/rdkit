@@ -10,11 +10,22 @@
 
 #include "MacroMolTemplate.h"
 
+#include <algorithm>
+
 namespace RDKit {
 
 namespace {
 const std::string SUP_TYPE = "SUP";
 const std::string LGRP_CLASS = "LGRP";
+
+size_t getMainGroupSize(const std::shared_ptr<MacroMolEntry> &entry) {
+  if (!entry || !entry->molTemplate) {
+    return 0;
+  }
+  const auto &templ = *entry->molTemplate;
+  const auto *mainSgroup = templ.getMainSgroup();
+  return mainSgroup ? mainSgroup->getAtoms().size() : 0;
+}
 
 bool isMainSgroup(const SubstanceGroup &sgroup) {
   std::string type;
@@ -48,6 +59,8 @@ unsigned int MacroMolTemplate::addLeavingGroup(
     const std::vector<unsigned int> &atomIdxs, unsigned int attachAtomIdx,
     unsigned int leavingAtomIdx, const int attachPt) {
   PRECONDITION(getMainSgroup() != nullptr, "main group must be set first");
+  PRECONDITION(getMainSgroup()->includesAtom(attachAtomIdx),
+               "attachment atom must be part of the main group");
 
   SubstanceGroup sgroup(this, SUP_TYPE);
   sgroup.setProp("CLASS", LGRP_CLASS);
@@ -90,24 +103,70 @@ std::vector<const SubstanceGroup *> MacroMolTemplate::getLeavingGroups() const {
 
 void MacroMolTemplateLibrary::addEntry(
     const std::shared_ptr<MacroMolEntry> &macroMolEntry) {
-  byTemplateName[{macroMolEntry->monomerClass, macroMolEntry->templateName}] =
-      macroMolEntry;
-  bySymbol[{macroMolEntry->monomerClass, macroMolEntry->symbol}] =
-      macroMolEntry;
+  const MacroMolTemplateKey templateKey{macroMolEntry->monomerClass,
+                                        macroMolEntry->templateName};
+  const auto templateIt = byTemplateName.find(templateKey);
+  if (templateIt != byTemplateName.end() &&
+      templateIt->second != macroMolEntry) {
+    throw ValueErrorException(
+        "MacroMolTemplateLibrary already contains an entry with the same "
+        "monomer class and template name");
+  }
+
+  const MacroMolTemplateKey symbolKey{macroMolEntry->monomerClass,
+                                      macroMolEntry->symbol};
+  const auto symbolIt = bySymbol.find(symbolKey);
+  if (symbolIt != bySymbol.end() && symbolIt->second != macroMolEntry) {
+    throw ValueErrorException(
+        "MacroMolTemplateLibrary already contains an entry with the same "
+        "monomer class and symbol");
+  }
+
+  // If this exact entry is already registered, the maps and orderedEntries
+  // already hold it; nothing to do. byTemplateName and bySymbol are always
+  // written together below, so an entry is present in both maps or neither;
+  // the conflict checks above guarantee any hit here is this same entry.
+  const bool haveTemplate = templateIt != byTemplateName.end();
+  const bool haveSymbol = symbolIt != bySymbol.end();
+  if (haveTemplate || haveSymbol) {
+    CHECK_INVARIANT(haveTemplate && haveSymbol,
+                    "template/symbol maps out of sync");
+    return;
+  }
+
+  byTemplateName[templateKey] = macroMolEntry;
+  bySymbol[symbolKey] = macroMolEntry;
+
+  // Cache the main-group size once (getMainGroupSize scans the template's
+  // substance groups) and keep orderedEntries sorted largest-main-group-first,
+  // preserving insertion order among equal sizes, so entries() needs no work
+  // and MolToMacroMol sees a stable, deterministic precedence.
+  macroMolEntry->mainGroupSize = getMainGroupSize(macroMolEntry);
+  const auto pos = std::upper_bound(
+      orderedEntries.begin(), orderedEntries.end(),
+      macroMolEntry->mainGroupSize,
+      [](size_t size, const std::shared_ptr<MacroMolEntry> &entry) {
+        return size > entry->mainGroupSize;
+      });
+  orderedEntries.insert(pos, macroMolEntry);
+}
+
+const std::vector<std::shared_ptr<MacroMolEntry>> &
+MacroMolTemplateLibrary::entries() const {
+  return orderedEntries;
 }
 
 const std::shared_ptr<MacroMolEntry> &
 MacroMolTemplateLibrary::getByTemplateName(
-    const std::string &monomerClass, const std::string &templateName) const {
+    MonomerClass monomerClass, const std::string &templateName) const {
   static std::shared_ptr<MacroMolEntry> empty;
   auto it = byTemplateName.find({monomerClass, templateName});
   if (it != byTemplateName.end()) return it->second;
   return empty;
 }
 
-const std::shared_ptr<MacroMolEntry> &
-MacroMolTemplateLibrary::getBySymbol(const std::string &monomerClass,
-                                     const std::string &symbol) const {
+const std::shared_ptr<MacroMolEntry> &MacroMolTemplateLibrary::getBySymbol(
+    MonomerClass monomerClass, const std::string &symbol) const {
   static std::shared_ptr<MacroMolEntry> empty;
   auto it = bySymbol.find({monomerClass, symbol});
   if (it != bySymbol.end()) return it->second;

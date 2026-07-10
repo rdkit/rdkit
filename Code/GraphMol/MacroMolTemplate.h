@@ -14,6 +14,7 @@
 #include <RDGeneral/export.h>
 #include <GraphMol/RWMol.h>
 #include <GraphMol/SubstanceGroup.h>
+#include <GraphMol/MacroAtomInfo.h>
 #include <map>
 #include <memory>
 #include <string>
@@ -42,27 +43,34 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate : public RWMol {
 };
 
 struct RDKIT_GRAPHMOL_EXPORT MacroMolEntry {
-  std::string monomerClass;  // MonomerClass as string, e.g., "AA", "NA", "CHEM"
+  MonomerClass monomerClass = MonomerClass::OTHER;  // e.g., AA, NA, CHEM
   std::string templateName;  // Name of the template, e.g., "ALA"
   std::string symbol;        // e.g., "A" for Alanine
   std::string original_data;  // Original definition (SMILES, SDF, etc.)
   // Parsed, annotated template molecule
   std::shared_ptr<MacroMolTemplate> molTemplate;
+
+  // Library-managed: set by MacroMolTemplateLibrary::addEntry from the
+  // template's main group and used to order entries largest-first. Do not set
+  // manually.
+  size_t mainGroupSize = 0;
 };
 
 class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateLibrary {
  public:
   void addEntry(const std::shared_ptr<MacroMolEntry> &macroMolEntry);
+  const std::vector<std::shared_ptr<MacroMolEntry>> &entries() const;
   const std::shared_ptr<MacroMolEntry> &getByTemplateName(
-      const std::string &monomerClass, const std::string &templateName) const;
+      MonomerClass monomerClass, const std::string &templateName) const;
   const std::shared_ptr<MacroMolEntry> &getBySymbol(
-      const std::string &monomerClass, const std::string &symbol) const;
+      MonomerClass monomerClass, const std::string &symbol) const;
 
  private:
-  using MacroMolTemplateKey = std::pair<std::string, std::string>;
+  using MacroMolTemplateKey = std::pair<MonomerClass, std::string>;
 
   std::map<MacroMolTemplateKey, std::shared_ptr<MacroMolEntry>> byTemplateName;
   std::map<MacroMolTemplateKey, std::shared_ptr<MacroMolEntry>> bySymbol;
+  std::vector<std::shared_ptr<MacroMolEntry>> orderedEntries;
 };
 
 }  // namespace RDKit
