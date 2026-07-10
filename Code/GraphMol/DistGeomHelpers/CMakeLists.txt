@@ -14,6 +14,14 @@ rdkit_catch_test(testDistGeomHelpers testDgeomHelpers.cpp
 rdkit_catch_test(distGeomHelpersCatch catch_tests.cpp 
 LINK_LIBRARIES DistGeomHelpers MolTransforms FileParsers SmilesParse )
 
+rdkit_catch_test(testDgeomHelpersGH3019_0 testGithub3019.cpp
+           LINK_LIBRARIES DistGeomHelpers SmilesParse
+           CLIARGS --shard-count=2 --shard-index=0 )
+
+rdkit_catch_test(testDgeomHelpersGH3019_1 testGithub3019.cpp
+           LINK_LIBRARIES DistGeomHelpers SmilesParse 
+           CLIARGS --shard-count=2 --shard-index=1 )
+
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
