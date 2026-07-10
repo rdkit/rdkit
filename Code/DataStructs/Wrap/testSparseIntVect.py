@@ -87,7 +87,6 @@ class TestCase(unittest.TestCase):
     v2 = pickle.loads(pkl)
     self.assertTrue(v2 == v1)
 
-  @unittest.skipIf(usingNanobind, "nanobind doesn't support legacy pickles")
   def test3LegacyPickle1(self):
     """
 
@@ -116,7 +115,6 @@ class TestCase(unittest.TestCase):
       v3 = pickle.load(f)
       self.assertTrue(v3 == v1)
 
-  @unittest.skipIf(usingNanobind, "nanobind doesn't support legacy pickles")
   def test3LegacyPickle2(self):
     """
 

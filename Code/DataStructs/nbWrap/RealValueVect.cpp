@@ -55,6 +55,8 @@ struct realValVec_wrapper {
                                static_cast<size_t>(b.size())));
              }),
              "pkl"_a)
+        .def(nb::new_([](std::string pkl) { return new RealValueVect(pkl); }),
+             "pkl"_a)
         .def("__len__", &RealValueVect::getLength,
              "Get the number of entries in the vector")
         .def("__setitem__", &RealValueVect::setVal,

@@ -68,6 +68,9 @@ struct discreteValVec_wrapper {
                                static_cast<size_t>(b.size())));
              }),
              "pkl"_a)
+        .def(nb::new_(
+                 [](std::string pkl) { return new DiscreteValueVect(pkl); }),
+             "pkl"_a)
         .def("__len__", &DiscreteValueVect::getLength,
              "Get the number of entries in the vector")
         .def("__setitem__", &DiscreteValueVect::setVal, "i"_a, "val"_a,

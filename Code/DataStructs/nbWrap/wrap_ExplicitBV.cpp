@@ -135,6 +135,8 @@ struct EBV_wrapper {
                                static_cast<size_t>(b.size())));
              }),
              "pkl"_a)
+        .def(nb::new_([](std::string pkl) { return new ExplicitBitVect(pkl); }),
+             "pkl"_a)
         .def(nb::new_([](unsigned int size, bool bitsSet) {
                return new ExplicitBitVect(size, bitsSet);
              }),

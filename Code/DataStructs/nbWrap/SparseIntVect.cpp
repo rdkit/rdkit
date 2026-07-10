@@ -137,6 +137,10 @@ struct sparseIntVec_wrapper {
                                static_cast<size_t>(b.size())));
              }),
              "pkl"_a)
+        .def(nb::new_([](std::string pkl) {
+               return new SparseIntVect<IndexType>(pkl);
+             }),
+             "pkl"_a)
         .def(nb::new_([](IndexType len) {
                return new SparseIntVect<IndexType>(len);
              }),

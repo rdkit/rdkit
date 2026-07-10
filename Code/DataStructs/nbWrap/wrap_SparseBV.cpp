@@ -128,6 +128,8 @@ struct SBV_wrapper {
              }),
 
              "pkl"_a)
+        .def(nb::new_([](std::string pkl) { return new SparseBitVect(pkl); }),
+             "pkl"_a)
         .def(
             "SetBit", (bool (SBV::*)(unsigned int))&SBV::setBit, "which"_a,
             R"DOC(Turns on a particular bit. Returns the original state of the bit.
