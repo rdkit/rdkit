@@ -2,9 +2,11 @@ import copy
 import math
 import os
 import signal
+import sys
 import time
 import unittest
 import numpy
+
 
 import rdkit.DistanceGeometry as DG
 from rdkit import Chem, RDConfig, rdBase
@@ -881,11 +883,11 @@ class TestCase(unittest.TestCase):
     # set up our handler
     signal.signal(signal.SIGINT, handler)
     mol = Chem.AddHs(Chem.MolFromSmiles("C[C@H](O)c1ccccc1"))
-    params = AllChem.ETKDGv3()
+    params = AllChem.KDG()
     params.randomSeed = 0xF00D
     # now embed, which changes the handler
     AllChem.EmbedMolecule(mol, params)
-    os.kill(os.getpid(), signal.SIGINT)
+    os.kill(os.getpid(), signal.CTRL_C_EVENT if sys.platform == 'win32' else signal.SIGINT)
     time.sleep(0.2)
     self.assertEqual(seen, [signal.SIGINT])
 
