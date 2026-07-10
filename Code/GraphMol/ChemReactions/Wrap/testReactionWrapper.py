@@ -487,7 +487,6 @@ M  END
     labels = rxn.AddRecursiveQueriesToReaction(qs, 'query', getLabels=True)
     self.assertTrue(len(labels), 1)
 
-  @unittest.skipIf(not haveFilterCatalog, "FilterCatalog not available in nanobind yet")
   def test17bAddRecursiveQueriesToReaction(self):
     from rdkit.Chem import FilterCatalog
     rxn = rdChemReactions.ReactionFromSmarts("[C:1][O:2].[N:3]>>[C:1][N:2]")
