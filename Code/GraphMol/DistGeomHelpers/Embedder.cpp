@@ -372,7 +372,7 @@ bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
       std::ranges::count_if(eargs.etkdgDetails->angles,
                             [](const auto &angle) { return angle[3]; }) +
       eargs.etkdgDetails->improperAtoms.size();
-  if (totalEnergy > (nCenters * planarityTolerance)){
+  if (totalEnergy > (nCenters * planarityTolerance)) {
     return false;
   }
   for (const auto &contrib : field->contribs()) {
@@ -1353,8 +1353,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -1840,7 +1840,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     }
     int numThreads = getNumThreadsToUse(params.numThreads);
 
-    ControlCHandler::reset();
+    ControlCHandler hdlr;
+    // ControlCHandler::reset();
 
     // do the embedding, using multiple threads if requested
     detail::EmbedArgs eargs = {&confsOk,        fourD,
@@ -1874,7 +1875,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       res.push_back(-1);
       return;
     }
-    if (ControlCHandler::getGotSignal()) {
+    if (hdlr.getGotSignal()) {
       BOOST_LOG(rdWarningLog) << INTERRUPT_MESSAGE << std::endl;
       return;
     }

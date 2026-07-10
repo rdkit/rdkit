@@ -14,6 +14,7 @@
 #include <atomic>
 #include <csignal>
 #include <stdexcept>
+#include <iostream>
 
 #include <RDGeneral/export.h>
 
@@ -45,23 +46,29 @@ class ControlCCaught : public std::runtime_error {
 //! released, otherwise a crash is inevitable at some future point.
 class ControlCHandler {
  public:
-  ControlCHandler() { d_prev_handler = std::signal(SIGINT, signalHandler); }
+  ControlCHandler() {
+    std::cerr << "  SETTING UP THE CONTROLC HANDLER " << this << std::endl;
+    d_prev_handler = std::signal(SIGINT, signalHandler);
+  }
   ControlCHandler(const ControlCHandler &) = delete;
   ControlCHandler(ControlCHandler &&) = delete;
   ControlCHandler &operator=(const ControlCHandler &) = delete;
   ControlCHandler &operator=(ControlCHandler &&) = delete;
   ~ControlCHandler() {
+    std::cerr << "  DESTROYING THE CONTROLC HANDLER " << this << std::endl;
     std::signal(SIGINT, d_prev_handler);
     d_gotSignal = false;
   }
   static bool getGotSignal() { return d_gotSignal; }
   static void signalHandler(int signalNumber) {
     if (signalNumber == SIGINT) {
+      std::cerr << "  GOT A SIGINT, SETTING THE FLAG " << std::endl;
       d_gotSignal = true;
       std::signal(SIGINT, d_prev_handler);
     }
   }
   static void reset() {
+    std::cerr << "  RESETTING THE CONTROLC HANDLER " << std::endl;
     d_gotSignal = false;
     std::signal(SIGINT, signalHandler);
   }
