@@ -747,25 +747,9 @@ TorsionValue _getInRing14Type(const ROMol &mol, const Bond *bnd1,
   // we add a check for the ring size here because there's no reason to
   // assume cis bonds in bigger rings. This was part of github #1240:
   // failure to embed larger aromatic rings
-  if (ringSize <= 8 && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
-      (stype != Bond::STEREOE && stype != Bond::STEREOTRANS)) {
-    // the ring check here was a big part of github #697
-    if (mol.getRingInfo()->numBondRings(bnd2->getIdx()) > 1) {
-      if (mol.getRingInfo()->numBondRings(bnd1->getIdx()) == 1 &&
-          mol.getRingInfo()->numBondRings(bnd3->getIdx()) == 1) {
-        for (const auto &br : mol.getRingInfo()->bondRings()) {
-          if (std::find(br.begin(), br.end(), bnd1->getIdx()) != br.end()) {
-            if (std::find(br.begin(), br.end(), bnd3->getIdx()) != br.end()) {
-              return {TorsionType::CIS};
-            }
-            break;
-          }
-        }
-      }
-    } else {
-      return {TorsionType::CIS};
-    }
-  } else if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
+  if ((ringSize <= 8 && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
+       (stype != Bond::STEREOE && stype != Bond::STEREOTRANS)) ||
+      stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
     return {TorsionType::CIS};
   } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
     return {TorsionType::TRANS};
