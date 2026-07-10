@@ -129,6 +129,10 @@ NB_MODULE(rdScaffoldNetwork, m) {
              return new ScaffoldNetwork::ScaffoldNetwork(s);
            }),
            "pkl"_a)
+      .def(nb::new_([](std::string pkl) {
+             return new ScaffoldNetwork::ScaffoldNetwork(pkl);
+           }),
+           "pkl"_a)
 #endif
       .def_ro("nodes", &ScaffoldNetwork::ScaffoldNetwork::nodes,
               "the sequence of SMILES defining the nodes")

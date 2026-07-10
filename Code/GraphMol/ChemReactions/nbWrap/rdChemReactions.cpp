@@ -514,6 +514,10 @@ Sample Usage:
                  std::string(static_cast<const char *>(b.data()), b.size()));
            }),
            "binStr"_a)
+      .def(nb::new_([](std::string pkl) {
+             return new RDKit::ChemicalReaction(pkl);
+           }),
+           "binStr"_a)
       .def(nb::new_([](const RDKit::ChemicalReaction &other) {
              return new RDKit::ChemicalReaction(other);
            }),
@@ -828,7 +832,7 @@ of the replacements argument.)DOC",
         nb::rv_policy::take_ownership);
 
   m.def("ReactionToSmarts",
-        (std::string(*)(
+        (std::string (*)(
             const RDKit::ChemicalReaction &))RDKit::ChemicalReactionToRxnSmarts,
         "reaction"_a,
         "construct a reaction SMARTS string for a ChemicalReaction");
@@ -841,49 +845,49 @@ of the replacements argument.)DOC",
         nb::rv_policy::take_ownership);
 
   m.def("ReactionToSmiles",
-        (std::string(*)(const RDKit::ChemicalReaction &,
-                        bool))RDKit::ChemicalReactionToRxnSmiles,
+        (std::string (*)(const RDKit::ChemicalReaction &,
+                         bool))RDKit::ChemicalReactionToRxnSmiles,
         "reaction"_a, "canonical"_a = true,
         "construct a reaction SMILES string for a ChemicalReaction");
 
   m.def("ReactionToSmarts",
-        (std::string(*)(const RDKit::ChemicalReaction &,
-                        const RDKit::SmilesWriteParams &))
+        (std::string (*)(const RDKit::ChemicalReaction &,
+                         const RDKit::SmilesWriteParams &))
             RDKit::ChemicalReactionToRxnSmarts,
         "reaction"_a, "params"_a,
         "construct a reaction SMARTS string for a ChemicalReaction");
 
   m.def("ReactionToSmiles",
-        (std::string(*)(const RDKit::ChemicalReaction &,
-                        const RDKit::SmilesWriteParams &))
+        (std::string (*)(const RDKit::ChemicalReaction &,
+                         const RDKit::SmilesWriteParams &))
             RDKit::ChemicalReactionToRxnSmiles,
         "reaction"_a, "params"_a,
         "construct a reaction SMILES string for a ChemicalReaction");
 
   m.def("ReactionToCXSmarts",
-        (std::string(*)(const RDKit::ChemicalReaction &))
+        (std::string (*)(const RDKit::ChemicalReaction &))
             RDKit::ChemicalReactionToCXRxnSmarts,
         "reaction"_a,
         "construct a reaction SMARTS string for a ChemicalReaction");
 
   m.def("ReactionToCXSmiles",
-        (std::string(*)(const RDKit::ChemicalReaction &,
-                        bool))RDKit::ChemicalReactionToCXRxnSmiles,
+        (std::string (*)(const RDKit::ChemicalReaction &,
+                         bool))RDKit::ChemicalReactionToCXRxnSmiles,
         "reaction"_a, "canonical"_a = true,
         "construct a reaction SMILES string for a ChemicalReaction");
 
   m.def("ReactionToCXSmarts",
-        (std::string(*)(const RDKit::ChemicalReaction &,
-                        const RDKit::SmilesWriteParams &,
-                        std::uint32_t))RDKit::ChemicalReactionToCXRxnSmarts,
+        (std::string (*)(const RDKit::ChemicalReaction &,
+                         const RDKit::SmilesWriteParams &,
+                         std::uint32_t))RDKit::ChemicalReactionToCXRxnSmarts,
         "reaction"_a, "params"_a,
         "flags"_a = RDKit::SmilesWrite::CXSmilesFields::CX_ALL,
         "construct a reaction CXSMARTS string for a ChemicalReaction");
 
   m.def("ReactionToCXSmiles",
-        (std::string(*)(const RDKit::ChemicalReaction &,
-                        const RDKit::SmilesWriteParams &,
-                        std::uint32_t))RDKit::ChemicalReactionToCXRxnSmiles,
+        (std::string (*)(const RDKit::ChemicalReaction &,
+                         const RDKit::SmilesWriteParams &,
+                         std::uint32_t))RDKit::ChemicalReactionToCXRxnSmiles,
         "reaction"_a, "params"_a,
         "flags"_a = RDKit::SmilesWrite::CXSmilesFields::CX_ALL,
         "construct a reaction CXSMILES string for a ChemicalReaction");

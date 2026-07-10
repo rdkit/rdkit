@@ -508,6 +508,15 @@ struct mol_wrapper {
              }),
              "Constructor from a binary string with property flags",
              "pklString"_a, "propertyFlags"_a)
+        .def(nb::new_([](std::string pkl) {
+      return new ROMol(pkl);
+             }),
+             "Constructor from a binary string", "pklString"_a)
+        .def(nb::new_([](std::string pkl, unsigned int propertyFlags) {
+      return new ROMol(pkl, propertyFlags);
+             }),
+             "Constructor from a binary string with property flags",
+             "pklString"_a, "propertyFlags"_a)
         .def(nb::new_([](const ROMol &m, bool quickCopy, int confId) {
       return new ROMol(m, quickCopy, confId);
              }),
@@ -1129,6 +1138,13 @@ it's probably not of general interest.
                    std::string(static_cast<const char *>(b.data()),
                                static_cast<size_t>(b.size())),
                    propertyFlags);
+             }),
+             "Constructor from a binary string with property flags",
+             "pklString"_a, "propertyFlags"_a)
+        .def(nb::new_([](std::string pkl) { return new ReadWriteMol(pkl); }),
+             "Constructor from a binary string", "pklString"_a)
+        .def(nb::new_([](std::string pkl, unsigned int propertyFlags) {
+               return new ReadWriteMol(pkl, propertyFlags);
              }),
              "Constructor from a binary string with property flags",
              "pklString"_a, "propertyFlags"_a)

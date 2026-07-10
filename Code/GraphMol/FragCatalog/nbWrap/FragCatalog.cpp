@@ -142,6 +142,9 @@ void wrap_fragcat(nb::module_ &m) {
                  static_cast<const char *>(pkl.data()), pkl.size()));
            }),
            "pickle"_a)
+      .def(
+          nb::new_([](std::string pkl) { return new RDKit::FragCatalog(pkl); }),
+          "pickle"_a)
       .def("GetNumEntries", &RDKit::FragCatalog::getNumEntries)
       .def("GetFPLength", &RDKit::FragCatalog::getFPLength)
       .def("GetCatalogParams",

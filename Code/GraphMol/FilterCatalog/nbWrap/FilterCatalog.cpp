@@ -413,6 +413,8 @@ hzone_phenol_A(479)
                  static_cast<const char *>(pkl.data()), pkl.size()));
            }),
            "pickle"_a)
+      .def(nb::new_([](std::string pkl) { return new FilterCatalog(pkl); }),
+           "pickle"_a)
       .def(nb::new_([](const FilterCatalogParams &ps) {
              return new FilterCatalog(ps);
            }),

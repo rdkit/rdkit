@@ -582,6 +582,7 @@ void wrap_substructlibrary(nb::module_ &m) {
         return new SubstructLibrary(
             std::string(static_cast<const char *>(b.data()), b.size()));
       }))
+      .def(nb::new_([](std::string pkl) { return new SubstructLibrary(pkl); }))
       .def(nb::new_([](nb::handle mols_h) {
              MolHolderBase *mols = nb::cast<MolHolderBase *>(mols_h);
              return new SubstructLibrary(
