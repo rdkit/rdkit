@@ -1,6 +1,8 @@
 rdkit_library(GraphMol
         Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp
-        MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp MacroMol.cpp
+        MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp
+        MacroAtomInfo.cpp
+        MacroMol.cpp
         PeriodicTable.cpp
         atomic_data.cpp QueryOps.cpp MolPickler.cpp Canon.cpp
         AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp

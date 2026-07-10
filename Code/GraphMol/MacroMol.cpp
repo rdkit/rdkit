@@ -10,40 +10,11 @@
 #include "MacroMol.h"
 #include "Atom.h"
 
-#include <array>
+#include <RDGeneral/Invariant.h>
+
 #include <utility>
 
 namespace RDKit {
-namespace {
-const std::array<std::pair<MonomerClass, const char *>, 4> monomerClassNames = {
-    {
-        {MonomerClass::AA, "AA"},
-        {MonomerClass::NA, "NA"},
-        {MonomerClass::CHEM, "CHEM"},
-        {MonomerClass::OTHER, "OTHER"},
-    }};
-}  // namespace
-
-const char *monomerClassToString(MonomerClass monomerClass) {
-  for (const auto &[value, name] : monomerClassNames) {
-    if (value == monomerClass) {
-      return name;
-    }
-  }
-  PRECONDITION(false, "unknown monomer class");
-  return "";
-}
-
-MonomerClass monomerClassFromString(const std::string &monomerClass) {
-  for (const auto &[value, name] : monomerClassNames) {
-    if (monomerClass == name) {
-      return value;
-    }
-  }
-  PRECONDITION(false, "unknown monomer class");
-  return MonomerClass::OTHER;
-}
-
 namespace {
 bool isMacroAtom(const Atom *atom) {
   return atom->getMacroAtomInfo() != nullptr;
