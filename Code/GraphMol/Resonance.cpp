@@ -81,12 +81,12 @@ struct CEStats {
 
 class ConjElectrons {
  public:
-  enum ConjElectronsFlags {
+  enum ConjElectronsFlags : unsigned int {
     HAVE_CATION_RIGHT_OF_N = (1 << 0),
     HAVE_CATION = (1 << 1),
     HAVE_ANION = (1 << 2)
   };
-  enum FPFlags {
+  enum FPFlags : unsigned int {
     FP_BONDS = (1 << 0),
     FP_ATOMS = (1 << 1)
   };
@@ -177,7 +177,7 @@ class CEVect2Store {
 
 class AtomElectrons {
  public:
-  enum AtomElectronsFlags {
+  enum AtomElectronsFlags : std::uint64_t{
     LAST_BOND = (1 << 0),
     DEFINITIVE = (1 << 1),
     STACKED = (1 << 2),
@@ -233,7 +233,7 @@ class AtomElectrons {
 
 class BondElectrons {
  public:
-  enum BondElectronsFlags {
+  enum BondElectronsFlags : std::uint64_t{
     DEFINITIVE = (1 << 0)
   };
   BondElectrons(ConjElectrons *parent, const Bond *b);

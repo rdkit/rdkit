@@ -34,7 +34,7 @@ class RDKIT_FORCEFIELD_EXPORT NonbondedContrib : public ForceFieldContrib {
   }
 
  private:
-  enum ContribType {
+  enum ContribType : unsigned int {
     VDW = 1 << 0,           //!< van der Waals contribution
     ELECTROSTATIC = 1 << 1  //!< electrostatic contribution
   };

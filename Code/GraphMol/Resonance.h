@@ -86,7 +86,7 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplierCallback {
 
 class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
  public:
-  enum ResonanceFlags {
+  enum ResonanceFlags : unsigned int {
     /*! include resonance structures whose octets are less complete
      *  than the most octet-complete structure */
     ALLOW_INCOMPLETE_OCTETS = (1 << 0),
