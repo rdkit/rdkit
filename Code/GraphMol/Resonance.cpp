@@ -177,7 +177,7 @@ class CEVect2Store {
 
 class AtomElectrons {
  public:
-  enum AtomElectronsFlags : std::uint64_t{
+  enum AtomElectronsFlags : unsigned int{
     LAST_BOND = (1 << 0),
     DEFINITIVE = (1 << 1),
     STACKED = (1 << 2),
@@ -233,7 +233,7 @@ class AtomElectrons {
 
 class BondElectrons {
  public:
-  enum BondElectronsFlags : std::uint64_t{
+  enum BondElectronsFlags : unsigned int{
     DEFINITIVE = (1 << 0)
   };
   BondElectrons(ConjElectrons *parent, const Bond *b);
