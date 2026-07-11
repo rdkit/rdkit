@@ -19,7 +19,7 @@
 using namespace RDKit;
 using namespace std;
 
-using Mol = class ROMol;
+using Mol = ROMol;
 
 void test1() {
   string smi = "CCOC";

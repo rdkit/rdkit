@@ -17,7 +17,7 @@
 
 using namespace RDKit;
 using namespace std;
-using Mol = class RWMol;
+using Mol = RWMol;
 
 void test1() {
   BOOST_LOG(rdErrorLog) << "---------------------- Test1" << std::endl;

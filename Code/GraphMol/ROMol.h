@@ -359,22 +359,20 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   using ATOM_BOOKMARK_MAP = std::map<int, ATOM_PTR_LIST>;
   using BOND_BOOKMARK_MAP = std::map<int, BOND_PTR_LIST>;
 
-  using AtomIterator = class AtomIterator_<Atom, ROMol>;
-  using ConstAtomIterator = class AtomIterator_<const Atom, const ROMol>;
-  using BondIterator = class BondIterator_;
-  using ConstBondIterator = class ConstBondIterator_;
-  using AromaticAtomIterator = class AromaticAtomIterator_<Atom, ROMol>;
+  using AtomIterator = AtomIterator_<Atom, ROMol>;
+  using ConstAtomIterator = AtomIterator_<const Atom, const ROMol>;
+  using BondIterator = BondIterator_;
+  using ConstBondIterator = ConstBondIterator_;
+  using AromaticAtomIterator = AromaticAtomIterator_<Atom, ROMol>;
   using ConstAromaticAtomIterator =
-      class AromaticAtomIterator_<const Atom, const ROMol>;
-  using HeteroatomIterator = class HeteroatomIterator_<Atom, ROMol>;
-  using ConstHeteroatomIterator =
-      class HeteroatomIterator_<const Atom, const ROMol>;
-  using QueryAtomIterator = class QueryAtomIterator_<Atom, ROMol>;
-  using ConstQueryAtomIterator =
-      class QueryAtomIterator_<const Atom, const ROMol>;
-  using MatchingAtomIterator = class MatchingAtomIterator_<Atom, ROMol>;
+      AromaticAtomIterator_<const Atom, const ROMol>;
+  using HeteroatomIterator = HeteroatomIterator_<Atom, ROMol>;
+  using ConstHeteroatomIterator = HeteroatomIterator_<const Atom, const ROMol>;
+  using QueryAtomIterator = QueryAtomIterator_<Atom, ROMol>;
+  using ConstQueryAtomIterator = QueryAtomIterator_<const Atom, const ROMol>;
+  using MatchingAtomIterator = MatchingAtomIterator_<Atom, ROMol>;
   using ConstMatchingAtomIterator =
-      class MatchingAtomIterator_<const Atom, const ROMol>;
+      MatchingAtomIterator_<const Atom, const ROMol>;
 
   using ConformerIterator = CONF_SPTR_LIST_I;
   using ConstConformerIterator = CONF_SPTR_LIST_CI;
