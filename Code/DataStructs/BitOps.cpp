@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2012 greg Landrum and Rational Discovery LLC
 //

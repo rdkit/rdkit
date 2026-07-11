@@ -1,5 +1,3 @@
-# $Id$
-#
 # Various smarts filters collected and contributed
 #   by Richard Lewis
 # 

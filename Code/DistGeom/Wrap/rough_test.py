@@ -1,8 +1,6 @@
 """
 ## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
 
-# $Id$
-#
 #  Copyright (C) 2004  Rational Discovery LLC
 #         All Rights Reserved
 #

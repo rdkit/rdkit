@@ -22,6 +22,10 @@ instead of a `boost::variant`. C++ code that inspects this type must use
 - `boost_adaptbx::python::streambuf` (in `RDBoost/python_streambuf.h`) now uses
 `std::optional` instead of `boost::optional`, and the header no longer includes
 `<boost/optional.hpp>`.
+- The `DistGeomHelpers::EmbedParameters` struct no longer has a constructor that
+takes arguments in C++. If you want to initialize data members to non-default
+values, use the designated initialization syntax. This change does not affect
+Python.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use

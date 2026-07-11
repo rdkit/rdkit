@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (C) 2006  Greg Landrum
 #
 import pickle

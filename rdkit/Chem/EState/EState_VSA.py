@@ -1,5 +1,3 @@
-# $Id$
-#
 # Copyright (C)2003-2010 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
