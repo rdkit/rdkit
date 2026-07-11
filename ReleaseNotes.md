@@ -15,6 +15,13 @@ to the first which also has the lowest index.
 - `MolTransforms.h` now includes `<Eigen/Core>` instead of `<Eigen/Dense>`. C++
 code that included `MolTransforms.h` and relied on it to transitively pull in the
 Eigen dense modules (LU/QR/SVD/etc.) must now include `<Eigen/Dense>` directly.
+- `PicklerOps::QueryDetails` (in `GraphMol/MolPickler.h`) is now a `std::variant`
+instead of a `boost::variant`. C++ code that inspects this type must use
+`std::get`/`std::holds_alternative` and `.index()` in place of `boost::get` and
+`.which()`. `MolPickler.h` also no longer includes `<boost/variant.hpp>`.
+- `boost_adaptbx::python::streambuf` (in `RDBoost/python_streambuf.h`) now uses
+`std::optional` instead of `boost::optional`, and the header no longer includes
+`<boost/optional.hpp>`.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use
