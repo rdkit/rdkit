@@ -14,7 +14,7 @@
 #include <sstream>
 #include <locale>
 
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 
 namespace RDKit {
 

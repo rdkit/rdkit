@@ -23,16 +23,16 @@ const unsigned int BITS_PER_INT = 32;
 //! a class for efficiently storing vectors of discrete values
 class RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect {
  public:
-  typedef boost::shared_array<std::uint32_t> DATA_SPTR;
+  using DATA_SPTR = boost::shared_array<std::uint32_t>;
 
   //! used to define the possible range of the values
-  typedef enum {
+  enum DiscreteValueType {
     ONEBITVALUE = 0,
     TWOBITVALUE,
     FOURBITVALUE,
     EIGHTBITVALUE,
     SIXTEENBITVALUE,
-  } DiscreteValueType;
+  };
 
   //! initialize with a particular type and size
   DiscreteValueVect(DiscreteValueType valType, unsigned int length)

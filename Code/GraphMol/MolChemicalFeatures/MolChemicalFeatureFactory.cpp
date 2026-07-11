@@ -32,7 +32,7 @@ FeatSPtrList MolChemicalFeatureFactory::getFeaturesForMol(
 #endif
   FeatSPtrList res;
   int idx = 1;
-  typedef std::vector<std::pair<std::string, std::set<int>>> MatchSetCollection;
+  using MatchSetCollection = std::vector<std::pair<std::string, std::set<int>>>;
   MatchSetCollection matchSets;
   for (auto featDefIt = beginFeatureDefs(); featDefIt != endFeatureDefs();
        featDefIt++) {

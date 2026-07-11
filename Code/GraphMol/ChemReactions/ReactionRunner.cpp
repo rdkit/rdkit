@@ -48,8 +48,8 @@
 #include <GraphMol/QueryBond.h>
 
 namespace RDKit {
-typedef std::vector<MatchVectType> VectMatchVectType;
-typedef std::vector<VectMatchVectType> VectVectMatchVectType;
+using VectMatchVectType = std::vector<MatchVectType>;
+using VectVectMatchVectType = std::vector<VectMatchVectType>;
 
 namespace {
 const std::string WAS_DUMMY =

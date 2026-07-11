@@ -92,24 +92,24 @@ class RDKIT_DESCRIPTORS_EXPORT Properties {
   static std::vector<boost::shared_ptr<PropertyFunctor>> registry;
 };
 
-typedef Queries::Query<bool, const ROMol &, true> PROP_BOOL_QUERY;
-typedef Queries::AndQuery<int, const ROMol &, true> PROP_AND_QUERY;
-typedef Queries::OrQuery<int, const ROMol &, true> PROP_OR_QUERY;
-typedef Queries::XOrQuery<int, const ROMol &, true> PROP_XOR_QUERY;
+using PROP_BOOL_QUERY = Queries::Query<bool, const ROMol &, true>;
+using PROP_AND_QUERY = Queries::AndQuery<int, const ROMol &, true>;
+using PROP_OR_QUERY = Queries::OrQuery<int, const ROMol &, true>;
+using PROP_XOR_QUERY = Queries::XOrQuery<int, const ROMol &, true>;
 
-typedef Queries::EqualityQuery<double, const ROMol &, true> PROP_EQUALS_QUERY;
+using PROP_EQUALS_QUERY = Queries::EqualityQuery<double, const ROMol &, true>;
 
-typedef Queries::GreaterQuery<double, const ROMol &, true> PROP_GREATER_QUERY;
+using PROP_GREATER_QUERY = Queries::GreaterQuery<double, const ROMol &, true>;
 
-typedef Queries::GreaterEqualQuery<double, const ROMol &, true>
-    PROP_GREATEREQUAL_QUERY;
+using PROP_GREATEREQUAL_QUERY =
+    Queries::GreaterEqualQuery<double, const ROMol &, true>;
 
-typedef Queries::LessQuery<double, const ROMol &, true> PROP_LESS_QUERY;
+using PROP_LESS_QUERY = Queries::LessQuery<double, const ROMol &, true>;
 
-typedef Queries::LessEqualQuery<double, const ROMol &, true>
-    PROP_LESSEQUAL_QUERY;
+using PROP_LESSEQUAL_QUERY =
+    Queries::LessEqualQuery<double, const ROMol &, true>;
 
-typedef Queries::RangeQuery<double, const ROMol &, true> PROP_RANGE_QUERY;
+using PROP_RANGE_QUERY = Queries::RangeQuery<double, const ROMol &, true>;
 
 template <class T>
 T *makePropertyQuery(const std::string &name, double what) {

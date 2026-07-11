@@ -22,7 +22,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
@@ -52,7 +52,7 @@ constexpr unsigned int MIN_MACROCYCLE_SIZE = 9;
 // class to store the experimental torsion angles
 class ExpTorsionAngleCollection {
  public:
-  typedef std::vector<ExpTorsionAngle> ParamsVect;
+  using ParamsVect = std::vector<ExpTorsionAngle>;
   static const ExpTorsionAngleCollection *getParams(
       unsigned int version, bool useSmallRingTorsions,
       bool useMacrocycleTorsions, const std::string &paramData = "");
@@ -64,10 +64,9 @@ class ExpTorsionAngleCollection {
   ParamsVect d_params;  //!< the parameters
 };
 
-typedef boost::flyweight<
+using param_flyweight = boost::flyweight<
     boost::flyweights::key_value<std::string, ExpTorsionAngleCollection>,
-    boost::flyweights::no_tracking>
-    param_flyweight;
+    boost::flyweights::no_tracking>;
 
 const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
     unsigned int version, bool useSmallRingTorsions, bool useMacrocycleTorsions,

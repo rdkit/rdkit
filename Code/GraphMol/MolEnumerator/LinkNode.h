@@ -11,13 +11,15 @@
 #define RD_MOLENUMERATOR_LINKNODE_H
 
 #include <RDGeneral/Invariant.h>
-
-#include <map>
+#include <RDGeneral/Exceptions.h>
+#include <GraphMol/Atom.h>
+#include <GraphMol/ROMol.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <algorithm>
+#include <map>
 
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 
 namespace RDKit {
 namespace MolEnumerator {

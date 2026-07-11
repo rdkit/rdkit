@@ -18,12 +18,12 @@ using namespace RDKit;
 using namespace RDGeom;
 using namespace RDFeatures;
 
-typedef enum {
+enum TypeMarker {
   fooType,
   barType,
   bazType,
   grnType,
-} TypeMarker;
+};
 
 TEST_CASE("Basics for ExplicitFeatures") {
   ExplicitFeature<TypeMarker> f1;
@@ -97,7 +97,7 @@ TEST_CASE("Basics for ImplicitFeatures") {
 }
 
 TEST_CASE("ExplicitFeatures 2D, string type.") {
-  typedef ExplicitFeature<std::string, std::string, Point2D> LocalFeature;
+  using LocalFeature = ExplicitFeature<std::string, std::string, Point2D>;
   LocalFeature f1;
   f1.setType("foo");
   REQUIRE(f1.getType() == "foo");

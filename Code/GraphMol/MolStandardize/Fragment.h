@@ -24,9 +24,8 @@ namespace MolStandardize {
 RDKIT_MOLSTANDARDIZE_EXPORT extern const CleanupParameters
     defaultCleanupParameters;
 
-typedef RDCatalog::HierarchCatalog<FragmentCatalogEntry, FragmentCatalogParams,
-                                   int>
-    FragmentCatalog;
+using FragmentCatalog = RDCatalog::HierarchCatalog<FragmentCatalogEntry,
+                                                   FragmentCatalogParams, int>;
 
 class RDKIT_MOLSTANDARDIZE_EXPORT FragmentRemover {
  public:

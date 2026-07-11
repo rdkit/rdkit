@@ -18,7 +18,7 @@
 
 namespace RDKit {
 namespace SGroupWriting {
-typedef std::unordered_map<int, SubstanceGroup> IDX_TO_SGROUP_MAP;
+using IDX_TO_SGROUP_MAP = std::unordered_map<int, SubstanceGroup>;
 
 /* ------------------ Inlined Formatters ------------------ */
 

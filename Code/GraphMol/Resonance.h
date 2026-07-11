@@ -12,9 +12,10 @@
 #define _RESONANCE_H__
 
 #include <vector>
-#include <stack>
 #include <map>
 #include <unordered_map>
+#include <cstdint>
+#include <memory>
 
 namespace RDKit {
 class ROMol;
@@ -24,12 +25,12 @@ class BondElectrons;
 class AtomElectrons;
 class ConjElectrons;
 class CEVect2;
-typedef std::map<unsigned int, BondElectrons *> ConjBondMap;
-typedef std::map<unsigned int, AtomElectrons *> ConjAtomMap;
-typedef std::vector<ConjElectrons *> CEVect;
-typedef std::vector<CEVect2 *> CEVect3;
-typedef std::vector<std::uint8_t> ConjFP;
-typedef std::unordered_map<std::size_t, ConjElectrons *> CEMap;
+using ConjBondMap = std::map<unsigned int, BondElectrons *>;
+using ConjAtomMap = std::map<unsigned int, AtomElectrons *>;
+using CEVect = std::vector<ConjElectrons *>;
+using CEVect3 = std::vector<CEVect2 *>;
+using ConjFP = std::vector<std::uint8_t>;
+using CEMap = std::unordered_map<std::size_t, ConjElectrons *>;
 
 /*!
  * Create a derived class from this abstract base class
@@ -85,7 +86,7 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplierCallback {
 
 class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
  public:
-  typedef enum {
+  enum ResonanceFlags {
     /*! include resonance structures whose octets are less complete
      *  than the most octet-complete structure */
     ALLOW_INCOMPLETE_OCTETS = (1 << 0),
@@ -109,7 +110,7 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
      *  UNCONSTRAINED_ANIONS implies ALLOW_CHARGE_SEPARATION.
      */
     UNCONSTRAINED_ANIONS = (1 << 4)
-  } ResonanceFlags;
+  };
   /*!
    *   \param mol        - the starter molecule
    *   \param flags      - flags which influence criteria to generate
@@ -197,10 +198,10 @@ class RDKIT_GRAPHMOL_EXPORT ResonanceMolSupplier {
   ROMol *operator[](unsigned int idx);
 
  private:
-  typedef struct CEPerm {
+  struct CEPerm {
     unsigned int idx;
     std::vector<unsigned int> v;
-  } CEPerm;
+  };
   unsigned int d_nConjGrp;
   unsigned int d_length;
   unsigned int d_flags;

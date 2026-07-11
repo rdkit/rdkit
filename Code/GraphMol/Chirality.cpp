@@ -949,13 +949,13 @@ void setStereoForBond(ROMol &mol, Bond *bond, Bond::BondStereo stereo,
 }
 }  // namespace detail
 
-typedef std::pair<int, int> INT_PAIR;
-typedef std::vector<INT_PAIR> INT_PAIR_VECT;
-typedef std::vector<INT_PAIR>::iterator INT_PAIR_VECT_I;
-typedef std::vector<INT_PAIR>::const_iterator INT_PAIR_VECT_CI;
+using INT_PAIR = std::pair<int, int>;
+using INT_PAIR_VECT = std::vector<INT_PAIR>;
+using INT_PAIR_VECT_I = std::vector<INT_PAIR>::iterator;
+using INT_PAIR_VECT_CI = std::vector<INT_PAIR>::const_iterator;
 
-typedef INT_VECT CIP_ENTRY;
-typedef std::vector<CIP_ENTRY> CIP_ENTRY_VECT;
+using CIP_ENTRY = INT_VECT;
+using CIP_ENTRY_VECT = std::vector<CIP_ENTRY>;
 
 template <typename T>
 void debugVect(const std::vector<T> arg) {

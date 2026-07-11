@@ -166,9 +166,9 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
   // pick the first entry
   if (firstPicks.empty()) {
     // get a seeded random number generator:
-    typedef boost::mt19937 rng_type;
-    typedef boost::uniform_int<> distrib_type;
-    typedef boost::variate_generator<rng_type &, distrib_type> source_type;
+    using rng_type = boost::mt19937;
+    using distrib_type = boost::uniform_int<>;
+    using source_type = boost::variate_generator<rng_type &, distrib_type>;
     rng_type generator;
     distrib_type dist(0, poolSize - 1);
     if (seed >= 0) {

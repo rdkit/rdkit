@@ -18,8 +18,8 @@
 #include <queue>
 
 namespace RDInfoTheory {
-typedef std::pair<double, int> PAIR_D_I;
-typedef std::vector<PAIR_D_I> VECT_PDI;
+using PAIR_D_I = std::pair<double, int>;
+using VECT_PDI = std::vector<PAIR_D_I>;
 
 struct gtDIPair {
   bool operator()(const PAIR_D_I &pd1, const PAIR_D_I &pd2) const {
@@ -27,7 +27,7 @@ struct gtDIPair {
   }
 };
 
-typedef std::priority_queue<PAIR_D_I, VECT_PDI, gtDIPair> PR_QUEUE;
+using PR_QUEUE = std::priority_queue<PAIR_D_I, VECT_PDI, gtDIPair>;
 
 void InfoBitRanker::setBiasList(RDKit::INT_VECT &classList) {
   URANGE_CHECK(classList.size(), d_classes);

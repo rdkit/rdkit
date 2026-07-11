@@ -79,20 +79,20 @@
  * 1 0.000 1 1
  */
 namespace RDInfoTheory {
-typedef std::vector<RDKit::USHORT> USHORT_VECT;
-typedef std::vector<USHORT_VECT> VECT_USHORT_VECT;
+using USHORT_VECT = std::vector<RDKit::USHORT>;
+using VECT_USHORT_VECT = std::vector<USHORT_VECT>;
 
 class RDKIT_INFOTHEORY_EXPORT InfoBitRanker {
  public:
   /*! \brief the type of measure for information
    *
    */
-  typedef enum {
+  enum InfoType {
     ENTROPY = 1,
     BIASENTROPY = 2,
     CHISQUARE = 3,
     BIASCHISQUARE = 4
-  } InfoType;
+  };
 
   /*! \brief Constructor
    *

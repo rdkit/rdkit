@@ -18,7 +18,7 @@
 
 namespace RDKit {
 class ROMol;
-typedef std::vector<boost::shared_ptr<ROMol>> MOL_SPTR_VECT;
+using MOL_SPTR_VECT = std::vector<boost::shared_ptr<ROMol>>;
 
 //! container for user parameters used to create a fragment catalog
 class RDKIT_FRAGCATALOG_EXPORT FragCatParams : public RDCatalog::CatalogParams {

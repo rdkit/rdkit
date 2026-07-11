@@ -17,9 +17,7 @@
 
 namespace RDKit {
 namespace FMCS {
-typedef std::vector<
-    std::pair<FMCS::Graph::vertex_descriptor, FMCS::Graph::vertex_descriptor>>
-    match_V_t;
+using match_V_t = std::vector<std::pair<FMCS::Graph::vertex_descriptor, FMCS::Graph::vertex_descriptor>>;
 const unsigned int NotSet = std::numeric_limits<unsigned int>::max();
 
 RDKIT_FMCS_EXPORT bool SubstructMatchCustomTable(

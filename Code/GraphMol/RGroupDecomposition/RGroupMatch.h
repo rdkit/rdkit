@@ -12,8 +12,8 @@
 #include "RGroupData.h"
 
 namespace RDKit {
-typedef boost::shared_ptr<RGroupData> RData;
-typedef std::map<int, RData> R_DECOMP;
+using RData = boost::shared_ptr<RGroupData>;
+using R_DECOMP = std::map<int, RData>;
 
 //! RGroupMatch is the decomposition for a single molecule
 struct RGroupMatch {

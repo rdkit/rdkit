@@ -25,7 +25,7 @@ namespace RDKit {
 //! The abstract base class for atom-level monomer info
 class RDKIT_GRAPHMOL_EXPORT AtomMonomerInfo {
  public:
-  typedef enum { UNKNOWN = 0, PDBRESIDUE, OTHER } AtomMonomerType;
+  enum AtomMonomerType { UNKNOWN = 0, PDBRESIDUE, OTHER };
 
   virtual ~AtomMonomerInfo() {}
 

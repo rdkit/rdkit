@@ -37,7 +37,7 @@ class MolBundle;
 
 //! \brief used to return matches from substructure searching,
 //!   The format is (queryAtomIdx, molAtomIdx)
-typedef std::vector<std::pair<int, int>> MatchVectType;
+using MatchVectType = std::vector<std::pair<int, int>>;
 
 struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
   bool useChirality = false;  //!< Use chirality in determining whether or not

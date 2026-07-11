@@ -19,7 +19,7 @@
 #include <boost/tokenizer.hpp>
 #include <Geometry/point.h>
 
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
@@ -32,10 +32,9 @@ namespace UFF {
 
 extern const std::string defaultParamData;
 
-typedef boost::flyweight<
-    boost::flyweights::key_value<std::string, ParamCollection>,
-    boost::flyweights::no_tracking>
-    param_flyweight;
+using param_flyweight =
+    boost::flyweight<boost::flyweights::key_value<std::string, ParamCollection>,
+                     boost::flyweights::no_tracking>;
 
 const ParamCollection *ParamCollection::getParams(
     const std::string &paramData) {

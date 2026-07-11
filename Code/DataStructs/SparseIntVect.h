@@ -27,7 +27,7 @@ namespace RDKit {
 template <typename IndexType>
 class SparseIntVect {
  public:
-  typedef std::map<IndexType, int> StorageType;
+  using StorageType = std::map<IndexType, int>;
 
   SparseIntVect() : d_length(0) {}
 

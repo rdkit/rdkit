@@ -24,7 +24,6 @@
 #include <cstdint>
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/types.h>
-#include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 
 #include <RDGeneral/BoostStartInclude.h>
@@ -38,7 +37,7 @@
 namespace {
 class ss_matcher {
  public:
-  ss_matcher() {};
+  ss_matcher(){};
   ss_matcher(const std::string &pattern) {
     RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
     TEST_ASSERT(p);
@@ -75,9 +74,9 @@ const char *pqs[] = {
     "[*]~[R](@[R])@[R](@[R])~[*]", "[*]~[R](@[R])@[R]@[R](@[R])~[*]",
     "[*]",  // single atom fragment
     ""};
-typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking>
-    pattern_flyweight;
+using pattern_flyweight =
+    boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
+                     boost::flyweights::no_tracking>;
 
 namespace detail {
 void getAtomNumbers(const Atom *a, std::vector<int> &atomNums) {

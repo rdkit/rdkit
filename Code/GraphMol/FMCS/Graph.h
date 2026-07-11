@@ -17,16 +17,14 @@
 
 namespace RDKit {
 namespace FMCS {
-typedef unsigned int AtomIdx_t;
-typedef unsigned int BondIdx_t;
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
-                              AtomIdx_t, BondIdx_t>
-    Graph_t;
+using AtomIdx_t = unsigned int;
+using BondIdx_t = unsigned int;
+using Graph_t = boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, AtomIdx_t, BondIdx_t>;
 
 class RDKIT_FMCS_EXPORT Graph : public Graph_t {
  public:
-  typedef edge_iterator EDGE_ITER;
-  typedef std::pair<EDGE_ITER, EDGE_ITER> BOND_ITER_PAIR;
+  using EDGE_ITER = edge_iterator;
+  using BOND_ITER_PAIR = std::pair<EDGE_ITER, EDGE_ITER>;
 
   void addAtom(unsigned int atom) {
     Graph::vertex_descriptor which = boost::add_vertex(*this);

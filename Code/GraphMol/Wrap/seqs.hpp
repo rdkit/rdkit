@@ -121,11 +121,10 @@ class ReadOnlySeq {
   }
 };
 
-typedef ReadOnlySeq<ROMol::QueryAtomIterator, Atom *, AtomCountFunctor>
-    QueryAtomIterSeq;
+using QueryAtomIterSeq =
+    ReadOnlySeq<ROMol::QueryAtomIterator, Atom *, AtomCountFunctor>;
 
-typedef ReadOnlySeq<ROMol::ConformerIterator, CONFORMER_SPTR &,
-                    ConformerCountFunctor>
-    ConformerIterSeq;
+using ConformerIterSeq = ReadOnlySeq<ROMol::ConformerIterator, CONFORMER_SPTR &,
+                                     ConformerCountFunctor>;
 }  // namespace RDKit
 #endif

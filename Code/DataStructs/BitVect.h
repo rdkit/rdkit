@@ -14,10 +14,10 @@
 #include <vector>
 #include <string>
 
-typedef std::vector<int> IntVect;
-typedef IntVect::iterator IntVectIter;
-typedef std::vector<double> DoubleVect;
-typedef DoubleVect::iterator DoubleVectIter;
+using IntVect = std::vector<int>;
+using IntVectIter = IntVect::iterator;
+using DoubleVect = std::vector<double>;
+using DoubleVectIter = DoubleVect::iterator;
 const int ci_BITVECT_VERSION = 0x0020;  //!< version number to use in pickles
 
 //! Abstract base class for storing BitVectors

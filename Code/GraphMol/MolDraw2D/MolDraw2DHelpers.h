@@ -65,8 +65,8 @@ struct DrawColour {
   DrawColour operator*(double v) const { return {r * v, g * v, b * v, a * v}; }
 };
 
-typedef std::map<int, DrawColour> ColourPalette;
-typedef std::vector<double> DashPattern;
+using ColourPalette = std::map<int, DrawColour>;
+using DashPattern = std::vector<double>;
 
 // This is used to convert the line width into something that SVG and
 // Cairo use.  It was picked by eye, and was formerly hidden in

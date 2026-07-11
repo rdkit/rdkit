@@ -29,10 +29,10 @@ namespace MolStandardize {
 RDKIT_MOLSTANDARDIZE_EXPORT extern const CleanupParameters
     defaultCleanupParameters;
 
-typedef RDCatalog::HierarchCatalog<TransformCatalogEntry,
-                                   TransformCatalogParams, int>
-    TransformCatalog;
-typedef std::pair<std::string, ROMOL_SPTR> SmilesMolPair;
+using TransformCatalog =
+    RDCatalog::HierarchCatalog<TransformCatalogEntry, TransformCatalogParams,
+                               int>;
+using SmilesMolPair = std::pair<std::string, ROMOL_SPTR>;
 
 //! The Normalizer class for applying Normalization transforms.
 /*!

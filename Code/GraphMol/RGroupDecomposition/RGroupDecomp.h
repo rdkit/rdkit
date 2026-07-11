@@ -28,11 +28,11 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionProcessResult {
 
 struct RGroupMatch;
 
-typedef std::map<std::string, ROMOL_SPTR> RGroupRow;
-typedef std::vector<ROMOL_SPTR> RGroupColumn;
+using RGroupRow = std::map<std::string, ROMOL_SPTR>;
+using RGroupColumn = std::vector<ROMOL_SPTR>;
 
-typedef std::vector<RGroupRow> RGroupRows;
-typedef std::map<std::string, RGroupColumn> RGroupColumns;
+using RGroupRows = std::vector<RGroupRow>;
+using RGroupColumns = std::map<std::string, RGroupColumn>;
 
 class UsedLabelMap {
  public:

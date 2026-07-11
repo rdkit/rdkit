@@ -32,20 +32,20 @@ RDKIT_DEPICTOR_EXPORT extern unsigned int MAX_COLL_ITERS;
 RDKIT_DEPICTOR_EXPORT extern double HETEROATOM_COLL_SCALE;
 RDKIT_DEPICTOR_EXPORT extern unsigned int NUM_BONDS_FLIPS;
 
-typedef std::vector<const RDGeom::Point2D *> VECT_C_POINT;
+using VECT_C_POINT = std::vector<const RDGeom::Point2D *>;
 
-typedef std::pair<int, int> PAIR_I_I;
-typedef std::vector<PAIR_I_I> VECT_PII;
+using PAIR_I_I = std::pair<int, int>;
+using VECT_PII = std::vector<PAIR_I_I>;
 struct RDKIT_DEPICTOR_EXPORT gtIIPair {
   bool operator()(const PAIR_I_I &pd1, const PAIR_I_I &pd2) const {
     return pd1.first > pd2.first;
   }
 };
 
-typedef std::priority_queue<PAIR_I_I, VECT_PII, gtIIPair> PR_QUEUE;
+using PR_QUEUE = std::priority_queue<PAIR_I_I, VECT_PII, gtIIPair>;
 
-typedef std::pair<double, PAIR_I_I> PAIR_D_I_I;
-typedef std::list<PAIR_D_I_I> LIST_PAIR_DII;
+using PAIR_D_I_I = std::pair<double, PAIR_I_I>;
+using LIST_PAIR_DII = std::list<PAIR_D_I_I>;
 
 //! Some utility functions used in generating 2D coordinates
 
@@ -173,11 +173,11 @@ RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT findNextRingToEmbed(
     const RDKit::INT_VECT &doneRings, const RDKit::VECT_INT_VECT &fusedRings,
     int &nextId);
 
-typedef std::pair<int, int> INT_PAIR;
-typedef std::vector<INT_PAIR> INT_PAIR_VECT;
-typedef INT_PAIR_VECT::const_iterator INT_PAIR_VECT_CI;
+using INT_PAIR = std::pair<int, int>;
+using INT_PAIR_VECT = std::vector<INT_PAIR>;
+using INT_PAIR_VECT_CI = INT_PAIR_VECT::const_iterator;
 
-typedef std::pair<double, INT_PAIR> DOUBLE_INT_PAIR;
+using DOUBLE_INT_PAIR = std::pair<double, INT_PAIR>;
 
 //! Sort a list of atoms by their  CIP rank
 /*!

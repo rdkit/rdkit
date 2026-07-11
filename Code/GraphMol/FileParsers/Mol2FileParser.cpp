@@ -78,7 +78,7 @@ void readFormalChargesFromAttr(std::istream *inStream, RWMol *res) {
   PRECONDITION(inStream, "inStream not valid");
   PRECONDITION(!inStream->eof(), "inStream is at eof");
   PRECONDITION(res, "RWMol not valid");
-  typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+  using tokenizer = boost::tokenizer<boost::char_separator<char>>;
   boost::char_separator<char> sep(" \t\n");
   bool readNextAtomAttribs = true;
   unsigned int atomIdx = 0, noAtomAttr = 0;
@@ -524,7 +524,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
 }
 
 Atom *ParseMol2FileAtomLine(const std::string atomLine, RDGeom::Point3D &pos) {
-  typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+  using tokenizer = boost::tokenizer<boost::char_separator<char>>;
   boost::char_separator<char> sep(" \t\n");
   std::string tAN, tAT;
   tokenizer tokens(atomLine, sep);
@@ -645,7 +645,7 @@ Bond *ParseMol2FileBondLine(const std::string bondLine,
                             const INT_VECT &idxCorresp) {
   unsigned int idx1, idx2;
 
-  typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+  using tokenizer = boost::tokenizer<boost::char_separator<char>>;
   boost::char_separator<char> sep(" \t\n");
 
   tokenizer tokens(bondLine, sep);
@@ -818,7 +818,7 @@ namespace FileParsers {
 std::unique_ptr<RWMol> MolFromMol2DataStream(std::istream &inStream,
                                              const Mol2ParserParams &params) {
   std::string tempStr, lineBeg;
-  typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+  using tokenizer = boost::tokenizer<boost::char_separator<char>>;
   boost::char_separator<char> sep(" \t\n");
   Utils::LocaleSwitcher ls;
 

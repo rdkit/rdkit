@@ -33,11 +33,11 @@ RDKIT_RDGENERAL_EXPORT double computeIntVectPrimesProduct(const INT_VECT &ring);
 //! floating point comparison with a tolerance
 RDKIT_RDGENERAL_EXPORT bool feq(double v1, double v2, double tol = 1e-4);
 
-typedef boost::minstd_rand rng_type;
-typedef boost::uniform_int<> uniform_int;
-typedef boost::uniform_real<> uniform_double;
-typedef boost::variate_generator<rng_type &, uniform_int> int_source_type;
-typedef boost::variate_generator<rng_type &, uniform_double> double_source_type;
+using rng_type = boost::minstd_rand;
+using uniform_int = boost::uniform_int<>;
+using uniform_double = boost::uniform_real<>;
+using int_source_type = boost::variate_generator<rng_type &, uniform_int>;
+using double_source_type = boost::variate_generator<rng_type &, uniform_double>;
 
 //! Optionally seed and return a reference to the global (Boost) random
 /// generator

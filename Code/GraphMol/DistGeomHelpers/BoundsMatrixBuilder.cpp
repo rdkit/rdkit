@@ -40,14 +40,14 @@ static const double minMacrocycleRingSize = 9;
 namespace RDKit {
 namespace DGeomHelpers {
 // forward declarations:
-typedef boost::shared_ptr<RDNumeric::IntSymmMatrix> SymmIntMatPtr;
-typedef boost::shared_ptr<RDNumeric::DoubleSymmMatrix> SymmDoubleMatPtr;
+using SymmIntMatPtr = boost::shared_ptr<RDNumeric::IntSymmMatrix>;
+using SymmDoubleMatPtr = boost::shared_ptr<RDNumeric::DoubleSymmMatrix>;
 
-typedef boost::dynamic_bitset<> BIT_SET;
+using BIT_SET = boost::dynamic_bitset<>;
 
 //! Bunch of functions to set distance bound based on topology
 
-typedef std::vector<long int> LINT_VECT;
+using LINT_VECT = std::vector<long>;
 
 enum class TorsionType {
   CIS = 0,
@@ -84,15 +84,15 @@ struct Optional14Info {
   std::size_t ringSize = 0;
 };
 
-typedef enum {
+enum DistType {
   DIST12,
   DIST13,
   DIST14
-} DistType;
+};
 
-typedef std::vector<Path14Configuration> PATH14_VECT;
-typedef PATH14_VECT::iterator PATH14_VECT_I;
-typedef PATH14_VECT::const_iterator PATH14_VECT_CI;
+using PATH14_VECT = std::vector<Path14Configuration>;
+using PATH14_VECT_I = PATH14_VECT::iterator;
+using PATH14_VECT_CI = PATH14_VECT::const_iterator;
 
 class ComputedData {
  public:
@@ -869,14 +869,9 @@ bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *,
   //           << " " << a4Num << " " << bnd1->getBondType() << " " << a2Num
   //           << " "
   //           << atm2->getTotalNumHs(true) << std::endl;
-  if (a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
+  return (a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
       (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
-      (a2Num == 8 || (a2Num == 7 && atm2->getTotalNumHs(true) == 1))) {
-    // std::cerr << " yes!" << std::endl;
-    return true;
-  }
-  // std::cerr << " no!" << std::endl;
-  return false;
+      (a2Num == 8 || (a2Num == 7 && atm2->getTotalNumHs(true) == 1)));
 }
 
 // checking for amide/ester when all three bonds are

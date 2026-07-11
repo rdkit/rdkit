@@ -62,7 +62,7 @@ bool getMolAtomPoints(const ROMol &mol, std::vector<RDGeom::Point3D> &atomPoint,
   return non_zero_z;
 }
 
-typedef std::tuple<std::string, int, int, int> NbrData;
+using NbrData = std::tuple<std::string, int, int, int>;
 
 bool lessTuple(const NbrData &left, const NbrData &right) {
   if (std::get<0>(left) < std::get<0>(right)) {

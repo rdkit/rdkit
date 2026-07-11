@@ -18,7 +18,7 @@
 namespace RDKit {
 class Snapshot;
 class Trajectory;
-typedef std::vector<Snapshot> SnapshotVect;
+using SnapshotVect = std::vector<Snapshot>;
 }  // namespace RDKit
 
 namespace RDKit {

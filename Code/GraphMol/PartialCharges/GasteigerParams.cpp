@@ -12,7 +12,7 @@
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 #include <RDGeneral/BoostEndInclude.h>
 #include "GasteigerParams.h"
 
@@ -66,10 +66,9 @@ Al      sp3     5.375   4.953   0.867 \n \
 Al      sp2     5.795   5.020   0.695 \n \
 ";
 
-typedef boost::flyweight<
-    boost::flyweights::key_value<std::string, GasteigerParams>,
-    boost::flyweights::no_tracking>
-    gparam_flyweight;
+using gparam_flyweight =
+    boost::flyweight<boost::flyweights::key_value<std::string, GasteigerParams>,
+                     boost::flyweights::no_tracking>;
 
 GasteigerParams::GasteigerParams(std::string paramData) {
   boost::char_separator<char> eolSep("\n");

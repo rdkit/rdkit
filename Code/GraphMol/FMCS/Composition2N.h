@@ -11,7 +11,7 @@
 #pragma once
 namespace RDKit {
 namespace FMCS {
-typedef unsigned long long BitSet;
+using BitSet = unsigned long long;
 class Composition2N {  // generator of 2^N-1 possible bit combinations
   BitSet Bits, InverseBits;
   BitSet MaxValue, ValueMask;  // need for inverse bitset must be 2^N-1

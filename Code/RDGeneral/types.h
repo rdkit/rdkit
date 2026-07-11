@@ -33,13 +33,10 @@
 #include <set>
 #include <string>
 #include <string_view>
-#include <algorithm>
-#include <numeric>
 #include <list>
 #include <limits>
 
 #include <cstring>
-#include <any>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
 #include <RDGeneral/BoostEndInclude.h>
@@ -202,7 +199,7 @@ inline constexpr std::string_view _displayLabelW = "_displayLabelW";
 
 }  // namespace common_properties
 #ifndef WIN32
-typedef long long int LONGINT;
+using LONGINT = long long;
 #else
 typedef __int64 LONGINT;
 #endif
@@ -217,62 +214,62 @@ inline constexpr double MAX_DOUBLE = std::numeric_limits<double>::max();
 inline constexpr double EPS_DOUBLE = std::numeric_limits<double>::epsilon();
 inline constexpr int MAX_INT = std::numeric_limits<int>::max();
 
-typedef unsigned int UINT;
-typedef unsigned short USHORT;
-typedef unsigned char UCHAR;
+using UINT = unsigned int;
+using USHORT = unsigned short;
+using UCHAR = unsigned char;
 
-typedef std::vector<int> INT_VECT;
-typedef INT_VECT::iterator INT_VECT_I;
-typedef INT_VECT::const_iterator INT_VECT_CI;
-typedef INT_VECT::reverse_iterator INT_VECT_RI;
-typedef INT_VECT::const_reverse_iterator INT_VECT_CRI;
+using INT_VECT = std::vector<int>;
+using INT_VECT_I = INT_VECT::iterator;
+using INT_VECT_CI = INT_VECT::const_iterator;
+using INT_VECT_RI = INT_VECT::reverse_iterator;
+using INT_VECT_CRI = INT_VECT::const_reverse_iterator;
 
-typedef std::list<int> INT_LIST;
-typedef INT_LIST::iterator INT_LIST_I;
-typedef INT_LIST::const_iterator INT_LIST_CI;
+using INT_LIST = std::list<int>;
+using INT_LIST_I = INT_LIST::iterator;
+using INT_LIST_CI = INT_LIST::const_iterator;
 
-typedef std::list<INT_VECT> LIST_INT_VECT;
-typedef LIST_INT_VECT::iterator LIST_INT_VECT_I;
-typedef LIST_INT_VECT::const_iterator LIST_INT_VECT_CI;
+using LIST_INT_VECT = std::list<INT_VECT>;
+using LIST_INT_VECT_I = LIST_INT_VECT::iterator;
+using LIST_INT_VECT_CI = LIST_INT_VECT::const_iterator;
 
-typedef std::vector<INT_VECT> VECT_INT_VECT;
-typedef VECT_INT_VECT::iterator VECT_INT_VECT_I;
-typedef VECT_INT_VECT::const_iterator VECT_INT_VECT_CI;
+using VECT_INT_VECT = std::vector<INT_VECT>;
+using VECT_INT_VECT_I = VECT_INT_VECT::iterator;
+using VECT_INT_VECT_CI = VECT_INT_VECT::const_iterator;
 
-typedef std::vector<UINT>::const_iterator UINT_VECT_CI;
-typedef std::vector<UINT> UINT_VECT;
+using UINT_VECT_CI = std::vector<UINT>::const_iterator;
+using UINT_VECT = std::vector<UINT>;
 
-typedef std::vector<std::string>::const_iterator STR_VECT_CI;
-typedef std::vector<std::string>::iterator STR_VECT_I;
-typedef std::vector<std::string> STR_VECT;
+using STR_VECT_CI = std::vector<std::string>::const_iterator;
+using STR_VECT_I = std::vector<std::string>::iterator;
+using STR_VECT = std::vector<std::string>;
 
-typedef std::vector<double> DOUBLE_VECT;
-typedef DOUBLE_VECT::iterator DOUBLE_VECT_I;
-typedef DOUBLE_VECT::const_iterator DOUBLE_VECT_CI;
-typedef std::vector<DOUBLE_VECT> VECT_DOUBLE_VECT;
-typedef VECT_DOUBLE_VECT::iterator VECT_DOUBLE_VECT_I;
-typedef VECT_DOUBLE_VECT::const_iterator VECT_DOUBLE_VECT_CI;
+using DOUBLE_VECT = std::vector<double>;
+using DOUBLE_VECT_I = DOUBLE_VECT::iterator;
+using DOUBLE_VECT_CI = DOUBLE_VECT::const_iterator;
+using VECT_DOUBLE_VECT = std::vector<DOUBLE_VECT>;
+using VECT_DOUBLE_VECT_I = VECT_DOUBLE_VECT::iterator;
+using VECT_DOUBLE_VECT_CI = VECT_DOUBLE_VECT::const_iterator;
 
-typedef std::map<std::string, UINT> STR_UINT_MAP;
-typedef std::map<std::string, UINT>::const_iterator STR_UINT_MAP_CI;
+using STR_UINT_MAP = std::map<std::string, UINT>;
+using STR_UINT_MAP_CI = std::map<std::string, UINT>::const_iterator;
 
-typedef std::map<int, INT_VECT> INT_INT_VECT_MAP;
-typedef INT_INT_VECT_MAP::const_iterator INT_INT_VECT_MAP_CI;
+using INT_INT_VECT_MAP = std::map<int, INT_VECT>;
+using INT_INT_VECT_MAP_CI = INT_INT_VECT_MAP::const_iterator;
 
-typedef std::map<int, int> INT_MAP_INT;
-typedef INT_MAP_INT::iterator INT_MAP_INT_I;
-typedef INT_MAP_INT::const_iterator INT_MAP_INT_CI;
+using INT_MAP_INT = std::map<int, int>;
+using INT_MAP_INT_I = INT_MAP_INT::iterator;
+using INT_MAP_INT_CI = INT_MAP_INT::const_iterator;
 
-typedef std::deque<int> INT_DEQUE;
-typedef INT_DEQUE::iterator INT_DEQUE_I;
-typedef INT_DEQUE::const_iterator INT_DEQUE_CI;
+using INT_DEQUE = std::deque<int>;
+using INT_DEQUE_I = INT_DEQUE::iterator;
+using INT_DEQUE_CI = INT_DEQUE::const_iterator;
 
-typedef std::map<int, INT_DEQUE> INT_INT_DEQ_MAP;
-typedef INT_INT_DEQ_MAP::const_iterator INT_INT_DEQ_MAP_CI;
+using INT_INT_DEQ_MAP = std::map<int, INT_DEQUE>;
+using INT_INT_DEQ_MAP_CI = INT_INT_DEQ_MAP::const_iterator;
 
-typedef std::set<int> INT_SET;
-typedef INT_SET::iterator INT_SET_I;
-typedef INT_SET::const_iterator INT_SET_CI;
+using INT_SET = std::set<int>;
+using INT_SET_I = INT_SET::iterator;
+using INT_SET_CI = INT_SET::const_iterator;
 
 //! functor to compare two doubles with a tolerance
 struct RDKIT_RDGENERAL_EXPORT ltDouble {
@@ -291,7 +288,7 @@ struct RDKIT_RDGENERAL_EXPORT ltDouble {
 };
 
 //! std::map from double to integer.
-typedef std::map<double, int, ltDouble> DOUBLE_INT_MAP;
+using DOUBLE_INT_MAP = std::map<double, int, ltDouble>;
 
 //! functor for returning the larger of two values
 template <typename T>

@@ -96,7 +96,7 @@ class RDKIT_FINGERPRINTS_EXPORT ss_matcher {
   RDKit::ROMOL_SPTR m_matcher;
 };
 
-typedef std::tuple<boost::dynamic_bitset<>, uint32_t, unsigned int> AccumTuple;
+using AccumTuple = std::tuple<boost::dynamic_bitset<>, uint32_t, unsigned int>;
 
 RDKIT_FINGERPRINTS_EXPORT extern std::vector<std::string> defaultFeatureSmarts;
 

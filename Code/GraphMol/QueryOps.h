@@ -33,43 +33,41 @@
 #endif
 
 namespace RDKit {
-typedef Queries::Query<bool, Atom const *, true> ATOM_BOOL_QUERY;
-typedef Queries::Query<bool, Bond const *, true> BOND_BOOL_QUERY;
+using ATOM_BOOL_QUERY = Queries::Query<bool, const Atom *, true>;
+using BOND_BOOL_QUERY = Queries::Query<bool, const Bond *, true>;
 
-typedef Queries::AndQuery<int, Atom const *, true> ATOM_AND_QUERY;
-typedef Queries::AndQuery<int, Bond const *, true> BOND_AND_QUERY;
+using ATOM_AND_QUERY = Queries::AndQuery<int, const Atom *, true>;
+using BOND_AND_QUERY = Queries::AndQuery<int, const Bond *, true>;
 
-typedef Queries::OrQuery<int, Atom const *, true> ATOM_OR_QUERY;
-typedef Queries::OrQuery<int, Bond const *, true> BOND_OR_QUERY;
+using ATOM_OR_QUERY = Queries::OrQuery<int, const Atom *, true>;
+using BOND_OR_QUERY = Queries::OrQuery<int, const Bond *, true>;
 
-typedef Queries::XOrQuery<int, Atom const *, true> ATOM_XOR_QUERY;
-typedef Queries::XOrQuery<int, Bond const *, true> BOND_XOR_QUERY;
+using ATOM_XOR_QUERY = Queries::XOrQuery<int, const Atom *, true>;
+using BOND_XOR_QUERY = Queries::XOrQuery<int, const Bond *, true>;
 
-typedef Queries::EqualityQuery<int, Atom const *, true> ATOM_EQUALS_QUERY;
-typedef Queries::EqualityQuery<int, Bond const *, true> BOND_EQUALS_QUERY;
+using ATOM_EQUALS_QUERY = Queries::EqualityQuery<int, const Atom *, true>;
+using BOND_EQUALS_QUERY = Queries::EqualityQuery<int, const Bond *, true>;
 
-typedef Queries::GreaterQuery<int, Atom const *, true> ATOM_GREATER_QUERY;
-typedef Queries::GreaterQuery<int, Bond const *, true> BOND_GREATER_QUERY;
+using ATOM_GREATER_QUERY = Queries::GreaterQuery<int, const Atom *, true>;
+using BOND_GREATER_QUERY = Queries::GreaterQuery<int, const Bond *, true>;
 
-typedef Queries::GreaterEqualQuery<int, Atom const *, true>
-    ATOM_GREATEREQUAL_QUERY;
-typedef Queries::GreaterEqualQuery<int, Bond const *, true>
-    BOND_GREATEREQUAL_QUERY;
+using ATOM_GREATEREQUAL_QUERY = Queries::GreaterEqualQuery<int, const Atom *, true>;
+using BOND_GREATEREQUAL_QUERY = Queries::GreaterEqualQuery<int, const Bond *, true>;
 
-typedef Queries::LessQuery<int, Atom const *, true> ATOM_LESS_QUERY;
-typedef Queries::LessQuery<int, Bond const *, true> BOND_LESS_QUERY;
+using ATOM_LESS_QUERY = Queries::LessQuery<int, const Atom *, true>;
+using BOND_LESS_QUERY = Queries::LessQuery<int, const Bond *, true>;
 
-typedef Queries::LessEqualQuery<int, Atom const *, true> ATOM_LESSEQUAL_QUERY;
-typedef Queries::LessEqualQuery<int, Bond const *, true> BOND_LESSEQUAL_QUERY;
+using ATOM_LESSEQUAL_QUERY = Queries::LessEqualQuery<int, const Atom *, true>;
+using BOND_LESSEQUAL_QUERY = Queries::LessEqualQuery<int, const Bond *, true>;
 
-typedef Queries::RangeQuery<int, Atom const *, true> ATOM_RANGE_QUERY;
-typedef Queries::RangeQuery<int, Bond const *, true> BOND_RANGE_QUERY;
+using ATOM_RANGE_QUERY = Queries::RangeQuery<int, const Atom *, true>;
+using BOND_RANGE_QUERY = Queries::RangeQuery<int, const Bond *, true>;
 
-typedef Queries::SetQuery<int, Atom const *, true> ATOM_SET_QUERY;
-typedef Queries::SetQuery<int, Bond const *, true> BOND_SET_QUERY;
+using ATOM_SET_QUERY = Queries::SetQuery<int, const Atom *, true>;
+using BOND_SET_QUERY = Queries::SetQuery<int, const Bond *, true>;
 
-typedef Queries::Query<int, Bond const *, true> BOND_NULL_QUERY;
-typedef Queries::Query<int, Atom const *, true> ATOM_NULL_QUERY;
+using BOND_NULL_QUERY = Queries::Query<int, const Bond *, true>;
+using ATOM_NULL_QUERY = Queries::Query<int, const Atom *, true>;
 
 // -------------------------------------------------
 // common atom queries
@@ -747,7 +745,7 @@ static inline int queryAtomRingMembership(Atom const *at) {
 // the definition of Match, then complains about an override
 // that differs only by const/volatile (c4301), then generates
 // incorrect code if we don't do this... so let's do it.
-typedef Atom const *ConstAtomPtr;
+using ConstAtomPtr = const Atom *;
 
 class RDKIT_GRAPHMOL_EXPORT AtomRingQuery
     : public Queries::EqualityQuery<int, ConstAtomPtr, true> {
@@ -857,7 +855,7 @@ bool nullQueryFun(T) {
   return true;
 }
 
-typedef Bond const *ConstBondPtr;
+using ConstBondPtr = const Bond *;
 
 // ! Query whether an atom has a property
 template <class TargetPtr>
@@ -894,8 +892,8 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
   const std::string &getPropName() const { return propname; }
 };
 
-typedef Queries::EqualityQuery<int, Atom const *, true> ATOM_PROP_QUERY;
-typedef Queries::EqualityQuery<int, Bond const *, true> BOND_PROP_QUERY;
+using ATOM_PROP_QUERY = Queries::EqualityQuery<int, const Atom *, true>;
+using BOND_PROP_QUERY = Queries::EqualityQuery<int, const Bond *, true>;
 
 //! returns a Query for matching atoms that have a particular property
 template <class Target>

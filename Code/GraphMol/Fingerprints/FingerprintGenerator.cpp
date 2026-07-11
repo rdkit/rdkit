@@ -375,12 +375,12 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
   // result in an RNG that's much too computationally intensive
   // to seed.
   // These are the parameters that have been used for the RDKit fingerprint.
-  typedef boost::random::mersenne_twister<std::uint32_t, 32, 4, 2, 31,
-                                          0x9908b0df, 11, 7, 0x9d2c5680, 15,
-                                          0xefc60000, 18, 3346425566U>
-      rng_type;
-  typedef boost::uniform_int<> distrib_type;
-  typedef boost::variate_generator<rng_type &, distrib_type> source_type;
+  using rng_type =
+      boost::random::mersenne_twister<std::uint32_t, 32, 4, 2, 31, 0x9908b0df,
+                                      11, 7, 0x9d2c5680, 15, 0xefc60000, 18,
+                                      3346425566U>;
+  using distrib_type = boost::uniform_int<>;
+  using source_type = boost::variate_generator<rng_type &, distrib_type>;
   std::unique_ptr<rng_type> generator;
   //
   // if we generate arbitrarily sized ints then mod them down to the

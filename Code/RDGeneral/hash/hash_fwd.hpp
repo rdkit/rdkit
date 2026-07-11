@@ -16,11 +16,10 @@
 
 #include <cstdint>
 namespace std {
-typedef std::uint32_t hash_result_t;
+using hash_result_t = std::uint32_t;
 }
 
 #include <boost/config.hpp>
-#include <cstddef>
 #include <boost/detail/workaround.hpp>
 
 namespace gboost {

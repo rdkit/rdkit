@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include <RDBoost/python.h>
-#include <fstream>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
 #include <RDGeneral/versions.h>
@@ -229,7 +228,7 @@ struct PyCaptureErrorLog : boost::noncopyable {
 
 namespace {
 struct python_streambuf_wrapper {
-  typedef boost_adaptbx::python::streambuf wt;
+  using wt = boost_adaptbx::python::streambuf;
 
   static void wrap() {
     using namespace boost::python;
@@ -241,7 +240,7 @@ struct python_streambuf_wrapper {
 };
 
 struct python_ostream_wrapper {
-  typedef boost_adaptbx::python::ostream wt;
+  using wt = boost_adaptbx::python::ostream;
 
   static void wrap() {
     using namespace boost::python;

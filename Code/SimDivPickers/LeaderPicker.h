@@ -136,17 +136,17 @@ void *LeaderPickerWork(void *arg);
 
 template <typename T>
 struct LeaderPickerState {
-  typedef struct {
+  struct LeaderPickerBlock {
     int *ptr;
     unsigned int capacity;
     unsigned int len;
     unsigned int next[2];
-  } LeaderPickerBlock;
-  typedef struct {
+  };
+  struct LeaderPickerThread {
     LeaderPickerState<T> *stat;
     pthread_t tid;
     unsigned int id;
-  } LeaderPickerThread;
+  };
 
   std::vector<LeaderPickerThread> threads;
   std::vector<LeaderPickerBlock> blocks;

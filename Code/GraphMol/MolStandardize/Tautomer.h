@@ -28,9 +28,8 @@ class RWMol;
 
 namespace MolStandardize {
 
-typedef RDCatalog::HierarchCatalog<TautomerCatalogEntry, TautomerCatalogParams,
-                                   int>
-    TautomerCatalog;
+using TautomerCatalog = RDCatalog::HierarchCatalog<TautomerCatalogEntry,
+                                                   TautomerCatalogParams, int>;
 
 namespace TautomerScoringFunctions {
 const std::string tautomerScoringVersion = "1.0.0";
@@ -55,8 +54,7 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
   RWMol connectivityMatcher;
 
   SubstructTerm(std::string aname, std::string asmarts, int ascore,
-                std::vector<int> reqElements = {},
-                std::string connSmarts = "");
+                std::vector<int> reqElements = {}, std::string connSmarts = "");
   SubstructTerm(const SubstructTerm &rhs) = default;
   SubstructTerm &operator=(const SubstructTerm &rhs) = default;
 
@@ -95,8 +93,8 @@ RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(
 ///      doesn't match (since tautomerization doesn't create/destroy bonds)
 /// Returns indices into the terms vector for relevant terms.
 RDKIT_MOLSTANDARDIZE_EXPORT std::vector<size_t> getRelevantSubstructTermIndices(
-    const ROMol &mol,
-    const std::vector<SubstructTerm> &terms = getDefaultTautomerScoreSubstructs());
+    const ROMol &mol, const std::vector<SubstructTerm> &terms =
+                          getDefaultTautomerScoreSubstructs());
 
 //! Score substructures using only the terms at the specified indices.
 /// Uses specialized matchers for simple patterns (C=O, N=O, P=O, methyl, etc.)
@@ -181,8 +179,8 @@ class Tautomer {
   bool d_done;
 };
 
-typedef std::map<std::string, Tautomer> SmilesTautomerMap;
-typedef std::pair<std::string, Tautomer> SmilesTautomerPair;
+using SmilesTautomerMap = std::map<std::string, Tautomer>;
+using SmilesTautomerPair = std::pair<std::string, Tautomer>;
 
 //! Contains results of tautomer enumeration
 class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumeratorResult {
@@ -191,11 +189,11 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumeratorResult {
  public:
   class const_iterator {
    public:
-    typedef ROMOL_SPTR value_type;
-    typedef std::ptrdiff_t difference_type;
-    typedef const ROMol *pointer;
-    typedef const ROMOL_SPTR &reference;
-    typedef std::bidirectional_iterator_tag iterator_category;
+    using value_type = ROMOL_SPTR;
+    using difference_type = std::ptrdiff_t;
+    using pointer = const ROMol *;
+    using reference = const ROMOL_SPTR &;
+    using iterator_category = std::bidirectional_iterator_tag;
 
     explicit const_iterator(const SmilesTautomerMap::const_iterator &it)
         : d_it(it) {}

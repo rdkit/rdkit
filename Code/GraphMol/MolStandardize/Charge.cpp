@@ -30,17 +30,15 @@ std::vector<ChargeCorrection> CHARGE_CORRECTIONS = {
     ChargeCorrection("[Mg,Ca]", "[Mg,Ca;X0+0]", 2),
     ChargeCorrection("[Cl]", "[Cl;X0+0]", -1)};
 
-typedef boost::flyweight<
+using param_filename_flyweight = boost::flyweight<
     boost::flyweights::key_value<std::string, AcidBaseCatalogParams>,
-    boost::flyweights::no_tracking>
-    param_filename_flyweight;
+    boost::flyweights::no_tracking>;
 
-typedef boost::flyweight<
+using param_data_flyweight = boost::flyweight<
     boost::flyweights::key_value<
         std::vector<std::tuple<std::string, std::string, std::string>>,
         AcidBaseCatalogParams>,
-    boost::flyweights::no_tracking>
-    param_data_flyweight;
+    boost::flyweights::no_tracking>;
 
 // constructor
 Reionizer::Reionizer() {
@@ -248,10 +246,10 @@ void Reionizer::reionizeInPlace(RWMol &mol) {
   }  // while loop
 }
 
-std::pair<unsigned int, std::vector<unsigned int>> *
-Reionizer::strongestProtonated(
-    const ROMol &mol,
-    const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs) {
+std::pair<unsigned int, std::vector<unsigned int>>
+    *Reionizer::strongestProtonated(
+        const ROMol &mol,
+        const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs) {
   // position is the position in the acid list.
   unsigned int position = 0;
   for (const auto &abpair : abpairs) {
@@ -306,7 +304,7 @@ Uncharger::Uncharger()
           // hali(a)te, perhalate
           "$([O-][Cl,Br,I;+,+2,+3][O-]),"
           // tetrazole
-          "$([n-]1nnnc1),$([n-]1ncnn1)]")) {};
+          "$([n-]1nnnc1),$([n-]1ncnn1)]")){};
 
 namespace {
 void removeCharge(Atom *atom, int charge, int hDelta) {

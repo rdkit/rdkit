@@ -19,7 +19,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
@@ -131,10 +131,9 @@ double calcMR(const ROMol &mol) {
   return mr;
 }
 
-typedef boost::flyweight<
+using param_flyweight = boost::flyweight<
     boost::flyweights::key_value<std::string, CrippenParamCollection>,
-    boost::flyweights::no_tracking>
-    param_flyweight;
+    boost::flyweights::no_tracking>;
 
 const CrippenParamCollection *CrippenParamCollection::getParams(
     const std::string &paramData) {

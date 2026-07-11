@@ -3,8 +3,8 @@
 #include <RDGeneral/export.h>
 #if BOOST_VERSION < 106500
 #include <boost/python/numeric.hpp>
-typedef boost::python::numeric::array NumpyArrayType;
+using NumpyArrayType = boost::python::numeric::array;
 #else
 #include <boost/python/numpy.hpp>
-typedef boost::python::numpy::ndarray NumpyArrayType;
+using NumpyArrayType = boost::python::numpy::ndarray;
 #endif

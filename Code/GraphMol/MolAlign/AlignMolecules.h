@@ -16,7 +16,7 @@
 #include <vector>
 
 namespace RDKit {
-typedef std::vector<std::pair<int, int>> MatchVectType;
+using MatchVectType = std::vector<std::pair<int, int>>;
 
 class Conformer;
 class ROMol;

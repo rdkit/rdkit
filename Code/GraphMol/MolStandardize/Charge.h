@@ -31,9 +31,8 @@ namespace MolStandardize {
 RDKIT_MOLSTANDARDIZE_EXPORT extern const CleanupParameters
     defaultCleanupParameters;
 
-typedef RDCatalog::HierarchCatalog<AcidBaseCatalogEntry, AcidBaseCatalogParams,
-                                   int>
-    AcidBaseCatalog;
+using AcidBaseCatalog = RDCatalog::HierarchCatalog<AcidBaseCatalogEntry,
+                                                   AcidBaseCatalogParams, int>;
 
 struct RDKIT_MOLSTANDARDIZE_EXPORT ChargeCorrection {
   std::string Name;

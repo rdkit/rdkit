@@ -109,18 +109,18 @@ namespace bp = boost::python;
 */
 class streambuf : public std::basic_streambuf<char> {
  private:
-  typedef std::basic_streambuf<char> base_t;
+  using base_t = std::basic_streambuf<char>;
 
  public:
   /* The syntax
       using base_t::char_type;
      would be nicer but Visual Studio C++ 8 chokes on it
   */
-  typedef base_t::char_type char_type;
-  typedef base_t::int_type int_type;
-  typedef base_t::pos_type pos_type;
-  typedef base_t::off_type off_type;
-  typedef base_t::traits_type traits_type;
+  using char_type = base_t::char_type;
+  using int_type = base_t::int_type;
+  using pos_type = base_t::pos_type;
+  using off_type = base_t::off_type;
+  using traits_type = base_t::traits_type;
 
   // work around Visual C++ 7.1 problem
   inline static int traits_type_eof() { return traits_type::eof(); }

@@ -39,7 +39,7 @@ namespace RDKit {
 namespace EnumerationTypes {
 //! BBS - Helper typedef for holding building blocks for reactions
 //!   holds vectors of reagents for each reactant in a Reaction
-typedef std::vector<MOL_SPTR_VECT> BBS;
+using BBS = std::vector<MOL_SPTR_VECT>;
 
 //! RGROUPS Helper typedef for indexing into the BBS vector
 //!  - The indices into the BBS molecule list to create a product
@@ -53,7 +53,7 @@ typedef std::vector<MOL_SPTR_VECT> BBS;
 //!   building_blocks.push_back( BBS[0][groups[0] );
 //!   building_blocks.push_back( BBS[1][groups[1] );
 //!    rxn.runReactants( building_blocks );
-typedef std::vector<boost::uint64_t> RGROUPS;
+using RGROUPS = std::vector<boost::uint64_t>;
 }  // namespace EnumerationTypes
 }  // namespace RDKit
 #endif

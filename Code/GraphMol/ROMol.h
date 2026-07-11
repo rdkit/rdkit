@@ -24,7 +24,6 @@
 #include <utility>
 #include <map>
 #include <ranges>
-#include <limits>
 
 // boost stuff
 #include <RDGeneral/BoostStartInclude.h>
@@ -52,9 +51,8 @@ class SubstanceGroup;
 class Atom;
 class Bond;
 //! This is the BGL type used to store the topology:
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
-                              Atom *, Bond *>
-    MolGraph;
+using MolGraph = boost::adjacency_list<boost::vecS, boost::vecS,
+                                       boost::undirectedS, Atom *, Bond *>;
 class MolPickler;
 class RWMol;
 class QueryAtom;
@@ -139,7 +137,7 @@ struct CXXAtomIterator {
       }
     }
 
-    CXXAtomIter() {};
+    CXXAtomIter(){};
 
     CXXAtomIter(Graph *graph, Iterator pos) : graph(graph), pos(pos) {
       if (CheckedAtoms) {
@@ -220,7 +218,7 @@ struct CXXAtomIterator {
     std::tie(vstart, vend) = boost::vertices(*graph);
   }
   CXXAtomIterator(Graph *graph, Iterator start, Iterator end)
-      : graph(graph), vstart(start), vend(end) {};
+      : graph(graph), vstart(start), vend(end){};
   CXXAtomIter begin() { return {graph, vstart}; }
   CXXAtomIter end() { return {graph, vend}; }
   size_t size() const { return vend - vstart; }
@@ -250,7 +248,7 @@ struct CXXBondIterator {
     Iterator pos;
     size_t osize{0};
 
-    CXXBondIter() {};
+    CXXBondIter(){};
 
     CXXBondIter(Graph *graph, Iterator pos) : graph(graph), pos(pos) {
       if (Checked) {
@@ -299,7 +297,7 @@ struct CXXBondIterator {
     vend = vs.second;
   }
   CXXBondIterator(Graph *graph, Iterator start, Iterator end)
-      : graph(graph), vstart(start), vend(end) {};
+      : graph(graph), vstart(start), vend(end){};
   CXXBondIter begin() { return {graph, vstart}; }
   CXXBondIter end() { return {graph, vend}; }
   size_t size() const {
@@ -325,61 +323,61 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   //! \name typedefs
   //! @{
-  typedef MolGraph::vertex_descriptor vertex_descriptor;
-  typedef MolGraph::edge_descriptor edge_descriptor;
+  using vertex_descriptor = MolGraph::vertex_descriptor;
+  using edge_descriptor = MolGraph::edge_descriptor;
 
-  typedef MolGraph::edge_iterator EDGE_ITER;
-  typedef MolGraph::out_edge_iterator OEDGE_ITER;
-  typedef MolGraph::vertex_iterator VERTEX_ITER;
-  typedef MolGraph::adjacency_iterator ADJ_ITER;
-  typedef std::pair<EDGE_ITER, EDGE_ITER> BOND_ITER_PAIR;
-  typedef std::pair<OEDGE_ITER, OEDGE_ITER> OBOND_ITER_PAIR;
-  typedef std::pair<VERTEX_ITER, VERTEX_ITER> ATOM_ITER_PAIR;
-  typedef std::pair<ADJ_ITER, ADJ_ITER> ADJ_ITER_PAIR;
+  using EDGE_ITER = MolGraph::edge_iterator;
+  using OEDGE_ITER = MolGraph::out_edge_iterator;
+  using VERTEX_ITER = MolGraph::vertex_iterator;
+  using ADJ_ITER = MolGraph::adjacency_iterator;
+  using BOND_ITER_PAIR = std::pair<EDGE_ITER, EDGE_ITER>;
+  using OBOND_ITER_PAIR = std::pair<OEDGE_ITER, OEDGE_ITER>;
+  using ATOM_ITER_PAIR = std::pair<VERTEX_ITER, VERTEX_ITER>;
+  using ADJ_ITER_PAIR = std::pair<ADJ_ITER, ADJ_ITER>;
 
-  typedef std::vector<Atom *> ATOM_PTR_VECT;
-  typedef ATOM_PTR_VECT::iterator ATOM_PTR_VECT_I;
-  typedef ATOM_PTR_VECT::const_iterator ATOM_PTR_VECT_CI;
-  typedef std::vector<Bond *> BOND_PTR_VECT;
-  typedef BOND_PTR_VECT::iterator BOND_PTR_VECT_I;
-  typedef BOND_PTR_VECT::const_iterator BOND_PTR_VECT_CI;
+  using ATOM_PTR_VECT = std::vector<Atom *>;
+  using ATOM_PTR_VECT_I = ATOM_PTR_VECT::iterator;
+  using ATOM_PTR_VECT_CI = ATOM_PTR_VECT::const_iterator;
+  using BOND_PTR_VECT = std::vector<Bond *>;
+  using BOND_PTR_VECT_I = BOND_PTR_VECT::iterator;
+  using BOND_PTR_VECT_CI = BOND_PTR_VECT::const_iterator;
 
-  typedef std::list<Atom *> ATOM_PTR_LIST;
-  typedef ATOM_PTR_LIST::iterator ATOM_PTR_LIST_I;
-  typedef ATOM_PTR_LIST::const_iterator ATOM_PTR_LIST_CI;
-  typedef std::list<Bond *> BOND_PTR_LIST;
-  typedef BOND_PTR_LIST::iterator BOND_PTR_LIST_I;
-  typedef BOND_PTR_LIST::const_iterator BOND_PTR_LIST_CI;
+  using ATOM_PTR_LIST = std::list<Atom *>;
+  using ATOM_PTR_LIST_I = ATOM_PTR_LIST::iterator;
+  using ATOM_PTR_LIST_CI = ATOM_PTR_LIST::const_iterator;
+  using BOND_PTR_LIST = std::list<Bond *>;
+  using BOND_PTR_LIST_I = BOND_PTR_LIST::iterator;
+  using BOND_PTR_LIST_CI = BOND_PTR_LIST::const_iterator;
 
   // list of conformations
-  typedef std::list<CONFORMER_SPTR> CONF_SPTR_LIST;
-  typedef CONF_SPTR_LIST::iterator CONF_SPTR_LIST_I;
-  typedef CONF_SPTR_LIST::const_iterator CONF_SPTR_LIST_CI;
-  typedef std::pair<CONF_SPTR_LIST_I, CONF_SPTR_LIST_I> CONFS_I_PAIR;
+  using CONF_SPTR_LIST = std::list<CONFORMER_SPTR>;
+  using CONF_SPTR_LIST_I = CONF_SPTR_LIST::iterator;
+  using CONF_SPTR_LIST_CI = CONF_SPTR_LIST::const_iterator;
+  using CONFS_I_PAIR = std::pair<CONF_SPTR_LIST_I, CONF_SPTR_LIST_I>;
 
   // ROFIX: these will need to be readonly somehow?
-  typedef std::map<int, ATOM_PTR_LIST> ATOM_BOOKMARK_MAP;
-  typedef std::map<int, BOND_PTR_LIST> BOND_BOOKMARK_MAP;
+  using ATOM_BOOKMARK_MAP = std::map<int, ATOM_PTR_LIST>;
+  using BOND_BOOKMARK_MAP = std::map<int, BOND_PTR_LIST>;
 
-  typedef class AtomIterator_<Atom, ROMol> AtomIterator;
-  typedef class AtomIterator_<const Atom, const ROMol> ConstAtomIterator;
-  typedef class BondIterator_ BondIterator;
-  typedef class ConstBondIterator_ ConstBondIterator;
-  typedef class AromaticAtomIterator_<Atom, ROMol> AromaticAtomIterator;
-  typedef class AromaticAtomIterator_<const Atom, const ROMol>
-      ConstAromaticAtomIterator;
-  typedef class HeteroatomIterator_<Atom, ROMol> HeteroatomIterator;
-  typedef class HeteroatomIterator_<const Atom, const ROMol>
-      ConstHeteroatomIterator;
-  typedef class QueryAtomIterator_<Atom, ROMol> QueryAtomIterator;
-  typedef class QueryAtomIterator_<const Atom, const ROMol>
-      ConstQueryAtomIterator;
-  typedef class MatchingAtomIterator_<Atom, ROMol> MatchingAtomIterator;
-  typedef class MatchingAtomIterator_<const Atom, const ROMol>
-      ConstMatchingAtomIterator;
+  using AtomIterator = class AtomIterator_<Atom, ROMol>;
+  using ConstAtomIterator = class AtomIterator_<const Atom, const ROMol>;
+  using BondIterator = class BondIterator_;
+  using ConstBondIterator = class ConstBondIterator_;
+  using AromaticAtomIterator = class AromaticAtomIterator_<Atom, ROMol>;
+  using ConstAromaticAtomIterator =
+      class AromaticAtomIterator_<const Atom, const ROMol>;
+  using HeteroatomIterator = class HeteroatomIterator_<Atom, ROMol>;
+  using ConstHeteroatomIterator =
+      class HeteroatomIterator_<const Atom, const ROMol>;
+  using QueryAtomIterator = class QueryAtomIterator_<Atom, ROMol>;
+  using ConstQueryAtomIterator =
+      class QueryAtomIterator_<const Atom, const ROMol>;
+  using MatchingAtomIterator = class MatchingAtomIterator_<Atom, ROMol>;
+  using ConstMatchingAtomIterator =
+      class MatchingAtomIterator_<const Atom, const ROMol>;
 
-  typedef CONF_SPTR_LIST_I ConformerIterator;
-  typedef CONF_SPTR_LIST_CI ConstConformerIterator;
+  using ConformerIterator = CONF_SPTR_LIST_I;
+  using ConstConformerIterator = CONF_SPTR_LIST_CI;
 
   //! @}
   //! \endcond
@@ -997,8 +995,8 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   friend RDKIT_GRAPHMOL_EXPORT std::vector<SubstanceGroup> &getSubstanceGroups(
       ROMol &);
-  friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup> &
-  getSubstanceGroups(const ROMol &);
+  friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup>
+      &getSubstanceGroups(const ROMol &);
   void clearSubstanceGroups() { d_sgroups.clear(); }
 
  protected:
@@ -1046,12 +1044,12 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   void initFromOther(const ROMol &other, bool quickCopy, int confId);
 };
 
-typedef std::vector<ROMol> MOL_VECT;
-typedef boost::shared_ptr<ROMol> ROMOL_SPTR;
-typedef std::vector<ROMol *> MOL_PTR_VECT;
-typedef std::vector<ROMOL_SPTR> MOL_SPTR_VECT;
+using MOL_VECT = std::vector<ROMol>;
+using ROMOL_SPTR = boost::shared_ptr<ROMol>;
+using MOL_PTR_VECT = std::vector<ROMol *>;
+using MOL_SPTR_VECT = std::vector<ROMOL_SPTR>;
 
-typedef MOL_PTR_VECT::const_iterator MOL_PTR_VECT_CI;
-typedef MOL_PTR_VECT::iterator MOL_PTR_VECT_I;
+using MOL_PTR_VECT_CI = MOL_PTR_VECT::const_iterator;
+using MOL_PTR_VECT_I = MOL_PTR_VECT::iterator;
 };  // namespace RDKit
 #endif

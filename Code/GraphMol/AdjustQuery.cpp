@@ -35,7 +35,7 @@ bool isMapped(const Atom *atom) {
 namespace MolOps {
 
 namespace {
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 
 unsigned int parseWhichString(const std::string &txt) {
   unsigned int res = MolOps::ADJUST_IGNORENONE;

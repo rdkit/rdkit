@@ -219,8 +219,8 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   void batchRemoveAtoms();
 };
 
-typedef boost::shared_ptr<RWMol> RWMOL_SPTR;
-typedef std::vector<RWMOL_SPTR> RWMOL_SPTR_VECT;
+using RWMOL_SPTR = boost::shared_ptr<RWMol>;
+using RWMOL_SPTR_VECT = std::vector<RWMOL_SPTR>;
 
 };  // namespace RDKit
 

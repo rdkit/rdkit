@@ -52,7 +52,7 @@
 #include "FilterMatchers.h"
 
 namespace RDKit {
-typedef std::map<std::string, std::string> STRING_PROPS;
+using STRING_PROPS = std::map<std::string, std::string>;
 
 class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
     : public RDCatalog::CatalogEntry {

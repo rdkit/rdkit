@@ -30,7 +30,7 @@ class AtomicParams;
 namespace RDKit {
 class ROMol;
 namespace UFF {
-typedef std::vector<const ForceFields::UFF::AtomicParams *> AtomicParamVect;
+using AtomicParamVect = std::vector<const ForceFields::UFF::AtomicParams *>;
 
 //! Builds and returns a UFF force field for a molecule
 /*!

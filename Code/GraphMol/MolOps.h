@@ -30,9 +30,9 @@ class RWMol;
 class Atom;
 class Bond;
 class Conformer;
-typedef std::vector<double> INVAR_VECT;
-typedef INVAR_VECT::iterator INVAR_VECT_I;
-typedef INVAR_VECT::const_iterator INVAR_VECT_CI;
+using INVAR_VECT = std::vector<double>;
+using INVAR_VECT_I = INVAR_VECT::iterator;
+using INVAR_VECT_CI = INVAR_VECT::const_iterator;
 
 //! \brief Groups a variety of molecular query and transformation operations.
 namespace MolOps {
@@ -395,7 +395,7 @@ RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
 */
 RDKIT_GRAPHMOL_EXPORT std::pair<bool, bool> hasQueryHs(const ROMol &mol);
 
-typedef enum {
+enum AdjustQueryWhichFlags {
   ADJUST_IGNORENONE = 0x0,
   ADJUST_IGNORECHAINS = 0x1,
   ADJUST_IGNORERINGS = 0x4,
@@ -403,7 +403,7 @@ typedef enum {
   ADJUST_IGNORENONDUMMIES = 0x8,
   ADJUST_IGNOREMAPPED = 0x10,
   ADJUST_IGNOREALL = 0xFFFFFFF
-} AdjustQueryWhichFlags;
+};
 
 //! Parameters controlling the behavior of MolOps::adjustQueryProperties
 /*!
@@ -613,14 +613,14 @@ does not consider the outer envelope of fused rings)
 - \c AROMATICIT_MMFF94 the aromaticity model used by the MMFF94 force field
 - \c AROMATICITY_CUSTOM uses a caller-provided function
 */
-typedef enum {
+enum AromaticityModel {
   AROMATICITY_DEFAULT = 0x0,  ///< future proofing
   AROMATICITY_RDKIT = 0x1,
   AROMATICITY_SIMPLE = 0x2,
   AROMATICITY_MDL = 0x4,
   AROMATICITY_MMFF94 = 0x8,
   AROMATICITY_CUSTOM = 0xFFFFFFF  ///< use a function
-} AromaticityModel;
+};
 
 //! sets the aromaticity model for a molecule to MMFF94
 RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RWMol &mol);

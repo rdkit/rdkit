@@ -244,7 +244,7 @@ or
 */
 class RDKIT_STRUCTCHECKER_EXPORT StructChecker {
  public:
-  typedef enum StructureFlags {
+  enum StructureFlags {
     NO_CHANGE = 0,
     BAD_MOLECULE = 0x0001,
     ALIAS_CONVERSION_FAILED = 0x0002,
@@ -270,7 +270,7 @@ class RDKIT_STRUCTCHECKER_EXPORT StructChecker {
     TRANSFORMED_SET = (TRANSFORMED | FRAGMENTS_FOUND | EITHER_WARNING |
                        DUBIOUS_STEREO_REMOVED | STEREO_TRANSFORMED |
                        TEMPLATE_TRANSFORMED | TAUTOMER_TRANSFORMED | RECHARGED),
-  } StructureFlags;
+  };
   // attributes:
  private:
   StructCheckerOptions Options;

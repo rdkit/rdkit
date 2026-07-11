@@ -119,8 +119,8 @@ class RingMembership {
 };
 
 class RingMembershipSize {
-  typedef std::map<unsigned int, RingMembership> RingMembershipMap;
-  typedef std::map<unsigned int, RingMembershipMap> RingSizeMembershipMap;
+  using RingMembershipMap = std::map<unsigned int, RingMembership>;
+  using RingSizeMembershipMap = std::map<unsigned int, RingMembershipMap>;
 
  public:
   static const std::uint32_t IS_AROMATIC_BIT;

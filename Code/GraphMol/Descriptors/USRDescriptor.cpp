@@ -122,8 +122,9 @@ void calcMoments(const std::vector<double> &dist,
       } else {
         moments[2] = -1. * pow(-1. * moments[2], 1. / 3.);
       }
-#else
-      moments[2] = cbrt(moments[2] / (moments[1] * moments[1] * moments[1]));
+
+      moments[2] =
+          std::cbrt(moments[2] / (moments[1] * moments[1] * moments[1]));
 #endif
     }
   }
@@ -133,7 +134,7 @@ void calcMoments(const std::vector<double> &dist,
 
 class ss_matcher {
  public:
-  ss_matcher() {};
+  ss_matcher(){};
   ss_matcher(const std::string &pattern) {
     RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
     TEST_ASSERT(p);
@@ -155,9 +156,9 @@ $([N&v3;H1,H2]-[!$(*=[O,N,P,S])]),$([N;v3;H0]),$([n,o,s;+0]),F]",  // acceptor
     "[N!H0v3,N!H0+v4,OH+0,SH+0,nH+0]"                              // donor
 };
 std::vector<std::string> featureSmarts(smartsPatterns, smartsPatterns + 4);
-typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking>
-    pattern_flyweight;
+using pattern_flyweight =
+    boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
+                     boost::flyweights::no_tracking>;
 
 void getAtomIdsForFeatures(const ROMol &mol,
                            std::vector<std::vector<unsigned int>> &atomIds) {

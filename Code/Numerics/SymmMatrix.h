@@ -29,7 +29,7 @@ namespace RDNumeric {
 template <class TYPE>
 class SymmMatrix {
  public:
-  typedef boost::shared_array<TYPE> DATA_SPTR;
+  using DATA_SPTR = boost::shared_array<TYPE>;
 
   explicit SymmMatrix(unsigned int N) : d_size(N), d_dataSize(N * (N + 1) / 2) {
     TYPE *data = new TYPE[d_dataSize];
@@ -336,9 +336,9 @@ Vector<TYPE> &multiply(const SymmMatrix<TYPE> &A, const Vector<TYPE> &x,
   return y;
 }
 
-typedef SymmMatrix<double> DoubleSymmMatrix;
-typedef SymmMatrix<int> IntSymmMatrix;
-typedef SymmMatrix<unsigned int> UintSymmMatrix;
+using DoubleSymmMatrix = SymmMatrix<double>;
+using IntSymmMatrix = SymmMatrix<int>;
+using UintSymmMatrix = SymmMatrix<unsigned int>;
 }  // namespace RDNumeric
 
 //! ostream operator for Matrix's

@@ -428,7 +428,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
 
 class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
  public:
-  typedef boost::shared_ptr<RDNumeric::Vector<double>> VECT_SH_PTR;
+  using VECT_SH_PTR = boost::shared_ptr<RDNumeric::Vector<double>>;
 
   PointND(unsigned int dim) {
     RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(dim, 0.0);
@@ -534,28 +534,28 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
 #endif
 #endif
 
-typedef std::vector<RDGeom::Point *> PointPtrVect;
-typedef PointPtrVect::iterator PointPtrVect_I;
-typedef PointPtrVect::const_iterator PointPtrVect_CI;
+using PointPtrVect = std::vector<RDGeom::Point *>;
+using PointPtrVect_I = PointPtrVect::iterator;
+using PointPtrVect_CI = PointPtrVect::const_iterator;
 
-typedef std::vector<RDGeom::Point3D *> Point3DPtrVect;
-typedef std::vector<RDGeom::Point2D *> Point2DPtrVect;
-typedef Point3DPtrVect::iterator Point3DPtrVect_I;
-typedef Point3DPtrVect::const_iterator Point3DPtrVect_CI;
-typedef Point2DPtrVect::iterator Point2DPtrVect_I;
-typedef Point2DPtrVect::const_iterator Point2DPtrVect_CI;
+using Point3DPtrVect = std::vector<RDGeom::Point3D *>;
+using Point2DPtrVect = std::vector<RDGeom::Point2D *>;
+using Point3DPtrVect_I = Point3DPtrVect::iterator;
+using Point3DPtrVect_CI = Point3DPtrVect::const_iterator;
+using Point2DPtrVect_I = Point2DPtrVect::iterator;
+using Point2DPtrVect_CI = Point2DPtrVect::const_iterator;
 
-typedef std::vector<const RDGeom::Point3D *> Point3DConstPtrVect;
-typedef Point3DConstPtrVect::iterator Point3DConstPtrVect_I;
-typedef Point3DConstPtrVect::const_iterator Point3DConstPtrVect_CI;
+using Point3DConstPtrVect = std::vector<const RDGeom::Point3D *>;
+using Point3DConstPtrVect_I = Point3DConstPtrVect::iterator;
+using Point3DConstPtrVect_CI = Point3DConstPtrVect::const_iterator;
 
-typedef std::vector<Point3D> POINT3D_VECT;
-typedef std::vector<Point3D>::iterator POINT3D_VECT_I;
-typedef std::vector<Point3D>::const_iterator POINT3D_VECT_CI;
+using POINT3D_VECT = std::vector<Point3D>;
+using POINT3D_VECT_I = std::vector<Point3D>::iterator;
+using POINT3D_VECT_CI = std::vector<Point3D>::const_iterator;
 
-typedef std::map<int, Point2D> INT_POINT2D_MAP;
-typedef INT_POINT2D_MAP::iterator INT_POINT2D_MAP_I;
-typedef INT_POINT2D_MAP::const_iterator INT_POINT2D_MAP_CI;
+using INT_POINT2D_MAP = std::map<int, Point2D>;
+using INT_POINT2D_MAP_I = INT_POINT2D_MAP::iterator;
+using INT_POINT2D_MAP_CI = INT_POINT2D_MAP::const_iterator;
 
 RDKIT_RDGEOMETRYLIB_EXPORT std::ostream &operator<<(std::ostream &target,
                                                     const RDGeom::Point &pt);

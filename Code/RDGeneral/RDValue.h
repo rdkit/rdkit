@@ -29,6 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #include <RDGeneral/export.h>
+#include <string>
 #ifndef RDKIT_RDVALUE_H
 #define RDKIT_RDVALUE_H
 
@@ -39,6 +40,7 @@
 #include "RDValue-taggedunion.h"
 #endif
 
+#include <iomanip>
 #include <boost/algorithm/string.hpp>
 
 namespace RDKit {
@@ -195,7 +197,7 @@ inline bool rdvalue_tostring(RDValue_cast_t val, std::string &res) {
       res = rdvalue_cast<std::string>(val);
       break;
     case RDTypeTag::IntTag:
-      res = boost::lexical_cast<std::string>(rdvalue_cast<int>(val));
+      res = std::to_string(rdvalue_cast<int>(val));
       break;
     case RDTypeTag::DoubleTag: {
       Utils::LocaleSwitcher ls;  // for lexical cast...
@@ -203,7 +205,7 @@ inline bool rdvalue_tostring(RDValue_cast_t val, std::string &res) {
       break;
     }
     case RDTypeTag::UnsignedIntTag:
-      res = boost::lexical_cast<std::string>(rdvalue_cast<unsigned int>(val));
+      res = std::to_string(rdvalue_cast<unsigned int>(val));
       break;
 #ifdef RDVALUE_HASBOOL
     case RDTypeTag::BoolTag:
@@ -241,16 +243,16 @@ inline bool rdvalue_tostring(RDValue_cast_t val, std::string &res) {
       } catch (const std::bad_any_cast &) {
         auto &rdtype = rdvalue_cast<std::any &>(val).type();
         if (rdtype == typeid(long)) {
-          res = boost::lexical_cast<std::string>(
+          res = std::to_string(
               std::any_cast<long>(rdvalue_cast<std::any &>(val)));
         } else if (rdtype == typeid(int64_t)) {
-          res = boost::lexical_cast<std::string>(
+          res = std::to_string(
               std::any_cast<int64_t>(rdvalue_cast<std::any &>(val)));
         } else if (rdtype == typeid(uint64_t)) {
-          res = boost::lexical_cast<std::string>(
+          res = std::to_string(
               std::any_cast<uint64_t>(rdvalue_cast<std::any &>(val)));
         } else if (rdtype == typeid(unsigned long)) {
-          res = boost::lexical_cast<std::string>(
+          res = std::to_string(
               std::any_cast<unsigned long>(rdvalue_cast<std::any &>(val)));
         } else {
           throw;

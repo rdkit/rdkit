@@ -25,8 +25,8 @@
 namespace boost {
 namespace logging {
 
-typedef boost::iostreams::tee_device<std::ostream, std::ostream> RDTee;
-typedef boost::iostreams::stream<RDTee> RDTeeStream;
+using RDTee = boost::iostreams::tee_device<std::ostream, std::ostream>;
+using RDTeeStream = boost::iostreams::stream<RDTee>;
 
 class RDKIT_RDGENERAL_EXPORT rdLogger {
  public:

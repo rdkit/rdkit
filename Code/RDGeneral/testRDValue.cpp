@@ -122,7 +122,7 @@ TEST_CASE("testStringVect") {
 
 TEST_CASE("testMapsAndLists") {
   {
-    typedef std::map<std::string, int> listtype;
+    using listtype = std::map<std::string, int>;
     listtype m;
     m["foo"] = 1;
     m["bar"] = 2;

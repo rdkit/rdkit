@@ -20,9 +20,9 @@ class DemoKlass {
  private:
   int val_;
 };
-typedef boost::shared_ptr<DemoKlass> DemoKlassSPtr;
-typedef std::vector<DemoKlass *> DemoKlassPtrVect;
-typedef std::vector<DemoKlassSPtr> DemoKlassSPtrVect;
+using DemoKlassSPtr = boost::shared_ptr<DemoKlass>;
+using DemoKlassPtrVect = std::vector<DemoKlass *>;
+using DemoKlassSPtrVect = std::vector<DemoKlassSPtr>;
 
 DemoKlass *buildPtr(int v) { return new DemoKlass(v); }
 DemoKlassSPtr buildSPtr(int v) { return DemoKlassSPtr(new DemoKlass(v)); }
@@ -45,8 +45,8 @@ DemoKlassSPtrVect buildSPtrVector(unsigned int sz) {
 
 class DemoContainer {
  public:
-  typedef DemoKlassSPtrVect::iterator iterator;
-  typedef DemoKlassSPtrVect::const_iterator const_iterator;
+  using iterator = DemoKlassSPtrVect::iterator;
+  using const_iterator = DemoKlassSPtrVect::const_iterator;
   explicit DemoContainer(unsigned int sz) { vect_ = buildSPtrVector(sz); }
   iterator begin() { return vect_.begin(); }
   iterator end() { return vect_.end(); }

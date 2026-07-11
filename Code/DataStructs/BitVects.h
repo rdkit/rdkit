@@ -19,7 +19,7 @@
 #include "BitVect.h"
 #include "ExplicitBitVect.h"
 #include "SparseBitVect.h"
-typedef SparseBitVect SBV;
-typedef ExplicitBitVect EBV;
+using SBV = SparseBitVect;
+using EBV = ExplicitBitVect;
 
 #endif

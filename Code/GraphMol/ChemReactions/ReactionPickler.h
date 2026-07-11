@@ -47,7 +47,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ReactionPickler {
   //! the pickle format is tagged using these tags:
   //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM,
   //! otherwise you will break old pickles.
-  typedef enum {
+  enum Tags {
     VERSION = 10000,
     BEGINREACTANTS,
     ENDREACTANTS,
@@ -60,7 +60,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ReactionPickler {
     ENDPROPS,
     BEGINSSSPARAMS,
     ENDSSSPARAMS
-  } Tags;
+  };
 
   //! pickles a reaction and sends the results to stream \c ss
   static void pickleReaction(const ChemicalReaction *rxn, std::ostream &ss,

@@ -24,16 +24,16 @@ class Bond;
 }  // namespace RDKit
 
 namespace RDDepict {
-typedef boost::shared_array<double> DOUBLE_SMART_PTR;
+using DOUBLE_SMART_PTR = boost::shared_array<double>;
 
 //! Class that contains the data for an atoms that has already been embedded
 class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
  public:
-  typedef enum {
+  enum EAtomType {
     UNSPECIFIED = 0,
     CISTRANS,
     RING
-  } EAtomType;
+  };
 
   EmbeddedAtom() { neighs.clear(); }
 
@@ -134,9 +134,9 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
   bool df_fixed{false};
 };
 
-typedef std::map<unsigned int, EmbeddedAtom> INT_EATOM_MAP;
-typedef INT_EATOM_MAP::iterator INT_EATOM_MAP_I;
-typedef INT_EATOM_MAP::const_iterator INT_EATOM_MAP_CI;
+using INT_EATOM_MAP = std::map<unsigned int, EmbeddedAtom>;
+using INT_EATOM_MAP_I = INT_EATOM_MAP::iterator;
+using INT_EATOM_MAP_CI = INT_EATOM_MAP::const_iterator;
 
 //! Class containing a fragment of a molecule that has already been embedded
 /*

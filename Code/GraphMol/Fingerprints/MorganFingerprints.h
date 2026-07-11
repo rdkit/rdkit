@@ -53,9 +53,9 @@
 namespace RDKit {
 class ROMol;
 namespace MorganFingerprints {
-typedef std::map<std::uint32_t,
-                 std::vector<std::pair<std::uint32_t, std::uint32_t>>>
-    BitInfoMap;
+using BitInfoMap =
+    std::map<std::uint32_t,
+             std::vector<std::pair<std::uint32_t, std::uint32_t>>>;
 
 const std::string morganFingerprintVersion = "1.0.0";
 

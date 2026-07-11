@@ -24,9 +24,9 @@ class ROMol;
 };
 
 namespace RingUtils {
-typedef std::vector<int> INT_VECT;
-typedef std::vector<std::vector<int>> VECT_INT_VECT;
-typedef std::map<int, std::vector<int>> INT_INT_VECT_MAP;
+using INT_VECT = std::vector<int>;
+using VECT_INT_VECT = std::vector<std::vector<int>>;
+using INT_INT_VECT_MAP = std::map<int, std::vector<int>>;
 
 //! Pick a set of rings that are fused together and contain a specified ring
 /*!

@@ -11,7 +11,7 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/types.h>
 
-typedef double real;
+using real = double;
 extern "C" void distdriver_(long int *n, long int *len, real *dists,
                             long int *toggle, long int *ia, long int *ib,
                             real *crit);

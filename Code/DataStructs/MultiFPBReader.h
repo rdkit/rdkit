@@ -52,7 +52,7 @@ namespace RDKit {
 */
 class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
  public:
-  typedef std::tuple<double, unsigned int, unsigned int> ResultTuple;
+  using ResultTuple = std::tuple<double, unsigned int, unsigned int>;
   MultiFPBReader() {}
 
   /*!
