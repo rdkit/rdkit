@@ -122,9 +122,8 @@ void calcMoments(const std::vector<double> &dist,
       } else {
         moments[2] = -1. * pow(-1. * moments[2], 1. / 3.);
       }
-
-      moments[2] =
-          std::cbrt(moments[2] / (moments[1] * moments[1] * moments[1]));
+#else
+      moments[2] = cbrt(moments[2] / (moments[1] * moments[1] * moments[1]));
 #endif
     }
   }
