@@ -886,9 +886,14 @@ class TestCase(unittest.TestCase):
     params = AllChem.KDG()
     params.randomSeed = 0xF00D
     # now embed, which changes the handler
+    #print('embed')
     AllChem.EmbedMolecule(mol, params)
+    #print('done')
+    # time.sleep(0.5)
     os.kill(os.getpid(), signal.CTRL_C_EVENT if sys.platform == 'win32' else signal.SIGINT)
-    time.sleep(0.2)
+    print('post kill')
+    time.sleep(0.5)
+    print('post sleep')
     self.assertEqual(seen, [signal.SIGINT])
 
 
