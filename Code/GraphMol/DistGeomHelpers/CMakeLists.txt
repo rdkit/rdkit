@@ -9,18 +9,13 @@ rdkit_headers(BoundsMatrixBuilder.h
 
 rdkit_catch_test(testDistGeomHelpers testDgeomHelpers.cpp
            LINK_LIBRARIES
-           DistGeomHelpers MolTransforms FileParsers SmilesParse  )
+           DistGeomHelpers MolTransforms FileParsers SmilesParse SHARD_COUNT 4 )
 
 rdkit_catch_test(distGeomHelpersCatch catch_tests.cpp 
-LINK_LIBRARIES DistGeomHelpers MolTransforms FileParsers SmilesParse )
+LINK_LIBRARIES DistGeomHelpers MolTransforms FileParsers SmilesParse SHARD_COUNT 4 )
 
-rdkit_catch_test(testDgeomHelpersGH3019_0 testGithub3019.cpp
-           LINK_LIBRARIES DistGeomHelpers SmilesParse
-           CLIARGS --shard-count=2 --shard-index=0 )
-
-rdkit_catch_test(testDgeomHelpersGH3019_1 testGithub3019.cpp
-           LINK_LIBRARIES DistGeomHelpers SmilesParse 
-           CLIARGS --shard-count=2 --shard-index=1 )
+rdkit_catch_test(testDgeomHelpersGH3019 testGithub3019.cpp
+           LINK_LIBRARIES DistGeomHelpers SmilesParse SHARD_COUNT 2)
 
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
