@@ -1841,7 +1841,6 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     int numThreads = getNumThreadsToUse(params.numThreads);
 
     ControlCHandler hdlr;
-    // ControlCHandler::reset();
 
     // do the embedding, using multiple threads if requested
     detail::EmbedArgs eargs = {&confsOk,        fourD,
