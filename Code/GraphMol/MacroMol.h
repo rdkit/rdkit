@@ -98,6 +98,12 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
                        Bond::BondType bondType = Bond::UNSPECIFIED);
   //! \overload
   unsigned int addBond(Bond *bond, bool takeOwnership = false);
+
+ private:
+  unsigned int addMacroBondHelper(unsigned int beginAtomIdx,
+                                  unsigned int endAtomIdx, int beginAttachPt,
+                                  int endAttachPt,
+                                  Bond::BondType bondType = Bond::UNSPECIFIED);
 };
 }  // namespace RDKit
 

@@ -32,17 +32,15 @@ unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
   return this->addAtom(atom, updateLabel, takeOwnership);
 }
 
-unsigned int MacroMol::addMacroBond(unsigned int beginAtomIdx,
-                                    unsigned int endAtomIdx, int beginAttachPt,
-                                    int endAttachPt, Bond::BondType bondType) {
-  PRECONDITION((isMacroAtom(this->getAtomWithIdx(beginAtomIdx)) ||
-                isMacroAtom(this->getAtomWithIdx(endAtomIdx))),
-               "at least one atom must be a macro atom");
+unsigned int MacroMol::addMacroBondHelper(unsigned int beginAtomIdx,
+                                          unsigned int endAtomIdx,
+                                          int beginAttachPt, int endAttachPt,
+                                          Bond::BondType bondType) {
   auto bond = this->getBondBetweenAtoms(beginAtomIdx, endAtomIdx);
   if (!bond) {
     // The actual macro bond types live in MacroBondInfo.
-    auto numBonds = RWMol::addBond(beginAtomIdx, endAtomIdx,
-                                   Bond::BondType::UNSPECIFIED);
+    auto numBonds =
+        RWMol::addBond(beginAtomIdx, endAtomIdx, Bond::BondType::UNSPECIFIED);
     auto bondIdx = numBonds - 1;
     bond = this->getBondWithIdx(bondIdx);
     bond->setMacroBondInfo(new MacroBondInfo(
@@ -66,6 +64,17 @@ unsigned int MacroMol::addMacroBond(unsigned int beginAtomIdx,
   return numBonds;
 }
 
+unsigned int MacroMol::addMacroBond(unsigned int beginAtomIdx,
+                                    unsigned int endAtomIdx, int beginAttachPt,
+                                    int endAttachPt, Bond::BondType bondType) {
+  PRECONDITION(isMacroAtom(this->getAtomWithIdx(beginAtomIdx)),
+               "begin atom is not a macro atom");
+  PRECONDITION(isMacroAtom(this->getAtomWithIdx(endAtomIdx)),
+               "end atom is not a macro atom");
+  return addMacroBondHelper(beginAtomIdx, endAtomIdx, beginAttachPt,
+                            endAttachPt, bondType);
+}
+
 unsigned int MacroMol::addAtomToMacroAtomBond(unsigned int beginAtomIdx,
                                               unsigned int endMacroAtomIdx,
                                               int endAttachPt,
@@ -74,7 +83,8 @@ unsigned int MacroMol::addAtomToMacroAtomBond(unsigned int beginAtomIdx,
                "end atom is not a macro atom");
   PRECONDITION(!isMacroAtom(this->getAtomWithIdx(beginAtomIdx)),
                "begin atom is a macro atom");
-  return addMacroBond(beginAtomIdx, endMacroAtomIdx, -1, endAttachPt, bondType);
+  return addMacroBondHelper(beginAtomIdx, endMacroAtomIdx, -1, endAttachPt,
+                            bondType);
 }
 
 unsigned int MacroMol::addMacroAtomToAtomBond(unsigned int beginMacroAtomIdx,
@@ -85,8 +95,8 @@ unsigned int MacroMol::addMacroAtomToAtomBond(unsigned int beginMacroAtomIdx,
                "begin atom is not a macro atom");
   PRECONDITION(!isMacroAtom(this->getAtomWithIdx(endAtomIdx)),
                "end atom is a macro atom");
-  return addMacroBond(beginMacroAtomIdx, endAtomIdx, beginAttachPt, -1,
-                      bondType);
+  return addMacroBondHelper(beginMacroAtomIdx, endAtomIdx, beginAttachPt, -1,
+                            bondType);
 }
 
 unsigned int MacroMol::addBond(unsigned int beginAtomIdx,
