@@ -112,7 +112,7 @@ inline const MolOps::AdjustQueryParameters MatchOnlyAtRgroupsAdjustParams() {
   return params;
 }
 
-enum SanitizeRxnFlags : unsigned int {
+enum SanitizeRxnFlags {
   SANITIZE_NONE = 0x0,
   SANITIZE_RGROUP_NAMES = 0x1,
   SANITIZE_ATOM_MAPS = 0x2,

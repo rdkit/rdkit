@@ -395,7 +395,7 @@ RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
 */
 RDKIT_GRAPHMOL_EXPORT std::pair<bool, bool> hasQueryHs(const ROMol &mol);
 
-enum AdjustQueryWhichFlags : unsigned int {
+enum AdjustQueryWhichFlags {
   ADJUST_IGNORENONE = 0x0,
   ADJUST_IGNORECHAINS = 0x1,
   ADJUST_IGNORERINGS = 0x4,
@@ -613,7 +613,7 @@ does not consider the outer envelope of fused rings)
 - \c AROMATICIT_MMFF94 the aromaticity model used by the MMFF94 force field
 - \c AROMATICITY_CUSTOM uses a caller-provided function
 */
-enum AromaticityModel : unsigned int {
+enum AromaticityModel {
   AROMATICITY_DEFAULT = 0x0,  ///< future proofing
   AROMATICITY_RDKIT = 0x1,
   AROMATICITY_SIMPLE = 0x2,
