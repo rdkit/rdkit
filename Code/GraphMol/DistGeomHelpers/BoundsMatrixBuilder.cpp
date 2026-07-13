@@ -734,11 +734,9 @@ Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
   return stype;
 }
 
-TorsionValue _getInRing14Type(const ROMol &mol, const Bond *bnd1,
-                              const Bond *bnd2, const Bond *bnd3,
-                              const Atom *atm1, const Atom *atm2,
-                              const Atom *atm3, const Atom *atm4,
-                              int ringSize) {
+TorsionValue _getInRing14Type(const Bond *bnd2, const Atom *atm1,
+                              const Atom *atm2, const Atom *atm3,
+                              const Atom *atm4, int ringSize) {
   Atom::HybridizationType ahyb2 = atm2->getHybridization();
   Atom::HybridizationType ahyb3 = atm3->getHybridization();
 
@@ -747,25 +745,9 @@ TorsionValue _getInRing14Type(const ROMol &mol, const Bond *bnd1,
   // we add a check for the ring size here because there's no reason to
   // assume cis bonds in bigger rings. This was part of github #1240:
   // failure to embed larger aromatic rings
-  if (ringSize <= 8 && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
-      (stype != Bond::STEREOE && stype != Bond::STEREOTRANS)) {
-    // the ring check here was a big part of github #697
-    if (mol.getRingInfo()->numBondRings(bnd2->getIdx()) > 1) {
-      if (mol.getRingInfo()->numBondRings(bnd1->getIdx()) == 1 &&
-          mol.getRingInfo()->numBondRings(bnd3->getIdx()) == 1) {
-        for (const auto &br : mol.getRingInfo()->bondRings()) {
-          if (std::find(br.begin(), br.end(), bnd1->getIdx()) != br.end()) {
-            if (std::find(br.begin(), br.end(), bnd3->getIdx()) != br.end()) {
-              return {TorsionType::CIS};
-            }
-            break;
-          }
-        }
-      }
-    } else {
-      return {TorsionType::CIS};
-    }
-  } else if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
+  if ((ringSize <= 8 && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
+       (stype != Bond::STEREOE && stype != Bond::STEREOTRANS)) ||
+      stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
     return {TorsionType::CIS};
   } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
     return {TorsionType::TRANS};
@@ -799,24 +781,22 @@ TorsionValue _getTwoInSameRing14Type(const ROMol &mol, const Atom *atm1,
   }
 }
 
-TorsionValue _getTwoInDiffRing14Type(const ROMol &mol, const Bond *bnd1,
-                                     const Bond *bnd2, const Bond *bnd3,
-                                     const Atom *atm1, const Atom *atm2,
-                                     const Atom *atm3, const Atom *atm4) {
+TorsionValue _getTwoInDiffRing14Type(const Bond *bnd2, const Atom *atm1,
+                                     const Atom *atm2, const Atom *atm3,
+                                     const Atom *atm4) {
   // this turns out to be very similar to all bonds in the same ring
   // situation.
   // There is probably some fine tuning that can be done when the atoms a2
   // and a3 are not sp2 hybridized, but we will not worry about that now;
   // simple use 0-180 deg for non-sp2 cases.
-  return _getInRing14Type(mol, bnd1, bnd2, bnd3, atm1, atm2, atm3, atm4, 0);
+  return _getInRing14Type(bnd2, atm1, atm2, atm3, atm4, 0);
 }
 
-TorsionValue _getShareRingBond14Type(const ROMol &mol, const Bond *bnd1,
-                                     const Bond *bnd2, const Bond *bnd3,
-                                     const Atom *atm1, const Atom *atm2,
-                                     const Atom *atm3, const Atom *atm4) {
+TorsionValue _getShareRingBond14Type(const Bond *bnd2, const Atom *atm1,
+                                     const Atom *atm2, const Atom *atm3,
+                                     const Atom *atm4) {
   // once this turns out to be similar to bonds in the same ring
-  return _getInRing14Type(mol, bnd1, bnd2, bnd3, atm1, atm2, atm3, atm4, 0);
+  return _getInRing14Type(bnd2, atm1, atm2, atm3, atm4, 0);
 }
 
 bool _checkH2NX3H1OX2(const Atom *atm) {
@@ -1261,8 +1241,8 @@ void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
                                      atm4, info.forceTransAmides);
       break;
     case Type14::IN_RING:
-      torsionValue = _getInRing14Type(mol, bnd1, bnd2, bnd3, atm1, atm2, atm3,
-                                      atm4, info.ringSize);
+      torsionValue =
+          _getInRing14Type(bnd2, atm1, atm2, atm3, atm4, info.ringSize);
       break;
     case Type14::MACROCYCLE_ALL_IN_SAME_RING:
       torsionValue = _getMacrocycleAllInSameRing14Type(mol, bnd1, bnd2, bnd3,
@@ -1273,12 +1253,10 @@ void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
                                                        atm2, atm3, atm4);
       break;
     case Type14::SHARE_RING_BOND:
-      torsionValue = _getShareRingBond14Type(mol, bnd1, bnd2, bnd3, atm1, atm2,
-                                             atm3, atm4);
+      torsionValue = _getShareRingBond14Type(bnd2, atm1, atm2, atm3, atm4);
       break;
     case Type14::TWO_IN_DIFF_RING:
-      torsionValue = _getTwoInDiffRing14Type(mol, bnd1, bnd2, bnd3, atm1, atm2,
-                                             atm3, atm4);
+      torsionValue = _getTwoInDiffRing14Type(bnd2, atm1, atm2, atm3, atm4);
       break;
     case Type14::TWO_IN_SAME_RING:
       torsionValue = _getTwoInSameRing14Type(mol, atm1, atm2, atm3, atm4);
