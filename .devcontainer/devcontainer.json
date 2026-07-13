@@ -1,0 +1,42 @@
+{
+  "name": "RDKit Development",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "PYTHON_VERSION": "3.12"
+    }
+  },
+  "userEnvProbe": "none",
+  "containerEnv": {
+    "QT_QPA_PLATFORM": "offscreen"
+  },
+  "mounts": [
+    "source=${localEnv:HOME}/.codex,target=/root/.codex,type=bind,consistency=cached"
+  ],
+  "remoteEnv": {
+    "PATH": "/opt/conda/envs/rdkit_build/bin:/opt/conda/bin:${containerEnv:PATH}",
+    "RDBASE": "${containerWorkspaceFolder}",
+    "CONDA_DEFAULT_ENV": "rdkit_build",
+    "CONDA_PREFIX": "/opt/conda/envs/rdkit_build"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "ms-python.python",
+        "twxs.cmake"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/opt/conda/envs/rdkit_build/bin/python",
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "/bin/bash"
+          }
+        }
+      }
+    }
+  },
+  "remoteUser": "root"
+}
