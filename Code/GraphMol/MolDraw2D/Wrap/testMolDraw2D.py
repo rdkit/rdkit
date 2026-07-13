@@ -7,10 +7,7 @@ import numpy as np
 
 from rdkit import Chem, Geometry
 from rdkit.Chem import Draw, rdDepictor
-try:
-  from rdkit.Chem import rdChemReactions
-except ImportError:
-  rdChemReactions = None
+from rdkit.Chem import rdChemReactions
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem import Draw
 
@@ -211,7 +208,6 @@ M  END""")
       self.assertAlmostEqual(dpos1.x, dpos2.x, 6)
       self.assertAlmostEqual(dpos1.y, dpos2.y, 6)
 
-  @unittest.skipIf(rdChemReactions is None, 'Reaction support not enabled')
   def testReaction1(self):
     rxn = rdChemReactions.ReactionFromSmarts(
       '[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',
@@ -224,7 +220,6 @@ M  END""")
     self.assertTrue(txt.find("</svg>") != -1)
     # print(txt,file=open('blah1.svg','w+'))
 
-  @unittest.skipIf(rdChemReactions is None, 'Reaction support not enabled')
   def testReaction2(self):
     rxn = rdChemReactions.ReactionFromSmarts(
       '[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',
@@ -237,7 +232,6 @@ M  END""")
     self.assertTrue(txt.find("</svg>") != -1)
     # print(txt,file=open('blah2.svg','w+'))
 
-  @unittest.skipIf(rdChemReactions is None, 'Reaction support not enabled')
   def testReaction3(self):
     rxn = rdChemReactions.ReactionFromSmarts(
       '[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',
@@ -250,7 +244,6 @@ M  END""")
     self.assertTrue(txt.find("<svg") != -1)
     self.assertTrue(txt.find("</svg>") != -1)
 
-  @unittest.skipIf(rdChemReactions is None, 'Reaction support not enabled')
   def testReaction4(self):
     rxn = rdChemReactions.ReactionFromSmarts(
       '[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=[O:3])[NH:6][CH3:5].[OH2:4]',

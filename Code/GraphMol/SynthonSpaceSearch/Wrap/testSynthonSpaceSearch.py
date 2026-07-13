@@ -142,7 +142,6 @@ class TestCase(unittest.TestCase):
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     self.assertRaises(RuntimeError, synthonspace.ReadTextFile, fName)
 
-  @unittest.skipIf(rdRascalMCES is None, "RascalMCES not available")
   def testRascalSearch(self):
     fName = self.sssDir / "Syntons_5567.csv"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()

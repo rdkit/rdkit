@@ -2,6 +2,7 @@ import unittest
 
 from rdkit import Chem, rdBase
 
+
 class TestCase(unittest.TestCase):
 
   def testLabelAtomsList(self):
@@ -58,9 +59,7 @@ class TestCase(unittest.TestCase):
     self.assertFalse(bond1.HasProp("_CIPCode"))
     self.assertEqual(bond3.GetProp("_CIPCode"), "Z")
 
-  def doOneAtropIomerMandP(self,  inputSmiles , expected):
-    if rdBase._wrapperType == 'nanobind':
-      self.skipTest("SmilesParserParams constructor not available in nanobind yet")
+  def doOneAtropIomerMandP(self, inputSmiles, expected):
     ps = Chem.SmilesParserParams()
     ps.allowCXSMILES = True
     ps.parseName = False
@@ -72,13 +71,13 @@ class TestCase(unittest.TestCase):
     self.assertIsNotNone(mol)
     Chem.rdCIPLabeler.AssignCIPLabels(mol)
 
-    cipsCodes =""
+    cipsCodes = ""
     for bondIndex in range(mol.GetNumBonds()):
 
       bond = mol.GetBondWithIdx(bondIndex)
 
       if (bond.HasProp("_CIPCode")):
-        cipsCodes += str(bondIndex) + bond.GetProp("_CIPCode") + ":" 
+        cipsCodes += str(bondIndex) + bond.GetProp("_CIPCode") + ":"
 
     self.assertEqual(cipsCodes, expected)
 
@@ -91,6 +90,7 @@ class TestCase(unittest.TestCase):
 
     mol = "N1(n2c(C)ccc2Br)C(=O)[C@H](C)[C@H](C)C1=O |(-11.1517,1.8306,;-11.1517,3.3708,;-12.4855,4.1411,;-13.8193,3.371,;-12.4855,5.6813,;-9.8177,5.6813,;-9.8177,4.1411,;-8.4839,3.371,;-12.3975,0.9252,;-13.8622,1.4011,;-11.9217,-0.5394,;-12.8269,-1.7852,;-10.3817,-0.5394,;-9.4765,-1.7852,;-9.9059,0.9252,;-8.4413,1.4011,),wU:0.8,10.11,12.13|"
     self.doOneAtropIomerMandP(mol, "0p:")
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -10,11 +10,6 @@ import unittest
 
 from rdkit import DataStructs as ds
 from rdkit import RDConfig
-from rdkit import rdBase
-if hasattr(rdBase, '_wrapperType') and rdBase._wrapperType == 'nanobind':
-  usingNanobind = True
-else:
-  usingNanobind = False
 
 
 def feq(v1, v2, tol=1e-4):

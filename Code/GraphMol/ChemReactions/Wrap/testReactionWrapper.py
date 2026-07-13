@@ -40,11 +40,7 @@ from rdkit import Chem, RDConfig
 from rdkit.Chem import AllChem, rdChemReactions
 from rdkit.Chem.SimpleEnum import Enumerator
 
-try:
-  from rdkit.Chem import FilterCatalog
-  haveFilterCatalog = True
-except (ImportError, AttributeError):
-  haveFilterCatalog = False
+from rdkit.Chem import FilterCatalog
 
 
 def feq(v1, v2, tol2=1e-4):
