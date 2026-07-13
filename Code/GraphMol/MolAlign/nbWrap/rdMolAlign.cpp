@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2004-2026 Greg Landrum, Paolo Tosco and other RDKit contributors
+//  Copyright (C) 2004-2026 Greg Landrum, Paolo Tosco and other RDKit
+//  contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +14,7 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 
+#include <ForceField/nbWrap/PyForceField.h>
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/MolAlign/O3AAlignMolecules.h>
@@ -115,7 +117,8 @@ nb::object makeRmsdTransResult(double rmsd, const RDGeom::Transform3D &trans,
 
 // -- Constraint parsing and validation --
 
-std::pair<std::unique_ptr<MatchVectType>, std::unique_ptr<RDNumeric::DoubleVector>>
+std::pair<std::unique_ptr<MatchVectType>,
+          std::unique_ptr<RDNumeric::DoubleVector>>
 parseConstraints(nb::object constraintMap, nb::object constraintWeights,
                  const ROMol &prbMol, const ROMol &refMol) {
   std::unique_ptr<MatchVectType> cMap;
@@ -141,13 +144,6 @@ parseConstraints(nb::object constraintMap, nb::object constraintWeights,
   return {std::move(cMap), std::move(cWts)};
 }
 
-// -- NbMMFFMolProperties --
-
-struct NbMMFFMolProperties {
-  std::shared_ptr<MMFF::MMFFMolProperties> dp_props;
-  bool isValid() const { return dp_props != nullptr; }
-};
-
 // -- NbBestAlignmentParams --
 
 struct NbBestAlignmentParams {
@@ -163,7 +159,8 @@ struct NbBestAlignmentParams {
   toNative() const {
     MolAlign::BestAlignmentParams params;
     params.maxMatches = maxMatches;
-    params.symmetrizeConjugatedTerminalGroups = symmetrizeConjugatedTerminalGroups;
+    params.symmetrizeConjugatedTerminalGroups =
+        symmetrizeConjugatedTerminalGroups;
     params.ignoreHs = ignoreHs;
     params.numThreads = numThreads;
     params.map = map;
@@ -289,9 +286,9 @@ nb::object getBestMolAlignTransformParams(const ROMol &prbMol,
   return makeRmsdTransResult(rmsd, bestTrans, &bestMatch);
 }
 
-double alignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid,
-                     int refCid, nb::object atomMap, nb::object weights,
-                     bool reflect, unsigned int maxIters) {
+double alignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
+                     nb::object atomMap, nb::object weights, bool reflect,
+                     unsigned int maxIters) {
   auto aMap = nbTranslateAtomMap(atomMap);
   MatchVectType *aMapPtr = aMap.empty() ? nullptr : &aMap;
   auto wtsVec = makeDoubleVector(weights);
@@ -346,8 +343,8 @@ double getBestRMSParams(ROMol &prbMol, ROMol &refMol,
 }
 
 nb::tuple getAllConformerBestRMS(ROMol &mol, int numThreads, nb::object map,
-                                int maxMatches, bool symmetrize,
-                                nb::object weights) {
+                                 int maxMatches, bool symmetrize,
+                                 nb::object weights) {
   NbBestAlignmentParams nbParams;
   nbParams.maxMatches = maxMatches;
   nbParams.symmetrizeConjugatedTerminalGroups = symmetrize;
@@ -373,7 +370,7 @@ nb::tuple getAllConformerBestRMS(ROMol &mol, int numThreads, nb::object map,
 }
 
 nb::tuple getAllConformerBestRMSParams(ROMol &mol,
-                                      const NbBestAlignmentParams &nbParams) {
+                                       const NbBestAlignmentParams &nbParams) {
   auto [params, weightsOwner] = nbParams.toNative();
   std::vector<double> rmsds;
   {
@@ -428,9 +425,10 @@ void alignMolConfs(ROMol &mol, nb::object atomIds, nb::object confIds,
   }
 }
 
-NbO3A getMMFFO3A(ROMol &prbMol, ROMol &refMol, nb::object prbProps,
-                 nb::object refProps, int prbCid, int refCid, bool reflect,
-                 unsigned int maxIters, unsigned int options,
+NbO3A getMMFFO3A(ROMol &prbMol, ROMol &refMol,
+                 MMFF::MMFFMolProperties *prbProps,
+                 MMFF::MMFFMolProperties *refProps, int prbCid, int refCid,
+                 bool reflect, unsigned int maxIters, unsigned int options,
                  nb::object constraintMap, nb::object constraintWeights) {
   auto [cMap, cWts] =
       parseConstraints(constraintMap, constraintWeights, prbMol, refMol);
@@ -439,8 +437,8 @@ NbO3A getMMFFO3A(ROMol &prbMol, ROMol &refMol, nb::object prbProps,
   std::unique_ptr<MMFF::MMFFMolProperties> prbMolProps;
   std::unique_ptr<MMFF::MMFFMolProperties> refMolProps;
 
-  if (!prbProps.is_none()) {
-    prbMolPropsPtr = nb::cast<NbMMFFMolProperties &>(prbProps).dp_props.get();
+  if (prbProps) {
+    prbMolPropsPtr = prbProps;
   } else {
     prbMolProps = std::make_unique<MMFF::MMFFMolProperties>(prbMol);
     if (!prbMolProps->isValid()) {
@@ -448,8 +446,8 @@ NbO3A getMMFFO3A(ROMol &prbMol, ROMol &refMol, nb::object prbProps,
     }
     prbMolPropsPtr = prbMolProps.get();
   }
-  if (!refProps.is_none()) {
-    refMolPropsPtr = nb::cast<NbMMFFMolProperties &>(refProps).dp_props.get();
+  if (refProps) {
+    refMolPropsPtr = refProps;
   } else {
     refMolProps = std::make_unique<MMFF::MMFFMolProperties>(refMol);
     if (!refMolProps->isValid()) {
@@ -457,21 +455,20 @@ NbO3A getMMFFO3A(ROMol &prbMol, ROMol &refMol, nb::object prbProps,
     }
     refMolPropsPtr = refMolProps.get();
   }
-
   std::shared_ptr<MolAlign::O3A> o3a;
   {
     nb::gil_scoped_release release;
-    o3a = std::shared_ptr<MolAlign::O3A>(
-        new MolAlign::O3A(prbMol, refMol, prbMolPropsPtr, refMolPropsPtr,
-                          MolAlign::O3A::MMFF94, prbCid, refCid, reflect,
-                          maxIters, options, cMap.get(), cWts.get()));
+    o3a = std::shared_ptr<MolAlign::O3A>(new MolAlign::O3A(
+        prbMol, refMol, prbMolPropsPtr, refMolPropsPtr, MolAlign::O3A::MMFF94,
+        prbCid, refCid, reflect, maxIters, options, cMap.get(), cWts.get()));
   }
   return NbO3A{std::move(o3a)};
 }
 
 nb::tuple getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
-                             nb::object prbProps, nb::object refProps,
-                             int refCid, bool reflect, unsigned int maxIters,
+                             MMFF::MMFFMolProperties *prbProps,
+                             MMFF::MMFFMolProperties *refProps, int refCid,
+                             bool reflect, unsigned int maxIters,
                              unsigned int options, nb::object constraintMap,
                              nb::object constraintWeights) {
   auto [cMap, cWts] =
@@ -481,8 +478,8 @@ nb::tuple getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
   std::unique_ptr<MMFF::MMFFMolProperties> prbMolProps;
   std::unique_ptr<MMFF::MMFFMolProperties> refMolProps;
 
-  if (!prbProps.is_none()) {
-    prbMolPropsPtr = nb::cast<NbMMFFMolProperties &>(prbProps).dp_props.get();
+  if (prbProps) {
+    prbMolPropsPtr = prbProps;
   } else {
     prbMolProps = std::make_unique<MMFF::MMFFMolProperties>(prbMol);
     if (!prbMolProps->isValid()) {
@@ -490,8 +487,8 @@ nb::tuple getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
     }
     prbMolPropsPtr = prbMolProps.get();
   }
-  if (!refProps.is_none()) {
-    refMolPropsPtr = nb::cast<NbMMFFMolProperties &>(refProps).dp_props.get();
+  if (refProps) {
+    refMolPropsPtr = refProps;
   } else {
     refMolProps = std::make_unique<MMFF::MMFFMolProperties>(refMol);
     if (!refMolProps->isValid()) {
@@ -510,13 +507,13 @@ nb::tuple getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
   }
   nb::list pyres;
   for (auto &i : res) {
-    pyres.append(NbO3A{std::shared_ptr<MolAlign::O3A>(i.get(), [b = i](MolAlign::O3A *) {})});
+    pyres.append(NbO3A{
+        std::shared_ptr<MolAlign::O3A>(i.get(), [b = i](MolAlign::O3A *) {})});
   }
   return nb::tuple(pyres);
 }
 
-NbO3A getCrippenO3A(ROMol &prbMol, ROMol &refMol,
-                    nb::object prbCrippenContribs,
+NbO3A getCrippenO3A(ROMol &prbMol, ROMol &refMol, nb::object prbCrippenContribs,
                     nb::object refCrippenContribs, int prbCid, int refCid,
                     bool reflect, unsigned int maxIters, unsigned int options,
                     nb::object constraintMap, nb::object constraintWeights) {
@@ -623,42 +620,29 @@ nb::tuple getCrippenO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
   }
   nb::list pyres;
   for (auto &i : res) {
-    pyres.append(NbO3A{std::shared_ptr<MolAlign::O3A>(i.get(), [b = i](MolAlign::O3A *) {})});
+    pyres.append(NbO3A{
+        std::shared_ptr<MolAlign::O3A>(i.get(), [b = i](MolAlign::O3A *) {})});
   }
   return nb::tuple(pyres);
-}
-
-NbMMFFMolProperties mmffGetMoleculeProperties(ROMol &mol,
-                                              const std::string &mmffVariant,
-                                              unsigned int mmffVerbosity) {
-  auto *p = new MMFF::MMFFMolProperties(mol, mmffVariant, mmffVerbosity);
-  NbMMFFMolProperties result;
-  if (p->isValid()) {
-    result.dp_props.reset(p);
-  } else {
-    delete p;
-  }
-  return result;
 }
 
 }  // namespace
 
 NB_MODULE(rdMolAlign, m) {
-  m.doc() = "Module containing functions to align a molecule to a second molecule";
+  nb::module_::import_("rdkit.ForceField.rdForceField");
 
-  nb::class_<NbMMFFMolProperties>(m, "MMFFMolProperties",
-                                  "MMFF molecular properties for O3A alignment")
-      .def("IsValid", &NbMMFFMolProperties::isValid,
-           "Returns True if MMFF parameters are available for this molecule");
+  m.doc() =
+      "Module containing functions to align a molecule to a second molecule";
 
   nb::class_<NbBestAlignmentParams>(m, "BestAlignmentParams",
                                     "Parameters controlling RMSD alignment")
       .def(nb::init<>())
       .def_rw("maxMatches", &NbBestAlignmentParams::maxMatches,
               "maximum number of substructure matches to consider")
-      .def_rw("symmetrizeConjugatedTerminalGroups",
-              &NbBestAlignmentParams::symmetrizeConjugatedTerminalGroups,
-              R"DOC(if true, conjugated terminal functional groups (like nitro or carboxylate)
+      .def_rw(
+          "symmetrizeConjugatedTerminalGroups",
+          &NbBestAlignmentParams::symmetrizeConjugatedTerminalGroups,
+          R"DOC(if true, conjugated terminal functional groups (like nitro or carboxylate)
 will be considered symmetrically.)DOC")
       .def_rw("ignoreHs", &NbBestAlignmentParams::ignoreHs,
               "if true, hydrogens will be ignored in the alignment")
@@ -707,25 +691,24 @@ will be considered symmetrically.)DOC")
       .def("Weights", &NbO3A::weights,
            "returns the weight vector as found by Open3DALIGN");
 
-  m.def(
-      "MMFFGetMoleculeProperties", &mmffGetMoleculeProperties, "mol"_a,
-      "mmffVariant"_a = "MMFF94", "mmffVerbosity"_a = 0u,
-      R"DOC(Get MMFF molecule properties for use with GetO3A.
+  //   m.def(
+  //       "MMFFGetMoleculeProperties", &mmffGetMoleculeProperties, "mol"_a,
+  //       "mmffVariant"_a = "MMFF94", "mmffVerbosity"_a = 0u,
+  //       R"DOC(Get MMFF molecule properties for use with GetO3A.
 
-ARGUMENTS:
- - mol          : the molecule of interest
- - mmffVariant  : "MMFF94" or "MMFF94s" (defaults to "MMFF94")
- - mmffVerbosity: verbosity level (defaults to 0)
+  // ARGUMENTS:
+  //  - mol          : the molecule of interest
+  //  - mmffVariant  : "MMFF94" or "MMFF94s" (defaults to "MMFF94")
+  //  - mmffVerbosity: verbosity level (defaults to 0)
 
-RETURNS:
-An MMFFMolProperties object, or one with IsValid()==False if parameters are unavailable.)DOC");
+  // RETURNS:
+  // An MMFFMolProperties object, or one with IsValid()==False if parameters are
+  // unavailable.)DOC");
 
-  m.def(
-      "GetAlignmentTransform", getMolAlignTransform,
-      "prbMol"_a, "refMol"_a, "prbCid"_a = -1, "refCid"_a = -1,
-      "atomMap"_a = nb::none(), "weights"_a = nb::none(),
-      "reflect"_a = false, "maxIters"_a = 50u,
-      R"DOC(Compute the transformation required to align a molecule
+  m.def("GetAlignmentTransform", getMolAlignTransform, "prbMol"_a, "refMol"_a,
+        "prbCid"_a = -1, "refCid"_a = -1, "atomMap"_a = nb::none(),
+        "weights"_a = nb::none(), "reflect"_a = false, "maxIters"_a = 50u,
+        R"DOC(Compute the transformation required to align a molecule
 
 The 3D transformation required to align the specied conformation in the probe molecule
 to a specified conformation in the reference molecule is computed so that the root mean
@@ -749,14 +732,12 @@ ARGUMENTS
 RETURNS
 a tuple of (RMSD value, transform matrix))DOC");
 
-  m.def(
-      "GetBestAlignmentTransform", getBestMolAlignTransform,
-      "prbMol"_a, "refMol"_a, "prbCid"_a = -1, "refCid"_a = -1,
-      "map"_a = nb::none(), "maxMatches"_a = 1000000,
-      "symmetrizeConjugatedTerminalGroups"_a = true,
-      "weights"_a = nb::none(), "reflect"_a = false,
-      "maxIters"_a = 50u, "numThreads"_a = 1,
-      R"DOC(Compute the optimal RMS, transformation and atom map for aligning
+  m.def("GetBestAlignmentTransform", getBestMolAlignTransform, "prbMol"_a,
+        "refMol"_a, "prbCid"_a = -1, "refCid"_a = -1, "map"_a = nb::none(),
+        "maxMatches"_a = 1000000, "symmetrizeConjugatedTerminalGroups"_a = true,
+        "weights"_a = nb::none(), "reflect"_a = false, "maxIters"_a = 50u,
+        "numThreads"_a = 1,
+        R"DOC(Compute the optimal RMS, transformation and atom map for aligning
 two molecules, taking symmetry into account. Molecule coordinates
 are left unaltered.
 
@@ -789,22 +770,19 @@ ARGUMENTS
 RETURNS
 a tuple of (RMSD value, best transform matrix, best atom map))DOC");
 
-  m.def(
-      "GetBestAlignmentTransform", getBestMolAlignTransformParams,
-      "prbMol"_a, "refMol"_a, "params"_a, "prbCid"_a = -1, "refCid"_a = -1,
-      "reflect"_a = false, "maxIters"_a = 50u,
-      R"DOC(Compute the optimal RMS, transformation and atom map for aligning
+  m.def("GetBestAlignmentTransform", getBestMolAlignTransformParams, "prbMol"_a,
+        "refMol"_a, "params"_a, "prbCid"_a = -1, "refCid"_a = -1,
+        "reflect"_a = false, "maxIters"_a = 50u,
+        R"DOC(Compute the optimal RMS, transformation and atom map for aligning
 two molecules using a BestAlignmentParams object.
 
 RETURNS
 a tuple of (RMSD value, best transform matrix, best atom map))DOC");
 
-  m.def(
-      "AlignMol", alignMolecule,
-      "prbMol"_a, "refMol"_a, "prbCid"_a = -1, "refCid"_a = -1,
-      "atomMap"_a = nb::none(), "weights"_a = nb::none(),
-      "reflect"_a = false, "maxIters"_a = 50u,
-      R"DOC(Optimally (minimum RMSD) align a molecule to another molecule
+  m.def("AlignMol", alignMolecule, "prbMol"_a, "refMol"_a, "prbCid"_a = -1,
+        "refCid"_a = -1, "atomMap"_a = nb::none(), "weights"_a = nb::none(),
+        "reflect"_a = false, "maxIters"_a = 50u,
+        R"DOC(Optimally (minimum RMSD) align a molecule to another molecule
 
 The 3D transformation required to align the specied conformation in the probe molecule
 to a specified conformation in the reference molecule is computed so that the root mean
@@ -829,13 +807,11 @@ ARGUMENTS
 RETURNS
 RMSD value)DOC");
 
-  m.def(
-      "GetBestRMS", getBestRMS,
-      "prbMol"_a, "refMol"_a, "prbId"_a = -1, "refId"_a = -1,
-      "map"_a = nb::none(), "maxMatches"_a = 1000000,
-      "symmetrizeConjugatedTerminalGroups"_a = true,
-      "weights"_a = nb::none(), "numThreads"_a = 1,
-      R"DOC(Returns the optimal RMS for aligning two molecules, taking
+  m.def("GetBestRMS", getBestRMS, "prbMol"_a, "refMol"_a, "prbId"_a = -1,
+        "refId"_a = -1, "map"_a = nb::none(), "maxMatches"_a = 1000000,
+        "symmetrizeConjugatedTerminalGroups"_a = true, "weights"_a = nb::none(),
+        "numThreads"_a = 1,
+        R"DOC(Returns the optimal RMS for aligning two molecules, taking
 symmetry into account. As a side-effect, the probe molecule is
 left in the aligned state.
 
@@ -867,18 +843,17 @@ RETURNS
 The best RMSD found)DOC");
 
   m.def(
-      "GetBestRMS", getBestRMSParams,
-      "prbMol"_a, "refMol"_a, "params"_a, "prbId"_a = -1, "refId"_a = -1,
+      "GetBestRMS", getBestRMSParams, "prbMol"_a, "refMol"_a, "params"_a,
+      "prbId"_a = -1, "refId"_a = -1,
       R"DOC(Returns the optimal RMS for aligning two molecules using a BestAlignmentParams object.
 
 RETURNS
 The best RMSD found)DOC");
 
   m.def(
-      "GetAllConformerBestRMS", getAllConformerBestRMS,
-      "mol"_a, "numThreads"_a = 1, "map"_a = nb::none(),
-      "maxMatches"_a = 1000000, "symmetrizeConjugatedTerminalGroups"_a = true,
-      "weights"_a = nb::none(),
+      "GetAllConformerBestRMS", getAllConformerBestRMS, "mol"_a,
+      "numThreads"_a = 1, "map"_a = nb::none(), "maxMatches"_a = 1000000,
+      "symmetrizeConjugatedTerminalGroups"_a = true, "weights"_a = nb::none(),
       R"DOC(Returns the symmetric distance matrix between the conformers of a molecule.
 getBestRMS() is used to calculate the inter-conformer distances
 
@@ -900,8 +875,8 @@ RETURNS
 A tuple with the best RMSDS. The ordering is [(1,0),(2,0),(2,1),(3,0),... etc])DOC");
 
   m.def(
-      "GetAllConformerBestRMS", getAllConformerBestRMSParams,
-      "mol"_a, "params"_a,
+      "GetAllConformerBestRMS", getAllConformerBestRMSParams, "mol"_a,
+      "params"_a,
       R"DOC(Returns the symmetric distance matrix between the conformers of a molecule
 using a BestAlignmentParams object.
 
@@ -909,11 +884,9 @@ RETURNS
 A tuple with the best RMSDS. The ordering is [(1,0),(2,0),(2,1),(3,0),... etc])DOC");
 
   m.def(
-      "CalcRMS", calcRMS,
-      "prbMol"_a, "refMol"_a, "prbId"_a = -1, "refId"_a = -1,
-      "map"_a = nb::none(), "maxMatches"_a = 1000000,
-      "symmetrizeConjugatedTerminalGroups"_a = true,
-      "weights"_a = nb::none(),
+      "CalcRMS", calcRMS, "prbMol"_a, "refMol"_a, "prbId"_a = -1,
+      "refId"_a = -1, "map"_a = nb::none(), "maxMatches"_a = 1000000,
+      "symmetrizeConjugatedTerminalGroups"_a = true, "weights"_a = nb::none(),
       R"DOC(Returns the RMS between two molecules, taking symmetry into account.
 In contrast to getBestRMS, the RMS is computed 'in place', i.e.
 probe molecules are not aligned to the reference ahead of the
@@ -944,12 +917,10 @@ ARGUMENTS
 RETURNS
 The best RMSD found)DOC");
 
-  m.def(
-      "AlignMolConformers", alignMolConfs,
-      "mol"_a, "atomIds"_a = nb::none(), "confIds"_a = nb::none(),
-      "weights"_a = nb::none(), "reflect"_a = false, "maxIters"_a = 50u,
-      "RMSlist"_a = nb::none(),
-      R"DOC(Align conformations in a molecule to each other
+  m.def("AlignMolConformers", alignMolConfs, "mol"_a, "atomIds"_a = nb::none(),
+        "confIds"_a = nb::none(), "weights"_a = nb::none(), "reflect"_a = false,
+        "maxIters"_a = 50u, "RMSlist"_a = nb::none(),
+        R"DOC(Align conformations in a molecule to each other
 
 The first conformation in the molecule is used as the reference
 
@@ -963,10 +934,9 @@ ARGUMENTS
  - RMSlist      if provided, fills in the RMS values between the reference
                 conformation and the other aligned conformations)DOC");
 
-  m.def(
-      "RandomTransform", MolAlign::randomTransform,
-      "mol"_a, "cid"_a = -1, "seed"_a = -1,
-      R"DOC(Perform a random transformation on a molecule
+  m.def("RandomTransform", MolAlign::randomTransform, "mol"_a, "cid"_a = -1,
+        "seed"_a = -1,
+        R"DOC(Perform a random transformation on a molecule
 
 ARGUMENTS
  - mol    molecule that is to be transformed
@@ -975,24 +945,21 @@ ARGUMENTS
  - seed   seed used to initialize the random generator
           (defaults to -1, that is no seeding))DOC");
 
-  m.def(
-      "GetO3A", getMMFFO3A,
-      "prbMol"_a, "refMol"_a,
-      "prbPyMMFFMolProperties"_a = nb::none(),
-      "refPyMMFFMolProperties"_a = nb::none(),
-      "prbCid"_a = -1, "refCid"_a = -1, "reflect"_a = false,
-      "maxIters"_a = 50u, "options"_a = 0u,
-      "constraintMap"_a = nb::none(), "constraintWeights"_a = nb::none(),
-      R"DOC(Get an O3A object with atomMap and weights vectors to overlay
+  m.def("GetO3A", getMMFFO3A, "prbMol"_a, "refMol"_a,
+        "prbMMFFMolProperties"_a = nb::none(),
+        "refMMFFMolProperties"_a = nb::none(), "prbCid"_a = -1, "refCid"_a = -1,
+        "reflect"_a = false, "maxIters"_a = 50u, "options"_a = 0u,
+        "constraintMap"_a = nb::none(), "constraintWeights"_a = nb::none(),
+        R"DOC(Get an O3A object with atomMap and weights vectors to overlay
 the probe molecule onto the reference molecule based on
 MMFF atom types and charges
 
 ARGUMENTS
  - prbMol                   molecule that is to be aligned
  - refMol                   molecule used as the reference for the alignment
- - prbPyMMFFMolProperties   MMFFMolProperties object for the probe molecule as returned
+ - prbMMFFMolProperties   MMFFMolProperties object for the probe molecule as returned
                             by MMFFGetMoleculeProperties()
- - refPyMMFFMolProperties   MMFFMolProperties object for the reference molecule as returned
+ - refMMFFMolProperties   MMFFMolProperties object for the reference molecule as returned
                             by MMFFGetMoleculeProperties()
  - prbCid                   ID of the conformation in the probe to be used
                             for the alignment (defaults to first conformation)
@@ -1014,15 +981,12 @@ ARGUMENTS
 RETURNS
 The O3A object)DOC");
 
-  m.def(
-      "GetCrippenO3A", getCrippenO3A,
-      "prbMol"_a, "refMol"_a,
-      "prbCrippenContribs"_a = nb::none(),
-      "refCrippenContribs"_a = nb::none(),
-      "prbCid"_a = -1, "refCid"_a = -1, "reflect"_a = false,
-      "maxIters"_a = 50u, "options"_a = 0u,
-      "constraintMap"_a = nb::none(), "constraintWeights"_a = nb::none(),
-      R"DOC(Get an O3A object with atomMap and weights vectors to overlay
+  m.def("GetCrippenO3A", getCrippenO3A, "prbMol"_a, "refMol"_a,
+        "prbCrippenContribs"_a = nb::none(),
+        "refCrippenContribs"_a = nb::none(), "prbCid"_a = -1, "refCid"_a = -1,
+        "reflect"_a = false, "maxIters"_a = 50u, "options"_a = 0u,
+        "constraintMap"_a = nb::none(), "constraintWeights"_a = nb::none(),
+        R"DOC(Get an O3A object with atomMap and weights vectors to overlay
 the probe molecule onto the reference molecule based on
 Crippen logP atom contributions
 
@@ -1055,15 +1019,12 @@ ARGUMENTS
 RETURNS
 The O3A object)DOC");
 
-  m.def(
-      "GetO3AForProbeConfs", getMMFFO3AForConfs,
-      "prbMol"_a, "refMol"_a, "numThreads"_a = 1,
-      "prbPyMMFFMolProperties"_a = nb::none(),
-      "refPyMMFFMolProperties"_a = nb::none(),
-      "refCid"_a = -1, "reflect"_a = false, "maxIters"_a = 50u,
-      "options"_a = 0u, "constraintMap"_a = nb::none(),
-      "constraintWeights"_a = nb::none(),
-      R"DOC(Get a vector of O3A objects for the overlay of all
+  m.def("GetO3AForProbeConfs", getMMFFO3AForConfs, "prbMol"_a, "refMol"_a,
+        "numThreads"_a = 1, "prbMMFFMolProperties"_a = nb::none(),
+        "refMMFFMolProperties"_a = nb::none(), "refCid"_a = -1,
+        "reflect"_a = false, "maxIters"_a = 50u, "options"_a = 0u,
+        "constraintMap"_a = nb::none(), "constraintWeights"_a = nb::none(),
+        R"DOC(Get a vector of O3A objects for the overlay of all
 the probe molecule's conformations onto the reference molecule based on
 MMFF atom types and charges
 
@@ -1073,9 +1034,9 @@ ARGUMENTS
  - numThreads :             the number of threads to use, only has an effect if
                             the RDKit was built with thread support (defaults to 1)
                             If set to zero, the max supported by the system will be used.
- - prbPyMMFFMolProperties   MMFFMolProperties object for the probe molecule as returned
+ - prbMMFFMolProperties   MMFFMolProperties object for the probe molecule as returned
                             by MMFFGetMoleculeProperties()
- - refPyMMFFMolProperties   MMFFMolProperties object for the reference molecule as returned
+ - refMMFFMolProperties   MMFFMolProperties object for the reference molecule as returned
                             by MMFFGetMoleculeProperties()
  - refCid                   ID of the conformation in the ref molecule to which
                             the alignment is computed (defaults to first conformation)
@@ -1095,15 +1056,12 @@ ARGUMENTS
 RETURNS
 A vector of O3A objects)DOC");
 
-  m.def(
-      "GetCrippenO3AForProbeConfs", getCrippenO3AForConfs,
-      "prbMol"_a, "refMol"_a, "numThreads"_a = 1,
-      "prbCrippenContribs"_a = nb::none(),
-      "refCrippenContribs"_a = nb::none(),
-      "refCid"_a = -1, "reflect"_a = false, "maxIters"_a = 50u,
-      "options"_a = 0u, "constraintMap"_a = nb::none(),
-      "constraintWeights"_a = nb::none(),
-      R"DOC(Get a vector of O3A objects for the overlay of all
+  m.def("GetCrippenO3AForProbeConfs", getCrippenO3AForConfs, "prbMol"_a,
+        "refMol"_a, "numThreads"_a = 1, "prbCrippenContribs"_a = nb::none(),
+        "refCrippenContribs"_a = nb::none(), "refCid"_a = -1,
+        "reflect"_a = false, "maxIters"_a = 50u, "options"_a = 0u,
+        "constraintMap"_a = nb::none(), "constraintWeights"_a = nb::none(),
+        R"DOC(Get a vector of O3A objects for the overlay of all
 the probe molecule's conformations onto the reference molecule based on
 Crippen logP atom contributions
 

@@ -194,93 +194,14 @@ nb::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq,
   return nb::make_tuple(resInt, l);
 }
 
-nb::object PyMMFFMolProperties::getMMFFBondStretchParams(
-    const RDKit::ROMol &mol, const unsigned int idx1,
-    const unsigned int idx2) const {
-  unsigned int bondType;
-  ForceFields::MMFF::MMFFBond mmffBondStretchParams;
-  if (mmffMolProperties->getMMFFBondStretchParams(mol, idx1, idx2, bondType,
-                                                  mmffBondStretchParams)) {
-    return nb::cast(nb::make_tuple((int)bondType, mmffBondStretchParams.kb,
-                                   mmffBondStretchParams.r0));
-  }
-  return nb::none();
-}
-
-nb::object PyMMFFMolProperties::getMMFFAngleBendParams(
-    const RDKit::ROMol &mol, const unsigned int idx1, const unsigned int idx2,
-    const unsigned int idx3) const {
-  unsigned int angleType;
-  ForceFields::MMFF::MMFFAngle mmffAngleBendParams;
-  if (mmffMolProperties->getMMFFAngleBendParams(
-          mol, idx1, idx2, idx3, angleType, mmffAngleBendParams)) {
-    return nb::cast(nb::make_tuple((int)angleType, mmffAngleBendParams.ka,
-                                   mmffAngleBendParams.theta0));
-  }
-  return nb::none();
-}
-
-nb::object PyMMFFMolProperties::getMMFFStretchBendParams(
-    const RDKit::ROMol &mol, const unsigned int idx1, const unsigned int idx2,
-    const unsigned int idx3) const {
-  unsigned int stretchBendType;
-  ForceFields::MMFF::MMFFStbn mmffStretchBendParams;
-  ForceFields::MMFF::MMFFBond mmffBondStretchParams[2];
-  ForceFields::MMFF::MMFFAngle mmffAngleBendParams;
-  if (mmffMolProperties->getMMFFStretchBendParams(
-          mol, idx1, idx2, idx3, stretchBendType, mmffStretchBendParams,
-          mmffBondStretchParams, mmffAngleBendParams)) {
-    return nb::cast(nb::make_tuple((int)stretchBendType,
-                                   mmffStretchBendParams.kbaIJK,
-                                   mmffStretchBendParams.kbaKJI));
-  }
-  return nb::none();
-}
-
-nb::object PyMMFFMolProperties::getMMFFTorsionParams(
-    const RDKit::ROMol &mol, const unsigned int idx1, const unsigned int idx2,
-    const unsigned int idx3, const unsigned int idx4) const {
-  unsigned int torType;
-  ForceFields::MMFF::MMFFTor mmffTorsionParams;
-  if (mmffMolProperties->getMMFFTorsionParams(mol, idx1, idx2, idx3, idx4,
-                                              torType, mmffTorsionParams)) {
-    return nb::cast(nb::make_tuple((int)torType, mmffTorsionParams.V1,
-                                   mmffTorsionParams.V2, mmffTorsionParams.V3));
-  }
-  return nb::none();
-}
-
-nb::object PyMMFFMolProperties::getMMFFOopBendParams(
-    const RDKit::ROMol &mol, const unsigned int idx1, const unsigned int idx2,
-    const unsigned int idx3, const unsigned int idx4) const {
-  ForceFields::MMFF::MMFFOop mmffOopBendParams;
-  if (mmffMolProperties->getMMFFOopBendParams(mol, idx1, idx2, idx3, idx4,
-                                              mmffOopBendParams)) {
-    return nb::cast(mmffOopBendParams.koop);
-  }
-  return nb::none();
-}
-
-nb::object PyMMFFMolProperties::getMMFFVdWParams(const unsigned int idx1,
-                                                 const unsigned int idx2) const {
-  ForceFields::MMFF::MMFFVdWRijstarEps mmffVdWParams;
-  if (mmffMolProperties->getMMFFVdWParams(idx1, idx2, mmffVdWParams)) {
-    return nb::cast(
-        nb::make_tuple(mmffVdWParams.R_ij_starUnscaled,
-                       mmffVdWParams.epsilonUnscaled, mmffVdWParams.R_ij_star,
-                       mmffVdWParams.epsilon));
-  }
-  return nb::none();
-}
-
 NB_MODULE(rdForceField, m) {
   m.doc() = "Exposes the ForceField class";
 
   // Minimal Snapshot binding needed for MinimizeTrajectory return value.
   // Full Snapshot bindings live in the Trajectory nbWrap (not yet migrated).
   nb::class_<RDKit::Snapshot>(m, "Snapshot",
-                               "A snapshot of atomic coordinates from a "
-                               "minimization trajectory")
+                              "A snapshot of atomic coordinates from a "
+                              "minimization trajectory")
       .def("GetPoint2D", &RDKit::Snapshot::getPoint2D, "pointNum"_a,
            "Returns the coordinates at pointNum as a Point2D object; "
            "requires the Trajectory dimension to be == 2")
@@ -293,8 +214,7 @@ NB_MODULE(rdForceField, m) {
            "Sets the energy for this Snapshot");
 
   nb::class_<PyForceField>(m, "ForceField", "A force field")
-      .def("CalcEnergy", &PyForceField::calcEnergyWithPos,
-           "pos"_a = nb::none(),
+      .def("CalcEnergy", &PyForceField::calcEnergyWithPos, "pos"_a = nb::none(),
            R"DOC(Returns the energy (in kcal/mol) of the current arrangement
 or of the supplied coordinate list (if non-empty))DOC")
       .def("CalcGrad", &PyForceField::calcGradWithPos, "pos"_a = nb::none(),
@@ -319,53 +239,51 @@ trajectory every snapshotFreq steps.
 
 Returns a (int, []) tuple; the int is 0 if the minimization succeeded,
 while the list contains Snapshot objects.)DOC")
-      .def("AddDistanceConstraint", ForceFieldAddDistanceConstraint,
-           "idx1"_a, "idx2"_a, "minLen"_a, "maxLen"_a, "forceConstant"_a,
+      .def("AddDistanceConstraint", ForceFieldAddDistanceConstraint, "idx1"_a,
+           "idx2"_a, "minLen"_a, "maxLen"_a, "forceConstant"_a,
            "Adds a distance constraint to the UFF force field "
            "(deprecated, use UFFAddDistanceConstraint instead).")
       .def("AddFixedPoint", ForceFieldAddFixedPoint, "idx"_a,
            "Adds a fixed point to the force field.")
-      .def("UFFAddDistanceConstraint", UFFAddDistanceConstraint,
-           "idx1"_a, "idx2"_a, "relative"_a, "minLen"_a, "maxLen"_a,
-           "forceConstant"_a,
+      .def("UFFAddDistanceConstraint", UFFAddDistanceConstraint, "idx1"_a,
+           "idx2"_a, "relative"_a, "minLen"_a, "maxLen"_a, "forceConstant"_a,
            "Adds a distance constraint to the UFF force field; if relative == "
            "True, then minLen and maxLen are intended as relative to the "
            "current distance.")
-      .def("UFFAddAngleConstraint", UFFAddAngleConstraint, "idx1"_a,
-           "idx2"_a, "idx3"_a, "relative"_a, "minAngleDeg"_a, "maxAngleDeg"_a,
+      .def("UFFAddAngleConstraint", UFFAddAngleConstraint, "idx1"_a, "idx2"_a,
+           "idx3"_a, "relative"_a, "minAngleDeg"_a, "maxAngleDeg"_a,
            "forceConstant"_a,
            "Adds an angle constraint to the UFF force field; if relative == "
            "True, then minAngleDeg and maxAngleDeg are intended as relative to "
            "the current angle.")
-      .def("UFFAddTorsionConstraint", UFFAddTorsionConstraint,
-           "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a, "relative"_a,
-           "minDihedralDeg"_a, "maxDihedralDeg"_a, "forceConstant"_a,
+      .def("UFFAddTorsionConstraint", UFFAddTorsionConstraint, "idx1"_a,
+           "idx2"_a, "idx3"_a, "idx4"_a, "relative"_a, "minDihedralDeg"_a,
+           "maxDihedralDeg"_a, "forceConstant"_a,
            "Adds a dihedral angle constraint to the UFF force field; if "
            "relative == True, then minDihedralDeg and maxDihedralDeg are "
            "intended as relative to the current dihedral angle.")
-      .def("UFFAddPositionConstraint", UFFAddPositionConstraint,
-           "idx"_a, "maxDispl"_a, "forceConstant"_a,
+      .def("UFFAddPositionConstraint", UFFAddPositionConstraint, "idx"_a,
+           "maxDispl"_a, "forceConstant"_a,
            "Adds a position constraint to the UFF force field.")
-      .def("MMFFAddDistanceConstraint", MMFFAddDistanceConstraint,
-           "idx1"_a, "idx2"_a, "relative"_a, "minLen"_a, "maxLen"_a,
-           "forceConstant"_a,
+      .def("MMFFAddDistanceConstraint", MMFFAddDistanceConstraint, "idx1"_a,
+           "idx2"_a, "relative"_a, "minLen"_a, "maxLen"_a, "forceConstant"_a,
            "Adds a distance constraint to the MMFF force field; if relative == "
            "True, then minLen and maxLen are intended as relative to the "
            "current distance.")
-      .def("MMFFAddAngleConstraint", MMFFAddAngleConstraint, "idx1"_a,
-           "idx2"_a, "idx3"_a, "relative"_a, "minAngleDeg"_a, "maxAngleDeg"_a,
+      .def("MMFFAddAngleConstraint", MMFFAddAngleConstraint, "idx1"_a, "idx2"_a,
+           "idx3"_a, "relative"_a, "minAngleDeg"_a, "maxAngleDeg"_a,
            "forceConstant"_a,
            "Adds an angle constraint to the MMFF force field; if relative == "
            "True, then minAngleDeg and maxAngleDeg are intended as relative to "
            "the current angle.")
-      .def("MMFFAddTorsionConstraint", MMFFAddTorsionConstraint,
-           "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a, "relative"_a,
-           "minDihedralDeg"_a, "maxDihedralDeg"_a, "forceConstant"_a,
+      .def("MMFFAddTorsionConstraint", MMFFAddTorsionConstraint, "idx1"_a,
+           "idx2"_a, "idx3"_a, "idx4"_a, "relative"_a, "minDihedralDeg"_a,
+           "maxDihedralDeg"_a, "forceConstant"_a,
            "Adds a dihedral angle constraint to the MMFF force field; if "
            "relative == True, then minDihedralDeg and maxDihedralDeg are "
            "intended as relative to the current dihedral angle.")
-      .def("MMFFAddPositionConstraint", MMFFAddPositionConstraint,
-           "idx"_a, "maxDispl"_a, "forceConstant"_a,
+      .def("MMFFAddPositionConstraint", MMFFAddPositionConstraint, "idx"_a,
+           "maxDispl"_a, "forceConstant"_a,
            "Adds a position constraint to the MMFF force field.")
       .def("Initialize", &PyForceField::initialize,
            "initializes the force field (call this before minimizing)")
@@ -374,117 +292,217 @@ while the list contains Snapshot objects.)DOC")
            "Adds an extra point, this can be useful for adding constraints.")
       .def("GetExtraPointPos", ForceFieldGetExtraPointLoc, "idx"_a,
            "returns the location of an extra point as a tuple");
-
-  nb::class_<PyMMFFMolProperties>(m, "MMFFMolProperties",
-                                  "MMFF molecular properties")
-      .def("GetMMFFAtomType", &PyMMFFMolProperties::getMMFFAtomType, "idx"_a,
-           "Retrieves MMFF atom type for atom with index idx")
-      .def("GetMMFFFormalCharge", &PyMMFFMolProperties::getMMFFFormalCharge,
-           "idx"_a, "Retrieves MMFF formal charge for atom with index idx")
-      .def("GetMMFFPartialCharge", &PyMMFFMolProperties::getMMFFPartialCharge,
-           "idx"_a, "Retrieves MMFF partial charge for atom with index idx")
-      .def("GetMMFFBondStretchParams",
-           &PyMMFFMolProperties::getMMFFBondStretchParams, "mol"_a, "idx1"_a,
-           "idx2"_a,
-           "Retrieves MMFF bond stretch parameters for atoms with indexes "
-           "idx1, idx2 as a (bondType, kb, r0) tuple, or None if no "
-           "parameters could be found")
-      .def("GetMMFFAngleBendParams",
-           &PyMMFFMolProperties::getMMFFAngleBendParams, "mol"_a, "idx1"_a,
-           "idx2"_a, "idx3"_a,
-           "Retrieves MMFF angle bend parameters for atoms with indexes idx1, "
-           "idx2, idx3 as a (angleType, ka, theta0) tuple, or None if no "
-           "parameters could be found")
-      .def("GetMMFFStretchBendParams",
-           &PyMMFFMolProperties::getMMFFStretchBendParams, "mol"_a, "idx1"_a,
-           "idx2"_a, "idx3"_a,
-           "Retrieves MMFF stretch-bend parameters for atoms with indexes "
-           "idx1, idx2, idx3 as a (stretchBendType, kbaIJK, kbaKJI) tuple, "
-           "or None if no parameters could be found")
-      .def("GetMMFFTorsionParams", &PyMMFFMolProperties::getMMFFTorsionParams,
-           "mol"_a, "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a,
-           "Retrieves MMFF torsion parameters for atoms with indexes idx1, "
-           "idx2, idx3, idx4 as a (torsionType, V1, V2, V3) tuple, or None "
-           "if no parameters could be found")
-      .def("GetMMFFOopBendParams", &PyMMFFMolProperties::getMMFFOopBendParams,
-           "mol"_a, "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a,
-           "Retrieves MMFF out-of-plane bending force constant for atoms with "
-           "indexes idx1, idx2, idx3, idx4 as a koop float value")
-      .def("GetMMFFVdWParams", &PyMMFFMolProperties::getMMFFVdWParams, "idx1"_a,
-           "idx2"_a,
-           "Retrieves MMFF van der Waals parameters for atoms with indexes "
-           "idx1, idx2 as a (R_ij_starUnscaled, epsilonUnscaled, R_ij_star, "
-           "epsilon) tuple, or None if no parameters could be found")
+  nb::enum_<RDKit::MMFF::MMFFVerbosity>(m, "MMFFVerbosity")
+      .value("MMFF_VERBOSITY_NONE", RDKit::MMFF::MMFF_VERBOSITY_NONE)
+      .value("MMFF_VERBOSITY_LOW", RDKit::MMFF::MMFF_VERBOSITY_LOW)
+      .value("MMFF_VERBOSITY_HIGH", RDKit::MMFF::MMFF_VERBOSITY_HIGH);
+  nb::class_<RDKit::MMFF::MMFFMolProperties>(m, "MMFFMolProperties",
+                                             "MMFF molecular properties")
+      .def(nb::init<RDKit::ROMol &, const std::string &, std::uint8_t>(),
+           "mol"_a, "mmffVariant"_a = "MMFF94",
+           "verbosity"_a = RDKit::MMFF::MMFF_VERBOSITY_NONE)
+      .def(
+          "GetMMFFAtomType",
+          [](const RDKit::MMFF::MMFFMolProperties &self, unsigned int idx) {
+            return (unsigned int)self.getMMFFAtomType(idx);
+          },
+          "idx"_a, "Retrieves MMFF atom type for atom with index idx")
+      .def("GetMMFFFormalCharge",
+           &RDKit::MMFF::MMFFMolProperties::getMMFFFormalCharge, "idx"_a,
+           "Retrieves MMFF formal charge for atom with index idx")
+      .def("GetMMFFPartialCharge",
+           &RDKit::MMFF::MMFFMolProperties::getMMFFPartialCharge, "idx"_a,
+           "Retrieves MMFF partial charge for atom with index idx")
+      .def(
+          "GetMMFFBondStretchParams",
+          [](const RDKit::MMFF::MMFFMolProperties &self,
+             const RDKit::ROMol &mol, const unsigned int idx1,
+             const unsigned int idx2) {
+            unsigned int bondType;
+            ForceFields::MMFF::MMFFBond mmffBondStretchParams;
+            if (self.getMMFFBondStretchParams(mol, idx1, idx2, bondType,
+                                              mmffBondStretchParams)) {
+              return nb::cast(nb::make_tuple((int)bondType,
+                                             mmffBondStretchParams.kb,
+                                             mmffBondStretchParams.r0));
+            }
+            return nb::none();
+          },
+          "mol"_a, "idx1"_a, "idx2"_a,
+          "Retrieves MMFF bond stretch parameters for atoms with indexes "
+          "idx1, idx2 as a (bondType, kb, r0) tuple, or None if no "
+          "parameters could be found")
+      .def(
+          "GetMMFFAngleBendParams",
+          [](const RDKit::MMFF::MMFFMolProperties &self,
+             const RDKit::ROMol &mol, const unsigned int idx1,
+             const unsigned int idx2, const unsigned int idx3) {
+            unsigned int angleType;
+            ForceFields::MMFF::MMFFAngle mmffAngleBendParams;
+            if (self.getMMFFAngleBendParams(mol, idx1, idx2, idx3, angleType,
+                                            mmffAngleBendParams)) {
+              return nb::cast(nb::make_tuple((int)angleType,
+                                             mmffAngleBendParams.ka,
+                                             mmffAngleBendParams.theta0));
+            }
+            return nb::none();
+          },
+          "mol"_a, "idx1"_a, "idx2"_a, "idx3"_a,
+          "Retrieves MMFF angle bend parameters for atoms with indexes idx1, "
+          "idx2, idx3 as a (angleType, ka, theta0) tuple, or None if no "
+          "parameters could be found")
+      .def(
+          "GetMMFFStretchBendParams",
+          [](const RDKit::MMFF::MMFFMolProperties &self,
+             const RDKit::ROMol &mol, const unsigned int idx1,
+             const unsigned int idx2, const unsigned int idx3) {
+            unsigned int stretchBendType;
+            ForceFields::MMFF::MMFFStbn mmffStretchBendParams;
+            ForceFields::MMFF::MMFFBond mmffBondStretchParams[2];
+            ForceFields::MMFF::MMFFAngle mmffAngleBendParams;
+            if (self.getMMFFStretchBendParams(
+                    mol, idx1, idx2, idx3, stretchBendType,
+                    mmffStretchBendParams, mmffBondStretchParams,
+                    mmffAngleBendParams)) {
+              return nb::cast(nb::make_tuple((int)stretchBendType,
+                                             mmffStretchBendParams.kbaIJK,
+                                             mmffStretchBendParams.kbaKJI));
+            }
+            return nb::none();
+          },
+          "mol"_a, "idx1"_a, "idx2"_a, "idx3"_a,
+          "Retrieves MMFF stretch-bend parameters for atoms with indexes "
+          "idx1, idx2, idx3 as a (stretchBendType, kbaIJK, kbaKJI) tuple, "
+          "or None if no parameters could be found")
+      .def(
+          "GetMMFFTorsionParams",
+          [](const RDKit::MMFF::MMFFMolProperties &self,
+             const RDKit::ROMol &mol, const unsigned int idx1,
+             const unsigned int idx2, const unsigned int idx3,
+             const unsigned int idx4) {
+            unsigned int torType;
+            ForceFields::MMFF::MMFFTor mmffTorsionParams;
+            if (self.getMMFFTorsionParams(mol, idx1, idx2, idx3, idx4, torType,
+                                          mmffTorsionParams)) {
+              return nb::cast(nb::make_tuple((int)torType, mmffTorsionParams.V1,
+                                             mmffTorsionParams.V2,
+                                             mmffTorsionParams.V3));
+            }
+            return nb::none();
+          },
+          "mol"_a, "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a,
+          "Retrieves MMFF torsion parameters for atoms with indexes idx1, "
+          "idx2, idx3, idx4 as a (torsionType, V1, V2, V3) tuple, or None "
+          "if no parameters could be found")
+      .def(
+          "GetMMFFOopBendParams",
+          [](const RDKit::MMFF::MMFFMolProperties &self,
+             const RDKit::ROMol &mol, const unsigned int idx1,
+             const unsigned int idx2, const unsigned int idx3,
+             const unsigned int idx4) {
+            ForceFields::MMFF::MMFFOop mmffOopBendParams;
+            if (self.getMMFFOopBendParams(mol, idx1, idx2, idx3, idx4,
+                                          mmffOopBendParams)) {
+              return nb::cast(mmffOopBendParams.koop);
+            }
+            return nb::none();
+          },
+          "mol"_a, "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a,
+          "Retrieves MMFF out-of-plane bending force constant for atoms with "
+          "indexes idx1, idx2, idx3, idx4 as a koop float value")
+      .def(
+          "GetMMFFVdWParams",
+          [](const RDKit::MMFF::MMFFMolProperties &self,
+             const unsigned int idx1, const unsigned int idx2) {
+            ForceFields::MMFF::MMFFVdWRijstarEps mmffVdWParams;
+            if (self.getMMFFVdWParams(idx1, idx2, mmffVdWParams)) {
+              return nb::cast(nb::make_tuple(mmffVdWParams.R_ij_starUnscaled,
+                                             mmffVdWParams.epsilonUnscaled,
+                                             mmffVdWParams.R_ij_star,
+                                             mmffVdWParams.epsilon));
+            }
+            return nb::none();
+          },
+          "idx1"_a, "idx2"_a,
+          "Retrieves MMFF van der Waals parameters for atoms with indexes "
+          "idx1, idx2 as a (R_ij_starUnscaled, epsilonUnscaled, R_ij_star, "
+          "epsilon) tuple, or None if no parameters could be found")
       .def("SetMMFFDielectricModel",
-           &PyMMFFMolProperties::setMMFFDielectricModel, "dielModel"_a = 1,
+           &RDKit::MMFF::MMFFMolProperties::setMMFFDielectricModel,
+           "dielModel"_a = 1,
            "Sets the DielModel MMFF property (1: constant; 2: "
            "distance-dependent; defaults to constant)")
       .def("GetMMFFDielectricModel",
-           &PyMMFFMolProperties::getMMFFDielectricModel,
+           &RDKit::MMFF::MMFFMolProperties::getMMFFDielectricModel,
            "Returns the currently configured MMFF dielectric model "
            "(1: constant; 2: distance-dependent).")
       .def("SetMMFFDielectricConstant",
-           &PyMMFFMolProperties::setMMFFDielectricConstant, "dielConst"_a = 1.0,
+           &RDKit::MMFF::MMFFMolProperties::setMMFFDielectricConstant,
+           "dielConst"_a = 1.0,
            "Sets the DielConst MMFF property (defaults to 1.0)")
       .def("GetMMFFDielectricConstant",
-           &PyMMFFMolProperties::getMMFFDielectricConstant,
+           &RDKit::MMFF::MMFFMolProperties::getMMFFDielectricConstant,
            "Returns the currently configured MMFF dielectric constant.")
-      .def("SetMMFFBondTerm", &PyMMFFMolProperties::setMMFFBondTerm,
+      .def("SetMMFFBondTerm", &RDKit::MMFF::MMFFMolProperties::setMMFFBondTerm,
            "state"_a = true,
            "Sets the bond term to be included in the MMFF equation "
            "(defaults to True)")
-      .def("GetMMFFBondTerm", &PyMMFFMolProperties::getMMFFBondTerm,
+      .def("GetMMFFBondTerm", &RDKit::MMFF::MMFFMolProperties::getMMFFBondTerm,
            "Returns whether the bond term is included in the MMFF equation.")
-      .def("SetMMFFAngleTerm", &PyMMFFMolProperties::setMMFFAngleTerm,
-           "state"_a = true,
+      .def("SetMMFFAngleTerm",
+           &RDKit::MMFF::MMFFMolProperties::setMMFFAngleTerm, "state"_a = true,
            "Sets the angle term to be included in the MMFF equation "
            "(defaults to True)")
-      .def("GetMMFFAngleTerm", &PyMMFFMolProperties::getMMFFAngleTerm,
+      .def("GetMMFFAngleTerm",
+           &RDKit::MMFF::MMFFMolProperties::getMMFFAngleTerm,
            "Returns whether the angle term is included in the MMFF equation.")
       .def("SetMMFFStretchBendTerm",
-           &PyMMFFMolProperties::setMMFFStretchBendTerm, "state"_a = true,
+           &RDKit::MMFF::MMFFMolProperties::setMMFFStretchBendTerm,
+           "state"_a = true,
            "Sets the stretch-bend term to be included in the MMFF equation "
            "(defaults to True)")
       .def("GetMMFFStretchBendTerm",
-           &PyMMFFMolProperties::getMMFFStretchBendTerm,
+           &RDKit::MMFF::MMFFMolProperties::getMMFFStretchBendTerm,
            "Returns whether the stretch-bend term is included in the MMFF "
            "equation.")
-      .def("SetMMFFOopTerm", &PyMMFFMolProperties::setMMFFOopTerm,
+      .def("SetMMFFOopTerm", &RDKit::MMFF::MMFFMolProperties::setMMFFOopTerm,
            "state"_a = true,
            "Sets the out-of-plane bend term to be included in the MMFF "
            "equation (defaults to True)")
-      .def("GetMMFFOopTerm", &PyMMFFMolProperties::getMMFFOopTerm,
+      .def("GetMMFFOopTerm", &RDKit::MMFF::MMFFMolProperties::getMMFFOopTerm,
            "Returns whether the out-of-plane bend term is included in the "
            "MMFF equation.")
-      .def("SetMMFFTorsionTerm", &PyMMFFMolProperties::setMMFFTorsionTerm,
+      .def("SetMMFFTorsionTerm",
+           &RDKit::MMFF::MMFFMolProperties::setMMFFTorsionTerm,
            "state"_a = true,
            "Sets the torsional term to be included in the MMFF equation "
            "(defaults to True)")
-      .def("GetMMFFTorsionTerm", &PyMMFFMolProperties::getMMFFTorsionTerm,
+      .def("GetMMFFTorsionTerm",
+           &RDKit::MMFF::MMFFMolProperties::getMMFFTorsionTerm,
            "Returns whether the torsional term is included in the MMFF "
            "equation.")
-      .def("SetMMFFVdWTerm", &PyMMFFMolProperties::setMMFFVdWTerm,
+      .def("SetMMFFVdWTerm", &RDKit::MMFF::MMFFMolProperties::setMMFFVdWTerm,
            "state"_a = true,
            "Sets the Van der Waals term to be included in the MMFF equation "
            "(defaults to True)")
-      .def("GetMMFFVdWTerm", &PyMMFFMolProperties::getMMFFVdWTerm,
+      .def("GetMMFFVdWTerm", &RDKit::MMFF::MMFFMolProperties::getMMFFVdWTerm,
            "Returns whether the Van der Waals term is included in the MMFF "
            "equation.")
-      .def("SetMMFFEleTerm", &PyMMFFMolProperties::setMMFFEleTerm,
+      .def("SetMMFFEleTerm", &RDKit::MMFF::MMFFMolProperties::setMMFFEleTerm,
            "state"_a = true,
            "Sets the electrostatic term to be included in the MMFF equation "
            "(defaults to True)")
-      .def("GetMMFFEleTerm", &PyMMFFMolProperties::getMMFFEleTerm,
+      .def("GetMMFFEleTerm", &RDKit::MMFF::MMFFMolProperties::getMMFFEleTerm,
            "Returns whether the electrostatic term is included in the MMFF "
            "equation.")
-      .def("SetMMFFVariant", &PyMMFFMolProperties::setMMFFVariant,
+      .def("SetMMFFVariant", &RDKit::MMFF::MMFFMolProperties::setMMFFVariant,
            "mmffVariant"_a = "MMFF94",
            "Sets the MMFF variant to be used (\"MMFF94\" or \"MMFF94s\"; "
            "defaults to \"MMFF94\")")
-      .def("GetMMFFVariant", &PyMMFFMolProperties::getMMFFVariant,
+      .def("GetMMFFVariant", &RDKit::MMFF::MMFFMolProperties::getMMFFVariant,
            "Returns the currently configured MMFF variant "
            "(\"MMFF94\" or \"MMFF94s\").")
-      .def("SetMMFFVerbosity", &PyMMFFMolProperties::setMMFFVerbosity,
-           "verbosity"_a = 0,
+      .def("SetMMFFVerbosity",
+           &RDKit::MMFF::MMFFMolProperties::setMMFFVerbosity, "verbosity"_a = 0,
            "Sets the MMFF verbosity (0: none; 1: low; 2: high; defaults to 0)");
 }

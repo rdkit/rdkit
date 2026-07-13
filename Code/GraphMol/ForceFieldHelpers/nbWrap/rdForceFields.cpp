@@ -37,8 +37,7 @@ int UFFHelper(ROMol &mol, int maxIters, double vdwThresh, int confId,
 }
 
 nb::list UFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
-                        double vdwThresh,
-                        bool ignoreInterfragInteractions) {
+                        double vdwThresh, bool ignoreInterfragInteractions) {
   std::vector<std::pair<int, double>> res;
   {
     nb::gil_scoped_release release;
@@ -135,28 +134,26 @@ unsigned int SanitizeMMFFMol(ROMol &mol) {
   return MMFF::sanitizeMMFFMol(static_cast<RWMol &>(mol));
 };
 
-std::unique_ptr<ForceFields::PyMMFFMolProperties> GetMMFFMolProperties(
+std::unique_ptr<MMFF::MMFFMolProperties> GetMMFFMolProperties(
     ROMol &mol, std::string mmffVariant = "MMFF94",
     unsigned int mmffVerbosity = MMFF::MMFF_VERBOSITY_NONE) {
-  auto mmffMolProperties =
-      std::make_unique<MMFF::MMFFMolProperties>(mol, mmffVariant, mmffVerbosity);
+  auto mmffMolProperties = std::make_unique<MMFF::MMFFMolProperties>(
+      mol, mmffVariant, mmffVerbosity);
   if (!mmffMolProperties->isValid()) {
     return nullptr;
   }
-  return std::make_unique<ForceFields::PyMMFFMolProperties>(
-      std::move(mmffMolProperties));
+  return mmffMolProperties;
 }
 
 std::unique_ptr<ForceFields::PyForceField> MMFFGetMoleculeForceField(
-    ROMol &mol, ForceFields::PyMMFFMolProperties *pyMMFFMolProperties,
+    ROMol &mol, MMFF::MMFFMolProperties *MMFFMolProperties,
     double nonBondedThresh = 100.0, int confId = -1,
     bool ignoreInterfragInteractions = true) {
-  if (!pyMMFFMolProperties) {
+  if (!MMFFMolProperties) {
     return nullptr;
   }
   auto ff = std::unique_ptr<ForceFields::ForceField>(
-      MMFF::constructForceField(mol, pyMMFFMolProperties->mmffMolProperties.get(),
-                                nonBondedThresh, confId,
+      MMFF::constructForceField(mol, MMFFMolProperties, nonBondedThresh, confId,
                                 ignoreInterfragInteractions));
   auto pyFF = std::make_unique<ForceFields::PyForceField>(std::move(ff));
   pyFF->initialize();
@@ -195,10 +192,8 @@ nb::object getUFFAngleBendParams(const RDKit::ROMol &mol,
   return nb::none();
 };
 
-nb::object getUFFTorsionParams(const RDKit::ROMol &mol,
-                               const unsigned int idx1,
-                               const unsigned int idx2,
-                               const unsigned int idx3,
+nb::object getUFFTorsionParams(const RDKit::ROMol &mol, const unsigned int idx1,
+                               const unsigned int idx2, const unsigned int idx3,
                                const unsigned int idx4) {
   ForceFields::UFF::UFFTor uffTorsionParams;
   if (RDKit::UFF::getUFFTorsionParams(mol, idx1, idx2, idx3, idx4,
@@ -236,9 +231,9 @@ NB_MODULE(rdForceFieldHelpers, m) {
 
   m.doc() = "Module containing functions to handle force fields";
 
-  m.def("UFFOptimizeMolecule", RDKit::UFFHelper,
-        "mol"_a, "maxIters"_a = 200, "vdwThresh"_a = 10.0,
-        "confId"_a = -1, "ignoreInterfragInteractions"_a = true,
+  m.def("UFFOptimizeMolecule", RDKit::UFFHelper, "mol"_a, "maxIters"_a = 200,
+        "vdwThresh"_a = 10.0, "confId"_a = -1,
+        "ignoreInterfragInteractions"_a = true,
         R"DOC(uses UFF to optimize a molecule's structure
 
 ARGUMENTS:
@@ -254,9 +249,9 @@ ARGUMENTS:
 RETURNS: 0 if the optimization converged, 1 if more iterations are required.
 )DOC");
 
-  m.def("UFFOptimizeMoleculeConfs", RDKit::UFFConfsHelper,
-        "mol"_a, "numThreads"_a = 1, "maxIters"_a = 200,
-        "vdwThresh"_a = 10.0, "ignoreInterfragInteractions"_a = true,
+  m.def("UFFOptimizeMoleculeConfs", RDKit::UFFConfsHelper, "mol"_a,
+        "numThreads"_a = 1, "maxIters"_a = 200, "vdwThresh"_a = 10.0,
+        "ignoreInterfragInteractions"_a = true,
         R"DOC(uses UFF to optimize all of a molecule's conformations
 
 ARGUMENTS:
@@ -275,8 +270,8 @@ RETURNS: a list of (not_converged, energy) 2-tuples.
     If not_converged is 0 the optimization converged for that conformer.
 )DOC");
 
-  m.def("UFFGetMoleculeForceField", RDKit::UFFGetMoleculeForceField,
-        "mol"_a, "vdwThresh"_a = 10.0, "confId"_a = -1,
+  m.def("UFFGetMoleculeForceField", RDKit::UFFGetMoleculeForceField, "mol"_a,
+        "vdwThresh"_a = 10.0, "confId"_a = -1,
         "ignoreInterfragInteractions"_a = true,
         R"DOC(returns a UFF force field for a molecule
 
@@ -290,17 +285,17 @@ ARGUMENTS:
                fragments will not be added to the forcefield.
 )DOC");
 
-  m.def("UFFHasAllMoleculeParams", RDKit::UFFHasAllMoleculeParams,
-        "mol"_a,
-        R"DOC(checks if UFF parameters are available for all of a molecule's atoms
+  m.def(
+      "UFFHasAllMoleculeParams", RDKit::UFFHasAllMoleculeParams, "mol"_a,
+      R"DOC(checks if UFF parameters are available for all of a molecule's atoms
 
 ARGUMENTS:
 
  - mol : the molecule of interest.
 )DOC");
 
-  m.def("MMFFOptimizeMolecule", RDKit::MMFFOptimizeMolecule,
-        "mol"_a, "mmffVariant"_a = "MMFF94", "maxIters"_a = 200,
+  m.def("MMFFOptimizeMolecule", RDKit::MMFFOptimizeMolecule, "mol"_a,
+        "mmffVariant"_a = "MMFF94", "maxIters"_a = 200,
         "nonBondedThresh"_a = 100.0, "confId"_a = -1,
         "ignoreInterfragInteractions"_a = true,
         R"DOC(uses MMFF to optimize a molecule's structure
@@ -320,16 +315,15 @@ RETURNS: 0 if the optimization converged, -1 if the forcefield could
          not be set up, 1 if more iterations are required.
 )DOC");
 
-  m.def("MMFFSanitizeMolecule", RDKit::SanitizeMMFFMol,
-        "mol"_a,
+  m.def("MMFFSanitizeMolecule", RDKit::SanitizeMMFFMol, "mol"_a,
         R"DOC(sanitizes a molecule according to MMFF requirements.
 
  - mol : the molecule of interest.
 )DOC");
 
-  m.def("MMFFGetMoleculeProperties", RDKit::GetMMFFMolProperties,
-        "mol"_a, "mmffVariant"_a = "MMFF94", "mmffVerbosity"_a = 0,
-        R"DOC(returns a PyMMFFMolProperties object for a
+  m.def("MMFFGetMoleculeProperties", RDKit::GetMMFFMolProperties, "mol"_a,
+        "mmffVariant"_a = "MMFF94", "mmffVerbosity"_a = 0,
+        R"DOC(returns an MMFFMolProperties object for a
 molecule, which is required by MMFFGetMoleculeForceField()
 and can be used to get/set MMFF properties
 
@@ -340,16 +334,15 @@ ARGUMENTS:
                (defaults to "MMFF94")
  - mmffVerbosity : 0: none; 1: low; 2: high (defaults to 0).
 )DOC");
-
-  m.def("MMFFGetMoleculeForceField", RDKit::MMFFGetMoleculeForceField,
-        "mol"_a, "pyMMFFMolProperties"_a.none(), "nonBondedThresh"_a = 100.0,
+  m.def("MMFFGetMoleculeForceField", RDKit::MMFFGetMoleculeForceField, "mol"_a,
+        "MMFFMolProperties"_a.none(), "nonBondedThresh"_a = 100.0,
         "confId"_a = -1, "ignoreInterfragInteractions"_a = true,
         R"DOC(returns a MMFF force field for a molecule
 
 ARGUMENTS:
 
  - mol : the molecule of interest
- - pyMMFFMolProperties : PyMMFFMolProperties object as returned
+ - MMFFMolProperties : MMFFMolProperties object as returned
                by MMFFGetMoleculeProperties()
  - nonBondedThresh : used to exclude long-range non-bonded
                interactions (defaults to 100.0)
@@ -358,9 +351,10 @@ ARGUMENTS:
                fragments will not be added to the forcefield
 )DOC");
 
-  m.def("CreateEmptyForceFieldForMol", RDKit::CreateEmptyForceFieldForMol,
-        "mol"_a, "confId"_a = -1,
-        R"DOC(Get An empty Force Field, with only the positions of the atoms but no Contributions.
+  m.def(
+      "CreateEmptyForceFieldForMol", RDKit::CreateEmptyForceFieldForMol,
+      "mol"_a, "confId"_a = -1,
+      R"DOC(Get An empty Force Field, with only the positions of the atoms but no Contributions.
 
 ARGUMENTS :
 
@@ -368,19 +362,18 @@ ARGUMENTS :
     - confId: the conformer which positions should be added to the force field.
 )DOC");
 
-  m.def("MMFFHasAllMoleculeParams", RDKit::MMFFHasAllMoleculeParams,
-        "mol"_a,
-        R"DOC(checks if MMFF parameters are available for all of a molecule's atoms
+  m.def(
+      "MMFFHasAllMoleculeParams", RDKit::MMFFHasAllMoleculeParams, "mol"_a,
+      R"DOC(checks if MMFF parameters are available for all of a molecule's atoms
 
 ARGUMENTS:
 
  - mol : the molecule of interest
 )DOC");
 
-  m.def("MMFFOptimizeMoleculeConfs", RDKit::MMFFConfsHelper,
-        "mol"_a, "numThreads"_a = 1, "maxIters"_a = 200,
-        "mmffVariant"_a = "MMFF94", "nonBondedThresh"_a = 100.0,
-        "ignoreInterfragInteractions"_a = true,
+  m.def("MMFFOptimizeMoleculeConfs", RDKit::MMFFConfsHelper, "mol"_a,
+        "numThreads"_a = 1, "maxIters"_a = 200, "mmffVariant"_a = "MMFF94",
+        "nonBondedThresh"_a = 100.0, "ignoreInterfragInteractions"_a = true,
         R"DOC(uses MMFF to optimize all of a molecule's conformations
 
 ARGUMENTS:
@@ -400,36 +393,37 @@ RETURNS: a list of (not_converged, energy) 2-tuples.
     If not_converged is 0 the optimization converged for that conformer.
 )DOC");
 
-  m.def("GetUFFBondStretchParams", ForceFields::getUFFBondStretchParams,
-        "mol"_a, "idx1"_a, "idx2"_a,
-        "Retrieves UFF bond stretch parameters for atoms with indexes idx1, idx2 "
-        "as a (kb, r0) tuple, or None if no parameters could be found");
+  m.def(
+      "GetUFFBondStretchParams", ForceFields::getUFFBondStretchParams, "mol"_a,
+      "idx1"_a, "idx2"_a,
+      "Retrieves UFF bond stretch parameters for atoms with indexes idx1, idx2 "
+      "as a (kb, r0) tuple, or None if no parameters could be found");
 
-  m.def("GetUFFAngleBendParams", ForceFields::getUFFAngleBendParams,
-        "mol"_a, "idx1"_a, "idx2"_a, "idx3"_a,
+  m.def("GetUFFAngleBendParams", ForceFields::getUFFAngleBendParams, "mol"_a,
+        "idx1"_a, "idx2"_a, "idx3"_a,
         "Retrieves UFF angle bend parameters for atoms with indexes "
         "idx1, idx2, idx3 as a (ka, theta0) tuple, or None if no "
         "parameters could be found");
 
-  m.def("GetUFFTorsionParams", ForceFields::getUFFTorsionParams,
-        "mol"_a, "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a,
+  m.def("GetUFFTorsionParams", ForceFields::getUFFTorsionParams, "mol"_a,
+        "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a,
         "Retrieves UFF torsion parameters for atoms "
         "with indexes idx1, idx2, idx3, idx4 as a V float value, or None "
         "if no parameters could be found");
 
-  m.def("GetUFFInversionParams", ForceFields::getUFFInversionParams,
-        "mol"_a, "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a,
+  m.def("GetUFFInversionParams", ForceFields::getUFFInversionParams, "mol"_a,
+        "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a,
         "Retrieves UFF inversion parameters for atoms "
         "with indexes idx1, idx2, idx3, idx4 as a K float value, or None "
         "if no parameters could be found");
 
-  m.def("GetUFFVdWParams", ForceFields::getUFFVdWParams,
-        "mol"_a, "idx1"_a, "idx2"_a,
-        "Retrieves UFF van der Waals parameters for atoms with indexes idx1, "
-        "idx2 as a (x_ij, D_ij) tuple, or None if no parameters could be found");
+  m.def(
+      "GetUFFVdWParams", ForceFields::getUFFVdWParams, "mol"_a, "idx1"_a,
+      "idx2"_a,
+      "Retrieves UFF van der Waals parameters for atoms with indexes idx1, "
+      "idx2 as a (x_ij, D_ij) tuple, or None if no parameters could be found");
 
-  m.def("OptimizeMolecule", RDKit::FFHelper,
-        "ff"_a, "maxIters"_a = 200,
+  m.def("OptimizeMolecule", RDKit::FFHelper, "ff"_a, "maxIters"_a = 200,
         R"DOC(uses the supplied force field to optimize a molecule's structure
 
 ARGUMENTS:
@@ -440,9 +434,10 @@ ARGUMENTS:
 RETURNS: 0 if the optimization converged, 1 if more iterations are required.
 )DOC");
 
-  m.def("OptimizeMoleculeConfs", RDKit::FFConfsHelper,
-        "mol"_a, "ff"_a, "numThreads"_a = 1, "maxIters"_a = 200,
-        R"DOC(uses the supplied force field to optimize all of a molecule's conformations
+  m.def(
+      "OptimizeMoleculeConfs", RDKit::FFConfsHelper, "mol"_a, "ff"_a,
+      "numThreads"_a = 1, "maxIters"_a = 200,
+      R"DOC(uses the supplied force field to optimize all of a molecule's conformations
 
 ARGUMENTS:
 

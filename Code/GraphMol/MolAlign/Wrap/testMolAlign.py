@@ -13,14 +13,8 @@ import numpy
 from rdkit import Chem, RDConfig
 from rdkit.Chem import (ChemicalForceFields, rdMolAlign, rdMolDescriptors, rdMolTransforms)
 
-# In nanobind mode, rdMolAlign exposes MMFFGetMoleculeProperties directly.
-# Use it when available so we don't pass boost Python objects to nanobind functions.
-haveNbMMFFProps = hasattr(rdMolAlign, 'MMFFGetMoleculeProperties')
-
 
 def getMMFFProps(mol):
-  if haveNbMMFFProps:
-    return rdMolAlign.MMFFGetMoleculeProperties(mol)
   return ChemicalForceFields.MMFFGetMoleculeProperties(mol)
 
 
