@@ -38,11 +38,31 @@ unsigned int MacroMol::addMacroBond(unsigned int beginAtomIdx,
   PRECONDITION((isMacroAtom(this->getAtomWithIdx(beginAtomIdx)) ||
                 isMacroAtom(this->getAtomWithIdx(endAtomIdx))),
                "at least one atom must be a macro atom");
-  auto numBonds = RWMol::addBond(beginAtomIdx, endAtomIdx, bondType);
-  auto bondIdx = numBonds - 1;
-  auto bond = this->getBondWithIdx(bondIdx);
-  bond->setProp(common_properties::_MacroMolBeginAttachPt, beginAttachPt);
-  bond->setProp(common_properties::_MacroMolEndAttachPt, endAttachPt);
+  auto bond = this->getBondBetweenAtoms(beginAtomIdx, endAtomIdx);
+  if (!bond) {
+    // The actual macro bond types live in MacroBondInfo.
+    auto numBonds = RWMol::addBond(beginAtomIdx, endAtomIdx,
+                                   Bond::BondType::UNSPECIFIED);
+    auto bondIdx = numBonds - 1;
+    bond = this->getBondWithIdx(bondIdx);
+    bond->setMacroBondInfo(new MacroBondInfo(
+        beginAttachPt, endAttachPt, static_cast<unsigned int>(bondType)));
+    return numBonds;
+  }
+  bond->setBondType(Bond::BondType::UNSPECIFIED);
+  auto *info = bond->getMacroBondInfo();
+  if (!info) {
+    bond->setMacroBondInfo(new MacroBondInfo());
+    info = bond->getMacroBondInfo();
+  }
+  if (bond->getBeginAtomIdx() == beginAtomIdx) {
+    info->addBond(beginAttachPt, endAttachPt,
+                  static_cast<unsigned int>(bondType));
+  } else {
+    info->addBond(endAttachPt, beginAttachPt,
+                  static_cast<unsigned int>(bondType));
+  }
+  auto numBonds = this->getNumBonds();
   return numBonds;
 }
 

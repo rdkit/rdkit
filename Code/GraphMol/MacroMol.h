@@ -32,6 +32,8 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
   //! Adds a bond between two macro atoms.
   /*!
     At least one of the two atoms must be a macro atom.
+    The graph bond's bond type is unspecified; use MacroBondInfo for the
+    macro bond type.
 
     \param beginAtomIdx  index of the atom where the bond begins
     \param endAtomIdx    index of the atom where the bond ends
@@ -47,6 +49,9 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
 
   //! Adds a bond from a regular atom to a macro atom.
   /*!
+    The graph bond's bond type is unspecified; use MacroBondInfo for the
+    macro bond type.
+
     \param beginAtomIdx     index of the regular atom where the bond begins
     \param endMacroAtomIdx  index of the macro atom where the bond ends
     \param endAttachPt      the attachment point on the end (macro) atom
@@ -60,6 +65,9 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
 
   //! Adds a bond from a macro atom to a regular atom.
   /*!
+    The graph bond's bond type is unspecified; use MacroBondInfo for the
+    macro bond type.
+
     \param beginMacroAtomIdx index of the macro atom where the bond begins
     \param endAtomIdx        index of the regular atom where the bond ends
     \param beginAttachPt     the attachment point on the begin (macro) atom

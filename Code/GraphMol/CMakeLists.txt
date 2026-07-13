@@ -46,6 +46,7 @@ rdkit_headers(Atom.h
         ROMol.h
         RWMol.h
         MacroAtomInfo.h
+        MacroBondInfo.h
         MacroMol.h
         SanitException.h
         SubstanceGroup.h
