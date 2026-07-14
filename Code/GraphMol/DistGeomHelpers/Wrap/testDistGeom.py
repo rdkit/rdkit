@@ -886,15 +886,9 @@ class TestCase(unittest.TestCase):
     params.randomSeed = 0xF00D
     # now embed, which changes the handler
     AllChem.EmbedMolecule(mol, params)
-    time.sleep(0.5)
-    os.kill(os.getpid(), signal.CTRL_C_EVENT if sys.platform == 'win32' else signal.SIGINT)
-    time.sleep(0.5)
-    if sys.platform != 'win32':
-      # on the windows CI machines it seems that the signal handling doesn't work
-      # as expected, so we don't do this test.
-      # If things end up really messed up, and the signal handler really is not
-      # installed, the whole test run will fail...
-      self.assertEqual(seen, [signal.SIGINT])
+    time.sleep(0.2)
+    # make sure our signal handler is once again active:
+    self.assertEqual(signal.getsignal(signal.SIGINT), handler)
 
 
 if __name__ == '__main__':
