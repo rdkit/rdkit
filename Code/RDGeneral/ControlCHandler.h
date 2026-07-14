@@ -15,11 +15,9 @@
 #include <csignal>
 #include <stdexcept>
 
-#include <RDGeneral/export.h>
-
 namespace RDKit {
 
-class RDKIT_RDGENERAL_EXPORT ControlCCaught : public std::runtime_error {
+class ControlCCaught : public std::runtime_error {
  public:
   explicit ControlCCaught()
       : std::runtime_error("The process was interrupted with Ctrl+c") {};
