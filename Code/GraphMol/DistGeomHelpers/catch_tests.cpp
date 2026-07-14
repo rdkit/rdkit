@@ -1766,3 +1766,86 @@ TEST_CASE("Github #9143: ETKDGv3 generating twisted amides") {
     }
   }
 }
+
+TEST_CASE("Github TODO: Bug: Forced cis bonds in macrocycle") {
+  SECTION("as reported") {
+    auto mol =
+        "C1C(C)=C(C)CCCCCCCCCC1"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+      // check that torsion not fixed on 90 degree      
+      double blcc = (bm->getUpperBound(0, 1) + bm->getLowerBound(1, 0)) / 2;
+      double blcDBc = (bm->getUpperBound(2, 3) + bm->getLowerBound(3, 2)) / 2;
+
+      double ba= 2.0 * M_PI / 3.0;
+
+      double opt_14_cis = RDGeom::compute14DistCis(blcc, blcDBc, blcc, blcDBc, ba);
+      double opt_14_trans =
+          RDGeom::compute14DistTrans(blcc, blcDBc, blcc, blcDBc, ba);
+
+      // both should allow cis and trans
+      CHECK(bm->getLowerBound(0, 4) <= opt_14_cis);
+      CHECK(bm->getUpperBound(0, 4) >= opt_14_trans);
+
+      CHECK(bm->getLowerBound(0, 5) <= opt_14_cis);
+      CHECK(bm->getUpperBound(0, 5) >= opt_14_trans);
+  }
+}
+
+TEST_CASE("Github TODO: Bug: Overwritten stereo information in rings") {
+  SECTION("as reported (enforce trans bond in macrocycle)") {
+    auto mol =
+        "C1C/(C)=\C(C)CCCCCCCCCC1"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+      // check that torsion not fixed on 90 degree      
+      double blcc = (bm->getUpperBound(0, 1) + bm->getLowerBound(1, 0)) / 2;
+      double blcDBc = (bm->getUpperBound(2, 3) + bm->getLowerBound(3, 2)) / 2;
+
+      double ba= 2.0 * M_PI / 3.0;
+
+      double opt_14_cis = RDGeom::compute14DistCis(blcc, blcDBc, blcc, blcDBc, ba);
+      double opt_14_trans =
+          RDGeom::compute14DistTrans(blcc, blcDBc, blcc, blcDBc, ba);
+
+      // trans should be allowed but NOT cis
+      CHECK(bm->getLowerBound(0, 4) > opt_14_cis);
+      CHECK(bm->getUpperBound(0, 4) >= opt_14_trans);
+
+      // cis should be allowed but not trans
+      CHECK(bm->getLowerBound(0, 5) <= opt_14_cis);
+      CHECK(bm->getUpperBound(0, 5) < opt_14_trans);
+  }
+  SECTION("as reported (enforce trans bond in small ring)") {
+    auto mol =
+        "C1C/(C)=\C(C)CCCC1"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+      // check that torsion not fixed on 90 degree      
+      double blcc = (bm->getUpperBound(0, 1) + bm->getLowerBound(1, 0)) / 2;
+      double blcDBc = (bm->getUpperBound(2, 3) + bm->getLowerBound(3, 2)) / 2;
+
+      double ba= 2.0 * M_PI / 3.0;
+
+      double opt_14_cis = RDGeom::compute14DistCis(blcc, blcDBc, blcc, blcDBc, ba);
+      double opt_14_trans =
+          RDGeom::compute14DistTrans(blcc, blcDBc, blcc, blcDBc, ba);
+
+      // trans should be allowed but NOT cis
+      CHECK(bm->getLowerBound(0, 4) > opt_14_cis);
+      CHECK(bm->getUpperBound(0, 4) >= opt_14_trans);
+
+      // cis should be allowed but not trans
+      CHECK(bm->getLowerBound(0, 5) <= opt_14_cis);
+      CHECK(bm->getUpperBound(0, 5) < opt_14_trans);
+  }
+}
