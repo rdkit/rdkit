@@ -4,6 +4,12 @@ rdkit_library(ChemTransforms ChemTransforms.cpp
   GraphMol SubstructMatch SmilesParse Depictor)
 target_compile_definitions(ChemTransforms PRIVATE -DRDKIT_CHEMTRANSFORMS_BUILD)
 
+# MolFragmenterJSONParser.cpp #defines USE_BETTER_ENUMS and so is incompatible with
+# the plain-enum precompiled header; compile it without the PCH (see BetterEnums.h).
+if(RDK_USE_PRECOMPILED_HEADERS)
+  set_source_files_properties(MolFragmenterJSONParser.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+endif()
+
 rdkit_headers(ChemTransforms.h
    MolFragmenter.h MolFragmenterJSONParser.h
    DEST GraphMol/ChemTransforms)

@@ -31,7 +31,7 @@ if(WIN32)
     endif()
 endif()
 
-rdkit_library(RingDecomposerLib ${URFSOURCES} SHARED)
+rdkit_library(RingDecomposerLib ${URFSOURCES} SHARED NO_PCH)
 if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32 AND (NOT RDK_INSTALL_STATIC_LIBS)))
     target_compile_definitions(RingDecomposerLib PRIVATE RDKIT_URFLIB_BUILD)
 endif()

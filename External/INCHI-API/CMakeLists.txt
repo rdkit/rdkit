@@ -59,7 +59,7 @@ if(RDK_BUILD_INCHI_SUPPORT)
       src/INCHI_API/libinchi/src/ixa/ixa_mol.c
       src/INCHI_API/libinchi/src/ixa/ixa_read_inchi.c
       src/INCHI_API/libinchi/src/ixa/ixa_read_mol.c
-      src/INCHI_API/libinchi/src/ixa/ixa_status.c SHARED)
+      src/INCHI_API/libinchi/src/ixa/ixa_status.c SHARED NO_PCH)
     target_compile_definitions(Inchi PRIVATE RDKIT_INCHI_BUILD)
 
       if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))

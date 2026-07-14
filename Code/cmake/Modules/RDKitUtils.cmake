@@ -57,7 +57,7 @@ endfunction()
 macro(rdkit_library)
   PARSE_ARGUMENTS(RDKLIB
     "LINK_LIBRARIES;DEST"
-    "SHARED"
+    "SHARED;NO_PCH"
     ${ARGN})
   CAR(RDKLIB_NAME ${RDKLIB_DEFAULT_ARGS})
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
@@ -76,6 +76,9 @@ macro(rdkit_library)
   if(RDK_BUILD_STATIC_LIBS_ONLY)
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
+    if(RDK_USE_PRECOMPILED_HEADERS AND RDKLIB_NO_PCH)
+      set_target_properties(${RDKLIB_NAME} PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+    endif(RDK_USE_PRECOMPILED_HEADERS AND RDKLIB_NO_PCH)
     if(RDK_INSTALL_DEV_COMPONENT)
       INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${exportName}
               DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
@@ -91,8 +94,14 @@ macro(rdkit_library)
     INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${exportName}
             DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
             COMPONENT ${sharedLibComponent})
+    if(RDK_USE_PRECOMPILED_HEADERS AND RDKLIB_NO_PCH)
+      set_target_properties(${RDKLIB_NAME} PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+    endif(RDK_USE_PRECOMPILED_HEADERS AND RDKLIB_NO_PCH)
     if(RDK_INSTALL_STATIC_LIBS)
       add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
+      if(RDK_USE_PRECOMPILED_HEADERS AND RDKLIB_NO_PCH)
+        set_target_properties(${RDKLIB_NAME}_static PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+      endif(RDK_USE_PRECOMPILED_HEADERS AND RDKLIB_NO_PCH)
 
       set(skipNext FALSE)
       foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
@@ -205,6 +214,10 @@ macro(rdkit_python_extension)
 
     target_link_libraries(${RDKPY_NAME} PUBLIC ${RDKPY_LINK_LIBRARIES}
                           RDBoost rdkit_py_base rdkit_base )
+    # The precompiled header is scoped to library targets (see rdkit_test).
+    if(RDK_USE_PRECOMPILED_HEADERS)
+      set_target_properties(${RDKPY_NAME} PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+    endif()
     if("${PYTHON_LDSHARED}" STREQUAL "")
     else()
       set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})
@@ -225,6 +238,12 @@ macro(rdkit_test)
   if(RDK_BUILD_CPP_TESTS)
     add_executable(${RDKTEST_NAME} ${RDKTEST_SOURCES})
     target_link_libraries(${RDKTEST_NAME} ${RDKTEST_LINK_LIBRARIES})
+    # The precompiled header is scoped to library targets. There are hundreds of
+    # test executables; a per-target PCH gains little and exhausts disk on
+    # Windows CI, so keep tests off the PCH.
+    if(RDK_USE_PRECOMPILED_HEADERS)
+      set_target_properties(${RDKTEST_NAME} PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+    endif()
     add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME})
   endif(RDK_BUILD_CPP_TESTS)
 endmacro(rdkit_test)
@@ -239,6 +258,10 @@ macro(rdkit_catch_test)
   if(RDK_BUILD_CPP_TESTS)
     add_executable(${RDKTEST_NAME} ${RDKTEST_SOURCES})
     target_link_libraries(${RDKTEST_NAME} PRIVATE rdkitCatch ${RDKTEST_LINK_LIBRARIES} Catch2::Catch2)
+    # The precompiled header is scoped to library targets (see rdkit_test).
+    if(RDK_USE_PRECOMPILED_HEADERS)
+      set_target_properties(${RDKTEST_NAME} PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+    endif()
     add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME})
   endif(RDK_BUILD_CPP_TESTS)
 endmacro(rdkit_catch_test)
