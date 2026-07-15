@@ -3421,4 +3421,33 @@ TEST_CASE(
     smi = MolFragmentToSmiles(*m, ps, {0, 1, 2, 3});
     CHECK(smi == "C/C=C/[*:1]");
   }
+  SECTION("Simpler systems") {
+    auto m = "C/C=C/C"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    auto smi = MolFragmentToSmiles(*m, ps, {0, 1, 2});
+    CHECK(smi == "C=CC");
+    smi = MolFragmentToSmiles(*m, ps, {1, 2, 3});
+    CHECK(smi == "C=CC");
+  }
+  SECTION("edge cases") {
+    {
+      auto m = "C/C=C(F)/C"_smiles;
+      REQUIRE(m);
+      SmilesWriteParams ps;
+      auto smi = MolFragmentToSmiles(*m, ps, {0, 1, 2, 3});
+      CHECK(smi == "C/C=C\\F");
+      smi = MolFragmentToSmiles(*m, ps, {0, 1, 2, 4});
+      CHECK(smi == "C/C=C/C");
+    }
+    {
+      auto m = "C/C(F)=C/C"_smiles;
+      REQUIRE(m);
+      SmilesWriteParams ps;
+      auto smi = MolFragmentToSmiles(*m, ps, {0, 1, 3, 4});
+      CHECK(smi == "C/C=C\\C");
+      smi = MolFragmentToSmiles(*m, ps, {2, 1, 3, 4});
+      CHECK(smi == "C/C=C/F");
+    }
+  }
 }

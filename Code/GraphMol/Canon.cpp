@@ -769,11 +769,11 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
         bond->getStereo() <= Bond::STEREOANY ||
         bond->getStereoAtoms().size() < 2 ||
         std::ranges::find_if(bond->getStereoAtoms(),
-                                    [&atomVisitOrders](const auto &atomIdx) {
-                                      return !atomVisitOrders[atomIdx];         
-                                    }) != bond->getStereoAtoms().end()
-      ) {
-      // not a bond that can have stereo or one of the stereo atoms was not traversed.
+                             [&atomVisitOrders](const auto &atomIdx) {
+                               return !atomVisitOrders[atomIdx];
+                             }) != bond->getStereoAtoms().end()) {
+      // not a bond that can have stereo or one of the stereo atoms was not
+      // traversed.
       bond->setStereo(Bond::STEREONONE);
       continue;
     }
@@ -1521,7 +1521,8 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
   std::vector<unsigned int> atomVisitOrders(mol.getNumAtoms(), 0);
   std::vector<unsigned int> bondVisitOrders(mol.getNumBonds(), 0);
 
-  unsigned int pos = 1;
+  unsigned int pos =
+      1;  // start at 1 since we use 0 to detect unvisited atoms/bonds
   for (const auto &msI : molStack) {
     if (msI.type == MOL_STACK_ATOM) {
       atomVisitOrders[msI.obj.atom->getIdx()] = pos;

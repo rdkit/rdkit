@@ -938,8 +938,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
   std::vector<unsigned int> atomOrdering;
   std::vector<unsigned int> bondOrdering;
 
-  // clean up the chirality on any atom that is marked as chiral,
-  // but that should not be:
+  // check stereochemistry:
   if (params.doIsomericSmiles) {
     if (!mol.hasProp(common_properties::_StereochemDone)) {
       MolOps::assignStereochemistry(tmol, true);
@@ -953,6 +952,77 @@ std::string MolFragmentToSmiles(const ROMol &mol,
           tmol.getAtomWithIdx(aidx)->setProp(common_properties::_CIPCode,
                                              cipCode);
         }
+      }
+    }
+    // check for double bonds where the atoms defining stereo are not included
+    for (auto bnd : tmol.bonds()) {
+      if (bondsInPlay[bnd->getIdx()] && bnd->getBondType() == Bond::DOUBLE &&
+          bnd->getStereo() != Bond::BondStereo::STEREONONE) {
+        auto stereoAtoms = bnd->getStereoAtoms();
+        if (stereoAtoms.size() != 2) {
+          continue;
+        }
+        for (auto [stereoAtomIdx, bondAtom] :
+             {std::make_pair(stereoAtoms[0], bnd->getBeginAtom()),
+              std::make_pair(stereoAtoms[1], bnd->getEndAtom())}) {
+          if (!atomsInPlay[stereoAtomIdx]) {
+            if (bondAtom->getDegree() > 2) {
+              bool updated = false;
+              for (auto nbrAt : tmol.atomNeighbors(bondAtom)) {
+                if (nbrAt->getIdx() !=
+                        static_cast<unsigned int>(stereoAtomIdx) &&
+                    atomsInPlay[nbrAt->getIdx()]) {
+                  bnd->setStereoAtoms(nbrAt->getIdx(),
+                                      stereoAtomIdx == stereoAtoms[0]
+                                          ? stereoAtoms[1]
+                                          : stereoAtoms[0]);
+                  updated = true;
+                  if (bnd->getStereo() == Bond::BondStereo::STEREOZ ||
+                      bnd->getStereo() == Bond::BondStereo::STEREOCIS) {
+                    bnd->setStereo(Bond::BondStereo::STEREOTRANS);
+                  } else if (bnd->getStereo() == Bond::BondStereo::STEREOE ||
+                             bnd->getStereo() ==
+                                 Bond::BondStereo::STEREOTRANS) {
+                    bnd->setStereo(Bond::BondStereo::STEREOCIS);
+                  }
+                  break;
+                }
+              }
+              if (!updated) {
+                bnd->setStereo(Bond::BondStereo::STEREONONE);
+              }
+            } else {
+              bnd->setStereo(Bond::BondStereo::STEREONONE);
+              break;
+            }
+          }
+        }
+        // if (!atomsInPlay[stereoAtoms[0]]) {
+        //   if (bnd->getBeginAtom()->getDegree() > 2) {
+        //     bool updated = false;
+        //     for (auto nbrAt : tmol.atomNeighbors(bnd->getBeginAtomIdx())) {
+        //       if (nbrAt->getIdx() != stereoAtoms[0] &&
+        //           atomsInPlay[nbrAt->getIdx()]) {
+        //         bnd->setStereoAtoms(nbrAt->getIdx(), stereoAtoms[1]);
+        //         updated = true;
+        //         if (bnd->getStereo() == Bond::BondStereo::STEREOZ ||
+        //         bnd->getStereo() == Bond::BondStereo::STEREOCIS) {
+        //           bnd->setStereo(Bond::BondStereo::STEREOTRANS);
+        //         } else if (bnd->getStereo() == Bond::BondStereo::STEREOE ||
+        //         bnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
+        //           bnd->setStereo(Bond::BondStereo::STEREOCIS);
+        //         }
+        //         break;
+        //       }
+        //     }
+        //     if(!updated) {
+        //       bnd->setStereo(Bond::BondStereo::STEREONONE);
+        //     }
+        //   } else {
+        //     bnd->setStereo(Bond::BondStereo::STEREONONE);
+        //     break;
+        //   }
+        // }
       }
     }
   }
