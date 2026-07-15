@@ -767,8 +767,13 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
 
     if (bond->getBondType() != Bond::DOUBLE ||
         bond->getStereo() <= Bond::STEREOANY ||
-        bond->getStereoAtoms().size() < 2) {
-      // not a bond that can have stereo or that needs canonicalization
+        bond->getStereoAtoms().size() < 2 ||
+        std::ranges::find_if(bond->getStereoAtoms(),
+                                    [&atomVisitOrders](const auto &atomIdx) {
+                                      return !atomVisitOrders[atomIdx];         
+                                    }) != bond->getStereoAtoms().end()
+      ) {
+      // not a bond that can have stereo or one of the stereo atoms was not traversed.
       bond->setStereo(Bond::STEREONONE);
       continue;
     }
@@ -816,7 +821,8 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
     while (!connectedBondsQ.empty()) {
       const auto currentBond = connectedBondsQ.front();
       connectedBondsQ.pop();
-      if (seen_bonds[currentBond->getIdx()]) {
+      if (seen_bonds[currentBond->getIdx()] ||
+          !bondVisitOrders[currentBond->getIdx()]) {
         continue;
       }
 
@@ -1512,10 +1518,10 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
     }
   }
 
-  std::vector<unsigned int> atomVisitOrders(mol.getNumAtoms());
-  std::vector<unsigned int> bondVisitOrders(mol.getNumBonds());
+  std::vector<unsigned int> atomVisitOrders(mol.getNumAtoms(), 0);
+  std::vector<unsigned int> bondVisitOrders(mol.getNumBonds(), 0);
 
-  unsigned int pos = 0;
+  unsigned int pos = 1;
   for (const auto &msI : molStack) {
     if (msI.type == MOL_STACK_ATOM) {
       atomVisitOrders[msI.obj.atom->getIdx()] = pos;
