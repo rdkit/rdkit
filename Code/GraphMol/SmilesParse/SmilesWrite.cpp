@@ -962,6 +962,10 @@ std::string MolFragmentToSmiles(const ROMol &mol,
         if (stereoAtoms.size() != 2) {
           continue;
         }
+        // check at both ends of the bond to see if the stereo atom is in play.
+        // If not and there's another neighbor atom there that *is* in play,
+        // then keep the stereochemistry and swap the stereo atoms. If not,
+        // remove the stereochemistry.
         for (auto [stereoAtomIdx, bondAtom] :
              {std::make_pair(stereoAtoms[0], bnd->getBeginAtom()),
               std::make_pair(stereoAtoms[1], bnd->getEndAtom())}) {
@@ -972,10 +976,11 @@ std::string MolFragmentToSmiles(const ROMol &mol,
                 if (nbrAt->getIdx() !=
                         static_cast<unsigned int>(stereoAtomIdx) &&
                     atomsInPlay[nbrAt->getIdx()]) {
-                  bnd->setStereoAtoms(nbrAt->getIdx(),
-                                      stereoAtomIdx == stereoAtoms[0]
-                                          ? stereoAtoms[1]
-                                          : stereoAtoms[0]);
+                  if (stereoAtomIdx == stereoAtoms[0]) {
+                    bnd->setStereoAtoms(nbrAt->getIdx(), stereoAtoms[1]);
+                  } else {
+                    bnd->setStereoAtoms(stereoAtoms[0], nbrAt->getIdx());
+                  }
                   updated = true;
                   if (bnd->getStereo() == Bond::BondStereo::STEREOZ ||
                       bnd->getStereo() == Bond::BondStereo::STEREOCIS) {
@@ -990,6 +995,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
               }
               if (!updated) {
                 bnd->setStereo(Bond::BondStereo::STEREONONE);
+                break;
               }
             } else {
               bnd->setStereo(Bond::BondStereo::STEREONONE);

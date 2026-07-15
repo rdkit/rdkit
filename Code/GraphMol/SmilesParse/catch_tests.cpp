@@ -3445,9 +3445,18 @@ TEST_CASE(
       REQUIRE(m);
       SmilesWriteParams ps;
       auto smi = MolFragmentToSmiles(*m, ps, {0, 1, 3, 4});
-      CHECK(smi == "C/C=C\\C");
+      CHECK(smi == "C\\C=C\\C");
       smi = MolFragmentToSmiles(*m, ps, {2, 1, 3, 4});
-      CHECK(smi == "C/C=C/F");
+      CHECK(smi == "C/C=C\\F");
+    }
+    {
+      auto m = "C/C(F)=C/C"_smiles;
+      REQUIRE(m);
+      SmilesWriteParams ps;
+      auto smi = MolFragmentToSmiles(*m, ps, {0, 1, 3});
+      CHECK(smi == "C=CC");
+      smi = MolFragmentToSmiles(*m, ps, {2, 1, 3});
+      CHECK(smi == "C=CF");
     }
   }
 }
