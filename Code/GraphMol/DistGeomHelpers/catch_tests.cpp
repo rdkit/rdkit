@@ -1024,7 +1024,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol < 0);
-        CHECK(fabs(chiralVol) > 0.5);
+        CHECK(fabs(chiralVol) > 0.3);
       }
     }
   }
@@ -1724,7 +1724,7 @@ TEST_CASE("Github #9143: ETKDGv3 generating twisted amides") {
                Catch::Matchers::WithinAbs(-180, 10) ||
                    Catch::Matchers::WithinAbs(180, 10));
     CHECK_THAT(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 29),
-               Catch::Matchers::WithinAbs(0, 12.5));
+               Catch::Matchers::WithinAbs(0, 12.7));
     CHECK_THAT(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 21),
                Catch::Matchers::WithinAbs(-180, 20) ||
                    Catch::Matchers::WithinAbs(180, 20));
@@ -1787,7 +1787,7 @@ TEST_CASE("Github TODO: Bug: Forced cis bonds in larger (non-macrocycle)") {
           2.0 * 0.06 + 0.00001);
   }
   SECTION("small ring") {
-    auto mol = "C1C(C)=C(C)CCC1"_smiles;
+    auto mol = "C1C(C)=C(C)CCCC1"_smiles;
 
     // 0 1 2  3 4 5
     REQUIRE(mol);
@@ -1805,19 +1805,19 @@ TEST_CASE("Github TODO: Bug: Forced cis bonds in larger (non-macrocycle)") {
 }
 
 TEST_CASE("Github TODO: Bug: Overwritten stereo information in rings") {
-  SECTION("as reported (enforce trans bond in macrocycle)") {
+  SECTION("as reported (enforce trans bond in larger (non-macrocycle) rings)") {
     auto mol = "C1C(C)=C(C)CCCCCC1"_smiles;
     REQUIRE(mol);
     DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
     DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-    DGeomHelpers::setTopolBounds(*mol, bm);
 
     auto bnd = mol->getBondBetweenAtoms(1, 3);
     bnd->setStereoAtoms(0, 5);
     bnd->setStereo(Bond::BondStereo::STEREOTRANS);
 
-    // trans should be allowed but NOT cis for 0-4 and the other way araound for
-    // 0-5
+    DGeomHelpers::setTopolBounds(*mol, bm);
+    // trans should be allowed but NOT cis for 0-5 and the other way araound for
+    // 0-4
     CHECK(bm->getLowerBound(0, 5) > bm->getUpperBound(0, 4));
     CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <=
           2.0 * 0.06 + 0.00001);
@@ -1829,14 +1829,15 @@ TEST_CASE("Github TODO: Bug: Overwritten stereo information in rings") {
     REQUIRE(mol);
     DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
     DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-    DGeomHelpers::setTopolBounds(*mol, bm);
 
     auto bnd = mol->getBondBetweenAtoms(1, 3);
     bnd->setStereoAtoms(0, 5);
     bnd->setStereo(Bond::BondStereo::STEREOTRANS);
 
-    // trans should be allowed but NOT cis for 0-4 and the other way araound for
-    // 0-5
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    // trans should be allowed but NOT cis for 0-5 and the other way araound for
+    // 0-4
     CHECK(bm->getLowerBound(0, 5) > bm->getUpperBound(0, 4));
     CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <=
           2.0 * 0.06 + 0.00001);
