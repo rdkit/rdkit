@@ -3027,8 +3027,8 @@ TEST_CASE("Ignore atom map numbers") {
   // if ignoreAtomMapNumbers is true as the latter should only apply if
   // canonicalising. (Github 9225).
   auto m3 = "c1ccc([NH2:1])cc1"_smiles;
-  CHECK(MolToSmiles(*m3, true, false, -1, false, false, false, false, true) ==
-        "c1ccc([NH2:1])cc1");
+  SmilesWriteParams params2{.canonical = false, .ignoreAtomMapNumbers = true};
+  CHECK(MolToSmiles(*m3, params2) == "c1ccc([NH2:1])cc1");
 }
 
 TEST_CASE("Github #7340", "[Reaction][CX][CXSmiles]") {
