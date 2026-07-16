@@ -1584,7 +1584,8 @@ TEST_CASE("testGithub1990") {
     MolOps::addHs(*mol);
     MolOps::removeHs(*mol);
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
+    DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                         .useLegacyImplementation =
                                              legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     CHECK(cid >= 0);
