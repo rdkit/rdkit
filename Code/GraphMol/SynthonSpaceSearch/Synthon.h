@@ -10,12 +10,14 @@
 
 #ifndef RDKIT_REAGENT_H
 #define RDKIT_REAGENT_H
-#include <DataStructs/ExplicitBitVect.h>
 #include <memory>
+#include <vector>
 
 #include <string>
 
 #include <RDGeneral/export.h>
+
+class ExplicitBitVect;
 
 namespace RDKit {
 class Atom;

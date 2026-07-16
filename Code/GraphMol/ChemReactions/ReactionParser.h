@@ -50,7 +50,6 @@
 
 namespace RDKit {
 class ROMol;
-class ChemicalReaction;
 
 //! used to indicate an error in parsing reaction data
 class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
