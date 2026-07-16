@@ -157,12 +157,15 @@ TEST_CASE("test1") {
       "C12(C)CC1CC2"};
   const bool legacyETKDG = GENERATE(true, false);
   std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
+  // std::string fname2 = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
   if (!legacyETKDG) {
     fname += "AIO/";
+    // fname2 += "AIO/";
   }
   fname += "initCoords.sdf";
+  // fname2 += "initCoords_new.sdf";
   v2::FileParsers::SDMolSupplier sdsup(fname);
-  // SDWriter writer("foo.sdf");
+  // SDWriter writer(fname2);
   for (std::size_t i = 0; i < smiString.size(); ++i) {
     auto m = v2::SmilesParse::MolFromSmiles(smiString[i]);
     DGeomHelpers::EmbedParameters params{
@@ -204,6 +207,7 @@ TEST_CASE("test1") {
       }
     }
   }
+  // writer.close();
   boost::logging::enable_logs("rdApp.warning");
 }
 
@@ -1346,6 +1350,7 @@ TEST_CASE("testEmbedParameters") {
     };
     const bool legacyETKDG = GENERATE(true, false);
     std::string file = getPath(fname, legacyETKDG);
+    // std::string file2 = getPath("new_" + fname, legacyETKDG);
     auto ps = v2::FileParsers::MolFileParserParams{.removeHs = false};
     auto ref = v2::FileParsers::MolFromMolFile(file, ps);
     REQUIRE(ref);
@@ -1356,6 +1361,10 @@ TEST_CASE("testEmbedParameters") {
     params.useLegacyImplementation = legacyETKDG;
     params.randomSeed = 42;
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    // SDWriter writer(file2);
+    // writer.write(*mol);
+    // writer.flush();
+    // writer.close();
     compareConfs(ref.get(), mol.get());
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -1817,7 +1826,7 @@ TEST_CASE("testMissingHsWarning") {
   DGeomHelpers::EmbedMolecule(*mol, params);
   rdWarningLog->ClearTee();
   TEST_ASSERT(ss.str().find("Molecule does not have explicit Hs") !=
-        std::string::npos);
+              std::string::npos);
 }
 
 TEST_CASE("testHydrogenBondBasics") {
@@ -1838,6 +1847,6 @@ TEST_CASE("testHydrogenBondBasics") {
   params.useLegacyImplementation = legacyETKDG;
   REQUIRE(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
   auto dist = MolTransforms::getBondLength(mol->getConformer(), 3, 4);
-  CHECK(dist < mat->getUpperBound(4,3));
-  CHECK(dist > mat->getLowerBound(4,3));
+  CHECK(dist < mat->getUpperBound(4, 3));
+  CHECK(dist > mat->getLowerBound(4, 3));
 }
