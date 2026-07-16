@@ -69,7 +69,8 @@ steps:
     echo "LD_LIBRARY_PATH: " $LD_LIBRARY_PATH
     export QT_QPA_PLATFORM='offscreen'
     cd build
-    ctest -j $( $(number_of_cores) ) --output-on-failure -T Test
+    ctest -j $( $(number_of_cores) ) --output-on-failure -E DistGeom -E distGeom -T Test
+    ctest -j $( $(number_of_cores) ) -V --output-on-failure -R DistGeom -R distGeom -T Test
   displayName: Run tests
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
