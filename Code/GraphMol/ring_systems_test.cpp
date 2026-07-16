@@ -13,6 +13,7 @@
 #include <GraphMol/test_fixtures.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
+#include <RDStreams/streams.h>
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -95,3 +96,67 @@ TEST_CASE("performance") {
               << std::endl;
   }
 }
+
+#ifdef RDK_USE_BOOST_IOSTREAMS
+
+void legacy(RWMol *m1) {
+  bool includeDative = false;
+  bool includeHBonds = false;
+  bool legacyCalculation = true;
+  MolOps::symmetrizeSSSR(*m1, includeDative, includeHBonds, legacyCalculation);
+}
+
+void updated(RWMol *m1) {
+  bool includeDative = false;
+  bool includeHBonds = false;
+  bool legacyCalculation = false;
+  MolOps::symmetrizeSSSR(*m1, includeDative, includeHBonds, legacyCalculation);
+}
+TEST_CASE("bulk performance") {
+  std::string rdbase = getenv("RDBASE");
+  auto path = rdbase + "/Regress/Data/chembl_20_chiral.smi.gz";
+  // auto path = rdbase + "/Regress/Data/znp.50k.smi.gz";
+  std::unique_ptr<std::istream> strm = std::make_unique<gzstream>(path);
+  double taccum_legacy = 0.0;
+  double taccum_updated = 0.0;
+  unsigned int nToDo = 10000;
+  for (unsigned int i = 0; i < nToDo; ++i) {
+    std::string line;
+    std::getline(*strm, line);
+    v2::SmilesParse::SmilesParserParams params;
+    params.sanitize = false;
+    params.removeHs = false;
+
+    {
+      auto m = v2::SmilesParse::MolFromSmiles(line, params);
+      REQUIRE(m);
+      std::chrono::high_resolution_clock::time_point t1 =
+          std::chrono::high_resolution_clock::now();
+      legacy(m.get());
+      std::chrono::high_resolution_clock::time_point t2 =
+          std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> time_span =
+          std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+      taccum_legacy += time_span.count();
+    }
+    {
+      auto m = v2::SmilesParse::MolFromSmiles(line, params);
+      REQUIRE(m);
+      std::chrono::high_resolution_clock::time_point t1 =
+          std::chrono::high_resolution_clock::now();
+      updated(m.get());
+      std::chrono::high_resolution_clock::time_point t2 =
+          std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> time_span =
+          std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+      taccum_updated += time_span.count();
+    }
+  }
+  std::cout << "Time taken for " << nToDo
+            << " calls to symmetrizeSSSR (legacy): " << taccum_legacy
+            << " seconds." << std::endl;
+  std::cout << "Time taken for " << nToDo
+            << " calls to symmetrizeSSSR (new): " << taccum_updated
+            << " seconds." << std::endl;
+}
+#endif
