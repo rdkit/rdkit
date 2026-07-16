@@ -19,6 +19,7 @@ Eigen dense modules (LU/QR/SVD/etc.) must now include `<Eigen/Dense>` directly.
 takes arguments in C++. If you want to initialize data members to non-default
 values, use the designated initialization syntax. This change does not affect
 Python.
+- MolToSmiles with canonical=false, ignoreAtomMapNumbers=true no longer strips out the atom map numbers.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use
