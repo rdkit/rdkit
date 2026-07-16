@@ -19,7 +19,7 @@
 #include <map>
 #include <boost/dynamic_bitset_fwd.hpp>
 
-class RDL_cycle;
+struct RDL_cycle;
 
 namespace RDKit {
 class ROMol;
