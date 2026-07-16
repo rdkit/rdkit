@@ -326,6 +326,8 @@ class TestTimeout(MCSTestCase):
       rdFMCS.FindMCS(lengthy_mols, timeout=-1)
     except OverflowError:
       pass
+    except TypeError:
+      pass
     else:
       raise AssertionError("bad range check for timeout")
 

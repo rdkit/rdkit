@@ -70,7 +70,6 @@ std::string multiSdsDocStr =
 \n";
 struct multiSDMolSup_wrap {
   static void wrap() {
-
     python::class_<MultithreadedSDMolSupplier, boost::noncopyable>(
         "MultithreadedSDMolSupplier", multiSDMolSupplierClassDoc.c_str(),
         python::init<>(python::args("self")))
@@ -92,8 +91,7 @@ struct multiSDMolSup_wrap {
                  MolIOEnter,
              python::return_internal_reference<>())
         .def("__exit__", (bool (*)(MultithreadedSDMolSupplier *, python::object,
-                                   python::object, python::object)) &
-                             MolIOExit)
+                                   python::object, python::object))&MolIOExit)
         .def("__next__",
              (ROMol * (*)(MultithreadedSDMolSupplier *)) & MolForwardSupplNext,
              "Returns the next molecule in the file. Raises _StopIteration_ "
@@ -102,16 +100,14 @@ struct multiSDMolSup_wrap {
              python::args("self"))
         .def("atEnd", &MultithreadedSDMolSupplier::atEnd, python::args("self"),
              "Returns true if we have read all records else false.\n")
-        .def(
-            "GetLastRecordId",
-            (unsigned int (*)(MultithreadedSDMolSupplier *)) & MTMolSupplLastId,
-            python::args("self"),
-            "Returns the record id for the last extracted item.\n")
-        .def(
-            "GetLastItemText",
-            (std::string(*)(MultithreadedSDMolSupplier *)) & MTMolSupplLastItem,
-            python::args("self"),
-            "Returns the text for the last extracted item.\n")
+        .def("GetLastRecordId",
+             (unsigned int (*)(MultithreadedSDMolSupplier *))&MTMolSupplLastId,
+             python::args("self"),
+             "Returns the record id for the last extracted item.\n")
+        .def("GetLastItemText",
+             (std::string (*)(MultithreadedSDMolSupplier *))&MTMolSupplLastItem,
+             python::args("self"),
+             "Returns the text for the last extracted item.\n")
         .def("GetProcessPropertyLists",
              &MultithreadedSDMolSupplier::getProcessPropertyLists,
              python::args("self"),

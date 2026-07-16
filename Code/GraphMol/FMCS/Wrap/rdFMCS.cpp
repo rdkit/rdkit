@@ -764,7 +764,6 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                     &RDKit::PyMCSParameters::setStoreAll,
                     "toggles storage of degenerate MCSs")
       .def("__setattr__", &safeSetattr);
-      
 
   python::class_<RDKit::MCSAtomCompareParameters, boost::noncopyable>(
       "MCSAtomCompareParameters",

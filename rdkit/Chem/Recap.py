@@ -145,7 +145,7 @@ class RecapHierarchyNode(object):
 
 def RecapDecompose(mol, allNodes=None, minFragmentSize=0, onlyUseReactions=None):
   """ returns the recap decomposition for a molecule """
-  mSmi = Chem.MolToSmiles(mol, 1)
+  mSmi = Chem.MolToSmiles(mol)
 
   if allNodes is None:
     allNodes = {}
@@ -182,7 +182,7 @@ def RecapDecompose(mol, allNodes=None, minFragmentSize=0, onlyUseReactions=None)
               Chem.SanitizeMol(prod)
             except Exception:
               continue
-            pSmi = Chem.MolToSmiles(prod, 1)
+            pSmi = Chem.MolToSmiles(prod)
             if minFragmentSize > 0:
               nDummies = pSmi.count('*')
               if nats - nDummies < minFragmentSize:

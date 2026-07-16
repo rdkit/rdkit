@@ -68,7 +68,7 @@ enum {
   CONSTANT = 1,
   DISTANCE = 2
 };
-enum {
+enum MMFFVerbosity {
   MMFF_VERBOSITY_NONE = 0,
   MMFF_VERBOSITY_LOW = 1,
   MMFF_VERBOSITY_HIGH = 2

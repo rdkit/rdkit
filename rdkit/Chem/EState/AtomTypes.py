@@ -1,4 +1,4 @@
-#  Copyright (C) 2002-2006  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2002-2026  greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -129,7 +129,7 @@ def TypeAtoms(mol):
   nAtoms = mol.GetNumAtoms()
   res = [None] * nAtoms
   for name, patt in esPatterns:
-    matches = mol.GetSubstructMatches(patt, uniquify=0)
+    matches = mol.GetSubstructMatches(patt, uniquify=False)
     for match in matches:
       idx = match[0]
       if res[idx] is None:

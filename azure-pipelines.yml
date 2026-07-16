@@ -46,6 +46,17 @@ jobs:
     python_name: python312
   steps:
   - template: .azure-pipelines/linux_build_py312.yml
+- job: Ubuntu_x64_nb
+  timeoutInMinutes: 120
+  pool:
+    vmImage: ubuntu-latest
+  variables:
+    python: python=3.14
+    boost_version: 1.91.0
+    number_of_cores: nproc
+    python_name: python314
+  steps:
+  - template: .azure-pipelines/linux_build_nb.yml  
 - job: macOS_x64
   timeoutInMinutes: 120
   pool:

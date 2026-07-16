@@ -9,7 +9,10 @@ import numpy
 
 import rdkit.DistanceGeometry as DG
 from rdkit import Chem, RDConfig, rdBase
-from rdkit.Chem import AllChem, ChemicalForceFields, rdDistGeom, rdMolAlign
+from rdkit.Chem import rdDistGeom
+from rdkit.Chem import ChemicalForceFields
+
+from rdkit.Chem import rdMolAlign
 from rdkit.Geometry import ComputeSignedDihedralAngle, Point3D
 from rdkit.Geometry import rdGeometry as geom
 from rdkit.RDLogger import logger
@@ -562,15 +565,15 @@ class TestCase(unittest.TestCase):
   def assertDeterministicWithSeed(self, seed):
     input_mol = Chem.MolFromSmiles('CN(Cc1cnc2nc(N)nc(N)c2n1)c1ccc(C(=O)NC(CCC(=O)O)C(=O)O)cc1')
 
-    params = AllChem.ETKDG()
+    params = rdDistGeom.ETKDG()
     if seed is not None:
       params.randomSeed = seed
 
     firstMol = Chem.AddHs(input_mol)
-    firstIds = AllChem.EmbedMultipleConfs(firstMol, 11, params)
+    firstIds = rdDistGeom.EmbedMultipleConfs(firstMol, 11, params)
 
     secondMol = Chem.AddHs(input_mol)
-    secondIds = AllChem.EmbedMultipleConfs(secondMol, 11, params)
+    secondIds = rdDistGeom.EmbedMultipleConfs(secondMol, 11, params)
 
     self.assertEqual(list(firstIds), list(secondIds))
     self.assertEqual(firstMol.GetNumConformers(), secondMol.GetNumConformers())
@@ -729,9 +732,9 @@ class TestCase(unittest.TestCase):
     smiles = "C1CCC(=O)NCCCCCC(=O)NC1"
     smiles_mol = Chem.MolFromSmiles(smiles)
     mol = Chem.AddHs(smiles_mol)
-    params = AllChem.ETKDGv3()
+    params = rdDistGeom.ETKDGv3()
     params.randomSeed = 0
-    AllChem.EmbedMolecule(mol, params)
+    rdDistGeom.EmbedMolecule(mol, params)
     conf = mol.GetConformer(0)
     for torsion in get_atom_mapping(mol):
       a1, a2, a3, a4 = [conf.GetAtomPosition(i) for i in torsion]
@@ -762,20 +765,20 @@ class TestCase(unittest.TestCase):
     params.trackFailures = True
     mol = Chem.MolFromSmiles('C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC')
     mol = Chem.AddHs(mol)
-    AllChem.EmbedMolecule(mol, params)
+    rdDistGeom.EmbedMolecule(mol, params)
     cnts = params.GetFailureCounts()
-    self.assertGreater(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS], 5)
-    self.assertGreater(cnts[AllChem.EmbedFailureCauses.ETK_MINIMIZATION], 10)
+    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.INITIAL_COORDS], 5)
+    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.ETK_MINIMIZATION], 10)
 
   def testTrackFailures(self):
     params = _getParams(useLegacy=False, maxIt=50, seed=42)
     params.trackFailures = True
     mol = Chem.MolFromSmiles('C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC')
     mol = Chem.AddHs(mol)
-    AllChem.EmbedMolecule(mol, params)
+    rdDistGeom.EmbedMolecule(mol, params)
     cnts = params.GetFailureCounts()
-    self.assertGreater(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS], 5)
-    self.assertGreater(cnts[AllChem.EmbedFailureCauses.MINIMIZATION], 10)
+    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.INITIAL_COORDS], 5)
+    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.MINIMIZATION], 10)
 
   def testCoordMap(self):
     mol = Chem.AddHs(Chem.MolFromSmiles("OCCC"))

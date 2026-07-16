@@ -33,7 +33,7 @@ import pickle
 import unittest
 
 from rdkit import Chem
-from rdkit.Chem import AllChem, rdChemReactions
+from rdkit.Chem import rdChemReactions
 
 test_data = [
   ("good", '''$RXN
@@ -274,11 +274,11 @@ class TestCase(unittest.TestCase):
   def test_sanitize(self):
     for status, block in test_data:
       print("*" * 44)
-      rxna = AllChem.ReactionFromRxnBlock(block)
-      rxnb = AllChem.ReactionFromRxnBlock(block)
+      rxna = rdChemReactions.ReactionFromRxnBlock(block)
+      rxnb = rdChemReactions.ReactionFromRxnBlock(block)
       rxna.Initialize()
       res = rdChemReactions.PreprocessReaction(rxna)
-      print(AllChem.ReactionToRxnBlock(rxna))
+      print(rdChemReactions.ReactionToRxnBlock(rxna))
       if status == "good":
         self.assertEqual(res, good_res)
       elif status == "bad":
@@ -288,7 +288,7 @@ class TestCase(unittest.TestCase):
       try:
         rdChemReactions.SanitizeRxn(rxnb)
         res = rdChemReactions.PreprocessReaction(rxnb)
-        print(AllChem.ReactionToRxnBlock(rxnb))
+        print(rdChemReactions.ReactionToRxnBlock(rxnb))
         self.assertEqual(res, good_res)
         assert not status == "fail"
       except Exception:
@@ -298,12 +298,12 @@ class TestCase(unittest.TestCase):
         raise
 
   def test_unused_rlabel_in_product(self):
-    rxn = AllChem.ReactionFromRxnBlock(unused_rlabel_in_product)
+    rxn = rdChemReactions.ReactionFromRxnBlock(unused_rlabel_in_product)
     # test was for a seg fault
     rdChemReactions.SanitizeRxn(rxn)
 
   def test_only_aromatize_if_possible(self):
-    rxn = AllChem.ReactionFromRxnBlock(kekule_rxn)
+    rxn = rdChemReactions.ReactionFromRxnBlock(kekule_rxn)
     # test was for a seg fault
     groups = rxn.RunReactants([Chem.MolFromSmiles("c1ccccc1")])
     print(groups)
@@ -315,7 +315,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(groups[0]))
 
     # now check adjustparams with ONLY aromatize if possible
-    rxn = AllChem.ReactionFromRxnBlock(kekule_rxn)
+    rxn = rdChemReactions.ReactionFromRxnBlock(kekule_rxn)
     rdChemReactions.SanitizeRxn(rxn)
 
     groups = rxn.RunReactants([Chem.MolFromSmiles("c1ccccc1")])
