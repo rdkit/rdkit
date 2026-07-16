@@ -1382,6 +1382,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         }
       } else {
         _record14Path(mol, bid1, bid2, bid3, accumData);
+        cisRingBondPairs.set(pid);
       }
 
       bid1 = bid2;
