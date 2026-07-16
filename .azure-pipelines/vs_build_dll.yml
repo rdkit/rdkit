@@ -11,7 +11,7 @@ steps:
         libboost-python-devel=(boost_version) ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        numpy matplotlib cairo pillow eigen pandas=2.1
+        numpy matplotlib cairo pillow eigen pandas=2.1 expat
     call activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
@@ -56,7 +56,8 @@ steps:
     set RDBASE=%cd%
     set PATH=%RDBASE%\lib;%PATH%
     cd build
-    ctest -C Release -j $(number_of_cores) --output-on-failure -T Test
+    ctest -C Release -j $(number_of_cores) --output-on-failure -E shard -T Test
+    ctest -C Release -j $(number_of_cores) -V --output-on-failure -R shard -T Test
   displayName: Run tests
 - task: PublishTestResults@2
   inputs:
