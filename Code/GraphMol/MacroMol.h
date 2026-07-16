@@ -45,7 +45,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
   */
   unsigned int addMacroBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
                             int beginAttachPt, int endAttachPt,
-                            Bond::BondType bondType = Bond::UNSPECIFIED);
+                            Bond::BondType bondType = Bond::SINGLE);
 
   //! Adds a bond from a regular atom to a macro atom.
   /*!
@@ -61,7 +61,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
   */
   unsigned int addAtomToMacroAtomBond(
       unsigned int beginAtomIdx, unsigned int endMacroAtomIdx, int endAttachPt,
-      Bond::BondType bondType = Bond::BondType::UNSPECIFIED);
+      Bond::BondType bondType = Bond::BondType::SINGLE);
 
   //! Adds a bond from a macro atom to a regular atom.
   /*!
@@ -77,7 +77,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
   */
   unsigned int addMacroAtomToAtomBond(
       unsigned int beginMacroAtomIdx, unsigned int endAtomIdx,
-      int beginAttachPt, Bond::BondType bondType = Bond::BondType::UNSPECIFIED);
+      int beginAttachPt, Bond::BondType bondType = Bond::BondType::SINGLE);
 
   //! Adds a bond between two regular atoms.
   /*!
@@ -92,10 +92,10 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
     \return the new number of bonds
   */
   unsigned int addBond(unsigned int beginAtomIdx, unsigned int endAtomIdx,
-                       Bond::BondType bondType = Bond::UNSPECIFIED);
+                       Bond::BondType bondType = Bond::SINGLE);
   //! \overload
   unsigned int addBond(Atom *beginAtom, Atom *endAtom,
-                       Bond::BondType bondType = Bond::UNSPECIFIED);
+                       Bond::BondType bondType = Bond::SINGLE);
   //! \overload
   unsigned int addBond(Bond *bond, bool takeOwnership = false);
 
@@ -103,7 +103,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
   unsigned int addMacroBondHelper(unsigned int beginAtomIdx,
                                   unsigned int endAtomIdx, int beginAttachPt,
                                   int endAttachPt,
-                                  Bond::BondType bondType = Bond::UNSPECIFIED);
+                                  Bond::BondType bondType = Bond::SINGLE);
 };
 }  // namespace RDKit
 

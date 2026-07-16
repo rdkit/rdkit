@@ -88,7 +88,7 @@ TEST_CASE("testMultipleConnectionsSameMacroAtoms") {
   CHECK(bond_info->getBond(0).beginAttachPt == 2);
   CHECK(bond_info->getBond(0).endAttachPt == 1);
   CHECK(bond_info->getBond(0).bondType ==
-        static_cast<unsigned int>(Bond::BondType::UNSPECIFIED));
+        static_cast<unsigned int>(Bond::BondType::SINGLE));
   CHECK(bond_info->getBond(1).beginAttachPt == 3);
   CHECK(bond_info->getBond(1).endAttachPt == 3);
   CHECK(bond_info->getBond(1).bondType ==
@@ -125,7 +125,7 @@ TEST_CASE("testAddAtomToMacroAtomBond") {
   CHECK(bond_info->getBond(0).beginAttachPt == -1);
   CHECK(bond_info->getBond(0).endAttachPt == 1);
   CHECK(bond_info->getBond(0).bondType ==
-        static_cast<unsigned int>(Bond::BondType::UNSPECIFIED));
+        static_cast<unsigned int>(Bond::BondType::SINGLE));
 }
 
 TEST_CASE("testAddMacroAtomToAtomBond") {
@@ -158,7 +158,7 @@ TEST_CASE("testAddMacroAtomToAtomBond") {
   CHECK(bond_info->getBond(0).beginAttachPt == 1);
   CHECK(bond_info->getBond(0).endAttachPt == -1);
   CHECK(bond_info->getBond(0).bondType ==
-        static_cast<unsigned int>(Bond::BondType::UNSPECIFIED));
+        static_cast<unsigned int>(Bond::BondType::SINGLE));
 }
 
 TEST_CASE("testAddBond") {
