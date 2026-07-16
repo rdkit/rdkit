@@ -795,7 +795,6 @@ TorsionValue _getTwoInDiffRing14Type(const Bond *bnd2, const Atom *atm1,
   // There is probably some fine tuning that can be done when the atoms a2
   // and a3 are not sp2 hybridized, but we will not worry about that now;
   // simple use 0-180 deg for non-sp2 cases.
-  // TODO this was the reason for the additional checks
   return _getInRing14Type(bnd2, atm1, atm2, atm3, atm4, 0);
 }
 
@@ -803,7 +802,6 @@ TorsionValue _getShareRingBond14Type(const Bond *bnd2, const Atom *atm1,
                                      const Atom *atm2, const Atom *atm3,
                                      const Atom *atm4) {
   // once this turns out to be similar to bonds in the same ring
-  // TODO additional check
   return _getInRing14Type(bnd2, atm1, atm2, atm3, atm4, 0);
 }
 
@@ -1191,7 +1189,7 @@ TorsionValue _getMacrocycleAllInSameRing14Type(
         if (atm2->getAtomicNum() == 7 && atm2->getDegree() == 3 &&
             atm1->getAtomicNum() == 1 && atm2->getTotalNumHs(true) == 1) {
           // secondary amide, this is the H
-          return {TorsionType::NONE};  // TODO ?
+          return {TorsionType::NONE};
         } else {
           return {TorsionType::TRANS};
         }
