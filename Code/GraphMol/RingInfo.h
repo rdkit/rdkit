@@ -302,6 +302,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       - the object must be initialized before calling this
   */
   const VECT_INT_VECT &atomRingFamilies() const { return d_atomRingFamilies; }
+  VECT_INT_VECT atomRelevantCycles() const;
 
   //! returns our bond ring family vectors
   /*!
@@ -334,6 +335,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
  public:
   boost::shared_ptr<RDL_data> dp_urfData;
 };
+
 }  // namespace RDKit
 
 #endif

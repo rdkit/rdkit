@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -26,63 +26,6 @@ using RINGINVAR_INT_VECT_MAP = std::map<RINGINVAR, std::vector<int>>;
 
 namespace {
 using namespace RDKit;
-
-// normalizes a ring by rotating/reversing it so that the first atom
-// is the one with the smallest index, and the second atom is the neighbor
-// to the first one that again has the smallest index.
-// This change should have a small performance footprint while it helps
-// keeping test results consistent when making changes to ring detection.
-void normalize_ring(std::vector<int> &ring) {
-  auto newStart = std::ranges::min_element(ring);
-  std::ranges::rotate(ring, newStart);
-
-  if (ring.back() < ring[1]) {
-    // we don't need to move the central element!
-    auto numPairsToMove = (ring.size() - 1) / 2;
-    auto front = ring.begin() + 1;
-    std::swap_ranges(front, front + numPairsToMove, ring.rbegin());
-  }
-}
-
-std::vector<int> rdl_cycle_to_atom_ring(RDL_cycle *cycle) {
-  std::vector<int> ring;
-  ring.reserve(cycle->weight);
-
-  // Edges in a cycle are not returned in iteration order.
-  // so we need to take care of that while we convert them
-  // into an atom ring.
-  boost::dynamic_bitset<> unseen_edges(cycle->weight);
-  unseen_edges.set();
-
-  ring.push_back(cycle->edges[0][0]);
-  ring.push_back(cycle->edges[0][1]);
-  unseen_edges.set(0, false);
-
-  while (ring.size() < cycle->weight) {
-    // Note we don't want to close the cycle: that would
-    // add the initial atom at the end too.
-    for (auto edgeIdx = unseen_edges.find_first();
-         edgeIdx != boost::dynamic_bitset<>::npos;
-         edgeIdx = unseen_edges.find_next(edgeIdx)) {
-      auto edge = cycle->edges[edgeIdx];
-      for (auto j = 0; j < 2; ++j) {
-        if (static_cast<unsigned int>(ring.back()) == edge[j]) {
-          ring.push_back(edge[1 - j]);
-          unseen_edges.set(edgeIdx, false);
-          break;
-        }
-      }
-      if (ring.size() == cycle->weight) {
-        break;
-      }
-    }
-  }
-
-  // For consistency, normalize the ring
-  normalize_ring(ring);
-
-  return ring;
-}
 
 bool ringComparer(const std::vector<int> &v1, const std::vector<int> &v2) {
   if (v1.size() == v2.size()) {
@@ -323,7 +266,7 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
         }
       }
     }  // end of loop over neighbors of current atom
-  }    // moving to the next node
+  }  // moving to the next node
 
   // if we are here we should have found everything around the node
   return rdcast<unsigned int>(rings.size());
@@ -426,8 +369,8 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
           }
         }
       }  // end of loop over new rings found
-    }    // end if (dupCand.size() > 1)
-  }      // end of loop over all set of duplicate candidates
+    }  // end if (dupCand.size() > 1)
+  }  // end of loop over all set of duplicate candidates
 }
 
 void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
@@ -659,7 +602,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
         }
       }
     }  // doing node of degree 3 - end of found only 1 smallest ring
-  }    // end of found less than 3 smallest ring for the degree 3 node
+  }  // end of found less than 3 smallest ring for the degree 3 node
 }
 
 int greatestComFac(long curfac, long nfac) {
@@ -924,7 +867,7 @@ void findRingsFigueras(const ROMol &mol, VECT_INT_VECT &res,
         ++nAtomsDone;
         FindRings::trimBonds(cand, mol, changed, atomDegrees, activeBonds);
       }  // done with degree 3 node
-    }    // done finding rings in this fragment
+    }  // done finding rings in this fragment
 
     // calculate the cyclomatic number for the fragment:
     int nexpt = rdcast<int>((nbnds - curFrag.size() + 1));
@@ -982,7 +925,7 @@ void findRingsFigueras(const ROMol &mol, VECT_INT_VECT &res,
                std::make_move_iterator(fragRes.end()));
   }  // done with all fragments
 
-  std::ranges::for_each(res, normalize_ring);
+  std::ranges::for_each(res, RingUtils::normalizeRing);
   std::ranges::sort(res, ringComparer);
 }
 }  // namespace FindRings
@@ -1020,7 +963,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
 
   res.reserve(sssrSize);
   for (unsigned int i = 0; i < sssrSize; ++i) {
-    auto ring = rdl_cycle_to_atom_ring(sssr[i]);
+    auto ring = RingUtils::rdlCycleToAtomRing(sssr[i]);
     res.push_back(std::move(ring));
   }
   RDL_deleteCycles(sssr, sssrSize);
@@ -1036,18 +979,16 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
 }
 
 int symmetrizeSSSR(ROMol &mol, bool includeDativeBonds,
-                   bool includeHydrogenBonds) {
+                   bool includeHydrogenBonds, bool legacyCalculation) {
   VECT_INT_VECT tmp;
-  return symmetrizeSSSR(mol, tmp, includeDativeBonds, includeHydrogenBonds);
+  return symmetrizeSSSR(mol, tmp, includeDativeBonds, includeHydrogenBonds,
+                        legacyCalculation);
 };
 
-int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
-                   bool includeHydrogenBonds) {
+namespace {
+void legacySymmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
+                          bool includeDativeBonds, bool includeHydrogenBonds) {
   findSSSR(mol, res, includeDativeBonds, includeHydrogenBonds);
-
-  // reinit as SYMM_SSSR
-  auto ringInfo = mol.getRingInfo();
-  ringInfo->initialize(FIND_RING_TYPE_SYMM_SSSR);
 
   // now check if there are any extra rings on the molecule.
   // We do this using the legacy way: using the modified Figueras
@@ -1067,11 +1008,12 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
 
   if (extras.empty()) {
     // no extra rings, nothing to be done
-    return rdcast<int>(res.size());
+    return;
   }
 
   // get the bond rings: we should have these from the SSSR calculation,
   // so no need to make the conversion, just make a copy.
+  auto ringInfo = mol.getRingInfo();
   auto bondsssrs = ringInfo->bondRings();
 
   //
@@ -1132,7 +1074,28 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
       }
     }
   }
+}
+}  // namespace
+int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
+                   bool includeHydrogenBonds, bool legacyCalculation) {
+  auto ringInfo = mol.getRingInfo();
+  if (ringInfo->isInitialized()) {
+    ringInfo->reset();
+  }
+  ringInfo->initialize(FIND_RING_TYPE_SYMM_SSSR);
 
+  if (!legacyCalculation) {
+    ringInfo->preallocate(mol.getNumAtoms(), mol.getNumBonds());
+    findRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
+    res = ringInfo->atomRelevantCycles();
+    for (const auto &atomRing : res) {
+      INT_VECT bondRing;
+      RingUtils::convertToBonds(atomRing, bondRing, mol);
+      ringInfo->addRing(atomRing, bondRing);
+    }
+  } else {
+    legacySymmetrizeSSSR(mol, res, includeDativeBonds, includeHydrogenBonds);
+  }
   return rdcast<int>(res.size());
 }
 

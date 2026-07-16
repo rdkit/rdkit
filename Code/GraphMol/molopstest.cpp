@@ -4928,7 +4928,9 @@ TEST_CASE("Testing github issue 418: removeHs not updating H count") {
     REQUIRE(m->getAtomWithIdx(0)->getNumExplicitHs() == 4);
     delete m;
   }
-  { REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException); }
+  {
+    REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException);
+  }
 }
 
 TEST_CASE(
@@ -6933,9 +6935,23 @@ TEST_CASE(
       REQUIRE_NOTHROW(MolOps::findSSSR(*m));
     }
     {
-      // symmetrizeSSSR (used in sanitization) still uses Figueras'
-      // algorithm, which throws because BFS goes too deep.
-      REQUIRE_THROWS_AS(SmilesToMol(smiles), ValueErrorException);
+      // symmetrizeSSSR (used in sanitization) has also been updated to the RDL,
+      // so normal sanitization should work too:
+      REQUIRE_NOTHROW(v2::SmilesParse::MolFromSmiles(smiles));
+    }
+
+    {
+      // legacy SymmetrizeSSSR uses the old SSSR code, which fails on this
+      // molecule.  So if we use the legacy code, we should get an exception:
+      std::unique_ptr<RWMol> m{SmilesToMol(smiles, 0, false)};
+      REQUIRE(m);
+      bool useDativeBonds = false;
+      bool useHydrogenBonds = false;
+      bool useLegacySymmetrizeSSSR = true;
+      REQUIRE_THROWS_AS(
+          MolOps::symmetrizeSSSR(*m, useDativeBonds, useHydrogenBonds,
+                                 useLegacySymmetrizeSSSR),
+          ValueErrorException);
     }
   }
 }
@@ -7791,8 +7807,16 @@ TEST_CASE("Testing ring family calculation") {
     REQUIRE(numRC == 20);
     int numRings = m->getRingInfo()->numRings();
 
-    REQUIRE(numRings == 14);
+    REQUIRE(numRings == 20);
     REQUIRE(m->getRingInfo()->numRingFamilies() == 5);
+
+    bool includeHBonds = true;
+    bool includeDative = true;
+    bool legacyCalculation = true;
+    auto nrings = MolOps::symmetrizeSSSR(*m, includeDative, includeHBonds,
+                                         legacyCalculation);
+    REQUIRE(nrings == 14);
+
     delete m;
   }
 }
@@ -8015,8 +8039,15 @@ TEST_CASE("GitHub Issue #9064: Incorrect SMARTS matching") {
   auto q = v2::SmilesParse::MolFromSmarts(sma);
   REQUIRE(q);
 
-  CHECK(m->getRingInfo()->numRings() == 5);
+  CHECK(m->getRingInfo()->numRings() == 6);
 
   auto matches = SubstructMatch(*m, *q);
   CHECK(matches.empty());
+
+  bool includeHBonds = true;
+  bool includeDative = true;
+  bool legacyCalculation = true;
+  auto nrings = MolOps::symmetrizeSSSR(*m, includeDative, includeHBonds,
+                                       legacyCalculation);
+  REQUIRE(nrings == 5);
 }

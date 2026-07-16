@@ -289,10 +289,9 @@ RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
    returns.
 */
 [[deprecated(
-    "Please use the version with RemoveHsParameters")]] RDKIT_GRAPHMOL_EXPORT
-    ROMol *
-    removeHs(const ROMol &mol, bool implicitOnly,
-             bool updateExplicitCount = false, bool sanitize = true);
+    "Please use the version with RemoveHsParameters")]] RDKIT_GRAPHMOL_EXPORT ROMol *
+removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount = false,
+         bool sanitize = true);
 //! \overload
 /// modifies the molecule in place
 [[deprecated(
@@ -908,11 +907,13 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
                                          std::vector<std::vector<int>> &res,
                                          bool includeDativeBonds = false,
-                                         bool includeHydrogenBonds = false);
+                                         bool includeHydrogenBonds = false,
+                                         bool legacyCalculation = false);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
                                          bool includeDativeBonds = false,
-                                         bool includeHydrogenBonds = false);
+                                         bool includeHydrogenBonds = false,
+                                         bool legacyCalculation = false);
 
 //! @}
 
