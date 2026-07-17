@@ -39,7 +39,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/RDThreads.h>
 #include <cstddef>
-#include <stdexcept>
 #include <vector>
 #include <chrono>  // for time-related functions
 
@@ -1455,7 +1454,7 @@ bool setupInitialBoundsMatrix(
   PRECONDITION(mol, "bad molecule");
   unsigned int nAtoms = mol->getNumAtoms();
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
-    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, true,
+    setTopolBounds(*mol, mmat, etkdgDetails, true,
                    false, params.useMacrocycle14config,
                    params.forceTransAmides);
   } else {

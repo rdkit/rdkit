@@ -10,6 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
 #include <DistGeom/BoundsMatrix.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include "BoundsMatrixBuilder.h"
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
@@ -25,6 +26,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <ranges>
+#include <vector>
 
 const double DIST12_DELTA = 0.01;
 // const double ANGLE_DELTA = 0.0837;
@@ -1547,15 +1549,25 @@ void collectBondsAndAngles(const ROMol &mol,
     }
   }
 }
+RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
+    const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+    std::vector<std::pair<int, int>> &bonds,
+    std::vector<std::vector<int>> &angles, bool set15bounds, bool scaleVDW,
+    bool useMacrocycle14config, bool forceTransAmides, bool set14bounds,
+    bool set13bounds) {
+  ForceFields::CrystalFF::CrystalFFDetails details;
+  setTopolBounds(mol, mmat, details, set15bounds, scaleVDW,
+                 useMacrocycle14config, forceTransAmides, set14bounds,
+                 set13bounds);
+  bonds = details.bonds;
+  angles = details.angles;
+}
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                    std::vector<std::pair<int, int>> &bonds,
-                    std::vector<std::vector<int>> &angles, bool set15bounds,
-                    bool scaleVDW, bool useMacrocycle14config,
+                    ForceFields::CrystalFF::CrystalFFDetails &details,
+                    bool set15bounds, bool scaleVDW, bool useMacrocycle14config,
                     bool forceTransAmides, bool set14bounds, bool set13bounds) {
   PRECONDITION(mmat.get(), "bad pointer");
-  bonds.clear();
-  angles.clear();
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
   if (!na) {
@@ -1582,7 +1594,7 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
   setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
 
-  collectBondsAndAngles(mol, bonds, angles);
+  collectBondsAndAngles(mol, details.bonds, details.angles);
 }
 
 // some helper functions to set 15 distances
