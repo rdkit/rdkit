@@ -16,6 +16,29 @@
 namespace RDKit {
 class ROMol;
 namespace DGeomHelpers {
+
+enum class TorsionType {
+  CIS = 0,
+  TRANS,
+  FLEXIBLE,
+  CUSTOM,
+  NONE  // don't set the bound
+};
+
+struct TorsionValue {
+  TorsionType type = TorsionType::NONE;
+  std::optional<double> value = {};
+  std::optional<double> extraDist = {};
+  bool isForced = false;
+};
+
+//! A structure used to store 14 paths - cis/trans info
+struct Path14Configuration {
+  unsigned int bid1, bid2, bid3;
+  unsigned int aid1, aid2, aid3, aid4;
+  TorsionValue type;
+};
+
 //! Set default upper and lower distance bounds in a distance matrix
 /*!
   \param mmat        pointer to the bounds matrix to be altered
