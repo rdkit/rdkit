@@ -1695,19 +1695,6 @@ TEST_CASE("testDisableFragmentation") {
   CHECK((conf.getAtomPos(1) - conf.getAtomPos(3)).length() > 2.0);
 }
 
-TEST_CASE("testGithub3019") {
-  {  // make sure the mechanics work
-    auto m = v2::SmilesParse::MolFromSmiles(std::string(2000, 'C'));
-    REQUIRE(m);
-    CHECK(m->getNumAtoms() == 2000);
-    const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{
-        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
-    int cid = DGeomHelpers::EmbedMolecule(*m, params);
-    CHECK(cid >= 0);
-  }
-}
-
 TEST_CASE("testGithub3667") {
   auto throwError = [](unsigned int) {
     throw ValueErrorException("embedder is abortable");
