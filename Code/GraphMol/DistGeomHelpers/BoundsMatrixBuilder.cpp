@@ -82,6 +82,7 @@ struct Path14Configuration {
 struct Optional14Info {
   bool forceTransAmides = false;
   std::size_t ringSize = 0;
+  std::size_t preferTrans = false;
 };
 
 typedef enum {
@@ -756,9 +757,10 @@ TorsionValue _getInRing14Type(const Bond *bnd2, const Atom *atm1,
   return {TorsionType::FLEXIBLE};
 }
 
-TorsionValue _getTwoInSameRing14Type(const ROMol &mol, const Atom *atm1,
-                                     const Atom *atm2, const Atom *atm3,
-                                     const Atom *atm4) {
+TorsionValue _getTwoInSameRing14Type(const ROMol &mol, const Bond *bnd2,
+                                     const Atom *atm1, const Atom *atm2,
+                                     const Atom *atm3, const Atom *atm4,
+                                     bool preferTrans) {
   // when we have fused rings, it can happen that this isn't actually a 1-4
   // contact,
   // (this was the cause of sf.net bug 2835784) check that now:
@@ -769,12 +771,16 @@ TorsionValue _getTwoInSameRing14Type(const ROMol &mol, const Atom *atm1,
 
   Atom::HybridizationType ahyb3 = atm3->getHybridization();
   Atom::HybridizationType ahyb2 = atm2->getHybridization();
+  Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
 
-  if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2)) {  // FIX: check for trans
+  if (preferTrans && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
+      (stype != Bond::STEREOZ &&
+       stype != Bond::STEREOCIS)) { 
     // here we will assume 180 degrees: basically flat ring with an external
     // substituent
     return {TorsionType::TRANS};
-
+  } else if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
+    return {TorsionType::CIS};
   } else {
     // here we will assume anything is possible
     return {TorsionType::FLEXIBLE};
@@ -1107,8 +1113,8 @@ bool _checkMacrocycleTwoInSameRingAmideEster14(
 }
 
 TorsionValue _getMacrocycleTwoInSameRing14Type(
-    const ROMol &mol, const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
-    const Atom *atm2, const Atom *atm3, const Atom *atm4) {
+    const ROMol &mol, const Bond *bnd1, const Bond *bnd2, const Bond *bnd3,
+    const Atom *atm1, const Atom *atm2, const Atom *atm3, const Atom *atm4) {
   // when we have fused rings, it can happen that this isn't actually a 1-4
   // contact,
   // (this was the cause of sf.net bug 2835784) check that now:
@@ -1117,11 +1123,17 @@ TorsionValue _getMacrocycleTwoInSameRing14Type(
     return {TorsionType::NONE};
   }
 
+  Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
+
   if ((_checkMacrocycleTwoInSameRingAmideEster14(bnd1, bnd3, atm1, atm2, atm3,
                                                  atm4)) ||
       (_checkMacrocycleTwoInSameRingAmideEster14(bnd3, bnd1, atm4, atm3, atm2,
                                                  atm1))) {
     return {TorsionType::CIS};
+  } else if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
+    return {TorsionType::CIS};
+  } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
+    return {TorsionType::TRANS};
   } else {
     // here we will assume anything is possible
     return {TorsionType::FLEXIBLE};
@@ -1249,8 +1261,8 @@ void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
                                                        atm1, atm2, atm3, atm4);
       break;
     case Type14::MACROCYCLE_TWO_IN_SAME_RING:
-      torsionValue = _getMacrocycleTwoInSameRing14Type(mol, bnd1, bnd3, atm1,
-                                                       atm2, atm3, atm4);
+      torsionValue = _getMacrocycleTwoInSameRing14Type(mol, bnd1, bnd2, bnd3,
+                                                       atm1, atm2, atm3, atm4);
       break;
     case Type14::SHARE_RING_BOND:
       torsionValue = _getShareRingBond14Type(bnd2, atm1, atm2, atm3, atm4);
@@ -1259,7 +1271,8 @@ void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       torsionValue = _getTwoInDiffRing14Type(bnd2, atm1, atm2, atm3, atm4);
       break;
     case Type14::TWO_IN_SAME_RING:
-      torsionValue = _getTwoInSameRing14Type(mol, atm1, atm2, atm3, atm4);
+      torsionValue = _getTwoInSameRing14Type(mol, bnd2, atm1, atm2, atm3, atm4,
+                                             info.preferTrans);
       break;
   }
 
@@ -1334,6 +1347,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   std::uint64_t nb = mol.getNumBonds();
   boost::dynamic_bitset<> ringBondPairs(nb * nb);
   boost::dynamic_bitset<> donePaths(nb * nb * nb);
+  boost::dynamic_bitset<> cisRingBondPairs(nb * nb);
   // first we will deal with 1-4 atoms that belong to the same ring
   for (const auto &bring : bondRings) {
     const auto rSize = bring.size();
@@ -1362,9 +1376,11 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                             mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
                             Type14::IN_RING, accumData, mmat, distMatrix,
                             {.ringSize = rSize});
+          cisRingBondPairs.set(pid, rSize <= 8);
         }
       } else {
         _record14Path(mol, bid1, bid2, bid3, accumData);
+        cisRingBondPairs.set(pid);
       }
 
       bid1 = bid2;
@@ -1398,7 +1414,9 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                 } else {
                   _set14BoundHelper(mol, bnd1, bond, bnd3,
                                     Type14::TWO_IN_SAME_RING, accumData, mmat,
-                                    distMatrix, {});
+                                    distMatrix,
+                                    {.preferTrans = cisRingBondPairs[pid1] ||
+                                                    cisRingBondPairs[pid2]});
                 }
               } else if (((rinfo->numBondRings(bid1) > 0) &&
                           (rinfo->numBondRings(bid2) > 0)) ||

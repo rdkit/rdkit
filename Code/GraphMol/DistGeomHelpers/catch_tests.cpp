@@ -1769,3 +1769,79 @@ TEST_CASE("Github #9143: ETKDGv3 generating twisted amides") {
     }
   }
 }
+
+TEST_CASE("Github9403: Bug: Forced cis bonds in larger (non-macrocycle)") {
+  SECTION("as reported") {
+    auto mol = "C1C(C)=C(C)CCCCCC1"_smiles;
+
+    // 0 1 2  3 4 5
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    // both should allow cis and trans -> range must be larger than GEN_DIST_TOL
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) >
+          2.0 * 0.06 + 0.00001);
+    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) >
+          2.0 * 0.06 + 0.00001);
+  }
+  SECTION("small ring") {
+    auto mol = "C1C(C)=C(C)CCCC1"_smiles;
+
+    // 0 1 2  3 4 5
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    CHECK(bm->getLowerBound(0, 4) > bm->getUpperBound(0, 5));
+    // here cis/trans should be enforced
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <=
+          2.0 * 0.06 + 0.00001);
+    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <=
+          2.0 * 0.06 + 0.00001);
+  }
+}
+
+TEST_CASE("Github9403: Bug: Overwritten stereo information in rings") {
+  SECTION("as reported (enforce trans bond in larger (non-macrocycle) rings)") {
+    auto mol = "C1C(C)=C(C)CCCCCC1"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+    auto bnd = mol->getBondBetweenAtoms(1, 3);
+    bnd->setStereoAtoms(0, 5);
+    bnd->setStereo(Bond::BondStereo::STEREOTRANS);
+
+    DGeomHelpers::setTopolBounds(*mol, bm);
+    // trans should be allowed but NOT cis for 0-5 and the other way araound for
+    // 0-4
+    CHECK(bm->getLowerBound(0, 5) > bm->getUpperBound(0, 4));
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <=
+          2.0 * 0.06 + 0.00001);
+    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <=
+          2.0 * 0.06 + 0.00001);
+  }
+  SECTION("as reported (enforce trans bond in small ring)") {
+    auto mol = "C1C(C)=C(C)CCCC1"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+    auto bnd = mol->getBondBetweenAtoms(1, 3);
+    bnd->setStereoAtoms(0, 5);
+    bnd->setStereo(Bond::BondStereo::STEREOTRANS);
+
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    // trans should be allowed but NOT cis for 0-5 and the other way araound for
+    // 0-4
+    CHECK(bm->getLowerBound(0, 5) > bm->getUpperBound(0, 4));
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <=
+          2.0 * 0.06 + 0.00001);
+    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <=
+          2.0 * 0.06 + 0.00001);
+  }
+}
