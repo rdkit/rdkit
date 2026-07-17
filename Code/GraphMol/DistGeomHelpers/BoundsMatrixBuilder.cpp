@@ -1891,5 +1891,17 @@ void set15Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                        distMatrix);
   }
 }
+
+RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
+    const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+    std::vector<std::pair<int, int>> &bonds,
+    std::vector<std::vector<int>> &angles, bool set15bounds = true,
+    bool scaleVDW = false, bool useMacrocycle14config = false,
+    bool forceTransAmides = true, bool set14bounds = true,
+    bool set13bounds = true) {
+  auto details = ForceFields::CrystalFF::CrystalFFDetails{.angles = angles,
+                                                          .bonds = bonds};
+}
+
 }  // namespace DGeomHelpers
 }  // namespace RDKit
