@@ -12,6 +12,7 @@
 #include <DistGeom/BoundsMatrix.h>
 #include "BoundsMatrixBuilder.h"
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <ForceField/UFF/BondStretch.h>
 #include <Geometry/Utils.h>
 
@@ -703,8 +704,8 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         }  // while loop over second bond
         ++beg1;
       }  // while loop over first bond
-    }  // done with non-ring atoms
-  }  // done with all atoms
+    }    // done with non-ring atoms
+  }      // done with all atoms
 }  // done with 13 distance setting
 
 Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
@@ -774,8 +775,7 @@ TorsionValue _getTwoInSameRing14Type(const ROMol &mol, const Bond *bnd2,
   Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
 
   if (preferTrans && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
-      (stype != Bond::STEREOZ &&
-       stype != Bond::STEREOCIS)) { 
+      (stype != Bond::STEREOZ && stype != Bond::STEREOCIS)) {
     // here we will assume 180 degrees: basically flat ring with an external
     // substituent
     return {TorsionType::TRANS};
@@ -959,7 +959,7 @@ TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
                              const Bond *bnd2, const Bond *bnd3,
                              const Atom *atm1, const Atom *atm2,
                              const Atom *atm3, const Atom *atm4,
-                             bool forceTransAmides) {
+                             const bool forceTransAmides) {
   switch (bnd2->getBondType()) {
     case Bond::DOUBLE:
       // if any of the other bonds are double - the torsion angle is zero
@@ -984,34 +984,35 @@ TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
           (atm2->getDegree() == 2) && (atm3->getDegree() == 2)) {
         // this is *S-S* situation
         return {TorsionType::CUSTOM, M_PI / 2.0};
-      } else if ((_checkAmideEster14(bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
-                 (_checkAmideEster14(bnd3, bnd1, atm4, atm3, atm2, atm1))) {
-        // It's an amide or ester:
-        //
-        //        4    <- 4 is the O
-        //        |    <- That's the double bond
-        //    1   3
-        //     \ / \                                         T.S.I.Left Blank
-        //      2   5  <- 2 is an oxygen/nitrogen
-        //
-        // Here we set the distance between atoms 1 and 4,
-        //  we'll handle atoms 1 and 5 below.
+      }
+      if (forceTransAmides) {
+        if ((_checkAmideEster14(bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
+            (_checkAmideEster14(bnd3, bnd1, atm4, atm3, atm2, atm1))) {
+          // It's an amide or ester:
+          //
+          //        4    <- 4 is the O
+          //        |    <- That's the double bond
+          //    1   3
+          //     \ / \                                         T.S.I.Left Blank
+          //      2   5  <- 2 is an oxygen/nitrogen
+          //
+          // Here we set the distance between atoms 1 and 4,
+          //  we'll handle atoms 1 and 5 below.
 
-        // fix for issue 251 - we were marking this as a cis configuration
-        // earlier
-        // -------------------------------------------------------
-        // Issue284:
-        //   As this code originally stood, we forced amide bonds to be trans.
-        //   This is convenient a lot of the time for generating nice-looking
-        //   structures, but is unfortunately totally bogus.  So here we'll
-        //   allow the distance to roam from cis to trans and hope that the
-        //   force field planarizes things later.
-        //
-        //   What we'd really like to be able to do is specify multiple
-        //   possible ranges for the distances, but a single bounds matrix
-        //   doesn't support this kind of fanciness.
-        //
-        if (forceTransAmides) {
+          // fix for issue 251 - we were marking this as a cis configuration
+          // earlier
+          // -------------------------------------------------------
+          // Issue284:
+          //   As this code originally stood, we forced amide bonds to be trans.
+          //   This is convenient a lot of the time for generating nice-looking
+          //   structures, but is unfortunately totally bogus.  So here we'll
+          //   allow the distance to roam from cis to trans and hope that the
+          //   force field planarizes things later.
+          //
+          //   What we'd really like to be able to do is specify multiple
+          //   possible ranges for the distances, but a single bounds matrix
+          //   doesn't support this kind of fanciness.
+          //
           if ((atm1->getAtomicNum() == 1 && atm2->getAtomicNum() == 7 &&
                atm2->getDegree() == 3 && atm2->getTotalNumHs(true) == 1) ||
               (atm4->getAtomicNum() == 1 && atm3->getAtomicNum() == 7 &&
@@ -1021,28 +1022,23 @@ TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
           } else {
             return {TorsionType::CIS};
           }
-        } else {
-          return {TorsionType::FLEXIBLE};
         }
-      } else if ((_checkAmideEster15(mol, bnd1, bnd3, atm1, atm2, atm3,
-                                     atm4)) ||
-                 (_checkAmideEster15(mol, bnd3, bnd1, atm4, atm3, atm2,
-                                     atm1))) {
-        // it's an amide or ester.
-        //
-        //        4    <- 4 is the O
-        //        |    <- That's the double bond
-        //    1   3
-        //     \ / \                                          T.S.I.Left Blank
-        //      2   5  <- 2 is oxygen or nitrogen
-        //
-        // we already set the 1-4 contact above, here we are doing 1-5
+        if ((_checkAmideEster15(mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
+            (_checkAmideEster15(mol, bnd3, bnd1, atm4, atm3, atm2, atm1))) {
+          // it's an amide or ester.
+          //
+          //        4    <- 4 is the O
+          //        |    <- That's the double bond
+          //    1   3
+          //     \ / \                                          T.S.I.Left Blank
+          //      2   5  <- 2 is oxygen or nitrogen
+          //
+          // we already set the 1-4 contact above, here we are doing 1-5
 
-        // If we're going to have a hope of getting good geometries
-        // out of here we need to set some reasonably smart bounds between 1
-        // and 5 (ref Issue355):
+          // If we're going to have a hope of getting good geometries
+          // out of here we need to set some reasonably smart bounds between 1
+          // and 5 (ref Issue355):
 
-        if (forceTransAmides) {
           if ((atm1->getAtomicNum() == 1 && atm2->getAtomicNum() == 7 &&
                atm2->getDegree() == 3 && atm2->getTotalNumHs(true) == 1) ||
               (atm4->getAtomicNum() == 1 && atm3->getAtomicNum() == 7 &&
@@ -1052,13 +1048,8 @@ TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
           } else {
             return {TorsionType::TRANS};
           }
-        } else {
-          return {TorsionType::FLEXIBLE};
         }
-      } else {
-        return {TorsionType::FLEXIBLE};
       }
-      break;
     default:
       return {TorsionType::FLEXIBLE};
   }
@@ -1142,7 +1133,8 @@ TorsionValue _getMacrocycleTwoInSameRing14Type(
 
 TorsionValue _getMacrocycleAllInSameRing14Type(
     const ROMol &mol, const Bond *bnd1, const Bond *bnd2, const Bond *bnd3,
-    const Atom *atm1, const Atom *atm2, const Atom *atm3, const Atom *atm4) {
+    const Atom *atm1, const Atom *atm2, const Atom *atm3, const Atom *atm4,
+    const bool forceTransAmides) {
   switch (bnd2->getBondType()) {
     case Bond::DOUBLE:
       // if any of the other bonds are double - the torsion angle is zero
@@ -1167,37 +1159,27 @@ TorsionValue _getMacrocycleAllInSameRing14Type(
           (atm2->getDegree() == 2) && (atm3->getDegree() == 2)) {
         // this is *S-S* situation
         return {TorsionType::CUSTOM, M_PI / 2.0};
-
-      } else if ((_checkMacrocycleAllInSameRingAmideEster14(
-                     mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
-                 (_checkMacrocycleAllInSameRingAmideEster14(
-                     mol, bnd3, bnd1, atm4, atm3, atm2, atm1))) {
-        return {.type = TorsionType::TRANS, .extraDist = 0.1};
-        // we saw that the currently defined max distance for trans
-        // is still a bit too short, thus we add an additional 0.1,
-        // which is the max that works without triangular smoothing
-        // error
-      } else if ((_checkAmideEster15(mol, bnd1, bnd3, atm1, atm2, atm3,
-                                     atm4)) ||
-                 (_checkAmideEster15(mol, bnd3, bnd1, atm4, atm3, atm2,
-                                     atm1))) {
-#ifdef FORCE_TRANS_AMIDES
-        // amide is trans, we're cis:
-        return {Path14Configuration::CIS};
-#else
-        // amide is cis, we're trans:
-        if (atm2->getAtomicNum() == 7 && atm2->getDegree() == 3 &&
-            atm1->getAtomicNum() == 1 && atm2->getTotalNumHs(true) == 1) {
-          // secondary amide, this is the H
-          return {TorsionType::NONE};
-        } else {
-          return {TorsionType::TRANS};
-        }
-#endif
-      } else {
-        return {TorsionType::FLEXIBLE};
       }
-      break;
+      if (forceTransAmides) {
+        if ((_checkMacrocycleAllInSameRingAmideEster14(mol, bnd1, bnd3, atm1,
+                                                       atm2, atm3, atm4)) ||
+            (_checkMacrocycleAllInSameRingAmideEster14(mol, bnd3, bnd1, atm4,
+                                                       atm3, atm2, atm1))) {
+          return {.type = TorsionType::TRANS,
+                  .extraDist = 0.1,
+                  .reason = BKEnum::ForceTransAmide};
+        }
+        if ((_checkAmideEster15(mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
+            (_checkAmideEster15(mol, bnd3, bnd1, atm4, atm3, atm2, atm1))) {
+          if (atm2->getAtomicNum() == 7 && atm2->getDegree() == 3 &&
+              atm1->getAtomicNum() == 1 && atm2->getTotalNumHs(true) == 1) {
+            // secondary amide, this is the H
+            return {TorsionType::CIS, .reason = Reason::ForceTransAmide};
+          } else {
+            return {TorsionType::TRANS, .reason = Reason::ForceTransAmide};
+          }
+        }
+      }
     default:
       return {TorsionType::FLEXIBLE};
   }
@@ -1257,8 +1239,8 @@ void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
           _getInRing14Type(bnd2, atm1, atm2, atm3, atm4, info.ringSize);
       break;
     case Type14::MACROCYCLE_ALL_IN_SAME_RING:
-      torsionValue = _getMacrocycleAllInSameRing14Type(mol, bnd1, bnd2, bnd3,
-                                                       atm1, atm2, atm3, atm4);
+      torsionValue = _getMacrocycleAllInSameRing14Type(
+          mol, bnd1, bnd2, bnd3, atm1, atm2, atm3, atm4, info.forceTransAmides);
       break;
     case Type14::MACROCYCLE_TWO_IN_SAME_RING:
       torsionValue = _getMacrocycleTwoInSameRing14Type(mol, bnd1, bnd2, bnd3,
@@ -1369,7 +1351,8 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
           _set14BoundHelper(mol, mol.getBondWithIdx(bid1),
                             mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
                             Type14::MACROCYCLE_ALL_IN_SAME_RING, accumData,
-                            mmat, distMatrix, {});
+                            mmat, distMatrix,
+                            {.forceTransAmides = forceTransAmides});
           bidIsMacrocycle.insert(bid2);
         } else {
           _set14BoundHelper(mol, mol.getBondWithIdx(bid1),
@@ -1385,7 +1368,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
       bid1 = bid2;
     }  // loop over bonds in the ring
-  }  // end of all rings
+  }    // end of all rings
   for (const auto bond : mol.bonds()) {
     auto bid2 = bond->getIdx();
     auto aid2 = bond->getBeginAtomIdx();
