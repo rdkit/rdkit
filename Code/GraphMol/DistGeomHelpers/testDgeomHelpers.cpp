@@ -157,15 +157,12 @@ TEST_CASE("test1") {
       "C12(C)CC1CC2"};
   const bool legacyETKDG = GENERATE(true, false);
   std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
-  // std::string fname2 = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
   if (!legacyETKDG) {
     fname += "AIO/";
-    // fname2 += "AIO/";
   }
   fname += "initCoords.sdf";
-  // fname2 += "initCoords_new.sdf";
   v2::FileParsers::SDMolSupplier sdsup(fname);
-  // SDWriter writer(fname2);
+  // SDWriter writer("foo.sdf");
   for (std::size_t i = 0; i < smiString.size(); ++i) {
     auto m = v2::SmilesParse::MolFromSmiles(smiString[i]);
     DGeomHelpers::EmbedParameters params{
@@ -207,7 +204,6 @@ TEST_CASE("test1") {
       }
     }
   }
-  // writer.close();
   boost::logging::enable_logs("rdApp.warning");
 }
 
@@ -577,7 +573,8 @@ TEST_CASE("testIssue285") {
 
   std::size_t tgtNumber = 10;
   const bool legacyETKDG = GENERATE(true, false);
-  DGeomHelpers::EmbedParameters params{.useLegacyImplementation = legacyETKDG};
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .useLegacyImplementation = legacyETKDG};
   INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, tgtNumber, params);
   REQUIRE(cids.size() == tgtNumber);
 
@@ -699,7 +696,8 @@ TEST_CASE("testRandomCoords") {
 
 TEST_CASE("testIssue1989539") {
   const bool legacyETKDG = GENERATE(true, false);
-  DGeomHelpers::EmbedParameters params{.useLegacyImplementation = legacyETKDG};
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .useLegacyImplementation = legacyETKDG};
   {
     auto m = "c1ccccc1.Cl"_smiles;
     const int cid = DGeomHelpers::EmbedMolecule(*m, params);
@@ -788,8 +786,8 @@ TEST_CASE("Check Mols embedddable") {
     int cid = DGeomHelpers::EmbedMolecule(m);
     CHECK(cid >= 0);
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     std::vector<int> cids = DGeomHelpers::EmbedMultipleConfs(m, 10, params);
     CHECK(cids.size() == 10);
     CHECK(std::find(cids.begin(), cids.end(), -1) == cids.end());
@@ -798,8 +796,8 @@ TEST_CASE("Check Mols embedddable") {
   SECTION("testIssue2091864 1") {
     auto m = "C1C2CC12"_smiles;
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*m, params);
     CHECK(cid >= 0);
   }
@@ -826,8 +824,8 @@ TEST_CASE("Check Mols embedddable") {
     auto m = "O=N(=O)OCC(CON(=O)=O)(CON(=O)=O)CON(=O)=O"_smiles;
     MolOps::addHs(*m);
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*m, params);
     CHECK(cid >= 0);
   }
@@ -842,8 +840,8 @@ TEST_CASE("testIssue2835784") {
     if (addHs) {
       MolOps::addHs(*m);
     }
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*m, params);
     CHECK(cid >= 0);
     std::vector<int> cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, params);
@@ -915,7 +913,8 @@ TEST_CASE("testIssue3483968") {
   auto m = v2::FileParsers::MolFromMolFile(molfile);
   REQUIRE(m);
   const bool legacyETKDG = GENERATE(true, false);
-  DGeomHelpers::EmbedParameters params{.ignoreSmoothingFailures = true,
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .ignoreSmoothingFailures = true,
                                        .useLegacyImplementation = legacyETKDG};
   int cid = DGeomHelpers::EmbedMolecule(*m, params);
   CHECK(cid >= 0);
@@ -1040,8 +1039,8 @@ TEST_CASE("testGithub55") {
     REQUIRE(core);
 
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*core, params);
     CHECK(cid >= 0);
 
@@ -1067,8 +1066,8 @@ TEST_CASE("testGithub55") {
     REQUIRE(core);
 
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*core, params);
     CHECK(cid >= 0);
 
@@ -1350,7 +1349,6 @@ TEST_CASE("testEmbedParameters") {
     };
     const bool legacyETKDG = GENERATE(true, false);
     std::string file = getPath(fname, legacyETKDG);
-    // std::string file2 = getPath("new_" + fname, legacyETKDG);
     auto ps = v2::FileParsers::MolFileParserParams{.removeHs = false};
     auto ref = v2::FileParsers::MolFromMolFile(file, ps);
     REQUIRE(ref);
@@ -1361,10 +1359,6 @@ TEST_CASE("testEmbedParameters") {
     params.useLegacyImplementation = legacyETKDG;
     params.randomSeed = 42;
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
-    // SDWriter writer(file2);
-    // writer.write(*mol);
-    // writer.flush();
-    // writer.close();
     compareConfs(ref.get(), mol.get());
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -1579,8 +1573,8 @@ TEST_CASE("testGithub1990") {
     MolOps::removeHs(*mol);
     CHECK(mol->getNumAtoms() == 4);
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     CHECK(cid >= 0);
   }
@@ -1593,8 +1587,8 @@ TEST_CASE("testGithub1990") {
     MolOps::addHs(*mol);
     MolOps::removeHs(*mol);
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     CHECK(cid >= 0);
   }
@@ -1715,7 +1709,8 @@ TEST_CASE("testGithub3667") {
   REQUIRE(mol);
 
   const bool legacyETKDG = GENERATE(true, false);
-  DGeomHelpers::EmbedParameters params{.useLegacyImplementation = legacyETKDG};
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .useLegacyImplementation = legacyETKDG};
   params.callback = throwError;
   CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*mol, params),
                   ValueErrorException);
@@ -1809,7 +1804,8 @@ TEST_CASE("testMissingHsWarning") {
   const bool legacyETKDG = GENERATE(true, false);
   std::stringstream ss;
   rdWarningLog->SetTee(ss);
-  DGeomHelpers::EmbedParameters params{.useLegacyImplementation = legacyETKDG};
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .useLegacyImplementation = legacyETKDG};
   DGeomHelpers::EmbedMolecule(*mol, params);
   rdWarningLog->ClearTee();
   TEST_ASSERT(ss.str().find("Molecule does not have explicit Hs") !=
