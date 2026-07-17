@@ -775,7 +775,7 @@ TorsionValue _getTwoInSameRing14Type(const ROMol &mol, const Bond *bnd2,
 
   if (preferTrans && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
       (stype != Bond::STEREOZ &&
-       stype != Bond::STEREOCIS)) {  // FIX: check for trans
+       stype != Bond::STEREOCIS)) { 
     // here we will assume 180 degrees: basically flat ring with an external
     // substituent
     return {TorsionType::TRANS};
