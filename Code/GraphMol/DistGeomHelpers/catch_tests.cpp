@@ -1845,3 +1845,19 @@ TEST_CASE("Github9403: Bug: Overwritten stereo information in rings") {
           2.0 * 0.06 + 0.00001);
   }
 }
+
+TEST_CASE("setTopolBounds with param objects") {
+  SECTION("simple") {
+    auto mol = "CC(=O)NC"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::EmbedParameters ps{.forceTransAmides = false};
+    DGeomHelpers::setTopolBounds(*mol, bm, ps);
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) > 0.5);
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    ps.forceTransAmides = true;
+    DGeomHelpers::setTopolBounds(*mol, bm, ps);
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) < 0.5);
+  }
+}
