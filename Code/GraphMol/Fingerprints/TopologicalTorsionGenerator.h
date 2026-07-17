@@ -63,7 +63,7 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionAtomEnv
       const std::uint64_t fpSize = 0                     // unused
   ) const override;
   void updateAdditionalOutput(AdditionalOutput *output,
-                              size_t bitId) const override;
+                              std::uint64_t bitId) const override;
   /**
    \brief Construct a new Topological Torsion Atom Env object
 
