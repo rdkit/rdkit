@@ -10,6 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
 #include <DistGeom/BoundsMatrix.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include "BoundsMatrixBuilder.h"
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <ForceField/UFF/BondStretch.h>
@@ -24,6 +25,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <ranges>
+#include <vector>
 
 const double DIST12_DELTA = 0.01;
 // const double ANGLE_DELTA = 0.0837;
@@ -703,8 +705,8 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         }  // while loop over second bond
         ++beg1;
       }  // while loop over first bond
-    }  // done with non-ring atoms
-  }  // done with all atoms
+    }    // done with non-ring atoms
+  }      // done with all atoms
 }  // done with 13 distance setting
 
 Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
@@ -774,8 +776,7 @@ TorsionValue _getTwoInSameRing14Type(const ROMol &mol, const Bond *bnd2,
   Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
 
   if (preferTrans && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
-      (stype != Bond::STEREOZ &&
-       stype != Bond::STEREOCIS)) { 
+      (stype != Bond::STEREOZ && stype != Bond::STEREOCIS)) {
     // here we will assume 180 degrees: basically flat ring with an external
     // substituent
     return {TorsionType::TRANS};
@@ -1385,7 +1386,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
       bid1 = bid2;
     }  // loop over bonds in the ring
-  }  // end of all rings
+  }    // end of all rings
   for (const auto bond : mol.bonds()) {
     auto bid2 = bond->getIdx();
     auto aid2 = bond->getBeginAtomIdx();
@@ -1564,15 +1565,25 @@ void collectBondsAndAngles(const ROMol &mol,
     }
   }
 }
+RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
+    const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+    std::vector<std::pair<int, int>> &bonds,
+    std::vector<std::vector<int>> &angles, bool set15bounds, bool scaleVDW,
+    bool useMacrocycle14config, bool forceTransAmides, bool set14bounds,
+    bool set13bounds) {
+  ForceFields::CrystalFF::CrystalFFDetails details;
+  setTopolBounds(mol, mmat, details, set15bounds, scaleVDW,
+                 useMacrocycle14config, forceTransAmides, set14bounds,
+                 set13bounds);
+  bonds = details.bonds;
+  angles = details.angles;
+}
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                    std::vector<std::pair<int, int>> &bonds,
-                    std::vector<std::vector<int>> &angles, bool set15bounds,
-                    bool scaleVDW, bool useMacrocycle14config,
+                    ForceFields::CrystalFF::CrystalFFDetails &details,
+                    bool set15bounds, bool scaleVDW, bool useMacrocycle14config,
                     bool forceTransAmides, bool set14bounds, bool set13bounds) {
   PRECONDITION(mmat.get(), "bad pointer");
-  bonds.clear();
-  angles.clear();
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
   if (!na) {
@@ -1599,7 +1610,7 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
   setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
 
-  collectBondsAndAngles(mol, bonds, angles);
+  collectBondsAndAngles(mol, details.bonds, details.angles);
 }
 
 // some helper functions to set 15 distances

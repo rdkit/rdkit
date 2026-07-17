@@ -13,6 +13,11 @@
 
 #include <DistGeom/BoundsMatrix.h>
 
+namespace ForceFields {
+namespace CrystalFF {
+struct CrystalFFDetails;
+}
+}  // namespace ForceFields
 namespace RDKit {
 class ROMol;
 namespace DGeomHelpers {
@@ -65,6 +70,15 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     std::vector<std::pair<int, int>> &bonds,
     std::vector<std::vector<int>> &angles, bool set15bounds = true,
+    bool scaleVDW = false, bool useMacrocycle14config = false,
+    bool forceTransAmides = true, bool set14bounds = true,
+    bool set13bounds = true);
+
+/*! \overload for experimental torsion angle preferences
+ */
+RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
+    const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+    ForceFields::CrystalFF::CrystalFFDetails &details, bool set15bounds = true,
     bool scaleVDW = false, bool useMacrocycle14config = false,
     bool forceTransAmides = true, bool set14bounds = true,
     bool set13bounds = true);

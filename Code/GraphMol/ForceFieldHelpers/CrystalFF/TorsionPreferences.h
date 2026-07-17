@@ -12,7 +12,9 @@
 #define _RD_TORSIONPREFERENCES_H_
 #include <vector>
 #include <string>
+#include <utility>
 #include <memory>
+#include <tuple>
 #include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
