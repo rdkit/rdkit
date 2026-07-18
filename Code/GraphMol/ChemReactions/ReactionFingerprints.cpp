@@ -46,6 +46,7 @@
 #include <DataStructs/SparseIntVect.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 
+#include <cmath>
 namespace {
 
 RDKit::SparseIntVect<std::uint32_t> *generateFingerprint(
@@ -192,7 +193,7 @@ ExplicitBitVect *StructuralFingerprintChemReaction(
     unsigned agent_fp_size = params.fpSize / 3;
     if (params.bitRatioAgents < 1.0) {
       agent_fp_size =
-          int(ceil(static_cast<double>(params.fpSize) * params.bitRatioAgents));
+          int(std::ceil(static_cast<double>(params.fpSize) * params.bitRatioAgents));
     }
     unsigned scaling = !(agent_fp_size % 2) ? agent_fp_size : agent_fp_size - 1;
     fpSize_final = (params.fpSize - scaling) / 2;

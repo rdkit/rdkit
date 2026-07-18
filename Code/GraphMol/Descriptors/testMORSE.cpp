@@ -20,6 +20,7 @@
 
 #include <GraphMol/Descriptors/MORSE.h>
 
+#include <cmath>
 void testMORSE() {
   std::cout << "=>start test MORSE\n";
 
@@ -68,26 +69,26 @@ void testMORSE() {
     for (size_t i = 0; i < dmorse.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
 
-      if (fabs(ref) > 0.01) {
-        if (fabs((ref - dmorse[i]) / ref) > 1) {
+      if (std::fabs(ref) > 0.01) {
+        if (std::fabs((ref - dmorse[i]) / ref) > 1) {
           std::cout << "value mismatch: pos" << i << " " << inm << " " << ref
                     << " " << dmorse[i] << std::endl;
         }
       }
 
-      if (fabs(ref) < 0.01) {
-        if (fabs(ref - dmorse[i]) > 0.02) {
+      if (std::fabs(ref) < 0.01) {
+        if (std::fabs(ref - dmorse[i]) > 0.02) {
           std::cout << "value mismatch: pos" << i << " " << inm << " " << ref
                     << " " << dmorse[i] << std::endl;
         }
       }
-      if (ref > 1 && fabs(ref - dmorse[i]) / ref > 0.02) {
+      if (ref > 1 && std::fabs(ref - dmorse[i]) / ref > 0.02) {
         std::cout << "value mismatch: pos" << i << " " << inm << " " << ref
                   << " " << dmorse[i] << std::endl;
       }
       // we're testing reasonably sized values and want to be sure that we're
       // within 2% of the reference.
-      TEST_ASSERT(ref < 1 || fabs(ref - dmorse[i]) / ref < 0.02);
+      TEST_ASSERT(ref < 1 || std::fabs(ref - dmorse[i]) / ref < 0.02);
     }
 
     delete m;

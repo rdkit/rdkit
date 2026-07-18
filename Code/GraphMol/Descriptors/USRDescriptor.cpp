@@ -41,6 +41,7 @@
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
 
+#include <cmath>
 namespace RDKit {
 
 namespace {
@@ -110,7 +111,7 @@ void calcMoments(const std::vector<double> &dist,
       moments[1] += diff * diff;
       moments[2] += diff * diff * diff;
     }
-    moments[1] = sqrt(moments[1] / numPts);
+    moments[1] = std::sqrt(moments[1] / numPts);
     moments[2] /= numPts;
     if (moments[1] == 0) {
       moments[2] = 0.0;
@@ -118,12 +119,12 @@ void calcMoments(const std::vector<double> &dist,
 #ifdef WIN32
       moments[2] = moments[2] / (moments[1] * moments[1] * moments[1]);
       if (moments[2] >= 0) {
-        moments[2] = pow(moments[2], 1. / 3.);
+        moments[2] = std::pow(moments[2], 1. / 3.);
       } else {
-        moments[2] = -1. * pow(-1. * moments[2], 1. / 3.);
+        moments[2] = -1. * std::pow(-1. * moments[2], 1. / 3.);
       }
 #else
-      moments[2] = cbrt(moments[2] / (moments[1] * moments[1] * moments[1]));
+      moments[2] = std::cbrt(moments[2] / (moments[1] * moments[1] * moments[1]));
 #endif
     }
   }
@@ -315,7 +316,7 @@ double calcUSRScore(const std::vector<double> &d1,
     double tmpScore = 0.0;
     unsigned int offset = num * w;
     for (unsigned int i = 0; i < num; ++i) {
-      tmpScore += fabs(d1[i + offset] - d2[i + offset]);
+      tmpScore += std::fabs(d1[i + offset] - d2[i + offset]);
     }
     tmpScore /= num;
     score += weights[w] * tmpScore;

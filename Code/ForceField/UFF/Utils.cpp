@@ -30,12 +30,12 @@ double calculateCosY(const RDGeom::Point3D &iPoint,
     return 0.0;
   }
   RDGeom::Point3D n = rJI.crossProduct(rJK);
-  n /= (sqrt(l2JI) * sqrt(l2JK));
+  n /= (std::sqrt(l2JI) * std::sqrt(l2JK));
   auto l2n = n.lengthSq();
   if (l2n < zeroTol) {
     return 0.0;
   }
-  return n.dotProduct(rJL) / (sqrt(l2JL) * sqrt(l2n));
+  return n.dotProduct(rJL) / (std::sqrt(l2JL) * std::sqrt(l2n));
 }
 
 std::tuple<double, double, double, double>
@@ -76,8 +76,8 @@ calcInversionCoefficientsAndForceConstant(int at2AtomicNum, bool isCBoundToO) {
         break;
     }
     C2 = 1.0;
-    C1 = -4.0 * cos(w0);
-    C0 = -(C1 * cos(w0) + C2 * cos(2.0 * w0));
+    C1 = -4.0 * std::cos(w0);
+    C0 = -(C1 * std::cos(w0) + C2 * std::cos(2.0 * w0));
     res = 22.0 / (C0 + C1 + C2);
   }
   res /= 3.0;

@@ -26,13 +26,13 @@
 #include <algorithm>
 #include <cstdlib>
 #include <optional>
-#include <ranges>
 #include <set>
 #include <sstream>
 #include <utility>
 
 // #define VERBOSE_CANON 1
 
+#include <cmath>
 namespace RDKit {
 
 namespace {
@@ -46,11 +46,7 @@ bool shouldDetectDoubleBondStereo(const Bond *bond) {
 bool getValFromEnvironment(const char *var, bool defVal) {
   auto evar = std::getenv(var);
   if (evar != nullptr) {
-    if (!strcmp(evar, "0")) {
-      return false;
-    } else {
-      return true;
-    }
+    return strcmp(evar, "0");
   }
   return defVal;
 }
@@ -107,9 +103,9 @@ bool isLinearArrangement(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2) {
 
   double dotProd = v1.dotProduct(v2);
 
-  double cos178 =
-      -0.999388;  // == cos(M_PI-0.035), corresponds to a tolerance of 2 degrees
-  return dotProd < cos178 * sqrt(lsq);
+  double cos178 = -0.999388;  // == std::cos(M_PI-0.035), corresponds to a
+                              // tolerance of 2 degrees
+  return dotProd < cos178 * std::sqrt(lsq);
 }
 
 void controllingBondFromAtom(const ROMol &mol,
@@ -611,31 +607,22 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     auto needsSwap = [&zeroTol](const RDGeom::Point3D &cp01,
                                 const RDGeom::Point3D &cp02, double dp01,
                                 double dp02) -> bool {
-      if (fabs(dp01) - 1 > -zeroTol) {
-        if (cp02.z < 0) {
-          return true;
-        }
-        return false;
+      if (std::fabs(dp01) - 1 > -zeroTol) {
+        return cp02.z < 0;
       }
-      if (fabs(dp02) - 1 > -zeroTol) {
+      if (std::fabs(dp02) - 1 > -zeroTol) {
         if (cp01.z < 0) {
           return true;
         }
       }
 
       if ((cp01.z * cp02.z) < -zeroTol) {
-        if (cp01.z < cp02.z) {
-          return true;
-        }
-        return false;
+        return cp01.z < cp02.z;
       }
       if (dp01 * dp02 < -zeroTol) {
-        if (dp01 < dp02) {
-          return true;
-        }
-        return false;
+        return dp01 < dp02;
       }
-      return fabs(dp01) > fabs(dp02);
+      return std::fabs(dp01) > std::fabs(dp02);
     };
 #if defined(__clang__)
 #pragma GCC diagnostic pop
@@ -697,8 +684,8 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
             // are drawn 180 degrees apart and with opposite wedging. Let that
             // one pass.
             if (nNbrs == 4 &&
-                fabs(bondVects[order[i]].dotProduct(bondVects[order[j]]) + 1) <
-                    zeroTol) {
+                std::fabs(bondVects[order[i]].dotProduct(bondVects[order[j]]) +
+                          1) < zeroTol) {
               // this is allowed for neighboring bonds
               if (j - i == 1 || (i == 0 && j == 3)) {
                 // std::cerr << " skip it " << std::endl;
@@ -731,13 +718,13 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
     if (nNbrs == 3) {
       bool conflict = false;
       if (bondVects[order[1]].z * bondVects[order[0]].z < -coordZeroTol &&
-          fabs(bondVects[order[2]].z) < coordZeroTol) {
+          std::fabs(bondVects[order[2]].z) < coordZeroTol) {
         conflict = bondVects[order[2]].crossProduct(bondVects[order[0]]).z *
                        bondVects[order[2]].crossProduct(bondVects[order[1]]).z <
                    -1e-4;
       } else if (bondVects[order[2]].z * bondVects[order[0]].z <
                      -coordZeroTol &&
-                 fabs(bondVects[order[1]].z) < coordZeroTol) {
+                 std::fabs(bondVects[order[1]].z) < coordZeroTol) {
         conflict = bondVects[order[1]].crossProduct(bondVects[order[0]]).z *
                        bondVects[order[1]].crossProduct(bondVects[order[2]]).z <
                    -coordZeroTol;
@@ -779,7 +766,7 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       }
     } else if (crossp1.lengthSq() < 10 * zeroTol) {
       // if the other bond is flat:
-      if (fabs(bondVects[order[3]].z) < coordZeroTol) {
+      if (std::fabs(bondVects[order[3]].z) < coordZeroTol) {
         // By construction this is a neighboring bond, so make it the opposite
         // wedging from us.
         bondVects[order[3]].z = -1 * bondVects[order[0]].z;
@@ -800,9 +787,9 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
 
       // detect the case where there's no chiral volume for the default
       // evaluation
-      if (fabs(vol) < zeroTol) {
+      if (std::fabs(vol) < zeroTol) {
         // and check the other evaluation:
-        if (fabs(vol2) < zeroTol) {
+        if (std::fabs(vol2) < zeroTol) {
           BOOST_LOG(rdWarningLog)
               << "Warning: ambiguous stereochemistry - no chiral volume - at atom "
               << atom->getIdx() << " ignored" << std::endl;
@@ -810,13 +797,14 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
         }
         vol = vol2;
         prefactor *= -1;
-      } else if (vol * vol2 > 0 && fabs(vol2) > volumeTolerance &&
+      } else if (vol * vol2 > 0 && std::fabs(vol2) > volumeTolerance &&
                  dotp1 < dotp2) {
         // both volumes give the same answer, but in the second case the cross
         // product is between two bonds with a better dot product
         vol = vol2;
         prefactor *= -1;
-      } else if (fabs(vol) < volumeTolerance && fabs(vol2) > volumeTolerance) {
+      } else if (std::fabs(vol) < volumeTolerance &&
+                 std::fabs(vol2) > volumeTolerance) {
         // if the first volume is too small, but the second isn't, take the
         // second
         if (vol * vol2 < 0) {

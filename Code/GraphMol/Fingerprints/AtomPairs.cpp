@@ -21,6 +21,7 @@
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
 #include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
 
+#include <cmath>
 namespace RDKit {
 namespace AtomPairs {
 
@@ -39,7 +40,7 @@ void setAtomPairBit(std::uint32_t i, std::uint32_t j, std::uint32_t nAtoms,
                     const std::vector<std::uint32_t> &atomCodes,
                     const double *dm, T *bv, unsigned int minLength,
                     unsigned int maxLength, bool includeChirality) {
-  auto dist = static_cast<unsigned int>(floor(dm[i * nAtoms + j]));
+  auto dist = static_cast<unsigned int>(std::floor(dm[i * nAtoms + j]));
   if (dist >= minLength && dist <= maxLength) {
     std::uint32_t bitId =
         getAtomPairCode(atomCodes[i], atomCodes[j], dist, includeChirality);

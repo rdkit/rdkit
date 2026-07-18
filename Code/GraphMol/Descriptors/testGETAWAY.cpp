@@ -20,6 +20,7 @@
 
 #include <GraphMol/Descriptors/GETAWAY.h>
 
+#include <cmath>
 void testGETAWAY() {
   std::cout << "=>start test GETAWAY\n";
 
@@ -76,15 +77,15 @@ void testGETAWAY() {
     for (int i = 0; i < 273; i++) {
       double ref = atof(myrow[i + 1].c_str());
 
-      if (fabs(ref) > 1) {
-        if (fabs((ref - dgetaway[i]) / ref) > 0.01) {
+      if (std::fabs(ref) > 1) {
+        if (std::fabs((ref - dgetaway[i]) / ref) > 0.01) {
           std::cerr << "value mismatch: pos" << i << " " << inm
                     << " dragon: " << ref << " rdkit: " << dgetaway[i]
                     << std::endl;
         }
       }
-      if (fabs(ref) <= 1) {
-        if (fabs(ref - dgetaway[i]) > 0.02) {
+      if (std::fabs(ref) <= 1) {
+        if (std::fabs(ref - dgetaway[i]) > 0.02) {
           std::cerr << "value mismatch: pos" << i << " " << inm
                     << " dragon: " << ref << " rdkit: " << dgetaway[i]
                     << std::endl;
@@ -92,7 +93,7 @@ void testGETAWAY() {
       }
       // if (i != 0) outstrm << "\t";
       // outstrm << dgetaway[i];
-      TEST_ASSERT(fabs(ref - dgetaway[i]) < 0.05);
+      TEST_ASSERT(std::fabs(ref - dgetaway[i]) < 0.05);
     }
     // outstrm << "\n";
     delete m;

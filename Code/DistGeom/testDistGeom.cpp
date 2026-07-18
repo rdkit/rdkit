@@ -22,7 +22,7 @@ using namespace RDNumeric;
 
 TEST_CASE("test1") {
   unsigned int npt = 5;
-  double x = sqrt(3.0);
+  double x = std::sqrt(3.0);
   auto *mmat = new BoundsMatrix(npt);
 
   mmat->setUpperBound(0, 1, 1.0);

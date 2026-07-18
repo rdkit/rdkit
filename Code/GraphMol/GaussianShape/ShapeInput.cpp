@@ -28,6 +28,7 @@
 #include <boost/flyweight/no_tracking.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
+#include <cmath>
 #ifdef RDK_HAS_EIGEN3
 #include <Eigen/Dense>
 #endif
@@ -527,7 +528,7 @@ std::array<double, 3> ShapeInput::bestSimilarity(
       }
       // Floating point cruft means we sometimes get a similarity slightly
       // above 1.0.  1.0 is the maximum possible, so stop if we hit it.
-      if (bestSim[0] > 1.0 || fabs(bestSim[0] - 1.0) < 1.0e-6) {
+      if (bestSim[0] > 1.0 || std::fabs(bestSim[0] - 1.0) < 1.0e-6) {
         setActiveShape(currActiveShape);
         return bestSim;
       }

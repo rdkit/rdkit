@@ -33,6 +33,7 @@
 
 #include <regex>
 
+#include <cmath>
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <cairo.h>
 #include "MolDraw2DCairo.h"
@@ -8478,7 +8479,7 @@ M  END
     // 12 and 14 pixels apart in the two molecules.
     CHECK(d1 > 10.0);
     CHECK(d2 > 10.0);
-    CHECK_THAT(fabs(d1 - d2), Catch::Matchers::WithinAbs(0.0, 0.1));
+    CHECK_THAT(std::fabs(d1 - d2), Catch::Matchers::WithinAbs(0.0, 0.1));
   };
 
   {
@@ -9876,7 +9877,7 @@ TEST_CASE("Github7036 - triple bond to wedge not right") {
     pts.push_back(Point2D(stod(match[3]), stod(match[4])));
     double dot = pts[0].directionVector(pts[1]).dotProduct(
         pts[2].directionVector(pts[3]));
-    CHECK_THAT(fabs(dot), Catch::Matchers::WithinAbs(1.0, 0.001));
+    CHECK_THAT(std::fabs(dot), Catch::Matchers::WithinAbs(1.0, 0.001));
     check_file_hash(svgFile);
   }
 }
@@ -11349,7 +11350,7 @@ M  END
         for (size_t i = 0; i < referenceCoords.size(); ++i) {
           CHECK(referenceCoords[i].size() == highlightCoords[i].size());
           for (size_t j = 0; j < referenceCoords[i].size(); ++j) {
-            if (fabs(highlightCoords[i][j]) - referenceCoords[i][j] > 0.1) {
+            if (std::fabs(highlightCoords[i][j]) - referenceCoords[i][j] > 0.1) {
               return false;
             }
           }

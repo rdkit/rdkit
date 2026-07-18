@@ -13,6 +13,7 @@
 #include <RDGeneral/StreamOps.h>
 #include "DatastructsException.h"
 
+#include <cmath>
 constexpr double VAL_TOL = 0.01;
 
 namespace RDKit {
@@ -43,7 +44,7 @@ bool RealValueVect::compareVectors(const RealValueVect &other) const {
   }
   return std::equal(this->d_data.begin(), this->d_data.end(),
                     other.d_data.begin(), [](auto v1, auto v2) {
-                      return fabs((v1 - v2) / (v1 != 0 ? v1 : 1)) <= VAL_TOL;
+                      return std::fabs((v1 - v2) / (v1 != 0 ? v1 : 1)) <= VAL_TOL;
                     });
 }
 
@@ -53,7 +54,7 @@ double computeL1Norm(const RealValueVect &v1, const RealValueVect &v2) {
   }
   double res = 0.0;
   for (auto i = 0u; i < v1.getLength(); ++i) {
-    res += fabs(v1.getData()[i] - v2.getData()[i]);
+    res += std::fabs(v1.getData()[i] - v2.getData()[i]);
   }
   return res;
 }

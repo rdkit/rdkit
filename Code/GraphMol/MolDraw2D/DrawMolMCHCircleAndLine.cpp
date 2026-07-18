@@ -16,6 +16,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/DrawMolMCHCircleAndLine.h>
 
+#include <cmath>
 namespace RDKit {
 namespace MolDraw2D_detail {
 
@@ -225,7 +226,7 @@ void DrawMolMCHCircleAndLine::calcSymbolEllipse(unsigned int atomIdx,
   x_max = y_max = std::numeric_limits<double>::lowest();
   atomLabels_[atomIdx]->findExtremes(x_min, x_max, y_min, y_max);
 
-  static const double root_2 = sqrt(2.0);
+  static const double root_2 = std::sqrt(2.0);
   xradius = std::max(xradius, root_2 * 0.5 * (x_max - x_min));
   yradius = std::max(yradius, root_2 * 0.5 * (y_max - y_min));
   centre.x = 0.5 * (x_max + x_min);

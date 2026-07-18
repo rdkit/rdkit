@@ -58,8 +58,8 @@ void Transform3D::SetTranslation(const Point3D &move) {
 }
 
 void Transform3D::SetRotation(double angle, AxisType axis) {
-  double cosT = cos(angle);
-  double sinT = sin(angle);
+  double cosT = std::cos(angle);
+  double sinT = std::sin(angle);
   this->setToIdentity();
   double *data = d_data.get();
   switch (axis) {
@@ -105,8 +105,8 @@ void Transform3D::SetRotation(double cosT, double sinT, const Point3D &axis) {
 
 void Transform3D::SetRotation(double angle, const Point3D &axis) {
   this->setToIdentity();
-  double c = cos(angle);
-  double s = sin(angle);
+  double c = std::cos(angle);
+  double s = std::sin(angle);
   this->SetRotation(c, s, axis);
 }
 

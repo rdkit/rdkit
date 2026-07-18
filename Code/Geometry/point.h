@@ -157,11 +157,11 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
 
   double length() const override {
     double res = x * x + y * y + z * z;
-    return sqrt(res);
+    return std::sqrt(res);
   }
 
   constexpr double lengthSq() const override {
-    // double res = pow(x,2) + pow(y,2) + pow(z,2);
+    // double res = std::pow(x,2) + std::pow(y,2) + std::pow(z,2);
     double res = x * x + y * y + z * z;
     return res;
   }
@@ -180,7 +180,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
   double angleTo(const Point3D &other) const {
     double lsq = lengthSq() * other.lengthSq();
     double dotProd = dotProduct(other);
-    dotProd /= sqrt(lsq);
+    dotProd /= std::sqrt(lsq);
 
     // watch for roundoff error:
     if (dotProd <= -1.0) {
@@ -190,7 +190,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
       return 0.0;
     }
 
-    return acos(dotProd);
+    return std::acos(dotProd);
   }
 
   /*! \brief determines the signed angle between a vector to this point
@@ -379,9 +379,9 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
   }
 
   double length() const override {
-    // double res = pow(x,2) + pow(y,2);
+    // double res = std::pow(x,2) + std::pow(y,2);
     double res = x * x + y * y;
-    return sqrt(res);
+    return std::sqrt(res);
   }
 
   constexpr double lengthSq() const override {
@@ -406,7 +406,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
     } else if (dotProd > 1.0) {
       dotProd = 1.0;
     }
-    return acos(dotProd);
+    return std::acos(dotProd);
   }
 
   double signedAngleTo(const Point2D &other) const {
@@ -519,7 +519,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
     } else if (dp > 1.0) {
       dp = 1.0;
     }
-    return acos(dp);
+    return std::acos(dp);
   }
 
  private:

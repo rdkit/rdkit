@@ -44,6 +44,7 @@
 #include <cstdio>
 #include <string_view>
 
+#include <cmath>
 using namespace RDKit::SGroupParsing;
 using std::regex;
 using std::regex_match;
@@ -2286,7 +2287,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
       } catch (boost::bad_lexical_cast &) {
         try {
           dv = FileParserUtils::toDouble(val);
-          v = static_cast<int>(floor(dv));
+          v = static_cast<int>(std::floor(dv));
         } catch (boost::bad_lexical_cast &) {
           v = -1;
         }

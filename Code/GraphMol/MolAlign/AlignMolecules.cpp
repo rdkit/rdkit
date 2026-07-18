@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <boost/format.hpp>
 
+#include <cmath>
 namespace RDKit {
 namespace MolAlign {
 
@@ -208,7 +209,7 @@ double getBestRMSInternal(const ROMol &prbMol, const ROMol &refMol, int prbCid,
     *bestMatch = *bestMatchPtr;
   }
 
-  return sqrt(msdBest);
+  return std::sqrt(msdBest);
 }
 }  // namespace
 
@@ -235,7 +236,7 @@ double getAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
   }
   double msd = alignConfsOnAtomMap(prbCnf, refCnf, *atomMap, trans, weights,
                                    reflect, maxIterations);
-  return sqrt(msd);
+  return std::sqrt(msd);
 }
 
 double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
@@ -450,7 +451,7 @@ void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds,
                                                weights, reflect, maxIters);
       if (RMSlist) {
         ssd /= (prbPoints.size());
-        RMSlist->push_back(sqrt(ssd));
+        RMSlist->push_back(std::sqrt(ssd));
       }
       MolTransforms::transformConformer(*(*cnfi), trans);
     }
@@ -468,7 +469,7 @@ void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds,
                                                weights, reflect, maxIters);
       if (RMSlist) {
         ssd /= (prbPoints.size());
-        RMSlist->push_back(sqrt(ssd));
+        RMSlist->push_back(std::sqrt(ssd));
       }
       MolTransforms::transformConformer(conf, trans);
     }

@@ -967,7 +967,7 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   rtrans.SetTransform(refLoc, currAngle);
   auto currLoc = nb2;
   rtrans.TransformPoint(currLoc);
-  if (fabs(remAngle) - M_PI < 1e-3) {
+  if (std::fabs(remAngle) - M_PI < 1e-3) {
     auto currLoc2 = nb2;
     rtrans.SetTransform(refLoc, -currAngle);
     rtrans.TransformPoint(currLoc2);
@@ -1399,7 +1399,7 @@ void EmbeddedFrag::canonicalizeOrientation() {
   //   (2*xy, (yy - xx) + d) and (2*xy, (yy - xx) - d)
   // where d = sqrt((xx - yy)^2 + 4*xy^2)
   auto d = (xx - yy) * (xx - yy) + 4 * xy * xy;
-  d = sqrt(d);
+  d = std::sqrt(d);
   eig1.x = 2 * xy;
   eig1.y = (yy - xx) + d;
   if (eig1.length() <= 1e-4) {

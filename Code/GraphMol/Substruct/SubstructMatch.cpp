@@ -23,6 +23,7 @@
 #include <map>
 #include <span>
 
+#include <cmath>
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #include <thread>
@@ -630,7 +631,7 @@ std::vector<MatchVectType> SubstructMatch(
       matchesThread[ti] = std::make_unique<std::set<MatchVectType>>();
       unsigned int bi = ei;
       dc += dpt;
-      ei = static_cast<unsigned int>(floor(dc));
+      ei = static_cast<unsigned int>(std::floor(dc));
       tg.emplace_back(std::async(std::launch::async,
                                  detail::ResSubstructMatchHelper_, args,
                                  matchesThread[ti].get(), bi, ei));

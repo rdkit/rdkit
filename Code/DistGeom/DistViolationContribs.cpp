@@ -12,6 +12,7 @@
 #include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
 
+#include <cmath>
 namespace DistGeom {
 
 DistViolationContribs::DistViolationContribs(ForceFields::ForceField *owner) {
@@ -33,7 +34,7 @@ inline double distance2(const unsigned int idx1, const unsigned int idx2,
 
 inline double distance(const unsigned int idx1, const unsigned int idx2,
                        const double *pos, const unsigned int dim) {
-  return sqrt(distance2(idx1, idx2, pos, dim));
+  return std::sqrt(distance2(idx1, idx2, pos, dim));
 }
 
 double DistViolationContribs::getEnergy(double *pos) const {
@@ -70,10 +71,10 @@ void DistViolationContribs::getGrad(double *pos, double *grad) const {
     double d;
     double preFactor = 0.0;
     if (d2 > c.ub2) {
-      d = sqrt(d2);
+      d = std::sqrt(d2);
       preFactor = 4. * (((d * d) / c.ub2) - 1.0) * (d / c.ub2);
     } else if (d2 < c.lb2) {
-      d = sqrt(d2);
+      d = std::sqrt(d2);
       double l2d2 = d2 + c.lb2;
       preFactor = 8. * c.lb2 * d * (1. - 2 * c.lb2 / l2d2) / (l2d2 * l2d2);
     } else {

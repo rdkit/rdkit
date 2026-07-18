@@ -20,6 +20,7 @@
 
 #include <GraphMol/Descriptors/AUTOCORR3D.h>
 
+#include <cmath>
 void testautocorrelation() {
   std::cout << "=>start test autocorr3D\n";
 
@@ -69,11 +70,11 @@ void testautocorrelation() {
 
     for (int i = 0; i < 80; i++) {
       double ref = atof(myrow[i + 1].c_str());
-      if (fabs(ref - da3d[i]) > 0.0015) {
+      if (std::fabs(ref - da3d[i]) > 0.0015) {
         std::cout << "value mismatch: pos" << i << " " << inm << " " << ref
                   << " " << da3d[i] << std::endl;
       }
-      TEST_ASSERT(fabs(ref - da3d[i]) < 0.0015);
+      TEST_ASSERT(std::fabs(ref - da3d[i]) < 0.0015);
     }
     delete m;
     ++nDone;

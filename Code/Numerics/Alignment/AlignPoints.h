@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
+#include <cmath>
 #ifndef RD_ALIGN_POINTS_H
 #define RD_ALIGN_POINTS_H
 

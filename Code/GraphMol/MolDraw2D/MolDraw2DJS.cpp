@@ -130,8 +130,8 @@ void MolDraw2DJS::drawEllipse(const Point2D &cds1, const Point2D &cds2,
   double ry = 0.5 * h;
   double cx = c1.x + rx;
   double cy = c1.y + ry;
-  rx = fabs(rx);
-  ry = fabs(ry);
+  rx = std::fabs(rx);
+  ry = std::fabs(ry);
 
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();

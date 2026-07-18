@@ -45,7 +45,7 @@ void arcPoints(const Point2D &cds1, const Point2D &cds2,
   float step = M_PI * extent / (180 * steps);
   float angle = M_PI * startAng / 180;
   for (int i = 0; i <= steps; ++i) {
-    Point2D point(x + xScale * cos(angle), y - yScale * sin(angle));
+    Point2D point(x + xScale * std::cos(angle), y - yScale * std::sin(angle));
     res.emplace_back(point);
     angle += step;
   }
@@ -60,11 +60,11 @@ bool lineSegmentsIntersect(const Point2D &s1, const Point2D &s2,
   auto d2x = (s3.x - s4.x);
   auto d2y = (s3.y - s4.y);
 
-  if (fabs(d1x) < 1e-4) {
+  if (std::fabs(d1x) < 1e-4) {
     // fudge factor, since this isn't super critical
     d1x = 1e-4;
   }
-  if (fabs(d2x) < 1e-4) {
+  if (std::fabs(d2x) < 1e-4) {
     // fudge factor, since this isn't super critical
     d2x = 1e-4;
   }
@@ -244,7 +244,7 @@ bool doesLineIntersectArc(const Point2D &centre, double xradius, double yradius,
     if (xdisc + ydisc <= 1.0) {
       // end1 is inside the whole ellipse.  See if the angle it makes with the
       // x axis lies between start_and and stop_ang.
-      double th = atan2(p.x, p.y) * 180.0 / M_PI;
+      double th = std::atan2(p.x, p.y) * 180.0 / M_PI;
       if (th < 0.0) {
         th += 360.0;
       }
@@ -352,7 +352,7 @@ RDKIT_MOLDRAW2D_EXPORT void calcArrowHead(Point2D &arrowEnd, Point2D &arrow1,
     return;
   }
   // Allow for the mitre.
-  double adjuster = 0.5 * lineWidth / sin(angle);
+  double adjuster = 0.5 * lineWidth / std::sin(angle);
   double len = (arrowBegin - arrowEnd).length();
   if (len > 1.0e-6) {
     double adjLen = len - adjuster;
@@ -399,13 +399,13 @@ void adjustLineEndForEllipse(const Point2D &centre, double xradius,
     // no solutions, leave things as they are.  Bit crap, though.
     p2 += centre;
     return;
-  } else if (fabs(disc) < 1.0e-6) {
+  } else if (std::fabs(disc) < 1.0e-6) {
     // 1 solution
     double t = -B / (2.0 * A);
     p2 = t_to_point(t);
   } else {
     // 2 solutions - take the one nearest p1.
-    double disc_rt = sqrt(disc);
+    double disc_rt = std::sqrt(disc);
     double t1 = (-B + disc_rt) / (2.0 * A);
     double t2 = (-B - disc_rt) / (2.0 * A);
     double t;
@@ -485,7 +485,7 @@ std::vector<SGroupDataLabel> getSGroupDataLabels(const ROMol &mol,
         if (atomIdx < 0) {
           // no atom to anchor relative position to, skip
           continue;
-        } else if (fabs(xp) > 1e-3 || fabs(yp) > 1e-3) {
+        } else if (std::fabs(xp) > 1e-3 || std::fabs(yp) > 1e-3) {
           // opposite sign for y
           pos.x += conf.getAtomPos(atomIdx).x;
           pos.y -= conf.getAtomPos(atomIdx).y;

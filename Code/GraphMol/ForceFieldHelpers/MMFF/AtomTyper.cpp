@@ -20,6 +20,7 @@
 #include "AtomTyper.h"
 #include <cstdarg>
 
+#include <cmath>
 namespace RDKit {
 namespace MMFF {
 using namespace ForceFields::MMFF;
@@ -2703,7 +2704,7 @@ MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &,
 #endif
   // equation (18) - MMFF.V, page 625
   mmffBondParams->r0 = (r0_i[0] + r0_i[1] -
-                        c * pow(fabs(mmffAtomCovRadPauEleParams[0]->chi -
+                        c * std::pow(std::fabs(mmffAtomCovRadPauEleParams[0]->chi -
                                      mmffAtomCovRadPauEleParams[1]->chi),
                                 n) -
                         delta);
@@ -2721,7 +2722,7 @@ MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &,
     mmffHerschbachLaurieParams = (*mmffHerschbachLaurie)(
         getPeriodicTableRowHL(atomicNum1), getPeriodicTableRowHL(atomicNum2));
     mmffBondParams->kb =
-        pow(10.0, -(mmffBondParams->r0 - mmffHerschbachLaurieParams->a_ij) /
+        std::pow(10.0, -(mmffBondParams->r0 - mmffHerschbachLaurieParams->a_ij) /
                       mmffHerschbachLaurieParams->d_ij);
   }
 
@@ -2866,7 +2867,7 @@ const ForceFields::MMFF::MMFFAngle *getMMFFAngleBendEmpiricalRuleParams(
   // equation (20) - MMFF.V, page 628
   mmffAngleParams->ka =
       beta * Z[0] * C[1] * Z[2] /
-      ((r0_ij + r0_jk) * theta0_rad * theta0_rad * exp(2.0 * D));
+      ((r0_ij + r0_jk) * theta0_rad * theta0_rad * std::exp(2.0 * D));
 
   return (const ForceFields::MMFF::MMFFAngle *)mmffAngleParams;
 }
@@ -2956,19 +2957,19 @@ MMFFMolProperties::getMMFFTorsionEmpiricalRuleParams(const ROMol &mol,
                 ? 3.0
                 : 6.0);
     pi_jk = (((jMMFFProp->pilp == 0) && (kMMFFProp->pilp == 0)) ? 0.5 : 0.3);
-    mmffTorParams->V2 = beta * pi_jk * sqrt(U[0] * U[1]);
+    mmffTorParams->V2 = beta * pi_jk * std::sqrt(U[0] * U[1]);
   }
 
   // rule (c)
   else if (bond->getBondType() == Bond::DOUBLE) {
     beta = 6.0;
     pi_jk = (((jMMFFProp->mltb == 2) && (kMMFFProp->mltb == 2)) ? 1.0 : 0.4);
-    mmffTorParams->V2 = beta * pi_jk * sqrt(U[0] * U[1]);
+    mmffTorParams->V2 = beta * pi_jk * std::sqrt(U[0] * U[1]);
   }
 
   // rule (d)
   else if ((jMMFFProp->crd == 4) && (kMMFFProp->crd == 4)) {
-    mmffTorParams->V3 = sqrt(V[0] * V[1]) / N_jk;
+    mmffTorParams->V3 = std::sqrt(V[0] * V[1]) / N_jk;
   }
 
   // rule (e)
@@ -2981,7 +2982,7 @@ MMFFMolProperties::getMMFFTorsionEmpiricalRuleParams(const ROMol &mol,
       mmffTorParams->V2 = 0.0;
       mmffTorParams->V3 = 0.0;
     } else {
-      mmffTorParams->V3 = sqrt(V[0] * V[1]) / N_jk;
+      mmffTorParams->V3 = std::sqrt(V[0] * V[1]) / N_jk;
     }
   }
 
@@ -2995,7 +2996,7 @@ MMFFMolProperties::getMMFFTorsionEmpiricalRuleParams(const ROMol &mol,
       mmffTorParams->V2 = 0.0;
       mmffTorParams->V3 = 0.0;
     } else {
-      mmffTorParams->V3 = sqrt(V[0] * V[1]) / N_jk;
+      mmffTorParams->V3 = std::sqrt(V[0] * V[1]) / N_jk;
     }
   }
 
@@ -3022,7 +3023,7 @@ MMFFMolProperties::getMMFFTorsionEmpiricalRuleParams(const ROMol &mol,
                  (getPeriodicTableRow(atomicNum[1]) != 2)) {
         pi_jk = 0.15;
       }
-      mmffTorParams->V2 = beta * pi_jk * sqrt(U[0] * U[1]);
+      mmffTorParams->V2 = beta * pi_jk * std::sqrt(U[0] * U[1]);
     }
     // case (3)
     else if (kMMFFProp->pilp && jMMFFProp->mltb) {
@@ -3036,20 +3037,20 @@ MMFFMolProperties::getMMFFTorsionEmpiricalRuleParams(const ROMol &mol,
                  (getPeriodicTableRow(atomicNum[1]) != 2)) {
         pi_jk = 0.15;
       }
-      mmffTorParams->V2 = beta * pi_jk * sqrt(U[0] * U[1]);
+      mmffTorParams->V2 = beta * pi_jk * std::sqrt(U[0] * U[1]);
     }
     // case (4)
     else if (((jMMFFProp->mltb == 1) || (kMMFFProp->mltb == 1)) &&
              ((atomicNum[0] != 6) || (atomicNum[1] != 6))) {
       beta = 6.0;
       pi_jk = 0.4;
-      mmffTorParams->V2 = beta * pi_jk * sqrt(U[0] * U[1]);
+      mmffTorParams->V2 = beta * pi_jk * std::sqrt(U[0] * U[1]);
     }
     // case (5)
     else {
       beta = 6.0;
       pi_jk = 0.15;
-      mmffTorParams->V2 = beta * pi_jk * sqrt(U[0] * U[1]);
+      mmffTorParams->V2 = beta * pi_jk * std::sqrt(U[0] * U[1]);
     }
   }
 
@@ -3057,9 +3058,9 @@ MMFFMolProperties::getMMFFTorsionEmpiricalRuleParams(const ROMol &mol,
   else {
     if (((atomicNum[0] == 8) || (atomicNum[0] == 16)) &&
         ((atomicNum[1] == 8) || (atomicNum[1] == 16))) {
-      mmffTorParams->V2 = -sqrt(W[0] * W[1]);
+      mmffTorParams->V2 = -std::sqrt(W[0] * W[1]);
     } else {
-      mmffTorParams->V3 = sqrt(V[0] * V[1]) / N_jk;
+      mmffTorParams->V3 = std::sqrt(V[0] * V[1]) / N_jk;
     }
   }
 

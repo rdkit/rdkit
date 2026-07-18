@@ -19,6 +19,7 @@
 #include <vector>
 // #define VERBOSE_CANON 1
 
+#include <cmath>
 namespace RDKit {
 namespace Canon {
 
@@ -542,7 +543,7 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
       // FIX: this applies to more than just P
     } else {
       nReps =
-          static_cast<unsigned int>(floor(2. * bond->getBondTypeAsDouble()));
+          static_cast<unsigned int>(std::floor(2. * bond->getBondTypeAsDouble()));
     }
     unsigned int symclass =
         nbr->getAtomicNum() * ATNUM_CLASS_OFFSET + nbrIdx + 1;

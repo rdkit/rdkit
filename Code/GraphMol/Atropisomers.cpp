@@ -23,6 +23,7 @@
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
+#include <cmath>
 constexpr double REALLY_SMALL_BOND_LEN = 0.0000001;
 
 namespace RDKit {
@@ -92,8 +93,8 @@ bool getBondFrameOfReference(const Bond *bond, const Conformer *conf,
 
   // here for 3D conf
 
-  if (fabs(xAxis.x) > REALLY_SMALL_BOND_LEN ||
-      fabs(xAxis.y) > REALLY_SMALL_BOND_LEN) {
+  if (std::fabs(xAxis.x) > REALLY_SMALL_BOND_LEN ||
+      std::fabs(xAxis.y) > REALLY_SMALL_BOND_LEN) {
     zAxis = RDGeom::Point3D(
         0, 0, 1);  // since X or Y value of the new x xaxis is NOT 0, this
                    // new temp z axis cannnot be colinear with it
@@ -408,10 +409,10 @@ void DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
 
       if (bondDirResult.second == Bond::BEGINWEDGE) {
         bondVecs[bondAtomIndex].y *= 0.707;
-        bondVecs[bondAtomIndex].z = fabs(bondVecs[bondAtomIndex].y);
+        bondVecs[bondAtomIndex].z = std::fabs(bondVecs[bondAtomIndex].y);
       } else if (bondDirResult.second == Bond::BEGINDASH) {
         bondVecs[bondAtomIndex].y *= 0.707;
-        bondVecs[bondAtomIndex].z = -fabs(bondVecs[bondAtomIndex].y);
+        bondVecs[bondAtomIndex].z = -std::fabs(bondVecs[bondAtomIndex].y);
       }
     } else {  // the conf is 3D
       // to be considered, one or more neighbor bonds must have a wedge or

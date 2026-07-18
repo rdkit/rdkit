@@ -171,7 +171,7 @@ class Vector {
   }
 
   //! L2 norm
-  constexpr TYPE normL2() const { return sqrt(this->normL2Sq()); }
+  constexpr TYPE normL2() const { return std::sqrt(this->normL2Sq()); }
 
   //! L1 norm
   constexpr TYPE normL1() const {
@@ -179,7 +179,7 @@ class Vector {
     unsigned int i;
     TYPE *data = d_data.get();
     for (i = 0; i < d_size; i++) {
-      res += fabs(data[i]);
+      res += std::fabs(data[i]);
     }
     return res;
   }
@@ -190,8 +190,8 @@ class Vector {
     unsigned int i;
     TYPE *data = d_data.get();
     for (i = 0; i < d_size; i++) {
-      if (fabs(data[i]) > res) {
-        res = fabs(data[i]);
+      if (std::fabs(data[i]) > res) {
+        res = std::fabs(data[i]);
       }
     }
     return res;
@@ -204,8 +204,8 @@ class Vector {
     unsigned int i, id = d_size;
     TYPE *data = d_data.get();
     for (i = 0; i < d_size; i++) {
-      if (fabs(data[i]) > res) {
-        res = fabs(data[i]);
+      if (std::fabs(data[i]) > res) {
+        res = std::fabs(data[i]);
         id = i;
       }
     }

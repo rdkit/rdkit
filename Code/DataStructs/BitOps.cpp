@@ -326,7 +326,7 @@ double CosineSimilarity(const T1 &bv1, const T2 &bv2) {
   double z = bv2.getNumOnBits();
 
   if (y * z > 0.0) {
-    return x / sqrt(y * z);
+    return x / std::sqrt(y * z);
   } else {
     return 0.0;
   }
