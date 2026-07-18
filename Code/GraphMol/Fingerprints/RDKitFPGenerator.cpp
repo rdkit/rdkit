@@ -118,7 +118,7 @@ RDKitFPArguments::RDKitFPArguments(unsigned int minPath, unsigned int maxPath,
 
 template <typename OutputType>
 void RDKitFPAtomEnv<OutputType>::updateAdditionalOutput(
-    AdditionalOutput *additionalOutput, size_t bitId) const {
+    AdditionalOutput *additionalOutput, std::uint64_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
   if (additionalOutput->bitPaths) {
     (*additionalOutput->bitPaths)[bitId].push_back(d_bondPath);
