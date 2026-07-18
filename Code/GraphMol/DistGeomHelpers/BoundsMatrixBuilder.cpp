@@ -1494,17 +1494,16 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   set12Bounds(mol, mmat, accumData);
   if (set13bounds) {
     set13Bounds(mol, mmat, accumData);
-  }
 
-  if (set14bounds) {
-    set14Bounds(mol, mmat, accumData, distMatrix, params.useMacrocycle14config,
-                params.forceTransAmides);
-  }
+    if (set14bounds) {
+      set14Bounds(mol, mmat, accumData, distMatrix,
+                  params.useMacrocycle14config, params.forceTransAmides);
 
-  if (set15bounds) {
-    set15Bounds(mol, mmat, accumData, distMatrix);
+      if (set15bounds) {
+        set15Bounds(mol, mmat, accumData, distMatrix);
+      }
+    }
   }
-
   setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
 }
 
