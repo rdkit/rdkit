@@ -1860,4 +1860,138 @@ TEST_CASE("setTopolBounds with param objects") {
     DGeomHelpers::setTopolBounds(*mol, bm, ps);
     CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) < 0.5);
   }
+
+  SECTION("additional parameters") {
+    auto mol = "CC(=O)NCC"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::EmbedParameters ps;
+    ps.useMacrocycle14config = true;
+    ps.forceTransAmides = true;
+
+    {
+      // skip setting 1-3 bounds
+      bool set15bounds = true;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = true;
+      bool set13bounds = false;
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) == 1000.0);
+      // make sure 1-4s and 1-5s are also not set:
+      CHECK(bm->getUpperBound(0, 4) == 1000.0);
+      CHECK(bm->getUpperBound(0, 5) == 1000.0);
+
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, ps, scaleVDW, set15bounds,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) == 1000.0);
+      // make sure 1-4s and 1-5s are also not set:
+      CHECK(bm->getUpperBound(0, 4) == 1000.0);
+      CHECK(bm->getUpperBound(0, 5) == 1000.0);
+    }
+    {
+      // skip setting 1-4 bounds
+      bool set15bounds = true;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = false;
+      bool set13bounds = true;
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) < 6.0);
+      CHECK(bm->getUpperBound(0, 4) == 1000.0);
+      // make sure 1-5s are also not set:
+      CHECK(bm->getUpperBound(0, 5) == 1000.0);
+
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, ps, scaleVDW, set15bounds,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) < 6.0);
+      CHECK(bm->getUpperBound(0, 4) == 1000.0);
+      // make sure 1-5s are also not set:
+      CHECK(bm->getUpperBound(0, 5) == 1000.0);
+    }
+    {
+      // skip setting 1-5 bounds
+      bool set15bounds = false;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = true;
+      bool set13bounds = true;
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) < 6.0);
+      CHECK(bm->getUpperBound(0, 4) < 6.0);
+      CHECK(bm->getUpperBound(0, 5) == 1000.0);
+
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, ps, scaleVDW, set15bounds,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) < 6.0);
+      CHECK(bm->getUpperBound(0, 4) < 6.0);
+      CHECK(bm->getUpperBound(0, 5) == 1000.0);
+    }
+    {
+      // set everything
+      bool set15bounds = true;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = true;
+      bool set13bounds = true;
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) < 6.0);
+      CHECK(bm->getUpperBound(0, 4) < 6.0);
+      CHECK(bm->getUpperBound(0, 5) < 6.0);
+
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, ps, scaleVDW, set15bounds,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) < 6.0);
+      CHECK(bm->getUpperBound(0, 4) < 6.0);
+      CHECK(bm->getUpperBound(0, 5) < 6.0);
+    }
+    {
+      // scale VDW is ignored
+      bool set15bounds = false;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = true;
+      bool set13bounds = true;
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+      auto lb = bm->getLowerBound(0, 5);
+      CHECK_THAT(lb, Catch::Matchers::WithinAbs(2.38, 0.01));
+
+      scaleVDW = true;
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+      CHECK(lb == bm->getLowerBound(0, 5));
+
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, ps, scaleVDW, set15bounds,
+                                   set14bounds, set13bounds);
+      CHECK(lb == bm->getLowerBound(0, 5));
+    }
+  }
 }
