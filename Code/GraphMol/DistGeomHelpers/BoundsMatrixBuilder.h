@@ -48,16 +48,15 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
   \param mol          The molecule of interest
   \param mmat         Bounds matrix to the bounds are written
   \param set15bounds  If true try to set 1-5 bounds also based on topology
-  \param scaleVDW     If true scale the sum of the vdW radii while setting lower
-  bounds
-                      so that a smaller value (0.7*(vdw1 + vdw2) ) is used for
-  paths
-                      that are less five bonds apart.
+  \param scaleVDW     Ignored.
   \param useMacrocycle14config  If 1-4 distances bound heuristics for
   macrocycles is used <b>Note</b> For some strained systems the bounds matrix
   resulting from setting 1-5 bounds may fail triangle smoothing. In these cases
   it is recommended to back out and recompute the bounds matrix with no 1-5
   bounds and with vdW scaling.
+  \param forceTransAmides  If true, amide bonds are enforced to be trans
+  \param set14bounds  If true, set 1-4 distance bounds based on topology
+  \param set13bounds  If true, set 1-3 distance bounds based on topology
 */
 inline void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                            bool set15bounds = true, bool scaleVDW = false,
