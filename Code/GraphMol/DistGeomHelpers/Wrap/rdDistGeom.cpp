@@ -741,8 +741,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - mol : the molecule of interest\n\
     - set15bounds : set bounds for 1-5 atom distances based on \n\
                     topology (otherwise stop at 1-4s)\n\
-    - scaleVDW : scale down the sum of VDW radii when setting the \n\
-                 lower bounds for atoms less than 5 bonds apart \n\
+    - scaleVDW : ignored \n\
     - doTriangleSmoothing : run triangle smoothing on the bounds \n\
                  matrix before returning it \n\
     - useMacrocycle14config : use 1-4 distance bound heuristics for macrocycles\n\
