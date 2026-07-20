@@ -1017,13 +1017,9 @@ void EmbeddedFrag::addNonRingAtom(unsigned int aid, unsigned int toAid) {
     }
   }
 
-  // Debug: print atom placement
-  std::cerr << "Adding atom " << aid << " to atom " << toAid;
   if (d_eatoms[toAid].angle > 0.0) {
-    std::cerr << " (WithAng)" << std::endl;
     addAtomToAtomWithAng(aid, toAid);
   } else {
-    std::cerr << " (NoAng)" << std::endl;
     addAtomToAtomWithNoAng(aid, toAid);
   }
   // remove aid from the neighbor list of toAid
