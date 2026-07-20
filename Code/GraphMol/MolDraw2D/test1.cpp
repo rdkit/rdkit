@@ -3334,7 +3334,7 @@ void test18FixedScales() {
                   std::string::npos);
 #endif
 #else
-      TEST_ASSERT(text.find("font-size:9px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:10px") != std::string::npos);
 #endif
       check_file_hash(nameBase + "3.svg");
     }
@@ -3375,7 +3375,7 @@ void test18FixedScales() {
                   std::string::npos);
 #endif
 #else
-      TEST_ASSERT(text.find("font-size:9px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:10px") != std::string::npos);
 #endif
       check_file_hash(nameBase + "5.svg");
     }
