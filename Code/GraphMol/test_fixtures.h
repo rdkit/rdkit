@@ -13,7 +13,6 @@
 #include <cstdlib>
 #include <string>
 
-#include <boost/noncopyable.hpp>
 
 #include <GraphMol/Chirality.h>
 
@@ -40,8 +39,10 @@
   }
 #endif
 
-class TestFixtureTemplate : public boost::noncopyable {
+class TestFixtureTemplate {
  public:
+  TestFixtureTemplate(const TestFixtureTemplate &) = delete;
+  TestFixtureTemplate &operator=(const TestFixtureTemplate &) = delete;
   TestFixtureTemplate() = delete;
 
   TestFixtureTemplate(std::string var, bool (*getter_func)(),

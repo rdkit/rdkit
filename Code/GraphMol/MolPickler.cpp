@@ -420,24 +420,24 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         ((const RecursiveStructureQuery *)query)->getQueryMol(), ss);
   } else {
     auto qdetails = PicklerOps::getQueryDetails(query);
-    switch (qdetails.which()) {
+    switch (qdetails.index()) {
       case 0:
-        streamWrite(ss, boost::get<MolPickler::Tags>(qdetails));
+        streamWrite(ss, std::get<MolPickler::Tags>(qdetails));
         break;
       case 1: {
-        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t>>(qdetails);
+        auto v = std::get<std::tuple<MolPickler::Tags, int32_t>>(qdetails);
         streamWrite(ss, std::get<0>(v));
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<1>(v));
       } break;
       case 2: {
-        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t, int32_t>>(
+        auto v = std::get<std::tuple<MolPickler::Tags, int32_t, int32_t>>(
             qdetails);
         streamWrite(ss, std::get<0>(v));
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<1>(v));
         streamWrite(ss, std::get<2>(v));
       } break;
       case 3: {
-        auto v = boost::get<
+        auto v = std::get<
             std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>>(
             qdetails);
         streamWrite(ss, std::get<0>(v));
@@ -447,7 +447,7 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         streamWrite(ss, std::get<4>(v));
       } break;
       case 4: {
-        auto v = boost::get<std::tuple<MolPickler::Tags, std::set<int32_t>>>(
+        auto v = std::get<std::tuple<MolPickler::Tags, std::set<int32_t>>>(
             qdetails);
         streamWrite(ss, std::get<0>(v));
         const auto &tset = std::get<1>(v);
@@ -460,13 +460,13 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
       } break;
       case 5: {
         auto v =
-            boost::get<std::tuple<MolPickler::Tags, std::string>>(qdetails);
+            std::get<std::tuple<MolPickler::Tags, std::string>>(qdetails);
         streamWrite(ss, std::get<0>(v));
         const auto &pval = std::get<1>(v);
         streamWrite(ss, MolPickler::QUERY_VALUE, pval);
       } break;
       case 6: {
-        auto &v = boost::get<std::tuple<MolPickler::Tags, PairHolder, double>>(
+        auto &v = std::get<std::tuple<MolPickler::Tags, PairHolder, double>>(
             qdetails);
         streamWrite(ss, std::get<0>(v));
         // The tolerance is pickled first as we can't pickle a PairHolder with
