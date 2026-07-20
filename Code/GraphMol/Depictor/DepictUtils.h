@@ -32,6 +32,9 @@ RDKIT_DEPICTOR_EXPORT extern unsigned int MAX_COLL_ITERS;
 RDKIT_DEPICTOR_EXPORT extern double HETEROATOM_COLL_SCALE;
 RDKIT_DEPICTOR_EXPORT extern unsigned int NUM_BONDS_FLIPS;
 
+// Threshold for identifying macrocycles (rings > 8 atoms)
+constexpr unsigned int MACROCYCLE_SIZE_THRESHOLD = 8;
+
 typedef std::vector<const RDGeom::Point2D *> VECT_C_POINT;
 
 typedef std::pair<int, int> PAIR_I_I;

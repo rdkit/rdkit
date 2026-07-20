@@ -15,6 +15,7 @@
 #include <Geometry/Transform2D.h>
 #include <Geometry/point.h>
 #include "DepictUtils.h"
+#include "MacrocycleGenerator.h"
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
 
@@ -189,9 +190,11 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
     \param fusedRings a vector of rings, each ring is a list of atom ids
     \param useRingTemplates whether to use ring system templates for generating
       initial coordinates
+    \param useDeNovoMacrocycleGeneration whether to use de novo macrocycle
+      generation for large rings
   */
   EmbeddedFrag(const RDKit::ROMol *mol, const RDKit::VECT_INT_VECT &fusedRings,
-               bool useRingTemplates);
+               bool useRingTemplates, bool useDeNovoMacrocycleGeneration);
 
   //! Initializer for a cis/trans system using the double bond
   /*!
@@ -348,11 +351,14 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
                                         double mimicDmatWt = 0.0,
                                         bool permuteDeg4Nodes = false);
 
-  //! Remove collisions in a structure by flipping rotatable bonds and spiro centers
-  //! along the shortest path between two colliding atoms
+  //! Remove collisions in a structure by flipping rotatable bonds and spiro
+  //! centers along the shortest path between two colliding atoms
   void removeCollisionsBondAndSpiroFlip();
-  
-  [[deprecated("please use removeCollisionsBondAndSpiroFlip()")]] void removeCollisionsBondFlip() { removeCollisionsBondAndSpiroFlip(); };
+
+  [[deprecated("please use removeCollisionsBondAndSpiroFlip()")]] void
+  removeCollisionsBondFlip() {
+    removeCollisionsBondAndSpiroFlip();
+  };
 
   //! Remove collision by opening angles at the offending atoms
   void removeCollisionsOpenAngles();
@@ -386,25 +392,42 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
 
   // Helper methods for collision resolution
   bool tryResolvingCollisionWithBondFlip(
-      const std::pair<unsigned int, unsigned int> &cAids,
-      unsigned int ncols,
-      double prevDensity,
-      std::map<int, unsigned int> &doneBonds,
+      const std::pair<unsigned int, unsigned int> &cAids, unsigned int ncols,
+      double prevDensity, std::map<int, unsigned int> &doneBonds,
       const double *dmat);
 
   bool tryResolvingCollisionWithSpiroFlip(
-      const std::pair<unsigned int, unsigned int> &cAids,
-      unsigned int ncols,
-      double prevDensity,
-      std::map<int, unsigned int> &doneSpiros,
-      const boost::dynamic_bitset<> &spiroCenters,
-      const double *dmat);
+      const std::pair<unsigned int, unsigned int> &cAids, unsigned int ncols,
+      double prevDensity, std::map<int, unsigned int> &doneSpiros,
+      const boost::dynamic_bitset<> &spiroCenters, const double *dmat);
 
   // returns true if fused rings found a template
   bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms);
 
+  //! Copy coordinates from a template match into embedded atoms
+  /*!
+    \param templateMol the template molecule with conformer coordinates
+    \param match the mapping from template atom indices to molecule atom indices
+  */
+  void applyCoordinates(const std::shared_ptr<RDKit::ROMol> &templateMol,
+                        const RDKit::MatchVectType &match);
+
+  //! Copy coordinates directly into embedded atoms
+  /*!
+    \param atomIndices the atom indices to set coordinates for
+    \param coordinates the 2D coordinates (must be same size as atomIndices)
+  */
+  void applyCoordinates(const RDKit::INT_VECT &atomIndices,
+                        const std::vector<RDGeom::Point2D> &coordinates);
+
+  void embedMacrocycleWithFusedRings(const RDKit::VECT_INT_VECT &coreRings,
+                                     const RDKit::INT_VECT &coreRingsIds,
+                                     RDKit::INT_VECT &doneRings,
+                                     bool useDeNovoMacrocycleGeneration);
+
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
-                       bool useRingTemplates);
+                       bool useRingTemplates,
+                       bool useDeNovoMacrocycleGeneration);
 
   void setupAttachmentPoints();
 
@@ -493,13 +516,15 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   void reflectIfNecessaryThirdPt(EmbeddedFrag &embFrag, unsigned int aid1,
                                  unsigned int aid2, unsigned int aid3);
 
-  //! \brief Initialize this fragment from a ring and coordinates for its atoms
+  //! \brief Initialize this fragment from a ring and coordinates for its
+  //! atoms
   /*!
     ARGUMENTS:
     /param ring     a vector of atom ids in the ring; it is assumed that there
     in
                     clockwise or anti-clockwise order
-    /param nringMap a map of atomId to coordinate map for the atoms in the ring
+    /param nringMap a map of atomId to coordinate map for the atoms in the
+    ring
   */
   void initFromRingCoords(const RDKit::INT_VECT &ring,
                           const RDGeom::INT_POINT2D_MAP &nringMap);
@@ -528,9 +553,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
 
     ARGUMENTS:
     \param  aid     ID of the atom to be added
-    \param  toAid   ID of the atom that is already in this object to which this
-    atom is added
-    \param  mol     the molecule we are dealing with
+    \param  toAid   ID of the atom that is already in this object to which
+    this atom is added \param  mol     the molecule we are dealing with
   */
   void addAtomToAtomWithNoAng(
       unsigned int aid,
@@ -567,7 +591,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   bool d_done = false;
   double d_px = 0.0, d_nx = 0.0, d_py = 0.0, d_ny = 0.0;
 
-  //! a map that takes one from the atom id to the embeddedatom object for that
+  //! a map that takes one from the atom id to the embeddedatom object for
+  //! that
   /// atom.
   INT_EATOM_MAP d_eatoms;
 
