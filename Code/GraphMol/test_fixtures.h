@@ -41,8 +41,6 @@
 
 class TestFixtureTemplate {
  public:
-  TestFixtureTemplate(const TestFixtureTemplate &) = delete;
-  TestFixtureTemplate &operator=(const TestFixtureTemplate &) = delete;
   TestFixtureTemplate() = delete;
   TestFixtureTemplate(const TestFixtureTemplate &) = delete;
   TestFixtureTemplate &operator=(const TestFixtureTemplate &) = delete;
