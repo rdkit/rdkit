@@ -839,12 +839,38 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
       }
       aseen[firstIdx] = 1;
 
-      // now that the atom is part of ring check if it can donate
-      // electron or has empty orbitals. Record the donor type
-      // information in 'edon' - we will need it when we get to
-      // the Huckel rule later
+     
       edon[firstIdx] = getAtomDonorTypeArom(at);
       acands[firstIdx] = isAtomCandForArom(at, edon[firstIdx]);
+
+      // Check if this atom can donate electrons or has empty orbitals. 
+      // We save the donor type in 'edon' for the Hückel rule check later.
+      ElectronDonorType donorType = getAtomDonorTypeArom(at);
+      
+      // Fix: Prevent aliphatic ether oxygens and sulfurs in large macrocycles 
+      // (> 10 members) from being falsely flagged as aromatic. In these large 
+      // rings, they act as simple bridges, not pi donors like in small rings (e.g., furan).
+      if (donorType == TwoElectronDonorType) {
+        if ((at->getAtomicNum() == 8 || at->getAtomicNum() == 16) &&
+            at->getDegree() == 2 && at->getFormalCharge() == 0) {
+          bool hasMultipleBond = false;
+          for (const auto bond : mol.atomBonds(at)) {
+            if (bond->getBondType() == Bond::DOUBLE || bond->getBondType() == Bond::TRIPLE) {
+              hasMultipleBond = true;
+              break;
+            }
+          }
+          if (!hasMultipleBond && ringSz > 10) {
+            donorType = NoElectronDonorType;
+          }
+        }
+      }
+
+      edon[firstIdx] = donorType;
+      acands[firstIdx] = isAtomCandForArom(at, donorType);
+      if (!acands[firstIdx]) {
+        allAromatic = false;
+      }
       if (!acands[firstIdx]) {
         allAromatic = false;
       }

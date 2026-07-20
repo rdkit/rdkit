@@ -7997,3 +7997,22 @@ TEST_CASE("Testing isRingFused") {
     REQUIRE(std::count(fusedBonds.begin(), fusedBonds.end(), 2) == 3);
   }
 }
+
+TEST_CASE("Github Issue: Macrocycle ether aromaticity", "[aromaticity]") {
+    // The SMILES with uppercase 'O' (aliphatic ethers)
+    std::string smiles = "O=C(O)c1cccc2Oc3cncc(n3)Oc3c(C(=O)O)cccc3Oc3cncc(n3)Oc12";
+    RWMol *m = SmilesToMol(smiles);
+    REQUIRE(m);
+
+    // Run the aromaticity perception
+    MolOps::setAromaticity(*m);
+
+    // Check that the ether oxygens are NOT aromatic
+    // (Based on the Python script, atoms 8, 15, 25, 32 are the oxygens)
+    CHECK(!m->getAtomWithIdx(8)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(15)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(25)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(32)->getIsAromatic());
+
+    delete m;
+}
