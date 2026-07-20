@@ -134,6 +134,9 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
   //! distance from the initial embedded atom/ring (for chain detection)
   unsigned int d_distanceFromStart{0};
 
+  //! true if this atom is at a balanced bifurcation (both neighbors are chain continuations)
+  bool d_isBalancedBifurcation{false};
+
   //! if set this atom is fixed: further operations on the fragment may not
   //! move it.
   bool df_fixed{false};
@@ -388,6 +391,9 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
 
  private:
   double totalDensity();
+
+  // Check if subtree starting from atomId (excluding parentId) contains ring atoms
+  bool subtreeHasRing(unsigned int atomId, unsigned int parentId) const;
 
   // Helper methods for collision resolution
   bool tryResolvingCollisionWithBondFlip(
