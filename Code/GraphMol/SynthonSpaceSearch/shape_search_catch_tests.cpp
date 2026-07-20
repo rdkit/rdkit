@@ -652,10 +652,13 @@ Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
   // This is one of those rare occasions where Mac and Linux give different
   // conformations even with the same parameters.  The results are similar
   // but ordered differently.
-  std::vector<std::vector<double>> expVols{
-      {74.0, 187.5}, {198.5, 74.2}, {74.3, 177.9}, {138.0, 64.6}};
+  std::vector<std::vector<double>> expVols{{74.0, 187.5},
+                                           {198.5, 74.2},
+                                           {74.3, 177.9},
+                                           {138.0, 64.6},
+                                           {74.2, 140.5}};
   std::vector<std::vector<double>> expMeanVols{
-      {3.0, 6.5}, {6.4, 3.0}, {5.7, 5.7}, {4.2, 2.7}};
+      {3.0, 6.5}, {6.4, 3.0}, {5.7, 5.7}, {4.2, 2.7}, {2.3, 4.4}};
   {
     params.possibleHitsFile = "poss_hits_1.txt";
     params.maxExcludedVolume = -1.0;
@@ -663,16 +666,18 @@ Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
     CHECK(results.getHitMolecules().size() == 2);
     unsigned int i = 0;
     for (const auto &mol : results.getHitMolecules()) {
-      auto excVol = mol->getProp<double>("ExcludedVolume");
-      CHECK_THAT(excVol, Catch::Matchers::WithinAbs(expVols[0][i], 0.1) ||
-                             Catch::Matchers::WithinAbs(expVols[1][i], 0.1) ||
-                             Catch::Matchers::WithinAbs(expVols[2][i], 0.1) ||
-                             Catch::Matchers::WithinAbs(expVols[3][i], 0.1));
+      CHECK_THAT(mol->getProp<double>("ExcludedVolume"),
+                 Catch::Matchers::WithinAbs(expVols[0][i], 0.1) ||
+                     Catch::Matchers::WithinAbs(expVols[1][i], 0.1) ||
+                     Catch::Matchers::WithinAbs(expVols[2][i], 0.1) ||
+                     Catch::Matchers::WithinAbs(expVols[3][i], 0.1) ||
+                     Catch::Matchers::WithinAbs(expVols[4][i], 0.1));
       CHECK_THAT(mol->getProp<double>("MeanExcludedVolume"),
                  Catch::Matchers::WithinAbs(expMeanVols[0][i], 0.1) ||
                      Catch::Matchers::WithinAbs(expMeanVols[1][i], 0.1) ||
                      Catch::Matchers::WithinAbs(expMeanVols[2][i], 0.1) ||
-                     Catch::Matchers::WithinAbs(expMeanVols[3][i], 0.1));
+                     Catch::Matchers::WithinAbs(expMeanVols[3][i], 0.1) ||
+                     Catch::Matchers::WithinAbs(expMeanVols[4][i], 0.1));
       ++i;
     }
     CHECK(countFileLines("poss_hits_1.txt") == 2);
