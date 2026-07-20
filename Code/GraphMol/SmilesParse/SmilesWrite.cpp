@@ -482,12 +482,6 @@ std::string FragmentSmilesConstruct(
 
 }  // end of namespace SmilesWrite
 
-static bool SortBasedOnFirstElement(
-    const std::pair<std::string, std::vector<unsigned int>> &a,
-    const std::pair<std::string, std::vector<unsigned int>> &b) {
-  return a.first < b.first;
-}
-
 namespace SmilesWrite {
 namespace detail {
 std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
@@ -550,7 +544,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     // update property cache
     std::vector<int> atomMapNums(tmol->getNumAtoms(), 0);
     for (auto atom : tmol->atoms()) {
-      if (params.ignoreAtomMapNumbers) {
+      if (params.canonical && params.ignoreAtomMapNumbers) {
         atomMapNums[atom->getIdx()] = atom->getAtomMapNum();
         atom->setAtomMapNum(0);
       }
@@ -645,7 +639,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
                           includeIsotopes, includeAtomMaps,
                           includeChiralPresence, includeStereoGroups,
                           useNonStereoRanks);
-      if (params.ignoreAtomMapNumbers) {
+      if (params.canonical && params.ignoreAtomMapNumbers) {
         for (auto atom : tmol->atoms()) {
           atom->setAtomMapNum(atomMapNums[atom->getIdx()]);
         }

@@ -29,14 +29,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import itertools
-import os
 import pickle
-import sys
-import time
 import unittest
 
-from rdkit import Chem, Geometry, RDConfig, rdBase
+from rdkit import Chem
 from rdkit.Chem import AllChem, rdChemReactions
 
 test_data = [

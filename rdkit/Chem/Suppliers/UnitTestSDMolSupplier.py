@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (C) 2002-2006  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
@@ -112,88 +110,6 @@ class TestCase(unittest.TestCase):
     with open(outPath, 'r') as inf:
       outD = inf.read()
     self.assertEqual(self.nMolecules, outD.count('$$$$'), 'bad nMols in output')
-
-#   def _testStreamRoundtrip(self):
-#     inD = open(self.fName).read()
-#     supp = Chem.SDMolSupplier(self.fName)
-#     outName = tempfile.mktemp('.sdf')
-#     writer = Chem.SDWriter(outName)
-#     _ = next(supp)
-#     for m in supp:
-#       writer.write(m)
-#     writer.flush()
-#     writer = None
-#     outD = open(outName, 'r').read()
-#     try:
-#       os.unlink(outName)
-#     except Exception:
-#       import time
-#       time.sleep(1)
-#       try:
-#         os.unlink(outName)
-#       except Exception:
-#         pass
-#     assert inD.count('$$$$') == outD.count('$$$$'), 'bad nMols in output'
-#     io = StringIO(outD)
-#     supp = Chem.SDMolSupplier(stream=io)
-#     outD2 = supp.Dump()
-#     assert outD2.count('$$$$') == len(supp), 'bad nMols in output'
-#     assert outD2.count('$$$$') == outD.count('$$$$'), 'bad nMols in output'
-#     assert outD2 == outD, 'bad outd'
-
-#   def _testLazyDataRoundtrip(self):
-#     inD = open(self.fName).read()
-#     supp = Chem.SDMolSupplier(self.fName)
-#     outName = tempfile.mktemp('.sdf')
-#     writer = Chem.SDWriter(outName)
-#     _ = next(supp)
-#     for m in supp:
-#       writer.write(m)
-#     writer.flush()
-#     writer = None
-#     outD = open(outName, 'r').read()
-#     try:
-#       os.unlink(outName)
-#     except Exception:
-#       import time
-#       time.sleep(1)
-#       try:
-#         os.unlink(outName)
-#       except Exception:
-#         pass
-#     assert inD.count('$$$$') == outD.count('$$$$'), 'bad nMols in output'
-#     supp = Chem.SDMolSupplier.LazySDMolSupplier(inD=outD)
-#     outD2 = supp.Dump()
-#     assert outD2.count('$$$$') == len(supp), 'bad nMols in output'
-#     assert outD2.count('$$$$') == outD.count('$$$$'), 'bad nMols in output'
-#     assert outD2 == outD, 'bad outd'
-
-#   def _testLazyIter(self):
-#     " tests lazy reads using the iterator interface "
-#     supp = Chem.SDMolSupplier.LazySDMolSupplier(fileN=self.fName)
-#
-#     nDone = 0
-#     for mol in supp:
-#       assert mol, 'read %d failed' % nDone
-#       assert mol.GetNumAtoms(), 'no atoms in mol %d' % nDone
-#       nDone += 1
-#     assert nDone == 200, 'bad number of molecules: %d' % (nDone)
-#
-#     l = len(supp)
-#     assert l == 200, 'bad supplier length: %d' % (l)
-#
-#     i = 12
-#     m = supp[i - 1]
-#     assert m, 'back index %d failed' % i
-#     assert m.GetNumAtoms(), 'no atoms in mol %d' % i
-#
-#     try:
-#       m = supp[201]
-#     except IndexError:
-#       fail = 1
-#     else:
-#       fail = 0
-#     assert fail, 'out of bound read did not fail'
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

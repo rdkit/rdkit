@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2024 Niels Maeder and other RDKit contributors
+//  Copyright (C) 2024-2026 Niels Maeder and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -32,7 +32,7 @@ struct AngleConstraintContribsParams {
         idx3(idx3),
         minAngle(minAngle),
         maxAngle(maxAngle),
-        forceConstant(forceConstant) {};
+        forceConstant(forceConstant){};
 };
 
 //! A term to capture all flat bottom angle constraint potentials.
@@ -78,6 +78,14 @@ class RDKIT_FORCEFIELD_EXPORT AngleConstraintContribs
     \param pos  positions of the atoms in the current state
   */
   double getEnergy(double *pos) const override;
+  //! return the contribution of this contrib to the energy of a given state
+  /*!
+    \param positions positions of the atoms in the current state
+    \param energies Will resize and write the energies of every single contrib
+    of this contribs object to the energies vector
+  */
+  double getEnergy(const RDGeom::Point3DPtrVect &positions,
+                   std::vector<double> &energies) const;
   //! calculate the contribution of this contrib to the gradient at a given
   /// state
   /*!
@@ -99,8 +107,6 @@ class RDKIT_FORCEFIELD_EXPORT AngleConstraintContribs
 
  private:
   std::vector<AngleConstraintContribsParams> d_contribs;
-  double computeAngleTerm(const double &angle,
-                          const AngleConstraintContribsParams &contrib) const;
 };
 }  // namespace ForceFields
 #endif

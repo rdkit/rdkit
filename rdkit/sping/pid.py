@@ -1,4 +1,3 @@
-# $Id$
 # based upon
 # piddle.py -- Plug In Drawing, Does Little Else
 # Copyright (C) 1999  Joseph J. Strout

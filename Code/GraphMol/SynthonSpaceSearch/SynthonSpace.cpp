@@ -40,7 +40,6 @@
 #include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/RDThreads.h>
 #include <RDGeneral/StreamOps.h>
-#include <sys/stat.h>
 
 namespace RDKit {
 namespace SynthonSpaceSearch {
@@ -114,10 +113,9 @@ SearchResults SynthonSpace::substructureSearch(
     const ROMol &query, const SubstructMatchParameters &matchParams,
     const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
-  ControlCHandler::reset();
-
-  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, this);
-  return ssss.search(ThreadMode::ThreadReactions);
+  ControlCHandler hdlr;
+  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, *this);
+  return ssss.search();
 }
 
 void SynthonSpace::substructureSearch(
@@ -125,9 +123,9 @@ void SynthonSpace::substructureSearch(
     const SubstructMatchParameters &matchParams,
     const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
-  ControlCHandler::reset();
-  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, this);
-  ssss.search(cb, ThreadMode::ThreadReactions);
+  ControlCHandler hdlr;
+  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, *this);
+  ssss.search(cb);
 }
 
 SearchResults SynthonSpace::substructureSearch(
@@ -223,7 +221,7 @@ SearchResults SynthonSpace::substructureSearch(
 SearchResults SynthonSpace::fingerprintSearch(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
     const SynthonSpaceSearchParams &params) {
-  ControlCHandler::reset();
+  ControlCHandler hdlr;
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
 
   SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, this);
@@ -233,7 +231,7 @@ SearchResults SynthonSpace::fingerprintSearch(
 void SynthonSpace::fingerprintSearch(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
     const SearchResultCallback &cb, const SynthonSpaceSearchParams &params) {
-  ControlCHandler::reset();
+  ControlCHandler hdlr;
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, this);
   ssss.search(cb, ThreadMode::ThreadFragments);
@@ -484,10 +482,10 @@ void SynthonSpace::readStream(std::istream &is, bool &cancelled) {
   int format = -1;
   std::string nextLine;
   int lineNum = 1;
-  ControlCHandler::reset();
+  ControlCHandler hdlr;
 
   while (!is.eof()) {
-    if (ControlCHandler::getGotSignal()) {
+    if (hdlr.getGotSignal()) {
       cancelled = true;
       return;
     }

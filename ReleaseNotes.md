@@ -12,6 +12,21 @@ GitHub)
 - Since #9208, atom rings are "normalized" so that the first atom in the ring
 definition is the one with the lowest index, and the second one is the neighbor
 to the first which also has the lowest index.
+- `MolTransforms.h` now includes `<Eigen/Core>` instead of `<Eigen/Dense>`. C++
+code that included `MolTransforms.h` and relied on it to transitively pull in the
+Eigen dense modules (LU/QR/SVD/etc.) must now include `<Eigen/Dense>` directly.
+- `PicklerOps::QueryDetails` (in `GraphMol/MolPickler.h`) is now a `std::variant`
+instead of a `boost::variant`. C++ code that inspects this type must use
+`std::get`/`std::holds_alternative` and `.index()` in place of `boost::get` and
+`.which()`. `MolPickler.h` also no longer includes `<boost/variant.hpp>`.
+- `boost_adaptbx::python::streambuf` (in `RDBoost/python_streambuf.h`) now uses
+`std::optional` instead of `boost::optional`, and the header no longer includes
+`<boost/optional.hpp>`.
+- The `DistGeomHelpers::EmbedParameters` struct no longer has a constructor that
+takes arguments in C++. If you want to initialize data members to non-default
+values, use the designated initialization syntax. This change does not affect
+Python.
+- MolToSmiles with canonical=false, ignoreAtomMapNumbers=true no longer strips out the atom map numbers.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use

@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (C) 2002-2008  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
@@ -15,7 +13,6 @@
 import io
 import os
 import pickle
-import sys
 import unittest
 
 import numpy

@@ -337,7 +337,7 @@ class TestMolFromInchiAndAuxInfo(unittest.TestCase):
 
   def test0RoundTripAtomOrder(self):
     """Verify that round-tripping through InChI+AuxInfo preserves atom ordering."""
-    from rdkit.Chem import MolFromSmiles, MolToSmiles
+    from rdkit.Chem import MolFromSmiles
     smiles_list = ['c1ccccc1O', 'CC(=O)O', 'C(=O)(N)C', 'c1cc(O)ccc1N']
     for smi in smiles_list:
       mol = MolFromSmiles(smi)

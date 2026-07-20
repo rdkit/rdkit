@@ -24,7 +24,6 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <boost/multiprecision/number.hpp>
 #include <boost/parameter/aux_/pp_impl/match.hpp>
 
 #include <catch2/catch_all.hpp>
@@ -354,6 +353,8 @@ TEST_CASE("FP Approx Similarity") {
   SynthonSpace synthonspace;
   synthonspace.readDBFile(binName);
   SynthonSpaceSearchParams params;
+  // The addFP and subtractFP are built from a random selection of
+  // products so do occasionally vary, so use a fixed seed.
   params.randomSeed = 1;
   params.similarityCutoff = 0.5;
   params.timeOut = 0;

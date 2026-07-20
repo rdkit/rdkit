@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (C) 2001-2006  greg Landrum
 #
 #   @@ All Rights Reserved @@
@@ -12,8 +10,6 @@
 - canonicalization
 - stereo chemistry parsing consistency
 """
-import os
-import pickle
 import unittest
 
 from rdkit import Chem
