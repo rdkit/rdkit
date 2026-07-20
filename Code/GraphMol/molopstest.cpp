@@ -6945,12 +6945,8 @@ TEST_CASE(
       // molecule.  So if we use the legacy code, we should get an exception:
       std::unique_ptr<RWMol> m{SmilesToMol(smiles, 0, false)};
       REQUIRE(m);
-      bool useDativeBonds = false;
-      bool useHydrogenBonds = false;
-      bool useLegacySymmetrizeSSSR = true;
       REQUIRE_THROWS_AS(
-          MolOps::symmetrizeSSSR(*m, useDativeBonds, useHydrogenBonds,
-                                 useLegacySymmetrizeSSSR),
+          MolOps::symmetrizeSSSR(*m, MolOps::SymmetrizeSSSRAlgorithm::LEGACY),
           ValueErrorException);
     }
   }
@@ -7810,11 +7806,8 @@ TEST_CASE("Testing ring family calculation") {
     REQUIRE(numRings == 20);
     REQUIRE(m->getRingInfo()->numRingFamilies() == 5);
 
-    bool includeHBonds = true;
-    bool includeDative = true;
-    bool legacyCalculation = true;
-    auto nrings = MolOps::symmetrizeSSSR(*m, includeDative, includeHBonds,
-                                         legacyCalculation);
+    auto nrings =
+        MolOps::symmetrizeSSSR(*m, MolOps::SymmetrizeSSSRAlgorithm::LEGACY);
     REQUIRE(nrings == 14);
 
     delete m;
@@ -8044,10 +8037,7 @@ TEST_CASE("GitHub Issue #9064: Incorrect SMARTS matching") {
   auto matches = SubstructMatch(*m, *q);
   CHECK(matches.empty());
 
-  bool includeHBonds = true;
-  bool includeDative = true;
-  bool legacyCalculation = true;
-  auto nrings = MolOps::symmetrizeSSSR(*m, includeDative, includeHBonds,
-                                       legacyCalculation);
+  auto nrings =
+      MolOps::symmetrizeSSSR(*m, MolOps::SymmetrizeSSSRAlgorithm::LEGACY);
   REQUIRE(nrings == 5);
 }

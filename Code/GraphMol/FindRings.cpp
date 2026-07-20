@@ -932,6 +932,19 @@ void findRingsFigueras(const ROMol &mol, VECT_INT_VECT &res,
 
 namespace RDKit {
 namespace MolOps {
+
+void setUseLegacyRingFinding(bool val) {
+  if (val) {
+    setenv(MolOps::useLegacyRingFindingEnvVar, "1", 1);
+  } else {
+    setenv(MolOps::useLegacyRingFindingEnvVar, "0", 1);
+  }
+}
+bool getUseLegacyRingFinding() {
+  return getValFromEnvironment(MolOps::useLegacyRingFindingEnvVar,
+                               MolOps::useLegacyRingFindingDefaultVal);
+}
+
 int findSSSR(const ROMol &mol, VECT_INT_VECT *res, bool includeDativeBonds,
              bool includeHydrogenBonds) {
   if (!res) {
@@ -977,13 +990,6 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
   // we will ignore any existing SSSRs on the molecule - simply overwrite
   return rdcast<int>(res.size());
 }
-
-int symmetrizeSSSR(ROMol &mol, bool includeDativeBonds,
-                   bool includeHydrogenBonds, bool legacyCalculation) {
-  VECT_INT_VECT tmp;
-  return symmetrizeSSSR(mol, tmp, includeDativeBonds, includeHydrogenBonds,
-                        legacyCalculation);
-};
 
 namespace {
 void legacySymmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
@@ -1076,15 +1082,21 @@ void legacySymmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
   }
 }
 }  // namespace
-int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
-                   bool includeHydrogenBonds, bool legacyCalculation) {
+int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
+                   SymmetrizeSSSRAlgorithm algorithm, bool includeDativeBonds,
+                   bool includeHydrogenBonds) {
   auto ringInfo = mol.getRingInfo();
   if (ringInfo->isInitialized()) {
     ringInfo->reset();
   }
   ringInfo->initialize(FIND_RING_TYPE_SYMM_SSSR);
 
-  if (!legacyCalculation) {
+  if (algorithm == SymmetrizeSSSRAlgorithm::DEFAULT) {
+    algorithm = getUseLegacyRingFinding() ? SymmetrizeSSSRAlgorithm::LEGACY
+                                          : SymmetrizeSSSRAlgorithm::RDL;
+  }
+
+  if (algorithm != SymmetrizeSSSRAlgorithm::LEGACY) {
     ringInfo->preallocate(mol.getNumAtoms(), mol.getNumBonds());
     findRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
     res = ringInfo->atomRelevantCycles();

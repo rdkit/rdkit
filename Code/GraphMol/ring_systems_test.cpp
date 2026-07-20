@@ -54,6 +54,23 @@ TEST_CASE("missing rings") {
   }
 }
 
+TEST_CASE("environment variable") {
+  std::string smi =
+      "C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1";
+  SECTION("legacy") {
+    UseLegacyRingFindingFixture fix(true);
+    auto m = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(m);
+    CHECK(m->getRingInfo()->numRings() == 24);
+  }
+  SECTION("RDL") {
+    UseLegacyRingFindingFixture fix(false);
+    auto m = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(m);
+    CHECK(m->getRingInfo()->numRings() == 70);
+  }
+}
+
 TEST_CASE("performance") {
   std::string smi =
       "C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1";
@@ -80,11 +97,7 @@ TEST_CASE("performance") {
     std::chrono::high_resolution_clock::time_point t1 =
         std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 1000; ++i) {
-      bool includeDative = true;
-      bool includeHBonds = true;
-      bool legacyCalculation = true;
-      MolOps::symmetrizeSSSR(*m, includeDative, includeHBonds,
-                             legacyCalculation);
+      MolOps::symmetrizeSSSR(*m, MolOps::SymmetrizeSSSRAlgorithm::LEGACY);
     }
     std::chrono::high_resolution_clock::time_point t2 =
         std::chrono::high_resolution_clock::now();
@@ -99,12 +112,12 @@ TEST_CASE("performance") {
 
 TEST_CASE("performance 2") {
   constexpr const char *smi =
-        "COc1cc2ccc1n1c(=O)n(c3ccc(cc3OC)c3ccc(c(c3)OC)n3c(=O)n(c4ccc(cc4OC)"
-        "c4ccc(c(c4)OC)n4c(=O)n(c5ccc(cc5OC)c5ccc(n6c(=O)n(c7ccc(c8ccc(n9c(=O)"
-        "n(c%10ccc(c%11ccc(n%12c(=O)n(c%13ccc2cc%13OC)c(=O)n(c%12=O)c2ccc("
-        "cc2OC)C)c(OC)c%11)cc%10OC)c(=O)n(c9=O)c2ccc(cc2OC)C)c(OC)c8)cc7OC)c(="
-        "O)n(c6=O)c2ccc(cc2OC)C)c(c5)OC)c(=O)n(c4=O)c2ccc(cc2OC)C)c(=O)n(c3=O)"
-        "c2ccc(cc2OC)C)c(=O)n(c1=O)c1ccc(cc1OC)C";
+      "COc1cc2ccc1n1c(=O)n(c3ccc(cc3OC)c3ccc(c(c3)OC)n3c(=O)n(c4ccc(cc4OC)"
+      "c4ccc(c(c4)OC)n4c(=O)n(c5ccc(cc5OC)c5ccc(n6c(=O)n(c7ccc(c8ccc(n9c(=O)"
+      "n(c%10ccc(c%11ccc(n%12c(=O)n(c%13ccc2cc%13OC)c(=O)n(c%12=O)c2ccc("
+      "cc2OC)C)c(OC)c%11)cc%10OC)c(=O)n(c9=O)c2ccc(cc2OC)C)c(OC)c8)cc7OC)c(="
+      "O)n(c6=O)c2ccc(cc2OC)C)c(c5)OC)c(=O)n(c4=O)c2ccc(cc2OC)C)c(=O)n(c3=O)"
+      "c2ccc(cc2OC)C)c(=O)n(c1=O)c1ccc(cc1OC)C";
   v2::SmilesParse::SmilesParserParams params;
   params.sanitize = false;
   params.removeHs = false;
@@ -113,48 +126,32 @@ TEST_CASE("performance 2") {
   SECTION("case 1 - RDL") {
     std::chrono::high_resolution_clock::time_point t1 =
         std::chrono::high_resolution_clock::now();
-        MolOps::symmetrizeSSSR(*m);
+    MolOps::symmetrizeSSSR(*m);
     std::chrono::high_resolution_clock::time_point t2 =
         std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> time_span = 
+    std::chrono::duration<double> time_span =
         std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
     std::cout << "Time taken for 1 call to symmetrizeSSSR (new): "
               << time_span.count() << " seconds." << std::endl;
-    std::cout << "mol has " << m->getRingInfo()->numRings() << " rings" << std::endl;
+    std::cout << "mol has " << m->getRingInfo()->numRings() << " rings"
+              << std::endl;
   }
   SECTION("case 2 - legacy") {
     std::chrono::high_resolution_clock::time_point t1 =
         std::chrono::high_resolution_clock::now();
-    bool includeDative = true;
-    bool includeHBonds = true;
-    bool legacyCalculation = true;
-    MolOps::symmetrizeSSSR(*m, includeDative, includeHBonds, legacyCalculation);
+    MolOps::symmetrizeSSSR(*m, MolOps::SymmetrizeSSSRAlgorithm::LEGACY);
     std::chrono::high_resolution_clock::time_point t2 =
         std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_span =
         std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
     std::cout << "Time taken for 1 call to symmetrizeSSSR (legacy): "
               << time_span.count() << " seconds." << std::endl;
-    std::cout << "mol has " << m->getRingInfo()->atomRings().size() << " rings" << std::endl;
+    std::cout << "mol has " << m->getRingInfo()->atomRings().size() << " rings"
+              << std::endl;
   }
-
 }
 
 #ifdef RDK_USE_BOOST_IOSTREAMS
-
-void legacy(RWMol *m1) {
-  bool includeDative = false;
-  bool includeHBonds = false;
-  bool legacyCalculation = true;
-  MolOps::symmetrizeSSSR(*m1, includeDative, includeHBonds, legacyCalculation);
-}
-
-void updated(RWMol *m1) {
-  bool includeDative = false;
-  bool includeHBonds = false;
-  bool legacyCalculation = false;
-  MolOps::symmetrizeSSSR(*m1, includeDative, includeHBonds, legacyCalculation);
-}
 
 TEST_CASE("bulk performance") {
   std::string rdbase = getenv("RDBASE");
@@ -176,7 +173,7 @@ TEST_CASE("bulk performance") {
       REQUIRE(m);
       std::chrono::high_resolution_clock::time_point t1 =
           std::chrono::high_resolution_clock::now();
-      legacy(m.get());
+      MolOps::symmetrizeSSSR(*m, MolOps::SymmetrizeSSSRAlgorithm::LEGACY);
       std::chrono::high_resolution_clock::time_point t2 =
           std::chrono::high_resolution_clock::now();
       std::chrono::duration<double> time_span =
@@ -188,7 +185,7 @@ TEST_CASE("bulk performance") {
       REQUIRE(m);
       std::chrono::high_resolution_clock::time_point t1 =
           std::chrono::high_resolution_clock::now();
-      updated(m.get());
+      MolOps::symmetrizeSSSR(*m);
       std::chrono::high_resolution_clock::time_point t2 =
           std::chrono::high_resolution_clock::now();
       std::chrono::duration<double> time_span =

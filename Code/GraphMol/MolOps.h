@@ -806,6 +806,16 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
 //! \name Ring finding and SSSR
 //! @{
 
+constexpr auto useLegacyRingFindingEnvVar = "RDK_USE_LEGACY_RING_FINDING";
+constexpr bool useLegacyRingFindingDefaultVal =
+    false;  //!< whether or not the legacy symmetric SSSR code is used during
+            //!< sanitization
+//! \brief sets whether or not the legacy symmetric SSSR code is used
+RDKIT_GRAPHMOL_EXPORT extern void setUseLegacyRingFinding(bool val);
+//! \brief returns whether or not the legacy symmetric SSSR code is used during
+//! sanitization
+RDKIT_GRAPHMOL_EXPORT extern bool getUseLegacyRingFinding();
+
 //! finds a molecule's Smallest Set of Smallest Rings
 /*!
   Currently this implements a modified form of Figueras algorithm
@@ -876,6 +886,12 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol,
                                             bool includeDativeBonds = false,
                                             bool includeHydrogenBonds = false);
 
+enum class SymmetrizeSSSRAlgorithm {
+  DEFAULT,
+  LEGACY,
+  RDL
+};
+
 //! symmetrize the molecule's Smallest Set of Smallest Rings
 /*!
    SSSR rings obtained from "findSSSR" can be non-unique in some case.
@@ -893,6 +909,8 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol,
   \param res used to return the vector of rings. Each entry is a vector with
       atom indices.  This information is also stored in the molecule's
       RingInfo structure, so this argument is optional (see overload)
+  \param algorithm - determines which algorithm is used to find the rings and
+      do the symmetrization
   \param includeDativeBonds - determines whether or not dative bonds are used
   in the ring finding.
   \param includeHydrogenBonds - determines whether or not hydrogen bonds are
@@ -904,16 +922,34 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol,
    - if no SSSR rings are found on the molecule - MolOps::findSSSR() is called
   first
 */
-RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
-                                         std::vector<std::vector<int>> &res,
-                                         bool includeDativeBonds = false,
-                                         bool includeHydrogenBonds = false,
-                                         bool legacyCalculation = false);
+RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(
+    ROMol &mol, std::vector<std::vector<int>> &res,
+    SymmetrizeSSSRAlgorithm algorithm = SymmetrizeSSSRAlgorithm::DEFAULT,
+    bool includeDativeBonds = false, bool includeHydrogenBonds = false);
 //! \overload
-RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
-                                         bool includeDativeBonds = false,
-                                         bool includeHydrogenBonds = false,
-                                         bool legacyCalculation = false);
+inline int symmetrizeSSSR(
+    ROMol &mol,
+    SymmetrizeSSSRAlgorithm algorithm = SymmetrizeSSSRAlgorithm::DEFAULT,
+    bool includeDativeBonds = false, bool includeHydrogenBonds = false) {
+  std::vector<std::vector<int>> res;
+  return symmetrizeSSSR(mol, res, algorithm, includeDativeBonds,
+                        includeHydrogenBonds);
+}
+
+//! \overload
+inline int symmetrizeSSSR(ROMol &mol, std::vector<std::vector<int>> &res,
+                          bool includeDativeBonds,
+                          bool includeHydrogenBonds = false) {
+  return symmetrizeSSSR(mol, res, SymmetrizeSSSRAlgorithm::DEFAULT,
+                        includeDativeBonds, includeHydrogenBonds);
+}
+//! \overload
+inline int symmetrizeSSSR(ROMol &mol, bool includeDativeBonds,
+                          bool includeHydrogenBonds = false) {
+  std::vector<std::vector<int>> res;
+  return symmetrizeSSSR(mol, res, SymmetrizeSSSRAlgorithm::DEFAULT,
+                        includeDativeBonds, includeHydrogenBonds);
+}
 
 //! @}
 
