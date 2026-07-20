@@ -114,8 +114,8 @@ SearchResults SynthonSpace::substructureSearch(
     const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   ControlCHandler hdlr;
-  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, *this);
-  return ssss.search();
+  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, this);
+  return ssss.search(ThreadMode::ThreadReactions);
 }
 
 void SynthonSpace::substructureSearch(
@@ -124,8 +124,8 @@ void SynthonSpace::substructureSearch(
     const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   ControlCHandler hdlr;
-  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, *this);
-  ssss.search(cb);
+  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, this);
+  ssss.search(cb, ThreadMode::ThreadReactions);
 }
 
 SearchResults SynthonSpace::substructureSearch(

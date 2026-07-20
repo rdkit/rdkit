@@ -653,9 +653,9 @@ Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
   // conformations even with the same parameters.  The results are similar
   // but ordered differently.
   std::vector<std::vector<double>> expVols{
-      {74.0, 189.7}, {198.5, 74.2}, {74.3, 177.9}, {138.0, 64.6}};
+      {74.0, 187.5}, {198.5, 74.2}, {74.3, 177.9}, {138.0, 64.6}};
   std::vector<std::vector<double>> expMeanVols{
-      {3.0, 6.8}, {6.4, 3.0}, {5.7, 5.7}, {4.2, 2.7}};
+      {3.0, 6.5}, {6.4, 3.0}, {5.7, 5.7}, {4.2, 2.7}};
   {
     params.possibleHitsFile = "poss_hits_1.txt";
     params.maxExcludedVolume = -1.0;

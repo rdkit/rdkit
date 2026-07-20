@@ -399,7 +399,7 @@ TEST_CASE("Rascal Biggy") {
       "c12ccccc1c(N)nc(N)n2", "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
       "c1n[nH]cn1",           "C(=O)NC(CC)C(=O)N(CC)C"};
   const std::vector<size_t> numRes{254, 89, 2, 34, 0, 14};
-  const std::vector<size_t> maxRes{376110, 278747, 79833, 34817, 190, 45932};
+  const std::vector<size_t> maxRes{376417, 279307, 79833, 35604, 190, 46017};
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
   params.numThreads = -1;
