@@ -42,9 +42,9 @@ namespace {
 
 // Find the first synthon in the set that has no less than the required
 // number of set bits, based on the threshold.
-size_t findSynthonSearchStart(unsigned int numFragSetBits,
-                              double similarityCutoff, size_t synthonSetNum,
-                              const SynthonSet &reaction) {
+size_t findSynthonSearchStartF(unsigned int numFragSetBits,
+                               double similarityCutoff, size_t synthonSetNum,
+                               const SynthonSet &reaction) {
   unsigned int minBits = similarityCutoff * numFragSetBits;
   auto s = reaction.getFingerprintOrderedSynthon(synthonSetNum, 0);
 
@@ -88,8 +88,8 @@ std::vector<std::vector<size_t>> getHitSynthons(
       maxBits = 1 + fragFPs[i]->getNumOnBits() / similarityCutoff;
     }
     auto start =
-        findSynthonSearchStart(fragFPs[i]->getNumOnBits(), similarityCutoff,
-                               synthonSetOrder[i], reaction);
+        findSynthonSearchStartF(fragFPs[i]->getNumOnBits(), similarityCutoff,
+                                synthonSetOrder[i], reaction);
     const auto &synthons = reaction.getSynthons()[synthonSetOrder[i]];
     bool fragMatched = false;
     for (size_t j = start; j < synthons.size(); j++) {

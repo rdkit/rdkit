@@ -27,9 +27,9 @@ SynthonSpaceRascalSearcher::SynthonSpaceRascalSearcher(
 
 namespace {
 
-size_t findSynthonSearchStart(unsigned int fragAtomsAndBonds,
-                              double similarityCutoff, size_t synthonSetNum,
-                              const SynthonSet &reaction) {
+size_t findSynthonSearchStartR(unsigned int fragAtomsAndBonds,
+                               double similarityCutoff, size_t synthonSetNum,
+                               const SynthonSet &reaction) {
   unsigned int minAtomsAndBonds = similarityCutoff * fragAtomsAndBonds;
   auto s = reaction.getRascalOrderedSynthon(synthonSetNum, 0);
 
@@ -84,9 +84,9 @@ std::vector<std::vector<size_t>> getHitSynthons(
         fragSet[fragNum]->getNumAtoms() + fragSet[fragNum]->getNumBonds();
     unsigned int maxAtomsAndBonds =
         1 + fragAtomsAndBonds / rascalOptions.similarityThreshold;
-    auto start = findSynthonSearchStart(fragAtomsAndBonds,
-                                        rascalOptions.similarityThreshold,
-                                        synthonSetOrder[fragNum], reaction);
+    auto start = findSynthonSearchStartR(fragAtomsAndBonds,
+                                         rascalOptions.similarityThreshold,
+                                         synthonSetOrder[fragNum], reaction);
     const auto &synthons = reaction.getSynthons()[synthonSetOrder[fragNum]];
     bool fragMatched = false;
     for (size_t j = start; j < synthons.size(); j++) {
