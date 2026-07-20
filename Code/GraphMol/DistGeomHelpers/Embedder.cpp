@@ -1789,7 +1789,6 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
             ? ForceFields::CrystalFF::ETKDGForceConsts::SEQ::Cosine
             : ForceFields::CrystalFF::ETKDGForceConsts::AIO::Cosine;
 
-    EmbeddingOps::initETKDG(piece.get(), params, etkdgDetails);
 
     DistGeom::BoundsMatPtr mmat;
     if (params.boundsMat == nullptr || molFrags.size() > 1) {
@@ -1816,6 +1815,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       mmat.reset(new DistGeom::BoundsMatrix(*params.boundsMat));
     }
 
+    EmbeddingOps::initETKDG(piece.get(), params, etkdgDetails);
     // find all the chiral centers in the molecule
     MolOps::assignStereochemistry(*piece);
     DistGeom::VECT_CHIRALSET chiralCenters;

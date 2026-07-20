@@ -48,23 +48,6 @@ constexpr unsigned int MIN_MACROCYCLE_SIZE = 9;
 #include "torsionPreferences_smallrings.in"
 #include "torsionPreferences_macrocycles.in"
 
-namespace {
-template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::optional<T> &opt) {
-  if (opt) {
-    return os << opt.value();
-  }
-  return os << "";
-}
-}  // namespace
-// Trans amide (and ester) Angle
-const ExpTorsionAngle TransAmideAngle{.torsionIdx = std::nullopt,
-                                      .smarts = std::nullopt,
-                                      .V = {20.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-                                      .signs = {1, 1, 1, 1, 1, 1},
-                                      .dp_pattern = nullptr,
-                                      .idx = {1, 2, 3, 4}};
-
 // class to store the experimental torsion angles
 class ExpTorsionAngleCollection {
  public:
@@ -136,7 +119,7 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
         angle.V.push_back(boost::lexical_cast<double>(*token));
         ++token;
       }
-      angle.dp_pattern.reset(SmartsToMol(*angle.smarts));
+      angle.dp_pattern.reset(SmartsToMol(angle.smarts));
       // get the atom indices for atom 1, 2, 3, 4 in the pattern
       for (std::size_t i = 0; i < (angle.dp_pattern.get())->getNumAtoms();
            ++i) {
@@ -221,38 +204,42 @@ void getExperimentalTorsions(
   boost::dynamic_bitset<> doneBonds(nb);
 
   if (useExpTorsions) {
-    if (details.transAmideIndices) {
-      for (const auto &[i, j, k, l] : *details.transAmideIndices) {
-        const auto bnd = mol.getBondBetweenAtoms(j, k)->getIdx();
-        if (excludedBonds[bnd] || mol.getRingInfo()->numBondRings(bnd) > 3) {
-          doneBonds[bnd] = 1;
-        }
-        if (doneBonds[bnd]) {
-          continue;
-        }
-        if (!details.constrainedAtoms.empty() && details.constrainedAtoms[i] &&
-            details.constrainedAtoms[j] && details.constrainedAtoms[k] &&
-            details.constrainedAtoms[l]) {
-          continue;
-        }
-        doneBonds[bnd] = 1;
-
-        std::vector<unsigned int> aids{i, j, k, l};
-        std::vector<int> atoms(4);
-        atoms[0] = i;
-        atoms[0] = j;
-        atoms[0] = k;
-        atoms[0] = l;
-        details.expTorsionAtoms.push_back(atoms);
-        std::vector<double> V{TransAmideAngle.V};
-        if (details.forceConsts.etTermScaling != 1.0) {
-          for (double &v : V) {
-            v *= details.forceConsts.etTermScaling;
-          }
-        }
-        details.expTorsionAngles.emplace_back(TransAmideAngle.signs, V);
-        torsionBonds.emplace_back(bnd, aids, &TransAmideAngle);
+    for (const auto &config : details.path14Configs) {
+      if (!config.type.isForced) {
+        continue;
       }
+      if (config.type.type != DGeomHelpers::TorsionType::TRANS) {
+        continue;
+      }
+      const auto i = config.aid1;
+      const auto j = config.aid2;
+      const auto k = config.aid3;
+      const auto l = config.aid4;
+      const auto bndIdx = mol.getBondBetweenAtoms(j, k)->getIdx();
+      if (excludedBonds[bndIdx] ||
+          mol.getRingInfo()->numBondRings(bndIdx) > 3) {
+        doneBonds[bndIdx] = 1;
+      }
+      if (doneBonds[bndIdx]) {
+        continue;
+      }
+      if (!details.constrainedAtoms.empty() && details.constrainedAtoms[i] &&
+          details.constrainedAtoms[j] && details.constrainedAtoms[k] &&
+          details.constrainedAtoms[l]) {
+        continue;
+      }
+      doneBonds[bndIdx] = 1;
+      std::vector<unsigned int> aids{i, j, k, l};
+      std::vector<int> atoms(4);
+      atoms[0] = i;
+      atoms[1] = j;
+      atoms[2] = k;
+      atoms[3] = l;
+      details.expTorsionAtoms.push_back(atoms);
+      std::vector<double> V(6,0.0);
+      V[0] = 15.0 * details.forceConsts.etTermScaling;
+      std::vector<int> signs(6, 1);
+      details.expTorsionAngles.emplace_back(signs, V);
     }
     // we set the torsion angles with experimental data
     const auto *params = ExpTorsionAngleCollection::getParams(
@@ -308,7 +295,7 @@ void getExperimentalTorsions(
           // using the stringstream seems redundant, but we don't want the
           // extra formatting provided by the logger after every entry;
           std::stringstream sstr;
-          sstr << *param.smarts << ": " << aid1 << " " << aid2 << " " << aid3
+          sstr << param.smarts << ": " << aid1 << " " << aid2 << " " << aid3
                << " " << aid4 << ", [";
           for (unsigned int i = 0; i < param.V.size() - 1; ++i) {
             sstr << "(" << param.signs[i] << " " << param.V[i] << "), ";

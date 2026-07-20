@@ -27,6 +27,7 @@
 #include <unordered_set>
 #include <ranges>
 #include <vector>
+#include <cstddef>
 
 const double DIST12_DELTA = 0.01;
 // const double ANGLE_DELTA = 0.0837;
@@ -74,9 +75,9 @@ typedef enum {
   DIST14
 } DistType;
 
-typedef std::vector<Path14Configuration> PATH14_VECT;
-typedef PATH14_VECT::iterator PATH14_VECT_I;
-typedef PATH14_VECT::const_iterator PATH14_VECT_CI;
+using PATH14_VECT = std::vector<Path14Configuration>;
+using PATH14_VECT_I = PATH14_VECT::iterator;
+using PATH14_VECT_CI = PATH14_VECT::const_iterator;
 
 class ComputedData {
  public:
@@ -1000,9 +1001,9 @@ TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
               (atm4->getAtomicNum() == 1 && atm3->getAtomicNum() == 7 &&
                atm3->getDegree() == 3 && atm3->getTotalNumHs(true) == 1)) {
             // secondary amide, this is the H, it should be trans to the O
-            return {TorsionType::TRANS};
+            return {.type = TorsionType::TRANS, .isForced = true};
           } else {
-            return {TorsionType::CIS};
+            return {.type = TorsionType::CIS, .isForced = true};
           }
         }
         if ((_checkAmideEster15(mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
@@ -1026,12 +1027,13 @@ TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
               (atm4->getAtomicNum() == 1 && atm3->getAtomicNum() == 7 &&
                atm3->getDegree() == 3 && atm3->getTotalNumHs(true) == 1)) {
             // secondary amide, this is the H, it's cis to atom 5
-            return {TorsionType::CIS};
+            return {.type = TorsionType::CIS, .isForced = true};
           } else {
-            return {TorsionType::TRANS};
+            return {.type = TorsionType::TRANS, .isForced = true};
           }
         }
       }
+      return {TorsionType::FLEXIBLE};
     default:
       return {TorsionType::FLEXIBLE};
   }
@@ -1051,7 +1053,7 @@ void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
   const unsigned int aid4 = mol.getBondWithIdx(bid2)->getOtherAtomIdx(aid3);
 
   unsigned int nb = mol.getNumBonds();
-  Path14Configuration path14 = {bid1, bid2, bid3, aid1, aid2, aid3, aid4};
+  Path14Configuration path14 = {bid1, bid2, bid3, aid1, aid2, aid3, aid4, {}};
 
   if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2)) {  // FIX: check for trans
     path14.type = {TorsionType::CIS};
@@ -1152,21 +1154,21 @@ TorsionValue _getMacrocycleAllInSameRing14Type(
                                                        atm2, atm3, atm4)) ||
             (_checkMacrocycleAllInSameRingAmideEster14(mol, bnd3, bnd1, atm4,
                                                        atm3, atm2, atm1))) {
-          return {.type = TorsionType::TRANS,
-                  .extraDist = 0.1,
-                  .reason = BKEnum::ForceTransAmide};
+          return {
+              .type = TorsionType::TRANS, .extraDist = 0.1, .isForced = true};
         }
         if ((_checkAmideEster15(mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
             (_checkAmideEster15(mol, bnd3, bnd1, atm4, atm3, atm2, atm1))) {
           if (atm2->getAtomicNum() == 7 && atm2->getDegree() == 3 &&
               atm1->getAtomicNum() == 1 && atm2->getTotalNumHs(true) == 1) {
             // secondary amide, this is the H
-            return {TorsionType::CIS, .reason = Reason::ForceTransAmide};
+            return {.type = TorsionType::CIS, .isForced = true};
           } else {
-            return {TorsionType::TRANS, .reason = Reason::ForceTransAmide};
+            return {.type = TorsionType::TRANS, .isForced = true};
           }
         }
       }
+      [[fallthrough]];
     default:
       return {TorsionType::FLEXIBLE};
   }
@@ -1453,7 +1455,7 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
   // this is 2.6 million bonds, so it's extremly unlikely to ever occur, but
   // we might as well check:
-  const size_t MAX_NUM_BONDS = static_cast<size_t>(
+  const auto MAX_NUM_BONDS = static_cast<std::size_t>(
       std::pow(std::numeric_limits<std::uint64_t>::max(), 1. / 3));
   if (mol.getNumBonds() >= MAX_NUM_BONDS) {
     throw ValueErrorException(
@@ -1536,7 +1538,8 @@ void collectBondsAndAngles(const ROMol &mol,
     }
   }
 }
-RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
+
+void setTopolBounds(
     const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     std::vector<std::pair<int, int>> &bonds,
     std::vector<std::vector<int>> &angles, bool set15bounds, bool scaleVDW,
@@ -1582,6 +1585,8 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
 
   collectBondsAndAngles(mol, details.bonds, details.angles);
+
+  details.path14Configs = accumData.paths14;
 }
 
 // some helper functions to set 15 distances
@@ -1889,17 +1894,6 @@ void set15Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     _set15BoundsHelper(mol, bid3, bid2, bid1, type, accumData, mmat,
                        distMatrix);
   }
-}
-
-RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
-    const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-    std::vector<std::pair<int, int>> &bonds,
-    std::vector<std::vector<int>> &angles, bool set15bounds = true,
-    bool scaleVDW = false, bool useMacrocycle14config = false,
-    bool forceTransAmides = true, bool set14bounds = true,
-    bool set13bounds = true) {
-  auto details = ForceFields::CrystalFF::CrystalFFDetails{.angles = angles,
-                                                          .bonds = bonds};
 }
 
 }  // namespace DGeomHelpers

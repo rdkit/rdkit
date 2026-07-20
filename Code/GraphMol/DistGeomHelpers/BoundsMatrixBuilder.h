@@ -12,6 +12,7 @@
 #define RD_BOUNDS_MATRIX_BUILDER_H
 
 #include <DistGeom/BoundsMatrix.h>
+#include <optional>
 
 namespace ForceFields {
 namespace CrystalFF {
