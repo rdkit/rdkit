@@ -1497,7 +1497,10 @@ TEST_CASE("testGithub1990") {
     MolOps::addHs(*mol);
     MolOps::removeHs(*mol);
     CHECK(mol->getNumAtoms() == 4);
-    int cid = DGeomHelpers::EmbedMolecule(*mol);
+    // use a fixed random seed so the embedding is deterministic
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     CHECK(cid >= 0);
   }
   SECTION("Reported Problem") {  // The original problem report
@@ -1508,7 +1511,12 @@ TEST_CASE("testGithub1990") {
     REQUIRE(mol);
     MolOps::addHs(*mol);
     MolOps::removeHs(*mol);
-    int cid = DGeomHelpers::EmbedMolecule(*mol);
+    // use a fixed random seed so the embedding is deterministic; the default
+    // (randomSeed = -1) seeds from a random source and this large, flexible
+    // molecule does not always converge, making the test flaky.
+    DGeomHelpers::EmbedParameters params;
+    params.randomSeed = 0xf00d;
+    int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     CHECK(cid >= 0);
   }
   boost::logging::enable_logs("rdApp.warning");
