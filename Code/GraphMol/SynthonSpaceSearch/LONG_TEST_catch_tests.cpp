@@ -353,8 +353,6 @@ TEST_CASE("FP Approx Similarity") {
   SynthonSpace synthonspace;
   synthonspace.readDBFile(binName);
   SynthonSpaceSearchParams params;
-  // The addFP and subtractFP are built from a random selection of
-  // products so do occasionally vary, so use a fixed seed.
   params.randomSeed = 1;
   params.similarityCutoff = 0.5;
   params.timeOut = 0;
