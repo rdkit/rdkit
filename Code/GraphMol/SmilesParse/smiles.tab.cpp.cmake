@@ -74,7 +74,6 @@
 /* First part of user prologue.  */
 
 
-  // $Id$
   //
   //  Copyright (C) 2001-2016 Randal Henne, Greg Landrum and Rational Discovery LLC
   //

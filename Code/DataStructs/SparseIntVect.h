@@ -385,8 +385,8 @@ class SparseIntVect {
         case sizeof(std::int32_t):
           readVals<std::uint32_t>(ss);
           break;
-        case sizeof(boost::int64_t):
-          readVals<boost::uint64_t>(ss);
+        case sizeof(std::int64_t):
+          readVals<std::uint64_t>(ss);
           break;
         default:
           throw ValueErrorException("unreadable format");

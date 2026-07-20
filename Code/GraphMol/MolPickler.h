@@ -18,7 +18,7 @@
 #include <GraphMol/QueryBond.h>
 #include <RDGeneral/StreamOps.h>
 #include <boost/utility/binary.hpp>
-#include <boost/variant.hpp>
+#include <variant>
 #include <Query/QueryObjects.h>
 
 // Std stuff
@@ -318,7 +318,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
 namespace PicklerOps {
 // clang-format off
-using QueryDetails = boost::variant<
+using QueryDetails = std::variant<
     MolPickler::Tags, std::tuple<MolPickler::Tags, int32_t>,
     std::tuple<MolPickler::Tags, int32_t, int32_t>,
     std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>,

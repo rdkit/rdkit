@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2016 Sereina Riniker, Paolo Tosco
 //
