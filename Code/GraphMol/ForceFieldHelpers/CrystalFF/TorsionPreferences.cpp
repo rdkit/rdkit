@@ -236,8 +236,8 @@ void getExperimentalTorsions(
       atoms[2] = k;
       atoms[3] = l;
       details.expTorsionAtoms.push_back(atoms);
-      std::vector<double> V(6,0.0);
-      V[0] = 15.0 * details.forceConsts.etTermScaling;
+      std::vector<double> V(6, 0.0);
+      V[0] = 25.0 * details.forceConsts.etTermScaling;
       std::vector<int> signs(6, 1);
       details.expTorsionAngles.emplace_back(signs, V);
     }

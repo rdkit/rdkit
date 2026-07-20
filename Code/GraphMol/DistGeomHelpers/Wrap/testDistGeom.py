@@ -279,14 +279,14 @@ class TestCase(unittest.TestCase):
     ]
 
     nconfs = []
-    expected = [3, 3, 7, 6, 3, 3]
+    expected = [3, 3, 7, 5, 3, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       ps = _getParams(useLegacy=False, maxIt=30, seed=100, pruneRMS=1.5)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
       nconfs.append(len(cids))
     d = [abs(x - y) for x, y in zip(expected, nconfs)]
-    # print(expected, nconfs)
+    # print(1, expected, nconfs)
     self.assertTrue(max(d) <= 1)
 
     # legacy previous settings
@@ -297,14 +297,14 @@ class TestCase(unittest.TestCase):
     params.useSymmetryForPruning = False
     params.useLegacyImplementation = True
     nconfs = []
-    expected = [5, 5, 4, 6, 7, 3]
+    expected = [6, 5, 6, 5, 7, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
       nconfs.append(len(cids))
 
     d = [abs(x - y) for x, y in zip(expected, nconfs)]
-    # print(expected, nconfs)
+    # print(2, expected, nconfs)
     self.assertTrue(max(d) <= 1)
 
     # aio previous settings
@@ -315,12 +315,13 @@ class TestCase(unittest.TestCase):
     params.useSymmetryForPruning = False
     params.useLegacyImplementation = False
     nconfs = []
-    expected = [3, 5, 4, 6, 5, 3]
+    expected = [5, 5, 4, 6, 5, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
       nconfs.append(len(cids))
     d = [abs(x - y) for x, y in zip(expected, nconfs)]
+    # print(3, expected, nconfs)
     self.assertTrue(max(d) <= 1)
 
   def test6Chirality(self):
@@ -815,10 +816,10 @@ class TestCase(unittest.TestCase):
     ps.randomSeed = 0xc0ffee
     ps.pruneRmsThresh = 0.5
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
-    self.assertEqual(len(cids), 1)
+    self.assertEqual(len(cids), 2)
     ps.symmetrizeConjugatedTerminalGroupsForPruning = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
-    self.assertGreater(len(cids), 1)
+    self.assertGreater(len(cids), 2)
 
   def testSymmetrizeTerminal(self):
     mol = Chem.AddHs(Chem.MolFromSmiles("FCC(=O)O"))
@@ -827,7 +828,7 @@ class TestCase(unittest.TestCase):
     ps.pruneRmsThresh = 0.5
     ps.useLegacyImplementation = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
-    self.assertEqual(len(cids), 2)
+    self.assertEqual(len(cids), 1)
     ps.symmetrizeConjugatedTerminalGroupsForPruning = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
     self.assertGreater(len(cids), 1)
