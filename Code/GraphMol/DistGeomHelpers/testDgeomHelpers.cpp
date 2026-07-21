@@ -573,7 +573,8 @@ TEST_CASE("testIssue285") {
 
   std::size_t tgtNumber = 10;
   const bool legacyETKDG = GENERATE(true, false);
-  DGeomHelpers::EmbedParameters params{.useLegacyImplementation = legacyETKDG};
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .useLegacyImplementation = legacyETKDG};
   INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, tgtNumber, params);
   REQUIRE(cids.size() == tgtNumber);
 
@@ -695,7 +696,8 @@ TEST_CASE("testRandomCoords") {
 
 TEST_CASE("testIssue1989539") {
   const bool legacyETKDG = GENERATE(true, false);
-  DGeomHelpers::EmbedParameters params{.useLegacyImplementation = legacyETKDG};
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .useLegacyImplementation = legacyETKDG};
   {
     auto m = "c1ccccc1.Cl"_smiles;
     const int cid = DGeomHelpers::EmbedMolecule(*m, params);
@@ -784,8 +786,8 @@ TEST_CASE("Check Mols embedddable") {
     int cid = DGeomHelpers::EmbedMolecule(m);
     CHECK(cid >= 0);
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     std::vector<int> cids = DGeomHelpers::EmbedMultipleConfs(m, 10, params);
     CHECK(cids.size() == 10);
     CHECK(std::find(cids.begin(), cids.end(), -1) == cids.end());
@@ -794,8 +796,8 @@ TEST_CASE("Check Mols embedddable") {
   SECTION("testIssue2091864 1") {
     auto m = "C1C2CC12"_smiles;
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*m, params);
     CHECK(cid >= 0);
   }
@@ -822,8 +824,8 @@ TEST_CASE("Check Mols embedddable") {
     auto m = "O=N(=O)OCC(CON(=O)=O)(CON(=O)=O)CON(=O)=O"_smiles;
     MolOps::addHs(*m);
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*m, params);
     CHECK(cid >= 0);
   }
@@ -838,8 +840,8 @@ TEST_CASE("testIssue2835784") {
     if (addHs) {
       MolOps::addHs(*m);
     }
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*m, params);
     CHECK(cid >= 0);
     std::vector<int> cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, params);
@@ -911,7 +913,8 @@ TEST_CASE("testIssue3483968") {
   auto m = v2::FileParsers::MolFromMolFile(molfile);
   REQUIRE(m);
   const bool legacyETKDG = GENERATE(true, false);
-  DGeomHelpers::EmbedParameters params{.ignoreSmoothingFailures = true,
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .ignoreSmoothingFailures = true,
                                        .useLegacyImplementation = legacyETKDG};
   int cid = DGeomHelpers::EmbedMolecule(*m, params);
   CHECK(cid >= 0);
@@ -1036,8 +1039,8 @@ TEST_CASE("testGithub55") {
     REQUIRE(core);
 
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*core, params);
     CHECK(cid >= 0);
 
@@ -1063,8 +1066,8 @@ TEST_CASE("testGithub55") {
     REQUIRE(core);
 
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*core, params);
     CHECK(cid >= 0);
 
@@ -1570,8 +1573,8 @@ TEST_CASE("testGithub1990") {
     MolOps::removeHs(*mol);
     CHECK(mol->getNumAtoms() == 4);
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     CHECK(cid >= 0);
   }
@@ -1584,8 +1587,8 @@ TEST_CASE("testGithub1990") {
     MolOps::addHs(*mol);
     MolOps::removeHs(*mol);
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     CHECK(cid >= 0);
   }
@@ -1706,7 +1709,8 @@ TEST_CASE("testGithub3667") {
   REQUIRE(mol);
 
   const bool legacyETKDG = GENERATE(true, false);
-  DGeomHelpers::EmbedParameters params{.useLegacyImplementation = legacyETKDG};
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .useLegacyImplementation = legacyETKDG};
   params.callback = throwError;
   CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*mol, params),
                   ValueErrorException);
@@ -1800,11 +1804,12 @@ TEST_CASE("testMissingHsWarning") {
   const bool legacyETKDG = GENERATE(true, false);
   std::stringstream ss;
   rdWarningLog->SetTee(ss);
-  DGeomHelpers::EmbedParameters params{.useLegacyImplementation = legacyETKDG};
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .useLegacyImplementation = legacyETKDG};
   DGeomHelpers::EmbedMolecule(*mol, params);
   rdWarningLog->ClearTee();
   TEST_ASSERT(ss.str().find("Molecule does not have explicit Hs") !=
-        std::string::npos);
+              std::string::npos);
 }
 
 TEST_CASE("testHydrogenBondBasics") {
@@ -1825,6 +1830,6 @@ TEST_CASE("testHydrogenBondBasics") {
   params.useLegacyImplementation = legacyETKDG;
   REQUIRE(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
   auto dist = MolTransforms::getBondLength(mol->getConformer(), 3, 4);
-  CHECK(dist < mat->getUpperBound(4,3));
-  CHECK(dist > mat->getLowerBound(4,3));
+  CHECK(dist < mat->getUpperBound(4, 3));
+  CHECK(dist > mat->getLowerBound(4, 3));
 }

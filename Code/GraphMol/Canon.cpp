@@ -29,7 +29,13 @@
 namespace RDKit {
 namespace Canon {
 namespace {
-constexpr Bond::BondDir flipStereoBondDir(Bond::BondDir bondDir) {
+static bool isCanonicalizableStereoDoubleBond(const Bond &bond) {
+  const auto stereo = bond.getStereo();
+  return bond.getBondType() == Bond::DOUBLE && stereo >= Bond::STEREOZ &&
+         stereo <= Bond::STEREOTRANS && bond.getStereoAtoms().size() == 2;
+}
+
+static constexpr Bond::BondDir flipStereoBondDir(Bond::BondDir bondDir) {
   switch (bondDir) {
     case Bond::ENDUPRIGHT:
       return Bond::ENDDOWNRIGHT;
@@ -724,8 +730,7 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
                                          const Bond *nbrBnd) -> Bond * {
     auto otherAtom = nbrBnd->getOtherAtom(dblBndAtom);
     for (const auto bond : mol.atomBonds(otherAtom)) {
-      if (bond != nbrBnd && bond->getBondType() == Bond::DOUBLE &&
-          bond->getStereo() > Bond::STEREOANY) {
+      if (bond != nbrBnd && isCanonicalizableStereoDoubleBond(*bond)) {
         return bond;
       }
     }
@@ -765,16 +770,15 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
       bond->setBondDir(Bond::NONE);
     }
 
-    if (bond->getBondType() != Bond::DOUBLE ||
-        bond->getStereo() <= Bond::STEREOANY ||
-        bond->getStereoAtoms().size() < 2 ||
+    if (!isCanonicalizableStereoDoubleBond(*bond) ||
         std::ranges::find_if(bond->getStereoAtoms(),
                              [&atomVisitOrders](const auto &atomIdx) {
                                return !atomVisitOrders[atomIdx];
                              }) != bond->getStereoAtoms().end()) {
-      // not a bond that can have stereo or one of the stereo atoms was not
-      // traversed.
+      // not a bond that can have stereo or that needs canonicalization
+      // or one of the stereo atoms has not been traversed
       bond->setStereo(Bond::STEREONONE);
+      bond->getStereoAtoms().clear();
       continue;
     }
 
@@ -823,6 +827,12 @@ void canonicalizeDoubleBonds(ROMol &mol, const UINT_VECT &bondVisitOrders,
       connectedBondsQ.pop();
       if (seen_bonds[currentBond->getIdx()] ||
           !bondVisitOrders[currentBond->getIdx()]) {
+        continue;
+      }
+      if (!isCanonicalizableStereoDoubleBond(*currentBond)) {
+        currentBond->setStereo(Bond::STEREONONE);
+        currentBond->getStereoAtoms().clear();
+        seen_bonds[currentBond->getIdx()] = true;
         continue;
       }
 

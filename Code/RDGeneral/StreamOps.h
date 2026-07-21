@@ -18,7 +18,7 @@
 #include <string>
 #include <sstream>
 #include <unordered_set>
-#include <boost/cstdint.hpp>
+#include <cstdint>
 #include <boost/predef.h>
 
 namespace RDKit {
@@ -107,7 +107,7 @@ inline signed char EndianSwapBytes(signed char value) {
 
 //! Packs an integer and outputs it to a stream
 inline void appendPackedIntToStream(std::stringstream &ss,
-                                    boost::uint32_t num) {
+                                    std::uint32_t num) {
   int nbytes, bix;
   unsigned int val, res;
   char tc;
@@ -150,8 +150,8 @@ inline void appendPackedIntToStream(std::stringstream &ss,
 }
 
 //! Reads an integer from a stream in packed format and returns the result.
-inline boost::uint32_t readPackedIntFromStream(std::stringstream &ss) {
-  boost::uint32_t val, num;
+inline std::uint32_t readPackedIntFromStream(std::stringstream &ss) {
+  std::uint32_t val, num;
   int shift, offset;
   char tmp;
   ss.read(&tmp, sizeof(tmp));
@@ -216,8 +216,8 @@ inline boost::uint32_t readPackedIntFromStream(std::stringstream &ss) {
 
 //! Reads an integer from a char * in packed format and returns the result.
 //!  The argument is advanced
-inline boost::uint32_t pullPackedIntFromString(const char *&text) {
-  boost::uint32_t val, num;
+inline std::uint32_t pullPackedIntFromString(const char *&text) {
+  std::uint32_t val, num;
   int shift, offset;
   char tmp;
   tmp = *text;
@@ -275,7 +275,7 @@ inline void streamWrite(std::ostream &ss, const std::string &what) {
 
 template <typename T>
 void streamWriteVec(std::ostream &ss, const T &val) {
-  streamWrite(ss, static_cast<boost::uint64_t>(val.size()));
+  streamWrite(ss, static_cast<std::uint64_t>(val.size()));
   for (size_t i = 0; i < val.size(); ++i) {
     streamWrite(ss, val[i]);
   }
@@ -313,7 +313,7 @@ inline void streamRead(std::istream &ss, std::string &what, int version) {
 
 template <class T>
 void streamReadVec(std::istream &ss, T &val) {
-  boost::uint64_t size;
+  std::uint64_t size;
   streamRead(ss, size);
   val.resize(boost::numeric_cast<size_t>(size));
 
@@ -324,7 +324,7 @@ void streamReadVec(std::istream &ss, T &val) {
 
 inline void streamReadStringVec(std::istream &ss, std::vector<std::string> &val,
                                 int version) {
-  boost::uint64_t size;
+  std::uint64_t size;
   streamRead(ss, size);
   val.resize(size);
 
