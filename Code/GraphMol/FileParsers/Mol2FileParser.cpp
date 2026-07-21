@@ -674,12 +674,16 @@ Bond *ParseMol2FileBondLine(const std::string bondLine,
     throw FileParseException("Cannot process mol2 bonds.");
   }
 
+  if (idx1 == 0 || idx2 == 0) {
+    throw FileParseException("Mol2 bond index starts at 1, not 0.");
+  }
+
   // adjust the numbering
   idx1--;
   idx2--;
 
   // if either of both ends of the bond is not an atom in the mol - return NULL
-  if (!(idx1 < idxCorresp.size() || idx2 < idxCorresp.size())) {
+  if (!(idx1 < idxCorresp.size() && idx2 < idxCorresp.size())) {
     throw FileParseException("index mismatch");
   }
 

@@ -8106,3 +8106,32 @@ M  END
   CHECK(stgs.front().getGroupType() == StereoGroupType::STEREO_OR);
   CHECK(stgs.front().getAtoms().size() == 1);
 }
+
+TEST_CASE("mol2 reader out-of-bounds access") {
+  SECTION("atom index too high") {
+    std::string mol2 = R"MOL2(@<TRIPOS>MOLECULE
+
+2 1
+@<TRIPOS>ATOM
+1 C1 0.0 0.0 0.0 C
+2 C2 1.0 0.0 0.0 C
+@<TRIPOS>BOND
+1 1 28 1
+)MOL2";
+    REQUIRE_THROWS_AS(v2::FileParsers::MolFromMol2Block(mol2),
+                      FileParseException);
+  }
+  SECTION("atom index zero") {
+    std::string mol2 = R"MOL2(@<TRIPOS>MOLECULE
+
+2 1
+@<TRIPOS>ATOM
+1 C1 0.0 0.0 0.0 C
+2 C2 1.0 0.0 0.0 C
+@<TRIPOS>BOND
+1 1 0 1
+)MOL2";
+    REQUIRE_THROWS_AS(v2::FileParsers::MolFromMol2Block(mol2),
+                      FileParseException);
+  }
+}
