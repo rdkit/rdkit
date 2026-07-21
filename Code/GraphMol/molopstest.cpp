@@ -7999,3 +7999,34 @@ TEST_CASE("Testing isRingFused") {
     REQUIRE(std::count(fusedBonds.begin(), fusedBonds.end(), 2) == 3);
   }
 }
+
+TEST_CASE("Github #9398: Macrocycle ether aromaticity") {
+  SECTION("as reported") {
+    // The SMILES with uppercase 'O' (aliphatic ethers)
+    auto m = "O=C(O)c1cccc2Oc3cncc(n3)Oc3c(C(=O)O)cccc3Oc3cncc(n3)Oc12"_smiles;
+    REQUIRE(m);
+
+    // Check that the ether oxygens are NOT aromatic
+    // (Based on the Python script, atoms 8, 15, 25, 32 are the oxygens)
+    CHECK(!m->getAtomWithIdx(8)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(15)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(25)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(32)->getIsAromatic());
+  }
+  SECTION("test edge cases") {
+    {
+      // eight-membered ring is a candidate for aromaticity
+      auto m = "O=c1ccccc(=O)c(=O)o1"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getIsAromatic());
+    }
+    {
+      // nine-membered ring is not a candidate for aromaticity
+      auto m = "O=c1ccccc(=O)ooo1"_smiles;
+      REQUIRE(m);
+      CHECK(!m->getAtomWithIdx(1)->getIsAromatic());
+    }
+
+    // m->debugMol(std::cerr);
+  }
+}
