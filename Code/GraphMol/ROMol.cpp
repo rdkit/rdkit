@@ -353,6 +353,24 @@ const Bond *ROMol::getBondBetweenAtoms(unsigned int idx1,
   return res;
 }
 
+std::vector<Bond *> ROMol::getBondsBetweenAtoms(unsigned int idx1, unsigned int idx2) {
+
+  URANGE_CHECK(idx1, getNumAtoms());
+  URANGE_CHECK(idx2, getNumAtoms());
+  
+  std::vector<Bond *> res;
+
+  auto edgeIters = boost::out_edges( idx1, d_graph); 
+  for (auto it=edgeIters.first ; it != edgeIters.second ; ++it) {
+    if (it->m_target == idx2) {
+      res.push_back(d_graph[*it]);
+    }
+  }
+
+  
+  return res;
+}
+
 ROMol::ADJ_ITER_PAIR ROMol::getAtomNeighbors(Atom const *at) const {
   PRECONDITION(at, "no atom");
   PRECONDITION(&at->getOwningMol() == this,
@@ -409,9 +427,16 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
   URANGE_CHECK(bond_pin->getEndAtomIdx(), getNumAtoms());
   PRECONDITION(bond_pin->getBeginAtomIdx() != bond_pin->getEndAtomIdx(),
                "attempt to add self-bond");
-  PRECONDITION(!(boost::edge(bond_pin->getBeginAtomIdx(),
-                             bond_pin->getEndAtomIdx(), d_graph)
-                     .second),
+  // macro atoms can have multiple connections, but regular atoms cannot
+
+  auto beginAtom = getAtomWithIdx(bond_pin->getBeginAtomIdx());
+  auto endAtom = getAtomWithIdx(bond_pin->getEndAtomIdx());
+
+  PRECONDITION(beginAtom->hasProp(RDKit::common_properties::molAtomClass) ||
+                   endAtom->hasProp(RDKit::common_properties::molAtomClass) ||
+                   !(boost::edge(bond_pin->getBeginAtomIdx(),
+                                 bond_pin->getEndAtomIdx(), d_graph)
+                         .second),
                "bond already exists");
 
   Bond *bond_p;

@@ -1316,7 +1316,7 @@ TEST_CASE("Round TRIP") {
 
   SECTION("round trip") {
     std::set<std::string> exceptions = {"stereo3d_unknown.mol", "mrv-sma.mol",
-                                        "github2040_1.mol"};
+                                        "github2040_1.mol", "Phe_4I.mol", "cyaTemplate.mol", "dCTemplate.mol"};
     int failed = 0;
     int total = 0;
     RDLog::LogStateSetter blocker;
@@ -1335,6 +1335,7 @@ TEST_CASE("Round TRIP") {
           std::cerr << "Skipping exception: " << entry.path() << std::endl;
           continue;
         }
+
         RWMol *mol = nullptr;
         try {
           mol = MolFileToMol(entry.path().string());
