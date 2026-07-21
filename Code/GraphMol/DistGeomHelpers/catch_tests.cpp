@@ -1879,7 +1879,7 @@ TEST_CASE("Resolving competing 1-4s in six membered rings") {
 
     auto bnd2 = mol->getBondBetweenAtoms(5, 4);
     bnd2->setStereoAtoms(3, 0);
-    bnd2->setStereo(Bond::BondStereo::STEREOTRANS);
+    bnd2->setStereo(Bond::BondStereo::STEREOCIS);
 
     DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
     DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
