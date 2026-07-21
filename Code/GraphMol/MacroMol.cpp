@@ -17,6 +17,7 @@
 namespace RDKit {
 namespace {
 bool isMacroAtom(const Atom *atom) {
+  PRECONDITION(atom, "atom is null");
   return atom->getMacroAtomInfo() != nullptr;
 }
 }  // namespace
@@ -102,18 +103,16 @@ unsigned int MacroMol::addMacroAtomToAtomBond(unsigned int beginMacroAtomIdx,
 unsigned int MacroMol::addBond(unsigned int beginAtomIdx,
                                unsigned int endAtomIdx,
                                Bond::BondType bondType) {
-  PRECONDITION(!isMacroAtom(this->getAtomWithIdx(beginAtomIdx)),
-               "begin atom is a macro atom");
-  PRECONDITION(!isMacroAtom(this->getAtomWithIdx(endAtomIdx)),
-               "end atom is a macro atom");
-
-  return RWMol::addBond(beginAtomIdx, endAtomIdx, bondType);
+  return addBond(this->getAtomWithIdx(beginAtomIdx),
+                 this->getAtomWithIdx(endAtomIdx), bondType);
 }
 
 unsigned int MacroMol::addBond(Atom *beginAtom, Atom *endAtom,
                                Bond::BondType bondType) {
   PRECONDITION(beginAtom && endAtom, "NULL atom passed in");
-  return addBond(beginAtom->getIdx(), endAtom->getIdx(), bondType);
+  PRECONDITION(!isMacroAtom(beginAtom), "begin atom is a macro atom");
+  PRECONDITION(!isMacroAtom(endAtom), "end atom is a macro atom");
+  return RWMol::addBond(beginAtom->getIdx(), endAtom->getIdx(), bondType);
 }
 
 unsigned int MacroMol::addBond(Bond *bond, bool takeOwnership) {

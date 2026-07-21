@@ -32,7 +32,7 @@ const char *monomerClassToString(MonomerClass monomerClass) {
       return name;
     }
   }
-  PRECONDITION(false, "unknown monomer class");
+  POSTCONDITION(false, "unknown monomer class");
   return "";
 }
 
