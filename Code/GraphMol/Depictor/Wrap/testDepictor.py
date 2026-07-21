@@ -184,7 +184,8 @@ class TestCase(unittest.TestCase):
       os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 'test_data/7UPJ_xtal.mol'))
 
     # default mode
-    rdDepictor.Compute2DCoords(mol, canonOrient=False)
+    rdDepictor.Compute2DCoords(mol, canonOrient=False,
+                               useBranchDepthPrioritization=False)
     self.assertTrue(
       compareCoords(
         mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
@@ -192,7 +193,8 @@ class TestCase(unittest.TestCase):
 
     # spread the structure as much as possible by sampling
     rdDepictor.Compute2DCoords(mol, canonOrient=False, nFlipsPerSample=3, nSample=100,
-                               sampleSeed=100, permuteDeg4Nodes=1)
+                               sampleSeed=100, permuteDeg4Nodes=1,
+                               useBranchDepthPrioritization=False)
     self.assertTrue(
       compareCoords(
         mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
@@ -211,14 +213,16 @@ class TestCase(unittest.TestCase):
     dmat3D = getDistMat(mol)
 
     # now mimic the coordinate with a very small weight
-    rdDepictor.Compute2DCoordsMimicDistmat(mol, dmat3D, weightDistMat=0.001)
+    rdDepictor.Compute2DCoordsMimicDistmat(
+      mol, dmat3D, weightDistMat=0.001, useBranchDepthPrioritization=False)
     self.assertTrue(
       compareCoords(
         mol,
         os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 'test_data/7UPJ_mimic3D_1.mol')))
 
     # now mimic the coordinate with a very small weight
-    rdDepictor.Compute2DCoordsMimicDistmat(mol, dmat3D, weightDistMat=0.003)
+    rdDepictor.Compute2DCoordsMimicDistmat(
+      mol, dmat3D, weightDistMat=0.003, useBranchDepthPrioritization=False)
     self.assertTrue(
       compareCoords(
         mol,

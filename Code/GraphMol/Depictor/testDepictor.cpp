@@ -385,7 +385,11 @@ void testIssue248() {
        ++token) {
     std::string smi = *token;
     RWMol *m = SmilesToMol(smi, 0, 1);
-    unsigned int confId = RDDepict::compute2DCoords(*m, nullptr, false, true, 3, 100);
+    RDDepict::Compute2DCoordParameters params;
+    params.nFlipsPerSample = 3;
+    params.nSamples = 100;
+    params.useBranchDepthPrioritization = false;
+    unsigned int confId = RDDepict::compute2DCoords(*m, params);
     // check that there are no collisions in the molecules
     int natms = m->getNumAtoms();
     int i, j;
