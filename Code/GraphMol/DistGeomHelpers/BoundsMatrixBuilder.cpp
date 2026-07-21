@@ -1235,7 +1235,7 @@ void _collect14Bounds(
     const ROMol &mol, const Bond *bnd1, const Bond *bnd2, const Bond *bnd3,
     const Type14 type, ComputedData &accumData, double *dmat,
     const Optional14Info info,
-    std::unordered_map<unsigned int, std::vector<Bounds>> &collected14Bounds) {
+    std::unordered_map<std::size_t, std::vector<Bounds>> &collected14Bounds) {
   PRECONDITION(bnd1, "");
   PRECONDITION(bnd2, "");
   PRECONDITION(bnd3, "");
@@ -1383,7 +1383,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   boost::dynamic_bitset<> ringBondPairs(nb * nb);
   boost::dynamic_bitset<> donePaths(nb * nb * nb);
 
-  std::unordered_map<unsigned int, std::vector<Bounds>> collectedBounds;
+  std::unordered_map<std::size_t, std::vector<Bounds>> collectedBounds;
 
   boost::dynamic_bitset<> cisRingBondPairs(nb * nb);
   // first we will deal with 1-4 atoms that belong to the same ring
