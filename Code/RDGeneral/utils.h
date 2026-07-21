@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2026 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,13 +12,22 @@
 #ifndef RD_UTILS_H
 #define RD_UTILS_H
 
+#include <cstdlib>
+
 #include "types.h"
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/random.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
+#ifdef _WIN32
+inline int setenv(const char *name, const char *value, int) {
+  return _putenv_s(name, value);
+}
+#endif
+
 namespace RDKit {
+
 const int NUM_PRIMES_AVAIL =
     1000;  //!< the number of primes available and stored
 RDKIT_RDGENERAL_EXPORT extern int firstThousandPrimes[NUM_PRIMES_AVAIL];
@@ -80,6 +89,19 @@ unsigned int countSwapsToInterconvert(const T &ref, T probe) {
 }
 
 RDKIT_RDGENERAL_EXPORT std::string augmentTagName(const std::string &tag);
+
+inline bool getValFromEnvironment(const char *var, bool defVal) {
+  auto evar = std::getenv(var);
+  if (evar != nullptr) {
+    if (!strcmp(evar, "0")) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+  return defVal;
+}
+
 }  // namespace RDKit
 
 // contribution from dkoes

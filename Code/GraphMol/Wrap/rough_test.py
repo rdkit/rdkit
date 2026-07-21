@@ -2235,10 +2235,10 @@ CAS<~>
     self.assertTrue(ri.IsAtomInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 4))
-    self.assertEqual(ri.AtomRings(), ((0, 1, 2, 3), (2, 3, 4)))
-    self.assertEqual(ri.BondRings(), ((0, 1, 2, 4), (2, 3, 5)))
+    self.assertEqual(ri.AtomRings(), ((2, 3, 4), (0, 1, 2, 3)))
+    self.assertEqual(ri.BondRings(), ((2, 3, 5), (0, 1, 2, 4)))
     self.assertEqual(len(ri.AtomMembers(2)), 2)
-    self.assertEqual(ri.AtomRingSizes(2), (4, 3))
+    self.assertEqual(ri.AtomRingSizes(2), (3, 4))
     self.assertEqual(ri.AtomRingSizes(99), ())
     self.assertTrue(ri.AreAtomsInSameRing(2, 3))
     self.assertFalse(ri.AreAtomsInSameRing(1, 4))
@@ -2252,7 +2252,7 @@ CAS<~>
     self.assertTrue(ri.AreRingsFused(0, 1))
     self.assertTrue(ri.NumFusedBonds(0) == 1)
     self.assertTrue(ri.NumFusedBonds(1) == 1)
-    self.assertEqual(ri.BondRingSizes(2), (4, 3))
+    self.assertEqual(ri.BondRingSizes(2), (3, 4))
     self.assertEqual(ri.BondRingSizes(0), (4, ))
     self.assertEqual(ri.BondRingSizes(99), ())
     self.assertTrue(ri.AreBondsInSameRing(1, 2))
@@ -2263,15 +2263,12 @@ CAS<~>
     self.assertFalse(ri.AreBondsInSameRingOfSize(1, 2, 3))
     self.assertFalse(ri.AreBondsInSameRingOfSize(1, 3, 4))
 
-    if hasattr(Chem, 'FindRingFamilies'):
-      ri = m.GetRingInfo()
-      self.assertFalse(ri.AreRingFamiliesInitialized())
-      Chem.FindRingFamilies(m)
-      ri = m.GetRingInfo()
-      self.assertTrue(ri.AreRingFamiliesInitialized())
-      self.assertEqual(ri.NumRingFamilies(), 2)
-      self.assertEqual(sorted(ri.AtomRingFamilies()), [(0, 1, 2, 3), (2, 3, 4)])
-      self.assertEqual(sorted(ri.BondRingFamilies()), [(0, 1, 2, 4), (2, 3, 5)])
+    # ring families are initialized during symmetrizeSSSR in sanitization
+    ri = m.GetRingInfo()
+    self.assertTrue(ri.AreRingFamiliesInitialized())
+    self.assertEqual(ri.NumRingFamilies(), 2)
+    self.assertEqual(sorted(ri.AtomRingFamilies()), [(0, 1, 2, 3), (2, 3, 4)])
+    self.assertEqual(sorted(ri.BondRingFamilies()), [(0, 1, 2, 4), (2, 3, 5)])
 
   def test46ReplaceCore(self):
     """ test the ReplaceCore functionality
@@ -8718,6 +8715,25 @@ M  END
     m1 = Chem.MolFromSmiles('c1ncc(C)nc1')
     Chem.Kekulize(m1, canonical=False)
     self.assertEqual(m1.GetBondBetweenAtoms(3, 5).GetBondType(), Chem.BondType.SINGLE)
+
+  def testLegacyRingFinding(self):
+    origVal = Chem.GetUseLegacyRingFinding()
+    Chem.SetUseLegacyRingFinding(False)
+
+    m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
+    self.assertEqual(m1.GetRingInfo().NumRings(), 70)
+
+    Chem.SetUseLegacyRingFinding(True)
+    m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
+    self.assertEqual(m1.GetRingInfo().NumRings(), 24)
+
+    Chem.SetUseLegacyRingFinding(origVal)
+
+    m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
+    rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.LEGACY)
+    self.assertEqual(len(rings), 24)
+    rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
+    self.assertEqual(len(rings), 70)
 
 
 if __name__ == '__main__':
