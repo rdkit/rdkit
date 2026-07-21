@@ -1845,3 +1845,115 @@ TEST_CASE("Github9403: Bug: Overwritten stereo information in rings") {
           2.0 * 0.06 + 0.00001);
   }
 }
+
+TEST_CASE("Resolving competing 1-4s in six membered rings") {
+  SECTION("Simple case (CIS constrainted)") {
+    auto mol = "C1C=CCCC1"_smiles;
+    auto mol2 = "C1C=CCC=C1"_smiles;
+
+    REQUIRE(mol);
+    REQUIRE(mol2);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(mol2->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*mol2, bm2);
+    // the 1-4 between atoms 0 and 3 must be the same since both are
+    // constrainted by the CIS configuration
+    CHECK(bm->getUpperBound(0, 3) == bm2->getUpperBound(0, 3));
+    CHECK(bm->getLowerBound(0, 3) == bm2->getLowerBound(0, 3));
+  }
+  SECTION("CIS/TRANS inconsistency") {
+    auto mol = "C1C=CCC=C1"_smiles;
+
+    REQUIRE(mol);
+
+    auto bnd = mol->getBondBetweenAtoms(1, 2);
+    bnd->setStereoAtoms(0, 3);
+    bnd->setStereo(Bond::BondStereo::STEREOTRANS);
+
+    auto bnd2 = mol->getBondBetweenAtoms(5, 4);
+    bnd2->setStereoAtoms(3, 0);
+    bnd2->setStereo(Bond::BondStereo::STEREOTRANS);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    // the 1-4 between atoms 0 and 3 must allow both CIS and TRANS configuration
+    CHECK(bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3) > 0.2);
+  }
+  SECTION("Fused rings overlapping") {
+    auto mol = "C1CC2CCC1SS2"_smiles;
+    auto molref = "C1CCCCC1"_smiles;
+    auto molref2 = "C1SSCSS1"_smiles;
+
+    REQUIRE(mol);
+    REQUIRE(molref);
+    REQUIRE(molref2);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    DistGeom::BoundsMatPtr bmref{
+        new DistGeom::BoundsMatrix(molref->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bmref, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*molref, bmref);
+
+    DistGeom::BoundsMatPtr bmref2{
+        new DistGeom::BoundsMatrix(molref2->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bmref2, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*molref2, bmref2);
+
+    // Flexibility of 5-0-1-2 and 5-6-7-2 overlapping with -S-S- (constrainted
+    // by 90 deg)
+    // => interesection should be choosen where lower bound constrainted by
+    // -S-S-
+    CHECK(bm->getLowerBound(2, 5) > bmref->getLowerBound(0, 3));
+    CHECK(bm->getUpperBound(2, 5) <
+          bmref2->getUpperBound(0, 3));  // due to extra squish for S
+  }
+  SECTION("Fused rings not overlapping") {
+    auto mol = "C1=CC2CCC1SS2"_smiles;
+    auto molref = "C1C=CCC=C1"_smiles;
+    auto molref2 = "C1SSCSS1"_smiles;
+
+    REQUIRE(mol);
+    REQUIRE(molref);
+    REQUIRE(molref2);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    DistGeom::BoundsMatPtr bmref{
+        new DistGeom::BoundsMatrix(molref->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bmref, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*molref, bmref);
+
+    DistGeom::BoundsMatPtr bmref2{
+        new DistGeom::BoundsMatrix(molref2->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bmref2, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*molref2, bmref2);
+
+    // CIS constraint of 5-0-1-2 is NOT overlapping with -S-S- (constrainted
+    // by 90 deg)
+    // although 5-6-7-2 is overlapping with both -> union must be taken
+    CHECK(bm->getLowerBound(2, 5) <= bmref->getLowerBound(0, 3));
+    CHECK(bm->getUpperBound(2, 5) >=
+          bmref2->getUpperBound(0, 3));  // due to extra squish for S
+  }
+}
