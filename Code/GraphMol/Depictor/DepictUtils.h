@@ -144,6 +144,11 @@ RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrder(unsigned int aid,
                                                   const RDKit::INT_VECT &nbrs,
                                                   const RDKit::ROMol &mol);
 
+//! Like setNbrOrder(), but use branch size as the primary ordering criterion
+/// for extended branch prioritization.
+RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrderByBranchSize(
+    unsigned int aid, const RDKit::INT_VECT &nbrs, const RDKit::ROMol &mol);
+
 //! \brief From a given set of fused rings find the "core" rings, i.e. the rings
 //! that are left after iteratively removing rings that are fused with only one
 //! other ring by one or two atoms

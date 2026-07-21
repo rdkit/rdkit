@@ -295,8 +295,43 @@ void EmbeddedFrag::updateNewNeighs(
 
   auto deg = getDepictDegree(dp_mol->getAtomWithIdx(aid));
 
-  // If branch depths are available, sort neighbors by depth (deepest first)
-  if (dp_branchDepths && d_eatoms[aid].neighs.size() > 0) {
+  if ((deg >= 4) && (d_eatoms[aid].neighs.size() >= 3)) {
+    // Preserve the degree-4 placement scheme: one neighbor is opposite the
+    // incoming bond, and the other two are left/right at 90 degrees. Extended
+    // branch prioritization may choose those roles from branch-depth/size;
+    // without it, keep the historical rank-based ordering.
+    if (dp_branchDepths) {
+      auto rankedNbrs = rankAtomsByRank(*dp_mol, d_eatoms[aid].neighs);
+      RDKit::INT_VECT longNbrs;
+      RDKit::INT_VECT otherNbrs;
+      auto distTraveled = d_eatoms[aid].d_distanceFromStart;
+
+      for (auto nbr : rankedNbrs) {
+        auto key = std::make_pair(aid, static_cast<unsigned int>(nbr));
+        auto depthIt = dp_branchDepths->find(key);
+        auto depth =
+            depthIt != dp_branchDepths->end() ? depthIt->second : 0;
+        if (depth > distTraveled && depth > 1) {
+          longNbrs.push_back(nbr);
+        } else {
+          otherNbrs.push_back(nbr);
+        }
+      }
+
+      if (deg == 4 && longNbrs.size() == 2 && otherNbrs.size() == 1) {
+        // Balanced degree-4 intersection: the incoming path is not continued
+        // straight. Instead, the two long branches become the new chain and
+        // are placed in the left/right 90-degree slots.
+        d_eatoms[aid].neighs = {longNbrs[0], otherNbrs[0], longNbrs[1]};
+      } else {
+        d_eatoms[aid].neighs =
+            setNbrOrderByBranchSize(aid, d_eatoms[aid].neighs, *dp_mol);
+      }
+    } else {
+      d_eatoms[aid].neighs = setNbrOrder(aid, d_eatoms[aid].neighs, *dp_mol);
+    }
+  } else if (dp_branchDepths && d_eatoms[aid].neighs.size() > 0) {
+    // If branch depths are available, sort neighbors by depth (deepest first).
     std::stable_sort(d_eatoms[aid].neighs.begin(), d_eatoms[aid].neighs.end(),
                      [this, aid](int a, int b) {
                        auto keyA = std::make_pair(aid, static_cast<unsigned int>(a));
@@ -325,17 +360,10 @@ void EmbeddedFrag::updateNewNeighs(
                        dp_mol->getAtomWithIdx(b)->getPropIfPresent(RDKit::common_properties::_CIPRank, rankB);
                        return rankA < rankB;
                      });
-  } else {
+  } else if (d_eatoms[aid].neighs.size() > 0) {
     // Original logic: order the neighbors by their CIPranks, if the number is between > 0 but
     // less than 3
-    if ((d_eatoms[aid].neighs.size() > 0) &&
-        ((deg < 4) || (d_eatoms[aid].neighs.size() < 3))) {
-      d_eatoms[aid].neighs = rankAtomsByRank(*dp_mol, d_eatoms[aid].neighs);
-    } else if ((deg >= 4) && (d_eatoms[aid].neighs.size() >= 3)) {
-      // now if we have more more than 2 neighbors change the order so that atoms
-      // with the highest rank fall on opposite sides of each other
-      d_eatoms[aid].neighs = setNbrOrder(aid, d_eatoms[aid].neighs, *dp_mol);
-    }
+    d_eatoms[aid].neighs = rankAtomsByRank(*dp_mol, d_eatoms[aid].neighs);
   }
 
   if (d_eatoms[aid].neighs.size() > 0) {
@@ -992,6 +1020,7 @@ void EmbeddedFrag::addNonRingAtom(unsigned int aid, unsigned int toAid) {
   // Check if toAid is at a balanced bifurcation BEFORE adding aid
   // (after aid is added, it will be removed from neighs list)
   if (dp_branchDepths &&
+      getDepictDegree(dp_mol->getAtomWithIdx(toAid)) < 4 &&
       d_eatoms[toAid].neighs.size() == 2 &&
       !d_eatoms[toAid].d_isBalancedBifurcation) {  // Only check once
 

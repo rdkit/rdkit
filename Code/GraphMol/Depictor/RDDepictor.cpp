@@ -622,18 +622,17 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   // perform random sampling here to improve the density
   // BUT: disable when branch depth prioritization is enabled, as random flipping
   // would break the carefully constructed zigzag chains
-  if (!params.useBranchDepthPrioritization) {
-    for (auto &eri : efrags) {
-      // either sample the 2D space by randomly flipping rotatable
-      // bonds in the structure or flip only bonds along the shortest
-      // path between colliding atoms - don't do both
-      if ((params.nSamples > 0) && (params.nFlipsPerSample > 0)) {
-        eri.randomSampleFlipsAndPermutations(
-            params.nFlipsPerSample, params.nSamples, params.sampleSeed, nullptr,
-            0.0, params.permuteDeg4Nodes);
-      } else {
-        eri.removeCollisionsBondAndSpiroFlip();
-      }
+  for (auto &eri : efrags) {
+    // either sample the 2D space by randomly flipping rotatable
+    // bonds in the structure or flip only bonds along the shortest
+    // path between colliding atoms - don't do both
+    if (!params.useBranchDepthPrioritization && (params.nSamples > 0) &&
+        (params.nFlipsPerSample > 0)) {
+      eri.randomSampleFlipsAndPermutations(
+          params.nFlipsPerSample, params.nSamples, params.sampleSeed, nullptr,
+          0.0, params.permuteDeg4Nodes);
+    } else {
+      eri.removeCollisionsBondAndSpiroFlip();
     }
   }
   for (auto &eri : efrags) {
