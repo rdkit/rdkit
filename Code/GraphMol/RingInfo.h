@@ -302,6 +302,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       - the object must be initialized before calling this
   */
   const VECT_INT_VECT &atomRingFamilies() const { return d_atomRingFamilies; }
+  VECT_INT_VECT atomRelevantCycles() const;
 
   //! returns our bond ring family vectors
   /*!
@@ -313,11 +314,15 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   //! check if the ring families have been initialized
   bool areRingFamiliesInitialized() const { return dp_urfData != nullptr; }
 
+  //! reset ring family information
+  void resetRingFamilies();
+
   //! @}
 
- private:
   //! pre-allocates some memory to save time later
   void preallocate(unsigned int numAtoms, unsigned int numBonds);
+
+ private:
   void initFusedRings();
   bool df_init{false};
   FIND_RING_TYPE df_find_type_type{FIND_RING_TYPE_OTHER_OR_UNKNOWN};
@@ -330,6 +335,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
  public:
   boost::shared_ptr<RDL_data> dp_urfData;
 };
+
 }  // namespace RDKit
 
 #endif
