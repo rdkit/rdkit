@@ -683,7 +683,7 @@ Bond *ParseMol2FileBondLine(const std::string bondLine,
   idx2--;
 
   // if either of both ends of the bond is not an atom in the mol - return NULL
-  if (!(idx1 < idxCorresp.size() && idx2 < idxCorresp.size())) {
+  if (idx1 >= idxCorresp.size() || idx2 >= idxCorresp.size()) {
     throw FileParseException("index mismatch");
   }
 
