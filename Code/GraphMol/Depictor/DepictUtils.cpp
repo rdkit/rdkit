@@ -689,7 +689,7 @@ template RDKit::INT_LIST rankAtomsByRank(const RDKit::ROMol &mol,
 
 namespace {
 // Helper function to count acyclic subtree size in a given direction
-unsigned int countAcyclicSubtree(unsigned int fromAtom, unsigned int currentAtom,
+unsigned int countAcyclicSubtree(unsigned int currentAtom,
                                  boost::dynamic_bitset<> &visited,
                                  const RDKit::ROMol &mol) {
   // Stop at ring atoms - they're already embedded as templates
@@ -704,7 +704,7 @@ unsigned int countAcyclicSubtree(unsigned int fromAtom, unsigned int currentAtom
   for (const auto *nbr : mol.atomNeighbors(atom)) {
     unsigned int nbrIdx = nbr->getIdx();
     if (!visited[nbrIdx]) {
-      count += countAcyclicSubtree(currentAtom, nbrIdx, visited, mol);
+      count += countAcyclicSubtree(nbrIdx, visited, mol);
     }
   }
 
@@ -726,7 +726,7 @@ BRANCH_DEPTH_MAP computeBranchDepths(const RDKit::ROMol &mol) {
       boost::dynamic_bitset<> visited(numAtoms);
       visited.set(atomIdx);  // Don't backtrack through current atom
 
-      unsigned int depth = countAcyclicSubtree(atomIdx, nbrIdx, visited, mol);
+      unsigned int depth = countAcyclicSubtree(nbrIdx, visited, mol);
       depthMap[std::make_pair(atomIdx, nbrIdx)] = depth;
     }
   }
