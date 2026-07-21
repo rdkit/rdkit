@@ -113,7 +113,7 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb,
     // process the synthons
     while (stepper.d_currState[0] != numSynthons[0]) {
       toTry.emplace_back(hitset.get(), stepper.d_currState);
-      if (toTry.size() == static_cast<size_t>(d_params.toTryChunkSize)) {
+      if (toTry.size() == d_params.toTryChunkSize) {
         std::vector<std::unique_ptr<ROMol>> partResults;
         processToTrySet(toTry, endTime, partResults, numHitsFound,
                         numPossHitsFound);
@@ -545,7 +545,7 @@ bool SynthonSpaceSearcher::quickVerify(
       return false;
     }
   }
-  if (getParams().minHitMolWt > 0.0 || getParams().maxHitMolWt > 0.0) {
+  if (getParams().minHitMolWt > 0.0 || getParams().maxHitMolWt > -1.0) {
     double molWt = 0.0;
     for (unsigned int i = 0; i < synthNums.size(); ++i) {
       molWt += hitset->synthonsToUse[i][synthNums[i]].second->getMolWt();
@@ -578,7 +578,7 @@ bool SynthonSpaceSearcher::quickVerify(
 void SynthonSpaceSearcher::updateBestHitSoFar(const ROMol &possBest,
                                               const double sim) {
   if (sim > d_bestSimilarity) {
-    std::unique_lock lock1{d_myMutex};
+    std::unique_lock lock1{d_bestHitsMutex};
     d_bestSimilarity = sim;
     d_bestHitFound.reset(new ROMol(possBest));
     d_bestHitFound->setProp<double>("Similarity", sim);
@@ -676,7 +676,7 @@ void SynthonSpaceSearcher::buildAllHits(
     // process the synthons
     while (stepper.d_currState[0] != numSynthons[0]) {
       toTry.emplace_back(hitset.get(), stepper.d_currState);
-      if (std::cmp_equal(toTry.size(), d_params.toTryChunkSize)) {
+      if (toTry.size() == d_params.toTryChunkSize) {
         std::vector<std::unique_ptr<ROMol>> partResults;
         processToTrySet(toTry, endTime, partResults, numHitsFound,
                         numPossHitsWritten);

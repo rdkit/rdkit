@@ -122,13 +122,14 @@ class SynthonSpaceSearcher {
  private:
   std::unique_ptr<std::mt19937> d_randGen;
 
-  ROMol d_query;
-  SynthonSpaceSearchParams d_params;
+  const ROMol d_query;
+  const SynthonSpaceSearchParams d_params;
   SynthonSpace *d_space;
   std::unique_ptr<ROMol> d_bestHitFound;
   double d_bestSimilarity{0.0};
 
-  std::mutex d_myMutex;
+  // This for updating d_bestHitFound and d_bestSimilarity
+  std::mutex d_bestHitsMutex;
 
   // Generally, the search needs the query fragmented into no more than
   // the largest number synthon sets in any reaction.  Substructure search

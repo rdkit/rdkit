@@ -1052,12 +1052,6 @@ Synthon *SynthonSpace::getSynthonFromPool(const std::string &smiles) const {
   return nullptr;
 }
 
-void SynthonSpace::orderSynthonsForSearch() {
-  for (auto &[name, reaction] : d_reactions) {
-    reaction->initializeSearchOrders();
-  }
-}
-
 SearchResults SynthonSpace::extendedSearch(
     const MolBundle &query, const SubstructMatchParameters &matchParams,
     const SynthonSpaceSearchParams &params) {

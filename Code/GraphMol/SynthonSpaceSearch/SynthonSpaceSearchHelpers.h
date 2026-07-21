@@ -44,7 +44,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                 // memory use.  If the number of fragment sets hits this
                 // number, fragmentation stops and the search results
                 // will likely be incomplete.
-  std::int64_t toTryChunkSize{
+  std::uint64_t toTryChunkSize{
       2500000};              // For similarity searching, especially
                              // fingerprint similarity, there can be a
                              // very large number of possible hits to
@@ -85,8 +85,8 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
   unsigned int minHitHeavyAtoms{0};  // Minimum number of heavy atoms in a hit.
   int maxHitHeavyAtoms{-1};          // Maximum number of heavy atoms in a hit.
   // -1 means no maximum.
-  double minHitMolWt{0};  // Minimum molecular weight for a hit.
-  double maxHitMolWt{0};  // Maximum molecular weight for a hit.  0.0 means
+  double minHitMolWt{0};   // Minimum molecular weight for a hit.
+  double maxHitMolWt{-1};  // Maximum molecular weight for a hit.  -1.0 means
   // no maximum.
   unsigned int minHitChiralAtoms{
       0};                           // Minimum number of chiral atoms in a hit.

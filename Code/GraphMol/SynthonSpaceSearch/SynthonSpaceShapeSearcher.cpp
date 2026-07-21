@@ -365,13 +365,13 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
     const TimePoint *endTime) {
   // Use the given conformer unless it looks like a
   // 2D molecule.
-  auto queryMol = std::unique_ptr<RWMol>(new RWMol(getQuery()));
-  if (!queryMol->getNumConformers() || !queryMol->getConformer().is3D()) {
+  auto &queryMol = getQuery();
+  if (!queryMol.getNumConformers() || !queryMol.getConformer().is3D()) {
     BOOST_LOG(rdErrorLog) << "The query molecule needs a 3D conformer."
                           << std::endl;
     return false;
   }
-  if (queryMol->getNumConformers() > 1) {
+  if (queryMol.getNumConformers() > 1) {
     BOOST_LOG(rdWarningLog)
         << "The query molecule has multiple conformers.  Just using the default."
         << std::endl;

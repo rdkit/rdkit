@@ -609,11 +609,12 @@ TEST_CASE("Excluded volume") {
   SynthonSpace synthonSpace;
 #if 0
   // This space is the ligand from 4al4, chopped up.  2-2 is the same as 2-1 but
-  // with an extra phenyl group to ensure a big clash.  Keeping it here in
-  // case it needs rebuilding.
+  // with an extra phenyl group to ensure a big clash. 1-1 has an O instead of
+  // an S which gave a bit less variability in the conformations.
+  // Keeping it here in case it needs rebuilding.
   std::string spaceText(
       R"(SMILES	synton_id	synton#	reaction_id	release
-Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
+Cc1nc2ccc(NC(=O)[1*])cc2o1	1-1	0	4al4
 [1*]CCNC(=O)NCC[2*]	2-1	1	4al4
 [1*]CCNC(=O)NC(c1ccccc1)C[2*]	2-2	1	4al4
 [2*]Oc1ccc(cc1)CC(C(=O)O)C(=O)O	3-1	2	4al4
@@ -652,13 +653,8 @@ Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
   // This is one of those rare occasions where Mac and Linux give different
   // conformations even with the same parameters.  The results are similar
   // but ordered differently.
-  std::vector<std::vector<double>> expVols{{74.0, 187.5},
-                                           {198.5, 74.2},
-                                           {74.3, 177.9},
-                                           {138.0, 64.6},
-                                           {74.2, 140.5}};
-  std::vector<std::vector<double>> expMeanVols{
-      {3.0, 6.5}, {6.4, 3.0}, {5.7, 5.7}, {4.2, 2.7}, {2.3, 4.4}};
+  std::vector<std::vector<double>> expVols{{71.2, 90.2}, {71.2, 95.1}};
+  std::vector<std::vector<double>> expMeanVols{{3.0, 2.4}, {6.4, 2.3}};
   {
     params.possibleHitsFile = "poss_hits_1.txt";
     params.maxExcludedVolume = -1.0;
@@ -668,16 +664,10 @@ Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
     for (const auto &mol : results.getHitMolecules()) {
       CHECK_THAT(mol->getProp<double>("ExcludedVolume"),
                  Catch::Matchers::WithinAbs(expVols[0][i], 0.1) ||
-                     Catch::Matchers::WithinAbs(expVols[1][i], 0.1) ||
-                     Catch::Matchers::WithinAbs(expVols[2][i], 0.1) ||
-                     Catch::Matchers::WithinAbs(expVols[3][i], 0.1) ||
-                     Catch::Matchers::WithinAbs(expVols[4][i], 0.1));
+                     Catch::Matchers::WithinAbs(expVols[1][i], 0.1));
       CHECK_THAT(mol->getProp<double>("MeanExcludedVolume"),
                  Catch::Matchers::WithinAbs(expMeanVols[0][i], 0.1) ||
-                     Catch::Matchers::WithinAbs(expMeanVols[1][i], 0.1) ||
-                     Catch::Matchers::WithinAbs(expMeanVols[2][i], 0.1) ||
-                     Catch::Matchers::WithinAbs(expMeanVols[3][i], 0.1) ||
-                     Catch::Matchers::WithinAbs(expMeanVols[4][i], 0.1));
+                     Catch::Matchers::WithinAbs(expMeanVols[1][i], 0.1));
       ++i;
     }
     CHECK(countFileLines("poss_hits_1.txt") == 2);
@@ -686,22 +676,18 @@ Cc1nc2ccc(NC(=O)[1*])cc2s1	1-1	0	4al4
 
   {
     params.possibleHitsFile = "poss_hits_2.txt";
-    params.maxExcludedVolume = 100.0;
+    params.maxExcludedVolume = 80.0;
     auto results = synthonSpace.shapeSearch(*comb_4aji_4aj1, params);
     CHECK(results.getHitMolecules().size() == 1);
     CHECK(results.getHitMolecules()[0]->getProp<std::string>(
               common_properties::_Name) == "1-1;2-1;3-1;4al4");
     CHECK_THAT(results.getHitMolecules()[0]->getProp<double>("ExcludedVolume"),
                Catch::Matchers::WithinAbs(expVols[0][0], 0.1) ||
-                   Catch::Matchers::WithinAbs(expVols[1][1], 0.1) ||
-                   Catch::Matchers::WithinAbs(expVols[2][0], 0.1) ||
-                   Catch::Matchers::WithinAbs(expVols[3][1], 0.1));
+                   Catch::Matchers::WithinAbs(expVols[1][1], 0.1));
     CHECK_THAT(
         results.getHitMolecules()[0]->getProp<double>("MeanExcludedVolume"),
         Catch::Matchers::WithinAbs(expMeanVols[0][0], 0.1) ||
-            Catch::Matchers::WithinAbs(expMeanVols[1][1], 0.1) ||
-            Catch::Matchers::WithinAbs(expMeanVols[2][0], 0.1) ||
-            Catch::Matchers::WithinAbs(expMeanVols[3][1], 0.1));
+            Catch::Matchers::WithinAbs(expMeanVols[1][1], 0.1));
     CHECK(countFileLines("poss_hits_2.txt") == 2);
     std::remove("poss_hits_2.txt");
   }
