@@ -609,6 +609,34 @@ class TestCase(unittest.TestCase):
     bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, doTriangleSmoothing=False)
     self.assertTrue(bm1[0, 4] < bm2[0, 4])
 
+  def testGetMolBoundsMatrixParams(self):
+    mol = Chem.MolFromSmiles('CC(=O)NCC')
+    bm1 = rdDistGeom.GetMoleculeBoundsMatrix(mol, forceTransAmides=False, doTriangleSmoothing=False)
+    self.assertTrue(bm1[0, 4] - bm1[4, 0] > 0.5)
+    bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, forceTransAmides=True, doTriangleSmoothing=False)
+    self.assertTrue(bm2[0, 4] - bm2[4, 0] < 0.5)
+
+    ps = rdDistGeom.EmbedParameters()
+    ps.forceTransAmides = False
+    bm1 = rdDistGeom.GetMoleculeBoundsMatrix(mol, ps, doTriangleSmoothing=False)
+    self.assertTrue(bm1[0, 4] - bm1[4, 0] > 0.5)
+    ps.forceTransAmides = True
+    bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, ps, doTriangleSmoothing=False)
+    self.assertTrue(bm2[0, 4] - bm2[4, 0] < 0.5)
+
+    bm1 = rdDistGeom.GetMoleculeBoundsMatrix(mol, set15bounds=True, doTriangleSmoothing=False)
+    self.assertLess(bm1[0,5],6.0)
+    bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, set15bounds=False, doTriangleSmoothing=False)
+    self.assertEqual(bm2[0,5],1000.0)
+
+    bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, set14bounds=False, doTriangleSmoothing=False)
+    self.assertEqual(bm2[0,4],1000.0)
+
+    bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, set13bounds=False, doTriangleSmoothing=False)
+    self.assertEqual(bm2[0,3],1000.0)
+
+
+
   def testGithub2057(self):
     # ensure that ETKDG is the default Embedder
     mol = Chem.AddHs(Chem.MolFromSmiles('OCCC'))

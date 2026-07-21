@@ -774,8 +774,7 @@ TorsionValue _getTwoInSameRing14Type(const ROMol &mol, const Bond *bnd2,
   Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
 
   if (preferTrans && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
-      (stype != Bond::STEREOZ &&
-       stype != Bond::STEREOCIS)) { 
+      (stype != Bond::STEREOZ && stype != Bond::STEREOCIS)) {
     // here we will assume 180 degrees: basically flat ring with an external
     // substituent
     return {TorsionType::TRANS};
@@ -1471,8 +1470,8 @@ void initBoundsMat(DistGeom::BoundsMatPtr mmat, double defaultMin,
 };
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                    bool set15bounds, bool scaleVDW, bool useMacrocycle14config,
-                    bool forceTransAmides, bool set14bounds, bool set13bounds) {
+                    const EmbedParameters &params, bool scaleVDW,
+                    bool set15bounds, bool set14bounds, bool set13bounds) {
   PRECONDITION(mmat.get(), "bad pointer");
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -1495,17 +1494,16 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   set12Bounds(mol, mmat, accumData);
   if (set13bounds) {
     set13Bounds(mol, mmat, accumData);
-  }
 
-  if (set14bounds) {
-    set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
-                forceTransAmides);
-  }
+    if (set14bounds) {
+      set14Bounds(mol, mmat, accumData, distMatrix,
+                  params.useMacrocycle14config, params.forceTransAmides);
 
-  if (set15bounds) {
-    set15Bounds(mol, mmat, accumData, distMatrix);
+      if (set15bounds) {
+        set15Bounds(mol, mmat, accumData, distMatrix);
+      }
+    }
   }
-
   setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
 }
 
@@ -1567,38 +1565,13 @@ void collectBondsAndAngles(const ROMol &mol,
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     std::vector<std::pair<int, int>> &bonds,
-                    std::vector<std::vector<int>> &angles, bool set15bounds,
-                    bool scaleVDW, bool useMacrocycle14config,
-                    bool forceTransAmides, bool set14bounds, bool set13bounds) {
-  PRECONDITION(mmat.get(), "bad pointer");
+                    std::vector<std::vector<int>> &angles,
+                    const EmbedParameters &params, bool scaleVDW,
+                    bool set15bounds, bool set14bounds, bool set13bounds) {
+  setTopolBounds(mol, mmat, params, scaleVDW, set15bounds, set14bounds,
+                 set13bounds);
   bonds.clear();
   angles.clear();
-  unsigned int nb = mol.getNumBonds();
-  unsigned int na = mol.getNumAtoms();
-  if (!na) {
-    throw ValueErrorException("molecule has no atoms");
-  }
-  ComputedData accumData(na, nb);
-  double *distMatrix = nullptr;
-  distMatrix = MolOps::getDistanceMat(mol);
-
-  set12Bounds(mol, mmat, accumData);
-
-  if (set13bounds) {
-    set13Bounds(mol, mmat, accumData);
-  }
-
-  if (set14bounds) {
-    set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
-                forceTransAmides);
-  }
-
-  if (set15bounds) {
-    set15Bounds(mol, mmat, accumData, distMatrix);
-  }
-
-  setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
-
   collectBondsAndAngles(mol, bonds, angles);
 }
 
