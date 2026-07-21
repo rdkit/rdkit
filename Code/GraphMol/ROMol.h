@@ -927,6 +927,11 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! \name Properties
   //! @{
 
+  //! sets the molecule name/title; equivalent to setting the \c _Name property
+  void setName(const std::string &name) const;
+  //! gets the molecule name/title stored in \c _Name, or an empty string if
+  //! absent
+  std::string getName() const;
   //! clears all of our \c computed \c properties
   void clearComputedProps(bool includeRings = true) const;
   //! calculates any of our lazy \c properties

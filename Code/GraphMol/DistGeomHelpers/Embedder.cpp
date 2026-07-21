@@ -329,11 +329,9 @@ bool clashCheck(const RDGeom::PointPtrVect *positions,
   for (std::size_t i = 1; i < positions->size(); ++i) {
     for (std::size_t j = 0; j < i; ++j) {
       double dist2 = 0.0;
-      const RDGeom::PointND diff =
-          (*static_cast<RDGeom::PointND *>((*positions)[j]) -
-           *static_cast<RDGeom::PointND *>((*positions)[i]));
       for (std::size_t d = 0; d < 3; ++d) {
-        dist2 += diff[d] * diff[d];
+        const double diff = (*(*positions)[j])[d] - (*(*positions)[i])[d];
+        dist2 += diff * diff;
       }
       if (dist2 >= (threshold2)) {
         continue;
@@ -374,7 +372,7 @@ bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
       std::ranges::count_if(eargs.etkdgDetails->angles,
                             [](const auto &angle) { return angle[3]; }) +
       eargs.etkdgDetails->improperAtoms.size();
-  if (totalEnergy > (nCenters * planarityTolerance)){
+  if (totalEnergy > (nCenters * planarityTolerance)) {
     return false;
   }
   for (const auto &contrib : field->contribs()) {
@@ -1355,8 +1353,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -1456,13 +1454,13 @@ bool setupInitialBoundsMatrix(
     ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
   PRECONDITION(mol, "bad molecule");
   unsigned int nAtoms = mol->getNumAtoms();
+  bool set15bounds = true;
+  bool scaleVDW = false;
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
-    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, true,
-                   false, params.useMacrocycle14config,
-                   params.forceTransAmides);
+    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
+                   scaleVDW, set15bounds);
   } else {
-    setTopolBounds(*mol, mmat, true, false, params.useMacrocycle14config,
-                   params.forceTransAmides);
+    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
   }
   double tol = 0.0;
   if (coordMap) {
@@ -1473,8 +1471,9 @@ bool setupInitialBoundsMatrix(
     // ok this bound matrix failed to triangle smooth - re-compute the
     // bounds matrix without 15 bounds and with VDW scaling
     initBoundsMat(mmat);
-    setTopolBounds(*mol, mmat, false, true, params.useMacrocycle14config,
-                   params.forceTransAmides);
+    bool scaleVDW = true;
+    bool set15bounds = false;
+    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
 
     if (coordMap) {
       adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
@@ -1486,8 +1485,9 @@ bool setupInitialBoundsMatrix(
       if (params.ignoreSmoothingFailures) {
         // proceed anyway with the more relaxed bounds matrix
         initBoundsMat(mmat);
-        setTopolBounds(*mol, mmat, false, true, params.useMacrocycle14config,
-                       params.forceTransAmides);
+        bool scaleVDW = true;
+        bool set15bounds = false;
+        setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
 
         if (coordMap) {
           adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
@@ -1842,7 +1842,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     }
     int numThreads = getNumThreadsToUse(params.numThreads);
 
-    ControlCHandler::reset();
+    ControlCHandler hdlr;
 
     // do the embedding, using multiple threads if requested
     detail::EmbedArgs eargs = {&confsOk,        fourD,
@@ -1876,7 +1876,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       res.push_back(-1);
       return;
     }
-    if (ControlCHandler::getGotSignal()) {
+    if (hdlr.getGotSignal()) {
       BOOST_LOG(rdWarningLog) << INTERRUPT_MESSAGE << std::endl;
       return;
     }

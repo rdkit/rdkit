@@ -37,9 +37,6 @@ class TestCase(unittest.TestCase):
     lmaxmin = pkr.LazyPick(func, self.n, self.m, (886, 112))
     self.assertEqual(list(lmaxmin), list(maxmin))
 
-    lmaxmin = pkr.LazyPick(func, self.n, self.m, (886, 112), useCache=False)
-    self.assertEqual(list(lmaxmin), list(maxmin))
-
     self.assertRaises(ValueError, lambda: pkr.Pick(self.dMat, self.n, self.m, (1012, )))
     self.assertRaises(ValueError, lambda: pkr.Pick(self.dMat, self.n, self.m, (-1, )))
 
@@ -124,21 +121,22 @@ class TestCase(unittest.TestCase):
       return d
 
     picker = rdSimDivPickers.MaxMinPicker()
-    mm1 = picker.LazyPick(taniFunc, len(vs), N)
+    mm1 = picker.LazyPick(taniFunc, len(vs), N, seed=0xf00d)
     self.assertEqual(len(mm1), N)
     picker = None
 
     picker = rdSimDivPickers.MaxMinPicker()
-    mm2 = picker.LazyBitVectorPick(vs, len(vs), N)
+    mm2 = picker.LazyBitVectorPick(vs, len(vs), N, seed=0xf00d)
     self.assertEqual(len(mm2), N)
 
     picker = rdSimDivPickers.MaxMinPicker()
-    mm3 = picker.LazyBitVectorPick(vs, len(vs), N)
+    mm3 = picker.LazyBitVectorPick(vs, len(vs), N, seed=0xf00d + 1)
     self.assertEqual(len(mm3), N)
 
-    # we get the occasional dupe randomly,
-    # make sure we don't get three dupes in a row
-    self.assertTrue(tuple(mm2) != tuple(mm1)) or (tuple(mm3) != tuple(mm1))
+    # LazyPick and LazyBitVectorPick should return the same results for the same seed
+    self.assertEqual(tuple(mm2), tuple(mm1))
+    # different seeds give different picks here:
+    self.assertNotEqual(tuple(mm3), tuple(mm1))
     picker = None
 
     ds = []
@@ -173,15 +171,7 @@ class TestCase(unittest.TestCase):
     mm1 = picker.LazyPick(func, len(vs), N, seed=42)
     self.assertEqual(len(mm1), N)
 
-    mm2 = picker.LazyPick(func, len(vs), N, useCache=False, seed=42)
-    self.assertEqual(len(mm2), N)
-    self.assertEqual(list(mm1), list(mm2))
-
     mm2 = picker.LazyBitVectorPick(vs, len(vs), N, seed=42)
-    self.assertEqual(len(mm2), N)
-    self.assertEqual(list(mm1), list(mm2))
-
-    mm2 = picker.LazyBitVectorPick(vs, len(vs), N, useCache=False, seed=42)
     self.assertEqual(len(mm2), N)
     self.assertEqual(list(mm1), list(mm2))
 
@@ -227,10 +217,6 @@ class TestCase(unittest.TestCase):
     mm1 = picker.LazyBitVectorPick(fps, len(fps), N, seed=42)
     self.assertEqual(len(mm1), N)
     self.assertEqual(list(mm1), [37, 1, 43, 38, 16])
-
-    mm2 = picker.LazyBitVectorPick(fps, len(fps), N, useCache=False, seed=42)
-    self.assertEqual(len(mm2), N)
-    self.assertEqual(list(mm1), list(mm2))
 
   def testBitVectorMaxMin3(self):
     fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'SimDivPickers', 'Wrap', 'test_data',
