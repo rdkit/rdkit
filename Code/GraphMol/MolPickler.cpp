@@ -420,24 +420,24 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         ((const RecursiveStructureQuery *)query)->getQueryMol(), ss);
   } else {
     auto qdetails = PicklerOps::getQueryDetails(query);
-    switch (qdetails.which()) {
+    switch (qdetails.index()) {
       case 0:
-        streamWrite(ss, boost::get<MolPickler::Tags>(qdetails));
+        streamWrite(ss, std::get<MolPickler::Tags>(qdetails));
         break;
       case 1: {
-        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t>>(qdetails);
+        auto v = std::get<std::tuple<MolPickler::Tags, int32_t>>(qdetails);
         streamWrite(ss, std::get<0>(v));
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<1>(v));
       } break;
       case 2: {
-        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t, int32_t>>(
+        auto v = std::get<std::tuple<MolPickler::Tags, int32_t, int32_t>>(
             qdetails);
         streamWrite(ss, std::get<0>(v));
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<1>(v));
         streamWrite(ss, std::get<2>(v));
       } break;
       case 3: {
-        auto v = boost::get<
+        auto v = std::get<
             std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>>(
             qdetails);
         streamWrite(ss, std::get<0>(v));
@@ -447,7 +447,7 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         streamWrite(ss, std::get<4>(v));
       } break;
       case 4: {
-        auto v = boost::get<std::tuple<MolPickler::Tags, std::set<int32_t>>>(
+        auto v = std::get<std::tuple<MolPickler::Tags, std::set<int32_t>>>(
             qdetails);
         streamWrite(ss, std::get<0>(v));
         const auto &tset = std::get<1>(v);
@@ -460,13 +460,13 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
       } break;
       case 5: {
         auto v =
-            boost::get<std::tuple<MolPickler::Tags, std::string>>(qdetails);
+            std::get<std::tuple<MolPickler::Tags, std::string>>(qdetails);
         streamWrite(ss, std::get<0>(v));
         const auto &pval = std::get<1>(v);
         streamWrite(ss, MolPickler::QUERY_VALUE, pval);
       } break;
       case 6: {
-        auto &v = boost::get<std::tuple<MolPickler::Tags, PairHolder, double>>(
+        auto &v = std::get<std::tuple<MolPickler::Tags, PairHolder, double>>(
             qdetails);
         streamWrite(ss, std::get<0>(v));
         // The tolerance is pickled first as we can't pickle a PairHolder with
@@ -1420,13 +1420,16 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   // -------------------
   streamRead(ss, tag, version);
   bool ringFound = false;
+  bool ringFamiliesFound = false;
   FIND_RING_TYPE ringType =
       RDKit::FIND_RING_TYPE::FIND_RING_TYPE_OTHER_OR_UNKNOWN;
   if (tag == BEGINSSSR) {
     ringFound = true;
+    ringFamiliesFound = true;
     ringType = FIND_RING_TYPE::FIND_RING_TYPE_SSSR;
   } else if (tag == BEGINSYMMSSSR) {
     ringFound = true;
+    ringFamiliesFound = true;
     ringType = FIND_RING_TYPE::FIND_RING_TYPE_SYMM_SSSR;
   } else if (tag == BEGINFASTFIND) {
     ringFound = true;
@@ -1438,6 +1441,12 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   if (ringFound) {
     _addRingInfoFromPickle<T>(ss, mol, version, directMap, ringType);
     streamRead(ss, tag, version);
+  }
+  if (ringFamiliesFound) {
+    // findSSSR now initializes ring families, so make sure
+    // unpickled mols have done this to prevent issues with
+    // code that expects ring families to be initialized.
+    MolOps::findRingFamilies(*mol);
   }
 
   // -------------------

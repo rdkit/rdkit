@@ -23,8 +23,6 @@
 #include <RDGeneral/BoostStartInclude.h>
 
 #include <boost/graph/connected_components.hpp>
-#include <boost/graph/kruskal_min_spanning_tree.hpp>
-#include <boost/graph/johnson_all_pairs_shortest.hpp>
 #include <boost/version.hpp>
 #if BOOST_VERSION >= 104000
 #include <boost/property_map/property_map.hpp>
@@ -1295,7 +1293,7 @@ bool isAttachmentPoint(const Atom *atom, bool markedOnly) {
 
 void expandAttachmentPoints(RWMol &mol, bool addAsQueries, bool addCoords) {
   for (auto atom : mol.atoms()) {
-    int value;
+    int value = 0;
     if (atom->getPropIfPresent(common_properties::molAttachPoint, value)) {
       std::vector<int> tgtVals;
       if (value == 1 || value == -1) {
@@ -1307,7 +1305,7 @@ void expandAttachmentPoints(RWMol &mol, bool addAsQueries, bool addCoords) {
       if (tgtVals.empty()) {
         BOOST_LOG(rdWarningLog)
             << "Invalid value for molAttachPoint: " << value << " on atom "
-            << atom->getIdx() << ". Not expanding this atttachment point."
+            << atom->getIdx() << ". Not expanding this attachment point."
             << std::endl;
         continue;
       }

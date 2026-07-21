@@ -1,8 +1,10 @@
 import copy
 import math
 import os
+import signal
+import sys
+import time
 import unittest
-
 import numpy
 
 import rdkit.DistanceGeometry as DG
@@ -869,6 +871,24 @@ class TestCase(unittest.TestCase):
     rdDistGeom.EmbedMolecule(mol, ps)
     fc = ps.GetFailureCounts()
     assert len(fc) == len(legacy_set.union(aio_set))
+
+  def testGithub9381(self):
+    seen = []
+
+    def handler(sig, frame):
+      print("python handler ran")
+      seen.append(sig)
+
+    # set up our handler
+    signal.signal(signal.SIGINT, handler)
+    mol = Chem.AddHs(Chem.MolFromSmiles("C[C@H](O)c1ccccc1"))
+    params = AllChem.KDG()
+    params.randomSeed = 0xF00D
+    # now embed, which changes the handler
+    AllChem.EmbedMolecule(mol, params)
+    time.sleep(0.2)
+    # make sure our signal handler is once again active:
+    self.assertEqual(signal.getsignal(signal.SIGINT), handler)
 
 
 if __name__ == '__main__':

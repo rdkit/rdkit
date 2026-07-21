@@ -1,3 +1,5 @@
+include(CatchShardTests)
+
 include(BoostUtils)
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 # Mac OS X specific code
@@ -231,7 +233,7 @@ endmacro(rdkit_test)
 
 macro(rdkit_catch_test)
   PARSE_ARGUMENTS(RDKTEST
-    "LINK_LIBRARIES;DEPENDS;DEST"
+    "LINK_LIBRARIES;DEPENDS;DEST;CLIARGS;SHARD_COUNT"
     ""
     ${ARGN})
   CAR(RDKTEST_NAME ${RDKTEST_DEFAULT_ARGS})
@@ -239,7 +241,11 @@ macro(rdkit_catch_test)
   if(RDK_BUILD_CPP_TESTS)
     add_executable(${RDKTEST_NAME} ${RDKTEST_SOURCES})
     target_link_libraries(${RDKTEST_NAME} PRIVATE rdkitCatch ${RDKTEST_LINK_LIBRARIES} Catch2::Catch2)
-    add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME})
+    if(${RDKTEST_SHARD_COUNT})
+      catch_add_sharded_tests(${RDKTEST_NAME} SHARD_COUNT ${RDKTEST_SHARD_COUNT})
+    else()
+      add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME} ${RDKTEST_CLIARGS})
+    endif()
   endif(RDK_BUILD_CPP_TESTS)
 endmacro(rdkit_catch_test)
 

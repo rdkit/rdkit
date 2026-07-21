@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,12 +12,14 @@
 //! \brief utility functionality for working with ring systems
 
 #include <RDGeneral/export.h>
-#ifndef _RDRINGS_H_
-#define _RDRINGS_H_
+#ifndef RDRINGS_H
+#define RDRINGS_H
 
 #include <vector>
 #include <map>
 #include <boost/dynamic_bitset_fwd.hpp>
+
+struct RDL_cycle;
 
 namespace RDKit {
 class ROMol;
@@ -85,6 +87,15 @@ RDKIT_GRAPHMOL_EXPORT void makeRingNeighborMap(const VECT_INT_VECT &brings,
 RDKIT_GRAPHMOL_EXPORT void convertToBonds(const VECT_INT_VECT &res,
                                           VECT_INT_VECT &brings,
                                           const RDKit::ROMol &mol);
-};  // namespace RingUtils
+
+// normalizes a ring by rotating/reversing it so that the first atom
+// is the one with the smallest index, and the second atom is the neighbor
+// to the first one that again has the smallest index.
+// This change should have a small performance footprint while it helps
+// keeping test results consistent when making changes to ring detection.
+void normalizeRing(std::vector<int> &ring);
+std::vector<int> rdlCycleToAtomRing(RDL_cycle *cycle);
+
+}  // namespace RingUtils
 
 #endif

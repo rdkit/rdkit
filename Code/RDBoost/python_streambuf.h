@@ -20,7 +20,7 @@
 #include <boost/python/str.hpp>
 #include <boost/python/extract.hpp>
 
-#include <boost/optional.hpp>
+#include <optional>
 #include <boost/utility/typed_in_place_factory.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
@@ -401,7 +401,7 @@ class streambuf : public std::basic_streambuf<char> {
     }
 
     // Let's have a go
-    boost::optional<off_type> result =
+    std::optional<off_type> result =
         seekoff_without_calling_python(off, way, which);
     if (!result) {
       // we need to call Python
@@ -455,9 +455,9 @@ class streambuf : public std::basic_streambuf<char> {
   // the farthest place the buffer has been written into
   char *farthest_pptr;
 
-  boost::optional<off_type> seekoff_without_calling_python(
+  std::optional<off_type> seekoff_without_calling_python(
       off_type off, std::ios_base::seekdir way, std::ios_base::openmode which) {
-    boost::optional<off_type> const failure = off_type(-1);
+    std::optional<off_type> const failure = off_type(-1);
 
     // Buffer range and current position
     off_type buf_begin, buf_end, buf_cur, upper_bound;
