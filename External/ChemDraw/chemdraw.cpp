@@ -217,8 +217,10 @@ void visit_children(
         // Sometimes ChemDraw just marks with R and S, so let's assign
         //  these as long as they were not already determined
         checkChemDrawTetrahedralGeometries(*res);
+        checkChemDrawDoubleBondGeometries(*res);
       } else {
         MolOps::detectBondStereochemistry(*res);
+        checkChemDrawDoubleBondGeometries(*res);
       }
     } else if (id == kCDXObj_ReactionScheme) {  // get the reaction info
       auto &scheme = (CDXReactionScheme &)(*frag.second);
