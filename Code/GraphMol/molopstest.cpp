@@ -8021,24 +8021,35 @@ TEST_CASE("Testing isRingFused") {
   }
 }
 
-TEST_CASE("Github Issue: Macrocycle ether aromaticity", "[aromaticity]") {
-  // The SMILES with uppercase 'O' (aliphatic ethers)
-  std::string smiles =
-      "O=C(O)c1cccc2Oc3cncc(n3)Oc3c(C(=O)O)cccc3Oc3cncc(n3)Oc12";
-  RWMol *m = SmilesToMol(smiles);
-  REQUIRE(m);
+TEST_CASE("Github #9398: Macrocycle ether aromaticity") {
+  SECTION("as reported") {
+    // The SMILES with uppercase 'O' (aliphatic ethers)
+    auto m = "O=C(O)c1cccc2Oc3cncc(n3)Oc3c(C(=O)O)cccc3Oc3cncc(n3)Oc12"_smiles;
+    REQUIRE(m);
 
-  // Run the aromaticity perception
-  MolOps::setAromaticity(*m);
+    // Check that the ether oxygens are NOT aromatic
+    // (Based on the Python script, atoms 8, 15, 25, 32 are the oxygens)
+    CHECK(!m->getAtomWithIdx(8)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(15)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(25)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(32)->getIsAromatic());
+  }
+  SECTION("test edge cases") {
+    {
+      // eight-membered ring is a candidate for aromaticity
+      auto m = "O=c1ccccc(=O)c(=O)o1"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getIsAromatic());
+    }
+    {
+      // nine-membered ring is not a candidate for aromaticity
+      auto m = "O=c1ccccc(=O)ooo1"_smiles;
+      REQUIRE(m);
+      CHECK(!m->getAtomWithIdx(1)->getIsAromatic());
+    }
 
-  // Check that the ether oxygens are NOT aromatic
-  // (Based on the Python script, atoms 8, 15, 25, 32 are the oxygens)
-  CHECK(!m->getAtomWithIdx(8)->getIsAromatic());
-  CHECK(!m->getAtomWithIdx(15)->getIsAromatic());
-  CHECK(!m->getAtomWithIdx(25)->getIsAromatic());
-  CHECK(!m->getAtomWithIdx(32)->getIsAromatic());
-
-  delete m;
+    // m->debugMol(std::cerr);
+  }
 }
 TEST_CASE("GitHub Issue #9064: Incorrect SMARTS matching") {
   constexpr const char *smi = R"smi(c1ccc2c(c1)C3CC3C4CC5CC4CC25)smi";
