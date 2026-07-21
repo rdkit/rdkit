@@ -283,7 +283,6 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
     rlw += atlw;
     rup += atup;
   }
-
   if (rup >= 6) {
     for (rie = rlw; rie <= rup; ++rie) {
       if ((rie - 2) % 4 == 0) {
@@ -839,40 +838,31 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
       }
       aseen[firstIdx] = 1;
 
-     
-      edon[firstIdx] = getAtomDonorTypeArom(at);
-      acands[firstIdx] = isAtomCandForArom(at, edon[firstIdx]);
-
-      // Check if this atom can donate electrons or has empty orbitals. 
-      // We save the donor type in 'edon' for the Hückel rule check later.
+      // Check if this atom can donate electrons or has empty orbitals.
       ElectronDonorType donorType = getAtomDonorTypeArom(at);
-      
-      // Fix: Prevent aliphatic ether oxygens and sulfurs in large macrocycles 
-      // (> 10 members) from being falsely flagged as aromatic. In these large 
-      // rings, they act as simple bridges, not pi donors like in small rings (e.g., furan).
-      if (donorType == TwoElectronDonorType) {
+
+      // Fix: Prevent aliphatic ether oxygens and sulfurs in macrocycles
+      // (>= 9 members, this is what we use as the definition of macrocycle
+      // elsewhere) from being falsely flagged as aromatic. In these large
+      // rings, they act as simple bridges, not pi donors like in small rings
+      // (e.g., furan).
+      if (donorType == TwoElectronDonorType && ringSz >= 9) {
         if ((at->getAtomicNum() == 8 || at->getAtomicNum() == 16) &&
             at->getDegree() == 2 && at->getFormalCharge() == 0) {
-          bool hasMultipleBond = false;
-          for (const auto bond : mol.atomBonds(at)) {
-            if (bond->getBondType() == Bond::DOUBLE || bond->getBondType() == Bond::TRIPLE) {
-              hasMultipleBond = true;
-              break;
-            }
-          }
-          if (!hasMultipleBond && ringSz > 10) {
+          if (std::ranges::none_of(mol.atomBonds(at), [](const Bond *bond) {
+                return bond->getBondType() == Bond::DOUBLE ||
+                       bond->getBondType() == Bond::TRIPLE;
+              })) {
             donorType = NoElectronDonorType;
           }
         }
       }
-
       edon[firstIdx] = donorType;
       acands[firstIdx] = isAtomCandForArom(at, donorType);
       if (!acands[firstIdx]) {
         allAromatic = false;
-      }
-      if (!acands[firstIdx]) {
-        allAromatic = false;
+        // we can't break out of the loop over the rest of the ring here because
+        // we still need to set edon and acands for the other atoms in the ring.
       }
     }
     if (allAromatic && !allDummy) {

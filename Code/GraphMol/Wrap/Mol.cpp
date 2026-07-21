@@ -745,6 +745,16 @@ struct mol_wrapper {
              "assigned.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to check for (a string).\n")
+        .def("SetName", &ROMol::setName,
+             (python::arg("self"), python::arg("name")),
+             "Sets the molecule name; this is stored as the _Name property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - name: the molecule name (a string).\n")
+        .def("GetName", &ROMol::getName, python::args("self"),
+             "Returns the molecule name stored as the _Name property.\n\n"
+             "  NOTE:\n"
+             "    - If the _Name property has not been set, an empty string "
+             "will be returned.\n")
         .def(
             "GetProp", GetPyProp<ROMol>,
             (python::arg("self"), python::arg("key"),
