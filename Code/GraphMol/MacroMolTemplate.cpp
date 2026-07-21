@@ -10,8 +10,6 @@
 
 #include "MacroMolTemplate.h"
 
-#include <algorithm>
-
 namespace RDKit {
 
 namespace {
@@ -46,13 +44,15 @@ bool isLeavingGroup(const SubstanceGroup &sgroup) {
 }
 }  // namespace
 
+RWMol MacroMolTemplate::getMol() const { return d_mol; }
+
 unsigned int MacroMolTemplate::setMainGroup(
-    const std::vector<unsigned int> &atomIdxs, const std::string &className) {
+    const std::vector<unsigned int> &atomIdxs, MonomerClass monomerClass) {
   PRECONDITION(getMainSgroup() == nullptr, "main group already set");
-  SubstanceGroup sgroup(this, SUP_TYPE);
-  sgroup.setProp("CLASS", className);
+  SubstanceGroup sgroup(&d_mol, SUP_TYPE);
+  sgroup.setProp("CLASS", monomerClassToString(monomerClass));
   sgroup.setAtoms(atomIdxs);
-  return addSubstanceGroup(*this, sgroup);
+  return addSubstanceGroup(d_mol, sgroup);
 }
 
 unsigned int MacroMolTemplate::addLeavingGroup(
@@ -62,10 +62,10 @@ unsigned int MacroMolTemplate::addLeavingGroup(
   PRECONDITION(getMainSgroup()->includesAtom(attachAtomIdx),
                "attachment atom must be part of the main group");
 
-  SubstanceGroup sgroup(this, SUP_TYPE);
+  SubstanceGroup sgroup(&d_mol, SUP_TYPE);
   sgroup.setProp("CLASS", LGRP_CLASS);
   sgroup.setAtoms(atomIdxs);
-  auto idx = addSubstanceGroup(*this, sgroup);
+  auto idx = addSubstanceGroup(d_mol, sgroup);
 
   getMainSgroup()->addAttachPoint(attachAtomIdx,
                                   static_cast<int>(leavingAtomIdx),
@@ -74,7 +74,7 @@ unsigned int MacroMolTemplate::addLeavingGroup(
 }
 
 const SubstanceGroup *MacroMolTemplate::getMainSgroup() const {
-  for (const auto &sgroup : getSubstanceGroups(*this)) {
+  for (const auto &sgroup : getSubstanceGroups(d_mol)) {
     if (isMainSgroup(sgroup)) {
       return &sgroup;
     }
@@ -83,7 +83,7 @@ const SubstanceGroup *MacroMolTemplate::getMainSgroup() const {
 }
 
 SubstanceGroup *MacroMolTemplate::getMainSgroup() {
-  for (auto &sgroup : getSubstanceGroups(*this)) {
+  for (auto &sgroup : getSubstanceGroups(d_mol)) {
     if (isMainSgroup(sgroup)) {
       return &sgroup;
     }
@@ -93,7 +93,7 @@ SubstanceGroup *MacroMolTemplate::getMainSgroup() {
 
 std::vector<const SubstanceGroup *> MacroMolTemplate::getLeavingGroups() const {
   std::vector<const SubstanceGroup *> leavingGroups;
-  for (const auto &sgroup : getSubstanceGroups(*this)) {
+  for (const auto &sgroup : getSubstanceGroups(d_mol)) {
     if (isLeavingGroup(sgroup)) {
       leavingGroups.push_back(&sgroup);
     }
@@ -137,40 +137,31 @@ void MacroMolTemplateLibrary::addEntry(
   byTemplateName[templateKey] = macroMolEntry;
   bySymbol[symbolKey] = macroMolEntry;
 
-  // Cache the main-group size once (getMainGroupSize scans the template's
-  // substance groups) and keep orderedEntries sorted largest-main-group-first,
-  // preserving insertion order among equal sizes, so entries() needs no work
-  // and MolToMacroMol sees a stable, deterministic precedence.
-  macroMolEntry->mainGroupSize = getMainGroupSize(macroMolEntry);
-  const auto pos = std::upper_bound(
-      orderedEntries.begin(), orderedEntries.end(),
-      macroMolEntry->mainGroupSize,
-      [](size_t size, const std::shared_ptr<MacroMolEntry> &entry) {
-        return size > entry->mainGroupSize;
-      });
-  orderedEntries.insert(pos, macroMolEntry);
+  orderedEntries.insert({getMainGroupSize(macroMolEntry), macroMolEntry});
 }
 
-const std::vector<std::shared_ptr<MacroMolEntry>> &
-MacroMolTemplateLibrary::entries() const {
-  return orderedEntries;
+std::vector<std::shared_ptr<MacroMolEntry>> MacroMolTemplateLibrary::entries()
+    const {
+  std::vector<std::shared_ptr<MacroMolEntry>> result;
+  result.reserve(orderedEntries.size());
+  for (const auto &entry : orderedEntries) {
+    result.push_back(entry.second);
+  }
+  return result;
 }
 
-const std::shared_ptr<MacroMolEntry> &
-MacroMolTemplateLibrary::getByTemplateName(
+std::shared_ptr<MacroMolEntry> MacroMolTemplateLibrary::getByTemplateName(
     MonomerClass monomerClass, const std::string &templateName) const {
-  static std::shared_ptr<MacroMolEntry> empty;
   auto it = byTemplateName.find({monomerClass, templateName});
   if (it != byTemplateName.end()) return it->second;
-  return empty;
+  return nullptr;
 }
 
-const std::shared_ptr<MacroMolEntry> &MacroMolTemplateLibrary::getBySymbol(
+std::shared_ptr<MacroMolEntry> MacroMolTemplateLibrary::getBySymbol(
     MonomerClass monomerClass, const std::string &symbol) const {
-  static std::shared_ptr<MacroMolEntry> empty;
   auto it = bySymbol.find({monomerClass, symbol});
   if (it != bySymbol.end()) return it->second;
-  return empty;
+  return nullptr;
 }
 
 }  // namespace RDKit

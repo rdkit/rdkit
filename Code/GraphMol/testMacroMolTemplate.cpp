@@ -9,10 +9,12 @@
 //
 
 #include <GraphMol/MacroMolTemplate.h>
+#include <GraphMol/Atom.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <catch2/catch_all.hpp>
 
 #include <memory>
+#include <vector>
 
 using namespace RDKit;
 
@@ -99,16 +101,17 @@ TEST_CASE("testMacroMolTemplateMainAndLeavingGroups") {
 
   REQUIRE(constMacroMolTemplate.getMainSgroup() == nullptr);
 
-  CHECK(macroMolTemplate.getNumAtoms() == 7);
-  CHECK(macroMolTemplate.getAtomWithIdx(0)->getSymbol() == "H");
-  CHECK(macroMolTemplate.getAtomWithIdx(1)->getSymbol() == "N");
-  CHECK(macroMolTemplate.getAtomWithIdx(2)->getSymbol() == "C");
-  CHECK(macroMolTemplate.getAtomWithIdx(3)->getSymbol() == "C");
-  CHECK(macroMolTemplate.getAtomWithIdx(4)->getSymbol() == "C");
-  CHECK(macroMolTemplate.getAtomWithIdx(5)->getSymbol() == "O");
-  CHECK(macroMolTemplate.getAtomWithIdx(6)->getSymbol() == "O");
+  auto mol = macroMolTemplate.getMol();
+  CHECK(mol.getNumAtoms() == 7);
+  CHECK(mol.getAtomWithIdx(0)->getSymbol() == "H");
+  CHECK(mol.getAtomWithIdx(1)->getSymbol() == "N");
+  CHECK(mol.getAtomWithIdx(2)->getSymbol() == "C");
+  CHECK(mol.getAtomWithIdx(3)->getSymbol() == "C");
+  CHECK(mol.getAtomWithIdx(4)->getSymbol() == "C");
+  CHECK(mol.getAtomWithIdx(5)->getSymbol() == "O");
+  CHECK(mol.getAtomWithIdx(6)->getSymbol() == "O");
 
-  macroMolTemplate.setMainGroup({1, 2, 3, 4, 5}, "AA");
+  macroMolTemplate.setMainGroup({1, 2, 3, 4, 5}, MonomerClass::AA);
   // The amino nitrogen (1) attaches to the leaving hydrogen (0).
   macroMolTemplate.addLeavingGroup({0}, 1, 0, 1);
   // The carbonyl carbon (4) attaches to the leaving hydroxyl oxygen (6).
@@ -140,8 +143,8 @@ TEST_CASE("testMacroMolTemplateMainAndLeavingGroups") {
 }
 
 TEST_CASE("testMacroMolTemplateLibraryMissingTemplate") {
-  // Build a MacroMolTemplateLibrary and check that missing lookups return an
-  // empty shared pointer.
+  // Build a MacroMolTemplateLibrary and check that missing lookups return
+  // nullptr.
   MacroMolTemplateLibrary templateLibrary;
 
   CHECK(!templateLibrary.getByTemplateName(MonomerClass::AA, "ALA"));
