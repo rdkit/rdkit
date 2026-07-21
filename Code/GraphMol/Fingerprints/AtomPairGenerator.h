@@ -108,7 +108,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairAtomEnv
       const std::uint64_t fpSize = 0  // unused
   ) const override;
   void updateAdditionalOutput(AdditionalOutput *output,
-                              size_t bitId) const override;
+                              std::uint64_t bitId) const override;
 
   /*!
     \brief construct a new AtomPairAtomEnv object

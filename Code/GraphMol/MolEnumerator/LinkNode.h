@@ -7,6 +7,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#ifndef RD_MOLENUMERATOR_LINKNODE_H
+#define RD_MOLENUMERATOR_LINKNODE_H
+
 #include <RDGeneral/Invariant.h>
 
 #include <map>
@@ -156,3 +159,4 @@ inline std::vector<LinkNode> getMolLinkNodes(
 }  // namespace MolEnumerator
 
 }  // namespace RDKit
+#endif  // RD_MOLENUMERATOR_LINKNODE_H

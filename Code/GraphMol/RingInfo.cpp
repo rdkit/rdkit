@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include "Rings.h"
 #include "RingInfo.h"
 #include <RDGeneral/Invariant.h>
 #include <algorithm>
@@ -274,6 +275,7 @@ unsigned int RingInfo::numRingFamilies() const {
 
 unsigned int RingInfo::numRelevantCycles() const {
   PRECONDITION(df_init, "RingInfo not initialized");
+  PRECONDITION(dp_urfData, "Ring families not initialized");
   return rdcast<unsigned int>(RDL_getNofRC(dp_urfData.get()));
 };
 
@@ -286,6 +288,12 @@ unsigned int RingInfo::addRingFamily(const INT_VECT &atomIndices,
                 "length mismatch");
 
   return rdcast<unsigned int>(d_atomRingFamilies.size());
+}
+
+void RingInfo::resetRingFamilies() {
+  d_atomRingFamilies.clear();
+  d_bondRingFamilies.clear();
+  dp_urfData.reset();
 }
 
 void RingInfo::initialize(RDKit::FIND_RING_TYPE ringType) {
@@ -302,12 +310,89 @@ void RingInfo::reset() {
   d_bondMembers.clear();
   d_atomRings.clear();
   d_bondRings.clear();
-
-  d_atomRingFamilies.clear();
-  d_bondRingFamilies.clear();
+  resetRingFamilies();
 }
 void RingInfo::preallocate(unsigned int numAtoms, unsigned int numBonds) {
   d_atomMembers.resize(numAtoms);
   d_bondMembers.resize(numBonds);
 }
+
+std::vector<std::vector<int>> RingInfo::atomRelevantCycles() const {
+  PRECONDITION(df_init, "RingInfo not initialized");
+  PRECONDITION(dp_urfData, "Ring families not initialized");
+  std::vector<std::vector<int>> res;
+  if (dp_urfData) {
+    res.reserve(RDL_getNofRC(dp_urfData.get()));
+
+    RDL_cycleIterator *it = RDL_getRCyclesIterator(dp_urfData.get());
+    while (!RDL_cycleIteratorAtEnd(it)) {
+      auto cycle = RDL_cycleIteratorGetCycle(it);
+      res.push_back(RingUtils::rdlCycleToAtomRing(cycle));
+      RDL_deleteCycle(cycle);
+      RDL_cycleIteratorNext(it);
+    }
+    RDL_deleteCycleIterator(it);
+  }
+  return res;
+}
+
 }  // namespace RDKit
+namespace RingUtils {
+// normalizes a ring by rotating/reversing it so that the first atom
+// is the one with the smallest index, and the second atom is the neighbor
+// to the first one that again has the smallest index.
+// This change should have a small performance footprint while it helps
+// keeping test results consistent when making changes to ring detection.
+void normalizeRing(std::vector<int> &ring) {
+  auto newStart = std::ranges::min_element(ring);
+  std::ranges::rotate(ring, newStart);
+
+  if (ring.back() < ring[1]) {
+    // we don't need to move the central element!
+    auto numPairsToMove = (ring.size() - 1) / 2;
+    auto front = ring.begin() + 1;
+    std::swap_ranges(front, front + numPairsToMove, ring.rbegin());
+  }
+}
+
+std::vector<int> rdlCycleToAtomRing(RDL_cycle *cycle) {
+  PRECONDITION(cycle, "cycle is null");
+  std::vector<int> ring;
+  ring.reserve(cycle->weight);
+
+  // Edges in a cycle are not returned in iteration order.
+  // so we need to take care of that while we convert them
+  // into an atom ring.
+  boost::dynamic_bitset<> unseen_edges(cycle->weight);
+  unseen_edges.set();
+
+  ring.push_back(cycle->edges[0][0]);
+  ring.push_back(cycle->edges[0][1]);
+  unseen_edges.set(0, false);
+
+  while (ring.size() < cycle->weight) {
+    // Note we don't want to close the cycle: that would
+    // add the initial atom at the end too.
+    for (auto edgeIdx = unseen_edges.find_first();
+         edgeIdx != boost::dynamic_bitset<>::npos;
+         edgeIdx = unseen_edges.find_next(edgeIdx)) {
+      auto edge = cycle->edges[edgeIdx];
+      for (auto j = 0; j < 2; ++j) {
+        if (static_cast<unsigned int>(ring.back()) == edge[j]) {
+          ring.push_back(edge[1 - j]);
+          unseen_edges.set(edgeIdx, false);
+          break;
+        }
+      }
+      if (ring.size() == cycle->weight) {
+        break;
+      }
+    }
+  }
+
+  // For consistency, normalize the ring
+  normalizeRing(ring);
+
+  return ring;
+}
+}  // namespace RingUtils

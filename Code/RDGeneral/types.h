@@ -154,7 +154,6 @@ inline constexpr std::string_view _rgroupBonds = "_rgroupBonds";
 inline constexpr std::string_view _rgroupTargetAtoms = "_rgroupTargetAtoms";
 inline constexpr std::string_view _rgroupTargetBonds = "_rgroupTargetBonds";
 inline constexpr std::string_view dummyLabel = "dummyLabel";
-inline constexpr std::string_view extraRings = "extraRings";
 inline constexpr std::string_view isImplicit = "isImplicit";
 inline constexpr std::string_view maxAttachIdx = "maxAttachIdx";
 inline constexpr std::string_view molAtomMapNumber = "molAtomMapNumber";
