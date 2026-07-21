@@ -795,7 +795,7 @@ TorsionValue _getTwoInSameRing14Type(const ROMol &mol, const Bond *bnd2,
   if (mol.getBondBetweenAtoms(atm1->getIdx(), atm3->getIdx()) ||
       mol.getBondBetweenAtoms(atm4->getIdx(), atm2->getIdx())) {
     return {TorsionType::NONE};
-  }  // TODO can be removed (?)
+  }
 
   Atom::HybridizationType ahyb3 = atm3->getHybridization();
   Atom::HybridizationType ahyb2 = atm2->getHybridization();
@@ -1356,9 +1356,6 @@ void _collect14Bounds(
   collected14Bounds.try_emplace(pid, std::vector<Bounds>{});
 
   collected14Bounds[pid].emplace_back(dl, du, aid1, aid4);
-
-  std::cout << "setting " << aid1 << " " << aid4 << ": " << dl << "-" << du
-            << std::endl;
 }
 
 void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,

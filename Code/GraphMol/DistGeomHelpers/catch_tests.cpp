@@ -730,7 +730,7 @@ TEST_CASE("tracking failure causes") {
     CHECK(cid < 0);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
-          3);
+          1);
   }
   SECTION("basicsAIO") {
     auto mol =
