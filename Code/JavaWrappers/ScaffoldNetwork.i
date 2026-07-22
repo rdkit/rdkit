@@ -16,10 +16,10 @@ typedef std::vector<unsigned> UINT_VECT;
 %}
 
 
-%template(ROMol_Vect) std::vector<boost::shared_ptr<RDKit::ROMol>>;
+%template(ROMol_Vect) std::vector<std::shared_ptr<RDKit::ROMol>>;
 %template(NetworkEdge_Vect) std::vector<RDKit::ScaffoldNetwork::NetworkEdge>;
 %include <GraphMol/ScaffoldNetwork/ScaffoldNetwork.h>
-%template(createScaffoldNetwork) RDKit::ScaffoldNetwork::createScaffoldNetwork<std::vector<boost::shared_ptr<RDKit::ROMol>>>;
+%template(createScaffoldNetwork) RDKit::ScaffoldNetwork::createScaffoldNetwork<std::vector<std::shared_ptr<RDKit::ROMol>>>;
 
 // this is needed for the csharp wrappers to access count values as it does
 // not seem to be possible to wrap std::vector<unsigned>

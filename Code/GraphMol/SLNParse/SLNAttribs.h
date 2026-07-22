@@ -61,7 +61,7 @@ class RDKIT_SLNPARSE_EXPORT AttribType {
   void *structQuery{nullptr};
 };
 
-typedef std::vector<std::pair<AttribCombineOp, boost::shared_ptr<AttribType>>>
+typedef std::vector<std::pair<AttribCombineOp, std::shared_ptr<AttribType>>>
     AttribListType;
 
 //! parses the attributes provided for an atom and sets

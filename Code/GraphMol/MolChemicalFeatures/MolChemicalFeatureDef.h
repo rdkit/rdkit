@@ -17,14 +17,14 @@
 #include <GraphMol/ROMol.h>
 #include <RDGeneral/Exceptions.h>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 namespace RDKit {
 class ROMol;
 class MolChemicalFeatureDef;
 
 class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureDef {
  public:
-  typedef std::list<boost::shared_ptr<MolChemicalFeatureDef>> CollectionType;
+  typedef std::list<std::shared_ptr<MolChemicalFeatureDef>> CollectionType;
 
   MolChemicalFeatureDef() : d_family(""), d_type(""), d_smarts("") {}
   MolChemicalFeatureDef(const std::string &smarts, std::string family,
@@ -61,7 +61,7 @@ class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureDef {
   std::string d_family;
   std::string d_type;
   std::string d_smarts;
-  boost::shared_ptr<ROMol> dp_pattern;
+  std::shared_ptr<ROMol> dp_pattern;
   std::vector<double> d_weights;
 };
 }  // namespace RDKit

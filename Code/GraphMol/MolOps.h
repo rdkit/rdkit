@@ -128,7 +128,7 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(
   \return a vector of the fragments as smart pointers to ROMols
 
 */
-RDKIT_GRAPHMOL_EXPORT std::vector<boost::shared_ptr<ROMol>> getMolFrags(
+RDKIT_GRAPHMOL_EXPORT std::vector<std::shared_ptr<ROMol>> getMolFrags(
     const ROMol &mol, bool sanitizeFrags = true,
     std::vector<int> *frags = nullptr,
     std::vector<std::vector<int>> *fragsMolAtomMapping = nullptr,
@@ -150,11 +150,10 @@ RDKIT_GRAPHMOL_EXPORT std::vector<boost::shared_ptr<ROMol>> getMolFrags(
 */
 
 template <typename T>
-RDKIT_GRAPHMOL_EXPORT std::map<T, boost::shared_ptr<ROMol>>
-getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
-                     bool sanitizeFrags = true,
-                     const std::vector<T> *whiteList = nullptr,
-                     bool negateList = false);
+RDKIT_GRAPHMOL_EXPORT std::map<T, std::shared_ptr<ROMol>> getMolFragsWithQuery(
+    const ROMol &mol, T (*query)(const ROMol &, const Atom *),
+    bool sanitizeFrags = true, const std::vector<T> *whiteList = nullptr,
+    bool negateList = false);
 //! splits a molecule into pieces based on labels assigned using a query,
 //! putting them into a map of std::unique_ptr<ROMol>.
 /*!

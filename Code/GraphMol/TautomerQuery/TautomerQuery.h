@@ -65,7 +65,7 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
     PRECONDITION(other.d_templateMolecule != nullptr, "Null template");
     for (auto taut : other.d_tautomers) {
       PRECONDITION(taut.get() != nullptr, "Null tautomer");
-      d_tautomers.push_back(boost::make_shared<ROMol>(*taut));
+      d_tautomers.push_back(std::make_shared<ROMol>(*taut));
     }
   }
 
