@@ -1453,13 +1453,13 @@ bool setupInitialBoundsMatrix(
     ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
   PRECONDITION(mol, "bad molecule");
   unsigned int nAtoms = mol->getNumAtoms();
+  bool set15bounds = true;
+  bool scaleVDW = false;
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
-    setTopolBounds(*mol, mmat, etkdgDetails, true,
-                   false, params.useMacrocycle14config,
-                   params.forceTransAmides);
+    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
+                   scaleVDW, set15bounds);
   } else {
-    setTopolBounds(*mol, mmat, true, false, params.useMacrocycle14config,
-                   params.forceTransAmides);
+    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
   }
   double tol = 0.0;
   if (coordMap) {
@@ -1470,8 +1470,9 @@ bool setupInitialBoundsMatrix(
     // ok this bound matrix failed to triangle smooth - re-compute the
     // bounds matrix without 15 bounds and with VDW scaling
     initBoundsMat(mmat);
-    setTopolBounds(*mol, mmat, false, true, params.useMacrocycle14config,
-                   params.forceTransAmides);
+    bool scaleVDW = true;
+    bool set15bounds = false;
+    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
 
     if (coordMap) {
       adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
@@ -1483,8 +1484,9 @@ bool setupInitialBoundsMatrix(
       if (params.ignoreSmoothingFailures) {
         // proceed anyway with the more relaxed bounds matrix
         initBoundsMat(mmat);
-        setTopolBounds(*mol, mmat, false, true, params.useMacrocycle14config,
-                       params.forceTransAmides);
+        bool scaleVDW = true;
+        bool set15bounds = false;
+        setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
 
         if (coordMap) {
           adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);

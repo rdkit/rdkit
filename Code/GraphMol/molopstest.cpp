@@ -298,7 +298,7 @@ TEST_CASE("test3") {
   delete m;
 
   smi = "C(C1C2C3C41)(C2C35)C45";  // cubane
-  // smi = "C1(C2C3C4C5C6C72)C3C4C5C6C71"; // from Figureras paper
+  // smi = "C1(C2C3C4C5C6C72)C3C4C5C6C71"; // from Figueras paper
   // smi = "C17C5C4C3C2C1C6C2C3C4C5C67";
   // we cannot use the sanitization code, because that finds *symmetric*
   // rings, which will break this case:
@@ -311,7 +311,6 @@ TEST_CASE("test3") {
   bfs = MolOps::symmetrizeSSSR(*m, bfrs);
   REQUIRE(bfs == 6);
   BOOST_LOG(rdInfoLog) << "BFSR: " << bfs << "\n";
-
   for (auto bring : bfrs) {
     BOOST_LOG(rdInfoLog) << "( ";
 
@@ -339,15 +338,19 @@ TEST_CASE("test3") {
   REQUIRE(bfs == 2);
   delete m;
 
-  // Counterexamples in ring perception figure 4:
+  // This was a counterexamples in ring perception figure 4:
   //  * The native Figueras algorithm cannot work on this molecule, it will
   //    fail after finding one ring. Naive modified Figueras finds a 6 membered
   //    ring, which is wrong.
+  // RingDecomposerLib uses an exhaustive search, and finds the correct SSSR,
+  // which Figueras didn't do.
   smi = "C123C4C5C6(C3)C7C1C8C2C4C5C6C78";
   m = SmilesToMol(smi, 0, 0);
   bfs = MolOps::findSSSR(*m);
-  REQUIRE(bfs == 7);
+  REQUIRE(bfs == 8);
   bfrs.resize(0);
+  // Running Figueras to find extra rings to be used in Symmetrization
+  // won't find any extra rings, and we keep the ones from the SSSR.
   bfs = MolOps::symmetrizeSSSR(*m, bfrs);
   REQUIRE(bfs == 8);
   for (auto bring : bfrs) {
@@ -371,8 +374,8 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 3);
-  REQUIRE(sssr[0].size() == 6);
-  REQUIRE(sssr[1].size() == 5);
+  REQUIRE(sssr[0].size() == 5);
+  REQUIRE(sssr[1].size() == 6);
   REQUIRE(sssr[2].size() == 6);
   BOOST_LOG(rdInfoLog) << smi << "\n";
   delete m;
@@ -412,9 +415,9 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 4);
-  REQUIRE(sssr[0].size() == 6);
+  REQUIRE(sssr[0].size() == 5);
   REQUIRE(sssr[1].size() == 5);
-  REQUIRE(sssr[2].size() == 5);
+  REQUIRE(sssr[2].size() == 6);
   REQUIRE(sssr[3].size() == 6);
   delete m;
 
@@ -423,8 +426,8 @@ TEST_CASE("test3") {
   REQUIRE(m);
   count = MolOps::findSSSR(*m, sssr);
   REQUIRE(count == 2);
-  REQUIRE(sssr[0].size() == 4);
-  REQUIRE(sssr[1].size() == 3);
+  REQUIRE(sssr[0].size() == 3);
+  REQUIRE(sssr[1].size() == 4);
 
   REQUIRE(m->getRingInfo()->numAtomRings(0) == 1);
   REQUIRE(m->getRingInfo()->isAtomInRingOfSize(0, 4));
@@ -4925,7 +4928,9 @@ TEST_CASE("Testing github issue 418: removeHs not updating H count") {
     REQUIRE(m->getAtomWithIdx(0)->getNumExplicitHs() == 4);
     delete m;
   }
-  { REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException); }
+  {
+    REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException);
+  }
 }
 
 TEST_CASE(
@@ -6926,9 +6931,24 @@ TEST_CASE(
       REQUIRE(m);
       REQUIRE(m->getNumAtoms() == 204);
       REQUIRE(m->getNumBonds() == 244);
-      REQUIRE_THROWS_AS(MolOps::findSSSR(*m), ValueErrorException);
+      // FindSSSR now uses RingDecomposerLib, which doesn't fail on this
+      REQUIRE_NOTHROW(MolOps::findSSSR(*m));
     }
-    { REQUIRE_THROWS_AS(SmilesToMol(smiles), ValueErrorException); }
+    {
+      // symmetrizeSSSR (used in sanitization) has also been updated to the RDL,
+      // so normal sanitization should work too:
+      REQUIRE_NOTHROW(v2::SmilesParse::MolFromSmiles(smiles));
+    }
+
+    {
+      // legacy SymmetrizeSSSR uses the old SSSR code, which fails on this
+      // molecule.  So if we use the legacy code, we should get an exception:
+      std::unique_ptr<RWMol> m{SmilesToMol(smiles, 0, false)};
+      REQUIRE(m);
+      REQUIRE_THROWS_AS(
+          MolOps::symmetrizeSSSR(*m, MolOps::SymmetrizeSSSRAlgorithm::LEGACY),
+          ValueErrorException);
+    }
   }
 }
 
@@ -7752,8 +7772,7 @@ TEST_CASE("Testing ring family calculation") {
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 8);
-    REQUIRE(!m->getRingInfo()->areRingFamiliesInitialized());
-    MolOps::findRingFamilies(*m);
+    // findSSSR triggers ring family calculation
     REQUIRE(m->getRingInfo()->isInitialized());
     REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
     int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
@@ -7774,8 +7793,7 @@ TEST_CASE("Testing ring family calculation") {
     ROMol *m = SmilesToMol(smiles);
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 28);
-    REQUIRE(!m->getRingInfo()->areRingFamiliesInitialized());
-    MolOps::findRingFamilies(*m);
+    // findSSSR triggers ring family calculation
     REQUIRE(m->getRingInfo()->isInitialized());
     REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
     int numURF = RDL_getNofURF(m->getRingInfo()->dp_urfData.get());
@@ -7785,8 +7803,13 @@ TEST_CASE("Testing ring family calculation") {
     REQUIRE(numRC == 20);
     int numRings = m->getRingInfo()->numRings();
 
-    REQUIRE(numRings == 14);
+    REQUIRE(numRings == 20);
     REQUIRE(m->getRingInfo()->numRingFamilies() == 5);
+
+    auto nrings =
+        MolOps::symmetrizeSSSR(*m, MolOps::SymmetrizeSSSRAlgorithm::LEGACY);
+    REQUIRE(nrings == 14);
+
     delete m;
   }
 }
@@ -7996,4 +8019,55 @@ TEST_CASE("Testing isRingFused") {
     REQUIRE(std::count(fusedBonds.begin(), fusedBonds.end(), 1) == 2);
     REQUIRE(std::count(fusedBonds.begin(), fusedBonds.end(), 2) == 3);
   }
+}
+
+TEST_CASE("Github #9398: Macrocycle ether aromaticity") {
+  SECTION("as reported") {
+    // The SMILES with uppercase 'O' (aliphatic ethers)
+    auto m = "O=C(O)c1cccc2Oc3cncc(n3)Oc3c(C(=O)O)cccc3Oc3cncc(n3)Oc12"_smiles;
+    REQUIRE(m);
+
+    // Check that the ether oxygens are NOT aromatic
+    // (Based on the Python script, atoms 8, 15, 25, 32 are the oxygens)
+    CHECK(!m->getAtomWithIdx(8)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(15)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(25)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(32)->getIsAromatic());
+  }
+  SECTION("test edge cases") {
+    {
+      // eight-membered ring is a candidate for aromaticity
+      auto m = "O=c1ccccc(=O)c(=O)o1"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getIsAromatic());
+    }
+    {
+      // nine-membered ring is not a candidate for aromaticity
+      auto m = "O=c1ccccc(=O)ooo1"_smiles;
+      REQUIRE(m);
+      CHECK(!m->getAtomWithIdx(1)->getIsAromatic());
+    }
+
+    // m->debugMol(std::cerr);
+  }
+}
+TEST_CASE("GitHub Issue #9064: Incorrect SMARTS matching") {
+  constexpr const char *smi = R"smi(c1ccc2c(c1)C3CC3C4CC5CC4CC25)smi";
+  constexpr const char *sma = R"sma(C!@c)sma";
+
+  v2::SmilesParse::SmilesParserParams p{.removeHs = false, .replacements = {}};
+  auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+  REQUIRE(m);
+
+  auto q = v2::SmilesParse::MolFromSmarts(sma);
+  REQUIRE(q);
+
+  CHECK(m->getRingInfo()->numRings() == 6);
+
+  auto matches = SubstructMatch(*m, *q);
+  CHECK(matches.empty());
+
+  auto nrings =
+      MolOps::symmetrizeSSSR(*m, MolOps::SymmetrizeSSSRAlgorithm::LEGACY);
+  REQUIRE(nrings == 5);
 }

@@ -1447,8 +1447,10 @@ void initBoundsMat(DistGeom::BoundsMatPtr mmat, double defaultMin,
 };
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                    bool set15bounds, bool scaleVDW, bool useMacrocycle14config,
-                    bool forceTransAmides, bool set14bounds, bool set13bounds) {
+                    const EmbedParameters &params,
+                    ForceFields::CrystalFF::CrystalFFDetails &details,
+                    bool scaleVDW, bool set15bounds, bool set14bounds,
+                    bool set13bounds) {
   PRECONDITION(mmat.get(), "bad pointer");
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -1471,18 +1473,26 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   set12Bounds(mol, mmat, accumData);
   if (set13bounds) {
     set13Bounds(mol, mmat, accumData);
-  }
 
-  if (set14bounds) {
-    set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
-                forceTransAmides);
-  }
+    if (set14bounds) {
+      set14Bounds(mol, mmat, accumData, distMatrix,
+                  params.useMacrocycle14config, params.forceTransAmides);
 
-  if (set15bounds) {
-    set15Bounds(mol, mmat, accumData, distMatrix);
+      if (set15bounds) {
+        set15Bounds(mol, mmat, accumData, distMatrix);
+      }
+    }
   }
-
   setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
+  details.path14Configs = accumData.paths14;
+}
+
+void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+                    const EmbedParameters &params, bool scaleVDW,
+                    bool set15bounds, bool set14bounds, bool set13bounds) {
+  ForceFields::CrystalFF::CrystalFFDetails details;
+  return setTopolBounds(mol, mmat, params, details, scaleVDW, set15bounds,
+                        set14bounds, set13bounds);
 }
 
 void collectBondsAndAngles(const ROMol &mol,
@@ -1543,51 +1553,14 @@ void collectBondsAndAngles(const ROMol &mol,
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     std::vector<std::pair<int, int>> &bonds,
-                    std::vector<std::vector<int>> &angles, bool set15bounds,
-                    bool scaleVDW, bool useMacrocycle14config,
-                    bool forceTransAmides, bool set14bounds, bool set13bounds) {
-  ForceFields::CrystalFF::CrystalFFDetails details;
-  setTopolBounds(mol, mmat, details, set15bounds, scaleVDW,
-                 useMacrocycle14config, forceTransAmides, set14bounds,
+                    std::vector<std::vector<int>> &angles,
+                    const EmbedParameters &params, bool scaleVDW,
+                    bool set15bounds, bool set14bounds, bool set13bounds) {
+  setTopolBounds(mol, mmat, params, scaleVDW, set15bounds, set14bounds,
                  set13bounds);
-  bonds = details.bonds;
-  angles = details.angles;
-}
-
-void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                    ForceFields::CrystalFF::CrystalFFDetails &details,
-                    bool set15bounds, bool scaleVDW, bool useMacrocycle14config,
-                    bool forceTransAmides, bool set14bounds, bool set13bounds) {
-  PRECONDITION(mmat.get(), "bad pointer");
-  unsigned int nb = mol.getNumBonds();
-  unsigned int na = mol.getNumAtoms();
-  if (!na) {
-    throw ValueErrorException("molecule has no atoms");
-  }
-  ComputedData accumData(na, nb);
-  double *distMatrix = nullptr;
-  distMatrix = MolOps::getDistanceMat(mol);
-
-  set12Bounds(mol, mmat, accumData);
-
-  if (set13bounds) {
-    set13Bounds(mol, mmat, accumData);
-  }
-
-  if (set14bounds) {
-    set14Bounds(mol, mmat, accumData, distMatrix, useMacrocycle14config,
-                forceTransAmides);
-  }
-
-  if (set15bounds) {
-    set15Bounds(mol, mmat, accumData, distMatrix);
-  }
-
-  setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
-
-  collectBondsAndAngles(mol, details.bonds, details.angles);
-
-  details.path14Configs = accumData.paths14;
+  bonds.clear();
+  angles.clear();
+  collectBondsAndAngles(mol, bonds, angles);
 }
 
 // some helper functions to set 15 distances
