@@ -29,6 +29,7 @@
 #include "BoundsMatrixBuilderDetails.h"
 #include <tuple>
 #include <map>
+#include <limits>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
@@ -39,6 +40,30 @@
 #endif
 
 using namespace RDKit;
+
+TEST_CASE("invalid coordinate maps", "[constrained-embedding]") {
+  auto mol = "CCO"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  std::map<int, RDGeom::Point3D> coordMap;
+  params.coordMap = &coordMap;
+
+  SECTION("atom index out of range") {
+    coordMap[mol->getNumAtoms()] = {0.0, 0.0, 0.0};
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*mol, params),
+                    ValueErrorException);
+  }
+
+  SECTION("non-finite coordinates") {
+    const auto value = GENERATE(std::numeric_limits<double>::infinity(),
+                                -std::numeric_limits<double>::infinity(),
+                                std::numeric_limits<double>::quiet_NaN());
+    coordMap[0] = {value, 0.0, 0.0};
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*mol, params),
+                    ValueErrorException);
+  }
+}
 
 TEST_CASE("Torsions not found in fused macrocycles", "[macrocycles]") {
   RDLog::InitLogs();
