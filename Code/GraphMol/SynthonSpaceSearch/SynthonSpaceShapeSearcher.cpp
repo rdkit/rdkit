@@ -1143,6 +1143,8 @@ bool SynthonSpaceShapeSearcher::verifyHit(
           initScores[0] >= getParams().similarityCutoff) {
         return true;
       }
+    } else {
+      initScores[0] = -1.0;  // To flag it as a bad hit.
     }
   }
   // If the run is multi-threaded, this will already be running
@@ -1204,11 +1206,12 @@ bool SynthonSpaceShapeSearcher::verifyHit(
         foundHit = true;
         bestSim = thisScore[0];
       }
-      if (!foundHit && initScores[0] > getParams().similarityCutoff) {
-        // Stick with what we found at the start, which should still be in hit.
-        foundHit = true;
-      }
     }
+  }
+  if (!foundHit && initScores[0] > getParams().similarityCutoff) {
+    // Stick with what we found at the start, which should still be in hit,
+    // because the conformational expansion didn't do any better.
+    foundHit = true;
   }
   return foundHit;
 }

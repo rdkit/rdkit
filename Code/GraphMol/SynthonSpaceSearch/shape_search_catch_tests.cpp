@@ -495,6 +495,7 @@ TEST_CASE("Excluded volume") {
   params.excludedVolume = excVolShape.get();
   params.possibleHitsFile = fullRoot + "exc_vol_poss_hits.txt";
   params.maxExcludedVolume = 80.0;
+  params.maxMeanExcludedVolume = 3.5;
 
   SynthonSpace synthonSpace;
   auto results = synthonSpace.shapeSearch(*comb_4aji_4aj1, params, 0, 2);
