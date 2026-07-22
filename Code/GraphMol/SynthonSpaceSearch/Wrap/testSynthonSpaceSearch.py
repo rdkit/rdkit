@@ -181,36 +181,34 @@ class TestCase(unittest.TestCase):
     self.assertRaises(RuntimeError, synthonspace.ReadTextFile, fName)
 
   def testRascalSearch(self):
-    fName = self.sssDir / "Syntons_5567.csv"
+    fName = self.sssDir / "amide_space.txt"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadTextFile(fName)
-    self.assertEqual(10, synthonspace.GetNumReactions())
+    self.assertEqual(1, synthonspace.GetNumReactions())
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
-    params.maxHits = 10
+    params.maxHits = 4
     rascalOpts = rdRascalMCES.RascalOptions()
-    rascalOpts.similarityThreshold = 0.8
-    results = synthonspace.RascalSearch(Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"),
+    results = synthonspace.RascalSearch(Chem.MolFromSmiles("c1ccccc1C(=O)N1CCCC1"),
                                              rascalOpts, params)
     self.assertEqual(4, len(results.GetHitMolecules()))
 
   def testRascalPossibleHitsWrite(self):
-    fName = self.sssDir / "Syntons_5567.csv"
+    fName = self.sssDir / "amide_space.txt"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadTextFile(fName)
-    self.assertEqual(10, synthonspace.GetNumReactions())
+    self.assertEqual(1, synthonspace.GetNumReactions())
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.possibleHitsFile = "r_poss_hits_a.txt"
     params.writePossibleHitsAndStop = True
     rascalOpts = rdRascalMCES.RascalOptions()
-    rascalOpts.similarityThreshold = 0.8
-    results = synthonspace.RascalSearch(Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"),
+    results = synthonspace.RascalSearch(Chem.MolFromSmiles("c1ccccc1C(=O)N1CCCC1"),
                                              rascalOpts, params)
     self.assertEqual(0, len(results.GetHitMolecules()))
 
-    results = synthonspace.RascalSearch(Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"),
-                                             rascalOpts, params, 0, 100)
+    results = synthonspace.RascalSearch(Chem.MolFromSmiles("c1ccccc1C(=O)N1CCCC1"),
+                                             rascalOpts, params, 0, 3)
     # Fewer hits than testRascalSearch because only looking at the
-    # first 100 lines of the possible hits file.
+    # first 3 lines of the possible hits file.
     self.assertEqual(3, len(results.GetHitMolecules()))
     Path(params.possibleHitsFile).unlink()
 
