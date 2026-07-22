@@ -8106,3 +8106,57 @@ M  END
   CHECK(stgs.front().getGroupType() == StereoGroupType::STEREO_OR);
   CHECK(stgs.front().getAtoms().size() == 1);
 }
+
+TEST_CASE("mol2 reader out-of-bounds access") {
+  SECTION("atom index too high") {
+    std::string mol2 = R"MOL2(@<TRIPOS>MOLECULE
+
+2 1
+@<TRIPOS>ATOM
+1 C1 0.0 0.0 0.0 C
+2 C2 1.0 0.0 0.0 C
+@<TRIPOS>BOND
+1 1 28 1
+)MOL2";
+    REQUIRE_THROWS_AS(v2::FileParsers::MolFromMol2Block(mol2),
+                      FileParseException);
+  }
+  SECTION("atom index zero") {
+    std::string mol2 = R"MOL2(@<TRIPOS>MOLECULE
+
+2 1
+@<TRIPOS>ATOM
+1 C1 0.0 0.0 0.0 C
+2 C2 1.0 0.0 0.0 C
+@<TRIPOS>BOND
+1 1 0 1
+)MOL2";
+    REQUIRE_THROWS_AS(v2::FileParsers::MolFromMol2Block(mol2),
+                      FileParseException);
+  }
+}
+
+TEST_CASE("OOB access with bad SGroup") {
+  SECTION("as reported") {
+    std::string molblock = R"CTAB(poc
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.0 0.0 0.0 0
+M  V30 2 H 1.0 0.0 0.0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 ATOMS=(1 1) SAP=(1
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB";
+    REQUIRE_THROWS_AS(v2::FileParsers::MolFromMolBlock(molblock),
+                      FileParseException);
+  }
+}
