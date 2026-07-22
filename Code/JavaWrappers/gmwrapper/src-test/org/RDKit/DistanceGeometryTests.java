@@ -139,10 +139,9 @@ public class DistanceGeometryTests extends GraphMolTest {
 		assertTrue((bm.getUpperBound(2,5) - dmat.getVal(2,5) > -0.1 )
 				&& (bm.getLowerBound(2,5) - dmat.getVal(2,5) < 0.10 ));
 
-		assertTrue((bm.getUpperBound(8,4) - bm.getLowerBound(8,4)) > 1.);
-		assertTrue((bm.getUpperBound(8,4) - bm.getLowerBound(8,4)) < 1.2);
-		assertTrue((bm.getUpperBound(8,4) - dmat.getVal(8,4) > -0.1 )
-				&& (bm.getLowerBound(8,4) - dmat.getVal(8,4) < 0.10));
+		assertTrue((bm.getUpperBound(8,4) - bm.getLowerBound(8,4)) < 0.2);
+    	assertTrue((bm.getUpperBound(8,4) - dmat.getVal(8,4) > -0.1 )
+                && (bm.getLowerBound(8,4) - dmat.getVal(8,4) < 0.10));
 
 		assertTrue((bm.getUpperBound(8,6) - bm.getLowerBound(8,6)) > 1.0);
 		assertTrue((bm.getUpperBound(8,6) - bm.getLowerBound(8,6)) < 1.2);

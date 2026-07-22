@@ -89,27 +89,25 @@ struct Bounds {
   double lower, upper;
   unsigned int aid1, aid4;
 
+  inline bool valid() const { return lower <= upper; }
+
   static Bounds merge(std::vector<Bounds> bounds) {
     PRECONDITION(bounds.size(), "To merge bounds, at least one must be given.");
 
     // if the intersection of all bounds is empty => take the union
-    std::ranges::sort(bounds, {}, &Bounds::lower);
-    Bounds merged{bounds.front()};
+    auto intersection = std::ranges::max(bounds, {}, &Bounds::lower);
+    intersection.upper =
+        std::ranges::min(bounds | std::views::transform(&Bounds::upper));
 
-    for (auto &_bound : bounds) {
-      if (_bound.lower > merged.upper) {
-        // intersection is empty => take union
-        return {bounds.front().lower, bounds.back().upper, bounds.front().aid1,
-                bounds.front().aid4};
-      }
-      // invariant: intersection of bounds until (including _bound is not empty
-      // we now that bounds are sorted by lower bounds => _bound is always
-      // larger/equal merged.lower
-      merged.lower = _bound.lower;
-      merged.upper = std::min(merged.upper, _bound.upper);
+    if (intersection.valid()) {
+      return intersection;
     }
 
-    return merged;
+    auto boundsUnion = std::ranges::min(bounds, {}, &Bounds::lower);
+    boundsUnion.upper =
+        std::ranges::max(bounds | std::views::transform(&Bounds::upper));
+
+    return boundsUnion;
   }
 };
 
