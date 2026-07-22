@@ -116,32 +116,57 @@ void reflectPoints(RDGeom::INT_POINT2D_MAP &coordMap,
   });
 }
 
-RDKit::INT_VECT setNbrOrder(unsigned int aid, const RDKit::INT_VECT &nbrs,
-                            const RDKit::ROMol &mol) {
-  PRECONDITION(aid < mol.getNumAtoms(), "");
-  PR_QUEUE subsAid;
+namespace {
+int findPlacedNbr(unsigned int aid, const RDKit::INT_VECT &nbrs,
+                  const RDKit::ROMol &mol) {
+  // Find the already-placed neighbor, i.e. atom A from setNbrOrder()'s header
+  // comment. The remaining neighbors are the atoms still to be arranged.
   int ref = -1;
-  // find the neighbor of aid that is not in nbrs i.e. atom A from the comments
-  // in the header file and the store the pair <degree, aid> in the order of
-  // increasing degree
   for (auto anbr : mol.atomNeighbors(mol.getAtomWithIdx(aid))) {
-    // We used to use degree here instead we will start using the CIP rank here
     if (std::find(nbrs.begin(), nbrs.end(), static_cast<int>(anbr->getIdx())) ==
         nbrs.end()) {
       ref = anbr->getIdx();
     }
   }
+  return ref;
+}
 
-  RDKit::INT_VECT thold = nbrs;
-  if (ref >= 0) {
-    thold.push_back(ref);
+unsigned int countBranchSize(unsigned int aid, unsigned int nbr,
+                             const RDKit::ROMol &mol) {
+  // Count every atom reachable through nbr without crossing back through aid.
+  // This deliberately includes rings because degree-4 ordering is about visual
+  // footprint, not just acyclic chain depth.
+  boost::dynamic_bitset<> visited(mol.getNumAtoms());
+  visited.set(aid);
+  RDKit::INT_VECT stack{static_cast<int>(nbr)};
+  unsigned int branchSize = 0;
+
+  while (!stack.empty()) {
+    auto current = stack.back();
+    stack.pop_back();
+    if (visited[current]) {
+      continue;
+    }
+    visited.set(current);
+    ++branchSize;
+    for (const auto nextNbr : mol.atomNeighbors(mol.getAtomWithIdx(current))) {
+      auto nextIdx = nextNbr->getIdx();
+      if (!visited[nextIdx]) {
+        stack.push_back(nextIdx);
+      }
+    }
   }
+  return branchSize;
+}
+
+RDKit::INT_VECT arrangeNbrsAroundPlacedNbr(int ref, RDKit::INT_VECT thold,
+                                           unsigned int resSize) {
   // we should be here unless we have more than 3 atoms to worry about
   CHECK_INVARIANT(thold.size() > 3, "");
-  thold = rankAtomsByRank(mol, thold);
 
-  // swap the position of the 3rd to last and second to last items in sorted
-  // list
+  // This preserves the historical degree-4 slot assignment: after sorting,
+  // the two highest-priority substituents land opposite each other, while the
+  // remaining substituents are placed in the two 90-degree side slots.
   unsigned int ln = thold.size();
   int tint = thold[ln - 3];
   thold[ln - 3] = thold[ln - 2];
@@ -159,8 +184,48 @@ RDKit::INT_VECT setNbrOrder(unsigned int aid, const RDKit::INT_VECT &nbrs,
     res.insert(res.end(), thold.begin(), pos);
   }
 
-  POSTCONDITION(res.size() == nbrs.size(), "");
+  POSTCONDITION(res.size() == resSize, "");
   return res;
+}
+
+RDKit::INT_VECT setNbrOrderImpl(unsigned int aid, const RDKit::INT_VECT &nbrs,
+                                const RDKit::ROMol &mol,
+                                bool useBranchSize) {
+  PRECONDITION(aid < mol.getNumAtoms(), "");
+  int ref = findPlacedNbr(aid, nbrs, mol);
+  RDKit::INT_VECT thold = nbrs;
+  if (ref >= 0) {
+    thold.push_back(ref);
+  }
+
+  thold = rankAtomsByRank(mol, thold);
+
+  if (useBranchSize) {
+    std::map<int, unsigned int> branchSizes;
+    for (auto nbr : thold) {
+      branchSizes[nbr] = countBranchSize(aid, nbr, mol);
+    }
+    // Keep the existing atom ranks as the stable tie-break, but primarily
+    // arrange extended-branch degree-4 substituents by visual footprint.
+    std::stable_sort(thold.begin(), thold.end(),
+                     [&branchSizes](auto nbr1, auto nbr2) {
+                       return branchSizes.at(nbr1) < branchSizes.at(nbr2);
+                     });
+  }
+
+  return arrangeNbrsAroundPlacedNbr(ref, thold, nbrs.size());
+}
+}  // namespace
+
+RDKit::INT_VECT setNbrOrder(unsigned int aid, const RDKit::INT_VECT &nbrs,
+                            const RDKit::ROMol &mol) {
+  return setNbrOrderImpl(aid, nbrs, mol, false);
+}
+
+RDKit::INT_VECT setNbrOrderByBranchSize(unsigned int aid,
+                                        const RDKit::INT_VECT &nbrs,
+                                        const RDKit::ROMol &mol) {
+  return setNbrOrderImpl(aid, nbrs, mol, true);
 }
 
 int pickFirstRingToEmbed(const RDKit::ROMol &mol,
@@ -621,6 +686,97 @@ template RDKit::INT_DEQUE rankAtomsByRank(const RDKit::ROMol &mol,
 template RDKit::INT_LIST rankAtomsByRank(const RDKit::ROMol &mol,
                                          const RDKit::INT_LIST &commAtms,
                                          bool ascending);
+
+namespace {
+// Helper function to count acyclic subtree size in a given direction
+unsigned int countAcyclicSubtree(unsigned int currentAtom,
+                                 boost::dynamic_bitset<> &visited,
+                                 const RDKit::ROMol &mol) {
+  // Stop at ring atoms - they're already embedded as templates
+  if (mol.getRingInfo()->numAtomRings(currentAtom) > 0) {
+    return 0;
+  }
+
+  unsigned int count = 1;
+  visited.set(currentAtom);
+
+  const auto *atom = mol.getAtomWithIdx(currentAtom);
+  for (const auto *nbr : mol.atomNeighbors(atom)) {
+    unsigned int nbrIdx = nbr->getIdx();
+    if (!visited[nbrIdx]) {
+      count += countAcyclicSubtree(nbrIdx, visited, mol);
+    }
+  }
+
+  return count;
+}
+}  // namespace
+
+BRANCH_DEPTH_MAP computeBranchDepths(const RDKit::ROMol &mol) {
+  BRANCH_DEPTH_MAP depthMap;
+  unsigned int numAtoms = mol.getNumAtoms();
+
+  for (unsigned int atomIdx = 0; atomIdx < numAtoms; ++atomIdx) {
+    const auto *atom = mol.getAtomWithIdx(atomIdx);
+
+    // For each neighbor, compute subtree depth in that direction
+    for (const auto *nbr : mol.atomNeighbors(atom)) {
+      unsigned int nbrIdx = nbr->getIdx();
+
+      boost::dynamic_bitset<> visited(numAtoms);
+      visited.set(atomIdx);  // Don't backtrack through current atom
+
+      unsigned int depth = countAcyclicSubtree(nbrIdx, visited, mol);
+      depthMap[std::make_pair(atomIdx, nbrIdx)] = depth;
+    }
+  }
+
+  return depthMap;
+}
+
+RDKit::INT_VECT sortNeighborsByDepth(const BRANCH_DEPTH_MAP &depthMap,
+                                     unsigned int atomIdx,
+                                     const RDKit::INT_VECT &neighbors,
+                                     const RDKit::ROMol &mol) {
+  // Create tuples of (neighbor, depth, cipRank)
+  std::vector<std::tuple<int, unsigned int, unsigned int>> nbrData;
+
+  for (int nbrIdx : neighbors) {
+    // Get branch depth
+    unsigned int depth = 0;
+    auto it = depthMap.find(std::make_pair(atomIdx, static_cast<unsigned int>(nbrIdx)));
+    if (it != depthMap.end()) {
+      depth = it->second;
+    }
+
+    // Get CIP rank for tie-breaking
+    unsigned int cipRank = static_cast<unsigned int>(nbrIdx);  // default
+    const auto *at = mol.getAtomWithIdx(nbrIdx);
+    if (!at->getPropIfPresent(RDKit::common_properties::_CIPRank, cipRank)) {
+      at->getPropIfPresent(RDKit::common_properties::_ChiralAtomRank, cipRank);
+    }
+
+    nbrData.emplace_back(nbrIdx, depth, cipRank);
+  }
+
+  // Sort by depth (descending), then CIP rank (ascending)
+  std::sort(nbrData.begin(), nbrData.end(),
+            [](const auto &a, const auto &b) {
+              if (std::get<1>(a) != std::get<1>(b)) {
+                return std::get<1>(a) > std::get<1>(b);  // Deeper first
+              }
+              return std::get<2>(a) < std::get<2>(b);  // Lower rank first
+            });
+
+  RDKit::INT_VECT result;
+  result.reserve(nbrData.size());
+
+  for (const auto &item : nbrData) {
+    result.push_back(std::get<0>(item));
+  }
+
+  return result;
+}
 
 bool hasTerminalRGroupOrQueryHydrogen(const RDKit::ROMol &mol) {
   // we do not need the allowRGroups logic if there are no

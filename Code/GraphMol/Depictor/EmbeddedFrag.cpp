@@ -247,6 +247,34 @@ int EmbeddedFrag::findNumNeigh(const RDGeom::Point2D &pt, double radius) {
   return res;
 }
 
+bool EmbeddedFrag::subtreeHasRing(unsigned int atomId, unsigned int parentId) const {
+  PRECONDITION(dp_mol, "");
+
+  const auto atom = dp_mol->getAtomWithIdx(atomId);
+
+  // Check if this atom itself is in a ring
+  if (atom->getOwningMol().getRingInfo()->numAtomRings(atomId) > 0) {
+    return true;
+  }
+
+  // Recursively check neighbors (excluding parent and already embedded atoms)
+  for (const auto nbr : dp_mol->atomNeighbors(atom)) {
+    unsigned int nbrIdx = nbr->getIdx();
+
+    // Skip parent and already-embedded atoms
+    if (nbrIdx == parentId || d_eatoms.find(nbrIdx) != d_eatoms.end()) {
+      continue;
+    }
+
+    // Recursively check this neighbor's subtree
+    if (subtreeHasRing(nbrIdx, atomId)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void EmbeddedFrag::updateNewNeighs(
     unsigned int aid) {  //, const RDKit::ROMol *mol) {
   PRECONDITION(dp_mol, "");
@@ -266,15 +294,76 @@ void EmbeddedFrag::updateNewNeighs(
                               hIndices.end());
 
   auto deg = getDepictDegree(dp_mol->getAtomWithIdx(aid));
-  // order the neighbors by their CIPranks, if the number is between > 0 but
-  // less than 3
-  if ((d_eatoms[aid].neighs.size() > 0) &&
-      ((deg < 4) || (d_eatoms[aid].neighs.size() < 3))) {
+
+  if ((deg >= 4) && (d_eatoms[aid].neighs.size() >= 3)) {
+    // Preserve the degree-4 placement scheme: one neighbor is opposite the
+    // incoming bond, and the other two are left/right at 90 degrees. Extended
+    // branch prioritization may choose those roles from branch-depth/size;
+    // without it, keep the historical rank-based ordering.
+    if (dp_branchDepths) {
+      auto rankedNbrs = rankAtomsByRank(*dp_mol, d_eatoms[aid].neighs);
+      RDKit::INT_VECT longNbrs;
+      RDKit::INT_VECT otherNbrs;
+      auto distTraveled = d_eatoms[aid].d_distanceFromStart;
+
+      for (auto nbr : rankedNbrs) {
+        auto key = std::make_pair(aid, static_cast<unsigned int>(nbr));
+        auto depthIt = dp_branchDepths->find(key);
+        auto depth =
+            depthIt != dp_branchDepths->end() ? depthIt->second : 0;
+        if (depth > distTraveled && depth > 1) {
+          longNbrs.push_back(nbr);
+        } else {
+          otherNbrs.push_back(nbr);
+        }
+      }
+
+      if (deg == 4 && longNbrs.size() == 2 && otherNbrs.size() == 1) {
+        // Balanced degree-4 intersection: the incoming path is not continued
+        // straight. Instead, the two long branches become the new chain and
+        // are placed in the left/right 90-degree slots.
+        d_eatoms[aid].neighs = {longNbrs[0], otherNbrs[0], longNbrs[1]};
+      } else {
+        d_eatoms[aid].neighs =
+            setNbrOrderByBranchSize(aid, d_eatoms[aid].neighs, *dp_mol);
+      }
+    } else {
+      d_eatoms[aid].neighs = setNbrOrder(aid, d_eatoms[aid].neighs, *dp_mol);
+    }
+  } else if (dp_branchDepths && d_eatoms[aid].neighs.size() > 0) {
+    // If branch depths are available, sort neighbors by depth (deepest first).
+    std::stable_sort(d_eatoms[aid].neighs.begin(), d_eatoms[aid].neighs.end(),
+                     [this, aid](int a, int b) {
+                       auto keyA = std::make_pair(aid, static_cast<unsigned int>(a));
+                       auto keyB = std::make_pair(aid, static_cast<unsigned int>(b));
+                       auto itA = dp_branchDepths->find(keyA);
+                       auto itB = dp_branchDepths->find(keyB);
+
+                       unsigned int depthA = (itA != dp_branchDepths->end()) ? itA->second : 0;
+                       unsigned int depthB = (itB != dp_branchDepths->end()) ? itB->second : 0;
+
+                       // Add 1.5 bonus if the neighbor itself is a ring atom or has rings in subtree
+                       bool hasRingA = (dp_mol->getRingInfo()->numAtomRings(a) > 0) || this->subtreeHasRing(a, aid);
+                       bool hasRingB = (dp_mol->getRingInfo()->numAtomRings(b) > 0) || this->subtreeHasRing(b, aid);
+
+                       double scoreA = depthA + (hasRingA ? 1.5 : 0.0);
+                       double scoreB = depthB + (hasRingB ? 1.5 : 0.0);
+
+                       // Sort by score descending (highest score first)
+                       if (scoreA != scoreB) {
+                         return scoreA > scoreB;
+                       }
+
+                       // Final tie-break with CIP rank if available
+                       unsigned int rankA = 0, rankB = 0;
+                       dp_mol->getAtomWithIdx(a)->getPropIfPresent(RDKit::common_properties::_CIPRank, rankA);
+                       dp_mol->getAtomWithIdx(b)->getPropIfPresent(RDKit::common_properties::_CIPRank, rankB);
+                       return rankA < rankB;
+                     });
+  } else if (d_eatoms[aid].neighs.size() > 0) {
+    // Original logic: order the neighbors by their CIPranks, if the number is between > 0 but
+    // less than 3
     d_eatoms[aid].neighs = rankAtomsByRank(*dp_mol, d_eatoms[aid].neighs);
-  } else if ((deg >= 4) && (d_eatoms[aid].neighs.size() >= 3)) {
-    // now if we have more more than 2 neighbors change the order so that atoms
-    // with the highest rank fall on opposite sides of each other
-    d_eatoms[aid].neighs = setNbrOrder(aid, d_eatoms[aid].neighs, *dp_mol);
   }
 
   if (d_eatoms[aid].neighs.size() > 0) {
@@ -927,6 +1016,36 @@ void EmbeddedFrag::addNonRingAtom(unsigned int aid, unsigned int toAid) {
   PRECONDITION(d_eatoms.find(aid) == d_eatoms.end(), "");
   // and that toAid is already in the embedded system
   PRECONDITION(d_eatoms.find(toAid) != d_eatoms.end(), "");
+
+  // Check if toAid is at a balanced bifurcation BEFORE adding aid
+  // (after aid is added, it will be removed from neighs list)
+  if (dp_branchDepths &&
+      getDepictDegree(dp_mol->getAtomWithIdx(toAid)) < 4 &&
+      d_eatoms[toAid].neighs.size() == 2 &&
+      !d_eatoms[toAid].d_isBalancedBifurcation) {  // Only check once
+
+    unsigned int nbr1_id = d_eatoms[toAid].neighs[0];
+    unsigned int nbr2_id = d_eatoms[toAid].neighs[1];
+
+    auto key1 = std::make_pair(toAid, nbr1_id);
+    auto key2 = std::make_pair(toAid, nbr2_id);
+    auto it1 = dp_branchDepths->find(key1);
+    auto it2 = dp_branchDepths->find(key2);
+
+    if (it1 != dp_branchDepths->end() && it2 != dp_branchDepths->end()) {
+      unsigned int depth1 = it1->second;
+      unsigned int depth2 = it2->second;
+      unsigned int distTraveled = d_eatoms[toAid].d_distanceFromStart;
+
+      // Both are chain continuations only if they extend beyond the distance
+      // already traveled to this atom.
+      if (depth1 > distTraveled && depth2 > distTraveled &&
+          depth1 > 1 && depth2 > 1) {
+        d_eatoms[toAid].d_isBalancedBifurcation = true;
+      }
+    }
+  }
+
   if (d_eatoms[toAid].angle > 0.0) {
     addAtomToAtomWithAng(aid, toAid);
   } else {
@@ -955,8 +1074,9 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   auto currAngle = remAngle / (1 + nnbr);
   d_eatoms[toAid].angle += currAngle;
 
+  const auto prevNbr2 = refAtom.nbr2;
   const auto &nb1 = d_eatoms.at(refAtom.nbr1).loc;
-  const auto &nb2 = d_eatoms.at(refAtom.nbr2).loc;
+  const auto &nb2 = d_eatoms.at(prevNbr2).loc;
   if (d_eatoms[toAid].rotDir == 0) {
     d_eatoms[toAid].rotDir = rotationDir(refLoc, nb1, nb2, remAngle);
   }
@@ -987,6 +1107,7 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   eatm.loc = currLoc;
   eatm.nbr1 = toAid;
   eatm.angle = -1.0;
+  eatm.d_distanceFromStart = d_eatoms[toAid].d_distanceFromStart + 1;
 
   // now compute the normal at this atom - which gives the direction in which we
   // want to add the next atom. We will go in the direction that seem to be
@@ -996,18 +1117,50 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   auto tp1 = currLoc + norm;
   auto tp2 = currLoc - norm;
 
-  auto nccw = findNumNeigh(
-      tp1, NEIGH_RADIUS);  // number of neighbors if we go counter-clockwise
-  auto ncw = findNumNeigh(
-      tp2, NEIGH_RADIUS);  // number of neighbors if we go clockwise
-
   norm.normalize();
-  if (nccw < ncw) {
-    eatm.normal = norm;
-    eatm.ccw = false;
+
+  // For balanced bifurcations, keep the zig-zag phase consistent across the
+  // two chain continuations.
+  if (d_eatoms[toAid].d_isBalancedBifurcation) {
+    const auto aidAtom = dp_mol->getAtomWithIdx(aid);
+    auto nextAngle =
+        computeSubAngle(getDepictDegree(aidAtom), aidAtom->getHybridization()) -
+        M_PI / 2;
+
+    RDGeom::Point2D targetDir = refLoc - nb2;
+    targetDir.normalize();
+
+    RDGeom::Point2D samePhaseDir = norm;
+    RDGeom::Transform2D nextTrans;
+    nextTrans.SetTransform(origin, -nextAngle);
+    nextTrans.TransformPoint(samePhaseDir);
+
+    RDGeom::Point2D flippedPhaseDir = -norm;
+    nextTrans.SetTransform(origin, nextAngle);
+    nextTrans.TransformPoint(flippedPhaseDir);
+
+    if (samePhaseDir.dotProduct(targetDir) >=
+        flippedPhaseDir.dotProduct(targetDir)) {
+      eatm.normal = norm;
+      eatm.ccw = false;
+    } else {
+      eatm.normal = -norm;
+      eatm.ccw = true;
+    }
   } else {
-    eatm.normal = (-norm);
-    eatm.ccw = true;
+    // Existing logic: choose the side based on density
+    auto nccw = findNumNeigh(
+        tp1, NEIGH_RADIUS);  // number of neighbors if we go counter-clockwise
+    auto ncw = findNumNeigh(
+        tp2, NEIGH_RADIUS);  // number of neighbors if we go clockwise
+
+    if (nccw < ncw) {
+      eatm.normal = norm;
+      eatm.ccw = false;
+    } else {
+      eatm.normal = (-norm);
+      eatm.ccw = true;
+    }
   }
 
   d_eatoms[aid] = eatm;
@@ -1099,8 +1252,14 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
   eatm.nbr1 = toAid;
 
   eatm.angle = -1.0;
+  eatm.d_distanceFromStart = d_eatoms[toAid].d_distanceFromStart + 1;
 
   eatm.ccw = (!refAtomCCW) ^ flipNorm;
+  if (d_eatoms[toAid].d_isBalancedBifurcation &&
+      d_eatoms[toAid].neighs.size() == 2) {
+    eatm.normal *= -1.0;
+    eatm.ccw = !eatm.ccw;
+  }
   d_eatoms[aid] = eatm;
 }
 

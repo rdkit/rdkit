@@ -411,7 +411,8 @@ struct ThetaBin {
 void computeInitialCoords(RDKit::ROMol &mol,
                           const RDGeom::INT_POINT2D_MAP *coordMap,
                           std::list<EmbeddedFrag> &efrags,
-                          bool useRingTemplates) {
+                          bool useRingTemplates,
+                          bool useBranchDepthPrioritization) {
   std::vector<int> atomRanks;
   atomRanks.resize(mol.getNumAtoms());
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
@@ -449,6 +450,19 @@ void computeInitialCoords(RDKit::ROMol &mol,
 
   // deal with any cis/trans systems
   DepictorLocal::embedCisTransSystems(mol, efrags);
+
+  // Precompute branch depths for layout prioritization (if enabled)
+  BRANCH_DEPTH_MAP branchDepths;
+  const BRANCH_DEPTH_MAP *branchDepthsPtr = nullptr;
+  if (useBranchDepthPrioritization) {
+    branchDepths = computeBranchDepths(mol);
+    branchDepthsPtr = &branchDepths;
+    // Pass branch depths to all existing fragments
+    for (auto &efrag : efrags) {
+      efrag.setBranchDepths(branchDepthsPtr);
+    }
+  }
+
   // now get the atoms that are not yet embedded in either a cis/trans system
   // or a ring system (or simply the first atom)
   auto nratms = DepictorLocal::getNonEmbeddedAtoms(mol, efrags);
@@ -481,6 +495,9 @@ void computeInitialCoords(RDKit::ROMol &mol,
         }
       }
       EmbeddedFrag efrag((*mnri), &mol);
+      if (branchDepthsPtr) {
+        efrag.setBranchDepths(branchDepthsPtr);
+      }
       nratms.erase(mnri);
       efrags.push_back(efrag);
       mri = efrags.end();
@@ -598,15 +615,19 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   RDKit::ROMol cp(mol);
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
-  computeInitialCoords(cp, params.coordMap, efrags, params.useRingTemplates);
+  computeInitialCoords(cp, params.coordMap, efrags, params.useRingTemplates,
+                       params.useBranchDepthPrioritization);
 
 #if 1
   // perform random sampling here to improve the density
+  // BUT: disable when branch depth prioritization is enabled, as random flipping
+  // would break the carefully constructed zigzag chains
   for (auto &eri : efrags) {
     // either sample the 2D space by randomly flipping rotatable
     // bonds in the structure or flip only bonds along the shortest
     // path between colliding atoms - don't do both
-    if ((params.nSamples > 0) && (params.nFlipsPerSample > 0)) {
+    if (!params.useBranchDepthPrioritization && (params.nSamples > 0) &&
+        (params.nFlipsPerSample > 0)) {
       eri.randomSampleFlipsAndPermutations(
           params.nFlipsPerSample, params.nSamples, params.sampleSeed, nullptr,
           0.0, params.permuteDeg4Nodes);
@@ -698,10 +719,12 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
 unsigned int compute2DCoordsMimicDistMat(
     RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat, bool canonOrient,
     bool clearConfs, double weightDistMat, unsigned int nFlipsPerSample,
-    unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes, bool) {
+    unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes, bool,
+    bool useBranchDepthPrioritization) {
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
-  computeInitialCoords(mol, nullptr, efrags, false);
+  computeInitialCoords(mol, nullptr, efrags, false,
+                       useBranchDepthPrioritization);
 
   // now perform random flips of rotatable bonds so that we can sample the space
   // and try to mimic the distances in dmat
