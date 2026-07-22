@@ -65,15 +65,16 @@ enum class Type14 {
 
 struct Optional14Info {
   bool forceTransAmides = false;
+  bool useMacrocycle14Config = false;
   std::size_t ringSize = 0;
   std::size_t preferTrans = false;
 };
 
-typedef enum {
+enum DistType {
   DIST12,
   DIST13,
   DIST14
-} DistType;
+};
 
 using PATH14_VECT = std::vector<Path14Configuration>;
 using PATH14_VECT_I = PATH14_VECT::iterator;
@@ -1102,9 +1103,9 @@ TorsionValue _getMacrocycleTwoInSameRing14Type(
       mol.getBondBetweenAtoms(atm4->getIdx(), atm2->getIdx())) {
     return {TorsionType::NONE};
   }
+  // TODO: Ask Katha, is this always or only when macrocycle14 config?
 
   Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
-
   if ((_checkMacrocycleTwoInSameRingAmideEster14(bnd1, bnd3, atm1, atm2, atm3,
                                                  atm4)) ||
       (_checkMacrocycleTwoInSameRingAmideEster14(bnd3, bnd1, atm4, atm3, atm2,
@@ -1123,7 +1124,7 @@ TorsionValue _getMacrocycleTwoInSameRing14Type(
 TorsionValue _getMacrocycleAllInSameRing14Type(
     const ROMol &mol, const Bond *bnd1, const Bond *bnd2, const Bond *bnd3,
     const Atom *atm1, const Atom *atm2, const Atom *atm3, const Atom *atm4,
-    const bool forceTransAmides) {
+    const bool useMacrocycle14config) {
   switch (bnd2->getBondType()) {
     case Bond::DOUBLE:
       // if any of the other bonds are double - the torsion angle is zero
@@ -1149,7 +1150,7 @@ TorsionValue _getMacrocycleAllInSameRing14Type(
         // this is *S-S* situation
         return {TorsionType::CUSTOM, M_PI / 2.0};
       }
-      if (forceTransAmides) {
+      if (useMacrocycle14config) {
         if ((_checkMacrocycleAllInSameRingAmideEster14(mol, bnd1, bnd3, atm1,
                                                        atm2, atm3, atm4)) ||
             (_checkMacrocycleAllInSameRingAmideEster14(mol, bnd3, bnd1, atm4,
@@ -1229,7 +1230,8 @@ void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       break;
     case Type14::MACROCYCLE_ALL_IN_SAME_RING:
       torsionValue = _getMacrocycleAllInSameRing14Type(
-          mol, bnd1, bnd2, bnd3, atm1, atm2, atm3, atm4, info.forceTransAmides);
+          mol, bnd1, bnd2, bnd3, atm1, atm2, atm3, atm4,
+          info.useMacrocycle14Config);
       break;
     case Type14::MACROCYCLE_TWO_IN_SAME_RING:
       torsionValue = _getMacrocycleTwoInSameRing14Type(mol, bnd1, bnd2, bnd3,
@@ -1343,7 +1345,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                             mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
                             Type14::MACROCYCLE_ALL_IN_SAME_RING, accumData,
                             mmat, distMatrix,
-                            {.forceTransAmides = forceTransAmides});
+                            {.useMacrocycle14Config = useMacrocycle14config});
           bidIsMacrocycle.insert(bid2);
         } else {
           _set14BoundHelper(mol, mol.getBondWithIdx(bid1),
@@ -1539,12 +1541,11 @@ void collectBondsAndAngles(const ROMol &mol,
   }
 }
 
-void setTopolBounds(
-    const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-    std::vector<std::pair<int, int>> &bonds,
-    std::vector<std::vector<int>> &angles, bool set15bounds, bool scaleVDW,
-    bool useMacrocycle14config, bool forceTransAmides, bool set14bounds,
-    bool set13bounds) {
+void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+                    std::vector<std::pair<int, int>> &bonds,
+                    std::vector<std::vector<int>> &angles, bool set15bounds,
+                    bool scaleVDW, bool useMacrocycle14config,
+                    bool forceTransAmides, bool set14bounds, bool set13bounds) {
   ForceFields::CrystalFF::CrystalFFDetails details;
   setTopolBounds(mol, mmat, details, set15bounds, scaleVDW,
                  useMacrocycle14config, forceTransAmides, set14bounds,
