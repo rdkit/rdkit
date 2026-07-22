@@ -489,7 +489,7 @@ TEST_CASE("Excluded volume") {
   params.randomSeed = 0xdac;
   params.bestHit = true;
   params.maxHits = 10;
-  params.similarityCutoff = 0.5;
+  params.similarityCutoff = 0.45;
   params.shapeOverlayOptions.simAlpha = 0.95;
   params.shapeOverlayOptions.simBeta = 0.05;
   params.excludedVolume = excVolShape.get();
