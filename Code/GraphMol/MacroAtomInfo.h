@@ -33,10 +33,10 @@ namespace RDKit {
   link errors in shared-library and unity builds.
 */
 enum MonomerClass : int {
-  AA,
-  NA,
-  CHEM,
-  OTHER
+  AminoAcid,
+  NucleicAcid,
+  Chemical,
+  Other
 };
 
 //! Converts a macro atom monomer class enum value to its recognized name.
@@ -64,7 +64,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroAtomInfo {
     \param monomerClass the class of monomer the macro atom represents
   */
   MacroAtomInfo(std::string symbol,
-                MonomerClass monomerClass = MonomerClass::OTHER)
+                MonomerClass monomerClass = MonomerClass::Other)
       : d_symbol(std::move(symbol)), d_monomerClass(monomerClass) {}
   MacroAtomInfo(const MacroAtomInfo &other) = default;
 
@@ -95,7 +95,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroAtomInfo {
 
  private:
   std::string d_symbol{""};
-  MonomerClass d_monomerClass{MonomerClass::OTHER};
+  MonomerClass d_monomerClass{MonomerClass::Other};
 };
 }  // namespace RDKit
 

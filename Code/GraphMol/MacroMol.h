@@ -22,16 +22,16 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
  public:
   //! Adds a new macro atom to the molecule.
   /*!
-    \param monomerClass the class of monomer the macro atom represents
     \param symbol       the symbol (dummy label) used to identify the monomer
+    \param monomerClass the class of monomer the macro atom represents
 
     \return the index of the newly added atom
   */
-  unsigned int addMacroAtom(MonomerClass monomerClass, std::string symbol);
+  unsigned int addMacroAtom(std::string symbol, MonomerClass monomerClass);
 
   //! Adds a bond between two macro atoms.
   /*!
-    At least one of the two atoms must be a macro atom.
+    Both atoms must be macro atoms.
     The graph bond's bond type is unspecified; use MacroBondInfo for the
     macro bond type.
 

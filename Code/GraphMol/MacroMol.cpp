@@ -22,8 +22,8 @@ bool isMacroAtom(const Atom *atom) {
 }
 }  // namespace
 
-unsigned int MacroMol::addMacroAtom(MonomerClass monomerClass,
-                                    std::string symbol) {
+unsigned int MacroMol::addMacroAtom(std::string symbol,
+                                    MonomerClass monomerClass) {
   auto atom = new Atom(0);
 
   atom->setMacroAtomInfo(new MacroAtomInfo(std::move(symbol), monomerClass));

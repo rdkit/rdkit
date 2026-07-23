@@ -22,9 +22,9 @@ TEST_CASE("testBuildMacroMol") {
   // that the MacroMol has the expected number of atoms and bonds, and that the
   // "sequence" of template names in the macro atoms is as expected.
   auto macro_mol = std::make_unique<MacroMol>();
-  auto macro_atom_1 = macro_mol->addMacroAtom(MonomerClass::AA, "A");
-  auto macro_atom_2 = macro_mol->addMacroAtom(MonomerClass::AA, "C");
-  auto macro_atom_3 = macro_mol->addMacroAtom(MonomerClass::AA, "D");
+  auto macro_atom_1 = macro_mol->addMacroAtom("A", MonomerClass::AminoAcid);
+  auto macro_atom_2 = macro_mol->addMacroAtom("C", MonomerClass::AminoAcid);
+  auto macro_atom_3 = macro_mol->addMacroAtom("D", MonomerClass::AminoAcid);
   auto num_bonds_1 = macro_mol->addMacroBond(macro_atom_1, macro_atom_2, 2, 1,
                                               Bond::BondType::SINGLE);
   auto num_bonds_2 = macro_mol->addMacroBond(macro_atom_2, macro_atom_3, 2, 1,
@@ -51,7 +51,7 @@ TEST_CASE("testBuildMacroMol") {
     const auto *info = atom->getMacroAtomInfo();
     REQUIRE(info);
     sequence += info->getSymbol();
-    CHECK(info->getMonomerClass() == MonomerClass::AA);
+    CHECK(info->getMonomerClass() == MonomerClass::AminoAcid);
   }
   CHECK(sequence == "ACD");
   for (auto bond : {bond_1, bond_2}) {
@@ -70,8 +70,8 @@ TEST_CASE("testMultipleConnectionsSameMacroAtoms") {
   // Build a MacroMol with two macro atoms and two bonds between them. This
   // results in one graph bond with two macro bond records.
   auto macro_mol = std::make_unique<MacroMol>();
-  auto macro_atom_1 = macro_mol->addMacroAtom(MonomerClass::AA, "C");
-  auto macro_atom_2 = macro_mol->addMacroAtom(MonomerClass::AA, "C");
+  auto macro_atom_1 = macro_mol->addMacroAtom("C", MonomerClass::AminoAcid);
+  auto macro_atom_2 = macro_mol->addMacroAtom("C", MonomerClass::AminoAcid);
   auto num_bonds_1 = macro_mol->addMacroBond(macro_atom_1, macro_atom_2, 2, 1);
   auto num_bonds_2 = macro_mol->addMacroBond(macro_atom_1, macro_atom_2, 3, 3,
                                             Bond::BondType::DOUBLE);
@@ -103,7 +103,8 @@ TEST_CASE("testAddAtomToMacroAtomBond") {
   auto atomMacroAtom = std::make_unique<MacroMol>();
   auto atom = new Atom(6);
   auto atom_idx = atomMacroAtom->addAtom(atom, false, true);
-  auto macro_atom_idx = atomMacroAtom->addMacroAtom(MonomerClass::AA, "C");
+  auto macro_atom_idx =
+      atomMacroAtom->addMacroAtom("C", MonomerClass::AminoAcid);
   auto num_bonds =
       atomMacroAtom->addAtomToMacroAtomBond(atom_idx, macro_atom_idx, 1);
   auto bond_idx = num_bonds - 1;
@@ -114,7 +115,7 @@ TEST_CASE("testAddAtomToMacroAtomBond") {
   const auto *macro_info = macro_atom->getMacroAtomInfo();
   REQUIRE(macro_info);
   CHECK(macro_info->getSymbol() == "C");
-  CHECK(macro_info->getMonomerClass() == MonomerClass::AA);
+  CHECK(macro_info->getMonomerClass() == MonomerClass::AminoAcid);
   auto bond = atomMacroAtom->getBondWithIdx(bond_idx);
   CHECK(bond->getBeginAtomIdx() == atom_idx);
   CHECK(bond->getEndAtomIdx() == macro_atom_idx);
@@ -134,7 +135,8 @@ TEST_CASE("testAddMacroAtomToAtomBond") {
   // bonds, and that the properties of the macro atom and the bond are as
   // expected.
   auto macroAtomAtom = std::make_unique<MacroMol>();
-  auto macro_atom_idx = macroAtomAtom->addMacroAtom(MonomerClass::AA, "C");
+  auto macro_atom_idx =
+      macroAtomAtom->addMacroAtom("C", MonomerClass::AminoAcid);
   auto atom = new Atom(6);
   auto atom_idx = macroAtomAtom->addAtom(atom, false, true);
   auto num_bonds =
@@ -147,7 +149,7 @@ TEST_CASE("testAddMacroAtomToAtomBond") {
   const auto *macro_info = macro_atom->getMacroAtomInfo();
   REQUIRE(macro_info);
   CHECK(macro_info->getSymbol() == "C");
-  CHECK(macro_info->getMonomerClass() == MonomerClass::AA);
+  CHECK(macro_info->getMonomerClass() == MonomerClass::AminoAcid);
   auto bond = macroAtomAtom->getBondWithIdx(bond_idx);
   CHECK(bond->getBeginAtomIdx() == macro_atom_idx);
   CHECK(bond->getEndAtomIdx() == atom_idx);
@@ -165,8 +167,8 @@ TEST_CASE("testAddBond") {
   // Build a MacroMol with two macro atoms and attempt to add a regular bond
   // between them.
   auto macro_mol = std::make_unique<MacroMol>();
-  auto macro_atom_1 = macro_mol->addMacroAtom(MonomerClass::AA, "A");
-  auto macro_atom_2 = macro_mol->addMacroAtom(MonomerClass::AA, "C");
+  auto macro_atom_1 = macro_mol->addMacroAtom("A", MonomerClass::AminoAcid);
+  auto macro_atom_2 = macro_mol->addMacroAtom("C", MonomerClass::AminoAcid);
   CHECK_THROWS_AS(macro_mol->addBond(macro_atom_1, macro_atom_2),
                   Invar::Invariant);
   auto atom = new Atom(6);

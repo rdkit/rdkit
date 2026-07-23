@@ -19,10 +19,10 @@ namespace RDKit {
 namespace {
 const std::array<std::pair<MonomerClass, const char *>, 4> monomerClassNames = {
     {
-        {MonomerClass::AA, "AA"},
-        {MonomerClass::NA, "NA"},
-        {MonomerClass::CHEM, "CHEM"},
-        {MonomerClass::OTHER, "OTHER"},
+        {MonomerClass::AminoAcid, "AminoAcid"},
+        {MonomerClass::NucleicAcid, "NucleicAcid"},
+        {MonomerClass::Chemical, "Chemical"},
+        {MonomerClass::Other, "Other"},
     }};
 }  // namespace
 
@@ -43,8 +43,8 @@ MonomerClass monomerClassFromString(const std::string &monomerClass) {
     }
   }
   BOOST_LOG(rdWarningLog) << "unrecognized monomer class '" << monomerClass
-                          << "'; treating it as OTHER" << std::endl;
-  return MonomerClass::OTHER;
+                          << "'; treating it as Other" << std::endl;
+  return MonomerClass::Other;
 }
 
 }  // namespace RDKit
