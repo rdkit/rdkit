@@ -67,8 +67,18 @@ steps:
     export QT_QPA_PLATFORM='offscreen'
     cd build
     ctest -j $( $(number_of_cores) ) --output-on-failure -E shard -T Test
-    ctest -j $( $(number_of_cores) ) -V --output-on-failure -R shard -T Test
   displayName: Run tests
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    export RDBASE=`pwd`
+    export PYTHONPATH=${RDBASE}:${PYTHONPATH}
+    export LD_LIBRARY_PATH=${RDBASE}/lib:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
+    echo "LD_LIBRARY_PATH: " $LD_LIBRARY_PATH
+    export QT_QPA_PLATFORM='offscreen'
+    cd build
+    ctest -j $( $(number_of_cores) ) -V --output-on-failure -R shard -T Test
+  displayName: Run sharded tests
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
