@@ -36,6 +36,8 @@
 #include <RDGeneral/export.h>
 #ifndef AUTOCORR2DRDKIT_H_SEPT2016
 #define AUTOCORR2DRDKIT_H_SEPT2016
+#include <vector>
+#include <string>
 
 namespace RDKit {
 class ROMol;

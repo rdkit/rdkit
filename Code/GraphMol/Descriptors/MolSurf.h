@@ -16,6 +16,7 @@
 #include <RDGeneral/export.h>
 #ifndef __RD_MOLSURF_H__
 #define __RD_MOLSURF_H__
+#include <string>
 
 #include <vector>
 

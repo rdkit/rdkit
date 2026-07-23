@@ -10,6 +10,8 @@
 #include <RDGeneral/export.h>
 #ifndef _RESONANCE_H__
 #define _RESONANCE_H__
+#include <memory>
+#include <cstdint>
 
 #include <vector>
 #include <stack>
