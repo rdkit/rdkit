@@ -14,6 +14,7 @@
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <ForceField/UFF/BondStretch.h>
 #include <Geometry/Utils.h>
+#include "BoundsMatrixBuilderDetails.h"
 
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
@@ -85,31 +86,22 @@ struct Optional14Info {
   std::size_t preferTrans = false;
 };
 
-struct Bounds {
-  double lower, upper;
-  unsigned int aid1, aid4;
+//     // if the intersection of all bounds is empty => take the union
+//     auto intersection = std::ranges::max(bounds, {}, &Bounds::lower);
+//     intersection.upper =
+//         std::ranges::min(bounds | std::views::transform(&Bounds::upper));
 
-  inline bool valid() const { return lower <= upper; }
+//     if (intersection.valid()) {
+//       return intersection;
+//     }
 
-  static Bounds merge(std::vector<Bounds> bounds) {
-    PRECONDITION(bounds.size(), "To merge bounds, at least one must be given.");
+//     auto boundsUnion = std::ranges::min(bounds, {}, &Bounds::lower);
+//     boundsUnion.upper =
+//         std::ranges::max(bounds | std::views::transform(&Bounds::upper));
 
-    // if the intersection of all bounds is empty => take the union
-    auto intersection = std::ranges::max(bounds, {}, &Bounds::lower);
-    intersection.upper =
-        std::ranges::min(bounds | std::views::transform(&Bounds::upper));
-
-    if (intersection.valid()) {
-      return intersection;
-    }
-
-    auto boundsUnion = std::ranges::min(bounds, {}, &Bounds::lower);
-    boundsUnion.upper =
-        std::ranges::max(bounds | std::views::transform(&Bounds::upper));
-
-    return boundsUnion;
-  }
-};
+//     return boundsUnion;
+//   }
+// };
 
 typedef enum {
   DIST12,
@@ -178,13 +170,11 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   \param accumData    Used to store the data that have been calculated so far
                       about the molecule
   <b>Procedure</b>
-  All 1-3 distances within all simple rings are first dealt with, while keeping
-  track of
-  any atoms that are visited twice; these are the atoms that are part of
-  multiple simple rings.
-  Then all other 1-3 distance are set while treating 1-3 atoms that have a ring
-  atom in
-  between differently from those that have a non-ring atom in between.
+  All 1-3 distances within all simple rings are first dealt with, while
+  keeping track of any atoms that are visited twice; these are the atoms that
+  are part of multiple simple rings. Then all other 1-3 distance are set while
+  treating 1-3 atoms that have a ring atom in between differently from those
+  that have a non-ring atom in between.
  */
 void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                  ComputedData &accumData);
@@ -202,8 +192,8 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   \param accumData    Used to store the data that have been calculated so far
                       about the molecule
   <b>Procedure</b>
-  As in the case of 1-3 distances 1-4 distance that are part of simple rings are
-  first dealt with. The remaining 1-4 cases are dealt with while paying
+  As in the case of 1-3 distances 1-4 distance that are part of simple rings
+  are first dealt with. The remaining 1-4 cases are dealt with while paying
   attention
   to the special cases.
  */
@@ -221,7 +211,8 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 void set15Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                  ComputedData &accumData, double *distMatrix);
 
-//! Set lower distance bounds based on VDW radii for atoms that are not covered
+//! Set lower distance bounds based on VDW radii for atoms that are not
+//! covered
 // by
 //! other bounds (1-2, 1-3, 1-4, or 1-5)
 /*!
@@ -1350,7 +1341,7 @@ void _collect14Bounds(
   accumData.paths14.push_back(path14);
   accumData.visited14Bounds.set(pid);
 
-  collected14Bounds.try_emplace(pid, std::vector<Bounds>{});
+  // collected14Bounds.try_emplace(pid, std::vector<Bounds>{});
 
   collected14Bounds[pid].emplace_back(dl, du, aid1, aid4);
 }
@@ -1491,7 +1482,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
 
   for (auto &[pid, bounds] : collectedBounds) {
-    auto mergedBounds = Bounds::merge(bounds);
+    auto mergedBounds = merge(bounds);
     _checkAndSetBounds(mergedBounds.aid1, mergedBounds.aid4, mergedBounds.lower,
                        mergedBounds.upper, mmat);
   }

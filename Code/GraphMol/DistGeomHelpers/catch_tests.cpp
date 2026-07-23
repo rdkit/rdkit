@@ -26,6 +26,7 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
+#include "BoundsMatrixBuilderDetails.h"
 #include <tuple>
 #include <map>
 #include <boost/algorithm/string.hpp>
@@ -1846,7 +1847,7 @@ TEST_CASE("Github9403: Bug: Overwritten stereo information in rings") {
   }
 }
 
-TEST_CASE("Resolving competing 1-4s in six membered rings") {
+TEST_CASE("Github #9404: competing 1-4s in six membered rings") {
   SECTION("Simple case (CIS constrainted)") {
     auto mol = "C1C=CCCC1"_smiles;
     auto mol2 = "C1C=CCC=C1"_smiles;
@@ -1864,7 +1865,7 @@ TEST_CASE("Resolving competing 1-4s in six membered rings") {
 
     DGeomHelpers::setTopolBounds(*mol2, bm2);
     // the 1-4 between atoms 0 and 3 must be the same since both are
-    // constrainted by the CIS configuration
+    // constrained by the CIS configuration
     CHECK(bm->getUpperBound(0, 3) == bm2->getUpperBound(0, 3));
     CHECK(bm->getLowerBound(0, 3) == bm2->getLowerBound(0, 3));
   }
@@ -1915,9 +1916,9 @@ TEST_CASE("Resolving competing 1-4s in six membered rings") {
 
     DGeomHelpers::setTopolBounds(*molref2, bmref2);
 
-    // Flexibility of 5-0-1-2 and 5-6-7-2 overlapping with -S-S- (constrainted
+    // Flexibility of 5-0-1-2 and 5-6-7-2 overlapping with -S-S- (constrained
     // by 90 deg)
-    // => interesection should be choosen where lower bound constrainted by
+    // => intersection should be chosen where lower bound constrained by
     // -S-S-
     CHECK(bm->getLowerBound(2, 5) > bmref->getLowerBound(0, 3));
     CHECK(bm->getUpperBound(2, 5) <
@@ -1926,7 +1927,7 @@ TEST_CASE("Resolving competing 1-4s in six membered rings") {
   SECTION("Fused rings not overlapping") {
     auto mol = "C1=CC2CCC1SS2"_smiles;
     auto molref = "C1C=CCC=C1"_smiles;
-    auto molref2 = "C1SSCSS1"_smiles;
+    auto molref2 = "C1CCCCC1"_smiles;
 
     REQUIRE(mol);
     REQUIRE(molref);
@@ -1949,10 +1950,20 @@ TEST_CASE("Resolving competing 1-4s in six membered rings") {
 
     DGeomHelpers::setTopolBounds(*molref2, bmref2);
 
-    // CIS constraint of 5-0-1-2 is NOT overlapping with -S-S- (constrainted
+    // CIS constraint of 5-0-1-2 is NOT overlapping with -S-S- (constrained
     // by 90 deg)
-    // although 5-6-7-2 is overlapping with both -> union must be taken
+    // although 5-6-7-2 is overlapping with both -> union of overlapping
+    // intersections must be taken
     CHECK(bm->getLowerBound(2, 5) <= bmref->getLowerBound(0, 3));
+    // The following scenario:
+    // Bounds{lower=2.52477, upper=3.81072, aid1=2, aid4=5}
+    // Bounds{lower=2.75783, upper=2.87783, aid1=5, aid4=2}
+    // Bounds{lower=3.33888, upper=4.77919, aid1=2, aid4=5}
+    // (2.5) |------------| (3.8)       [CCCC]
+    //   (2.8) |--| (2.9)               [CC=CC]
+    //               |----------| (4.8) [CSSC]
+    // ========================================
+    //   (2.8) |----------| (3.8)
     CHECK(bm->getUpperBound(2, 5) >=
           bmref2->getUpperBound(0, 3));  // due to extra squish for S
   }
@@ -2105,5 +2116,167 @@ TEST_CASE("setTopolBounds with param objects") {
                                    set14bounds, set13bounds);
       CHECK(lb == bm->getLowerBound(0, 5));
     }
+  }
+}
+
+void check_permuations(std::vector<DGeomHelpers::Bounds> &bounds,
+                       const DGeomHelpers::Bounds expected) {
+  // we check all permutaions to ensure no order dependence
+  do {
+    auto merged = DGeomHelpers::merge(bounds);
+    CHECK(merged == expected);
+  } while (
+      std::ranges::next_permutation(bounds, {}, &DGeomHelpers::Bounds::lower)
+          .found);
+}
+
+TEST_CASE("Bounds Merging") {
+  SECTION("Simple, all overlapping") {
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.0, 2.0, 0u, 0u}, {1.5, 3.0, 0u, 0u}, {0.5, 2.5, 0u, 0u}};
+    check_permuations(bounds, {1.5, 2.0, 0u, 0u});
+  }
+  SECTION("Simple all not overlapping") {
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.0, 2.0, 0u, 0u}, {2.5, 3.0, 0u, 0u}, {3.5, 4.5, 0u, 0u}};
+
+    check_permuations(bounds, {0.0, 4.5, 0u, 0u});
+  }
+  SECTION("Test fused 1") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0, 0u, 0u},
+                                                {0.5, 1.0, 0u, 0u},
+                                                {1.5, 2.5, 0u, 0u},
+                                                {2.0, 3.0, 0u, 0u}};
+    // |------------------|
+    //   |--|
+    //          |---|
+    //            |-----|
+    // ====================
+    //   |----------|
+    check_permuations(bounds, {0.5, 2.5, 0u, 0u});
+  }
+  SECTION("Test fused 2") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0, 0u, 0u},
+                                                {0.5, 1.0, 0u, 0u},
+                                                {1.5, 3.0, 0u, 0u},
+                                                {2.0, 2.5, 0u, 0u}};
+    // |------------------|
+    //   |--|
+    //          |-----|
+    //            |-|
+    // ====================
+    //   |----------|
+    check_permuations(bounds, {0.5, 2.5, 0u, 0u});
+  }
+  SECTION("Test fused 3") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0, 0u, 0u},
+                                                {0.5, 1.0, 0u, 0u},
+                                                {1.5, 3.0, 0u, 0u},
+                                                {2.0, 5.5, 0u, 0u}};
+    // |------------------|
+    //   |--|
+    //          |-----|
+    //            |----------|
+    // =======================
+    //   |------------|
+    check_permuations(bounds, {0.5, 3.0, 0u, 0u});
+  }
+  SECTION("Test fused 4") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0, 0u, 0u},
+                                                {0.5, 1.0, 0u, 0u},
+                                                {1.5, 2.5, 0u, 0u},
+                                                {2.0, 3.0, 0u, 0u},
+                                                {4.0, 6.0, 0u, 0u}};
+    // |---------------------|
+    //   |--|
+    //          |---|
+    //            |-----|
+    //                     |-----|
+    // ===========================
+    //   |-------------------|
+    check_permuations(bounds, {0.5, 5.0, 0u, 0u});
+  }
+
+  SECTION("Test fused 5") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0, 0u, 0u},
+                                                {0.5, 1.0, 0u, 0u},
+                                                {0.7, 1.9, 0u, 0u},
+                                                {2.0, 5.5, 0u, 0u}};
+    // |------------------|
+    //   |--|
+    //     |-----|
+    //            |----------|
+    // =======================
+    //    |---------------|
+    check_permuations(bounds, {0.7, 5, 0u, 0u});
+  }
+  SECTION("Test fused 6") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 1.5, 0u, 0u},
+                                                {0.5, 5.0, 0u, 0u},
+                                                {0.7, 1.9, 0u, 0u},
+                                                {2.0, 5.5, 0u, 0u}};
+    // |-----|
+    //   |----------------|
+    //     |-----|
+    //            |----------|
+    // =======================
+    //    |---------------|
+    check_permuations(bounds, {0.7, 5, 0u, 0u});
+  }
+  SECTION("Test fused 7") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0, 0u, 0u},
+                                                {0.5, 1.0, 0u, 0u},
+                                                {1.5, 1.9, 0u, 0u},
+                                                {2.0, 5.5, 0u, 0u}};
+    // |------------------|
+    //   |--|
+    //         |--|
+    //                |----------|
+    // =======================
+    //    |---------------|
+    check_permuations(bounds, {0.5, 5, 0u, 0u});
+  }
+  SECTION("Test fused 1.1") {
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.5, 1.0, 0u, 0u}, {1.5, 2.5, 0u, 0u}, {2.0, 3.0, 0u, 0u}};
+    //   |--|
+    //          |---|
+    //            |-----|
+    // ====================
+    //   |----------|
+    check_permuations(bounds, {0.5, 2.5, 0u, 0u});
+  }
+  SECTION("Test fused 2.1") {
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.5, 1.0, 0u, 0u}, {1.5, 3.0, 0u, 0u}, {2.0, 2.5, 0u, 0u}};
+    //   |--|
+    //          |-----|
+    //            |-|
+    // ====================
+    //   |----------|
+    check_permuations(bounds, {0.5, 2.5, 0u, 0u});
+  }
+  SECTION("Test fused 3.1") {
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.5, 1.0, 0u, 0u}, {1.5, 3.0, 0u, 0u}, {2.0, 5.5, 0u, 0u}};
+    //   |--|
+    //          |-----|
+    //            |----------|
+    // =======================
+    //   |------------|
+    check_permuations(bounds, {0.5, 3.0, 0u, 0u});
+  }
+  SECTION("Test fused 4.1") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.5, 1.0, 0u, 0u},
+                                                {1.5, 2.5, 0u, 0u},
+                                                {2.0, 3.0, 0u, 0u},
+                                                {4.0, 6.0, 0u, 0u}};
+    //   |--|
+    //          |---|
+    //            |-----|
+    //                     |-----|
+    // ===========================
+    //   |-----------------------|
+    check_permuations(bounds, {0.5, 6.0, 0u, 0u});
   }
 }
