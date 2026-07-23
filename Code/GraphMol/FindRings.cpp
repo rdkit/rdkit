@@ -19,7 +19,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <cstdint>
 #include <queue>
-#include <chrono>
 
 using RINGINVAR = boost::dynamic_bitset<>;
 using RINGINVAR_SET = std::set<RINGINVAR>;
