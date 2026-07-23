@@ -2133,60 +2133,60 @@ void check_permutations(std::vector<DGeomHelpers::Bounds> &bounds,
 TEST_CASE("Bounds Merging") {
   SECTION("Simple, all overlapping") {
     std::vector<DGeomHelpers::Bounds> bounds = {
-        {0.0, 2.0, 0u, 0u}, {1.5, 3.0, 0u, 0u}, {0.5, 2.5, 0u, 0u}};
-    check_permuations(bounds, {1.5, 2.0, 0u, 0u});
+        {0.0, 2.0}, {1.5, 3.0}, {0.5, 2.5}};
+    check_permutations(bounds, {1.5, 2.0});
   }
   SECTION("Simple all not overlapping") {
     std::vector<DGeomHelpers::Bounds> bounds = {
-        {0.0, 2.0, 0u, 0u}, {2.5, 3.0, 0u, 0u}, {3.5, 4.5, 0u, 0u}};
+        {0.0, 2.0}, {2.5, 3.0}, {3.5, 4.5}};
 
-    check_permuations(bounds, {0.0, 4.5, 0u, 0u});
+    check_permutations(bounds, {0.0, 4.5});
   }
   SECTION("Test fused 1") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0, 0u, 0u},
-                                                {0.5, 1.0, 0u, 0u},
-                                                {1.5, 2.5, 0u, 0u},
-                                                {2.0, 3.0, 0u, 0u}};
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
+                                                {0.5, 1.0},
+                                                {1.5, 2.5},
+                                                {2.0, 3.0}};
     // |------------------|
     //   |--|
     //          |---|
     //            |-----|
     // ====================
     //   |----------|
-    check_permuations(bounds, {0.5, 2.5, 0u, 0u});
+    check_permutations(bounds, {0.5, 2.5});
   }
   SECTION("Test fused 2") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0, 0u, 0u},
-                                                {0.5, 1.0, 0u, 0u},
-                                                {1.5, 3.0, 0u, 0u},
-                                                {2.0, 2.5, 0u, 0u}};
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
+                                                {0.5, 1.0},
+                                                {1.5, 3.0},
+                                                {2.0, 2.5}};
     // |------------------|
     //   |--|
     //          |-----|
     //            |-|
     // ====================
     //   |----------|
-    check_permuations(bounds, {0.5, 2.5, 0u, 0u});
+    check_permutations(bounds, {0.5, 2.5});
   }
   SECTION("Test fused 3") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0, 0u, 0u},
-                                                {0.5, 1.0, 0u, 0u},
-                                                {1.5, 3.0, 0u, 0u},
-                                                {2.0, 5.5, 0u, 0u}};
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
+                                                {0.5, 1.0},
+                                                {1.5, 3.0},
+                                                {2.0, 5.5}};
     // |------------------|
     //   |--|
     //          |-----|
     //            |----------|
     // =======================
     //   |------------|
-    check_permuations(bounds, {0.5, 3.0, 0u, 0u});
+    check_permutations(bounds, {0.5, 3.0});
   }
   SECTION("Test fused 4") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0, 0u, 0u},
-                                                {0.5, 1.0, 0u, 0u},
-                                                {1.5, 2.5, 0u, 0u},
-                                                {2.0, 3.0, 0u, 0u},
-                                                {4.0, 6.0, 0u, 0u}};
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
+                                                {0.5, 1.0},
+                                                {1.5, 2.5},
+                                                {2.0, 3.0},
+                                                {4.0, 6.0}};
     // |---------------------|
     //   |--|
     //          |---|
@@ -2194,89 +2194,89 @@ TEST_CASE("Bounds Merging") {
     //                     |-----|
     // ===========================
     //   |-------------------|
-    check_permuations(bounds, {0.5, 5.0, 0u, 0u});
+    check_permutations(bounds, {0.5, 5.0});
   }
 
   SECTION("Test fused 5") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0, 0u, 0u},
-                                                {0.5, 1.0, 0u, 0u},
-                                                {0.7, 1.9, 0u, 0u},
-                                                {2.0, 5.5, 0u, 0u}};
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
+                                                {0.5, 1.0},
+                                                {0.7, 1.9},
+                                                {2.0, 5.5}};
     // |------------------|
     //   |--|
     //     |-----|
     //            |----------|
     // =======================
     //    |---------------|
-    check_permuations(bounds, {0.7, 5, 0u, 0u});
+    check_permutations(bounds, {0.7, 5});
   }
   SECTION("Test fused 6") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 1.5, 0u, 0u},
-                                                {0.5, 5.0, 0u, 0u},
-                                                {0.7, 1.9, 0u, 0u},
-                                                {2.0, 5.5, 0u, 0u}};
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 1.5},
+                                                {0.5, 5.0},
+                                                {0.7, 1.9},
+                                                {2.0, 5.5}};
     // |-----|
     //   |----------------|
     //     |-----|
     //            |----------|
     // =======================
     //    |---------------|
-    check_permuations(bounds, {0.7, 5, 0u, 0u});
+    check_permutations(bounds, {0.7, 5});
   }
   SECTION("Test fused 7") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0, 0u, 0u},
-                                                {0.5, 1.0, 0u, 0u},
-                                                {1.5, 1.9, 0u, 0u},
-                                                {2.0, 5.5, 0u, 0u}};
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
+                                                {0.5, 1.0},
+                                                {1.5, 1.9},
+                                                {2.0, 5.5}};
     // |------------------|
     //   |--|
     //         |--|
     //                |----------|
     // =======================
     //    |---------------|
-    check_permuations(bounds, {0.5, 5, 0u, 0u});
+    check_permutations(bounds, {0.5, 5});
   }
   SECTION("Test fused 1.1") {
     std::vector<DGeomHelpers::Bounds> bounds = {
-        {0.5, 1.0, 0u, 0u}, {1.5, 2.5, 0u, 0u}, {2.0, 3.0, 0u, 0u}};
+        {0.5, 1.0}, {1.5, 2.5}, {2.0, 3.0}};
     //   |--|
     //          |---|
     //            |-----|
     // ====================
     //   |----------|
-    check_permuations(bounds, {0.5, 2.5, 0u, 0u});
+    check_permutations(bounds, {0.5, 2.5});
   }
   SECTION("Test fused 2.1") {
     std::vector<DGeomHelpers::Bounds> bounds = {
-        {0.5, 1.0, 0u, 0u}, {1.5, 3.0, 0u, 0u}, {2.0, 2.5, 0u, 0u}};
+        {0.5, 1.0}, {1.5, 3.0}, {2.0, 2.5}};
     //   |--|
     //          |-----|
     //            |-|
     // ====================
     //   |----------|
-    check_permuations(bounds, {0.5, 2.5, 0u, 0u});
+    check_permutations(bounds, {0.5, 2.5});
   }
   SECTION("Test fused 3.1") {
     std::vector<DGeomHelpers::Bounds> bounds = {
-        {0.5, 1.0, 0u, 0u}, {1.5, 3.0, 0u, 0u}, {2.0, 5.5, 0u, 0u}};
+        {0.5, 1.0}, {1.5, 3.0}, {2.0, 5.5}};
     //   |--|
     //          |-----|
     //            |----------|
     // =======================
     //   |------------|
-    check_permuations(bounds, {0.5, 3.0, 0u, 0u});
+    check_permutations(bounds, {0.5, 3.0});
   }
   SECTION("Test fused 4.1") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.5, 1.0, 0u, 0u},
-                                                {1.5, 2.5, 0u, 0u},
-                                                {2.0, 3.0, 0u, 0u},
-                                                {4.0, 6.0, 0u, 0u}};
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.5, 1.0},
+                                                {1.5, 2.5},
+                                                {2.0, 3.0},
+                                                {4.0, 6.0}};
     //   |--|
     //          |---|
     //            |-----|
     //                     |-----|
     // ===========================
     //   |-----------------------|
-    check_permuations(bounds, {0.5, 6.0, 0u, 0u});
+    check_permutations(bounds, {0.5, 6.0});
   }
 }
