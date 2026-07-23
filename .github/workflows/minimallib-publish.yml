@@ -46,6 +46,7 @@ jobs:
 
       - name: Build WASM
         run: |
+          cd ./Code/MinimalLib
           NPM_VERSION=${{ steps.version.outputs.version }} GET_SRC=copy bash scripts/build_rdkitjs.sh
 
       - name: Setup Node
