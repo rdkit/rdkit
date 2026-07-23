@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <vector>
-// #include "RDGeneral/Invariant.h"
+#include "RDGeneral/Invariant.h"
 #include <ranges>
 #include <optional>
 #include <algorithm>
@@ -35,6 +35,8 @@ struct Bounds {
 };
 
 Bounds merge(std::vector<Bounds> bounds) {
+  PRECONDITION(bounds.size(), "Cannot merge empty list of bounds");
+
   std::ranges::sort(bounds, {}, &Bounds::lower);
 
   Bounds current = bounds.front();
