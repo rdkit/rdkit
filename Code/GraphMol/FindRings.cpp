@@ -19,6 +19,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <cstdint>
 #include <queue>
+#include <chrono>
 
 using RINGINVAR = boost::dynamic_bitset<>;
 using RINGINVAR_SET = std::set<RINGINVAR>;
@@ -1087,7 +1088,8 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
                    bool includeHydrogenBonds) {
   auto ringInfo = mol.getRingInfo();
   if (ringInfo->isInitialized()) {
-    ringInfo->reset();
+    bool resetRingFamilies = false;
+    ringInfo->reset(resetRingFamilies);
   }
   ringInfo->initialize(FIND_RING_TYPE_SYMM_SSSR);
 
@@ -1097,8 +1099,10 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
   }
 
   if (algorithm != SymmetrizeSSSRAlgorithm::LEGACY) {
-    ringInfo->preallocate(mol.getNumAtoms(), mol.getNumBonds());
-    findRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
+    if (!ringInfo->areRingFamiliesInitialized()) {
+      ringInfo->preallocate(mol.getNumAtoms(), mol.getNumBonds());
+      findRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
+    }
     res = ringInfo->atomRelevantCycles();
     for (const auto &atomRing : res) {
       INT_VECT bondRing;
