@@ -3,8 +3,8 @@
 # The build consists of three stages (services):
 # 1. `deps`: This service builds the dependencies required for RDKit.
 # 2. `rdkit_get_src`: This service gets the RDKit source code from
-#    either from GitHub (GET_SRC=clone_from_github, the default)
-#    or from a local source tree (GET_SRC=copy_from_local)
+#    either from a local source tree (GET_SRC=copy, the default)
+#    or from GitHub (GET_SRC=clone)
 #    into the Docker image.
 # 3. `rdkit_build`: This service builds the RDKit MinimalLib using
 #    the dependencies built in the first service and the source code
@@ -13,7 +13,7 @@
 # Example usage:
 # (the --build-arg are all optional)
 #
-# GET_SRC=copy_from_local \
+# GET_SRC=copy \
 # docker-compose -f docker_compose_build_minimallib.yml build \
 #   --build-arg http_proxy=$HTTP_PROXY \
 #   --build-arg http_proxy=$HTTP_PROXY \
@@ -24,7 +24,7 @@
 # Once the build is finished, you can run the following command to
 # export the buildartifacts to your local filesystem:
 #
-# DOCKER_BUILDKIT=1 docker build -f Dockerfile_4_rdkit_export -o ../demo .
+# DOCKER_BUILDKIT=1 docker build -f 04_export.Dockerfile -o ../demo .
 
 services:
   rdkit_deps:
@@ -33,17 +33,17 @@ services:
     network_mode: ${NETWORK_MODE:-bridge}
     build:
       context: .
-      dockerfile: Dockerfile_1_deps
+      dockerfile: 01_deps.Dockerfile
     image: rdkit-minimallib-deps:latest
 
   rdkit_get_src:
     environment:
       - NETWORK_MODE=${NETWORK_MODE:-bridge}
-      - GET_SRC=${GET_SRC:-clone_from_github}
+      - GET_SRC=${GET_SRC:-copy}
     network_mode: ${NETWORK_MODE:-bridge}
     build:
       context: ../../..
-      dockerfile: ./Code/MinimalLib/docker/Dockerfile_2_rdkit_${GET_SRC:-clone_from_github}
+      dockerfile: ./Code/MinimalLib/docker/02_rdkit_${GET_SRC:-copy}.Dockerfile
     image: rdkit-minimallib-rdkit-src:latest
     depends_on:
       - rdkit_deps
@@ -54,7 +54,7 @@ services:
     network_mode: ${NETWORK_MODE:-bridge}
     build:
       context: .
-      dockerfile: Dockerfile_3_rdkit_build
+      dockerfile: 03_build.Dockerfile
     image: rdkit-minimallib:latest
     depends_on:
       - rdkit_get_src
