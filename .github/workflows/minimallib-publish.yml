@@ -59,7 +59,7 @@ jobs:
         run: node Code/MinimalLib/tests/tests.js
 
       - name: Make package
-        working-directory: Code/MinimalLib/dist
+        working-directory: Code/MinimalLib/build
         run: npm pack
 
       - name: Debug npm and OIDC
@@ -73,7 +73,7 @@ jobs:
       # use the trusted publishing flow. The npm documentation
       # recommends --provenance
       - name: Publish to npm
-        working-directory: Code/MinimalLib/dist
+        working-directory: Code/MinimalLib/build
         run: |
           IS_PRERELEASE="${{ steps.version.outputs.is_prerelease }}"
 
