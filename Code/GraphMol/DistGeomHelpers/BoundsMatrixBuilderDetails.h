@@ -54,7 +54,7 @@ inline Bounds merge(std::vector<Bounds> bounds) {
   // keeping track on the current/active non-empty intersection
   // (currentIntersection), the largest upperBound that was reached so far
   // (this is needed since the currentIntersection.upper can be smaller than
-  // that, loosing track on potenial overlaps/intersections).
+  // that, losing track of potenial overlaps/intersections).
   // To avoid storing all maximal non-overlapping intersections (only the
   // first and last one is relevant), we store the lower bound of the first
   // maximal intersection in resultLower
