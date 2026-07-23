@@ -330,7 +330,7 @@ void getExperimentalTorsions(
       atoms[3] = l;
       details.expTorsionAtoms.push_back(atoms);
       std::vector<double> V(6, 0.0);
-      V[0] = 75.0 * details.forceConsts.etTermScaling;
+      V[0] = 60.0 * details.forceConsts.etTermScaling;
       std::vector<int> signs(6, 1);
       if (config.type.type == DGeomHelpers::TorsionType::CIS) {
         signs[0] = -1;
