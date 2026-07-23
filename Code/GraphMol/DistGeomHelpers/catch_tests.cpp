@@ -2119,7 +2119,7 @@ TEST_CASE("setTopolBounds with param objects") {
   }
 }
 
-void check_permuations(std::vector<DGeomHelpers::Bounds> &bounds,
+void check_permutations(std::vector<DGeomHelpers::Bounds> &bounds,
                        const DGeomHelpers::Bounds expected) {
   // we check all permutaions to ensure no order dependence
   do {
