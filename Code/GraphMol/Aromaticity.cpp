@@ -41,17 +41,46 @@ namespace RingUtils {
 using namespace RDKit;
 
 void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
-                    boost::dynamic_bitset<> &done, int depth) {
+                    boost::dynamic_bitset<> &done, int /* depth */) {
+  // Use an explicit DFS stack instead of recursion. Large fused systems can
+  // contain thousands of rings, which overflows the comparatively small
+  // default thread stack on Windows.
   auto pos = neighMap.find(curr);
   PRECONDITION(pos != neighMap.end(), "bad argument");
   done[curr] = 1;
   res.push_back(curr);
 
-  const auto &neighs = pos->second;
-  for (int neigh : neighs) {
-    if (!done[neigh]) {
-      pickFusedRings(neigh, neighMap, res, done, depth + 1);
+  // Each entry stores a ring index and the next neighbor to visit. Advancing
+  // neighbors one at a time preserves the preorder traversal of the old
+  // recursive implementation.
+  std::vector<std::pair<int, unsigned>> stack;
+  stack.emplace_back(curr, 0);
+  while (!stack.empty()) {
+    auto &[ringIdx, nextNeighbor] = stack.back();
+    const auto &neighs = neighMap.find(ringIdx)->second;
+    if (nextNeighbor == neighs.size()) {
+      // No more neighbors to visit for this ring
+      stack.pop_back();
+      continue;
     }
+
+    const auto neigh = neighs[nextNeighbor];
+
+    // this advances the "neighbor to visit" index in the current
+    // element in the stack (note that nextNeighbor is a reference,
+    // and that we haven't popped the stack!)
+    ++nextNeighbor;
+
+    if (done[neigh]) {
+      continue;
+    }
+
+    // We haven't seen this ring yet, so add it to the stack
+    pos = neighMap.find(neigh);
+    CHECK_INVARIANT(pos != neighMap.end(), "neighboring ring not found");
+    done[neigh] = 1;
+    res.push_back(neigh);
+    stack.emplace_back(neigh, 0);
   }
 }
 
@@ -71,8 +100,7 @@ bool checkFused(const INT_VECT &rids, INT_INT_VECT_MAP &ringNeighs) {
 
   // then pick a fused system from the remaining (i.e. rids)
   // If the rings in rids are fused we should get back all of them
-  // in fused
-  // if we get a smaller number in fused then rids are not fused
+  // in fused if we get a smaller number in fused then rids are not fused
   pickFusedRings(rids.front(), ringNeighs, fused, done);
 
   CHECK_INVARIANT(fused.size() <= rids.size(), "");
@@ -402,7 +430,7 @@ void applyHuckelToFused(
       std::copy(curRs.begin(), curRs.end(),
                 std::inserter(aromRings, aromRings.begin()));
     }  // end check huckel rule
-  }  // end while(1)
+  }    // end while(1)
   narom += rdcast<int>(aromRings.size());
 }
 
