@@ -12,7 +12,7 @@
 #define RD_BOUNDS_MATRIX_BUILDER_H
 
 #include <DistGeom/BoundsMatrix.h>
-#include <optional>
+#include "BoundsMatrixBuilderDetails.h"
 #include "Embedder.h"
 
 namespace ForceFields {
@@ -23,28 +23,7 @@ struct CrystalFFDetails;
 namespace RDKit {
 class ROMol;
 namespace DGeomHelpers {
-enum class TorsionType {
-  CIS = 0,
-  TRANS,
-  FLEXIBLE,
-  CUSTOM,
-  NONE  // don't set the bound
-};
 
-struct TorsionValue {
-  TorsionType type = TorsionType::NONE;
-  std::optional<double> value = {};
-  std::optional<double> extraDist = {};
-  bool isForced = false;
-};
-
-//! A structure used to store 14 paths - cis/trans info
-struct Path14Configuration {
-  unsigned int bid1, bid2, bid3;
-  unsigned int aid1, aid2, aid3, aid4;
-  TorsionValue type;
-};
-using PATH14_VECT = std::vector<Path14Configuration>;
 //! Set default upper and lower distance bounds in a distance matrix
 /*!
   \param mmat        pointer to the bounds matrix to be altered

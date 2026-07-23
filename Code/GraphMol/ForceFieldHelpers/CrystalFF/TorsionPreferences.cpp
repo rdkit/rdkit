@@ -12,6 +12,7 @@
 #include <Geometry/Utils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/DistGeomHelpers/BoundsMatrixBuilderDetails.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
@@ -297,7 +298,9 @@ void getExperimentalTorsions(
     }    // loop over rings
     // torsions for forced trans amides / esters
     auto is_forced_cis_or_trans = [](const auto &config) {
-      if (!config.type.isForced) return false;
+      if (!config.type.isForced) {
+        return false;
+      }
       return config.type.type == DGeomHelpers::TorsionType::TRANS ||
              config.type.type == DGeomHelpers::TorsionType::CIS;
     };
@@ -316,7 +319,7 @@ void getExperimentalTorsions(
       if (doneBonds[bndIdx]) {
         continue;
       }
-       
+
       if (!details.constrainedAtoms.empty() && details.constrainedAtoms[i] &&
           details.constrainedAtoms[j] && details.constrainedAtoms[k] &&
           details.constrainedAtoms[l]) {

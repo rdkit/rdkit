@@ -11,9 +11,7 @@
 #include <GraphMol/Chirality.h>
 #include <DistGeom/BoundsMatrix.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
-#include "BoundsMatrixBuilder.h"
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
-#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <ForceField/UFF/BondStretch.h>
 #include <Geometry/Utils.h>
 
@@ -28,6 +26,9 @@
 #include <ranges>
 #include <vector>
 #include <cstddef>
+
+#include "BoundsMatrixBuilder.h"
+#include "BoundsMatrixBuilderDetails.h"
 
 const double DIST12_DELTA = 0.01;
 // const double ANGLE_DELTA = 0.0837;
