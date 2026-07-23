@@ -1,9 +1,8 @@
 name: Publish MinimalLib
 
 on:
-  push:
-    tags:
-      - 'Release_*'
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
@@ -19,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract RDKit version
+      - name: Get RDKit version
         id: version
         run: |
           YEAR=$(grep -F 'set(RDKit_Year' CMakeLists.txt | cut -d'"' -f2)
