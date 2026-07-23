@@ -34,7 +34,7 @@ struct Bounds {
   }
 };
 
-Bounds merge(std::vector<Bounds> bounds) {
+inline Bounds merge(std::vector<Bounds> bounds) {
   PRECONDITION(bounds.size(), "Cannot merge empty list of bounds");
 
   std::ranges::sort(bounds, {}, &Bounds::lower);
