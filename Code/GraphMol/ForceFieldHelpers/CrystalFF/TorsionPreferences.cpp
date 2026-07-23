@@ -296,19 +296,19 @@ void getExperimentalTorsions(
       }  // loop over atoms in ring
     }    // loop over rings
     // torsions for forced trans amides / esters
-    for (const auto &config : details.path14Configs) {
-      if (!config.type.isForced) {
-        continue;
-      }
-      if (config.type.type != DGeomHelpers::TorsionType::TRANS &&
-          config.type.type != DGeomHelpers::TorsionType::CIS) {
-        continue;
-      }
+    auto is_forced_cis_or_trans = [](const auto &config) {
+      if (!config.type.isForced) return false;
+      return config.type.type == DGeomHelpers::TorsionType::TRANS ||
+             config.type.type == DGeomHelpers::TorsionType::CIS;
+    };
+    for (const auto &config :
+         details.path14Configs | std::views::filter(is_forced_cis_or_trans)) {
       const auto i = config.aid1;
       const auto j = config.aid2;
       const auto k = config.aid3;
       const auto l = config.aid4;
       const auto bndIdx = mol.getBondBetweenAtoms(j, k)->getIdx();
+
       if (excludedBonds[bndIdx] ||
           mol.getRingInfo()->numBondRings(bndIdx) > 3) {
         doneBonds[bndIdx] = 1;
@@ -316,22 +316,19 @@ void getExperimentalTorsions(
       if (doneBonds[bndIdx]) {
         continue;
       }
+       
       if (!details.constrainedAtoms.empty() && details.constrainedAtoms[i] &&
           details.constrainedAtoms[j] && details.constrainedAtoms[k] &&
           details.constrainedAtoms[l]) {
         continue;
       }
-      doneBonds[bndIdx] = 1;
-      std::vector<unsigned int> aids{i, j, k, l};
-      std::vector<int> atoms(4);
-      atoms[0] = i;
-      atoms[1] = j;
-      atoms[2] = k;
-      atoms[3] = l;
-      details.expTorsionAtoms.push_back(atoms);
+      details.expTorsionAtoms.push_back(
+          {static_cast<int>(i), static_cast<int>(j), static_cast<int>(k),
+           static_cast<int>(l)});
       std::vector<double> V(6, 0.0);
-      V[0] = 60.0 * details.forceConsts.etTermScaling;
       std::vector<int> signs(6, 1);
+
+      V[0] = 60.0 * details.forceConsts.etTermScaling;
       if (config.type.type == DGeomHelpers::TorsionType::CIS) {
         signs[0] = -1;
       }
