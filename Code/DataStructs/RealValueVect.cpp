@@ -13,6 +13,9 @@
 #include <RDGeneral/StreamOps.h>
 #include "DatastructsException.h"
 
+#include <cmath>
+#include <numeric>
+
 constexpr double VAL_TOL = 0.01;
 
 namespace RDKit {

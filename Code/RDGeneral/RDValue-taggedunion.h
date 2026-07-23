@@ -34,8 +34,6 @@
 
 #include <cassert>
 #include "Invariant.h"
-#include <iomanip>
-#include <sstream>
 #include <vector>
 #include <cstdint>
 #include <RDGeneral/BoostStartInclude.h>
@@ -356,7 +354,7 @@ inline void copy_rdvalue(RDValue &dest, const RDValue &src) {
 // avoid register pressure and spilling on 32 bit systems
 typedef const RDValue &RDValue_cast_t;
 #else
-typedef RDValue RDValue_cast_t;
+using RDValue_cast_t = RDValue;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////////

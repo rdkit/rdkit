@@ -24,12 +24,10 @@
 #include <memory>
 
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-#include <cstdint>
 #include "list_indexing_suite.hpp"
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <list>
-#include <string_view>
 #include <vector>
 #include <RDGeneral/Exceptions.h>
 
@@ -307,11 +305,10 @@ struct iterable_converter {
 
     // Obtain a handle to the memory block that the converter has allocated
     // for the C++ type.
-    typedef python::converter::rvalue_from_python_storage<Container>
-        storage_type;
+    using storage_type = python::converter::rvalue_from_python_storage<Container>;
     void *storage = reinterpret_cast<storage_type *>(data)->storage.bytes;
 
-    typedef python::stl_input_iterator<typename Container::value_type> iterator;
+    using iterator = python::stl_input_iterator<typename Container::value_type>;
 
     // Allocate the C++ type into the converter's memory block, and assign
     // its handle to the converter's convertible variable.  The C++

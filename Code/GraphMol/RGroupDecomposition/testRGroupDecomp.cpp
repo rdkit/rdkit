@@ -46,12 +46,12 @@
 #include <RDGeneral/Exceptions.h>
 #include <boost/tokenizer.hpp>
 #include <regex>
-
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+#include <cmath>
+using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 
 using namespace RDKit;
 
-typedef std::vector<std::unique_ptr<ROMol>> UMOLS;
+using UMOLS = std::vector<std::unique_ptr<ROMol>>;
 #define UPTR(m) std::unique_ptr<ROMol>(m)
 
 void CHECK_RGROUP(RGroupRows::const_iterator &it, const std::string &expected,

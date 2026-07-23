@@ -39,13 +39,13 @@ class ROMol;
 // NOTE: before replacing the defn of PATH_TYPE: be aware that
 // we do occasionally use reverse iterators on these things, so
 // replacing with a slist would probably be a bad idea.
-typedef std::vector<int> PATH_TYPE;
-typedef std::list<PATH_TYPE> PATH_LIST;
-typedef PATH_LIST::const_iterator PATH_LIST_CI;
+using PATH_TYPE = std::vector<int>;
+using PATH_LIST = std::list<PATH_TYPE>;
+using PATH_LIST_CI = PATH_LIST::const_iterator;
 
-typedef std::map<int, PATH_LIST> INT_PATH_LIST_MAP;
-typedef INT_PATH_LIST_MAP::const_iterator INT_PATH_LIST_MAP_CI;
-typedef INT_PATH_LIST_MAP::iterator INT_PATH_LIST_MAP_I;
+using INT_PATH_LIST_MAP = std::map<int, PATH_LIST>;
+using INT_PATH_LIST_MAP_CI = INT_PATH_LIST_MAP::const_iterator;
+using INT_PATH_LIST_MAP_I = INT_PATH_LIST_MAP::iterator;
 
 // --- --- --- --- --- --- --- --- --- --- --- --- ---
 //

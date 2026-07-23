@@ -42,14 +42,16 @@
 namespace RDKit {
 class Atom;
 class Bond;
+class RWMol;
+class ROMol;
 
 namespace SLNParse {
-typedef enum {
+enum AttribCombineOp {
   AttribLowPriAnd = 0,
   AttribOr,
   AttribAnd,
   AttribNot
-} AttribCombineOp;
+};
 
 class RDKIT_SLNPARSE_EXPORT AttribType {
  public:
@@ -61,8 +63,8 @@ class RDKIT_SLNPARSE_EXPORT AttribType {
   void *structQuery{nullptr};
 };
 
-typedef std::vector<std::pair<AttribCombineOp, boost::shared_ptr<AttribType>>>
-    AttribListType;
+using AttribListType =
+    std::vector<std::pair<AttribCombineOp, boost::shared_ptr<AttribType>>>;
 
 //! parses the attributes provided for an atom and sets
 /// the appropriate RD properties/queries.

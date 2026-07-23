@@ -28,8 +28,8 @@ class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeature
   friend class MolChemicalFeatureFactory;
 
  public:
-  typedef std::vector<const Atom *> AtomPtrContainer;
-  typedef AtomPtrContainer::const_iterator AtomPtrContainer_CI;
+  using AtomPtrContainer = std::vector<const Atom *>;
+  using AtomPtrContainer_CI = AtomPtrContainer::const_iterator;
 
   //! Constructor
   MolChemicalFeature(const ROMol *mol, const MolChemicalFeatureFactory *factory,
@@ -83,7 +83,7 @@ class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeature
   AtomPtrContainer::const_iterator endAtoms() const { return d_atoms.end(); }
 
  private:
-  typedef std::map<int, RDGeom::Point3D> PointCacheType;
+  using PointCacheType = std::map<int, RDGeom::Point3D>;
 
   const ROMol *dp_mol;
   const MolChemicalFeatureFactory *dp_factory;

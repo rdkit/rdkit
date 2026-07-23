@@ -120,7 +120,7 @@ RDKIT_DESCRIPTORS_EXPORT double calcMR(const ROMol &mol);
 */
 class RDKIT_DESCRIPTORS_EXPORT CrippenParamCollection {
  public:
-  typedef std::vector<CrippenParams> ParamsVect;
+  using ParamsVect = std::vector<CrippenParams>;
   static const CrippenParamCollection *getParams(
       const std::string &paramData = "");
   ParamsVect::const_iterator begin() const { return d_params.begin(); }

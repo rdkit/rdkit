@@ -198,8 +198,8 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
   frag->clearAllBondBookmarks();
 };
 
-typedef std::pair<size_t, int> SIZET_PAIR;
-typedef std::pair<int, int> INT_PAIR;
+using SIZET_PAIR = std::pair<size_t, int>;
+using INT_PAIR = std::pair<int, int>;
 template <typename T>
 bool operator<(const std::pair<T, T> &p1, const std::pair<T, T> &p2) {
   return p1.first < p2.first;

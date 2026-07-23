@@ -19,8 +19,8 @@ using RDKit::MHFPFingerprints::MHFPEncoder;
 namespace RDKit {
 namespace MHFPWrapper {
 
-typedef std::vector<std::vector<uint32_t>> VectMinHashVect;
-typedef std::vector<ExplicitBitVect> VectExplicitBitVect;
+using VectMinHashVect = std::vector<std::vector<uint32_t>>;
+using VectExplicitBitVect = std::vector<ExplicitBitVect>;
 
 template <typename T>
 std::vector<T> ListToVector(const python::object &obj) {

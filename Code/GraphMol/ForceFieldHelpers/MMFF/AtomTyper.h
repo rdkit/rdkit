@@ -12,12 +12,13 @@
 #include <RDGeneral/export.h>
 #ifndef _RD_MMFFATOMTYPER_H__
 #define _RD_MMFFATOMTYPER_H__
-
+#include <RDGeneral/types.h>
 #include <vector>
 #include <string>
 #include <ForceField/MMFF/Params.h>
 #include <cstdint>
-
+#include <iostream>
+#include <boost/shared_ptr.hpp>
 namespace RDKit {
 class ROMol;
 class RWMol;
@@ -63,7 +64,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFAtomProperties {
   double mmffPartialCharge{0.0};
 };
 
-typedef boost::shared_ptr<MMFFAtomProperties> MMFFAtomPropertiesPtr;
+using MMFFAtomPropertiesPtr = boost::shared_ptr<MMFFAtomProperties>;
 enum {
   CONSTANT = 1,
   DISTANCE = 2

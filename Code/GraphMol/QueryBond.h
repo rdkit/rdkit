@@ -27,7 +27,7 @@ namespace RDKit {
 
 class RDKIT_GRAPHMOL_EXPORT QueryBond : public Bond {
  public:
-  typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
+  using QUERYBOND_QUERY = Queries::Query<int, const Bond *, true>;
 
   QueryBond() : Bond() {}
   //! initialize with a particular bond order

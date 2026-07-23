@@ -19,8 +19,7 @@
 namespace RDKit {
 class ROMol;
 
-typedef RDCatalog::HierarchCatalog<FragCatalogEntry, FragCatParams, int>
-    FragCatalog;
+using FragCatalog = RDCatalog::HierarchCatalog<FragCatalogEntry, FragCatParams, int>;
 
 class RDKIT_FRAGCATALOG_EXPORT FragCatGenerator {
  public:

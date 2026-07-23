@@ -238,13 +238,13 @@ class RDKIT_MOLALIGN_EXPORT SDM {
   unsigned int size() { return d_SDMPtrVect.size(); }
 
  private:
-  typedef struct SDMElement {
+  struct SDMElement {
     unsigned int idx[2];
     int score;
     int cost;
     double sqDist;
     O3AConstraint *o3aConstraint;
-  } SDMElement;
+  };
   const Conformer *d_prbConf;
   const Conformer *d_refConf;
   O3AConstraintVect *d_o3aConstraintVect;
@@ -274,7 +274,7 @@ class RDKIT_MOLALIGN_EXPORT SDM {
 class RDKIT_MOLALIGN_EXPORT O3A {
  public:
   //! pre-defined atom typing schemes
-  typedef enum { MMFF94 = 0, CRIPPEN } AtomTypeScheme;
+  enum AtomTypeScheme { MMFF94 = 0, CRIPPEN };
   O3A(ROMol &prbMol, const ROMol &refMol, void *prbProp, void *refProp,
       AtomTypeScheme atomTypes = MMFF94, const int prbCid = -1,
       const int refCid = -1, const bool reflect = false,

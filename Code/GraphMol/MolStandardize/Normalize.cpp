@@ -30,16 +30,15 @@ class ROMol;
 
 namespace MolStandardize {
 
-typedef boost::flyweight<
+using param_filename_flyweight = boost::flyweight<
     boost::flyweights::key_value<std::string, TransformCatalogParams>,
-    boost::flyweights::no_tracking>
-    param_filename_flyweight;
+    boost::flyweights::no_tracking>;
 
-typedef boost::flyweight<boost::flyweights::key_value<
-                             std::vector<std::pair<std::string, std::string>>,
-                             TransformCatalogParams>,
-                         boost::flyweights::no_tracking>
-    param_data_flyweight;
+using param_data_flyweight =
+    boost::flyweight<boost::flyweights::key_value<
+                         std::vector<std::pair<std::string, std::string>>,
+                         TransformCatalogParams>,
+                     boost::flyweights::no_tracking>;
 
 // unsigned int MAX_RESTARTS = 200;
 

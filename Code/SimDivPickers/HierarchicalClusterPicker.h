@@ -26,7 +26,7 @@ class RDKIT_SIMDIVPICKERS_EXPORT HierarchicalClusterPicker : public DistPicker {
  public:
   /*! \brief The type of hierarchical clustering algorithm to use
    */
-  typedef enum {
+  enum ClusterMethod {
     WARD = 1,
     SLINK = 2,
     CLINK = 3,
@@ -34,7 +34,7 @@ class RDKIT_SIMDIVPICKERS_EXPORT HierarchicalClusterPicker : public DistPicker {
     MCQUITTY = 5,
     GOWER = 6,
     CENTROID = 7
-  } ClusterMethod;
+  };
 
   /*! \brief Constructor - takes a ClusterMethod as an argument
    *

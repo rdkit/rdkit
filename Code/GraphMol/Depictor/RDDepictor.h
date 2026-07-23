@@ -26,7 +26,7 @@ namespace RDDepict {
 RDKIT_DEPICTOR_EXPORT extern bool
     preferCoordGen;  // Ignored if coordgen support isn't active
 
-typedef boost::shared_array<double> DOUBLE_SMART_PTR;
+using DOUBLE_SMART_PTR = boost::shared_array<double>;
 
 class RDKIT_DEPICTOR_EXPORT DepictException : public std::exception {
  public:

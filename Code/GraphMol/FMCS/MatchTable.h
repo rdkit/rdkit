@@ -10,7 +10,6 @@
 #include <RDGeneral/export.h>
 #pragma once
 #include <vector>
-#include <stdexcept>
 
 namespace RDKit {
 namespace FMCS {
@@ -45,6 +44,6 @@ class RDKIT_FMCS_EXPORT
   inline T at(size_t row, size_t col) const { return Data[row * XSize + col]; }
 };
 
-typedef TArray2D<bool> MatchTable;  // row is index in QueryMolecule
+using MatchTable = TArray2D<bool>;  // row is index in QueryMolecule
 }  // namespace FMCS
 }  // namespace RDKit

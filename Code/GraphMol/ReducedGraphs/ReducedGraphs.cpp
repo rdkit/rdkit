@@ -31,7 +31,7 @@ namespace {
 // FIX: this is duplicated here and in the MorganFingerprints code
 class ss_matcher {
  public:
-  ss_matcher() {};
+  ss_matcher(){};
   ss_matcher(const std::string &pattern) {
     RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
     TEST_ASSERT(p);
@@ -72,9 +72,9 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]",  // Positive
 };
 std::vector<std::string> defaultFeatureSmarts(smartsPatterns,
                                               smartsPatterns + nFeatures);
-typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking>
-    pattern_flyweight;
+using pattern_flyweight =
+    boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
+                     boost::flyweights::no_tracking>;
 
 void getErGAtomTypes(const ROMol &mol,
                      std::vector<boost::dynamic_bitset<>> &types,

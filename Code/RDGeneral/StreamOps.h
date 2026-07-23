@@ -383,8 +383,8 @@ class CustomPropHandler {
   virtual CustomPropHandler *clone() const = 0;
 };
 
-typedef std::vector<std::shared_ptr<const CustomPropHandler>>
-    CustomPropHandlerVec;
+using CustomPropHandlerVec =
+    std::vector<std::shared_ptr<const CustomPropHandler>>;
 
 inline bool isSerializable(const Dict::Pair &pair,
                            const CustomPropHandlerVec &handlers = {}) {

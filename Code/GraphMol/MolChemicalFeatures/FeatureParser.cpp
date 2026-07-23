@@ -18,7 +18,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 
 #include <fstream>
 #include <sstream>
@@ -26,7 +26,7 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 namespace RDKit {
 namespace Local {
-typedef boost::tokenizer<boost::escaped_list_separator<char>> CommaTokenizer;
+using CommaTokenizer = boost::tokenizer<boost::escaped_list_separator<char>>;
 
 void getNextLine(std::istream &inStream, std::string &line,
                  unsigned int &lineNo) {

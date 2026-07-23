@@ -30,7 +30,7 @@
 #include <GraphMol/MolPickler.h>
 
 using namespace RDKit;
-typedef std::tuple<std::string, std::string, size_t> matchCase;
+using matchCase = std::tuple<std::string, std::string, size_t>;
 
 class _IsSubstructOf : public Catch::Matchers::MatcherBase<const ROMol &> {
   ROMol const *m_mol;

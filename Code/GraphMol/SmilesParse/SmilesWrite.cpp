@@ -698,9 +698,8 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
   if (params.canonical) {
     // Sort the vfragsmi, but also sort the atom and bond order vectors into
     // the same order
-    typedef std::tuple<std::string, std::vector<unsigned int>,
-                       std::vector<unsigned int>>
-        tplType;
+    using tplType = std::tuple<std::string, std::vector<unsigned int>,
+                               std::vector<unsigned int>>;
     std::vector<tplType> tmp(vfragsmi.size());
     for (unsigned int ti = 0; ti < vfragsmi.size(); ++ti) {
       tmp[ti] = std::make_tuple(vfragsmi[ti], allAtomOrdering[ti],

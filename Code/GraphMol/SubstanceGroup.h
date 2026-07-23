@@ -18,7 +18,6 @@
 #define _RD_SGROUP_H
 
 #include <utility>
-#include <unordered_map>
 
 #include <Geometry/point.h>
 #include <RDGeneral/types.h>
@@ -59,7 +58,7 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
     CBOND,  // Internal/Contained bond
   };
 
-  typedef std::array<RDGeom::Point3D, 3> Bracket;
+  using Bracket = std::array<RDGeom::Point3D, 3>;
 
   //! Data structure for SAP lines (see V3000 spec)
   //! lvIdx may not be set; this signaled with value -1

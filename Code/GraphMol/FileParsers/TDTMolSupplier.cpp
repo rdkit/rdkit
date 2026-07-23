@@ -21,13 +21,12 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
-#include <fstream>
 #include <sstream>
 #include <string>
 
 namespace RDKit {
 namespace TDTParseUtils {
-typedef boost::tokenizer<boost::escaped_list_separator<char>> CommaTokenizer;
+using CommaTokenizer = boost::tokenizer<boost::escaped_list_separator<char>>;
 
 /*
  * if inStream is valid, we'll allow the numbers to be broken across multiple

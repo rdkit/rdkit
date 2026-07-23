@@ -192,22 +192,22 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]",  // Basic
 
 const RDKit::ROMol *ss_matcher::getMatcher() const { return m_matcher.get(); }
 
-ss_matcher::ss_matcher() {};
+ss_matcher::ss_matcher(){};
 ss_matcher::ss_matcher(const std::string &pattern) {
   RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
   TEST_ASSERT(p);
   m_matcher.reset(p);
 };
 
-typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking>
-    pattern_flyweight;
+using pattern_flyweight =
+    boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
+                     boost::flyweights::no_tracking>;
 
 std::vector<std::string> defaultFeatureSmarts(smartsPatterns,
                                               smartsPatterns + 6);
-typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking>
-    pattern_flyweight;
+using pattern_flyweight =
+    boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
+                     boost::flyweights::no_tracking>;
 void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
                           const std::vector<const ROMol *> *patterns) {
   unsigned int nAtoms = mol.getNumAtoms();

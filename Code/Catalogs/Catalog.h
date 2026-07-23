@@ -39,8 +39,8 @@ const int endianId = 0xDEADBEEF;
 template <class entryType, class paramType>
 class Catalog {
  public:
-  typedef entryType entryType_t;
-  typedef paramType paramType_t;
+  using entryType_t = entryType;
+  using paramType_t = paramType;
 
   //------------------------------------
   Catalog() : dp_cParams(nullptr) {}
@@ -139,24 +139,18 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   //! used by the BGL to set up the node properties in our graph
   struct vertex_entry_t {
     enum { num = 1003 };
-    typedef boost::vertex_property_tag kind;
+    using kind = boost::vertex_property_tag;
   };
-  typedef boost::property<vertex_entry_t, entryType *> EntryProperty;
+  using EntryProperty = boost::property<vertex_entry_t, entryType *>;
 
   //! the type of the graph itself:
-  typedef boost::adjacency_list<
-      boost::vecS,
-      boost::vecS,  // FIX: should be using setS for edges so that parallel
-                    // edges are never added (page 225 BGL book)
-      // but that seems result in compile errors
-      boost::bidirectionalS, EntryProperty>
-      CatalogGraph;
+  using CatalogGraph = boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, EntryProperty>;
 
-  typedef boost::graph_traits<CatalogGraph> CAT_GRAPH_TRAITS;
-  typedef typename CAT_GRAPH_TRAITS::vertex_iterator VER_ITER;
-  typedef std::pair<VER_ITER, VER_ITER> ENT_ITER_PAIR;
-  typedef typename CAT_GRAPH_TRAITS::adjacency_iterator DOWN_ENT_ITER;
-  typedef std::pair<DOWN_ENT_ITER, DOWN_ENT_ITER> DOWN_ENT_ITER_PAIR;
+  using CAT_GRAPH_TRAITS = boost::graph_traits<CatalogGraph>;
+  using VER_ITER = typename CAT_GRAPH_TRAITS::vertex_iterator;
+  using ENT_ITER_PAIR = std::pair<VER_ITER, VER_ITER>;
+  using DOWN_ENT_ITER = typename CAT_GRAPH_TRAITS::adjacency_iterator;
+  using DOWN_ENT_ITER_PAIR = std::pair<DOWN_ENT_ITER, DOWN_ENT_ITER>;
 
   //------------------------------------
   HierarchCatalog() {};

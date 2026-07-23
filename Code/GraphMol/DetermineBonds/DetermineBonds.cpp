@@ -28,8 +28,8 @@
 #include <GraphMol/FileParsers/ProximityBonds.h>
 #include <RDGeneral/ControlCHandler.h>
 
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>
-    Graph;
+using Graph =
+    boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>;
 using boost::multiprecision::uint1024_t;
 
 namespace {

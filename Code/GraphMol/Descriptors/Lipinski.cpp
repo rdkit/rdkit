@@ -53,16 +53,16 @@ class ss_matcher {
   ~ss_matcher() { delete m_matcher; };
 
  private:
-  ss_matcher() : m_pattern("") {};
+  ss_matcher() : m_pattern(""){};
   std::string m_pattern;
   bool m_needCopies{false};
   const RDKit::ROMol *m_matcher{nullptr};
 };
 }  // namespace
 
-typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking>
-    pattern_flyweight;
+using pattern_flyweight =
+    boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
+                     boost::flyweights::no_tracking>;
 #define SMARTSCOUNTFUNC(nm, pattern, vers)         \
   const std::string nm##Version = vers;            \
   unsigned int calc##nm(const RDKit::ROMol &mol) { \

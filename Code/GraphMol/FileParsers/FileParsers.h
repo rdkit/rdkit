@@ -16,8 +16,6 @@
 #include <GraphMol/FileParsers/FileWriters.h>
 #include "CDXMLParser.h"
 #include <string>
-#include <string_view>
-#include <vector>
 #include <exception>
 
 #include <boost/shared_ptr.hpp>
@@ -260,9 +258,9 @@ namespace FileParsers {
 //  MOL2 handling
 //-----
 
-typedef enum {
+enum Mol2Type {
   CORINA = 0  //!< supports output from Corina and some dbtranslate output
-} Mol2Type;
+};
 
 struct Mol2ParserParams {
   bool sanitize = true; /**< sanitize the molecule after building it */

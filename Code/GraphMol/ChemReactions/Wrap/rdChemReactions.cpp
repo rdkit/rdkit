@@ -475,7 +475,7 @@ python::object PreprocessReaction(ChemicalReaction &reaction,
                             python::tuple(reactantLabels));
 }
 
-typedef boost::uint64_t sanitize_ops;
+using sanitize_ops = boost::uint64_t;
 
 RxnOps::SanitizeRxnFlags sanitizeReaction(
     ChemicalReaction &rxn, sanitize_ops sanitizeOps,

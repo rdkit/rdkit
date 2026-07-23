@@ -10,6 +10,8 @@
 #include <RDGeneral/export.h>
 #ifndef RD_CANON_H
 #define RD_CANON_H
+#include <vector>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
 class ROMol;
@@ -22,26 +24,26 @@ constexpr int MAX_CYCLES = 1024;  //!< used in the canonical traversal code
 constexpr int MAX_BONDTYPE = 32;  //!< used in the canonical traversal code
 
 //! used in traversals of the molecule
-typedef enum {
+enum AtomColors {
   WHITE_NODE = 0,  //!< not visited
   GREY_NODE,       //!< visited, but not finished
   BLACK_NODE,      //!< visited and finished
-} AtomColors;
+};
 
 //! used to indicate types of entries in the molecular stack:
-typedef enum {
+enum MolStackTypes {
   MOL_STACK_ATOM = 0,      //!< an Atom
   MOL_STACK_BOND,          //!< a Bond
   MOL_STACK_RING,          //!< a ring closure
   MOL_STACK_BRANCH_OPEN,   //!< beginning of a branch
   MOL_STACK_BRANCH_CLOSE,  //!< end of a branch
-} MolStackTypes;
+};
 
 //! used to store components in the molecular stack
-typedef union {
+union MolStackUnion {
   Atom *atom;
   Bond *bond;
-} MolStackUnion;
+};
 
 //! these are the actual elements in the molecular stack
 class RDKIT_GRAPHMOL_EXPORT MolStackElem {
@@ -87,10 +89,10 @@ class RDKIT_GRAPHMOL_EXPORT MolStackElem {
   int number =
       -1;  //!< stores our number (relevant for bonds and ring closures)
 };
-typedef std::vector<MolStackElem> MolStack;
+using MolStack = std::vector<MolStackElem>;
 
 //! used to represent possible branches from an atom
-typedef std::tuple<int, int, Bond *> PossibleType;
+using PossibleType = std::tuple<int, int, Bond *>;
 
 //! constructs the canonical traversal order for a molecular fragment
 /*!

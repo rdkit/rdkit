@@ -29,7 +29,7 @@ namespace detail {
 // is added to each score based on match indices.
 class ScoreMatchesByDegreeOfCoreSubstitution {
  public:
-  typedef std::pair<unsigned int, double> IdxScorePair;
+  using IdxScorePair = std::pair<unsigned int, double>;
   ScoreMatchesByDegreeOfCoreSubstitution(
       const RDKit::ROMol &mol, const RDKit::ROMol &query,
       const std::vector<RDKit::MatchVectType> &matches)

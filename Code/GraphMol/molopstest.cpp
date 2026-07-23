@@ -39,7 +39,7 @@
 using namespace RDKit;
 using namespace std;
 RWMol _t;
-typedef class ROMol Mol;
+using Mol = ROMol;
 
 TEST_CASE("test1") {
   string smi;

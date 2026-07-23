@@ -1648,7 +1648,7 @@ void randomTransform(ROMol &mol, const int cid, const int seed) {
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 namespace detail {
-typedef struct {
+struct O3AHelperArgs_ {
   O3A::AtomTypeScheme atomTypes;
   int refCid;
   bool reflect;
@@ -1656,7 +1656,7 @@ typedef struct {
   unsigned int options;
   MatchVectType const *constraintMap;
   RDNumeric::DoubleVector const *constraintWeights;
-} O3AHelperArgs_;
+};
 void O3AHelper_(ROMol *prbMol, const ROMol *refMol, void *prbProp,
                 void *refProp, std::vector<boost::shared_ptr<O3A>> *res,
                 unsigned int threadIdx, int numThreads,

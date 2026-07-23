@@ -27,7 +27,7 @@ namespace RDKit {
  */
 class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
  public:
-  typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
+  using QUERYATOM_QUERY = Queries::Query<int, Atom const *, true>;
 
   QueryAtom() : Atom() {}
   explicit QueryAtom(int num) : Atom(num), dp_query(makeAtomNumQuery(num)) {}

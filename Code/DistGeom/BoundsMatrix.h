@@ -13,7 +13,6 @@
 
 #include <RDGeneral/Invariant.h>
 #include <boost/smart_ptr.hpp>
-#include <iomanip>
 #include <Numerics/SquareMatrix.h>
 
 namespace DistGeom {
@@ -26,7 +25,7 @@ namespace DistGeom {
 class RDKIT_DISTGEOMETRY_EXPORT BoundsMatrix
     : public RDNumeric::SquareMatrix<double> {
  public:
-  typedef boost::shared_array<double> DATA_SPTR;
+  using DATA_SPTR = boost::shared_array<double>;
 
   explicit BoundsMatrix(unsigned int N)
       : RDNumeric::SquareMatrix<double>(N, 0.0) {}
@@ -104,7 +103,7 @@ class RDKIT_DISTGEOMETRY_EXPORT BoundsMatrix
   }
 };
 
-typedef boost::shared_ptr<BoundsMatrix> BoundsMatPtr;
+using BoundsMatPtr = boost::shared_ptr<BoundsMatrix>;
 }  // namespace DistGeom
 
 #endif

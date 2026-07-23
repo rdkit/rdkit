@@ -19,9 +19,9 @@
 class ExplicitBitVect;
 namespace RDKit {
 class ROMol;
-typedef RDCatalog::HierarchCatalog<FragCatalogEntry, FragCatParams, int>
-    FragCatalog;
-typedef std::vector<std::pair<int, int>> MatchVectType;
+using FragCatalog =
+    RDCatalog::HierarchCatalog<FragCatalogEntry, FragCatParams, int>;
+using MatchVectType = std::vector<std::pair<int, int>>;
 
 class RDKIT_FRAGCATALOG_EXPORT FragFPGenerator {
  public:

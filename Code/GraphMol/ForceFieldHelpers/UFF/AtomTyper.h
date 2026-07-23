@@ -25,7 +25,7 @@ class ROMol;
 class Atom;
 
 namespace UFF {
-typedef std::vector<const ForceFields::UFF::AtomicParams *> AtomicParamVect;
+using AtomicParamVect = std::vector<const ForceFields::UFF::AtomicParams *>;
 
 RDKIT_FORCEFIELDHELPERS_EXPORT std::pair<AtomicParamVect, bool> getAtomTypes(
     const ROMol &mol, const std::string &paramData = "");

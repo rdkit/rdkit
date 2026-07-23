@@ -25,7 +25,7 @@ class EnumException : public std::exception {
 void orientSidechain(RWMol *mol, RWMol *sidechain, int molAttachIdx,
                      int sidechainAttachIdx);
 
-typedef std::vector<RWMOL_SPTR_VECT> VECT_RWMOL_SPTR_VECT;
+using VECT_RWMOL_SPTR_VECT = std::vector<RWMOL_SPTR_VECT>;
 void markAttachmentPoints(RWMOL_SPTR *mol, char frontMarker = 'X');
 void markAttachmentPoints(RWMol *mol, char frontMarker = 'X');
 void prepareSidechains(RWMOL_SPTR_VECT *sidechains, char frontMarker = 'Y');

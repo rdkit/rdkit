@@ -49,10 +49,10 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
 
  public:
   // FIX: grn...
-  typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
+  using QUERYBOND_QUERY = Queries::Query<int, const Bond *, true>;
 
   //! the type of Bond
-  typedef enum {
+  enum BondType {
     UNSPECIFIED = 0,
     SINGLE,
     DOUBLE,
@@ -76,10 +76,10 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     OTHER,
     ZERO  //!< Zero-order bond (from
     // http://pubs.acs.org/doi/abs/10.1021/ci200488k)
-  } BondType;
+  };
 
   //! the bond's direction (for chirality)
-  typedef enum {
+  enum BondDir {
     NONE = 0,    //!< no special style
     BEGINWEDGE,  //!< wedged: narrow at begin
     BEGINDASH,   //!< dashed: narrow at begin
@@ -88,10 +88,10 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     ENDUPRIGHT,    //!<  ditto
     EITHERDOUBLE,  //!< a "crossed" double bond
     UNKNOWN,       //!< intentionally unspecified stereochemistry
-  } BondDir;
+  };
 
   //! the nature of the bond's stereochem (for cis/trans)
-  typedef enum {     // stereochemistry of double bonds
+  enum BondStereo {     // stereochemistry of double bonds
     STEREONONE = 0,  // no special style
     STEREOANY,       // intentionally unspecified
     // -- Put any true specifications about this point so
@@ -102,7 +102,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     STEREOTRANS,     // trans double bond
     STEREOATROPCW,   //  atropisomer clockwise rotation
     STEREOATROPCCW,  //  atropisomer counter clockwise rotation
-  } BondStereo;
+  };
 
   Bond();
   //! construct with a particular BondType

@@ -11,7 +11,6 @@
 #ifndef RD_RINGINFO_H
 #define RD_RINGINFO_H
 
-#include <map>
 #include <vector>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
@@ -24,21 +23,21 @@ namespace RDKit {
 /*!
 
  */
-typedef enum {
+enum FIND_RING_TYPE {
   FIND_RING_TYPE_FAST,
   FIND_RING_TYPE_SSSR,
   FIND_RING_TYPE_SYMM_SSSR,
   FIND_RING_TYPE_OTHER_OR_UNKNOWN
-} FIND_RING_TYPE;
+};
 
 class RDKIT_GRAPHMOL_EXPORT RingInfo {
   friend class MolPickler;
 
  public:
-  typedef std::vector<int> MemberType;
-  typedef std::vector<MemberType> DataType;
-  typedef std::vector<int> INT_VECT;
-  typedef std::vector<INT_VECT> VECT_INT_VECT;
+  using MemberType = std::vector<int>;
+  using DataType = std::vector<MemberType>;
+  using INT_VECT = std::vector<int>;
+  using VECT_INT_VECT = std::vector<INT_VECT>;
 
   RingInfo() {}
   RingInfo(const RingInfo &other) = default;

@@ -17,8 +17,8 @@
 namespace RDKit {
 
 namespace SGroupParsing {
-typedef std::map<int, SubstanceGroup> IDX_TO_SGROUP_MAP;
-typedef std::map<int, STR_VECT> IDX_TO_STR_VECT_MAP;
+using IDX_TO_SGROUP_MAP = std::map<int, SubstanceGroup>;
+using IDX_TO_STR_VECT_MAP = std::map<int, STR_VECT>;
 
 /* ------------------ V2000 Utils  ------------------ */
 

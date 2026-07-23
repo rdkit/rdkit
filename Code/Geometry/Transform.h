@@ -13,7 +13,11 @@
 
 namespace RDGeom {
 
-typedef enum { X_Axis, Y_Axis, Z_Axis } AxisType;
-}
+enum AxisType {
+  X_Axis,
+  Y_Axis,
+  Z_Axis
+};
+}  // namespace RDGeom
 
 #endif

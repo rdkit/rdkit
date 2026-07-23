@@ -53,11 +53,11 @@ template <class Container, bool NoProxy = false,
 class list_indexing_suite
     : public indexing_suite<Container, DerivedPolicies, NoProxy> {
  public:
-  typedef typename Container::value_type data_type;
-  typedef typename Container::value_type key_type;
-  typedef typename Container::size_type index_type;
-  typedef typename Container::size_type size_type;
-  typedef typename Container::iterator iterator_type;
+  using data_type = typename Container::value_type;
+  using key_type = typename Container::value_type;
+  using index_type = typename Container::size_type;
+  using size_type = typename Container::size_type;
+  using iterator_type = typename Container::iterator;
 
   static typename mpl::if_<is_class<data_type>, data_type&, data_type>::type
   get_item(Container& container, index_type i) {

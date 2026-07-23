@@ -1,4 +1,3 @@
-#include <map>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -15,8 +14,8 @@
                                  // 'const float'
 #endif
 
-typedef std::pair<std::string, int> STR_INT;
-typedef std::vector<STR_INT> PAIR_VECT;
+using STR_INT = std::pair<std::string, int>;
+using PAIR_VECT = std::vector<STR_INT>;
 
 class classC {
  public:

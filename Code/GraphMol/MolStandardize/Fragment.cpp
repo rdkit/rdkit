@@ -11,7 +11,7 @@
 #include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogUtils.h>
 #include <boost/tokenizer.hpp>
 #include <utility>
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>

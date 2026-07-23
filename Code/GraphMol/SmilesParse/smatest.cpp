@@ -9,7 +9,6 @@
 //
 #include <RDGeneral/test.h>
 
-#include <fstream>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
 #include "SmartsWrite.h"
@@ -20,7 +19,7 @@
 // #include <boost/log/functions.hpp>
 using namespace RDKit;
 using namespace std;
-typedef ROMol Mol;
+using Mol = ROMol;
 
 #define LOCAL_TEST_ALL 1
 #if LOCAL_TEST_ALL

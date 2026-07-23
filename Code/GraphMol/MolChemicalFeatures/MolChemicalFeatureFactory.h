@@ -16,9 +16,9 @@
 
 namespace RDKit {
 class MolChemicalFeature;
-typedef boost::shared_ptr<MolChemicalFeature> FeatSPtr;
-typedef std::list<FeatSPtr> FeatSPtrList;
-typedef FeatSPtrList::iterator FeatSPtrList_I;
+using FeatSPtr = boost::shared_ptr<MolChemicalFeature>;
+using FeatSPtrList = std::list<FeatSPtr>;
+using FeatSPtrList_I = FeatSPtrList::iterator;
 
 //! The class for finding chemical features in molecules
 class RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureFactory {

@@ -14,7 +14,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/MolStandardize.h>
 #include <GraphMol/MolStandardize/Tautomer.h>
-#include <sstream>
 
 namespace python = boost::python;
 using namespace RDKit;
@@ -109,7 +108,7 @@ class PyTautomerEnumeratorCallback
   python::object d_pyCallbackObject;
 };
 
-typedef boost::shared_ptr<MolStandardize::Tautomer> TAUT_SPTR;
+using TAUT_SPTR = boost::shared_ptr<MolStandardize::Tautomer>;
 
 ROMol *getTautomerHelper(const TAUT_SPTR &self) {
   return new ROMol(*self->tautomer);

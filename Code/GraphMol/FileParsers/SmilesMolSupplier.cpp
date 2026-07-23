@@ -14,9 +14,8 @@
 #include "MolSupplier.h"
 #include "FileParsers.h"
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 
-#include <fstream>
 #include <sstream>
 #include <string>
 #include <cstdlib>

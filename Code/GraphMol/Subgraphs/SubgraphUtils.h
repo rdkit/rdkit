@@ -23,7 +23,7 @@ class ROMol;
 
 namespace Subgraphs {
 //! used to return path discriminators (three unsigned ints):
-typedef std::tuple<std::uint32_t, std::uint32_t, std::uint32_t> DiscrimTuple;
+using DiscrimTuple = std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>;
 
 RDKIT_SUBGRAPHS_EXPORT DiscrimTuple calcPathDiscriminators(
     const ROMol &mol, const PATH_TYPE &path, bool useBO = true,
