@@ -15,11 +15,6 @@
 #include "BoundsMatrixBuilderDetails.h"
 #include "Embedder.h"
 
-namespace ForceFields {
-namespace CrystalFF {
-struct CrystalFFDetails;
-}
-}  // namespace ForceFields
 namespace RDKit {
 class ROMol;
 namespace DGeomHelpers {
@@ -38,12 +33,6 @@ RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatrix *mmat,
 RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatPtr mmat,
                                                 double defaultMin = 0.0,
                                                 double defaultMax = 1000.0);
-
-RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
-    const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-    const EmbedParameters &params,
-    ForceFields::CrystalFF::CrystalFFDetails &details, bool scaleVDW = false,
-    bool set15bounds = true, bool set14bounds = true, bool set13bounds = true);
 
 RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     const ROMol &mol, DistGeom::BoundsMatPtr mmat,
@@ -89,7 +78,7 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     std::vector<std::pair<int, int>> &bonds,
     std::vector<std::vector<int>> &angles, const EmbedParameters &params,
     bool scaleVDW = false, bool set15bounds = true, bool set14bounds = true,
-    bool set13bounds = true);
+    bool set13bounds = true, PATH14_VECT *paths14 = nullptr);
 /*! \overload for experimental torsion angle preferences
  */
 inline void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,

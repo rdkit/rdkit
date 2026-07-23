@@ -10,7 +10,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
 #include <DistGeom/BoundsMatrix.h>
-#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <ForceField/UFF/BondStretch.h>
 #include <Geometry/Utils.h>
@@ -1549,23 +1548,12 @@ void collectBondsAndAngles(const ROMol &mol,
 }
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                    const EmbedParameters &params,
-                    ForceFields::CrystalFF::CrystalFFDetails &details,
-                    bool scaleVDW, bool set15bounds, bool set14bounds,
-                    bool set13bounds) {
-  setTopolBounds(mol, mmat, params, scaleVDW, set15bounds, set14bounds,
-                 set13bounds, &details.path14Configs);
-  details.bonds.clear();
-  details.angles.clear();
-  collectBondsAndAngles(mol, details.bonds, details.angles);
-}
-void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     std::vector<std::pair<int, int>> &bonds,
                     std::vector<std::vector<int>> &angles,
                     const EmbedParameters &params, bool scaleVDW,
-                    bool set15bounds, bool set14bounds, bool set13bounds) {
+                    bool set15bounds, bool set14bounds, bool set13bounds, PATH14_VECT *paths14) {
   setTopolBounds(mol, mmat, params, scaleVDW, set15bounds, set14bounds,
-                 set13bounds);
+                 set13bounds, paths14);
   bonds.clear();
   angles.clear();
   collectBondsAndAngles(mol, bonds, angles);

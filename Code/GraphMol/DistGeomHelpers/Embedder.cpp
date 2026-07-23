@@ -1456,7 +1456,9 @@ bool setupInitialBoundsMatrix(
   bool set15bounds = true;
   bool scaleVDW = false;
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
-    setTopolBounds(*mol, mmat, params, etkdgDetails, scaleVDW, set15bounds);
+    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
+                   scaleVDW, set15bounds, true, true,
+                   &etkdgDetails.path14Configs);
   } else {
     setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
   }
