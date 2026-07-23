@@ -77,7 +77,7 @@ void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
 
     // We haven't seen this ring yet, so add it to the stack
     pos = neighMap.find(neigh);
-    PRECONDITION(pos != neighMap.end(), "bad argument");
+    CHECK_INVARIANT(pos != neighMap.end(), "neighboring ring not found");
     done[neigh] = 1;
     res.push_back(neigh);
     stack.emplace_back(neigh, 0);
