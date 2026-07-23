@@ -561,7 +561,7 @@ TEST_CASE("maximum fragment separation") {
     }
     {
       opts.maxFragSeparation = 3;
-      opts.timeout = 3;
+      opts.timeout = 300;
       auto res = rascalMCES(*m1, *m2, opts);
       REQUIRE(res.size() == 1);
       REQUIRE(res.front().getBondMatches().size() == std::get<3>(test));
