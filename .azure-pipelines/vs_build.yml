@@ -66,7 +66,7 @@ steps:
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
     cd build
-    ctest -C Release -j $(number_of_cores) -V --output-on-failure -R shard -T Test
+    ctest -C Release -j $(number_of_cores) --output-on-failure -R shard -T Test
   displayName: Run sharded tests
 - script: |
     call activate rdkit_build
