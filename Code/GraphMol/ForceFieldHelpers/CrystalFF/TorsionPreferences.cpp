@@ -300,7 +300,8 @@ void getExperimentalTorsions(
       if (!config.type.isForced) {
         continue;
       }
-      if (config.type.type != DGeomHelpers::TorsionType::TRANS) {
+      if (config.type.type != DGeomHelpers::TorsionType::TRANS &&
+          config.type.type != DGeomHelpers::TorsionType::CIS) {
         continue;
       }
       const auto i = config.aid1;
@@ -329,8 +330,11 @@ void getExperimentalTorsions(
       atoms[3] = l;
       details.expTorsionAtoms.push_back(atoms);
       std::vector<double> V(6, 0.0);
-      V[0] = 20.0 * details.forceConsts.etTermScaling;
+      V[0] = 75.0 * details.forceConsts.etTermScaling;
       std::vector<int> signs(6, 1);
+      if (config.type.type == DGeomHelpers::TorsionType::CIS) {
+        signs[0] = -1;
+      }
       details.expTorsionAngles.emplace_back(signs, V);
     }
   }  // if useBasicKnowledge

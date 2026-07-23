@@ -1352,8 +1352,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }  // if block - heavy atom check
-  }  // for loop over atoms
+    }    // if block - heavy atom check
+  }      // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -1456,8 +1456,7 @@ bool setupInitialBoundsMatrix(
   bool set15bounds = true;
   bool scaleVDW = false;
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
-    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
-                   scaleVDW, set15bounds);
+    setTopolBounds(*mol, mmat, params, etkdgDetails, scaleVDW, set15bounds);
   } else {
     setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
   }
@@ -1790,7 +1789,6 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         params.useLegacyImplementation
             ? ForceFields::CrystalFF::ETKDGForceConsts::SEQ::Cosine
             : ForceFields::CrystalFF::ETKDGForceConsts::AIO::Cosine;
-
 
     DistGeom::BoundsMatPtr mmat;
     if (params.boundsMat == nullptr || molFrags.size() > 1) {

@@ -76,7 +76,6 @@ enum DistType {
   DIST14
 };
 
-using PATH14_VECT = std::vector<Path14Configuration>;
 using PATH14_VECT_I = PATH14_VECT::iterator;
 using PATH14_VECT_CI = PATH14_VECT::const_iterator;
 
@@ -1095,7 +1094,8 @@ bool _checkMacrocycleTwoInSameRingAmideEster14(
 
 TorsionValue _getMacrocycleTwoInSameRing14Type(
     const ROMol &mol, const Bond *bnd1, const Bond *bnd2, const Bond *bnd3,
-    const Atom *atm1, const Atom *atm2, const Atom *atm3, const Atom *atm4) {
+    const Atom *atm1, const Atom *atm2, const Atom *atm3, const Atom *atm4,
+    const bool useMacrycocyle14Config) {
   // when we have fused rings, it can happen that this isn't actually a 1-4
   // contact,
   // (this was the cause of sf.net bug 2835784) check that now:
@@ -1103,15 +1103,17 @@ TorsionValue _getMacrocycleTwoInSameRing14Type(
       mol.getBondBetweenAtoms(atm4->getIdx(), atm2->getIdx())) {
     return {TorsionType::NONE};
   }
-  // TODO: Ask Katha, is this always or only when macrocycle14 config?
 
   Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
-  if ((_checkMacrocycleTwoInSameRingAmideEster14(bnd1, bnd3, atm1, atm2, atm3,
-                                                 atm4)) ||
-      (_checkMacrocycleTwoInSameRingAmideEster14(bnd3, bnd1, atm4, atm3, atm2,
-                                                 atm1))) {
-    return {TorsionType::CIS};
-  } else if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
+  if (useMacrycocyle14Config) {
+    if ((_checkMacrocycleTwoInSameRingAmideEster14(bnd1, bnd3, atm1, atm2, atm3,
+                                                   atm4)) ||
+        (_checkMacrocycleTwoInSameRingAmideEster14(bnd3, bnd1, atm4, atm3, atm2,
+                                                   atm1))) {
+      return {.type = TorsionType::CIS, .isForced = true};
+    }
+  }
+  if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
     return {TorsionType::CIS};
   } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
     return {TorsionType::TRANS};
@@ -1234,8 +1236,9 @@ void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
           info.useMacrocycle14Config);
       break;
     case Type14::MACROCYCLE_TWO_IN_SAME_RING:
-      torsionValue = _getMacrocycleTwoInSameRing14Type(mol, bnd1, bnd2, bnd3,
-                                                       atm1, atm2, atm3, atm4);
+      torsionValue = _getMacrocycleTwoInSameRing14Type(
+          mol, bnd1, bnd2, bnd3, atm1, atm2, atm3, atm4,
+          info.useMacrocycle14Config);
       break;
     case Type14::SHARE_RING_BOND:
       torsionValue = _getShareRingBond14Type(bnd2, atm1, atm2, atm3, atm4);
@@ -1447,10 +1450,9 @@ void initBoundsMat(DistGeom::BoundsMatPtr mmat, double defaultMin,
 };
 
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                    const EmbedParameters &params,
-                    ForceFields::CrystalFF::CrystalFFDetails &details,
-                    bool scaleVDW, bool set15bounds, bool set14bounds,
-                    bool set13bounds) {
+                    const EmbedParameters &params, bool scaleVDW,
+                    bool set15bounds, bool set14bounds, bool set13bounds,
+                    PATH14_VECT *paths14) {
   PRECONDITION(mmat.get(), "bad pointer");
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -1484,15 +1486,9 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     }
   }
   setLowerBoundVDW(mol, mmat, scaleVDW, distMatrix);
-  details.path14Configs = accumData.paths14;
-}
-
-void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                    const EmbedParameters &params, bool scaleVDW,
-                    bool set15bounds, bool set14bounds, bool set13bounds) {
-  ForceFields::CrystalFF::CrystalFFDetails details;
-  return setTopolBounds(mol, mmat, params, details, scaleVDW, set15bounds,
-                        set14bounds, set13bounds);
+  if (paths14) {
+    *paths14 = accumData.paths14;
+  }
 }
 
 void collectBondsAndAngles(const ROMol &mol,
@@ -1551,6 +1547,17 @@ void collectBondsAndAngles(const ROMol &mol,
   }
 }
 
+void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+                    const EmbedParameters &params,
+                    ForceFields::CrystalFF::CrystalFFDetails &details,
+                    bool scaleVDW, bool set15bounds, bool set14bounds,
+                    bool set13bounds) {
+  setTopolBounds(mol, mmat, params, scaleVDW, set15bounds, set14bounds,
+                 set13bounds, &details.path14Configs);
+  details.bonds.clear();
+  details.angles.clear();
+  collectBondsAndAngles(mol, details.bonds, details.angles);
+}
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     std::vector<std::pair<int, int>> &bonds,
                     std::vector<std::vector<int>> &angles,

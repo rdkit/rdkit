@@ -23,7 +23,6 @@ struct CrystalFFDetails;
 namespace RDKit {
 class ROMol;
 namespace DGeomHelpers {
-
 enum class TorsionType {
   CIS = 0,
   TRANS,
@@ -45,7 +44,7 @@ struct Path14Configuration {
   unsigned int aid1, aid2, aid3, aid4;
   TorsionValue type;
 };
-
+using PATH14_VECT = std::vector<Path14Configuration>;
 //! Set default upper and lower distance bounds in a distance matrix
 /*!
   \param mmat        pointer to the bounds matrix to be altered
@@ -60,16 +59,18 @@ RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatrix *mmat,
 RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatPtr mmat,
                                                 double defaultMin = 0.0,
                                                 double defaultMax = 1000.0);
+
 RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     const EmbedParameters &params,
     ForceFields::CrystalFF::CrystalFFDetails &details, bool scaleVDW = false,
     bool set15bounds = true, bool set14bounds = true, bool set13bounds = true);
 
-RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                           const EmbedParameters &params, bool scaleVDW = false,
-                           bool set15bounds = true, bool set14bounds = true,
-                           bool set13bounds = true); 
+RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
+    const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+    const EmbedParameters &params, bool scaleVDW = false,
+    bool set15bounds = true, bool set14bounds = true, bool set13bounds = true,
+    PATH14_VECT *paths14 = nullptr);
 
 //! Set upper and lower distance bounds between atoms in a molecule based on
 /// topology
