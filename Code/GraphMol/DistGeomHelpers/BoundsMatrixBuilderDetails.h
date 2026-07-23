@@ -63,7 +63,7 @@ inline Bounds merge(std::vector<Bounds> bounds) {
     if (_bound.lower <= current.upper) {
       // Case 1: _bounds intersects with currentIntersection => add to current
       // intersection
-      //  we now that bounds are sorted by lower bounds =>
+      //  we know that bounds are sorted by lower bounds =>
       // _bound.lower is always greater/equal currentIntersection.lower
       current.lower = _bound.lower;
       current.upper = std::min(current.upper, _bound.upper);
