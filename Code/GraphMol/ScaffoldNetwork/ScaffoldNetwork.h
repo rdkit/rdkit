@@ -90,8 +90,7 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT NetworkEdge {
  private:
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    RDUNUSED_PARAM(version);
+  void serialize(Archive &ar, [[maybe_unused]] const unsigned int version) {
     ar & beginIdx;
     ar & endIdx;
     ar & type;
@@ -117,8 +116,7 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork {
  private:
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    RDUNUSED_PARAM(version);
+  void serialize(Archive &ar, [[maybe_unused]] const unsigned int version) {
     ar & nodes;
     ar & counts;
     if (version > 0) {

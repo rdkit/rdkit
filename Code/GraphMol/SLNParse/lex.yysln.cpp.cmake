@@ -2586,9 +2586,8 @@ YY_BUFFER_STATE yysln__scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_
 #define YY_EXIT_FAILURE 2
 #endif
 
-static void yy_fatal_error (yyconst char* msg , yyscan_t yyscanner)
+static void yy_fatal_error (yyconst char* msg , [[maybe_unused]] yyscan_t yyscanner)
 {
-    RDUNUSED_PARAM(yyscanner);
   	(void) fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
 }
@@ -2919,13 +2918,12 @@ static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 }
 #endif
 
-void *yysln_alloc (yy_size_t  size , yyscan_t yyscanner)
+void *yysln_alloc (yy_size_t  size , [[maybe_unused]] yyscan_t yyscanner)
 {
-    RDUNUSED_PARAM(yyscanner);
 	return (void *) malloc( size );
 }
 
-void *yysln_realloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
+void *yysln_realloc  (void * ptr, yy_size_t  size , [[maybe_unused]] yyscan_t yyscanner)
 {
 	/* The cast to (char *) in the following accommodates both
 	 * implementations that use char* generic pointers, and those
@@ -2934,13 +2932,11 @@ void *yysln_realloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
 	 * any pointer type to void*, and deal with argument conversions
 	 * as though doing an assignment.
 	 */
-    RDUNUSED_PARAM(yyscanner);
 	return (void *) realloc( (char *) ptr, size );
 }
 
-void yysln_free (void * ptr , yyscan_t yyscanner)
+void yysln_free (void * ptr , [[maybe_unused]] yyscan_t yyscanner)
 {
-    RDUNUSED_PARAM(yyscanner);
 	free( (char *) ptr );	/* see yysln_realloc() for (char *) cast */
 }
 
