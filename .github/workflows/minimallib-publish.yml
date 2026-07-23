@@ -47,12 +47,7 @@ jobs:
 
       - name: Build WASM
         run: |
-          docker buildx build \
-            --build-arg VERSION=${{ steps.version.outputs.version }} \
-            --file Code/MinimalLib/docker/build-wasm.Dockerfile \
-            --target export-stage \
-            --output type=local,dest=Code/MinimalLib/dist \
-            .
+          NPM_VERSION=${{ steps.version.outputs.version }} GET_SRC=copy bash scripts/build_rdkitjs.sh
 
       - name: Setup Node
         uses: actions/setup-node@v4

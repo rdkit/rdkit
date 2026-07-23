@@ -32,7 +32,7 @@ jobs:
       - name: Build WASM
         run: |
           cd ./Code/MinimalLib
-          NPM_VERSION=${{ steps.version.outputs.version }} GET_SRC=copy_from_local bash scripts/build_rdkitjs.sh
+          NPM_VERSION=${{ steps.version.outputs.version }} GET_SRC=copy bash scripts/build_rdkitjs.sh
 
       - name: Test WASM artifacts
         run: node Code/MinimalLib/tests/tests.js
