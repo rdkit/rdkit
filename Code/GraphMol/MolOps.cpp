@@ -606,16 +606,18 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
     mol.updatePropertyCache(false);
   }
 
-  operationThatFailed = SANITIZE_SYMMRINGS;
-  if (sanitizeOps & operationThatFailed) {
-    VECT_INT_VECT arings;
-    MolOps::symmetrizeSSSR(mol, arings);
-  }
-
   // kekulizations
   operationThatFailed = SANITIZE_KEKULIZE;
   if (sanitizeOps & operationThatFailed) {
     kekulizeForSanitize(mol);
+  }
+
+  operationThatFailed = SANITIZE_SYMMRINGS;
+  if (sanitizeOps & operationThatFailed) {
+    VECT_INT_VECT arings;
+    bool recalcSSSR = false;
+    MolOps::symmetrizeSSSR(mol, arings, SymmetrizeSSSRAlgorithm::DEFAULT,
+                           recalcSSSR);
   }
 
   // look for radicals:

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -52,7 +52,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       RDKit::FIND_RING_TYPE ringType = FIND_RING_TYPE_OTHER_OR_UNKNOWN);
   RDKit::FIND_RING_TYPE getRingType() const { return df_find_type_type; };
   //! blows out all current data and de-initializes
-  void reset();
+  void reset(bool resetRingFamilies = true);
 
   bool isFindFastOrBetter() const {
     return df_init && (df_find_type_type == FIND_RING_TYPE_FAST ||
