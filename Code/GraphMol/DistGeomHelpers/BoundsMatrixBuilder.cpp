@@ -14,6 +14,7 @@
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <ForceField/UFF/BondStretch.h>
 #include <Geometry/Utils.h>
+#include "BoundsMatrixBuilderDetails.h"
 
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
@@ -85,6 +86,23 @@ struct Optional14Info {
   std::size_t preferTrans = false;
 };
 
+//     // if the intersection of all bounds is empty => take the union
+//     auto intersection = std::ranges::max(bounds, {}, &Bounds::lower);
+//     intersection.upper =
+//         std::ranges::min(bounds | std::views::transform(&Bounds::upper));
+
+//     if (intersection.valid()) {
+//       return intersection;
+//     }
+
+//     auto boundsUnion = std::ranges::min(bounds, {}, &Bounds::lower);
+//     boundsUnion.upper =
+//         std::ranges::max(bounds | std::views::transform(&Bounds::upper));
+
+//     return boundsUnion;
+//   }
+// };
+
 typedef enum {
   DIST12,
   DIST13,
@@ -152,13 +170,11 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   \param accumData    Used to store the data that have been calculated so far
                       about the molecule
   <b>Procedure</b>
-  All 1-3 distances within all simple rings are first dealt with, while keeping
-  track of
-  any atoms that are visited twice; these are the atoms that are part of
-  multiple simple rings.
-  Then all other 1-3 distance are set while treating 1-3 atoms that have a ring
-  atom in
-  between differently from those that have a non-ring atom in between.
+  All 1-3 distances within all simple rings are first dealt with, while
+  keeping track of any atoms that are visited twice; these are the atoms that
+  are part of multiple simple rings. Then all other 1-3 distance are set while
+  treating 1-3 atoms that have a ring atom in between differently from those
+  that have a non-ring atom in between.
  */
 void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                  ComputedData &accumData);
@@ -176,8 +192,8 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   \param accumData    Used to store the data that have been calculated so far
                       about the molecule
   <b>Procedure</b>
-  As in the case of 1-3 distances 1-4 distance that are part of simple rings are
-  first dealt with. The remaining 1-4 cases are dealt with while paying
+  As in the case of 1-3 distances 1-4 distance that are part of simple rings
+  are first dealt with. The remaining 1-4 cases are dealt with while paying
   attention
   to the special cases.
  */
@@ -195,7 +211,8 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 void set15Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                  ComputedData &accumData, double *distMatrix);
 
-//! Set lower distance bounds based on VDW radii for atoms that are not covered
+//! Set lower distance bounds based on VDW radii for atoms that are not
+//! covered
 // by
 //! other bounds (1-2, 1-3, 1-4, or 1-5)
 /*!
@@ -773,8 +790,9 @@ TorsionValue _getTwoInSameRing14Type(const ROMol &mol, const Bond *bnd2,
   Atom::HybridizationType ahyb2 = atm2->getHybridization();
   Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
 
-  if (preferTrans && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
-      (stype != Bond::STEREOZ && stype != Bond::STEREOCIS)) {
+  if ((preferTrans && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
+       (stype != Bond::STEREOZ && stype != Bond::STEREOCIS)) ||
+      stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
     // here we will assume 180 degrees: basically flat ring with an external
     // substituent
     return {TorsionType::TRANS};
@@ -1202,10 +1220,11 @@ TorsionValue _getMacrocycleAllInSameRing14Type(
   }
 }
 
-void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
-                       const Bond *bnd3, const Type14 type,
-                       ComputedData &accumData, DistGeom::BoundsMatPtr mmat,
-                       double *dmat, const Optional14Info info) {
+void _collect14Bounds(
+    const ROMol &mol, const Bond *bnd1, const Bond *bnd2, const Bond *bnd3,
+    const Type14 type, ComputedData &accumData, double *dmat,
+    const Optional14Info info,
+    std::unordered_map<std::size_t, std::vector<Bounds>> &collected14Bounds) {
   PRECONDITION(bnd1, "");
   PRECONDITION(bnd2, "");
   PRECONDITION(bnd3, "");
@@ -1226,7 +1245,7 @@ void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   // check that the bound was not set before and this actually is a 1-4 contact:
   if (accumData.visitedBound(pid, DistType::DIST13) ||
 
-      dmat[std::max(aid1, aid4) * mmat->numRows() + std::min(aid1, aid4)] <
+      dmat[std::max(aid1, aid4) * mol.getNumAtoms() + std::min(aid1, aid4)] <
           2.9) {
     return;
   }
@@ -1319,9 +1338,12 @@ void _set14BoundHelper(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   Path14Configuration path14 = {bid1, bid2, bid3, torsionValue.type};
 
   // we only overwrite bounds if they are not 1-2 nor 1-3 distances
-  _checkAndSetBounds(aid1, aid4, dl, du, mmat);
   accumData.paths14.push_back(path14);
   accumData.visited14Bounds.set(pid);
+
+  // collected14Bounds.try_emplace(pid, std::vector<Bounds>{});
+
+  collected14Bounds[pid].emplace_back(dl, du, aid1, aid4);
 }
 
 void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
@@ -1339,13 +1361,19 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
   const auto rinfo = mol.getRingInfo();  // FIX: make sure we have ring info
   CHECK_INVARIANT(rinfo, "");
-  const auto &bondRings = rinfo->bondRings();
+  auto bondRings = rinfo->bondRings();
+
+  // we first want to handle smaller rings
+  std::ranges::sort(bondRings, std::ranges::greater{}, &std::vector<int>::size);
 
   std::unordered_set<unsigned int> bidIsMacrocycle;
 
   std::uint64_t nb = mol.getNumBonds();
   boost::dynamic_bitset<> ringBondPairs(nb * nb);
   boost::dynamic_bitset<> donePaths(nb * nb * nb);
+
+  std::unordered_map<std::size_t, std::vector<Bounds>> collectedBounds;
+
   boost::dynamic_bitset<> cisRingBondPairs(nb * nb);
   // first we will deal with 1-4 atoms that belong to the same ring
   for (const auto &bring : bondRings) {
@@ -1365,16 +1393,16 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
       if (rSize > 5) {
         if (useMacrocycle14config && rSize >= minMacrocycleRingSize) {
-          _set14BoundHelper(mol, mol.getBondWithIdx(bid1),
-                            mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
-                            Type14::MACROCYCLE_ALL_IN_SAME_RING, accumData,
-                            mmat, distMatrix, {});
+          _collect14Bounds(mol, mol.getBondWithIdx(bid1),
+                           mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
+                           Type14::MACROCYCLE_ALL_IN_SAME_RING, accumData,
+                           distMatrix, {}, collectedBounds);
           bidIsMacrocycle.insert(bid2);
         } else {
-          _set14BoundHelper(mol, mol.getBondWithIdx(bid1),
-                            mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
-                            Type14::IN_RING, accumData, mmat, distMatrix,
-                            {.ringSize = rSize});
+          _collect14Bounds(mol, mol.getBondWithIdx(bid1),
+                           mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
+                           Type14::IN_RING, accumData, distMatrix,
+                           {.ringSize = rSize}, collectedBounds);
           cisRingBondPairs.set(pid, rSize <= 8);
         }
       } else {
@@ -1407,15 +1435,16 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                 // ring; we dealt with that before)
                 if (useMacrocycle14config &&
                     bidIsMacrocycle.find(bid2) != bidIsMacrocycle.end()) {
-                  _set14BoundHelper(mol, bnd1, bond, bnd3,
-                                    Type14::MACROCYCLE_TWO_IN_SAME_RING,
-                                    accumData, mmat, distMatrix, {});
+                  _collect14Bounds(mol, bnd1, bond, bnd3,
+                                   Type14::MACROCYCLE_TWO_IN_SAME_RING,
+                                   accumData, distMatrix, {}, collectedBounds);
                 } else {
-                  _set14BoundHelper(mol, bnd1, bond, bnd3,
-                                    Type14::TWO_IN_SAME_RING, accumData, mmat,
-                                    distMatrix,
-                                    {.preferTrans = cisRingBondPairs[pid1] ||
-                                                    cisRingBondPairs[pid2]});
+                  _collect14Bounds(mol, bnd1, bond, bnd3,
+                                   Type14::TWO_IN_SAME_RING, accumData,
+                                   distMatrix,
+                                   {.preferTrans = cisRingBondPairs[pid1] ||
+                                                   cisRingBondPairs[pid2]},
+                                   collectedBounds);
                 }
               } else if (((rinfo->numBondRings(bid1) > 0) &&
                           (rinfo->numBondRings(bid2) > 0)) ||
@@ -1429,27 +1458,33 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                 // bid2 are ring bonds that belong to ring r1 and
                 // r2, then bid3 is either an external bond or
                 // belongs to a third ring r3.
-                _set14BoundHelper(mol, bnd1, bond, bnd3,
-                                  Type14::TWO_IN_DIFF_RING, accumData, mmat,
-                                  distMatrix, {});
+                _collect14Bounds(mol, bnd1, bond, bnd3,
+                                 Type14::TWO_IN_DIFF_RING, accumData,
+                                 distMatrix, {}, collectedBounds);
               } else if (rinfo->numBondRings(bid2) > 0) {
                 // the middle bond is a ring bond and the other
                 // two do not belong to the same ring or are
                 // non-ring bonds
-                _set14BoundHelper(mol, bnd1, bond, bnd3,
-                                  Type14::SHARE_RING_BOND, accumData, mmat,
-                                  distMatrix, {});
+                _collect14Bounds(mol, bnd1, bond, bnd3, Type14::SHARE_RING_BOND,
+                                 accumData, distMatrix, {}, collectedBounds);
               } else {
                 // middle bond not a ring
-                _set14BoundHelper(mol, bnd1, bond, bnd3, Type14::IN_CHAIN,
-                                  accumData, mmat, distMatrix,
-                                  {.forceTransAmides = forceTransAmides});
+                _collect14Bounds(mol, bnd1, bond, bnd3, Type14::IN_CHAIN,
+                                 accumData, distMatrix,
+                                 {.forceTransAmides = forceTransAmides},
+                                 collectedBounds);
               }
             }
           }
         }
       }
     }
+  }
+
+  for (auto &[pid, bounds] : collectedBounds) {
+    auto mergedBounds = merge(bounds);
+    _checkAndSetBounds(mergedBounds.aid1, mergedBounds.aid4, mergedBounds.lower,
+                       mergedBounds.upper, mmat);
   }
 }
 

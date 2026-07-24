@@ -231,7 +231,7 @@ class TestCase(unittest.TestCase):
     ps = _getParams(useLegacy=True, maxIt=30, seed=100, useET=False, useK=False)
     cids = rdDistGeom.EmbedMultipleConfs(mol, 10, ps)
     energies = [
-      116.330, 106.246, 109.816, 104.890, 93.060, 140.803, 139.253, 95.820, 123.591, 108.655
+      112.402, 105.358, 107.208, 108.402, 91.798, 143.366, 142.029, 97.256, 121.667, 107.796
     ]
     nenergies = []
     for cid in cids:
@@ -244,8 +244,8 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC")
     ps = _getParams(useLegacy=False, maxIt=30, seed=100, useET=False, useK=False)
     cids = rdDistGeom.EmbedMultipleConfs(mol, 10, ps)
-    energies = [
-      139.739, 140.211, 112.619, 105.982, 103.66, 153.573, 95.437, 128.129, 133.901, 160.431
+    energies = [ 
+      141.659, 123.752, 112.075, 106.244, 104.799, 148.224, 99.548, 122.873, 121.211, 157.351
     ]
     nenergies = []
     for cid in cids:
@@ -279,7 +279,7 @@ class TestCase(unittest.TestCase):
     ]
 
     nconfs = []
-    expected = [3, 3, 7, 6, 3, 3]
+    expected = [3, 2, 6, 4, 3, 3] # note: this also depends on seed
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       ps = _getParams(useLegacy=False, maxIt=30, seed=100, pruneRMS=1.5)

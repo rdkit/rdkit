@@ -242,8 +242,7 @@ TEST_CASE("test2") {
     CHECK(bm->getUpperBound(2, 5) - dmat->getVal(2, 5) > -0.1);
     CHECK(bm->getLowerBound(2, 5) - dmat->getVal(2, 5) < 0.10);
 
-    CHECK((bm->getUpperBound(8, 4) - bm->getLowerBound(8, 4)) > 1.);
-    CHECK((bm->getUpperBound(8, 4) - bm->getLowerBound(8, 4)) < 1.2);
+    CHECK((bm->getUpperBound(8, 4) - bm->getLowerBound(8, 4)) <= 0.2);
     CHECK((bm->getUpperBound(8, 4) - dmat->getVal(8, 4) > -0.1));
     CHECK((bm->getLowerBound(8, 4) - dmat->getVal(8, 4) < 0.10));
 
