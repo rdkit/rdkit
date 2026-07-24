@@ -3415,3 +3415,55 @@ TEST_CASE("github #9144: PR #9082 breaks MolFragmentToSmarts()") {
     }
   }
 }
+
+TEST_CASE(
+    "github #9368: RuntimeError while extracting a fragment from a molecule that cuts after an E/Z double bond") {
+  SECTION("as reported") {
+    auto m = "[*:1]/C=C/C=C/c1ccc(OC)cc1"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    auto smi = MolFragmentToSmiles(*m, ps, {0, 1, 2});
+    CHECK(smi == "C=C[*:1]");
+    // make sure we keep stereo if we include enough atoms
+    smi = MolFragmentToSmiles(*m, ps, {0, 1, 2, 3});
+    CHECK(smi == "C/C=C/[*:1]");
+  }
+  SECTION("Simpler systems") {
+    auto m = "C/C=C/C"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    auto smi = MolFragmentToSmiles(*m, ps, {0, 1, 2});
+    CHECK(smi == "C=CC");
+    smi = MolFragmentToSmiles(*m, ps, {1, 2, 3});
+    CHECK(smi == "C=CC");
+  }
+  SECTION("edge cases") {
+    {
+      auto m = "C/C=C(F)/C"_smiles;
+      REQUIRE(m);
+      SmilesWriteParams ps;
+      auto smi = MolFragmentToSmiles(*m, ps, {0, 1, 2, 3});
+      CHECK(smi == "C/C=C\\F");
+      smi = MolFragmentToSmiles(*m, ps, {0, 1, 2, 4});
+      CHECK(smi == "C/C=C/C");
+    }
+    {
+      auto m = "C/C(F)=C/C"_smiles;
+      REQUIRE(m);
+      SmilesWriteParams ps;
+      auto smi = MolFragmentToSmiles(*m, ps, {0, 1, 3, 4});
+      CHECK(smi == "C\\C=C\\C");
+      smi = MolFragmentToSmiles(*m, ps, {2, 1, 3, 4});
+      CHECK(smi == "C/C=C\\F");
+    }
+    {
+      auto m = "C/C(F)=C/C"_smiles;
+      REQUIRE(m);
+      SmilesWriteParams ps;
+      auto smi = MolFragmentToSmiles(*m, ps, {0, 1, 3});
+      CHECK(smi == "C=CC");
+      smi = MolFragmentToSmiles(*m, ps, {2, 1, 3});
+      CHECK(smi == "C=CF");
+    }
+  }
+}
