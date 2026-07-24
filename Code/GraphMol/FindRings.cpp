@@ -1083,12 +1083,11 @@ void legacySymmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
 }
 }  // namespace
 int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
-                   SymmetrizeSSSRAlgorithm algorithm, bool includeDativeBonds,
-                   bool includeHydrogenBonds) {
+                   SymmetrizeSSSRAlgorithm algorithm, bool recalcSSSR,
+                   bool includeDativeBonds, bool includeHydrogenBonds) {
   auto ringInfo = mol.getRingInfo();
   if (ringInfo->isInitialized()) {
-    bool resetRingFamilies = false;
-    ringInfo->reset(resetRingFamilies);
+    ringInfo->reset(recalcSSSR);
   }
   ringInfo->initialize(FIND_RING_TYPE_SYMM_SSSR);
 

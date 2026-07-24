@@ -615,7 +615,9 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   operationThatFailed = SANITIZE_SYMMRINGS;
   if (sanitizeOps & operationThatFailed) {
     VECT_INT_VECT arings;
-    MolOps::symmetrizeSSSR(mol, arings);
+    bool recalcSSSR = false;
+    MolOps::symmetrizeSSSR(mol, arings, SymmetrizeSSSRAlgorithm::DEFAULT,
+                           recalcSSSR);
   }
 
   // look for radicals:

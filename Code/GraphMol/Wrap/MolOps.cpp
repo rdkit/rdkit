@@ -498,9 +498,10 @@ void cleanupAtropisomersMol(ROMol &mol) {
 
 VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds,
                           bool includeHydrogenBonds,
-                          MolOps::SymmetrizeSSSRAlgorithm algorithm) {
+                          MolOps::SymmetrizeSSSRAlgorithm algorithm,
+                          bool recalcSSSR) {
   VECT_INT_VECT rings;
-  MolOps::symmetrizeSSSR(mol, rings, algorithm, includeDativeBonds,
+  MolOps::symmetrizeSSSR(mol, rings, algorithm, recalcSSSR, includeDativeBonds,
                          includeHydrogenBonds);
   return rings;
 }
@@ -1296,6 +1297,7 @@ struct molops_wrapper {
     - includeDativeBonds: whether or not dative bonds should be included in the ring finding.\n\
     - includeHydrogenBonds: whether or not hydrogen bonds should be included in the ring finding.\n\
     - algorithm: the algorithm to use for symmetrizing the SSSR.\n\
+    - recalcSSSR: whether or not to recalculate the SSSR before symmetrizing it.\n\
 \n\
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
 \n";
@@ -1303,7 +1305,8 @@ struct molops_wrapper {
         "GetSymmSSSR", getSymmSSSR,
         (python::arg("mol"), python::arg("includeDativeBonds") = false,
          python::arg("includeHydrogenBonds") = false,
-         python::arg("algorithm") = MolOps::SymmetrizeSSSRAlgorithm::DEFAULT),
+         python::arg("algorithm") = MolOps::SymmetrizeSSSRAlgorithm::DEFAULT,
+         python::arg("recalcSSSR") = true),
         docString.c_str());
 
     // ------------------------------------------------------------------------
