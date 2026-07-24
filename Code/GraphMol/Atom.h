@@ -17,6 +17,7 @@
 #define _RD_ATOM_H
 
 #include <limits>
+#include <memory>
 
 // ours
 #include <RDGeneral/Invariant.h>
@@ -24,6 +25,7 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDProps.h>
 #include <GraphMol/details.h>
+#include <GraphMol/MacroAtomInfo.h>
 
 namespace RDKit {
 class Atom;
@@ -36,7 +38,6 @@ namespace RDKit {
 class ROMol;
 class RWMol;
 class AtomMonomerInfo;
-
 //! The class for representing atoms
 /*!
 
@@ -370,6 +371,13 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! takes ownership of the pointer
   void setMonomerInfo(AtomMonomerInfo *info);
 
+  MacroAtomInfo *getMacroAtomInfo() { return dp_macroAtomInfo.get(); }
+  const MacroAtomInfo *getMacroAtomInfo() const {
+    return dp_macroAtomInfo.get();
+  }
+  //! takes ownership of the pointer
+  void setMacroAtomInfo(MacroAtomInfo *info);
+
   //! Set the atom map Number of the atom
   void setAtomMapNum(int mapno, bool strict = true) {
     PRECONDITION(
@@ -422,6 +430,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
 
   ROMol *dp_mol;
   AtomMonomerInfo *dp_monomerInfo;
+  std::unique_ptr<MacroAtomInfo> dp_macroAtomInfo;
   void initAtom();
   void initFromOther(const Atom &other);
 };
