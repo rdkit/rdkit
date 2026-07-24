@@ -4,6 +4,7 @@ add_executable(bench EXCLUDE_FROM_ALL bench_common.cpp
   meta.cpp
   mol.cpp
   molops.cpp
+  reaction_enumerate.cpp
   pickle.cpp
   smiles.cpp
   stereo.cpp
@@ -13,6 +14,7 @@ target_link_libraries(bench rdkitCatch
   CIPLabeler
   Descriptors
   Fingerprints
+  ChemReactions
   SmilesParse
 )
 
@@ -23,10 +25,11 @@ endif(RDK_BUILD_INCHI_SUPPORT)
 
 if(RDK_BUILD_CPP_TESTS)
   # add a fast version of the benchmarks to the default unit tests
-  # to protect the benchmarks from bit-rot
+  # to protect the benchmarks from bit-rot. [slow] benchmarks are excluded
+  # here and meant to be run on demand (e.g. `bench [slow]`).
   add_test(
     NAME quickbench
-    COMMAND bench --benchmark-samples 1 --benchmark-warmup-time 0
+    COMMAND bench --benchmark-samples 1 --benchmark-warmup-time 0 ~[slow]
   )
   
   # ctest does not automatically build test executables
