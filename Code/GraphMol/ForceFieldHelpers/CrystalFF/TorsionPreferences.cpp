@@ -206,96 +206,6 @@ void getExperimentalTorsions(
   // apply basic knowledge such as flat aromatic rings, other sp2-centers,
   // straight triple bonds, etc.
   if (useBasicKnowledge) {
-    boost::dynamic_bitset<> doneAtoms(na);
-
-    // inversion terms (improper torsions / out-of-plane bends / inversion)
-    // loop over atoms
-    for (aid2 = 0; aid2 < na; ++aid2) {
-      if (!(doneAtoms[aid2])) {
-        std::vector<int> atoms(4, -1);
-        atoms[1] = aid2;
-        const Atom *atom2 = mol.getAtomWithIdx(atoms[1]);
-        int at2AtomicNum = atom2->getAtomicNum();
-
-        // if atom is a N,O or C, SP2-hybridized, and has three neighbors
-        if (((at2AtomicNum == 6) || (at2AtomicNum == 7) ||
-             (at2AtomicNum == 8)) &&
-            (atom2->getHybridization() == Atom::SP2) &&
-            mol.getAtomDegree(atom2) == 3) {
-          unsigned int i = 0;
-          unsigned int isBoundToSP2O = 0;  // false
-          for (const auto atomX : mol.atomNeighbors(atom2)) {
-            atoms[i] = atomX->getIdx();
-            // if the central atom is sp2 carbon and is bound to sp2 oxygen,
-            // set a flag
-            if (!isBoundToSP2O) {
-              isBoundToSP2O =
-                  ((at2AtomicNum == 6) && (atomX->getAtomicNum() == 8) &&
-                   (atomX->getHybridization() == Atom::SP2));
-            }
-            if (!i) {
-              ++i;
-            }
-            ++i;
-          }
-          atoms.push_back(at2AtomicNum);
-          atoms.push_back(isBoundToSP2O);
-          details.improperAtoms.push_back(atoms);
-          /*if (verbose) {
-            std::cout << "out-of-plane bend: " << atoms[0] << " " << atoms[1]
-          << " "
-                << atoms[2] << " " << atoms[3] << std::endl;
-          }*/
-        }
-      }  // if atom is a N,O or C and SP2-hybridized
-    }
-
-    // torsions for flat rings
-    const RingInfo *rinfo = mol.getRingInfo();
-    CHECK_INVARIANT(rinfo, "no ring info");
-    CHECK_INVARIANT(rinfo->isInitialized(), "ring info not initialized");
-    for (const auto &atomRing : rinfo->atomRings()) {
-      std::size_t rSize = atomRing.size();
-      // we don't need to deal with 3 membered rings
-      // and we do not treat rings greater than 6
-      if (rSize < 4 || rSize > 6) {
-        continue;
-      }
-      // loop over ring atoms
-      for (std::size_t i = 0; i < rSize; ++i) {
-        // proper torsions
-        aid1 = atomRing[i];
-        aid2 = atomRing[(i + 1) % rSize];
-        aid3 = atomRing[(i + 2) % rSize];
-        aid4 = atomRing[(i + 3) % rSize];
-        bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
-        // if all 4 atoms are SP2, add torsion
-        if (!(doneBonds[bid2]) &&
-            (mol.getAtomWithIdx(aid1)->getHybridization() == Atom::SP2) &&
-            (mol.getAtomWithIdx(aid2)->getHybridization() == Atom::SP2) &&
-            (mol.getAtomWithIdx(aid3)->getHybridization() == Atom::SP2) &&
-            (mol.getAtomWithIdx(aid4)->getHybridization() == Atom::SP2)) {
-          doneBonds[bid2] = 1;
-          std::vector<int> atoms(4);
-          atoms[0] = aid1;
-          atoms[1] = aid2;
-          atoms[2] = aid3;
-          atoms[3] = aid4;
-          details.expTorsionAtoms.push_back(atoms);
-
-          std::vector<int> signs(6, 1);
-          signs[1] = -1;  // MMFF sign for m = 2
-          std::vector<double> fconsts(6, 0.0);
-          fconsts[1] = details.forceConsts.kTermTorsion;
-          details.expTorsionAngles.emplace_back(signs, fconsts);
-          /*if (verbose) {
-            std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 <<
-          " " << aid4 << std::endl;
-          }*/
-        }
-
-      }  // loop over atoms in ring
-    }    // loop over rings
     // torsions for forced trans amides / esters
     auto is_forced_cis_or_trans = [](const auto &config) {
       if (!config.type.isForced) {
@@ -405,6 +315,98 @@ void getExperimentalTorsions(
       }  // end loop over matches
     }    // end loop over patterns
   }      // end if experimentalTorsions
+  if (useBasicKnowledge) {
+    boost::dynamic_bitset<> doneAtoms(na);
+
+    // inversion terms (improper torsions / out-of-plane bends / inversion)
+    // loop over atoms
+    for (aid2 = 0; aid2 < na; ++aid2) {
+      if (!(doneAtoms[aid2])) {
+        std::vector<int> atoms(4, -1);
+        atoms[1] = aid2;
+        const Atom *atom2 = mol.getAtomWithIdx(atoms[1]);
+        int at2AtomicNum = atom2->getAtomicNum();
+
+        // if atom is a N,O or C, SP2-hybridized, and has three neighbors
+        if (((at2AtomicNum == 6) || (at2AtomicNum == 7) ||
+             (at2AtomicNum == 8)) &&
+            (atom2->getHybridization() == Atom::SP2) &&
+            mol.getAtomDegree(atom2) == 3) {
+          unsigned int i = 0;
+          unsigned int isBoundToSP2O = 0;  // false
+          for (const auto atomX : mol.atomNeighbors(atom2)) {
+            atoms[i] = atomX->getIdx();
+            // if the central atom is sp2 carbon and is bound to sp2 oxygen,
+            // set a flag
+            if (!isBoundToSP2O) {
+              isBoundToSP2O =
+                  ((at2AtomicNum == 6) && (atomX->getAtomicNum() == 8) &&
+                   (atomX->getHybridization() == Atom::SP2));
+            }
+            if (!i) {
+              ++i;
+            }
+            ++i;
+          }
+          atoms.push_back(at2AtomicNum);
+          atoms.push_back(isBoundToSP2O);
+          details.improperAtoms.push_back(atoms);
+          /*if (verbose) {
+            std::cout << "out-of-plane bend: " << atoms[0] << " " << atoms[1]
+          << " "
+                << atoms[2] << " " << atoms[3] << std::endl;
+          }*/
+        }
+      }  // if atom is a N,O or C and SP2-hybridized
+    }
+
+    // torsions for flat rings
+    const RingInfo *rinfo = mol.getRingInfo();
+    CHECK_INVARIANT(rinfo, "no ring info");
+    CHECK_INVARIANT(rinfo->isInitialized(), "ring info not initialized");
+    for (const auto &atomRing : rinfo->atomRings()) {
+      std::size_t rSize = atomRing.size();
+      // we don't need to deal with 3 membered rings
+      // and we do not treat rings greater than 6
+      if (rSize < 4 || rSize > 6) {
+        continue;
+      }
+      // loop over ring atoms
+      for (std::size_t i = 0; i < rSize; ++i) {
+        // proper torsions
+        aid1 = atomRing[i];
+        aid2 = atomRing[(i + 1) % rSize];
+        aid3 = atomRing[(i + 2) % rSize];
+        aid4 = atomRing[(i + 3) % rSize];
+        bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
+        // if all 4 atoms are SP2, add torsion
+        if (!(doneBonds[bid2]) &&
+            (mol.getAtomWithIdx(aid1)->getHybridization() == Atom::SP2) &&
+            (mol.getAtomWithIdx(aid2)->getHybridization() == Atom::SP2) &&
+            (mol.getAtomWithIdx(aid3)->getHybridization() == Atom::SP2) &&
+            (mol.getAtomWithIdx(aid4)->getHybridization() == Atom::SP2)) {
+          doneBonds[bid2] = 1;
+          std::vector<int> atoms(4);
+          atoms[0] = aid1;
+          atoms[1] = aid2;
+          atoms[2] = aid3;
+          atoms[3] = aid4;
+          details.expTorsionAtoms.push_back(atoms);
+
+          std::vector<int> signs(6, 1);
+          signs[1] = -1;  // MMFF sign for m = 2
+          std::vector<double> fconsts(6, 0.0);
+          fconsts[1] = details.forceConsts.kTermTorsion;
+          details.expTorsionAngles.emplace_back(signs, fconsts);
+          /*if (verbose) {
+            std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 <<
+          " " << aid4 << std::endl;
+          }*/
+        }
+
+      }  // loop over atoms in ring
+    }    // loop over rings
+  }
 }  // end function
 
 void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
