@@ -5,12 +5,15 @@ add_executable(bench EXCLUDE_FROM_ALL bench_common.cpp
   mol.cpp
   molops.cpp
   pickle.cpp
+  similarity_matrix.cpp
   smiles.cpp
   stereo.cpp
   substruct_match.cpp
 )
 target_link_libraries(bench rdkitCatch
+  BulkSimilarity
   CIPLabeler
+  DataStructs
   Descriptors
   Fingerprints
   SmilesParse
