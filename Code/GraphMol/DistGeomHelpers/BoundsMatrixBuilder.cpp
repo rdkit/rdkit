@@ -27,7 +27,7 @@
 #include <ranges>
 
 const double DIST12_DELTA = 0.01;
-// const double ANGLE_DELTA = 0.0837;
+const double ANGLE_DELTA = 0.035;
 // const double RANGLE_DELTA = 0.0837; // tolerance for bond angles
 // const double TANGLE_DELTA = 0.0837; // tolerance for torsion angle
 const double DIST13_TOL = 0.04;
@@ -432,6 +432,21 @@ inline bool isLargerSP2Atom(const Atom *atom) {
          atom->getOwningMol().getRingInfo()->numAtomRings(atom->getIdx());
 }
 }  // namespace
+
+double getAngleTolerance(const Atom *atm1, const Atom *atm2, const Atom *atm3) {
+  auto angleTolerance = ANGLE_DELTA;
+  if (isLargerSP2Atom(atm1)) {
+    angleTolerance *= 2.0;
+  }
+  if (isLargerSP2Atom(atm2)) {
+    angleTolerance *= 2.0;
+  }
+  if (isLargerSP2Atom(atm3)) {
+    angleTolerance *= 2.0;
+  }
+  return angleTolerance;
+}
+
 void _set13BoundsHelper(const unsigned int aid1, const unsigned int aid,
                         const unsigned int aid3, const double angle,
                         const ComputedData &accumData,
@@ -442,22 +457,17 @@ void _set13BoundsHelper(const unsigned int aid1, const unsigned int aid,
   // We increase the tolerance if we're outside of the first row of the
   // periodic table.
 
-  auto distTol = DIST13_TOL;
-  if (isLargerSP2Atom(mol.getAtomWithIdx(aid1))) {
-    distTol *= 2.0;
-  }
-  if (isLargerSP2Atom(mol.getAtomWithIdx(aid))) {
-    distTol *= 2.0;
-  }
-  if (isLargerSP2Atom(mol.getAtomWithIdx(aid3))) {
-    distTol *= 2.0;
-  }
+  auto angleTolerance =
+      getAngleTolerance(mol.getAtomWithIdx(aid1), mol.getAtomWithIdx(aid),
+                        mol.getAtomWithIdx(aid3));
+
+  const auto du = RDGeom::compute13Dist(accumData.bondLengths[bid1],
+                                        accumData.bondLengths[bid2],
+                                        std::min(angle + angleTolerance, M_PI));
 
   const auto dl = RDGeom::compute13Dist(accumData.bondLengths[bid1],
-                                        accumData.bondLengths[bid2], angle) -
-                  distTol;
-
-  const auto du = dl + 2.0 * distTol;
+                                        accumData.bondLengths[bid2],
+                                        std::max(angle - angleTolerance, 0.0));
   _checkAndSetBounds(aid1, aid3, dl, du, mmat);
 }
 
