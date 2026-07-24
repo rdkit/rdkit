@@ -27,13 +27,22 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
   SynthonSpaceSubstructureSearcher(const ROMol &query,
                                    const SubstructMatchParameters &matchParams,
                                    const SynthonSpaceSearchParams &params,
-                                   SynthonSpace &space)
+                                   SynthonSpace *space)
       : SynthonSpaceSearcher(query, params, space),
         d_matchParams(matchParams) {}
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
-      const std::vector<std::unique_ptr<ROMol>> &fragSet,
+      const std::vector<std::shared_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const override;
+
+  bool verifyHit(ROMol &hit, const std::string &rxnId,
+                 const std::vector<const std::string *> &synthNames) override;
+
+ protected:
+  // In this case, it's just the number of atoms in the query
+  // divided by the number of atoms in the product.
+  double approxSimilarity(const SynthonSpaceHitSet *hitset,
+                          const std::vector<size_t> &synthNums) const override;
 
  private:
   // These are the pattern fingerprints for the fragments in this
@@ -57,14 +66,13 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
       std::pair<void *, std::vector<std::unique_ptr<ExplicitBitVect>> *>>
       d_connRegFPs;
 
+  bool extraSearchSetup(
+      std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
+      const TimePoint *endTime) override;
   unsigned int getNumQueryFragmentsRequired() override;
-  void extraSearchSetup(
-      std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) override;
-
-  bool verifyHit(ROMol &hit) const override;
 
   void getConnectorRegions(
-      const std::vector<std::unique_ptr<ROMol>> &molFrags,
+      const std::vector<std::shared_ptr<ROMol>> &molFrags,
       std::vector<std::vector<ROMol *>> &connRegs,
       std::vector<std::vector<const std::string *>> &connRegSmis,
       std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) const;

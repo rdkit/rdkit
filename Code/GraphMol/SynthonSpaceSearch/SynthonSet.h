@@ -29,6 +29,21 @@ namespace SynthonSpaceSearch {
 class Synthon;
 class SynthonSpace;
 struct SynthonSpaceSearchParams;
+struct ShapeBuildParams;
+
+// For holding a sample molecule from this set, based on the given
+// synthon which is in the d_synthonSetNum vector of d_synthons
+// of the SynthonSet.  Used for building shapes.  The d_mol isn't
+// built immediately to save memory, so the information needed to
+// produce it is all captured.
+struct SampleMolRec {
+  const class SynthonSet *d_synthonSet{nullptr};
+  Synthon *d_synthon{nullptr};
+  std::vector<size_t> d_synthonNums;
+  size_t d_synthonSetNum;
+  std::unique_ptr<ROMol> d_mol{nullptr};
+  unsigned int d_numAtoms{0};
+};
 
 // This class holds pointers to all the synthons for a particular
 // reaction.  The synthons themselves are in a pool in the
@@ -45,6 +60,23 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   getSynthons() const {
     return d_synthons;
   }
+  // Return the synthon of the given number in the given set, based on
+  // the sorted order rather than the input order.  Returns empty string
+  // and nullptr if the numbers are invalid.
+  const std::pair<std::string, Synthon *> getSubstructureOrderedSynthon(
+      size_t setNum, size_t synthonNum) const;
+  const std::pair<std::string, Synthon *> getFingerprintOrderedSynthon(
+      size_t setNum, size_t synthonNum) const;
+  const std::pair<std::string, Synthon *> getRascalOrderedSynthon(
+      size_t setNum, size_t synthonNum) const;
+  // Return the actual synthon number given its ordered number.  Returns
+  // "-1" if the numbers are invalid.
+  size_t getSubstructureOrderedSynthonNum(size_t setNum,
+                                          size_t synthonNum) const;
+  size_t getFingerprintOrderedSynthonNum(size_t setNum,
+                                         size_t synthonNum) const;
+  size_t getRascalOrderedSynthonNum(size_t setNum, size_t synthonNum) const;
+
   const boost::dynamic_bitset<> &getConnectors() const { return d_connectors; }
   const std::vector<boost::dynamic_bitset<>> &getSynthonConnectorPatterns()
       const {
@@ -80,7 +112,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // The bonds in the synthons may not be the same as in the products, and
   // this is a problem for aromatic ring creation in particular.  Such as:
   // [1*]=CC=C[2*] and [1*]Nc1c([2*])cccc1 giving c1ccc2ncccc2c1.  So
-  // make versions of the synthons that reflect this, storead as searchMol
+  // make versions of the synthons that reflect this, stored as searchMol
   // in each synthon.
   void makeSynthonSearchMols();
 
@@ -110,6 +142,19 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   std::unique_ptr<ROMol> buildProduct(
       const std::vector<size_t> &synthNums) const;
 
+  void initializeSearchOrders();
+  std::vector<std::vector<size_t>> orderSynthonsForSearch(
+      const std::function<bool(const Synthon *synthon1,
+                               const Synthon *synthon2)> &cmp);
+
+  // make a SampleMolRec for this synthon, which is expected
+  // to be in the SynthonSet.  Returns an empty object if it isn't,
+  // but that really shouldn't happen.
+  std::unique_ptr<SampleMolRec> makeSampleMolecule(Synthon *synthon) const;
+  // Make a molecule from the given synthonNums, which index into d_synthons.
+  std::unique_ptr<ROMol> buildMolecule(
+      const std::vector<size_t> &synthonNums) const;
+
   void assessRingFormers();
 
  private:
@@ -121,6 +166,19 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // can have different IDs, so we need to keep the ID here rather
   // than in the Synthon, whose primary key is its SMILES string.
   std::vector<std::vector<std::pair<std::string, Synthon *>>> d_synthons;
+
+  // The order that the synthons should be searched in.  It will
+  // be the same shape as d_synthons. The substructure
+  // search will order in ascending size of number of heavy atoms,
+  // the fingerprint search in ascending number of set bits and
+  // the Rascal search in ascending number of heavy atoms and bonds.
+  // This allows for a marginally more efficient search since either
+  // or both ends of a synthon set can be ignored as not being able
+  // to yield a match. There is no advantage in sorting the shapes.
+  std::vector<std::vector<size_t>> d_substructureSearchOrders;
+  std::vector<std::vector<size_t>> d_fingerprintSearchOrders;
+  std::vector<std::vector<size_t>> d_rascalSearchOrders;
+
   // MAX_CONNECTOR_NUM+1 bits showing which connectors are present in all the
   // synthon sets.
   boost::dynamic_bitset<> d_connectors;
@@ -143,12 +201,27 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // When doing an approximate FP similarity by ORing together
   // the synthonFPs, adding d_addFP and subtracting d_subtractFP
   // accounts (a bit) for the joins and the dummy atoms
-  // respectively.
+  // respectively.  Not used at present, but left in for
+  // compatibility with old databases.
   std::unique_ptr<ExplicitBitVect> d_addFP;
   std::unique_ptr<ExplicitBitVect> d_subtractFP;
 
   // The number of connectors in the synthons in each synthon set.
   std::vector<int> d_numConnectors;
+
+  // Synthons are shared, so sometimes we need to copy the molecules into a
+  // new set that we can fiddle with without upsetting anything else.
+  std::unique_ptr<RWMol> copySynthon(size_t synthonSetNum,
+                                     size_t synthonIdx) const;
+  std::vector<std::vector<std::unique_ptr<RWMol>>> copySynthons() const;
+
+  // Take the synthons and build molecules from them.  longVecNum is the number
+  // of the vector containing the synthon set of interest.  Each product is
+  // a molecule made from the corresponding member of longVecNum and a small
+  // element of the other vectors.  synthonMols are from copySynthons.
+  std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
+      const std::vector<std::vector<std::unique_ptr<RWMol>>> &synthonMols,
+      size_t longVecNum) const;
   // The number of rings that may be formed by the synthons.  If there
   // are a pair of synthons A([1*])[2*] and B([1*])[2*] 1 ring can be
   // formed.
