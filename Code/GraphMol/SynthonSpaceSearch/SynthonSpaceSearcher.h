@@ -15,8 +15,10 @@
 #ifndef SYNTHONSPACESEARCHER_H
 #define SYNTHONSPACESEARCHER_H
 
+#include <atomic>
 #include <chrono>
 #include <functional>
+#include <mutex>
 #include <random>
 
 #include <RDGeneral/export.h>

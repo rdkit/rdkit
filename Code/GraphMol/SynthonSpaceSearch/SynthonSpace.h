@@ -40,7 +40,6 @@
 #include <GraphMol/MolStandardize/Tautomer.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearchHelpers.h>
 
 namespace RDKit {

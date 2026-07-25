@@ -91,7 +91,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
     const auto &synthons = reaction.getSynthons()[synthonSetOrder[fragNum]];
     // Get the smallest fragment volume.
     bool fragMatched = false;
-    // Because the combination score is the sum of 2 tanimotos, it's not
+    // Because the combination score is the sum of 2 Tversky scores, it's not
     // possible to use the threshold to set upper and lower bounds on the
     // search space as is done with fingerprints and Rascal similarity.
     // We just need to plough through them in order.

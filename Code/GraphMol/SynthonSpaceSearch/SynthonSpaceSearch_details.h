@@ -83,7 +83,7 @@ std::vector<std::vector<boost::dynamic_bitset<>>> getConnectorPermutations(
     const std::vector<boost::dynamic_bitset<>> &fragConnPatts,
     const boost::dynamic_bitset<> &reactionConns);
 
-// If all bits in one of the bitsets is unset, it means that no fragemnt matched
+// If all bits in one of the bitsets is unset, it means that no fragment matched
 // that synthon.  If at least one of the bitsets has a set bit, all products
 // incorporating the synthon with no bits set must match the query so
 // should be used because the query matches products that don't incorporate

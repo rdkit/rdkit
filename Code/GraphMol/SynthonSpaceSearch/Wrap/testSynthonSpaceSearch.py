@@ -48,11 +48,13 @@ class TestCase(unittest.TestCase):
 
   def setUp(self):
     self.sssDir = Path(os.environ["RDBASE"]) / "Code" / "GraphMol" / "SynthonSpaceSearch" / "data"
+    # For profiling/debugging.
     self.startTime = time.time()
 
   def tearDown(self):
+    # For profiling/debugging.
     t = time.time() - self.startTime
-    print(f"Test {self.id()} took {t:.3f}s")
+    # print(f"Test {self.id()} took {t:.3f}s")
 
   def testSubstructSearch(self):
     fName = self.sssDir / "idorsia_toy_space_a.spc"
@@ -69,7 +71,7 @@ class TestCase(unittest.TestCase):
                                               params=params)
     self.assertEqual(10, len(results.GetHitMolecules()))
 
-    # callback returns None, stil get all results
+    # callback returns None, still get all results
     mols = []
     synthonspace.SubstructureSearchIncremental(
             query,

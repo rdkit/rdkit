@@ -83,8 +83,13 @@ class ProgressBar {
     std::time_t finish_time_t =
         std::chrono::system_clock::to_time_t(projFinish);
 
-    // Convert to local time structure
-    std::tm local_tm = *std::localtime(&finish_time_t);
+    // Convert to local time structure using threadsafe version
+    std::tm local_tm{};
+#if defined(_WIN32)
+    localtime_s(&local_tm, &finish_time_t);
+#else
+    localtime_r(&finish_time_t, &local_tm);
+#endif
     std::string fmt = "%H:%M %a";
     static constexpr std::int64_t weekSecs = 7 * 24 * 3600;
     if (std::chrono::duration_cast<std::chrono::seconds>(totToDo).count() >

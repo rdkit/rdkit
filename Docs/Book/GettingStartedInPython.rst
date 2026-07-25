@@ -3418,8 +3418,7 @@ of using the infoString directly to create a fingerprint generator, so it must b
   >>> print(spc.GetSynthonFingerprintType())
   Common arguments : countSimulation=0 fpSize=2048 bitsPerFeature=2 includeChirality=0 --- RDKitFPArguments minPath=1 maxPath=7 useHs=1 branchedPaths=1 useBondOrder=1 --- RDKitFPEnvGenerator --- RDKitFPAtomInvGenerator --- No bond invariants generator
 
-The similarity metric is hard-coded to use the Tversky coefficient with parameters defaulting to produce a Tanimoto
-coefficient.  The default similarity cutoff for the search
+The similarity metric is hard-coded to use the Tanimoto coefficient.  The default similarity cutoff for the search
 is 0.5, which is a reasonable starting value for a Morgan fingerprint of radius 2.  Note that in the similarity search,
 you will get the first `maxHits` hits that pass the threshold, not necessarily the best hits.  The search attempts to
 bring the most similar matches towards the start of the hit list by ordering the synthons that match a fragment in
