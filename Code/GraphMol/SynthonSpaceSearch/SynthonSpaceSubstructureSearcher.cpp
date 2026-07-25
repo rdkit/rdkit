@@ -231,12 +231,6 @@ std::vector<std::vector<size_t>> getHitSynthons(
           synthonsToUse[synthonSetOrder[fragNum]][synthonNum] = true;
           fragMatched = true;
         }
-        if (const auto &[id, synthon] = synthonsSet[j];
-            !SubstructMatch(*synthon->getSearchMol(), *molFrags[fragNum])
-                 .empty()) {
-          synthonsToUse[synthonSetOrder[fragNum]][j] = true;
-          fragMatched = true;
-        }
       }
     }
     // if the fragment didn't match anything, the whole thing's a bust.

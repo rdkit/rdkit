@@ -40,7 +40,6 @@
 #include <GraphMol/MolStandardize/Tautomer.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearchHelpers.h>
 
 namespace RDKit {
@@ -493,8 +492,6 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 
   // Just do the lookup, and return nullptr if not found.
   Synthon *getSynthonFromPool(const std::string &smiles) const;
-
-  void orderSynthonsForSearch();
 
  private:
   std::string d_fileName;

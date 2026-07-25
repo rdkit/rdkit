@@ -91,7 +91,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
     const auto &synthons = reaction.getSynthons()[synthonSetOrder[fragNum]];
     // Get the smallest fragment volume.
     bool fragMatched = false;
-    // Because the combination score is the sum of 2 tanimotos, it's not
+    // Because the combination score is the sum of 2 Tversky scores, it's not
     // possible to use the threshold to set upper and lower bounds on the
     // search space as is done with fingerprints and Rascal similarity.
     // We just need to plough through them in order.
@@ -365,13 +365,13 @@ bool SynthonSpaceShapeSearcher::extraSearchSetup(
     const TimePoint *endTime) {
   // Use the given conformer unless it looks like a
   // 2D molecule.
-  auto queryMol = std::unique_ptr<RWMol>(new RWMol(getQuery()));
-  if (!queryMol->getNumConformers() || !queryMol->getConformer().is3D()) {
+  auto &queryMol = getQuery();
+  if (!queryMol.getNumConformers() || !queryMol.getConformer().is3D()) {
     BOOST_LOG(rdErrorLog) << "The query molecule needs a 3D conformer."
                           << std::endl;
     return false;
   }
-  if (queryMol->getNumConformers() > 1) {
+  if (queryMol.getNumConformers() > 1) {
     BOOST_LOG(rdWarningLog)
         << "The query molecule has multiple conformers.  Just using the default."
         << std::endl;
@@ -1143,6 +1143,8 @@ bool SynthonSpaceShapeSearcher::verifyHit(
           initScores[0] >= getParams().similarityCutoff) {
         return true;
       }
+    } else {
+      initScores[0] = -1.0;  // To flag it as a bad hit.
     }
   }
   // If the run is multi-threaded, this will already be running
@@ -1204,11 +1206,12 @@ bool SynthonSpaceShapeSearcher::verifyHit(
         foundHit = true;
         bestSim = thisScore[0];
       }
-      if (!foundHit && initScores[0] > getParams().similarityCutoff) {
-        // Stick with what we found at the start, which should still be in hit.
-        foundHit = true;
-      }
     }
+  }
+  if (!foundHit && initScores[0] > getParams().similarityCutoff) {
+    // Stick with what we found at the start, which should still be in hit,
+    // because the conformational expansion didn't do any better.
+    foundHit = true;
   }
   return foundHit;
 }
