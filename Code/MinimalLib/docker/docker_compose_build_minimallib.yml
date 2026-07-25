@@ -24,7 +24,7 @@
 # Once the build is finished, you can run the following command to
 # export the buildartifacts to your local filesystem:
 #
-# DOCKER_BUILDKIT=1 docker build -f 04_export.Dockerfile -o ../demo .
+# DOCKER_BUILDKIT=1 docker build -f 04_export.Dockerfile -o ../build .
 
 services:
   rdkit_deps:
