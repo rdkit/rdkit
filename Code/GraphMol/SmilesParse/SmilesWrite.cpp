@@ -1003,32 +1003,6 @@ std::string MolFragmentToSmiles(const ROMol &mol,
             }
           }
         }
-        // if (!atomsInPlay[stereoAtoms[0]]) {
-        //   if (bnd->getBeginAtom()->getDegree() > 2) {
-        //     bool updated = false;
-        //     for (auto nbrAt : tmol.atomNeighbors(bnd->getBeginAtomIdx())) {
-        //       if (nbrAt->getIdx() != stereoAtoms[0] &&
-        //           atomsInPlay[nbrAt->getIdx()]) {
-        //         bnd->setStereoAtoms(nbrAt->getIdx(), stereoAtoms[1]);
-        //         updated = true;
-        //         if (bnd->getStereo() == Bond::BondStereo::STEREOZ ||
-        //         bnd->getStereo() == Bond::BondStereo::STEREOCIS) {
-        //           bnd->setStereo(Bond::BondStereo::STEREOTRANS);
-        //         } else if (bnd->getStereo() == Bond::BondStereo::STEREOE ||
-        //         bnd->getStereo() == Bond::BondStereo::STEREOTRANS) {
-        //           bnd->setStereo(Bond::BondStereo::STEREOCIS);
-        //         }
-        //         break;
-        //       }
-        //     }
-        //     if(!updated) {
-        //       bnd->setStereo(Bond::BondStereo::STEREONONE);
-        //     }
-        //   } else {
-        //     bnd->setStereo(Bond::BondStereo::STEREONONE);
-        //     break;
-        //   }
-        // }
       }
     }
   }
