@@ -9,6 +9,7 @@
 //
 #include "ProximityBonds.h"
 #include <algorithm>
+#include <vector>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RWMol.h>
 #include <GraphMol/MonomerInfo.h>
@@ -256,16 +257,22 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
         }
         ++nbr;
       }
-      // iterate again and remove all but closest
+      // iterate again and remove all but closest. removeBond() erases from
+      // the adjacency list we are walking, so collect the bonds first and
+      // drop them once the walk is over.
       boost::tie(nbr, end_nbr) = mol->getAtomNeighbors(atom);
+      std::vector<unsigned int> bondsToRemove;
       while (nbr != end_nbr) {
         if (*nbr == best_idx) {
           Bond *bond = mol->getBondBetweenAtoms(i, *nbr);
           bond->setBondType(Bond::SINGLE);  // make sure this one is single
         } else {
-          mol->removeBond(i, *nbr);
+          bondsToRemove.push_back(*nbr);
         }
         ++nbr;
+      }
+      for (auto iToRemove : bondsToRemove) {
+        mol->removeBond(i, iToRemove);
       }
     }
   }
