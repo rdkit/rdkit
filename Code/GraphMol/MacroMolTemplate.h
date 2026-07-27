@@ -70,7 +70,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate {
 };
 
 struct RDKIT_GRAPHMOL_EXPORT MacroMolEntry {
-  MonomerClass monomerClass = MonomerClass::OTHER;  // e.g., AA, NA, CHEM
+  MonomerClass monomerClass = MonomerClass::Other;
   std::string templateName;  // Name of the template, e.g., "ALA"
   std::string symbol;        // e.g., "A" for Alanine
   std::string original_data;  // Original definition (SMILES, SDF, etc.)

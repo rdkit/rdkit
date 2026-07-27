@@ -22,13 +22,13 @@ TEST_CASE("testBuildMacroMolEntry") {
   // Build a simple MacroMolEntry and check that the public fields are
   // populated as expected.
   MacroMolEntry macroMolEntry;
-  macroMolEntry.monomerClass = MonomerClass::AA;
+  macroMolEntry.monomerClass = MonomerClass::AminoAcid;
   macroMolEntry.templateName = "ALA";
   macroMolEntry.symbol = "A";
   macroMolEntry.original_data = "N[C@@H](C)C(=O)O";
   macroMolEntry.molTemplate = std::make_shared<MacroMolTemplate>();
 
-  CHECK(macroMolEntry.monomerClass == MonomerClass::AA);
+  CHECK(macroMolEntry.monomerClass == MonomerClass::AminoAcid);
   CHECK(macroMolEntry.templateName == "ALA");
   CHECK(macroMolEntry.symbol == "A");
   CHECK(macroMolEntry.original_data == "N[C@@H](C)C(=O)O");
@@ -40,13 +40,13 @@ TEST_CASE("testMacroMolTemplateLibraryLookup") {
   // lookup by template name and symbol returns the expected entry.
   MacroMolTemplateLibrary templateLibrary;
   auto alanineEntry = std::make_shared<MacroMolEntry>();
-  alanineEntry->monomerClass = MonomerClass::AA;
+  alanineEntry->monomerClass = MonomerClass::AminoAcid;
   alanineEntry->templateName = "ALA";
   alanineEntry->symbol = "A";
   alanineEntry->molTemplate = std::make_shared<MacroMolTemplate>();
 
   auto cysteineEntry = std::make_shared<MacroMolEntry>();
-  cysteineEntry->monomerClass = MonomerClass::AA;
+  cysteineEntry->monomerClass = MonomerClass::AminoAcid;
   cysteineEntry->templateName = "CYS";
   cysteineEntry->symbol = "C";
   cysteineEntry->molTemplate = std::make_shared<MacroMolTemplate>();
@@ -54,12 +54,14 @@ TEST_CASE("testMacroMolTemplateLibraryLookup") {
   templateLibrary.addEntry(alanineEntry);
   templateLibrary.addEntry(cysteineEntry);
 
-  CHECK(templateLibrary.getByTemplateName(MonomerClass::AA, "ALA") ==
+  CHECK(templateLibrary.getByTemplateName(MonomerClass::AminoAcid, "ALA") ==
         alanineEntry);
-  CHECK(templateLibrary.getBySymbol(MonomerClass::AA, "A") == alanineEntry);
-  CHECK(templateLibrary.getByTemplateName(MonomerClass::AA, "CYS") ==
+  CHECK(templateLibrary.getBySymbol(MonomerClass::AminoAcid, "A") ==
+        alanineEntry);
+  CHECK(templateLibrary.getByTemplateName(MonomerClass::AminoAcid, "CYS") ==
         cysteineEntry);
-  CHECK(templateLibrary.getBySymbol(MonomerClass::AA, "C") == cysteineEntry);
+  CHECK(templateLibrary.getBySymbol(MonomerClass::AminoAcid, "C") ==
+        cysteineEntry);
 }
 
 TEST_CASE("testMacroMolTemplateLibrarySeparatesMonomerClasses") {
@@ -68,13 +70,13 @@ TEST_CASE("testMacroMolTemplateLibrarySeparatesMonomerClasses") {
   // part of the lookup key.
   MacroMolTemplateLibrary templateLibrary;
   auto aaEntry = std::make_shared<MacroMolEntry>();
-  aaEntry->monomerClass = MonomerClass::AA;
+  aaEntry->monomerClass = MonomerClass::AminoAcid;
   aaEntry->templateName = "ALA";
   aaEntry->symbol = "A";
   aaEntry->molTemplate = std::make_shared<MacroMolTemplate>();
 
   auto naEntry = std::make_shared<MacroMolEntry>();
-  naEntry->monomerClass = MonomerClass::NA;
+  naEntry->monomerClass = MonomerClass::NucleicAcid;
   naEntry->templateName = "ADE";
   naEntry->symbol = "A";
   naEntry->molTemplate = std::make_shared<MacroMolTemplate>();
@@ -82,10 +84,13 @@ TEST_CASE("testMacroMolTemplateLibrarySeparatesMonomerClasses") {
   templateLibrary.addEntry(aaEntry);
   templateLibrary.addEntry(naEntry);
 
-  CHECK(templateLibrary.getByTemplateName(MonomerClass::AA, "ALA") == aaEntry);
-  CHECK(templateLibrary.getBySymbol(MonomerClass::AA, "A") == aaEntry);
-  CHECK(templateLibrary.getByTemplateName(MonomerClass::NA, "ADE") == naEntry);
-  CHECK(templateLibrary.getBySymbol(MonomerClass::NA, "A") == naEntry);
+  CHECK(templateLibrary.getByTemplateName(MonomerClass::AminoAcid, "ALA") ==
+        aaEntry);
+  CHECK(templateLibrary.getBySymbol(MonomerClass::AminoAcid, "A") == aaEntry);
+  CHECK(templateLibrary.getByTemplateName(MonomerClass::NucleicAcid, "ADE") ==
+        naEntry);
+  CHECK(templateLibrary.getBySymbol(MonomerClass::NucleicAcid, "A") ==
+        naEntry);
 }
 
 TEST_CASE("testMacroMolTemplateMainAndLeavingGroups") {
@@ -111,7 +116,7 @@ TEST_CASE("testMacroMolTemplateMainAndLeavingGroups") {
   CHECK(mol.getAtomWithIdx(5)->getSymbol() == "O");
   CHECK(mol.getAtomWithIdx(6)->getSymbol() == "O");
 
-  macroMolTemplate.setMainGroup({1, 2, 3, 4, 5}, MonomerClass::AA);
+  macroMolTemplate.setMainGroup({1, 2, 3, 4, 5}, MonomerClass::AminoAcid);
   // The amino nitrogen (1) attaches to the leaving hydrogen (0).
   macroMolTemplate.addLeavingGroup({0}, 1, 0, 1);
   // The carbonyl carbon (4) attaches to the leaving hydroxyl oxygen (6).
@@ -120,7 +125,7 @@ TEST_CASE("testMacroMolTemplateMainAndLeavingGroups") {
   const auto *mainSgroup = constMacroMolTemplate.getMainSgroup();
   REQUIRE(mainSgroup != nullptr);
   CHECK(mainSgroup->getProp<std::string>("TYPE") == "SUP");
-  CHECK(mainSgroup->getProp<std::string>("CLASS") == "AA");
+  CHECK(mainSgroup->getProp<std::string>("CLASS") == "AminoAcid");
   CHECK(mainSgroup->getAtoms() == std::vector<unsigned int>({1, 2, 3, 4, 5}));
 
   auto leavingGroups = macroMolTemplate.getLeavingGroups();
@@ -147,6 +152,6 @@ TEST_CASE("testMacroMolTemplateLibraryMissingTemplate") {
   // nullptr.
   MacroMolTemplateLibrary templateLibrary;
 
-  CHECK(!templateLibrary.getByTemplateName(MonomerClass::AA, "ALA"));
-  CHECK(!templateLibrary.getBySymbol(MonomerClass::AA, "A"));
+  CHECK(!templateLibrary.getByTemplateName(MonomerClass::AminoAcid, "ALA"));
+  CHECK(!templateLibrary.getBySymbol(MonomerClass::AminoAcid, "A"));
 }
