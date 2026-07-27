@@ -318,10 +318,10 @@ void fragmentOnSomeBonds(
                "bad dummyLabel vector");
   PRECONDITION((!bondTypes || bondTypes->size() == bondIndices.size()),
                "bad bondType vector");
-  PRECONDITION(
-      std::set<unsigned int>(bondIndices.begin(), bondIndices.end()).size() ==
-          bondIndices.size(),
-      "bondIndices contains duplicates");
+  if (std::unordered_set<unsigned int>(bondIndices.begin(), bondIndices.end())
+          .size() < bondIndices.size()) {
+    throw ValueErrorException("bondIndices contains duplicates");
+  }
   if (bondIndices.size() > 63) {
     throw ValueErrorException("currently can only fragment on up to 63 bonds");
   }
@@ -440,10 +440,10 @@ ROMol *fragmentOnBonds(
                "bad bondType vector");
   PRECONDITION((!nCutsPerAtom || nCutsPerAtom->size() == mol.getNumAtoms()),
                "bad nCutsPerAtom vector");
-  PRECONDITION(
-      std::set<unsigned int>(bondIndices.begin(), bondIndices.end()).size() ==
-          bondIndices.size(),
-      "bondIndices contains duplicates");
+  if (std::unordered_set<unsigned int>(bondIndices.begin(), bondIndices.end())
+          .size() < bondIndices.size()) {
+    throw ValueErrorException("bondIndices contains duplicates");
+  }
   if (nCutsPerAtom) {
     for (auto &nCuts : *nCutsPerAtom) {
       nCuts = 0;

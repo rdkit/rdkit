@@ -661,7 +661,7 @@ TEST_CASE("fragmentOnBonds should not segfault on duplicate bondIndices") {
   std::unique_ptr<ROMol> splitMol;
   CHECK_THROWS_AS(splitMol.reset(MolFragmenter::fragmentOnBonds(
                       *mol, std::vector<unsigned int>{0, 2, 2})),
-                  Invar::Invariant);
+                  ValueErrorException);
   REQUIRE(!splitMol);
 }
 
