@@ -3667,7 +3667,8 @@ cubane only contains 5 rings, even though there are
 “obviously” 6. This problem can be fixed by implementing a *small*
 (instead of *smallest*) set of smallest rings algorithm that returns
 symmetric results. This is the approach that we took with the RDKit
-in :py:func:`rdkit.Chem.GetSymmSSSR`.
+in :py:func:`rdkit.Chem.GetSymmSSSR`; we return the set of "Relevant 
+Cycles" calculated by the RingDecomposerLib library [#RDL]_.
 
 Because it is sometimes useful to know the "true" SSSR rings, there
 is a :py:func:`rdkit.Chem.GetSSSR` function which returns this
@@ -4068,7 +4069,7 @@ All of the available filters can also be considered at once. Additional informat
 .. [#brenk] Brenk, R.; Schipani, A.; James, D.; Krasowski, A.; Gilbert, I. H.; Frearson, J.; Wyatt, P. G. "Lessons Learnt from Assembling Screening Libraries for Drug Discovery for Neglected Diseases." *ChemMedChem* **3**:435–444 (2008)
 .. [#jadhav] Jadhav, A.; Ferreira, R. S.; Klumpp, C.; Mott, B. T.; Austin, C. P.; Inglese, J.; Thomas, C. J.; Maloney, D. J.; Shoichet, B. K.; Simeonov, A. "Quantitative Analyses of Aggregation, Autofluorescence, and Reactivity Artifacts in a Screen for Inhibitors of a Thiol Protease." *J. Med. Chem.* **53**:37–51 (2010)
 .. [#doveston] Doveston, R. G.; Tosatti, P.; Dow, M.; Foley, D. J.; Li, H. Y.; Campbell, A. J.; House, D.; Churcher, I.; Marsden, S. P.; Nelson, A. "A Unified Lead-Oriented Synthesis of over Fifty Molecular Scaffolds." *Org. Biomol. Chem.* **13**:859–865. (2014)
-
+.. [#RDL] Flachsenberg, F.; Andresen, N.; Rarey, M. "RingDecomposerLib: An Open-Source Implementation of Unique Ring Families and Other Cycle Bases." *J. Chem. Inf. Model.* **57**:122-126 (2017)
 
 License
 *******
