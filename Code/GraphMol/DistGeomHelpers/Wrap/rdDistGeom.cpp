@@ -634,9 +634,9 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite("useMacrocycleTorsions",
                      &PyEmbedParameters::useMacrocycleTorsions,
                      "impose macrocycle torsion angle preferences")
-      .def_readwrite("useMacrocycle14config",
-                     &PyEmbedParameters::useMacrocycle14config,
-                     "use the 1-4 distance bounds from ETKDGv3")
+      .def_readwrite(
+          "useMacrocycle14config", &PyEmbedParameters::useMacrocycle14config,
+          "This forces amides and esters to be trans in macrocycles. This does not affect chain amides / esters!")
       .def_readwrite("useLegacyImplementation",
                      &PyEmbedParameters::useLegacyImplementation,
                      "Whether to use the combined minimization approach")
@@ -656,8 +656,9 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
            python::args("self", "CPCIdict"),
            "set the customised pairwise Columb-like interaction to atom pairs."
            "used during structural minimisation stage")
-      .def_readwrite("forceTransAmides", &PyEmbedParameters::forceTransAmides,
-                     "constrain amide bonds to be trans")
+      .def_readwrite(
+          "forceTransAmides", &PyEmbedParameters::forceTransAmides,
+          "This forces chain amides and esters to be trans. This does not affect amides / esters in macrocycles!")
       .def_readwrite(
           "trackFailures", &PyEmbedParameters::trackFailures,
           "keep track of which checks during the embedding process fail")
