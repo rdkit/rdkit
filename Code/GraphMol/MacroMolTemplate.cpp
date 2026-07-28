@@ -10,17 +10,15 @@
 
 #include "MacroMolTemplate.h"
 
+#include <algorithm>
+
 namespace RDKit {
 
 namespace {
 const std::string SUP_TYPE = "SUP";
 const std::string LGRP_CLASS = "LGRP";
 
-size_t getMainGroupSize(const std::shared_ptr<MacroMolEntry> &entry) {
-  if (!entry || !entry->molTemplate) {
-    return 0;
-  }
-  const auto &templ = *entry->molTemplate;
+size_t getMainGroupSize(const MacroMolTemplate &templ) {
   const auto *mainSgroup = templ.getMainSgroup();
   return mainSgroup ? mainSgroup->getAtoms().size() : 0;
 }
@@ -44,15 +42,13 @@ bool isLeavingGroup(const SubstanceGroup &sgroup) {
 }
 }  // namespace
 
-RWMol MacroMolTemplate::getMol() const { return d_mol; }
-
 unsigned int MacroMolTemplate::setMainGroup(
-    const std::vector<unsigned int> &atomIdxs, MonomerClass monomerClass) {
+    const std::vector<unsigned int> &atomIdxs) {
   PRECONDITION(getMainSgroup() == nullptr, "main group already set");
-  SubstanceGroup sgroup(&d_mol, SUP_TYPE);
-  sgroup.setProp("CLASS", monomerClassToString(monomerClass));
+  SubstanceGroup sgroup(this, SUP_TYPE);
+  sgroup.setProp("CLASS", monomerClassToString(d_monomerClass));
   sgroup.setAtoms(atomIdxs);
-  return addSubstanceGroup(d_mol, sgroup);
+  return addSubstanceGroup(*this, sgroup);
 }
 
 unsigned int MacroMolTemplate::addLeavingGroup(
@@ -62,10 +58,10 @@ unsigned int MacroMolTemplate::addLeavingGroup(
   PRECONDITION(getMainSgroup()->includesAtom(attachAtomIdx),
                "attachment atom must be part of the main group");
 
-  SubstanceGroup sgroup(&d_mol, SUP_TYPE);
+  SubstanceGroup sgroup(this, SUP_TYPE);
   sgroup.setProp("CLASS", LGRP_CLASS);
   sgroup.setAtoms(atomIdxs);
-  auto idx = addSubstanceGroup(d_mol, sgroup);
+  auto idx = addSubstanceGroup(*this, sgroup);
 
   getMainSgroup()->addAttachPoint(attachAtomIdx,
                                   static_cast<int>(leavingAtomIdx),
@@ -74,7 +70,7 @@ unsigned int MacroMolTemplate::addLeavingGroup(
 }
 
 const SubstanceGroup *MacroMolTemplate::getMainSgroup() const {
-  for (const auto &sgroup : getSubstanceGroups(d_mol)) {
+  for (const auto &sgroup : getSubstanceGroups(*this)) {
     if (isMainSgroup(sgroup)) {
       return &sgroup;
     }
@@ -83,7 +79,7 @@ const SubstanceGroup *MacroMolTemplate::getMainSgroup() const {
 }
 
 SubstanceGroup *MacroMolTemplate::getMainSgroup() {
-  for (auto &sgroup : getSubstanceGroups(d_mol)) {
+  for (auto &sgroup : getSubstanceGroups(*this)) {
     if (isMainSgroup(sgroup)) {
       return &sgroup;
     }
@@ -93,7 +89,7 @@ SubstanceGroup *MacroMolTemplate::getMainSgroup() {
 
 std::vector<const SubstanceGroup *> MacroMolTemplate::getLeavingGroups() const {
   std::vector<const SubstanceGroup *> leavingGroups;
-  for (const auto &sgroup : getSubstanceGroups(d_mol)) {
+  for (const auto &sgroup : getSubstanceGroups(*this)) {
     if (isLeavingGroup(sgroup)) {
       leavingGroups.push_back(&sgroup);
     }
@@ -101,63 +97,67 @@ std::vector<const SubstanceGroup *> MacroMolTemplate::getLeavingGroups() const {
   return leavingGroups;
 }
 
-void MacroMolTemplateLibrary::addEntry(
-    const std::shared_ptr<MacroMolEntry> &macroMolEntry) {
-  const MacroMolTemplateKey templateKey{macroMolEntry->monomerClass,
-                                        macroMolEntry->templateName};
-  const auto templateIt = byTemplateName.find(templateKey);
-  if (templateIt != byTemplateName.end() &&
-      templateIt->second != macroMolEntry) {
+void MacroMolTemplateLibrary::addTemplate(
+    std::unique_ptr<MacroMolTemplate> macroMolTemplate) {
+  if (!macroMolTemplate) {
+    throw ValueErrorException("cannot add a null MacroMolTemplate");
+  }
+
+  size_t mainGroupCount = 0;
+  for (const auto &sgroup : getSubstanceGroups(*macroMolTemplate)) {
+    if (isMainSgroup(sgroup)) {
+      ++mainGroupCount;
+    }
+  }
+  if (mainGroupCount != 1) {
+    throw ValueErrorException(
+        "MacroMolTemplate must contain exactly one main SUP SGroup");
+  }
+
+  const MacroMolTemplateKey templateKey{
+      macroMolTemplate->getMonomerClass(),
+      macroMolTemplate->getTemplateName()};
+  if (byTemplateName.find(templateKey) != byTemplateName.end()) {
     throw ValueErrorException(
         "MacroMolTemplateLibrary already contains an entry with the same "
         "monomer class and template name");
   }
 
-  const MacroMolTemplateKey symbolKey{macroMolEntry->monomerClass,
-                                      macroMolEntry->symbol};
-  const auto symbolIt = bySymbol.find(symbolKey);
-  if (symbolIt != bySymbol.end() && symbolIt->second != macroMolEntry) {
+  const MacroMolTemplateKey symbolKey{macroMolTemplate->getMonomerClass(),
+                                      macroMolTemplate->getSymbol()};
+  if (bySymbol.find(symbolKey) != bySymbol.end()) {
     throw ValueErrorException(
         "MacroMolTemplateLibrary already contains an entry with the same "
         "monomer class and symbol");
   }
 
-  // If this exact entry is already registered, the maps and orderedEntries
-  // already hold it; nothing to do. byTemplateName and bySymbol are always
-  // written together below, so an entry is present in both maps or neither;
-  // the conflict checks above guarantee any hit here is this same entry.
-  const bool haveTemplate = templateIt != byTemplateName.end();
-  const bool haveSymbol = symbolIt != bySymbol.end();
-  if (haveTemplate || haveSymbol) {
-    CHECK_INVARIANT(haveTemplate && haveSymbol,
-                    "template/symbol maps out of sync");
-    return;
-  }
+  const auto mainGroupSize = getMainGroupSize(*macroMolTemplate);
+  const auto insertionPoint = std::upper_bound(
+      orderedEntries.begin(), orderedEntries.end(), mainGroupSize,
+      [](size_t size, const MacroMolTemplate *existingTemplate) {
+        return size > getMainGroupSize(*existingTemplate);
+      });
 
-  byTemplateName[templateKey] = macroMolEntry;
-  bySymbol[symbolKey] = macroMolEntry;
-
-  orderedEntries.insert({getMainGroupSize(macroMolEntry), macroMolEntry});
+  const auto *templatePtr = macroMolTemplate.get();
+  ownedTemplates.push_back(std::move(macroMolTemplate));
+  byTemplateName.emplace(templateKey, templatePtr);
+  bySymbol.emplace(symbolKey, templatePtr);
+  orderedEntries.insert(insertionPoint, templatePtr);
 }
 
-std::vector<std::shared_ptr<MacroMolEntry>> MacroMolTemplateLibrary::entries()
-    const {
-  std::vector<std::shared_ptr<MacroMolEntry>> result;
-  result.reserve(orderedEntries.size());
-  for (const auto &entry : orderedEntries) {
-    result.push_back(entry.second);
-  }
-  return result;
+const std::vector<const MacroMolTemplate *> &
+MacroMolTemplateLibrary::entries() const {
+  return orderedEntries;
 }
 
-std::shared_ptr<MacroMolEntry> MacroMolTemplateLibrary::getByTemplateName(
+const MacroMolTemplate *MacroMolTemplateLibrary::getByTemplateName(
     MonomerClass monomerClass, const std::string &templateName) const {
   auto it = byTemplateName.find({monomerClass, templateName});
   if (it != byTemplateName.end()) return it->second;
   return nullptr;
 }
 
-std::shared_ptr<MacroMolEntry> MacroMolTemplateLibrary::getBySymbol(
+const MacroMolTemplate *MacroMolTemplateLibrary::getBySymbol(
     MonomerClass monomerClass, const std::string &symbol) const {
   auto it = bySymbol.find({monomerClass, symbol});
   if (it != bySymbol.end()) return it->second;

@@ -17,7 +17,6 @@
 #include <GraphMol/MacroAtomInfo.h>
 #include <map>
 #include <memory>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -30,21 +29,34 @@ namespace RDKit {
   leaving-group SGroups describing the atoms removed when the monomer is
   connected to its neighbors.
 */
-class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate {
+class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate : public RWMol {
  public:
-  MacroMolTemplate() = default;
-  explicit MacroMolTemplate(const RWMol &other) : d_mol(other) {}
+  //! Constructs a template from a molecule and its immutable lookup metadata.
+  MacroMolTemplate(const RWMol &mol, MonomerClass monomerClass,
+                   std::string templateName, std::string symbol,
+                   std::string originalData)
+      : RWMol(mol),
+        d_monomerClass(monomerClass),
+        d_templateName(std::move(templateName)),
+        d_symbol(std::move(symbol)),
+        d_originalData(std::move(originalData)) {}
 
-  //! Returns a copy of the underlying template molecule.
-  RWMol getMol() const;
+  //! Returns the monomer class used for lookup and the main SGroup CLASS.
+  MonomerClass getMonomerClass() const { return d_monomerClass; }
+  //! Returns the template name, e.g. "ALA".
+  const std::string &getTemplateName() const { return d_templateName; }
+  //! Returns the template symbol, e.g. "A" for alanine.
+  const std::string &getSymbol() const { return d_symbol; }
+  //! Returns the original template definition (SMILES, SDF, etc.).
+  const std::string &getOriginalData() const { return d_originalData; }
 
   //! Sets the main SUP SGroup for this template.
   /*!
-    \param atomIdxs      atom indices in the main monomer group
-    \param monomerClass  monomer class used as the main SGroup CLASS value
+    The SGroup CLASS value is derived from this template's monomer class.
+
+    \param atomIdxs  atom indices in the main monomer group
   */
-  unsigned int setMainGroup(const std::vector<unsigned int> &atomIdxs,
-                            MonomerClass monomerClass);
+  unsigned int setMainGroup(const std::vector<unsigned int> &atomIdxs);
 
   //! Adds a leaving-group SUP SGroup and records its attachment point.
   /*!
@@ -66,49 +78,45 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate {
  private:
   SubstanceGroup *getMainSgroup();
 
-  RWMol d_mol;
-};
-
-struct RDKIT_GRAPHMOL_EXPORT MacroMolEntry {
-  MonomerClass monomerClass = MonomerClass::Other;
-  std::string templateName;  // Name of the template, e.g., "ALA"
-  std::string symbol;        // e.g., "A" for Alanine
-  std::string original_data;  // Original definition (SMILES, SDF, etc.)
-  // Parsed, annotated template molecule
-  std::shared_ptr<MacroMolTemplate> molTemplate;
+  MonomerClass d_monomerClass;
+  std::string d_templateName;
+  std::string d_symbol;
+  std::string d_originalData;
 };
 
 class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateLibrary {
  public:
-  void addEntry(const std::shared_ptr<MacroMolEntry> &macroMolEntry);
-  //! Returns the entries ordered by descending main-group size.
-  std::vector<std::shared_ptr<MacroMolEntry>> entries() const;
-  //! Returns the entry for the given monomer class and template name, or
-  //! nullptr if no such entry has been added.
-  std::shared_ptr<MacroMolEntry> getByTemplateName(
+  //! Adds a completed template and takes ownership of it.
+  /*!
+    The template must contain exactly one main SUP SGroup. Registered
+    templates are exposed as const objects so that their lookup keys and
+    main-group-size ordering cannot be invalidated.
+  */
+  void addTemplate(std::unique_ptr<MacroMolTemplate> macroMolTemplate);
+
+  //! Returns the templates ordered by descending main-group size.
+  /*!
+    Templates with equal main-group size remain in insertion order.
+  */
+  const std::vector<const MacroMolTemplate *> &entries() const;
+
+  //! Returns the template for the given monomer class and template name, or
+  //! nullptr if no such template has been added.
+  const MacroMolTemplate *getByTemplateName(
       MonomerClass monomerClass, const std::string &templateName) const;
-  //! Returns the entry for the given monomer class and symbol, or nullptr if
-  //! no such entry has been added.
-  std::shared_ptr<MacroMolEntry> getBySymbol(
+
+  //! Returns the template for the given monomer class and symbol, or nullptr
+  //! if no such template has been added.
+  const MacroMolTemplate *getBySymbol(
       MonomerClass monomerClass, const std::string &symbol) const;
 
  private:
   using MacroMolTemplateKey = std::pair<MonomerClass, std::string>;
-  using MacroMolTemplateEntry = std::pair<size_t, std::shared_ptr<MacroMolEntry>>;
 
-  //! Orders entries by descending main-group size. Entries with equal size
-  //! keep their insertion order, which std::multiset guarantees for
-  //! equivalent elements.
-  struct MainGroupSizeGreater {
-    bool operator()(const MacroMolTemplateEntry &lhs,
-                    const MacroMolTemplateEntry &rhs) const {
-      return lhs.first > rhs.first;
-    }
-  };
-
-  std::map<MacroMolTemplateKey, std::shared_ptr<MacroMolEntry>> byTemplateName;
-  std::map<MacroMolTemplateKey, std::shared_ptr<MacroMolEntry>> bySymbol;
-  std::multiset<MacroMolTemplateEntry, MainGroupSizeGreater> orderedEntries;
+  std::map<MacroMolTemplateKey, const MacroMolTemplate *> byTemplateName;
+  std::map<MacroMolTemplateKey, const MacroMolTemplate *> bySymbol;
+  std::vector<std::unique_ptr<const MacroMolTemplate>> ownedTemplates;
+  std::vector<const MacroMolTemplate *> orderedEntries;
 };
 
 }  // namespace RDKit
