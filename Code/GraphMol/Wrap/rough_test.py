@@ -3574,6 +3574,10 @@ CAS<~>
     m = Chem.MolFromSmiles('OCCCCN')
     self.assertRaises(ValueError, lambda: Chem.FragmentOnBonds(m, ()))
 
+    # duplicate bond indices
+    m = Chem.MolFromSmiles('OCCN')
+    self.assertRaises(ValueError, lambda: Chem.FragmentOnBonds(m, (0, 2, 2)))
+
   def test88QueryAtoms(self):
     from rdkit.Chem import rdqueries
     m = Chem.MolFromSmiles('c1nc(C)n(CC)c1')

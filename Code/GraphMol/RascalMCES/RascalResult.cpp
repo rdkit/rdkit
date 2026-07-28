@@ -384,8 +384,8 @@ void RascalResult::matchCliqueAtoms(
 }
 
 void RascalResult::applyMaxFragSep() {
-  std::unique_ptr<RDKit::ROMol> mol1_frags(makeMolFrags(1));
-  auto frags1 = RDKit::MolOps::getMolFrags(*mol1_frags, false);
+  std::unique_ptr<RDKit::ROMol> mol1Frags(makeMolFrags(1));
+  auto frags1 = RDKit::MolOps::getMolFrags(*mol1Frags, false);
   if (frags1.size() < 2) {
     return;
   }
@@ -416,25 +416,21 @@ void RascalResult::applyMaxFragSep() {
 
   bool deletedFrag = false;
   for (size_t i = 0; i < frags1.size() - 1; ++i) {
-    if (!frags1[i]) {
-      continue;
-    }
     for (size_t j = i + 1; j < frags1.size(); ++j) {
-      if (!frags1[j]) {
-        continue;
-      }
-      int mol1Dist =
-          fragFragDist(frags1[i], frags1[j], mol1Dists, d_mol1->getNumAtoms());
-      int mol2Dist =
-          fragFragDist(frags2[i], frags2[j], mol2Dists, d_mol2->getNumAtoms());
-      if (mol1Dist > d_maxFragSep || mol2Dist > d_maxFragSep) {
-        deletedFrag = true;
-        if (frags1[i]->getNumAtoms() < frags1[j]->getNumAtoms()) {
-          frags1[i].reset();
-          frags2[i].reset();
-        } else {
-          frags1[j].reset();
-          frags2[j].reset();
+      if (frags1[i] && frags1[j]) {
+        int mol1Dist = fragFragDist(frags1[i], frags1[j], mol1Dists,
+                                    d_mol1->getNumAtoms());
+        int mol2Dist = fragFragDist(frags2[i], frags2[j], mol2Dists,
+                                    d_mol2->getNumAtoms());
+        if (mol1Dist > d_maxFragSep || mol2Dist > d_maxFragSep) {
+          deletedFrag = true;
+          if (frags1[i]->getNumAtoms() < frags1[j]->getNumAtoms()) {
+            frags1[i].reset();
+            frags2[i].reset();
+          } else {
+            frags1[j].reset();
+            frags2[j].reset();
+          }
         }
       }
     }

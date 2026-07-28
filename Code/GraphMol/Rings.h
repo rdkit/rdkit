@@ -33,16 +33,15 @@ typedef std::map<int, std::vector<int>> INT_INT_VECT_MAP;
 //! Pick a set of rings that are fused together and contain a specified ring
 /*!
 
-   \param curr      the ID for the irng that should be in the fused system
+   \param curr      the ID for the ring that should be in the fused system
    \param neighMap  adjacency lists for for all rings in the molecule.
            See documentation for makeNeighMap
    \param res       used to return the results: a list of rings that are fused
            with curr in them
    \param done      a bit vector recording the rings that are already dealt with
            this also can be used to avoid any rings that should not be included
-   in
-           the fused system
-   \param depth used to track recursion depth
+           in the fused system
+   \param depth retained for API compatibility; no longer used
 
 */
 RDKIT_GRAPHMOL_EXPORT void pickFusedRings(int curr,
@@ -54,7 +53,7 @@ RDKIT_GRAPHMOL_EXPORT void pickFusedRings(int curr,
 //! \brief For each ring in bring compute and store the ring that are fused
 //! (share at least one bond with it).
 /*!
-  Useful both for the keulization stuff and aromaticity perception.
+  Useful both for the kekulization stuff and aromaticity perception.
 
   \param brings   list of rings - each ring is specified as a list of bond IDs
   \param neighMap an STL map into which the results are stored. Each entry in
