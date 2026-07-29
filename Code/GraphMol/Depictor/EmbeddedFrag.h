@@ -69,6 +69,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
     neighs = other.neighs;
     d_density = other.d_density;
     d_distanceFromStart = other.d_distanceFromStart;
+    d_isBalancedBifurcation = other.d_isBalancedBifurcation;
     df_fixed = other.df_fixed;
     return *this;
   }

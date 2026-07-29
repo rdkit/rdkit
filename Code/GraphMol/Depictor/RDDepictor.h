@@ -90,9 +90,9 @@ struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
                                   //!< preferCoordGen is set to true
   bool useRingTemplates = false;  //!< whether to use ring system templates for
                                   //!< generating initial coordinates
-  bool useBranchDepthPrioritization = true;  //!< use branch depth scoring to
-                                              //!< prioritize longer chains over
-                                              //!< shorter branches in layout
+  bool useBranchDepthPrioritization = false;  //!< use branch depth scoring to
+                                               //!< prioritize longer chains over
+                                               //!< shorter branches in layout
 };
 
 //! \brief Generate 2D coordinates (a depiction) for a molecule
@@ -213,7 +213,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoordsMimicDistMat(
     bool canonOrient = true, bool clearConfs = true, double weightDistMat = 0.5,
     unsigned int nFlipsPerSample = 3, unsigned int nSamples = 100,
     int sampleSeed = 25, bool permuteDeg4Nodes = true, bool forceRDKit = false,
-    bool useBranchDepthPrioritization = true);
+    bool useBranchDepthPrioritization = false);
 
 struct RDKIT_DEPICTOR_EXPORT ConstrainedDepictionParams {
   //! if false (default), a DepictException is thrown if the molecule

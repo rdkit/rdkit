@@ -331,35 +331,31 @@ void EmbeddedFrag::updateNewNeighs(
       d_eatoms[aid].neighs = setNbrOrder(aid, d_eatoms[aid].neighs, *dp_mol);
     }
   } else if (dp_branchDepths && d_eatoms[aid].neighs.size() > 0) {
-    // If branch depths are available, sort neighbors by depth (deepest first).
-    std::stable_sort(d_eatoms[aid].neighs.begin(), d_eatoms[aid].neighs.end(),
-                     [this, aid](int a, int b) {
-                       auto keyA = std::make_pair(aid, static_cast<unsigned int>(a));
-                       auto keyB = std::make_pair(aid, static_cast<unsigned int>(b));
-                       auto itA = dp_branchDepths->find(keyA);
-                       auto itB = dp_branchDepths->find(keyB);
+    // First use the normal depiction atom ranking, then stable-sort by branch
+    // score so ties keep the existing rankAtomsByRank() behavior.
+    d_eatoms[aid].neighs = rankAtomsByRank(*dp_mol, d_eatoms[aid].neighs);
+    std::stable_sort(
+        d_eatoms[aid].neighs.begin(), d_eatoms[aid].neighs.end(),
+        [this, aid](int a, int b) {
+          auto keyA = std::make_pair(aid, static_cast<unsigned int>(a));
+          auto keyB = std::make_pair(aid, static_cast<unsigned int>(b));
+          auto itA = dp_branchDepths->find(keyA);
+          auto itB = dp_branchDepths->find(keyB);
 
-                       unsigned int depthA = (itA != dp_branchDepths->end()) ? itA->second : 0;
-                       unsigned int depthB = (itB != dp_branchDepths->end()) ? itB->second : 0;
+          unsigned int depthA =
+              (itA != dp_branchDepths->end()) ? itA->second : 0;
+          unsigned int depthB =
+              (itB != dp_branchDepths->end()) ? itB->second : 0;
 
-                       // Add 1.5 bonus if the neighbor itself is a ring atom or has rings in subtree
-                       bool hasRingA = (dp_mol->getRingInfo()->numAtomRings(a) > 0) || this->subtreeHasRing(a, aid);
-                       bool hasRingB = (dp_mol->getRingInfo()->numAtomRings(b) > 0) || this->subtreeHasRing(b, aid);
+          bool hasRingA = (dp_mol->getRingInfo()->numAtomRings(a) > 0) ||
+                          this->subtreeHasRing(a, aid);
+          bool hasRingB = (dp_mol->getRingInfo()->numAtomRings(b) > 0) ||
+                          this->subtreeHasRing(b, aid);
 
-                       double scoreA = depthA + (hasRingA ? 1.5 : 0.0);
-                       double scoreB = depthB + (hasRingB ? 1.5 : 0.0);
-
-                       // Sort by score descending (highest score first)
-                       if (scoreA != scoreB) {
-                         return scoreA > scoreB;
-                       }
-
-                       // Final tie-break with CIP rank if available
-                       unsigned int rankA = 0, rankB = 0;
-                       dp_mol->getAtomWithIdx(a)->getPropIfPresent(RDKit::common_properties::_CIPRank, rankA);
-                       dp_mol->getAtomWithIdx(b)->getPropIfPresent(RDKit::common_properties::_CIPRank, rankB);
-                       return rankA < rankB;
-                     });
+          double scoreA = depthA + (hasRingA ? 1.5 : 0.0);
+          double scoreB = depthB + (hasRingB ? 1.5 : 0.0);
+          return scoreA > scoreB;
+        });
   } else if (d_eatoms[aid].neighs.size() > 0) {
     // Original logic: order the neighbors by their CIPranks, if the number is between > 0 but
     // less than 3

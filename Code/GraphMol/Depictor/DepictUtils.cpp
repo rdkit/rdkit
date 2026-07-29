@@ -688,27 +688,27 @@ template RDKit::INT_LIST rankAtomsByRank(const RDKit::ROMol &mol,
                                          bool ascending);
 
 namespace {
-// Helper function to count acyclic subtree size in a given direction
-unsigned int countAcyclicSubtree(unsigned int currentAtom,
-                                 boost::dynamic_bitset<> &visited,
-                                 const RDKit::ROMol &mol) {
+unsigned int computeAcyclicBranchDepth(unsigned int currentAtom,
+                                       boost::dynamic_bitset<> &visited,
+                                       const RDKit::ROMol &mol) {
   // Stop at ring atoms - they're already embedded as templates
   if (mol.getRingInfo()->numAtomRings(currentAtom) > 0) {
     return 0;
   }
 
-  unsigned int count = 1;
   visited.set(currentAtom);
 
+  unsigned int maxChildDepth = 0;
   const auto *atom = mol.getAtomWithIdx(currentAtom);
   for (const auto *nbr : mol.atomNeighbors(atom)) {
     unsigned int nbrIdx = nbr->getIdx();
     if (!visited[nbrIdx]) {
-      count += countAcyclicSubtree(nbrIdx, visited, mol);
+      maxChildDepth = std::max(
+          maxChildDepth, computeAcyclicBranchDepth(nbrIdx, visited, mol));
     }
   }
 
-  return count;
+  return 1 + maxChildDepth;
 }
 }  // namespace
 
@@ -719,63 +719,19 @@ BRANCH_DEPTH_MAP computeBranchDepths(const RDKit::ROMol &mol) {
   for (unsigned int atomIdx = 0; atomIdx < numAtoms; ++atomIdx) {
     const auto *atom = mol.getAtomWithIdx(atomIdx);
 
-    // For each neighbor, compute subtree depth in that direction
+    // For each neighbor, compute the longest acyclic path in that direction.
     for (const auto *nbr : mol.atomNeighbors(atom)) {
       unsigned int nbrIdx = nbr->getIdx();
 
       boost::dynamic_bitset<> visited(numAtoms);
       visited.set(atomIdx);  // Don't backtrack through current atom
 
-      unsigned int depth = countAcyclicSubtree(nbrIdx, visited, mol);
+      unsigned int depth = computeAcyclicBranchDepth(nbrIdx, visited, mol);
       depthMap[std::make_pair(atomIdx, nbrIdx)] = depth;
     }
   }
 
   return depthMap;
-}
-
-RDKit::INT_VECT sortNeighborsByDepth(const BRANCH_DEPTH_MAP &depthMap,
-                                     unsigned int atomIdx,
-                                     const RDKit::INT_VECT &neighbors,
-                                     const RDKit::ROMol &mol) {
-  // Create tuples of (neighbor, depth, cipRank)
-  std::vector<std::tuple<int, unsigned int, unsigned int>> nbrData;
-
-  for (int nbrIdx : neighbors) {
-    // Get branch depth
-    unsigned int depth = 0;
-    auto it = depthMap.find(std::make_pair(atomIdx, static_cast<unsigned int>(nbrIdx)));
-    if (it != depthMap.end()) {
-      depth = it->second;
-    }
-
-    // Get CIP rank for tie-breaking
-    unsigned int cipRank = static_cast<unsigned int>(nbrIdx);  // default
-    const auto *at = mol.getAtomWithIdx(nbrIdx);
-    if (!at->getPropIfPresent(RDKit::common_properties::_CIPRank, cipRank)) {
-      at->getPropIfPresent(RDKit::common_properties::_ChiralAtomRank, cipRank);
-    }
-
-    nbrData.emplace_back(nbrIdx, depth, cipRank);
-  }
-
-  // Sort by depth (descending), then CIP rank (ascending)
-  std::sort(nbrData.begin(), nbrData.end(),
-            [](const auto &a, const auto &b) {
-              if (std::get<1>(a) != std::get<1>(b)) {
-                return std::get<1>(a) > std::get<1>(b);  // Deeper first
-              }
-              return std::get<2>(a) < std::get<2>(b);  // Lower rank first
-            });
-
-  RDKit::INT_VECT result;
-  result.reserve(nbrData.size());
-
-  for (const auto &item : nbrData) {
-    result.push_back(std::get<0>(item));
-  }
-
-  return result;
 }
 
 bool hasTerminalRGroupOrQueryHydrogen(const RDKit::ROMol &mol) {

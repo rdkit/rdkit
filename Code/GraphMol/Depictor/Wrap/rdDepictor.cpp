@@ -36,7 +36,7 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
                              bool permuteDeg4Nodes = false,
                              double bondLength = -1.0, bool forceRDKit = false,
                              bool useRingTemplates = false,
-                             bool useBranchDepthPrioritization = true) {
+                             bool useBranchDepthPrioritization = false) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
   python::list ks = coordMap.keys();
@@ -78,7 +78,7 @@ unsigned int Compute2DCoordsMimicDistmat(
     bool clearConfs, double weightDistMat, unsigned int nFlipsPerSample,
     unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes,
     double bondLength = -1.0, bool forceRDKit = false,
-    bool useBranchDepthPrioritization = true) {
+    bool useBranchDepthPrioritization = false) {
   PyObject *distMatPtr = distMat.ptr();
   if (!PyArray_Check(distMatPtr)) {
     throw_value_error("Argument isn't an array");
@@ -368,7 +368,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
      useRingTemplates - use templates to generate coordinates of complex\n\
                   ring systems\n\
      useBranchDepthPrioritization - use branch depth scoring to prioritize\n\
-                  longer chains over shorter branches in layout (default=true)\n\n\
+                  longer chains over shorter branches in layout (default=false)\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(
@@ -380,7 +380,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("sampleSeed") = 0, python::arg("permuteDeg4Nodes") = false,
        python::arg("bondLength") = -1.0, python::arg("forceRDKit") = false,
        python::arg("useRingTemplates") = false,
-       python::arg("useBranchDepthPrioritization") = true),
+       python::arg("useBranchDepthPrioritization") = false),
       docString.c_str());
 
   docString =
@@ -410,7 +410,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
      forceRDKit - use RDKit to generate coordinates even if \n\
                   preferCoordGen is set to true\n\
      useBranchDepthPrioritization - use branch depth scoring to prioritize\n\
-                  longer chains over shorter branches in layout (default=true)\n\n\
+                  longer chains over shorter branches in layout (default=false)\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(
@@ -421,7 +421,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("nSample") = 100, python::arg("sampleSeed") = 100,
        python::arg("permuteDeg4Nodes") = true, python::arg("bondLength") = -1.0,
        python::arg("forceRDKit") = false,
-       python::arg("useBranchDepthPrioritization") = true),
+       python::arg("useBranchDepthPrioritization") = false),
       docString.c_str());
 
   docString =

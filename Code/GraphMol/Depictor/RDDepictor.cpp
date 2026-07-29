@@ -516,7 +516,6 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
   // create a conformation to store the coordinates and add it to the molecule
   auto *conf = new RDKit::Conformer(mol.getNumAtoms());
   conf->set3D(false);
-  std::list<EmbeddedFrag>::iterator eri;
   for (const auto &efrag : efrags) {
     for (const auto &eai : efrag.GetEmbeddedAtoms()) {
       const auto &cr = eai.second.loc;
@@ -726,12 +725,14 @@ unsigned int compute2DCoordsMimicDistMat(
   computeInitialCoords(mol, nullptr, efrags, false,
                        useBranchDepthPrioritization);
 
-  // now perform random flips of rotatable bonds so that we can sample the space
-  // and try to mimic the distances in dmat
-  std::list<EmbeddedFrag>::iterator eri;
+  // Random flips break branch-depth-prioritized zig-zags, so keep the existing
+  // distance-matrix sampling behavior only when that layout mode is disabled.
   for (auto &eri : efrags) {
-    eri.randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples, sampleSeed,
-                                         dmat, weightDistMat, permuteDeg4Nodes);
+    if (!useBranchDepthPrioritization) {
+      eri.randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples,
+                                           sampleSeed, dmat, weightDistMat,
+                                           permuteDeg4Nodes);
+    }
   }
   if (canonOrient && efrags.size()) {
     // canonicalize the orientation of the fragment so that the
