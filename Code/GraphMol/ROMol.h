@@ -650,6 +650,11 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
                                rdcast<unsigned int>(idx2));
   }
 
+  //! returns a vector of bond pointers for the bonds between two atoms, empty vector if none
+  // macro atoms can have mutliple bonds between the same two macro atoms
+  std::vector<Bond *> getBondsBetweenAtoms(unsigned int idx1, unsigned int idx2);
+
+
   //! @}
 
   //! \name Bookmarks

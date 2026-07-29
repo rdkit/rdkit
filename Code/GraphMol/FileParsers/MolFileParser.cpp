@@ -3483,19 +3483,23 @@ void finishMolProcessing(
   // sign that chirality ever existed and makes us sad... so first
   // perceive chirality, then remove the Hs and sanitize.
   //
-  const Conformer &conf = res->getConformer();
-  if (chiralityPossible || conf.is3D()) {
-    if (!conf.is3D()) {
-      bool replaceExistingTags = true;
-      MolOps::assignChiralTypesFromBondDirs(*res, conf.getId(),
-                                            replaceExistingTags);
-    } else {
-      res->updatePropertyCache(false);
-      MolOps::assignChiralTypesFrom3D(*res, conf.getId(), true);
-    }
-  }
 
-  Atropisomers::detectAtropisomerChirality(*res, &conf);
+  const Conformer *conf = nullptr;
+  if (res->getNumConformers() > 0) {
+    conf = &res->getConformer();
+    if (chiralityPossible || conf->is3D()) {
+      if (!conf->is3D()) {
+        bool replaceExistingTags = true;
+        MolOps::assignChiralTypesFromBondDirs(*res, conf->getId(),
+                                              replaceExistingTags);
+      } else {
+        res->updatePropertyCache(false);
+        MolOps::assignChiralTypesFrom3D(*res, conf->getId(), true);
+      }
+    }
+}
+
+  Atropisomers::detectAtropisomerChirality(*res, conf);
 
   // now that atom stereochem has been perceived, the wedging
   // information is no longer needed, so we clear
@@ -3543,6 +3547,7 @@ namespace FileParsers {
 std::unique_ptr<RWMol> MolFromMolDataStream(std::istream &inStream,
                                             unsigned int &line,
                                             const MolFileParserParams &params) {
+  auto res = std::make_unique<RWMol>();
   std::string tempStr;
   bool fileComplete = false;
   bool chiralityPossible = false;
@@ -3551,9 +3556,9 @@ std::unique_ptr<RWMol> MolFromMolDataStream(std::istream &inStream,
   line++;
   tempStr = getLine(inStream);
   if (inStream.eof()) {
-    return nullptr;
+    res = nullptr;
+    return res;
   }
-  auto res = std::make_unique<RWMol>();
   res->setProp(common_properties::_Name, tempStr);
 
   // info
@@ -3773,18 +3778,16 @@ std::unique_ptr<RWMol> MolFromMolBlock(const std::string &molBlock,
 std::unique_ptr<RWMol> MolFromMolFile(const std::string &fName,
                                       const MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
-  if (!inStream || (inStream.bad())) {
+  if (!inStream || (inStream.bad()) || inStream.eof()) {
     std::ostringstream errout;
     errout << "Bad input file " << fName;
     throw BadFileException(errout.str());
   }
-  if (!inStream.eof()) {
-    unsigned int line = 0;
-    return MolFromMolDataStream(inStream, line, params);
-  } else {
-    return std::unique_ptr<RWMol>();
-  }
+  
+  unsigned int line = 0;
+  return MolFromMolDataStream(inStream, line, params);
 }
+
 }  // namespace FileParsers
 }  // namespace v2
 }  // namespace RDKit
