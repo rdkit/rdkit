@@ -51,7 +51,7 @@ static_assert(std::is_same_v<
               const std::vector<const MacroMolTemplate *> &>);
 static_assert(std::is_same_v<
               decltype(std::declval<const MacroMolTemplateLibrary &>()
-                           .getByTemplateName(MonomerClass::AminoAcid, "")),
+                           .getByName(MonomerClass::AminoAcid, "")),
               const MacroMolTemplate *>);
 
 TEST_CASE("MacroMolTemplate owns its molecule and metadata") {
@@ -76,11 +76,11 @@ TEST_CASE("MacroMolTemplateLibrary lookups return const templates") {
   templateLibrary.addTemplate(std::move(alanine));
   templateLibrary.addTemplate(std::move(cysteine));
 
-  CHECK(templateLibrary.getByTemplateName(MonomerClass::AminoAcid, "ALA") ==
+  CHECK(templateLibrary.getByName(MonomerClass::AminoAcid, "ALA") ==
         alaninePtr);
   CHECK(templateLibrary.getBySymbol(MonomerClass::AminoAcid, "A") ==
         alaninePtr);
-  CHECK(templateLibrary.getByTemplateName(MonomerClass::AminoAcid, "CYS") ==
+  CHECK(templateLibrary.getByName(MonomerClass::AminoAcid, "CYS") ==
         cysteinePtr);
   CHECK(templateLibrary.getBySymbol(MonomerClass::AminoAcid, "C") ==
         cysteinePtr);
@@ -98,11 +98,11 @@ TEST_CASE("MacroMolTemplateLibrary separates monomer classes") {
   templateLibrary.addTemplate(std::move(aminoAcid));
   templateLibrary.addTemplate(std::move(nucleicAcid));
 
-  CHECK(templateLibrary.getByTemplateName(MonomerClass::AminoAcid, "ALA") ==
+  CHECK(templateLibrary.getByName(MonomerClass::AminoAcid, "ALA") ==
         aminoAcidPtr);
   CHECK(templateLibrary.getBySymbol(MonomerClass::AminoAcid, "A") ==
         aminoAcidPtr);
-  CHECK(templateLibrary.getByTemplateName(MonomerClass::NucleicAcid, "ADE") ==
+  CHECK(templateLibrary.getByName(MonomerClass::NucleicAcid, "ADE") ==
         nucleicAcidPtr);
   CHECK(templateLibrary.getBySymbol(MonomerClass::NucleicAcid, "A") ==
         nucleicAcidPtr);
@@ -159,6 +159,30 @@ TEST_CASE("MacroMolTemplate main and leaving groups") {
   CHECK(attachPoints[1].aIdx == 4);
   CHECK(attachPoints[1].lvIdx == 6);
   CHECK(attachPoints[1].id == "2");
+}
+
+TEST_CASE("MacroMolTemplate rejects invalid leaving groups without mutation") {
+  SECTION("leaving atom is not part of the leaving group") {
+    auto macroMolTemplate = makeTemplate("PROPANE", "Pr", "CCC", {0, 1});
+    const auto *mainSgroup =
+        std::as_const(*macroMolTemplate).getMainSgroup();
+    REQUIRE(mainSgroup != nullptr);
+
+    CHECK_THROWS(macroMolTemplate->addLeavingGroup({2}, 1, 0, 1));
+    CHECK(macroMolTemplate->getLeavingGroups().empty());
+    CHECK(mainSgroup->getAttachPoints().empty());
+  }
+
+  SECTION("attachment atom is not bonded to the leaving atom") {
+    auto macroMolTemplate = makeTemplate("DISCONNECTED", "X", "C.C", {0});
+    const auto *mainSgroup =
+        std::as_const(*macroMolTemplate).getMainSgroup();
+    REQUIRE(mainSgroup != nullptr);
+
+    CHECK_THROWS(macroMolTemplate->addLeavingGroup({1}, 0, 1, 1));
+    CHECK(macroMolTemplate->getLeavingGroups().empty());
+    CHECK(mainSgroup->getAttachPoints().empty());
+  }
 }
 
 TEST_CASE("MacroMolTemplateLibrary orders templates by main-group size") {
@@ -234,7 +258,7 @@ TEST_CASE("MacroMolTemplateLibrary rejects duplicate lookup keys") {
 TEST_CASE("MacroMolTemplateLibrary missing lookups return nullptr") {
   MacroMolTemplateLibrary templateLibrary;
 
-  CHECK(templateLibrary.getByTemplateName(MonomerClass::AminoAcid, "ALA") ==
+  CHECK(templateLibrary.getByName(MonomerClass::AminoAcid, "ALA") ==
         nullptr);
   CHECK(templateLibrary.getBySymbol(MonomerClass::AminoAcid, "A") == nullptr);
 }

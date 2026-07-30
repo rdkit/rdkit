@@ -57,6 +57,11 @@ unsigned int MacroMolTemplate::addLeavingGroup(
   PRECONDITION(getMainSgroup() != nullptr, "main group must be set first");
   PRECONDITION(getMainSgroup()->includesAtom(attachAtomIdx),
                "attachment atom must be part of the main group");
+  PRECONDITION(std::find(atomIdxs.begin(), atomIdxs.end(), leavingAtomIdx) !=
+                   atomIdxs.end(),
+               "leaving atom must be part of the leaving group");
+  PRECONDITION(getBondBetweenAtoms(attachAtomIdx, leavingAtomIdx) != nullptr,
+               "attachment atom must be bonded to the leaving atom");
 
   SubstanceGroup sgroup(this, SUP_TYPE);
   sgroup.setProp("CLASS", LGRP_CLASS);
@@ -132,6 +137,8 @@ void MacroMolTemplateLibrary::addTemplate(
   }
 
   const auto mainGroupSize = getMainGroupSize(*macroMolTemplate);
+  // Keep larger main groups first while preserving insertion order among
+  // templates with equal-sized main groups.
   const auto insertionPoint = std::upper_bound(
       orderedEntries.begin(), orderedEntries.end(), mainGroupSize,
       [](size_t size, const MacroMolTemplate *existingTemplate) {
@@ -150,7 +157,7 @@ MacroMolTemplateLibrary::entries() const {
   return orderedEntries;
 }
 
-const MacroMolTemplate *MacroMolTemplateLibrary::getByTemplateName(
+const MacroMolTemplate *MacroMolTemplateLibrary::getByName(
     MonomerClass monomerClass, const std::string &templateName) const {
   auto it = byTemplateName.find({monomerClass, templateName});
   if (it != byTemplateName.end()) return it->second;

@@ -102,7 +102,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateLibrary {
 
   //! Returns the template for the given monomer class and template name, or
   //! nullptr if no such template has been added.
-  const MacroMolTemplate *getByTemplateName(
+  const MacroMolTemplate *getByName(
       MonomerClass monomerClass, const std::string &templateName) const;
 
   //! Returns the template for the given monomer class and symbol, or nullptr
