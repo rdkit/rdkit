@@ -152,7 +152,8 @@ std::vector<std::pair<std::string, std::string>> readPossHitsLines(
   std::ifstream ifs(possHitsFile.c_str());
   if (!ifs) {
     BOOST_LOG(rdErrorLog) << "Possible hits file " << possHitsFile
-                          << "not found, so no results generated." << std::endl;
+                          << " not found, so no results generated."
+                          << std::endl;
     return retLines;
   }
   std::string smiles, name, wholeLine;
@@ -160,8 +161,7 @@ std::vector<std::pair<std::string, std::string>> readPossHitsLines(
     std::getline(ifs, wholeLine);
   }
   for (std::uint64_t i = startLine; i < finishLine; ++i) {
-    std::getline(ifs, wholeLine);
-    if (ifs.eof()) {
+    if (!std::getline(ifs, wholeLine)) {
       break;
     }
     if (wholeLine.empty()) {
@@ -220,7 +220,7 @@ void checkPossibleHitsPart(
       prod = molzip(*mol, mzparams);
       MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prod.get()));
     } catch (std::exception &e) {
-      std::cout << "Failed to zip " << MolToSmiles(*prod) << " for " << name
+      std::cout << "Failed to zip " << MolToSmiles(*mol) << " for " << name
                 << " because " << std::endl
                 << e.what() << std::endl;
       continue;

@@ -1015,6 +1015,9 @@ TEST_CASE("S Write Possible Hits") {
     auto newResults =
         synthonspace.substructureSearch(*queryMol, matchParams, params, 0, 110);
     CHECK(newResults.getHitMolecules().size() == 110);
+    for (const auto &res : newResults.getHitMolecules()) {
+      std::cout << res->getName() << "\n";
+    }
     std::remove("s_poss_hits_1.txt");
   }
 
@@ -1043,5 +1046,16 @@ TEST_CASE("S Write Possible Hits") {
 #else
     CHECK_THROWS_AS(synthonspace.substructureSearch(xrq), Invar::Invariant);
 #endif
+  }
+
+  {
+    // Check it handles a final line with no newline
+    SynthonSpaceSearchParams params1;
+    params1.possibleHitsFile =
+        fName + "/Code/GraphMol/SynthonSpaceSearch/data/s_poss_hits_noeol.txt";
+    auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
+    auto results =
+        synthonspace.substructureSearch(*queryMol, matchParams, params1, 0);
+    CHECK(results.getHitMolecules().size() == 2);
   }
 }
