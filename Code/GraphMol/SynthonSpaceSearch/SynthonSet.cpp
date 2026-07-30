@@ -291,8 +291,10 @@ void SynthonSet::enumerateToStream(std::ostream &os) const {
   details::Stepper stepper(numSynthons);
   while (stepper.d_currState[0] != numSynthons[0]) {
     auto prod = buildProduct(stepper.d_currState);
-    auto prodName = buildProductName(stepper.d_currState);
-    os << MolToSmiles(*prod) << " " << prodName << std::endl;
+    if (prod) {
+      auto prodName = buildProductName(stepper.d_currState);
+      os << MolToSmiles(*prod) << " " << prodName << std::endl;
+    }
     stepper.step();
   }
 }
@@ -548,27 +550,30 @@ void SynthonSet::buildAddAndSubtractFPs(
       theseSynthNums[i] = synthonNums[i][stepper.d_currState[i]];
     }
     auto prod = buildProduct(theseSynthNums);
-    std::unique_ptr<ExplicitBitVect> prodFP(fpGen.getFingerprint(*prod));
-    ExplicitBitVect approxFP(*d_synthons[0][theseSynthNums[0]].second->getFP());
-    for (size_t j = 1; j < d_synthons.size(); ++j) {
-      approxFP |= *d_synthons[j][theseSynthNums[j]].second->getFP();
-    }
-    // addFP is what's in the productFP and not in approxFP
-    // and subtractFP is vice versa.  The former captures the bits of
-    // the molecule formed by the joining the fragments, the latter
-    // the bits connecting the dummy atoms.
-    std::unique_ptr<ExplicitBitVect> addFP(
-        new ExplicitBitVect(*prodFP & ~approxFP));
-    IntVect v;
-    addFP->getOnBits(v);
-    for (auto i : v) {
-      naddbitcounts[i]++;
-    }
-    std::unique_ptr<ExplicitBitVect> subtractFP(
-        new ExplicitBitVect(approxFP & ~(*prodFP)));
-    subtractFP->getOnBits(v);
-    for (auto i : v) {
-      nsubbitcounts[i]++;
+    if (prod) {
+      std::unique_ptr<ExplicitBitVect> prodFP(fpGen.getFingerprint(*prod));
+      ExplicitBitVect approxFP(
+          *d_synthons[0][theseSynthNums[0]].second->getFP());
+      for (size_t j = 1; j < d_synthons.size(); ++j) {
+        approxFP |= *d_synthons[j][theseSynthNums[j]].second->getFP();
+      }
+      // addFP is what's in the productFP and not in approxFP
+      // and subtractFP is vice versa.  The former captures the bits of
+      // the molecule formed by the joining the fragments, the latter
+      // the bits connecting the dummy atoms.
+      std::unique_ptr<ExplicitBitVect> addFP(
+          new ExplicitBitVect(*prodFP & ~approxFP));
+      IntVect v;
+      addFP->getOnBits(v);
+      for (auto i : v) {
+        naddbitcounts[i]++;
+      }
+      std::unique_ptr<ExplicitBitVect> subtractFP(
+          new ExplicitBitVect(approxFP & ~(*prodFP)));
+      subtractFP->getOnBits(v);
+      for (auto i : v) {
+        nsubbitcounts[i]++;
+      }
     }
     stepper.step();
   }
