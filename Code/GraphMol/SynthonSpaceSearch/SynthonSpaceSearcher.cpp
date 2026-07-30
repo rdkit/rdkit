@@ -117,7 +117,6 @@ void SynthonSpaceSearcher::search(const SearchResultCallback &cb,
         std::vector<std::unique_ptr<ROMol>> partResults;
         processToTrySet(toTry, endTime, partResults, numHitsFound,
                         numPossHitsFound);
-        numHitsFound += partResults.size();
         stop = cb(partResults);
         toTry.clear();
         if (stop ||
