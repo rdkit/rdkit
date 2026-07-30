@@ -442,6 +442,12 @@ TEST_CASE("DB Writer") {
   std::remove(spaceName);
   // Check it behaves gracefully with a missing file
   CHECK_THROWS(synthonspace.readDBFile(spaceName));
+
+  // And the free function with some cursory checks.
+  convertTextToDBFile(libName, spaceName, cancelled, fpGen.get());
+  SynthonSpace newsynthonspace2;
+  newsynthonspace2.readDBFile(spaceName);
+  CHECK_NOTHROW(irxn = newsynthonspace.getReaction("doebner-miller-quinoline"));
 }
 
 TEST_CASE("S Small query") {
@@ -1015,9 +1021,6 @@ TEST_CASE("S Write Possible Hits") {
     auto newResults =
         synthonspace.substructureSearch(*queryMol, matchParams, params, 0, 110);
     CHECK(newResults.getHitMolecules().size() == 110);
-    for (const auto &res : newResults.getHitMolecules()) {
-      std::cout << res->getName() << "\n";
-    }
     std::remove("s_poss_hits_1.txt");
   }
 

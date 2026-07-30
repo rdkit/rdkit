@@ -16,6 +16,7 @@
 #include <memory>
 #include <ranges>
 #include <regex>
+#include <sstream>
 #include <thread>
 #include <vector>
 
@@ -1432,16 +1433,16 @@ void makeShapesFromMol(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
         // in the molecule.
         BOOST_LOG(rdWarningLog) << e.what() << std::endl;
       } catch (Invar::Invariant &e) {
-        BOOST_LOG(rdWarningLog) << e.what() << std::endl;
-        BOOST_LOG(rdWarningLog)
-            << "No conformers generated for sample molecule "
+        std::ostringstream oss;
+        oss << e.what() << "\n"
+            << "No shapes generated for sample molecule "
             << sampleMols[molNum]->d_mol->getProp<std::string>(
                    common_properties::_Name)
             << " : " << MolToSmiles(*sampleMols[molNum]->d_mol)
             << " when generating conformers for synthon "
             << sampleMols[molNum]->d_synthon->getSmiles()
             << " with isomer : " << MolToSmiles(*isomer) << std::endl;
-        exit(1);
+        throw std::runtime_error(oss.str());
       }
     }
     if (allShapes) {

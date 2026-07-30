@@ -792,8 +792,7 @@ std::unique_ptr<ROMol> SynthonSet::buildMolecule(
              d_synthons[i][synthonNums[i]].second->getSmiles() + ")";
     }
     msg += "\n" + std::string(e.what()) + "\n";
-    BOOST_LOG(rdErrorLog) << msg;
-    throw(e);
+    throw(std::runtime_error(msg));
   }
 }
 
