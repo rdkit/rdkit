@@ -38,6 +38,7 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/RDThreads.h>
+#include <cmath>
 #include <cstddef>
 #include <stdexcept>
 #include <vector>
@@ -1454,13 +1455,13 @@ bool setupInitialBoundsMatrix(
     ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
   PRECONDITION(mol, "bad molecule");
   unsigned int nAtoms = mol->getNumAtoms();
+  bool set15bounds = true;
+  bool scaleVDW = false;
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
-    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, true,
-                   false, params.useMacrocycle14config,
-                   params.forceTransAmides);
+    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
+                   scaleVDW, set15bounds);
   } else {
-    setTopolBounds(*mol, mmat, true, false, params.useMacrocycle14config,
-                   params.forceTransAmides);
+    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
   }
   double tol = 0.0;
   if (coordMap) {
@@ -1471,8 +1472,9 @@ bool setupInitialBoundsMatrix(
     // ok this bound matrix failed to triangle smooth - re-compute the
     // bounds matrix without 15 bounds and with VDW scaling
     initBoundsMat(mmat);
-    setTopolBounds(*mol, mmat, false, true, params.useMacrocycle14config,
-                   params.forceTransAmides);
+    bool scaleVDW = true;
+    bool set15bounds = false;
+    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
 
     if (coordMap) {
       adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
@@ -1484,8 +1486,9 @@ bool setupInitialBoundsMatrix(
       if (params.ignoreSmoothingFailures) {
         // proceed anyway with the more relaxed bounds matrix
         initBoundsMat(mmat);
-        setTopolBounds(*mol, mmat, false, true, params.useMacrocycle14config,
-                       params.forceTransAmides);
+        bool scaleVDW = true;
+        bool set15bounds = false;
+        setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
 
         if (coordMap) {
           adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
@@ -1762,6 +1765,15 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   boost::dynamic_bitset<> constrainedAtoms(mol.getNumAtoms());
   if (coordMap) {
     for (const auto &entry : *coordMap) {
+      if (entry.first < 0 ||
+          static_cast<unsigned int>(entry.first) >= mol.getNumAtoms()) {
+        throw ValueErrorException("coordMap atom index is out of range");
+      }
+      const auto &point = entry.second;
+      if (!std::isfinite(point.x) || !std::isfinite(point.y) ||
+          !std::isfinite(point.z)) {
+        throw ValueErrorException("coordMap contains non-finite coordinates");
+      }
       constrainedAtoms.set(entry.first);
     }
   }

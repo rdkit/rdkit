@@ -26,8 +26,10 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
+#include "BoundsMatrixBuilderDetails.h"
 #include <tuple>
 #include <map>
+#include <limits>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
@@ -38,6 +40,30 @@
 #endif
 
 using namespace RDKit;
+
+TEST_CASE("invalid coordinate maps", "[constrained-embedding]") {
+  auto mol = "CCO"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  std::map<int, RDGeom::Point3D> coordMap;
+  params.coordMap = &coordMap;
+
+  SECTION("atom index out of range") {
+    coordMap[mol->getNumAtoms()] = {0.0, 0.0, 0.0};
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*mol, params),
+                    ValueErrorException);
+  }
+
+  SECTION("non-finite coordinates") {
+    const auto value = GENERATE(std::numeric_limits<double>::infinity(),
+                                -std::numeric_limits<double>::infinity(),
+                                std::numeric_limits<double>::quiet_NaN());
+    coordMap[0] = {value, 0.0, 0.0};
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*mol, params),
+                    ValueErrorException);
+  }
+}
 
 TEST_CASE("Torsions not found in fused macrocycles", "[macrocycles]") {
   RDLog::InitLogs();
@@ -730,7 +756,7 @@ TEST_CASE("tracking failure causes") {
     CHECK(cid < 0);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
-          3);
+          1);
   }
   SECTION("basicsAIO") {
     auto mol =
@@ -1843,5 +1869,439 @@ TEST_CASE("Github9403: Bug: Overwritten stereo information in rings") {
           2.0 * 0.06 + 0.00001);
     CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <=
           2.0 * 0.06 + 0.00001);
+  }
+}
+
+TEST_CASE("Github #9404: competing 1-4s in six membered rings") {
+  SECTION("Simple case (CIS constrainted)") {
+    auto mol = "C1C=CCCC1"_smiles;
+    auto mol2 = "C1C=CCC=C1"_smiles;
+
+    REQUIRE(mol);
+    REQUIRE(mol2);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    DistGeom::BoundsMatPtr bm2{new DistGeom::BoundsMatrix(mol2->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm2, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*mol2, bm2);
+    // the 1-4 between atoms 0 and 3 must be the same since both are
+    // constrained by the CIS configuration
+    CHECK(bm->getUpperBound(0, 3) == bm2->getUpperBound(0, 3));
+    CHECK(bm->getLowerBound(0, 3) == bm2->getLowerBound(0, 3));
+  }
+  SECTION("CIS/TRANS inconsistency") {
+    auto mol = "C1C=CCC=C1"_smiles;
+
+    REQUIRE(mol);
+
+    auto bnd = mol->getBondBetweenAtoms(1, 2);
+    bnd->setStereoAtoms(0, 3);
+    bnd->setStereo(Bond::BondStereo::STEREOTRANS);
+
+    auto bnd2 = mol->getBondBetweenAtoms(5, 4);
+    bnd2->setStereoAtoms(3, 0);
+    bnd2->setStereo(Bond::BondStereo::STEREOCIS);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    // the 1-4 between atoms 0 and 3 must allow both CIS and TRANS configuration
+    CHECK(bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3) > 0.2);
+  }
+  SECTION("Fused rings overlapping") {
+    auto mol = "C1CC2CCC1SS2"_smiles;
+    auto molref = "C1CCCCC1"_smiles;
+    auto molref2 = "C1SSCSS1"_smiles;
+
+    REQUIRE(mol);
+    REQUIRE(molref);
+    REQUIRE(molref2);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    DistGeom::BoundsMatPtr bmref{
+        new DistGeom::BoundsMatrix(molref->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bmref, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*molref, bmref);
+
+    DistGeom::BoundsMatPtr bmref2{
+        new DistGeom::BoundsMatrix(molref2->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bmref2, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*molref2, bmref2);
+
+    // Flexibility of 5-0-1-2 and 5-6-7-2 overlapping with -S-S- (constrained
+    // by 90 deg)
+    // => intersection should be chosen where lower bound constrained by
+    // -S-S-
+    CHECK(bm->getLowerBound(2, 5) > bmref->getLowerBound(0, 3));
+    CHECK(bm->getUpperBound(2, 5) <
+          bmref2->getUpperBound(0, 3));  // due to extra squish for S
+  }
+  SECTION("Fused rings not overlapping") {
+    auto mol = "C1=CC2CCC1SS2"_smiles;
+    auto molref = "C1C=CCC=C1"_smiles;
+    auto molref2 = "C1CCCCC1"_smiles;
+
+    REQUIRE(mol);
+    REQUIRE(molref);
+    REQUIRE(molref2);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    DistGeom::BoundsMatPtr bmref{
+        new DistGeom::BoundsMatrix(molref->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bmref, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*molref, bmref);
+
+    DistGeom::BoundsMatPtr bmref2{
+        new DistGeom::BoundsMatrix(molref2->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bmref2, 0.0, 1000.0);
+
+    DGeomHelpers::setTopolBounds(*molref2, bmref2);
+
+    // CIS constraint of 5-0-1-2 is NOT overlapping with -S-S- (constrained
+    // by 90 deg)
+    // although 5-6-7-2 is overlapping with both -> union of overlapping
+    // intersections must be taken
+    CHECK(bm->getLowerBound(2, 5) <= bmref->getLowerBound(0, 3));
+    // The following scenario:
+    // Bounds{lower=2.52477, upper=3.81072, aid1=2, aid4=5}
+    // Bounds{lower=2.75783, upper=2.87783, aid1=5, aid4=2}
+    // Bounds{lower=3.33888, upper=4.77919, aid1=2, aid4=5}
+    // (2.5) |------------| (3.8)       [CCCC]
+    //   (2.8) |--| (2.9)               [CC=CC]
+    //               |----------| (4.8) [CSSC]
+    // ========================================
+    //   (2.8) |----------| (3.8)
+    CHECK(bm->getUpperBound(2, 5) >=
+          bmref2->getUpperBound(0, 3));  // due to extra squish for S
+  }
+}
+
+TEST_CASE("setTopolBounds with param objects") {
+  SECTION("simple") {
+    auto mol = "CC(=O)NC"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::EmbedParameters ps{.forceTransAmides = false};
+    DGeomHelpers::setTopolBounds(*mol, bm, ps);
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) > 0.5);
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    ps.forceTransAmides = true;
+    DGeomHelpers::setTopolBounds(*mol, bm, ps);
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) < 0.5);
+  }
+
+  SECTION("additional parameters") {
+    auto mol = "CC(=O)NCC"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::EmbedParameters ps;
+    ps.useMacrocycle14config = true;
+    ps.forceTransAmides = true;
+
+    {
+      // skip setting 1-3 bounds
+      bool set15bounds = true;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = true;
+      bool set13bounds = false;
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) == 1000.0);
+      // make sure 1-4s and 1-5s are also not set:
+      CHECK(bm->getUpperBound(0, 4) == 1000.0);
+      CHECK(bm->getUpperBound(0, 5) == 1000.0);
+
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, ps, scaleVDW, set15bounds,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) == 1000.0);
+      // make sure 1-4s and 1-5s are also not set:
+      CHECK(bm->getUpperBound(0, 4) == 1000.0);
+      CHECK(bm->getUpperBound(0, 5) == 1000.0);
+    }
+    {
+      // skip setting 1-4 bounds
+      bool set15bounds = true;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = false;
+      bool set13bounds = true;
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) < 6.0);
+      CHECK(bm->getUpperBound(0, 4) == 1000.0);
+      // make sure 1-5s are also not set:
+      CHECK(bm->getUpperBound(0, 5) == 1000.0);
+
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, ps, scaleVDW, set15bounds,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) < 6.0);
+      CHECK(bm->getUpperBound(0, 4) == 1000.0);
+      // make sure 1-5s are also not set:
+      CHECK(bm->getUpperBound(0, 5) == 1000.0);
+    }
+    {
+      // skip setting 1-5 bounds
+      bool set15bounds = false;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = true;
+      bool set13bounds = true;
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) < 6.0);
+      CHECK(bm->getUpperBound(0, 4) < 6.0);
+      CHECK(bm->getUpperBound(0, 5) == 1000.0);
+
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, ps, scaleVDW, set15bounds,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) < 6.0);
+      CHECK(bm->getUpperBound(0, 4) < 6.0);
+      CHECK(bm->getUpperBound(0, 5) == 1000.0);
+    }
+    {
+      // set everything
+      bool set15bounds = true;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = true;
+      bool set13bounds = true;
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) < 6.0);
+      CHECK(bm->getUpperBound(0, 4) < 6.0);
+      CHECK(bm->getUpperBound(0, 5) < 6.0);
+
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, ps, scaleVDW, set15bounds,
+                                   set14bounds, set13bounds);
+      CHECK(bm->getUpperBound(0, 3) < 6.0);
+      CHECK(bm->getUpperBound(0, 4) < 6.0);
+      CHECK(bm->getUpperBound(0, 5) < 6.0);
+    }
+    {
+      // scale VDW is ignored
+      bool set15bounds = false;
+      bool scaleVDW = false;
+      bool useMacrocycle14config = false;
+      bool forceTransAmides = true;
+      bool set14bounds = true;
+      bool set13bounds = true;
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+      auto lb = bm->getLowerBound(0, 5);
+      CHECK_THAT(lb, Catch::Matchers::WithinAbs(2.38, 0.01));
+
+      scaleVDW = true;
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
+                                   useMacrocycle14config, forceTransAmides,
+                                   set14bounds, set13bounds);
+      CHECK(lb == bm->getLowerBound(0, 5));
+
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*mol, bm, ps, scaleVDW, set15bounds,
+                                   set14bounds, set13bounds);
+      CHECK(lb == bm->getLowerBound(0, 5));
+    }
+  }
+}
+
+void check_permutations(std::vector<DGeomHelpers::Bounds> &bounds,
+                       const DGeomHelpers::Bounds expected) {
+  // we check all permutations to ensure no order dependence
+  do {
+    auto merged = DGeomHelpers::merge(bounds);
+    CHECK(merged == expected);
+  } while (
+      std::ranges::next_permutation(bounds, {}, &DGeomHelpers::Bounds::lower)
+          .found);
+}
+
+TEST_CASE("Bounds Merging") {
+  SECTION("Simple, all overlapping") {
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.0, 2.0}, {1.5, 3.0}, {0.5, 2.5}};
+    check_permutations(bounds, {1.5, 2.0});
+  }
+  SECTION("Simple all not overlapping") {
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.0, 2.0}, {2.5, 3.0}, {3.5, 4.5}};
+
+    check_permutations(bounds, {0.0, 4.5});
+  }
+  SECTION("Test fused 1") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
+                                                {0.5, 1.0},
+                                                {1.5, 2.5},
+                                                {2.0, 3.0}};
+    // |------------------|
+    //   |--|
+    //          |---|
+    //            |-----|
+    // ====================
+    //   |----------|
+    check_permutations(bounds, {0.5, 2.5});
+  }
+  SECTION("Test fused 2") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
+                                                {0.5, 1.0},
+                                                {1.5, 3.0},
+                                                {2.0, 2.5}};
+    // |------------------|
+    //   |--|
+    //          |-----|
+    //            |-|
+    // ====================
+    //   |----------|
+    check_permutations(bounds, {0.5, 2.5});
+  }
+  SECTION("Test fused 3") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
+                                                {0.5, 1.0},
+                                                {1.5, 3.0},
+                                                {2.0, 5.5}};
+    // |------------------|
+    //   |--|
+    //          |-----|
+    //            |----------|
+    // =======================
+    //   |------------|
+    check_permutations(bounds, {0.5, 3.0});
+  }
+  SECTION("Test fused 4") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
+                                                {0.5, 1.0},
+                                                {1.5, 2.5},
+                                                {2.0, 3.0},
+                                                {4.0, 6.0}};
+    // |---------------------|
+    //   |--|
+    //          |---|
+    //            |-----|
+    //                     |-----|
+    // ===========================
+    //   |-------------------|
+    check_permutations(bounds, {0.5, 5.0});
+  }
+
+  SECTION("Test fused 5") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
+                                                {0.5, 1.0},
+                                                {0.7, 1.9},
+                                                {2.0, 5.5}};
+    // |------------------|
+    //   |--|
+    //     |-----|
+    //            |----------|
+    // =======================
+    //    |---------------|
+    check_permutations(bounds, {0.7, 5});
+  }
+  SECTION("Test fused 6") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 1.5},
+                                                {0.5, 5.0},
+                                                {0.7, 1.9},
+                                                {2.0, 5.5}};
+    // |-----|
+    //   |----------------|
+    //     |-----|
+    //            |----------|
+    // =======================
+    //    |---------------|
+    check_permutations(bounds, {0.7, 5});
+  }
+  SECTION("Test fused 7") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
+                                                {0.5, 1.0},
+                                                {1.5, 1.9},
+                                                {2.0, 5.5}};
+    // |------------------|
+    //   |--|
+    //         |--|
+    //                |----------|
+    // =======================
+    //    |---------------|
+    check_permutations(bounds, {0.5, 5});
+  }
+  SECTION("Test fused 1.1") {
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.5, 1.0}, {1.5, 2.5}, {2.0, 3.0}};
+    //   |--|
+    //          |---|
+    //            |-----|
+    // ====================
+    //   |----------|
+    check_permutations(bounds, {0.5, 2.5});
+  }
+  SECTION("Test fused 2.1") {
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.5, 1.0}, {1.5, 3.0}, {2.0, 2.5}};
+    //   |--|
+    //          |-----|
+    //            |-|
+    // ====================
+    //   |----------|
+    check_permutations(bounds, {0.5, 2.5});
+  }
+  SECTION("Test fused 3.1") {
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.5, 1.0}, {1.5, 3.0}, {2.0, 5.5}};
+    //   |--|
+    //          |-----|
+    //            |----------|
+    // =======================
+    //   |------------|
+    check_permutations(bounds, {0.5, 3.0});
+  }
+  SECTION("Test fused 4.1") {
+    std::vector<DGeomHelpers::Bounds> bounds = {{0.5, 1.0},
+                                                {1.5, 2.5},
+                                                {2.0, 3.0},
+                                                {4.0, 6.0}};
+    //   |--|
+    //          |---|
+    //            |-----|
+    //                     |-----|
+    // ===========================
+    //   |-----------------------|
+    check_permutations(bounds, {0.5, 6.0});
   }
 }

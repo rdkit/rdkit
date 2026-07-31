@@ -22,6 +22,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Rings.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -493,6 +494,31 @@ TEST_CASE("test3") {
   REQUIRE(m->getRingInfo()->numAtomRings(4) == 3);
   REQUIRE(m->getRingInfo()->isAtomInRingOfSize(4, 4));
   delete m;
+}
+
+TEST_CASE("pickFusedRings handles deeply fused systems without recursion") {
+  // Set this to a large number to make sure mols with lots of rings
+  // don't trigger a stack overflow in pickFusedRings.
+  constexpr int numRings = 10000;
+
+  INT_INT_VECT_MAP neighMap;
+  for (int ring = 0; ring < numRings; ++ring) {
+    if (ring) {
+      neighMap[ring].push_back(ring - 1);
+    }
+    if (ring + 1 < numRings) {
+      neighMap[ring].push_back(ring + 1);
+    }
+  }
+
+  INT_VECT fused;
+  boost::dynamic_bitset<> done(numRings);
+  RingUtils::pickFusedRings(0, neighMap, fused, done);
+
+  REQUIRE(fused.size() == numRings);
+  REQUIRE(done.count() == numRings);
+  REQUIRE(fused.front() == 0);
+  REQUIRE(fused.back() == numRings - 1);
 }
 
 TEST_CASE("test4") {
@@ -4928,9 +4954,7 @@ TEST_CASE("Testing github issue 418: removeHs not updating H count") {
     REQUIRE(m->getAtomWithIdx(0)->getNumExplicitHs() == 4);
     delete m;
   }
-  {
-    REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException);
-  }
+  { REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException); }
 }
 
 TEST_CASE(
@@ -8021,6 +8045,36 @@ TEST_CASE("Testing isRingFused") {
   }
 }
 
+TEST_CASE("Github #9398: Macrocycle ether aromaticity") {
+  SECTION("as reported") {
+    // The SMILES with uppercase 'O' (aliphatic ethers)
+    auto m = "O=C(O)c1cccc2Oc3cncc(n3)Oc3c(C(=O)O)cccc3Oc3cncc(n3)Oc12"_smiles;
+    REQUIRE(m);
+
+    // Check that the ether oxygens are NOT aromatic
+    // (Based on the Python script, atoms 8, 15, 25, 32 are the oxygens)
+    CHECK(!m->getAtomWithIdx(8)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(15)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(25)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(32)->getIsAromatic());
+  }
+  SECTION("test edge cases") {
+    {
+      // eight-membered ring is a candidate for aromaticity
+      auto m = "O=c1ccccc(=O)c(=O)o1"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getIsAromatic());
+    }
+    {
+      // nine-membered ring is not a candidate for aromaticity
+      auto m = "O=c1ccccc(=O)ooo1"_smiles;
+      REQUIRE(m);
+      CHECK(!m->getAtomWithIdx(1)->getIsAromatic());
+    }
+
+    // m->debugMol(std::cerr);
+  }
+}
 TEST_CASE("GitHub Issue #9064: Incorrect SMARTS matching") {
   constexpr const char *smi = R"smi(c1ccc2c(c1)C3CC3C4CC5CC4CC25)smi";
   constexpr const char *sma = R"sma(C!@c)sma";

@@ -652,6 +652,19 @@ TEST_CASE(
   CHECK(!nb8->hasQuery());
 }
 
+TEST_CASE("fragmentOnBonds should not segfault on duplicate bondIndices") {
+  // Basic test
+  auto mol = "NCCO"_smiles;
+  REQUIRE(mol);
+  REQUIRE(mol->getBondWithIdx(0));
+  REQUIRE(mol->getBondWithIdx(2));
+  std::unique_ptr<ROMol> splitMol;
+  CHECK_THROWS_AS(splitMol.reset(MolFragmenter::fragmentOnBonds(
+                      *mol, std::vector<unsigned int>{0, 2, 2})),
+                  ValueErrorException);
+  REQUIRE(!splitMol);
+}
+
 TEST_CASE("align fragments") {
   SECTION("basics") {
     auto m = "CC[1*].O[1*] |(1,0,0;2,0,0;3.5,0,0;0,1,0;0,2.1,0)|"_smiles;

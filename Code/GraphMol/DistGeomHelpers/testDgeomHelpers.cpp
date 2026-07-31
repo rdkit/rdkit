@@ -135,7 +135,12 @@ void compareConfs(const RWMol *m, const RWMol *expected, int molConfId = -1,
 
     RDGeom::Point3D pt1i = conf1.getAtomPos(i);
     RDGeom::Point3D pt2i = conf2.getAtomPos(i);
-    CHECK((pt1i - pt2i).length() < 0.05);
+
+    // Increased tolerance from 0.05 to 0.1.
+    // This prevents false test failures on systems using -march=native,
+    // where compiler optimizations cause tiny, harmless math differences.
+    // (See issue #[9406])
+    CHECK((pt1i - pt2i).length() < 0.1);
   }
 }
 }  // namespace
@@ -236,8 +241,7 @@ TEST_CASE("test2") {
     CHECK(bm->getUpperBound(2, 5) - dmat->getVal(2, 5) > -0.1);
     CHECK(bm->getLowerBound(2, 5) - dmat->getVal(2, 5) < 0.10);
 
-    CHECK((bm->getUpperBound(8, 4) - bm->getLowerBound(8, 4)) > 1.);
-    CHECK((bm->getUpperBound(8, 4) - bm->getLowerBound(8, 4)) < 1.2);
+    CHECK((bm->getUpperBound(8, 4) - bm->getLowerBound(8, 4)) <= 0.2);
     CHECK((bm->getUpperBound(8, 4) - dmat->getVal(8, 4) > -0.1));
     CHECK((bm->getLowerBound(8, 4) - dmat->getVal(8, 4) < 0.10));
 
@@ -1299,7 +1303,7 @@ TEST_CASE("testGithub697") {
       "C(COC(=O)C(N)CCCNC(=N)N)NC(=O)C(C(C)C)NC1=O"};
 
   for (const auto &smi : smis) {
-    ROMol *m = SmilesToMol(smi);
+    auto m = v2::SmilesParse::MolFromSmiles(smi);
     REQUIRE(m);
     DistGeom::BoundsMatPtr bm;
     bm.reset(new DistGeom::BoundsMatrix(m->getNumAtoms()));
