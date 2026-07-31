@@ -23,7 +23,7 @@ using namespace RDKit;
 namespace {
 
 std::unique_ptr<MacroMolTemplate> makeTemplate(
-    const std::string &templateName, const std::string &symbol,
+    const std::string &name, const std::string &symbol,
     const std::string &smiles, std::vector<unsigned int> mainGroupAtoms,
     std::vector<MacroMolLeavingGroup> leavingGroups = {},
     MonomerClass monomerClass = MonomerClass::AminoAcid) {
@@ -31,8 +31,7 @@ std::unique_ptr<MacroMolTemplate> makeTemplate(
   if (!mol) {
     throw ValueErrorException("could not parse template SMILES");
   }
-  MacroMolTemplateBuilder builder(*mol, monomerClass, templateName, symbol,
-                                  smiles);
+  MacroMolTemplateBuilder builder(*mol, monomerClass, name, symbol, smiles);
   builder.setMainGroup(std::move(mainGroupAtoms));
   for (auto &leavingGroup : leavingGroups) {
     builder.addLeavingGroup(std::move(leavingGroup));
@@ -65,7 +64,7 @@ TEST_CASE("MacroMolTemplate owns an immutable molecule and metadata") {
 
   CHECK(templ->getMol().getNumAtoms() == 1);
   CHECK(templ->getMonomerClass() == MonomerClass::AminoAcid);
-  CHECK(templ->getTemplateName() == "ALA");
+  CHECK(templ->getName() == "ALA");
   CHECK(templ->getSymbol() == "A");
   CHECK(templ->getOriginalData() == "C");
   CHECK(templ->getMainAtomIdxs() == std::vector<unsigned int>{0});
@@ -208,9 +207,9 @@ TEST_CASE("MacroMolTemplateLibrary separates classes and rejects duplicates") {
   library.addTemplate(
       makeTemplate("ADE", "A", "N", {0}, {}, MonomerClass::NucleicAcid));
 
-  CHECK(library.getBySymbol(MonomerClass::AminoAcid, "A")->getTemplateName() ==
+  CHECK(library.getBySymbol(MonomerClass::AminoAcid, "A")->getName() ==
         "ALA");
-  CHECK(library.getBySymbol(MonomerClass::NucleicAcid, "A")->getTemplateName() ==
+  CHECK(library.getBySymbol(MonomerClass::NucleicAcid, "A")->getName() ==
         "ADE");
   CHECK_THROWS_AS(
       library.addTemplate(

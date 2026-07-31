@@ -142,8 +142,8 @@ MacroMolTemplateBuilder &MacroMolTemplateBuilder::addLeavingGroup(
 }
 
 std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() && {
-  if (d_templateName.empty()) {
-    invalidTemplate("template name cannot be empty");
+  if (d_name.empty()) {
+    invalidTemplate("name cannot be empty");
   }
   if (d_symbol.empty()) {
     invalidTemplate("template symbol cannot be empty");
@@ -173,7 +173,7 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() && {
   SubstanceGroup mainSgroup(&d_mol, SUP_TYPE);
   mainSgroup.setProp("CLASS",
                      std::string(monomerClassToString(d_monomerClass)));
-  mainSgroup.setProp("LABEL", d_templateName);
+  mainSgroup.setProp("LABEL", d_name);
   mainSgroup.setAtoms(d_mainAtomIdxs);
   for (const auto &leavingGroup : d_leavingGroups) {
     mainSgroup.addAttachPoint(leavingGroup.attachAtomIdx,
@@ -190,7 +190,7 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() && {
   }
 
   return std::unique_ptr<MacroMolTemplate>(new MacroMolTemplate(
-      std::move(d_mol), d_monomerClass, std::move(d_templateName),
+      std::move(d_mol), d_monomerClass, std::move(d_name),
       std::move(d_symbol), std::move(d_originalData),
       std::move(d_mainAtomIdxs), std::move(d_leavingGroups), mainSgroupIdx));
 }
@@ -207,13 +207,12 @@ void MacroMolTemplateLibrary::addTemplate(
     throw ValueErrorException("cannot add a null MacroMolTemplate");
   }
 
-  const MacroMolTemplateKey templateKey{
-      macroMolTemplate->getMonomerClass(),
-      macroMolTemplate->getTemplateName()};
-  if (byTemplateName.find(templateKey) != byTemplateName.end()) {
+  const MacroMolTemplateKey nameKey{
+      macroMolTemplate->getMonomerClass(), macroMolTemplate->getName()};
+  if (byName.find(nameKey) != byName.end()) {
     throw ValueErrorException(
         "MacroMolTemplateLibrary already contains an entry with the same "
-        "monomer class and template name");
+        "monomer class and name");
   }
 
   const MacroMolTemplateKey symbolKey{macroMolTemplate->getMonomerClass(),
@@ -233,7 +232,7 @@ void MacroMolTemplateLibrary::addTemplate(
 
   const auto *templatePtr = macroMolTemplate.get();
   ownedTemplates.push_back(std::move(macroMolTemplate));
-  byTemplateName.emplace(templateKey, templatePtr);
+  byName.emplace(nameKey, templatePtr);
   bySymbol.emplace(symbolKey, templatePtr);
   orderedEntries.insert(insertionPoint, templatePtr);
 }
@@ -244,9 +243,9 @@ MacroMolTemplateLibrary::entries() const {
 }
 
 const MacroMolTemplate *MacroMolTemplateLibrary::getByName(
-    MonomerClass monomerClass, const std::string &templateName) const {
-  auto it = byTemplateName.find({monomerClass, templateName});
-  if (it != byTemplateName.end()) return it->second;
+    MonomerClass monomerClass, const std::string &name) const {
+  auto it = byName.find({monomerClass, name});
+  if (it != byName.end()) return it->second;
   return nullptr;
 }
 

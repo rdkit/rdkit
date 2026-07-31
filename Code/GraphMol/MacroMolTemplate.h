@@ -58,8 +58,8 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate final {
   const ROMol &getMol() const { return d_mol; }
   //! Returns the monomer class used for lookup and the main SGroup CLASS.
   MonomerClass getMonomerClass() const { return d_monomerClass; }
-  //! Returns the template name, e.g. "ALA".
-  const std::string &getTemplateName() const { return d_templateName; }
+  //! Returns the name, e.g. "ALA".
+  const std::string &getName() const { return d_name; }
   //! Returns the template symbol, e.g. "A" for alanine.
   const std::string &getSymbol() const { return d_symbol; }
   //! Returns the original template definition (SMILES, SDF, etc.).
@@ -79,14 +79,14 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate final {
   friend class MacroMolTemplateBuilder;
 
   MacroMolTemplate(RWMol mol, MonomerClass monomerClass,
-                   std::string templateName, std::string symbol,
+                   std::string name, std::string symbol,
                    std::string originalData,
                    std::vector<unsigned int> mainAtomIdxs,
                    std::vector<MacroMolLeavingGroup> leavingGroups,
                    unsigned int mainSgroupIdx)
       : d_mol(std::move(mol)),
         d_monomerClass(monomerClass),
-        d_templateName(std::move(templateName)),
+        d_name(std::move(name)),
         d_symbol(std::move(symbol)),
         d_originalData(std::move(originalData)),
         d_mainAtomIdxs(std::move(mainAtomIdxs)),
@@ -95,7 +95,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate final {
 
   RWMol d_mol;
   MonomerClass d_monomerClass;
-  std::string d_templateName;
+  std::string d_name;
   std::string d_symbol;
   std::string d_originalData;
   std::vector<unsigned int> d_mainAtomIdxs;
@@ -107,11 +107,11 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate final {
 class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateBuilder {
  public:
   MacroMolTemplateBuilder(const ROMol &mol, MonomerClass monomerClass,
-                          std::string templateName, std::string symbol,
+                          std::string name, std::string symbol,
                           std::string originalData)
       : d_mol(mol),
         d_monomerClass(monomerClass),
-        d_templateName(std::move(templateName)),
+        d_name(std::move(name)),
         d_symbol(std::move(symbol)),
         d_originalData(std::move(originalData)) {}
 
@@ -126,7 +126,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateBuilder {
  private:
   RWMol d_mol;
   MonomerClass d_monomerClass;
-  std::string d_templateName;
+  std::string d_name;
   std::string d_symbol;
   std::string d_originalData;
   std::vector<unsigned int> d_mainAtomIdxs;
@@ -144,7 +144,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateLibrary {
 
   //! Returns a matching template, or nullptr if none has been added.
   const MacroMolTemplate *getByName(
-      MonomerClass monomerClass, const std::string &templateName) const;
+      MonomerClass monomerClass, const std::string &name) const;
   //! Returns a matching template, or nullptr if none has been added.
   const MacroMolTemplate *getBySymbol(
       MonomerClass monomerClass, const std::string &symbol) const;
@@ -152,7 +152,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateLibrary {
  private:
   using MacroMolTemplateKey = std::pair<MonomerClass, std::string>;
 
-  std::map<MacroMolTemplateKey, const MacroMolTemplate *> byTemplateName;
+  std::map<MacroMolTemplateKey, const MacroMolTemplate *> byName;
   std::map<MacroMolTemplateKey, const MacroMolTemplate *> bySymbol;
   std::vector<std::unique_ptr<const MacroMolTemplate>> ownedTemplates;
   std::vector<const MacroMolTemplate *> orderedEntries;
