@@ -17,93 +17,47 @@ namespace python = boost::python;
 using namespace RDInfoTheory;
 
 namespace RDInfoTheory {
-double infoEntropy(python::object resArr) {
-  PyObject *matObj = resArr.ptr();
-  if (!PyArray_Check(matObj)) {
+namespace {
+// Dispatching on the input's own type_num used to leave uncommon dtypes
+// (NPY_LONGLONG, i.e. numpy's int64 on Windows, but also int8/uint*/float16)
+// unhandled, which silently produced a result of 0.0 (github #8421).
+PyArrayObject *contiguousDoubles(const python::object &resArr, int minDim,
+                                 int maxDim) {
+  if (!PyArray_Check(resArr.ptr())) {
     throw_value_error("Expecting a Numeric array object");
   }
-  PyArrayObject *copy;
-  copy = (PyArrayObject *)PyArray_ContiguousFromObject(
-      matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 1, 1);
-  double res = 0.0;
-  // we are expecting a 1 dimensional array
-  auto ncols = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
-  CHECK_INVARIANT(ncols > 0, "");
-  if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
-    auto *data = (double *)PyArray_DATA(copy);
-    res = InfoEntropy(data, ncols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
-    auto *data = (float *)PyArray_DATA(copy);
-    res = InfoEntropy(data, ncols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
-    int *data = (int *)PyArray_DATA(copy);
-    res = InfoEntropy(data, ncols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
-    auto *data = (long int *)PyArray_DATA(copy);
-    res = InfoEntropy(data, ncols);
+  auto *copy = (PyArrayObject *)PyArray_ContiguousFromObject(
+      resArr.ptr(), NPY_DOUBLE, minDim, maxDim);
+  if (!copy) {
+    throw_value_error("could not convert argument to an array of doubles");
   }
+  return copy;
+}
+}  // namespace
+
+double infoEntropy(python::object resArr) {
+  PyArrayObject *copy = contiguousDoubles(resArr, 1, 1);
+  auto ncols = (long int)PyArray_DIM(copy, 0);
+  CHECK_INVARIANT(ncols > 0, "");
+  double res = InfoEntropy((double *)PyArray_DATA(copy), ncols);
   Py_DECREF(copy);
   return res;
 }
 
 double infoGain(python::object resArr) {
-  PyObject *matObj = resArr.ptr();
-  if (!PyArray_Check(matObj)) {
-    throw_value_error("Expecting a Numeric array object");
-  }
-  PyArrayObject *copy;
-  copy = (PyArrayObject *)PyArray_ContiguousFromObject(
-      matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 2, 2);
-  auto rows = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
-  auto cols = (long int)PyArray_DIM((PyArrayObject *)matObj, 1);
-  double res = 0.0;
-  if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
-    auto *data = (double *)PyArray_DATA(copy);
-    res = InfoEntropyGain(data, rows, cols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
-    auto *data = (float *)PyArray_DATA(copy);
-    res = InfoEntropyGain(data, rows, cols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
-    int *data = (int *)PyArray_DATA(copy);
-    res = InfoEntropyGain(data, rows, cols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
-    auto *data = (long int *)PyArray_DATA(copy);
-    res = InfoEntropyGain(data, rows, cols);
-  } else {
-    throw_value_error(
-        "Numeric array object of type int or long or float or double");
-  }
+  PyArrayObject *copy = contiguousDoubles(resArr, 2, 2);
+  auto rows = (long int)PyArray_DIM(copy, 0);
+  auto cols = (long int)PyArray_DIM(copy, 1);
+  double res = InfoEntropyGain((double *)PyArray_DATA(copy), rows, cols);
   Py_DECREF(copy);
   return res;
 }
 
 double chiSquare(python::object resArr) {
-  PyObject *matObj = resArr.ptr();
-  if (!PyArray_Check(matObj)) {
-    throw_value_error("Expecting a Numeric array object");
-  }
-  PyArrayObject *copy;
-  copy = (PyArrayObject *)PyArray_ContiguousFromObject(
-      matObj, PyArray_DESCR((PyArrayObject *)matObj)->type_num, 2, 2);
-  auto rows = (long int)PyArray_DIM((PyArrayObject *)matObj, 0);
-  auto cols = (long int)PyArray_DIM((PyArrayObject *)matObj, 1);
-  double res = 0.0;
-  if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_DOUBLE) {
-    auto *data = (double *)PyArray_DATA(copy);
-    res = ChiSquare(data, rows, cols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_FLOAT) {
-    auto *data = (float *)PyArray_DATA(copy);
-    res = ChiSquare(data, rows, cols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_INT) {
-    int *data = (int *)PyArray_DATA(copy);
-    res = ChiSquare(data, rows, cols);
-  } else if (PyArray_DESCR((PyArrayObject *)matObj)->type_num == NPY_LONG) {
-    auto *data = (long int *)PyArray_DATA(copy);
-    res = ChiSquare(data, rows, cols);
-  } else {
-    throw_value_error(
-        "Numeric array object of type int or long or float or double");
-  }
+  PyArrayObject *copy = contiguousDoubles(resArr, 2, 2);
+  auto rows = (long int)PyArray_DIM(copy, 0);
+  auto cols = (long int)PyArray_DIM(copy, 1);
+  double res = ChiSquare((double *)PyArray_DATA(copy), rows, cols);
   Py_DECREF(copy);
   return res;
 }

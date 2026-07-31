@@ -320,7 +320,7 @@ def _pyChiNv_(mol, order=2):
                         for hkd in _hkDeltas(mol, skipHs=0)])
   accum = 0.0
   for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
-    accum += numpy.prod(deltas[numpy.array(path)],float)
+    accum += numpy.prod(deltas[numpy.array(path)], dtype=float)
   return accum
 
 
@@ -391,7 +391,7 @@ def _pyChiNn_(mol, order=2):
   deltas = numpy.array([(1. / numpy.sqrt(x) if x else 0.0) for x in nval])
   accum = 0.0
   for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
-    accum += numpy.prod(deltas[numpy.array(path)],float)
+    accum += numpy.prod(deltas[numpy.array(path)], dtype=float)
   return accum
 
 
