@@ -26,10 +26,18 @@ namespace RDKit {
 
 //! Describes the atoms removed at one MacroMol template attachment point.
 struct RDKIT_GRAPHMOL_EXPORT MacroMolLeavingGroup {
+  MacroMolLeavingGroup(std::vector<unsigned int> atomIdxs,
+                       unsigned int attachAtomIdx,
+                       unsigned int leavingAtomIdx, int attachPoint)
+      : atomIdxs(std::move(atomIdxs)),
+        attachAtomIdx(attachAtomIdx),
+        leavingAtomIdx(leavingAtomIdx),
+        attachPoint(attachPoint) {}
+
   std::vector<unsigned int> atomIdxs;
-  unsigned int attachAtomIdx = 0;
-  unsigned int leavingAtomIdx = 0;
-  int attachPoint = 0;
+  unsigned int attachAtomIdx;
+  unsigned int leavingAtomIdx;
+  int attachPoint;
 };
 
 class MacroMolTemplateBuilder;

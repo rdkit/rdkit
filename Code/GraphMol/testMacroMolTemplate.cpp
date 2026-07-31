@@ -44,6 +44,10 @@ std::unique_ptr<MacroMolTemplate> makeTemplate(
 
 static_assert(!std::is_base_of_v<ROMol, MacroMolTemplate>);
 static_assert(!std::is_base_of_v<RWMol, MacroMolTemplate>);
+static_assert(!std::is_default_constructible_v<MacroMolLeavingGroup>);
+static_assert(std::is_constructible_v<MacroMolLeavingGroup,
+                                      std::vector<unsigned int>, unsigned int,
+                                      unsigned int, int>);
 static_assert(!std::is_default_constructible_v<MacroMolTemplate>);
 static_assert(std::is_copy_constructible_v<MacroMolTemplate>);
 static_assert(std::is_move_constructible_v<MacroMolTemplate>);
