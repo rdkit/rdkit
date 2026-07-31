@@ -9,7 +9,6 @@
 //
 
 #include <GraphMol/MacroMolTemplate.h>
-#include <GraphMol/Atom.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <catch2/catch_all.hpp>
 
@@ -25,240 +24,199 @@ namespace {
 
 std::unique_ptr<MacroMolTemplate> makeTemplate(
     const std::string &templateName, const std::string &symbol,
-    const std::string &smiles, const std::vector<unsigned int> &mainGroupAtoms,
+    const std::string &smiles, std::vector<unsigned int> mainGroupAtoms,
+    std::vector<MacroMolLeavingGroup> leavingGroups = {},
     MonomerClass monomerClass = MonomerClass::AminoAcid) {
   std::unique_ptr<RWMol> mol(SmilesToMol(smiles));
   if (!mol) {
     throw ValueErrorException("could not parse template SMILES");
   }
-  auto result = std::make_unique<MacroMolTemplate>(
-      *mol, monomerClass, templateName, symbol, smiles);
-  result->setMainGroup(mainGroupAtoms);
-  return result;
+  MacroMolTemplateBuilder builder(*mol, monomerClass, templateName, symbol,
+                                  smiles);
+  builder.setMainGroup(std::move(mainGroupAtoms));
+  for (auto &leavingGroup : leavingGroups) {
+    builder.addLeavingGroup(std::move(leavingGroup));
+  }
+  return std::move(builder).build();
 }
 
 }  // namespace
 
-static_assert(std::is_base_of_v<RWMol, MacroMolTemplate>);
+static_assert(!std::is_base_of_v<ROMol, MacroMolTemplate>);
+static_assert(!std::is_base_of_v<RWMol, MacroMolTemplate>);
 static_assert(!std::is_default_constructible_v<MacroMolTemplate>);
+static_assert(std::is_copy_constructible_v<MacroMolTemplate>);
+static_assert(std::is_move_constructible_v<MacroMolTemplate>);
+static_assert(!std::is_copy_assignable_v<MacroMolTemplate>);
 static_assert(std::is_same_v<
-              decltype(std::declval<const MacroMolTemplate &>()
-                           .getTemplateName()),
-              const std::string &>);
+              decltype(std::declval<const MacroMolTemplate &>().getMol()),
+              const ROMol &>);
 static_assert(std::is_same_v<
               decltype(std::declval<const MacroMolTemplateLibrary &>()
                            .entries()),
               const std::vector<const MacroMolTemplate *> &>);
-static_assert(std::is_same_v<
-              decltype(std::declval<const MacroMolTemplateLibrary &>()
-                           .getByName(MonomerClass::AminoAcid, "")),
-              const MacroMolTemplate *>);
 
-TEST_CASE("MacroMolTemplate owns its molecule and metadata") {
-  RWMol mol;
-  MacroMolTemplate macroMolTemplate(
-      mol, MonomerClass::AminoAcid, "ALA", "A", "N[C@@H](C)C(=O)O");
+TEST_CASE("MacroMolTemplate owns an immutable molecule and metadata") {
+  auto templ = makeTemplate("ALA", "A", "C", {0});
 
-  CHECK(macroMolTemplate.getNumAtoms() == 0);
-  CHECK(macroMolTemplate.getMonomerClass() == MonomerClass::AminoAcid);
-  CHECK(macroMolTemplate.getTemplateName() == "ALA");
-  CHECK(macroMolTemplate.getSymbol() == "A");
-  CHECK(macroMolTemplate.getOriginalData() == "N[C@@H](C)C(=O)O");
+  CHECK(templ->getMol().getNumAtoms() == 1);
+  CHECK(templ->getMonomerClass() == MonomerClass::AminoAcid);
+  CHECK(templ->getTemplateName() == "ALA");
+  CHECK(templ->getSymbol() == "A");
+  CHECK(templ->getOriginalData() == "C");
+  CHECK(templ->getMainAtomIdxs() == std::vector<unsigned int>{0});
+  CHECK(templ->getLeavingGroups().empty());
+
+  MacroMolTemplate copied(*templ);
+  CHECK(copied.getMol().getNumAtoms() == 1);
+  CHECK(&copied.getMainSgroup().getOwningMol() == &copied.getMol());
 }
 
-TEST_CASE("MacroMolTemplateLibrary lookups return const templates") {
-  MacroMolTemplateLibrary templateLibrary;
-  auto alanine = makeTemplate("ALA", "A", "CC", {0, 1});
-  auto cysteine = makeTemplate("CYS", "C", "CS", {0, 1});
-  const auto *alaninePtr = alanine.get();
-  const auto *cysteinePtr = cysteine.get();
-
-  templateLibrary.addTemplate(std::move(alanine));
-  templateLibrary.addTemplate(std::move(cysteine));
-
-  CHECK(templateLibrary.getByName(MonomerClass::AminoAcid, "ALA") ==
-        alaninePtr);
-  CHECK(templateLibrary.getBySymbol(MonomerClass::AminoAcid, "A") ==
-        alaninePtr);
-  CHECK(templateLibrary.getByName(MonomerClass::AminoAcid, "CYS") ==
-        cysteinePtr);
-  CHECK(templateLibrary.getBySymbol(MonomerClass::AminoAcid, "C") ==
-        cysteinePtr);
-}
-
-TEST_CASE("MacroMolTemplateLibrary separates monomer classes") {
-  MacroMolTemplateLibrary templateLibrary;
-  auto aminoAcid =
-      makeTemplate("ALA", "A", "C", {0}, MonomerClass::AminoAcid);
-  auto nucleicAcid =
-      makeTemplate("ADE", "A", "N", {0}, MonomerClass::NucleicAcid);
-  const auto *aminoAcidPtr = aminoAcid.get();
-  const auto *nucleicAcidPtr = nucleicAcid.get();
-
-  templateLibrary.addTemplate(std::move(aminoAcid));
-  templateLibrary.addTemplate(std::move(nucleicAcid));
-
-  CHECK(templateLibrary.getByName(MonomerClass::AminoAcid, "ALA") ==
-        aminoAcidPtr);
-  CHECK(templateLibrary.getBySymbol(MonomerClass::AminoAcid, "A") ==
-        aminoAcidPtr);
-  CHECK(templateLibrary.getByName(MonomerClass::NucleicAcid, "ADE") ==
-        nucleicAcidPtr);
-  CHECK(templateLibrary.getBySymbol(MonomerClass::NucleicAcid, "A") ==
-        nucleicAcidPtr);
-}
-
-TEST_CASE("MacroMolTemplate main and leaving groups") {
-  // Build an alanine template with explicit peptide-bond leaving groups:
-  //   [H] on the N side and [OH] on the C-terminal O side. Atom indices:
-  //   0:H(N)  1:N  2:C(alpha)  3:C(methyl)  4:C(carbonyl)  5:O(=O)  6:O(H)
+TEST_CASE("MacroMolTemplate mirrors typed main and leaving groups") {
   SmilesParserParams params;
   params.removeHs = false;
   std::unique_ptr<RWMol> parsed(SmilesToMol("[H]N[C@@H](C)C(=O)O", params));
   REQUIRE(parsed);
-  MacroMolTemplate macroMolTemplate(*parsed, MonomerClass::AminoAcid, "ALA",
-                                    "A", "[H]N[C@@H](C)C(=O)O");
-  const auto &constMacroMolTemplate = macroMolTemplate;
 
-  REQUIRE(constMacroMolTemplate.getMainSgroup() == nullptr);
-  CHECK(macroMolTemplate.getNumAtoms() == 7);
-  CHECK(macroMolTemplate.getAtomWithIdx(0)->getSymbol() == "H");
-  CHECK(macroMolTemplate.getAtomWithIdx(1)->getSymbol() == "N");
-  CHECK(macroMolTemplate.getAtomWithIdx(2)->getSymbol() == "C");
-  CHECK(macroMolTemplate.getAtomWithIdx(3)->getSymbol() == "C");
-  CHECK(macroMolTemplate.getAtomWithIdx(4)->getSymbol() == "C");
-  CHECK(macroMolTemplate.getAtomWithIdx(5)->getSymbol() == "O");
-  CHECK(macroMolTemplate.getAtomWithIdx(6)->getSymbol() == "O");
+  MacroMolTemplateBuilder builder(*parsed, MonomerClass::AminoAcid, "ALA",
+                                  "A", "[H]N[C@@H](C)C(=O)O");
+  auto templ = std::move(builder.setMainGroup({1, 2, 3, 4, 5})
+                              .addLeavingGroup({{0}, 1, 0, 1})
+                              .addLeavingGroup({{6}, 4, 6, 2}))
+                   .build();
 
-  macroMolTemplate.setMainGroup({1, 2, 3, 4, 5});
-  // The amino nitrogen (1) attaches to the leaving hydrogen (0).
-  macroMolTemplate.addLeavingGroup({0}, 1, 0, 1);
-  // The carbonyl carbon (4) attaches to the leaving hydroxyl oxygen (6).
-  macroMolTemplate.addLeavingGroup({6}, 4, 6, 2);
-
-  const auto *mainSgroup = constMacroMolTemplate.getMainSgroup();
-  REQUIRE(mainSgroup != nullptr);
-  CHECK(mainSgroup->getProp<std::string>("TYPE") == "SUP");
-  CHECK(mainSgroup->getProp<std::string>("CLASS") == "AminoAcid");
-  CHECK(mainSgroup->getAtoms() == std::vector<unsigned int>({1, 2, 3, 4, 5}));
-
-  auto leavingGroups = constMacroMolTemplate.getLeavingGroups();
+  CHECK(templ->getMol().getNumAtoms() == 7);
+  CHECK(templ->getMainAtomIdxs() ==
+        std::vector<unsigned int>({1, 2, 3, 4, 5}));
+  const auto &leavingGroups = templ->getLeavingGroups();
   REQUIRE(leavingGroups.size() == 2);
-  CHECK(leavingGroups[0]->getProp<std::string>("TYPE") == "SUP");
-  CHECK(leavingGroups[0]->getProp<std::string>("CLASS") == "LGRP");
-  CHECK(leavingGroups[0]->getAtoms() == std::vector<unsigned int>({0}));
-  CHECK(leavingGroups[1]->getProp<std::string>("TYPE") == "SUP");
-  CHECK(leavingGroups[1]->getProp<std::string>("CLASS") == "LGRP");
-  CHECK(leavingGroups[1]->getAtoms() == std::vector<unsigned int>({6}));
+  CHECK(leavingGroups[0].atomIdxs == std::vector<unsigned int>{0});
+  CHECK(leavingGroups[0].attachAtomIdx == 1);
+  CHECK(leavingGroups[0].leavingAtomIdx == 0);
+  CHECK(leavingGroups[0].attachPoint == 1);
+  CHECK(leavingGroups[1].atomIdxs == std::vector<unsigned int>{6});
 
-  const auto &attachPoints = mainSgroup->getAttachPoints();
+  const auto &mainSgroup = templ->getMainSgroup();
+  CHECK(mainSgroup.getProp<std::string>("TYPE") == "SUP");
+  CHECK(mainSgroup.getProp<std::string>("CLASS") == "AminoAcid");
+  CHECK(mainSgroup.getProp<std::string>("LABEL") == "ALA");
+  CHECK(mainSgroup.getAtoms() == templ->getMainAtomIdxs());
+  const auto &attachPoints = mainSgroup.getAttachPoints();
   REQUIRE(attachPoints.size() == 2);
-  CHECK(attachPoints[0].aIdx == 1);
-  CHECK(attachPoints[0].lvIdx == 0);
-  CHECK(attachPoints[0].id == "1");
-  CHECK(attachPoints[1].aIdx == 4);
-  CHECK(attachPoints[1].lvIdx == 6);
-  CHECK(attachPoints[1].id == "2");
+  const SubstanceGroup::AttachPoint firstAttachPoint{1, 0, "1"};
+  const SubstanceGroup::AttachPoint secondAttachPoint{4, 6, "2"};
+  CHECK(attachPoints[0] == firstAttachPoint);
+  CHECK(attachPoints[1] == secondAttachPoint);
+
+  const auto &sgroups = getSubstanceGroups(templ->getMol());
+  REQUIRE(sgroups.size() == 3);
+  CHECK(sgroups[1].getProp<std::string>("CLASS") == "LGRP");
+  CHECK(sgroups[1].getAtoms() == leavingGroups[0].atomIdxs);
+  CHECK(sgroups[2].getProp<std::string>("CLASS") == "LGRP");
+  CHECK(sgroups[2].getAtoms() == leavingGroups[1].atomIdxs);
 }
 
-TEST_CASE("MacroMolTemplate rejects invalid leaving groups without mutation") {
-  SECTION("leaving atom is not part of the leaving group") {
-    auto macroMolTemplate = makeTemplate("PROPANE", "Pr", "CCC", {0, 1});
-    const auto *mainSgroup =
-        std::as_const(*macroMolTemplate).getMainSgroup();
-    REQUIRE(mainSgroup != nullptr);
-
-    CHECK_THROWS(macroMolTemplate->addLeavingGroup({2}, 1, 0, 1));
-    CHECK(macroMolTemplate->getLeavingGroups().empty());
-    CHECK(mainSgroup->getAttachPoints().empty());
+TEST_CASE("MacroMolTemplateBuilder validates completed definitions") {
+  SECTION("main group is required") {
+    RWMol mol;
+    MacroMolTemplateBuilder builder(mol, MonomerClass::Other, "X", "X", "");
+    CHECK_THROWS_AS(std::move(builder).build(), ValueErrorException);
   }
+  SECTION("metadata is required") {
+    auto mol = std::unique_ptr<RWMol>(SmilesToMol("C"));
+    MacroMolTemplateBuilder builder(*mol, MonomerClass::Other, "", "X", "C");
+    builder.setMainGroup({0});
+    CHECK_THROWS_AS(std::move(builder).build(), ValueErrorException);
+  }
+  SECTION("main indices must be unique and in range") {
+    auto mol = std::unique_ptr<RWMol>(SmilesToMol("CC"));
+    MacroMolTemplateBuilder duplicate(*mol, MonomerClass::Other, "X", "X",
+                                      "CC");
+    duplicate.setMainGroup({0, 0});
+    CHECK_THROWS_AS(std::move(duplicate).build(), ValueErrorException);
 
-  SECTION("attachment atom is not bonded to the leaving atom") {
-    auto macroMolTemplate = makeTemplate("DISCONNECTED", "X", "C.C", {0});
-    const auto *mainSgroup =
-        std::as_const(*macroMolTemplate).getMainSgroup();
-    REQUIRE(mainSgroup != nullptr);
+    MacroMolTemplateBuilder outOfRange(*mol, MonomerClass::Other, "X", "X",
+                                       "CC");
+    outOfRange.setMainGroup({0, 2});
+    CHECK_THROWS_AS(std::move(outOfRange).build(), ValueErrorException);
+  }
+  SECTION("groups must form a disjoint atom partition") {
+    auto mol = std::unique_ptr<RWMol>(SmilesToMol("CCC"));
+    MacroMolTemplateBuilder gap(*mol, MonomerClass::Other, "X", "X", "CCC");
+    gap.setMainGroup({0, 1});
+    CHECK_THROWS_AS(std::move(gap).build(), ValueErrorException);
 
-    CHECK_THROWS(macroMolTemplate->addLeavingGroup({1}, 0, 1, 1));
-    CHECK(macroMolTemplate->getLeavingGroups().empty());
-    CHECK(mainSgroup->getAttachPoints().empty());
+    MacroMolTemplateBuilder overlap(*mol, MonomerClass::Other, "X", "X",
+                                    "CCC");
+    overlap.setMainGroup({0, 1}).addLeavingGroup({{1, 2}, 1, 2, 1});
+    CHECK_THROWS_AS(std::move(overlap).build(), ValueErrorException);
+  }
+  SECTION("attachment ids must be positive and unique") {
+    auto mol = std::unique_ptr<RWMol>(SmilesToMol("CCC"));
+    MacroMolTemplateBuilder duplicate(*mol, MonomerClass::Other, "X", "X",
+                                      "CCC");
+    duplicate.setMainGroup({1})
+        .addLeavingGroup({{0}, 1, 0, 1})
+        .addLeavingGroup({{2}, 1, 2, 1});
+    CHECK_THROWS_AS(std::move(duplicate).build(), ValueErrorException);
+  }
+  SECTION("leaving groups must be connected") {
+    auto mol = std::unique_ptr<RWMol>(SmilesToMol("CCC.C"));
+    MacroMolTemplateBuilder builder(*mol, MonomerClass::Other, "X", "X",
+                                    "CCC.C");
+    builder.setMainGroup({0}).addLeavingGroup({{1, 2, 3}, 0, 1, 1});
+    CHECK_THROWS_AS(std::move(builder).build(), ValueErrorException);
+  }
+  SECTION("leaving groups have exactly one declared boundary bond") {
+    auto mol = std::unique_ptr<RWMol>(SmilesToMol("C1CC1"));
+    MacroMolTemplateBuilder builder(*mol, MonomerClass::Other, "X", "X",
+                                    "C1CC1");
+    builder.setMainGroup({0}).addLeavingGroup({{1, 2}, 0, 1, 1});
+    CHECK_THROWS_AS(std::move(builder).build(), ValueErrorException);
   }
 }
 
-TEST_CASE("MacroMolTemplateLibrary orders templates by main-group size") {
-  MacroMolTemplateLibrary templateLibrary;
-  auto small = makeTemplate("SMALL", "S", "CC", {0});
+TEST_CASE("MacroMolTemplateLibrary owns, orders, and looks up templates") {
+  MacroMolTemplateLibrary library;
+  auto small = makeTemplate("SMALL", "S", "C", {0});
   auto firstLarge = makeTemplate("FIRST_LARGE", "L1", "CCC", {0, 1, 2});
   auto secondLarge = makeTemplate("SECOND_LARGE", "L2", "CCN", {0, 1, 2});
   const auto *smallPtr = small.get();
   const auto *firstLargePtr = firstLarge.get();
   const auto *secondLargePtr = secondLarge.get();
 
-  templateLibrary.addTemplate(std::move(small));
-  templateLibrary.addTemplate(std::move(firstLarge));
-  templateLibrary.addTemplate(std::move(secondLarge));
+  library.addTemplate(std::move(small));
+  library.addTemplate(std::move(firstLarge));
+  library.addTemplate(std::move(secondLarge));
 
-  const auto &entries = templateLibrary.entries();
-  REQUIRE(entries.size() == 3);
-  CHECK(entries[0] == firstLargePtr);
-  CHECK(entries[1] == secondLargePtr);
-  CHECK(entries[2] == smallPtr);
+  const std::vector<const MacroMolTemplate *> expectedEntries{
+      firstLargePtr, secondLargePtr, smallPtr};
+  CHECK(library.entries() == expectedEntries);
+  CHECK(library.getByName(MonomerClass::AminoAcid, "SMALL") == smallPtr);
+  CHECK(library.getBySymbol(MonomerClass::AminoAcid, "S") == smallPtr);
+  CHECK(library.getByName(MonomerClass::AminoAcid, "missing") == nullptr);
 }
 
-TEST_CASE("MacroMolTemplateLibrary rejects invalid templates") {
-  SECTION("null template") {
-    MacroMolTemplateLibrary templateLibrary;
-    CHECK_THROWS_AS(
-        templateLibrary.addTemplate(std::unique_ptr<MacroMolTemplate>{}),
-        ValueErrorException);
-  }
+TEST_CASE("MacroMolTemplateLibrary separates classes and rejects duplicates") {
+  MacroMolTemplateLibrary library;
+  library.addTemplate(
+      makeTemplate("ALA", "A", "C", {0}, {}, MonomerClass::AminoAcid));
+  library.addTemplate(
+      makeTemplate("ADE", "A", "N", {0}, {}, MonomerClass::NucleicAcid));
 
-  SECTION("missing main group") {
-    MacroMolTemplateLibrary templateLibrary;
-    RWMol mol;
-    auto macroMolTemplate = std::make_unique<MacroMolTemplate>(
-        mol, MonomerClass::AminoAcid, "ALA", "A", "");
-    CHECK_THROWS_AS(templateLibrary.addTemplate(std::move(macroMolTemplate)),
-                    ValueErrorException);
-  }
-
-  SECTION("multiple main groups") {
-    MacroMolTemplateLibrary templateLibrary;
-    auto macroMolTemplate = makeTemplate("ALA", "A", "CC", {0});
-    SubstanceGroup secondMainGroup(macroMolTemplate.get(), "SUP");
-    secondMainGroup.setProp("CLASS", std::string("AminoAcid"));
-    secondMainGroup.setAtoms({1});
-    addSubstanceGroup(*macroMolTemplate, secondMainGroup);
-
-    CHECK_THROWS_AS(templateLibrary.addTemplate(std::move(macroMolTemplate)),
-                    ValueErrorException);
-  }
-}
-
-TEST_CASE("MacroMolTemplateLibrary rejects duplicate lookup keys") {
-  SECTION("duplicate template name") {
-    MacroMolTemplateLibrary templateLibrary;
-    templateLibrary.addTemplate(makeTemplate("ALA", "A", "C", {0}));
-
-    CHECK_THROWS_AS(
-        templateLibrary.addTemplate(makeTemplate("ALA", "X", "N", {0})),
-        ValueErrorException);
-  }
-
-  SECTION("duplicate symbol") {
-    MacroMolTemplateLibrary templateLibrary;
-    templateLibrary.addTemplate(makeTemplate("ALA", "A", "C", {0}));
-
-    CHECK_THROWS_AS(
-        templateLibrary.addTemplate(makeTemplate("OTHER", "A", "N", {0})),
-        ValueErrorException);
-  }
-}
-
-TEST_CASE("MacroMolTemplateLibrary missing lookups return nullptr") {
-  MacroMolTemplateLibrary templateLibrary;
-
-  CHECK(templateLibrary.getByName(MonomerClass::AminoAcid, "ALA") ==
-        nullptr);
-  CHECK(templateLibrary.getBySymbol(MonomerClass::AminoAcid, "A") == nullptr);
+  CHECK(library.getBySymbol(MonomerClass::AminoAcid, "A")->getTemplateName() ==
+        "ALA");
+  CHECK(library.getBySymbol(MonomerClass::NucleicAcid, "A")->getTemplateName() ==
+        "ADE");
+  CHECK_THROWS_AS(
+      library.addTemplate(
+          makeTemplate("ALA", "X", "N", {0}, {}, MonomerClass::AminoAcid)),
+      ValueErrorException);
+  CHECK_THROWS_AS(
+      library.addTemplate(
+          makeTemplate("OTHER", "A", "N", {0}, {}, MonomerClass::AminoAcid)),
+      ValueErrorException);
+  CHECK_THROWS_AS(
+      library.addTemplate(std::unique_ptr<MacroMolTemplate>{}),
+      ValueErrorException);
 }
