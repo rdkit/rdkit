@@ -56,6 +56,7 @@ ARG EXCEPTION_HANDLING="-fexceptions -sNO_DISABLE_EXCEPTION_CATCHING"
 
 FROM rdkit-minimallib-rdkit-src AS build-stage
 ARG EXCEPTION_HANDLING
+ARG VERSION=0.0.0
 
 LABEL maintainer="Greg Landrum <greg.landrum@t5informatics.com>"
 
@@ -79,15 +80,26 @@ RUN emcmake cmake -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
   -DZLIB_LIBRARY=/opt/zlib/lib/libz.a \
   -DCMAKE_CXX_FLAGS="${EXCEPTION_HANDLING} -O3 -DNDEBUG" \
   -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING} -O3 -DNDEBUG -DCOMPILE_ANSI_ONLY" \
-  -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING} -s STACK_OVERFLOW_CHECK=1 -s USE_PTHREADS=0 -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB -s MODULARIZE=1 -s EXPORT_NAME=\"'initRDKitModule'\"" ..
+  -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING} -s STACK_OVERFLOW_CHECK=1 -s USE_PTHREADS=0 -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB -s MODULARIZE=1 -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=1 --emit-tsd RDKit_minimal.d.ts -s EXPORT_NAME='initRDKitModule'" ..
 
 # "patch" to make the InChI code work with emscripten:
 RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak && \
   sed 's/&& defined(__APPLE__)//' /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak > /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c
 
 # build and "install"
-RUN make -j2 RDKit_minimal && \
-  cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/demo/
+RUN make -j2 RDKit_minimal
+RUN mkdir -p ../Code/MinimalLib/dist
+RUN cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/dist/
+
+# Build package
+WORKDIR /src/rdkit/Code/MinimalLib
+RUN mkdir -p build
+RUN cp assets/package.json ./build
+RUN cp README.md ./build
+RUN mv ./dist ./build
+
+WORKDIR /src/rdkit/Code/MinimalLib/build
+RUN /opt/emsdk/node/*/bin/node -e "const p=require('./package.json');p.version='${VERSION}';require('fs').writeFileSync('./package.json',JSON.stringify(p,null,2))"
 
 # run the tests
 WORKDIR /src/rdkit/Code/MinimalLib/tests
@@ -97,5 +109,5 @@ RUN /opt/emsdk/node/*/bin/node tests.js
 # This feature requires the BuildKit backend
 # https://docs.docker.com/engine/reference/commandline/build/#custom-build-outputs
 FROM scratch as export-stage
-COPY --from=build-stage /src/rdkit/Code/MinimalLib/demo /
+COPY --from=build-stage /src/rdkit/Code/MinimalLib/build /
 COPY --from=build-stage /src/rdkit/Code/MinimalLib/docs /

@@ -1,0 +1,84 @@
+name: Publish MinimalLib
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # For npm Trusted Publishing
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get RDKit version
+        id: version
+        run: |
+          YEAR=$(grep -F 'set(RDKit_Year' CMakeLists.txt | cut -d'"' -f2)
+          MONTH=$(grep -F 'set(RDKit_Month' CMakeLists.txt | cut -d'"' -f2)
+          MONTH=$((10#$MONTH))
+          REV=$(grep -F 'set(RDKit_Revision ' CMakeLists.txt | cut -d'"' -f2)
+          REV=$((10#$REV))
+
+          VERSION="${YEAR}.${MONTH}.${REV}"
+
+          MOD=$(grep -F 'set(RDKit_RevisionModifier' CMakeLists.txt | cut -d'"' -f2)
+
+          if [ -n "$MOD" ]; then
+            VERSION="${VERSION}-${MOD}"
+            IS_PRERELEASE="true"
+          else
+            IS_PRERELEASE="false"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build WASM
+        run: |
+          cd ./Code/MinimalLib
+          NPM_VERSION=${{ steps.version.outputs.version }} GET_SRC=copy bash scripts/build_rdkitjs.sh
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          registry-url: https://registry.npmjs.org
+
+      - name: Test WASM artifacts
+        run: node Code/MinimalLib/tests/tests.js
+
+      - name: Make package
+        working-directory: Code/MinimalLib/build
+        run: npm pack
+
+      - name: Debug npm and OIDC
+        run: |
+          npm --version
+          node --version
+          echo "OIDC URL: ${ACTIONS_ID_TOKEN_REQUEST_URL:+present}"
+          echo "OIDC TOKEN: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+present}"
+
+      # For Trusted Publishing (OIDC), npm expects the publish to
+      # use the trusted publishing flow. The npm documentation
+      # recommends --provenance
+      - name: Publish to npm
+        working-directory: Code/MinimalLib/build
+        run: |
+          IS_PRERELEASE="${{ steps.version.outputs.is_prerelease }}"
+
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            npm publish --provenance --access public --tag next
+          else
+            npm publish --provenance --access public
+          fi
