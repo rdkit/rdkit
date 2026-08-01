@@ -1,3 +1,76 @@
+# Release_2026.03.5
+(Changes relative to Release_2026.03.4)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Katharina Buchthal, Kerim Buyukakyuz, David Cosgrove, Peter Gedeck, Tad Hurst,
+Egor Lyfar, Niels Maeder, Vedran Miletić, Yakov Pechersky, Emily Rhodes Jake
+Robson-Tull, Ricardo Rodriguez, Pavel Tomanek, Paolo Tosco, Ivan Tubert-Brohman,
+m_holmer 
+
+## New Features and Enhancements:
+  - Add ROMol name accessors
+ (github pull #9384 from i-tub)
+  - Handle Data SGroups with no "fieldname"
+ (github pull #9390 from tadhurst-cdd)
+  - Validate coordinate map entries before distance geometry embedding
+ (github pull #9420 from lyfar)
+
+## Documentation:
+  - Add stub for rdGaussianShape docs.
+ (github pull #9440 from DavidACosgrove)
+
+## Bug Fixes:
+  - TautomerEnumerator.Canonicalize() raises pre-condition violation when `SetRemoveBondStereo(False)` on a molecule with atropisomer bond
+ (github issue #9338 from pechersky)
+  - CDXML reading doesn't retain Z/E bonds
+ (github issue #9356 from pechersky)
+  - RuntimeError while extracting a fragment from a molecule that cuts after an E/Z double bond
+ (github issue #9368 from MalteHolmer)
+  - Fix race in MinimalLib test_substruct_library JS test
+ (github pull #9392 from emilyrrhodes)
+  - Aromaticity perception in polycyclic conjugated system
+ (github issue #9398 from nmaeder)
+  - Inconsistent stereochemistry of ring-bonds in BoundsMatrixBuilder
+ (github issue #9403 from kabu00002)
+  - Inconsistent bounds for 1-4 distances of 6-membered rings
+ (github issue #9404 from kabu00002)
+  - RDKit 2026.03.4: testDistGeomHelpers fails
+ (github issue #9406 from pavelToman)
+  - Fix 64-bit fingerprint bit ID truncation in AdditionalOutput on 32-bit targets
+ (github pull #9411 from gedeck)
+  - Rascal FindMCES crash when time out reached and maxFragSeparation set
+ (github issue #9418 from jrobsontull)
+  - Out-of-bounds read in Mol2 bond parser due to incorrect bounds check
+ (github issue #9421 from buyukakyuz)
+  - Fix maeparser warning suppression with GCC
+ (github pull #9429 from vedranmiletic)
+  - fragmentOnBonds: enfore unique bondIndices on input
+ (github pull #9430 from ptosco)
+  - Guard the BCUT2D test with RDK_HAS_EIGEN3
+ (github pull #9432 from vedranmiletic)
+  - rdGaussianShape throws exception with 2 LOBSTER compounds
+ (github issue #9441 from DavidACosgrove)
+
+## Cleanup work:
+  - Speedup testDGeomHelpers
+ (github pull #9388 from nmaeder)
+  - Removed redundant code
+ (github pull #9389 from kabu00002)
+  - Fix flaky DiversityPickerTests.test3.
+ (github pull #9395 from emilyrrhodes)
+  - some cleanups of the SimDivPickers tests
+ (github pull #9397 from greglandrum)
+  - make sure embedding runs in tests have RNG seeds set
+ (github pull #9409 from greglandrum)
+  - Refactoring, bug fixes, and cleanup of setTopolBounds()
+ (github pull #9412 from greglandrum)
+  - Fix leaks in 2 tests
+ (github pull #9435 from ricrogz)
+
 # Release_2026.03.4
 (Changes relative to Release_2026.03.3)
 
