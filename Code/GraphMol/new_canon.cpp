@@ -706,7 +706,18 @@ void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
     unsigned newSymClass = atoms[nbrIdx].index;
     nbr.nbrSymClass = newSymClass;
   }
-  std::sort(nbrs.begin(), nbrs.end(), bondholder::greater);
+  // Neighbor lists are normally very short and already close to sorted after
+  // partition refinement. Insertion sort avoids std::sort's setup overhead and
+  // minimizes movement in that common case.
+  for (size_t i = 1; i < nbrs.size(); ++i) {
+    auto value = std::move(nbrs[i]);
+    size_t j = i;
+    while (j && bondholder::greater(value, nbrs[j - 1])) {
+      nbrs[j] = std::move(nbrs[j - 1]);
+      --j;
+    }
+    nbrs[j] = std::move(value);
+  }
 }
 
 // This routine calculates the number of swaps that would be required to
