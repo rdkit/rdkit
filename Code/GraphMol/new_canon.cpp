@@ -483,7 +483,7 @@ bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
   }
   return res;
 }
-void getBonds(const ROMol &mol, const Atom *at, std::vector<bondholder> &nbrs,
+void getBonds(const ROMol &mol, const Atom *at, bondholder_vector &nbrs,
               bool includeChirality,
               const std::vector<Canon::canon_atom> &atoms) {
   PRECONDITION(at, "bad pointer");
@@ -499,7 +499,7 @@ void getBonds(const ROMol &mol, const Atom *at, std::vector<bondholder> &nbrs,
 }
 
 void getChiralBonds(const ROMol &mol, const Atom *at,
-                    std::vector<bondholder> &nbrs) {
+                    bondholder_vector &nbrs) {
   PRECONDITION(at, "bad pointer");
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(at);
@@ -699,7 +699,7 @@ void initChiralCanonAtoms(const ROMol &mol,
 }
 
 }  // namespace detail
-void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
+void updateAtomNeighborIndex(canon_atom *atoms, bondholder_vector &nbrs) {
   PRECONDITION(atoms, "bad pointer");
   for (auto &nbr : nbrs) {
     unsigned nbrIdx = nbr.nbrIdx;
@@ -722,7 +722,7 @@ void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
 // that neighbor to determine the priority of the atom of interest.
 
 void updateAtomNeighborNumSwaps(
-    canon_atom *atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx,
+    canon_atom *atoms, bondholder_vector &nbrs, unsigned int atomIdx,
     std::vector<std::pair<unsigned int, unsigned int>> &result) {
   bool isRingAtom = queryIsAtomInRing(atoms[atomIdx].atom);
   for (auto &nbr : nbrs) {

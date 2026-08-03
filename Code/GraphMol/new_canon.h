@@ -20,6 +20,7 @@
 #include <RDGeneral/BoostStartInclude.h>
 #include <cstdint>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/container/small_vector.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <cstring>
 #include <cassert>
@@ -99,6 +100,7 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
     return 0;
   }
 };
+using bondholder_vector = boost::container::small_vector<bondholder, 4>;
 struct RDKIT_GRAPHMOL_EXPORT canon_atom {
   const Atom *atom{nullptr};
   int index{-1};
@@ -113,14 +115,14 @@ struct RDKIT_GRAPHMOL_EXPORT canon_atom {
       nullptr};  // if provided, this is used to order atoms
   std::vector<int> neighborNum;
   std::vector<int> revistedNeighbors;
-  std::vector<bondholder> bonds;
+  bondholder_vector bonds;
 };
 
 RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborIndex(
-    canon_atom *atoms, std::vector<bondholder> &nbrs);
+    canon_atom *atoms, bondholder_vector &nbrs);
 
 RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborNumSwaps(
-    canon_atom *atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx,
+    canon_atom *atoms, bondholder_vector &nbrs, unsigned int atomIdx,
     std::vector<std::pair<unsigned int, unsigned int>> &result);
 
 /*
@@ -571,7 +573,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
 
 const unsigned int ATNUM_CLASS_OFFSET = 10000;
 class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
-  void getAtomNeighborhood(std::vector<bondholder> &nbrs) const {
+  void getAtomNeighborhood(bondholder_vector &nbrs) const {
     for (unsigned j = 0; j < nbrs.size(); ++j) {
       unsigned int nbrIdx = nbrs[j].nbrIdx;
       if (nbrIdx == ATNUM_CLASS_OFFSET) {
