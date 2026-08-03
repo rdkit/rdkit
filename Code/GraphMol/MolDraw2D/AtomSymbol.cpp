@@ -129,6 +129,9 @@ void AtomSymbol::adjustColons() {
       break;
     }
     size_t gtPos = tmpSym.find('>');
+    if (gtPos == std::string::npos) {
+      return;
+    }
     tmpSym = tmpSym.substr(0, ltPos) + tmpSym.substr(gtPos + 1);
   }
   colonPos = tmpSym.find(':');
