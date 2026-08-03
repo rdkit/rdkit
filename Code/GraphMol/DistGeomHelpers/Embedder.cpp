@@ -38,6 +38,7 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/RDThreads.h>
+#include <cmath>
 #include <cstddef>
 #include <stdexcept>
 #include <vector>
@@ -1764,6 +1765,15 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   boost::dynamic_bitset<> constrainedAtoms(mol.getNumAtoms());
   if (coordMap) {
     for (const auto &entry : *coordMap) {
+      if (entry.first < 0 ||
+          static_cast<unsigned int>(entry.first) >= mol.getNumAtoms()) {
+        throw ValueErrorException("coordMap atom index is out of range");
+      }
+      const auto &point = entry.second;
+      if (!std::isfinite(point.x) || !std::isfinite(point.y) ||
+          !std::isfinite(point.z)) {
+        throw ValueErrorException("coordMap contains non-finite coordinates");
+      }
       constrainedAtoms.set(entry.first);
     }
   }

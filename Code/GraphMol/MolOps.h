@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2024 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -540,8 +540,8 @@ BETTER_ENUM(SanitizeFlags, unsigned int,
    This functions calls the following in sequence
      -# MolOps::cleanUp()
      -# mol.updatePropertyCache()
-     -# MolOps::symmetrizeSSSR()
      -# MolOps::Kekulize()
+     -# MolOps::symmetrizeSSSR()
      -# MolOps::assignRadicals()
      -# MolOps::setAromaticity()
      -# MolOps::setConjugation()
@@ -911,6 +911,8 @@ enum class SymmetrizeSSSRAlgorithm {
       RingInfo structure, so this argument is optional (see overload)
   \param algorithm - determines which algorithm is used to find the rings and
       do the symmetrization
+  \param recalcSSSR - if set, the SSSR set will be recalculated, otherwise if
+      there is an existing SSSR set, it will be used
   \param includeDativeBonds - determines whether or not dative bonds are used
   in the ring finding.
   \param includeHydrogenBonds - determines whether or not hydrogen bonds are
@@ -925,14 +927,16 @@ enum class SymmetrizeSSSRAlgorithm {
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(
     ROMol &mol, std::vector<std::vector<int>> &res,
     SymmetrizeSSSRAlgorithm algorithm = SymmetrizeSSSRAlgorithm::DEFAULT,
-    bool includeDativeBonds = false, bool includeHydrogenBonds = false);
+    bool recalcSSSR = true, bool includeDativeBonds = false,
+    bool includeHydrogenBonds = false);
 //! \overload
 inline int symmetrizeSSSR(
     ROMol &mol,
     SymmetrizeSSSRAlgorithm algorithm = SymmetrizeSSSRAlgorithm::DEFAULT,
-    bool includeDativeBonds = false, bool includeHydrogenBonds = false) {
+    bool recalcSSSR = true, bool includeDativeBonds = false,
+    bool includeHydrogenBonds = false) {
   std::vector<std::vector<int>> res;
-  return symmetrizeSSSR(mol, res, algorithm, includeDativeBonds,
+  return symmetrizeSSSR(mol, res, algorithm, recalcSSSR, includeDativeBonds,
                         includeHydrogenBonds);
 }
 
@@ -940,14 +944,16 @@ inline int symmetrizeSSSR(
 inline int symmetrizeSSSR(ROMol &mol, std::vector<std::vector<int>> &res,
                           bool includeDativeBonds,
                           bool includeHydrogenBonds = false) {
-  return symmetrizeSSSR(mol, res, SymmetrizeSSSRAlgorithm::DEFAULT,
+  bool recalcSSSR = true;
+  return symmetrizeSSSR(mol, res, SymmetrizeSSSRAlgorithm::DEFAULT, recalcSSSR,
                         includeDativeBonds, includeHydrogenBonds);
 }
 //! \overload
 inline int symmetrizeSSSR(ROMol &mol, bool includeDativeBonds,
                           bool includeHydrogenBonds = false) {
   std::vector<std::vector<int>> res;
-  return symmetrizeSSSR(mol, res, SymmetrizeSSSRAlgorithm::DEFAULT,
+  bool recalcSSSR = true;
+  return symmetrizeSSSR(mol, res, SymmetrizeSSSRAlgorithm::DEFAULT, recalcSSSR,
                         includeDativeBonds, includeHydrogenBonds);
 }
 

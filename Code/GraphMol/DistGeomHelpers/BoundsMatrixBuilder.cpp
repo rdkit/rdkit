@@ -730,8 +730,8 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         }  // while loop over second bond
         ++beg1;
       }  // while loop over first bond
-    }  // done with non-ring atoms
-  }  // done with all atoms
+    }    // done with non-ring atoms
+  }      // done with all atoms
 }  // done with 13 distance setting
 
 Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
@@ -1422,7 +1422,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
       bid1 = bid2;
     }  // loop over bonds in the ring
-  }  // end of all rings
+  }    // end of all rings
   for (const auto bond : mol.bonds()) {
     auto bid2 = bond->getIdx();
     auto aid2 = bond->getBeginAtomIdx();
@@ -1523,9 +1523,9 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   if (!na) {
     throw ValueErrorException("molecule has no atoms");
   }
-  // this is 2.6 million bonds, so it's extremly unlikely to ever occur, but
+  // this is 2.6 million bonds, so it's extremely unlikely to ever occur, but
   // we might as well check:
-  const size_t MAX_NUM_BONDS = static_cast<size_t>(
+  const auto MAX_NUM_BONDS = static_cast<size_t>(
       std::pow(std::numeric_limits<std::uint64_t>::max(), 1. / 3));
   if (mol.getNumBonds() >= MAX_NUM_BONDS) {
     throw ValueErrorException(
