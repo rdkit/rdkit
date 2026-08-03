@@ -710,7 +710,7 @@ std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
   std::optional attachmentMappingOption = std::map<int, int>();
   auto zippedMol = molzip(*combinedMol, b, params, attachmentMappingOption);
 
-  if (params.generateCoordinates && zippedMol->getNumAtoms() > 0) {
+  if (params.generateCoordinates && zippedMol && zippedMol->getNumAtoms() > 0) {
     const auto confId = RDDepict::compute2DCoords(*zippedMol);
     const auto zippedConf = zippedMol->getConformer(confId);
     auto attachmentMapping = *attachmentMappingOption;
