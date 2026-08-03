@@ -286,6 +286,7 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
   std::vector<int> next(nAts);
   std::vector<int> changed(nAts, 1);
   std::vector<char> touched(nAts, 0);
+  std::vector<int> hanoiTemp(nAts);
   int activeset;
   CreateSinglePartition(nAts, order, count, atoms);
 // ActivatePartitions(nAts,order,count,activeset,next,changed);
@@ -307,7 +308,7 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
   }
 #endif
   RefinePartitions(mol, atoms, ftor, true, order, count, activeset, next,
-                   changed, touched);
+                   changed, touched, hanoiTemp);
 #ifdef VERBOSE_CANON
   std::cerr << "2--------" << std::endl;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -326,7 +327,7 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
                                               bondsInPlay);
     ActivatePartitions(nAts, order, count, activeset, next, changed);
     RefinePartitions(mol, atoms, scftor, true, order, count, activeset, next,
-                     changed, touched);
+                     changed, touched, hanoiTemp);
 #ifdef VERBOSE_CANON
     std::cerr << "2a--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -363,7 +364,7 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
     compareRingAtomsConcerningNumNeighbors(atoms, nAts, mol);
     ActivatePartitions(nAts, order, count, activeset, next, changed);
     RefinePartitions(mol, atoms, sftor, true, order, count, activeset, next,
-                     changed, touched);
+                     changed, touched, hanoiTemp);
 #ifdef VERBOSE_CANON
     std::cerr << "2b--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -374,7 +375,7 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
   }
   if (breakTies) {
     BreakTies(mol, atoms, ftor, true, order, count, activeset, next, changed,
-              touched);
+              touched, hanoiTemp);
 #ifdef VERBOSE_CANON
     std::cerr << "3--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
