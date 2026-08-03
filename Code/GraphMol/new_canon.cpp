@@ -710,12 +710,15 @@ void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
   // partition refinement. Insertion sort avoids std::sort's setup overhead and
   // minimizes movement in that common case.
   for (size_t i = 1; i < nbrs.size(); ++i) {
+    if (!bondholder::greater(nbrs[i], nbrs[i - 1])) {
+      continue;
+    }
     auto value = std::move(nbrs[i]);
     size_t j = i;
-    while (j && bondholder::greater(value, nbrs[j - 1])) {
+    do {
       nbrs[j] = std::move(nbrs[j - 1]);
       --j;
-    }
+    } while (j && bondholder::greater(value, nbrs[j - 1]));
     nbrs[j] = std::move(value);
   }
 }
