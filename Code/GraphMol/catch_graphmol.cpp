@@ -3865,6 +3865,27 @@ TEST_CASE("expand and remove AttachmentPoints") {
     CHECK(!MolOps::isMarkedAttachmentPoint(mol->getAtomWithIdx(0)));
     attachment->clearProp(common_properties::_fromAttachPoint);
     CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+
+    attachment->setProp(common_properties::atomLabel, "_AP37");
+    CHECK(MolOps::isMarkedAttachmentPoint(attachment));
+    CHECK(!MolOps::details::isAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel, "_AP0");
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel, "_AP3x");
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+  }
+  SECTION("collapse label-only attachment point") {
+    auto mol = "*C |$_AP37;$|"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 2);
+    CHECK(MolOps::isMarkedAttachmentPoint(mol->getAtomWithIdx(0)));
+
+    MolOps::collapseAttachmentPoints(*mol);
+    REQUIRE(mol->getNumAtoms() == 1);
+    int value = 0;
+    CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
+        common_properties::molAttachPoint, value));
+    CHECK(value == 1);
   }
 }
 

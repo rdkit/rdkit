@@ -1258,10 +1258,26 @@ unsigned int addExplicitAttachmentPoint(RWMol &mol, unsigned int atomIdx,
 
 }  // namespace details
 
+namespace {
+bool hasAttachmentPointLabel(const Atom *atom) {
+  std::string label;
+  if (!atom->getPropIfPresent(common_properties::atomLabel, label) ||
+      label.size() <= 3 || label.compare(0, 3, "_AP") != 0) {
+    return false;
+  }
+  const auto suffix = label.begin() + 3;
+  return std::all_of(suffix, label.end(),
+                     [](char value) { return value >= '0' && value <= '9'; }) &&
+         std::any_of(suffix, label.end(),
+                     [](char value) { return value != '0'; });
+}
+}  // namespace
+
 bool isMarkedAttachmentPoint(const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   return atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
-         atom->hasProp(common_properties::_fromAttachPoint);
+         (atom->hasProp(common_properties::_fromAttachPoint) ||
+          hasAttachmentPointLabel(atom));
 }
 
 namespace details {
@@ -1337,12 +1353,18 @@ void collapseAttachmentPoints(RWMol &mol, bool markedOnly) {
   for (auto atom : mol.atoms()) {
     if (details::isAttachmentPoint(atom, markedOnly)) {
       int value = 0;
-      atom->getPropIfPresent(common_properties::_fromAttachPoint, value);
+      const bool hasNativeMarker =
+          atom->getPropIfPresent(common_properties::_fromAttachPoint, value);
       if (markedOnly && (value < 0 || value > 2)) {
         BOOST_LOG(rdWarningLog)
             << "Invalid value for _fromAttachPoint: " << value << " on atom "
             << atom->getIdx() << ". Not collapsing this atom" << std::endl;
         continue;
+      }
+      if (markedOnly && !hasNativeMarker) {
+        // _AP<n> labels identify explicit attachment points, but n is not an
+        // MDL ATTCHPT position. Treat a label-only atom as position 1.
+        value = 1;
       }
       if (!markedOnly && !value) {
         value = 1;

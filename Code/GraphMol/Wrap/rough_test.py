@@ -8518,6 +8518,12 @@ M  END
     self.assertTrue(Chem.IsMarkedAttachmentPoint(attachment))
     self.assertFalse(Chem.IsMarkedAttachmentPoint(mol.GetAtomWithIdx(0)))
 
+    legacy = Chem.MolFromSmiles("*C |$_AP37;$|")
+    self.assertTrue(Chem.IsMarkedAttachmentPoint(legacy.GetAtomWithIdx(0)))
+    Chem.CollapseAttachmentPoints(legacy)
+    self.assertEqual(legacy.GetNumAtoms(), 1)
+    self.assertEqual(legacy.GetAtomWithIdx(0).GetIntProp("molAttchpt"), 1)
+
   def testAddStereoAnnotations(self):
     mol = Chem.MolFromSmiles(
       "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"
