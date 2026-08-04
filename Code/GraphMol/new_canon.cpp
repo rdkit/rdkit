@@ -10,6 +10,7 @@
 //
 
 #include "new_canon.h"
+#include "new_canon_internal.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Atropisomers.h>
@@ -384,6 +385,13 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
     }
 #endif
   }
+}
+
+void rankStereoAtoms(StereoAtomCompareFunctor &ftor, std::vector<int> &order,
+                     const boost::dynamic_bitset<> *atomsInPlay,
+                     const boost::dynamic_bitset<> *bondsInPlay) {
+  rankWithFunctor(ftor, false, order, true, false, false, atomsInPlay,
+                  bondsInPlay);
 }
 }  // namespace detail
 namespace {

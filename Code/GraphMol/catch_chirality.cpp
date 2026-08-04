@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <array>
 #include <cstdlib>
 #include <optional>
 #include <ranges>
@@ -39,6 +40,20 @@ unsigned count_wedged_bonds(const ROMol &mol) {
     }
   }
   return nWedged;
+}
+
+RWMol makeDummySubstitutedCarbon(
+    const std::array<const char *, 4> &dummyLabels) {
+  RWMol mol;
+  const auto center = mol.addAtom(new Atom(6), true, true);
+  for (const auto label : dummyLabels) {
+    auto dummy = new Atom(0);
+    dummy->setProp(common_properties::dummyLabel, label);
+    const auto idx = mol.addAtom(dummy, true, true);
+    mol.addBond(center, idx, Bond::BondType::SINGLE);
+  }
+  mol.updatePropertyCache(false);
+  return mol;
 }
 
 TEST_CASE("bond StereoInfo", "[unittest]") {
@@ -473,6 +488,16 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
       std::vector<unsigned> catoms = {0, 2, 3};
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
+  }
+  SECTION("dummy labels distinguish controlling atoms") {
+    auto distinct = makeDummySubstitutedCarbon({"A", "B", "C", "D"});
+    auto stereoInfo = Chirality::findPotentialStereo(distinct);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 0);
+
+    auto duplicate = makeDummySubstitutedCarbon({"A", "B", "C", "C"});
+    stereoInfo = Chirality::findPotentialStereo(duplicate);
+    CHECK(stereoInfo.empty());
   }
 }
 
