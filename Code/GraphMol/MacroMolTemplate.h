@@ -42,10 +42,13 @@ struct RDKIT_GRAPHMOL_EXPORT MacroMolLeavingGroup {
 
 class MacroMolTemplateBuilder;
 
-//! An immutable, annotated molecule template for a macromolecule monomer.
+//! A logically read-only, annotated molecule template for a macromolecule
+//! monomer.
 /*!
   The typed main- and leaving-group definitions are authoritative. The owned
-  molecule mirrors those definitions as SUP SGroups for RDKit I/O.
+  molecule mirrors those definitions as SUP SGroups for RDKit I/O. Accessors
+  follow RDKit's normal const semantics, including its legacy owning-molecule
+  back-references.
 */
 class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate final {
  public:
@@ -54,7 +57,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate final {
   MacroMolTemplate &operator=(const MacroMolTemplate &) = delete;
   MacroMolTemplate &operator=(MacroMolTemplate &&) = delete;
 
-  //! Returns the immutable underlying template molecule.
+  //! Returns a read-only view of the underlying template molecule.
   const ROMol &getMol() const { return d_mol; }
   //! Returns the monomer class used for lookup and the main SGroup CLASS.
   MonomerClass getMonomerClass() const { return d_monomerClass; }

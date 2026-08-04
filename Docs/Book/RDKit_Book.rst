@@ -2852,8 +2852,15 @@ The RNA and DNA elements are represented by three parts – a phosphate group, a
 Each atom line in the CTAB can refer to an elemental atom or a macro atom.  Macro atom lines have a text description of the macro name and must have a CLASS and an
 ATTCHORD attributed.  They can also have an optional SEQID attribute.  
 
-According to the Biovia doc, the CLASS attribute must have a value that is one of:  AA, dAA, DNA, RNA, SUGAR, BASE, PHOSPHATE, LINKER, CHEM, LGRP, MODAA, MODdAA, MODDNA, MODRNA, XLINKAA, XLINKdAA, XLINKDNA, XLINKRNA.   
-For an SCSR mol block, (and for any SGROUP), RDKit requires that the CLASS attribute be one of these values.
+According to the Biovia doc, the CLASS attribute must have a value that is one of:  AA, dAA, DNA, RNA, SUGAR, BASE, PHOSPHATE, LINKER, CHEM, LGRP, MODAA, MODdAA, MODDNA, MODRNA, XLINKAA, XLINKdAA, XLINKDNA, XLINKRNA.
+RDKit requires these standard values when strictly parsing an SCSR mol block.
+
+For generic MOL and SDF files, RDKit additionally accepts the CLASS values
+``AminoAcid``, ``NucleicAcid``, ``Chemical``, and ``Other``. These values
+preserve RDKit's format-neutral ``MonomerClass`` metadata but are RDKit
+extensions, not standard SCSR classes. Other CTfile implementations may reject
+or ignore them, and strict SCSR parsing continues to require the standard
+classes listed above.
 
 The SEQID is a sequential integer and is ignored by this treatment.  Typically, the three parts of an RNA or DNA element have the same SEQID.
 
@@ -3110,4 +3117,3 @@ To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/
 
 The intent of this license is similar to that of the RDKit itself.
 In simple words: “Do whatever you want with it, but please give us some credit.”
-

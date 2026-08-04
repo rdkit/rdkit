@@ -336,6 +336,15 @@ bool SubstanceGroupChecks::isValidConnectType(const std::string &type) {
 }
 
 bool SubstanceGroupChecks::isValidClass(const std::string &sgroupClass) {
+  return isValidSCSRClass(sgroupClass) ||
+         std::find(SubstanceGroupChecks::rdkitMonomerClasses.begin(),
+                   SubstanceGroupChecks::rdkitMonomerClasses.end(),
+                   sgroupClass) !=
+             SubstanceGroupChecks::rdkitMonomerClasses.end();
+}
+
+bool SubstanceGroupChecks::isValidSCSRClass(
+    const std::string &sgroupClass) {
   return std::find(SubstanceGroupChecks::sGroupClasses.begin(),
                    SubstanceGroupChecks::sGroupClasses.end(),
                    sgroupClass) != SubstanceGroupChecks::sGroupClasses.end();
