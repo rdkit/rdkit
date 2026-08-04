@@ -543,8 +543,8 @@ MaeWriter::MaeWriter(std::ostream *outStream) : dp_ostream{outStream} {
 
 MaeWriter::MaeWriter(std::shared_ptr<std::ostream> outStream)
     : dp_ostream{std::move(outStream)} {
-  PRECONDITION(outStream, "null stream");
-  if (outStream->bad()) {
+  PRECONDITION(dp_ostream, "null stream");
+  if (dp_ostream->bad()) {
     throw FileParseException("Bad output stream");
   }
 }
