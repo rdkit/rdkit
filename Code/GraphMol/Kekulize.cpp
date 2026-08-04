@@ -367,7 +367,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
             optsV.push_back(nbrIdx);
           }
         }  // end of curr atoms can have a double bond
-      }    // end of looping over neighbors
+      }  // end of looping over neighbors
 
       // Non-wedged options first, then wedged — both already in rank order
       // because nbrs was pre-sorted by lessByRank above.
@@ -448,32 +448,47 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
           return false;
         }
       }  // end of else try to backtrack
-    }    // end of curr atom atom being a cand for double bond
-  }      // end of while we are not done with all atoms
+    }  // end of curr atom atom being a cand for double bond
+  }  // end of while we are not done with all atoms
   return true;
 }
 
 class QuestionEnumerator {
  public:
   QuestionEnumerator(INT_VECT questions)
-      : d_questions(std::move(questions)), d_pos(1){};
+      : d_questions(std::move(questions)), d_state(d_questions.size()) {
+    if (!d_state.empty()) {
+      // Start at one because the empty subset has already been attempted.
+      d_state.set(0);
+    }
+  }
   INT_VECT next() {
     INT_VECT res;
-    if (d_pos >= (0x1u << d_questions.size())) {
+    if (d_done) {
       return res;
     }
-    for (unsigned int i = 0; i < d_questions.size(); ++i) {
-      if (d_pos & (0x1u << i)) {
+    for (size_t i = 0; i < d_questions.size(); ++i) {
+      if (d_state.test(i)) {
         res.push_back(d_questions[i]);
       }
     }
-    ++d_pos;
+
+    size_t pos = 0;
+    while (pos < d_state.size() && d_state.test(pos)) {
+      d_state.reset(pos++);
+    }
+    if (pos == d_state.size()) {
+      d_done = true;
+    } else {
+      d_state.set(pos);
+    }
     return res;
-  };
+  }
 
  private:
   INT_VECT d_questions;
-  unsigned int d_pos;
+  boost::dynamic_bitset<> d_state;
+  bool d_done = false;
 };
 
 bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,

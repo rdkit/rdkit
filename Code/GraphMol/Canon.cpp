@@ -1725,14 +1725,15 @@ void canonicalizeEnhancedStereo(ROMol &mol,
         bond->invertChirality();
       }
     }
-    newSgs.emplace_back(
-        StereoGroup(sg.getGroupType(), std::move(sgAtoms), std::move(sgBonds)));
+
+    if (!sgAtoms.empty()) {
+      sgAtoms.front()->setProp("_stereoGroup", newSgs.size(), true);
+    }
 
     // note that we do not forward the Group Ids: this is intentional, so that
     // the Ids are reassigned based on the canonicalized order.
-    if (sgAtoms.size() > 0) {
-      sgAtoms.front()->setProp("_stereoGroup", newSgs.size() - 1, true);
-    }
+    newSgs.emplace_back(
+        StereoGroup(sg.getGroupType(), std::move(sgAtoms), std::move(sgBonds)));
   }
   mol.setStereoGroups(newSgs);
 }

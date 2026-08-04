@@ -514,7 +514,7 @@ std::unique_ptr<ROMol> molzip(
             // correctly
             auto &bond = mappings[molno];
             CHECK_INVARIANT(
-                bondType = bond.linkerBondType,
+                bondType == bond.linkerBondType,
                 ("molzip: LINKER bond with labels: " + std::to_string(molno) +
                  "," + std::to_string(attached_molno) +
                  " has inconsistent bond types"));

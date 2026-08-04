@@ -325,12 +325,13 @@ void fragmentOnSomeBonds(
   if (bondIndices.size() > 63) {
     throw ValueErrorException("currently can only fragment on up to 63 bonds");
   }
-  if (!maxToCut || !mol.getNumAtoms() || !bondIndices.size()) {
+  if (!maxToCut || maxToCut > bondIndices.size() || !mol.getNumAtoms() ||
+      bondIndices.empty()) {
     return;
   }
 
-  std::uint64_t state = (0x1L << maxToCut) - 1;
-  std::uint64_t stop = 0x1L << bondIndices.size();
+  std::uint64_t state = (std::uint64_t{1} << maxToCut) - 1;
+  std::uint64_t stop = std::uint64_t{1} << bondIndices.size();
   std::vector<unsigned int> fragmentHere(maxToCut);
   std::unique_ptr<std::vector<std::pair<unsigned int, unsigned int>>>
       dummyLabelsHere;
@@ -345,7 +346,7 @@ void fragmentOnSomeBonds(
   while (state < stop) {
     unsigned int nSeen = 0;
     for (unsigned int i = 0; i < bondIndices.size() && nSeen < maxToCut; ++i) {
-      if (state & (0x1L << i)) {
+      if (state & (std::uint64_t{1} << i)) {
         fragmentHere[nSeen] = bondIndices[i];
         if (dummyLabelsHere) {
           (*dummyLabelsHere)[nSeen] = (*dummyLabels)[i];
