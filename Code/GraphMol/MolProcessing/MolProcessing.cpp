@@ -51,15 +51,15 @@ std::vector<std::unique_ptr<T>> mtWorker(
   };
   suppl->setWriteCallback(workerfunc);
   // loop over the supplier to make sure we read everything
+  auto maxRecordId = 0u;
   while (!suppl->atEnd()) {
     auto mol = suppl->next();
+    maxRecordId = std::max(maxRecordId, suppl->getLastRecordId());
   }
   // convert the map to a vector and get the results in the input order
-  auto maxv = 0u;
-  for (const auto &pr : accum) {
-    maxv = std::max(maxv, pr.first);
-  }
-  std::vector<std::unique_ptr<T>> results(maxv);
+  // The write callback is not called for records that fail to parse, so use
+  // the IDs of all consumed records to preserve trailing null entries.
+  std::vector<std::unique_ptr<T>> results(maxRecordId);
   for (auto &pr : accum) {
     results[pr.first - 1] = std::move(pr.second);
   }
