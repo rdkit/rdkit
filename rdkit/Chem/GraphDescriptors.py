@@ -540,8 +540,6 @@ def _AssignSymmetryClasses(mol, vdList, bdMat, forceBDMat, numAtoms, cutoff):
     bdMat = Chem.GetDistanceMatrix(mol, useBO=1, useAtomWts=0, force=1, prefix="Balaban")
     mol._balabanMat = bdMat
 
-  # one format call per row instead of one per element, and a dict instead of a
-  # linear scan over the keys seen so far; the keys themselves are unchanged
   sortedRows = numpy.sort(bdMat, axis=1)[:numAtoms, :cutoff]
   rowFmt = '%.4f,' * sortedRows.shape[1]
   keysSeen = {}
@@ -660,8 +658,8 @@ def BertzCT(mol, cutoff=100, dMat=None, forceDMat=1):
   atomTypeDict = {}
   connectionDict = {}
   numAtoms = mol.GetNumAtoms()
-  # when forceDMat is set _AssignSymmetryClasses() replaces dMat with a freshly
-  # calculated Balaban matrix, so there's no point in calculating one here
+  # dMat is only used when forceDMat is unset; otherwise _AssignSymmetryClasses()
+  # calculates its own Balaban matrix
   if not forceDMat and dMat is None:
     try:
       dMat = mol._adjMat
