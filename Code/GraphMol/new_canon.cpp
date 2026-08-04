@@ -398,9 +398,10 @@ bool hasRingNbr(const ROMol &mol, const Atom *at) {
   return false;
 }
 
-void getNbrs(const ROMol &mol, const Atom *at, int *ids) {
+void getNbrs(const ROMol &mol, const Atom *at, const std::span<int> ids) {
   PRECONDITION(at, "bad pointer");
-  PRECONDITION(ids, "bad pointer");
+  PRECONDITION(ids.size() >= at->getDegree(),
+               "neighbor ID storage is too small");
   ROMol::ADJ_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomNeighbors(at);
   unsigned int idx = 0;
@@ -564,13 +565,13 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
 }
 
 void basicInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
-                        const int &idx, int *neighborIds) {
+                        const int &idx,
+                        const std::span<int> neighborIds) {
   atom.atom = mol.getAtomWithIdx(idx);
   atom.index = idx;
   atom.p_symbol = nullptr;
   atom.degree = atom.atom->getDegree();
-  static int emptyNeighborId = 0;
-  atom.nbrIds = atom.degree ? neighborIds : &emptyNeighborId;
+  atom.nbrIds = neighborIds.first(atom.degree);
   getNbrs(mol, atom.atom, atom.nbrIds);
 }
 
@@ -586,14 +587,13 @@ void advancedInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
 }  // end anonymous namespace
 
 void initCanonAtoms(const ROMol &mol, std::vector<Canon::canon_atom> &atoms,
-                    std::vector<int> &neighborIds, bool includeChirality,
+                    std::span<int> neighborIds, bool includeChirality,
                     bool includeStereoGroups) {
   PRECONDITION(neighborIds.size() >= 2 * mol.getNumBonds(),
                "neighbor ID storage is too small");
-  size_t offset = 0;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    basicInitCanonAtom(mol, atoms[i], i, neighborIds.data() + offset);
-    offset += atoms[i].degree;
+    basicInitCanonAtom(mol, atoms[i], i, neighborIds);
+    neighborIds = neighborIds.subspan(atoms[i].degree);
     advancedInitCanonAtom(mol, atoms[i], i);
     atoms[i].bonds.reserve(atoms[i].degree);
     getBonds(mol, atoms[i].atom, atoms[i].bonds, includeChirality, atoms);
@@ -618,7 +618,7 @@ void initFragmentCanonAtoms(const ROMol &mol,
                             const std::vector<std::string> *bondSymbols,
                             const boost::dynamic_bitset<> &atomsInPlay,
                             const boost::dynamic_bitset<> &bondsInPlay,
-                            std::vector<int> &neighborIds,
+                            std::span<int> neighborIds,
                             bool needsInit) {
   needsInit = true;
   PRECONDITION(!atomSymbols || atomSymbols->size() == mol.getNumAtoms(),
@@ -627,7 +627,6 @@ void initFragmentCanonAtoms(const ROMol &mol,
                "bad bond symbols");
   PRECONDITION(neighborIds.size() >= 2 * mol.getNumBonds(),
                "neighbor ID storage is too small");
-  size_t offset = 0;
   // start by initializing the atoms
   for (const auto atom : mol.atoms()) {
     auto i = atom->getIdx();
@@ -644,10 +643,8 @@ void initFragmentCanonAtoms(const ROMol &mol,
         atomsi.p_symbol = nullptr;
       }
       if (needsInit) {
-        static int emptyNeighborId = 0;
-        atomsi.nbrIds = atom->getDegree() ? neighborIds.data() + offset
-                                           : &emptyNeighborId;
-        offset += atom->getDegree();
+        atomsi.nbrIds = neighborIds.first(atom->getDegree());
+        neighborIds = neighborIds.subspan(atom->getDegree());
         advancedInitCanonAtom(mol, atomsi, i);
         atomsi.bonds.reserve(4);
       }
@@ -705,11 +702,10 @@ void initFragmentCanonAtoms(const ROMol &mol,
 
 void initChiralCanonAtoms(const ROMol &mol,
                           std::vector<Canon::canon_atom> &atoms,
-                          std::vector<int> &neighborIds) {
-  size_t offset = 0;
+                          std::span<int> neighborIds) {
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    basicInitCanonAtom(mol, atoms[i], i, neighborIds.data() + offset);
-    offset += atoms[i].degree;
+    basicInitCanonAtom(mol, atoms[i], i, neighborIds);
+    neighborIds = neighborIds.subspan(atoms[i].degree);
     getChiralBonds(mol, atoms[i].atom, atoms[i].bonds);
   }
 }
