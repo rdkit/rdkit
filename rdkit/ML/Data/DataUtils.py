@@ -656,7 +656,7 @@ def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
     if runDetails:
       runDetails.randomized = 1
     nPossible = dataSet.GetNPossibleVals()[-1]
-    acts = [random.randint(0, nPossible) for _ in len(examples)]
+    acts = [random.randrange(nPossible) for _ in range(nPts)]
   for i in range(nPts):
     tmp = dataSet[i]
     tmp[-1] = acts[i]
