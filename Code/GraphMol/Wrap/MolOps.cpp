@@ -2699,6 +2699,10 @@ ARGUMENTS:\n\
         "BondWedgingParameters",
         "Parameters controlling how bond wedging is done.")
         .def_readwrite(
+            "wedgeAttachmentPointBonds",
+            &Chirality::BondWedgingParameters::wedgeAttachmentPointBonds,
+            "If false, bonds to marked attachment points will not be wedged")
+        .def_readwrite(
             "wedgeTwoBondsIfPossible",
             &Chirality::BondWedgingParameters::wedgeTwoBondsIfPossible,
             R"DOC(If this is enabled then two bonds will be wedged at chiral
