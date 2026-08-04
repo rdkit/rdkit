@@ -62,7 +62,7 @@ unsigned int countSwapsToInterconvert(const T &ref, T probe) {
     if ((*probeIt) != (*refIt)) {
       bool foundIt = false;
       probeIt2 = probeIt;
-      while ((*probeIt2) != (*refIt) && probeIt2 != probe.end()) {
+      while (probeIt2 != probe.end() && (*probeIt2) != (*refIt)) {
         ++probeIt2;
       }
       if (probeIt2 != probe.end()) {
