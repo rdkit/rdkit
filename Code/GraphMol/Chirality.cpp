@@ -2264,19 +2264,6 @@ std::ostream &operator<<(std::ostream &oss, const StereoSpecified &s) {
       3) if there are still unresolved atoms or bonds
          repeat the above steps as necessary
  */
-// Runs atropisomer detection for molecules that did not go through
-// assignChiralTypesFromBondDirs or assignChiralTypesFrom3D (e.g. molecules
-// built programmatically). Skips detection if atropisomer stereo is already
-// set, which covers the normal parser path where detection already ran.
-void detectAtropisomersIfNeeded(ROMol &mol) {
-  if (Atropisomers::doesMolHaveAtropisomers(mol)) {
-    return;
-  }
-  const Conformer *conf =
-      mol.getNumConformers() ? &mol.getConformer() : nullptr;
-  Atropisomers::detectAtropisomerChirality(mol, conf);
-}
-
 void legacyStereoPerception(ROMol &mol, bool cleanIt,
                             bool flagPossibleStereoCenters) {
   mol.clearProp("_needsDetectBondStereo");
@@ -2440,7 +2427,9 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
       }
     }
   }
-  detectAtropisomersIfNeeded(mol);
+  const Conformer *conf =
+      mol.getNumConformers() ? &mol.getConformer() : nullptr;
+  Atropisomers::detectAtropisomerChirality(mol, conf, cleanIt);
   if (cleanIt) {
     bool foundAtropisomer = false;
     for (auto bond : mol.bonds()) {
@@ -2612,7 +2601,9 @@ void stereoPerception(ROMol &mol, bool cleanIt,
   }
   // populate double bond stereo info:
   updateDoubleBondStereo(mol, sinfo, cleanIt);
-  detectAtropisomersIfNeeded(mol);
+  const Conformer *conf =
+      mol.getNumConformers() ? &mol.getConformer() : nullptr;
+  Atropisomers::detectAtropisomerChirality(mol, conf, cleanIt);
   if (cleanIt) {
     Atropisomers::cleanupAtropisomerStereoGroups(mol);
     Chirality::cleanupStereoGroups(mol);
@@ -3514,7 +3505,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
       atom->setProp<int>(common_properties::_NonExplicit3DChirality, 1);
     }
   }
-  Atropisomers::detectAtropisomerChirality(mol, &conf);
+  Atropisomers::detectAtropisomerChirality(mol, &conf, replaceExistingTags);
 }
 
 void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
@@ -3783,7 +3774,7 @@ void assignStereochemistryFrom3D(ROMol &mol, int confId,
 void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
                                    const bool replaceExistingTags) {
   if (!mol.getNumConformers()) {
-    Atropisomers::detectAtropisomerChirality(mol, nullptr);
+    Atropisomers::detectAtropisomerChirality(mol, nullptr, replaceExistingTags);
     return;
   }
   auto conf = mol.getConformer(confId);
@@ -3828,7 +3819,8 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
       }
     }
   }
-  Atropisomers::detectAtropisomerChirality(mol, &mol.getConformer(confId));
+  Atropisomers::detectAtropisomerChirality(mol, &mol.getConformer(confId),
+                                           replaceExistingTags);
 }
 
 void removeStereochemistry(ROMol &mol) {
