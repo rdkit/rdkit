@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <limits>
 
 #include <RDGeneral/BoostStartInclude.h>
 
@@ -1258,26 +1259,38 @@ unsigned int addExplicitAttachmentPoint(RWMol &mol, unsigned int atomIdx,
 
 }  // namespace details
 
-namespace {
-bool hasAttachmentPointLabel(const Atom *atom) {
+unsigned int getAttachmentPointLabelNumber(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  if (atom->getAtomicNum() != 0 || atom->getDegree() != 1) {
+    return 0;
+  }
   std::string label;
   if (!atom->getPropIfPresent(common_properties::atomLabel, label) ||
-      label.size() <= 3 || label.compare(0, 3, "_AP") != 0) {
-    return false;
+      label.size() <= attachmentPointLabelPrefix.size() ||
+      label.compare(0, attachmentPointLabelPrefix.size(),
+                    attachmentPointLabelPrefix) != 0) {
+    return 0;
   }
-  const auto suffix = label.begin() + 3;
-  return std::all_of(suffix, label.end(),
-                     [](char value) { return value >= '0' && value <= '9'; }) &&
-         std::any_of(suffix, label.end(),
-                     [](char value) { return value != '0'; });
+  unsigned int result = 0;
+  for (auto iter = label.begin() + attachmentPointLabelPrefix.size();
+       iter != label.end(); ++iter) {
+    if (*iter < '0' || *iter > '9') {
+      return 0;
+    }
+    const auto digit = static_cast<unsigned int>(*iter - '0');
+    if (result > (std::numeric_limits<unsigned int>::max() - digit) / 10) {
+      return 0;
+    }
+    result = result * 10 + digit;
+  }
+  return result;
 }
-}  // namespace
 
 bool isMarkedAttachmentPoint(const Atom *atom) {
   PRECONDITION(atom, "bad atom");
   return atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
          (atom->hasProp(common_properties::_fromAttachPoint) ||
-          hasAttachmentPointLabel(atom));
+          getAttachmentPointLabelNumber(atom));
 }
 
 namespace details {

@@ -8519,6 +8519,9 @@ M  END
     self.assertFalse(Chem.IsMarkedAttachmentPoint(mol.GetAtomWithIdx(0)))
 
     legacy = Chem.MolFromSmiles("*C |$_AP37;$|")
+    self.assertEqual(Chem.ATTACHMENT_POINT_LABEL_PREFIX, "_AP")
+    self.assertEqual(
+      Chem.GetAttachmentPointLabelNumber(legacy.GetAtomWithIdx(0)), 37)
     self.assertTrue(Chem.IsMarkedAttachmentPoint(legacy.GetAtomWithIdx(0)))
     Chem.CollapseAttachmentPoints(legacy)
     self.assertEqual(legacy.GetNumAtoms(), 1)

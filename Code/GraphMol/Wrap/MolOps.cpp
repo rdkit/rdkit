@@ -3407,6 +3407,20 @@ A note on the flags controlling which atoms/bonds are modified:
    - either no query or be an AtomNullQuery
 )DOC");
     python::def(
+        "GetAttachmentPointLabelNumber", MolOps::getAttachmentPointLabelNumber,
+        python::arg("atom"),
+        R"DOC(returns the positive integer from a valid _AP<n> attachment-point label
+
+  The atom must be a degree-one dummy atom. Returns 0 if it does not have a
+  valid numbered attachment-point label. The returned number is a label
+  identifier, not an MDL ATTCHPT position.
+
+  Arguments:
+   - atom: the atom to inspect
+)DOC");
+    python::scope().attr("ATTACHMENT_POINT_LABEL_PREFIX") =
+        std::string(MolOps::attachmentPointLabelPrefix);
+    python::def(
         "IsMarkedAttachmentPoint", MolOps::isMarkedAttachmentPoint,
         python::arg("atom"),
         R"DOC(returns whether an atom is a marked explicit attachment point

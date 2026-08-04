@@ -14,6 +14,7 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <string_view>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -1396,6 +1397,22 @@ RDKIT_GRAPHMOL_EXPORT void expandAttachmentPoints(RWMol &mol,
  */
 RDKIT_GRAPHMOL_EXPORT void collapseAttachmentPoints(RWMol &mol,
                                                     bool markedOnly = true);
+
+//! prefix used for numbered explicit attachment-point atom labels
+inline constexpr std::string_view attachmentPointLabelPrefix = "_AP";
+
+//! returns the positive integer from a valid _AP<n> attachment-point label
+/*!
+ * The atom must be a degree-one dummy atom whose atomLabel consists of
+ * attachmentPointLabelPrefix followed by a positive decimal integer. Returns
+ * 0 if the atom does not have a valid numbered attachment-point label.
+ *
+ * This number is a label identifier, not an MDL ATTCHPT position.
+ *
+ * @param atom the atom to inspect
+ */
+RDKIT_GRAPHMOL_EXPORT unsigned int getAttachmentPointLabelNumber(
+    const Atom *atom);
 
 //! returns whether an atom is a marked explicit attachment point
 /*!
