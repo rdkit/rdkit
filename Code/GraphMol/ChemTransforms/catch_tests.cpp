@@ -665,6 +665,21 @@ TEST_CASE("fragmentOnBonds should not segfault on duplicate bondIndices") {
   REQUIRE(!splitMol);
 }
 
+TEST_CASE("fragmentOnBonds updates implicit Hs after batch bond removal") {
+  auto mol = "c1ccccc1CC"_smiles;
+  REQUIRE(mol);
+  const auto *coreBond = mol->getBondBetweenAtoms(5, 6);
+  const auto *sidechainBond = mol->getBondBetweenAtoms(6, 7);
+  REQUIRE(coreBond);
+  REQUIRE(sidechainBond);
+  std::unique_ptr<ROMol> splitMol(MolFragmenter::fragmentOnBonds(
+      *mol, {coreBond->getIdx(), sidechainBond->getIdx()}, false));
+  REQUIRE(splitMol);
+  CHECK(splitMol->getAtomWithIdx(5)->getTotalNumHs() == 1);
+  CHECK(splitMol->getAtomWithIdx(6)->getTotalNumHs() == 4);
+  CHECK(splitMol->getAtomWithIdx(7)->getTotalNumHs() == 4);
+}
+
 TEST_CASE("align fragments") {
   SECTION("basics") {
     auto m = "CC[1*].O[1*] |(1,0,0;2,0,0;3.5,0,0;0,1,0;0,2.1,0)|"_smiles;
