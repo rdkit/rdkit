@@ -24,6 +24,7 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
+#include <ranges>
 #include <sstream>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/StreamOps.h>
@@ -495,12 +496,16 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
             "atoms has degree > 1 ");
         auto coreNeighborIdx =
             core[*core.getAtomNeighbors(coreAtom).first]->getIdx();
-        auto molNeighborIdx =
-            std::find_if(matchV.cbegin(), matchV.cend(),
-                         [coreNeighborIdx](std::pair<int, int> p) {
-                           return p.first == static_cast<int>(coreNeighborIdx);
-                         })
-                ->second;
+        auto molNeighborMatch =
+            std::ranges::find_if(matchV, [coreNeighborIdx](auto p) {
+              return p.first == static_cast<int>(coreNeighborIdx);
+            });
+        if (molNeighborMatch == matchV.end()) {
+          throw ValueErrorException(
+              "Supplied MatchVect is missing the neighbor of a multiply "
+              "mapped core atom");
+        }
+        auto molNeighborIdx = molNeighborMatch->second;
         if (molNeighborIdx > -1) {
           auto connectingBond =
               mol.getBondBetweenAtoms(mappingInfo.molIndex, molNeighborIdx);
