@@ -1564,6 +1564,30 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
   }
 }
 
+TEST_CASE("pickBondsToWedge() can exclude marked attachment points") {
+  auto mol = "F[C@](Cl)(Br)*"_smiles;
+  REQUIRE(mol);
+  const auto chiralAtom = mol->getAtomWithIdx(1);
+  const auto attachmentPoint = mol->getAtomWithIdx(4);
+  attachmentPoint->setProp(common_properties::_fromAttachPoint, 1);
+
+  // Leave the attachment-point bond as the only wedgeable single bond.
+  for (auto bond : mol->atomBonds(chiralAtom)) {
+    if (bond->getOtherAtom(chiralAtom) != attachmentPoint) {
+      bond->setBondType(Bond::BondType::DOUBLE);
+    }
+  }
+
+  auto wedgedBonds = Chirality::pickBondsToWedge(*mol);
+  REQUIRE(wedgedBonds.size() == 1);
+  CHECK(wedgedBonds.begin()->first ==
+        static_cast<int>(mol->getBondBetweenAtoms(1, 4)->getIdx()));
+
+  Chirality::BondWedgingParameters params;
+  params.wedgeAttachmentPointBonds = false;
+  CHECK(Chirality::pickBondsToWedge(*mol, &params).empty());
+}
+
 TEST_CASE("addWavyBondsForStereoAny()") {
   SECTION("simplest") {
     auto mol = "CC=CC"_smiles;
