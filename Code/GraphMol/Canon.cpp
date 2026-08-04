@@ -188,9 +188,10 @@ bool handleDirConflictsAcrossDoubleBond(
     const Atom &atom2, bool atom2DirsAreConsistent, const Bond &firstFromAtom2,
     bool isFirstFromAtom2Flipped, const Bond *secondFromAtom2,
     bool isSecondFromAtom2Flipped, std::vector<int8_t> &bondDirCounts,
-    std::vector<int8_t> &atomDirCounts
+    std::vector<int8_t> &atomDirCounts) {
+  PRECONDITION(atom1DirsAreConsistent || secondFromAtom1, "bad second bond");
+  PRECONDITION(atom2DirsAreConsistent || secondFromAtom2, "bad second bond");
 
-) {
   if (atom1DirsAreConsistent && atom2DirsAreConsistent) {
     // The directions on each side are consistent, so if they are also
     // consistent across the double bond, then all is good. But if they

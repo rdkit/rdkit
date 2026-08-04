@@ -25,7 +25,7 @@ namespace RDDataManip {
  *  Examples of the container include PySequenceHolder which is wrapper around
  *  a python sequence objects like lists and tuples.
  *  Examples of the entryType include a sequence of double, floats, and
- *ExplicitBitVects
+ *  ExplicitBitVects
  *
  */
 template <class vectType, class entryType>
@@ -38,7 +38,7 @@ class MetricMatrixCalc {
 
   /*! \brief Set the metric function
    *
-   * Set the pointer to the metric funCtion to be used by the metric calculator
+   * Set the pointer to the metric function to be used by the metric calculator
    *
    * ARGUMENTS:
    *
