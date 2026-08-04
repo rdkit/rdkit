@@ -8506,6 +8506,18 @@ M  END
     Chem.CollapseAttachmentPoints(mol, markedOnly=False)
     self.assertEqual(mol.GetNumAtoms(), 2)
 
+  def testIsMarkedAttachmentPoint(self):
+    mol = Chem.MolFromSmiles("CC")
+    mol.GetAtomWithIdx(1).SetIntProp("molAttchpt", 1)
+    Chem.ExpandAttachmentPoints(mol)
+    attachment = mol.GetAtomWithIdx(2)
+    self.assertTrue(Chem.IsMarkedAttachmentPoint(attachment))
+
+    bond = mol.GetBondBetweenAtoms(1, 2)
+    bond.SetBondDir(Chem.BondDir.BEGINWEDGE)
+    self.assertTrue(Chem.IsMarkedAttachmentPoint(attachment))
+    self.assertFalse(Chem.IsMarkedAttachmentPoint(mol.GetAtomWithIdx(0)))
+
   def testAddStereoAnnotations(self):
     mol = Chem.MolFromSmiles(
       "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"

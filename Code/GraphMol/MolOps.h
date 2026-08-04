@@ -1396,6 +1396,17 @@ RDKIT_GRAPHMOL_EXPORT void expandAttachmentPoints(RWMol &mol,
 RDKIT_GRAPHMOL_EXPORT void collapseAttachmentPoints(RWMol &mol,
                                                     bool markedOnly = true);
 
+//! returns whether an atom is a marked explicit attachment point
+/*!
+ * A marked explicit attachment point is a degree-one dummy atom with the
+ * _fromAttachPoint property. This checks attachment-point identity only; it
+ * does not check whether the atom can currently be collapsed. In particular,
+ * an attachment point connected by a wedged bond is still considered marked.
+ *
+ * @param atom the atom to inspect
+ */
+RDKIT_GRAPHMOL_EXPORT bool isMarkedAttachmentPoint(const Atom *atom);
+
 namespace details {
 //! attachment points encoded as attachPt properties are added to the graph as
 /// dummy atoms
@@ -1415,10 +1426,10 @@ RDKIT_GRAPHMOL_EXPORT unsigned int addExplicitAttachmentPoint(
     RWMol &mol, unsigned int atomIdx, unsigned int val, bool addAsQuery = true,
     bool addCoords = true);
 
-//! returns whether or not an atom is an attachment point
+//! returns whether an atom is eligible to be collapsed as an attachment point
 /*!
  *
- * @param mol the molecule of interest
+ * @param atom the atom to inspect
  * @param markedOnly if true, only dummy atoms with the _fromAttachPoint
  *    property will be collapsed
  *

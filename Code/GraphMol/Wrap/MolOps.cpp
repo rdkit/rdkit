@@ -3406,6 +3406,18 @@ A note on the flags controlling which atoms/bonds are modified:
    - either no query or be an AtomNullQuery
 )DOC");
     python::def(
+        "IsMarkedAttachmentPoint", MolOps::isMarkedAttachmentPoint,
+        python::arg("atom"),
+        R"DOC(returns whether an atom is a marked explicit attachment point
+
+  This checks attachment-point identity only, not whether the atom can
+  currently be collapsed. In particular, an attachment point connected by a
+  wedged bond is still considered marked.
+
+  Arguments:
+   - atom: the atom to inspect
+)DOC");
+    python::def(
         "AddStereoAnnotations", Chirality::addStereoAnnotations,
         (python::arg("mol"), python::arg("absLabel") = "abs ({cip})",
          python::arg("orLabel") = "or{id}", python::arg("andLabel") = "and{id}",

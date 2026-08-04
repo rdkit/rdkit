@@ -3845,6 +3845,27 @@ TEST_CASE("expand and remove AttachmentPoints") {
     // marked as an attachment point, but at end of a double bond
     CHECK(!MolOps::details::isAttachmentPoint(mol->getAtomWithIdx(4)));
   }
+  SECTION("marked attachment point identity") {
+    auto mol = "CC"_smiles;
+    REQUIRE(mol);
+    auto attachmentIdx =
+        MolOps::details::addExplicitAttachmentPoint(*mol, 1, 1, true, false);
+    auto attachment = mol->getAtomWithIdx(attachmentIdx);
+    auto attachmentBond = mol->getBondBetweenAtoms(1, attachmentIdx);
+
+    CHECK(MolOps::isMarkedAttachmentPoint(attachment));
+    CHECK(MolOps::details::isAttachmentPoint(attachment));
+
+    attachmentBond->setBondDir(Bond::BondDir::BEGINWEDGE);
+    CHECK(MolOps::isMarkedAttachmentPoint(attachment));
+    CHECK(!MolOps::details::isAttachmentPoint(attachment));
+
+    CHECK(!MolOps::isMarkedAttachmentPoint(mol->getAtomWithIdx(0)));
+    mol->getAtomWithIdx(0)->setProp(common_properties::_fromAttachPoint, 1);
+    CHECK(!MolOps::isMarkedAttachmentPoint(mol->getAtomWithIdx(0)));
+    attachment->clearProp(common_properties::_fromAttachPoint);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+  }
 }
 
 TEST_CASE("bond output") {

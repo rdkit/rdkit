@@ -1256,13 +1256,23 @@ unsigned int addExplicitAttachmentPoint(RWMol &mol, unsigned int atomIdx,
   return idx;
 }
 
+}  // namespace details
+
+bool isMarkedAttachmentPoint(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  return atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
+         atom->hasProp(common_properties::_fromAttachPoint);
+}
+
+namespace details {
+
 bool isAttachmentPoint(const Atom *atom, bool markedOnly) {
   PRECONDITION(atom, "bad atom");
   PRECONDITION(atom->hasOwningMol(), "atom not associated with a molecule");
   if (atom->getAtomicNum() != 0 || atom->getDegree() != 1) {
     return false;
   }
-  if (markedOnly && !atom->hasProp(common_properties::_fromAttachPoint)) {
+  if (markedOnly && !isMarkedAttachmentPoint(atom)) {
     return false;
   }
   // we know that the atom is degree 1
