@@ -166,7 +166,7 @@ void getExperimentalTorsions(
   // exclude bonds in bridged ring systems
   boost::dynamic_bitset<> excludedBonds(nb);
   const RingInfo *rinfo = mol.getRingInfo();
-  const VECT_INT_VECT &bondRings = rinfo->bondRings();
+  const auto bondRings = rinfo->bondRingsAsVectors();
   for (auto rii = bondRings.begin(); rii != bondRings.end(); ++rii) {
     boost::dynamic_bitset<> rs1(nb);  // bitset for ring 1
     for (auto riiv : *rii) {

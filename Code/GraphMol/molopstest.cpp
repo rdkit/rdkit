@@ -139,6 +139,66 @@ TEST_CASE("test2") {
   delete m;
 };
 
+TEST_CASE("flat RingInfo storage preserves membership and fused semantics") {
+  RingInfo ringInfo;
+  ringInfo.initialize(FIND_RING_TYPE_SSSR);
+  ringInfo.preallocate(8, 8);
+
+  const VECT_INT_VECT atomRings{{0, 1, 2}, {0, 1, 3}, {0, 1, 4}};
+  const VECT_INT_VECT bondRings{{0, 1, 2}, {0, 3, 4}, {0, 5, 6}};
+  REQUIRE(ringInfo.addRings(atomRings, bondRings) == 3);
+  REQUIRE(ringInfo.numRings() == 3);
+
+  REQUIRE(ringInfo.atomRings().size() == atomRings.size());
+  for (size_t i = 0; i < atomRings.size(); ++i) {
+    REQUIRE(std::equal(ringInfo.atomRings()[i].begin(),
+                       ringInfo.atomRings()[i].end(), atomRings[i].begin(),
+                       atomRings[i].end()));
+    REQUIRE(std::equal(ringInfo.bondRings()[i].begin(),
+                       ringInfo.bondRings()[i].end(), bondRings[i].begin(),
+                       bondRings[i].end()));
+  }
+
+  REQUIRE(ringInfo.atomMembers(0).size() == 3);
+  REQUIRE(ringInfo.atomMembers(0)[0] == 0);
+  REQUIRE(ringInfo.atomMembers(0)[1] == 1);
+  REQUIRE(ringInfo.atomMembers(0)[2] == 2);
+  REQUIRE(ringInfo.bondMembers(0).size() == 3);
+  REQUIRE(ringInfo.minAtomRingSize(7) == 0);
+  REQUIRE(ringInfo.minAtomRingSize(99) == 0);
+  REQUIRE(
+      ringInfo.atomMembers(std::numeric_limits<unsigned int>::max()).empty());
+  REQUIRE(ringInfo.minBondRingSize(7) == 0);
+  REQUIRE(ringInfo.minBondRingSize(99) == 0);
+  REQUIRE(
+      ringInfo.bondMembers(std::numeric_limits<unsigned int>::max()).empty());
+
+  // A bond shared by three rings is one fused bond in each ring, while each
+  // ring still has two fused ring neighbors.
+  for (unsigned int ringIdx = 0; ringIdx < 3; ++ringIdx) {
+    REQUIRE(ringInfo.isRingFused(ringIdx));
+    REQUIRE(ringInfo.numFusedBonds(ringIdx) == 1);
+    REQUIRE(ringInfo.numFusedRingNeighbors(ringIdx) == 2);
+  }
+
+  RingInfo copied(ringInfo);
+  REQUIRE(copied.numRings() == 3);
+  REQUIRE(copied.numFusedBonds(0) == 1);
+  RingInfo moved(std::move(copied));
+  REQUIRE(moved.numRings() == 3);
+  copied.reset();
+  copied.initialize();
+  copied.preallocate(3, 3);
+  REQUIRE(copied.addRing({0, 1, 2}, {0, 1, 2}) == 1);
+
+  ringInfo.addRingFamily({0, 1, 2, 3}, {0, 1, 3, 4});
+  ringInfo.reset(false);
+  REQUIRE(!ringInfo.isInitialized());
+  ringInfo.initialize();
+  REQUIRE(ringInfo.numRings() == 0);
+  REQUIRE(ringInfo.numRingFamilies() == 1);
+}
+
 TEST_CASE("test3") {
   string smi;
   Mol *m;

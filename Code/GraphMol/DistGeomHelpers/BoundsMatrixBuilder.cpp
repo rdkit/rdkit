@@ -517,7 +517,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   unsigned int aid2, aid1, aid3, bid1, bid2;
   double angle;
 
-  auto atomRings = rinfo->atomRings();
+  auto atomRings = rinfo->atomRingsAsVectors();
   std::sort(atomRings.begin(), atomRings.end(), lessVector);
   // sort the rings based on the ring size
   std::vector<unsigned int> visited(npt, 0u);
@@ -1361,7 +1361,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
   const auto rinfo = mol.getRingInfo();  // FIX: make sure we have ring info
   CHECK_INVARIANT(rinfo, "");
-  auto bondRings = rinfo->bondRings();
+  auto bondRings = rinfo->bondRingsAsVectors();
 
   // we first want to handle smaller rings
   std::ranges::sort(bondRings, std::ranges::greater{}, &std::vector<int>::size);

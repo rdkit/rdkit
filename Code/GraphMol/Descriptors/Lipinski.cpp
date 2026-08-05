@@ -442,10 +442,11 @@ unsigned int calcNumSpiroAtoms(const ROMol &mol,
     atoms = &lAtoms;
   }
 
-  for (unsigned int i = 0; i < rInfo->atomRings().size(); ++i) {
-    const INT_VECT &ri = rInfo->atomRings()[i];
-    for (unsigned int j = i + 1; j < rInfo->atomRings().size(); ++j) {
-      const INT_VECT &rj = rInfo->atomRings()[j];
+  const auto atomRings = rInfo->atomRingsAsVectors();
+  for (unsigned int i = 0; i < atomRings.size(); ++i) {
+    const auto &ri = atomRings[i];
+    for (unsigned int j = i + 1; j < atomRings.size(); ++j) {
+      const auto &rj = atomRings[j];
       // EFF: using intersect here does more work and memory allocation than is
       // required
       INT_VECT inter;
@@ -472,10 +473,11 @@ unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
     atoms = &lAtoms;
   }
 
-  for (unsigned int i = 0; i < rInfo->bondRings().size(); ++i) {
-    const INT_VECT &ri = rInfo->bondRings()[i];
-    for (unsigned int j = i + 1; j < rInfo->bondRings().size(); ++j) {
-      const INT_VECT &rj = rInfo->bondRings()[j];
+  const auto bondRings = rInfo->bondRingsAsVectors();
+  for (unsigned int i = 0; i < bondRings.size(); ++i) {
+    const auto &ri = bondRings[i];
+    for (unsigned int j = i + 1; j < bondRings.size(); ++j) {
+      const auto &rj = bondRings[j];
       // EFF: using intersect here does more work and memory allocation than is
       // required
       INT_VECT inter;

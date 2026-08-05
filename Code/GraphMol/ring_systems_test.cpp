@@ -43,7 +43,7 @@ TEST_CASE("missing rings") {
     auto m = "O=C=NC1=CC2C3=C(C=C1)C2=C(N=C=O)C=C3"_smiles;
     REQUIRE(m);
     MolOps::symmetrizeSSSR(*m);
-    auto arings = m->getRingInfo()->atomRings();
+    auto arings = m->getRingInfo()->atomRingsAsVectors();
     REQUIRE(arings.size() == 5);
     std::vector<std::vector<int>> expected{{5, 6, 7, 10},
                                            {5, 6, 16, 15, 11, 10},

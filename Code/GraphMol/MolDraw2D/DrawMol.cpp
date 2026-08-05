@@ -3415,7 +3415,7 @@ void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
   std::vector<size_t> bond_in_rings;
   const auto &bond_rings = drawMol_->getRingInfo()->bondRings();
   for (size_t i = 0; i < bond_rings.size(); ++i) {
-    if (find(bond_rings[i].begin(), bond_rings[i].end(), bond.getIdx()) !=
+    if (std::find(bond_rings[i].begin(), bond_rings[i].end(), bond.getIdx()) !=
         bond_rings[i].end()) {
       bond_in_rings.push_back(i);
     }
@@ -3424,13 +3424,13 @@ void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
   // given the bond and the atom at one end, find the ring atom connected to it
   // that isn't the other end of the bond.
   auto other_ring_atom = [&](unsigned int bondAtom, const Bond &bond,
-                             const INT_VECT &ringBonds) -> int {
+                             RingInfo::IntView ringBonds) -> int {
     auto atom = drawMol_->getAtomWithIdx(bondAtom);
     for (const auto bond2 : drawMol_->atomBonds(atom)) {
       if (bond2->getIdx() == bond.getIdx()) {
         continue;
       }
-      if (find(ringBonds.begin(), ringBonds.end(), bond2->getIdx()) !=
+      if (std::find(ringBonds.begin(), ringBonds.end(), bond2->getIdx()) !=
           ringBonds.end()) {
         return bond2->getOtherAtomIdx(bondAtom);
       }
@@ -3438,7 +3438,7 @@ void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
     return -1;
   };
 
-  const std::vector<int> *ringToUse = nullptr;
+  RingInfo::IntView ringToUse;
   if (bond_in_rings.size() > 1) {
     // bond is in more than 1 ring.  Choose one that is the same aromaticity
     // as the bond, so that if bond is aromatic, the double bond is inside
@@ -3446,9 +3446,9 @@ void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
     // where there are fused aromatic and aliphatic rings.
     // morphine: CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@H]3[C@H]1C5
     for (size_t i = 0; i < bond_in_rings.size(); ++i) {
-      ringToUse = &bond_rings[bond_in_rings[i]];
+      ringToUse = bond_rings[bond_in_rings[i]];
       bool ring_ok = true;
-      for (auto bond_idx : *ringToUse) {
+      for (auto bond_idx : ringToUse) {
         const Bond *bond2 = drawMol_->getBondWithIdx(bond_idx);
         if (bond.getIsAromatic() != bond2->getIsAromatic()) {
           ring_ok = false;
@@ -3460,13 +3460,13 @@ void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
       }
     }
   } else {
-    ringToUse = &bond_rings[bond_in_rings.front()];
+    ringToUse = bond_rings[bond_in_rings.front()];
   }
 
   // either bond is in 1 ring, or we couldn't decide above, so just use the
   // first one
-  int thirdAtom = other_ring_atom(bond.getBeginAtomIdx(), bond, *ringToUse);
-  int fourthAtom = other_ring_atom(bond.getEndAtomIdx(), bond, *ringToUse);
+  int thirdAtom = other_ring_atom(bond.getBeginAtomIdx(), bond, ringToUse);
+  int fourthAtom = other_ring_atom(bond.getEndAtomIdx(), bond, ringToUse);
   // As seen in #5486, bonds in rings can be trans and the default code assumes
   // they are always cis.  If trans, treat as a non-ring bond.  It won't
   // necessarily come out on the inside of the ring, but that's quite

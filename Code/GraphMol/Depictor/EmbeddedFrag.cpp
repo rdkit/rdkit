@@ -1453,7 +1453,7 @@ std::vector<RDKit::INT_VECT> _getRingsForSpiroCenter(unsigned int spiroAid,
   for (const auto &ring : atomRings) {
     if (std::find(ring.begin(), ring.end(), static_cast<int>(spiroAid)) !=
         ring.end()) {
-      result.push_back(ring);
+      result.emplace_back(ring.begin(), ring.end());
     }
   }
 

@@ -905,7 +905,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
     tmol.getRingInfo()->reset();
     tmol.getRingInfo()->initialize();
     for (unsigned int ridx = 0; ridx < mol.getRingInfo()->numRings(); ++ridx) {
-      const INT_VECT &aring = mol.getRingInfo()->atomRings()[ridx];
+      const auto aring = mol.getRingInfo()->atomRings()[ridx];
       bool keepIt = true;
       for (auto aidx : aring) {
         if (!atomsInPlay[aidx]) {
@@ -914,7 +914,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
         }
       }
       if (keepIt) {
-        const INT_VECT &bring = mol.getRingInfo()->bondRings()[ridx];
+        const auto bring = mol.getRingInfo()->bondRings()[ridx];
         for (auto bidx : bring) {
           if (!bondsInPlay[bidx]) {
             keepIt = false;

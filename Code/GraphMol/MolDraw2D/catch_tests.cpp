@@ -7939,7 +7939,7 @@ TEST_CASE(
         DrawColour(0.0, 0.8, 0.8), DrawColour(0.0, 0.0, 0.8)};
 
     auto rings = m->getRingInfo();
-    auto &atomRings = rings->atomRings();
+    auto atomRings = rings->atomRings();
     std::map<int, std::vector<DrawColour>> atomCols;
     std::map<int, double> atomRads;
     for (auto i = 0u; i < atomRings.size(); ++i) {
@@ -7958,7 +7958,7 @@ TEST_CASE(
       }
     }
 
-    auto &bondRings = rings->bondRings();
+    auto bondRings = rings->bondRings();
     std::map<int, int> bondMults;
     std::map<int, std::vector<DrawColour>> bondCols;
     for (auto i = 0u; i < bondRings.size(); ++i) {
