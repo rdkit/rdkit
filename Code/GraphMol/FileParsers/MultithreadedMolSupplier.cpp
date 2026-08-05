@@ -79,6 +79,15 @@ void MultithreadedMolSupplier::close() {
   df_started = false;
 }
 
+void MultithreadedMolSupplier::closeStreams() {
+  if (df_owner && dp_inStream) {
+    delete dp_inStream;
+    df_owner = false;
+    dp_inStream = nullptr;
+  }
+  df_started = false;
+}
+
 void MultithreadedMolSupplier::reader() {
   std::string record;
   unsigned int lineNum, index;
@@ -177,9 +186,9 @@ void MultithreadedMolSupplier::endThreads() {
 }
 
 void MultithreadedMolSupplier::startThreads() {
-  // run the reader function in a seperate thread
+  // run the reader function in a separate thread
   d_readerThread = std::thread(&MultithreadedMolSupplier::reader, this);
-  // run the writer function in seperate threads
+  // run the writer function in separate threads
   for (unsigned int i = 0; i < d_params.numWriterThreads; i++) {
     d_writerThreads.emplace_back(
         std::thread(&MultithreadedMolSupplier::writer, this));

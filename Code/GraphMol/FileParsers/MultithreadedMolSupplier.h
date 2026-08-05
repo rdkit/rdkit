@@ -43,18 +43,18 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
 
   MultithreadedMolSupplier() {}
 
-  
   // Derived classes MUST have a destructor that calls close
   //  to properly end threads while the instance is alive
-  virtual ~MultithreadedMolSupplier() {close();}
+  ~MultithreadedMolSupplier() override { close(); }
 
   //! shut down the supplier
-  virtual void close() override;
+  void close() final;
+
   //! pop elements from the output queue
-  std::unique_ptr<RWMol> next() override;
+  std::unique_ptr<RWMol> next() final;
 
   //! returns true when all records have been read from the supplier
-  bool atEnd() override;
+  bool atEnd() final;
 
   //! included for the interface, always returns false
   bool getEOFHitOnRead() const { return false; }
@@ -64,6 +64,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   //! if and only if the function is called before extracting the first
   //! record
   unsigned int getLastRecordId() const;
+
   //! returns the text block for the last extracted item
   std::string getLastItemText() const;
 
@@ -79,6 +80,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   void setNextCallback(T cb) {
     nextCallback = cb;
   }
+
   //! sets the callback to be applied to molecules after they are processed, but
   ///! before they are written to the output queue
   /*!
@@ -90,6 +92,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   void setWriteCallback(T cb) {
     writeCallback = cb;
   }
+
   //! sets the callback to be applied to input text records before they are
   ///! added to the input queue
   /*!
@@ -101,66 +104,78 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
     readCallback = cb;
   }
 
+  //! not yet implemented
+  void init() final{};
+
+  //! not yet implemented
+  void reset() final;
+
  protected:
+  virtual bool getEnd() const = 0;
+
+  //! extracts next record from the input file or stream
+  virtual bool extractNextRecord(std::string &record, unsigned int &lineNum,
+                                 unsigned int &index) = 0;
+
+  //! processes the record into an RWMol object
+  virtual RWMol *processMoleculeRecord(const std::string &record,
+                                       unsigned int lineNum) = 0;
+
+  //!< stores last extracted record id
+  std::atomic<unsigned int> d_lastRecordId = 0;
+
+  std::unique_ptr<
+      ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>>
+      d_inputQueue;  //!< concurrent input queue
+
+  std::unique_ptr<
+      ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>>
+      d_outputQueue;  //!< concurrent output queue
+
+  Parameters d_params;
+
+ private:
   //! Close down any external streams
-  virtual void closeStreams() {}
+  void closeStreams();
 
   //! starts reader and writer threads
   void startThreads();
+
   //! finalizes the reader and writer threads
   void endThreads();
 
- private:
   //! reads lines from input stream to populate the input queue
   void reader();
+
   //! parses lines from the input queue converting them to RWMol objects
   //! populating the output queue
   void writer();
+
   //! disable automatic copy constructors and assignment operators
   //! for this class and its subclasses.  They will likely be
   //! carrying around stream pointers and copying those is a recipe
   //! for disaster.
-  MultithreadedMolSupplier(const MultithreadedMolSupplier &);
-  MultithreadedMolSupplier &operator=(const MultithreadedMolSupplier &);
-  //! not yet implemented
-  void reset() override;
-  void init() override = 0;
-  virtual bool getEnd() const = 0;
-  //! extracts next record from the input file or stream
-  virtual bool extractNextRecord(std::string &record, unsigned int &lineNum,
-                                 unsigned int &index) = 0;
-  //! processes the record into an RWMol object
-  virtual RWMol *processMoleculeRecord(const std::string &record,
-                                       unsigned int lineNum) = 0;
+  MultithreadedMolSupplier(const MultithreadedMolSupplier &) = delete;
+
+  MultithreadedMolSupplier &operator=(const MultithreadedMolSupplier &) =
+      delete;
+
+  std::atomic<bool> df_started = false;
+  std::atomic<bool> df_forceStop = false;
 
   std::mutex d_threadCounterMutex;
   std::atomic<unsigned int> d_threadCounter{1};  //!< thread counter
   std::vector<std::thread> d_writerThreads;      //!< vector writer threads
   std::thread d_readerThread;                    //!< single reader thread
 
- protected:
-  std::atomic<bool> df_started = false;
-  std::atomic<bool> df_forceStop = false;
-
-  std::atomic<unsigned int> d_lastRecordId =
-      0;                       //!< stores last extracted record id
   std::string d_lastItemText;  //!< stores last extracted record
-  const unsigned int d_numReaderThread = 1;  //!< number of reader thread
 
-  std::unique_ptr<
-      ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>>
-      d_inputQueue;  //!< concurrent input queue
-  std::unique_ptr<
-      ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>>
-      d_outputQueue;  //!< concurrent output queue
-  Parameters d_params;
   std::function<void(RWMol &, const MultithreadedMolSupplier &)> nextCallback =
       nullptr;
   std::function<void(RWMol &, const std::string &, unsigned int)>
       writeCallback = nullptr;
   std::function<std::string(const std::string &, unsigned int)> readCallback =
       nullptr;
-
 };
 }  // namespace FileParsers
 }  // namespace v2

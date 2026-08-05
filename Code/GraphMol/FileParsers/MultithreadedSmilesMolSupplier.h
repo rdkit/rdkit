@@ -27,30 +27,30 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
       std::istream *inStream, bool takeOwnership = true,
       const Parameters &params = Parameters(),
       const SmilesMolSupplierParams &parseParams = SmilesMolSupplierParams());
-  MultithreadedSmilesMolSupplier();
-  virtual ~MultithreadedSmilesMolSupplier() {close();};
 
-  void init() override {}
-  //! returns df_end
-  bool getEnd() const override;
-  //! reads and processes the title line
-  void processTitleLine();
+  MultithreadedSmilesMolSupplier();
+
+  ~MultithreadedSmilesMolSupplier() final { close(); };
+
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
                          unsigned int &index) override;
+
   //! parses the record and returns the resulting molecule
   RWMol *processMoleculeRecord(const std::string &record,
                                unsigned int lineNum) override;
-
- protected:
-  void closeStreams() override;
 
  private:
   void initFromSettings(
       bool takeOwnership, const Parameters &params,
       const SmilesMolSupplierParams &parseParams = SmilesMolSupplierParams());
 
- private:
+  //! returns df_end
+  bool getEnd() const override;
+
+  //! reads and processes the title line
+  void processTitleLine();
+
   bool df_end = false;                 //!< have we reached the end of the file?
   int d_line = 0;                      //!< line number we are currently on
   STR_VECT d_props;                    //!< vector of property names
@@ -125,6 +125,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
     PRECONDITION(dp_supplier, "no supplier");
     return static_cast<ContainedType *>(dp_supplier.get())->getLastRecordId();
   }
+
   //! returns the text block for the last extracted item
   std::string getLastItemText() const {
     PRECONDITION(dp_supplier, "no supplier");

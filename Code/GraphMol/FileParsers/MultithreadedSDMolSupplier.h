@@ -30,28 +30,32 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
       const MolFileParserParams &parseParams = MolFileParserParams());
 
   MultithreadedSDMolSupplier();
-  virtual ~MultithreadedSDMolSupplier() {close();}
-  void init() override {}
 
-  void checkForEnd();
-  bool getEnd() const override;
+  ~MultithreadedSDMolSupplier() final { close(); }
+
   void setProcessPropertyLists(bool val) { df_processPropertyLists = val; }
+
   bool getProcessPropertyLists() const { return df_processPropertyLists; }
+
   bool getEOFHitOnRead() const { return df_eofHitOnRead; }
 
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
                          unsigned int &index) override;
-  void readMolProps(RWMol &mol, std::istringstream &inStream);
+
   //! parses the record and returns the resulting molecule
   RWMol *processMoleculeRecord(const std::string &record,
                                unsigned int lineNum) override;
- protected:
-    void closeStreams() override;
 
  private:
   void initFromSettings(bool takeOwnership, const Parameters &params,
                         const MolFileParserParams &parseParams);
+
+  bool getEnd() const override;
+
+  void checkForEnd();
+
+  void readMolProps(RWMol &mol, std::istringstream &inStream);
 
   bool df_end = false;  //!< have we reached the end of the file?
   int d_line = 0;       //!< line number we are currently on
@@ -121,16 +125,19 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier : public MolSupplier {
     PRECONDITION(dp_supplier, "no supplier");
     return static_cast<ContainedType *>(dp_supplier.get())->getLastRecordId();
   }
+
   //! returns the text block for the last extracted item
   std::string getLastItemText() const {
     PRECONDITION(dp_supplier, "no supplier");
     return static_cast<ContainedType *>(dp_supplier.get())->getLastItemText();
   }
+
   void setProcessPropertyLists(bool val) {
     PRECONDITION(dp_supplier, "no supplier");
     static_cast<ContainedType *>(dp_supplier.get())
         ->setProcessPropertyLists(val);
   }
+
   bool getProcessPropertyLists() const {
     PRECONDITION(dp_supplier, "no supplier");
     return static_cast<ContainedType *>(dp_supplier.get())
