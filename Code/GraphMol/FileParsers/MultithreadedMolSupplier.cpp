@@ -19,21 +19,32 @@ namespace FileParsers {
 
 void MultithreadedMolSupplier::close() {
   df_forceStop = true;
-  d_outputQueue->setDone();
+
+  // close() is called from the destructor, and will be
+  // triggered if an exception is thrown. If this happens,
+  // the queues might not be initialized, so make sure
+  // they are initialized before dereferencing them.
+  if (d_outputQueue) {
+    d_outputQueue->setDone();
+  }
 
   if (df_started) {
-    // Clear the queues until they are empty
-    //  d_inputQueue->clear is not thread-safe
-    std::tuple<std::string, unsigned int, unsigned int> r;
-    while (d_inputQueue->pop(r)) {
+    if (d_inputQueue) {
+      // Clear the queues until they are empty
+      //  d_inputQueue->clear is not thread-safe
+      std::tuple<std::string, unsigned int, unsigned int> r;
+      while (d_inputQueue->pop(r)) {
+      }
     }
     // clear the output queues, they might be full
     //  and blocking the writer threads, note
     //  that while ending threads the writers may
     //  put a few more items back in the queue
-    std::tuple<RWMol *, std::string, unsigned int> mol_r;
-    while (d_outputQueue->pop(mol_r)) {
-      delete std::get<0>(mol_r);
+    if (d_outputQueue) {
+      std::tuple<RWMol *, std::string, unsigned int> mol_r;
+      while (d_outputQueue->pop(mol_r)) {
+        delete std::get<0>(mol_r);
+      }
     }
   }
 
@@ -41,12 +52,14 @@ void MultithreadedMolSupplier::close() {
 
   // notify the queue again that it is done in case
   //  anyone is waiting on it
-  d_outputQueue->setDone();
+  if (d_outputQueue) {
+    d_outputQueue->setDone();
+  }
 
   // destroy all objects in the input and output queues
   //  and anything missed put in the queues while
   //  the threads were endings
-  if (df_started) {
+  if (d_inputQueue) {
     d_inputQueue->clear();
   }
 
