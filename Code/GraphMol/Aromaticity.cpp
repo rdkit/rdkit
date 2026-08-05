@@ -681,8 +681,7 @@ int countAtomElec(const Atom *at) {
 }
 
 namespace {
-template <typename Rings>
-int mdlAromaticityHelper(RWMol &mol, const Rings &srings) {
+int mdlAromaticityHelper(RWMol &mol, const RingInfo::RingsView &srings) {
   int narom = 0;
   // loop over all the atoms in the rings that can be candidates
   // for aromaticity
@@ -791,8 +790,7 @@ int mdlAromaticityHelper(RWMol &mol, const Rings &srings) {
   return narom;
 }
 
-template <typename Rings>
-int mmff94AromaticityHelper(RWMol &mol, const Rings &srings) {
+int mmff94AromaticityHelper(RWMol &mol, const RingInfo::RingsView &srings) {
   // set aromaticity as done in MMFF94 init
   if (!mol.hasProp(common_properties::_MMFFSanitized)) {
     bool isAromaticSet = false;
@@ -829,9 +827,9 @@ int mmff94AromaticityHelper(RWMol &mol, const Rings &srings) {
 }
 
 // use minRingSize=0 or maxRingSize=0 to ignore these constraints
-template <typename Rings>
-int aromaticityHelper(RWMol &mol, const Rings &srings, unsigned int minRingSize,
-                      unsigned int maxRingSize, bool includeFused) {
+int aromaticityHelper(RWMol &mol, const RingInfo::RingsView &srings,
+                      unsigned int minRingSize, unsigned int maxRingSize,
+                      bool includeFused) {
   int narom = 0;
   // loop over all the atoms in the rings that can be candidates
   // for aromaticity
@@ -1143,33 +1141,30 @@ int setAromaticity(RWMol &mol, AromaticityModel model, int (*func)(RWMol &)) {
   // with aromaticity information, assumed it is correct and
   // did not touch it. Now it ignores that information entirely.
 
-  auto applyModel = [&](const auto &srings) {
-    switch (model) {
-      case AROMATICITY_DEFAULT:
-      case AROMATICITY_RDKIT:
-        return aromaticityHelper(mol, srings, 0, 0, true);
-      case AROMATICITY_SIMPLE:
-        return aromaticityHelper(mol, srings, 5, 6, false);
-      case AROMATICITY_MDL:
-        return mdlAromaticityHelper(mol, srings);
-      case AROMATICITY_MMFF94:
-        return mmff94AromaticityHelper(mol, srings);
-      case AROMATICITY_CUSTOM:
-        PRECONDITION(
-            func,
-            "function must be set when aromaticity model is AROMATICITY_CUSTOM");
-        return func(mol);
-      default:
-        throw ValueErrorException("Bad AromaticityModel");
-    }
-  };
-
-  if (mol.getRingInfo()->isInitialized()) {
-    return applyModel(mol.getRingInfo()->atomRings());
+  auto *ringInfo = mol.getRingInfo();
+  if (!ringInfo->isInitialized()) {
+    MolOps::symmetrizeSSSR(mol);
   }
-  VECT_INT_VECT srings;
-  MolOps::symmetrizeSSSR(mol, srings);
-  return applyModel(srings);
+  const auto srings = ringInfo->atomRings();
+
+  switch (model) {
+    case AROMATICITY_DEFAULT:
+    case AROMATICITY_RDKIT:
+      return aromaticityHelper(mol, srings, 0, 0, true);
+    case AROMATICITY_SIMPLE:
+      return aromaticityHelper(mol, srings, 5, 6, false);
+    case AROMATICITY_MDL:
+      return mdlAromaticityHelper(mol, srings);
+    case AROMATICITY_MMFF94:
+      return mmff94AromaticityHelper(mol, srings);
+    case AROMATICITY_CUSTOM:
+      PRECONDITION(
+          func,
+          "function must be set when aromaticity model is AROMATICITY_CUSTOM");
+      return func(mol);
+    default:
+      throw ValueErrorException("Bad AromaticityModel");
+  }
 }
 
 };  // end of namespace MolOps
