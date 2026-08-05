@@ -762,6 +762,7 @@ MarvinAtom::MarvinAtom()
       y3(DBL_MAX),
       z3(DBL_MAX),
       formalCharge(0),
+      isotope(0),
       mrvValence(-1),
       hydrogenCount(-1),
       mrvMap(0),
@@ -1443,7 +1444,7 @@ std::string MarvinSruCoModSgroup::role() const { return roleName; }
 
 bool MarvinSruCoModSgroup::hasAtomBondBlocks() const { return false; }
 
-MarvinDataSgroup::MarvinDataSgroup(MarvinMolBase *parentInit) {
+MarvinDataSgroup::MarvinDataSgroup(MarvinMolBase *parentInit) : x(0.0), y(0.0) {
   parent = parentInit;
 }
 
@@ -1744,7 +1745,8 @@ ptree MarvinMultipleSgroup::toPtree() const {
   return out;
 }
 
-MarvinMulticenterSgroup::MarvinMulticenterSgroup(MarvinMolBase *parentInit) {
+MarvinMulticenterSgroup::MarvinMulticenterSgroup(MarvinMolBase *parentInit)
+    : center(nullptr) {
   PRECONDITION(parentInit != nullptr, "parentInit cannot be null");
   parent = parentInit;
 }
