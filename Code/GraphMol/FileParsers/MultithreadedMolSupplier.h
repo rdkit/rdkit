@@ -164,38 +164,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
 };
 }  // namespace FileParsers
 }  // namespace v2
-
-inline namespace v1 {
-class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
-  //! this is an abstract base class to concurrently supply molecules one at a
-  //! time
- public:
-  using ContainedType = v2::FileParsers::MultithreadedMolSupplier;
-  MultithreadedMolSupplier() {}
-
-  //! included for the interface, always returns false
-  bool getEOFHitOnRead() const {
-    if (dp_supplier) {
-      return static_cast<ContainedType *>(dp_supplier.get())->getEOFHitOnRead();
-    }
-    return false;
-  }
-
-  //! returns the record id of the last extracted item
-  //! Note: d_LastRecordId = 0, initially therefore the value 0 is returned
-  //! if and only if the function is called before extracting the first
-  //! record
-  unsigned int getLastRecordId() const {
-    PRECONDITION(dp_supplier, "no supplier");
-    return static_cast<ContainedType *>(dp_supplier.get())->getLastRecordId();
-  }
-  //! returns the text block for the last extracted item
-  std::string getLastItemText() const {
-    PRECONDITION(dp_supplier, "no supplier");
-    return static_cast<ContainedType *>(dp_supplier.get())->getLastItemText();
-  }
-};
-}  // namespace v1
 }  // namespace RDKit
 #endif
 #endif
