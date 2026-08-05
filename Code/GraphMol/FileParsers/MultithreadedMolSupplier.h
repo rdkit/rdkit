@@ -113,6 +113,8 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
  protected:
   virtual bool getEnd() const = 0;
 
+  void initFromSettings(bool takeOwnership, const Parameters &params);
+
   //! extracts next record from the input file or stream
   virtual bool extractNextRecord(std::string &record, unsigned int &lineNum,
                                  unsigned int &index) = 0;

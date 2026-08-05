@@ -17,6 +17,19 @@ namespace RDKit {
 namespace v2 {
 namespace FileParsers {
 
+void MultithreadedMolSupplier::initFromSettings(bool takeOwnership,
+                                                const Parameters &params) {
+  df_owner = takeOwnership;
+  d_params = params;
+  d_params.numWriterThreads = getNumThreadsToUse(params.numWriterThreads);
+  d_inputQueue.reset(
+      new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
+          d_params.sizeInputQueue));
+  d_outputQueue.reset(
+      new ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>(
+          d_params.sizeOutputQueue));
+}
+
 void MultithreadedMolSupplier::close() {
   df_forceStop = true;
 

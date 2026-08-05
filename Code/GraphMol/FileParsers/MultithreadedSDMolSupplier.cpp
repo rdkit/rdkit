@@ -40,20 +40,11 @@ MultithreadedSDMolSupplier::MultithreadedSDMolSupplier() {
 void MultithreadedSDMolSupplier::initFromSettings(
     bool takeOwnership, const Parameters &params,
     const MolFileParserParams &parseParams) {
-  df_owner = takeOwnership;
-  d_params = params;
-  d_parseParams = parseParams;
-  d_params.numWriterThreads = getNumThreadsToUse(params.numWriterThreads);
-  d_inputQueue.reset(
-      new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
-          d_params.sizeInputQueue));
-  d_outputQueue.reset(
-      new ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>(
-          d_params.sizeOutputQueue));
-
+  MultithreadedMolSupplier::initFromSettings(takeOwnership, params);
   df_end = false;
-  d_line = 0;
+  d_parseParams = parseParams;
   df_processPropertyLists = true;
+  d_line = 0;
 }
 
 // ensures that there is a line available to be read

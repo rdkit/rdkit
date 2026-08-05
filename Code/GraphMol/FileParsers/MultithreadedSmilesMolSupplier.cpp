@@ -42,16 +42,8 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() {
 void MultithreadedSmilesMolSupplier::initFromSettings(
     bool takeOwnership, const Parameters &params,
     const SmilesMolSupplierParams &parseParams) {
-  df_owner = takeOwnership;
-  d_params = params;
+  MultithreadedMolSupplier::initFromSettings(takeOwnership, params);
   d_parseParams = parseParams;
-  d_params.numWriterThreads = getNumThreadsToUse(d_params.numWriterThreads);
-  d_inputQueue.reset(
-      new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
-          d_params.sizeInputQueue));
-  d_outputQueue.reset(
-      new ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>(
-          d_params.sizeOutputQueue));
   df_end = false;
   d_line = -1;
 }
