@@ -12,6 +12,10 @@
 
 #include "FileParserUtils.h"
 
+#include <sstream>
+#include <string>
+#include <utility>
+
 namespace RDKit {
 namespace v2 {
 namespace FileParsers {

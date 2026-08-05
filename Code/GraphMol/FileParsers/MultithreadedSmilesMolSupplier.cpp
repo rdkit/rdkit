@@ -10,6 +10,16 @@
 //
 #include "MultithreadedSmilesMolSupplier.h"
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/tokenizer.hpp>
+
+#include <sstream>
+#include <string>
+#include <vector>
+
+using tokenizer = boost::tokenizer<boost::char_separator<char>>;
+
 namespace RDKit {
 
 inline static bool lineIsEmptyOrComment(const std::string &line) {

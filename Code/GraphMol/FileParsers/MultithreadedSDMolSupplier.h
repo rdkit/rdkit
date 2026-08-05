@@ -10,6 +10,11 @@
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #ifndef MULTITHREADED_SD_MOL_SUPPLIER
 #define MULTITHREADED_SD_MOL_SUPPLIER
+
+#include <iosfwd>
+#include <memory>
+#include <string>
+
 #include "MultithreadedMolSupplier.h"
 namespace RDKit {
 namespace v2 {

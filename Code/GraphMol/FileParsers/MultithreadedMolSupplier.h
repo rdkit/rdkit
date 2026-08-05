@@ -19,14 +19,18 @@
 #include <RDGeneral/RDThreads.h>
 #include <RDGeneral/StreamOps.h>
 
-#include <functional>
-#include <atomic>
-#include <boost/tokenizer.hpp>
-
 #include "FileParsers.h"
 #include "MolSupplier.h"
 
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+#include <atomic>
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <tuple>
+#include <vector>
 
 namespace RDKit {
 namespace v2 {

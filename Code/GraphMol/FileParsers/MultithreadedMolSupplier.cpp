@@ -12,6 +12,9 @@
 
 #include <RDGeneral/RDLog.h>
 
+#include <exception>
+#include <ostream>
+
 namespace RDKit {
 
 namespace v2 {
