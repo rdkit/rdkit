@@ -343,15 +343,15 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
           bOrder, atomParams[begId], atomParams[endId]);
 
       double extraSquish = 0.0;
-      if (squishAtoms[begId] || squishAtoms[endId]) {
+      if (squishAtoms[begId] && squishAtoms[endId]) {
         extraSquish = 0.2;  // empirical
       }
 
       accumData.bondLengths[bond->getIdx()] = bl;
       mmat->setUpperBound(begId, endId, bl + extraSquish + DIST12_DELTA);
       mmat->setLowerBound(begId, endId, bl - extraSquish - DIST12_DELTA);
-      std::cout << begId << "; " << endId << ": "
-                << bl - extraSquish - DIST12_DELTA << std::endl;
+      // std::cout << begId << "; " << endId << ": "
+      //           << bl - extraSquish - DIST12_DELTA << std::endl;
 
     } else {
       // we don't have parameters for one of the atoms... so we're forced to
