@@ -21,10 +21,9 @@ RingInfo::INT_VECT RingInfo::atomRingSizes(unsigned int idx) const {
   const auto members = atomMembers(idx);
   if (!members.empty()) {
     INT_VECT res(members.size());
-    std::transform(members.begin(), members.end(), res.begin(),
-                   [this](int ri) {
-                     return d_atomRingBegins[ri + 1] - d_atomRingBegins[ri];
-                   });
+    std::transform(members.begin(), members.end(), res.begin(), [this](int ri) {
+      return d_atomRingBegins[ri + 1] - d_atomRingBegins[ri];
+    });
     return res;
   }
   return INT_VECT();
@@ -47,8 +46,8 @@ unsigned int RingInfo::minAtomRingSize(unsigned int idx) const {
   if (!members.empty()) {
     unsigned int result = std::numeric_limits<unsigned int>::max();
     for (const auto ri : members) {
-      result = std::min(
-          result, d_atomRingBegins[ri + 1] - d_atomRingBegins[ri]);
+      result =
+          std::min(result, d_atomRingBegins[ri + 1] - d_atomRingBegins[ri]);
     }
     return result;
   }
@@ -104,10 +103,9 @@ RingInfo::INT_VECT RingInfo::bondRingSizes(unsigned int idx) const {
   const auto members = bondMembers(idx);
   if (!members.empty()) {
     INT_VECT res(members.size());
-    std::transform(members.begin(), members.end(), res.begin(),
-                   [this](int ri) {
-                     return d_bondRingBegins[ri + 1] - d_bondRingBegins[ri];
-                   });
+    std::transform(members.begin(), members.end(), res.begin(), [this](int ri) {
+      return d_bondRingBegins[ri + 1] - d_bondRingBegins[ri];
+    });
     return res;
   }
   return INT_VECT();
@@ -130,8 +128,8 @@ unsigned int RingInfo::minBondRingSize(unsigned int idx) const {
   if (!members.empty()) {
     unsigned int result = std::numeric_limits<unsigned int>::max();
     for (const auto ri : members) {
-      result = std::min(
-          result, d_bondRingBegins[ri + 1] - d_bondRingBegins[ri]);
+      result =
+          std::min(result, d_bondRingBegins[ri + 1] - d_bondRingBegins[ri]);
     }
     return result;
   }
@@ -255,8 +253,8 @@ unsigned int RingInfo::addRings(const VECT_INT_VECT &atomRings,
   return numRings();
 }
 
-unsigned int RingInfo::addRings(
-    const RingInfo &source, const std::vector<unsigned int> &ringIndices) {
+unsigned int RingInfo::addRings(const RingInfo &source,
+                                const std::vector<unsigned int> &ringIndices) {
   PRECONDITION(df_init, "RingInfo not initialized");
   PRECONDITION(source.df_init, "source RingInfo not initialized");
   PRECONDITION(&source != this, "source and destination RingInfo must differ");
@@ -270,10 +268,10 @@ unsigned int RingInfo::addRings(
   size_t bondCount = 0;
   for (const auto ringIdx : ringIndices) {
     PRECONDITION(ringIdx < source.numRings(), "ring index out of bounds");
-    atomCount += source.d_atomRingBegins[ringIdx + 1] -
-                 source.d_atomRingBegins[ringIdx];
-    bondCount += source.d_bondRingBegins[ringIdx + 1] -
-                 source.d_bondRingBegins[ringIdx];
+    atomCount +=
+        source.d_atomRingBegins[ringIdx + 1] - source.d_atomRingBegins[ringIdx];
+    bondCount +=
+        source.d_bondRingBegins[ringIdx + 1] - source.d_bondRingBegins[ringIdx];
   }
   d_atomsInRings.reserve(d_atomsInRings.size() + atomCount);
   d_bondsInRings.reserve(d_bondsInRings.size() + bondCount);

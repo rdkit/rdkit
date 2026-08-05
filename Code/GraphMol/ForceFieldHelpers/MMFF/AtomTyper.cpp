@@ -108,9 +108,8 @@ template <typename Ring>
 bool isRingAromaticImpl(const ROMol &mol, const Ring &ringIndxVect) {
   bool isAromatic = true;
   for (unsigned int i = 0; isAromatic && (i + 1 < ringIndxVect.size()); ++i) {
-    isAromatic =
-        (mol.getBondBetweenAtoms(ringIndxVect[i], ringIndxVect[i + 1])
-             ->getBondType() == Bond::AROMATIC);
+    isAromatic = (mol.getBondBetweenAtoms(ringIndxVect[i], ringIndxVect[i + 1])
+                      ->getBondType() == Bond::AROMATIC);
   }
   return isAromatic;
 }
