@@ -103,18 +103,6 @@ const MMFFVdWCollection *getMMFFVdW() {
 }
 
 }  // namespace DefaultParameters
-
-namespace {
-bool isRingAromatic(const ROMol &mol, const RingInfo::IntView &ringIndxVect) {
-  bool isAromatic = true;
-  for (unsigned int i = 0; isAromatic && (i + 1 < ringIndxVect.size()); ++i) {
-    isAromatic = (mol.getBondBetweenAtoms(ringIndxVect[i], ringIndxVect[i + 1])
-                      ->getBondType() == Bond::AROMATIC);
-  }
-  return isAromatic;
-}
-}  // namespace
-
 class RingMembership {
  public:
   RingMembership() {};
@@ -155,9 +143,10 @@ RingMembershipSize::RingMembershipSize(const ROMol &mol) {
   const auto atomRings = ringInfo->atomRings();
   PRECONDITION(atomRings.size() < MAX_NUM_RINGS, "Too many rings");
   for (std::uint32_t ringIdx = 0; ringIdx < atomRings.size(); ++ringIdx) {
-    unsigned int ringSize = atomRings[ringIdx].size();
+    const auto ring = atomRings[ringIdx];
+    unsigned int ringSize = ring.size();
     std::uint32_t ringIdxWithAromaticFlag = ringIdx;
-    bool ringIsAromatic = isRingAromatic(mol, atomRings[ringIdx]);
+    bool ringIsAromatic = isRingAromatic(mol, ring);
     if (ringIsAromatic) {
       ringIdxWithAromaticFlag |= IS_AROMATIC_BIT;
     }
@@ -167,7 +156,7 @@ RingMembershipSize::RingMembershipSize(const ROMol &mol) {
                .insert(std::make_pair(ringSize, RingMembershipMap()))
                .first;
     }
-    for (int atomIdxIt : atomRings[ringIdx]) {
+    for (int atomIdxIt : ring) {
       auto it2 = it->second.find(atomIdxIt);
       if (it2 == it->second.end()) {
         it2 = it->second.insert(std::make_pair(atomIdxIt, RingMembership()))
@@ -314,9 +303,9 @@ bool isAromaticAtomType(const unsigned int atomType) {
   return (aromaticTypes.find(atomType) != aromaticTypes.end());
 }
 
-bool isRingAromatic(const ROMol &mol, const INT_VECT &ringIndxVect) {
+bool isRingAromatic(const ROMol &mol, std::span<const int> ringIndxVect) {
   bool isAromatic = true;
-  for (unsigned int i = 0; isAromatic && (i < ringIndxVect.size() - 1); ++i) {
+  for (unsigned int i = 0; isAromatic && (i + 1 < ringIndxVect.size()); ++i) {
     isAromatic = (mol.getBondBetweenAtoms(ringIndxVect[i], ringIndxVect[i + 1])
                       ->getBondType() == Bond::AROMATIC);
   }
@@ -331,12 +320,12 @@ bool isAtomInAromaticRingOfSize(const Atom *atom, const unsigned int ringSize) {
 
   if (atom->getIsAromatic()) {
     for (unsigned int i = 0; (!isAromatic) && (i < atomRings.size()); ++i) {
-      if ((atomRings[i].size() != ringSize) ||
-          (std::find(atomRings[i].begin(), atomRings[i].end(),
-                     atom->getIdx()) == atomRings[i].end())) {
+      const auto ring = atomRings[i];
+      if ((ring.size() != ringSize) ||
+          (std::find(ring.begin(), ring.end(), atom->getIdx()) == ring.end())) {
         continue;
       }
-      isAromatic = isRingAromatic(mol, atomRings[i]);
+      isAromatic = isRingAromatic(mol, ring);
     }
   }
 
