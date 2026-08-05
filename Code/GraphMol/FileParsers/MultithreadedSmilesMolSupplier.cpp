@@ -11,6 +11,12 @@
 #include "MultithreadedSmilesMolSupplier.h"
 
 namespace RDKit {
+
+inline static bool lineIsEmptyOrComment(const std::string &line) {
+  return line.empty() || line[0] == '#' ||
+         line.find_first_not_of(" \t\r\n") == std::string::npos;
+}
+
 namespace v2 {
 namespace FileParsers {
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
@@ -53,19 +59,21 @@ void MultithreadedSmilesMolSupplier::initFromSettings(
 //
 void MultithreadedSmilesMolSupplier::processTitleLine() {
   PRECONDITION(dp_inStream, "bad stream");
-  std::string tempStr = getLine(dp_inStream);
+
   // loop until we get a valid line
+  std::string tempStr;
   while (!dp_inStream->eof() && !dp_inStream->fail() &&
-         ((tempStr[0] == '#') || (strip(tempStr).size() == 0))) {
+         lineIsEmptyOrComment(tempStr)) {
     tempStr = getLine(dp_inStream);
   }
+
   boost::char_separator<char> sep(d_parseParams.delimiter.c_str(), "",
                                   boost::keep_empty_tokens);
-  tokenizer tokens(tempStr, sep);
-  for (tokenizer::iterator tokIter = tokens.begin(); tokIter != tokens.end();
-       ++tokIter) {
-    std::string pname = strip(*tokIter);
-    d_props.push_back(pname);
+
+  auto tokens = tokenizer(tempStr, sep);
+  d_props.assign(tokens.begin(), tokens.end());
+  for (auto &pname : d_props) {
+    boost::trim_if(pname, boost::is_any_of(" \t\r\n"));
   }
 }
 
@@ -85,10 +93,11 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
       this->processTitleLine();
     }
   }
-  std::string tempStr = getLine(dp_inStream);
-  record = "";
+
+  record.clear();
+  std::string tempStr;
   while (!dp_inStream->eof() && !dp_inStream->fail() &&
-         ((tempStr[0] == '#') || (strip(tempStr).size() == 0))) {
+         lineIsEmptyOrComment(tempStr)) {
     tempStr = getLine(dp_inStream);
   }
 

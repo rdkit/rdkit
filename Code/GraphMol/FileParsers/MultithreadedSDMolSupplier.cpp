@@ -54,14 +54,18 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
     return false;
   }
 
-  std::string currentStr, prevStr;
-  record = "";
+  std::string currentStr;
+  std::string prevStr;
+  record.clear();
   lineNum = d_line;
+
+  // keep reading while we can, and the current line is not a record separator,
+  // and the previous one is a valid end of a mol block (blank line or M  END)
   while (!dp_inStream->eof() && !dp_inStream->fail() &&
          ((prevStr.find_first_not_of(" \t\r\n") != std::string::npos &&
            prevStr.find("M  END") != 0) ||
-          currentStr[0] != '$' || currentStr.substr(0, 4) != "$$$$")) {
-    prevStr = currentStr;
+          !currentStr.starts_with("$$$$"))) {
+    std::swap(prevStr, currentStr);
     std::getline(*dp_inStream, currentStr);
     record += currentStr + "\n";
     ++d_line;
@@ -87,8 +91,7 @@ void MultithreadedSDMolSupplier::readMolProps(RWMol &mol,
   std::getline(inStream, tempStr);
 
   // FIX: report files missing the $$$$ marker
-  while (!inStream.eof() && !inStream.fail() &&
-         (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
+  while (!inStream.eof() && !inStream.fail() && !tempStr.starts_with("$$$$")) {
     tempStr = strip(tempStr);
     if (tempStr != "") {
       if (tempStr[0] == '>') {  // data header line: start of a data item
@@ -100,9 +103,9 @@ void MultithreadedSDMolSupplier::readMolProps(RWMol &mol,
         // situation - so ignore such data items for now
         hasProp = true;
         warningIssued = false;
-        tempStr.erase(0, 1);            // remove the first ">" sign
-        size_t sl = tempStr.find("<");  // begin datalabel
-        size_t se = tempStr.find(">");  // end datalabel
+        tempStr.erase(0, 1);             // remove the first ">" sign
+        size_t sl = tempStr.find("<");   // begin datalabel
+        size_t se = tempStr.rfind(">");  // end datalabel
         if ((sl == std::string::npos) || (se == std::string::npos) ||
             (se == (sl + 1))) {
           // we either do not have a data label or the label is empty
