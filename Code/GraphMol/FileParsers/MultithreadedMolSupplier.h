@@ -68,8 +68,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   //! returns true when all records have been read from the supplier
   bool atEnd() final;
 
-  //! included for the interface, always returns false
-  bool getEOFHitOnRead() const { return false; }
+  //! included for the interface. Python wrappers check this
+  //! each time next() is called.  It is not used in the C++ code.
+  virtual bool getEOFHitOnRead() const = 0;
 
   //! returns the record id of the last extracted item
   //! Note: d_LastRecordId = 0, initially therefore the value 0 is returned
