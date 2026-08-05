@@ -115,8 +115,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   void reset() final;
 
  protected:
-  virtual bool getEnd() const = 0;
-
   void initFromSettings(bool takeOwnership, const Parameters &params);
 
   //! extracts next record from the input file or stream
@@ -129,6 +127,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
 
   //!< stores last extracted record id
   std::atomic<unsigned int> d_lastRecordId = 0;
+
+  int d_line = 0;                      //!< line number we are currently on
+  unsigned int d_currentRecordId = 1;  //!< current record id
 
   //!< concurrent input queue
   std::unique_ptr<inputQueue_t> d_inputQueue;

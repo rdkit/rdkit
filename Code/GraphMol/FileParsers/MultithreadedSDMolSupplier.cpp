@@ -41,52 +41,9 @@ void MultithreadedSDMolSupplier::initFromSettings(
     bool takeOwnership, const Parameters &params,
     const MolFileParserParams &parseParams) {
   MultithreadedMolSupplier::initFromSettings(takeOwnership, params);
-  df_end = false;
   d_parseParams = parseParams;
   df_processPropertyLists = true;
   d_line = 0;
-}
-
-// ensures that there is a line available to be read
-// from the file, implementation identical to the method in
-// in ForwardSDMolSupplier
-void MultithreadedSDMolSupplier::checkForEnd() {
-  PRECONDITION(dp_inStream, "no stream");
-  // we will call it end of file if we have more than 4 contiguous empty lines
-  // or we reach end of file in the meantime
-  if (dp_inStream->eof()) {
-    df_end = true;
-    return;
-  }
-
-  /*
-    // we are not at the end of file, check for blank lines
-    unsigned int numEmpty = 0;
-    std::string tempStr;
-    // in case df_end is not set then, reset file pointer
-    std::streampos holder = dp_inStream->tellg();
-          if(static_cast<long int>(holder) == -1){ std::cerr << "putan\n";
-    return;} for (unsigned int i = 0; i < 4; i++) { tempStr =
-    getLine(dp_inStream); if (dp_inStream->eof()) { df_end = true; break;
-      }
-      if (tempStr.find_first_not_of(" \t\r\n") == std::string::npos) {
-        ++numEmpty;
-      }
-    }
-    if (numEmpty == 4) {
-      df_end = true;
-    }
-    // we need to reset the file pointer to read the next record
-    if (!df_end) {
-      dp_inStream->clear();
-      dp_inStream->seekg(holder);
-    }
-  */
-}
-
-bool MultithreadedSDMolSupplier::getEnd() const {
-  PRECONDITION(dp_inStream, "no stream");
-  return df_end;
 }
 
 bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
@@ -94,7 +51,6 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
                                                    unsigned int &index) {
   PRECONDITION(dp_inStream, "no stream");
   if (dp_inStream->eof()) {
-    df_end = true;
     return false;
   }
 
@@ -109,10 +65,6 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
     std::getline(*dp_inStream, currentStr);
     record += currentStr + "\n";
     ++d_line;
-    if (prevStr.find_first_not_of(" \t\r\n") == std::string::npos &&
-        currentStr[0] == '$' && currentStr.substr(0, 4) == "$$$$") {
-      this->checkForEnd();
-    }
   }
 
   // ignore trailing new lines

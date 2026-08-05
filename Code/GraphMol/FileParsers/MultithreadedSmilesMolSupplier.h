@@ -47,16 +47,10 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
       bool takeOwnership, const Parameters &params,
       const SmilesMolSupplierParams &parseParams = SmilesMolSupplierParams());
 
-  //! returns df_end
-  bool getEnd() const override;
-
   //! reads and processes the title line
   void processTitleLine();
 
-  bool df_end = false;                 //!< have we reached the end of the file?
-  int d_line = 0;                      //!< line number we are currently on
-  STR_VECT d_props;                    //!< vector of property names
-  unsigned int d_currentRecordId = 1;  //!< current record id
+  STR_VECT d_props;  //!< vector of property names
   SmilesMolSupplierParams d_parseParams;
 };
 }  // namespace FileParsers

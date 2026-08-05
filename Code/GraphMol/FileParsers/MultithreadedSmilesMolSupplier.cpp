@@ -44,13 +44,7 @@ void MultithreadedSmilesMolSupplier::initFromSettings(
     const SmilesMolSupplierParams &parseParams) {
   MultithreadedMolSupplier::initFromSettings(takeOwnership, params);
   d_parseParams = parseParams;
-  df_end = false;
   d_line = -1;
-}
-
-bool MultithreadedSmilesMolSupplier::getEnd() const {
-  PRECONDITION(dp_inStream, "no stream");
-  return df_end;
 }
 
 // --------------------------------------------------
@@ -80,7 +74,6 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
                                                        unsigned int &index) {
   PRECONDITION(dp_inStream, "bad stream");
   if (dp_inStream->eof()) {
-    df_end = true;
     return false;
   }
 
