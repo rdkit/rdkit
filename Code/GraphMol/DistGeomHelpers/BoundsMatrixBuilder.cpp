@@ -23,6 +23,7 @@
 #include <DistGeom/TriangleSmooth.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
+#include <numeric>
 #include <unordered_set>
 #include <ranges>
 
@@ -487,10 +488,6 @@ double _getRingAngle(const Atom *atom, const unsigned int ringSize) {
   }
 }
 
-auto lessVector = [](const auto &v1, const auto &v2) {
-  return v1.size() < v2.size();
-};
-
 void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                  ComputedData &accumData) {
   auto npt = mmat->numRows();
@@ -517,16 +514,21 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   unsigned int aid2, aid1, aid3, bid1, bid2;
   double angle;
 
-  auto atomRings = rinfo->atomRingsAsVectors();
-  std::sort(atomRings.begin(), atomRings.end(), lessVector);
-  // sort the rings based on the ring size
+  const auto atomRings = rinfo->atomRings();
+  std::vector<unsigned int> atomRingOrder(atomRings.size());
+  std::iota(atomRingOrder.begin(), atomRingOrder.end(), 0u);
+  std::ranges::sort(atomRingOrder, {}, [&atomRings](unsigned int ringIdx) {
+    return atomRings[ringIdx].size();
+  });
+  // sort lightweight ring indices based on ring size
   std::vector<unsigned int> visited(npt, 0u);
 
   DOUBLE_VECT angleTaken(npt, 0.0);
   auto nb = mol.getNumBonds();
   BIT_SET donePaths(nb * nb);
   // first deal with all rings and atoms in them
-  for (const auto &ringi : atomRings) {
+  for (const auto ringIdx : atomRingOrder) {
+    const auto ringi = atomRings[ringIdx];
     auto rSize = ringi.size();
     aid1 = ringi[rSize - 1];
     for (unsigned int i = 0; i < rSize; i++) {
@@ -1361,10 +1363,15 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
   const auto rinfo = mol.getRingInfo();  // FIX: make sure we have ring info
   CHECK_INVARIANT(rinfo, "");
-  auto bondRings = rinfo->bondRingsAsVectors();
+  const auto bondRings = rinfo->bondRings();
+  std::vector<unsigned int> bondRingOrder(bondRings.size());
+  std::iota(bondRingOrder.begin(), bondRingOrder.end(), 0u);
 
   // we first want to handle smaller rings
-  std::ranges::sort(bondRings, std::ranges::greater{}, &std::vector<int>::size);
+  std::ranges::sort(bondRingOrder, std::ranges::greater{},
+                    [&bondRings](unsigned int ringIdx) {
+                      return bondRings[ringIdx].size();
+                    });
 
   std::unordered_set<unsigned int> bidIsMacrocycle;
 
@@ -1376,7 +1383,8 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
   boost::dynamic_bitset<> cisRingBondPairs(nb * nb);
   // first we will deal with 1-4 atoms that belong to the same ring
-  for (const auto &bring : bondRings) {
+  for (const auto ringIdx : bondRingOrder) {
+    const auto bring = bondRings[ringIdx];
     const auto rSize = bring.size();
     if (rSize < 3) {
       continue;  // rings with less than 3 bonds are not useful

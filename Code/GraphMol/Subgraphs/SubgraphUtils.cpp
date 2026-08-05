@@ -26,6 +26,18 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery) {
   return pathToSubmol(mol, path, useQuery, aIdxMap);
 }
 
+ROMol *pathToSubmol(const ROMol &mol, std::span<const int> path,
+                    bool useQuery) {
+  SubsetOptions options;
+  options.copyAsQuery = useQuery;
+  options.copyCoordinates = true;
+  options.method = SubsetMethod::BONDS;
+
+  std::vector<unsigned int> upath{path.begin(), path.end()};
+  SubsetInfo subsetInfo;
+  return copyMolSubset(mol, upath, subsetInfo, options).release();
+}
+
 ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
                     INT_MAP_INT &atomIdxMap) {
   SubsetOptions options;

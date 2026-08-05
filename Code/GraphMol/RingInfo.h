@@ -57,6 +57,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     const_iterator end() const { return d_size ? dp_data + d_size : dp_data; }
     const_iterator cbegin() const { return begin(); }
     const_iterator cend() const { return end(); }
+    const int *data() const { return dp_data; }
     size_t size() const { return d_size; }
     bool empty() const { return d_size == 0; }
     const int &operator[](size_t idx) const { return dp_data[idx]; }
@@ -237,10 +238,12 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   unsigned int addRing(const INT_VECT &atomIndices,
                        const INT_VECT &bondIndices);
-  unsigned int addRing(IntView atomIndices, IntView bondIndices);
   //! Adds multiple rings while building the membership index only once.
   unsigned int addRings(const VECT_INT_VECT &atomRings,
                         const VECT_INT_VECT &bondRings);
+  //! Copies selected rings from another RingInfo and rebuilds membership once.
+  unsigned int addRings(const RingInfo &source,
+                        const std::vector<unsigned int> &ringIndices);
 
   //! \name Atom information
   //! @{
@@ -278,8 +281,6 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       - the object must be initialized before calling this
   */
   RingsView atomRings() const { return {&d_atomsInRings, &d_atomRingBegins}; }
-  //! Materializes ordinary atom rings for APIs which require owning vectors.
-  VECT_INT_VECT atomRingsAsVectors() const;
 
   //! returns our \c atom-members vector for atom idx (i.e.,
   //! a vector of ints reporting the ring indices that
@@ -357,8 +358,6 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       - the object must be initialized before calling this
   */
   RingsView bondRings() const { return {&d_bondsInRings, &d_bondRingBegins}; }
-  //! Materializes ordinary bond rings for APIs which require owning vectors.
-  VECT_INT_VECT bondRingsAsVectors() const;
 
   //! returns our \c bond-members vector for bond idx (i.e.,
   //! a vector of ints reporting the ring indices that

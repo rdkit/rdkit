@@ -104,11 +104,10 @@ std::vector<std::string> MHFPEncoder::CreateShingling(
   std::vector<std::string> shingling;
 
   if (rings) {
-    const VECT_INT_VECT bonds_vect =
-        tmol.getRingInfo()->bondRingsAsVectors();
-
-    for (size_t i = 0; i < bonds_vect.size(); i++) {
-      std::unique_ptr<ROMol> m(Subgraphs::pathToSubmol(tmol, bonds_vect[i]));
+    const auto bondRings = tmol.getRingInfo()->bondRings();
+    for (const auto ring : bondRings) {
+      std::unique_ptr<ROMol> m(Subgraphs::pathToSubmol(
+          tmol, std::span<const int>(ring.data(), ring.size())));
       shingling.emplace_back(MolToSmiles(*m));
     }
   }
