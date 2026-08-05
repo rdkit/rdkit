@@ -489,10 +489,14 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   void invalidateFusedRings();
   bool df_init{false};
   FIND_RING_TYPE df_find_type_type{FIND_RING_TYPE_OTHER_OR_UNKNOWN};
-  std::vector<uint32_t> d_atomRingBegins{0}, d_bondRingBegins{0};
-  std::vector<int> d_atomsInRings, d_bondsInRings;
-  std::vector<uint32_t> d_atomMembershipBegins{0}, d_bondMembershipBegins{0};
-  std::vector<int> d_atomMemberships, d_bondMemberships;
+  std::vector<uint32_t> d_atomRingBegins{0};
+  std::vector<uint32_t> d_bondRingBegins{0};
+  std::vector<int> d_atomsInRings;
+  std::vector<int> d_bondsInRings;
+  std::vector<uint32_t> d_atomMembershipBegins{0};
+  std::vector<uint32_t> d_bondMembershipBegins{0};
+  std::vector<int> d_atomMemberships;
+  std::vector<int> d_bondMemberships;
   VECT_INT_VECT d_atomRingFamilies, d_bondRingFamilies;
   std::vector<bool> d_fusedRings;
   std::vector<unsigned int> d_numFusedBonds;

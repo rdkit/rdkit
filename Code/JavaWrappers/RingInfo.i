@@ -37,4 +37,50 @@
 #include <GraphMol/RingInfo.h>
 %}
 
+// Keep the managed-language API based on owned vectors. The C++ methods now
+// return non-owning views whose lifetimes cannot be represented safely by the
+// Java and C# wrappers.
+%ignore RDKit::RingInfo::IntView;
+%ignore RDKit::RingInfo::RingsView;
+%ignore RDKit::RingInfo::atomRings;
+%ignore RDKit::RingInfo::bondRings;
+%ignore RDKit::RingInfo::atomMembers;
+%ignore RDKit::RingInfo::bondMembers;
+%rename(atomRings) RDKit::RingInfo::atomRingsForWrapper;
+%rename(bondRings) RDKit::RingInfo::bondRingsForWrapper;
+%rename(atomMembers) RDKit::RingInfo::atomMembersForWrapper;
+%rename(bondMembers) RDKit::RingInfo::bondMembersForWrapper;
+
 %include <GraphMol/RingInfo.h>
+
+%extend RDKit::RingInfo {
+  RDKit::VECT_INT_VECT atomRingsForWrapper() const {
+    RDKit::VECT_INT_VECT result;
+    const auto rings = $self->atomRings();
+    result.reserve(rings.size());
+    for (const auto ring : rings) {
+      result.emplace_back(ring.begin(), ring.end());
+    }
+    return result;
+  }
+
+  RDKit::VECT_INT_VECT bondRingsForWrapper() const {
+    RDKit::VECT_INT_VECT result;
+    const auto rings = $self->bondRings();
+    result.reserve(rings.size());
+    for (const auto ring : rings) {
+      result.emplace_back(ring.begin(), ring.end());
+    }
+    return result;
+  }
+
+  RDKit::INT_VECT atomMembersForWrapper(unsigned int idx) const {
+    const auto members = $self->atomMembers(idx);
+    return {members.begin(), members.end()};
+  }
+
+  RDKit::INT_VECT bondMembersForWrapper(unsigned int idx) const {
+    const auto members = $self->bondMembers(idx);
+    return {members.begin(), members.end()};
+  }
+}
