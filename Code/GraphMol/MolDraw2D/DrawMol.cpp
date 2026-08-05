@@ -3425,7 +3425,7 @@ void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
   // given the bond and the atom at one end, find the ring atom connected to it
   // that isn't the other end of the bond.
   auto other_ring_atom = [&](unsigned int bondAtom, const Bond &bond,
-                             RingInfo::IntView ringBonds) -> int {
+                             std::span<const int> ringBonds) -> int {
     auto atom = drawMol_->getAtomWithIdx(bondAtom);
     for (const auto bond2 : drawMol_->atomBonds(atom)) {
       if (bond2->getIdx() == bond.getIdx()) {
@@ -3439,7 +3439,7 @@ void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
     return -1;
   };
 
-  RingInfo::IntView ringToUse;
+  std::span<const int> ringToUse;
   if (bond_in_rings.size() > 1) {
     // bond is in more than 1 ring.  Choose one that is the same aromaticity
     // as the bond, so that if bond is aromatic, the double bond is inside

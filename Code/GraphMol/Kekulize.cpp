@@ -666,7 +666,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     const auto allrings = mol.getRingInfo()->atomRings();
     std::deque<INT_VECT> tmpRings;
     auto containsNonDummy = [&atomsToUse,
-                             &dummyAts](const RingInfo::IntView &ring) {
+                             &dummyAts](std::span<const int> ring) {
       bool ringOk = false;
       for (auto ai : ring) {
         if (!atomsToUse[ai]) {
@@ -695,7 +695,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
         }
         INT_VECT nring(ring.size());
         for (auto ri = 0u; ri < ring.size(); ++ri) {
-          nring[ri] = ring.at((ri + startPos) % ring.size());
+          nring[ri] = ring[(ri + startPos) % ring.size()];
         }
         if (!hasWedge) {
           tmpRings.push_back(std::move(nring));
