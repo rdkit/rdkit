@@ -761,6 +761,7 @@ MarvinAtom::MarvinAtom()
       x3(DBL_MAX),
       y3(DBL_MAX),
       z3(DBL_MAX),
+
       formalCharge(0),
       isotope(0),
       mrvValence(-1),
