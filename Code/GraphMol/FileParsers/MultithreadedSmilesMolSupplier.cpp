@@ -106,24 +106,25 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
   return true;
 }
 
-RWMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
+std::unique_ptr<RWMol> MultithreadedSmilesMolSupplier::processMoleculeRecord(
     const std::string &record, unsigned int lineNum) {
   // -----------
   // tokenize the input line:
   // -----------
   boost::char_separator<char> sep(d_parseParams.delimiter.c_str(), "",
                                   boost::keep_empty_tokens);
-  tokenizer tokens(record, sep);
-  STR_VECT recs;
-  for (tokenizer::iterator tokIter = tokens.begin(); tokIter != tokens.end();
-       ++tokIter) {
-    std::string rec = strip(*tokIter);
-    recs.push_back(rec);
-  }
+
+  auto tokens = tokenizer(record, sep);
+  std::vector<std::string> recs(tokens.begin(), tokens.end());
+
   if (recs.size() <= static_cast<unsigned int>(d_parseParams.smilesColumn)) {
     std::ostringstream errout;
     errout << "ERROR: line #" << lineNum << "does not contain enough tokens\n";
     throw FileParseException(errout.str());
+  }
+
+  for (auto &rec : recs) {
+    boost::trim_if(rec, boost::is_any_of(" \t\r\n"));
   }
 
   // -----------
@@ -143,10 +144,7 @@ RWMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
   // -----------
   if (d_parseParams.nameColumn == -1) {
     // if no name defaults it to the line number we read it from string
-    std::ostringstream tstr;
-    tstr << lineNum;
-    std::string mname = tstr.str();
-    res->setProp(common_properties::_Name, mname);
+    res->setProp(common_properties::_Name, std::to_string(lineNum));
   } else {
     if (d_parseParams.nameColumn >= static_cast<int>(recs.size())) {
       BOOST_LOG(rdWarningLog)
@@ -164,20 +162,15 @@ RWMol *MultithreadedSmilesMolSupplier::processMoleculeRecord(
         static_cast<int>(col) == d_parseParams.nameColumn) {
       continue;
     }
-    std::string pname, pval;
-    if (d_props.size() > col) {
-      pname = d_props[col];
+    if (d_props.size() > col && !d_props[col].empty()) {
+      res->setProp(d_props[col], recs[col]);
     } else {
-      pname = "Column_";
-      std::stringstream ss;
-      ss << col;
-      pname += ss.str();
+      std::string pname = "Column_";
+      pname += std::to_string(col);
+      res->setProp(pname, recs[col]);
     }
-
-    pval = recs[col];
-    res->setProp(pname, pval);
   }
-  return res.release();
+  return res;
 }
 
 }  // namespace FileParsers

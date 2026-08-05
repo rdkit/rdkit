@@ -226,7 +226,7 @@ void MultithreadedSDMolSupplier::readMolProps(RWMol &mol,
   }
 }
 
-RWMol *MultithreadedSDMolSupplier::processMoleculeRecord(
+std::unique_ptr<RWMol> MultithreadedSDMolSupplier::processMoleculeRecord(
     const std::string &record, unsigned int lineNum) {
   PRECONDITION(dp_inStream, "no stream");
   std::istringstream inStream(record);
@@ -234,9 +234,8 @@ RWMol *MultithreadedSDMolSupplier::processMoleculeRecord(
       v2::FileParsers::MolFromMolDataStream(inStream, lineNum, d_parseParams);
   if (res) {
     this->readMolProps(*res, inStream);
-    return res.release();
   }
-  return nullptr;
+  return res;
 }
 }  // namespace FileParsers
 }  // namespace v2

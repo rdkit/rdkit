@@ -41,11 +41,11 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
 
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
-                         unsigned int &index) override;
+                         unsigned int &index) final;
 
   //! parses the record and returns the resulting molecule
-  RWMol *processMoleculeRecord(const std::string &record,
-                               unsigned int lineNum) override;
+  std::unique_ptr<RWMol> processMoleculeRecord(const std::string &record,
+                                               unsigned int lineNum) final;
 
  private:
   void initFromSettings(bool takeOwnership, const Parameters &params,

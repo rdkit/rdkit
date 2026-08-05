@@ -123,8 +123,8 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
                                  unsigned int &index) = 0;
 
   //! processes the record into an RWMol object
-  virtual RWMol *processMoleculeRecord(const std::string &record,
-                                       unsigned int lineNum) = 0;
+  virtual std::unique_ptr<RWMol> processMoleculeRecord(
+      const std::string &record, unsigned int lineNum) = 0;
 
   //!< stores last extracted record id
   std::atomic<unsigned int> d_lastRecordId = 0;
