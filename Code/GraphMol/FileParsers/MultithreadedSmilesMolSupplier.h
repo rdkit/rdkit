@@ -21,7 +21,7 @@ namespace v2 {
 namespace FileParsers {
 //! This class is still a bit experimental and the public API may change
 //! in future releases.
-class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
+class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier final
     : public MultithreadedMolSupplier {
  public:
   explicit MultithreadedSmilesMolSupplier(
