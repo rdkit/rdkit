@@ -167,9 +167,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   std::atomic<bool> df_forceStop = false;
 
   std::mutex d_threadCounterMutex;
-  std::atomic<unsigned int> d_threadCounter{1};  //!< thread counter
-  std::vector<std::thread> d_writerThreads;      //!< vector writer threads
-  std::thread d_readerThread;                    //!< single reader thread
+  unsigned int d_threadEndCounter{1};        //!< thread counter
+  std::vector<std::thread> d_writerThreads;  //!< vector writer threads
+  std::thread d_readerThread;                //!< single reader thread
 
   std::string d_lastItemText;  //!< stores last extracted record
 

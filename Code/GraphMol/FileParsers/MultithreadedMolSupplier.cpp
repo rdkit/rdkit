@@ -137,18 +137,21 @@ void MultithreadedMolSupplier::writer() {
     }
   }
 
-  // we need a lock here otherwise two threads
-  //  can increment d_threadCounter even though it's
-  //  atomic.
+  // Protect the shared writer-thread counter.
+  // Note that d_threadEndCounter starts at 1, so that the last thread
+  // to finish will set the output queue to done.
+  // We can't use d_writerThreads.size() here because for the case
+  // of many threads and a small number of records, some threads may
+  // finish before others have started.
   d_threadCounterMutex.lock();
-  if (d_threadCounter < d_params.numWriterThreads) {
-    ++d_threadCounter;
+  if (d_threadEndCounter < d_params.numWriterThreads) {
+    ++d_threadEndCounter;
     d_threadCounterMutex.unlock();
   } else {
     // Here we need to unlock the threadCounterMutex before we setDone on the
-    //  outputQueue.  This causes a notification to the queue which may actually
-    //  have elements in it.  This notification may unblock the queue which
-    //  allows waiting threads to get their last attempt at adding to it
+    //  outputQueue.  This causes a notification to the queue which may
+    //  actually have elements in it.  This notification may unblock the queue
+    //  which allows waiting threads to get their last attempt at adding to it
     //  which will end up here and deadlock.
     d_threadCounterMutex.unlock();
     d_outputQueue->setDone();
