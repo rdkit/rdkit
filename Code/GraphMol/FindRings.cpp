@@ -272,12 +272,6 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
   return rdcast<unsigned int>(rings.size());
 }
 
-void storeRingInfo(const ROMol &mol, const INT_VECT &ring) {
-  INT_VECT bondIndices;
-  RingUtils::convertToBonds(ring, bondIndices, mol);
-  mol.getRingInfo()->addRing(ring, bondIndices);
-}
-
 void storeRingsInfo(const ROMol &mol, const VECT_INT_VECT &rings) {
   VECT_INT_VECT bondRings;
   bondRings.reserve(rings.size());
@@ -1024,7 +1018,7 @@ void legacySymmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
   // get the bond rings: we should have these from the SSSR calculation,
   // so no need to make the conversion, just make a copy.
   auto ringInfo = mol.getRingInfo();
-  auto bondsssrs = ringInfo->bondRingsAsVectors();
+  const auto bondsssrs = ringInfo->bondRings();
 
   //
   // For each "extra" ring, figure out if it could replace a single
@@ -1050,9 +1044,11 @@ void legacySymmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
   }
 
   INT_VECT extraBondRing;
+  VECT_INT_VECT acceptedAtomRings;
+  VECT_INT_VECT acceptedBondRings;
   for (auto &extraAtomRing : extras) {
     RingUtils::convertToBonds(extraAtomRing, extraBondRing, mol);
-    for (auto &ring : bondsssrs) {
+    for (const auto ring : bondsssrs) {
       if (ring.size() != extraBondRing.size()) {
         continue;
       }
@@ -1079,11 +1075,13 @@ void legacySymmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
 
       if (shareBond && replacesAllUniqueBonds) {
         res.push_back(extraAtomRing);
-        ringInfo->addRing(extraAtomRing, extraBondRing);
+        acceptedAtomRings.push_back(extraAtomRing);
+        acceptedBondRings.push_back(extraBondRing);
         break;
       }
     }
   }
+  ringInfo->addRings(acceptedAtomRings, acceptedBondRings);
 }
 }  // namespace
 int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,

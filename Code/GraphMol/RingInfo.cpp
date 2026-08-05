@@ -15,27 +15,6 @@
 #include <numeric>
 
 namespace RDKit {
-namespace {
-RingInfo::VECT_INT_VECT materializeRings(RingInfo::RingsView rings) {
-  RingInfo::VECT_INT_VECT result;
-  result.reserve(rings.size());
-  for (const auto ring : rings) {
-    result.emplace_back(ring.begin(), ring.end());
-  }
-  return result;
-}
-}  // namespace
-
-RingInfo::VECT_INT_VECT RingInfo::atomRingsAsVectors() const {
-  PRECONDITION(df_init, "RingInfo not initialized");
-  return materializeRings(atomRings());
-}
-
-RingInfo::VECT_INT_VECT RingInfo::bondRingsAsVectors() const {
-  PRECONDITION(df_init, "RingInfo not initialized");
-  return materializeRings(bondRings());
-}
-
 RingInfo::INT_VECT RingInfo::atomRingSizes(unsigned int idx) const {
   PRECONDITION(df_init, "RingInfo not initialized");
 
@@ -237,11 +216,6 @@ unsigned int RingInfo::addRing(const INT_VECT &atomIndices,
   return rdcast<unsigned int>(atomRings().size());
 }
 
-unsigned int RingInfo::addRing(IntView atomIndices, IntView bondIndices) {
-  return addRing(INT_VECT(atomIndices.begin(), atomIndices.end()),
-                 INT_VECT(bondIndices.begin(), bondIndices.end()));
-}
-
 unsigned int RingInfo::addRings(const VECT_INT_VECT &atomRings,
                                 const VECT_INT_VECT &bondRings) {
   PRECONDITION(df_init, "RingInfo not initialized");
@@ -273,6 +247,45 @@ unsigned int RingInfo::addRings(const VECT_INT_VECT &atomRings,
                           atomRings[i].end());
     d_bondsInRings.insert(d_bondsInRings.end(), bondRings[i].begin(),
                           bondRings[i].end());
+    d_atomRingBegins.push_back(rdcast<uint32_t>(d_atomsInRings.size()));
+    d_bondRingBegins.push_back(rdcast<uint32_t>(d_bondsInRings.size()));
+  }
+  rebuildMemberships();
+  invalidateFusedRings();
+  return numRings();
+}
+
+unsigned int RingInfo::addRings(
+    const RingInfo &source, const std::vector<unsigned int> &ringIndices) {
+  PRECONDITION(df_init, "RingInfo not initialized");
+  PRECONDITION(source.df_init, "source RingInfo not initialized");
+  PRECONDITION(&source != this, "source and destination RingInfo must differ");
+  if (d_atomRingBegins.empty()) {
+    d_atomRingBegins.push_back(0);
+  }
+  if (d_bondRingBegins.empty()) {
+    d_bondRingBegins.push_back(0);
+  }
+  size_t atomCount = 0;
+  size_t bondCount = 0;
+  for (const auto ringIdx : ringIndices) {
+    PRECONDITION(ringIdx < source.numRings(), "ring index out of bounds");
+    atomCount += source.d_atomRingBegins[ringIdx + 1] -
+                 source.d_atomRingBegins[ringIdx];
+    bondCount += source.d_bondRingBegins[ringIdx + 1] -
+                 source.d_bondRingBegins[ringIdx];
+  }
+  d_atomsInRings.reserve(d_atomsInRings.size() + atomCount);
+  d_bondsInRings.reserve(d_bondsInRings.size() + bondCount);
+  d_atomRingBegins.reserve(d_atomRingBegins.size() + ringIndices.size());
+  d_bondRingBegins.reserve(d_bondRingBegins.size() + ringIndices.size());
+  for (const auto ringIdx : ringIndices) {
+    const auto atomRing = source.atomRings()[ringIdx];
+    const auto bondRing = source.bondRings()[ringIdx];
+    d_atomsInRings.insert(d_atomsInRings.end(), atomRing.begin(),
+                          atomRing.end());
+    d_bondsInRings.insert(d_bondsInRings.end(), bondRing.begin(),
+                          bondRing.end());
     d_atomRingBegins.push_back(rdcast<uint32_t>(d_atomsInRings.size()));
     d_bondRingBegins.push_back(rdcast<uint32_t>(d_bondsInRings.size()));
   }

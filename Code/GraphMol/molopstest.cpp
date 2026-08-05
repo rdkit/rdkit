@@ -186,6 +186,18 @@ TEST_CASE("flat RingInfo storage preserves membership and fused semantics") {
   REQUIRE(copied.numFusedBonds(0) == 1);
   RingInfo moved(std::move(copied));
   REQUIRE(moved.numRings() == 3);
+
+  RingInfo selected;
+  selected.initialize(FIND_RING_TYPE_SSSR);
+  selected.preallocate(8, 8);
+  REQUIRE(selected.addRings(ringInfo, {2, 0}) == 2);
+  REQUIRE(std::ranges::equal(selected.atomRings()[0], atomRings[2]));
+  REQUIRE(std::ranges::equal(selected.bondRings()[0], bondRings[2]));
+  REQUIRE(std::ranges::equal(selected.atomRings()[1], atomRings[0]));
+  REQUIRE(std::ranges::equal(selected.bondRings()[1], bondRings[0]));
+  REQUIRE(selected.numAtomRings(0) == 2);
+  REQUIRE(selected.numBondRings(0) == 2);
+
   copied.reset();
   copied.initialize();
   copied.preallocate(3, 3);
