@@ -389,8 +389,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
 namespace {
 const std::string replaceCoreDummyBond = "_replaceCoreDummyBond";
 
-int findNbrBond(RWMol &mol, Bond *bond, Atom *bondAtom,
-                RingInfo::IntView bring,
+int findNbrBond(RWMol &mol, Bond *bond, Atom *bondAtom, RingInfo::IntView bring,
                 const boost::dynamic_bitset<> &removedAtoms) {
   int res = -1;
   for (const auto nbrBond : mol.atomBonds(bondAtom)) {

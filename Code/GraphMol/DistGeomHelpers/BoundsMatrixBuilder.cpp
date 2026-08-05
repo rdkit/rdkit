@@ -1391,10 +1391,9 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   std::iota(bondRingOrder.begin(), bondRingOrder.end(), 0u);
 
   // we first want to handle smaller rings
-  std::ranges::sort(bondRingOrder, std::ranges::greater{},
-                    [&bondRings](unsigned int ringIdx) {
-                      return bondRings[ringIdx].size();
-                    });
+  std::ranges::sort(
+      bondRingOrder, std::ranges::greater{},
+      [&bondRings](unsigned int ringIdx) { return bondRings[ringIdx].size(); });
 
   std::unordered_set<unsigned int> bidIsMacrocycle;
 

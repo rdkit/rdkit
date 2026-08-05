@@ -830,9 +830,8 @@ int mmff94AromaticityHelper(RWMol &mol, const Rings &srings) {
 
 // use minRingSize=0 or maxRingSize=0 to ignore these constraints
 template <typename Rings>
-int aromaticityHelper(RWMol &mol, const Rings &srings,
-                      unsigned int minRingSize, unsigned int maxRingSize,
-                      bool includeFused) {
+int aromaticityHelper(RWMol &mol, const Rings &srings, unsigned int minRingSize,
+                      unsigned int maxRingSize, bool includeFused) {
   int narom = 0;
   // loop over all the atoms in the rings that can be candidates
   // for aromaticity
