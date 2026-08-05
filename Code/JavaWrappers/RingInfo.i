@@ -40,7 +40,6 @@
 // Keep the managed-language API based on owned vectors. The C++ methods now
 // return non-owning views whose lifetimes cannot be represented safely by the
 // Java and C# wrappers.
-%ignore RDKit::RingInfo::IntView;
 %ignore RDKit::RingInfo::RingsView;
 %ignore RDKit::RingInfo::atomRings;
 %ignore RDKit::RingInfo::bondRings;

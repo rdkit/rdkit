@@ -233,7 +233,7 @@ TEST_CASE("test3") {
     REQUIRE(m->getRingInfo()->numAtomRings(i) == 1);
     REQUIRE(m->getRingInfo()->atomRingSizes(i) == (INT_VECT{3}));
     REQUIRE((m->getRingInfo()->atomMembers(i).size() == 1 &&
-             m->getRingInfo()->atomMembers(i).at(0) == 0));
+             m->getRingInfo()->atomMembers(i)[0] == 0));
   }
   for (unsigned int i = 0; i < m->getNumBonds(); i++) {
     REQUIRE(m->getRingInfo()->isBondInRingOfSize(i, 3));
@@ -241,7 +241,7 @@ TEST_CASE("test3") {
     REQUIRE(m->getRingInfo()->numBondRings(i) == 1);
     REQUIRE(m->getRingInfo()->bondRingSizes(i) == (INT_VECT{3}));
     REQUIRE((m->getRingInfo()->bondMembers(i).size() == 1 &&
-             m->getRingInfo()->bondMembers(i).at(0) == 0));
+             m->getRingInfo()->bondMembers(i)[0] == 0));
   }
   REQUIRE(m->getRingInfo()->areAtomsInSameRing(0, 1));
   REQUIRE(m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 3));
@@ -266,7 +266,7 @@ TEST_CASE("test3") {
     REQUIRE(m->getRingInfo()->numAtomRings(i) == 1);
     REQUIRE(m->getRingInfo()->atomRingSizes(i) == (INT_VECT{4}));
     REQUIRE((m->getRingInfo()->atomMembers(i).size() == 1 &&
-             m->getRingInfo()->atomMembers(i).at(0) == 0));
+             m->getRingInfo()->atomMembers(i)[0] == 0));
   }
   REQUIRE(m->getRingInfo()->isBondInRingOfSize(0, 4));
   REQUIRE(m->getRingInfo()->numBondRings(0) == 1);
@@ -361,8 +361,8 @@ TEST_CASE("test3") {
   REQUIRE(m->getRingInfo()->atomRingSizes(1) == (INT_VECT{5}));
   REQUIRE(m->getRingInfo()->atomRingSizes(2) == (INT_VECT{5, 5}));
   REQUIRE(m->getRingInfo()->atomMembers(2).size() == 2);
-  REQUIRE(m->getRingInfo()->atomMembers(2).at(0) == 0);
-  REQUIRE(m->getRingInfo()->atomMembers(2).at(1) == 1);
+  REQUIRE(m->getRingInfo()->atomMembers(2)[0] == 0);
+  REQUIRE(m->getRingInfo()->atomMembers(2)[1] == 1);
   REQUIRE(m->getRingInfo()->isRingFused(0));
   REQUIRE(m->getRingInfo()->isRingFused(1));
   REQUIRE(m->getRingInfo()->areRingsFused(0, 1));

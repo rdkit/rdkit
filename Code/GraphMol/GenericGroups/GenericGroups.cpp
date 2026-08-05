@@ -342,7 +342,7 @@ bool AlkynylHAtomMatcher(const ROMol &mol, const Atom &atom,
 namespace {
 bool checkAtomRing(const ROMol &mol, const Atom &atom,
                    const boost::dynamic_bitset<> &ignore,
-                   RingInfo::IntView ring, AtomMatcherFunc matcher,
+                   std::span<const int> ring, AtomMatcherFunc matcher,
                    AtomMatcherFunc atLeastOne) {
   bool atLeast = atLeastOne == nullptr;
   for (auto aidx : ring) {
@@ -356,7 +356,7 @@ bool checkAtomRing(const ROMol &mol, const Atom &atom,
   }
   return atLeast;
 }
-bool checkBondRing(const ROMol &mol, RingInfo::IntView bring,
+bool checkBondRing(const ROMol &mol, std::span<const int> bring,
                    BondMatcherFunc matcher, BondMatcherFunc atLeastOne) {
   bool atLeast = atLeastOne == nullptr;
   for (auto bidx : bring) {

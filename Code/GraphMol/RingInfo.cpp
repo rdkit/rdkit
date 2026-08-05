@@ -60,7 +60,7 @@ unsigned int RingInfo::numAtomRings(unsigned int idx) const {
   }
   return d_atomMembershipBegins[idx + 1] - d_atomMembershipBegins[idx];
 }
-RingInfo::IntView RingInfo::atomMembers(unsigned int idx) const {
+std::span<const int> RingInfo::atomMembers(unsigned int idx) const {
   PRECONDITION(df_init, "RingInfo not initialized");
 
   if (!d_atomMembershipBegins.empty() &&
@@ -142,7 +142,7 @@ unsigned int RingInfo::numBondRings(unsigned int idx) const {
   }
   return d_bondMembershipBegins[idx + 1] - d_bondMembershipBegins[idx];
 }
-RingInfo::IntView RingInfo::bondMembers(unsigned int idx) const {
+std::span<const int> RingInfo::bondMembers(unsigned int idx) const {
   PRECONDITION(df_init, "RingInfo not initialized");
 
   if (!d_bondMembershipBegins.empty() &&

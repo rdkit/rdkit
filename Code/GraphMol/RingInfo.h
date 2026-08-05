@@ -14,8 +14,8 @@
 #include <map>
 #include <cstdint>
 #include <iterator>
+#include <span>
 #include <stdexcept>
-#include <compare>
 #include <vector>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
@@ -44,37 +44,6 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   typedef std::vector<int> INT_VECT;
   typedef std::vector<INT_VECT> VECT_INT_VECT;
 
-  //! A non-owning view of one ring or one atom/bond membership list.
-  //! The view is invalidated by non-const changes to this RingInfo.
-  class IntView {
-   public:
-    using value_type = int;
-    using const_iterator = const int *;
-
-    IntView() = default;
-    IntView(const int *data, size_t size) : dp_data(data), d_size(size) {}
-    const_iterator begin() const { return dp_data; }
-    const_iterator end() const { return d_size ? dp_data + d_size : dp_data; }
-    const_iterator cbegin() const { return begin(); }
-    const_iterator cend() const { return end(); }
-    const int *data() const { return dp_data; }
-    size_t size() const { return d_size; }
-    bool empty() const { return d_size == 0; }
-    const int &operator[](size_t idx) const { return dp_data[idx]; }
-    const int &at(size_t idx) const {
-      if (idx >= d_size) {
-        throw std::out_of_range("RingInfo::IntView index out of range");
-      }
-      return dp_data[idx];
-    }
-    const int &front() const { return dp_data[0]; }
-    const int &back() const { return dp_data[d_size - 1]; }
-
-   private:
-    const int *dp_data{nullptr};
-    size_t d_size{0};
-  };
-
   //! A non-owning indexed view of all ordinary atom or bond rings.
   //! Iteration is read-only and views must not be retained across mutation.
   class RingsView {
@@ -83,18 +52,12 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
      public:
       using iterator_category = std::forward_iterator_tag;
       using iterator_concept = std::forward_iterator_tag;
-      using value_type = IntView;
+      using value_type = std::span<const int>;
       using difference_type = std::ptrdiff_t;
-      using reference = IntView;
+      using reference = value_type;
 
+      const_iterator() = default;
       reference operator*() const { return valueAt(d_idx); }
-      const IntView *operator->() const {
-        d_cachedValue = valueAt(d_idx);
-        return &d_cachedValue;
-      }
-      reference operator[](difference_type offset) const {
-        return valueAt(d_idx + offset);
-      }
       const_iterator &operator++() {
         ++d_idx;
         return *this;
@@ -104,48 +67,10 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
         ++*this;
         return res;
       }
-      const_iterator &operator--() {
-        --d_idx;
-        return *this;
-      }
-      const_iterator operator--(int) {
-        auto res = *this;
-        --*this;
-        return res;
-      }
-      const_iterator &operator+=(difference_type offset) {
-        d_idx += offset;
-        return *this;
-      }
-      const_iterator &operator-=(difference_type offset) {
-        d_idx -= offset;
-        return *this;
-      }
-      friend const_iterator operator+(const_iterator it,
-                                      difference_type offset) {
-        return it += offset;
-      }
-      friend const_iterator operator+(difference_type offset,
-                                      const_iterator it) {
-        return it += offset;
-      }
-      friend const_iterator operator-(const_iterator it,
-                                      difference_type offset) {
-        return it -= offset;
-      }
-      friend difference_type operator-(const const_iterator &lhs,
-                                       const const_iterator &rhs) {
-        return static_cast<difference_type>(lhs.d_idx) -
-               static_cast<difference_type>(rhs.d_idx);
-      }
       friend bool operator==(const const_iterator &lhs,
                              const const_iterator &rhs) {
         return lhs.dp_values == rhs.dp_values &&
                lhs.dp_begins == rhs.dp_begins && lhs.d_idx == rhs.d_idx;
-      }
-      friend auto operator<=>(const const_iterator &lhs,
-                              const const_iterator &rhs) {
-        return lhs.d_idx <=> rhs.d_idx;
       }
 
      private:
@@ -153,7 +78,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       const_iterator(const std::vector<int> *values,
                      const std::vector<uint32_t> *begins, size_t idx)
           : dp_values(values), dp_begins(begins), d_idx(idx) {}
-      IntView valueAt(size_t idx) const {
+      value_type valueAt(size_t idx) const {
         const auto begin = (*dp_begins)[idx];
         const auto size = (*dp_begins)[idx + 1] - begin;
         return {size ? dp_values->data() + begin : nullptr, size};
@@ -161,7 +86,6 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       const std::vector<int> *dp_values{nullptr};
       const std::vector<uint32_t> *dp_begins{nullptr};
       size_t d_idx{0};
-      mutable IntView d_cachedValue;
     };
 
     RingsView() = default;
@@ -172,19 +96,19 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       return dp_begins && !dp_begins->empty() ? dp_begins->size() - 1 : 0;
     }
     bool empty() const { return size() == 0; }
-    IntView operator[](size_t idx) const {
+    std::span<const int> operator[](size_t idx) const {
       const auto begin = (*dp_begins)[idx];
       const auto size = (*dp_begins)[idx + 1] - begin;
       return {size ? dp_values->data() + begin : nullptr, size};
     }
-    IntView at(size_t idx) const {
+    std::span<const int> at(size_t idx) const {
       if (idx >= size()) {
         throw std::out_of_range("RingInfo::RingsView index out of range");
       }
       return (*this)[idx];
     }
-    IntView front() const { return (*this)[0]; }
-    IntView back() const { return (*this)[size() - 1]; }
+    std::span<const int> front() const { return (*this)[0]; }
+    std::span<const int> back() const { return (*this)[size() - 1]; }
     const_iterator begin() const { return {dp_values, dp_begins, 0}; }
     const_iterator end() const { return {dp_values, dp_begins, size()}; }
     const_iterator cbegin() const { return begin(); }
@@ -274,23 +198,20 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   unsigned int minAtomRingSize(unsigned int idx) const;
 
-  //! returns our \c atom-rings vectors, i.e. a vector of int vectors
-  //! reporting the atom indices which are part of each ring
+  //! returns a read-only view of the atom indices in each ring
   /*!
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
   RingsView atomRings() const { return {&d_atomsInRings, &d_atomRingBegins}; }
 
-  //! returns our \c atom-members vector for atom idx (i.e.,
-  //! a vector of ints reporting the ring indices that
-  //! atom idx is member of), or an empty vector if the atom is
-  //! not in any ring.
+  //! returns a read-only span of the rings containing atom idx, or an empty
+  //! span if the atom is not in any ring.
   /*!
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  IntView atomMembers(unsigned int idx) const;
+  std::span<const int> atomMembers(unsigned int idx) const;
 
   //! returns whether or not atoms with indices \c idx1 and \c idx2 belong to
   //! the same ring.
@@ -351,23 +272,20 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   unsigned int numRings() const;
 
-  //! returns our \c bond-rings vectors, i.e. a vector of int vectors
-  //! reporting the bond indices which are part of each ring
+  //! returns a read-only view of the bond indices in each ring
   /*!
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
   RingsView bondRings() const { return {&d_bondsInRings, &d_bondRingBegins}; }
 
-  //! returns our \c bond-members vector for bond idx (i.e.,
-  //! a vector of ints reporting the ring indices that
-  //! bond idx is member of), or an empty vector if the bond is
-  //! not in any ring.
+  //! returns a read-only span of the rings containing bond idx, or an empty
+  //! span if the bond is not in any ring.
   /*!
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  IntView bondMembers(unsigned int idx) const;
+  std::span<const int> bondMembers(unsigned int idx) const;
 
   //! returns whether or not bonds with indices \c idx1 and \c idx2 belong to
   //! the same ring.
