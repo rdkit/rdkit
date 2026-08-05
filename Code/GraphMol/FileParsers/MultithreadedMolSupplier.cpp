@@ -22,12 +22,8 @@ void MultithreadedMolSupplier::initFromSettings(bool takeOwnership,
   df_owner = takeOwnership;
   d_params = params;
   d_params.numWriterThreads = getNumThreadsToUse(params.numWriterThreads);
-  d_inputQueue.reset(
-      new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
-          d_params.sizeInputQueue));
-  d_outputQueue.reset(
-      new ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>(
-          d_params.sizeOutputQueue));
+  d_inputQueue.reset(new inputQueue_t(d_params.sizeInputQueue));
+  d_outputQueue.reset(new outputQueue_t(d_params.sizeOutputQueue));
 }
 
 void MultithreadedMolSupplier::close() {

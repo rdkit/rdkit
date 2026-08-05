@@ -35,6 +35,18 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   //! this is an abstract base class to concurrently supply molecules one at a
   //! time
  public:
+  using readCallBackFn_t =
+      std::function<std::string(const std::string &, unsigned int)>;
+  using nextCallBackFn_t =
+      std::function<void(RWMol &, const MultithreadedMolSupplier &)>;
+  using writeCallBackFn_t =
+      std::function<void(RWMol &, const std::string &, unsigned int)>;
+
+  using inputQueue_t =
+      ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>;
+  using outputQueue_t =
+      ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>;
+
   struct Parameters {
     unsigned int numWriterThreads = 1;
     size_t sizeInputQueue = 5;
@@ -76,10 +88,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
     place
 
    */
-  template <typename T>
-  void setNextCallback(T cb) {
-    nextCallback = cb;
-  }
+  void setNextCallback(nextCallBackFn_t cb) { nextCallback = cb; }
 
   //! sets the callback to be applied to molecules after they are processed, but
   ///! before they are written to the output queue
@@ -88,10 +97,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
     to the string record, and an unsigned int record id. This can modify the
     molecule in place
   */
-  template <typename T>
-  void setWriteCallback(T cb) {
-    writeCallback = cb;
-  }
+  void setWriteCallback(writeCallBackFn_t cb) { writeCallback = cb; }
 
   //! sets the callback to be applied to input text records before they are
   ///! added to the input queue
@@ -99,10 +105,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
     \param cb: a function that takes a const reference to the string record and
     an unsigned int record id and returns the modified string record
   */
-  template <typename T>
-  void setReadCallback(T cb) {
-    readCallback = cb;
-  }
+  void setReadCallback(readCallBackFn_t cb) { readCallback = cb; }
 
   //! not yet implemented
   void init() final{};
@@ -126,13 +129,11 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   //!< stores last extracted record id
   std::atomic<unsigned int> d_lastRecordId = 0;
 
-  std::unique_ptr<
-      ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>>
-      d_inputQueue;  //!< concurrent input queue
+  //!< concurrent input queue
+  std::unique_ptr<inputQueue_t> d_inputQueue;
 
-  std::unique_ptr<
-      ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>>
-      d_outputQueue;  //!< concurrent output queue
+  //!< concurrent output queue
+  std::unique_ptr<outputQueue_t> d_outputQueue;
 
   Parameters d_params;
 
@@ -172,12 +173,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
 
   std::string d_lastItemText;  //!< stores last extracted record
 
-  std::function<void(RWMol &, const MultithreadedMolSupplier &)> nextCallback =
-      nullptr;
-  std::function<void(RWMol &, const std::string &, unsigned int)>
-      writeCallback = nullptr;
-  std::function<std::string(const std::string &, unsigned int)> readCallback =
-      nullptr;
+  readCallBackFn_t readCallback = nullptr;
+  nextCallBackFn_t nextCallback = nullptr;
+  writeCallBackFn_t writeCallback = nullptr;
 };
 }  // namespace FileParsers
 }  // namespace v2
