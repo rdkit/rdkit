@@ -25,6 +25,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
+#include <GraphMol/Subset.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
@@ -105,9 +106,11 @@ std::vector<std::string> MHFPEncoder::CreateShingling(
 
   if (rings) {
     const auto bondRings = tmol.getRingInfo()->bondRings();
+    SubsetOptions options;
+    options.method = SubsetMethod::BONDS;
     for (const auto ring : bondRings) {
-      std::unique_ptr<ROMol> m(Subgraphs::pathToSubmol(
-          tmol, std::span<const int>(ring.data(), ring.size())));
+      std::vector<unsigned int> bondIndices(ring.begin(), ring.end());
+      auto m = copyMolSubset(tmol, bondIndices, options);
       shingling.emplace_back(MolToSmiles(*m));
     }
   }

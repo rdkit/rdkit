@@ -17,7 +17,6 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <cstdint>
-#include <span>
 
 namespace RDKit {
 class ROMol;
@@ -50,9 +49,6 @@ RDKIT_SUBGRAPHS_EXPORT ROMol *pathToSubmol(const ROMol &mol,
                                            std::map<int, int> &atomIdxMap);
 RDKIT_SUBGRAPHS_EXPORT ROMol *pathToSubmol(const ROMol &mol,
                                            const PATH_TYPE &path,
-                                           bool useQuery = false);
-RDKIT_SUBGRAPHS_EXPORT ROMol *pathToSubmol(const ROMol &mol,
-                                           std::span<const int> path,
                                            bool useQuery = false);
 }  // end of namespace Subgraphs
 }  // namespace RDKit
