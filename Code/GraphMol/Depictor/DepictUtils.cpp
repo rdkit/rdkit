@@ -425,7 +425,7 @@ bool isSpiroCenter(unsigned int aid, const RDKit::ROMol *mol) {
   for (const auto &ring : atomRings) {
     if (std::find(ring.begin(), ring.end(), static_cast<int>(aid)) !=
         ring.end()) {
-      rings.push_back(ring);
+      rings.emplace_back(ring.begin(), ring.end());
     }
   }
 

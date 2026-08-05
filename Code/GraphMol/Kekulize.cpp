@@ -664,8 +664,10 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     if (!mol.getRingInfo()->isInitialized()) {
       MolOps::findSSSR(mol, allringsSSSR);
     }
-    const VECT_INT_VECT &allrings =
-        allringsSSSR.empty() ? mol.getRingInfo()->atomRings() : allringsSSSR;
+    if (allringsSSSR.empty()) {
+      allringsSSSR = mol.getRingInfo()->atomRingsAsVectors();
+    }
+    const VECT_INT_VECT &allrings = allringsSSSR;
     std::deque<INT_VECT> tmpRings;
     auto containsNonDummy = [&atomsToUse, &dummyAts](const INT_VECT &ring) {
       bool ringOk = false;

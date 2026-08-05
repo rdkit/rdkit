@@ -140,7 +140,7 @@ const std::uint32_t RingMembershipSize::IS_AROMATIC_BIT = (1u << 31);
 RingMembershipSize::RingMembershipSize(const ROMol &mol) {
   static const unsigned int MAX_NUM_RINGS = (0xFFFFFFFF >> 1);
   const RingInfo *ringInfo = mol.getRingInfo();
-  const VECT_INT_VECT &atomRings = ringInfo->atomRings();
+  const auto atomRings = ringInfo->atomRingsAsVectors();
   PRECONDITION(atomRings.size() < MAX_NUM_RINGS, "Too many rings");
   for (std::uint32_t ringIdx = 0; ringIdx < atomRings.size(); ++ringIdx) {
     unsigned int ringSize = atomRings[ringIdx].size();
@@ -315,7 +315,7 @@ bool isRingAromatic(const ROMol &mol, const INT_VECT &ringIndxVect) {
 bool isAtomInAromaticRingOfSize(const Atom *atom, const unsigned int ringSize) {
   bool isAromatic = false;
   const ROMol &mol = atom->getOwningMol();
-  const VECT_INT_VECT &atomRings = mol.getRingInfo()->atomRings();
+  const auto atomRings = mol.getRingInfo()->atomRingsAsVectors();
 
   if (atom->getIsAromatic()) {
     for (unsigned int i = 0; (!isAromatic) && (i < atomRings.size()); ++i) {
@@ -451,7 +451,7 @@ bool areAtomsInSameRingOfSize(const ROMol &mol, const unsigned int ringSize,
                               const unsigned int numAtoms, ...) {
   unsigned int i;
   bool areInSameRingOfSize = false;
-  const VECT_INT_VECT &atomRings = mol.getRingInfo()->atomRings();
+  const auto atomRings = mol.getRingInfo()->atomRings();
   unsigned int idx;
   va_list atomIdxs;
 
@@ -478,7 +478,7 @@ bool areAtomsInSameAromaticRing(const ROMol &mol, const unsigned int idx1,
   unsigned int i;
   unsigned int j;
   bool areInSameAromatic = false;
-  const VECT_INT_VECT &atomRings = mol.getRingInfo()->atomRings();
+  const auto atomRings = mol.getRingInfo()->atomRings();
 
   if (mol.getAtomWithIdx(idx1)->getIsAromatic() &&
       mol.getAtomWithIdx(idx2)->getIsAromatic()) {
@@ -3081,7 +3081,7 @@ void MMFFMolProperties::computeMMFFCharges(const ROMol &mol) {
   double pChg = 0.0;
   double fChg = 0.0;
   boost::dynamic_bitset<> conjNBitVect(mol.getNumAtoms());
-  VECT_INT_VECT atomRings = mol.getRingInfo()->atomRings();
+  VECT_INT_VECT atomRings = mol.getRingInfo()->atomRingsAsVectors();
   ROMol::ADJ_ITER nbrIdx;
   ROMol::ADJ_ITER endNbrs;
   ROMol::ADJ_ITER nbr2Idx;

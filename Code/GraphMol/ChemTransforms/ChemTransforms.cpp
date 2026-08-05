@@ -389,7 +389,8 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
 namespace {
 const std::string replaceCoreDummyBond = "_replaceCoreDummyBond";
 
-int findNbrBond(RWMol &mol, Bond *bond, Atom *bondAtom, const INT_VECT &bring,
+int findNbrBond(RWMol &mol, Bond *bond, Atom *bondAtom,
+                RingInfo::IntView bring,
                 const boost::dynamic_bitset<> &removedAtoms) {
   int res = -1;
   for (const auto nbrBond : mol.atomBonds(bondAtom)) {
@@ -797,7 +798,7 @@ ROMol *MurckoDecompose(const ROMol &mol) {
       keepAtoms[i] = 1;
     }
   }
-  const VECT_INT_VECT &rings = ringInfo->atomRings();
+  const auto rings = ringInfo->atomRings();
   // std::cerr<<"  rings: "<<rings.size()<<std::endl;
   // now find the shortest paths between each ring system and mark the atoms
   // along each as being keepers:

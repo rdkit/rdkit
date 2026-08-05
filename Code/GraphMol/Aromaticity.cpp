@@ -978,7 +978,7 @@ void setMMFFAromaticity(RWMol &mol) {
   RingInfo *ringInfo = mol.getRingInfo();
   Atom *atom;
   Bond *bond;
-  const VECT_INT_VECT &atomRings = ringInfo->atomRings();
+  const auto atomRings = ringInfo->atomRings();
   ROMol::ADJ_ITER nbrIdx;
   ROMol::ADJ_ITER endNbrs;
   boost::dynamic_bitset<> aromBitVect(mol.getNumAtoms());
@@ -1144,7 +1144,7 @@ int setAromaticity(RWMol &mol, AromaticityModel model, int (*func)(RWMol &)) {
   // first find the all the simple rings in the molecule
   VECT_INT_VECT srings;
   if (mol.getRingInfo()->isInitialized()) {
-    srings = mol.getRingInfo()->atomRings();
+    srings = mol.getRingInfo()->atomRingsAsVectors();
   } else {
     MolOps::symmetrizeSSSR(mol, srings);
   }

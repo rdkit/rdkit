@@ -48,10 +48,12 @@ int queryIsAtomBridgehead(Atom const *at) {
 
   boost::dynamic_bitset<> bondsInRingI(mol.getNumBonds());
   boost::dynamic_bitset<> ringsOverlap(ri->numRings());
-  for (unsigned int i = 0; i < ri->bondRings().size(); ++i) {
+  const auto bondRings = ri->bondRings();
+  for (unsigned int i = 0; i < bondRings.size(); ++i) {
     bondsInRingI.reset();
     bool atomInRingI = false;
-    for (const auto bidx : ri->bondRings()[i]) {
+    const auto ringI = bondRings[i];
+    for (const auto bidx : ringI) {
       bondsInRingI.set(bidx);
       if (atomRingBonds[bidx]) {
         atomInRingI = true;
@@ -60,10 +62,11 @@ int queryIsAtomBridgehead(Atom const *at) {
     if (!atomInRingI) {
       continue;
     }
-    for (unsigned int j = i + 1; j < ri->bondRings().size(); ++j) {
+    for (unsigned int j = i + 1; j < bondRings.size(); ++j) {
       unsigned int overlap = 0;
       bool atomInRingJ = false;
-      for (const auto bidx : ri->bondRings()[j]) {
+      const auto ringJ = bondRings[j];
+      for (const auto bidx : ringJ) {
         if (atomRingBonds[bidx]) {
           atomInRingJ = true;
         }

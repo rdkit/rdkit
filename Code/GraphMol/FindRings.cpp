@@ -279,9 +279,13 @@ void storeRingInfo(const ROMol &mol, const INT_VECT &ring) {
 }
 
 void storeRingsInfo(const ROMol &mol, const VECT_INT_VECT &rings) {
+  VECT_INT_VECT bondRings;
+  bondRings.reserve(rings.size());
   for (const auto &ring : rings) {
-    storeRingInfo(mol, ring);
+    bondRings.emplace_back();
+    RingUtils::convertToBonds(ring, bondRings.back(), mol);
   }
+  mol.getRingInfo()->addRings(rings, bondRings);
 }
 
 void markUselessD2s(unsigned int root, const ROMol &tMol,
@@ -1020,7 +1024,7 @@ void legacySymmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
   // get the bond rings: we should have these from the SSSR calculation,
   // so no need to make the conversion, just make a copy.
   auto ringInfo = mol.getRingInfo();
-  auto bondsssrs = ringInfo->bondRings();
+  auto bondsssrs = ringInfo->bondRingsAsVectors();
 
   //
   // For each "extra" ring, figure out if it could replace a single
@@ -1102,11 +1106,13 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
       findRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
     }
     res = ringInfo->atomRelevantCycles();
+    VECT_INT_VECT bondRings;
+    bondRings.reserve(res.size());
     for (const auto &atomRing : res) {
-      INT_VECT bondRing;
-      RingUtils::convertToBonds(atomRing, bondRing, mol);
-      ringInfo->addRing(atomRing, bondRing);
+      bondRings.emplace_back();
+      RingUtils::convertToBonds(atomRing, bondRings.back(), mol);
     }
+    ringInfo->addRings(res, bondRings);
   } else {
     legacySymmetrizeSSSR(mol, res, includeDativeBonds, includeHydrogenBonds);
   }

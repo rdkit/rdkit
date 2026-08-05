@@ -906,7 +906,8 @@ bool updateAtoms(
                     }
                   }
                 }
-                for (auto rbidx : mol.getRingInfo()->bondRings()[ridx]) {
+                const auto bring = mol.getRingInfo()->bondRings()[ridx];
+                for (auto rbidx : bring) {
                   if (possibleRingStereoBonds[rbidx]) {
                     --possibleRingStereoBonds[rbidx];
                   }
