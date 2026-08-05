@@ -86,21 +86,20 @@ void WorkWithRingInfo() {
   TEST_ASSERT(ringInfo->isBondInRingOfSize(1, 5));
 
   // can also get the full list of rings as atom indices:
-  VECT_INT_VECT atomRings;  // VECT_INT_VECT is vector< vector<int> >
-  atomRings = ringInfo->atomRings();
+  auto atomRings = ringInfo->atomRings();
   TEST_ASSERT(atomRings.size() == 2);
   TEST_ASSERT(atomRings[0].size() == 5);
   TEST_ASSERT(atomRings[1].size() == 6);
   // this sort is just here for test/demo purposes:
-  std::sort(atomRings[0].begin(), atomRings[0].end());
-  TEST_ASSERT(atomRings[0][0] == 1);
-  TEST_ASSERT(atomRings[0][1] == 2);
-  TEST_ASSERT(atomRings[0][2] == 3);
-  TEST_ASSERT(atomRings[0][3] == 4);
-  TEST_ASSERT(atomRings[0][4] == 5);
+  INT_VECT sortedRing(atomRings[0].begin(), atomRings[0].end());
+  std::sort(sortedRing.begin(), sortedRing.end());
+  TEST_ASSERT(sortedRing[0] == 1);
+  TEST_ASSERT(sortedRing[1] == 2);
+  TEST_ASSERT(sortedRing[2] == 3);
+  TEST_ASSERT(sortedRing[3] == 4);
+  TEST_ASSERT(sortedRing[4] == 5);
   // same with bonds:
-  VECT_INT_VECT bondRings;  // VECT_INT_VECT is vector< vector<int> >
-  bondRings = ringInfo->bondRings();
+  auto bondRings = ringInfo->bondRings();
   TEST_ASSERT(bondRings.size() == 2);
   TEST_ASSERT(bondRings[0].size() == 5);
   TEST_ASSERT(bondRings[1].size() == 6);
@@ -110,7 +109,7 @@ void WorkWithRingInfo() {
   // count the number of rings of size 5:
   auto nRingsSize5 =
       std::count_if(atomRings.begin(), atomRings.end(),
-                    [](const INT_VECT &ring) { return ring.size() == 5; });
+                    [](const auto ring) { return ring.size() == 5; });
   TEST_ASSERT(nRingsSize5 == 1);
   delete mol;
 

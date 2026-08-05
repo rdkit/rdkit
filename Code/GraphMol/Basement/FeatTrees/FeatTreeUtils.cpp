@@ -123,9 +123,10 @@ void mergeRingCycle(FeatTreeGraph &featGraph, FeatTreeGraph &featGraphCopy,
 // -----------------------------------------------------------------------
 void addRingsAndConnectors(const ROMol &mol, FeatTreeGraph &resGraph) {
   RingInfo *ringInfo = mol.getRingInfo();
+  const auto atomRings = ringInfo->atomRings();
   unsigned int ringIdxI = 0;
-  for (auto ringItI = ringInfo->atomRings().cbegin();
-       ringItI != ringInfo->atomRings().cend(); ++ringItI, ++ringIdxI) {
+  for (auto ringItI = atomRings.cbegin(); ringItI != atomRings.cend();
+       ++ringItI, ++ringIdxI) {
     UINT_SET s(ringItI->begin(), ringItI->end());
     boost::add_vertex(FeatTreeNode(s), resGraph);
 
@@ -134,10 +135,10 @@ void addRingsAndConnectors(const ROMol &mol, FeatTreeGraph &resGraph) {
     // ------ ------ ------ ------
     // sort a copy of this ring's atoms so that it's easier to
     // search for overlaps:
-    INT_VECT ringI = *ringItI;
+    INT_VECT ringI(ringItI->begin(), ringItI->end());
     std::sort(ringI.begin(), ringI.end());
     unsigned int ringIdxJ = 0;
-    for (auto ringItJ = ringInfo->atomRings().cbegin(); ringItJ != ringItI;
+    for (auto ringItJ = atomRings.cbegin(); ringItJ != ringItI;
          ++ringItJ, ++ringIdxJ) {
       for (auto ringJElem = ringItJ->cbegin(); ringJElem != ringItJ->cend();
            ++ringJElem) {
