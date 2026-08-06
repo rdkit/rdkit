@@ -165,6 +165,7 @@ TEST_CASE("Monomer classes are valid generic SGroup classes") {
   for (const auto monomerClass : monomerClasses) {
     const std::string className = monomerClassToString(monomerClass);
     CHECK(SubstanceGroupChecks::isValidClass(className));
+    CHECK(monomerClassFromString(className) == monomerClass);
 
     auto templ = makeTemplate(className, "X", "C", {0}, {}, monomerClass);
     const auto molBlock = MolToV3KMolBlock(templ->getMol());
@@ -177,6 +178,8 @@ TEST_CASE("Monomer classes are valid generic SGroup classes") {
   }
 
   CHECK_FALSE(SubstanceGroupChecks::isValidClass("NotAMonomerClass"));
+  CHECK_THROWS_AS(monomerClassFromString("NotAMonomerClass"),
+                  ValueErrorException);
 }
 
 TEST_CASE("MacroMolTemplate SGroups survive generic MOL and SDF round trips") {

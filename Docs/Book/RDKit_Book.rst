@@ -2862,6 +2862,20 @@ extensions, not standard SCSR classes. Other CTfile implementations may reject
 or ignore them, and strict SCSR parsing continues to require the standard
 classes listed above.
 
+``MonomerClass`` deliberately stores only broad, format-neutral semantics. It
+does not retain distinctions such as amino-acid chirality or modification, or
+whether a nucleic acid is DNA, RNA, a base, a sugar, or a phosphate. ``Other``
+represents a recognized but otherwise uncategorized monomer; it is not a
+container for arbitrary external class strings.
+
+The canonical names returned by ``monomerClassToString()`` are RDKit names,
+not mappings to SCSR, HELM, PDB, or another format. Parsers and writers for
+those formats are responsible for their own conversions. A writer must use
+additional format-specific context or report an error when a neutral class is
+insufficient to select a valid output value. Exact external classifications,
+such as ``dAA``, ``MODAA``, or ``BASE``, are not preserved by
+``MonomerClass``.
+
 The SEQID is a sequential integer and is ignored by this treatment.  Typically, the three parts of an RNA or DNA element have the same SEQID.
 
 The ATTCHORD attribute must have a specification for each bond that comes from the macro atom.   The specification is contained between parentheses, and the first 
