@@ -361,6 +361,8 @@ INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(
     const ROMol &mol, unsigned int lowerLen, unsigned int upperLen, bool useHs,
     int rootedAtAtom, boost::dynamic_bitset<> *ignoreAtoms) {
   PRECONDITION(lowerLen <= upperLen, "");
+  PRECONDITION(!ignoreAtoms || ignoreAtoms->size() == mol.getNumAtoms(),
+               "bad ignoreAtoms size");
   boost::dynamic_bitset<> forbidden(mol.getNumBonds());
   // if there are any ignore atoms, mark any bonds involving them as forbidden
   if (ignoreAtoms) {
