@@ -30,6 +30,7 @@ set(CMAKE_MODULE_PATH
 add_library(rdkit_base INTERFACE)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
+option(RDK_BUILD_PYTHON_WRAPPERS "if this is OFF, no python wrappers will be built" ON )
 option(RDK_BUILD_BOOST_PYTHON_WRAPPERS "build the python wrappers using boost.python" OFF )
 option(RDK_BUILD_NANOBIND_WRAPPERS "build the python wrappers using nanobind" ON )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
@@ -321,6 +322,12 @@ if(RDK_BUILD_INCHI_SUPPORT)
   find_package(Inchi)
 endif(RDK_BUILD_INCHI_SUPPORT)
 
+if(NOT RDK_BUILD_PYTHON_WRAPPERS)
+ message("Disabling Python wrappers")
+ set(RDK_BUILD_BOOST_PYTHON_WRAPPERS OFF)
+ set(RDK_BUILD_NANOBIND_WRAPPERS OFF)
+endif()
+
 if(RDK_BUILD_NANOBIND_WRAPPERS)
   add_library(rdkit_py_base INTERFACE)
   if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
@@ -335,7 +342,45 @@ if(RDK_BUILD_NANOBIND_WRAPPERS)
     COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
     OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
   find_package(nanobind CONFIG REQUIRED)
-  set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
+  if(RDK_INSTALL_INTREE)
+    set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
+  else(RDK_INSTALL_INTREE)
+    if (NOT PYTHON_INSTDIR)
+      # Determine correct installation directory for Python bindings
+      execute_process(
+        COMMAND
+        ${Python_EXECUTABLE} -c "import sys; import sysconfig; \
+          base_key = 'base' if sys.platform == 'win32' else 'platbase'; \
+          schema = 'nt' if sys.platform == 'win32' else 'posix_prefix'; \
+          print(sysconfig.get_path('platlib', schema, vars={base_key: '${CMAKE_INSTALL_PREFIX}'}))"
+        OUTPUT_VARIABLE PYTHON_INSTDIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+    endif (NOT PYTHON_INSTDIR)
+    string(REGEX REPLACE "\\\\" "/" PYTHON_INSTDIR ${PYTHON_INSTDIR})
+    message("Python Install directory ${PYTHON_INSTDIR}")
+    set(RDKit_PythonDir "${PYTHON_INSTDIR}/rdkit")
+    if(RDK_INSTALL_PYTHON_TESTS)
+      install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
+        COMPONENT python
+        PATTERN ".svn" EXCLUDE
+        PATTERN "CMake*" EXCLUDE
+        PATTERN "Basement" EXCLUDE
+      )
+    else(RDK_INSTALL_PYTHON_TESTS)
+      install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
+        COMPONENT python
+        PATTERN ".svn" EXCLUDE
+        PATTERN "test_data" EXCLUDE
+        PATTERN "testData" EXCLUDE
+        PATTERN "test_list*" EXCLUDE
+        PATTERN "CMake*" EXCLUDE
+        PATTERN "Basement" EXCLUDE
+        PATTERN "UnitTest*" EXCLUDE
+      )
+    endif(RDK_INSTALL_PYTHON_TESTS)
+
+  endif(RDK_INSTALL_INTREE)
 
   # check to see if we can find nbval,
   execute_process(

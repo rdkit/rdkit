@@ -8,9 +8,12 @@ import sys
 if sys.version_info.minor >= 13:
   from warnings import deprecated
 else:
+
   def deprecated(msg):
+
     def decorator(func):
       return func
+
     return decorator
 
 
@@ -133,8 +136,10 @@ if hasattr(rdBase, '_wrapperType') and rdBase._wrapperType == 'nanobind':
     Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.MolProps
                                     | Chem.PropertyPickleOptions.PrivateProps
                                     | Chem.PropertyPickleOptions.ComputedProps | oVal)
-    d = Chem.Mol.__getstate__(self)
-    Chem.SetDefaultPickleProperties(oVal)
+    try:
+      d = Chem.Mol.__getstate__(self)
+    finally:
+      Chem.SetDefaultPickleProperties(oVal)
     return d
 
   PropertyMol.__getstate__ = __getstate__

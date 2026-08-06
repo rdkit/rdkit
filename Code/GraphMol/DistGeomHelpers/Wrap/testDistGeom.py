@@ -247,7 +247,7 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC")
     ps = _getParams(useLegacy=False, maxIt=30, seed=100, useET=False, useK=False)
     cids = rdDistGeom.EmbedMultipleConfs(mol, 10, ps)
-    energies = [ 
+    energies = [
       141.659, 123.752, 112.075, 106.244, 104.799, 148.224, 99.548, 122.873, 121.211, 157.351
     ]
     nenergies = []
@@ -282,7 +282,7 @@ class TestCase(unittest.TestCase):
     ]
 
     nconfs = []
-    expected = [3, 2, 6, 4, 3, 3] # note: this also depends on seed
+    expected = [3, 2, 6, 4, 3, 3]  # note: this also depends on seed
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       ps = _getParams(useLegacy=False, maxIt=30, seed=100, pruneRMS=1.5)
@@ -628,17 +628,15 @@ class TestCase(unittest.TestCase):
     self.assertTrue(bm2[0, 4] - bm2[4, 0] < 0.5)
 
     bm1 = rdDistGeom.GetMoleculeBoundsMatrix(mol, set15bounds=True, doTriangleSmoothing=False)
-    self.assertLess(bm1[0,5],6.0)
+    self.assertLess(bm1[0, 5], 6.0)
     bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, set15bounds=False, doTriangleSmoothing=False)
-    self.assertEqual(bm2[0,5],1000.0)
+    self.assertEqual(bm2[0, 5], 1000.0)
 
     bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, set14bounds=False, doTriangleSmoothing=False)
-    self.assertEqual(bm2[0,4],1000.0)
+    self.assertEqual(bm2[0, 4], 1000.0)
 
     bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, set13bounds=False, doTriangleSmoothing=False)
-    self.assertEqual(bm2[0,3],1000.0)
-
-
+    self.assertEqual(bm2[0, 3], 1000.0)
 
   def testGithub2057(self):
     # ensure that ETKDG is the default Embedder
@@ -913,10 +911,10 @@ class TestCase(unittest.TestCase):
     # set up our handler
     signal.signal(signal.SIGINT, handler)
     mol = Chem.AddHs(Chem.MolFromSmiles("C[C@H](O)c1ccccc1"))
-    params = AllChem.KDG()
+    params = rdDistGeom.KDG()
     params.randomSeed = 0xF00D
     # now embed, which changes the handler
-    AllChem.EmbedMolecule(mol, params)
+    rdDistGeom.EmbedMolecule(mol, params)
     time.sleep(0.2)
     # make sure our signal handler is once again active:
     self.assertEqual(signal.getsignal(signal.SIGINT), handler)
