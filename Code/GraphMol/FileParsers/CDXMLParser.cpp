@@ -25,7 +25,6 @@
 #include <sstream>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/FileParseException.h>
-#include <GraphMol/Atropisomers.h>
 
 using boost::property_tree::ptree;
 namespace RDKit {
@@ -623,11 +622,6 @@ void visit_children(
         scaleBonds(*res, *conf, RDKIT_DEPICT_BONDLENGTH, bondLength);
         auto confidx = res->addConformer(conf.release());
         DetectAtomStereoChemistry(*res, &res->getConformer(confidx));
-
-        Atropisomers::detectAtropisomerChirality(*res,
-                                                 &res->getConformer(confidx));
-      } else {  // no Conformer
-        Atropisomers::detectAtropisomerChirality(*res, nullptr);
       }
 
       // now that atom stereochem has been perceived, the wedging

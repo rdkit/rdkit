@@ -519,10 +519,24 @@ void cleanupAtropisomerStereoGroups(ROMol &mol) {
 }
 
 void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
+  detectAtropisomerChirality(mol, conf, true);
+}
+
+void detectAtropisomerChirality(ROMol &mol, const Conformer *conf,
+                                const bool replaceExistingTags) {
   PRECONDITION(conf == nullptr || &(conf->getOwningMol()) == &mol,
                "conformer does not belong to molecule");
 
   std::set<Bond *> bondsToTry;
+
+  if (replaceExistingTags && conf && conf->is3D()) {
+    for (auto bond : mol.bonds()) {
+      if (bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+          bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+        bondsToTry.insert(bond);
+      }
+    }
+  }
 
   for (auto bond : mol.bonds()) {
     if (canHaveDirection(*bond) &&
@@ -532,7 +546,21 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
         if (nbrBond == bond) {
           continue;  // a bond is NOT its own neighbor
         }
+        if (!replaceExistingTags &&
+            (nbrBond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+             nbrBond->getStereo() == Bond::BondStereo::STEREOATROPCCW)) {
+          continue;
+        }
         bondsToTry.insert(nbrBond);
+      }
+    }
+  }
+
+  if (replaceExistingTags) {
+    for (auto bond : bondsToTry) {
+      if (bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+          bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+        bond->setStereo(Bond::BondStereo::STEREONONE);
       }
     }
   }
