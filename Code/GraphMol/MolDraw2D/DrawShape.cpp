@@ -314,7 +314,7 @@ bool DrawShapePolyLine::doesRectClash(const StringRect &rect,
 }
 
 // ****************************************************************************
-DrawShapeSolidWedge::DrawShapeSolidWedge(const std::vector<Point2D> points,
+DrawShapeSolidWedge::DrawShapeSolidWedge(const std::vector<Point2D> &points,
                                          const DrawColour &col1,
                                          const DrawColour &col2,
                                          bool splitBonds,
@@ -550,7 +550,7 @@ void DrawShapeSolidWedge::orderOtherBondVecs() {
 }
 
 // ****************************************************************************
-DrawShapeDashedWedge::DrawShapeDashedWedge(const std::vector<Point2D> points,
+DrawShapeDashedWedge::DrawShapeDashedWedge(const std::vector<Point2D> &points,
                                            const DrawColour &col1,
                                            const DrawColour &col2,
                                            bool oneLessDash, double lineWidth,
@@ -679,7 +679,7 @@ bool DrawShapeDashedWedge::doesRectClash(const StringRect &rect,
 }
 
 // ****************************************************************************
-DrawShapeWavyLine::DrawShapeWavyLine(const std::vector<Point2D> points,
+DrawShapeWavyLine::DrawShapeWavyLine(const std::vector<Point2D> &points,
                                      double lineWidth, bool scaleLineWidth,
                                      const DrawColour &col1,
                                      const DrawColour &col2, double offset,
@@ -717,7 +717,7 @@ bool DrawShapeWavyLine::doesRectClash(const StringRect &rect,
 }
 
 // ****************************************************************************
-DrawShapeArc::DrawShapeArc(const std::vector<Point2D> points, double ang1,
+DrawShapeArc::DrawShapeArc(const std::vector<Point2D> &points, double ang1,
                            double ang2, double lineWidth, bool scaleLineWidth,
                            const DrawColour &col1, bool fill, int atom1)
     : DrawShape(points, lineWidth, scaleLineWidth, col1, fill, atom1),
