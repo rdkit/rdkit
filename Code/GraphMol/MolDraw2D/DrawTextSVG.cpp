@@ -21,7 +21,6 @@
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/DrawTextSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
-#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 
 namespace RDKit {
 
