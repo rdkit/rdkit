@@ -561,8 +561,6 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, high
   if len(mols) % molsPerRow:
     nRows += 1
 
-  blocks = [''] * (nRows * molsPerRow)
-
   fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
 
   d2d = rdMolDraw2D.MolDraw2DSVG(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
