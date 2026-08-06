@@ -44,10 +44,24 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   typedef std::vector<int> INT_VECT;
   typedef std::vector<INT_VECT> VECT_INT_VECT;
 
-  //! A non-owning indexed view of all ordinary atom or bond rings.
-  //! Iteration is read-only and views must not be retained across mutation.
+  //! A read-only, non-owning view of a collection of rings.
+  /*!
+    Each element is a `std::span<const int>` containing the atom or bond
+    indices for one ring. The view supports indexed access and forward
+    iteration without allocating or copying the underlying ring data.
+
+    A `RingsView` does not extend the lifetime of its backing vectors. Views,
+    iterators, and spans obtained from a view may be invalidated by an
+    operation that modifies the originating `RingInfo`, and must not outlive
+    it.
+
+    The `values` vector used to construct a view stores all ring members
+    contiguously. The `begins` vector stores the offset of each ring and a
+    final end offset, so a view containing N rings has N + 1 offsets.
+  */
   class RingsView {
    public:
+    //! A forward iterator whose value is the span for one ring.
     class const_iterator {
      public:
       using iterator_category = std::forward_iterator_tag;
@@ -57,6 +71,15 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       using reference = value_type;
 
       const_iterator() = default;
+      //! Constructs an iterator at `idx` in the supplied ring storage.
+      /*!
+        `values` and `begins` must describe the same valid ring collection and
+        must remain alive and unchanged while the iterator is used. `idx` may
+        equal the number of rings to construct the end iterator.
+      */
+      const_iterator(const std::vector<int> *values,
+                     const std::vector<uint32_t> *begins, size_t idx)
+          : dp_values(values), dp_begins(begins), d_idx(idx) {}
       reference operator*() const { return valueAt(d_idx); }
       const_iterator &operator++() {
         ++d_idx;
@@ -74,10 +97,6 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       }
 
      private:
-      friend class RingsView;
-      const_iterator(const std::vector<int> *values,
-                     const std::vector<uint32_t> *begins, size_t idx)
-          : dp_values(values), dp_begins(begins), d_idx(idx) {}
       value_type valueAt(size_t idx) const {
         const auto begin = (*dp_begins)[idx];
         const auto size = (*dp_begins)[idx + 1] - begin;
@@ -88,7 +107,14 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       size_t d_idx{0};
     };
 
+    //! Constructs an empty view with no backing storage.
     RingsView() = default;
+    //! Constructs a view over flattened ring values and their offsets.
+    /*!
+      `values` and `begins` must remain alive and unchanged while the view is
+      used. `begins` must contain a leading zero, monotonically increasing
+      offsets into `values`, and a final offset equal to `values->size()`.
+    */
     RingsView(const std::vector<int> *values,
               const std::vector<uint32_t> *begins)
         : dp_values(values), dp_begins(begins) {}
@@ -160,8 +186,8 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       - the object must be initialized before calling this
 
   */
-  unsigned int addRing(const INT_VECT &atomIndices,
-                       const INT_VECT &bondIndices);
+  unsigned int addRing(std::span<const int> atomIndices,
+                       std::span<const int> bondIndices);
   //! Adds multiple rings while building the membership index only once.
   unsigned int addRings(const VECT_INT_VECT &atomRings,
                         const VECT_INT_VECT &bondRings);
@@ -402,6 +428,9 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   void preallocate(unsigned int numAtoms, unsigned int numBonds);
 
  private:
+  void appendRingUnchecked(std::span<const int> atomIndices,
+                           std::span<const int> bondIndices);
+  unsigned int finishRingUpdates();
   void initFusedRings();
   void rebuildMemberships();
   void invalidateFusedRings();

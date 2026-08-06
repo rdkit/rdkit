@@ -45,10 +45,12 @@
 %ignore RDKit::RingInfo::bondRings;
 %ignore RDKit::RingInfo::atomMembers;
 %ignore RDKit::RingInfo::bondMembers;
+%ignore RDKit::RingInfo::addRing;
 %rename(atomRings) RDKit::RingInfo::atomRingsForWrapper;
 %rename(bondRings) RDKit::RingInfo::bondRingsForWrapper;
 %rename(atomMembers) RDKit::RingInfo::atomMembersForWrapper;
 %rename(bondMembers) RDKit::RingInfo::bondMembersForWrapper;
+%rename(addRing) RDKit::RingInfo::addRingForWrapper;
 
 %include <GraphMol/RingInfo.h>
 
@@ -81,5 +83,10 @@
   RDKit::INT_VECT bondMembersForWrapper(unsigned int idx) const {
     const auto members = $self->bondMembers(idx);
     return {members.begin(), members.end()};
+  }
+
+  unsigned int addRingForWrapper(const RDKit::INT_VECT &atomIndices,
+                                 const RDKit::INT_VECT &bondIndices) {
+    return $self->addRing(atomIndices, bondIndices);
   }
 }
