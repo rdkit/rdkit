@@ -148,9 +148,9 @@ class TestCase(unittest.TestCase):
       orgActivities = [d[-1] for d in dataSet]
       DataUtils.RandomizeActivities(dataSet, shuffle=False, runDetails=details)
       self.assertNotEqual(orgActivities, [d[-1] for d in dataSet])
-      self.assertEqual(sorted(orgActivities), sorted([d[-1] for d in dataSet]))
-      self.assertFalse(details.randomized)
-      self.assertTrue(details.shuffled)
+      self.assertNotEqual(sorted(orgActivities), sorted([d[-1] for d in dataSet]))
+      self.assertTrue(details.randomized)
+      self.assertFalse(details.shuffled)
     except NameError:
       # This code branch is not working.
       pass

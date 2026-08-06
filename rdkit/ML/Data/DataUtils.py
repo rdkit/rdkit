@@ -631,10 +631,12 @@ def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
 
       **Arguments**
 
-        - dataSet: a _ML.Data.MLQuantDataSet_, the activities here will be randomized
+        - dataSet: a _ML.Data.MLQuantDataSet_, the activities here will be
+          randomized
 
-        - shuffle: an optional toggle. If this is set, the activity values
-          will be shuffled (so the number in each class remains constant)
+        - shuffle: an optional toggle. If this is set, the activity values will
+          be shuffled (so the number in each class remains constant). Otherwise
+          random values between the min and max of the dataset will be assigned
 
         - runDetails: an optional CompositeRun object
 
@@ -655,8 +657,9 @@ def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
   else:  # This part of the code isn't working as examples is not defined
     if runDetails:
       runDetails.randomized = 1
-    nPossible = dataSet.GetNPossibleVals()[-1]
-    acts = [random.randrange(nPossible) for _ in len(examples)]
+    acts = dataSet.GetResults()[:]
+    rng = max(acts) - min(acts)
+    acts = [min(acts) + random.random() * rng for _ in range(nPts)]
   for i in range(nPts):
     tmp = dataSet[i]
     tmp[-1] = acts[i]
