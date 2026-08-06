@@ -42,9 +42,10 @@ std::string _recurseBondSmarts(const Bond *bond,
                                unsigned int &features,
                                const SmilesWriteParams &params);
 
-std::string _combineChildSmarts(std::string cs1, unsigned int features1,
-                                std::string cs2, unsigned int features2,
-                                std::string descrip, unsigned int &features) {
+std::string _combineChildSmarts(const std::string &cs1, unsigned int features1,
+                                const std::string &cs2, unsigned int features2,
+                                const std::string &descrip,
+                                unsigned int &features) {
   std::string res = "";
   if ((descrip.find("Or") > 0) && (descrip.find("Or") < descrip.length())) {
     // if either of child smarts already have a "," and ";" we can't have one
