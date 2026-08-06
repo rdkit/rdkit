@@ -24,7 +24,6 @@
 #include <DataStructs/BitOps.h>
 #include <functional>
 
-#include <functional>
 #include <limits>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
