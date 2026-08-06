@@ -466,6 +466,24 @@ std::unique_ptr<RWMol> ShapeInput::shapeToMol(const bool includeColors,
     v2::SmilesParse::SmilesParserParams params;
     params.sanitize = false;
     mol = v2::SmilesParse::MolFromSmiles(d_smiles, params);
+    // construction of the shape removes all Hs except isotopes.
+    // do that from the molecule too.
+    // This was #9441
+    MolOps::RemoveHsParameters rhps{.removeDegreeZero = true,
+                                    .removeHigherDegrees = true,
+                                    .removeOnlyHNeighbors = true,
+                                    .removeIsotopes = false,
+                                    .removeDummyNeighbors = true,
+                                    .removeDefiningBondStereo = true,
+                                    .removeWithWedgedBond = true,
+                                    .removeWithQuery = true,
+                                    .removeInSGroups = true,
+                                    .showWarnings = false,
+                                    .removeNonimplicit = true,
+                                    .removeHydrides = true,
+                                    .removeNontetrahedralNeighbors = true};
+    bool sanitize = false;
+    MolOps::removeHs(*mol, rhps, sanitize);
   } else {
     mol.reset(new RWMol());
     for (unsigned int i = 0; i < getNumAtoms(); i++) {

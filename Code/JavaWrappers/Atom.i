@@ -70,6 +70,8 @@ std::string describeQueryHelper(const RDKit::Atom::QUERYATOM_QUERY *q, unsigned 
 
 %ignore RDKit::Atom::Match(const Atom *) const;
 %ignore RDKit::Atom::expandQuery;
+%ignore RDKit::Atom::getMacroAtomInfo;
+%ignore RDKit::Atom::setMacroAtomInfo;
 %template(Bond_Vect) std::vector<RDKit::Bond*>;
 
 %include "enums.swg"

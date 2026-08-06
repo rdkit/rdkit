@@ -539,18 +539,12 @@ def _AssignSymmetryClasses(mol, vdList, bdMat, forceBDMat, numAtoms, cutoff):
     bdMat = Chem.GetDistanceMatrix(mol, useBO=True, useAtomWts=False, force=True, prefix="Balaban")
     mol._balabanMat = bdMat
 
-  keysSeen = []
+  sortedRows = numpy.sort(bdMat, axis=1)[:numAtoms, :cutoff]
+  rowFmt = '%.4f,' * sortedRows.shape[1]
+  keysSeen = {}
   symList = [0] * numAtoms
-  for i in range(numAtoms):
-    tmpList = bdMat[i].tolist()
-    tmpList.sort()
-    theKey = tuple(['%.4f' % x for x in tmpList[:cutoff]])
-    try:
-      idx = keysSeen.index(theKey)
-    except ValueError:
-      idx = len(keysSeen)
-      keysSeen.append(theKey)
-    symList[i] = idx + 1
+  for i, row in enumerate(sortedRows.tolist()):
+    symList[i] = keysSeen.setdefault(rowFmt % tuple(row), len(keysSeen)) + 1
   return tuple(symList)
 
 
@@ -658,17 +652,14 @@ def BertzCT(mol, cutoff=100, dMat=None, forceDMat=1):
   atomTypeDict = {}
   connectionDict = {}
   numAtoms = mol.GetNumAtoms()
-  if forceDMat or dMat is None:
-    if forceDMat:
-      # nope, gotta calculate one
+  # dMat is only used when forceDMat is unset; otherwise _AssignSymmetryClasses()
+  # calculates its own Balaban matrix
+  if not forceDMat and dMat is None:
+    try:
+      dMat = mol._adjMat
+    except AttributeError:
       dMat = Chem.GetDistanceMatrix(mol, useBO=False, useAtomWts=False, force=True)
       mol._adjMat = dMat
-    else:
-      try:
-        dMat = mol._adjMat
-      except AttributeError:
-        dMat = Chem.GetDistanceMatrix(mol, useBO=False, useAtomWts=False, force=True)
-        mol._adjMat = dMat
 
   if numAtoms < 2:
     return 0

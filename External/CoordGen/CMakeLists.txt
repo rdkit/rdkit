@@ -32,11 +32,13 @@ if(RDK_BUILD_MAEPARSER_SUPPORT OR RDK_BUILD_COORDGEN_SUPPORT)
         CACHE STRING "MaeParser Include Dir" FORCE)
     file(GLOB MAESOURCES "${MAEPARSER_DIR}/*.cpp")
 
-     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-copy")
-     endif()
-
     rdkit_library(maeparser ${MAESOURCES} SHARED)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      target_compile_options(maeparser PRIVATE -Wno-deprecated-copy)
+      if(RDK_INSTALL_STATIC_LIBS AND NOT RDK_BUILD_STATIC_LIBS_ONLY)
+        target_compile_options(maeparser_static PRIVATE -Wno-deprecated-copy)
+      endif()
+    endif()
     install(TARGETS maeparser DESTINATION ${RDKit_LibDir})
     set(maeparser_LIBRARIES maeparser)
 

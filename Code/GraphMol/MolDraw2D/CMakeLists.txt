@@ -35,6 +35,7 @@ rdkit_headers(MolDraw2D.h
         MolDraw2DJS.h
         MolDraw2DUtils.h
         MolDraw2DHelpers.h
+        MolDraw2DSGroupData.h
         DEST GraphMol/MolDraw2D
 )
 

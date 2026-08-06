@@ -1754,7 +1754,6 @@ TEST_CASE("Custom Scoring Functions") {
                 *mol, terms) == 1000);
   }
 }
-
 TEST_CASE("tautomer canonicalize preserves conformers") {
   // Regression test: quickCopy during tautomer enumeration drops
   // conformers.  canonicalize() must restore them from the original
@@ -1834,3 +1833,51 @@ M  END
   }
 }
 
+TEST_CASE("tautomer canonicalize clears invalid bond stereo after bond-order changes") {
+  std::string molblock = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 66.546902 -10.607295 0.000000 0
+M  V30 2 C 67.407319 -9.379170 0.000000 0
+M  V30 3 N 68.901071 -9.509378 0.000000 0
+M  V30 4 C 69.532321 -10.864587 0.000000 0
+M  V30 5 O 68.675029 -12.088546 0.000000 0
+M  V30 6 C 71.021905 -10.994795 0.000000 0
+M  V30 7 C 67.180236 -11.966671 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 4 5
+M  V30 2 1 4 6 CFG=1
+M  V30 3 1 3 4
+M  V30 4 2 2 1
+M  V30 5 1 1 7
+M  V30 6 1 3 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+  std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+  REQUIRE(mol);
+
+  MolStandardize::CleanupParameters params;
+  params.tautomerRemoveBondStereo = false;
+  MolStandardize::TautomerEnumerator te(params);
+
+  std::unique_ptr<ROMol> canon;
+  REQUIRE_NOTHROW(canon.reset(te.canonicalize(*mol)));
+  REQUIRE(canon);
+  CHECK(MolToSmiles(*canon) == "CCC=NC(C)=O");
+  for (const auto bond : canon->bonds()) {
+    if (bond->getBondType() != Bond::DOUBLE) {
+      continue;
+    }
+    CHECK(bond->getStereo() < Bond::STEREOATROPCW);
+    if (bond->getStereo() > Bond::STEREOANY) {
+      CHECK(bond->getStereoAtoms().size() == 2);
+    }
+  }
+}

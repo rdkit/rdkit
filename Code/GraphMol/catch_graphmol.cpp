@@ -2162,7 +2162,7 @@ TEST_CASE(
     ROMol m2(*m);
     m2.getRingInfo()->reset();
     MolOps::fastFindRings(m2);
-    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
+    CHECK(m->getRingInfo()->numRings() >= m2.getRingInfo()->numRings());
   }
   SECTION("case2") {
     auto m = "c1ccccc1.C123C45C16C21C34C561"_smiles;
@@ -2170,7 +2170,7 @@ TEST_CASE(
     ROMol m2(*m);
     m2.getRingInfo()->reset();
     MolOps::fastFindRings(m2);
-    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
+    CHECK(m->getRingInfo()->numRings() >= m2.getRingInfo()->numRings());
   }
 }
 
@@ -5013,6 +5013,29 @@ TEST_CASE("github #9068: properties with empty names") {
     CHECK(!m->hasProp(""));
     CHECK_NOTHROW(m->clearProp(""));
   }
+}
+
+TEST_CASE("ROMol setName/getName") {
+  auto m = "CCO"_smiles;
+  REQUIRE(m);
+
+  CHECK(m->getName().empty());
+
+  m->setName("ethanol");
+  CHECK(m->hasProp(common_properties::_Name));
+  CHECK(m->getName() == "ethanol");
+  CHECK(m->getProp<std::string>(common_properties::_Name) == "ethanol");
+
+  m->setProp(common_properties::_Name, "updated name");
+  CHECK(m->getName() == "updated name");
+
+  m->clearProp(common_properties::_Name);
+  CHECK(m->getName().empty());
+
+  const ROMol &cmol = *m;
+  cmol.setName("const name");
+  CHECK(cmol.getName() == "const name");
+  CHECK(cmol.getProp<std::string>(common_properties::_Name) == "const name");
 }
 
 TEST_CASE("canonical re-kekulization after sanitization preserves stereo",

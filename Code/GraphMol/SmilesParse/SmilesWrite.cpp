@@ -544,7 +544,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     // update property cache
     std::vector<int> atomMapNums(tmol->getNumAtoms(), 0);
     for (auto atom : tmol->atoms()) {
-      if (params.ignoreAtomMapNumbers) {
+      if (params.canonical && params.ignoreAtomMapNumbers) {
         atomMapNums[atom->getIdx()] = atom->getAtomMapNum();
         atom->setAtomMapNum(0);
       }
@@ -639,7 +639,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
                           includeIsotopes, includeAtomMaps,
                           includeChiralPresence, includeStereoGroups,
                           useNonStereoRanks);
-      if (params.ignoreAtomMapNumbers) {
+      if (params.canonical && params.ignoreAtomMapNumbers) {
         for (auto atom : tmol->atoms()) {
           atom->setAtomMapNum(atomMapNums[atom->getIdx()]);
         }
@@ -938,8 +938,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
   std::vector<unsigned int> atomOrdering;
   std::vector<unsigned int> bondOrdering;
 
-  // clean up the chirality on any atom that is marked as chiral,
-  // but that should not be:
+  // check stereochemistry:
   if (params.doIsomericSmiles) {
     if (!mol.hasProp(common_properties::_StereochemDone)) {
       MolOps::assignStereochemistry(tmol, true);
@@ -952,6 +951,59 @@ std::string MolFragmentToSmiles(const ROMol &mol,
         if (oAt->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
           tmol.getAtomWithIdx(aidx)->setProp(common_properties::_CIPCode,
                                              cipCode);
+        }
+      }
+    }
+    // check for double bonds where the atoms defining stereo are not included
+    for (auto bnd : tmol.bonds()) {
+      if (bondsInPlay[bnd->getIdx()] && bnd->getBondType() == Bond::DOUBLE &&
+          bnd->getStereo() != Bond::BondStereo::STEREONONE) {
+        const auto &stereoAtoms = bnd->getStereoAtoms();
+        if (stereoAtoms.size() != 2) {
+          continue;
+        }
+        // check at both ends of the bond to see if the stereo atom is in play.
+        // If not and there's another neighbor atom there that *is* in play,
+        // then keep the stereochemistry and swap the stereo atoms. If not,
+        // remove the stereochemistry.
+        const std::vector<std::pair<int, const Atom *>>
+            stereoAtomsAndBondAtoms = {
+                std::make_pair(stereoAtoms[0], bnd->getBeginAtom()),
+                std::make_pair(stereoAtoms[1], bnd->getEndAtom())};
+        for (auto [stereoAtomIdx, bondAtom] : stereoAtomsAndBondAtoms) {
+          if (!atomsInPlay[stereoAtomIdx]) {
+            if (bondAtom->getDegree() > 2) {
+              bool updated = false;
+              for (auto nbrAt : tmol.atomNeighbors(bondAtom)) {
+                if (nbrAt->getIdx() !=
+                        static_cast<unsigned int>(stereoAtomIdx) &&
+                    atomsInPlay[nbrAt->getIdx()]) {
+                  if (stereoAtomIdx == stereoAtoms[0]) {
+                    bnd->setStereoAtoms(nbrAt->getIdx(), stereoAtoms[1]);
+                  } else {
+                    bnd->setStereoAtoms(stereoAtoms[0], nbrAt->getIdx());
+                  }
+                  updated = true;
+                  if (bnd->getStereo() == Bond::BondStereo::STEREOZ ||
+                      bnd->getStereo() == Bond::BondStereo::STEREOCIS) {
+                    bnd->setStereo(Bond::BondStereo::STEREOTRANS);
+                  } else if (bnd->getStereo() == Bond::BondStereo::STEREOE ||
+                             bnd->getStereo() ==
+                                 Bond::BondStereo::STEREOTRANS) {
+                    bnd->setStereo(Bond::BondStereo::STEREOCIS);
+                  }
+                  break;
+                }
+              }
+              if (!updated) {
+                bnd->setStereo(Bond::BondStereo::STEREONONE);
+                break;
+              }
+            } else {
+              bnd->setStereo(Bond::BondStereo::STEREONONE);
+              break;
+            }
+          }
         }
       }
     }

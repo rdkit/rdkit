@@ -318,29 +318,35 @@ void fragmentOnSomeBonds(
                "bad dummyLabel vector");
   PRECONDITION((!bondTypes || bondTypes->size() == bondIndices.size()),
                "bad bondType vector");
+  if (std::unordered_set<unsigned int>(bondIndices.begin(), bondIndices.end())
+          .size() < bondIndices.size()) {
+    throw ValueErrorException("bondIndices contains duplicates");
+  }
   if (bondIndices.size() > 63) {
     throw ValueErrorException("currently can only fragment on up to 63 bonds");
   }
-  if (!maxToCut || !mol.getNumAtoms() || !bondIndices.size()) {
+  if (!maxToCut || maxToCut > bondIndices.size() || !mol.getNumAtoms() ||
+      bondIndices.empty()) {
     return;
   }
 
-  std::uint64_t state = (0x1L << maxToCut) - 1;
-  std::uint64_t stop = 0x1L << bondIndices.size();
+  std::uint64_t state = (std::uint64_t{1} << maxToCut) - 1;
+  std::uint64_t stop = std::uint64_t{1} << bondIndices.size();
   std::vector<unsigned int> fragmentHere(maxToCut);
-  std::vector<std::pair<unsigned int, unsigned int>> *dummyLabelsHere = nullptr;
+  std::unique_ptr<std::vector<std::pair<unsigned int, unsigned int>>>
+      dummyLabelsHere;
   if (dummyLabels) {
-    dummyLabelsHere =
-        new std::vector<std::pair<unsigned int, unsigned int>>(maxToCut);
+    dummyLabelsHere.reset(
+        new std::vector<std::pair<unsigned int, unsigned int>>(maxToCut));
   }
-  std::vector<Bond::BondType> *bondTypesHere = nullptr;
+  std::unique_ptr<std::vector<Bond::BondType>> bondTypesHere;
   if (bondTypes) {
-    bondTypesHere = new std::vector<Bond::BondType>(maxToCut);
+    bondTypesHere.reset(new std::vector<Bond::BondType>(maxToCut));
   }
   while (state < stop) {
     unsigned int nSeen = 0;
     for (unsigned int i = 0; i < bondIndices.size() && nSeen < maxToCut; ++i) {
-      if (state & (0x1L << i)) {
+      if (state & (std::uint64_t{1} << i)) {
         fragmentHere[nSeen] = bondIndices[i];
         if (dummyLabelsHere) {
           (*dummyLabelsHere)[nSeen] = (*dummyLabels)[i];
@@ -356,14 +362,12 @@ void fragmentOnSomeBonds(
       nCutsPerAtom->push_back(std::vector<unsigned int>(mol.getNumAtoms()));
       lCutsPerAtom = &(nCutsPerAtom->back());
     }
-    ROMol *nm = fragmentOnBonds(mol, fragmentHere, addDummies, dummyLabelsHere,
-                                bondTypesHere, lCutsPerAtom);
-    resMols.emplace_back(nm);
+    resMols.emplace_back(fragmentOnBonds(mol, fragmentHere, addDummies,
+                                         dummyLabelsHere.get(),
+                                         bondTypesHere.get(), lCutsPerAtom));
 
     state = nextBitCombo(state);
   }
-  delete dummyLabelsHere;
-  delete bondTypesHere;
 }
 
 namespace {
@@ -437,14 +441,18 @@ ROMol *fragmentOnBonds(
                "bad bondType vector");
   PRECONDITION((!nCutsPerAtom || nCutsPerAtom->size() == mol.getNumAtoms()),
                "bad nCutsPerAtom vector");
+  if (std::unordered_set<unsigned int>(bondIndices.begin(), bondIndices.end())
+          .size() < bondIndices.size()) {
+    throw ValueErrorException("bondIndices contains duplicates");
+  }
   if (nCutsPerAtom) {
     for (auto &nCuts : *nCutsPerAtom) {
       nCuts = 0;
     }
   }
-  auto *res = new RWMol(mol);
-  if (!mol.getNumAtoms()) {
-    return res;
+  std::unique_ptr<RWMol> res(new RWMol(mol));
+  if (!mol.getNumAtoms() || bondIndices.empty()) {
+    return res.release();
   }
 
   std::vector<Bond *> bondsToRemove;
@@ -452,6 +460,7 @@ ROMol *fragmentOnBonds(
   for (auto bondIdx : bondIndices) {
     bondsToRemove.push_back(res->getBondWithIdx(bondIdx));
   }
+  res->beginBatchEdit();
   for (unsigned int i = 0; i < bondsToRemove.size(); ++i) {
     const Bond *bond = bondsToRemove[i];
     unsigned int bidx = bond->getBeginAtomIdx();
@@ -472,9 +481,8 @@ ROMol *fragmentOnBonds(
       (*nCutsPerAtom)[eidx] += 1;
     }
     if (addDummies) {
-      Atom *at1, *at2;
-      at1 = new Atom(0);
-      at2 = new Atom(0);
+      std::unique_ptr<Atom> at1(new Atom(0));
+      std::unique_ptr<Atom> at2(new Atom(0));
       if (dummyLabels) {
         at1->setIsotope((*dummyLabels)[i].first);
         at2->setIsotope((*dummyLabels)[i].second);
@@ -482,11 +490,11 @@ ROMol *fragmentOnBonds(
         at1->setIsotope(bidx);
         at2->setIsotope(eidx);
       }
-      unsigned int idx1 = res->addAtom(at1, false, true);
+      unsigned int idx1 = res->addAtom(at1.release(), false, true);
       if (bondTypes) {
         bT = (*bondTypes)[i];
       }
-      bondidx = res->addBond(at1->getIdx(), eidx, bT) - 1;
+      bondidx = res->addBond(idx1, eidx, bT) - 1;
       // the dummy replaces the original start atom, so the
       // direction will be ok as long as it's one of the
       // states associated with double bond stereo
@@ -500,8 +508,8 @@ ROMol *fragmentOnBonds(
         res->replaceBond(bondidx, qb.get());
       }
 
-      unsigned int idx2 = res->addAtom(at2, false, true);
-      bondidx = res->addBond(bidx, at2->getIdx(), bT) - 1;
+      unsigned int idx2 = res->addAtom(at2.release(), false, true);
+      bondidx = res->addBond(bidx, idx2, bT) - 1;
       // this bond starts at the same atom, so its direction should always be
       // correct:
       res->getBondWithIdx(bondidx)->setBondDir(bD);
@@ -560,8 +568,9 @@ ROMol *fragmentOnBonds(
       }
     }
   }
+  res->commitBatchEdit();
   res->clearComputedProps();
-  return static_cast<ROMol *>(res);
+  return static_cast<ROMol *>(res.release());
 }
 
 ROMol *fragmentOnBonds(const ROMol &mol,

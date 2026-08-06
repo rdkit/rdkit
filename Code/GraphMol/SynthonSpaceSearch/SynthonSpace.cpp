@@ -109,7 +109,7 @@ SearchResults SynthonSpace::substructureSearch(
     const ROMol &query, const SubstructMatchParameters &matchParams,
     const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
-  ControlCHandler::reset();
+  ControlCHandler hdlr;
   SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, *this);
   return ssss.search();
 }
@@ -119,7 +119,7 @@ void SynthonSpace::substructureSearch(
     const SubstructMatchParameters &matchParams,
     const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
-  ControlCHandler::reset();
+  ControlCHandler hdlr;
   SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, *this);
   ssss.search(cb);
 }
@@ -165,7 +165,7 @@ SearchResults SynthonSpace::substructureSearch(
 SearchResults SynthonSpace::fingerprintSearch(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
     const SynthonSpaceSearchParams &params) {
-  ControlCHandler::reset();
+  ControlCHandler hdlr;
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, *this);
   return ssss.search();
@@ -174,7 +174,7 @@ SearchResults SynthonSpace::fingerprintSearch(
 void SynthonSpace::fingerprintSearch(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
     const SearchResultCallback &cb, const SynthonSpaceSearchParams &params) {
-  ControlCHandler::reset();
+  ControlCHandler hdlr;
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, *this);
   ssss.search(cb);
@@ -318,10 +318,10 @@ void SynthonSpace::readStream(std::istream &is, bool &cancelled) {
   int format = -1;
   std::string nextLine;
   int lineNum = 1;
-  ControlCHandler::reset();
+  ControlCHandler hdlr;
 
   while (!is.eof()) {
-    if (ControlCHandler::getGotSignal()) {
+    if (hdlr.getGotSignal()) {
       cancelled = true;
       return;
     }

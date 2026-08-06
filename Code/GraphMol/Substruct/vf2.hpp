@@ -19,7 +19,7 @@
 
 #ifndef __BGL_VF2_SUB_STATE_H__
 #define __BGL_VF2_SUB_STATE_H__
-//#define RDK_VF2_PRUNING
+// #define RDK_VF2_PRUNING
 #define RDK_ADJ_ITER typename Graph::adjacency_iterator
 
 namespace boost {
@@ -641,7 +641,7 @@ bool vf2(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
   int n = 0;
 
   F.clear();
-  RDKit::ControlCHandler::reset();
+  RDKit::ControlCHandler hdlr;
   if (match(&n, ni1, ni2, s0)) {
     auto sz = num_vertices(g1);
     F.reserve(sz);
@@ -650,7 +650,7 @@ bool vf2(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
     }
   }
 
-  if (RDKit::ControlCHandler::getGotSignal()) {
+  if (hdlr.getGotSignal()) {
     BOOST_LOG(rdWarningLog)
         << "Substructure search was interrupted, result may not include all matches"
         << std::endl;
@@ -680,11 +680,11 @@ bool vf2_all(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
 
   F.clear();
 
-  RDKit::ControlCHandler::reset();
+  RDKit::ControlCHandler hdlr;
 
   match(ni1.get(), ni2.get(), s0, F, max_results);
 
-  if (RDKit::ControlCHandler::getGotSignal()) {
+  if (hdlr.getGotSignal()) {
     BOOST_LOG(rdWarningLog)
         << "Substructure search was interrupted, result may not include all matches"
         << std::endl;

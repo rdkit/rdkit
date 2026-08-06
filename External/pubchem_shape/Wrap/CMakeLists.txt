@@ -9,5 +9,5 @@ rdkit_python_extension(rdShapeAlign
                        DEST Chem
                        LINK_LIBRARIES
                        PubChemShape )
-add_pytest(pyShapeAlign
+add_pytest(pyPubChemShapeAlign
          ${CMAKE_CURRENT_SOURCE_DIR}/test_rdshapealign.py)

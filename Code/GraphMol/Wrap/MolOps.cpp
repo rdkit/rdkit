@@ -497,9 +497,12 @@ void cleanupAtropisomersMol(ROMol &mol) {
 }
 
 VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds,
-                          bool includeHydrogenBonds) {
+                          bool includeHydrogenBonds,
+                          MolOps::SymmetrizeSSSRAlgorithm algorithm,
+                          bool recalcSSSR) {
   VECT_INT_VECT rings;
-  MolOps::symmetrizeSSSR(mol, rings, includeDativeBonds, includeHydrogenBonds);
+  MolOps::symmetrizeSSSR(mol, rings, algorithm, recalcSSSR, includeDativeBonds,
+                         includeHydrogenBonds);
   return rings;
 }
 PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
@@ -1269,7 +1272,18 @@ struct molops_wrapper {
                  python::arg("includeHydrogenBonds") = false),
                 docString.c_str());
 
-    // ------------------------------------------------------------------------
+    python::enum_<MolOps::SymmetrizeSSSRAlgorithm>("SymmetrizeSSSRAlgorithm")
+        .value("DEFAULT", MolOps::SymmetrizeSSSRAlgorithm::DEFAULT)
+        .value("LEGACY", MolOps::SymmetrizeSSSRAlgorithm::LEGACY)
+        .value("RDL", MolOps::SymmetrizeSSSRAlgorithm::RDL);
+
+    python::def(
+        "SetUseLegacyRingFinding", MolOps::setUseLegacyRingFinding,
+        python::args("val"),
+        "sets usage of the legacy symmetric SSSR code during sanitization");
+    python::def("GetUseLegacyRingFinding", MolOps::getUseLegacyRingFinding,
+                "returns whether or not the legacy symmetric SSSR code is "
+                "being used during sanitization");
     docString =
         "Get a symmetrized SSSR for a molecule.\n\
 \n\
@@ -1282,13 +1296,18 @@ struct molops_wrapper {
     - mol: the molecule to use.\n\
     - includeDativeBonds: whether or not dative bonds should be included in the ring finding.\n\
     - includeHydrogenBonds: whether or not hydrogen bonds should be included in the ring finding.\n\
+    - algorithm: the algorithm to use for symmetrizing the SSSR.\n\
+    - recalcSSSR: whether or not to recalculate the SSSR before symmetrizing it.\n\
 \n\
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
 \n";
-    python::def("GetSymmSSSR", getSymmSSSR,
-                (python::arg("mol"), python::arg("includeDativeBonds") = false,
-                 python::arg("includeHydrogenBonds") = false),
-                docString.c_str());
+    python::def(
+        "GetSymmSSSR", getSymmSSSR,
+        (python::arg("mol"), python::arg("includeDativeBonds") = false,
+         python::arg("includeHydrogenBonds") = false,
+         python::arg("algorithm") = MolOps::SymmetrizeSSSRAlgorithm::DEFAULT,
+         python::arg("recalcSSSR") = true),
+        docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =

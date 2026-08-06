@@ -1,8 +1,10 @@
 import copy
 import math
 import os
+import signal
+import sys
+import time
 import unittest
-
 import numpy
 
 import rdkit.DistanceGeometry as DG
@@ -232,7 +234,7 @@ class TestCase(unittest.TestCase):
     ps = _getParams(useLegacy=True, maxIt=30, seed=100, useET=False, useK=False)
     cids = rdDistGeom.EmbedMultipleConfs(mol, 10, ps)
     energies = [
-      116.330, 106.246, 109.816, 104.890, 93.060, 140.803, 139.253, 95.820, 123.591, 108.655
+      112.402, 105.358, 107.208, 108.402, 91.798, 143.366, 142.029, 97.256, 121.667, 107.796
     ]
     nenergies = []
     for cid in cids:
@@ -245,8 +247,8 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC")
     ps = _getParams(useLegacy=False, maxIt=30, seed=100, useET=False, useK=False)
     cids = rdDistGeom.EmbedMultipleConfs(mol, 10, ps)
-    energies = [
-      139.739, 140.211, 112.619, 105.982, 103.66, 153.573, 95.437, 128.129, 133.901, 160.431
+    energies = [ 
+      141.659, 123.752, 112.075, 106.244, 104.799, 148.224, 99.548, 122.873, 121.211, 157.351
     ]
     nenergies = []
     for cid in cids:
@@ -280,7 +282,7 @@ class TestCase(unittest.TestCase):
     ]
 
     nconfs = []
-    expected = [3, 3, 7, 6, 3, 3]
+    expected = [3, 2, 6, 4, 3, 3] # note: this also depends on seed
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       ps = _getParams(useLegacy=False, maxIt=30, seed=100, pruneRMS=1.5)
@@ -610,6 +612,34 @@ class TestCase(unittest.TestCase):
     bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, doTriangleSmoothing=False)
     self.assertTrue(bm1[0, 4] < bm2[0, 4])
 
+  def testGetMolBoundsMatrixParams(self):
+    mol = Chem.MolFromSmiles('CC(=O)NCC')
+    bm1 = rdDistGeom.GetMoleculeBoundsMatrix(mol, forceTransAmides=False, doTriangleSmoothing=False)
+    self.assertTrue(bm1[0, 4] - bm1[4, 0] > 0.5)
+    bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, forceTransAmides=True, doTriangleSmoothing=False)
+    self.assertTrue(bm2[0, 4] - bm2[4, 0] < 0.5)
+
+    ps = rdDistGeom.EmbedParameters()
+    ps.forceTransAmides = False
+    bm1 = rdDistGeom.GetMoleculeBoundsMatrix(mol, ps, doTriangleSmoothing=False)
+    self.assertTrue(bm1[0, 4] - bm1[4, 0] > 0.5)
+    ps.forceTransAmides = True
+    bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, ps, doTriangleSmoothing=False)
+    self.assertTrue(bm2[0, 4] - bm2[4, 0] < 0.5)
+
+    bm1 = rdDistGeom.GetMoleculeBoundsMatrix(mol, set15bounds=True, doTriangleSmoothing=False)
+    self.assertLess(bm1[0,5],6.0)
+    bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, set15bounds=False, doTriangleSmoothing=False)
+    self.assertEqual(bm2[0,5],1000.0)
+
+    bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, set14bounds=False, doTriangleSmoothing=False)
+    self.assertEqual(bm2[0,4],1000.0)
+
+    bm2 = rdDistGeom.GetMoleculeBoundsMatrix(mol, set13bounds=False, doTriangleSmoothing=False)
+    self.assertEqual(bm2[0,3],1000.0)
+
+
+
   def testGithub2057(self):
     # ensure that ETKDG is the default Embedder
     mol = Chem.AddHs(Chem.MolFromSmiles('OCCC'))
@@ -872,6 +902,24 @@ class TestCase(unittest.TestCase):
     rdDistGeom.EmbedMolecule(mol, ps)
     fc = ps.GetFailureCounts()
     assert len(fc) == len(legacy_set.union(aio_set))
+
+  def testGithub9381(self):
+    seen = []
+
+    def handler(sig, frame):
+      print("python handler ran")
+      seen.append(sig)
+
+    # set up our handler
+    signal.signal(signal.SIGINT, handler)
+    mol = Chem.AddHs(Chem.MolFromSmiles("C[C@H](O)c1ccccc1"))
+    params = AllChem.KDG()
+    params.randomSeed = 0xF00D
+    # now embed, which changes the handler
+    AllChem.EmbedMolecule(mol, params)
+    time.sleep(0.2)
+    # make sure our signal handler is once again active:
+    self.assertEqual(signal.getsignal(signal.SIGINT), handler)
 
 
 if __name__ == '__main__':

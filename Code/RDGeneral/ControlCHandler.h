@@ -15,8 +15,6 @@
 #include <csignal>
 #include <stdexcept>
 
-#include <RDGeneral/export.h>
-
 namespace RDKit {
 
 class ControlCCaught : public std::runtime_error {

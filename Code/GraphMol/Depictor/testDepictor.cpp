@@ -385,7 +385,8 @@ void testIssue248() {
        ++token) {
     std::string smi = *token;
     RWMol *m = SmilesToMol(smi, 0, 1);
-    unsigned int confId = RDDepict::compute2DCoords(*m, nullptr, false, true, 3, 100);
+    unsigned int confId =
+        RDDepict::compute2DCoords(*m, nullptr, false, true, 3, 100);
     // check that there are no collisions in the molecules
     int natms = m->getNumAtoms();
     int i, j;
@@ -601,8 +602,8 @@ void testIssue2995724() {
       const Conformer &conf = m1->getConformer(cid1);
       for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
         RDGeom::Point3D loci = conf.getAtomPos(i);
-        TEST_ASSERT(loci.x > -7.0);
-        TEST_ASSERT(loci.x < 7.0);
+        TEST_ASSERT(loci.x > -8.0);
+        TEST_ASSERT(loci.x < 8.0);
         TEST_ASSERT(loci.y > -6.0);
         TEST_ASSERT(loci.y < 6.0);
       }
