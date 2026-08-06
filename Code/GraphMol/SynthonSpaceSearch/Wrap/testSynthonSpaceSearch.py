@@ -31,6 +31,7 @@
 
 # These tests are just to check that the Python wrappers are working
 # ok.  The bulk of the tests are in the C++ code.
+import multiprocessing
 import os
 import tempfile
 import time
@@ -43,6 +44,14 @@ from rdkit.Chem import (rdSynthonSpaceSearch, rdFingerprintGenerator,
                         rdRascalMCES, rdGeneralizedSubstruct, rdMolDescriptors,
                         rdDistGeom, rdGaussianShape)
 
+def createShapeDatabaseForTest(spaceFile, restartFile):
+  space = rdSynthonSpaceSearch.SynthonSpace()
+  space.ReadTextFile(spaceFile)
+  buildParams = rdSynthonSpaceSearch.ShapeBuildParams()
+  buildParams.interimFile = restartFile
+  buildParams.interimWrites = 3
+  space.BuildSynthonShapes(buildParams)
+  
 
 class TestCase(unittest.TestCase):
 
@@ -409,6 +418,37 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(hits.GetHitMolecules()), 3)
     phf.unlink()
 
+  def testShapeInterimFile(self):
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+      restartFile = tmp.name
+    os.unlink(restartFile)
+    textFile = self.sssDir / "amide_space.txt"
+    print(f"Restart : {restartFile}  from {textFile}")
+
+    p = multiprocessing.Process(target=createShapeDatabaseForTest,
+                                args=(textFile, restartFile))
+    p.start()
+    while True:
+      time.sleep(0.1)
+      if Path(restartFile).exists():
+        break
+
+    p.terminate()
+    p.join()
+    
+    # We now have a partial restart file, finish building the
+    # shapes.
+    space = rdSynthonSpaceSearch.SynthonSpace()
+    space.ReadDBFile(restartFile)
+    numWithShapes = space.GetNumSynthonsWithShapes()
+    self.assertEqual(numWithShapes, 3)
+    print(f"Restart num shapes : {numWithShapes}")
+    buildParams = rdSynthonSpaceSearch.ShapeBuildParams()
+    space.BuildSynthonShapes(buildParams)
+    numWithShapes = space.GetNumSynthonsWithShapes()
+    print(f"Final num shapes : {numWithShapes}")
+    self.assertEqual(numWithShapes, 7)
+    
 
 if __name__ == "__main__":
   unittest.main()

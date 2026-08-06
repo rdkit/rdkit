@@ -968,16 +968,13 @@ void SynthonSpace::buildSynthonShapes(bool &cancelled,
 }
 
 std::uint64_t SynthonSpace::getNumSynthonsWithShapes() const {
-  size_t numShapes = 0;
-  size_t totShapes = 0;
+  size_t numWithShapes = 0;
   for (const auto &[smiles, synthon] : d_synthonPool) {
     if (synthon->getShapes()) {
-      numShapes++;
-      totShapes += synthon->getShapes()->getShapes().getNumShapes();
+      numWithShapes++;
     }
   }
-  std::cout << "Total number of shapes : " << totShapes << std::endl;
-  return numShapes;
+  return numWithShapes;
 }
 
 void SynthonSpace::reportSynthonUsage(std::ostream &os) const {

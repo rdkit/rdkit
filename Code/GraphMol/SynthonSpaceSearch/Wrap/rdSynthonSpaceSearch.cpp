@@ -754,6 +754,11 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       .def("GetNumSynthons", &SynthonSpaceSearch::SynthonSpace::getNumSynthons,
            python::arg("self"),
            "Returns number of synthons in the SynthonSpace.")
+      .def("GetNumSynthonsWithShapes",
+           &SynthonSpaceSearch::SynthonSpace::getNumSynthonsWithShapes,
+           python::arg("self"),
+           "Returns the number of synthons in the"
+           " SynthonSpace that have a shape.")
       .def("Summarise", &helpers::summariseHelper, python::arg("self"),
            "Writes a summary of the SynthonSpace to stdout.")
       .def(
