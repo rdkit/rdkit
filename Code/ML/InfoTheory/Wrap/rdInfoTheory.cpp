@@ -18,46 +18,88 @@ using namespace RDInfoTheory;
 
 namespace RDInfoTheory {
 namespace {
-// Dispatching on the input's own type_num used to leave uncommon dtypes
-// (NPY_LONGLONG, i.e. numpy's int64 on Windows, but also int8/uint*/float16)
-// unhandled, which silently produced a result of 0.0 (github #8421).
-PyArrayObject *contiguousDoubles(const python::object &resArr, int minDim,
-                                 int maxDim) {
+// InfoEntropy(), InfoEntropyGain() and ChiSquare() are instantiated for these
+// dtypes, so arrays using them are read directly. Anything else is converted to
+// doubles. Note that NPY_LONG is only 32 bits wide on Windows, where numpy's
+// default integer is NPY_LONGLONG (github #8421).
+int nativeOrDoubleType(const python::object &resArr) {
   if (!PyArray_Check(resArr.ptr())) {
     throw_value_error("Expecting a Numeric array object");
   }
+  int typeNum = PyArray_DESCR((PyArrayObject *)resArr.ptr())->type_num;
+  switch (typeNum) {
+    case NPY_DOUBLE:
+    case NPY_FLOAT:
+    case NPY_INT:
+    case NPY_LONG:
+    case NPY_LONGLONG:
+      return typeNum;
+    default:
+      return NPY_DOUBLE;
+  }
+}
+
+PyArrayObject *contiguousArray(const python::object &resArr, int typeNum,
+                               int minDim, int maxDim) {
   auto *copy = (PyArrayObject *)PyArray_ContiguousFromObject(
-      resArr.ptr(), NPY_DOUBLE, minDim, maxDim);
+      resArr.ptr(), typeNum, minDim, maxDim);
   if (!copy) {
-    throw_value_error("could not convert argument to an array of doubles");
+    throw_value_error("could not convert argument to a numeric array");
   }
   return copy;
+}
+
+// Calls func with the array's data cast to the pointer type matching typeNum.
+template <typename Func>
+double withTypedData(PyArrayObject *arr, int typeNum, Func func) {
+  void *data = PyArray_DATA(arr);
+  switch (typeNum) {
+    case NPY_FLOAT:
+      return func((float *)data);
+    case NPY_INT:
+      return func((int *)data);
+    case NPY_LONG:
+      return func((long int *)data);
+    case NPY_LONGLONG:
+      return func((long long *)data);
+    default:
+      return func((double *)data);
+  }
 }
 }  // namespace
 
 double infoEntropy(python::object resArr) {
-  PyArrayObject *copy = contiguousDoubles(resArr, 1, 1);
+  int typeNum = nativeOrDoubleType(resArr);
+  PyArrayObject *copy = contiguousArray(resArr, typeNum, 1, 1);
+  // we are expecting a 1 dimensional array
   auto ncols = (long int)PyArray_DIM(copy, 0);
   CHECK_INVARIANT(ncols > 0, "");
-  double res = InfoEntropy((double *)PyArray_DATA(copy), ncols);
+  double res = withTypedData(
+      copy, typeNum, [ncols](auto *data) { return InfoEntropy(data, ncols); });
   Py_DECREF(copy);
   return res;
 }
 
 double infoGain(python::object resArr) {
-  PyArrayObject *copy = contiguousDoubles(resArr, 2, 2);
+  int typeNum = nativeOrDoubleType(resArr);
+  PyArrayObject *copy = contiguousArray(resArr, typeNum, 2, 2);
   auto rows = (long int)PyArray_DIM(copy, 0);
   auto cols = (long int)PyArray_DIM(copy, 1);
-  double res = InfoEntropyGain((double *)PyArray_DATA(copy), rows, cols);
+  double res = withTypedData(copy, typeNum, [rows, cols](auto *data) {
+    return InfoEntropyGain(data, rows, cols);
+  });
   Py_DECREF(copy);
   return res;
 }
 
 double chiSquare(python::object resArr) {
-  PyArrayObject *copy = contiguousDoubles(resArr, 2, 2);
+  int typeNum = nativeOrDoubleType(resArr);
+  PyArrayObject *copy = contiguousArray(resArr, typeNum, 2, 2);
   auto rows = (long int)PyArray_DIM(copy, 0);
   auto cols = (long int)PyArray_DIM(copy, 1);
-  double res = ChiSquare((double *)PyArray_DATA(copy), rows, cols);
+  double res = withTypedData(copy, typeNum, [rows, cols](auto *data) {
+    return ChiSquare(data, rows, cols);
+  });
   Py_DECREF(copy);
   return res;
 }
