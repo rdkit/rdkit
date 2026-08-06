@@ -9,7 +9,6 @@
 """ uses DSViewer to interact with molecules
 
 """
-import os
 import tempfile
 
 from win32com.client import Dispatch
@@ -179,7 +178,7 @@ class MolViewer(object):
           if id in tmpD:
             molIds.append(tmpD[id])
           else:
-            for k, v in self.displayables.iteritems():
+            for k, v in self.displayables.items():
               if id == v.id:
                 tmpD[id] = k
                 molIds.append(k)
