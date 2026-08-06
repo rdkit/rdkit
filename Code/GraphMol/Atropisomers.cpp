@@ -485,7 +485,7 @@ void DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
 
 void cleanupAtropisomerStereoGroups(ROMol &mol) {
   std::vector<StereoGroup> newsgs;
-  for (auto sg : mol.getStereoGroups()) {
+  for (const auto &sg : mol.getStereoGroups()) {
     std::vector<Atom *> okatoms;
     std::vector<Bond *> okbonds;
 
