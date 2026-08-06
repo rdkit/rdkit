@@ -45,11 +45,25 @@
 #include "rules/Rule1a.h"
 #include "rules/Rule2.h"
 #include "rules/Rule6.h"
+#include "rules/Rules.h"
 
 #include "CIPMol.h"
 
 using namespace RDKit;
 using namespace RDKit::CIPLabeler;
+
+TEST_CASE("Rules eagerly initializes its composite sorter", "[accurateCIP]") {
+  const Rule1a standaloneRule;
+  REQUIRE(standaloneRule.getSorter());
+  CHECK(standaloneRule.getSorter()->getRules() ==
+        std::vector<const SequenceRule *>{&standaloneRule});
+
+  const Rules rules({new Rule1a});
+
+  REQUIRE(rules.getSorter());
+  CHECK(rules.getSorter()->getRules() ==
+        std::vector<const SequenceRule *>{&rules});
+}
 
 TEST_CASE("Descriptor lists", "[accurateCIP]") {
   auto descriptors = PairList();
@@ -202,8 +216,7 @@ TEST_CASE("Mancude fractional atomic numbers", "[accurateCIP]") {
     int bond_duplicates = 0;
     for (const auto edge : negative_node->getEdges()) {
       const auto end = edge->getEnd();
-      if (edge->isBeg(negative_node) &&
-          end->isSet(Node::BOND_DUPLICATE)) {
+      if (edge->isBeg(negative_node) && end->isSet(Node::BOND_DUPLICATE)) {
         ++bond_duplicates;
         CHECK(end->getAtomicNumFraction() == boost::rational<int>(4, 1));
       }
