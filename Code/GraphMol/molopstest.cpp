@@ -201,7 +201,7 @@ TEST_CASE("flat RingInfo storage preserves membership and fused semantics") {
   copied.reset();
   copied.initialize();
   copied.preallocate(3, 3);
-  REQUIRE(copied.addRing({0, 1, 2}, {0, 1, 2}) == 1);
+  REQUIRE(copied.addRing(INT_VECT{0, 1, 2}, INT_VECT{0, 1, 2}) == 1);
 
   ringInfo.addRingFamily({0, 1, 2, 3}, {0, 1, 3, 4});
   ringInfo.reset(false);
