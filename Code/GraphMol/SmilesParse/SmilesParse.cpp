@@ -34,7 +34,6 @@
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
-#include <GraphMol/Chirality.h>
 
 #include "SmilesParseOps.h"
 #include <RDGeneral/RDLog.h>

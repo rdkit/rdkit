@@ -22,7 +22,6 @@
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/trim.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/no_tracking.hpp>

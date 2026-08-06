@@ -11,9 +11,7 @@
 #include <Geometry/UniformGrid3D.h>
 
 #include "ShapeEncoder.h"
-#include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
-#include <Geometry/UniformGrid3D.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/RDKitBase.h>
 namespace RDKit {
