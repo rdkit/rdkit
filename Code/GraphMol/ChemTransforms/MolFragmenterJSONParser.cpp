@@ -18,12 +18,11 @@
 namespace RDKit {
 
 void parseMolzipParametersJSON(MolzipParams &params, const char *details_json) {
-  if (!details_json || !strlen(details_json)) {
+  if (!details_json || !*details_json) {
     return;
   }
   boost::property_tree::ptree pt;
-  std::istringstream ss;
-  ss.str(details_json);
+  std::istringstream ss(details_json);
   boost::property_tree::read_json(ss, pt);
   std::string label;
   label = pt.get<std::string>("Label", label);
