@@ -654,7 +654,7 @@ def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
     # While the random argument is the default, removing it will cause the shuffle
     # tests in UnitTestScreenComposite to fail.
     random.shuffle(acts, random=random.random)
-  else:  # This part of the code isn't working as examples is not defined
+  else:
     if runDetails:
       runDetails.randomized = 1
     acts = dataSet.GetResults()[:]
