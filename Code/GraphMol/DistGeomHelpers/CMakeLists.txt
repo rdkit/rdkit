@@ -18,6 +18,10 @@ rdkit_catch_test(testDgeomHelpersGH3019 testGithub3019.cpp
            LINK_LIBRARIES DistGeomHelpers SmilesParse SHARD_COUNT 2)
 
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
 endif()

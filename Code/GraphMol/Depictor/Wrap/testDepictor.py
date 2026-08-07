@@ -12,7 +12,8 @@ import unittest
 import numpy as np
 
 from rdkit import Chem, Geometry, RDConfig
-from rdkit.Chem import rdDepictor, rdMolAlign, rdMolTransforms
+from rdkit.Chem import rdDepictor, rdMolTransforms
+from rdkit.Chem import rdMolAlign
 from rdkit.Chem.ChemUtils import AlignDepict
 
 
@@ -94,7 +95,8 @@ def stereoCompare(smilesFile):
     matches = nmol.GetSubstructMatches(mol, False)
     dbnds = [
       x for x in mol.GetBonds()
-      if (x.GetBondType() == Chem.BondType.DOUBLE and x.GetStereo() > Chem.BondStereo.STEREOANY)
+      if (x.GetBondType() == Chem.BondType.DOUBLE and x.GetStereo() not in (
+        Chem.BondStereo.STEREOANY, Chem.BondStereo.STEREONONE))
     ]
     ok = True
     for match in matches:
@@ -462,7 +464,7 @@ M  END""")
 
   def testNormalizeStraighten(self):
     noradrenalineMJ = Chem.MolFromMolBlock("""
-  MJ201100                      
+  MJ201100
 
  12 12  0  0  1  0  0  0  0  0999 V2000
     2.2687    1.0716    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1020,7 +1022,7 @@ M  END
 
   def testRGroupMatchHeavyHydroNoneCharged(self):
     templateRef = Chem.MolFromMolBlock("""
-  MJ201100                      
+  MJ201100
 
   7  7  0  0  0  0  0  0  0  0999 V2000
    -0.5804    1.2045    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0

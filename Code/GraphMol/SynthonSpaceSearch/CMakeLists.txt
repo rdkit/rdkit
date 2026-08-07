@@ -23,6 +23,10 @@ if (RDK_BUILD_LONG_RUNNING_TESTS)
             LINK_LIBRARIES SubstructMatch SubstructLibrary SynthonSpaceSearch)
 endif ()
 
-if (RDK_BUILD_PYTHON_WRAPPERS)
+if (RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
 endif ()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()
