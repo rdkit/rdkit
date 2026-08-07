@@ -343,15 +343,38 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       mmat->setLowerBound(begId, endId, bl - extraSquish - DIST12_DELTA);
     } else {
       // we don't have parameters for one of the atoms... so we're forced to
-      // use very crude bounds:
-      auto vw1 = PeriodicTable::getTable()->getRvdw(
+      // use cruder bounds.
+      // start with the sum of the covalent radii:
+      auto vw1 = PeriodicTable::getTable()->getRcovalent(
           mol.getAtomWithIdx(begId)->getAtomicNum());
-      auto vw2 = PeriodicTable::getTable()->getRvdw(
+      auto vw2 = PeriodicTable::getTable()->getRcovalent(
           mol.getAtomWithIdx(endId)->getAtomicNum());
-      auto bl = (vw1 + vw2) / 2;
+      auto bl = vw1 + vw2;
+      // empirical scaling factors to allow for some flexibility in the bond
+      // lengths
+      auto upperScale = 1.1;
+      auto lowerScale = 0.9;
+      if (auto bt = bond->getBondType();
+          bt > Bond::BondType::AROMATIC || bt < Bond::BondType::SINGLE) {
+        // weird bond types, use the average of the van der Waals radii instead
+        // and allow a lot more flex
+        vw1 = PeriodicTable::getTable()->getRvdw(
+            mol.getAtomWithIdx(begId)->getAtomicNum());
+        vw2 = PeriodicTable::getTable()->getRvdw(
+            mol.getAtomWithIdx(endId)->getAtomicNum());
+        bl = (vw1 + vw2) / 2;
+        upperScale = 1.5;
+        lowerScale = 0.75;
+      } else {
+        // apply Pauling's formula to get a rough estimate of the bond length
+        // based on the bond order
+        //   this is taken from the UFF BondStretch.cpp code
+        constexpr double paulingLambda = 0.1332;
+        bl -= paulingLambda * std::log(bOrder) * bl;
+      }
       accumData.bondLengths[bond->getIdx()] = bl;
-      mmat->setUpperBound(begId, endId, 1.5 * bl);
-      mmat->setLowerBound(begId, endId, .5 * bl);
+      mmat->setUpperBound(begId, endId, upperScale * bl);
+      mmat->setLowerBound(begId, endId, lowerScale * bl);
     }
     unsigned int pid =
         std::min(begId, endId) * mol.getNumAtoms() + std::max(begId, endId);
@@ -720,8 +743,8 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         }  // while loop over second bond
         ++beg1;
       }  // while loop over first bond
-    }    // done with non-ring atoms
-  }      // done with all atoms
+    }  // done with non-ring atoms
+  }  // done with all atoms
 }  // done with 13 distance setting
 
 Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
@@ -1412,7 +1435,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
       bid1 = bid2;
     }  // loop over bonds in the ring
-  }    // end of all rings
+  }  // end of all rings
   for (const auto bond : mol.bonds()) {
     auto bid2 = bond->getIdx();
     auto aid2 = bond->getBeginAtomIdx();
