@@ -460,6 +460,7 @@ ROMol *fragmentOnBonds(
   for (auto bondIdx : bondIndices) {
     bondsToRemove.push_back(res->getBondWithIdx(bondIdx));
   }
+  std::unordered_set<unsigned int> atomsToUpdate;
   res->beginBatchEdit();
   for (unsigned int i = 0; i < bondsToRemove.size(); ++i) {
     const Bond *bond = bondsToRemove[i];
@@ -491,6 +492,7 @@ ROMol *fragmentOnBonds(
         at2->setIsotope(eidx);
       }
       unsigned int idx1 = res->addAtom(at1.release(), false, true);
+      atomsToUpdate.insert(idx1);
       if (bondTypes) {
         bT = (*bondTypes)[i];
       }
@@ -509,6 +511,7 @@ ROMol *fragmentOnBonds(
       }
 
       unsigned int idx2 = res->addAtom(at2.release(), false, true);
+      atomsToUpdate.insert(idx2);
       bondidx = res->addBond(bidx, idx2, bT) - 1;
       // this bond starts at the same atom, so its direction should always be
       // correct:
@@ -555,21 +558,28 @@ ROMol *fragmentOnBonds(
         conf->setAtomPos(idx1, conf->getAtomPos(bidx));
         conf->setAtomPos(idx2, conf->getAtomPos(eidx));
       }
-    } else {
-      // was github issues 429, 6034
-      for (auto idx : {bidx, eidx}) {
-        if (auto tatom = res->getAtomWithIdx(idx);
-            tatom->getNoImplicit() ||
-            (tatom->getIsAromatic() && tatom->getAtomicNum() != 6)) {
-          tatom->setNumExplicitHs(tatom->getNumExplicitHs() + 1);
-        } else {
-          tatom->updatePropertyCache(false);
-        }
-      }
+    }
+    for (auto idx : {bidx, eidx}) {
+      // keep track of the atoms so that we can adjust H counts later
+      atomsToUpdate.insert(idx);
     }
   }
   res->commitBatchEdit();
   res->clearComputedProps();
+  if (!atomsToUpdate.empty()) {
+    // Adjust H counts on dummies and atoms where bonds were broken.
+    // was github issues 429, 6034
+    std::ranges::for_each(atomsToUpdate, [&](unsigned int idx) {
+      Atom *atom = res->getAtomWithIdx(idx);
+      if (!addDummies &&
+          (atom->getNoImplicit() ||
+           (atom->getIsAromatic() && atom->getAtomicNum() != 6))) {
+        atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
+      }
+      atom->updatePropertyCache(false);
+    });
+  }
+
   return static_cast<ROMol *>(res.release());
 }
 
