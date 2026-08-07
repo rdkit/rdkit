@@ -151,9 +151,9 @@ class TestCase(unittest.TestCase):
 
     # writer.write(mol) TODO
 
-    self.assertTrue(lstEq(conf.GetAtomPosition(0), [-1.230152, -0.001454, 0.0]))
-    self.assertTrue(lstEq(conf.GetAtomPosition(1), [-0.009610, 0.007200, 0.0]))
-    self.assertTrue(lstEq(conf.GetAtomPosition(2), [1.239763, -0.00574, 0.0]))
+    self.assertTrue(lstEq(conf.GetAtomPosition(0), [-1.23521, -0.00290, 0.0]))
+    self.assertTrue(lstEq(conf.GetAtomPosition(1), [-0.00535, 0.00597, 0.0]))
+    self.assertTrue(lstEq(conf.GetAtomPosition(2), [1.240577, -0.003067, 0.0]))
 
     mol = Chem.MolFromSmiles('C=C=C=C')
     rdDistGeom.EmbedMolecule(mol, _getParams(useET=False, useK=False))
@@ -200,9 +200,9 @@ class TestCase(unittest.TestCase):
     conf = mol.GetConformer()
 
 
-    self.assertTrue(lstEq(conf.GetAtomPosition(0), [-1.2474, 0.0012, 0.0]))
-    self.assertTrue(lstEq(conf.GetAtomPosition(1), [-0.0001, -0.0025, 0.0]))
-    self.assertTrue(lstEq(conf.GetAtomPosition(2), [1.2474, 0.0012, 0.0]))
+    self.assertTrue(lstEq(conf.GetAtomPosition(0), [-1.2474, 0.0005, 0.0]))
+    self.assertTrue(lstEq(conf.GetAtomPosition(1), [-0.0001, -0.0010, 0.0]))
+    self.assertTrue(lstEq(conf.GetAtomPosition(2), [1.2474, 0.0005, 0.0]))
 
     mol = Chem.MolFromSmiles('C=C=C=C')
     rdDistGeom.EmbedMolecule(mol, _getParams(useLegacy=False, useET=False, useK=False))

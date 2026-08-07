@@ -30,7 +30,6 @@ const double DIST12_DELTA = 0.01;
 const double ANGLE_DELTA = 0.035;
 // const double RANGLE_DELTA = 0.0837; // tolerance for bond angles
 // const double TANGLE_DELTA = 0.0837; // tolerance for torsion angle
-// const double DIST13_TOL = 0.04;
 const double GEN_DIST_TOL = 0.06;  //  a general distance tolerance
 const double DIST15_TOL = 0.08;
 const double VDW_SCALE_15 = 0.7;
@@ -324,8 +323,6 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       accumData.bondLengths[bond->getIdx()] = bl;
       mmat->setUpperBound(begId, endId, bl + extraSquish + DIST12_DELTA);
       mmat->setLowerBound(begId, endId, bl - extraSquish - DIST12_DELTA);
-      // std::cout << begId << "; " << endId << ": "
-      //           << bl - extraSquish - DIST12_DELTA << std::endl;
 
     } else {
       // we don't have parameters for one of the atoms... so we're forced to
@@ -462,11 +459,11 @@ inline double scaleToleranceForLargeSP2(const Atom *atm1, const Atom *atm2,
 inline std::pair<double, double> getAngleRange(const double angle,
                                                const double tolerance) {
   if (angle + tolerance >= M_PI) {
-    return {M_PI - 2.0 * tolerance, M_PI};
+    return {M_PI - tolerance, M_PI};
   }
 
   if (angle - tolerance <= 0.0) {
-    return {0.0, 2.0 * tolerance};
+    return {0.0, tolerance};
   }
 
   return {angle - tolerance, angle + tolerance};
@@ -1362,6 +1359,8 @@ void _collect14Bounds(
   }
 
   if (fabs(du - dl) < DIST12_DELTA) {
+    // just to maker sure that lower and upper bound are not too close to each
+    // other
     dl -= GEN_DIST_TOL;
     du += GEN_DIST_TOL;
   }
@@ -1845,8 +1844,6 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
       // check that this actually is a 1-5 contact:
       if (dmat[std::max(aid1, aid5) * mmat->numRows() + std::min(aid1, aid5)] <
           3.9) {
-        // std::cerr<<"skip: "<<aid1<<"-"<<aid5<<" because
-        // d="<<dmat[std::max(aid1,aid5)*mmat->numRows()+std::min(aid1,aid5)]<<std::endl;
         continue;
       }
 
@@ -1920,7 +1917,6 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
             du = MAX_UPPER;
           }
 
-          // std::cerr<<"3: "<<aid1<<"-"<<aid5<<std::endl;
           _checkAndSetBounds(aid1, aid5, dl, du, mmat);
           accumData.set15Atoms.set(pid);
         }

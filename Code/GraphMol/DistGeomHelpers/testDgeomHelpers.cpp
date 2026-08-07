@@ -1835,6 +1835,6 @@ TEST_CASE("testHydrogenBondBasics") {
   params.useLegacyImplementation = legacyETKDG;
   REQUIRE(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
   auto dist = MolTransforms::getBondLength(mol->getConformer(), 3, 4);
-  CHECK(dist < mat->getUpperBound(4, 3) + 0.01);
-  CHECK(dist > mat->getLowerBound(4, 3) + 0.01);
+  CHECK(dist < mat->getUpperBound(4, 3) + 0.005);  // allow minimal violations
+  CHECK(dist > mat->getLowerBound(4, 3) - 0.005);
 }

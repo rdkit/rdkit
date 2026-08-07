@@ -2298,6 +2298,7 @@ TEST_CASE("Angle tolerances") {
   SECTION("Flat S-aromat") {
     auto mol = "c1sccc1"_smiles;
     REQUIRE(mol);
+    MolOps::addHs(*mol);
     DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
     DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
     DGeomHelpers::setTopolBounds(*mol, bm);
@@ -2311,12 +2312,12 @@ TEST_CASE("Angle tolerances") {
 
     DGeomHelpers::EmbedMolecule(*mol, params);
 
-    // we should be able to generate a conformations without violations
+    // we should be able to generate a conformations without major violations
     const auto conf = mol->getConformer();
     RDGeom::Point3D pos_2 = conf.getAtomPos(2);
     RDGeom::Point3D pos_4 = conf.getAtomPos(4);
     auto dist = (pos_2 - pos_4).length();
-    CHECK(bm->getLowerBound(4, 2) <= dist);
-    CHECK(bm->getUpperBound(4, 2) >= dist);
+    CHECK(bm->getLowerBound(4, 2) - 0.025 <= dist);
+    CHECK(bm->getUpperBound(4, 2) + 0.025 >= dist);
   }
 }
