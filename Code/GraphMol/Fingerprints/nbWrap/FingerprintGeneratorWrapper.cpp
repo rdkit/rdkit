@@ -36,8 +36,8 @@ namespace RDKit {
 namespace FingerprintWrapper {
 
 void convertPyArguments(
-    nb::object py_fromAtoms, nb::object py_ignoreAtoms,
-    nb::object py_atomInvs, nb::object py_bondInvs,
+    nb::object py_fromAtoms, nb::object py_ignoreAtoms, nb::object py_atomInvs,
+    nb::object py_bondInvs,
     std::unique_ptr<std::vector<std::uint32_t>> &fromAtoms,
     std::unique_ptr<std::vector<std::uint32_t>> &ignoreAtoms,
     std::unique_ptr<std::vector<std::uint32_t>> &customAtomInvariants,
@@ -424,8 +424,8 @@ namespace {
 template <typename T>
 void wrapGenerator(nb::module_ &m, const std::string &nm) {
   nb::class_<FingerprintGenerator<T>>(m, nm.c_str())
-      .def("GetSparseCountFingerprint", getSparseCountFingerprint<T>,
-           "mol"_a, "fromAtoms"_a = nb::none(), "ignoreAtoms"_a = nb::none(),
+      .def("GetSparseCountFingerprint", getSparseCountFingerprint<T>, "mol"_a,
+           "fromAtoms"_a = nb::none(), "ignoreAtoms"_a = nb::none(),
            "confId"_a = -1, "customAtomInvariants"_a = nb::none(),
            "customBondInvariants"_a = nb::none(),
            "additionalOutput"_a = nb::none(),
@@ -433,8 +433,8 @@ void wrapGenerator(nb::module_ &m, const std::string &nm) {
 
 ARGUMENTS:
     - mol: molecule to be fingerprinted
-    - fromAtoms: indices of atoms to use while generating the fingerprint
-    - ignoreAtoms: indices of atoms to exclude while generating the fingerprint
+    - fromAtoms: only environments starting at or centered on these atoms will be included
+    - ignoreAtoms: environments including these atoms will be excluded
     - confId: 3D confirmation to use, only used by AtomPair fingerprint
     - customAtomInvariants: custom atom invariants to be used,
       overrides invariants from the invariant generator
@@ -445,8 +445,8 @@ ARGUMENTS:
 RETURNS: a SparseIntVect containing fingerprint
 )DOC",
            nb::rv_policy::take_ownership)
-      .def("GetSparseFingerprint", getSparseFingerprint<T>,
-           "mol"_a, "fromAtoms"_a = nb::none(), "ignoreAtoms"_a = nb::none(),
+      .def("GetSparseFingerprint", getSparseFingerprint<T>, "mol"_a,
+           "fromAtoms"_a = nb::none(), "ignoreAtoms"_a = nb::none(),
            "confId"_a = -1, "customAtomInvariants"_a = nb::none(),
            "customBondInvariants"_a = nb::none(),
            "additionalOutput"_a = nb::none(),
@@ -454,8 +454,8 @@ RETURNS: a SparseIntVect containing fingerprint
 
 ARGUMENTS:
     - mol: molecule to be fingerprinted
-    - fromAtoms: indices of atoms to use while generating the fingerprint
-    - ignoreAtoms: indices of atoms to exclude while generating the fingerprint
+    - fromAtoms: only environments starting at or centered on these atoms will be included
+    - ignoreAtoms: environments including these atoms will be excluded
     - confId: 3D confirmation to use, only used by AtomPair fingerprint
     - customAtomInvariants: custom atom invariants to be used,
       overrides invariants from the invariant generator
@@ -466,8 +466,8 @@ ARGUMENTS:
 RETURNS: a SparseBitVect containing fingerprint
 )DOC",
            nb::rv_policy::take_ownership)
-      .def("GetCountFingerprint", getCountFingerprint<T>,
-           "mol"_a, "fromAtoms"_a = nb::none(), "ignoreAtoms"_a = nb::none(),
+      .def("GetCountFingerprint", getCountFingerprint<T>, "mol"_a,
+           "fromAtoms"_a = nb::none(), "ignoreAtoms"_a = nb::none(),
            "confId"_a = -1, "customAtomInvariants"_a = nb::none(),
            "customBondInvariants"_a = nb::none(),
            "additionalOutput"_a = nb::none(),
@@ -475,8 +475,8 @@ RETURNS: a SparseBitVect containing fingerprint
 
 ARGUMENTS:
     - mol: molecule to be fingerprinted
-    - fromAtoms: indices of atoms to use while generating the fingerprint
-    - ignoreAtoms: indices of atoms to exclude while generating the fingerprint
+    - fromAtoms: only environments starting at or centered on these atoms will be included
+    - ignoreAtoms: environments including these atoms will be excluded
     - confId: 3D confirmation to use, only used by AtomPair fingerprint
     - customAtomInvariants: custom atom invariants to be used,
       overrides invariants from the invariant generator
@@ -487,8 +487,8 @@ ARGUMENTS:
 RETURNS: a SparseIntVect containing fingerprint
 )DOC",
            nb::rv_policy::take_ownership)
-      .def("GetCountFingerprintAsNumPy", getNumPyCountFingerprint<T>,
-           "mol"_a, "fromAtoms"_a = nb::none(), "ignoreAtoms"_a = nb::none(),
+      .def("GetCountFingerprintAsNumPy", getNumPyCountFingerprint<T>, "mol"_a,
+           "fromAtoms"_a = nb::none(), "ignoreAtoms"_a = nb::none(),
            "confId"_a = -1, "customAtomInvariants"_a = nb::none(),
            "customBondInvariants"_a = nb::none(),
            "additionalOutput"_a = nb::none(),
@@ -496,8 +496,8 @@ RETURNS: a SparseIntVect containing fingerprint
 
 ARGUMENTS:
     - mol: molecule to be fingerprinted
-    - fromAtoms: indices of atoms to use while generating the fingerprint
-    - ignoreAtoms: indices of atoms to exclude while generating the fingerprint
+    - fromAtoms: only environments starting at or centered on these atoms will be included
+    - ignoreAtoms: environments including these atoms will be excluded
     - confId: 3D confirmation to use, only used by AtomPair fingerprint
     - customAtomInvariants: custom atom invariants to be used,
       overrides invariants from the invariant generator
@@ -507,8 +507,8 @@ ARGUMENTS:
 
 RETURNS: a numpy array containing the fingerprint
 )DOC")
-      .def("GetFingerprint", getFingerprint<T>,
-           "mol"_a, "fromAtoms"_a = nb::none(), "ignoreAtoms"_a = nb::none(),
+      .def("GetFingerprint", getFingerprint<T>, "mol"_a,
+           "fromAtoms"_a = nb::none(), "ignoreAtoms"_a = nb::none(),
            "confId"_a = -1, "customAtomInvariants"_a = nb::none(),
            "customBondInvariants"_a = nb::none(),
            "additionalOutput"_a = nb::none(),
@@ -516,8 +516,8 @@ RETURNS: a numpy array containing the fingerprint
 
 ARGUMENTS:
     - mol: molecule to be fingerprinted
-    - fromAtoms: indices of atoms to use while generating the fingerprint
-    - ignoreAtoms: indices of atoms to exclude while generating the fingerprint
+    - fromAtoms: only environments starting at or centered on these atoms will be included
+    - ignoreAtoms: environments including these atoms will be excluded
     - confId: 3D confirmation to use, only used by AtomPair fingerprint
     - customAtomInvariants: custom atom invariants to be used,
       overrides invariants from the invariant generator
@@ -528,8 +528,8 @@ ARGUMENTS:
 RETURNS: a ExplicitBitVect containing fingerprint
 )DOC",
            nb::rv_policy::take_ownership)
-      .def("GetFingerprintAsNumPy", getNumPyFingerprint<T>,
-           "mol"_a, "fromAtoms"_a = nb::none(), "ignoreAtoms"_a = nb::none(),
+      .def("GetFingerprintAsNumPy", getNumPyFingerprint<T>, "mol"_a,
+           "fromAtoms"_a = nb::none(), "ignoreAtoms"_a = nb::none(),
            "confId"_a = -1, "customAtomInvariants"_a = nb::none(),
            "customBondInvariants"_a = nb::none(),
            "additionalOutput"_a = nb::none(),
@@ -537,8 +537,8 @@ RETURNS: a ExplicitBitVect containing fingerprint
 
 ARGUMENTS:
     - mol: molecule to be fingerprinted
-    - fromAtoms: indices of atoms to use while generating the fingerprint
-    - ignoreAtoms: indices of atoms to exclude while generating the fingerprint
+    - fromAtoms: only environments starting at or centered on these atoms will be included
+    - ignoreAtoms: environments including these atoms will be excluded
     - confId: 3D confirmation to use, only used by AtomPair fingerprint
     - customAtomInvariants: custom atom invariants to be used,
       overrides invariants from the invariant generator
@@ -548,8 +548,7 @@ ARGUMENTS:
 
 RETURNS: a numpy array containing the fingerprint
 )DOC")
-      .def("GetFingerprints", getFingerprints<T>, "mols"_a,
-           "numThreads"_a = 1,
+      .def("GetFingerprints", getFingerprints<T>, "mols"_a, "numThreads"_a = 1,
            R"DOC(Generates fingerprints for a sequence of molecules
 
 ARGUMENTS:
@@ -588,17 +587,20 @@ ARGUMENTS:
 
 RETURNS: a tuple of SparseIntVects
 )DOC")
-      .def("GetInfoString",
-           [](const FingerprintGenerator<T> *fpGen) {
-             return std::string(fpGen->infoString());
-           },
-           R"DOC(Returns a string containing information about the fingerprint generator
+      .def(
+          "GetInfoString",
+          [](const FingerprintGenerator<T> *fpGen) {
+            return std::string(fpGen->infoString());
+          },
+          R"DOC(Returns a string containing information about the fingerprint generator
 
 RETURNS: an information string
 )DOC")
-      .def("GetOptions",
-           [](FingerprintGenerator<T> *fpGen) { return fpGen->getOptions(); },
-           nb::rv_policy::reference_internal, "return the fingerprint options object")
+      .def(
+          "GetOptions",
+          [](FingerprintGenerator<T> *fpGen) { return fpGen->getOptions(); },
+          nb::rv_policy::reference_internal,
+          "return the fingerprint options object")
       .def("ToJSON", &generatorToJSON<T>,
            "Serialize a FingerprintGenerator to JSON");
 }
@@ -623,16 +625,21 @@ NB_MODULE(rdFingerprintGenerator, m) {
            "synonym for CollectAtomCounts()")
       .def("AllocateAtomsPerBit", &AdditionalOutput::allocateAtomsPerBit,
            "synonym for CollectAtomsPerBit()")
-      .def("CollectAtomToBits", &AdditionalOutput::allocateAtomToBits,
-           R"DOC(toggle collection of information mapping each atom to the bits it is involved in.)DOC")
-      .def("CollectBitInfoMap", &AdditionalOutput::allocateBitInfoMap,
-           R"DOC(toggles collection of information mapping each atom to more detail about the atom environment (not available from all fingerprints))DOC")
-      .def("CollectBitPaths", &AdditionalOutput::allocateBitPaths,
-           R"DOC(toggles collection of information matching each atom to information about the paths it is involved in (not available from all fingerprints).)DOC")
-      .def("CollectAtomCounts", &AdditionalOutput::allocateAtomCounts,
-           R"DOC(toggles collection of information about the number of bits each atom is involved in)DOC")
-      .def("CollectAtomsPerBit", &AdditionalOutput::allocateAtomsPerBit,
-           R"DOC(toggles collection of information about all atoms involved in setting each bit)DOC")
+      .def(
+          "CollectAtomToBits", &AdditionalOutput::allocateAtomToBits,
+          R"DOC(toggle collection of information mapping each atom to the bits it is involved in.)DOC")
+      .def(
+          "CollectBitInfoMap", &AdditionalOutput::allocateBitInfoMap,
+          R"DOC(toggles collection of information mapping each atom to more detail about the atom environment (not available from all fingerprints))DOC")
+      .def(
+          "CollectBitPaths", &AdditionalOutput::allocateBitPaths,
+          R"DOC(toggles collection of information matching each atom to information about the paths it is involved in (not available from all fingerprints).)DOC")
+      .def(
+          "CollectAtomCounts", &AdditionalOutput::allocateAtomCounts,
+          R"DOC(toggles collection of information about the number of bits each atom is involved in)DOC")
+      .def(
+          "CollectAtomsPerBit", &AdditionalOutput::allocateAtomsPerBit,
+          R"DOC(toggles collection of information about all atoms involved in setting each bit)DOC")
       .def("GetAtomToBits", &getAtomToBitsHelper)
       .def("GetBitInfoMap", &getBitInfoMapHelper)
       .def("GetBitPaths", &getBitPathsHelper)
@@ -642,22 +649,21 @@ NB_MODULE(rdFingerprintGenerator, m) {
   nb::class_<FingerprintArguments>(m, "FingerprintOptions")
       .def_rw("countSimulation", &FingerprintArguments::df_countSimulation,
               "use count simulation")
-      .def_rw(
-          "includeChirality", &FingerprintArguments::df_includeChirality,
-          "include chirality in atom invariants (not for all fingerprints)")
+      .def_rw("includeChirality", &FingerprintArguments::df_includeChirality,
+              "include chirality in atom invariants (not for all fingerprints)")
       .def_rw("fpSize", &FingerprintArguments::d_fpSize,
               "size of the fingerprints created")
       .def_rw("numBitsPerFeature", &FingerprintArguments::d_numBitsPerFeature,
               "number of bits to set for each feature")
-      .def("SetCountBounds",
-           [](FingerprintArguments &opts, nb::object bounds) {
-             opts.d_countBounds.clear();
-             for (auto item : bounds) {
-               opts.d_countBounds.push_back(nb::cast<std::uint32_t>(item));
-             }
-           },
-           "bounds"_a,
-           "set the bins for the count bounds");
+      .def(
+          "SetCountBounds",
+          [](FingerprintArguments &opts, nb::object bounds) {
+            opts.d_countBounds.clear();
+            for (auto item : bounds) {
+              opts.d_countBounds.push_back(nb::cast<std::uint32_t>(item));
+            }
+          },
+          "bounds"_a, "set the bins for the count bounds");
 
   wrapGenerator<std::uint32_t>(m, "FingerprintGenerator32");
   wrapGenerator<std::uint64_t>(m, "FingerprintGenerator64");
@@ -681,13 +687,13 @@ NB_MODULE(rdFingerprintGenerator, m) {
   m.def("GetFPs", &getFPBulkPy, "molecules"_a = nb::none(),
         "fpType"_a = FPType::MorganFP, "");
 
-  m.def("FingerprintGeneratorFromJSON",
-        [](const std::string &jsonStr) {
-          return generatorFromJSON(jsonStr).release();
-        },
-        "jsonString"_a,
-        "Deserialize a FingerprintGenerator from a JSON string",
-        nb::rv_policy::take_ownership);
+  m.def(
+      "FingerprintGeneratorFromJSON",
+      [](const std::string &jsonStr) {
+        return generatorFromJSON(jsonStr).release();
+      },
+      "jsonString"_a, "Deserialize a FingerprintGenerator from a JSON string",
+      nb::rv_policy::take_ownership);
 
   AtomPairWrapper::exportAtompair(m);
   MorganWrapper::exportMorgan(m);

@@ -2043,9 +2043,13 @@ RETURNS:
   has 3 _subgraphs_ of length 3: (0,1,2),(0,1,3),(2,1,3)\n\
   but only 2 _paths_ of length 3: (0,1,3),(2,1,3)\n\
 \n";
-    m.def("FindAllSubgraphsOfLengthN", &findAllSubgraphsOfLengthN, "mol"_a,
-          "length"_a, "useHs"_a = false, "rootedAtAtom"_a = -1,
-          docString.c_str());
+    m.def(
+        "FindAllSubgraphsOfLengthN",
+        [](const ROMol &mol, int length, bool useHs, int rootedAtAtom) {
+          return findAllSubgraphsOfLengthN(mol, length, useHs, rootedAtAtom);
+        },
+        "mol"_a, "length"_a, "useHs"_a = false, "rootedAtAtom"_a = -1,
+        docString.c_str());
     // ------------------------------------------------------------------------
     docString =
         "Finds all subgraphs of a particular length in a molecule\n\
@@ -2078,9 +2082,15 @@ RETURNS:
   RETURNS: a tuple of tuples with bond IDs\n\
 \n\
 \n";
-    m.def("FindUniqueSubgraphsOfLengthN", &findUniqueSubgraphsOfLengthN,
-          "mol"_a, "length"_a, "useHs"_a = false, "useBO"_a = true,
-          "rootedAtAtom"_a = -1, docString.c_str());
+    m.def(
+        "FindUniqueSubgraphsOfLengthN",
+        [](const ROMol &mol, int length, bool useHs, bool useBO,
+           int rootedAtAtom) {
+          return findUniqueSubgraphsOfLengthN(mol, length, useHs, useBO,
+                                              rootedAtAtom);
+        },
+        "mol"_a, "length"_a, "useHs"_a = false, "useBO"_a = true,
+        "rootedAtAtom"_a = -1, docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
@@ -2121,9 +2131,16 @@ RETURNS:
        has 3 _subgraphs_ of length 3: (0,1,2),(0,1,3),(2,1,3)\n\
        but only 2 _paths_ of length 3: (0,1,3),(2,1,3)\n\
 \n";
-    m.def("FindAllPathsOfLengthN", &findAllPathsOfLengthN, "mol"_a, "length"_a,
-          "useBonds"_a = true, "useHs"_a = false, "rootedAtAtom"_a = -1,
-          "onlyShortestPaths"_a = false, docString.c_str());
+    m.def(
+        "FindAllPathsOfLengthN",
+        [](const ROMol &mol, int length, bool useBonds, bool useHs,
+           int rootedAtAtom, bool onlyShortestPaths) {
+          return findAllPathsOfLengthN(mol, length, useBonds, useHs,
+                                       rootedAtAtom, onlyShortestPaths);
+        },
+        "mol"_a, "length"_a, "useBonds"_a = true, "useHs"_a = false,
+        "rootedAtAtom"_a = -1, "onlyShortestPaths"_a = false,
+        docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =

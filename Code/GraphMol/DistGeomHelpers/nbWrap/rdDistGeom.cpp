@@ -210,14 +210,14 @@ static INT_VECT EmbedMultipleConfs2(ROMol &mol, unsigned int numConfs,
   return res;
 }
 
-static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
-    const ROMol &mol, bool set15bounds, bool scaleVDW, bool doTriangleSmoothing,
-    bool useMacrocycle14config) {
+static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix2(
+    const ROMol &mol, const PyEmbedParameters &params, bool doTriangleSmoothing,
+    bool scaleVDW, bool set15bounds, bool set14bounds, bool set13bounds) {
   unsigned int nats = mol.getNumAtoms();
   DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
   DGeomHelpers::initBoundsMat(mat);
-  DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW,
-                               useMacrocycle14config);
+  DGeomHelpers::setTopolBounds(mol, mat, params, scaleVDW, set15bounds,
+                               set14bounds, set13bounds);
   if (doTriangleSmoothing) {
     DistGeom::triangleSmoothBounds(mat);
   }
@@ -228,6 +228,25 @@ static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
   });
   return nb::ndarray<nb::numpy, double, nb::ndim<2>>(resData, {nats, nats},
                                                      owner);
+}
+static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
+    const ROMol &mol, bool set15bounds, bool scaleVDW, bool doTriangleSmoothing,
+    bool useMacrocycle14config, bool forceTransAmides, bool set14bounds,
+    bool set13bounds) {
+  PyEmbedParameters params;
+  params.useMacrocycle14config = useMacrocycle14config;
+  params.forceTransAmides = forceTransAmides;
+  return getMolBoundsMatrix2(mol, params, doTriangleSmoothing, scaleVDW,
+                             set15bounds, set14bounds, set13bounds);
+  unsigned int nats = mol.getNumAtoms();
+  DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
+  DGeomHelpers::initBoundsMat(mat);
+  DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW,
+                               useMacrocycle14config, forceTransAmides,
+                               set14bounds, set13bounds);
+  if (doTriangleSmoothing) {
+    DistGeom::triangleSmoothBounds(mat);
+  }
 }
 
 static nb::list getExpTorsHelper(const ROMol &mol, bool useExpTorsions,
@@ -641,6 +660,8 @@ version 3 (macrocycles).)DOC");
   m.def("GetMoleculeBoundsMatrix", &RDKit::getMolBoundsMatrix, "mol"_a,
         "set15bounds"_a = true, "scaleVDW"_a = false,
         "doTriangleSmoothing"_a = true, "useMacrocycle14config"_a = false,
+        "forceTransAmides"_a = true, "set14bounds"_a = true,
+        "set13bounds"_a = true,
         R"DOC(Returns the distance bounds matrix for a molecule
 
 ARGUMENTS:
@@ -652,6 +673,39 @@ ARGUMENTS:
                 lower bounds for atoms less than 5 bonds apart
    - doTriangleSmoothing : run triangle smoothing on the bounds
                 matrix before returning it
+   - useMacrocycle14config : use 1-4 distance bound heuristics for macrocycles
+   - forceTransAmides : constrain amide bonds to be trans
+   - set14bounds : set bounds for 1-4 atom distances based on
+                   topology
+   - set13bounds : set bounds for 1-3 atom distances based on
+                   topology
+
+RETURNS:
+
+   the bounds matrix as a Numeric array with lower bounds in
+   the lower triangle and upper bounds in the upper triangle
+)DOC");
+
+  m.def("GetMoleculeBoundsMatrix", &RDKit::getMolBoundsMatrix2, "mol"_a,
+        "embedParameters"_a, "doTriangleSmoothing"_a = true,
+        "scaleVDW"_a = false, "set15bounds"_a = true, "set14bounds"_a = true,
+        "set13bounds"_a = true,
+        R"DOC(Returns the distance bounds matrix for a molecule
+
+ARGUMENTS:
+
+   - mol : the molecule of interest
+   - embedParameters : an EmbedParameters object
+   - doTriangleSmoothing : run triangle smoothing on the bounds
+   matrix before returning it
+   - scaleVDW : scale down the sum of VDW radii when setting the
+   lower bounds for atoms less than 5 bonds apart
+   - set15bounds : set bounds for 1-5 atom distances based on
+                   topology (otherwise stop at 1-4s)
+   - set14bounds : set bounds for 1-4 atom distances based on
+                   topology
+   - set13bounds : set bounds for 1-3 atom distances based on
+                   topology
 
 RETURNS:
 

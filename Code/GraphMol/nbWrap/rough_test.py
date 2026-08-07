@@ -2246,10 +2246,10 @@ CAS<~>
     self.assertTrue(ri.IsAtomInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 4))
-    self.assertEqual(ri.AtomRings(), ((0, 1, 2, 3), (2, 3, 4)))
-    self.assertEqual(ri.BondRings(), ((0, 1, 2, 4), (2, 3, 5)))
+    self.assertEqual(ri.AtomRings(), ((2, 3, 4), (0, 1, 2, 3)))
+    self.assertEqual(ri.BondRings(), ((2, 3, 5), (0, 1, 2, 4)))
     self.assertEqual(len(ri.AtomMembers(2)), 2)
-    self.assertEqual(ri.AtomRingSizes(2), (4, 3))
+    self.assertEqual(ri.AtomRingSizes(2), (3, 4))
     self.assertEqual(ri.AtomRingSizes(99), ())
     self.assertTrue(ri.AreAtomsInSameRing(2, 3))
     self.assertFalse(ri.AreAtomsInSameRing(1, 4))
@@ -2263,7 +2263,7 @@ CAS<~>
     self.assertTrue(ri.AreRingsFused(0, 1))
     self.assertTrue(ri.NumFusedBonds(0) == 1)
     self.assertTrue(ri.NumFusedBonds(1) == 1)
-    self.assertEqual(ri.BondRingSizes(2), (4, 3))
+    self.assertEqual(ri.BondRingSizes(2), (3, 4))
     self.assertEqual(ri.BondRingSizes(0), (4, ))
     self.assertEqual(ri.BondRingSizes(99), ())
     self.assertTrue(ri.AreBondsInSameRing(1, 2))
@@ -2274,15 +2274,12 @@ CAS<~>
     self.assertFalse(ri.AreBondsInSameRingOfSize(1, 2, 3))
     self.assertFalse(ri.AreBondsInSameRingOfSize(1, 3, 4))
 
-    if hasattr(Chem, 'FindRingFamilies'):
-      ri = m.GetRingInfo()
-      self.assertFalse(ri.AreRingFamiliesInitialized())
-      Chem.FindRingFamilies(m)
-      ri = m.GetRingInfo()
-      self.assertTrue(ri.AreRingFamiliesInitialized())
-      self.assertEqual(ri.NumRingFamilies(), 2)
-      self.assertEqual(sorted(ri.AtomRingFamilies()), [(0, 1, 2, 3), (2, 3, 4)])
-      self.assertEqual(sorted(ri.BondRingFamilies()), [(0, 1, 2, 4), (2, 3, 5)])
+    # ring families are initialized during symmetrizeSSSR in sanitization
+    ri = m.GetRingInfo()
+    self.assertTrue(ri.AreRingFamiliesInitialized())
+    self.assertEqual(ri.NumRingFamilies(), 2)
+    self.assertEqual(sorted(ri.AtomRingFamilies()), [(0, 1, 2, 3), (2, 3, 4)])
+    self.assertEqual(sorted(ri.BondRingFamilies()), [(0, 1, 2, 4), (2, 3, 5)])
 
   def test46ReplaceCore(self):
     """ test the ReplaceCore functionality
@@ -4776,6 +4773,23 @@ $$$$
       with self.assertRaises(ValueError) as e:
         ob.GetIntProp("foo")
       self.assertEqual(str(e.exception), errors["int overflow"])
+
+      self.assertEqual(m.GetName(), "")
+
+      m.SetName("ethane")
+      self.assertEqual(m.GetName(), "ethane")
+      self.assertEqual(m.GetProp("_Name"), "ethane")
+
+      m.SetProp("_Name", "updated name")
+      self.assertEqual(m.GetName(), "updated name")
+
+      m.ClearProp("_Name")
+      self.assertEqual(m.GetName(), "")
+
+      rwm = Chem.RWMol(m)
+      rwm.SetName("editable ethane")
+      self.assertEqual(rwm.GetName(), "editable ethane")
+      self.assertEqual(rwm.GetProp("_Name"), "editable ethane")
 
   def testInvariantException(self):
     m = Chem.MolFromSmiles("C")
