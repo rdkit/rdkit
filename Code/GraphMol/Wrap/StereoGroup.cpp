@@ -80,7 +80,7 @@ struct stereogroup_wrap {
         .value("STEREO_AND", RDKit::StereoGroupType::STEREO_AND)
         .export_values();
 
-    python::class_<StereoGroup, boost::shared_ptr<StereoGroup>>(
+    python::class_<StereoGroup, std::shared_ptr<StereoGroup>>(
         "StereoGroup", stereoGroupClassDoc.c_str(), python::no_init)
         .def("GetGroupType", &StereoGroup::getGroupType, python::args("self"),
              "Returns the StereoGroupType.\n")

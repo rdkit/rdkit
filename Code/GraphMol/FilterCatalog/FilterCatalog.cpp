@@ -145,7 +145,7 @@ std::string FilterCatalog::Serialize() const {
 }
 
 unsigned int FilterCatalog::addEntry(entryType_t *entry, bool) {
-  return addEntry(boost::shared_ptr<entryType_t>(entry));
+  return addEntry(std::shared_ptr<entryType_t>(entry));
 }
 
 unsigned int FilterCatalog::addEntry(SENTRY entry, bool) {

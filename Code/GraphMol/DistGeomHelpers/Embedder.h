@@ -16,7 +16,7 @@
 #include <utility>
 #include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <DistGeom/BoundsMatrix.h>
 
 namespace RDKit {
@@ -142,7 +142,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   double pruneRmsThresh{-1.0};
   bool onlyHeavyAtomsForRMS{true};
   unsigned int ETversion{2};
-  boost::shared_ptr<const DistGeom::BoundsMatrix> boundsMat{nullptr};
+  std::shared_ptr<const DistGeom::BoundsMatrix> boundsMat{nullptr};
   bool embedFragmentsSeparately{true};
   bool useSmallRingTorsions{false};
   bool useMacrocycleTorsions{false};

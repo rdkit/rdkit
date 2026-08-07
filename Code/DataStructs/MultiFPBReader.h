@@ -35,7 +35,7 @@ namespace RDKit {
   readers.append(&r2);
   MultiFPBReader fpbs(readers);
   fpbs.init();
-  boost::shared_ptr<ExplicitBitVect> ebv = fpbs.getReader(0)->getFP(95);
+  std::shared_ptr<ExplicitBitVect> ebv = fpbs.getReader(0)->getFP(95);
   std::vector<std::tuple<double,unsigned int, unsigned int> > nbrs =
       fpbs.getTanimotoNeighbors(*ebv.get(), 0.70);
   \endcode
