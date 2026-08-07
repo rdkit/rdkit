@@ -812,4 +812,40 @@ TEST_CASE("github #9468") {
             m->getAtomWithIdx(i)->getTotalNumHs());
     }
   }
+  SECTION("test case from Rachel Walker") {
+    auto mol = "c1ccccc1CC"_smiles;
+    REQUIRE(mol);
+    const auto *coreBond = mol->getBondBetweenAtoms(5, 6);
+    const auto *sidechainBond = mol->getBondBetweenAtoms(6, 7);
+    REQUIRE(coreBond);
+    REQUIRE(sidechainBond);
+    bool addDummies = false;
+    std::unique_ptr<ROMol> splitMol(MolFragmenter::fragmentOnBonds(
+        *mol, {coreBond->getIdx(), sidechainBond->getIdx()}, addDummies));
+    REQUIRE(splitMol);
+    CHECK(splitMol->getAtomWithIdx(5)->getTotalNumHs() == 1);
+    CHECK(splitMol->getAtomWithIdx(6)->getTotalNumHs() == 4);
+    CHECK(splitMol->getAtomWithIdx(7)->getTotalNumHs() == 4);
+  }
+  SECTION("breaking double bonds") {
+    auto mol = "C=CC"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> bonds{0};
+    {
+      bool addDummies = false;
+      std::unique_ptr<ROMol> splitMol(
+          MolFragmenter::fragmentOnBonds(*mol, bonds, addDummies));
+      REQUIRE(splitMol);
+      CHECK(splitMol->getAtomWithIdx(0)->getTotalNumHs() == 4);
+      CHECK(splitMol->getAtomWithIdx(1)->getTotalNumHs() == 3);
+    }
+    {
+      bool addDummies = true;
+      std::unique_ptr<ROMol> splitMol(
+          MolFragmenter::fragmentOnBonds(*mol, bonds, addDummies));
+      REQUIRE(splitMol);
+      CHECK(splitMol->getAtomWithIdx(0)->getTotalNumHs() == 2);
+      CHECK(splitMol->getAtomWithIdx(1)->getTotalNumHs() == 1);
+    }
+  }
 }

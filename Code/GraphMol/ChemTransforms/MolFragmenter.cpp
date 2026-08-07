@@ -460,7 +460,7 @@ ROMol *fragmentOnBonds(
   for (auto bondIdx : bondIndices) {
     bondsToRemove.push_back(res->getBondWithIdx(bondIdx));
   }
-  boost::dynamic_bitset<> atomsToUpdate(res->getNumAtoms());
+  std::unordered_set<unsigned int> atomsToUpdate;
   res->beginBatchEdit();
   for (unsigned int i = 0; i < bondsToRemove.size(); ++i) {
     const Bond *bond = bondsToRemove[i];
@@ -559,18 +559,16 @@ ROMol *fragmentOnBonds(
     }
     for (auto idx : {bidx, eidx}) {
       // keep track of the atoms so that we can adjust H counts later
-      atomsToUpdate.set(idx);
+      atomsToUpdate.insert(idx);
     }
   }
   res->commitBatchEdit();
   res->clearComputedProps();
-  if (atomsToUpdate.any()) {
+  if (!atomsToUpdate.empty()) {
     // Adjust H counts on atoms where bonds were broken.
     // was github issues 429, 6034
-    std::ranges::for_each(res->atoms(), [&](Atom *atom) {
-      if (!atomsToUpdate[atom->getIdx()]) {
-        return;
-      }
+    std::ranges::for_each(atomsToUpdate, [&](unsigned int idx) {
+      Atom *atom = res->getAtomWithIdx(idx);
       if (!addDummies &&
           (atom->getNoImplicit() ||
            (atom->getIsAromatic() && atom->getAtomicNum() != 6))) {
