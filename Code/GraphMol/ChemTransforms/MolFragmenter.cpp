@@ -460,6 +460,7 @@ ROMol *fragmentOnBonds(
   for (auto bondIdx : bondIndices) {
     bondsToRemove.push_back(res->getBondWithIdx(bondIdx));
   }
+  std::unordered_set<unsigned int> atomsToUpdate;
   res->beginBatchEdit();
   for (unsigned int i = 0; i < bondsToRemove.size(); ++i) {
     const Bond *bond = bondsToRemove[i];
@@ -563,12 +564,15 @@ ROMol *fragmentOnBonds(
             (tatom->getIsAromatic() && tatom->getAtomicNum() != 6)) {
           tatom->setNumExplicitHs(tatom->getNumExplicitHs() + 1);
         } else {
-          tatom->updatePropertyCache(false);
+          atomsToUpdate.insert(idx);
         }
       }
     }
   }
   res->commitBatchEdit();
+  for (auto idx : atomsToUpdate) {
+    res->getAtomWithIdx(idx)->updatePropertyCache(false);
+  }
   res->clearComputedProps();
   return static_cast<ROMol *>(res.release());
 }
