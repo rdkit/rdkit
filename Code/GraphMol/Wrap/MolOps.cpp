@@ -818,6 +818,24 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
 
   return res;
 }
+PATH_LIST findUniqueSubgraphsOfLengthNHelper(const ROMol &mol,
+                                             unsigned int length, bool useHs,
+                                             bool useBO, int rootedAtAtom) {
+  return findUniqueSubgraphsOfLengthN(mol, length, useHs, useBO, rootedAtAtom);
+}
+
+PATH_LIST findAllSubgraphsOfLengthNHelper(const ROMol &mol, unsigned int length,
+                                          bool useHs, int rootedAtAtom) {
+  return findAllSubgraphsOfLengthN(mol, length, useHs, rootedAtAtom);
+}
+
+PATH_LIST findAllPathsOfLengthNHelper(const ROMol &mol, unsigned int length,
+                                      bool useBonds, bool useHs,
+                                      int rootedAtAtom,
+                                      bool onlyShortestPaths) {
+  return findAllPathsOfLengthN(mol, length, useBonds, useHs, rootedAtAtom,
+                               onlyShortestPaths);
+}
 
 python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
                                                    unsigned int lowerLen,
@@ -2074,7 +2092,7 @@ RETURNS:
   but only 2 _paths_ of length 3: (0,1,3),(2,1,3)\n\
 \n";
     python::def(
-        "FindAllSubgraphsOfLengthN", &findAllSubgraphsOfLengthN,
+        "FindAllSubgraphsOfLengthN", &findAllSubgraphsOfLengthNHelper,
         (python::arg("mol"), python::arg("length"),
          python::arg("useHs") = false, python::arg("rootedAtAtom") = -1),
         docString.c_str());
@@ -2112,7 +2130,8 @@ RETURNS:
   RETURNS: a tuple of tuples with bond IDs\n\
 \n\
 \n";
-    python::def("FindUniqueSubgraphsOfLengthN", &findUniqueSubgraphsOfLengthN,
+    python::def("FindUniqueSubgraphsOfLengthN",
+                &findUniqueSubgraphsOfLengthNHelper,
                 (python::arg("mol"), python::arg("length"),
                  python::arg("useHs") = false, python::arg("useBO") = true,
                  python::arg("rootedAtAtom") = -1),
@@ -2157,7 +2176,7 @@ RETURNS:
        has 3 _subgraphs_ of length 3: (0,1,2),(0,1,3),(2,1,3)\n\
        but only 2 _paths_ of length 3: (0,1,3),(2,1,3)\n\
 \n";
-    python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthN,
+    python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthNHelper,
                 (python::arg("mol"), python::arg("length"),
                  python::arg("useBonds") = true, python::arg("useHs") = false,
                  python::arg("rootedAtAtom") = -1,
