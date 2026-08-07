@@ -80,6 +80,9 @@ RascalResult::RascalResult(const RascalResult &other)
       d_timedOut(other.d_timedOut),
       d_tier1Sim(other.d_tier1Sim),
       d_tier2Sim(other.d_tier2Sim),
+      d_ringMatchesRingOnly(other.d_ringMatchesRingOnly),
+      d_maxFragSep(other.d_maxFragSep),
+      d_exactConnectionsMatch(other.d_exactConnectionsMatch),
       d_equivalentAtoms(other.d_equivalentAtoms),
       d_ignoreBondOrders(other.d_ignoreBondOrders),
       d_numFrags(other.d_numFrags),
@@ -102,25 +105,7 @@ RascalResult &RascalResult::operator=(const RascalResult &other) {
   if (this == &other) {
     return *this;
   }
-  d_bondMatches = other.d_bondMatches;
-  d_atomMatches = other.d_atomMatches;
-  d_smarts = other.d_smarts;
-  d_timedOut = other.d_timedOut;
-  d_equivalentAtoms = other.d_equivalentAtoms;
-  d_numFrags = other.d_numFrags;
-  d_ringNonRingBondScore = other.d_ringNonRingBondScore;
-  d_atomMatchScore = other.d_atomMatchScore;
-  d_maxDeltaAtomAtomDist = other.d_maxDeltaAtomAtomDist;
-  d_largestFragSize = other.d_largestFragSize;
-  if (other.d_mol1) {
-    d_mol1.reset(new ROMol(*other.d_mol1));
-  }
-  if (other.d_mol2) {
-    d_mol2.reset(new ROMol(*other.d_mol2));
-  }
-  if (other.d_mcesMol) {
-    d_mcesMol.reset(new ROMol(*other.d_mcesMol));
-  }
+  *this = RascalResult(other);
   return *this;
 }
 

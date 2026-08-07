@@ -531,3 +531,27 @@ TEST_CASE("atomsPerBit") {
     REQUIRE(apb[140][0] == std::vector<int>({2, 1, 0, 5}));
   }
 }
+
+TEST_CASE("RDKit fingerprinter and ignoreAtoms") {
+  auto mol = "CCO"_smiles;
+  REQUIRE(mol);
+  RDKitFP::RDKitFPArguments args;
+  args.d_numBitsPerFeature = 1;
+  auto fpg = RDKitFP::getRDKitFPGenerator<std::uint64_t>(args);
+  REQUIRE(fpg);
+  auto fp1 = fpg->getSparseFingerprint(*mol);
+  CHECK(fp1->getNumOnBits() == 3);
+  std::vector<std::uint32_t> ignoreAtoms = {2};
+  RDKit::FingerprintFuncArguments funcArgs;
+  funcArgs.ignoreAtoms = &ignoreAtoms;
+  auto fp2 = fpg->getSparseFingerprint(*mol, funcArgs);
+  CHECK(fp2->getNumOnBits() == 1);
+  std::vector<int> obl;
+  fp2->getOnBits(obl);
+  REQUIRE(obl.size() == 1);
+  CHECK((*fp1)[obl[0]] == 1);
+  // make sure we continue to ignore the atoms even if they are fromAtoms
+  funcArgs.fromAtoms = &ignoreAtoms;
+  auto fp3 = fpg->getSparseFingerprint(*mol, funcArgs);
+  CHECK(fp3->getNumOnBits() == 0);
+}

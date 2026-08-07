@@ -396,13 +396,13 @@ class TestCase(unittest.TestCase):
     ao = rdFingerprintGenerator.AdditionalOutput()
     ao.AllocateAtomsPerBit()
     m = Chem.MolFromSmiles('c1ccccn1')
-    fp = fpg.GetFingerprint(m,additionalOutput=ao)
+    fp = fpg.GetFingerprint(m, additionalOutput=ao)
     apb = ao.GetAtomsPerBit()
-    self.assertEqual(fp.GetNumOnBits(),len(apb))
-    self.assertEqual(apb[140],((2, 1, 0, 5), (2, 3, 4, 5)))
+    self.assertEqual(fp.GetNumOnBits(), len(apb))
+    self.assertEqual(apb[140], ((2, 1, 0, 5), (2, 3, 4, 5)))
 
     ao = rdFingerprintGenerator.AdditionalOutput()
-    _ = fpg.GetFingerprint(m,additionalOutput=ao)
+    _ = fpg.GetFingerprint(m, additionalOutput=ao)
     self.assertIsNone(ao.GetAtomsPerBit())
 
   def testJSONSerialization(self):
@@ -414,6 +414,15 @@ class TestCase(unittest.TestCase):
     fp2 = g2.GetFingerprint(m)
     self.assertEqual(fp1, fp2)
 
+  def testRDKitFPGeneratorAndFromAtoms(self):
+    m = Chem.MolFromSmiles('CCCO')
+    g = rdFingerprintGenerator.GetRDKitFPGenerator(numBitsPerFeature=1, minPath=2, maxPath=3)
+    fp = g.GetSparseCountFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 3)
+    fp = g.GetSparseCountFingerprint(m, ignoreAtoms=[2])
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 0)
 
 
 if __name__ == '__main__':
