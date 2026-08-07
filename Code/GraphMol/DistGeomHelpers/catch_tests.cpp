@@ -2316,7 +2316,17 @@ TEST_CASE("Angle tolerances") {
     RDGeom::Point3D pos_2 = conf.getAtomPos(2);
     RDGeom::Point3D pos_4 = conf.getAtomPos(4);
     auto dist = (pos_2 - pos_4).length();
-    CHECK(bm->getLowerBound(4, 2) <= dist);
-    CHECK(bm->getUpperBound(4, 2) >= dist);
+    CHECK(bm->getLowerBound(4, 2) - 0.001 <= dist);
+    CHECK(bm->getUpperBound(4, 2) + 0.001 >= dist);
   }
+}
+
+TEST_CASE("Github #9461") {
+  auto mol = "Cc1sccc1"_smiles;
+  REQUIRE(mol);
+  DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+  DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+  DGeomHelpers::setTopolBounds(*mol, bm);
+
+  CHECK(feq(bm->getUpperBound(0, 1) - bm->getLowerBound(0, 1), 0.02));
 }

@@ -317,7 +317,7 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
           bOrder, atomParams[begId], atomParams[endId]);
 
       double extraSquish = 0.0;
-      if (squishAtoms[begId] || squishAtoms[endId]) {
+      if (squishAtoms[begId] && squishAtoms[endId]) {
         extraSquish = 0.2;  // empirical
       }
 
