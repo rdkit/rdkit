@@ -769,3 +769,47 @@ O      3.100000    0.000000    0.000000
     }
   }
 }
+
+TEST_CASE("github #9468") {
+  SECTION("as reported") {
+    auto m = "CCCCC(=O)N1CCCC1"_smiles;
+    REQUIRE(m);
+    std::vector<unsigned int> bonds{{0, 1, 2, 3}};
+    bool addDummies = false;
+    std::unique_ptr<ROMol> res{
+        MolFragmenter::fragmentOnBonds(*m, bonds, addDummies)};
+    REQUIRE(res);
+    CHECK(res->getNumAtoms() == m->getNumAtoms());
+    CHECK(res->getAtomWithIdx(0)->getTotalNumHs() == 4);
+    CHECK(res->getAtomWithIdx(1)->getTotalNumHs() == 4);
+    CHECK(res->getAtomWithIdx(2)->getTotalNumHs() == 4);
+    CHECK(res->getAtomWithIdx(3)->getTotalNumHs() == 4);
+  }
+  SECTION("aromaticity") {
+    auto m = "Cn1cccc1"_smiles;
+    REQUIRE(m);
+    std::vector<unsigned int> bonds = {0};
+    bool addDummies = false;
+    std::unique_ptr<ROMol> res{
+        MolFragmenter::fragmentOnBonds(*m, bonds, addDummies)};
+    REQUIRE(res);
+    CHECK(res->getNumAtoms() == m->getNumAtoms());
+    CHECK(res->getAtomWithIdx(0)->getTotalNumHs() == 4);
+    CHECK(res->getAtomWithIdx(1)->getTotalNumHs() == 1);
+    CHECK(res->getAtomWithIdx(1)->getNumExplicitHs() == 1);
+  }
+  SECTION("no changes to H counts if dummies are added") {
+    auto m = "CCCCC(=O)N1CCCC1"_smiles;
+    REQUIRE(m);
+    std::vector<unsigned int> bonds{{0, 1, 2, 3}};
+    bool addDummies = true;
+    std::unique_ptr<ROMol> res{
+        MolFragmenter::fragmentOnBonds(*m, bonds, addDummies)};
+    REQUIRE(res);
+    CHECK(res->getNumAtoms() > m->getNumAtoms());
+    for (unsigned int i = 0; i < 4; ++i) {
+      CHECK(res->getAtomWithIdx(i)->getTotalNumHs() ==
+            m->getAtomWithIdx(i)->getTotalNumHs());
+    }
+  }
+}
