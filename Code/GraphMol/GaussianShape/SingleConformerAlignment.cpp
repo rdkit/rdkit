@@ -573,7 +573,7 @@ void reduceStep(const std::array<double, 7> &grad,
 // code from
 // https://github.com/ncbi/pubchem-align3d/blob/main/shape_neighbor.cpp
 // Original Authors:  Evan Bolton, Leonid Zaslavsky, Paul Thiessen
-bool SingleConformerAlignment::optimise(unsigned int maxIters) {
+bool SingleConformerAlignment::optimise(const unsigned int maxIters) {
   const double maxQuaternionStep = 0.075;   // Maximum step size for quaternion
   const double maxTranslationStep = 0.500;  // Maximum step size for translation
   const double minQuaternionStep =
