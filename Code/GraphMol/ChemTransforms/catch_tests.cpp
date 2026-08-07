@@ -811,6 +811,10 @@ TEST_CASE("github #9468") {
       CHECK(res->getAtomWithIdx(i)->getTotalNumHs() ==
             m->getAtomWithIdx(i)->getTotalNumHs());
     }
+    // make sure dummies have implicit props too
+    for (unsigned int i = m->getNumAtoms(); i < res->getNumAtoms(); ++i) {
+      CHECK(res->getAtomWithIdx(i)->getTotalNumHs() == 0);
+    }
   }
   SECTION("test case from Rachel Walker") {
     auto mol = "c1ccccc1CC"_smiles;

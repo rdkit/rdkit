@@ -492,6 +492,7 @@ ROMol *fragmentOnBonds(
         at2->setIsotope(eidx);
       }
       unsigned int idx1 = res->addAtom(at1.release(), false, true);
+      atomsToUpdate.insert(idx1);
       if (bondTypes) {
         bT = (*bondTypes)[i];
       }
@@ -510,6 +511,7 @@ ROMol *fragmentOnBonds(
       }
 
       unsigned int idx2 = res->addAtom(at2.release(), false, true);
+      atomsToUpdate.insert(idx2);
       bondidx = res->addBond(bidx, idx2, bT) - 1;
       // this bond starts at the same atom, so its direction should always be
       // correct:
@@ -565,7 +567,7 @@ ROMol *fragmentOnBonds(
   res->commitBatchEdit();
   res->clearComputedProps();
   if (!atomsToUpdate.empty()) {
-    // Adjust H counts on atoms where bonds were broken.
+    // Adjust H counts on dummies and atoms where bonds were broken.
     // was github issues 429, 6034
     std::ranges::for_each(atomsToUpdate, [&](unsigned int idx) {
       Atom *atom = res->getAtomWithIdx(idx);
