@@ -181,9 +181,9 @@ std::vector<AtomEnvironment<OutputType> *>
 RDKitFPEnvGenerator<OutputType>::getEnvironments(
     const ROMol &mol, FingerprintArguments *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *,  // ignoreAtoms
-    const int,                           // confId
-    const AdditionalOutput *,            // additionalOutput
+    const std::vector<std::uint32_t> *ignoreAtoms,
+    const int,                 // confId
+    const AdditionalOutput *,  // additionalOutput
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *,  // bondInvariants
     const bool                           // hashResults
@@ -197,9 +197,18 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
 
   // get all paths
   INT_PATH_LIST_MAP allPaths;
+
+  boost::dynamic_bitset<> ignoreAtomsBitset;
+  if (ignoreAtoms) {
+    ignoreAtomsBitset.resize(mol.getNumAtoms());
+    std::ranges::for_each(*ignoreAtoms, [&](const auto atomIdx) {
+      ignoreAtomsBitset.set(atomIdx);
+    });
+  }
   RDKitFPUtils::enumerateAllPaths(
       mol, allPaths, fromAtoms, fpArguments->df_branchedPaths,
-      fpArguments->df_useHs, fpArguments->d_minPath, fpArguments->d_maxPath);
+      fpArguments->df_useHs, fpArguments->d_minPath, fpArguments->d_maxPath,
+      ignoreAtoms ? &ignoreAtomsBitset : nullptr);
 
   // identify query bonds
   std::vector<short> isQueryBond(mol.getNumBonds(), 0);
