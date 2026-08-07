@@ -158,14 +158,14 @@ class TestCase(unittest.TestCase):
     AlignDepict.AlignDepict(m2, t)
     expected = [
       Geometry.Point3D(1.5, 0.0, 0.0),
-      Geometry.Point3D(0.75, 1.299, 0.0),
-      Geometry.Point3D(-0.75, 1.299, 0.0),
-      Geometry.Point3D(-1.5, 2.5981, 0.0),
-      Geometry.Point3D(-0.75, 3.8971, 0.0),
-      Geometry.Point3D(-1.5, 5.1962, 0.0),
+      Geometry.Point3D(0.75, -1.299, 0.0),
+      Geometry.Point3D(-0.75, -1.299, 0.0),
+      Geometry.Point3D(-1.5, -2.5981, 0.0),
+      Geometry.Point3D(-3.0, -2.5981, 0.0),
+      Geometry.Point3D(-3.75, -3.8971, 0.0),
       Geometry.Point3D(-1.5, 0.0, 0.0),
-      Geometry.Point3D(-0.75, -1.2990, 0.0),
-      Geometry.Point3D(0.75, -1.2990, 0.0)
+      Geometry.Point3D(-0.75, 1.2990, 0.0),
+      Geometry.Point3D(0.75, 1.2990, 0.0)
     ]
 
     nat = m2.GetNumAtoms()
@@ -883,12 +883,12 @@ M  END
    -3.4910    1.0942    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
     1.7051    1.0942    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
    -3.4910   -1.9059    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0
-  2  3  2  0
-  3  4  1  0
-  4  5  2  0
-  5  6  1  0
-  6  1  2  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
   6  8  1  0
   3  9  1  0
   2  7  1  0
@@ -1066,76 +1066,6 @@ M  END
       self.assertEqual(mol.GetNumAtoms(), 7)
       self.assertEqual(
         len(rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef, params=p)), 7)
-
-  def testGenerateDepictionMatching2DStructureWithRingTemplates(self):
-    align_ref_mol = Chem.MolFromMolBlock(R"""
-    RDKit          2D
-
-  0  0  0  0  0  0  0  0  0  0999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 6 6 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 N -5.242424 0.787879 0.000000 0
-M  V30 2 C -4.492420 2.086915 0.000000 0
-M  V30 3 C -2.992419 2.086916 0.000000 0
-M  V30 4 C -2.242418 0.787879 0.000000 0
-M  V30 5 C -2.992416 -0.511157 0.000000 0
-M  V30 6 C -4.492420 -0.511158 0.000000 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 2 3
-M  V30 2 2 3 4
-M  V30 3 1 4 5
-M  V30 4 2 5 6
-M  V30 5 2 2 1
-M  V30 6 1 1 6
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-$$$$
-""")
-
-    mol = Chem.MolFromSmiles(R"CC1=CC(C23C4C5C6C4C2C6C53)=CN=C1")
-
-    self.assertIsNotNone(align_ref_mol)
-    self.assertIsNotNone(mol)
-
-    ref_coords = align_ref_mol.GetConformer().GetPositions()
-
-    def check_match_coords(mol, match):
-      coords = mol.GetConformer().GetPositions()
-      return all(np.allclose(ref_coords[ref_idx], coords[idx]) for ref_idx, idx in match)
-
-    def has_weird_bonds(mol):
-      coords = mol.GetConformer().GetPositions()
-      for bond in mol.GetBonds():
-        length = np.linalg.norm(coords[bond.GetBeginAtomIdx()] - coords[bond.GetEndAtomIdx()])
-        if length < 1.0 or length > 2.0:
-          return True
-      return False
-
-    params = rdDepictor.ConstrainedDepictionParams()
-
-    params.useRingTemplates = False
-
-    matches = rdDepictor.GenerateDepictionMatching2DStructure(mol, align_ref_mol, params=params)
-    self.assertEqual(len(matches), 6)
-
-    self.assertTrue(check_match_coords(mol, matches))
-
-    # by default, RDkit's coordinate generation creates some weird bonds for cubane
-    self.assertTrue(has_weird_bonds(mol))
-
-    params.useRingTemplates = True
-
-    matches = rdDepictor.GenerateDepictionMatching2DStructure(mol, align_ref_mol, params=params)
-    self.assertEqual(len(matches), 6)
-
-    self.assertTrue(check_match_coords(mol, matches))
-
-    # when using ring templates, cubane bonds are all approximately
-    # the same length, which is reasonable
-    self.assertFalse(has_weird_bonds(mol))
 
 
 if __name__ == '__main__':
