@@ -353,11 +353,11 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       // empirical scaling factors to allow for some flexibility in the bond
       // lengths
       auto upperScale = 1.1;
-      auto lowerScale = 0.8;
+      auto lowerScale = 0.9;
       if (auto bt = bond->getBondType();
-          bt > Bond::BondType::FIVEANDAHALF || bt < Bond::BondType::SINGLE) {
+          bt > Bond::BondType::AROMATIC || bt < Bond::BondType::SINGLE) {
         // weird bond types, use the average of the van der Waals radii instead
-        // and allow a lot more more flex in the bond lengths
+        // and allow a lot more flex
         vw1 = PeriodicTable::getTable()->getRvdw(
             mol.getAtomWithIdx(begId)->getAtomicNum());
         vw2 = PeriodicTable::getTable()->getRvdw(
@@ -365,6 +365,12 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         bl = (vw1 + vw2) / 2;
         upperScale = 1.5;
         lowerScale = 0.75;
+      } else {
+        // apply Pauling's formula to get a rough estimate of the bond length
+        // based on the bond order
+        //   this is taken from the UFF BondStretch.cpp code
+        constexpr double paulingLambda = 0.1332;
+        bl -= paulingLambda * std::log(bOrder) * bl;
       }
       accumData.bondLengths[bond->getIdx()] = bl;
       mmat->setUpperBound(begId, endId, upperScale * bl);
