@@ -28,7 +28,6 @@ def lstEq(l1, l2, tol=1.0e-4):
 
   for i in range(ln):
     if abs(l1[i] - l2[i]) > tol:
-      print(l1[i], l2[i])
       return 0
   return 1
 
