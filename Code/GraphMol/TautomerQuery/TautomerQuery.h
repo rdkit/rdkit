@@ -118,8 +118,7 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
-  void save(Archive &ar, const unsigned int version) const {
-    RDUNUSED_PARAM(version);
+  void save(Archive &ar, [[maybe_unused]] const unsigned int version) const {
     std::vector<std::string> pkls;
     for (const auto &taut : d_tautomers) {
       std::string pkl;
@@ -135,9 +134,7 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
   }
 
   template <class Archive>
-  void load(Archive &ar, const unsigned int version) {
-    RDUNUSED_PARAM(version);
-
+  void load(Archive &ar, [[maybe_unused]] const unsigned int version) {
     std::vector<std::string> pkls;
     ar >> pkls;
     d_tautomers.clear();
