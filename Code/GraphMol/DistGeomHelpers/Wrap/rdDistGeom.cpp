@@ -673,12 +673,6 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "symmetrize terminal conjugated groups for RMSD pruning")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap, python::args("self"),
            "sets the coordmap to be used")
-      .def_readwrite(
-          "angleTolerance", &PyEmbedParameters::angleTolerance,
-          "Bond angle tolerance [rad.], used for bounds matrix construction")
-      .def_readwrite(
-          "useAngleTolerances", &PyEmbedParameters::useAngleTolerance,
-          "Using bond angle tolerances instead of static 1-3 tolerances (bounds matrix construction)")
       .def("__setattr__", &safeSetattr);
 
   docString =
