@@ -48,6 +48,18 @@ class TestCase(unittest.TestCase):
     mat6 = numpy.array([[1, 0], [1, 0]],float)
     self.assertTrue(feq(rdit.InfoGain(mat6), 0.0000))
 
+  def testGainFunDtypes(self):
+    # Github #8421: dtypes the wrappers did not recognize used to silently
+    # return 0.0. numpy's default integer is int64, which is NPY_LONGLONG (and
+    # so was not recognized) on Windows.
+    arr = numpy.array([2, 5, 5])
+    mat = numpy.array([[6, 2], [3, 3]])
+    for dtype in ('int8', 'int32', 'int64', 'longlong', 'uint8', 'uint64', 'float16', 'float32',
+                  'float64'):
+      self.assertTrue(feq(rdit.InfoEntropy(arr.astype(dtype)), 1.4834), dtype)
+      self.assertTrue(feq(rdit.InfoGain(mat.astype(dtype)), 0.0481), dtype)
+      self.assertTrue(feq(rdit.ChiSquare(mat.astype(dtype)), 0.9333), dtype)
+
   def test1ranker(self):
     nbits = 100
     ninst = 100
