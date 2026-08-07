@@ -93,6 +93,13 @@ class TestCase(unittest.TestCase):
       self.__testDesc('PP_descrs_regress.2.csv', 1, GraphDescriptors.BertzCT,
                       molFilter=_hasAromaticAtoms)
 
+  def testGithub8421(self):
+    # BertzCT was platform dependent: the InfoEntropy wrapper silently returned
+    # 0.0 for numpy's default integer dtype on Windows, which dropped the atom
+    # type term of the sum
+    m = Chem.MolFromSmiles('Fc1cccc(C2(c3nnc(Cc4cccc5ccccc45)o3)CCOCC2)c1')
+    self.assertAlmostEqual(GraphDescriptors.BertzCT(m), 1143.0567597744753, delta=1e-4)
+
   def testHallKierAlpha(self):
     self.__testDesc('PP_descrs_regress.csv', 3, GraphDescriptors.HallKierAlpha)
     if doLong:
