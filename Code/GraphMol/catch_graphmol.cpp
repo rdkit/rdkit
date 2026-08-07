@@ -3845,6 +3845,56 @@ TEST_CASE("expand and remove AttachmentPoints") {
     // marked as an attachment point, but at end of a double bond
     CHECK(!MolOps::details::isAttachmentPoint(mol->getAtomWithIdx(4)));
   }
+  SECTION("marked attachment point identity") {
+    auto mol = "CC"_smiles;
+    REQUIRE(mol);
+    auto attachmentIdx =
+        MolOps::details::addExplicitAttachmentPoint(*mol, 1, 1, true, false);
+    auto attachment = mol->getAtomWithIdx(attachmentIdx);
+    auto attachmentBond = mol->getBondBetweenAtoms(1, attachmentIdx);
+
+    CHECK(MolOps::isMarkedAttachmentPoint(attachment));
+    CHECK(MolOps::details::isAttachmentPoint(attachment));
+
+    attachmentBond->setBondDir(Bond::BondDir::BEGINWEDGE);
+    CHECK(MolOps::isMarkedAttachmentPoint(attachment));
+    CHECK(!MolOps::details::isAttachmentPoint(attachment));
+
+    CHECK(!MolOps::isMarkedAttachmentPoint(mol->getAtomWithIdx(0)));
+    mol->getAtomWithIdx(0)->setProp(common_properties::_fromAttachPoint, 1);
+    CHECK(!MolOps::isMarkedAttachmentPoint(mol->getAtomWithIdx(0)));
+    attachment->clearProp(common_properties::_fromAttachPoint);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+
+    attachment->setProp(common_properties::atomLabel, "_AP37");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 37);
+    CHECK(MolOps::isMarkedAttachmentPoint(attachment));
+    CHECK(!MolOps::details::isAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel, "_AP0");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel, "_AP3x");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel,
+                        "_AP999999999999999999999999999999999999");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+  }
+  SECTION("collapse label-only attachment point") {
+    auto mol = "*C |$_AP37;$|"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 2);
+    CHECK(MolOps::isMarkedAttachmentPoint(mol->getAtomWithIdx(0)));
+
+    MolOps::collapseAttachmentPoints(*mol);
+    REQUIRE(mol->getNumAtoms() == 1);
+    int value = 0;
+    CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
+        common_properties::molAttachPoint, value));
+    CHECK(value == 1);
+  }
 }
 
 TEST_CASE("bond output") {
