@@ -30,7 +30,7 @@ const double DIST12_DELTA = 0.01;
 const double ANGLE_DELTA = 0.035;
 // const double RANGLE_DELTA = 0.0837; // tolerance for bond angles
 // const double TANGLE_DELTA = 0.0837; // tolerance for torsion angle
-const double DIST13_TOL = 0.04;
+// const double DIST13_TOL = 0.04;
 const double GEN_DIST_TOL = 0.06;  //  a general distance tolerance
 const double DIST15_TOL = 0.08;
 const double VDW_SCALE_15 = 0.7;
@@ -103,9 +103,7 @@ class ComputedData {
     auto *bAdj = new RDNumeric::IntSymmMatrix(nBonds, -1);
     bondAdj.reset(bAdj);
     auto *bAngles = new RDNumeric::DoubleSymmMatrix(nBonds, -1.0);
-    auto *bAngleTols = new RDNumeric::DoubleSymmMatrix(nBonds, -1.0);
     bondAngles.reset(bAngles);
-    bondAngleTolerances.reset(bAngleTols);
     set15Atoms.resize(nAtoms * nAtoms);
     visited12Bounds.resize(nAtoms * nAtoms);
     visited13Bounds.resize(nAtoms * nAtoms);
@@ -123,7 +121,6 @@ class ComputedData {
   DOUBLE_VECT bondLengths;
   SymmIntMatPtr bondAdj;  // bond adjacency matrix
   SymmDoubleMatPtr bondAngles;
-  SymmDoubleMatPtr bondAngleTolerances;
   PATH14_VECT paths14;
   std::unordered_set<std::uint64_t> cisPaths;
   std::unordered_set<std::uint64_t> transPaths;
@@ -1327,7 +1324,6 @@ void _collect14Bounds(
 
   switch (torsionValue.type) {
     case TorsionType::CIS:
-      // TODO assert that this is lower
       dl = RDGeom::compute14DistCis(blL1, blL2, blL3, baL12, baL23) +
            torsionValue.extraDist.value_or(0.0);
       du = RDGeom::compute14DistCis(blU1, blU2, blU3, baU12, baU23) +
@@ -1830,12 +1826,6 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
   ang12 = accumData.bondAngles->getVal(bid1, bid2);
   ang23 = accumData.bondAngles->getVal(bid2, bid3);
 
-  // double baU12 = accumData.bondAnglesUpper->getVal(bid1, bid2);
-  // double baU23 = accumData.bondAnglesUpper->getVal(bid2, bid3);
-
-  // double baL12 = accumData.bondAnglesLower->getVal(bid1, bid2);
-  // double baL23 = accumData.bondAnglesLower->getVal(bid2, bid3);
-
   for (i = 0; i < nb; i++) {
     du = -1.0;
     dl = 0.0;
@@ -1859,103 +1849,6 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
         // d="<<dmat[std::max(aid1,aid5)*mmat->numRows()+std::min(aid1,aid5)]<<std::endl;
         continue;
       }
-
-      // double baU34 = accumData.bondAnglesUpper->getVal(bid3, i);
-      // double baL34 = accumData.bondAnglesLower->getVal(bid3, i);
-
-      // unsigned long pathId = getUnifiedId(bid2, bid3, i, nb);
-      // if (type == TorsionType::CIS) {
-      //   if (accumData.cisPaths.find(pathId) != accumData.cisPaths.end()) {
-      //     // note: we assume angles to be >= 90 degree
-      //     dl = _compute15DistsCisCis(d1, d2, d3, d4, baL12, baL23, baL34);
-      //     du = _compute15DistsCisCis(d1, d2, d3, d4, baU12, baU23, baU34);
-      //   } else if (accumData.transPaths.find(pathId) !=
-      //              accumData.transPaths.end()) {
-      //     auto dist = {
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baL12, baL23, baL34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baL12, baL23, baU34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baL12, baU23, baL34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baU12, baL23, baL34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baL12, baU23, baU34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baU12, baL23, baU34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baU12, baU23, baL34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baU12, baU23, baU34),
-      //     };
-      //     dl = std::min(dist);
-      //     du = std::max(dist);
-      //   } else {
-      //     dl = _compute15DistsCisCis(d1, d2, d3, d4, baL12, baL23, baL34);
-      //     du = std::max({
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baL12, baL23, baL34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baL12, baL23, baU34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baL12, baU23, baL34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baU12, baL23, baL34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baL12, baU23, baU34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baU12, baL23, baU34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baU12, baU23, baL34),
-      //         _compute15DistsCisTrans(d1, d2, d3, d4, baU12, baU23, baU34),
-      //     });
-      //   }
-
-      // } else if (type == TorsionType::TRANS) {
-      //   if (accumData.cisPaths.find(pathId) != accumData.cisPaths.end()) {
-      //     auto dist = {
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baL12, baL23, baL34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baL12, baL23, baU34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baL12, baU23, baL34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baU12, baL23, baL34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baL12, baU23, baU34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baU12, baL23, baU34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baU12, baU23, baL34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baU12, baU23, baU34),
-      //     };
-      //     dl = std::min(dist);
-      //     du = std::max(dist);
-      //   } else if (accumData.transPaths.find(pathId) !=
-      //              accumData.transPaths.end()) {
-      //     dl = _compute15DistsTransTrans(d1, d2, d3, d4, baL12, baL23,
-      //     baL34); du = _compute15DistsTransTrans(d1, d2, d3, d4, baU12,
-      //     baU23, baU34);
-      //   } else {
-      //     dl = std::min({
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baL12, baL23, baL34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baL12, baL23, baU34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baL12, baU23, baL34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baU12, baL23, baL34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baL12, baU23, baU34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baU12, baL23, baU34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baU12, baU23, baL34),
-      //         _compute15DistsTransCis(d1, d2, d3, d4, baU12, baU23, baU34),
-      //     });
-      //     du = _compute15DistsTransTrans(d1, d2, d3, d4, baU12, baU23,
-      //     baU34);
-      //   }
-      // } else {
-      //   if (accumData.cisPaths.find(pathId) != accumData.cisPaths.end()) {
-      //     dl = _compute15DistsCisCis(d4, d3, d2, d1, baL34, baL23, baL12);
-      //     du = std::max({
-      //         _compute15DistsCisTrans(d4, d3, d2, d1, baL34, baL23, baL12),
-      //         _compute15DistsCisTrans(d4, d3, d2, d1, baL34, baL23, baU12),
-      //         _compute15DistsCisTrans(d4, d3, d2, d1, baL34, baU23, baL12),
-      //         _compute15DistsCisTrans(d4, d3, d2, d1, baU34, baL23, baL12),
-      //         _compute15DistsCisTrans(d4, d3, d2, d1, baL34, baU23, baU12),
-      //         _compute15DistsCisTrans(d4, d3, d2, d1, baU34, baL23, baU12),
-      //         _compute15DistsCisTrans(d4, d3, d2, d1, baU34, baU23, baL12),
-      //         _compute15DistsCisTrans(d4, d3, d2, d1, baU34, baU23, baU12),
-      //     });
-      //   } else if (accumData.transPaths.find(pathId) !=
-      //              accumData.transPaths.end()) {
-      //     dl = std::min({
-      //         _compute15DistsTransCis(d4, d3, d2, d1, baL34, baL23, baL12),
-      //         _compute15DistsTransCis(d4, d3, d2, d1, baL34, baL23, baU12),
-      //         _compute15DistsTransCis(d4, d3, d2, d1, baL34, baU23, baL12),
-      //         _compute15DistsTransCis(d4, d3, d2, d1, baU34, baL23, baL12),
-      //         _compute15DistsTransCis(d4, d3, d2, d1, baL34, baU23, baU12),
-      //         _compute15DistsTransCis(d4, d3, d2, d1, baU34, baL23, baU12),
-      //         _compute15DistsTransCis(d4, d3, d2, d1, baU34, baU23, baL12),
-      //         _compute15DistsTransCis(d4, d3, d2, d1, baU34, baU23, baU12),
-      //     });
-      //         du = _compute15DistsTransTrans(d4, d3, d2, d1, baU34, baU23,
 
       if (aid1 != aid5) {  // FIX: do we need this
         if ((mmat->getLowerBound(aid1, aid5) < DIST12_DELTA) ||
