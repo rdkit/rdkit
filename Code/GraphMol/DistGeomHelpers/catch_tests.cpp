@@ -2284,3 +2284,39 @@ TEST_CASE("Bounds Merging") {
     check_permutations(bounds, {0.5, 6.0});
   }
 }
+
+TEST_CASE("Angle tolerances") {
+  SECTION("Linear 1-3") {
+    auto mol = "C=[Ge]=C"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+    CHECK(bm->getLowerBound(0, 2) <=
+          bm->getLowerBound(0, 1) + bm->getLowerBound(1, 2));
+  }
+  SECTION("Flat S-aromat") {
+    auto mol = "c1sccc1"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    auto legacyImplementation = GENERATE(true, false);
+    auto params = DGeomHelpers::EmbedParameters();
+    params.useBasicKnowledge = true;
+    params.useExpTorsionAnglePrefs = true;
+    params.useLegacyImplementation = legacyImplementation;
+    params.randomSeed = 0xC0FFEE;
+
+    DGeomHelpers::EmbedMolecule(*mol, params);
+
+    // we should be able to generate a conformations without violations
+    const auto conf = mol->getConformer();
+    RDGeom::Point3D pos_2 = conf.getAtomPos(2);
+    RDGeom::Point3D pos_4 = conf.getAtomPos(4);
+    auto dist = (pos_2 - pos_4).length();
+    CHECK(bm->getLowerBound(4, 2) <= dist);
+    CHECK(bm->getUpperBound(4, 2) >= dist);
+  }
+}
