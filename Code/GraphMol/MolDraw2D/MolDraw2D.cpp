@@ -17,7 +17,6 @@
 #include <GraphMol/MolDraw2D/AtomSymbol.h>
 #include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
-#include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/MolDraw2D/DrawMolMCHCircleAndLine.h>
 #include <GraphMol/MolDraw2D/DrawMolMCHLasso.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
