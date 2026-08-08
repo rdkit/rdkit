@@ -8160,3 +8160,31 @@ M  END)CTAB";
                       FileParseException);
   }
 }
+
+TEST_CASE("CMLWriter handles chiral centers with implicit hydrogens correctly") {
+
+  
+  auto mol = v2::SmilesParse::MolFromSmiles("F[C@H](Br)Cl");
+  REQUIRE(mol);
+  
+  mol->updatePropertyCache();
+  MolOps::assignStereochemistry(*mol, true, true);
+  
+  std::string cml = MolToCMLBlock(*mol);
+  
+  REQUIRE(cml.find("atomParity") != std::string::npos);
+  
+  size_t pos = cml.find("atomRefs4=\"");
+  REQUIRE(pos != std::string::npos);
+  size_t end_pos = cml.find("\"", pos + 12);
+  std::string refs = cml.substr(pos + 12, end_pos - (pos + 12));
+  
+  int ref_count = 1;
+  for (char c : refs) {
+    if (c == ' ') ref_count++;
+  }
+  
+  CHECK(ref_count == 4);
+  
+  CHECK(refs.find("a1") != std::string::npos);
+}
