@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (C) 2015  Novartis Institute of BioMedical Research
 #         All Rights Reserved
 #
@@ -39,11 +37,10 @@ import os
 import pickle
 import unittest
 
-from rdkit import RDConfig
 from rdkit.RDLogger import logger
 
 logger = logger()
-from rdkit import Chem, DataStructs, rdBase
+from rdkit import Chem, rdBase
 from rdkit.Chem import FilterCatalog, rdfiltercatalog, rdMolDescriptors
 from rdkit.Chem.FilterCatalog import FilterCatalogParams, FilterMatchOps
 

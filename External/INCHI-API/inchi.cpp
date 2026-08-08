@@ -1439,8 +1439,7 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
         Chirality::assignAtomCIPRanks(*m, ranks);
         for (unsigned int i = 0; i < numStereo0D; i++) {
           inchi_Stereo0D *stereo0DPtr = inchiOutput.stereo0D + i;
-          if (stereo0DPtr->parity == INCHI_PARITY_NONE ||
-              stereo0DPtr->parity == INCHI_PARITY_UNDEFINED) {
+          if (stereo0DPtr->parity == INCHI_PARITY_NONE) {
             continue;
           }
           switch (stereo0DPtr->type) {
@@ -1585,6 +1584,10 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
               break;
             }
             case INCHI_StereoType_Tetrahedral: {
+              if (stereo0DPtr->parity == INCHI_PARITY_UNDEFINED ||
+                  stereo0DPtr->parity == INCHI_PARITY_UNKNOWN) {
+                break;
+              }
               unsigned int c =
                   indexToAtomIndexMapping[stereo0DPtr->central_atom];
               Atom *atom = m->getAtomWithIdx(c);
@@ -2034,14 +2037,44 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
       stereo0D.type = INCHI_StereoType_DoubleBond;
       stereo0DEntries.push_back(stereo0D);
     } else if (bond->getStereo() == Bond::STEREOANY) {
-      // have to treat STEREOANY separately because RDKit will clear out
-      // StereoAtoms information.
-      // Here we just change the coordinates of the two end atoms - to bring
-      // them really close - so that InChI will not try to infer stereobond
-      // info from coordinates.
+      // Collapse coordinates so InChI cannot infer stereo from geometry,
+      // and send a proper stereo0D with UNKNOWN parity so that -SUU
+      // produces the correct unknown annotation. StereoAtoms may be
+      // cleared for STEREOANY, so we find neighbors by iterating bonds.
       inchiAtoms[atomIndex1].x = inchiAtoms[atomIndex2].x;
       inchiAtoms[atomIndex1].y = inchiAtoms[atomIndex2].y;
       inchiAtoms[atomIndex1].z = inchiAtoms[atomIndex2].z;
+      int leftNbr = -1;
+      int rightNbr = -1;
+      for (const auto &nbond : m->atomBonds(m->getAtomWithIdx(atomIndex1))) {
+        auto other = nbond->getOtherAtomIdx(atomIndex1);
+        if (other != static_cast<unsigned int>(atomIndex2)) {
+          leftNbr = other;
+          break;
+        }
+      }
+      for (const auto &nbond : m->atomBonds(m->getAtomWithIdx(atomIndex2))) {
+        auto other = nbond->getOtherAtomIdx(atomIndex2);
+        if (other != static_cast<unsigned int>(atomIndex1)) {
+          rightNbr = other;
+          break;
+        }
+      }
+      if (leftNbr >= 0 && rightNbr >= 0) {
+        inchi_Stereo0D stereo0D;
+        stereo0D.parity = INCHI_PARITY_UNKNOWN;
+        stereo0D.neighbor[0] = leftNbr;
+        stereo0D.neighbor[1] = atomIndex1;
+        stereo0D.neighbor[2] = atomIndex2;
+        stereo0D.neighbor[3] = rightNbr;
+        if (!m->getBondBetweenAtoms(stereo0D.neighbor[0],
+                                    stereo0D.neighbor[1])) {
+          std::swap(stereo0D.neighbor[0], stereo0D.neighbor[3]);
+        }
+        stereo0D.central_atom = NO_ATOM;
+        stereo0D.type = INCHI_StereoType_DoubleBond;
+        stereo0DEntries.push_back(stereo0D);
+      }
     }
 
     // number of bonds

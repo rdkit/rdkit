@@ -43,8 +43,6 @@ struct chirality_wrapper {
         .value("Bond_Trans", Chirality::StereoDescriptor::Bond_Trans);
     python::class_<Chirality::StereoInfo>("StereoInfo",
                                           "Class describing stereochemistry")
-        .def_readonly("NOATOM", &Atom::NOATOM,
-                      "marker for unspecified int values")
         .def_readwrite("type", &Chirality::StereoInfo::type,
                        "the type of stereo")
         .def_readwrite("specified", &Chirality::StereoInfo::specified,

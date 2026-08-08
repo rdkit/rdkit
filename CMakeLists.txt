@@ -65,6 +65,18 @@ option(RDK_BUILD_STRUCTCHECKER_SUPPORT "build in support for the StructChecker a
 option(RDK_BUILD_PUBCHEMSHAPE_SUPPORT "build the rdkit wrapper around pubchem-align3d" ON )
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
+option(RDK_USE_UNITY_BUILDS "build the RDKit libraries using CMake unity (jumbo) builds to reduce compile time" OFF)
+# Internal libraries that are not yet clean under unity builds (file-local
+# symbols with colliding names across files in the same library). They are
+# excluded so that RDK_USE_UNITY_BUILDS still produces a working build; shrink
+# this list as the collisions are resolved (typically by giving the file-local
+# symbols unique names or anonymous-namespace scope). Note that vendored
+# third-party code under External/ is excluded automatically (by path).
+set(RDK_UNITY_BUILD_EXCLUDED_LIBRARIES
+    CIPLabeler ChemTransforms Descriptors FileParsers ForceField
+    ForceFieldHelpers MolDraw2D MolStandardize RGroupDecomposition SmilesParse
+    hc
+    CACHE STRING "RDKit libraries excluded from unity builds")
 option(RDK_BUILD_MINIMAL_LIB "build the minimal RDKit wrapper (for the JS bindings)" OFF)
 option(RDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS "build the minimal RDKit JS wrapper such that it supports legacy browsers" OFF)
 option(RDK_BUILD_CFFI_LIB "build the CFFI wrapper (for use in other programming languges)" OFF)
@@ -639,7 +651,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     FILE ${RDKitPython_EXPORTED_TARGETS}.cmake
     NAMESPACE RDKit::
     DESTINATION ${RDKit_LibDir}/cmake/rdkitpython
-    COMPONENT dev
+    COMPONENT python
   )
 
   write_basic_package_version_file(
@@ -656,7 +668,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     ${RDKit_BINARY_DIR}/rdkitpython-config.cmake
     ${RDKit_BINARY_DIR}/rdkitpython-config-version.cmake
     DESTINATION ${RDKit_LibDir}/cmake/rdkitpython
-    COMPONENT dev)
+    COMPONENT python)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 # Memory testing setup

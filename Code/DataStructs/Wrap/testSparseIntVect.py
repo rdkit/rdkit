@@ -1,5 +1,3 @@
-# $Id$
-#
 # Copyright (C) 2007,2008 Greg Landrum
 #
 #  @@ All Rights Reserved @@
@@ -8,7 +6,6 @@ import io
 import os
 import pickle
 import random
-import sys
 import unittest
 
 from rdkit import DataStructs as ds

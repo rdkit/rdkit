@@ -8,8 +8,6 @@ piddlePS - a PostScript backend for the PIDDLE drawing module
 # some fixups by Chris Lee (cwlee@artsci.wustl.edu)
 # help from Paul S. and Bernhard Herzog and others
 
-# $Id$
-#
 # For each page, the coordinate system is initialized with "0 canvasHeight translate" so
 # that coordinate (0,0) is at the top left of the page
 # Therefore all y coordinates must be entered in opposite sign to go down

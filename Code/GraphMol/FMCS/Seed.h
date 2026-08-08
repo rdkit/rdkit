@@ -95,13 +95,14 @@ class RDKIT_FMCS_EXPORT Seed {
   std::vector<TargetMatch> MatchResult;
 
  public:
-  Seed()
+  Seed() {}
+  // Defined explicitly (rather than defaulted) so that copying goes through
+  // operator=, which sets CopyComplete last as a publication barrier for the
+  // multi-threaded growing path. Without a user-declared copy constructor the
+  // implicit one would be used and is deprecated (-Wdeprecated-copy), since
+  // operator= is user-provided.
+  Seed(const Seed &src) { *this = src; }
 
-  {}
-
-  void setMoleculeFragment(const Seed &src) {
-    MoleculeFragment = src.MoleculeFragment;
-  }
   Seed &operator=(const Seed &src) {
     NewBonds = src.NewBonds;
     GrowingStage = src.GrowingStage;
@@ -119,6 +120,9 @@ class RDKIT_FMCS_EXPORT Seed {
     MatchResult = src.MatchResult;
     CopyComplete = true;  // LAST
     return *this;
+  }
+  void setMoleculeFragment(const Seed &src) {
+    MoleculeFragment = src.MoleculeFragment;
   }
   void createFromParent(const Seed *parent) {
     MoleculeFragment = parent->MoleculeFragment;

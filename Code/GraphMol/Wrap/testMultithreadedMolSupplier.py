@@ -1,10 +1,8 @@
-import doctest
 import gzip
 import os
-import sys
 import unittest
 
-from rdkit import Chem, RDConfig, __version__, rdBase
+from rdkit import Chem, RDConfig
 
 
 class TestCase(unittest.TestCase):

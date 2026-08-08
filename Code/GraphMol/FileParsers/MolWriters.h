@@ -17,7 +17,6 @@
 #include <memory>
 #include <string>
 
-#include <boost/noncopyable.hpp>
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
 namespace schrodinger {
@@ -33,8 +32,11 @@ namespace RDKit {
 
 static int defaultConfId = -1;
 
-class RDKIT_FILEPARSERS_EXPORT MolWriter : private boost::noncopyable {
+class RDKIT_FILEPARSERS_EXPORT MolWriter {
  public:
+  MolWriter() = default;
+  MolWriter(const MolWriter &) = delete;
+  MolWriter &operator=(const MolWriter &) = delete;
   virtual ~MolWriter() {}
   virtual void write(const ROMol &mol, int confId = defaultConfId) = 0;
   virtual void flush() = 0;

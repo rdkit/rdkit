@@ -334,6 +334,27 @@ RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT getRotatableBonds(const RDKit::ROMol &mol,
 RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT getAllRotatableBonds(
     const RDKit::ROMol &mol);
 
+//! \brief check if an atom is a spiro center (belongs to exactly 2 rings)
+/*!
+  \param aid  index of the atom
+  \param mol  the molecule of interest
+
+  \return true if the atom is a spiro center
+*/
+RDKIT_DEPICTOR_EXPORT bool isSpiroCenter(unsigned int aid,
+                                          const RDKit::ROMol *mol);
+
+//! \brief find spiro centers on the shortest path between two atoms
+/*!
+  \param mol   the molecule of interest
+  \param aid1  index of the first atom
+  \param aid2  index of the second atom
+
+  \return a set of the indices of spiro centers
+*/
+RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT getSpiroCenters(
+    const RDKit::ROMol &mol, unsigned int aid1, unsigned int aid2);
+
 //! Get the ids of the atoms and bonds that are connected to aid
 RDKIT_DEPICTOR_EXPORT void getNbrAtomAndBondIds(unsigned int aid,
                                                 const RDKit::ROMol *mol,

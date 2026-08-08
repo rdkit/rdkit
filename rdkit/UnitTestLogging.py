@@ -12,7 +12,6 @@ unit testing code for various logging schemes
 """
 
 import collections
-import datetime
 import io
 import logging
 import os
@@ -20,7 +19,6 @@ import re
 import sys
 import tempfile
 import threading
-import time
 import unittest
 
 import rdkit

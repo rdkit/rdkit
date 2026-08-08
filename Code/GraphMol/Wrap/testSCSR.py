@@ -10,7 +10,6 @@
 
 #
 import os
-import sys
 import unittest
 
 from rdkit import Chem

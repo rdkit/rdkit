@@ -33,7 +33,6 @@
 """ unit testing code for molecule drawing
 """
 
-import sys
 import unittest
 
 from rdkit import Chem

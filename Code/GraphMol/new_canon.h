@@ -9,6 +9,9 @@
 //  of the RDKit source tree.
 //
 
+#ifndef RD_NEW_CANON_H
+#define RD_NEW_CANON_H
+
 #include <RDGeneral/export.h>
 #include <RDGeneral/hanoiSort.h>
 #include <GraphMol/ROMol.h>
@@ -913,3 +916,5 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
 
 }  // namespace Canon
 }  // namespace RDKit
+
+#endif  // RD_NEW_CANON_H

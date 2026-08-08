@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2000-2025  greg Landrum and other RDKit contributors
+#  Copyright (C) 2000-2026 Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -277,3 +277,27 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
   finally:
     SetUseLegacyStereoPerception(origUseLegacyVal)
   return centers
+
+
+def MultiConfMolFromSDF(sdf, sanitize=True, removeHs=True, strictParsing=True):
+  """ A convenience function for creating a multi conformer molecule from an SD file.
+
+  This assumes that all structures in the same file are actually the same molecule.
+  
+  Arguments:
+    - sdf: the name of the file to read from
+    - sanitize: (optional) Sanitize the molecule after constructing it
+    - removeHs: (optional) Remove Hs after constructing the molecule
+    - strictParsing: (optional) If set to false, the parser is more lax about the correctness of the contents
+
+  Returns:
+    A molecule with all conformers found in the SD file.
+
+  """
+  returnMol = None
+  for mol in SDMolSupplier(sdf, sanitize=sanitize, removeHs=removeHs, strictParsing=strictParsing):
+    if returnMol is None:
+      returnMol = Mol(mol)
+      continue
+    returnMol.AddConformer(mol.GetConformer(), assignId=True)
+  return returnMol

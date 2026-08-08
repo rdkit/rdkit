@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021-2025 Greg Landrum and other RDKit contributors.
+//  Copyright (C) 2021-2026 Greg Landrum and other RDKit contributors.
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -43,6 +43,7 @@ namespace DGeomHelpers {
   X(trackFailures)                                \
   X(useBasicKnowledge)                            \
   X(useExpTorsionAnglePrefs)                      \
+  X(useLegacyImplementation)                      \
   X(useMacrocycle14config)                        \
   X(useMacrocycleTorsions)                        \
   X(useRandomCoords)                              \

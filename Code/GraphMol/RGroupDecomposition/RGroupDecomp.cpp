@@ -586,7 +586,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
           potentialMatches.emplace_back(core_idx, numberMissingUserGroups,
                                         match, extractedCore);
           if (data->params.includeTargetMolInResults) {
-            potentialMatches.back().setTargetMoleculeForHighlights(mol);
+            potentialMatches.back().setTargetMoleculeForHighlights(
+                RWMOL_SPTR(new RWMol(*mol)));
           }
         }
       }
