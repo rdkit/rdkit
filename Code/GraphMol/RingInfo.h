@@ -77,12 +77,15 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
         must remain alive and unchanged while the iterator is used. `idx` may
         equal the number of rings to construct the end iterator.
       */
-      const_iterator(const std::vector<int> *values,
-                     const std::vector<uint32_t> *begins, size_t idx)
-          : dp_values(values), dp_begins(begins), d_idx(idx) {}
-      reference operator*() const { return valueAt(d_idx); }
+      const_iterator(const int *values, const uint32_t *begin)
+          : dp_values(values), dp_begin(begin) {}
+      reference operator*() const {
+        const auto offset = dp_begin[0];
+        const auto size = dp_begin[1] - offset;
+        return {size ? dp_values + offset : nullptr, size};
+      }
       const_iterator &operator++() {
-        ++d_idx;
+        ++dp_begin;
         return *this;
       }
       const_iterator operator++(int) {
@@ -92,19 +95,12 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       }
       friend bool operator==(const const_iterator &lhs,
                              const const_iterator &rhs) {
-        return lhs.dp_values == rhs.dp_values &&
-               lhs.dp_begins == rhs.dp_begins && lhs.d_idx == rhs.d_idx;
+        return lhs.dp_begin == rhs.dp_begin;
       }
 
      private:
-      value_type valueAt(size_t idx) const {
-        const auto begin = (*dp_begins)[idx];
-        const auto size = (*dp_begins)[idx + 1] - begin;
-        return {size ? dp_values->data() + begin : nullptr, size};
-      }
-      const std::vector<int> *dp_values{nullptr};
-      const std::vector<uint32_t> *dp_begins{nullptr};
-      size_t d_idx{0};
+      const int *dp_values{nullptr};
+      const uint32_t *dp_begin{nullptr};
     };
 
     //! Constructs an empty view with no backing storage.
@@ -117,15 +113,15 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     */
     RingsView(const std::vector<int> *values,
               const std::vector<uint32_t> *begins)
-        : dp_values(values), dp_begins(begins) {}
-    size_t size() const {
-      return dp_begins && !dp_begins->empty() ? dp_begins->size() - 1 : 0;
-    }
-    bool empty() const { return size() == 0; }
+        : dp_values(values ? values->data() : nullptr),
+          dp_begins(begins && !begins->empty() ? begins->data() : nullptr),
+          d_size(begins && !begins->empty() ? begins->size() - 1 : 0) {}
+    size_t size() const { return d_size; }
+    bool empty() const { return d_size == 0; }
     std::span<const int> operator[](size_t idx) const {
-      const auto begin = (*dp_begins)[idx];
-      const auto size = (*dp_begins)[idx + 1] - begin;
-      return {size ? dp_values->data() + begin : nullptr, size};
+      const auto begin = dp_begins[idx];
+      const auto size = dp_begins[idx + 1] - begin;
+      return {size ? dp_values + begin : nullptr, size};
     }
     std::span<const int> at(size_t idx) const {
       if (idx >= size()) {
@@ -135,14 +131,17 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     }
     std::span<const int> front() const { return (*this)[0]; }
     std::span<const int> back() const { return (*this)[size() - 1]; }
-    const_iterator begin() const { return {dp_values, dp_begins, 0}; }
-    const_iterator end() const { return {dp_values, dp_begins, size()}; }
+    const_iterator begin() const { return {dp_values, dp_begins}; }
+    const_iterator end() const {
+      return {dp_values, dp_begins ? dp_begins + d_size : nullptr};
+    }
     const_iterator cbegin() const { return begin(); }
     const_iterator cend() const { return end(); }
 
    private:
-    const std::vector<int> *dp_values{nullptr};
-    const std::vector<uint32_t> *dp_begins{nullptr};
+    const int *dp_values{nullptr};
+    const uint32_t *dp_begins{nullptr};
+    size_t d_size{0};
   };
 
   RingInfo() {}
@@ -428,6 +427,24 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   void preallocate(unsigned int numAtoms, unsigned int numBonds);
 
  private:
+  std::span<const int> atomMembersUnchecked(unsigned int idx) const {
+    if (d_atomMembershipBegins.empty() ||
+        idx >= d_atomMembershipBegins.size() - 1) {
+      return {};
+    }
+    const auto begin = d_atomMembershipBegins[idx];
+    const auto size = d_atomMembershipBegins[idx + 1] - begin;
+    return {size ? d_atomMemberships.data() + begin : nullptr, size};
+  }
+  std::span<const int> bondMembersUnchecked(unsigned int idx) const {
+    if (d_bondMembershipBegins.empty() ||
+        idx >= d_bondMembershipBegins.size() - 1) {
+      return {};
+    }
+    const auto begin = d_bondMembershipBegins[idx];
+    const auto size = d_bondMembershipBegins[idx + 1] - begin;
+    return {size ? d_bondMemberships.data() + begin : nullptr, size};
+  }
   void appendRingUnchecked(std::span<const int> atomIndices,
                            std::span<const int> bondIndices);
   unsigned int finishRingUpdates();
@@ -437,13 +454,13 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   bool df_init{false};
   FIND_RING_TYPE df_find_type_type{FIND_RING_TYPE_OTHER_OR_UNKNOWN};
   std::vector<uint32_t> d_atomRingBegins{0};
+  std::vector<uint32_t> d_atomMembershipBegins{0};
+  std::vector<int> d_atomMemberships;
   std::vector<uint32_t> d_bondRingBegins{0};
+  std::vector<uint32_t> d_bondMembershipBegins{0};
+  std::vector<int> d_bondMemberships;
   std::vector<int> d_atomsInRings;
   std::vector<int> d_bondsInRings;
-  std::vector<uint32_t> d_atomMembershipBegins{0};
-  std::vector<uint32_t> d_bondMembershipBegins{0};
-  std::vector<int> d_atomMemberships;
-  std::vector<int> d_bondMemberships;
   VECT_INT_VECT d_atomRingFamilies, d_bondRingFamilies;
   std::vector<bool> d_fusedRings;
   std::vector<unsigned int> d_numFusedBonds;
