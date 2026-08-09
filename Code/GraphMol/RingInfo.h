@@ -236,7 +236,12 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  std::span<const int> atomMembers(unsigned int idx) const;
+  std::span<const int> atomMembers(unsigned int idx) const {
+    if (!df_init) {
+      checkInitialized();
+    }
+    return atomMembersUnchecked(idx);
+  }
 
   //! returns whether or not atoms with indices \c idx1 and \c idx2 belong to
   //! the same ring.
@@ -244,9 +249,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  bool areAtomsInSameRing(unsigned int idx1, unsigned int idx2) const {
-    return areAtomsInSameRingOfSize(idx1, idx2, 0);
-  }
+  bool areAtomsInSameRing(unsigned int idx1, unsigned int idx2) const;
 
   //! returns whether or not atoms with indices \c idx1 and \c idx2 belong to
   //! the same ring of size \c size.
@@ -310,7 +313,12 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  std::span<const int> bondMembers(unsigned int idx) const;
+  std::span<const int> bondMembers(unsigned int idx) const {
+    if (!df_init) {
+      checkInitialized();
+    }
+    return bondMembersUnchecked(idx);
+  }
 
   //! returns whether or not bonds with indices \c idx1 and \c idx2 belong to
   //! the same ring.
@@ -318,9 +326,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  bool areBondsInSameRing(unsigned int idx1, unsigned int idx2) const {
-    return areBondsInSameRingOfSize(idx1, idx2, 0);
-  }
+  bool areBondsInSameRing(unsigned int idx1, unsigned int idx2) const;
 
   //! returns whether or not bonds with indices \c idx1 and \c idx2 belong to
   //! the same ring of size \c size.
@@ -427,6 +433,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   void preallocate(unsigned int numAtoms, unsigned int numBonds);
 
  private:
+  void checkInitialized() const;
   std::span<const int> atomMembersUnchecked(unsigned int idx) const {
     if (d_atomMembershipBegins.empty() ||
         idx >= d_atomMembershipBegins.size() - 1) {
