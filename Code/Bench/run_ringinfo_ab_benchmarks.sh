@@ -449,7 +449,8 @@ for path in sorted(glob.glob(os.path.join(raw, "memory-*.stdout"))):
         "count", "sizeof_ringinfo", "object_bytes", "baseline_rss_bytes",
         "object_rss_bytes", "populated_rss_bytes", "object_rss_delta_bytes",
         "population_rss_delta_bytes", "retained_delta_bytes",
-        "retained_bytes_per_ringinfo", "rings", "atom_members",
+        "object_bytes_per_ringinfo", "ring_bytes_per_ringinfo",
+        "total_bytes_per_ringinfo", "rings", "atom_members",
     ):
         if key not in values:
             raise ValueError(f"{key} missing from {path}")
@@ -502,12 +503,25 @@ for (suite, dataset, operation), values in sorted(micro_groups.items()):
                 values["before"], values["after"])
 
 memory_groups = defaultdict(lambda: {"before": [], "after": []})
+memory_object_groups = defaultdict(lambda: {"before": [], "after": []})
+memory_ring_groups = defaultdict(lambda: {"before": [], "after": []})
 for row in memory_rows:
     memory_groups[row["dataset"]][row["revision"]].append(
-        row["retained_bytes_per_ringinfo"])
+        row["total_bytes_per_ringinfo"])
+    memory_object_groups[row["dataset"]][row["revision"]].append(
+        row["object_bytes_per_ringinfo"])
+    memory_ring_groups[row["dataset"]][row["revision"]].append(
+        row["ring_bytes_per_ringinfo"])
 for dataset, values in sorted(memory_groups.items()):
     add_summary("ringinfo_memory", dataset, "bytes_per_ringinfo",
                 values["before"], values["after"])
+    add_summary("ringinfo_memory_object", dataset, "bytes_per_ringinfo",
+                memory_object_groups[dataset]["before"],
+                memory_object_groups[dataset]["after"])
+    add_summary("ringinfo_memory_ring_additions", dataset,
+                "bytes_per_ringinfo",
+                memory_ring_groups[dataset]["before"],
+                memory_ring_groups[dataset]["after"])
 
 for metric, unit in (
     ("elapsed_s", "seconds"),
@@ -654,26 +668,74 @@ fig.tight_layout(rect=(0, 0, 1, 0.94))
 fig.savefig(os.path.join(plots, "ring_perception.svg"))
 plt.close(fig)
 
-fig, ax = plt.subplots(figsize=(9, 5.8))
+perception_reductions = {}
+for operation in perception_operations:
+    perception_reductions[operation] = []
+    for dataset in DATASETS:
+        values = micro_groups[("perception", dataset, operation)]
+        before = statistics.median(values["before"])
+        after = statistics.median(values["after"])
+        perception_reductions[operation].append(
+            100.0 * (1.0 - after / before))
+all_perception_reductions = [
+    value
+    for values in perception_reductions.values()
+    for value in values
+]
+lower = min(0.0, min(all_perception_reductions))
+upper = max(0.0, max(all_perception_reductions))
+margin = max(0.5, 0.12 * (upper - lower))
+
+fig, axes = plt.subplots(1, 2, figsize=(13, 5.8), sharey=True)
+for ax, operation in zip(axes, perception_operations):
+    values = perception_reductions[operation]
+    colors = ["#2b8a3e" if value >= 0 else "#c92a2a" for value in values]
+    bars = ax.bar(range(1, len(DATASETS) + 1), values,
+                  color=colors, alpha=0.82)
+    ax.axhline(0, color="#333333", linewidth=0.9)
+    ax.bar_label(bars, labels=[f"{value:+.1f}%" for value in values],
+                 padding=3, fontsize=9)
+    ax.set_title(operation.replace("MolOps::", ""))
+    ax.set_xticks(range(1, len(DATASETS) + 1),
+                  [dataset.replace("_", " ") for dataset in DATASETS])
+    ax.set_ylabel("Median time reduction (%)")
+    ax.set_ylim(lower - margin, upper + margin)
+    ax.grid(axis="y", alpha=0.22)
+fig.suptitle("Ring perception: percent reduction (positive is faster)",
+             y=0.995)
+fig.tight_layout(rect=(0, 0, 1, 0.94))
+fig.savefig(os.path.join(plots, "ring_perception_percent_reduction.svg"))
+plt.close(fig)
+
+fig, ax = plt.subplots(figsize=(10, 5.8))
 datasets = sorted(memory_groups)
-positions = range(1, len(datasets) + 1)
-for offset, revision in ((-0.18, "before"), (0.18, "after")):
-    values = [[value / 1024.0 for value in memory_groups[dataset][revision]]
-              for dataset in datasets]
-    boxes = ax.boxplot(values, positions=[p + offset for p in positions],
-                       widths=0.30, patch_artist=True, showfliers=False,
-                       medianprops={"color": "black", "linewidth": 1.4})
-    for box in boxes["boxes"]:
-        box.set(facecolor=COLORS[revision], alpha=0.72)
-    for position, samples in zip(positions, values):
-        ax.scatter([position + offset] * len(samples), samples, s=18,
-                   color=COLORS[revision], alpha=0.70, zorder=3)
+positions = list(range(1, len(datasets) + 1))
+for offset, revision in ((-0.19, "before"), (0.19, "after")):
+    object_values = [
+        statistics.median(memory_object_groups[dataset][revision]) / 1024.0
+        for dataset in datasets
+    ]
+    ring_values = [
+        statistics.median(memory_ring_groups[dataset][revision]) / 1024.0
+        for dataset in datasets
+    ]
+    bar_positions = [position + offset for position in positions]
+    ax.bar(bar_positions, object_values, width=0.34,
+           color=COLORS[revision], alpha=0.95,
+           label=f"{revision.title()}: object/default storage")
+    ax.bar(bar_positions, ring_values, width=0.34, bottom=object_values,
+           color=COLORS[revision], alpha=0.48, hatch="//",
+           label=f"{revision.title()}: ring additions")
+    for position, object_value, ring_value in zip(
+            bar_positions, object_values, ring_values):
+        total = object_value + ring_value
+        ax.text(position, total, f"{total:.2f}", ha="center", va="bottom",
+                fontsize=8, rotation=90)
 ax.set_xticks(list(positions), [dataset.replace("_", " ") for dataset in datasets])
-ax.set_ylabel("Retained KiB per RingInfo")
-ax.set_title("RingInfo retained memory before/after")
+ax.set_ylabel("KiB per RingInfo")
+ax.set_title("Total RingInfo memory: object/default storage + ring additions")
 ax.grid(axis="y", alpha=0.22)
-ax.legend(handles=[Patch(color=COLORS[key], label=key.title(), alpha=0.72)
-                   for key in ("before", "after")])
+ax.legend(ncol=2, fontsize=8)
 fig.tight_layout()
 fig.savefig(os.path.join(plots, "ringinfo_memory.svg"))
 plt.close(fig)

@@ -244,9 +244,11 @@ TEST_CASE("test3") {
              m->getRingInfo()->bondMembers(i)[0] == 0));
   }
   REQUIRE(m->getRingInfo()->areAtomsInSameRing(0, 1));
+  REQUIRE(m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 0));
   REQUIRE(m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 3));
   REQUIRE(!m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 4));
   REQUIRE(m->getRingInfo()->areBondsInSameRing(0, 1));
+  REQUIRE(m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 0));
   REQUIRE(m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 3));
   REQUIRE(!m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 4));
   BOOST_LOG(rdInfoLog) << smi << "\n";

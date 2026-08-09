@@ -26,7 +26,56 @@ void validateRing(std::span<const int> atomIndices,
       std::ranges::none_of(bondIndices, [](int idx) { return idx < 0; }),
       "bond index must be non-negative");
 }
+
+template <bool checkRingSize>
+bool areMembersInSameRing(const std::vector<uint32_t> &membershipBegins,
+                          const std::vector<int> &memberships,
+                          const std::vector<uint32_t> &ringBegins,
+                          unsigned int idx1, unsigned int idx2,
+                          unsigned int ringSize = 0) {
+  if (membershipBegins.empty() || idx1 >= membershipBegins.size() - 1 ||
+      idx2 >= membershipBegins.size() - 1) {
+    return false;
+  }
+  auto pos1 = membershipBegins[idx1];
+  auto pos2 = membershipBegins[idx2];
+  const auto end1 = membershipBegins[idx1 + 1];
+  const auto end2 = membershipBegins[idx2 + 1];
+
+  if (end1 - pos1 == 1 && end2 - pos2 == 1) {
+    const auto ring1 = memberships[pos1];
+    if (ring1 != memberships[pos2]) {
+      return false;
+    }
+    if constexpr (checkRingSize) {
+      return ringBegins[ring1 + 1] - ringBegins[ring1] == ringSize;
+    }
+    return true;
+  }
+
+  while (pos1 < end1 && pos2 < end2) {
+    const auto ring1 = memberships[pos1];
+    const auto ring2 = memberships[pos2];
+    if (ring1 < ring2) {
+      ++pos1;
+    } else if (ring1 > ring2) {
+      ++pos2;
+    } else if constexpr (!checkRingSize) {
+      return true;
+    } else if (ringBegins[ring1 + 1] - ringBegins[ring1] == ringSize) {
+      return true;
+    } else {
+      ++pos1;
+      ++pos2;
+    }
+  }
+  return false;
+}
 }  // namespace
+
+void RingInfo::checkInitialized() const {
+  PRECONDITION(df_init, "RingInfo not initialized");
+}
 
 RingInfo::INT_VECT RingInfo::atomRingSizes(unsigned int idx) const {
   PRECONDITION(df_init, "RingInfo not initialized");
@@ -88,40 +137,23 @@ unsigned int RingInfo::numAtomRings(unsigned int idx) const {
   }
   return d_atomMembershipBegins[idx + 1] - d_atomMembershipBegins[idx];
 }
-std::span<const int> RingInfo::atomMembers(unsigned int idx) const {
+bool RingInfo::areAtomsInSameRing(unsigned int idx1,
+                                  unsigned int idx2) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-
-  return atomMembersUnchecked(idx);
+  return areMembersInSameRing<false>(d_atomMembershipBegins,
+                                     d_atomMemberships, d_atomRingBegins, idx1,
+                                     idx2);
 }
 bool RingInfo::areAtomsInSameRingOfSize(unsigned int idx1, unsigned int idx2,
                                         unsigned int size) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-
-  if (d_atomMembershipBegins.empty() ||
-      idx1 >= d_atomMembershipBegins.size() - 1 ||
-      idx2 >= d_atomMembershipBegins.size() - 1) {
-    return false;
+  if (!size) {
+    return areMembersInSameRing<false>(d_atomMembershipBegins,
+                                       d_atomMemberships, d_atomRingBegins,
+                                       idx1, idx2);
   }
-  auto pos1 = d_atomMembershipBegins[idx1];
-  auto pos2 = d_atomMembershipBegins[idx2];
-  const auto end1 = d_atomMembershipBegins[idx1 + 1];
-  const auto end2 = d_atomMembershipBegins[idx2 + 1];
-  while (pos1 < end1 && pos2 < end2) {
-    const auto ring1 = d_atomMemberships[pos1];
-    const auto ring2 = d_atomMemberships[pos2];
-    if (ring1 < ring2) {
-      ++pos1;
-    } else if (ring1 > ring2) {
-      ++pos2;
-    } else if (!size ||
-               d_atomRingBegins[ring1 + 1] - d_atomRingBegins[ring1] == size) {
-      return true;
-    } else {
-      ++pos1;
-      ++pos2;
-    }
-  }
-  return false;
+  return areMembersInSameRing<true>(d_atomMembershipBegins, d_atomMemberships,
+                                    d_atomRingBegins, idx1, idx2, size);
 }
 RingInfo::INT_VECT RingInfo::bondRingSizes(unsigned int idx) const {
   PRECONDITION(df_init, "RingInfo not initialized");
@@ -183,46 +215,32 @@ unsigned int RingInfo::numBondRings(unsigned int idx) const {
   }
   return d_bondMembershipBegins[idx + 1] - d_bondMembershipBegins[idx];
 }
-std::span<const int> RingInfo::bondMembers(unsigned int idx) const {
+bool RingInfo::areBondsInSameRing(unsigned int idx1,
+                                  unsigned int idx2) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-
-  return bondMembersUnchecked(idx);
+  return areMembersInSameRing<false>(d_bondMembershipBegins,
+                                     d_bondMemberships, d_bondRingBegins, idx1,
+                                     idx2);
 }
 bool RingInfo::areBondsInSameRingOfSize(unsigned int idx1, unsigned int idx2,
                                         unsigned int size) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-
-  if (d_bondMembershipBegins.empty() ||
-      idx1 >= d_bondMembershipBegins.size() - 1 ||
-      idx2 >= d_bondMembershipBegins.size() - 1) {
-    return false;
+  if (!size) {
+    return areMembersInSameRing<false>(d_bondMembershipBegins,
+                                       d_bondMemberships, d_bondRingBegins,
+                                       idx1, idx2);
   }
-  auto pos1 = d_bondMembershipBegins[idx1];
-  auto pos2 = d_bondMembershipBegins[idx2];
-  const auto end1 = d_bondMembershipBegins[idx1 + 1];
-  const auto end2 = d_bondMembershipBegins[idx2 + 1];
-  while (pos1 < end1 && pos2 < end2) {
-    const auto ring1 = d_bondMemberships[pos1];
-    const auto ring2 = d_bondMemberships[pos2];
-    if (ring1 < ring2) {
-      ++pos1;
-    } else if (ring1 > ring2) {
-      ++pos2;
-    } else if (!size ||
-               d_bondRingBegins[ring1 + 1] - d_bondRingBegins[ring1] == size) {
-      return true;
-    } else {
-      ++pos1;
-      ++pos2;
-    }
-  }
-  return false;
+  return areMembersInSameRing<true>(d_bondMembershipBegins, d_bondMemberships,
+                                    d_bondRingBegins, idx1, idx2, size);
 }
 
 unsigned int RingInfo::numRings() const {
   PRECONDITION(df_init, "RingInfo not initialized");
-  PRECONDITION(atomRings().size() == bondRings().size(), "length mismatch");
-  return rdcast<unsigned int>(atomRings().size());
+  PRECONDITION(d_atomRingBegins.size() == d_bondRingBegins.size(),
+               "length mismatch");
+  return d_atomRingBegins.empty()
+             ? 0
+             : rdcast<unsigned int>(d_atomRingBegins.size() - 1);
 }
 
 void RingInfo::appendRingUnchecked(std::span<const int> atomIndices,

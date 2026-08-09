@@ -143,6 +143,12 @@ int main(int argc, char *argv[]) {
     const auto objectDelta = nonnegativeDifference(objectRss, baselineRss);
     const auto populationDelta = nonnegativeDifference(populatedRss, objectRss);
     const auto retainedDelta = nonnegativeDifference(populatedRss, baselineRss);
+    const auto objectBytesPerRingInfo =
+        static_cast<double>(objectDelta) / count;
+    const auto ringBytesPerRingInfo =
+        static_cast<double>(populationDelta) / count;
+    const auto totalBytesPerRingInfo =
+        static_cast<double>(retainedDelta) / count;
 
     std::size_t rings = 0, members = 0;
     for (const auto &info : infos) {
@@ -160,8 +166,9 @@ int main(int argc, char *argv[]) {
               << " object_rss_delta_bytes=" << objectDelta
               << " population_rss_delta_bytes=" << populationDelta
               << " retained_delta_bytes=" << retainedDelta
-              << " retained_bytes_per_ringinfo="
-              << static_cast<double>(retainedDelta) / count
+              << " object_bytes_per_ringinfo=" << objectBytesPerRingInfo
+              << " ring_bytes_per_ringinfo=" << ringBytesPerRingInfo
+              << " total_bytes_per_ringinfo=" << totalBytesPerRingInfo
               << " rings=" << rings << " atom_members=" << members << '\n';
   } catch (const std::exception &error) {
     std::cerr << error.what() << '\n';
