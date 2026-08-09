@@ -16,7 +16,7 @@
 #   --build-arg http_proxy=$HTTP_PROXY \
 #   --build-arg https_proxy=$HTTP_PROXY \
 #   --network=host --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions" \
-#   -f Dockerfile_1_deps .
+#   -f 01_deps.Dockerfile .
 #
 # 3. build the MinimalLib rdkit-minimallib-rdkit-src image:
 #   3a. from a git clone:
@@ -25,13 +25,13 @@
 #     --build-arg https_proxy=$HTTP_PROXY \
 #     --build-arg "RDKIT_GIT_URL=https://github.com/myfork/rdkit.git" \
 #     --build-arg "RDKIT_BRANCH=mybranch" \
-#     --network=host -f Dockerfile_rdkit_clone_from_github .
+#     --network=host -f 02_rdkit_clone.Dockerfile .
 #   or
 #   3b. from an existing local source tree:
 #   docker build --target local-src-stage -t rdkit-minimallib-rdkit-src \
 #     --build-arg http_proxy=$HTTP_PROXY \
 #     --build-arg https_proxy=$HTTP_PROXY \
-#     --network=host -f Dockerfile_2_rdkit_copy_from_local ../../..
+#     --network=host -f 02_rdkit_copy.Dockerfile ../../..
 #
 # 4. build the MinimalLib rdkit-minimallib image:
 #    (the build-arg arguments are all optional; in the following
@@ -41,7 +41,7 @@
 #   --build-arg http_proxy=$HTTP_PROXY \
 #   --build-arg https_proxy=$HTTP_PROXY \
 #   --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions" \
-#   -f Dockerfile_3_rdkit_build .
+#   -f 03_build.Dockerfile .
 #
 # 5. create a temporary container and copy built libraries
 #    from the container to your local filesystem, then destroy
