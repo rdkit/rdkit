@@ -1,4 +1,4 @@
-name: Build MinimalLib, compile-boost multi-docker 
+name: Build MinimalLib, compile-boost multi-docker
 
 on:
   push:
