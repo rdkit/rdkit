@@ -19,6 +19,11 @@
 namespace RDKit {
 // local utility namespace:
 namespace {
+struct ConjAtomInfo {
+  bool isCandidate;
+  unsigned int numSubstituents;
+};
+
 bool isAtomConjugCand(const Atom *at) {
   PRECONDITION(at, "bad atom");
   // return false for neutral atoms where the current valence exceeds the
@@ -43,35 +48,35 @@ bool isAtomConjugCand(const Atom *at) {
   return res;
 }
 
-void markConjAtomBonds(Atom *at) {
+void markConjAtomBonds(Atom *at, const std::vector<ConjAtomInfo> &atomInfo) {
   PRECONDITION(at, "bad atom");
-  if (!isAtomConjugCand(at)) {
+  const auto &info = atomInfo[at->getIdx()];
+  if (!info.isCandidate) {
     return;
   }
   auto &mol = at->getOwningMol();
 
   int atx = at->getIdx();
   // make sure that have either 2 or 3 substitutions on this atom
-  int sbo = at->getDegree() + at->getTotalNumHs();
-  if ((sbo < 2) || (sbo > 3)) {
+  if ((info.numSubstituents < 2) || (info.numSubstituents > 3)) {
     return;
   }
 
   for (const auto bnd1 : mol.atomBonds(at)) {
     if (bnd1->getValenceContrib(at) < 1.5 ||
-        !isAtomConjugCand(bnd1->getOtherAtom(at))) {
+        !atomInfo[bnd1->getOtherAtomIdx(atx)].isCandidate) {
       continue;
     }
     for (const auto bnd2 : mol.atomBonds(at)) {
       if (bnd1 == bnd2) {
         continue;
       }
-      auto at2 = mol.getAtomWithIdx(bnd2->getOtherAtomIdx(atx));
-      sbo = at2->getDegree() + at2->getTotalNumHs();
-      if (sbo > 3) {
+      const auto at2Idx = bnd2->getOtherAtomIdx(atx);
+      const auto &at2Info = atomInfo[at2Idx];
+      if (at2Info.numSubstituents > 3) {
         continue;
       }
-      if (isAtomConjugCand(at2)) {
+      if (at2Info.isCandidate) {
         bnd1->setIsConjugated(true);
         bnd2->setIsConjugated(true);
       }
@@ -132,10 +137,16 @@ void setConjugation(ROMol &mol) {
     bond->setIsConjugated(bond->getIsAromatic());
   }
 
+  std::vector<ConjAtomInfo> atomInfo(mol.getNumAtoms());
+  for (const auto atom : mol.atoms()) {
+    atomInfo[atom->getIdx()] = {
+        isAtomConjugCand(atom), atom->getDegree() + atom->getTotalNumHs()};
+  }
+
   // loop over each atom and check if the bonds connecting to it can
   // be conjugated
   for (auto atom : mol.atoms()) {
-    markConjAtomBonds(atom);
+    markConjAtomBonds(atom, atomInfo);
   }
 }
 
