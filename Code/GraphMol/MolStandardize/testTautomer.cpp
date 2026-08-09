@@ -1827,10 +1827,7 @@ int main() {
   testTautomerEnumeratorResult_const_iterator();
   testGithub3430();
   testGithub3755();
-<<<<<<< fix/tautomer-enumerate-drops-stereo-of-unmodified-sp3
   testEnumeratePreservesUnmodifiedSp3Stereo();
-=======
   testCanonicalizePreservesNonTautomericBondStereo();
->>>>>>> master
   return 0;
 }
