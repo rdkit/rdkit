@@ -370,7 +370,9 @@ void cleanUpOrganometallics(RWMol &mol) {
   }
 }
 
-void adjustHs(RWMol &mol) {
+namespace {
+void adjustHsImpl(RWMol &mol,
+                  const boost::dynamic_bitset<> *atomsToAdjust = nullptr) {
   //
   //  Go through and adjust the number of implicit and explicit Hs
   //  on each atom in the molecule.
@@ -382,6 +384,9 @@ void adjustHs(RWMol &mol) {
   //  valence of everything has been calculated.
   //
   for (auto atom : mol.atoms()) {
+    if (atomsToAdjust && !(*atomsToAdjust)[atom->getIdx()]) {
+      continue;
+    }
     int origImplicitV = atom->getValence(Atom::ValenceType::IMPLICIT);
     atom->calcExplicitValence(false);
     int origExplicitV = atom->getNumExplicitHs();
@@ -409,6 +414,24 @@ void adjustHs(RWMol &mol) {
     }
   }
 }
+
+void includeAromaticAtoms(const RWMol &mol,
+                          boost::dynamic_bitset<> &atomsToAdjust) {
+  for (const auto atom : mol.atoms()) {
+    if (atom->getIsAromatic()) {
+      atomsToAdjust[atom->getIdx()] = 1;
+    }
+  }
+  for (const auto bond : mol.bonds()) {
+    if (bond->getIsAromatic()) {
+      atomsToAdjust[bond->getBeginAtomIdx()] = 1;
+      atomsToAdjust[bond->getEndAtomIdx()] = 1;
+    }
+  }
+}
+}  // namespace
+
+void adjustHs(RWMol &mol) { adjustHsImpl(mol); }
 
 void assignRadicals(RWMol &mol) {
   for (auto atom : mol.atoms()) {
@@ -606,6 +629,15 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
     mol.updatePropertyCache(false);
   }
 
+  const bool trackAromaticAtomsForAdjustHs =
+      (sanitizeOps & SANITIZE_ADJUSTHS) &&
+      (sanitizeOps & (SANITIZE_KEKULIZE | SANITIZE_SETAROMATICITY));
+  boost::dynamic_bitset<> atomsToAdjustHs(
+      trackAromaticAtomsForAdjustHs ? mol.getNumAtoms() : 0);
+  if (trackAromaticAtomsForAdjustHs) {
+    includeAromaticAtoms(mol, atomsToAdjustHs);
+  }
+
   // kekulizations
   operationThatFailed = SANITIZE_KEKULIZE;
   if (sanitizeOps & operationThatFailed) {
@@ -637,6 +669,9 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   operationThatFailed = SANITIZE_SETAROMATICITY;
   if (sanitizeOps & operationThatFailed) {
     setAromaticity(mol);
+    if (trackAromaticAtomsForAdjustHs) {
+      includeAromaticAtoms(mol, atomsToAdjustHs);
+    }
   }
 
   // set conjugation
@@ -665,7 +700,11 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   // adjust Hydrogen counts:
   operationThatFailed = SANITIZE_ADJUSTHS;
   if (sanitizeOps & operationThatFailed) {
-    adjustHs(mol);
+    if (trackAromaticAtomsForAdjustHs) {
+      adjustHsImpl(mol, &atomsToAdjustHs);
+    } else {
+      adjustHs(mol);
+    }
   }
 
   // now that everything has been cleaned up, go through and check/update the
