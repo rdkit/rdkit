@@ -45,6 +45,8 @@
 using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 using namespace RDKit;
 
+#define WRITE_MOLFILES false
+
 namespace {
 /**
  * @brief Computes pairwise distance matrix for 3D coordinates.
@@ -1360,10 +1362,13 @@ TEST_CASE("testEmbedParameters") {
     auto mol = v2::SmilesParse::MolFromSmiles(smiles);
     REQUIRE(mol);
     MolOps::addHs(*mol);
-    REQUIRE(ref->getNumAtoms() == mol->getNumAtoms());
+    REQUIRE(mol->getNumAtoms() == ref->getNumAtoms()); 
     params.useLegacyImplementation = legacyETKDG;
     params.randomSeed = 42;
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    #if WRITE_MOLFILES 
+      MolToMolFile(*mol, file);
+    #endif
     compareConfs(ref.get(), mol.get());
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;

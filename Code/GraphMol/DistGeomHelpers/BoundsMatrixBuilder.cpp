@@ -1,4 +1,3 @@
-//
 //  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
@@ -1051,7 +1050,7 @@ TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
           }
         }
       }
-      return {TorsionType::FLEXIBLE};
+      [[fallthrough]];
     default:
       return {TorsionType::FLEXIBLE};
   }

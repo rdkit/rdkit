@@ -55,7 +55,7 @@ constexpr Params Cosine = {.distance = 2.15,
                            .kTermAngle = 0.1,
                            .kTermImproper = .001,
                            .kTermTorsion = 2.15,
-                           .etTermScaling = 0.1};
+                           .etTermScaling = 0.05};
 }  // namespace AIO
 }  // namespace ETKDGForceConsts
 struct CrystalFFDetails {
