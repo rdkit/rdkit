@@ -218,7 +218,7 @@ class RDKIT_RDBOOST_EXPORT RDUNUSED NOGIL {
 };
 #else
 // Never release the lock when not compiling thread-safe
-struct RDUNUSED NOGIL {};
+struct RDUNUSED NOGIL{};
 #endif
 
 // -------------------
