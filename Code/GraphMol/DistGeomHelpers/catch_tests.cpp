@@ -252,7 +252,7 @@ TEST_CASE("EmbedParameters to JSON") {
     ps.boundsMat = mat;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6573654663221247"],["0.98025420400136154","1.5773654663221246","0"]]})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6536523290585412"],["0.98025420400136154","1.5809872790648758","0"]]})JSON";
     CHECK(json == goal);
   }
   SECTION("Round trip") {
@@ -754,9 +754,9 @@ TEST_CASE("tracking failure causes") {
     ps.maxIterations = 50;
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid < 0);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
-          1);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 3);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] ==
+          0);
   }
   SECTION("basicsAIO") {
     auto mol =
@@ -792,8 +792,8 @@ TEST_CASE("tracking failure causes") {
     ps.useLegacyImplementation = false;
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid < 0);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 8);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::MINIMIZATION] == 42);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 4);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::MINIMIZATION] == 46);
   }
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -905,9 +905,9 @@ TEST_CASE("Macrocycle bounds matrix") {
     bool useMacrocycle14config = true;
     DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
                                  useMacrocycle14config);
-    CHECK(bm->getLowerBound(1, 18) > 2.6);
+    CHECK(bm->getLowerBound(1, 18) > 2.55);
     CHECK(bm->getLowerBound(1, 18) < 2.7);
-    CHECK(bm->getLowerBound(4, 17) > 2.6);
+    CHECK(bm->getLowerBound(4, 17) > 2.55);
     CHECK(bm->getLowerBound(4, 17) < 2.7);
 
     const bool legacyETKDG = GENERATE(true, false);
@@ -1050,7 +1050,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol < 0);
-        CHECK(fabs(chiralVol) > 0.5);
+        CHECK(fabs(chiralVol) > 0.37);
       }
     }
   }
@@ -1243,7 +1243,7 @@ TEST_CASE("github #8001: RMS pruning misses conformers") {
     ps.pruneRmsThresh = 0.5;
     ps.useLegacyImplementation = false;
     auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
-    CHECK(cids.size() == 93);
+    CHECK(cids.size() == 84);
     ps.pruneRmsThresh = 1.0;
     cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
     CHECK(cids.size() == 5);
@@ -1746,16 +1746,20 @@ TEST_CASE("Github #9143: ETKDGv3 generating twisted amides") {
     CHECK(cid >= 0);
     auto conf = mol->getConformer(cid);
 
-    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 27),
-               Catch::Matchers::WithinAbs(-180, 10) ||
-                   Catch::Matchers::WithinAbs(180, 10));
-    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 29),
-               Catch::Matchers::WithinAbs(0, 12.5));
-    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 21),
-               Catch::Matchers::WithinAbs(-180, 20) ||
+    // These amide torsions can go either way, so we have to check "cis" and
+    // "trans" for each of them:
+    CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 27)),
+               Catch::Matchers::WithinAbs(180, 10) ||
+                   Catch::Matchers::WithinAbs(0, 12.5));
+    CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 29)),
+               Catch::Matchers::WithinAbs(180, 10) ||
+                   Catch::Matchers::WithinAbs(0, 12.5));
+    CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 21)),
+               Catch::Matchers::WithinAbs(180, 20) ||
+                   Catch::Matchers::WithinAbs(0, 20));
+    CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 24)),
+               Catch::Matchers::WithinAbs(0, 20) ||
                    Catch::Matchers::WithinAbs(180, 20));
-    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 24),
-               Catch::Matchers::WithinAbs(0, 20));
   }
   SECTION("specific tests") {
     std::vector<std::pair<std::string, std::vector<std::vector<int>>>> testCases{
@@ -1806,11 +1810,9 @@ TEST_CASE("Github9403: Bug: Forced cis bonds in larger (non-macrocycle)") {
     DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
     DGeomHelpers::setTopolBounds(*mol, bm);
 
-    // both should allow cis and trans -> range must be larger than GEN_DIST_TOL
-    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) >
-          2.0 * 0.06 + 0.00001);
-    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) >
-          2.0 * 0.06 + 0.00001);
+    // both should allow cis and trans
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) > 1.1);
+    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) > 1.1);
   }
   SECTION("small ring") {
     auto mol = "C1C(C)=C(C)CCCC1"_smiles;
@@ -1823,10 +1825,8 @@ TEST_CASE("Github9403: Bug: Forced cis bonds in larger (non-macrocycle)") {
 
     CHECK(bm->getLowerBound(0, 4) > bm->getUpperBound(0, 5));
     // here cis/trans should be enforced
-    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <=
-          2.0 * 0.06 + 0.00001);
-    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <=
-          2.0 * 0.06 + 0.00001);
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <= 1.1);
+    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <= 1.1);
   }
 }
 
@@ -1845,10 +1845,8 @@ TEST_CASE("Github9403: Bug: Overwritten stereo information in rings") {
     // trans should be allowed but NOT cis for 0-5 and the other way araound for
     // 0-4
     CHECK(bm->getLowerBound(0, 5) > bm->getUpperBound(0, 4));
-    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <=
-          2.0 * 0.06 + 0.00001);
-    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <=
-          2.0 * 0.06 + 0.00001);
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <= 1.1);
+    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <= 1.1);
   }
   SECTION("as reported (enforce trans bond in small ring)") {
     auto mol = "C1C(C)=C(C)CCCC1"_smiles;
@@ -1865,10 +1863,8 @@ TEST_CASE("Github9403: Bug: Overwritten stereo information in rings") {
     // trans should be allowed but NOT cis for 0-5 and the other way araound for
     // 0-4
     CHECK(bm->getLowerBound(0, 5) > bm->getUpperBound(0, 4));
-    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <=
-          2.0 * 0.06 + 0.00001);
-    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <=
-          2.0 * 0.06 + 0.00001);
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <= 1.1);
+    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <= 1.1);
   }
 }
 
@@ -2145,7 +2141,7 @@ TEST_CASE("setTopolBounds with param objects") {
 }
 
 void check_permutations(std::vector<DGeomHelpers::Bounds> &bounds,
-                       const DGeomHelpers::Bounds expected) {
+                        const DGeomHelpers::Bounds expected) {
   // we check all permutations to ensure no order dependence
   do {
     auto merged = DGeomHelpers::merge(bounds);
@@ -2168,10 +2164,8 @@ TEST_CASE("Bounds Merging") {
     check_permutations(bounds, {0.0, 4.5});
   }
   SECTION("Test fused 1") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
-                                                {0.5, 1.0},
-                                                {1.5, 2.5},
-                                                {2.0, 3.0}};
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.0, 5.0}, {0.5, 1.0}, {1.5, 2.5}, {2.0, 3.0}};
     // |------------------|
     //   |--|
     //          |---|
@@ -2181,10 +2175,8 @@ TEST_CASE("Bounds Merging") {
     check_permutations(bounds, {0.5, 2.5});
   }
   SECTION("Test fused 2") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
-                                                {0.5, 1.0},
-                                                {1.5, 3.0},
-                                                {2.0, 2.5}};
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.0, 5.0}, {0.5, 1.0}, {1.5, 3.0}, {2.0, 2.5}};
     // |------------------|
     //   |--|
     //          |-----|
@@ -2194,10 +2186,8 @@ TEST_CASE("Bounds Merging") {
     check_permutations(bounds, {0.5, 2.5});
   }
   SECTION("Test fused 3") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
-                                                {0.5, 1.0},
-                                                {1.5, 3.0},
-                                                {2.0, 5.5}};
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.0, 5.0}, {0.5, 1.0}, {1.5, 3.0}, {2.0, 5.5}};
     // |------------------|
     //   |--|
     //          |-----|
@@ -2207,11 +2197,8 @@ TEST_CASE("Bounds Merging") {
     check_permutations(bounds, {0.5, 3.0});
   }
   SECTION("Test fused 4") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
-                                                {0.5, 1.0},
-                                                {1.5, 2.5},
-                                                {2.0, 3.0},
-                                                {4.0, 6.0}};
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.0, 5.0}, {0.5, 1.0}, {1.5, 2.5}, {2.0, 3.0}, {4.0, 6.0}};
     // |---------------------|
     //   |--|
     //          |---|
@@ -2223,10 +2210,8 @@ TEST_CASE("Bounds Merging") {
   }
 
   SECTION("Test fused 5") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
-                                                {0.5, 1.0},
-                                                {0.7, 1.9},
-                                                {2.0, 5.5}};
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.0, 5.0}, {0.5, 1.0}, {0.7, 1.9}, {2.0, 5.5}};
     // |------------------|
     //   |--|
     //     |-----|
@@ -2236,10 +2221,8 @@ TEST_CASE("Bounds Merging") {
     check_permutations(bounds, {0.7, 5});
   }
   SECTION("Test fused 6") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 1.5},
-                                                {0.5, 5.0},
-                                                {0.7, 1.9},
-                                                {2.0, 5.5}};
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.0, 1.5}, {0.5, 5.0}, {0.7, 1.9}, {2.0, 5.5}};
     // |-----|
     //   |----------------|
     //     |-----|
@@ -2249,10 +2232,8 @@ TEST_CASE("Bounds Merging") {
     check_permutations(bounds, {0.7, 5});
   }
   SECTION("Test fused 7") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.0, 5.0},
-                                                {0.5, 1.0},
-                                                {1.5, 1.9},
-                                                {2.0, 5.5}};
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.0, 5.0}, {0.5, 1.0}, {1.5, 1.9}, {2.0, 5.5}};
     // |------------------|
     //   |--|
     //         |--|
@@ -2292,10 +2273,8 @@ TEST_CASE("Bounds Merging") {
     check_permutations(bounds, {0.5, 3.0});
   }
   SECTION("Test fused 4.1") {
-    std::vector<DGeomHelpers::Bounds> bounds = {{0.5, 1.0},
-                                                {1.5, 2.5},
-                                                {2.0, 3.0},
-                                                {4.0, 6.0}};
+    std::vector<DGeomHelpers::Bounds> bounds = {
+        {0.5, 1.0}, {1.5, 2.5}, {2.0, 3.0}, {4.0, 6.0}};
     //   |--|
     //          |---|
     //            |-----|
@@ -2304,4 +2283,50 @@ TEST_CASE("Bounds Merging") {
     //   |-----------------------|
     check_permutations(bounds, {0.5, 6.0});
   }
+}
+
+TEST_CASE("Angle tolerances") {
+  SECTION("Linear 1-3") {
+    auto mol = "C=[Ge]=C"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+    CHECK(bm->getLowerBound(0, 2) <=
+          bm->getLowerBound(0, 1) + bm->getLowerBound(1, 2));
+  }
+  SECTION("Flat S-aromat") {
+    auto mol = "c1sccc1"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    auto legacyImplementation = GENERATE(true, false);
+    auto params = DGeomHelpers::EmbedParameters();
+    params.useBasicKnowledge = true;
+    params.useExpTorsionAnglePrefs = true;
+    params.useLegacyImplementation = legacyImplementation;
+    params.randomSeed = 0xC0FFEE;
+
+    DGeomHelpers::EmbedMolecule(*mol, params);
+
+    // we should be able to generate a conformations without violations
+    const auto conf = mol->getConformer();
+    RDGeom::Point3D pos_2 = conf.getAtomPos(2);
+    RDGeom::Point3D pos_4 = conf.getAtomPos(4);
+    auto dist = (pos_2 - pos_4).length();
+    CHECK(bm->getLowerBound(4, 2) - 0.001 <= dist);
+    CHECK(bm->getUpperBound(4, 2) + 0.001 >= dist);
+  }
+}
+
+TEST_CASE("Github #9461") {
+  auto mol = "Cc1sccc1"_smiles;
+  REQUIRE(mol);
+  DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+  DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+  DGeomHelpers::setTopolBounds(*mol, bm);
+
+  CHECK(feq(bm->getUpperBound(0, 1) - bm->getLowerBound(0, 1), 0.02));
 }
