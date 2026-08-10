@@ -559,11 +559,10 @@ ROMol *fragmentOnBonds(
         conf->setAtomPos(idx2, conf->getAtomPos(eidx));
       }
     }
-    for (auto idx : {bidx, eidx}) {
-      // keep track of the atoms so that we can adjust H counts later
-      atomsToUpdate.insert(idx);
-    }
-  }
+    // keep track of the atoms so that we can adjust H counts later
+    atomsToUpdate.insert(bidx);
+    atomsToUpdate.insert(eidx);
+}
   res->commitBatchEdit();
   res->clearComputedProps();
   if (!atomsToUpdate.empty()) {
