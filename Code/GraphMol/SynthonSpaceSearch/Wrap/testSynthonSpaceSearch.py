@@ -414,7 +414,7 @@ class TestCase(unittest.TestCase):
     phf = Path(ssparams.possibleHitsFile)
     self.assertTrue(phf.exists())
 
-    hits = synthonspace.ShapeSearch(query, 0, -1, ssparams)
+    hits = synthonspace.ShapeSearch(query, ssparams, 0, -1)
     self.assertEqual(len(hits.GetHitMolecules()), 3)
     phf.unlink()
 
