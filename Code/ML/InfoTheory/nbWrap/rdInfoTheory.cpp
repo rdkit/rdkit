@@ -11,11 +11,15 @@
 #include <nanobind/ndarray.h>
 #include <ML/InfoTheory/InfoBitRanker.h>
 #include <ML/InfoTheory/InfoGainFuncs.h>
+#include <numpy/arrayobject.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
 
 namespace RDInfoTheory {
+
+// FIX: there's some bad code duplication here since I couldn't figure out
+// how to make it properly generic with the nanobind::ndarray template.
 
 template <class T>
 double infoEntropyHelper(nb::ndarray<nb::numpy, nb::ndim<1>> arr) {
@@ -30,10 +34,22 @@ double infoEntropy(nb::ndarray<nb::numpy, nb::ndim<1>> resArr) {
     return infoEntropyHelper<double>(resArr);
   } else if (resArr.dtype() == nb::dtype<float>()) {
     return infoEntropyHelper<float>(resArr);
-  } else if (resArr.dtype() == nb::dtype<int>()) {
-    return infoEntropyHelper<int>(resArr);
-  } else if (resArr.dtype() == nb::dtype<long int>()) {
-    return infoEntropyHelper<long int>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::int8_t>()) {
+    return infoEntropyHelper<std::int8_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::int16_t>()) {
+    return infoEntropyHelper<std::int16_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::int32_t>()) {
+    return infoEntropyHelper<std::int32_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::int64_t>()) {
+    return infoEntropyHelper<std::int64_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::uint8_t>()) {
+    return infoEntropyHelper<std::uint8_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::uint16_t>()) {
+    return infoEntropyHelper<std::uint16_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::uint32_t>()) {
+    return infoEntropyHelper<std::uint32_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::uint64_t>()) {
+    return infoEntropyHelper<std::uint64_t>(resArr);
   } else {
     throw nb::value_error(
         "Expecting a Numeric array object of type int, long, float, or double");
@@ -53,13 +69,25 @@ double infoGain(nb::ndarray<nb::numpy, nb::ndim<2>> resArr) {
     return infoGainHelper<double>(resArr);
   } else if (resArr.dtype() == nb::dtype<float>()) {
     return infoGainHelper<float>(resArr);
-  } else if (resArr.dtype() == nb::dtype<int>()) {
-    return infoGainHelper<int>(resArr);
-  } else if (resArr.dtype() == nb::dtype<long int>()) {
-    return infoGainHelper<long int>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::int8_t>()) {
+    return infoGainHelper<std::int8_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::int16_t>()) {
+    return infoGainHelper<std::int16_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::int32_t>()) {
+    return infoGainHelper<std::int32_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::int64_t>()) {
+    return infoGainHelper<std::int64_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::uint8_t>()) {
+    return infoGainHelper<std::uint8_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::uint16_t>()) {
+    return infoGainHelper<std::uint16_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::uint32_t>()) {
+    return infoGainHelper<std::uint32_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::uint64_t>()) {
+    return infoGainHelper<std::uint64_t>(resArr);
   } else {
     throw nb::value_error(
-        "Numeric array object of type int or long or float or double");
+        "Expecting a Numeric array object of type int, long, float, or double");
   }
 }
 
@@ -76,13 +104,25 @@ double chiSquare(nb::ndarray<nb::numpy, nb::ndim<2>> resArr) {
     return chiSquareHelper<double>(resArr);
   } else if (resArr.dtype() == nb::dtype<float>()) {
     return chiSquareHelper<float>(resArr);
-  } else if (resArr.dtype() == nb::dtype<int>()) {
-    return chiSquareHelper<int>(resArr);
-  } else if (resArr.dtype() == nb::dtype<long int>()) {
-    return chiSquareHelper<long int>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::int8_t>()) {
+    return chiSquareHelper<std::int8_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::int16_t>()) {
+    return chiSquareHelper<std::int16_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::int32_t>()) {
+    return chiSquareHelper<std::int32_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::int64_t>()) {
+    return chiSquareHelper<std::int64_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::uint8_t>()) {
+    return chiSquareHelper<std::uint8_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::uint16_t>()) {
+    return chiSquareHelper<std::uint16_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::uint32_t>()) {
+    return chiSquareHelper<std::uint32_t>(resArr);
+  } else if (resArr.dtype() == nb::dtype<std::uint64_t>()) {
+    return chiSquareHelper<std::uint64_t>(resArr);
   } else {
     throw nb::value_error(
-        "Numeric array object of type int or long or float or double");
+        "Expecting a Numeric array object of type int, long, float, or double");
   }
 }
 

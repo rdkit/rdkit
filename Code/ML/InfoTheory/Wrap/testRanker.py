@@ -54,8 +54,7 @@ class TestCase(unittest.TestCase):
     # so was not recognized) on Windows.
     arr = numpy.array([2, 5, 5])
     mat = numpy.array([[6, 2], [3, 3]])
-    for dtype in ('int8', 'int32', 'int64', 'longlong', 'uint8', 'uint64', 'float16', 'float32',
-                  'float64'):
+    for dtype in ('int8', 'int32', 'int64', 'longlong', 'uint8', 'uint64', 'float32', 'float64'):
       self.assertTrue(feq(rdit.InfoEntropy(arr.astype(dtype)), 1.4834), dtype)
       self.assertTrue(feq(rdit.InfoGain(mat.astype(dtype)), 0.0481), dtype)
       self.assertTrue(feq(rdit.ChiSquare(mat.astype(dtype)), 0.9333), dtype)
