@@ -196,7 +196,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
   /*! \brief determines the signed angle between a vector to this point
    *   from the origin and a vector to the other point.
    *
-   *  The results of this call will be between 0 and M_2_PI
+   *  The results of this call will be between 0 and 2 * M_PI.
    */
   double signedAngleTo(const Point3D &other) const {
     double res = this->angleTo(other);

@@ -70,7 +70,7 @@ def ProcessMol(mol, typeConversions, globalProps, nDone, nameProp='_Name', nameC
         pD[pn] = pv
 
   if redraw:
-    AllChem.Compute2DCoords(m)
+    AllChem.Compute2DCoords(mol)
   if not skipSmiles:
     row.append(Chem.MolToSmiles(mol))
   row.append(DbModule.binaryHolder(mol.ToBinary()))

@@ -1077,11 +1077,10 @@ bool DepthFirstSearchForRing(Atom *root, Atom *nbor, unsigned int maxatomidx) {
   PRECONDITION(nbor, "bad atom pointer");
 
   unsigned int natoms = maxatomidx;
-  auto *visit = (unsigned char *)alloca(natoms);
-  memset(visit, 0, natoms);
+  std::vector<unsigned char> visit(natoms, 0);
 
   visit[root->getIdx()] = true;
-  return TraverseForRing(nbor, visit);
+  return TraverseForRing(nbor, visit.data());
 }
 
 bool IsInScaffold(Atom *atom, unsigned int maxatomidx) {
@@ -1122,7 +1121,7 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
   }
 
   unsigned int maxatomidx = mol->getNumAtoms();
-  auto *is_in_scaffold = (unsigned char *)alloca(maxatomidx);
+  std::vector<unsigned char> is_in_scaffold(maxatomidx);
   for (auto aptr : mol->atoms()) {
     is_in_scaffold[aptr->getIdx()] = IsInScaffold(aptr, maxatomidx);
   }
@@ -1133,7 +1132,7 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
     if (is_in_scaffold[aidx]) {
       continue;
     }
-    if (HasNbrInScaffold(aptr, is_in_scaffold)) {
+    if (HasNbrInScaffold(aptr, is_in_scaffold.data())) {
       aptr->setAtomicNum(0);
       aptr->setFormalCharge(0);
       aptr->setNoImplicit(true);

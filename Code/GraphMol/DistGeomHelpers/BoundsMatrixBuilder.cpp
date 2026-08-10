@@ -1494,9 +1494,9 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   if (!na) {
     throw ValueErrorException("molecule has no atoms");
   }
-  // this is 2.6 million bonds, so it's extremly unlikely to ever occur, but
+  // this is 2.6 million bonds, so it's extremely unlikely to ever occur, but
   // we might as well check:
-  const auto MAX_NUM_BONDS = static_cast<std::size_t>(
+  const auto MAX_NUM_BONDS = static_cast<size_t>(
       std::pow(std::numeric_limits<std::uint64_t>::max(), 1. / 3));
   if (mol.getNumBonds() >= MAX_NUM_BONDS) {
     throw ValueErrorException(
