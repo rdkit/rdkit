@@ -510,10 +510,10 @@ Documentation for the [C++ API](https://www.rdkit.org/docs/cppapi/) is generated
 ### Wrapping the C++ Code for Python
 
 RDKit uses [Boost](https://www.boost.org/) and [nanobind](https://github.com/wjakob/nanobind) to expose functions from the C++ API to Python. In each sub-directory of `rdkit/Code` is a further sub-directory named `Wrap` containing the files needed to construct the boost Python bindings. 
-Adittionaly, there is an acoompanying `nbWrap` folder containing the nanobind Python bindings.
-These generally includes:
+Additionally, there is an accompanying `nbWrap` folder containing the nanobind Python bindings.
+These generally include:
 - C++ file defining the Python bindings. This will include the required libraries (usually `#include <RDBoost/Wrap.h>` / `#include RDBoost/Wrap_nb.h`)
-- Python file(s) containing the corresponding unit tests (in `Wrap`)
+- Python file(s) containing the corresponding unit tests (in `Wrap`). Note that both the boost and nanobind wrappers use the same tests in the`Wrap` directory. This is important to maintain API compatibility between the different wrappers.
 - CMakeLists.txt file containing build instructions (including the destination of the python code + linked libraries) and calls for the tests
 
 Taking the [Double Cubic Lattice Volume](https://www.rdkit.org/docs/source/rdkit.Chem.rdMolDescriptors.html#rdkit.Chem.rdMolDescriptors.DoubleCubicLatticeVolume) class as an example, in the raw C++ the class is defined as follows:
