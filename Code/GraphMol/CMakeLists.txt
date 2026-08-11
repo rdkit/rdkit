@@ -50,6 +50,7 @@ rdkit_headers(Atom.h
         MacroBondInfo.h
         MacroMol.h
         MacroMolTemplate.h
+        MacroMolTemplateLibrary.h
         SanitException.h
         SubstanceGroup.h
         StereoGroup.h
@@ -60,6 +61,10 @@ rdkit_headers(Atom.h
         DEST GraphMol)
 
 add_subdirectory(SmilesParse)
+rdkit_library(MacroMolTemplateLibrary MacroMolTemplateLibrary.cpp
+        SHARED LINK_LIBRARIES GraphMol)
+target_compile_definitions(MacroMolTemplateLibrary PRIVATE RDKIT_GRAPHMOL_BUILD)
+
 add_subdirectory(Depictor)
 add_subdirectory(MarvinParse)
 add_subdirectory(FileParsers)
@@ -223,3 +228,6 @@ rdkit_catch_test(ringSystemsTest ring_systems_test.cpp LINK_LIBRARIES SmilesPars
 
 rdkit_catch_test(testMacroMolTemplate testMacroMolTemplate.cpp
         LINK_LIBRARIES FileParsers SmilesParse GraphMol)
+
+rdkit_catch_test(testMacroMolTemplateLibrary testMacroMolTemplateLibrary.cpp
+        LINK_LIBRARIES MacroMolTemplateLibrary GraphMol)
