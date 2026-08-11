@@ -247,4 +247,14 @@ const MacroMolTemplate *MacroMolTemplateLibrary::getBySymbol(
   return nullptr;
 }
 
+std::vector<const MacroMolTemplate *>
+MacroMolTemplateLibrary::getTemplates() const {
+  std::vector<const MacroMolTemplate *> templates;
+  templates.reserve(byName.size());
+  for (const auto &entry : byName) {
+    templates.push_back(entry.second.get());
+  }
+  return templates;
+}
+
 }  // namespace RDKit
