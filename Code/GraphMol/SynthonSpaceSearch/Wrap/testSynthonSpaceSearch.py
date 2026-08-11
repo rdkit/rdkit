@@ -75,50 +75,42 @@ class TestCase(unittest.TestCase):
     results = synthonspace.SubstructureSearch(query, params=params)
     self.assertEqual(10, len(results.GetHitMolecules()))
     smParams = Chem.SubstructMatchParameters()
-    results = synthonspace.SubstructureSearch(query,
-                                              substructMatchParams=smParams,
-                                              params=params)
+    results = synthonspace.SubstructureSearch(query, substructMatchParams=smParams, params=params)
     self.assertEqual(10, len(results.GetHitMolecules()))
 
     # callback returns None, still get all results
     mols = []
-    synthonspace.SubstructureSearchIncremental(
-            query,
-            lambda results: mols.extend(results),
-            substructMatchParams=smParams,
-            params=params)
+    synthonspace.SubstructureSearchIncremental(query, lambda results: mols.extend(results),
+                                               substructMatchParams=smParams, params=params)
     self.assertEqual(10, len(mols))
 
     # callback returns True, get one chunk
     mols = []
     params.toTryChunkSize = 2
+
     def callback_returns_true(chunk):
-        mols.extend(chunk)
-        return True
-    synthonspace.SubstructureSearchIncremental(
-            query,
-            callback_returns_true,
-            substructMatchParams=smParams,
-            params=params)
+      mols.extend(chunk)
+      return True
+
+    synthonspace.SubstructureSearchIncremental(query, callback_returns_true,
+                                               substructMatchParams=smParams, params=params)
     self.assertEqual(2, len(mols))
 
     # Exceptions thrown in the callback propagate back here
     mols = []
     params.toTryChunkSize = 2
+
     def callback_raises(chunk):
-        mols.extend(chunk)
-        raise StopIteration
+      mols.extend(chunk)
+      raise StopIteration
 
     try:
-        synthonspace.SubstructureSearchIncremental(
-                query,
-                callback_raises,
-                substructMatchParams=smParams,
-                params=params)
+      synthonspace.SubstructureSearchIncremental(query, callback_raises,
+                                                 substructMatchParams=smParams, params=params)
     except StopIteration:
-        pass
+      pass
     else:
-        assert False, "Expected exception"
+      assert False, "Expected exception"
     self.assertEqual(2, len(mols))
 
   def testFingerprintSearch(self):
@@ -130,15 +122,12 @@ class TestCase(unittest.TestCase):
     params.maxHits = -1
     params.similarityCutoff = 0.45
     fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
-    results = synthonspace.FingerprintSearch(
-      Chem.MolFromSmiles("O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"), fpgen, params)
+    results = synthonspace.FingerprintSearch(Chem.MolFromSmiles("O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"),
+                                             fpgen, params)
     self.assertEqual(278, len(results.GetHitMolecules()))
     mols = []
-    synthonspace.FingerprintSearchIncremental(
-      Chem.MolFromSmiles("O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"),
-      fpgen,
-      lambda results: mols.extend(results),
-      params)
+    synthonspace.FingerprintSearchIncremental(Chem.MolFromSmiles("O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"),
+                                              fpgen, lambda results: mols.extend(results), params)
     self.assertEqual(278, len(mols))
 
   def testFingerprintPossibleHitsWrite(self):
@@ -299,7 +288,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(220, len(results.GetHitMolecules()))
     results = synthonspace.SubstructureSearch(q, params=params)
     self.assertEqual(185, len(results.GetHitMolecules()))
-    
+
   def testChiralAtomtCutoffs(self):
     fName = self.sssDir / "idorsia_toy_space_a.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
@@ -414,7 +403,7 @@ class TestCase(unittest.TestCase):
     phf = Path(ssparams.possibleHitsFile)
     self.assertTrue(phf.exists())
 
-    hits = synthonspace.ShapeSearch(query, 0, -1, ssparams)
+    hits = synthonspace.ShapeSearch(query, 0, 100000, ssparams)
     self.assertEqual(len(hits.GetHitMolecules()), 3)
     phf.unlink()
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2006 greg Landrum and Rational Discovery LLC
+# Copyright (C) 2002-2026 greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -52,7 +52,7 @@ def EStateIndices(mol, force=True):
       dv = tbl.GetNOuterElecs(atNum) - at.GetTotalNumHs()
       N = GetPrincipleQuantumNumber(atNum)
       Is[i] = (4. / (N * N) * dv + 1) / d
-  dists = Chem.GetDistanceMatrix(mol, useBO=0, useAtomWts=0) + 1
+  dists = Chem.GetDistanceMatrix(mol, useBO=False, useAtomWts=False) + 1
 
   accum = numpy.zeros(nAtoms, dtype=numpy.float64)
   for i in range(nAtoms):
