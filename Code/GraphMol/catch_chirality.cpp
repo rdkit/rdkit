@@ -1539,6 +1539,44 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
   }
 }
 
+TEST_CASE("SHARED-12489: avoid wedging bonds in regular polygon rings",
+          "[wedging][regression]") {
+  auto mol = "CN1[C@@H]2CCC[C@H]1C2"_smiles;
+  REQUIRE(mol);
+
+  // Coordinates produced by the 2D depictor for this molecule. Atoms 1-6
+  // form the regular outer polygon, while bonds 6 and 8 point into the
+  // irregular bridged-ring portion of the depiction.
+  auto conf = std::make_unique<Conformer>(mol->getNumAtoms());
+  const std::vector<RDGeom::Point3D> positions = {
+      {0.0, 2.8400034005593087, 0.0},
+      {0.0, 1.42, 0.0},
+      {1.22976, 0.71, 0.0},
+      {1.22976, -0.71, 0.0},
+      {0.0, -1.42, 0.0},
+      {-1.22976, -0.71, 0.0},
+      {-1.22976, 0.71, 0.0},
+      {0.0, 0.21, 0.0},
+  };
+  for (unsigned int atomIdx = 0; atomIdx < positions.size(); ++atomIdx) {
+    conf->setAtomPos(atomIdx, positions[atomIdx]);
+  }
+  conf->set3D(false);
+  mol->addConformer(conf.release(), true);
+
+  const auto wedgeBonds = Chirality::pickBondsToWedge(*mol);
+  REQUIRE(wedgeBonds.size() == 2);
+  std::vector<int> wedgeBondIndices;
+  for (const auto &wedgeBond : wedgeBonds) {
+    wedgeBondIndices.push_back(wedgeBond.first);
+  }
+  CHECK(wedgeBondIndices == std::vector<int>{6, 8});
+
+  Chirality::wedgeMolBonds(*mol, &mol->getConformer());
+  CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::BEGINWEDGE);
+  CHECK(mol->getBondWithIdx(8)->getBondDir() == Bond::BEGINWEDGE);
+}
+
 TEST_CASE("addWavyBondsForStereoAny()") {
   SECTION("simplest") {
     auto mol = "CC=CC"_smiles;
