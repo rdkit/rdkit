@@ -48,6 +48,7 @@ rdkit_library(FileParsers
     MultithreadedSmilesMolSupplier.cpp
     MultithreadedSDMolSupplier.cpp
     MolToMacroMol.cpp
+    MolFromMacroMol.cpp
     LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol SubstructMatch ${MAEPARSER_LIB} ${RDK_CHEMDRAW_LIBS} ${STANDALONE_ZLIB_LIBRARY}
 )
 if(STANDALONE_ZLIB_LIBRARY)
@@ -69,6 +70,7 @@ rdkit_headers(CDXMLParser.h
     MultithreadedSDMolSupplier.h
     PNGParser.h
     MolToMacroMol.h
+    MolFromMacroMol.h
     DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp
@@ -109,6 +111,9 @@ rdkit_catch_test(macromolsCatchTest macromols_catch.cpp
     LINK_LIBRARIES FileParsers)
 
 rdkit_catch_test(testMolToMacroMol testMolToMacroMol.cpp
+    LINK_LIBRARIES FileParsers)
+
+rdkit_catch_test(testMolFromMacroMol testMolFromMacroMol.cpp
     LINK_LIBRARIES FileParsers)
 
 rdkit_catch_test(testPropertyLists testPropertyLists.cpp
