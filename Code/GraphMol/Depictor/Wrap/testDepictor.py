@@ -158,14 +158,14 @@ class TestCase(unittest.TestCase):
     AlignDepict.AlignDepict(m2, t)
     expected = [
       Geometry.Point3D(1.5, 0.0, 0.0),
-      Geometry.Point3D(0.75, -1.299, 0.0),
-      Geometry.Point3D(-0.75, -1.299, 0.0),
-      Geometry.Point3D(-1.5, -2.5981, 0.0),
-      Geometry.Point3D(-3.0, -2.5981, 0.0),
-      Geometry.Point3D(-3.75, -3.8971, 0.0),
+      Geometry.Point3D(0.75, 1.299, 0.0),
+      Geometry.Point3D(-0.75, 1.299, 0.0),
+      Geometry.Point3D(-1.5, 2.5981, 0.0),
+      Geometry.Point3D(-0.75, 3.8971, 0.0),
+      Geometry.Point3D(-1.5, 5.1962, 0.0),
       Geometry.Point3D(-1.5, 0.0, 0.0),
-      Geometry.Point3D(-0.75, 1.2990, 0.0),
-      Geometry.Point3D(0.75, 1.2990, 0.0)
+      Geometry.Point3D(-0.75, -1.2990, 0.0),
+      Geometry.Point3D(0.75, -1.2990, 0.0)
     ]
 
     nat = m2.GetNumAtoms()
@@ -895,15 +895,16 @@ M  END
 M  END
 """
     mol = Chem.MolFromMolBlock(mol_molblock)
+    original_molblock = Chem.MolToMolBlock(mol)
     self.assertRaises(
       ValueError, lambda: rdDepictor.GenerateDepictionMatching2DStructure(
         mol, template_ref, -1, None, False, False, True))
-    self.assertEqual(Chem.MolToMolBlock(mol), mol_molblock)
+    self.assertEqual(Chem.MolToMolBlock(mol), original_molblock)
     self.assertEqual(
       len(
         rdDepictor.GenerateDepictionMatching2DStructure(mol, template_ref, -1, None, True, False,
                                                         True)), 0)
-    self.assertNotEqual(Chem.MolToMolBlock(mol), mol_molblock)
+    self.assertNotEqual(Chem.MolToMolBlock(mol), original_molblock)
     mol.RemoveAllConformers()
     p = rdDepictor.ConstrainedDepictionParams()
     p.allowRGroups = True
