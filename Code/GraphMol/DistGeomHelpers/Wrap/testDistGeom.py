@@ -516,6 +516,7 @@ class TestCase(unittest.TestCase):
       params.randomSeed = 42
       params.useLegacyImplementation = useLegacy
       self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+      print(Chem.MolToMolBlock(mol))
       self._compareConfs(mol, ref, 0, 0)
 
     smiles = 'OCCC'
@@ -558,6 +559,7 @@ class TestCase(unittest.TestCase):
     smiles = 'n1cccc(C)c1ON'
     fn = 'torsion.etkdg.v2.mol'
     params = rdDistGeom.ETKDGv2()
+    print(rdDistGeom.GetMoleculeBoundsMatrix(Chem.AddHs(Chem.MolFromSmiles(smiles)), params))
     runTest(fn, smiles, params, True)
     runTest(fn, smiles, params, False)
 
