@@ -9,6 +9,10 @@ rdkit_headers(EnumerateStereoisomers.h Flippers.h DEST GraphMol/EnumerateStereoi
 rdkit_catch_test(testEnumerateStereoisomers catch_tests.cpp
         LINK_LIBRARIES EnumerateStereoisomers)
 
-if (RDK_BUILD_PYTHON_WRAPPERS)
+if (RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
 endif ()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()
