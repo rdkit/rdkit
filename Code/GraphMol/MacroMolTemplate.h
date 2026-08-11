@@ -146,9 +146,9 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateBuilder {
 class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateLibrary {
  public:
   MacroMolTemplateLibrary() = default;
-  MacroMolTemplateLibrary(const MacroMolTemplateLibrary &) = delete;
+  MacroMolTemplateLibrary(const MacroMolTemplateLibrary &other);
   MacroMolTemplateLibrary(MacroMolTemplateLibrary &&) noexcept = default;
-  MacroMolTemplateLibrary &operator=(const MacroMolTemplateLibrary &) = delete;
+  MacroMolTemplateLibrary &operator=(const MacroMolTemplateLibrary &other);
   MacroMolTemplateLibrary &operator=(MacroMolTemplateLibrary &&) noexcept =
       default;
 

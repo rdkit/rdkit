@@ -178,6 +178,26 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() const {
       d_mainAtomIdxs, d_leavingGroups, mainSgroupIdx));
 }
 
+MacroMolTemplateLibrary::MacroMolTemplateLibrary(
+    const MacroMolTemplateLibrary &other) {
+  *this = other;
+}
+
+MacroMolTemplateLibrary &MacroMolTemplateLibrary::operator=(
+    const MacroMolTemplateLibrary &other) {
+  if (this == &other) {
+    return *this;
+  }
+
+  MacroMolTemplateLibrary copy;
+  for (const auto &entry : other.byName) {
+    copy.addTemplate(std::make_unique<MacroMolTemplate>(*entry.second));
+  }
+  byName.swap(copy.byName);
+  bySymbol.swap(copy.bySymbol);
+  return *this;
+}
+
 void MacroMolTemplateLibrary::addTemplate(
     std::unique_ptr<MacroMolTemplate> macroMolTemplate) {
   PRECONDITION(macroMolTemplate, "cannot add a null MacroMolTemplate");
