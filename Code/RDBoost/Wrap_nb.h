@@ -167,7 +167,11 @@ void setObjectState(nb::object obj, nb::object state) {
     nb::bytes bytes;
     if (nb::try_cast<nb::bytes>(tpl[tplPos], bytes)) {
       std::string pkl(static_cast<const char *>(bytes.data()), bytes.size());
-      *self = std::move(T(pkl));
+      if constexpr (std::movable<T>) {
+        *self = std::move(T(pkl));
+      } else {
+        *self = T(pkl);
+      }
       tplPos++;
     }
     if (tplPos < nb::len(tpl)) {
