@@ -70,6 +70,19 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
     }
   }
 
+  // Unpickling requires a move operator.
+  TautomerQuery &operator=(TautomerQuery &&other) noexcept {
+    if (this != &other) {
+      d_templateMolecule =
+          (other.d_templateMolecule ? std::move(other.d_templateMolecule)
+                                    : nullptr);
+      d_modifiedAtoms = std::move(other.d_modifiedAtoms);
+      d_modifiedBonds = std::move(other.d_modifiedBonds);
+      d_tautomers = std::move(other.d_tautomers);
+    }
+    return *this;
+  }
+
   TautomerQuery(const std::string &pickle) { initFromString(pickle); }
 
   // Factory to build TautomerQuery
