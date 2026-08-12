@@ -123,16 +123,15 @@ RDBASE=$PWD/.. PYTHONPATH=$RDBASE LD_LIBRARY_PATH=$RDBASE/lib:$LD_LIBRARY_PATH c
 
 #### Nanobind or Boost?
 
-There is now the option of building with Boost wrappers or the new nanobind equivalent.  You can only have one at a time.
-The Boost wrappers are built by default.  In order to build the nanobind wrappers, you need to add the nanobind module
+There is now the option of building with Boost wrappers or the new nanobind equivalent.  You can only have one at a time and
+the Boost wrappers are built by default.  In order to build the nanobind wrappers, you need to add the nanobind module
 to your conda environment:
 
 ```
 conda install -c conda-forge nanobind 
 ```
 
-The cmake command needs to emended to turn off the default Boost build and instead use nanobind.  You can't have both
-at the same time.
+The cmake command needs to be emended to turn off the default Boost build and instead use nanobind:
 
 ```
 cmake -DCMAKE_BUILD_TYPE=Release \
@@ -143,6 +142,8 @@ cmake -DCMAKE_BUILD_TYPE=Release \
   -DRDK_BUILD_NANOBIND_WRAPPERS=ON \
   ..
 ```
+
+Then proceed as normal.
 
 #### Long tests
 
