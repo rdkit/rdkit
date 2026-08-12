@@ -242,7 +242,7 @@ void getExperimentalTorsions(
       std::vector<int> signs(6, 1);
 
       V[0] = 75.0;
-      if (std::fabs(details.forceConsts.etTermScaling - 1.0) > 1e-3){
+      if (std::fabs(details.forceConsts.etTermScaling - 1.0) > 1e-3) {
         V[0] = 4.0;
       }
       if (config.type.type == DGeomHelpers::TorsionType::CIS) {

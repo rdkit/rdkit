@@ -1361,13 +1361,13 @@ TEST_CASE("testEmbedParameters") {
     auto mol = v2::SmilesParse::MolFromSmiles(smiles);
     REQUIRE(mol);
     MolOps::addHs(*mol);
-    REQUIRE(mol->getNumAtoms() == ref->getNumAtoms()); 
+    REQUIRE(mol->getNumAtoms() == ref->getNumAtoms());
     params.useLegacyImplementation = legacyETKDG;
     params.randomSeed = 42;
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
-    #if WRITE_MOLFILES 
-      MolToMolFile(*mol, file);
-    #endif
+#if WRITE_MOLFILES
+    MolToMolFile(*mol, file);
+#endif
     compareConfs(ref.get(), mol.get());
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
