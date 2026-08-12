@@ -701,15 +701,20 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
                       std::vector<int> &count, int &activeset,
                       std::vector<int> &next, std::vector<int> &changed,
                       std::vector<char> &touchedPartitions,
-                      std::vector<int> &hanoiTemp) {
+                      std::vector<int> *hanoiTemp = nullptr) {
   unsigned int nAtoms = mol.getNumAtoms();
+  std::vector<int> localHanoiTemp;
+  if (!hanoiTemp) {
+    localHanoiTemp.resize(nAtoms);
+    hanoiTemp = &localHanoiTemp;
+  }
   int partition;
   int symclass = 0;
   int offset;
   int index;
   int len;
   int i;
-  PRECONDITION(hanoiTemp.size() >= nAtoms, "hanoi scratch is too small");
+  PRECONDITION(hanoiTemp->size() >= nAtoms, "hanoi scratch is too small");
   // std::vector<char> touchedPartitions(mol.getNumAtoms(),0);
 
   // std::cerr<<"&&&&&&&&&&&&&&&& RP"<<std::endl;
@@ -742,9 +747,9 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
     //   std::cerr<<order[ii]+1<<" count: "<<count[order[ii]]<<" index:
     //   "<<atoms[order[ii]].index<<std::endl;
     // }
-    if (RDKit::detail::hanoi(start.data(), len, hanoiTemp.data(), count.data(),
+    if (RDKit::detail::hanoi(start.data(), len, hanoiTemp->data(), count.data(),
                              changed.data(), compar)) {
-      std::copy_n(hanoiTemp.begin(), len, start.begin());
+      std::copy_n(hanoiTemp->begin(), len, start.begin());
     }
     // std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
     // std::cerr<<"  result:";
@@ -804,7 +809,7 @@ void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
                int &activeset, std::vector<int> &next,
                std::vector<int> &changed,
                std::vector<char> &touchedPartitions,
-               std::vector<int> &hanoiTemp) {
+               std::vector<int> *hanoiTemp = nullptr) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
   int offset;
