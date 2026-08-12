@@ -193,7 +193,6 @@ def _bivariate_normal(X, Y, sigmax=1.0, sigmay=1.0, mux=0.0, muy=0.0, sigmaxy=0.
     https://github.com/matplotlib/matplotlib/blob/81e8154dbba54ac1607b21b22984cabf7a6598fa/lib/matplotlib/mlab.py#L1866
     it was deprecated in v2.2 of matplotlib, so we are including it here.
 
-
     Bivariate Gaussian distribution for equal shape *X*, *Y*.
     See `bivariate normal
     <http://mathworld.wolfram.com/BivariateNormalDistribution.html>`_
@@ -483,23 +482,23 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
       NOTES:
 
             To include a blank cell in the middle of a row, supply None for that entry in molsMatrix.
-            You do not need to do that for empty cells at the end of a row; 
+            You do not need to do that for empty cells at the end of a row;
             this function will automatically pad rows so that all rows are the same length.
-            
+
             This function is useful when each row has some meaning,
-            for example the generation in a mass spectrometry fragmentation tree--refer to 
+            for example the generation in a mass spectrometry fragmentation tree--refer to
             example at https://en.wikipedia.org/wiki/Fragmentation_(mass_spectrometry).
             If you want to display a set molecules where each row does not have any specific meaning,
             use MolsToGridImage instead.
 
             This function nests data structures one additional level beyond the analogous function MolsToGridImage
-            (in which the molecules and legends are non-nested lists, 
-            and the highlight parameters are two-deep nested lists) 
+            (in which the molecules and legends are non-nested lists,
+            and the highlight parameters are two-deep nested lists)
 
       RETURNS:
 
         A grid of molecular images in one of these formats:
-        
+
         - useSVG=False and returnPNG=False (default): A PIL object for a PNG image file
 
         - useSVG=False and returnPNG=True: PNG data
@@ -526,10 +525,10 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
         # Exhaustive example: All parameters are supplied,
         # result will be a drawing containing (where each row of molecules is followed by a row of legends):
         # 1 F-Cl 0              1 F-Cl 0
-        # no highlighting       bond highlighted         
+        # no highlighting       bond highlighted
         # 1 F-Cl 0                                  1 F-Cl 0
         # sodium highlighted                        chloride and bond highlighted
-        legendsMatrix = [["no highlighting", "bond highlighted"], 
+        legendsMatrix = [["no highlighting", "bond highlighted"],
         ["F highlighted", "", "Cl and bond highlighted"]]
         highlightAtomListsMatrix = [[[],[]], [[0], None, [1]]]
         highlightBondListsMatrix = [[[],[0]], [[], None, [0]]]
@@ -537,8 +536,8 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
         dopts = rdMolDraw2D.MolDrawOptions()
         dopts.addAtomIndices = True
 
-        img_binary = MolsMatrixToGridImage(molsMatrix=molsMatrix, subImgSize=(300, 400), 
-        legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, 
+        img_binary = MolsMatrixToGridImage(molsMatrix=molsMatrix, subImgSize=(300, 400),
+        legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix,
         highlightBondListsMatrix=highlightBondListsMatrix, useSVG=False, returnPNG=True, drawOptions=dopts)
         print(img_binary[:20])
         # Prints a binary string: b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x03\x84'
@@ -992,7 +991,8 @@ def _addColorsToMap(els, cols, color):
 
 
 def DrawMolWithMatches(mol, matches, molSize=(350, 300), qry=None, label='',
-                       options=MolDrawOptions(), colors=None, doPNG=True, kekulize=True, confId=-1):
+                       options=rdMolDraw2D.MolDrawOptions(), colors=None, doPNG=True, kekulize=True,
+                       confId=-1):
   ''' Draws a molecule with a set of substructure matches highlighted
 
       ARGUMENTS:
@@ -1038,7 +1038,8 @@ def DrawMolWithMatches(mol, matches, molSize=(350, 300), qry=None, label='',
                     colors[i % len(colors)] if colors is not None else options.getHighlightColour())
     _addColorsToMap(blist, bcols,
                     colors[i % len(colors)] if colors is not None else options.getHighlightColour())
-  d = MolDraw2DCairo(molSize[0], molSize[1]) if doPNG else MolDraw2DSVG(molSize[0], molSize[1])
+  d = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1]) if doPNG \
+    else rdMolDraw2D.MolDraw2DSVG(molSize[0], molSize[1])
   d.SetDrawOptions(options)
   d.drawOptions().prepareMolsBeforeDrawing = False
   d.DrawMoleculeWithHighlights(mol, label, acols, bcols, h_rads, h_lw_mult, confId=confId)
