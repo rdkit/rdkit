@@ -143,15 +143,6 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
   FilterCatalog(const FilterCatalog &rhs)
       : FCatalog(rhs), d_entries(rhs.d_entries) {}
 
-  FilterCatalog &operator=(FilterCatalog &&other) {
-    if (this != &other) {
-      d_entries = std::move(other.d_entries);
-      dp_cParams = other.dp_cParams;
-      other.dp_cParams = nullptr;  // Avoid double deletion
-    }
-    return *this;
-  }
-
   FilterCatalog(const std::string &binStr);
 
   ~FilterCatalog() override;
