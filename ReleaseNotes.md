@@ -9,9 +9,7 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes:
-- `Canon::canon_atom::bonds` has changed from
-  `std::vector<Canon::bondholder>` to `Canon::BondholderVector`, an alias for
-  `boost::container::small_vector<Canon::bondholder, 4>`.
+- `Canon::canon_atom::bonds` now uses `boost::container::small_vector`.
 - Since #9208, atom rings are "normalized" so that the first atom in the ring
 definition is the one with the lowest index, and the second one is the neighbor
 to the first which also has the lowest index.
