@@ -52,7 +52,7 @@ Download the latest [Miniforge installer](https://github.com/conda-forge/minifor
 bash Miniforge3-MacOSX-arm64.sh # or bash ~/Miniforge3-MacOSX-x86_64.sh for Intel-based systems
 conda create -n my-rdkit-env
 conda activate my-rdkit-env
-conda install compilers libcxx cmake \
+conda install -c conda-forge compilers libcxx cmake \
       libboost libboost-devel \
       libboost-python libboost-python-devel \
       numpy matplotlib cairo pillow eigen pandas qt
@@ -121,6 +121,37 @@ The `ctest` build requires that the installation path (the root of the source tr
 RDBASE=$PWD/.. PYTHONPATH=$RDBASE LD_LIBRARY_PATH=$RDBASE/lib:$LD_LIBRARY_PATH ctest
 ```
 
+#### Nanobind or Boost?
+
+There is now the option of building with Boost wrappers or the new nanobind equivalent.  You can only have one at a time.
+The Boost wrappers are built by default.  In order to build the nanobind wrappers, you need to add the nanobind module
+to your conda environment:
+
+```
+conda install -c conda-forge nanobind 
+```
+
+The cmake command needs to emended to turn off the default Boost build and instead use nanobind.  You can't have both
+at the same time.
+
+```
+cmake -DCMAKE_BUILD_TYPE=Release \
+  -DRDK_INSTALL_INTREE=ON \
+  -DRDK_BUILD_CPP_TESTS=ON \
+  -DRDK_BUILD_INCHI_SUPPORT=ON \
+  -DRDK_BUILD_BOOST_PYTHON_WRAPPERS=OFF \
+  -DRDK_BUILD_NANOBIND_WRAPPERS=ON \
+  ..
+```
+
+#### Long tests
+
+Some of the modules, rdRascalMCES and rdSynthonSpaceSearch for example, have some additional regression tests that take too
+long to run in the CI tests, but are nonetheless valuable.  If you are compiling the RDKit from source because
+you are adding to the C++ layer, you should consider running these as well before pushing a PR.  Probably you wouldn't
+want to run them routinely during your development cycle because they can take a couple of minutes.  To build them use
+the cmake flag `-DRDK_BUILD_LONG_RUNNING_TESTS=ON` and `ctest` should then find them.  To run them manually, look for
+executables `test*LONG_TEST`.
 
 ### Installing and using PostgreSQL and the RDKit PostgreSQL cartridge from a conda environment
 
