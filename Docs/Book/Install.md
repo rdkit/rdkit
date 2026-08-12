@@ -131,7 +131,7 @@ to your conda environment:
 conda install -c conda-forge nanobind 
 ```
 
-The cmake command needs to be emended to turn off the default Boost build and instead use nanobind:
+The cmake command needs to be modified to turn off the default Boost build and instead use nanobind:
 
 ```
 cmake -DCMAKE_BUILD_TYPE=Release \
