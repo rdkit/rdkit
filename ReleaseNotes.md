@@ -9,6 +9,9 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes:
+- `Canon::canon_atom::bonds` now uses `boost::container::small_vector` instead
+  of `std::vector`. Its vector-like interface is unchanged, but C++ code which
+  relies on the member's exact type must be updated.
 - Since #9208, atom rings are "normalized" so that the first atom in the ring
 definition is the one with the lowest index, and the second one is the neighbor
 to the first which also has the lowest index.

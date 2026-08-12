@@ -483,7 +483,7 @@ bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
   }
   return res;
 }
-void getBonds(const ROMol &mol, const Atom *at, bondholder_vector &nbrs,
+void getBonds(const ROMol &mol, const Atom *at, BondholderVector &nbrs,
               bool includeChirality,
               const std::vector<Canon::canon_atom> &atoms) {
   PRECONDITION(at, "bad pointer");
@@ -499,7 +499,7 @@ void getBonds(const ROMol &mol, const Atom *at, bondholder_vector &nbrs,
 }
 
 void getChiralBonds(const ROMol &mol, const Atom *at,
-                    bondholder_vector &nbrs) {
+                    BondholderVector &nbrs) {
   PRECONDITION(at, "bad pointer");
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(at);
@@ -699,7 +699,8 @@ void initChiralCanonAtoms(const ROMol &mol,
 }
 
 }  // namespace detail
-void updateAtomNeighborIndex(canon_atom *atoms, bondholder_vector &nbrs) {
+template <typename Bondholders>
+void updateAtomNeighborIndexImpl(canon_atom *atoms, Bondholders &nbrs) {
   PRECONDITION(atoms, "bad pointer");
   for (auto &nbr : nbrs) {
     unsigned nbrIdx = nbr.nbrIdx;
@@ -707,6 +708,15 @@ void updateAtomNeighborIndex(canon_atom *atoms, bondholder_vector &nbrs) {
     nbr.nbrSymClass = newSymClass;
   }
   std::sort(nbrs.begin(), nbrs.end(), bondholder::greater);
+}
+
+void updateAtomNeighborIndex(canon_atom *atoms,
+                             std::vector<bondholder> &nbrs) {
+  updateAtomNeighborIndexImpl(atoms, nbrs);
+}
+
+void updateAtomNeighborIndex(canon_atom *atoms, BondholderVector &nbrs) {
+  updateAtomNeighborIndexImpl(atoms, nbrs);
 }
 
 // This routine calculates the number of swaps that would be required to
@@ -721,8 +731,9 @@ void updateAtomNeighborIndex(canon_atom *atoms, bondholder_vector &nbrs) {
 // that have the same priority so far.  If any two are the same, we do NOT use
 // that neighbor to determine the priority of the atom of interest.
 
-void updateAtomNeighborNumSwaps(
-    canon_atom *atoms, bondholder_vector &nbrs, unsigned int atomIdx,
+template <typename Bondholders>
+void updateAtomNeighborNumSwapsImpl(
+    canon_atom *atoms, Bondholders &nbrs, unsigned int atomIdx,
     std::vector<std::pair<unsigned int, unsigned int>> &result) {
   bool isRingAtom = queryIsAtomInRing(atoms[atomIdx].atom);
   for (auto &nbr : nbrs) {
@@ -777,6 +788,18 @@ void updateAtomNeighborNumSwaps(
     }
   }
   sort(result.begin(), result.end());
+}
+
+void updateAtomNeighborNumSwaps(
+    canon_atom *atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx,
+    std::vector<std::pair<unsigned int, unsigned int>> &result) {
+  updateAtomNeighborNumSwapsImpl(atoms, nbrs, atomIdx, result);
+}
+
+void updateAtomNeighborNumSwaps(
+    canon_atom *atoms, BondholderVector &nbrs, unsigned int atomIdx,
+    std::vector<std::pair<unsigned int, unsigned int>> &result) {
+  updateAtomNeighborNumSwapsImpl(atoms, nbrs, atomIdx, result);
 }
 
 void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
