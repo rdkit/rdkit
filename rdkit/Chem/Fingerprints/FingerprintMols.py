@@ -65,9 +65,9 @@ def FingerprintMol(mol, fingerprinter=Chem.RDKFingerprint, **fpArgs):
     fp = fingerprinter(mol, **fpArgs)
     return FoldFingerprintToTargetDensity(fp, **fpArgs)
 
-  return fingerprinter(mol, fpArgs['minPath'], fpArgs['maxPath'], fpArgs['fpSize'],
-                       fpArgs['bitsPerHash'], fpArgs['useHs'], fpArgs['tgtDensity'],
-                       fpArgs['minSize'])
+  return fingerprinter(mol, fpArgs['minPath'],
+                       fpArgs['maxPath'], fpArgs['fpSize'], fpArgs['bitsPerHash'],
+                       bool(fpArgs['useHs']), fpArgs['tgtDensity'], fpArgs['minSize'])
 
 
 def FingerprintsFromSmiles(dataSource, idCol, smiCol, fingerprinter=Chem.RDKFingerprint,
@@ -290,9 +290,9 @@ class FingerprinterDetails(object):
     self.tgtDensity = 0.3
     self.minPath = 1
     self.maxPath = 7
-    self.discrimHash = 0
-    self.useHs = 0
-    self.useValence = 0
+    self.discrimHash = False
+    self.useHs = False
+    self.useValence = False
     self.bitsPerHash = 2
     self.smilesName = 'SMILES'
     self.maxMols = -1
@@ -309,11 +309,11 @@ class FingerprinterDetails(object):
     self.doScreen = ''
     self.topN = 10
     self.screenThresh = 0.75
-    self.doThreshold = 0
+    self.doThreshold = False
     self.smilesTableName = ''
     self.probeSmiles = ''
     self.probeMol = None
-    self.noPickle = 0
+    self.noPickle = False
 
   def _clusterInit(self):
     self.clusterAlgo = Murtagh.WARDS
@@ -492,9 +492,9 @@ def ParseArgs(details=None):
 
   for arg, val in args:
     if arg == '-H':
-      details.useHs = 1
+      details.useHs = True
     elif arg == '-V':
-      details.useValence = 1
+      details.useValence = True
     elif arg == '-d':
       details.dbName = val
     elif arg == '-t':
@@ -520,7 +520,7 @@ def ParseArgs(details=None):
     elif arg == '--nBitsPerHash':
       details.bitsPerHash = int(val)
     elif arg == '--discrim':
-      details.discrimHash = 1
+      details.discrimHash = True
     elif arg == '--smilesName':
       details.smilesName = val
     elif arg == '--molPkl':
@@ -541,10 +541,10 @@ def ParseArgs(details=None):
     elif arg == '--smilesTable':
       details.smilesTableName = val
     elif arg == '--topN':
-      details.doThreshold = 0
+      details.doThreshold = False
       details.topN = int(val)
     elif arg == '--thresh':
-      details.doThreshold = 1
+      details.doThreshold = True
       details.screenThresh = float(val)
     elif arg == '--smiles':
       details.probeSmiles = val
