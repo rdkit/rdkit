@@ -216,7 +216,7 @@ struct CXXAtomIterator {
       return pos - other.pos;
     }
     friend CXXAtomIter operator+(difference_type n, const CXXAtomIter &it) {
-      checkIterator();
+      it.checkIterator();
       return CXXAtomIter(it.graph, it.pos + n);
     }
 
