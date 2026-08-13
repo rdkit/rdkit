@@ -40,6 +40,9 @@ rdkit_catch_test(testCIPLabeler catch_tests.cpp
 # sources, and NOT linking to the lib.
 if(RDK_BUILD_CPP_TESTS)
     target_compile_definitions(testCIPLabeler PRIVATE RDKIT_CIPLABELER_BUILD)
+    # Parser dependencies also load the shared CIPLabeler library. Keep this
+    # test's private copy of the implementation local to the executable.
+    set_target_properties(testCIPLabeler PROPERTIES CXX_VISIBILITY_PRESET hidden)
 endif()
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
