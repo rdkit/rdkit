@@ -700,14 +700,21 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
                       int mode, std::vector<int> &order,
                       std::vector<int> &count, int &activeset,
                       std::vector<int> &next, std::vector<int> &changed,
-                      std::vector<char> &touchedPartitions) {
+                      std::vector<char> &touchedPartitions,
+                      std::vector<int> *hanoiTemp = nullptr) {
   unsigned int nAtoms = mol.getNumAtoms();
+  std::vector<int> localHanoiTemp;
+  if (!hanoiTemp) {
+    localHanoiTemp.resize(nAtoms);
+    hanoiTemp = &localHanoiTemp;
+  }
   int partition;
   int symclass = 0;
   int offset;
   int index;
   int len;
   int i;
+  PRECONDITION(hanoiTemp->size() >= nAtoms, "hanoi scratch is too small");
   // std::vector<char> touchedPartitions(mol.getNumAtoms(),0);
 
   // std::cerr<<"&&&&&&&&&&&&&&&& RP"<<std::endl;
@@ -740,7 +747,10 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
     //   std::cerr<<order[ii]+1<<" count: "<<count[order[ii]]<<" index:
     //   "<<atoms[order[ii]].index<<std::endl;
     // }
-    hanoisort(start, count, changed, compar);
+    if (RDKit::detail::hanoi(start.data(), len, hanoiTemp->data(), count.data(),
+                             changed.data(), compar)) {
+      std::copy_n(hanoiTemp->begin(), len, start.begin());
+    }
     // std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
     // std::cerr<<"  result:";
     // for(unsigned int ii=0;ii<nAtoms;++ii){
@@ -798,7 +808,8 @@ void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
                int mode, std::vector<int> &order, std::vector<int> &count,
                int &activeset, std::vector<int> &next,
                std::vector<int> &changed,
-               std::vector<char> &touchedPartitions) {
+               std::vector<char> &touchedPartitions,
+               std::vector<int> *hanoiTemp = nullptr) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
   int offset;
@@ -838,7 +849,7 @@ void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
         }
       }
       RefinePartitions(mol, atoms, compar, mode, order, count, activeset, next,
-                       changed, touchedPartitions);
+                       changed, touchedPartitions, hanoiTemp);
     }
     // not sure if this works each time
     if (atoms[partition].index != oldPart) {
