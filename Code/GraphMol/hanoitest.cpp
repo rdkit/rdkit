@@ -311,13 +311,14 @@ void test3() {
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size(), 1);
     std::vector<char> touched(atoms.size(), 0);
+    std::vector<int> hanoiTemp(atoms.size());
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
                                      next, changed);
 
     RDKit::Canon::RefinePartitions(*m, data, ftor, false, order, count,
-                                   activeset, next, changed, touched);
+                                   activeset, next, changed, touched, &hanoiTemp);
 
     // std::cerr<<"----------------------------------"<<std::endl;
     // for(unsigned int i=0;i<m->getNumAtoms();++i){
@@ -446,6 +447,7 @@ void test4() {
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size(), 1);
     std::vector<char> touched(atoms.size(), 0);
+    std::vector<int> hanoiTemp(atoms.size());
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -457,7 +459,7 @@ void test4() {
     //    "<<changed[order[i]]<<std::endl;
     // }
     RDKit::Canon::RefinePartitions(*m, data, ftor, false, order, count,
-                                   activeset, next, changed, touched);
+                                   activeset, next, changed, touched, &hanoiTemp);
 
     // std::cerr<<"2----------------------------------"<<std::endl;
     //  for(unsigned int i=0;i<m->getNumAtoms();++i){
@@ -477,7 +479,7 @@ void test4() {
     //    "<<changed[order[i]]<<std::endl;
     // }
     RDKit::Canon::RefinePartitions(*m, data, ftor, true, order, count,
-                                   activeset, next, changed, touched);
+                                   activeset, next, changed, touched, &hanoiTemp);
 
     // std::cerr<<"----------------------------------"<<std::endl;
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
@@ -506,13 +508,14 @@ void test4() {
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size(), 1);
     std::vector<char> touched(atoms.size(), 0);
+    std::vector<int> hanoiTemp(atoms.size());
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
                                      next, changed);
 
     RDKit::Canon::RefinePartitions(*m, data, ftor, false, order, count,
-                                   activeset, next, changed, touched);
+                                   activeset, next, changed, touched, &hanoiTemp);
     // std::cerr<<"----------------------------------"<<std::endl;
     // for(unsigned int i=0;i<m->getNumAtoms();++i){
     //   std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count:
@@ -523,7 +526,7 @@ void test4() {
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
                                      next, changed);
     RDKit::Canon::RefinePartitions(*m, data, ftor, true, order, count,
-                                   activeset, next, changed, touched);
+                                   activeset, next, changed, touched, &hanoiTemp);
 
     // std::cerr<<"----------------------------------"<<std::endl;
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
@@ -553,6 +556,7 @@ void test4() {
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size(), 1);
     std::vector<char> touched(atoms.size(), 0);
+    std::vector<int> hanoiTemp(atoms.size());
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -565,7 +569,7 @@ void test4() {
     // }
 
     RDKit::Canon::RefinePartitions(*m, data, ftor, false, order, count,
-                                   activeset, next, changed, touched);
+                                   activeset, next, changed, touched, &hanoiTemp);
 
     // std::cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
     ftor.df_useNbrs = true;
@@ -573,7 +577,7 @@ void test4() {
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
                                      next, changed);
     RDKit::Canon::RefinePartitions(*m, data, ftor, true, order, count,
-                                   activeset, next, changed, touched);
+                                   activeset, next, changed, touched, &hanoiTemp);
     // std::cerr<<"----------------------------------"<<std::endl;
 
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
@@ -622,6 +626,7 @@ void test5() {
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size(), 1);
     std::vector<char> touched(atoms.size(), 0);
+    std::vector<int> hanoiTemp(atoms.size());
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -634,14 +639,14 @@ void test5() {
     // }
 
     RDKit::Canon::RefinePartitions(*m, data, ftor, false, order, count,
-                                   activeset, next, changed, touched);
+                                   activeset, next, changed, touched, &hanoiTemp);
 
     // std::cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
     ftor.df_useNbrs = true;
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
                                      next, changed);
     RDKit::Canon::RefinePartitions(*m, data, ftor, true, order, count,
-                                   activeset, next, changed, touched);
+                                   activeset, next, changed, touched, &hanoiTemp);
 
     // std::cerr<<"----------------------------------"<<std::endl;
     // for(unsigned int i=0;i<m->getNumAtoms();++i){
@@ -662,7 +667,7 @@ void test5() {
     TEST_ASSERT(order[9] == 1 && count[1] == 1);
 
     RDKit::Canon::BreakTies(*m, data, ftor, true, order, count, activeset, next,
-                            changed, touched);
+                            changed, touched, &hanoiTemp);
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
       // std::cerr<<order[i]<<" "<<" index: "<<atoms[order[i]].index<<" count:
       // "<<count[order[i]]<<std::endl;
