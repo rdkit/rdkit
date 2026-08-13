@@ -572,6 +572,7 @@ void basicInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
   atom.index = idx;
   atom.p_symbol = nullptr;
   atom.degree = atom.atom->getDegree();
+  TEST_ASSERT(neighborIds.size() >= atom.degree);
   atom.nbrIds = neighborIds.first(atom.degree);
   getNbrs(mol, atom.atom, atom.nbrIds);
 }
