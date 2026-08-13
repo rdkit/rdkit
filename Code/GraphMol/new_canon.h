@@ -71,7 +71,7 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
                      unsigned int div = 1) {
     if (x.p_symbol && y.p_symbol) {
       auto symbolCompare = x.p_symbol->compare(*y.p_symbol);
-      if (symbolCompare) {
+      if (symbolCompare != 0) {
         return symbolCompare;
       }
     }
@@ -356,13 +356,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
       return 1;
     }
     if (dp_atoms[i].p_symbol && dp_atoms[j].p_symbol) {
-      auto symbolCompare =
-          dp_atoms[i].p_symbol->compare(*dp_atoms[j].p_symbol);
-      if (symbolCompare) {
-        return symbolCompare;
-      } else {
-        return 0;
-      }
+      return dp_atoms[i].p_symbol->compare(*dp_atoms[j].p_symbol);
     }
 
     // move onto atomic number
