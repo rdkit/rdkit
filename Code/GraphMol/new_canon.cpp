@@ -704,6 +704,8 @@ void initFragmentCanonAtoms(const ROMol &mol,
 void initChiralCanonAtoms(const ROMol &mol,
                           std::vector<Canon::canon_atom> &atoms,
                           std::span<int> neighborIds) {
+  PRECONDITION(neighborIds.size() >= 2 * mol.getNumBonds(),
+               "neighbor ID storage is too small");
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     basicInitCanonAtom(mol, atoms[i], i, neighborIds);
     neighborIds = neighborIds.subspan(atoms[i].degree);
