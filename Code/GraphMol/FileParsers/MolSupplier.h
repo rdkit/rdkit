@@ -685,8 +685,8 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   std::shared_ptr<schrodinger::mae::Block> d_next_struct;
   std::shared_ptr<std::istream> dp_sInStream;
   std::string d_stored_exc;
-  unsigned d_position;
-  unsigned d_length;
+  unsigned d_position{0};
+  unsigned d_length{0};
 };
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
 

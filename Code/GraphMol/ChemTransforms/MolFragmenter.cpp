@@ -325,12 +325,13 @@ void fragmentOnSomeBonds(
   if (bondIndices.size() > 63) {
     throw ValueErrorException("currently can only fragment on up to 63 bonds");
   }
-  if (!maxToCut || !mol.getNumAtoms() || !bondIndices.size()) {
+  if (!maxToCut || maxToCut > bondIndices.size() || !mol.getNumAtoms() ||
+      bondIndices.empty()) {
     return;
   }
 
-  std::uint64_t state = (0x1L << maxToCut) - 1;
-  std::uint64_t stop = 0x1L << bondIndices.size();
+  std::uint64_t state = (std::uint64_t{1} << maxToCut) - 1;
+  std::uint64_t stop = std::uint64_t{1} << bondIndices.size();
   std::vector<unsigned int> fragmentHere(maxToCut);
   std::unique_ptr<std::vector<std::pair<unsigned int, unsigned int>>>
       dummyLabelsHere;
@@ -345,7 +346,7 @@ void fragmentOnSomeBonds(
   while (state < stop) {
     unsigned int nSeen = 0;
     for (unsigned int i = 0; i < bondIndices.size() && nSeen < maxToCut; ++i) {
-      if (state & (0x1L << i)) {
+      if (state & (std::uint64_t{1} << i)) {
         fragmentHere[nSeen] = bondIndices[i];
         if (dummyLabelsHere) {
           (*dummyLabelsHere)[nSeen] = (*dummyLabels)[i];
@@ -459,6 +460,7 @@ ROMol *fragmentOnBonds(
   for (auto bondIdx : bondIndices) {
     bondsToRemove.push_back(res->getBondWithIdx(bondIdx));
   }
+  std::unordered_set<unsigned int> atomsToUpdate;
   res->beginBatchEdit();
   for (unsigned int i = 0; i < bondsToRemove.size(); ++i) {
     const Bond *bond = bondsToRemove[i];
@@ -490,6 +492,7 @@ ROMol *fragmentOnBonds(
         at2->setIsotope(eidx);
       }
       unsigned int idx1 = res->addAtom(at1.release(), false, true);
+      atomsToUpdate.insert(idx1);
       if (bondTypes) {
         bT = (*bondTypes)[i];
       }
@@ -508,6 +511,7 @@ ROMol *fragmentOnBonds(
       }
 
       unsigned int idx2 = res->addAtom(at2.release(), false, true);
+      atomsToUpdate.insert(idx2);
       bondidx = res->addBond(bidx, idx2, bT) - 1;
       // this bond starts at the same atom, so its direction should always be
       // correct:
@@ -554,21 +558,27 @@ ROMol *fragmentOnBonds(
         conf->setAtomPos(idx1, conf->getAtomPos(bidx));
         conf->setAtomPos(idx2, conf->getAtomPos(eidx));
       }
-    } else {
-      // was github issues 429, 6034
-      for (auto idx : {bidx, eidx}) {
-        if (auto tatom = res->getAtomWithIdx(idx);
-            tatom->getNoImplicit() ||
-            (tatom->getIsAromatic() && tatom->getAtomicNum() != 6)) {
-          tatom->setNumExplicitHs(tatom->getNumExplicitHs() + 1);
-        } else {
-          tatom->updatePropertyCache(false);
-        }
-      }
     }
-  }
+    // keep track of the atoms so that we can adjust H counts later
+    atomsToUpdate.insert(bidx);
+    atomsToUpdate.insert(eidx);
+}
   res->commitBatchEdit();
   res->clearComputedProps();
+  if (!atomsToUpdate.empty()) {
+    // Adjust H counts on dummies and atoms where bonds were broken.
+    // was github issues 429, 6034
+    std::ranges::for_each(atomsToUpdate, [&](unsigned int idx) {
+      Atom *atom = res->getAtomWithIdx(idx);
+      if (!addDummies &&
+          (atom->getNoImplicit() ||
+           (atom->getIsAromatic() && atom->getAtomicNum() != 6))) {
+        atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
+      }
+      atom->updatePropertyCache(false);
+    });
+  }
+
   return static_cast<ROMol *>(res.release());
 }
 

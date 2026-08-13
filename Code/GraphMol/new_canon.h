@@ -20,6 +20,7 @@
 #include <RDGeneral/BoostStartInclude.h>
 #include <cstdint>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/container/small_vector.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <cstring>
 #include <cassert>
@@ -100,6 +101,7 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
     return 0;
   }
 };
+using BondholderVector = boost::container::small_vector<bondholder, 4>;
 struct RDKIT_GRAPHMOL_EXPORT canon_atom {
   const Atom *atom{nullptr};
   int index{-1};
@@ -114,14 +116,19 @@ struct RDKIT_GRAPHMOL_EXPORT canon_atom {
       nullptr};  // if provided, this is used to order atoms
   std::vector<int> neighborNum;
   std::vector<int> revistedNeighbors;
-  std::vector<bondholder> bonds;
+  BondholderVector bonds;
 };
 
 RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborIndex(
     canon_atom *atoms, std::vector<bondholder> &nbrs);
+RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborIndex(canon_atom *atoms,
+                                                   BondholderVector &nbrs);
 
 RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborNumSwaps(
     canon_atom *atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx,
+    std::vector<std::pair<unsigned int, unsigned int>> &result);
+RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborNumSwaps(
+    canon_atom *atoms, BondholderVector &nbrs, unsigned int atomIdx,
     std::vector<std::pair<unsigned int, unsigned int>> &result);
 
 /*
@@ -572,7 +579,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
 
 const unsigned int ATNUM_CLASS_OFFSET = 10000;
 class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
-  void getAtomNeighborhood(std::vector<bondholder> &nbrs) const {
+  void getAtomNeighborhood(BondholderVector &nbrs) const {
     for (unsigned j = 0; j < nbrs.size(); ++j) {
       unsigned int nbrIdx = nbrs[j].nbrIdx;
       if (nbrIdx == ATNUM_CLASS_OFFSET) {
@@ -701,14 +708,21 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
                       int mode, std::vector<int> &order,
                       std::vector<int> &count, int &activeset,
                       std::vector<int> &next, std::vector<int> &changed,
-                      std::vector<char> &touchedPartitions) {
+                      std::vector<char> &touchedPartitions,
+                      std::vector<int> *hanoiTemp = nullptr) {
   unsigned int nAtoms = mol.getNumAtoms();
+  std::vector<int> localHanoiTemp;
+  if (!hanoiTemp) {
+    localHanoiTemp.resize(nAtoms);
+    hanoiTemp = &localHanoiTemp;
+  }
   int partition;
   int symclass = 0;
   int offset;
   int index;
   int len;
   int i;
+  PRECONDITION(hanoiTemp->size() >= nAtoms, "hanoi scratch is too small");
   // std::vector<char> touchedPartitions(mol.getNumAtoms(),0);
 
   // std::cerr<<"&&&&&&&&&&&&&&&& RP"<<std::endl;
@@ -741,7 +755,10 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
     //   std::cerr<<order[ii]+1<<" count: "<<count[order[ii]]<<" index:
     //   "<<atoms[order[ii]].index<<std::endl;
     // }
-    hanoisort(start, count, changed, compar);
+    if (RDKit::detail::hanoi(start.data(), len, hanoiTemp->data(), count.data(),
+                             changed.data(), compar)) {
+      std::copy_n(hanoiTemp->begin(), len, start.begin());
+    }
     // std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
     // std::cerr<<"  result:";
     // for(unsigned int ii=0;ii<nAtoms;++ii){
@@ -799,7 +816,8 @@ void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
                int mode, std::vector<int> &order, std::vector<int> &count,
                int &activeset, std::vector<int> &next,
                std::vector<int> &changed,
-               std::vector<char> &touchedPartitions) {
+               std::vector<char> &touchedPartitions,
+               std::vector<int> *hanoiTemp = nullptr) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
   int offset;
@@ -839,7 +857,7 @@ void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
         }
       }
       RefinePartitions(mol, atoms, compar, mode, order, count, activeset, next,
-                       changed, touchedPartitions);
+                       changed, touchedPartitions, hanoiTemp);
     }
     // not sure if this works each time
     if (atoms[partition].index != oldPart) {

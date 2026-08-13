@@ -1,5 +1,5 @@
 import os
-
+import time
 import unittest
 
 from rdkit import Chem, RDConfig
@@ -117,8 +117,7 @@ class TestCase(unittest.TestCase):
     # start with defaults (which does not cache results):
     npr1s = []
     npr2s = []
-    for c in m.GetConformers():
-      cid = c.GetId()
+    for cid in range(m.GetNumConformers()):
       npr1s.append(rdMD.CalcNPR1(m, confId=cid))
       npr2s.append(rdMD.CalcNPR2(m, confId=cid))
     for i in range(1, len(npr1s)):
@@ -128,8 +127,7 @@ class TestCase(unittest.TestCase):
     # now ensure that we can cache:
     npr1s = []
     npr2s = []
-    for c in m.GetConformers():
-      cid = c.GetId()
+    for cid in range(m.GetNumConformers()):
       npr1s.append(rdMD.CalcNPR1(m, confId=cid, force=False))
       npr2s.append(rdMD.CalcNPR2(m, confId=cid, force=False))
     for i in range(1, len(npr1s)):
