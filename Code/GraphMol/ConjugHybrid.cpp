@@ -16,12 +16,14 @@
 #include "AtomIterators.h"
 #include "BondIterators.h"
 
+#include <span>
+
 namespace RDKit {
 // local utility namespace:
 namespace {
 struct ConjAtomInfo {
-  bool isCandidate;
   unsigned int numSubstituents;
+  bool isCandidate;
 };
 
 bool isAtomConjugCand(const Atom *at) {
@@ -48,7 +50,8 @@ bool isAtomConjugCand(const Atom *at) {
   return res;
 }
 
-void markConjAtomBonds(Atom *at, const std::vector<ConjAtomInfo> &atomInfo) {
+void markConjAtomBonds(Atom *at,
+                       const std::span<const ConjAtomInfo> atomInfo) {
   PRECONDITION(at, "bad atom");
   const auto &info = atomInfo[at->getIdx()];
   if (!info.isCandidate) {
@@ -139,8 +142,10 @@ void setConjugation(ROMol &mol) {
 
   std::vector<ConjAtomInfo> atomInfo(mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
+    const auto isCandidate = isAtomConjugCand(atom);
     atomInfo[atom->getIdx()] = {
-        isAtomConjugCand(atom), atom->getDegree() + atom->getTotalNumHs()};
+        isCandidate ? atom->getDegree() + atom->getTotalNumHs() : 0u,
+        isCandidate};
   }
 
   // loop over each atom and check if the bonds connecting to it can
