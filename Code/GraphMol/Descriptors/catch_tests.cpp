@@ -10,6 +10,9 @@
 
 #include <catch2/catch_all.hpp>
 
+#include <cstdio>
+#include <fstream>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -21,6 +24,7 @@
 #include <GraphMol/Descriptors/PMI.h>
 #include <GraphMol/Descriptors/DCLV.h>
 #include <GraphMol/Descriptors/BCUT.h>
+#include <GraphMol/Descriptors/SAScore.h>
 #ifdef RDK_BUILD_DESCRIPTORS3D
 #include <GraphMol/Descriptors/GETAWAY.h>
 #endif
@@ -738,3 +742,78 @@ TEST_CASE("Github #7264: GETAWAY descriptors are non-deterministic") {
   }
 }
 #endif
+
+TEST_CASE("SA score") {
+  const auto tablePath =
+      std::string(getenv("RDBASE")) + "/Data/SA_Score/fpscores.bin";
+  const Descriptors::SAScoreFragmentTable table(tablePath);
+
+  SECTION("fragment table") {
+    CHECK(table.size() == 705292);
+    CHECK(table.score(0xFFFFFFFFu) ==
+          Descriptors::SAScoreFragmentTable::defaultScore);
+  }
+
+  SECTION("agrees with Contrib/SA_Score/sascorer.py") {
+    const std::vector<std::pair<std::string, double>> data{
+        {"c1ccccc1", 1.000000},
+        {"CC(=O)Oc1ccccc1C(=O)O", 1.580040},
+        {"C[C@H](N)C(=O)O", 2.319603},
+        {"CC(N)C(=O)O", 2.319603},
+        {"CC(C)CCC[C@@H](C)[C@H]1CC[C@H]2[C@@H]3CC=C4C[C@@H](O)CC[C@]4(C)[C@H]"
+         "3CC[C@]12C",
+         4.163362},
+        {"C1CCC2(CC1)CCCCC2", 2.412221},
+        {"C1CC2CCC1CC2", 2.784431},
+        {"C1CCCCCCCCCCC1", 1.000000},
+        {"C1CC1C1CC1C1CC1", 3.114235},
+        {"CC1=C2C(=O)C(OC(C)=O)C3(C)C(O)CC4OCC4(OC(C)=O)C3C(OC(=O)c3ccccc3)C2("
+         "C)C(O)CC1OC(=O)C(O)C(NC(=O)c1ccccc1)c1ccccc1",
+         5.463623},
+    };
+    for (const auto &[smiles, expected] : data) {
+      INFO(smiles);
+      const std::unique_ptr<ROMol> mol{SmilesToMol(smiles)};
+      REQUIRE(mol);
+      CHECK_THAT(Descriptors::calcSAScore(*mol, table),
+                 Catch::Matchers::WithinAbs(expected, 1e-4));
+    }
+  }
+
+  SECTION("Github #8251: no discontinuity above 8") {
+    // sascorer.py reported this as 4.36, i.e. easier to make than aspirin
+    const auto smiles =
+        "C[N+]12CCCC1c1ccc[n+](c1)[Zn+2]21[O]C(=O)C(=O)[O]1.O=C1[OH+][Zn+2]2(["
+        "OH+]C1=O)[OH+]C(=O)C(=O)[OH+]2";
+    const std::unique_ptr<ROMol> mol{SmilesToMol(smiles)};
+    REQUIRE(mol);
+    CHECK_THAT(Descriptors::calcSAScore(*mol, table),
+               Catch::Matchers::WithinAbs(8.025797, 1e-4));
+  }
+
+  SECTION("empty molecule") {
+    const ROMol empty;
+    CHECK_THROWS_AS(Descriptors::calcSAScore(empty, table), ValueErrorException);
+  }
+
+  SECTION("bad table") {
+    CHECK_THROWS_AS(Descriptors::SAScoreFragmentTable("no_such_file.bin"),
+                    BadFileException);
+    CHECK_THROWS_AS(Descriptors::SAScoreFragmentTable(
+                        std::string(getenv("RDBASE")) + "/Data/Crippen.txt"),
+                    ValueErrorException);
+
+    // a header promising more data than the file holds must not be trusted
+    const std::string truncatedPath = "sascore_truncated.bin";
+    {
+      std::ifstream src(tablePath, std::ios_base::binary);
+      std::vector<char> prefix(4096);
+      src.read(prefix.data(), prefix.size());
+      std::ofstream dest(truncatedPath, std::ios_base::binary);
+      dest.write(prefix.data(), prefix.size());
+    }
+    CHECK_THROWS_AS(Descriptors::SAScoreFragmentTable(truncatedPath),
+                    ValueErrorException);
+    std::remove(truncatedPath.c_str());
+  }
+}

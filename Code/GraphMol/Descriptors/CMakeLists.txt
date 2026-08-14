@@ -14,9 +14,10 @@ rdkit_library(Descriptors
               USRDescriptor.cpp AtomFeat.cpp
               OxidationNumbers.cpp
               DCLV.cpp
+              SAScore.cpp
               ${DESC3D_SOURCES}
               LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol
-                 EigenSolvers RDGeneral)
+                 Fingerprints EigenSolvers RDGeneral)
 target_compile_definitions(Descriptors PRIVATE RDKIT_DESCRIPTORS_BUILD)
 
 rdkit_headers(Crippen.h BCUT.h Lipinski.h
@@ -29,6 +30,7 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
               USRDescriptor.h AtomFeat.h
               OxidationNumbers.h
               DCLV.h
+              SAScore.h
               ${DESC3D_HDRS}
               DEST GraphMol/Descriptors)
 
