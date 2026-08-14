@@ -61,20 +61,6 @@ inline std::vector<int> convertMatch(const MatchVectType &match) {
   return res;
 }
 
-#if 0
-inline PyObject *convertMatchesToTupleOfPairs(const MatchVectType &matches) {
-  PyObject *res = PyTuple_New(matches.size());
-  std::for_each(matches.begin(), matches.end(),
-  [res, &matches](const auto &pair) {
-    PyObject *pyPair = PyTuple_New(2);
-    PyTuple_SetItem(pyPair, 0, PyInt_FromLong(pair.first));
-                  PyTuple_SetItem(pyPair, 1, PyInt_FromLong(pair.second));
-                  PyTuple_SetItem(res, &pair - &matches.front(), pyPair);
-                });
-  return res;
-}
-#endif
-
 template <typename T1, typename T2>
 void pySubstructHelper(T1 &mol, T2 &query,
                        const SubstructMatchParameters &params,
