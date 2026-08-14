@@ -231,7 +231,7 @@ void checkPossibleHitsPart(
     std::vector<std::string> synthNames;
     std::vector<const std::string *> synthNamePtrs;
     dismantleName(name, rxnId, synthNames, synthNamePtrs);
-    if (searcher->verifyHit(*prod, rxnId, synthNamePtrs)) {
+    if (searcher->verifyHit(prod, rxnId, synthNamePtrs)) {
       allResultMols[nextLine] = std::move(prod);
     }
     if (pbar) {
@@ -338,7 +338,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
   // when split is a match to the synthons (c1ccc(C[1*])o1 and [1*]N)
   // but the product the hydroxyquinazoline is aromatic, at least in
   // the RDKit model so the N in the query doesn't match.
-  if (!verifyHit(*prod, hitset->d_reaction->getId(), synthNames)) {
+  if (!verifyHit(prod, hitset->d_reaction->getId(), synthNames)) {
     prod.reset();
   }
   return prod;
@@ -589,10 +589,11 @@ void SynthonSpaceSearcher::updateBestHitSoFar(const ROMol &possBest,
 
 // It's conceivable that building the full molecule has changed the
 // chiral atom count.
-bool SynthonSpaceSearcher::verifyHit(ROMol &mol, const std::string &,
+bool SynthonSpaceSearcher::verifyHit(std::unique_ptr<ROMol> &mol,
+                                     const std::string &,
                                      const std::vector<const std::string *> &) {
   if (getParams().minHitChiralAtoms || getParams().maxHitChiralAtoms) {
-    auto numChiralAtoms = details::countChiralAtoms(mol);
+    auto numChiralAtoms = details::countChiralAtoms(*mol);
     if (numChiralAtoms < getParams().minHitChiralAtoms ||
         (getParams().maxHitChiralAtoms > -1 &&
          std::cmp_greater(numChiralAtoms, getParams().maxHitChiralAtoms))) {
@@ -883,8 +884,11 @@ void SynthonSpaceSearcher::sortToTryByApproxSimilarity(
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
       newToTry;
   newToTry.reserve(tmp.size());
-  std::transform(tmp.begin(), tmp.end(), back_inserter(newToTry),
-                 [&](const auto &p) -> auto { return toTry[p.first]; });
+  std::transform(
+      tmp.begin(), tmp.end(),
+      back_inserter(newToTry), [&](const auto &p) -> auto{
+        return toTry[p.first];
+      });
   toTry = newToTry;
 }
 

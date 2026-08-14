@@ -43,7 +43,7 @@ template <class Archive, typename Block, typename Allocator>
 void serialize(Archive &ar, dynamic_bitset<Block, Allocator> &bs,
                const unsigned int /*version*/) {
   size_t num_bits = bs.size();
-  ar & num_bits;
+  ar &num_bits;
 
   std::vector<Block> blocks;
 
@@ -51,7 +51,7 @@ void serialize(Archive &ar, dynamic_bitset<Block, Allocator> &bs,
     to_block_range(bs, std::back_inserter(blocks));
   }
 
-  ar & blocks;
+  ar &blocks;
 
   if (Archive::is_loading::value) {
     bs.resize(num_bits);
@@ -347,22 +347,22 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 #ifdef RDK_USE_BOOST_SERIALIZATION
 template <class Archive>
 void ShapeInput::serialize(Archive &ar, const unsigned int) {
-  ar & d_activeShape;
-  ar & d_coords;
-  ar & d_alphas;
-  ar & d_types;
-  ar & d_numAtoms;
-  ar & d_numFeats;
-  ar & d_selfOverlapShapeVols;
-  ar & d_selfOverlapColorVols;
-  ar & d_extremePointss;
-  ar & d_carbonRadii;
-  ar & d_smiles;
-  ar & d_normalizeds;
-  ar & d_normalizationOKs;
-  ar & d_canonRots;
-  ar & d_canonTranss;
-  ar & d_eigenValuess;
+  ar &d_activeShape;
+  ar &d_coords;
+  ar &d_alphas;
+  ar &d_types;
+  ar &d_numAtoms;
+  ar &d_numFeats;
+  ar &d_selfOverlapShapeVols;
+  ar &d_selfOverlapColorVols;
+  ar &d_extremePointss;
+  ar &d_carbonRadii;
+  ar &d_smiles;
+  ar &d_normalizeds;
+  ar &d_normalizationOKs;
+  ar &d_canonRots;
+  ar &d_canonTranss;
+  ar &d_eigenValuess;
 }
 #endif
 

@@ -35,7 +35,7 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
       const std::vector<std::shared_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const override;
 
-  bool verifyHit(ROMol &hit, const std::string &rxnId,
+  bool verifyHit(std::unique_ptr<ROMol> &hit, const std::string &rxnId,
                  const std::vector<const std::string *> &synthNames) override;
 
  protected:

@@ -18,6 +18,7 @@
 #include <atomic>
 #include <chrono>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <random>
 
@@ -79,7 +80,7 @@ class SynthonSpaceSearcher {
   // the derived class' criteria.  This function checks the chiralAtomCount
   // if appropriate, which required a non-const ROMol.  Some derived classes
   // will also update d_bestHitFound.
-  virtual bool verifyHit(ROMol &mol, const std::string &,
+  virtual bool verifyHit(std::unique_ptr<ROMol> &mol, const std::string &,
                          const std::vector<const std::string *> &);
 
  protected:

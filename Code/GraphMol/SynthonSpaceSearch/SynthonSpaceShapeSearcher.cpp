@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <memory>
 #include <numbers>
 #include <ranges>
 
@@ -804,10 +805,7 @@ bool SynthonSpaceShapeSearcher::quickVerify(
     const std::vector<size_t> &synthNums) const {
   // The approximate similarity should already have been checked in
   // processToTrySet so no need to do it again.
-  if (!SynthonSpaceSearcher::quickVerify(hitset, synthNums)) {
-    return false;
-  }
-  return true;
+  return SynthonSpaceSearcher::quickVerify(hitset, synthNums);
 }
 
 double SynthonSpaceShapeSearcher::approxSimilarity(
@@ -965,26 +963,27 @@ bool checkExcludedVols(const ROMol &mol, const SynthonSpaceSearchParams &params,
 bool finaliseHit(GaussianShape::ShapeInput &hitShapes,
                  const unsigned int hitShapeNum,
                  const std::array<double, 3> &scores, const std::string &rxnId,
-                 const std::vector<const std::string *> &synthNames, ROMol &hit,
+                 const std::vector<const std::string *> &synthNames,
+                 std::unique_ptr<ROMol> &hit,
                  const SynthonSpaceSearchParams &params, double &excludedVol,
                  double &meanExcludedVol) {
   // Copy the conformer into the hit.
   hitShapes.setActiveShape(hitShapeNum);
-  hit = static_cast<ROMol>(*hitShapes.shapeToMol(false, true));
-  if (!checkExcludedVols(hit, params, excludedVol, meanExcludedVol)) {
+  hit.reset(hitShapes.shapeToMol(false, true).release());
+  if (!checkExcludedVols(*hit, params, excludedVol, meanExcludedVol)) {
     return false;
   }
-  hit.setProp<double>("Similarity", scores[0]);
-  hit.setProp<double>("ShapeScore", scores[1]);
-  hit.setProp<double>("ColorScore", scores[2]);
+  hit->setProp<double>("Similarity", scores[0]);
+  hit->setProp<double>("ShapeScore", scores[1]);
+  hit->setProp<double>("ColorScore", scores[2]);
   const auto prodName = details::buildProductName(rxnId, synthNames);
-  hit.setProp<std::string>(common_properties::_Name, prodName);
-  MolOps::assignStereochemistryFrom3D(hit);
+  hit->setProp<std::string>(common_properties::_Name, prodName);
+  MolOps::assignStereochemistryFrom3D(*hit);
   if (excludedVol > -0.5) {
-    hit.setProp<double>("ExcludedVolume", excludedVol);
+    hit->setProp<double>("ExcludedVolume", excludedVol);
   }
   if (meanExcludedVol > -0.5) {
-    hit.setProp<double>("MeanExcludedVolume", meanExcludedVol);
+    hit->setProp<double>("MeanExcludedVolume", meanExcludedVol);
   }
   return true;
 }
@@ -1126,20 +1125,20 @@ bool checkBondLengths(const ROMol &mol) {
 }  // namespace
 
 bool SynthonSpaceShapeSearcher::verifyHit(
-    ROMol &hit, const std::string &rxnId,
+    std::unique_ptr<ROMol> &hit, const std::string &rxnId,
     const std::vector<const std::string *> &synthNames) {
   std::array<double, 3> initScores{-1.0, -1.0, -1.0};
-  if (hit.getNumConformers()) {
+  if (hit->getNumConformers()) {
     initScores = GaussianShape::AlignMolecule(
-        dp_queryShape->getShapes(), hit, GaussianShape::ShapeInputOptions(),
+        dp_queryShape->getShapes(), *hit, GaussianShape::ShapeInputOptions(),
         nullptr, getParams().shapeOverlayOptions);
     double excludedVol{-1.0}, meanExcludedVol{-1.0};
-    if (checkExcludedVols(hit, getParams(), excludedVol, meanExcludedVol)) {
+    if (checkExcludedVols(*hit, getParams(), excludedVol, meanExcludedVol)) {
       // If the excluded vol is also ok, take this hit.  Otherwise, pass it
       // through to conformation expansion to see if it wins there.
-      finaliseHit(hit, initScores, rxnId, synthNames, excludedVol,
+      finaliseHit(*hit, initScores, rxnId, synthNames, excludedVol,
                   meanExcludedVol);
-      if (!getParams().bestHit && checkBondLengths(hit) &&
+      if (!getParams().bestHit && checkBondLengths(*hit) &&
           initScores[0] >= getParams().similarityCutoff) {
         return true;
       }
@@ -1156,7 +1155,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
   dgParams.timeout = getParams().timeOut;
   UserConfGenerator userConf = getParams().userConformerGenerator;
   auto hitConfs = details::generateIsomerConformers(
-      hit, getParams().numConformers, true, getParams().stereoEnumOpts,
+      *hit, getParams().numConformers, true, getParams().stereoEnumOpts,
       dgParams, userConf);
   bool foundHit = false;
   // Prefer a hit from a generated conf rather than the initial hit
@@ -1188,7 +1187,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
           continue;
         }
         finalisedHit = true;
-        updateBestHitSoFar(hit, thisScore[0]);
+        updateBestHitSoFar(*hit, thisScore[0]);
       }
       if (thisScore[0] >= bestSim &&
           thisScore[0] > getParams().similarityCutoff) {

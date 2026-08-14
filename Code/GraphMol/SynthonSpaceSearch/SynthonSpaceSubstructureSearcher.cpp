@@ -567,14 +567,14 @@ double SynthonSpaceSubstructureSearcher::approxSimilarity(
 }
 
 bool SynthonSpaceSubstructureSearcher::verifyHit(
-    ROMol &hit, const std::string &rxnId,
+    std::unique_ptr<ROMol> &hit, const std::string &rxnId,
     const std::vector<const std::string *> &synthNames) {
   if (!SynthonSpaceSearcher::verifyHit(hit, rxnId, synthNames)) {
     return false;
   }
-  if (!SubstructMatch(hit, getQuery(), d_matchParams).empty()) {
+  if (!SubstructMatch(*hit, getQuery(), d_matchParams).empty()) {
     const auto prodName = details::buildProductName(rxnId, synthNames);
-    hit.setProp<std::string>(common_properties::_Name, prodName);
+    hit->setProp<std::string>(common_properties::_Name, prodName);
     return true;
   }
   return false;
