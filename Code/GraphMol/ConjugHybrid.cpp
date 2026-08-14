@@ -59,7 +59,7 @@ void markConjAtomBonds(Atom *at,
   }
   auto &mol = at->getOwningMol();
 
-  int atx = at->getIdx();
+  const auto atx = at->getIdx();
   // make sure that have either 2 or 3 substitutions on this atom
   if ((info.numSubstituents < 2) || (info.numSubstituents > 3)) {
     return;
@@ -85,6 +85,21 @@ void markConjAtomBonds(Atom *at,
       }
     }
   }
+}
+
+// Kept for the Java Atom wrapper, which exposes this atom-level helper.
+// MolOps::setConjugation() builds this cache once for the entire molecule.
+[[maybe_unused]] void markConjAtomBonds(Atom *at) {
+  PRECONDITION(at, "bad atom");
+  auto &mol = at->getOwningMol();
+  std::vector<ConjAtomInfo> atomInfo(mol.getNumAtoms());
+  for (const auto atom : mol.atoms()) {
+    const auto isCandidate = isAtomConjugCand(atom);
+    atomInfo[atom->getIdx()] = {
+        isCandidate ? atom->getDegree() + atom->getTotalNumHs() : 0u,
+        isCandidate};
+  }
+  markConjAtomBonds(at, atomInfo);
 }
 
 int numBondsPlusLonePairs(Atom *at) {
