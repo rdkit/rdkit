@@ -107,9 +107,9 @@ def calculateScore(m):
   max = 2.5
   sascore = 11. - (sascore - min + 1) / (max - min) * 9.
 
-  # smooth the 10-end
+  # smooth the 10-end; log(sascore - 7) keeps this continuous at 8 (github #8251)
   if sascore > 8.:
-    sascore = 8. + math.log(sascore + 1. - 9.)
+    sascore = 8. + math.log(sascore - 7.)
   if sascore > 10.:
     sascore = 10.0
   elif sascore < 1.:
