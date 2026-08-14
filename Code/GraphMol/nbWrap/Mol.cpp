@@ -89,20 +89,16 @@ namespace {
 
 void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
                                  nb::object func) {
-  ps.extraFinalCheck = pyFinalMatchFunctor(func);
+  ps.extraFinalCheck =
+      pyMatchFunctor<ROMol, std::span<const unsigned int>>(func);
 }
 
 void setExtraAtomCheckFunc(SubstructMatchParameters &ps, nb::object func) {
-  ps.extraAtomCheck = pyMatchFunctor<Atom>(func);
+  ps.extraAtomCheck = pyMatchFunctor<Atom, Atom>(func);
 }
 
-void setExtraAtomCheckFunc2(SubstructMatchParameters &ps,
-                            const AtomCoordsMatchFunctor &ftor) {
-  ps.extraAtomCheck = std::bind(&AtomCoordsMatchFunctor::operator(), &ftor,
-                                std::placeholders::_1, std::placeholders::_2);
-}
 void setExtraBondCheckFunc(SubstructMatchParameters &ps, nb::object func) {
-  ps.extraBondCheck = pyMatchFunctor<Bond>(func);
+  ps.extraBondCheck = pyMatchFunctor<Bond, Bond>(func);
 }
 
 void MolDebug(const ROMol &mol, bool useStdout) {
@@ -312,24 +308,13 @@ struct mol_wrapper {
             &RDKit::SubstructMatchParameters::
                 specifiedStereoQueryMatchesUnspecified,
             "If set, query atoms and bonds with specified stereochemistry will match atoms and bonds with unspecified stereochemistry.")
-        .def("setExtraFinalCheck", setSubstructMatchFinalCheck,
-             // FIX: This probably doesn't have the right custodian/ward
-             "func"_a,
+        .def("setExtraFinalCheck", setSubstructMatchFinalCheck, "func"_a,
              R"DOC(allows you to provide a function that will be called
                with the molecule
            and a vector of atom IDs containing a potential match.
            The function should return true or false indicating whether or not
            that match should be accepted.)DOC")
-        .def(
-            "setExtraAtomCheckFunc", setExtraAtomCheckFunc2,
-            // FIX: This probably doesn't have the right custodian/ward
-            "atomCoordsMatcher"_a,
-            R"DOC(allows you to provide an AtomCoordsMatcher that will be called
-              for each atom pair that matches during substructure searching,
-              after all other comparisons have passed.)DOC")
-        .def("setExtraAtomCheckFunc", setExtraAtomCheckFunc,
-             // FIX: This probably doesn't have the right custodian/ward
-             "func"_a,
+        .def("setExtraAtomCheckFunc", setExtraAtomCheckFunc, "func"_a,
              R"DOC(allows you to provide a function that will be called
            for each atom pair that matches during substructure searching,
            after all other comparisons have passed.
@@ -340,9 +325,7 @@ struct mol_wrapper {
             &RDKit::SubstructMatchParameters::
                 extraAtomCheckOverridesDefaultCheck,
             "if set, only the extraAtomCheck will be used to determine whether or not atoms match")
-        .def("setExtraBondCheckFunc", setExtraBondCheckFunc,
-             // FIX: This probably doesn't have the right custodian/ward
-             "func"_a,
+        .def("setExtraBondCheckFunc", setExtraBondCheckFunc, "func"_a,
              R"DOC(allows you to provide a function that will be called
            for each bond pair that matches during substructure searching,
            after all other comparisons have passed.
