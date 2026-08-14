@@ -35,13 +35,11 @@ rdkit_catch_test(testCIPLabeler catch_tests.cpp
                  ${configs_src} ${rules_src}
                  LINK_LIBRARIES SmilesParse GraphMol FileParsers MarvinParser)
 
-# Set the BUILD macro to keep dll linkage consistency, since, in order
-# to test private, unexported functions, we are building the test from
-# sources, and NOT linking to the lib.
+# Parser dependencies load the shared CIPLabeler library, so keep the test's
+# private implementation local to the executable.
 if(RDK_BUILD_CPP_TESTS)
-    target_compile_definitions(testCIPLabeler PRIVATE RDKIT_CIPLABELER_BUILD)
-    # Parser dependencies also load the shared CIPLabeler library. Keep this
-    # test's private copy of the implementation local to the executable.
+    target_compile_definitions(testCIPLabeler PRIVATE
+        RDKIT_CIPLABELER_LOCAL_BUILD)
     set_target_properties(testCIPLabeler PROPERTIES CXX_VISIBILITY_PRESET hidden)
 endif()
 
