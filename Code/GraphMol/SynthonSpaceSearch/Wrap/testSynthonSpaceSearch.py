@@ -51,7 +51,7 @@ def createShapeDatabaseForTest(spaceFile, restartFile):
   buildParams.interimFile = restartFile
   buildParams.interimWrites = 3
   space.BuildSynthonShapes(buildParams)
-  
+
 
 class TestCase(unittest.TestCase):
 
@@ -307,7 +307,7 @@ class TestCase(unittest.TestCase):
     fName = self.sssDir / "triazole_space_shapes.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadDBFile(fName)
-    
+
     query = Chem.MolFromSmiles("C[C@H]1CCN(c2nnc(CO)n2C2CCCC2)C1 |(3.88187,-1.9608,1.02401;3.40947,-0.556473,0.685633;3.49763,-0.278493,-0.787477;2.18424,0.313597,-1.21035;1.39217,0.480256,0.0110759;0.36454,1.42337,0.278193;0.656593,2.66561,0.766052;-0.477075,3.33073,0.923413;-1.48168,2.52297,0.540741;-2.93641,2.8664,0.551747;-3.33354,3.43671,-0.657732;-0.965924,1.32594,0.134935;-1.71735,0.224133,-0.333621;-1.11549,-0.643316,-1.37025;-2.26431,-1.65079,-1.54776;-2.58926,-1.96617,-0.0975393;-2.00229,-0.836476,0.740437;1.90383,-0.551243,0.906815),wD:1.0|")
     ssparams = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     ssparams.maxHits = -1
@@ -360,6 +360,11 @@ class TestCase(unittest.TestCase):
 
     ssparams = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     ssparams.excludedVolume = excVol
+
+    # Clear this to see if ssparams.excludedVolume is still ok
+    # after this has been cleared.
+    excVol = None
+
     ssparams.fragSimilarityAdjuster = 0.2
     ssparams.approxSimilarityAdjuster = 0.2
     ssparams.numConformers = 10
@@ -377,6 +382,10 @@ class TestCase(unittest.TestCase):
     fName = self.sssDir / "4ala_shapes.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadDBFile(fName)
+
+    query = Chem.MolFromSmiles("O=C(c1ccccc1)N1CCCC1 |(0.0443291,-1.81486,-1.76886;0.0506321,-0.858174,-0.921491;1.37975,-0.430412,-0.483603;2.18964,-1.35506,0.144714;3.47088,-1.00454,0.585539;3.93803,0.297573,0.388032;3.1267,1.22739,-0.242406;1.85597,0.849751,-0.670531;-1.14837,-0.261434,-0.446583;-1.26073,0.836916,0.520219;-2.73583,1.04666,0.696614;-3.34033,-0.283345,0.290893;-2.46516,-0.679843,-0.874401)|")
+    hits = synthonspace.ShapeSearch(query, ssparams)
+    self.assertEqual(len(hits.GetHitMolecules()), 1)
 
 
   def testShapePossibleHitsWrite(self):
@@ -424,7 +433,7 @@ class TestCase(unittest.TestCase):
 
     p.terminate()
     p.join()
-    
+
     # We now have a partial restart file, finish building the
     # shapes.
     space = rdSynthonSpaceSearch.SynthonSpace()
@@ -437,7 +446,7 @@ class TestCase(unittest.TestCase):
     numWithShapes = space.GetNumSynthonsWithShapes()
     print(f"Final num shapes : {numWithShapes}")
     self.assertEqual(numWithShapes, 7)
-    
+
 
 if __name__ == "__main__":
   unittest.main()
