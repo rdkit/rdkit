@@ -38,6 +38,15 @@ class pyMatchFunctor {
     // grab the GIL
     PyGILStateHolder h;
 
+    if constexpr (std::is_same_v<T, ROMol> &&
+                  std::is_same_v<U, std::span<const unsigned int>>) {
+      // nanobind doesn't support std::span, so we need to convert the span to
+      // a vector before calling into python. This might be dependent
+      // on the nanobind version.
+      std::vector<unsigned int> matchVec(a2.begin(), a2.end());
+      return nb::cast<bool>(dp_callable(&a1, &matchVec));
+    }
+
     if constexpr (std::is_same_v<T, Atom> && std::is_same_v<U, Atom>) {
       // If the callable is a subclass of AtomCoordsMatchFunctor,
       // we can take a shortcut and avoid passing the args through
