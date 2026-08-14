@@ -21,6 +21,11 @@ Co5mos, İlker YILMAZ
   invalidated when the `RingInfo` is modified. `RingInfo::addRing()` now takes
   `std::span<const int>` arguments. The Python, Java, and C# APIs are unchanged.
 - `Flippers.h` has been removed from the installed headers.
+- `Contrib/SA_Score/sascorer.py` scores above 8 change with the fix for github
+  #8251. The old code took `log(sascore - 8)`, which diverges at the branch
+  boundary and reported some very hard molecules as trivially easy. Scores
+  only ever move upwards; 2 of the 4,991 molecules in
+  `$RDBASE/Data/NCI/first_5K.smi` are affected.
 
 ## Code removed in this release:
 
