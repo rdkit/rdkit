@@ -9,13 +9,10 @@
 //  of the RDKit source tree.
 //
 
-import assert from 'assert';
-import fs from 'fs';
-import readline from 'readline';
-import initRDKitModule from '../build/dist/RDKit_minimal.js';
-
-import { fileURLToPath } from 'url';
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const assert = require('assert');
+const fs = require('fs');
+const readline = require('readline');
+var initRDKitModule = require('../build/dist/RDKit_minimal.js');
 
 var RDKitModule;
 

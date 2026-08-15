@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "description": "RDKit MinimalLib compiled to WebAssembly",
   "main": "./dist/RDKit_minimal.js",
-  "type": "module",
   "types": "./dist/RDKit_minimal.d.ts",
   "exports": {
     ".": {
