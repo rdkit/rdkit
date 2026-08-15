@@ -35,6 +35,8 @@
 // The hack assumes that sys/stat.h will be imported for the first
 // time by win32_port.h, which is not necessarily the case
 // So we need to set the stage for the hack or it will fail
+#include "../../GraphMol/Descriptors/MolDescriptors.h"
+#include "../../GraphMol/Descriptors/MolSurf.h"
 #ifdef _WIN32
 #define fstat microsoft_native_fstat
 #define stat microsoft_native_stat
@@ -65,6 +67,8 @@
 #include <GraphMol/Fingerprints/MACCS.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
+#include <GraphMol/Descriptors/BCUT.h>
+#include <GraphMol/Descriptors/MolSurf.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/MolHash/MolHash.h>
 #include <GraphMol/FMCS/FMCS.h>
@@ -664,13 +668,20 @@ extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify,
     const ROMol *im = (ROMol *)i;      \
     return func(*im);                  \
   }
+#define MOLDESCRARR(name, func, index, ret)   \
+  extern "C" ret Mol##name##index(CROMol i) { \
+    const ROMol *im = (ROMol *)i;             \
+    return func(*im)[index - 1];              \
+  }
 MOLDESCR(FractionCSP3, RDKit::Descriptors::calcFractionCSP3, double)
 MOLDESCR(TPSA, RDKit::Descriptors::calcTPSA, double)
 MOLDESCR(LabuteASA, RDKit::Descriptors::calcLabuteASA, double)
 MOLDESCR(AMW, RDKit::Descriptors::calcAMW, double)
 MOLDESCR(ExactMW, RDKit::Descriptors::calcExactMW, double)
-MOLDESCR(HBA, RDKit::Descriptors::calcLipinskiHBA, int)
-MOLDESCR(HBD, RDKit::Descriptors::calcLipinskiHBD, int)
+MOLDESCR(LHBA, RDKit::Descriptors::calcLipinskiHBA, int)
+MOLDESCR(LHBD, RDKit::Descriptors::calcLipinskiHBD, int)
+MOLDESCR(HBA, RDKit::Descriptors::calcNumHBA, int)
+MOLDESCR(HBD, RDKit::Descriptors::calcNumHBD, int)
 MOLDESCR(NumHeteroatoms, RDKit::Descriptors::calcNumHeteroatoms, int)
 MOLDESCR(NumRings, RDKit::Descriptors::calcNumRings, int)
 MOLDESCR(NumAromaticRings, RDKit::Descriptors::calcNumAromaticRings, int)
@@ -692,6 +703,8 @@ MOLDESCR(NumHeterocycles, RDKit::Descriptors::calcNumHeterocycles, int)
 MOLDESCR(NumSpiroAtoms, RDKit::Descriptors::calcNumSpiroAtoms, int)
 MOLDESCR(NumBridgeheadAtoms, RDKit::Descriptors::calcNumBridgeheadAtoms, int)
 MOLDESCR(NumAmideBonds, RDKit::Descriptors::calcNumAmideBonds, int)
+MOLDESCR(NumUnspecifiedAtomStereoCenters, RDKit::Descriptors::numUnspecifiedAtomStereoCenters, int)
+MOLDESCR(NumAtomStereoCenters, RDKit::Descriptors::numAtomStereoCenters, int)
 
 MOLDESCR(NumRotatableBonds, RDKit::Descriptors::calcNumRotatableBonds, int)
 MOLDESCR(Chi0v, RDKit::Descriptors::calcChi0v, double)
@@ -710,10 +723,79 @@ MOLDESCR(Kappa3, RDKit::Descriptors::calcKappa3, double)
 MOLDESCR(HallKierAlpha, RDKit::Descriptors::calcHallKierAlpha, double)
 MOLDESCR(Phi, RDKit::Descriptors::calcPhi, double)
 
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 1, double)
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 2, double)
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 3, double)
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 4, double)
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 5, double)
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 6, double)
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 7, double)
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 8, double)
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 9, double)
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 10, double)
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 11, double)
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 12, double)
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 13, double)
+MOLDESCRARR(PEOE_VSA, RDKit::Descriptors::calcPEOE_VSA, 14, double)
+MOLDESCRARR(SMR_VSA, RDKit::Descriptors::calcSMR_VSA, 1, double)
+MOLDESCRARR(SMR_VSA, RDKit::Descriptors::calcSMR_VSA, 2, double)
+MOLDESCRARR(SMR_VSA, RDKit::Descriptors::calcSMR_VSA, 3, double)
+MOLDESCRARR(SMR_VSA, RDKit::Descriptors::calcSMR_VSA, 4, double)
+MOLDESCRARR(SMR_VSA, RDKit::Descriptors::calcSMR_VSA, 5, double)
+MOLDESCRARR(SMR_VSA, RDKit::Descriptors::calcSMR_VSA, 6, double)
+MOLDESCRARR(SMR_VSA, RDKit::Descriptors::calcSMR_VSA, 7, double)
+MOLDESCRARR(SMR_VSA, RDKit::Descriptors::calcSMR_VSA, 8, double)
+MOLDESCRARR(SMR_VSA, RDKit::Descriptors::calcSMR_VSA, 9, double)
+MOLDESCRARR(SMR_VSA, RDKit::Descriptors::calcSMR_VSA, 10, double)
+MOLDESCRARR(SlogP_VSA, RDKit::Descriptors::calcSlogP_VSA, 1, double)
+MOLDESCRARR(SlogP_VSA, RDKit::Descriptors::calcSlogP_VSA, 2, double)
+MOLDESCRARR(SlogP_VSA, RDKit::Descriptors::calcSlogP_VSA, 3, double)
+MOLDESCRARR(SlogP_VSA, RDKit::Descriptors::calcSlogP_VSA, 4, double)
+MOLDESCRARR(SlogP_VSA, RDKit::Descriptors::calcSlogP_VSA, 5, double)
+MOLDESCRARR(SlogP_VSA, RDKit::Descriptors::calcSlogP_VSA, 6, double)
+MOLDESCRARR(SlogP_VSA, RDKit::Descriptors::calcSlogP_VSA, 7, double)
+MOLDESCRARR(SlogP_VSA, RDKit::Descriptors::calcSlogP_VSA, 8, double)
+MOLDESCRARR(SlogP_VSA, RDKit::Descriptors::calcSlogP_VSA, 9, double)
+MOLDESCRARR(SlogP_VSA, RDKit::Descriptors::calcSlogP_VSA, 10, double)
+MOLDESCRARR(SlogP_VSA, RDKit::Descriptors::calcSlogP_VSA, 11, double)
+MOLDESCRARR(SlogP_VSA, RDKit::Descriptors::calcSlogP_VSA, 12, double)
+
 extern "C" double MolLogP(CROMol i) {
   double logp, mr;
   RDKit::Descriptors::calcCrippenDescriptors(*(ROMol *)i, logp, mr);
   return logp;
+}
+extern "C" double MolMR(CROMol i) {
+  double logp, mr;
+  RDKit::Descriptors::calcCrippenDescriptors(*(ROMol *)i, logp, mr);
+  return mr;
+}
+extern "C" double MolHeavyMW(CROMol i) {
+  return RDKit::Descriptors::calcExactMW(*(ROMol *)i, true);
+}
+extern "C" double MolBCUT2DMWHI(CROMol i) {
+  return RDKit::Descriptors::BCUT2D_MW(*(ROMol *)i).first;
+}
+extern "C" double MolBCUT2DMWLOW(CROMol i) {
+  return RDKit::Descriptors::BCUT2D_MW(*(ROMol *)i).second;
+}
+extern "C" double MolBCUT2DCHGHI(CROMol i) {
+  return RDKit::Descriptors::BCUT2D_CHG(*(ROMol *)i).first;
+}
+extern "C" double MolBCUT2DCHGLOW(CROMol i) {
+  return RDKit::Descriptors::BCUT2D_CHG(*(ROMol *)i).second;
+}
+extern "C" double MolBCUT2DLOGPHI(CROMol i) {
+  return RDKit::Descriptors::BCUT2D_LOGP(*(ROMol *)i).first;
+}
+extern "C" double MolBCUT2DLOGPLOW(CROMol i) {
+  return RDKit::Descriptors::BCUT2D_LOGP(*(ROMol *)i).second;
+}
+extern "C" double MolBCUT2DMRHI(CROMol i) {
+  return RDKit::Descriptors::BCUT2D_MR(*(ROMol *)i).first;
+}
+extern "C" double MolBCUT2DMRLOW(CROMol i) {
+  return RDKit::Descriptors::BCUT2D_MR(*(ROMol *)i).second;
 }
 extern "C" int MolNumAtoms(CROMol i) {
   const ROMol *im = (ROMol *)i;
