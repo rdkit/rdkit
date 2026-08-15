@@ -35,8 +35,6 @@
 // The hack assumes that sys/stat.h will be imported for the first
 // time by win32_port.h, which is not necessarily the case
 // So we need to set the stage for the hack or it will fail
-#include "../../GraphMol/Descriptors/MolDescriptors.h"
-#include "../../GraphMol/Descriptors/MolSurf.h"
 #ifdef _WIN32
 #define fstat microsoft_native_fstat
 #define stat microsoft_native_stat
