@@ -824,6 +824,26 @@ void testGithub3365() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub9431() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing github #9431: resonating radical double-bond stereo"
+      << std::endl;
+
+  auto m = "F/C=C/[CH]Cl"_smiles;
+  TEST_ASSERT(m);
+
+  ExtraInchiReturnValues directResult;
+  const auto direct = MolToInchi(*m, directResult);
+
+  ExtraInchiReturnValues molBlockResult;
+  const auto molBlock = MolBlockToInchi(MolToMolBlock(*m), molBlockResult);
+  TEST_ASSERT(direct == molBlock);
+  TEST_ASSERT(direct.find("/b") == std::string::npos);
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void testGithub3645() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "testing github #3645: Seg fault when parsing InChI"
@@ -1062,6 +1082,7 @@ int main() {
   testMolBlockToInchi();
   testGithubIssue562();
   testGithub3365();
+  testGithub9431();
   testGithub3645();
   test_clean_up_on_kekulization_error();
   testGithub6172();

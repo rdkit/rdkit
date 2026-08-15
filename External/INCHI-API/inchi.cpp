@@ -1832,15 +1832,22 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
     inchiAtoms[i].num_iso_H[3] = 0;
 
     // radical
-    inchiAtoms[i].radical = 0;
-    if (atom->getNumRadicalElectrons()) {
-      // the direct specification of radicals in InChI is tricky since they use
-      // the MDL representation (singlet, double, triplet) and we just have the
-      // number of unpaired electrons. Instead we set the number of implicit Hs
-      // here, that together with the atom identity and charge should be
-      // sufficient
-      inchiAtoms[i].num_iso_H[0] = atom->getTotalNumHs();
-    } else {
+    inchiAtoms[i].radical = INCHI_RADICAL_NONE;
+    switch (atom->getNumRadicalElectrons()) {
+      case 1:
+        inchiAtoms[i].radical = INCHI_RADICAL_DOUBLET;
+        break;
+      case 2:
+        inchiAtoms[i].radical = INCHI_RADICAL_TRIPLET;
+        break;
+      default:
+        // InChI uses the MDL singlet/doublet/triplet representation, so there
+        // is no direct mapping for higher radical-electron counts. Preserve the
+        // existing implicit-H fallback for those cases.
+        if (atom->getNumRadicalElectrons()) {
+          inchiAtoms[i].num_iso_H[0] = atom->getTotalNumHs();
+        }
+        break;
     }
 
     // convert tetrahedral chirality info to Stereo0D
