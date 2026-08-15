@@ -71,10 +71,9 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
   static int compare(const bondholder &x, const bondholder &y,
                      unsigned int div = 1) {
     if (x.p_symbol && y.p_symbol) {
-      if ((*x.p_symbol) < (*y.p_symbol)) {
-        return -1;
-      } else if ((*x.p_symbol) > (*y.p_symbol)) {
-        return 1;
+      auto symbolCompare = x.p_symbol->compare(*y.p_symbol);
+      if (symbolCompare != 0) {
+        return symbolCompare;
       }
     }
     if (x.bondType < y.bondType) {
@@ -364,13 +363,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
       return 1;
     }
     if (dp_atoms[i].p_symbol && dp_atoms[j].p_symbol) {
-      if (*(dp_atoms[i].p_symbol) < *(dp_atoms[j].p_symbol)) {
-        return -1;
-      } else if (*(dp_atoms[i].p_symbol) > *(dp_atoms[j].p_symbol)) {
-        return 1;
-      } else {
-        return 0;
-      }
+      return dp_atoms[i].p_symbol->compare(*dp_atoms[j].p_symbol);
     }
 
     // move onto atomic number
