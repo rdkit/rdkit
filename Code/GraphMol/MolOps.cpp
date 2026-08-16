@@ -371,8 +371,8 @@ void cleanUpOrganometallics(RWMol &mol) {
 }
 
 namespace {
-void adjustHsImpl(RWMol &mol,
-                  const boost::dynamic_bitset<> *atomsToAdjust = nullptr) {
+void adjustHs(RWMol &mol,
+              const boost::dynamic_bitset<> *atomsToAdjust) {
   //
   //  Go through and adjust the number of implicit and explicit Hs
   //  on each atom in the molecule.
@@ -431,7 +431,7 @@ void includeAromaticAtoms(const RWMol &mol,
 }
 }  // namespace
 
-void adjustHs(RWMol &mol) { adjustHsImpl(mol); }
+void adjustHs(RWMol &mol) { adjustHs(mol, nullptr); }
 
 void assignRadicals(RWMol &mol) {
   for (auto atom : mol.atoms()) {
@@ -701,7 +701,7 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   operationThatFailed = SANITIZE_ADJUSTHS;
   if (sanitizeOps & operationThatFailed) {
     if (trackAromaticAtomsForAdjustHs) {
-      adjustHsImpl(mol, &atomsToAdjustHs);
+      adjustHs(mol, &atomsToAdjustHs);
     } else {
       adjustHs(mol);
     }
