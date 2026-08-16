@@ -155,13 +155,16 @@ void setConjugation(ROMol &mol) {
     bond->setIsConjugated(bond->getIsAromatic());
   }
 
-  std::vector<ConjAtomInfo> atomInfo(mol.getNumAtoms());
-  for (const auto atom : mol.atoms()) {
-    const auto isCandidate = isAtomConjugCand(atom);
-    atomInfo[atom->getIdx()] = {
-        isCandidate ? atom->getDegree() + atom->getTotalNumHs() : 0u,
-        isCandidate};
-  }
+  std::vector<ConjAtomInfo> atomInfo;
+  atomInfo.reserve(mol.getNumAtoms());
+  std::ranges::transform(
+      mol.atoms(), std::back_inserter(atomInfo), [](const auto atom) {
+        const auto isCandidate = isAtomConjugCand(atom);
+        return ConjAtomInfo{
+            isCandidate ? atom->getDegree() + atom->getTotalNumHs() : 0u,
+            isCandidate};
+      });
+
 
   // loop over each atom and check if the bonds connecting to it can
   // be conjugated
