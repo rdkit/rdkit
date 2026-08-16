@@ -63,7 +63,7 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
   std::vector<std::string> bondProperties;  //!< bond properties that must be
                                             //!< equivalent in order to match
   std::function<bool(const ROMol &mol,
-                     const std::span<const unsigned int> &match)>
+                     std::span<const unsigned int> match)>
       extraFinalCheck;  //!< a function to be called at the end to validate a
                         //!< match
   unsigned int maxRecursiveMatches =
