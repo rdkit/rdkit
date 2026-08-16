@@ -9,6 +9,11 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes:
+- `Contrib/SA_Score/sascorer.py` now delegates to the new C++ implementation,
+and with it picks up the fix for github #8251. Scores above 8 change: the old
+code took `log(sascore - 8)`, which diverges at the branch boundary and
+reported some very hard molecules as trivially easy. Scores only ever move
+upwards, and roughly 0.04% of molecules in a drug-like set are affected.
 - `Canon::canon_atom::bonds` now uses `boost::container::small_vector`.
 - Since #9208, atom rings are "normalized" so that the first atom in the ring
 definition is the one with the lowest index, and the second one is the neighbor
@@ -118,6 +123,8 @@ wszqkzqk, Diogo, dehaenw
   optional argument toggling the canonical Kekulization.
 
 ## New Features and Enhancements:
+  - Contrib/SA_Score/sascorer.py is now a wrapper around a C++ implementation
+    of the score, which makes it substantially faster to import and to run.
   - MolFromSmiles scales quadratically with chain length
  (github issue #8776 from i-tub)
   - Add extract mol fragment api
@@ -246,6 +253,8 @@ wszqkzqk, Diogo, dehaenw
  (github pull #9121 from JacksonBurns)
 
 ## Bug Fixes:
+  - Weird dip in SAscore normalization
+ (github issue #8251 from MherMatevosyan)
   - rdShapeAlign is sensitive to starting conformation
  (github issue #8513 from priley-vv)
   - Hydrides in organometallics removed when parsing

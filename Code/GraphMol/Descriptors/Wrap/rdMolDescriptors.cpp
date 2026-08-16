@@ -20,6 +20,7 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/AtomFeat.h>
 #include <GraphMol/Descriptors/OxidationNumbers.h>
+#include <GraphMol/Descriptors/SAScore.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
@@ -852,6 +853,15 @@ python::list CalcMQNs(const RDKit::ROMol &mol, bool force) {
   return pyres;
 }
 
+RDKit::Descriptors::SAScoreFragmentTable *saScoreFragmentTableFromLists(
+    python::object bitIds, python::object contributions) {
+  std::vector<std::uint32_t> ids;
+  std::vector<double> scores;
+  pythonObjectToVect(bitIds, ids);
+  pythonObjectToVect(contributions, scores);
+  return new RDKit::Descriptors::SAScoreFragmentTable(ids, scores);
+}
+
 unsigned int numSpiroAtoms(const RDKit::ROMol &mol, python::object pyatoms) {
   std::vector<unsigned int> ats;
   unsigned int res = RDKit::Descriptors::calcNumSpiroAtoms(
@@ -1582,6 +1592,31 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("CalcNumBridgeheadAtoms", numBridgeheadAtoms,
               (python::arg("mol"), python::arg("atoms") = python::object()),
               docString.c_str());
+
+  docString =
+      "Internal. Fragment contributions for _CalcSAScore(); use "
+      "Contrib/SA_Score/sascorer.py instead.";
+  python::class_<RDKit::Descriptors::SAScoreFragmentTable, boost::noncopyable>(
+      "_SAScoreFragmentTable", docString.c_str(),
+      python::init<const std::string &>((python::arg("self"),
+                                         python::arg("filename"))))
+      .def("__init__",
+           python::make_constructor(
+               saScoreFragmentTableFromLists, python::default_call_policies(),
+               (python::arg("bitIds"), python::arg("contributions"))))
+      .def("__len__", &RDKit::Descriptors::SAScoreFragmentTable::size,
+           python::arg("self"))
+      .def("GetScore", &RDKit::Descriptors::SAScoreFragmentTable::score,
+           (python::arg("self"), python::arg("bitId")));
+
+  docString =
+      "Internal. Use Contrib/SA_Score/sascorer.py calculateScore() instead.";
+  python::def(
+      "_CalcSAScore",
+      static_cast<double (*)(const RDKit::ROMol &,
+                             const RDKit::Descriptors::SAScoreFragmentTable &)>(
+          RDKit::Descriptors::calcSAScore),
+      (python::arg("mol"), python::arg("table")), docString.c_str());
 
   python::scope().attr("_CalcNumAtomStereoCenters_version") =
       RDKit::Descriptors::NumAtomStereoCentersVersion;
