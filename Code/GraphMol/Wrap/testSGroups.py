@@ -8,12 +8,9 @@
 #  of the RDKit source tree.
 #
 
-import os
-import sys
 import unittest
 
 from rdkit import Chem, Geometry
-from rdkit.Chem import RDConfig
 
 
 class TestCase(unittest.TestCase):

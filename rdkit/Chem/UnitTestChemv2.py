@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (C) 2003-2006  Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
@@ -11,11 +9,10 @@
 """basic unit testing code for the rdkit Boost wrapper
 
 """
-import os
 import pickle
 import unittest
 
-from rdkit import Chem, RDConfig
+from rdkit import Chem
 from rdkit.Chem import AllChem
 
 

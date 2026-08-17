@@ -136,22 +136,6 @@ int getIntDefaultValue(const char *key, const bj::value &from,
   }
   return defaults.getInt(key);
 }
-bool getBoolDefaultValue(const char *key, const bj::value &from,
-                         const DefaultValueCache &defaults) {
-  PRECONDITION(key, "no key");
-  if (const auto fobj = from.if_object()) {
-    if (const auto kit = fobj->find(key); kit != fobj->end()) {
-      const auto val = kit->value().if_bool();
-      if (!val) {
-        throw FileParseException(std::string("Bad format: value of ") +
-                                 std::string(key) +
-                                 std::string(" is not a bool"));
-      }
-      return *val;
-    }
-  }
-  return defaults.getBool(key);
-}
 std::string getStringDefaultValue(const char *key, const bj::value &from,
                                   const DefaultValueCache &defaults) {
   PRECONDITION(key, "no key");

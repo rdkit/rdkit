@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2023 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2023-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,9 +13,8 @@
 #include <cstdlib>
 #include <string>
 
-#include <boost/noncopyable.hpp>
-
 #include <GraphMol/Chirality.h>
+#include <GraphMol/MolOps.h>
 
 // Extend catch2 (if available) with macros that add messages
 // to the (failed) test output, so we have a replacement for
@@ -40,9 +39,13 @@
   }
 #endif
 
-class TestFixtureTemplate : public boost::noncopyable {
+class TestFixtureTemplate {
  public:
   TestFixtureTemplate() = delete;
+  TestFixtureTemplate(const TestFixtureTemplate &) = delete;
+  TestFixtureTemplate &operator=(const TestFixtureTemplate &) = delete;
+  TestFixtureTemplate(TestFixtureTemplate &&) = default;
+  TestFixtureTemplate &operator=(TestFixtureTemplate &&) = default;
 
   TestFixtureTemplate(std::string var, bool (*getter_func)(),
                       void (*setter_func)(bool))
@@ -99,4 +102,19 @@ class AllowNontetrahedralChiralityFixture : private TestFixtureTemplate {
             RDKit::Chirality::nonTetrahedralStereoEnvVar,
             &RDKit::Chirality::getAllowNontetrahedralChirality,
             &RDKit::Chirality::setAllowNontetrahedralChirality) {}
+};
+
+class UseLegacyRingFindingFixture : private TestFixtureTemplate {
+ public:
+  UseLegacyRingFindingFixture()
+      : TestFixtureTemplate(RDKit::MolOps::useLegacyRingFindingEnvVar,
+                            &RDKit::MolOps::getUseLegacyRingFinding,
+                            &RDKit::MolOps::setUseLegacyRingFinding) {}
+
+  UseLegacyRingFindingFixture(bool state)
+      : TestFixtureTemplate(RDKit::MolOps::useLegacyRingFindingEnvVar,
+                            &RDKit::MolOps::getUseLegacyRingFinding,
+                            &RDKit::MolOps::setUseLegacyRingFinding) {
+    (*m_setter_func)(state);
+  }
 };

@@ -114,6 +114,8 @@ __pycache__/
 /Code/GraphMol/FileParsers/test_data/outSmiles_molwriter.csv
 /Code/GraphMol/FileParsers/test_data/testSGroupsSample_V?000.mol
 /Code/GraphMol/FileParsers/test_data/testSubstanceGroupsSample_V?000.mol
+/Code/GraphMol/FileParsers/test_data/atropisomers/*.NEW*
+/Code/GraphMol/MarvinParse/test_data/*.NEW.*
 
 /Code/GraphMol/ForceFieldHelpers/UFF/test_data/Issue62.sdf
 

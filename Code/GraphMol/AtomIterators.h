@@ -97,10 +97,7 @@ class RDKIT_GRAPHMOL_EXPORT HeteroatomIterator_ {
   int _end{-1};
   int _pos{-1};
   Mol_ *_mol;
-  // FIX: somehow changing the following to a pointer make the regression test
-  // pass
-  // QueryAtom _qA;
-  QueryAtom *_qA;
+  QueryAtom *_qA{nullptr};
 
   int _findNext(int from);
   int _findPrev(int from);

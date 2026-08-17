@@ -14,15 +14,14 @@
 # (the --build-arg are all optional)
 #
 # GET_SRC=copy \
-# docker-compose -f docker_compose_build_minimallib.yml build \
-#   --build-arg http_proxy=$HTTP_PROXY \
+# docker compose -f docker_compose_build_minimallib.yml build \
 #   --build-arg http_proxy=$HTTP_PROXY \
 #   --build-arg https_proxy=$HTTP_PROXY \
 #   --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions" \
 #   2>&1 | tee docker-compose.log
 #
 # Once the build is finished, you can run the following command to
-# export the buildartifacts to your local filesystem:
+# export the build artifacts to your local filesystem:
 #
 # DOCKER_BUILDKIT=1 docker build -f 04_export.Dockerfile -o ../build .
 

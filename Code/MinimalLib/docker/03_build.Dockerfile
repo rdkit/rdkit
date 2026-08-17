@@ -109,6 +109,6 @@ RUN /opt/emsdk/node/*/bin/node tests.js
 # Copy js and wasm rdkit files to use in browser
 # This feature requires the BuildKit backend
 # https://docs.docker.com/engine/reference/commandline/build/#custom-build-outputs
-FROM scratch as export-stage
+FROM scratch AS export-stage
 COPY --from=build-stage /src/rdkit/Code/MinimalLib/build /
 COPY --from=build-stage /src/rdkit/Code/MinimalLib/docs /

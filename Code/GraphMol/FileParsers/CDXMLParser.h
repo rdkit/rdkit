@@ -86,6 +86,26 @@ RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
     const std::string &cdxml,
     const CDXMLParserParams &params =
         CDXMLParserParams(true, true, v2::CDXMLParser::CDXMLFormat::Auto));
+
+//! \brief write a CDX or CDXML block from a molecule
+//! The RDKit is optionally built with the Revvity ChemDraw parser
+//! If this is available, CDX and CDXML can be written
+//!   Note that the CDXML format is large and complex, the RDKit doesn't
+//!   support full functionality, just the base ones required for molecule and
+//!   reaction parsing.
+//! Note: If the ChemDraw extensions are unavailable, an exception will be thrown
+//!  please use the support function hasChemDrawCDXSupport() to check
+//!  whether ChemDraw writing support is enabled.
+//! Note: For CDXML the contents of the std::string are UTF-8
+//!       For CDX they are the binary bytes.
+/*!
+ *   \param mol - Molecule to write
+ *   \param format - CDXMLFormat to use, CDX or CDXML (default)
+ */
+RDKIT_FILEPARSERS_EXPORT std::string MolToCDXMLBlock(
+    const RWMol &mol,
+    CDXMLFormat format = CDXMLFormat::CDXML);
+
 }  // namespace CDXMLParser
 }  // namespace v2
 

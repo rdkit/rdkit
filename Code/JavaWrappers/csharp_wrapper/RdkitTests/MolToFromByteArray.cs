@@ -70,5 +70,17 @@ namespace RdkitTests
 	    Assert.True(mols.Count >= 1);
 
 	}
+	[Fact]
+	public void MolToCDX() {
+	  string smi = "c1ccccc1[C@](F)(Cl)Br";	
+	  ROMol mol = RWMol.MolFromSmiles(smi);
+	  byte[] pkl = mol.MolToCDX();
+	  var mols = RWMol.MolsFromCDXMLByteArray(pkl);
+	  Assert.True(mol.MolToSmiles() == mols[0].MolToSmiles());
+
+	  string cdxml = mol.MolToCDXML();
+	  mols = RWMol.MolsFromCDXMLByteArray(pkl);
+	  Assert.True(mol.MolToSmiles() == mols[0].MolToSmiles());
+	}
     }
 }

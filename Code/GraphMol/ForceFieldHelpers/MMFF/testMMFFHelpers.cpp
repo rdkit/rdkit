@@ -1,4 +1,4 @@
-//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2026 Greg Landrum and other RDKit contributors
 
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -585,10 +585,9 @@ void testIssue242() {
   mol = MolFileToMol(pathName + "/Issue242-2.mol");
   TEST_ASSERT(mol);
 
-  mol2 = MolFileToMol(pathName + "/Issue242-2.mol");
+  mol2 = MolFileToMol(pathName + "/Issue242-2-embedded.mol");
   TEST_ASSERT(mol2);
 
-  TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol2, 30, 2370) >= 0);
   mb1 = MolToMolBlock(*mol);
   mb2 = MolToMolBlock(*mol2);
 
@@ -628,8 +627,7 @@ void testGithub308() {
   BOOST_LOG(rdErrorLog)
       << "    Testing github 308: crash during MMFF parameterization ."
       << std::endl;
-  ROMol *mol = SmilesToMol("FF");
-  TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol) >= 0);
+  auto mol = "FF |(0.663009,0,;-0.663009,0,)|"_smiles;
   int needMore;
   ForceFields::ForceField *field = nullptr;
   TEST_ASSERT(mol);
@@ -640,7 +638,6 @@ void testGithub308() {
   field->initialize();
   needMore = field->minimize(200, 1.0e-6, 1.0e-3);
   TEST_ASSERT(!needMore);
-  delete mol;
   delete field;
 }
 
@@ -1073,14 +1070,17 @@ void testGithub6728() {
   BOOST_LOG(rdErrorLog)
       << "    Testing github6728: crash due to missing stretch-bend params."
       << std::endl;
-  RWMol *mol = SmilesToMol("CC(C)(C)CO[H-]F");
+  auto mol =
+      "CC(C)(C)CO[H-]F "
+      "|(-0.7933,1.32622,-0.230915;-1.03622,-0.151726,0.0194261;"
+      "-1.30793,-0.297383,1.5116;-2.25568,-0.570331,-0.744635;"
+      "0.179691,-0.953878,-0.41966;1.30936,-0.586936,0.263594;"
+      "1.74731,0.175205,-0.168988;2.15677,1.05883,-0.230423)|"_smiles;
   TEST_ASSERT(mol);
-  MolOps::addHs(*mol);
-  TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol) >= 0);
+  MolOps::addHs(*mol, false, true);
   auto field = MMFF::constructForceField(*mol);
   TEST_ASSERT(field);
   field->initialize();
-  delete mol;
   delete field;
 }
 

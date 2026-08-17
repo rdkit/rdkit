@@ -1,13 +1,9 @@
-# $Id$
-#
 #  Copyright (C) 2004  Rational Discovery LLC
 #         All Rights Reserved
 #
-import os
-import sys
 import unittest
 
-from rdkit import Chem, Geometry, RDConfig
+from rdkit import Chem
 from rdkit.Geometry import Point3D
 
 

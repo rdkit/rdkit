@@ -22,6 +22,11 @@
 namespace RDKit {
 class RWMol;
 namespace MolHash {
+// atoms or bonds with this property set (value not important) will not be
+// included in tautomerism when using the HetAtomTautomerv2 or
+// HetAtomProtomerv2 hash functions.
+constexpr const char *excludeFromTautomerismProp =
+    "_MolHashExcludeFromTautomerism";
 enum class HashFunction {
   AnonymousGraph = 1,
   ElementGraph = 2,

@@ -93,32 +93,32 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDeuterium.svg", 1732266714U},
     {"testTritium.svg", 761248656U},
     {"crossed_bonds.svg", 3239666213U},
-    {"test10_1.svg", 502155973U},
-    {"test10_2.svg", 3289667916U},
-    {"test10_3.svg", 2681596657U},
-    {"test10_4.svg", 2620790292U},
-    {"test10_5.svg", 2715569518U},
-    {"test10_6.svg", 2984792612U},
-    {"test11_1.svg", 568621130U},
-    {"test11_2.svg", 1278518938U},
-    {"test12_1.svg", 826649652U},
-    {"test12_5.svg", 3309074342U},
-    {"test12_3.svg", 3930752601U},
-    {"test12_4.svg", 3930752601U},
-    {"test12_2.svg", 3096703157U},
+    {"test10_1.svg", 3149901024U},
+    {"test10_2.svg", 762048470U},
+    {"test10_3.svg", 2292884792U},
+    {"test10_4.svg", 425948219U},
+    {"test10_5.svg", 1966483859U},
+    {"test10_6.svg", 3437601670U},
+    {"test11_1.svg", 3509048284U},
+    {"test11_2.svg", 2398046517U},
+    {"test12_1.svg", 3779248118U},
+    {"test12_5.svg", 822651752U},
+    {"test12_3.svg", 2546399002U},
+    {"test12_4.svg", 2546399002U},
+    {"test12_2.svg", 3077976371U},
     {"test13_1.svg", 3606927863U},
     {"testGithub1090_1.svg", 874921274U},
     {"test1271_1.svg", 1756490064U},
     {"test1271_2.svg", 3464983192U},
     {"test1271_3.svg", 244396434U},
     {"test1271_4.svg", 244396434U},
-    {"test1271_5.svg", 1050442325U},
-    {"test1322_1.svg", 843693353U},
-    {"test1322_2.svg", 2204609576U},
+    {"test1271_5.svg", 705462470U},
+    {"test1322_1.svg", 760092677U},
+    {"test1322_2.svg", 2028843686U},
     {"test14_1.svg", 3999745197U},
     {"test14_2.svg", 1367250174U},
-    {"test15_1.svg", 2704862730U},
-    {"test15_2.svg", 659023204U},
+    {"test15_1.svg", 719545325U},
+    {"test15_2.svg", 918926990U},
     {"test17_1.svg", 75329691U},
     {"test17_2.svg", 2699803606U},
     {"test17_3.svg", 2996396838U},
@@ -133,12 +133,12 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test19_1.svg", 4060393720U},
     {"test19_2.svg", 4171949096U},
     {"test16_1.svg", 62134348U},
-    {"test16_2.svg", 3050459518U},
+    {"test16_2.svg", 3715194538U},
     {"testGithub2063_1.svg", 1908318348U},
     {"testGithub2063_2.svg", 1908318348U},
     {"testGithub2151_1.svg", 4119581143U},
     {"testGithub2151_2.svg", 425960913U},
-    {"testGithub2762.svg", 6657792U},
+    {"testGithub2762.svg", 2728250031U},
     {"testGithub2931_1.svg", 3635831631U},
     {"testGithub2931_2.svg", 2281185190U},
     {"testGithub2931_3.svg", 2885834646U},
@@ -162,12 +162,12 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3305_5.svg", 1335449325U},
     {"testGithub3305_6.svg", 4242832627U},
     {"testGithub3305_7.svg", 1080046861U},
-    {"testGithub3391_1.svg", 1082073469U},
-    {"testGithub3391_2.svg", 1941002529U},
-    {"testGithub3391_3.svg", 2929587661U},
-    {"testGithub3391_4.svg", 3877564580U},
-    {"testGithub4156_1.svg", 3897707793U},
-    {"testGithub4156_2.svg", 2067399849U},
+    {"testGithub3391_1.svg", 288775907U},
+    {"testGithub3391_2.svg", 790336526U},
+    {"testGithub3391_3.svg", 1779122782U},
+    {"testGithub3391_4.svg", 1740794045U},
+    {"testGithub4156_1.svg", 4027310579U},
+    {"testGithub4156_2.svg", 3915842326U},
     {"test23_1.svg", 244577595U},
     {"testGithub4496_1.svg", 148519702U},
     {"testGithub5006_1.svg", 484020409U},
@@ -3329,11 +3329,12 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 74.1 170.0") !=
+
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 38.9 163.0") !=
                   std::string::npos);
 #endif
 #else
-      TEST_ASSERT(text.find("font-size:9px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:10px") != std::string::npos);
 #endif
       check_file_hash(nameBase + "3.svg");
     }
@@ -3350,7 +3351,7 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 104.0 156.8") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 87.4 151.4") !=
                   std::string::npos);
 #endif
 #else
@@ -3370,11 +3371,11 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 74.1 170.0") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 38.9 163.0") !=
                   std::string::npos);
 #endif
 #else
-      TEST_ASSERT(text.find("font-size:9px") != std::string::npos);
+      TEST_ASSERT(text.find("font-size:10px") != std::string::npos);
 #endif
       check_file_hash(nameBase + "5.svg");
     }
@@ -3394,7 +3395,7 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 71.9 167.7") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 26.0 155.8") !=
                   std::string::npos);
 #endif
 #else
@@ -3416,7 +3417,7 @@ void test18FixedScales() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-2' d='M 75.0 171.0") !=
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 45.3 166.6") !=
                   std::string::npos);
 #endif
 #else
@@ -4345,8 +4346,9 @@ void testGithub3305() {
       // This seems to work for Freetype and non-Freetype builds.
       std::regex regex(
           R"(class='bond-6 atom-6 atom-7' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) Z' style='fill:#FF7F7F;)");
-      std::vector<Point2D> expected{Point2D(127.2, 82.6), Point2D(135.2, 96.3),
-                                    Point2D(131.7, 96.3), Point2D(125.5, 85.6)};
+      std::vector<Point2D> expected{
+          Point2D(149.8, 121.1), Point2D(153.1, 122.1), Point2D(141.5, 132.6),
+          Point2D(140.8, 129.2)};
       check_corners(text, regex, expected);
       check_file_hash(nameBase + "4.svg");
 #endif
@@ -4380,8 +4382,8 @@ void testGithub3305() {
 #if DO_TEST_ASSERT
       std::regex regex(
           R"(class='bond-6 atom-6 atom-7' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) Z' style='fill:#FF7F7F;)");
-      std::vector<Point2D> expected{Point2D(133.8, 79.5), Point2D(145.5, 99.8),
-                                    Point2D(127.0, 99.8), Point2D(124.6, 95.5)};
+      std::vector<Point2D> expected{Point2D(139.6, 122), Point2D(157.2, 127.7),
+                                    Point2D(140, 143.1), Point2D(136.2, 125.1)};
       check_corners(text, regex, expected);
 #endif
       check_file_hash(nameBase + "5.svg");
@@ -4410,7 +4412,7 @@ void testGithub3305() {
       outs.flush();
       outs.close();
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.8") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.7") !=
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px") ==
                   std::string::npos);

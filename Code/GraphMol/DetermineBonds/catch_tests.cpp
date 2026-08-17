@@ -7,7 +7,6 @@
 #include <GraphMol/DetermineBonds/DetermineBonds.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/AddHs.cpp>
 #include <fstream>
 #include <algorithm>
 #include <GraphMol/Resonance.h>

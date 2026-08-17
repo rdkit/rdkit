@@ -118,7 +118,7 @@ RDKitFPArguments::RDKitFPArguments(unsigned int minPath, unsigned int maxPath,
 
 template <typename OutputType>
 void RDKitFPAtomEnv<OutputType>::updateAdditionalOutput(
-    AdditionalOutput *additionalOutput, size_t bitId) const {
+    AdditionalOutput *additionalOutput, std::uint64_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
   if (additionalOutput->bitPaths) {
     (*additionalOutput->bitPaths)[bitId].push_back(d_bondPath);
@@ -181,9 +181,9 @@ std::vector<AtomEnvironment<OutputType> *>
 RDKitFPEnvGenerator<OutputType>::getEnvironments(
     const ROMol &mol, FingerprintArguments *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *,  // ignoreAtoms
-    const int,                           // confId
-    const AdditionalOutput *,            // additionalOutput
+    const std::vector<std::uint32_t> *ignoreAtoms,
+    const int,                 // confId
+    const AdditionalOutput *,  // additionalOutput
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *,  // bondInvariants
     const bool                           // hashResults
@@ -197,9 +197,18 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
 
   // get all paths
   INT_PATH_LIST_MAP allPaths;
+
+  boost::dynamic_bitset<> ignoreAtomsBitset;
+  if (ignoreAtoms) {
+    ignoreAtomsBitset.resize(mol.getNumAtoms());
+    std::ranges::for_each(*ignoreAtoms, [&](const auto atomIdx) {
+      ignoreAtomsBitset.set(atomIdx);
+    });
+  }
   RDKitFPUtils::enumerateAllPaths(
       mol, allPaths, fromAtoms, fpArguments->df_branchedPaths,
-      fpArguments->df_useHs, fpArguments->d_minPath, fpArguments->d_maxPath);
+      fpArguments->df_useHs, fpArguments->d_minPath, fpArguments->d_maxPath,
+      ignoreAtoms ? &ignoreAtomsBitset : nullptr);
 
   // identify query bonds
   std::vector<short> isQueryBond(mol.getNumBonds(), 0);

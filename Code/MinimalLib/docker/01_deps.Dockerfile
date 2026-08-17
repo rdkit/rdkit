@@ -19,7 +19,7 @@ ARG BOOST_MINOR_VERSION="87"
 ARG BOOST_PATCH_VERSION="0"
 ARG BOOST_DOT_VERSION
 ARG BOOST_UNDERSCORE_VERSION
-ARG FREETYPE_VERSION="2.13.3"
+ARG FREETYPE_VERSION="2-13-3"
 ARG ZLIB_VERSION="1.3.2"
 ARG http_proxy
 ARG https_proxy
@@ -83,8 +83,8 @@ RUN ./emsdk install ${EMSDK_VERSION} && \
 RUN echo "source /opt/emsdk/emsdk_env.sh > /dev/null 2>&1" >> ~/.bashrc
 
 WORKDIR /src
-RUN wget -q https://download.savannah.gnu.org/releases/freetype/freetype-${FREETYPE_VERSION}.tar.gz && \
-  tar xzf freetype-${FREETYPE_VERSION}.tar.gz
+RUN wget -q https://github.com/freetype/freetype/archive/refs/tags/VER-${FREETYPE_VERSION}.tar.gz && \
+  tar xzf VER-${FREETYPE_VERSION}.tar.gz && mv freetype-VER-${FREETYPE_VERSION} freetype-${FREETYPE_VERSION}
 WORKDIR /src/freetype-${FREETYPE_VERSION}
 RUN mkdir build
 WORKDIR /src/freetype-${FREETYPE_VERSION}/build

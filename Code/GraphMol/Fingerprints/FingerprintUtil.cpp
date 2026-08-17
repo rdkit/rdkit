@@ -282,22 +282,35 @@ void buildDefaultRDKitFingerprintAtomInvariants(
 void enumerateAllPaths(const ROMol &mol, INT_PATH_LIST_MAP &allPaths,
                        const std::vector<std::uint32_t> *fromAtoms,
                        bool branchedPaths, bool useHs, unsigned int minPath,
-                       unsigned int maxPath) {
+                       unsigned int maxPath,
+                       boost::dynamic_bitset<> *ignoreAtoms) {
+  PRECONDITION(!ignoreAtoms || ignoreAtoms->size() == mol.getNumAtoms(),
+               "bad ignoreAtoms size");
   if (!fromAtoms) {
     if (branchedPaths) {
-      allPaths = findAllSubgraphsOfLengthsMtoN(mol, minPath, maxPath, useHs);
+      int rootedAtAtom = -1;
+      allPaths = findAllSubgraphsOfLengthsMtoN(mol, minPath, maxPath, useHs,
+                                               rootedAtAtom, ignoreAtoms);
     } else {
-      allPaths = findAllPathsOfLengthsMtoN(mol, minPath, maxPath, true, useHs);
+      bool useBonds = true;
+      int rootedAtAtom = -1;
+      bool onlyShortestPaths = false;
+      allPaths = findAllPathsOfLengthsMtoN(mol, minPath, maxPath, useBonds,
+                                           useHs, rootedAtAtom,
+                                           onlyShortestPaths, ignoreAtoms);
     }
   } else {
     for (auto aidx : *fromAtoms) {
       INT_PATH_LIST_MAP tPaths;
       if (branchedPaths) {
-        tPaths =
-            findAllSubgraphsOfLengthsMtoN(mol, minPath, maxPath, useHs, aidx);
+        tPaths = findAllSubgraphsOfLengthsMtoN(mol, minPath, maxPath, useHs,
+                                               aidx, ignoreAtoms);
       } else {
+        bool useBonds = true;
+        bool onlyShortestPaths = false;
         tPaths =
-            findAllPathsOfLengthsMtoN(mol, minPath, maxPath, true, useHs, aidx);
+            findAllPathsOfLengthsMtoN(mol, minPath, maxPath, useBonds, useHs,
+                                      aidx, onlyShortestPaths, ignoreAtoms);
       }
       for (INT_PATH_LIST_MAP::const_iterator tpit = tPaths.begin();
            tpit != tPaths.end(); ++tpit) {
