@@ -1,3 +1,5 @@
+include(CatchShardTests)
+
 include(BoostUtils)
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 # Mac OS X specific code
@@ -25,6 +27,33 @@ endif()
 set(RDKit_BUILDNAME "${CMAKE_SYSTEM_NAME}|${CMAKE_SYSTEM_VERSION}|${systemAttribute}|${compilerID}|${bit3264}")
 set(RDKit_EXPORTED_TARGETS rdkit-targets)
 set(RDKitPython_EXPORTED_TARGETS rdkitpython-targets)
+
+
+# Enable CMake unity (jumbo) builds for an rdkit_library target when
+# RDK_USE_UNITY_BUILDS is set: the library's sources are concatenated into a few
+# translation units so shared headers are parsed once per batch instead of once
+# per file. Skipped for vendored third-party code under External/ and for the
+# libraries listed in RDK_UNITY_BUILD_EXCLUDED_LIBRARIES (which still have
+# file-local symbol collisions to resolve). Implemented as a function so its
+# locals don't leak into the calling directory scope.
+function(rdkit_maybe_enable_unity_build target)
+  if(NOT RDK_USE_UNITY_BUILDS)
+    return()
+  endif()
+  # never unity-build vendored third-party code under External/
+  string(FIND "${CMAKE_CURRENT_SOURCE_DIR}/" "${CMAKE_SOURCE_DIR}/External/" extPos)
+  if(NOT extPos EQUAL -1)
+    return()
+  endif()
+  list(FIND RDK_UNITY_BUILD_EXCLUDED_LIBRARIES "${target}" excluded)
+  if(NOT excluded EQUAL -1)
+    return()
+  endif()
+  set_target_properties(${target} PROPERTIES UNITY_BUILD ON)
+  if(TARGET ${target}_static)
+    set_target_properties(${target}_static PROPERTIES UNITY_BUILD ON)
+  endif()
+endfunction()
 
 
 macro(rdkit_library)
@@ -137,6 +166,7 @@ macro(rdkit_library)
                         ARCHIVE_OUTPUT_DIRECTORY ${RDK_ARCHIVE_OUTPUT_DIRECTORY}
                         RUNTIME_OUTPUT_DIRECTORY ${RDK_RUNTIME_OUTPUT_DIRECTORY}
                         LIBRARY_OUTPUT_DIRECTORY ${RDK_LIBRARY_OUTPUT_DIRECTORY})
+  rdkit_maybe_enable_unity_build(${RDKLIB_NAME})
 endmacro(rdkit_library)
 
 macro(rdkit_headers)
@@ -203,7 +233,7 @@ endmacro(rdkit_test)
 
 macro(rdkit_catch_test)
   PARSE_ARGUMENTS(RDKTEST
-    "LINK_LIBRARIES;DEPENDS;DEST"
+    "LINK_LIBRARIES;DEPENDS;DEST;CLIARGS;SHARD_COUNT"
     ""
     ${ARGN})
   CAR(RDKTEST_NAME ${RDKTEST_DEFAULT_ARGS})
@@ -211,7 +241,11 @@ macro(rdkit_catch_test)
   if(RDK_BUILD_CPP_TESTS)
     add_executable(${RDKTEST_NAME} ${RDKTEST_SOURCES})
     target_link_libraries(${RDKTEST_NAME} PRIVATE rdkitCatch ${RDKTEST_LINK_LIBRARIES} Catch2::Catch2)
-    add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME})
+    if(${RDKTEST_SHARD_COUNT})
+      catch_add_sharded_tests(${RDKTEST_NAME} SHARD_COUNT ${RDKTEST_SHARD_COUNT})
+    else()
+      add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME} ${RDKTEST_CLIARGS})
+    endif()
   endif(RDK_BUILD_CPP_TESTS)
 endmacro(rdkit_catch_test)
 

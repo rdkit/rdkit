@@ -7,6 +7,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#ifndef RD_MAESTROPROPERTIES_H
+#define RD_MAESTROPROPERTIES_H
+
 #include <string>
 
 namespace RDKit {
@@ -31,3 +34,4 @@ static const std::string PDB_TFACTOR = "r_m_pdb_tfactor";
 }  // namespace schrodinger
 }  // namespace FileParsers
 }  // namespace RDKit
+#endif  // RD_MAESTROPROPERTIES_H

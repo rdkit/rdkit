@@ -14,7 +14,6 @@
 
 #include <catch2/catch_all.hpp>
 
-#include <boost/noncopyable.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/StereoGroup.h>

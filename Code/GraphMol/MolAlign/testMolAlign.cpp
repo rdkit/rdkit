@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2018 Rational Discovery LLC
+//  Copyright (C) 2001-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -248,19 +248,15 @@ void testIssue241() {
   std::string rdbase = getenv("RDBASE");
   std::string fname1 =
       rdbase + "/Code/GraphMol/MolAlign/test_data/Issue241.mol";
-  ROMol *m1 = MolFileToMol(fname1);
-  std::string res;
-  MolPickler::pickleMol(*m1, res);
-  auto *ref = new ROMol(res);
-  DGeomHelpers::EmbedMolecule(*ref, 30, 239 * 10);
+  std::string fname2 =
+      rdbase + "/Code/GraphMol/MolAlign/test_data/Issue241_dg.mol";
+  auto m1 = v2::FileParsers::MolFromMolFile(fname1);
+  auto ref = v2::FileParsers::MolFromMolFile(fname2);
   ForceFields::ForceField *ff1 = UFF::constructForceField(*ref);
   ff1->initialize();
   ff1->minimize(200, 1e-8, 1e-6);
 
-  std::string pkl2;
-  MolPickler::pickleMol(*m1, pkl2);
-  auto *probe = new ROMol(pkl2);
-  DGeomHelpers::EmbedMolecule(*probe, 30, 239 * 10);
+  auto probe = v2::FileParsers::MolFromMolFile(fname2);
   ForceFields::ForceField *ff2 = UFF::constructForceField(*probe);
   ff2->initialize();
   ff2->minimize(200, 1e-8, 1e-6);
@@ -269,9 +265,6 @@ void testIssue241() {
 
   delete ff1;
   delete ff2;
-  delete m1;
-  delete ref;
-  delete probe;
 
   TEST_ASSERT(RDKit::feq(rmsd, 0.0));
 }

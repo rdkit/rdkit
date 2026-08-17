@@ -5,7 +5,7 @@
 import unittest
 from io import BytesIO
 
-from rdkit import Chem, RDConfig, rdBase
+from rdkit import Chem
 from rdkit.Chem.rdmolops import _TestSetProps
 
 

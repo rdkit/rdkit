@@ -37,10 +37,9 @@ it is intended to be shallow but broad.
 import doctest
 import logging
 import os
-import sys
 import unittest
 
-from rdkit import RDConfig, RDLogger, rdBase
+from rdkit import RDLogger, rdBase
 from rdkit.RDLogger import logger
 
 logger = logger()
@@ -49,7 +48,7 @@ import tempfile
 import time
 
 from rdkit import Chem
-from rdkit.Chem import rdSubstructLibrary, rdGeneralizedSubstruct, rdTautomerQuery
+from rdkit.Chem import rdSubstructLibrary, rdGeneralizedSubstruct
 
 
 def load_tests(loader, tests, ignore):

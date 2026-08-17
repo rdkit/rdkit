@@ -5,7 +5,7 @@ from os import environ
 
 import numpy as np
 
-from rdkit import Chem, Geometry, RDConfig
+from rdkit import Chem, Geometry
 from rdkit.Chem import AllChem, Draw, rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
 
@@ -891,6 +891,7 @@ M  END''')
       d2d.drawOptions().addAtomIndices = True
       d2d.drawOptions().addBondIndices = True
       d2d.drawOptions().singleColourWedgeBonds = True  # test symbolColour
+      d2d.drawOptions().singleColourBonds = True # just test it's settable
       setattr(d2d.drawOptions(), attr, val)
       aval = getattr(d2d.drawOptions(), attr)
       for idx in range(4):
@@ -998,6 +999,16 @@ M  END
     svg = Draw.MolToSVG(mol, legend='Ethanol', drawOptions=opts)
     self.assertIn("class='legend'", svg)
 
+  def testSettingOptions(self):
+    # These are options that are tested in the C++ code.
+    # Here, just making sure they are settable.
+    d2d = rdMolDraw2D.MolDraw2DSVG(300, 200, -1, -1, False)
+    d2d.drawOptions().singleColourBonds = True
+    d2d.drawOptions().stereoGroupAndLabel = "&"
+    d2d.drawOptions().stereoGroupOrLabel = "OR"
+    d2d.drawOptions().stereoGroupAbsLabel = "_AbS_"
+    d2d.drawOptions().addStereoGroupAnnotation = False
 
+    
 if __name__ == "__main__":
   unittest.main()
