@@ -63,7 +63,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFAtomProperties {
   double mmffPartialCharge{0.0};
 };
 
-typedef boost::shared_ptr<MMFFAtomProperties> MMFFAtomPropertiesPtr;
+typedef std::shared_ptr<MMFFAtomProperties> MMFFAtomPropertiesPtr;
 enum {
   CONSTANT = 1,
   DISTANCE = 2

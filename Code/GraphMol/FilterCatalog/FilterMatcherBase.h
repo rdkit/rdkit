@@ -32,6 +32,7 @@
 #include <RDGeneral/export.h>
 #ifndef __RD_FILTER_MATCHER_BASE_H__
 #define __RD_FILTER_MATCHER_BASE_H__
+#include <memory>
 #include <utility>
 
 #include <GraphMol/RDKitBase.h>
@@ -42,7 +43,6 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/assume_abstract.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #endif  // RDK_USE_BOOST_SERIALIZATION
 
@@ -52,11 +52,11 @@ class FilterMatcherBase;  // Forward declaration
 
 //! Holds the atomPairs matched by the underlying matcher
 struct RDKIT_FILTERCATALOG_EXPORT FilterMatch {
-  boost::shared_ptr<FilterMatcherBase> filterMatch;
+  std::shared_ptr<FilterMatcherBase> filterMatch;
   MatchVectType atomPairs;
 
   FilterMatch() : filterMatch(), atomPairs() {}
-  FilterMatch(boost::shared_ptr<FilterMatcherBase> filter,
+  FilterMatch(std::shared_ptr<FilterMatcherBase> filter,
               MatchVectType atomPairs)
       : filterMatch(std::move(filter)), atomPairs(std::move(atomPairs)) {}
 
@@ -73,18 +73,18 @@ struct RDKIT_FILTERCATALOG_EXPORT FilterMatch {
 
 RDKIT_FILTERCATALOG_EXPORT extern const char *DEFAULT_FILTERMATCHERBASE_NAME;
 class RDKIT_FILTERCATALOG_EXPORT FilterMatcherBase
-    : public boost::enable_shared_from_this<FilterMatcherBase> {
+    : public std::enable_shared_from_this<FilterMatcherBase> {
   //------------------------------------
   //! Virtual API for filter matching
   std::string d_filterName;
 
  public:
   FilterMatcherBase(std::string name = DEFAULT_FILTERMATCHERBASE_NAME)
-      : boost::enable_shared_from_this<FilterMatcherBase>(),
+      : std::enable_shared_from_this<FilterMatcherBase>(),
         d_filterName(std::move(name)) {}
 
   FilterMatcherBase(const FilterMatcherBase &rhs)
-      : boost::enable_shared_from_this<FilterMatcherBase>(),
+      : std::enable_shared_from_this<FilterMatcherBase>(),
         d_filterName(rhs.d_filterName) {}
 
   virtual ~FilterMatcherBase() {}
@@ -118,7 +118,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterMatcherBase
   //! Clone - deprecated
   /// Clones the current FilterMatcherBase into one that
   ///  can be passed around safely.
-  virtual boost::shared_ptr<FilterMatcherBase> Clone() const {
+  virtual std::shared_ptr<FilterMatcherBase> Clone() const {
     BOOST_LOG(rdWarningLog)
         << "FilterMatcherBase::Clone is deprecated, use copy instead"
         << std::endl;
@@ -129,7 +129,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterMatcherBase
   //! copy
   /// copies the current FilterMatcherBase into one that
   ///  can be passed around safely.
-  virtual boost::shared_ptr<FilterMatcherBase> copy() const = 0;
+  virtual std::shared_ptr<FilterMatcherBase> copy() const = 0;
 
  private:
 #ifdef RDK_USE_BOOST_SERIALIZATION

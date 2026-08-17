@@ -62,23 +62,23 @@ class SubstructLibraryWrap {
   SubstructLibrary ss;
 
   SubstructLibraryWrap() : ss() {}
-  SubstructLibraryWrap(boost::shared_ptr<MolHolderBase> molecules)
+  SubstructLibraryWrap(std::shared_ptr<MolHolderBase> molecules)
       : ss(molecules) {}
-  SubstructLibraryWrap(boost::shared_ptr<MolHolderBase> molecules,
-                       boost::shared_ptr<FPHolderBase> fingerprints)
+  SubstructLibraryWrap(std::shared_ptr<MolHolderBase> molecules,
+                       std::shared_ptr<FPHolderBase> fingerprints)
       : ss(molecules, fingerprints) {}
-  SubstructLibraryWrap(boost::shared_ptr<MolHolderBase> molecules,
-                       boost::shared_ptr<KeyHolderBase> keys)
+  SubstructLibraryWrap(std::shared_ptr<MolHolderBase> molecules,
+                       std::shared_ptr<KeyHolderBase> keys)
       : ss(molecules, keys) {}
-  SubstructLibraryWrap(boost::shared_ptr<MolHolderBase> molecules,
-                       boost::shared_ptr<FPHolderBase> fingerprints,
-                       boost::shared_ptr<KeyHolderBase> keys)
+  SubstructLibraryWrap(std::shared_ptr<MolHolderBase> molecules,
+                       std::shared_ptr<FPHolderBase> fingerprints,
+                       std::shared_ptr<KeyHolderBase> keys)
       : ss(molecules, fingerprints, keys) {}
   SubstructLibraryWrap(const std::string &pickle) : ss(pickle) {}
 
-  boost::shared_ptr<MolHolderBase> &getMolHolder() { return ss.getMolHolder(); }
-  boost::shared_ptr<FPHolderBase> &getFpHolder() { return ss.getFpHolder(); }
-  boost::shared_ptr<KeyHolderBase> &getKeyHolder() { return ss.getKeyHolder(); }
+  std::shared_ptr<MolHolderBase> &getMolHolder() { return ss.getMolHolder(); }
+  std::shared_ptr<FPHolderBase> &getFpHolder() { return ss.getFpHolder(); }
+  std::shared_ptr<KeyHolderBase> &getKeyHolder() { return ss.getKeyHolder(); }
   unsigned int addMol(const ROMol &mol) { return ss.addMol(mol); }
 
   template <class Query>
@@ -195,7 +195,7 @@ class SubstructLibraryWrap {
     return ss.hasMatch(query, startIdx, endIdx, params, numThreads);
   }
 
-  boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+  std::shared_ptr<ROMol> getMol(unsigned int idx) const {
     return ss.getMol(idx);
   }
   unsigned int size() const { return ss.size(); }
@@ -405,17 +405,17 @@ void initFromStream(SubstructLibraryWrap &cat, python::object &fileobj) {
   cat.ss.initFromStream(is);
 }
 
-boost::shared_ptr<MolHolderBase> GetMolHolder(SubstructLibraryWrap &sslib) {
+std::shared_ptr<MolHolderBase> GetMolHolder(SubstructLibraryWrap &sslib) {
   // need to convert from a ref to a real shared_ptr
   return sslib.ss.getMolHolder();
 }
 
-boost::shared_ptr<FPHolderBase> GetFpHolder(SubstructLibraryWrap &sslib) {
+std::shared_ptr<FPHolderBase> GetFpHolder(SubstructLibraryWrap &sslib) {
   // need to convert from a ref to a real shared_ptr
   return sslib.ss.getFpHolder();
 }
 
-boost::shared_ptr<KeyHolderBase> GetKeyHolder(SubstructLibraryWrap &sslib) {
+std::shared_ptr<KeyHolderBase> GetKeyHolder(SubstructLibraryWrap &sslib) {
   // need to convert from a ref to a real shared_ptr
   return sslib.ss.getKeyHolder();
 }
@@ -439,8 +439,7 @@ void setSearchOrderHelper(SubstructLibraryWrap &sslib,
 }
 
 void addPatternsHelper(SubstructLibraryWrap &sslib,
-                       boost::shared_ptr<FPHolderBase> patterns,
-                       int numThreads) {
+                       std::shared_ptr<FPHolderBase> patterns, int numThreads) {
   NOGIL gil;
   addPatterns(sslib.ss, patterns, numThreads);
 }
@@ -625,7 +624,7 @@ void addPatternsHelper(SubstructLibraryWrap &sslib, int numThreads) {
 
 struct substructlibrary_wrapper {
   static void wrap() {
-    python::class_<MolHolderBase, boost::shared_ptr<MolHolderBase>,
+    python::class_<MolHolderBase, std::shared_ptr<MolHolderBase>,
                    boost::noncopyable>("MolHolderBase", "", python::no_init)
         .def("__len__", &MolHolderBase::size, python::args("self"))
         .def("AddMol", &MolHolderBase::addMol, python::args("self", "m"),
@@ -639,11 +638,11 @@ struct substructlibrary_wrapper {
              "  NOTE: molecule indices start at 0\n")
         .def("__len__", &MolHolderBase::size, python::args("self"));
 
-    python::class_<MolHolder, boost::shared_ptr<MolHolder>,
+    python::class_<MolHolder, std::shared_ptr<MolHolder>,
                    python::bases<MolHolderBase>>(
         "MolHolder", MolHolderDoc, python::init<>(python::args("self")));
 
-    python::class_<CachedMolHolder, boost::shared_ptr<CachedMolHolder>,
+    python::class_<CachedMolHolder, std::shared_ptr<CachedMolHolder>,
                    python::bases<MolHolderBase>>(
         "CachedMolHolder", CachedMolHolderDoc,
         python::init<>(python::args("self")))
@@ -653,7 +652,7 @@ struct substructlibrary_wrapper {
              "on the input data");
 
     python::class_<CachedSmilesMolHolder,
-                   boost::shared_ptr<CachedSmilesMolHolder>,
+                   std::shared_ptr<CachedSmilesMolHolder>,
                    python::bases<MolHolderBase>>(
         "CachedSmilesMolHolder", CachedSmilesMolHolderDoc,
         python::init<>(python::args("self")))
@@ -663,7 +662,7 @@ struct substructlibrary_wrapper {
              "is done on the input data");
 
     python::class_<CachedTrustedSmilesMolHolder,
-                   boost::shared_ptr<CachedTrustedSmilesMolHolder>,
+                   std::shared_ptr<CachedTrustedSmilesMolHolder>,
                    python::bases<MolHolderBase>>(
         "CachedTrustedSmilesMolHolder", CachedTrustedSmilesMolHolderDoc,
         python::init<>(python::args("self")))
@@ -672,7 +671,7 @@ struct substructlibrary_wrapper {
              "Add a trusted smiles string to the molecule holder, no checking "
              "is done on the input data");
 
-    python::class_<FPHolderBase, boost::shared_ptr<FPHolderBase>,
+    python::class_<FPHolderBase, std::shared_ptr<FPHolderBase>,
                    boost::noncopyable>("FPHolderBase", "", python::no_init)
         .def("__len__", &FPHolderBase::size, python::args("self"))
 
@@ -699,12 +698,12 @@ struct substructlibrary_wrapper {
              python::return_value_policy<python::manage_new_object>(),
              "Compute the query bits for the holder");
 
-    python::class_<PatternHolder, boost::shared_ptr<PatternHolder>,
+    python::class_<PatternHolder, std::shared_ptr<PatternHolder>,
                    python::bases<FPHolderBase>>(
         "PatternHolder", PatternHolderDoc, python::init<>(python::args("self")))
         .def(python::init<unsigned int>(python::args("self", "numBits")));
 
-    python::class_<KeyHolderBase, boost::shared_ptr<KeyHolderBase>,
+    python::class_<KeyHolderBase, std::shared_ptr<KeyHolderBase>,
                    boost::noncopyable>("KeyHolderBase", "", python::no_init)
         .def("__len__", &KeyHolderBase::size, python::args("self"))
 
@@ -724,7 +723,7 @@ struct substructlibrary_wrapper {
              "  ARGUMENTS:\n"
              "    - indices: The indices of the keys\n\n");
 
-    python::class_<KeyFromPropHolder, boost::shared_ptr<KeyFromPropHolder>,
+    python::class_<KeyFromPropHolder, std::shared_ptr<KeyFromPropHolder>,
                    python::bases<KeyHolderBase>>(
         "KeyFromPropHolder", KeyHolderDoc, python::init<>(python::args("self")))
         .def(
@@ -737,27 +736,26 @@ struct substructlibrary_wrapper {
              "Return the key for the given molecule index");
 
     python::class_<TautomerPatternHolder,
-                   boost::shared_ptr<TautomerPatternHolder>,
+                   std::shared_ptr<TautomerPatternHolder>,
                    python::bases<FPHolderBase>>(
         "TautomerPatternHolder", TautomerPatternHolderDoc,
         python::init<>(python::args("self")))
         .def(python::init<unsigned int>(python::args("self", "numBits")));
 
-    python::class_<SubstructLibraryWrap,
-                   boost::shared_ptr<SubstructLibraryWrap>>(
+    python::class_<SubstructLibraryWrap, std::shared_ptr<SubstructLibraryWrap>>(
         "SubstructLibrary", SubstructLibraryDoc,
         python::init<>(python::args("self")))
-        .def(python::init<boost::shared_ptr<MolHolderBase>>(
+        .def(python::init<std::shared_ptr<MolHolderBase>>(
             python::args("self", "molecules")))
-        .def(python::init<boost::shared_ptr<MolHolderBase>,
-                          boost::shared_ptr<FPHolderBase>>(
+        .def(python::init<std::shared_ptr<MolHolderBase>,
+                          std::shared_ptr<FPHolderBase>>(
             python::args("self", "molecules", "fingerprints")))
-        .def(python::init<boost::shared_ptr<MolHolderBase>,
-                          boost::shared_ptr<KeyHolderBase>>(
+        .def(python::init<std::shared_ptr<MolHolderBase>,
+                          std::shared_ptr<KeyHolderBase>>(
             python::args("self", "molecules", "keys")))
-        .def(python::init<boost::shared_ptr<MolHolderBase>,
-                          boost::shared_ptr<FPHolderBase>,
-                          boost::shared_ptr<KeyHolderBase>>(
+        .def(python::init<std::shared_ptr<MolHolderBase>,
+                          std::shared_ptr<FPHolderBase>,
+                          std::shared_ptr<KeyHolderBase>>(
             python::args("self", "molecules", "fingerprints", "keys")))
         .def(python::init<std::string>(python::args("self", "pickle")))
 
@@ -847,8 +845,7 @@ struct substructlibrary_wrapper {
 
     python::def(
         "AddPatterns",
-        (void (*)(SubstructLibraryWrap &, boost::shared_ptr<FPHolderBase>,
-                  int)) &
+        (void (*)(SubstructLibraryWrap &, std::shared_ptr<FPHolderBase>, int)) &
             addPatternsHelper,
         "Add pattern fingerprints to the given library, use numThreads=-1 to "
         "use all available cores",

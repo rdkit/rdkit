@@ -68,7 +68,7 @@ void SetOffPatterns(ExclusionList &fc, boost::python::object list) {
   python::stl_input_iterator<FilterMatcherBase *> begin(list);
   python::stl_input_iterator<FilterMatcherBase *> end;
 
-  std::vector<boost::shared_ptr<FilterMatcherBase>> temp;
+  std::vector<std::shared_ptr<FilterMatcherBase>> temp;
 
   for (; begin != end; ++begin) {
     temp.push_back((*begin)->copy());
@@ -78,7 +78,7 @@ void SetOffPatterns(ExclusionList &fc, boost::python::object list) {
 /*
 std::vector<const FilterCatalogEntry*> *GetMatches(FilterCatalog &fc, const
 ROMol &mol) {
-  std::vector<boost::shared_ptr<FilterCatalogEntry> > *result =        \
+  std::vector<std::shared_ptr<FilterCatalogEntry> > *result =        \
     new std::vector<const FilterCatalogEntry*>(fc.getMatches(mol));
   return result;
 }
@@ -182,8 +182,8 @@ class PythonFilterMatch : public FilterMatcherBase {
     return python::call_method<bool>(functor, "HasMatch", boost::ref(mol));
   }
 
-  boost::shared_ptr<FilterMatcherBase> copy() const override {
-    return boost::shared_ptr<FilterMatcherBase>(new PythonFilterMatch(*this));
+  std::shared_ptr<FilterMatcherBase> copy() const override {
+    return std::shared_ptr<FilterMatcherBase>(new PythonFilterMatch(*this));
   }
 };
 
@@ -305,7 +305,7 @@ python::dict GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
   return dict;
 }
 
-std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry>>>
+std::vector<std::vector<std::shared_ptr<const FilterCatalogEntry>>>
 RunFilterCatalogWrapper(const FilterCatalog &fc,
                         const std::vector<std::string> &smiles,
                         int numThreads) {
@@ -322,16 +322,16 @@ struct filtercat_wrapper {
         .def_readwrite("target", &std::pair<int, int>::second)
         .def("__getitem__", &GetMatchVectItem, python::args("self", "idx"));
 
-    python::class_<FilterMatch, boost::shared_ptr<FilterMatch>>(
+    python::class_<FilterMatch, std::shared_ptr<FilterMatch>>(
         "FilterMatch", FilterMatchDoc,
-        python::init<boost::shared_ptr<FilterMatcherBase>, MatchVectType>(
+        python::init<std::shared_ptr<FilterMatcherBase>, MatchVectType>(
             python::args("self", "filter", "atomPairs")))
         .def_readonly("filterMatch", &FilterMatch::filterMatch)
         .def_readonly("atomPairs", &FilterMatch::atomPairs);
 
     RegisterVectorConverter<FilterMatch>("VectFilterMatch");
 
-    python::class_<FilterMatcherBase, boost::shared_ptr<FilterMatcherBase>,
+    python::class_<FilterMatcherBase, std::shared_ptr<FilterMatcherBase>,
                    boost::noncopyable>("FilterMatcherBase",
                                        FilterMatcherBaseDoc, python::no_init)
         .def("IsValid", &FilterMatcherBase::isValid, python::args("self"),
@@ -405,7 +405,7 @@ struct filtercat_wrapper {
              "Add a FilterMatcherBase that should not appear in a molecule");
 
     python::class_<FilterHierarchyMatcher,
-                   boost::shared_ptr<FilterHierarchyMatcher>,
+                   std::shared_ptr<FilterHierarchyMatcher>,
                    python::bases<FilterMatcherBase>>(
         "FilterHierarchyMatcher", FilterHierarchyMatcherDoc,
         python::init<>(python::args("self")))
@@ -421,16 +421,16 @@ struct filtercat_wrapper {
              "Add a child node to this hierarchy.");
 
     if (!is_python_converter_registered<
-            boost::shared_ptr<const FilterHierarchyMatcher>>()) {
+            std::shared_ptr<const FilterHierarchyMatcher>>()) {
       python::register_ptr_to_python<
-          boost::shared_ptr<const FilterHierarchyMatcher>>();
+          std::shared_ptr<const FilterHierarchyMatcher>>();
     }
 
     bool noproxy = true;
     RegisterVectorConverter<RDKit::ROMol *>("MolList", noproxy);
 
-    python::class_<FilterCatalogEntry, boost::shared_ptr<FilterCatalogEntry>,
-                   boost::shared_ptr<const FilterCatalogEntry>>(
+    python::class_<FilterCatalogEntry, std::shared_ptr<FilterCatalogEntry>,
+                   std::shared_ptr<const FilterCatalogEntry>>(
         "FilterCatalogEntry", FilterCatalogEntryDoc,
         python::init<>(python::args("self")))
         .def(python::init<const std::string &, FilterMatcherBase &>(
@@ -480,23 +480,23 @@ struct filtercat_wrapper {
         " of name:ROMOL_SPTR substructure items");
 
     if (!is_python_converter_registered<
-            boost::shared_ptr<const FilterCatalogEntry>>()) {
+            std::shared_ptr<const FilterCatalogEntry>>()) {
       python::register_ptr_to_python<
-          boost::shared_ptr<const FilterCatalogEntry>>();
+          std::shared_ptr<const FilterCatalogEntry>>();
     }
 
     noproxy = true;
-    RegisterVectorConverter<boost::shared_ptr<FilterCatalogEntry const>>(
+    RegisterVectorConverter<std::shared_ptr<FilterCatalogEntry const>>(
         "FilterCatalogEntryList", noproxy);
 
     RegisterVectorConverter<
-        std::vector<boost::shared_ptr<FilterCatalogEntry const>>>(
+        std::vector<std::shared_ptr<FilterCatalogEntry const>>>(
         "FilterCatalogListOfEntryList");
 
     {
       python::scope in_FilterCatalogParams =
           python::class_<FilterCatalogParams,
-                         boost::shared_ptr<FilterCatalogParams>>(
+                         std::shared_ptr<FilterCatalogParams>>(
               "FilterCatalogParams", python::init<>(python::args("self")))
               .def(python::init<FilterCatalogParams::FilterCatalogs>(
                   python::args("self", "catalogs"),

@@ -63,8 +63,8 @@ namespace RDKit {
 class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibraryBase {
  protected:
   ChemicalReaction m_rxn;
-  boost::shared_ptr<EnumerationStrategyBase> m_enumerator;
-  boost::shared_ptr<EnumerationStrategyBase> m_initialEnumerator;
+  std::shared_ptr<EnumerationStrategyBase> m_enumerator;
+  std::shared_ptr<EnumerationStrategyBase> m_initialEnumerator;
 
  public:
   //! default constructor
