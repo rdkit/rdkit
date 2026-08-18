@@ -1,4 +1,4 @@
-#  Copyright (C) 2002-2008  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2002-2026  Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -122,7 +122,7 @@ class TestCase(unittest.TestCase):
         refOrder = numpy.argsort(refContribs)
         mol = Chem.MolFromSmiles(smi)
         if mol:
-          mol = Chem.AddHs(mol, 1)
+          mol = Chem.AddHs(mol, True)
           smi2 = Chem.MolToSmiles(mol)
           contribs = Crippen._GetAtomContribs(mol)
           contribs = [x[0] for x in contribs]

@@ -1102,9 +1102,10 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   bondsInPlay.set();
 
   std::vector<Canon::canon_atom> canonAtoms(mol.getNumAtoms());
+  std::vector<int> canonNeighborIds(2 * mol.getNumBonds());
   Canon::detail::initFragmentCanonAtoms(mol, canonAtoms, false, &atomSymbols,
                                         &bondSymbols, atomsInPlay, bondsInPlay,
-                                        true);
+                                        canonNeighborIds, true);
   Canon::AtomCompareFunctor ftor(&canonAtoms.front(), mol, &atomsInPlay,
                                  &bondsInPlay);
   ftor.df_useIsotopes = false;

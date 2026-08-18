@@ -9,6 +9,10 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes:
+- The C++ canonicalization helpers `Canon::initCanonAtoms()` and
+  `Canon::detail::initFragmentCanonAtoms()` now require caller-owned neighbor ID
+  storage. `Canon::canon_atom::nbrIds` is now a non-owning `std::span<int>`.
+- `Canon::canon_atom::bonds` now uses `boost::container::small_vector`.
 - Since #9208, atom rings are "normalized" so that the first atom in the ring
 definition is the one with the lowest index, and the second one is the neighbor
 to the first which also has the lowest index.
@@ -47,6 +51,10 @@ Python.
   been removed. Please use `Atom::NOATOM` and `Chem.Atom.NOATOM`.
 
 ## Deprecated code (to be removed in a future release):
+- The PropertyMol class in python has been deprecated. Use a normal Chem.Mol and
+  the function
+  Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps) to ensure
+  the properties you are interested in are pickled.
 
 
 # Release_2026.03.1

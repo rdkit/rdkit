@@ -96,6 +96,7 @@ class TautomerQueryTestCase(TestCase):
   def test_serialization(self):
     mol = Chem.MolFromSmiles("O=C1CCCCC1")
     base_tautomer_query = rdTautomerQuery.TautomerQuery(mol)
+    self.assertIsInstance(base_tautomer_query.ToBinary(), bytes)
     for tautomer_query in (pickle.loads(pickle.dumps(base_tautomer_query)),
                            rdTautomerQuery.TautomerQuery(base_tautomer_query.ToBinary())):
       self.assertEqual(2, len(tautomer_query.GetTautomers()))

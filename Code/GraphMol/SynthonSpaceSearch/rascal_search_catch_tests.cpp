@@ -84,9 +84,6 @@ TEST_CASE("RASCAL Small tests") {
   RascalOptions rascalOptions;
 
   for (size_t i = 0; i < libNames.size(); i++) {
-    // if (i != 0) {
-    // continue;
-    // }
     SynthonSpace synthonspace;
     bool cancelled = false;
     synthonspace.readTextFile(libNames[i], cancelled);
@@ -125,4 +122,36 @@ TEST_CASE("RASCAL Small tests") {
       CHECK(fullSmis.find(rs) != fullSmis.end());
     }
   }
+}
+
+unsigned int countFileLines(const std::string &filename) {
+  std::ifstream ifs(filename.c_str());
+  ifs.unsetf(std::ios_base::skipws);
+  unsigned int numLines = std::count(std::istream_iterator<char>(ifs),
+                                     std::istream_iterator<char>(), '\n');
+  ifs.close();
+  return numLines;
+}
+
+TEST_CASE("R Write Possible Hits") {
+  RascalOptions rascalOptions;
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
+  std::string libName = fullRoot + "amide_space.txt";
+  SynthonSpaceSearchParams params;
+  params.possibleHitsFile = "r_poss_hits_1.txt";
+  params.writePossibleHitsAndStop = true;
+  auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
+  SynthonSpace synthonspace;
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
+  auto results = synthonspace.rascalSearch(*queryMol, rascalOptions, params);
+  CHECK(results.getHitMolecules().size() == 0);
+  CHECK(countFileLines("r_poss_hits_1.txt") == 6);
+
+  auto newResults =
+      synthonspace.rascalSearch(*queryMol, rascalOptions, params, 0);
+  CHECK(newResults.getHitMolecules().size() == 6);
+  std::remove("r_poss_hits_1.txt");
 }
