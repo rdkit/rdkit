@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-#include <strstream>
+#include <sstream>
 
 #ifdef RDK_TEST_MULTITHREADED
 #include <csignal>
@@ -822,7 +822,7 @@ void testOneAtropIsomerMandP(std::string inputText, const std::string &expected,
   REQUIRE(mol);
   CIPLabeler::assignCIPLabels(*mol, 100000);
 
-  std::ostrstream out;
+  std::ostringstream out;
   bool foundOne = false;
   for (auto bond : mol->bonds()) {
     if (bond->hasProp(common_properties::_CIPCode)) {
@@ -835,8 +835,6 @@ void testOneAtropIsomerMandP(std::string inputText, const std::string &expected,
   if (!foundOne) {
     out << "none ";
   }
-  out << std::ends;
-
   CHECK(out.str() == expected);
 }
 
