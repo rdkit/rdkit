@@ -1082,7 +1082,7 @@ TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
 void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
                    unsigned int bid3, ComputedData &accumData) {
   const unsigned int aid2 = accumData.bondAdj->getVal(bid1, bid2);
-  const unsigned int aid3 = accumData.bondAdj->getVal(bid1, bid2);
+  const unsigned int aid3 = accumData.bondAdj->getVal(bid2, bid3);
 
   const Atom *atm2 = mol.getAtomWithIdx(aid2);
   Atom::HybridizationType ahyb2 = atm2->getHybridization();
