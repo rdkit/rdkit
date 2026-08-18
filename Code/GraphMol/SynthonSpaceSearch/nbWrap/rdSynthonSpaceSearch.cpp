@@ -72,8 +72,7 @@ void set_excludedVolume(SynthonSpaceSearch::SynthonSpaceSearchParams &params,
     params.excludedVolume = nullptr;
     return;
   }
-  params.excludedVolume = new GaussianShape::ShapeInput(
-      nb::cast<GaussianShape::ShapeInput>(pyExcVol));
+  params.excludedVolume = nb::cast<GaussianShape::ShapeInput *>(pyExcVol);
 }
 
 SynthonSpaceSearch::SearchResults substructureSearch_helper1(
@@ -580,6 +579,7 @@ use 7 threads.  Default=1.)DOC")
           " job.  Default=0 means no bar.")
       .def_prop_rw(
           "excludedVolume", &get_excludedVolume, &set_excludedVolume,
+          nb::for_setter(nb::keep_alive<1, 2>()),
           "  Add an excluded volume to use in the shape search.  The volume"
           " overlap and mean overlap over clashing atoms will be reported.")
       .def_rw("maxExcludedVolume",
