@@ -1890,12 +1890,12 @@ TEST_CASE("canonical tautomer keeps stereo on an equal-score tie",
   // sorts after every atom letter, so the twin always won:
   //   "CC(=O)C(C)O" < "CC(=O)[C@H](C)O"
   // Both acetoin enantiomers therefore canonicalized to the same achiral SMILES
-  // even with tautomerRemoveSp3Stereo set to false. See GitHub #7969.
-  CleanupParameters params;
+  // even with tautomerRemoveSp3Stereo set to false. See GitHub #9518 and #7969.
+  MolStandardize::CleanupParameters params;
   params.tautomerRemoveSp3Stereo = false;
   params.tautomerRemoveBondStereo = false;
   params.tautomerRemoveIsotopicHs = false;
-  TautomerEnumerator te(params);
+  MolStandardize::TautomerEnumerator te(params);
 
   SECTION("acetoin enantiomers stay distinct") {
     for (const auto &smi :
