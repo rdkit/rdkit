@@ -9,6 +9,9 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes:
+- The C++ canonicalization helpers `Canon::initCanonAtoms()` and
+  `Canon::detail::initFragmentCanonAtoms()` now require caller-owned neighbor ID
+  storage. `Canon::canon_atom::nbrIds` is now a non-owning `std::span<int>`.
 - `Canon::canon_atom::bonds` now uses `boost::container::small_vector`.
 - Since #9208, atom rings are "normalized" so that the first atom in the ring
 definition is the one with the lowest index, and the second one is the neighbor
