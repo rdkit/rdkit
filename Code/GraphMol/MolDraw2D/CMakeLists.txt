@@ -35,6 +35,7 @@ rdkit_headers(MolDraw2D.h
         MolDraw2DJS.h
         MolDraw2DUtils.h
         MolDraw2DHelpers.h
+        MolDraw2DSGroupData.h
         DEST GraphMol/MolDraw2D
 )
 
@@ -105,6 +106,10 @@ rdkit_catch_test(moldraw2DTestCatch catch_tests.cpp LINK_LIBRARIES
 rdkit_test(moldraw2DRxnTest1 rxn_test1.cpp LINK_LIBRARIES
         MolDraw2D)
 
-if (RDK_BUILD_PYTHON_WRAPPERS)
+if (RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
 endif ()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()

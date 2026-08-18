@@ -57,6 +57,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
       return *this;
     }
 
+    aid = other.aid;
     loc = other.loc;
     angle = other.angle;
     nbr1 = other.nbr1;

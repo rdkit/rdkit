@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -33,6 +33,7 @@
 #include <list>
 #include <map>
 #include <unordered_map>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
 class ROMol;
@@ -62,13 +63,16 @@ typedef INT_PATH_LIST_MAP::iterator INT_PATH_LIST_MAP_I;
  *                      Hs to the graph.
  *   \param rootedAtAtom - if non-negative, only subgraphs that start at
  *                         this atom will be returned.
+ *   \param ignoreAtoms - if provided, any subgraph that contains any of
+ *                        the atoms in this set will be ignored
  *
  *   The result is a map from subgraph size -> list of paths
  *               (i.e. list of list of bond indices)
  */
 RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(
     const ROMol &mol, unsigned int lowerLen, unsigned int upperLen,
-    bool useHs = false, int rootedAtAtom = -1);
+    bool useHs = false, int rootedAtAtom = -1,
+    boost::dynamic_bitset<> *ignoreAtoms = nullptr);
 
 //! \brief find all bond subgraphs of a particular size
 /*!
@@ -79,13 +83,15 @@ RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(
  *                      Hs to the graph.
  *   \param rootedAtAtom - if non-negative, only subgraphs that start at
  *                         this atom will be returned.
+ *   \param ignoreAtoms - if provided, any subgraph that contains any of
+ *                        the atoms in this set will be ignored
  *
  *
  *   The result is a list of paths (i.e. list of list of bond indices)
  */
-RDKIT_SUBGRAPHS_EXPORT PATH_LIST
-findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
-                          bool useHs = false, int rootedAtAtom = -1);
+RDKIT_SUBGRAPHS_EXPORT PATH_LIST findAllSubgraphsOfLengthN(
+    const ROMol &mol, unsigned int targetLen, bool useHs = false,
+    int rootedAtAtom = -1, boost::dynamic_bitset<> *ignoreAtoms = nullptr);
 
 //! \brief find unique bond subgraphs of a particular size
 /*!
@@ -97,13 +103,15 @@ findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
  *   \param useBO     - if set, bond orders will be considered when uniquifying
  *                      the paths
  *   \param rootedAtAtom - if non-negative, only subgraphs that start at
- *                         this atom will be returned.
+ *   \param ignoreAtoms - if provided, any subgraph that contains any of
+ *                        the atoms in this set will be ignored
  *
  *   The result is a list of paths (i.e. list of list of bond indices)
  */
 RDKIT_SUBGRAPHS_EXPORT PATH_LIST findUniqueSubgraphsOfLengthN(
     const ROMol &mol, unsigned int targetLen, bool useHs = false,
-    bool useBO = true, int rootedAtAtom = -1);
+    bool useBO = true, int rootedAtAtom = -1,
+    boost::dynamic_bitset<> *ignoreAtoms = nullptr);
 //! \brief find all paths of a particular size
 /*!
  *   \param mol - the molecule to be considered
@@ -118,16 +126,20 @@ RDKIT_SUBGRAPHS_EXPORT PATH_LIST findUniqueSubgraphsOfLengthN(
  *   \param onlyShortestPaths - if set then only paths which are <= the shortest
  *                              path between the begin and end atoms will be
  *                              included in the results
+ *   \param ignoreAtoms - if provided, any subgraph that contains any of
+ *                        the atoms in this set will be ignored
  *
  *   The result is a list of paths (i.e. list of list of bond indices)
  */
 RDKIT_SUBGRAPHS_EXPORT PATH_LIST findAllPathsOfLengthN(
     const ROMol &mol, unsigned int targetLen, bool useBonds = true,
-    bool useHs = false, int rootedAtAtom = -1, bool onlyShortestPaths = false);
+    bool useHs = false, int rootedAtAtom = -1, bool onlyShortestPaths = false,
+    boost::dynamic_bitset<> *ignoreAtoms = nullptr);
 RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
     const ROMol &mol, unsigned int lowerLen, unsigned int upperLen,
     bool useBonds = true, bool useHs = false, int rootedAtAtom = -1,
-    bool onlyShortestPaths = false);
+    bool onlyShortestPaths = false,
+    boost::dynamic_bitset<> *ignoreAtoms = nullptr);
 
 //! \brief Find bond subgraphs of a particular radius around an atom.
 //!        Return empty result if there is no bond at the requested radius.

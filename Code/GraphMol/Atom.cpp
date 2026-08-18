@@ -217,6 +217,8 @@ void Atom::initFromOther(const Atom &other) {
   } else {
     dp_monomerInfo = nullptr;
   }
+  dp_macroAtomInfo =
+      other.dp_macroAtomInfo ? other.dp_macroAtomInfo->copy() : nullptr;
   d_flags = other.d_flags;
 }
 
@@ -631,6 +633,10 @@ int Atom::calcImplicitValence(bool strict) {
 void Atom::setMonomerInfo(AtomMonomerInfo *info) {
   delete dp_monomerInfo;
   dp_monomerInfo = info;
+}
+
+void Atom::setMacroAtomInfo(MacroAtomInfo *info) {
+  dp_macroAtomInfo.reset(info);
 }
 
 void Atom::setIsotope(unsigned int what) { d_isotope = what; }

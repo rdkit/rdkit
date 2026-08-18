@@ -500,14 +500,20 @@ TEST_CASE("CDXML") {
   }
   SECTION("Bad CDXML") {
     auto fname = cdxmlbase + "bad-cdxml.cdxml";
-    // Only one passes sanitization
+    // MolsFromCDXMLFile() uses the ChemDraw importer when available; for this
+    // fixture that yields 2 sanitized fragments instead of the fallback
+    // parser's 1.
     {
       std::vector<std::string> expected = {"*c1ccccc1"};
       std::vector<std::string> expected_smarts = {
           "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
       };
+      if (hasChemDrawCDXSupport()) {
+        expected.push_back("*c1cccnc1");
+        expected_smarts.push_back("[#6]1:[#6]:[#6]:[#7]:[#6]:[#6]:1-[!#1]");
+      }
       auto mols = MolsFromCDXMLFile(fname);
-      CHECK(mols.size() == expected.size());
+      REQUIRE(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
         CHECK(MolToSmarts(*mol) == expected_smarts[i]);
@@ -566,9 +572,9 @@ TEST_CASE("CDXML") {
     // the new cdxml parser handles stereo a lot better
     std::vector<std::string> expected = {
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
-        "[B]",
+        "B",
 	"*",
-	"[C]",
+	"C",
         "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",
         // this is may or may not be correct, but the structure is drawn
         // incorrectly.
@@ -689,70 +695,70 @@ TEST_CASE("CDXML") {
       talatisamine, //0 
         "*",
         "C",
-        "[F]",
-        "[B]",
-        "[C]",
+        "F",
+        "B",
+        "C",
         "[2H]",
         talatisamine,
         "*",
         "C",
-        "[F]", // 10
-        "[B]",
-        "[C]",
+        "F", // 10
+        "B",
+        "C",
         "[2H]",
 	talatisamine,
         "*",
         "C",
-        "[F]",
-        "[B]",
-        "[C]",
+        "F",
+        "B",
+        "C",
         "[2H]", // 20
         talatisamine,
         "*",
         "C",
-        "[F]",
-        "[B]",
-        "[C]",
+        "F",
+        "B",
+        "C",
         "[2H]",
         talatisamine,
 	"CCN1C[C@]2(COC)CC[C@H](OC)[C@]34C1C(C[C@H]23)[C@@]1(O)CC(OC)[C@H]2C[C@@H]4[C@@H]1[C@H]2O",
         "*", // 30
-        "[B]",
-        "[C]",
+        "B",
+        "C",
         "[2H]",
         "C",
-        "[F]",
+        "F",
         "*",
         "C",
-        "[F]",
-        "[B]",
-        "[C]", // 40
+        "F",
+        "B",
+        "C", // 40
         "[2H]",
         talatisamine,
         "*",
         "C",
-        "[F]",
-        "[B]",
-        "[C]",
+        "F",
+        "B",
+        "C",
         "[2H]",
         talatisamine,
         "*", // 50
         "C",
-        "[F]",
-        "[B]",
-        "[C]",
+        "F",
+        "B",
+        "C",
         "[2H]",
         "CC1CC[C@]2(O)[C@]3(C)C[C@]4(O)O[C@@]2([C@@H]1O)C1(O)C4(C)C(O)(C(C)C)[C@@H](O)[C@]13O",
         "CC1=C(C(C)C)[C@@H](O)[C@@]2(O)[C@@]3(C)CC(=O)O[C@@]4([C@H](O)C(C)CC[C@]34O)[C@@]12O",
         "CC1=C[C@@]23OC(=O)C[C@@](C)([C@@]2(O)CC1)[C@]1(O)[C@H](O)C2(C(C)C)OC2(C)[C@@]31O",
         "*",
-        "[B]", // 60
-        "[C]",
+        "B", // 60
+        "C",
         "CC1CC[C@@H]2[C@]3(C)C[C@@H]4O[C@@]2(C1)C1[C@@H]3CC(C(C)C)C14C",
         "[2H]",
         "*",
-        "[B]",
-        "[C]",
+        "B",
+        "C",
         "C",
         "CC1CC[C@]2(O)[C@]3(C)C[C@]4(O)O[C@@]2([C@@H]1O)C1(O)C4(C)C(O)(C(C)C)[C@@H](O)[C@]13O",
         "[2H]"};
@@ -773,27 +779,41 @@ TEST_CASE("CDXML") {
     auto mols = MolsFromCDXMLFile(fname);
     std::vector<std::string> expected = {
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
-        "[B]",
+        "B",
         "*",
-        "[C]",
+        "C",
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
-        "[B]",
+        "B",
         "*",
-        "[C]",
+        "C",
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@@H](C[C@@H](O)[C@@H](C)O)O[C@@]1(O)C(C)(C)/C=C/C=O",
         "*",
-        "[C]",
-        "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
-        "*.CC[Si](CC)CC",
+        "C",
+        "C=C(C[C@H](O)C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
+        "*.CC[SiH](CC)CC",
         "CC[Si](C)(CC)CC",
         "CC[Si](C)(CC)CC",
         "CC",
         "CC",
         "*",
-        "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
-        "*.CC[Si](CC)CC",
+        "C=C(C[C@H](O)C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
+        "*.CC[SiH](CC)CC",
         "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@@H](C[C@@H](O)[C@@H](C)O)O[C@@]1(O)C(C)(C)/C=C/C=O",
-        "[C]"};
+        "C"};
+    if (!hasChemDrawCDXSupport()) {
+      expected[1] = "[B]";
+      expected[3] = "[C]";
+      expected[5] = "[B]";
+      expected[7] = "[C]";
+      expected[10] = "[C]";
+      expected[11] =
+          "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C";
+      expected[12] = "*.CC[Si](CC)CC";
+      expected[18] =
+          "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C";
+      expected[19] = "*.CC[Si](CC)CC";
+      expected[21] = "[C]";
+    }
     int i = 0;
     for (auto &mol : mols) {
       INFO(i);
@@ -829,8 +849,13 @@ TEST_CASE("CDXML") {
     auto mols = MolsFromCDXMLFile(fname);
     std::vector<std::string> expected = {
         "*",
-        "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
-        "*.CC[Si](CC)CC"};
+        "C=C(C[C@H](O)C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C",
+        "*.CC[SiH](CC)CC"};
+    if (!hasChemDrawCDXSupport()) {
+      expected[1] =
+          "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C";
+      expected[2] = "*.CC[Si](CC)CC";
+    }
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {

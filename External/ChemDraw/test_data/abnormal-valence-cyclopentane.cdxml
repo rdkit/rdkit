@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML SYSTEM "https://static.chemistry.revvitycloud.com/cdxml/CDXML.dtd" >
+<CDXML>
+<page><fragment><n id="1" AbnormalValence="yes"/><n id="2" AbnormalValence="yes"/><n id="3" AbnormalValence="yes"/><n id="4" AbnormalValence="yes"/><n id="5" AbnormalValence="yes"/><b B="1" E="2"/><b B="2" E="3"/><b B="3" E="4"/><b B="4" E="5"/><b B="5" E="1"/></fragment></page>
+</CDXML>

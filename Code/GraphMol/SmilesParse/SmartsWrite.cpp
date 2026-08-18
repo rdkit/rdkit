@@ -463,7 +463,7 @@ std::string getBondSmartsSimple(const Bond *bond,
   } else {
     std::stringstream msg;
     msg << "Can't write smarts for this query bond type: " << descrip;
-    throw msg.str().c_str();
+    throw ValueErrorException(msg.str());
   }
   return res;
 }

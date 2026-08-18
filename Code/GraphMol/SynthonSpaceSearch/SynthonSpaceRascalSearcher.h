@@ -31,20 +31,25 @@ class SynthonSpaceRascalSearcher : public SynthonSpaceSearcher {
   SynthonSpaceRascalSearcher(const ROMol &query,
                              const RascalMCES::RascalOptions &options,
                              const SynthonSpaceSearchParams &params,
-                             SynthonSpace &space);
+                             SynthonSpace *space);
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
-      const std::vector<std::unique_ptr<ROMol>> &fragSet,
+      const std::vector<std::shared_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const override;
 
- private:
-  void extraSearchSetup(
-      std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) override;
+  bool verifyHit(ROMol &hit, const std::string &rxnId,
+                 const std::vector<const std::string *> &synthNames) override;
 
+ protected:
   bool quickVerify(const SynthonSpaceHitSet *hitset,
                    const std::vector<size_t> &synthNums) const override;
+  double approxSimilarity(const SynthonSpaceHitSet *hitset,
+                          const std::vector<size_t> &synthNums) const override;
 
-  bool verifyHit(ROMol &hit) const override;
+ private:
+  bool extraSearchSetup(
+      std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
+      const TimePoint *endTime) override;
 
   const RascalMCES::RascalOptions &d_rascalOptions;
   RascalMCES::RascalOptions d_rascalFragOptions;

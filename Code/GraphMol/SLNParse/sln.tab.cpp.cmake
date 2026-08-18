@@ -68,7 +68,6 @@
 /* Copy the first part of user declarations.  */
 #line 1 "sln.yy" /* yacc.c:339  */
 
-// $Id$
 //
 //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.

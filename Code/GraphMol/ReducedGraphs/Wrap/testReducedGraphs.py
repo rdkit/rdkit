@@ -1,5 +1,3 @@
-# $Id$
-#
 import unittest
 
 

@@ -940,7 +940,8 @@ void testMissingParams() {
     TEST_ASSERT(!types[0]);
 
     // make sure we can optimize anyway:
-    ForceFields::ForceField *field = UFF::constructForceField(*mol, types);
+    std::unique_ptr<ForceFields::ForceField> field(
+        UFF::constructForceField(*mol, types));
     TEST_ASSERT(field);
     field->initialize();
     double e1 = field->calcEnergy();
@@ -949,7 +950,6 @@ void testMissingParams() {
     double e2 = field->calcEnergy();
     TEST_ASSERT(e2 < e1);
     // std::cerr<<" DE: "<<e1<<" -> "<<e2<<std::endl;
-    delete field;
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;

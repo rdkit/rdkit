@@ -9,8 +9,8 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <map>
+#include <sstream>
 #include <string>
-#include <strstream>
 
 namespace RDKit {
 namespace MolOps {
