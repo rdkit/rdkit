@@ -8,8 +8,10 @@
 //  of the RDKit source tree.
 //
 
+#include <algorithm>
 #include <bitset>
 #include <list>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -42,6 +44,7 @@
 #include "rules/Pairlist.h"
 #include "rules/Rule1a.h"
 #include "rules/Rule2.h"
+#include "rules/Rule6.h"
 
 #include "CIPMol.h"
 
@@ -1575,4 +1578,36 @@ $$$$
                                 ranked_anchors) == true);
     CHECK(ranked_anchors == std::vector<unsigned int>{0, Atom::NOATOM});
   }
+}
+
+TEST_CASE("GitHub #9516: update return values for Rule 6") {
+  auto mol = "C(C)(F)Cl"_smiles;
+  REQUIRE(mol);
+
+  CIPMol cipmol(*mol);
+  Digraph digraph(cipmol, mol->getAtomWithIdx(0));
+  auto root = digraph.getCurrentRoot();
+  auto edges = root->getEdges();
+
+  const auto findEdgeTo = [&mol, &edges](unsigned int atomIdx) {
+    const auto atom = mol->getAtomWithIdx(atomIdx);
+    const auto iter = std::ranges::find_if(
+        edges, [atom](auto edge) { return edge->getEnd()->getAtom() == atom; });
+    REQUIRE(iter != edges.end());
+    return *iter;
+  };
+  const auto refEdge = findEdgeTo(1);
+  const auto otherEdge = findEdgeTo(2);
+  digraph.setRule6Ref(refEdge->getEnd()->getAtom());
+
+  const Rule6 rule;
+  CHECK(rule.compare(refEdge, otherEdge) == +2);
+  CHECK(rule.compare(otherEdge, refEdge) == -2);
+
+  Sort sorter(&rule);
+  std::vector<Edge *> toSort{otherEdge, refEdge};
+  const auto priority = sorter.prioritize(root, toSort, false);
+  CHECK(priority.isUnique());
+  CHECK(priority.isPseudoAsymetric());
+  CHECK(toSort == std::vector<Edge *>{refEdge, otherEdge});
 }
