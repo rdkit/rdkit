@@ -16,15 +16,23 @@
 #include <Geometry/Transform2D.h>
 #include "EmbeddedFrag.h"
 #include "DepictUtils.h"
+#include "MacrocycleGenerator.h"
 #include "Templates.h"
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Bond.h>
 #include "RDDepictor.h"
 #include <list>
 #include <algorithm>
+#include <unordered_set>
+#include <unordered_map>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/QueryAtom.h>
+#include <GraphMol/QueryOps.h>
+
 constexpr double NEIGH_RADIUS = 2.5;
 
 namespace RDDepict {
@@ -34,6 +42,7 @@ unsigned int getDepictDegree(const RDKit::Atom *atom) {
   PRECONDITION(atom, "no atom");
   return atom->getDegree();
 }
+
 }  // end of anonymous namespace
 
 EmbeddedFrag::EmbeddedFrag(unsigned int aid, const RDKit::ROMol *mol) {
@@ -59,12 +68,14 @@ EmbeddedFrag::EmbeddedFrag(unsigned int aid, const RDKit::ROMol *mol) {
 
 EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
                            const RDKit::VECT_INT_VECT &fusedRings,
-                           bool useRingTemplates) {
+                           bool useRingTemplates,
+                           bool useDeNovoMacrocycleGeneration) {
   PRECONDITION(mol, "");
   dp_mol = mol;
   d_eatoms.clear();
   d_attachPts.clear();
-  this->embedFusedRings(fusedRings, useRingTemplates);
+  this->embedFusedRings(fusedRings, useRingTemplates,
+                        useDeNovoMacrocycleGeneration);
   d_done = false;
 }
 
@@ -347,119 +358,58 @@ void EmbeddedFrag::setupAttachmentPoints() {
 
 // check if the stereochemistry of the template matches the stereochemistry of
 // the molecule
-static bool checkStereoChemistry(const RDKit::ROMol &mol,
-                                 const RDKit::ROMol &template_mol,
-                                 RDKit::MatchVectType match) {
-  for (auto bond : mol.bonds()) {
-    if (bond->getBondType() != RDKit::Bond::DOUBLE ||
-        bond->getStereo() == RDKit::Bond::STEREOANY ||
-        bond->getStereo() == RDKit::Bond::STEREONONE) {
-      continue;
-    }
-    // get the four atoms around the double bond
-    auto neighbors = bond->getStereoAtoms();
-    if (neighbors.size() != 2) {
-      continue;
-    }
-    int atom1_neighbor1 = neighbors[0];
-    int atom2_neighbor1 = neighbors[1];
-    int atom1 = bond->getBeginAtomIdx();
-    int atom2 = bond->getEndAtomIdx();
 
-    // now get the other two atoms that are not part of the double bond (if any)
-    int atom1_neighbor2 = -1;
-    int atom2_neighbor2 = -1;
-    if (mol.getAtomWithIdx(atom1)->getDegree() > 2) {
-      for (auto neighbor : mol.atomNeighbors(mol.getAtomWithIdx(atom1))) {
-        if (static_cast<int>(neighbor->getIdx()) != atom1_neighbor1 &&
-            static_cast<int>(neighbor->getIdx()) != atom2) {
-          atom1_neighbor2 = neighbor->getIdx();
-          break;
-        }
-      }
-    }
-    if (mol.getAtomWithIdx(atom2)->getDegree() > 2) {
-      for (auto neighbor : mol.atomNeighbors(mol.getAtomWithIdx(atom2))) {
-        if (static_cast<int>(neighbor->getIdx()) != atom2_neighbor1 &&
-            static_cast<int>(neighbor->getIdx()) != atom1) {
-          atom2_neighbor2 = neighbor->getIdx();
-          break;
-        }
-      }
-    }
+void EmbeddedFrag::applyCoordinates(
+    const RDKit::INT_VECT &atomIndices,
+    const std::vector<RDGeom::Point2D> &coordinates) {
+  PRECONDITION(atomIndices.size() == coordinates.size(),
+               "atomIndices and coordinates must be same size");
 
-    // find the template atoms that correspond to the four atoms
-    int template_atom1 = -1;
-    int template_atom2 = -1;
-    int template_atom1_neighbor1 = -1;
-    int template_atom1_neighbor2 = -1;
-    int template_atom2_neighbor1 = -1;
-    int template_atom2_neighbor2 = -1;
-    for (auto &[template_aidx, rs_aidx] : match) {
-      if (rs_aidx == atom1) {
-        template_atom1 = template_aidx;
-      } else if (rs_aidx == atom2) {
-        template_atom2 = template_aidx;
-      } else if (rs_aidx == atom1_neighbor1) {
-        template_atom1_neighbor1 = template_aidx;
-      } else if (rs_aidx == atom2_neighbor1) {
-        template_atom2_neighbor1 = template_aidx;
-      } else if (rs_aidx == atom1_neighbor2) {
-        template_atom1_neighbor2 = template_aidx;
-      } else if (rs_aidx == atom2_neighbor2) {
-        template_atom2_neighbor2 = template_aidx;
-      }
-    }
-
-    // there's a chance that the atoms controlling the double bond stereochem in
-    // the molecule are not the atoms that matched to the template, handle that
-    // here by swapping to the other atom
-    bool swapStereo = false;
-    if (template_atom1_neighbor1 == -1) {
-      template_atom1_neighbor1 = template_atom1_neighbor2;
-      swapStereo = !swapStereo;
-    }
-    if (template_atom2_neighbor1 == -1) {
-      template_atom2_neighbor1 = template_atom2_neighbor2;
-      swapStereo = !swapStereo;
-    }
-
-    if (template_atom1 == -1 || template_atom2 == -1 ||
-        template_atom1_neighbor1 == -1 || template_atom2_neighbor1 == -1) {
-      return false;
-    }
-
-    const auto &conf = template_mol.getConformer();
-    const auto &atom1_loc = conf.getAtomPos(template_atom1);
-    const auto &atom2_loc = conf.getAtomPos(template_atom2);
-    const auto &atom1_neighbor_loc = conf.getAtomPos(template_atom1_neighbor1);
-    const auto &atom2_neighbor_loc = conf.getAtomPos(template_atom2_neighbor1);
-    // check if the two neighbors are on the same side of the bond
-    const auto v12 = atom1_neighbor_loc - atom1_loc;
-    const auto v42 = atom2_neighbor_loc - atom1_loc;
-    const auto v32 = atom2_loc - atom1_loc;
-    auto cross1 = v32.x * v12.y - v32.y * v12.x;
-    auto cross2 = v32.x * v42.y - v32.y * v42.x;
-    bool is_cis = cross1 * cross2 > 0;
-    if (swapStereo) {
-      is_cis = !is_cis;
-    }
-    if (is_cis != (bond->getStereo() == RDKit::Bond::STEREOZ ||
-                   bond->getStereo() == RDKit::Bond::STEREOCIS)) {
-      return false;
+  // Copy coordinates to embedded atoms (update existing or create new)
+  for (size_t i = 0; i < atomIndices.size(); ++i) {
+    int atomIdx = atomIndices[i];
+    auto it = d_eatoms.find(atomIdx);
+    if (it != d_eatoms.end()) {
+      // Update existing atom
+      it->second.loc = coordinates[i];
+      it->second.df_fixed = true;
+    } else {
+      // Create new atom
+      EmbeddedAtom new_at(atomIdx, coordinates[i]);
+      new_at.df_fixed = true;
+      d_eatoms.emplace(atomIdx, new_at);
     }
   }
-  return true;
+
+  // Setup neighbors and attachment points
+  this->setupNewNeighs();
+  this->setupAttachmentPoints();
+}
+
+void EmbeddedFrag::applyCoordinates(
+    const std::shared_ptr<RDKit::ROMol> &templateMol,
+    const RDKit::MatchVectType &match) {
+  // Extract atom indices and coordinates from template match
+  RDKit::INT_VECT atomIndices;
+  std::vector<RDGeom::Point2D> coordinates;
+  atomIndices.reserve(match.size());
+  coordinates.reserve(match.size());
+
+  const auto &conf = templateMol->getConformer();
+  for (const auto &[templateAidx, molAidx] : match) {
+    atomIndices.push_back(molAidx);
+    coordinates.push_back(conf.getAtomPos(templateAidx));
+  }
+
+  // Delegate to the overload
+  applyCoordinates(atomIndices, coordinates);
 }
 
 bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms) {
-  CoordinateTemplates &coordinate_templates =
+  CoordinateTemplates &coordinateTemplates =
       CoordinateTemplates::getRingSystemTemplates();
 
-  // only look for an exact match to the ring system because our method of
-  // completing rings from a template isn't reliably better than not using
-  // a template at all
-  if (!coordinate_templates.hasTemplateOfSize(ringSystemAtoms.size())) {
+  if (!coordinateTemplates.hasTemplateOfSize(ringSystemAtoms.size())) {
     return false;
   }
 
@@ -487,9 +437,10 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms) {
 
   // find template that this mol matches to, if any
   RDKit::MatchVectType match;
-  std::shared_ptr<RDKit::ROMol> template_mol(nullptr);
+  std::shared_ptr<RDKit::ROMol> templateMol(nullptr);
+
   for (const auto &mol :
-       coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
+       coordinateTemplates.getMatchingTemplates(ringSystemAtoms.size())) {
     // To reduce how often we have to do substructure matches, check ring info
     // and bond count first
     if (mol->getNumBonds() != numBonds) {
@@ -531,24 +482,16 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms) {
     if (!matches.empty()) {
       if (checkStereoChemistry(rs_mol, *mol, matches[0])) {
         match = matches[0];
-        template_mol = mol;
+        templateMol = mol;
         break;
       }
     }
   }
-  if (!template_mol) {
+  if (!templateMol) {
     return false;
   }
 
-  // copy over new coordinates
-  const auto &conf = template_mol->getConformer();
-  for (auto &[template_aidx, rs_aidx] : match) {
-    EmbeddedAtom new_at(rs_aidx, conf.getAtomPos(template_aidx));
-    new_at.df_fixed = true;
-    d_eatoms.emplace(rs_aidx, new_at);
-  }
-  this->setupNewNeighs();
-  this->setupAttachmentPoints();
+  applyCoordinates(templateMol, match);
   return true;
 }
 
@@ -612,13 +555,104 @@ static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
     coords[atom1] = RDGeom::Point2D(x, y);
   }
 }
+// Special handling for macrocycles as the first ring in the core ring systems.
+// A flexible template matching is attempted, which allows some substituents to
+// be put inside the ring. If that fails coordinates are generated on-the-fly
+// with the MacrocycleGenerator. If that fails also, the doneRings vector and
+// the macrocycle will be generated as a regular polygon in the caller code
+void EmbeddedFrag::embedMacrocycleWithFusedRings(
+    const RDKit::VECT_INT_VECT &coreRings, const RDKit::INT_VECT &coreRingsIds,
+    RDKit::INT_VECT &doneRings, bool useDeNovoMacrocycleGeneration) {
+  PRECONDITION(dp_mol, "");
+
+  // Find the macrocycle in coreRings
+  int macrocycleIdxInCoreRings = pickFirstRingToEmbed(*dp_mol, coreRings);
+  const auto &macrocycleRing = coreRings[macrocycleIdxInCoreRings];
+  // Map back to fusedRings index
+  int macrocycleIdx = coreRingsIds[macrocycleIdxInCoreRings];
+
+  // Pre-compute substituent info once for both template matching and
+  // generation
+  boost::dynamic_bitset<> ring_atoms(dp_mol->getNumAtoms());
+  for (auto aidx : macrocycleRing) {
+    ring_atoms.set(aidx);
+  }
+  for (const auto &ring : coreRings) {
+    for (auto aidx : ring) {
+      ring_atoms.set(aidx);
+    }
+  }
+  auto subInfo = computeSubstituentInfo(dp_mol, macrocycleRing, ring_atoms);
+
+  // Try template matching with fusion validation
+  // Pass coreRings and macrocycleIdxInCoreRings so the function can skip the
+  // macrocycle
+  RDGeom::INT_POINT2D_MAP coordMap;
+  for (const auto &ea : d_eatoms) {
+    coordMap[ea.first] = ea.second.loc;
+  }
+
+  bool foundTemplate = RDDepict::matchToTemplateMacrocycle(
+      dp_mol, macrocycleRing, coreRings, subInfo.sizesByPosition, coordMap,
+      macrocycleIdxInCoreRings);
+
+  if (foundTemplate) {
+    // Update d_eatoms with matched coordinates
+    for (const auto &coord : coordMap) {
+      if (d_eatoms.find(coord.first) != d_eatoms.end()) {
+        d_eatoms[coord.first].loc = coord.second;
+      } else {
+        EmbeddedAtom new_at;
+        new_at.aid = coord.first;
+        new_at.loc = coord.second;
+        new_at.df_fixed = true;
+        d_eatoms.emplace(coord.first, new_at);
+      }
+    }
+    this->setupNewNeighs();
+    this->setupAttachmentPoints();
+    doneRings.push_back(macrocycleIdx);
+  }
+
+  if (doneRings.empty() && useDeNovoMacrocycleGeneration) {
+    // If template matching failed, try to generate coordinates on-the-fly
+    // Pass coreRings and macrocycleIdxInCoreRings so the function can skip the
+    // macrocycle
+    auto coords = RDDepict::generateMacrocycleCoordinates(
+        dp_mol, macrocycleRing, coreRings, subInfo.sizesByPosition, BOND_LEN,
+        macrocycleIdxInCoreRings);
+
+    if (!coords.empty()) {
+      // Apply generated coordinates
+      applyCoordinates(macrocycleRing, coords);
+
+      // Reflect fused rings if needed
+      RDGeom::INT_POINT2D_MAP coordMap;
+      for (const auto &ea : d_eatoms) {
+        coordMap[ea.first] = ea.second.loc;
+      }
+      RDDepict::maybeReflectSymmetricFusedRings(*dp_mol, macrocycleRing,
+                                                coreRings, coordMap,
+                                                macrocycleIdxInCoreRings);
+      for (const auto &coord : coordMap) {
+        if (d_eatoms.find(coord.first) != d_eatoms.end()) {
+          d_eatoms[coord.first].loc = coord.second;
+        }
+      }
+
+      // Mark macrocycle as done, then continue to attach small rings
+      doneRings.push_back(macrocycleIdx);
+    }
+  }
+}
 
 //
 // NOTE: the individual rings in fusedRings must appear in traversal order.
 //    This is what is provided by the current ring-finding code.
 //
 void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
-                                   bool useRingTemplates) {
+                                   bool useRingTemplates,
+                                   bool useDeNovoMacrocycleGeneration) {
   PRECONDITION(dp_mol, "");
   // Look for a template for the whole system. Failing that simplify the system
   // to a set of core atoms and  look for a template for those. If that fails,
@@ -626,38 +660,70 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
 
   RDKit::INT_VECT funion;
   // look for a template that matches the entire fused ring system
-  // For single rings, only use templates for macrocycles (size > 8)
-  if (useRingTemplates &&
-      (fusedRings.size() > 1 ||
-       (fusedRings.size() == 1 && fusedRings[0].size() > 8))) {
+  if (useRingTemplates) {
     RDKit::Union(fusedRings, funion);
-    bool found_template = matchToTemplate(funion);
-    if (found_template) {
-      // we are done
+
+    // First try exact template matching on all rings
+    bool foundTemplate = matchToTemplate(funion);
+    // bool foundTemplate = false;  // TEMPORARY: Set to false to skip
+    // templates (for testing MacrocycleGenerator)
+
+    if (foundTemplate) {
+      // Whole fused system template matched - we are done
       return;
     }
   }
+
+  RDKit::INT_VECT doneRings;
+
+  if (useRingTemplates) {
+    bool foundTemplate = false;
+
+    RDKit::INT_VECT coreRingsIds;
+    auto coreRings = findCoreRings(fusedRings, coreRingsIds, *dp_mol);
+    // If after simplification we have a smaller set, but still > 1 ring, then
+    // we will try to match a template to the core
+    bool hasASimplifiedFusedSystem =
+        coreRings.size() < fusedRings.size() && coreRings.size() > 1;
+
+    if (hasASimplifiedFusedSystem) {
+      // look for a template that matches the core ring system
+      RDKit::Union(coreRings, funion);
+      // No macrocycle, use regular strict template matching
+      foundTemplate = matchToTemplate(funion);
+      if (foundTemplate && doneRings.empty()) {
+        doneRings = coreRingsIds;
+      }
+    }
+
+    // if we don't have a template for the core, but it contains a macrocycle,
+    // we have special treatment for that, including a more relaxed matching
+    // that allows some substituents inside or de-novo generation. Note that
+    // this will only generate coordinates for the macrocycle itself, but the
+    // fused atoms will be adjusted so that it's going to be easy to add fused
+    // rings to it.
+
+    bool hasMacrocycle = std::any_of(
+        coreRings.begin(), coreRings.end(), [](const RDKit::INT_VECT &ring) {
+          return ring.size() > MACROCYCLE_SIZE_THRESHOLD;
+        });
+    if (!foundTemplate && hasMacrocycle) {
+      embedMacrocycleWithFusedRings(coreRings, coreRingsIds, doneRings,
+                                    useDeNovoMacrocycleGeneration);
+    }
+  }
+
   std::vector<RDGeom::INT_POINT2D_MAP> coords;
   coords.reserve(fusedRings.size());
 
   for (const auto &ring : fusedRings) {
     auto ring_coords = embedRing(ring);
-    mirrorTransRingAtoms(*dp_mol, ring, ring_coords);
-    coords.push_back(ring_coords);
-  }
-  RDKit::INT_VECT doneRings;
-
-  if (useRingTemplates) {
-    RDKit::INT_VECT coreRingsIds;
-    auto coreRings = findCoreRings(fusedRings, coreRingsIds, *dp_mol);
-    if (coreRings.size() > 1 && coreRings.size() < fusedRings.size()) {
-      // look for a template that matches the core ring system
-      RDKit::Union(coreRings, funion);
-      bool found_template = matchToTemplate(funion);
-      if (found_template) {
-        doneRings = coreRingsIds;
-      }
+    if (ring.size() > MACROCYCLE_SIZE_THRESHOLD) {
+      // if it's a macrocycle, we need to make sure that trans double bonds are
+      // not inverted
+      mirrorTransRingAtoms(*dp_mol, ring, ring_coords);
     }
+    coords.push_back(ring_coords);
   }
 
   // if not embed find a ring as a starting point
@@ -671,19 +737,103 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
     doneRings.push_back(firstRingId);
   }
   RDKit::Union(fusedRings, funion);
+
+  // at this point we have coordinates for at least one atom of the core system,
+  // or for the full core system if we found a template for it. We are now going
+  // to loop over the rings and embed them one at a time, starting from the ones
+  // that have the most atoms in common with the rings that have already been
+  // embedded. For this to work, we need to have coordinates for all the atoms
+  // in the fused system, so we will embed each ring as if it was alone
+
   // now loop over the remaining rings and attach them one at a time
   // the order is determined by how many atoms a ring has in common with
   // the atoms already embedded
-  while (d_eatoms.size() < funion.size()) {  // ) {
+  while (d_eatoms.size() < funion.size()) {
     int nextId;
     // we will take the ring with maximum number of common atoms with
     // with atoms already done
     auto commonAtomIds = findNextRingToEmbed(doneRings, fusedRings, nextId);
 
+    // Track if this ring is a macrocycle that was successfully generated with
+    // fusion constraints
+    bool isMacrocycleWithFusionConstraints = false;
+
+    // If this ring is a macrocycle, generate its coordinates with fusion
+    // constraints
+    if (fusedRings[nextId].size() > MACROCYCLE_SIZE_THRESHOLD) {
+      // Build bitset of all atoms in fused system
+      boost::dynamic_bitset<> ring_atoms(dp_mol->getNumAtoms());
+      for (const auto &ring : fusedRings) {
+        for (auto aidx : ring) {
+          ring_atoms.set(aidx);
+        }
+      }
+
+      // Compute substituent info for this macrocycle
+      auto subInfo =
+          computeSubstituentInfo(dp_mol, fusedRings[nextId], ring_atoms);
+
+      // Build coordinate map from already-embedded atoms (from first
+      // macrocycle) to constrain middle fusion positions to match existing
+      // angles
+      RDGeom::INT_POINT2D_MAP embeddedCoords;
+      for (const auto &ea : d_eatoms) {
+        embeddedCoords[ea.first] = ea.second.loc;
+      }
+
+      // Check if we need to reverse the atom list based on the layout direction
+      // of the already-embedded macrocycle. This ensures we traverse the ring
+      // in the canonical CW direction.
+      RDKit::INT_VECT macrocycleRing = fusedRings[nextId];
+      bool shouldReverse = RDDepict::shouldReverseMacrocycleForFusion(
+          macrocycleRing, fusedRings, nextId, &embeddedCoords);
+      if (shouldReverse) {
+        std::reverse(macrocycleRing.begin(), macrocycleRing.end());
+        // Also reverse the substituent positions map
+        std::map<size_t, int> reversedSizes;
+        for (const auto &entry : subInfo.sizesByPosition) {
+          size_t reversedPos = macrocycleRing.size() - 1 - entry.first;
+          reversedSizes[reversedPos] = entry.second;
+        }
+        subInfo.sizesByPosition = reversedSizes;
+      }
+
+      // Generate macrocycle coordinates with fusion constraints
+      std::vector<RDGeom::Point2D> coords_vec;
+      try {
+        coords_vec = RDDepict::generateMacrocycleCoordinates(
+            dp_mol, macrocycleRing, fusedRings, subInfo.sizesByPosition,
+            BOND_LEN, nextId, &embeddedCoords);
+      } catch (...) {
+        // Failed to generate coordinates (e.g., no solution found, out of
+        // bounds access) Fall back to regular embedding
+        coords_vec.clear();
+      }
+
+      // Convert vector to map and update coords
+      if (!coords_vec.empty()) {
+        RDGeom::INT_POINT2D_MAP macrocycle_coords;
+        for (size_t i = 0; i < coords_vec.size(); ++i) {
+          int atomIdx = macrocycleRing[i];
+          macrocycle_coords[atomIdx] = coords_vec[i];
+        }
+
+        coords[nextId] = macrocycle_coords;
+        isMacrocycleWithFusionConstraints = true;
+      } else {
+        // Failed to generate macrocycle coordinates, skip fusion constraint
+        // path Fall through to regular embedding below
+        isMacrocycleWithFusionConstraints = false;
+      }
+    }
+
     RDGeom::Transform2D trans;
     EmbeddedFrag embRing;
+    // Use either the macrocycle-generated coordinates or the regular embedRing
+    // coordinates
     embRing.initFromRingCoords(fusedRings[nextId], coords[nextId]);
     RDKit::INT_VECT pinAtoms;
+
     // REVIEW: using the average position of the shared atoms and the
     // centroid vector, we can make this a single case.
     if (commonAtomIds.size() == 1) {
@@ -699,10 +849,17 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
       auto aid2 = commonAtomIds.back();
       pinAtoms.push_back(aid1);
       pinAtoms.push_back(aid2);
+
       trans.assign(this->computeTwoAtomTrans(aid1, aid2, coords[nextId]));
       embRing.Transform(trans);
-      reflectIfNecessaryDensity(embRing, aid1, aid2);
+
+      // Skip reflection for macrocycles generated with fusion constraints
+      // (orientation already determined by fusion constraints)
+      if (!isMacrocycleWithFusionConstraints) {
+        reflectIfNecessaryDensity(embRing, aid1, aid2);
+      }
     }
+
     this->mergeRing(embRing, commonAtomIds.size(), pinAtoms);
     doneRings.push_back(nextId);
   }
