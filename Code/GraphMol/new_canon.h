@@ -9,6 +9,9 @@
 //  of the RDKit source tree.
 //
 
+#ifndef RD_NEW_CANON_H
+#define RD_NEW_CANON_H
+
 #include <RDGeneral/export.h>
 #include <RDGeneral/hanoiSort.h>
 #include <GraphMol/ROMol.h>
@@ -17,10 +20,12 @@
 #include <RDGeneral/BoostStartInclude.h>
 #include <cstdint>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/container/small_vector.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <cstring>
 #include <cassert>
 #include <cstring>
+#include <span>
 #include <vector>
 
 // #define VERBOSE_CANON 1
@@ -67,10 +72,9 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
   static int compare(const bondholder &x, const bondholder &y,
                      unsigned int div = 1) {
     if (x.p_symbol && y.p_symbol) {
-      if ((*x.p_symbol) < (*y.p_symbol)) {
-        return -1;
-      } else if ((*x.p_symbol) > (*y.p_symbol)) {
-        return 1;
+      auto symbolCompare = x.p_symbol->compare(*y.p_symbol);
+      if (symbolCompare != 0) {
+        return symbolCompare;
       }
     }
     if (x.bondType < y.bondType) {
@@ -96,6 +100,7 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
     return 0;
   }
 };
+using BondholderVector = boost::container::small_vector<bondholder, 4>;
 struct RDKIT_GRAPHMOL_EXPORT canon_atom {
   const Atom *atom{nullptr};
   int index{-1};
@@ -105,19 +110,24 @@ struct RDKIT_GRAPHMOL_EXPORT canon_atom {
   bool isRingStereoAtom{false};
   unsigned int whichStereoGroup{0};
   StereoGroupType typeOfStereoGroup{StereoGroupType::STEREO_ABSOLUTE};
-  std::unique_ptr<int[]> nbrIds;
+  std::span<int> nbrIds;
   const std::string *p_symbol{
       nullptr};  // if provided, this is used to order atoms
   std::vector<int> neighborNum;
   std::vector<int> revistedNeighbors;
-  std::vector<bondholder> bonds;
+  BondholderVector bonds;
 };
 
 RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborIndex(
     canon_atom *atoms, std::vector<bondholder> &nbrs);
+RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborIndex(canon_atom *atoms,
+                                                   BondholderVector &nbrs);
 
 RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborNumSwaps(
     canon_atom *atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx,
+    std::vector<std::pair<unsigned int, unsigned int>> &result);
+RDKIT_GRAPHMOL_EXPORT void updateAtomNeighborNumSwaps(
+    canon_atom *atoms, BondholderVector &nbrs, unsigned int atomIdx,
     std::vector<std::pair<unsigned int, unsigned int>> &result);
 
 /*
@@ -288,7 +298,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
       return 0;
     }
 
-    auto nbrs = dp_atoms[i].nbrIds.get();
+    const std::span<const int> nbrs = dp_atoms[i].nbrIds;
     unsigned int code = 0;
     for (unsigned j = 0; j < dp_atoms[i].degree; ++j) {
       if (dp_atoms[nbrs[j]].isRingStereoAtom) {
@@ -354,13 +364,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
       return 1;
     }
     if (dp_atoms[i].p_symbol && dp_atoms[j].p_symbol) {
-      if (*(dp_atoms[i].p_symbol) < *(dp_atoms[j].p_symbol)) {
-        return -1;
-      } else if (*(dp_atoms[i].p_symbol) > *(dp_atoms[j].p_symbol)) {
-        return 1;
-      } else {
-        return 0;
-      }
+      return dp_atoms[i].p_symbol->compare(*dp_atoms[j].p_symbol);
     }
 
     // move onto atomic number
@@ -568,7 +572,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
 
 const unsigned int ATNUM_CLASS_OFFSET = 10000;
 class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
-  void getAtomNeighborhood(std::vector<bondholder> &nbrs) const {
+  void getAtomNeighborhood(BondholderVector &nbrs) const {
     for (unsigned j = 0; j < nbrs.size(); ++j) {
       unsigned int nbrIdx = nbrs[j].nbrIdx;
       if (nbrIdx == ATNUM_CLASS_OFFSET) {
@@ -697,14 +701,21 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
                       int mode, std::vector<int> &order,
                       std::vector<int> &count, int &activeset,
                       std::vector<int> &next, std::vector<int> &changed,
-                      std::vector<char> &touchedPartitions) {
+                      std::vector<char> &touchedPartitions,
+                      std::vector<int> *hanoiTemp = nullptr) {
   unsigned int nAtoms = mol.getNumAtoms();
+  std::vector<int> localHanoiTemp;
+  if (!hanoiTemp) {
+    localHanoiTemp.resize(nAtoms);
+    hanoiTemp = &localHanoiTemp;
+  }
   int partition;
   int symclass = 0;
   int offset;
   int index;
   int len;
   int i;
+  PRECONDITION(hanoiTemp->size() >= nAtoms, "hanoi scratch is too small");
   // std::vector<char> touchedPartitions(mol.getNumAtoms(),0);
 
   // std::cerr<<"&&&&&&&&&&&&&&&& RP"<<std::endl;
@@ -737,7 +748,10 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
     //   std::cerr<<order[ii]+1<<" count: "<<count[order[ii]]<<" index:
     //   "<<atoms[order[ii]].index<<std::endl;
     // }
-    hanoisort(start, count, changed, compar);
+    if (RDKit::detail::hanoi(start.data(), len, hanoiTemp->data(), count.data(),
+                             changed.data(), compar)) {
+      std::copy_n(hanoiTemp->begin(), len, start.begin());
+    }
     // std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
     // std::cerr<<"  result:";
     // for(unsigned int ii=0;ii<nAtoms;++ii){
@@ -795,7 +809,8 @@ void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
                int mode, std::vector<int> &order, std::vector<int> &count,
                int &activeset, std::vector<int> &next,
                std::vector<int> &changed,
-               std::vector<char> &touchedPartitions) {
+               std::vector<char> &touchedPartitions,
+               std::vector<int> *hanoiTemp = nullptr) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
   int offset;
@@ -835,7 +850,7 @@ void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
         }
       }
       RefinePartitions(mol, atoms, compar, mode, order, count, activeset, next,
-                       changed, touchedPartitions);
+                       changed, touchedPartitions, hanoiTemp);
     }
     // not sure if this works each time
     if (atoms[partition].index != oldPart) {
@@ -890,6 +905,7 @@ RDKIT_GRAPHMOL_EXPORT void chiralRankMolAtoms(const ROMol &mol,
 
 RDKIT_GRAPHMOL_EXPORT void initCanonAtoms(const ROMol &mol,
                                           std::vector<Canon::canon_atom> &atoms,
+                                          std::span<int> neighborIds,
                                           bool includeChirality = true,
                                           bool includeStereoGroups = true);
 
@@ -901,6 +917,7 @@ void initFragmentCanonAtoms(const ROMol &mol,
                             const std::vector<std::string> *bondSymbols,
                             const boost::dynamic_bitset<> &atomsInPlay,
                             const boost::dynamic_bitset<> &bondsInPlay,
+                            std::span<int> neighborIds,
                             bool needsInit);
 template <typename T>
 void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
@@ -913,3 +930,5 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
 
 }  // namespace Canon
 }  // namespace RDKit
+
+#endif  // RD_NEW_CANON_H

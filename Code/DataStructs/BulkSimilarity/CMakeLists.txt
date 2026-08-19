@@ -50,6 +50,6 @@ rdkit_headers(BulkSimilarity.h DEST DataStructs/BulkSimilarity)
 rdkit_catch_test(testBulkSimilarity catch_tests.cpp
                  LINK_LIBRARIES BulkSimilarity DataStructs)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   add_subdirectory(Wrap)
 endif()

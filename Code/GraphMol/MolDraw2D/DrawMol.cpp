@@ -29,6 +29,7 @@
 #include <GraphMol/MolDraw2D/DrawShape.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <GraphMol/MolDraw2D/MolDraw2DSGroupData.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolEnumerator/LinkNode.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
@@ -221,7 +222,9 @@ void DrawMol::extractAll(double scale) {
   if (drawOptions_.addStereoAnnotation) {
     extractCIPCodes(drawOptions_.showAllCIPCodes);
   }
-  extractStereoGroups();  // always show StereoGroups
+  if (drawOptions_.addStereoGroupAnnotation) {
+    extractStereoGroups();
+  }
   extractBondNotes();
   extractRadicals();
   extractSGroupData();
@@ -536,13 +539,15 @@ void DrawMol::extractStereoGroups() {
 
     switch (group.getGroupType()) {
       case RDKit::StereoGroupType::STEREO_ABSOLUTE:
-        stereoGroupType = "abs";
+        stereoGroupType = drawOptions_.stereoGroupAbsLabel;
         break;
       case RDKit::StereoGroupType::STEREO_OR:
-        stereoGroupType = "or" + std::to_string(++orCount);
+        stereoGroupType =
+            drawOptions_.stereoGroupOrLabel + std::to_string(++orCount);
         break;
       case RDKit::StereoGroupType::STEREO_AND:
-        stereoGroupType = "and" + std::to_string(++andCount);
+        stereoGroupType =
+            drawOptions_.stereoGroupAndLabel + std::to_string(++andCount);
         break;
       default:
         throw ValueErrorException("Unrecognized stereo group type");
@@ -792,7 +797,12 @@ void DrawMol::extractBrackets() {
       // bracket is largely horizontal or largely vertical.
       const auto &brkShp = *postShapes_.back();
       Point2D longline = brkShp.points_[1] - brkShp.points_[2];
-      longline.normalize();
+      try {
+        longline.normalize();
+      } catch (std::runtime_error &e) {
+        // the bracket had no length so can be ignored.
+        continue;
+      }
       static const double cos45 = 1.0 / sqrt(2.0);
       bool horizontal = fabs(longline.x) > cos45;
       size_t labelBrk = postShapes_.size() - 1;
@@ -1116,11 +1126,13 @@ void DrawMol::calculateScale() {
   partitionForLegend();
 
   if (xRange_ > 1e-4 || yRange_ > 1e-4) {
-    double widthForScale = molWidth_ > 0 ? double(molWidth_) : double(drawWidth_);
+    double widthForScale =
+        molWidth_ > 0 ? double(molWidth_) : double(drawWidth_);
     const bool sideLegendHoriz =
         !legend_.empty() &&
         (drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Left ||
-         drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Right) &&
+         drawOptions_.legendPosition ==
+             MolDrawOptions::LegendPosition::Right) &&
         !drawOptions_.legendVerticalText;
     if (sideLegendHoriz && molWidth_ > 0) {
       // Keep a minimum absolute side gap of 8 px so labels do not crowd the
@@ -1132,8 +1144,7 @@ void DrawMol::calculateScale() {
         widthForScale = double(molWidth_) - g;
       }
     }
-    newScale =
-        std::min(widthForScale / xRange_, double(molHeight_) / yRange_);
+    newScale = std::min(widthForScale / xRange_, double(molHeight_) / yRange_);
     double fix_scale = newScale;
     // after all that, use the fixed scale unless it's too big, in which case
     // scale the drawing down to fit.
@@ -1402,6 +1413,7 @@ void DrawMol::shrinkToFit(bool withPadding) {
   } else {
     legendHeight_ = 0;
     molHeight_ = height_;
+    molWidth_ = drawWidth_;
     drawHeight_ = height_ * (1 - 2 * padding);
   }
 }
@@ -1801,24 +1813,23 @@ std::vector<std::string> split_legend_bits(const std::string &legend,
     return legend_bits;
   }
   boost::split(legend_bits, legend, boost::is_any_of("\n"));
-  legend_bits.erase(std::remove_if(legend_bits.begin(), legend_bits.end(),
-                                   [](const std::string &s) {
-                                     return s.empty();
-                                   }),
-                    legend_bits.end());
+  legend_bits.erase(
+      std::remove_if(legend_bits.begin(), legend_bits.end(),
+                     [](const std::string &s) { return s.empty(); }),
+      legend_bits.end());
   return legend_bits;
 }
 
-void place_bottom_legend(const std::vector<std::string> &legend_bits,
-                         double relFontScale, const DrawColour &legendColour,
-                         DrawText &textDrawer, double baseX, double baseY,
-                         double drawWidth, double drawHeight,
-                         std::vector<std::unique_ptr<DrawAnnotation>> &legends) {
+void place_bottom_legend(
+    const std::vector<std::string> &legend_bits, double relFontScale,
+    const DrawColour &legendColour, DrawText &textDrawer, double baseX,
+    double baseY, double drawWidth, double drawHeight,
+    std::vector<std::unique_ptr<DrawAnnotation>> &legends) {
   Point2D loc(baseX + drawWidth / 2.0, baseY + drawHeight);
   for (const auto &bit : legend_bits) {
-    legends.emplace_back(new DrawAnnotation(bit, TextAlignType::MIDDLE, "legend",
-                                            relFontScale, loc, legendColour,
-                                            textDrawer));
+    legends.emplace_back(new DrawAnnotation(bit, TextAlignType::MIDDLE,
+                                            "legend", relFontScale, loc,
+                                            legendColour, textDrawer));
   }
   double xmin, xmax, ymin, ymax;
   double lastAbove = 0.0;
@@ -1847,7 +1858,8 @@ void place_top_legend(const std::vector<std::string> &legend_bits,
   for (size_t i = 0; i < legend_bits.size(); ++i) {
     double height, width;
     DrawAnnotation da(legend_bits[i], TextAlignType::MIDDLE, "legend",
-                      relFontScale, Point2D(0.0, 0.0), legendColour, textDrawer);
+                      relFontScale, Point2D(0.0, 0.0), legendColour,
+                      textDrawer);
     da.getDimensions(width, height);
     total_h += height;
     if (i + 1 < legend_bits.size()) {
@@ -1859,13 +1871,14 @@ void place_top_legend(const std::vector<std::string> &legend_bits,
   for (size_t i = 0; i < legend_bits.size(); ++i) {
     double height, width;
     DrawAnnotation da(legend_bits[i], TextAlignType::MIDDLE, "legend",
-                      relFontScale, Point2D(0.0, 0.0), legendColour, textDrawer);
+                      relFontScale, Point2D(0.0, 0.0), legendColour,
+                      textDrawer);
     da.getDimensions(width, height);
     y += height / 2.0;
     Point2D loc(baseX + drawWidth / 2.0, y);
-    legends.emplace_back(new DrawAnnotation(legend_bits[i], TextAlignType::MIDDLE,
-                                            "legend", relFontScale, loc,
-                                            legendColour, textDrawer));
+    legends.emplace_back(
+        new DrawAnnotation(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                           relFontScale, loc, legendColour, textDrawer));
     y += height / 2.0;
     if (i + 1 < legend_bits.size()) {
       y += gap;
@@ -1876,8 +1889,9 @@ void place_top_legend(const std::vector<std::string> &legend_bits,
 void place_side_legend(const std::vector<std::string> &legend_bits,
                        double relFontScale, const DrawColour &legendColour,
                        DrawText &textDrawer, bool vertText, bool is_left,
-                       double baseX, double baseY, int legendWidth, int molWidth,
-                       double drawWidth, double drawHeight, double marginPadding,
+                       double baseX, double baseY, int legendWidth,
+                       int molWidth, double drawWidth, double drawHeight,
+                       double marginPadding,
                        std::vector<std::unique_ptr<DrawAnnotation>> &legends) {
   if (legend_bits.empty()) {
     return;
@@ -1925,9 +1939,9 @@ void place_side_legend(const std::vector<std::string> &legend_bits,
     for (size_t i = 0; i < legend_bits.size(); ++i) {
       y += max_h / 2.0;
       Point2D loc(stripCentreX, y);
-      legends.emplace_back(new DrawAnnotation(legend_bits[i], TextAlignType::MIDDLE,
-                                              "legend", relFontScale, loc,
-                                              legendColour, textDrawer));
+      legends.emplace_back(
+          new DrawAnnotation(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                             relFontScale, loc, legendColour, textDrawer));
       y += max_h / 2.0;
       if (i + 1 < legend_bits.size()) {
         y += gap;
@@ -1955,9 +1969,9 @@ void place_side_legend(const std::vector<std::string> &legend_bits,
       da.getDimensions(width, height);
       y += height / 2.0;
       Point2D loc(stripCentreX, y);
-      legends.emplace_back(new DrawAnnotation(legend_bits[i], TextAlignType::MIDDLE,
-                                              "legend", relFontScale, loc,
-                                              legendColour, textDrawer));
+      legends.emplace_back(
+          new DrawAnnotation(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                             relFontScale, loc, legendColour, textDrawer));
       y += height / 2.0;
       if (i + 1 < legend_bits.size()) {
         y += gap;
@@ -2007,7 +2021,8 @@ void DrawMol::extractLegend() {
       (drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Left ||
        drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Right) &&
       !vertText;
-  if (total_width > maxWidth && maxWidth > 0 && !flexiCanvasX_ && !sideHorizontal) {
+  if (total_width > maxWidth && maxWidth > 0 && !flexiCanvasX_ &&
+      !sideHorizontal) {
     relFontScale *= maxWidth / total_width;
     calc_legend_dims(legend_bits, relFontScale, drawOptions_.legendColour,
                      textDrawer_, total_width, total_height);
@@ -2064,9 +2079,8 @@ void DrawMol::extractLegend() {
       }
       const double gap = calc_line_gap(textDrawer_, vertText, relFontScale);
       const size_t n = legend_bits.size();
-      const double span =
-          static_cast<double>(n) * max_h +
-          (n > 1 ? static_cast<double>(n - 1) * gap : 0.0);
+      const double span = static_cast<double>(n) * max_h +
+                          (n > 1 ? static_cast<double>(n - 1) * gap : 0.0);
       if (span <= avail || span <= 0.0) {
         break;
       }
@@ -2098,9 +2112,9 @@ void DrawMol::extractLegend() {
       break;
     case MolDrawOptions::LegendPosition::Right:
       place_side_legend(legend_bits, relFontScale, drawOptions_.legendColour,
-                        textDrawer_, vertText, false, baseX, baseY, legendWidth_,
-                        molWidth_, drawWidth_, drawHeight_, marginPadding_,
-                        legends_);
+                        textDrawer_, vertText, false, baseX, baseY,
+                        legendWidth_, molWidth_, drawWidth_, drawHeight_,
+                        marginPadding_, legends_);
       break;
   }
 }
@@ -2385,7 +2399,7 @@ void DrawMol::makeWedgedBond(Bond *bond,
   auto at2 = bond->getEndAtom();
   auto col1 = cols.first;
   auto col2 = cols.second;
-  if (drawOptions_.singleColourWedgeBonds) {
+  if (drawOptions_.singleColourWedgeBonds || drawOptions_.singleColourBonds) {
     col1 = drawOptions_.symbolColour;
     col2 = drawOptions_.symbolColour;
   }
@@ -2570,8 +2584,12 @@ std::pair<DrawColour, DrawColour> DrawMol::getBondColours(Bond *bond) {
     col2 = bondColours_[bond->getIdx()].second;
   } else {
     if (!highlight_bond || drawOptions_.continuousHighlight) {
-      col1 = getColour(bond->getBeginAtomIdx());
-      col2 = getColour(bond->getEndAtomIdx());
+      if (drawOptions_.singleColourBonds) {
+        col1 = col2 = drawOptions_.symbolColour;
+      } else {
+        col1 = getColour(bond->getBeginAtomIdx());
+        col2 = getColour(bond->getEndAtomIdx());
+      }
     } else {
       if (highlightBondMap_.find(bond->getIdx()) != highlightBondMap_.end()) {
         col1 = col2 = highlightBondMap_.find(bond->getIdx())->second;
@@ -2870,16 +2888,14 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
     // If the nbr has the same coords as atom, bond_vec comes out as NaN, NaN
     // (issue 6559), so use a short arbitrary vector instead.
     Point2D bond_vec;
-    if ((at_cds - atCds_[nbr]).lengthSq() < 0.0001) {
-      bond_vec.x = 0.1;
-      bond_vec.y = 0.1;
-    } else {
+    try {
       bond_vec = at_cds.directionVector(atCds_[nbr]);
+    } catch (const std::runtime_error &e) {
+      bond_vec.x = 0.7071;
+      bond_vec.y = 0.7071;
     }
-    bond_vec.normalize();
     bond_vecs.push_back(bond_vec);
   }
-
   Point2D ret_vec;
   if (bond_vecs.size() == 1) {
     if (!atomLabels_[atom->getIdx()]) {
@@ -2915,7 +2931,12 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
         double ang = acos(bond_vecs[i].dotProduct(bond_vecs[j]));
         if (ang < discrim) {
           ret_vec = bond_vecs[i] + bond_vecs[j];
-          ret_vec.normalize();
+          try {
+            ret_vec.normalize();
+          } catch (const std::runtime_error &e) {
+            // normalize throws on zero-length bond.
+            continue;
+          }
           discrim = -1.0;
           break;
         }
@@ -3645,15 +3666,15 @@ Point2D DrawMol::doubleBondEnd(unsigned int at1, unsigned int at2,
   v23perp.normalize();
 
   Point2D bis = v21 + v23;
-  if (bis.lengthSq() < 1.0e-6) {
+  try {
+    bis.normalize();
+  } catch (std::exception &e) {
     // if the bonds are colinear, bis comes out as 0, and thus normalizes
     // to NaN which gives a very ugly result (Github #6027).  It's safe
-    // to use v23perp in this case, so long as is on the right side of the
+    // to use v23perp in this case, so long as it is on the right side of the
     // bond, which will be checked on return.
     return (atCds_[at2] - v23perp * offset);
   }
-
-  bis.normalize();
   if (v23perp.dotProduct(bis) < 0.0) {
     v23perp = v23perp * -1.0;
   }
@@ -4074,10 +4095,14 @@ bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
     ROMol const &mol = atom.getOwningMol();
     int i = 0;
     for (auto nbr : make_iterator_range(mol.getAtomNeighbors(&atom))) {
-      Point2D bond_vec = at1_cds.directionVector(atCds[nbr]);
-      bond_vec.normalize();
-      bond_vecs[i] = bond_vec;
-      bts[i] = mol.getBondBetweenAtoms(atom.getIdx(), nbr)->getBondType();
+      try {
+        Point2D bond_vec = at1_cds.directionVector(atCds[nbr]);
+        bond_vecs[i] = bond_vec;
+        bts[i] = mol.getBondBetweenAtoms(atom.getIdx(), nbr)->getBondType();
+      } catch (std::runtime_error &e) {
+        // A zero-length vector throws and can be ignored.
+        continue;
+      }
       ++i;
     }
     return (bts[0] == bts[1] && bond_vecs[0].dotProduct(bond_vecs[1]) < -0.95);

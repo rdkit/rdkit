@@ -8,6 +8,9 @@
 //  of the RDKit source tree.
 //
 
+#ifndef RD_DEPICTOR_TEMPLATES_H
+#define RD_DEPICTOR_TEMPLATES_H
+
 #include <GraphMol/ROMol.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/MolOps.h>
@@ -102,3 +105,4 @@ class RDKIT_DEPICTOR_EXPORT CoordinateTemplates {
       m_templates;
 };
 }  // namespace RDDepict
+#endif  // RD_DEPICTOR_TEMPLATES_H

@@ -277,6 +277,16 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
 
       numAtoms = NumAtoms()
       rdMolDescriptors.Properties.RegisterProperty(numAtoms)
+
+    NOTE: using this class will add a cyclic reference to the property functor. This will
+    lead to warnings when the interpreter is shutting down with the nanobind wrappers.
+    To avoid the problem just use PythonPropertyFunctor directly and register it like this:
+    
+      def NumAtoms(mol):
+        return mol.GetNumAtoms()
+
+      numAtoms = rdMolDescriptors.PythonPropertyFunctor(NumAtoms, "NumAtoms", "1.0.0")
+      rdMolDescriptors.Properties.RegisterProperty(numAtoms)
     """
 
   def __init__(self, name, version):

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2023 Greg Landrum
+//  Copyright (C) 2023-2026 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -56,5 +56,97 @@ TEST_CASE("shortestPathsOnly") {
                                    onlyShortestPaths);
     CHECK(ps.size() == 1);
     CHECK(ps[3].size() == 2);
+  }
+}
+
+TEST_CASE("ignoreAtoms") {
+  auto m = "CCCO"_smiles;
+  REQUIRE(m);
+  SECTION("findAllPathsOfLengthN") {
+    bool useBonds = true;
+    bool useHs = false;
+    int rootedAt = -1;
+    bool onlyShortestPaths = true;
+
+    auto ps = findAllPathsOfLengthN(*m, 3, useBonds, useHs, rootedAt,
+                                    onlyShortestPaths);
+    CHECK(ps.size() == 1);
+
+    // check that ignoreAtoms works:
+    boost::dynamic_bitset<> ignoreAtoms(m->getNumAtoms());
+    ignoreAtoms[0] = 1;
+    auto ps2 = findAllPathsOfLengthN(*m, 3, useBonds, useHs, rootedAt,
+                                     onlyShortestPaths, &ignoreAtoms);
+    CHECK(ps2.empty());
+
+    // make sure we ignore it even if we are rooted there.
+    rootedAt = 1;
+    auto ps3 = findAllPathsOfLengthN(*m, 3, useBonds, useHs, rootedAt,
+                                     onlyShortestPaths, &ignoreAtoms);
+    CHECK(ps3.empty());
+  }
+  SECTION("findAllPathsOfLengthsMtoN") {
+    bool useBonds = true;
+    bool useHs = false;
+    int rootedAt = -1;
+    bool onlyShortestPaths = true;
+
+    auto ps = findAllPathsOfLengthsMtoN(*m, 3, 3, useBonds, useHs, rootedAt,
+                                        onlyShortestPaths);
+    CHECK(ps.size() == 1);
+
+    // check that ignoreAtoms works:
+    boost::dynamic_bitset<> ignoreAtoms(m->getNumAtoms());
+    ignoreAtoms[0] = 1;
+    auto ps2 = findAllPathsOfLengthsMtoN(*m, 3, 3, useBonds, useHs, rootedAt,
+                                         onlyShortestPaths, &ignoreAtoms);
+    CHECK(ps2.empty());
+
+    // make sure we ignore it even if we are rooted there.
+    rootedAt = 1;
+    auto ps3 = findAllPathsOfLengthsMtoN(*m, 3, 3, useBonds, useHs, rootedAt,
+                                         onlyShortestPaths, &ignoreAtoms);
+    CHECK(ps3.empty());
+  }
+  SECTION("findAllSubgraphsOfLengthN") {
+    bool useHs = false;
+    int rootedAt = -1;
+
+    auto ps = findAllSubgraphsOfLengthN(*m, 3, useHs, rootedAt);
+    CHECK(ps.size() == 1);
+
+    // check that ignoreAtoms works:
+    boost::dynamic_bitset<> ignoreAtoms(m->getNumAtoms());
+    ignoreAtoms[0] = 1;
+    auto ps2 = findAllSubgraphsOfLengthN(*m, 3, useHs, rootedAt, &ignoreAtoms);
+    CHECK(ps2.empty());
+
+    // make sure we ignore it even if we are rooted there.
+    rootedAt = 1;
+    auto ps3 = findAllSubgraphsOfLengthN(*m, 3, useHs, rootedAt, &ignoreAtoms);
+    CHECK(ps3.empty());
+  }
+  SECTION("findAllSubgraphsOfLengthsMtoN") {
+    bool useHs = false;
+    int rootedAt = -1;
+
+    auto ps = findAllSubgraphsOfLengthsMtoN(*m, 3, 3, useHs, rootedAt);
+    CHECK(ps.size() == 1);
+    CHECK(ps[3].size() == 1);
+
+    // check that ignoreAtoms works:
+    boost::dynamic_bitset<> ignoreAtoms(m->getNumAtoms());
+    ignoreAtoms[0] = 1;
+    auto ps2 =
+        findAllSubgraphsOfLengthsMtoN(*m, 3, 3, useHs, rootedAt, &ignoreAtoms);
+    CHECK(ps2.size() == 1);
+    CHECK(ps2[3].empty());
+
+    // make sure we ignore it even if we are rooted there.
+    rootedAt = 1;
+    auto ps3 =
+        findAllSubgraphsOfLengthsMtoN(*m, 3, 3, useHs, rootedAt, &ignoreAtoms);
+    CHECK(ps3.size() == 1);
+    CHECK(ps3[3].empty());
   }
 }

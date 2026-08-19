@@ -1,10 +1,9 @@
-import os
 import sys
 import unittest
 from multiprocessing import Process, Value
 from time import sleep
 
-from rdkit import Chem, RDConfig
+from rdkit import Chem
 from rdkit.Chem import ChemicalForceFields, rdMolTransforms
 
 

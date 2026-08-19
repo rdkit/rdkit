@@ -1443,6 +1443,24 @@ void _recurseAtomOneSide(unsigned int endAid, unsigned int begAid,
   return;
 }
 
+std::vector<RDKit::INT_VECT> _getRingsForSpiroCenter(unsigned int spiroAid,
+                                                     const RDKit::ROMol *mol) {
+  PRECONDITION(mol, "");
+  std::vector<RDKit::INT_VECT> result;
+  const auto &atomRings = mol->getRingInfo()->atomRings();
+
+  // Collect the 2 rings containing this spiro atom
+  for (const auto &ring : atomRings) {
+    if (std::find(ring.begin(), ring.end(), static_cast<int>(spiroAid)) !=
+        ring.end()) {
+      result.push_back(ring);
+    }
+  }
+
+  POSTCONDITION(result.size() == 2, "Spiro must have exactly 2 rings");
+  return result;
+}
+
 double _crossVal(const RDGeom::Point2D &v1, const RDGeom::Point2D &v2) {
   return v1.x * v2.y - v2.x * v1.y;
 }
@@ -1870,6 +1888,62 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
   }
 }
 
+void EmbeddedFrag::flipAboutSpiroCenter(unsigned int spiroAid) {
+  PRECONDITION(dp_mol, "");
+  PRECONDITION(spiroAid < dp_mol->getNumAtoms(), "");
+  // Note: Caller validates spiroAid is a spiro center, no need to check again
+
+  // Get the two rings
+  auto rings = _getRingsForSpiroCenter(spiroAid, dp_mol);
+  CHECK_INVARIANT(rings.size() == 2, "");
+
+  // Always flip the first ring
+  const auto &targetRing = rings[0];
+
+  // Find the two neighbors of the spiro atom that are in the target ring
+  // (must be bonded to the spiro atom, not just in the same ring)
+  std::set<int> targetRingSet(targetRing.begin(), targetRing.end());
+  std::vector<unsigned int> ringNeighbors;
+
+  for (auto nbr : dp_mol->atomNeighbors(dp_mol->getAtomWithIdx(spiroAid))) {
+    unsigned int nbrIdx = nbr->getIdx();
+    if (targetRingSet.contains(nbrIdx)) {
+      ringNeighbors.push_back(nbrIdx);
+    }
+  }
+
+  CHECK_INVARIANT(ringNeighbors.size() == 2,
+                  "Spiro atom should have exactly 2 neighbors in each ring");
+
+  // Recursively collect all atoms on this side of the spiro
+  // (includes the ring, fused rings, and all substituents - DRY approach using
+  // bond flip logic) Start from one neighbor - it will find the other neighbor
+  // through the ring
+  RDKit::INT_VECT atomsToFlip;
+  _recurseAtomOneSide(ringNeighbors[0], spiroAid, dp_mol, atomsToFlip);
+
+  // Define reflection axis: through spiro center and midpoint of its two
+  // neighbors
+  const auto &spiroLoc = d_eatoms.at(spiroAid).loc;
+
+  // Calculate midpoint of the two neighbors
+  const auto &neighbor1Loc = d_eatoms.at(ringNeighbors[0]).loc;
+  const auto &neighbor2Loc = d_eatoms.at(ringNeighbors[1]).loc;
+  RDGeom::Point2D midpoint = (neighbor1Loc + neighbor2Loc) * 0.5;
+
+  // Check for fixed atoms (cannot flip if any atoms are fixed)
+  for (auto aid : atomsToFlip) {
+    if (d_eatoms.at(aid).df_fixed) {
+      return;  // Cannot flip - has fixed atoms
+    }
+  }
+
+  // Reflect all atoms on this side of the spiro (spiro center stays in place)
+  for (auto aid : atomsToFlip) {
+    d_eatoms[aid].Reflect(spiroLoc, midpoint);
+  }
+}
+
 unsigned int _findDeg1Neighbor(const RDKit::ROMol *mol, unsigned int aid) {
   PRECONDITION(mol, "");
   auto deg = getDepictDegree(mol->getAtomWithIdx(aid));
@@ -1974,60 +2048,138 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
   }
 }
 
-void EmbeddedFrag::removeCollisionsBondFlip() {
-  // try to remove collisions in a structure by flipping rotatable bonds along
-  // the shortest path between the colliding atoms. we will limit the number of
-  // times we are going to do this since we may fall into spiral where removing
-  // a collision may create a new one
+bool EmbeddedFrag::tryResolvingCollisionWithBondFlip(
+    const std::pair<unsigned int, unsigned int> &cAids, unsigned int ncols,
+    double prevDensity, std::map<int, unsigned int> &doneBonds,
+    const double *dmat) {
+  auto rotBonds = getRotatableBonds(*dp_mol, cAids.first, cAids.second);
+
+  for (auto ri : rotBonds) {
+    auto doneBondsRiIt = doneBonds.find(ri);
+    if ((doneBondsRiIt == doneBonds.end()) ||
+        (doneBondsRiIt->second < NUM_BONDS_FLIPS)) {
+      if (doneBondsRiIt == doneBonds.end()) {
+        doneBonds[ri] = 1;
+      } else {
+        doneBondsRiIt->second += 1;
+      }
+
+      flipAboutBond(ri);
+      auto colls = this->findCollisions(dmat);
+      auto newDensity = this->totalDensity();
+      if (colls.size() < ncols) {
+        doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
+        return true;
+      } else if (colls.size() == ncols && newDensity < prevDensity) {
+        return true;
+      } else {
+        // we made the wrong move earlier - reject the flip move it back
+        flipAboutBond(ri);
+        // and try the other end:
+        flipAboutBond(ri, false);
+        colls = this->findCollisions(dmat);
+        newDensity = this->totalDensity();
+        if (colls.size() < ncols) {
+          doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
+          return true;
+        } else if (colls.size() == ncols && newDensity < prevDensity) {
+          return true;
+        } else {
+          flipAboutBond(ri, false);
+        }
+      }
+    }
+  }
+  return false;
+}
+
+bool EmbeddedFrag::tryResolvingCollisionWithSpiroFlip(
+    const std::pair<unsigned int, unsigned int> &cAids, unsigned int ncols,
+    double prevDensity, std::map<int, unsigned int> &doneSpiros,
+    const boost::dynamic_bitset<> &spiroCenters, const double *dmat) {
+  // Find spiro centers on the path using our cached bitset (avoid expensive
+  // re-checks)
+  RDKit::INT_LIST path =
+      RDKit::MolOps::getShortestPath(*dp_mol, cAids.first, cAids.second);
+  std::vector<unsigned int> spiros;
+  for (auto aid : path) {
+    if (spiroCenters.test(aid)) {
+      spiros.push_back(aid);
+    }
+  }
+
+  for (auto spiroAid : spiros) {
+    auto doneSpiroIt = doneSpiros.find(spiroAid);
+
+    // Skip if already flipped NUM_BONDS_FLIPS times
+    if (doneSpiroIt != doneSpiros.end() &&
+        doneSpiroIt->second >= NUM_BONDS_FLIPS) {
+      continue;
+    }
+    // Flip the first ring
+    flipAboutSpiroCenter(spiroAid);
+    auto colls = this->findCollisions(dmat);
+    auto newDensity = this->totalDensity();
+
+    if (colls.size() < ncols) {
+      // Success! Lock this spiro
+      doneSpiros[spiroAid] = NUM_BONDS_FLIPS;
+      return true;
+    } else if (colls.size() == ncols && newDensity < prevDensity) {
+      // Same collisions but better density - keep it
+      if (doneSpiroIt == doneSpiros.end()) {
+        doneSpiros[spiroAid] = 1;
+      } else {
+        doneSpiroIt->second++;
+      }
+      return true;
+    } else {
+      // Didn't help - undo the flip
+      flipAboutSpiroCenter(spiroAid);
+    }
+  }
+  return false;
+}
+
+void EmbeddedFrag::removeCollisionsBondAndSpiroFlip() {
+  // Pre-compute which atoms are spiro centers (expensive check, so cache it)
+  boost::dynamic_bitset<> spiroCenters(dp_mol->getNumAtoms());
+  for (unsigned int aid = 0; aid < dp_mol->getNumAtoms(); ++aid) {
+    if (isSpiroCenter(aid, dp_mol)) {
+      spiroCenters.set(aid);
+    }
+  }
+
+  // try to remove collisions in a structure by flipping rotatable bonds and
+  // spiro centers along the shortest path between the colliding atoms. we will
+  // limit the number of times we are going to do this since we may fall into
+  // spiral where removing a collision may create a new one
   auto dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
   auto colls = this->findCollisions(dmat);
   std::map<int, unsigned int> doneBonds;
+  std::map<int, unsigned int> doneSpiros;
   unsigned int iter = 0;
+
   while (iter < MAX_COLL_ITERS && colls.size()) {
     auto ncols = colls.size();
     if (ncols > 0) {
       // we have a collision
       auto cAids = colls[0];
-      auto rotBonds = getRotatableBonds(*dp_mol, cAids.first, cAids.second);
       auto prevDensity = this->totalDensity();
-      for (auto ri : rotBonds) {
-        auto doneBondsRiIt = doneBonds.find(ri);
-        if ((doneBondsRiIt == doneBonds.end()) ||
-            (doneBondsRiIt->second < NUM_BONDS_FLIPS)) {
-          if (doneBondsRiIt == doneBonds.end()) {
-            doneBonds[ri] = 1;
-          } else {
-            doneBondsRiIt->second += 1;
-          }
+      bool resolved = false;
 
-          flipAboutBond(ri);
-          colls = this->findCollisions(dmat);
-          auto newDensity = this->totalDensity();
-          if (colls.size() < ncols) {
-            doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
-            break;
-          } else if (colls.size() == ncols && newDensity < prevDensity) {
-            break;
-          } else {
-            // we made the wrong move earlier - reject the flip move it back
-            flipAboutBond(ri);
-            colls = this->findCollisions(dmat);
-            // and try the other end:
-            flipAboutBond(ri, false);
-            colls = this->findCollisions(dmat);
-            newDensity = this->totalDensity();
-            if (colls.size() < ncols) {
-              doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
-              break;
-            } else if (colls.size() == ncols && newDensity < prevDensity) {
-              break;
-            } else {
-              flipAboutBond(ri, false);
-              colls = this->findCollisions(dmat);
-            }
-          }
-        }
+      // Try bond flipping first
+      resolved = tryResolvingCollisionWithBondFlip(cAids, ncols, prevDensity,
+                                                   doneBonds, dmat);
+
+      // Try spiro flipping if bond flipping didn't resolve the collision
+      if (!resolved) {
+        resolved = tryResolvingCollisionWithSpiroFlip(
+            cAids, ncols, prevDensity, doneSpiros, spiroCenters, dmat);
       }
+
+      // Re-check collisions after flipping
+      colls = this->findCollisions(dmat);
     }
     ++iter;
   }

@@ -329,10 +329,6 @@ int hDeltaRemovingNeg(const Atom *atom, bool protonationOnly) {
   return earlyAtom ? -1 : 1;
 }
 
-bool canRemoveNeg(const Atom *atom, bool protonationOnly) {
-  return hDeltaRemovingNeg(atom, protonationOnly) != 0;
-}
-
 bool removeNegIfPossible(Atom *atom, bool protonationOnly) {
   int hDelta = hDeltaRemovingNeg(atom, protonationOnly);
   if (hDelta != 0) {

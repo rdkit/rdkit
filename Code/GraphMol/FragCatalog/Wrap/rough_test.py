@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (C) 2003-2005  Rational Discovery LLC
 #         All Rights Reserved
 #
@@ -16,7 +14,7 @@ from rdkit import RDConfig
 from rdkit.RDLogger import logger
 
 logger = logger()
-from rdkit import Chem, DataStructs
+from rdkit import Chem
 from rdkit.Chem import FragmentCatalog
 
 
@@ -55,7 +53,7 @@ class TestCase(unittest.TestCase):
     fparams = FragmentCatalog.FragCatParams(1, 6, self.fName, 1.0e-8)
     fcat = FragmentCatalog.FragCatalog(fparams)
     fgen = FragmentCatalog.FragCatGenerator()
-    suppl = Chem.SmilesMolSupplier(self.smiName, " ", 0, 1, 0)
+    suppl = Chem.SmilesMolSupplier(self.smiName, " ", 0, 1, False)
     for mol in suppl:
       nent = fgen.AddFragsFromMol(mol, fcat)
     self.assertEqual(fcat.GetNumEntries(), 21)
@@ -72,7 +70,7 @@ class TestCase(unittest.TestCase):
     fparams = FragmentCatalog.FragCatParams(1, 6, self.fName)
     fcat = FragmentCatalog.FragCatalog(fparams)
     fgen = FragmentCatalog.FragCatGenerator()
-    suppl = Chem.SmilesMolSupplier(self.smiName, " ", 0, 1, 0)
+    suppl = Chem.SmilesMolSupplier(self.smiName, " ", 0, 1, False)
     smiles = []
     for mol in suppl:
       nent = fgen.AddFragsFromMol(mol, fcat)
@@ -100,7 +98,7 @@ class TestCase(unittest.TestCase):
     fparams = FragmentCatalog.FragCatParams(1, 6, self.fName)
     fcat = FragmentCatalog.FragCatalog(fparams)
     fgen = FragmentCatalog.FragCatGenerator()
-    suppl = Chem.SmilesMolSupplier(self.smiName, " ", 0, 1, 0)
+    suppl = Chem.SmilesMolSupplier(self.smiName, " ", 0, 1, False)
     smiles = []
     for mol in suppl:
       nent = fgen.AddFragsFromMol(mol, fcat)
@@ -141,7 +139,7 @@ class TestCase(unittest.TestCase):
     fparams = FragmentCatalog.FragCatParams(1, 6, self.fName, 1.0e-8)
     fcat = FragmentCatalog.FragCatalog(fparams)
     fgen = FragmentCatalog.FragCatGenerator()
-    suppl = Chem.SmilesMolSupplier(self.smiName, " ", 0, 1, 0)
+    suppl = Chem.SmilesMolSupplier(self.smiName, " ", 0, 1, False)
     for mol in suppl:
       nent = fgen.AddFragsFromMol(mol, fcat)
     self.assertEqual(fcat.GetNumEntries(), 21)
@@ -151,7 +149,7 @@ class TestCase(unittest.TestCase):
 
   def test7Issue116(self):
     smiList = ['Cc1ccccc1']
-    suppl = Chem.SmilesMolSupplierFromText('\n'.join(smiList), ',', 0, -1, 0)
+    suppl = Chem.SmilesMolSupplierFromText('\n'.join(smiList), ',', 0, -1, False)
     fparams = FragmentCatalog.FragCatParams(2, 2, self.fName, 1.0e-8)
     cat = FragmentCatalog.FragCatalog(fparams)
     fgen = FragmentCatalog.FragCatGenerator()
@@ -173,7 +171,7 @@ class TestCase(unittest.TestCase):
   def test8Issue118(self):
     smiList = ['CCN(C(N)=O)N=O']
     fName = os.path.join(RDConfig.RDDataDir, 'FunctionalGroups.txt')
-    suppl = Chem.SmilesMolSupplierFromText('\n'.join(smiList), ',', 0, -1, 0)
+    suppl = Chem.SmilesMolSupplierFromText('\n'.join(smiList), ',', 0, -1, False)
     fparams = FragmentCatalog.FragCatParams(2, 4, fName, 1.0e-8)
     cat = FragmentCatalog.FragCatalog(fparams)
     fgen = FragmentCatalog.FragCatGenerator()

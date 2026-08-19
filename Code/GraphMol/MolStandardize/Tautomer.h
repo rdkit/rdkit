@@ -58,6 +58,7 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
                 std::vector<int> reqElements = {},
                 std::string connSmarts = "");
   SubstructTerm(const SubstructTerm &rhs) = default;
+  SubstructTerm &operator=(const SubstructTerm &rhs) = default;
 
   bool operator==(const SubstructTerm &rhs) const {
     return name == rhs.name && smarts == rhs.smarts && score == rhs.score;

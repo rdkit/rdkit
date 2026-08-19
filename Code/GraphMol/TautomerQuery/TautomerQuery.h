@@ -50,6 +50,7 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
                      const SubstructMatchParameters &params) const;
 
  public:
+  TautomerQuery() = default;
   TautomerQuery(std::vector<ROMOL_SPTR> tautomers,
                 const ROMol *const templateMolecule,
                 std::vector<size_t> modifiedAtoms,

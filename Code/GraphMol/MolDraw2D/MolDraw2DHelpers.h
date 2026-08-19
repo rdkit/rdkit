@@ -313,6 +313,10 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;  // if all specified stereocenters are in a single StereoGroup,
               // show a molecule-level annotation instead of the individual
               // labels
+  std::string stereoGroupAndLabel = "and"; // String to use for enhanced stereo 'AND' groups
+  std::string stereoGroupOrLabel  = "or";  // String to use for enhanced stereo 'OR' groups
+  std::string stereoGroupAbsLabel = "abs"; // String to use for enhanced stereo 'ABS' groups
+  bool addStereoGroupAnnotation = true; // Whether to add the enhanced stereo labels.
   bool unspecifiedStereoIsUnknown = false;  // if true, double bonds with
                                             // unspecified stereo are drawn
                                             // crossed, potential stereocenters
@@ -322,6 +326,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;                        // if true wedged and dashed bonds are drawn
                                     // using symbolColour rather than inheriting
                                     // their colour from the atoms
+  bool singleColourBonds = false;   // if true all bonds are drawn using
+                                    // symbolColour rather than inheriting their
+                                    // colour from the atoms
   bool useMolBlockWedging = false;  // If the molecule came from a MolBlock,
                                     // prefer the wedging information that
                                     // provides.  If false, use RDKit rules.

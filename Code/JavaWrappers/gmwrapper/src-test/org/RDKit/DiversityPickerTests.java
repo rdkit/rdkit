@@ -151,16 +151,30 @@ public class DiversityPickerTests extends GraphMolTest {
 	}
 	@Test
 	public void test3() {
-		Int_Vect avoid = new Int_Vect();
-		Int_Vect picks1 = RDKFuncs.pickUsingFingerprints(fps,5,-1);
-		Int_Vect picks2 = RDKFuncs.pickUsingFingerprints(fps,5,-1);
-		assertEquals(picks1.size(),5);
-		assertEquals(picks2.size(),5);
-		boolean allEqual=true;
-		for(int i=0;i<picks1.size();++i){
-			if(picks1.get(i)!=picks2.get(i)) allEqual=false;
+		// The seed controls the (randomized) starting point of the pick. Verify
+		// this deterministically: the same seed reproduces the same picks, and
+		// a different seed produces different picks. (Replaces an older check that
+		// used a random seed of -1, which was flaky.)
+		Int_Vect picksA1 = RDKFuncs.pickUsingFingerprints(fps,5,42);
+		Int_Vect picksA2 = RDKFuncs.pickUsingFingerprints(fps,5,42);
+		Int_Vect picksB  = RDKFuncs.pickUsingFingerprints(fps,5,43);
+		assertEquals(picksA1.size(),5);
+		assertEquals(picksA2.size(),5);
+		assertEquals(picksB.size(),5);
+
+		// same seed => identical picks
+		boolean sameSeedEqual=true;
+		for(int i=0;i<picksA1.size();++i){
+			if(picksA1.get(i)!=picksA2.get(i)) sameSeedEqual=false;
 		}
-		assertFalse(allEqual);
+		assertTrue(sameSeedEqual);
+
+		// different seed => at least one pick differs
+		boolean diffSeedEqual=true;
+		for(int i=0;i<picksA1.size();++i){
+			if(picksA1.get(i)!=picksB.get(i)) diffSeedEqual=false;
+		}
+		assertFalse(diffSeedEqual);
 	}
 
 	public static void main(String args[]) {

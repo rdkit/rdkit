@@ -1,13 +1,12 @@
 from __future__ import print_function
-import os, sys
+import os
 import unittest
 import copy
-from rdkit import DataStructs, RDConfig
+from rdkit import RDConfig
 from rdkit.Geometry import rdGeometry as geom
-from rdkit.Chem import rdMIF, AllChem
-import math
-import numpy as np
-import pickle
+from rdkit import Chem
+from rdkit.Chem import rdMIF
+from rdkit.Chem import rdPartialCharges
 
 
 def feq(v1, v2, tol=1.0e-4):
@@ -29,7 +28,7 @@ class TestCase(unittest.TestCase):
     pass
 
   def test1ConstructGrid(self):
-    mol = AllChem.MolFromMolFile(
+    mol = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MolInteractionFields/Wrap/testData/HCl.mol'),
       removeHs=False)
 
@@ -42,7 +41,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(grd.GetNumZ() == int((abs(bond.z) + 10.0) / 0.5 + 0.5))
 
   def test2CubeFiles(self):
-    mol = AllChem.MolFromMolFile(
+    mol = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MolInteractionFields/Wrap/testData/HCl.mol'),
       removeHs=False)
 
@@ -53,8 +52,7 @@ class TestCase(unittest.TestCase):
     rdMIF.WriteToCubeFile(
       grd,
       os.path.join(RDConfig.RDBaseDir,
-                   'Code/GraphMol/MolInteractionFields/Wrap/testData/test3.cube'),
-      mol)
+                   'Code/GraphMol/MolInteractionFields/Wrap/testData/test3.cube'), mol)
 
     grd2, mol2 = rdMIF.ReadFromCubeFile(
       os.path.join(RDConfig.RDBaseDir,
@@ -98,10 +96,10 @@ class TestCase(unittest.TestCase):
     self.assertIsNone(mol3)
 
   def test3Coulomb(self):
-    mol = AllChem.MolFromMolFile(
+    mol = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MolInteractionFields/Wrap/testData/HCl.mol'),
       removeHs=False)
-    AllChem.ComputeGasteigerCharges(mol)
+    rdPartialCharges.ComputeGasteigerCharges(mol)
 
     conf = mol.GetConformer(0)
     charges = [a.GetDoubleProp("_GasteigerCharge") for a in mol.GetAtoms()]
@@ -144,10 +142,10 @@ class TestCase(unittest.TestCase):
     self.assertTrue(coul3(0.70, 0.0, 0.0, 1000) > coul3(0.68, 0.0, 0.0, 1000))
 
   def test4CoulombDielectric(self):
-    mol = AllChem.MolFromMolFile(
+    mol = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MolInteractionFields/Wrap/testData/HCl.mol'),
       removeHs=False)
-    AllChem.ComputeGasteigerCharges(mol)
+    rdPartialCharges.ComputeGasteigerCharges(mol)
 
     conf = mol.GetConformer(0)
     charges = [a.GetDoubleProp("_GasteigerCharge") for a in mol.GetAtoms()]
@@ -188,10 +186,10 @@ class TestCase(unittest.TestCase):
     self.assertTrue(couldiele3(0.66, 0.0, 0.0, 1000) > couldiele3(0.68, 0.0, 0.0, 1000))
     self.assertTrue(couldiele3(0.70, 0.0, 0.0, 1000) > couldiele3(0.68, 0.0, 0.0, 1000))
 
-    mol = AllChem.MolFromMolFile(
+    mol = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir,
                    'Code/GraphMol/MolInteractionFields/Wrap/testData/glucose.mol'), removeHs=False)
-    AllChem.ComputeGasteigerCharges(mol)
+    rdPartialCharges.ComputeGasteigerCharges(mol)
 
     couldiele4 = rdMIF.CoulombDielectric(mol, confId=0, probeCharge=1.0, absVal=False,
                                          chargeKey="_GasteigerCharge", softcoreParam=0.01,
@@ -207,7 +205,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(couldiele6(-1.0, 0.0, 0.0, 1000) < couldiele4(-1.0, 0.0, 0.0, 1000))
 
   def test5VdWaals(self):
-    mol = AllChem.MolFromMolFile(
+    mol = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MolInteractionFields/Wrap/testData/HCN.mol'),
       removeHs=False)
     vdw = rdMIF.MMFFVdWaals(mol, confId=0, probeAtomType=6, scaling=False, cutoff=1.0)
@@ -216,7 +214,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(vdw(-1.68, 0, 0, 1000) > vdw(-5.0, 0, 0, 1000))
     self.assertTrue(vdw(-5.0, 0, 0, 1000) < vdw(-10.0, 0, 0, 1000))
 
-    mol2 = AllChem.MolFromMolFile(
+    mol2 = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MolInteractionFields/Wrap/testData/h2o.mol'),
       removeHs=False)
     vdw = rdMIF.MMFFVdWaals(mol2, scaling=False)
@@ -231,7 +229,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(vdw3(-5.0, 0, 0, 1000) < vdw3(-10.0, 0, 0, 1000))
 
   def test6HBond(self):
-    mol = AllChem.MolFromMolFile(
+    mol = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir,
                    'Code/GraphMol/MolInteractionFields/Wrap/testData/ethane.mol'), removeHs=False)
     grd = rdMIF.ConstructGrid(mol, margin=5.0, spacing=0.5)
@@ -253,7 +251,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(
       abs(int((grd.GetOccupancyVect() - grd1.GetOccupancyVect()).GetTotalVal())) == grd.GetSize())
 
-    mol = AllChem.MolFromMolFile(
+    mol = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir,
                    'Code/GraphMol/MolInteractionFields/Wrap/testData/aceticacid.mol'),
       removeHs=False)
@@ -275,7 +273,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(hbonddes1(3.0, 0.0, 0.0, 1000) < hbonddes4(3.0, 0.0, 0.0, 1000))
 
   def test7Hydrophilic(self):
-    mol = AllChem.MolFromMolFile(
+    mol = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MolInteractionFields/Wrap/testData/h2o.mol'),
       removeHs=False)
     hydro = rdMIF.Hydrophilic(mol)
