@@ -13,16 +13,10 @@ from rdkit import rdBase
 from rdkit.DataStructs import cDataStructs
 from rdkit.DataStructs.cDataStructs import *
 
-try:
-  from rdkit.DataStructs.cBulkSimilarity import (
-    BulkTanimotoMatrix,
-    BulkSimilarityActiveKernel,
-  )
-except ImportError:
-  # The BulkSimilarity extension is built alongside DataStructs but is
-  # imported defensively so a missing or partial build does not break the
-  # rest of the package.
-  pass
+from rdkit.DataStructs.cBulkSimilarity import (
+  BulkTanimotoMatrix,
+  BulkSimilarityActiveKernel,
+)
 
 __doc__ = cDataStructs.__doc__
 

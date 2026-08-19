@@ -56,6 +56,12 @@ from rdkit.DataStructs import BulkTanimotoMatrix
 matrix = BulkTanimotoMatrix(probes, targets)   # numpy float64 (M, N)
 ```
 
+The extension is provided for both Python binding backends: `Wrap/` builds
+it with Boost.Python when `RDK_BUILD_BOOST_PYTHON_WRAPPERS` is set, and
+`nbWrap/` builds it with nanobind when `RDK_BUILD_NANOBIND_WRAPPERS` is set.
+The two are mutually exclusive, expose the same entry points, and share the
+test file in `Wrap/testBulkSimilarity.py`.
+
 ## Kernel design
 
 * The fingerprints are kept in a row-major packed layout of `uint64_t`
