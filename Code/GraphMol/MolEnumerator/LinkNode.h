@@ -9,10 +9,12 @@
 //
 #ifndef RD_MOLENUMERATOR_LINKNODE_H
 #define RD_MOLENUMERATOR_LINKNODE_H
+#include <GraphMol/ROMol.h>
 
 #include <RDGeneral/Invariant.h>
 
 #include <map>
+#include <sstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <algorithm>

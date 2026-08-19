@@ -13,6 +13,8 @@
 #include <RDGeneral/export.h>
 #ifndef _DATASTRUCTS_EXCEPTION_H_20050126
 #define _DATASTRUCTS_EXCEPTION_H_20050126
+#include <exception>
+#include <string>
 
 class RDKIT_DATASTRUCTS_EXPORT DatastructsException : public std::exception {
  public:
