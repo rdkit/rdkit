@@ -1837,13 +1837,10 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
       case 1:
         inchiAtoms[i].radical = INCHI_RADICAL_DOUBLET;
         break;
-      case 2:
-        inchiAtoms[i].radical = INCHI_RADICAL_TRIPLET;
-        break;
       default:
         // InChI uses the MDL singlet/doublet/triplet representation, so there
-        // is no direct mapping for higher radical-electron counts. Preserve the
-        // existing implicit-H fallback for those cases.
+        // is no safe direct mapping from other radical-electron counts.
+        // Preserve the existing implicit-H fallback for those cases.
         if (atom->getNumRadicalElectrons()) {
           inchiAtoms[i].num_iso_H[0] = atom->getTotalNumHs();
         }
