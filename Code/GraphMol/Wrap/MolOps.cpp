@@ -3416,13 +3416,42 @@ A note on the flags controlling which atoms/bonds are modified:
 
   Arguments:
    - mol: molecule to be modified
-   - markedOnly: if true, only dummy atoms with the _fromAttachPoint
-     property will be collapsed
+   - markedOnly: if true, only dummy atoms with the _fromAttachPoint property
+     or a valid _AP<n> atom label will be collapsed. The label suffix is not
+     interpreted as an MDL attachment-point position.
 
   In order for a dummy atom to be considered for collapsing it must have:
    - degree 1 with a single or unspecified bond
    - the bond to it can not be wedged
    - either no query or be an AtomNullQuery
+)DOC");
+    python::def(
+        "GetAttachmentPointLabelNumber", MolOps::getAttachmentPointLabelNumber,
+        python::arg("atom"),
+        R"DOC(returns the positive integer from a valid _AP<n> attachment-point label
+
+  The atom must be a degree-one dummy atom. Returns 0 if it does not have a
+  valid numbered attachment-point label. The returned number is a label
+  identifier, not an MDL ATTCHPT position.
+
+  Arguments:
+   - atom: the atom to inspect
+)DOC");
+    python::scope().attr("ATTACHMENT_POINT_LABEL_PREFIX") =
+        std::string(MolOps::attachmentPointLabelPrefix);
+    python::def(
+        "IsMarkedAttachmentPoint", MolOps::isMarkedAttachmentPoint,
+        python::arg("atom"),
+        R"DOC(returns whether an atom is a marked explicit attachment point
+
+  A marked attachment point is a degree-one dummy atom with the
+  _fromAttachPoint property or a valid _AP<n> atom label, where n is a
+  positive decimal integer. This checks attachment-point identity only, not
+  whether the atom can currently be collapsed. In particular, an attachment
+  point connected by a wedged bond is still considered marked.
+
+  Arguments:
+   - atom: the atom to inspect
 )DOC");
     python::def(
         "AddStereoAnnotations", Chirality::addStereoAnnotations,
