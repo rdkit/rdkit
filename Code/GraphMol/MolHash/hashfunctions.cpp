@@ -989,13 +989,12 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
   ps.allBondsExplicit = true;
   ps.allHsExplicit = true;
   result = convertToSmilesWithCXFlags(*mol, useCXSmiles, cxFlagsToSkip, ps);
-  char buffer[32];
   if (!proto) {
-    sprintf(buffer, "_%d_%d", hcount, charge);
+    result += "_" + std::to_string(hcount) + "_" + std::to_string(charge);
   } else {
-    sprintf(buffer, "_%d", hcount - charge);
+    const auto netHydrogens = static_cast<int>(hcount) - charge;
+    result += "_" + std::to_string(netHydrogens);
   }
-  result += buffer;
   if (useCXSmiles) {
     addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }

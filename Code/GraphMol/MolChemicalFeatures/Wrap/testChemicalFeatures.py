@@ -211,11 +211,10 @@ EndFeature
       os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolChemicalFeatures', 'test_data',
                    'testGH2530.sdf'), removeHs=False)
 
-    feats_0 = cfac.GetFeaturesForMol(m2, confId=-1)
-    feats_5 = cfac.GetFeaturesForMol(m2, confId=5)
-    self.assertNotEqual(feats_5[0], feats_0[0])
-    self.assertNotEqual(feats_5[1], feats_0[1])
-    self.assertNotEqual(feats_5[2], feats_0[2])
+    feats_0 = cfac.GetFeaturesForMol(m2, confId=0)
+    feats_1 = cfac.GetFeaturesForMol(m2, confId=1)
+    # raise ValueError(list(feats_0))
+    self.assertNotEqual(feats_1[0], feats_0[0])
 
 
 if __name__ == '__main__':

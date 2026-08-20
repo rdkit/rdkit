@@ -10,6 +10,10 @@
 #include <RDGeneral/export.h>
 #ifndef RD_MOLINTERCHANGE_H_JAN2018
 #define RD_MOLINTERCHANGE_H_JAN2018
+namespace RDKit {
+class ROMol;
+class RWMol;
+}  // namespace RDKit
 
 /*! \file MolInterchange.h
 

@@ -37,11 +37,11 @@ class TestCase(unittest.TestCase):
     ]
     for smi, matches in tgts:
       m = Chem.MolFromSmiles(smi)
-      fp1 = Chem.RDKFingerprint(m, 2, 7, 9192, 4, 0)
+      fp1 = Chem.RDKFingerprint(m, 2, 7, 9192, 4, False)
       _ = fp1.GetOnBits()
       for match in matches:
         m2 = Chem.MolFromSmiles(match)
-        fp2 = Chem.RDKFingerprint(m2, 2, 7, 9192, 4, 0)
+        fp2 = Chem.RDKFingerprint(m2, 2, 7, 9192, 4, False)
         v1, _ = DataStructs.OnBitProjSimilarity(fp2, fp1)
         self.assertAlmostEqual(v1, 1, 'substruct %s not properly contained in %s' % (match, smi))
 
@@ -52,11 +52,11 @@ class TestCase(unittest.TestCase):
     ]
     for smi, matches in tgts:
       m = Chem.MolFromSmiles(smi)
-      fp1 = Chem.RDKFingerprint(m, 2, 7, 9192, 4, 1)
+      fp1 = Chem.RDKFingerprint(m, 2, 7, 9192, 4, True)
       _ = fp1.GetOnBits()
       for match in matches:
         m2 = Chem.MolFromSmiles(match)
-        fp2 = Chem.RDKFingerprint(m2, 2, 7, 9192, 4, 1)
+        fp2 = Chem.RDKFingerprint(m2, 2, 7, 9192, 4, True)
         v1, _ = DataStructs.OnBitProjSimilarity(fp2, fp1)
         self.assertAlmostEqual(v1, 1, 'substruct %s not properly contained in %s' % (match, smi))
 

@@ -27,9 +27,14 @@ if (RDK_BUILD_LONG_RUNNING_TESTS)
             LINK_LIBRARIES SubstructMatch SubstructLibrary SynthonSpaceSearch)
 endif ()
 
-if (RDK_BUILD_PYTHON_WRAPPERS)
+if (RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
 endif ()
-else()
-message("The SynthonSpaceSearch module requires threads, so not building.")
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
 endif()
+
+else(RDK_BUILD_THREADSAFE_SSS)
+message("The SynthonSpaceSearch module requires threads, so not building.")
+endif(RDK_BUILD_THREADSAFE_SSS)
