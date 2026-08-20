@@ -1110,7 +1110,7 @@ $$$$
       coords = mol.GetConformer().GetPositions()
       for bond in mol.GetBonds():
         length = np.linalg.norm(coords[bond.GetBeginAtomIdx()] - coords[bond.GetEndAtomIdx()])
-        if length < 1.0 or length > 2.0:
+        if length < 1.0 or length > 2.1:
           return True
       return False
 
