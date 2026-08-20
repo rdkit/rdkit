@@ -9,8 +9,8 @@
 //
 #include "MacroAtomInfo.h"
 
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/Invariant.h>
-#include <RDGeneral/RDLog.h>
 
 #include <array>
 #include <utility>
@@ -42,9 +42,8 @@ MonomerClass monomerClassFromString(const std::string &monomerClass) {
       return value;
     }
   }
-  BOOST_LOG(rdWarningLog) << "unrecognized monomer class '" << monomerClass
-                          << "'; treating it as Other" << std::endl;
-  return MonomerClass::Other;
+  throw ValueErrorException("unrecognized monomer class '" + monomerClass +
+                            "'");
 }
 
 }  // namespace RDKit

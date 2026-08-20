@@ -20,7 +20,67 @@ bool isMacroAtom(const Atom *atom) {
   PRECONDITION(atom, "atom is null");
   return atom->getMacroAtomInfo() != nullptr;
 }
+
+std::unique_ptr<MacroMolTemplateLibrary> copyLocalTemplateLibrary(
+    const MacroMolTemplateLibrary &source) {
+  auto result = std::make_unique<MacroMolTemplateLibrary>();
+  for (const auto *macroMolTemplate : source.entries()) {
+    result->addTemplate(
+        std::make_unique<MacroMolTemplate>(*macroMolTemplate));
+  }
+  return result;
+}
 }  // namespace
+
+MacroMol::MacroMol()
+    : dp_localTemplateLibrary(
+          std::make_unique<MacroMolTemplateLibrary>()) {}
+
+MacroMol::MacroMol(
+    std::unique_ptr<MacroMolTemplateLibrary> localTemplateLibrary)
+    : dp_localTemplateLibrary(std::move(localTemplateLibrary)) {
+  PRECONDITION(dp_localTemplateLibrary, "local template library is null");
+}
+
+MacroMol::MacroMol(const MacroMol &other)
+    : RWMol(other),
+      dp_localTemplateLibrary(
+          copyLocalTemplateLibrary(*other.dp_localTemplateLibrary)) {}
+
+MacroMol &MacroMol::operator=(const MacroMol &other) {
+  if (this != &other) {
+    auto localTemplateLibrary =
+        copyLocalTemplateLibrary(*other.dp_localTemplateLibrary);
+    RWMol::operator=(other);
+    dp_localTemplateLibrary = std::move(localTemplateLibrary);
+  }
+  return *this;
+}
+
+void MacroMol::addLocalTemplate(
+    std::unique_ptr<MacroMolTemplate> macroMolTemplate) {
+  dp_localTemplateLibrary->addTemplate(std::move(macroMolTemplate));
+}
+
+const MacroMolTemplateLibrary &MacroMol::getLocalTemplateLibrary() const {
+  return *dp_localTemplateLibrary;
+}
+
+bool MacroMol::hasValidLocalTemplateReferences() const {
+  for (const auto *atom : atoms()) {
+    const auto *macroAtomInfo = atom->getMacroAtomInfo();
+    if (!macroAtomInfo) {
+      continue;
+    }
+    const auto monomerClass = macroAtomInfo->getMonomerClass();
+    const auto &symbol = macroAtomInfo->getSymbol();
+    if (!dp_localTemplateLibrary->getBySymbol(monomerClass, symbol) &&
+        !dp_localTemplateLibrary->getByName(monomerClass, symbol)) {
+      return false;
+    }
+  }
+  return true;
+}
 
 unsigned int MacroMol::addMacroAtom(std::string symbol,
                                     MonomerClass monomerClass) {
