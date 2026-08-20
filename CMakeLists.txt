@@ -321,9 +321,10 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   #-------
   # pull in python:
-  find_package(Python3 COMPONENTS Interpreter Development.Module NumPy)
-  target_include_directories(rdkit_py_base INTERFACE ${Python3_INCLUDE_DIRS})
-  target_include_directories(rdkit_py_base INTERFACE ${Python3_NumPy_INCLUDE_DIRS})
+  find_package(Python COMPONENTS Interpreter Development.Module NumPy)
+  target_include_directories(rdkit_py_base INTERFACE ${Python_INCLUDE_DIRS})
+  target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
+  target_compile_definitions(rdkit_py_base INTERFACE "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
 
   # determine linkage of python
   execute_process(
