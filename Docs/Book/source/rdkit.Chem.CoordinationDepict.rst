@@ -22,7 +22,8 @@ representation and leaves the input molecule unchanged::
 The initial implementation handles mononuclear complexes. Other molecules
 fall back to regular CoordGen coordinate generation. The requested metal-bond
 length is an initial value; the layout may increase all metal-ligand distances
-uniformly when that is necessary to prevent clashes.
+uniformly when that is necessary to prevent clashes. Calling the coordinate
+generator requires an RDKit build with CoordGen support.
 
 .. automodule:: rdkit.Chem.CoordinationDepict
     :members:

@@ -1,5 +1,8 @@
+import builtins
+import importlib.util
 import math
 import unittest
+from unittest import mock
 
 import numpy as np
 
@@ -17,6 +20,24 @@ def _xy(mol):
 
 class TestCoordinationDepict(unittest.TestCase):
 
+  def test_module_imports_without_coordgen(self):
+    real_import = builtins.__import__
+
+    def import_without_coordgen(name, globals=None, locals=None, fromlist=(), level=0):
+      if name == "rdkit.Chem" and "rdCoordGen" in fromlist:
+        raise ImportError("CoordGen support disabled for test")
+      return real_import(name, globals, locals, fromlist, level)
+
+    spec = importlib.util.spec_from_file_location(
+      "CoordinationDepictWithoutCoordGen", CoordinationDepict.__file__)
+    module = importlib.util.module_from_spec(spec)
+    with mock.patch("builtins.__import__", side_effect=import_without_coordgen):
+      spec.loader.exec_module(module)
+
+    self.assertIsNone(module.rdCoordGen)
+
+  @unittest.skipIf(CoordinationDepict.rdCoordGen is None,
+                   "CoordGen support not available")
   def test_octahedral_donors_are_distributed_around_metal(self):
     mol = Chem.MolFromSmiles(
       "N->[Co+3](<-N)(<-N)(<-N)(<-N)<-N", sanitize=False)
@@ -35,6 +56,8 @@ class TestCoordinationDepict(unittest.TestCase):
     gaps = np.diff(np.r_[angles, angles[0] + 2.0 * math.pi])
     self.assertGreater(np.min(gaps), math.radians(35.0))
 
+  @unittest.skipIf(CoordinationDepict.rdCoordGen is None,
+                   "CoordGen support not available")
   def test_chelating_ligands_form_a_regular_coordination_sphere(self):
     smiles = (
       "Clc1cc2nc3c4ccc[n]5->[Ru+2]67(<-[n]8cccc(c3nc2cc1Cl)c8c45)"
@@ -56,6 +79,8 @@ class TestCoordinationDepict(unittest.TestCase):
     self.assertLess(np.ptp(distances), 1.0e-6)
     self.assertGreater(np.min(gaps), math.radians(20.0))
 
+  @unittest.skipIf(CoordinationDepict.rdCoordGen is None,
+                   "CoordGen support not available")
   def test_haptic_groups_use_existing_rdkit_representation(self):
     mol = Chem.MolFromSmiles(
       "C12->[Fe+2]3456789(<-C1=C->3[CH-]->4C->5=2)"
@@ -75,6 +100,8 @@ class TestCoordinationDepict(unittest.TestCase):
     for bond in dative_bonds:
       self.assertTrue(bond.HasProp("_MolFileBondEndPts"))
 
+  @unittest.skipIf(CoordinationDepict.rdCoordGen is None,
+                   "CoordGen support not available")
   def test_adjacent_donors_remain_separate_coordination_sites(self):
     mol = Chem.MolFromSmiles("N1N->[Co+2]<-1", sanitize=False)
     CoordinationDepict.Compute2DCoordinationCoords(mol)
@@ -87,6 +114,8 @@ class TestCoordinationDepict(unittest.TestCase):
     ])
     self.assertGreater(np.linalg.norm(vectors[0] - vectors[1]), 0.5)
 
+  @unittest.skipIf(CoordinationDepict.rdCoordGen is None,
+                   "CoordGen support not available")
   def test_non_coordination_molecule_falls_back_to_coordgen(self):
     mol = Chem.MolFromSmiles("c1ccccc1")
     conf_id = CoordinationDepict.Compute2DCoordinationCoords(mol)
@@ -99,6 +128,12 @@ class TestCoordinationDepict(unittest.TestCase):
     mol = Chem.MolFromSmiles("N->[Pt+2]<-N", sanitize=False)
     with self.assertRaises(ValueError):
       CoordinationDepict.Compute2DCoordinationCoords(mol, metalBondLength=0)
+
+  def test_coordgen_required_for_valid_molecule(self):
+    mol = Chem.MolFromSmiles("c1ccccc1")
+    with mock.patch.object(CoordinationDepict, "rdCoordGen", None):
+      with self.assertRaisesRegex(ImportError, "CoordGen support is required"):
+        CoordinationDepict.Compute2DCoordinationCoords(mol)
 
 
 if __name__ == "__main__":

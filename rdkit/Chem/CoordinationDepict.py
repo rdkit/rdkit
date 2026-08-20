@@ -15,8 +15,12 @@ import math
 import numpy as np
 
 from rdkit import Chem
-from rdkit.Chem import rdCoordGen
 from rdkit.Geometry import Point3D
+
+try:
+  from rdkit.Chem import rdCoordGen
+except ImportError:
+  rdCoordGen = None
 
 
 _METAL_ATOMIC_NUMBERS = (
@@ -274,6 +278,8 @@ def Compute2DCoordinationCoords(mol, metalBondLength=1.5):
     raise ValueError("mol must not be None")
   if metalBondLength <= 0:
     raise ValueError("metalBondLength must be positive")
+  if rdCoordGen is None:
+    raise ImportError("CoordGen support is required for coordination depiction")
 
   metals = [
     idx for idx in _metal_indices(mol)
