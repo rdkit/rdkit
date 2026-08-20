@@ -3,6 +3,7 @@ rdkit_library(GraphMol
         MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp
         MacroAtomInfo.cpp
         MacroMol.cpp
+        MacroMolTemplate.cpp
         PeriodicTable.cpp
         atomic_data.cpp QueryOps.cpp MolPickler.cpp Canon.cpp
         AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp
@@ -48,6 +49,8 @@ rdkit_headers(Atom.h
         MacroAtomInfo.h
         MacroBondInfo.h
         MacroMol.h
+        MacroMolTemplate.h
+        MacroMolTemplateLibrary.h
         SanitException.h
         SubstanceGroup.h
         StereoGroup.h
@@ -58,6 +61,10 @@ rdkit_headers(Atom.h
         DEST GraphMol)
 
 add_subdirectory(SmilesParse)
+rdkit_library(MacroMolTemplateLibrary MacroMolTemplateLibrary.cpp
+        SHARED LINK_LIBRARIES GraphMol)
+target_compile_definitions(MacroMolTemplateLibrary PRIVATE RDKIT_GRAPHMOL_BUILD)
+
 add_subdirectory(Depictor)
 add_subdirectory(MarvinParse)
 add_subdirectory(FileParsers)
@@ -220,5 +227,11 @@ rdkit_catch_test(molopsTestsCatch catch_molops.cpp
 
 rdkit_catch_test(testMacroMol testMacroMol.cpp
         LINK_LIBRARIES SmilesParse GraphMol)
-        
+
 rdkit_catch_test(ringSystemsTest ring_systems_test.cpp LINK_LIBRARIES SmilesParse GraphMol RDStreams)
+
+rdkit_catch_test(testMacroMolTemplate testMacroMolTemplate.cpp
+        LINK_LIBRARIES FileParsers SmilesParse GraphMol)
+
+rdkit_catch_test(testMacroMolTemplateLibrary testMacroMolTemplateLibrary.cpp
+        LINK_LIBRARIES MacroMolTemplateLibrary GraphMol)
