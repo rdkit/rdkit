@@ -24,7 +24,7 @@ class TestCoordinationDepict(unittest.TestCase):
     real_import = builtins.__import__
 
     def import_without_coordgen(name, globals=None, locals=None, fromlist=(), level=0):
-      if name == "rdkit.Chem" and "rdCoordGen" in fromlist:
+      if name == "rdkit.Chem" and fromlist and "rdCoordGen" in fromlist:
         raise ImportError("CoordGen support disabled for test")
       return real_import(name, globals, locals, fromlist, level)
 
