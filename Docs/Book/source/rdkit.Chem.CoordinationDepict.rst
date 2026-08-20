@@ -3,7 +3,10 @@ rdkit.Chem.CoordinationDepict module
 
 The standard 2D coordinate generators are optimized for organic molecular
 graphs. The helpers in this module depict each ligand independently with
-CoordGen and arrange the resulting fragments around a single metal centre.
+CoordGen and arrange the resulting fragments around a single metal centre. The
+layout approach was informed by the `metal2d project
+<https://github.com/levakrasnovs/metal2d>`_; this module is a self-contained
+implementation using existing RDKit APIs.
 
 The coordinate generator modifies the molecule in place and returns the new
 conformer id::

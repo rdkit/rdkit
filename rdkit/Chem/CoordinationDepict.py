@@ -6,6 +6,10 @@ ligands on top of each other around the metal atom.  This module keeps ligand
 depiction delegated to CoordGen and only handles the missing coordination-
 sphere layout step.
 
+The layout approach was informed by the ``metal2d`` project
+(https://github.com/levakrasnovs/metal2d); this module is a self-contained
+implementation using existing RDKit APIs.
+
 The initial implementation is intentionally limited to mononuclear complexes.
 Molecules without exactly one bonded metal centre fall back to CoordGen.
 """
@@ -273,6 +277,9 @@ def Compute2DCoordinationCoords(mol, metalBondLength=1.5):
     mol: molecule to modify.
     metalBondLength: initial distance between the metal and donor atoms.  The
       layout may increase all metal-ligand distances to prevent clashes.
+
+  Raises:
+    ImportError: if RDKit was built without CoordGen support.
   """
   if mol is None:
     raise ValueError("mol must not be None")
