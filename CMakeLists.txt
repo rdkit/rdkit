@@ -336,6 +336,7 @@ if(RDK_BUILD_NANOBIND_WRAPPERS)
 
   find_package(Python 3.9 COMPONENTS Interpreter ${DEV_MODULE} NumPy REQUIRED)
   target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
+  target_compile_definitions(rdkit_py_base INTERFACE "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
 
   # Detect the installed nanobind package and import it into CMake
   execute_process(
@@ -405,6 +406,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   find_package(Python COMPONENTS Interpreter Development.Module NumPy)
   target_include_directories(rdkit_py_base INTERFACE ${Python_INCLUDE_DIRS})
   target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
+  target_compile_definitions(rdkit_py_base INTERFACE "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
 
   # determine linkage of python
   execute_process(
