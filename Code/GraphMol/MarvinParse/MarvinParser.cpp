@@ -32,7 +32,6 @@
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/SubstanceGroup.h>
 
-#include "MarvinParser.h"
 
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/FileParseException.h>
