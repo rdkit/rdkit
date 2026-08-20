@@ -94,9 +94,9 @@ void MultithreadedMolSupplier::close() {
 void MultithreadedMolSupplier::closeStreams() {
   if (df_owner && dp_inStream) {
     delete dp_inStream;
-    df_owner = false;
-    dp_inStream = nullptr;
   }
+  df_owner = false;
+  dp_inStream = nullptr;
   df_started = false;
 }
 
