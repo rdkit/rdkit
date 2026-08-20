@@ -7,20 +7,44 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <vector>
 #include "RDGeneral/Invariant.h"
-#include <ranges>
+#include <vector>
 #include <optional>
+#include <vector>
+#include <ranges>
 #include <algorithm>
+#include "RDGeneral/Invariant.h"
 
 #ifndef RD_BOUNDS_MATRIX_BUILDER_DETAILS_H
 #define RD_BOUNDS_MATRIX_BUILDER_DETAILS_H
 
 namespace RDKit {
 namespace DGeomHelpers {
+enum class TorsionType {
+  CIS = 0,
+  TRANS,
+  FLEXIBLE,
+  CUSTOM,
+  NONE  // don't set the bound
+};
+
+struct TorsionValue {
+  TorsionType type = TorsionType::NONE;
+  std::optional<double> value = {};
+  std::optional<double> extraDist = {};
+  bool isForced = false;
+};
+
+//! A structure used to store 14 paths - cis/trans info
+struct Path14Configuration {
+  unsigned int bid1, bid2, bid3;
+  unsigned int aid1, aid2, aid3, aid4;
+  TorsionValue type;
+};
+using PATH14_VECT = std::vector<Path14Configuration>;
 
 struct Bounds {
-  double lower{1.0}, upper{-1.0}; // we start invalid
+  double lower{1.0}, upper{-1.0};  // we start invalid
   unsigned int aid1{0}, aid4{0};
 
   inline bool valid() const { return lower <= upper; }

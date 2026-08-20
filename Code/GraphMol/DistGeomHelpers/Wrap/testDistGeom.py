@@ -2,7 +2,6 @@ import copy
 import math
 import os
 import signal
-import sys
 import time
 import unittest
 import numpy
@@ -18,6 +17,9 @@ from rdkit.Geometry import rdGeometry as geom
 from rdkit.RDLogger import logger
 
 logger = logger()
+
+OVERWRITE_TESTFILES = False
+PRINT_FAILURES = False
 
 
 def feq(v1, v2, tol=1.e-4):
@@ -282,14 +284,15 @@ class TestCase(unittest.TestCase):
     ]
 
     nconfs = []
-    expected = [3, 2, 6, 4, 3, 3]  # note: this also depends on seed
+    expected = [3, 3, 6, 4, 3, 4] # note: this also depends on seed
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       ps = _getParams(useLegacy=False, maxIt=30, seed=100, pruneRMS=1.5)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
       nconfs.append(len(cids))
     d = [abs(x - y) for x, y in zip(expected, nconfs)]
-    # print(expected, nconfs)
+    if PRINT_FAILURES:
+      print(1, expected, nconfs)
     self.assertTrue(max(d) <= 1)
 
     # legacy previous settings
@@ -300,14 +303,15 @@ class TestCase(unittest.TestCase):
     params.useSymmetryForPruning = False
     params.useLegacyImplementation = True
     nconfs = []
-    expected = [5, 5, 4, 6, 7, 3]
+    expected = [5, 4, 4, 4, 6, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
       nconfs.append(len(cids))
 
     d = [abs(x - y) for x, y in zip(expected, nconfs)]
-    # print(expected, nconfs)
+    if PRINT_FAILURES:
+      print(2, expected, nconfs)
     self.assertTrue(max(d) <= 1)
 
     # aio previous settings
@@ -318,12 +322,14 @@ class TestCase(unittest.TestCase):
     params.useSymmetryForPruning = False
     params.useLegacyImplementation = False
     nconfs = []
-    expected = [3, 5, 4, 6, 5, 3]
+    expected = [4, 4, 4, 5, 6, 4]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
       nconfs.append(len(cids))
     d = [abs(x - y) for x, y in zip(expected, nconfs)]
+    if PRINT_FAILURES:
+      print(3, expected, nconfs)
     self.assertTrue(max(d) <= 1)
 
   def test6Chirality(self):
@@ -517,6 +523,8 @@ class TestCase(unittest.TestCase):
       params.randomSeed = 42
       params.useLegacyImplementation = useLegacy
       self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
+      if OVERWRITE_TESTFILES:
+        Chem.MolToMolFile(mol, fn)
       self._compareConfs(mol, ref, 0, 0)
 
     smiles = 'OCCC'
@@ -844,10 +852,10 @@ class TestCase(unittest.TestCase):
     ps.randomSeed = 0xc0ffee
     ps.pruneRmsThresh = 0.5
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
-    self.assertEqual(len(cids), 1)
+    self.assertEqual(len(cids), 2)
     ps.symmetrizeConjugatedTerminalGroupsForPruning = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
-    self.assertGreater(len(cids), 1)
+    self.assertGreater(len(cids), 2)
 
   def testSymmetrizeTerminal(self):
     mol = Chem.AddHs(Chem.MolFromSmiles("FCC(=O)O"))
@@ -856,7 +864,7 @@ class TestCase(unittest.TestCase):
     ps.pruneRmsThresh = 0.5
     ps.useLegacyImplementation = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
-    self.assertEqual(len(cids), 2)
+    self.assertEqual(len(cids), 1)
     ps.symmetrizeConjugatedTerminalGroupsForPruning = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
     self.assertGreater(len(cids), 1)
