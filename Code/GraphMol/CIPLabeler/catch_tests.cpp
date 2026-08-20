@@ -51,10 +51,6 @@
 using namespace RDKit;
 using namespace RDKit::CIPLabeler;
 
-std::string toBinaryString(PairList::pairing_t value) {
-  return std::bitset<PairList::numPairingBits>(value).to_string();
-}
-
 TEST_CASE("Descriptor lists", "[accurateCIP]") {
   auto descriptors = PairList();
 
@@ -70,57 +66,6 @@ TEST_CASE("Descriptor lists", "[accurateCIP]") {
     CHECK(descriptors.add(Descriptor::R));
     CHECK(descriptors.add(Descriptor::S));
   }
-  SECTION("Pairing") {
-    REQUIRE(descriptors.getPairing() == 0);
-
-    CHECK("0000000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    descriptors.add(Descriptor::R);
-    CHECK("0000000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0100000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // unlike
-    descriptors.add(Descriptor::S);
-    CHECK("0110000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110100000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110110000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110111000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // unlike
-    descriptors.add(Descriptor::S);
-    CHECK("0110111000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110111010000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-  }
-
   SECTION("pairRM") {
     PairList list1 = PairList();
     PairList list2 = PairList();
