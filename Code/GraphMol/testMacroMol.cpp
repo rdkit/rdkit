@@ -15,7 +15,33 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <catch2/catch_all.hpp>
 
+#include <memory>
+#include <string>
+#include <type_traits>
+#include <utility>
+
 using namespace RDKit;
+
+namespace {
+
+std::unique_ptr<MacroMolTemplate> makeMacroMolTemplate(
+    const std::string &name, const std::string &symbol,
+    MonomerClass monomerClass = MonomerClass::AminoAcid) {
+  RWMol mol;
+  mol.addAtom(new Atom(6), false, true);
+  MacroMolTemplateBuilder builder(mol, monomerClass, name, symbol, "");
+  builder.setMainGroup({0});
+  return std::move(builder).build();
+}
+
+}  // namespace
+
+static_assert(std::is_same_v<
+              decltype(std::declval<const MacroMol &>()
+                           .getLocalTemplateLibrary()),
+              const MacroMolTemplateLibrary &>);
+static_assert(std::is_nothrow_move_constructible_v<MacroMol>);
+static_assert(std::is_nothrow_move_assignable_v<MacroMol>);
 
 TEST_CASE("testBuildMacroMol") {
   // Build a simple MacroMol with three macro atoms and two bonds, and check
@@ -192,4 +218,147 @@ TEST_CASE("testAddBond") {
   auto second_regular_atom = macro_mol->getAtomWithIdx(second_atom_idx);
   CHECK(macro_mol->addBond(regular_atom, second_regular_atom) == 1);
   CHECK(macro_mol->getNumBonds() == 1);
+}
+
+TEST_CASE("MacroMol owns a local template library") {
+  SECTION("default construction") {
+    MacroMol macroMol;
+    CHECK(macroMol.getLocalTemplateLibrary().entries().empty());
+
+    auto alanine = makeMacroMolTemplate("ALA", "A");
+    const auto *alaninePtr = alanine.get();
+    macroMol.addLocalTemplate(std::move(alanine));
+
+    CHECK(alanine == nullptr);
+    CHECK(macroMol.getLocalTemplateLibrary().getBySymbol(
+              MonomerClass::AminoAcid, "A") == alaninePtr);
+    CHECK(macroMol.getLocalTemplateLibrary().getByName(
+              MonomerClass::AminoAcid, "ALA") == alaninePtr);
+  }
+
+  SECTION("ownership transfer") {
+    auto localTemplateLibrary =
+        std::make_unique<MacroMolTemplateLibrary>();
+    auto alanine = makeMacroMolTemplate("ALA", "A");
+    const auto *alaninePtr = alanine.get();
+    localTemplateLibrary->addTemplate(std::move(alanine));
+
+    MacroMol macroMol(std::move(localTemplateLibrary));
+
+    CHECK(localTemplateLibrary == nullptr);
+    CHECK(macroMol.getLocalTemplateLibrary().getBySymbol(
+              MonomerClass::AminoAcid, "A") == alaninePtr);
+  }
+
+  SECTION("null library") {
+    CHECK_THROWS_AS(
+        MacroMol(std::unique_ptr<MacroMolTemplateLibrary>{}),
+        Invar::Invariant);
+  }
+}
+
+TEST_CASE("MacroMol validates references against only its local library") {
+  SECTION("empty and ordinary-atom-only molecules are valid") {
+    MacroMol macroMol;
+    CHECK(macroMol.hasValidLocalTemplateReferences());
+    macroMol.addAtom(new Atom(6), false, true);
+    CHECK(macroMol.hasValidLocalTemplateReferences());
+  }
+
+  SECTION("symbol lookup") {
+    MacroMol macroMol;
+    macroMol.addLocalTemplate(makeMacroMolTemplate("ALA", "A"));
+    macroMol.addMacroAtom("A", MonomerClass::AminoAcid);
+    CHECK(macroMol.hasValidLocalTemplateReferences());
+  }
+
+  SECTION("template-name lookup") {
+    MacroMol macroMol;
+    macroMol.addLocalTemplate(makeMacroMolTemplate("ALA", "A"));
+    macroMol.addMacroAtom("ALA", MonomerClass::AminoAcid);
+    CHECK(macroMol.hasValidLocalTemplateReferences());
+  }
+
+  SECTION("missing template") {
+    MacroMol macroMol;
+    macroMol.addMacroAtom("A", MonomerClass::AminoAcid);
+    CHECK_FALSE(macroMol.hasValidLocalTemplateReferences());
+  }
+
+  SECTION("monomer class is part of the lookup key") {
+    MacroMol macroMol;
+    macroMol.addLocalTemplate(makeMacroMolTemplate("ALA", "A"));
+    macroMol.addMacroAtom("A", MonomerClass::NucleicAcid);
+    CHECK_FALSE(macroMol.hasValidLocalTemplateReferences());
+  }
+
+  SECTION("one unresolved macro atom invalidates the molecule") {
+    MacroMol macroMol;
+    macroMol.addLocalTemplate(makeMacroMolTemplate("ALA", "A"));
+    macroMol.addMacroAtom("A", MonomerClass::AminoAcid);
+    macroMol.addMacroAtom("C", MonomerClass::AminoAcid);
+    CHECK_FALSE(macroMol.hasValidLocalTemplateReferences());
+  }
+}
+
+TEST_CASE("MacroMol local-template library rejects null templates") {
+  MacroMol macroMol;
+  CHECK_THROWS_AS(macroMol.addLocalTemplate(nullptr),
+                  ValueErrorException);
+}
+
+TEST_CASE("MacroMol copies have independent local template libraries") {
+  MacroMol source;
+  source.addLocalTemplate(makeMacroMolTemplate("ALA", "A"));
+  source.addMacroAtom("A", MonomerClass::AminoAcid);
+  const auto *sourceTemplate = source.getLocalTemplateLibrary().getBySymbol(
+      MonomerClass::AminoAcid, "A");
+  REQUIRE(sourceTemplate);
+
+  MacroMol copy(source);
+  CHECK(&copy.getLocalTemplateLibrary() !=
+        &source.getLocalTemplateLibrary());
+  const auto *copiedTemplate = copy.getLocalTemplateLibrary().getBySymbol(
+      MonomerClass::AminoAcid, "A");
+  REQUIRE(copiedTemplate);
+  CHECK(copiedTemplate != sourceTemplate);
+  CHECK(copiedTemplate->getName() == sourceTemplate->getName());
+  CHECK(copy.hasValidLocalTemplateReferences());
+
+  MacroMol assigned;
+  assigned.addLocalTemplate(makeMacroMolTemplate("CYS", "C"));
+  assigned = source;
+  CHECK(&assigned.getLocalTemplateLibrary() !=
+        &source.getLocalTemplateLibrary());
+  const auto *assignedTemplate = assigned.getLocalTemplateLibrary().getBySymbol(
+      MonomerClass::AminoAcid, "A");
+  REQUIRE(assignedTemplate);
+  CHECK(assignedTemplate != sourceTemplate);
+  CHECK(assignedTemplate != copiedTemplate);
+  CHECK(assigned.getLocalTemplateLibrary().entries().size() == 1);
+  CHECK(assigned.hasValidLocalTemplateReferences());
+}
+
+TEST_CASE("MacroMol moves its local template library") {
+  MacroMol source;
+  source.addLocalTemplate(makeMacroMolTemplate("ALA", "A"));
+  source.addMacroAtom("A", MonomerClass::AminoAcid);
+  const auto *sourceLibrary = &source.getLocalTemplateLibrary();
+  const auto *sourceTemplate = sourceLibrary->getBySymbol(
+      MonomerClass::AminoAcid, "A");
+  REQUIRE(sourceTemplate);
+
+  MacroMol moved(std::move(source));
+  CHECK(&moved.getLocalTemplateLibrary() == sourceLibrary);
+  CHECK(moved.getLocalTemplateLibrary().getBySymbol(
+            MonomerClass::AminoAcid, "A") == sourceTemplate);
+  CHECK(moved.hasValidLocalTemplateReferences());
+
+  MacroMol assigned;
+  assigned.addLocalTemplate(makeMacroMolTemplate("CYS", "C"));
+  assigned = std::move(moved);
+  CHECK(&assigned.getLocalTemplateLibrary() == sourceLibrary);
+  CHECK(assigned.getLocalTemplateLibrary().getBySymbol(
+            MonomerClass::AminoAcid, "A") == sourceTemplate);
+  CHECK(assigned.hasValidLocalTemplateReferences());
 }

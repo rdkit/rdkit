@@ -255,13 +255,23 @@ const std::vector<std::string> sGroupClasses = {
     "MODDNA",    "MODRNA", "XLINKAA", "XLINKdAA", "XLINKDNA", "XLINKRNA",
 };
 
+// RDKit extensions used to preserve format-neutral MonomerClass values in
+// generic MOL and SDF files. These are not standard SCSR classes.
+const std::vector<std::string> rdkitMonomerClasses = {
+    "AminoAcid", "NucleicAcid", "Chemical", "Other"};
+
 RDKIT_GRAPHMOL_EXPORT bool isValidType(const std::string &type);
 
 RDKIT_GRAPHMOL_EXPORT bool isValidSubType(const std::string &type);
 
 RDKIT_GRAPHMOL_EXPORT bool isValidConnectType(const std::string &type);
 
+//! Returns whether a class is valid for generic RDKit MOL/SDF parsing.
 RDKIT_GRAPHMOL_EXPORT bool isValidClass(const std::string &sgroupClass);
+
+//! Returns whether a class belongs to the standard SCSR vocabulary.
+RDKIT_GRAPHMOL_EXPORT bool isValidSCSRClass(
+    const std::string &sgroupClass);
 
 RDKIT_GRAPHMOL_EXPORT bool isSubstanceGroupIdFree(const ROMol &mol,
                                                   unsigned int id);

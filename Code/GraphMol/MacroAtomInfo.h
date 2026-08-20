@@ -23,9 +23,13 @@
 
 namespace RDKit {
 
-//! Classes of monomer that a macro atom can represent.
+//! Format-neutral classes of monomer that a macro atom can represent.
 /*!
-  Supported monomer classes for macro atoms.
+  These are broad semantic categories, not the class vocabularies used by
+  SCSR, HELM, PDB, or another external format. Format parsers and writers are
+  responsible for mapping their own classifications to and from these values.
+  Such mappings may require additional format-specific context and should fail
+  rather than guess when the available information is ambiguous.
 
   A regular enum is used here because MonomerClass appears in public MacroMol
   method signatures. RDKit's BETTER_ENUM macro can expand to different C++
@@ -33,17 +37,31 @@ namespace RDKit {
   link errors in shared-library and unity builds.
 */
 enum MonomerClass : int {
+  //! An amino-acid monomer, without encoding chirality, modification, or
+  //! crosslink status.
   AminoAcid,
+  //! A nucleic-acid monomer, without distinguishing DNA, RNA, base, sugar, or
+  //! phosphate classifications.
   NucleicAcid,
+  //! A non-biopolymer chemical monomer.
   Chemical,
+  //! A recognized monomer that does not belong to another neutral category.
   Other
 };
 
-//! Converts a macro atom monomer class enum value to its recognized name.
+//! Converts a monomer class to its canonical format-neutral RDKit name.
+/*!
+  The returned name is not a mapping to an external format's class vocabulary.
+*/
 RDKIT_GRAPHMOL_EXPORT const char *monomerClassToString(
     MonomerClass monomerClass);
 
-//! Converts a recognized macro atom monomer class name to its enum value.
+//! Converts a canonical format-neutral RDKit name to its monomer class.
+/*!
+  \throws ValueErrorException if monomerClass is not a canonical name. External
+          format adapters must validate and map their own class vocabulary
+          instead of passing arbitrary values to this function.
+*/
 RDKIT_GRAPHMOL_EXPORT MonomerClass
 monomerClassFromString(const std::string &monomerClass);
 
