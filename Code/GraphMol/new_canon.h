@@ -69,9 +69,8 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
     return compare(lhs, rhs) > 0;
   }
 
-  template <bool divideSymClasses>
-  static int compareImpl(const bondholder &x, const bondholder &y,
-                         unsigned int div) {
+  static int compare(const bondholder &x, const bondholder &y,
+                     unsigned int div = 1) {
     if (x.p_symbol && y.p_symbol) {
       auto symbolCompare = x.p_symbol->compare(*y.p_symbol);
       if (symbolCompare != 0) {
@@ -88,13 +87,12 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
     } else if (x.bondStereo > y.bondStereo) {
       return 1;
     }
-    auto xClass = x.nbrSymClass;
-    auto yClass = y.nbrSymClass;
-    if constexpr (divideSymClasses) {
-      xClass /= div;
-      yClass /= div;
+    int scdiv;
+    if (div != 1) {
+      scdiv = x.nbrSymClass / div - y.nbrSymClass / div;
+    } else {
+      scdiv = x.nbrSymClass - y.nbrSymClass;
     }
-    auto scdiv = xClass - yClass;
     if (scdiv) {
       return scdiv;
     }
@@ -105,14 +103,6 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
       }
     }
     return 0;
-  }
-
-  static int compare(const bondholder &x, const bondholder &y) {
-    return compareImpl<false>(x, y, 1);
-  }
-  static int compare(const bondholder &x, const bondholder &y,
-                     unsigned int div) {
-    return compareImpl<true>(x, y, div);
   }
 };
 using BondholderVector = boost::container::small_vector<bondholder, 4>;
