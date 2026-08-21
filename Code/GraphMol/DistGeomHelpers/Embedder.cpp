@@ -1311,7 +1311,10 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
         // set a flag for tetrahedral centers that are in multiple small rings
         auto numSmallRings = 0u;
         constexpr int smallRingSize = 5;
-        for (const auto sz : mol.getRingInfo()->atomRingSizes(atom->getIdx())) {
+        const auto ringInfo = mol.getRingInfo();
+        const auto atomRings = ringInfo->atomRings();
+        for (const auto ringIdx : ringInfo->atomMembers(atom->getIdx())) {
+          const auto sz = atomRings[ringIdx].size();
           if (sz < smallRingSize) {
             ++numSmallRings;
           }

@@ -827,6 +827,10 @@ void readRDKitRepresentation(RWMol *mol, const bj::value &repVal,
                       "rings already initialized");
       auto ri = mol->getRingInfo();
       ri->initialize();
+      VECT_INT_VECT atomRings;
+      VECT_INT_VECT bondRings;
+      atomRings.reserve(miter->value().as_array().size());
+      bondRings.reserve(miter->value().as_array().size());
       for (const auto &val : miter->value().as_array()) {
         if (!val.is_array()) {
           throw FileParseException("Bad Format: atomRing not array");
@@ -850,8 +854,10 @@ void readRDKitRepresentation(RWMol *mol, const bj::value &repVal,
         const auto &bnd = mol->getBondBetweenAtoms(idx1, idx2);
         CHECK_INVARIANT(bnd, "no bond found for ring");
         bondRing.push_back(bnd->getIdx());
-        ri->addRing(atomRing, bondRing);
+        atomRings.push_back(std::move(atomRing));
+        bondRings.push_back(std::move(bondRing));
       }
+      ri->addRings(atomRings, bondRings);
     }
   }
 }

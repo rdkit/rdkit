@@ -660,14 +660,13 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
 
     // first find all the simple rings in the molecule that are not
     // completely composed of dummy atoms
-    VECT_INT_VECT allringsSSSR;
     if (!mol.getRingInfo()->isInitialized()) {
-      MolOps::findSSSR(mol, allringsSSSR);
+      MolOps::findSSSR(mol);
     }
-    const VECT_INT_VECT &allrings =
-        allringsSSSR.empty() ? mol.getRingInfo()->atomRings() : allringsSSSR;
+    const auto allrings = mol.getRingInfo()->atomRings();
     std::deque<INT_VECT> tmpRings;
-    auto containsNonDummy = [&atomsToUse, &dummyAts](const INT_VECT &ring) {
+    auto containsNonDummy = [&atomsToUse,
+                             &dummyAts](std::span<const int> ring) {
       bool ringOk = false;
       for (auto ai : ring) {
         if (!atomsToUse[ai]) {
@@ -683,7 +682,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     // we try to favor starting the traversal of any ring from an atom that is
     // at the end of a wedged ring bond. This is part of our attempt to avoid
     // assigning double bonds to bonds with wedging
-    for (const auto &ring : allrings) {
+    for (const auto ring : allrings) {
       if (containsNonDummy(ring)) {
         unsigned int startPos = 0;
         bool hasWedge = false;
@@ -696,18 +695,19 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
         }
         INT_VECT nring(ring.size());
         for (auto ri = 0u; ri < ring.size(); ++ri) {
-          nring[ri] = ring.at((ri + startPos) % ring.size());
+          nring[ri] = ring[(ri + startPos) % ring.size()];
         }
         if (!hasWedge) {
-          tmpRings.push_back(nring);
+          tmpRings.push_back(std::move(nring));
         } else {
-          tmpRings.push_front(nring);
+          tmpRings.push_front(std::move(nring));
         }
       }
     }
     VECT_INT_VECT arings;
     arings.reserve(allrings.size());
-    arings.insert(arings.end(), tmpRings.begin(), tmpRings.end());
+    arings.insert(arings.end(), std::make_move_iterator(tmpRings.begin()),
+                  std::make_move_iterator(tmpRings.end()));
     VECT_INT_VECT allbrings;
     RingUtils::convertToBonds(arings, allbrings, mol);
     VECT_INT_VECT brings;

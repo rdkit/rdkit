@@ -681,7 +681,7 @@ int countAtomElec(const Atom *at) {
 }
 
 namespace {
-int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
+int mdlAromaticityHelper(RWMol &mol, const RingInfo::RingsView &srings) {
   int narom = 0;
   // loop over all the atoms in the rings that can be candidates
   // for aromaticity
@@ -694,7 +694,7 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   VECT_EDON_TYPE edon(natoms);
 
   VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
-  for (auto &sring : srings) {
+  for (const auto &sring : srings) {
     bool allAromatic = true;
     bool allDummy = true;
 
@@ -736,7 +736,7 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
       }
     }
     if (allAromatic && !allDummy) {
-      cRings.push_back(sring);
+      cRings.emplace_back(sring.begin(), sring.end());
     }
   }
 
@@ -790,7 +790,7 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   return narom;
 }
 
-int mmff94AromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
+int mmff94AromaticityHelper(RWMol &mol, const RingInfo::RingsView &srings) {
   // set aromaticity as done in MMFF94 init
   if (!mol.hasProp(common_properties::_MMFFSanitized)) {
     bool isAromaticSet = false;
@@ -809,7 +809,7 @@ int mmff94AromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
 
   // count aromatic rings for return value
   int narom = 1;
-  for (auto &sring : srings) {
+  for (const auto &sring : srings) {
     bool isAromRing = true;
     for (auto &aid : sring) {
       Atom *atom = mol.getAtomWithIdx(aid);
@@ -827,7 +827,7 @@ int mmff94AromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
 }
 
 // use minRingSize=0 or maxRingSize=0 to ignore these constraints
-int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
+int aromaticityHelper(RWMol &mol, const RingInfo::RingsView &srings,
                       unsigned int minRingSize, unsigned int maxRingSize,
                       bool includeFused) {
   int narom = 0;
@@ -842,7 +842,7 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
   VECT_EDON_TYPE edon(natoms);
 
   VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
-  for (auto &sring : srings) {
+  for (const auto &sring : srings) {
     size_t ringSz = sring.size();
     // test ring size:
     if ((minRingSize && ringSz < minRingSize) ||
@@ -894,7 +894,7 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
       }
     }
     if (allAromatic && !allDummy) {
-      cRings.push_back(sring);
+      cRings.emplace_back(sring.begin(), sring.end());
     }
   }
 
@@ -978,7 +978,7 @@ void setMMFFAromaticity(RWMol &mol) {
   RingInfo *ringInfo = mol.getRingInfo();
   Atom *atom;
   Bond *bond;
-  const VECT_INT_VECT &atomRings = ringInfo->atomRings();
+  const auto atomRings = ringInfo->atomRings();
   ROMol::ADJ_ITER nbrIdx;
   ROMol::ADJ_ITER endNbrs;
   boost::dynamic_bitset<> aromBitVect(mol.getNumAtoms());
@@ -1141,39 +1141,30 @@ int setAromaticity(RWMol &mol, AromaticityModel model, int (*func)(RWMol &)) {
   // with aromaticity information, assumed it is correct and
   // did not touch it. Now it ignores that information entirely.
 
-  // first find the all the simple rings in the molecule
-  VECT_INT_VECT srings;
-  if (mol.getRingInfo()->isInitialized()) {
-    srings = mol.getRingInfo()->atomRings();
-  } else {
-    MolOps::symmetrizeSSSR(mol, srings);
+  auto *ringInfo = mol.getRingInfo();
+  if (!ringInfo->isInitialized()) {
+    MolOps::symmetrizeSSSR(mol);
   }
+  const auto srings = ringInfo->atomRings();
 
-  int res;
   switch (model) {
     case AROMATICITY_DEFAULT:
     case AROMATICITY_RDKIT:
-      res = aromaticityHelper(mol, srings, 0, 0, true);
-      break;
+      return aromaticityHelper(mol, srings, 0, 0, true);
     case AROMATICITY_SIMPLE:
-      res = aromaticityHelper(mol, srings, 5, 6, false);
-      break;
+      return aromaticityHelper(mol, srings, 5, 6, false);
     case AROMATICITY_MDL:
-      res = mdlAromaticityHelper(mol, srings);
-      break;
+      return mdlAromaticityHelper(mol, srings);
     case AROMATICITY_MMFF94:
-      res = mmff94AromaticityHelper(mol, srings);
-      break;
+      return mmff94AromaticityHelper(mol, srings);
     case AROMATICITY_CUSTOM:
       PRECONDITION(
           func,
           "function must be set when aromaticity model is AROMATICITY_CUSTOM");
-      res = func(mol);
-      break;
+      return func(mol);
     default:
       throw ValueErrorException("Bad AromaticityModel");
   }
-  return res;
 }
 
 };  // end of namespace MolOps

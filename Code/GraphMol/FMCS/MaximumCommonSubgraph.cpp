@@ -766,9 +766,9 @@ MaximumCommonSubgraph::generateResultSMARTSAndQueryMol(
     for (const auto &bond : mcsIdx.Bonds) {
       queryBondInMcs.set(bond->getIdx());
     }
-    const auto &bondRings = ri->bondRings();
-    for (const auto &bondRing : bondRings) {
-      auto ringIdx = &bondRing - &bondRings.front();
+    const auto bondRings = ri->bondRings();
+    for (size_t ringIdx = 0; ringIdx < bondRings.size(); ++ringIdx) {
+      const auto bondRing = bondRings[ringIdx];
       for (const auto &bondIdx : bondRing) {
         if (!queryBondInMcs.test(bondIdx)) {
           mcsRingIsComplete.reset(ringIdx);
