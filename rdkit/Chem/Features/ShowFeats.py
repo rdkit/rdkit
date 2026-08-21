@@ -64,7 +64,8 @@ def _buildCanonArrowhead(headFrac, nSteps, aspect):
 
   twopi = 2 * math.pi
   for i in range(1, nSteps):
-    v = Geometry.Point3D(scale * math.cos(i * twopi), scale * math.sin(i * twopi), 0)
+    angle = i * twopi / nSteps
+    v = Geometry.Point3D(scale * math.cos(angle), scale * math.sin(angle), 0)
     _canonArrowhead.append(v)
 
 
