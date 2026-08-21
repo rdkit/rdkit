@@ -18,40 +18,59 @@
 
 namespace RDKit {
 
-class pyFunctor {
+template <typename T, typename U>
+class pyMatchFunctor {
  public:
-  virtual ~pyFunctor() = default;
-};
+  pyMatchFunctor(nb::object obj) : dp_callable(nb::borrow<nb::callable>(obj)) {
+    if (!dp_callable.is_valid()) {
+      throw std::runtime_error("Matcher object is not callable");
+    }
 
-class pyFinalMatchFunctor : public pyFunctor {
- public:
-  pyFinalMatchFunctor(nb::object obj) : dp_obj(std::move(obj)) {}
-  ~pyFinalMatchFunctor() = default;
-  bool operator()(const ROMol &m, std::span<const unsigned int> match) {
-    // grab the GIL
-    PyGILStateHolder h;
-    // boost::python doesn't handle std::span, so we need to convert the span to
-    // a vector before calling into python:
-    std::vector<unsigned int> matchVec(match.begin(), match.end());
-    return nb::cast<bool>(dp_obj(m, matchVec));
+    // Special case to create a shortcut for AtomCoordsMatchFunctors:
+    if constexpr (std::is_same_v<T, Atom> && std::is_same_v<U, Atom>) {
+      nb::try_cast<AtomCoordsMatchFunctor *>(obj, dp_coordsMatchedFunc);
+    }
   }
 
- private:
-  nb::object dp_obj;
-};
-template <typename T>
-class pyMatchFunctor : public pyFunctor {
- public:
-  pyMatchFunctor(nb::object obj) : dp_obj(std::move(obj)) {}
   ~pyMatchFunctor() = default;
-  bool operator()(const T &a1, const T &a2) {
+
+  bool operator()(const T &a1, const U &a2) const {
     // grab the GIL
     PyGILStateHolder h;
-    return nb::cast<bool>(dp_obj(a1, a2));
+
+    if constexpr (std::is_same_v<T, ROMol> &&
+                  std::is_same_v<U, std::span<const unsigned int>>) {
+      // nanobind doesn't support std::span, so we need to convert the span to
+      // a vector before calling into python. This might be dependent
+      // on the nanobind version.
+      std::vector<unsigned int> matchVec(a2.begin(), a2.end());
+      return nb::cast<bool>(dp_callable(&a1, &matchVec));
+    } else {
+      if constexpr (std::is_same_v<T, Atom> && std::is_same_v<U, Atom>) {
+        // If the callable is a subclass of AtomCoordsMatchFunctor,
+        // we can take a shortcut and avoid passing the args through
+        // the nanobind wrappers twice.
+        if (dp_coordsMatchedFunc) {
+          return (*dp_coordsMatchedFunc)(a1, a2);
+        }
+      }
+
+      // We want to pass pointers to the callable: the args will
+      // be passed through the nanobind wrappers (twice?), and
+      // it seems there are copies made along the way. If we pass
+      // Atom or Bond references, they seem to lose Mol ownership
+      // info, resulting in an exception during the fn call.
+      return nb::cast<bool>(dp_callable(&a1, &a2));
+    }
   }
 
  private:
-  nb::object dp_obj;
+  // The callable is borrowed, so ownership of the Python function
+  // is shared with instances.
+  nb::callable dp_callable;
+
+  // This function is guaranteed to exist for the lifetime of the callable.
+  AtomCoordsMatchFunctor *dp_coordsMatchedFunc = nullptr;
 };
 
 inline std::vector<int> convertMatch(const MatchVectType &match) {
@@ -60,20 +79,6 @@ inline std::vector<int> convertMatch(const MatchVectType &match) {
                 [&res](const auto &pair) { res[pair.first] = pair.second; });
   return res;
 }
-
-#if 0
-inline PyObject *convertMatchesToTupleOfPairs(const MatchVectType &matches) {
-  PyObject *res = PyTuple_New(matches.size());
-  std::for_each(matches.begin(), matches.end(),
-  [res, &matches](const auto &pair) {
-    PyObject *pyPair = PyTuple_New(2);
-    PyTuple_SetItem(pyPair, 0, PyInt_FromLong(pair.first));
-                  PyTuple_SetItem(pyPair, 1, PyInt_FromLong(pair.second));
-                  PyTuple_SetItem(res, &pair - &matches.front(), pyPair);
-                });
-  return res;
-}
-#endif
 
 template <typename T1, typename T2>
 void pySubstructHelper(T1 &mol, T2 &query,
