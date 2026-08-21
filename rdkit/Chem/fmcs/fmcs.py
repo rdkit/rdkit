@@ -50,7 +50,7 @@ The core description is:
 The SMARTS string depends on the desired match properties. For
 example, if ring atoms are only allowed to match ring atoms then an
 aliphatic ring carbon in the query is converted to the SMARTS "[C;R]",
-and the double-bond ring bond converted to "=;@" while the respective
+and the double-bond ring bond converted to "=;@" while the respectice
 chain-only version are "[C;!R]" and "=;!@".
 
 The algorithm I outlined earlier will usually take a long time. There
@@ -65,7 +65,7 @@ This requires atom and bond type information, which I store as SMARTS
 patterns. A bond can only be in the MCS if its canonical bond type is
 present in all of the structures. A bond type is string made of the
 SMARTS for one atom, the SMARTS for the bond, and the SMARTS for the
-other atom. The canonical bond type is the lexicographically smaller of
+other atom. The canonical bond type is the lexographically smaller of
 the two possible bond types for a bond.
 
 The atom and bond SMARTS depend on the type comparison used.
@@ -141,7 +141,7 @@ for this fragment. Given N bonds there are 2**N-1 possible ways to
 grow, which is just the powerset of the available bonds, excluding the
 no-growth case.
 
-This breadth-first growth takes into account all possibilities of using
+This breadth-first growth takes into account all possibilties of using
 the available N bonds so all of those bonds are added to the exclusion
 set of the newly expanded subgraphs.
 
@@ -1629,10 +1629,9 @@ class VerboseCachingTargetsMatcher(object):
     return True
 
   def report(self):
-    print(
-      "%d tests of %d unique SMARTS, cache: %d True %d False, search: %d True %d False (%d substructure tests)"
-      % (self.num_lookups, len(self.cache), self.num_cached_true, self.num_cached_false,
-         self.num_search_true, self.num_search_false, self.num_matches), file=sys.stderr)
+    print >> sys.stderr, "%d tests of %d unique SMARTS, cache: %d True %d False, search: %d True %d False (%d substructure tests)" % (
+      self.num_lookups, len(self.cache), self.num_cached_true, self.num_cached_false,
+      self.num_search_true, self.num_search_false, self.num_matches)
 
 
   ##### Different maximization algorithms ######
@@ -2086,9 +2085,8 @@ class VerboseHeapOps(object):
     self.report()
 
   def report(self):
-    print(
-      "  %d subgraphs enumerated, %d processed" % (self.num_seeds_added, self.num_seeds_processed),
-      file=sys.stderr)
+    print >> sys.stderr, "  %d subgraphs enumerated, %d processed" % (self.num_seeds_added,
+                                                                      self.num_seeds_processed)
 
 
 def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None,
@@ -2724,7 +2722,7 @@ def main(args=None):
     if not any(molno in range_ for range_ in args.select):
       continue
     if mol is None:
-      print("Skipping unreadable structure #%d" % (molno + 1, ), file=sys.stderr)
+      print >> sys.stderr, "Skipping unreadable structure #%d" % (molno + 1, )
       continue
     if atom_class_tag is not None:
       try:
@@ -2743,7 +2741,7 @@ def main(args=None):
   times = {"load": time.perf_counter() - t1}
 
   if args.verbosity:
-    print("Loaded", len(structures), "structures from", filename, "    ", file=sys.stderr)
+    print >> sys.stderr, "Loaded", len(structures), "structures from", filename, "    "
 
   if len(structures) < 2:
     raise SystemExit("Input file %r must contain at least two structures" % (filename, ))
@@ -2818,7 +2816,7 @@ def main(args=None):
     outfile.close()
 
   if args.times or args.verbosity:
-    print(msg_format % times, file=sys.stderr)
+    print >> sys.stderr, msg_format % times
 
 
 if __name__ == "__main__":
