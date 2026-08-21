@@ -45,23 +45,23 @@ class pyMatchFunctor {
       // on the nanobind version.
       std::vector<unsigned int> matchVec(a2.begin(), a2.end());
       return nb::cast<bool>(dp_callable(&a1, &matchVec));
-    }
-
-    if constexpr (std::is_same_v<T, Atom> && std::is_same_v<U, Atom>) {
-      // If the callable is a subclass of AtomCoordsMatchFunctor,
-      // we can take a shortcut and avoid passing the args through
-      // the nanobind wrappers twice.
-      if (dp_coordsMatchedFunc) {
-        return (*dp_coordsMatchedFunc)(a1, a2);
+    } else {
+      if constexpr (std::is_same_v<T, Atom> && std::is_same_v<U, Atom>) {
+        // If the callable is a subclass of AtomCoordsMatchFunctor,
+        // we can take a shortcut and avoid passing the args through
+        // the nanobind wrappers twice.
+        if (dp_coordsMatchedFunc) {
+          return (*dp_coordsMatchedFunc)(a1, a2);
+        }
       }
-    }
 
-    // We want to pass pointers to the callable: the args will
-    // be passed through the nanobind wrappers (twice?), and
-    // it seems there are copies made along the way. If we pass
-    // Atom or Bond references, they seem to lose Mol ownership
-    // info, resulting in an exception during the fn call.
-    return nb::cast<bool>(dp_callable(&a1, &a2));
+      // We want to pass pointers to the callable: the args will
+      // be passed through the nanobind wrappers (twice?), and
+      // it seems there are copies made along the way. If we pass
+      // Atom or Bond references, they seem to lose Mol ownership
+      // info, resulting in an exception during the fn call.
+      return nb::cast<bool>(dp_callable(&a1, &a2));
+    }
   }
 
  private:
