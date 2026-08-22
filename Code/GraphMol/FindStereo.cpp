@@ -1098,19 +1098,6 @@ void findChiralAtomSpecialCases(ROMol &mol,
                                 boost::dynamic_bitset<> &possibleSpecialCases,
                                 const std::vector<unsigned int> &atomRanks);
 
-void updateStereoAtomRanks(Canon::AtomCompareFunctor &ftor,
-                           std::vector<int> &atomOrder,
-                           const std::vector<Canon::canon_atom> &canonAtoms,
-                           std::vector<unsigned int> &atomRanks,
-                           const boost::dynamic_bitset<> &atomsInPlay,
-                           const boost::dynamic_bitset<> &bondsInPlay) {
-  Canon::detail::rankWithFunctor(ftor, false, atomOrder, true, false, false,
-                                 &atomsInPlay, &bondsInPlay);
-  for (unsigned int i = 0; i < canonAtoms.size(); ++i) {
-    atomRanks[atomOrder[i]] = canonAtoms[atomOrder[i]].index;
-  }
-}
-
 std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
                                    bool cleanIt) {
   // This potentially does two passes of "canonicalization" to identify
@@ -1176,6 +1163,16 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
                                  &bondsInPlay, atomCompareCodes.data());
   std::vector<int> atomOrder(mol.getNumAtoms());
   std::vector<unsigned int> aranks(mol.getNumAtoms());
+  const auto updateRanks = [&]() {
+    const bool includeChirality = false;
+    const bool breakTies = false;
+    Canon::detail::rankWithFunctor(ftor, breakTies, atomOrder, true,
+                                   includeChirality, false, &atomsInPlay,
+                                   &bondsInPlay);
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+      aranks[atomOrder[i]] = canonAtoms[atomOrder[i]].index;
+    }
+  };
 
   bool needAnotherRound = true;
   while (needAnotherRound) {
@@ -1184,8 +1181,7 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
     // The necessary condition for chirality is that an atom's neighbors have
     // unique ranks. The molecular topology is constant across cleanup rounds,
     // so reuse the initialized canonical atoms while the symbol values change.
-    updateStereoAtomRanks(ftor, atomOrder, canonAtoms, aranks, atomsInPlay,
-                          bondsInPlay);
+    updateRanks();
     // check if any new atoms definitely now have stereo; do another loop if
     // so
     needAnotherRound = updateAtoms(
@@ -1240,8 +1236,7 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
       //           std::ostream_iterator<std::string>(std::cerr, " "));
       // std::cerr << std::endl;
 
-      updateStereoAtomRanks(ftor, atomOrder, canonAtoms, aranks, atomsInPlay,
-                            bondsInPlay);
+      updateRanks();
       needAnotherRound = updateAtoms(
           mol, aranks, atomCompareCodes, possibleAtoms, knownAtoms, fixedAtoms,
           possibleRingStereoAtoms, possibleRingStereoBonds, res);

@@ -45,11 +45,11 @@ unsigned count_wedged_bonds(const ROMol &mol) {
 RWMol makeDummySubstitutedCarbon(
     const std::array<const char *, 4> &dummyLabels) {
   RWMol mol;
-  const auto center = mol.addAtom(new Atom(6), true, true);
+  const auto center = mol.addAtom();
+  mol.getAtomWithIdx(center)->setAtomicNum(6);
   for (const auto label : dummyLabels) {
-    auto dummy = new Atom(0);
-    dummy->setProp(common_properties::dummyLabel, label);
-    const auto idx = mol.addAtom(dummy, true, true);
+    const auto idx = mol.addAtom();
+    mol.getAtomWithIdx(idx)->setProp(common_properties::dummyLabel, label);
     mol.addBond(center, idx, Bond::BondType::SINGLE);
   }
   mol.updatePropertyCache(false);
