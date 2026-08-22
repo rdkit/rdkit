@@ -699,6 +699,102 @@ TEST_CASE("github #6050: stereogroups not combined") {
   }
 }
 
+TEST_CASE("CXSMILES writer emits |w:| for STEREOANY double bonds") {
+  SECTION("acyclic STEREOANY set programmatically produces |w:|") {
+    // The scenario produced by e.g. an InChI roundtrip: STEREOANY is set on
+    // the double bond with stereo atoms, but no adjacent single bond has
+    // BondDir::UNKNOWN. Before the fix the CXSMILES writer dropped this
+    // information silently. The writer should now mark an adjacent single
+    // bond as wavy in the output.
+    auto m = "CC=CC"_smiles;
+    REQUIRE(m);
+    auto bond = m->getBondBetweenAtoms(1, 2);
+    REQUIRE(bond);
+    bond->setStereoAtoms(0, 3);
+    bond->setStereo(Bond::STEREOANY);
+    auto out = MolToCXSmiles(*m);
+    CHECK(out.find("w:") != std::string::npos);
+  }
+
+  SECTION("ring STEREOANY uses |ctu:|, never |w:|") {
+    // STEREOANY on an in-ring double bond is serialized as an unknown
+    // ring-bond cis/trans (|ctu:|). The new code path must not also emit
+    // a wavy marker.
+    auto m = "C1CC=CCCCC1"_smiles;
+    REQUIRE(m);
+    auto bond = m->getBondBetweenAtoms(2, 3);
+    REQUIRE(bond);
+    bond->setStereoAtoms(1, 4);
+    bond->setStereo(Bond::STEREOANY);
+    auto out = MolToCXSmiles(*m);
+    CHECK(out.find("w:") == std::string::npos);
+    CHECK(out.find("ctu:") != std::string::npos);
+  }
+
+  SECTION("|w:| roundtrip is idempotent and does not duplicate") {
+    // Parsing |w:0.0| sets BondDir::UNKNOWN on the adjacent single bond
+    // (bond 0) and STEREOANY on the double bond (bond 1). The writer must
+    // emit |w:| exactly once — the existing UNKNOWN path covers it, and
+    // the new STEREOANY path's alreadyHandled guard must suppress a
+    // second emission.
+    auto m = "CC=CC |w:0.0|"_smiles;
+    REQUIRE(m);
+    auto out = MolToCXSmiles(*m);
+    auto firstW = out.find("w:");
+    REQUIRE(firstW != std::string::npos);
+    CHECK(out.find("w:", firstW + 1) == std::string::npos);
+  }
+
+  SECTION("STEREOANY with empty stereo atoms does not emit |w:|") {
+    // Defensive: STEREOANY without stereo atoms has no anchor to attach a
+    // wavy marker to. The writer must skip silently rather than emit a
+    // garbled marker.
+    auto m = "CC=CC"_smiles;
+    REQUIRE(m);
+    auto bond = m->getBondBetweenAtoms(1, 2);
+    REQUIRE(bond);
+    bond->setStereo(Bond::STEREOANY);
+    auto out = MolToCXSmiles(*m);
+    CHECK(out.find("w:") == std::string::npos);
+  }
+
+  SECTION("STEREOANY with _MolFileBondStereo defers to mol-file wedging") {
+    // _MolFileBondStereo on the double bond marks that wedging info comes
+    // from a mol file (e.g. crossed double bond, cfg=3). The CXSMILES
+    // writer should not emit |w:| in addition — the existing wU/wD path
+    // already covers it.
+    auto m = "CC=CC"_smiles;
+    REQUIRE(m);
+    auto bond = m->getBondBetweenAtoms(1, 2);
+    REQUIRE(bond);
+    bond->setStereoAtoms(0, 3);
+    bond->setStereo(Bond::STEREOANY);
+    bond->setProp(common_properties::_MolFileBondStereo, 3);
+    auto out = MolToCXSmiles(*m);
+    CHECK(out.find("w:") == std::string::npos);
+  }
+
+  SECTION("adjacent _MolFileBondCfg=2 suppresses duplicate |w:|") {
+    // _MolFileBondCfg=2 on an adjacent single bond means a mol-file wavy
+    // marker is already going to be emitted by the wedging path. The new
+    // STEREOANY emission must not duplicate it.
+    auto m = "CC=CC"_smiles;
+    REQUIRE(m);
+    auto db = m->getBondBetweenAtoms(1, 2);
+    REQUIRE(db);
+    db->setStereoAtoms(0, 3);
+    db->setStereo(Bond::STEREOANY);
+    auto adj = m->getBondBetweenAtoms(0, 1);
+    REQUIRE(adj);
+    adj->setProp(common_properties::_MolFileBondCfg, 2u);
+    auto out = MolToCXSmiles(*m);
+    auto firstW = out.find("w:");
+    if (firstW != std::string::npos) {
+      CHECK(out.find("w:", firstW + 1) == std::string::npos);
+    }
+  }
+}
+
 class SmilesTest {
  public:
   std::string fileName;
