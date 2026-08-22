@@ -555,7 +555,7 @@ void initAtomInfo(
   std::vector<std::uint32_t> symbolIds(mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
     auto symbol = atom->getSymbol();
-    auto iter = std::find(uniqueSymbols.begin(), uniqueSymbols.end(), symbol);
+    auto iter = std::ranges::find(uniqueSymbols, symbol);
     if (iter == uniqueSymbols.end()) {
       symbolIds[atom->getIdx()] =
           static_cast<std::uint32_t>(uniqueSymbols.size());
@@ -567,10 +567,10 @@ void initAtomInfo(
   }
   std::vector<std::uint32_t> symbolOrder(uniqueSymbols.size());
   std::iota(symbolOrder.begin(), symbolOrder.end(), 0);
-  std::sort(symbolOrder.begin(), symbolOrder.end(),
-            [&uniqueSymbols](auto lhs, auto rhs) {
-              return uniqueSymbols[lhs] < uniqueSymbols[rhs];
-            });
+  std::ranges::sort(
+      symbolOrder, {}, [&uniqueSymbols](auto symbolId) -> const std::string & {
+        return uniqueSymbols[symbolId];
+      });
   std::vector<std::uint32_t> symbolRanks(uniqueSymbols.size());
   for (std::uint32_t rank = 0; rank < symbolOrder.size(); ++rank) {
     symbolRanks[symbolOrder[rank]] = rank;
