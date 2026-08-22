@@ -9,7 +9,6 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/new_canon.h>
-#include <GraphMol/new_canon_internal.h>
 #include <RDGeneral/types.h>
 #include <algorithm>
 #include <numeric>
@@ -449,17 +448,21 @@ enum class AtomCompareState : std::uint32_t {
   Stereo,
 };
 
-inline Canon::detail::StereoAtomCompareCode makeAtomCompareCode(
-    const Atom &atom, std::uint32_t symbolRank) {
+inline Canon::AtomCompareCode makeAtomCompareCode(const Atom &atom,
+                                                  std::uint32_t symbolRank) {
+  int atomMapNumber = 0;
+  if (atom.getAtomicNum() == 0) {
+    atom.getPropIfPresent(common_properties::molAtomMapNumber, atomMapNumber);
+  }
   // Pack isotope, symbol rank, and biased formal charge in comparison order.
   const auto charge = static_cast<std::uint8_t>(atom.getFormalCharge() + 128);
-  return {(std::uint64_t{atom.getIsotope()} << 40) |
+  return {atomMapNumber, atom.getDegree(),
+          (std::uint64_t{atom.getIsotope()} << 40) |
               (std::uint64_t{symbolRank} << 8) | charge,
           0};
 }
 
-void setAtomCompareState(Canon::detail::StereoAtomCompareCode &code,
-                         AtomCompareState state,
+void setAtomCompareState(Canon::AtomCompareCode &code, AtomCompareState state,
                          std::uint32_t discriminator = 0) {
   code.secondary = (static_cast<std::uint64_t>(state) << 32) | discriminator;
 }
@@ -546,7 +549,7 @@ namespace {
 void initAtomInfo(
     ROMol &mol, bool flagPossible, bool cleanIt,
     boost::dynamic_bitset<> &knownAtoms,
-    std::vector<Canon::detail::StereoAtomCompareCode> &atomCompareCodes,
+    std::vector<Canon::AtomCompareCode> &atomCompareCodes,
     boost::dynamic_bitset<> &possibleAtoms) {
   std::vector<std::string> uniqueSymbols;
   std::vector<std::uint32_t> symbolIds(mol.getNumAtoms());
@@ -797,7 +800,7 @@ void flagRingStereo(ROMol &mol,
 
 bool updateAtoms(
     ROMol &mol, const std::vector<unsigned int> &aranks,
-    std::vector<Canon::detail::StereoAtomCompareCode> &atomCompareCodes,
+    std::vector<Canon::AtomCompareCode> &atomCompareCodes,
     boost::dynamic_bitset<> &possibleAtoms, boost::dynamic_bitset<> &knownAtoms,
     boost::dynamic_bitset<> &fixedAtoms,
     std::vector<unsigned int> &possibleRingStereoAtoms,
@@ -1095,13 +1098,14 @@ void findChiralAtomSpecialCases(ROMol &mol,
                                 boost::dynamic_bitset<> &possibleSpecialCases,
                                 const std::vector<unsigned int> &atomRanks);
 
-void updateStereoAtomRanks(Canon::detail::StereoAtomCompareFunctor &ftor,
+void updateStereoAtomRanks(Canon::AtomCompareFunctor &ftor,
                            std::vector<int> &atomOrder,
                            const std::vector<Canon::canon_atom> &canonAtoms,
                            std::vector<unsigned int> &atomRanks,
                            const boost::dynamic_bitset<> &atomsInPlay,
                            const boost::dynamic_bitset<> &bondsInPlay) {
-  Canon::detail::rankStereoAtoms(ftor, atomOrder, &atomsInPlay, &bondsInPlay);
+  Canon::detail::rankWithFunctor(ftor, false, atomOrder, true, false, false,
+                                 &atomsInPlay, &bondsInPlay);
   for (unsigned int i = 0; i < canonAtoms.size(); ++i) {
     atomRanks[atomOrder[i]] = canonAtoms[atomOrder[i]].index;
   }
@@ -1119,8 +1123,7 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   //   others. This allows us to identify every possible stereo atom/bond
 
   boost::dynamic_bitset<> knownAtoms(mol.getNumAtoms());
-  std::vector<Canon::detail::StereoAtomCompareCode> atomCompareCodes(
-      mol.getNumAtoms());
+  std::vector<Canon::AtomCompareCode> atomCompareCodes(mol.getNumAtoms());
   boost::dynamic_bitset<> possibleAtoms(mol.getNumAtoms());
   initAtomInfo(mol, flagPossible, cleanIt, knownAtoms, atomCompareCodes,
                possibleAtoms);
@@ -1169,8 +1172,8 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   Canon::detail::initFragmentCanonAtoms(mol, canonAtoms, false, nullptr,
                                         &bondSymbols, atomsInPlay, bondsInPlay,
                                         canonNeighborIds, true);
-  Canon::detail::StereoAtomCompareFunctor ftor(
-      &canonAtoms.front(), mol, atomCompareCodes, &atomsInPlay, &bondsInPlay);
+  Canon::AtomCompareFunctor ftor(&canonAtoms.front(), mol, &atomsInPlay,
+                                 &bondsInPlay, atomCompareCodes.data());
   std::vector<int> atomOrder(mol.getNumAtoms());
   std::vector<unsigned int> aranks(mol.getNumAtoms());
 
