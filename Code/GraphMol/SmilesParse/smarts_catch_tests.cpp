@@ -171,3 +171,20 @@ TEST_CASE("k SMARTS extensions") {
     }
   }
 }
+TEST_CASE("Github #9247: chirality lost inside recursive SMARTS") {
+  auto m = "OC[C@H]1O[C@H](O)[C@H](O)[C@@H](O)[C@@H]1O"_smiles;
+  REQUIRE(m);
+
+  SECTION("non-recursive pattern matches with chirality") {
+    auto patt = "OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O"_smarts;
+    REQUIRE(patt);
+    MatchVectType mv;
+    CHECK(SubstructMatch(*m, *patt, mv, true, true));
+  }
+  SECTION("equivalent recursive pattern should also match with chirality") {
+    auto patt = "[$(OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O)]"_smarts;
+    REQUIRE(patt);
+    MatchVectType mv;
+    CHECK(SubstructMatch(*m, *patt, mv, true, true));
+  }
+}
