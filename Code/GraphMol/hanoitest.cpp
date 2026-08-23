@@ -248,7 +248,8 @@ void test3() {
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
-    initCanonAtoms(*m, atoms, true);
+    std::vector<int> neighborIds(2 * m->getNumBonds());
+    initCanonAtoms(*m, atoms, neighborIds, true);
     atomcomparefunctor ftor(atoms.data());
 
     auto *data = atoms.data();
@@ -300,7 +301,8 @@ void test3() {
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
-    initCanonAtoms(*m, atoms, true);
+    std::vector<int> neighborIds(2 * m->getNumBonds());
+    initCanonAtoms(*m, atoms, neighborIds, true);
     atomcomparefunctor2 ftor(atoms.data());
 
     auto *data = atoms.data();
@@ -438,7 +440,8 @@ void test4() {
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
-    initCanonAtoms(*m, atoms, true);
+    std::vector<int> neighborIds(2 * m->getNumBonds());
+    initCanonAtoms(*m, atoms, neighborIds, true);
     atomcomparefunctor3 ftor(atoms.data(), *m);
     auto *data = atoms.data();
     std::vector<int> count(atoms.size());
@@ -498,7 +501,8 @@ void test4() {
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
-    initCanonAtoms(*m, atoms, true);
+    std::vector<int> neighborIds(2 * m->getNumBonds());
+    initCanonAtoms(*m, atoms, neighborIds, true);
     atomcomparefunctor3 ftor(atoms.data(), *m);
 
     auto data = atoms.data();
@@ -546,7 +550,8 @@ void test4() {
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
-    initCanonAtoms(*m, atoms, true);
+    std::vector<int> neighborIds(2 * m->getNumBonds());
+    initCanonAtoms(*m, atoms, neighborIds, true);
     atomcomparefunctor3 ftor(atoms.data(), *m);
 
     auto *data = atoms.data();
@@ -616,7 +621,8 @@ void test5() {
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     std::vector<Canon::canon_atom> atoms(m->getNumAtoms());
-    initCanonAtoms(*m, atoms, true);
+    std::vector<int> neighborIds(2 * m->getNumBonds());
+    initCanonAtoms(*m, atoms, neighborIds, true);
     atomcomparefunctor3 ftor(atoms.data(), *m);
 
     auto *data = atoms.data();

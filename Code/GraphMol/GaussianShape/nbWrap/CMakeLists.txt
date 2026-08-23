@@ -3,5 +3,5 @@ rdkit_nanobind_extension(rdGaussianShape
         rdGaussianShape.cpp
         DEST Chem
         LINK_LIBRARIES GaussianShape)
-add_pytest(pyShapeAlign
+add_pytest(pyGaussianShapeAlign
         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/test_rdgaussian_shape.py)

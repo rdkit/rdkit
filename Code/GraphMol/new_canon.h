@@ -25,6 +25,7 @@
 #include <cstring>
 #include <cassert>
 #include <cstring>
+#include <span>
 #include <vector>
 
 // #define VERBOSE_CANON 1
@@ -71,10 +72,9 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
   static int compare(const bondholder &x, const bondholder &y,
                      unsigned int div = 1) {
     if (x.p_symbol && y.p_symbol) {
-      if ((*x.p_symbol) < (*y.p_symbol)) {
-        return -1;
-      } else if ((*x.p_symbol) > (*y.p_symbol)) {
-        return 1;
+      auto symbolCompare = x.p_symbol->compare(*y.p_symbol);
+      if (symbolCompare != 0) {
+        return symbolCompare;
       }
     }
     if (x.bondType < y.bondType) {
@@ -110,7 +110,7 @@ struct RDKIT_GRAPHMOL_EXPORT canon_atom {
   bool isRingStereoAtom{false};
   unsigned int whichStereoGroup{0};
   StereoGroupType typeOfStereoGroup{StereoGroupType::STEREO_ABSOLUTE};
-  std::unique_ptr<int[]> nbrIds;
+  std::span<int> nbrIds;
   const std::string *p_symbol{
       nullptr};  // if provided, this is used to order atoms
   std::vector<int> neighborNum;
@@ -298,7 +298,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
       return 0;
     }
 
-    auto nbrs = dp_atoms[i].nbrIds.get();
+    const std::span<const int> nbrs = dp_atoms[i].nbrIds;
     unsigned int code = 0;
     for (unsigned j = 0; j < dp_atoms[i].degree; ++j) {
       if (dp_atoms[nbrs[j]].isRingStereoAtom) {
@@ -364,13 +364,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
       return 1;
     }
     if (dp_atoms[i].p_symbol && dp_atoms[j].p_symbol) {
-      if (*(dp_atoms[i].p_symbol) < *(dp_atoms[j].p_symbol)) {
-        return -1;
-      } else if (*(dp_atoms[i].p_symbol) > *(dp_atoms[j].p_symbol)) {
-        return 1;
-      } else {
-        return 0;
-      }
+      return dp_atoms[i].p_symbol->compare(*dp_atoms[j].p_symbol);
     }
 
     // move onto atomic number
@@ -911,6 +905,7 @@ RDKIT_GRAPHMOL_EXPORT void chiralRankMolAtoms(const ROMol &mol,
 
 RDKIT_GRAPHMOL_EXPORT void initCanonAtoms(const ROMol &mol,
                                           std::vector<Canon::canon_atom> &atoms,
+                                          std::span<int> neighborIds,
                                           bool includeChirality = true,
                                           bool includeStereoGroups = true);
 
@@ -922,6 +917,7 @@ void initFragmentCanonAtoms(const ROMol &mol,
                             const std::vector<std::string> *bondSymbols,
                             const boost::dynamic_bitset<> &atomsInPlay,
                             const boost::dynamic_bitset<> &bondsInPlay,
+                            std::span<int> neighborIds,
                             bool needsInit);
 template <typename T>
 void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
