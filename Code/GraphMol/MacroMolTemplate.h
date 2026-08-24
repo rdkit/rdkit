@@ -106,7 +106,13 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate final {
   unsigned int d_mainSgroupIdx;
 };
 
-//! Builds and validates a completed MacroMolTemplate.
+//! Collects and validates the pieces needed to create a MacroMolTemplate.
+/*!
+  Main-group and leaving-group definitions depend on one another, so the
+  builder holds the incomplete definition until build() can validate it as a
+  whole. build() returns a complete template without modifying the builder,
+  allowing callers to use the normal builder.build() syntax.
+*/
 class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateBuilder {
  public:
   MacroMolTemplateBuilder(const ROMol &mol, MonomerClass monomerClass,
@@ -124,7 +130,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateBuilder {
   //! Adds a leaving group and its attachment-point definition.
   MacroMolTemplateBuilder &addLeavingGroup(MacroMolLeavingGroup leavingGroup);
   //! Validates the complete definition and returns an immutable template.
-  std::unique_ptr<MacroMolTemplate> build() &&;
+  std::unique_ptr<MacroMolTemplate> build() const;
 
  private:
   RWMol d_mol;
@@ -142,9 +148,6 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateLibrary {
   //! Adds a completed template and takes ownership of it.
   void addTemplate(std::unique_ptr<MacroMolTemplate> macroMolTemplate);
 
-  //! Returns templates ordered by descending main-group size.
-  const std::vector<const MacroMolTemplate *> &entries() const;
-
   //! Returns a matching template, or nullptr if none has been added.
   const MacroMolTemplate *getByName(
       MonomerClass monomerClass, const std::string &name) const;
@@ -155,10 +158,8 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateLibrary {
  private:
   using MacroMolTemplateKey = std::pair<MonomerClass, std::string>;
 
-  std::map<MacroMolTemplateKey, const MacroMolTemplate *> byName;
+  std::map<MacroMolTemplateKey, std::unique_ptr<const MacroMolTemplate>> byName;
   std::map<MacroMolTemplateKey, const MacroMolTemplate *> bySymbol;
-  std::vector<std::unique_ptr<const MacroMolTemplate>> ownedTemplates;
-  std::vector<const MacroMolTemplate *> orderedEntries;
 };
 
 }  // namespace RDKit

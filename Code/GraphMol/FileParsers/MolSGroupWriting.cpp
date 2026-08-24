@@ -375,6 +375,7 @@ std::string BuildV2000SAPLines(const int idx, const SubstanceGroup &sgroup) {
     // lvIdx == -1 will turn into 0, which is right (see spec)
     temp << FormatV2000IntField(1 + sap.lvIdx);
 
+    // SAP ids occupy a fixed-width two-character field.
     temp << FormatV2000StringField(sap.id, 2, true, true);
     if (++count == entriesPerLine) {
       ret << "M  SAP" << FormatV2000IntField(idx)

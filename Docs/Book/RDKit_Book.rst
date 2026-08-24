@@ -2852,29 +2852,8 @@ The RNA and DNA elements are represented by three parts – a phosphate group, a
 Each atom line in the CTAB can refer to an elemental atom or a macro atom.  Macro atom lines have a text description of the macro name and must have a CLASS and an
 ATTCHORD attributed.  They can also have an optional SEQID attribute.  
 
-According to the Biovia doc, the CLASS attribute must have a value that is one of:  AA, dAA, DNA, RNA, SUGAR, BASE, PHOSPHATE, LINKER, CHEM, LGRP, MODAA, MODdAA, MODDNA, MODRNA, XLINKAA, XLINKdAA, XLINKDNA, XLINKRNA.
-RDKit requires these standard values when strictly parsing an SCSR mol block.
-
-For generic MOL and SDF files, RDKit additionally accepts the CLASS values
-``AminoAcid``, ``NucleicAcid``, ``Chemical``, and ``Other``. These values
-preserve RDKit's format-neutral ``MonomerClass`` metadata but are RDKit
-extensions, not standard SCSR classes. Other CTfile implementations may reject
-or ignore them, and strict SCSR parsing continues to require the standard
-classes listed above.
-
-``MonomerClass`` deliberately stores only broad, format-neutral semantics. It
-does not retain distinctions such as amino-acid chirality or modification, or
-whether a nucleic acid is DNA, RNA, a base, a sugar, or a phosphate. ``Other``
-represents a recognized but otherwise uncategorized monomer; it is not a
-container for arbitrary external class strings.
-
-The canonical names returned by ``monomerClassToString()`` are RDKit names,
-not mappings to SCSR, HELM, PDB, or another format. Parsers and writers for
-those formats are responsible for their own conversions. A writer must use
-additional format-specific context or report an error when a neutral class is
-insufficient to select a valid output value. Exact external classifications,
-such as ``dAA``, ``MODAA``, or ``BASE``, are not preserved by
-``MonomerClass``.
+According to the Biovia doc, the CLASS attribute must have a value that is one of:  AA, dAA, DNA, RNA, SUGAR, BASE, PHOSPHATE, LINKER, CHEM, LGRP, MODAA, MODdAA, MODDNA, MODRNA, XLINKAA, XLINKdAA, XLINKDNA, XLINKRNA.   
+For an SCSR mol block, (and for any SGROUP), RDKit requires that the CLASS attribute be one of these values.
 
 The SEQID is a sequential integer and is ignored by this treatment.  Typically, the three parts of an RNA or DNA element have the same SEQID.
 
@@ -3131,3 +3110,4 @@ To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/
 
 The intent of this license is similar to that of the RDKit itself.
 In simple words: “Do whatever you want with it, but please give us some credit.”
+

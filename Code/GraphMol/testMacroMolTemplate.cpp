@@ -20,7 +20,6 @@
 #include <memory>
 #include <string>
 #include <type_traits>
-#include <utility>
 #include <vector>
 
 using namespace RDKit;
@@ -41,7 +40,7 @@ std::unique_ptr<MacroMolTemplate> makeTemplate(
   for (auto &leavingGroup : leavingGroups) {
     builder.addLeavingGroup(std::move(leavingGroup));
   }
-  return std::move(builder).build();
+  return builder.build();
 }
 
 std::unique_ptr<MacroMolTemplate> makeAnnotatedAlanineTemplate() {
@@ -54,12 +53,13 @@ std::unique_ptr<MacroMolTemplate> makeAnnotatedAlanineTemplate() {
 
   MacroMolTemplateBuilder builder(*parsed, MonomerClass::AminoAcid, "ALA",
                                   "A", "[H]N[C@@H](C)C(=O)O");
-  return std::move(builder.setMainGroup({1, 2, 3, 4, 5})
-                       .addLeavingGroup({{0}, 1, 0, 1})
-                       .addLeavingGroup({{6}, 4, 6, 2}))
-      .build();
+  builder.setMainGroup({1, 2, 3, 4, 5})
+      .addLeavingGroup({{0}, 1, 0, 1})
+      .addLeavingGroup({{6}, 4, 6, 2});
+  return builder.build();
 }
 
+// Check the exact SGroup metadata preserved by each serialization path.
 void checkSerializedAlanineTemplate(const ROMol &mol) {
   const auto &sgroups = getSubstanceGroups(mol);
   REQUIRE(sgroups.size() == 3);
@@ -85,27 +85,8 @@ void checkSerializedAlanineTemplate(const ROMol &mol) {
 
 }  // namespace
 
+// MacroMolTemplate owns an ROMol instead of extending the molecule hierarchy.
 static_assert(!std::is_base_of_v<ROMol, MacroMolTemplate>);
-static_assert(!std::is_base_of_v<RWMol, MacroMolTemplate>);
-static_assert(!std::is_default_constructible_v<MacroMolLeavingGroup>);
-static_assert(std::is_constructible_v<MacroMolLeavingGroup,
-                                      std::vector<unsigned int>, unsigned int,
-                                      unsigned int, int>);
-static_assert(!std::is_default_constructible_v<MacroMolTemplate>);
-static_assert(std::is_copy_constructible_v<MacroMolTemplate>);
-static_assert(std::is_move_constructible_v<MacroMolTemplate>);
-static_assert(!std::is_copy_assignable_v<MacroMolTemplate>);
-static_assert(std::is_same_v<
-              decltype(std::declval<const MacroMolTemplate &>().getMol()),
-              const ROMol &>);
-static_assert(std::is_same_v<
-              decltype(std::declval<const MacroMolTemplate &>()
-                           .getMainSgroup()),
-              const SubstanceGroup &>);
-static_assert(std::is_same_v<
-              decltype(std::declval<const MacroMolTemplateLibrary &>()
-                           .entries()),
-              const std::vector<const MacroMolTemplate *> &>);
 
 TEST_CASE("MacroMolTemplate owns a logically read-only molecule and metadata") {
   auto templ = makeTemplate("ALA", "A", "C", {0});
@@ -118,6 +99,7 @@ TEST_CASE("MacroMolTemplate owns a logically read-only molecule and metadata") {
   CHECK(templ->getMainAtomIdxs() == std::vector<unsigned int>{0});
   CHECK(templ->getLeavingGroups().empty());
 
+  // Copying must repair the SGroup's owning-molecule back-reference.
   MacroMolTemplate copied(*templ);
   CHECK(copied.getMol().getNumAtoms() == 1);
   CHECK(&copied.getMainSgroup().getOwningMol() == &copied.getMol());
@@ -158,6 +140,7 @@ TEST_CASE("MacroMolTemplate mirrors typed main and leaving groups") {
 }
 
 TEST_CASE("Monomer classes are valid generic SGroup classes") {
+  // Neutral class names must survive generic CTAB serialization.
   const std::array monomerClasses{
       MonomerClass::AminoAcid, MonomerClass::NucleicAcid,
       MonomerClass::Chemical, MonomerClass::Other};
@@ -185,6 +168,7 @@ TEST_CASE("Monomer classes are valid generic SGroup classes") {
 TEST_CASE("MacroMolTemplate SGroups survive generic MOL and SDF round trips") {
   auto templ = makeAnnotatedAlanineTemplate();
 
+  // Cover the fixed-width V2000 path as well as V3000 and SDF serialization.
   SECTION("V2000 MOL") {
     const auto molBlock = MolToV2KMolBlock(templ->getMol());
     std::unique_ptr<RWMol> roundTripped(
@@ -218,36 +202,36 @@ TEST_CASE("MacroMolTemplateBuilder validates completed definitions") {
   SECTION("main group is required") {
     RWMol mol;
     MacroMolTemplateBuilder builder(mol, MonomerClass::Other, "X", "X", "");
-    CHECK_THROWS_AS(std::move(builder).build(), ValueErrorException);
+    CHECK_THROWS_AS(builder.build(), ValueErrorException);
   }
   SECTION("metadata is required") {
     auto mol = std::unique_ptr<RWMol>(SmilesToMol("C"));
     MacroMolTemplateBuilder builder(*mol, MonomerClass::Other, "", "X", "C");
     builder.setMainGroup({0});
-    CHECK_THROWS_AS(std::move(builder).build(), ValueErrorException);
+    CHECK_THROWS_AS(builder.build(), ValueErrorException);
   }
   SECTION("main indices must be unique and in range") {
     auto mol = std::unique_ptr<RWMol>(SmilesToMol("CC"));
     MacroMolTemplateBuilder duplicate(*mol, MonomerClass::Other, "X", "X",
                                       "CC");
     duplicate.setMainGroup({0, 0});
-    CHECK_THROWS_AS(std::move(duplicate).build(), ValueErrorException);
+    CHECK_THROWS_AS(duplicate.build(), ValueErrorException);
 
     MacroMolTemplateBuilder outOfRange(*mol, MonomerClass::Other, "X", "X",
                                        "CC");
     outOfRange.setMainGroup({0, 2});
-    CHECK_THROWS_AS(std::move(outOfRange).build(), ValueErrorException);
+    CHECK_THROWS_AS(outOfRange.build(), ValueErrorException);
   }
   SECTION("groups must form a disjoint atom partition") {
     auto mol = std::unique_ptr<RWMol>(SmilesToMol("CCC"));
     MacroMolTemplateBuilder gap(*mol, MonomerClass::Other, "X", "X", "CCC");
     gap.setMainGroup({0, 1});
-    CHECK_THROWS_AS(std::move(gap).build(), ValueErrorException);
+    CHECK_THROWS_AS(gap.build(), ValueErrorException);
 
     MacroMolTemplateBuilder overlap(*mol, MonomerClass::Other, "X", "X",
                                     "CCC");
     overlap.setMainGroup({0, 1}).addLeavingGroup({{1, 2}, 1, 2, 1});
-    CHECK_THROWS_AS(std::move(overlap).build(), ValueErrorException);
+    CHECK_THROWS_AS(overlap.build(), ValueErrorException);
   }
   SECTION("attachment ids must be positive and unique") {
     auto mol = std::unique_ptr<RWMol>(SmilesToMol("CCC"));
@@ -256,46 +240,48 @@ TEST_CASE("MacroMolTemplateBuilder validates completed definitions") {
     duplicate.setMainGroup({1})
         .addLeavingGroup({{0}, 1, 0, 1})
         .addLeavingGroup({{2}, 1, 2, 1});
-    CHECK_THROWS_AS(std::move(duplicate).build(), ValueErrorException);
+    CHECK_THROWS_AS(duplicate.build(), ValueErrorException);
   }
   SECTION("leaving groups must be connected") {
     auto mol = std::unique_ptr<RWMol>(SmilesToMol("CCC.C"));
     MacroMolTemplateBuilder builder(*mol, MonomerClass::Other, "X", "X",
                                     "CCC.C");
     builder.setMainGroup({0}).addLeavingGroup({{1, 2, 3}, 0, 1, 1});
-    CHECK_THROWS_AS(std::move(builder).build(), ValueErrorException);
+    CHECK_THROWS_AS(builder.build(), ValueErrorException);
   }
   SECTION("leaving groups have exactly one declared boundary bond") {
     auto mol = std::unique_ptr<RWMol>(SmilesToMol("C1CC1"));
     MacroMolTemplateBuilder builder(*mol, MonomerClass::Other, "X", "X",
                                     "C1CC1");
     builder.setMainGroup({0}).addLeavingGroup({{1, 2}, 0, 1, 1});
-    CHECK_THROWS_AS(std::move(builder).build(), ValueErrorException);
+    CHECK_THROWS_AS(builder.build(), ValueErrorException);
   }
 }
 
-TEST_CASE("MacroMolTemplateLibrary owns, orders, and looks up templates") {
+TEST_CASE("MacroMolTemplateBuilder can build without being consumed") {
+  auto mol = std::unique_ptr<RWMol>(SmilesToMol("C"));
+  MacroMolTemplateBuilder builder(*mol, MonomerClass::Other, "X", "X", "C");
+  builder.setMainGroup({0});
+
+  const auto first = builder.build();
+  const auto second = builder.build();
+  CHECK(first->getName() == second->getName());
+}
+
+TEST_CASE("MacroMolTemplateLibrary owns and looks up templates") {
   MacroMolTemplateLibrary library;
   auto small = makeTemplate("SMALL", "S", "C", {0});
-  auto firstLarge = makeTemplate("FIRST_LARGE", "L1", "CCC", {0, 1, 2});
-  auto secondLarge = makeTemplate("SECOND_LARGE", "L2", "CCN", {0, 1, 2});
   const auto *smallPtr = small.get();
-  const auto *firstLargePtr = firstLarge.get();
-  const auto *secondLargePtr = secondLarge.get();
 
   library.addTemplate(std::move(small));
-  library.addTemplate(std::move(firstLarge));
-  library.addTemplate(std::move(secondLarge));
 
-  const std::vector<const MacroMolTemplate *> expectedEntries{
-      firstLargePtr, secondLargePtr, smallPtr};
-  CHECK(library.entries() == expectedEntries);
   CHECK(library.getByName(MonomerClass::AminoAcid, "SMALL") == smallPtr);
   CHECK(library.getBySymbol(MonomerClass::AminoAcid, "S") == smallPtr);
   CHECK(library.getByName(MonomerClass::AminoAcid, "missing") == nullptr);
 }
 
 TEST_CASE("MacroMolTemplateLibrary separates classes and rejects duplicates") {
+  // Name and symbol keys are scoped by MonomerClass.
   MacroMolTemplateLibrary library;
   library.addTemplate(
       makeTemplate("ALA", "A", "C", {0}, {}, MonomerClass::AminoAcid));

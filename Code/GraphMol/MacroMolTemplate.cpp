@@ -10,10 +10,10 @@
 
 #include "MacroMolTemplate.h"
 
+#include <GraphMol/MolOps.h>
 #include <RDGeneral/Exceptions.h>
 
 #include <algorithm>
-#include <queue>
 #include <set>
 #include <unordered_set>
 
@@ -23,14 +23,14 @@ namespace {
 const std::string SUP_TYPE = "SUP";
 const std::string LGRP_CLASS = "LGRP";
 
-// Give all builder validation failures a consistent, recognizable prefix.
 [[noreturn]] void invalidTemplate(const std::string &message) {
+  // Give all builder validation failures a recognizable prefix.
   throw ValueErrorException("invalid MacroMolTemplate: " + message);
 }
 
-// Require every supplied atom index to be unique and present in the molecule.
 void validateUniqueInRange(const std::vector<unsigned int> &atomIdxs,
                            unsigned int numAtoms, const std::string &name) {
+  // Require every index to be unique and present in the molecule.
   std::unordered_set<unsigned int> seen;
   for (const auto atomIdx : atomIdxs) {
     if (atomIdx >= numAtoms) {
@@ -42,35 +42,12 @@ void validateUniqueInRange(const std::vector<unsigned int> &atomIdxs,
   }
 }
 
-// Check that the atoms form one connected component in the template molecule.
-bool isConnected(const ROMol &mol,
-                 const std::vector<unsigned int> &atomIdxs) {
-  std::unordered_set<unsigned int> groupAtoms(atomIdxs.begin(), atomIdxs.end());
-  std::unordered_set<unsigned int> visited;
-  std::queue<unsigned int> pending;
-  pending.push(atomIdxs.front());
-  visited.insert(atomIdxs.front());
-
-  while (!pending.empty()) {
-    const auto atomIdx = pending.front();
-    pending.pop();
-    for (const auto *bond : mol.atomBonds(mol.getAtomWithIdx(atomIdx))) {
-      const auto otherAtomIdx = bond->getOtherAtomIdx(atomIdx);
-      if (groupAtoms.find(otherAtomIdx) != groupAtoms.end() &&
-          visited.insert(otherAtomIdx).second) {
-        pending.push(otherAtomIdx);
-      }
-    }
-  }
-  return visited.size() == atomIdxs.size();
-}
-
-// Validate one leaving group and record its atoms and attachment point as used.
 void validateLeavingGroup(const ROMol &mol,
                           const MacroMolLeavingGroup &leavingGroup,
                           const std::unordered_set<unsigned int> &mainAtoms,
                           std::set<int> &attachmentPoints,
                           std::vector<unsigned int> &atomMembership) {
+  // Validate one leaving group and record its atoms and attachment point.
   if (leavingGroup.atomIdxs.empty()) {
     invalidTemplate("leaving groups cannot be empty");
   }
@@ -86,38 +63,37 @@ void validateLeavingGroup(const ROMol &mol,
     invalidTemplate("attachment atom must be part of the main group");
   }
 
-  const std::unordered_set<unsigned int> leavingAtoms(
-      leavingGroup.atomIdxs.begin(), leavingGroup.atomIdxs.end());
-  if (leavingAtoms.find(leavingGroup.leavingAtomIdx) == leavingAtoms.end()) {
+  if (std::find(leavingGroup.atomIdxs.begin(), leavingGroup.atomIdxs.end(),
+                leavingGroup.leavingAtomIdx) == leavingGroup.atomIdxs.end()) {
     invalidTemplate("leaving atom must be part of its leaving group");
   }
   if (!mol.getBondBetweenAtoms(leavingGroup.attachAtomIdx,
                                leavingGroup.leavingAtomIdx)) {
     invalidTemplate("attachment atom must be bonded to the leaving atom");
   }
-  if (!isConnected(mol, leavingGroup.atomIdxs)) {
-    invalidTemplate("each leaving group must be connected");
-  }
-
-  unsigned int boundaryBondCount = 0;
-  bool foundAttachmentBond = false;
   for (const auto atomIdx : leavingGroup.atomIdxs) {
     if (atomMembership[atomIdx] != 0) {
       invalidTemplate("main and leaving groups must not overlap");
     }
     atomMembership[atomIdx] = 2;
-    for (const auto *bond : mol.atomBonds(mol.getAtomWithIdx(atomIdx))) {
-      const auto otherAtomIdx = bond->getOtherAtomIdx(atomIdx);
-      if (leavingAtoms.find(otherAtomIdx) == leavingAtoms.end()) {
-        ++boundaryBondCount;
-        if (atomIdx == leavingGroup.leavingAtomIdx &&
-            otherAtomIdx == leavingGroup.attachAtomIdx) {
-          foundAttachmentBond = true;
-        }
-      }
-    }
   }
-  if (boundaryBondCount != 1 || !foundAttachmentBond) {
+
+  // Removing the declared bond must isolate exactly the leaving-group atoms.
+  RWMol disconnected(mol);
+  disconnected.removeBond(leavingGroup.attachAtomIdx,
+                          leavingGroup.leavingAtomIdx);
+  std::vector<int> fragmentIds;
+  MolOps::getMolFrags(disconnected, fragmentIds);
+  const auto leavingFragment = fragmentIds[leavingGroup.leavingAtomIdx];
+  if (std::any_of(leavingGroup.atomIdxs.begin(), leavingGroup.atomIdxs.end(),
+                  [&fragmentIds, leavingFragment](unsigned int atomIdx) {
+                    return fragmentIds[atomIdx] != leavingFragment;
+                  })) {
+    invalidTemplate("each leaving group must be connected");
+  }
+  if (static_cast<size_t>(std::count(fragmentIds.begin(), fragmentIds.end(),
+                                     leavingFragment)) !=
+      leavingGroup.atomIdxs.size()) {
     invalidTemplate(
         "a leaving group must have exactly its declared attachment boundary");
   }
@@ -145,7 +121,7 @@ MacroMolTemplateBuilder &MacroMolTemplateBuilder::addLeavingGroup(
   return *this;
 }
 
-std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() && {
+std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() const {
   if (d_name.empty()) {
     invalidTemplate("name cannot be empty");
   }
@@ -176,7 +152,8 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() && {
   }
 
   // Mirror the canonical template definition as SUP SGroups for MOL/SDF I/O.
-  SubstanceGroup mainSgroup(&d_mol, SUP_TYPE);
+  RWMol mol(d_mol);
+  SubstanceGroup mainSgroup(&mol, SUP_TYPE);
   mainSgroup.setProp("CLASS",
                      std::string(monomerClassToString(d_monomerClass)));
   mainSgroup.setProp("LABEL", d_name);
@@ -186,19 +163,18 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() && {
                               static_cast<int>(leavingGroup.leavingAtomIdx),
                               std::to_string(leavingGroup.attachPoint));
   }
-  const auto mainSgroupIdx = addSubstanceGroup(d_mol, std::move(mainSgroup));
+  const auto mainSgroupIdx = addSubstanceGroup(mol, std::move(mainSgroup));
 
   for (const auto &leavingGroup : d_leavingGroups) {
-    SubstanceGroup sgroup(&d_mol, SUP_TYPE);
+    SubstanceGroup sgroup(&mol, SUP_TYPE);
     sgroup.setProp("CLASS", LGRP_CLASS);
     sgroup.setAtoms(leavingGroup.atomIdxs);
-    addSubstanceGroup(d_mol, std::move(sgroup));
+    addSubstanceGroup(mol, std::move(sgroup));
   }
 
   return std::unique_ptr<MacroMolTemplate>(new MacroMolTemplate(
-      std::move(d_mol), d_monomerClass, std::move(d_name),
-      std::move(d_symbol), std::move(d_originalData),
-      std::move(d_mainAtomIdxs), std::move(d_leavingGroups), mainSgroupIdx));
+      std::move(mol), d_monomerClass, d_name, d_symbol, d_originalData,
+      d_mainAtomIdxs, d_leavingGroups, mainSgroupIdx));
 }
 
 void MacroMolTemplateLibrary::addTemplate(
@@ -223,31 +199,16 @@ void MacroMolTemplateLibrary::addTemplate(
         "monomer class and symbol");
   }
 
-  // Try larger, more specific templates before smaller substructure matches.
-  const auto mainGroupSize = macroMolTemplate->getMainAtomIdxs().size();
-  const auto insertionPoint = std::upper_bound(
-      orderedEntries.begin(), orderedEntries.end(), mainGroupSize,
-      [](size_t size, const MacroMolTemplate *existingTemplate) {
-        return size > existingTemplate->getMainAtomIdxs().size();
-      });
-
   const auto *templatePtr = macroMolTemplate.get();
-  ownedTemplates.push_back(std::move(macroMolTemplate));
-  byName.emplace(nameKey, templatePtr);
+  byName.emplace(nameKey, std::move(macroMolTemplate));
   bySymbol.emplace(symbolKey, templatePtr);
-  orderedEntries.insert(insertionPoint, templatePtr);
-}
-
-const std::vector<const MacroMolTemplate *> &
-MacroMolTemplateLibrary::entries() const {
-  return orderedEntries;
 }
 
 const MacroMolTemplate *MacroMolTemplateLibrary::getByName(
     MonomerClass monomerClass, const std::string &name) const {
   auto it = byName.find({monomerClass, name});
   if (it != byName.end()) {
-    return it->second;
+    return it->second.get();
   }
   return nullptr;
 }
