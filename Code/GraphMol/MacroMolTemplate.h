@@ -40,18 +40,6 @@ struct RDKIT_GRAPHMOL_EXPORT MacroMolLeavingGroup {
   int attachPoint;
 };
 
-//! Converts a canonical MacroMol attachment point to its SUP SGroup SAP id.
-/*!
-  Attachment points remain numeric in MacroMol. When mirrored to a SUP SGroup,
-  point 1 is written as "Al", point 2 as "Br", and subsequent points use the
-  crosslink convention "Cx", "Dx", etc.
-
-  \throws ValueErrorException if attachPoint cannot be represented by the
-          two-character SGroup convention.
-*/
-RDKIT_GRAPHMOL_EXPORT std::string macroMolAttachmentPointToSGroupId(
-    int attachPoint);
-
 class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateBuilder;
 
 //! A logically read-only, annotated molecule template for a macromolecule

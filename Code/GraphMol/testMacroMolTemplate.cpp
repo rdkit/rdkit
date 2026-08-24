@@ -72,8 +72,8 @@ void checkSerializedAlanineTemplate(const ROMol &mol) {
         std::vector<unsigned int>({1, 2, 3, 4, 5}));
   const auto &attachPoints = mainSgroup.getAttachPoints();
   REQUIRE(attachPoints.size() == 2);
-  const SubstanceGroup::AttachPoint firstAttachPoint{1, 0, "Al"};
-  const SubstanceGroup::AttachPoint secondAttachPoint{4, 6, "Br"};
+  const SubstanceGroup::AttachPoint firstAttachPoint{1, 0, "1"};
+  const SubstanceGroup::AttachPoint secondAttachPoint{4, 6, "2"};
   CHECK(attachPoints[0] == firstAttachPoint);
   CHECK(attachPoints[1] == secondAttachPoint);
 
@@ -106,15 +106,6 @@ static_assert(std::is_same_v<
               decltype(std::declval<const MacroMolTemplateLibrary &>()
                            .entries()),
               const std::vector<const MacroMolTemplate *> &>);
-
-TEST_CASE("MacroMol attachment points use conventional SGroup SAP ids") {
-  CHECK(macroMolAttachmentPointToSGroupId(1) == "Al");
-  CHECK(macroMolAttachmentPointToSGroupId(2) == "Br");
-  CHECK(macroMolAttachmentPointToSGroupId(3) == "Cx");
-  CHECK(macroMolAttachmentPointToSGroupId(4) == "Dx");
-  CHECK_THROWS_AS(macroMolAttachmentPointToSGroupId(0), ValueErrorException);
-  CHECK_THROWS_AS(macroMolAttachmentPointToSGroupId(27), ValueErrorException);
-}
 
 TEST_CASE("MacroMolTemplate owns a logically read-only molecule and metadata") {
   auto templ = makeTemplate("ALA", "A", "C", {0});
@@ -153,8 +144,8 @@ TEST_CASE("MacroMolTemplate mirrors typed main and leaving groups") {
   CHECK(mainSgroup.getAtoms() == templ->getMainAtomIdxs());
   const auto &attachPoints = mainSgroup.getAttachPoints();
   REQUIRE(attachPoints.size() == 2);
-  const SubstanceGroup::AttachPoint firstAttachPoint{1, 0, "Al"};
-  const SubstanceGroup::AttachPoint secondAttachPoint{4, 6, "Br"};
+  const SubstanceGroup::AttachPoint firstAttachPoint{1, 0, "1"};
+  const SubstanceGroup::AttachPoint secondAttachPoint{4, 6, "2"};
   CHECK(attachPoints[0] == firstAttachPoint);
   CHECK(attachPoints[1] == secondAttachPoint);
 
