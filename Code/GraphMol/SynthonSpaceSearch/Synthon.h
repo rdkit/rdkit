@@ -10,12 +10,16 @@
 
 #ifndef RDKIT_REAGENT_H
 #define RDKIT_REAGENT_H
+#include <memory>
+#include <vector>
 
 #include <string>
 
 #include <RDGeneral/export.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonShapeInput.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearchHelpers.h>
+
+class ExplicitBitVect;
 
 namespace RDKit {
 class Atom;

@@ -1087,6 +1087,9 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
 
   // our return value
   std::vector<StereoInfo> res;
+  if (!mol.getNumAtoms()) {
+    return res;
+  }
 
   // these are used to track which atoms/bonds have been altered
   boost::dynamic_bitset<> fixedAtoms(mol.getNumAtoms());
@@ -1098,53 +1101,39 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   boost::dynamic_bitset<> bondsInPlay(mol.getNumBonds());
   bondsInPlay.set();
 
-#define LOCAL_CANON 0
-#if LOCAL_CANON
   std::vector<Canon::canon_atom> canonAtoms(mol.getNumAtoms());
   std::vector<int> canonNeighborIds(2 * mol.getNumBonds());
+  Canon::detail::initFragmentCanonAtoms(mol, canonAtoms, false, &atomSymbols,
+                                        &bondSymbols, atomsInPlay, bondsInPlay,
+                                        canonNeighborIds, true);
   Canon::AtomCompareFunctor ftor(&canonAtoms.front(), mol, &atomsInPlay,
                                  &bondsInPlay);
   ftor.df_useIsotopes = false;
   ftor.df_useChirality = false;
-  auto atomOrder = new int[mol.getNumAtoms()];
-#endif
+  ftor.df_useAtomMaps = false;
+  ftor.df_useChiralityRings = false;
+  ftor.df_useChiralPresence = false;
+  std::vector<int> atomOrder(mol.getNumAtoms());
   std::vector<unsigned int> aranks(mol.getNumAtoms());
-  bool needAnotherRound = true;
-  while (needAnotherRound) {
-    res.clear();
-#if LOCAL_CANON
-    // find symmetry classes with the canonicalization code
-    Canon::detail::initFragmentCanonAtoms(mol, canonAtoms, false, &atomSymbols,
-                                          &bondSymbols, atomsInPlay,
-                                          bondsInPlay, canonNeighborIds,
-                                          needsInit);
-    needsInit = false;
-
+  const auto updateRanks = [&]() {
     const bool includeChirality = false;
-    const bool includeIsotopes = false;
     const bool breakTies = false;
-    memset(atomOrder, 0, mol.getNumAtoms() * sizeof(int));
     Canon::detail::rankWithFunctor(ftor, breakTies, atomOrder, true,
-                                   includeChirality, &atomsInPlay,
+                                   includeChirality, false, &atomsInPlay,
                                    &bondsInPlay);
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       aranks[atomOrder[i]] = canonAtoms[atomOrder[i]].index;
     }
-#else
-    const bool includeChirality = false;
-    const bool includeIsotopes = false;
-    const bool breakTies = false;
-    const bool includeAtomMaps = false;
-    const bool includeChiralPresence = false;
-    const bool useRingStereo = false;
-    // Now apply the canonical atom ranking code with basic connectivity
-    // invariants The necessary condition for chirality is that an atom's
-    // neighbors must have unique ranks
-    Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
-                             &atomSymbols, &bondSymbols, breakTies,
-                             includeChirality, includeIsotopes, includeAtomMaps,
-                             includeChiralPresence, useRingStereo);
-#endif
+  };
+
+  bool needAnotherRound = true;
+  while (needAnotherRound) {
+    res.clear();
+    // Apply the canonical atom ranking code with basic connectivity invariants.
+    // The necessary condition for chirality is that an atom's neighbors have
+    // unique ranks. The molecular topology is constant across cleanup rounds,
+    // so reuse the initialized canonical atoms while the symbol values change.
+    updateRanks();
     // check if any new atoms definitely now have stereo; do another loop if
     // so
     needAnotherRound = updateAtoms(
@@ -1202,36 +1191,7 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
       //           std::ostream_iterator<std::string>(std::cerr, " "));
       // std::cerr << std::endl;
 
-#if LOCAL_CANON
-      Canon::detail::initFragmentCanonAtoms(mol, canonAtoms, false,
-                                            &atomSymbols, &bondSymbols,
-                                            atomsInPlay, bondsInPlay,
-                                            canonNeighborIds, true);
-      needsInit = false;
-
-      const bool includeChirality = false;
-      const bool breakTies = false;
-      memset(atomOrder, 0, mol.getNumAtoms() * sizeof(int));
-      Canon::detail::rankWithFunctor(ftor, breakTies, atomOrder, true,
-                                     includeChirality, &atomsInPlay,
-                                     &bondsInPlay);
-      for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-        aranks[atomOrder[i]] = canonAtoms[atomOrder[i]].index;
-      }
-
-#else
-      // we will use the canonicalization code
-      const bool breakTies = false;
-      const bool includeChirality = false;
-      const bool includeIsotopes = false;
-      const bool includeAtomMaps = false;
-      const bool includeChiralPresence = false;
-      const bool useRingStereo = false;
-      Canon::rankFragmentAtoms(
-          mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols, &bondSymbols,
-          breakTies, includeChirality, includeIsotopes, includeAtomMaps,
-          includeChiralPresence, useRingStereo);
-#endif
+      updateRanks();
       needAnotherRound = updateAtoms(
           mol, aranks, atomSymbols, possibleAtoms, knownAtoms, fixedAtoms,
           possibleRingStereoAtoms, possibleRingStereoBonds, res);
@@ -1249,10 +1209,6 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
                                 aranks[atom->getIdx()], true);
   }
 
-#if LOCAL_CANON
-  delete[] atomOrder;
-  Canon::detail::freeCanonAtoms(canonAtoms);
-#endif
   return res;
 }
 
