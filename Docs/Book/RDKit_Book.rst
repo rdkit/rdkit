@@ -2868,14 +2868,6 @@ whether a nucleic acid is DNA, RNA, a base, a sugar, or a phosphate. ``Other``
 represents a recognized but otherwise uncategorized monomer; it is not a
 container for arbitrary external class strings.
 
-MacroMol attachment points likewise use canonical positive integers. When a
-``MacroMolTemplate`` mirrors those points into SUP SGroups for generic MOL and
-SDF I/O, the SAP identifiers are stored as decimal strings such as ``1``, ``2``,
-and ``3``. Format-specific adapters are responsible for mapping those canonical
-numbers to their own representation when sufficient format-specific context is
-available; for example, HELM uses ``R1``, ``R2``, and ``R3``. MacroMol does not
-infer SCSR labels such as ``Al``, ``Br``, or ``Cx`` from numeric order alone.
-
 The canonical names returned by ``monomerClassToString()`` are RDKit names,
 not mappings to SCSR, HELM, PDB, or another format. Parsers and writers for
 those formats are responsible for their own conversions. A writer must use
