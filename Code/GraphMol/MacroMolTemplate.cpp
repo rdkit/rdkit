@@ -121,6 +121,21 @@ void validateLeavingGroup(const ROMol &mol,
 
 }  // namespace
 
+std::string macroMolAttachmentPointToSGroupId(int attachPoint) {
+  if (attachPoint < 1 || attachPoint > 26) {
+    throw ValueErrorException(
+        "MacroMol attachment point cannot be represented as an SGroup SAP "
+        "id");
+  }
+  if (attachPoint == 1) {
+    return "Al";
+  }
+  if (attachPoint == 2) {
+    return "Br";
+  }
+  return {static_cast<char>('A' + attachPoint - 1), 'x'};
+}
+
 const SubstanceGroup &MacroMolTemplate::getMainSgroup() const {
   return getSubstanceGroups(d_mol).at(d_mainSgroupIdx);
 }
@@ -178,7 +193,8 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() && {
   for (const auto &leavingGroup : d_leavingGroups) {
     mainSgroup.addAttachPoint(leavingGroup.attachAtomIdx,
                               static_cast<int>(leavingGroup.leavingAtomIdx),
-                              std::to_string(leavingGroup.attachPoint));
+                              macroMolAttachmentPointToSGroupId(
+                                  leavingGroup.attachPoint));
   }
   const auto mainSgroupIdx = addSubstanceGroup(d_mol, std::move(mainSgroup));
 
@@ -245,14 +261,18 @@ MacroMolTemplateLibrary::entries() const {
 const MacroMolTemplate *MacroMolTemplateLibrary::getByName(
     MonomerClass monomerClass, const std::string &name) const {
   auto it = byName.find({monomerClass, name});
-  if (it != byName.end()) return it->second;
+  if (it != byName.end()) {
+    return it->second;
+  }
   return nullptr;
 }
 
 const MacroMolTemplate *MacroMolTemplateLibrary::getBySymbol(
     MonomerClass monomerClass, const std::string &symbol) const {
   auto it = bySymbol.find({monomerClass, symbol});
-  if (it != bySymbol.end()) return it->second;
+  if (it != bySymbol.end()) {
+    return it->second;
+  }
   return nullptr;
 }
 
