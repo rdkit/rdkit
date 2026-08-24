@@ -12,6 +12,7 @@
 
 #include <GraphMol/MolOps.h>
 #include <RDGeneral/Exceptions.h>
+#include <RDGeneral/Invariant.h>
 
 #include <algorithm>
 #include <set>
@@ -105,9 +106,7 @@ const SubstanceGroup &MacroMolTemplate::getMainSgroup() const {
 
 MacroMolTemplateBuilder &MacroMolTemplateBuilder::setMainGroup(
     std::vector<unsigned int> atomIdxs) {
-  if (d_mainGroupSet) {
-    invalidTemplate("main group has already been set");
-  }
+  PRECONDITION(!d_mainGroupSet, "main group has already been set");
   d_mainAtomIdxs = std::move(atomIdxs);
   d_mainGroupSet = true;
   return *this;
@@ -181,9 +180,7 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() const {
 
 void MacroMolTemplateLibrary::addTemplate(
     std::unique_ptr<MacroMolTemplate> macroMolTemplate) {
-  if (!macroMolTemplate) {
-    throw ValueErrorException("cannot add a null MacroMolTemplate");
-  }
+  PRECONDITION(macroMolTemplate, "cannot add a null MacroMolTemplate");
 
   const MacroMolTemplateKey nameKey{
       macroMolTemplate->getMonomerClass(), macroMolTemplate->getName()};

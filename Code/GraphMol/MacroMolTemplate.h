@@ -145,6 +145,13 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateBuilder {
 
 class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateLibrary {
  public:
+  MacroMolTemplateLibrary() = default;
+  MacroMolTemplateLibrary(const MacroMolTemplateLibrary &) = delete;
+  MacroMolTemplateLibrary(MacroMolTemplateLibrary &&) noexcept = delete;
+  MacroMolTemplateLibrary &operator=(const MacroMolTemplateLibrary &) = delete;
+  MacroMolTemplateLibrary &operator=(MacroMolTemplateLibrary &&) noexcept =
+      delete;
+
   //! Adds a completed template and takes ownership of it.
   void addTemplate(std::unique_ptr<MacroMolTemplate> macroMolTemplate);
 

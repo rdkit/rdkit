@@ -14,6 +14,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <RDGeneral/Invariant.h>
 #include <catch2/catch_all.hpp>
 
 #include <array>
@@ -199,6 +200,13 @@ TEST_CASE("MacroMolTemplate SGroups survive generic MOL and SDF round trips") {
 }
 
 TEST_CASE("MacroMolTemplateBuilder validates completed definitions") {
+  SECTION("main group can only be set once") {
+    auto mol = std::unique_ptr<RWMol>(SmilesToMol("C"));
+    MacroMolTemplateBuilder builder(*mol, MonomerClass::Other, "X", "X",
+                                    "C");
+    builder.setMainGroup({0});
+    CHECK_THROWS_AS(builder.setMainGroup({0}), Invar::Invariant);
+  }
   SECTION("main group is required") {
     RWMol mol;
     MacroMolTemplateBuilder builder(mol, MonomerClass::Other, "X", "X", "");
@@ -302,5 +310,5 @@ TEST_CASE("MacroMolTemplateLibrary separates classes and rejects duplicates") {
       ValueErrorException);
   CHECK_THROWS_AS(
       library.addTemplate(std::unique_ptr<MacroMolTemplate>{}),
-      ValueErrorException);
+      Invar::Invariant);
 }
