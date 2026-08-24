@@ -257,7 +257,7 @@ const std::vector<std::string> sGroupClasses = {
 
 // RDKit extensions used to preserve format-neutral MonomerClass values in
 // generic MOL and SDF files. These are not standard SCSR classes.
-const std::vector<std::string> rdkitMonomerClasses = {
+const std::vector<std::string> macroAtomClasses = {
     "AminoAcid", "NucleicAcid", "Chemical", "Other"};
 
 RDKIT_GRAPHMOL_EXPORT bool isValidType(const std::string &type);

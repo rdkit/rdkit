@@ -338,10 +338,10 @@ bool SubstanceGroupChecks::isValidConnectType(const std::string &type) {
 bool SubstanceGroupChecks::isValidClass(const std::string &sgroupClass) {
   // Generic MOL/SDF accepts both standard SCSR and RDKit-neutral class names.
   return isValidSCSRClass(sgroupClass) ||
-         std::find(SubstanceGroupChecks::rdkitMonomerClasses.begin(),
-                   SubstanceGroupChecks::rdkitMonomerClasses.end(),
+         std::find(SubstanceGroupChecks::macroAtomClasses.begin(),
+                   SubstanceGroupChecks::macroAtomClasses.end(),
                    sgroupClass) !=
-             SubstanceGroupChecks::rdkitMonomerClasses.end();
+             SubstanceGroupChecks::macroAtomClasses.end();
 }
 
 bool SubstanceGroupChecks::isValidSCSRClass(

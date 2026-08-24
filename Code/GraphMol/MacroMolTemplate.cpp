@@ -23,10 +23,12 @@ namespace {
 const std::string SUP_TYPE = "SUP";
 const std::string LGRP_CLASS = "LGRP";
 
+// Give all builder validation failures a consistent, recognizable prefix.
 [[noreturn]] void invalidTemplate(const std::string &message) {
   throw ValueErrorException("invalid MacroMolTemplate: " + message);
 }
 
+// Require every supplied atom index to be unique and present in the molecule.
 void validateUniqueInRange(const std::vector<unsigned int> &atomIdxs,
                            unsigned int numAtoms, const std::string &name) {
   std::unordered_set<unsigned int> seen;
@@ -40,6 +42,7 @@ void validateUniqueInRange(const std::vector<unsigned int> &atomIdxs,
   }
 }
 
+// Check that the atoms form one connected component in the template molecule.
 bool isConnected(const ROMol &mol,
                  const std::vector<unsigned int> &atomIdxs) {
   std::unordered_set<unsigned int> groupAtoms(atomIdxs.begin(), atomIdxs.end());
@@ -62,6 +65,7 @@ bool isConnected(const ROMol &mol,
   return visited.size() == atomIdxs.size();
 }
 
+// Validate one leaving group and record its atoms and attachment point as used.
 void validateLeavingGroup(const ROMol &mol,
                           const MacroMolLeavingGroup &leavingGroup,
                           const std::unordered_set<unsigned int> &mainAtoms,
