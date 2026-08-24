@@ -17,6 +17,7 @@
 
 namespace RDKit {
 namespace {
+// Keep the stable external names for the format-neutral enum in one table.
 const std::array<std::pair<MonomerClass, const char *>, 4> monomerClassNames = {
     {
         {MonomerClass::AminoAcid, "AminoAcid"},

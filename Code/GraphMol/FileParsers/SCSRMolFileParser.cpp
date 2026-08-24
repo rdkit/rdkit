@@ -147,6 +147,7 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
     throw FileParseException(errout.str());
   }
 
+  // Strict SCSR input must not accept RDKit's broader generic SGroup classes.
   if (strictParsing &&
       !SubstanceGroupChecks::isValidSCSRClass(subTokens.front())) {
     std::ostringstream errout;

@@ -167,6 +167,7 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() && {
     invalidTemplate("main group must be nonempty");
   }
 
+  // Validate the complete atom partition before deriving any SGroup metadata.
   validateUniqueInRange(d_mainAtomIdxs, d_mol.getNumAtoms(), "main group");
   std::unordered_set<unsigned int> mainAtoms(d_mainAtomIdxs.begin(),
                                              d_mainAtomIdxs.end());
@@ -185,6 +186,7 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() && {
     invalidTemplate("main and leaving groups must partition all atoms");
   }
 
+  // Mirror the canonical template definition as SUP SGroups for MOL/SDF I/O.
   SubstanceGroup mainSgroup(&d_mol, SUP_TYPE);
   mainSgroup.setProp("CLASS",
                      std::string(monomerClassToString(d_monomerClass)));
@@ -211,12 +213,6 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() && {
       std::move(d_mainAtomIdxs), std::move(d_leavingGroups), mainSgroupIdx));
 }
 
-namespace {
-size_t getMainGroupSize(const MacroMolTemplate &templ) {
-  return templ.getMainAtomIdxs().size();
-}
-}  // namespace
-
 void MacroMolTemplateLibrary::addTemplate(
     std::unique_ptr<MacroMolTemplate> macroMolTemplate) {
   if (!macroMolTemplate) {
@@ -239,11 +235,12 @@ void MacroMolTemplateLibrary::addTemplate(
         "monomer class and symbol");
   }
 
-  const auto mainGroupSize = getMainGroupSize(*macroMolTemplate);
+  // Try larger, more specific templates before smaller substructure matches.
+  const auto mainGroupSize = macroMolTemplate->getMainAtomIdxs().size();
   const auto insertionPoint = std::upper_bound(
       orderedEntries.begin(), orderedEntries.end(), mainGroupSize,
       [](size_t size, const MacroMolTemplate *existingTemplate) {
-        return size > getMainGroupSize(*existingTemplate);
+        return size > existingTemplate->getMainAtomIdxs().size();
       });
 
   const auto *templatePtr = macroMolTemplate.get();
