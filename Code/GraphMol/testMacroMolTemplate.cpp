@@ -242,7 +242,7 @@ TEST_CASE("MacroMolTemplateBuilder validates completed definitions") {
         .addLeavingGroup({{2}, 1, 2, 1});
     CHECK_THROWS_AS(duplicate.build(), ValueErrorException);
   }
-  SECTION("leaving groups must be connected") {
+  SECTION("the template molecule must be connected") {
     auto mol = std::unique_ptr<RWMol>(SmilesToMol("CCC.C"));
     MacroMolTemplateBuilder builder(*mol, MonomerClass::Other, "X", "X",
                                     "CCC.C");

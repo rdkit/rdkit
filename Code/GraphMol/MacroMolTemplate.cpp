@@ -71,29 +71,27 @@ void validateLeavingGroup(const ROMol &mol,
                                leavingGroup.leavingAtomIdx)) {
     invalidTemplate("attachment atom must be bonded to the leaving atom");
   }
+  const std::unordered_set<unsigned int> leavingAtoms(
+      leavingGroup.atomIdxs.begin(), leavingGroup.atomIdxs.end());
+  unsigned int boundaryBondCount = 0;
+  bool foundAttachmentBond = false;
   for (const auto atomIdx : leavingGroup.atomIdxs) {
     if (atomMembership[atomIdx] != 0) {
       invalidTemplate("main and leaving groups must not overlap");
     }
     atomMembership[atomIdx] = 2;
+    for (const auto *bond : mol.atomBonds(mol.getAtomWithIdx(atomIdx))) {
+      const auto otherAtomIdx = bond->getOtherAtomIdx(atomIdx);
+      if (leavingAtoms.find(otherAtomIdx) == leavingAtoms.end()) {
+        ++boundaryBondCount;
+        if (atomIdx == leavingGroup.leavingAtomIdx &&
+            otherAtomIdx == leavingGroup.attachAtomIdx) {
+          foundAttachmentBond = true;
+        }
+      }
+    }
   }
-
-  // Removing the declared bond must isolate exactly the leaving-group atoms.
-  RWMol disconnected(mol);
-  disconnected.removeBond(leavingGroup.attachAtomIdx,
-                          leavingGroup.leavingAtomIdx);
-  std::vector<int> fragmentIds;
-  MolOps::getMolFrags(disconnected, fragmentIds);
-  const auto leavingFragment = fragmentIds[leavingGroup.leavingAtomIdx];
-  if (std::any_of(leavingGroup.atomIdxs.begin(), leavingGroup.atomIdxs.end(),
-                  [&fragmentIds, leavingFragment](unsigned int atomIdx) {
-                    return fragmentIds[atomIdx] != leavingFragment;
-                  })) {
-    invalidTemplate("each leaving group must be connected");
-  }
-  if (static_cast<size_t>(std::count(fragmentIds.begin(), fragmentIds.end(),
-                                     leavingFragment)) !=
-      leavingGroup.atomIdxs.size()) {
+  if (boundaryBondCount != 1 || !foundAttachmentBond) {
     invalidTemplate(
         "a leaving group must have exactly its declared attachment boundary");
   }
@@ -134,6 +132,10 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() const {
 
   // Validate the complete atom partition before deriving any SGroup metadata.
   validateUniqueInRange(d_mainAtomIdxs, d_mol.getNumAtoms(), "main group");
+  std::vector<int> fragmentIds;
+  if (MolOps::getMolFrags(d_mol, fragmentIds) != 1) {
+    invalidTemplate("template molecule must be connected");
+  }
   std::unordered_set<unsigned int> mainAtoms(d_mainAtomIdxs.begin(),
                                              d_mainAtomIdxs.end());
   std::vector<unsigned int> atomMembership(d_mol.getNumAtoms(), 0);
