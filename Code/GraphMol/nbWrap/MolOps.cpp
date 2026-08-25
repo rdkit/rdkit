@@ -923,8 +923,8 @@ nb::tuple detectChemistryProblemsHelper(const ROMol &mol,
                                         unsigned int sanitizeOps) {
   auto probs = MolOps::detectChemistryProblems(mol, sanitizeOps);
   nb::list res;
-  for (const auto &exc_ptr : probs) {
-    res.append(exc_ptr->copy());
+  for (auto &&exc_ptr : probs) {
+    res.append(std::move(exc_ptr));
   }
   return nb::tuple(res);
 }
