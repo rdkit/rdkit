@@ -95,7 +95,7 @@ Note: unlike Atoms, is it currently impossible to construct Bonds from\n\
 Python.\n";
 struct bond_wrapper {
   static void wrap(nb::module_ &m) {
-    nb::class_<Bond>(m, "Bond")
+    nb::class_<Bond>(m, "Bond", nb::pooled())
 
         .def("HasOwningMol", &Bond::hasOwningMol,
              "Returns whether or not this instance belongs to a molecule.\n")

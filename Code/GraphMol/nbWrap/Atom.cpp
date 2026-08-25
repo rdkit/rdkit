@@ -164,7 +164,7 @@ struct atom_wrapper {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-    nb::class_<Atom>(m, "Atom")
+    nb::class_<Atom>(m, "Atom", nb::pooled())
         .def(nb::init<std::string>(), "what"_a)
         .def(nb::init<const Atom &>(), "other"_a)
         .def(nb::init<unsigned int>(), "num"_a,

@@ -121,9 +121,9 @@ void MolDebug(const ROMol &mol, bool useStdout) {
 
 class ReadWriteMol : public RWMol {
  public:
-  ReadWriteMol(){};
+  ReadWriteMol() {};
   ReadWriteMol(const ROMol &m, bool quickCopy = false, int confId = -1)
-      : RWMol(m, quickCopy, confId){};
+      : RWMol(m, quickCopy, confId) {};
 
   void RemoveAtom(unsigned int idx) { removeAtom(idx); };
   void RemoveBond(unsigned int idx1, unsigned int idx2) {
@@ -417,7 +417,7 @@ struct mol_wrapper {
         .def("__getitem__", &QueryAtomIterSeq::operator[],
              nb::rv_policy::reference_internal, "idx"_a);
 
-    nb::class_<ROMol>(m, "Mol", nb::dynamic_attr())
+    nb::class_<ROMol>(m, "Mol", nb::dynamic_attr(), nb::pooled())
         .def(nb::new_([]() {
       return new ROMol(); }),
              "Constructor, takes no arguments")
@@ -1030,7 +1030,8 @@ it's probably not of general interest.
 )DOC");
     // ---------------------------------------------------------------------------------------------
 
-    nb::class_<ReadWriteMol, ROMol>(m, "RWMol", nb::dynamic_attr())
+    nb::class_<ReadWriteMol, ROMol>(m, "RWMol", nb::dynamic_attr(),
+                                    nb::pooled())
         .def(nb::new_([]() { return new ReadWriteMol(); }),
              "Constructor, takes no arguments")
         .def(nb::new_([](nb::bytes b) {
