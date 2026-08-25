@@ -15,8 +15,10 @@
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/map.h>
 #include <nanobind/stl/tuple.h>
-#include <nanobind/stl/shared_ptr.h>
+#include <nanobind/trampoline.h>
+
 #include <RDBoost/Wrap_nb.h>
+#include <RDBoost/boost_shared_ptr.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/GraphMol.h>
 
@@ -45,6 +47,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <optional>
+#include <ranges>
 #include <vector>
 
 namespace nb = nanobind;
@@ -53,6 +56,54 @@ using namespace nb::literals;
 struct AtomPairsParameters {};
 
 namespace {
+
+static std::string nanobindInternalsKeyName;
+
+nb::dict getBuiltinsDict() {
+  // PyEval_GetBuiltins only gets the builtins for the current thread,
+// which may not be the main thread.
+#if defined(PYPY_VERSION)
+  PyObject *dict = PyEval_GetBuiltins();
+#else
+  PyObject *dict = PyInterpreterState_GetDict(PyInterpreterState_Get());
+#endif
+  return nb::borrow<nb::dict>(dict);
+}
+
+void getNanobindInternalsKeyName() {
+  if (!nanobindInternalsKeyName.empty()) {
+    return;
+  }
+  auto builtins = getBuiltinsDict();
+  if (!builtins.is_valid()) {
+    return;
+  }
+
+  std::string keyStr;
+  for (const auto &key : builtins.keys()) {
+    if (nb::try_cast<std::string>(key, keyStr) &&
+        keyStr.starts_with("__nb_internals_")) {
+      nanobindInternalsKeyName = std::move(keyStr);
+      return;
+    }
+  }
+}
+
+bool isNanobindFinalized() {
+  // If something goes wrong, and we can't tell,
+  // then assume nanobind is still there
+  if (nanobindInternalsKeyName.empty()) {
+    return false;
+  }
+  auto builtins = getBuiltinsDict();
+  if (!builtins.is_valid()) {
+    return false;
+  }
+
+  // We've seen the internals key before, so if we can't
+  // see it anymore, then nanobind has been finalized.
+  return !builtins.contains(nanobindInternalsKeyName);
+}
 
 std::vector<unsigned int> atomPairTypes(
     RDKit::AtomPairs::atomNumberTypes,
@@ -828,23 +879,81 @@ unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol, nb::object pyatoms) {
 
 // Python-callable property functor that delegates __call__ to a Python callback
 struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
-  nb::object callback;
-
-  PythonPropertyFunctor(nb::object cb, const std::string &name,
-                        const std::string &version)
-      : PropertyFunctor(name, version), callback(cb) {}
+  NB_TRAMPOLINE(RDKit::Descriptors::PropertyFunctor, 1);
 
   double operator()(const RDKit::ROMol &mol) const override {
-    return nb::cast<double>(callback(mol));
+    NB_OVERRIDE_NAME("__call__", operator(), mol);
   }
 };
 
-int registerPropertyHelper(std::shared_ptr<PythonPropertyFunctor> ptr) {
-  ptr->callback
-      .inc_ref();  // Increment reference count to ensure it stays alive
-  auto ppf = new PythonPropertyFunctor(ptr->callback, ptr->getName(),
-                                       ptr->getVersion());
-  auto res = RDKit::Descriptors::Properties::registerProperty(ppf);
+// This is adapted from
+// https://nanobind.readthedocs.io/en/latest/refleaks.html#fixing-reference-leaks
+// The trampoline takes care of the clean up the Python objects as long as
+// the functor is not registered. But once the functor is registered,
+// the shared pointer will keep the functor alive, and the trampoline will
+// in turn keep the Python object alive. The problem is that, since the registry
+// is static, it will be destructed after Python has terminated, potentially
+// leaking any registered PythonPropertyFunctor objects. To remedy that,
+// we keep track of the nanobind internals object: we capture the name
+// of the key that holds it when the first PythonPropertyFunctor is registered,
+// and on each visit of the collector we check if the nanobind internals object
+// is still alive. When it is not, it means that Python is shutting down, so
+// we should pop the functor so it can be destroyed too.
+int ppf_tp_traverse(PyObject *self, visitproc visit, void *arg) {
+  // We must traverse the implicit dependency of an object on its
+  // associated type object.
+  Py_VISIT(Py_TYPE(self));
+
+  // The tp_traverse method may be called after __new__ but before or during
+  // __init__, before the C++ constructor has been completed. We must not
+  // inspect the C++ state if the constructor has not yet completed.
+  if (!nb::inst_ready(self)) {
+    return 0;
+  }
+
+  // Get the C++ object associated with 'self' (this always succeeds)
+  auto ppf = nb::inst_ptr<PythonPropertyFunctor>(self);
+
+  // Get the Python object at the base of the trampoline, and
+  // let the GC know about it.
+  auto base = ppf->nb_trampoline.base();
+
+  Py_VISIT(base.ptr());
+
+  return 0;
+}
+
+int ppf_tp_clear(PyObject *self) {
+  if (!isNanobindFinalized()) {
+    // nanobind is still there, so we're not being terminated yet.
+    return 0;
+  }
+
+  // ok, nanobind is gone. Time to pop this object from the registry
+  // so that it can be destructed-
+  auto &registry = RDKit::Descriptors::Properties::registry;
+  auto it = std::ranges::find_if(registry, [self](const auto &pf) {
+    return pf.get() == nb::inst_ptr<PythonPropertyFunctor>(self);
+  });
+
+  if (it != registry.end()) {
+    registry.erase(it);
+  }
+
+  return 0;
+}
+
+// Don't forget to install in the class declaration for PythonPropertyFunctor !
+PyType_Slot pyPropFunctor_slots[] = {
+    {Py_tp_traverse, (void *)ppf_tp_traverse},
+    {Py_tp_clear, (void *)ppf_tp_clear},
+    {0, 0},  // slots termination mark
+};
+
+int registerPropertyHelper(
+    boost::shared_ptr<RDKit::Descriptors::PropertyFunctor> ptr) {
+  getNanobindInternalsKeyName();
+  auto res = RDKit::Descriptors::Properties::registerProperty(ptr);
   return res;
 }
 
@@ -1431,18 +1540,6 @@ assigning hybridization)DOC");
         RDKit::Descriptors::numUnspecifiedAtomStereoCenters, "mol"_a,
         "Returns the number of unspecified atomic stereocenters");
 
-  nb::class_<RDKit::Descriptors::PropertyFunctor>(
-      m, "PropertyFunctor",
-      R"DOC(Property computation class stored in the property registry.
-See rdkit.Chem.rdMolDescriptor.Properties.GetProperty and
-rdkit.Chem.Descriptor.Properties.PropertyFunctor for creating new ones)DOC")
-      .def("__call__", &RDKit::Descriptors::PropertyFunctor::operator(),
-           "mol"_a, "Compute the property for the specified molecule")
-      .def("GetName", &RDKit::Descriptors::PropertyFunctor::getName,
-           "Return the name of the property to calculate")
-      .def("GetVersion", &RDKit::Descriptors::PropertyFunctor::getVersion,
-           "Return the version of the calculated property");
-
   nb::class_<RDKit::Descriptors::Properties>(
       m, "Properties",
       R"DOC(Property computation and registry system.  To compute all registered properties:
@@ -1483,12 +1580,16 @@ for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperti
                   "propertyFunctor"_a,
                   "Register a new property object (not thread safe)");
 
-  nb::class_<PythonPropertyFunctor, RDKit::Descriptors::PropertyFunctor>(
-      m, "PythonPropertyFunctor", nb::is_weak_referenceable())
-      .def(nb::init<nb::object, const std::string &, const std::string &>(),
-           "callback"_a, "name"_a, "version"_a)
-      .def("__call__", &PythonPropertyFunctor::operator(), "mol"_a,
-           "Compute the property for the specified molecule");
+  nb::class_<RDKit::Descriptors::PropertyFunctor, PythonPropertyFunctor>(
+      m, "PythonPropertyFunctor", nb::is_weak_referenceable(),
+      nb::type_slots(pyPropFunctor_slots))
+      .def(nb::init<std::string, std::string>(), "name"_a, "version"_a)
+      .def("__call__", &RDKit::Descriptors::PropertyFunctor::operator(),
+           "mol"_a, "Compute the property for the specified molecule")
+      .def("GetName", &RDKit::Descriptors::PropertyFunctor::getName,
+           "Return the name of the property to calculate")
+      .def("GetVersion", &RDKit::Descriptors::PropertyFunctor::getVersion,
+           "Return the version of the calculated property");
 
   nb::class_<Queries::RangeQuery<double, RDKit::ROMol const &, true>>(
       m, "PropertyRangeQuery",

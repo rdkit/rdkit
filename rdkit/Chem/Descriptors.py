@@ -12,6 +12,7 @@ from collections import \
 
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
 from rdkit import Chem
+from rdkit import rdBase
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
 from rdkit.Chem import rdPartialCharges
@@ -277,20 +278,13 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
 
       numAtoms = NumAtoms()
       rdMolDescriptors.Properties.RegisterProperty(numAtoms)
-
-    NOTE: using this class will add a cyclic reference to the property functor. This will
-    lead to warnings when the interpreter is shutting down with the nanobind wrappers.
-    To avoid the problem just use PythonPropertyFunctor directly and register it like this:
-    
-      def NumAtoms(mol):
-        return mol.GetNumAtoms()
-
-      numAtoms = rdMolDescriptors.PythonPropertyFunctor(NumAtoms, "NumAtoms", "1.0.0")
-      rdMolDescriptors.Properties.RegisterProperty(numAtoms)
     """
 
   def __init__(self, name, version):
-    rdMolDescriptors.PythonPropertyFunctor.__init__(self, self, name, version)
+    if hasattr(rdBase, '_wrapperType') and rdBase._wrapperType == 'nanobind':
+      rdMolDescriptors.PythonPropertyFunctor.__init__(self, name, version)
+    else:
+      rdMolDescriptors.PythonPropertyFunctor.__init__(self, self, name, version)
 
   def __call__(self, mol):
     raise NotImplementedError("Please implement the __call__ method")
