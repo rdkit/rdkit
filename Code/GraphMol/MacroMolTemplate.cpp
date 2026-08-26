@@ -82,7 +82,8 @@ void validateLeavingGroup(const ROMol &mol,
     }
     atomMembership[atomIdx] = 2;
     for (const auto *bond : mol.atomBonds(mol.getAtomWithIdx(atomIdx))) {
-      const auto otherAtomIdx = bond->getOtherAtomIdx(atomIdx);
+    for (const auto nbr : mol.atomNeighbors(mol.getAtomWithIdx(atomIdx))) {
+      const auto otherAtomIdx = nbr->getIdx();
       if (leavingAtoms.find(otherAtomIdx) == leavingAtoms.end()) {
         ++boundaryBondCount;
         if (atomIdx == leavingGroup.leavingAtomIdx &&
