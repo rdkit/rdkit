@@ -146,7 +146,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
 }  // namespace
 
 bool SynthonSpaceFingerprintSearcher::extraSearchSetup(
-    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
+    std::vector<std::vector<std::shared_ptr<RWMol>>> &fragSets,
     const TimePoint *endTime) {
   if (!getSpace()->hasFingerprints() ||
       getSpace()->getSynthonFingerprintType() != d_fpGen.infoString()) {
@@ -193,7 +193,7 @@ bool SynthonSpaceFingerprintSearcher::extraSearchSetup(
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceFingerprintSearcher::searchFragSet(
-    const std::vector<std::shared_ptr<ROMol>> &fragSet,
+    const std::vector<std::shared_ptr<RWMol>> &fragSet,
     const SynthonSet &reaction) const {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
 

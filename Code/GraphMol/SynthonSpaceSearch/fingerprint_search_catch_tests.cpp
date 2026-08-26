@@ -145,8 +145,6 @@ TEST_CASE("FP Binary File") {
   SearchResults results;
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
   SynthonSpaceSearchParams params;
-  std::cout << params.similarityCutoff << " and "
-            << params.approxSimilarityAdjuster << std::endl;
   for (auto numThreads : std::vector<int>{1, 2, -1}) {
     synthonspace.readDBFile(libName, numThreads);
     params.numThreads = numThreads;

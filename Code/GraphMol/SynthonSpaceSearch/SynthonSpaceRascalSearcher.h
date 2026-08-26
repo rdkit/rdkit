@@ -34,7 +34,7 @@ class SynthonSpaceRascalSearcher : public SynthonSpaceSearcher {
                              SynthonSpace *space);
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
-      const std::vector<std::shared_ptr<ROMol>> &fragSet,
+      const std::vector<std::shared_ptr<RWMol>> &fragSet,
       const SynthonSet &reaction) const override;
 
   bool verifyHit(ROMol &hit, const std::string &rxnId,
@@ -48,7 +48,7 @@ class SynthonSpaceRascalSearcher : public SynthonSpaceSearcher {
 
  private:
   bool extraSearchSetup(
-      std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
+      std::vector<std::vector<std::shared_ptr<RWMol>>> &fragSets,
       const TimePoint *endTime) override;
 
   const RascalMCES::RascalOptions &d_rascalOptions;

@@ -347,7 +347,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
 namespace {
 
 void searchReactionPart(
-    const std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments,
+    const std::vector<std::vector<std::shared_ptr<RWMol>>> &fragments,
     const TimePoint *endTime, std::atomic<std::int64_t> &mostRecentFrag,
     const SynthonSpaceSearcher *searcher, const SynthonSet &reaction,
     std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> &allSetHits,
@@ -380,7 +380,7 @@ void searchReactionPart(
 std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchReaction(
     SynthonSpaceSearcher *searcher, const SynthonSet &reaction,
     const TimePoint *endTime, const unsigned numThreads,
-    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments,
+    std::vector<std::vector<std::shared_ptr<RWMol>>> &fragments,
     std::unique_ptr<ProgressBar> &pbar) {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> hits;
   std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> allSetHits(
@@ -413,7 +413,7 @@ std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchReaction(
 void processReactions(
     SynthonSpaceSearcher *searcher,
     const std::vector<std::string> &reactionNames,
-    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments,
+    std::vector<std::vector<std::shared_ptr<RWMol>>> &fragments,
     const TimePoint *endTime, std::atomic<std::int64_t> &mostRecentReaction,
     const std::int64_t lastReaction,
     std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> &reactionHits,
@@ -462,7 +462,7 @@ SynthonSpaceSearcher::assembleHitSets(const TimePoint *endTime, bool &timedOut,
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceSearcher::doTheSearch(
-    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
+    std::vector<std::vector<std::shared_ptr<RWMol>>> &fragSets,
     const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits,
     const ThreadMode threadMode) {
   auto reactionNames = getSpace()->getReactionNames();
@@ -881,11 +881,8 @@ void SynthonSpaceSearcher::sortToTryByApproxSimilarity(
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
       newToTry;
   newToTry.reserve(tmp.size());
-  std::transform(
-      tmp.begin(), tmp.end(),
-      back_inserter(newToTry), [&](const auto &p) -> auto{
-        return toTry[p.first];
-      });
+  std::transform(tmp.begin(), tmp.end(), back_inserter(newToTry),
+                 [&](const auto &p) -> auto { return toTry[p.first]; });
   toTry = newToTry;
 }
 

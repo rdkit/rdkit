@@ -158,7 +158,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
 }  // namespace
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceShapeSearcher::searchFragSet(
-    const std::vector<std::shared_ptr<ROMol>> &fragSet,
+    const std::vector<std::shared_ptr<RWMol>> &fragSet,
     const SynthonSet &reaction) const {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
   if (fragSet.size() > reaction.getSynthons().size()) {
@@ -319,7 +319,7 @@ void generateSomeShapes(
 
 // This is very similar to details::mapFragsBySmiles.
 std::map<std::string, std::vector<ROMol *>> mapFragsByAtoms(
-    const std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
+    const std::vector<std::vector<std::shared_ptr<RWMol>>> &fragSets,
     bool &cancelled) {
   std::map<std::string, std::vector<ROMol *>> atomsToFrags;
   for (auto &fragSet : fragSets) {
@@ -362,7 +362,7 @@ std::map<std::string, std::vector<ROMol *>> mapFragsByAtoms(
 }  // namespace
 
 bool SynthonSpaceShapeSearcher::extraSearchSetup(
-    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
+    std::vector<std::vector<std::shared_ptr<RWMol>>> &fragSets,
     const TimePoint *endTime) {
   // Use the given conformer unless it looks like a
   // 2D molecule.

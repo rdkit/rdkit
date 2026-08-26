@@ -28,7 +28,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
   SynthonSpaceHitSet() = delete;
   SynthonSpaceHitSet(const SynthonSet &reaction,
                      const std::vector<std::vector<size_t>> &stu,
-                     const std::vector<std::shared_ptr<ROMol>> &fragSet);
+                     const std::vector<std::shared_ptr<RWMol>> &fragSet);
   SynthonSpaceHitSet(const SynthonSpaceHitSet &lhs) = delete;
   SynthonSpaceHitSet(SynthonSpaceHitSet &&lhs) = delete;
   virtual ~SynthonSpaceHitSet() = default;
@@ -47,7 +47,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
   // The fragments that this hitset is derived from, useful for debugging.
   // Also required by the shape search.  This will be 1 single fragmentation
   // of the query.
-  std::vector<std::shared_ptr<ROMol>> frags;
+  std::vector<std::shared_ptr<RWMol>> frags;
 };
 
 // This sub-class holds results from a SynthonSpaceFingerprintSearch.
@@ -57,7 +57,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceFPHitSet
   SynthonSpaceFPHitSet() = delete;
   SynthonSpaceFPHitSet(const SynthonSet &reaction,
                        const std::vector<std::vector<size_t>> &stu,
-                       const std::vector<std::shared_ptr<ROMol>> &fragSet);
+                       const std::vector<std::shared_ptr<RWMol>> &fragSet);
   SynthonSpaceFPHitSet(const SynthonSpaceFPHitSet &lhs) = delete;
   SynthonSpaceFPHitSet(SynthonSpaceFPHitSet &&lhs) = delete;
   ~SynthonSpaceFPHitSet() override = default;
@@ -77,7 +77,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceShapeHitSet
   SynthonSpaceShapeHitSet() = delete;
   SynthonSpaceShapeHitSet(const SynthonSet &reaction,
                           const std::vector<std::vector<size_t>> &stu,
-                          const std::vector<std::shared_ptr<ROMol>> &fragSet,
+                          const std::vector<std::shared_ptr<RWMol>> &fragSet,
                           const std::vector<SynthonShapeInput *> &fShapes,
                           const std::vector<unsigned int> &sSetOrder);
   SynthonSpaceShapeHitSet(const SynthonSpaceShapeHitSet &lhs) = delete;

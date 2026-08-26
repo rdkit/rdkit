@@ -64,7 +64,7 @@ class SynthonSpaceSearcher {
   // appropriate way, for example by substructure or fingerprint
   // similarity.
   virtual std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
-      const std::vector<std::shared_ptr<ROMol>> &fragSet,
+      const std::vector<std::shared_ptr<RWMol>> &fragSet,
       const SynthonSet &reaction) const = 0;
 
   // Make the hit, constructed from a specific combination of
@@ -142,7 +142,7 @@ class SynthonSpaceSearcher {
   // for all the fragments.  The SubstructureSearcher needs connector
   // regions and information about them.
   virtual bool extraSearchSetup(
-      std::vector<std::vector<std::shared_ptr<ROMol>>> &, const TimePoint *) {
+      std::vector<std::vector<std::shared_ptr<RWMol>>> &, const TimePoint *) {
     return true;
   }
 
@@ -151,7 +151,7 @@ class SynthonSpaceSearcher {
       ThreadMode threadMode);
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> doTheSearch(
-      std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
+      std::vector<std::vector<std::shared_ptr<RWMol>>> &fragSets,
       const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits,
       ThreadMode threadMode);
 
