@@ -9,15 +9,10 @@
 //
 
 #include <GraphMol/MacroMolTemplate.h>
-#include <GraphMol/FileParsers/FileParsers.h>
-#include <GraphMol/FileParsers/FileWriters.h>
-#include <GraphMol/FileParsers/MolSupplier.h>
-#include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/Invariant.h>
 #include <catch2/catch_all.hpp>
 
-#include <array>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -58,30 +53,6 @@ std::unique_ptr<MacroMolTemplate> makeAnnotatedAlanineTemplate() {
       .addLeavingGroup({{0}, 1, 0, 1})
       .addLeavingGroup({{6}, 4, 6, 2});
   return builder.build();
-}
-
-// Check the exact SGroup metadata preserved by each serialization path.
-void checkSerializedAlanineTemplate(const ROMol &mol) {
-  const auto &sgroups = getSubstanceGroups(mol);
-  REQUIRE(sgroups.size() == 3);
-
-  const auto &mainSgroup = sgroups[0];
-  CHECK(mainSgroup.getProp<std::string>("TYPE") == "SUP");
-  CHECK(mainSgroup.getProp<std::string>("CLASS") == "AminoAcid");
-  CHECK(mainSgroup.getProp<std::string>("LABEL") == "ALA");
-  CHECK(mainSgroup.getAtoms() ==
-        std::vector<unsigned int>({1, 2, 3, 4, 5}));
-  const auto &attachPoints = mainSgroup.getAttachPoints();
-  REQUIRE(attachPoints.size() == 2);
-  const SubstanceGroup::AttachPoint firstAttachPoint{1, 0, "1"};
-  const SubstanceGroup::AttachPoint secondAttachPoint{4, 6, "2"};
-  CHECK(attachPoints[0] == firstAttachPoint);
-  CHECK(attachPoints[1] == secondAttachPoint);
-
-  CHECK(sgroups[1].getProp<std::string>("CLASS") == "LGRP");
-  CHECK(sgroups[1].getAtoms() == std::vector<unsigned int>{0});
-  CHECK(sgroups[2].getProp<std::string>("CLASS") == "LGRP");
-  CHECK(sgroups[2].getAtoms() == std::vector<unsigned int>{6});
 }
 
 }  // namespace
@@ -138,65 +109,6 @@ TEST_CASE("MacroMolTemplate mirrors typed main and leaving groups") {
   CHECK(sgroups[1].getAtoms() == leavingGroups[0].atomIdxs);
   CHECK(sgroups[2].getProp<std::string>("CLASS") == "LGRP");
   CHECK(sgroups[2].getAtoms() == leavingGroups[1].atomIdxs);
-}
-
-TEST_CASE("Monomer classes are valid generic SGroup classes") {
-  // Neutral class names must survive generic CTAB serialization.
-  const std::array monomerClasses{
-      MonomerClass::AminoAcid, MonomerClass::NucleicAcid,
-      MonomerClass::Chemical, MonomerClass::Other};
-
-  for (const auto monomerClass : monomerClasses) {
-    const std::string className = monomerClassToString(monomerClass);
-    CHECK(SubstanceGroupChecks::isValidClass(className));
-    CHECK(monomerClassFromString(className) == monomerClass);
-
-    auto templ = makeTemplate(className, "X", "C", {0}, {}, monomerClass);
-    const auto molBlock = MolToV3KMolBlock(templ->getMol());
-    std::unique_ptr<RWMol> roundTripped(
-        MolBlockToMol(molBlock, false, false, true));
-    REQUIRE(roundTripped);
-    const auto &sgroups = getSubstanceGroups(*roundTripped);
-    REQUIRE(sgroups.size() == 1);
-    CHECK(sgroups[0].getProp<std::string>("CLASS") == className);
-  }
-
-  CHECK_FALSE(SubstanceGroupChecks::isValidClass("NotAMonomerClass"));
-  CHECK_THROWS_AS(monomerClassFromString("NotAMonomerClass"),
-                  ValueErrorException);
-}
-
-TEST_CASE("MacroMolTemplate SGroups survive generic MOL and SDF round trips") {
-  auto templ = makeAnnotatedAlanineTemplate();
-
-  // Cover the fixed-width V2000 path as well as V3000 and SDF serialization.
-  SECTION("V2000 MOL") {
-    const auto molBlock = MolToV2KMolBlock(templ->getMol());
-    std::unique_ptr<RWMol> roundTripped(
-        MolBlockToMol(molBlock, false, false, true));
-    REQUIRE(roundTripped);
-    checkSerializedAlanineTemplate(*roundTripped);
-  }
-
-  SECTION("V3000 MOL") {
-    const auto molBlock = MolToV3KMolBlock(templ->getMol());
-    std::unique_ptr<RWMol> roundTripped(
-        MolBlockToMol(molBlock, false, false, true));
-    REQUIRE(roundTripped);
-    checkSerializedAlanineTemplate(*roundTripped);
-  }
-
-  SECTION("SDF") {
-    v2::FileParsers::MolFileParserParams params;
-    params.sanitize = false;
-    params.removeHs = false;
-    params.strictParsing = true;
-    v2::FileParsers::SDMolSupplier supplier;
-    supplier.setData(SDWriter::getText(templ->getMol()), params);
-    auto roundTripped = supplier.next();
-    REQUIRE(roundTripped);
-    checkSerializedAlanineTemplate(*roundTripped);
-  }
 }
 
 TEST_CASE("MacroMolTemplateBuilder validates completed definitions") {

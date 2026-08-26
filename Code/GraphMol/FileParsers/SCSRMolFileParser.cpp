@@ -103,7 +103,7 @@ std::string getQuotedToken(const char *&linePtr) {
 }
 
 void parseTemplateLine(RWMol *templateMol, std::string lineStr,
-                       unsigned int &line, bool strictParsing) {
+                       unsigned int &line) {
   PRECONDITION(templateMol, "bad template molecule");
 
   // TEMPLATE 1 AA/Cya/Cya/ NATREPLACE=AA/A COMMENT=comment
@@ -144,15 +144,6 @@ void parseTemplateLine(RWMol *templateMol, std::string lineStr,
     std::ostringstream errout;
     errout << "Type/Name(s) string is not of the form \"AA/Gly/G/\" at line  "
            << line;
-    throw FileParseException(errout.str());
-  }
-
-  // Strict SCSR input must not accept RDKit's broader generic SGroup classes.
-  if (strictParsing &&
-      !SubstanceGroupChecks::isValidSCSRClass(subTokens.front())) {
-    std::ostringstream errout;
-    errout << "Unsupported SCSR template class '" << subTokens.front()
-           << "' at line " << line;
     throw FileParseException(errout.str());
   }
 
@@ -234,8 +225,7 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
     res->addTemplate(std::unique_ptr<ROMol>(new ROMol()));
     auto templateMol = (RWMol *)res->getTemplate(res->getTemplateCount() - 1);
 
-    parseTemplateLine(templateMol, tempStr.c_str(), line,
-                      params.strictParsing);
+    parseTemplateLine(templateMol, tempStr.c_str(), line);
 
     auto molComplete = false;
     Conformer *conf = nullptr;

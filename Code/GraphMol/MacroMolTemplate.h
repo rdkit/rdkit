@@ -125,10 +125,10 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateBuilder {
         d_originalData(std::move(originalData)) {}
 
   //! Defines the atoms retained as the main monomer group.
-  MacroMolTemplateBuilder &setMainGroup(
   MacroMolTemplateBuilder &setMainGroup(std::vector<unsigned int> &&atomIdxs);
   //! Adds a leaving group and its attachment-point definition.
-  MacroMolTemplateBuilder &addLeavingGroup(MacroMolLeavingGroup &&leavingGroup);
+  MacroMolTemplateBuilder &addLeavingGroup(
+      MacroMolLeavingGroup &&leavingGroup);
   //! Validates the complete definition and returns an immutable template.
   std::unique_ptr<MacroMolTemplate> build() const;
 

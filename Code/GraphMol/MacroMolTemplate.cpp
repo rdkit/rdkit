@@ -81,7 +81,6 @@ void validateLeavingGroup(const ROMol &mol,
       invalidTemplate("main and leaving groups must not overlap");
     }
     atomMembership[atomIdx] = 2;
-    for (const auto *bond : mol.atomBonds(mol.getAtomWithIdx(atomIdx))) {
     for (const auto nbr : mol.atomNeighbors(mol.getAtomWithIdx(atomIdx))) {
       const auto otherAtomIdx = nbr->getIdx();
       if (leavingAtoms.find(otherAtomIdx) == leavingAtoms.end()) {
@@ -106,7 +105,7 @@ const SubstanceGroup &MacroMolTemplate::getMainSgroup() const {
 }
 
 MacroMolTemplateBuilder &MacroMolTemplateBuilder::setMainGroup(
-    std::vector<unsigned int> atomIdxs) {
+    std::vector<unsigned int> &&atomIdxs) {
   PRECONDITION(!d_mainGroupSet, "main group has already been set");
   d_mainAtomIdxs = std::move(atomIdxs);
   d_mainGroupSet = true;
@@ -114,7 +113,7 @@ MacroMolTemplateBuilder &MacroMolTemplateBuilder::setMainGroup(
 }
 
 MacroMolTemplateBuilder &MacroMolTemplateBuilder::addLeavingGroup(
-    MacroMolLeavingGroup leavingGroup) {
+    MacroMolLeavingGroup &&leavingGroup) {
   d_leavingGroups.push_back(std::move(leavingGroup));
   return *this;
 }

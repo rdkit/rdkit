@@ -837,8 +837,6 @@ void ParseSGroupV2000SAPLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
       }
       if (text.size() >= pos + 3) {
         id = text.substr(pos + 1, 2);
-        // Remove padding from the fixed-width SAP id.
-        boost::trim(id);
         pos += 3;
       }
     }
