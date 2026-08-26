@@ -54,8 +54,8 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate final {
  public:
   MacroMolTemplate(const MacroMolTemplate &) = default;
   MacroMolTemplate(MacroMolTemplate &&) noexcept = default;
-  MacroMolTemplate &operator=(const MacroMolTemplate &) = delete;
-  MacroMolTemplate &operator=(MacroMolTemplate &&) = delete;
+  MacroMolTemplate &operator=(const MacroMolTemplate &) = default;
+  MacroMolTemplate &operator=(MacroMolTemplate &&) = default;
 
   //! Returns a read-only view of the underlying template molecule.
   const ROMol &getMol() const { return d_mol; }
