@@ -57,6 +57,11 @@ rdkit_headers(Atom.h
 	Subset.h
         DEST GraphMol)
 
+find_package(TBB)
+if(TBB_FOUND)
+    set(TBB_DEP TBB::tbb)
+endif()
+
 add_subdirectory(SmilesParse)
 add_subdirectory(Depictor)
 add_subdirectory(MarvinParse)
@@ -220,5 +225,5 @@ rdkit_catch_test(molopsTestsCatch catch_molops.cpp
 
 rdkit_catch_test(testMacroMol testMacroMol.cpp
         LINK_LIBRARIES SmilesParse GraphMol)
-        
+
 rdkit_catch_test(ringSystemsTest ring_systems_test.cpp LINK_LIBRARIES SmilesParse GraphMol RDStreams)
