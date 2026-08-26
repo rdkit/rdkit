@@ -27,6 +27,16 @@
 #include <nanobind/stl/tuple.h>
 namespace nb = nanobind;
 
+// Handle support for instance pooling. Availability is checked in the
+// main CMakelists.txt file, via a version check on the nanobind package.
+// Documentation about the pooling feature is available at:
+// https://nanobind.readthedocs.io/en/latest/classes.html#instance-pooling
+#ifdef NANOBIND_POOLED_AVAILABLE
+#define NB_POOLED_IF_AVAILABLE , nb::pooled()
+#else
+#define NB_POOLED_IF_AVAILABLE
+#endif
+
 // pattern for this from the "Better alternative" section of this StackOverflow
 // answer: https://stackoverflow.com/a/71575543
 template <typename T>
