@@ -446,7 +446,7 @@ void doPartFinalFragmentation(
       // fragments.
       fragments[thisFrag + 1].resize(molFrags.size());
       for (unsigned int i = 0; i < molFrags.size(); ++i) {
-        fragments[thisFrag + 1][i].reset(molFrags[i].release());
+        fragments[thisFrag + 1][i].reset(new RWMol(*molFrags[i]));
       }
     }
     --numTries;
@@ -644,7 +644,7 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
   // for a single synthon set.
   fragments.resize(tmpFrags.size() + 1);
   fragments.emplace_back();
-  fragments.back().emplace_back(new ROMol(query));
+  fragments.back().emplace_back(new RWMol(query));
   // And now split the molecules into the final fragments.
   doFinalFragmentation(tmpFrags, maxNumFrags, numThreads, endTime, timedOut,
                        fragments);
@@ -934,9 +934,10 @@ std::map<std::string, std::vector<ROMol *>> mapFragsBySmiles(
         return fragSmiToFrag;
       }
       // For the fingerprints and shapes, ring info is required.
-      unsigned int otf;
-      sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
-                  MolOps::SANITIZE_SYMMRINGS);
+      if (!frag->getRingInfo()->isInitialized()) {
+        VECT_INT_VECT arings;
+        MolOps::findSSSR(*frag, arings);
+      }
       std::string fragSmi = MolToSmiles(*frag);
       if (auto it = fragSmiToFrag.find(fragSmi); it == fragSmiToFrag.end()) {
         fragSmiToFrag.emplace(fragSmi, std::vector<ROMol *>(1, frag.get()));
@@ -1085,7 +1086,7 @@ std::vector<std::unique_ptr<RWMol>> generateIsomerConformers(
     EnumerateStereoisomers::StereoisomerEnumerator enu(mol, enumOpts);
     unsigned int i = 0;
     while (auto isomer = enu.next()) {
-      confMols.emplace_back(static_cast<RWMol *>(isomer.release()));
+      confMols.emplace_back(new RWMol(*isomer));
       if (++i == maxStereoCenters) {
         break;
       }
@@ -1228,8 +1229,9 @@ std::unique_ptr<RWMol> trimSampleMol(const ROMol &mol, size_t molNum) {
       }
     }
   }
-  std::unique_ptr<RWMol> newMol(static_cast<RWMol *>(
-      MolFragmenter::fragmentOnBonds(mol, bondsToGo, false)));
+  std::unique_ptr<ROMol> tmpMol(
+      MolFragmenter::fragmentOnBonds(mol, bondsToGo, false));
+  auto newMol = std::make_unique<RWMol>(*tmpMol);
   std::vector<std::vector<int>> molFrags;
   auto numFrags = MolOps::getMolFrags(*newMol, molFrags);
   newMol->beginBatchEdit();

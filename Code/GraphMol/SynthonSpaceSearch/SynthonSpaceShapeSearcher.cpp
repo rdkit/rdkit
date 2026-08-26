@@ -329,9 +329,10 @@ std::map<std::string, std::vector<ROMol *>> mapFragsByAtoms(
         return atomsToFrags;
       }
       // Ring info is required.
-      unsigned int otf;
-      sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
-                  MolOps::SANITIZE_SYMMRINGS);
+      if (!frag->getRingInfo()->isInitialized()) {
+        VECT_INT_VECT arings;
+        MolOps::findSSSR(*frag, arings);
+      }
       std::vector<unsigned int> atIdxs;
       unsigned int dummyIdx = 10000;
       for (const auto a : frag->atoms()) {
