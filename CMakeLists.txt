@@ -689,6 +689,11 @@ if (MSVC)
   add_definitions( "/wd4267" )
 endif(MSVC)
 
+find_package(TBB)
+if(TBB_FOUND)
+    set(TBB_DEP TBB::tbb)
+endif()
+
 add_subdirectory(External)
 add_subdirectory(Code)
 

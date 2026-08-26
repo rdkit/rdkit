@@ -57,11 +57,6 @@ rdkit_headers(Atom.h
 	Subset.h
         DEST GraphMol)
 
-find_package(TBB)
-if(TBB_FOUND)
-    set(TBB_DEP TBB::tbb)
-endif()
-
 add_subdirectory(SmilesParse)
 add_subdirectory(Depictor)
 add_subdirectory(MarvinParse)
