@@ -101,7 +101,6 @@ TEST_CASE("Shape Small test") {
   params.bestHit = true;
   auto queryMol = v2::SmilesParse::MolFromSmiles(querySmi);
   auto results = synthonspace.shapeSearch(*queryMol, params);
-  unsigned int j = 0;
   CHECK(results.getHitMolecules().size() == 3);
   for (const auto &mol : results.getHitMolecules()) {
     // Different machine/compiler combinations give slightly different results
@@ -113,7 +112,6 @@ TEST_CASE("Shape Small test") {
     auto scores = GaussianShape::ScoreMolecule(*queryMol, *mol);
     CHECK_THAT(mol->getProp<double>("Similarity"),
                Catch::Matchers::WithinAbs(scores[0], 0.001));
-    ++j;
   }
 }
 
