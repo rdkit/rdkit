@@ -342,7 +342,7 @@ if(RDK_BUILD_NANOBIND_WRAPPERS)
   execute_process(
     COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
     OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
-  find_package(nanobind CONFIG REQUIRED)
+  find_package(nanobind 2 CONFIG REQUIRED)
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
   else(RDK_INSTALL_INTREE)
