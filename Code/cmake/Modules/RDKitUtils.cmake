@@ -251,7 +251,7 @@ macro(add_pytest)
   CAR(PYTEST_NAME ${PYTEST_DEFAULT_ARGS})
   CDR(PYTEST_SOURCES ${PYTEST_DEFAULT_ARGS})
   if(RDK_BUILD_PYTHON_WRAPPERS)
-    add_test(${PYTEST_NAME}  ${Python3_EXECUTABLE}
+    add_test(${PYTEST_NAME}  ${Python_EXECUTABLE}
              ${PYTEST_SOURCES})
     SET(RDKIT_PYTEST_CACHE "${PYTEST_NAME};${RDKIT_PYTEST_CACHE}" CACHE INTERNAL "Global list of python tests")
   endif(RDK_BUILD_PYTHON_WRAPPERS)
@@ -259,7 +259,7 @@ endmacro(add_pytest)
 
 function(add_jupytertest testname workingdir notebook)
   if(RDK_BUILD_PYTHON_WRAPPERS AND RDK_NBVAL_AVAILABLE)
-    add_test(NAME ${testname}  COMMAND ${Python3_EXECUTABLE} -m pytest --nbval ${notebook}
+    add_test(NAME ${testname}  COMMAND ${Python_EXECUTABLE} -m pytest --nbval ${notebook}
        WORKING_DIRECTORY ${workingdir} )
     SET(RDKIT_JUPYTERTEST_CACHE "${testname};${RDKIT_JUPYTERTEST_CACHE}" CACHE INTERNAL "Global list of jupyter tests")
   endif()
@@ -267,7 +267,7 @@ endfunction(add_jupytertest)
 
 function(add_pythonpytest testname workingdir)
   if(RDK_BUILD_PYTHON_WRAPPERS)
-    add_test(NAME ${testname}  COMMAND ${Python3_EXECUTABLE} -m pytest 
+    add_test(NAME ${testname}  COMMAND ${Python_EXECUTABLE} -m pytest 
        WORKING_DIRECTORY ${workingdir} )
     SET(RDKIT_PYTHONTEST_CACHE "${testname};${RDKIT_PYTHONTEST_CACHE}" CACHE INTERNAL "Global list of pytest tests")
   endif()
