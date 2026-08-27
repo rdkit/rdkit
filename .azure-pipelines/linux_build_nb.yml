@@ -10,7 +10,7 @@ steps:
         libboost-devel=$(boost_version) \
         libboost=$(boost_version) \
         libboost-headers=$(boost_version) \
-        nanobind \
+        nanobind=2 \
         numpy=2.4 pillow eigen pandas=3 matplotlib-base=3.10 \
         cairo
     conda activate rdkit_build
