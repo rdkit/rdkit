@@ -1754,7 +1754,6 @@ TEST_CASE("Custom Scoring Functions") {
                 *mol, terms) == 1000);
   }
 }
-
 TEST_CASE("tautomer canonicalize preserves conformers") {
   // Regression test: quickCopy during tautomer enumeration drops
   // conformers.  canonicalize() must restore them from the original
@@ -1834,3 +1833,110 @@ M  END
   }
 }
 
+TEST_CASE("tautomer canonicalize clears invalid bond stereo after bond-order changes") {
+  std::string molblock = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 66.546902 -10.607295 0.000000 0
+M  V30 2 C 67.407319 -9.379170 0.000000 0
+M  V30 3 N 68.901071 -9.509378 0.000000 0
+M  V30 4 C 69.532321 -10.864587 0.000000 0
+M  V30 5 O 68.675029 -12.088546 0.000000 0
+M  V30 6 C 71.021905 -10.994795 0.000000 0
+M  V30 7 C 67.180236 -11.966671 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 4 5
+M  V30 2 1 4 6 CFG=1
+M  V30 3 1 3 4
+M  V30 4 2 2 1
+M  V30 5 1 1 7
+M  V30 6 1 3 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+  std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+  REQUIRE(mol);
+
+  MolStandardize::CleanupParameters params;
+  params.tautomerRemoveBondStereo = false;
+  MolStandardize::TautomerEnumerator te(params);
+
+  std::unique_ptr<ROMol> canon;
+  REQUIRE_NOTHROW(canon.reset(te.canonicalize(*mol)));
+  REQUIRE(canon);
+  CHECK(MolToSmiles(*canon) == "CCC=NC(C)=O");
+  for (const auto bond : canon->bonds()) {
+    if (bond->getBondType() != Bond::DOUBLE) {
+      continue;
+    }
+    CHECK(bond->getStereo() < Bond::STEREOATROPCW);
+    if (bond->getStereo() > Bond::STEREOANY) {
+      CHECK(bond->getStereoAtoms().size() == 2);
+    }
+  }
+}
+
+TEST_CASE("canonical tautomer keeps stereo on an equal-score tie",
+          "[tautomer][stereo]") {
+  // A transform that destroys and regenerates an sp3 stereocentre puts a
+  // stereo-unspecified twin of an equally-scoring tautomer into the pool. The
+  // tie-break used to be lexicographic on canonical SMILES only, and '[' (0x5B)
+  // sorts after every atom letter, so the twin always won:
+  //   "CC(=O)C(C)O" < "CC(=O)[C@H](C)O"
+  // Both acetoin enantiomers therefore canonicalized to the same achiral SMILES
+  // even with tautomerRemoveSp3Stereo set to false. See GitHub #9518 and #7969.
+  MolStandardize::CleanupParameters params;
+  params.tautomerRemoveSp3Stereo = false;
+  params.tautomerRemoveBondStereo = false;
+  params.tautomerRemoveIsotopicHs = false;
+  MolStandardize::TautomerEnumerator te(params);
+
+  SECTION("acetoin enantiomers stay distinct") {
+    for (const auto &smi :
+         std::vector<std::string>{"CC(=O)[C@H](C)O", "CC(=O)[C@@H](C)O"}) {
+      std::unique_ptr<RWMol> m{SmilesToMol(smi)};
+      REQUIRE(m);
+      const auto expected = MolToSmiles(*m);
+      std::unique_ptr<ROMol> canon{te.canonicalize(*m)};
+      REQUIRE(canon);
+      CHECK(MolToSmiles(*canon) == expected);
+    }
+  }
+
+  SECTION("the two enantiomers do not collapse onto each other") {
+    std::unique_ptr<RWMol> r{SmilesToMol("CC(=O)[C@H](C)O")};
+    std::unique_ptr<RWMol> s{SmilesToMol("CC(=O)[C@@H](C)O")};
+    std::unique_ptr<ROMol> cr{te.canonicalize(*r)};
+    std::unique_ptr<ROMol> cs{te.canonicalize(*s)};
+    CHECK(MolToSmiles(*cr) != MolToSmiles(*cs));
+  }
+
+  SECTION("open-chain D-fructose keeps all three centres") {
+    std::unique_ptr<RWMol> m{
+        SmilesToMol("O=C(CO)[C@@H](O)[C@H](O)[C@H](O)CO")};
+    REQUIRE(m);
+    std::unique_ptr<ROMol> canon{te.canonicalize(*m)};
+    REQUIRE(canon);
+    CHECK(MolToSmiles(*canon) == MolToSmiles(*m));
+  }
+
+  SECTION("result is independent of input atom ordering") {
+    std::unique_ptr<RWMol> m{SmilesToMol("CCC(=O)[C@H](O)CC")};
+    REQUIRE(m);
+    std::unique_ptr<ROMol> ref{te.canonicalize(*m)};
+    const auto refSmi = MolToSmiles(*ref);
+    std::vector<unsigned int> order(m->getNumAtoms());
+    for (unsigned int i = 0; i < order.size(); ++i) {
+      order[i] = (i + 3) % order.size();
+    }
+    std::unique_ptr<ROMol> renumbered{MolOps::renumberAtoms(*m, order)};
+    std::unique_ptr<ROMol> got{te.canonicalize(*renumbered)};
+    CHECK(MolToSmiles(*got) == refSmi);
+  }
+}

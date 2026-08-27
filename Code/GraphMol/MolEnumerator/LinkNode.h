@@ -7,12 +7,16 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#ifndef RD_MOLENUMERATOR_LINKNODE_H
+#define RD_MOLENUMERATOR_LINKNODE_H
+#include <GraphMol/ROMol.h>
+
 #include <RDGeneral/Invariant.h>
 
 #include <map>
+#include <sstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
-#include <boost/format.hpp>
 #include <algorithm>
 
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
@@ -157,3 +161,4 @@ inline std::vector<LinkNode> getMolLinkNodes(
 }  // namespace MolEnumerator
 
 }  // namespace RDKit
+#endif  // RD_MOLENUMERATOR_LINKNODE_H

@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //
@@ -28,22 +27,19 @@ RDKit::VECT_INT_VECT HierarchicalClusterPicker::cluster(
   // Do the clustering
   auto method = (long int)d_method;
   long int len = poolSize * (poolSize - 1);
-  auto *ia = (long int *)calloc(poolSize, sizeof(long int));
-  auto *ib = (long int *)calloc(poolSize, sizeof(long int));
-  real *crit = (real *)calloc(poolSize, sizeof(real));
-  CHECK_INVARIANT(ia, "failed to allocate memory");
-  CHECK_INVARIANT(ib, "failed to allocate memory");
-  CHECK_INVARIANT(crit, "failed to allocate memory");
+  std::vector<long int> ia(poolSize, 0);
+  std::vector<long int> ib(poolSize, 0);
+  std::vector<real> crit(poolSize, 0.0);
   auto poolSize2 = static_cast<long int>(poolSize);
 
   distdriver_(&poolSize2,       // number of items in the pool
               &len,             // number of entries in the distance matrix
               (real *)distMat,  // distance matrix
               &method,          // the clustering method (ward, slink etc.)
-              ia,               // int vector with clustering history
-              ib,               // one more clustering history matrix
-              crit  // I believe this is a vector the difference in heights of
-                    // two clusters
+              ia.data(),        // int vector with clustering history
+              ib.data(),        // one more clustering history matrix
+              crit.data()       // I believe this is a vector the difference in
+                                // heights of two clusters
   );
 
   // we have the clusters now merge then until the number of clusters is same
@@ -56,14 +52,15 @@ RDKit::VECT_INT_VECT HierarchicalClusterPicker::cluster(
   //     ia[j] is replaced by the new cluster in the cluster list
   //
   RDKit::VECT_INT_VECT clusters;
+  clusters.reserve(poolSize);
   for (unsigned int i = 0; i < poolSize; i++) {
-    RDKit::INT_VECT cls;
-    cls.push_back(i);
+    RDKit::INT_VECT cls = {static_cast<int>(i)};
     clusters.push_back(cls);
   }
 
   // do the merging, each round of of this loop eliminates one cluster
   RDKit::INT_VECT removed;
+  removed.reserve(poolSize - pickSize);
   for (unsigned int i = 0; i < (poolSize - pickSize); i++) {
     int cx1 = ia[i] - 1;
     int cx2 = ib[i] - 1;
@@ -77,10 +74,6 @@ RDKit::VECT_INT_VECT HierarchicalClusterPicker::cluster(
     // mark the second cluster as removed
     removed.push_back(cx2);
   }
-  free(ia);
-  free(ib);
-  free(crit);
-
   // sort removed so that looping will be easier later
   std::sort(removed.begin(), removed.end());
 
@@ -108,7 +101,7 @@ RDKit::INT_VECT HierarchicalClusterPicker::pick(const double *distMat,
                                                 unsigned int poolSize,
                                                 unsigned int pickSize) const {
   PRECONDITION(distMat, "bad distance matrix");
-  RDKit::VECT_INT_VECT clusters = this->cluster(distMat, poolSize, pickSize);
+  auto clusters = this->cluster(distMat, poolSize, pickSize);
   CHECK_INVARIANT(clusters.size() == pickSize, "");
 
   // the last step: find a representative element from each of the

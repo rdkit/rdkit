@@ -1,6 +1,4 @@
-# $Id$
-#
-# Copyright (C) 2006-2008 Greg Landrum
+# Copyright (C) 2006-2026 Greg Landrum and other RDKit contributors
 #
 #  @@ All Rights Reserved @@
 #
@@ -8,10 +6,9 @@
 import io
 import os
 import pickle
-import sys
 import unittest
 
-from rdkit import Chem, RDConfig
+from rdkit import RDConfig
 from rdkit.Chem import ChemicalFeatures
 from rdkit.Geometry import rdGeometry as geom
 

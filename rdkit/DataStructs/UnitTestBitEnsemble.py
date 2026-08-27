@@ -1,5 +1,3 @@
-# $Id$
-#
 # Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
@@ -17,7 +15,7 @@ import unittest
 
 from rdkit import RDConfig
 # This import is important to initialize the BitEnsemble module
-from rdkit.DataStructs import BitEnsembleDb, SparseBitVect
+from rdkit.DataStructs import SparseBitVect
 from rdkit.DataStructs.BitEnsemble import BitEnsemble
 
 

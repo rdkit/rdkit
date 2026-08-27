@@ -1,4 +1,3 @@
-# $Id$
 # Christopher Lee  clee@users.sourceforge.net
 # based upon pdfmetrics.py by Andy Robinson
 

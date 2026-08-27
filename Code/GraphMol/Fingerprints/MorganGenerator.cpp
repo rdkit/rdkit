@@ -234,7 +234,7 @@ void MorganArguments::fromJSON(const boost::property_tree::ptree &pt) {
 
 template <typename OutputType>
 void MorganAtomEnv<OutputType>::updateAdditionalOutput(
-    AdditionalOutput *additionalOutput, size_t bitId) const {
+    AdditionalOutput *additionalOutput, std::uint64_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
   PRECONDITION(d_mol, "bad mol pointer");
   if (additionalOutput->bitInfoMap) {

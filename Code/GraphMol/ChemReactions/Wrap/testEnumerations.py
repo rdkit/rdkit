@@ -32,14 +32,13 @@
 import copy
 import itertools
 import os
-import pickle
 import sys
 import time
 import unittest
 
 import numpy as np
 
-from rdkit import Chem, Geometry, RDConfig, rdBase
+from rdkit import Chem, RDConfig, rdBase
 from rdkit.Chem import AllChem, rdChemReactions
 
 

@@ -44,6 +44,9 @@
 #include "fragment.h"
 
 namespace RDKit {
+namespace v2 {
+struct ChemDrawParserParams;
+}
 namespace ChemDraw {
 inline constexpr auto CDXML_FREE_SITES_PROP = "_cdxmlFreeSites";
 inline constexpr auto CDXML_RING_BOND_COUNT_AS_DRAWN_PROP =
@@ -56,7 +59,8 @@ inline constexpr auto CDXML_VARIABLE_ATTACHMENT_ENDPOINTS_PROP =
 bool parseNode(
     RWMol &mol, unsigned int fragmentId, CDXNode &node, PageData &pagedata,
     std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
-    int &missingFragId, int externalAttachment);
+    int &missingFragId, const v2::ChemDrawParserParams &params,
+    int externalAttachment);
 }
 }  // namespace RDKit
 #endif

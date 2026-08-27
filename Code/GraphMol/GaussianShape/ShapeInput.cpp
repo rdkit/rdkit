@@ -19,8 +19,10 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#ifndef RDKIT_NO_SIMDIVPICKERS
 #include <SimDivPickers/DistPicker.h>
 #include <SimDivPickers/LeaderPicker.h>
+#endif
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
@@ -126,8 +128,6 @@ ShapeInput::ShapeInput(const ROMol &mol, const int confId,
   PRECONDITION(mol.getNumConformers() > 0,
                "ShapeInput object needs the molecule to have conformers.  " +
                    mol.getProp<std::string>("_Name") + "  " + MolToSmiles(mol));
-  // std::cout << "making shape from " << MolToSmiles(mol) << " with "
-  // << mol.getNumConformers() << " confs" << std::endl;
   std::unique_ptr<RWMol> tmpMol;
   // Subsetting the molecule makes any bespoke atom radii, identified
   // by atom index, incorrect so stash them as atom properties.
@@ -142,7 +142,6 @@ ShapeInput::ShapeInput(const ROMol &mol, const int confId,
     tmpMol.reset(new RWMol(mol));
   }
   d_smiles = MolToSmiles(*tmpMol);
-  // std::cout << "shape smiles : " << d_smiles << std::endl;
   std::vector<unsigned int> atOrder;
   tmpMol->getProp(common_properties::_smilesAtomOutputOrder, atOrder);
   tmpMol.reset(dynamic_cast<RWMol *>(MolOps::renumberAtoms(*tmpMol, atOrder)));
@@ -263,12 +262,14 @@ ShapeInput &ShapeInput::operator=(const ShapeInput &other) {
   return *this;
 }
 
-void ShapeInput::merge(ShapeInput &other) {
-  PRECONDITION(d_smiles == other.d_smiles,
-               "Shapes have different SMILES strings.");
+void ShapeInput::merge(ShapeInput &&other) {
   if (!d_coords.empty() &&
       d_coords.front().size() != other.d_coords.front().size()) {
     BOOST_LOG(rdWarningLog) << "Can't merge shapes as different sizes.\n";
+    return;
+  }
+  if (d_types != other.d_types) {
+    BOOST_LOG(rdWarningLog) << "Can't merge shapes as different types.\n";
     return;
   }
   if (other.d_coords.empty()) {
@@ -467,6 +468,24 @@ std::unique_ptr<RWMol> ShapeInput::shapeToMol(const bool includeColors,
     v2::SmilesParse::SmilesParserParams params;
     params.sanitize = false;
     mol = v2::SmilesParse::MolFromSmiles(d_smiles, params);
+    // construction of the shape removes all Hs except isotopes.
+    // do that from the molecule too.
+    // This was #9441
+    MolOps::RemoveHsParameters rhps{.removeDegreeZero = true,
+                                    .removeHigherDegrees = true,
+                                    .removeOnlyHNeighbors = true,
+                                    .removeIsotopes = false,
+                                    .removeDummyNeighbors = true,
+                                    .removeDefiningBondStereo = true,
+                                    .removeWithWedgedBond = true,
+                                    .removeWithQuery = true,
+                                    .removeInSGroups = true,
+                                    .showWarnings = false,
+                                    .removeNonimplicit = true,
+                                    .removeHydrides = true,
+                                    .removeNontetrahedralNeighbors = true};
+    bool sanitize = false;
+    MolOps::removeHs(*mol, rhps, sanitize);
   } else {
     mol.reset(new RWMol());
     for (unsigned int i = 0; i < getNumAtoms(); i++) {
@@ -556,6 +575,7 @@ double ShapeInput::maxPossibleSimilarity(
   }
   return maxSim;
 }
+#ifndef RDKIT_NO_SIMDIVPICKERS
 
 void ShapeInput::pruneShapes(const double simThreshold) {
   if (d_coords.size() < 2 || simThreshold < 0.0) {
@@ -589,6 +609,15 @@ void ShapeInput::pruneShapes(const double simThreshold) {
   selectConformations(picks);
   d_activeShape = 0;
 }
+
+#else
+
+void ShapeInput::pruneShapes(const double) {
+  UNDER_CONSTRUCTION(
+      "pruneShapes not implemented when the SimDivPickers have not been built.");
+}
+
+#endif
 
 namespace {
 double getStandardAtomRadius(const unsigned int atomicNum) {

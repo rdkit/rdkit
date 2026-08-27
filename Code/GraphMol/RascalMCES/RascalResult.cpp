@@ -80,6 +80,9 @@ RascalResult::RascalResult(const RascalResult &other)
       d_timedOut(other.d_timedOut),
       d_tier1Sim(other.d_tier1Sim),
       d_tier2Sim(other.d_tier2Sim),
+      d_ringMatchesRingOnly(other.d_ringMatchesRingOnly),
+      d_maxFragSep(other.d_maxFragSep),
+      d_exactConnectionsMatch(other.d_exactConnectionsMatch),
       d_equivalentAtoms(other.d_equivalentAtoms),
       d_ignoreBondOrders(other.d_ignoreBondOrders),
       d_numFrags(other.d_numFrags),
@@ -102,25 +105,7 @@ RascalResult &RascalResult::operator=(const RascalResult &other) {
   if (this == &other) {
     return *this;
   }
-  d_bondMatches = other.d_bondMatches;
-  d_atomMatches = other.d_atomMatches;
-  d_smarts = other.d_smarts;
-  d_timedOut = other.d_timedOut;
-  d_equivalentAtoms = other.d_equivalentAtoms;
-  d_numFrags = other.d_numFrags;
-  d_ringNonRingBondScore = other.d_ringNonRingBondScore;
-  d_atomMatchScore = other.d_atomMatchScore;
-  d_maxDeltaAtomAtomDist = other.d_maxDeltaAtomAtomDist;
-  d_largestFragSize = other.d_largestFragSize;
-  if (other.d_mol1) {
-    d_mol1.reset(new ROMol(*other.d_mol1));
-  }
-  if (other.d_mol2) {
-    d_mol2.reset(new ROMol(*other.d_mol2));
-  }
-  if (other.d_mcesMol) {
-    d_mcesMol.reset(new ROMol(*other.d_mcesMol));
-  }
+  *this = RascalResult(other);
   return *this;
 }
 
@@ -384,8 +369,8 @@ void RascalResult::matchCliqueAtoms(
 }
 
 void RascalResult::applyMaxFragSep() {
-  std::unique_ptr<RDKit::ROMol> mol1_frags(makeMolFrags(1));
-  auto frags1 = RDKit::MolOps::getMolFrags(*mol1_frags, false);
+  std::unique_ptr<RDKit::ROMol> mol1Frags(makeMolFrags(1));
+  auto frags1 = RDKit::MolOps::getMolFrags(*mol1Frags, false);
   if (frags1.size() < 2) {
     return;
   }
@@ -416,25 +401,21 @@ void RascalResult::applyMaxFragSep() {
 
   bool deletedFrag = false;
   for (size_t i = 0; i < frags1.size() - 1; ++i) {
-    if (!frags1[i]) {
-      continue;
-    }
     for (size_t j = i + 1; j < frags1.size(); ++j) {
-      if (!frags1[j]) {
-        continue;
-      }
-      int mol1Dist =
-          fragFragDist(frags1[i], frags1[j], mol1Dists, d_mol1->getNumAtoms());
-      int mol2Dist =
-          fragFragDist(frags2[i], frags2[j], mol2Dists, d_mol2->getNumAtoms());
-      if (mol1Dist > d_maxFragSep || mol2Dist > d_maxFragSep) {
-        deletedFrag = true;
-        if (frags1[i]->getNumAtoms() < frags1[j]->getNumAtoms()) {
-          frags1[i].reset();
-          frags2[i].reset();
-        } else {
-          frags1[j].reset();
-          frags2[j].reset();
+      if (frags1[i] && frags1[j]) {
+        int mol1Dist = fragFragDist(frags1[i], frags1[j], mol1Dists,
+                                    d_mol1->getNumAtoms());
+        int mol2Dist = fragFragDist(frags2[i], frags2[j], mol2Dists,
+                                    d_mol2->getNumAtoms());
+        if (mol1Dist > d_maxFragSep || mol2Dist > d_maxFragSep) {
+          deletedFrag = true;
+          if (frags1[i]->getNumAtoms() < frags1[j]->getNumAtoms()) {
+            frags1[i].reset();
+            frags2[i].reset();
+          } else {
+            frags1[j].reset();
+            frags2[j].reset();
+          }
         }
       }
     }

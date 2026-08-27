@@ -16,6 +16,7 @@
 #include <utility>
 #include <iterator>
 #include <Catalogs/Catalog.h>
+#include <GraphMol/ROMol.h>
 #include <GraphMol/MolStandardize/MolStandardize.h>
 #include <GraphMol/MolStandardize/TautomerCatalog/TautomerCatalogEntry.h>
 #include <GraphMol/MolStandardize/TautomerCatalog/TautomerCatalogParams.h>
@@ -58,6 +59,7 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
                 std::vector<int> reqElements = {},
                 std::string connSmarts = "");
   SubstructTerm(const SubstructTerm &rhs) = default;
+  SubstructTerm &operator=(const SubstructTerm &rhs) = default;
 
   bool operator==(const SubstructTerm &rhs) const {
     return name == rhs.name && smarts == rhs.smarts && score == rhs.score;
@@ -136,6 +138,35 @@ inline boost::function<int(const ROMol &)> makeOptimizedScorer(
   };
 }
 }  // namespace TautomerScoringFunctions
+
+namespace detail {
+//! Number of explicitly specified stereo descriptors on a molecule.
+/*!
+  Used only to break score ties when picking the canonical tautomer, where a
+  lexicographic comparison of SMILES would otherwise be systematically biased
+  against stereochemistry.
+*/
+inline unsigned int countSpecifiedStereo(const ROMol &mol) {
+  unsigned int nSpecified = 0;
+  for (const auto atom : mol.atoms()) {
+    // CHI_UNSPECIFIED is the only "none" value on the atom side; ChiralType has no
+    // analogue of STEREOANY, so a simple inequality is right here.
+    if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+      ++nSpecified;
+    }
+  }
+  for (const auto bond : mol.bonds()) {
+    // STEREOANY is *intentionally unspecified*, not retained stereochemistry, and
+    // getClearedTautomerBondStereo() assigns it to cleared acyclic double bonds, so
+    // counting it would let a tautomer win a tie on unknown stereo. The enum is
+    // ordered so that "> STEREOANY" is the idiomatic test; see Bond.h.
+    if (bond->getStereo() > Bond::STEREOANY) {
+      ++nSpecified;
+    }
+  }
+  return nSpecified;
+}
+}  // namespace detail
 
 enum class TautomerEnumeratorStatus {
   Completed = 0,
@@ -463,22 +494,41 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
     } else {
       // Calculate score for each tautomer
       int bestScore = std::numeric_limits<int>::min();
+      unsigned int bestStereo = 0;
       std::string bestSmiles = "";
       for (const auto &t : tautomers) {
         auto score = scoreFunc(*t);
 #ifdef VERBOSE_ENUMERATION
         std::cerr << "  " << MolToSmiles(*t) << " " << score << std::endl;
 #endif
+        if (score < bestScore) {
+          // cannot win, so do not pay for its SMILES
+          continue;
+        }
+        // See the comment in the pickCanonical overload in Tautomer.cpp: the
+        // lexicographic tie-break is biased against stereochemistry, so compare
+        // the amount of retained stereo first.
+        auto nStereo = detail::countSpecifiedStereo(*t);
+        bool better = false;
+        bool haveSmiles = false;
+        std::string smiles;
         if (score > bestScore) {
-          bestScore = score;
-          bestSmiles = MolToSmiles(*t);
-          bestMol = t;
-        } else if (score == bestScore) {
-          auto smiles = MolToSmiles(*t);
-          if (smiles < bestSmiles) {
-            bestSmiles = smiles;
-            bestMol = t;
+          better = true;
+        } else if (nStereo > bestStereo) {
+          better = true;
+        } else if (nStereo == bestStereo) {
+          smiles = MolToSmiles(*t);
+          haveSmiles = true;
+          better = smiles < bestSmiles;
+        }
+        if (better) {
+          if (!haveSmiles) {
+            smiles = MolToSmiles(*t);
           }
+          bestScore = score;
+          bestStereo = nStereo;
+          bestSmiles = std::move(smiles);
+          bestMol = t;
         }
       }
     }

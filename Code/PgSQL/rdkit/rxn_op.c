@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.

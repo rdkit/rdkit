@@ -35,7 +35,6 @@
 #include <GraphMol/ChemReactions/Enumerate/RandomSampleAllBBs.h>
 #include <GraphMol/ChemReactions/Enumerate/EvenSamplePairs.h>
 #include <GraphMol/ChemReactions/Enumerate/Enumerate.h>
-#include <boost/python/stl_iterator.hpp>
 #include <cstdint>
 
 namespace python = boost::python;
@@ -124,14 +123,6 @@ class EnumerateLibraryWrap : public RDKit::EnumerateLibrary {
                        const EnumerationParams &params = EnumerationParams())
       : RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), enumerator, params) {}
 };
-
-namespace {
-template <typename T>
-inline std::vector<T> to_std_vector(const python::object &iterable) {
-  return std::vector<T>(python::stl_input_iterator<T>(iterable),
-                        python::stl_input_iterator<T>());
-}
-}  // namespace
 
 void ToBBS(EnumerationStrategyBase &rgroup, ChemicalReaction &rxn,
            python::list ob) {

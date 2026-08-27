@@ -167,7 +167,7 @@ void testFileMCSB(const char *test, unsigned int timeout = 30,
         float t;
         char mcs[1024];
         MCSResult res;
-        sscanf(str, "%u %c %d %d %d %f %s", &n, &c, &frag, &res.NumAtoms,
+        sscanf(str, "%u %c %d %u %u %f %s", &n, &c, &frag, &res.NumAtoms,
                &res.NumBonds, &t, mcs);
         res.Canceled = ('.' != c);
         res.SmartsString = mcs;
@@ -207,9 +207,9 @@ void testFileMCSB(const char *test, unsigned int timeout = 30,
         unsigned int nn, len;
         n++;
         testCase.emplace_back();
-        sscanf(str, "%u%n", &nn, &len);
+        sscanf(str, "%u%u", &nn, &len);
         while ('\0' != *(str + len) &&
-               1 == sscanf(str + len, "%s%n", name, &nn)) {
+               1 == sscanf(str + len, "%s%u", name, &nn)) {
           len += nn;
           testCase.back().push_back(std::string(name));
         }

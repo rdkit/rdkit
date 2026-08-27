@@ -1,4 +1,4 @@
-#  Copyright (C) 2001-2021  greg Landrum
+#  Copyright (C) 2001-2026 Greg Landrum and other rdkit Contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -194,6 +194,15 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(sms), 2)
     self.assertIn('C[C@](F)(Cl)Br', sms)
     self.assertIn('C[C@@](F)(Cl)Br', sms)
+
+  def testMultiConfMolFromSDF(self):
+    sdf = os.path.join(RDConfig.RDCodeDir, "Chem", "test_data", "cis.sdf")
+    mol = Chem.MultiConfMolFromSDF(sdf)
+    self.assertEqual(mol.GetNumConformers(), 1)
+
+    sdf = os.path.join(RDConfig.RDCodeDir, "Chem", "test_data", "biaryl.sdf")
+    mol = Chem.MultiConfMolFromSDF(sdf)
+    self.assertEqual(mol.GetNumConformers(), 3)
 
 
 if __name__ == '__main__':
