@@ -1,3 +1,94 @@
+# Release_2026.03.6
+(Changes relative to Release_2026.03.5)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Kevin Boyd, Michael Cho, David Cosgrove, Mike DePaulo, Paul Emsley, Guillaume
+Godin, Niels Maeder, Vedran Miletić, younes ouzza, Ricardo Rodriguez, Wonseok
+Shin, Chris Von Bargen, Rachel Walker, Shin,
+
+## New Features and Enhancements:
+  - Synthon space shape search
+ (github pull #9279 from DavidACosgrove)
+  - Speed-up BertzCT, no value changes
+ (github pull #9447 from gratus907)
+  - change source of freetype in docker builds
+ (github pull #9448 from greglandrum)
+  - Install header for SGroup data label API
+ (github pull #9453 from cdvonbargen)
+  - support ignoreAtoms in RDKitFingerprintGenerators
+ (github pull #9459 from greglandrum)
+  - ConfGen: Use a better estimate of 1-2 distances when we don't have UFF atom params
+ (github pull #9465 from greglandrum)
+  - Reduce SMILES parser bond property staging
+ (github pull #9476 from scal444)
+  - Reuse Hanoi scratch buffer in canonical ranking
+ (github pull #9478 from scal444)
+  - Use insertion sort for canonical neighbors
+ (github pull #9492 from scal444)
+  - Reduce comparisons and branches in bondholder compare
+ (github pull #9497 from scal444)
+  - Cache isAtomConjugCand in markConjAtomBonds
+ (github pull #9498 from scal444)
+  - Make checking in checked iterators stricter to avoid heap-use-after-free problems
+ (github pull #9500 from ricrogz)
+
+## Documentation:
+  - Correct comment in Point::signedAngleTo.
+ (github pull #9445 from DavidACosgrove)
+
+## Bug Fixes:
+  - make GaussianShape build without SimDivPickers on big-endian
+ (github pull #9438 from mikedep333)
+  - Fix numpy dtype handling in the InfoTheory wrappers
+ (github pull #9443 from gratus907)
+  - Three small bugs
+ (github pull #9444 from vedranmiletic)
+  - Fixes for AI-found critical issues
+ (github pull #9450 from ricrogz)
+  - Fixes for AI-found high impact issues (1/2)
+ (github pull #9451 from ricrogz)
+  - Fixes for AI-found high impact issues (2/2)
+ (github pull #9452 from ricrogz)
+  - fixes bug in RandomizeActivities when shuffle is false
+ (github pull #9463 from greglandrum)
+  - CML Writer atom parity problem
+ (github issue #9464 from pemsley)
+  - Fixes for AI-found medium impact issues (C++ code)
+ (github pull #9466 from ricrogz)
+  - Change of behaviour in fragmentOnBonds between 2026.03.4 and master
+ (github issue #9468 from DavidACosgrove)
+  - MMFF Minimization fails to parametrize cyclophosphazene
+ (github issue #9473 from scal444)
+  - support building with boost 1.92.0
+ (github pull #9494 from cho-m)
+  - Fix bug with basic substructure highlighting in the IPythonConsole code
+ (github pull #9495 from greglandrum)
+  - Fix maeparser includes declaration
+ (github pull #9496 from ricrogz)
+  - ROMol Move Constructor Leaks
+ (github issue #9504 from scal444)
+  - CIPLabeler: backport "recent" fixes from https://github.com/SiMolecule/centres
+ (github pull #9516 from ricrogz)
+  - Fix/erronous return in ff contributions
+ (github pull #9523 from nmaeder)
+  - Fix build issue with TBB in debug builds
+ (github pull #9532 from ricrogz)
+
+## Cleanup work:
+  - Address some "unused-but-set" warnings
+ (github pull #9439 from ricrogz)
+  - Fix harmless test issues found by ASAN
+ (github pull #9506 from scal444)
+  - Enable numpy's "modern" API
+ (github pull #9510 from ricrogz)
+  - CIPLabeler: remove the PairList integer mechanism
+ (github pull #9515 from ricrogz)
+
+
 # Release_2026.03.5
 (Changes relative to Release_2026.03.4)
 
