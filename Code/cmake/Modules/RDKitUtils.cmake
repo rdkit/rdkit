@@ -190,7 +190,7 @@ macro(rdkit_python_extension)
   CAR(RDKPY_NAME ${RDKPY_DEFAULT_ARGS})
   CDR(RDKPY_SOURCES ${RDKPY_DEFAULT_ARGS})
   if(RDK_BUILD_PYTHON_WRAPPERS)
-    Python3_add_library(${RDKPY_NAME} MODULE ${RDKPY_SOURCES})
+    Python_add_library(${RDKPY_NAME} MODULE ${RDKPY_SOURCES})
     set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
 
     if(WIN32)
