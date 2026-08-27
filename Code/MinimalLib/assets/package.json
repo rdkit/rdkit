@@ -1,5 +1,5 @@
 {
-  "name": "@charnley/rdkit-minimal",
+  "name": "@rdkit/rdkit",
   "version": "0.0.0",
   "description": "RDKit MinimalLib compiled to WebAssembly",
   "main": "./dist/RDKit_minimal.js",
@@ -20,7 +20,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/charnley/rdkit.git"
+    "url": "https://github.com/rdkit/rdkit.git"
   },
   "publishConfig": {
     "access": "public"
