@@ -47,16 +47,15 @@ MacroMol &MacroMol::operator=(const MacroMol &other) {
   return *this;
 }
 
-void MacroMol::addLocalTemplate(
-    std::unique_ptr<MacroMolTemplate> macroMolTemplate) {
-  dp_localTemplateLibrary->addTemplate(std::move(macroMolTemplate));
+MacroMolTemplateLibrary &MacroMol::getLocalTemplateLibrary() {
+  return *dp_localTemplateLibrary;
 }
 
 const MacroMolTemplateLibrary &MacroMol::getLocalTemplateLibrary() const {
   return *dp_localTemplateLibrary;
 }
 
-bool MacroMol::hasValidLocalTemplateReferences() const {
+bool MacroMol::checkLocalTemplateReferences() const {
   for (const auto *atom : atoms()) {
     const auto *macroAtomInfo = atom->getMacroAtomInfo();
     if (!macroAtomInfo) {
