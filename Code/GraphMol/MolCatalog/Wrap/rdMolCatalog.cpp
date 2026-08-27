@@ -80,6 +80,14 @@ MolCatalog *createMolCatalog() {
   MolCatalogParams params;
   return new MolCatalog(&params);
 }
+
+template <typename T>
+python::object serializeHelper(const T &obj) {
+  std::string res = obj.Serialize();
+  return python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+}
+
 struct MolCatalog_wrapper {
   static void wrap() {
     python::class_<MolCatalog>(
@@ -87,7 +95,7 @@ struct MolCatalog_wrapper {
         python::init<const std::string &>(python::args("self", "pickle")))
         .def("GetNumEntries", &MolCatalog::getNumEntries, python::args("self"))
         .def("GetFPLength", &MolCatalog::getFPLength, python::args("self"))
-        .def("Serialize", &MolCatalog::Serialize, python::args("self"))
+        .def("Serialize", serializeHelper<MolCatalog>, python::args("self"))
 
         .def("GetBitDescription", GetBitDescription,
              python::args("self", "idx"))
@@ -113,6 +121,8 @@ struct MolCatalogEntry_wrapper {
     python::class_<MolCatalogEntry>("MolCatalogEntry",
                                     python::init<>(python::args("self")))
         .def(python::init<const std::string &>(python::args("self", "pickle")))
+        .def("Serialize", serializeHelper<MolCatalogEntry>,
+             python::args("self"))
         .def("GetDescription", &MolCatalogEntry::getDescription,
              python::args("self"))
         .def("SetDescription", &MolCatalogEntry::setDescription,

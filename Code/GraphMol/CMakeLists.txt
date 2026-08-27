@@ -3,6 +3,7 @@ rdkit_library(GraphMol
         MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp
         MacroAtomInfo.cpp
         MacroMol.cpp
+        MacroMolTemplate.cpp
         PeriodicTable.cpp
         atomic_data.cpp QueryOps.cpp MolPickler.cpp Canon.cpp
         AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp
@@ -48,6 +49,7 @@ rdkit_headers(Atom.h
         MacroAtomInfo.h
         MacroBondInfo.h
         MacroMol.h
+        MacroMolTemplate.h
         SanitException.h
         SubstanceGroup.h
         StereoGroup.h
@@ -115,7 +117,7 @@ if (RDK_BUILD_MOLINTERCHANGE_SUPPORT)
     add_subdirectory(MolInterchange)
 endif (RDK_BUILD_MOLINTERCHANGE_SUPPORT)
 
-if (RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
+if (RDK_BUILD_SLN_SUPPORT)
     if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS_EQUAL 4.8)
         message("Skipping SLN build with gcc version <= 4.8")
     else ()
@@ -123,8 +125,12 @@ if (RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
     endif ()
 endif ()
 
-if (RDK_BUILD_PYTHON_WRAPPERS)
+if (RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
+endif ()
+
+if (RDK_BUILD_NANOBIND_WRAPPERS)
+    add_subdirectory(nbWrap)
 endif ()
 
 add_subdirectory(MolStandardize)
@@ -216,5 +222,8 @@ rdkit_catch_test(molopsTestsCatch catch_molops.cpp
 
 rdkit_catch_test(testMacroMol testMacroMol.cpp
         LINK_LIBRARIES SmilesParse GraphMol)
-        
+
 rdkit_catch_test(ringSystemsTest ring_systems_test.cpp LINK_LIBRARIES SmilesParse GraphMol RDStreams)
+
+rdkit_catch_test(testMacroMolTemplate testMacroMolTemplate.cpp
+        LINK_LIBRARIES SmilesParse GraphMol)

@@ -3,8 +3,8 @@ import unittest
 
 from rdkit import Chem
 from rdkit.Chem import ChemicalForceFields
-from rdkit.Chem.rdtrajectory import (ReadAmberTrajectory, ReadGromosTrajectory,
-                                     Snapshot, Trajectory)
+from rdkit.Chem.rdtrajectory import (ReadAmberTrajectory, ReadGromosTrajectory, Snapshot,
+                                     Trajectory)
 
 
 def feq(v1, v2, tol=1.0e-4):
