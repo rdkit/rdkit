@@ -169,7 +169,7 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> buildProduct(
 
 // Make a map that has all the fragments with the same SMILES
 // in a vector keyed by that SMILES.
-RDKIT_SYNTHONSPACESEARCH_EXPORT std::map<std::string, std::vector<ROMol *>>
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::map<std::string, std::vector<RWMol *>>
 mapFragsBySmiles(std::vector<std::vector<std::shared_ptr<RWMol>>> &fragSets,
                  bool &cancelled);
 

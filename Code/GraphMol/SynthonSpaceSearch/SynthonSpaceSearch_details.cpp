@@ -923,10 +923,10 @@ std::unique_ptr<ROMol> buildProduct(
   return zipProdMol;
 }
 
-std::map<std::string, std::vector<ROMol *>> mapFragsBySmiles(
+std::map<std::string, std::vector<RWMol *>> mapFragsBySmiles(
     std::vector<std::vector<std::shared_ptr<RWMol>>> &fragSets,
     bool &cancelled) {
-  std::map<std::string, std::vector<ROMol *>> fragSmiToFrag;
+  std::map<std::string, std::vector<RWMol *>> fragSmiToFrag;
   for (auto &fragSet : fragSets) {
     for (auto &frag : fragSet) {
       if (ControlCHandler::getGotSignal()) {
@@ -940,7 +940,7 @@ std::map<std::string, std::vector<ROMol *>> mapFragsBySmiles(
       }
       std::string fragSmi = MolToSmiles(*frag);
       if (auto it = fragSmiToFrag.find(fragSmi); it == fragSmiToFrag.end()) {
-        fragSmiToFrag.emplace(fragSmi, std::vector<ROMol *>(1, frag.get()));
+        fragSmiToFrag.emplace(fragSmi, std::vector<RWMol *>(1, frag.get()));
       } else {
         it->second.emplace_back(frag.get());
       }

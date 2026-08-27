@@ -419,8 +419,7 @@ bool SynthonSpaceSubstructureSearcher::extraSearchSetup(
       // combined with a synthon such as [*1]ccccc[*3].  The downside is that
       // the fragment will become less discriminating leading to more false
       // positives in the initial screenout, hence the warning.
-      if (details::removeQueryAtoms(*dynamic_cast<RWMol *>(frag)) &&
-          !saidSomething) {
+      if (details::removeQueryAtoms(*frag) && !saidSomething) {
         saidSomething = true;
         BOOST_LOG(rdInfoLog) << "Complex queries can be slow." << std::endl;
       }
