@@ -946,8 +946,8 @@ bool checkExcludedVols(const ROMol &mol, const SynthonSpaceSearchParams &params,
     excludedVol = calcExcludedVolume(mol, *params.excludedVolume,
                                      params.shapeOverlayOptions);
     auto numClashes = calcNumClashes(mol, *params.excludedVolume);
-    meanExcludedVol = numClashes ? excludedVol / static_cast<double>(numClashes)
-                                 : excludedVol;
+    meanExcludedVol =
+        numClashes ? excludedVol / static_cast<double>(numClashes) : 0.0;
 
     if (params.maxExcludedVolume > -0.5 &&
         excludedVol > params.maxExcludedVolume) {
