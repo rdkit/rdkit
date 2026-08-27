@@ -420,7 +420,6 @@ class TestCase(unittest.TestCase):
       restartFile = tmp.name
     os.unlink(restartFile)
     textFile = self.sssDir / "amide_space.txt"
-    print(f"Restart : {restartFile}  from {textFile}")
 
     p = multiprocessing.Process(target=createShapeDatabaseForTest,
                                 args=(textFile, restartFile))
