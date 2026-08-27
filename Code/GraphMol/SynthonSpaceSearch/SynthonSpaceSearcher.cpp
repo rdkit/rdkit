@@ -651,10 +651,6 @@ void SynthonSpaceSearcher::buildAllHits(
     return;
   }
 
-  std::uint64_t numPossHits = 0;
-  for (const auto &hitset : hitsets) {
-    numPossHits += hitset->numHits;
-  }
   if (!getParams().possibleHitsFile.empty()) {
     // The file will be appended to, so clear it out at the start.
     std::ofstream ofs(getParams().possibleHitsFile);
