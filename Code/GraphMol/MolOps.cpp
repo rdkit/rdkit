@@ -19,7 +19,6 @@
 
 #include <vector>
 #include <algorithm>
-#include <limits>
 
 #include <RDGeneral/BoostStartInclude.h>
 
@@ -35,6 +34,7 @@
 
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <Geometry/point.h>
 #include <GraphMol/QueryOps.h>
@@ -1272,16 +1272,11 @@ unsigned int getAttachmentPointLabelNumber(const Atom *atom) {
     return 0;
   }
   unsigned int result = 0;
-  for (auto iter = label.begin() + attachmentPointLabelPrefix.size();
-       iter != label.end(); ++iter) {
-    if (*iter < '0' || *iter > '9') {
-      return 0;
-    }
-    const auto digit = static_cast<unsigned int>(*iter - '0');
-    if (result > (std::numeric_limits<unsigned int>::max() - digit) / 10) {
-      return 0;
-    }
-    result = result * 10 + digit;
+  try {
+    result = boost::lexical_cast<unsigned int>(
+        label.substr(attachmentPointLabelPrefix.size()));
+  } catch (const boost::bad_lexical_cast &) {
+    return 0;
   }
   return result;
 }
