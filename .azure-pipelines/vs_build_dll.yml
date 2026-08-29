@@ -7,7 +7,7 @@ steps:
     conda install -n base conda-libmamba-solver
     conda config --set solver libmamba
     conda create --name rdkit_build -c conda-forge --override-channels  $(python) ^
-        boost=$(boost_version) boost-cpp=$(boost_version) ^
+        vs2022_win-64 boost=$(boost_version) boost-cpp=$(boost_version) ^
         libboost-python-devel=(boost_version) ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^

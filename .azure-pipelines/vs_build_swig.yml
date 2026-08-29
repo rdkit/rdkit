@@ -12,10 +12,10 @@ steps:
     conda install -n base conda-libmamba-solver
     conda config --set solver libmamba
     conda create --name rdkit_build -c conda-forge --override-channels  ^
-        cmake=3.26 ^
+        vs2022_win-64 cmake=3.26 ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        cairo eigen swig=4.2 expat ccache ninja
+        cairo eigen swig=4.2 expat ccache ninja 
     call activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
