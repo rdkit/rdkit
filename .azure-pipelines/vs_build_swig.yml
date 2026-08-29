@@ -15,14 +15,21 @@ steps:
         vs2022_win-64 cmake=3.26 ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        cairo eigen swig=4.2 expat ccache ninja 
+        cairo eigen swig=4.2 expat ccache ninja
     call activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
   displayName: Install dependencies
 - bash: |
+    # Pull branch names from origin, then get 3 more commits from this branch and 1 from master
+    git remote set-branches origin '*'
+    git fetch origin $(Build.SourceBranchName) --depth=4
+    git fetch origin master --depth=1
     echo "##vso[task.setvariable variable=current_hash;]`git log --pretty=%H -n 1 HEAD`"
-    echo "##vso[task.setvariable variable=parent_hash;]`git log --pretty=%H -n 1 HEAD^`"
+    echo "##vso[task.setvariable variable=ancestor1_hash;]`git log --pretty=%H -n 1 HEAD~1`"
+    echo "##vso[task.setvariable variable=ancestor2_hash;]`git log --pretty=%H -n 1 HEAD~2`"
+    echo "##vso[task.setvariable variable=ancestor3_hash;]`git log --pretty=%H -n 1 HEAD~3`"
+    echo "##vso[task.setvariable variable=master_hash;]`git log --pretty=%H -n 1 origin/master`"
     echo -e "CCACHE_DIR=${CCACHE_DIR}"
     echo -e "CCACHE env vars"
     export | grep -i ccache
@@ -32,7 +39,11 @@ steps:
     key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(current_hash)"'
     path: $(CCACHE_DIR)
     cacheHitVar: CACHE_RESTORED
-    restoreKeys: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(parent_hash)"'
+    restoreKeys: |
+      'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor1_hash)"'
+      'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor2_hash)"'
+      'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor3_hash)"'
+      'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(master_hash)"'
   displayName: "Cache ccache directory"
 - script: |
     set Boost_ROOT=
