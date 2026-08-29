@@ -20,18 +20,18 @@ steps:
     conda install -c conda-forge --override-channels  ipython=8.20 jupyter nbval ipykernel>=6.0
   displayName: Setup build environment (no Qt due to versioning problems)
 - bash: |
-    echo -e "Azure cache current key = ccache | "$(Agent.OS)" | "$(System.JobName)" | "$(System.PullRequest.SourceBranch)""
-    echo -e "Azure cache master key = ccache | "$(Agent.OS)" | "$(System.JobName)" | master "
+    echo -e "Azure cache current key = ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(System.PullRequest.SourceBranch)""
+    echo -e "Azure cache master key = ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | master "
     echo -e "CCACHE_DIR=${CCACHE_DIR}"
     echo -e "CCACHE env vars"
     export | grep -i ccache
   displayName: Print cache variables
 - task: Cache@2
   inputs:
-    key: 'ccache | "$(Agent.OS)" | "$(System.JobName)" | "$(System.PullRequest.SourceBranch)"'
+    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(System.PullRequest.SourceBranch)"'
     path: $(CCACHE_DIR)
     cacheHitVar: CACHE_RESTORED
-    restoreKeys: 'ccache | "$(Agent.OS)" | "$(System.JobName)" | master '
+    restoreKeys: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | master '
   displayName: "Cache ccache directory"
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
