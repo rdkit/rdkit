@@ -11,7 +11,7 @@ steps:
         libboost-python-devel=(boost_version) ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        numpy matplotlib cairo pillow eigen pandas=2.1 expat ccache
+        numpy matplotlib cairo pillow eigen pandas=2.1 expat ccache ninja
     call activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
@@ -36,7 +36,7 @@ steps:
     mkdir build && cd build
     call activate rdkit_build
     cmake .. ^
-    -G "Visual Studio 17 2022" ^
+    -G "Ninja" ^
     -DCMAKE_BUILD_TYPE=Release ^
     -DCMAKE_C_COMPILER_LAUNCHER=ccache ^
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache ^
