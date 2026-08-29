@@ -10,17 +10,17 @@
 #include <array>
 #include <cstdlib>
 #include <fstream>
-#include <RDBoost/Wrap_nb.h>
-#include <RDBoost/python_capsule_nb.h>
-#include <RDBoost/python_streambuf_nb.h>
-#include <RDGeneral/versions.h>
-#include <RDGeneral/Invariant.h>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/operators.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/string.h>
 
+#include <RDBoost/Wrap_nb.h>
+#include <RDBoost/python_capsule_nb.h>
+#include <RDBoost/python_streambuf_nb.h>
+#include <RDGeneral/versions.h>
+#include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 
 namespace nb = nanobind;

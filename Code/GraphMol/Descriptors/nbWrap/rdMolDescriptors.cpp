@@ -19,6 +19,7 @@
 
 #include <RDBoost/Wrap_nb.h>
 #include <RDBoost/boost_shared_ptr.h>
+#include <RDBoost/python_capsule_nb.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/GraphMol.h>
 
@@ -886,74 +887,31 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
   }
 };
 
-// This is adapted from
-// https://nanobind.readthedocs.io/en/latest/refleaks.html#fixing-reference-leaks
-// The trampoline takes care of the clean up the Python objects as long as
-// the functor is not registered. But once the functor is registered,
-// the shared pointer will keep the functor alive, and the trampoline will
-// in turn keep the Python object alive. The problem is that, since the registry
-// is static, it will be destructed after Python has terminated, potentially
-// leaking any registered PythonPropertyFunctor objects. To remedy that,
-// we keep track of the nanobind internals object: we capture the name
-// of the key that holds it when the first PythonPropertyFunctor is registered,
-// and on each visit of the collector we check if the nanobind internals object
-// is still alive. When it is not, it means that Python is shutting down, so
-// we should pop the functor so it can be destroyed too.
-int ppf_tp_traverse(PyObject *self, visitproc visit, void *arg) {
-  // We must traverse the implicit dependency of an object on its
-  // associated type object.
-  Py_VISIT(Py_TYPE(self));
-
-  // The tp_traverse method may be called after __new__ but before or during
-  // __init__, before the C++ constructor has been completed. We must not
-  // inspect the C++ state if the constructor has not yet completed.
-  if (!nb::inst_ready(self)) {
-    return 0;
-  }
-
-  // Get the C++ object associated with 'self' (this always succeeds)
-  auto ppf = nb::inst_ptr<PythonPropertyFunctor>(self);
-
-  // Get the Python object at the base of the trampoline, and
-  // let the GC know about it.
-  auto base = ppf->nb_trampoline.base();
-
-  Py_VISIT(base.ptr());
-
-  return 0;
-}
-
-int ppf_tp_clear(PyObject *self) {
-  if (!isNanobindFinalized()) {
-    // nanobind is still there, so we're not being terminated yet.
-    return 0;
-  }
-
-  // ok, nanobind is gone. Time to pop this object from the registry
-  // so that it can be destructed-
-  auto &registry = RDKit::Descriptors::Properties::registry;
-  auto it = std::ranges::find_if(registry, [self](const auto &pf) {
-    return pf.get() == nb::inst_ptr<PythonPropertyFunctor>(self);
-  });
-
-  if (it != registry.end()) {
-    registry.erase(it);
-  }
-
-  return 0;
-}
-
-// Don't forget to install in the class declaration for PythonPropertyFunctor !
-PyType_Slot pyPropFunctor_slots[] = {
-    {Py_tp_traverse, (void *)ppf_tp_traverse},
-    {Py_tp_clear, (void *)ppf_tp_clear},
-    {0, 0},  // slots termination mark
-};
-
 int registerPropertyHelper(
-    boost::shared_ptr<RDKit::Descriptors::PropertyFunctor> ptr) {
+    boost::shared_ptr<RDKit::Descriptors::PropertyFunctor> ppf) {
   getNanobindInternalsKeyName();
-  auto res = RDKit::Descriptors::Properties::registerProperty(ptr);
+
+  namespace rdkDesc = RDKit::Descriptors;
+
+  // Set up pruning of Python functions for when Python shuts down.
+  // This needs to be done only once.
+  constexpr const char *capsuleName = "__rdkit_DescPropRegistry__";
+  if (getCapsulePtr(capsuleName) == nullptr) {
+    auto cleanUpFn = [](void *ptr) noexcept {
+      using propFtor_t = boost::shared_ptr<rdkDesc::PropertyFunctor>;
+      auto registry = static_cast<std::vector<propFtor_t> *>(ptr);
+      std::erase_if(*registry, [](const auto &propFunc) {
+        return nb::find(propFunc).is_valid();
+      });
+
+      // DO NOT delete p: it's a static object owned by the C++ code.
+    };
+
+    nb::capsule regCapsule(&rdkDesc::Properties::registry, cleanUpFn);
+    installCapsule(regCapsule, capsuleName);
+  }
+
+  auto res = RDKit::Descriptors::Properties::registerProperty(ppf);
   return res;
 }
 
@@ -1581,8 +1539,7 @@ for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperti
                   "Register a new property object (not thread safe)");
 
   nb::class_<RDKit::Descriptors::PropertyFunctor, PythonPropertyFunctor>(
-      m, "PythonPropertyFunctor", nb::is_weak_referenceable(),
-      nb::type_slots(pyPropFunctor_slots))
+      m, "PythonPropertyFunctor", nb::is_weak_referenceable())
       .def(nb::init<std::string, std::string>(), "name"_a, "version"_a)
       .def("__call__", &RDKit::Descriptors::PropertyFunctor::operator(),
            "mol"_a, "Compute the property for the specified molecule")
