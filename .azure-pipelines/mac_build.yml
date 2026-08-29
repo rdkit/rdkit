@@ -30,7 +30,7 @@ steps:
         jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval make ccache
   displayName: Setup build environment
 - bash: |
-    echo -e "Azure cache current key = ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(System.PullRequest.SourceBranch)""
+    echo -e "Azure cache current key = ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(Build.SourceBranchName)""
     echo -e "Azure cache master key = ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | master "
     echo -e "CCACHE_DIR=${CCACHE_DIR}"
     echo -e "CCACHE env vars"
@@ -38,7 +38,7 @@ steps:
   displayName: Print cache variables
 - task: Cache@2
   inputs:
-    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(System.PullRequest.SourceBranch)"'
+    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(Build.SourceBranchName)"'
     path: $(CCACHE_DIR)
     cacheHitVar: CACHE_RESTORED
     restoreKeys: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | master '
