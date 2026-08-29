@@ -6,7 +6,7 @@
 
 namespace nb = nanobind;
 
-nb::dict getBuiltinsDict() {
+inline nb::dict getBuiltinsDict() {
   // PyEval_GetBuiltins only gets the builtins for the current thread,
 // which may not be the main thread.
 #if defined(PYPY_VERSION)
@@ -21,12 +21,12 @@ nb::dict getBuiltinsDict() {
   return nb::borrow<nb::dict>(dict);
 }
 
-void installCapsule(nb::capsule capsule, const char *name) {
+inline void installCapsule(nb::capsule capsule, const char *name) {
   nb::dict builtins = getBuiltinsDict();
   builtins[name] = capsule;
 }
 
-void *getCapsulePtr(const char *name) {
+inline void *getCapsulePtr(const char *name) {
   nb::dict builtins = getBuiltinsDict();
   if (!builtins.contains(name)) {
     return nullptr;
