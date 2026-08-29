@@ -76,7 +76,9 @@ steps:
     make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
-    ccache -s # Show ccache stats
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    ccache -s
   displayName: "Show ccache stats"
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

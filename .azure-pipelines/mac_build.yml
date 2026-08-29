@@ -93,7 +93,10 @@ steps:
     make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
-    ccache -s # Show ccache stats
+    export CONDA=/tmp/miniforge
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    ccache -s
   displayName: "Show ccache stats"
 - bash: |
     export CONDA=/tmp/miniforge
