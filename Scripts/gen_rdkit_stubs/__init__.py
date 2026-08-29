@@ -10,6 +10,7 @@ from multiprocessing.pool import ThreadPool
 import tempfile
 import shutil
 import logging
+import ast
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,42 @@ def patch_stubs(tempdir, src_entry):
         if os.path.exists(patch_file):
             apply_patch(tempdir, patch_file)
 
+def validate_stubs(tempdir, src_dir):
+    """Validate and sanitize generated stubs to ensure they are valid Python syntax."""
+    for pyi in glob.glob(os.path.join(src_dir, "**/*.pyi"), recursive=True):
+        with open(pyi, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        # Python keyword 'None' used as an attribute name
+        content = re.sub(r'^(\s*)None(\s*:)', r'\1_None\2', content, flags=re.MULTILINE)
+        
+        # Iteratively fix "parameter without a default follows parameter with a default"
+        max_attempts = 20
+        for _ in range(max_attempts):
+            try:
+                ast.parse(content)
+                break  # File is valid, exit the loop!
+            except SyntaxError as e:
+                if "parameter without a default follows parameter with a default" in e.msg:
+                    lines = content.split('\n')
+                    line_idx = e.lineno - 1
+                    line = lines[line_idx]
+                    # Safely replace arguments up to the return type (->) or colon (:)
+                    new_line = re.sub(r'\(.*?\)(?=\s*(?:->|:))', '(*args, **kwargs)', line)
+                    lines[line_idx] = new_line
+                    content = '\n'.join(lines)
+                else:
+                    pyi_rel = os.path.relpath(pyi, tempdir)
+                    raise RuntimeError(
+                        f"Syntax error in generated stub {pyi_rel}:{e.lineno}: {e.msg}\n"
+                        f"Please add a fix to validate_stubs in __init__.py."
+                    )
+        else:
+            pyi_rel = os.path.relpath(pyi, tempdir)
+            raise RuntimeError(f"Failed to fix syntax errors in {pyi_rel} after {max_attempts} attempts.")
+        
+        with open(pyi, "w", encoding="utf-8") as f:
+            f.write(content)
 def copy_stubs(src_entry, outer_dirs):
     """Copy src_entry to each directory in outer_dirs.
     If src_entry is a directory it will be recursively copied.
@@ -189,6 +226,9 @@ def clear_stubs(outer_dir):
             os.remove(entry)
 
 def generate_stubs_internal(modules, outer_dirs, args):
+    if not modules:
+        logger.warning("No modules found to generate stubs for. Exiting.")
+        return
     concurrency = min(args.concurrency, len(modules))
     with tempfile.TemporaryDirectory() as tempdir:
         src_dir = os.path.join(tempdir, RDKIT_MODULE_NAME)
@@ -207,6 +247,7 @@ def generate_stubs_internal(modules, outer_dirs, args):
             logger.warning(concat_out)
         if os.path.isdir(src_dir):
             patch_stubs(tempdir, src_dir)
+            validate_stubs(tempdir, src_dir)  
             for f in os.listdir(src_dir):
                 src_entry = os.path.join(src_dir, f)
                 if os.path.exists(src_entry):
