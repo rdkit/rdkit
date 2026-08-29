@@ -11,7 +11,7 @@ steps:
         libboost-python=$(boost_version) \
         libboost-devel=$(boost_version) \
         libboost=$(boost_version) \
-        numpy=2.4 pillow eigen pandas=3 matplotlib-base=3.8 \
+        numpy=2.4 pillow eigen=3 pandas=3 matplotlib-base=3.8 \
         cairo
     conda activate rdkit_build
     conda config --env --add channels conda-forge
@@ -52,6 +52,14 @@ steps:
     -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
     -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
   displayName: Configure build (Run CMake)
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    export RDBASE=`pwd`
+    export PYTHONPATH=${RDBASE}:${PYTHONPATH}
+    cd build
+    grep -q "RDK_BUILD_DESCRIPTORS3D:BOOL=ON" CMakeCache.txt
+  displayName: make sure we have eigen
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
