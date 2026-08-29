@@ -4,7 +4,7 @@ trigger:
 - dev/*
 
 variables:
-  CCACHE_DIR: ${Build.ArtifactStagingDirectory}/.ccache
+  CCACHE_DIR: $(Build.ArtifactStagingDirectory)/.ccache
   CCACHE_CPP: yes
   CCACHE_BASEDIR: $(Build.Repository.LocalPath)
   CCACHE_NOHASHDIR: yes
@@ -52,7 +52,6 @@ jobs:
     cxx: g++-13
     number_of_cores: nproc
     python_name: python312
-    CCACHE_DIR: ${Build.ArtifactStagingDirectory}/.ccache
   steps:
   - template: .azure-pipelines/linux_build_py312.yml
 - job: Ubuntu_x64_nb
@@ -64,12 +63,6 @@ jobs:
     boost_version: 1.91.0
     number_of_cores: nproc
     python_name: python314
-    CCACHE_DIR: ${Build.ArtifactStagingDirectory}/.ccache
-    CCACHE_CPP: yes
-    CCACHE_BASEDIR: $(Build.Repository.LocalPath)
-    CCACHE_NOHASHDIR: yes
-    CCACHE_NAMESPACE: "$(System.JobName)"
-    CCACHE_SLOPPINESS: time_macros
   steps:
   - template: .azure-pipelines/linux_build_nb.yml
 - job: macOS_x64
@@ -83,7 +76,6 @@ jobs:
     number_of_cores: sysctl -n hw.ncpu
     target_platform: 14
     python: python=3.11
-    CCACHE_DIR: ${Build.ArtifactStagingDirectory}/.ccache
   steps:
   - template: .azure-pipelines/mac_build.yml
 - job: macOS_x64_java
@@ -106,7 +98,6 @@ jobs:
     boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python: python=3.12
-    CCACHE_DIR: ${Build.ArtifactStagingDirectory}/.ccache
   steps:
   - template: .azure-pipelines/vs_build.yml
 - job: Windows_VS2022_x64_dll
@@ -117,7 +108,6 @@ jobs:
     boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python: python=3.12
-    CCACHE_DIR: ${Build.ArtifactStagingDirectory}/.ccache
   steps:
   - template: .azure-pipelines/vs_build_dll.yml
 - job: Ubuntu_x64_cartridge
