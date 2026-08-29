@@ -4,9 +4,9 @@ trigger:
 - dev/*
 
 variables:
-  CCACHE_DIR: $(Build.ArtifactStagingDirectory)/.ccache
+  CCACHE_DIR: "$(Build.ArtifactStagingDirectory)/.ccache"
   CCACHE_CPP: yes
-  CCACHE_BASEDIR: $(Build.Repository.LocalPath)
+  CCACHE_BASEDIR: "$(Build.Repository.LocalPath)"
   CCACHE_NOHASHDIR: yes
   CCACHE_NAMESPACE: "$(System.JobDisplayName)"
   CCACHE_SLOPPINESS: time_macros
