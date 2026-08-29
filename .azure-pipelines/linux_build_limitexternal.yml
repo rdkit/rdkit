@@ -23,11 +23,21 @@ steps:
     git remote set-branches origin '*'
     git fetch origin $(Build.SourceBranchName) --depth=4
     git fetch origin master --depth=1
-    echo "##vso[task.setvariable variable=current_hash;]`git log --pretty=%H -n 1 HEAD`"
-    echo "##vso[task.setvariable variable=ancestor1_hash;]`git log --pretty=%H -n 1 HEAD~1`"
-    echo "##vso[task.setvariable variable=ancestor2_hash;]`git log --pretty=%H -n 1 HEAD~2`"
-    echo "##vso[task.setvariable variable=ancestor3_hash;]`git log --pretty=%H -n 1 HEAD~3`"
-    echo "##vso[task.setvariable variable=master_hash;]`git log --pretty=%H -n 1 origin/master`"
+    current_hash=`git log --pretty=%H -n 1 HEAD`
+    ancestor1_hash=`git log --pretty=%H -n 1 HEAD~1`
+    ancestor2_hash=`git log --pretty=%H -n 1 HEAD~2`
+    ancestor3_hash=`git log --pretty=%H -n 1 HEAD~3`
+    master_hash=`git log --pretty=%H -n 1 origin/master`
+    echo -e "Current hash: ${current_hash}"
+    echo -e "Ancestor #1 hash: ${ancestor1_hash}"
+    echo -e "Ancestor #2 hash: ${ancestor1_hash}"
+    echo -e "Ancestor #3 hash: ${ancestor1_hash}"
+    echo -e "origin/master hash: ${current_hash}"
+    echo "##vso[task.setvariable variable=current_hash;]${current_hash}"
+    echo "##vso[task.setvariable variable=ancestor1_hash;]${ancestor1_hash}"
+    echo "##vso[task.setvariable variable=ancestor2_hash;]${ancestor2_hash}"
+    echo "##vso[task.setvariable variable=ancestor3_hash;]${ancestor3_hash}"
+    echo "##vso[task.setvariable variable=master_hash;]${current_hash}"
     echo -e "CCACHE_DIR=${CCACHE_DIR}"
     echo -e "CCACHE env vars"
     export | grep -i ccache
@@ -38,10 +48,10 @@ steps:
     path: $(CCACHE_DIR)
     cacheHitVar: CACHE_RESTORED
     restoreKeys: |
-      'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor1_hash)"'
-      'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor2_hash)"'
-      'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor3_hash)"'
-      'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(master_hash)"'
+      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor1_hash)"
+      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor2_hash)"
+      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor3_hash)"
+      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(master_hash)"
   displayName: "Cache ccache directory"
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
