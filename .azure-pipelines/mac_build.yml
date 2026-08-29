@@ -30,18 +30,18 @@ steps:
         jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval make ccache
   displayName: Setup build environment
 - bash: |
-    echo -e "Azure cache current key = ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(Build.SourceBranchName)""
-    echo -e "Azure cache master key = ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | master "
+    echo "##vso[task.setvariable variable=current_hash;]`git log --pretty=%H -n 1 HEAD`"
+    echo "##vso[task.setvariable variable=parent_hash;]`git log --pretty=%H -n 1 HEAD^`"
     echo -e "CCACHE_DIR=${CCACHE_DIR}"
     echo -e "CCACHE env vars"
     export | grep -i ccache
-  displayName: Print cache variables
+  displayName: Get commit hashes and print cache variables
 - task: Cache@2
   inputs:
-    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(Build.SourceBranchName)"'
+    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(current_hash)"'
     path: $(CCACHE_DIR)
     cacheHitVar: CACHE_RESTORED
-    restoreKeys: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | master '
+    restoreKeys: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(parent_hash)"'
   displayName: "Cache ccache directory"
 - bash: |
     export CONDA=/tmp/miniforge
