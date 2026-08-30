@@ -8,8 +8,13 @@ steps:
   inputs:
     key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(Build.SourceBranchName)" | "$(Build.SourceVersion)"'
     path: $(CCACHE_DIR)
-    cacheHitVar: CACHE_RESTORED
-    restoreKeys: |
-      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(Build.SourceBranchName)"
-      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "master"
-  displayName: "Cache ccache directory"
+    cacheHitVar: CACHED_BRANCH_RESTORED
+    restoreKeys: ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(Build.SourceBranchName)"
+  displayName: "Check cached branch ccache directory"
+- task: Cache@2
+  condition: ne(variables.CACHED_BRANCH_RESTORED, 'true')
+  inputs:
+    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(Build.SourceBranchName)" | "$(Build.SourceVersion)"'
+    path: $(CCACHE_DIR)
+    restoreKeys: ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "master"
+  displayName: "Check cached master ccache directory"
