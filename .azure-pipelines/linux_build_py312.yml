@@ -11,7 +11,7 @@ steps:
         libboost-python=$(boost_version) \
         libboost-devel=$(boost_version) \
         libboost=$(boost_version) \
-        numpy=2.4 pillow eigen=3 pandas=3 matplotlib-base=3.8 \
+        numpy=2.4 pillow pandas=3 matplotlib-base=3.8 \
         cairo
     conda activate rdkit_build
     conda config --env --add channels conda-forge
