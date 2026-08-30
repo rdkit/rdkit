@@ -19,7 +19,7 @@ steps:
     conda config --env --set channel_priority strict
     conda install -c conda-forge --override-channels  ipython=9.8 jupyter nbval ipykernel>=6.0
   displayName: Setup build environment (no Qt due to versioning problems)
-- template: templates/steps_setup_caches.yml
+- template: _templates/steps_setup_cache.yml
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build

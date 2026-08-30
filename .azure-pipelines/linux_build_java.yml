@@ -11,7 +11,7 @@ steps:
         libboost-devel=$(boost_version) \
         swig=4.2 ccache
   displayName: Setup build environment
-- template: templates/steps_setup_caches.yml
+- template: _templates/steps_setup_cache.yml
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
