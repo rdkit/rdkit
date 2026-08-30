@@ -1,48 +1,15 @@
 steps:
 - bash: |
-    # Pull branch names from origin, then get some more commits from this branch and from master
-    git remote set-branches origin '*'
-    git fetch origin $(Build.SourceBranchName) --deepen=5
-    git fetch origin master --depth=2
-    current_hash=`git log --pretty=%H -n 1 HEAD`
-    ancestor1_hash=`git log --pretty=%H -n 1 HEAD~1`
-    ancestor2_hash=`git log --pretty=%H -n 1 HEAD~2`
-    ancestor3_hash=`git log --pretty=%H -n 1 HEAD~3`
-    ancestor4_hash=`git log --pretty=%H -n 1 HEAD~4`
-    ancestor5_hash=`git log --pretty=%H -n 1 HEAD~5`
-    master_hash=`git log --pretty=%H -n 1 origin/master`
-    master1_hash=`git log --pretty=%H -n 1 origin/master~1`
-    echo -e "Current hash: ${current_hash}"
-    echo -e "Ancestor #1 hash: ${ancestor1_hash}"
-    echo -e "Ancestor #2 hash: ${ancestor2_hash}"
-    echo -e "Ancestor #3 hash: ${ancestor3_hash}"
-    echo -e "Ancestor #4 hash: ${ancestor4_hash}"
-    echo -e "Ancestor #5 hash: ${ancestor5_hash}"
-    echo -e "origin/master HEAD hash: ${master_hash}"
-    echo -e "origin/master HEAD^ hash: ${master1_hash}"
-    echo "##vso[task.setvariable variable=current_hash;]${current_hash}"
-    echo "##vso[task.setvariable variable=ancestor1_hash;]${ancestor1_hash}"
-    echo "##vso[task.setvariable variable=ancestor2_hash;]${ancestor2_hash}"
-    echo "##vso[task.setvariable variable=ancestor3_hash;]${ancestor3_hash}"
-    echo "##vso[task.setvariable variable=ancestor4_hash;]${ancestor4_hash}"
-    echo "##vso[task.setvariable variable=ancestor5_hash;]${ancestor5_hash}"
-    echo "##vso[task.setvariable variable=master_hash;]${master_hash}"
-    echo "##vso[task.setvariable variable=master1_hash;]${master1_hash}"
     echo -e "CCACHE_DIR=${CCACHE_DIR}"
     echo -e "CCACHE env vars"
     export | grep -i ccache
   displayName: Get commit hashes and print cache variables
 - task: Cache@2
   inputs:
-    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(current_hash)"'
+    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(Build.SourceBranchName)" | "$(Build.SourceVersion)"'
     path: $(CCACHE_DIR)
     cacheHitVar: CACHE_RESTORED
     restoreKeys: |
-      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor1_hash)"
-      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor2_hash)"
-      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor3_hash)"
-      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor4_hash)"
-      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(ancestor5_hash)"
-      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(master_hash)"
-      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(master1_hash)"
+      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(Build.SourceBranchName)"
+      ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "master"
   displayName: "Cache ccache directory"
