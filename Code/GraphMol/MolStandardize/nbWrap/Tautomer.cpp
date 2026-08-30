@@ -330,9 +330,9 @@ derived class to TautomerEnumerator.SetCallback())DOC")
       .def(
           "__iter__",
           [](const MolStandardize::TautomerEnumeratorResult &self) {
-            return nb::make_iterator(nb::type<nb::object>(),
-                                     "TautomerEnumeratorResult iterator",
-                                     self.begin(), self.end());
+            return nb::make_iterator(
+                nb::type<MolStandardize::TautomerEnumeratorResult>(),
+                "TautomerEnumeratorResult iterator", self.begin(), self.end());
           },
           nb::keep_alive<0, 1>())
       .def(
