@@ -12,9 +12,9 @@ steps:
     restoreKeys: ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(Build.SourceBranchName)"
   displayName: "Check cached branch ccache directory"
 - task: Cache@2
-  condition: ne(variables.CACHED_BRANCH_RESTORED, 'true')
   inputs:
     key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(Build.SourceBranchName)" | "$(Build.SourceVersion)"'
     path: $(CCACHE_DIR)
     restoreKeys: ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "master"
   displayName: "Check cached master ccache directory"
+  condition: eq(variables.CACHED_BRANCH_RESTORED, 'false')
