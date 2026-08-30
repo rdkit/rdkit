@@ -118,6 +118,7 @@ if (RDK_BUILD_DOTNET_CSHARP_TESTS OR MSVC)
   ADD_TEST(
     NAME CSharpTests
     COMMAND ${DOTNET_EXE} test RDKitDotNetCore.sln "-l:console$<SEMICOLON>verbosity=normal"
+     -c ${CMAKE_BUILD_TYPE} -p:Platform="Any CPU"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   )
 else(RDK_BUILD_DOTNET_CSHARP_TESTS OR MSVC)
