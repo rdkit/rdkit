@@ -237,7 +237,8 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
         if (currRingId == otherRingId || removedRings[otherRingId]) {
           continue;
         }
-        bool isMacrocycle = fusedRings[otherRingId].size() > 8;
+        bool isMacrocycle =
+            fusedRings[otherRingId].size() > MACROCYCLE_SIZE_THRESHOLD;
         RDKit::INT_VECT commonAtoms;
         RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
                          commonAtoms);
