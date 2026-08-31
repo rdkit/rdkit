@@ -99,6 +99,41 @@ option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" O
 option(RDK_BUILD_MINIMAL_LIB_MMPA "build support for MMPA into MinimalLib" OFF )
 option(RDK_BUILD_LONG_RUNNING_TESTS "build longer running tests" OFF )
 
+set(RDK_LTO_MODE "OFF" CACHE STRING
+    "link-time optimization mode: OFF, THIN, or FULL")
+set_property(CACHE RDK_LTO_MODE PROPERTY STRINGS OFF THIN FULL)
+set(RDK_LTO_JOBS "auto" CACHE STRING
+    "GCC full-LTO parallelism: auto or a positive integer")
+
+string(TOUPPER "${RDK_LTO_MODE}" RDK_LTO_MODE_UPPER)
+if(NOT RDK_LTO_MODE_UPPER MATCHES "^(OFF|THIN|FULL)$")
+  message(FATAL_ERROR
+      "RDK_LTO_MODE must be one of OFF, THIN, or FULL: ${RDK_LTO_MODE}")
+endif()
+
+if(NOT RDK_LTO_MODE_UPPER STREQUAL "OFF")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    string(TOLOWER "${RDK_LTO_MODE_UPPER}" RDK_LTO_MODE_LOWER)
+    set(RDK_LTO_FLAG "-flto=${RDK_LTO_MODE_LOWER}")
+    add_compile_options("${RDK_LTO_FLAG}")
+    add_link_options("${RDK_LTO_FLAG}")
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(RDK_LTO_MODE_UPPER STREQUAL "THIN")
+      message(FATAL_ERROR "GCC does not support ThinLTO; use RDK_LTO_MODE=FULL")
+    endif()
+    if(NOT RDK_LTO_JOBS MATCHES "^(auto|[1-9][0-9]*)$")
+      message(FATAL_ERROR
+          "RDK_LTO_JOBS must be auto or a positive integer: ${RDK_LTO_JOBS}")
+    endif()
+    set(RDK_LTO_FLAG "-flto=${RDK_LTO_JOBS}")
+    add_compile_options("${RDK_LTO_FLAG}")
+    add_link_options("${RDK_LTO_FLAG}")
+  else()
+    message(FATAL_ERROR
+        "RDK_LTO_MODE=${RDK_LTO_MODE} requires Clang or GCC")
+  endif()
+endif()
+
 set(RDK_BOOST_VERSION "1.81.0")
 
 if(NOT MSVC AND RDK_OPTIMIZE_POPCNT)
