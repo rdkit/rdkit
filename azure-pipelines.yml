@@ -10,6 +10,7 @@ variables:
   CCACHE_NOHASHDIR: yes
   CCACHE_NAMESPACE: "$(System.JobDisplayName)"
   CCACHE_SLOPPINESS: time_macros
+  BUILD_BRANCH_NAME: "${{ iif(eq(variables['Build.Reason'], 'PullRequest'), $(System.PullRequest.SourceBranch), $(Build.SourceBranchName)) }}"
 
 jobs:
 - job: Ubuntu_x64_minimallib_build
