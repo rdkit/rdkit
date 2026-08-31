@@ -14,7 +14,6 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/Chirality.h>
 #include <algorithm>
-#include <span>
 #include <boost/dynamic_bitset.hpp>
 
 namespace {
@@ -414,35 +413,25 @@ bool isSpiroCenter(unsigned int aid, const RDKit::ROMol *mol) {
     return false;
   }
 
-  // Spiro atom must belong to exactly 2 rings
-  unsigned int numRings = mol->getRingInfo()->numAtomRings(aid);
-  if (numRings != 2) {
+  const auto ringInfo = mol->getRingInfo();
+  const auto ringIndices = ringInfo->atomMembers(aid);
+  if (ringIndices.size() != 2) {
     return false;
   }
 
   // Get the two rings containing this atom
-  const auto &atomRings = mol->getRingInfo()->atomRings();
-  std::vector<std::span<const int>> rings;
-  rings.reserve(2);
-  for (const auto ring : atomRings) {
-    if (std::find(ring.begin(), ring.end(), static_cast<int>(aid)) !=
-        ring.end()) {
-      rings.push_back(ring);
-    }
-  }
-
-  if (rings.size() != 2) {
-    return false;
-  }
+  const auto atomRings = ringInfo->atomRings();
+  const auto ring1Members = atomRings[ringIndices[0]];
+  const auto ring2Members = atomRings[ringIndices[1]];
 
   // Use dynamic_bitset for efficient set operations
   boost::dynamic_bitset<> ring1(mol->getNumAtoms());
   boost::dynamic_bitset<> ring2(mol->getNumAtoms());
 
-  for (auto idx : rings[0]) {
+  for (auto idx : ring1Members) {
     ring1.set(idx);
   }
-  for (auto idx : rings[1]) {
+  for (auto idx : ring2Members) {
     ring2.set(idx);
   }
 
