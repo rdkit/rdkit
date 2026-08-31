@@ -363,7 +363,9 @@ BOOST_PYTHON_MODULE(rdDepictor) {
      forceRDKit - use RDKit to generate coordinates even if \n\
                   preferCoordGen is set to true\n\
      useRingTemplates - use templates to generate coordinates of complex\n\
-                  ring systems\n\n\
+                  ring systems\n\
+     usePathAngleExpansion - use path-angle expansion to resolve atom clashes\n\
+                  and bond crossings\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(

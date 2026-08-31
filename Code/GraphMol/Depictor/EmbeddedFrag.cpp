@@ -2438,7 +2438,7 @@ std::vector<unsigned int> EmbeddedFrag::getAtomsOnSide(unsigned int center,
   return result;
 }
 
-void EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
+bool EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
                                         unsigned int centerAtom,
                                         unsigned int nextAtom,
                                         double angleIncrement,
@@ -2449,8 +2449,8 @@ void EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
   // Key: We want to make the angle LARGER (closer to 180°).
   // This straightens out the chain and increases separation along the path.
   //
-  // Strategy: Use cross product to determine orientation (CW/CCW) and predict
-  // which rotation direction will open the angle, avoiding trial-and-error.
+  // Try both rotation directions and use the one which actually opens the
+  // angle. This also handles collinear vectors without an arbitrary choice.
   //
 
   PRECONDITION(dp_mol, "");
@@ -2464,27 +2464,67 @@ void EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
   auto atomsSide1 = getAtomsOnSide(centerAtom, prevAtom, nextAtom);
   auto atomsSide2 = getAtomsOnSide(centerAtom, nextAtom, prevAtom);
 
-  // Choose the smaller side to rotate (less disruptive)
-  bool rotateSide1 = atomsSide1.size() < atomsSide2.size();
+  // If the two traversals overlap, there is an alternate path around the
+  // center. Rotating either partial side would distort bonds in that cycle.
+  std::set<unsigned int> side1Atoms(atomsSide1.begin(), atomsSide1.end());
+  if (std::any_of(atomsSide2.begin(), atomsSide2.end(),
+                  [&](auto aid) { return side1Atoms.count(aid); })) {
+    return false;
+  }
+
+  const auto containsFixedAtom = [&](const auto &atoms) {
+    return std::any_of(atoms.begin(), atoms.end(), [&](auto aid) {
+      return d_eatoms.at(aid).df_fixed;
+    });
+  };
+  const auto side1Fixed = containsFixedAtom(atomsSide1);
+  const auto side2Fixed = containsFixedAtom(atomsSide2);
+  if (side1Fixed && side2Fixed) {
+    return false;
+  }
+
+  // Prefer the smaller side, unless that would move a coordinate-constrained
+  // atom. The center is the pivot and is never moved.
+  bool rotateSide1 = side2Fixed ||
+                     (!side1Fixed && atomsSide1.size() < atomsSide2.size());
   auto &atomsToMove = rotateSide1 ? atomsSide1 : atomsSide2;
 
-  // Use cross product to determine orientation
-  // cross = v1.x * v2.y - v1.y * v2.x
-  // If cross > 0: CCW orientation (prevAtom -> center -> nextAtom)
-  // If cross < 0: CW orientation
-  double cross = v1.x * v2.y - v1.y * v2.x;
+  const auto vectorLength = [](const auto &v) {
+    return std::sqrt(v.x * v.x + v.y * v.y);
+  };
+  const auto angleBetween = [&](const auto &a, const auto &b) {
+    const auto denominator = vectorLength(a) * vectorLength(b);
+    if (denominator < 1e-8) {
+      return -1.0;
+    }
+    const auto cosine = std::clamp((a.x * b.x + a.y * b.y) / denominator,
+                                   -1.0, 1.0);
+    return std::acos(cosine);
+  };
+  const auto originalAngle = angleBetween(v1, v2);
+  if (originalAngle < 0.0) {
+    return false;
+  }
 
-  // Determine rotation direction to open the angle:
-  // - If rotating side1 (prevAtom side) and CCW (cross > 0): rotate CCW
-  // (negative angle)
-  // - If rotating side1 (prevAtom side) and CW (cross < 0): rotate CW (positive
-  // angle)
-  // - If rotating side2 (nextAtom side): flip the sign
-  double rotationAngle;
-  if (rotateSide1) {
-    rotationAngle = (cross > 0) ? -angleIncrement : angleIncrement;
-  } else {
-    rotationAngle = (cross > 0) ? angleIncrement : -angleIncrement;
+  double rotationAngle = 0.0;
+  // Trial-rotate only the adjacent atom in each direction. This is inexpensive
+  // and avoids choosing an arbitrary or angle-closing direction for collinear
+  // and near-180-degree configurations; the selected side is rotated only once
+  // below after an angle-increasing direction has been found.
+  for (const auto candidate : {angleIncrement, -angleIncrement}) {
+    RDGeom::Transform2D trial;
+    trial.SetTransform(d_eatoms[centerAtom].loc, candidate);
+    auto movedPoint = d_eatoms[rotateSide1 ? prevAtom : nextAtom].loc;
+    trial.TransformPoint(movedPoint);
+    const auto movedVector = movedPoint - d_eatoms[centerAtom].loc;
+    const auto fixedVector = rotateSide1 ? v2 : v1;
+    if (angleBetween(movedVector, fixedVector) > originalAngle + 1e-8) {
+      rotationAngle = candidate;
+      break;
+    }
+  }
+  if (rotationAngle == 0.0) {
+    return false;
   }
 
   // Apply the rotation
@@ -2494,6 +2534,7 @@ void EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
   for (auto aid : atomsToMove) {
     trans.TransformPoint(d_eatoms[aid].loc);
   }
+  return true;
 }
 
 void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
@@ -2654,11 +2695,12 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
       auto nextAtom = pathVec[pos + 1];
 
       // Try opening this angle (making it larger, towards 180°)
-      openAngleByIncrement(prevAtom, centerAtom, nextAtom,
-                           ANGLE_EXPANSION_INCREMENT, dmat);
-      angleTotals[canonicalCollision(collision)][centerAtom] +=
-          ANGLE_EXPANSION_INCREMENT;
-      anyExpanded = true;
+      if (openAngleByIncrement(prevAtom, centerAtom, nextAtom,
+                               ANGLE_EXPANSION_INCREMENT, dmat)) {
+        angleTotals[canonicalCollision(collision)][centerAtom] +=
+            ANGLE_EXPANSION_INCREMENT;
+        anyExpanded = true;
+      }
     }
 
     if (!anyExpanded) {

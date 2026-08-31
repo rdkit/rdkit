@@ -2804,3 +2804,70 @@ TEST_CASE("path angle expansion ignores bonded atom collision candidates") {
     }
   }
 }
+
+TEST_CASE("path angle expansion preserves fixed coordinates") {
+  auto mol =
+      "COCC(Cn1ccnc1[N+](=O)[O-])OP(=O)(N1CC1(C)C)N1CC1(C)C"_smiles;
+  REQUIRE(mol);
+
+  RDDepict::Compute2DCoordParameters params;
+  params.canonOrient = false;
+  params.nFlipsPerSample = 3;
+  params.nSamples = 100;
+  params.sampleSeed = 100;
+  params.useRingTemplates = true;
+  CHECK(RDDepict::compute2DCoords(*mol, params) == 0);
+
+  RDGeom::INT_POINT2D_MAP coordMap;
+  const auto &originalConf = mol->getConformer();
+  for (unsigned int aid = 0; aid < mol->getNumAtoms(); ++aid) {
+    const auto &position = originalConf.getAtomPos(aid);
+    coordMap.emplace(aid, RDGeom::Point2D(position.x, position.y));
+  }
+
+  params.coordMap = &coordMap;
+  params.usePathAngleExpansion = true;
+  CHECK(RDDepict::compute2DCoords(*mol, params) == 0);
+
+  const auto &constrainedConf = mol->getConformer();
+  for (const auto &[aid, expected] : coordMap) {
+    const auto &actual = constrainedConf.getAtomPos(aid);
+    CAPTURE(aid);
+    CHECK(actual.x == Catch::Approx(expected.x).margin(1e-8));
+    CHECK(actual.y == Catch::Approx(expected.y).margin(1e-8));
+  }
+}
+
+TEST_CASE("path angle expansion preserves bonds in bridged ring systems") {
+  const auto smiles = "CCC12C=CC3=C4CCC(=O)C=C4CCC3C1CC[C@]2(C)O";
+  auto control = std::unique_ptr<RWMol>(SmilesToMol(smiles));
+  auto expanded = std::unique_ptr<RWMol>(SmilesToMol(smiles));
+  REQUIRE(control);
+  REQUIRE(expanded);
+
+  RDDepict::Compute2DCoordParameters params;
+  params.canonOrient = false;
+  params.nFlipsPerSample = 3;
+  params.nSamples = 100;
+  params.sampleSeed = 100;
+  params.useRingTemplates = true;
+  CHECK(RDDepict::compute2DCoords(*control, params) == 0);
+  params.usePathAngleExpansion = true;
+  CHECK(RDDepict::compute2DCoords(*expanded, params) == 0);
+
+  const auto &controlConf = control->getConformer();
+  const auto &expandedConf = expanded->getConformer();
+  for (const auto *bond : control->bonds()) {
+    if (!control->getRingInfo()->numBondRings(bond->getIdx())) {
+      continue;
+    }
+    const auto begin = bond->getBeginAtomIdx();
+    const auto end = bond->getEndAtomIdx();
+    const auto controlLength =
+        (controlConf.getAtomPos(begin) - controlConf.getAtomPos(end)).length();
+    const auto expandedLength =
+        (expandedConf.getAtomPos(begin) - expandedConf.getAtomPos(end)).length();
+    CAPTURE(begin, end);
+    CHECK(expandedLength == Catch::Approx(controlLength).margin(1e-8));
+  }
+}
