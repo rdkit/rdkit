@@ -55,3 +55,15 @@ TEST_CASE("macrocycle turn constraints", "[macrocycle]") {
     CHECK_FALSE(generator.solve());
   }
 }
+
+TEST_CASE("unsupported shared endpoint topology is ignored", "[macrocycle]") {
+  // A spiro ring has the same first and last macrocycle endpoint, so endpoint
+  // tracking can present the same ring twice. Its full atom overlap is neither
+  // a one-atom nor a two-atom fusion and must not create a zero-angle
+  // constraint.
+  const EndpointInfo spiroEndpoint{5, {0, 1, 2, 3, 4}};
+  const auto constraint =
+      computeSharedEndpointConstraint({spiroEndpoint, spiroEndpoint}, 3);
+
+  CHECK(constraint.position == SIZE_MAX);
+}

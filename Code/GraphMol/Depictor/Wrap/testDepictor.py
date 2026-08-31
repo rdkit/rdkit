@@ -674,7 +674,7 @@ M  END)""")
     for aid, expected_position in coord_map.items():
       actual_position = mol.GetConformer().GetAtomPosition(aid)
       self.assertAlmostEqual(actual_position.x, expected_position.x)
-      self.assertAlmostEqual(actual_position.y, actual_position.y)
+      self.assertAlmostEqual(actual_position.y, expected_position.y)
 
   def testDeNovoMacrocycleGeneration(self):
     with rdDepictor.UsingCoordGen(False):

@@ -271,7 +271,7 @@ size_t MacrocycleGenerator::getNumConstraints() const {
 
 size_t MacrocycleGenerator::addBigSubstituentConstraints(
     const std::vector<size_t> &freePositions) {
-  int outerTurn = -d_innerTurnSign;  // Outer turn is R
+  int outerTurn = -d_innerTurnSign;  // Opposite to the inner turn
   size_t constraintsAdded = 0;
 
   for (size_t pos : freePositions) {
@@ -1030,6 +1030,9 @@ AngleConstraint computeSharedEndpointConstraint(
       ++sharedCount;
     }
   }
+  if (sharedCount != 1 && sharedCount != 2) {
+    return constraint;
+  }
 
   // Get the ideal turn magnitude for each ring
   double turn1 = computeIdealAngle(ringSize1);
@@ -1065,7 +1068,7 @@ AngleConstraint computeSharedEndpointConstraint(
 // the macrocycle and a fused ring can be constrained to the ideal angle for
 // that small ring (e.g. 120° for a 6-membered ring, 108° for 5-membered ring
 // etc. When an atom is fused between the macrocycle and two other rings, its
-// target angle becomes 360* - the sum of the two small ring angles, so that
+// target angle becomes 360° - the sum of the two small ring angles, so that
 // both can remain regular polygons)
 std::vector<AngleConstraint> identifyAngleConstraintsForFusedRings(
     const std::vector<int> &macrocycleRing,
