@@ -115,7 +115,7 @@
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
       return $null;
     }
-    catch (std::exception &) {
+    catch (std::exception &e) {
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, "error");
       return $null;
     }
