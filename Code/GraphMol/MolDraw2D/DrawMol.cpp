@@ -377,8 +377,8 @@ void DrawMol::extractAttachments() {
       }
       if (at1->getAtomicNum() == 0 && at1->getDegree() == 1) {
         Point2D &at1_cds = atCds_[at1->getIdx()];
-        const auto &iter_pair = drawMol_->getAtomNeighbors(at1);
-        const Atom *at2 = (*drawMol_)[*iter_pair.first];
+        auto nbrIter = drawMol_->atomNeighbors(at1);
+        const Atom *at2 = *nbrIter.begin();
         Point2D &at2_cds = atCds_[at2->getIdx()];
         Point2D perp = calcPerpendicular(at1_cds, at2_cds);
         Point2D p1 =
@@ -2884,12 +2884,12 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
   }
   const Point2D &at_cds = atCds_[atom->getIdx()];
   std::vector<Point2D> bond_vecs;
-  for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(atom))) {
+  for (auto nbr : drawMol_->atomNeighbors(atom)) {
     // If the nbr has the same coords as atom, bond_vec comes out as NaN, NaN
     // (issue 6559), so use a short arbitrary vector instead.
     Point2D bond_vec;
     try {
-      bond_vec = at_cds.directionVector(atCds_[nbr]);
+      bond_vec = at_cds.directionVector(atCds_[nbr->getIdx()]);
     } catch (const std::runtime_error &e) {
       bond_vec.x = 0.7071;
       bond_vec.y = 0.7071;
@@ -3617,8 +3617,8 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     Point2D l2 = l2s.directionVector(l2f);
     l2f = l2s + l2 * 2.0 * bl;
     Point2D ip;
-    for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(at2))) {
-      auto nbr_cds = atCds_[nbr];
+    for (auto nbr : drawMol_->atomNeighbors(at2)) {
+      auto nbr_cds = atCds_[nbr->getIdx()];
       if (doLinesIntersect(l1s, l1f, at2_cds, nbr_cds, &ip)) {
         l1f = ip;
       }
@@ -4029,10 +4029,8 @@ DrawColour DrawMol::getColour(int atom_idx) const {
       const auto *atomPtr = drawMol_->getAtomWithIdx(atom_idx);
       int numBonds = 0, numHighBonds = 0;
       std::unique_ptr<DrawColour> highCol;
-      for (const auto &nbri :
-           boost::make_iterator_range(drawMol_->getAtomBonds(atomPtr))) {
+      for (const auto nbr : drawMol_->atomBonds(atomPtr)) {
         ++numBonds;
-        const auto &nbr = (*drawMol_)[nbri];
         if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
                       nbr->getIdx()) != highlightBonds_.end() ||
             highlightBondMap_.find(nbr->getIdx()) != highlightBondMap_.end()) {
