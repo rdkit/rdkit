@@ -88,6 +88,18 @@ unsigned int numMemberRings(const std::vector<uint32_t> &membershipBegins,
   return end - begin;
 }
 
+size_t fusedRingPairIndex(unsigned int ring1Idx, unsigned int ring2Idx) {
+  const auto high = std::max(ring1Idx, ring2Idx);
+  const auto low = std::min(ring1Idx, ring2Idx);
+  return size_t(high) * (high - 1) / 2 + low;
+}
+
+bool areRingsFusedUnchecked(const std::vector<bool> &fusedRings,
+                            unsigned int ring1Idx, unsigned int ring2Idx) {
+  return ring1Idx != ring2Idx &&
+         fusedRings[fusedRingPairIndex(ring1Idx, ring2Idx)];
+}
+
 template <bool checkRingSize>
 bool areMembersInSameRing(const std::vector<uint32_t> &membershipBegins,
                           const std::vector<int> &memberships,
@@ -343,9 +355,12 @@ bool RingInfo::isRingFused(unsigned int ringIdx) {
   initFusedRings();
   PRECONDITION(ringIdx < numRings(), "ringIdx out of bounds");
   const auto n = numRings();
-  return std::find(d_fusedRings.begin() + ringIdx * n,
-                   d_fusedRings.begin() + (ringIdx + 1) * n,
-                   true) != d_fusedRings.begin() + (ringIdx + 1) * n;
+  for (unsigned int otherRingIdx = 0; otherRingIdx < n; ++otherRingIdx) {
+    if (areRingsFusedUnchecked(d_fusedRings, ringIdx, otherRingIdx)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool RingInfo::areRingsFused(unsigned int ring1Idx, unsigned int ring2Idx) {
@@ -353,7 +368,7 @@ bool RingInfo::areRingsFused(unsigned int ring1Idx, unsigned int ring2Idx) {
   const auto n = numRings();
   PRECONDITION(ring1Idx < n, "ring1Idx out of bounds");
   PRECONDITION(ring2Idx < n, "ring2Idx out of bounds");
-  return d_fusedRings[ring1Idx * n + ring2Idx];
+  return areRingsFusedUnchecked(d_fusedRings, ring1Idx, ring2Idx);
 }
 
 unsigned int RingInfo::numFusedBonds(unsigned int ringIdx) {
@@ -366,8 +381,11 @@ unsigned int RingInfo::numFusedRingNeighbors(unsigned int ringIdx) {
   initFusedRings();
   const auto n = numRings();
   PRECONDITION(ringIdx < n, "ringIdx out of bounds");
-  return std::count(d_fusedRings.begin() + ringIdx * n,
-                    d_fusedRings.begin() + (ringIdx + 1) * n, true);
+  unsigned int result = 0;
+  for (unsigned int otherRingIdx = 0; otherRingIdx < n; ++otherRingIdx) {
+    result += areRingsFusedUnchecked(d_fusedRings, ringIdx, otherRingIdx);
+  }
+  return result;
 }
 
 std::vector<unsigned int> RingInfo::fusedRingNeighbors(unsigned int ringIdx) {
@@ -377,7 +395,7 @@ std::vector<unsigned int> RingInfo::fusedRingNeighbors(unsigned int ringIdx) {
   std::vector<unsigned int> res;
   res.reserve(numFusedRingNeighbors(ringIdx));
   for (unsigned int i = 0; i < n; ++i) {
-    if (d_fusedRings[ringIdx * n + i]) {
+    if (areRingsFusedUnchecked(d_fusedRings, ringIdx, i)) {
       res.push_back(i);
     }
   }
@@ -389,7 +407,8 @@ void RingInfo::initFusedRings() {
     return;
   }
   const auto n = numRings();
-  d_fusedRings.assign(n * n, false);
+  const auto numRingPairs = n < 2 ? 0 : size_t(n) * (n - 1) / 2;
+  d_fusedRings.assign(numRingPairs, false);
   d_numFusedBonds.assign(n, 0);
   for (unsigned int bondIdx = 0; bondIdx + 1 < d_bondMembershipBegins.size();
        ++bondIdx) {
@@ -402,8 +421,9 @@ void RingInfo::initFusedRings() {
       unsigned int ringIdx1 = ringIndices[i];
       for (unsigned int j = i + 1; j < ringIndices.size(); ++j) {
         unsigned int ringIdx2 = ringIndices[j];
-        d_fusedRings[ringIdx1 * n + ringIdx2] = true;
-        d_fusedRings[ringIdx2 * n + ringIdx1] = true;
+        if (ringIdx1 != ringIdx2) {
+          d_fusedRings[fusedRingPairIndex(ringIdx1, ringIdx2)] = true;
+        }
       }
     }
     for (const auto ringIdx : ringIndices) {
