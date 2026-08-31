@@ -1,32 +1,21 @@
 steps:
 - bash: |
-    echo -e "Build Reason 1: $(Build.Reason)"
-  displayName: Print build reason 1
-- bash: |
-    echo -e "Build Reason 3: ${{ variables.Build.Reason }}"
-  displayName: Print build reason 3
-- bash: |
-    echo -e "Build Reason 4: ${{ variables['Build.Reason'] }}"
-  displayName: Print build reason 4
-- bash: |
-    echo -e "Branch name: ${BUILD_BRANCH_NAME}"
-    echo -e "Branch name 2 : ${BUILD_BRANCH_NAME2}"
-    echo -e "Branch name 3 : ${BUILD_BRANCH_NAME3}"
-    echo -e "Branch name 4 : ${BUILD_BRANCH_NAME4}"
+    echo -e "Branch name : ${BUILD_BRANCH_NAME3}"
+    echo -e "Branch name NOT : ${BUILD_BRANCH_NAME_NOT}"
     echo -e "CCACHE_DIR=${CCACHE_DIR}"
     echo -e "CCACHE env vars"
     export | grep -i ccache
   displayName: Print cache variables
 - task: Cache@2
   inputs:
-    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(variables.BUILD_BRANCH_NAME)" | "$(Build.SourceVersion)"'
+    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(BUILD_BRANCH_NAME)" | "$(Build.SourceVersion)"'
     path: $(CCACHE_DIR)
     cacheHitVar: CACHED_BRANCH_RESTORED
-    restoreKeys: ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(variables.BUILD_BRANCH_NAME)"
+    restoreKeys: ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(BUILD_BRANCH_NAME)"
   displayName: "Check cached branch ccache directory"
 - task: Cache@2
   inputs:
-    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(variables.BUILD_BRANCH_NAME)" | "$(Build.SourceVersion)"'
+    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(BUILD_BRANCH_NAME)" | "$(Build.SourceVersion)"'
     path: $(CCACHE_DIR)
     restoreKeys: ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "master"
   displayName: "Check cached master ccache directory"

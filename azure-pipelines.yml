@@ -10,10 +10,8 @@ variables:
   CCACHE_NAMESPACE: "$(System.JobDisplayName)"
   CCACHE_MAXSIZE: 1Gb
   CCACHE_SLOPPINESS: time_macros
-  BUILD_BRANCH_NAME: "${{ iif(eq(variables.Build.Reason, 'PullRequest'),    format('pr/{0}', variables.System.PullRequest.SourceBranch),    variables.Build.SourceBranchName) }}"
-  BUILD_BRANCH_NAME2: ${{ iif(eq(variables.Build.Reason, 'PullRequest'),    format('pr/{0}', variables.System.PullRequest.SourceBranch),    variables.Build.SourceBranchName) }}
-  BUILD_BRANCH_NAME3: ${{ iif(eq(variables['Build.Reason'], 'PullRequest'), format('pr/{0}', variables.System.PullRequest.SourceBranch),    variables.Build.SourceBranchName) }}
-  BUILD_BRANCH_NAME4: ${{ iif(eq(variables.Build.Reason, 'PullRequest'),    format('pr/{0}', variables['System.PullRequest.SourceBranch']), variables['Build.SourceBranchName']) }}
+  BUILD_BRANCH_NAME: ${{ iif(eq(variables['Build.Reason'], 'PullRequest'), format('pr/{0}', variables['System.PullRequest.SourceBranch']), variables['Build.SourceBranchName']) }}
+  BUILD_BRANCH_NAME_NOT: ${{ iif(eq(variables['Build.Reason'], 'PullRequest'), format('pr/{0}', variables['Build.SourceBranchName'], variables['System.PullRequest.SourceBranch'])) }}
 
 jobs:
 - job: Ubuntu_x64_minimallib_build
