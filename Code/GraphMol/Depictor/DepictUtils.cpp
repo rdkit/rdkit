@@ -14,6 +14,7 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/Chirality.h>
 #include <algorithm>
+#include <span>
 #include <boost/dynamic_bitset.hpp>
 
 namespace {
@@ -421,11 +422,12 @@ bool isSpiroCenter(unsigned int aid, const RDKit::ROMol *mol) {
 
   // Get the two rings containing this atom
   const auto &atomRings = mol->getRingInfo()->atomRings();
-  std::vector<RDKit::INT_VECT> rings;
-  for (const auto &ring : atomRings) {
+  std::vector<std::span<const int>> rings;
+  rings.reserve(2);
+  for (const auto ring : atomRings) {
     if (std::find(ring.begin(), ring.end(), static_cast<int>(aid)) !=
         ring.end()) {
-      rings.emplace_back(ring.begin(), ring.end());
+      rings.push_back(ring);
     }
   }
 
