@@ -11,8 +11,12 @@
 #ifndef RD_MACROCYCLE_GENERATOR_H
 #define RD_MACROCYCLE_GENERATOR_H
 
-#include <vector>
+#include <map>
+#include <set>
 #include <string>
+#include <vector>
+#include <boost/dynamic_bitset.hpp>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <Geometry/point.h>
 #include "DepictUtils.h"
 
@@ -261,7 +265,7 @@ class RDKIT_DEPICTOR_EXPORT MacrocycleGenerator {
     \param freePositions: Positions still free
     \return Map from dependent position to its controlling independent position
   */
-  std::map<size_t, size_t> buildDependencyMap(
+  std::map<size_t, std::pair<size_t, int>> buildDependencyMap(
       const std::vector<size_t> &freePositions) const;
 
   //! Collect all positions where turn value is 0 (undecided)
@@ -542,11 +546,13 @@ void maybeReflectSymmetricFusedRings(const RDKit::ROMol &mol,
   \param macrocycleRing: Atom indices in the macrocycle
   \param allRings: All rings in the molecule (macrocycle will be filtered out)
   \param coords: Coordinate map (modified in-place)
+  \param currentRingIndex: Index of the macrocycle in allRings
 */
 void maybeRefineTemplateMatchedMacrocycle(const RDKit::ROMol *mol,
                                           const RDKit::INT_VECT &macrocycleRing,
                                           const RDKit::VECT_INT_VECT &allRings,
-                                          RDGeom::INT_POINT2D_MAP &coords);
+                                          RDGeom::INT_POINT2D_MAP &coords,
+                                          int currentRingIndex = -1);
 
 //! Generate de-novo 2D coordinates for a macrocycle using turn-based encoding
 /*!

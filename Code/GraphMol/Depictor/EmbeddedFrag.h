@@ -593,8 +593,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   double d_px = 0.0, d_nx = 0.0, d_py = 0.0, d_ny = 0.0;
 
   //! a map that takes one from the atom id to the embeddedatom object for
-  //! that
-  /// atom.
+  /// that atom.
   INT_EATOM_MAP d_eatoms;
 
   // RDKit::INT_DEQUE d_attachPts;

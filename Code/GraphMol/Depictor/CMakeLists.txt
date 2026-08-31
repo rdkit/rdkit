@@ -34,14 +34,14 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
 
 rdkit_catch_test(depictorCatch catch_tests.cpp LINK_LIBRARIES Depictor SmilesParse FileParsers)
 
-rdkit_test(testMacrocycleGenerator test_macrocycle_generator.cpp
-           LINK_LIBRARIES Depictor)
+rdkit_catch_test(testMacrocycleGenerator test_macrocycle_generator.cpp
+                 LINK_LIBRARIES Depictor)
 
-rdkit_test(testMacrocycleConstraints test_macrocycle_constraints.cpp
-           LINK_LIBRARIES Depictor)
+rdkit_catch_test(testMacrocycleConstraints test_macrocycle_constraints.cpp
+                 LINK_LIBRARIES Depictor)
 
-rdkit_test(testSelfCrossing test_selfcrossing.cpp
-           LINK_LIBRARIES Depictor)
+rdkit_catch_test(testSelfCrossing test_selfcrossing.cpp
+                 LINK_LIBRARIES Depictor)
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

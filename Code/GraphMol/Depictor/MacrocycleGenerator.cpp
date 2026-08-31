@@ -24,6 +24,8 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <iostream>
+#include <mutex>
+#include <numeric>
 
 namespace RDDepict {
 
@@ -340,9 +342,10 @@ size_t MacrocycleGenerator::addOppositeConstraintsToReduce(
   return constraintsAdded;
 }
 
-std::map<size_t, size_t> MacrocycleGenerator::buildDependencyMap(
+std::map<size_t, std::pair<size_t, int>>
+MacrocycleGenerator::buildDependencyMap(
     const std::vector<size_t> &freePositions) const {
-  std::map<size_t, size_t> dependentMap;
+  std::map<size_t, std::pair<size_t, int>> dependentMap;
   std::set<size_t> freeSet(freePositions.begin(), freePositions.end());
 
   for (const auto &constraint : d_constraints) {
@@ -355,7 +358,9 @@ std::map<size_t, size_t> MacrocycleGenerator::buildDependencyMap(
       if (freeSet.count(pos1) && freeSet.count(pos2)) {
         // Make pos2 dependent on pos1 (unless pos2 is already dependent)
         if (!dependentMap.count(pos2)) {
-          dependentMap[pos2] = pos1;
+          const int multiplier =
+              constraint.type == ConstraintType::SAME ? 1 : -1;
+          dependentMap[pos2] = {pos1, multiplier};
         }
       }
     }
@@ -416,12 +421,11 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
   // Find positions of free variables
   std::vector<size_t> freePositions = collectFreePositions(d_turns);
 
-  // Simplification already done in solve() - no need to do it again here
-  // Just identify dependent positions via OPPOSITE constraints
-  // This supports chaining: pos2 can depend on pos1, which itself depends on
-  // pos0 dependentMap[pos] = the position that pos depends on (must be
-  // opposite)
+  // Simplification already happened in solve(). Identify positions whose
+  // values are determined by SAME or OPPOSITE constraints.
   auto dependentMap = buildDependencyMap(freePositions);
+  const int targetDiff = numRight - numLeft +
+                         std::accumulate(d_turns.begin(), d_turns.end(), 0);
 
   // Rebuild freePositions with only independent positions
   std::vector<size_t> independentPositions;
@@ -439,50 +443,17 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     return true;
   }
 
-  // IMPORTANT: Recalculate numRight/numLeft based on INDEPENDENT positions
-  // only! The counts passed in were based on ALL free positions (including
-  // dependents) But we only enumerate over independent positions
-  //
-  // KEY INSIGHT: OPPOSITE constraints create pairs (independent, dependent)
-  // where dependent = -independent. Each pair contributes 1 R and 1 L, so
-  // R-L contribution is 0. Therefore, the R-L differential needed from
-  // independent positions equals the R-L differential needed from all free
-  // positions!
-  int targetDiff = numRight - numLeft;    // Preserve the R-L differential
-  size_t numFree = freePositions.size();  // independent positions only
-  numRight = (numFree + targetDiff) / 2;
-  numLeft = (numFree - targetDiff) / 2;
-
-  // Check if the recalculated values are valid
-  if (numRight < 0 || numLeft < 0 ||
-      numRight + numLeft != static_cast<int>(numFree)) {
-    return false;
-  }
-
-  // Enumerate ways to assign R/L to free positions
-  std::vector<size_t> rightPositions(numRight);
-
-  // Initialize first combination: choose first numRight free positions for R
-  for (int i = 0; i < numRight; ++i) {
-    rightPositions[i] = i;
-  }
-
   double bestScore = std::numeric_limits<double>::max();
   std::vector<int> bestTurns;
 
-  // Helper: create candidate from current combination
-  auto createCandidate = [&]() {
+  // Create a candidate from a bit mask over the independent positions.
+  auto createCandidate = [&](size_t assignment) {
     std::vector<int> candidate = d_turns;  // Start with constrained values
-    // Set free positions to L
-    for (size_t freeIdx : freePositions) {
-      candidate[freeIdx] = -1;
+    for (size_t i = 0; i < freePositions.size(); ++i) {
+      candidate[freePositions[i]] = (assignment & (size_t{1} << i)) ? 1 : -1;
     }
-    // Set selected positions to R
-    for (size_t idx : rightPositions) {
-      candidate[freePositions[idx]] = 1;
-    }
-    // Apply OPPOSITE constraints for dependent positions
-    // Support chains by iterating until all dependencies are resolved
+
+    // Resolve dependency chains after their controlling values are known.
     std::set<size_t> unresolved;
     for (const auto &dep : dependentMap) {
       unresolved.insert(dep.first);
@@ -492,10 +463,10 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     for (int iter = 0; iter < maxIters && !unresolved.empty(); ++iter) {
       std::set<size_t> stillUnresolved;
       for (size_t dependent : unresolved) {
-        size_t independent = dependentMap.at(dependent);
+        const auto [independent, multiplier] = dependentMap.at(dependent);
         // Can only resolve if the independent position has been set
         if (candidate[independent] != 0) {
-          candidate[dependent] = -candidate[independent];
+          candidate[dependent] = multiplier * candidate[independent];
         } else {
           stillUnresolved.insert(dependent);
         }
@@ -510,7 +481,9 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
 
   // Helper: evaluate a candidate and update best solution if better
   auto evaluateCandidate = [&](const std::vector<int> &candidate) {
-    if (validateConstraints(candidate)) {
+    const int candidateDiff =
+        std::accumulate(candidate.begin(), candidate.end(), 0);
+    if (candidateDiff == targetDiff && validateConstraints(candidate)) {
       int minDistance = calculateMinDistance(candidate);
       // Skip if self-crossing detected (minDistance == 0)
       // This applies to both even and odd rings using hex grid approximation
@@ -527,12 +500,10 @@ bool MacrocycleGenerator::findOptimalTurnSequence(int numRight, int numLeft) {
     }
   };
 
-  // Enumerate all combinations
-  std::vector<int> candidate;
-  do {
-    candidate = createCandidate();
-    evaluateCandidate(candidate);
-  } while (nextCombination(rightPositions, numFree));
+  const size_t numAssignments = size_t{1} << freePositions.size();
+  for (size_t assignment = 0; assignment < numAssignments; ++assignment) {
+    evaluateCandidate(createCandidate(assignment));
+  }
 
   // Store best solution
   if (bestTurns.empty()) {
@@ -2306,6 +2277,8 @@ static const CachedTemplateInfo &getCachedTemplateInfo(
   static std::map<std::shared_ptr<const RDKit::ROMol>, CachedTemplateInfo,
                   std::owner_less<std::shared_ptr<const RDKit::ROMol>>>
       cache;
+  static std::mutex cacheMutex;
+  const std::lock_guard<std::mutex> lock(cacheMutex);
 
   auto it = cache.find(tmpl);
   if (it != cache.end()) {
@@ -2345,8 +2318,8 @@ static const CachedTemplateInfo &getCachedTemplateInfo(
     }
   }
   info.relaxed_query.reset(relaxed);
-  cache[tmpl] = std::move(info);
-  return cache[tmpl];
+  auto inserted = cache.emplace(tmpl, std::move(info)).first;
+  return inserted->second;
 }
 
 // Helper function: build a molecule with ring atoms preserved and non-ring
@@ -2459,13 +2432,14 @@ SubstituentInfo computeSubstituentInfo(
     const RDKit::ROMol *mol, const RDKit::INT_VECT &macrocycleRing,
     const boost::dynamic_bitset<> &ringAtoms) {
   SubstituentInfo info;
+  std::unordered_set<unsigned int> countedNeighbors;
 
   for (size_t i = 0; i < macrocycleRing.size(); ++i) {
     auto ringAtomIdx = macrocycleRing[i];
     auto atom = mol->getAtomWithIdx(ringAtomIdx);
     for (auto nbr : mol->atomNeighbors(atom)) {
       unsigned int nbrIdx = nbr->getIdx();
-      if (!ringAtoms.test(nbrIdx) && info.sizesByPosition.count(nbrIdx) == 0) {
+      if (!ringAtoms.test(nbrIdx) && countedNeighbors.insert(nbrIdx).second) {
         int size = computeSubstituentSize(mol, nbrIdx, ringAtomIdx, ringAtoms);
         info.sizesByPosition[i] += size;  // Also track by position
       }
