@@ -148,7 +148,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomEnvironment : private boost::noncopyable {
                               const bool hashResults = false,
                               const std::uint64_t fpSize = 0) const = 0;
   virtual void updateAdditionalOutput(AdditionalOutput *AdditionalOutput,
-                                      size_t bitId) const = 0;
+                                      std::uint64_t bitId) const = 0;
 
   virtual ~AtomEnvironment() {}
 };

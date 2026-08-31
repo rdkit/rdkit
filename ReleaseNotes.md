@@ -9,12 +9,40 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes:
+- The C++ canonicalization helpers `Canon::initCanonAtoms()` and
+  `Canon::detail::initFragmentCanonAtoms()` now require caller-owned neighbor ID
+  storage. `Canon::canon_atom::nbrIds` is now a non-owning `std::span<int>`.
+- `Canon::canon_atom::bonds` now uses `boost::container::small_vector`.
 - Since #9208, atom rings are "normalized" so that the first atom in the ring
 definition is the one with the lowest index, and the second one is the neighbor
 to the first which also has the lowest index.
 - `MolTransforms.h` now includes `<Eigen/Core>` instead of `<Eigen/Dense>`. C++
 code that included `MolTransforms.h` and relied on it to transitively pull in the
 Eigen dense modules (LU/QR/SVD/etc.) must now include `<Eigen/Dense>` directly.
+- `PicklerOps::QueryDetails` (in `GraphMol/MolPickler.h`) is now a `std::variant`
+instead of a `boost::variant`. C++ code that inspects this type must use
+`std::get`/`std::holds_alternative` and `.index()` in place of `boost::get` and
+`.which()`. `MolPickler.h` also no longer includes `<boost/variant.hpp>`.
+- `boost_adaptbx::python::streambuf` (in `RDBoost/python_streambuf.h`) now uses
+`std::optional` instead of `boost::optional`, and the header no longer includes
+`<boost/optional.hpp>`.
+- The `DistGeomHelpers::EmbedParameters` struct no longer has a constructor that
+takes arguments in C++. If you want to initialize data members to non-default
+values, use the designated initialization syntax. This change does not affect
+Python.
+- MolToSmiles with canonical=false, ignoreAtomMapNumbers=true no longer strips
+  out the atom map numbers.
+- The default algorithm for symmetrizing the smallest set of smallest rings has
+  been changed. The new algorithm, based on the RingDecomposerLib from the Rarey
+  group, is faster in most cases and fixes some bugs in the legacy
+  implementation. In a limited number of cases (large macrocycles containing
+  multiple para-substituted rings) the new algorithm can take a long time to
+  find the very large number of symmetric rings; the old algorithm was faster in
+  these cases, but returned incorrect results. You can force use of the old
+  algorithm by either setting the environment variable
+  `RDK_USE_LEGACY_RING_FINDING` to 1 or by calling
+  `MolOps::setUseLegacyRingFinding(true)` (`Chem.SetUseLegacyRingFinding(True)`
+  from Python).
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use
@@ -23,6 +51,10 @@ Eigen dense modules (LU/QR/SVD/etc.) must now include `<Eigen/Dense>` directly.
   been removed. Please use `Atom::NOATOM` and `Chem.Atom.NOATOM`.
 
 ## Deprecated code (to be removed in a future release):
+- The PropertyMol class in python has been deprecated. Use a normal Chem.Mol and
+  the function
+  Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps) to ensure
+  the properties you are interested in are pickled.
 
 
 # Release_2026.03.1

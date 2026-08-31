@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (C) 2015  Novartis Institute of BioMedical Research
 #         All Rights Reserved
 #

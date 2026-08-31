@@ -798,7 +798,6 @@ static const flex_int16_t yy_chk[358] =
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 
-// $Id$
 //
 //  Copyright (C) 2001-2010 Randal Henne, Greg Landrum and Rational Discovery LLC
 //

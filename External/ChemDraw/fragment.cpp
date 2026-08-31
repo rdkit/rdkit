@@ -31,6 +31,7 @@
 //
 #include "fragment.h"
 #include "bond.h"
+#include "chemdraw.h"
 #include "node.h"
 
 namespace RDKit {
@@ -62,7 +63,8 @@ const char *sequenceTypeToName(CDXSeqType seqtype) {
 }
 }  // namespace
 bool parseFragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
-                   int &missingFragId, int externalAttachment) {
+                   int &missingFragId, const v2::ChemDrawParserParams &params,
+                   int externalAttachment) {
   int frag_id = fragment.GetObjectID();
   if (fragment.m_sequenceType != kCDXSeqType_Unknown) {
     BOOST_LOG(rdWarningLog)
@@ -97,7 +99,7 @@ bool parseFragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
       case kCDXObj_Node: {
         auto &node = (CDXNode &)(*child.second);
         if (!parseNode(mol, frag_id, node, pagedata, sgroups, missingFragId,
-                       externalAttachment)) {
+                       params, externalAttachment)) {
           skip_fragment = true;
         }
         break;

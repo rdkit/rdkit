@@ -16,6 +16,7 @@
 #include <RDGeneral/export.h>
 #ifndef __RD_MQN_H__
 #define __RD_MQN_H__
+#include <string>
 
 #include <vector>
 

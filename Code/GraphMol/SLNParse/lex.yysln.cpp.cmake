@@ -686,7 +686,6 @@ static yyconst flex_int16_t yy_chk[776] =
 #line 1 "sln.ll"
 #line 6 "sln.ll"
 
-// $Id$
 //
 //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.

@@ -27,9 +27,9 @@ int Rule6::compare(const Edge *a, const Edge *b) const {
   const auto &aAtom = a->getEnd()->getAtom();
   const auto &bAtom = b->getEnd()->getAtom();
   if (ref == aAtom && ref != bAtom) {
-    return +1;  // a is ref (has priority)
+    return +2;  // a is ref (has priority and Rule 6 follows Rule 5)
   } else if (ref != aAtom && ref == bAtom) {
-    return -1;  // b is ref (has priority)
+    return -2;  // b is ref (has priority and Rule 6 follows Rule 5)
   }
   return 0;
 }

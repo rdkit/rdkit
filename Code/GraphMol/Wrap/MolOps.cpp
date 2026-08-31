@@ -497,9 +497,12 @@ void cleanupAtropisomersMol(ROMol &mol) {
 }
 
 VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds,
-                          bool includeHydrogenBonds) {
+                          bool includeHydrogenBonds,
+                          MolOps::SymmetrizeSSSRAlgorithm algorithm,
+                          bool recalcSSSR) {
   VECT_INT_VECT rings;
-  MolOps::symmetrizeSSSR(mol, rings, includeDativeBonds, includeHydrogenBonds);
+  MolOps::symmetrizeSSSR(mol, rings, algorithm, recalcSSSR, includeDativeBonds,
+                         includeHydrogenBonds);
   return rings;
 }
 PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
@@ -817,6 +820,24 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
   }
 
   return res;
+}
+PATH_LIST findUniqueSubgraphsOfLengthNHelper(const ROMol &mol,
+                                             unsigned int length, bool useHs,
+                                             bool useBO, int rootedAtAtom) {
+  return findUniqueSubgraphsOfLengthN(mol, length, useHs, useBO, rootedAtAtom);
+}
+
+PATH_LIST findAllSubgraphsOfLengthNHelper(const ROMol &mol, unsigned int length,
+                                          bool useHs, int rootedAtAtom) {
+  return findAllSubgraphsOfLengthN(mol, length, useHs, rootedAtAtom);
+}
+
+PATH_LIST findAllPathsOfLengthNHelper(const ROMol &mol, unsigned int length,
+                                      bool useBonds, bool useHs,
+                                      int rootedAtAtom,
+                                      bool onlyShortestPaths) {
+  return findAllPathsOfLengthN(mol, length, useBonds, useHs, rootedAtAtom,
+                               onlyShortestPaths);
 }
 
 python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
@@ -1269,7 +1290,18 @@ struct molops_wrapper {
                  python::arg("includeHydrogenBonds") = false),
                 docString.c_str());
 
-    // ------------------------------------------------------------------------
+    python::enum_<MolOps::SymmetrizeSSSRAlgorithm>("SymmetrizeSSSRAlgorithm")
+        .value("DEFAULT", MolOps::SymmetrizeSSSRAlgorithm::DEFAULT)
+        .value("LEGACY", MolOps::SymmetrizeSSSRAlgorithm::LEGACY)
+        .value("RDL", MolOps::SymmetrizeSSSRAlgorithm::RDL);
+
+    python::def(
+        "SetUseLegacyRingFinding", MolOps::setUseLegacyRingFinding,
+        python::args("val"),
+        "sets usage of the legacy symmetric SSSR code during sanitization");
+    python::def("GetUseLegacyRingFinding", MolOps::getUseLegacyRingFinding,
+                "returns whether or not the legacy symmetric SSSR code is "
+                "being used during sanitization");
     docString =
         "Get a symmetrized SSSR for a molecule.\n\
 \n\
@@ -1282,13 +1314,18 @@ struct molops_wrapper {
     - mol: the molecule to use.\n\
     - includeDativeBonds: whether or not dative bonds should be included in the ring finding.\n\
     - includeHydrogenBonds: whether or not hydrogen bonds should be included in the ring finding.\n\
+    - algorithm: the algorithm to use for symmetrizing the SSSR.\n\
+    - recalcSSSR: whether or not to recalculate the SSSR before symmetrizing it.\n\
 \n\
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
 \n";
-    python::def("GetSymmSSSR", getSymmSSSR,
-                (python::arg("mol"), python::arg("includeDativeBonds") = false,
-                 python::arg("includeHydrogenBonds") = false),
-                docString.c_str());
+    python::def(
+        "GetSymmSSSR", getSymmSSSR,
+        (python::arg("mol"), python::arg("includeDativeBonds") = false,
+         python::arg("includeHydrogenBonds") = false,
+         python::arg("algorithm") = MolOps::SymmetrizeSSSRAlgorithm::DEFAULT,
+         python::arg("recalcSSSR") = true),
+        docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
@@ -1876,7 +1913,8 @@ to the terminal dummy atoms.\n\
     - The molecule is modified in place.\n\
     )DOC";
     python::def("KekulizeIfPossible", kekulizeMolIfPossible,
-                (python::arg("mol"), python::arg("clearAromaticFlags") = false, python::arg("canonical")=true),
+                (python::arg("mol"), python::arg("clearAromaticFlags") = false,
+                 python::arg("canonical") = true),
                 docString.c_str());
     // ------------------------------------------------------------------------
     docString =
@@ -2072,7 +2110,7 @@ RETURNS:
   but only 2 _paths_ of length 3: (0,1,3),(2,1,3)\n\
 \n";
     python::def(
-        "FindAllSubgraphsOfLengthN", &findAllSubgraphsOfLengthN,
+        "FindAllSubgraphsOfLengthN", &findAllSubgraphsOfLengthNHelper,
         (python::arg("mol"), python::arg("length"),
          python::arg("useHs") = false, python::arg("rootedAtAtom") = -1),
         docString.c_str());
@@ -2110,7 +2148,8 @@ RETURNS:
   RETURNS: a tuple of tuples with bond IDs\n\
 \n\
 \n";
-    python::def("FindUniqueSubgraphsOfLengthN", &findUniqueSubgraphsOfLengthN,
+    python::def("FindUniqueSubgraphsOfLengthN",
+                &findUniqueSubgraphsOfLengthNHelper,
                 (python::arg("mol"), python::arg("length"),
                  python::arg("useHs") = false, python::arg("useBO") = true,
                  python::arg("rootedAtAtom") = -1),
@@ -2155,7 +2194,7 @@ RETURNS:
        has 3 _subgraphs_ of length 3: (0,1,2),(0,1,3),(2,1,3)\n\
        but only 2 _paths_ of length 3: (0,1,3),(2,1,3)\n\
 \n";
-    python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthN,
+    python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthNHelper,
                 (python::arg("mol"), python::arg("length"),
                  python::arg("useBonds") = true, python::arg("useHs") = false,
                  python::arg("rootedAtAtom") = -1,
