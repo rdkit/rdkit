@@ -1,15 +1,15 @@
 steps:
 - bash: |
-    echo -e "Build Reason: $(Build.Reason)"
+    echo -e "Build Reason 1: $(Build.Reason)"
   displayName: Print build reason 1
 - bash: |
-    echo -e "Build Reason: ${{ Build.Reason }}"
+    echo -e "Build Reason 2: ${{ Build.Reason }}"
   displayName: Print build reason 2
 - bash: |
-    echo -e "Build Reason: ${{ variables.Build.Reason }}"
+    echo -e "Build Reason 3: ${{ variables.Build.Reason }}"
   displayName: Print build reason 3
 - bash: |
-    echo -e "Build Reason: ${{ variables['Build.Reason'] }}"
+    echo -e "Build Reason 4: ${{ variables['Build.Reason'] }}"
   displayName: Print build reason 4
 - bash: |
     echo -e "Branch name: ${BUILD_BRANCH_NAME}"
