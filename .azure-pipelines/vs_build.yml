@@ -69,12 +69,11 @@ steps:
     cd build
     ctest -C Release -j $(number_of_cores) --output-on-failure -R shard -T Test
   displayName: Run sharded tests
-- bash: |
-    source ${CONDA}/etc/profile.d/conda.sh
-    conda activate rdkit_build
-    export RDBASE=`pwd`
-    export PYTHONPATH=${RDBASE}:${PYTHONPATH}
-    export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}
+- script: |
+    call activate rdkit_build
+    set RDBASE=%cd%
+    set PYTHONPATH=%RDBASE%;%PYTHONPATH%
+    set PATH=%RDBASE%\lib;%PATH%
     pip install pybind11_stubgen
     python -m Scripts.gen_rdkit_stubs rdkit-stubs
     python Scripts/gen_rdkit_stubs/test_stubs_syntax.py rdkit-stubs
