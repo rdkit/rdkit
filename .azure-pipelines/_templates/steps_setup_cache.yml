@@ -1,6 +1,17 @@
 steps:
 - bash: |
-    echo -e "Build Reason: $(Build.Reason) / ${{ Build.Reason }} / ${{ variables.Build.Reason }} / ${{ variables['Build.Reason'] }}"
+    echo -e "Build Reason: $(Build.Reason)"
+  displayName: Print build reason 1
+- bash: |
+    echo -e "Build Reason: ${{ Build.Reason }}"
+  displayName: Print build reason 2
+- bash: |
+    echo -e "Build Reason: ${{ variables.Build.Reason }}"
+  displayName: Print build reason 3
+- bash: |
+    echo -e "Build Reason: ${{ variables['Build.Reason'] }}"
+  displayName: Print build reason 4
+- bash: |
     echo -e "Branch name: ${BUILD_BRANCH_NAME}"
     echo -e "Branch name 2 : ${BUILD_BRANCH_NAME2}"
     echo -e "CCACHE_DIR=${CCACHE_DIR}"
