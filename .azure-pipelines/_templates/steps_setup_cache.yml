@@ -3,9 +3,6 @@ steps:
     echo -e "Build Reason 1: $(Build.Reason)"
   displayName: Print build reason 1
 - bash: |
-    echo -e "Build Reason 2: ${{ Build.Reason }}"
-  displayName: Print build reason 2
-- bash: |
     echo -e "Build Reason 3: ${{ variables.Build.Reason }}"
   displayName: Print build reason 3
 - bash: |
