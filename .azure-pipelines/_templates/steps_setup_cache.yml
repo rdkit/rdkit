@@ -11,6 +11,8 @@ steps:
 - bash: |
     echo -e "Branch name: ${BUILD_BRANCH_NAME}"
     echo -e "Branch name 2 : ${BUILD_BRANCH_NAME2}"
+    echo -e "Branch name 3 : ${BUILD_BRANCH_NAME3}"
+    echo -e "Branch name 4 : ${BUILD_BRANCH_NAME4}"
     echo -e "CCACHE_DIR=${CCACHE_DIR}"
     echo -e "CCACHE env vars"
     export | grep -i ccache
