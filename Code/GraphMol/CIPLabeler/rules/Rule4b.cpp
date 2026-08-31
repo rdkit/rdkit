@@ -176,17 +176,17 @@ std::vector<std::vector<const Node *>> Rule4b::getNextLevel(
     }
 
     // check sizes
-    int size = -1;
-    for (auto i = 0u; i < tmp.size(); ++i) {
-      int localSize = tmp[0].size();
-      if (size < 0) {
-        size = localSize;
-      } else if (size != localSize) {
-        throw std::runtime_error("Something unexpected!");
+    unsigned int size = 0;
+    if (!tmp.empty()) {
+      size = tmp.front().size();
+      for (const auto &groups : tmp) {
+        if (size != groups.size()) {
+          throw std::runtime_error("Something unexpected!");
+        }
       }
     }
 
-    for (int i = 0; i < size; ++i) {
+    for (unsigned int i = 0; i < size; ++i) {
       std::vector<const Node *> eq;
       for (const auto &aTmp : tmp) {
         auto tmpNodes = toNodeList(aTmp[i]);

@@ -147,8 +147,7 @@ void cartToQuatGrads(const double *quat, const double *mol, const int numBPts,
   const auto s = quat[2];
   const auto u = quat[3];
   const auto coef = 1.0 / (q * q + r * r + s * s + u * u);
-  for (int i = 0, j = gradConvOffset, k = 12 * gradConvOffset; i < 3 * numBPts;
-       i += 3, ++j, k += 12) {
+  for (int i = 0, k = 12 * gradConvOffset; i < 3 * numBPts; i += 3, k += 12) {
     const auto x = mol[i];
     const auto y = mol[i + 1];
     const auto z = mol[i + 2];

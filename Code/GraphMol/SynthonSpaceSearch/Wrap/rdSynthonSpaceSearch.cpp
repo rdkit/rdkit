@@ -359,8 +359,8 @@ SynthonSpaceSearch::SearchResults shapeSearch_helper(
 }
 
 SynthonSpaceSearch::SearchResults shapeSearch_helper_3(
-    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query, int startLine,
-    int finishLine, const python::object &py_params) {
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    const python::object &py_params, int startLine, int finishLine) {
   SynthonSpaceSearch::SynthonSpaceSearchParams params;
   if (!py_params.is_none()) {
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
@@ -873,8 +873,8 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " 1 3D conformer.  Only the first conformer will be used in the search.")
       .def(
           "ShapeSearch", &helpers::shapeSearch_helper_3,
-          (python::arg("self"), python::arg("query"), python::arg("startLine"),
-           python::arg("finishLine"), python::arg("params")),
+          (python::arg("self"), python::arg("query"), python::arg("params"),
+           python::arg("startLine"), python::arg("finishLine")),
           "Take the contents of params.possibleHitsFile, which is assumed to have"
           " been written by an earlier search, and extract those that are indeed"
           " hits.  It makes sense that params is the same as the one used to"

@@ -9,14 +9,15 @@
 //
 #include "MacroAtomInfo.h"
 
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/Invariant.h>
-#include <RDGeneral/RDLog.h>
 
 #include <array>
 #include <utility>
 
 namespace RDKit {
 namespace {
+// Keep the stable external names for the format-neutral enum in one table.
 const std::array<std::pair<MonomerClass, const char *>, 4> monomerClassNames = {
     {
         {MonomerClass::AminoAcid, "AminoAcid"},
@@ -42,9 +43,8 @@ MonomerClass monomerClassFromString(const std::string &monomerClass) {
       return value;
     }
   }
-  BOOST_LOG(rdWarningLog) << "unrecognized monomer class '" << monomerClass
-                          << "'; treating it as Other" << std::endl;
-  return MonomerClass::Other;
+  throw ValueErrorException("unrecognized monomer class '" + monomerClass +
+                            "'");
 }
 
 }  // namespace RDKit

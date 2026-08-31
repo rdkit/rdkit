@@ -128,6 +128,14 @@ class TestCase(unittest.TestCase):
     d = Draw.MolsMatrixToGridImage(molsMatrix, useSVG=True, legendsMatrix=legendsMatrix)
     self.assertIsNotNone(d)
 
+  @unittest.skipIf(IPythonConsole is None, 'IPython not available')
+  def testSimpleHighlighting(self):
+    m = Chem.MolFromSmiles('c1ccccc1O')
+    m.__sssAtoms = [0, 1, 2]
+    # These two calls should fail if the methods haven't ben updated
+    png = IPythonConsole._toPNG(m)
+    svg = IPythonConsole._toSVG(m)
+
 
 if __name__ == '__main__':
   unittest.main()

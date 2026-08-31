@@ -110,9 +110,6 @@ RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType> SubstructMatch(
 //! Count substructure matches for a query in a molecule without materializing
 //! the full match vectors.
 /*!
-    
-    
-    
   \param mol         The ROMol to be searched
   \param query       The query ROMol
   \param matchParams Parameters controlling the matching
@@ -121,8 +118,8 @@ RDKIT_SUBSTRUCTMATCH_EXPORT std::vector<MatchVectType> SubstructMatch(
 
 */
 RDKIT_SUBSTRUCTMATCH_EXPORT unsigned int SubstructMatchCount(
-  const ROMol &mol, const ROMol &query,
-  const SubstructMatchParameters &params = SubstructMatchParameters());
+    const ROMol &mol, const ROMol &query,
+    const SubstructMatchParameters &params = SubstructMatchParameters());
 
 //! Find all substructure matches for a query in a ResonanceMolSupplier object
 /*!
@@ -292,9 +289,7 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT AtomCoordsMatchFunctor {
   double d_tol2 = 1e-8;  //< squared distance tolerance
   AtomCoordsMatchFunctor(int refConfId = -1, int queryConfId = -1,
                          double tol = 1e-4)
-      : d_refConfId(refConfId),
-        d_queryConfId(queryConfId),
-        d_tol2(tol * tol) {};
+      : d_refConfId(refConfId), d_queryConfId(queryConfId), d_tol2(tol * tol){};
 
   bool operator()(const Atom &queryAtom, const Atom &targetAtom) const;
 };

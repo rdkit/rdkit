@@ -6991,6 +6991,19 @@ TEST_CASE(
   }
 }
 
+TEST_CASE("adjustHs preserves hydrogens lost during aromaticity perception") {
+  std::unique_ptr<RWMol> mol{
+      SmilesToMol("O=C1NC=CC2=C1C=CC=C2", 0, false)};
+  REQUIRE(mol);
+
+  MolOps::sanitizeMol(*mol);
+
+  const auto nitrogen = mol->getAtomWithIdx(2);
+  CHECK(nitrogen->getIsAromatic());
+  CHECK(nitrogen->getNumExplicitHs() == 1);
+  CHECK(nitrogen->getNumImplicitHs() == 0);
+}
+
 TEST_CASE("Testing Github issue 1622: add MDL aromaticity perception") {
   {
     // rings that should be aromatic

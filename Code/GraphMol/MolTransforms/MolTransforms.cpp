@@ -477,17 +477,13 @@ void _toBeMovedIdxList(const ROMol &mol, unsigned int iAtomId,
   visitedIdx[jAtomId] = 1;
   unsigned int tIdx;
   unsigned int wIdx;
-  ROMol::ADJ_ITER nbrIdx;
-  ROMol::ADJ_ITER endNbrs;
   bool doMainLoop;
   while (stack.size()) {
     doMainLoop = false;
     tIdx = stack.top();
     const Atom *tAtom = mol.getAtomWithIdx(tIdx);
-    boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(tAtom);
-    unsigned int eIdx;
-    for (eIdx = 0; nbrIdx != endNbrs; ++nbrIdx, ++eIdx) {
-      wIdx = (mol[*nbrIdx])->getIdx();
+    for (auto atom : mol.atomNeighbors(tAtom)) {
+      wIdx = atom->getIdx();
       if (!visitedIdx[wIdx]) {
         visitedIdx[wIdx] = 1;
         stack.push(wIdx);

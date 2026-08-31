@@ -16,7 +16,6 @@
 #include <algorithm>
 #include <ranges>
 #include <filesystem>
-#include <execution>
 
 using namespace RDKit;
 

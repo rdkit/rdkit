@@ -44,6 +44,10 @@ file(WRITE ${PUBCHEMSHAPE_DIR}/shape_neighbor.cpp "${FILE_CONTENTS}")
 
 rdkit_library(pubchem_align3d ./pubchem-align3d/shape_functions1.cpp
             ./pubchem-align3d/shape_functions2.cpp ./pubchem-align3d/shape_neighbor.cpp SHARED)
+# The external pubchem-align3d sources do not use RDKit export annotations.
+# Keep their symbols visible when RDKit is built with hidden visibility.
+set_target_properties(pubchem_align3d PROPERTIES CXX_VISIBILITY_PRESET default)
+
 if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
   set_target_properties(pubchem_align3d PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()

@@ -1432,7 +1432,7 @@ yyreduce:
   int atomIdx2=mp->addAtom((yyvsp[0].atom),true,true);
   mp->addBond(atomIdx1,atomIdx2,
 	      SmilesParseOps::GetUnspecifiedBondType(mp,a1,mp->getAtomWithIdx(atomIdx2)));
-  mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  ++numBondsParsed;
   //delete $2;
 }
     break;
@@ -1454,7 +1454,7 @@ yyreduce:
     (yyvsp[-1].bond)->setBeginAtomIdx(atomIdx1);
     (yyvsp[-1].bond)->setEndAtomIdx(atomIdx2);
   }
-  (yyvsp[-1].bond)->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  ++numBondsParsed;
   mp->addBond((yyvsp[-1].bond),true);
   //delete $3;
 }
@@ -1466,7 +1466,7 @@ yyreduce:
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom((yyvsp[0].atom),true,true);
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
-  mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  ++numBondsParsed;
   //delete $3;
 }
     break;
@@ -1557,7 +1557,7 @@ yyreduce:
   int atomIdx2=mp->addAtom((yyvsp[0].atom),true,true);
   mp->addBond(atomIdx1,atomIdx2,
 	      SmilesParseOps::GetUnspecifiedBondType(mp,a1,mp->getAtomWithIdx(atomIdx2)));
-  mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  ++numBondsParsed;
   branchPoints.push_back({atomIdx1, (yyvsp[-1].ival)});
 }
     break;
@@ -1579,7 +1579,7 @@ yyreduce:
     (yyvsp[-1].bond)->setBeginAtomIdx(atomIdx1);
     (yyvsp[-1].bond)->setEndAtomIdx(atomIdx2);
   }
-  (yyvsp[-1].bond)->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  ++numBondsParsed;
   mp->addBond((yyvsp[-1].bond),true);
 
   branchPoints.push_back({atomIdx1, (yyvsp[-2].ival)});
@@ -1592,7 +1592,7 @@ yyreduce:
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom((yyvsp[0].atom),true,true);
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
-  mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  ++numBondsParsed;
   branchPoints.push_back({atomIdx1, (yyvsp[-2].ival)});
 }
     break;

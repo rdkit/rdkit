@@ -309,15 +309,22 @@ void finalizePolymerSGroup(RWMol &mol, SubstanceGroup &sgroup) {
   sgroup.setProp("XBCORR", xbcorr);
 }
 
-Bond *get_bond_with_smiles_idx(const ROMol &mol, unsigned idx) {
+Bond *get_bond_with_smiles_idx(RWMol &mol, unsigned idx) {
+  // SMILES ring-closure bonds are appended after the ordinary bonds. Only
+  // they need an explicit parse-order index; ordinary bond positions can be
+  // recovered by removing the earlier ring-closure slots.
+  unsigned int earlierRingBonds = 0;
   for (auto bnd : mol.bonds()) {
     unsigned int smilesIdx;
-    if (bnd->getPropIfPresent("_cxsmilesBondIdx", smilesIdx) &&
-        smilesIdx == idx) {
-      return bnd;
+    if (bnd->getPropIfPresent("_cxsmilesBondIdx", smilesIdx)) {
+      if (smilesIdx == idx) {
+        return bnd;
+      }
+      earlierRingBonds += smilesIdx < idx;
     }
   }
-  return nullptr;
+  const auto bondIdx = idx - earlierRingBonds;
+  return bondIdx < mol.getNumBonds() ? mol.getBondWithIdx(bondIdx) : nullptr;
 }
 
 }  // end of anonymous namespace

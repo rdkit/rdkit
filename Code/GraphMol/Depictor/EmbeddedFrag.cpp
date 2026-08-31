@@ -20,8 +20,8 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Bond.h>
 #include "RDDepictor.h"
-#include <list>
 #include <algorithm>
+#include <ranges>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -108,18 +108,24 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
   PRECONDITION(doneNbrs.size() >= 3, "");
   // we will find all the inter nbr angles, pick the one with the largest angle
   // make those neighbors the nbr1 and nbr2 of aid
-  std::list<DOUBLE_INT_PAIR> anglePairs;
-  double ang;
+  double ang = 0.;
+  std::vector<DOUBLE_INT_PAIR> anglePairs;
+  anglePairs.reserve(doneNbrs.size() * (doneNbrs.size() - 1) / 2);
   for (auto nbi1 = doneNbrs.begin(); nbi1 != doneNbrs.end(); ++nbi1) {
-    auto nbi3 = nbi1;
-    for (auto nbi2 = nbi3++; nbi2 != doneNbrs.end(); ++nbi2) {
+    for (auto nbi2 = std::next(nbi1); nbi2 != doneNbrs.end(); ++nbi2) {
       ang = computeAngle(d_eatoms[aid].loc, d_eatoms[*nbi1].loc,
                          d_eatoms[*nbi2].loc);
       auto nbrPair = std::make_pair((*nbi1), (*nbi2));
       anglePairs.emplace_back(ang, nbrPair);
     }
   }
-  anglePairs.sort([](auto pr1, auto pr2) { return pr1.first < pr2.first; });
+
+  std::ranges::sort(anglePairs, [](const auto &pr1, const auto &pr2) {
+    if (pr1.first == pr2.first) {
+      return pr1.second < pr2.second;
+    }
+    return pr1.first < pr2.first;
+  });
 
   // more pain, more pain we unfortunately cannot right away pick the largest
   // angle - it is possible that we pick an angle that is in a fused ring - see
@@ -138,22 +144,20 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
   //  by checking that both our neighbors are not involved in more than one
   //  ring. Bridged systems - don't even go there
   auto winner = anglePairs.back();
-  for (auto pr : boost::adaptors::reverse(anglePairs)) {
+  for (const auto &pr : boost::adaptors::reverse(anglePairs)) {
     if ((dp_mol->getRingInfo()->numAtomRings(pr.second.first) <= 1) &&
         (dp_mol->getRingInfo()->numAtomRings(pr.second.second) <= 1)) {
       winner = pr;
       break;
     }
   }
-
-  auto winPair = winner.second;
-  auto wnb1 = winPair.first;
-  auto wnb2 = winPair.second;
+  const auto [wnb1, wnb2] = winner.second;
 
   // now find the smallest angle that contains one of these nbrs
-  int nb2 = -1, nb1 = -1;
-  for (auto anglePair : anglePairs) {
-    auto nbrPair = anglePair.second;
+  int nb2 = -1;
+  int nb1 = -1;
+  for (const auto &anglePair : anglePairs) {
+    const auto nbrPair = anglePair.second;
     if (wnb1 == nbrPair.first) {
       nb2 = wnb1;
       nb1 = nbrPair.second;

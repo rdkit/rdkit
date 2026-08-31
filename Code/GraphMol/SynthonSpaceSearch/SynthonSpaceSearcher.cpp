@@ -836,10 +836,8 @@ void SynthonSpaceSearcher::makeHitsFromToTry(
     // different lengths of time in an average search.
     if (const auto numThreads = getNumThreadsToUse(d_params.numThreads);
         numThreads > 1) {
-      const size_t eachThread = 1 + toTry.size() / numThreads;
-      size_t start = 0;
       std::vector<std::thread> threads;
-      for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
+      for (unsigned int i = 0U; i < numThreads; ++i) {
         threads.push_back(
             std::thread(processPartHitsFromDetails, std::ref(toTry), endTime,
                         std::ref(results), this, std::ref(mostRecentTry),
@@ -883,8 +881,11 @@ void SynthonSpaceSearcher::sortToTryByApproxSimilarity(
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
       newToTry;
   newToTry.reserve(tmp.size());
-  std::transform(tmp.begin(), tmp.end(), back_inserter(newToTry),
-                 [&](const auto &p) -> auto { return toTry[p.first]; });
+  std::transform(
+      tmp.begin(), tmp.end(),
+      back_inserter(newToTry), [&](const auto &p) -> auto{
+        return toTry[p.first];
+      });
   toTry = newToTry;
 }
 

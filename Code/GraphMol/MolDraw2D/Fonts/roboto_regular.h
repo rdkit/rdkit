@@ -15,6 +15,8 @@
 // This font is licensed under Apache License v2.0
 // https://www.apache.org/licenses/LICENSE-2.0
 
+#include <string>
+
 namespace {
 const unsigned char roboto_regular_raw_data[] = {
     0x00, 0x01, 0x00, 0x00, 0x00, 0x12, 0x01, 0x00, 0x00, 0x04, 0x00, 0x20,

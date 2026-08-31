@@ -19,6 +19,7 @@ with open(args.ttf_file, 'rb') as f:
 num = 0
 
 with open(args.output_file, 'w') as f:
+  f.write('#include <string>\n\n')
   f.write('namespace {\n')
   f.write(f'const unsigned char {args.variable_name}[] = {{\n   ')
   for i in range(0, len(hexdata), 2):

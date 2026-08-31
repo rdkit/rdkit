@@ -9,6 +9,7 @@
 //
 #ifndef RD_SUBSET_H
 #define RD_SUBSET_H
+#include <map>
 
 #include <RDGeneral/export.h>
 #include <boost/dynamic_bitset.hpp>
@@ -17,6 +18,7 @@
 #include <vector>
 
 namespace RDKit {
+class ROMol;
 class RWMol;
 
 //! Subsetting Methods for copyMolSubset

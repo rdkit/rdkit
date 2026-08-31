@@ -314,26 +314,6 @@ the atom which can then be modified, for example with additional query
 constraints added.  The new atom is otherwise a copy of the old.
 If the atom already has a query, nothing will be changed.)DOC",
         nb::rv_policy::reference, nb::keep_alive<1, 0>());
-    m.def(
-        "foo",
-        [](ROMol *mol, Atom *atom) {
-          return QueryOps::replaceAtomWithQueryAtom((RWMol *)mol, atom);
-        },
-        "mol"_a, "atom"_a, nb::rv_policy::reference_internal);
-    m.def(
-        "foo2",
-        [](ROMol *mol, Atom *atom) {
-          return (QueryAtom *)QueryOps::replaceAtomWithQueryAtom((RWMol *)mol,
-                                                                 atom);
-        },
-        "mol"_a, "atom"_a, nb::rv_policy::reference_internal);
-    m.def(
-        "foo3",
-        [](ROMol *mol, Atom *atom) {
-          auto res = QueryOps::replaceAtomWithQueryAtom((RWMol *)mol, atom);
-          return (QueryAtom *)res->copy();
-        },
-        "mol"_a, "atom"_a, nb::rv_policy::reference_internal);
   };
 };
 void wrap_queries(nb::module_ &m) { RDKit::queries_wrapper::wrap(m); }

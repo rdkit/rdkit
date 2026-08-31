@@ -79,7 +79,7 @@ class RGroupDecompositionChromosome : public IntegerStringChromosome {
       delete;
   RGroupDecompositionChromosome &operator=(
       const RGroupDecompositionChromosome &other) = delete;
-  double fitness;
+  double fitness{0.0};
   FingerprintVarianceScoreData fingerprintVarianceScoreData;
   OperationName operationName = Create;
   vector<size_t> permutation;

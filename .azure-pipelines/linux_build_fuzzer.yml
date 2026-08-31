@@ -12,7 +12,7 @@ steps:
         cairo eigen
     conda activate rdkit_build
     conda config --env --add channels conda-forge
-    conda config --env --set channel_priority strict	
+    conda config --env --set channel_priority strict
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

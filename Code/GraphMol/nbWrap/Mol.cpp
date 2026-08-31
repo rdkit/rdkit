@@ -33,6 +33,7 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 namespace RDKit {
+
 template <typename T>
 std::string MolToString(const T &self) {
   std::string res;
@@ -42,6 +43,7 @@ std::string MolToString(const T &self) {
   }
   return res;
 }
+
 nb::bytes MolToBinary(const ROMol &self) {
   std::string res;
   {
@@ -51,6 +53,7 @@ nb::bytes MolToBinary(const ROMol &self) {
   nb::bytes retval = nb::bytes(res.c_str(), res.length());
   return retval;
 }
+
 nb::bytes MolToBinaryWithProps(const ROMol &self, unsigned int props) {
   std::string res;
   {
@@ -60,6 +63,7 @@ nb::bytes MolToBinaryWithProps(const ROMol &self, unsigned int props) {
   nb::bytes retval = nb::bytes(res.c_str(), res.length());
   return retval;
 }
+
 bool HasSubstructMatchStr(nb::bytes pkl, const ROMol &query,
                           bool recursionPossible = true,
                           bool useChirality = false,
@@ -80,89 +84,23 @@ bool HasSubstructMatchStr(nb::bytes pkl, const ROMol &query,
                              useQueryQueryMatches);
   return hasM;
 }
-#if 0
-void MolClearComputedPropsHelper(const ROMol &mol, bool includeRings) {
-  mol.clearComputedProps(includeRings);
-}
-
-
-//
-// allows molecules to be pickled.
-//  since molecules have a constructor that takes a binary string
-//  we only need to provide getinitargs()
-//
-struct mol_pickle_suite : rdkit_pickle_suite {
-  static python::tuple getinitargs(const ROMol &self) {
-    return python::make_tuple(MolToBinary(self));
-  };
-};
-
-
-unsigned int AddMolConformer(ROMol &mol, Conformer *conf,
-                             bool assignId = false) {
-  auto *nconf = new Conformer(*conf);
-  return mol.addConformer(nconf, assignId);
-}
-
-Conformer *GetMolConformer(ROMol &mol, int id = -1) {
-  return &(mol.getConformer(id));
-}
-
-
-ConformerIterSeq *GetMolConformers(const ROMOL_SPTR &mol) {
-  ConformerIterSeq *res =
-      new ConformerIterSeq(mol, mol->beginConformers(), mol->endConformers(),
-                           ConformerCountFunctor(mol));
-  return res;
-}
-
-int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
-  if (onlyHeavy > -1) {
-    BOOST_LOG(rdWarningLog)
-        << "WARNING: the onlyHeavy argument to mol.GetNumAtoms() has been "
-           "deprecated. Please use the onlyExplicit argument instead or "
-           "mol.GetNumHeavyAtoms() if you want the heavy atom count."
-        << std::endl;
-    return mol.getNumAtoms(onlyHeavy);
-  }
-  return mol.getNumAtoms(onlyExplicit);
-}
-#endif
 
 namespace {
-
-// QueryAtomIterSeq &MolGetAromaticAtoms(ROMol &mol) {
-//   auto *qa = new QueryAtom();
-//   qa->setQuery(makeAtomAromaticQuery());
-//   return QueryAtomIterSeq(mol, qa);
-// }
-// QueryAtomIterSeq *MolGetQueryAtoms(ROMol &mol, QueryAtom *qa) {
-//   QueryAtomIterSeq *res = new QueryAtomIterSeq(
-//       mol, mol.beginQueryAtoms(qa), mol.endQueryAtoms(),
-//       AtomCountFunctor(mol));
-//   return res;
-// }
 
 void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
                                  nb::object func) {
-  ps.extraFinalCheck = pyFinalMatchFunctor(func);
+  ps.extraFinalCheck =
+      pyMatchFunctor<ROMol, std::span<const unsigned int>>(func);
 }
 
 void setExtraAtomCheckFunc(SubstructMatchParameters &ps, nb::object func) {
-  ps.extraAtomCheck = pyMatchFunctor<Atom>(func);
+  ps.extraAtomCheck = pyMatchFunctor<Atom, Atom>(func);
 }
 
-void setExtraAtomCheckFunc2(SubstructMatchParameters &ps,
-                            const AtomCoordsMatchFunctor &ftor) {
-  ps.extraAtomCheck = std::bind(&AtomCoordsMatchFunctor::operator(), &ftor,
-                                std::placeholders::_1, std::placeholders::_2);
-}
 void setExtraBondCheckFunc(SubstructMatchParameters &ps, nb::object func) {
-  ps.extraBondCheck = pyMatchFunctor<Bond>(func);
+  ps.extraBondCheck = pyMatchFunctor<Bond, Bond>(func);
 }
 
-}  // namespace
-namespace {
 void MolDebug(const ROMol &mol, bool useStdout) {
   if (useStdout) {
     mol.debugMol(std::cout);
@@ -183,9 +121,9 @@ void MolDebug(const ROMol &mol, bool useStdout) {
 
 class ReadWriteMol : public RWMol {
  public:
-  ReadWriteMol() {};
+  ReadWriteMol(){};
   ReadWriteMol(const ROMol &m, bool quickCopy = false, int confId = -1)
-      : RWMol(m, quickCopy, confId) {};
+      : RWMol(m, quickCopy, confId){};
 
   void RemoveAtom(unsigned int idx) { removeAtom(idx); };
   void RemoveBond(unsigned int idx1, unsigned int idx2) {
@@ -252,7 +190,7 @@ class ReadWriteMol : public RWMol {
   std::shared_ptr<RWMol> dp_mol;
 };
 
-std::string molClassDoc = R"DOC(The Molecule class.
+constexpr const char *molClassDoc = R"DOC(The Molecule class.
 
      In addition to the expected Atoms and Bonds, molecules contain:
           - a collection of Atom and Bond bookmarks indexed with integers
@@ -267,13 +205,13 @@ std::string molClassDoc = R"DOC(The Molecule class.
                     Molecules also have the concept of *private* properties, which are tagged
                          by beginning the property name with an underscore (_).
 )DOC";
-std::string rwmolClassDoc = R"DOC(The RW molecule class (read/write)
+constexpr const char *rwmolClassDoc = R"DOC(The RW molecule class (read/write)
 
      This class is a more-performant version of the EditableMolecule class in that
      it is a 'live' molecule and shares the interface from the Mol class.
      All changes are performed without the need to create a copy of the
      molecule using GetMol() (this is still available, however).
-  
+
      n.b. Eventually this class may become a direct replacement for EditableMol)DOC";
 
 struct mol_wrapper {
@@ -370,24 +308,13 @@ struct mol_wrapper {
             &RDKit::SubstructMatchParameters::
                 specifiedStereoQueryMatchesUnspecified,
             "If set, query atoms and bonds with specified stereochemistry will match atoms and bonds with unspecified stereochemistry.")
-        .def("setExtraFinalCheck", setSubstructMatchFinalCheck,
-             // FIX: This probably doesn't have the right custodian/ward
-             "func"_a,
+        .def("setExtraFinalCheck", setSubstructMatchFinalCheck, "func"_a,
              R"DOC(allows you to provide a function that will be called
                with the molecule
            and a vector of atom IDs containing a potential match.
            The function should return true or false indicating whether or not
            that match should be accepted.)DOC")
-        .def(
-            "setExtraAtomCheckFunc", setExtraAtomCheckFunc2,
-            // FIX: This probably doesn't have the right custodian/ward
-            "atomCoordsMatcher"_a,
-            R"DOC(allows you to provide an AtomCoordsMatcher that will be called
-              for each atom pair that matches during substructure searching,
-              after all other comparisons have passed.)DOC")
-        .def("setExtraAtomCheckFunc", setExtraAtomCheckFunc,
-             // FIX: This probably doesn't have the right custodian/ward
-             "func"_a,
+        .def("setExtraAtomCheckFunc", setExtraAtomCheckFunc, "func"_a,
              R"DOC(allows you to provide a function that will be called
            for each atom pair that matches during substructure searching,
            after all other comparisons have passed.
@@ -398,9 +325,7 @@ struct mol_wrapper {
             &RDKit::SubstructMatchParameters::
                 extraAtomCheckOverridesDefaultCheck,
             "if set, only the extraAtomCheck will be used to determine whether or not atoms match")
-        .def("setExtraBondCheckFunc", setExtraBondCheckFunc,
-             // FIX: This probably doesn't have the right custodian/ward
-             "func"_a,
+        .def("setExtraBondCheckFunc", setExtraBondCheckFunc, "func"_a,
              R"DOC(allows you to provide a function that will be called
            for each bond pair that matches during substructure searching,
            after all other comparisons have passed.
@@ -580,7 +505,7 @@ struct mol_wrapper {
             "AddConformer",
             [](ROMol &mol, Conformer &conf, bool assignId) {
       // C++ takes ownership of the new Conformer.
-      // There's no way for python to relenquish ownerhship,
+      // There's no way for python to relinquish ownership,
       // so we need to copy.
       return mol.addConformer(new Conformer(conf), assignId);
             },
@@ -1018,25 +943,11 @@ struct mol_wrapper {
         .def("GetPropsAsDict", GetPropsAsDict<ROMol>,
              "includePrivate"_a = false, "includeComputed"_a = false,
              "autoConvertStrings"_a = true, getPropsAsDictDocString.c_str())
-        //         .def(
-        //             "GetStereoGroups", [](nb::object &self) {
-        //                ROMol *m = nb::cast<ROMol *>(self);
-        //                nb::list result;
-        //                for(auto &sg : m->getStereoGroups()) {
-        //                  result.append(
-        //                      nb::cast(&sg,
-        //                      nb::rv_policy::reference_internal,self));
-        //                }
-        //                return result;
-        //             },
-        //             R"DOC(Returns a list of StereoGroups defining the
-        //             relative stereochemistry of the atoms.
-        // )DOC")
         .def(
             "GetStereoGroups", &ROMol::getStereoGroups,
             nb::rv_policy::reference_internal,
             R"DOC(Returns a list of StereoGroups defining the relative stereochemistry of the atoms.))DOC")
-#if 1
+
            .def("GetAromaticAtoms", [](const ROMol &self) {
       auto *qa = new QueryAtom();
       qa->setQuery(makeAtomAromaticQuery());
@@ -1044,19 +955,6 @@ struct mol_wrapper {
       return QueryAtomIterSeq(self, qa, ownsQa);
             }, nb::keep_alive<0,1>(),
                 "Returns a read-only sequence containing all of the molecule's aromatic Atoms.\n")
-
-        //    .def(
-        //        "GetAtomsMatchingQuery", [](ROMol &self, QueryAtom *qa ) {
-        //            return QueryAtomIterSeq(
-        //  self, self.beginQueryAtoms(qa), self.endQueryAtoms(),
-        //  AtomCountFunctor(self));
-        //        },
-        //        "qa"_a,
-        //        nb::keep_alive<0, 1>(),
-        //        R"DOC(Returns a read-only sequence containing all of the atoms
-        //        in a molecule that match the query atom.
-        //              Atom query options are defined in the
-        //              rdkit.Chem.rdqueries module. )DOC")
         .def(
             "GetAtomsMatchingQuery",
             [](const ROMol &self, const QueryAtom *qa) {
@@ -1064,11 +962,11 @@ struct mol_wrapper {
       return QueryAtomIterSeq(self, qa, ownsQa);
             },
             "qa"_a, nb::keep_alive<0, 1>(),
-            R"DOC(Returns a read-only sequence containing all of the atoms in a molecule that match the query atom. 
+            R"DOC(Returns a read-only sequence containing all of the atoms in a molecule that match the query atom.
                   Atom query options are defined in the rdkit.Chem.rdqueries module.
                   )DOC")
 
-#endif
+
         .def("ClearComputedProps", &ROMol::clearComputedProps,
              "includeRings"_a = true,
              R"DOC(Removes all computed properties from the molecule.
@@ -1112,7 +1010,7 @@ struct mol_wrapper {
 
         .def("__getstate__", getObjectState<ROMol, MolToString<ROMol>>)
         .def("__setstate__", setObjectState<ROMol>)
-        .doc() = molClassDoc.c_str();
+        .doc() = molClassDoc;
 
     m.def(
         "_HasSubstructMatchStr", HasSubstructMatchStr, "pkl"_a, "query"_a,
@@ -1206,7 +1104,8 @@ it's probably not of general interest.
              "finishes batch editing and makes the actual changes")
         .def("__getstate__",
              getObjectState<ReadWriteMol, MolToString<ReadWriteMol>>)
-        .def("__setstate__", setObjectState<ReadWriteMol>);
+        .def("__setstate__", setObjectState<ReadWriteMol>)
+        .doc() = rwmolClassDoc;
   }
 };
 }  // namespace RDKit

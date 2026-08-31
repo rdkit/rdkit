@@ -48,8 +48,8 @@ void RGroupData::mergeIntoCombinedMol(const ROMOL_SPTR &mol) {
   if (!incomingBondIndices.empty()) {
     existingBondIndices.insert(
         existingBondIndices.end(),
-        std::make_move_iterator(existingBondIndices.begin()),
-        std::make_move_iterator(existingBondIndices.end()));
+        std::make_move_iterator(incomingBondIndices.begin()),
+        std::make_move_iterator(incomingBondIndices.end()));
   }
 }
 
