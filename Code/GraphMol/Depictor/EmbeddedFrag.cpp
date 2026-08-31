@@ -1469,26 +1469,86 @@ double _crossVal(const RDGeom::Point2D &v1, const RDGeom::Point2D &v2) {
   return v1.x * v2.y - v2.x * v1.y;
 }
 
+namespace {
+constexpr double SEGMENT_INTERSECTION_EPSILON = 1e-6;
+
+double _orientation(const RDGeom::Point2D &a, const RDGeom::Point2D &b,
+                    const RDGeom::Point2D &c) {
+  return _crossVal(b - a, c - a);
+}
+
+bool _pointOnSegment(const RDGeom::Point2D &a, const RDGeom::Point2D &b,
+                     const RDGeom::Point2D &point) {
+  return std::abs(_orientation(a, b, point)) <=
+             SEGMENT_INTERSECTION_EPSILON &&
+         point.x >= std::min(a.x, b.x) - SEGMENT_INTERSECTION_EPSILON &&
+         point.x <= std::max(a.x, b.x) + SEGMENT_INTERSECTION_EPSILON &&
+         point.y >= std::min(a.y, b.y) - SEGMENT_INTERSECTION_EPSILON &&
+         point.y <= std::max(a.y, b.y) + SEGMENT_INTERSECTION_EPSILON;
+}
+
+bool _segmentsIntersect(const RDGeom::Point2D &a,
+                        const RDGeom::Point2D &b,
+                        const RDGeom::Point2D &c,
+                        const RDGeom::Point2D &d) {
+  // Axis-aligned bounding boxes are a cheap, geometry-safe prefilter: two
+  // intersecting segments must have overlapping projections on both axes.
+  if (std::max(a.x, b.x) + SEGMENT_INTERSECTION_EPSILON <
+          std::min(c.x, d.x) ||
+      std::max(c.x, d.x) + SEGMENT_INTERSECTION_EPSILON <
+          std::min(a.x, b.x) ||
+      std::max(a.y, b.y) + SEGMENT_INTERSECTION_EPSILON <
+          std::min(c.y, d.y) ||
+      std::max(c.y, d.y) + SEGMENT_INTERSECTION_EPSILON <
+          std::min(a.y, b.y)) {
+    return false;
+  }
+
+  const auto o1 = _orientation(a, b, c);
+  const auto o2 = _orientation(a, b, d);
+  const auto o3 = _orientation(c, d, a);
+  const auto o4 = _orientation(c, d, b);
+  const bool firstStraddles =
+      (o1 > SEGMENT_INTERSECTION_EPSILON &&
+       o2 < -SEGMENT_INTERSECTION_EPSILON) ||
+      (o1 < -SEGMENT_INTERSECTION_EPSILON &&
+       o2 > SEGMENT_INTERSECTION_EPSILON);
+  const bool secondStraddles =
+      (o3 > SEGMENT_INTERSECTION_EPSILON &&
+       o4 < -SEGMENT_INTERSECTION_EPSILON) ||
+      (o3 < -SEGMENT_INTERSECTION_EPSILON &&
+       o4 > SEGMENT_INTERSECTION_EPSILON);
+  if (firstStraddles && secondStraddles) {
+    return true;
+  }
+
+  // Also treat collinear overlap and non-adjacent endpoint contact as bond
+  // collisions. Bonds sharing an atom are excluded by the caller.
+  return _pointOnSegment(a, b, c) || _pointOnSegment(a, b, d) ||
+         _pointOnSegment(c, d, a) || _pointOnSegment(c, d, b);
+}
+}  // namespace
+
 int _pairDIICompAscending(const PAIR_D_I_I &arg1, const PAIR_D_I_I &arg2) {
   return (arg1.first < arg2.first);
 }
 
-PAIR_I_I _findClosestPair(unsigned int beg1, unsigned int end1,
-                          unsigned int beg2, unsigned int end2,
-                          const RDKit::ROMol &mol, const double *dmat) {
+PAIR_I_I _findFarthestPair(unsigned int beg1, unsigned int end1,
+                           unsigned int beg2, unsigned int end2,
+                           const RDKit::ROMol &mol, const double *dmat) {
   auto na = mol.getNumAtoms();
   auto d1 = dmat[beg1 * na + beg2];
   auto d2 = dmat[beg1 * na + end2];
   auto d3 = dmat[end1 * na + beg2];
   auto d4 = dmat[end1 * na + end2];
-  auto minPr =
-      std::min(PAIR_D_I_I(d1, PAIR_I_I(beg1, beg2)),
+  auto maxPr =
+      std::max(PAIR_D_I_I(d1, PAIR_I_I(beg1, beg2)),
                PAIR_D_I_I(d2, PAIR_I_I(beg1, end2)), _pairDIICompAscending);
-  minPr = std::min(minPr, PAIR_D_I_I(d3, PAIR_I_I(end1, beg2)),
+  maxPr = std::max(maxPr, PAIR_D_I_I(d3, PAIR_I_I(end1, beg2)),
                    _pairDIICompAscending);
-  minPr = std::min(minPr, PAIR_D_I_I(d4, PAIR_I_I(end1, end2)),
+  maxPr = std::max(maxPr, PAIR_D_I_I(d4, PAIR_I_I(end1, end2)),
                    _pairDIICompAscending);
-  return minPr.second;
+  return maxPr.second;
 }
 
 void EmbeddedFrag::computeDistMat(DOUBLE_SMART_PTR &dmat) {
@@ -1715,7 +1775,8 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
 }
 
 std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
-                                                   bool includeBonds) {
+                                                   bool includeBonds,
+                                                   bool includeBondedAtoms) {
   // find a pair of atoms that are too close to each other
   std::vector<PAIR_I_I> res;
   for (auto &d_eatom : d_eatoms) {
@@ -1748,7 +1809,9 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
         efj->second.d_density += 1000.0;
       }
       d2 /= (atomTypeFactor1 * atomTypeFactor2);
-      if (d2 < colThres2) {
+      if (d2 < colThres2 &&
+          (includeBondedAtoms ||
+           !dp_mol->getBondBetweenAtoms(efi->first, efj->first))) {
         PAIR_I_I cAids(efi->first, efj->first);
         res.push_back(cAids);
       }
@@ -1756,16 +1819,12 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
   }
   if (includeBonds) {
     // now find bond collisions
-    double BOND_THRES2 = BOND_THRES * BOND_THRES;
     for (const auto b1 : dp_mol->bonds()) {
       auto bid1 = b1->getIdx();
       auto beg1 = b1->getBeginAtomIdx();
       auto end1 = b1->getEndAtomIdx();
       if ((d_eatoms.find(beg1) != d_eatoms.end()) &&
           (d_eatoms.find(end1) != d_eatoms.end())) {
-        auto v1 = d_eatoms[end1].loc - d_eatoms[beg1].loc;
-        auto avg1 = d_eatoms[end1].loc + d_eatoms[beg1].loc;
-        avg1 *= 0.5;
         for (const auto b2 : dp_mol->bonds()) {
           if (b2->getIdx() <= bid1) {
             continue;
@@ -1773,21 +1832,21 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
 
           auto beg2 = b2->getBeginAtomIdx();
           auto end2 = b2->getEndAtomIdx();
+          if (beg1 == beg2 || beg1 == end2 || end1 == beg2 || end1 == end2) {
+            continue;
+          }
           if ((d_eatoms.find(beg2) != d_eatoms.end()) &&
               (d_eatoms.find(end2) != d_eatoms.end())) {
-            auto avg2 = d_eatoms[end2].loc + d_eatoms[beg2].loc;
-            avg2 *= 0.5;
-            avg2 -= avg1;
-            if (avg2.lengthSq() < 0.5 && avg2.lengthSq() < BOND_THRES2) {
-              auto v2 = d_eatoms[beg2].loc - d_eatoms[beg1].loc;
-              auto v3 = d_eatoms[end2].loc - d_eatoms[beg1].loc;
-              auto valProd = _crossVal(v1, v2) * _crossVal(v1, v3);
-              if (valProd < -1e-6) {
-                // we have a collision, find the closest two atoms
-                auto cAids =
-                    _findClosestPair(beg1, end1, beg2, end2, *dp_mol, dmat);
-                res.push_back(cAids);
-              }
+            if (_segmentsIntersect(d_eatoms[beg1].loc, d_eatoms[end1].loc,
+                                   d_eatoms[beg2].loc,
+                                   d_eatoms[end2].loc)) {
+              // Choose the outermost endpoints of the crossed bonds. The
+              // downstream getRotatableBonds() call deliberately skips the
+              // two outer bonds on this path, so they will not themselves be
+              // flipped; their adjacent bonds remain available as candidates.
+              auto cAids =
+                  _findFarthestPair(beg1, end1, beg2, end2, *dp_mol, dmat);
+              res.push_back(cAids);
             }
           }
         }
@@ -2473,7 +2532,36 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
   }
 
   auto dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
-  auto colls = this->findCollisions(dmat, 0);
+  // Earlier collision-resolution stages historically treat very short bonds
+  // as collisions. Preserve that behavior there, but do not let a shortened
+  // bond's own endpoints become an actionable clash for path expansion. Work
+  // through atom clashes first, then check bond crossings. Mixing both kinds
+  // in one queue can reject an atom-clash improvement merely because crossings
+  // remain for the second stage.
+  auto findPathAngleCollisions = [&]() {
+    auto collisions = this->findCollisions(dmat, 0, 0);
+    if (collisions.empty()) {
+      collisions = this->findCollisions(dmat, 1, 0);
+    }
+    return collisions;
+  };
+  const auto canonicalCollision = [](const PAIR_I_I &collision) {
+    return PAIR_I_I(std::min(collision.first, collision.second),
+                    std::max(collision.first, collision.second));
+  };
+  std::set<PAIR_I_I> skippedCollisions;
+  auto filterSkippedCollisions = [&](std::vector<PAIR_I_I> collisions) {
+    collisions.erase(
+        std::remove_if(collisions.begin(), collisions.end(),
+                       [&](const auto &collision) {
+                         return skippedCollisions.count(
+                                    canonicalCollision(collision)) != 0;
+                       }),
+        collisions.end());
+    return collisions;
+  };
+  auto allColls = findPathAngleCollisions();
+  auto colls = filterSkippedCollisions(allColls);
 
   // Track total rotation applied at each angle
   // Key: (collision pair, atom index), Value: cumulative rotation in radians
@@ -2490,6 +2578,7 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
     auto path = RDKit::MolOps::getShortestPath(*dp_mol, aid1, aid2);
 
     if (path.size() < 3) {
+      skippedCollisions.insert(canonicalCollision(collision));
       colls.erase(colls.begin());
       ++iter;
       continue;
@@ -2535,13 +2624,14 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
     }
 
     if (expandablePositions.empty()) {
+      skippedCollisions.insert(canonicalCollision(collision));
       colls.erase(colls.begin());
       ++iter;
       continue;
     }
 
     // Save state
-    auto prevCollisionCount = colls.size();
+    auto prevCollisionCount = allColls.size();
     std::map<int, RDGeom::Point2D> savedPositions;
 
     for (const auto &ea : d_eatoms) {
@@ -2555,7 +2645,8 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
       auto centerAtom = pathVec[pos];
 
       // Check if this angle has reached maximum expansion
-      if (angleTotals[collision][centerAtom] >= MAX_ANGLE_EXPANSION) {
+      if (angleTotals[canonicalCollision(collision)][centerAtom] >=
+          MAX_ANGLE_EXPANSION) {
         continue;
       }
 
@@ -2565,11 +2656,13 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
       // Try opening this angle (making it larger, towards 180°)
       openAngleByIncrement(prevAtom, centerAtom, nextAtom,
                            ANGLE_EXPANSION_INCREMENT, dmat);
-      angleTotals[collision][centerAtom] += ANGLE_EXPANSION_INCREMENT;
+      angleTotals[canonicalCollision(collision)][centerAtom] +=
+          ANGLE_EXPANSION_INCREMENT;
       anyExpanded = true;
     }
 
     if (!anyExpanded) {
+      skippedCollisions.insert(canonicalCollision(collision));
       colls.erase(colls.begin());
       ++iter;
       continue;
@@ -2579,10 +2672,10 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
     dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
 
     // Check if expansion helped or made things worse
-    colls = this->findCollisions(dmat, 0);
+    auto newColls = findPathAngleCollisions();
 
     // accept if we have fewer or same collisions, otherwise revert
-    if (colls.size() > prevCollisionCount) {
+    if (newColls.size() > prevCollisionCount) {
       // Created MORE collisions - revert
 
       // Restore all atom positions
@@ -2591,12 +2684,16 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
       }
 
       // Clear rotation tracking for this collision and give up on it
-      angleTotals.erase(collision);
+      angleTotals.erase(canonicalCollision(collision));
+      skippedCollisions.insert(canonicalCollision(collision));
 
       // OPTIMIZATION: Only recompute if we reverted
       dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
-      colls = this->findCollisions(dmat, 0);
-      colls.erase(colls.begin());
+      allColls = findPathAngleCollisions();
+      colls = filterSkippedCollisions(allColls);
+    } else {
+      allColls = std::move(newColls);
+      colls = filterSkippedCollisions(allColls);
     }
     // Otherwise accept (fewer or same collisions)
     ++iter;
