@@ -4088,26 +4088,30 @@ void centerMolForDrawing(RWMol &mol, int confId) {
 
 // ****************************************************************************
 bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
-  if (atom.getDegree() == 2) {
-    Point2D bond_vecs[2];
-    Bond::BondType bts[2];
-    Point2D const &at1_cds = atCds[atom.getIdx()];
-    ROMol const &mol = atom.getOwningMol();
-    int i = 0;
-    for (auto nbr : make_iterator_range(mol.getAtomNeighbors(&atom))) {
-      try {
-        Point2D bond_vec = at1_cds.directionVector(atCds[nbr]);
-        bond_vecs[i] = bond_vec;
-        bts[i] = mol.getBondBetweenAtoms(atom.getIdx(), nbr)->getBondType();
-      } catch (std::runtime_error &e) {
-        // A zero-length vector throws and can be ignored.
-        continue;
-      }
-      ++i;
-    }
-    return (bts[0] == bts[1] && bond_vecs[0].dotProduct(bond_vecs[1]) < -0.95);
+  if (atom.getDegree() != 2) {
+    return false;
   }
-  return false;
+  Point2D bond_vecs[2];
+  Bond::BondType bts[2] = {Bond::BondType::UNSPECIFIED,
+                           Bond::BondType::UNSPECIFIED};
+  Point2D const &at1_cds = atCds[atom.getIdx()];
+  ROMol const &mol = atom.getOwningMol();
+  int i = 0;
+  for (const auto nbr : mol.atomNeighbors(&atom)) {
+    const auto nbri = nbr->getIdx();
+    try {
+      Point2D bond_vec = at1_cds.directionVector(atCds[nbri]);
+      bond_vecs[i] = bond_vec;
+    } catch (const std::runtime_error &) {
+      // A zero-length vector throws and can be ignored.
+      // but we still need to get the bond type and increment
+      // the counter
+    }
+    bts[i] =
+        mol.getBondBetweenAtoms(atom.getIdx(), nbr->getIdx())->getBondType();
+    ++i;
+  }
+  return (bts[0] == bts[1] && bond_vecs[0].dotProduct(bond_vecs[1]) < -0.95);
 }
 
 // ****************************************************************************
