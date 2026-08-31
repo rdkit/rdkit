@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <limits>
 #include <numeric>
+#include <utility>
 
 namespace RDKit {
 namespace {
@@ -30,6 +31,61 @@ void validateRing(std::span<const int> atomIndices,
 unsigned int ringSizeUnchecked(const std::vector<uint32_t> &ringBegins,
                                unsigned int ringIdx) {
   return ringBegins[ringIdx + 1] - ringBegins[ringIdx];
+}
+
+std::pair<uint32_t, uint32_t> membershipRange(
+    const std::vector<uint32_t> &membershipBegins, unsigned int idx) {
+  if (membershipBegins.empty() || idx >= membershipBegins.size() - 1) {
+    return {0, 0};
+  }
+  return {membershipBegins[idx], membershipBegins[idx + 1]};
+}
+
+std::vector<int> memberRingSizes(
+    const std::vector<uint32_t> &membershipBegins,
+    const std::vector<int> &memberships,
+    const std::vector<uint32_t> &ringBegins, unsigned int idx) {
+  const auto [begin, end] = membershipRange(membershipBegins, idx);
+  std::vector<int> result(end - begin);
+  for (auto pos = begin; pos < end; ++pos) {
+    result[pos - begin] = ringSizeUnchecked(ringBegins, memberships[pos]);
+  }
+  return result;
+}
+
+bool isMemberInRingOfSize(const std::vector<uint32_t> &membershipBegins,
+                          const std::vector<int> &memberships,
+                          const std::vector<uint32_t> &ringBegins,
+                          unsigned int idx, unsigned int size) {
+  const auto [begin, end] = membershipRange(membershipBegins, idx);
+  for (auto pos = begin; pos < end; ++pos) {
+    if (ringSizeUnchecked(ringBegins, memberships[pos]) == size) {
+      return true;
+    }
+  }
+  return false;
+}
+
+unsigned int minMemberRingSize(
+    const std::vector<uint32_t> &membershipBegins,
+    const std::vector<int> &memberships,
+    const std::vector<uint32_t> &ringBegins, unsigned int idx) {
+  const auto [begin, end] = membershipRange(membershipBegins, idx);
+  if (begin == end) {
+    return 0;
+  }
+  auto result = std::numeric_limits<unsigned int>::max();
+  for (auto pos = begin; pos < end; ++pos) {
+    result =
+        std::min(result, ringSizeUnchecked(ringBegins, memberships[pos]));
+  }
+  return result;
+}
+
+unsigned int numMemberRings(const std::vector<uint32_t> &membershipBegins,
+                            unsigned int idx) {
+  const auto [begin, end] = membershipRange(membershipBegins, idx);
+  return end - begin;
 }
 
 template <bool checkRingSize>
@@ -76,6 +132,31 @@ bool areMembersInSameRing(const std::vector<uint32_t> &membershipBegins,
   }
   return false;
 }
+
+void rebuildRingTypeMemberships(
+    std::vector<uint32_t> &membershipBegins,
+    std::vector<int> &memberships, const std::vector<int> &membersInRings,
+    const std::vector<uint32_t> &ringBegins) {
+  size_t numMembers =
+      membershipBegins.empty() ? 0 : membershipBegins.size() - 1;
+  for (const auto idx : membersInRings) {
+    numMembers = std::max(numMembers, size_t(idx) + 1);
+  }
+  membershipBegins.assign(numMembers + 1, 0);
+  for (const auto idx : membersInRings) {
+    ++membershipBegins[idx + 1];
+  }
+  std::partial_sum(membershipBegins.begin(), membershipBegins.end(),
+                   membershipBegins.begin());
+
+  memberships.resize(membersInRings.size());
+  auto next = membershipBegins;
+  for (size_t ringIdx = 0; ringIdx + 1 < ringBegins.size(); ++ringIdx) {
+    for (auto pos = ringBegins[ringIdx]; pos < ringBegins[ringIdx + 1]; ++pos) {
+      memberships[next[membersInRings[pos]]++] = rdcast<int>(ringIdx);
+    }
+  }
+}
 }  // namespace
 
 void RingInfo::checkInitialized() const {
@@ -84,62 +165,22 @@ void RingInfo::checkInitialized() const {
 
 RingInfo::INT_VECT RingInfo::atomRingSizes(unsigned int idx) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-
-  if (d_atomMembershipBegins.empty() ||
-      idx >= d_atomMembershipBegins.size() - 1) {
-    return {};
-  }
-  const auto begin = d_atomMembershipBegins[idx];
-  const auto end = d_atomMembershipBegins[idx + 1];
-  INT_VECT res(end - begin);
-  for (auto pos = begin; pos < end; ++pos) {
-    const auto ringIdx = d_atomMemberships[pos];
-    res[pos - begin] = ringSizeUnchecked(d_atomRingBegins, ringIdx);
-  }
-  return res;
+  return memberRingSizes(d_atomMembershipBegins, d_atomMemberships,
+                         d_atomRingBegins, idx);
 }
 bool RingInfo::isAtomInRingOfSize(unsigned int idx, unsigned int size) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-
-  if (d_atomMembershipBegins.empty() ||
-      idx >= d_atomMembershipBegins.size() - 1) {
-    return false;
-  }
-  for (auto pos = d_atomMembershipBegins[idx];
-       pos < d_atomMembershipBegins[idx + 1]; ++pos) {
-    const auto ringIdx = d_atomMemberships[pos];
-    if (ringSizeUnchecked(d_atomRingBegins, ringIdx) == size) {
-      return true;
-    }
-  }
-  return false;
+  return isMemberInRingOfSize(d_atomMembershipBegins, d_atomMemberships,
+                              d_atomRingBegins, idx, size);
 }
 unsigned int RingInfo::minAtomRingSize(unsigned int idx) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-
-  if (d_atomMembershipBegins.empty() ||
-      idx >= d_atomMembershipBegins.size() - 1) {
-    return 0;
-  }
-  const auto begin = d_atomMembershipBegins[idx];
-  const auto end = d_atomMembershipBegins[idx + 1];
-  if (begin == end) {
-    return 0;
-  }
-  unsigned int result = std::numeric_limits<unsigned int>::max();
-  for (auto pos = begin; pos < end; ++pos) {
-    const auto ringIdx = d_atomMemberships[pos];
-    result = std::min(result, ringSizeUnchecked(d_atomRingBegins, ringIdx));
-  }
-  return result;
+  return minMemberRingSize(d_atomMembershipBegins, d_atomMemberships,
+                           d_atomRingBegins, idx);
 }
 unsigned int RingInfo::numAtomRings(unsigned int idx) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-  if (d_atomMembershipBegins.empty() ||
-      idx >= d_atomMembershipBegins.size() - 1) {
-    return 0;
-  }
-  return d_atomMembershipBegins[idx + 1] - d_atomMembershipBegins[idx];
+  return numMemberRings(d_atomMembershipBegins, idx);
 }
 bool RingInfo::areAtomsInSameRing(unsigned int idx1,
                                   unsigned int idx2) const {
@@ -161,62 +202,22 @@ bool RingInfo::areAtomsInSameRingOfSize(unsigned int idx1, unsigned int idx2,
 }
 RingInfo::INT_VECT RingInfo::bondRingSizes(unsigned int idx) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-
-  if (d_bondMembershipBegins.empty() ||
-      idx >= d_bondMembershipBegins.size() - 1) {
-    return {};
-  }
-  const auto begin = d_bondMembershipBegins[idx];
-  const auto end = d_bondMembershipBegins[idx + 1];
-  INT_VECT res(end - begin);
-  for (auto pos = begin; pos < end; ++pos) {
-    const auto ringIdx = d_bondMemberships[pos];
-    res[pos - begin] = ringSizeUnchecked(d_bondRingBegins, ringIdx);
-  }
-  return res;
+  return memberRingSizes(d_bondMembershipBegins, d_bondMemberships,
+                         d_bondRingBegins, idx);
 }
 bool RingInfo::isBondInRingOfSize(unsigned int idx, unsigned int size) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-
-  if (d_bondMembershipBegins.empty() ||
-      idx >= d_bondMembershipBegins.size() - 1) {
-    return false;
-  }
-  for (auto pos = d_bondMembershipBegins[idx];
-       pos < d_bondMembershipBegins[idx + 1]; ++pos) {
-    const auto ringIdx = d_bondMemberships[pos];
-    if (ringSizeUnchecked(d_bondRingBegins, ringIdx) == size) {
-      return true;
-    }
-  }
-  return false;
+  return isMemberInRingOfSize(d_bondMembershipBegins, d_bondMemberships,
+                              d_bondRingBegins, idx, size);
 }
 unsigned int RingInfo::minBondRingSize(unsigned int idx) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-
-  if (d_bondMembershipBegins.empty() ||
-      idx >= d_bondMembershipBegins.size() - 1) {
-    return 0;
-  }
-  const auto begin = d_bondMembershipBegins[idx];
-  const auto end = d_bondMembershipBegins[idx + 1];
-  if (begin == end) {
-    return 0;
-  }
-  unsigned int result = std::numeric_limits<unsigned int>::max();
-  for (auto pos = begin; pos < end; ++pos) {
-    const auto ringIdx = d_bondMemberships[pos];
-    result = std::min(result, ringSizeUnchecked(d_bondRingBegins, ringIdx));
-  }
-  return result;
+  return minMemberRingSize(d_bondMembershipBegins, d_bondMemberships,
+                           d_bondRingBegins, idx);
 }
 unsigned int RingInfo::numBondRings(unsigned int idx) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-  if (d_bondMembershipBegins.empty() ||
-      idx >= d_bondMembershipBegins.size() - 1) {
-    return 0;
-  }
-  return d_bondMembershipBegins[idx + 1] - d_bondMembershipBegins[idx];
+  return numMemberRings(d_bondMembershipBegins, idx);
 }
 bool RingInfo::areBondsInSameRing(unsigned int idx1,
                                   unsigned int idx2) const {
@@ -326,40 +327,10 @@ unsigned int RingInfo::addRings(const RingInfo &source,
 }
 
 void RingInfo::rebuildMemberships() {
-  size_t numAtoms =
-      d_atomMembershipBegins.empty() ? 0 : d_atomMembershipBegins.size() - 1;
-  size_t numBonds =
-      d_bondMembershipBegins.empty() ? 0 : d_bondMembershipBegins.size() - 1;
-  for (const auto idx : d_atomsInRings) {
-    numAtoms = std::max(numAtoms, size_t(idx + 1));
-  }
-  for (const auto idx : d_bondsInRings) {
-    numBonds = std::max(numBonds, size_t(idx + 1));
-  }
-  d_atomMembershipBegins.assign(numAtoms + 1, 0);
-  d_bondMembershipBegins.assign(numBonds + 1, 0);
-  for (const auto idx : d_atomsInRings) {
-    ++d_atomMembershipBegins[idx + 1];
-  }
-  for (const auto idx : d_bondsInRings) {
-    ++d_bondMembershipBegins[idx + 1];
-  }
-  std::partial_sum(d_atomMembershipBegins.begin(), d_atomMembershipBegins.end(),
-                   d_atomMembershipBegins.begin());
-  std::partial_sum(d_bondMembershipBegins.begin(), d_bondMembershipBegins.end(),
-                   d_bondMembershipBegins.begin());
-  d_atomMemberships.resize(d_atomsInRings.size());
-  d_bondMemberships.resize(d_bondsInRings.size());
-  auto atomNext = d_atomMembershipBegins;
-  auto bondNext = d_bondMembershipBegins;
-  for (size_t ringIdx = 0; ringIdx < atomRings().size(); ++ringIdx) {
-    for (const auto idx : atomRings()[ringIdx]) {
-      d_atomMemberships[atomNext[idx]++] = rdcast<int>(ringIdx);
-    }
-    for (const auto idx : bondRings()[ringIdx]) {
-      d_bondMemberships[bondNext[idx]++] = rdcast<int>(ringIdx);
-    }
-  }
+  rebuildRingTypeMemberships(d_atomMembershipBegins, d_atomMemberships,
+                             d_atomsInRings, d_atomRingBegins);
+  rebuildRingTypeMemberships(d_bondMembershipBegins, d_bondMemberships,
+                             d_bondsInRings, d_bondRingBegins);
 }
 
 void RingInfo::invalidateFusedRings() {
@@ -423,7 +394,7 @@ void RingInfo::initFusedRings() {
   for (unsigned int bondIdx = 0; bondIdx + 1 < d_bondMembershipBegins.size();
        ++bondIdx) {
     const auto ringIndices = bondMembersUnchecked(bondIdx);
-    // The nested loop subtracts one from the unsigned span size.
+    // A bond must belong to at least two rings to fuse them.
     if (ringIndices.size() <= 1) {
       continue;
     }
