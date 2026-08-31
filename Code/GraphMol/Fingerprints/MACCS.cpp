@@ -911,8 +911,8 @@ void GenerateFP(const RDKit::ROMol &mol, ExplicitBitVect &fp) {
   for (unsigned int i = 0; i < ringcount; i++) {
     bool isArom = true;
     const auto ring = info->bondRings()[i];
-    for (auto iter = ring.begin(); iter != ring.end(); ++iter) {
-      if (!mol.getBondWithIdx(*iter)->getIsAromatic()) {
+    for (const auto bondIdx : ring) {
+      if (!mol.getBondWithIdx(bondIdx)->getIsAromatic()) {
         isArom = false;
         break;
       }

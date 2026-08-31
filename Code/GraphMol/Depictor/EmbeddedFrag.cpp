@@ -1447,17 +1447,17 @@ void _recurseAtomOneSide(unsigned int endAid, unsigned int begAid,
   return;
 }
 
-std::vector<RDKit::INT_VECT> _getRingsForSpiroCenter(unsigned int spiroAid,
-                                                     const RDKit::ROMol *mol) {
+std::vector<std::span<const int>> _getRingsForSpiroCenter(
+    unsigned int spiroAid, const RDKit::ROMol *mol) {
   PRECONDITION(mol, "");
-  std::vector<RDKit::INT_VECT> result;
+  std::vector<std::span<const int>> result;
   const auto &atomRings = mol->getRingInfo()->atomRings();
 
   // Collect the 2 rings containing this spiro atom
   for (const auto &ring : atomRings) {
     if (std::find(ring.begin(), ring.end(), static_cast<int>(spiroAid)) !=
         ring.end()) {
-      result.emplace_back(ring.begin(), ring.end());
+      result.push_back(ring);
     }
   }
 

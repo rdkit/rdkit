@@ -274,11 +274,7 @@ int smallestRingsBfs(const ROMol &mol, int root, VECT_INT_VECT &rings,
 
 void storeRingsInfo(const ROMol &mol, const VECT_INT_VECT &rings) {
   VECT_INT_VECT bondRings;
-  bondRings.reserve(rings.size());
-  for (const auto &ring : rings) {
-    bondRings.emplace_back();
-    RingUtils::convertToBonds(ring, bondRings.back(), mol);
-  }
+  RingUtils::convertToBonds(rings, bondRings, mol);
   mol.getRingInfo()->addRings(rings, bondRings);
 }
 
@@ -1104,13 +1100,7 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
       findRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
     }
     res = ringInfo->atomRelevantCycles();
-    VECT_INT_VECT bondRings;
-    bondRings.reserve(res.size());
-    for (const auto &atomRing : res) {
-      bondRings.emplace_back();
-      RingUtils::convertToBonds(atomRing, bondRings.back(), mol);
-    }
-    ringInfo->addRings(res, bondRings);
+    FindRings::storeRingsInfo(mol, res);
   } else {
     legacySymmetrizeSSSR(mol, res, includeDativeBonds, includeHydrogenBonds);
   }

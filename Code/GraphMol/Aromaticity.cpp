@@ -694,7 +694,7 @@ int mdlAromaticityHelper(RWMol &mol, const RingInfo::RingsView &srings) {
   VECT_EDON_TYPE edon(natoms);
 
   VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
-  for (const auto &sring : srings) {
+  for (const auto sring : srings) {
     bool allAromatic = true;
     bool allDummy = true;
 
@@ -809,7 +809,7 @@ int mmff94AromaticityHelper(RWMol &mol, const RingInfo::RingsView &srings) {
 
   // count aromatic rings for return value
   int narom = 1;
-  for (const auto &sring : srings) {
+  for (const auto sring : srings) {
     bool isAromRing = true;
     for (auto &aid : sring) {
       Atom *atom = mol.getAtomWithIdx(aid);
@@ -842,7 +842,7 @@ int aromaticityHelper(RWMol &mol, const RingInfo::RingsView &srings,
   VECT_EDON_TYPE edon(natoms);
 
   VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
-  for (const auto &sring : srings) {
+  for (const auto sring : srings) {
     size_t ringSz = sring.size();
     // test ring size:
     if ((minRingSize && ringSz < minRingSize) ||
