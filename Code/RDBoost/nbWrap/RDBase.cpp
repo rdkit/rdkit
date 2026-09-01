@@ -27,14 +27,11 @@ namespace nb = nanobind;
 using namespace nb::literals;
 namespace logging = boost::logging;
 
-static constexpr unsigned bufferChunkSize = 1024;
-
 // std::ostream wrapper around Python's stderr stream
 struct PyErrStream : std::ostream, std::streambuf {
   static thread_local std::string buffer;
 
   PyErrStream() : std::ostream(this) {
-    buffer.reserve(bufferChunkSize);
     // All done!
   }
 
@@ -49,9 +46,6 @@ struct PyErrStream : std::ostream, std::streambuf {
       PySys_WriteStderr("%s\n", buffer.c_str());
       buffer.clear();
     } else {
-      if (buffer.size() == buffer.capacity()) {
-        buffer.reserve(buffer.capacity() + bufferChunkSize);
-      }
       buffer += c;
     }
   }
@@ -79,7 +73,6 @@ struct PyLogStream : std::ostream, std::streambuf {
     if (PyErr_Occurred()) {
       PyErr_Print();
     }
-    buffer.reserve(bufferChunkSize);
   }
 
   ~PyLogStream() override {
@@ -105,9 +98,6 @@ struct PyLogStream : std::ostream, std::streambuf {
       Py_XDECREF(result);
       buffer.clear();
     } else {
-      if (buffer.size() == buffer.capacity()) {
-        buffer.reserve(buffer.capacity() + bufferChunkSize);
-      }
       buffer += c;
     }
   }
