@@ -318,7 +318,7 @@ namespace MolAlign {
 class PyO3A {
  public:
   PyO3A(O3A *o) : o3a(o) {};
-  PyO3A(boost::shared_ptr<O3A> o) : o3a(std::move(o)) {};
+  PyO3A(std::shared_ptr<O3A> o) : o3a(std::move(o)) {};
   ~PyO3A() = default;
   double align() { return o3a.get()->align(); };
   PyObject *trans() {
@@ -350,7 +350,7 @@ class PyO3A {
 
     return weightList;
   };
-  boost::shared_ptr<O3A> o3a;
+  std::shared_ptr<O3A> o3a;
 };
 PyO3A *getMMFFO3A(ROMol &prbMol, ROMol &refMol, python::object prbProps,
                   python::object refProps, int prbCid = -1, int refCid = -1,
@@ -477,7 +477,7 @@ python::tuple getMMFFO3AForConfs(
     }
     refMolPropsPtr = refMolProps.get();
   }
-  std::vector<boost::shared_ptr<O3A>> res;
+  std::vector<std::shared_ptr<O3A>> res;
   {
     NOGIL gil;
     getO3AForProbeConfs(prbMol, refMol, prbMolPropsPtr, refMolPropsPtr, res,
@@ -638,7 +638,7 @@ python::tuple getCrippenO3AForConfs(
                                         true, &refAtomTypes,
                                         &refAtomTypeLabels);
   }
-  std::vector<boost::shared_ptr<O3A>> res;
+  std::vector<std::shared_ptr<O3A>> res;
   {
     NOGIL gil;
     getO3AForProbeConfs(prbMol, refMol, &prbLogpContribs, &refLogpContribs, res,
@@ -961,7 +961,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       docString.c_str());
 
   python::class_<RDKit::MolAlign::PyO3A,
-                 boost::shared_ptr<RDKit::MolAlign::PyO3A>>(
+                 std::shared_ptr<RDKit::MolAlign::PyO3A>>(
       "O3A", "Open3DALIGN object", python::no_init)
       .def("Align", &RDKit::MolAlign::PyO3A::align, (python::arg("self")),
            "aligns probe molecule onto reference molecule")

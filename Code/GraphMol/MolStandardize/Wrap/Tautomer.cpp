@@ -76,7 +76,7 @@ class PyTautomerEnumeratorResult {
   const MolStandardize::TautomerEnumeratorResult *get() { return d_tr.get(); }
 
  private:
-  boost::shared_ptr<MolStandardize::TautomerEnumeratorResult> d_tr;
+  std::shared_ptr<MolStandardize::TautomerEnumeratorResult> d_tr;
   python::tuple d_atTuple;
   python::tuple d_bndTuple;
 };
@@ -109,7 +109,7 @@ class PyTautomerEnumeratorCallback
   python::object d_pyCallbackObject;
 };
 
-typedef boost::shared_ptr<MolStandardize::Tautomer> TAUT_SPTR;
+typedef std::shared_ptr<MolStandardize::Tautomer> TAUT_SPTR;
 
 ROMol *getTautomerHelper(const TAUT_SPTR &self) {
   return new ROMol(*self->tautomer);

@@ -12,11 +12,11 @@
 #define __CHEMICALFEATUREFACTORY_H_02122004_1545__
 
 #include "MolChemicalFeatureDef.h"
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace RDKit {
 class MolChemicalFeature;
-typedef boost::shared_ptr<MolChemicalFeature> FeatSPtr;
+typedef std::shared_ptr<MolChemicalFeature> FeatSPtr;
 typedef std::list<FeatSPtr> FeatSPtrList;
 typedef FeatSPtrList::iterator FeatSPtrList_I;
 
