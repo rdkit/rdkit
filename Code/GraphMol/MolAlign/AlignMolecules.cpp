@@ -481,7 +481,7 @@ std::vector<double> getAllConformerBestRMSToRef(
   auto numThreads = getNumThreadsToUse(params.numThreads);
   std::vector<MatchVectType> allMatches;
   if (params.map.empty()) {
-    getAllMatchesPrbRef(refMol, prbMol, allMatches, params.maxMatches,
+    getAllMatchesPrbRef(prbMol, refMol, allMatches, params.maxMatches,
                         params.symmetrizeConjugatedTerminalGroups,
                         params.ignoreHs);
   }
