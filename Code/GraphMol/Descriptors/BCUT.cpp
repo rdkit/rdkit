@@ -139,6 +139,72 @@ std::vector<double> BCUT2D(const ROMol &m) {
       logp.first,      logp.second,      mr.first,        mr.second};
   return res;
 }
+
+std::pair<double, double> BCUT2D_MW(const ROMol &m) {
+  if (!m.getNumAtoms()) {
+    return std::pair<double, double>(0.0, 0.0);
+  }
+  std::unique_ptr<ROMol> mol(MolOps::removeAllHs(m));
+  unsigned int numAtoms = mol->getNumAtoms();
+  std::vector<double> masses;
+  masses.reserve(numAtoms);
+
+  for (auto &atom : mol->atoms()) {
+    masses.push_back(atom->getMass());
+  }
+
+  auto burden = make_burden(*mol);
+  return BCUT2D(burden, masses);
+}
+
+std::pair<double, double> BCUT2D_CHG(const ROMol &m) {
+  if (!m.getNumAtoms()) {
+    return std::pair<double, double>(0.0, 0.0);
+  }
+  std::unique_ptr<ROMol> mol(MolOps::removeAllHs(m));
+  unsigned int numAtoms = mol->getNumAtoms();
+  std::vector<double> charges;
+  charges.reserve(numAtoms);
+
+  RDKit::computeGasteigerCharges(*mol, 12, true);
+  for (auto &atom : mol->atoms()) {
+    charges.push_back(
+        atom->getProp<double>(common_properties::_GasteigerCharge));
+  }
+
+  auto burden = make_burden(*mol);
+  return BCUT2D(burden, charges);
+}
+
+std::pair<double, double> BCUT2D_LOGP(const ROMol &m) {
+  if (!m.getNumAtoms()) {
+    return std::pair<double, double>(0.0, 0.0);
+  }
+  std::unique_ptr<ROMol> mol(MolOps::removeAllHs(m));
+  unsigned int numAtoms = mol->getNumAtoms();
+
+  std::vector<double> slogp(numAtoms, 0.0);
+  std::vector<double> cmr(numAtoms, 0.0);
+  getCrippenAtomContribs(*mol, slogp, cmr);
+
+  auto burden = make_burden(*mol);
+  return BCUT2D(burden, slogp);
+}
+
+std::pair<double, double> BCUT2D_MR(const ROMol &m) {
+  if (!m.getNumAtoms()) {
+    return std::pair<double, double>(0.0, 0.0);
+  }
+  std::unique_ptr<ROMol> mol(MolOps::removeAllHs(m));
+  unsigned int numAtoms = mol->getNumAtoms();
+
+  std::vector<double> slogp(numAtoms, 0.0);
+  std::vector<double> cmr(numAtoms, 0.0);
+  getCrippenAtomContribs(*mol, slogp, cmr);
+
+  auto burden = make_burden(*mol);
+  return BCUT2D(burden, cmr);
+}
 }  // namespace Descriptors
 }  // namespace RDKit
 
