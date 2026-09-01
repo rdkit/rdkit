@@ -6682,4 +6682,22 @@ TEST_CASE("Github #8108: assignStereochemistry should handle atropisomers",
     MolOps::assignChiralTypesFrom3D(*m, -1, true);
     CHECK(atropBond->getStereo() == correctStereo);
   }
+
+  SECTION("bonds in small rings are not atropisomers") {
+    // The wedge on atom 0 makes both the pyrazole-imide bond 0-1 and the
+    // succinimide ring bond 0-14 look like atropisomer candidates, but a bond
+    // in a five-membered ring cannot rotate. sanitizeMol() would have
+    // discarded it, but detection now happens after sanitization.
+    auto m = v2::SmilesParse::MolFromSmiles(
+        "N1(n2c(C)ccc2Br)C(=O)[C@H](C)[C@H](C)C1=O "
+        "|(-11.1517,1.8306,;-11.1517,3.3708,;-12.4855,4.1411,;-13.8193,3.371,;"
+        "-12.4855,5.6813,;-9.8177,5.6813,;-9.8177,4.1411,;-8.4839,3.371,;"
+        "-12.3975,0.9252,;-13.8622,1.4011,;-11.9217,-0.5394,;-12.8269,-1.7852,;"
+        "-10.3817,-0.5394,;-9.4765,-1.7852,;-9.9059,0.9252,;-8.4413,1.4011,),"
+        "wU:0.8,10.11,12.13|");
+    REQUIRE(m);
+    CHECK(getAtropBond(*m) == m->getBondBetweenAtoms(0, 1));
+    CHECK(m->getBondBetweenAtoms(0, 14)->getStereo() ==
+          Bond::BondStereo::STEREONONE);
+  }
 }

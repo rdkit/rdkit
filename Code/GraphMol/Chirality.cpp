@@ -2240,6 +2240,39 @@ std::ostream &operator<<(std::ostream &oss, const StereoSpecified &s) {
   return oss;
 }
 
+namespace {
+//! detect atropisomers and discard the ones that cannot actually rotate
+/*!
+  We run after sanitization, so MolOps::cleanupAtropisomers() has already had
+  its turn and won't get another one. Repeat the ring check it does here so
+  that bonds in small rings don't end up tagged as atropisomers.
+*/
+void detectAtropisomersPostSanitization(ROMol &mol, bool cleanIt) {
+  const Conformer *conf =
+      mol.getNumConformers() ? &mol.getConformer() : nullptr;
+  Atropisomers::detectAtropisomerChirality(mol, conf, cleanIt);
+  const auto ri = mol.getRingInfo();
+  if (!cleanIt || !ri->isSssrOrBetter()) {
+    return;
+  }
+  bool removedAny = false;
+  for (auto bond : mol.bonds()) {
+    // bonds in macrocycles are left alone, since they can link actual
+    // atropisomeric portions
+    if ((bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+         bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) &&
+        ri->numBondRings(bond->getIdx()) > 0 &&
+        ri->minBondRingSize(bond->getIdx()) < 8) {
+      bond->setStereo(Bond::BondStereo::STEREONONE);
+      removedAny = true;
+    }
+  }
+  if (removedAny) {
+    Atropisomers::cleanupAtropisomerStereoGroups(mol);
+  }
+}
+}  // namespace
+
 /*
     We're going to do this iteratively:
       1) assign atom stereochemistry
@@ -2410,9 +2443,7 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
       }
     }
   }
-  const Conformer *conf =
-      mol.getNumConformers() ? &mol.getConformer() : nullptr;
-  Atropisomers::detectAtropisomerChirality(mol, conf, cleanIt);
+  detectAtropisomersPostSanitization(mol, cleanIt);
   if (cleanIt) {
     bool foundAtropisomer = false;
     for (auto bond : mol.bonds()) {
@@ -2584,9 +2615,7 @@ void stereoPerception(ROMol &mol, bool cleanIt,
   }
   // populate double bond stereo info:
   updateDoubleBondStereo(mol, sinfo, cleanIt);
-  const Conformer *conf =
-      mol.getNumConformers() ? &mol.getConformer() : nullptr;
-  Atropisomers::detectAtropisomerChirality(mol, conf, cleanIt);
+  detectAtropisomersPostSanitization(mol, cleanIt);
   if (cleanIt) {
     Atropisomers::cleanupAtropisomerStereoGroups(mol);
     Chirality::cleanupStereoGroups(mol);
