@@ -12,7 +12,7 @@ variables:
   CCACHE_SLOPPINESS: time_macros
   # Conditionally set BUILD_BRANCH_NAME based on the trigger type
   ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-    BUILD_BRANCH_NAME: 'pr/$(System.PullRequest.SourceBranch)'
+    BUILD_BRANCH_NAME: 'pr/$(system.pullRequest.pullRequestNumber)/$(System.PullRequest.SourceBranch)'
   ${{ else }}:
     BUILD_BRANCH_NAME: '$(Build.SourceBranchName)'
 
