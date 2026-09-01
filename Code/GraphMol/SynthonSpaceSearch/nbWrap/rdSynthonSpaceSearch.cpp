@@ -72,8 +72,7 @@ void set_excludedVolume(SynthonSpaceSearch::SynthonSpaceSearchParams &params,
     params.excludedVolume = nullptr;
     return;
   }
-  params.excludedVolume = new GaussianShape::ShapeInput(
-      nb::cast<GaussianShape::ShapeInput>(pyExcVol));
+  params.excludedVolume = nb::cast<GaussianShape::ShapeInput *>(pyExcVol);
 }
 
 SynthonSpaceSearch::SearchResults substructureSearch_helper1(
@@ -310,8 +309,8 @@ SynthonSpaceSearch::SearchResults shapeSearch_helper(
 
 SynthonSpaceSearch::SearchResults shapeSearch_helper3(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    std::uint64_t startLine, std::uint64_t finishLine,
-    const SynthonSpaceSearch::SynthonSpaceSearchParams &params) {
+    const SynthonSpaceSearch::SynthonSpaceSearchParams &params,
+    std::uint64_t startLine, std::uint64_t finishLine) {
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
@@ -494,11 +493,10 @@ the search could produce, but doesn't return them.)DOC")
           R"DOC(Similarities of fragments are generally low due to low bit
 densities.  For the fragment matching, reduce the similarity cutoff
 off by this amount.  Default=0.1.)DOC")
-      .def_rw(
-          "approxSimilarityAdjuster",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::
-              approxSimilarityAdjuster,
-          R"DOC(The fingerprint search uses an approximate similarity method
+      .def_rw("approxSimilarityAdjuster",
+              &SynthonSpaceSearch::SynthonSpaceSearchParams::
+                  approxSimilarityAdjuster,
+              R"DOC(The fingerprint search uses an approximate similarity method
 before building a product and doing a final check.  The
 similarityCutoff is reduced by this value for the approximate
 check.  A lower value will give faster run times at the
@@ -581,6 +579,7 @@ use 7 threads.  Default=1.)DOC")
           " job.  Default=0 means no bar.")
       .def_prop_rw(
           "excludedVolume", &get_excludedVolume, &set_excludedVolume,
+          nb::for_setter(nb::keep_alive<1, 2>()),
           "  Add an excluded volume to use in the shape search.  The volume"
           " overlap and mean overlap over clashing atoms will be reported.")
       .def_rw("maxExcludedVolume",
@@ -805,16 +804,15 @@ be returned.)DOC")
           R"DOC(Does a search using the Rascal similarity score.  The similarity
 threshold used is provided by rascalOptions, and the one in
 params is ignored.  Returns results iteratively in the callback.)DOC")
-      .def(
-          "ShapeSearch", &shapeSearch_helper, "query"_a,
-          "params"_a = nb::none(),
-          R"DOC(Perform a shape similarity search with the given query molecule
+      .def("ShapeSearch", &shapeSearch_helper, "query"_a,
+           "params"_a = nb::none(),
+           R"DOC(Perform a shape similarity search with the given query molecule
 across the synthonspace library.  Duplicate SMILES strings produced by
 different reactions will be returned.  Requires a query with at least
 1 3D conformer.  Only the first conformer will be used in the search.)DOC")
       .def(
-          "ShapeSearch", &shapeSearch_helper3, "query"_a, "startLine"_a,
-          "finishLine"_a, "params"_a,
+          "ShapeSearch", &shapeSearch_helper3, "query"_a, "params"_a,
+          "startLine"_a, "finishLine"_a,
           R"DOC(Take the contents of params.possibleHitsFile, which is assumed to have
 been written by an earlier search, and extract those that are indeed
 hits.  It makes sense that params is the same as the one used to

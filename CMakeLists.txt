@@ -336,12 +336,13 @@ if(RDK_BUILD_NANOBIND_WRAPPERS)
 
   find_package(Python 3.9 COMPONENTS Interpreter ${DEV_MODULE} NumPy REQUIRED)
   target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
+  target_compile_definitions(rdkit_py_base INTERFACE "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
 
   # Detect the installed nanobind package and import it into CMake
   execute_process(
     COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
     OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
-  find_package(nanobind CONFIG REQUIRED)
+  find_package(nanobind 2 CONFIG REQUIRED)
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
   else(RDK_INSTALL_INTREE)
@@ -405,6 +406,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   find_package(Python COMPONENTS Interpreter Development.Module NumPy)
   target_include_directories(rdkit_py_base INTERFACE ${Python_INCLUDE_DIRS})
   target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
+  target_compile_definitions(rdkit_py_base INTERFACE "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
 
   # determine linkage of python
   execute_process(
@@ -686,6 +688,11 @@ if (MSVC)
   #  - 4267: conversion from 'size_t' to 'unsigned int', possible loss of data
   add_definitions( "/wd4267" )
 endif(MSVC)
+
+find_package(TBB)
+if(TBB_FOUND)
+    set(TBB_DEP TBB::tbb)
+endif()
 
 add_subdirectory(External)
 add_subdirectory(Code)

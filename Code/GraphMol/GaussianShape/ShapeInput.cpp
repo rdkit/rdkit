@@ -19,8 +19,10 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#ifndef RDKIT_NO_SIMDIVPICKERS
 #include <SimDivPickers/DistPicker.h>
 #include <SimDivPickers/LeaderPicker.h>
+#endif
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
@@ -573,6 +575,7 @@ double ShapeInput::maxPossibleSimilarity(
   }
   return maxSim;
 }
+#ifndef RDKIT_NO_SIMDIVPICKERS
 
 void ShapeInput::pruneShapes(const double simThreshold) {
   if (d_coords.size() < 2 || simThreshold < 0.0) {
@@ -606,6 +609,15 @@ void ShapeInput::pruneShapes(const double simThreshold) {
   selectConformations(picks);
   d_activeShape = 0;
 }
+
+#else
+
+void ShapeInput::pruneShapes(const double) {
+  UNDER_CONSTRUCTION(
+      "pruneShapes not implemented when the SimDivPickers have not been built.");
+}
+
+#endif
 
 namespace {
 double getStandardAtomRadius(const unsigned int atomicNum) {

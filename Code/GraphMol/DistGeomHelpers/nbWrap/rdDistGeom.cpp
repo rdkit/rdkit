@@ -229,6 +229,7 @@ static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix2(
   return nb::ndarray<nb::numpy, double, nb::ndim<2>>(resData, {nats, nats},
                                                      owner);
 }
+
 static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
     const ROMol &mol, bool set15bounds, bool scaleVDW, bool doTriangleSmoothing,
     bool useMacrocycle14config, bool forceTransAmides, bool set14bounds,
@@ -238,15 +239,6 @@ static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
   params.forceTransAmides = forceTransAmides;
   return getMolBoundsMatrix2(mol, params, doTriangleSmoothing, scaleVDW,
                              set15bounds, set14bounds, set13bounds);
-  unsigned int nats = mol.getNumAtoms();
-  DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
-  DGeomHelpers::initBoundsMat(mat);
-  DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW,
-                               useMacrocycle14config, forceTransAmides,
-                               set14bounds, set13bounds);
-  if (doTriangleSmoothing) {
-    DistGeom::triangleSmoothBounds(mat);
-  }
 }
 
 static nb::list getExpTorsHelper(const ROMol &mol, bool useExpTorsions,

@@ -8,12 +8,14 @@
 //  of the RDKit source tree.
 //
 
+#include <algorithm>
 #include <bitset>
 #include <list>
+#include <ranges>
 #include <string>
 #include <vector>
 
-#include <strstream>
+#include <sstream>
 
 #ifdef RDK_TEST_MULTITHREADED
 #include <csignal>
@@ -42,15 +44,12 @@
 #include "rules/Pairlist.h"
 #include "rules/Rule1a.h"
 #include "rules/Rule2.h"
+#include "rules/Rule6.h"
 
 #include "CIPMol.h"
 
 using namespace RDKit;
 using namespace RDKit::CIPLabeler;
-
-std::string toBinaryString(PairList::pairing_t value) {
-  return std::bitset<PairList::numPairingBits>(value).to_string();
-}
 
 TEST_CASE("Descriptor lists", "[accurateCIP]") {
   auto descriptors = PairList();
@@ -67,57 +66,6 @@ TEST_CASE("Descriptor lists", "[accurateCIP]") {
     CHECK(descriptors.add(Descriptor::R));
     CHECK(descriptors.add(Descriptor::S));
   }
-  SECTION("Pairing") {
-    REQUIRE(descriptors.getPairing() == 0);
-
-    CHECK("0000000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    descriptors.add(Descriptor::R);
-    CHECK("0000000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0100000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // unlike
-    descriptors.add(Descriptor::S);
-    CHECK("0110000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110100000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110110000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110111000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // unlike
-    descriptors.add(Descriptor::S);
-    CHECK("0110111000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110111010000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-  }
-
   SECTION("pairRM") {
     PairList list1 = PairList();
     PairList list2 = PairList();
@@ -822,7 +770,7 @@ void testOneAtropIsomerMandP(std::string inputText, const std::string &expected,
   REQUIRE(mol);
   CIPLabeler::assignCIPLabels(*mol, 100000);
 
-  std::ostrstream out;
+  std::ostringstream out;
   bool foundOne = false;
   for (auto bond : mol->bonds()) {
     if (bond->hasProp(common_properties::_CIPCode)) {
@@ -835,8 +783,6 @@ void testOneAtropIsomerMandP(std::string inputText, const std::string &expected,
   if (!foundOne) {
     out << "none ";
   }
-  out << std::ends;
-
   CHECK(out.str() == expected);
 }
 
@@ -1575,4 +1521,36 @@ $$$$
                                 ranked_anchors) == true);
     CHECK(ranked_anchors == std::vector<unsigned int>{0, Atom::NOATOM});
   }
+}
+
+TEST_CASE("GitHub #9516: update return values for Rule 6") {
+  auto mol = "C(C)(F)Cl"_smiles;
+  REQUIRE(mol);
+
+  CIPMol cipmol(*mol);
+  Digraph digraph(cipmol, mol->getAtomWithIdx(0));
+  auto root = digraph.getCurrentRoot();
+  auto edges = root->getEdges();
+
+  const auto findEdgeTo = [&mol, &edges](unsigned int atomIdx) {
+    const auto atom = mol->getAtomWithIdx(atomIdx);
+    const auto iter = std::ranges::find_if(
+        edges, [atom](auto edge) { return edge->getEnd()->getAtom() == atom; });
+    REQUIRE(iter != edges.end());
+    return *iter;
+  };
+  const auto refEdge = findEdgeTo(1);
+  const auto otherEdge = findEdgeTo(2);
+  digraph.setRule6Ref(refEdge->getEnd()->getAtom());
+
+  const Rule6 rule;
+  CHECK(rule.compare(refEdge, otherEdge) == +2);
+  CHECK(rule.compare(otherEdge, refEdge) == -2);
+
+  Sort sorter(&rule);
+  std::vector<Edge *> toSort{otherEdge, refEdge};
+  const auto priority = sorter.prioritize(root, toSort, false);
+  CHECK(priority.isUnique());
+  CHECK(priority.isPseudoAsymetric());
+  CHECK(toSort == std::vector<Edge *>{refEdge, otherEdge});
 }
