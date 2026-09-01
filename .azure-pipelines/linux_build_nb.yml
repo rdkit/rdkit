@@ -64,8 +64,7 @@ steps:
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     ccache -s
-    ccache --recompress 19 --recompress-threads $( $(number_of_cores) )
-  displayName: "Show ccache stats and recompress cache"
+  displayName: "Show ccache stats"
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
