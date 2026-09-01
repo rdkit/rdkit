@@ -58,7 +58,10 @@ steps:
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     cd build
-    grep -q "RDK_BUILD_DESCRIPTORS3D:BOOL=ON" CMakeCache.txt
+    if ! grep -Fq "RDK_BUILD_DESCRIPTORS3D:BOOL=ON" CMakeCache.txt; then
+      echo "ERROR: Eigen support was not enabled in CMakeCache.txt"
+      exit 1
+    fi
   displayName: make sure we have eigen
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
