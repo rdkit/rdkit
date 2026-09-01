@@ -8,7 +8,7 @@ variables:
   CCACHE_BASEDIR: "$(Build.Repository.LocalPath)"
   CCACHE_NOHASHDIR: yes
   CCACHE_NAMESPACE: "$(System.JobDisplayName)"
-  CCACHE_MAXSIZE: 1Gb
+  CCACHE_MAXSIZE: 1G
   CCACHE_SLOPPINESS: time_macros
   # Conditionally set BUILD_BRANCH_NAME based on the trigger type
   ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
