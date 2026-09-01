@@ -254,9 +254,29 @@ TEST_CASE("MacroMol owns a local template library") {
               MonomerClass::AminoAcid, "A") == alaninePtr);
   }
 
+  SECTION("replacement ownership transfer") {
+    MacroMol macroMol;
+    auto localTemplateLibrary =
+        std::make_unique<MacroMolTemplateLibrary>();
+    auto alanine = makeMacroMolTemplate("ALA", "A");
+    const auto *alaninePtr = alanine.get();
+    localTemplateLibrary->addTemplate(std::move(alanine));
+
+    macroMol.setLocalTemplateLibrary(std::move(localTemplateLibrary));
+
+    CHECK(localTemplateLibrary == nullptr);
+    CHECK(macroMol.getLocalTemplateLibrary().getBySymbol(
+              MonomerClass::AminoAcid, "A") == alaninePtr);
+  }
+
   SECTION("null library") {
     CHECK_THROWS_AS(
         MacroMol(std::unique_ptr<MacroMolTemplateLibrary>{}),
+        Invar::Invariant);
+    MacroMol macroMol;
+    CHECK_THROWS_AS(
+        macroMol.setLocalTemplateLibrary(
+            std::unique_ptr<MacroMolTemplateLibrary>{}),
         Invar::Invariant);
   }
 }

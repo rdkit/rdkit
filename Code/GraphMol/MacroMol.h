@@ -37,6 +37,13 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
   MacroMol(MacroMol &&other) noexcept = default;
   MacroMol &operator=(MacroMol &&other) noexcept = default;
 
+  //! Replaces the local template library and takes ownership of it.
+  /*!
+    \param newTemplateLibrary the non-null library to take ownership of
+  */
+  void setLocalTemplateLibrary(
+      std::unique_ptr<MacroMolTemplateLibrary> newTemplateLibrary);
+
   //! Returns this molecule's local template library.
   MacroMolTemplateLibrary &getLocalTemplateLibrary();
   //! Returns this molecule's local template library.

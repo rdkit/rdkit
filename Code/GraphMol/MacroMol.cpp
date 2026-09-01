@@ -47,6 +47,12 @@ MacroMol &MacroMol::operator=(const MacroMol &other) {
   return *this;
 }
 
+void MacroMol::setLocalTemplateLibrary(
+    std::unique_ptr<MacroMolTemplateLibrary> newTemplateLibrary) {
+  PRECONDITION(newTemplateLibrary, "local template library is null");
+  dp_localTemplateLibrary = std::move(newTemplateLibrary);
+}
+
 MacroMolTemplateLibrary &MacroMol::getLocalTemplateLibrary() {
   return *dp_localTemplateLibrary;
 }
