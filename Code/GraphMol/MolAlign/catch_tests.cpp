@@ -265,3 +265,59 @@ TEST_CASE("ignoring Hs") {
     }
   }
 }
+
+TEST_CASE("Multi mol best conformer rmsd") {
+  const auto loadMultiConformerSDF = [](const std::string &sdfFilePath) {
+    RDKit::SDMolSupplier supplier(sdfFilePath);
+    std::unique_ptr<RDKit::ROMol> mainMol = nullptr;
+    while (!supplier.atEnd()) {
+      RDKit::ROMol *rawMol = supplier.next();
+      std::unique_ptr<RDKit::ROMol> currentMol(rawMol);
+      if (!mainMol) {
+        mainMol = std::move(currentMol);
+      } else if (currentMol->getNumConformers() > 0) {
+        const RDKit::Conformer &conf = currentMol->getConformer();
+        auto *confCopy = new RDKit::Conformer(conf);
+        mainMol->addConformer(confCopy, true);
+      }
+    }
+    return mainMol;
+  };
+  const auto runTest = [](const std::vector<double> &exp, const ROMol &refMol,
+                          const ROMol &prbMol, const int numThreads = 1) {
+    const std::vector<double> result = MolAlign::getAllConformerBestRMSToRef(
+        refMol, prbMol, {.numThreads = numThreads, .map = {}});
+    REQUIRE_THAT(result, Catch::Matchers::Approx(exp).margin(0.0001));
+  };
+
+  std::string basePath = getenv("RDBASE");
+  basePath += "/Code/GraphMol/MolAlign/test_data/";
+
+  SECTION("1x5") {
+    const std::vector<double> expected = {0.19474, 0.86739, 0.87102, 0.35358,
+                                          0.35395};
+    RDKit::SDMolSupplier supplier(basePath + "butane_ref.sdf");
+    const auto ref = std::make_unique<RDKit::ROMol>(*supplier.next());
+    const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
+    runTest(expected, *ref, *prb);
+  }
+
+  SECTION("2x5") {
+    const std::vector<double> expected = {0.19474, 0.86739, 0.87102, 0.35358,
+                                          0.35395, 0.82243, 0.16809, 0.16859,
+                                          0.54966, 0.56173};
+    const auto ref = loadMultiConformerSDF(basePath + "butane_ref.sdf");
+    const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
+    runTest(expected, *ref, *prb);
+  }
+#ifdef RDK_TEST_MULTITHREADED
+  SECTION("2x5-multithreaded") {
+    const std::vector<double> expected = {0.19474, 0.86739, 0.87102, 0.35358,
+                                          0.35395, 0.82243, 0.16809, 0.16859,
+                                          0.54966, 0.56173};
+    const auto ref = loadMultiConformerSDF(basePath + "butane_ref.sdf");
+    const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
+    runTest(expected, *ref, *prb, 2);
+  }
+#endif
+}

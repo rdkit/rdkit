@@ -474,5 +474,80 @@ void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds,
     }
   }
 }
+
+std::vector<double> getAllConformerBestRMSToRef(
+    const ROMol &refMol, const ROMol &prbMol,
+    const BestAlignmentParams &params) {
+  auto numThreads = getNumThreadsToUse(params.numThreads);
+  std::vector<MatchVectType> allMatches;
+  if (params.map.empty()) {
+    getAllMatchesPrbRef(refMol, prbMol, allMatches, params.maxMatches,
+                        params.symmetrizeConjugatedTerminalGroups,
+                        params.ignoreHs);
+  }
+  const auto &matches = params.map.empty() ? allMatches : params.map;
+
+  std::vector<double> res;
+  RDGeom::Transform3D trans;
+  bool reflect = false;
+  unsigned int maxIters = 50;
+  std::vector<int> refCids;
+  std::vector<int> prbCids;
+  for (auto cit = refMol.beginConformers(); cit != refMol.endConformers();
+       ++cit) {
+    refCids.push_back((*cit)->getId());
+  }
+  for (auto cit = prbMol.beginConformers(); cit != prbMol.endConformers();
+       ++cit) {
+    prbCids.push_back((*cit)->getId());
+  }
+  if (numThreads == 1) {
+    for (std::size_t ci = 0; ci < refMol.getNumConformers(); ++ci) {
+      for (std::size_t cj = 0; cj < prbMol.getNumConformers(); ++cj) {
+        res.push_back(getBestRMSInternal(prbMol, refMol, prbCids[cj],
+                                         refCids[ci], matches, &trans, nullptr,
+                                         params.weights, reflect, maxIters, 1));
+      }
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  else {
+    std::vector<std::pair<unsigned int, unsigned int>> pairs;
+    for (std::size_t ci = 0; ci < refMol.getNumConformers(); ++ci) {
+      for (std::size_t cj = 0; cj < prbMol.getNumConformers(); ++cj) {
+        pairs.emplace_back(refCids[ci], prbCids[cj]);
+      }
+    }
+    std::vector<std::vector<std::pair<unsigned int, double>>> rmsds(numThreads);
+    auto func = [&](unsigned int tidx) {
+      RDGeom::Transform3D trans;
+      bool reflect = false;
+      unsigned int maxIters = 50;
+      for (auto i = tidx; i < pairs.size(); i += numThreads) {
+        auto rms = getBestRMSInternal(prbMol, refMol, pairs[i].second, pairs[i].first,
+                                      matches, &trans, nullptr, params.weights,
+                                      reflect, maxIters, 1);
+        rmsds[tidx].emplace_back(i, rms);
+      }
+    };
+    std::vector<std::thread> tg;
+    for (auto ti = 0u; ti < numThreads; ++ti) {
+      tg.emplace_back(std::thread(func, ti));
+    }
+    for (auto &thread : tg) {
+      if (thread.joinable()) {
+        thread.join();
+      }
+    }
+    res.resize(pairs.size());
+    for (const auto &tres : rmsds) {
+      for (const auto &v : tres) {
+        res[v.first] = v.second;
+      }
+    }
+  }
+#endif
+  return res;
+}
 }  // namespace MolAlign
 }  // namespace RDKit
