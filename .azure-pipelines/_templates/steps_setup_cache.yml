@@ -1,7 +1,6 @@
 steps:
 - bash: |
-    echo -e "Branch name : ${BUILD_BRANCH_NAME3}"
-    echo -e "Branch name NOT : ${BUILD_BRANCH_NAME_NOT}"
+    echo -e "Branch name : ${BUILD_BRANCH_NAME}"
     echo -e "CCACHE_DIR=${CCACHE_DIR}"
     echo -e "CCACHE env vars"
     export | grep -i ccache
