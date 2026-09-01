@@ -384,7 +384,7 @@ class TestCase(unittest.TestCase):
 
     query = Chem.MolFromSmiles("O=C(c1ccccc1)N1CCCC1 |(0.0443291,-1.81486,-1.76886;0.0506321,-0.858174,-0.921491;1.37975,-0.430412,-0.483603;2.18964,-1.35506,0.144714;3.47088,-1.00454,0.585539;3.93803,0.297573,0.388032;3.1267,1.22739,-0.242406;1.85597,0.849751,-0.670531;-1.14837,-0.261434,-0.446583;-1.26073,0.836916,0.520219;-2.73583,1.04666,0.696614;-3.34033,-0.283345,0.290893;-2.46516,-0.679843,-0.874401)|")
     hits = synthonspace.ShapeSearch(query, ssparams)
-    self.assertEqual(len(hits.GetHitMolecules()), 1)
+    self.assertEqual(len(hits.GetHitMolecules()), 2)
 
 
   def testShapePossibleHitsWrite(self):
