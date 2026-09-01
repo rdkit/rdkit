@@ -13,7 +13,6 @@
 #include <sstream>
 #include <set>
 #include <algorithm>
-#include <cmath>
 #include <numeric>
 #include <tuple>
 #include <RDGeneral/utils.h>
@@ -55,86 +54,52 @@ std::tuple<unsigned int, unsigned int, unsigned int> getDoubleBondPresence(
 namespace detail {
 
 namespace {
-// Depictions often contain small coordinate distortions, so do not require an
-// exact regular polygon. A 5% tolerance is tight enough to distinguish rings
-// deliberately drawn as irregular while accepting normal depiction noise.
-constexpr double regularRingRelativeTolerance = 0.05;
+RDGeom::Point3D getRingSystemCenter(const ROMol &mol, unsigned int bondIdx,
+                                    const Conformer *conf) {
+  PRECONDITION(conf && !conf->is3D(), "a 2D conformer is required");
+  const auto bond = mol.getBondWithIdx(bondIdx);
+  PRECONDITION(mol.getRingInfo()->numBondRings(bondIdx),
+               "bond is not in a ring");
 
-bool valuesAreNearlyEqual(const std::vector<double> &values) {
-  PRECONDITION(!values.empty(), "no values provided");
-  const auto mean =
-      std::accumulate(values.begin(), values.end(), 0.0) / values.size();
-  if (mean <= 0.0) {
-    return false;
-  }
-  return std::all_of(values.begin(), values.end(), [mean](double value) {
-    return std::abs(value - mean) <=
-           regularRingRelativeTolerance * mean;
-  });
-}
-
-bool ringIsRegularPolygon(const ROMol &mol, unsigned int ringIdx,
-                          const Conformer *conf) {
-  // This preference is based on the displayed 2D geometry. Without 2D
-  // coordinates, retain the existing bond-selection behavior.
-  if (!conf || conf->is3D()) {
-    return false;
-  }
-  const auto ringInfo = mol.getRingInfo();
-  const auto &atomRings = ringInfo->atomRings();
-  const auto &bondRings = ringInfo->bondRings();
-  PRECONDITION(ringIdx < atomRings.size(), "bad ring index");
-  PRECONDITION(ringIdx < bondRings.size(), "bad ring index");
-  const auto &ringAtoms = atomRings[ringIdx];
-  if (ringAtoms.size() < 3) {
-    return false;
-  }
-
+  // Find the connected ring system containing the bond. Using ring bonds for
+  // the traversal excludes substituents, which could otherwise move the
+  // center away from the depiction's ring system.
+  boost::dynamic_bitset<> visited(mol.getNumAtoms());
+  std::vector<unsigned int> atomsToVisit{bond->getBeginAtomIdx()};
   RDGeom::Point3D center;
-  for (auto atomIdx : ringAtoms) {
+  unsigned int numRingAtoms = 0;
+  while (!atomsToVisit.empty()) {
+    const auto atomIdx = atomsToVisit.back();
+    atomsToVisit.pop_back();
+    if (visited[atomIdx]) {
+      continue;
+    }
+    visited.set(atomIdx);
     auto pos = conf->getAtomPos(atomIdx);
     pos.z = 0.0;
     center += pos;
-  }
-  center /= static_cast<double>(ringAtoms.size());
+    ++numRingAtoms;
 
-  std::vector<double> radii;
-  radii.reserve(ringAtoms.size());
-  for (auto atomIdx : ringAtoms) {
-    auto radius = conf->getAtomPos(atomIdx) - center;
-    radius.z = 0.0;
-    radii.push_back(radius.length());
+    const auto atom = mol.getAtomWithIdx(atomIdx);
+    for (const auto ringBond : mol.atomBonds(atom)) {
+      if (mol.getRingInfo()->numBondRings(ringBond->getIdx())) {
+        atomsToVisit.push_back(ringBond->getOtherAtomIdx(atomIdx));
+      }
+    }
   }
-
-  std::vector<double> bondLengths;
-  bondLengths.reserve(bondRings[ringIdx].size());
-  for (auto bondIdx : bondRings[ringIdx]) {
-    const auto bond = mol.getBondWithIdx(bondIdx);
-    auto bondVector = conf->getAtomPos(bond->getBeginAtomIdx()) -
-                      conf->getAtomPos(bond->getEndAtomIdx());
-    bondVector.z = 0.0;
-    bondLengths.push_back(bondVector.length());
-  }
-
-  // A regular polygon has both equally spaced vertices around its center and
-  // equal sides. Checking both avoids classifying merely cyclic or equilateral
-  // but visibly irregular ring layouts as regular polygons.
-  return valuesAreNearlyEqual(radii) && valuesAreNearlyEqual(bondLengths);
+  center /= static_cast<double>(numRingAtoms);
+  return center;
 }
 
-bool bondIsInRegularPolygon(const ROMol &mol, unsigned int bondIdx,
-                            const Conformer *conf) {
-  if (!conf || conf->is3D()) {
-    return false;
-  }
-  const auto ringInfo = mol.getRingInfo();
-  const auto &ringMembership = ringInfo->bondMembers(bondIdx);
-  // In fused systems a bond may belong to multiple perceived rings. Avoid it
-  // if any one of those rings is displayed as a regular polygon.
-  return std::any_of(ringMembership.begin(), ringMembership.end(),
-                     [&](unsigned int ringIdx) {
-                       return ringIsRegularPolygon(mol, ringIdx, conf);
-                     });
+double bondDistanceToPoint(const ROMol &mol, unsigned int bondIdx,
+                           const Conformer *conf,
+                           const RDGeom::Point3D &point) {
+  const auto bond = mol.getBondWithIdx(bondIdx);
+  auto midpoint = (conf->getAtomPos(bond->getBeginAtomIdx()) +
+                   conf->getAtomPos(bond->getEndAtomIdx())) /
+                  2.0;
+  midpoint.z = 0.0;
+  return (midpoint - point).lengthSq();
 }
 
 int pickBondToWedgeImpl(
@@ -392,8 +357,8 @@ int pickBondToWedgeImpl(
     MolOps::findSSSR(mol);
   }
 
-  // is-ring-bond, is-in-regular-polygon, existing score, bond id
-  std::vector<std::tuple<bool, bool, int, int>> nbrScores;
+  // is-ring-bond, distance-to-ring-system-center, existing score, bond id
+  std::vector<std::tuple<bool, double, int, int>> nbrScores;
   for (const auto bond : mol.atomBonds(atom)) {
     // can only wedge single bonds:
     if (bond->getBondType() != Bond::SINGLE) {
@@ -405,7 +370,7 @@ int pickBondToWedgeImpl(
       // very strong preference for Hs:
       auto *oatom = bond->getOtherAtom(atom);
       if (oatom->getAtomicNum() == 1) {
-        nbrScores.emplace_back(false, false, -1000000,
+        nbrScores.emplace_back(false, 0.0, -1000000,
                                bid);  // lower than anything else can be
         continue;
       }
@@ -440,8 +405,7 @@ int pickBondToWedgeImpl(
       //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]
       //           << std::endl;
       const auto isRingBond = mol.getRingInfo()->numBondRings(bid) != 0;
-      nbrScores.emplace_back(
-          isRingBond, bondIsInRegularPolygon(mol, bid, conf), nbrScore, bid);
+      nbrScores.emplace_back(isRingBond, 0.0, nbrScore, bid);
     }
   }
   // There's still one situation where this whole thing can fail: an unlucky
@@ -459,12 +423,23 @@ int pickBondToWedgeImpl(
       std::all_of(nbrScores.begin(), nbrScores.end(), [](const auto &score) {
         return std::get<0>(score);
       });
+  if (allCandidatesAreRingBonds && conf && !conf->is3D()) {
+    // All candidate bonds share the current atom, so they belong to the same
+    // connected ring system. Find its center once, and only when the result
+    // will actually be used to select a bond.
+    const auto ringSystemCenter =
+        getRingSystemCenter(mol, std::get<3>(nbrScores.front()), conf);
+    for (auto &score : nbrScores) {
+      std::get<1>(score) = bondDistanceToPoint(
+          mol, std::get<3>(score), conf, ringSystemCenter);
+    }
+  }
   const auto minPr = std::min_element(
       nbrScores.begin(), nbrScores.end(),
       [allCandidatesAreRingBonds](const auto &lhs, const auto &rhs) {
         // Preserve the established scoring whenever a non-ring bond is
         // available. Only when a ring bond is unavoidable do we first prefer
-        // one that is not part of a regularly drawn polygon.
+        // an inner bond, leaving the ring system's outer perimeter unwedged.
         if (allCandidatesAreRingBonds) {
           return std::tie(std::get<1>(lhs), std::get<2>(lhs),
                           std::get<3>(lhs)) <
