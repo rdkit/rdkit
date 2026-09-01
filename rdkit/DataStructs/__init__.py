@@ -13,6 +13,11 @@ from rdkit import rdBase
 from rdkit.DataStructs import cDataStructs
 from rdkit.DataStructs.cDataStructs import *
 
+from rdkit.DataStructs.cBulkSimilarity import (
+  BulkTanimotoMatrix,
+  BulkSimilarityActiveKernel,
+)
+
 __doc__ = cDataStructs.__doc__
 
 similarityFunctions = [
