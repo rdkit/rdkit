@@ -65,6 +65,8 @@ steps:
     if ! grep -Fq "RDK_BUILD_DESCRIPTORS3D:BOOL=ON" CMakeCache.txt; then
       echo "ERROR: Eigen support was not enabled in CMakeCache.txt"
       exit 1
+    else
+      echo "Eigen is present"
     fi
   displayName: make sure we have eigen
 - bash: |
