@@ -1,3 +1,16 @@
+//
+// Copyright (C)  2026 Greg Landrum and other RDKit contributors
+//
+//  @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+//  The idea of inserting a capsule into the builtins dictionary
+//  was taken from nanobind, as well as the mechanism to capture
+//  the builtins dict object.
+//
 #pragma once
 
 #include <Python.h>
@@ -7,7 +20,7 @@
 namespace nb = nanobind;
 
 inline nb::dict getBuiltinsDict() {
-  // PyEval_GetBuiltins only gets the builtins for the current thread,
+// PyEval_GetBuiltins only gets the builtins for the current thread,
 // which may not be the main thread.
 #if defined(PYPY_VERSION)
   PyObject *dict = PyEval_GetBuiltins();
