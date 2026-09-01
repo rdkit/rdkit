@@ -118,6 +118,12 @@ MacroMolTemplateBuilder &MacroMolTemplateBuilder::addLeavingGroup(
   return *this;
 }
 
+MacroMolTemplateBuilder &MacroMolTemplateBuilder::setSubclass(
+    std::string subclass) {
+  d_subclass = std::move(subclass);
+  return *this;
+}
+
 std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() const {
   if (d_name.empty()) {
     invalidTemplate("name cannot be empty");
@@ -175,7 +181,7 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() const {
 
   return std::unique_ptr<MacroMolTemplate>(new MacroMolTemplate(
       std::move(mol), d_monomerClass, d_name, d_symbol, d_originalData,
-      d_mainAtomIdxs, d_leavingGroups, mainSgroupIdx));
+      d_subclass, d_mainAtomIdxs, d_leavingGroups, mainSgroupIdx));
 }
 
 MacroMolTemplateLibrary::MacroMolTemplateLibrary(
