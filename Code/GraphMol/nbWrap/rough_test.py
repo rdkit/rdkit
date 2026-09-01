@@ -8623,14 +8623,15 @@ M  END
     origVal = Chem.GetUseLegacyRingFinding()
     Chem.SetUseLegacyRingFinding(False)
 
-    m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
-    self.assertEqual(m1.GetRingInfo().NumRings(), 70)
+    try:
+      m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
+      self.assertEqual(m1.GetRingInfo().NumRings(), 70)
 
-    Chem.SetUseLegacyRingFinding(True)
-    m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
-    self.assertEqual(m1.GetRingInfo().NumRings(), 24)
-
-    Chem.SetUseLegacyRingFinding(origVal)
+      Chem.SetUseLegacyRingFinding(True)
+      m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
+      self.assertEqual(m1.GetRingInfo().NumRings(), 24)
+    finally:
+      Chem.SetUseLegacyRingFinding(origVal)
 
     m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
     rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.LEGACY)
