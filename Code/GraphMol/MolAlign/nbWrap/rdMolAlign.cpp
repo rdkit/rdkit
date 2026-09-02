@@ -390,7 +390,7 @@ nb::tuple getAllConformerBestRMSToRef(
   MolAlign::BestAlignmentParams params;
   std::unique_ptr<RDNumeric::DoubleVector> weightsOwner;
   if (nbParams) {
-    auto [p, owner] = nbParams->to_native();
+    auto [p, owner] = nbParams->toNative();
     params = p;
     weightsOwner = std::move(owner);
   }
