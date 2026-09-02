@@ -369,13 +369,14 @@ nb::tuple getAllConformerBestRMS(ROMol &mol, int numThreads, nb::object map,
   return nb::tuple(res);
 }
 
-nb::tuple getAllConformerBestRMSParams(ROMol &mol,
-                                       const NbBestAlignmentParams &nbParams) {
+nb::tuple getAllConformerBestRMSParams(
+    ROMol &mol, const std::optional<NbBestAlignmentParams> &nbParams) {
   auto [params, weightsOwner] = nbParams.toNative();
   std::vector<double> rmsds;
   {
     nb::gil_scoped_release release;
-    rmsds = MolAlign::getAllConformerBestRMS(mol, params);
+    rmsds = MolAlign::getAllConformerBestRMS(
+        mol, params.value_or(MolAlign::BestAlignmentParams()));
   }
   nb::list res;
   for (double v : rmsds) {
