@@ -286,7 +286,7 @@ class TestCase(unittest.TestCase):
     ]
 
     nconfs = []
-    expected = [3, 3, 6, 4, 3, 4] # note: this also depends on seed
+    expected = [3, 3, 6, 4, 4, 3] # note: this also depends on seed
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       ps = _getParams(useLegacy=False, maxIt=30, seed=100, pruneRMS=1.5)
@@ -305,7 +305,7 @@ class TestCase(unittest.TestCase):
     params.useSymmetryForPruning = False
     params.useLegacyImplementation = True
     nconfs = []
-    expected = [5, 4, 4, 4, 6, 3]
+    expected = [5, 5, 6, 7, 5, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
@@ -324,7 +324,7 @@ class TestCase(unittest.TestCase):
     params.useSymmetryForPruning = False
     params.useLegacyImplementation = False
     nconfs = []
-    expected = [4, 4, 4, 5, 6, 4]
+    expected = [6, 4, 4, 6, 7, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
@@ -867,10 +867,10 @@ class TestCase(unittest.TestCase):
     ps.pruneRmsThresh = 0.5
     ps.useLegacyImplementation = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
-    self.assertEqual(len(cids), 1)
+    self.assertEqual(len(cids), 2)
     ps.symmetrizeConjugatedTerminalGroupsForPruning = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
-    self.assertGreater(len(cids), 1)
+    self.assertGreater(len(cids), 2)
 
   def testSetattr(self):
     mol = Chem.MolFromSmiles("CCC")

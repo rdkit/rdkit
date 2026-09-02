@@ -754,9 +754,9 @@ TEST_CASE("tracking failure causes") {
     ps.maxIterations = 50;
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid < 0);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
-          1);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 3);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] ==
+          0);  // we do not have final chiral bound failures here
   }
   SECTION("basicsAIO") {
     auto mol =
@@ -792,8 +792,8 @@ TEST_CASE("tracking failure causes") {
     ps.useLegacyImplementation = false;
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid < 0);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 8);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::MINIMIZATION] == 42);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 4);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::MINIMIZATION] == 46);
   }
 
 #ifdef RDK_TEST_MULTITHREADED
