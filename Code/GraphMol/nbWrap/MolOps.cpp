@@ -11,6 +11,7 @@
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/list.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/stl/unique_ptr.h>
 #include <nanobind/stl/map.h>
 #include <RDBoost/boost_shared_ptr.h>
 
@@ -78,8 +79,8 @@ nb::tuple fragmentOnSomeBondsHelper(const ROMol &mol, nb::object pyBondIndices,
     unsigned int nVs = nb::len(pyDummyLabels);
     dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
-      unsigned int v1 = nb::cast<unsigned int>(pyDummyLabels[i][0]);
-      unsigned int v2 = nb::cast<unsigned int>(pyDummyLabels[i][1]);
+      auto v1 = nb::cast<unsigned int>(pyDummyLabels[i][0]);
+      auto v2 = nb::cast<unsigned int>(pyDummyLabels[i][1]);
       (*dummyLabels)[i] = std::make_pair(v1, v2);
     }
   }
@@ -152,8 +153,8 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, nb::object pyBondIndices,
     unsigned int nVs = nb::len(pyDummyLabels);
     dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
-      unsigned int v1 = nb::cast<unsigned int>(pyDummyLabels[i][0]);
-      unsigned int v2 = nb::cast<unsigned int>(pyDummyLabels[i][1]);
+      auto v1 = nb::cast<unsigned int>(pyDummyLabels[i][0]);
+      auto v2 = nb::cast<unsigned int>(pyDummyLabels[i][1]);
       (*dummyLabels)[i] = std::make_pair(v1, v2);
     }
   }
@@ -224,47 +225,41 @@ std::string getChainId(const ROMol &, const Atom *at) {
 }  // namespace
 nb::dict splitMolByPDBResidues(const ROMol &mol, nb::object pyWhiteList,
                                bool negateList) {
-  std::vector<std::string> *whiteList = nullptr;
+  std::unique_ptr<std::vector<std::string>> whiteList{nullptr};
   if (!pyWhiteList.is_none()) {
     unsigned int nVs = nb::len(pyWhiteList);
-    whiteList = new std::vector<std::string>(nVs);
+    whiteList.reset(new std::vector<std::string>(nVs));
     for (unsigned int i = 0; i < nVs; ++i) {
       (*whiteList)[i] = nb::cast<std::string>(pyWhiteList[i]);
     }
   }
   std::map<std::string, boost::shared_ptr<ROMol>> res =
-      MolOps::getMolFragsWithQuery(mol, getResidue, false, whiteList,
+      MolOps::getMolFragsWithQuery(mol, getResidue, false, whiteList.get(),
                                    negateList);
-  delete whiteList;
 
   nb::dict pyres;
-  for (std::map<std::string, boost::shared_ptr<ROMol>>::const_iterator iter =
-           res.begin();
-       iter != res.end(); ++iter) {
-    pyres[iter->first.c_str()] = iter->second;
+  for (const auto &iter : res) {
+    pyres[iter.first.c_str()] = iter.second;
   }
   return pyres;
 }
 nb::dict splitMolByPDBChainId(const ROMol &mol, nb::object pyWhiteList,
                               bool negateList) {
-  std::vector<std::string> *whiteList = nullptr;
+  std::unique_ptr<std::vector<std::string>> whiteList{nullptr};
   if (!pyWhiteList.is_none()) {
     unsigned int nVs = nb::len(pyWhiteList);
-    whiteList = new std::vector<std::string>(nVs);
+    whiteList.reset(new std::vector<std::string>(nVs));
     for (unsigned int i = 0; i < nVs; ++i) {
       (*whiteList)[i] = nb::cast<std::string>(pyWhiteList[i]);
     }
   }
   std::map<std::string, boost::shared_ptr<ROMol>> res =
-      MolOps::getMolFragsWithQuery(mol, getChainId, false, whiteList,
+      MolOps::getMolFragsWithQuery(mol, getChainId, false, whiteList.get(),
                                    negateList);
-  delete whiteList;
 
   nb::dict pyres;
-  for (std::map<std::string, boost::shared_ptr<ROMol>>::const_iterator iter =
-           res.begin();
-       iter != res.end(); ++iter) {
-    pyres[iter->first.c_str()] = iter->second;
+  for (const auto &iter : res) {
+    pyres[iter.first.c_str()] = iter.second;
   }
   return pyres;
 }
@@ -287,10 +282,8 @@ nb::dict parseQueryDefFileHelper(nb::object &input, bool standardize,
   }
 
   nb::dict res;
-  for (std::map<std::string, ROMOL_SPTR>::const_iterator iter =
-           queryDefs.begin();
-       iter != queryDefs.end(); ++iter) {
-    res[iter->first.c_str()] = iter->second;
+  for (const auto &iter : queryDefs) {
+    res[iter.first.c_str()] = iter.second;
   }
 
   return res;
@@ -302,9 +295,9 @@ void addRecursiveQueriesHelper(ROMol &mol, nb::dict replDict,
   const auto items = replDict.items();
   for (unsigned int i = 0; i < nb::len(items); ++i) {
     const auto item = items[i];
-    ROMol *m = nb::cast<ROMol *>(item[1]);
+    auto m = nb::cast<ROMol *>(item[1]);
     ROMOL_SPTR nm(new ROMol(*m));
-    std::string k = nb::cast<std::string>(item[0]);
+    auto k = nb::cast<std::string>(item[0]);
     replacements[k] = nm;
   }
   addRecursiveQueries(mol, replacements, propName);
@@ -444,16 +437,6 @@ MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
   return static_cast<MolOps::SanitizeFlags>(operationThatFailed);
 }
 
-RWMol *getEditable(const ROMol &mol) {
-  auto *res = new RWMol(mol, false);
-  return res;
-}
-
-ROMol *getNormal(const RWMol &mol) {
-  auto *res = static_cast<ROMol *>(new RWMol(mol));
-  return res;
-}
-
 void kekulizeMol(ROMol &mol, bool clearAromaticFlags = false,
                  bool canonical = true) {
   auto &wmol = static_cast<RWMol &>(mol);
@@ -516,9 +499,12 @@ void cleanupAtropisomersMol(ROMol &mol) {
 }
 
 VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds,
-                          bool includeHydrogenBonds) {
+                          bool includeHydrogenBonds,
+                          MolOps::SymmetrizeSSSRAlgorithm algorithm,
+                          bool recalcSSSR) {
   VECT_INT_VECT rings;
-  MolOps::symmetrizeSSSR(mol, rings, includeDativeBonds, includeHydrogenBonds);
+  MolOps::symmetrizeSSSR(mol, rings, algorithm, recalcSSSR, includeDativeBonds,
+                         includeHydrogenBonds);
   return rings;
 }
 auto getDistanceMatrix(ROMol &mol, bool useBO = false, bool useAtomWts = false,
@@ -526,13 +512,13 @@ auto getDistanceMatrix(ROMol &mol, bool useBO = false, bool useAtomWts = false,
   const auto nats = mol.getNumAtoms();
   double *distMat =
       MolOps::getDistanceMat(mol, useBO, useAtomWts, force, prefix);
-  double *dmCopy = new double[nats * nats];
+  auto dmCopy = new double[nats * nats];
   memcpy(static_cast<void *>(dmCopy), static_cast<void *>(distMat),
          nats * nats * sizeof(double));
   // pattern from
   // https://nanobind.readthedocs.io/en/latest/ndarray.html#data-ownership
   nb::capsule owner(dmCopy, [](void *f) noexcept {
-    double *data = reinterpret_cast<double *>(f);
+    auto data = reinterpret_cast<double *>(f);
     delete[] data;
   });
   return nb::ndarray<nb::numpy, double, nb::ndim<2>>(
@@ -546,7 +532,7 @@ auto get3DDistanceMatrix(ROMol &mol, int confId = -1, bool useAtomWts = false,
   double *distMat =
       MolOps::get3DDistanceMat(mol, confId, useAtomWts, force, prefix);
 
-  double *dmCopy = new double[nats * nats];
+  auto dmCopy = new double[nats * nats];
   memcpy(static_cast<void *>(dmCopy), static_cast<void *>(distMat),
          nats * nats * sizeof(double));
   if (prefix == nullptr || std::string(prefix) == "") {
@@ -555,7 +541,7 @@ auto get3DDistanceMatrix(ROMol &mol, int confId = -1, bool useAtomWts = false,
   // pattern from
   // https://nanobind.readthedocs.io/en/latest/ndarray.html#data-ownership
   nb::capsule owner(dmCopy, [](void *f) noexcept {
-    double *data = reinterpret_cast<double *>(f);
+    auto data = reinterpret_cast<double *>(f);
     delete[] data;
   });
   return nb::ndarray<nb::numpy, double, nb::ndim<2>>(
@@ -573,13 +559,13 @@ nb::object getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
       MolOps::getAdjacencyMatrix(mol, useBO, emptyVal, force, prefix);
 
   if (useBO) {
-    double *resMat = new double[nats * nats];
+    auto resMat = new double[nats * nats];
     memcpy(static_cast<void *>(resMat), static_cast<void *>(tmpMat),
            nats * nats * sizeof(double));
     // pattern from
     // https://nanobind.readthedocs.io/en/latest/ndarray.html#data-ownership
     nb::capsule owner(resMat, [](void *f) noexcept {
-      double *data = reinterpret_cast<double *>(f);
+      auto data = reinterpret_cast<double *>(f);
       delete[] data;
     });
     auto res = nb::ndarray<nb::numpy, double, nb::ndim<2>>(
@@ -588,7 +574,7 @@ nb::object getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
         /* owner = */ owner);
     return res.cast();
   } else {
-    int *resMat = new int[nats * nats];
+    auto resMat = new int[nats * nats];
     for (unsigned int i = 0; i < nats; i++) {
       for (unsigned int j = 0; j < nats; j++) {
         resMat[i * nats + j] = (int)std::round(tmpMat[i * nats + j]);
@@ -597,7 +583,7 @@ nb::object getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
     // pattern from
     // https://nanobind.readthedocs.io/en/latest/ndarray.html#data-ownership
     nb::capsule owner(resMat, [](void *f) noexcept {
-      int *data = reinterpret_cast<int *>(f);
+      auto data = reinterpret_cast<int *>(f);
       delete[] data;
     });
     auto res = nb::ndarray<nb::numpy, int, nb::ndim<2>>(
@@ -620,8 +606,8 @@ nb::tuple GetMolFragsWithMapping(const ROMol &mol, bool asMols,
 
     for (auto &i : fragsVec) {
       nb::list tpl;
-      for (unsigned int j = 0; j < i.size(); ++j) {
-        tpl.append(i[j]);
+      for (auto &j : i) {
+        tpl.append(j);
       }
       res.append(nb::tuple(tpl));
     }
@@ -644,14 +630,14 @@ nb::tuple GetMolFragsWithMapping(const ROMol &mol, bool asMols,
       auto fragsMolAtomMappingList = nb::cast<nb::list>(fragsMolAtomMapping);
       for (auto &i : fragsMolAtomMappingVec) {
         nb::list perFragMolAtomMappingTpl;
-        for (unsigned int j = 0; j < i.size(); ++j) {
-          perFragMolAtomMappingTpl.append(i[j]);
+        for (auto &j : i) {
+          perFragMolAtomMappingTpl.append(j);
         }
         fragsMolAtomMappingList.append(nb::tuple(perFragMolAtomMappingTpl));
       }
     }
     for (auto &molFrag : molFrags) {
-      res.append(molFrag.release());
+      res.append(molFrag);
     }
   }
   return nb::tuple(res);
@@ -770,7 +756,7 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     delete lAtomBits;
   }
   if (!bitInfo.is_none()) {
-    nb::dict pyBitInfo = nb::cast<nb::dict>(bitInfo);
+    auto pyBitInfo = nb::cast<nb::dict>(bitInfo);
     for (auto &it : (*lBitInfo)) {
       nb::list temp;
       std::vector<std::vector<int>>::iterator itset;
@@ -824,7 +810,7 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
     delete lAtomBits;
   }
   if (!bitInfo.is_none()) {
-    nb::dict pyBitInfo = nb::cast<nb::dict>(bitInfo);
+    auto pyBitInfo = nb::cast<nb::dict>(bitInfo);
     for (auto &it : (*lBitInfo)) {
       nb::list temp;
       std::vector<std::vector<int>>::iterator itset;
@@ -880,7 +866,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol,
     path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
                                         enforceSize, &cAtomMap);
     // make sure the optional argument (atomMap) is actually a dictionary
-    nb::dict typecheck = nb::cast<nb::dict>(atomMap);
+    auto typecheck = nb::cast<nb::dict>(atomMap);
     atomMap.attr("clear")();
     for (auto pair : cAtomMap) {
       atomMap[pair.first] = pair.second;
@@ -900,7 +886,7 @@ ROMol *pathToSubmolHelper(const ROMol &mol, nb::object &path, bool useQuery,
   result = Subgraphs::pathToSubmol(mol, pth, useQuery, mapping);
   if (!atomMap.is_none()) {
     // make sure the optional argument actually was a dictionary
-    nb::dict mapDict = nb::cast<nb::dict>(atomMap);
+    auto mapDict = nb::cast<nb::dict>(atomMap);
     mapDict.clear();
     for (const auto &[k, v] : mapping) {
       mapDict[nb::int_(k)] = nb::int_(v);
@@ -930,8 +916,8 @@ nb::tuple detectChemistryProblemsHelper(const ROMol &mol,
                                         unsigned int sanitizeOps) {
   auto probs = MolOps::detectChemistryProblems(mol, sanitizeOps);
   nb::list res;
-  for (const auto &exc_ptr : probs) {
-    res.append(exc_ptr->copy());
+  for (auto &&exc_ptr : probs) {
+    res.append(std::move(exc_ptr));
   }
   return nb::tuple(res);
 }
@@ -1290,6 +1276,17 @@ struct molops_wrapper {
     m.def("GetSSSR", getSSSR, "mol"_a, "includeDativeBonds"_a = false,
           "includeHydrogenBonds"_a = false, docString.c_str());
 
+    nb::enum_<MolOps::SymmetrizeSSSRAlgorithm>(m, "SymmetrizeSSSRAlgorithm")
+        .value("DEFAULT", MolOps::SymmetrizeSSSRAlgorithm::DEFAULT)
+        .value("LEGACY", MolOps::SymmetrizeSSSRAlgorithm::LEGACY)
+        .value("RDL", MolOps::SymmetrizeSSSRAlgorithm::RDL);
+
+    m.def("SetUseLegacyRingFinding", MolOps::setUseLegacyRingFinding, "val"_a,
+          "sets usage of the legacy symmetric SSSR code during sanitization");
+    m.def("GetUseLegacyRingFinding", MolOps::getUseLegacyRingFinding,
+          "returns whether or not the legacy symmetric SSSR code is "
+          "being used during sanitization");
+
     // ------------------------------------------------------------------------
     docString =
         "Get a symmetrized SSSR for a molecule.\n\
@@ -1307,7 +1304,9 @@ struct molops_wrapper {
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
 \n";
     m.def("GetSymmSSSR", getSymmSSSR, "mol"_a, "includeDativeBonds"_a = false,
-          "includeHydrogenBonds"_a = false, docString.c_str());
+          "includeHydrogenBonds"_a = false,
+          "algorithm"_a = MolOps::SymmetrizeSSSRAlgorithm::DEFAULT,
+          "recalcSSSR"_a = true, docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =

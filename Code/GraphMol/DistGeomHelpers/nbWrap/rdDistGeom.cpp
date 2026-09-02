@@ -229,6 +229,7 @@ static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix2(
   return nb::ndarray<nb::numpy, double, nb::ndim<2>>(resData, {nats, nats},
                                                      owner);
 }
+
 static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
     const ROMol &mol, bool set15bounds, bool scaleVDW, bool doTriangleSmoothing,
     bool useMacrocycle14config, bool forceTransAmides, bool set14bounds,
@@ -238,15 +239,6 @@ static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
   params.forceTransAmides = forceTransAmides;
   return getMolBoundsMatrix2(mol, params, doTriangleSmoothing, scaleVDW,
                              set15bounds, set14bounds, set13bounds);
-  unsigned int nats = mol.getNumAtoms();
-  DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
-  DGeomHelpers::initBoundsMat(mat);
-  DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW,
-                               useMacrocycle14config, forceTransAmides,
-                               set14bounds, set13bounds);
-  if (doTriangleSmoothing) {
-    DistGeom::triangleSmoothBounds(mat);
-  }
 }
 
 static nb::list getExpTorsHelper(const ROMol &mol, bool useExpTorsions,
@@ -358,7 +350,8 @@ ARGUMENTS:
    - ETversion : version of the standard torsion definitions to use. NOTE for both
                  ETKDGv2 and ETKDGv3 this should be 2 since ETKDGv3 uses the ETKDGv2
                  definitions for standard torsions
-   - useMacrocycle14config : use the 1-4 distance bounds from ETKDGv3
+   - useMacrocycle14config : This forces amides and esters to be trans in macrocycles.
+                             This does not affect chain amides / esters!\n\
 
 RETURNS:
 
@@ -560,7 +553,8 @@ conformations that are at least this far apart from each other)DOC")
               "impose macrocycle torsion angle preferences")
       .def_rw("useMacrocycle14config",
               &PyEmbedParameters::useMacrocycle14config,
-              "use the 1-4 distance bounds from ETKDGv3")
+              "This forces amides and esters to be trans in macrocycles. "
+              "This does not affect chain amides / esters!")
       .def_rw("useLegacyImplementation",
               &PyEmbedParameters::useLegacyImplementation,
               "whether to use the combined minimization approach")
@@ -581,7 +575,8 @@ will be done on this) from a Numpy array)DOC")
           R"DOC(set the customised pairwise Columb-like interaction to atom pairs.
 used during structural minimisation stage)DOC")
       .def_rw("forceTransAmides", &PyEmbedParameters::forceTransAmides,
-              "constrain amide bonds to be trans")
+              "This forces chain amides and esters to be trans. "
+              "This does not affect amides / esters in macrocycles!")
       .def_rw("trackFailures", &PyEmbedParameters::trackFailures,
               "keep track of which checks during the embedding process fail")
       .def("GetFailureCounts", &PyEmbedParameters::getFailureCounts,

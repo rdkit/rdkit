@@ -860,21 +860,41 @@ ROMol *TautomerEnumerator::pickCanonical(
   } else {
     // Calculate score for each tautomer
     int bestScore = std::numeric_limits<int>::min();
+    unsigned int bestStereo = 0;
     std::string bestSmiles = "";
     for (const auto &t : tautRes.d_tautomers) {
       auto score = scoreFunc(*t.second.tautomer);
 #ifdef VERBOSE_ENUMERATION
       std::cerr << "  " << t.first << " " << score << std::endl;
 #endif
+      if (score < bestScore) {
+        continue;
+      }
+      auto nStereo = detail::countSpecifiedStereo(*t.second.tautomer);
+      bool better = false;
       if (score > bestScore) {
+        better = true;
+      } else {
+        // Break the tie on retained stereochemistry before falling back to
+        // lexicographic SMILES order. A transform that destroys and then
+        // regenerates an sp3 stereocentre puts a stereo-unspecified twin of an
+        // equally-scoring tautomer into the pool, and '[' (0x5B) sorts after
+        // every atom letter, so the lexicographic comparison alone always
+        // prefers the twin: "CC(=O)C(C)O" beats "CC(=O)[C@H](C)O". That silently
+        // merged both acetoin enantiomers even with tautomerRemoveSp3Stereo set
+        // to false. Comparing stereo first keeps the result canonical, since
+        // the count is a property of the tautomer rather than of the input.
+        if (nStereo > bestStereo) {
+          better = true;
+        } else if (nStereo == bestStereo && t.first < bestSmiles) {
+          better = true;
+        }
+      }
+      if (better) {
         bestScore = score;
+        bestStereo = nStereo;
         bestSmiles = t.first;
         bestMol = t.second.tautomer;
-      } else if (score == bestScore) {
-        if (t.first < bestSmiles) {
-          bestSmiles = t.first;
-          bestMol = t.second.tautomer;
-        }
       }
     }
   }

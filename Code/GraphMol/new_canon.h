@@ -24,6 +24,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 #include <cstring>
 #include <cassert>
+#include <compare>
 #include <cstring>
 #include <span>
 #include <vector>
@@ -33,6 +34,17 @@
 namespace RDKit {
 namespace Canon {
 struct canon_atom;
+
+// Complete atom comparison key used after the current symmetry class.
+struct AtomCompareCode {
+  int atomMapNumber{0};
+  unsigned int degree{0};
+  std::uint64_t primary{0};
+  std::uint64_t secondary{0};
+
+  // The defaulted comparison orders atom map, degree, primary, then secondary.
+  auto operator<=>(const AtomCompareCode &) const = default;
+};
 
 struct RDKIT_GRAPHMOL_EXPORT bondholder {
   Bond::BondType bondType{Bond::BondType::UNSPECIFIED};
@@ -508,6 +520,8 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
  public:
   Canon::canon_atom *dp_atoms{nullptr};
   const ROMol *dp_mol{nullptr};
+  const AtomCompareCode *dp_compareCodes{
+      nullptr};  // optional complete atom comparison keys
   const boost::dynamic_bitset<> *dp_atomsInPlay{nullptr},
       *dp_bondsInPlay{nullptr};
   bool df_useNbrs{false};
@@ -522,9 +536,11 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
   AtomCompareFunctor() {}
   AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
                      const boost::dynamic_bitset<> *atomsInPlay = nullptr,
-                     const boost::dynamic_bitset<> *bondsInPlay = nullptr)
+                     const boost::dynamic_bitset<> *bondsInPlay = nullptr,
+                     const AtomCompareCode *compareCodes = nullptr)
       : dp_atoms(atoms),
         dp_mol(&m),
+        dp_compareCodes(compareCodes),
         dp_atomsInPlay(atomsInPlay),
         dp_bondsInPlay(bondsInPlay) {}
 
@@ -532,7 +548,19 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
     if (dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])) {
       return 0;
     }
-    int v = basecomp(i, j);
+    int v = 0;
+    if (dp_compareCodes) {
+      if (dp_atoms[i].index != dp_atoms[j].index) {
+        v = dp_atoms[i].index < dp_atoms[j].index ? -1 : 1;
+      } else {
+        const auto ordering = dp_compareCodes[i] <=> dp_compareCodes[j];
+        if (ordering != 0) {
+          v = ordering < 0 ? -1 : 1;
+        }
+      }
+    } else {
+      v = basecomp(i, j);
+    }
     if (v) {
       return v;
     }
