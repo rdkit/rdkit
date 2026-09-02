@@ -369,14 +369,13 @@ nb::tuple getAllConformerBestRMS(ROMol &mol, int numThreads, nb::object map,
   return nb::tuple(res);
 }
 
-nb::tuple getAllConformerBestRMSParams(
-    ROMol &mol, const std::optional<NbBestAlignmentParams> &nbParams) {
+nb::tuple getAllConformerBestRMSParams(ROMol &mol,
+                                       const NbBestAlignmentParams &nbParams) {
   auto [params, weightsOwner] = nbParams.toNative();
   std::vector<double> rmsds;
   {
     nb::gil_scoped_release release;
-    rmsds = MolAlign::getAllConformerBestRMS(
-        mol, params.value_or(MolAlign::BestAlignmentParams()));
+    rmsds = MolAlign::getAllConformerBestRMS(mol, params);
   }
   nb::list res;
   for (double v : rmsds) {
@@ -385,9 +384,16 @@ nb::tuple getAllConformerBestRMSParams(
   return nb::tuple(res);
 }
 
-nb::tuple getAllConformerBestRMSToRef(const ROMol &prbMol, const ROMol &refMol,
-                                      const NbBestAlignmentParams &nbParams) {
-  auto [params, weightsOwner] = nbParams.toNative();
+nb::tuple getAllConformerBestRMSToRef(
+    const ROMol &prbMol, const ROMol &refMol,
+    const std::optional<NbBestAlignmentParams> &nbParams) {
+  NbBestAlignmentParams params;
+  decltype(nbParams->to_native().second) weightsOwner;
+  if (nbParams) {
+    auto [p, owner] = nbParams->to_native();
+    params = p;
+    weightsOwner = std::move(owner);
+  }
   std::vector<double> rmsds;
   {
     nb::gil_scoped_release release;
