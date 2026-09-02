@@ -390,7 +390,7 @@ nb::tuple getAllConformerBestRMSToRef(const ROMol &prbMol, const ROMol &refMol,
   std::vector<double> rmsds;
   {
     nb::gil_scoped_release release;
-    rmsds = MolAlign::getAllConformerBestRMSToRef(prbMol, refMol, &params);
+    rmsds = MolAlign::getAllConformerBestRMSToRef(prbMol, refMol, params);
   }
   nb::list res;
   for (const double v : rmsds) {
