@@ -387,7 +387,7 @@ nb::tuple getAllConformerBestRMSParams(ROMol &mol,
 nb::tuple getAllConformerBestRMSToRef(
     const ROMol &prbMol, const ROMol &refMol,
     const std::optional<NbBestAlignmentParams> &nbParams) {
-  NbBestAlignmentParams params;
+  MolAlign::BestAlignmentParams params;
   std::unique_ptr<RDNumeric::DoubleVector> weightsOwner;
   if (nbParams) {
     auto [p, owner] = nbParams->to_native();
