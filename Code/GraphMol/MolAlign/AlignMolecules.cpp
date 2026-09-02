@@ -487,26 +487,29 @@ std::vector<double> getAllConformerBestRMSToRef(
   }
   const auto &matches = params.map.empty() ? allMatches : params.map;
 
-  std::vector<double> res;
-  RDGeom::Transform3D trans;
-  bool reflect = false;
-  unsigned int maxIters = 50;
   std::vector<int> refCids;
+  refCids.resize(refMol.getNumConformers());
+  std::transform(refMol.beginConformers(), refMol.endConformers(),
+                 refCids.begin(),
+                 [](const auto conf) { return conf->getId(); });
+
   std::vector<int> prbCids;
-  for (auto cit = refMol.beginConformers(); cit != refMol.endConformers();
-       ++cit) {
-    refCids.push_back((*cit)->getId());
-  }
-  for (auto cit = prbMol.beginConformers(); cit != prbMol.endConformers();
-       ++cit) {
-    prbCids.push_back((*cit)->getId());
-  }
+  prbCids.resize(prbMol.getNumConformers());
+  std::transform(prbMol.beginConformers(), prbMol.endConformers(),
+                 prbCids.begin(),
+                 [](const auto conf) { return conf->getId(); });
+
+  std::vector<double> res;
   if (numThreads == 1) {
     for (std::size_t ci = 0; ci < refMol.getNumConformers(); ++ci) {
       for (std::size_t cj = 0; cj < prbMol.getNumConformers(); ++cj) {
-        res.push_back(getBestRMSInternal(prbMol, refMol, prbCids[cj],
-                                         refCids[ci], matches, &trans, nullptr,
-                                         params.weights, reflect, maxIters, 1));
+        RDGeom::Transform3D trans;
+        bool reflect = false;
+        unsigned int maxIters = 50;
+        MatchVectType *bestMatch = nullptr;
+        res.push_back(getBestRMSInternal(
+            prbMol, refMol, prbCids[cj], refCids[ci], matches, &trans,
+            bestMatch, params.weights, reflect, maxIters, numThreads));
       }
     }
   }
@@ -520,13 +523,15 @@ std::vector<double> getAllConformerBestRMSToRef(
     }
     std::vector<std::vector<std::pair<unsigned int, double>>> rmsds(numThreads);
     auto func = [&](unsigned int tidx) {
-      RDGeom::Transform3D trans;
-      bool reflect = false;
-      unsigned int maxIters = 50;
       for (auto i = tidx; i < pairs.size(); i += numThreads) {
-        auto rms = getBestRMSInternal(prbMol, refMol, pairs[i].second, pairs[i].first,
-                                      matches, &trans, nullptr, params.weights,
-                                      reflect, maxIters, 1);
+        RDGeom::Transform3D trans;
+        bool reflect = false;
+        unsigned int maxIters = 50;
+        int nLocalThreads = 1;  // we don't want to spawn threads inside threads
+        MatchVectType *bestMatch = nullptr;
+        auto rms = getBestRMSInternal(
+            prbMol, refMol, pairs[i].second, pairs[i].first, matches, &trans,
+            bestMatch, params.weights, reflect, maxIters, nLocalThreads);
         rmsds[tidx].emplace_back(i, rms);
       }
     };

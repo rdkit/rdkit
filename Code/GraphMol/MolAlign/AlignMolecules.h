@@ -418,7 +418,7 @@ RDKIT_MOLALIGN_EXPORT void alignMolConformers(
   <b>Returns</b>
   a vector with the RMSD values stored in the order:
     [(0, 0), (0, 1), (0, 2), (1, 0), (2, 1), ...]
-    where the first idx is a conformerID of the refMol where the second is the
+    where the first idx is a conformerID of the refMol and the second is the
   confid of the prbMol.
 */
 RDKIT_MOLALIGN_EXPORT std::vector<double> getAllConformerBestRMSToRef(

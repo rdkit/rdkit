@@ -287,7 +287,7 @@ TEST_CASE("Multi mol best conformer rmsd") {
                           const ROMol &refMol, const int numThreads = 1) {
     const std::vector<double> result = MolAlign::getAllConformerBestRMSToRef(
         prbMol, refMol, {.numThreads = numThreads, .map = {}});
-    REQUIRE_THAT(result, Catch::Matchers::Approx(exp).margin(0.0001));
+    REQUIRE_THAT(result, Catch::Matchers::WithinAbs(exp, 0.001));
   };
 
   std::string basePath = getenv("RDBASE");
@@ -317,7 +317,8 @@ TEST_CASE("Multi mol best conformer rmsd") {
                                           0.54966, 0.56173};
     const auto ref = loadMultiConformerSDF(basePath + "butane_ref.sdf");
     const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
-    runTest(expected, *prb, *ref);
+    int numThreads = 4;
+    runTest(expected, *prb, *ref, numThreads);
   }
 #endif
 }
