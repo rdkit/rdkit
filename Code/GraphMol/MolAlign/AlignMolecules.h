@@ -37,7 +37,7 @@ class RDKIT_MOLALIGN_EXPORT MolAlignException : public std::exception {
 };
 
 struct RDKIT_MOLALIGN_EXPORT BestAlignmentParams {
-  int maxMatches = 1e6;  //< if map is empty, this will be the max number of
+  int maxMatches = 1'000'000;  //< if map is empty, this will be the max number of
                          /// matches found in a SubstructMatch().
   bool symmetrizeConjugatedTerminalGroups =
       true;              //< if set, conjugated
