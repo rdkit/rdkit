@@ -28,7 +28,7 @@ class SynthonSpaceFingerprintSearcher : public SynthonSpaceSearcher {
       const SynthonSpaceSearchParams &params, SynthonSpace *space);
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
-      const std::vector<std::shared_ptr<RWMol>> &fragSet,
+      const std::vector<std::shared_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const override;
 
   bool verifyHit(ROMol &hit, const std::string &rxnId,
@@ -53,7 +53,7 @@ class SynthonSpaceFingerprintSearcher : public SynthonSpaceSearcher {
   std::vector<std::pair<void *, ExplicitBitVect *>> d_fragFPs;
 
   bool extraSearchSetup(
-      std::vector<std::vector<std::shared_ptr<RWMol>>> &fragSets,
+      std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
       const TimePoint *endTime) override;
 };
 }  // namespace RDKit::SynthonSpaceSearch

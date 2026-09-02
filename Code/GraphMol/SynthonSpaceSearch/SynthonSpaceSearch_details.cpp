@@ -431,7 +431,7 @@ void doPartFinalFragmentation(
     const std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> &tmpFrags,
     unsigned int maxNumFrags, const TimePoint *endTime,
     std::atomic<std::int64_t> &mostRecentFrag, std::int64_t lastFrag,
-    std::vector<std::vector<std::shared_ptr<RWMol>>> &fragments) {
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments) {
   int numTries = 100;
   bool timedOut = false;
   while (true) {
@@ -446,7 +446,7 @@ void doPartFinalFragmentation(
       // fragments.
       fragments[thisFrag + 1].resize(molFrags.size());
       for (unsigned int i = 0; i < molFrags.size(); ++i) {
-        fragments[thisFrag + 1][i].reset(new RWMol(*molFrags[i]));
+        fragments[thisFrag + 1][i].reset(molFrags[i].release());
       }
     }
     --numTries;
@@ -464,7 +464,7 @@ void doFinalFragmentation(
     const std::vector<std::pair<std::string, std::shared_ptr<ROMol>>> &tmpFrags,
     unsigned int maxNumFrags, [[maybe_unused]] int numThreads,
     const TimePoint *endTime, bool &timedOut,
-    std::vector<std::vector<std::shared_ptr<RWMol>>> &fragments) {
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments) {
   std::int64_t lastFrag = tmpFrags.size() - 1;
   std::atomic<std::int64_t> mostRecentFrag = -1;
   if (const auto numThreadsToUse = getNumThreadsToUse(numThreads);
@@ -589,7 +589,7 @@ void uniquifyFragsByAtoms(
 }
 }  // namespace
 
-std::vector<std::vector<std::shared_ptr<RWMol>>> splitMolecule(
+std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxNumFrags,
     const std::uint64_t maxNumFragSets, const TimePoint *endTime,
     const int numThreads, const FragSetUniquifyMode &uniquifyMode,
@@ -626,7 +626,7 @@ std::vector<std::vector<std::shared_ptr<RWMol>>> splitMolecule(
   // the SMILES for it.
   doInitialFragmentation(query, splitBonds, maxNumFrags, ringBonds, numThreads,
                          endTime, timedOut, tmpFrags);
-  std::vector<std::vector<std::shared_ptr<RWMol>>> fragments;
+  std::vector<std::vector<std::shared_ptr<ROMol>>> fragments;
   if (timedOut || ControlCHandler::getGotSignal()) {
     return fragments;
   }
@@ -644,7 +644,7 @@ std::vector<std::vector<std::shared_ptr<RWMol>>> splitMolecule(
   // for a single synthon set.
   fragments.resize(tmpFrags.size() + 1);
   fragments.emplace_back();
-  fragments.back().emplace_back(new RWMol(query));
+  fragments.back().emplace_back(new ROMol(query));
   // And now split the molecules into the final fragments.
   doFinalFragmentation(tmpFrags, maxNumFrags, numThreads, endTime, timedOut,
                        fragments);
@@ -668,7 +668,7 @@ int countConnections(const ROMol &mol) {
 }
 
 std::vector<boost::dynamic_bitset<>> getConnectorPatterns(
-    const std::vector<std::shared_ptr<RWMol>> &mols) {
+    const std::vector<std::shared_ptr<ROMol>> &mols) {
   std::vector<boost::dynamic_bitset<>> connPatterns(
       mols.size(), boost::dynamic_bitset<>(MAX_CONNECTOR_NUM + 1));
   for (size_t i = 0; i < mols.size(); i++) {
@@ -683,7 +683,7 @@ std::vector<boost::dynamic_bitset<>> getConnectorPatterns(
 }
 
 boost::dynamic_bitset<> getConnectorPattern(
-    const std::vector<std::shared_ptr<RWMol>> &fragSet) {
+    const std::vector<std::shared_ptr<ROMol>> &fragSet) {
   boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
   const auto connPatterns = getConnectorPatterns(fragSet);
   for (const auto &cp : connPatterns) {
@@ -923,10 +923,10 @@ std::unique_ptr<ROMol> buildProduct(
   return zipProdMol;
 }
 
-std::map<std::string, std::vector<RWMol *>> mapFragsBySmiles(
-    std::vector<std::vector<std::shared_ptr<RWMol>>> &fragSets,
+std::map<std::string, std::vector<ROMol *>> mapFragsBySmiles(
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
     bool &cancelled) {
-  std::map<std::string, std::vector<RWMol *>> fragSmiToFrag;
+  std::map<std::string, std::vector<ROMol *>> fragSmiToFrag;
   for (auto &fragSet : fragSets) {
     for (auto &frag : fragSet) {
       if (ControlCHandler::getGotSignal()) {
@@ -940,7 +940,7 @@ std::map<std::string, std::vector<RWMol *>> mapFragsBySmiles(
       }
       std::string fragSmi = MolToSmiles(*frag);
       if (auto it = fragSmiToFrag.find(fragSmi); it == fragSmiToFrag.end()) {
-        fragSmiToFrag.emplace(fragSmi, std::vector<RWMol *>(1, frag.get()));
+        fragSmiToFrag.emplace(fragSmi, std::vector<ROMol *>(1, frag.get()));
       } else {
         it->second.emplace_back(frag.get());
       }
@@ -1086,7 +1086,7 @@ std::vector<std::unique_ptr<RWMol>> generateIsomerConformers(
     EnumerateStereoisomers::StereoisomerEnumerator enu(mol, enumOpts);
     unsigned int i = 0;
     while (auto isomer = enu.next()) {
-      confMols.emplace_back(new RWMol(*isomer));
+      confMols.emplace_back(reinterpret_cast<RWMol *>(isomer.release()));
       if (++i == maxStereoCenters) {
         break;
       }
@@ -1229,9 +1229,8 @@ std::unique_ptr<RWMol> trimSampleMol(const ROMol &mol, size_t molNum) {
       }
     }
   }
-  std::unique_ptr<ROMol> tmpMol(
-      MolFragmenter::fragmentOnBonds(mol, bondsToGo, false));
-  auto newMol = std::make_unique<RWMol>(*tmpMol);
+  std::unique_ptr<RWMol> newMol(static_cast<RWMol *>(
+      MolFragmenter::fragmentOnBonds(mol, bondsToGo, false)));
   std::vector<std::vector<int>> molFrags;
   auto numFrags = MolOps::getMolFrags(*newMol, molFrags);
   newMol->beginBatchEdit();

@@ -53,7 +53,7 @@ size_t findSynthonSearchStartR(unsigned int fragAtomsAndBonds,
 }
 
 std::vector<std::vector<size_t>> getHitSynthons(
-    const std::vector<std::shared_ptr<RWMol>> &fragSet,
+    const std::vector<std::shared_ptr<ROMol>> &fragSet,
     const RascalMCES::RascalOptions &rascalOptions, const SynthonSet &reaction,
     const std::vector<unsigned int> &synthonSetOrder) {
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
@@ -130,7 +130,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
 }  // namespace
 
 bool SynthonSpaceRascalSearcher::extraSearchSetup(
-    std::vector<std::vector<std::shared_ptr<RWMol>>> &fragSets,
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
     const TimePoint *endTime) {
   int numDone = 100;
   for (const auto &fragSet : fragSets) {
@@ -153,7 +153,7 @@ bool SynthonSpaceRascalSearcher::extraSearchSetup(
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceRascalSearcher::searchFragSet(
-    const std::vector<std::shared_ptr<RWMol>> &fragSet,
+    const std::vector<std::shared_ptr<ROMol>> &fragSet,
     const SynthonSet &reaction) const {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
 

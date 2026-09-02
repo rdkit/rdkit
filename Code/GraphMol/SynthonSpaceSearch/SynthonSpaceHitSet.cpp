@@ -13,7 +13,7 @@
 namespace RDKit::SynthonSpaceSearch {
 SynthonSpaceHitSet::SynthonSpaceHitSet(
     const SynthonSet &reaction, const std::vector<std::vector<size_t>> &stu,
-    const std::vector<std::shared_ptr<RWMol>> &fragSet)
+    const std::vector<std::shared_ptr<ROMol>> &fragSet)
     : d_reaction(&reaction) {
   synthonsToUse.reserve(stu.size());
   const auto &synthons = reaction.getSynthons();
@@ -35,7 +35,7 @@ SynthonSpaceHitSet::SynthonSpaceHitSet(
 
 SynthonSpaceFPHitSet::SynthonSpaceFPHitSet(
     const SynthonSet &reaction, const std::vector<std::vector<size_t>> &stu,
-    const std::vector<std::shared_ptr<RWMol>> &fragSet)
+    const std::vector<std::shared_ptr<ROMol>> &fragSet)
     : SynthonSpaceHitSet(reaction, stu, fragSet) {
   synthonFPs.reserve(stu.size());
   for (size_t i = 0; i < stu.size(); ++i) {
@@ -52,7 +52,7 @@ SynthonSpaceFPHitSet::SynthonSpaceFPHitSet(
 
 SynthonSpaceShapeHitSet::SynthonSpaceShapeHitSet(
     const SynthonSet &reaction, const std::vector<std::vector<size_t>> &stu,
-    const std::vector<std::shared_ptr<RWMol>> &fragSet,
+    const std::vector<std::shared_ptr<ROMol>> &fragSet,
     const std::vector<SynthonShapeInput *> &fShapes,
     const std::vector<unsigned int> &sSetOrder)
     : SynthonSpaceHitSet(reaction, stu, fragSet),
