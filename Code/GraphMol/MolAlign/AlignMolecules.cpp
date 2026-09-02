@@ -476,7 +476,7 @@ void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds,
 }
 
 std::vector<double> getAllConformerBestRMSToRef(
-    const ROMol &refMol, const ROMol &prbMol,
+    const ROMol &prbMol, const ROMol &refMol,
     const BestAlignmentParams &params) {
   auto numThreads = getNumThreadsToUse(params.numThreads);
   std::vector<MatchVectType> allMatches;

@@ -403,7 +403,7 @@ RDKIT_MOLALIGN_EXPORT void alignMolConformers(
     const RDNumeric::DoubleVector *weights = nullptr, bool reflect = false,
     unsigned int maxIters = 50, std::vector<double> *RMSlist = nullptr);
 
-//! Returns the symmetric distance matrix between all conformers of refMol
+//! Returns the RMSD matrix between all conformers of refMol
 //! and all the conformers of prbMol
 /// getBestRMS() is used to calculate the inter-conformer distances
 /*!
@@ -411,8 +411,8 @@ RDKIT_MOLALIGN_EXPORT void alignMolConformers(
   orders in both molecules, for some molecules it will lead to 'combinatorial
   explosion' especially if hydrogens are present.
 
-  \param refMol        the reference molecule
-  \param prbMol        the probe molecule
+  \param prbMol        the reference molecule
+  \param refMol        the probe molecule
   \param params     parameters for the matching
 
   <b>Returns</b>
@@ -422,7 +422,7 @@ RDKIT_MOLALIGN_EXPORT void alignMolConformers(
   confid of the prbMol.
 */
 RDKIT_MOLALIGN_EXPORT std::vector<double> getAllConformerBestRMSToRef(
-    const ROMol &refMol, const ROMol &prbMol,
+    const ROMol &prbMol, const ROMol &refMol,
     const BestAlignmentParams &params);
 
 namespace details {
