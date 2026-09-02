@@ -283,10 +283,10 @@ TEST_CASE("Multi mol best conformer rmsd") {
     }
     return mainMol;
   };
-  const auto runTest = [](const std::vector<double> &exp, const ROMol &refMol,
-                          const ROMol &prbMol, const int numThreads = 1) {
+  const auto runTest = [](const std::vector<double> &exp, const ROMol &prbMol,
+                          const ROMol &refMol, const int numThreads = 1) {
     const std::vector<double> result = MolAlign::getAllConformerBestRMSToRef(
-        refMol, prbMol, {.numThreads = numThreads, .map = {}});
+        prbMol, refMol, {.numThreads = numThreads, .map = {}});
     REQUIRE_THAT(result, Catch::Matchers::Approx(exp).margin(0.0001));
   };
 
@@ -299,7 +299,7 @@ TEST_CASE("Multi mol best conformer rmsd") {
     RDKit::SDMolSupplier supplier(basePath + "butane_ref.sdf");
     const auto ref = std::make_unique<RDKit::ROMol>(*supplier.next());
     const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
-    runTest(expected, *ref, *prb);
+    runTest(expected, *prb, *ref);
   }
 
   SECTION("2x5") {
@@ -308,7 +308,7 @@ TEST_CASE("Multi mol best conformer rmsd") {
                                           0.54966, 0.56173};
     const auto ref = loadMultiConformerSDF(basePath + "butane_ref.sdf");
     const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
-    runTest(expected, *ref, *prb);
+    runTest(expected, *prb, *ref);
   }
 #ifdef RDK_TEST_MULTITHREADED
   SECTION("2x5-multithreaded") {
@@ -317,7 +317,7 @@ TEST_CASE("Multi mol best conformer rmsd") {
                                           0.54966, 0.56173};
     const auto ref = loadMultiConformerSDF(basePath + "butane_ref.sdf");
     const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
-    runTest(expected, *ref, *prb, 2);
+    runTest(expected, *prb, *ref);
   }
 #endif
 }
