@@ -534,12 +534,22 @@ else(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   find_package(Boost ${RDK_BOOST_VERSION} REQUIRED CONFIG)
 endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
-find_package(Eigen3)
+find_package(Eigen3 NO_MODULE)
 if(RDK_BUILD_DESCRIPTORS3D)
-  if(NOT EIGEN3_FOUND)
+  # once External/Eigen is removed, remove this block (to the next comment)
+  if(NOT TARGET Eigen3::Eigen)
     add_subdirectory(External/Eigen)
   endif()
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
+
+  # once External/Eigen is removed, uncomment below here
+  #if(NOT TARGET Eigen3::Eigen)
+  #  message("eigen not found, disabling Descriptors3D")
+  #  set(RDK_BUILD_DESCRIPTORS3D OFF CACHE BOOL "Build 3D descriptors" FORCE)
+  #else()
+  #  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
+  #endif()
+  
 endif()
 
 if(TARGET Eigen3::Eigen)

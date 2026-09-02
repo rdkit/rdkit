@@ -12,7 +12,7 @@ steps:
     conda create --name rdkit_build -c conda-forge --override-channels  $(python) cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
-        numpy pillow eigen pandas=2.0 matplotlib-base=3.8 \
+        numpy pillow eigen=3 pandas=2.0 matplotlib-base=3.8 \
         qt=5 cairo ccache
     conda activate rdkit_build
     conda config --env --add channels conda-forge
@@ -58,6 +58,16 @@ steps:
     -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
     -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
   displayName: Configure build (Run CMake)
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    export RDBASE=`pwd`
+    export PYTHONPATH=${RDBASE}:${PYTHONPATH}
+    cd build
+    if ! grep -Fq "RDK_BUILD_DESCRIPTORS3D:BOOL=ON" CMakeCache.txt; then
+      echo "ERROR: Eigen support was not enabled in CMakeCache.txt"
+      exit 1
+    fi
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
