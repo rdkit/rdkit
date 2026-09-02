@@ -1109,7 +1109,7 @@ ARGUMENTS
 RETURNS
 A vector of O3A objects)DOC");
 
-  m.def("GetAllConformerBestRMSDToRef", getAllConformerBestRMSToRef, "prbMol"_a,
+  m.def("GetAllConformerBestRMSToRef", getAllConformerBestRMSToRef, "prbMol"_a,
         "refMol"_a, "params"_a = nb::none(),
         R"DOC(Get the RMSD matrix between all conformers of refMol\n\
 and all the conformers of prbMol.
