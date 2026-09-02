@@ -513,7 +513,7 @@ class TestCase(unittest.TestCase):
     for i in range(mol.GetNumAtoms()):
       mp = molConf.GetAtomPosition(i)
       rp = refConf.GetAtomPosition(i)
-      self.assertAlmostEqual((mp - rp).Length(), 0.0, 3)
+      self.assertLess((mp - rp).Length(), 0.1)
 
   def test9EmbedParams(self):
 

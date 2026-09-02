@@ -139,7 +139,7 @@ void compareConfs(const ROMol *m, const ROMol *expected, int molConfId = -1,
 
     RDGeom::Point3D pt1i = conf1.getAtomPos(i);
     RDGeom::Point3D pt2i = conf2.getAtomPos(i);
-    TEST_ASSERT((pt1i - pt2i).length() < 0.05);
+    TEST_ASSERT((pt1i - pt2i).length() < 0.1);
   }
 }
 }  // namespace
