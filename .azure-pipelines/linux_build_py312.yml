@@ -65,6 +65,9 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    echo -e "Current build stats:"
+    ccache --show-log-stats
+    echo -e "Global stats:"
     ccache -s
   displayName: "Show ccache stats"
 - bash: |
