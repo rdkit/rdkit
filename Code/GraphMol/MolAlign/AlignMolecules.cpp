@@ -21,6 +21,8 @@
 #include <RDGeneral/RDThreads.h>
 #include <algorithm>
 #include <boost/format.hpp>
+#include <iterator>
+#include <ranges>
 
 namespace RDKit {
 namespace MolAlign {
@@ -488,16 +490,16 @@ std::vector<double> getAllConformerBestRMSToRef(
   const auto &matches = params.map.empty() ? allMatches : params.map;
 
   std::vector<int> refCids;
-  refCids.resize(refMol.getNumConformers());
-  std::transform(refMol.beginConformers(), refMol.endConformers(),
-                 refCids.begin(),
-                 [](const auto conf) { return conf->getId(); });
+  refCids.reserve(refMol.getNumConformers());
+  std::ranges::transform(
+      std::ranges::subrange(refMol.beginConformers(), refMol.endConformers()),
+      std::back_inserter(refCids), &Conformer::getId);
 
   std::vector<int> prbCids;
-  prbCids.resize(prbMol.getNumConformers());
-  std::transform(prbMol.beginConformers(), prbMol.endConformers(),
-                 prbCids.begin(),
-                 [](const auto conf) { return conf->getId(); });
+  prbCids.reserve(prbMol.getNumConformers());
+  std::ranges::transform(
+      std::ranges::subrange(prbMol.beginConformers(), prbMol.endConformers()),
+      std::back_inserter(prbCids), &Conformer::getId);
 
   std::vector<double> res;
   if (numThreads == 1) {
@@ -545,10 +547,8 @@ std::vector<double> getAllConformerBestRMSToRef(
       }
     }
     res.resize(pairs.size());
-    for (const auto &tres : rmsds) {
-      for (const auto &v : tres) {
-        res[v.first] = v.second;
-      }
+    for (const auto &[index, value] : rmsds | std::views::join) {
+      res[index] = value;
     }
   }
 #endif
