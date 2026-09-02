@@ -494,7 +494,7 @@ TEST_CASE("Excluded volume") {
   params.shapeOverlayOptions.simBeta = 0.05;
   params.excludedVolume = excVolShape.get();
   params.possibleHitsFile = fullRoot + "exc_vol_poss_hits.txt";
-  params.maxExcludedVolume = 80.0;
+  params.maxExcludedVolume = 90.0;
   params.maxMeanExcludedVolume = 3.5;
 
   SynthonSpace synthonSpace;
