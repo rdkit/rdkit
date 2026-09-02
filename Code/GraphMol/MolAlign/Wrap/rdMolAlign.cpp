@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2025 Greg Landrum, Paolo Tosco and other RDKit
+//  Copyright (C) 2004-2026 Greg Landrum, Paolo Tosco and other RDKit
 //  contributors
 //
 //   @@ All Rights Reserved @@

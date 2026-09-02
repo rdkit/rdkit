@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2022-2025 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2022-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
