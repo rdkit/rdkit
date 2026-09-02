@@ -285,17 +285,21 @@ TEST_CASE("Multi mol best conformer rmsd") {
   };
   const auto runTest = [](const std::vector<double> &exp, const ROMol &prbMol,
                           const ROMol &refMol, const int numThreads = 1) {
+    const double margin = 0.001;
     const std::vector<double> result = MolAlign::getAllConformerBestRMSToRef(
         prbMol, refMol, {.numThreads = numThreads, .map = {}});
-    REQUIRE_THAT(result, Catch::Matchers::WithinAbs(exp, 0.001));
+    REQUIRE_THAT(
+        result, Catch::Matchers::RangeEquals(exp, [margin](double a, double b) {
+          return Catch::Matchers::WithinAbs(b, margin).match(a);
+        }));
   };
 
   std::string basePath = getenv("RDBASE");
   basePath += "/Code/GraphMol/MolAlign/test_data/";
 
   SECTION("1x5") {
-    const std::vector<double> expected = {0.19474, 0.86739, 0.87102, 0.35358,
-                                          0.35395};
+    const std::vector<double> expected = {0.1947, 0.8673, 0.8710, 0.3535,
+                                          0.3539};
     RDKit::SDMolSupplier supplier(basePath + "butane_ref.sdf");
     const auto ref = std::make_unique<RDKit::ROMol>(*supplier.next());
     const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
@@ -303,18 +307,18 @@ TEST_CASE("Multi mol best conformer rmsd") {
   }
 
   SECTION("2x5") {
-    const std::vector<double> expected = {0.19474, 0.86739, 0.87102, 0.35358,
-                                          0.35395, 0.82243, 0.16809, 0.16859,
-                                          0.54966, 0.56173};
+    const std::vector<double> expected = {0.1947, 0.8673, 0.8710, 0.3535,
+                                          0.3539, 0.8224, 0.1680, 0.1685,
+                                          0.5496, 0.5617};
     const auto ref = loadMultiConformerSDF(basePath + "butane_ref.sdf");
     const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
     runTest(expected, *prb, *ref);
   }
 #ifdef RDK_TEST_MULTITHREADED
   SECTION("2x5-multithreaded") {
-    const std::vector<double> expected = {0.19474, 0.86739, 0.87102, 0.35358,
-                                          0.35395, 0.82243, 0.16809, 0.16859,
-                                          0.54966, 0.56173};
+    const std::vector<double> expected = {0.1947, 0.8673, 0.8710, 0.3535,
+                                          0.3539, 0.8224, 0.1680, 0.1685,
+                                          0.5496, 0.5617};
     const auto ref = loadMultiConformerSDF(basePath + "butane_ref.sdf");
     const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
     int numThreads = 4;
