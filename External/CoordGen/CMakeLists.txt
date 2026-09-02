@@ -45,7 +45,7 @@ if(RDK_BUILD_MAEPARSER_SUPPORT OR RDK_BUILD_COORDGEN_SUPPORT)
 
   endif(MAEPARSER_FORCE_BUILD OR (NOT maeparser_FOUND))
   # FIX: the INSTALL_INTERFACE here is not correct
-  target_include_directories(maeparser PUBLIC 
+  target_include_directories(maeparser INTERFACE
    $<BUILD_INTERFACE:${maeparser_INCLUDE_DIRS}>
    $<INSTALL_INTERFACE:include>)
 

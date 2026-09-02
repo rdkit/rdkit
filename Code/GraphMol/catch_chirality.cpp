@@ -3302,7 +3302,7 @@ TEST_CASE(
 void testStereoValidationFromMol(std::string molBlock,
                                  std::string expectedSmiles, bool legacyFlag,
                                  bool canonicalFlag = false) {
-  RDKit::Chirality::setUseLegacyStereoPerception(legacyFlag);
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(legacyFlag);
 
   std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock, true, false, false));
   REQUIRE(mol);
@@ -3323,7 +3323,6 @@ void testStereoValidationFromMol(std::string molBlock,
                        RDKit::SmilesWrite::CXSmilesFields::CX_POLYMER;
 
   auto outSmiles = MolToCXSmiles(*mol, smilesWriteParams, flags);
-  RDKit::Chirality::setUseLegacyStereoPerception(false);
 
   CHECK(outSmiles == expectedSmiles);
 }

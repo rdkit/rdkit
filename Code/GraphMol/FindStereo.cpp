@@ -1101,6 +1101,7 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
 #define LOCAL_CANON 0
 #if LOCAL_CANON
   std::vector<Canon::canon_atom> canonAtoms(mol.getNumAtoms());
+  std::vector<int> canonNeighborIds(2 * mol.getNumBonds());
   Canon::AtomCompareFunctor ftor(&canonAtoms.front(), mol, &atomsInPlay,
                                  &bondsInPlay);
   ftor.df_useIsotopes = false;
@@ -1115,7 +1116,8 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
     // find symmetry classes with the canonicalization code
     Canon::detail::initFragmentCanonAtoms(mol, canonAtoms, false, &atomSymbols,
                                           &bondSymbols, atomsInPlay,
-                                          bondsInPlay, needsInit);
+                                          bondsInPlay, canonNeighborIds,
+                                          needsInit);
     needsInit = false;
 
     const bool includeChirality = false;
@@ -1203,7 +1205,8 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
 #if LOCAL_CANON
       Canon::detail::initFragmentCanonAtoms(mol, canonAtoms, false,
                                             &atomSymbols, &bondSymbols,
-                                            atomsInPlay, bondsInPlay, true);
+                                            atomsInPlay, bondsInPlay,
+                                            canonNeighborIds, true);
       needsInit = false;
 
       const bool includeChirality = false;
