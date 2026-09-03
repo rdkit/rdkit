@@ -19,11 +19,11 @@ namespace RDKit {
 namespace {
 void validateRing(std::span<const int> atomIndices,
                   std::span<const int> bondIndices) {
-  PRECONDITION(atomIndices.size() == bondIndices.size(), "length mismatch");
-  PRECONDITION(
+  CHECK_INVARIANT(atomIndices.size() == bondIndices.size(), "length mismatch");
+  CHECK_INVARIANT(
       std::ranges::none_of(atomIndices, [](int idx) { return idx < 0; }),
       "atom index must be non-negative");
-  PRECONDITION(
+  CHECK_INVARIANT(
       std::ranges::none_of(bondIndices, [](int idx) { return idx < 0; }),
       "bond index must be non-negative");
 }
@@ -162,10 +162,12 @@ void rebuildRingTypeMemberships(
                    membershipBegins.begin());
 
   memberships.resize(membersInRings.size());
-  auto next = membershipBegins;
+  // Keep the CSR offsets intact while tracking the next free slot per member.
+  auto nextMembership = membershipBegins;
   for (size_t ringIdx = 0; ringIdx + 1 < ringBegins.size(); ++ringIdx) {
     for (auto pos = ringBegins[ringIdx]; pos < ringBegins[ringIdx + 1]; ++pos) {
-      memberships[next[membersInRings[pos]]++] = rdcast<int>(ringIdx);
+      memberships[nextMembership[membersInRings[pos]]++] =
+          rdcast<int>(ringIdx);
     }
   }
 }
