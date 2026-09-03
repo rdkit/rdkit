@@ -30,10 +30,9 @@
 #include "BoundsMatrixBuilderDetails.h"
 
 const double DIST12_DELTA = 0.01;
-// const double ANGLE_DELTA = 0.0837;
+const double ANGLE_DELTA = 0.035;
 // const double RANGLE_DELTA = 0.0837; // tolerance for bond angles
 // const double TANGLE_DELTA = 0.0837; // tolerance for torsion angle
-const double DIST13_TOL = 0.04;
 const double GEN_DIST_TOL = 0.06;  //  a general distance tolerance
 const double DIST15_TOL = 0.08;
 const double VDW_SCALE_15 = 0.7;
@@ -69,23 +68,6 @@ struct Optional14Info {
   std::size_t ringSize = 0;
   std::size_t preferTrans = false;
 };
-
-//     // if the intersection of all bounds is empty => take the union
-//     auto intersection = std::ranges::max(bounds, {}, &Bounds::lower);
-//     intersection.upper =
-//         std::ranges::min(bounds | std::views::transform(&Bounds::upper));
-
-//     if (intersection.valid()) {
-//       return intersection;
-//     }
-
-//     auto boundsUnion = std::ranges::min(bounds, {}, &Bounds::lower);
-//     boundsUnion.upper =
-//         std::ranges::max(bounds | std::views::transform(&Bounds::upper));
-
-//     return boundsUnion;
-//   }
-// };
 
 enum DistType {
   DIST12,
@@ -324,6 +306,7 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       accumData.bondLengths[bond->getIdx()] = bl;
       mmat->setUpperBound(begId, endId, bl + extraSquish + DIST12_DELTA);
       mmat->setLowerBound(begId, endId, bl - extraSquish - DIST12_DELTA);
+
     } else {
       // we don't have parameters for one of the atoms... so we're forced to
       // use cruder bounds.
@@ -438,32 +421,51 @@ inline bool isLargerSP2Atom(const Atom *atom) {
          atom->getOwningMol().getRingInfo()->numAtomRings(atom->getIdx());
 }
 }  // namespace
-void _set13BoundsHelper(const unsigned int aid1, const unsigned int aid,
-                        const unsigned int aid3, const double angle,
-                        const ComputedData &accumData,
-                        DistGeom::BoundsMatPtr mmat, const ROMol &mol) {
-  const auto bid1 = mol.getBondBetweenAtoms(aid1, aid)->getIdx();
-  const auto bid2 = mol.getBondBetweenAtoms(aid, aid3)->getIdx();
 
+inline double scaleToleranceForLargeSP2(const Atom *atm1, const Atom *atm2,
+                                        const Atom *atm3,
+                                        double angleTolerance = ANGLE_DELTA) {
   // We increase the tolerance if we're outside of the first row of the
   // periodic table.
-
-  auto distTol = DIST13_TOL;
-  if (isLargerSP2Atom(mol.getAtomWithIdx(aid1))) {
-    distTol *= 2.0;
+  if (isLargerSP2Atom(atm1)) {
+    angleTolerance *= 2.0;
   }
-  if (isLargerSP2Atom(mol.getAtomWithIdx(aid))) {
-    distTol *= 2.0;
+  if (isLargerSP2Atom(atm2)) {
+    angleTolerance *= 2.0;
   }
-  if (isLargerSP2Atom(mol.getAtomWithIdx(aid3))) {
-    distTol *= 2.0;
+  if (isLargerSP2Atom(atm3)) {
+    angleTolerance *= 2.0;
+  }
+  return angleTolerance;
+}
+
+inline std::pair<double, double> getAngleRange(const double angle,
+                                               const double tolerance) {
+  if (angle + tolerance >= M_PI) {
+    return {M_PI - tolerance, M_PI};
   }
 
-  const auto dl = RDGeom::compute13Dist(accumData.bondLengths[bid1],
-                                        accumData.bondLengths[bid2], angle) -
-                  distTol;
+  if (angle - tolerance <= 0.0) {
+    return {0.0, tolerance};
+  }
 
-  const auto du = dl + 2.0 * distTol;
+  return {angle - tolerance, angle + tolerance};
+}
+
+void _set13BoundsHelper(const unsigned int aid1, const unsigned int aid,
+                        const unsigned int aid3, const double angle,
+                        DistGeom::BoundsMatPtr mmat, const ROMol &mol) {
+  double tolerance = scaleToleranceForLargeSP2(mol.getAtomWithIdx(aid1),
+                                               mol.getAtomWithIdx(aid),
+                                               mol.getAtomWithIdx(aid3));
+  auto [angleL, angleU] = getAngleRange(angle, tolerance);
+
+  const auto du = RDGeom::compute13Dist(mmat->getUpperBound(aid1, aid),
+                                        mmat->getUpperBound(aid, aid3), angleU);
+
+  const auto dl = RDGeom::compute13Dist(mmat->getLowerBound(aid1, aid),
+                                        mmat->getLowerBound(aid, aid3), angleL);
+
   _checkAndSetBounds(aid1, aid3, dl, du, mmat);
 }
 
@@ -561,7 +563,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         const auto pid = getUnifiedId(aid1, aid3, mol.getNumAtoms());
 
         if (!accumData.visitedBound(pid, DistType::DIST12)) {
-          _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+          _set13BoundsHelper(aid1, aid2, aid3, angle, mmat, mol);
           accumData.visited13Bounds.set(pid);
         }
 
@@ -645,7 +647,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                 getUnifiedId(aid1, aid3, mol.getNumAtoms());
 
             if (!accumData.visitedBound(pid, DistType::DIST12)) {
-              _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+              _set13BoundsHelper(aid1, aid2, aid3, angle, mmat, mol);
               accumData.visited13Bounds.set(pid);
             }
 
@@ -706,7 +708,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
             if (atom->getDegree() <= 4 ||
                 (Chirality::hasNonTetrahedralStereo(atom) &&
                  atom->hasProp(common_properties::_chiralPermutation))) {
-              _set13BoundsHelper(aid1, aid2, aid3, angle, accumData, mmat, mol);
+              _set13BoundsHelper(aid1, aid2, aid3, angle, mmat, mol);
             } else {
               // just use 180 as the max angle and an arbitrary min angle
               auto dmax =
@@ -869,23 +871,9 @@ bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *,
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
   unsigned int a4Num = atm4->getAtomicNum();
-  // std::cerr << " -> " << atm1->getIdx() << "-" << atm2->getIdx() << "-"
-  //           << atm3->getIdx() << "-" << atm4->getIdx()
-  //           << " bonds: " << bnd1->getIdx() << "," << bnd3->getIdx()
-  //           << std::endl;
-  // std::cerr << "   " << a1Num << " " << a3Num << " " <<
-  // bnd3->getBondType()
-  //           << " " << a4Num << " " << bnd1->getBondType() << " " << a2Num
-  //           << " "
-  //           << atm2->getTotalNumHs(true) << std::endl;
-  if (a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
-      (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
-      (a2Num == 8 || (a2Num == 7 && atm2->getTotalNumHs(true) == 1))) {
-    // std::cerr << " yes!" << std::endl;
-    return true;
-  }
-  // std::cerr << " no!" << std::endl;
-  return false;
+  return a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
+         (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
+         (a2Num == 8 || (a2Num == 7 && atm2->getTotalNumHs(true) == 1));
 }
 
 // checking for amide/ester when all three bonds are
@@ -1219,8 +1207,8 @@ TorsionValue _getMacrocycleAllInSameRing14Type(
 
 void _collect14Bounds(
     const ROMol &mol, const Bond *bnd1, const Bond *bnd2, const Bond *bnd3,
-    const Type14 type, ComputedData &accumData, double *dmat,
-    const Optional14Info info,
+    const Type14 type, ComputedData &accumData,
+    const DistGeom::BoundsMatPtr mmat, double *dmat, const Optional14Info info,
     std::unordered_map<std::size_t, std::vector<Bounds>> &collected14Bounds) {
   PRECONDITION(bnd1, "");
   PRECONDITION(bnd2, "");
@@ -1247,9 +1235,13 @@ void _collect14Bounds(
     return;
   }
 
-  double bl1 = accumData.bondLengths[bid1];
-  double bl2 = accumData.bondLengths[bid2];
-  double bl3 = accumData.bondLengths[bid3];
+  double blU1 = mmat->getUpperBound(aid1, atm2->getIdx());
+  double blU2 = mmat->getUpperBound(atm2->getIdx(), atm3->getIdx());
+  double blU3 = mmat->getUpperBound(atm3->getIdx(), aid4);
+
+  double blL1 = mmat->getLowerBound(aid1, atm2->getIdx());
+  double blL2 = mmat->getLowerBound(atm2->getIdx(), atm3->getIdx());
+  double blL3 = mmat->getLowerBound(atm3->getIdx(), aid4);
 
   double ba12 = accumData.bondAngles->getVal(bid1, bid2);
   double ba23 = accumData.bondAngles->getVal(bid2, bid3);
@@ -1297,22 +1289,30 @@ void _collect14Bounds(
 
   unsigned int nb = mol.getNumBonds();
 
+  double tol12 = scaleToleranceForLargeSP2(atm1, atm2, atm3);
+  double tol23 = scaleToleranceForLargeSP2(atm2, atm3, atm4);
+
+  auto [baL12, baU12] = getAngleRange(ba12, tol12);
+  auto [baL23, baU23] = getAngleRange(ba23, tol23);
+
   switch (torsionValue.type) {
     case TorsionType::CIS:
-      dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) +
-           torsionValue.extraDist.value_or(0.0) - GEN_DIST_TOL;
-      du = dl + 2 * GEN_DIST_TOL;
+      dl = RDGeom::compute14DistCis(blL1, blL2, blL3, baL12, baL23) +
+           torsionValue.extraDist.value_or(0.0);
+      du = RDGeom::compute14DistCis(blU1, blU2, blU3, baU12, baU23) +
+           torsionValue.extraDist.value_or(0.0);
       accumData.cisPaths.insert(getUnifiedId(bid1, bid2, bid3, nb));
       break;
     case TorsionType::TRANS:
-      dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) +
-           torsionValue.extraDist.value_or(0.0) - GEN_DIST_TOL;
-      du = dl + 2 * GEN_DIST_TOL;
+      dl = RDGeom::compute14DistTrans(blL1, blL2, blL3, baL12, baL23) +
+           torsionValue.extraDist.value_or(0.0);
+      du = RDGeom::compute14DistTrans(blU1, blU2, blU3, baU12, baU23) +
+           torsionValue.extraDist.value_or(0.0);
       accumData.transPaths.insert(getUnifiedId(bid1, bid2, bid3, nb));
       break;
     case TorsionType::FLEXIBLE:
-      dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
-      du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+      dl = RDGeom::compute14DistCis(blL1, blL2, blL3, baL12, baL23);
+      du = RDGeom::compute14DistTrans(blU1, blU2, blU3, baU12, baU23);
       // in highly-strained situations these can get mixed up:
       if (du < dl) {
         std::swap(du, dl);
@@ -1325,15 +1325,21 @@ void _collect14Bounds(
     case TorsionType::CUSTOM:
       CHECK_INVARIANT(torsionValue.value,
                       "Missing value for custom torsion type");
-      dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23,
-                                   *torsionValue.value) -
-           GEN_DIST_TOL;
-      du = dl + 2 * GEN_DIST_TOL;
+      dl = RDGeom::compute14Dist3D(blL1, blL2, blL3, baL12, baL23,
+                                   *torsionValue.value);
+      du = RDGeom::compute14Dist3D(blU1, blU2, blU3, baU12, baU23,
+                                   *torsionValue.value);
       break;
     default:  // NONE  => do not set the bounds => nothing more to do
       return;
   }
 
+  if (fabs(du - dl) < DIST12_DELTA) {
+    // just to maker sure that lower and upper bound are not too close to each
+    // other
+    dl -= GEN_DIST_TOL;
+    du += GEN_DIST_TOL;
+  }
   Path14Configuration path14 = {bid1, bid2,           bid3,
                                 aid1, atm2->getIdx(), atm3->getIdx(),
                                 aid4, torsionValue};
@@ -1341,8 +1347,6 @@ void _collect14Bounds(
   // we only overwrite bounds if they are not 1-2 nor 1-3 distances
   accumData.paths14.push_back(path14);
   accumData.visited14Bounds.set(pid);
-
-  // collected14Bounds.try_emplace(pid, std::vector<Bounds>{});
 
   collected14Bounds[pid].emplace_back(dl, du, aid1, aid4);
 }
@@ -1396,7 +1400,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         if (useMacrocycle14config && rSize >= minMacrocycleRingSize) {
           _collect14Bounds(mol, mol.getBondWithIdx(bid1),
                            mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
-                           Type14::MACROCYCLE_ALL_IN_SAME_RING, accumData,
+                           Type14::MACROCYCLE_ALL_IN_SAME_RING, accumData, mmat,
                            distMatrix,
                            {.useMacrocycle14Config = useMacrocycle14config},
                            collectedBounds);
@@ -1404,7 +1408,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         } else {
           _collect14Bounds(mol, mol.getBondWithIdx(bid1),
                            mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
-                           Type14::IN_RING, accumData, distMatrix,
+                           Type14::IN_RING, accumData, mmat, distMatrix,
                            {.ringSize = rSize}, collectedBounds);
           cisRingBondPairs.set(pid, rSize <= 8);
         }
@@ -1440,10 +1444,11 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     bidIsMacrocycle.find(bid2) != bidIsMacrocycle.end()) {
                   _collect14Bounds(mol, bnd1, bond, bnd3,
                                    Type14::MACROCYCLE_TWO_IN_SAME_RING,
-                                   accumData, distMatrix, {}, collectedBounds);
+                                   accumData, mmat, distMatrix, {},
+                                   collectedBounds);
                 } else {
                   _collect14Bounds(mol, bnd1, bond, bnd3,
-                                   Type14::TWO_IN_SAME_RING, accumData,
+                                   Type14::TWO_IN_SAME_RING, accumData, mmat,
                                    distMatrix,
                                    {.preferTrans = cisRingBondPairs[pid1] ||
                                                    cisRingBondPairs[pid2]},
@@ -1462,18 +1467,19 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                 // r2, then bid3 is either an external bond or
                 // belongs to a third ring r3.
                 _collect14Bounds(mol, bnd1, bond, bnd3,
-                                 Type14::TWO_IN_DIFF_RING, accumData,
+                                 Type14::TWO_IN_DIFF_RING, accumData, mmat,
                                  distMatrix, {}, collectedBounds);
               } else if (rinfo->numBondRings(bid2) > 0) {
                 // the middle bond is a ring bond and the other
                 // two do not belong to the same ring or are
                 // non-ring bonds
                 _collect14Bounds(mol, bnd1, bond, bnd3, Type14::SHARE_RING_BOND,
-                                 accumData, distMatrix, {}, collectedBounds);
+                                 accumData, mmat, distMatrix, {},
+                                 collectedBounds);
               } else {
                 // middle bond not a ring
                 _collect14Bounds(mol, bnd1, bond, bnd3, Type14::IN_CHAIN,
-                                 accumData, distMatrix,
+                                 accumData, mmat, distMatrix,
                                  {.forceTransAmides = forceTransAmides},
                                  collectedBounds);
               }
@@ -1802,6 +1808,7 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
   d3 = accumData.bondLengths[bid3];
   ang12 = accumData.bondAngles->getVal(bid1, bid2);
   ang23 = accumData.bondAngles->getVal(bid2, bid3);
+
   for (i = 0; i < nb; i++) {
     du = -1.0;
     dl = 0.0;
@@ -1821,8 +1828,6 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
       // check that this actually is a 1-5 contact:
       if (dmat[std::max(aid1, aid5) * mmat->numRows() + std::min(aid1, aid5)] <
           3.9) {
-        // std::cerr<<"skip: "<<aid1<<"-"<<aid5<<" because
-        // d="<<dmat[std::max(aid1,aid5)*mmat->numRows()+std::min(aid1,aid5)]<<std::endl;
         continue;
       }
 
@@ -1896,7 +1901,6 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
             du = MAX_UPPER;
           }
 
-          // std::cerr<<"3: "<<aid1<<"-"<<aid5<<std::endl;
           _checkAndSetBounds(aid1, aid5, dl, du, mmat);
           accumData.set15Atoms.set(pid);
         }

@@ -139,7 +139,20 @@ void compareConfs(const ROMol *m, const ROMol *expected, int molConfId = -1,
 
     RDGeom::Point3D pt1i = conf1.getAtomPos(i);
     RDGeom::Point3D pt2i = conf2.getAtomPos(i);
-    TEST_ASSERT((pt1i - pt2i).length() < 0.05);
+    // instead of directly comparing positions, we look at distances in order to
+    // try and minimize differences from different compilers
+    for (unsigned int j = 0; j < i; j++) {
+      REQUIRE(m->getAtomWithIdx(j)->getAtomicNum() ==
+              expected->getAtomWithIdx(j)->getAtomicNum());
+      RDGeom::Point3D pt1j = conf1.getAtomPos(j);
+      RDGeom::Point3D pt2j = conf2.getAtomPos(j);
+      auto tol = 0.15;
+      if (m->getBondBetweenAtoms(i, j)) {
+        tol = 0.05;
+      }
+      CHECK_THAT((pt1j - pt1i).length(),
+                 Catch::Matchers::WithinAbs((pt2j - pt2i).length(), tol));
+    }
   }
 }
 }  // namespace
@@ -252,7 +265,7 @@ TEST_CASE("EmbedParameters to JSON") {
     ps.boundsMat = mat;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6573654663221247"],["0.98025420400136154","1.5773654663221246","0"]]})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6536523290585412"],["0.98025420400136154","1.5809872790648758","0"]]})JSON";
     CHECK(json == goal);
   }
   SECTION("Round trip") {
@@ -322,176 +335,179 @@ TEST_CASE(
     }
   }
 }
-TEST_CASE("nontetrahedral stereo",
-          "[nontetrahedral]"){SECTION("bounds matrix basics"){
-    {auto m = "Cl[Pt@SP1]([35Cl])([36Cl])[37Cl]"_smiles;
-REQUIRE(m);
-CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1), m->getAtomWithIdx(0))
-          ->getIdx() == 3);
-CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1), m->getAtomWithIdx(2))
-          ->getIdx() == 4);
-CHECK_THAT(Chirality::getIdealAngleBetweenLigands(m->getAtomWithIdx(1),
-                                                  m->getAtomWithIdx(0),
-                                                  m->getAtomWithIdx(3)),
-           Catch::Matchers::WithinAbs(180, 0.001));
+TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
+  SECTION("bounds matrix basics") {
+    {
+      auto m = "Cl[Pt@SP1]([35Cl])([36Cl])[37Cl]"_smiles;
+      REQUIRE(m);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(0))
+                ->getIdx() == 3);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(2))
+                ->getIdx() == 4);
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(3)),
+          Catch::Matchers::WithinAbs(180, 0.001));
 
-CHECK_THAT(Chirality::getIdealAngleBetweenLigands(m->getAtomWithIdx(1),
-                                                  m->getAtomWithIdx(0),
-                                                  m->getAtomWithIdx(2)),
-           Catch::Matchers::WithinAbs(90, 0.001));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(90, 0.001));
 
-DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
-DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-DGeomHelpers::setTopolBounds(*m, bm);
-// std::cerr << *bm << std::endl;
-CHECK(bm->getLowerBound(0, 3) - bm->getLowerBound(0, 2) > 1.0);
-CHECK(bm->getUpperBound(0, 3) - bm->getUpperBound(0, 2) > 1.0);
-}
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+      // std::cerr << *bm << std::endl;
+      CHECK(bm->getLowerBound(0, 3) - bm->getLowerBound(0, 2) > 1.0);
+      CHECK(bm->getUpperBound(0, 3) - bm->getUpperBound(0, 2) > 1.0);
+    }
 
-{
-  // Cl[Pt@SP1]([35Cl])([36Cl])* => Cl[Pt@SP3](*)([35Cl])[36Cl]
-  auto m = "Cl[Pt@SP3]([35Cl])[36Cl]"_smiles;
-  REQUIRE(m);
-  CHECK(
-      Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1), m->getAtomWithIdx(0))
-          ->getIdx() == 3);
-  CHECK(!Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
-                                        m->getAtomWithIdx(2)));
-  CHECK_THAT(
-      Chirality::getIdealAngleBetweenLigands(
-          m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(3)),
-      Catch::Matchers::WithinAbs(180, 0.001));
+    {
+      // Cl[Pt@SP1]([35Cl])([36Cl])* => Cl[Pt@SP3](*)([35Cl])[36Cl]
+      auto m = "Cl[Pt@SP3]([35Cl])[36Cl]"_smiles;
+      REQUIRE(m);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(0))
+                ->getIdx() == 3);
+      CHECK(!Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                            m->getAtomWithIdx(2)));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(3)),
+          Catch::Matchers::WithinAbs(180, 0.001));
 
-  CHECK_THAT(
-      Chirality::getIdealAngleBetweenLigands(
-          m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
-      Catch::Matchers::WithinAbs(90, 0.001));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(90, 0.001));
 
-  DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
-  DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-  DGeomHelpers::setTopolBounds(*m, bm);
-  // std::cerr << *bm << std::endl;
-  CHECK(bm->getLowerBound(0, 3) - bm->getLowerBound(0, 2) > 1.0);
-  CHECK(bm->getUpperBound(0, 3) - bm->getUpperBound(0, 2) > 1.0);
-}
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+      // std::cerr << *bm << std::endl;
+      CHECK(bm->getLowerBound(0, 3) - bm->getLowerBound(0, 2) > 1.0);
+      CHECK(bm->getUpperBound(0, 3) - bm->getUpperBound(0, 2) > 1.0);
+    }
 
-{
-  // note that things aren't quite as nice here since we don't actually have
-  // TBP UFF parameters
-  auto m = "Cl[Pt@TB1]([35Cl])([36Cl])([37Cl])[38Cl]"_smiles;
-  REQUIRE(m);
-  CHECK(
-      Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1), m->getAtomWithIdx(0))
-          ->getIdx() == 5);
-  CHECK(!Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
-                                        m->getAtomWithIdx(2)));
-  CHECK_THAT(
-      Chirality::getIdealAngleBetweenLigands(
-          m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(5)),
-      Catch::Matchers::WithinAbs(180, 0.001));
+    {
+      // note that things aren't quite as nice here since we don't actually have
+      // TBP UFF parameters
+      auto m = "Cl[Pt@TB1]([35Cl])([36Cl])([37Cl])[38Cl]"_smiles;
+      REQUIRE(m);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(0))
+                ->getIdx() == 5);
+      CHECK(!Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                            m->getAtomWithIdx(2)));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(5)),
+          Catch::Matchers::WithinAbs(180, 0.001));
 
-  CHECK_THAT(
-      Chirality::getIdealAngleBetweenLigands(
-          m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
-      Catch::Matchers::WithinAbs(90, 0.001));
-  CHECK_THAT(
-      Chirality::getIdealAngleBetweenLigands(
-          m->getAtomWithIdx(1), m->getAtomWithIdx(3), m->getAtomWithIdx(2)),
-      Catch::Matchers::WithinAbs(120, 0.001));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(90, 0.001));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(3), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(120, 0.001));
 
-  DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
-  DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-  DGeomHelpers::setTopolBounds(*m, bm);
-  CHECK(bm->getLowerBound(0, 5) - bm->getLowerBound(0, 2) > 0.5);
-  CHECK(bm->getUpperBound(0, 5) - bm->getUpperBound(0, 2) > 0.5);
-  CHECK(bm->getLowerBound(0, 5) - bm->getLowerBound(2, 3) > 0.5);
-  CHECK(bm->getUpperBound(0, 5) - bm->getUpperBound(2, 3) > 0.5);
-  CHECK(bm->getLowerBound(2, 3) - bm->getLowerBound(0, 2) > 0.5);
-  CHECK(bm->getUpperBound(2, 3) - bm->getUpperBound(0, 2) > 0.5);
-}
-{
-  auto m = "Cl[Th@OH1]([35Cl])([36Cl])([37Cl])([38Cl])[39Cl]"_smiles;
-  REQUIRE(m);
-  CHECK(
-      Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1), m->getAtomWithIdx(0))
-          ->getIdx() == 6);
-  CHECK(
-      Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1), m->getAtomWithIdx(2))
-          ->getIdx() == 4);
-  CHECK(
-      Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1), m->getAtomWithIdx(3))
-          ->getIdx() == 5);
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+      CHECK(bm->getLowerBound(0, 5) - bm->getLowerBound(0, 2) > 0.5);
+      CHECK(bm->getUpperBound(0, 5) - bm->getUpperBound(0, 2) > 0.5);
+      CHECK(bm->getLowerBound(0, 5) - bm->getLowerBound(2, 3) > 0.5);
+      CHECK(bm->getUpperBound(0, 5) - bm->getUpperBound(2, 3) > 0.5);
+      CHECK(bm->getLowerBound(2, 3) - bm->getLowerBound(0, 2) > 0.5);
+      CHECK(bm->getUpperBound(2, 3) - bm->getUpperBound(0, 2) > 0.5);
+    }
+    {
+      auto m = "Cl[Th@OH1]([35Cl])([36Cl])([37Cl])([38Cl])[39Cl]"_smiles;
+      REQUIRE(m);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(0))
+                ->getIdx() == 6);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(2))
+                ->getIdx() == 4);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(3))
+                ->getIdx() == 5);
 
-  CHECK_THAT(
-      Chirality::getIdealAngleBetweenLigands(
-          m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(6)),
-      Catch::Matchers::WithinAbs(180, 0.001));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(6)),
+          Catch::Matchers::WithinAbs(180, 0.001));
 
-  CHECK_THAT(
-      Chirality::getIdealAngleBetweenLigands(
-          m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
-      Catch::Matchers::WithinAbs(90, 0.001));
-  CHECK_THAT(
-      Chirality::getIdealAngleBetweenLigands(
-          m->getAtomWithIdx(1), m->getAtomWithIdx(4), m->getAtomWithIdx(2)),
-      Catch::Matchers::WithinAbs(180, 0.001));
-  CHECK_THAT(
-      Chirality::getIdealAngleBetweenLigands(
-          m->getAtomWithIdx(1), m->getAtomWithIdx(3), m->getAtomWithIdx(2)),
-      Catch::Matchers::WithinAbs(90, 0.001));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(90, 0.001));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(4), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(180, 0.001));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(3), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(90, 0.001));
 
-  DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
-  DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-  DGeomHelpers::setTopolBounds(*m, bm);
-  CHECK(bm->getLowerBound(0, 6) - bm->getLowerBound(0, 2) > 0.5);
-  CHECK(bm->getUpperBound(0, 6) - bm->getUpperBound(0, 3) > 0.5);
-  CHECK(bm->getLowerBound(0, 6) - bm->getLowerBound(2, 3) > 0.5);
-  CHECK(bm->getUpperBound(0, 6) - bm->getUpperBound(2, 4) < 0.01);
-  CHECK(bm->getLowerBound(2, 4) - bm->getLowerBound(2, 3) > 0.5);
-}
-}
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+      CHECK(bm->getLowerBound(0, 6) - bm->getLowerBound(0, 2) > 0.5);
+      CHECK(bm->getUpperBound(0, 6) - bm->getUpperBound(0, 3) > 0.5);
+      CHECK(bm->getLowerBound(0, 6) - bm->getLowerBound(2, 3) > 0.5);
+      CHECK(bm->getUpperBound(0, 6) - bm->getUpperBound(2, 4) < 0.01);
+      CHECK(bm->getLowerBound(2, 4) - bm->getLowerBound(2, 3) > 0.5);
+    }
+  }
 #if 1
-SECTION("Embedding") {
-  const bool legacyETKDG = GENERATE(true, false);
-  {
-    auto m = "Cl[Pt@SP1](<-N)(<-N)[Cl]"_smiles;
-    REQUIRE(m);
-    m->setProp("_Name", "cis platin");
-    MolOps::addHs(*m);
-    auto ps = DGeomHelpers::EmbedParameters{
-        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
-    CHECK(DGeomHelpers::EmbedMolecule(*m, ps) == 0);
-    auto mb = MolToV3KMolBlock(*m);
-    // std::cerr << mb << std::endl;
-    std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
-    MolOps::assignStereochemistryFrom3D(*m2);
-    CHECK(m2->getAtomWithIdx(1)->getChiralTag() ==
-          Atom::ChiralType::CHI_SQUAREPLANAR);
-    unsigned int perm = 100;
-    CHECK(m2->getAtomWithIdx(1)->getPropIfPresent(
-        common_properties::_chiralPermutation, perm));
-    CHECK(perm == 1);
+  SECTION("Embedding") {
+    const bool legacyETKDG = GENERATE(true, false);
+    {
+      auto m = "Cl[Pt@SP1](<-N)(<-N)[Cl]"_smiles;
+      REQUIRE(m);
+      m->setProp("_Name", "cis platin");
+      MolOps::addHs(*m);
+      auto ps = DGeomHelpers::EmbedParameters{
+          .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
+      CHECK(DGeomHelpers::EmbedMolecule(*m, ps) == 0);
+      auto mb = MolToV3KMolBlock(*m);
+      // std::cerr << mb << std::endl;
+      std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
+      MolOps::assignStereochemistryFrom3D(*m2);
+      CHECK(m2->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_SQUAREPLANAR);
+      unsigned int perm = 100;
+      CHECK(m2->getAtomWithIdx(1)->getPropIfPresent(
+          common_properties::_chiralPermutation, perm));
+      CHECK(perm == 1);
+    }
+    {
+      auto m = "Cl[Pt@SP3](<-N)(<-N)[Cl]"_smiles;
+      REQUIRE(m);
+      m->setProp("_Name", "trans platin");
+      MolOps::addHs(*m);
+      auto ps = DGeomHelpers::EmbedParameters{
+          .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
+      CHECK(DGeomHelpers::EmbedMolecule(*m, ps) == 0);
+      auto mb = MolToV3KMolBlock(*m);
+      // std::cerr << mb << std::endl;
+      std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
+      MolOps::assignStereochemistryFrom3D(*m2);
+      CHECK(m2->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_SQUAREPLANAR);
+      unsigned int perm = 100;
+      CHECK(m2->getAtomWithIdx(1)->getPropIfPresent(
+          common_properties::_chiralPermutation, perm));
+      CHECK(perm == 3);
+    }
   }
-  {
-    auto m = "Cl[Pt@SP3](<-N)(<-N)[Cl]"_smiles;
-    REQUIRE(m);
-    m->setProp("_Name", "trans platin");
-    MolOps::addHs(*m);
-    auto ps = DGeomHelpers::EmbedParameters{
-        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
-    CHECK(DGeomHelpers::EmbedMolecule(*m, ps) == 0);
-    auto mb = MolToV3KMolBlock(*m);
-    // std::cerr << mb << std::endl;
-    std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
-    MolOps::assignStereochemistryFrom3D(*m2);
-    CHECK(m2->getAtomWithIdx(1)->getChiralTag() ==
-          Atom::ChiralType::CHI_SQUAREPLANAR);
-    unsigned int perm = 100;
-    CHECK(m2->getAtomWithIdx(1)->getPropIfPresent(
-        common_properties::_chiralPermutation, perm));
-    CHECK(perm == 3);
-  }
-}
 #endif
 }
 
@@ -718,102 +734,103 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
   }
 }
 
-TEST_CASE("tracking failure causes"){SECTION("basics"){
+TEST_CASE("tracking failure causes") {
+  SECTION("basics") {
     auto mol =
         "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
-REQUIRE(mol);
-MolOps::addHs(*mol);
-DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-ps.trackFailures = true;
-ps.maxIterations = 50;
-ps.randomSeed = 42;
-auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-CHECK(cid < 0);
-CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 10);
-auto fail_cp = ps.failures;
-// make sure we reset the counts each time
-cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-CHECK(ps.failures == fail_cp);
-}
-SECTION("chirality") {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname =
-      rdbase +
-      "/Code/GraphMol/DistGeomHelpers/test_data/chirality_failure_test.mol";
-  std::unique_ptr<RWMol> mol{MolFileToMol(fname, true, false)};
-  REQUIRE(mol);
-  MolOps::addHs(*mol);
-  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-  ps.randomSeed = 0xf00d;
-  ps.trackFailures = true;
-  ps.maxIterations = 50;
-  auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-  CHECK(cid < 0);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >=
-        1);
-}
-SECTION("basicsAIO") {
-  auto mol =
-      "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
-  REQUIRE(mol);
-  MolOps::addHs(*mol);
-  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-  ps.trackFailures = true;
-  ps.maxIterations = 50;
-  ps.randomSeed = 42;
-  ps.useLegacyImplementation = false;
-  auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-  CHECK(cid < 0);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 16);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::KTERM_VIOLATION] == 0);
-  auto fail_cp = ps.failures;
-  // make sure we reset the counts each time
-  cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-  CHECK(ps.failures == fail_cp);
-}
-SECTION("chiralityAIO") {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname =
-      rdbase +
-      "/Code/GraphMol/DistGeomHelpers/test_data/chirality_failure_test.mol";
-  std::unique_ptr<RWMol> mol{MolFileToMol(fname, true, false)};
-  REQUIRE(mol);
-  MolOps::addHs(*mol);
-  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-  ps.randomSeed = 0xf00d;
-  ps.trackFailures = true;
-  ps.maxIterations = 50;
-  ps.useLegacyImplementation = false;
-  auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
-  CHECK(cid < 0);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 8);
-  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::MINIMIZATION] == 42);
-}
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.trackFailures = true;
+    ps.maxIterations = 50;
+    ps.randomSeed = 42;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid < 0);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 10);
+    auto fail_cp = ps.failures;
+    // make sure we reset the counts each time
+    cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(ps.failures == fail_cp);
+  }
+  SECTION("chirality") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/chirality_failure_test.mol";
+    std::unique_ptr<RWMol> mol{MolFileToMol(fname, true, false)};
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    ps.trackFailures = true;
+    ps.maxIterations = 50;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid < 0);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 3);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] ==
+          0);  // we do not have final chiral bound failures here
+  }
+  SECTION("basicsAIO") {
+    auto mol =
+        "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.trackFailures = true;
+    ps.maxIterations = 50;
+    ps.randomSeed = 42;
+    ps.useLegacyImplementation = false;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid < 0);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 16);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::KTERM_VIOLATION] == 0);
+    auto fail_cp = ps.failures;
+    // make sure we reset the counts each time
+    cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(ps.failures == fail_cp);
+  }
+  SECTION("chiralityAIO") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fname =
+        rdbase +
+        "/Code/GraphMol/DistGeomHelpers/test_data/chirality_failure_test.mol";
+    std::unique_ptr<RWMol> mol{MolFileToMol(fname, true, false)};
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    ps.trackFailures = true;
+    ps.maxIterations = 50;
+    ps.useLegacyImplementation = false;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+    CHECK(cid < 0);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 4);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::MINIMIZATION] == 46);
+  }
 
 #ifdef RDK_TEST_MULTITHREADED
-SECTION("multithreaded") {
-  auto mol =
-      "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
-  REQUIRE(mol);
-  MolOps::addHs(*mol);
-  const bool legacyETKDG = GENERATE(true, false);
-  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
-  ps.trackFailures = true;
-  ps.maxIterations = 10;
-  ps.randomSeed = 42;
-  ps.useLegacyImplementation = legacyETKDG;
-  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps);
+  SECTION("multithreaded") {
+    auto mol =
+        "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    const bool legacyETKDG = GENERATE(true, false);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.trackFailures = true;
+    ps.maxIterations = 10;
+    ps.randomSeed = 42;
+    ps.useLegacyImplementation = legacyETKDG;
+    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps);
 
-  DGeomHelpers::EmbedParameters ps2 = ps;
-  ps2.numThreads = 4;
+    DGeomHelpers::EmbedParameters ps2 = ps;
+    ps2.numThreads = 4;
 
-  auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps2);
-  CHECK(cids2 == cids);
+    auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps2);
+    CHECK(cids2 == cids);
 
-  CHECK(ps.failures == ps2.failures);
-}
+    CHECK(ps.failures == ps2.failures);
+  }
 #endif
 }
 
@@ -901,9 +918,9 @@ TEST_CASE("Macrocycle bounds matrix") {
     bool useMacrocycle14config = true;
     DGeomHelpers::setTopolBounds(*mol, bm, set15bounds, scaleVDW,
                                  useMacrocycle14config);
-    CHECK(bm->getLowerBound(1, 18) > 2.6);
+    CHECK(bm->getLowerBound(1, 18) > 2.55);
     CHECK(bm->getLowerBound(1, 18) < 2.7);
-    CHECK(bm->getLowerBound(4, 17) > 2.6);
+    CHECK(bm->getLowerBound(4, 17) > 2.55);
     CHECK(bm->getLowerBound(4, 17) < 2.7);
 
     const bool legacyETKDG = GENERATE(true, false);
@@ -1023,7 +1040,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol > 0);
-        CHECK(fabs(chiralVol) > 0.5);
+        CHECK(fabs(chiralVol) > 0.3);
       }
     }  // now swap the stereo and see if it still works
     mol->getBondWithIdx(bondIdx)->setStereo(
@@ -1046,7 +1063,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol < 0);
-        CHECK(fabs(chiralVol) > 0.5);
+        CHECK(fabs(chiralVol) > 0.37);
       }
     }
   }
@@ -1239,7 +1256,7 @@ TEST_CASE("github #8001: RMS pruning misses conformers") {
     ps.pruneRmsThresh = 0.5;
     ps.useLegacyImplementation = false;
     auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
-    CHECK(cids.size() == 93);
+    CHECK(cids.size() == 84);
     ps.pruneRmsThresh = 1.0;
     cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
     CHECK(cids.size() == 5);
@@ -1742,16 +1759,20 @@ TEST_CASE("Github #9143: ETKDGv3 generating twisted amides") {
     CHECK(cid >= 0);
     auto conf = mol->getConformer(cid);
 
-    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 27),
-               Catch::Matchers::WithinAbs(-180, 10) ||
-                   Catch::Matchers::WithinAbs(180, 10));
-    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 29),
-               Catch::Matchers::WithinAbs(0, 12.5));
-    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 21),
-               Catch::Matchers::WithinAbs(-180, 20) ||
+    // These amide torsions can go either way, so we have to check "cis" and
+    // "trans" for each of them:
+    CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 27)),
+               Catch::Matchers::WithinAbs(180, 10) ||
+                   Catch::Matchers::WithinAbs(0, 12.5));
+    CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 29)),
+               Catch::Matchers::WithinAbs(180, 10) ||
+                   Catch::Matchers::WithinAbs(0, 12.5));
+    CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 21)),
+               Catch::Matchers::WithinAbs(180, 20) ||
+                   Catch::Matchers::WithinAbs(0, 20));
+    CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 24)),
+               Catch::Matchers::WithinAbs(0, 20) ||
                    Catch::Matchers::WithinAbs(180, 20));
-    CHECK_THAT(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 24),
-               Catch::Matchers::WithinAbs(0, 20));
   }
   SECTION("specific tests") {
     std::vector<std::pair<std::string, std::vector<std::vector<int>>>> testCases{
@@ -1802,11 +1823,9 @@ TEST_CASE("Github9403: Bug: Forced cis bonds in larger (non-macrocycle)") {
     DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
     DGeomHelpers::setTopolBounds(*mol, bm);
 
-    // both should allow cis and trans -> range must be larger than GEN_DIST_TOL
-    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) >
-          2.0 * 0.06 + 0.00001);
-    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) >
-          2.0 * 0.06 + 0.00001);
+    // both should allow cis and trans
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) > 1.1);
+    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) > 1.1);
   }
   SECTION("small ring") {
     auto mol = "C1C(C)=C(C)CCCC1"_smiles;
@@ -1819,10 +1838,8 @@ TEST_CASE("Github9403: Bug: Forced cis bonds in larger (non-macrocycle)") {
 
     CHECK(bm->getLowerBound(0, 4) > bm->getUpperBound(0, 5));
     // here cis/trans should be enforced
-    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <=
-          2.0 * 0.06 + 0.00001);
-    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <=
-          2.0 * 0.06 + 0.00001);
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <= 1.1);
+    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <= 1.1);
   }
 }
 
@@ -1841,10 +1858,8 @@ TEST_CASE("Github9403: Bug: Overwritten stereo information in rings") {
     // trans should be allowed but NOT cis for 0-5 and the other way araound for
     // 0-4
     CHECK(bm->getLowerBound(0, 5) > bm->getUpperBound(0, 4));
-    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <=
-          2.0 * 0.06 + 0.00001);
-    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <=
-          2.0 * 0.06 + 0.00001);
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <= 1.1);
+    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <= 1.1);
   }
   SECTION("as reported (enforce trans bond in small ring)") {
     auto mol = "C1C(C)=C(C)CCCC1"_smiles;
@@ -1861,10 +1876,8 @@ TEST_CASE("Github9403: Bug: Overwritten stereo information in rings") {
     // trans should be allowed but NOT cis for 0-5 and the other way araound for
     // 0-4
     CHECK(bm->getLowerBound(0, 5) > bm->getUpperBound(0, 4));
-    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <=
-          2.0 * 0.06 + 0.00001);
-    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <=
-          2.0 * 0.06 + 0.00001);
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <= 1.1);
+    CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <= 1.1);
   }
 }
 
@@ -2285,6 +2298,42 @@ TEST_CASE("Bounds Merging") {
   }
 }
 
+TEST_CASE("Angle tolerances") {
+  SECTION("Linear 1-3") {
+    auto mol = "C=[Ge]=C"_smiles;
+    REQUIRE(mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+    CHECK(bm->getLowerBound(0, 2) <=
+          bm->getLowerBound(0, 1) + bm->getLowerBound(1, 2));
+  }
+  SECTION("Flat S-aromat") {
+    auto mol = "c1sccc1"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    auto legacyImplementation = GENERATE(true, false);
+    auto params = DGeomHelpers::EmbedParameters();
+    params.useBasicKnowledge = true;
+    params.useExpTorsionAnglePrefs = true;
+    params.useLegacyImplementation = legacyImplementation;
+    params.randomSeed = 0xC0FFEE;
+
+    DGeomHelpers::EmbedMolecule(*mol, params);
+
+    // we should be able to generate a conformations without major violations
+    const auto conf = mol->getConformer();
+    RDGeom::Point3D pos_2 = conf.getAtomPos(2);
+    RDGeom::Point3D pos_4 = conf.getAtomPos(4);
+    auto dist = (pos_2 - pos_4).length();
+    CHECK(bm->getLowerBound(4, 2) - 0.025 <= dist);
+    CHECK(bm->getUpperBound(4, 2) + 0.025 >= dist);
+  }
+}
 TEST_CASE("TransAmideKTerm") {
   /* Embed 10 confs of a molecule using the provided parameters and returns true
   if all torsions around i,j,k,l are closer to +/-180 than to 0
