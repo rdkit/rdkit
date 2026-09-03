@@ -29,6 +29,16 @@ namespace CIPLabeler {
 
 namespace {
 
+enum class Type : uint8_t {
+  Cv4D3,       // =C(X)-
+  Nv3D2,       // =N-
+  Nv4D3Plus,   // =[N+]<
+  Nv2D2Minus,  // -[N-]-
+  Cv3D3Minus,  // -[C(X)-]-
+  Ov3D2Plus,   // -[O+]=
+  Other
+};
+
 // Initialize atom types for ring atoms, looking at connectivity,
 // bond orders, atomic number and charge.
 bool SeedTypes(std::vector<Type> &types, const CIPMol &mol) {

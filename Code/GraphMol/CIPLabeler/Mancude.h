@@ -52,16 +52,6 @@ class FractionalAtomicNum {
   int d_denominator = 0;
 };
 
-enum class Type : uint8_t {
-  Cv4D3,       // =C(X)-
-  Nv3D2,       // =N-
-  Nv4D3Plus,   // =[N+]<
-  Nv2D2Minus,  // -[N-]-
-  Cv3D3Minus,  // -[C(X)-]-
-  Ov3D2Plus,   // -[O+]=
-  Other
-};
-
 /**
  * Calculate fractional atomic numbers for all atoms in the mol.
  * Using fractional atomic numbers makes sure that atoms in rings
