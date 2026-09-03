@@ -96,19 +96,21 @@ bool SeedTypes(std::vector<Type> &types, const CIPMol &mol) {
   return result;
 }
 
-// Reset atom types for atoms that have been given a type,
-// but cannot be part of a mancude system (more than one
-// typed neighbor is required for resonance to be possible)
+// Reset (to Type::Other) atom types for atoms that have been
+//  given a type but cannot be part of a mancude system (more
+//  than one typed neighbor is required for resonance to be possible)
 void RelaxTypes(std::vector<Type> &types, const CIPMol &mol) {
   std::list<Atom *> queue;
-  auto counts = std::vector<int>(mol.getNumAtoms());
+  std::vector<int> counts(mol.getNumAtoms(), 0);
   for (auto atom : mol.atoms()) {
     const auto aidx = atom->getIdx();
     if (types[aidx] == Type::Other) {
+      // This is already Type::Other, no need to reset it!
       continue;
     }
     for (const auto &bond : mol.getBonds(atom)) {
       if (!mol.isInRing(bond)) {
+        // No non-ring bonds are Type::Other already
         continue;
       }
       const auto nbr = bond->getOtherAtom(atom);
@@ -117,6 +119,8 @@ void RelaxTypes(std::vector<Type> &types, const CIPMol &mol) {
       }
     }
 
+    // Atoms that do not have at least two typed neighbors
+    // go to the queue to be reset to Type::Other.
     if (counts[aidx] <= 1) {
       queue.push_back(atom);
     }
@@ -125,23 +129,32 @@ void RelaxTypes(std::vector<Type> &types, const CIPMol &mol) {
   while (!queue.empty()) {
     const auto atom = queue.front();
     queue.pop_front();
-    const auto aidx = atom->getIdx();
-    if (types[aidx] != Type::Other) {
-      types[aidx] = Type::Other;
 
-      for (const auto &bond : mol.getBonds(atom)) {
-        if (!mol.isInRing(bond)) {
-          continue;
-        }
-        const auto nbr = bond->getOtherAtom(atom);
-        const auto nbridx = nbr->getIdx();
-        if (types[nbridx] == Type::Other) {
-          continue;
-        }
-        --counts[nbridx];
-        if (counts[nbridx] == 1) {
-          queue.push_back(nbr);
-        }
+    const auto aidx = atom->getIdx();
+    if (types[aidx] == Type::Other) {
+      // shouldn't happen, we only enqueue
+      // typed atoms
+      continue;
+    }
+
+    // the actual reset
+    types[aidx] = Type::Other;
+
+    // Update the counts for the neighbors, and check
+    // whether they need to be reset too.
+    for (const auto &bond : mol.getBonds(atom)) {
+      if (!mol.isInRing(bond)) {
+        continue;
+      }
+      const auto nbr = bond->getOtherAtom(atom);
+      const auto nbridx = nbr->getIdx();
+      if (types[nbridx] == Type::Other) {
+        continue;
+      }
+
+      --counts[nbridx];
+      if (counts[nbridx] == 1) {
+        queue.push_back(nbr);
       }
     }
   }
