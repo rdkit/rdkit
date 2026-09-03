@@ -13,6 +13,7 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/stl/optional.h>
 
 #include <ForceField/nbWrap/PyForceField.h>
 #include <GraphMol/GraphMol.h>

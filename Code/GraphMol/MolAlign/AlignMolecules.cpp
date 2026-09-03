@@ -547,8 +547,10 @@ std::vector<double> getAllConformerBestRMSToRef(
       }
     }
     res.resize(pairs.size());
-    for (const auto &[index, value] : rmsds | std::views::join) {
-      res[index] = value;
+    for (const auto &tres : rmsds) {
+      for (const auto &[key, value] : tres) {
+        res[key] = value;
+      }
     }
   }
 #endif
