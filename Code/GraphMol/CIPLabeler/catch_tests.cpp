@@ -161,6 +161,68 @@ TEST_CASE("Digraph", "[accurateCIP]") {
   check_incoming_edge_count(current_root);
 }
 
+TEST_CASE("Mancude fractional atomic numbers", "[accurateCIP]") {
+  SECTION("negative resonance component gets one final fraction") {
+    auto mol = "[CH-]1C=CC=C1"_smiles;
+    CIPLabeler::CIPMol cipmol(*mol);
+
+    for (const auto atom : mol->atoms()) {
+      const auto &frac = cipmol.getFractionalAtomicNum(atom);
+      CHECK(frac.numerator() == 24);
+      CHECK(frac.denominator() == 5);
+      CHECK(frac.value() == boost::rational<int>(24, 5));
+      CHECK(frac.isAveraged());
+    }
+  }
+
+  SECTION("unreduced denominator remains available to graph expansion") {
+    auto mol = "[CH-]1C=C1"_smiles;
+    CIPLabeler::CIPMol cipmol(*mol);
+
+    for (const auto atom : mol->atoms()) {
+      const auto &frac = cipmol.getFractionalAtomicNum(atom);
+      CHECK(frac.numerator() == 12);
+      CHECK(frac.denominator() == 3);
+      CHECK(frac.value() == boost::rational<int>(4, 1));
+      CHECK(frac.isAveraged());
+    }
+
+    Digraph graph(cipmol, cipmol.getAtom(1));
+    Node *negative_node = nullptr;
+    for (const auto edge : graph.getOriginalRoot()->getEdges()) {
+      if (edge->isBeg(graph.getOriginalRoot()) &&
+          edge->getEnd()->getAtom() == cipmol.getAtom(0) &&
+          !edge->getEnd()->isDuplicate()) {
+        negative_node = edge->getEnd();
+        break;
+      }
+    }
+    REQUIRE(negative_node != nullptr);
+
+    int bond_duplicates = 0;
+    for (const auto edge : negative_node->getEdges()) {
+      const auto end = edge->getEnd();
+      if (edge->isBeg(negative_node) &&
+          end->isSet(Node::BOND_DUPLICATE)) {
+        ++bond_duplicates;
+        CHECK(end->getAtomicNumFraction() == boost::rational<int>(4, 1));
+      }
+    }
+    CHECK(bond_duplicates == 1);
+  }
+
+  SECTION("typed atom outside the ring two-core is relaxed") {
+    auto mol = "[N-]1CCC1"_smiles;
+    CIPLabeler::CIPMol cipmol(*mol);
+
+    const auto &frac = cipmol.getFractionalAtomicNum(cipmol.getAtom(0));
+    CHECK(frac.numerator() == 7);
+    CHECK(frac.denominator() == 1);
+    CHECK(frac.value() == boost::rational<int>(7, 1));
+    CHECK_FALSE(frac.isAveraged());
+  }
+}
+
 TEST_CASE("Rule1a", "[accurateCIP]") {
   SECTION("Compare equal") {
     auto mol = "COC"_smiles;

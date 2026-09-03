@@ -21,7 +21,7 @@ CIPMol::CIPMol(ROMol &mol) : d_mol{mol} {
   std::ranges::copy(mol.bonds(), std::back_inserter(d_bonds));
 }
 
-boost::rational<int> CIPMol::getFractionalAtomicNum(Atom *atom) const {
+const FractionalAtomicNum &CIPMol::getFractionalAtomicNum(Atom *atom) const {
   PRECONDITION(atom, "bad atom")
   if (d_atomnums.empty()) {
     const_cast<CIPMol *>(this)->d_atomnums = calcFracAtomNums(*this);

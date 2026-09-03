@@ -104,24 +104,40 @@ void RelaxTypes(std::vector<Type> &types, const CIPMol &mol) {
   auto counts = std::vector<int>(mol.getNumAtoms());
   for (auto atom : mol.atoms()) {
     const auto aidx = atom->getIdx();
-    for (const auto &nbr : mol.getNeighbors(atom)) {
+    if (types[aidx] == Type::Other) {
+      continue;
+    }
+    for (const auto &bond : mol.getBonds(atom)) {
+      if (!mol.isInRing(bond)) {
+        continue;
+      }
+      const auto nbr = bond->getOtherAtom(atom);
       if (types[nbr->getIdx()] != Type::Other) {
         ++counts[aidx];
       }
     }
 
-    if (counts[aidx] == 1) {
+    if (counts[aidx] <= 1) {
       queue.push_back(atom);
     }
   }
 
-  for (const auto &atom : queue) {
+  while (!queue.empty()) {
+    const auto atom = queue.front();
+    queue.pop_front();
     const auto aidx = atom->getIdx();
     if (types[aidx] != Type::Other) {
       types[aidx] = Type::Other;
 
-      for (auto &nbr : mol.getNeighbors(atom)) {
-        auto nbridx = nbr->getIdx();
+      for (const auto &bond : mol.getBonds(atom)) {
+        if (!mol.isInRing(bond)) {
+          continue;
+        }
+        const auto nbr = bond->getOtherAtom(atom);
+        const auto nbridx = nbr->getIdx();
+        if (types[nbridx] == Type::Other) {
+          continue;
+        }
         --counts[nbridx];
         if (counts[nbridx] == 1) {
           queue.push_back(nbr);
@@ -174,9 +190,9 @@ int VisitParts(std::vector<int> &parts, const std::vector<Type> &types,
 
 }  // namespace
 
-std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
+std::vector<FractionalAtomicNum> calcFracAtomNums(const CIPMol &mol) {
   const auto num_atoms = mol.getNumAtoms();
-  std::vector<boost::rational<int>> fractions;
+  std::vector<FractionalAtomicNum> fractions;
   fractions.reserve(num_atoms);
   for (const auto &atom : mol.atoms()) {
     fractions.emplace_back(atom->getAtomicNum(), 1);
@@ -194,8 +210,7 @@ std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
     auto parts = std::vector<int>(num_atoms);
     int numparts = VisitParts(parts, types, mol);
 
-    auto resparts = std::vector<int>(numparts);
-    int numres = 0;
+    auto resonance_parts = std::vector<bool>(numparts + 1);
 
     if (numparts > 0) {
       for (auto i = 0u; i < num_atoms; ++i) {
@@ -206,16 +221,7 @@ std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
 
         // Find resonant structures caused by relocation of a negative charge.
         if (types[i] == Type::Cv3D3Minus || types[i] == Type::Nv2D2Minus) {
-          int j = 0;
-          for (; j < numres; ++j) {
-            if (resparts[j] == parts[i]) {
-              break;
-            }
-          }
-          if (j >= numres) {
-            resparts[numres] = parts[i];
-            ++numres;
-          }
+          resonance_parts[parts[i]] = true;
         }
 
         int numerator = 0;
@@ -227,11 +233,11 @@ std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
           }
         }
 
-        // boost::rational does not accept 0 as denominator.
-        if (denominator == 0) {
-          fractions[i].assign(0, 1);
-        } else {
-          fractions[i].assign(numerator, denominator);
+        // A retained type is in the ring 2-core, so this should not be zero.
+        // Keep the ordinary atomic number if malformed input violates that
+        // invariant.
+        if (denominator != 0) {
+          fractions[i] = FractionalAtomicNum(numerator, denominator);
         }
       }
     }
@@ -239,31 +245,32 @@ std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
     // If there are any resonant structures due to negative charges,
     // recalculate the average atomic number considering relocation
     // of the charge through higher order bonds.
-    if (numres > 0) {
-      for (int j = 0; j < numres; ++j) {
-        int numerator = 0;
-        int denominator = 0;
-        int part = resparts[j];
-        for (auto i = 0u; i < num_atoms; ++i) {
-          if (parts[i] == part) {
-            // boost::rational does not accept 0 as denominator
-            if (denominator == 0) {
-              fractions[i].assign(0, 1);
-            } else {
-              fractions[i].assign(numerator, denominator);
-            }
-
-            ++denominator;
-            auto atom = mol.getAtom(i);
-            for (auto &bond : mol.getBonds(atom)) {
-              auto nbr = bond->getOtherAtom(atom);
-              int bord = mol.getBondOrder(bond);
-              if (bord > 1 && parts[nbr->getIdx()] == part) {
-                numerator += (bord - 1) * nbr->getAtomicNum();
-              }
-            }
-          }
+    auto numerators = std::vector<int>(numparts + 1);
+    auto denominators = std::vector<int>(numparts + 1);
+    for (auto i = 0u; i < num_atoms; ++i) {
+      const auto part = parts[i];
+      if (part == 0 || !resonance_parts[part]) {
+        continue;
+      }
+      ++denominators[part];
+      const auto atom = mol.getAtom(i);
+      for (const auto &bond : mol.getBonds(atom)) {
+        const auto nbr = bond->getOtherAtom(atom);
+        const auto bord = mol.getBondOrder(bond);
+        if (bord > 1 && parts[nbr->getIdx()] == part) {
+          numerators[part] += (bord - 1) * nbr->getAtomicNum();
         }
+      }
+    }
+
+    // Every atom in a negative-charge resonance component shares one final
+    // Fraction object in Java. Assigning the final value in a separate pass
+    // reproduces that behavior without accidentally storing running prefixes.
+    for (auto i = 0u; i < num_atoms; ++i) {
+      const auto part = parts[i];
+      if (part != 0 && resonance_parts[part] && denominators[part] != 0) {
+        fractions[i] =
+            FractionalAtomicNum(numerators[part], denominators[part]);
       }
     }
   }
