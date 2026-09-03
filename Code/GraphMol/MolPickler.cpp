@@ -34,10 +34,10 @@ using std::uint32_t;
 
 namespace RDKit {
 
-const int32_t MolPickler::versionMajor = 16;
-const int32_t MolPickler::versionMinor = 3;
-const int32_t MolPickler::versionPatch = 0;
-const int32_t MolPickler::endianId = 0xDEADBEEF;
+constexpr int32_t MolPickler::versionMajor = 16;
+constexpr int32_t MolPickler::versionMinor = 4;
+constexpr int32_t MolPickler::versionPatch = 0;
+constexpr int32_t MolPickler::endianId = 0xDEADBEEF;
 
 void streamWrite(std::ostream &ss, MolPickler::Tags tag) {
   auto tmp = static_cast<unsigned char>(tag);
@@ -1140,7 +1140,7 @@ void MolPickler::molFromPickle(std::istream &ss, ROMol *mol,
       int32_t numBonds;
       streamRead(ss, numAtoms, majorVersion);
       streamRead(ss, numBonds, majorVersion);
-      if (numAtoms > 255 || numBonds > 255) {
+      if (numAtoms > 255 || (majorVersion >= 16040 && numBonds > 255)) {
         _depickle<int32_t>(ss, mol, majorVersion, numAtoms, numBonds,
                            propertyFlags);
       } else {
