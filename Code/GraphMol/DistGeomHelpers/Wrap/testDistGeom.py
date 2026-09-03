@@ -511,9 +511,15 @@ class TestCase(unittest.TestCase):
     molConf = mol.GetConformer(molConfId)
     refConf = ref.GetConformer(refConfId)
     for i in range(mol.GetNumAtoms()):
-      mp = molConf.GetAtomPosition(i)
-      rp = refConf.GetAtomPosition(i)
-      self.assertLess((mp - rp).Length(), 0.1)
+      mpi = molConf.GetAtomPosition(i)
+      rpi = refConf.GetAtomPosition(i)
+      for j in range(i):
+        mpj = molConf.GetAtomPosition(j)
+        rpj = refConf.GetAtomPosition(j)
+        tol = 0.15
+        if mol.GetBondBetweenAtoms(i, j) is not None:
+          tol = 0.05
+        self.assertAlmostEqual((mpi - mpj).Length(), (rpi - rpj).Length(), delta=tol)
 
   def test9EmbedParams(self):
 
@@ -569,7 +575,6 @@ class TestCase(unittest.TestCase):
     smiles = 'n1cccc(C)c1ON'
     fn = 'torsion.etkdg.v2.mol'
     params = rdDistGeom.ETKDGv2()
-    print(rdDistGeom.GetMoleculeBoundsMatrix(Chem.AddHs(Chem.MolFromSmiles(smiles)), params))
     runTest(fn, smiles, params, True)
     runTest(fn, smiles, params, False)
 

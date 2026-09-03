@@ -137,12 +137,20 @@ void compareConfs(const RWMol *m, const RWMol *expected, int molConfId = -1,
 
     RDGeom::Point3D pt1i = conf1.getAtomPos(i);
     RDGeom::Point3D pt2i = conf2.getAtomPos(i);
-
-    // Increased tolerance from 0.05 to 0.1.
-    // This prevents false test failures on systems using -march=native,
-    // where compiler optimizations cause tiny, harmless math differences.
-    // (See issue #[9406])
-    CHECK((pt1i - pt2i).length() < 0.1);
+    // instead of directly comparing positions, we look at distances in order to
+    // try and minimize differences from different compilers
+    for (unsigned int j = 0; j < i; j++) {
+      REQUIRE(m->getAtomWithIdx(j)->getAtomicNum() ==
+              expected->getAtomWithIdx(j)->getAtomicNum());
+      RDGeom::Point3D pt1j = conf1.getAtomPos(j);
+      RDGeom::Point3D pt2j = conf2.getAtomPos(j);
+      auto tol = 0.15;
+      if (m->getBondBetweenAtoms(i, j)) {
+        tol = 0.05;
+      }
+      CHECK_THAT((pt1j - pt1i).length(),
+                 Catch::Matchers::WithinAbs((pt2j - pt2i).length(), tol));
+    }
   }
 }
 }  // namespace
