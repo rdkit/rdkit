@@ -43,7 +43,9 @@ static unsigned int compute2DCoordsHelper(RDKit::ROMol &mol, bool canonOrient,
                                           unsigned int nFlipsPerSample,
                                           unsigned int nSamples, int sampleSeed,
                                           int permuteDeg4Nodes, double bondLength,
-                                          bool forceRDKit, bool useRingTemplates) {
+                                          bool forceRDKit,
+                                          bool useRingTemplates,
+                                          bool usePathAngleExpansion) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
   for (auto item : coordMap) {
@@ -57,10 +59,18 @@ static unsigned int compute2DCoordsHelper(RDKit::ROMol &mol, bool canonOrient,
   if (bondLength > 0) {
     RDDepict::BOND_LEN = bondLength;
   }
-  unsigned int res =
-      RDDepict::compute2DCoords(mol, &cMap, canonOrient, clearConfs,
-                                nFlipsPerSample, nSamples, sampleSeed,
-                                (bool)permuteDeg4Nodes, forceRDKit, useRingTemplates);
+  Compute2DCoordParameters params;
+  params.coordMap = cMap.empty() ? nullptr : &cMap;
+  params.canonOrient = canonOrient;
+  params.clearConfs = clearConfs;
+  params.nFlipsPerSample = nFlipsPerSample;
+  params.nSamples = nSamples;
+  params.sampleSeed = sampleSeed;
+  params.permuteDeg4Nodes = permuteDeg4Nodes;
+  params.forceRDKit = forceRDKit;
+  params.useRingTemplates = useRingTemplates;
+  params.usePathAngleExpansion = usePathAngleExpansion;
+  unsigned int res = RDDepict::compute2DCoords(mol, params);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
   }
@@ -316,6 +326,7 @@ adjustMolBlockWedging is True)DOC")
       "coordMap"_a = nb::dict(), "nFlipsPerSample"_a = 0, "nSample"_a = 0,
       "sampleSeed"_a = 0, "permuteDeg4Nodes"_a = 0, "bondLength"_a = -1.0,
       "forceRDKit"_a = false, "useRingTemplates"_a = false,
+      "usePathAngleExpansion"_a = false,
       R"DOC(Compute 2D coordinates for a molecule.
   The resulting coordinates are stored on each atom of the molecule
 
@@ -339,6 +350,8 @@ adjustMolBlockWedging is True)DOC")
                   preferCoordGen is set to true
      useRingTemplates - use templates to generate coordinates of complex
                   ring systems
+     usePathAngleExpansion - use path-angle expansion to resolve atom clashes
+                  and bond crossings
 
   RETURNS:
 

@@ -30,6 +30,11 @@ unsigned int MAX_COLL_ITERS = 15;
 double HETEROATOM_COLL_SCALE = 1.3;
 unsigned int NUM_BONDS_FLIPS = 3;
 
+// Path angle expansion parameters
+double ANGLE_EXPANSION_INCREMENT = 0.0873;  // 5 degrees per step
+double MAX_ANGLE_EXPANSION = 3. * ANGLE_EXPANSION_INCREMENT;
+unsigned int MAX_ANGLE_EXPANSION_ITERS = 20;
+
 RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
   // The process here is very straight forward
   // we take the center of the ring to lies at the origin put the first
