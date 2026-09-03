@@ -93,6 +93,19 @@ TEST_CASE("MacroMolTemplate preserves its SCSR subclass") {
   CHECK(copied.getSubclass() == "AA");
 }
 
+TEST_CASE("MacroMolTemplateBuilder provides mutable molecule access") {
+  RWMol mol;
+  mol.addAtom(new Atom(6), false, true);
+  MacroMolTemplateBuilder builder(mol, MonomerClass::Chemical, "CARBON", "C",
+                                  "C");
+
+  builder.getMol().getAtomWithIdx(0)->setIsotope(13);
+  builder.setMainGroup({0});
+  auto templ = builder.build();
+
+  CHECK(templ->getMol().getAtomWithIdx(0)->getIsotope() == 13);
+}
+
 TEST_CASE("MacroMolTemplate mirrors typed main and leaving groups") {
   auto templ = makeAnnotatedAlanineTemplate();
 

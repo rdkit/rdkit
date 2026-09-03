@@ -128,6 +128,13 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateBuilder {
         d_symbol(std::move(symbol)),
         d_originalData(std::move(originalData)) {}
 
+  //! Returns the mutable molecule being prepared for the template.
+  /*!
+    Structural edits should be completed before defining the main and
+    leaving groups.
+  */
+  RWMol &getMol() { return d_mol; }
+
   //! Defines the atoms retained as the main monomer group.
   MacroMolTemplateBuilder &setMainGroup(std::vector<unsigned int> &&atomIdxs);
   //! Adds a leaving group and its attachment-point definition.
