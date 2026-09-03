@@ -213,80 +213,91 @@ std::vector<FractionalAtomicNum> calcFracAtomNums(const CIPMol &mol) {
 
   // Mark all atoms which are potentially part of a resonance system.
   auto types = std::vector<Type>(num_atoms, Type::Other);
-  if (SeedTypes(types, mol)) {
-    // Filter out atoms which cannot be resonant because
-    // of not having the proper environment.
-    RelaxTypes(types, mol);
+  if (!SeedTypes(types, mol)) {
+    // No relevant rings.
+    return fractions;
+  }
 
-    // Find resonant systems: parts stores the ids of the
-    // systems each atom is involved in.
-    auto parts = std::vector<int>(num_atoms);
-    int numparts = VisitParts(parts, types, mol);
+  // Filter out atoms which cannot be resonant because
+  // of not having the proper environment.
+  RelaxTypes(types, mol);
 
-    auto resonance_parts = std::vector<bool>(numparts + 1);
+  // Find resonant systems: parts stores the ids of the
+  // systems each atom is involved in.
+  std::vector<int> parts(num_atoms);
+  int numparts = VisitParts(parts, types, mol);
 
-    if (numparts > 0) {
-      for (auto i = 0u; i < num_atoms; ++i) {
-        if (parts[i] == 0) {
-          continue;
-        }
-        auto atom = mol.getAtom(i);
+  if (numparts <= 0) {
+    // No rings (shouldn't happen, we'd seen it before)
+    return fractions;
+  }
 
-        // Find resonant structures caused by relocation of a negative charge.
-        if (types[i] == Type::Cv3D3Minus || types[i] == Type::Nv2D2Minus) {
-          resonance_parts[parts[i]] = true;
-        }
+  // parts are 1-based, so we need to allocate one extra element.
+  // This means that resonant_parts[0] will never be used, and
+  // we can use it as a shortcut to check whether any resonant
+  // systems were found.
+  std::vector<bool> resonant_parts(numparts + 1, false);
 
-        int numerator = 0;
-        int denominator = 0;
-        for (const auto &nbr : mol.getNeighbors(atom)) {
-          if (parts[nbr->getIdx()] == parts[i]) {
-            numerator += nbr->getAtomicNum();
-            ++denominator;
-          }
-        }
+  for (auto i = 0u; i < num_atoms; ++i) {
+    if (parts[i] == 0) {
+      continue;
+    }
+    auto atom = mol.getAtom(i);
 
-        // A retained type is in the ring 2-core, so this should not be zero.
-        // Keep the ordinary atomic number if malformed input violates that
-        // invariant.
-        if (denominator != 0) {
-          fractions[i] = FractionalAtomicNum(numerator, denominator);
-        }
-      }
+    // Find resonant structures caused by relocation of a negative charge.
+    if (types[i] == Type::Cv3D3Minus || types[i] == Type::Nv2D2Minus) {
+      resonant_parts[parts[i]] = true;
+      resonant_parts[0] = true;
     }
 
-    // If there are any resonant structures due to negative charges,
-    // recalculate the average atomic number considering relocation
-    // of the charge through higher order bonds.
-    auto numerators = std::vector<int>(numparts + 1);
-    auto denominators = std::vector<int>(numparts + 1);
-    for (auto i = 0u; i < num_atoms; ++i) {
-      const auto part = parts[i];
-      if (part == 0 || !resonance_parts[part]) {
-        continue;
-      }
-      ++denominators[part];
-      const auto atom = mol.getAtom(i);
-      for (const auto &bond : mol.getBonds(atom)) {
-        const auto nbr = bond->getOtherAtom(atom);
-        const auto bord = mol.getBondOrder(bond);
-        if (bord > 1 && parts[nbr->getIdx()] == part) {
-          numerators[part] += (bord - 1) * nbr->getAtomicNum();
-        }
+    int numerator = 0;
+    int denominator = 0;
+    for (const auto &nbr : mol.getNeighbors(atom)) {
+      if (parts[nbr->getIdx()] == parts[i]) {
+        numerator += nbr->getAtomicNum();
+        ++denominator;
       }
     }
+    fractions[i] = FractionalAtomicNum(numerator, denominator);
+  }
 
-    // Every atom in a negative-charge resonance component shares one final
-    // Fraction object in Java. Assigning the final value in a separate pass
-    // reproduces that behavior without accidentally storing running prefixes.
-    for (auto i = 0u; i < num_atoms; ++i) {
-      const auto part = parts[i];
-      if (part != 0 && resonance_parts[part] && denominators[part] != 0) {
-        fractions[i] =
-            FractionalAtomicNum(numerators[part], denominators[part]);
+  if (!resonant_parts[0]) {
+    // No resonant systems.
+    return fractions;
+  }
+
+  // If there are any resonant parts due to negative charges,
+  // update the average atomic number considering relocation
+  // of the charge through higher order bonds.
+  std::vector<int> numerators(numparts + 1);
+  std::vector<int> denominators(numparts + 1);
+  for (auto i = 0u; i < num_atoms; ++i) {
+    const auto part = parts[i];
+    if (part == 0 || !resonant_parts[part]) {
+      continue;
+    }
+
+    ++denominators[part];
+    const auto atom = mol.getAtom(i);
+    for (const auto &bond : mol.getBonds(atom)) {
+      const auto nbr = bond->getOtherAtom(atom);
+      const auto bord = mol.getBondOrder(bond);
+      if (bord > 1 && parts[nbr->getIdx()] == part) {
+        numerators[part] += (bord - 1) * nbr->getAtomicNum();
       }
     }
   }
+
+  // Once all the numerators and denominators for the different
+  // resonant parts of the mol have been calculated, distribute
+  // the values to the atoms in the corresponding parts.
+  for (auto i = 0u; i < num_atoms; ++i) {
+    const auto part = parts[i];
+    if (part != 0 && resonant_parts[part] && denominators[part] != 0) {
+      fractions[i] = FractionalAtomicNum(numerators[part], denominators[part]);
+    }
+  }
+
   return fractions;
 }
 

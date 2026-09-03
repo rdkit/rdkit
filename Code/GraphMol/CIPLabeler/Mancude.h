@@ -41,20 +41,18 @@ class FractionalAtomicNum {
   FractionalAtomicNum(int numerator, int denominator)
       : d_numerator{numerator}, d_denominator{denominator} {}
 
-  boost::rational<int> value() const {
-    return {d_numerator, d_denominator};
-  }
+  boost::rational<int> value() const { return {d_numerator, d_denominator}; }
 
   int numerator() const { return d_numerator; }
   int denominator() const { return d_denominator; }
   bool isAveraged() const { return d_denominator > 1; }
 
  private:
-  int d_numerator;
-  int d_denominator;
+  int d_numerator = 0;
+  int d_denominator = 0;
 };
 
-enum class Type {
+enum class Type : uint8_t {
   Cv4D3,       // =C(X)-
   Nv3D2,       // =N-
   Nv4D3Plus,   // =[N+]<
