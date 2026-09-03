@@ -118,6 +118,12 @@ MacroMolTemplateBuilder &MacroMolTemplateBuilder::addLeavingGroup(
   return *this;
 }
 
+MacroMolTemplateBuilder &MacroMolTemplateBuilder::setSubclass(
+    std::string subclass) {
+  d_subclass = std::move(subclass);
+  return *this;
+}
+
 std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() const {
   if (d_name.empty()) {
     invalidTemplate("name cannot be empty");
@@ -175,7 +181,27 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() const {
 
   return std::unique_ptr<MacroMolTemplate>(new MacroMolTemplate(
       std::move(mol), d_monomerClass, d_name, d_symbol, d_originalData,
-      d_mainAtomIdxs, d_leavingGroups, mainSgroupIdx));
+      d_subclass, d_mainAtomIdxs, d_leavingGroups, mainSgroupIdx));
+}
+
+MacroMolTemplateLibrary::MacroMolTemplateLibrary(
+    const MacroMolTemplateLibrary &other) {
+  *this = other;
+}
+
+MacroMolTemplateLibrary &MacroMolTemplateLibrary::operator=(
+    const MacroMolTemplateLibrary &other) {
+  if (this == &other) {
+    return *this;
+  }
+
+  MacroMolTemplateLibrary copy;
+  for (const auto &entry : other.byName) {
+    copy.addTemplate(std::make_unique<MacroMolTemplate>(*entry.second));
+  }
+  byName.swap(copy.byName);
+  bySymbol.swap(copy.bySymbol);
+  return *this;
 }
 
 void MacroMolTemplateLibrary::addTemplate(
@@ -219,6 +245,16 @@ const MacroMolTemplate *MacroMolTemplateLibrary::getBySymbol(
     return it->second;
   }
   return nullptr;
+}
+
+std::vector<const MacroMolTemplate *>
+MacroMolTemplateLibrary::getTemplates() const {
+  std::vector<const MacroMolTemplate *> templates;
+  templates.reserve(byName.size());
+  for (const auto &entry : byName) {
+    templates.push_back(entry.second.get());
+  }
+  return templates;
 }
 
 }  // namespace RDKit
