@@ -71,7 +71,7 @@ class CIPMol {
 
   // Average atomic number with other atoms that are in an
   // aromatic ring with this one.
-  boost::rational<int> getFractionalAtomicNum(Atom *atom) const;
+  const FractionalAtomicNum &getFractionalAtomicNum(Atom *atom) const;
 
   unsigned getNumAtoms() const;
 
@@ -96,7 +96,7 @@ class CIPMol {
  private:
   ROMol &d_mol;
   std::vector<RDKit::Bond::BondType> d_kekulized_bonds;
-  std::vector<boost::rational<int>> d_atomnums;
+  std::vector<FractionalAtomicNum> d_atomnums;
   std::vector<RDKit::Bond* > d_bonds;
 };
 
