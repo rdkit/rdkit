@@ -154,8 +154,6 @@ class TestCase(unittest.TestCase):
     rdDistGeom.EmbedMolecule(mol, _getParams())
     conf = mol.GetConformer()
 
-    # writer.write(mol) TODO
-
     self.assertTrue(lstEq(conf.GetAtomPosition(0), [-1.23521, -0.00290, 0.0]))
     self.assertTrue(lstEq(conf.GetAtomPosition(1), [-0.00535, 0.00597, 0.0]))
     self.assertTrue(lstEq(conf.GetAtomPosition(2), [1.240577, -0.003067, 0.0]))

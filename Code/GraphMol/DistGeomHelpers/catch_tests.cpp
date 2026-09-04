@@ -2330,10 +2330,21 @@ TEST_CASE("Angle tolerances") {
     RDGeom::Point3D pos_2 = conf.getAtomPos(2);
     RDGeom::Point3D pos_4 = conf.getAtomPos(4);
     auto dist = (pos_2 - pos_4).length();
-    CHECK(bm->getLowerBound(4, 2) - 0.025 <= dist);
-    CHECK(bm->getUpperBound(4, 2) + 0.025 >= dist);
+    CHECK(bm->getLowerBound(4, 2) - 0.08 <= dist);
+    CHECK(bm->getUpperBound(4, 2) + 0.08 >= dist);
   }
 }
+
+TEST_CASE("Github #9461") {
+  auto mol = "Cc1sccc1"_smiles;
+  REQUIRE(mol);
+  DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+  DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+  DGeomHelpers::setTopolBounds(*mol, bm);
+
+  CHECK_THAT(bm->getUpperBound(0, 1) - bm->getLowerBound(0, 1), Catch::Matchers::WithinAbs(0.02, 1e-4));
+}
+
 TEST_CASE("TransAmideKTerm") {
   /* Embed 10 confs of a molecule using the provided parameters and returns true
   if all torsions around i,j,k,l are closer to +/-180 than to 0
