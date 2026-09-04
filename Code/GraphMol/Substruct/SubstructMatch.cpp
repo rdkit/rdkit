@@ -451,23 +451,24 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
   }
 };
 
-struct RecursiveLocker {
-  std::vector<RecursiveStructureQuery *> locked;
-  RecursiveLocker(const ROMol &query, const bool recursionPossible) {
-    if (recursionPossible) {
-      locked.reserve(query.getNumAtoms());
-    }
+std::vector<RecursiveStructureQuery *> locked;
+RecursiveLocker::RecursiveLocker(const size_t numAtoms,
+                                 const bool recursionPossible) {
+  if (recursionPossible) {
+    locked.reserve(numAtoms);
   }
+}
 
-  ~RecursiveLocker() {
-    for (auto v : locked) {
+RecursiveLocker::~RecursiveLocker() {
+  for (auto v : locked) {
+    if (df_clearOnDestruct) {
       v->clear();
-#ifdef RDK_BUILD_THREADSAFE_SSS
-      v->d_mutex.unlock();
-#endif
     }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    v->d_mutex.unlock();
+#endif
   }
-};
+}
 
 // A minimal container which satisfies the vf2_all() output-sequence interface
 // but only counts matches instead of storing them.
@@ -501,7 +502,7 @@ std::vector<MatchVectType> SubstructMatch(
     return matches;
   }
 
-  detail::RecursiveLocker locker(query, params.recursionPossible);
+  detail::RecursiveLocker locker(query.getNumAtoms(), params.recursionPossible);
 
   if (params.recursionPossible) {
     detail::SUBQUERY_MAP subqueryMap;
@@ -543,7 +544,7 @@ unsigned int SubstructMatchCount(const ROMol &mol, const ROMol &query,
     return 0;
   }
 
-  detail::RecursiveLocker locker(query, params.recursionPossible);
+  detail::RecursiveLocker locker(query.getNumAtoms(), params.recursionPossible);
 
   if (params.recursionPossible) {
     detail::SUBQUERY_MAP subqueryMap;

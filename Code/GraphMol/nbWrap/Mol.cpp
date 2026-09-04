@@ -960,11 +960,12 @@ struct mol_wrapper {
             "GetAtomsMatchingQuery",
             [](const ROMol &self, const QueryAtom *qa) {
       bool ownsQa = false;
-      if(qa && hasUninitializedRecursiveQuery(*qa)) {
+      if(qa && hasRecursiveQuery(*qa)) {
           SubstructMatchParameters params;
           detail::SUBQUERY_MAP subqueryMap;
-          std::vector<RecursiveStructureQuery *> locked;
-          detail::MatchSubqueries(self, qa->getQuery(), params, subqueryMap, locked);
+          detail::RecursiveLocker locker;
+          locker.df_clearOnDestruct = false;
+          detail::MatchSubqueries(self, qa->getQuery(), params, subqueryMap, locker.locked);
       }
       return QueryAtomIterSeq(self, qa, ownsQa);
             },

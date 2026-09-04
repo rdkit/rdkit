@@ -127,11 +127,13 @@ QueryAtomIterSeq *MolGetAromaticAtoms(const ROMOL_SPTR &mol) {
   return res;
 }
 QueryAtomIterSeq *MolGetQueryAtoms(const ROMOL_SPTR &mol, QueryAtom *qa) {
-  if (qa && hasUninitializedRecursiveQuery(*qa)) {
+  if (qa && hasRecursiveQuery(*qa)) {
     SubstructMatchParameters params;
     detail::SUBQUERY_MAP subqueryMap;
-    std::vector<RecursiveStructureQuery *> locked;
-    detail::MatchSubqueries(*mol, qa->getQuery(), params, subqueryMap, locked);
+    detail::RecursiveLocker locker;
+    locker.df_clearOnDestruct = false;
+    detail::MatchSubqueries(*mol, qa->getQuery(), params, subqueryMap,
+                            locker.locked);
   }
   auto res = new QueryAtomIterSeq(mol, mol->beginQueryAtoms(qa),
                                   mol->endQueryAtoms(), AtomCountFunctor(mol));
