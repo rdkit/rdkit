@@ -164,7 +164,6 @@ struct atom_wrapper {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-```suggestion
 // Handle support for instance pooling. Availability is checked in the
 // main CMakelists.txt file, via a version check on the nanobind package.
 // Documentation about the pooling feature is available at:
@@ -289,7 +288,7 @@ struct atom_wrapper {
             nb::keep_alive<0, 1>(),
             "Returns a sequence-like object of the atom's bonds.")
 
-        .def("Match", (bool (Atom::*)(const Atom *) const) & Atom::Match,
+        .def("Match", (bool(Atom::*)(const Atom *) const) & Atom::Match,
              "other"_a,
              "Returns whether or not this atom matches another Atom.\n\n"
              "  Each Atom (or query Atom) has a query function which is\n"
