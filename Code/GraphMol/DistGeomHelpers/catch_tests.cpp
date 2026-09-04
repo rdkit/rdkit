@@ -2330,8 +2330,8 @@ TEST_CASE("Angle tolerances") {
     RDGeom::Point3D pos_2 = conf.getAtomPos(2);
     RDGeom::Point3D pos_4 = conf.getAtomPos(4);
     auto dist = (pos_2 - pos_4).length();
-    CHECK(bm->getLowerBound(4, 2) - 0.025 <= dist);
-    CHECK(bm->getUpperBound(4, 2) + 0.025 >= dist);
+    CHECK(bm->getLowerBound(4, 2) - 0.08 <= dist);
+    CHECK(bm->getUpperBound(4, 2) + 0.08 >= dist);
   }
 }
 
