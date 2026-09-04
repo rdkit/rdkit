@@ -20,7 +20,7 @@
 namespace RDKit {
 class ROMol;
 class RecursiveStructureQuery;
-class SubstructMatchParameters;
+struct SubstructMatchParameters;
 
 namespace detail {
 struct RecursiveLocker {
