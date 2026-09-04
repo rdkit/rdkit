@@ -2342,7 +2342,7 @@ TEST_CASE("Github #9461") {
   DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
   DGeomHelpers::setTopolBounds(*mol, bm);
 
-  CHECK_THAT(bm->getUpperBound(0, 1) - bm->getLowerBound(0, 1), Catch::Matchers::WithinAbs(0.02, 1e-4));```
+  CHECK_THAT(bm->getUpperBound(0, 1) - bm->getLowerBound(0, 1), Catch::Matchers::WithinAbs(0.02, 1e-4));
 }
 
 TEST_CASE("TransAmideKTerm") {
