@@ -113,4 +113,20 @@ TEST_CASE("hasRecursiveQuery") {
   REQUIRE(q2);
   CHECK(!hasRecursiveQuery(*q2));
 }
+
+TEST_CASE("copying atom queries") {
+  auto q = v2::SmilesParse::AtomFromSmarts("[C;!$(C=C)]");
+  REQUIRE(q);
+  CHECK(hasRecursiveQuery(*q));
+  QueryAtom q2(*q);
+  CHECK(hasRecursiveQuery(q2));
+}
+
+TEST_CASE("recursive queries should fail with QueryAtomIterator") {
+  auto m = "CC=C"_smiles;
+  REQUIRE(m);
+  auto q = v2::SmilesParse::AtomFromSmarts("[C;!$(C=C)]");
+  REQUIRE(q);
+  CHECK(hasRecursiveQuery(*q));
+  CHECK_THROWS_AS(m->beginQueryAtoms(q.get()), ValueErrorException);
 }

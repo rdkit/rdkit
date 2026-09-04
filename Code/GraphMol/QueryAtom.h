@@ -31,20 +31,25 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
 
   QueryAtom() : Atom() {}
   explicit QueryAtom(int num) : Atom(num), dp_query(makeAtomNumQuery(num)) {}
-  explicit QueryAtom(const Atom &other)
-      : Atom(other), dp_query(makeAtomNumQuery(other.getAtomicNum())) {
-    if (other.getIsotope()) {
-      this->expandQuery(makeAtomIsotopeQuery(other.getIsotope()),
-                        Queries::CompositeQueryType::COMPOSITE_AND);
-    }
-    if (other.getFormalCharge()) {
-      this->expandQuery(makeAtomFormalChargeQuery(other.getFormalCharge()),
-                        Queries::CompositeQueryType::COMPOSITE_AND);
-    }
-    if (other.getNumRadicalElectrons()) {
-      this->expandQuery(
-          makeAtomNumRadicalElectronsQuery(other.getNumRadicalElectrons()),
-          Queries::CompositeQueryType::COMPOSITE_AND);
+  explicit QueryAtom(const Atom &other) : Atom(other) {
+    if (other.hasQuery()) {
+      dp_query = other.getQuery()->copy();
+    } else {
+      dp_query = makeAtomNumQuery(other.getAtomicNum());
+
+      if (other.getIsotope()) {
+        this->expandQuery(makeAtomIsotopeQuery(other.getIsotope()),
+                          Queries::CompositeQueryType::COMPOSITE_AND);
+      }
+      if (other.getFormalCharge()) {
+        this->expandQuery(makeAtomFormalChargeQuery(other.getFormalCharge()),
+                          Queries::CompositeQueryType::COMPOSITE_AND);
+      }
+      if (other.getNumRadicalElectrons()) {
+        this->expandQuery(
+            makeAtomNumRadicalElectronsQuery(other.getNumRadicalElectrons()),
+            Queries::CompositeQueryType::COMPOSITE_AND);
+      }
     }
   }
   QueryAtom(const QueryAtom &other) : Atom(other) {
