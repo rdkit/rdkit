@@ -9,7 +9,7 @@
 #   --build-arg http_proxy=$HTTP_PROXY \
 #   --build-arg https_proxy=$HTTP_PROXY \
 #   --network=host --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions" \
-#   -f Dockerfile_1_deps .
+#   -f 01_deps.Dockerfile .
 
 
 ARG EMSDK_VERSION="latest"

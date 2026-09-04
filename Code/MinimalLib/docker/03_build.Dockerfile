@@ -16,7 +16,7 @@
 #   --build-arg http_proxy=$HTTP_PROXY \
 #   --build-arg https_proxy=$HTTP_PROXY \
 #   --network=host --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions" \
-#   -f Dockerfile_1_deps .
+#   -f 01_deps.Dockerfile .
 #
 # 3. build the MinimalLib rdkit-minimallib-rdkit-src image:
 #   3a. from a git clone:
@@ -25,13 +25,13 @@
 #     --build-arg https_proxy=$HTTP_PROXY \
 #     --build-arg "RDKIT_GIT_URL=https://github.com/myfork/rdkit.git" \
 #     --build-arg "RDKIT_BRANCH=mybranch" \
-#     --network=host -f Dockerfile_rdkit_clone_from_github .
+#     --network=host -f 02_rdkit_clone.Dockerfile .
 #   or
 #   3b. from an existing local source tree:
 #   docker build --target local-src-stage -t rdkit-minimallib-rdkit-src \
 #     --build-arg http_proxy=$HTTP_PROXY \
 #     --build-arg https_proxy=$HTTP_PROXY \
-#     --network=host -f Dockerfile_2_rdkit_copy_from_local ../../..
+#     --network=host -f 02_rdkit_copy.Dockerfile ../../..
 #
 # 4. build the MinimalLib rdkit-minimallib image:
 #    (the build-arg arguments are all optional; in the following
@@ -41,14 +41,14 @@
 #   --build-arg http_proxy=$HTTP_PROXY \
 #   --build-arg https_proxy=$HTTP_PROXY \
 #   --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions" \
-#   -f Dockerfile_3_rdkit_build .
+#   -f 03_build.Dockerfile .
 #
 # 5. create a temporary container and copy built libraries
 #    from the container to your local filesystem, then destroy
 #    the temporary container
 # docker create --name=rdkit-minimallib-container rdkit-minimallib:latest --entrypoint /
-# docker cp rdkit-minimallib-container:/RDKit_minimal.js ../demo
-# docker cp rdkit-minimallib-container:/RDKit_minimal.wasm ../demo
+# docker cp rdkit-minimallib-container:/RDKit_minimal.js ../build
+# docker cp rdkit-minimallib-container:/RDKit_minimal.wasm ../build
 # docker rm rdkit-minimallib-container
 
 
@@ -56,6 +56,7 @@ ARG EXCEPTION_HANDLING="-fexceptions -sNO_DISABLE_EXCEPTION_CATCHING"
 
 FROM rdkit-minimallib-rdkit-src AS build-stage
 ARG EXCEPTION_HANDLING
+ARG VERSION=0.0.0
 
 LABEL maintainer="Greg Landrum <greg.landrum@t5informatics.com>"
 
@@ -71,6 +72,7 @@ RUN emcmake cmake -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
   -DRDK_BUILD_CHEMDRAW_SUPPORT=OFF -DRDK_BUILD_MAEPARSER_SUPPORT=OFF -DRDK_BUILD_COORDGEN_SUPPORT=ON \
   -DRDK_BUILD_MINIMAL_LIB_MCS=ON -DRDK_BUILD_MINIMAL_LIB_MOLZIP=ON \
   -DRDK_BUILD_MINIMAL_LIB_MMPA=ON \
+  -DRDK_BUILD_MINIMAL_LIB_RGROUPDECOMP=ON \
   -DBoost_DIR=/opt/boost/lib/cmake/Boost-${BOOST_DOT_VERSION} \
   -Dboost_headers_DIR=/opt/boost/lib/cmake/boost_headers-${BOOST_DOT_VERSION} \
   -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_USE_BOOST_IOSTREAMS=OFF \
@@ -80,15 +82,26 @@ RUN emcmake cmake -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
   -DZLIB_LIBRARY=/opt/zlib/lib/libz.a \
   -DCMAKE_CXX_FLAGS="${EXCEPTION_HANDLING} -O3 -DNDEBUG" \
   -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING} -O3 -DNDEBUG -DCOMPILE_ANSI_ONLY" \
-  -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING} -s STACK_OVERFLOW_CHECK=1 -s USE_PTHREADS=0 -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB -s MODULARIZE=1 -s EXPORT_NAME=\"'initRDKitModule'\"" ..
+  -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING} -s STACK_OVERFLOW_CHECK=1 -s USE_PTHREADS=0 -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB -s MODULARIZE=1 --emit-tsd RDKit_minimal.d.ts -s EXPORT_NAME='initRDKitModule'" ..
 
 # "patch" to make the InChI code work with emscripten:
 RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak && \
   sed 's/&& defined(__APPLE__)//' /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak > /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c
 
 # build and "install"
-RUN make -j2 RDKit_minimal && \
-  cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/demo/
+RUN make -j2 RDKit_minimal
+RUN mkdir -p ../Code/MinimalLib/dist
+RUN cp Code/MinimalLib/RDKit_minimal.* ../Code/MinimalLib/dist/
+
+# Build package
+WORKDIR /src/rdkit/Code/MinimalLib
+RUN mkdir -p build
+RUN cp assets/package.json ./build
+RUN cp README.md ./build
+RUN mv ./dist ./build
+
+WORKDIR /src/rdkit/Code/MinimalLib/build
+RUN /opt/emsdk/node/*/bin/node -e "const p=require('./package.json');p.version='${VERSION}';require('fs').writeFileSync('./package.json',JSON.stringify(p,null,2))"
 
 # run the tests
 WORKDIR /src/rdkit/Code/MinimalLib/tests
@@ -97,6 +110,6 @@ RUN /opt/emsdk/node/*/bin/node tests.js
 # Copy js and wasm rdkit files to use in browser
 # This feature requires the BuildKit backend
 # https://docs.docker.com/engine/reference/commandline/build/#custom-build-outputs
-FROM scratch as export-stage
-COPY --from=build-stage /src/rdkit/Code/MinimalLib/demo /
+FROM scratch AS export-stage
+COPY --from=build-stage /src/rdkit/Code/MinimalLib/build /
 COPY --from=build-stage /src/rdkit/Code/MinimalLib/docs /
