@@ -339,12 +339,18 @@ void addExperimentalTorsionTerms(
   PRECONDITION(ff, "bad force field");
   auto torsionContribs =
       std::make_unique<ForceFields::CrystalFF::TorsionAngleContribs>(ff);
+  boost::dynamic_bitset<> doneBonds(numAtoms * numAtoms);
   for (std::size_t t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
     const std::size_t i = etkdgDetails.expTorsionAtoms[t][0];
     const std::size_t j = etkdgDetails.expTorsionAtoms[t][1];
     const std::size_t k = etkdgDetails.expTorsionAtoms[t][2];
     const std::size_t l = etkdgDetails.expTorsionAtoms[t][3];
     const std::size_t idx = i < l ? i * numAtoms + l : l * numAtoms + i;
+    const std::size_t bidx = j < k ? j * numAtoms + k : k * numAtoms + j;
+    if (doneBonds[bidx]) {
+      continue;
+    }
+    doneBonds[bidx] = true;
     atomPairs[idx] = excludeTorsions;
     torsionContribs->addContrib(i, j, k, l,
                                 etkdgDetails.expTorsionAngles[t].second,
@@ -510,8 +516,8 @@ ForceFields::ForceField *construct3DForceField(
   unsigned int N = mmat.numRows();
   PRECONDITION(N == positions.size(), "");
   PRECONDITION(etkdgDetails.expTorsionAtoms.size() ==
-                      etkdgDetails.expTorsionAngles.size(),
-                  "");
+                   etkdgDetails.expTorsionAngles.size(),
+               "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
   field->positions().insert(field->positions().begin(), positions.begin(),
                             positions.end());
@@ -560,8 +566,8 @@ ForceFields::ForceField *constructPlain3DForceField(
   unsigned int N = mmat.numRows();
   PRECONDITION(N == positions.size(), "");
   PRECONDITION(etkdgDetails.expTorsionAtoms.size() ==
-                      etkdgDetails.expTorsionAngles.size(),
-                  "");
+                   etkdgDetails.expTorsionAngles.size(),
+               "");
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
   field->positions().insert(field->positions().begin(), positions.begin(),
                             positions.end());
@@ -730,8 +736,8 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
   const std::size_t N = mmat.numRows();
   PRECONDITION(N == positions.size(), "");
   PRECONDITION(etkdgDetails.expTorsionAtoms.size() ==
-                      etkdgDetails.expTorsionAngles.size(),
-                  "");
+                   etkdgDetails.expTorsionAngles.size(),
+               "");
 
   auto *field = new ForceFields::ForceField(positions[0]->dimension());
   field->positions().insert(field->positions().begin(), positions.begin(),

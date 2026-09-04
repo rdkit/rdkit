@@ -16,13 +16,23 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+if (CMAKE_VERSION VERSION_LESS 3.18)
+  set(DEV_MODULE Development)
+else()
+  set(DEV_MODULE Development.Module)
+endif()
+
+
+
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
 add_library(rdkit_base INTERFACE)
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
-option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
+option(RDK_BUILD_PYTHON_WRAPPERS "if this is OFF, no python wrappers will be built" ON )
+option(RDK_BUILD_BOOST_PYTHON_WRAPPERS "build the python wrappers using boost.python" ON )
+option(RDK_BUILD_NANOBIND_WRAPPERS "build the python wrappers using nanobind" OFF )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
 option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the variable AVALONTOOLS_DIR to set the location of the source." OFF )
@@ -88,6 +98,41 @@ option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MMPA "build support for MMPA into MinimalLib" OFF )
 option(RDK_BUILD_LONG_RUNNING_TESTS "build longer running tests" OFF )
+
+set(RDK_LTO_MODE "OFF" CACHE STRING
+    "link-time optimization mode: OFF, THIN, or FULL")
+set_property(CACHE RDK_LTO_MODE PROPERTY STRINGS OFF THIN FULL)
+set(RDK_LTO_JOBS "auto" CACHE STRING
+    "GCC full-LTO parallelism: auto or a positive integer")
+
+string(TOUPPER "${RDK_LTO_MODE}" RDK_LTO_MODE_UPPER)
+if(NOT RDK_LTO_MODE_UPPER MATCHES "^(OFF|THIN|FULL)$")
+  message(FATAL_ERROR
+      "RDK_LTO_MODE must be one of OFF, THIN, or FULL: ${RDK_LTO_MODE}")
+endif()
+
+if(NOT RDK_LTO_MODE_UPPER STREQUAL "OFF")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    string(TOLOWER "${RDK_LTO_MODE_UPPER}" RDK_LTO_MODE_LOWER)
+    set(RDK_LTO_FLAG "-flto=${RDK_LTO_MODE_LOWER}")
+    add_compile_options("${RDK_LTO_FLAG}")
+    add_link_options("${RDK_LTO_FLAG}")
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(RDK_LTO_MODE_UPPER STREQUAL "THIN")
+      message(FATAL_ERROR "GCC does not support ThinLTO; use RDK_LTO_MODE=FULL")
+    endif()
+    if(NOT RDK_LTO_JOBS MATCHES "^(auto|[1-9][0-9]*)$")
+      message(FATAL_ERROR
+          "RDK_LTO_JOBS must be auto or a positive integer: ${RDK_LTO_JOBS}")
+    endif()
+    set(RDK_LTO_FLAG "-flto=${RDK_LTO_JOBS}")
+    add_compile_options("${RDK_LTO_FLAG}")
+    add_link_options("${RDK_LTO_FLAG}")
+  else()
+    message(FATAL_ERROR
+        "RDK_LTO_MODE=${RDK_LTO_MODE} requires Clang or GCC")
+  endif()
+endif()
 
 set(RDK_BOOST_VERSION "1.81.0")
 
@@ -312,31 +357,108 @@ if(RDK_BUILD_INCHI_SUPPORT)
   find_package(Inchi)
 endif(RDK_BUILD_INCHI_SUPPORT)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(NOT RDK_BUILD_PYTHON_WRAPPERS)
+ message("Disabling Python wrappers")
+ set(RDK_BUILD_BOOST_PYTHON_WRAPPERS OFF)
+ set(RDK_BUILD_NANOBIND_WRAPPERS OFF)
+endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_library(rdkit_py_base INTERFACE)
+  if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+    message(FATAL_ERROR "RDK_BUILD_BOOST_PYTHON_WRAPPERS and RDK_BUILD_NANOBIND_WRAPPERS are mutually exclusive.")
+  endif()
+
+  find_package(Python 3.9 COMPONENTS Interpreter ${DEV_MODULE} NumPy REQUIRED)
+  target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
+  target_compile_definitions(rdkit_py_base INTERFACE "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
+
+  # Detect the installed nanobind package and import it into CMake
+  execute_process(
+    COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
+  find_package(nanobind 2 CONFIG REQUIRED)
+  if(RDK_INSTALL_INTREE)
+    set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
+  else(RDK_INSTALL_INTREE)
+    if (NOT PYTHON_INSTDIR)
+      # Determine correct installation directory for Python bindings
+      execute_process(
+        COMMAND
+        ${Python_EXECUTABLE} -c "import sys; import sysconfig; \
+          base_key = 'base' if sys.platform == 'win32' else 'platbase'; \
+          schema = 'nt' if sys.platform == 'win32' else 'posix_prefix'; \
+          print(sysconfig.get_path('platlib', schema, vars={base_key: '${CMAKE_INSTALL_PREFIX}'}))"
+        OUTPUT_VARIABLE PYTHON_INSTDIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+    endif (NOT PYTHON_INSTDIR)
+    string(REGEX REPLACE "\\\\" "/" PYTHON_INSTDIR ${PYTHON_INSTDIR})
+    message("Python Install directory ${PYTHON_INSTDIR}")
+    set(RDKit_PythonDir "${PYTHON_INSTDIR}/rdkit")
+    if(RDK_INSTALL_PYTHON_TESTS)
+      install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
+        COMPONENT python
+        PATTERN ".svn" EXCLUDE
+        PATTERN "CMake*" EXCLUDE
+        PATTERN "Basement" EXCLUDE
+      )
+    else(RDK_INSTALL_PYTHON_TESTS)
+      install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
+        COMPONENT python
+        PATTERN ".svn" EXCLUDE
+        PATTERN "test_data" EXCLUDE
+        PATTERN "testData" EXCLUDE
+        PATTERN "test_list*" EXCLUDE
+        PATTERN "CMake*" EXCLUDE
+        PATTERN "Basement" EXCLUDE
+        PATTERN "UnitTest*" EXCLUDE
+      )
+    endif(RDK_INSTALL_PYTHON_TESTS)
+
+  endif(RDK_INSTALL_INTREE)
+
+  # check to see if we can find nbval,
+  execute_process(
+    COMMAND
+    ${Python_EXECUTABLE} -c "import nbval"
+    ERROR_VARIABLE nbvalERR
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT nbvalERR)
+    set(RDK_NBVAL_AVAILABLE ON)
+  else()
+    message("nbval not found, disabling the jupyter tests")
+  endif()
+
+endif(RDK_BUILD_NANOBIND_WRAPPERS)
+
+
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   add_library(rdkit_py_base INTERFACE)
 
   #-------
   # pull in python:
-  find_package(Python3 COMPONENTS Interpreter Development.Module NumPy)
-  target_include_directories(rdkit_py_base INTERFACE ${Python3_INCLUDE_DIRS})
-  target_include_directories(rdkit_py_base INTERFACE ${Python3_NumPy_INCLUDE_DIRS})
+  find_package(Python COMPONENTS Interpreter Development.Module NumPy)
+  target_include_directories(rdkit_py_base INTERFACE ${Python_INCLUDE_DIRS})
+  target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
+  target_compile_definitions(rdkit_py_base INTERFACE "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
 
   # determine linkage of python
   execute_process(
       COMMAND
-      ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
+      ${Python_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
       OUTPUT_VARIABLE Py_ENABLE_SHARED
       OUTPUT_STRIP_TRAILING_WHITESPACE
   )
 
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
-    target_link_libraries(rdkit_py_base INTERFACE ${Python3_LIBRARIES} )
+    target_link_libraries(rdkit_py_base INTERFACE ${Python_LIBRARIES} )
   endif()
 
 
-  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" REQUIRED CONFIG)
+  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}" "numpy${Python_VERSION_MAJOR}${Python_VERSION_MINOR}" REQUIRED CONFIG)
 
-  target_link_libraries(rdkit_py_base INTERFACE "Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")
+  target_link_libraries(rdkit_py_base INTERFACE "Boost::python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}" "Boost::numpy${Python_VERSION_MAJOR}${Python_VERSION_MINOR}")
 
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
@@ -345,7 +467,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
       # Determine correct installation directory for Python bindings
       execute_process(
         COMMAND
-        ${Python3_EXECUTABLE} -c "import sys; import sysconfig; \
+        ${Python_EXECUTABLE} -c "import sys; import sysconfig; \
           base_key = 'base' if sys.platform == 'win32' else 'platbase'; \
           schema = 'nt' if sys.platform == 'win32' else 'posix_prefix'; \
           print(sysconfig.get_path('platlib', schema, vars={base_key: '${CMAKE_INSTALL_PREFIX}'}))"
@@ -386,7 +508,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     # We strip off the first word though (which will be the compiler name).
     execute_process(
         COMMAND
-        ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
+        ${Python_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
         OUTPUT_VARIABLE PYTHON_LDSHARED
         OUTPUT_STRIP_TRAILING_WHITESPACE
      )
@@ -399,7 +521,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   # check to see if we can find nbval,
   execute_process(
     COMMAND
-    ${Python3_EXECUTABLE} -c "import nbval"
+    ${Python_EXECUTABLE} -c "import nbval"
     ERROR_VARIABLE nbvalERR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT nbvalERR)
@@ -408,16 +530,26 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     message("nbval not found, disabling the jupyter tests")
   endif()
 
-else(RDK_BUILD_PYTHON_WRAPPERS)
+else(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   find_package(Boost ${RDK_BOOST_VERSION} REQUIRED CONFIG)
-endif(RDK_BUILD_PYTHON_WRAPPERS)
+endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
-find_package(Eigen3)
+find_package(Eigen3 NO_MODULE)
 if(RDK_BUILD_DESCRIPTORS3D)
-  if(NOT EIGEN3_FOUND)
+  # once External/Eigen is removed, remove this block (to the next comment)
+  if(NOT TARGET Eigen3::Eigen)
     add_subdirectory(External/Eigen)
   endif()
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
+
+  # once External/Eigen is removed, uncomment below here
+  #if(NOT TARGET Eigen3::Eigen)
+  #  message("eigen not found, disabling Descriptors3D")
+  #  set(RDK_BUILD_DESCRIPTORS3D OFF CACHE BOOL "Build 3D descriptors" FORCE)
+  #else()
+  #  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
+  #endif()
+  
 endif()
 
 if(TARGET Eigen3::Eigen)
@@ -554,7 +686,7 @@ if(NOT RDK_INSTALL_INTREE)
       COMPONENT extras
       PATTERN ".svn" EXCLUDE
       )
-  if(RDK_BUILD_PYTHON_WRAPPERS)
+  if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     install(DIRECTORY Projects DESTINATION
         ${RDKit_ShareDir}
         COMPONENT extras
@@ -578,7 +710,7 @@ if(NOT RDK_INSTALL_INTREE)
     endif(RDK_INSTALL_PYTHON_TESTS)
 
 
-  endif(RDK_BUILD_PYTHON_WRAPPERS)
+  endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   install(FILES README.md license.txt
           DESTINATION ${RDKit_ShareDir}
           COMPONENT base
@@ -602,14 +734,26 @@ if (MSVC)
   add_definitions( "/wd4267" )
 endif(MSVC)
 
+find_package(TBB)
+if(TBB_FOUND)
+    set(TBB_DEP TBB::tbb)
+endif()
+
 add_subdirectory(External)
 add_subdirectory(Code)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   add_subdirectory(Projects)
   add_subdirectory(rdkit)
   add_subdirectory(rdkit-stubs)
-endif(RDK_BUILD_PYTHON_WRAPPERS)
+endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(Projects)
+  add_subdirectory(rdkit)
+  #add_subdirectory(rdkit-stubs)
+endif(RDK_BUILD_NANOBIND_WRAPPERS)
+
 
 if(RDK_BUILD_CONTRIB)
   add_subdirectory(Contrib)
@@ -645,7 +789,7 @@ install(FILES
     COMPONENT dev)
 
 # then manage the targets for the python bindings
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   install(
     EXPORT ${RDKitPython_EXPORTED_TARGETS}
     FILE ${RDKitPython_EXPORTED_TARGETS}.cmake
@@ -669,7 +813,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     ${RDKit_BINARY_DIR}/rdkitpython-config-version.cmake
     DESTINATION ${RDKit_LibDir}/cmake/rdkitpython
     COMPONENT python)
-endif(RDK_BUILD_PYTHON_WRAPPERS)
+endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
 # Memory testing setup
 FIND_PROGRAM(MEMORYCHECK_COMMAND valgrind)

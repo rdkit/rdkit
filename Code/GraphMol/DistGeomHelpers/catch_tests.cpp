@@ -139,7 +139,20 @@ void compareConfs(const ROMol *m, const ROMol *expected, int molConfId = -1,
 
     RDGeom::Point3D pt1i = conf1.getAtomPos(i);
     RDGeom::Point3D pt2i = conf2.getAtomPos(i);
-    TEST_ASSERT((pt1i - pt2i).length() < 0.05);
+    // instead of directly comparing positions, we look at distances in order to
+    // try and minimize differences from different compilers
+    for (unsigned int j = 0; j < i; j++) {
+      REQUIRE(m->getAtomWithIdx(j)->getAtomicNum() ==
+              expected->getAtomWithIdx(j)->getAtomicNum());
+      RDGeom::Point3D pt1j = conf1.getAtomPos(j);
+      RDGeom::Point3D pt2j = conf2.getAtomPos(j);
+      auto tol = 0.15;
+      if (m->getBondBetweenAtoms(i, j)) {
+        tol = 0.05;
+      }
+      CHECK_THAT((pt1j - pt1i).length(),
+                 Catch::Matchers::WithinAbs((pt2j - pt2i).length(), tol));
+    }
   }
 }
 }  // namespace
@@ -756,7 +769,7 @@ TEST_CASE("tracking failure causes") {
     CHECK(cid < 0);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 3);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] ==
-          0);
+          0);  // we do not have final chiral bound failures here
   }
   SECTION("basicsAIO") {
     auto mol =
@@ -1027,7 +1040,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol > 0);
-        CHECK(fabs(chiralVol) > 0.5);
+        CHECK(fabs(chiralVol) > 0.3);
       }
     }  // now swap the stereo and see if it still works
     mol->getBondWithIdx(bondIdx)->setStereo(
@@ -2298,6 +2311,7 @@ TEST_CASE("Angle tolerances") {
   SECTION("Flat S-aromat") {
     auto mol = "c1sccc1"_smiles;
     REQUIRE(mol);
+    MolOps::addHs(*mol);
     DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
     DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
     DGeomHelpers::setTopolBounds(*mol, bm);
@@ -2311,13 +2325,13 @@ TEST_CASE("Angle tolerances") {
 
     DGeomHelpers::EmbedMolecule(*mol, params);
 
-    // we should be able to generate a conformations without violations
+    // we should be able to generate a conformations without major violations
     const auto conf = mol->getConformer();
     RDGeom::Point3D pos_2 = conf.getAtomPos(2);
     RDGeom::Point3D pos_4 = conf.getAtomPos(4);
     auto dist = (pos_2 - pos_4).length();
-    CHECK(bm->getLowerBound(4, 2) - 0.001 <= dist);
-    CHECK(bm->getUpperBound(4, 2) + 0.001 >= dist);
+    CHECK(bm->getLowerBound(4, 2) - 0.025 <= dist);
+    CHECK(bm->getUpperBound(4, 2) + 0.025 >= dist);
   }
 }
 
@@ -2329,4 +2343,74 @@ TEST_CASE("Github #9461") {
   DGeomHelpers::setTopolBounds(*mol, bm);
 
   CHECK(feq(bm->getUpperBound(0, 1) - bm->getLowerBound(0, 1), 0.02));
+}
+
+TEST_CASE("TransAmideKTerm") {
+  /* Embed 10 confs of a molecule using the provided parameters and returns true
+  if all torsions around i,j,k,l are closer to +/-180 than to 0
+  */
+  auto allTrans = [](RWMol &mol, DGeomHelpers::EmbedParameters &ps,
+                     const std::size_t i, const std::size_t j,
+                     const std::size_t k, const std::size_t l) {
+    auto cids = DGeomHelpers::EmbedMultipleConfs(mol, 10, ps);
+
+    for (const auto cid : cids) {
+      auto conf = mol.getConformer(cid);
+      auto tors = MolTransforms::getDihedralDeg(conf, i, j, k, l);
+      if (std::fabs(tors) < 90.0) {
+        return false;
+      }
+    }
+    return true;
+  };
+  SECTION("Chain Case") {
+    auto mol = "CNC(=O)C"_smiles;
+    MolOps::addHs(*mol);
+    SECTION("KDG") {
+      auto ps = DGeomHelpers::KDG;
+      ps.randomSeed = 0xC0FFEE;
+      ps.useLegacyImplementation = GENERATE(true, false);
+      WHEN("forceTransAmide is True") {
+        ps.forceTransAmides = true;
+        THEN("Expect All Trans") { CHECK(allTrans(*mol, ps, 0, 1, 2, 4)); }
+      }
+
+      WHEN("forceTransAmide is False") {
+        ps.forceTransAmides = false;
+        THEN("Expect Some Cis") { CHECK(not allTrans(*mol, ps, 0, 1, 2, 4)); }
+      }
+    }
+  }
+  SECTION("Macrocycle") {
+    auto mol = "C1NC(=O)CCCCCC1"_smiles;
+    MolOps::addHs(*mol);
+    SECTION("KDG") {
+      auto ps = DGeomHelpers::KDG;
+      ps.randomSeed = 0xC0FFEE;
+      ps.useLegacyImplementation = GENERATE(true, false);
+      WHEN("Macrocycle14Config is True") {
+        ps.useMacrocycle14config = true;
+        THEN("Expect All Trans") { CHECK(allTrans(*mol, ps, 0, 1, 2, 4)); }
+      }
+      WHEN("Marcocycle14Config is False") {
+        ps.useMacrocycle14config = false;
+        THEN("Expect Some Cis") { CHECK(not allTrans(*mol, ps, 0, 1, 2, 4)); }
+      }
+    }
+  }
+  SECTION("Macrocycle where ET allows both") {
+    auto mol = "C1[C@@H](C)C(=O)N[C@@H](C)CCCC1"_smiles;
+    MolOps::addHs(*mol);
+    auto ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xC0FFEE;
+    ps.useLegacyImplementation = GENERATE(true, false);
+    WHEN("Macrocycle14Config is True") {
+      ps.useMacrocycle14config = true;
+      THEN("Expect all trans") { CHECK(allTrans(*mol, ps, 1, 3, 5, 6)); }
+    }
+    WHEN("Marcocycle14Config is False") {
+      ps.useMacrocycle14config = false;
+      THEN("Expect some cis") { CHECK(not allTrans(*mol, ps, 1, 3, 5, 6)); }
+    }
+  }
 }

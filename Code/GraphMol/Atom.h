@@ -90,7 +90,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
 
   //! store hybridization
-  typedef enum {
+  enum HybridizationType : std::uint8_t {
     UNSPECIFIED = 0,  //!< hybridization that hasn't been specified
     S,
     SP,
@@ -100,10 +100,10 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     SP3D,
     SP3D2,
     OTHER  //!< unrecognized hybridization
-  } HybridizationType;
+  };
 
   //! store type of chirality
-  typedef enum {
+  enum ChiralType : std::uint8_t {
     CHI_UNSPECIFIED = 0,  //!< chirality that hasn't been specified
     CHI_TETRAHEDRAL_CW,   //!< tetrahedral: clockwise rotation (SMILES \@\@)
     CHI_TETRAHEDRAL_CCW,  //!< tetrahedral: counter-clockwise rotation (SMILES
@@ -114,7 +114,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     CHI_SQUAREPLANAR,     //!< square planar, use permutation flag
     CHI_TRIGONALBIPYRAMIDAL,  //!< trigonal bipyramidal, use permutation flag
     CHI_OCTAHEDRAL            //!< octahedral, use permutation flag
-  } ChiralType;
+  };
 
   enum class ValenceType : std::uint8_t {
     IMPLICIT = 0,
