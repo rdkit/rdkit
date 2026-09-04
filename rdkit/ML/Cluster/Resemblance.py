@@ -128,7 +128,7 @@ def ShowMetricMat(metricMat, nObjs):
       if col <= row:
         print('   ---    ', end='')
       else:
-        print('%10.6f' % metricMat[(col * (col - 1)) / 2 + row], end='')
+        print('%10.6f' % metricMat[(col * (col - 1)) // 2 + row], end='')
     print()
 
 

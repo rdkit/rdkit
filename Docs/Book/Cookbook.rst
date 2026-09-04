@@ -758,7 +758,7 @@ Count Ring Systems
 
 .. testoutput::
 
-   [{1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12}, {14, 15, 16, 17, 18, 19}]
+   [{14, 15, 16, 17, 18, 19}, {1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12}]
 
 .. testcode::
 
@@ -2551,7 +2551,7 @@ To use the EmbedParameter for conformer generation:
 .. testcode::
 
    params.useRandomCoords = True
-   # Note this is only an illustrative example, hydrogens are not added before conformer generation to keep the indices apparant 
+   # Note this is only an illustrative example, hydrogens are not added before conformer generation to keep the indices apparent 
    AllChem.EmbedMultipleConfs(mol, numConfs = 3 , params = params)
 
 Both of these setters can be used to help sampling all kinds of molecules as the users see fit. Nevertheless, to facilitate using them in conformer generation of macrocycles, we devised the python package github.com/rinikerlab/cpeptools to provide chemcially intuitive bound matrices and CPCIs for macrocycles. Example usage cases are shown in the README.

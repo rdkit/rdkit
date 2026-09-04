@@ -9,7 +9,10 @@ from datetime import datetime, timedelta
 
 from rdkit import Chem, RDConfig
 from rdkit.Chem.MolStandardize import rdMolStandardize
-from rdkit.Chem import inchi, rdCIPLabeler
+from rdkit.Chem import inchi
+
+haveInchi = hasattr(inchi, 'MolToInchi')
+from rdkit.Chem import rdCIPLabeler
 from rdkit.Chem.rdchem import Atom
 
 
@@ -278,7 +281,6 @@ class TestCase(unittest.TestCase):
     vm.allowEmptyMolecules = True
     msg = vm.validate(mol)
     self.assertEqual(len(msg), 0)
-
 
     vm2 = rdMolStandardize.MolVSValidation([rdMolStandardize.FragmentValidation()])
     # with no argument it also works
@@ -551,7 +553,6 @@ chlorine	[Cl]
     self.assertEqual(len(res68), 50)
     self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTautomersReached)
 
-
     origVal = Chem.GetUseLegacyStereoPerception()
     for useLegacy in (True, False):
       Chem.SetUseLegacyStereoPerception(useLegacy)
@@ -582,7 +583,7 @@ chlorine	[Cl]
         self.assertEqual(Chem.MolToSmiles(taut), Chem.MolToSmiles(res[i]))
         self.assertEqual(Chem.MolToSmiles(taut), res.smiles[i])
         self.assertEqual(Chem.MolToSmiles(taut),
-                        Chem.MolToSmiles(res.smilesTautomerMap.values()[i].tautomer))
+                         Chem.MolToSmiles(res.smilesTautomerMap.values()[i].tautomer))
       for i, k in enumerate(res.smilesTautomerMap.keys()):
         self.assertEqual(k, res.smiles[i])
       for i, v in enumerate(res.smilesTautomerMap.values()):
@@ -596,7 +597,7 @@ chlorine	[Cl]
       self.assertEqual(Chem.MolToSmiles(res.tautomers[-1]), Chem.MolToSmiles(res[-1]))
       self.assertEqual(Chem.MolToSmiles(res[-1]), Chem.MolToSmiles(res[len(res) - 1]))
       self.assertEqual(Chem.MolToSmiles(res.tautomers[-1]),
-                      Chem.MolToSmiles(res.tautomers[len(res) - 1]))
+                       Chem.MolToSmiles(res.tautomers[len(res) - 1]))
       with self.assertRaises(IndexError):
         res[len(res)]
       with self.assertRaises(IndexError):
@@ -637,10 +638,10 @@ chlorine	[Cl]
       res = enumerator.Enumerate(eEnol)
       for taut in res.tautomers:
         bond = taut.GetBondWithIdx(1)
-        self.assertTrue(
-          (bond.GetBondType() == Chem.BondType.DOUBLE and bond.GetStereo() == Chem.BondStereo.STEREOANY) or
-          (bond.GetBondType() != Chem.BondType.DOUBLE and bond.GetStereo() == Chem.BondStereo.STEREONONE)
-        )
+        self.assertTrue((bond.GetBondType() == Chem.BondType.DOUBLE
+                         and bond.GetStereo() == Chem.BondStereo.STEREOANY)
+                        or (bond.GetBondType() != Chem.BondType.DOUBLE
+                            and bond.GetStereo() == Chem.BondStereo.STEREONONE))
       # test retain enol E stereochemistry
       params = rdMolStandardize.CleanupParameters()
       params.tautomerRemoveBondStereo = False
@@ -666,10 +667,10 @@ chlorine	[Cl]
       res = enumerator.Enumerate(zEnol)
       for taut in res:
         bond = taut.GetBondWithIdx(1)
-        self.assertTrue(
-          (bond.GetBondType() == Chem.BondType.DOUBLE and bond.GetStereo() == Chem.BondStereo.STEREOANY) or
-          (bond.GetBondType() != Chem.BondType.DOUBLE and bond.GetStereo() == Chem.BondStereo.STEREONONE)
-        )
+        self.assertTrue((bond.GetBondType() == Chem.BondType.DOUBLE
+                         and bond.GetStereo() == Chem.BondStereo.STEREOANY)
+                        or (bond.GetBondType() != Chem.BondType.DOUBLE
+                            and bond.GetStereo() == Chem.BondStereo.STEREONONE))
       # test retain enol Z stereochemistry
       params = rdMolStandardize.CleanupParameters()
       params.tautomerRemoveBondStereo = False
@@ -717,7 +718,7 @@ chlorine	[Cl]
       def __call__(self, mol, res):
         self._parent.assertTrue(isinstance(mol, Chem.Mol))
         self._parent.assertTrue(isinstance(res, rdMolStandardize.TautomerEnumeratorResult))
-        return (datetime.now() - self._start_time < self._timeout)
+        return (datetime.now() - self._start_time) < self._timeout
 
     class MyBrokenCallback(rdMolStandardize.TautomerEnumeratorCallback):
       pass
@@ -1024,8 +1025,8 @@ chlorine	[Cl]
       {"name":"phenol","acid":"c[OH]","base":"c[O-]"}
     ],
     "fragmentData":[
-      {"name":"hydrogen", "smarts":"[H]"}, 
-      {"name":"fluorine", "smarts":"[F]"}, 
+      {"name":"hydrogen", "smarts":"[H]"},
+      {"name":"fluorine", "smarts":"[F]"},
       {"name":"chlorine", "smarts":"[Cl]"}
     ],
     "tautomerTransformData":[
@@ -1233,7 +1234,7 @@ chlorine	[Cl]
     # featuresValidation
     mol = Chem.MolFromMolBlock(
       '''
-  Mrv2311 01162413552D          
+  Mrv2311 01162413552D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1259,7 +1260,7 @@ M  END
     self.assertEqual(len(errinfo), 0)
 
     mol = Chem.MolFromMolBlock('''
-  Mrv2311 01162411552D          
+  Mrv2311 01162411552D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1299,7 +1300,7 @@ M  END
 
     mol = Chem.MolFromMolBlock(
       '''
-  Mrv2311 02272411562D          
+  Mrv2311 02272411562D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1344,7 +1345,7 @@ M  END
     # disallowedRadicalValidation
     mol = Chem.MolFromMolBlock(
       '''
-  Mrv2311 02082417212D          
+  Mrv2311 02082417212D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1369,7 +1370,7 @@ M  END
     # is2DValidation
     mol = Chem.MolFromMolBlock(
       '''
-                    2D          
+                    2D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1407,7 +1408,7 @@ M  END
 
     mol = Chem.MolFromMolBlock(
       '''
-                    2D          
+                    2D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1431,7 +1432,7 @@ M  END
     # AtomClashValidation
     mol = Chem.MolFromMolBlock(
       '''
-                    2D          
+                    2D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1466,7 +1467,7 @@ M  END
 
     mol = Chem.MolFromMolBlock(
       '''
-          10052311582D          
+          10052311582D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1503,7 +1504,7 @@ M  END
 
     # invalid input molblock
     molblock = '''
-             sldfj;ldskfj sldkjfsd;lkf 
+             sldfj;ldskfj sldkjfsd;lkf
 M  V30 BEGIN CTAB
 '''
     result = pipeline.run(molblock)
@@ -1513,7 +1514,7 @@ M  V30 BEGIN CTAB
 
     # R group
     molblock = '''
-  Mrv2311 01162413552D          
+  Mrv2311 01162413552D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1536,7 +1537,7 @@ M  END
 
     # no atoms
     molblock = '''
-          10052313452D          
+          10052313452D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1552,7 +1553,7 @@ M  END
 
     # neutral quaternary N
     molblock = '''
-          10242314442D          
+          10242314442D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1587,7 +1588,7 @@ M  END
       ))
 
     molblock = '''
-                    2D          
+                    2D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1610,7 +1611,7 @@ M  END
     self.assertTrue(result.status & rdMolStandardize.PipelineStatus.IS2D_VALIDATION_ERROR)
 
     molblock = '''
-                    2D          
+                    2D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1637,7 +1638,7 @@ M  END
     self.assertTrue(result.status & rdMolStandardize.PipelineStatus.LAYOUT2D_VALIDATION_ERROR)
 
     molblock = '''
-                    2D          
+                    2D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1668,7 +1669,7 @@ M  END
       | rdMolStandardize.PipelineStatus.STEREO_VALIDATION_ERROR)
 
     molblock = '''
-          10282320572D          
+          10282320572D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1710,7 +1711,7 @@ M  END
     self.assertEqual(outputSmiles, "CC(=O)O")
 
     molblock = '''
-          10282320572D          
+          10282320572D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1747,7 +1748,7 @@ M  END
     self.assertEqual(outputSmiles, "C[N+](=O)[O-]")
 
     molblock = '''
-          10282320572D          
+          10282320572D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1796,7 +1797,7 @@ M  END
     pipeline = rdMolStandardize.Pipeline(options)
 
     molblock = '''
-  Mrv2311 02072415362D          
+  Mrv2311 02072415362D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1835,7 +1836,7 @@ M  END
 
     # no atoms
     molblock = '''
-          10052313452D          
+          10052313452D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1856,19 +1857,15 @@ M  END
 
     # check the default terms
     terms = rdMolStandardize.GetDefaultTautomerScoreSubstructs()
-    for term, (name, smarts, score) in zip(terms, [["benzoquinone", "[#6]1([#6]=[#6][#6]([#6]=[#6]1)=,:[N,S,O])=,:[N,S,O]",
-                                                    25],
-                                                   ["oxim", "[#6]=[N][OH]", 4],
-                                                   ["C=O", "[#6]=,:[#8]", 2],
-                                                   ["N=O", "[#7]=,:[#8]", 2],
-                                                   ["P=O", "[#15]=,:[#8]", 2],
-                                                   ["C=hetero", "[C]=[!#1;!#6]", 1],
-                                                   ["C(=hetero)-hetero", "[C](=[!#1;!#6])[!#1;!#6]", 2],
-                                                   ["aromatic C = exocyclic N", "[c]=!@[N]", -1],
-                                                   ["methyl", "[CX4H3]", 1],
-                                                   ["guanidine terminal=N", "[#7]C(=[NR0])[#7H0]", 1],
-                                                   ["guanidine endocyclic=N", "[#7;R][#6;R]([N])=[#7;R]", 2],
-                                                   ["aci-nitro", "[#6]=[N+]([O-])[OH]", -4]]):
+    for term, (name, smarts, score) in zip(
+        terms, [["benzoquinone", "[#6]1([#6]=[#6][#6]([#6]=[#6]1)=,:[N,S,O])=,:[N,S,O]", 25],
+                ["oxim", "[#6]=[N][OH]", 4], ["C=O", "[#6]=,:[#8]", 2], ["N=O", "[#7]=,:[#8]", 2],
+                ["P=O", "[#15]=,:[#8]", 2], ["C=hetero", "[C]=[!#1;!#6]", 1],
+                ["C(=hetero)-hetero", "[C](=[!#1;!#6])[!#1;!#6]", 2],
+                ["aromatic C = exocyclic N", "[c]=!@[N]", -1], ["methyl", "[CX4H3]", 1],
+                ["guanidine terminal=N", "[#7]C(=[NR0])[#7H0]", 1],
+                ["guanidine endocyclic=N", "[#7;R][#6;R]([N])=[#7;R]", 2],
+                ["aci-nitro", "[#6]=[N+]([O-])[OH]", -4]]):
       self.assertEqual((term.name, term.smarts, term.score), (name, smarts, score))
 
       # make sure we can pass in our own terms
@@ -1876,12 +1873,13 @@ M  END
       terms.append(rdMolStandardize.SubstructTerm("C=0", "[#6]=,:[#8]", 1000))
       self.assertEqual(rdMolStandardize.ScoreSubstructs(m, terms), 1000)
 
-      self.assertEqual(rdMolStandardize.ScoreSubstructs(
-        m, rdMolStandardize.GetDefaultTautomerScoreSubstructs()), 6)
+      self.assertEqual(
+        rdMolStandardize.ScoreSubstructs(m, rdMolStandardize.GetDefaultTautomerScoreSubstructs()),
+        6)
 
       enumerator = rdMolStandardize.TautomerEnumerator()
       m2 = Chem.MolFromSmiles("C1(=CCCCC1)O")
-      
+
       ctaut = enumerator.Canonicalize(m2)
       self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
 
@@ -1898,11 +1896,11 @@ M  END
         if Chem.MolToSmiles(mol) == Chem.CanonSmiles("C1(=CCCCC1)O"):
           return 100_000
         return 0
-      
+
       ctaut = enumerator.Canonicalize(m2, score_func2)
       self.assertEqual(Chem.MolToSmiles(ctaut), Chem.CanonSmiles("C1(=CCCCC1)O"))
 
-  @unittest.skipUnless(inchi.INCHI_AVAILABLE, 'Inchi required')
+  @unittest.skipUnless(haveInchi, 'Inchi required')
   def testTautomerCanonicalizeNoInchiBondStereoFrom2DCoords(self):
 
     molblock = """
@@ -1989,10 +1987,8 @@ M  END
     ranks = list(Chem.CanonicalRankAtoms(mol, breakTies=False))
     for bond in mol.GetBonds():
       if (bond.GetBondType() != Chem.rdchem.BondType.DOUBLE
-          or bond.GetStereo() != Chem.rdchem.BondStereo.STEREONONE
-          or bond.IsInRing()
-          or bond.GetBeginAtom().GetAtomicNum() != 6
-          or bond.GetEndAtom().GetAtomicNum() != 6):
+          or bond.GetStereo() != Chem.rdchem.BondStereo.STEREONONE or bond.IsInRing()
+          or bond.GetBeginAtom().GetAtomicNum() != 6 or bond.GetEndAtom().GetAtomicNum() != 6):
         continue
       bgn, end = bond.GetBeginAtom(), bond.GetEndAtom()
       bgnNbrs = [n.GetIdx() for n in bgn.GetNeighbors() if n.GetIdx() != end.GetIdx()]
@@ -2014,8 +2010,8 @@ M  END
     enumerator = rdMolStandardize.TautomerEnumerator(params)
     canon = enumerator.Canonicalize(mol)
     smi = Chem.MolToSmiles(canon)
-    self.assertEqual(smi, "O=C1CC(=CC2=CC=COC2)C(=O)N1",
-                     f"Expected exocyclic form, got: {smi}")
+    self.assertEqual(smi, "O=C1CC(=CC2=CC=COC2)C(=O)N1", f"Expected exocyclic form, got: {smi}")
+
 
 if __name__ == "__main__":
   unittest.main()

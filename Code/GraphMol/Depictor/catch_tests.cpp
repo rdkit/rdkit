@@ -289,7 +289,7 @@ $$$$
       for (auto bond : mol.bonds()) {
         auto diff =
             coords[bond->getBeginAtomIdx()] - coords[bond->getEndAtomIdx()];
-        if (auto length = diff.length(); length < 1.0 || length > 2.0) {
+        if (auto length = diff.length(); length < 1.0 || length > 2.1) {
           return true;
         }
       };

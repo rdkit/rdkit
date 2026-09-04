@@ -10,6 +10,10 @@ rdkit_headers(GasteigerCharges.h
 rdkit_test(testPartialCharges test1.cpp LINK_LIBRARIES  PartialCharges
 SmilesParse )
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+add_subdirectory(nbWrap)
 endif()

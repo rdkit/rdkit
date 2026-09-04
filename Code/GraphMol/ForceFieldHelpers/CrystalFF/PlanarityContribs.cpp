@@ -107,7 +107,7 @@ void PlanarityContribs::getGrad(double *pos, double *grad) const {
     const double dJK = rJK.length();
     const double dJL = rJL.length();
     if (isDoubleZero(dJI) || isDoubleZero(dJK) || isDoubleZero(dJL)) {
-      return;
+      continue;
     }
     rJI /= dJI;
     rJK /= dJK;

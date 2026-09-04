@@ -35,10 +35,10 @@ using std::uint32_t;
 
 namespace RDKit {
 
-const int32_t MolPickler::versionMajor = 16;
-const int32_t MolPickler::versionMinor = 3;
-const int32_t MolPickler::versionPatch = 0;
-const int32_t MolPickler::endianId = 0xDEADBEEF;
+constexpr int32_t MolPickler::versionMajor = 16;
+constexpr int32_t MolPickler::versionMinor = 4;
+constexpr int32_t MolPickler::versionPatch = 0;
+constexpr int32_t MolPickler::endianId = 0xDEADBEEF;
 
 void streamWrite(std::ostream &ss, MolPickler::Tags tag) {
   auto tmp = static_cast<unsigned char>(tag);
@@ -421,24 +421,24 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         ((const RecursiveStructureQuery *)query)->getQueryMol(), ss);
   } else {
     auto qdetails = PicklerOps::getQueryDetails(query);
-    switch (qdetails.which()) {
+    switch (qdetails.index()) {
       case 0:
-        streamWrite(ss, boost::get<MolPickler::Tags>(qdetails));
+        streamWrite(ss, std::get<MolPickler::Tags>(qdetails));
         break;
       case 1: {
-        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t>>(qdetails);
+        auto v = std::get<std::tuple<MolPickler::Tags, int32_t>>(qdetails);
         streamWrite(ss, std::get<0>(v));
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<1>(v));
       } break;
       case 2: {
-        auto v = boost::get<std::tuple<MolPickler::Tags, int32_t, int32_t>>(
-            qdetails);
+        auto v =
+            std::get<std::tuple<MolPickler::Tags, int32_t, int32_t>>(qdetails);
         streamWrite(ss, std::get<0>(v));
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<1>(v));
         streamWrite(ss, std::get<2>(v));
       } break;
       case 3: {
-        auto v = boost::get<
+        auto v = std::get<
             std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>>(
             qdetails);
         streamWrite(ss, std::get<0>(v));
@@ -448,8 +448,8 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         streamWrite(ss, std::get<4>(v));
       } break;
       case 4: {
-        auto v = boost::get<std::tuple<MolPickler::Tags, std::set<int32_t>>>(
-            qdetails);
+        auto v =
+            std::get<std::tuple<MolPickler::Tags, std::set<int32_t>>>(qdetails);
         streamWrite(ss, std::get<0>(v));
         const auto &tset = std::get<1>(v);
         int32_t sz = tset.size();
@@ -460,14 +460,13 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
 
       } break;
       case 5: {
-        auto v =
-            boost::get<std::tuple<MolPickler::Tags, std::string>>(qdetails);
+        auto v = std::get<std::tuple<MolPickler::Tags, std::string>>(qdetails);
         streamWrite(ss, std::get<0>(v));
         const auto &pval = std::get<1>(v);
         streamWrite(ss, MolPickler::QUERY_VALUE, pval);
       } break;
       case 6: {
-        auto &v = boost::get<std::tuple<MolPickler::Tags, PairHolder, double>>(
+        auto &v = std::get<std::tuple<MolPickler::Tags, PairHolder, double>>(
             qdetails);
         streamWrite(ss, std::get<0>(v));
         // The tolerance is pickled first as we can't pickle a PairHolder with
@@ -1042,7 +1041,7 @@ void MolPickler::pickleMol(const ROMol *mol, std::ostream &ss,
     streamWrite(ss, versionMinor);
     streamWrite(ss, versionPatch);
 #ifndef OLD_PICKLE
-    if (mol->getNumAtoms() > 255) {
+    if (mol->getNumAtoms() > 255 || mol->getNumBonds() > 255) {
       _pickle<int32_t>(mol, ss, propertyFlags);
     } else {
       _pickle<unsigned char>(mol, ss, propertyFlags);
@@ -1139,11 +1138,14 @@ void MolPickler::molFromPickle(std::istream &ss, ROMol *mol,
       _depickleV1(ss, mol);
     } else {
       int32_t numAtoms;
+      int32_t numBonds;
       streamRead(ss, numAtoms, majorVersion);
-      if (numAtoms > 255) {
-        _depickle<int32_t>(ss, mol, majorVersion, numAtoms, propertyFlags);
+      streamRead(ss, numBonds, majorVersion);
+      if (numAtoms > 255 || (majorVersion >= 16040 && numBonds > 255)) {
+        _depickle<int32_t>(ss, mol, majorVersion, numAtoms, numBonds,
+                           propertyFlags);
       } else {
-        _depickle<unsigned char>(ss, mol, majorVersion, numAtoms,
+        _depickle<unsigned char>(ss, mol, majorVersion, numAtoms, numBonds,
                                  propertyFlags);
       }
     }
@@ -1346,17 +1348,13 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
 
 template <typename T>
 void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
-                           int numAtoms, unsigned int propertyFlags) {
+                           int numAtoms, int numBonds,
+                           unsigned int propertyFlags) {
   PRECONDITION(mol, "empty molecule");
   bool directMap = mol->getNumAtoms() == 0;
   Tags tag;
   int32_t tmpInt;
-  // int numAtoms,numBonds;
-  int numBonds;
   bool haveQuery = false;
-
-  streamRead(ss, tmpInt, version);
-  numBonds = tmpInt;
 
   // did we include coordinates
   bool includeCoords = false;
@@ -1421,13 +1419,16 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   // -------------------
   streamRead(ss, tag, version);
   bool ringFound = false;
+  bool ringFamiliesFound = false;
   FIND_RING_TYPE ringType =
       RDKit::FIND_RING_TYPE::FIND_RING_TYPE_OTHER_OR_UNKNOWN;
   if (tag == BEGINSSSR) {
     ringFound = true;
+    ringFamiliesFound = true;
     ringType = FIND_RING_TYPE::FIND_RING_TYPE_SSSR;
   } else if (tag == BEGINSYMMSSSR) {
     ringFound = true;
+    ringFamiliesFound = true;
     ringType = FIND_RING_TYPE::FIND_RING_TYPE_SYMM_SSSR;
   } else if (tag == BEGINFASTFIND) {
     ringFound = true;
@@ -1439,6 +1440,12 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   if (ringFound) {
     _addRingInfoFromPickle<T>(ss, mol, version, directMap, ringType);
     streamRead(ss, tag, version);
+  }
+  if (ringFamiliesFound) {
+    // findSSSR now initializes ring families, so make sure
+    // unpickled mols have done this to prevent issues with
+    // code that expects ring families to be initialized.
+    MolOps::findRingFamilies(*mol);
   }
 
   // -------------------

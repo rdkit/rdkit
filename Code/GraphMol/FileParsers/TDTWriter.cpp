@@ -66,7 +66,11 @@ TDTWriter::TDTWriter(std::ostream *outStream, bool takeOwnership) {
 TDTWriter::~TDTWriter() {
   // close the writer if it's still open:
   if (dp_ostream != nullptr) {
-    close();
+    try {
+      close();
+    } catch (...) {
+      // Destructors must not propagate stream exceptions.
+    }
   }
 }
 

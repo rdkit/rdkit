@@ -20,6 +20,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <GraphMol/MolDraw2D/MolDraw2DSGroupData.h>
 #include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/PNGParser.h>
@@ -8750,16 +8751,16 @@ TEST_CASE("Lasso highlights") {
     CHECK(match_count == 4);
     auto a0reg = std::sregex_iterator(text.begin(), text.end(), a0);
     auto dat1 = *a0reg;
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(228.9, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(94.6, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(228.8, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(93.6, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(381.7, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(284.9, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(381.0, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(285.5, 0.1));
     a0reg++;
     dat1 = *a0reg;
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(244.1, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(81.1, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.1, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(81.5, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(377.9, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(265.7, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(378.7, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(266.0, 0.1));
     check_file_hash(baseName + "3.svg");
 #endif
   }
@@ -8799,22 +8800,22 @@ TEST_CASE("Lasso highlights") {
       CHECK(match_count == 3);
       auto a5reg = std::sregex_iterator(text.begin(), text.end(), a5);
       auto dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(221.0, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(206.7, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(219.7, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(206.2, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(286.2, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(243.1, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(285.0, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(242.7, 0.1));
       a5reg++;
       dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(215.1, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(177.9, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(216.2, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(177.0, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(280.5, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(215.0, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(281.6, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(214.2, 0.1));
       a5reg++;
       dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(243.0, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(187.2, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(243.3, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(188.6, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(307.7, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(224.2, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(307.9, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(225.5, 0.1));
       // There should be 2 lines in red, the lasso along the bi-phenyl
       // bond.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
@@ -8858,16 +8859,16 @@ TEST_CASE("Lasso highlights") {
       CHECK(match_count == 2);
       auto a11reg = std::sregex_iterator(text.begin(), text.end(), a11);
       auto dat1 = *a11reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(346.2, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(279.1, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(345.0, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(278.7, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(156.2, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(286.8, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(157.2, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(285.9, 0.1));
       a11reg++;
       dat1 = *a11reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(340.5, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(250.9, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(341.6, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(250.0, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(183.4, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(295.9, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(183.7, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(297.3, 0.1));
 
       // There should not be any red lines for bond 5.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
@@ -11560,7 +11561,7 @@ TEST_CASE("Github 9310 - SVG Backgrounds not cleared in grid display") {
 }
 
 TEST_CASE("Github 9329 - zero length vector") {
-  auto m1 = "CCO |(0.0, 0.0,;0.0,0.0,;1.0,0.0,;)|"_smiles;
+  auto m1 = "CCO |(0.0,0.0,;0.0,0.0,;1.0,0.0,;)|"_smiles;
   REQUIRE(m1);
   MolDraw2DSVG drawer(400, 400);
   MolDraw2DUtils::prepareMolForDrawing(*m1);
@@ -11674,5 +11675,95 @@ TEST_CASE("Configurable Stereo Labels") {
         std::distance(std::sregex_iterator(text.begin(), text.end(), under),
                       std::sregex_iterator()));
     CHECK(under_count == 0);
+  }
+}
+
+TEST_CASE("colourScheme option from JSON", "[drawing]") {
+  auto m1 = "c1ccccc1CO"_smiles;
+  REQUIRE(m1);
+  SECTION("dark sets the whole colour family, not just the palette") {
+    MolDrawOptions defaults;
+    MolDrawOptions reference;
+    setDarkMode(reference);
+
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(
+        opts, R"({"colourScheme": "dark"})");
+    CHECK(opts.backgroundColour == reference.backgroundColour);
+    CHECK(opts.backgroundColour != defaults.backgroundColour);
+    CHECK(opts.legendColour == reference.legendColour);
+    CHECK(opts.symbolColour == reference.symbolColour);
+    CHECK(opts.annotationColour == reference.annotationColour);
+    CHECK(opts.atomNoteColour == reference.atomNoteColour);
+    CHECK(opts.variableAttachmentColour == reference.variableAttachmentColour);
+    CHECK(opts.atomColourPalette == reference.atomColourPalette);
+
+    MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions() = opts;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testColourSchemeDark.svg");
+    outs << text;
+    outs.close();
+    // the background rect is drawn with the background colour
+    CHECK(text.find("fill:#000000") != std::string::npos);
+  }
+  SECTION("scheme name is case-insensitive and darkmode is an alias") {
+    MolDrawOptions reference;
+    setDarkMode(reference);
+    for (const auto *json : {R"({"colourScheme": "Dark"})",
+                             R"({"colourScheme": "DARKMODE"})"}) {
+      MolDrawOptions opts;
+      MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
+      CHECK(opts.backgroundColour == reference.backgroundColour);
+      CHECK(opts.atomColourPalette == reference.atomColourPalette);
+    }
+  }
+  SECTION("individual colour options override the scheme") {
+    const DrawColour blue{0.0, 0.0, 1.0, 1.0};
+    MolDrawOptions reference;
+    setDarkMode(reference);
+
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(
+        opts,
+        R"({"colourScheme": "dark", "backgroundColour": [0, 0, 1, 1]})");
+    CHECK(opts.backgroundColour == blue);
+    // everything else still comes from the scheme
+    CHECK(opts.legendColour == reference.legendColour);
+    CHECK(opts.atomColourPalette == reference.atomColourPalette);
+  }
+  SECTION("an explicit palette overrides the one set by the scheme") {
+    ColourPalette bwPalette;
+    assignBWPalette(bwPalette);
+
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(
+        opts, R"({"colourScheme": "dark", "atomColourPalette": "bw"})");
+    CHECK(opts.atomColourPalette == bwPalette);
+    // but the scheme still supplied the background
+    MolDrawOptions reference;
+    setDarkMode(reference);
+    CHECK(opts.backgroundColour == reference.backgroundColour);
+  }
+  SECTION("monochrome") {
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(
+        opts, R"({"colourScheme": "monochrome"})");
+    const DrawColour black{0.0, 0.0, 0.0, 1.0};
+    const DrawColour white{1.0, 1.0, 1.0, 1.0};
+    CHECK(opts.backgroundColour == white);
+    CHECK(opts.symbolColour == black);
+    CHECK(opts.atomColourPalette.size() == 1);
+    CHECK(opts.atomColourPalette.at(-1) == black);
+  }
+  SECTION("an unknown scheme name is ignored") {
+    MolDrawOptions defaults;
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(
+        opts, R"({"colourScheme": "chartreuse"})");
+    CHECK(opts.backgroundColour == defaults.backgroundColour);
+    CHECK(opts.atomColourPalette == defaults.atomColourPalette);
   }
 }

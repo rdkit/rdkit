@@ -347,10 +347,10 @@ void getGETAWAYDescCustom(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
   MatrixXd Bi;
   MatrixXd RBw;
   double HATSc, HATSct, H0ct, R0ct, H0c, R0c, Rkmaxc, tmpc;
-  double HATSk[9];
-  double Hk[9];
-  double Rk[8];
-  double Rp[8];
+  double HATSk[9]{0.0};
+  double Hk[9]{0.0};
+  double Rk[8]{0.0};
+  double Rp[8]{0.0};
 
   double *dist =
       MolOps::getDistanceMat(mol, false);  // need to be be set to false to have

@@ -196,7 +196,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
   /*! \brief determines the signed angle between a vector to this point
    *   from the origin and a vector to the other point.
    *
-   *  The results of this call will be between 0 and M_2_PI
+   *  The results of this call will be between 0 and 2 * M_PI.
    */
   double signedAngleTo(const Point3D &other) const {
     double res = this->angleTo(other);
@@ -439,6 +439,16 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
     RDNumeric::Vector<double> *nvec =
         new RDNumeric::Vector<double>(*other.getStorage());
     dp_storage.reset(nvec);
+  }
+
+  PointND(const std::vector<double> &vals) {
+    RDNumeric::Vector<double> *nvec =
+        new RDNumeric::Vector<double>(vals.size(), 0.0);
+    dp_storage.reset(nvec);
+
+    std::memcpy(static_cast<void *>(dp_storage.get()->getData()),
+                static_cast<const void *>(vals.data()),
+                vals.size() * sizeof(double));
   }
 
   Point *copy() const override { return new PointND(*this); }

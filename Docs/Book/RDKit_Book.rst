@@ -1803,12 +1803,13 @@ Here are the steps involved, in order.
      valence states. This step is always performed, but if it is "skipped"
      the test for non-standard valences will not be carried out.
 
-  5. ``symmetrizeSSSR``: calls the symmetrized smallest set of smallest rings
-     algorithm (discussed in the Getting Started document).
 
-  6. ``Kekulize``: converts aromatic rings to their Kekule form. Will raise an
+  5. ``Kekulize``: converts aromatic rings to their Kekule form. Will raise an
      exception if a ring cannot be kekulized or if aromatic bonds are found
      outside of rings.
+
+  6. ``symmetrizeSSSR``: calls the symmetrized smallest set of smallest rings
+     algorithm (discussed in the Getting Started document).
 
   7. ``assignRadicals``: determines the number of radical electrons (if any) on
      each atom.

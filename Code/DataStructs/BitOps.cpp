@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "BitVects.h"
+#include <cstdint>
 #include "BitOps.h"
 #include <cmath>
 #include <string>
@@ -900,14 +901,14 @@ template RDKIT_DATASTRUCTS_EXPORT void UpdateBitVectFromBinaryText(
 #include <intrin.h>
 #ifdef _WIN64
 #define BUILTIN_POPCOUNT_INSTR __popcnt64
-using BUILTIN_POPCOUNT_TYPE = boost::uint64_t;
+using BUILTIN_POPCOUNT_TYPE = std::uint64_t;
 #else
 #define BUILTIN_POPCOUNT_INSTR __popcnt
 using BUILTIN_POPCOUNT_TYPE = std::uint32_t;
 #endif
 #else
 #define BUILTIN_POPCOUNT_INSTR __builtin_popcountll
-using BUILTIN_POPCOUNT_TYPE = boost::uint64_t;
+using BUILTIN_POPCOUNT_TYPE = std::uint64_t;
 #endif
 
 // the Bitmap Tanimoto and Dice similarity code is adapted

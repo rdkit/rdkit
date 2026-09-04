@@ -60,6 +60,9 @@ struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
 
   //! Compute the value of the property
   virtual double operator()(const RDKit::ROMol &mol) const {
+    if (d_dataFunc == nullptr) {
+      throw ValueErrorException("PropertyFunctor has no data function");
+    }
     return (*d_dataFunc)(mol);
   }
 

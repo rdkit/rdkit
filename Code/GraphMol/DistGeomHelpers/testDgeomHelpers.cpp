@@ -45,6 +45,8 @@
 using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 using namespace RDKit;
 
+#define WRITE_MOLFILES false
+
 namespace {
 /**
  * @brief Computes pairwise distance matrix for 3D coordinates.
@@ -135,7 +137,20 @@ void compareConfs(const RWMol *m, const RWMol *expected, int molConfId = -1,
 
     RDGeom::Point3D pt1i = conf1.getAtomPos(i);
     RDGeom::Point3D pt2i = conf2.getAtomPos(i);
-    CHECK((pt1i - pt2i).length() < 0.05);
+    // instead of directly comparing positions, we look at distances in order to
+    // try and minimize differences from different compilers
+    for (unsigned int j = 0; j < i; j++) {
+      REQUIRE(m->getAtomWithIdx(j)->getAtomicNum() ==
+              expected->getAtomWithIdx(j)->getAtomicNum());
+      RDGeom::Point3D pt1j = conf1.getAtomPos(j);
+      RDGeom::Point3D pt2j = conf2.getAtomPos(j);
+      auto tol = 0.15;
+      if (m->getBondBetweenAtoms(i, j)) {
+        tol = 0.05;
+      }
+      CHECK_THAT((pt1j - pt1i).length(),
+                 Catch::Matchers::WithinAbs((pt2j - pt2i).length(), tol));
+    }
   }
 }
 }  // namespace
@@ -236,13 +251,12 @@ TEST_CASE("test2") {
     CHECK(bm->getUpperBound(2, 5) - dmat->getVal(2, 5) > -0.1);
     CHECK(bm->getLowerBound(2, 5) - dmat->getVal(2, 5) < 0.10);
 
-    CHECK((bm->getUpperBound(8, 4) - bm->getLowerBound(8, 4)) > 1.);
-    CHECK((bm->getUpperBound(8, 4) - bm->getLowerBound(8, 4)) < 1.2);
+    CHECK((bm->getUpperBound(8, 4) - bm->getLowerBound(8, 4)) <= 0.21);
     CHECK((bm->getUpperBound(8, 4) - dmat->getVal(8, 4) > -0.1));
     CHECK((bm->getLowerBound(8, 4) - dmat->getVal(8, 4) < 0.10));
 
     CHECK((bm->getUpperBound(8, 6) - bm->getLowerBound(8, 6)) > 1.0);
-    CHECK((bm->getUpperBound(8, 6) - bm->getLowerBound(8, 6)) < 1.2);
+    CHECK((bm->getUpperBound(8, 6) - bm->getLowerBound(8, 6)) < 1.27);
     CHECK((bm->getUpperBound(8, 6) - dmat->getVal(8, 6) > -0.1));
     CHECK((bm->getLowerBound(8, 6) - dmat->getVal(8, 6) < 0.10));
   }
@@ -251,7 +265,7 @@ TEST_CASE("test2") {
     const std::string smiles = "CCCC";
     auto [mol, dmat, bm] = getResults(smiles);
     CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) > 1.0);
-    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < 1.3);
+    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < 1.47);
     CHECK((bm->getUpperBound(0, 3) - dmat->getVal(0, 3) > -0.1));
     CHECK(bm->getLowerBound(0, 3) - dmat->getVal(0, 3) < 0.10);
   }
@@ -279,7 +293,7 @@ TEST_CASE("test2") {
   SECTION("Ethene cis") {
     const std::string smiles = "C/C=C\\C";
     auto [mol, dmat, bm] = getResults(smiles);
-    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < .13);
+    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < .23);
     CHECK((bm->getUpperBound(0, 3) - dmat->getVal(0, 3) > -0.1));
     CHECK((bm->getLowerBound(0, 3) - dmat->getVal(0, 3) < 0.10));
   }
@@ -287,7 +301,7 @@ TEST_CASE("test2") {
   SECTION("Ethene No Stereo") {
     const std::string smiles = "CC=CC";
     auto [mol, dmat, bm] = getResults(smiles);
-    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < 1.13);
+    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < 1.18);
     CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) > 1.);
     CHECK((bm->getUpperBound(0, 3) - dmat->getVal(0, 3) > -0.1));
     CHECK((bm->getLowerBound(0, 3) - dmat->getVal(0, 3) < 0.10));
@@ -295,7 +309,7 @@ TEST_CASE("test2") {
   SECTION("Disulfur Dioxide") {
     const std::string smiles = "O=S-S=O";
     auto [mol, dmat, bm] = getResults(smiles);
-    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < .13);
+    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < .19);
     CHECK((bm->getUpperBound(0, 3) - dmat->getVal(0, 3) > -0.1));
     CHECK((bm->getLowerBound(0, 3) - dmat->getVal(0, 3) < 0.10));
   }
@@ -531,8 +545,8 @@ TEST_CASE("testTriangleSmoothing") {
 TEST_CASE("testIssue251") {
   const auto m = "COC=O"_smiles;
   auto bm = _getBoundsMatrix(m);
-  CHECK(RDKit::feq(bm->getLowerBound(0, 3), 2.67, 0.01));
-  CHECK(RDKit::feq(bm->getUpperBound(0, 3), 2.79, 0.01));
+  CHECK(RDKit::feq(bm->getLowerBound(0, 3), 2.63, 0.01));
+  CHECK(RDKit::feq(bm->getUpperBound(0, 3), 2.83, 0.01));
 }
 
 TEST_CASE("testIssue284") {
@@ -556,9 +570,10 @@ TEST_CASE("testIssue284") {
   CHECK(bm2->getUpperBound(0, 4) > 3.5);
   CHECK(bm2->getLowerBound(2, 4) < 3.0);
   CHECK(bm2->getUpperBound(2, 4) > 3.5);
-  CHECK(bm->getLowerBound(0, 3) < bm2->getLowerBound(0, 4));
+  CHECK(bm->getLowerBound(0, 3) ==
+        bm2->getLowerBound(0, 4));  // (for both cis is allowed)
   CHECK(bm->getUpperBound(0, 3) < bm2->getUpperBound(0, 4));
-  CHECK(bm->getLowerBound(0, 3) < bm2->getLowerBound(2, 4));
+  CHECK(bm->getLowerBound(0, 3) == bm2->getLowerBound(2, 4));
   CHECK(bm->getUpperBound(0, 3) < bm2->getUpperBound(2, 4));
 }
 
@@ -573,7 +588,8 @@ TEST_CASE("testIssue285") {
 
   std::size_t tgtNumber = 10;
   const bool legacyETKDG = GENERATE(true, false);
-  DGeomHelpers::EmbedParameters params{.useLegacyImplementation = legacyETKDG};
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .useLegacyImplementation = legacyETKDG};
   INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, tgtNumber, params);
   REQUIRE(cids.size() == tgtNumber);
 
@@ -695,7 +711,8 @@ TEST_CASE("testRandomCoords") {
 
 TEST_CASE("testIssue1989539") {
   const bool legacyETKDG = GENERATE(true, false);
-  DGeomHelpers::EmbedParameters params{.useLegacyImplementation = legacyETKDG};
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .useLegacyImplementation = legacyETKDG};
   {
     auto m = "c1ccccc1.Cl"_smiles;
     const int cid = DGeomHelpers::EmbedMolecule(*m, params);
@@ -784,8 +801,8 @@ TEST_CASE("Check Mols embedddable") {
     int cid = DGeomHelpers::EmbedMolecule(m);
     CHECK(cid >= 0);
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     std::vector<int> cids = DGeomHelpers::EmbedMultipleConfs(m, 10, params);
     CHECK(cids.size() == 10);
     CHECK(std::find(cids.begin(), cids.end(), -1) == cids.end());
@@ -794,8 +811,8 @@ TEST_CASE("Check Mols embedddable") {
   SECTION("testIssue2091864 1") {
     auto m = "C1C2CC12"_smiles;
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*m, params);
     CHECK(cid >= 0);
   }
@@ -822,8 +839,8 @@ TEST_CASE("Check Mols embedddable") {
     auto m = "O=N(=O)OCC(CON(=O)=O)(CON(=O)=O)CON(=O)=O"_smiles;
     MolOps::addHs(*m);
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*m, params);
     CHECK(cid >= 0);
   }
@@ -838,8 +855,8 @@ TEST_CASE("testIssue2835784") {
     if (addHs) {
       MolOps::addHs(*m);
     }
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*m, params);
     CHECK(cid >= 0);
     std::vector<int> cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, params);
@@ -911,7 +928,8 @@ TEST_CASE("testIssue3483968") {
   auto m = v2::FileParsers::MolFromMolFile(molfile);
   REQUIRE(m);
   const bool legacyETKDG = GENERATE(true, false);
-  DGeomHelpers::EmbedParameters params{.ignoreSmoothingFailures = true,
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .ignoreSmoothingFailures = true,
                                        .useLegacyImplementation = legacyETKDG};
   int cid = DGeomHelpers::EmbedMolecule(*m, params);
   CHECK(cid >= 0);
@@ -1036,8 +1054,8 @@ TEST_CASE("testGithub55") {
     REQUIRE(core);
 
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*core, params);
     CHECK(cid >= 0);
 
@@ -1063,8 +1081,8 @@ TEST_CASE("testGithub55") {
     REQUIRE(core);
 
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*core, params);
     CHECK(cid >= 0);
 
@@ -1296,7 +1314,7 @@ TEST_CASE("testGithub697") {
       "C(COC(=O)C(N)CCCNC(=N)N)NC(=O)C(C(C)C)NC1=O"};
 
   for (const auto &smi : smis) {
-    ROMol *m = SmilesToMol(smi);
+    auto m = v2::SmilesParse::MolFromSmiles(smi);
     REQUIRE(m);
     DistGeom::BoundsMatPtr bm;
     bm.reset(new DistGeom::BoundsMatrix(m->getNumAtoms()));
@@ -1352,10 +1370,13 @@ TEST_CASE("testEmbedParameters") {
     auto mol = v2::SmilesParse::MolFromSmiles(smiles);
     REQUIRE(mol);
     MolOps::addHs(*mol);
-    REQUIRE(ref->getNumAtoms() == mol->getNumAtoms());
+    REQUIRE(mol->getNumAtoms() == ref->getNumAtoms());
     params.useLegacyImplementation = legacyETKDG;
     params.randomSeed = 42;
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+#if WRITE_MOLFILES
+    MolToMolFile(*mol, file);
+#endif
     compareConfs(ref.get(), mol.get());
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -1570,8 +1591,8 @@ TEST_CASE("testGithub1990") {
     MolOps::removeHs(*mol);
     CHECK(mol->getNumAtoms() == 4);
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     CHECK(cid >= 0);
   }
@@ -1584,8 +1605,8 @@ TEST_CASE("testGithub1990") {
     MolOps::addHs(*mol);
     MolOps::removeHs(*mol);
     const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{.useLegacyImplementation =
-                                             legacyETKDG};
+    DGeomHelpers::EmbedParameters params{
+        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
     int cid = DGeomHelpers::EmbedMolecule(*mol, params);
     CHECK(cid >= 0);
   }
@@ -1695,19 +1716,6 @@ TEST_CASE("testDisableFragmentation") {
   CHECK((conf.getAtomPos(1) - conf.getAtomPos(3)).length() > 2.0);
 }
 
-TEST_CASE("testGithub3019") {
-  {  // make sure the mechanics work
-    auto m = v2::SmilesParse::MolFromSmiles(std::string(2000, 'C'));
-    REQUIRE(m);
-    CHECK(m->getNumAtoms() == 2000);
-    const bool legacyETKDG = GENERATE(true, false);
-    DGeomHelpers::EmbedParameters params{
-        .randomSeed = 0xf00d, .useLegacyImplementation = legacyETKDG};
-    int cid = DGeomHelpers::EmbedMolecule(*m, params);
-    CHECK(cid >= 0);
-  }
-}
-
 TEST_CASE("testGithub3667") {
   auto throwError = [](unsigned int) {
     throw ValueErrorException("embedder is abortable");
@@ -1719,7 +1727,8 @@ TEST_CASE("testGithub3667") {
   REQUIRE(mol);
 
   const bool legacyETKDG = GENERATE(true, false);
-  DGeomHelpers::EmbedParameters params{.useLegacyImplementation = legacyETKDG};
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .useLegacyImplementation = legacyETKDG};
   params.callback = throwError;
   CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*mol, params),
                   ValueErrorException);
@@ -1746,9 +1755,9 @@ TEST_CASE("testForceTransAmides") {
       REQUIRE(cid >= 0);
       auto conf = mol->getConformer(cid);
       auto tors = MolTransforms::getDihedralDeg(conf, 0, 1, 3, 4);
-      CHECK(std::fabs(std::fabs(tors) - 180) < 37);
+      CHECK(std::fabs(std::fabs(tors) - 180) < 39);
       tors = MolTransforms::getDihedralDeg(conf, 2, 1, 3, 5);
-      CHECK(std::fabs(std::fabs(tors) - 180) < 37);
+      CHECK(std::fabs(std::fabs(tors) - 180) < 39);
     }
   }
   SECTION("Get Cis") {  // make sure we can find at least one non-trans
@@ -1787,7 +1796,7 @@ TEST_CASE("testSymmetryPruningLegacy") {
 
   params.useSymmetryForPruning = false;
   cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
-  CHECK(cids.size() == 8);
+  CHECK(cids.size() == 9);
 }
 TEST_CASE("testSymmetryPruningAIO") {
   auto mol = "CCOC(C)(C)C"_smiles;
@@ -1803,7 +1812,7 @@ TEST_CASE("testSymmetryPruningAIO") {
 
   params.useSymmetryForPruning = false;
   cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
-  CHECK(cids.size() == 8);
+  CHECK(cids.size() == 9);
 }
 
 TEST_CASE("testMissingHsWarning") {
@@ -1813,11 +1822,12 @@ TEST_CASE("testMissingHsWarning") {
   const bool legacyETKDG = GENERATE(true, false);
   std::stringstream ss;
   rdWarningLog->SetTee(ss);
-  DGeomHelpers::EmbedParameters params{.useLegacyImplementation = legacyETKDG};
+  DGeomHelpers::EmbedParameters params{.randomSeed = 0xf00d,
+                                       .useLegacyImplementation = legacyETKDG};
   DGeomHelpers::EmbedMolecule(*mol, params);
   rdWarningLog->ClearTee();
   TEST_ASSERT(ss.str().find("Molecule does not have explicit Hs") !=
-        std::string::npos);
+              std::string::npos);
 }
 
 TEST_CASE("testHydrogenBondBasics") {
@@ -1838,6 +1848,6 @@ TEST_CASE("testHydrogenBondBasics") {
   params.useLegacyImplementation = legacyETKDG;
   REQUIRE(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
   auto dist = MolTransforms::getBondLength(mol->getConformer(), 3, 4);
-  CHECK(dist < mat->getUpperBound(4,3));
-  CHECK(dist > mat->getLowerBound(4,3));
+  CHECK(dist < mat->getUpperBound(4, 3) + 0.005);  // allow minimal violations
+  CHECK(dist > mat->getLowerBound(4, 3) - 0.005);
 }

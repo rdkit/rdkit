@@ -35,6 +35,8 @@ Bond::Bond(const Bond &other) : RDProps(other) {
   } else {
     dp_stereoAtoms = nullptr;
   }
+  dp_macroBondInfo =
+      other.dp_macroBondInfo ? other.dp_macroBondInfo->copy() : nullptr;
   df_isAromatic = other.df_isAromatic;
   df_isConjugated = other.df_isConjugated;
   d_index = other.d_index;
@@ -58,6 +60,8 @@ Bond &Bond::operator=(const Bond &other) {
   } else {
     dp_stereoAtoms = nullptr;
   }
+  dp_macroBondInfo =
+      other.dp_macroBondInfo ? other.dp_macroBondInfo->copy() : nullptr;
   df_isAromatic = other.df_isAromatic;
   df_isConjugated = other.df_isConjugated;
   d_index = other.d_index;
@@ -75,6 +79,10 @@ Bond *Bond::copy() const {
 void Bond::setOwningMol(ROMol *other) {
   // FIX: doesn't update topology
   dp_mol = other;
+}
+
+void Bond::setMacroBondInfo(MacroBondInfo *info) {
+  dp_macroBondInfo.reset(info);
 }
 
 unsigned int Bond::getOtherAtomIdx(const unsigned int thisIdx) const {

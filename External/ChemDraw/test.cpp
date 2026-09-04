@@ -36,6 +36,7 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -1389,7 +1390,6 @@ TEST_CASE("Round TRIP") {
             continue;
           }
 
-
           auto smi2 = MolToSmiles(*mols[0]);
           if (smi1 != smi2) {
             // std::cerr <<
@@ -1405,23 +1405,27 @@ TEST_CASE("Round TRIP") {
             // std::cerr << "PASS:" << entry.path() << std::endl;
           }
           // CHECK(smi1 == smi2);
-	  SmilesWriteParams ps;
+          SmilesWriteParams ps;
 
-	  unsigned int flags = SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER |
-	                       SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
-	  auto cxsmi1 = MolToCXSmiles(*mol, ps, flags);
-	  auto cxsmi2 = MolToCXSmiles(*mols[0], ps, flags);
-	  if(cxsmi1 != cxsmi2) {
-	    std::cerr << "CXFAIL:" << entry.path() << " (mol)" << cxsmi1
+          unsigned int flags =
+              SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER |
+              SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
+          auto cxsmi1 = MolToCXSmiles(*mol, ps, flags);
+          auto cxsmi2 = MolToCXSmiles(*mols[0], ps, flags);
+          if (cxsmi1 != cxsmi2) {
+            std::cerr << "CXFAIL:" << entry.path() << " (mol)" << cxsmi1
                       << " != (mol-cdxml)" << cxsmi2 << std::endl;
             failed++;
-	    std::cerr << "========================================" << std::endl;
-	    mol->debugMol(std::cerr);
-	    std::cerr << "----------------------------------------" << std::endl;
-	    mols[0]->debugMol(std::cerr);
-	    std::cerr << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-	    std::cerr << cdx << std::endl;
-	  }
+            std::cerr << "========================================"
+                      << std::endl;
+            mol->debugMol(std::cerr);
+            std::cerr << "----------------------------------------"
+                      << std::endl;
+            mols[0]->debugMol(std::cerr);
+            std::cerr << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+                      << std::endl;
+            std::cerr << cdx << std::endl;
+          }
           delete mol;
         }
       }
@@ -1450,6 +1454,68 @@ TEST_CASE("Geometry") {
     auto mols = MolsFromChemDrawFile(fname);
     REQUIRE(mols.size());
     REQUIRE("C1[C@H]2C[C@@H]12" == MolToSmiles(*mols[0]));
+  }
+}
+
+TEST_CASE("Bond stereo") {
+  std::string path =
+      std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
+  const auto checkOximeStereoFixture = [&](const std::string &fname,
+                                           Bond::BondStereo expectedStereo) {
+    auto mols = MolsFromChemDrawFile(fname);
+    REQUIRE(mols.size() == 1);
+
+    auto &mol = *mols[0];
+    CHECK(MolToSmiles(mol, false) == "CC1C2CCC1CC(=NO)C2");
+
+    Bond *bond = nullptr;
+    for (auto candidate : mol.bonds()) {
+      if (candidate->getBondType() == Bond::BondType::DOUBLE) {
+        bond = candidate;
+        break;
+      }
+    }
+    REQUIRE(bond);
+    CHECK(bond->getStereo() == expectedStereo);
+    CHECK(bond->getStereoAtoms() == INT_VECT({0, 10}));
+
+    auto roundtrip = v2::FileParsers::MolFromMolBlock(MolToV3KMolBlock(mol));
+    REQUIRE(roundtrip);
+    Bond *roundtripBond = nullptr;
+    for (auto candidate : roundtrip->bonds()) {
+      if (candidate->getBondType() == Bond::BondType::DOUBLE) {
+        roundtripBond = candidate;
+        break;
+      }
+    }
+    REQUIRE(roundtripBond);
+    CHECK(roundtripBond->getStereo() == expectedStereo);
+    CHECK(roundtripBond->getStereoAtoms() == INT_VECT({0, 10}));
+
+    ChemDrawParserParams params;
+    params.sanitize = false;
+    auto rawMols = MolsFromChemDrawFile(fname, params);
+    REQUIRE(rawMols.size() == 1);
+    Bond *rawBond = nullptr;
+    for (auto candidate : rawMols[0]->bonds()) {
+      if (candidate->getBondType() == Bond::BondType::DOUBLE) {
+        rawBond = candidate;
+        break;
+      }
+    }
+    REQUIRE(rawBond);
+    CHECK(rawBond->getStereo() == expectedStereo);
+    CHECK(rawBond->getStereoAtoms() == INT_VECT({0, 10}));
+  };
+
+  SECTION("ChemDraw BS labels preserve oxime Z stereo") {
+    auto fname = path + "oxime-bond-stereo-z.cdxml";
+    checkOximeStereoFixture(fname, Bond::BondStereo::STEREOZ);
+  }
+
+  SECTION("ChemDraw BS labels preserve oxime E stereo") {
+    auto fname = path + "oxime-bond-stereo-e.cdxml";
+    checkOximeStereoFixture(fname, Bond::BondStereo::STEREOE);
   }
 }
 
@@ -1524,9 +1590,10 @@ TEST_CASE("NeedsClean hydrogens") {
     params.needsCleanPolicy = NeedsCleanPolicy::TrustExplicitHydrogens;
     auto trust = MolsFromChemDrawFile(fname);
     auto preserve = MolsFromChemDrawFile(fname, params);
-    REQUIRE(molSmiles(trust) ==
-            std::vector<std::string>{
-                "CC(=O)S[C@H]1CC2=CC(=O)CC[C@@]2(C)[C@@H]2CC[C@]3(C)[C@H](CC[C@]34CCC(=O)O4)[C@@H]12"});
+    REQUIRE(
+        molSmiles(trust) ==
+        std::vector<std::string>{
+            "CC(=O)S[C@H]1CC2=CC(=O)CC[C@@]2(C)[C@@H]2CC[C@]3(C)[C@H](CC[C@]34CCC(=O)O4)[C@@H]12"});
     CHECK(molSmiles(preserve) == molSmiles(trust));
   }
   SECTION(

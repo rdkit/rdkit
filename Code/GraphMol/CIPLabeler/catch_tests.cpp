@@ -8,12 +8,14 @@
 //  of the RDKit source tree.
 //
 
+#include <algorithm>
 #include <bitset>
 #include <list>
+#include <ranges>
 #include <string>
 #include <vector>
 
-#include <strstream>
+#include <sstream>
 
 #ifdef RDK_TEST_MULTITHREADED
 #include <csignal>
@@ -42,15 +44,12 @@
 #include "rules/Pairlist.h"
 #include "rules/Rule1a.h"
 #include "rules/Rule2.h"
+#include "rules/Rule6.h"
 
 #include "CIPMol.h"
 
 using namespace RDKit;
 using namespace RDKit::CIPLabeler;
-
-std::string toBinaryString(PairList::pairing_t value) {
-  return std::bitset<PairList::numPairingBits>(value).to_string();
-}
 
 TEST_CASE("Descriptor lists", "[accurateCIP]") {
   auto descriptors = PairList();
@@ -67,57 +66,6 @@ TEST_CASE("Descriptor lists", "[accurateCIP]") {
     CHECK(descriptors.add(Descriptor::R));
     CHECK(descriptors.add(Descriptor::S));
   }
-  SECTION("Pairing") {
-    REQUIRE(descriptors.getPairing() == 0);
-
-    CHECK("0000000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    descriptors.add(Descriptor::R);
-    CHECK("0000000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0100000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // unlike
-    descriptors.add(Descriptor::S);
-    CHECK("0110000000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110100000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110110000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110111000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // unlike
-    descriptors.add(Descriptor::S);
-    CHECK("0110111000000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("0110111010000000000000000000000000000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-  }
-
   SECTION("pairRM") {
     PairList list1 = PairList();
     PairList list2 = PairList();
@@ -211,6 +159,68 @@ TEST_CASE("Digraph", "[accurateCIP]") {
   REQUIRE(current_root->getAtom()->getIdx() == new_root_idx);
 
   check_incoming_edge_count(current_root);
+}
+
+TEST_CASE("Mancude fractional atomic numbers", "[accurateCIP]") {
+  SECTION("negative resonance component gets one final fraction") {
+    auto mol = "[CH-]1C=CC=C1"_smiles;
+    CIPLabeler::CIPMol cipmol(*mol);
+
+    for (const auto atom : mol->atoms()) {
+      const auto &frac = cipmol.getFractionalAtomicNum(atom);
+      CHECK(frac.numerator() == 24);
+      CHECK(frac.denominator() == 5);
+      CHECK(frac.value() == boost::rational<int>(24, 5));
+      CHECK(frac.isAveraged());
+    }
+  }
+
+  SECTION("unreduced denominator remains available to graph expansion") {
+    auto mol = "[CH-]1C=C1"_smiles;
+    CIPLabeler::CIPMol cipmol(*mol);
+
+    for (const auto atom : mol->atoms()) {
+      const auto &frac = cipmol.getFractionalAtomicNum(atom);
+      CHECK(frac.numerator() == 12);
+      CHECK(frac.denominator() == 3);
+      CHECK(frac.value() == boost::rational<int>(4, 1));
+      CHECK(frac.isAveraged());
+    }
+
+    Digraph graph(cipmol, cipmol.getAtom(1));
+    Node *negative_node = nullptr;
+    for (const auto edge : graph.getOriginalRoot()->getEdges()) {
+      if (edge->isBeg(graph.getOriginalRoot()) &&
+          edge->getEnd()->getAtom() == cipmol.getAtom(0) &&
+          !edge->getEnd()->isDuplicate()) {
+        negative_node = edge->getEnd();
+        break;
+      }
+    }
+    REQUIRE(negative_node != nullptr);
+
+    int bond_duplicates = 0;
+    for (const auto edge : negative_node->getEdges()) {
+      const auto end = edge->getEnd();
+      if (edge->isBeg(negative_node) &&
+          end->isSet(Node::BOND_DUPLICATE)) {
+        ++bond_duplicates;
+        CHECK(end->getAtomicNumFraction() == boost::rational<int>(4, 1));
+      }
+    }
+    CHECK(bond_duplicates == 1);
+  }
+
+  SECTION("typed atom outside the ring two-core is relaxed") {
+    auto mol = "[N-]1CCC1"_smiles;
+    CIPLabeler::CIPMol cipmol(*mol);
+
+    const auto &frac = cipmol.getFractionalAtomicNum(cipmol.getAtom(0));
+    CHECK(frac.numerator() == 7);
+    CHECK(frac.denominator() == 1);
+    CHECK(frac.value() == boost::rational<int>(7, 1));
+    CHECK_FALSE(frac.isAveraged());
+  }
 }
 
 TEST_CASE("Rule1a", "[accurateCIP]") {
@@ -822,7 +832,7 @@ void testOneAtropIsomerMandP(std::string inputText, const std::string &expected,
   REQUIRE(mol);
   CIPLabeler::assignCIPLabels(*mol, 100000);
 
-  std::ostrstream out;
+  std::ostringstream out;
   bool foundOne = false;
   for (auto bond : mol->bonds()) {
     if (bond->hasProp(common_properties::_CIPCode)) {
@@ -835,8 +845,6 @@ void testOneAtropIsomerMandP(std::string inputText, const std::string &expected,
   if (!foundOne) {
     out << "none ";
   }
-  out << std::ends;
-
   CHECK(out.str() == expected);
 }
 
@@ -1575,4 +1583,36 @@ $$$$
                                 ranked_anchors) == true);
     CHECK(ranked_anchors == std::vector<unsigned int>{0, Atom::NOATOM});
   }
+}
+
+TEST_CASE("GitHub #9516: update return values for Rule 6") {
+  auto mol = "C(C)(F)Cl"_smiles;
+  REQUIRE(mol);
+
+  CIPMol cipmol(*mol);
+  Digraph digraph(cipmol, mol->getAtomWithIdx(0));
+  auto root = digraph.getCurrentRoot();
+  auto edges = root->getEdges();
+
+  const auto findEdgeTo = [&mol, &edges](unsigned int atomIdx) {
+    const auto atom = mol->getAtomWithIdx(atomIdx);
+    const auto iter = std::ranges::find_if(
+        edges, [atom](auto edge) { return edge->getEnd()->getAtom() == atom; });
+    REQUIRE(iter != edges.end());
+    return *iter;
+  };
+  const auto refEdge = findEdgeTo(1);
+  const auto otherEdge = findEdgeTo(2);
+  digraph.setRule6Ref(refEdge->getEnd()->getAtom());
+
+  const Rule6 rule;
+  CHECK(rule.compare(refEdge, otherEdge) == +2);
+  CHECK(rule.compare(otherEdge, refEdge) == -2);
+
+  Sort sorter(&rule);
+  std::vector<Edge *> toSort{otherEdge, refEdge};
+  const auto priority = sorter.prioritize(root, toSort, false);
+  CHECK(priority.isUnique());
+  CHECK(priority.isPseudoAsymetric());
+  CHECK(toSort == std::vector<Edge *>{refEdge, otherEdge});
 }

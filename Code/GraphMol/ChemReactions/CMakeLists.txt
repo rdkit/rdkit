@@ -2,7 +2,7 @@ if(NOT RDK_USE_BOOST_SERIALIZATION)
     message("== Making EnumerateLibrary without boost Serialization support")
 endif()
 
-if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5)
+if(NOT MSVC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5)
   if(Boost_VERSION LESS  106200)
     set_property(SOURCE Enumerate/Enumerate.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -fpermissive ")
   endif()
@@ -52,6 +52,10 @@ ChemReactions  )
 
 rdkit_catch_test(rxnTestCatch catch_tests.cpp LINK_LIBRARIES ChemReactions )
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
 endif()

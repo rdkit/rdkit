@@ -388,7 +388,7 @@ class AtomLabelFunctor {
  public:
   AtomLabelFunctor(const ROMol &query, const ROMol &mol,
                    const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps) {};
+      : d_query(query), d_mol(mol), d_params(ps){};
 
   bool operator()(unsigned int i, unsigned int j) const {
     bool res = false;
@@ -417,7 +417,7 @@ class BondLabelFunctor {
  public:
   BondLabelFunctor(const ROMol &query, const ROMol &mol,
                    const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps) {};
+      : d_query(query), d_mol(mol), d_params(ps){};
   bool operator()(MolGraph::edge_descriptor i,
                   MolGraph::edge_descriptor j) const {
     if (d_params.useChirality) {
@@ -759,7 +759,6 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
        ++childIt) {
     MatchSubqueries(mol, childIt->get(), params, subqueryMap, locked);
   }
-  // std::cout << "<<- back " << (int)query << std::endl;
 }
 
 }  // end of namespace detail
