@@ -11,6 +11,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
@@ -102,4 +103,14 @@ TEST_CASE("range queries for atom ring membership") {
     CHECK(queryAtomIsInRingOfSize(m->getAtomWithIdx(3), 0, 4) == 4);
     CHECK(queryAtomIsInRingOfSize(m->getAtomWithIdx(5), 0, 4) == -1);
   }
+}
+
+TEST_CASE("hasRecursiveQuery") {
+  auto q = v2::SmilesParse::AtomFromSmarts("[C;!$(C=C)]");
+  REQUIRE(q);
+  CHECK(hasRecursiveQuery(*q));
+  auto q2 = v2::SmilesParse::AtomFromSmarts("[C;CH3]");
+  REQUIRE(q2);
+  CHECK(!hasRecursiveQuery(*q2));
+}
 }

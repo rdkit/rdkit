@@ -156,6 +156,9 @@ inline std::string describeQuery(const Atom *atom) {
   return res;
 }
 
+RDKIT_GRAPHMOL_EXPORT bool hasRecursiveQuery(const Atom &atom);
+RDKIT_GRAPHMOL_EXPORT bool hasUninitializedRecursiveQuery(const Atom &atom);
+
 };  // namespace RDKit
 
 #endif
