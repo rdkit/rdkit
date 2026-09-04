@@ -24,6 +24,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Substruct/SubstructDetails.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/pyint_api.h>
 #include <boost/python/copy_non_const_reference.hpp>
@@ -126,6 +127,12 @@ QueryAtomIterSeq *MolGetAromaticAtoms(const ROMOL_SPTR &mol) {
   return res;
 }
 QueryAtomIterSeq *MolGetQueryAtoms(const ROMOL_SPTR &mol, QueryAtom *qa) {
+  if (qa && hasUninitializedRecursiveQuery(*qa)) {
+    SubstructMatchParameters params;
+    detail::SUBQUERY_MAP subqueryMap;
+    std::vector<RecursiveStructureQuery *> locked;
+    detail::MatchSubqueries(*mol, qa->getQuery(), params, subqueryMap, locked);
+  }
   auto res = new QueryAtomIterSeq(mol, mol->beginQueryAtoms(qa),
                                   mol->endQueryAtoms(), AtomCountFunctor(mol));
   return res;
@@ -172,9 +179,9 @@ void setExtraBondCheckFunc(SubstructMatchParameters &ps, python::object func) {
 
 class ReadWriteMol : public RWMol {
  public:
-  ReadWriteMol(){};
+  ReadWriteMol() {};
   ReadWriteMol(const ROMol &m, bool quickCopy = false, int confId = -1)
-      : RWMol(m, quickCopy, confId){};
+      : RWMol(m, quickCopy, confId) {};
 
   void RemoveAtom(unsigned int idx) { removeAtom(idx); };
   void RemoveBond(unsigned int idx1, unsigned int idx2) {
