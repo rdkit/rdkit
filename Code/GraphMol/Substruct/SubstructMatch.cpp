@@ -18,6 +18,8 @@
 
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
+#include "SubstructDetails.h"
+
 #include <GraphMol/GenericGroups/GenericGroups.h>
 #include <boost/smart_ptr.hpp>
 #include <map>
@@ -113,18 +115,11 @@ bool enhancedStereoIsOK(
 
 }  // namespace
 
-typedef std::map<unsigned int, QueryAtom::QUERYATOM_QUERY *> SUBQUERY_MAP;
-
 typedef struct {
   ResonanceMolSupplier &resMolSupplier;
   const ROMol &query;
   const SubstructMatchParameters &params;
 } ResSubstructMatchHelperArgs_;
-
-void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *q,
-                     const SubstructMatchParameters &params,
-                     SUBQUERY_MAP &subqueryMap,
-                     std::vector<RecursiveStructureQuery *> &locked);
 
 bool insertIfNeeded(std::set<MatchVectType> &matches, const MatchVectType &m) {
   bool shouldInsert = true;
@@ -387,7 +382,7 @@ class AtomLabelFunctor {
  public:
   AtomLabelFunctor(const ROMol &query, const ROMol &mol,
                    const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps){};
+      : d_query(query), d_mol(mol), d_params(ps) {};
 
   bool operator()(unsigned int i, unsigned int j) const {
     bool res = false;
@@ -416,7 +411,7 @@ class BondLabelFunctor {
  public:
   BondLabelFunctor(const ROMol &query, const ROMol &mol,
                    const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps){};
+      : d_query(query), d_mol(mol), d_params(ps) {};
   bool operator()(MolGraph::edge_descriptor i,
                   MolGraph::edge_descriptor j) const {
     if (d_params.useChirality) {
@@ -720,6 +715,7 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
 #endif
     locked.push_back(rsq);
     rsq->clear();
+    rsq->setInitialized(true);
     bool matchDone = false;
     if (rsq->getSerialNumber() &&
         subqueryMap.find(rsq->getSerialNumber()) != subqueryMap.end()) {
