@@ -35,7 +35,7 @@ double getRandomVal(int seed) {
   return dbRandSource();
 }
 
-bool feq(double v1, double v2, double tol) { return fabs(v1 - v2) <= tol; }
+bool feq(double v1, double v2, double tol) { return std::fabs(v1 - v2) <= tol; }
 
 double computeIntVectPrimesProduct(const INT_VECT &vect) {
   double invr = 1.0;

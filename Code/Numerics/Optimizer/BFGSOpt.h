@@ -71,7 +71,7 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
   for (unsigned int i = 0; i < dim; i++) {
     sum += dir[i] * dir[i];
   }
-  sum = sqrt(sum);
+  sum = std::sqrt(sum);
 
   // Rescale if we're trying to move too far
   if (sum > maxStep) {
@@ -92,7 +92,7 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
 
   test = 0.0;
   for (unsigned int i = 0; i < dim; i++) {
-    double temp = fabs(dir[i]) / std::max(fabs(oldPt[i]), 1.0);
+    double temp = std::fabs(dir[i]) / std::max(std::fabs(oldPt[i]), 1.0);
     if (temp > test) {
       test = temp;
     }
@@ -135,9 +135,9 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
         if (disc < 0.0) {
           tmpLambda = 0.5 * lambda;
         } else if (b <= 0.0) {
-          tmpLambda = (-b + sqrt(disc)) / (3.0 * a);
+          tmpLambda = (-b + std::sqrt(disc)) / (3.0 * a);
         } else {
-          tmpLambda = -slope / (b + sqrt(disc));
+          tmpLambda = -slope / (b + std::sqrt(disc));
         }
       }
       if (tmpLambda > 0.5 * lambda) {
@@ -223,7 +223,8 @@ int minimize(unsigned int dim, double *pos, double gradTol,
       sum += pos[i] * pos[i];
     }
   }
-  double maxStep = MAXSTEP * std::max(sqrt(sum), static_cast<double>(dim));
+  // pick a max step size:
+  double maxStep = MAXSTEP * std::max(std::sqrt(sum), static_cast<double>(dim));
 
   for (unsigned int iter = 1; iter <= maxIts; ++iter) {
     numIters = iter;
@@ -240,7 +241,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     for (unsigned int i = 0; i < dim; i++) {
       xi[i] = newPos[i] - pos[i];
       pos[i] = newPos[i];
-      double temp = fabs(xi[i]) / std::max(fabs(pos[i]), 1.0);
+      double temp = std::fabs(xi[i]) / std::max(std::fabs(pos[i]), 1.0);
       if (temp > test) {
         test = temp;
       }
@@ -263,9 +264,9 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // electrostatic or dispersion terms) do not drive
     // funcVal * gradScale below zero and clamp the denominator to 1.0,
     // which would artificially tighten the gradient convergence test.
-    double term = std::max(fabs(funcVal) * gradScale, 1.0);
+    double term = std::max(std::fabs(funcVal) * gradScale, 1.0);
     for (unsigned int i = 0; i < dim; i++) {
-      double temp = fabs(grad[i]) * std::max(fabs(pos[i]), 1.0);
+      double temp = std::fabs(grad[i]) * std::max(std::fabs(pos[i]), 1.0);
       test = std::max(test, temp);
       dGrad[i] = grad[i] - dGrad[i];
     }
@@ -307,7 +308,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
         sumXi += xi[i] * xi[i];
       }
     }
-    if (fac > sqrt(EPS * sumDGrad * sumXi)) {
+    if (fac > std::sqrt(EPS * sumDGrad * sumXi)) {
       fac = 1.0 / fac;
       double fad = 1.0 / fae;
       for (unsigned int i = 0; i < dim; i++) {

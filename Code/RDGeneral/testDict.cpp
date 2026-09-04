@@ -21,6 +21,7 @@
 #include <vector>
 #include <ctime>
 
+#include <cmath>
 using namespace RDKit;
 using namespace std;
 
@@ -173,7 +174,7 @@ TEST_CASE("testRDValue") {
 
   // growth in the loops below is loop * loops / 2, so going higher
   // than this will cause an overflow of std::any_cast<int>(*v)
-  const int loops = sqrt(std::numeric_limits<int>::max());
+  const int loops = std::sqrt(std::numeric_limits<int>::max());
   {
     std::clock_t clock1 = std::clock();
     std::any v;

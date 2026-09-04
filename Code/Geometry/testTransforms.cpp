@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <ctime>
 
+#include <cmath>
 using namespace RDGeom;
 using namespace std;
 
@@ -111,7 +112,7 @@ TEST_CASE("testPointOps3D") {
                Catch::Matchers::WithinAbs(3. * M_PI / 2., 1e-4));
 
   Point3D diffPt = pt0.directionVector(pt1);
-  Point3D ref(-sqrt(2.) / 2., sqrt(2.) / 2., 0);
+  Point3D ref(-std::sqrt(2.) / 2., std::sqrt(2.) / 2., 0);
   REQUIRE(ptEq(diffPt, ref));
 }
 
@@ -139,7 +140,7 @@ TEST_CASE("testPointOps2D") {
                Catch::Matchers::WithinAbs(3. * M_PI / 2., 1e-4));
 
   Point2D diffPt = pt0.directionVector(pt1);
-  Point2D ref(-sqrt(2.) / 2., sqrt(2.) / 2.);
+  Point2D ref(-std::sqrt(2.) / 2., std::sqrt(2.) / 2.);
   REQUIRE(ptEq(diffPt, ref));
 }
 
@@ -330,8 +331,8 @@ TEST_CASE("test3MatMultiply") {
 
 TEST_CASE("testFromQuaternion") {
   double qt[4];
-  qt[0] = cos(M_PI / 6);
-  qt[1] = -sin(M_PI / 6);
+  qt[0] = std::cos(M_PI / 6);
+  qt[1] = -std::sin(M_PI / 6);
   qt[2] = 0.0;
   qt[3] = 0.0;
   Transform3D trans;

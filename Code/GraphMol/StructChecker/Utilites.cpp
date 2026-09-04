@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <tuple>
 
+#include <cmath>
 namespace RDKit {
 namespace StructureCheck {
 
@@ -47,7 +48,7 @@ bool getMolAtomPoints(const ROMol &mol, std::vector<RDGeom::Point3D> &atomPoint,
       if (twod || conf.is3D()) {
         for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
           atomPoint[i] = conf.getAtomPos(i);
-          if (fabs(atomPoint[i].z) >= 1.e-7) {
+          if (std::fabs(atomPoint[i].z) >= 1.e-7) {
             non_zero_z = true;
           }
         }

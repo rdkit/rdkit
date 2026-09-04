@@ -11,6 +11,7 @@
 //
 // A load of helper classes used by MolDraw2D.
 
+#include <cmath>
 #ifndef RDKIT_MOLDRAW2DHELPERS_H
 #define RDKIT_MOLDRAW2DHELPERS_H
 
@@ -48,9 +49,9 @@ struct DrawColour {
   bool operator!=(const DrawColour &other) const { return !(*this == other); }
   bool feq(const DrawColour &other, double tol = 0.001,
            bool ignoreAlpha = true) const {
-    return fabs(r - other.r) <= tol && fabs(g - other.g) <= tol &&
-           fabs(b - other.b) <= tol &&
-           (ignoreAlpha || fabs(a - other.a) <= tol);
+    return std::fabs(r - other.r) <= tol && std::fabs(g - other.g) <= tol &&
+           std::fabs(b - other.b) <= tol &&
+           (ignoreAlpha || std::fabs(a - other.a) <= tol);
   }
   DrawColour operator+(const DrawColour &other) const {
     return {r + other.r, g + other.g, b + other.b, a + other.a};

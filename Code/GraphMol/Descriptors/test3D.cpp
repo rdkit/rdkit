@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <cmath>
 #ifdef _MSC_VER
 // disable warnings about getenv in visual C++
 #define _CRT_SECURE_NO_WARNINGS
@@ -39,11 +40,11 @@ using namespace RDKit::Descriptors;
 
 bool compare(const std::string &inm, double ref, double val,
              double tol = 1e-3) {
-  if (fabs(ref - val) > tol) {
+  if (std::fabs(ref - val) > tol) {
     std::cerr << "value mismatch: " << inm << " " << ref << " " << val
               << std::endl;
   }
-  return fabs(ref - val) < tol;
+  return std::fabs(ref - val) < tol;
 }
 
 void testPMI1() {
@@ -124,9 +125,9 @@ void testPMIEdges() {
     double val;
 
     val = RDKit::Descriptors::PMI1(*m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
     val = RDKit::Descriptors::PMI2(*m);
-    TEST_ASSERT(fabs(val) >= 10);
+    TEST_ASSERT(std::fabs(val) >= 10);
     val = RDKit::Descriptors::PMI3(*m);
     TEST_ASSERT(val >= 10);
     TEST_ASSERT(RDKit::Descriptors::PMI3(*m) - RDKit::Descriptors::PMI2(*m) <
@@ -144,9 +145,9 @@ void testPMIEdges() {
     double val;
 
     val = RDKit::Descriptors::PMI1(*m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
     val = RDKit::Descriptors::PMI2(*m);
-    TEST_ASSERT(fabs(val) >= 1);
+    TEST_ASSERT(std::fabs(val) >= 1);
     val = RDKit::Descriptors::PMI3(*m);
     TEST_ASSERT(val >= 1);
     TEST_ASSERT(RDKit::Descriptors::PMI3(*m) - RDKit::Descriptors::PMI2(*m) <
@@ -195,11 +196,11 @@ void testPMIEdges() {
     m.addAtom(new RDKit::Atom(6), updateLabel, takeOwnership);
     m.addConformer(new RDKit::Conformer(m.getNumAtoms()));
     double val = RDKit::Descriptors::PMI1(m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
     val = RDKit::Descriptors::PMI2(m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
     val = RDKit::Descriptors::PMI3(m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -294,9 +295,9 @@ void testNPREdges() {
     double val;
 
     val = RDKit::Descriptors::NPR1(*m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
     val = RDKit::Descriptors::NPR2(*m);
-    TEST_ASSERT(fabs(val - 1) < 1e-4);
+    TEST_ASSERT(std::fabs(val - 1) < 1e-4);
 
     delete m;
   }
@@ -310,9 +311,9 @@ void testNPREdges() {
     double val;
 
     val = RDKit::Descriptors::NPR1(*m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
     val = RDKit::Descriptors::NPR2(*m);
-    TEST_ASSERT(fabs(val - 1) < 1e-4);
+    TEST_ASSERT(std::fabs(val - 1) < 1e-4);
 
     delete m;
   }
@@ -326,9 +327,9 @@ void testNPREdges() {
     double val;
 
     val = RDKit::Descriptors::NPR1(*m);
-    TEST_ASSERT(fabs(val - 0.5) < 1e-4);
+    TEST_ASSERT(std::fabs(val - 0.5) < 1e-4);
     val = RDKit::Descriptors::NPR2(*m);
-    TEST_ASSERT(fabs(val - 0.5) < 1e-4);
+    TEST_ASSERT(std::fabs(val - 0.5) < 1e-4);
 
     delete m;
   }
@@ -342,9 +343,9 @@ void testNPREdges() {
     double val;
 
     val = RDKit::Descriptors::NPR1(*m);
-    TEST_ASSERT(fabs(val - 0.5) < 1e-4);
+    TEST_ASSERT(std::fabs(val - 0.5) < 1e-4);
     val = RDKit::Descriptors::NPR2(*m);
-    TEST_ASSERT(fabs(val - 0.5) < 1e-4);
+    TEST_ASSERT(std::fabs(val - 0.5) < 1e-4);
 
     delete m;
   }
@@ -360,9 +361,9 @@ void testNPREdges() {
     m.addAtom(new RDKit::Atom(6), updateLabel, takeOwnership);
     m.addConformer(new RDKit::Conformer(m.getNumAtoms()));
     double val = RDKit::Descriptors::NPR1(m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
     val = RDKit::Descriptors::NPR2(m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -380,13 +381,13 @@ void test3DVals() {
     double val;
 
     val = RDKit::Descriptors::radiusOfGyration(*m);
-    TEST_ASSERT(fabs(val - 1.511) < 1e-2);
+    TEST_ASSERT(std::fabs(val - 1.511) < 1e-2);
     val = RDKit::Descriptors::eccentricity(*m);
-    TEST_ASSERT(fabs(val - 0.866) < 1e-2);
+    TEST_ASSERT(std::fabs(val - 0.866) < 1e-2);
     val = RDKit::Descriptors::asphericity(*m);
-    TEST_ASSERT(fabs(val - 0.25) < 1e-2);
+    TEST_ASSERT(std::fabs(val - 0.25) < 1e-2);
     val = RDKit::Descriptors::spherocityIndex(*m);
-    TEST_ASSERT(fabs(val) < 1e-2);
+    TEST_ASSERT(std::fabs(val) < 1e-2);
 
     delete m;
   }
@@ -398,11 +399,11 @@ void test3DVals() {
     double val;
 
     val = RDKit::Descriptors::radiusOfGyration(*m);
-    TEST_ASSERT(fabs(val - 1.686) < 1e-2);
+    TEST_ASSERT(std::fabs(val - 1.686) < 1e-2);
     val = RDKit::Descriptors::eccentricity(*m);
-    TEST_ASSERT(fabs(val - 1.0) < 1e-2);
+    TEST_ASSERT(std::fabs(val - 1.0) < 1e-2);
     val = RDKit::Descriptors::asphericity(*m);
-    TEST_ASSERT(fabs(val - 0.875) < 1e-2);
+    TEST_ASSERT(std::fabs(val - 0.875) < 1e-2);
     val = RDKit::Descriptors::spherocityIndex(*m);
     // nothing really precise to say here
     TEST_ASSERT((0 < val) && (val < 0.25));
@@ -417,13 +418,13 @@ void test3DVals() {
     double val;
 
     val = RDKit::Descriptors::radiusOfGyration(*m);
-    TEST_ASSERT(fabs(val - 1.827) < 1e-2);
+    TEST_ASSERT(std::fabs(val - 1.827) < 1e-2);
     val = RDKit::Descriptors::eccentricity(*m);
-    TEST_ASSERT(fabs(val) < 1e-2);
+    TEST_ASSERT(std::fabs(val) < 1e-2);
     val = RDKit::Descriptors::asphericity(*m);
-    TEST_ASSERT(fabs(val) < 1e-2);
+    TEST_ASSERT(std::fabs(val) < 1e-2);
     val = RDKit::Descriptors::spherocityIndex(*m);
-    TEST_ASSERT(fabs(val - 1) < 1e-2);
+    TEST_ASSERT(std::fabs(val - 1) < 1e-2);
 
     delete m;
   }
@@ -453,13 +454,13 @@ void test3DEdges() {
     m.getConformer().setAtomPos(5, RDGeom::Point3D(0, 0, -1));
     double val;
     val = RDKit::Descriptors::radiusOfGyration(m);
-    TEST_ASSERT(fabs(val) > 0.1);
+    TEST_ASSERT(std::fabs(val) > 0.1);
     val = RDKit::Descriptors::eccentricity(m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
     val = RDKit::Descriptors::asphericity(m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
     val = RDKit::Descriptors::spherocityIndex(m);
-    TEST_ASSERT(fabs(1. - val) < 1e-4);
+    TEST_ASSERT(std::fabs(1. - val) < 1e-4);
   }
 
   {
@@ -475,15 +476,15 @@ void test3DEdges() {
     m.addConformer(new RDKit::Conformer(m.getNumAtoms()));
     double val;
     val = RDKit::Descriptors::radiusOfGyration(m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
     val = RDKit::Descriptors::inertialShapeFactor(m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
     val = RDKit::Descriptors::eccentricity(m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
     val = RDKit::Descriptors::asphericity(m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
     val = RDKit::Descriptors::spherocityIndex(m);
-    TEST_ASSERT(fabs(val) < 1e-4);
+    TEST_ASSERT(std::fabs(val) < 1e-4);
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;

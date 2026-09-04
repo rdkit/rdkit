@@ -27,6 +27,7 @@
 #include <ForceField/ForceField.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 
+#include <cmath>
 using namespace RDKit;
 void testUFFTyper1() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
@@ -1025,7 +1026,7 @@ void testGitHubIssue62() {
       sdfWriter->write(*mol);
       double e = field->calcEnergy();
       BOOST_LOG(rdErrorLog) << molName << " " << e << std::endl;
-      TEST_ASSERT(fabs(e - energyValues[i]) < 1.);
+      TEST_ASSERT(std::fabs(e - energyValues[i]) < 1.);
       delete field;
     }
     sdfWriter->close();

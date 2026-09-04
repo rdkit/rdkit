@@ -19,6 +19,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/range/iterator_range.hpp>
 
+#include <cmath>
 constexpr double sq_dist_zero_tol = 1.e-4;
 
 namespace RDKit {
@@ -432,7 +433,7 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
         // direction...
         // correct for this (issue 2951221):
         if ((*cfi)->is3D()) {
-          if (fabs(nbr3Vect.dotProduct(nbr1Vect.crossProduct(nbr2Vect))) <
+          if (std::fabs(nbr3Vect.dotProduct(nbr1Vect.crossProduct(nbr2Vect))) <
               0.1) {
             // compute the normal:
             dirVect = nbr1Vect.crossProduct(nbr2Vect);

@@ -1955,8 +1955,8 @@ TEST_CASE("Testing AddHs with coordinates") {
   RDGeom::Point3D v;
   double bondLength = PeriodicTable::getTable()->getRb0(1) +
                       PeriodicTable::getTable()->getRb0(6);
-  double tetDist = 2. * sin((109.471 / 2.) * M_PI / 180) * bondLength;
-  double sp2Dist = 2. * sin(60. * M_PI / 180) * bondLength;
+  double tetDist = 2. * std::sin((109.471 / 2.) * M_PI / 180) * bondLength;
+  double sp2Dist = 2. * std::sin(60. * M_PI / 180) * bondLength;
 
   std::string smi;
 
@@ -2114,9 +2114,9 @@ TEST_CASE("Testing AddHs with coordinates") {
         (conf->getAtomPos(chHIdx) - conf->getAtomPos(chIdx))
             .crossProduct((conf->getAtomPos(nh2Idx) - conf->getAtomPos(chIdx)));
     hcnNormal.normalize();
-    REQUIRE(feq(fabs(nccNormal.dotProduct(hnhNormal)), 1.0));
-    REQUIRE(feq(fabs(nccNormal.dotProduct(hchNormal)), 1.0));
-    REQUIRE(feq(fabs(nccNormal.dotProduct(hcnNormal)), 1.0));
+    REQUIRE(feq(std::fabs(nccNormal.dotProduct(hnhNormal)), 1.0));
+    REQUIRE(feq(std::fabs(nccNormal.dotProduct(hchNormal)), 1.0));
+    REQUIRE(feq(std::fabs(nccNormal.dotProduct(hcnNormal)), 1.0));
   }
 
   smi = "C#C";
@@ -7784,7 +7784,8 @@ M  END)CTAB";
   auto conf = m2->getConformer();
   for (auto i = 7; i < 9; ++i) {
     auto atom_pos = conf.getAtomPos(i);
-    REQUIRE((!isnan(atom_pos.x) && !isnan(atom_pos.y) && !isnan(atom_pos.z)));
+    REQUIRE((!std::isnan(atom_pos.x) && !std::isnan(atom_pos.y) &&
+         !std::isnan(atom_pos.z)));
   }
 
   // check that we bisect the correct angle and point outside the rings
@@ -7792,14 +7793,14 @@ M  END)CTAB";
   auto v21 = conf.getAtomPos(2) - conf.getAtomPos(1);
   auto v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
   auto v61 = conf.getAtomPos(6) - conf.getAtomPos(1);
-  REQUIRE(fabs(fabs(v71.dotProduct(v01)) - fabs(v71.dotProduct(v21))) < 1e-3);
+  REQUIRE(std::fabs(std::fabs(v71.dotProduct(v01)) - std::fabs(v71.dotProduct(v21))) < 1e-3);
   REQUIRE(v71.dotProduct(v61) < -1e-4);
 
   auto v86 = conf.getAtomPos(8) - conf.getAtomPos(6);
   auto v06 = conf.getAtomPos(0) - conf.getAtomPos(6);
   auto v56 = conf.getAtomPos(5) - conf.getAtomPos(6);
   auto v16 = conf.getAtomPos(1) - conf.getAtomPos(6);
-  REQUIRE(fabs(fabs(v86.dotProduct(v56)) - fabs(v86.dotProduct(v06))) < 1e-3);
+  REQUIRE(std::fabs(std::fabs(v86.dotProduct(v56)) - std::fabs(v86.dotProduct(v06))) < 1e-3);
   REQUIRE(v86.dotProduct(v16) < -1e-4);
 }
 

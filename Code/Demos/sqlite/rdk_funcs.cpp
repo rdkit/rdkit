@@ -9,6 +9,7 @@
 //
 
 #include <sqlite3ext.h>
+#include <cmath>
 SQLITE_EXTENSION_INIT1
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
@@ -448,7 +449,7 @@ static void sivDiceSim(sqlite3_context *context, int argc,
     v2Sum += v2;
   }
   double denom = v1Sum + v2Sum;
-  if (fabs(denom) < 1e-6) {
+  if (std::fabs(denom) < 1e-6) {
     res = 0.0;
   } else {
     res = 2. * numer / denom;

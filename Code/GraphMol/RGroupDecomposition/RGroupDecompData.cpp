@@ -18,6 +18,7 @@
 
 // #define VERBOSE 1
 
+#include <cmath>
 namespace RDKit {
 
 RGroupDecompData::RGroupDecompData(const RWMol &inputCore,
@@ -693,7 +694,7 @@ RGroupDecompositionProcessResult RGroupDecompData::process(bool pruneMatches,
                             ? scoreFromPrunedData(iterator->permutation)
                             : score(iterator->permutation);
 
-      if (fabs(newscore - rGroupScorer.getBestScore()) <
+      if (std::fabs(newscore - rGroupScorer.getBestScore()) <
           1e-6) {  // heuristic to overcome floating point comparison issues
         rGroupScorer.pushTieToStore(iterator->permutation);
       } else if (newscore > rGroupScorer.getBestScore()) {

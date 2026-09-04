@@ -927,7 +927,7 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR> &src_mols) {
   // at least one target, max all targets
   ThresholdCount = static_cast<unsigned int>(std::min(
       static_cast<int>(src_mols.size()) - 1,
-      std::max(1, static_cast<int>(ceil(static_cast<double>(src_mols.size()) *
+      std::max(1, static_cast<int>(std::ceil(static_cast<double>(src_mols.size()) *
                                         Parameters.Threshold)) -
                       1)));
 

@@ -20,6 +20,7 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
+#include <cmath>
 using namespace RDKit;
 
 TEST_CASE("Encode", "[shapehelpers]") {
@@ -99,5 +100,5 @@ TEST_CASE("GitHub #4364", "[shapehelpers]") {
   CHECK_THAT(dist, Catch::Matchers::WithinAbs(0.31, 0.01));
   double gridSpacing = 1.0;
   auto dist2 = MolShapes::tanimotoDistance(*m, *m2, cid1, cid2, gridSpacing);
-  CHECK(fabs(dist2 - dist) > 0.001);
+  CHECK(std::fabs(dist2 - dist) > 0.001);
 }

@@ -27,6 +27,7 @@
 // make a 2D test of not ?
 #include <GraphMol/Descriptors/AUTOCORR2D.h>
 
+#include <cmath>
 void testRDFcustom() {
   std::cout << "=>start test rdf custom\n";
 
@@ -76,12 +77,12 @@ void testRDFcustom() {
     for (size_t i = 0; i < drdf.size(); i++) {
       double ref = atof(myrow[i + 1].c_str());
       // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
-      // if (fabs(ref - drdf[i]) > 0.01) {
+      // if (std::fabs(ref - drdf[i]) > 0.01) {
       //  std::cerr << "pos" << i << " " << inm
       //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
       //}
 
-      TEST_ASSERT(fabs(ref - drdf[i]) < 0.001);
+      TEST_ASSERT(std::fabs(ref - drdf[i]) < 0.001);
     }
     // std::cerr << "\n";
 
@@ -143,12 +144,12 @@ void testMORSEcustom() {
       double ref = atof(myrow[i + 1].c_str());
       // std::cerr << dmorse[i] << ",";
       // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
-      // if (fabs(ref - drdf[i]) > 0.01) {
+      // if (std::fabs(ref - drdf[i]) > 0.01) {
       //  std::cerr << "pos" << i << " " << inm
       //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
       //}
 
-      TEST_ASSERT(fabs(ref - dmorse[i]) < 0.001);
+      TEST_ASSERT(std::fabs(ref - dmorse[i]) < 0.001);
     }
     // std::cerr << "\n";
 
@@ -210,12 +211,12 @@ void testAUTOCORR3Dcustom() {
       double ref = atof(myrow[i + 1].c_str());
       // std::cerr << dauto3d[i] << ",";
       // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
-      // if (fabs(ref - drdf[i]) > 0.01) {
+      // if (std::fabs(ref - drdf[i]) > 0.01) {
       //  std::cerr << "pos" << i << " " << inm
       //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
       //}
 
-      TEST_ASSERT(fabs(ref - dauto3d[i]) < 0.001);
+      TEST_ASSERT(std::fabs(ref - dauto3d[i]) < 0.001);
     }
     // std::cerr << "\n";
 
@@ -283,12 +284,12 @@ void testWHIMcustom() {
       double ref = atof(myrow[i + 1].c_str());
       // std::cerr << dwhim[i] << ",";
       // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
-      // if (fabs(ref - drdf[i]) > 0.01) {
+      // if (std::fabs(ref - drdf[i]) > 0.01) {
       //  std::cerr << "pos" << i << " " << inm
       //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
       //}
 
-      TEST_ASSERT(fabs(ref - dwhim[i]) < 0.01);
+      TEST_ASSERT(std::fabs(ref - dwhim[i]) < 0.01);
     }
     // std::cerr << "\n";
 
@@ -352,12 +353,12 @@ void testWHIMcustom1() {
       double ref = atof(myrow[i + 1].c_str());
       // std::cerr << dwhim[i] << ",";
       // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
-      // if (fabs(ref - drdf[i]) > 0.01) {
+      // if (std::fabs(ref - drdf[i]) > 0.01) {
       //  std::cerr << "pos" << i << " " << inm
       //    << " file: " << ref << " computed: " << dwhim[i] ; // << std::endl;
       //}
 
-      TEST_ASSERT(fabs(ref - dwhim[i]) < 0.01);
+      TEST_ASSERT(std::fabs(ref - dwhim[i]) < 0.01);
     }
     // std::cerr << "\n";
 
@@ -425,12 +426,12 @@ void testGETAWAYcustom() {
       double ref = atof(myrow[i + 1].c_str());
       // std::cerr << dgetaway[i] << ",";
       // std::cerr << "[" << i << ":" << drdf[i] << "," << ref <<"]|";
-      // if (fabs(ref - drdf[i]) > 0.01) {
+      // if (std::fabs(ref - drdf[i]) > 0.01) {
       //  std::cerr << "pos" << i << " " << inm
       //    << " file: " << ref << " computed: " << drdf[i] ; // << std::endl;
       //}
 
-      TEST_ASSERT(fabs(ref - dgetaway[i]) < 0.001);
+      TEST_ASSERT(std::fabs(ref - dgetaway[i]) < 0.001);
     }
     // std::cerr << "\n";
 

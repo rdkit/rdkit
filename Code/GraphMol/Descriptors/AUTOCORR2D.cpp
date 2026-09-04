@@ -97,8 +97,8 @@ void get2DautocorrelationDesc(const double *dist, unsigned int numAtoms,
                                   (w[t * numAtoms + i] - w[t * numAtoms + j]);
 
             TDBmat[t * 8 + k] += w[t * numAtoms + i] * w[t * numAtoms + j];
-            TDBmatC[t * 8 + k] += fabs(w[t * numAtoms + i] - wmean[t]) *
-                                  fabs(w[t * numAtoms + j] - wmean[t]);
+            TDBmatC[t * 8 + k] += std::fabs(w[t * numAtoms + i] - wmean[t]) *
+                                  std::fabs(w[t * numAtoms + j] - wmean[t]);
           }
           maxkVertexPairs += 1;
         }
@@ -176,7 +176,7 @@ void get2DautocorrelationDescCustom(const double *dist, unsigned int numAtoms,
           TDBmatM[k] += (wc[i] - wmean) * (wc[j] - wmean);
           TDBmatG[k] += (wc[i] - wc[j]) * (wc[i] - w[j]);
           TDBmat[k] += wc[i] * wc[j];
-          TDBmatC[k] += fabs(wc[i] - wmean) * fabs(wc[j] - wmean);
+          TDBmatC[k] += std::fabs(wc[i] - wmean) * std::fabs(wc[j] - wmean);
           maxkVertexPairs += 1;
         }
       }

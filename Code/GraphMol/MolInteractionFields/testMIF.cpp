@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <fstream>
 
+#include <cmath>
 using namespace RDGeom;
 using namespace RDKit;
 using namespace RDMIF;
@@ -61,9 +62,9 @@ TEST_CASE("constructGrid") {
   Point3D bond =
       mol->getConformer().getAtomPos(1) - mol->getConformer().getAtomPos(0);
   CHECK(feq(grd.getSpacing(), 0.5));
-  CHECK(feq(grd.getNumX(), std::floor((fabs(bond.x) + 10.0) / 0.5 + 0.5)));
-  CHECK(feq(grd.getNumY(), std::floor((fabs(bond.y) + 10.0) / 0.5 + 0.5)));
-  CHECK(feq(grd.getNumZ(), std::floor((fabs(bond.z) + 10.0) / 0.5 + 0.5)));
+  CHECK(feq(grd.getNumX(), std::floor((std::fabs(bond.x) + 10.0) / 0.5 + 0.5)));
+  CHECK(feq(grd.getNumY(), std::floor((std::fabs(bond.y) + 10.0) / 0.5 + 0.5)));
+  CHECK(feq(grd.getNumZ(), std::floor((std::fabs(bond.z) + 10.0) / 0.5 + 0.5)));
 }
 
 TEST_CASE("CalculateDescriptors") {
@@ -279,7 +280,7 @@ TEST_CASE("VdWaals") {
   REQUIRE(mol2);
   MMFFVdWaals vdw(*mol2, 0, 6, false, 1.0);
   MMFFVdWaals vdw2(*mol2, 0, 6, true, 1.0);
-  CHECK(fabs(vdw2(-3.0, 0, 0, 1000) - vdw(-3.0, 0, 0, 1000)) > 0.0001);
+  CHECK(std::fabs(vdw2(-3.0, 0, 0, 1000) - vdw(-3.0, 0, 0, 1000)) > 0.0001);
 
   UFFVdWaals vdw3(*mol, 0, "O_3", 1.0);
   CHECK(vdw3(-5.0, 0, 0, 1000) < 0);
@@ -327,7 +328,7 @@ TEST_CASE("HBond") {
   TEST_ASSERT(!grd.compareGrids(grd1));
   const RealValueVect *vect = grd.getOccupancyVect();
   const RealValueVect *vect1 = grd1.getOccupancyVect();
-  CHECK((unsigned int)fabs(((*vect1 - *vect).getTotalVal())) == grd.getSize());
+  CHECK((unsigned int)std::fabs(((*vect1 - *vect).getTotalVal())) == grd.getSize());
 
   hbonddes = HBond(*mol, 0, "O", true, 0.001);
   CHECK(hbonddes.getNumInteractions() == 0);
@@ -337,7 +338,7 @@ TEST_CASE("HBond") {
   }
   calculateDescriptors<HBond>(grd, hbonddes);
   TEST_ASSERT(!grd.compareGrids(grd1));
-  CHECK((unsigned int)fabs(((*vect1 - *vect).getTotalVal())));
+  CHECK((unsigned int)std::fabs(((*vect1 - *vect).getTotalVal())));
 
   mol = v2::FileParsers::MolFromMolFile(path + "aceticacid.mol",
                                         fopts);  // Acetic Acid

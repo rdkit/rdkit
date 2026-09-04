@@ -492,7 +492,7 @@ void alignDummies(const double *fragDummy, const double *fragDummyNbr,
   auto axis = synthVec.crossProduct(fragVec);
   axis.normalize();
   const auto cosT = fragVec.dotProduct(synthVec);
-  const auto sinT = sqrt(1.0 - cosT * cosT);
+  const auto sinT = std::sqrt(1.0 - cosT * cosT);
   RDGeom::Transform3D rot;
   rot.SetRotation(cosT, sinT, axis);
   rot.TransformPoint(synthVec);
@@ -556,12 +556,12 @@ SynthonOverlay bestSimSynthonOntoFragment(
   opts.startMode = GaussianShape::StartMode::ROTATE_0;
   opts.normalize = false;
   // Rotations of 0, 90, 180, 270 degrees.
-  static const std::array<double, 4> sinT{0, sin(std::numbers::pi / 2.0),
-                                          sin(std::numbers::pi),
-                                          sin(std::numbers::pi * 1.5)};
-  static const std::array<double, 4> cosT{1.0, cos(std::numbers::pi / 2.0),
-                                          cos(std::numbers::pi),
-                                          cos(std::numbers::pi * 1.5)};
+    static const std::array<double, 4> sinT{
+      0, std::sin(std::numbers::pi / 2.0), std::sin(std::numbers::pi),
+      std::sin(std::numbers::pi * 1.5)};
+    static const std::array<double, 4> cosT{
+      1.0, std::cos(std::numbers::pi / 2.0), std::cos(std::numbers::pi),
+      std::cos(std::numbers::pi * 1.5)};
   // Tolerances for how far the synthon shape moves when overlaid onto the
   // fragment.
   static constexpr double distTolSq = 4.0;  // Slightly over a bond's length

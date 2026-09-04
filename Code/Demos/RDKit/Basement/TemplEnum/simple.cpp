@@ -11,7 +11,7 @@ using namespace TemplateEnum;
 #include <cmath>
 
 bool feq(double v1, double v2, double tol = 1e-4) {
-  return fabs(v1 - v2) <= tol;
+  return std::fabs(v1 - v2) <= tol;
 }
 bool feq(RDGeom::Point3D p1, RDGeom::Point3D p2, double tol = 1e-4) {
   return feq(p1.x, p2.x, tol) && feq(p1.y, p2.y, tol) && feq(p1.z, p2.z, tol);

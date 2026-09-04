@@ -28,7 +28,7 @@ double calcUnscaledVdWMinimum(const MMFFVdWCollection *mmffVdW,
            (((mmffVdWParamsIAtom->DA == 'D') || (mmffVdWParamsJAtom->DA == 'D'))
                 ? 0.0
                 : mmffVdW->B *
-                      (1.0 - exp(-(mmffVdW->Beta) * gamma_ij * gamma_ij)))));
+                      (1.0 - std::exp(-(mmffVdW->Beta) * gamma_ij * gamma_ij)))));
 }
 
 double calcUnscaledVdWWellDepth(double R_star_ij,
@@ -39,8 +39,8 @@ double calcUnscaledVdWWellDepth(double R_star_ij,
 
   return (c4 * mmffVdWParamsIAtom->G_i * mmffVdWParamsJAtom->G_i *
           mmffVdWParamsIAtom->alpha_i * mmffVdWParamsJAtom->alpha_i /
-          ((sqrt(mmffVdWParamsIAtom->alpha_i / mmffVdWParamsIAtom->N_i) +
-            sqrt(mmffVdWParamsJAtom->alpha_i / mmffVdWParamsJAtom->N_i)) *
+          ((std::sqrt(mmffVdWParamsIAtom->alpha_i / mmffVdWParamsIAtom->N_i) +
+            std::sqrt(mmffVdWParamsJAtom->alpha_i / mmffVdWParamsJAtom->N_i)) *
            R_star_ij2 * R_star_ij2 * R_star_ij2));
 }
 

@@ -23,7 +23,7 @@ double EuclideanDistanceMetric(const T1 &v1, const T2 &v2, unsigned int dim) {
     double diff = static_cast<double>(v1[i]) - static_cast<double>(v2[i]);
     dist += (diff * diff);
   }
-  return sqrt(dist);
+  return std::sqrt(dist);
 };
 
 // FIX: there's no reason to have this tied to TanimotoSimilarity... could

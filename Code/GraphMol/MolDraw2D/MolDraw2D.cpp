@@ -414,8 +414,8 @@ void MolDraw2D::drawArc(const Point2D &centre, double xradius, double yradius,
   double start_ang_rads = ang1 * M_PI / 180.0;
   for (int i = 0; i <= num_steps; ++i) {
     double ang = start_ang_rads + double(i) * ang_incr;
-    double x = centre.x + xradius * cos(ang);
-    double y = centre.y + yradius * sin(ang);
+    double x = centre.x + xradius * std::cos(ang);
+    double y = centre.y + yradius * std::sin(ang);
     pts.emplace_back(x, y);
   }
   if (fillPolys()) {
@@ -1064,7 +1064,7 @@ void MolDraw2D::calcReactionOffsets(
     }
     totWidth = reactionWidth(reagents, products, agents, drawOptions(),
                              arrowMult, plusWidth);
-    if (fabs(totWidth - oldTotWidth) < 0.01 * widthToUse) {
+    if (std::fabs(totWidth - oldTotWidth) < 0.01 * widthToUse) {
       break;
     }
   }

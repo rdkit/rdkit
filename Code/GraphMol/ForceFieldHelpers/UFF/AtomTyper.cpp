@@ -18,6 +18,7 @@
 #include <RDGeneral/RDLog.h>
 #include "AtomTyper.h"
 
+#include <cmath>
 namespace RDKit {
 namespace UFF {
 using namespace ForceFields::UFF;
@@ -624,7 +625,7 @@ bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
     double bondOrder = bond->getBondTypeAsDouble();
     if ((hyb[0] == RDKit::Atom::SP3) && (hyb[1] == RDKit::Atom::SP3)) {
       // general case:
-      uffTorsionParams.V = sqrt(paramVect[0]->V1 * paramVect[1]->V1);
+      uffTorsionParams.V = std::sqrt(paramVect[0]->V1 * paramVect[1]->V1);
       // special case for single bonds between group 6 elements:
       if (((int)(bondOrder * 10) == 10) && UFF::Utils::isInGroup6(atNum[0]) &&
           UFF::Utils::isInGroup6(atNum[1])) {
@@ -636,7 +637,7 @@ bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
         if (atNum[1] == 8) {
           V3 = 2.0;
         }
-        uffTorsionParams.V = sqrt(V2 * V3);
+        uffTorsionParams.V = std::sqrt(V2 * V3);
       }
     } else if ((hyb[0] == RDKit::Atom::SP2) && (hyb[1] == RDKit::Atom::SP2)) {
       uffTorsionParams.V =

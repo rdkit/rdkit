@@ -33,6 +33,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
+#include <cmath>
 #ifdef RDK_TEST_MULTITHREADED
 #include <csignal>
 #include <thread>
@@ -1040,7 +1041,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol > 0);
-        CHECK(fabs(chiralVol) > 0.3);
+        CHECK(std::fabs(chiralVol) > 0.3);
       }
     }  // now swap the stereo and see if it still works
     mol->getBondWithIdx(bondIdx)->setStereo(
@@ -1063,7 +1064,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol < 0);
-        CHECK(fabs(chiralVol) > 0.37);
+        CHECK(std::fabs(chiralVol) > 0.37);
       }
     }
   }
@@ -1761,16 +1762,16 @@ TEST_CASE("Github #9143: ETKDGv3 generating twisted amides") {
 
     // These amide torsions can go either way, so we have to check "cis" and
     // "trans" for each of them:
-    CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 27)),
+    CHECK_THAT(std::fabs(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 27)),
                Catch::Matchers::WithinAbs(180, 10) ||
                    Catch::Matchers::WithinAbs(0, 12.5));
-    CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 29)),
+    CHECK_THAT(std::fabs(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 29)),
                Catch::Matchers::WithinAbs(180, 10) ||
                    Catch::Matchers::WithinAbs(0, 12.5));
-    CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 21)),
+    CHECK_THAT(std::fabs(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 21)),
                Catch::Matchers::WithinAbs(180, 20) ||
                    Catch::Matchers::WithinAbs(0, 20));
-    CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 24)),
+    CHECK_THAT(std::fabs(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 24)),
                Catch::Matchers::WithinAbs(0, 20) ||
                    Catch::Matchers::WithinAbs(180, 20));
   }

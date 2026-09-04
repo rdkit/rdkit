@@ -441,7 +441,7 @@ RWMOL_SPTR cleanup2D(RWMOL_SPTR mol, PipelineResult & /*result*/,
   if (options.scaledMedianBondLength > 0. && mol->getNumConformers()) {
     auto &conf = mol->getConformer();
     double medianBondLength =
-        sqrt(Layout2DValidation::squaredMedianBondLength(*mol, conf));
+        std::sqrt(Layout2DValidation::squaredMedianBondLength(*mol, conf));
     if (medianBondLength > options.minMedianBondLength) {
       double scaleFactor = options.scaledMedianBondLength / medianBondLength;
       unsigned int natoms = conf.getNumAtoms();

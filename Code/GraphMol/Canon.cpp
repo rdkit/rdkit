@@ -1570,7 +1570,7 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
           const INT_VECT &ringStereoAtoms = msI.obj.atom->getProp<INT_VECT>(
               common_properties::_ringStereoAtoms);
           for (auto nbrV : ringStereoAtoms) {
-            int nbrIdx = abs(nbrV) - 1;
+            int nbrIdx = std::abs(nbrV) - 1;
             // Adjust the chirality flag of the ring stereo atoms according to
             // the first one
             if (!ringStereoChemAdjusted[nbrIdx] &&

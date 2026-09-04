@@ -14,6 +14,7 @@
 #include <GraphMol/MolOps.h>
 #include "GasteigerParams.h"
 
+#include <cmath>
 namespace Gasteiger {
 using namespace RDKit;
 /*! \brief split the formal charge across atoms of same type if we have a
@@ -33,7 +34,7 @@ void splitChargeConjugated(const ROMol &mol, DOUBLE_VECT &charges) {
     double formal = at->getFormalCharge();
     // std::cout << aix << " formal charges:" << formal << "\n";
     marker.resize(0);
-    if ((fabs(formal) > EPS_DOUBLE) && (fabs(charges[aix]) < EPS_DOUBLE)) {
+    if ((std::fabs(formal) > EPS_DOUBLE) && (std::fabs(charges[aix]) < EPS_DOUBLE)) {
       marker.push_back(aix);
       for (const auto bnd1 : mol.atomBonds(at)) {
         if (bnd1->getIsConjugated()) {

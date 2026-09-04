@@ -23,6 +23,7 @@
 #include <optional>
 #include <vector>
 
+#include <cmath>
 namespace RDKit {
 namespace {
 const unsigned int NOLABEL = std::numeric_limits<unsigned int>::max();
@@ -370,14 +371,14 @@ void rotateFragmentToBondVector(
   templateTform.SetTranslation(Pma);
 
   auto cosT = Us.dotProduct(Um);
-  if (fabs(cosT) < 1.0) {
-    auto sinT = sqrt(1.0 - cosT * cosT);
+  if (std::fabs(cosT) < 1.0) {
+    auto sinT = std::sqrt(1.0 - cosT * cosT);
     RDGeom::Point3D rotnAxis = Us.crossProduct(Um);
     rotnAxis.normalize();
     templateTform.SetRotation(cosT, sinT, rotnAxis);
   } else {
     RDGeom::Point3D normal(1, 0, 0);
-    if (fabs(Us.dotProduct(normal)) == 1.0) {
+    if (std::fabs(Us.dotProduct(normal)) == 1.0) {
       normal = RDGeom::Point3D(0, 1, 0);
     }
     auto rotnAxis = Us.crossProduct(normal);

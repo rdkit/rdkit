@@ -20,6 +20,7 @@
 
 #include <GraphMol/Descriptors/PBF.h>
 
+#include <cmath>
 void test1() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Basic PBF tests." << std::endl;
@@ -43,11 +44,11 @@ void test1() {
     instrm >> inm;
     instrm >> ref;
     TEST_ASSERT(inm == nm);
-    if (fabs(ref - dpbf) > .001) {
+    if (std::fabs(ref - dpbf) > .001) {
       std::cerr << "value mismatch: " << inm << " " << ref << " " << dpbf
                 << std::endl;
     }
-    TEST_ASSERT(fabs(ref - dpbf) < 0.001);
+    TEST_ASSERT(std::fabs(ref - dpbf) < 0.001);
     delete m;
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;

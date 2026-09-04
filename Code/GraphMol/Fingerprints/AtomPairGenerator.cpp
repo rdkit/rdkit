@@ -19,6 +19,7 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
+#include <cmath>
 namespace RDKit {
 namespace AtomPair {
 using namespace AtomPairs;
@@ -219,7 +220,7 @@ AtomPairEnvGenerator<OutputType>::getEnvironments(
         continue;
       }
       auto distance =
-          static_cast<unsigned int>(floor(distanceMatrix[i * atomCount + j]));
+          static_cast<unsigned int>(std::floor(distanceMatrix[i * atomCount + j]));
 
       if (distance >= atomPairArguments->d_minDistance &&
           distance <= atomPairArguments->d_maxDistance) {

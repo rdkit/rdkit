@@ -82,7 +82,7 @@ std::map<int, std::vector<int>> gridIdxCache;
 std::vector<int> computeGridIndices(const UniformGrid3D &grid,
                                     double windowRadius) {
   double gridSpacing = grid.getSpacing();
-  int radInGrid = static_cast<int>(ceil(windowRadius / gridSpacing));
+  int radInGrid = static_cast<int>(std::ceil(windowRadius / gridSpacing));
   // if(gridIdxCache.count(radInGrid)>0){
   //  return gridIdxCache[radInGrid];
   //}
@@ -93,7 +93,7 @@ std::vector<int> computeGridIndices(const UniformGrid3D &grid,
     for (int j = -radInGrid; j <= radInGrid; ++j) {
       for (int k = -radInGrid; k <= radInGrid; ++k) {
         double r2 = i * i + j * j + k * k;
-        int d = static_cast<int>(sqrt(r2));
+        int d = static_cast<int>(std::sqrt(r2));
         if (d <= radInGrid) {
           res.push_back((i * dY + j) * dX + k);
         }

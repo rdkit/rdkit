@@ -241,7 +241,7 @@ void guessFormalCharges(RWMol *res) {
       }
       if (assignChg) {
         // no aromatic atom will get aa abs(charge) > 1
-        if (at->getIsAromatic() && abs(assignChg) > 1) {
+        if (at->getIsAromatic() && std::abs(assignChg) > 1) {
           at->setFormalCharge((assignChg > 0) -
                               (assignChg < 0));  // this results in -1 or +1
         } else {

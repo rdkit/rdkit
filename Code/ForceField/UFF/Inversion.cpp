@@ -59,8 +59,8 @@ double InversionContrib::getEnergy(double *pos) const {
 
   double cosY = Utils::calculateCosY(p1, p2, p3, p4);
   double sinYSq = 1.0 - cosY * cosY;
-  double sinY = ((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0);
-  // cos(2 * W) = 2 * cos(W) * cos(W) - 1 = 2 * sin(W) * sin(W) - 1
+  double sinY = ((sinYSq > 0.0) ? std::sqrt(sinYSq) : 0.0);
+  // std::cos(2 * W) = 2 * std::cos(W) * std::cos(W) - 1 = 2 * std::sin(W) * std::sin(W) - 1
   double cos2W = 2.0 * sinY * sinY - 1.0;
   double res = d_forceConstant * (d_C0 + d_C1 * sinY + d_C2 * cos2W);
   // std::cout << d_at1Idx + 1 << "," << d_at2Idx + 1 << "," << d_at3Idx + 1 <<
@@ -104,12 +104,12 @@ void InversionContrib::getGrad(double *pos, double *grad) const {
   double cosY = n.dotProduct(rJL);
   clipToOne(cosY);
   double sinYSq = 1.0 - cosY * cosY;
-  double sinY = std::max(sqrt(sinYSq), 1.0e-8);
+  double sinY = std::max(std::sqrt(sinYSq), 1.0e-8);
   double cosTheta = rJI.dotProduct(rJK);
   clipToOne(cosTheta);
   double sinThetaSq = 1.0 - cosTheta * cosTheta;
-  double sinTheta = std::max(sqrt(sinThetaSq), 1.0e-8);
-  // sin(2 * W) = 2 * sin(W) * cos(W) = 2 * cos(Y) * sin(Y)
+  double sinTheta = std::max(std::sqrt(sinThetaSq), 1.0e-8);
+  // std::sin(2 * W) = 2 * std::sin(W) * std::cos(W) = 2 * std::cos(Y) * std::sin(Y)
   double dE_dW = -d_forceConstant * (d_C1 * cosY + 4.0 * d_C2 * cosY * sinY);
   RDGeom::Point3D t1 = rJL.crossProduct(rJK);
   RDGeom::Point3D t2 = rJI.crossProduct(rJL);

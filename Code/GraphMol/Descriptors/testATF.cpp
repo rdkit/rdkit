@@ -16,14 +16,11 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/RDLog.h>
 #include <vector>
-#include <algorithm>
-#include <fstream>
-#include <sstream>
 
-#include <chrono>  // for high_resolution_clock
 
 #include <GraphMol/Descriptors/AtomFeat.h>
 
+#include <cmath>
 using namespace RDKit;
 
 void test1() {
@@ -45,7 +42,7 @@ void test1() {
   TEST_ASSERT(res.size() == 49);
 
   for (std::size_t i = 0; i < res.size(); i++) {
-    TEST_ASSERT(fabs(res[i] - exp[i]) < 0.001);
+    TEST_ASSERT(std::fabs(res[i] - exp[i]) < 0.001);
     // std::cout << res[i] << "," ;
   }
 }
@@ -78,7 +75,7 @@ void test2() {
     TEST_ASSERT(res.size() == 49);
 
     for (std::size_t i = 0; i < res.size(); i++) {
-      TEST_ASSERT(fabs(res[i] - molatf[i + j * 49]) < 0.001);
+      TEST_ASSERT(std::fabs(res[i] - molatf[i + j * 49]) < 0.001);
     }
 
     res.clear();
@@ -123,7 +120,7 @@ void test3() {
     TEST_ASSERT(res.size() == 49);
 
     for (std::size_t i = 0; i < res.size(); i++) {
-      TEST_ASSERT(fabs(res[i] - molatf[i + j * 49]) < 0.001);
+      TEST_ASSERT(std::fabs(res[i] - molatf[i + j * 49]) < 0.001);
     }
 
     res.clear();
@@ -170,7 +167,7 @@ void test4() {
     TEST_ASSERT(res.size() == 52);
 
     for (std::size_t i = 0; i < res.size(); i++) {
-      TEST_ASSERT(fabs(res[i] - molatf[i + j * 52]) < 0.001);
+      TEST_ASSERT(std::fabs(res[i] - molatf[i + j * 52]) < 0.001);
     }
 
     res.clear();
@@ -217,7 +214,7 @@ void test5() {
     TEST_ASSERT(res.size() == 52);
 
     for (std::size_t i = 0; i < res.size(); i++) {
-      TEST_ASSERT(fabs(res[i] - molatf[i + j * 52]) < 0.001);
+      TEST_ASSERT(std::fabs(res[i] - molatf[i + j * 52]) < 0.001);
     }
 
     res.clear();

@@ -40,8 +40,8 @@ bool isInGroup6(int num) {
 // used locally, implement equation 17 of the UFF paper.
 double equation17(double bondOrder23, const AtomicParams *at2Params,
                   const AtomicParams *at3Params) {
-  return 5. * sqrt(at2Params->U1 * at3Params->U1) *
-         (1. + 4.18 * log(bondOrder23));
+  return 5. * std::sqrt(at2Params->U1 * at3Params->U1) *
+         (1. + 4.18 * std::log(bondOrder23));
 }
 
 void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t, double *d,
@@ -125,7 +125,7 @@ void TorsionAngleContrib::calcTorsionParams(double bondOrder23, int atNum2,
 
   if (hyb2 == RDKit::Atom::SP3 && hyb3 == RDKit::Atom::SP3) {
     // general case:
-    d_forceConstant = sqrt(at2Params->V1 * at3Params->V1);
+    d_forceConstant = std::sqrt(at2Params->V1 * at3Params->V1);
     d_order = 3;
     d_cosTerm = -1;  // phi0=60
 
@@ -139,7 +139,7 @@ void TorsionAngleContrib::calcTorsionParams(double bondOrder23, int atNum2,
       if (atNum3 == 8) {
         V3 = 2.0;
       }
-      d_forceConstant = sqrt(V2 * V3);
+      d_forceConstant = std::sqrt(V2 * V3);
       d_order = 2;
       d_cosTerm = -1;  // phi0=90
     }
@@ -191,30 +191,30 @@ double TorsionAngleContrib::getEnergy(double *pos) const {
   double cosPhi = Utils::calculateCosTorsion(p1, p2, p3, p4);
   double sinPhiSq = 1 - cosPhi * cosPhi;
 
-  // E(phi) = V/2 * (1 - cos(n*phi_0)*cos(n*phi))
+  // E(phi) = V/2 * (1 - std::cos(n*phi_0)*std::cos(n*phi))
   double cosNPhi = 0.0;
   switch (d_order) {
     case 2:
-      // cos(2x) = 1 - 2sin^2(x)
+      // std::cos(2x) = 1 - 2sin^2(x)
       cosNPhi = 1 - 2 * sinPhiSq;
       break;
     case 3:
-      // cos(3x) = cos^3(x) - 3*cos(x)*sin^2(x) = 4cos^3(x) -3cos(x)
+      // std::cos(3x) = cos^3(x) - 3*std::cos(x)*sin^2(x) = 4cos^3(x) -3cos(x)
       cosNPhi = cosPhi * (cosPhi * cosPhi - 3. * sinPhiSq);
       break;
     case 6:
-      // cos(6x) = 1 - 32*sin^6(x) + 48*sin^4(x) - 18*sin^2(x)
+      // std::cos(6x) = 1 - 32*sin^6(x) + 48*sin^4(x) - 18*sin^2(x)
       cosNPhi =
           1 + sinPhiSq * (-32. * sinPhiSq * sinPhiSq + 48. * sinPhiSq - 18.);
       break;
   }
   double res = d_forceConstant / 2.0 * (1. - d_cosTerm * cosNPhi);
   // std::cout << " torsion(" << d_at1Idx << "," << d_at2Idx << "," << d_at3Idx
-  // << "," << d_at4Idx << "): " << cosPhi << "(" << acos(cosPhi) << ")" << " ->
+  // << "," << d_at4Idx << "): " << cosPhi << "(" << std::acos(cosPhi) << ")" << " ->
   // " << res << std::endl;
   // if(d_at2Idx==5&&d_at3Idx==6) std::cerr << " torsion(" << d_at1Idx << "," <<
   // d_at2Idx << "," << d_at3Idx << "," << d_at4Idx << "): " << cosPhi << "(" <<
-  // acos(cosPhi) << ")" << " -> " << res << std::endl;
+  // std::acos(cosPhi) << ")" << " -> " << res << std::endl;
   return res;
 }
 
@@ -233,7 +233,7 @@ void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
   RDKit::ForceFieldsHelper::computeDihedral(
       pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, nullptr, &cosPhi, r, t, d);
   double sinPhiSq = 1.0 - cosPhi * cosPhi;
-  double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
+  double sinPhi = ((sinPhiSq > 0.0) ? std::sqrt(sinPhiSq) : 0.0);
 
   // dE/dPhi is independent of cartesians:
   double dE_dPhi = getThetaDeriv(cosPhi, sinPhi);
@@ -247,7 +247,7 @@ double TorsionAngleContrib::getThetaDeriv(double cosTheta,
                                           double sinTheta) const {
   PRECONDITION(d_order == 2 || d_order == 3 || d_order == 6, "bad order");
   double sinThetaSq = sinTheta * sinTheta;
-  // cos(6x) = 1 - 32*sin^6(x) + 48*sin^4(x) - 18*sin^2(x)
+  // std::cos(6x) = 1 - 32*sin^6(x) + 48*sin^4(x) - 18*sin^2(x)
 
   double res = 0.0;
   switch (d_order) {
@@ -255,11 +255,11 @@ double TorsionAngleContrib::getThetaDeriv(double cosTheta,
       res = 2 * sinTheta * cosTheta;
       break;
     case 3:
-      // sin(3*x) = 3*sin(x) - 4*sin^3(x)
+      // std::sin(3*x) = 3*std::sin(x) - 4*sin^3(x)
       res = sinTheta * (3 - 4 * sinThetaSq);
       break;
     case 6:
-      // sin(6x) = cos(x) * [ 32*sin^5(x) - 32*sin^3(x) + 6*sin(x) ]
+      // std::sin(6x) = std::cos(x) * [ 32*sin^5(x) - 32*sin^3(x) + 6*std::sin(x) ]
       res = cosTheta * sinTheta * (32 * sinThetaSq * (sinThetaSq - 1) + 6);
       break;
   }

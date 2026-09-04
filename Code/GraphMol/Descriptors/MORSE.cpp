@@ -95,7 +95,7 @@ void getMORSEDesc(const double *DM, const ROMol &mol, const Conformer &conf,
         if (i == 0) {
           p = 1;
         } else {
-          p = sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
+          p = std::sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
         }
         res1 += p;
         res2 += Mass[j] * Mass[k] * p;
@@ -144,7 +144,7 @@ void getMORSEDescCustom(const double *DM, const ROMol &mol,
         if (i == 0) {
           p = 1;
         } else {
-          p = sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
+          p = std::sin(R[i] * DM[j * numAtoms + k]) / (R[i] * DM[j * numAtoms + k]);
         }
         res1 += customAtomArray[j] * customAtomArray[k] * p;  // "custom"
       }

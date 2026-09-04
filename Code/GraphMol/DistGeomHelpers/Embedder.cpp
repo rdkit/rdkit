@@ -43,6 +43,7 @@
 #include <vector>
 #include <chrono>  // for time-related functions
 
+#include <cmath>
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
 #include <mutex>
@@ -212,33 +213,33 @@ bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
   RDGeom::Point3D crossp = v1.crossProduct(v2);
   double vol = crossp.dotProduct(v3);
   if (verbose) {
-    std::cerr << "   " << fabs(vol) << std::endl;
+    std::cerr << "   " << std::fabs(vol) << std::endl;
   }
-  if (fabs(vol) < volScale * MIN_TETRAHEDRAL_CHIRAL_VOL) {
+  if (std::fabs(vol) < volScale * MIN_TETRAHEDRAL_CHIRAL_VOL) {
     return false;
   }
   crossp = v1.crossProduct(v2);
   vol = crossp.dotProduct(v4);
   if (verbose) {
-    std::cerr << "   " << fabs(vol) << std::endl;
+    std::cerr << "   " << std::fabs(vol) << std::endl;
   }
-  if (fabs(vol) < volScale * MIN_TETRAHEDRAL_CHIRAL_VOL) {
+  if (std::fabs(vol) < volScale * MIN_TETRAHEDRAL_CHIRAL_VOL) {
     return false;
   }
   crossp = v1.crossProduct(v3);
   vol = crossp.dotProduct(v4);
   if (verbose) {
-    std::cerr << "   " << fabs(vol) << std::endl;
+    std::cerr << "   " << std::fabs(vol) << std::endl;
   }
-  if (fabs(vol) < volScale * MIN_TETRAHEDRAL_CHIRAL_VOL) {
+  if (std::fabs(vol) < volScale * MIN_TETRAHEDRAL_CHIRAL_VOL) {
     return false;
   }
   crossp = v2.crossProduct(v3);
   vol = crossp.dotProduct(v4);
   if (verbose) {
-    std::cerr << "   " << fabs(vol) << std::endl;
+    std::cerr << "   " << std::fabs(vol) << std::endl;
   }
-  return fabs(vol) >= volScale * MIN_TETRAHEDRAL_CHIRAL_VOL;
+  return std::fabs(vol) >= volScale * MIN_TETRAHEDRAL_CHIRAL_VOL;
 }
 
 bool _sameSide(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
@@ -248,7 +249,7 @@ bool _sameSide(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
   double d1 = normal.dotProduct(v4 - v1);
   double d2 = normal.dotProduct(p0 - v1);
   // std::cerr << "     " << d1 << " - " << d2 << std::endl;
-  if (fabs(d1) < tol || fabs(d2) < tol) {
+  if (std::fabs(d1) < tol || std::fabs(d2) < tol) {
     return false;
   }
   return !((d1 < 0.) ^ (d2 < 0.));
@@ -309,11 +310,11 @@ bool _boundsFulfilled(const std::vector<std::size_t> &atoms,
       double d2 = (p0 - p1).length();  // distance
       double lb = mmat.getLowerBound(a1, a2);
       double ub = mmat.getUpperBound(a1, a2);  // bounds
-      if (((d2 < lb) && (fabs(d2 - lb) > 0.1 * ub)) ||
-          ((d2 > ub) && (fabs(d2 - ub) > 0.1 * ub))) {
+      if (((d2 < lb) && (std::fabs(d2 - lb) > 0.1 * ub)) ||
+          ((d2 > ub) && (std::fabs(d2 - ub) > 0.1 * ub))) {
 #ifdef DEBUG_EMBEDDING
         std::cerr << a1 << " " << a2 << ":" << d2 << " " << lb << " " << ub
-                  << " " << fabs(d2 - lb) << " " << fabs(d2 - ub) << std::endl;
+                  << " " << std::fabs(d2 - lb) << " " << std::fabs(d2 - ub) << std::endl;
 #endif
         return false;
       }

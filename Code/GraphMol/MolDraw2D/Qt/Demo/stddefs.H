@@ -35,7 +35,7 @@ template <class T> inline T length( const T vector[3] ) {
   T ret_value;
   ret_value = square( vector[0] ) + square( vector[1] ) +
     square( vector[2] );
-  return sqrt( ret_value );
+  return std::sqrt( ret_value );
 
 }
 
@@ -147,7 +147,7 @@ template <class T> inline T angle( const T vec1[3] , T len1 ,
     sin_theta = -1.0;
   }
 
-  T theta = fabs( asin( sin_theta ) );
+  T theta = std::fabs( std::asin( sin_theta ) );
 
   // find the appropriate quadrant - if both positive, nothing to do
   if( sin_theta > 0.0 && cos_theta < 0.0 ) {
@@ -201,7 +201,7 @@ template <class T> inline T sq_distance( const T *vec1 , const T *vec2 ,
 // the distance between the 2 3D points
 template <class T> inline T distance( const T *vec1 , const T *vec2 ) {
 
-  return sqrt( sq_distance( vec1 , vec2 ) );
+  return std::sqrt( sq_distance( vec1 , vec2 ) );
 
 }
 
@@ -210,7 +210,7 @@ template <class T> inline T distance( const T *vec1 , const T *vec2 ) {
 template <class T> inline T distance( const T *vec1 , const T *vec2 ,
                                       int num_points ) {
 
-  return sqrt( sq_distance( vec1 , vec2 , num_points ) );
+  return std::sqrt( sq_distance( vec1 , vec2 , num_points ) );
 
 }
 
@@ -325,18 +325,18 @@ template <class T> inline void calc_normal_to_2D_vec( T bond[2] ,
   T      length , bond_hat[2] , ell[2];
 
   // check if bond is parallel to an axis
-  if( fabs( 0.0 - bond[0] ) < 1.0e-10 ) {
+  if( std::fabs( 0.0 - bond[0] ) < 1.0e-10 ) {
     normal[0] = 1.0;
     normal[1] = 0.0;
     return;
-  } else if( fabs( 0.0 - bond[1] ) < 1.0e-10 ) {
+  } else if( std::fabs( 0.0 - bond[1] ) < 1.0e-10 ) {
     normal[0] = 0.0;
     normal[1] = 1.0;
     return;
   }
 
   length = bond[0] * bond[0] + bond[1] * bond[1];
-  length = sqrt( length );
+  length = std::sqrt( length );
 
   // normalise the bond length
   bond_hat[0] = bond[0] / length;
@@ -352,7 +352,7 @@ template <class T> inline void calc_normal_to_2D_vec( T bond[2] ,
   // by ell minus the projection of the bond on the x axis
   normal[0] = ell[0] - bond[0];
   normal[1] = ell[1];
-  length = sqrt( normal[0] * normal[0] + normal[1] * normal[1] );
+  length = std::sqrt( normal[0] * normal[0] + normal[1] * normal[1] );
   normal[0] /= length;
   normal[1] /= length;
 
@@ -469,9 +469,9 @@ inline double fac( int n ) {
   } else {
     // uses Gosper's approximation, more accurate than Stirling's
     double fltn = double( n );
-    double facn = sqrt( ( ( 2 * fltn ) + 1.0 / 3.0 ) * M_PI );
-    facn *= pow( fltn , fltn ) * exp( -fltn );
-    fac = round( facn );
+    double facn = std::sqrt( ( ( 2 * fltn ) + 1.0 / 3.0 ) * M_PI );
+    facn *= std::pow( fltn , fltn ) * std::exp( -fltn );
+    fac = std::round( facn );
   }
 
   return fac;
