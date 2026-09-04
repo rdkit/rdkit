@@ -1335,7 +1335,7 @@ void _collect14Bounds(
       return;
   }
 
-  if (fabs(du - dl) < DIST12_DELTA) {
+  if (std::fabs(du - dl) < DIST12_DELTA) {
     // just to maker sure that lower and upper bound are not too close to each
     // other
     dl -= GEN_DIST_TOL;

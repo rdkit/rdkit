@@ -194,7 +194,7 @@ TEST_CASE("Shape DB Writer") {
            ++k) {
         const auto ishape = irxn->getSynthons()[i][j].second->getShapes().get();
         const auto oshape = orxn->getSynthons()[i][j].second->getShapes().get();
-        CHECK_THAT(fabs(ishape->getShapes().getShapeVolume(k) -
+        CHECK_THAT(std::fabs(ishape->getShapes().getShapeVolume(k) -
                         oshape->getShapes().getShapeVolume(k)),
                    Catch::Matchers::WithinAbs(0.0, 1.0e-6));
       }

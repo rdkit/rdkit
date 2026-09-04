@@ -119,7 +119,7 @@ class SparseIntVect {
       if (!doAbs) {
         res += iter->second;
       } else {
-        res += abs(iter->second);
+        res += std::abs(iter->second);
       }
     }
     return res;
@@ -445,35 +445,35 @@ void calcVectParams(const SparseIntVect<IndexType> &v1,
   typename SparseIntVect<IndexType>::StorageType::const_iterator iter1, iter2;
   iter1 = v1.getNonzeroElements().begin();
   if (iter1 != v1.getNonzeroElements().end()) {
-    v1Sum += abs(iter1->second);
+    v1Sum += std::abs(iter1->second);
   }
   iter2 = v2.getNonzeroElements().begin();
   if (iter2 != v2.getNonzeroElements().end()) {
-    v2Sum += abs(iter2->second);
+    v2Sum += std::abs(iter2->second);
   }
   while (iter1 != v1.getNonzeroElements().end()) {
     while (iter2 != v2.getNonzeroElements().end() &&
            iter2->first < iter1->first) {
       ++iter2;
       if (iter2 != v2.getNonzeroElements().end()) {
-        v2Sum += abs(iter2->second);
+        v2Sum += std::abs(iter2->second);
       }
     }
     if (iter2 != v2.getNonzeroElements().end()) {
       if (iter2->first == iter1->first) {
-        if (abs(iter2->second) < abs(iter1->second)) {
-          andSum += abs(iter2->second);
+        if (std::abs(iter2->second) < std::abs(iter1->second)) {
+          andSum += std::abs(iter2->second);
         } else {
-          andSum += abs(iter1->second);
+          andSum += std::abs(iter1->second);
         }
         ++iter2;
         if (iter2 != v2.getNonzeroElements().end()) {
-          v2Sum += abs(iter2->second);
+          v2Sum += std::abs(iter2->second);
         }
       }
       ++iter1;
       if (iter1 != v1.getNonzeroElements().end()) {
-        v1Sum += abs(iter1->second);
+        v1Sum += std::abs(iter1->second);
       }
     } else {
       break;
@@ -482,14 +482,14 @@ void calcVectParams(const SparseIntVect<IndexType> &v1,
   if (iter1 != v1.getNonzeroElements().end()) {
     ++iter1;
     while (iter1 != v1.getNonzeroElements().end()) {
-      v1Sum += abs(iter1->second);
+      v1Sum += std::abs(iter1->second);
       ++iter1;
     }
   }
   if (iter2 != v2.getNonzeroElements().end()) {
     ++iter2;
     while (iter2 != v2.getNonzeroElements().end()) {
-      v2Sum += abs(iter2->second);
+      v2Sum += std::abs(iter2->second);
       ++iter2;
     }
   }

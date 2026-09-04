@@ -7784,7 +7784,8 @@ M  END)CTAB";
   auto conf = m2->getConformer();
   for (auto i = 7; i < 9; ++i) {
     auto atom_pos = conf.getAtomPos(i);
-    REQUIRE((!isnan(atom_pos.x) && !isnan(atom_pos.y) && !isnan(atom_pos.z)));
+    REQUIRE((!std::isnan(atom_pos.x) && !std::isnan(atom_pos.y) &&
+         !std::isnan(atom_pos.z)));
   }
 
   // check that we bisect the correct angle and point outside the rings

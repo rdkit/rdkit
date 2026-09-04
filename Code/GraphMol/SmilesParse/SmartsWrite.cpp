@@ -212,8 +212,8 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     } else {
       res << "+";
     }
-    if (mods == Modifiers::NONE && abs(val) != 1) {
-      res << abs(val);
+    if (mods == Modifiers::NONE && std::abs(val) != 1) {
+      res << std::abs(val);
     }
     needParen = true;
   } else if (descrip == "AtomNegativeFormalCharge") {
@@ -223,8 +223,8 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     } else {
       res << "-";
     }
-    if (mods == Modifiers::NONE && abs(val) != 1) {
-      res << abs(val);
+    if (mods == Modifiers::NONE && std::abs(val) != 1) {
+      res << std::abs(val);
     }
     needParen = true;
   } else if (descrip == "AtomHybridization" && equery) {

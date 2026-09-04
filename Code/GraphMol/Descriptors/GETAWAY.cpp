@@ -120,7 +120,7 @@ bool IsClose2(double a, double b, unsigned int) {
 
   if (ta.length() == tb.length()) {
     // last digit +/-1 deviation only!)
-    if (abs(atoi(ta.c_str()) - atoi(tb.c_str())) < 2) {
+    if (std::abs(atoi(ta.c_str()) - atoi(tb.c_str())) < 2) {
       // std::cout << a << "," << b << " ta:"  << ta << "," << "tb:" << tb<<
       // "\n";
       isclose = true;

@@ -1570,7 +1570,7 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
       // charge always comes post the symbol
       int ichg = atom.getFormalCharge();
       std::string sgn = ichg > 0 ? std::string("+") : std::string("-");
-      ichg = abs(ichg);
+      ichg = std::abs(ichg);
       if (ichg > 1) {
         sgn = std::to_string(ichg) + sgn;
       }
