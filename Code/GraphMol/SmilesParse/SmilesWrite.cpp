@@ -19,29 +19,33 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
-
 #include <RDGeneral/utils.h>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
-#include <boost/format.hpp>
 
-#include <sstream>
 #include <map>
-#include <list>
 
 // #define VERBOSE_CANON 1
 
 namespace RDKit {
 
 namespace SmilesWrite {
-const int atomicSmiles[] = {0, 5, 6, 7, 8, 9, 15, 16, 17, 35, 53, -1};
 bool inOrganicSubset(int atomicNumber) {
-  unsigned int idx = 0;
-  while (atomicSmiles[idx] < atomicNumber && atomicSmiles[idx] != -1) {
-    ++idx;
+  switch (atomicNumber) {
+    case 0:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+    case 15:
+    case 16:
+    case 17:
+    case 35:
+    case 53:
+      return true;
+    default:
+      return false;
   }
-  return atomicSmiles[idx] == atomicNumber;
 }
 
 namespace {
@@ -388,14 +392,13 @@ std::string FragmentSmilesConstruct(
   Canon::MolStack molStack;
   // try to prevent excessive reallocation
   molStack.reserve(mol.getNumAtoms() + mol.getNumBonds());
-  std::stringstream res;
 
   std::map<int, int> ringClosureMap;
   int ringIdx, closureVal;
   if (!params.canonical) {
     mol.setProp(common_properties::_StereochemDone, 1);
   }
-  std::list<unsigned int> ringClosuresToErase;
+  std::vector<unsigned int> ringClosuresToErase;
 
   if (params.canonical && params.doIsomericSmiles) {
     Canon::canonicalizeEnhancedStereo(mol, &ranks);
@@ -403,6 +406,7 @@ std::string FragmentSmilesConstruct(
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
                               atomsInPlay, bondsInPlay, bondSymbols,
                               params.doIsomericSmiles, params.doRandom);
+  std::string res;
   Bond *bond = nullptr;
   for (auto &mSE : molStack) {
     switch (mSE.type) {
@@ -413,9 +417,9 @@ std::string FragmentSmilesConstruct(
         ringClosuresToErase.clear();
         // std::cout << "\t\tAtom: " << mSE.obj.atom->getIdx() << std::endl;
         if (!atomSymbols) {
-          res << GetAtomSmiles(mSE.obj.atom, params);
+          res += GetAtomSmiles(mSE.obj.atom, params);
         } else {
-          res << (*atomSymbols)[mSE.obj.atom->getIdx()];
+          res += (*atomSymbols)[mSE.obj.atom->getIdx()];
         }
         atomOrdering.push_back(mSE.obj.atom->getIdx());
         break;
@@ -423,9 +427,9 @@ std::string FragmentSmilesConstruct(
         bond = mSE.obj.bond;
         // std::cout << "\t\tBond: " << bond->getIdx() << std::endl;
         if (!bondSymbols) {
-          res << GetBondSmiles(bond, params, mSE.number);
+          res += GetBondSmiles(bond, params, mSE.number);
         } else {
-          res << (*bondSymbols)[bond->getIdx()];
+          res += (*bondSymbols)[bond->getIdx()];
         }
         bondOrdering.push_back(bond->getIdx());
         break;
@@ -460,24 +464,27 @@ std::string FragmentSmilesConstruct(
           ringClosureMap[ringIdx] = closureVal;
         }
         if (closureVal < 10) {
-          res << (char)(closureVal + '0');
+          res += static_cast<char>(closureVal + '0');
         } else if (closureVal < 100) {
-          res << '%' << closureVal;
+          res += '%';
+          res += std::to_string(closureVal);
         } else {  // use extension to OpenSMILES
-          res << "%(" << closureVal << ')';
+          res += "%(";
+          res += std::to_string(closureVal);
+          res += ')';
         }
         break;
       case Canon::MOL_STACK_BRANCH_OPEN:
-        res << "(";
+        res += '(';
         break;
       case Canon::MOL_STACK_BRANCH_CLOSE:
-        res << ")";
+        res += ')';
         break;
       default:
         break;
     }
   }
-  return res.str();
+  return res;
 }
 
 }  // end of namespace SmilesWrite
@@ -617,7 +624,6 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
       rootedAtAtom = getRandomGenerator()() % tmol->getNumAtoms();
     }
 
-    std::string res;
     unsigned int nAtoms = tmol->getNumAtoms();
     std::vector<unsigned int> ranks(nAtoms);
     std::vector<unsigned int> atomOrdering;
@@ -656,7 +662,6 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
 
     std::vector<Canon::AtomColors> colors(nAtoms, Canon::WHITE_NODE);
     int nextAtomIdx = -1;
-    std::string subSmi;
 
     // find the next atom for a traverse
     if (rootedAtAtom >= 0) {
@@ -672,22 +677,19 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
       }
     }
     CHECK_INVARIANT(nextAtomIdx >= 0, "no start atom found");
-    subSmi = SmilesWrite::FragmentSmilesConstruct(
+    vfragsmi[fragIdx] = SmilesWrite::FragmentSmilesConstruct(
         *tmol, nextAtomIdx, colors, ranks, params, atomOrdering, bondOrdering);
-
-    res += subSmi;
-    vfragsmi[fragIdx] = res;
 
     for (unsigned int &vit : atomOrdering) {
       vit = fragsMolAtomMapping[fragIdx][vit];  // Lookup the Id in the
                                                 // original molecule
     }
-    allAtomOrdering.push_back(atomOrdering);
+    allAtomOrdering.push_back(std::move(atomOrdering));
     for (unsigned int &vit : bondOrdering) {
       vit = fragsMolBondMapping[fragIdx][vit];  // Lookup the Id in the
                                                 // original molecule
     }
-    allBondOrdering.push_back(bondOrdering);
+    allBondOrdering.push_back(std::move(bondOrdering));
   }
 
   std::string result;
@@ -703,8 +705,9 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
         tplType;
     std::vector<tplType> tmp(vfragsmi.size());
     for (unsigned int ti = 0; ti < vfragsmi.size(); ++ti) {
-      tmp[ti] = std::make_tuple(vfragsmi[ti], allAtomOrdering[ti],
-                                allBondOrdering[ti]);
+      tmp[ti] = std::make_tuple(std::move(vfragsmi[ti]),
+                                std::move(allAtomOrdering[ti]),
+                                std::move(allBondOrdering[ti]));
     }
 
     std::sort(tmp.begin(), tmp.end());
@@ -890,9 +893,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
         "rootedAtAtom can only be used with molecules that have a single fragment");
 
     for (auto aidx : atomsToUse) {
-      for (const auto &bndi : boost::make_iterator_range(
-               mol.getAtomBonds(mol.getAtomWithIdx(aidx)))) {
-        const Bond *bond = mol[bndi];
+      for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(aidx))) {
         if (atomsInPlay[bond->getOtherAtomIdx(aidx)]) {
           bondsInPlay.set(bond->getIdx());
         }
