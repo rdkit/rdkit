@@ -164,7 +164,16 @@ struct atom_wrapper {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-    nb::class_<Atom>(m, "Atom" NB_POOLED_IF_AVAILABLE)
+```suggestion
+// Handle support for instance pooling. Availability is checked in the
+// main CMakelists.txt file, via a version check on the nanobind package.
+// Documentation about the pooling feature is available at:
+// https://nanobind.readthedocs.io/en/latest/classes.html#instance-pooling
+#ifdef NANOBIND_POOLED_AVAILABLE
+    nb::class_<Atom>(m, "Atom", nb::pooled())
+#else
+    nb::class_<Atom>(m, "Atom")
+#endif
         .def(nb::init<std::string>(), "what"_a)
         .def(nb::init<const Atom &>(), "other"_a)
         .def(nb::init<unsigned int>(), "num"_a,
