@@ -6,6 +6,7 @@ trigger:
 variables:
   CCACHE_DIR: "$(Build.ArtifactStagingDirectory)/.ccache"
   CCACHE_BASEDIR: "$(Build.Repository.LocalPath)"
+  CCACHE_STATSLOG: "$(Build.ArtifactStagingDirectory)/ccache_current_build_stats.log"
   CCACHE_NOHASHDIR: yes
   CCACHE_NAMESPACE: "$(System.JobDisplayName)"
   CCACHE_MAXSIZE: 1G
