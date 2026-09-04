@@ -121,9 +121,9 @@ void MolDebug(const ROMol &mol, bool useStdout) {
 
 class ReadWriteMol : public RWMol {
  public:
-  ReadWriteMol() {};
+  ReadWriteMol(){};
   ReadWriteMol(const ROMol &m, bool quickCopy = false, int confId = -1)
-      : RWMol(m, quickCopy, confId) {};
+      : RWMol(m, quickCopy, confId){};
 
   void RemoveAtom(unsigned int idx) { removeAtom(idx); };
   void RemoveBond(unsigned int idx1, unsigned int idx2) {
@@ -1038,8 +1038,16 @@ it's probably not of general interest.
 )DOC");
     // ---------------------------------------------------------------------------------------------
 
-    nb::class_<ReadWriteMol, ROMol>(m, "RWMol",
-                                    nb::dynamic_attr() NB_POOLED_IF_AVAILABLE)
+// Handle support for instance pooling. Availability is checked in the
+// main CMakelists.txt file, via a version check on the nanobind package.
+// Documentation about the pooling feature is available at:
+// https://nanobind.readthedocs.io/en/latest/classes.html#instance-pooling
+#ifdef NANOBIND_POOLED_AVAILABLE
+    nb::class_<ReadWriteMol, ROMol>(m, "RWMol", nb::dynamic_attr(),
+                                    nb::pooled())
+#else
+    nb::class_<ReadWriteMol, ROMol>(m, "RWMol", nb::dynamic_attr())
+#endif
         .def(nb::new_([]() { return new ReadWriteMol(); }),
              "Constructor, takes no arguments")
         .def(nb::new_([](nb::bytes b) {
