@@ -5,6 +5,7 @@ add_executable(bench EXCLUDE_FROM_ALL bench_common.cpp
   mol.cpp
   molops.cpp
   pickle.cpp
+  ringinfo.cpp
   smiles.cpp
   stereo.cpp
   substruct_match.cpp
@@ -15,6 +16,16 @@ target_link_libraries(bench rdkitCatch
   Fingerprints
   SmilesParse
 )
+
+add_executable(ringinfo_memory_bench EXCLUDE_FROM_ALL
+  ringinfo_memory_bench.cpp
+)
+target_link_libraries(ringinfo_memory_bench SmilesParse)
+
+add_executable(smiles_pipeline_bench EXCLUDE_FROM_ALL
+  smiles_pipeline_135k_bench.cpp
+)
+target_link_libraries(smiles_pipeline_bench SmilesParse)
 
 if(RDK_BUILD_INCHI_SUPPORT)
   target_link_libraries(bench RDInchiLib)

@@ -442,14 +442,19 @@ unsigned int calcNumSpiroAtoms(const ROMol &mol,
     atoms = &lAtoms;
   }
 
-  for (unsigned int i = 0; i < rInfo->atomRings().size(); ++i) {
-    const INT_VECT &ri = rInfo->atomRings()[i];
-    for (unsigned int j = i + 1; j < rInfo->atomRings().size(); ++j) {
-      const INT_VECT &rj = rInfo->atomRings()[j];
+  const auto atomRings = rInfo->atomRings();
+  for (unsigned int i = 0; i < atomRings.size(); ++i) {
+    const auto &ri = atomRings[i];
+    for (unsigned int j = i + 1; j < atomRings.size(); ++j) {
+      const auto &rj = atomRings[j];
       // EFF: using intersect here does more work and memory allocation than is
       // required
       INT_VECT inter;
-      Intersect(ri, rj, inter);
+      for (const auto atomIdx : ri) {
+        if (std::find(rj.begin(), rj.end(), atomIdx) != rj.end()) {
+          inter.push_back(atomIdx);
+        }
+      }
       if (inter.size() == 1) {
         if (std::find(atoms->begin(), atoms->end(), inter[0]) == atoms->end()) {
           atoms->push_back(inter[0]);
@@ -472,14 +477,19 @@ unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
     atoms = &lAtoms;
   }
 
-  for (unsigned int i = 0; i < rInfo->bondRings().size(); ++i) {
-    const INT_VECT &ri = rInfo->bondRings()[i];
-    for (unsigned int j = i + 1; j < rInfo->bondRings().size(); ++j) {
-      const INT_VECT &rj = rInfo->bondRings()[j];
+  const auto bondRings = rInfo->bondRings();
+  for (unsigned int i = 0; i < bondRings.size(); ++i) {
+    const auto &ri = bondRings[i];
+    for (unsigned int j = i + 1; j < bondRings.size(); ++j) {
+      const auto &rj = bondRings[j];
       // EFF: using intersect here does more work and memory allocation than is
       // required
       INT_VECT inter;
-      Intersect(ri, rj, inter);
+      for (const auto bondIdx : ri) {
+        if (std::find(rj.begin(), rj.end(), bondIdx) != rj.end()) {
+          inter.push_back(bondIdx);
+        }
+      }
       if (inter.size() > 1) {
         INT_VECT atomCounts(mol.getNumAtoms(), 0);
         for (auto ii : inter) {

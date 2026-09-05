@@ -904,8 +904,10 @@ std::string MolFragmentToSmiles(const ROMol &mol,
   if (mol.getRingInfo()->isInitialized()) {
     tmol.getRingInfo()->reset();
     tmol.getRingInfo()->initialize();
+    std::vector<unsigned int> retainedRings;
+    retainedRings.reserve(mol.getRingInfo()->numRings());
     for (unsigned int ridx = 0; ridx < mol.getRingInfo()->numRings(); ++ridx) {
-      const INT_VECT &aring = mol.getRingInfo()->atomRings()[ridx];
+      const auto aring = mol.getRingInfo()->atomRings()[ridx];
       bool keepIt = true;
       for (auto aidx : aring) {
         if (!atomsInPlay[aidx]) {
@@ -914,7 +916,7 @@ std::string MolFragmentToSmiles(const ROMol &mol,
         }
       }
       if (keepIt) {
-        const INT_VECT &bring = mol.getRingInfo()->bondRings()[ridx];
+        const auto bring = mol.getRingInfo()->bondRings()[ridx];
         for (auto bidx : bring) {
           if (!bondsInPlay[bidx]) {
             keepIt = false;
@@ -922,10 +924,11 @@ std::string MolFragmentToSmiles(const ROMol &mol,
           }
         }
         if (keepIt) {
-          tmol.getRingInfo()->addRing(aring, bring);
+          retainedRings.push_back(ridx);
         }
       }
     }
+    tmol.getRingInfo()->addRings(*mol.getRingInfo(), retainedRings);
   }
   if (tmol.needsUpdatePropertyCache()) {
     for (auto atom : tmol.atoms()) {

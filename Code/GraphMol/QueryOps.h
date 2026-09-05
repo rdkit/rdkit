@@ -341,7 +341,9 @@ static inline int queryAtomIsInRingOfSize(Atom const *at, int lower, int upper,
                                           bool lowerOpen = false,
                                           bool upperOpen = false) {
   const auto ri = at->getOwningMol().getRingInfo();
-  for (const auto ringSize : ri->atomRingSizes(at->getIdx())) {
+  const auto atomRings = ri->atomRings();
+  for (const auto ringIdx : ri->atomMembers(at->getIdx())) {
+    const auto ringSize = static_cast<int>(atomRings[ringIdx].size());
     if ((ringSize > lower || (ringSize == lower && !lowerOpen)) &&
         (upper < 0 ||
          (ringSize < upper || (ringSize == upper && !upperOpen)))) {

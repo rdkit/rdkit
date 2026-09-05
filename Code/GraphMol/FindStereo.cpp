@@ -692,8 +692,8 @@ void flagRingStereo(ROMol &mol,
   auto ringInfo = mol.getRingInfo();
   boost::dynamic_bitset<> possibleAtomsInRing(mol.getNumAtoms());
   for (unsigned int ridx = 0; ridx < ringInfo->atomRings().size(); ++ridx) {
-    const auto &aring = ringInfo->atomRings()[ridx];
-    const auto &bring = ringInfo->bondRings()[ridx];
+    const auto aring = ringInfo->atomRings()[ridx];
+    const auto bring = ringInfo->bondRings()[ridx];
     unsigned int nHere = 0;
     auto sz = aring.size();
     bool ringIsOddSized = sz % 2;
@@ -883,7 +883,7 @@ bool updateAtoms(
             // update all the other atoms/bonds in rings that we're in:
             for (unsigned int ridx = 0;
                  ridx < mol.getRingInfo()->atomRings().size(); ++ridx) {
-              const auto &aring = mol.getRingInfo()->atomRings()[ridx];
+              const auto aring = mol.getRingInfo()->atomRings()[ridx];
               unsigned int nHere = 0;
               for (auto raidx : aring) {
                 // Ring stereo changed, so un-fix atoms in this ring so we can
@@ -906,7 +906,8 @@ bool updateAtoms(
                     }
                   }
                 }
-                for (auto rbidx : mol.getRingInfo()->bondRings()[ridx]) {
+                const auto bring = mol.getRingInfo()->bondRings()[ridx];
+                for (auto rbidx : bring) {
                   if (possibleRingStereoBonds[rbidx]) {
                     --possibleRingStereoBonds[rbidx];
                   }
