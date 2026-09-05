@@ -2634,7 +2634,7 @@ NB_MODULE(rdmolfiles, m) {
       m, "CDXMLParserParams",
       "Parameters controlling conversion of a CDXML document to molecules")
       .def(nb::init<>(), "Construct a default CDXMLFormat")
-      .def(nb::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat>(),
+    .def(nb::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat, bool, bool>(),
            "sanitize"_a, "removeHs"_a, "format"_a, "parseQueries"_a, "strictQueryParsing"_a)
       .def_rw("sanitize", &RDKit::v2::CDXMLParser::CDXMLParserParams::sanitize,
               "controls whether or not the molecule is sanitized before "
