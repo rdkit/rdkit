@@ -16,6 +16,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/MolOps.h>
 
 #include "SmilesWrite.h"
 #include "SmilesParse.h"
@@ -1950,8 +1951,9 @@ std::string get_atomlabel_block(const ROMol &mol,
                atom->getPropIfPresent(common_properties::_fromAttachPoint,
                                       val) &&
                (val == 1 || val == 2)) {
-      res +=
-          quote_string("_AP" + std::to_string(val), labelAllowedSpecialChars);
+      res += quote_string(
+          std::string(MolOps::attachmentPointLabelPrefix) + std::to_string(val),
+          labelAllowedSpecialChars);
     } else if (atom->getPropIfPresent(common_properties::atomLabel, lbl)) {
       res += quote_string(lbl, labelAllowedSpecialChars);
     }
