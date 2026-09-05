@@ -75,10 +75,6 @@ bool AtropisomerBond::hasPrimaryLabel() const {
   return dp_bond->hasProp(common_properties::_CIPCode);
 }
 
-void AtropisomerBond::resetPrimaryLabel() const {
-  dp_bond->clearProp(common_properties::_CIPCode);
-}
-
 Descriptor AtropisomerBond::label(const Rules &comp) {
   auto &digraph = getDigraph();
   auto root1 = digraph.getOriginalRoot();

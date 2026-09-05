@@ -77,10 +77,6 @@ bool Tetrahedral::hasPrimaryLabel() const {
   return getFocus()->hasProp(common_properties::_CIPCode);
 }
 
-void Tetrahedral::resetPrimaryLabel() const {
-  getFocus()->clearProp(common_properties::_CIPCode);
-}
-
 Descriptor Tetrahedral::label(const Rules &comp) {
   auto &digraph = getDigraph();
 

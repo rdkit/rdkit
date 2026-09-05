@@ -25,8 +25,6 @@ class Tetrahedral : public Configuration {
 
   bool hasPrimaryLabel() const override;
 
-  void resetPrimaryLabel() const override;
-
   Descriptor label(const Rules &comp) override;
 
   Descriptor label(Node *node, Digraph &digraph, const Rules &comp) override;

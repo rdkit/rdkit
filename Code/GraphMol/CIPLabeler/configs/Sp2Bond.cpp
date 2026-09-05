@@ -70,10 +70,6 @@ bool Sp2Bond::hasPrimaryLabel() const {
   return dp_bond->hasProp(common_properties::_CIPCode);
 }
 
-void Sp2Bond::resetPrimaryLabel() const {
-  dp_bond->clearProp(common_properties::_CIPCode);
-}
-
 Descriptor Sp2Bond::label(const Rules &comp) {
   auto &digraph = getDigraph();
   auto root1 = digraph.getOriginalRoot();
