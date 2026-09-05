@@ -974,10 +974,11 @@ bool finaliseHit(GaussianShape::ShapeInput &hitShapes,
                  double &meanExcludedVol) {
   // Copy the conformer into the hit.
   hitShapes.setActiveShape(hitShapeNum);
-  hit = static_cast<ROMol>(*hitShapes.shapeToMol(false, true));
-  if (!checkExcludedVols(hit, params, excludedVol, meanExcludedVol)) {
+  std::unique_ptr<ROMol> possHit = hitShapes.shapeToMol(false, true);
+  if (!checkExcludedVols(*possHit, params, excludedVol, meanExcludedVol)) {
     return false;
   }
+  hit = ROMol(*possHit);
   hit.setProp<double>("Similarity", scores[0]);
   hit.setProp<double>("ShapeScore", scores[1]);
   hit.setProp<double>("ColorScore", scores[2]);
