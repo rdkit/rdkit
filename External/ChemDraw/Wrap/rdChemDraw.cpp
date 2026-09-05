@@ -191,7 +191,9 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
       "MolsFromChemDrawFile", MolsFromChemDrawFileHelper,
       (python::arg("filename"), python::arg("sanitize") = true,
        python::arg("removeHs") = true,
-       python::arg("needsCleanPolicy") = v2::NeedsCleanPolicy::TrustSource),
+       python::arg("needsCleanPolicy") = v2::NeedsCleanPolicy::TrustSource,
+       python::arg("parseQueries") = false,
+       python::arg("strictQueryParsing") = false),
       docString.c_str());
 
   docString =
@@ -221,7 +223,9 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
       "MolsFromChemDrawBlock", MolsFromChemDrawBlockHelper,
       (python::arg("block"), python::arg("sanitize") = true,
        python::arg("removeHs") = true,
-       python::arg("needsCleanPolicy") = v2::NeedsCleanPolicy::TrustSource),
+       python::arg("needsCleanPolicy") = v2::NeedsCleanPolicy::TrustSource,
+       python::arg("parseQueries") = false,
+       python::arg("strictQueryParsing") = false),
       docString.c_str());
 
   docString =
