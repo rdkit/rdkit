@@ -200,6 +200,9 @@ void visit_children(
             }
             MolOps::sanitizeMol(*res, failedOp, sanitizeOps);
             MolOps::detectBondStereochemistry(*res);
+            if (params.parseQueries && MolOps::hasQueryHs(*res).first) {
+              MolOps::mergeQueryHs(*res);
+            }
             MolOps::removeHs(*res);
           } else {
             MolOps::sanitizeMol(*res);
@@ -331,6 +334,8 @@ std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
     return std::vector<std::unique_ptr<RWMol>>();
   }
   PageData pagedata;
+  pagedata.parseQueries = params.parseQueries;
+  pagedata.strictQueryParsing = params.strictQueryParsing;
   auto bondLength = document->m_bondLength;
 
   int missing_frag_id = -1;

@@ -2634,8 +2634,9 @@ NB_MODULE(rdmolfiles, m) {
       m, "CDXMLParserParams",
       "Parameters controlling conversion of a CDXML document to molecules")
       .def(nb::init<>(), "Construct a default CDXMLFormat")
-      .def(nb::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat>(),
-           "sanitize"_a, "removeHs"_a, "format"_a)
+    .def(nb::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat, bool, bool>(),
+	 "sanitize"_a, "removeHs"_a, "format"_a,
+	 "parseQueries"_a=true, "strictQueryParsing"_a=true)
       .def_rw("sanitize", &RDKit::v2::CDXMLParser::CDXMLParserParams::sanitize,
               "controls whether or not the molecule is sanitized before "
               "being returned")
@@ -2645,6 +2646,15 @@ NB_MODULE(rdmolfiles, m) {
       .def_rw(
           "format", &RDKit::v2::CDXMLParser::CDXMLParserParams::format,
           "ChemDraw format One of Auto, CDXML, CDX.  For data streams, Auto defaults to CDXML")
+      .def_rw(
+        "parseQueries",
+        &RDKit::v2::CDXMLParser::CDXMLParserParams::parseQueries,
+        "controls whether CDXML query constructs are preserved as query atoms and bonds")
+      .def_rw(
+        "strictQueryParsing",
+        &RDKit::v2::CDXMLParser::CDXMLParserParams::strictQueryParsing,
+        "controls whether unsupported CDXML query constructs raise instead of warning")
+    
       .def("__setattr__", &safeSetattr);
 
   docString =
