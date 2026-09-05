@@ -31,6 +31,27 @@ Sp2Bond::Sp2Bond(const CIPMol &mol, Bond *bond, Atom *startAtom, Atom *endAtom,
   auto stereo_atoms = Chirality::findStereoAtoms(bond);
   CHECK_INVARIANT(stereo_atoms.size() == 2, "incorrect number of stereo atoms")
 
+  const auto isValidCarrier = [&mol](Atom *focus, Atom *otherFocus,
+                                     int carrierIdx) {
+    if (carrierIdx < 0 ||
+        static_cast<unsigned int>(carrierIdx) >= mol.getNumAtoms() ||
+        carrierIdx == static_cast<int>(focus->getIdx()) ||
+        carrierIdx == static_cast<int>(otherFocus->getIdx())) {
+      return false;
+    }
+    for (const auto neighbor : mol.getNeighbors(focus)) {
+      if (neighbor->getIdx() == static_cast<unsigned int>(carrierIdx)) {
+        return true;
+      }
+    }
+    return false;
+  };
+  if (stereo_atoms[0] == stereo_atoms[1] ||
+      !isValidCarrier(startAtom, endAtom, stereo_atoms[0]) ||
+      !isValidCarrier(endAtom, startAtom, stereo_atoms[1])) {
+    return;
+  }
+
   std::vector<Atom *> anchors{
       {mol.getAtom(stereo_atoms[0]), mol.getAtom(stereo_atoms[1])}};
 

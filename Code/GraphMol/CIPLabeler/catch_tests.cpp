@@ -715,6 +715,23 @@ TEST_CASE("Malformed stereo markers are ignored safely", "[accurateCIP]") {
     CHECK(!bond->hasProp(common_properties::_CIPNeighborOrder));
   }
 
+  SECTION("Double bond with invalid stereo atom indexes") {
+    auto mol = "FC=CCl"_smiles;
+    REQUIRE(mol);
+    auto bond = mol->getBondWithIdx(1);
+    REQUIRE(bond->getBondType() == Bond::DOUBLE);
+    auto &stereoAtoms = bond->getStereoAtoms();
+    stereoAtoms.clear();
+    stereoAtoms.push_back(mol->getNumAtoms() + 1);
+    stereoAtoms.push_back(3);
+    bond->setStereo(Bond::STEREOCIS);
+    bond->setProp(common_properties::_CIPCode, std::string("stale"));
+
+    CHECK_NOTHROW(CIPLabeler::assignCIPLabels(*mol));
+    CHECK(!bond->hasProp(common_properties::_CIPCode));
+    CHECK(!bond->hasProp(common_properties::_CIPNeighborOrder));
+  }
+
   SECTION("Invalid atropisomer marker") {
     auto mol = "CC"_smiles;
     REQUIRE(mol);
