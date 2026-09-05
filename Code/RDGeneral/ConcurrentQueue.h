@@ -12,6 +12,7 @@
 #define CONCURRENT_QUEUE
 #include <condition_variable>
 #include <thread>
+#include <type_traits>
 #include <vector>
 
 namespace RDKit {
@@ -70,6 +71,9 @@ void ConcurrentQueue<E>::push(const E &element) {
     d_notFull.wait(lk);
   }
   if (d_done) {
+    if constexpr (std::is_pointer_v<E>) {
+      delete element;
+    }
     return;
   }
   bool wasEmpty = (d_head == d_tail);
