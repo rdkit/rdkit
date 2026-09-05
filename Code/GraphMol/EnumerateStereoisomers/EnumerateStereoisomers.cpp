@@ -139,7 +139,20 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
       }
       MolOps::setDoubleBondNeighborDirections(*isomer);
       isomer->clearComputedProps(false);
+      std::vector<std::pair<unsigned int, Bond::BondStereo>> atropStereo;
+      for (const auto bond : isomer->bonds()) {
+        if (bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+            bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+          atropStereo.emplace_back(bond->getIdx(), bond->getStereo());
+        }
+      }
       MolOps::assignStereochemistry(*isomer, true, true, true);
+      // AtropisomerFlipper updates bond directions, but not an existing 2D
+      // conformer. Preserve the configuration selected by the flipper instead
+      // of allowing stale coordinates to overwrite it.
+      for (const auto &[bondIdx, stereo] : atropStereo) {
+        isomer->getBondWithIdx(bondIdx)->setStereo(stereo);
+      }
       if (d_options.unique) {
         auto smi =
             MolToCXSmiles(*isomer, SmilesWriteParams(),
