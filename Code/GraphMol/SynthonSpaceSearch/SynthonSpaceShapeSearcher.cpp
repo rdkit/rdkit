@@ -978,7 +978,7 @@ bool finaliseHit(GaussianShape::ShapeInput &hitShapes,
   if (!checkExcludedVols(*possHit, params, excludedVol, meanExcludedVol)) {
     return false;
   }
-  hit = ROMol(*possHit);
+  hit = std::move(*possHit);
   hit.setProp<double>("Similarity", scores[0]);
   hit.setProp<double>("ShapeScore", scores[1]);
   hit.setProp<double>("ColorScore", scores[2]);
@@ -1131,6 +1131,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
     ROMol &hit, const std::string &rxnId,
     const std::vector<const std::string *> &synthNames) {
   std::array<double, 3> initScores{-1.0, -1.0, -1.0};
+  std::unique_ptr<ROMol> initHit;
   if (hit.getNumConformers()) {
     initScores = GaussianShape::AlignMolecule(
         dp_queryShape->getShapes(), hit, GaussianShape::ShapeInputOptions(),
@@ -1144,6 +1145,9 @@ bool SynthonSpaceShapeSearcher::verifyHit(
       if (!getParams().bestHit && checkBondLengths(hit) &&
           initScores[0] >= getParams().similarityCutoff) {
         return true;
+      }
+      if (initScores[0] >= getParams().similarityCutoff) {
+        initHit.reset(new ROMol(hit));
       }
     } else {
       initScores[0] = -1.0;  // To flag it as a bad hit.
@@ -1210,9 +1214,10 @@ bool SynthonSpaceShapeSearcher::verifyHit(
       }
     }
   }
-  if (!foundHit && initScores[0] > getParams().similarityCutoff) {
-    // Stick with what we found at the start, which should still be in hit,
-    // because the conformational expansion didn't do any better.
+  if (!foundHit && initHit && initScores[0] > getParams().similarityCutoff) {
+    // Stick with what we found at the start because the conformational
+    // expansion didn't do any better.
+    hit = std::move(*initHit);
     foundHit = true;
   }
   return foundHit;
