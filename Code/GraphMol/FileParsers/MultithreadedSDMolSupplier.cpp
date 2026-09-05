@@ -209,6 +209,15 @@ std::unique_ptr<RWMol> MultithreadedSDMolSupplier::processMoleculeRecord(
   }
   return res;
 }
+
+void MultithreadedSDMolSupplier::setProcessPropertyLists(bool val) {
+  if (df_started) {
+    throw std::runtime_error(
+        "Cannot set property lists after threads have started");
+  }
+  df_processPropertyLists.store(val);
+}
+
 }  // namespace FileParsers
 }  // namespace v2
 }  // namespace RDKit

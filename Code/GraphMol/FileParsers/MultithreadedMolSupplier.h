@@ -134,6 +134,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
 
   int d_line = 0;  //!< line number we are currently on
 
+  std::atomic<bool> df_started = false;
   std::atomic<bool> df_eofHitOnRead = false;
   std::atomic<bool> df_readerDone = false;
 
@@ -171,7 +172,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   MultithreadedMolSupplier &operator=(const MultithreadedMolSupplier &) =
       delete;
 
-  std::atomic<bool> df_started = false;
   std::atomic<bool> df_forceStop = false;
 
   std::mutex d_threadCounterMutex;
