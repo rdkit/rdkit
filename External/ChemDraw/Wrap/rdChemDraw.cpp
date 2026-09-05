@@ -68,13 +68,14 @@ std::string pyObjectToString(python::object input) {
 
 python::object MolsFromChemDrawBlockHelper(
     const std::string &filename, bool sanitize, bool removeHs,
-    RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
-        RDKit::v2::NeedsCleanPolicy::TrustSource) {
+    RDKit::v2::NeedsCleanPolicy needsCleanPolicy = RDKit::v2::NeedsCleanPolicy::TrustSource,
+    bool parseQueries=false,
+    bool strictQueryParsing=false) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
     mols = RDKit::v2::MolsFromChemDrawBlock(
         filename,
-        {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy});
+        {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy, parseQueries, strictQueryParsing});
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
@@ -93,11 +94,12 @@ python::object MolsFromChemDrawBlockHelper(
 
 python::tuple MolsFromChemDrawFileHelper(
     python::object cdxml, bool sanitize, bool removeHs,
-    RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
-        RDKit::v2::NeedsCleanPolicy::TrustSource) {
+    RDKit::v2::NeedsCleanPolicy needsCleanPolicy = RDKit::v2::NeedsCleanPolicy::TrustSource,
+    bool parseQueries=false,
+    bool strictQueryParsing=false) {
   auto mols = RDKit::v2::MolsFromChemDrawFile(
       pyObjectToString(cdxml),
-      {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy});
+      {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy, parseQueries, strictQueryParsing});
   python::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr

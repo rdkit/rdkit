@@ -197,8 +197,9 @@ void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
 
   atom = queryAtom;
 }
-
-void applyDeferredFreeSitesQueryRestrictions(RWMol &mol) {
+  
+void applyDeferredFreeSitesQueryRestrictions(RWMol &mol,
+					     const v2::CDXMLParser::CDXMLParserParams &params) {
   for (auto atom : mol.atoms()) {
     if (!atom->hasProp(CDXML_FREE_SITES_PROP)) {
       continue;
@@ -1063,7 +1064,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
     }
 
     applyDeferredRingBondCountAsDrawnQueryRestrictions(mol, params);
-    applyDeferredFreeSitesQueryRestrictions(mol);
+    applyDeferredFreeSitesQueryRestrictions(mol, params);
     applyDeferredLinkNodeProperties(mol);
     applyDeferredVariableAttachmentProperties(mol);
   }

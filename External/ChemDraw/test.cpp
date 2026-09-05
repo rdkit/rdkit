@@ -440,15 +440,17 @@ TEST_CASE("CDXML Advanced") {
     }
     {
       auto fname = cdxmlbase + "query-atoms.cdxml";
-      auto params =
-          ChemDrawParserParams(true, true, CDXFormat::CDXML,
-                               NeedsCleanPolicy::TrustSource, true, true);
+      const bool parseQueries = true;
+      const bool strictQueryParsing = true;
+      auto params = ChemDrawParserParams(true, true, CDXFormat::CDXML, NeedsCleanPolicy::TrustSource,
+					 parseQueries, strictQueryParsing);
       auto mols = MolsFromChemDrawFile(fname, params);
       REQUIRE(mols.size() == 3);
       auto smarts = MolToSmarts(*mols[0]);
       CHECK(smarts.find("!H0") != std::string::npos);
       auto monoSubstituted = std::unique_ptr<ROMol>(SmilesToMol("Cc1ccccc1"));
-      auto diSubstituted = std::unique_ptr<ROMol>(SmilesToMol("Cc1ccc(C)cc1"));
+      auto diSubstituted =
+          std::unique_ptr<ROMol>(SmilesToMol("Cc1ccc(C)cc1"));
       REQUIRE(monoSubstituted);
       REQUIRE(diSubstituted);
       MatchVectType match;
@@ -458,9 +460,11 @@ TEST_CASE("CDXML Advanced") {
     }
     {
       auto fname = cdxmlbase + "chirality1.cdxml";
-      auto params =
-          ChemDrawParserParams(true, true, CDXFormat::CDXML,
-                               NeedsCleanPolicy::TrustSource, true, true);
+      const bool parseQueries = true;
+      const bool strictQueryParsing = true;
+
+      auto params = ChemDrawParserParams(true, true, CDXFormat::CDXML, NeedsCleanPolicy::TrustSource,
+					 parseQueries, strictQueryParsing);
       auto mols = MolsFromChemDrawFile(fname, params);
       REQUIRE(mols.size() == 1);
       auto smarts = MolToSmarts(*mols[0]);
