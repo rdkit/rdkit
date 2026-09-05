@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2025 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,6 +21,8 @@
 #include <RDGeneral/RDThreads.h>
 #include <algorithm>
 #include <boost/format.hpp>
+#include <iterator>
+#include <ranges>
 
 namespace RDKit {
 namespace MolAlign {
@@ -473,6 +475,86 @@ void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds,
       MolTransforms::transformConformer(conf, trans);
     }
   }
+}
+
+std::vector<double> getAllConformerBestRMSToRef(
+    const ROMol &prbMol, const ROMol &refMol,
+    const BestAlignmentParams &params) {
+  auto numThreads = getNumThreadsToUse(params.numThreads);
+  std::vector<MatchVectType> allMatches;
+  if (params.map.empty()) {
+    getAllMatchesPrbRef(prbMol, refMol, allMatches, params.maxMatches,
+                        params.symmetrizeConjugatedTerminalGroups,
+                        params.ignoreHs);
+  }
+  const auto &matches = params.map.empty() ? allMatches : params.map;
+
+  std::vector<int> refCids;
+  refCids.reserve(refMol.getNumConformers());
+  std::ranges::transform(
+      std::ranges::subrange(refMol.beginConformers(), refMol.endConformers()),
+      std::back_inserter(refCids), &Conformer::getId);
+
+  std::vector<int> prbCids;
+  prbCids.reserve(prbMol.getNumConformers());
+  std::ranges::transform(
+      std::ranges::subrange(prbMol.beginConformers(), prbMol.endConformers()),
+      std::back_inserter(prbCids), &Conformer::getId);
+
+  std::vector<double> res;
+  if (numThreads == 1) {
+    for (std::size_t ci = 0; ci < refMol.getNumConformers(); ++ci) {
+      for (std::size_t cj = 0; cj < prbMol.getNumConformers(); ++cj) {
+        RDGeom::Transform3D trans;
+        bool reflect = false;
+        unsigned int maxIters = 50;
+        MatchVectType *bestMatch = nullptr;
+        res.push_back(getBestRMSInternal(
+            prbMol, refMol, prbCids[cj], refCids[ci], matches, &trans,
+            bestMatch, params.weights, reflect, maxIters, numThreads));
+      }
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  else {
+    std::vector<std::pair<unsigned int, unsigned int>> pairs;
+    for (std::size_t ci = 0; ci < refMol.getNumConformers(); ++ci) {
+      for (std::size_t cj = 0; cj < prbMol.getNumConformers(); ++cj) {
+        pairs.emplace_back(refCids[ci], prbCids[cj]);
+      }
+    }
+    std::vector<std::vector<std::pair<unsigned int, double>>> rmsds(numThreads);
+    auto func = [&](unsigned int tidx) {
+      for (auto i = tidx; i < pairs.size(); i += numThreads) {
+        RDGeom::Transform3D trans;
+        bool reflect = false;
+        unsigned int maxIters = 50;
+        int nLocalThreads = 1;  // we don't want to spawn threads inside threads
+        MatchVectType *bestMatch = nullptr;
+        auto rms = getBestRMSInternal(
+            prbMol, refMol, pairs[i].second, pairs[i].first, matches, &trans,
+            bestMatch, params.weights, reflect, maxIters, nLocalThreads);
+        rmsds[tidx].emplace_back(i, rms);
+      }
+    };
+    std::vector<std::thread> tg;
+    for (auto ti = 0u; ti < numThreads; ++ti) {
+      tg.emplace_back(std::thread(func, ti));
+    }
+    for (auto &thread : tg) {
+      if (thread.joinable()) {
+        thread.join();
+      }
+    }
+    res.resize(pairs.size());
+    for (const auto &tres : rmsds) {
+      for (const auto &[key, value] : tres) {
+        res[key] = value;
+      }
+    }
+  }
+#endif
+  return res;
 }
 }  // namespace MolAlign
 }  // namespace RDKit

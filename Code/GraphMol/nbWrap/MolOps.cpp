@@ -437,16 +437,6 @@ MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
   return static_cast<MolOps::SanitizeFlags>(operationThatFailed);
 }
 
-RWMol *getEditable(const ROMol &mol) {
-  auto *res = new RWMol(mol, false);
-  return res;
-}
-
-ROMol *getNormal(const RWMol &mol) {
-  auto *res = static_cast<ROMol *>(new RWMol(mol));
-  return res;
-}
-
 void kekulizeMol(ROMol &mol, bool clearAromaticFlags = false,
                  bool canonical = true) {
   auto &wmol = static_cast<RWMol &>(mol);
@@ -509,9 +499,12 @@ void cleanupAtropisomersMol(ROMol &mol) {
 }
 
 VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds,
-                          bool includeHydrogenBonds) {
+                          bool includeHydrogenBonds,
+                          MolOps::SymmetrizeSSSRAlgorithm algorithm,
+                          bool recalcSSSR) {
   VECT_INT_VECT rings;
-  MolOps::symmetrizeSSSR(mol, rings, includeDativeBonds, includeHydrogenBonds);
+  MolOps::symmetrizeSSSR(mol, rings, algorithm, recalcSSSR, includeDativeBonds,
+                         includeHydrogenBonds);
   return rings;
 }
 auto getDistanceMatrix(ROMol &mol, bool useBO = false, bool useAtomWts = false,
@@ -1283,6 +1276,17 @@ struct molops_wrapper {
     m.def("GetSSSR", getSSSR, "mol"_a, "includeDativeBonds"_a = false,
           "includeHydrogenBonds"_a = false, docString.c_str());
 
+    nb::enum_<MolOps::SymmetrizeSSSRAlgorithm>(m, "SymmetrizeSSSRAlgorithm")
+        .value("DEFAULT", MolOps::SymmetrizeSSSRAlgorithm::DEFAULT)
+        .value("LEGACY", MolOps::SymmetrizeSSSRAlgorithm::LEGACY)
+        .value("RDL", MolOps::SymmetrizeSSSRAlgorithm::RDL);
+
+    m.def("SetUseLegacyRingFinding", MolOps::setUseLegacyRingFinding, "val"_a,
+          "sets usage of the legacy symmetric SSSR code during sanitization");
+    m.def("GetUseLegacyRingFinding", MolOps::getUseLegacyRingFinding,
+          "returns whether or not the legacy symmetric SSSR code is "
+          "being used during sanitization");
+
     // ------------------------------------------------------------------------
     docString =
         "Get a symmetrized SSSR for a molecule.\n\
@@ -1300,7 +1304,9 @@ struct molops_wrapper {
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
 \n";
     m.def("GetSymmSSSR", getSymmSSSR, "mol"_a, "includeDativeBonds"_a = false,
-          "includeHydrogenBonds"_a = false, docString.c_str());
+          "includeHydrogenBonds"_a = false,
+          "algorithm"_a = MolOps::SymmetrizeSSSRAlgorithm::DEFAULT,
+          "recalcSSSR"_a = true, docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =

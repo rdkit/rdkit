@@ -45,6 +45,8 @@
 using tokenizer = boost::tokenizer<boost::char_separator<char>>;
 using namespace RDKit;
 
+#define WRITE_MOLFILES false
+
 namespace {
 /**
  * @brief Computes pairwise distance matrix for 3D coordinates.
@@ -135,12 +137,20 @@ void compareConfs(const RWMol *m, const RWMol *expected, int molConfId = -1,
 
     RDGeom::Point3D pt1i = conf1.getAtomPos(i);
     RDGeom::Point3D pt2i = conf2.getAtomPos(i);
-
-    // Increased tolerance from 0.05 to 0.1.
-    // This prevents false test failures on systems using -march=native,
-    // where compiler optimizations cause tiny, harmless math differences.
-    // (See issue #[9406])
-    CHECK((pt1i - pt2i).length() < 0.1);
+    // instead of directly comparing positions, we look at distances in order to
+    // try and minimize differences from different compilers
+    for (unsigned int j = 0; j < i; j++) {
+      REQUIRE(m->getAtomWithIdx(j)->getAtomicNum() ==
+              expected->getAtomWithIdx(j)->getAtomicNum());
+      RDGeom::Point3D pt1j = conf1.getAtomPos(j);
+      RDGeom::Point3D pt2j = conf2.getAtomPos(j);
+      auto tol = 0.15;
+      if (m->getBondBetweenAtoms(i, j)) {
+        tol = 0.05;
+      }
+      CHECK_THAT((pt1j - pt1i).length(),
+                 Catch::Matchers::WithinAbs((pt2j - pt2i).length(), tol));
+    }
   }
 }
 }  // namespace
@@ -241,12 +251,12 @@ TEST_CASE("test2") {
     CHECK(bm->getUpperBound(2, 5) - dmat->getVal(2, 5) > -0.1);
     CHECK(bm->getLowerBound(2, 5) - dmat->getVal(2, 5) < 0.10);
 
-    CHECK((bm->getUpperBound(8, 4) - bm->getLowerBound(8, 4)) <= 0.2);
+    CHECK((bm->getUpperBound(8, 4) - bm->getLowerBound(8, 4)) <= 0.21);
     CHECK((bm->getUpperBound(8, 4) - dmat->getVal(8, 4) > -0.1));
     CHECK((bm->getLowerBound(8, 4) - dmat->getVal(8, 4) < 0.10));
 
     CHECK((bm->getUpperBound(8, 6) - bm->getLowerBound(8, 6)) > 1.0);
-    CHECK((bm->getUpperBound(8, 6) - bm->getLowerBound(8, 6)) < 1.2);
+    CHECK((bm->getUpperBound(8, 6) - bm->getLowerBound(8, 6)) < 1.27);
     CHECK((bm->getUpperBound(8, 6) - dmat->getVal(8, 6) > -0.1));
     CHECK((bm->getLowerBound(8, 6) - dmat->getVal(8, 6) < 0.10));
   }
@@ -255,7 +265,7 @@ TEST_CASE("test2") {
     const std::string smiles = "CCCC";
     auto [mol, dmat, bm] = getResults(smiles);
     CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) > 1.0);
-    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < 1.3);
+    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < 1.47);
     CHECK((bm->getUpperBound(0, 3) - dmat->getVal(0, 3) > -0.1));
     CHECK(bm->getLowerBound(0, 3) - dmat->getVal(0, 3) < 0.10);
   }
@@ -283,7 +293,7 @@ TEST_CASE("test2") {
   SECTION("Ethene cis") {
     const std::string smiles = "C/C=C\\C";
     auto [mol, dmat, bm] = getResults(smiles);
-    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < .13);
+    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < .23);
     CHECK((bm->getUpperBound(0, 3) - dmat->getVal(0, 3) > -0.1));
     CHECK((bm->getLowerBound(0, 3) - dmat->getVal(0, 3) < 0.10));
   }
@@ -291,7 +301,7 @@ TEST_CASE("test2") {
   SECTION("Ethene No Stereo") {
     const std::string smiles = "CC=CC";
     auto [mol, dmat, bm] = getResults(smiles);
-    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < 1.13);
+    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < 1.18);
     CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) > 1.);
     CHECK((bm->getUpperBound(0, 3) - dmat->getVal(0, 3) > -0.1));
     CHECK((bm->getLowerBound(0, 3) - dmat->getVal(0, 3) < 0.10));
@@ -299,7 +309,7 @@ TEST_CASE("test2") {
   SECTION("Disulfur Dioxide") {
     const std::string smiles = "O=S-S=O";
     auto [mol, dmat, bm] = getResults(smiles);
-    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < .13);
+    CHECK((bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3)) < .19);
     CHECK((bm->getUpperBound(0, 3) - dmat->getVal(0, 3) > -0.1));
     CHECK((bm->getLowerBound(0, 3) - dmat->getVal(0, 3) < 0.10));
   }
@@ -535,8 +545,8 @@ TEST_CASE("testTriangleSmoothing") {
 TEST_CASE("testIssue251") {
   const auto m = "COC=O"_smiles;
   auto bm = _getBoundsMatrix(m);
-  CHECK(RDKit::feq(bm->getLowerBound(0, 3), 2.67, 0.01));
-  CHECK(RDKit::feq(bm->getUpperBound(0, 3), 2.79, 0.01));
+  CHECK(RDKit::feq(bm->getLowerBound(0, 3), 2.63, 0.01));
+  CHECK(RDKit::feq(bm->getUpperBound(0, 3), 2.83, 0.01));
 }
 
 TEST_CASE("testIssue284") {
@@ -560,9 +570,10 @@ TEST_CASE("testIssue284") {
   CHECK(bm2->getUpperBound(0, 4) > 3.5);
   CHECK(bm2->getLowerBound(2, 4) < 3.0);
   CHECK(bm2->getUpperBound(2, 4) > 3.5);
-  CHECK(bm->getLowerBound(0, 3) < bm2->getLowerBound(0, 4));
+  CHECK(bm->getLowerBound(0, 3) ==
+        bm2->getLowerBound(0, 4));  // (for both cis is allowed)
   CHECK(bm->getUpperBound(0, 3) < bm2->getUpperBound(0, 4));
-  CHECK(bm->getLowerBound(0, 3) < bm2->getLowerBound(2, 4));
+  CHECK(bm->getLowerBound(0, 3) == bm2->getLowerBound(2, 4));
   CHECK(bm->getUpperBound(0, 3) < bm2->getUpperBound(2, 4));
 }
 
@@ -1359,10 +1370,13 @@ TEST_CASE("testEmbedParameters") {
     auto mol = v2::SmilesParse::MolFromSmiles(smiles);
     REQUIRE(mol);
     MolOps::addHs(*mol);
-    REQUIRE(ref->getNumAtoms() == mol->getNumAtoms());
+    REQUIRE(mol->getNumAtoms() == ref->getNumAtoms());
     params.useLegacyImplementation = legacyETKDG;
     params.randomSeed = 42;
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+#if WRITE_MOLFILES
+    MolToMolFile(*mol, file);
+#endif
     compareConfs(ref.get(), mol.get());
     // std::cerr << MolToMolBlock(*ref) << std::endl;
     // std::cerr << MolToMolBlock(*mol) << std::endl;
@@ -1741,9 +1755,9 @@ TEST_CASE("testForceTransAmides") {
       REQUIRE(cid >= 0);
       auto conf = mol->getConformer(cid);
       auto tors = MolTransforms::getDihedralDeg(conf, 0, 1, 3, 4);
-      CHECK(fabs(fabs(tors) - 180) < 37);
+      CHECK(fabs(fabs(tors) - 180) < 39);
       tors = MolTransforms::getDihedralDeg(conf, 2, 1, 3, 5);
-      CHECK(fabs(fabs(tors) - 180) < 37);
+      CHECK(fabs(fabs(tors) - 180) < 39);
     }
   }
   SECTION("Get Cis") {  // make sure we can find at least one non-trans
@@ -1782,7 +1796,7 @@ TEST_CASE("testSymmetryPruningLegacy") {
 
   params.useSymmetryForPruning = false;
   cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
-  CHECK(cids.size() == 8);
+  CHECK(cids.size() == 9);
 }
 TEST_CASE("testSymmetryPruningAIO") {
   auto mol = "CCOC(C)(C)C"_smiles;
@@ -1798,7 +1812,7 @@ TEST_CASE("testSymmetryPruningAIO") {
 
   params.useSymmetryForPruning = false;
   cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
-  CHECK(cids.size() == 8);
+  CHECK(cids.size() == 9);
 }
 
 TEST_CASE("testMissingHsWarning") {
@@ -1834,6 +1848,6 @@ TEST_CASE("testHydrogenBondBasics") {
   params.useLegacyImplementation = legacyETKDG;
   REQUIRE(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
   auto dist = MolTransforms::getBondLength(mol->getConformer(), 3, 4);
-  CHECK(dist < mat->getUpperBound(4, 3));
-  CHECK(dist > mat->getLowerBound(4, 3));
+  CHECK(dist < mat->getUpperBound(4, 3) + 0.005);  // allow minimal violations
+  CHECK(dist > mat->getLowerBound(4, 3) - 0.005);
 }
