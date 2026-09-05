@@ -134,7 +134,10 @@ void MultithreadedMolSupplier::writer() {
       auto temp = std::tuple<RWMol *, std::string, unsigned int>{
           mol.release(), std::get<0>(r), std::get<2>(r)};
 
-      d_outputQueue->push(temp);
+      if (!d_outputQueue->push(temp)) {
+        // temp was rejected by the queue, clean up the mol pointer
+        delete std::get<0>(temp);
+      }
     } catch (...) {
       // fill the queue wih a null value
       auto nullValue = std::tuple<RWMol *, std::string, unsigned int>{
