@@ -950,13 +950,13 @@ bool checkExcludedVols(const ROMol &mol, const SynthonSpaceSearchParams &params,
       return false;
     }
     auto numClashes = calcNumClashes(mol, *params.excludedVolume);
-    if (numClashes && params.maxMeanExcludedVolume > -0.5) {
+    if (numClashes) {
       meanExcludedVol = excludedVol / static_cast<double>(numClashes);
-      if (meanExcludedVol > params.maxMeanExcludedVolume) {
+      if (params.maxMeanExcludedVolume > -0.5 &&
+          meanExcludedVol > params.maxMeanExcludedVolume) {
         return false;
       }
-    }
-    if (!numClashes) {
+    } else {
       meanExcludedVol = 0.0;
     }
   }
