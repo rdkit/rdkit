@@ -27,19 +27,19 @@ RDKIT_CIPLABELER_EXPORT bool decrementRemainingCallCountAndCheck();
 namespace CIPLabeler {
 
 /*
-  Some very symmetrical mols can cause pseudo infinite processing
-  (e.g. dodecahedrane)
-  To avoid this a maxinum number of iterations can be set by the caller as a
-  parameter to assignCIPLabels.
-  If that maximum value is exceeded, the following error is thrown
+  Some very symmetrical mols can cause pseudo-infinite processing
+  (e.g. dodecahedrane). To avoid this, the caller can limit the total number
+  of recursive comparisons performed by assignCIPLabels. The limit applies
+  across both the preliminary and full labeling passes. If the limit is
+  exhausted, the following error is thrown.
 */
 
 class RDKIT_CIPLABELER_EXPORT MaxIterationsExceeded
     : public std::runtime_error {
  public:
   explicit MaxIterationsExceeded()
-      : std::runtime_error("Max Iterations Exceeded in CIP label calculation") {
-        };
+      : std::runtime_error(
+            "Max Iterations Exceeded in CIP label calculation"){};
 };
 
 /**
@@ -61,6 +61,9 @@ class RDKIT_CIPLABELER_EXPORT MaxIterationsExceeded
  *          bond directions will be labelled.
  *   \note Labels will be stored under the common_properties::_CIPCode
  *          property of the relevant atoms/bonds.
+ *   \param maxRecursiveIterations - maximum total number of recursive
+ *          comparisons across all labeling passes; zero means no
+ *          caller-specified limit.
  */
 RDKIT_CIPLABELER_EXPORT void assignCIPLabels(
     ROMol &mol, unsigned int maxRecursiveIterations = 0);
@@ -74,10 +77,12 @@ RDKIT_CIPLABELER_EXPORT void assignCIPLabels(
  *
  *   \param bonds - bitset with the bond indexes to be labeled.
  *
- *   \param maxRecursiveIterations - maximum number of iterations
- *      A value of 1,250,000 take about 1 second.  Most structures requires
- *      less than 10,000 iterations. A peptide with MW~3000 took about
- *      100 iterations, and a 20,000 mw protein took about 600 iterations.
+ *   \param maxRecursiveIterations - maximum total number of recursive
+ *      comparisons across the preliminary and full labeling passes. A value
+ *      of zero means no caller-specified limit. A value of 1,250,000 takes
+ *      about 1 second. Most structures require fewer than 10,000 comparisons.
+ *      A peptide with MW~3000 took about 100 comparisons, and a 20,000 MW
+ *      protein took about 600 comparisons.
  *
  */
 RDKIT_CIPLABELER_EXPORT void assignCIPLabels(

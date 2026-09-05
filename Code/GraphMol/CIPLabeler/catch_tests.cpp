@@ -96,6 +96,26 @@ TEST_CASE("Descriptor lists", "[accurateCIP]") {
   }
 }
 
+TEST_CASE("Iteration limit includes the preliminary pass",
+          "[bug][accurateCIP]") {
+  auto mol = "C[C@H](F)Cl"_smiles;
+  REQUIRE(mol);
+
+  CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 1),
+                  CIPLabeler::MaxIterationsExceeded);
+
+  // A bounded call must not leave the thread-local budget exhausted for
+  // standalone rule comparisons on the same thread.
+  auto comparisonMol = "COC"_smiles;
+  REQUIRE(comparisonMol);
+  CIPLabeler::CIPMol cipmol(*comparisonMol);
+  Digraph digraph(cipmol, cipmol.getAtom(1));
+  auto origin = digraph.getOriginalRoot();
+  auto edges = origin->getEdges();
+  Rule1a rule;
+  CHECK_NOTHROW(rule.getSorter()->prioritize(origin, edges));
+}
+
 void check_incoming_edge_count(Node *root) {
   auto queue = std::list<Node *>({root});
 
@@ -1458,7 +1478,9 @@ $$$$
   auto mol = v2::FileParsers::MolFromMolBlock(molBlock, params);
 
   REQUIRE(mol);
-  REQUIRE_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 1000),
+  // Leave enough of the global budget for the preliminary pass to visit the
+  // easy center before the difficult centers exhaust the remaining budget.
+  REQUIRE_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000),
                     CIPLabeler::MaxIterationsExceeded);
 
   auto at = mol->getAtomWithIdx(22);

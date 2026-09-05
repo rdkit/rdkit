@@ -169,16 +169,75 @@ bool labelAux(std::vector<std::unique_ptr<Configuration>> &configs,
   return true;
 }
 
-thread_local unsigned int remainingCallCount = 0;
-
 // The chiral centers in current rdkit examples that can be resolved using only
 // the constitutional rules average about 8 iterations (the highest count is
 // 1039, in one of the examples in the CIP validation suite). We use 2000 as
 // threshold to allow some margin.
 constexpr unsigned int constitutionalRuleTimeout = 2000;
 
+struct IterationBudget {
+  void reset(unsigned int maxRecursiveIterations) {
+    hasGlobalLimit = maxRecursiveIterations != 0;
+    remainingGlobal = maxRecursiveIterations;
+    inPreliminaryPass = false;
+    remainingPreliminary = 0;
+  }
+
+  void beginPreliminaryPass() {
+    inPreliminaryPass = true;
+    remainingPreliminary = constitutionalRuleTimeout;
+  }
+
+  void endPreliminaryPass() {
+    inPreliminaryPass = false;
+    remainingPreliminary = 0;
+  }
+
+  bool consume() {
+    if ((inPreliminaryPass && remainingPreliminary == 0) ||
+        (hasGlobalLimit && remainingGlobal == 0)) {
+      return false;
+    }
+    if (inPreliminaryPass) {
+      --remainingPreliminary;
+    }
+    if (hasGlobalLimit) {
+      --remainingGlobal;
+    }
+    return true;
+  }
+
+  bool hasGlobalLimit = false;
+  unsigned int remainingGlobal = 0;
+  bool inPreliminaryPass = false;
+  unsigned int remainingPreliminary = 0;
+};
+
+thread_local IterationBudget iterationBudget;
+
+class ScopedIterationBudget {
+ public:
+  explicit ScopedIterationBudget(unsigned int maxRecursiveIterations)
+      : d_previous{iterationBudget} {
+    iterationBudget.reset(maxRecursiveIterations);
+  }
+
+  ~ScopedIterationBudget() { iterationBudget = d_previous; }
+
+ private:
+  IterationBudget d_previous;
+};
+
+class ScopedPreliminaryBudget {
+ public:
+  ScopedPreliminaryBudget() { iterationBudget.beginPreliminaryPass(); }
+  ~ScopedPreliminaryBudget() { iterationBudget.endPreliminaryPass(); }
+};
+
 void label(std::vector<std::unique_ptr<Configuration>> &configs,
            unsigned int maxRecursiveIterations) {
+  const ScopedIterationBudget callBudget(maxRecursiveIterations);
+
   // First, if the specified number of iterations allows it, run all centers
   // through a fast pass with the constitutional rules allow easy stuff to be
   // resolved.
@@ -186,22 +245,14 @@ void label(std::vector<std::unique_ptr<Configuration>> &configs,
     // Make sure this stereo center has no label
     conf->resetPrimaryLabel();
 
-    remainingCallCount = constitutionalRuleTimeout;
     try {
+      const ScopedPreliminaryBudget preliminaryBudget;
       auto desc = conf->label(constitutional_rules);
       if (desc != Descriptor::UNKNOWN) {
         conf->setPrimaryLabel(desc);
       }
     } catch (const MaxIterationsExceeded &) {
     }
-  }
-
-  // Now, retry everything that hasn't been solved with a more generous
-  // threshold
-  if (maxRecursiveIterations != 0) {
-    remainingCallCount = maxRecursiveIterations;
-  } else {
-    remainingCallCount = UINT_MAX;  // really big - will never be hit
   }
 
   // try again on everything that hasn't been resolved yet
@@ -265,7 +316,7 @@ void assignCIPLabels(ROMol &mol, unsigned int maxRecursiveIterations) {
 namespace CIPLabeler_detail {
 
 bool decrementRemainingCallCountAndCheck() {
-  return (--CIPLabeler::remainingCallCount) > 0;
+  return CIPLabeler::iterationBudget.consume();
 }
 
 }  // namespace CIPLabeler_detail
