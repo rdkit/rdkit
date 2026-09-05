@@ -42,8 +42,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier final
 
   bool getProcessPropertyLists() const { return df_processPropertyLists; }
 
-  bool getEOFHitOnRead() const final { return df_eofHitOnRead; }
-
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
                          unsigned int &index) final;
@@ -59,7 +57,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier final
   void readMolProps(RWMol &mol, std::istringstream &inStream);
 
   bool df_processPropertyLists = true;
-  bool df_eofHitOnRead = false;
   MolFileParserParams d_parseParams;
 };
 }  // namespace FileParsers

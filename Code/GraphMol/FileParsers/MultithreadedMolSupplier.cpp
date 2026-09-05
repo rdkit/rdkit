@@ -117,6 +117,7 @@ void MultithreadedMolSupplier::reader() {
       d_inputQueue->push(r);
     }
   }
+  df_readerDone = true;
   d_inputQueue->setDone();
 }
 
@@ -169,7 +170,7 @@ std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
   std::tuple<RWMol *, std::string, unsigned int> r;
   if (!df_forceStop && d_outputQueue->pop(r)) {
     d_lastItemText = std::get<1>(r);
-    d_lastRecordId = std::get<2>(r);
+    d_lastReturnedRecordId = std::get<2>(r);
     std::unique_ptr<RWMol> res{std::get<0>(r)};
     if (res && nextCallback) {
       try {
@@ -178,6 +179,7 @@ std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
         // Ignore exception and proceed with mol as is.
       }
     }
+    ++d_returnedCount;
     return res;
   }
   return nullptr;
@@ -210,11 +212,23 @@ void MultithreadedMolSupplier::startThreads() {
 }
 
 bool MultithreadedMolSupplier::atEnd() {
-  return (d_outputQueue->isEmpty() && d_outputQueue->getDone());
+  // Check reader completion first: this is only set after the final
+  // update to d_lastReadRecordId and all input-queue pushes, so it
+  // being set guarantees that the record count below is final.
+  if (!df_readerDone) {
+    return false;
+  }
+  return d_returnedCount == d_lastReadRecordId;
+}
+
+bool MultithreadedMolSupplier::getEOFHitOnRead() const {
+  // Do not return 'true' until the output queue is empty,
+  // otherwise the mols still in the pipeline will leak.
+  return df_eofHitOnRead.load() && d_returnedCount == d_lastReadRecordId;
 }
 
 unsigned int MultithreadedMolSupplier::getLastRecordId() const {
-  return d_lastRecordId;
+  return d_lastReturnedRecordId;
 }
 
 std::string MultithreadedMolSupplier::getLastItemText() const {

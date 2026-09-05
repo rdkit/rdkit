@@ -37,8 +37,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier final
 
   ~MultithreadedSmilesMolSupplier() final { close(); };
 
-  bool getEOFHitOnRead() const final { return false; }
-
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
                          unsigned int &index) final;
@@ -54,6 +52,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier final
 
   //! reads and processes the title line
   void processTitleLine();
+
+  //! skip lines that start with a comment character or are empty
+  void skipComments();
 
   STR_VECT d_props;  //!< vector of property names
   SmilesMolSupplierParams d_parseParams;
