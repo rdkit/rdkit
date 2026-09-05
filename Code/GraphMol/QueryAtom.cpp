@@ -1,5 +1,5 @@
-//
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+
+//  Copyright (C) 2001-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -192,4 +192,37 @@ bool QueryAtom::QueryMatch(QueryAtom const *what) const {
   }
 }
 
-};  // namespace RDKit
+namespace detail {
+bool hasRecursiveQuery(const QueryAtom::QUERYATOM_QUERY *q,
+                       bool checkInitialized) {
+  if (!q) {
+    return false;
+  }
+  if (q->getDescription() == "RecursiveStructure" &&
+      (!checkInitialized ||
+       !static_cast<RecursiveStructureQuery const *>(q)->getInitialized())) {
+    return true;
+  }
+  for (auto iter = q->beginChildren(); iter != q->endChildren(); ++iter) {
+    if (hasRecursiveQuery(iter->get(), checkInitialized)) {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace detail
+
+bool hasUninitializedRecursiveQuery(const Atom &atom) {
+  if (!atom.hasQuery()) {
+    return false;
+  }
+  return detail::hasRecursiveQuery(atom.getQuery(), true);
+}
+bool hasRecursiveQuery(const Atom &atom) {
+  if (!atom.hasQuery()) {
+    return false;
+  }
+  return detail::hasRecursiveQuery(atom.getQuery(), false);
+}
+
+}  // namespace RDKit

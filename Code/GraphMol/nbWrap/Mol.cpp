@@ -28,6 +28,7 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Substruct/SubstructDetails.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -121,9 +122,9 @@ void MolDebug(const ROMol &mol, bool useStdout) {
 
 class ReadWriteMol : public RWMol {
  public:
-  ReadWriteMol(){};
+  ReadWriteMol() {};
   ReadWriteMol(const ROMol &m, bool quickCopy = false, int confId = -1)
-      : RWMol(m, quickCopy, confId){};
+      : RWMol(m, quickCopy, confId) {};
 
   void RemoveAtom(unsigned int idx) { removeAtom(idx); };
   void RemoveBond(unsigned int idx1, unsigned int idx2) {
@@ -967,6 +968,13 @@ struct mol_wrapper {
             "GetAtomsMatchingQuery",
             [](const ROMol &self, const QueryAtom *qa) {
       bool ownsQa = false;
+      if(qa && hasRecursiveQuery(*qa)) {
+          SubstructMatchParameters params;
+          detail::SUBQUERY_MAP subqueryMap;
+          detail::RecursiveLocker locker;
+          locker.df_clearOnDestruct = false;
+          detail::MatchSubqueries(self, qa->getQuery(), params, subqueryMap, locker.locked);
+      }
       return QueryAtomIterSeq(self, qa, ownsQa);
             },
             "qa"_a, nb::keep_alive<0, 1>(),
