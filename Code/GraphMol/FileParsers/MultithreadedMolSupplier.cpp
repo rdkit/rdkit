@@ -22,6 +22,8 @@ namespace FileParsers {
 
 void MultithreadedMolSupplier::initFromSettings(bool takeOwnership,
                                                 const Parameters &params) {
+  PRECONDITION(params.sizeInputQueue > 0, "invalid input queue capacity");
+  PRECONDITION(params.sizeOutputQueue > 0, "invalid output queue capacity");
   df_owner = takeOwnership;
   d_params = params;
   d_params.numWriterThreads = getNumThreadsToUse(params.numWriterThreads);
