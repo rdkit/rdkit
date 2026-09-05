@@ -201,7 +201,7 @@ void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
 void applyDeferredFreeSitesQueryRestrictions(RWMol &mol,
 					     const v2::CDXMLParser::CDXMLParserParams &params) {
   if (!params.parseQueries) {
-    continue;
+    return;
   }
   
   for (auto atom : mol.atoms()) {
