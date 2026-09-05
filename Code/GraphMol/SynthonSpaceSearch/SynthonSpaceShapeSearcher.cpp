@@ -1215,7 +1215,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
       }
     }
   }
-  if (!foundHit && initHit && initScores[0] > getParams().similarityCutoff) {
+  if (!foundHit && initHit && initScores[0] >= getParams().similarityCutoff) {
     // Stick with what we found at the start because the conformational
     // expansion didn't do any better.
     hit = std::move(*initHit);
