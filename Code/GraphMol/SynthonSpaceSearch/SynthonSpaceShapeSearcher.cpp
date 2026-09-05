@@ -956,6 +956,9 @@ bool checkExcludedVols(const ROMol &mol, const SynthonSpaceSearchParams &params,
         return false;
       }
     }
+    if (!numClashes) {
+      meanExcludedVol = 0.0;
+    }
   }
   return true;
 }
@@ -981,10 +984,8 @@ bool finaliseHit(GaussianShape::ShapeInput &hitShapes,
   const auto prodName = details::buildProductName(rxnId, synthNames);
   hit.setProp<std::string>(common_properties::_Name, prodName);
   MolOps::assignStereochemistryFrom3D(hit);
-  if (excludedVol > -0.5) {
+  if (params.excludedVolume) {
     hit.setProp<double>("ExcludedVolume", excludedVol);
-  }
-  if (meanExcludedVol > -0.5) {
     hit.setProp<double>("MeanExcludedVolume", meanExcludedVol);
   }
   return true;
@@ -996,16 +997,15 @@ bool finaliseHit(GaussianShape::ShapeInput &hitShapes,
 void finaliseHit(const ROMol &hit, const std::array<double, 3> &scores,
                  const std::string &rxnId,
                  const std::vector<const std::string *> &synthNames,
+                 const SynthonSpaceSearchParams &params,
                  const double excludedVol, const double meanExcludedVol) {
   hit.setProp<double>("Similarity", scores[0]);
   hit.setProp<double>("ShapeScore", scores[1]);
   hit.setProp<double>("ColorScore", scores[2]);
   const auto prodName = details::buildProductName(rxnId, synthNames);
   hit.setProp<std::string>(common_properties::_Name, prodName);
-  if (excludedVol > -0.5) {
+  if (params.excludedVolume) {
     hit.setProp<double>("ExcludedVolume", excludedVol);
-  }
-  if (meanExcludedVol > -0.5) {
     hit.setProp<double>("MeanExcludedVolume", meanExcludedVol);
   }
 }
@@ -1138,7 +1138,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
     if (checkExcludedVols(hit, getParams(), excludedVol, meanExcludedVol)) {
       // If the excluded vol is also ok, take this hit.  Otherwise, pass it
       // through to conformation expansion to see if it wins there.
-      finaliseHit(hit, initScores, rxnId, synthNames, excludedVol,
+      finaliseHit(hit, initScores, rxnId, synthNames, getParams(), excludedVol,
                   meanExcludedVol);
       if (!getParams().bestHit && checkBondLengths(hit) &&
           initScores[0] >= getParams().similarityCutoff) {
