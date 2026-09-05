@@ -139,12 +139,12 @@ public class DistanceGeometryTests extends GraphMolTest {
 		assertTrue((bm.getUpperBound(2,5) - dmat.getVal(2,5) > -0.1 )
 				&& (bm.getLowerBound(2,5) - dmat.getVal(2,5) < 0.10 ));
 
-		assertTrue((bm.getUpperBound(8,4) - bm.getLowerBound(8,4)) < 0.2);
+		assertTrue((bm.getUpperBound(8,4) - bm.getLowerBound(8,4)) <= 0.21);
     	assertTrue((bm.getUpperBound(8,4) - dmat.getVal(8,4) > -0.1 )
                 && (bm.getLowerBound(8,4) - dmat.getVal(8,4) < 0.10));
 
 		assertTrue((bm.getUpperBound(8,6) - bm.getLowerBound(8,6)) > 1.0);
-		assertTrue((bm.getUpperBound(8,6) - bm.getLowerBound(8,6)) < 1.2);
+		assertTrue((bm.getUpperBound(8,6) - bm.getLowerBound(8,6)) < 1.27);
 		assertTrue((bm.getUpperBound(8,6) - dmat.getVal(8,6) > -0.1)
 				&& (bm.getLowerBound(8,6) - dmat.getVal(8,6) < 0.10 ));
 
@@ -164,7 +164,7 @@ public class DistanceGeometryTests extends GraphMolTest {
 		DoubleSymmMatrix dmat = new DoubleSymmMatrix(nat, 0.0);
 		computeMolDmat(mol, dmat);
 		assertTrue( (bm.getUpperBound(0,3) - bm.getLowerBound(0,3)) > 1.0);
-		assertTrue( (bm.getUpperBound(0,3) - bm.getLowerBound(0,3)) < 1.3);
+		assertTrue( (bm.getUpperBound(0,3) - bm.getLowerBound(0,3)) < 1.47);
 		assertTrue( (bm.getUpperBound(0,3) - dmat.getVal(0,3) > -0.1)
 				&& (bm.getLowerBound(0,3) - dmat.getVal(0,3) < 0.10 ));
 	}

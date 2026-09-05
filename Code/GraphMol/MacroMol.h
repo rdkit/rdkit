@@ -11,15 +11,51 @@
 #ifndef RD_MACROMOL_H
 #define RD_MACROMOL_H
 
+#include <memory>
 #include <string>
 
 #include "MacroAtomInfo.h"
+#include "MacroMolTemplate.h"
 #include "RWMol.h"
 
 namespace RDKit {
 
 class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
  public:
+  //! Constructs a MacroMol with an empty local template library.
+  MacroMol();
+
+  //! Constructs a MacroMol that takes ownership of a local template library.
+  /*!
+    \param localTemplateLibrary the non-null library to take ownership of
+  */
+  explicit MacroMol(
+      std::unique_ptr<MacroMolTemplateLibrary> localTemplateLibrary);
+
+  MacroMol(const MacroMol &other);
+  MacroMol &operator=(const MacroMol &other);
+  MacroMol(MacroMol &&other) noexcept = default;
+  MacroMol &operator=(MacroMol &&other) noexcept = default;
+
+  //! Replaces the local template library and takes ownership of it.
+  /*!
+    \param newTemplateLibrary the non-null library to take ownership of
+  */
+  void setLocalTemplateLibrary(
+      std::unique_ptr<MacroMolTemplateLibrary> newTemplateLibrary);
+
+  //! Returns this molecule's local template library.
+  MacroMolTemplateLibrary &getLocalTemplateLibrary();
+  //! Returns this molecule's local template library.
+  const MacroMolTemplateLibrary &getLocalTemplateLibrary() const;
+
+  //! Checks that every macro atom resolves in the local template library.
+  /*!
+    Macro atoms are looked up by monomer class and symbol, then by monomer
+    class and template name. Ordinary atoms are ignored.
+  */
+  bool checkLocalTemplateReferences() const;
+
   //! Adds a new macro atom to the molecule.
   /*!
     \param symbol       the symbol (dummy label) used to identify the monomer
@@ -104,6 +140,8 @@ class RDKIT_GRAPHMOL_EXPORT MacroMol : public RWMol {
                                   unsigned int endAtomIdx, int beginAttachPt,
                                   int endAttachPt,
                                   Bond::BondType bondType = Bond::SINGLE);
+
+  std::unique_ptr<MacroMolTemplateLibrary> dp_localTemplateLibrary;
 };
 }  // namespace RDKit
 

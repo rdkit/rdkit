@@ -105,13 +105,15 @@ enum EmbedFailureCauses {
                 sampling
   useMacrocycleTorsions	optional torsions to improve macrocycle conformer
                 sampling
-  useMacrocycle14config  If 1-4 distances bound heuristics for
-                macrocycles is used
+  useMacrocycle14config  This forces amides and esters to be trans in
+  macrocycles. This does not affect chain amides / esters!
   timeout	 time out in seconds
   CPCI	custom columbic interactions between atom pairs
   callback	      void pointer to a function for reporting progress,
                   will be called with the current iteration number.
-  forceTransAmides   constrain amide bonds to be trans.
+  forceTransAmides  This forces chain amides and esters to be trans.
+  This does not affect amides / esters in macrocycles!
+
   useSymmetryForPruning   use molecule symmetry when doing the RMSD pruning.
                           NOTE that for reasons of computational efficiency,
                           setting this will also set onlyHeavyAtomsForRMS to

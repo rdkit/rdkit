@@ -161,7 +161,7 @@ void Digraph::expand(Node *beg) {
       // for example >S=O
       if (dp_origin != beg || d_atropisomerMode) {
         if (atom->getFormalCharge() < 0 &&
-            d_mol.getFractionalAtomicNum(atom).denominator() > 1) {
+            d_mol.getFractionalAtomicNum(atom).isAveraged()) {
           end = beg->newBondDuplicateChild(nbrIdx, nbr);
           addEdge(beg, bond, end);
         } else {
@@ -183,7 +183,7 @@ void Digraph::expand(Node *beg) {
       addEdge(beg, bond, end);
 
       if (atom->getFormalCharge() < 0 &&
-          d_mol.getFractionalAtomicNum(atom).denominator() > 1) {
+          d_mol.getFractionalAtomicNum(atom).isAveraged()) {
         end = beg->newBondDuplicateChild(nbrIdx, nbr);
         addEdge(beg, bond, end);
       } else {

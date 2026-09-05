@@ -716,27 +716,28 @@ Cc1nc2ccc(NC(=O)[1*])cc2o1	1-1	0	4al4
   params.excludedVolume = excVolShape.get();
 
   // This is one of those rare occasions where Mac and Linux give different
-  // conformations even with the same parameters.  The results are similar
-  // but ordered differently.
-  std::vector<std::vector<double>> expVols{{71.2, 90.2}, {71.2, 95.1}};
-  std::vector<std::vector<double>> expMeanVols{{3.0, 2.4}, {6.4, 2.3}};
+  // conformations even with the same parameters.
   {
     params.possibleHitsFile = "poss_hits_1.txt";
     params.maxExcludedVolume = -1.0;
     auto results = synthonSpace.shapeSearch(*comb_4aji_4aj1, params);
-    CHECK(results.getHitMolecules().size() == 2);
-    unsigned int i = 0;
-    for (const auto &mol : results.getHitMolecules()) {
-      CHECK_THAT(mol->getProp<double>("ExcludedVolume"),
-                 Catch::Matchers::WithinAbs(expVols[0][i], 0.1) ||
-                     Catch::Matchers::WithinAbs(expVols[1][i], 0.1));
-      CHECK_THAT(mol->getProp<double>("MeanExcludedVolume"),
-                 Catch::Matchers::WithinAbs(expMeanVols[0][i], 0.1) ||
-                     Catch::Matchers::WithinAbs(expMeanVols[1][i], 0.1));
-      ++i;
+    auto &hits = results.getHitMolecules();
+    CHECK(hits.size() == 2);
+    // The different conformer generators make it difficult to check the
+    // excluded volumes exactly, but the orders should be consistent
+    // and they should be within these ranges.
+    CHECK(hits[0]->getProp<double>("ExcludedVolume") <
+          +hits[1]->getProp<double>("ExcludedVolume"));
+    CHECK(hits[0]->getProp<double>("MeanExcludedVolume") >
+          +hits[1]->getProp<double>("MeanExcludedVolume"));
+    for (const auto &mol : hits) {
+      CHECK((mol->getProp<double>("ExcludedVolume") > 60.0 &&
+             mol->getProp<double>("ExcludedVolume") < 100.0));
+      CHECK((mol->getProp<double>("MeanExcludedVolume") > 2.0 &&
+             mol->getProp<double>("MeanExcludedVolume") < 4.0));
     }
     CHECK(countFileLines("poss_hits_1.txt") == 2);
-    // std::remove("poss_hits_1.txt");
+    std::remove("poss_hits_1.txt");
   }
 
   {
@@ -746,14 +747,9 @@ Cc1nc2ccc(NC(=O)[1*])cc2o1	1-1	0	4al4
     CHECK(results.getHitMolecules().size() == 1);
     CHECK(results.getHitMolecules()[0]->getProp<std::string>(
               common_properties::_Name) == "1-1;2-1;3-1;4al4");
-    CHECK_THAT(results.getHitMolecules()[0]->getProp<double>("ExcludedVolume"),
-               Catch::Matchers::WithinAbs(expVols[0][0], 0.1) ||
-                   Catch::Matchers::WithinAbs(expVols[1][1], 0.1));
-    CHECK_THAT(
-        results.getHitMolecules()[0]->getProp<double>("MeanExcludedVolume"),
-        Catch::Matchers::WithinAbs(expMeanVols[0][0], 0.1) ||
-            Catch::Matchers::WithinAbs(expMeanVols[1][1], 0.1));
+    CHECK(results.getHitMolecules()[0]->getProp<double>("ExcludedVolume") <
+          80.0);
     CHECK(countFileLines("poss_hits_2.txt") == 2);
-    // std::remove("poss_hits_2.txt");
+    std::remove("poss_hits_2.txt");
   }
 }

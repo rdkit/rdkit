@@ -11,7 +11,8 @@ import unittest
 import numpy
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem import (ChemicalForceFields, rdMolAlign, rdMolDescriptors, rdMolTransforms)
+from rdkit.Chem import (AllChem, ChemicalForceFields, rdMolAlign, rdMolDescriptors, rdMolTransforms)
+from rdkit.sping.PDF.pdfmetrics import parseAFMfile
 
 
 def getMMFFProps(mol):
@@ -595,6 +596,26 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(origVals), (nconfs * (nconfs - 1)) // 2)
     mcp = Chem.Mol(mol)
     self.assertAlmostEqual(origVals[0], rdMolAlign.GetBestRMS(mcp, mcp, params, 0, 1), 4)
+  
+  def test20GetAllConformerBestRMSToRef(self):
+    reffile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                         'butane_ref.sdf')
+    prbfile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                         'butane_prb.sdf')
+    prbMol = Chem.MultiConfMolFromSDF(prbfile)
+    refMol = next(iter(Chem.SDMolSupplier(reffile)))
+    expected = [0.19474, 0.86739, 0.87102, 0.35358, 0.35395]
+    rmsds = rdMolAlign.GetAllConformerBestRMSToRef(prbMol, refMol)
+    self.assertEqual(len(expected), len(rmsds), "Lists have different lengths")
+    for i, (a, b) in enumerate(zip(expected, rmsds)):
+      self.assertAlmostEqual(a, b, delta=0.0001, msg=f"Mismatch at index {i}")
+
+    expected = [ 0.19474, 0.86739, 0.87102, 0.35358, 0.35395, 0.82243, 0.16809, 0.16859, 0.54966, 0.56173]
+    refMol = Chem.MultiConfMolFromSDF(reffile)
+    rmsds = rdMolAlign.GetAllConformerBestRMSToRef(prbMol, refMol)
+    self.assertEqual(len(expected), len(rmsds), "Lists have different lengths")
+    for i, (a, b) in enumerate(zip(expected, rmsds)):
+      self.assertAlmostEqual(a, b, delta=0.0001, msg=f"Mismatch at index {i}")
 
 
 if __name__ == '__main__':

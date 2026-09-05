@@ -417,7 +417,15 @@ struct mol_wrapper {
         .def("__getitem__", &QueryAtomIterSeq::operator[],
              nb::rv_policy::reference_internal, "idx"_a);
 
+// Handle support for instance pooling. Availability is checked in the
+// main CMakelists.txt file, via a version check on the nanobind package.
+// Documentation about the pooling feature is available at:
+// https://nanobind.readthedocs.io/en/latest/classes.html#instance-pooling
+#ifdef NANOBIND_POOLED_AVAILABLE
+    nb::class_<ROMol>(m, "Mol", nb::dynamic_attr(), nb::pooled())
+#else
     nb::class_<ROMol>(m, "Mol", nb::dynamic_attr())
+#endif
         .def(nb::new_([]() {
       return new ROMol(); }),
              "Constructor, takes no arguments")
@@ -1030,7 +1038,16 @@ it's probably not of general interest.
 )DOC");
     // ---------------------------------------------------------------------------------------------
 
+// Handle support for instance pooling. Availability is checked in the
+// main CMakelists.txt file, via a version check on the nanobind package.
+// Documentation about the pooling feature is available at:
+// https://nanobind.readthedocs.io/en/latest/classes.html#instance-pooling
+#ifdef NANOBIND_POOLED_AVAILABLE
+    nb::class_<ReadWriteMol, ROMol>(m, "RWMol", nb::dynamic_attr(),
+                                    nb::pooled())
+#else
     nb::class_<ReadWriteMol, ROMol>(m, "RWMol", nb::dynamic_attr())
+#endif
         .def(nb::new_([]() { return new ReadWriteMol(); }),
              "Constructor, takes no arguments")
         .def(nb::new_([](nb::bytes b) {

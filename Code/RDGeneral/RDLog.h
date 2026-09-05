@@ -12,7 +12,6 @@
 #ifndef RDLOG_H_29JUNE2005
 #define RDLOG_H_29JUNE2005
 
-#if 1
 #include "BoostStartInclude.h"
 #include <boost/iostreams/tee.hpp>
 #include <boost/iostreams/stream.hpp>
@@ -121,16 +120,6 @@ RDKIT_RDGENERAL_EXPORT extern RDLogger rdErrorLog;
 RDKIT_RDGENERAL_EXPORT extern RDLogger rdWarningLog;
 RDKIT_RDGENERAL_EXPORT extern RDLogger rdStatusLog;
 
-#else
-#define BOOST_LOG_NO_LIB
-#include <boost/log/log.hpp>
-BOOST_DECLARE_LOG(rdAppLog)
-BOOST_DECLARE_LOG(rdDebugLog)
-BOOST_DECLARE_LOG(rdInfoLog)
-BOOST_DECLARE_LOG(rdErrorLog)
-BOOST_DECLARE_LOG(rdWarningLog)
-BOOST_DECLARE_LOG(rdStatusLog)
-#endif
 namespace RDLog {
 RDKIT_RDGENERAL_EXPORT void InitLogs();
 

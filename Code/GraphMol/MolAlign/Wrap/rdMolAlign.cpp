@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2025 Greg Landrum, Paolo Tosco and other RDKit
+//  Copyright (C) 2004-2026 Greg Landrum, Paolo Tosco and other RDKit
 //  contributors
 //
 //   @@ All Rights Reserved @@
@@ -294,6 +294,24 @@ python::tuple GetAllConformerBestRMS2(ROMol &mol, int numThreads,
       maxMatches, symmetrizeTerminalGroups, ignoreHs, numThreads, map, weights};
   return GetAllConformerBestRMS(mol, params);
 }
+python::tuple GetAllConformerBestRMSToRef(const ROMol &prbMol,
+                                          const ROMol &refMol,
+                                          const python::object &py_params) {
+  MolAlign::BestAlignmentParams params;
+  if (!py_params.is_none()) {
+    params = python::extract<MolAlign::BestAlignmentParams>(py_params);
+  }
+  std::vector<double> rmsds;
+  {
+    NOGIL gil;
+    rmsds = MolAlign::getAllConformerBestRMSToRef(prbMol, refMol, params);
+  }
+  python::list res;
+  for (const auto v : rmsds) {
+    res.append(v);
+  }
+  return python::tuple(res);
+}
 
 double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
                python::object map, int maxMatches,
@@ -317,8 +335,8 @@ double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
 namespace MolAlign {
 class PyO3A {
  public:
-  PyO3A(O3A *o) : o3a(o) {};
-  PyO3A(boost::shared_ptr<O3A> o) : o3a(std::move(o)) {};
+  PyO3A(O3A *o) : o3a(o){};
+  PyO3A(boost::shared_ptr<O3A> o) : o3a(std::move(o)){};
   ~PyO3A() = default;
   double align() { return o3a.get()->align(); };
   PyObject *trans() {
@@ -1152,5 +1170,30 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                python::arg("maxIters") = 50, python::arg("options") = 0,
                python::arg("constraintMap") = python::list(),
                python::arg("constraintWeights") = python::list()),
+              docString.c_str());
+
+  docString =
+      "Get the RMSD matrix between all conformers of refMol\n\
+      and all the conformers of prbMol.\n \
+      getBestRMS() is used to calculate the inter-conformer distances\n\
+      \n\
+        This function will attempt to align all permutations of matching atom\n\
+        orders in both molecules, for some molecules it will lead to 'combinatorial'\n\
+        explosion' especially if hydrogens are present.\n\
+      \n\
+      ARGUMENTS\n\
+        - prbMol        the probe molecule\n\
+        - refMol        the reference molecule\n\
+        - params     parameters for the matching\n\
+       \n\
+      RETURNS\n\
+      Vector with the RMSD values stored in the order:\n\
+        [(0, 0), (0, 1), (0, 2), (1, 0), (2, 1), ...]\n\
+        where the first idx is a conformerID of the refMol and the second is the\n\
+      confid of the prbMol.\n\
+      \n";
+  python::def("GetAllConformerBestRMSToRef", RDKit::GetAllConformerBestRMSToRef,
+              (python::arg("prbMol"), python::arg("refMol"),
+               python::arg("params") = python::object()),
               docString.c_str());
 }

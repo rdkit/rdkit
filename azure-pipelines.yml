@@ -3,6 +3,21 @@ trigger:
 - Release_*
 - dev/*
 
+variables:
+  CCACHE_DIR: "$(Build.ArtifactStagingDirectory)/.ccache"
+  CCACHE_BASEDIR: "$(Build.Repository.LocalPath)"
+  CCACHE_STATSLOG: "$(Build.ArtifactStagingDirectory)/ccache_current_build_stats.log"
+  CCACHE_NOHASHDIR: yes
+  CCACHE_NAMESPACE: "$(System.JobDisplayName)"
+  CCACHE_MAXSIZE: 1G
+  CCACHE_SLOPPINESS: time_macros
+  # Conditionally set BUILD_BRANCH_NAME based on the trigger type
+  ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+    BUILD_BRANCH_NAME: 'pr/$(system.pullRequest.pullRequestNumber)/$(System.PullRequest.SourceBranch)'
+  ${{ else }}:
+    BUILD_BRANCH_NAME: '$(Build.SourceBranchName)'
+
+
 jobs:
 - job: Ubuntu_x64_minimallib_build
   timeoutInMinutes: 120
@@ -56,7 +71,7 @@ jobs:
     number_of_cores: nproc
     python_name: python314
   steps:
-  - template: .azure-pipelines/linux_build_nb.yml  
+  - template: .azure-pipelines/linux_build_nb.yml
 - job: macOS_x64
   timeoutInMinutes: 120
   pool:

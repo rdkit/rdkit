@@ -18,7 +18,7 @@ NAMESPACE_BEGIN(NB_NAMESPACE)
 NAMESPACE_BEGIN(detail)
 
 // shared_ptr deleter that reduces the reference count of a Python object
-struct py_deleter {
+struct boost_py_deleter {
   void operator()(void *) noexcept {
     // Don't run the deleter if the interpreter has been shut down
     if (!is_alive()) return;
@@ -44,16 +44,16 @@ struct py_deleter {
  * single shared_ptr type_caster, which would enlarge the binding size)
  */
 template <typename T>
-inline NB_NOINLINE boost::shared_ptr<T> shared_from_python(T *ptr,
-                                                           handle h) noexcept {
+inline NB_NOINLINE boost::shared_ptr<T> boost_shared_from_python(
+    T *ptr, handle h) noexcept {
   if (ptr)
-    return boost::shared_ptr<T>(ptr, py_deleter{h.inc_ref().ptr()});
+    return boost::shared_ptr<T>(ptr, boost_py_deleter{h.inc_ref().ptr()});
   else
     return boost::shared_ptr<T>(nullptr);
 }
 
-inline NB_NOINLINE void shared_from_cpp(boost::shared_ptr<void> &&ptr,
-                                        PyObject *o) noexcept {
+inline NB_NOINLINE void boost_shared_from_cpp(boost::shared_ptr<void> &&ptr,
+                                              PyObject *o) noexcept {
   keep_alive(o, new boost::shared_ptr<void>(std::move(ptr)),
              [](void *p) noexcept { delete (boost::shared_ptr<void> *)p; });
 }
@@ -85,13 +85,13 @@ struct type_caster<boost::shared_ptr<T>> {
           return true;
         }
       }
-      // Otherwise create a new one. Use shared_from_python<T>(...)
+      // Otherwise create a new one. Use boost_shared_from_python<T>(...)
       // so that future calls to ptr->shared_from_this() can share
       // ownership with it.
-      value = shared_from_python(ptr, src);
+      value = boost_shared_from_python(ptr, src);
     } else {
       value = boost::static_pointer_cast<T>(
-          shared_from_python(static_cast<void *>(ptr), src));
+          boost_shared_from_python(static_cast<void *>(ptr), src));
     }
     return true;
   }
@@ -125,7 +125,7 @@ struct type_caster<boost::shared_ptr<T>> {
             boost::const_pointer_cast<Td>(value));
       else
         pp = boost::static_pointer_cast<void>(value);
-      shared_from_cpp(std::move(pp), result.ptr());
+      boost_shared_from_cpp(std::move(pp), result.ptr());
     }
 
     return result;

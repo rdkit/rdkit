@@ -298,7 +298,7 @@ TEST_CASE("Two piece query") {
   params.shapeOverlayOptions.simBeta = 0.05;
   auto results = synthonspace.shapeSearch(*queryMol, params);
   CHECK(results.getHitMolecules().size() == 2);
-  std::vector<double> expScores{0.721, 0.715};
+  std::vector<double> expScores{0.715, 0.715};
   for (unsigned int i = 0; i < results.getHitMolecules().size(); ++i) {
     auto &mol = results.getHitMolecules()[i];
     CHECK_THAT(mol->getProp<double>("Similarity"),
@@ -403,7 +403,7 @@ c1ccccc1[1*]	1-1	0	test1
   CHECK(results.getHitMolecules().size() == 1);
   CHECK(results.getHitMolecules()[0]->getName() == "1-1;2-1;3-1;test1");
   CHECK_THAT(results.getHitMolecules()[0]->getProp<double>("Similarity"),
-             Catch::Matchers::WithinAbs(0.781, 0.001));
+             Catch::Matchers::WithinAbs(0.786, 0.001));
 }
 
 TEST_CASE("Trim sample molecules") {
@@ -494,7 +494,7 @@ TEST_CASE("Excluded volume") {
   params.shapeOverlayOptions.simBeta = 0.05;
   params.excludedVolume = excVolShape.get();
   params.possibleHitsFile = fullRoot + "exc_vol_poss_hits.txt";
-  params.maxExcludedVolume = 80.0;
+  params.maxExcludedVolume = 90.0;
   params.maxMeanExcludedVolume = 3.5;
 
   SynthonSpace synthonSpace;

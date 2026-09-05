@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2025 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -37,7 +37,7 @@ class RDKIT_MOLALIGN_EXPORT MolAlignException : public std::exception {
 };
 
 struct RDKIT_MOLALIGN_EXPORT BestAlignmentParams {
-  int maxMatches = 1e6;  //< if map is empty, this will be the max number of
+  int maxMatches = 1'000'000;  //< if map is empty, this will be the max number of
                          /// matches found in a SubstructMatch().
   bool symmetrizeConjugatedTerminalGroups =
       true;              //< if set, conjugated
@@ -274,7 +274,6 @@ inline double getBestRMS(
 
   \param mol        the molecule to be considered
   \param params     parameters for the matching
-  \param numThreads (optional) number of threads to use during the calculation
 
   <b>Returns</b>
   a vector with the RMSD values stored in the order:
@@ -403,6 +402,28 @@ RDKIT_MOLALIGN_EXPORT void alignMolConformers(
     const std::vector<unsigned int> *confIds = nullptr,
     const RDNumeric::DoubleVector *weights = nullptr, bool reflect = false,
     unsigned int maxIters = 50, std::vector<double> *RMSlist = nullptr);
+
+//! Returns the RMSD matrix between all conformers of refMol
+//! and all the conformers of prbMol
+/// getBestRMS() is used to calculate the inter-conformer distances
+/*!
+  This function will attempt to align all permutations of matching atom
+  orders in both molecules, for some molecules it will lead to 'combinatorial
+  explosion' especially if hydrogens are present.
+
+  \param prbMol        the reference molecule
+  \param refMol        the probe molecule
+  \param params     parameters for the matching
+
+  <b>Returns</b>
+  a vector with the RMSD values stored in the order:
+    [(0, 0), (0, 1), (0, 2), (1, 0), (2, 1), ...]
+    where the first idx is a conformerID of the refMol and the second is the
+  confid of the prbMol.
+*/
+RDKIT_MOLALIGN_EXPORT std::vector<double> getAllConformerBestRMSToRef(
+    const ROMol &prbMol, const ROMol &refMol,
+    const BestAlignmentParams &params);
 
 namespace details {
 //! Converts terminal atoms in groups like nitro or carboxylate to be symmetry

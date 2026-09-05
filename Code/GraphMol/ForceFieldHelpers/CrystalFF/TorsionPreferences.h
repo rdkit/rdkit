@@ -12,8 +12,11 @@
 #define _RD_TORSIONPREFERENCES_H_
 #include <vector>
 #include <string>
+#include <utility>
 #include <memory>
+#include <tuple>
 #include <boost/dynamic_bitset.hpp>
+#include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 
 namespace RDKit {
 class ROMol;
@@ -52,9 +55,9 @@ constexpr Params Cosine = {.distance = 2.15,
                            .kTermAngle = 0.1,
                            .kTermImproper = .001,
                            .kTermTorsion = 2.15,
-                           .etTermScaling = 0.1};
+                           .etTermScaling = 0.05};
 }  // namespace AIO
-}  // namespace FC
+}  // namespace ETKDGForceConsts
 struct CrystalFFDetails {
   std::vector<std::vector<int>> expTorsionAtoms;
   std::vector<std::pair<std::vector<int>, std::vector<double>>>
@@ -67,6 +70,7 @@ struct CrystalFFDetails {
   boost::dynamic_bitset<> constrainedAtoms;
   double *distMat;
   ETKDGForceConsts::Params forceConsts;
+  std::vector<RDKit::DGeomHelpers::Path14Configuration> path14Configs;
 };
 
 //! Get the experimental torsional angles in a molecule

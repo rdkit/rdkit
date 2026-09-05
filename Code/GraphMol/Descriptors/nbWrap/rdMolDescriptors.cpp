@@ -15,8 +15,11 @@
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/map.h>
 #include <nanobind/stl/tuple.h>
-#include <nanobind/stl/shared_ptr.h>
+#include <nanobind/trampoline.h>
+
 #include <RDBoost/Wrap_nb.h>
+#include <RDBoost/boost_shared_ptr.h>
+#include <RDBoost/python_capsule_nb.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/GraphMol.h>
 
@@ -45,6 +48,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <optional>
+#include <ranges>
 #include <vector>
 
 namespace nb = nanobind;
@@ -53,6 +57,54 @@ using namespace nb::literals;
 struct AtomPairsParameters {};
 
 namespace {
+
+static std::string nanobindInternalsKeyName;
+
+nb::dict getBuiltinsDict() {
+  // PyEval_GetBuiltins only gets the builtins for the current thread,
+// which may not be the main thread.
+#if defined(PYPY_VERSION)
+  PyObject *dict = PyEval_GetBuiltins();
+#else
+  PyObject *dict = PyInterpreterState_GetDict(PyInterpreterState_Get());
+#endif
+  return nb::borrow<nb::dict>(dict);
+}
+
+void getNanobindInternalsKeyName() {
+  if (!nanobindInternalsKeyName.empty()) {
+    return;
+  }
+  auto builtins = getBuiltinsDict();
+  if (!builtins.is_valid()) {
+    return;
+  }
+
+  std::string keyStr;
+  for (const auto &key : builtins.keys()) {
+    if (nb::try_cast<std::string>(key, keyStr) &&
+        keyStr.starts_with("__nb_internals_")) {
+      nanobindInternalsKeyName = std::move(keyStr);
+      return;
+    }
+  }
+}
+
+bool isNanobindFinalized() {
+  // If something goes wrong, and we can't tell,
+  // then assume nanobind is still there
+  if (nanobindInternalsKeyName.empty()) {
+    return false;
+  }
+  auto builtins = getBuiltinsDict();
+  if (!builtins.is_valid()) {
+    return false;
+  }
+
+  // We've seen the internals key before, so if we can't
+  // see it anymore, then nanobind has been finalized.
+  return !builtins.contains(nanobindInternalsKeyName);
+}
 
 std::vector<unsigned int> atomPairTypes(
     RDKit::AtomPairs::atomNumberTypes,
@@ -828,22 +880,37 @@ unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol, nb::object pyatoms) {
 
 // Python-callable property functor that delegates __call__ to a Python callback
 struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
-  nb::object callback;
-
-  PythonPropertyFunctor(nb::object cb, const std::string &name,
-                        const std::string &version)
-      : PropertyFunctor(name, version), callback(cb) {}
+  NB_TRAMPOLINE(RDKit::Descriptors::PropertyFunctor, 1);
 
   double operator()(const RDKit::ROMol &mol) const override {
-    return nb::cast<double>(callback(mol));
+    NB_OVERRIDE_NAME("__call__", operator(), mol);
   }
 };
 
-int registerPropertyHelper(std::shared_ptr<PythonPropertyFunctor> ptr) {
-  ptr->callback
-      .inc_ref();  // Increment reference count to ensure it stays alive
-  auto ppf = new PythonPropertyFunctor(ptr->callback, ptr->getName(),
-                                       ptr->getVersion());
+int registerPropertyHelper(
+    boost::shared_ptr<RDKit::Descriptors::PropertyFunctor> ppf) {
+  getNanobindInternalsKeyName();
+
+  namespace rdkDesc = RDKit::Descriptors;
+
+  // Set up pruning of Python functions for when Python shuts down.
+  // This needs to be done only once.
+  constexpr const char *capsuleName = "__rdkit_DescPropRegistry__";
+  if (getCapsulePtr(capsuleName) == nullptr) {
+    auto cleanUpFn = [](void *ptr) noexcept {
+      using propFtor_t = boost::shared_ptr<rdkDesc::PropertyFunctor>;
+      auto registry = static_cast<std::vector<propFtor_t> *>(ptr);
+      std::erase_if(*registry, [](const auto &propFunc) {
+        return nb::find(propFunc).is_valid();
+      });
+
+      // DO NOT delete p: it's a static object owned by the C++ code.
+    };
+
+    nb::capsule regCapsule(&rdkDesc::Properties::registry, cleanUpFn);
+    installCapsule(regCapsule, capsuleName);
+  }
+
   auto res = RDKit::Descriptors::Properties::registerProperty(ppf);
   return res;
 }
@@ -1431,18 +1498,6 @@ assigning hybridization)DOC");
         RDKit::Descriptors::numUnspecifiedAtomStereoCenters, "mol"_a,
         "Returns the number of unspecified atomic stereocenters");
 
-  nb::class_<RDKit::Descriptors::PropertyFunctor>(
-      m, "PropertyFunctor",
-      R"DOC(Property computation class stored in the property registry.
-See rdkit.Chem.rdMolDescriptor.Properties.GetProperty and
-rdkit.Chem.Descriptor.Properties.PropertyFunctor for creating new ones)DOC")
-      .def("__call__", &RDKit::Descriptors::PropertyFunctor::operator(),
-           "mol"_a, "Compute the property for the specified molecule")
-      .def("GetName", &RDKit::Descriptors::PropertyFunctor::getName,
-           "Return the name of the property to calculate")
-      .def("GetVersion", &RDKit::Descriptors::PropertyFunctor::getVersion,
-           "Return the version of the calculated property");
-
   nb::class_<RDKit::Descriptors::Properties>(
       m, "Properties",
       R"DOC(Property computation and registry system.  To compute all registered properties:
@@ -1483,12 +1538,15 @@ for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperti
                   "propertyFunctor"_a,
                   "Register a new property object (not thread safe)");
 
-  nb::class_<PythonPropertyFunctor, RDKit::Descriptors::PropertyFunctor>(
+  nb::class_<RDKit::Descriptors::PropertyFunctor, PythonPropertyFunctor>(
       m, "PythonPropertyFunctor", nb::is_weak_referenceable())
-      .def(nb::init<nb::object, const std::string &, const std::string &>(),
-           "callback"_a, "name"_a, "version"_a)
-      .def("__call__", &PythonPropertyFunctor::operator(), "mol"_a,
-           "Compute the property for the specified molecule");
+      .def(nb::init<std::string, std::string>(), "name"_a, "version"_a)
+      .def("__call__", &RDKit::Descriptors::PropertyFunctor::operator(),
+           "mol"_a, "Compute the property for the specified molecule")
+      .def("GetName", &RDKit::Descriptors::PropertyFunctor::getName,
+           "Return the name of the property to calculate")
+      .def("GetVersion", &RDKit::Descriptors::PropertyFunctor::getVersion,
+           "Return the version of the calculated property");
 
   nb::class_<Queries::RangeQuery<double, RDKit::ROMol const &, true>>(
       m, "PropertyRangeQuery",

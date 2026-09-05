@@ -12,11 +12,13 @@
 #define RD_BOUNDS_MATRIX_BUILDER_H
 
 #include <DistGeom/BoundsMatrix.h>
+#include "BoundsMatrixBuilderDetails.h"
 #include "Embedder.h"
 
 namespace RDKit {
 class ROMol;
 namespace DGeomHelpers {
+
 //! Set default upper and lower distance bounds in a distance matrix
 /*!
   \param mmat        pointer to the bounds matrix to be altered
@@ -35,7 +37,8 @@ RDKIT_DISTGEOMHELPERS_EXPORT void initBoundsMat(DistGeom::BoundsMatPtr mmat,
 RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     const EmbedParameters &params, bool scaleVDW = false,
-    bool set15bounds = true, bool set14bounds = true, bool set13bounds = true);
+    bool set15bounds = true, bool set14bounds = true, bool set13bounds = true,
+    PATH14_VECT *paths14 = nullptr);
 
 //! Set upper and lower distance bounds between atoms in a molecule based on
 /// topology
@@ -75,7 +78,7 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     std::vector<std::pair<int, int>> &bonds,
     std::vector<std::vector<int>> &angles, const EmbedParameters &params,
     bool scaleVDW = false, bool set15bounds = true, bool set14bounds = true,
-    bool set13bounds = true);
+    bool set13bounds = true, PATH14_VECT *paths14 = nullptr);
 /*! \overload for experimental torsion angle preferences
  */
 inline void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,

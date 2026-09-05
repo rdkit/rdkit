@@ -12,11 +12,11 @@
 #include <Geometry/Utils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/DistGeomHelpers/BoundsMatrixBuilderDetails.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
 #include <boost/dynamic_bitset.hpp>
-#include <algorithm>
 #include <sstream>
 #include <RDGeneral/StreamOps.h>
 
@@ -105,7 +105,7 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
   std::istringstream inStream(paramData);
 
   std::string inLine = RDKit::getLine(inStream);
-  unsigned int torsionIdx = 0;
+  std::size_t torsionIdx = 0;
   while (!inStream.eof()) {
     if (inLine[0] != '#') {
       ExpTorsionAngle angle;
@@ -114,7 +114,7 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
       angle.smarts = *token;
       angle.torsionIdx = torsionIdx++;
       ++token;
-      for (unsigned int i = 0; i < 12; i += 2) {
+      for (std::size_t i = 0; i < 12; i += 2) {
         angle.signs.push_back(boost::lexical_cast<int>(*token));
         ++token;
         angle.V.push_back(boost::lexical_cast<double>(*token));
@@ -122,7 +122,7 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
       }
       angle.dp_pattern.reset(SmartsToMol(angle.smarts));
       // get the atom indices for atom 1, 2, 3, 4 in the pattern
-      for (unsigned int i = 0; i < (angle.dp_pattern.get())->getNumAtoms();
+      for (std::size_t i = 0; i < (angle.dp_pattern.get())->getNumAtoms();
            ++i) {
         Atom const *atom = (angle.dp_pattern.get())->getAtomWithIdx(i);
         int num;
@@ -203,6 +203,54 @@ void getExperimentalTorsions(
   }
 
   boost::dynamic_bitset<> doneBonds(nb);
+  // apply basic knowledge such as flat aromatic rings, other sp2-centers,
+  // straight triple bonds, etc.
+  if (useBasicKnowledge) {
+    // torsions for forced trans amides / esters
+    auto is_forced_cis_or_trans = [](const auto &config) {
+      if (!config.type.isForced) {
+        return false;
+      }
+      return config.type.type == DGeomHelpers::TorsionType::TRANS ||
+             config.type.type == DGeomHelpers::TorsionType::CIS;
+    };
+    for (const auto &config :
+         details.path14Configs | std::views::filter(is_forced_cis_or_trans)) {
+      const auto i = config.aid1;
+      const auto j = config.aid2;
+      const auto k = config.aid3;
+      const auto l = config.aid4;
+      const auto bndIdx = mol.getBondBetweenAtoms(j, k)->getIdx();
+
+      if (excludedBonds[bndIdx] ||
+          mol.getRingInfo()->numBondRings(bndIdx) > 3) {
+        doneBonds[bndIdx] = 1;
+      }
+      if (doneBonds[bndIdx]) {
+        continue;
+      }
+
+      if (!details.constrainedAtoms.empty() && details.constrainedAtoms[i] &&
+          details.constrainedAtoms[j] && details.constrainedAtoms[k] &&
+          details.constrainedAtoms[l]) {
+        continue;
+      }
+      details.expTorsionAtoms.push_back(
+          {static_cast<int>(i), static_cast<int>(j), static_cast<int>(k),
+           static_cast<int>(l)});
+      std::vector<double> V(6, 0.0);
+      std::vector<int> signs(6, 1);
+
+      V[0] = 75.0;
+      if (std::fabs(details.forceConsts.etTermScaling - 1.0) > 1e-3) {
+        V[0] = 4.0;
+      }
+      if (config.type.type == DGeomHelpers::TorsionType::CIS) {
+        signs[0] = -1;
+      }
+      details.expTorsionAngles.emplace_back(signs, V);
+    }
+  }  // if useBasicKnowledge
 
   if (useExpTorsions) {
     // we set the torsion angles with experimental data
@@ -228,53 +276,48 @@ void getExperimentalTorsions(
         if (excludedBonds[bid2] || mol.getRingInfo()->numBondRings(bid2) > 3) {
           doneBonds[bid2] = 1;
         }
-        if (!doneBonds[bid2]) {
-          // do not add ET terms between constrained atoms
-          // REVIEW: do we really need to check all 4 atoms?
-          if (!details.constrainedAtoms.empty() &&
-              details.constrainedAtoms[aid1] &&
-              details.constrainedAtoms[aid2] &&
-              details.constrainedAtoms[aid3] &&
-              details.constrainedAtoms[aid4]) {
-            continue;
+        if (doneBonds[bid2]) {
+          continue;
+        }
+        // do not add ET terms between constrained atoms
+        // REVIEW: do we really need to check all 4 atoms?
+        if (!details.constrainedAtoms.empty() &&
+            details.constrainedAtoms[aid1] && details.constrainedAtoms[aid2] &&
+            details.constrainedAtoms[aid3] && details.constrainedAtoms[aid4]) {
+          continue;
+        }
+        std::vector<unsigned int> aids{aid1, aid2, aid3, aid4};
+        torsionBonds.emplace_back(bid2, aids, &param);
+        doneBonds[bid2] = 1;
+        std::vector<int> atoms(4);
+        atoms[0] = aid1;
+        atoms[1] = aid2;
+        atoms[2] = aid3;
+        atoms[3] = aid4;
+        details.expTorsionAtoms.push_back(atoms);
+        std::vector<double> V{param.V};
+        if (details.forceConsts.etTermScaling != 1.0) {
+          for (double &v : V) {
+            v *= details.forceConsts.etTermScaling;
           }
-          std::vector<unsigned int> aids{aid1, aid2, aid3, aid4};
-          torsionBonds.emplace_back(bid2, aids, &param);
-          doneBonds[bid2] = 1;
-          std::vector<int> atoms(4);
-          atoms[0] = aid1;
-          atoms[1] = aid2;
-          atoms[2] = aid3;
-          atoms[3] = aid4;
-          details.expTorsionAtoms.push_back(atoms);
-          std::vector<double> V{param.V};
-          if (details.forceConsts.etTermScaling != 1.0) {
-            for (double &v : V) {
-              v *= details.forceConsts.etTermScaling;
-            }
+        }
+        details.expTorsionAngles.emplace_back(param.signs, V);
+
+        if (verbose) {
+          // using the stringstream seems redundant, but we don't want the
+          // extra formatting provided by the logger after every entry;
+          std::stringstream sstr;
+          sstr << param.smarts << ": " << aid1 << " " << aid2 << " " << aid3
+               << " " << aid4 << ", [";
+          for (unsigned int i = 0; i < param.V.size() - 1; ++i) {
+            sstr << "(" << param.signs[i] << " " << param.V[i] << "), ";
           }
-          details.expTorsionAngles.emplace_back(param.signs, V);
-
-          if (verbose) {
-            // using the stringstream seems redundant, but we don't want the
-            // extra formatting provided by the logger after every entry;
-            std::stringstream sstr;
-            sstr << param.smarts << ": " << aid1 << " " << aid2 << " " << aid3
-                 << " " << aid4 << ", [";
-            for (unsigned int i = 0; i < param.V.size() - 1; ++i) {
-              sstr << "(" << param.signs[i] << " " << param.V[i] << "), ";
-            }
-            sstr << "(" << param.signs.back() << " " << param.V.back() << ")] ";
-            BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
-          }
-        }  // if not donePaths
-      }    // end loop over matches
-
-    }  // end loop over patterns
-  }
-
-  // apply basic knowledge such as flat aromatic rings, other sp2-centers,
-  // straight triple bonds, etc.
+          sstr << "(" << param.signs.back() << " " << param.V.back() << ")] ";
+          BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
+        }
+      }  // end loop over matches
+    }    // end loop over patterns
+  }      // end if experimentalTorsions
   if (useBasicKnowledge) {
     boost::dynamic_bitset<> doneAtoms(na);
 
@@ -325,14 +368,14 @@ void getExperimentalTorsions(
     CHECK_INVARIANT(rinfo, "no ring info");
     CHECK_INVARIANT(rinfo->isInitialized(), "ring info not initialized");
     for (const auto &atomRing : rinfo->atomRings()) {
-      unsigned int rSize = atomRing.size();
+      std::size_t rSize = atomRing.size();
       // we don't need to deal with 3 membered rings
       // and we do not treat rings greater than 6
       if (rSize < 4 || rSize > 6) {
         continue;
       }
       // loop over ring atoms
-      for (unsigned int i = 0; i < rSize; ++i) {
+      for (std::size_t i = 0; i < rSize; ++i) {
         // proper torsions
         aid1 = atomRing[i];
         aid2 = atomRing[(i + 1) % rSize];
@@ -366,8 +409,7 @@ void getExperimentalTorsions(
 
       }  // loop over atoms in ring
     }    // loop over rings
-  }      // if useBasicKnowledge
-
+  }
 }  // end function
 
 void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,

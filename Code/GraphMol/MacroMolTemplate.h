@@ -67,6 +67,8 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate final {
   const std::string &getSymbol() const { return d_symbol; }
   //! Returns the original template definition (SMILES, SDF, etc.).
   const std::string &getOriginalData() const { return d_originalData; }
+  //! Returns the SCSR subclass, or an empty string if unspecified.
+  const std::string &getSubclass() const { return d_subclass; }
   //! Returns the atom indices belonging to the retained monomer group.
   const std::vector<unsigned int> &getMainAtomIdxs() const {
     return d_mainAtomIdxs;
@@ -83,7 +85,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate final {
 
   MacroMolTemplate(RWMol mol, MonomerClass monomerClass,
                    std::string name, std::string symbol,
-                   std::string originalData,
+                   std::string originalData, std::string subclass,
                    std::vector<unsigned int> mainAtomIdxs,
                    std::vector<MacroMolLeavingGroup> leavingGroups,
                    unsigned int mainSgroupIdx)
@@ -92,6 +94,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate final {
         d_name(std::move(name)),
         d_symbol(std::move(symbol)),
         d_originalData(std::move(originalData)),
+        d_subclass(std::move(subclass)),
         d_mainAtomIdxs(std::move(mainAtomIdxs)),
         d_leavingGroups(std::move(leavingGroups)),
         d_mainSgroupIdx(mainSgroupIdx) {}
@@ -101,6 +104,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate final {
   std::string d_name;
   std::string d_symbol;
   std::string d_originalData;
+  std::string d_subclass;
   std::vector<unsigned int> d_mainAtomIdxs;
   std::vector<MacroMolLeavingGroup> d_leavingGroups;
   unsigned int d_mainSgroupIdx;
@@ -124,11 +128,20 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateBuilder {
         d_symbol(std::move(symbol)),
         d_originalData(std::move(originalData)) {}
 
+  //! Returns the mutable molecule being prepared for the template.
+  /*!
+    Structural edits should be completed before defining the main and
+    leaving groups.
+  */
+  RWMol &getMol() { return d_mol; }
+
   //! Defines the atoms retained as the main monomer group.
   MacroMolTemplateBuilder &setMainGroup(std::vector<unsigned int> &&atomIdxs);
   //! Adds a leaving group and its attachment-point definition.
   MacroMolTemplateBuilder &addLeavingGroup(
       MacroMolLeavingGroup &&leavingGroup);
+  //! Sets the optional SCSR subclass.
+  MacroMolTemplateBuilder &setSubclass(std::string subclass);
   //! Validates the complete definition and returns an immutable template.
   std::unique_ptr<MacroMolTemplate> build() const;
 
@@ -138,6 +151,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateBuilder {
   std::string d_name;
   std::string d_symbol;
   std::string d_originalData;
+  std::string d_subclass;
   std::vector<unsigned int> d_mainAtomIdxs;
   std::vector<MacroMolLeavingGroup> d_leavingGroups;
   bool d_mainGroupSet = false;
@@ -146,9 +160,9 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateBuilder {
 class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateLibrary {
  public:
   MacroMolTemplateLibrary() = default;
-  MacroMolTemplateLibrary(const MacroMolTemplateLibrary &) = delete;
+  MacroMolTemplateLibrary(const MacroMolTemplateLibrary &other);
   MacroMolTemplateLibrary(MacroMolTemplateLibrary &&) noexcept = default;
-  MacroMolTemplateLibrary &operator=(const MacroMolTemplateLibrary &) = delete;
+  MacroMolTemplateLibrary &operator=(const MacroMolTemplateLibrary &other);
   MacroMolTemplateLibrary &operator=(MacroMolTemplateLibrary &&) noexcept =
       default;
 

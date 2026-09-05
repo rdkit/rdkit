@@ -81,7 +81,7 @@ void computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
   if (!cosPhi) {
     cosPhi = &cosPhiLocal;
   }
-  *cosPhi = (std::max)(-1.0, (std::min)(t[0].dotProduct(t[1]), 1.0));
+  *cosPhi = std::clamp(t[0].dotProduct(t[1]), -1.0, 1.0);
   // we want a signed dihedral, that's why we use atan2 instead of acos
   if (dihedral) {
     RDGeom::Point3D m = t[0].crossProduct(r[1]);
@@ -95,7 +95,7 @@ void computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
 namespace ForceFieldsHelper {
 class calcEnergy {
  public:
-  calcEnergy(ForceFields::ForceField *ffHolder) : mp_ffHolder(ffHolder) {};
+  calcEnergy(ForceFields::ForceField *ffHolder) : mp_ffHolder(ffHolder){};
   double operator()(double *pos) const { return mp_ffHolder->calcEnergy(pos); }
 
  private:
@@ -104,7 +104,7 @@ class calcEnergy {
 
 class calcGradient {
  public:
-  calcGradient(ForceFields::ForceField *ffHolder) : mp_ffHolder(ffHolder) {};
+  calcGradient(ForceFields::ForceField *ffHolder) : mp_ffHolder(ffHolder){};
   double operator()(double *pos, double *grad) const {
     double res = 1.0;
     // the contribs to the gradient function use +=, so we need
@@ -272,9 +272,9 @@ int ForceField::minimize(unsigned int snapshotFreq,
   ForceFieldsHelper::calcEnergy eCalc(this);
   ForceFieldsHelper::calcGradient gCalc(this);
 
-  int res =
-      BFGSOpt::minimize(dim, points.data(), forceTol, numIters, finalForce, eCalc,
-                        gCalc, snapshotFreq, snapshotVect, energyTol, maxIts);
+  int res = BFGSOpt::minimize(dim, points.data(), forceTol, numIters,
+                              finalForce, eCalc, gCalc, snapshotFreq,
+                              snapshotVect, energyTol, maxIts);
   this->gather(points.data());
 
   return res;
@@ -317,9 +317,8 @@ double ForceField::calcEnergy(double *pos) {
   }
 
   // now loop over the contribs
-  for (ContribPtrVect::const_iterator contrib = d_contribs.begin();
-       contrib != d_contribs.end(); contrib++) {
-    double E = (*contrib)->getEnergy(pos);
+  for (const auto &contrib : d_contribs) {
+    double E = contrib->getEnergy(pos);
     res += E;
   }
   return res;
@@ -357,17 +356,15 @@ void ForceField::calcGrad(double *pos, double *grad) {
     return;
   }
 
-  for (ContribPtrVect::const_iterator contrib = d_contribs.begin();
-       contrib != d_contribs.end(); contrib++) {
-    (*contrib)->getGrad(pos, grad);
+  for (const auto &contrib : d_contribs) {
+    contrib->getGrad(pos, grad);
   }
 
-  for (INT_VECT::const_iterator it = d_fixedPoints.begin();
-       it != d_fixedPoints.end(); it++) {
-    CHECK_INVARIANT(static_cast<unsigned int>(*it) < d_numPoints,
+  for (const auto point : d_fixedPoints) {
+    CHECK_INVARIANT(static_cast<std::size_t>(point) < d_numPoints,
                     "bad fixed point index");
-    unsigned int idx = d_dimension * (*it);
-    for (unsigned int di = 0; di < this->dimension(); ++di) {
+    std::size_t idx = d_dimension * point;
+    for (std::size_t di = 0; di < d_dimension; ++di) {
       grad[idx + di] = 0.0;
     }
   }

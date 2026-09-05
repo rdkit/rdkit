@@ -12,12 +12,14 @@ steps:
         libboost-devel=$(boost_version) \
         libboost=$(boost_version) \
         numpy=2.4 pillow eigen pandas=3 matplotlib-base=3.8 \
-        cairo
+        cairo \
+        ccache
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
     conda install -c conda-forge --override-channels  ipython=8.20 jupyter nbval ipykernel>=6.0
   displayName: Setup build environment (no Qt due to versioning problems)
+- template: _templates/steps_setup_cache.yml
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
@@ -25,6 +27,8 @@ steps:
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DRDK_INSTALL_INTREE=ON \
     -DRDK_INSTALL_STATIC_LIBS=OFF \
     -DRDK_BUILD_CPP_TESTS=ON \
@@ -55,9 +59,30 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    export RDBASE=`pwd`
+    export PYTHONPATH=${RDBASE}:${PYTHONPATH}
+    cd build
+    if ! grep -Fq "RDK_BUILD_DESCRIPTORS3D:BOOL=ON" CMakeCache.txt; then
+      echo "ERROR: Eigen support was not enabled in CMakeCache.txt"
+      exit 1
+    else
+      echo "Eigen is present"
+    fi
+  displayName: make sure we have eigen
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
     cd build
     make -j $( $(number_of_cores) ) install
   displayName: Build
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    echo -e "Current build stats:"
+    ccache --show-log-stats
+    echo -e "Global stats:"
+    ccache -s
+  displayName: "Show ccache stats"
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
