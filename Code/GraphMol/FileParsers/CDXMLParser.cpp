@@ -200,6 +200,10 @@ void applyAtomQueryRestrictions(RWMol &mol, Atom *&atom,
   
 void applyDeferredFreeSitesQueryRestrictions(RWMol &mol,
 					     const v2::CDXMLParser::CDXMLParserParams &params) {
+  if (!params.parseQueries) {
+    continue;
+  }
+  
   for (auto atom : mol.atoms()) {
     if (!atom->hasProp(CDXML_FREE_SITES_PROP)) {
       continue;
