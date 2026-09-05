@@ -934,9 +934,10 @@ std::map<std::string, std::vector<ROMol *>> mapFragsBySmiles(
         return fragSmiToFrag;
       }
       // For the fingerprints and shapes, ring info is required.
-      unsigned int otf;
-      sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
-                  MolOps::SANITIZE_SYMMRINGS);
+      if (!frag->getRingInfo()->isInitialized()) {
+        VECT_INT_VECT arings;
+        MolOps::findSSSR(*frag, arings);
+      }
       std::string fragSmi = MolToSmiles(*frag);
       if (auto it = fragSmiToFrag.find(fragSmi); it == fragSmiToFrag.end()) {
         fragSmiToFrag.emplace(fragSmi, std::vector<ROMol *>(1, frag.get()));
@@ -1085,7 +1086,7 @@ std::vector<std::unique_ptr<RWMol>> generateIsomerConformers(
     EnumerateStereoisomers::StereoisomerEnumerator enu(mol, enumOpts);
     unsigned int i = 0;
     while (auto isomer = enu.next()) {
-      confMols.emplace_back(static_cast<RWMol *>(isomer.release()));
+      confMols.emplace_back(reinterpret_cast<RWMol *>(isomer.release()));
       if (++i == maxStereoCenters) {
         break;
       }

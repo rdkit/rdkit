@@ -383,9 +383,10 @@ void SynthonSet::makeSynthonSearchMols() {
       std::vector<std::unique_ptr<ROMol>> molFrags;
       MolOps::getMolFrags(*fragMol, molFrags, false);
       int fragWeWant = findMolNumFrag(molFrags, synthSetNum);
-      unsigned int otf;
-      sanitizeMol(*static_cast<RWMol *>(molFrags[fragWeWant].get()), otf,
-                  MolOps::SANITIZE_SYMMRINGS);
+      if (!molFrags[fragWeWant]->getRingInfo()->isInitialized()) {
+        VECT_INT_VECT arings;
+        MolOps::findSSSR(*molFrags[fragWeWant], arings);
+      }
       d_synthons[synthSetNum][j].second->setSearchMol(
           std::move(molFrags[fragWeWant]));
     }

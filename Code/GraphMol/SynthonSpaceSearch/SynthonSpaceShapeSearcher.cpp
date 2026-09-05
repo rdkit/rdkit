@@ -329,9 +329,10 @@ std::map<std::string, std::vector<ROMol *>> mapFragsByAtoms(
         return atomsToFrags;
       }
       // Ring info is required.
-      unsigned int otf;
-      sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
-                  MolOps::SANITIZE_SYMMRINGS);
+      if (!frag->getRingInfo()->isInitialized()) {
+        VECT_INT_VECT arings;
+        MolOps::findSSSR(*frag, arings);
+      }
       std::vector<unsigned int> atIdxs;
       unsigned int dummyIdx = 10000;
       for (const auto a : frag->atoms()) {
@@ -944,16 +945,19 @@ bool checkExcludedVols(const ROMol &mol, const SynthonSpaceSearchParams &params,
   if (params.excludedVolume) {
     excludedVol = calcExcludedVolume(mol, *params.excludedVolume,
                                      params.shapeOverlayOptions);
-    auto numClashes = calcNumClashes(mol, *params.excludedVolume);
-    meanExcludedVol = excludedVol / static_cast<double>(numClashes);
     if (params.maxExcludedVolume > -0.5 &&
         excludedVol > params.maxExcludedVolume) {
       return false;
     }
-    if (params.maxMeanExcludedVolume > -0.5) {
-      if (meanExcludedVol > params.maxMeanExcludedVolume) {
+    auto numClashes = calcNumClashes(mol, *params.excludedVolume);
+    if (numClashes) {
+      meanExcludedVol = excludedVol / static_cast<double>(numClashes);
+      if (params.maxMeanExcludedVolume > -0.5 &&
+          meanExcludedVol > params.maxMeanExcludedVolume) {
         return false;
       }
+    } else {
+      meanExcludedVol = 0.0;
     }
   }
   return true;
@@ -970,20 +974,19 @@ bool finaliseHit(GaussianShape::ShapeInput &hitShapes,
                  double &meanExcludedVol) {
   // Copy the conformer into the hit.
   hitShapes.setActiveShape(hitShapeNum);
-  hit = static_cast<ROMol>(*hitShapes.shapeToMol(false, true));
-  if (!checkExcludedVols(hit, params, excludedVol, meanExcludedVol)) {
+  std::unique_ptr<ROMol> possHit = hitShapes.shapeToMol(false, true);
+  if (!checkExcludedVols(*possHit, params, excludedVol, meanExcludedVol)) {
     return false;
   }
+  hit = std::move(*possHit);
   hit.setProp<double>("Similarity", scores[0]);
   hit.setProp<double>("ShapeScore", scores[1]);
   hit.setProp<double>("ColorScore", scores[2]);
   const auto prodName = details::buildProductName(rxnId, synthNames);
   hit.setProp<std::string>(common_properties::_Name, prodName);
   MolOps::assignStereochemistryFrom3D(hit);
-  if (excludedVol > -0.5) {
+  if (params.excludedVolume) {
     hit.setProp<double>("ExcludedVolume", excludedVol);
-  }
-  if (meanExcludedVol > -0.5) {
     hit.setProp<double>("MeanExcludedVolume", meanExcludedVol);
   }
   return true;
@@ -995,16 +998,15 @@ bool finaliseHit(GaussianShape::ShapeInput &hitShapes,
 void finaliseHit(const ROMol &hit, const std::array<double, 3> &scores,
                  const std::string &rxnId,
                  const std::vector<const std::string *> &synthNames,
+                 const SynthonSpaceSearchParams &params,
                  const double excludedVol, const double meanExcludedVol) {
   hit.setProp<double>("Similarity", scores[0]);
   hit.setProp<double>("ShapeScore", scores[1]);
   hit.setProp<double>("ColorScore", scores[2]);
   const auto prodName = details::buildProductName(rxnId, synthNames);
   hit.setProp<std::string>(common_properties::_Name, prodName);
-  if (excludedVol > -0.5) {
+  if (params.excludedVolume) {
     hit.setProp<double>("ExcludedVolume", excludedVol);
-  }
-  if (meanExcludedVol > -0.5) {
     hit.setProp<double>("MeanExcludedVolume", meanExcludedVol);
   }
 }
@@ -1129,6 +1131,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
     ROMol &hit, const std::string &rxnId,
     const std::vector<const std::string *> &synthNames) {
   std::array<double, 3> initScores{-1.0, -1.0, -1.0};
+  std::unique_ptr<ROMol> initHit;
   if (hit.getNumConformers()) {
     initScores = GaussianShape::AlignMolecule(
         dp_queryShape->getShapes(), hit, GaussianShape::ShapeInputOptions(),
@@ -1137,11 +1140,15 @@ bool SynthonSpaceShapeSearcher::verifyHit(
     if (checkExcludedVols(hit, getParams(), excludedVol, meanExcludedVol)) {
       // If the excluded vol is also ok, take this hit.  Otherwise, pass it
       // through to conformation expansion to see if it wins there.
-      finaliseHit(hit, initScores, rxnId, synthNames, excludedVol,
+      finaliseHit(hit, initScores, rxnId, synthNames, getParams(), excludedVol,
                   meanExcludedVol);
       if (!getParams().bestHit && checkBondLengths(hit) &&
           initScores[0] >= getParams().similarityCutoff) {
+        updateBestHitSoFar(hit, initScores[0]);
         return true;
+      }
+      if (initScores[0] >= getParams().similarityCutoff) {
+        initHit.reset(new ROMol(hit));
       }
     } else {
       initScores[0] = -1.0;  // To flag it as a bad hit.
@@ -1208,9 +1215,11 @@ bool SynthonSpaceShapeSearcher::verifyHit(
       }
     }
   }
-  if (!foundHit && initScores[0] > getParams().similarityCutoff) {
-    // Stick with what we found at the start, which should still be in hit,
-    // because the conformational expansion didn't do any better.
+  if (!foundHit && initHit && initScores[0] >= getParams().similarityCutoff) {
+    // Stick with what we found at the start because the conformational
+    // expansion didn't do any better.
+    hit = std::move(*initHit);
+    updateBestHitSoFar(hit, initScores[0]);
     foundHit = true;
   }
   return foundHit;
