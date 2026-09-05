@@ -13,9 +13,8 @@
 #include <list>
 #include <ranges>
 #include <string>
+#include <type_traits>
 #include <vector>
-
-#include <sstream>
 
 #ifdef RDK_TEST_MULTITHREADED
 #include <csignal>
@@ -52,6 +51,10 @@
 
 using namespace RDKit;
 using namespace RDKit::CIPLabeler;
+
+static_assert(std::is_constructible_v<Digraph, const CIPMol &, Atom *>);
+static_assert(!std::is_constructible_v<Digraph, CIPMol &&, Atom *>);
+static_assert(!std::is_constructible_v<Digraph, const CIPMol &&, Atom *>);
 
 TEST_CASE("Rules eagerly initializes its composite sorter", "[accurateCIP]") {
   const Rule1a standaloneRule;
@@ -194,6 +197,48 @@ TEST_CASE("Digraph", "[accurateCIP]") {
   REQUIRE(current_root->getAtom()->getIdx() == new_root_idx);
 
   check_incoming_edge_count(current_root);
+}
+
+TEST_CASE("Digraph safety limits", "[accurateCIP]") {
+  SECTION("visit distances do not wrap on long paths") {
+    RWMol mol;
+    constexpr auto chain_length = 260u;
+    for (auto i = 0u; i < chain_length; ++i) {
+      auto atom = new Atom(6);
+      atom->setNoImplicit(true);
+      mol.addAtom(atom, true, true);
+      if (i != 0u) {
+        mol.addBond(i - 1, i, Bond::SINGLE);
+      }
+    }
+
+    CIPLabeler::CIPMol cipmol(mol);
+    Digraph graph(cipmol, cipmol.getAtom(0));
+    expandAll(graph);
+
+    CHECK(graph.getNumNodes() == chain_length);
+    const auto terminal_nodes =
+        graph.getNodes(cipmol.getAtom(chain_length - 1));
+    REQUIRE(terminal_nodes.size() == 1);
+    CHECK(terminal_nodes.front()->getDistance() == chain_length);
+  }
+
+  SECTION("node cap applies to each insertion") {
+    auto mol = "C"_smiles;
+    CIPLabeler::CIPMol cipmol(*mol);
+    Digraph graph(cipmol, cipmol.getAtom(0));
+
+    constexpr auto max_node_count = 100000;
+    for (auto i = 1; i < max_node_count; ++i) {
+      graph.addNode({}, nullptr, boost::rational<int>(1), 1,
+                    Node::IMPL_HYDROGEN);
+    }
+    CHECK(graph.getNumNodes() == max_node_count);
+    CHECK_THROWS_AS(graph.addNode({}, nullptr, boost::rational<int>(1), 1,
+                                  Node::IMPL_HYDROGEN),
+                    TooManyNodesException);
+    CHECK(graph.getNumNodes() == max_node_count);
+  }
 }
 
 TEST_CASE("Mancude fractional atomic numbers", "[accurateCIP]") {
