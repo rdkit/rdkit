@@ -441,12 +441,16 @@ bool replaceFragments(RWMol &mol) {
     }
   }
 
+  bool success = true;
   mol.beginBatchEdit();
   for (auto &replacement : replacements) {
-    replacement.second.replace(mol);
+    if (!replacement.second.replace(mol)) {
+      success = false;
+      break;
+    }
   }
   mol.commitBatchEdit();
-  return true;
+  return success;
 }
 
 void clearInternalCDXProps(std::vector<std::unique_ptr<RWMol>> &mols) {
@@ -1173,8 +1177,13 @@ void visit_children(
         mol->clearProp(NEEDS_FUSE);
         std::unique_ptr<ROMol> fused;
         try {
-          replaceFragments(*mol);
-          fused = molzip(*mol, molzip_params);
+          if (replaceFragments(*mol)) {
+	    fused = molzip(*mol, molzip_params);
+	  } else {
+	    BOOST_LOG(rdWarningLog) << "Failed replacement of fragment skipping... "
+				    << frag_id << std::endl;
+	    continue;
+	  }
         } catch (Invar::Invariant &) {
           BOOST_LOG(rdWarningLog) << "Failed fusion of fragment skipping... "
                                   << frag_id << std::endl;
