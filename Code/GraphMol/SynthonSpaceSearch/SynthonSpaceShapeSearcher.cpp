@@ -1144,6 +1144,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
                   meanExcludedVol);
       if (!getParams().bestHit && checkBondLengths(hit) &&
           initScores[0] >= getParams().similarityCutoff) {
+        updateBestHitSoFar(hit, initScores[0]);
         return true;
       }
       if (initScores[0] >= getParams().similarityCutoff) {
