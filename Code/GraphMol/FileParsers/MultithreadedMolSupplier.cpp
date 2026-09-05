@@ -235,6 +235,27 @@ std::string MultithreadedMolSupplier::getLastItemText() const {
   return d_lastItemText;
 }
 
+void MultithreadedMolSupplier::setNextCallback(nextCallBackFn_t cb) {
+  if (df_started) {
+    throw std::runtime_error("Cannot set callbacks after threads have started");
+  }
+  nextCallback = cb;
+}
+
+void MultithreadedMolSupplier::setWriteCallback(writeCallBackFn_t cb) {
+  if (df_started) {
+    throw std::runtime_error("Cannot set callbacks after threads have started");
+  }
+  writeCallback = cb;
+}
+
+void MultithreadedMolSupplier::setReadCallback(readCallBackFn_t cb) {
+  if (df_started) {
+    throw std::runtime_error("Cannot set callbacks after threads have started");
+  }
+  readCallback = cb;
+}
+
 void MultithreadedMolSupplier::reset() {
   UNDER_CONSTRUCTION("reset() not supported for MultithreadedMolSupplier();");
 }

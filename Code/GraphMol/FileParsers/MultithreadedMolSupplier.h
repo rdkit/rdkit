@@ -93,16 +93,17 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
     place
 
    */
-  void setNextCallback(nextCallBackFn_t cb) { nextCallback = cb; }
+  void setNextCallback(nextCallBackFn_t cb);
 
-  //! sets the callback to be applied to molecules after they are processed, but
+  //! sets the callback to be applied to molecules after they are processed,
+  //! but
   ///! before they are written to the output queue
   /*!
-    \param cb: a function that takes a reference to an RWMol, a const reference
-    to the string record, and an unsigned int record id. This can modify the
-    molecule in place
+    \param cb: a function that takes a reference to an RWMol, a const
+    reference to the string record, and an unsigned int record id. This can
+    modify the molecule in place
   */
-  void setWriteCallback(writeCallBackFn_t cb) { writeCallback = cb; }
+  void setWriteCallback(writeCallBackFn_t cb);
 
   //! sets the callback to be applied to input text records before they are
   ///! added to the input queue
@@ -110,8 +111,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
     \param cb: a function that takes a const reference to the string record and
     an unsigned int record id and returns the modified string record
   */
-  void setReadCallback(readCallBackFn_t cb) { readCallback = cb; }
-
+  void setReadCallback(readCallBackFn_t cb);
   //! not yet implemented
   void init() final {};
 
