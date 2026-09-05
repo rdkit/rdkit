@@ -1218,6 +1218,7 @@ bool SynthonSpaceShapeSearcher::verifyHit(
     // Stick with what we found at the start because the conformational
     // expansion didn't do any better.
     hit = std::move(*initHit);
+    updateBestHitSoFar(hit, initScores[0]);
     foundHit = true;
   }
   return foundHit;
