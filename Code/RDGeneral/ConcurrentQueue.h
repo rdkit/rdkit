@@ -66,8 +66,11 @@ void ConcurrentQueue<E>::push(const E &element) {
   //! concurrent queue is full so we wait until
   //! it is not full
 
-  while (d_head + d_capacity == d_tail) {
+  while (d_head + d_capacity == d_tail && !d_done) {
     d_notFull.wait(lk);
+  }
+  if (d_done) {
+    return;
   }
   bool wasEmpty = (d_head == d_tail);
   d_elements.at(d_tail % d_capacity) = element;
@@ -120,6 +123,7 @@ void ConcurrentQueue<E>::setDone() {
   std::unique_lock<std::mutex> lk(d_lock);
   d_done = true;
   d_notEmpty.notify_all();
+  d_notFull.notify_all();
 }
 
 template <typename E>
