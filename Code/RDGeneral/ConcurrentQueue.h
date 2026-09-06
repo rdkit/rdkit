@@ -12,6 +12,7 @@
 #define CONCURRENT_QUEUE
 #include <condition_variable>
 #include <thread>
+#include <type_traits>
 #include <vector>
 
 namespace RDKit {
@@ -39,7 +40,7 @@ class ConcurrentQueue {
   //! tries to push an element into the queue if it is not full without
   //! modifying the variable element, if the queue is full then pushing an
   //! element will result in blocking
-  void push(const E &element);
+  bool push(const E &element);
 
   //! tries to pop an element from the queue if it is not empty and not done
   //! the boolean value indicates the whether popping is successful, if the
@@ -61,13 +62,18 @@ class ConcurrentQueue {
 };
 
 template <typename E>
-void ConcurrentQueue<E>::push(const E &element) {
+bool ConcurrentQueue<E>::push(const E &element) {
   std::unique_lock<std::mutex> lk(d_lock);
   //! concurrent queue is full so we wait until
   //! it is not full
 
-  while (d_head + d_capacity == d_tail) {
+  while (d_head + d_capacity == d_tail && !d_done) {
     d_notFull.wait(lk);
+  }
+  if (d_done) {
+    // Notify the caller that the element was not
+    // accepted into the queue
+    return false;
   }
   bool wasEmpty = (d_head == d_tail);
   d_elements.at(d_tail % d_capacity) = element;
@@ -78,6 +84,9 @@ void ConcurrentQueue<E>::push(const E &element) {
   if (wasEmpty) {
     d_notEmpty.notify_all();
   }
+
+  // The element was accepted into the queue
+  return true;
 }
 
 template <typename E>
@@ -120,6 +129,7 @@ void ConcurrentQueue<E>::setDone() {
   std::unique_lock<std::mutex> lk(d_lock);
   d_done = true;
   d_notEmpty.notify_all();
+  d_notFull.notify_all();
 }
 
 template <typename E>

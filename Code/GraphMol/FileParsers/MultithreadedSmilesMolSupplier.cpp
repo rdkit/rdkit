@@ -37,7 +37,10 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   CHECK_INVARIANT(!(dp_inStream->eof()), "early EOF");
   // set df_takeOwnership = true
   initFromSettings(true, params, parseParams);
-  POSTCONDITION(dp_inStream, "bad instream");
+  skipComments();
+  if (d_parseParams.titleLine) {
+    processTitleLine();
+  }
 }
 
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
@@ -47,7 +50,10 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   CHECK_INVARIANT(!(inStream->eof()), "early EOF");
   dp_inStream = inStream;
   initFromSettings(takeOwnership, params, parseParams);
-  POSTCONDITION(dp_inStream, "bad instream");
+  skipComments();
+  if (d_parseParams.titleLine) {
+    processTitleLine();
+  }
 }
 
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() {
@@ -63,18 +69,62 @@ void MultithreadedSmilesMolSupplier::initFromSettings(
   d_line = -1;
 }
 
+void MultithreadedSmilesMolSupplier::skipComments() {
+  PRECONDITION(dp_inStream, "bad stream");
+  if (this->atEnd()) {
+    return;
+  }
+
+  // Peek at the first character of each line until we we find one
+  // that is not a comment. We can't look at the full line and then
+  // rewind, because the stream might not support it.
+  std::string tempStr;
+  while (!dp_inStream->eof() && !dp_inStream->fail()) {
+    auto peek = dp_inStream->peek();
+    if (dp_inStream->eof()) {
+      // No next line, this is the end of the file
+      df_readerDone = true;
+      break;
+    }
+    if (peek != '#' && peek != '\r' && peek != '\n') {
+      // Not a comment or empty line, leave
+      break;
+    }
+    // Consume the comment line
+    if (!std::getline(*dp_inStream, tempStr)) {
+      // shouldn´t happen, since we were able to peek
+      df_readerDone = true;
+      break;
+    }
+    ++d_line;
+  }
+}
+
 // --------------------------------------------------
 //
 //  Reads and processes the title line
 //
 void MultithreadedSmilesMolSupplier::processTitleLine() {
   PRECONDITION(dp_inStream, "bad stream");
+  if (this->atEnd()) {
+    // We expected some data, but didn't get any!
+    df_eofHitOnRead = true;
+    return;
+  }
 
-  // loop until we get a valid line
+  // loop until we get a valid line. Since we already
+  // called skipComments() before this, we shouldn't see
+  // any comments
   std::string tempStr;
   while (!dp_inStream->eof() && !dp_inStream->fail() &&
          lineIsEmptyOrComment(tempStr)) {
     tempStr = getLine(dp_inStream);
+    ++d_line;
+  }
+  if (tempStr.empty()) {
+    // We expected some data, but didn't get any!
+    df_eofHitOnRead = true;
+    return;
   }
 
   boost::char_separator<char> sep(d_parseParams.delimiter.c_str(), "",
@@ -92,29 +142,36 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
                                                        unsigned int &index) {
   PRECONDITION(dp_inStream, "bad stream");
   if (dp_inStream->eof()) {
+    df_readerDone = true;
     return false;
-  }
-
-  // need to process title line
-  // if we have not called next yet and the current record id = 1
-  // then we are seeking the first record
-  if (d_lastRecordId == 0 && d_currentRecordId == 1) {
-    if (d_parseParams.titleLine) {
-      this->processTitleLine();
-    }
   }
 
   record.clear();
   std::string tempStr;
   while (!dp_inStream->eof() && !dp_inStream->fail() &&
          lineIsEmptyOrComment(tempStr)) {
-    tempStr = getLine(dp_inStream);
+    if (!std::getline(*dp_inStream, tempStr)) {
+      // We expected some data, but didn't get any!
+      break;
+    };
+    ++d_line;
+  }
+
+  // SmilesMolSupplier skips comments and blank lines and does not expose an
+  // extra null record when none remain.
+  if (lineIsEmptyOrComment(tempStr) &&
+      (dp_inStream->eof() || dp_inStream->fail())) {
+    if (d_lastReadRecordId == 0) {
+      df_eofHitOnRead = true;
+    }
+    df_readerDone = true;
+    return false;
   }
 
   record = tempStr;
   lineNum = d_line;
-  index = d_currentRecordId;
-  ++d_currentRecordId;
+  ++d_lastReadRecordId;
+  index = d_lastReadRecordId;
   return true;
 }
 

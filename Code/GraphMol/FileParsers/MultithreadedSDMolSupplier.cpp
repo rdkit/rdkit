@@ -55,9 +55,11 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
                                                    unsigned int &index) {
   PRECONDITION(dp_inStream, "no stream");
   if (dp_inStream->eof()) {
+    df_readerDone = true;
     return false;
   }
 
+  bool readAnyLine = false;
   std::string currentStr;
   std::string prevStr;
   record.clear();
@@ -70,18 +72,31 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
            prevStr.find("M  END") != 0) ||
           !currentStr.starts_with("$$$$"))) {
     std::swap(prevStr, currentStr);
-    std::getline(*dp_inStream, currentStr);
+    if (std::getline(*dp_inStream, currentStr)) {
+      readAnyLine = true;
+    }
     record += currentStr + "\n";
     ++d_line;
   }
 
-  // ignore trailing new lines
-  if (record.find_first_not_of("\n\r") == std::string::npos) {
+  // A truly empty stream is logical EOF. If getline() successfully read one
+  // or more blank lines, preserve them as a null record, matching
+  // ForwardSDMolSupplier.
+  if (record.find_first_not_of(" \t\r\n") == std::string::npos &&
+      !readAnyLine) {
+    if (dp_inStream->eof() && d_lastReadRecordId == 0) {
+      // Match ForwardSDMolSupplier's empty-input behavior. Do not set this
+      // after a real record: the multithreaded supplier has already prefetched
+      // EOF at that point, and the Python wrapper would otherwise discard the
+      // final molecule.
+      df_eofHitOnRead = true;
+    }
+    df_readerDone = true;
     return false;
   }
 
-  index = d_currentRecordId;
-  ++d_currentRecordId;
+  ++d_lastReadRecordId;
+  index = d_lastReadRecordId;
   return true;
 }
 
@@ -196,6 +211,15 @@ std::unique_ptr<RWMol> MultithreadedSDMolSupplier::processMoleculeRecord(
   }
   return res;
 }
+
+void MultithreadedSDMolSupplier::setProcessPropertyLists(bool val) {
+  if (df_started) {
+    throw std::runtime_error(
+        "Cannot set property lists after threads have started");
+  }
+  df_processPropertyLists.store(val);
+}
+
 }  // namespace FileParsers
 }  // namespace v2
 }  // namespace RDKit

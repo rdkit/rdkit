@@ -1,5 +1,6 @@
 import gzip
 import os
+import tempfile
 import unittest
 
 from rdkit import Chem, RDConfig
@@ -165,6 +166,73 @@ class TestCase(unittest.TestCase):
           raise ValueError('hi')
 
     self.assertRaises(ValueError, helper, sdSup)
+
+  def testGitHubIssue8644(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'CH.mol')
+    noneMols = 0
+    notNoneMols = 0
+    # this is usually enough to hit the async issue described in the PR
+    # without the test taking forever
+    numIters = 100
+    for i in range(numIters):
+      for m in Chem.MultithreadedSDMolSupplier(fileN, numWriterThreads=100):
+        if m is None:
+          noneMols += 1
+        else:
+          notNoneMols += 1
+    self.assertEqual(notNoneMols, numIters)
+    self.assertEqual(noneMols, 0)
+
+  def testEmptySDEOFMatchesForwardSupplier(self):
+
+    with tempfile.TemporaryDirectory() as tmpDir:
+      fileN = os.path.join(tmpDir, 'empty.sdf')
+
+      # create an empty file
+      with open(fileN, 'wb'):
+        pass
+
+      with self.assertRaises(OSError):
+        Chem.MultithreadedSDMolSupplier(fileN)
+
+      with open(fileN, 'wb') as tmp:
+        tmp.write(b'\n')
+
+      with open(fileN, 'rb') as forwardInput:
+        forwardMols = list(Chem.ForwardSDMolSupplier(forwardInput))
+
+      multithreadedMols = list(Chem.MultithreadedSDMolSupplier(fileN))
+
+      # The ForwardSDMolSupplier returns None (parse failure)
+      # for whitespace at the end of the file
+      self.assertEqual(forwardMols, [None])
+      self.assertEqual(multithreadedMols, forwardMols)
+
+  def testEmptySmilesEOFMatchesSupplier(self):
+
+    with tempfile.TemporaryDirectory() as tmpDir:
+      fileN = os.path.join(tmpDir, 'empty.smi')
+
+      # create an empty file
+      with open(fileN, 'wb'):
+        pass
+
+      with self.assertRaises(OSError):
+        Chem.SmilesMolSupplier(fileN, titleLine=False)
+
+      with self.assertRaises(OSError):
+        Chem.MultithreadedSmilesMolSupplier(fileN, titleLine=False)
+
+      for content in (b'\n', b'# comment\n'):
+        with self.subTest(content=content):
+          with open(fileN, 'wb') as tmp:
+            tmp.write(content)
+
+        singleMols = list(Chem.SmilesMolSupplier(fileN, titleLine=False))
+        multithreadedMols = list(Chem.MultithreadedSmilesMolSupplier(fileN, titleLine=False))
+        self.assertEqual(singleMols, [])
+        self.assertEqual(multithreadedMols, singleMols)
 
 
 if __name__ == '__main__':

@@ -38,11 +38,11 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier final
 
   ~MultithreadedSDMolSupplier() final { close(); }
 
-  void setProcessPropertyLists(bool val) { df_processPropertyLists = val; }
+  void setProcessPropertyLists(bool val);
 
-  bool getProcessPropertyLists() const { return df_processPropertyLists; }
-
-  bool getEOFHitOnRead() const final { return df_eofHitOnRead; }
+  bool getProcessPropertyLists() const {
+    return df_processPropertyLists.load();
+  }
 
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
@@ -58,8 +58,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier final
 
   void readMolProps(RWMol &mol, std::istringstream &inStream);
 
-  bool df_processPropertyLists = true;
-  bool df_eofHitOnRead = false;
+  std::atomic<bool> df_processPropertyLists = true;
   MolFileParserParams d_parseParams;
 };
 }  // namespace FileParsers

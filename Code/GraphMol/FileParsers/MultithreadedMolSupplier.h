@@ -74,7 +74,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
 
   //! included for the interface. Python wrappers check this
   //! each time next() is called.  It is not used in the C++ code.
-  virtual bool getEOFHitOnRead() const = 0;
+  virtual bool getEOFHitOnRead() const;
 
   //! returns the record id of the last extracted item
   //! Note: d_LastRecordId = 0, initially therefore the value 0 is returned
@@ -93,16 +93,17 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
     place
 
    */
-  void setNextCallback(nextCallBackFn_t cb) { nextCallback = cb; }
+  void setNextCallback(nextCallBackFn_t cb);
 
-  //! sets the callback to be applied to molecules after they are processed, but
+  //! sets the callback to be applied to molecules after they are processed,
+  //! but
   ///! before they are written to the output queue
   /*!
-    \param cb: a function that takes a reference to an RWMol, a const reference
-    to the string record, and an unsigned int record id. This can modify the
-    molecule in place
+    \param cb: a function that takes a reference to an RWMol, a const
+    reference to the string record, and an unsigned int record id. This can
+    modify the molecule in place
   */
-  void setWriteCallback(writeCallBackFn_t cb) { writeCallback = cb; }
+  void setWriteCallback(writeCallBackFn_t cb);
 
   //! sets the callback to be applied to input text records before they are
   ///! added to the input queue
@@ -110,10 +111,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
     \param cb: a function that takes a const reference to the string record and
     an unsigned int record id and returns the modified string record
   */
-  void setReadCallback(readCallBackFn_t cb) { readCallback = cb; }
-
+  void setReadCallback(readCallBackFn_t cb);
   //! not yet implemented
-  void init() final{};
+  void init() final {};
 
   //! not yet implemented
   void reset() final;
@@ -130,10 +130,13 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
       const std::string &record, unsigned int lineNum) = 0;
 
   //!< stores last extracted record id
-  std::atomic<unsigned int> d_lastRecordId = 0;
+  std::atomic<unsigned int> d_lastReadRecordId = 0;
 
-  int d_line = 0;                      //!< line number we are currently on
-  unsigned int d_currentRecordId = 1;  //!< current record id
+  int d_line = 0;  //!< line number we are currently on
+
+  std::atomic<bool> df_started = false;
+  std::atomic<bool> df_eofHitOnRead = false;
+  std::atomic<bool> df_readerDone = false;
 
   //!< concurrent input queue
   std::unique_ptr<inputQueue_t> d_inputQueue;
@@ -169,7 +172,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   MultithreadedMolSupplier &operator=(const MultithreadedMolSupplier &) =
       delete;
 
-  std::atomic<bool> df_started = false;
   std::atomic<bool> df_forceStop = false;
 
   std::mutex d_threadCounterMutex;
@@ -177,7 +179,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   std::vector<std::thread> d_writerThreads;  //!< vector writer threads
   std::thread d_readerThread;                //!< single reader thread
 
-  std::string d_lastItemText;  //!< stores last extracted record
+  std::string d_lastItemText;               //!< stores last extracted record
+  unsigned int d_lastReturnedRecordId = 0;  //!< stores last extracted record id
+  unsigned int d_returnedCount = 0;
 
   readCallBackFn_t readCallback = nullptr;
   nextCallBackFn_t nextCallback = nullptr;
