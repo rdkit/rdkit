@@ -45,9 +45,12 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build WASM
+        env:
+          NPM_VERSION: ${{ steps.version.outputs.version }}
+          GET_SRC: copy
         run: |
           cd ./Code/MinimalLib
-          NPM_VERSION=${{ steps.version.outputs.version }} GET_SRC=copy bash scripts/build_rdkitjs.sh
+          bash scripts/build_rdkitjs.sh
 
       - name: Setup Node
         uses: actions/setup-node@v4
