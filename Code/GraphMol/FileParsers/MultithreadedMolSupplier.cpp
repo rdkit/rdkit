@@ -119,7 +119,6 @@ void MultithreadedMolSupplier::reader() {
       d_inputQueue->push(r);
     }
   }
-  df_readerDone = true;
   d_inputQueue->setDone();
 }
 

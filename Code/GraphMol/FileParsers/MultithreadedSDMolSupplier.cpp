@@ -55,6 +55,7 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
                                                    unsigned int &index) {
   PRECONDITION(dp_inStream, "no stream");
   if (dp_inStream->eof()) {
+    df_readerDone = true;
     return false;
   }
 
@@ -90,6 +91,7 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
       // final molecule.
       df_eofHitOnRead = true;
     }
+    df_readerDone = true;
     return false;
   }
 

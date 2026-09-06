@@ -142,6 +142,7 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
                                                        unsigned int &index) {
   PRECONDITION(dp_inStream, "bad stream");
   if (dp_inStream->eof()) {
+    df_readerDone = true;
     return false;
   }
 
@@ -163,6 +164,7 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
     if (d_lastReadRecordId == 0) {
       df_eofHitOnRead = true;
     }
+    df_readerDone = true;
     return false;
   }
 
