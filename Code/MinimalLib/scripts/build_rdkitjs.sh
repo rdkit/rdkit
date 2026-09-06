@@ -21,7 +21,6 @@ mkdir -p $MINIMALLIB_OUTPUT_PATH
 if [ "$GET_SRC" = copy ]; then
     echo "Building distribution files from local source tree"
     docker compose -f docker/docker_compose_build_minimallib.yml build \
-        --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions" \
         --build-arg "VERSION=${NPM_VERSION}"
 else
     RDKIT_BRANCH=${1:-master}

@@ -13,7 +13,8 @@
 
 
 ARG EMSDK_VERSION="latest"
-ARG EXCEPTION_HANDLING="-fexceptions -sNO_DISABLE_EXCEPTION_CATCHING"
+# Set to follow for JS-handle of exceptions "-fexceptions -sNO_DISABLE_EXCEPTION_CATCHING"
+ARG EXCEPTION_HANDLING="-fwasm-exceptions"
 ARG BOOST_MAJOR_VERSION="1"
 ARG BOOST_MINOR_VERSION="87"
 ARG BOOST_PATCH_VERSION="0"
@@ -52,6 +53,7 @@ RUN apt-get update && apt-get upgrade -y && apt install -y \
   g++ \
   libeigen3-dev \
   git \
+  jq \
   xz-utils \
   nodejs
 

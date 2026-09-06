@@ -1,6 +1,6 @@
 # This docker-compose file is used to build the RDKit MinimalLib
 # from either GitHub or a local source tree.
-# The build consists of three stages (services):
+# The build consists of four stages (services):
 # 1. `deps`: This service builds the dependencies required for RDKit.
 # 2. `rdkit_get_src`: This service gets the RDKit source code from
 #    either from a local source tree (GET_SRC=copy, the default)
@@ -9,6 +9,8 @@
 # 3. `rdkit_build`: This service builds the RDKit MinimalLib using
 #    the dependencies built in the first service and the source code
 #    copied in the second service.
+# 4. `rdkit_pack_test`: This service tests npm pack and npm publish
+#    --dry-run using the build artifacts from the previous service.
 #
 # Example usage:
 # (the --build-arg are all optional)
@@ -57,3 +59,14 @@ services:
     image: rdkit-minimallib:latest
     depends_on:
       - rdkit_get_src
+
+  rdkit_test:
+    environment:
+      - NETWORK_MODE=${NETWORK_MODE:-bridge}
+    network_mode: ${NETWORK_MODE:-bridge}
+    build:
+      context: .
+      dockerfile: 05_test.Dockerfile
+    image: rdkit-minimallib-test:latest
+    depends_on:
+      - rdkit_build

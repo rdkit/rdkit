@@ -52,7 +52,8 @@
 # docker rm rdkit-minimallib-container
 
 
-ARG EXCEPTION_HANDLING="-fexceptions -sNO_DISABLE_EXCEPTION_CATCHING"
+# Set to follow for JS-handle of exceptions "-fexceptions -sNO_DISABLE_EXCEPTION_CATCHING"
+ARG EXCEPTION_HANDLING="-fwasm-exceptions"
 
 FROM rdkit-minimallib-rdkit-src AS build-stage
 ARG EXCEPTION_HANDLING
@@ -100,8 +101,9 @@ RUN cp assets/package.json ./build
 RUN cp README.md ./build
 RUN mv ./dist ./build
 
+# Set version in package
 WORKDIR /src/rdkit/Code/MinimalLib/build
-RUN /opt/emsdk/node/*/bin/node -e "const p=require('./package.json');p.version='${VERSION}';require('fs').writeFileSync('./package.json',JSON.stringify(p,null,2))"
+RUN jq --arg v "${VERSION}" '.version = $v' package.json > package.json.tmp && mv package.json.tmp package.json
 
 # run the tests
 WORKDIR /src/rdkit/Code/MinimalLib/tests
