@@ -42,7 +42,6 @@ jobs:
     boost_version: 1.82.0
     compiler: gxx_linux-64
     number_of_cores: nproc
-    python_name: python39
     cc: gcc-11
     cxx: g++-11
   steps:
@@ -58,7 +57,6 @@ jobs:
     cc: gcc-13
     cxx: g++-13
     number_of_cores: nproc
-    python_name: python312
   steps:
   - template: .azure-pipelines/linux_build_py312.yml
 - job: Ubuntu_x64_nb
@@ -69,7 +67,6 @@ jobs:
     python: python=3.14
     boost_version: 1.91.0
     number_of_cores: nproc
-    python_name: python314
   steps:
   - template: .azure-pipelines/linux_build_nb.yml
 - job: macOS_x64
@@ -149,7 +146,6 @@ jobs:
   variables:
     boost_version: 1.84.0
     number_of_cores: nproc
-    python_name: python39
     compiler: gxx_linux-64
     cc: gcc-10
     cxx: g++-10
@@ -162,7 +158,6 @@ jobs:
   variables:
     boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
-    python_name: python39
   steps:
   - template: .azure-pipelines/vs_build_swig.yml
 
