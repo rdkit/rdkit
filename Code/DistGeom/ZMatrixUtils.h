@@ -54,6 +54,12 @@ struct TorsionRange {
     d_qUpper = quantize(upper);
   }
 
+  TorsionRange(int64_t qLower, int64_t qUpper)
+      : d_qLower(qLower), d_qUpper(qUpper) {
+    lower = dequantize(qLower);
+    upper = dequantize(qUpper);
+  }
+
   bool qContains(const int64_t value) const {
     if (d_qLower <= d_qUpper) {
       return value >= d_qLower && value <= d_qUpper;
@@ -105,6 +111,12 @@ struct TorsionValues {
   const_iterator cbegin() const { return content.cbegin(); }
   const_iterator cend() const { return content.cend(); }
 
+  friend TorsionValues merge(TorsionValues lhs,  // copying on purpose!
+                             TorsionValues rhs) {
+    rhs.content.merge(lhs.content);  // lhs <- lhs n rhs; rhs <- union
+    return lhs;
+  }
+
   double sample(RDKit::double_source_type &rng) const {
     const auto idxT =
         static_cast<std::size_t>(rng() * static_cast<double>(this->size()));
@@ -116,6 +128,8 @@ struct TorsionValues {
     // [-M_PI, M_PI] again
     return dequantize(*it);
   }
+
+  double firstValue() const { return dequantize(*content.begin()); }
 
   std::pair<iterator, bool> insert(double val) {
     return content.insert(quantize(val));
@@ -161,7 +175,7 @@ inline TorsionCandidates merge(const TorsionRange &range,
   }
 
   const auto &[minIt, maxIt] = std::ranges::minmax_element(values);
-  const TorsionRange minMaxValues{dequantize(*minIt), dequantize(*maxIt)};
+  const TorsionRange minMaxValues{*minIt, *maxIt};
 
   return merge(range, minMaxValues);
 }
@@ -169,14 +183,6 @@ inline TorsionCandidates merge(const TorsionRange &range,
 inline TorsionCandidates merge(const TorsionValues &values,
                                const TorsionRange &range) {
   return merge(range, values);
-}
-
-inline TorsionCandidates merge(TorsionValues lhs,  // copying on purpose!
-                               const TorsionValues &rhs) {
-  for (const auto val : rhs) {
-    lhs.insertQ(val);
-  }
-  return lhs;
 }
 
 inline bool less(const TorsionRange &lhs, const TorsionRange &rhs) {

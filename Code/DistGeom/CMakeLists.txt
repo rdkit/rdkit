@@ -19,6 +19,9 @@ rdkit_headers(BoundsMatrix.h
 rdkit_catch_test(testDistGeom testDistGeom.cpp 
 LINK_LIBRARIES DistGeometry )
 
+rdkit_catch_test(distGeomCatch catch_tests.cpp 
+LINK_LIBRARIES DistGeometry )
+
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
