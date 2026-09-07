@@ -703,18 +703,22 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     typedef std::tuple<std::string, std::vector<unsigned int>,
                        std::vector<unsigned int>>
         tplType;
-    std::vector<tplType> tmp(vfragsmi.size());
-    for (unsigned int ti = 0; ti < vfragsmi.size(); ++ti) {
+    const auto numFrags = vfragsmi.size();
+    std::vector<tplType> tmp(numFrags);
+    for (size_t ti = 0; ti < numFrags; ++ti) {
       tmp[ti] = std::make_tuple(std::move(vfragsmi[ti]),
                                 std::move(allAtomOrdering[ti]),
                                 std::move(allBondOrdering[ti]));
     }
+    vfragsmi.clear();
+    allAtomOrdering.clear();
+    allBondOrdering.clear();
 
     std::sort(tmp.begin(), tmp.end());
 
-    for (unsigned int ti = 0; ti < vfragsmi.size(); ++ti) {
+    for (unsigned int ti = 0; ti < numFrags; ++ti) {
       result += std::get<0>(tmp[ti]);
-      if (ti < vfragsmi.size() - 1) {
+      if (ti + 1 < numFrags) {
         result += ".";
       }
       flattenedAtomOrdering.insert(flattenedAtomOrdering.end(),
