@@ -159,6 +159,7 @@ struct EmbedArgs {
   std::vector<std::unique_ptr<Conformer>> *confs;
   unsigned int fragIdx;
   DistGeom::BoundsMatPtr mmat;
+  DistGeom::ZMatPtr zmat;
   DistGeom::VECT_CHIRALSET const *chiralCenters;
   DistGeom::VECT_CHIRALSET const *tetrahedralCarbons;
   std::vector<std::tuple<unsigned int, unsigned int, unsigned int>> const
@@ -393,37 +394,62 @@ bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
 }
 
 namespace EmbeddingOps {
+
+bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
+                        const detail::EmbedArgs &eargs,
+                        const EmbedParameters &);
+
+bool checkTetrahedralCenters(const RDGeom::PointPtrVect *positions,
+                             const detail::EmbedArgs &eargs,
+                             const double tol = TETRAHEDRAL_CENTERINVOLUME_TOL);
+
 bool generateInitialCoords(RDGeom::PointPtrVect *positions,
                            const detail::EmbedArgs &eargs,
                            const EmbedParameters &embedParams,
                            RDNumeric::DoubleSymmMatrix &distMat,
                            RDKit::double_source_type *rng) {
   bool gotCoords = false;
-  if (!embedParams.useRandomCoords) {
-    double largestDistance =
-        DistGeom::pickRandomDistMat(*eargs.mmat, distMat, *rng);
-    RDUNUSED_PARAM(largestDistance);
-    gotCoords = DistGeom::computeInitialCoords(distMat, *positions, *rng,
-                                               embedParams.randNegEig,
-                                               embedParams.numZeroFail);
-  } else {
-    double boxSize;
-    if (embedParams.boxSizeMult > 0) {
-      boxSize = 5. * embedParams.boxSizeMult;
-    } else {
-      boxSize = -1 * embedParams.boxSizeMult;
+
+  switch (embedParams.initialEmbeddingMode) {
+    case InitialEmbeddingMode::DG_EMBEDDING: {
+      double largestDistance =
+          DistGeom::pickRandomDistMat(*eargs.mmat, distMat, *rng);
+      RDUNUSED_PARAM(largestDistance);
+      gotCoords = DistGeom::computeInitialCoords(distMat, *positions, *rng,
+                                                 embedParams.randNegEig,
+                                                 embedParams.numZeroFail);
+      break;
     }
-    gotCoords = DistGeom::computeRandomCoords(*positions, boxSize, *rng);
-    if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
-      for (const auto &v : *embedParams.coordMap) {
-        auto p = positions->at(v.first);
-        for (unsigned int ci = 0; ci < v.second.dimension(); ++ci) {
-          (*p)[ci] = v.second[ci];
-        }
-        // zero out any higher dimensional components:
-        for (unsigned int ci = v.second.dimension(); ci < p->dimension();
-             ++ci) {
-          (*p)[ci] = 0.0;
+    case InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING: {
+      gotCoords = DistGeom::computeZMatrixCoords(*eargs.zmat, *positions, *rng);
+      if (eargs.fourD && (!checkTetrahedralCenters(positions, eargs) ||
+                          !checkChiralCenters(positions, eargs, embedParams))) {
+        // only add non-zero fourth dimention if chiral centers are off
+        std::ranges::for_each(*positions, [&rng](auto *position) {
+          (*position)[3] = 0.2 * ((*rng)() - 0.5);
+        });
+      }
+      break;
+    }
+    case InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING: {
+      double boxSize;
+      if (embedParams.boxSizeMult > 0) {
+        boxSize = 5. * embedParams.boxSizeMult;
+      } else {
+        boxSize = -1 * embedParams.boxSizeMult;
+      }
+      gotCoords = DistGeom::computeRandomCoords(*positions, boxSize, *rng);
+      if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
+        for (const auto &v : *embedParams.coordMap) {
+          auto p = positions->at(v.first);
+          for (unsigned int ci = 0; ci < v.second.dimension(); ++ci) {
+            (*p)[ci] = v.second[ci];
+          }
+          // zero out any higher dimensional components:
+          for (unsigned int ci = v.second.dimension(); ci < p->dimension();
+               ++ci) {
+            (*p)[ci] = 0.0;
+          }
         }
       }
     }
@@ -476,9 +502,8 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
   return gotCoords;
 }
 
-bool checkTetrahedralCenters(
-    const RDGeom::PointPtrVect *positions, const detail::EmbedArgs &eargs,
-    const double tol = TETRAHEDRAL_CENTERINVOLUME_TOL) {
+bool checkTetrahedralCenters(const RDGeom::PointPtrVect *positions,
+                             const detail::EmbedArgs &eargs, const double tol) {
   // for each of the atoms in the "tetrahedralCarbons" list, make sure
   // that there is a minimum volume around them and that they are inside
   // that volume. (this is part of github #971)
@@ -915,6 +940,10 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     }
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
+
+    if (embedParams.onlyInitialEmbedding) {
+      return gotCoords;
+    }
     if (!gotCoords) {
       if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -1078,6 +1107,10 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     // Get Initial positions
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
+
+    if (embedParams.onlyInitialEmbedding) {
+      return gotCoords;
+    }
     if (!gotCoords) {
       if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -1353,8 +1386,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -1731,6 +1764,12 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         << std::endl;
   }
 
+  // DEPRECATED
+  if (params.useRandomCoords) {
+    params.initialEmbeddingMode =
+        InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING;
+  }
+
   // initialize the conformers we're going to be creating:
   if (params.clearConfs) {
     res.clear();
@@ -1803,6 +1842,12 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
             : ForceFields::CrystalFF::ETKDGForceConsts::AIO::Cosine;
 
     DistGeom::BoundsMatPtr mmat;
+
+    if (params.internalCoords == nullptr) {
+      params.internalCoords =
+          std::make_shared<InternalCoordinates>(piece->getNumBonds());
+    }
+
     if (params.boundsMat == nullptr || molFrags.size() > 1) {
       // The user didn't provide one, so create and initialize the distance
       // bounds matrix
@@ -1822,6 +1867,15 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
             "size of boundsMat provided does not match the number of atoms in "
             "the molecule.");
       }
+      if (params.initialEmbeddingMode ==
+          InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING) {
+        // making sure, we collect internal coordinates
+        mmat.reset(new DistGeom::BoundsMatrix(nAtoms));
+        setTopolBounds(
+            *piece.get(), mmat,
+            params);  // for now, we use the bounds matrix internal coordinates,
+                      // in future, this should be an independend instance
+      }
       collectBondsAndAngles((*piece.get()), etkdgDetails.bonds,
                             etkdgDetails.angles);
       mmat.reset(new DistGeom::BoundsMatrix(*params.boundsMat));
@@ -1835,6 +1889,14 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons,
                                  coordMap);
 
+    DistGeom::ZMatPtr zmat =
+        std::make_shared<DistGeom::ZMatrix>(mol.getNumAtoms());
+    if (params.initialEmbeddingMode ==
+        InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING) {
+      setMoleculeDFS(*piece.get(), zmat, *params.internalCoords);
+      correctChiralCenters(mol, zmat);
+    }
+
     // find double bonds
     std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
         doubleBondEnds;
@@ -1846,20 +1908,31 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     // will first embed the molecule in four dimensions, otherwise we will
     // use 3D
     bool fourD = false;
-    if (params.useRandomCoords || chiralCenters.size() > 0) {
+    if (params.useRandomCoords || chiralCenters.size() > 0 ||
+        (params.initialEmbeddingMode ==
+             InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING &&
+         (chiralCenters.size() > 0 || tetrahedralCarbons.size() > 0))) {
       fourD = true;
     }
+
     int numThreads = getNumThreadsToUse(params.numThreads);
 
     ControlCHandler hdlr;
 
     // do the embedding, using multiple threads if requested
-    detail::EmbedArgs eargs = {&confsOk,        fourD,
-                               &fragMapping,    &confs,
-                               fragIdx,         mmat,
-                               &chiralCenters,  &tetrahedralCarbons,
-                               &doubleBondEnds, &stereoDoubleBonds,
-                               &etkdgDetails,   piece->getNumHeavyAtoms()};
+    detail::EmbedArgs eargs = {&confsOk,
+                               fourD,
+                               &fragMapping,
+                               &confs,
+                               fragIdx,
+                               mmat,
+                               zmat,
+                               &chiralCenters,
+                               &tetrahedralCarbons,
+                               &doubleBondEnds,
+                               &stereoDoubleBonds,
+                               &etkdgDetails,
+                               piece->getNumHeavyAtoms()};
     if (numThreads == 1) {
       detail::embedHelper_(0, 1, &eargs, &params, end_time);
     }

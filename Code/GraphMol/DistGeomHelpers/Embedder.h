@@ -18,6 +18,7 @@
 #include <GraphMol/ROMol.h>
 #include <boost/shared_ptr.hpp>
 #include <DistGeom/BoundsMatrix.h>
+#include "ZMatrixBuilder.h"
 
 namespace RDKit {
 namespace DGeomHelpers {
@@ -39,6 +40,12 @@ enum EmbedFailureCauses {
   KTERM_VIOLATION = 13,
   CLASH = 14,
   END_OF_ENUM = 15,
+};
+
+enum class InitialEmbeddingMode {
+  DG_EMBEDDING,
+  INTERNAL_COORDINATE_EMBEDDING,
+  RANDOM_COORDINATE_EMBEDDING
 };
 
 //! Parameter object for controlling embedding
@@ -151,12 +158,16 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool useMacrocycle14config{false};
   unsigned int timeout{0};
   bool useLegacyImplementation{true};
+  InitialEmbeddingMode initialEmbeddingMode{InitialEmbeddingMode::DG_EMBEDDING};
+  std::shared_ptr<InternalCoordinates> internalCoords{
+      nullptr};  // internals TODO
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI{
       nullptr};
   void (*callback)(unsigned int){nullptr};
   bool forceTransAmides{true};
   bool useSymmetryForPruning{true};
   double boundsMatForceScaling{1.0};
+  bool onlyInitialEmbedding{false};
   bool trackFailures{false};
   std::vector<unsigned int> failures{};
   bool enableSequentialRandomSeeds{false};

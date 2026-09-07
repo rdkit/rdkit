@@ -12,6 +12,7 @@
 #define _RD_DISTGEOMUTILS_H_
 
 #include "BoundsMatrix.h"
+#include "ZMatrix.h"
 #include <Numerics/SymmMatrix.h>
 #include <map>
 #include <Geometry/point.h>
@@ -86,6 +87,27 @@ RDKIT_DISTGEOMETRY_EXPORT bool computeRandomCoords(
 //! \overload
 RDKIT_DISTGEOMETRY_EXPORT bool computeRandomCoords(
     RDGeom::PointPtrVect &positions, double boxSize,
+    RDKit::double_source_type &rng);
+
+//! places atoms from a given Z-Matrix
+/*!
+  \param zmat        The Z-Matrix
+  \param positions     A vector of pointers to Points to write out the resulting
+  coordinates
+  \param setFourthDimension    if true, a fourth dimention is uniformly sampled
+from [-1,1]
+
+  \return true if the coordinate generation was successful
+TODO
+
+  \return true if the coordinate generation was successful (which is always the
+case here)
+*/
+RDKIT_DISTGEOMETRY_EXPORT bool computeZMatrixCoords(
+    ZMatrix &zmat, RDGeom::PointPtrVect &positions, int seed = -1);
+//! \overload
+RDKIT_DISTGEOMETRY_EXPORT bool computeZMatrixCoords(
+    ZMatrix &zmat, RDGeom::PointPtrVect &positions,
     RDKit::double_source_type &rng);
 
 //! Setup the error function for violation of distance bounds as a forcefield
