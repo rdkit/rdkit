@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2026 Katharina Buchthal and other RDKit contributors
+//  Copyright (C) 2026 ETH Zurich
+//  Created by: Katharina Buchthal
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
