@@ -9,7 +9,7 @@ steps:
     conda create --name rdkit_build -c conda-forge --override-channels  cmake \
         libboost=$(boost_version) \
         libboost-devel=$(boost_version) \
-        eigen cairo freetype swig=4.2 ccache
+        eigen cairo freetype swig ccache
   displayName: Setup build environment
 - template: _templates/steps_setup_cache.yml
 - bash: |

@@ -46,7 +46,7 @@ jobs:
     cxx: g++-11
   steps:
   - template: .azure-pipelines/linux_build.yml
-- job: Ubuntu_x64_py314 # up to date version of things
+- job: Ubuntu_x64_new # up to date version of things
   timeoutInMinutes: 120
   pool:
     vmImage: ubuntu-latest
@@ -73,7 +73,6 @@ jobs:
     vmImage: macos-14
   variables:
     compiler: clangxx_osx-64=18.1
-    compiler_version: 16
     boost_version: 1.92
     number_of_cores: sysctl -n hw.ncpu
     target_platform: 14
@@ -86,8 +85,7 @@ jobs:
     vmImage: macos-14
   variables:
     compiler: clangxx_osx-64=18.1
-    compiler_version: 16
-    boost_version: 1.92
+    boost_version: 1.91
     number_of_cores: sysctl -n hw.ncpu
     target_platform: 14
   steps:
