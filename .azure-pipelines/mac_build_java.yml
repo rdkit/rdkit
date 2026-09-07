@@ -23,7 +23,7 @@ steps:
         libcxx cmake \
         libboost=$(boost_version) \
         libboost-devel=$(boost_version) \
-        cairo eigen swig=4.2 make ccache
+        cairo eigen swig make ccache
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
