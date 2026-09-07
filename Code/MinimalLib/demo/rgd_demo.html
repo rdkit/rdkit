@@ -23,7 +23,7 @@ to switch from canvas to SVG output
     }
   </style>
 </head>
-<script src="./RDKit_minimal.js"></script>
+<script src="../build/dist/RDKit_minimal.js"></script>
 <script>
   const urlParams = new URLSearchParams(document.location.search);
   const useSvg = (urlParams.get('output') || '').toLowerCase() === 'svg';

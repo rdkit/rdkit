@@ -10,7 +10,7 @@
 #   --build-arg https_proxy=$HTTP_PROXY \
 #   --build-arg "RDKIT_GIT_URL=https://github.com/myfork/rdkit.git" \
 #   --build-arg "RDKIT_BRANCH=mybranch" \
-#   --network=host -f Dockerfile_rdkit_clone_from_github .
+#   --network=host -f 02_rdkit_clone.Dockerfile .
 
 
 ARG RDKIT_GIT_URL="https://github.com/rdkit/rdkit.git"
