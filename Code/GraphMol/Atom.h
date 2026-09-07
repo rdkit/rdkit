@@ -273,7 +273,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! NOT CALLABLE
   virtual void setQuery(QUERYATOM_QUERY *what);
 
-  //! NOT CALLABLE
+  //! returns nullptr
   virtual QUERYATOM_QUERY *getQuery() const;
   //! NOT CALLABLE
   virtual void expandQuery(

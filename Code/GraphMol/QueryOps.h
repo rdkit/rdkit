@@ -836,9 +836,12 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
     res->setNegation(getNegation());
     res->d_description = d_description;
     res->d_serialNumber = d_serialNumber;
+    res->df_initialized = df_initialized;
     return res;
   }
   unsigned int getSerialNumber() const { return d_serialNumber; }
+  void setInitialized(bool initialized) { df_initialized = initialized; }
+  bool getInitialized() const { return df_initialized; }
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
   std::mutex d_mutex;
@@ -846,6 +849,7 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
  private:
   boost::shared_ptr<const ROMol> dp_queryMol;
   unsigned int d_serialNumber{0};
+  bool df_initialized{false};
 };
 
 template <typename T>

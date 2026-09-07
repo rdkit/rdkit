@@ -25,6 +25,8 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Substruct/SubstructDetails.h>
+
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolPickler.h>
@@ -1244,3 +1246,32 @@ M  END
   interruptThread.join();
 }
 #endif
+
+TEST_CASE("recursive matcher and query initialization") {
+  auto mol = "CC=C"_smiles;
+  REQUIRE(mol);
+  auto qry = "[C;!$(C=C)]C"_smarts;
+  REQUIRE(qry);
+  CHECK(hasUninitializedRecursiveQuery(*qry->getAtomWithIdx(0)));
+  CHECK(!hasUninitializedRecursiveQuery(*qry->getAtomWithIdx(1)));
+  CHECK(!hasRecursiveQuery(*qry->getAtomWithIdx(1)));
+  SECTION("basics") {
+    // do the substructure match
+    SubstructMatchParameters ps;
+    auto matches = SubstructMatch(*mol, *qry, ps);
+    CHECK(matches.size() == 1);
+    // the recursive query should now be initialized
+    CHECK(!hasUninitializedRecursiveQuery(*qry->getAtomWithIdx(0)));
+  }
+  SECTION("MatchSubqueries initializes the recursive query") {
+    // call MatchSubqueries directly, which should initialize the recursive
+    // query
+    SubstructMatchParameters ps;
+    detail::SUBQUERY_MAP subqueryMap;
+    std::vector<RecursiveStructureQuery *> lockedQueries;
+    detail::MatchSubqueries(*mol, qry->getAtomWithIdx(0)->getQuery(), ps,
+                            subqueryMap, lockedQueries);
+    // the recursive query should now be initialized
+    CHECK(!hasUninitializedRecursiveQuery(*qry->getAtomWithIdx(0)));
+  }
+}
