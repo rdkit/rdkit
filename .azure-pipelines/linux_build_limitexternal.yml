@@ -12,7 +12,7 @@ steps:
     conda create --name rdkit_build -c conda-forge --override-channels $(python) cmake \
         libboost=$(boost_version) libboost-devel=$(boost_version) \
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
-        numpy pillow eigen pandas=2.1 \
+        numpy pillow eigen pandas=3 \
         qt pytest ccache
     conda activate rdkit_build
     conda config --env --add channels conda-forge

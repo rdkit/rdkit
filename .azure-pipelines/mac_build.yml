@@ -26,7 +26,7 @@ steps:
         libboost=$(boost_version) libboost-devel=$(boost_version) \
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         qt \
-        numpy matplotlib=3.8 cairo pillow eigen pandas=2.1  \
+        numpy matplotlib=3.8 cairo pillow eigen pandas=3  \
         jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval make ccache
   displayName: Setup build environment
 - template: _templates/steps_setup_cache.yml
