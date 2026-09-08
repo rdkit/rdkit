@@ -2244,7 +2244,7 @@ namespace {
 //! detect atropisomers and discard the ones that cannot actually rotate
 /*!
   We run after sanitization, so MolOps::cleanupAtropisomers() has already had
-  its turn and won't get another one. Repeat the ring check it does here so
+  its turn and won't get another one. Redo the ring check it does here so
   that bonds in small rings don't end up tagged as atropisomers.
 */
 void detectAtropisomersPostSanitization(ROMol &mol, bool cleanIt) {
@@ -2257,12 +2257,12 @@ void detectAtropisomersPostSanitization(ROMol &mol, bool cleanIt) {
   }
   bool removedAny = false;
   for (auto bond : mol.bonds()) {
-    // bonds in macrocycles are left alone, since they can link actual
-    // atropisomeric portions
+    // bonds in macrocycles (rings with 9 or more members) are left alone,
+    // since they can link actual atropisomeric portions
     if ((bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
          bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) &&
         ri->numBondRings(bond->getIdx()) > 0 &&
-        ri->minBondRingSize(bond->getIdx()) < 8) {
+        ri->minBondRingSize(bond->getIdx()) < 9) {
       bond->setStereo(Bond::BondStereo::STEREONONE);
       removedAny = true;
     }
