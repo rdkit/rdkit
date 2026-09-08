@@ -3877,6 +3877,15 @@ TEST_CASE("expand and remove AttachmentPoints") {
     attachment->setProp(common_properties::atomLabel, "_AP3x");
     CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
     CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel, "_AP+1");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel, "_AP-1");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel, "_AP 1");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
     attachment->setProp(common_properties::atomLabel,
                         "_AP999999999999999999999999999999999999");
     CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);

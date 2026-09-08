@@ -1271,10 +1271,14 @@ unsigned int getAttachmentPointLabelNumber(const Atom *atom) {
                     attachmentPointLabelPrefix) != 0) {
     return 0;
   }
+  // lexical_cast accepts a leading sign, so check the suffix ourselves
+  const auto suffix = label.substr(attachmentPointLabelPrefix.size());
+  if (suffix.find_first_not_of("0123456789") != std::string::npos) {
+    return 0;
+  }
   unsigned int result = 0;
   try {
-    result = boost::lexical_cast<unsigned int>(
-        label.substr(attachmentPointLabelPrefix.size()));
+    result = boost::lexical_cast<unsigned int>(suffix);
   } catch (const boost::bad_lexical_cast &) {
     return 0;
   }
