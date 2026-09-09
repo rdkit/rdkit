@@ -1843,7 +1843,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 
     DistGeom::BoundsMatPtr mmat;
 
-    if (params.internalCoords == nullptr) {
+    if (params.internalCoords == nullptr || molFrags.size() > 1) {
       params.internalCoords =
           std::make_shared<InternalCoordinates>(piece->getNumBonds());
     }
@@ -1889,12 +1889,11 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons,
                                  coordMap);
 
-    DistGeom::ZMatPtr zmat =
-        std::make_shared<DistGeom::ZMatrix>(mol.getNumAtoms());
+    DistGeom::ZMatPtr zmat = std::make_shared<DistGeom::ZMatrix>(nAtoms);
     if (params.initialEmbeddingMode ==
         InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING) {
       setMoleculeDFS(*piece.get(), zmat, *params.internalCoords);
-      correctChiralCenters(mol, zmat);
+      correctChiralCenters(*piece.get(), zmat);
     }
 
     // find double bonds
