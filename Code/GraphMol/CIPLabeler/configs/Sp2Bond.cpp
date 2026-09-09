@@ -25,6 +25,9 @@ Sp2Bond::Sp2Bond(const CIPMol &mol, Bond *bond, Atom *startAtom, Atom *endAtom,
   CHECK_INVARIANT(d_cfg == Bond::STEREOTRANS || d_cfg == Bond::STEREOCIS,
                   "bad config")
 
+  if (bond->getBondType() != Bond::DOUBLE) {
+    return;
+  }
   auto stereo_atoms = Chirality::findStereoAtoms(bond);
   CHECK_INVARIANT(stereo_atoms.size() == 2, "incorrect number of stereo atoms")
 
@@ -98,6 +101,10 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
   auto edges2 = root2->getEdges();
   removeInternalEdges(edges1, focus1, focus2);
   removeInternalEdges(edges2, focus1, focus2);
+
+  if (getCarriers().size() != 2 || edges1.empty() || edges2.empty()) {
+    return Descriptor::ns;
+  }
 
   auto carriers = std::vector<Atom *>(getCarriers());
   auto config = d_cfg;

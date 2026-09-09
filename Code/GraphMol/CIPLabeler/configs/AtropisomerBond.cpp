@@ -29,7 +29,8 @@ AtropisomerBond::AtropisomerBond(const CIPMol &mol, Bond *bond, Atom *startAtom,
 
   Atropisomers::AtropAtomAndBondVec atomAndBondVecs[2];
   if (!Atropisomers::getAtropisomerAtomsAndBonds(bond, atomAndBondVecs,
-                                                 bond->getOwningMol())) {
+                                                 bond->getOwningMol()) ||
+      atomAndBondVecs[0].second.empty() || atomAndBondVecs[1].second.empty()) {
     return;  // not an atropisomer
   }
   auto atom1 = mol.getAtom(atomAndBondVecs[0].second[0]->getOtherAtomIdx(
@@ -107,6 +108,10 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
 
   removeDuplicatesAndHs(edges1);
   removeDuplicatesAndHs(edges2);
+
+  if (getCarriers().size() != 2 || edges1.empty() || edges2.empty()) {
+    return Descriptor::ns;
+  }
 
   auto carriers = std::vector<Atom *>(getCarriers());
   auto config = d_cfg;
