@@ -361,9 +361,10 @@ bool DoubleCubicLatticeVolume::testPoint(
 double DoubleCubicLatticeVolume::getAtomSurfaceArea(unsigned int atomIdx) {
   // surface area for single atom
 
-  // clear our current surface points
-  surfacePoints[atomIdx].clear();
-
+  // clear our current surface points, if there are any
+  if (surfacePoints.find(atomIdx) != surfacePoints.end()) {
+    surfacePoints[atomIdx].clear();
+  }
   const auto rad = radii_[atomIdx];
   if (rad == 0.0) {
     return 0.0;  // don't include if radius = 0, masked atom
