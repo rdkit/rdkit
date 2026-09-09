@@ -74,12 +74,12 @@ RDKIT_CIPLABELER_EXPORT void assignCIPLabels(
  *   \param mol - the molecule to be labelled.
  *
  *   \param atoms - bitset with the atom indexes to be labeled.
- *      A nonempty bitset must have mol.getNumAtoms() bits. Unselected atom
+ *      The bitset must have mol.getNumAtoms() bits. Unselected atom
  *      configurations may still be used as auxiliary stereochemical
  *      dependencies, but their primary labels are not written.
  *
  *   \param bonds - bitset with the bond indexes to be labeled.
- *      A nonempty bitset must have mol.getNumBonds() bits. Unselected bond
+ *      The bitset must have mol.getNumBonds() bits. Unselected bond
  *      configurations may still be used as auxiliary stereochemical
  *      dependencies, but their primary labels are not written.
  *

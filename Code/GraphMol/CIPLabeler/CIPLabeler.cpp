@@ -310,18 +310,6 @@ void label(ConfigList &configs, unsigned int maxRecursiveIterations) {
   }
 }
 
-void validateSelection(const boost::dynamic_bitset<> &selection,
-                       unsigned int expectedSize, const char *kind) {
-  // Empty bitsets intentionally select none and are part of the public API.
-  if (!selection.empty() && selection.size() != expectedSize) {
-    std::ostringstream msg;
-    msg << "Error: CIP " << kind
-        << " selection bitset does not match the number of " << kind
-        << "s on the mol.";
-    throw ValueErrorException(msg.str());
-  }
-}
-
 template <typename T>
 void clearCIPProperties(T *object) {
   object->clearProp(common_properties::_CIPCode);
@@ -359,10 +347,12 @@ void clearSelectedCIPProperties(ROMol &mol,
 void assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
                      const boost::dynamic_bitset<> &bonds,
                      unsigned int maxRecursiveIterations) {
-  ControlCHandler hdlr;
+  PRECONDITION(atoms.size() == mol.getNumAtoms(),
+               "Atoms bitset size does not match number of atoms")
+  PRECONDITION(bonds.size() == mol.getNumBonds(),
+               "Bonds bitset size does not match number of bonds")
 
-  validateSelection(atoms, mol.getNumAtoms(), "atom");
-  validateSelection(bonds, mol.getNumBonds(), "bond");
+  ControlCHandler hdlr;
 
   const bool fullSelection = atoms.all() && bonds.all();
 
