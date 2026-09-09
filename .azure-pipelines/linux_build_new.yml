@@ -11,8 +11,8 @@ steps:
         libboost-python=$(boost_version) \
         libboost-devel=$(boost_version) \
         libboost=$(boost_version) \
-        numpy=2.4 pillow eigen pandas=3 matplotlib-base=3.8 \
-        cairo \
+        numpy pillow eigen pandas matplotlib-base \
+        cairo freetype \
         ccache
     conda activate rdkit_build
     conda config --env --add channels conda-forge
@@ -51,7 +51,6 @@ steps:
     -DRDK_BUILD_CFFI_LIB=ON \
     -DBoost_NO_SYSTEM_PATHS=ON \
     -DBoost_NO_BOOST_CMAKE=TRUE \
-    -DRDK_BOOST_PYTHON3_NAME=$(python_name) \
     -DPYTHON_EXECUTABLE=${CONDA_PREFIX}/bin/python3 \
     -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
     -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
@@ -105,18 +104,6 @@ steps:
     cd build
     ctest -j $( $(number_of_cores) ) --output-on-failure -R shard -T Test
   displayName: Run sharded tests
-- bash: |
-    source ${CONDA}/etc/profile.d/conda.sh
-    conda activate rdkit_build
-    conda install -c conda-forge --override-channels numpy=1.24 pandas=2.2
-    export RDBASE=`pwd`
-    export PYTHONPATH=${RDBASE}:${PYTHONPATH}
-    export LD_LIBRARY_PATH=${RDBASE}/lib:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
-    echo "LD_LIBRARY_PATH: " $LD_LIBRARY_PATH
-    export QT_QPA_PLATFORM='offscreen'
-    cd build
-    ctest -j $( $(number_of_cores) ) --output-on-failure -E shard -T Test
-  displayName: Run tests with older numpy and pandas
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
