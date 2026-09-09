@@ -101,6 +101,17 @@ steps:
     cd build
     ctest -j $( $(number_of_cores) ) --output-on-failure -T Test
   displayName: Run tests
+- bash: |
+    export CONDA=/tmp/miniforge
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
+    export RDBASE=`pwd`
+    export PYTHONPATH=${RDBASE}:${PYTHONPATH}
+    export DYLD_FALLBACK_LIBRARY_PATH=${RDBASE}/lib:${RDBASE}/rdkit:${CONDA_PREFIX}/lib:${DYLD_FALLBACK_LIBRARY_PATH}
+    pip install pybind11_stubgen
+    python -m Scripts.gen_rdkit_stubs rdkit-stubs
+    python Scripts/gen_rdkit_stubs/test_stubs_syntax.py rdkit-stubs
+  displayName: 'Generate and validate rdkit-stubs'
 - task: PublishTestResults@2
   inputs:
     testResultsFormat: 'CTest'

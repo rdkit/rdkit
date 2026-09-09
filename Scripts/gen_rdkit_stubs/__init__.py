@@ -10,6 +10,7 @@ from multiprocessing.pool import ThreadPool
 import tempfile
 import shutil
 import logging
+import ast
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,42 @@ def patch_stubs(tempdir, src_entry):
         if os.path.exists(patch_file):
             apply_patch(tempdir, patch_file)
 
+def validate_stubs(tempdir, src_dir):
+    """Validate and sanitize generated stubs to ensure they are valid Python syntax."""
+    for pyi in glob.glob(os.path.join(src_dir, "**/*.pyi"), recursive=True):
+        with open(pyi, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        # Python keyword 'None' used as an attribute name
+        content = re.sub(r'^(\s*)None(\s*:)', r'\1_None\2', content, flags=re.MULTILINE)
+        
+        # Iteratively fix "parameter without a default follows parameter with a default"
+        max_attempts = 20
+        for _ in range(max_attempts):
+            try:
+                ast.parse(content)
+                break  # File is valid, exit the loop!
+            except SyntaxError as e:
+                if "parameter without a default follows parameter with a default" in e.msg:
+                    lines = content.split('\n')
+                    line_idx = e.lineno - 1
+                    line = lines[line_idx]
+                    # Safely replace arguments up to the return type (->) or colon (:)
+                    new_line = re.sub(r'\(.*?\)(?=\s*(?:->|:))', '(*args, **kwargs)', line)
+                    lines[line_idx] = new_line
+                    content = '\n'.join(lines)
+                else:
+                    pyi_rel = os.path.relpath(pyi, tempdir)
+                    raise RuntimeError(
+                        f"Syntax error in generated stub {pyi_rel}:{e.lineno}: {e.msg}\n"
+                        f"Please add a fix to validate_stubs in __init__.py."
+                    )
+        else:
+            pyi_rel = os.path.relpath(pyi, tempdir)
+            raise RuntimeError(f"Failed to fix syntax errors in {pyi_rel} after {max_attempts} attempts.")
+        
+        with open(pyi, "w", encoding="utf-8") as f:
+            f.write(content)
 def copy_stubs(src_entry, outer_dirs):
     """Copy src_entry to each directory in outer_dirs.
     If src_entry is a directory it will be recursively copied.
@@ -188,7 +225,31 @@ def clear_stubs(outer_dir):
         else:
             os.remove(entry)
 
+def is_python_module(path, root):
+    """Check if path is an importable Python module within root.
+
+    Args:
+        path (pathlib.Path): file path to check
+        root (pathlib.Path): root directory of the package (e.g. rdkit directory)
+
+    Returns:
+        bool: True if path is a valid module name and located in a package directory tree
+    """
+    if not path.stem.isidentifier():
+        return False
+    parent = path.parent
+    while parent != root:
+        if not (parent / INIT_PY).is_file():
+            return False
+        if parent == parent.parent:
+            return False
+        parent = parent.parent
+    return True
+
 def generate_stubs_internal(modules, outer_dirs, args):
+    if not modules:
+        logger.warning("No modules found to generate stubs for. Exiting.")
+        return
     concurrency = min(args.concurrency, len(modules))
     with tempfile.TemporaryDirectory() as tempdir:
         src_dir = os.path.join(tempdir, RDKIT_MODULE_NAME)
@@ -201,12 +262,13 @@ def generate_stubs_internal(modules, outer_dirs, args):
         concat_out, concat_err = tuple(zip(*res))
         concat_out = "\n".join(out for out in concat_out if out)
         concat_err = "\n".join(err for err in concat_err if err)
-        if concat_err:
-            logger.critical(concat_err)
         if concat_out and args.verbose:
             logger.warning(concat_out)
+        if concat_err:
+            logger.critical(concat_err)
         if os.path.isdir(src_dir):
             patch_stubs(tempdir, src_dir)
+            validate_stubs(tempdir, src_dir)
             for f in os.listdir(src_dir):
                 src_entry = os.path.join(src_dir, f)
                 if os.path.exists(src_entry):
@@ -229,6 +291,7 @@ def generate_stubs(site_packages_path, args):
     args.concurrency = args.concurrency or 1
     args.verbose = args.verbose or False
     args.keep_incorrect_staticmethods = args.keep_incorrect_staticmethods or False
+    # Phase 1: sub-packages
     modules = {str(p.parent.relative_to(site_packages_path)).replace(os.sep, ".")
                for p in sorted(site_packages_path.joinpath(RDKIT_MODULE_NAME).rglob(INIT_PY))}
     outer_dirs = []
@@ -244,12 +307,21 @@ def generate_stubs(site_packages_path, args):
     generate_stubs_internal(modules, outer_dirs, args)
     pyi_path = pathlib.Path(outer_dirs[0])
     pyi_files = {PYI_TO_PY.sub(".py", str(p.relative_to(pyi_path))) for p in pyi_path.rglob("*.pyi")}
-    modules = {str(p.relative_to(site_packages_path.joinpath(RDKIT_MODULE_NAME)))
-               for p in (
-        sorted(site_packages_path.joinpath(RDKIT_MODULE_NAME).rglob("*.pyd")) +
-        sorted(site_packages_path.joinpath(RDKIT_MODULE_NAME).rglob("*.so")) +
-        sorted(site_packages_path.joinpath(RDKIT_MODULE_NAME).rglob("*.py"))
-    ) if p.name != INIT_PY}.difference(pyi_files)
+    # Phase 2: individual modules (only importable modules; excludes examples, test data, etc.)
+    rdkit_root = site_packages_path.joinpath(RDKIT_MODULE_NAME)
+    candidates = (
+        sorted(rdkit_root.rglob("*.pyd")) +
+        sorted(rdkit_root.rglob("*.so")) +
+        sorted(rdkit_root.rglob("*.py"))
+    )
+    module_paths = [
+        p for p in candidates
+        if p.name != INIT_PY and is_python_module(p, rdkit_root)
+    ]
+    modules = {
+        str(p.relative_to(rdkit_root))
+        for p in module_paths
+    }.difference(pyi_files)
     modules = {RDKIT_MODULE_NAME + "." + os.path.splitext(p.replace(os.sep, "."))[0] for p in modules}
     generate_stubs_internal(modules, outer_dirs, args)
 

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <cctype>
 #include <RDGeneral/export.h>
 #ifndef _RD_WRAP_H_
 #define _RD_WRAP_H_
@@ -103,7 +104,14 @@ void RegisterVectorConverter(const char *name, bool noproxy = false) {
 template <typename T>
 void RegisterVectorConverter(bool noproxy = false) {
   std::string name = "_vect";
-  name += typeid(T).name();
+  std::string typeName = typeid(T).name();
+  // Sanitize the type name to ensure it's a valid Python identifier
+  for (char &c : typeName) {
+    if (!std::isalnum(static_cast<unsigned char>(c)) && c != '_') {
+      c = '_';
+    }
+  }
+  name += typeName;
   RegisterVectorConverter<T>(name.c_str(), noproxy);
 }
 
@@ -118,7 +126,14 @@ void RegisterListConverter(bool noproxy = false) {
     return;
   }
   std::string name = "_list";
-  name += typeid(T).name();
+  std::string typeName = typeid(T).name();
+  // Sanitize the type name to ensure it's a valid Python identifier
+  for (char &c : typeName) {
+    if (!std::isalnum(static_cast<unsigned char>(c)) && c != '_') {
+      c = '_';
+    }
+  }
+  name += typeName;
 
   if (noproxy) {
     python::class_<std::list<T>>(name.c_str())

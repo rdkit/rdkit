@@ -107,6 +107,16 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    export RDBASE=`pwd`
+    export PYTHONPATH=${RDBASE}:${PYTHONPATH}
+    export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}
+    pip install pybind11_stubgen
+    python -m Scripts.gen_rdkit_stubs rdkit-stubs
+    python Scripts/gen_rdkit_stubs/test_stubs_syntax.py rdkit-stubs
+  displayName: 'Generate and validate rdkit-stubs'
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
     conda install -c conda-forge --override-channels  ipython=8.12 sphinx myst-parser
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
