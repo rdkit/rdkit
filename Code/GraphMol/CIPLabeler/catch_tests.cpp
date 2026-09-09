@@ -9,7 +9,6 @@
 //
 
 #include <algorithm>
-#include <bitset>
 #include <list>
 #include <ranges>
 #include <string>
@@ -538,7 +537,7 @@ TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
     atom5->clearProp(common_properties::_CIPCode);
 
     boost::dynamic_bitset<> atoms(mol->getNumAtoms());
-    boost::dynamic_bitset<> bonds;
+    boost::dynamic_bitset<> bonds(mol->getNumBonds());
     atoms.set(1);
     CIPLabeler::assignCIPLabels(*mol, atoms, bonds);
 
@@ -561,7 +560,7 @@ TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
     REQUIRE(!bond1->hasProp(common_properties::_CIPCode));
     REQUIRE(!bond3->hasProp(common_properties::_CIPCode));
 
-    boost::dynamic_bitset<> atoms;
+    boost::dynamic_bitset<> atoms(mol->getNumAtoms());
     boost::dynamic_bitset<> bonds(mol->getNumBonds());
     bonds.set(3);
     CIPLabeler::assignCIPLabels(*mol, atoms, bonds);
@@ -587,7 +586,7 @@ TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
     mol->clearProp(common_properties::_CIPComputed);
 
     boost::dynamic_bitset<> atoms(mol->getNumAtoms());
-    boost::dynamic_bitset<> bonds;
+    boost::dynamic_bitset<> bonds(mol->getNumBonds());
     atoms.set(7);
     CIPLabeler::assignCIPLabels(*mol, atoms, bonds);
 
@@ -601,17 +600,17 @@ TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
     auto mol = "C[C@H](F)Cl"_smiles;
     REQUIRE(mol);
 
-    boost::dynamic_bitset<> noBonds;
+    boost::dynamic_bitset<> noBonds(mol->getNumBonds());
     boost::dynamic_bitset<> wrongAtoms(mol->getNumAtoms() + 1);
     wrongAtoms.set(1);
     CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, wrongAtoms, noBonds),
-                    ValueErrorException);
+                    Invar::Invariant);
 
-    boost::dynamic_bitset<> noAtoms;
+    boost::dynamic_bitset<> noAtoms(mol->getNumAtoms());
     boost::dynamic_bitset<> wrongBonds(mol->getNumBonds() + 1);
     wrongBonds.set(0);
     CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, noAtoms, wrongBonds),
-                    ValueErrorException);
+                    Invar::Invariant);
   }
 }
 
@@ -674,7 +673,7 @@ TEST_CASE("CIP label property lifecycle", "[accurateCIP]") {
     unselected->setProp(common_properties::_CIPCode, std::string("keep"));
 
     boost::dynamic_bitset<> atoms(mol->getNumAtoms());
-    boost::dynamic_bitset<> bonds;
+    boost::dynamic_bitset<> bonds(mol->getNumBonds());
     atoms.set(0);
     CIPLabeler::assignCIPLabels(*mol, atoms, bonds);
 
