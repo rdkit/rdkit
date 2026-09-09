@@ -18,7 +18,7 @@
 namespace RDKit {
 
 void parseMolzipParametersJSON(MolzipParams &params, const char *details_json) {
-  if (!details_json || !*details_json) {
+  if (!details_json || !strlen(details_json)) {
     return;
   }
   boost::property_tree::ptree pt;
