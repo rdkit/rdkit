@@ -45,6 +45,10 @@ GitHub)
   `RDK_USE_LEGACY_RING_FINDING` to 1 or by calling
   `MolOps::setUseLegacyRingFinding(true)` (`Chem.SetUseLegacyRingFinding(True)`
   from Python).
+- The GetSurfacePoints() function of DoubleCubicLatticeVolume by default now
+  returns only points which are actually on the surface. Previously all
+  potential surface points for each atom were returned. You can get the old
+  result by setting the `allPoints` argument to true.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use
