@@ -18,8 +18,8 @@ typedef double real;
 namespace nb = nanobind;
 using namespace nb::literals;
 
-extern "C" void distdriver_(long *n, long *len, real *dists, long *toggle,
-                            long *ia, long *ib, real *crit);
+extern "C" void distdriver_(long int *n, long int *len, real *dists, long int *toggle,
+                            long int *ia, long int *ib, real *crit);
 
 //
 // Rather than deal with any nonsense like trying to get
