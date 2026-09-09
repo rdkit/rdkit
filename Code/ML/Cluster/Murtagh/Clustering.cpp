@@ -27,13 +27,13 @@ extern "C" void distdriver_(long int *n, long int *len, real *dists,
 // (thus drowning in the waves of f2c hate), we'll generate
 // the distance matrix on our own here and then call distdriver_
 //
-static void clusterit(real *dataP, boost::int64_t n, boost::int64_t m,
-                      boost::int64_t iopt, boost::int64_t *ia,
-                      boost::int64_t *ib, real *crit) {
+static void clusterit(real *dataP, long int n, long int m,
+                      long int iopt, long int *ia,
+                      long int *ib, real *crit) {
   real *dists;
-  boost::int64_t len;
-  boost::int64_t pos = 0;
-  boost::int64_t i, j, k, iTab, jTab;
+  long int len;
+  long int pos = 0;
+  long int i, j, k, iTab, jTab;
   double tmp;
   len = (n * (n - 1)) / 2;
   dists = (real *)calloc(len, sizeof(real));
@@ -61,7 +61,7 @@ static void capsule_cleanup(PyObject *capsule) {
 static PyObject *Clustering_MurtaghCluster(python::object data, int nPts,
                                            int sz, int option) {
   PyArrayObject *dataContig;
-  boost::int64_t *ia, *ib;
+  long int *ia, *ib;
   real *crit;
   PyObject *res;
   PyObject *tmp;
@@ -75,10 +75,10 @@ static PyObject *Clustering_MurtaghCluster(python::object data, int nPts,
     return nullptr;
   }
 
-  ia = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
+  ia = (long int *)calloc(nPts, sizeof(long int));
   auto ia_capsule = PyCapsule_New(ia, nullptr, capsule_cleanup);
 
-  ib = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
+  ib = (long int *)calloc(nPts, sizeof(long int));
   auto ib_capsule = PyCapsule_New(ib, nullptr, capsule_cleanup);
 
   crit = (real *)calloc(nPts, sizeof(real));
@@ -108,9 +108,9 @@ static PyObject *Clustering_MurtaghCluster(python::object data, int nPts,
   return res;
 };
 
-void distclusterit(real *dists, boost::int64_t n, boost::int64_t iopt,
-                   boost::int64_t *ia, boost::int64_t *ib, real *crit) {
-  boost::int64_t len;
+void distclusterit(real *dists, long int n, long int iopt,
+                   long int *ia, long int *ib, real *crit) {
+  long int len;
 
   len = (n * (n - 1)) / 2;
   distdriver_(&n, &len, dists, &iopt, ia, ib, crit);
@@ -119,7 +119,7 @@ void distclusterit(real *dists, boost::int64_t n, boost::int64_t iopt,
 static PyObject *Clustering_MurtaghDistCluster(python::object data, int nPts,
                                                int option) {
   PyArrayObject *dataContig;
-  boost::int64_t *ia, *ib;
+  long int *ia, *ib;
   real *crit;
   PyObject *res = PyTuple_New(3);
   PyObject *tmp;
@@ -133,10 +133,10 @@ static PyObject *Clustering_MurtaghDistCluster(python::object data, int nPts,
     return nullptr;
   }
 
-  ia = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
+  ia = (long int *)calloc(nPts, sizeof(long int));
   auto ia_capsule = PyCapsule_New(ia, nullptr, capsule_cleanup);
 
-  ib = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
+  ib = (long int *)calloc(nPts, sizeof(long int));
   auto ib_capsule = PyCapsule_New(ib, nullptr, capsule_cleanup);
 
   crit = (real *)calloc(nPts, sizeof(real));
