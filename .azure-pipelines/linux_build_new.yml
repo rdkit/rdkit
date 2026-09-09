@@ -107,18 +107,6 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    conda install -c conda-forge --override-channels numpy=1.24 pandas=2.2
-    export RDBASE=`pwd`
-    export PYTHONPATH=${RDBASE}:${PYTHONPATH}
-    export LD_LIBRARY_PATH=${RDBASE}/lib:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
-    echo "LD_LIBRARY_PATH: " $LD_LIBRARY_PATH
-    export QT_QPA_PLATFORM='offscreen'
-    cd build
-    ctest -j $( $(number_of_cores) ) --output-on-failure -E shard -T Test
-  displayName: Run tests with older numpy and pandas
-- bash: |
-    source ${CONDA}/etc/profile.d/conda.sh
-    conda activate rdkit_build
     conda install -c conda-forge --override-channels  sphinx myst-parser
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}

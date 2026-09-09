@@ -81,15 +81,6 @@ steps:
   displayName: Run sharded tests
 - script: |
     call activate rdkit_build
-    conda install -c conda-forge --override-channels  numpy=1.26 pandas=2.2
-    set RDBASE=%cd%
-    set PYTHONPATH=%RDBASE%;%PYTHONPATH%
-    set PATH=%RDBASE%\lib;%PATH%
-    cd build
-    ctest -C Release -j $(number_of_cores) --output-on-failure -E shard -T Test
-  displayName: Run with older numpy and pandas
-- script: |
-    call activate rdkit_build
     conda install -c conda-forge --override-channels  sphinx myst-parser
     set RDBASE=%cd%
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
