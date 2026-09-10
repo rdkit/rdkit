@@ -137,7 +137,7 @@ bool SynthonSpaceRascalSearcher::extraSearchSetup(
     for (const auto &frag : fragSet) {
       if (!frag->getRingInfo()->isInitialized()) {
         VECT_INT_VECT arings;
-        MolOps::findSSSR(*frag, arings);
+        MolOps::symmetrizeSSSR(*frag, arings);
       }
       --numDone;
       if (!numDone) {

@@ -1159,7 +1159,7 @@ void splitDummyDummyBonds(RWMol &mol) {
 }
 }  // namespace
 
-std::unique_ptr<RWMol> trimSampleMol(const ROMol &mol, size_t molNum) {
+std::unique_ptr<RWMol> trimSampleMol(ROMol &mol, size_t molNum) {
   auto ts = MolToCXSmiles(mol);
   boost::dynamic_bitset<> molNumAtoms(mol.getNumAtoms());
   unsigned int molNumProp;
@@ -1172,7 +1172,7 @@ std::unique_ptr<RWMol> trimSampleMol(const ROMol &mol, size_t molNum) {
 
   auto ringInfo = mol.getRingInfo();
   if (!ringInfo->isInitialized()) {
-    MolOps::findSSSR(mol);
+    MolOps::symmetrizeSSSR(mol);
   }
   for (const auto &atomRing : ringInfo->atomRings()) {
     for (auto a : atomRing) {

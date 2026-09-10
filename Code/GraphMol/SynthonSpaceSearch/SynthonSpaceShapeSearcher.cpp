@@ -331,7 +331,7 @@ std::map<std::string, std::vector<ROMol *>> mapFragsByAtoms(
       // Ring info is required.
       if (!frag->getRingInfo()->isInitialized()) {
         VECT_INT_VECT arings;
-        MolOps::findSSSR(*frag, arings);
+        MolOps::symmetrizeSSSR(*frag, arings);
       }
       std::vector<unsigned int> atIdxs;
       unsigned int dummyIdx = 10000;

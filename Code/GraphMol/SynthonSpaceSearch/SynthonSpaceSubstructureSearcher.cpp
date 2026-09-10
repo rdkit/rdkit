@@ -392,10 +392,10 @@ bool SynthonSpaceSubstructureSearcher::extraSearchSetup(
     // For the fingerprints, ring info is required, and this needs to be
     // done for every copy of the fragment. We also need to fix any
     // query atoms.
-    for (const auto &frag : frags) {
+    for (auto &frag : frags) {
       if (!frag->getRingInfo()->isInitialized()) {
         VECT_INT_VECT arings;
-        MolOps::findSSSR(*frag, arings);
+        MolOps::symmetrizeSSSR(*frag, arings);
       }
       // Query atoms may define the environment of the fragment (via recursive
       // SMARTS, for example) that a potentially matching synthon may not

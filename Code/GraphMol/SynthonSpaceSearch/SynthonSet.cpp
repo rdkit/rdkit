@@ -385,7 +385,7 @@ void SynthonSet::makeSynthonSearchMols() {
       int fragWeWant = findMolNumFrag(molFrags, synthSetNum);
       if (!molFrags[fragWeWant]->getRingInfo()->isInitialized()) {
         VECT_INT_VECT arings;
-        MolOps::findSSSR(*molFrags[fragWeWant], arings);
+        MolOps::symmetrizeSSSR(*molFrags[fragWeWant], arings);
       }
       d_synthons[synthSetNum][j].second->setSearchMol(
           std::move(molFrags[fragWeWant]));
