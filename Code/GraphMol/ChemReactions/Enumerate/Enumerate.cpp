@@ -110,9 +110,24 @@ size_t countMatches(const ROMol &bb, const ROMol &query, int maxMatches) {
                  useQueryQueryMatches, maxMatches + 1);
   return matches.size();
 }
+
+bool hasProtectedAtoms(const ROMol &mol) {
+  for (unsigned int atomIdx = 0; atomIdx < mol.getNumAtoms(); ++atomIdx) {
+    if (mol.getAtomWithIdx(atomIdx)->hasProp(common_properties::_protected)) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace
 BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
                               const EnumerationParams &params) {
+  return removeNonmatchingReagents(rxn, std::move(bbs), params, nullptr);
+}
+
+BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
+                              const EnumerationParams &params,
+                              ReactantMatchCache *cache) {
   PRECONDITION(bbs.size() <= rxn.getNumReactantTemplates(),
                "Number of Reagents not compatible with reaction templates");
   BBS result;
@@ -129,8 +144,31 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
     for (size_t reagent_idx = 0; reagent_idx < bbs[reactant_idx].size();
          ++reagent_idx) {
       ROMOL_SPTR mol = bbs[reactant_idx][reagent_idx];
-      size_t matches =
-          countMatches(*mol.get(), *reactantTemplate.get(), maxMatches);
+      size_t matches = 0;
+
+      const bool canPrimeCache =
+          cache && params.reagentMaxMatchCount == INT_MAX &&
+          !hasProtectedAtoms(*mol);
+      if (canPrimeCache) {
+        VectMatchVectType reactantMatches =
+            ReactionRunnerUtils::getReactantMatchesToTemplate(
+                *mol.get(), *reactantTemplate.get(), 1000u,
+                rxn.getSubstructParams());
+        if (params.dedupeSymmetricMatches) {
+          reactantMatches = ReactionRunnerUtils::dedupeMatchesBySymmetry(
+              *mol.get(), reactantMatches);
+        }
+        const auto cacheKey = std::make_tuple(
+            static_cast<unsigned int>(reactant_idx), mol.get(), 1000u,
+            params.dedupeSymmetricMatches);
+        matches = reactantMatches.size();
+        if (matches) {
+          cache->emplace(cacheKey, reactantMatches);
+        }
+      } else {
+        matches =
+            countMatches(*mol.get(), *reactantTemplate.get(), maxMatches);
+      }
 
       bool removeReagent = false;
       if (!matches || matches > rdcast<size_t>(params.reagentMaxMatchCount)) {
@@ -179,8 +217,17 @@ BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
 EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
                                    const EnumerationParams &params)
     : EnumerateLibraryBase(rxn, new CartesianProductStrategy),
-      m_bbs(removeNonmatchingReagents(m_rxn, bbs, params)) {
-  m_enumerator->initialize(m_rxn, m_bbs);  // getSizesFromBBs(bbs));
+      m_dedupeSymmetricMatches(params.dedupeSymmetricMatches),
+      m_matchCache(),
+      m_cacheMode(params.cacheMode),
+      m_graftCache(),
+      m_bbs(removeNonmatchingReagents(
+          m_rxn, bbs, params,
+          (params.cacheMode != ReactantCacheMode::None ||
+           params.dedupeSymmetricMatches)
+              ? &m_matchCache
+              : nullptr)) {
+  m_enumerator->initialize(m_rxn, m_bbs);  // getSizesFromBBs(bbs))
   m_initialEnumerator.reset(m_enumerator->copy());
 }
 
@@ -188,14 +235,28 @@ EnumerateLibrary::EnumerateLibrary(const ChemicalReaction &rxn, const BBS &bbs,
                                    const EnumerationStrategyBase &enumerator,
                                    const EnumerationParams &params)
     : EnumerateLibraryBase(rxn),
-      m_bbs(removeNonmatchingReagents(m_rxn, bbs, params)) {
+      m_dedupeSymmetricMatches(params.dedupeSymmetricMatches),
+      m_matchCache(),
+      m_cacheMode(params.cacheMode),
+      m_graftCache(),
+      m_bbs(removeNonmatchingReagents(
+          m_rxn, bbs, params,
+          (params.cacheMode != ReactantCacheMode::None ||
+           params.dedupeSymmetricMatches)
+              ? &m_matchCache
+              : nullptr)) {
   m_enumerator.reset(enumerator.copy());
   m_enumerator->initialize(m_rxn, m_bbs);
   m_initialEnumerator.reset(m_enumerator->copy());
 }
 
 EnumerateLibrary::EnumerateLibrary(const EnumerateLibrary &rhs)
-    : EnumerateLibraryBase(rhs), m_bbs(rhs.m_bbs) {}
+    : EnumerateLibraryBase(rhs),
+      m_dedupeSymmetricMatches(rhs.m_dedupeSymmetricMatches),
+      m_matchCache(rhs.m_matchCache),
+      m_cacheMode(rhs.m_cacheMode),
+      m_graftCache(rhs.m_graftCache),
+      m_bbs(rhs.m_bbs) {}
 
 std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {
   PRECONDITION(static_cast<bool>(*this), "No more enumerations");
@@ -206,7 +267,15 @@ std::vector<MOL_SPTR_VECT> EnumerateLibrary::next() {
     reactants[i] = m_bbs[i][reactantIndices[i]];
   }
 
-  return m_rxn.runReactants(reactants);
+  if (m_cacheMode == ReactantCacheMode::Full) {
+    return run_Reactants(m_rxn, reactants, m_matchCache, m_graftCache,
+                         m_dedupeSymmetricMatches);
+  }
+  if (m_cacheMode == ReactantCacheMode::MatchOnly || m_dedupeSymmetricMatches) {
+    return run_Reactants(m_rxn, reactants, m_matchCache,
+                         m_dedupeSymmetricMatches);
+  }
+  return run_Reactants(m_rxn, reactants);
 }
 
 void EnumerateLibrary::toStream(std::ostream &ss) const {

@@ -1,0 +1,483 @@
+#include <catch2/catch_all.hpp>
+
+#include <algorithm>
+#include <set>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/ChemReactions/ReactionRunner.h>
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+
+using namespace RDKit;
+
+namespace {
+
+std::vector<ROMOL_SPTR> make_reagent_pool(unsigned int count,
+                                         const std::string &suffix) {
+  std::vector<ROMOL_SPTR> pool;
+  pool.reserve(count);
+  for (unsigned int i = 0; i < count; ++i) {
+    const std::string smiles = std::string(i + 1, 'C') + suffix;
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    REQUIRE(mol);
+    pool.push_back(ROMOL_SPTR(mol.release()));
+  }
+  return pool;
+}
+
+std::vector<ROMOL_SPTR> make_acid_pool(unsigned int count) {
+  return make_reagent_pool(count, "(=O)O");
+}
+
+std::vector<ROMOL_SPTR> make_amine_pool(unsigned int count) {
+  return make_reagent_pool(count, "N");
+}
+
+constexpr unsigned int BENCH_REPEATS = 8;
+
+std::size_t run_uncached(const ChemicalReaction &rxn,
+                         const std::vector<ROMOL_SPTR> &acids,
+                         const std::vector<ROMOL_SPTR> &amines) {
+  std::size_t total_products = 0;
+  for (unsigned int repeat = 0; repeat < BENCH_REPEATS; ++repeat) {
+    for (const auto &acid : acids) {
+      for (const auto &amine : amines) {
+        MOL_SPTR_VECT reactants{acid, amine};
+        total_products += run_Reactants(rxn, reactants).size();
+      }
+    }
+  }
+  return total_products;
+}
+
+std::size_t run_cached(const ChemicalReaction &rxn,
+                       const std::vector<ROMOL_SPTR> &acids,
+                       const std::vector<ROMOL_SPTR> &amines) {
+  ReactantMatchCache cache;
+  std::size_t total_products = 0;
+  for (unsigned int repeat = 0; repeat < BENCH_REPEATS; ++repeat) {
+    for (const auto &acid : acids) {
+      for (const auto &amine : amines) {
+        MOL_SPTR_VECT reactants{acid, amine};
+        total_products += run_Reactants(rxn, reactants, cache).size();
+      }
+    }
+  }
+  return total_products;
+}
+
+}  // namespace
+
+TEST_CASE("reaction enumeration matching", "[reaction][enumerate]") {
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[C:1](=[O:2])[O;H1].[N:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  const auto acids = make_acid_pool(64);
+  const auto amines = make_amine_pool(64);
+
+  const std::size_t uncached_total = run_uncached(*rxn, acids, amines);
+  const std::size_t cached_total = run_cached(*rxn, acids, amines);
+  CHECK(cached_total == uncached_total);
+
+  BENCHMARK("runReactants uncached") {
+    std::size_t total_products = 0;
+    for (unsigned int repeat = 0; repeat < BENCH_REPEATS; ++repeat) {
+      for (const auto &acid : acids) {
+        for (const auto &amine : amines) {
+          MOL_SPTR_VECT reactants{acid, amine};
+          total_products += run_Reactants(*rxn, reactants).size();
+        }
+      }
+    }
+    return total_products;
+  };
+
+  BENCHMARK("runReactants cached") {
+    ReactantMatchCache cache;
+    std::size_t total_products = 0;
+    for (unsigned int repeat = 0; repeat < BENCH_REPEATS; ++repeat) {
+      for (const auto &acid : acids) {
+        for (const auto &amine : amines) {
+          MOL_SPTR_VECT reactants{acid, amine};
+          total_products += run_Reactants(*rxn, reactants, cache).size();
+        }
+      }
+    }
+    return total_products;
+  };
+}
+
+TEST_CASE("reaction enumeration matching (recursive SMARTS)",
+          "[reaction][enumerate]") {
+  // Both reactant templates use recursive SMARTS ($(...)), so the
+  // substructure matching is expensive relative to product assembly. This is
+  // where caching repeated per-reagent matches pays off the most. Smaller
+  // pools are used here because the recursive matching is costly.
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);"
+      "!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>"
+      "[N:3]-[C:1]-[N+0:2]"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  constexpr unsigned int POOL = 24;
+  // isothiocyanates of varying chain length match the first template
+  auto isothiocyanates = make_reagent_pool(POOL, "N=C=S");
+  // simple primary amines match the second (restrictive) template
+  std::vector<ROMOL_SPTR> amines;
+  amines.reserve(POOL);
+  for (unsigned int i = 0; i < POOL; ++i) {
+    auto mol = v2::SmilesParse::MolFromSmiles("N" + std::string(i + 1, 'C'));
+    REQUIRE(mol);
+    amines.push_back(ROMOL_SPTR(mol.release()));
+  }
+
+  // correctness: cached and uncached produce the same number of products
+  std::size_t uncached_total = 0;
+  std::size_t cached_total = 0;
+  ReactantMatchCache checkCache;
+  for (const auto &itc : isothiocyanates) {
+    for (const auto &amine : amines) {
+      MOL_SPTR_VECT reactants{itc, amine};
+      uncached_total += run_Reactants(*rxn, reactants).size();
+      cached_total += run_Reactants(*rxn, reactants, checkCache).size();
+    }
+  }
+  CHECK(cached_total == uncached_total);
+
+  BENCHMARK("runReactants uncached (recursive SMARTS)") {
+    std::size_t total_products = 0;
+    for (const auto &itc : isothiocyanates) {
+      for (const auto &amine : amines) {
+        MOL_SPTR_VECT reactants{itc, amine};
+        total_products += run_Reactants(*rxn, reactants).size();
+      }
+    }
+    return total_products;
+  };
+
+  BENCHMARK("runReactants cached (recursive SMARTS)") {
+    ReactantMatchCache cache;
+    std::size_t total_products = 0;
+    for (const auto &itc : isothiocyanates) {
+      for (const auto &amine : amines) {
+        MOL_SPTR_VECT reactants{itc, amine};
+        total_products += run_Reactants(*rxn, reactants, cache).size();
+      }
+    }
+    return total_products;
+  };
+}
+
+TEST_CASE("reaction enumeration matching (symmetric dedup)",
+          "[reaction][enumerate]") {
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[N;H2:1].[C:2](=[O:3])[O;H1]>>[N:1][C:2]=[O:3]"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  constexpr unsigned int POOL = 16;
+  std::vector<ROMOL_SPTR> diamines;
+  diamines.reserve(POOL);
+  for (unsigned int i = 0; i < POOL; ++i) {
+    auto mol = v2::SmilesParse::MolFromSmiles("N" + std::string(i + 1, 'C') +
+                                              "N");
+    REQUIRE(mol);
+    diamines.push_back(ROMOL_SPTR(mol.release()));
+  }
+  const auto acids = make_acid_pool(POOL);
+
+  auto collect_unique_product_smiles =
+      [&rxn, &diamines, &acids](bool dedupeSymmetricMatches) {
+        std::set<std::string> product_smiles;
+        ReactantMatchCache cache;
+        for (const auto &diamine : diamines) {
+          for (const auto &acid : acids) {
+            MOL_SPTR_VECT reactants{diamine, acid};
+            const auto products = run_Reactants(*rxn, reactants, cache,
+                                                dedupeSymmetricMatches);
+            for (const auto &product_set : products) {
+              for (const auto &product : product_set) {
+                product_smiles.insert(MolToSmiles(*product));
+              }
+            }
+          }
+        }
+        return product_smiles;
+      };
+
+  std::size_t dedupOff_total = 0;
+  std::size_t dedupOn_total = 0;
+  // the dedup flag is part of the cache key, so false/true entries never
+  // collide even when the same cache is shared between both modes here
+  ReactantMatchCache checkCache;
+  for (const auto &diamine : diamines) {
+    for (const auto &acid : acids) {
+      MOL_SPTR_VECT reactants{diamine, acid};
+      dedupOff_total += run_Reactants(*rxn, reactants, checkCache, false).size();
+      dedupOn_total += run_Reactants(*rxn, reactants, checkCache, true).size();
+    }
+  }
+  CHECK(dedupOn_total < dedupOff_total);
+  CHECK(collect_unique_product_smiles(false) ==
+        collect_unique_product_smiles(true));
+
+  BENCHMARK("runReactants dedupe off") {
+    ReactantMatchCache cache;
+    std::size_t total_products = 0;
+    for (const auto &diamine : diamines) {
+      for (const auto &acid : acids) {
+        MOL_SPTR_VECT reactants{diamine, acid};
+        total_products += run_Reactants(*rxn, reactants, cache, false).size();
+      }
+    }
+    return total_products;
+  };
+
+  BENCHMARK("runReactants dedupe on") {
+    ReactantMatchCache cache;
+    std::size_t total_products = 0;
+    for (const auto &diamine : diamines) {
+      for (const auto &acid : acids) {
+        MOL_SPTR_VECT reactants{diamine, acid};
+        total_products += run_Reactants(*rxn, reactants, cache, true).size();
+      }
+    }
+    return total_products;
+  };
+}
+
+TEST_CASE("reaction enumeration assembly baseline", "[reaction][assembly]") {
+  // Cheap matching with long side chains makes product assembly the dominant
+  // cost, which is the path we want to baseline before graft caching lands.
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[C:1](=[O:2])[O;H1].[N:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  const auto acids = make_reagent_pool(8, std::string(18, 'C') + "(=O)O");
+  const auto amines = make_reagent_pool(8, std::string(18, 'C') + "N");
+
+  std::size_t total_products = 0;
+  for (const auto &acid : acids) {
+    for (const auto &amine : amines) {
+      MOL_SPTR_VECT reactants{acid, amine};
+      total_products += run_Reactants(*rxn, reactants).size();
+    }
+  }
+  CHECK(total_products > 0);
+  // each acid+amine pair yields exactly one product set for this amide reaction
+  CHECK(total_products == acids.size() * amines.size());
+
+  BENCHMARK("assemble products (current)") {
+    std::size_t benchmark_total_products = 0;
+    for (const auto &acid : acids) {
+      for (const auto &amine : amines) {
+        MOL_SPTR_VECT reactants{acid, amine};
+        benchmark_total_products += run_Reactants(*rxn, reactants).size();
+      }
+    }
+    return benchmark_total_products;
+  };
+}
+
+TEST_CASE("reaction enumeration assembly graft cache",
+          "[reaction][assembly]") {
+  // Cheap matching with long side chains makes product assembly the dominant
+  // cost. Reusing the graft cache across the Cartesian product extracts each
+  // reagent's graft once and replays it for every pairing, which is the win
+  // this benchmark measures.
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[C:1](=[O:2])[O;H1].[N:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  const auto acids = make_reagent_pool(8, std::string(18, 'C') + "(=O)O");
+  const auto amines = make_reagent_pool(8, std::string(18, 'C') + "N");
+
+  // correctness: the graft-cached path produces exactly the same unique
+  // products (and the same count) as the uncached path
+  auto collect_unique_product_smiles = [&](bool useGraftCache) {
+    std::set<std::string> product_smiles;
+    std::size_t product_set_count = 0;
+    ReactantMatchCache matchCache;
+    ReactionRunnerUtils::ReactantGraftCache graftCache;
+    for (const auto &acid : acids) {
+      for (const auto &amine : amines) {
+        MOL_SPTR_VECT reactants{acid, amine};
+        const auto products =
+            useGraftCache
+                ? run_Reactants(*rxn, reactants, matchCache, graftCache)
+                : run_Reactants(*rxn, reactants);
+        product_set_count += products.size();
+        for (const auto &product_set : products) {
+          for (const auto &product : product_set) {
+            product_smiles.insert(MolToSmiles(*product));
+          }
+        }
+      }
+    }
+    return std::make_pair(product_smiles, product_set_count);
+  };
+
+  const auto uncached = collect_unique_product_smiles(false);
+  const auto grafted = collect_unique_product_smiles(true);
+  CHECK(grafted.first == uncached.first);
+  CHECK(grafted.second == uncached.second);
+  CHECK(grafted.second == acids.size() * amines.size());
+
+  BENCHMARK("assemble products (no graft cache)") {
+    std::size_t benchmark_total_products = 0;
+    for (const auto &acid : acids) {
+      for (const auto &amine : amines) {
+        MOL_SPTR_VECT reactants{acid, amine};
+        benchmark_total_products += run_Reactants(*rxn, reactants).size();
+      }
+    }
+    return benchmark_total_products;
+  };
+
+  BENCHMARK("assemble products (graft cache)") {
+    ReactantMatchCache matchCache;
+    ReactionRunnerUtils::ReactantGraftCache graftCache;
+    std::size_t benchmark_total_products = 0;
+    for (const auto &acid : acids) {
+      for (const auto &amine : amines) {
+        MOL_SPTR_VECT reactants{acid, amine};
+        benchmark_total_products +=
+            run_Reactants(*rxn, reactants, matchCache, graftCache).size();
+      }
+    }
+    return benchmark_total_products;
+  };
+}
+
+TEST_CASE("reaction enumeration three-component symmetric monomers",
+          "[reaction][assembly][slow]") {
+  // A three-reactant reaction enumerated over symmetric diamine monomers.
+  // Each monomer is a 2-substituted 1,3-diaminopropane: two equivalent primary
+  // amines (the symmetric core) with an inert alkyl chain grown at the central
+  // carbon, a symmetry-neutral position. Every monomer therefore stays
+  // internally symmetric (so dedup collapses its two equivalent matches) while
+  // remaining distinct from the others, and the growing chain makes product
+  // assembly the dominant cost (so the graft cache pays off). The three modes
+  // compared are: no caching (and no dedup), dedup + match cache, and
+  // dedup + graft cache.
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[N;H2:1].[N;H2:2].[N;H2:3]>>[N:1]C.[N:2]C.[N:3]C"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+
+  auto make_symmetric_diamines = [](unsigned int count) {
+    std::vector<ROMOL_SPTR> pool;
+    pool.reserve(count);
+    for (unsigned int i = 0; i < count; ++i) {
+      // H2N-CH2-CH(chain)-CH2-NH2 with a growing inert chain at the center
+      const std::string smiles = "NCC(" + std::string(i + 1, 'C') + ")CN";
+      auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(mol);
+      pool.push_back(ROMOL_SPTR(mol.release()));
+    }
+    return pool;
+  };
+
+  constexpr unsigned int POOL = 30;
+  const auto poolA = make_symmetric_diamines(POOL);
+  const auto poolB = make_symmetric_diamines(POOL);
+  const auto poolC = make_symmetric_diamines(POOL);
+
+  enum class Mode { Plain, DedupMatch, DedupGraft };
+
+  auto run_triple = [&](Mode mode, const ROMOL_SPTR &a, const ROMOL_SPTR &b,
+                        const ROMOL_SPTR &c, ReactantMatchCache &matchCache,
+                        ReactionRunnerUtils::ReactantGraftCache &graftCache) {
+    MOL_SPTR_VECT reactants{a, b, c};
+    switch (mode) {
+      case Mode::Plain:
+        return run_Reactants(*rxn, reactants);
+      case Mode::DedupMatch:
+        return run_Reactants(*rxn, reactants, matchCache, true);
+      case Mode::DedupGraft:
+        return run_Reactants(*rxn, reactants, matchCache, graftCache, true);
+    }
+    return std::vector<MOL_SPTR_VECT>{};
+  };
+
+  // correctness: on a small slice all three modes yield the same unique
+  // products; the no-dedup mode just produces extra symmetric duplicates
+  auto collect_unique = [&](Mode mode, unsigned int limit) {
+    std::set<std::string> uniqueProducts;
+    std::size_t setCount = 0;
+    ReactantMatchCache matchCache;
+    ReactionRunnerUtils::ReactantGraftCache graftCache;
+    for (unsigned int i = 0; i < limit; ++i) {
+      for (unsigned int j = 0; j < limit; ++j) {
+        for (unsigned int k = 0; k < limit; ++k) {
+          const auto products = run_triple(mode, poolA[i], poolB[j], poolC[k],
+                                           matchCache, graftCache);
+          setCount += products.size();
+          for (const auto &product_set : products) {
+            std::vector<std::string> parts;
+            parts.reserve(product_set.size());
+            for (const auto &product : product_set) {
+              parts.push_back(MolToSmiles(*product));
+            }
+            std::sort(parts.begin(), parts.end());
+            std::string joined;
+            for (const auto &part : parts) {
+              joined += part;
+              joined.push_back('.');
+            }
+            uniqueProducts.insert(joined);
+          }
+        }
+      }
+    }
+    return std::make_pair(uniqueProducts, setCount);
+  };
+
+  constexpr unsigned int CHECK_LIMIT = 4;
+  const auto plainCheck = collect_unique(Mode::Plain, CHECK_LIMIT);
+  const auto matchCheck = collect_unique(Mode::DedupMatch, CHECK_LIMIT);
+  const auto graftCheck = collect_unique(Mode::DedupGraft, CHECK_LIMIT);
+  CHECK(plainCheck.first == matchCheck.first);
+  CHECK(graftCheck.first == matchCheck.first);
+  // the symmetric core yields duplicate matches, so the no-dedup mode produces
+  // strictly more product sets than the deduped modes for the same unique set
+  CHECK(plainCheck.second > matchCheck.second);
+  CHECK(graftCheck.second == matchCheck.second);
+
+  // lean benchmark loop: full pools, no canonicalization so only assembly and
+  // caching are measured
+  auto bench_run = [&](Mode mode) {
+    ReactantMatchCache matchCache;
+    ReactionRunnerUtils::ReactantGraftCache graftCache;
+    std::size_t total = 0;
+    for (const auto &a : poolA) {
+      for (const auto &b : poolB) {
+        for (const auto &c : poolC) {
+          total += run_triple(mode, a, b, c, matchCache, graftCache).size();
+        }
+      }
+    }
+    return total;
+  };
+
+  BENCHMARK("three-component no caching") { return bench_run(Mode::Plain); };
+
+  BENCHMARK("three-component dedup + match cache") {
+    return bench_run(Mode::DedupMatch);
+  };
+
+  BENCHMARK("three-component dedup + graft cache") {
+    return bench_run(Mode::DedupGraft);
+  };
+}
