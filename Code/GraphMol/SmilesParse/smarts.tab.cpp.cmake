@@ -680,15 +680,15 @@ static const yytype_int16 yyrline[] =
      220,   225,   228,   236,   237,   238,   239,   247,   256,   270,
      291,   297,   321,   342,   359,   382,   396,   397,   398,   402,
      425,   429,   434,   440,   449,   456,   465,   474,   488,   495,
-     503,   510,   515,   520,   523,   529,   530,   534,   551,   575,
-     576,   581,   582,   587,   588,   593,   594,   595,   596,   597,
-     598,   599,   600,   604,   608,   612,   616,   620,   624,   628,
-     635,   642,   651,   660,   669,   679,   689,   699,   708,   716,
-     723,   729,   735,   742,   756,   757,   764,   765,   769,   773,
-     777,   781,   785,   790,   798,   810,   815,   820,   825,   830,
-     835,   838,   839,   847,   848,   854,   860,   866,   871,   878,
-     879,   880,   881,   882,   883,   887,   888,   889,   890,   891,
-     892,   893,   898,   899,   903,   904,   913,   914,   918
+     503,   510,   515,   520,   523,   529,   530,   534,   554,   581,
+     582,   587,   588,   593,   594,   599,   600,   601,   602,   603,
+     604,   605,   606,   610,   614,   618,   622,   626,   630,   634,
+     641,   648,   657,   666,   675,   685,   695,   705,   714,   722,
+     729,   735,   741,   748,   762,   763,   770,   771,   775,   779,
+     783,   787,   791,   796,   804,   816,   821,   826,   831,   836,
+     841,   844,   845,   853,   854,   860,   866,   872,   877,   884,
+     885,   886,   887,   888,   889,   893,   894,   895,   896,   897,
+     898,   899,   904,   905,   909,   910,   919,   920,   924
 };
 #endif
 
@@ -1989,6 +1989,9 @@ yyreduce:
   RWMol *molP = (*molList)[(yyvsp[-1].moli)];
   // close any rings in the molecule:
   SmilesParseOps::CloseMolRings(molP,0);
+  SmilesParseOps::CheckChiralitySpecifications(molP,true);
+  SmilesParseOps::SetUnspecifiedBondTypes(molP);
+  SmilesParseOps::AdjustAtomChiralityFlags(molP);
 
   //molP->debugMol(std::cout);
   qA->setQuery(new RecursiveStructureQuery(molP));
@@ -2013,6 +2016,9 @@ yyreduce:
   RWMol *molP = (*molList)[(yyvsp[-3].moli)];
   // close any rings in the molecule:
   SmilesParseOps::CloseMolRings(molP,0);
+  SmilesParseOps::CheckChiralitySpecifications(molP,true);
+  SmilesParseOps::SetUnspecifiedBondTypes(molP);
+  SmilesParseOps::AdjustAtomChiralityFlags(molP);
 
   //molP->debugMol(std::cout);
   qA->setQuery(new RecursiveStructureQuery(molP,(yyvsp[0].ival)));
