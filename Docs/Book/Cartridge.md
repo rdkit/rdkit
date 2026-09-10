@@ -655,7 +655,9 @@ There are additional operators defined in the cartridge, but these are used for 
 
 -   mol\_amw(mol) : returns the AMW for a molecule.
 -   mol\_exactmw(mol) : returns the exact MW for a molecule (*available from 2021\_09 release*).
+-   mol\_heavymw(mol) : returns the MW of the heavy atom in a molecule (*available from 2026\_04 release*)
 -   mol\_logp(mol) : returns the MolLogP for a molecule.
+-   mol\_mr(mol) : returns the MolMR for a molecule. (*available from 2026\_04 release*)
 -   mol\_tpsa(mol) : returns the topological polar surface area for a molecule (*available from Q1 2011 (2011\_03) release*).
 -   mol\_labuteasa(mol) : returns Labute's approximate surface area (ASA) for a molecule (*available from 2021\_09 release*).
 -   mol\_fractioncsp3(mol) : returns the fraction of carbons that are sp3 hybridized (*available from 2013\_03 release*).
@@ -663,6 +665,8 @@ There are additional operators defined in the cartridge, but these are used for 
 -   mol\_hbd(mol) : returns the number of Lipinski H-bond donors (i.e. number of Os and Ns that have at least one H) for a molecule.
 -   mol\_numatoms(mol) : returns the total number of atoms in a molecule.
 -   mol\_numheavyatoms(mol) : returns the number of heavy atoms in a molecule.
+-   mol\_numatomstereocenters(mol) : returns the number of atoms that are stereo centers in a molecule. (*available from 2026\_04 release*)
+-   mol\_numunspecifiedatomstereocenters(mol) : <not sure> (*available from 2026\_04 release*)
 -   mol\_numrotatablebonds(mol) : returns the number of rotatable bonds in a molecule (*available from Q1 2011 (2011\_03) release*).
 -   mol\_numheteroatoms(mol) : returns the number of heteroatoms in a molecule (*available from Q1 2011 (2011\_03) release*).
 -   mol\_numrings(mol) : returns the number of rings in a molecule (*available from Q1 2011 (2011\_03) release*).
@@ -681,6 +685,9 @@ There are additional operators defined in the cartridge, but these are used for 
 -   mol\_inchikey(mol) : returns an InChI key for the molecule. (*available from the 2011\_06 release, requires that the RDKit be built with InChI support*).
 -   mol\_formula(mol,bool default false, bool default true) : returns a string with the molecular formula. The second argument controls whether isotope information is included in the formula; the third argument controls whether "D" and "T" are used instead of [2H] and [3H]. (*available from the 2014\_03 release*)
 -   mol\_nm\_hash(mol,string default '') : returns a string with a hash for the molecule. The second argument controls the hash type. Legal values are 'AnonymousGraph', 'ElementGraph', 'CanonicalSmiles', 'MurckoScaffold', 'ExtendedMurcko', 'MolFormula', 'AtomBondCounts', 'DegreeVector', 'Mesomer', 'HetAtomTautomer', 'HetAtomProtomer', 'RedoxPair', 'Regioisomer', 'NetCharge', 'SmallWorldIndexBR', 'SmallWorldIndexBRL', 'ArthorSubstructureOrder`. The default is 'AnonymousGraph'.
+-   mol\_peoe\_vsa1 - mol\_peoe\_vsa14 : <not sure> (*available from 2026\_04 release*)
+-   mol\_smr\_vsa1 - mol\_smr\_vsa10 : <not sure> (*available from 2026\_04 release*)
+-   mol\_slogp\_vsa1 - mol\_slogp\_vsa12 : <not sure> (*available from 2026\_04 release*)
 
 ##### Connectivity Descriptors
 
@@ -689,6 +696,14 @@ There are additional operators defined in the cartridge, but these are used for 
 -   mol\_kappa1(mol) - mol\_kappa3(mol) : returns the kappaX value for a molecule for X=1-3 (*available from 2012\_01 release*).
 -   mol\_phi(mol) : returns the Kier Phi value for a molecule (*available from 2021\_09 release*).
 -   mol\_hallkieralpha(mol) : returns the Hall-Kier alpha value for a molecule (*available from 2021\_09 release*).
+-   mol\_bcut2d\_mwhi : <not sure> (*available from 2026\_04 release*)
+-   mol\_bcut2d\_mwlow : <not sure> (*available from 2026\_04 release*)
+-   mol\_bcut2d\_chghi : <not sure> (*available from 2026\_04 release*)
+-   mol\_bcut2d\_chglow : <not sure> (*available from 2026\_04 release*)
+-   mol\_bcut2d\_logphi : <not sure> (*available from 2026\_04 release*)
+-   mol\_bcut2d\_logplow : <not sure> (*available from 2026\_04 release*)
+-   mol\_bcut2d\_mrhi : <not sure> (*available from 2026\_04 release*)
+-   mol\_bcut2d\_mrlow : <not sure> (*available from 2026\_04 release*)
 
 ##### MCS
 
