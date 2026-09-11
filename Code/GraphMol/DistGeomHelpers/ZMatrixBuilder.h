@@ -47,7 +47,7 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setMoleculeDFS(
 RDKIT_DISTGEOMHELPERS_EXPORT void setMoleculeDFS(
     const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
     const InternalCoordinates &internalCoords, const unsigned int startAtomIdx,
-    const unsigned int atomIdx2, const unsigned int atomIdx3);
+    const unsigned int atomIdx2);
 
 //! TODO
 /*!

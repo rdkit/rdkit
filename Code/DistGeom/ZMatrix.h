@@ -221,7 +221,7 @@ inline std::ostream &operator<<(std::ostream &os, const ZMatrix &zmat) {
        << " " << torsionRef << " [";
     if (torsion) {
       std::visit(overloaded{[&os](const TorsionRange &r) {
-                              os << r.lower << ',' << r.lower;
+                              os << r.lower << ',' << r.upper;
                             },
                             [&os](const TorsionValues &ts) {
                               for (const auto t : ts) {
