@@ -55,7 +55,9 @@ struct PageData {
         mols(),
         fragmentLookup(),
         groupedFragments(),
-        schemes() {}
+        schemes(),
+        parseQueries(false),
+        strictQueryParsing(false) {}
 
   PageData(const PageData &) = delete;
 
@@ -66,6 +68,8 @@ struct PageData {
   std::map<unsigned int, std::vector<int>>
       groupedFragments;               // grouped.id -> [fragment.id]
   std::vector<ReactionInfo> schemes;  // reaction schemes found
+  bool parseQueries;
+  bool strictQueryParsing;
 
   void clearCDXProps() {
     for (auto &mol : mols) {
