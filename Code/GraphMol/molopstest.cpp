@@ -139,6 +139,78 @@ TEST_CASE("test2") {
   delete m;
 };
 
+TEST_CASE("flat RingInfo storage preserves membership and fused semantics") {
+  RingInfo ringInfo;
+  ringInfo.initialize(FIND_RING_TYPE_SSSR);
+  ringInfo.preallocate(8, 8);
+
+  const VECT_INT_VECT atomRings{{0, 1, 2}, {0, 1, 3}, {0, 1, 4}};
+  const VECT_INT_VECT bondRings{{0, 1, 2}, {0, 3, 4}, {0, 5, 6}};
+  REQUIRE(ringInfo.addRings(atomRings, bondRings) == 3);
+  REQUIRE(ringInfo.numRings() == 3);
+
+  REQUIRE(ringInfo.atomRings().size() == atomRings.size());
+  for (size_t i = 0; i < atomRings.size(); ++i) {
+    REQUIRE(std::equal(ringInfo.atomRings()[i].begin(),
+                       ringInfo.atomRings()[i].end(), atomRings[i].begin(),
+                       atomRings[i].end()));
+    REQUIRE(std::equal(ringInfo.bondRings()[i].begin(),
+                       ringInfo.bondRings()[i].end(), bondRings[i].begin(),
+                       bondRings[i].end()));
+  }
+
+  REQUIRE(ringInfo.atomMembers(0).size() == 3);
+  REQUIRE(ringInfo.atomMembers(0)[0] == 0);
+  REQUIRE(ringInfo.atomMembers(0)[1] == 1);
+  REQUIRE(ringInfo.atomMembers(0)[2] == 2);
+  REQUIRE(ringInfo.bondMembers(0).size() == 3);
+  REQUIRE(ringInfo.minAtomRingSize(7) == 0);
+  REQUIRE(ringInfo.minAtomRingSize(99) == 0);
+  REQUIRE(
+      ringInfo.atomMembers(std::numeric_limits<unsigned int>::max()).empty());
+  REQUIRE(ringInfo.minBondRingSize(7) == 0);
+  REQUIRE(ringInfo.minBondRingSize(99) == 0);
+  REQUIRE(
+      ringInfo.bondMembers(std::numeric_limits<unsigned int>::max()).empty());
+
+  // A bond shared by three rings is one fused bond in each ring, while each
+  // ring still has two fused ring neighbors.
+  for (unsigned int ringIdx = 0; ringIdx < 3; ++ringIdx) {
+    REQUIRE(ringInfo.isRingFused(ringIdx));
+    REQUIRE(ringInfo.numFusedBonds(ringIdx) == 1);
+    REQUIRE(ringInfo.numFusedRingNeighbors(ringIdx) == 2);
+  }
+
+  RingInfo copied(ringInfo);
+  REQUIRE(copied.numRings() == 3);
+  REQUIRE(copied.numFusedBonds(0) == 1);
+  RingInfo moved(std::move(copied));
+  REQUIRE(moved.numRings() == 3);
+
+  RingInfo selected;
+  selected.initialize(FIND_RING_TYPE_SSSR);
+  selected.preallocate(8, 8);
+  REQUIRE(selected.addRings(ringInfo, {2, 0}) == 2);
+  REQUIRE(std::ranges::equal(selected.atomRings()[0], atomRings[2]));
+  REQUIRE(std::ranges::equal(selected.bondRings()[0], bondRings[2]));
+  REQUIRE(std::ranges::equal(selected.atomRings()[1], atomRings[0]));
+  REQUIRE(std::ranges::equal(selected.bondRings()[1], bondRings[0]));
+  REQUIRE(selected.numAtomRings(0) == 2);
+  REQUIRE(selected.numBondRings(0) == 2);
+
+  copied.reset();
+  copied.initialize();
+  copied.preallocate(3, 3);
+  REQUIRE(copied.addRing(INT_VECT{0, 1, 2}, INT_VECT{0, 1, 2}) == 1);
+
+  ringInfo.addRingFamily({0, 1, 2, 3}, {0, 1, 3, 4});
+  ringInfo.reset(false);
+  REQUIRE(!ringInfo.isInitialized());
+  ringInfo.initialize();
+  REQUIRE(ringInfo.numRings() == 0);
+  REQUIRE(ringInfo.numRingFamilies() == 1);
+}
+
 TEST_CASE("test3") {
   string smi;
   Mol *m;
@@ -161,7 +233,7 @@ TEST_CASE("test3") {
     REQUIRE(m->getRingInfo()->numAtomRings(i) == 1);
     REQUIRE(m->getRingInfo()->atomRingSizes(i) == (INT_VECT{3}));
     REQUIRE((m->getRingInfo()->atomMembers(i).size() == 1 &&
-             m->getRingInfo()->atomMembers(i).at(0) == 0));
+             m->getRingInfo()->atomMembers(i)[0] == 0));
   }
   for (unsigned int i = 0; i < m->getNumBonds(); i++) {
     REQUIRE(m->getRingInfo()->isBondInRingOfSize(i, 3));
@@ -169,12 +241,14 @@ TEST_CASE("test3") {
     REQUIRE(m->getRingInfo()->numBondRings(i) == 1);
     REQUIRE(m->getRingInfo()->bondRingSizes(i) == (INT_VECT{3}));
     REQUIRE((m->getRingInfo()->bondMembers(i).size() == 1 &&
-             m->getRingInfo()->bondMembers(i).at(0) == 0));
+             m->getRingInfo()->bondMembers(i)[0] == 0));
   }
   REQUIRE(m->getRingInfo()->areAtomsInSameRing(0, 1));
+  REQUIRE(m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 0));
   REQUIRE(m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 3));
   REQUIRE(!m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 4));
   REQUIRE(m->getRingInfo()->areBondsInSameRing(0, 1));
+  REQUIRE(m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 0));
   REQUIRE(m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 3));
   REQUIRE(!m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 4));
   BOOST_LOG(rdInfoLog) << smi << "\n";
@@ -194,7 +268,7 @@ TEST_CASE("test3") {
     REQUIRE(m->getRingInfo()->numAtomRings(i) == 1);
     REQUIRE(m->getRingInfo()->atomRingSizes(i) == (INT_VECT{4}));
     REQUIRE((m->getRingInfo()->atomMembers(i).size() == 1 &&
-             m->getRingInfo()->atomMembers(i).at(0) == 0));
+             m->getRingInfo()->atomMembers(i)[0] == 0));
   }
   REQUIRE(m->getRingInfo()->isBondInRingOfSize(0, 4));
   REQUIRE(m->getRingInfo()->numBondRings(0) == 1);
@@ -289,8 +363,8 @@ TEST_CASE("test3") {
   REQUIRE(m->getRingInfo()->atomRingSizes(1) == (INT_VECT{5}));
   REQUIRE(m->getRingInfo()->atomRingSizes(2) == (INT_VECT{5, 5}));
   REQUIRE(m->getRingInfo()->atomMembers(2).size() == 2);
-  REQUIRE(m->getRingInfo()->atomMembers(2).at(0) == 0);
-  REQUIRE(m->getRingInfo()->atomMembers(2).at(1) == 1);
+  REQUIRE(m->getRingInfo()->atomMembers(2)[0] == 0);
+  REQUIRE(m->getRingInfo()->atomMembers(2)[1] == 1);
   REQUIRE(m->getRingInfo()->isRingFused(0));
   REQUIRE(m->getRingInfo()->isRingFused(1));
   REQUIRE(m->getRingInfo()->areRingsFused(0, 1));

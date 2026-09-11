@@ -73,7 +73,7 @@ bool Seed::canAddAllNonFusedRingBondsConnectedToBond(
   const auto &mol = bond.getOwningMol();
   const auto ri = mol.getRingInfo();
   int bondIdx = bond.getIdx();
-  const auto &bondRings = ri->bondRings().at(ri->bondMembers(bondIdx).front());
+  const auto bondRings = ri->bondRings().at(ri->bondMembers(bondIdx).front());
   std::set<unsigned int> nonFusedRingBondIndices;
   boost::dynamic_bitset<> connectedAtomIndices(mol.getNumAtoms());
   Seed seed;

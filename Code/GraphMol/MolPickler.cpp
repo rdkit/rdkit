@@ -2245,7 +2245,8 @@ void MolPickler::_pickleSSSR(std::ostream &ss, const RingInfo *ringInfo,
   streamWrite(ss, nrings);
   for (unsigned int i = 0; i < ringInfo->numRings(); i++) {
     INT_VECT ring;
-    ring = ringInfo->atomRings()[i];
+    const auto ringView = ringInfo->atomRings()[i];
+    ring.assign(ringView.begin(), ringView.end());
     T tmpT = static_cast<T>(ring.size());
     streamWrite(ss, tmpT);
     for (int &j : ring) {
@@ -2276,6 +2277,10 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
 
   if (numRings > 0) {
     ringInfo->preallocate(mol->getNumAtoms(), mol->getNumBonds());
+    VECT_INT_VECT atomRings;
+    VECT_INT_VECT bondRings;
+    atomRings.reserve(numRings);
+    bondRings.reserve(numRings);
     for (unsigned int i = 0; i < static_cast<unsigned int>(numRings); i++) {
       T tmpT;
       T ringSize;
@@ -2320,8 +2325,10 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
         bonds[ringSize - 1] =
             mol->getBondBetweenAtoms(atoms[0], atoms[ringSize - 1])->getIdx();
       }
-      ringInfo->addRing(atoms, bonds);
+      atomRings.push_back(std::move(atoms));
+      bondRings.push_back(std::move(bonds));
     }
+    ringInfo->addRings(atomRings, bondRings);
   }
 }
 

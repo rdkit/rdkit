@@ -140,12 +140,13 @@ const std::uint32_t RingMembershipSize::IS_AROMATIC_BIT = (1u << 31);
 RingMembershipSize::RingMembershipSize(const ROMol &mol) {
   static const unsigned int MAX_NUM_RINGS = (0xFFFFFFFF >> 1);
   const RingInfo *ringInfo = mol.getRingInfo();
-  const VECT_INT_VECT &atomRings = ringInfo->atomRings();
+  const auto atomRings = ringInfo->atomRings();
   PRECONDITION(atomRings.size() < MAX_NUM_RINGS, "Too many rings");
   for (std::uint32_t ringIdx = 0; ringIdx < atomRings.size(); ++ringIdx) {
-    unsigned int ringSize = atomRings[ringIdx].size();
+    const auto ring = atomRings[ringIdx];
+    unsigned int ringSize = ring.size();
     std::uint32_t ringIdxWithAromaticFlag = ringIdx;
-    bool ringIsAromatic = isRingAromatic(mol, atomRings[ringIdx]);
+    bool ringIsAromatic = isRingAromatic(mol, ring);
     if (ringIsAromatic) {
       ringIdxWithAromaticFlag |= IS_AROMATIC_BIT;
     }
@@ -155,7 +156,7 @@ RingMembershipSize::RingMembershipSize(const ROMol &mol) {
                .insert(std::make_pair(ringSize, RingMembershipMap()))
                .first;
     }
-    for (int atomIdxIt : atomRings[ringIdx]) {
+    for (int atomIdxIt : ring) {
       auto it2 = it->second.find(atomIdxIt);
       if (it2 == it->second.end()) {
         it2 = it->second.insert(std::make_pair(atomIdxIt, RingMembership()))
@@ -302,9 +303,9 @@ bool isAromaticAtomType(const unsigned int atomType) {
   return (aromaticTypes.find(atomType) != aromaticTypes.end());
 }
 
-bool isRingAromatic(const ROMol &mol, const INT_VECT &ringIndxVect) {
+bool isRingAromatic(const ROMol &mol, std::span<const int> ringIndxVect) {
   bool isAromatic = true;
-  for (unsigned int i = 0; isAromatic && (i < ringIndxVect.size() - 1); ++i) {
+  for (unsigned int i = 0; isAromatic && (i + 1 < ringIndxVect.size()); ++i) {
     isAromatic = (mol.getBondBetweenAtoms(ringIndxVect[i], ringIndxVect[i + 1])
                       ->getBondType() == Bond::AROMATIC);
   }
@@ -315,16 +316,16 @@ bool isRingAromatic(const ROMol &mol, const INT_VECT &ringIndxVect) {
 bool isAtomInAromaticRingOfSize(const Atom *atom, const unsigned int ringSize) {
   bool isAromatic = false;
   const ROMol &mol = atom->getOwningMol();
-  const VECT_INT_VECT &atomRings = mol.getRingInfo()->atomRings();
+  const auto atomRings = mol.getRingInfo()->atomRings();
 
   if (atom->getIsAromatic()) {
     for (unsigned int i = 0; (!isAromatic) && (i < atomRings.size()); ++i) {
-      if ((atomRings[i].size() != ringSize) ||
-          (std::find(atomRings[i].begin(), atomRings[i].end(),
-                     atom->getIdx()) == atomRings[i].end())) {
+      const auto ring = atomRings[i];
+      if ((ring.size() != ringSize) ||
+          (std::find(ring.begin(), ring.end(), atom->getIdx()) == ring.end())) {
         continue;
       }
-      isAromatic = isRingAromatic(mol, atomRings[i]);
+      isAromatic = isRingAromatic(mol, ring);
     }
   }
 
@@ -451,7 +452,7 @@ bool areAtomsInSameRingOfSize(const ROMol &mol, const unsigned int ringSize,
                               const unsigned int numAtoms, ...) {
   unsigned int i;
   bool areInSameRingOfSize = false;
-  const VECT_INT_VECT &atomRings = mol.getRingInfo()->atomRings();
+  const auto atomRings = mol.getRingInfo()->atomRings();
   unsigned int idx;
   va_list atomIdxs;
 
@@ -478,7 +479,7 @@ bool areAtomsInSameAromaticRing(const ROMol &mol, const unsigned int idx1,
   unsigned int i;
   unsigned int j;
   bool areInSameAromatic = false;
-  const VECT_INT_VECT &atomRings = mol.getRingInfo()->atomRings();
+  const auto atomRings = mol.getRingInfo()->atomRings();
 
   if (mol.getAtomWithIdx(idx1)->getIsAromatic() &&
       mol.getAtomWithIdx(idx2)->getIsAromatic()) {
@@ -3081,7 +3082,7 @@ void MMFFMolProperties::computeMMFFCharges(const ROMol &mol) {
   double pChg = 0.0;
   double fChg = 0.0;
   boost::dynamic_bitset<> conjNBitVect(mol.getNumAtoms());
-  VECT_INT_VECT atomRings = mol.getRingInfo()->atomRings();
+  const auto atomRings = mol.getRingInfo()->atomRings();
   ROMol::ADJ_ITER nbrIdx;
   ROMol::ADJ_ITER endNbrs;
   ROMol::ADJ_ITER nbr2Idx;
