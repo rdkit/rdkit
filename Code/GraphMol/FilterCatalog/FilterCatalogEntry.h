@@ -196,8 +196,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
 #ifdef RDK_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
   template <class Archive>
-  void save(Archive &ar, const unsigned int version) const {
-    RDUNUSED_PARAM(version);
+  void save(Archive &ar, [[maybe_unused]] const unsigned int version) const {
     registerFilterMatcherTypes(ar);
 
     ar & d_matcher;
@@ -220,8 +219,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
   }
 
   template <class Archive>
-  void load(Archive &ar, const unsigned int version) {
-    RDUNUSED_PARAM(version);
+  void load(Archive &ar, [[maybe_unused]] const unsigned int version) {
     registerFilterMatcherTypes(ar);
 
     ar & d_matcher;

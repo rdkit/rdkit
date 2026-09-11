@@ -2465,9 +2465,7 @@ void testAtomPairFPDifference() {
   TEST_ASSERT(fpFromFreeFuncAsVectOfPairs == fpFromGeneratorAsVectOfPairs);
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
+int main() {
   RDLog::InitLogs();
 #if 1
   testAtomPairFP();

@@ -541,8 +541,8 @@ double DiceSimilarity(const SparseIntVect<IndexType> &v1,
 template <typename IndexType>
 double TverskySimilarity(const SparseIntVect<IndexType> &v1,
                          const SparseIntVect<IndexType> &v2, double a, double b,
-                         bool returnDistance = false, double bounds = 0.0) {
-  RDUNUSED_PARAM(bounds);
+                         bool returnDistance = false,
+                         [[maybe_unused]] double bounds = 0.0) {
   if (v1.getLength() != v2.getLength()) {
     throw ValueErrorException("SparseIntVect size mismatch");
   }

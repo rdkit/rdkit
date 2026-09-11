@@ -34,8 +34,7 @@ inline unsigned int getNumThreadsToUse(int target) {
 #else
 
 namespace RDKit {
-inline unsigned int getNumThreadsToUse(int target) {
-  RDUNUSED_PARAM(target);
+inline unsigned int getNumThreadsToUse([[maybe_unused]] int target) {
   return 1;
 }
 }  // namespace RDKit

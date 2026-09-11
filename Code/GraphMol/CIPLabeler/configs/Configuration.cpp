@@ -89,12 +89,9 @@ const std::vector<Atom *> &Configuration::getCarriers() const {
 
 Digraph &Configuration::getDigraph() { return d_digraph; }
 
-Descriptor Configuration::label(Node *node, Digraph &digraph,
-                                const Rules &comp) {
-  (void)node;
-  (void)digraph;
-  (void)comp;
-
+Descriptor Configuration::label([[maybe_unused]] Node *node,
+                                [[maybe_unused]] Digraph &digraph,
+                                [[maybe_unused]] const Rules &comp) {
   return Descriptor::UNKNOWN;
 }
 

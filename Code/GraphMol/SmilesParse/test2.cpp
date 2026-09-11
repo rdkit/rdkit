@@ -101,9 +101,7 @@ void testParseBondSmarts() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
+int main() {
   RDLog::InitLogs();
 // boost::logging::enable_logs("rdApp.debug");
 #if 1

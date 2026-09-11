@@ -96,9 +96,8 @@ class MolBundle : public RDProps {
   }
 
   //! serializes (pickles) to a stream
-  void toStream(std::ostream &ss) const {
+  void toStream([[maybe_unused]] std::ostream &ss) const {
 #ifndef RDK_USE_BOOST_SERIALIZATION
-    RDUNUSED_PARAM(ss);
     PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else
     boost::archive::text_oarchive ar(ss);
@@ -112,9 +111,8 @@ class MolBundle : public RDProps {
     return ss.str();
   };
   //! initializes from a stream pickle
-  void initFromStream(std::istream &ss) {
+  void initFromStream([[maybe_unused]] std::istream &ss) {
 #ifndef RDK_USE_BOOST_SERIALIZATION
-    RDUNUSED_PARAM(ss);
     PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else
     boost::archive::text_iarchive ar(ss);
@@ -130,8 +128,7 @@ class MolBundle : public RDProps {
 #ifdef RDK_USE_BOOST_SERIALIZATION
   // FIX: we don't currently serialize properties
   template <class Archive>
-  void save(Archive &ar, const unsigned int version) const {
-    RDUNUSED_PARAM(version);
+  void save(Archive &ar, [[maybe_unused]] const unsigned int version) const {
     std::vector<std::string> pkls;
     for (const auto &mol : d_mols) {
       std::string pkl;
@@ -142,9 +139,7 @@ class MolBundle : public RDProps {
   }
 
   template <class Archive>
-  void load(Archive &ar, const unsigned int version) {
-    RDUNUSED_PARAM(version);
-
+  void load(Archive &ar, [[maybe_unused]] const unsigned int version) {
     std::vector<std::string> pkls;
     ar >> pkls;
     d_mols.clear();

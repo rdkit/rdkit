@@ -849,8 +849,7 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
       oVal = boost::lexical_cast<unsigned int>(foo);
       TEST_ASSERT(oVal == nHBD);
 
-      unsigned int nAmide = calcNumAmideBonds(*mol);
-      (void)nAmide;
+      [[maybe_unused]] unsigned int nAmide = calcNumAmideBonds(*mol);
       double logp, mr;
       calcCrippenDescriptors(*mol, logp, mr);
     }

@@ -54,10 +54,9 @@ namespace python = boost::python;
     - the _results_ array is assumed to be _nVals_ long
 
  ***********************************************/
-long int *GenVarTable(double *vals, int nVals, long int *cuts, int nCuts,
-                      long int *starts, long int *results, int nPossibleRes,
-                      long int *varTable) {
-  RDUNUSED_PARAM(vals);
+long int *GenVarTable([[maybe_unused]] double *vals, int nVals, long int *cuts,
+                      int nCuts, long int *starts, long int *results,
+                      int nPossibleRes, long int *varTable) {
   int nBins = nCuts + 1;
   int idx, i, iTab;
 
