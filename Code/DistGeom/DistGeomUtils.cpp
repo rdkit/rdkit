@@ -12,6 +12,8 @@
 #include "DistViolationContribs.h"
 #include "ChiralViolationContribs.h"
 #include "FourthDimContribs.h"
+#include "ZMatrix.h"
+#include "ZMatrixUtils.h"
 #include <Numerics/Matrix.h>
 #include <Numerics/SymmMatrix.h>
 #include <Numerics/Vector.h>
@@ -159,6 +161,113 @@ bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distMat,
       }
     }
   }
+  return true;
+}
+
+bool computeZMatrixCoords(ZMatrix &zmat, RDGeom::PointPtrVect &positions,
+                          int seed) {
+  if (seed > 0) {
+    RDKit::getRandomGenerator(seed);
+  }
+  return computeZMatrixCoords(zmat, positions, RDKit::getDoubleRandomSource());
+}
+
+inline RDGeom::Point3D getPositionFromReferences(
+    const auto &ref1Coord, const auto &ref2Coord, const auto &ref3Coord,
+    const double length, const double angle, const double torsion) {
+  auto v_1_2 = ref1Coord - ref2Coord;
+  auto v_2_3 = ref2Coord - ref3Coord;
+
+  v_1_2.normalize();
+  v_2_3.normalize();
+
+  const auto c_prod = v_2_3.crossProduct(v_1_2);
+  const auto dot_p = v_1_2.dotProduct(v_2_3);
+  const double denom = std::sqrt(1.0 - std::pow(dot_p, 2));
+
+  const auto n_cp = c_prod / denom;
+
+  const auto cp2 = n_cp.crossProduct(v_1_2);
+
+  const auto v_ref3_new_pos =
+      (-v_1_2 * std::cos(angle) + cp2 * std::sin(angle) * std::cos(torsion) +
+       n_cp * std::sin(angle) * std::sin(torsion)) *
+      length;
+
+  return ref1Coord + v_ref3_new_pos;
+}
+
+void computeZMatrixCoords(ZMatrix &zmat,
+                          std::vector<RDGeom::Point3D> &coordinates,
+                          RDKit::double_source_type &rng) {
+  // Adapted from
+  // https://github.com/greglandrum/yaehmop/blob/master/tightbind/Zmat.c
+  std::size_t numAtoms = coordinates.size();
+
+  {
+    // pos 1 to origin
+    coordinates[zmat[0].atomIdx] = RDGeom::Point3D(0.0, 0.0, 0.0);
+
+    if (numAtoms == 1) {
+      return;
+    }
+
+    // 2nd atom into zaxis
+    coordinates[zmat[1].atomIdx] =
+        RDGeom::Point3D(0.0, 0.0, zmat[1].internal.length.value());
+
+    if (numAtoms == 2) {
+      return;
+    }
+
+    // 3rd atom into xzplane
+    const auto &[atomIdx3, internalsAtm3, _] = zmat[2];
+    {
+      double bl = internalsAtm3.length.value(),
+             ba = internalsAtm3.angle.value();
+      double z_pos =
+          coordinates[internalsAtm3.bondRef.value()].z - bl * std::cos(ba);
+
+      coordinates[atomIdx3] = RDGeom::Point3D(bl * std::sin(ba), 0.0, z_pos);
+    }
+  }
+
+  for (const auto &[atomIdx, internals, torsionDep] :
+       zmat | std::views::drop(3)) {
+    const unsigned int torsionRefIdx =
+        torsionDep ? torsionDep->reference : internals.torsionRef.value();
+
+    const auto &ref1Coord = coordinates[internals.bondRef.value()];
+    const auto &ref2Coord = coordinates[internals.angleRef.value()];
+    const auto &ref3Coord = coordinates[torsionRefIdx];
+
+    const double torsion =
+        torsionDep ? torsionDep->offset : sample(*internals.torsion, rng);
+
+    coordinates[atomIdx] = getPositionFromReferences(
+        ref1Coord, ref2Coord, ref3Coord, internals.length.value(),
+        internals.angle.value(), torsion);
+  }
+}
+
+bool computeZMatrixCoords(ZMatrix &zmat, RDGeom::PointPtrVect &positions,
+                          RDKit::double_source_type &rng) {
+  std::vector<RDGeom::Point3D> coordinates(positions.size());
+
+  computeZMatrixCoords(zmat, coordinates, rng);
+
+  // ========== add noise to fourth coordinate
+  for (size_t i = 0; i < positions.size(); i++) {
+    auto &p = *(positions[i]);
+    auto &coord = coordinates[i];
+    p[0] = coord.x;
+    p[1] = coord.y;
+    p[2] = coord.z;
+    for (size_t j = 3; j < p.dimension(); j++) {
+      p[j] = 0.0;
+    }
+  }
+
   return true;
 }
 

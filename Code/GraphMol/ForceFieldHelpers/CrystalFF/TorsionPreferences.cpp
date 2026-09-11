@@ -208,11 +208,11 @@ void getExperimentalTorsions(
   if (useBasicKnowledge) {
     // torsions for forced trans amides / esters
     auto is_forced_cis_or_trans = [](const auto &config) {
-      if (!config.type.isForced) {
+      if (!config.value.isForced) {
         return false;
       }
-      return config.type.type == DGeomHelpers::TorsionType::TRANS ||
-             config.type.type == DGeomHelpers::TorsionType::CIS;
+      return config.value.type == DGeomHelpers::TorsionType::TRANS ||
+             config.value.type == DGeomHelpers::TorsionType::CIS;
     };
     for (const auto &config :
          details.path14Configs | std::views::filter(is_forced_cis_or_trans)) {
@@ -245,7 +245,7 @@ void getExperimentalTorsions(
       if (std::fabs(details.forceConsts.etTermScaling - 1.0) > 1e-3) {
         V[0] = 4.0;
       }
-      if (config.type.type == DGeomHelpers::TorsionType::CIS) {
+      if (config.value.type == DGeomHelpers::TorsionType::CIS) {
         signs[0] = -1;
       }
       details.expTorsionAngles.emplace_back(signs, V);
@@ -316,8 +316,8 @@ void getExperimentalTorsions(
           BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
         }
       }  // end loop over matches
-    }    // end loop over patterns
-  }      // end if experimentalTorsions
+    }  // end loop over patterns
+  }  // end if experimentalTorsions
   if (useBasicKnowledge) {
     boost::dynamic_bitset<> doneAtoms(na);
 
@@ -408,7 +408,7 @@ void getExperimentalTorsions(
         }
 
       }  // loop over atoms in ring
-    }    // loop over rings
+    }  // loop over rings
   }
 }  // end function
 
