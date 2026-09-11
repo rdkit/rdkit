@@ -68,9 +68,7 @@ class Rules : public SequenceRule {
 
  private:
   void add(SequenceRule *rule) {
-    if (rule == nullptr) {
-      throw std::runtime_error("No sequence rule provided");
-    }
+    PRECONDITION(rule != nullptr, "null rule provided");
     d_rules.push_back(rule);
     rule->setSorter(new Sort(d_rules));
   }
