@@ -333,7 +333,7 @@ TEST_CASE("find core rings") {
     auto mol = v2::SmilesParse::MolFromSmiles(example.first);
     RDKit::VECT_INT_VECT arings;
     bool includeDativeBonds = true;
-    RDKit::MolOps::symmetrizeSSSR(*mol, arings, includeDativeBonds);
+    RDKit::MolOps::findSSSR(*mol, arings, includeDativeBonds);
     CHECK(arings.size() == 3);
     RDKit::INT_VECT coreRingsIds;
     auto coreRings = RDDepict::findCoreRings(arings, coreRingsIds, *mol);
