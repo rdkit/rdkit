@@ -15,6 +15,7 @@
 #include <GraphMol/Chirality.h>
 #include "RDDepictor.h"
 #include "DepictUtils.h"
+#include "EmbeddedFrag.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -2669,5 +2670,204 @@ TEST_CASE("complex spiro structure from MOL file - reasonable bond lengths") {
       auto dist = pos.length();
       CHECK(dist > 0.35);
     }
+  }
+}
+
+TEST_CASE("collision resolution catches crossings far from bond midpoints") {
+  auto smiles = GENERATE(
+      "COCC(Cn1ccnc1[N+](=O)[O-])OP(=O)(N1CC1(C)C)N1CC1(C)C",
+      "CCC(=O)O[C@H]1C[C@H](OC(C)=O)[C@@]2(C)[C@H]([C@H]1C)"
+      "[C@@H](OC(C)=O)[C@]13O[C@]1(C)C(=O)O[C@H]3/C=C(/C)C[C@H]"
+      "(OC(C)=O)[C@H]2OC(C)=O",
+      "Cc1c(C2=NC(=O)C(C)(C)N2Cc2ccccc2)nn(-c2ccc(Cl)cc2Cl)c1-"
+      "c1ccc(Cl)cc1",
+      "CCC12C=CC3=C4CCC(=O)C=C4CCC3C1CC[C@]2(C)O",
+      "CC(C)OC(=O)[C@H](C)N[P@](=O)(OC[C@H]1O[C@@](C#N)(n2ccc(N)nc2=O)"
+      "[C@](C)(O)[C@@H]1OC(=O)C(C)C)Oc1ccccc1");
+  CAPTURE(smiles);
+
+  std::unique_ptr<RWMol> mol(SmilesToMol(smiles));
+  REQUIRE(mol);
+  RDDepict::Compute2DCoordParameters params;
+  params.canonOrient = false;
+  params.nFlipsPerSample = 3;
+  params.nSamples = 100;
+  params.sampleSeed = 100;
+  params.useRingTemplates = true;
+  params.usePathAngleExpansion = true;
+  CHECK(RDDepict::compute2DCoords(*mol, params) == 0);
+
+  constexpr double epsilon = 1e-9;
+  const auto orientation = [](const auto &a, const auto &b, const auto &c) {
+    return (b.x - a.x) * (c.y - a.y) -
+           (b.y - a.y) * (c.x - a.x);
+  };
+  const auto onSegment = [](const auto &a, const auto &b, const auto &point) {
+    return point.x >= std::min(a.x, b.x) - epsilon &&
+           point.x <= std::max(a.x, b.x) + epsilon &&
+           point.y >= std::min(a.y, b.y) - epsilon &&
+           point.y <= std::max(a.y, b.y) + epsilon;
+  };
+  const auto segmentsIntersect = [&](const auto &a, const auto &b,
+                                     const auto &c, const auto &d) {
+    const auto o1 = orientation(a, b, c);
+    const auto o2 = orientation(a, b, d);
+    const auto o3 = orientation(c, d, a);
+    const auto o4 = orientation(c, d, b);
+    if (((o1 > epsilon && o2 < -epsilon) ||
+         (o1 < -epsilon && o2 > epsilon)) &&
+        ((o3 > epsilon && o4 < -epsilon) ||
+         (o3 < -epsilon && o4 > epsilon))) {
+      return true;
+    }
+    return (std::abs(o1) <= epsilon && onSegment(a, b, c)) ||
+           (std::abs(o2) <= epsilon && onSegment(a, b, d)) ||
+           (std::abs(o3) <= epsilon && onSegment(c, d, a)) ||
+           (std::abs(o4) <= epsilon && onSegment(c, d, b));
+  };
+
+  const auto &conf = mol->getConformer();
+  for (auto first = mol->beginBonds(); first != mol->endBonds(); ++first) {
+    auto second = first;
+    ++second;
+    for (; second != mol->endBonds(); ++second) {
+      const auto *bond1 = *first;
+      const auto *bond2 = *second;
+      const auto beg1 = bond1->getBeginAtomIdx();
+      const auto end1 = bond1->getEndAtomIdx();
+      const auto beg2 = bond2->getBeginAtomIdx();
+      const auto end2 = bond2->getEndAtomIdx();
+      if (beg1 == beg2 || beg1 == end2 || end1 == beg2 || end1 == end2) {
+        continue;
+      }
+      CHECK_FALSE(segmentsIntersect(conf.getAtomPos(beg1),
+                                    conf.getAtomPos(end1),
+                                    conf.getAtomPos(beg2),
+                                    conf.getAtomPos(end2)));
+    }
+  }
+}
+
+TEST_CASE("findCollisions detects crossings far from bond midpoints") {
+  auto mol = "CCCC"_smiles;
+  REQUIRE(mol);
+
+  RDGeom::INT_POINT2D_MAP coordinates{
+      {0, {-10.0, 0.0}}, {1, {1.0, 0.0}},
+      {2, {0.0, -1.0}},  {3, {0.0, 1.0}},
+  };
+  RDDepict::EmbeddedFrag fragment(mol.get(), coordinates);
+  const auto *dmat = MolOps::getDistanceMat(*mol);
+
+  const auto collisions = fragment.findCollisions(dmat, true);
+  CHECK(std::find(collisions.begin(), collisions.end(),
+                  RDDepict::PAIR_I_I(0, 3)) != collisions.end());
+}
+
+TEST_CASE("findCollisions can exclude bonded atom pairs") {
+  auto mol = "CC"_smiles;
+  REQUIRE(mol);
+
+  RDGeom::INT_POINT2D_MAP coordinates{{0, {0.0, 0.0}}, {1, {0.1, 0.0}}};
+  RDDepict::EmbeddedFrag fragment(mol.get(), coordinates);
+  const auto *dmat = MolOps::getDistanceMat(*mol);
+
+  CHECK(fragment.findCollisions(dmat, false, true).size() == 1);
+  CHECK(fragment.findCollisions(dmat, false, false).empty());
+}
+
+TEST_CASE("path angle expansion ignores bonded atom collision candidates") {
+  auto mol =
+      "C[C@H](NC(=O)[C@H](Cc1ccc(OCc2ccccc2)cc1)NC(=O)c1ccc(-c2c3ccc(="
+      "[N+](C)C)cc-3oc3cc(N(C)C)ccc23)c(C(=O)[O-])c1)C(=O)N[C@@H](C[C@]1("
+      "O)C(=O)Nc2ccccc21)C(=O)NCc1ccccc1"_smiles;
+  REQUIRE(mol);
+
+  RDDepict::Compute2DCoordParameters params;
+  params.canonOrient = false;
+  params.nFlipsPerSample = 3;
+  params.nSamples = 100;
+  params.sampleSeed = 100;
+  params.useRingTemplates = true;
+  params.usePathAngleExpansion = true;
+  CHECK(RDDepict::compute2DCoords(*mol, params) == 0);
+
+  const auto &conf = mol->getConformer();
+  for (unsigned int first = 0; first < mol->getNumAtoms(); ++first) {
+    for (unsigned int second = first + 1; second < mol->getNumAtoms();
+         ++second) {
+      if (mol->getBondBetweenAtoms(first, second)) {
+        continue;
+      }
+      CAPTURE(first, second);
+      CHECK((conf.getAtomPos(first) - conf.getAtomPos(second)).length() >= 0.5);
+    }
+  }
+}
+
+TEST_CASE("path angle expansion preserves fixed coordinates") {
+  auto mol =
+      "COCC(Cn1ccnc1[N+](=O)[O-])OP(=O)(N1CC1(C)C)N1CC1(C)C"_smiles;
+  REQUIRE(mol);
+
+  RDDepict::Compute2DCoordParameters params;
+  params.canonOrient = false;
+  params.nFlipsPerSample = 3;
+  params.nSamples = 100;
+  params.sampleSeed = 100;
+  params.useRingTemplates = true;
+  CHECK(RDDepict::compute2DCoords(*mol, params) == 0);
+
+  RDGeom::INT_POINT2D_MAP coordMap;
+  const auto &originalConf = mol->getConformer();
+  for (unsigned int aid = 0; aid < mol->getNumAtoms(); ++aid) {
+    const auto &position = originalConf.getAtomPos(aid);
+    coordMap.emplace(aid, RDGeom::Point2D(position.x, position.y));
+  }
+
+  params.coordMap = &coordMap;
+  params.usePathAngleExpansion = true;
+  CHECK(RDDepict::compute2DCoords(*mol, params) == 0);
+
+  const auto &constrainedConf = mol->getConformer();
+  for (const auto &[aid, expected] : coordMap) {
+    const auto &actual = constrainedConf.getAtomPos(aid);
+    CAPTURE(aid);
+    CHECK(actual.x == Catch::Approx(expected.x).margin(1e-8));
+    CHECK(actual.y == Catch::Approx(expected.y).margin(1e-8));
+  }
+}
+
+TEST_CASE("path angle expansion preserves bonds in bridged ring systems") {
+  const auto smiles = "CCC12C=CC3=C4CCC(=O)C=C4CCC3C1CC[C@]2(C)O";
+  auto control = std::unique_ptr<RWMol>(SmilesToMol(smiles));
+  auto expanded = std::unique_ptr<RWMol>(SmilesToMol(smiles));
+  REQUIRE(control);
+  REQUIRE(expanded);
+
+  RDDepict::Compute2DCoordParameters params;
+  params.canonOrient = false;
+  params.nFlipsPerSample = 3;
+  params.nSamples = 100;
+  params.sampleSeed = 100;
+  params.useRingTemplates = true;
+  CHECK(RDDepict::compute2DCoords(*control, params) == 0);
+  params.usePathAngleExpansion = true;
+  CHECK(RDDepict::compute2DCoords(*expanded, params) == 0);
+
+  const auto &controlConf = control->getConformer();
+  const auto &expandedConf = expanded->getConformer();
+  for (const auto *bond : control->bonds()) {
+    if (!control->getRingInfo()->numBondRings(bond->getIdx())) {
+      continue;
+    }
+    const auto begin = bond->getBeginAtomIdx();
+    const auto end = bond->getEndAtomIdx();
+    const auto controlLength =
+        (controlConf.getAtomPos(begin) - controlConf.getAtomPos(end)).length();
+    const auto expandedLength =
+        (expandedConf.getAtomPos(begin) - expandedConf.getAtomPos(end)).length();
+    CAPTURE(begin, end);
+    CHECK(expandedLength == Catch::Approx(controlLength).margin(1e-8));
   }
 }

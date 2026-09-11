@@ -138,7 +138,7 @@ class TestCase(unittest.TestCase):
       2: Geometry.Point2D(1.5, 1.5),
       3: Geometry.Point2D(0, 1.5)
     }
-    rdDepictor.Compute2DCoords(m1, coordMap=coordMap)
+    rdDepictor.Compute2DCoords(m1, coordMap=coordMap, usePathAngleExpansion=True)
     conf = m1.GetConformer(0)
     for i in range(4):
       self.assertTrue(
