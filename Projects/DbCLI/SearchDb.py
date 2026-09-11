@@ -29,6 +29,9 @@
 #
 #  Created by Greg Landrum, July 2007
 #
+import warnings
+
+warnings.warn("the Projects.DbCLI.SearchDb module is deprecated", DeprecationWarning, stacklevel=2)
 
 _version = "0.14.0"
 _description = """
@@ -60,8 +63,7 @@ import zlib
 
 from rdkit import Chem, DataStructs
 from rdkit.Chem.MolDb import FingerprintUtils
-from rdkit.Chem.MolDb.FingerprintUtils import (BuildSigFactory, DepickleFP,
-                                               LayeredOptions,
+from rdkit.Chem.MolDb.FingerprintUtils import (BuildSigFactory, DepickleFP, LayeredOptions,
                                                supportedSimilarityMethods)
 
 
