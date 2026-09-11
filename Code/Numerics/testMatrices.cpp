@@ -24,7 +24,7 @@ TEST_CASE("test1Vector") {
   v1.setVal(2, -4.0);
   REQUIRE_THAT(v1.normL1(), Catch::Matchers::WithinAbs(7.0, 1e-4));
   REQUIRE_THAT(v1.normLinfinity(), Catch::Matchers::WithinAbs(4.0, 1e-4));
-  REQUIRE_THAT(v1.normL2(), Catch::Matchers::WithinAbs(sqrt(21.0), 1e-4));
+  REQUIRE_THAT(v1.normL2(), Catch::Matchers::WithinAbs(std::sqrt(21.0), 1e-4));
 
   v1.setVal(1, 2.0);
   REQUIRE_THAT(v1.getVal(1), Catch::Matchers::WithinAbs(2.0, 1e-4));

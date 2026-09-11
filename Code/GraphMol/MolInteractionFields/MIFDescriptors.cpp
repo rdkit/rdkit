@@ -23,6 +23,7 @@
 #include <vector>
 #include <fstream>
 
+#include <cmath>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -172,7 +173,7 @@ double UFFVdWaals::calcEnergy(double dist2, double x_ij,
 
 double MMFFVdWaals::calcEnergy(double dist2, double R_star_ij,
                                double wellDepth) const {
-  return ForceFields::MMFF::Utils::calcVdWEnergy(sqrt(dist2), R_star_ij,
+  return ForceFields::MMFF::Utils::calcVdWEnergy(std::sqrt(dist2), R_star_ij,
                                                  wellDepth);
 }
 
@@ -198,7 +199,7 @@ Coulomb::Coulomb(const std::vector<double> &charges,
     d_pos.push_back(position.y);
     d_pos.push_back(position.z);
   }
-  if (fabs(d_alpha) < MIN_CUTOFF_VAL) {
+  if (std::fabs(d_alpha) < MIN_CUTOFF_VAL) {
     d_softcore = false;
     if (d_cutoff < MIN_CUTOFF_VAL) {
       d_cutoff = CUTOFF;
@@ -226,7 +227,7 @@ Coulomb::Coulomb(const RDKit::ROMol &mol, int confId, double probeCharge,
     d_pos.push_back(pt.y);
     d_pos.push_back(pt.z);
   }
-  if (fabs(d_alpha) < MIN_CUTOFF_VAL) {
+  if (std::fabs(d_alpha) < MIN_CUTOFF_VAL) {
     d_softcore = false;
     if (d_cutoff < MIN_CUTOFF_VAL) {
       d_cutoff = CUTOFF;
@@ -247,7 +248,7 @@ double Coulomb::operator()(double x, double y, double z, double thres) const {
       temp = z - d_pos[j++];
       dist2 += temp * temp;
       if (dist2 < thres) {
-        res += d_charges[i] * (1.0 / sqrt(d_alpha + dist2));
+        res += d_charges[i] * (1.0 / std::sqrt(d_alpha + dist2));
       }
     }
   } else {
@@ -260,13 +261,13 @@ double Coulomb::operator()(double x, double y, double z, double thres) const {
       dist2 += temp * temp;
       if (dist2 < thres) {
         dist2 = std::max(dist2, d_cutoff);
-        res += d_charges[i] * (1.0 / sqrt(dist2));
+        res += d_charges[i] * (1.0 / std::sqrt(dist2));
       }
     }
   }
   res *= CoulombDetail::prefactor * d_probe;
   if (d_absVal) {
-    res = -fabs(
+    res = -std::fabs(
         res);  // takes the negative absolute value of the interaction energy
   }
   return res;
@@ -334,7 +335,7 @@ CoulombDielectric::CoulombDielectric(
         d_sp.push_back(4.0);
     }
   }
-  if (fabs(d_alpha) < MIN_CUTOFF_VAL) {
+  if (std::fabs(d_alpha) < MIN_CUTOFF_VAL) {
     d_softcore = false;
     if (d_cutoff < MIN_CUTOFF_VAL * MIN_CUTOFF_VAL) {
       d_cutoff = CUTOFF * CUTOFF;
@@ -418,7 +419,7 @@ CoulombDielectric::CoulombDielectric(const RDKit::ROMol &mol, int confId,
         d_sp.push_back(4.0);
     }
   }
-  if (fabs(d_alpha) < MIN_CUTOFF_VAL) {
+  if (std::fabs(d_alpha) < MIN_CUTOFF_VAL) {
     d_softcore = false;
     if (d_cutoff < MIN_CUTOFF_VAL * MIN_CUTOFF_VAL) {
       d_cutoff = CUTOFF * CUTOFF;
@@ -479,23 +480,23 @@ double CoulombDielectric::operator()(double x, double y, double z,
     for (unsigned int i = 0; i < d_nAtoms; i++) {
       if (d_dists[i] < thres) {
         res += d_charges[i] *
-               (1 / sqrt(d_alpha + d_dists[i]) +
-                d_dielectric / sqrt(d_alpha + d_dists[i] + 4.0 * d_sp[i] * sq));
+               (1 / std::sqrt(d_alpha + d_dists[i]) +
+                d_dielectric / std::sqrt(d_alpha + d_dists[i] + 4.0 * d_sp[i] * sq));
       }
     }
   } else {
     for (unsigned int i = 0; i < d_nAtoms; i++) {
       if (d_dists[i] < thres) {
         double dist2 = std::max(d_dists[i], d_cutoff);
-        res += d_charges[i] * (1 / sqrt(dist2) +
-                               d_dielectric / sqrt(dist2 + 4.0 * d_sp[i] * sq));
+        res += d_charges[i] * (1 / std::sqrt(dist2) +
+                               d_dielectric / std::sqrt(dist2 + 4.0 * d_sp[i] * sq));
       }
     }
   }
   res *= CoulombDetail::prefactor * (1 / d_xi) * d_probe;
 
   if (d_absVal) {
-    res = -fabs(
+    res = -std::fabs(
         res);  // takes the negative absolute value of the interaction energy
   }
   return res;
@@ -510,7 +511,7 @@ const double bondlength[2] = {-0.972, -1.019};
 
 double cos_2(double t, double, double) {
   if (t < M_PI_2) {
-    double temp = cos(t);
+    double temp = std::cos(t);
     temp *= temp;
     return temp;
   } else {
@@ -521,11 +522,11 @@ double cos_2(double t, double, double) {
 double cos_2_0(double t, double t_0 = 0.0, double t_i = 1.0) {
   double temp;
   if (t_i < M_55D) {
-    temp = cos(t_0);
+    temp = std::cos(t_0);
     temp *= temp;
     return temp;
   } else if (t_i < M_PI_2) {
-    temp = cos(t);
+    temp = std::cos(t);
     temp *= temp;
     return temp;
   } else {
@@ -536,7 +537,7 @@ double cos_2_0(double t, double t_0 = 0.0, double t_i = 1.0) {
 double cos_2_rot(double t, double, double) {
   t -= M_70_5D;
   if (t < M_PI_2) {
-    double temp = cos(t);
+    double temp = std::cos(t);
     temp *= temp;
     return temp;
   } else {
@@ -546,7 +547,7 @@ double cos_2_rot(double t, double, double) {
 
 double cos_4(double t, double, double) {
   if (t < M_PI_2) {
-    double temp = cos(t);
+    double temp = std::cos(t);
     temp *= temp;
     temp *= temp;
     return temp;
@@ -558,7 +559,7 @@ double cos_4(double t, double, double) {
 double cos_4_rot(double t, double, double) {
   t -= M_70_5D;
   if (t < M_PI_2) {
-    double temp = cos(t);
+    double temp = std::cos(t);
     temp *= temp;
     temp *= temp;
     return temp;
@@ -569,7 +570,7 @@ double cos_4_rot(double t, double, double) {
 
 double cos_6(double t, double, double) {
   if (t < M_PI_2) {
-    double temp = cos(t);
+    double temp = std::cos(t);
     temp *= temp;
     temp *= temp * temp;
     return temp;
@@ -581,7 +582,7 @@ double cos_6(double t, double, double) {
 double cos_6_rot(double t, double, double) {
   t -= M_70_5D;
   if (t < M_PI_2) {
-    double temp = cos(t);
+    double temp = std::cos(t);
     temp *= temp;
     temp *= temp * temp;
     return temp;
@@ -593,14 +594,14 @@ double cos_6_rot(double t, double, double) {
 double cos_acc(double, double t_0, double t_i) {
   double temp;
   if (t_i < M_PI_2) {
-    temp = cos(t_0) * (0.9 + 0.1 * sin(2 * t_i));
+    temp = std::cos(t_0) * (0.9 + 0.1 * std::sin(2 * t_i));
     return temp;
   } else if (t_i < M_110D) {
-    temp = cos(t_i);
+    temp = std::cos(t_i);
     temp *= temp;
     temp = K2 - temp;
     temp *= temp * temp;
-    temp *= cos(t_0) * K1;
+    temp *= std::cos(t_0) * K1;
     return temp;
   } else {
     return 0.0;
@@ -1585,7 +1586,7 @@ double HBond::operator()(double x, double y, double z, double thres) const {
                                 2];  // calc of squared length of interaction
                                      //        std::cout << dist2 << std::endl;
       if (dist2 < thres) {
-        double dis = sqrt(dist2);
+        double dis = std::sqrt(dist2);
         double distN[3] = {d_vectTargetProbe[j] / dis,
                            d_vectTargetProbe[j + 1] / dis,
                            d_vectTargetProbe[j + 2] / dis};
@@ -1707,7 +1708,7 @@ double HBond::operator()(double x, double y, double z, double thres) const {
                                 2];  // calc of squared length of interaction
                                      //    std::cout << dist2 << std::endl;
       if (dist2 < thres) {
-        double dis = sqrt(dist2);
+        double dis = std::sqrt(dist2);
         double distN[3] = {d_vectTargetProbe[j] / dis,
                            d_vectTargetProbe[j + 1] / dis,
                            d_vectTargetProbe[j + 2] / dis};
@@ -1807,7 +1808,7 @@ void HBond::addVectElements(atomtype type,
 
 void HBond::normalize(double &x, double &y, double &z) const {
   double temp = x * x + y * y + z * z;
-  temp = sqrt(temp);
+  temp = std::sqrt(temp);
   x /= temp;
   y /= temp;
   z /= temp;
@@ -1821,7 +1822,7 @@ double HBond::angle(double x1, double y1, double z1, double x2, double y2,
   } else if (dotProd > 1.0) {
     dotProd = 1.0;
   }
-  return acos(dotProd);
+  return std::acos(dotProd);
 }
 
 Hydrophilic::Hydrophilic(const RDKit::ROMol &mol, int confId, bool fixed,
@@ -1930,8 +1931,8 @@ std::unique_ptr<RDKit::RWMol> readFromCubeStream(
   inStrm >> dimY >> temp1 >> spacingY >> temp2;
   inStrm >> dimZ >> temp1 >> temp2 >> spacingZ;
 
-  if ((fabs(spacingX - spacingY) > spacingThreshold) ||
-      (fabs(spacingX - spacingZ) > spacingThreshold)) {
+  if ((std::fabs(spacingX - spacingY) > spacingThreshold) ||
+      (std::fabs(spacingX - spacingZ) > spacingThreshold)) {
     std::ostringstream errout;
     errout << "Same spacing in all directions needed";
     throw RDKit::FileParseException(errout.str());

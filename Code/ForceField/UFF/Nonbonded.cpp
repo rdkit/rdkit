@@ -19,11 +19,11 @@ namespace UFF {
 namespace Utils {
 double calcNonbondedMinimum(const AtomicParams *at1Params,
                             const AtomicParams *at2Params) {
-  return sqrt(at1Params->x1 * at2Params->x1);
+  return std::sqrt(at1Params->x1 * at2Params->x1);
 }
 double calcNonbondedDepth(const AtomicParams *at1Params,
                           const AtomicParams *at2Params) {
-  return sqrt(at1Params->D1 * at2Params->D1);
+  return std::sqrt(at1Params->D1 * at2Params->D1);
 }
 
 }  // namespace Utils

@@ -15,6 +15,7 @@
 
 #include <Eigen/Dense>
 
+#include <cmath>
 namespace RDKit {
 namespace Descriptors {
 namespace {
@@ -167,7 +168,7 @@ double radiusOfGyration(const ROMol &mol, int confId, bool useAtomicMasses,
     // the eigenvector calculation failed
     return 0.0;  // FIX: throw an exception here?
   }
-  return sqrt(pm1 + pm2 + pm3);
+  return std::sqrt(pm1 + pm2 + pm3);
 }
 
 double inertialShapeFactor(const ROMol &mol, int confId, bool useAtomicMasses,
@@ -197,7 +198,7 @@ double eccentricity(const ROMol &mol, int confId, bool useAtomicMasses,
     // no coordinates or very close to degeneracy
     return 0.0;
   } else {
-    return sqrt(pm3 * pm3 - pm1 * pm1) / pm3;
+    return std::sqrt(pm3 * pm3 - pm1 * pm1) / pm3;
   }
 }
 
@@ -216,7 +217,7 @@ double asphericity(const ROMol &mol, int confId, bool useAtomicMasses,
   } else {
     double denom = pm1 + pm2 + pm3;
 
-    return 0.5 * (pow(pm1 - pm2, 2) + pow(pm1 - pm3, 2) + pow(pm2 - pm3, 2)) /
+    return 0.5 * (std::pow(pm1 - pm2, 2) + std::pow(pm1 - pm3, 2) + std::pow(pm2 - pm3, 2)) /
            (denom * denom);
   }
 }

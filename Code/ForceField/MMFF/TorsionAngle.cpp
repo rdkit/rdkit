@@ -169,7 +169,7 @@ void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
     RDKit::ForceFieldsHelper::computeDihedral(
         pos, at1Idx, at2Idx, at3Idx, at4Idx, nullptr, &cosPhi, r, t, d);
     double sinPhiSq = 1.0 - cosPhi * cosPhi;
-    double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
+    double sinPhi = ((sinPhiSq > 0.0) ? std::sqrt(sinPhiSq) : 0.0);
     double sin2Phi = 2.0 * sinPhi * cosPhi;
     double sin3Phi = 3.0 * sinPhi - 4.0 * sinPhi * sinPhiSq;
     // dE/dPhi is independent of cartesians:

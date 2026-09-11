@@ -14,6 +14,7 @@
 #include <RDGeneral/Invariant.h>
 #include <ctime>
 
+#include <cmath>
 namespace RDNumeric {
 namespace EigenSolvers {
 bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
@@ -58,14 +59,14 @@ bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
       evalId = z.largestAbsValId();
       eigVal = z.getVal(evalId);
 
-      if (fabs(eigVal) < TINY_EIGVAL) {
+      if (std::fabs(eigVal) < TINY_EIGVAL) {
         break;
       }
 
       // compute the next estimate for the eigen vector
       v.assign(z);
       v /= eigVal;
-      if (fabs(eigVal - prevVal) < TOLERANCE) {
+      if (std::fabs(eigVal - prevVal) < TOLERANCE) {
         converged = true;
         break;
       }

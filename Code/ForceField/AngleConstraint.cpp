@@ -56,9 +56,9 @@ AngleConstraintContrib::AngleConstraintContrib(
     const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
     const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
                                  std::max(1.0e-5, r[1].lengthSq())};
-    double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
+    double cosTheta = r[0].dotProduct(r[1]) / std::sqrt(rLengthSq[0] * rLengthSq[1]);
     cosTheta = std::clamp(cosTheta, -1.0, 1.0);
-    const double angle = RAD2DEG * acos(cosTheta);
+    const double angle = RAD2DEG * std::acos(cosTheta);
     minAngleDeg += angle;
     maxAngleDeg += angle;
   }
@@ -96,9 +96,9 @@ double AngleConstraintContrib::getEnergy(double *pos) const {
   const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
   const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
                                std::max(1.0e-5, r[1].lengthSq())};
-  double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
+  double cosTheta = r[0].dotProduct(r[1]) / std::sqrt(rLengthSq[0] * rLengthSq[1]);
   cosTheta = std::clamp(cosTheta, -1.0, 1.0);
-  const double angle = RAD2DEG * acos(cosTheta);
+  const double angle = RAD2DEG * std::acos(cosTheta);
   const double angleTerm = computeAngleTerm(angle);
   return d_forceConstant * angleTerm * angleTerm;
 }
@@ -117,9 +117,9 @@ void AngleConstraintContrib::getGrad(double *pos, double *grad) const {
   const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
   const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
                                std::max(1.0e-5, r[1].lengthSq())};
-  double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
+  double cosTheta = r[0].dotProduct(r[1]) / std::sqrt(rLengthSq[0] * rLengthSq[1]);
   cosTheta = std::clamp(cosTheta, -1.0, 1.0);
-  const double angle = RAD2DEG * acos(cosTheta);
+  const double angle = RAD2DEG * std::acos(cosTheta);
   const double angleTerm = computeAngleTerm(angle);
 
   double dE_dTheta = 2.0 * RAD2DEG * d_forceConstant * angleTerm;

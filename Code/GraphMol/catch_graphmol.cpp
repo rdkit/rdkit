@@ -33,6 +33,7 @@
 #include <GraphMol/Resonance.h>
 #include <GraphMol/test_fixtures.h>
 
+#include <cmath>
 using namespace RDKit;
 TEST_CASE("SMILES Parsing works", "[molops]") {
   std::unique_ptr<RWMol> mol(SmilesToMol("C1CC1"));
@@ -1612,7 +1613,7 @@ M  END)CTAB"_ctab;
       auto v4 = conf.getAtomPos(8) - conf.getAtomPos(3);
       CHECK(v1.angleTo(v3) < v1.angleTo(v2));
       CHECK(v1.angleTo(v4) < v1.angleTo(v2));
-      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(std::fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
       CHECK(v1.dotProduct(v3) < -1e-4);
       CHECK(v1.dotProduct(v4) < -1e-4);
     }
@@ -1628,7 +1629,7 @@ M  END)CTAB"_ctab;
       auto v4 = conf.getAtomPos(7) - conf.getAtomPos(6);
       CHECK(v1.angleTo(v3) < v1.angleTo(v2));
       CHECK(v1.angleTo(v4) < v1.angleTo(v2));
-      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(std::fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
       CHECK(v1.dotProduct(v3) < -1e-4);
       CHECK(v1.dotProduct(v4) < -1e-4);
     }
@@ -1683,7 +1684,7 @@ M  END)CTAB"_ctab;
       auto v4 = conf.getAtomPos(8) - conf.getAtomPos(3);
       CHECK(v1.angleTo(v3) < v1.angleTo(v2));
       CHECK(v1.angleTo(v4) < v1.angleTo(v2));
-      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(std::fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
       CHECK(v1.dotProduct(v3) < -1e-4);
       CHECK(v1.dotProduct(v4) < -1e-4);
     }
@@ -1699,7 +1700,7 @@ M  END)CTAB"_ctab;
       auto v4 = conf.getAtomPos(7) - conf.getAtomPos(6);
       CHECK(v1.angleTo(v3) < v1.angleTo(v2));
       CHECK(v1.angleTo(v4) < v1.angleTo(v2));
-      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(std::fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
       CHECK(v1.dotProduct(v3) < -1e-4);
       CHECK(v1.dotProduct(v4) < -1e-4);
     }
@@ -1746,7 +1747,7 @@ M  END
       auto v4 = conf.getAtomPos(4) - conf.getAtomPos(1);
       CHECK(v1.angleTo(v3) < v1.angleTo(v2));
       CHECK(v1.angleTo(v4) < v1.angleTo(v2));
-      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(std::fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
       CHECK(v1.dotProduct(v3) < -1e-4);
       CHECK(v1.dotProduct(v4) < -1e-4);
     }
@@ -1819,7 +1820,7 @@ M  END)CTAB"_ctab;
       auto v4 = conf.getAtomPos(8) - conf.getAtomPos(7);
       CHECK(v1.angleTo(v2) < v1.angleTo(v4));
       CHECK(v1.angleTo(v3) < v1.angleTo(v4));
-      CHECK(fabs(v1.angleTo(v2) - v1.angleTo(v3)) < 1e-4);
+      CHECK(std::fabs(v1.angleTo(v2) - v1.angleTo(v3)) < 1e-4);
     }
   }
 }

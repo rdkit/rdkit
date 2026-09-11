@@ -167,7 +167,7 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
           threshTest /= delta;
         }
         if (params.useFillThreshold &&
-            fabs(threshTest) < params.fillThreshold) {
+            std::fabs(threshTest) < params.fillThreshold) {
           continue;
         }
         auto fracV = (gridV - minV) / delta;
@@ -285,8 +285,8 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
     drawer.setScale(drawer.width(), drawer.height(), minP, maxP, mol);
   }
 
-  size_t nx = (size_t)ceil(drawer.range().x / params.gridResolution) + 1;
-  size_t ny = (size_t)ceil(drawer.range().y / params.gridResolution) + 1;
+  size_t nx = (size_t)std::ceil(drawer.range().x / params.gridResolution) + 1;
+  size_t ny = (size_t)std::ceil(drawer.range().y / params.gridResolution) + 1;
   std::vector<double> xcoords(nx);
   for (size_t i = 0; i < nx; ++i) {
     xcoords[i] = drawer.minPt().x + i * params.gridResolution;
@@ -307,7 +307,7 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
       for (size_t ig = 0; ig < locs.size(); ++ig) {
         auto d2 = (pt - locs[ig]).lengthSq();
         auto contrib = weights[ig] / widths[ig] *
-                       exp(-0.5 * d2 / (widths[ig] * widths[ig]));
+                       std::exp(-0.5 * d2 / (widths[ig] * widths[ig]));
         accum += contrib;
       }
       grid[ix * ny + iy] = accum / (2 * M_PI);

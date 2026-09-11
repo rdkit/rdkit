@@ -181,7 +181,7 @@ TEST_CASE("testBFGSOptimization") {
 // energy is negative the denominator used to be
 // std::max(funcVal * gradScale, 1.0), which clamps to 1.0 for any
 // funcVal < 0 and so over-tightens the test. With the fix
-// (std::max(fabs(funcVal) * gradScale, 1.0)) this case must still
+// (std::max(std::fabs(funcVal) * gradScale, 1.0)) this case must still
 // converge to the analytic minimum.
 TEST_CASE("testBFGSOptimizationNegativeEnergy") {
   unsigned int dim = 2;

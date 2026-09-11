@@ -3,6 +3,7 @@
 //
 
 #include <RDGeneral/export.h>
+#include <cmath>
 #ifndef INFOGAINFUNC_H
 #define INFOGAINFUNC_H
 
@@ -52,7 +53,7 @@ double ChiSquare(T *dMat, long int dim1, long int dim2) {
   for (i = 0; i < dim1; i++) {
     double rchi = 0.0;
     for (j = 0; j < dim2; j++) {
-      rchi += (pow((double)dMat[i * dim2 + j], 2) / colSums[j]);
+      rchi += (std::pow((double)dMat[i * dim2 + j], 2) / colSums[j]);
     }
     chi += (((double)tSum / rowSums[i]) * rchi);
   }
@@ -77,11 +78,11 @@ double InfoEntropy(T *tPtr, long int dim) {
     for (i = 0; i < dim; i++) {
       d = (double)tPtr[i] / nInstances;
       if (d != 0) {
-        accum += -d * log(d);
+        accum += -d * std::log(d);
       }
     }
   }
-  return accum / log(2.0);
+  return accum / std::log(2.0);
 }
 
 template <class T>

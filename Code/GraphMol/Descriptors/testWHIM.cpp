@@ -21,6 +21,7 @@
 
 #include <GraphMol/Descriptors/WHIM.h>
 
+#include <cmath>
 void testWHIM2() {
   std::cout << "=>start test chlorobenzene whim from rdkit\n";
 
@@ -158,14 +159,14 @@ void testWHIM() {
     // outstrm << nm;
     for (int i = 0; i < 114; i++) {
       double ref = atof(myrow[i + 1].c_str());
-      if (fabs(ref - dwhim[i]) >= 0.01) {
+      if (std::fabs(ref - dwhim[i]) >= 0.01) {
         std::cerr << "value mismatch: pos" << i << " " << inm << " " << ref
                   << " " << dwhim[i] << std::endl;
       }
       // outstrm << "\t" << dwhim[i];
       // TEST_ASSERT((ref < 1e-3 && dwhim[i] < 1e-3) ||
-      //             fabs(ref - dwhim[i]) / ref < 0.01);
-      TEST_ASSERT(fabs(ref - dwhim[i]) < 0.01);
+      //             std::fabs(ref - dwhim[i]) / ref < 0.01);
+      TEST_ASSERT(std::fabs(ref - dwhim[i]) < 0.01);
     }
     // outstrm << std::endl;
     delete m;

@@ -14,11 +14,12 @@
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
+#include <cmath>
 namespace RDKit {
 
 std::string getDoubleAsText(double val, unsigned int precision = 6) {
   // this is left here for backwards compatibility
-  if (precision == 6 && fabs(val) < 0.00001) {
+  if (precision == 6 && std::fabs(val) < 0.00001) {
     return "0.00000";
   }
 

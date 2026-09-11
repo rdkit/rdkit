@@ -93,7 +93,7 @@ void getRDFDesc(double *DM, const ROMol &mol, const Conformer &conf,
 
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        p = exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
+        p = std::exp(-100 * std::pow(R[i] - DM[j * numAtoms + k], 2));
         res1 += p;                                                  // "u"
         res2 += Mass[j] * Mass[k] * p;                              // "m"
         res3 += RelativeVdW[j] * RelativeVdW[k] * p;                // "v"
@@ -137,7 +137,7 @@ void getRDFDescCustom(double *DM, const ROMol &mol, const Conformer &conf,
     double res = 0.0;
     for (int j = 0; j < numAtoms - 1; j++) {
       for (int k = j + 1; k < numAtoms; k++) {
-        p = exp(-100 * pow(R[i] - DM[j * numAtoms + k], 2));
+        p = std::exp(-100 * std::pow(R[i] - DM[j * numAtoms + k], 2));
         res += customAtomArray[j] * customAtomArray[k] * p;  // "custom"
       }
     }

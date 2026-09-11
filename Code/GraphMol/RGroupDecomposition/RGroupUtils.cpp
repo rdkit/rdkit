@@ -215,7 +215,7 @@ void relabelMappedDummies(ROMol &mol, unsigned int inputLabels,
     }
     unsigned int atomMapNum = 0;
     if (inputLabels & AtomMap) {
-      atomMapNum = static_cast<unsigned int>(abs(atom->getAtomMapNum()));
+      atomMapNum = static_cast<unsigned int>(std::abs(atom->getAtomMapNum()));
     }
     if (!atomMapNum && (inputLabels & Isotope)) {
       atomMapNum = atom->getIsotope();

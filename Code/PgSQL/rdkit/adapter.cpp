@@ -35,6 +35,7 @@
 // The hack assumes that sys/stat.h will be imported for the first
 // time by win32_port.h, which is not necessarily the case
 // So we need to set the stage for the hack or it will fail
+#include <cmath>
 #ifdef _WIN32
 #define fstat microsoft_native_fstat
 #define stat microsoft_native_stat
@@ -1278,7 +1279,7 @@ extern "C" double calcSparseStringDiceSml(const char *a, unsigned int,
     v2Sum += v2;
   }
   double denom = v1Sum + v2Sum;
-  if (fabs(denom) < 1e-6) {
+  if (std::fabs(denom) < 1e-6) {
     res = 0.0;
   } else {
     res = 2. * numer / denom;
