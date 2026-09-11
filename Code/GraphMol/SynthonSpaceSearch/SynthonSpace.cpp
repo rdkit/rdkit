@@ -322,7 +322,6 @@ SearchResults SynthonSpace::shapeSearch(
   } else {
     queryCp.reset(new RWMol(query));
   }
-
   SynthonSpaceShapeSearcher ssss(*queryCp, params, this);
   return ssss.search(ThreadMode::ThreadFragments);
 }
