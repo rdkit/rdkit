@@ -393,7 +393,7 @@ bool FusedRingMatch(const ROMol &mol, const Atom &atom,
   // atom start by finding the first ring:
   std::set<int> ringAtoms;
   for (auto i = 0u; i < mol.getRingInfo()->numRings(); ++i) {
-    const auto &ring = mol.getRingInfo()->atomRings()[i];
+    const auto ring = mol.getRingInfo()->atomRings()[i];
     if (std::find(ring.begin(), ring.end(), atom.getIdx()) != ring.end()) {
       if (!checkAtomRing(mol, atom, ignore, ring, atomMatcher,
                          atLeastOneAtomPerRing)) {
@@ -411,7 +411,7 @@ bool FusedRingMatch(const ROMol &mol, const Atom &atom,
   // now loop over all rings and find the ones which share at least two atoms
   // with what we've seen so far
   for (auto i = 0u; i < mol.getRingInfo()->numRings(); ++i) {
-    const auto &ring = mol.getRingInfo()->atomRings()[i];
+    const auto ring = mol.getRingInfo()->atomRings()[i];
     // check overlap of this ring with what we've seen so far and make sure that
     // the new atoms we are adding all pass the test
     std::set<int> sring(ring.begin(), ring.end());
