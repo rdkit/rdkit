@@ -2702,12 +2702,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       "CDXMLParserParams",
       "Parameters controlling conversion of a CDXML document to molecules",
       python::init<>(python::args("self"), "Construct a default CDXMLFormat"))
-      .def(python::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat>(
-          python::args("self", "sanitize", "removeHs", "format")))
       .def(python::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat, bool,
-              bool>(python::args("self", "sanitize", "removeHs",
-                         "format", "parseQueries",
-                         "strictQueryParsing")))
+                        bool>((python::arg("self"), python::arg("sanitize"),
+                               python::arg("removeHs"), python::arg("format"),
+                               python::arg("parseQueries") = false,
+                               python::arg("strictQueryParsing") = false)))
       .def_readwrite("sanitize",
                      &RDKit::v2::CDXMLParser::CDXMLParserParams::sanitize,
                      "controls whether or not the molecule is sanitized before "

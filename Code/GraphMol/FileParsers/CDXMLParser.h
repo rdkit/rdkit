@@ -39,15 +39,13 @@ struct RDKIT_FILEPARSERS_EXPORT CDXMLParserParams {
   bool strictQueryParsing = false;
 
   CDXMLParserParams() = default;
-  CDXMLParserParams(bool sanitize, bool removeHs, CDXMLFormat format)
-      : sanitize(sanitize), removeHs(removeHs), format(format) {}
   CDXMLParserParams(bool sanitize, bool removeHs, CDXMLFormat format,
-                    bool parseQueries, bool strictQueryParsing)
-      : sanitize(sanitize),
-        removeHs(removeHs),
-        format(format),
-        parseQueries(parseQueries),
-        strictQueryParsing(strictQueryParsing) {}
+		    bool parseQueries = false, bool strictQueryParsing = false)
+     : sanitize(sanitize),
+       removeHs(removeHs),
+       format(format),
+       parseQueries(parseQueries),
+       strictQueryParsing(strictQueryParsing) {}
 };
 
 //! \brief construct molecules from a CDXML file
