@@ -6,6 +6,6 @@ import warnings
 
 import warnings
 
-warnings.warn("the rdkit.Chem.fmcs module is deprecated", DeprecationWarning, stacklevel=2)
+warnings.warn("the rdkit.Chem.fmcs module is deprecated, use rdkit.Chem.rdFMCS instead.", DeprecationWarning, stacklevel=2)
 
 from rdkit.Chem.fmcs.fmcs import *
