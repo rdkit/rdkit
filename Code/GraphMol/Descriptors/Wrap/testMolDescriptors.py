@@ -804,6 +804,24 @@ class TestCase(unittest.TestCase):
       self.assertTrue(abs(sdf.GetVDWVolume() - 119.296) < 0.05)
       self.assertTrue(abs(sdf.GetPolarVolume() - 21.35) < 0.05)
 
+      pts = sdf.GetSurfacePoints()
+      self.assertTrue(len(pts) == mol2.GetNumAtoms())
+      for i in range(len(pts)):
+        self.assertTrue(len(pts[i]) > 0)
+      # make sure calling the function again doesn't change the result
+      pts2 = sdf.GetSurfacePoints()
+      self.assertTrue(len(pts2) == mol2.GetNumAtoms())
+      for i in range(len(pts2)):
+        self.assertTrue(len(pts2[i]) == len(pts[i]))
+      # check getting all of the points (including those not on the surface)
+      all_pts = sdf.GetSurfacePoints(allPoints=True)
+      self.assertTrue(len(all_pts) == mol2.GetNumAtoms())
+      for i in range(len(all_pts)):
+        self.assertTrue(len(all_pts[i]) == 320)
+        self.assertTrue(len(all_pts[i]) >= len(pts[i]))
+
+        
+
 
 if __name__ == '__main__':
   unittest.main()

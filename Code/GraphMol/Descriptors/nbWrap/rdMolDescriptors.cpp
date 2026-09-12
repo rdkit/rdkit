@@ -958,9 +958,9 @@ double getPartialVolumeHelper(
 }
 
 nb::dict getSurfacePointsHelper(
-    RDKit::Descriptors::DoubleCubicLatticeVolume &self) {
+    RDKit::Descriptors::DoubleCubicLatticeVolume &self, bool allPoints) {
   const std::map<unsigned int, std::vector<RDGeom::Point3D>> &points =
-      self.getSurfacePoints();
+      self.getSurfacePoints(allPoints);
   nb::dict surfacePoints;
 
   for (const auto &it : points) {
@@ -1605,8 +1605,9 @@ query.Match( mol ))DOC",
            "atomIndices"_a,
            "Get the Partial Surface Area of the Molecule or Protein for "
            "specified subset of atoms")
-      .def("GetSurfacePoints", &getSurfacePointsHelper,
-           "Get the set of points representing the surface")
+      .def(
+          "GetSurfacePoints", &getSurfacePointsHelper, "allPoints"_a = false,
+          "Get the set of points representing the surface. If allPoints is True, returns all surface points; otherwise, returns the standard surface points. ")
       .def("GetVolume",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getVolume,
            "Get the Total Volume of the Molecule or Protein")
