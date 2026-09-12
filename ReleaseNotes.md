@@ -61,6 +61,19 @@ GitHub)
   library during RDKit builds will be removed in a future release. Users who are
   building the RDKit themselves and who want to use Eigen will need to install
   Eigen themselves.
+- The DbCLI code (found in Projects/DbCLI) has been deprecated and will be removed in the next release.
+- The python package ML.MLUtils has been deprecated and will be removed in the
+  next release.
+- The python package Chem.MolDb has been deprecated and will be removed in the
+  next release.
+- The python package Chem.Fingerprints has been deprecated and will be removed
+  in the next release.
+- The python package Chem.fmcs has been deprecated and will be removed in the
+  next release. The C++ implementation in Chem.rdFMCS is more advanced and is
+  being maintained.
+  
+
+
 
 
 # Release_2026.03.1
