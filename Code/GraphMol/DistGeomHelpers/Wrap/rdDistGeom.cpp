@@ -17,8 +17,10 @@
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
+#include <DistGeom/ChiralSet.h>
 #include <RDGeneral/ControlCHandler.h>
 
+#include <GraphMol/DistGeomHelpers/BoundsMatrixBuilderDetails.h>
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 
@@ -356,7 +358,26 @@ python::str embedParametersToJSONHelper(
     const DGeomHelpers::EmbedParameters &ps) {
   return python::str(embedParametersToJSON(ps));
 }
+namespace DGeomHelpers {
+namespace EmbeddingOps {
+RDKIT_DISTGEOMHELPERS_EXPORT void findChiralSets(
+    const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
+    DistGeom::VECT_CHIRALSET &tetrahedralCenters,
+    const std::map<int, RDGeom::Point3D> *coordMap);
+}
+}  // namespace DGeomHelpers
 
+python::tuple getChiralSets(const RDKit::ROMol &mol) {
+  DistGeom::VECT_CHIRALSET chiralCenters;
+  DistGeom::VECT_CHIRALSET tetrahedralCenters;
+  DGeomHelpers::EmbeddingOps::findChiralSets(mol, chiralCenters,
+                                             tetrahedralCenters, nullptr);
+  std::vector<unsigned int> centers;
+  for (const auto &val : chiralCenters) {
+    centers.push_back(val->d_idx0);
+  }
+  return python::tuple(centers);
+}
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
@@ -365,6 +386,9 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       "distance geometry";
 
   rdkit_import_array();
+
+  python::def("GetChiralSets", RDKit::getChiralSets, python::arg("mol"),
+              "Get Chiral sets as used in ETKDG code.");
 
   // RegisterListConverter<RDKit::Atom*>();
 

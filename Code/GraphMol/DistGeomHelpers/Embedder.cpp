@@ -218,6 +218,8 @@ struct EmbedArgs {
 
 }  // namespace detail
 
+constexpr std::array<unsigned int, 3> ALLOWED_ET_VERSIONS = {1, 2, 4};
+
 bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
                  const RDGeom::PointPtrVect &positions, bool verbose = false) {
   RDGeom::Point3D p0((*positions[chiralSet->d_idx0])[0],
@@ -1825,9 +1827,11 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   if (!mol.getNumAtoms()) {
     throw ValueErrorException("molecule has no atoms");
   }
-  if (params.ETversion < 1 || params.ETversion > 2) {
+
+  if (std::find(ALLOWED_ET_VERSIONS.begin(), ALLOWED_ET_VERSIONS.end(),
+                params.ETversion) == ALLOWED_ET_VERSIONS.end()) {
     throw ValueErrorException(
-        "Only version 1 and 2 of the experimental "
+        "Only version 1, 2 and 4 of the experimental "
         "torsion-angle preferences (ETversion) supported");
   }
 
