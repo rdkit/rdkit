@@ -9,36 +9,39 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
 #include <DistGeom/BoundsMatrix.h>
+#include <DistGeom/TriangleSmooth.h>
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <ForceField/UFF/BondStretch.h>
 #include <Geometry/Utils.h>
-#include "BoundsMatrixBuilderDetails.h"
-
+#include <Numerics/SymmMatrix.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
-#include <Numerics/SymmMatrix.h>
-#include <DistGeom/TriangleSmooth.h>
+
 #include <boost/dynamic_bitset.hpp>
+
 #include <algorithm>
 #include <unordered_set>
-#include <ranges>
+#include <numbers>
 #include <vector>
 #include <cstddef>
+#include <optional>
 
 #include "BoundsMatrixBuilder.h"
 #include "BoundsMatrixBuilderDetails.h"
 
-const double DIST12_DELTA = 0.01;
-const double ANGLE_DELTA = 0.035;
+constexpr double DIST12_DELTA = 0.01;
+constexpr double ANGLE_DELTA = 0.035;
 // const double RANGLE_DELTA = 0.0837; // tolerance for bond angles
 // const double TANGLE_DELTA = 0.0837; // tolerance for torsion angle
-const double GEN_DIST_TOL = 0.06;  //  a general distance tolerance
-const double DIST15_TOL = 0.08;
-const double VDW_SCALE_15 = 0.7;
+constexpr double GEN_DIST_TOL = 0.06;  //  a general distance tolerance
+constexpr double DIST15_TOL = 0.08;
+constexpr double VDW_SCALE_15 = 0.7;
 constexpr double H_BOND_LENGTH = 1.8;
-const double MAX_UPPER = 1000.0;
-static const double minMacrocycleRingSize = 9;
+constexpr double MAX_UPPER = 1000.0;
+constexpr double minMacrocycleRingSize = 9;
+constexpr double FAILED12 = -1.0;
 
 namespace RDKit {
 namespace DGeomHelpers {
@@ -121,8 +124,10 @@ class ComputedData {
   \param accumData    Used to store the data that have been calculated so far
                       about the molecule
 */
-void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                 ComputedData &accumData);
+template <typename ParamF, typename CalcF>
+auto set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+                 ComputedData &accumData, const ParamF &paramF,
+                 const CalcF &calcF, const bool isFallback);
 
 //! Set 1-3 distance bounds for atoms in a molecule
 /*!
@@ -143,6 +148,8 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
  */
 void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                  ComputedData &accumData);
+void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+                 ComputedData &accumData, const MMFF::MMFFMolProperties &props);
 
 //! Set 1-4 distance bounds for atoms in a molecule
 /*!
@@ -265,19 +272,60 @@ inline bool squishBond(const ROMol &mol, const Bond *bond) {
          mol.getRingInfo()->isBondInRingOfSize(bond->getIdx(), 5);
 }
 
-void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                 ComputedData &accumData) {
+// Tools for setting 1-2 and 1-3 bounds with the specified forcefield.
+namespace {
+std::pair<UFF::AtomicParamVect, bool> parametrizeUFF(const ROMol &mol) {
+  return UFF::getAtomTypes(mol);
+}
+
+std::pair<MMFF::MMFFMolProperties, bool> parametrizeMMFF(ROMol mol) {
+  const auto params = MMFF::MMFFMolProperties(mol);
+  return std::make_pair(params, params.isValid());
+}
+
+double calcUFF12(const ROMol &mol, const Bond &bond,
+                 const UFF::AtomicParamVect &params, const std::size_t i,
+                 const std::size_t j) {
+  RDUNUSED_PARAM(mol)
+  const auto bOrder = bond.getBondTypeAsDouble();
+  return (bOrder > 0.0 && params[i] && params[j])
+             ? ForceFields::UFF::Utils::calcBondRestLength(bOrder, params[i],
+                                                           params[j])
+             : FAILED12;
+}
+
+double calcMMFF12(const ROMol &mol, const Bond &bond,
+                  MMFF::MMFFMolProperties &params, const std::size_t i,
+                  const std::size_t j) {
+  unsigned int bOrder = bond.getBondType();
+  MMFF::MMFFBond bondProps;
+  const bool isValid =
+      params.getMMFFBondStretchParams(mol, i, j, bOrder, bondProps);
+  return isValid ? bondProps.r0 : FAILED12;
+}
+}  // namespace
+
+template <typename ParamF, typename CalcF>
+auto set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+                 ComputedData &accumData, const ParamF &paramF,
+                 const CalcF &calcF, const bool isFallback) {
   unsigned int npt = mmat->numRows();
   CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
   CHECK_INVARIANT(accumData.bondLengths.size() >= mol.getNumBonds(),
                   "Wrong size accumData");
-  auto [atomParams, foundAll] = UFF::getAtomTypes(mol);
-  CHECK_INVARIANT(atomParams.size() == mol.getNumAtoms(),
-                  "parameter vector size mismatch");
 
+  auto [atomParams, foundAll] = paramF(mol);
+
+  if (!isFallback && !foundAll) {
+    BOOST_LOG(rdWarningLog)
+        << "Molecule was not parametrized succesfully with the selected force field. "
+           "Falling back to the Universal Force Field!"
+        << std::endl;
+    return std::make_pair(false, atomParams);
+  }
   boost::dynamic_bitset<> squishAtoms(mol.getNumAtoms());
-  // find larger heteroatoms in conjugated 5 rings, because we need to add a bit
-  // of extra flex for them
+  // find larger heteroatoms in conjugated 5 rings, because we need to add a
+  // bit of extra flex for them
   if (mol.getRingInfo() && mol.getRingInfo()->isInitialized()) {
     // we only set them, if we can determine the ring information
     auto setBitsIfSquishBond = [&squishAtoms, &mol](const Bond *bond) {
@@ -291,43 +339,36 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
 
   for (const auto bond : mol.bonds()) {
-    auto begId = bond->getBeginAtomIdx();
-    auto endId = bond->getEndAtomIdx();
-    auto bOrder = bond->getBondTypeAsDouble();
-    if (atomParams[begId] && atomParams[endId] && bOrder > 0) {
-      auto bl = ForceFields::UFF::Utils::calcBondRestLength(
-          bOrder, atomParams[begId], atomParams[endId]);
+    const auto begId = bond->getBeginAtomIdx();
+    const auto endId = bond->getEndAtomIdx();
+    auto bl = calcF(mol, *bond, atomParams, begId, endId);
 
+    // we found 12 distances
+    if (bl > FAILED12) {
       double extraSquish = 0.0;
-      if (squishAtoms[begId] && squishAtoms[endId]) {
+      if (squishAtoms[begId] || squishAtoms[endId]) {
         extraSquish = 0.2;  // empirical
       }
 
       accumData.bondLengths[bond->getIdx()] = bl;
       mmat->setUpperBound(begId, endId, bl + extraSquish + DIST12_DELTA);
       mmat->setLowerBound(begId, endId, bl - extraSquish - DIST12_DELTA);
-
-    } else {
-      // we don't have parameters for one of the atoms... so we're forced to
-      // use cruder bounds.
-      // start with the sum of the covalent radii:
-      auto vw1 = PeriodicTable::getTable()->getRcovalent(
-          mol.getAtomWithIdx(begId)->getAtomicNum());
-      auto vw2 = PeriodicTable::getTable()->getRcovalent(
-          mol.getAtomWithIdx(endId)->getAtomicNum());
+    }
+    // We didn't find them and use the fallback, which is using the periodic
+    // table.
+    else if (isFallback) {
+      const auto pt = PeriodicTable::getTable();
+      auto vw1 = pt->getRcovalent(mol.getAtomWithIdx(begId)->getAtomicNum());
+      auto vw2 = pt->getRcovalent(mol.getAtomWithIdx(endId)->getAtomicNum());
       auto bl = vw1 + vw2;
-      // empirical scaling factors to allow for some flexibility in the bond
-      // lengths
       auto upperScale = 1.1;
       auto lowerScale = 0.9;
       if (auto bt = bond->getBondType();
           bt > Bond::BondType::AROMATIC || bt < Bond::BondType::SINGLE) {
-        // weird bond types, use the average of the van der Waals radii instead
-        // and allow a lot more flex
-        vw1 = PeriodicTable::getTable()->getRvdw(
-            mol.getAtomWithIdx(begId)->getAtomicNum());
-        vw2 = PeriodicTable::getTable()->getRvdw(
-            mol.getAtomWithIdx(endId)->getAtomicNum());
+        // weird bond types, use the average of the van der Waals radii
+        // instead and allow a lot more flex
+        vw1 = pt->getRvdw(mol.getAtomWithIdx(begId)->getAtomicNum());
+        vw2 = pt->getRvdw(mol.getAtomWithIdx(endId)->getAtomicNum());
         bl = (vw1 + vw2) / 2;
         upperScale = 1.5;
         lowerScale = 0.75;
@@ -336,17 +377,24 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         // based on the bond order
         //   this is taken from the UFF BondStretch.cpp code
         constexpr double paulingLambda = 0.1332;
-        bl -= paulingLambda * std::log(bOrder) * bl;
+        bl -= paulingLambda * std::log(bond->getBondTypeAsDouble()) * bl;
       }
       accumData.bondLengths[bond->getIdx()] = bl;
       mmat->setUpperBound(begId, endId, upperScale * bl);
       mmat->setLowerBound(begId, endId, lowerScale * bl);
     }
-    unsigned int pid =
-        std::min(begId, endId) * mol.getNumAtoms() + std::max(begId, endId);
-
+    // We tried with the FF but failed, so we redo with the fallback.
+    else {
+      BOOST_LOG(rdWarningLog)
+          << "Molecule was not parametrized succesfully with the selected force field. "
+             "Falling back to the Universal Force Field!"
+          << std::endl;
+      return std::make_pair(false, atomParams);
+    }
+    unsigned int pid = getUnifiedId(begId, endId, mol.getNumAtoms());
     accumData.visited12Bounds.set(pid);
   }
+  return std::make_pair(false, atomParams);
 }
 
 inline bool isHBondAcceptor(const Atom *atom) {
@@ -728,9 +776,73 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         }  // while loop over second bond
         ++beg1;
       }  // while loop over first bond
-    }  // done with non-ring atoms
-  }  // done with all atoms
+    }    // done with non-ring atoms
+  }      // done with all atoms
 }  // done with 13 distance setting
+
+void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
+                 ComputedData &accumData, MMFF::MMFFMolProperties &mmffProp) {
+  auto npt = mmat->numRows();
+  CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
+  CHECK_INVARIANT(accumData.bondAngles->numRows() == mol.getNumBonds(),
+                  "Wrong size bond angle matrix");
+  CHECK_INVARIANT(accumData.bondAdj->numRows() == mol.getNumBonds(),
+                  "Wrong size bond adjacency matrix");
+
+  // loop over all bonds
+  for (const auto bondi : mol.bonds()) {
+    unsigned int aid2, aid1, aid3;
+    const auto bid1 = bondi->getIdx();
+    for (unsigned int j = bondi->getIdx() + 1; j < mol.getNumBonds(); ++j) {
+      const auto bondj = mol.getBondWithIdx(j);
+      const auto bid2 = bondj->getIdx();
+      const int aid11 = bondi->getBeginAtomIdx();
+      const int aid12 = bondi->getEndAtomIdx();
+      const int aid21 = bondj->getBeginAtomIdx();
+      const int aid22 = bondj->getEndAtomIdx();
+      if (aid11 != aid21 && aid11 != aid22 && aid12 != aid21 &&
+          aid12 != aid22) {
+        continue;
+      }
+      if (aid12 == aid21) {
+        aid1 = aid11;
+        aid2 = aid12;
+        aid3 = aid22;
+      } else if (aid12 == aid22) {
+        aid1 = aid11;
+        aid2 = aid12;
+        aid3 = aid21;
+      } else if (aid11 == aid21) {
+        aid1 = aid12;
+        aid2 = aid11;
+        aid3 = aid22;
+      } else {
+        aid1 = aid12;
+        aid2 = aid11;
+        aid3 = aid21;
+      }
+      unsigned int angleType;
+      MMFF::MMFFAngle aProp;
+      bool aValid = mmffProp.getMMFFAngleBendParams(mol, aid1, aid2, aid3,
+                                                    angleType, aProp);
+      if (!aValid) {
+        BOOST_LOG(rdWarningLog)
+            << "Bounds matrix builder: Invalid MMFF angle parameters for ("
+            << aid1 << ", " << aid2 << ", " << aid3 << ")" << std::endl;
+      }
+      const auto angle =
+          aProp.theta0 * std::numbers::pi / 180;  // theta0 is in degrees
+      const auto pid = getUnifiedId(aid1, aid3, mol.getNumAtoms());
+      if (!accumData.visitedBound(pid, DistType::DIST12)) {
+        _set13BoundsHelper(aid1, aid2, aid3, angle, mmat, mol);
+        accumData.visited13Bounds.set(pid);
+      }
+      accumData.bondAngles->setVal(bid1, bid2, angle);
+      accumData.bondAdj->setVal(bid1, bid2, aid2);
+    }
+  }
+
+}  // done with 13 distance setting (MMFF)
 
 Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
                                 unsigned int aid4) {
@@ -1419,7 +1531,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
       bid1 = bid2;
     }  // loop over bonds in the ring
-  }  // end of all rings
+  }    // end of all rings
   for (const auto bond : mol.bonds()) {
     auto bid2 = bond->getIdx();
     auto aid2 = bond->getBeginAtomIdx();
@@ -1516,7 +1628,7 @@ void initBoundsMat(DistGeom::BoundsMatPtr mmat, double defaultMin,
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     const EmbedParameters &params, bool scaleVDW,
                     bool set15bounds, bool set14bounds, bool set13bounds,
-                    PATH14_VECT *paths14) {
+                    PATH14_VECT *paths14, const EmbedFF embedForceField) {
   PRECONDITION(mmat.get(), "bad pointer");
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -1535,10 +1647,28 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   ComputedData accumData(na, nb);
   double *distMatrix = nullptr;
   distMatrix = MolOps::getDistanceMat(mol);
+  std::optional<MMFF::MMFFMolProperties> mmffParmas;
 
-  set12Bounds(mol, mmat, accumData);
+  switch (embedForceField) {
+    case EmbedFF::MMFF: {
+      auto [success, params] =
+          set12Bounds(mol, mmat, accumData, parametrizeMMFF, calcMMFF12, false);
+      if (success) {
+        mmffParmas = params;
+        break;
+      }
+      [[fallthrough]];
+    }
+    default:
+      set12Bounds(mol, mmat, accumData, parametrizeUFF, calcUFF12, true);
+  }
+
   if (set13bounds) {
-    set13Bounds(mol, mmat, accumData);
+    if (mmffParmas.has_value()) {
+      set13Bounds(mol, mmat, accumData, *mmffParmas);
+    } else {
+      set13Bounds(mol, mmat, accumData);
+    }
 
     if (set14bounds) {
       set14Bounds(mol, mmat, accumData, distMatrix,
@@ -1616,9 +1746,9 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     std::vector<std::vector<int>> &angles,
                     const EmbedParameters &params, bool scaleVDW,
                     bool set15bounds, bool set14bounds, bool set13bounds,
-                    PATH14_VECT *paths14) {
+                    PATH14_VECT *paths14, const EmbedFF embedForceField) {
   setTopolBounds(mol, mmat, params, scaleVDW, set15bounds, set14bounds,
-                 set13bounds, paths14);
+                 set13bounds, paths14, embedForceField);
   bonds.clear();
   angles.clear();
   collectBondsAndAngles(mol, bonds, angles);

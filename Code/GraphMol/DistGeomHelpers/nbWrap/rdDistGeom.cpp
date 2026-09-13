@@ -493,6 +493,11 @@ RETURNS:
       },
       "legacyImplementation"_a = true);
 
+  nb::enum_<RDKit::DGeomHelpers::EmbedFF>(m, "EmbedFF")
+      .value("UFF", RDKit::DGeomHelpers::EmbedFF::UFF)
+      .value("MMFF", RDKit::DGeomHelpers::EmbedFF::MMFF)
+      .export_values();
+
   nb::class_<PyEmbedParameters>(m, "EmbedParameters",
                                 "Parameters controlling embedding")
       .def(nb::init<>())
@@ -590,6 +595,8 @@ used during structural minimisation stage)DOC")
               "symmetrize terminal conjugated groups for RMSD pruning")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap,
            "sets the coordmap to be used")
+      .def_rw("embedForceField", &PyEmbedParameters::embedForceField,
+              "Force Field to use for ideal 1-2 and 1-3 distances.")
       .def("__setattr__", &safeSetattr);
 
   m.def("EmbedMultipleConfs", &RDKit::EmbedMultipleConfs2, "mol"_a,

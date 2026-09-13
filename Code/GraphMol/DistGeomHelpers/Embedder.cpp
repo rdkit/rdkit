@@ -1459,9 +1459,10 @@ bool setupInitialBoundsMatrix(
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
     setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
                    scaleVDW, set15bounds, true, true,
-                   &etkdgDetails.path14Configs);
+                   &etkdgDetails.path14Configs, params.embedForceField);
   } else {
-    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
+    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds, true, true,
+                   nullptr, params.embedForceField);
   }
   double tol = 0.0;
   if (coordMap) {

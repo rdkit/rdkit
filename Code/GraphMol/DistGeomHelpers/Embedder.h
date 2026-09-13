@@ -41,6 +41,11 @@ enum EmbedFailureCauses {
   END_OF_ENUM = 15,
 };
 
+enum class EmbedFF : std::uint8_t {
+  UFF,
+  MMFF
+};
+
 //! Parameter object for controlling embedding
 /*!
   numConfs       Number of conformations to be generated
@@ -123,6 +128,7 @@ enum EmbedFailureCauses {
                    of times each embedding check fails
   enableSequentialRandomSeeds    handle the random number seeds so that
                                  conformer generation can be restarted
+  embedFF Force Field to use to determine ideal 1-2 and 1-3 distances.
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations{0};
@@ -161,6 +167,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   std::vector<unsigned int> failures{};
   bool enableSequentialRandomSeeds{false};
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
+  EmbedFF embedForceField{EmbedFF::UFF};
 };
 
 //! update parameters from a JSON string
