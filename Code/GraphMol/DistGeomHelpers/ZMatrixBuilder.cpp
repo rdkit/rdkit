@@ -177,8 +177,8 @@ void addElement(const Atom *atom, const unsigned int precursorIdx,
             std::min(mol.getAtomWithIdx(precursorIdx)->getDegree(), 5u) - 1);
     torsiondependence = {offset, tRef.value()};
   } else if (ref2Opt) {  // only if a torsion reference exists (this does not
-                         // hold for the 3rd element in the matrix therefore the
-                         // check)
+                         // hold for the 3rd element in the matrix therefore
+                         // the check)
     if (internalCoords.torsionRange.find(
             static_cast<std::uint64_t>(getUnifiedId(
                 bndIdx1, bndIdx2,
@@ -207,50 +207,45 @@ void addElement(const Atom *atom, const unsigned int precursorIdx,
 
 void setMoleculeDFS(const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
                     const InternalCoordinates &internalCoords) {
-  unsigned int idx1, idx2;
-
   if (mol.getNumAtoms() == 1) {
-    setMoleculeDFS(mol, zmat, internalCoords, 0, 0, 0);
+    setMoleculeDFS(mol, zmat, internalCoords, 0, 0);
     return;
   }
 
-  if (mol.getNumAtoms() == 1) {
-    setMoleculeDFS(mol, zmat, internalCoords, 0, 1, 0);
+  if (mol.getNumAtoms() == 2) {
+    setMoleculeDFS(mol, zmat, internalCoords, 0, 1);
   }
 
-  if (internalCoords.torsionRange.empty()) {
-    // since connected component -> there must be at least one angle
-    const auto startAngleId = internalCoords.angles.begin()->first;
-    const auto _temp = unifiedIdToBondIds<2>(startAngleId, mol.getNumBonds());
-    idx1 = _temp[0];
-    idx2 = _temp[1];
-  } else {
-    // starting with most constraint one
-    const auto startTorsionId = internalCoords.torsionRange.begin()->first;
-    const auto _temp = unifiedIdToBondIds<3>(startTorsionId, mol.getNumBonds());
-    idx1 = _temp[0];
-    idx2 = _temp[1];
+  // start with a non-ring bond that is somewhere at the end of a chain
+  // 1. prefer bonds where both atoms are not in the ring
+  auto *rInfo = mol.getRingInfo();
+  auto bondHirachy = [rInfo](Bond *bnd) {
+    auto maxRingsInvolved =
+        std::max(rInfo->numAtomRings(bnd->getBeginAtomIdx()),
+                 rInfo->numAtomRings(bnd->getEndAtomIdx()));
+    auto minDegree = std::min(bnd->getBeginAtom()->getDegree(),
+                              bnd->getEndAtom()->getDegree());
+    return std::make_tuple(maxRingsInvolved, minDegree, bnd->getIdx());
+  };
+
+  auto bonds = mol.bonds();
+  auto *startBnd = *std::ranges::min_element(bonds, {}, bondHirachy);
+
+  auto *firstAtom = startBnd->getBeginAtom();
+  auto *secondAtom = startBnd->getEndAtom();
+
+  if (firstAtom->getDegree() > secondAtom->getDegree()) {
+    std::swap(firstAtom, secondAtom);
   }
 
-  const auto b1 = mol.getBondWithIdx(idx1);
-  const auto b2 = mol.getBondWithIdx(idx2);
-
-  auto startAtm = b1->getBeginAtomIdx();
-  auto atom2Idx = b1->getEndAtomIdx();
-
-  if (b2->getBeginAtomIdx() == startAtm || b2->getEndAtomIdx() == startAtm) {
-    std::swap(startAtm, atom2Idx);
-  }
-
-  const auto atom3Idx = b2->getOtherAtomIdx(atom2Idx);
-
-  setMoleculeDFS(mol, zmat, internalCoords, startAtm, atom2Idx, atom3Idx);
+  setMoleculeDFS(mol, zmat, internalCoords, firstAtom->getIdx(),
+                 secondAtom->getIdx());
 }
 
 void setMoleculeDFS(const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
                     const InternalCoordinates &internalCoords,
                     const unsigned int startAtomIdx,
-                    const unsigned int atomIdx2, const unsigned int atomIdx3) {
+                    const unsigned int atomIdx2) {
   // init bookkeeping structure(s) -> torsionReferences
   Type14References references(
       mol.getNumAtoms());  // similar to zmatrix but gets updated + tracks
@@ -292,15 +287,12 @@ void setMoleculeDFS(const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
   visitedAtoms.set(atomIdx2);
   visitedBonds.set(mol.getBondBetweenAtoms(atomIdx2, startAtomIdx)->getIdx());
 
-  references[startAtomIdx] = {std::nullopt, atomIdx2, atomIdx3};
+  references[startAtomIdx] = {
+      std::nullopt, atomIdx2,
+      stack.back().atomIdx};  // we know that stack has at least one element
+                              // (#atoms > 2) and that this is not a
+                              // ringclosure since zmat has only two elements
   references[atomIdx2] = {std::nullopt, startAtomIdx, std::nullopt};
-
-  // add third prio again to stack to ensure that we start with a torsion
-  if (mol.getBondBetweenAtoms(atomIdx2, atomIdx3)) {
-    stack.emplace_back(atomIdx3, atomIdx2);
-  } else {
-    stack.emplace_back(atomIdx3, startAtomIdx);
-  }
 
   while (stack.size()) {
     const auto &[idx, precursor] = stack.back();
@@ -329,81 +321,58 @@ void setMoleculeDFS(const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
 
 void correctChiralCenters(const ROMol &mol,
                           std::shared_ptr<DistGeom::ZMatrix> zmat) {
-  boost::dynamic_bitset<> visited{mol.getNumAtoms()};
-
   for (const auto &row :
-       *zmat |
-           std::views::drop(
-               4)  // do not visit first 4 element -> the four atoms can only
-                   // span a torsion -> we cannot have a torsion dependence here
+       *zmat | std::views::drop(3)  // do not visit first 4 element -> the four
+                                    // atoms can only span a torsion -> we
+                                    // cannot have a torsion dependence here
            | std::views::reverse) {
     const auto centerIdx = *row.internal.bondRef;
-    if (visited[centerIdx]) {
-      // we already dealt with this atom
+    if (!row.torsionDependence) {
+      // not a improper torsion
       continue;
     }
 
     const auto *center = mol.getAtomWithIdx(centerIdx);
     const auto chiralTag = center->getChiralTag();
     if ((chiralTag != Atom::CHI_TETRAHEDRAL_CW &&  // only consider tetrahereal
-         chiralTag != Atom::CHI_TETRAHEDRAL_CCW) ||
-        !row.torsionDependence) {  // TODO maybe removenot representable
-      visited.set(centerIdx);
+         chiralTag != Atom::CHI_TETRAHEDRAL_CCW)) {
       continue;
     }
 
     const auto axisatomIdx = *row.internal.angleRef;
-
-    // collect bonds in reverse order of setting them
-    auto refIdx = row.atomIdx;
-    std::vector<unsigned int> dependentIdxs;
-    while (zmat->getTorsionReference(refIdx)) {
-      dependentIdxs.emplace_back(refIdx);
-      refIdx = zmat->getTorsionReference(refIdx)->reference;
-    }
-
-    const auto anchorIdx = refIdx;  // the first one that we have placed
+    const auto anchorIdx = row.torsionDependence->reference;
+    const auto currentIdx = row.atomIdx;
 
     const auto *bnd1 = mol.getBondBetweenAtoms(centerIdx, axisatomIdx);
     const auto *bnd2 = mol.getBondBetweenAtoms(centerIdx, anchorIdx);
+    const auto *bnd3 = mol.getBondBetweenAtoms(centerIdx, currentIdx);
 
-    if (!bnd1 || !bnd2 || bnd1 == bnd2) {
+    if (!bnd1 || !bnd2 || !bnd3 || bnd1 == bnd2 || bnd1 == bnd3 ||
+        bnd2 == bnd3) {
+      // This should never happen
+      std::cerr << ">Error " << center->getIdx() << "; " << axisatomIdx << "; "
+                << anchorIdx << std::endl;
       // invalid center due to ring closure or for fused systems
       // we cannot correct chirality here
-      visited.set(centerIdx);
       continue;
     }
 
-    INT_LIST currentPertOrder;
-    currentPertOrder.emplace_back(bnd1->getIdx());
-    currentPertOrder.emplace_back(bnd2->getIdx());
+    INT_LIST currentPertOrder{static_cast<int>(bnd1->getIdx()),
+                              static_cast<int>(bnd2->getIdx()),
+                              static_cast<int>(bnd3->getIdx())};
 
-    for (unsigned int &dependentIdx : std::views::reverse(dependentIdxs)) {
-      const auto *bnd = mol.getBondBetweenAtoms(centerIdx, dependentIdx);
-      if (!bnd ||
-          std::ranges::find(currentPertOrder, bnd->getIdx()) !=
-              currentPertOrder.end()) {  // this can happen in fused systems
-        break;
+    for (const auto &bnd : mol.atomBonds(center)) {
+      if (bnd != bnd1 && bnd != bnd2 && bnd != bnd3) {
+        currentPertOrder.emplace_back(bnd->getIdx());
       }
-
-      currentPertOrder.emplace_back(bnd->getIdx());
-    }
-
-    if (currentPertOrder.size() != center->getDegree()) {
-      // this can happen for ring closures
-      visited.set(centerIdx);
-      continue;
     }
 
     const bool isCCW = center->getPerturbationOrder(currentPertOrder) %
                        2;  // if odd => counterclockwise @Greg Landrum?
     if (isCCW != (chiralTag == Atom::CHI_TETRAHEDRAL_CCW)) {
       // center is in wrong order => we need to inverse the offsets
-      for (const auto dependentIdx : dependentIdxs) {
-        zmat->invertTorsionDependence(dependentIdx);
-      }
+      zmat->invertTorsionDependence(currentIdx);
     }
-    visited.set(centerIdx);
   }
 }
 
