@@ -26,6 +26,8 @@ class ForceField;
 
 namespace DistGeom {
 
+template <typename T>
+concept TorsionParamType = ForceFields::CrystalFF::TorsionParamType<T>;
 //! Pick a distance matrix at random such that the
 //!  distance satisfy the bounds in the BoundsMatrix
 /*!
@@ -167,9 +169,10 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructForceField(
   <b>NOTE:</b> the caller is responsible for deleting this force field.
 
 */
+template <TorsionParamType T>
 RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
-    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails);
+    const ForceFields::CrystalFF::CrystalFFDetails<T> &etkdgDetails);
 //! Force field with experimental torsion angle preferences and 1-2/1-3 distance
 /// constraints, as well as atom pairwise Columbic interactions
 /*!
@@ -184,9 +187,10 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
   <b>NOTE:</b> the caller is responsible for deleting this force field.
 
 */
+template <TorsionParamType T>
 RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
-    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
+    const ForceFields::CrystalFF::CrystalFFDetails<T> &etkdgDetails,
     const std::map<std::pair<unsigned int, unsigned int>, double> &CPCI);
 //! Force field with experimental torsion angle preferences and 1-2/1-3 distance
 /// constraints
@@ -200,9 +204,10 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *construct3DForceField(
   <b>NOTE:</b> the caller is responsible for deleting this force field.
 
 */
+template <TorsionParamType T>
 RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructPlain3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
-    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails);
+    const ForceFields::CrystalFF::CrystalFFDetails<T> &etkdgDetails);
 
 //! Force field with improper terms and SP linearity contributions
 /*!
@@ -240,9 +245,10 @@ construct3DImproperForceField(
 
 */
 //! \overload
+template <TorsionParamType T>
 inline ForceFields::ForceField *construct3DImproperForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
-    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
+    const ForceFields::CrystalFF::CrystalFFDetails<T> &etkdgDetails) {
   return construct3DImproperForceField(
       mmat, positions, etkdgDetails.improperAtoms, etkdgDetails.angles,
       etkdgDetails.atomNums);
@@ -262,26 +268,29 @@ inline ForceFields::ForceField *construct3DImproperForceField(
     <b>NOTE:</b> the caller is responsible for deleting this force field.
 
 */
+template <TorsionParamType T>
 RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
     const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
-    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
+    const ForceFields::CrystalFF::CrystalFFDetails<T> &etkdgDetails,
     const VECT_CHIRALSET *csets,
     const std::map<std::pair<unsigned int, unsigned int>, double>
         *extraWeights = nullptr,
     const boost::dynamic_bitset<> *fixedPts = nullptr);
 
+template <TorsionParamType T>
 RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
     const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
-    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
+    const ForceFields::CrystalFF::CrystalFFDetails<T> &etkdgDetails,
     const VECT_CHIRALSET *csets,
     const std::map<std::pair<unsigned int, unsigned int>, double> &CPCI,
     const std::map<std::pair<unsigned int, unsigned int>, double>
         *extraWeights = nullptr,
     const boost::dynamic_bitset<> *fixedPts = nullptr);
 
+template <TorsionParamType T>
 RDKIT_DISTGEOMETRY_EXPORT void addTorsionTerms(
     ForceFields::ForceField *field,
-    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
+    const ForceFields::CrystalFF::CrystalFFDetails<T> &etkdgDetails,
     const bool doK, const bool doET);
 
 }  // namespace DistGeom

@@ -590,6 +590,9 @@ used during structural minimisation stage)DOC")
               "symmetrize terminal conjugated groups for RMSD pruning")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap,
            "sets the coordmap to be used")
+      .def_rw(
+          "fitVersion", &PyEmbedParameters::fitVersion,
+          "Which functional form to use for the experimental torsion terms. 1 = Cosine, 2 = Gaussian.")
       .def("__setattr__", &safeSetattr);
 
   m.def("EmbedMultipleConfs", &RDKit::EmbedMultipleConfs2, "mol"_a,
@@ -651,6 +654,23 @@ version 3 (macrocycles).)DOC");
   m.def(
       "DG", []() { return PyEmbedParameters(RDKit::DGeomHelpers::DG); },
       "Returns an EmbedParameters object for plain distance geometry.");
+
+  m.def(
+      "ETKDGv4",
+      []() { return PyEmbedParameters(RDKit::DGeomHelpers::ETKDGv4); },
+      R"DOC(Returns an EmbedParameters object for the ETKDG method - version 4.)DOC");
+  m.def(
+      "srETKDGv4",
+      []() { return PyEmbedParameters(RDKit::DGeomHelpers::srETKDGv4); },
+      R"DOC(Returns an EmbedParameters object for the ETKDG method - version 4 (small rings).)DOC");
+  m.def(
+      "mcETKDGv4",
+      []() { return PyEmbedParameters(RDKit::DGeomHelpers::mcETKDGv4); },
+      R"DOC(Returns an EmbedParameters object for the ETKDG method - version 4 (macrocycles).)DOC");
+  m.def(
+      "srmcETKDGv4",
+      []() { return PyEmbedParameters(RDKit::DGeomHelpers::srmcETKDGv4); },
+      R"DOC(Returns an EmbedParameters object for the ETKDG method - version 4 (small rings and macrocycles).)DOC");
 
   m.def("GetMoleculeBoundsMatrix", &RDKit::getMolBoundsMatrix, "mol"_a,
         "set15bounds"_a = true, "scaleVDW"_a = false,

@@ -3,7 +3,7 @@
 rdkit_library(ForceFieldHelpers UFF/AtomTyper.cpp UFF/Builder.cpp
               MMFF/AtomTyper.cpp MMFF/Builder.cpp CrystalFF/TorsionAngleM6.cpp
               CrystalFF/TorsionPreferences.cpp CrystalFF/TorsionAngleContribs.cpp
-              CrystalFF/PlanarityContribs.cpp
+              CrystalFF/PlanarityContribs.cpp CrystalFF/GaussianTorsionAngleContribs.cpp
               LINK_LIBRARIES SmilesParse SubstructMatch ForceField)
 target_compile_definitions(ForceFieldHelpers PRIVATE RDKIT_FORCEFIELDHELPERS_BUILD)
 
@@ -14,6 +14,7 @@ rdkit_headers(MMFF/AtomTyper.h
               MMFF/Builder.h MMFF/MMFF.h DEST GraphMol/ForceFieldHelpers/MMFF)
 rdkit_headers(CrystalFF/TorsionAngleM6.h CrystalFF/TorsionPreferences.h
               CrystalFF/TorsionAngleContribs.h CrystalFF/PlanarityContribs.h
+              CrystalFF/GaussianTorsionAngleContribs.h
               DEST GraphMol/ForceFieldHelpers/CrystalFF)
 
 rdkit_catch_test(forceFieldHelpersCatch catch_tests.cpp 

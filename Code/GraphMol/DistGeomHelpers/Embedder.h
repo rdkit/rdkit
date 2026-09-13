@@ -161,6 +161,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   std::vector<unsigned int> failures{};
   bool enableSequentialRandomSeeds{false};
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
+  std::size_t fitVersion{1};
 };
 
 //! update parameters from a JSON string
@@ -478,6 +479,11 @@ RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv3;
 //! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
 //! (10.1021/acs.jcim.0c00025) - the small ring part
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters srETKDGv3;
+
+RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv4;
+RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters srETKDGv4;
+RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters mcETKDGv4;
+RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters srmcETKDGv4;
 }  // namespace DGeomHelpers
 }  // namespace RDKit
 

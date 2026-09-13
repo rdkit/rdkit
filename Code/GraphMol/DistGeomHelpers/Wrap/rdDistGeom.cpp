@@ -306,6 +306,18 @@ PyEmbedParameters *getETDGv2() {
   return new PyEmbedParameters(DGeomHelpers::ETDGv2);
 }
 PyEmbedParameters *getDG() { return new PyEmbedParameters(DGeomHelpers::DG); }
+PyEmbedParameters *getETKDGv4() {
+  return new PyEmbedParameters(DGeomHelpers::ETKDGv4);
+}
+PyEmbedParameters *getsrETKDGv4() {
+  return new PyEmbedParameters(DGeomHelpers::srETKDGv4);
+}
+PyEmbedParameters *getmcETKDGv4() {
+  return new PyEmbedParameters(DGeomHelpers::mcETKDGv4);
+}
+PyEmbedParameters *getsrmcETKDGv4() {
+  return new PyEmbedParameters(DGeomHelpers::srmcETKDGv4);
+}
 
 python::tuple getExpTorsHelper(const RDKit::ROMol &mol, bool useExpTorsions,
                                bool useSmallRingTorsions,
@@ -675,6 +687,9 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "symmetrize terminal conjugated groups for RMSD pruning")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap, python::args("self"),
            "sets the coordmap to be used")
+      .def_readwrite(
+          "fitVersion", &PyEmbedParameters::fitVersion,
+          "Which functional form to use for the experimental torsion terms. 1 = Cosine, 2 = Gaussian.")
       .def("__setattr__", &safeSetattr);
 
   docString =
@@ -736,6 +751,22 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
               "Returns an EmbedParameters object for plain distance geometry.",
               python::return_value_policy<python::manage_new_object>());
 
+  python::def("ETKDGv4", RDKit::getETKDGv4,
+              "Returns an EmbedParameters object for the ETKDG method - "
+              "version 4.",
+              python::return_value_policy<python::manage_new_object>());
+  python::def("srETKDGv4", RDKit::getsrETKDGv4,
+              "Returns an EmbedParameters object for the ETKDG method - "
+              "version 4 (small rings).",
+              python::return_value_policy<python::manage_new_object>());
+  python::def("mcETKDGv4", RDKit::getmcETKDGv4,
+              "Returns an EmbedParameters object for the ETKDG method - "
+              "version 4 (macrocycles).",
+              python::return_value_policy<python::manage_new_object>());
+  python::def("srmcETKDGv4", RDKit::getsrmcETKDGv4,
+              "Returns an EmbedParameters object for the ETKDG method - "
+              "version 4 (small rings and macrocycles).",
+              python::return_value_policy<python::manage_new_object>());
   docString =
       "Returns the distance bounds matrix for a molecule\n\
  \n\
