@@ -1843,10 +1843,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 
     DistGeom::BoundsMatPtr mmat;
 
-    if (params.internalCoords == nullptr || molFrags.size() > 1) {
-      params.internalCoords =
-          std::make_shared<InternalCoordinates>(piece->getNumBonds());
-    }
+    params.internalCoords =
+        std::make_shared<InternalCoordinates>(piece->getNumBonds());
 
     if (params.boundsMat == nullptr || molFrags.size() > 1) {
       // The user didn't provide one, so create and initialize the distance
