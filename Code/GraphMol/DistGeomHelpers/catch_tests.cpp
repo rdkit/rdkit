@@ -2414,3 +2414,95 @@ TEST_CASE("TransAmideKTerm") {
     }
   }
 }
+
+TEST_CASE("Z-matrix builder initial embedding", "[zmatrixbuilder]") {
+  auto embedInitialCoordinates = [](RWMol &mol) {
+    auto params = DGeomHelpers::ETKDGv3;
+    params.initialEmbeddingMode =
+        DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
+    params.onlyInitialEmbedding = true;
+    params.randomSeed = 0xf00d;
+
+    REQUIRE(DGeomHelpers::EmbedMolecule(mol, params) == 0);
+    REQUIRE(mol.getNumConformers() == 1);
+    REQUIRE(params.internalCoords);
+    REQUIRE(params.internalCoords->lengths.size() == mol.getNumBonds());
+    return params.internalCoords;
+  };
+
+  auto checkBondLengths = [](const ROMol &mol,
+                             const DGeomHelpers::InternalCoordinates &coords) {
+    const auto &conf = mol.getConformer();
+    for (const auto bond : mol.bonds()) {
+      const auto distance =
+          (conf.getAtomPos(bond->getBeginAtomIdx()) -
+           conf.getAtomPos(bond->getEndAtomIdx()))
+              .length();
+      CHECK(std::isfinite(distance));
+      CHECK_THAT(distance, Catch::Matchers::WithinAbs(
+                               coords.lengths[bond->getIdx()], 1.e-6));
+    }
+  };
+
+  SECTION("acyclic molecules") {
+    const auto smiles = GENERATE("CCC", "CC(C)CO", "CCOC(=O)N");
+    std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
+    REQUIRE(mol);
+
+    const auto coords = embedInitialCoordinates(*mol);
+    checkBondLengths(*mol, *coords);
+  }
+
+  SECTION("one- and two-atom molecules") {
+    const auto smiles = GENERATE("C", "CC");
+    std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
+    REQUIRE(mol);
+
+    const auto coords = embedInitialCoordinates(*mol);
+    checkBondLengths(*mol, *coords);
+  }
+
+  SECTION("ring closures") {
+    const auto smiles = GENERATE("C1CC1", "C1CCCCC1", "c1ccccc1",
+                                 "C1CCC2CCCCC2C1", "C1CC2(C1)CCC2");
+    std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
+    REQUIRE(mol);
+
+    embedInitialCoordinates(*mol);
+    const auto &conf = mol->getConformer();
+    for (const auto bond : mol->bonds()) {
+      CAPTURE(smiles, bond->getIdx());
+      const auto distance =
+          (conf.getAtomPos(bond->getBeginAtomIdx()) -
+           conf.getAtomPos(bond->getEndAtomIdx()))
+              .length();
+      CHECK(std::isfinite(distance));
+      CHECK(distance > 0.1);
+    }
+  }
+
+  SECTION("tetrahedral stereochemistry") {
+    auto mol = "N[C@@H](C)C(=O)O"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+
+    const auto coords = embedInitialCoordinates(*mol);
+    checkBondLengths(*mol, *coords);
+
+    const auto center = mol->getAtomWithIdx(1);
+    REQUIRE(center->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    const auto &conf = mol->getConformer();
+    std::vector<const Atom *> neighbors;
+    for (const auto neighbor : mol->atomNeighbors(center)) {
+      neighbors.push_back(neighbor);
+    }
+    REQUIRE(neighbors.size() == 4);
+    const auto p0 = conf.getAtomPos(neighbors[0]->getIdx()) -
+                    conf.getAtomPos(center->getIdx());
+    const auto p1 = conf.getAtomPos(neighbors[1]->getIdx()) -
+                    conf.getAtomPos(center->getIdx());
+    const auto p2 = conf.getAtomPos(neighbors[2]->getIdx()) -
+                    conf.getAtomPos(center->getIdx());
+    CHECK(std::abs(p0.dotProduct(p1.crossProduct(p2))) > 1.e-3);
+  }
+}
