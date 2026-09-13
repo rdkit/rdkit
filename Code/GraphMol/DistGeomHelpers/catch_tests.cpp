@@ -27,6 +27,7 @@
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
 #include "BoundsMatrixBuilderDetails.h"
+#include "catch2/catch_test_macros.hpp"
 #include <tuple>
 #include <map>
 #include <limits>
@@ -2342,7 +2343,8 @@ TEST_CASE("Github #9461") {
   DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
   DGeomHelpers::setTopolBounds(*mol, bm);
 
-  CHECK_THAT(bm->getUpperBound(0, 1) - bm->getLowerBound(0, 1), Catch::Matchers::WithinAbs(0.02, 1e-4));
+  CHECK_THAT(bm->getUpperBound(0, 1) - bm->getLowerBound(0, 1),
+             Catch::Matchers::WithinAbs(0.02, 1e-4));
 }
 
 TEST_CASE("TransAmideKTerm") {
@@ -2417,6 +2419,7 @@ TEST_CASE("TransAmideKTerm") {
 
 TEST_CASE("Z-matrix builder initial embedding", "[zmatrixbuilder]") {
   auto embedInitialCoordinates = [](RWMol &mol) {
+    MolOps::addHs(mol);
     auto params = DGeomHelpers::ETKDGv3;
     params.initialEmbeddingMode =
         DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
@@ -2434,13 +2437,25 @@ TEST_CASE("Z-matrix builder initial embedding", "[zmatrixbuilder]") {
                              const DGeomHelpers::InternalCoordinates &coords) {
     const auto &conf = mol.getConformer();
     for (const auto bond : mol.bonds()) {
-      const auto distance =
-          (conf.getAtomPos(bond->getBeginAtomIdx()) -
-           conf.getAtomPos(bond->getEndAtomIdx()))
-              .length();
+      const auto distance = (conf.getAtomPos(bond->getBeginAtomIdx()) -
+                             conf.getAtomPos(bond->getEndAtomIdx()))
+                                .length();
       CHECK(std::isfinite(distance));
       CHECK_THAT(distance, Catch::Matchers::WithinAbs(
                                coords.lengths[bond->getIdx()], 1.e-6));
+    }
+    auto zmat = std::make_shared<DistGeom::ZMatrix>(mol.getNumAtoms());
+    DGeomHelpers::setMoleculeDFS(mol, zmat, coords);
+    DGeomHelpers::correctChiralCenters(mol, zmat);
+    for (const auto &row : *zmat) {
+      if (row.internal.angle && row.internal.bondRef &&
+          row.internal.angleRef) {
+        const auto center = conf.getAtomPos(*row.internal.bondRef);
+        const auto v1 = conf.getAtomPos(row.atomIdx) - center;
+        const auto v2 = conf.getAtomPos(*row.internal.angleRef) - center;
+        CHECK_THAT(v1.angleTo(v2), Catch::Matchers::WithinAbs(
+                                       *row.internal.angle, 1.e-6));
+      }
     }
   };
 
@@ -2468,23 +2483,43 @@ TEST_CASE("Z-matrix builder initial embedding", "[zmatrixbuilder]") {
     std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
     REQUIRE(mol);
 
-    embedInitialCoordinates(*mol);
+    const auto coords = embedInitialCoordinates(*mol);
     const auto &conf = mol->getConformer();
+    // all bonds that are no ring closures should not violate bond and angles
+    unsigned int numBondViolations = 0u;
+    unsigned int numAngleViolations = 0u;
     for (const auto bond : mol->bonds()) {
       CAPTURE(smiles, bond->getIdx());
-      const auto distance =
-          (conf.getAtomPos(bond->getBeginAtomIdx()) -
-           conf.getAtomPos(bond->getEndAtomIdx()))
-              .length();
-      CHECK(std::isfinite(distance));
-      CHECK(distance > 0.1);
+      const auto distance = (conf.getAtomPos(bond->getBeginAtomIdx()) -
+                             conf.getAtomPos(bond->getEndAtomIdx()))
+                                .length();
+      if (std::abs(distance - coords->lengths[bond->getIdx()]) > 1.e-6) {
+        numBondViolations++;
+      }
     }
+    auto zmat = std::make_shared<DistGeom::ZMatrix>(mol->getNumAtoms());
+    DGeomHelpers::setMoleculeDFS(*mol, zmat, *coords);
+    DGeomHelpers::correctChiralCenters(*mol, zmat);
+    for (const auto &row : *zmat) {
+      if (row.internal.angle && row.internal.bondRef &&
+          row.internal.angleRef) {
+        const auto center = conf.getAtomPos(*row.internal.bondRef);
+        const auto v1 = conf.getAtomPos(row.atomIdx) - center;
+        const auto v2 = conf.getAtomPos(*row.internal.angleRef) - center;
+        if (std::abs(v1.angleTo(v2) - *row.internal.angle) > 1.e-6) {
+          ++numAngleViolations;
+        }
+      }
+    }
+    CHECK(numBondViolations <= mol->getRingInfo()->numRings());
+    CHECK(numAngleViolations <= mol->getRingInfo()->numRings());
   }
 
   SECTION("tetrahedral stereochemistry") {
-    auto mol = "N[C@@H](C)C(=O)O"_smiles;
+    const auto smiles = GENERATE("N[C@@H](C)C(=O)O", "N[C@H](C)C(=O)O",
+                                 "F[C@H](Cl)Br", "F[C@@H](Cl)Br");
+    std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
     REQUIRE(mol);
-    MolOps::addHs(*mol);
 
     const auto coords = embedInitialCoordinates(*mol);
     checkBondLengths(*mol, *coords);
@@ -2497,12 +2532,15 @@ TEST_CASE("Z-matrix builder initial embedding", "[zmatrixbuilder]") {
       neighbors.push_back(neighbor);
     }
     REQUIRE(neighbors.size() == 4);
+    if (center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+      std::swap(neighbors[0], neighbors[1]);
+    }
     const auto p0 = conf.getAtomPos(neighbors[0]->getIdx()) -
                     conf.getAtomPos(center->getIdx());
     const auto p1 = conf.getAtomPos(neighbors[1]->getIdx()) -
                     conf.getAtomPos(center->getIdx());
     const auto p2 = conf.getAtomPos(neighbors[2]->getIdx()) -
                     conf.getAtomPos(center->getIdx());
-    CHECK(std::abs(p0.dotProduct(p1.crossProduct(p2))) > 1.e-3);
+    CHECK(p0.dotProduct(p1.crossProduct(p2)) > 0);
   }
 }
