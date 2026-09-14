@@ -463,6 +463,8 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
       }
     }
     auto tautBond = tautBonds[bondIdx];
+    // STEREOANY explicitly means undefined stereo; preserve it rather than
+    // normalizing it to STEREONONE.
     if (tautBond->getBondType() != Bond::DOUBLE || d_removeBondStereo ||
         (bond->getStereo() != Bond::STEREOANY &&
          !hasValidSpecifiedDoubleBondStereo(*bond))) {
