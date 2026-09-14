@@ -63,7 +63,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   file(GLOB CHEMDRAW_SOURCE "chemdraw/chemdraw/*.cpp")
   rdkit_library(ChemDraw ${CHEMDRAW_SOURCE} SHARED)
   target_compile_definitions(ChemDraw PRIVATE CHEMDRAW_BUILD)
-  target_link_libraries(ChemDraw PRIVATE expatpp)
+  target_link_libraries(ChemDraw PRIVATE expatpp EXPAT::EXPAT)
 
   # export all the symbols for ChemDraw on MSVC
   if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR((NOT MSVC) AND WIN32))

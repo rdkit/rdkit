@@ -22,7 +22,7 @@ namespace CIPLabeler {
  * Type} which can be useful when comparing centres of different geometry.
  *
  */
-enum class Descriptor {
+enum class Descriptor : uint8_t {
   NONE,  // Unspecified
   UNKNOWN,
   ns,  // Other

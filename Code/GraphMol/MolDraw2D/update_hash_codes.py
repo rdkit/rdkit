@@ -8,7 +8,6 @@
 # better to do the non-Freetype builds first, otherwise the PNG
 # hashes will definitely be wrong.
 
-import json
 import re
 import sys
 

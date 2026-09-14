@@ -12,7 +12,7 @@ steps:
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
         numpy matplotlib cairo pillow eigen ^
-        numpy=2.4 pandas=3 ^
+        numpy pandas=3 ^
         sphinx myst-parser ipython jupyter pytest nbval cmake expat ccache ninja
     call activate rdkit_build
     conda config --env --add channels conda-forge
@@ -79,15 +79,6 @@ steps:
     cd build
     ctest -C Release -j $(number_of_cores) --output-on-failure -R shard -T Test
   displayName: Run sharded tests
-- script: |
-    call activate rdkit_build
-    conda install -c conda-forge --override-channels  numpy=1.26 pandas=2.2
-    set RDBASE=%cd%
-    set PYTHONPATH=%RDBASE%;%PYTHONPATH%
-    set PATH=%RDBASE%\lib;%PATH%
-    cd build
-    ctest -C Release -j $(number_of_cores) --output-on-failure -E shard -T Test
-  displayName: Run with older numpy and pandas
 - script: |
     call activate rdkit_build
     conda install -c conda-forge --override-channels  sphinx myst-parser

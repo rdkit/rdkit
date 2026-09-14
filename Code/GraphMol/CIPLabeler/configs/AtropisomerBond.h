@@ -26,8 +26,6 @@ class AtropisomerBond : public Configuration {
 
   bool hasPrimaryLabel() const override;
 
-  void resetPrimaryLabel() const override;
-
   Descriptor label(const Rules &comp) override;
 
   Descriptor label(Node *root1, Digraph &digraph, const Rules &comp) override;

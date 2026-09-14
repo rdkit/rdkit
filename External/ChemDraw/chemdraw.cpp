@@ -53,7 +53,6 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
-#include <GraphMol/Atropisomers.h>
 #include <boost/algorithm/string.hpp>
 #include <filesystem>
 
@@ -168,10 +167,6 @@ void visit_children(
         } else {
           MolOps::assignChiralTypesFromBondDirs(*res, confidx, true);
         }
-        Atropisomers::detectAtropisomerChirality(*res,
-                                                 &res->getConformer(confidx));
-      } else {  // no Conformer
-        Atropisomers::detectAtropisomerChirality(*res, nullptr);
       }
 
       // now that atom stereochem has been perceived, the wedging

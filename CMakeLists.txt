@@ -170,7 +170,7 @@ if(RDK_SWIG_STATIC AND RDK_BUILD_SWIG_WRAPPERS)
     set(RDK_INSTALL_STATIC_LIBS ON CACHE BOOL "install the rdkit static libraries" FORCE)
   endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
-if ((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR (WIN32 AND RDK_INSTALL_STATIC_LIBS) OR RDK_BUILD_MINIMAL_LIB)
+if ((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR (WIN32 AND RDK_INSTALL_STATIC_LIBS) OR EMSCRIPTEN OR RDK_BUILD_MINIMAL_LIB)
   set(RDK_BUILD_STATIC_LIBS_ONLY ON)
 else()
   set(RDK_BUILD_STATIC_LIBS_ONLY OFF)
@@ -505,7 +505,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
   endif(RDK_INSTALL_INTREE)
 
-  if(NOT WIN32)
+  if(NOT WIN32 AND NOT EMSCRIPTEN)
     # See https://bugs.python.org/msg277944
     # The "command to create shared modules". Used as variable in the "Makefile (and similar) templates to build python modules"
     # for both in-python and third party modules. Initialized to hold the value which works for third party modules to link

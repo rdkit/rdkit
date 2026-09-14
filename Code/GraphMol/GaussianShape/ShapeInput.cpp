@@ -1062,6 +1062,10 @@ double maxScore(const double v1, const double v2, const double c1,
   // is v1, and the opposite.
   auto maxPart = [](const double p1, const double p2,
                     const ShapeOverlayOptions &ovlyOpts) -> double {
+    // If either is 0, the maximum overlap must be 0.
+    if (p1 == 0.0 || p2 == 0.0) {
+      return 0.0;
+    }
     if (p1 < p2) {
       return p1 / (ovlyOpts.simBeta * (p2 - p1) + p1);
     }

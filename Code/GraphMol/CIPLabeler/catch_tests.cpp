@@ -9,13 +9,11 @@
 //
 
 #include <algorithm>
-#include <bitset>
 #include <list>
 #include <ranges>
 #include <string>
+#include <type_traits>
 #include <vector>
-
-#include <sstream>
 
 #ifdef RDK_TEST_MULTITHREADED
 #include <csignal>
@@ -26,6 +24,7 @@
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include <RDGeneral/Exceptions.h>
 
 #include <catch2/catch_all.hpp>
 
@@ -45,11 +44,29 @@
 #include "rules/Rule1a.h"
 #include "rules/Rule2.h"
 #include "rules/Rule6.h"
+#include "rules/Rules.h"
 
 #include "CIPMol.h"
 
 using namespace RDKit;
 using namespace RDKit::CIPLabeler;
+
+static_assert(std::is_constructible_v<Digraph, const CIPMol &, Atom *>);
+static_assert(!std::is_constructible_v<Digraph, CIPMol &&, Atom *>);
+static_assert(!std::is_constructible_v<Digraph, const CIPMol &&, Atom *>);
+
+TEST_CASE("Rules eagerly initializes its composite sorter", "[accurateCIP]") {
+  const Rule1a standaloneRule;
+  REQUIRE(standaloneRule.getSorter());
+  CHECK(standaloneRule.getSorter()->getRules() ==
+        std::vector<const SequenceRule *>{&standaloneRule});
+
+  const Rules rules({new Rule1a});
+
+  REQUIRE(rules.getSorter());
+  CHECK(rules.getSorter()->getRules() ==
+        std::vector<const SequenceRule *>{&rules});
+}
 
 TEST_CASE("Descriptor lists", "[accurateCIP]") {
   auto descriptors = PairList();
@@ -80,6 +97,26 @@ TEST_CASE("Descriptor lists", "[accurateCIP]") {
     CHECK(list1.toString() == "R:llu");
     CHECK(list2.toString() == "R:uul");
   }
+}
+
+TEST_CASE("Iteration limit includes the preliminary pass",
+          "[bug][accurateCIP]") {
+  auto mol = "C[C@H](F)Cl"_smiles;
+  REQUIRE(mol);
+
+  CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 1),
+                  CIPLabeler::MaxIterationsExceeded);
+
+  // A bounded call must not leave the thread-local budget exhausted for
+  // standalone rule comparisons on the same thread.
+  auto comparisonMol = "COC"_smiles;
+  REQUIRE(comparisonMol);
+  CIPLabeler::CIPMol cipmol(*comparisonMol);
+  Digraph digraph(cipmol, cipmol.getAtom(1));
+  auto origin = digraph.getOriginalRoot();
+  auto edges = origin->getEdges();
+  Rule1a rule;
+  CHECK_NOTHROW(rule.getSorter()->prioritize(origin, edges));
 }
 
 void check_incoming_edge_count(Node *root) {
@@ -161,6 +198,48 @@ TEST_CASE("Digraph", "[accurateCIP]") {
   check_incoming_edge_count(current_root);
 }
 
+TEST_CASE("Digraph safety limits", "[accurateCIP]") {
+  SECTION("visit distances do not wrap on long paths") {
+    RWMol mol;
+    constexpr auto chain_length = 260u;
+    for (auto i = 0u; i < chain_length; ++i) {
+      auto atom = new Atom(6);
+      atom->setNoImplicit(true);
+      mol.addAtom(atom, true, true);
+      if (i != 0u) {
+        mol.addBond(i - 1, i, Bond::SINGLE);
+      }
+    }
+
+    CIPLabeler::CIPMol cipmol(mol);
+    Digraph graph(cipmol, cipmol.getAtom(0));
+    expandAll(graph);
+
+    CHECK(graph.getNumNodes() == chain_length);
+    const auto terminal_nodes =
+        graph.getNodes(cipmol.getAtom(chain_length - 1));
+    REQUIRE(terminal_nodes.size() == 1);
+    CHECK(terminal_nodes.front()->getDistance() == chain_length);
+  }
+
+  SECTION("node cap applies to each insertion") {
+    auto mol = "C"_smiles;
+    CIPLabeler::CIPMol cipmol(*mol);
+    Digraph graph(cipmol, cipmol.getAtom(0));
+
+    constexpr auto max_node_count = 100000;
+    for (auto i = 1; i < max_node_count; ++i) {
+      graph.addNode({}, nullptr, boost::rational<int>(1), 1,
+                    Node::IMPL_HYDROGEN);
+    }
+    CHECK(graph.getNumNodes() == max_node_count);
+    CHECK_THROWS_AS(graph.addNode({}, nullptr, boost::rational<int>(1), 1,
+                                  Node::IMPL_HYDROGEN),
+                    TooManyNodesException);
+    CHECK(graph.getNumNodes() == max_node_count);
+  }
+}
+
 TEST_CASE("Mancude fractional atomic numbers", "[accurateCIP]") {
   SECTION("negative resonance component gets one final fraction") {
     auto mol = "[CH-]1C=CC=C1"_smiles;
@@ -202,8 +281,7 @@ TEST_CASE("Mancude fractional atomic numbers", "[accurateCIP]") {
     int bond_duplicates = 0;
     for (const auto edge : negative_node->getEdges()) {
       const auto end = edge->getEnd();
-      if (edge->isBeg(negative_node) &&
-          end->isSet(Node::BOND_DUPLICATE)) {
+      if (edge->isBeg(negative_node) && end->isSet(Node::BOND_DUPLICATE)) {
         ++bond_duplicates;
         CHECK(end->getAtomicNumFraction() == boost::rational<int>(4, 1));
       }
@@ -347,6 +425,32 @@ TEST_CASE("Rule2", "[accurateCIP]") {
 
     CHECK(rule.getSorter()->prioritize(origin, edges).isUnique());
   }
+
+  SECTION("Unknown isotope falls back to its mass number") {
+    auto mol = "[999C]O[14C]"_smiles;
+    CIPLabeler::CIPMol cipmol(*mol);
+    Digraph g(cipmol, cipmol.getAtom(1));
+    auto origin = g.getOriginalRoot();
+    auto edges = origin->getEdges();
+    REQUIRE(edges.size() == 2);
+
+    Edge *unknown = nullptr;
+    Edge *known = nullptr;
+    for (auto edge : edges) {
+      if (edge->getEnd()->getMassNum() == 999) {
+        unknown = edge;
+      } else if (edge->getEnd()->getMassNum() == 14) {
+        known = edge;
+      }
+    }
+    REQUIRE(unknown);
+    REQUIRE(known);
+    CHECK(unknown->getEnd()->getAtomicMass() == Catch::Approx(999.0));
+
+    Rule2 rule;
+    CHECK(rule.compare(unknown, known) > 0);
+    CHECK(rule.compare(known, unknown) < 0);
+  }
 }
 
 TEST_CASE("Tetrahedral assignment", "[accurateCIP]") {
@@ -433,7 +537,7 @@ TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
     atom5->clearProp(common_properties::_CIPCode);
 
     boost::dynamic_bitset<> atoms(mol->getNumAtoms());
-    boost::dynamic_bitset<> bonds;
+    boost::dynamic_bitset<> bonds(mol->getNumBonds());
     atoms.set(1);
     CIPLabeler::assignCIPLabels(*mol, atoms, bonds);
 
@@ -441,6 +545,7 @@ TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
     CHECK(atom1->getPropIfPresent(common_properties::_CIPCode, chirality));
     CHECK(chirality == "S");
     CHECK(!atom5->hasProp(common_properties::_CIPCode));
+    CHECK(!mol->hasProp(common_properties::_CIPComputed));
   }
   SECTION("Assign bonds") {
     auto mol = R"(C\C=C\C=C/C)"_smiles;
@@ -455,7 +560,7 @@ TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
     REQUIRE(!bond1->hasProp(common_properties::_CIPCode));
     REQUIRE(!bond3->hasProp(common_properties::_CIPCode));
 
-    boost::dynamic_bitset<> atoms;
+    boost::dynamic_bitset<> atoms(mol->getNumAtoms());
     boost::dynamic_bitset<> bonds(mol->getNumBonds());
     bonds.set(3);
     CIPLabeler::assignCIPLabels(*mol, atoms, bonds);
@@ -464,6 +569,177 @@ TEST_CASE("assign specific atoms and bonds", "[accurateCIP]") {
     CHECK(!bond1->hasProp(common_properties::_CIPCode));
     CHECK(bond3->getPropIfPresent(common_properties::_CIPCode, stereo));
     CHECK(stereo == "Z");
+    CHECK(!mol->hasProp(common_properties::_CIPComputed));
+  }
+  SECTION("Selected pseudoasymmetric center uses unselected dependencies") {
+    auto mol = "C\\C=C/[C@@H](\\C=C\\O)[C@H](C)[C@H](\\C=C/C)\\C=C\\O"_smiles;
+    REQUIRE(mol);
+
+    for (auto atom : mol->atoms()) {
+      atom->clearProp(common_properties::_CIPCode);
+      atom->clearProp(common_properties::_CIPNeighborOrder);
+    }
+    for (auto bond : mol->bonds()) {
+      bond->clearProp(common_properties::_CIPCode);
+      bond->clearProp(common_properties::_CIPNeighborOrder);
+    }
+    mol->clearProp(common_properties::_CIPComputed);
+
+    boost::dynamic_bitset<> atoms(mol->getNumAtoms());
+    boost::dynamic_bitset<> bonds(mol->getNumBonds());
+    atoms.set(7);
+    CIPLabeler::assignCIPLabels(*mol, atoms, bonds);
+
+    CHECK(!mol->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
+    CHECK(mol->getAtomWithIdx(7)->getProp<std::string>(
+              common_properties::_CIPCode) == "r");
+    CHECK(!mol->getAtomWithIdx(9)->hasProp(common_properties::_CIPCode));
+    CHECK(!mol->hasProp(common_properties::_CIPComputed));
+  }
+  SECTION("Selection bitsets are validated") {
+    auto mol = "C[C@H](F)Cl"_smiles;
+    REQUIRE(mol);
+
+    boost::dynamic_bitset<> noBonds(mol->getNumBonds());
+    boost::dynamic_bitset<> wrongAtoms(mol->getNumAtoms() + 1);
+    wrongAtoms.set(1);
+    CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, wrongAtoms, noBonds),
+                    Invar::Invariant);
+
+    boost::dynamic_bitset<> noAtoms(mol->getNumAtoms());
+    boost::dynamic_bitset<> wrongBonds(mol->getNumBonds() + 1);
+    wrongBonds.set(0);
+    CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, noAtoms, wrongBonds),
+                    Invar::Invariant);
+  }
+}
+
+TEST_CASE("CIP label property lifecycle", "[accurateCIP]") {
+  SECTION("Full assignment clears a center whose tag was removed") {
+    auto mol = "C[C@H](F)Cl"_smiles;
+    REQUIRE(mol);
+    auto atom = mol->getAtomWithIdx(1);
+
+    CIPLabeler::assignCIPLabels(*mol);
+    REQUIRE(atom->hasProp(common_properties::_CIPCode));
+    REQUIRE(atom->hasProp(common_properties::_CIPNeighborOrder));
+
+    atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+    CIPLabeler::assignCIPLabels(*mol);
+    CHECK(!atom->hasProp(common_properties::_CIPCode));
+    CHECK(!atom->hasProp(common_properties::_CIPNeighborOrder));
+    CHECK(mol->hasProp(common_properties::_CIPComputed));
+  }
+
+  SECTION(
+      "Full assignment clears ranked neighbors when a center becomes tied") {
+    auto mol = "C[C@H](F)Cl"_smiles;
+    REQUIRE(mol);
+    auto atom = mol->getAtomWithIdx(1);
+
+    CIPLabeler::assignCIPLabels(*mol);
+    REQUIRE(atom->hasProp(common_properties::_CIPCode));
+    REQUIRE(atom->hasProp(common_properties::_CIPNeighborOrder));
+
+    mol->getAtomWithIdx(2)->setAtomicNum(17);
+    CIPLabeler::assignCIPLabels(*mol);
+    CHECK(!atom->hasProp(common_properties::_CIPCode));
+    CHECK(!atom->hasProp(common_properties::_CIPNeighborOrder));
+  }
+
+  SECTION("Full assignment clears a bond whose stereo flag was removed") {
+    auto mol = "F/C=C/Cl"_smiles;
+    REQUIRE(mol);
+    auto bond = mol->getBondWithIdx(1);
+
+    CIPLabeler::assignCIPLabels(*mol);
+    REQUIRE(bond->hasProp(common_properties::_CIPCode));
+    REQUIRE(bond->hasProp(common_properties::_CIPNeighborOrder));
+
+    bond->setStereo(Bond::STEREONONE);
+    CIPLabeler::assignCIPLabels(*mol);
+    CHECK(!bond->hasProp(common_properties::_CIPCode));
+    CHECK(!bond->hasProp(common_properties::_CIPNeighborOrder));
+  }
+
+  SECTION("Partial assignment clears only selected output state") {
+    auto mol = "C[C@H](F)Cl"_smiles;
+    REQUIRE(mol);
+    auto selected = mol->getAtomWithIdx(0);
+    auto unselected = mol->getAtomWithIdx(1);
+    selected->setProp(common_properties::_CIPCode, std::string("stale"));
+    selected->setProp(common_properties::_CIPNeighborOrder,
+                      std::vector<unsigned int>{1}, true);
+    unselected->setProp(common_properties::_CIPCode, std::string("keep"));
+
+    boost::dynamic_bitset<> atoms(mol->getNumAtoms());
+    boost::dynamic_bitset<> bonds(mol->getNumBonds());
+    atoms.set(0);
+    CIPLabeler::assignCIPLabels(*mol, atoms, bonds);
+
+    CHECK(!selected->hasProp(common_properties::_CIPCode));
+    CHECK(!selected->hasProp(common_properties::_CIPNeighborOrder));
+    CHECK(unselected->getProp<std::string>(common_properties::_CIPCode) ==
+          "keep");
+    CHECK(!mol->hasProp(common_properties::_CIPComputed));
+  }
+}
+
+TEST_CASE("Malformed stereo markers are ignored safely", "[accurateCIP]") {
+  SECTION("Tetrahedral atom with too few carriers") {
+    auto mol = "CF"_smiles;
+    REQUIRE(mol);
+    auto atom = mol->getAtomWithIdx(0);
+    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+    atom->setProp(common_properties::_CIPCode, std::string("stale"));
+    CHECK_NOTHROW(CIPLabeler::assignCIPLabels(*mol));
+    CHECK(!atom->hasProp(common_properties::_CIPCode));
+    CHECK(!atom->hasProp(common_properties::_CIPNeighborOrder));
+  }
+
+  SECTION("Cis/trans marker on a single bond") {
+    auto mol = "CCCC"_smiles;
+    REQUIRE(mol);
+    auto bond = mol->getBondBetweenAtoms(1, 2);
+    REQUIRE(bond);
+    REQUIRE(bond->getBondType() == Bond::SINGLE);
+
+    const auto beginCarrier = bond->getBeginAtomIdx() == 1 ? 0u : 3u;
+    const auto endCarrier = bond->getEndAtomIdx() == 2 ? 3u : 0u;
+    bond->setStereoAtoms(beginCarrier, endCarrier);
+    bond->setStereo(Bond::STEREOCIS);
+    bond->setProp(common_properties::_CIPCode, std::string("stale"));
+    CHECK_NOTHROW(CIPLabeler::assignCIPLabels(*mol));
+    CHECK(!bond->hasProp(common_properties::_CIPCode));
+    CHECK(!bond->hasProp(common_properties::_CIPNeighborOrder));
+  }
+
+  SECTION("Double bond with invalid stereo atom indexes") {
+    auto mol = "FC=CCl"_smiles;
+    REQUIRE(mol);
+    auto bond = mol->getBondWithIdx(1);
+    REQUIRE(bond->getBondType() == Bond::DOUBLE);
+    auto &stereoAtoms = bond->getStereoAtoms();
+    stereoAtoms.clear();
+    stereoAtoms.push_back(mol->getNumAtoms() + 1);
+    stereoAtoms.push_back(3);
+    bond->setStereo(Bond::STEREOCIS);
+    bond->setProp(common_properties::_CIPCode, std::string("stale"));
+
+    CHECK_NOTHROW(CIPLabeler::assignCIPLabels(*mol));
+    CHECK(!bond->hasProp(common_properties::_CIPCode));
+    CHECK(!bond->hasProp(common_properties::_CIPNeighborOrder));
+  }
+
+  SECTION("Invalid atropisomer marker") {
+    auto mol = "CC"_smiles;
+    REQUIRE(mol);
+    auto bond = mol->getBondWithIdx(0);
+    bond->setStereo(Bond::STEREOATROPCW);
+    bond->setProp(common_properties::_CIPCode, std::string("stale"));
+    CHECK_NOTHROW(CIPLabeler::assignCIPLabels(*mol));
+    CHECK(!bond->hasProp(common_properties::_CIPCode));
+    CHECK(!bond->hasProp(common_properties::_CIPNeighborOrder));
   }
 }
 
@@ -1445,7 +1721,9 @@ $$$$
   auto mol = v2::FileParsers::MolFromMolBlock(molBlock, params);
 
   REQUIRE(mol);
-  REQUIRE_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 1000),
+  // Leave enough of the global budget for the preliminary pass to visit the
+  // easy center before the difficult centers exhaust the remaining budget.
+  REQUIRE_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000),
                     CIPLabeler::MaxIterationsExceeded);
 
   auto at = mol->getAtomWithIdx(22);
