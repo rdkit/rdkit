@@ -464,7 +464,8 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     }
     auto tautBond = tautBonds[bondIdx];
     if (tautBond->getBondType() != Bond::DOUBLE || d_removeBondStereo ||
-        !hasValidSpecifiedDoubleBondStereo(*bond)) {
+        (bond->getStereo() != Bond::STEREOANY &&
+         !hasValidSpecifiedDoubleBondStereo(*bond))) {
       // When bond stereo is being removed for bonds involved in tautomerism,
       // use STEREOANY (for double bonds not in rings or connecting two ring atoms)
       // instead of STEREONONE.
