@@ -84,10 +84,12 @@ std::vector<ValidationErrorInfo> NoAtomValidation::validate(
 }
 
 std::vector<ValidationErrorInfo> FragmentValidation::validate(
-    const ROMol &mol, bool reportAllFailures) const {
+    const ROMol &mol,
+    [[maybe_unused]] bool
+        reportAllFailures  // REVIEW: reportAllFailures is not being used here.
+                           // is that correct?
+) const {
   std::vector<ValidationErrorInfo> errors;
-  // REVIEW: reportAllFailures is not being used here. is that correct?
-  RDUNUSED_PARAM(reportAllFailures);
   std::shared_ptr<FragmentCatalogParams> fparams(new FragmentCatalogParams(""));
   FragmentCatalog fcat(fparams.get());
 
