@@ -115,7 +115,6 @@ inline std::size_t getUnifiedId(const unsigned int id1, const unsigned int id2,
 
 template <unsigned int numBondIds>
 auto unifiedIdToBondIds(std::size_t id, const unsigned int n) {
-  // implements TODO algorithm
   std::array<unsigned int, numBondIds> bondIds;
 
   for (auto i : std::views::iota(0u, numBondIds) | std::views::reverse) {

@@ -94,11 +94,6 @@ RDKIT_DISTGEOMETRY_EXPORT bool computeRandomCoords(
   \param zmat        The Z-Matrix
   \param positions     A vector of pointers to Points to write out the resulting
   coordinates
-  \param setFourthDimension    if true, a fourth dimention is uniformly sampled
-from [-1,1]
-
-  \return true if the coordinate generation was successful
-TODO
 
   \return true if the coordinate generation was successful (which is always the
 case here)

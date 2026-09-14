@@ -67,6 +67,8 @@ constexpr double MAX_MINIMIZED_E_PER_ATOM = 0.05;
 constexpr double MAX_MINIMIZED_E_PER_ATOM_AIO = 0.1;
 constexpr double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
 constexpr double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
+constexpr double AMPLITUDE_FOURTH_COORDINATE_IC =
+    0.2;  // corresponds to range [-0.1, 0.1]
 inline bool haveOppositeSign(double a, double b) {
   return std::signbit(a) ^ std::signbit(b);
 }
@@ -424,9 +426,10 @@ bool generateInitialCoords(RDGeom::PointPtrVect *positions,
       gotCoords = DistGeom::computeZMatrixCoords(*eargs.zmat, *positions, *rng);
       if (eargs.fourD && (!checkTetrahedralCenters(positions, eargs) ||
                           !checkChiralCenters(positions, eargs, embedParams))) {
-        // only add non-zero fourth dimention if chiral centers are off
+        // only add non-zero fourth dimention if at least one chiral centers is
+        // incorrect
         std::ranges::for_each(*positions, [&rng](auto *position) {
-          (*position)[3] = 0.2 * ((*rng)() - 0.5);
+          (*position)[3] = AMPLITUDE_FOURTH_COORDINATE_IC * ((*rng)() - 0.5);
         });
       }
       break;

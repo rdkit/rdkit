@@ -24,34 +24,52 @@ using TorsionInfo =
 using BondAngleInfo = boost::unordered_flat_map<std::size_t, double>;
 using BondLengthInfo = std::vector<double>;
 
-// TODO as details    // typedef struct InternalCoordinates InternalCoordinates;
-typedef struct InternalCoordinates {
+//! A struct to store internal coordinates by unified ids through the ids from
+//! the invovled bonds
+struct InternalCoordinates {
   TorsionInfo torsionRange;
   BondAngleInfo angles;
   BondLengthInfo lengths;
   InternalCoordinates(unsigned int numBonds)
       : torsionRange{}, angles{}, lengths(numBonds) {}
-} InternalCoordinates;
+};
 
+//! Generates a Z-Matrix via a DFS walk through the molecule, as starting point,
+//! a non-ring bond (if existing) with minimal degree is selected
 /*!
-  \param TODO
+  \param mol  Molecule for which the matrix should be constructes
+  \param zmat Pointer to an initialized (!) but empty Z-Matrix that should be
+  filled
+  \param internalCoords Internal coordinates to be used for the ZMatrix (NOTE:
+  the molecule that was given here must be the same used to construct the
+  internal coordinates, since they are accessed by their bond ids)
 */
 RDKIT_DISTGEOMHELPERS_EXPORT void setMoleculeDFS(
     const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
     const InternalCoordinates &internalCoords);
 
-//! TODO
+//! Generates a Z-Matrix via a DFS walk through the molecule, as starting point,
+//! the given two atoms are used
 /*!
-  \param TODO
+  \param mol  Molecule for which the matrix should be constructes
+  \param zmat Pointer to an initialized (!) but empty Z-Matrix that should be
+  filled
+  \param internalCoords Internal coordinates to be used for the ZMatrix (NOTE:
+  the molecule that was given here must be the same used to construct the
+  internal coordinates, since they are accessed by their bond ids)
+  \param firstAtomIdx First row in zmatrix
+  \param secondAtomIdx Second row in zmatrix
 */
 RDKIT_DISTGEOMHELPERS_EXPORT void setMoleculeDFS(
     const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
-    const InternalCoordinates &internalCoords, const unsigned int startAtomIdx,
-    const unsigned int atomIdx2);
+    const InternalCoordinates &internalCoords, unsigned int firstAtomIdx,
+    unsigned int secondAtomIdx);
 
-//! TODO
+//! Corrects sign for offsets of improper torsions to account for chiral
+//! chemistry
 /*!
-  \param TODO
+  \param mol  Corresponding molecule
+  \param zmat ZMatrix
 */
 RDKIT_DISTGEOMHELPERS_EXPORT void correctChiralCenters(
     const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat);

@@ -256,7 +256,6 @@ bool computeZMatrixCoords(ZMatrix &zmat, RDGeom::PointPtrVect &positions,
 
   computeZMatrixCoords(zmat, coordinates, rng);
 
-  // ========== add noise to fourth coordinate
   for (size_t i = 0; i < positions.size(); i++) {
     auto &p = *(positions[i]);
     auto &coord = coordinates[i];

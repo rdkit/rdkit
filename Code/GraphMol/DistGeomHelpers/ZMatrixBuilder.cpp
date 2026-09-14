@@ -29,6 +29,7 @@
 #include <optional>
 #include <ranges>
 #include <DistGeom/ChiralSet.h>
+#include <utility>
 #include <vector>
 
 namespace RDKit {
@@ -244,55 +245,58 @@ void setMoleculeDFS(const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
 
 void setMoleculeDFS(const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
                     const InternalCoordinates &internalCoords,
-                    const unsigned int startAtomIdx,
-                    const unsigned int atomIdx2) {
+                    unsigned int firstAtomIdx, unsigned int secondAtomIdx) {
+  const auto nAtoms = mol.getNumAtoms();
   // init bookkeeping structure(s) -> torsionReferences
   Type14References references(
-      mol.getNumAtoms());  // similar to zmatrix but gets updated + tracks
-                           // backwards => important for first atoms
+      nAtoms);  // similar to zmatrix but gets updated + tracks
+                // backwards => important for first atoms
 
   boost::dynamic_bitset<> visitedAtoms(mol.getNumAtoms());
   boost::dynamic_bitset<> visitedBonds(mol.getNumBonds());
 
   std::vector<StackElem> stack;
-  stack.reserve(mol.getNumAtoms() / 2);  // just an approximation
+  stack.reserve(nAtoms / 2);  // just an approximation
 
-  zmat->addElement(startAtomIdx);
-
-  switch (mol.getNumAtoms()) {
-    case 2:
-      zmat->addElement(
-          atomIdx2,
-          internalCoords.lengths[mol.getBondBetweenAtoms(startAtomIdx, atomIdx2)
-                                     ->getIdx()],
-          startAtomIdx);
-      [[fallthrough]];
-    case 1:
-      return;
+  if (nAtoms > 2 && mol.getAtomWithIdx(secondAtomIdx)->getDegree() <= 1) {
+    // the second atom should be another neighbor than first atom (if we need a
+    // bond angle reference)
+    std::swap(firstAtomIdx, secondAtomIdx);
   }
 
-  addNeighborsToStack(startAtomIdx, startAtomIdx, mol, stack, visitedAtoms,
-                      *zmat, internalCoords);
-  visitedAtoms.set(startAtomIdx);
+  zmat->addElement(firstAtomIdx);
+
+  if (nAtoms == 1) {
+    return;
+  }
 
   zmat->addElement(
-      atomIdx2,
-      internalCoords
-          .lengths[mol.getBondBetweenAtoms(startAtomIdx, atomIdx2)->getIdx()],
-      startAtomIdx);
+      secondAtomIdx,
+      internalCoords.lengths
+          [mol.getBondBetweenAtoms(firstAtomIdx, secondAtomIdx)->getIdx()],
+      firstAtomIdx);
 
-  addNeighborsToStack(atomIdx2, startAtomIdx, mol, stack, visitedAtoms, *zmat,
-                      internalCoords);
+  if (nAtoms == 2) {
+    return;
+  }
 
-  visitedAtoms.set(atomIdx2);
-  visitedBonds.set(mol.getBondBetweenAtoms(atomIdx2, startAtomIdx)->getIdx());
+  addNeighborsToStack(firstAtomIdx, secondAtomIdx, mol, stack, visitedAtoms,
+                      *zmat, internalCoords);
+  visitedAtoms.set(firstAtomIdx);
 
-  references[startAtomIdx] = {
-      std::nullopt, atomIdx2,
+  addNeighborsToStack(secondAtomIdx, firstAtomIdx, mol, stack, visitedAtoms,
+                      *zmat, internalCoords);
+
+  visitedAtoms.set(secondAtomIdx);
+  visitedBonds.set(
+      mol.getBondBetweenAtoms(secondAtomIdx, firstAtomIdx)->getIdx());
+
+  references[firstAtomIdx] = {
+      std::nullopt, secondAtomIdx,
       stack.back().atomIdx};  // we know that stack has at least one element
                               // (#atoms > 2) and that this is not a
                               // ringclosure since zmat has only two elements
-  references[atomIdx2] = {std::nullopt, startAtomIdx, std::nullopt};
+  references[secondAtomIdx] = {std::nullopt, firstAtomIdx, std::nullopt};
 
   while (stack.size()) {
     const auto &[idx, precursor] = stack.back();
@@ -328,7 +332,7 @@ void correctChiralCenters(const ROMol &mol,
            | std::views::reverse) {
     const auto centerIdx = *row.internal.bondRef;
     if (!row.torsionDependence) {
-      // not a improper torsion
+      // not an improper torsion
       continue;
     }
 
@@ -347,20 +351,11 @@ void correctChiralCenters(const ROMol &mol,
     const auto *bnd2 = mol.getBondBetweenAtoms(centerIdx, anchorIdx);
     const auto *bnd3 = mol.getBondBetweenAtoms(centerIdx, currentIdx);
 
-    if (!bnd1 || !bnd2 || !bnd3 || bnd1 == bnd2 || bnd1 == bnd3 ||
-        bnd2 == bnd3) {
-      // This should never happen
-      std::cerr << ">Error " << center->getIdx() << "; " << axisatomIdx << "; "
-                << anchorIdx << std::endl;
-      // invalid center due to ring closure or for fused systems
-      // we cannot correct chirality here
-      continue;
-    }
-
     INT_LIST currentPertOrder{static_cast<int>(bnd1->getIdx()),
                               static_cast<int>(bnd2->getIdx()),
                               static_cast<int>(bnd3->getIdx())};
 
+    // find remaining bond
     for (const auto &bnd : mol.atomBonds(center)) {
       if (bnd != bnd1 && bnd != bnd2 && bnd != bnd3) {
         currentPertOrder.emplace_back(bnd->getIdx());
