@@ -9,6 +9,9 @@ rdkit_headers(AtomFeatures.h
               DASHTree.h
               DEST GraphMol/DASHTree)
 
+rdkit_catch_test(dashTreeCatchTest catch_tests.cpp
+                 LINK_LIBRARIES DASHTree FileParsers SmilesParse)
+
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   add_subdirectory(Wrap)
 endif()
