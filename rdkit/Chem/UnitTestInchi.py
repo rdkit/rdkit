@@ -141,6 +141,31 @@ class RegressionTest(unittest.TestCase):
     rdDepictor.Compute2DCoords(asymmetric)
     self.assertIn('/b', MolToInchi(asymmetric))
 
+  def testMappedAndUnmappedAsymmetricDoubleBondHaveSameInchi(self):
+    mol = MolFromSmiles('CC=CC')
+    rdDepictor.Compute2DCoords(mol)
+    mapped = Chem.Mol(mol)
+    for atom_idx, atom in enumerate(mapped.GetAtoms(), 1):
+      atom.SetAtomMapNum(atom_idx)
+    self.assertEqual(MolToInchi(mol), MolToInchi(mapped))
+
+  def testMappedAndUnmappedSymmetricYlideneHaveSameInchi(self):
+    mol, _ = self._loadSymmetricYlidene()
+    mapped = Chem.Mol(mol)
+    for atom_idx, atom in enumerate(mapped.GetAtoms(), 1):
+      atom.SetAtomMapNum(atom_idx)
+    inchi = MolToInchi(mol)
+    self.assertNotIn('/b', inchi)
+    self.assertEqual(inchi, MolToInchi(mapped))
+
+  def testAsymmetricallyMappedCCl3HasSameInchi(self):
+    unmapped = MolFromSmiles('CC(Cl)(Cl)Cl')
+    mapped = MolFromSmiles('CC([Cl:1])([Cl:2])[Cl:3]')
+    self.assertEqual(len(Chem.FindMolChiralCenters(mapped, includeUnassigned=True)), 1)
+    inchi = MolToInchi(unmapped)
+    self.assertNotIn('/t', inchi)
+    self.assertEqual(inchi, MolToInchi(mapped))
+
 
 @unittest.skipUnless(INCHI_AVAILABLE, 'Inchi support not available')
 class TestCase(unittest.TestCase):

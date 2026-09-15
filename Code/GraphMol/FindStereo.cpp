@@ -462,7 +462,8 @@ std::vector<unsigned int> getSymmetricUnspecifiedDoubleBondIndices(
   }
 
   std::vector<unsigned int> atomRanks(mol.getNumAtoms());
-  Canon::rankMolAtoms(mol, atomRanks, false, true, true, true, false, true,
+  // Atom maps are not part of InChI and must not break graph symmetry here.
+  Canon::rankMolAtoms(mol, atomRanks, false, true, true, false, false, true,
                       false, true);
 
   for (const auto bond : mol.bonds()) {
