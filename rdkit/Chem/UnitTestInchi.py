@@ -104,6 +104,8 @@ class RegressionTest(unittest.TestCase):
     self.assertEqual(ranks[6], ranks[11])
     self.assertNotIn('/b', MolToInchi(mol))
 
+    # Generate coordinates deliberately: this checks that the fix is limited
+    # to graph-symmetric, non-stereogenic double bonds.
     asymmetric = MolFromSmiles('CC=CC')
     rdDepictor.Compute2DCoords(asymmetric)
     self.assertIn('/b', MolToInchi(asymmetric))

@@ -408,6 +408,55 @@ bool isBondPotentialStereoBond(const Bond *bond) {
     return false;
   }
 }
+
+namespace {
+bool isSymmetricUnspecifiedDoubleBond(
+    const Bond &bond, const std::vector<unsigned int> &atomRanks) {
+  if (bond.getBondType() != Bond::BondType::DOUBLE ||
+      bond.getStereo() != Bond::BondStereo::STEREONONE ||
+      !isBondPotentialStereoBond(&bond)) {
+    return false;
+  }
+
+  const auto stereoInfo = getStereoInfo(&bond);
+  if (stereoInfo.specified != Chirality::StereoSpecified::Unspecified ||
+      stereoInfo.controllingAtoms.size() != 4) {
+    return false;
+  }
+
+  for (unsigned int side = 0; side < 2; ++side) {
+    const auto first = stereoInfo.controllingAtoms[2 * side];
+    const auto second = stereoInfo.controllingAtoms[2 * side + 1];
+    if (first == Atom::NOATOM && second == Atom::NOATOM) {
+      return true;
+    }
+    if (first != Atom::NOATOM && second != Atom::NOATOM &&
+        atomRanks[first] == atomRanks[second]) {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
+
+std::vector<unsigned int> getSymmetricUnspecifiedDoubleBondIndices(
+    const ROMol &mol) {
+  std::vector<unsigned int> atomRanks(mol.getNumAtoms());
+  Canon::rankMolAtoms(mol, atomRanks, false, true, true, true, false, true,
+                      false, true);
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(mol);
+  }
+
+  std::vector<unsigned int> result;
+  for (const auto bond : mol.bonds()) {
+    if (isSymmetricUnspecifiedDoubleBond(*bond, atomRanks)) {
+      result.push_back(bond->getIdx());
+    }
+  }
+  std::sort(result.begin(), result.end());
+  return result;
+}
 }  // namespace detail
 
 std::string getBondSymbol(const Bond *bond) {
