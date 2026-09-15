@@ -60,13 +60,14 @@ std::string pyObjectToString(nb::object input) {
 
 nb::tuple MolsFromChemDrawBlockHelper(
     const std::string &block, bool sanitize, bool removeHs,
-    RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
-        RDKit::v2::NeedsCleanPolicy::TrustSource) {
+    RDKit::v2::NeedsCleanPolicy needsCleanPolicy = RDKit::v2::NeedsCleanPolicy::TrustSource,
+    bool parseQueries=false,
+    bool strictQueryParsing=false) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
     mols = RDKit::v2::MolsFromChemDrawBlock(
         block,
-        {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy});
+        {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy, parseQueries, strictQueryParsing});
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -85,11 +86,12 @@ nb::tuple MolsFromChemDrawBlockHelper(
 
 nb::tuple MolsFromChemDrawFileHelper(
     nb::object cdxml, bool sanitize, bool removeHs,
-    RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
-        RDKit::v2::NeedsCleanPolicy::TrustSource) {
+    RDKit::v2::NeedsCleanPolicy needsCleanPolicy = RDKit::v2::NeedsCleanPolicy::TrustSource,
+    bool parseQueries=false,
+    bool strictQueryParsing=false) {
   auto mols = RDKit::v2::MolsFromChemDrawFile(
       pyObjectToString(cdxml),
-      {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy});
+        {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy, parseQueries, strictQueryParsing});
   nb::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
@@ -157,6 +159,8 @@ NB_MODULE(rdChemDraw, m) {
   m.def("MolsFromChemDrawFile", MolsFromChemDrawFileHelper, "filename"_a,
         "sanitize"_a = true, "removeHs"_a = true,
         "needsCleanPolicy"_a = v2::NeedsCleanPolicy::TrustSource,
+	"parseQueries"_a = false,
+	"strictQueryParsing"_a = false,
         R"DOC(Extract all molecules from a ChemDraw file.
 
 Note that the ChemDraw format is large and complex, the RDKit doesn't support
@@ -182,6 +186,8 @@ RETURNS:
   m.def("MolsFromChemDrawBlock", MolsFromChemDrawBlockHelper, "block"_a,
         "sanitize"_a = true, "removeHs"_a = true,
         "needsCleanPolicy"_a = v2::NeedsCleanPolicy::TrustSource,
+	"parseQueries"_a = false,
+	"strictQueryParsing"_a = false,
         R"DOC(Extract all molecules from a ChemDraw block.
 
 Note that the ChemDraw format is large and complex, the RDKit doesn't support
