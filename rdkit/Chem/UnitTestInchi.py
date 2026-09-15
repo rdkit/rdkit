@@ -134,6 +134,7 @@ class RegressionTest(unittest.TestCase):
       conformer.SetAtomPosition(atom.GetIdx(), (position.x, position.y, position.x / 10.0))
     self.assertNotIn('/b', MolToInchi(mol))
 
+  def testAsymmetricDoubleBondRetainsCoordinateStereo(self):
     # Generate coordinates deliberately: this checks that the fix is limited
     # to graph-symmetric, non-stereogenic double bonds.
     asymmetric = MolFromSmiles('CC=CC')
