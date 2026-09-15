@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from rdkit import Chem, DataStructs
+from rdkit import Chem, DataStructs, rdBase
 from rdkit.Chem import rdFingerprintGenerator
 
 
@@ -385,6 +385,15 @@ class TestCase(unittest.TestCase):
     tfps = g.GetSparseCountFingerprints(ms, numThreads=4)
     for ofp, tfp in zip(ofps, tfps):
       self.assertEqual(ofp, tfp)
+
+  @unittest.skipUnless(rdBase._wrapperType == 'nanobind',
+                       'Generator inputs are only supported by nanobind')
+  def testFreshMoleculesFromGenerator(self):
+    smiles = ['CC', 'CCO', 'c1ccccc1']
+    generator = rdFingerprintGenerator.GetMorganGenerator()
+    expected = tuple(generator.GetFingerprint(Chem.MolFromSmiles(s)) for s in smiles)
+    actual = generator.GetFingerprints((Chem.MolFromSmiles(s) for s in smiles))
+    self.assertEqual(actual, expected)
 
   def testFingerprintGeneratorOptionsLifetime(self):
     # this should not result in a seg fault

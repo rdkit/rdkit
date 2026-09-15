@@ -168,8 +168,10 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
 
 template <typename ReturnType, typename FuncType>
 nb::tuple mtgetFingerprints(FuncType func, nb::object mols, int numThreads) {
+  // Keep yielded molecules alive until fingerprinting finishes.
+  nb::list molList(mols);
   std::vector<const ROMol *> tmols;
-  for (auto item : mols) {
+  for (auto item : molList) {
     tmols.push_back(nb::cast<const ROMol *>(item));
   }
 
