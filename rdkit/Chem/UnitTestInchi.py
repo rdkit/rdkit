@@ -38,8 +38,9 @@ import re
 import unittest
 
 from rdkit import RDConfig, RDLogger
-from rdkit.Chem import (INCHI_AVAILABLE, ForwardSDMolSupplier, MolFromMolBlock, MolFromSmiles,
-                        MolToMolBlock, MolToSmiles, SanitizeMol, rdDepictor)
+from rdkit.Chem import (INCHI_AVAILABLE, CanonicalRankAtoms, ForwardSDMolSupplier,
+                        MolFromMolBlock, MolFromMolFile, MolFromSmiles, MolToMolBlock,
+                        MolToSmiles, SanitizeMol, rdDepictor)
 
 if INCHI_AVAILABLE:
   from rdkit.Chem import (InchiReadWriteError, InchiToInchiKey, MolBlockToInchi, MolFromInchi,
@@ -94,6 +95,14 @@ class RegressionTest(unittest.TestCase):
       m = MolFromSmiles(smiles)
       inchi = MolToInchi(m)
       self.assertEqual(inchi, expected)
+
+  def testSymmetricYlideneDoesNotInventDoubleBondStereo(self):
+    path = os.path.join(RDConfig.RDCodeDir, 'Chem/test_data', 'symmetric_ylidene.sdf')
+    mol = MolFromMolFile(path)
+    self.assertIsNotNone(mol)
+    ranks = CanonicalRankAtoms(mol, breakTies=False)
+    self.assertEqual(ranks[6], ranks[11])
+    self.assertNotIn('/b', MolToInchi(mol))
 
 
 @unittest.skipUnless(INCHI_AVAILABLE, 'Inchi support not available')
