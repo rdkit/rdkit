@@ -18,6 +18,7 @@ target_link_libraries(bench rdkitCatch
 
 if(RDK_BUILD_INCHI_SUPPORT)
   target_link_libraries(bench RDInchiLib)
+  target_include_directories(bench PRIVATE ${CMAKE_SOURCE_DIR}/External)
   target_sources(bench PRIVATE inchi.cpp)
 endif(RDK_BUILD_INCHI_SUPPORT)
 
