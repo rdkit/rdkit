@@ -371,10 +371,14 @@ Bond::BondStereo getClearedTautomerBondStereo(const RingInfo *ringInfo,
              : Bond::STEREONONE;
 }
 
-bool hasValidSpecifiedDoubleBondStereo(const Bond &bond) {
+bool hasPreservableDoubleBondStereo(const Bond &bond) {
   const auto stereo = bond.getStereo();
-  return bond.getBondType() == Bond::DOUBLE && stereo >= Bond::STEREOZ &&
-         stereo <= Bond::STEREOTRANS && bond.getStereoAtoms().size() == 2;
+  // STEREOANY explicitly means undefined stereo; preserve it rather than
+  // normalizing it to STEREONONE.
+  return bond.getBondType() == Bond::DOUBLE &&
+         (stereo == Bond::STEREOANY ||
+          (stereo >= Bond::STEREOZ && stereo <= Bond::STEREOTRANS &&
+           bond.getStereoAtoms().size() == 2));
 }
 }  // namespace
 
@@ -464,7 +468,7 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     }
     auto tautBond = tautBonds[bondIdx];
     if (tautBond->getBondType() != Bond::DOUBLE || d_removeBondStereo ||
-        !hasValidSpecifiedDoubleBondStereo(*bond)) {
+        !hasPreservableDoubleBondStereo(*bond)) {
       // When bond stereo is being removed for bonds involved in tautomerism,
       // use STEREOANY (for double bonds not in rings or connecting two ring atoms)
       // instead of STEREONONE.
