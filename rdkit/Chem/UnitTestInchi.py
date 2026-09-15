@@ -104,6 +104,10 @@ class RegressionTest(unittest.TestCase):
     self.assertEqual(ranks[6], ranks[11])
     self.assertNotIn('/b', MolToInchi(mol))
 
+    asymmetric = MolFromSmiles('CC=CC')
+    rdDepictor.Compute2DCoords(asymmetric)
+    self.assertIn('/b', MolToInchi(asymmetric))
+
 
 @unittest.skipUnless(INCHI_AVAILABLE, 'Inchi support not available')
 class TestCase(unittest.TestCase):

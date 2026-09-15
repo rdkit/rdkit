@@ -59,6 +59,7 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <inchi_api.h>
@@ -78,6 +79,34 @@
 // #define DEBUG 1
 namespace RDKit {
 namespace {
+bool isSymmetricUnspecifiedDoubleBond(
+    const Bond &bond, const std::vector<unsigned int> &atomRanks) {
+  if (bond.getBondType() != Bond::BondType::DOUBLE ||
+      bond.getStereo() != Bond::BondStereo::STEREONONE ||
+      !Chirality::detail::isBondPotentialStereoBond(&bond)) {
+    return false;
+  }
+
+  const auto stereoInfo = Chirality::detail::getStereoInfo(&bond);
+  if (stereoInfo.specified != Chirality::StereoSpecified::Unspecified ||
+      stereoInfo.controllingAtoms.size() != 4) {
+    return false;
+  }
+
+  for (unsigned int side = 0; side < 2; ++side) {
+    const auto first = stereoInfo.controllingAtoms[2 * side];
+    const auto second = stereoInfo.controllingAtoms[2 * side + 1];
+    if (first == Atom::NOATOM && second == Atom::NOATOM) {
+      return true;
+    }
+    if (first != Atom::NOATOM && second != Atom::NOATOM &&
+        atomRanks[first] == atomRanks[second]) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /* assignBondDirs
  * assign bond direction for neighboring bonds of stereo double bonds based
  * on two sets of constraints: zBondPairs gives the pairs of bonds that must
@@ -1767,6 +1796,9 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
   std::unique_ptr<inchi_Atom[]> inchiAtoms(new inchi_Atom[nAtoms]);
   // and a vector for stereo0D
   std::vector<inchi_Stereo0D> stereo0DEntries;
+  std::vector<unsigned int> atomRanks(nAtoms);
+  Canon::rankMolAtoms(*m, atomRanks, false, true, true, true, false, true,
+                      false, true);
 
   PeriodicTable *periodicTable = PeriodicTable::getTable();
   // Fill inchi_Atom's by atoms in RWMol
@@ -2011,6 +2043,11 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
       case Bond::NONE:
       default:
         inchiAtoms[atomIndex1].bond_stereo[idx] = INCHI_BOND_STEREO_NONE;
+    }
+    // Do not let retained coordinates invent stereo for graph-symmetric bonds.
+    if (isSymmetricUnspecifiedDoubleBond(*bond, atomRanks)) {
+      inchiAtoms[atomIndex1].bond_stereo[idx] =
+          INCHI_BOND_STEREO_DOUBLE_EITHER;
     }
 
     // double bond stereochemistry
