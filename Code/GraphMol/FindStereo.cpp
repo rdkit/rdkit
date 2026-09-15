@@ -441,14 +441,30 @@ bool isSymmetricUnspecifiedDoubleBond(
 
 std::vector<unsigned int> getSymmetricUnspecifiedDoubleBondIndices(
     const ROMol &mol) {
-  std::vector<unsigned int> atomRanks(mol.getNumAtoms());
-  Canon::rankMolAtoms(mol, atomRanks, false, true, true, true, false, true,
-                      false, true);
+  std::vector<unsigned int> result;
+  const auto hasCandidate = std::ranges::any_of(
+      mol.bonds(), [](const auto bond) {
+        return bond->getBondType() == Bond::BondType::DOUBLE &&
+               bond->getStereo() == Bond::BondStereo::STEREONONE &&
+               bond->getBondDir() == Bond::BondDir::NONE &&
+               bond->getBeginAtom()->getTotalDegree() > 1 &&
+               bond->getBeginAtom()->getTotalDegree() < 4 &&
+               bond->getEndAtom()->getTotalDegree() > 1 &&
+               bond->getEndAtom()->getTotalDegree() < 4 &&
+               bond->getBeginAtom()->getTotalNumHs(true) < 2 &&
+               bond->getEndAtom()->getTotalNumHs(true) < 2;
+      });
+  if (!hasCandidate) {
+    return result;
+  }
   if (!mol.getRingInfo()->isInitialized()) {
     MolOps::fastFindRings(mol);
   }
 
-  std::vector<unsigned int> result;
+  std::vector<unsigned int> atomRanks(mol.getNumAtoms());
+  Canon::rankMolAtoms(mol, atomRanks, false, true, true, true, false, true,
+                      false, true);
+
   for (const auto bond : mol.bonds()) {
     if (isSymmetricUnspecifiedDoubleBond(*bond, atomRanks)) {
       result.push_back(bond->getIdx());

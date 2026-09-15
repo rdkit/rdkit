@@ -1767,8 +1767,11 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
   std::unique_ptr<inchi_Atom[]> inchiAtoms(new inchi_Atom[nAtoms]);
   // and a vector for stereo0D
   std::vector<inchi_Stereo0D> stereo0DEntries;
-  const auto symmetricDoubleBonds =
-      Chirality::detail::getSymmetricUnspecifiedDoubleBondIndices(*m);
+  std::vector<unsigned int> symmetricDoubleBonds;
+  if (m->getNumConformers()) {
+    symmetricDoubleBonds =
+        Chirality::detail::getSymmetricUnspecifiedDoubleBondIndices(*m);
+  }
 
   PeriodicTable *periodicTable = PeriodicTable::getTable();
   // Fill inchi_Atom's by atoms in RWMol
