@@ -37,7 +37,7 @@ import pickle
 import re
 import unittest
 
-from rdkit import RDConfig, RDLogger
+from rdkit import Chem, RDConfig, RDLogger
 from rdkit.Chem import (INCHI_AVAILABLE, CanonicalRankAtoms, ForwardSDMolSupplier,
                         MolFromMolBlock, MolFromMolFile, MolFromSmiles, MolToMolBlock,
                         MolToSmiles, SanitizeMol, rdDepictor)
@@ -81,6 +81,19 @@ def inchiDiff(inchi1, inchi2):
 @unittest.skipUnless(INCHI_AVAILABLE, 'Inchi support not available')
 class RegressionTest(unittest.TestCase):
 
+  def _loadSymmetricYlidene(self):
+    path = os.path.join(RDConfig.RDCodeDir, 'Chem/test_data', 'symmetric_ylidene.sdf')
+    mol = MolFromMolFile(path)
+    self.assertIsNotNone(mol)
+    cc_double_bonds = [
+      bond for bond in mol.GetBonds()
+      if bond.GetBondType() == Chem.BondType.DOUBLE and
+      bond.GetBeginAtom().GetAtomicNum() == 6 and
+      bond.GetEndAtom().GetAtomicNum() == 6
+    ]
+    self.assertEqual(len(cc_double_bonds), 1)
+    return mol, cc_double_bonds[0]
+
   def testPrechloricAcid(self):
     examples = (
       ('OCl(=O)(=O)=O', 'InChI=1S/ClHO4/c2-1(3,4)5/h(H,2,3,4,5)'),
@@ -97,11 +110,28 @@ class RegressionTest(unittest.TestCase):
       self.assertEqual(inchi, expected)
 
   def testSymmetricYlideneDoesNotInventDoubleBondStereo(self):
-    path = os.path.join(RDConfig.RDCodeDir, 'Chem/test_data', 'symmetric_ylidene.sdf')
-    mol = MolFromMolFile(path)
-    self.assertIsNotNone(mol)
+    mol, double_bond = self._loadSymmetricYlidene()
     ranks = CanonicalRankAtoms(mol, breakTies=False)
-    self.assertEqual(ranks[6], ranks[11])
+    begin = double_bond.GetBeginAtom()
+    end = double_bond.GetEndAtom()
+    for endpoint, other in ((begin, end), (end, begin)):
+      side_atoms = [neighbor for neighbor in endpoint.GetNeighbors()
+                    if neighbor.GetIdx() != other.GetIdx()]
+      if len(side_atoms) == 2:
+        self.assertEqual(ranks[side_atoms[0].GetIdx()], ranks[side_atoms[1].GetIdx()])
+        break
+    else:
+      self.fail('symmetric ring endpoint not found')
+    self.assertNotIn('/b', MolToInchi(mol))
+
+  def testSymmetricYlidene3DDoesNotInventDoubleBondStereo(self):
+    mol, _ = self._loadSymmetricYlidene()
+    conformer = mol.GetConformer()
+    conformer.Set3D(True)
+    self.assertTrue(conformer.Is3D())
+    for atom in mol.GetAtoms():
+      position = conformer.GetAtomPosition(atom.GetIdx())
+      conformer.SetAtomPosition(atom.GetIdx(), (position.x, position.y, position.x / 10.0))
     self.assertNotIn('/b', MolToInchi(mol))
 
     # Generate coordinates deliberately: this checks that the fix is limited
