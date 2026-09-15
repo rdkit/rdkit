@@ -160,8 +160,15 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     writer.cpp
 
     # ${EXPAT_SRC}
-    SHARED LINK_LIBRARIES ChemDraw expatpp
+    SHARED LINK_LIBRARIES ChemDraw
     CIPLabeler ChemTransforms GraphMol RDGeneral Depictor SubstructMatch SmilesParse)
+
+  # expatpp is an external target without an _static variant. Link it directly
+  # so rdkit_library does not rewrite its name for static builds (including SWIG).
+  target_link_libraries(RDChemDrawLib PRIVATE expatpp)
+  if(TARGET RDChemDrawLib_static)
+    target_link_libraries(RDChemDrawLib_static PRIVATE expatpp)
+  endif()
 
   rdkit_library(RDChemDrawReactionLib
     chemdrawreaction.cpp
