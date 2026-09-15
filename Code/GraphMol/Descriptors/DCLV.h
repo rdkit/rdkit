@@ -85,7 +85,8 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   double getAtomSurfaceArea(unsigned int atomIdx);
 
   /*! \return Set of Points representing the surface */
-  std::map<unsigned int, std::vector<RDGeom::Point3D>> &getSurfacePoints();
+  std::map<unsigned int, std::vector<RDGeom::Point3D>> &getSurfacePoints(
+      bool allPoints = false);
 
   /*! \return Volume bound by probe sphere */
   double getVolume();
@@ -120,6 +121,7 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   double totalVolume = 0.0;
   double vdwVolume = 0.0;
   std::map<unsigned int, std::vector<RDGeom::Point3D>> surfacePoints;
+  std::map<unsigned int, std::vector<RDGeom::Point3D>> allSurfacePoints;
 
   // helpers
   bool testPoint(const RDGeom::Point3D &vect, double solvrad,
