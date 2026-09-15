@@ -238,9 +238,9 @@ class TestCase(unittest.TestCase):
 
       fmt = "\n{0}InChI write Summary: {1} identical, {2} suffix variance, {3} reasonable{4}"
       print(fmt.format(COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
-      self.assertEqual(same, 1161)
+      self.assertEqual(same, 1162)
       self.assertEqual(diff, 0)
-      self.assertEqual(reasonable, 20)
+      self.assertEqual(reasonable, 19)
 
   def test1InchiReadPubChem(self):
     for f in self.dataset.values():
