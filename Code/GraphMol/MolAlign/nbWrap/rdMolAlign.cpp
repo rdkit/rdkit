@@ -674,15 +674,15 @@ will be considered symmetrically.)DOC")
       .def_prop_rw(
           "map",
           [](const NbBestAlignmentParams &p) {
-            nb::list result;
+            nb::tuple_builder result(p.map.size());
             for (const auto &matchVect : p.map) {
-              nb::list matchList;
+              nb::list_builder matchList(matchVect.size());
               for (const auto &pair : matchVect) {
-                matchList.append(nb::make_tuple(pair.first, pair.second));
+                matchList.put(nb::make_tuple(pair.first, pair.second));
               }
-              result.append(matchList);
+              result.put(matchList.commit());
             }
-            return nb::tuple(result);
+            return result.commit();
           },
           [](NbBestAlignmentParams &p, nb::object obj) {
             p.map = nbTranslateAtomMapSeq(obj);

@@ -99,6 +99,16 @@ class PyResonanceMolSupplierCallback : public ResonanceMolSupplierCallback {
     pyCallback->d_cppCallback = this;
   }
 
+  ~PyResonanceMolSupplierCallback() override {
+    auto pyCallback = d_pyCallbackObject.release();
+    if (pyCallback.is_valid() && nb::is_alive()) {
+      nb::gil_scoped_acquire gil;
+      if (gil.is_valid()) {
+        pyCallback.dec_ref();
+      }
+    }
+  }
+
   inline unsigned int wrapGetNumConjGrps() const {
     return d_cppCallback->getNumConjGrps();
   }
@@ -119,7 +129,10 @@ class PyResonanceMolSupplierCallback : public ResonanceMolSupplierCallback {
   }
 
   bool operator()() override {
-    PyGILStateHolder h;
+    nb::gil_scoped_acquire gil;
+    if (!gil.is_valid()) {
+      return false;
+    }
     if (!d_pyCallbackObject.is_valid() || d_pyCallbackObject.is_none()) {
       throw nb::attribute_error(
           "The __call__ attribute in the rdchem.ResonanceMolSupplierCallback "

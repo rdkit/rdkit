@@ -23,7 +23,7 @@ using namespace RDKit;
 namespace {
 
 struct ValidationMethodTrampoline : MolStandardize::ValidationMethod {
-  NB_TRAMPOLINE(MolStandardize::ValidationMethod, 2);
+  NB_TRAMPOLINE(MolStandardize::ValidationMethod);
 
   std::vector<MolStandardize::ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override {

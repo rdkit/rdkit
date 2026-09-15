@@ -58,53 +58,6 @@ struct AtomPairsParameters {};
 
 namespace {
 
-static std::string nanobindInternalsKeyName;
-
-nb::dict getBuiltinsDict() {
-  // PyEval_GetBuiltins only gets the builtins for the current thread,
-// which may not be the main thread.
-#if defined(PYPY_VERSION)
-  PyObject *dict = PyEval_GetBuiltins();
-#else
-  PyObject *dict = PyInterpreterState_GetDict(PyInterpreterState_Get());
-#endif
-  return nb::borrow<nb::dict>(dict);
-}
-
-void getNanobindInternalsKeyName() {
-  if (!nanobindInternalsKeyName.empty()) {
-    return;
-  }
-  auto builtins = getBuiltinsDict();
-  if (!builtins.is_valid()) {
-    return;
-  }
-
-  std::string keyStr;
-  for (const auto &key : builtins.keys()) {
-    if (nb::try_cast<std::string>(key, keyStr) &&
-        keyStr.starts_with("__nb_internals_")) {
-      nanobindInternalsKeyName = std::move(keyStr);
-      return;
-    }
-  }
-}
-
-bool isNanobindFinalized() {
-  // If something goes wrong, and we can't tell,
-  // then assume nanobind is still there
-  if (nanobindInternalsKeyName.empty()) {
-    return false;
-  }
-  auto builtins = getBuiltinsDict();
-  if (!builtins.is_valid()) {
-    return false;
-  }
-
-  // We've seen the internals key before, so if we can't
-  // see it anymore, then nanobind has been finalized.
-  return !builtins.contains(nanobindInternalsKeyName);
-}
 
 std::vector<unsigned int> atomPairTypes(
     RDKit::AtomPairs::atomNumberTypes,
@@ -880,7 +833,7 @@ unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol, nb::object pyatoms) {
 
 // Python-callable property functor that delegates __call__ to a Python callback
 struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
-  NB_TRAMPOLINE(RDKit::Descriptors::PropertyFunctor, 1);
+  NB_TRAMPOLINE(RDKit::Descriptors::PropertyFunctor);
 
   double operator()(const RDKit::ROMol &mol) const override {
     NB_OVERRIDE_NAME("__call__", operator(), mol);
@@ -889,7 +842,6 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
 
 int registerPropertyHelper(
     boost::shared_ptr<RDKit::Descriptors::PropertyFunctor> ppf) {
-  getNanobindInternalsKeyName();
 
   namespace rdkDesc = RDKit::Descriptors;
 

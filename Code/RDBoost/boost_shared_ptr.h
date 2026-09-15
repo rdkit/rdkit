@@ -21,16 +21,14 @@ NAMESPACE_BEGIN(detail)
 struct boost_py_deleter {
   void operator()(void *) noexcept {
     // Don't run the deleter if the interpreter has been shut down
-    if (!is_alive()) return;
-    gil_scoped_acquire guard;
-    Py_DECREF(o);
+    if (cleanup_guard guard{}) Py_DECREF(o);
   }
 
   PyObject *o;
 };
 
 /**
- * Create a std::shared_ptr for `ptr` that owns a reference to the Python
+ * Create a boost::shared_ptr for `ptr` that owns a reference to the Python
  * object `h`; if `ptr` is non-null, then the refcount of `h` is incremented
  * before creating the shared_ptr and decremented by its deleter.
  *
@@ -54,8 +52,9 @@ inline NB_NOINLINE boost::shared_ptr<T> boost_shared_from_python(
 
 inline NB_NOINLINE void boost_shared_from_cpp(boost::shared_ptr<void> &&ptr,
                                               PyObject *o) noexcept {
-  keep_alive(o, new boost::shared_ptr<void>(std::move(ptr)),
-             [](void *p) noexcept { delete (boost::shared_ptr<void> *)p; });
+  NB_CALL(keep_alive_ptr)(
+      NB_CTX, o, new boost::shared_ptr<void>(std::move(ptr)),
+      [](void *p) noexcept { delete (boost::shared_ptr<void> *)p; });
 }
 
 template <typename T>
@@ -72,22 +71,29 @@ struct type_caster<boost::shared_ptr<T>> {
                 "However, a type caster was registered to intercept this "
                 "particular type, which is not allowed.");
 
-  bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) noexcept {
+  bool from_python(handle src, uint32_t flags, cleanup_list *cleanup) noexcept {
+    flags &= ~cast_flags::convert;
+
     Caster caster;
     if (!caster.from_python(src, flags, cleanup)) return false;
 
     Td *ptr = caster.operator Td *();
     if constexpr (has_shared_from_this_v<T>) {
       if (ptr) {
+        // Guard against concurrent conversions of the same object,
+        // which would race on its internal 'weak_this' member
+        ft_object_guard guard(src);
         if (auto sp = ptr->weak_from_this().lock()) {
           // There is already a C++ shared_ptr for this object. Use it.
           value = boost::static_pointer_cast<T>(std::move(sp));
           return true;
         }
+        // Otherwise create a new one. Use boost_shared_from_python<T>(...)
+        // so that future calls to ptr->shared_from_this() can share
+        // ownership with it.
+        value = boost_shared_from_python(ptr, src);
+        return true;
       }
-      // Otherwise create a new one. Use boost_shared_from_python<T>(...)
-      // so that future calls to ptr->shared_from_this() can share
-      // ownership with it.
       value = boost_shared_from_python(ptr, src);
     } else {
       value = boost::static_pointer_cast<T>(
@@ -108,15 +114,12 @@ struct type_caster<boost::shared_ptr<T>> {
         !std::is_base_of_v<std::false_type, type_hook<Td>>;
     if constexpr (has_type_hook) type = type_hook<Td>::get(ptr);
 
-    if constexpr (!std::is_polymorphic_v<Td>) {
-      result = nb_type_put(type, ptr, rv_policy::reference, cleanup, &is_new);
-    } else {
-      const std::type_info *type_p =
-          (!has_type_hook && ptr) ? &typeid(*ptr) : nullptr;
+    const std::type_info *type_p = nullptr;
+    if constexpr (std::is_polymorphic_v<Td>)
+      type_p = (!has_type_hook && ptr) ? &typeid(*ptr) : nullptr;
 
-      result = nb_type_put_p(type, type_p, ptr, rv_policy::reference, cleanup,
-                             &is_new);
-    }
+    result = NB_CALL(nb_type_put)(NB_CTX_C(cleanup), type, type_p, ptr,
+                                  rv_policy::reference, cleanup, &is_new);
 
     if (is_new) {
       boost::shared_ptr<void> pp;
