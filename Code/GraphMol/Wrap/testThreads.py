@@ -1,4 +1,5 @@
 import multiprocessing
+import os
 import threading
 
 from rdkit import Chem
@@ -34,7 +35,15 @@ funcs = ["GetSubstructMatch", "GetSubstructMatches", "HasSubstructMatch"]
 for func in funcs:
   expected[func] = runner(func, core_mol)
 
-nthreads = int(multiprocessing.cpu_count() * 100 / 4)  # 100 threads per cpu
+if hasattr(os, "process_cpu_count"):
+  cpu_count = os.process_cpu_count()
+elif hasattr(os, "sched_getaffinity"):
+  cpu_count = len(os.sched_getaffinity(0))
+else:
+  cpu_count = multiprocessing.cpu_count()
+
+nthreads = int((cpu_count or 1) * 100 / 4)  # 100 threads per available cpu
+
 threads = []
 for i in range(0, nthreads):
   for func in funcs:
