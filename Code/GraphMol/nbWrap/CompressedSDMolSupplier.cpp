@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 
 #include <boost/iostreams/device/file.hpp>
@@ -58,8 +59,9 @@ ROMol *ForwardMolSupplNext(ForwardSDMolSupplier *suppl) {
 
 }  // namespace
 
-ForwardSDMolSupplier *createForwardSupplier(std::string filename, bool sanitize,
-                                            bool removeHs) {
+ForwardSDMolSupplier *createForwardSupplier(
+    const std::filesystem::path &filePath, bool sanitize, bool removeHs) {
+  const std::string filename = filePath.string();
   std::vector<std::string> splitName;
   boost::split(splitName, filename, boost::is_any_of("."));
   std::unique_ptr<io::filtering_istream> strm(new io::filtering_istream());

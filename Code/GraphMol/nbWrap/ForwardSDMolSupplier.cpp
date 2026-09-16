@@ -11,6 +11,7 @@
 #define NO_IMPORT_ARRAY
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 
 #include <fstream>
@@ -63,8 +64,9 @@ class LocalForwardSDMolSupplier : public RDKit::ForwardSDMolSupplier {
         new RDKit::v2::FileParsers::ForwardSDMolSupplier(sbis, owner, params));
     POSTCONDITION(sbis, "bad instream");
   }
-  LocalForwardSDMolSupplier(std::string filename, bool sanitize, bool removeHs,
-                            bool strictParsing) {
+  LocalForwardSDMolSupplier(const std::filesystem::path &filePath,
+                            bool sanitize, bool removeHs, bool strictParsing) {
+    const std::string filename = filePath.string();
     std::istream *tmpStream = nullptr;
     tmpStream = static_cast<std::istream *>(
         new std::ifstream(filename.c_str(), std::ios_base::binary));
@@ -139,7 +141,7 @@ struct forwardsdmolsup_wrap {
   static void wrap(nb::module_ &m) {
     nb::class_<LocalForwardSDMolSupplier>(m, "ForwardSDMolSupplier",
                                           fsdMolSupplierClassDoc.c_str())
-        .def(nb::init<std::string, bool, bool, bool>(), "filename"_a,
+        .def(nb::init<std::filesystem::path, bool, bool, bool>(), "filename"_a,
              "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true)
         .def(nb::init<nb::object, bool, bool, bool>(), "fileobj"_a,
              "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true)

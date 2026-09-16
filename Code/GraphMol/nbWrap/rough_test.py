@@ -14,6 +14,7 @@ import gzip
 import importlib.util
 import logging
 import os
+import pathlib
 import pickle
 import sys
 import tempfile
@@ -8638,6 +8639,26 @@ M  END
     self.assertEqual(len(rings), 24)
     rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
     self.assertEqual(len(rings), 70)
+
+  def testSupplierAndWriterFilenamesAcceptPathLike(self):
+    # Suppliers and writers take a filename as str, bytes or os.PathLike, and
+    # the ones with a file-object overload still accept a file object.
+    mol = Chem.MolFromSmiles('CCO')
+    with tempfile.TemporaryDirectory() as tmpDir:
+      sdf = os.path.join(tmpDir, 'mols.sdf')
+      for arg in (sdf, sdf.encode(), pathlib.Path(sdf)):
+        with self.subTest(kind=type(arg).__name__):
+          with Chem.SDWriter(arg) as writer:
+            writer.write(mol)
+          self.assertEqual(len(Chem.SDMolSupplier(arg)), 1)
+          self.assertEqual(len(list(Chem.ForwardSDMolSupplier(arg))), 1)
+
+      with open(sdf, 'rb') as inF:
+        self.assertEqual(len(list(Chem.ForwardSDMolSupplier(inF))), 1)
+    out = StringIO()
+    with Chem.SDWriter(out) as writer:
+      writer.write(mol)
+    self.assertIn('$$$$', out.getvalue())
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
