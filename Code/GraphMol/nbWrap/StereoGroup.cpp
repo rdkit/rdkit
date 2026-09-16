@@ -62,19 +62,22 @@ StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
   return sg;
 }
 
-nb::tuple getAtomsHelper(StereoGroup &sg) {
+using AtomSequence = nb::typed<nb::tuple, Atom *, nb::ellipsis>;
+using BondSequence = nb::typed<nb::tuple, Bond *, nb::ellipsis>;
+
+AtomSequence getAtomsHelper(StereoGroup &sg) {
   nb::list res;
   for (auto at : sg.getAtoms()) {
     res.append(at);
   }
-  return nb::tuple(res);
+  return AtomSequence(nb::tuple(res));
 }
-nb::tuple getBondsHelper(StereoGroup &sg) {
+BondSequence getBondsHelper(StereoGroup &sg) {
   nb::list res;
   for (auto bnd : sg.getBonds()) {
     res.append(bnd);
   }
-  return nb::tuple(res);
+  return BondSequence(nb::tuple(res));
 }
 }  // namespace
 

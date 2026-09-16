@@ -59,6 +59,10 @@ struct AtomPairsParameters {};
 
 namespace {
 
+using ListOfFloatLists = nb::typed<nb::list, nb::typed<nb::list, double>>;
+using DictOfPointLists =
+    nb::typed<nb::dict, unsigned int, nb::typed<nb::list, RDGeom::Point3D>>;
+
 static std::string nanobindInternalsKeyName;
 
 nb::dict getBuiltinsDict() {
@@ -622,7 +626,7 @@ std::vector<double> GetUSR(const RDKit::ROMol &mol, int confId) {
   return descriptor;
 }
 
-nb::list GetUSRDistributions(nb::object coords, nb::object points) {
+ListOfFloatLists GetUSRDistributions(nb::object coords, nb::object points) {
   unsigned int numCoords = nb::len(coords);
   if (numCoords == 0) {
     throw ValueErrorException("no coordinates");
@@ -653,10 +657,11 @@ nb::list GetUSRDistributions(nb::object coords, nb::object points) {
   for (const auto *pt : c) {
     delete pt;
   }
-  return pyDist;
+  return ListOfFloatLists(pyDist);
 }
 
-nb::list GetUSRDistributionsFromPoints(nb::object coords, nb::object points) {
+ListOfFloatLists GetUSRDistributionsFromPoints(nb::object coords,
+                                               nb::object points) {
   unsigned int numCoords = nb::len(coords);
   unsigned int numPts = nb::len(points);
   if (numCoords == 0) {
@@ -683,7 +688,7 @@ nb::list GetUSRDistributionsFromPoints(nb::object coords, nb::object points) {
     }
     pyDist.append(pytmp);
   }
-  return pyDist;
+  return ListOfFloatLists(pyDist);
 }
 
 std::vector<double> GetUSRFromDistributions(nb::object distances) {
@@ -940,7 +945,7 @@ double getPartialVolumeHelper(
   return self.getPartialVolume(atoms);
 }
 
-nb::dict getSurfacePointsHelper(
+DictOfPointLists getSurfacePointsHelper(
     RDKit::Descriptors::DoubleCubicLatticeVolume &self, bool allPoints) {
   const std::map<unsigned int, std::vector<RDGeom::Point3D>> &points =
       self.getSurfacePoints(allPoints);
@@ -953,7 +958,7 @@ nb::dict getSurfacePointsHelper(
     }
     surfacePoints[nb::int_(it.first)] = points3D;
   }
-  return surfacePoints;
+  return DictOfPointLists(surfacePoints);
 }
 
 }  // namespace

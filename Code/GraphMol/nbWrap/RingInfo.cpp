@@ -21,7 +21,11 @@ using namespace nb::literals;
 
 namespace {
 using namespace RDKit;
-nb::tuple atomRings(const RingInfo *self) {
+
+using TupleOfInts = nb::typed<nb::tuple, int, nb::ellipsis>;
+using TupleOfIntTuples = nb::typed<nb::tuple, TupleOfInts, nb::ellipsis>;
+
+TupleOfIntTuples atomRings(const RingInfo *self) {
   nb::list res;
   for (const auto &ring : self->atomRings()) {
     nb::list ringAsList;
@@ -30,9 +34,9 @@ nb::tuple atomRings(const RingInfo *self) {
     }
     res.append(nb::tuple(ringAsList));
   }
-  return nb::tuple(res);
+  return TupleOfIntTuples(nb::tuple(res));
 }
-nb::tuple bondRings(const RingInfo *self) {
+TupleOfIntTuples bondRings(const RingInfo *self) {
   nb::list res;
   for (const auto &ring : self->bondRings()) {
     nb::list ringAsList;
@@ -41,38 +45,38 @@ nb::tuple bondRings(const RingInfo *self) {
     }
     res.append(nb::tuple(ringAsList));
   }
-  return nb::tuple(res);
+  return TupleOfIntTuples(nb::tuple(res));
 }
-nb::tuple atomMembers(const RingInfo *self, unsigned int idx) {
+TupleOfInts atomMembers(const RingInfo *self, unsigned int idx) {
   nb::list res;
   for (const auto v : self->atomMembers(idx)) {
     res.append(v);
   }
-  return nb::tuple(res);
+  return TupleOfInts(nb::tuple(res));
 }
-nb::tuple bondMembers(const RingInfo *self, unsigned int idx) {
+TupleOfInts bondMembers(const RingInfo *self, unsigned int idx) {
   nb::list res;
   for (const auto v : self->bondMembers(idx)) {
     res.append(v);
   }
-  return nb::tuple(res);
+  return TupleOfInts(nb::tuple(res));
 }
-nb::tuple atomRingSizes(const RingInfo *self, unsigned int idx) {
+TupleOfInts atomRingSizes(const RingInfo *self, unsigned int idx) {
   nb::list res;
   for (const auto v : self->atomRingSizes(idx)) {
     res.append(v);
   }
-  return nb::tuple(res);
+  return TupleOfInts(nb::tuple(res));
 }
-nb::tuple bondRingSizes(const RingInfo *self, unsigned int idx) {
+TupleOfInts bondRingSizes(const RingInfo *self, unsigned int idx) {
   nb::list res;
   for (const auto v : self->bondRingSizes(idx)) {
     res.append(v);
   }
-  return nb::tuple(res);
+  return TupleOfInts(nb::tuple(res));
 }
 
-nb::tuple atomRingFamilies(const RingInfo *self) {
+TupleOfIntTuples atomRingFamilies(const RingInfo *self) {
   nb::list res;
   for (const auto &ring : self->atomRingFamilies()) {
     nb::list ringAsList;
@@ -81,9 +85,9 @@ nb::tuple atomRingFamilies(const RingInfo *self) {
     }
     res.append(nb::tuple(ringAsList));
   }
-  return nb::tuple(res);
+  return TupleOfIntTuples(nb::tuple(res));
 }
-nb::tuple bondRingFamilies(const RingInfo *self) {
+TupleOfIntTuples bondRingFamilies(const RingInfo *self) {
   nb::list res;
   for (const auto &ring : self->bondRingFamilies()) {
     nb::list ringAsList;
@@ -92,7 +96,7 @@ nb::tuple bondRingFamilies(const RingInfo *self) {
     }
     res.append(nb::tuple(ringAsList));
   }
-  return nb::tuple(res);
+  return TupleOfIntTuples(nb::tuple(res));
 }
 
 void addRing(RingInfo *self, const PyIterableOf<int> &atomRing,

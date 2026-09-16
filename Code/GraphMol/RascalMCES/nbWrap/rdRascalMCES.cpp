@@ -25,8 +25,13 @@ using namespace nb::literals;
 
 namespace {
 
-nb::list convertVecPairInt(const std::vector<std::pair<int, int>> &vec) {
-  nb::list pyres;
+using ListOfIntPairs = nb::typed<nb::list, nb::typed<nb::tuple, int, int>>;
+using ListOfIntLists = nb::typed<nb::list, nb::typed<nb::list, unsigned int>>;
+using ListOfRascalResults =
+    nb::typed<nb::list, RDKit::RascalMCES::RascalResult>;
+
+ListOfIntPairs convertVecPairInt(const std::vector<std::pair<int, int>> &vec) {
+  ListOfIntPairs pyres;
   for (const auto &p : vec) {
     pyres.append(nb::make_tuple(p.first, p.second));
   }
@@ -47,9 +52,9 @@ std::vector<std::shared_ptr<RDKit::ROMol>> extractMols(nb::object mols) {
   return cmols;
 }
 
-nb::list packOutputMols(
+ListOfIntLists packOutputMols(
     const std::vector<std::vector<unsigned int>> &clusters) {
-  nb::list pyres;
+  ListOfIntLists pyres;
   for (const auto &clus : clusters) {
     nb::list mols;
     for (auto m : clus) {
@@ -199,7 +204,7 @@ minimum number of BONDS in the MCES. Default=0.)DOC")
             NOGIL gil;
             results = RDKit::RascalMCES::rascalMCES(mol1, mol2, opts);
           }
-          nb::list pyres;
+          ListOfRascalResults pyres;
           for (auto &res : results) {
             pyres.append(res);
           }

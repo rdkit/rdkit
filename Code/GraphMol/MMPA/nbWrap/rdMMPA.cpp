@@ -20,7 +20,11 @@ using namespace nb::literals;
 
 namespace {
 
-nb::tuple buildFragmentResults(
+// Each pair is (Mol | None, Mol) or (str, str) depending on resultsAsMols, so
+// only the outer shape is fixed.
+using TupleOfTuples = nb::typed<nb::tuple, nb::tuple, nb::ellipsis>;
+
+TupleOfTuples buildFragmentResults(
     const std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> &tres,
     bool resultsAsMols) {
   nb::list pyres;
@@ -43,43 +47,45 @@ nb::tuple buildFragmentResults(
     }
     pyres.append(nb::tuple(lres));
   }
-  return nb::tuple(pyres);
+  return TupleOfTuples(nb::tuple(pyres));
 }
 
-nb::tuple fragmentMolHelper(const RDKit::ROMol &mol, unsigned int maxCuts,
-                            unsigned int maxCutBonds,
-                            const std::string &pattern, bool resultsAsMols) {
+TupleOfTuples fragmentMolHelper(const RDKit::ROMol &mol, unsigned int maxCuts,
+                                unsigned int maxCutBonds,
+                                const std::string &pattern,
+                                bool resultsAsMols) {
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, maxCuts, maxCutBonds, pattern);
   if (!ok) {
-    return nb::tuple();
+    return TupleOfTuples(nb::tuple());
   }
   return buildFragmentResults(tres, resultsAsMols);
 }
 
-nb::tuple fragmentMolHelper2(const RDKit::ROMol &mol, unsigned int minCuts,
-                             unsigned int maxCuts, unsigned int maxCutBonds,
-                             const std::string &pattern, bool resultsAsMols) {
+TupleOfTuples fragmentMolHelper2(const RDKit::ROMol &mol, unsigned int minCuts,
+                                 unsigned int maxCuts, unsigned int maxCutBonds,
+                                 const std::string &pattern,
+                                 bool resultsAsMols) {
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, minCuts, maxCuts, maxCutBonds,
                                      pattern);
   if (!ok) {
-    return nb::tuple();
+    return TupleOfTuples(nb::tuple());
   }
   return buildFragmentResults(tres, resultsAsMols);
 }
 
-nb::tuple fragmentMolHelper3(const RDKit::ROMol &mol,
-                             const std::vector<unsigned int> &bondsToCut,
-                             unsigned int minCuts, unsigned int maxCuts,
-                             bool resultsAsMols) {
+TupleOfTuples fragmentMolHelper3(const RDKit::ROMol &mol,
+                                 const std::vector<unsigned int> &bondsToCut,
+                                 unsigned int minCuts, unsigned int maxCuts,
+                                 bool resultsAsMols) {
   if (bondsToCut.empty()) {
     throw nb::value_error("bondsToCut must be non-empty");
   }
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, bondsToCut, minCuts, maxCuts);
   if (!ok) {
-    return nb::tuple();
+    return TupleOfTuples(nb::tuple());
   }
   return buildFragmentResults(tres, resultsAsMols);
 }

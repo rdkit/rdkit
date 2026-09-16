@@ -114,12 +114,15 @@ void MMFFAddPositionConstraint(PyForceField *self, unsigned int idx,
   self->field->contribs().push_back(ForceFields::ContribPtr(constraint));
 }
 
-nb::tuple ForceFieldGetExtraPointLoc(PyForceField *self, unsigned int idx) {
+using ExtraPointLoc = nb::typed<nb::tuple, double, double, double>;
+
+ExtraPointLoc ForceFieldGetExtraPointLoc(PyForceField *self, unsigned int idx) {
   if (idx >= self->extraPoints.size()) {
     throw IndexErrorException(idx);
   }
-  return nb::make_tuple(self->extraPoints[idx]->x, self->extraPoints[idx]->y,
-                        self->extraPoints[idx]->z);
+  return ExtraPointLoc(nb::make_tuple(self->extraPoints[idx]->x,
+                                      self->extraPoints[idx]->y,
+                                      self->extraPoints[idx]->z));
 }
 
 double PyForceField::calcEnergyWithPos(nb::object pos) {
@@ -142,7 +145,7 @@ double PyForceField::calcEnergyWithPos(nb::object pos) {
   }
 }
 
-nb::tuple PyForceField::positions() {
+nb::typed<nb::tuple, double, nb::ellipsis> PyForceField::positions() {
   PRECONDITION(this->field, "no force field");
   const RDGeom::PointPtrVect &p = this->field->positions();
   nb::list coordList;
@@ -154,7 +157,8 @@ nb::tuple PyForceField::positions() {
   return nb::tuple(coordList);
 }
 
-nb::tuple PyForceField::calcGradWithPos(nb::object pos) {
+nb::typed<nb::tuple, double, nb::ellipsis> PyForceField::calcGradWithPos(
+    nb::object pos) {
   PRECONDITION(this->field, "no force field");
   size_t s = this->field->dimension() * this->field->numPoints();
   std::vector<double> g(s, 0.0);
@@ -180,9 +184,9 @@ nb::tuple PyForceField::calcGradWithPos(nb::object pos) {
   return nb::tuple(gradList);
 }
 
-nb::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq,
-                                           int maxIts, double forceTol,
-                                           double energyTol) {
+nb::typed<nb::tuple, int, nb::typed<nb::list, RDKit::Snapshot *>>
+PyForceField::minimizeTrajectory(unsigned int snapshotFreq, int maxIts,
+                                 double forceTol, double energyTol) {
   PRECONDITION(this->field, "no force field");
   RDKit::SnapshotVect snapshotVect;
   int resInt = this->field->minimize(snapshotFreq, &snapshotVect, maxIts,

@@ -28,6 +28,10 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 namespace RDKit {
+
+using ConformerEnergyList =
+    nb::typed<nb::list, nb::typed<nb::tuple, int, double>>;
+
 int UFFHelper(ROMol &mol, int maxIters, double vdwThresh, int confId,
               bool ignoreInterfragInteractions) {
   nb::gil_scoped_release release;
@@ -36,24 +40,26 @@ int UFFHelper(ROMol &mol, int maxIters, double vdwThresh, int confId,
       .first;
 }
 
-nb::list UFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
-                        double vdwThresh, bool ignoreInterfragInteractions) {
+ConformerEnergyList UFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
+                                   double vdwThresh,
+                                   bool ignoreInterfragInteractions) {
   std::vector<std::pair<int, double>> res;
   {
     nb::gil_scoped_release release;
     UFF::UFFOptimizeMoleculeConfs(mol, res, numThreads, maxIters, vdwThresh,
                                   ignoreInterfragInteractions);
   }
-  nb::list pyres;
+  ConformerEnergyList pyres;
   for (auto &itm : res) {
     pyres.append(nb::make_tuple(itm.first, itm.second));
   }
   return pyres;
 }
 
-nb::list MMFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
-                         std::string mmffVariant, double nonBondedThresh,
-                         bool ignoreInterfragInteractions) {
+ConformerEnergyList MMFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
+                                    std::string mmffVariant,
+                                    double nonBondedThresh,
+                                    bool ignoreInterfragInteractions) {
   std::vector<std::pair<int, double>> res;
   {
     nb::gil_scoped_release release;
@@ -61,7 +67,7 @@ nb::list MMFFConfsHelper(ROMol &mol, int numThreads, int maxIters,
                                     nonBondedThresh,
                                     ignoreInterfragInteractions);
   }
-  nb::list pyres;
+  ConformerEnergyList pyres;
   for (auto &itm : res) {
     pyres.append(nb::make_tuple(itm.first, itm.second));
   }
@@ -73,15 +79,15 @@ int FFHelper(ForceFields::PyForceField &ff, int maxIters) {
   return ForceFieldsHelper::OptimizeMolecule(*ff.field, maxIters).first;
 }
 
-nb::list FFConfsHelper(ROMol &mol, ForceFields::PyForceField &ff,
-                       int numThreads, int maxIters) {
+ConformerEnergyList FFConfsHelper(ROMol &mol, ForceFields::PyForceField &ff,
+                                  int numThreads, int maxIters) {
   std::vector<std::pair<int, double>> res;
   {
     nb::gil_scoped_release release;
     ForceFieldsHelper::OptimizeMoleculeConfs(mol, *ff.field, res, numThreads,
                                              maxIters);
   }
-  nb::list pyres;
+  ConformerEnergyList pyres;
   for (auto &itm : res) {
     pyres.append(nb::make_tuple(itm.first, itm.second));
   }

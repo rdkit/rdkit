@@ -38,6 +38,11 @@ using namespace RDKit;
 
 namespace {
 
+using RGBATuple = nb::typed<nb::tuple, double, double, double, double>;
+using RGBATupleSequence = nb::typed<nb::tuple, RGBATuple, nb::ellipsis>;
+using AtomPaletteDict = nb::typed<nb::dict, int, RGBATuple>;
+using MolSizeTuple = nb::typed<nb::tuple, int, int>;
+
 struct IntStringMap {
   std::map<int, std::string> *dp_map;
 };
@@ -203,7 +208,7 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
   delete har;
 }
 
-nb::tuple getMolSizeHelper(
+MolSizeTuple getMolSizeHelper(
     MolDraw2D &self, const ROMol &mol,
     const std::optional<PyIterableOf<int>> &highlight_atoms,
     const std::optional<PyIterableOf<int>> &highlight_bonds,
@@ -224,7 +229,7 @@ nb::tuple getMolSizeHelper(
   delete ham;
   delete hbm;
   delete har;
-  return nb::make_tuple(sz.first, sz.second);
+  return MolSizeTuple(nb::make_tuple(sz.first, sz.second));
 }
 
 void drawMoleculeWithHighlightsHelper(
@@ -418,17 +423,17 @@ ROMol *prepMolForDrawing(nb::object mol, bool kekulize, bool addChiralHs,
   return static_cast<ROMol *>(res);
 }
 
-nb::tuple colourToPyTuple(const DrawColour &clr) {
-  return nb::make_tuple(clr.r, clr.g, clr.b, clr.a);
+RGBATuple colourToPyTuple(const DrawColour &clr) {
+  return RGBATuple(nb::make_tuple(clr.r, clr.g, clr.b, clr.a));
 }
 
-nb::tuple getBgColour(const RDKit::MolDrawOptions &self) {
+RGBATuple getBgColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.backgroundColour);
 }
-nb::tuple getQyColour(const RDKit::MolDrawOptions &self) {
+RGBATuple getQyColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.queryColour);
 }
-nb::tuple getHighlightColour(const RDKit::MolDrawOptions &self) {
+RGBATuple getHighlightColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.highlightColour);
 }
 void setBgColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
@@ -440,19 +445,19 @@ void setQyColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
 void setHighlightColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
   self.highlightColour = pyTupleToDrawColour(tpl);
 }
-nb::tuple getSymbolColour(const RDKit::MolDrawOptions &self) {
+RGBATuple getSymbolColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.symbolColour);
 }
 void setSymbolColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
   self.symbolColour = pyTupleToDrawColour(tpl);
 }
-nb::tuple getLegendColour(const RDKit::MolDrawOptions &self) {
+RGBATuple getLegendColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.legendColour);
 }
 void setLegendColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
   self.legendColour = pyTupleToDrawColour(tpl);
 }
-nb::tuple getAnnotationColour(const RDKit::MolDrawOptions &self) {
+RGBATuple getAnnotationColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.annotationColour);
 }
 void setAnnotationColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
@@ -461,16 +466,16 @@ void setAnnotationColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
 void setAtomNoteColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
   self.atomNoteColour = pyTupleToDrawColour(tpl);
 }
-nb::tuple getAtomNoteColour(const RDKit::MolDrawOptions &self) {
+RGBATuple getAtomNoteColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.atomNoteColour);
 }
 void setBondNoteColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
   self.bondNoteColour = pyTupleToDrawColour(tpl);
 }
-nb::tuple getBondNoteColour(const RDKit::MolDrawOptions &self) {
+RGBATuple getBondNoteColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.bondNoteColour);
 }
-nb::tuple getVariableAttachmentColour(const RDKit::MolDrawOptions &self) {
+RGBATuple getVariableAttachmentColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.variableAttachmentColour);
 }
 void setVariableAttachmentColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
@@ -495,12 +500,12 @@ void setAtomPalette(RDKit::MolDrawOptions &self, nb::object cmap) {
   self.atomColourPalette.clear();
   updateAtomPalette(self, cmap);
 }
-nb::dict getAtomPalette(const RDKit::MolDrawOptions &self) {
+AtomPaletteDict getAtomPalette(const RDKit::MolDrawOptions &self) {
   nb::dict res;
   for (const auto &pair : self.atomColourPalette) {
     res[nb::cast(pair.first)] = colourToPyTuple(pair.second);
   }
-  return res;
+  return AtomPaletteDict(res);
 }
 
 void setMonochromeMode_helper1(RDKit::MolDrawOptions &options, nb::tuple fg,
@@ -604,12 +609,13 @@ void setColoursHelper(RDKit::MolDraw2DUtils::ContourParams &params,
   params.colourMap = cs;
 }
 
-nb::tuple getColoursHelper(const RDKit::MolDraw2DUtils::ContourParams &params) {
+RGBATupleSequence getColoursHelper(
+    const RDKit::MolDraw2DUtils::ContourParams &params) {
   nb::list res;
   for (const auto &clr : params.colourMap) {
     res.append(colourToPyTuple(clr));
   }
-  return nb::tuple(res);
+  return RGBATupleSequence(nb::tuple(res));
 }
 
 void setContourColour(RDKit::MolDraw2DUtils::ContourParams &params,
@@ -617,7 +623,7 @@ void setContourColour(RDKit::MolDraw2DUtils::ContourParams &params,
   params.contourColour = pyTupleToDrawColour(tpl);
 }
 
-nb::tuple getContourColour(const RDKit::MolDraw2DUtils::ContourParams &params) {
+RGBATuple getContourColour(const RDKit::MolDraw2DUtils::ContourParams &params) {
   return colourToPyTuple(params.contourColour);
 }
 

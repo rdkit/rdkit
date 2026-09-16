@@ -19,7 +19,9 @@
 
 #include <list>
 #include <optional>
+#include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 #include <RDGeneral/Exceptions.h>
 
@@ -88,6 +90,35 @@ RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 //! converted. Wrap it in std::optional for arguments that also accept None.
 template <typename T>
 using PyIterableOf = nb::typed<nb::iterable, T>;
+
+//! Python containers that name their element types in generated signatures:
+//! PyTupleOf<int> renders as tuple[int, ...], and they nest, so
+//! PyTupleOf<PyTupleOf<int>> renders as tuple[tuple[int, ...], ...]. Use these
+//! for return types; nanobind does not validate a returned value against the
+//! declared type, so they are annotations rather than conversions. A fixed
+//! length heterogeneous tuple is spelled out instead, as
+//! nb::typed<nb::tuple, double, int>.
+template <typename T>
+using PyTupleOf = nb::typed<nb::tuple, T, nb::ellipsis>;
+template <typename T>
+using PyListOf = nb::typed<nb::list, T>;
+template <typename K, typename V>
+using PyDictOf = nb::typed<nb::dict, K, V>;
+
+//! Text-format parsers accept either str or bytes. nanobind renders this
+//! variant as "str | bytes" in the generated signature and rejects anything
+//! else before the call is dispatched.
+using StringOrBytes = std::variant<std::string, nb::bytes>;
+
+//! Returns the text of \c input, whether it arrived as str or as bytes.
+inline std::string pyObjectToString(const StringOrBytes &input) {
+  if (std::holds_alternative<std::string>(input)) {
+    return std::get<std::string>(input);
+  }
+  const auto &bytes = std::get<nb::bytes>(input);
+  return std::string(static_cast<const char *>(bytes.data()),
+                     static_cast<size_t>(bytes.size()));
+}
 
 //! NOTE: this returns a nullptr if obj is None or empty
 template <typename T>

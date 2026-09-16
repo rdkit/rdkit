@@ -41,8 +41,10 @@ void throwCancelled(const char *msg) {
   throw nb::python_error();
 }
 
-nb::list hitMolecules_helper(const SynthonSpaceSearch::SearchResults &res) {
-  nb::list pyres;
+using ListOfMols = nb::typed<nb::list, ROMol *>;
+
+ListOfMols hitMolecules_helper(const SynthonSpaceSearch::SearchResults &res) {
+  ListOfMols pyres;
   for (const auto &r : res.getHitMolecules()) {
     pyres.append(nb::cast(new ROMol(*r), nb::rv_policy::take_ownership));
   }

@@ -47,19 +47,12 @@ using namespace nb::literals;
 using namespace RDKit;
 
 namespace RDKit {
-// Text-format parsers accept either str or bytes. nanobind renders this
-// variant as "str | bytes" in the generated signature and rejects anything
-// else before the call is dispatched.
-using StringOrBytes = std::variant<std::string, nb::bytes>;
+// Return annotation for sequences of molecules; renders as "tuple[Mol, ...]".
+using TupleOfMol = nb::typed<nb::tuple, ROMol *, nb::ellipsis>;
 
-std::string pyObjectToString(const StringOrBytes &input) {
-  if (std::holds_alternative<std::string>(input)) {
-    return std::get<std::string>(input);
-  }
-  const auto &bytes = std::get<nb::bytes>(input);
-  return std::string(static_cast<const char *>(bytes.data()),
-                     static_cast<size_t>(bytes.size()));
-}
+// Return annotation for the PNG helpers, which hand back binary data in an
+// object holding bytes; renders as "bytes".
+using BytesObject = nb::typed<nb::object, nb::bytes>;
 
 ROMol *MolFromSmiles(const StringOrBytes &ismiles, bool sanitize,
                      std::map<std::string, std::string> replacements) {
@@ -539,17 +532,17 @@ ROMol *MolFromSmartsHelper(const StringOrBytes &ismiles,
   }
 }
 
-nb::list MolToRandomSmilesHelper(const ROMol &mol, unsigned int numSmiles,
-                                 unsigned int randomSeed, bool doIsomericSmiles,
-                                 bool doKekule, bool allBondsExplicit,
-                                 bool allHsExplicit) {
+nb::typed<nb::list, std::string> MolToRandomSmilesHelper(
+    const ROMol &mol, unsigned int numSmiles, unsigned int randomSeed,
+    bool doIsomericSmiles, bool doKekule, bool allBondsExplicit,
+    bool allHsExplicit) {
   auto res = MolToRandomSmilesVect(mol, numSmiles, randomSeed, doIsomericSmiles,
                                    doKekule, allBondsExplicit, allHsExplicit);
   nb::list pyres;
   for (auto smi : res) {
     pyres.append(smi);
   }
-  return pyres;
+  return nb::typed<nb::list, std::string>(pyres);
 }
 
 ROMol *MolFromPNGFile(const std::string &filename,
@@ -583,19 +576,19 @@ ROMol *MolFromPNGString(nb::bytes png, SmilesParserParams *params) {
   return newM;
 }
 
-nb::object addMolToPNGFileHelperParams(const ROMol &mol,
-                                       const std::string &fname,
-                                       const PNGMetadataParams &params) {
+BytesObject addMolToPNGFileHelperParams(const ROMol &mol,
+                                        const std::string &fname,
+                                        const PNGMetadataParams &params) {
   auto res = addMolToPNGFile(mol, fname, params);
 
   nb::object retval = nb::object(nb::steal<nb::object>(
       PyBytes_FromStringAndSize(res.c_str(), res.length())));
-  return retval;
+  return BytesObject(retval);
 }
 
-nb::object addMolToPNGFileHelper(const ROMol &mol, const std::string &fname,
-                                 bool includePkl, bool includeSmiles,
-                                 bool includeMol) {
+BytesObject addMolToPNGFileHelper(const ROMol &mol, const std::string &fname,
+                                  bool includePkl, bool includeSmiles,
+                                  bool includeMol) {
   PNGMetadataParams params;
   params.includePkl = includePkl;
   params.includeSmiles = includeSmiles;
@@ -603,19 +596,19 @@ nb::object addMolToPNGFileHelper(const ROMol &mol, const std::string &fname,
   return addMolToPNGFileHelperParams(mol, fname, params);
 }
 
-nb::object addMolToPNGStringHelperParams(const ROMol &mol, nb::bytes png,
-                                         const PNGMetadataParams &params) {
+BytesObject addMolToPNGStringHelperParams(const ROMol &mol, nb::bytes png,
+                                          const PNGMetadataParams &params) {
   std::string pngStr(static_cast<const char *>(png.data()), png.size());
   auto res = addMolToPNGString(mol, pngStr, params);
 
   nb::object retval = nb::object(nb::steal<nb::object>(
       PyBytes_FromStringAndSize(res.c_str(), res.length())));
-  return retval;
+  return BytesObject(retval);
 }
 
-nb::object addMolToPNGStringHelper(const ROMol &mol, nb::bytes png,
-                                   bool includePkl, bool includeSmiles,
-                                   bool includeMol) {
+BytesObject addMolToPNGStringHelper(const ROMol &mol, nb::bytes png,
+                                    bool includePkl, bool includeSmiles,
+                                    bool includeMol) {
   PNGMetadataParams params;
   params.includePkl = includePkl;
   params.includeSmiles = includeSmiles;
@@ -641,14 +634,14 @@ std::vector<std::pair<std::string, std::string>> dictToMetadata(
   return metadata;
 }
 
-nb::object addMetadataToPNGFileHelper(nb::dict pymetadata,
-                                      const std::string &fname) {
+BytesObject addMetadataToPNGFileHelper(nb::dict pymetadata,
+                                       const std::string &fname) {
   auto metadata = dictToMetadata(pymetadata);
 
   auto res = addMetadataToPNGFile(fname, metadata);
 
   nb::bytes retval(res.c_str(), res.length());
-  return retval;
+  return BytesObject(retval);
 }
 nb::bytes addMetadataToPNGStringHelper(nb::dict pymetadata, nb::bytes png) {
   auto metadata = dictToMetadata(pymetadata);
@@ -659,7 +652,7 @@ nb::bytes addMetadataToPNGStringHelper(nb::dict pymetadata, nb::bytes png) {
   return retval;
 }
 
-nb::object MolsFromPNGFile(const std::string &filename, const std::string &tag,
+TupleOfMol MolsFromPNGFile(const std::string &filename, const std::string &tag,
                            SmilesParserParams *params) {
   std::vector<std::unique_ptr<ROMol>> mols;
   try {
@@ -678,11 +671,11 @@ nb::object MolsFromPNGFile(const std::string &filename, const std::string &tag,
     std::shared_ptr<ROMol> sptr(mol.release());
     res.append(sptr);
   }
-  return nb::tuple(res);
+  return TupleOfMol(nb::tuple(res));
 }
 
-nb::tuple MolsFromPNGString(nb::bytes png, const std::string &tag,
-                            SmilesParserParams *params) {
+TupleOfMol MolsFromPNGString(nb::bytes png, const std::string &tag,
+                             SmilesParserParams *params) {
   std::string pngStr(static_cast<const char *>(png.data()), png.size());
   auto mols =
       PNGStringToMols(pngStr, tag, params ? *params : SmilesParserParams());
@@ -692,10 +685,10 @@ nb::tuple MolsFromPNGString(nb::bytes png, const std::string &tag,
     std::shared_ptr<ROMol> sptr(mol.release());
     res.append(sptr);
   }
-  return nb::tuple(res);
+  return TupleOfMol(nb::tuple(res));
 }
 
-nb::object MolsFromCDXMLFile(const std::string &filename, bool sanitize,
+TupleOfMol MolsFromCDXMLFile(const std::string &filename, bool sanitize,
                              bool removeHs) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
@@ -713,10 +706,10 @@ nb::object MolsFromCDXMLFile(const std::string &filename, bool sanitize,
     std::shared_ptr<ROMol> sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
-  return nb::tuple(res);
+  return TupleOfMol(nb::tuple(res));
 }
 
-nb::tuple MolsFromCDXMLHelper(
+TupleOfMol MolsFromCDXMLHelper(
     const StringOrBytes &cdxml,
     RDKit::v2::CDXMLParser::CDXMLParserParams *pyParams) {
   RDKit::v2::CDXMLParser::CDXMLParserParams params;
@@ -731,10 +724,10 @@ nb::tuple MolsFromCDXMLHelper(
     std::shared_ptr<ROMol> sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
-  return nb::tuple(res);
+  return TupleOfMol(nb::tuple(res));
 }
 
-nb::object MolsFromCDXMLFileHelper(
+TupleOfMol MolsFromCDXMLFileHelper(
     const std::string &filename,
     RDKit::v2::CDXMLParser::CDXMLParserParams *pyParams) {
   RDKit::v2::CDXMLParser::CDXMLParserParams params(
@@ -758,11 +751,11 @@ nb::object MolsFromCDXMLFileHelper(
     std::shared_ptr<ROMol> sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
-  return nb::tuple(res);
+  return TupleOfMol(nb::tuple(res));
 }
 
-nb::tuple MolsFromCDXML(const StringOrBytes &cdxml, bool sanitize,
-                        bool removeHs) {
+TupleOfMol MolsFromCDXML(const StringOrBytes &cdxml, bool sanitize,
+                         bool removeHs) {
   auto mols = CDXMLToMols(pyObjectToString(cdxml), sanitize, removeHs);
   nb::list res;
   for (auto &mol : mols) {
@@ -770,7 +763,7 @@ nb::tuple MolsFromCDXML(const StringOrBytes &cdxml, bool sanitize,
     std::shared_ptr<ROMol> sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
-  return nb::tuple(res);
+  return TupleOfMol(nb::tuple(res));
 }
 
 nb::object MolToCDXMLBlockHelper(const RDKit::ROMol &mol,

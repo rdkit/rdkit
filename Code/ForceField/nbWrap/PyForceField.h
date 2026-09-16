@@ -46,17 +46,19 @@ class PyForceField {
 
   double calcEnergy() { return calcEnergyWithPos(); }
 
-  nb::tuple calcGradWithPos(nb::object pos = nb::none());
+  nb::typed<nb::tuple, double, nb::ellipsis> calcGradWithPos(
+      nb::object pos = nb::none());
 
-  nb::tuple positions();
+  nb::typed<nb::tuple, double, nb::ellipsis> positions();
 
   int minimize(int maxIts, double forceTol, double energyTol) {
     PRECONDITION(this->field, "no force field");
     return this->field->minimize(maxIts, forceTol, energyTol);
   }
 
-  nb::tuple minimizeTrajectory(unsigned int snapshotFreq, int maxIts,
-                               double forceTol, double energyTol);
+  nb::typed<nb::tuple, int, nb::typed<nb::list, RDKit::Snapshot *>>
+  minimizeTrajectory(unsigned int snapshotFreq, int maxIts, double forceTol,
+                     double energyTol);
 
   void initialize() {
     PRECONDITION(this->field, "no force field");

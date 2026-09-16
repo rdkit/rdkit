@@ -19,6 +19,10 @@ using namespace nb::literals;
 using EBV = ExplicitBitVect;
 using SBV = SparseBitVect;
 
+using ClosestNeighbor = nb::typed<nb::tuple, unsigned int, double>;
+using ListOfClosestNeighbors = nb::typed<nb::list, ClosestNeighbor>;
+using ListOfSimilarities = nb::typed<nb::list, double>;
+
 namespace {
 std::string bytesToString(const nb::bytes &b) {
   return std::string(static_cast<const char *>(b.data()),
@@ -49,8 +53,9 @@ double SimilarityWrapper(const T &bv1, const nb::bytes &pkl, double a, double b,
 }
 
 template <typename T>
-nb::list NeighborWrapper(const nb::iterable &queries, const nb::iterable &bvs,
-                         double (*metric)(const T &, const T &)) {
+ListOfClosestNeighbors NeighborWrapper(const nb::iterable &queries,
+                                       const nb::iterable &bvs,
+                                       double (*metric)(const T &, const T &)) {
   nb::list res;
   std::vector<const T *> bvPtrs;
   for (auto item : bvs) {
@@ -70,13 +75,13 @@ nb::list NeighborWrapper(const nb::iterable &queries, const nb::iterable &bvs,
     }
     res.append(nb::make_tuple(nbr, closest));
   }
-  return res;
+  return ListOfClosestNeighbors(res);
 }
 
 template <typename T>
-nb::list BulkWrapper(const T &bv1, const nb::iterable &bvs,
-                     double (*metric)(const T &, const T &),
-                     bool returnDistance) {
+ListOfSimilarities BulkWrapper(const T &bv1, const nb::iterable &bvs,
+                               double (*metric)(const T &, const T &),
+                               bool returnDistance) {
   nb::list res;
   for (auto item : bvs) {
     const auto &bv2 = nb::cast<const T &>(item);
@@ -86,13 +91,15 @@ nb::list BulkWrapper(const T &bv1, const nb::iterable &bvs,
     }
     res.append(sim);
   }
-  return res;
+  return ListOfSimilarities(res);
 }
 
 template <typename T>
-nb::list BulkWrapper(const T &bv1, const nb::iterable &bvs, double a, double b,
-                     double (*metric)(const T &, const T &, double, double),
-                     bool returnDistance) {
+ListOfSimilarities BulkWrapper(const T &bv1, const nb::iterable &bvs, double a,
+                               double b,
+                               double (*metric)(const T &, const T &, double,
+                                                double),
+                               bool returnDistance) {
   nb::list res;
   for (auto item : bvs) {
     const auto &bv2 = nb::cast<const T &>(item);
@@ -102,7 +109,7 @@ nb::list BulkWrapper(const T &bv1, const nb::iterable &bvs, double a, double b,
     }
     res.append(sim);
   }
-  return res;
+  return ListOfSimilarities(res);
 }
 
 #define METRIC_DEFS(_metricname_)                                              \
@@ -113,15 +120,15 @@ nb::list BulkWrapper(const T &bv1, const nb::iterable &bvs, double a, double b,
                              returnDistance);                                  \
   }                                                                            \
   template <typename T>                                                        \
-  nb::list Bulk##_metricname_(const T &bv1, const nb::iterable &bvs,           \
-                              bool returnDistance) {                           \
+  ListOfSimilarities Bulk##_metricname_(const T &bv1, const nb::iterable &bvs, \
+                                        bool returnDistance) {                 \
     return BulkWrapper(bv1, bvs,                                               \
                        (double (*)(const T &, const T &))_metricname_,         \
                        returnDistance);                                        \
   }                                                                            \
   template <typename T>                                                        \
-  nb::list _metricname_##Neighbors(const nb::iterable &queries,                \
-                                   const nb::iterable &bvs) {                  \
+  ListOfClosestNeighbors _metricname_##Neighbors(const nb::iterable &queries,  \
+                                                 const nb::iterable &bvs) {    \
     return NeighborWrapper<T>(queries, bvs,                                    \
                               (double (*)(const T &, const T &))_metricname_); \
   }
@@ -149,8 +156,9 @@ double TverskySimilarity_w(const T1 &bv1, const T2 &bv2, double a, double b,
 }
 
 template <typename T>
-nb::list BulkTverskySimilarity(const T &bv1, const nb::iterable &bvs, double a,
-                               double b, bool returnDistance) {
+ListOfSimilarities BulkTverskySimilarity(const T &bv1, const nb::iterable &bvs,
+                                         double a, double b,
+                                         bool returnDistance) {
   return BulkWrapper(
       bv1, bvs, a, b,
       (double (*)(const T &, const T &, double, double))TverskySimilarity,
@@ -169,12 +177,12 @@ bool AllProbeBitsMatchBytes(const T &probe, const nb::bytes &ref) {
     m.def(#_funcname_, (double (*)(const EBV &, const EBV &))_funcname_, \
           "v1"_a, "v2"_a, _help_);                                       \
     m.def(#_bulkname_,                                                   \
-          (nb::list (*)(const SBV &, const nb::iterable &,               \
-                        bool))_bulkname_<SBV>,                           \
+          (ListOfSimilarities (*)(const SBV &, const nb::iterable &,     \
+                                  bool))_bulkname_<SBV>,                 \
           "v1"_a, "v2"_a, "returnDistance"_a = false);                   \
     m.def(#_bulkname_,                                                   \
-          (nb::list (*)(const EBV &, const nb::iterable &,               \
-                        bool))_bulkname_<EBV>,                           \
+          (ListOfSimilarities (*)(const EBV &, const nb::iterable &,     \
+                                  bool))_bulkname_<EBV>,                 \
           "v1"_a, "v2"_a, "returnDistance"_a = false, _help_);           \
   }
 
@@ -191,12 +199,12 @@ bool AllProbeBitsMatchBytes(const T &probe, const nb::bytes &ref) {
           (double (*)(const EBV &, const nb::bytes &, bool))_name_w_, "bv1"_a, \
           "pkl"_a, "returnDistance"_a = false, _help_);                        \
     m.def(#_bulkname_,                                                         \
-          (nb::list (*)(const SBV &, const nb::iterable &,                     \
-                        bool))_bulkname_<SBV>,                                 \
+          (ListOfSimilarities (*)(const SBV &, const nb::iterable &,           \
+                                  bool))_bulkname_<SBV>,                       \
           "bv1"_a, "bvList"_a, "returnDistance"_a = false);                    \
     m.def(#_bulkname_,                                                         \
-          (nb::list (*)(const EBV &, const nb::iterable &,                     \
-                        bool))_bulkname_<EBV>,                                 \
+          (ListOfSimilarities (*)(const EBV &, const nb::iterable &,           \
+                                  bool))_bulkname_<EBV>,                       \
           "bv1"_a, "bvList"_a, "returnDistance"_a = false, _help_);            \
     m.def(#_funcname_ "Neighbors", _funcname_##Neighbors<ExplicitBitVect>,     \
           "bvqueries"_a, "bvList"_a, _help_);                                  \
@@ -253,12 +261,12 @@ struct BitOps_wrapper {
                         bool))TverskySimilarity_w,
             "bv1"_a, "pkl"_a, "a"_a, "b"_a, "returnDistance"_a = false, help);
       m.def("BulkTverskySimilarity",
-            (nb::list (*)(const SBV &, const nb::iterable &, double, double,
-                          bool))BulkTverskySimilarity<SBV>,
+            (ListOfSimilarities (*)(const SBV &, const nb::iterable &, double,
+                                    double, bool))BulkTverskySimilarity<SBV>,
             "bv1"_a, "bvList"_a, "a"_a, "b"_a, "returnDistance"_a = false);
       m.def("BulkTverskySimilarity",
-            (nb::list (*)(const EBV &, const nb::iterable &, double, double,
-                          bool))BulkTverskySimilarity<EBV>,
+            (ListOfSimilarities (*)(const EBV &, const nb::iterable &, double,
+                                    double, bool))BulkTverskySimilarity<EBV>,
             "bv1"_a, "bvList"_a, "a"_a, "b"_a, "returnDistance"_a = false,
             help);
     }

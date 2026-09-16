@@ -55,14 +55,26 @@ NB_MAKE_OPAQUE(std::map<unsigned int, unsigned int>);
 
 namespace RDKit {
 
-nb::tuple computeAtomCIPRanksHelper(ROMol &mol) {
+using TupleOfInts = nb::typed<nb::tuple, int, nb::ellipsis>;
+using TupleOfMols = nb::typed<nb::tuple, ROMOL_SPTR, nb::ellipsis>;
+using TupleOfTwoBools = nb::typed<nb::tuple, bool, bool>;
+using TupleOfIntPairs =
+    nb::typed<nb::tuple, nb::typed<nb::tuple, int, int>, nb::ellipsis>;
+using TupleOfSubgraphPaths =
+    nb::typed<nb::tuple, nb::typed<nb::list, nb::typed<nb::list, int>>,
+              nb::ellipsis>;
+using TupleOfSanitizationProblems =
+    nb::typed<nb::tuple, MolSanitizeException *, nb::ellipsis>;
+using DictOfMols = nb::typed<nb::dict, std::string, ROMOL_SPTR>;
+
+TupleOfInts computeAtomCIPRanksHelper(ROMol &mol) {
   UINT_VECT atomRanks;
   Chirality::assignAtomCIPRanks(mol, atomRanks);
   nb::list res;
   for (auto rank : atomRanks) {
     res.append(rank);
   }
-  return nb::tuple(res);
+  return TupleOfInts(nb::tuple(res));
 }
 
 nb::tuple fragmentOnSomeBondsHelper(
@@ -129,7 +141,7 @@ nb::tuple fragmentOnSomeBondsHelper(
   }
 }
 
-nb::tuple getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
+TupleOfInts getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
   if (aid1 < 0 || aid1 >= rdcast<int>(mol.getNumAtoms()) || aid2 < 0 ||
       aid2 >= rdcast<int>(mol.getNumAtoms())) {
     throw ValueErrorException("bad atom index");
@@ -138,7 +150,7 @@ nb::tuple getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
   for (const auto atomIdx : MolOps::getShortestPath(mol, aid1, aid2)) {
     res.append(atomIdx);
   }
-  return nb::steal<nb::tuple>(PySequence_Tuple(res.ptr()));
+  return TupleOfInts(nb::steal<nb::tuple>(PySequence_Tuple(res.ptr())));
 }
 
 ROMol *fragmentOnBondsHelper(const ROMol &mol,
@@ -225,8 +237,8 @@ std::string getChainId(const ROMol &, const Atom *at) {
   return static_cast<const AtomPDBResidueInfo *>(monomerInfo)->getChainId();
 }
 }  // namespace
-nb::dict splitMolByPDBResidues(const ROMol &mol, nb::object pyWhiteList,
-                               bool negateList) {
+DictOfMols splitMolByPDBResidues(const ROMol &mol, nb::object pyWhiteList,
+                                 bool negateList) {
   std::unique_ptr<std::vector<std::string>> whiteList{nullptr};
   if (!pyWhiteList.is_none()) {
     unsigned int nVs = nb::len(pyWhiteList);
@@ -243,10 +255,10 @@ nb::dict splitMolByPDBResidues(const ROMol &mol, nb::object pyWhiteList,
   for (const auto &iter : res) {
     pyres[iter.first.c_str()] = iter.second;
   }
-  return pyres;
+  return DictOfMols(pyres);
 }
-nb::dict splitMolByPDBChainId(const ROMol &mol, nb::object pyWhiteList,
-                              bool negateList) {
+DictOfMols splitMolByPDBChainId(const ROMol &mol, nb::object pyWhiteList,
+                                bool negateList) {
   std::unique_ptr<std::vector<std::string>> whiteList{nullptr};
   if (!pyWhiteList.is_none()) {
     unsigned int nVs = nb::len(pyWhiteList);
@@ -263,13 +275,13 @@ nb::dict splitMolByPDBChainId(const ROMol &mol, nb::object pyWhiteList,
   for (const auto &iter : res) {
     pyres[iter.first.c_str()] = iter.second;
   }
-  return pyres;
+  return DictOfMols(pyres);
 }
 
-nb::dict parseQueryDefFileHelper(nb::object &input, bool standardize,
-                                 std::string delimiter, std::string comment,
-                                 unsigned int nameColumn,
-                                 unsigned int smartsColumn) {
+DictOfMols parseQueryDefFileHelper(nb::object &input, bool standardize,
+                                   std::string delimiter, std::string comment,
+                                   unsigned int nameColumn,
+                                   unsigned int smartsColumn) {
   std::string input_text;
   std::map<std::string, ROMOL_SPTR> queryDefs;
 
@@ -288,7 +300,7 @@ nb::dict parseQueryDefFileHelper(nb::object &input, bool standardize,
     res[iter.first.c_str()] = iter.second;
   }
 
-  return res;
+  return DictOfMols(res);
 }
 
 void addRecursiveQueriesHelper(ROMol &mol, nb::dict replDict,
@@ -330,11 +342,11 @@ VECT_INT_VECT getSSSR(ROMol &mol, bool includeDativeBonds,
   return rings;
 }
 
-nb::tuple replaceSubstructures(const ROMol &orig, const ROMol &query,
-                               const ROMol &replacement,
-                               bool replaceAll = false,
-                               unsigned int replacementConnectionPoint = 0,
-                               bool useChirality = false) {
+TupleOfMols replaceSubstructures(const ROMol &orig, const ROMol &query,
+                                 const ROMol &replacement,
+                                 bool replaceAll = false,
+                                 unsigned int replacementConnectionPoint = 0,
+                                 bool useChirality = false) {
   std::vector<ROMOL_SPTR> v =
       replaceSubstructs(orig, query, replacement, replaceAll,
                         replacementConnectionPoint, useChirality);
@@ -342,7 +354,7 @@ nb::tuple replaceSubstructures(const ROMol &orig, const ROMol &query,
   for (const auto &mv : v) {
     res.append(mv);
   }
-  return nb::steal<nb::tuple>(PySequence_Tuple(res.ptr()));
+  return TupleOfMols(nb::steal<nb::tuple>(PySequence_Tuple(res.ptr())));
 }
 
 std::vector<MatchVectType> seqOfSeqsToMatchVectTypeVect(
@@ -836,11 +848,9 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
   return res;
 }
 
-nb::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
-                                               unsigned int lowerLen,
-                                               unsigned int upperLen,
-                                               bool useHs = false,
-                                               int rootedAtAtom = -1) {
+TupleOfSubgraphPaths findAllSubgraphsOfLengthsMtoNHelper(
+    const ROMol &mol, unsigned int lowerLen, unsigned int upperLen,
+    bool useHs = false, int rootedAtAtom = -1) {
   if (lowerLen > upperLen) {
     throw ValueErrorException("lowerLen > upperLen");
   }
@@ -856,7 +866,8 @@ nb::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
     }
     res.append(tmp);
   }
-  return nb::steal<nb::tuple>(PySequence_Tuple(res.ptr()));
+  return TupleOfSubgraphPaths(
+      nb::steal<nb::tuple>(PySequence_Tuple(res.ptr())));
 };
 
 PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol,
@@ -919,14 +930,14 @@ ROMol *adjustQueryPropertiesWithGenericGroupsHelper(const ROMol &mol,
   return GenericGroups::adjustQueryPropertiesWithGenericGroups(mol, &params);
 }
 
-nb::tuple detectChemistryProblemsHelper(const ROMol &mol,
-                                        unsigned int sanitizeOps) {
+TupleOfSanitizationProblems detectChemistryProblemsHelper(
+    const ROMol &mol, unsigned int sanitizeOps) {
   auto probs = MolOps::detectChemistryProblems(mol, sanitizeOps);
   nb::list res;
   for (auto &&exc_ptr : probs) {
     res.append(std::move(exc_ptr));
   }
-  return nb::tuple(res);
+  return TupleOfSanitizationProblems(nb::tuple(res));
 }
 
 ROMol *canonicalizeStereoGroupsHelper(
@@ -1043,12 +1054,12 @@ ROMol *rgroupRowZipHelper(nb::dict row, const std::optional<MolzipParams> p) {
   return molzip(rgroup_row, p.value_or(MolzipParams())).release();
 }
 
-nb::tuple hasQueryHsHelper(const ROMol &m) {
+TupleOfTwoBools hasQueryHsHelper(const ROMol &m) {
   nb::list res;
   auto hashs = MolOps::hasQueryHs(m);
   res.append(hashs.first);
   res.append(hashs.second);
-  return nb::tuple(res);
+  return TupleOfTwoBools(nb::tuple(res));
 }
 
 // we can really only set some of these types from C++ which means
@@ -1112,8 +1123,8 @@ void collapseAttachmentPointsHelper(ROMol &mol, bool markedOnly) {
   MolOps::collapseAttachmentPoints(static_cast<RWMol &>(mol), markedOnly);
 }
 
-nb::object findMesoHelper(const ROMol &mol, bool includeIsotopes,
-                          bool includeAtomMaps) {
+TupleOfIntPairs findMesoHelper(const ROMol &mol, bool includeIsotopes,
+                               bool includeAtomMaps) {
   auto meso = Chirality::findMesoCenters(mol, includeIsotopes, includeAtomMaps);
   nb::list res;
   for (const auto &pr : meso) {
@@ -1122,7 +1133,7 @@ nb::object findMesoHelper(const ROMol &mol, bool includeIsotopes,
     tpl.append(pr.second);
     res.append(nb::tuple(tpl));
   }
-  return nb::tuple(res);
+  return TupleOfIntPairs(nb::tuple(res));
 }
 
 ROMol *copyMolSubsetHelper1(const ROMol &mol,

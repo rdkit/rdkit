@@ -30,6 +30,15 @@ using namespace RDKit;
 
 namespace {
 
+using Transform4x4 = nb::ndarray<nb::numpy, double, nb::ndim<2>>;
+using MatchList = nb::typed<nb::list, nb::typed<nb::tuple, int, int>>;
+using RmsdTransResult = nb::typed<nb::tuple, double, Transform4x4>;
+using RmsdTransMatchResult =
+    nb::typed<nb::tuple, double, Transform4x4, MatchList>;
+using TupleOfDouble = nb::typed<nb::tuple, double, nb::ellipsis>;
+using ListOfDouble = nb::typed<nb::list, double>;
+using ListOfIntList = nb::typed<nb::list, nb::typed<nb::list, int>>;
+
 // -- Sequence translation helpers --
 
 MatchVectType nbTranslateAtomMap(nb::object obj) {
@@ -184,16 +193,16 @@ struct NbO3A {
 
   double align() { return o3a->align(); }
 
-  nb::object trans() {
+  RmsdTransResult trans() {
     RDGeom::Transform3D t;
     double rmsd = o3a->trans(t);
-    return makeRmsdTransResult(rmsd, t);
+    return nb::borrow<RmsdTransResult>(makeRmsdTransResult(rmsd, t));
   }
 
   double score() { return o3a->score(); }
 
-  nb::list matches() {
-    nb::list result;
+  ListOfIntList matches() {
+    ListOfIntList result;
     const MatchVectType *m = o3a->matches();
     for (const auto &p : *m) {
       nb::list pair;
@@ -204,8 +213,8 @@ struct NbO3A {
     return result;
   }
 
-  nb::list weights() {
-    nb::list result;
+  ListOfDouble weights() {
+    ListOfDouble result;
     const RDNumeric::DoubleVector *w = o3a->weights();
     for (unsigned int i = 0; i < w->size(); ++i) {
       result.append((*w)[i]);
@@ -214,12 +223,14 @@ struct NbO3A {
   }
 };
 
+using TupleOfO3A = nb::typed<nb::tuple, NbO3A, nb::ellipsis>;
+
 // -- Module functions --
 
-nb::object getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
-                                int prbCid, int refCid, nb::object atomMap,
-                                nb::object weights, bool reflect,
-                                unsigned int maxIters) {
+RmsdTransResult getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
+                                     int prbCid, int refCid, nb::object atomMap,
+                                     nb::object weights, bool reflect,
+                                     unsigned int maxIters) {
   auto aMap = nbTranslateAtomMap(atomMap);
   MatchVectType *aMapPtr = aMap.empty() ? nullptr : &aMap;
   auto wtsVec = makeDoubleVector(weights);
@@ -237,14 +248,13 @@ nb::object getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
                                            refCid, aMapPtr, wtsVec.get(),
                                            reflect, maxIters);
   }
-  return makeRmsdTransResult(rmsd, trans);
+  return nb::borrow<RmsdTransResult>(makeRmsdTransResult(rmsd, trans));
 }
 
-nb::object getBestMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
-                                    int prbCid, int refCid, nb::object map,
-                                    int maxMatches, bool symmetrize,
-                                    nb::object weights, bool reflect,
-                                    unsigned int maxIters, int numThreads) {
+RmsdTransMatchResult getBestMolAlignTransform(
+    const ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
+    nb::object map, int maxMatches, bool symmetrize, nb::object weights,
+    bool reflect, unsigned int maxIters, int numThreads) {
   NbBestAlignmentParams nbParams;
   nbParams.maxMatches = maxMatches;
   nbParams.symmetrizeConjugatedTerminalGroups = symmetrize;
@@ -266,14 +276,14 @@ nb::object getBestMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
                                                bestMatch, params, prbCid,
                                                refCid, reflect, maxIters);
   }
-  return makeRmsdTransResult(rmsd, bestTrans, &bestMatch);
+  return nb::borrow<RmsdTransMatchResult>(
+      makeRmsdTransResult(rmsd, bestTrans, &bestMatch));
 }
 
-nb::object getBestMolAlignTransformParams(const ROMol &prbMol,
-                                          const ROMol &refMol,
-                                          const NbBestAlignmentParams &nbParams,
-                                          int prbCid, int refCid, bool reflect,
-                                          unsigned int maxIters) {
+RmsdTransMatchResult getBestMolAlignTransformParams(
+    const ROMol &prbMol, const ROMol &refMol,
+    const NbBestAlignmentParams &nbParams, int prbCid, int refCid, bool reflect,
+    unsigned int maxIters) {
   auto [params, weightsOwner] = nbParams.toNative();
   RDGeom::Transform3D bestTrans;
   MatchVectType bestMatch;
@@ -284,7 +294,8 @@ nb::object getBestMolAlignTransformParams(const ROMol &prbMol,
                                                bestMatch, params, prbCid,
                                                refCid, reflect, maxIters);
   }
-  return makeRmsdTransResult(rmsd, bestTrans, &bestMatch);
+  return nb::borrow<RmsdTransMatchResult>(
+      makeRmsdTransResult(rmsd, bestTrans, &bestMatch));
 }
 
 double alignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
@@ -343,9 +354,9 @@ double getBestRMSParams(ROMol &prbMol, ROMol &refMol,
   return rmsd;
 }
 
-nb::tuple getAllConformerBestRMS(ROMol &mol, int numThreads, nb::object map,
-                                 int maxMatches, bool symmetrize,
-                                 nb::object weights) {
+TupleOfDouble getAllConformerBestRMS(ROMol &mol, int numThreads, nb::object map,
+                                     int maxMatches, bool symmetrize,
+                                     nb::object weights) {
   NbBestAlignmentParams nbParams;
   nbParams.maxMatches = maxMatches;
   nbParams.symmetrizeConjugatedTerminalGroups = symmetrize;
@@ -367,11 +378,11 @@ nb::tuple getAllConformerBestRMS(ROMol &mol, int numThreads, nb::object map,
   for (double v : rmsds) {
     res.append(v);
   }
-  return nb::tuple(res);
+  return TupleOfDouble(nb::tuple(res));
 }
 
-nb::tuple getAllConformerBestRMSParams(ROMol &mol,
-                                       const NbBestAlignmentParams &nbParams) {
+TupleOfDouble getAllConformerBestRMSParams(
+    ROMol &mol, const NbBestAlignmentParams &nbParams) {
   auto [params, weightsOwner] = nbParams.toNative();
   std::vector<double> rmsds;
   {
@@ -382,10 +393,10 @@ nb::tuple getAllConformerBestRMSParams(ROMol &mol,
   for (double v : rmsds) {
     res.append(v);
   }
-  return nb::tuple(res);
+  return TupleOfDouble(nb::tuple(res));
 }
 
-nb::tuple getAllConformerBestRMSToRef(
+TupleOfDouble getAllConformerBestRMSToRef(
     const ROMol &prbMol, const ROMol &refMol,
     const std::optional<NbBestAlignmentParams> &nbParams) {
   MolAlign::BestAlignmentParams params;
@@ -404,7 +415,7 @@ nb::tuple getAllConformerBestRMSToRef(
   for (const double v : rmsds) {
     res.append(v);
   }
-  return nb::tuple(res);
+  return TupleOfDouble(nb::tuple(res));
 }
 
 double calcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
@@ -488,12 +499,12 @@ NbO3A getMMFFO3A(ROMol &prbMol, ROMol &refMol,
   return NbO3A{std::move(o3a)};
 }
 
-nb::tuple getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
-                             MMFF::MMFFMolProperties *prbProps,
-                             MMFF::MMFFMolProperties *refProps, int refCid,
-                             bool reflect, unsigned int maxIters,
-                             unsigned int options, nb::object constraintMap,
-                             nb::object constraintWeights) {
+TupleOfO3A getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
+                              MMFF::MMFFMolProperties *prbProps,
+                              MMFF::MMFFMolProperties *refProps, int refCid,
+                              bool reflect, unsigned int maxIters,
+                              unsigned int options, nb::object constraintMap,
+                              nb::object constraintWeights) {
   auto [cMap, cWts] =
       parseConstraints(constraintMap, constraintWeights, prbMol, refMol);
   MMFF::MMFFMolProperties *prbMolPropsPtr = nullptr;
@@ -533,7 +544,7 @@ nb::tuple getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
     pyres.append(NbO3A{
         std::shared_ptr<MolAlign::O3A>(i.get(), [b = i](MolAlign::O3A *) {})});
   }
-  return nb::tuple(pyres);
+  return TupleOfO3A(nb::tuple(pyres));
 }
 
 NbO3A getCrippenO3A(ROMol &prbMol, ROMol &refMol, nb::object prbCrippenContribs,
@@ -589,12 +600,12 @@ NbO3A getCrippenO3A(ROMol &prbMol, ROMol &refMol, nb::object prbCrippenContribs,
   return NbO3A{std::move(o3a)};
 }
 
-nb::tuple getCrippenO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
-                                nb::object prbCrippenContribs,
-                                nb::object refCrippenContribs, int refCid,
-                                bool reflect, unsigned int maxIters,
-                                unsigned int options, nb::object constraintMap,
-                                nb::object constraintWeights) {
+TupleOfO3A getCrippenO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
+                                 nb::object prbCrippenContribs,
+                                 nb::object refCrippenContribs, int refCid,
+                                 bool reflect, unsigned int maxIters,
+                                 unsigned int options, nb::object constraintMap,
+                                 nb::object constraintWeights) {
   auto [cMap, cWts] =
       parseConstraints(constraintMap, constraintWeights, prbMol, refMol);
   unsigned int prbNAtoms = prbMol.getNumAtoms();
@@ -646,7 +657,7 @@ nb::tuple getCrippenO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
     pyres.append(NbO3A{
         std::shared_ptr<MolAlign::O3A>(i.get(), [b = i](MolAlign::O3A *) {})});
   }
-  return nb::tuple(pyres);
+  return TupleOfO3A(nb::tuple(pyres));
 }
 
 }  // namespace

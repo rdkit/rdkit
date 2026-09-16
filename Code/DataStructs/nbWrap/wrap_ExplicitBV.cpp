@@ -21,6 +21,7 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 using EBV = ExplicitBitVect;
+using ListOfBits = nb::typed<nb::list, int>;
 
 void SetBitsFromList(EBV *bv, const nb::iterable &onBitList) {
   for (auto item : onBitList) {
@@ -81,10 +82,10 @@ std::string ToBase64(EBV &self) {
   return res;
 }
 
-nb::list ExplicitToList(const ExplicitBitVect &sv) {
+ListOfBits ExplicitToList(const ExplicitBitVect &sv) {
   nb::list l;
   if (!sv.dp_bits) {
-    return l;
+    return ListOfBits(l);
   }
 
   auto count = sv.getNumBits();
@@ -98,7 +99,7 @@ nb::list ExplicitToList(const ExplicitBitVect &sv) {
       pos = sv.dp_bits->find_next(pos);
     }
   }
-  return l;
+  return ListOfBits(l);
 }
 
 std::string ebvClassDoc =

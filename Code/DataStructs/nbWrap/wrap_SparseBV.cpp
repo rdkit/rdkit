@@ -20,6 +20,7 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 using SBV = SparseBitVect;
+using ListOfBits = nb::typed<nb::list, int>;
 
 void SetBitsFromList(SBV *bv, const nb::iterable &onBitList) {
   for (auto item : onBitList) {
@@ -80,7 +81,7 @@ std::string ToBase64(SBV &self) {
   return res;
 }
 
-nb::list SparseToList(const SparseBitVect &sv) {
+ListOfBits SparseToList(const SparseBitVect &sv) {
   nb::list l;
   if (sv.getNumBits()) {
     for (unsigned int i = 0; i < sv.getNumBits(); ++i) {
@@ -90,7 +91,7 @@ nb::list SparseToList(const SparseBitVect &sv) {
       l[static_cast<size_t>(i)] = 1;
     }
   }
-  return l;
+  return ListOfBits(l);
 }
 
 std::string sbvClassDoc =

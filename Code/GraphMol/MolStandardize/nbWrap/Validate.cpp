@@ -22,6 +22,8 @@ using namespace RDKit;
 
 namespace {
 
+using ListOfStrings = nb::typed<nb::list, std::string>;
+
 struct ValidationMethodTrampoline : MolStandardize::ValidationMethod {
   NB_TRAMPOLINE(MolStandardize::ValidationMethod, 2);
 
@@ -37,9 +39,9 @@ struct ValidationMethodTrampoline : MolStandardize::ValidationMethod {
 
 // Wrap ValidationMethod::validate and convert the returned
 // vector into a Python list of strings
-nb::list pythonValidateMethod(const MolStandardize::ValidationMethod &self,
-                              const ROMol &mol, bool reportAllFailures) {
-  nb::list res;
+ListOfStrings pythonValidateMethod(const MolStandardize::ValidationMethod &self,
+                                   const ROMol &mol, bool reportAllFailures) {
+  ListOfStrings res;
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
   for (const auto &msg : errout) {
@@ -86,8 +88,8 @@ MolStandardize::DisallowedAtomsValidation *getDisallowedAtomsValidation(
   return new MolStandardize::DisallowedAtomsValidation(satoms);
 }
 
-nb::list standardizeSmilesHelper(const std::string &smiles) {
-  nb::list res;
+ListOfStrings standardizeSmilesHelper(const std::string &smiles) {
+  ListOfStrings res;
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       MolStandardize::validateSmiles(smiles);
   for (const auto &msg : errout) {
