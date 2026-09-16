@@ -23,6 +23,7 @@
 #include <GraphMol/Descriptors/Crippen.h>
 #include <Geometry/Transform3D.h>
 #include <Numerics/Vector.h>
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -32,13 +33,15 @@ namespace {
 
 // -- Sequence translation helpers --
 
-MatchVectType nbTranslateAtomMap(nb::object obj) {
+//! (probe atom index, reference atom index) pairs
+using AtomMap = PySequenceOf<PySequenceOf<int>>;
+
+MatchVectType nbTranslateAtomMap(const std::optional<AtomMap> &obj) {
   MatchVectType result;
-  if (obj.is_none()) return result;
-  nb::sequence seq = nb::cast<nb::sequence>(obj);
-  size_t n = nb::len(seq);
+  if (!obj) return result;
+  size_t n = nb::len(*obj);
   for (size_t i = 0; i < n; ++i) {
-    nb::sequence pair = nb::cast<nb::sequence>(seq[i]);
+    nb::sequence pair = nb::cast<nb::sequence>((*obj)[i]);
     if (nb::len(pair) != 2) {
       throw nb::value_error("Incorrect format for an atomMap");
     }
@@ -47,47 +50,47 @@ MatchVectType nbTranslateAtomMap(nb::object obj) {
   return result;
 }
 
-std::vector<MatchVectType> nbTranslateAtomMapSeq(nb::object obj) {
+std::vector<MatchVectType> nbTranslateAtomMapSeq(
+    const std::optional<PySequenceOf<AtomMap>> &obj) {
   std::vector<MatchVectType> result;
-  if (obj.is_none()) return result;
-  nb::sequence seq = nb::cast<nb::sequence>(obj);
-  size_t n = nb::len(seq);
+  if (!obj) return result;
+  size_t n = nb::len(*obj);
   for (size_t i = 0; i < n; ++i) {
-    result.push_back(nbTranslateAtomMap(nb::cast<nb::object>(seq[i])));
+    result.push_back(nbTranslateAtomMap(nb::cast<AtomMap>((*obj)[i])));
   }
   return result;
 }
 
-std::vector<double> nbTranslateDoubleVec(nb::object obj) {
+std::vector<double> nbTranslateDoubleVec(
+    const std::optional<PySequenceOf<double>> &obj) {
   std::vector<double> result;
-  if (obj.is_none()) return result;
-  nb::sequence seq = nb::cast<nb::sequence>(obj);
-  size_t n = nb::len(seq);
+  if (!obj) return result;
+  size_t n = nb::len(*obj);
   for (size_t i = 0; i < n; ++i) {
-    result.push_back(nb::cast<double>(seq[i]));
+    result.push_back(nb::cast<double>((*obj)[i]));
   }
   return result;
 }
 
-std::vector<unsigned int> nbTranslateUIntVec(nb::object obj) {
+std::vector<unsigned int> nbTranslateUIntVec(
+    const std::optional<PySequenceOf<unsigned int>> &obj) {
   std::vector<unsigned int> result;
-  if (obj.is_none()) return result;
-  nb::sequence seq = nb::cast<nb::sequence>(obj);
-  size_t n = nb::len(seq);
+  if (!obj) return result;
+  size_t n = nb::len(*obj);
   for (size_t i = 0; i < n; ++i) {
-    result.push_back(nb::cast<unsigned int>(seq[i]));
+    result.push_back(nb::cast<unsigned int>((*obj)[i]));
   }
   return result;
 }
 
-std::unique_ptr<RDNumeric::DoubleVector> makeDoubleVector(nb::object obj) {
-  if (obj.is_none()) return nullptr;
-  nb::sequence seq = nb::cast<nb::sequence>(obj);
-  size_t n = nb::len(seq);
+std::unique_ptr<RDNumeric::DoubleVector> makeDoubleVector(
+    const std::optional<PySequenceOf<double>> &obj) {
+  if (!obj) return nullptr;
+  size_t n = nb::len(*obj);
   if (n == 0) return nullptr;
   auto dv = std::make_unique<RDNumeric::DoubleVector>(n);
   for (size_t i = 0; i < n; ++i) {
-    dv->setVal(i, nb::cast<double>(seq[i]));
+    dv->setVal(i, nb::cast<double>((*obj)[i]));
   }
   return dv;
 }
@@ -120,11 +123,12 @@ nb::object makeRmsdTransResult(double rmsd, const RDGeom::Transform3D &trans,
 
 std::pair<std::unique_ptr<MatchVectType>,
           std::unique_ptr<RDNumeric::DoubleVector>>
-parseConstraints(nb::object constraintMap, nb::object constraintWeights,
+parseConstraints(const std::optional<AtomMap> &constraintMap,
+                 const std::optional<PySequenceOf<double>> &constraintWeights,
                  const ROMol &prbMol, const ROMol &refMol) {
   std::unique_ptr<MatchVectType> cMap;
   std::unique_ptr<RDNumeric::DoubleVector> cWts;
-  if (!constraintMap.is_none() && nb::len(constraintMap) > 0) {
+  if (constraintMap && nb::len(*constraintMap) > 0) {
     cMap = std::make_unique<MatchVectType>(nbTranslateAtomMap(constraintMap));
     cWts = makeDoubleVector(constraintWeights);
     if (cWts && cMap->size() != cWts->size()) {
@@ -216,10 +220,11 @@ struct NbO3A {
 
 // -- Module functions --
 
-nb::object getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
-                                int prbCid, int refCid, nb::object atomMap,
-                                nb::object weights, bool reflect,
-                                unsigned int maxIters) {
+nb::object getMolAlignTransform(
+    const ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
+    const std::optional<AtomMap> &atomMap,
+    const std::optional<PySequenceOf<double>> &weights, bool reflect,
+    unsigned int maxIters) {
   auto aMap = nbTranslateAtomMap(atomMap);
   MatchVectType *aMapPtr = aMap.empty() ? nullptr : &aMap;
   auto wtsVec = makeDoubleVector(weights);
@@ -240,22 +245,18 @@ nb::object getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
   return makeRmsdTransResult(rmsd, trans);
 }
 
-nb::object getBestMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
-                                    int prbCid, int refCid, nb::object map,
-                                    int maxMatches, bool symmetrize,
-                                    nb::object weights, bool reflect,
-                                    unsigned int maxIters, int numThreads) {
+nb::object getBestMolAlignTransform(
+    const ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
+    const std::optional<PySequenceOf<AtomMap>> &map, int maxMatches,
+    bool symmetrize, const std::optional<PySequenceOf<double>> &weights,
+    bool reflect, unsigned int maxIters, int numThreads) {
   NbBestAlignmentParams nbParams;
   nbParams.maxMatches = maxMatches;
   nbParams.symmetrizeConjugatedTerminalGroups = symmetrize;
   nbParams.ignoreHs = false;
   nbParams.numThreads = numThreads;
-  if (!map.is_none()) {
-    nbParams.map = nbTranslateAtomMapSeq(map);
-  }
-  if (!weights.is_none()) {
-    nbParams.weights = nbTranslateDoubleVec(weights);
-  }
+  nbParams.map = nbTranslateAtomMapSeq(map);
+  nbParams.weights = nbTranslateDoubleVec(weights);
   auto [params, weightsOwner] = nbParams.toNative();
   RDGeom::Transform3D bestTrans;
   MatchVectType bestMatch;
@@ -288,8 +289,9 @@ nb::object getBestMolAlignTransformParams(const ROMol &prbMol,
 }
 
 double alignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
-                     nb::object atomMap, nb::object weights, bool reflect,
-                     unsigned int maxIters) {
+                     const std::optional<AtomMap> &atomMap,
+                     const std::optional<PySequenceOf<double>> &weights,
+                     bool reflect, unsigned int maxIters) {
   auto aMap = nbTranslateAtomMap(atomMap);
   MatchVectType *aMapPtr = aMap.empty() ? nullptr : &aMap;
   auto wtsVec = makeDoubleVector(weights);
@@ -309,19 +311,17 @@ double alignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
 }
 
 double getBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
-                  nb::object map, int maxMatches, bool symmetrize,
-                  nb::object weights, int numThreads) {
+                  const std::optional<PySequenceOf<AtomMap>> &map,
+                  int maxMatches, bool symmetrize,
+                  const std::optional<PySequenceOf<double>> &weights,
+                  int numThreads) {
   NbBestAlignmentParams nbParams;
   nbParams.maxMatches = maxMatches;
   nbParams.symmetrizeConjugatedTerminalGroups = symmetrize;
   nbParams.ignoreHs = false;
   nbParams.numThreads = numThreads;
-  if (!map.is_none()) {
-    nbParams.map = nbTranslateAtomMapSeq(map);
-  }
-  if (!weights.is_none()) {
-    nbParams.weights = nbTranslateDoubleVec(weights);
-  }
+  nbParams.map = nbTranslateAtomMapSeq(map);
+  nbParams.weights = nbTranslateDoubleVec(weights);
   auto [params, weightsOwner] = nbParams.toNative();
   double rmsd;
   {
@@ -343,20 +343,17 @@ double getBestRMSParams(ROMol &prbMol, ROMol &refMol,
   return rmsd;
 }
 
-nb::tuple getAllConformerBestRMS(ROMol &mol, int numThreads, nb::object map,
-                                 int maxMatches, bool symmetrize,
-                                 nb::object weights) {
+nb::tuple getAllConformerBestRMS(
+    ROMol &mol, int numThreads, const std::optional<PySequenceOf<AtomMap>> &map,
+    int maxMatches, bool symmetrize,
+    const std::optional<PySequenceOf<double>> &weights) {
   NbBestAlignmentParams nbParams;
   nbParams.maxMatches = maxMatches;
   nbParams.symmetrizeConjugatedTerminalGroups = symmetrize;
   nbParams.ignoreHs = true;
   nbParams.numThreads = numThreads;
-  if (!map.is_none()) {
-    nbParams.map = nbTranslateAtomMapSeq(map);
-  }
-  if (!weights.is_none()) {
-    nbParams.weights = nbTranslateDoubleVec(weights);
-  }
+  nbParams.map = nbTranslateAtomMapSeq(map);
+  nbParams.weights = nbTranslateDoubleVec(weights);
   auto [params, weightsOwner] = nbParams.toNative();
   std::vector<double> rmsds;
   {
@@ -408,12 +405,10 @@ nb::tuple getAllConformerBestRMSToRef(
 }
 
 double calcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
-               nb::object map, int maxMatches, bool symmetrize,
-               nb::object weights) {
-  std::vector<MatchVectType> aMapVec;
-  if (!map.is_none()) {
-    aMapVec = nbTranslateAtomMapSeq(map);
-  }
+               const std::optional<PySequenceOf<AtomMap>> &map, int maxMatches,
+               bool symmetrize,
+               const std::optional<PySequenceOf<double>> &weights) {
+  std::vector<MatchVectType> aMapVec = nbTranslateAtomMapSeq(map);
   auto wtsVec = makeDoubleVector(weights);
   double rmsd;
   {
@@ -424,9 +419,11 @@ double calcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
   return rmsd;
 }
 
-void alignMolConfs(ROMol &mol, nb::object atomIds, nb::object confIds,
-                   nb::object weights, bool reflect, unsigned int maxIters,
-                   nb::object RMSlist) {
+void alignMolConfs(ROMol &mol,
+                   const std::optional<PySequenceOf<unsigned int>> &atomIds,
+                   const std::optional<PySequenceOf<unsigned int>> &confIds,
+                   const std::optional<PySequenceOf<double>> &weights,
+                   bool reflect, unsigned int maxIters, nb::object RMSlist) {
   auto aIds = nbTranslateUIntVec(atomIds);
   auto cIds = nbTranslateUIntVec(confIds);
   auto wtsVec = makeDoubleVector(weights);
@@ -452,7 +449,8 @@ NbO3A getMMFFO3A(ROMol &prbMol, ROMol &refMol,
                  MMFF::MMFFMolProperties *prbProps,
                  MMFF::MMFFMolProperties *refProps, int prbCid, int refCid,
                  bool reflect, unsigned int maxIters, unsigned int options,
-                 nb::object constraintMap, nb::object constraintWeights) {
+                 const std::optional<AtomMap> &constraintMap,
+                 const std::optional<PySequenceOf<double>> &constraintWeights) {
   auto [cMap, cWts] =
       parseConstraints(constraintMap, constraintWeights, prbMol, refMol);
   MMFF::MMFFMolProperties *prbMolPropsPtr = nullptr;
@@ -488,12 +486,12 @@ NbO3A getMMFFO3A(ROMol &prbMol, ROMol &refMol,
   return NbO3A{std::move(o3a)};
 }
 
-nb::tuple getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
-                             MMFF::MMFFMolProperties *prbProps,
-                             MMFF::MMFFMolProperties *refProps, int refCid,
-                             bool reflect, unsigned int maxIters,
-                             unsigned int options, nb::object constraintMap,
-                             nb::object constraintWeights) {
+nb::tuple getMMFFO3AForConfs(
+    ROMol &prbMol, ROMol &refMol, int numThreads,
+    MMFF::MMFFMolProperties *prbProps, MMFF::MMFFMolProperties *refProps,
+    int refCid, bool reflect, unsigned int maxIters, unsigned int options,
+    const std::optional<AtomMap> &constraintMap,
+    const std::optional<PySequenceOf<double>> &constraintWeights) {
   auto [cMap, cWts] =
       parseConstraints(constraintMap, constraintWeights, prbMol, refMol);
   MMFF::MMFFMolProperties *prbMolPropsPtr = nullptr;
@@ -536,10 +534,13 @@ nb::tuple getMMFFO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
   return nb::tuple(pyres);
 }
 
-NbO3A getCrippenO3A(ROMol &prbMol, ROMol &refMol, nb::object prbCrippenContribs,
-                    nb::object refCrippenContribs, int prbCid, int refCid,
-                    bool reflect, unsigned int maxIters, unsigned int options,
-                    nb::object constraintMap, nb::object constraintWeights) {
+NbO3A getCrippenO3A(
+    ROMol &prbMol, ROMol &refMol,
+    const std::optional<PySequenceOf<PySequenceOf<double>>> &prbCrippenContribs,
+    const std::optional<PySequenceOf<PySequenceOf<double>>> &refCrippenContribs,
+    int prbCid, int refCid, bool reflect, unsigned int maxIters,
+    unsigned int options, const std::optional<AtomMap> &constraintMap,
+    const std::optional<PySequenceOf<double>> &constraintWeights) {
   auto [cMap, cWts] =
       parseConstraints(constraintMap, constraintWeights, prbMol, refMol);
   unsigned int prbNAtoms = prbMol.getNumAtoms();
@@ -547,9 +548,8 @@ NbO3A getCrippenO3A(ROMol &prbMol, ROMol &refMol, nb::object prbCrippenContribs,
   std::vector<double> prbLogpContribs(prbNAtoms);
   std::vector<double> refLogpContribs(refNAtoms);
 
-  if (!prbCrippenContribs.is_none() &&
-      nb::len(prbCrippenContribs) == prbNAtoms) {
-    nb::sequence prbSeq = nb::cast<nb::sequence>(prbCrippenContribs);
+  if (prbCrippenContribs && nb::len(*prbCrippenContribs) == prbNAtoms) {
+    const auto &prbSeq = *prbCrippenContribs;
     for (unsigned int i = 0; i < prbNAtoms; ++i) {
       nb::sequence tup = nb::cast<nb::sequence>(prbSeq[i]);
       prbLogpContribs[i] = nb::cast<double>(tup[0]);
@@ -562,9 +562,8 @@ NbO3A getCrippenO3A(ROMol &prbMol, ROMol &refMol, nb::object prbCrippenContribs,
                                         true, &prbAtomTypes,
                                         &prbAtomTypeLabels);
   }
-  if (!refCrippenContribs.is_none() &&
-      nb::len(refCrippenContribs) == refNAtoms) {
-    nb::sequence refSeq = nb::cast<nb::sequence>(refCrippenContribs);
+  if (refCrippenContribs && nb::len(*refCrippenContribs) == refNAtoms) {
+    const auto &refSeq = *refCrippenContribs;
     for (unsigned int i = 0; i < refNAtoms; ++i) {
       nb::sequence tup = nb::cast<nb::sequence>(refSeq[i]);
       refLogpContribs[i] = nb::cast<double>(tup[0]);
@@ -589,12 +588,13 @@ NbO3A getCrippenO3A(ROMol &prbMol, ROMol &refMol, nb::object prbCrippenContribs,
   return NbO3A{std::move(o3a)};
 }
 
-nb::tuple getCrippenO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
-                                nb::object prbCrippenContribs,
-                                nb::object refCrippenContribs, int refCid,
-                                bool reflect, unsigned int maxIters,
-                                unsigned int options, nb::object constraintMap,
-                                nb::object constraintWeights) {
+nb::tuple getCrippenO3AForConfs(
+    ROMol &prbMol, ROMol &refMol, int numThreads,
+    const std::optional<PySequenceOf<PySequenceOf<double>>> &prbCrippenContribs,
+    const std::optional<PySequenceOf<PySequenceOf<double>>> &refCrippenContribs,
+    int refCid, bool reflect, unsigned int maxIters, unsigned int options,
+    const std::optional<AtomMap> &constraintMap,
+    const std::optional<PySequenceOf<double>> &constraintWeights) {
   auto [cMap, cWts] =
       parseConstraints(constraintMap, constraintWeights, prbMol, refMol);
   unsigned int prbNAtoms = prbMol.getNumAtoms();
@@ -602,9 +602,8 @@ nb::tuple getCrippenO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
   std::vector<double> prbLogpContribs(prbNAtoms);
   std::vector<double> refLogpContribs(refNAtoms);
 
-  if (!prbCrippenContribs.is_none() &&
-      nb::len(prbCrippenContribs) == prbNAtoms) {
-    nb::sequence prbSeq = nb::cast<nb::sequence>(prbCrippenContribs);
+  if (prbCrippenContribs && nb::len(*prbCrippenContribs) == prbNAtoms) {
+    const auto &prbSeq = *prbCrippenContribs;
     for (unsigned int i = 0; i < prbNAtoms; ++i) {
       nb::sequence tup = nb::cast<nb::sequence>(prbSeq[i]);
       prbLogpContribs[i] = nb::cast<double>(tup[0]);
@@ -617,9 +616,8 @@ nb::tuple getCrippenO3AForConfs(ROMol &prbMol, ROMol &refMol, int numThreads,
                                         true, &prbAtomTypes,
                                         &prbAtomTypeLabels);
   }
-  if (!refCrippenContribs.is_none() &&
-      nb::len(refCrippenContribs) == refNAtoms) {
-    nb::sequence refSeq = nb::cast<nb::sequence>(refCrippenContribs);
+  if (refCrippenContribs && nb::len(*refCrippenContribs) == refNAtoms) {
+    const auto &refSeq = *refCrippenContribs;
     for (unsigned int i = 0; i < refNAtoms; ++i) {
       nb::sequence tup = nb::cast<nb::sequence>(refSeq[i]);
       refLogpContribs[i] = nb::cast<double>(tup[0]);
@@ -684,7 +682,7 @@ will be considered symmetrically.)DOC")
             }
             return nb::tuple(result);
           },
-          [](NbBestAlignmentParams &p, nb::object obj) {
+          [](NbBestAlignmentParams &p, const PySequenceOf<AtomMap> &obj) {
             p.map = nbTranslateAtomMapSeq(obj);
           },
           "the atom-atom mapping(s) used in the alignment")
@@ -697,7 +695,7 @@ will be considered symmetrically.)DOC")
             }
             return nb::tuple(result);
           },
-          [](NbBestAlignmentParams &p, nb::object obj) {
+          [](NbBestAlignmentParams &p, const PySequenceOf<double> &obj) {
             p.weights = nbTranslateDoubleVec(obj);
           },
           "the weights used in the alignment");
