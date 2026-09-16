@@ -67,32 +67,35 @@ nb::tuple computeAtomCIPRanksHelper(ROMol &mol) {
 
 nb::tuple fragmentOnSomeBondsHelper(
     const ROMol &mol, const PyIterableOf<unsigned int> &pyBondIndices,
-    unsigned int nToBreak, bool addDummies, nb::object pyDummyLabels,
-    nb::object pyBondTypes, bool returnCutsPerAtom) {
+    unsigned int nToBreak, bool addDummies,
+    const std::optional<PySequenceOf<PySequenceOf<unsigned int>>>
+        &pyDummyLabels,
+    const std::optional<PySequenceOf<Bond::BondType>> &pyBondTypes,
+    bool returnCutsPerAtom) {
   auto bondIndices = pythonObjectToVect(pyBondIndices, mol.getNumBonds());
   if (!bondIndices.get() || bondIndices->empty()) {
     throw ValueErrorException("empty bond indices");
   }
 
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
-  if (!pyDummyLabels.is_none()) {
-    unsigned int nVs = nb::len(pyDummyLabels);
+  if (pyDummyLabels) {
+    unsigned int nVs = nb::len(*pyDummyLabels);
     dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
-      auto v1 = nb::cast<unsigned int>(pyDummyLabels[i][0]);
-      auto v2 = nb::cast<unsigned int>(pyDummyLabels[i][1]);
+      auto v1 = nb::cast<unsigned int>((*pyDummyLabels)[i][0]);
+      auto v2 = nb::cast<unsigned int>((*pyDummyLabels)[i][1]);
       (*dummyLabels)[i] = std::make_pair(v1, v2);
     }
   }
   std::vector<Bond::BondType> *bondTypes = nullptr;
-  if (!pyBondTypes.is_none()) {
-    unsigned int nVs = nb::len(pyBondTypes);
+  if (pyBondTypes) {
+    unsigned int nVs = nb::len(*pyBondTypes);
     if (nVs != bondIndices->size()) {
       throw ValueErrorException("bondTypes shorter than bondIndices");
     }
     bondTypes = new std::vector<Bond::BondType>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
-      (*bondTypes)[i] = nb::cast<Bond::BondType>(pyBondTypes[i]);
+      (*bondTypes)[i] = nb::cast<Bond::BondType>((*pyBondTypes)[i]);
     }
   }
   std::vector<std::vector<unsigned int>> *cutsPerAtom = nullptr;
@@ -141,33 +144,36 @@ nb::tuple getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
   return nb::steal<nb::tuple>(PySequence_Tuple(res.ptr()));
 }
 
-ROMol *fragmentOnBondsHelper(const ROMol &mol,
-                             const PyIterableOf<unsigned int> &pyBondIndices,
-                             bool addDummies, nb::object pyDummyLabels,
-                             nb::object pyBondTypes, nb::object pyCutsPerAtom) {
+ROMol *fragmentOnBondsHelper(
+    const ROMol &mol, const PyIterableOf<unsigned int> &pyBondIndices,
+    bool addDummies,
+    const std::optional<PySequenceOf<PySequenceOf<unsigned int>>>
+        &pyDummyLabels,
+    const std::optional<PySequenceOf<Bond::BondType>> &pyBondTypes,
+    nb::object pyCutsPerAtom) {
   auto bondIndices = pythonObjectToVect(pyBondIndices, mol.getNumBonds());
   if (!bondIndices.get() || bondIndices->empty()) {
     throw ValueErrorException("empty bond indices");
   }
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
-  if (!pyDummyLabels.is_none()) {
-    unsigned int nVs = nb::len(pyDummyLabels);
+  if (pyDummyLabels) {
+    unsigned int nVs = nb::len(*pyDummyLabels);
     dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
-      auto v1 = nb::cast<unsigned int>(pyDummyLabels[i][0]);
-      auto v2 = nb::cast<unsigned int>(pyDummyLabels[i][1]);
+      auto v1 = nb::cast<unsigned int>((*pyDummyLabels)[i][0]);
+      auto v2 = nb::cast<unsigned int>((*pyDummyLabels)[i][1]);
       (*dummyLabels)[i] = std::make_pair(v1, v2);
     }
   }
   std::vector<Bond::BondType> *bondTypes = nullptr;
-  if (!pyBondTypes.is_none()) {
-    unsigned int nVs = nb::len(pyBondTypes);
+  if (pyBondTypes) {
+    unsigned int nVs = nb::len(*pyBondTypes);
     if (nVs != bondIndices->size()) {
       throw ValueErrorException("bondTypes shorter than bondIndices");
     }
     bondTypes = new std::vector<Bond::BondType>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
-      (*bondTypes)[i] = nb::cast<Bond::BondType>(pyBondTypes[i]);
+      (*bondTypes)[i] = nb::cast<Bond::BondType>((*pyBondTypes)[i]);
     }
   }
   std::vector<unsigned int> *cutsPerAtom = nullptr;
@@ -227,14 +233,16 @@ std::string getChainId(const ROMol &, const Atom *at) {
   return static_cast<const AtomPDBResidueInfo *>(monomerInfo)->getChainId();
 }
 }  // namespace
-nb::dict splitMolByPDBResidues(const ROMol &mol, nb::object pyWhiteList,
-                               bool negateList) {
+nb::dict splitMolByPDBResidues(
+    const ROMol &mol,
+    const std::optional<PySequenceOf<std::string>> &pyWhiteList,
+    bool negateList) {
   std::unique_ptr<std::vector<std::string>> whiteList{nullptr};
-  if (!pyWhiteList.is_none()) {
-    unsigned int nVs = nb::len(pyWhiteList);
+  if (pyWhiteList) {
+    unsigned int nVs = nb::len(*pyWhiteList);
     whiteList.reset(new std::vector<std::string>(nVs));
     for (unsigned int i = 0; i < nVs; ++i) {
-      (*whiteList)[i] = nb::cast<std::string>(pyWhiteList[i]);
+      (*whiteList)[i] = nb::cast<std::string>((*pyWhiteList)[i]);
     }
   }
   std::map<std::string, boost::shared_ptr<ROMol>> res =
@@ -247,14 +255,16 @@ nb::dict splitMolByPDBResidues(const ROMol &mol, nb::object pyWhiteList,
   }
   return pyres;
 }
-nb::dict splitMolByPDBChainId(const ROMol &mol, nb::object pyWhiteList,
-                              bool negateList) {
+nb::dict splitMolByPDBChainId(
+    const ROMol &mol,
+    const std::optional<PySequenceOf<std::string>> &pyWhiteList,
+    bool negateList) {
   std::unique_ptr<std::vector<std::string>> whiteList{nullptr};
-  if (!pyWhiteList.is_none()) {
-    unsigned int nVs = nb::len(pyWhiteList);
+  if (pyWhiteList) {
+    unsigned int nVs = nb::len(*pyWhiteList);
     whiteList.reset(new std::vector<std::string>(nVs));
     for (unsigned int i = 0; i < nVs; ++i) {
-      (*whiteList)[i] = nb::cast<std::string>(pyWhiteList[i]);
+      (*whiteList)[i] = nb::cast<std::string>((*pyWhiteList)[i]);
     }
   }
   std::map<std::string, boost::shared_ptr<ROMol>> res =
@@ -599,10 +609,11 @@ nb::object getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
   }
 }
 
-nb::tuple GetMolFragsWithMapping(const ROMol &mol, bool asMols,
-                                 bool sanitizeFrags,
-                                 nb::object frags = nb::none(),
-                                 nb::object fragsMolAtomMapping = nb::none()) {
+nb::tuple GetMolFragsWithMapping(
+    const ROMol &mol, bool asMols, bool sanitizeFrags,
+    const std::optional<PyListOf<int>> &frags = std::nullopt,
+    const std::optional<PyListOf<PyTupleOf<int>>> &fragsMolAtomMapping =
+        std::nullopt) {
   nb::list res;
 
   if (!asMols) {
@@ -620,19 +631,19 @@ nb::tuple GetMolFragsWithMapping(const ROMol &mol, bool asMols,
     std::vector<std::vector<int>> fragsMolAtomMappingVec;
     std::vector<int> fragsVec;
     std::vector<std::unique_ptr<ROMol>> molFrags;
-    bool hasFrags = !frags.is_none();
-    bool hasFragsMolAtomMapping = !fragsMolAtomMapping.is_none();
+    bool hasFrags = frags.has_value();
+    bool hasFragsMolAtomMapping = fragsMolAtomMapping.has_value();
     MolOps::getMolFrags(
         mol, molFrags, sanitizeFrags, hasFrags ? &fragsVec : nullptr,
         hasFragsMolAtomMapping ? &fragsMolAtomMappingVec : nullptr);
     if (hasFrags) {
-      auto fragsList = nb::cast<nb::list>(frags);
+      nb::list fragsList = *frags;
       for (int i : fragsVec) {
         fragsList.append(i);
       }
     }
     if (hasFragsMolAtomMapping) {
-      auto fragsMolAtomMappingList = nb::cast<nb::list>(fragsMolAtomMapping);
+      nb::list fragsMolAtomMappingList = *fragsMolAtomMapping;
       for (auto &i : fragsMolAtomMappingVec) {
         nb::list perFragMolAtomMappingTpl;
         for (auto &j : i) {
@@ -732,17 +743,18 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     bool useBondOrder,
     const std::optional<PyIterableOf<unsigned int>> &atomInvariants,
     const std::optional<PyIterableOf<unsigned int>> &fromAtoms,
-    nb::object atomBits, nb::object bitInfo) {
+    const std::optional<PyListOf<PyListOf<int>>> &atomBits,
+    const std::optional<PyDictOf<int, PyListOf<PyListOf<int>>>> &bitInfo) {
   std::unique_ptr<std::vector<unsigned int>> lAtomInvariants =
       pythonObjectToVect<unsigned int>(atomInvariants);
   std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::vector<std::vector<std::uint32_t>> *lAtomBits = nullptr;
-  if (!atomBits.is_none()) {
+  if (atomBits) {
     lAtomBits = new std::vector<std::vector<std::uint32_t>>(mol.getNumAtoms());
   }
   std::map<std::uint32_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
-  if (!bitInfo.is_none()) {
+  if (bitInfo) {
     lBitInfo = new std::map<std::uint32_t, std::vector<std::vector<int>>>;
   }
   ExplicitBitVect *res;
@@ -752,7 +764,7 @@ ExplicitBitVect *wrapRDKFingerprintMol(
                                  lFromAtoms.get(), lAtomBits, lBitInfo);
 
   if (lAtomBits) {
-    auto pyl = nb::cast<nb::list>(atomBits);
+    nb::list pyl = *atomBits;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       nb::list tmp;
       for (auto v : (*lAtomBits)[i]) {
@@ -762,8 +774,8 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     }
     delete lAtomBits;
   }
-  if (!bitInfo.is_none()) {
-    auto pyBitInfo = nb::cast<nb::dict>(bitInfo);
+  if (bitInfo) {
+    nb::dict pyBitInfo = *bitInfo;
     for (auto &it : (*lBitInfo)) {
       nb::list temp;
       std::vector<std::vector<int>>::iterator itset;
@@ -787,18 +799,19 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
     bool branchedPaths, bool useBondOrder,
     const std::optional<PyIterableOf<unsigned int>> &atomInvariants,
     const std::optional<PyIterableOf<unsigned int>> &fromAtoms,
-    nb::object atomBits, nb::object bitInfo) {
+    const std::optional<PyListOf<PyListOf<int>>> &atomBits,
+    const std::optional<PyDictOf<int, PyListOf<PyListOf<int>>>> &bitInfo) {
   std::unique_ptr<std::vector<unsigned int>> lAtomInvariants =
       pythonObjectToVect<unsigned int>(atomInvariants);
   std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::vector<std::vector<boost::uint64_t>> *lAtomBits = nullptr;
-  if (!atomBits.is_none()) {
+  if (atomBits) {
     lAtomBits =
         new std::vector<std::vector<boost::uint64_t>>(mol.getNumAtoms());
   }
   std::map<boost::uint64_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
-  if (!bitInfo.is_none()) {
+  if (bitInfo) {
     lBitInfo = new std::map<boost::uint64_t, std::vector<std::vector<int>>>;
   }
 
@@ -808,7 +821,7 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
       lAtomInvariants.get(), lFromAtoms.get(), lAtomBits, lBitInfo);
 
   if (lAtomBits) {
-    auto pyl = nb::cast<nb::list>(atomBits);
+    nb::list pyl = *atomBits;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       nb::list tmp;
       for (auto v : (*lAtomBits)[i]) {
@@ -818,8 +831,8 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
     }
     delete lAtomBits;
   }
-  if (!bitInfo.is_none()) {
-    auto pyBitInfo = nb::cast<nb::dict>(bitInfo);
+  if (bitInfo) {
+    nb::dict pyBitInfo = *bitInfo;
     for (auto &it : (*lBitInfo)) {
       nb::list temp;
       std::vector<std::vector<int>>::iterator itset;
@@ -861,31 +874,30 @@ nb::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
   return nb::steal<nb::tuple>(PySequence_Tuple(res.ptr()));
 };
 
-PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol,
-                                             unsigned int radius,
-                                             unsigned int rootedAtAtom,
-                                             bool useHs, bool enforceSize,
-                                             nb::object atomMap) {
+PATH_TYPE findAtomEnvironmentOfRadiusNHelper(
+    const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
+    bool useHs, bool enforceSize,
+    const std::optional<PyDictOf<int, int>> &atomMap) {
   PATH_TYPE path;
-  if (atomMap.is_none()) {
+  if (!atomMap) {
     path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
                                         enforceSize);
   } else {
     std::unordered_map<unsigned int, unsigned int> cAtomMap;
     path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
                                         enforceSize, &cAtomMap);
-    // make sure the optional argument (atomMap) is actually a dictionary
-    auto typecheck = nb::cast<nb::dict>(atomMap);
-    atomMap.attr("clear")();
+    nb::dict mapDict = *atomMap;
+    mapDict.clear();
     for (auto pair : cAtomMap) {
-      atomMap[pair.first] = pair.second;
+      mapDict[nb::int_(pair.first)] = nb::int_(pair.second);
     }
   }
   return path;
 }
 
-ROMol *pathToSubmolHelper(const ROMol &mol, nb::object &path, bool useQuery,
-                          nb::object atomMap) {
+ROMol *pathToSubmolHelper(const ROMol &mol,
+                          const PySequenceOf<unsigned int> &path, bool useQuery,
+                          const std::optional<PyDictOf<int, int>> &atomMap) {
   ROMol *result;
   PATH_TYPE pth;
   for (unsigned int i = 0; i < nb::len(path); ++i) {
@@ -893,9 +905,8 @@ ROMol *pathToSubmolHelper(const ROMol &mol, nb::object &path, bool useQuery,
   }
   std::map<int, int> mapping;
   result = Subgraphs::pathToSubmol(mol, pth, useQuery, mapping);
-  if (!atomMap.is_none()) {
-    // make sure the optional argument actually was a dictionary
-    auto mapDict = nb::cast<nb::dict>(atomMap);
+  if (atomMap) {
+    nb::dict mapDict = *atomMap;
     mapDict.clear();
     for (const auto &[k, v] : mapping) {
       mapDict[nb::int_(k)] = nb::int_(v);
@@ -904,19 +915,22 @@ ROMol *pathToSubmolHelper(const ROMol &mol, nb::object &path, bool useQuery,
   return result;
 }
 
-ROMol *adjustQueryPropertiesHelper(const ROMol &mol, nb::object pyparams) {
+ROMol *adjustQueryPropertiesHelper(
+    const ROMol &mol,
+    const std::optional<MolOps::AdjustQueryParameters> &pyparams) {
   MolOps::AdjustQueryParameters params;
-  if (!pyparams.is_none()) {
-    params = nb::cast<MolOps::AdjustQueryParameters>(pyparams);
+  if (pyparams) {
+    params = *pyparams;
   }
   return MolOps::adjustQueryProperties(mol, &params);
 }
 
-ROMol *adjustQueryPropertiesWithGenericGroupsHelper(const ROMol &mol,
-                                                    nb::object pyparams) {
+ROMol *adjustQueryPropertiesWithGenericGroupsHelper(
+    const ROMol &mol,
+    const std::optional<MolOps::AdjustQueryParameters> &pyparams) {
   MolOps::AdjustQueryParameters params;
-  if (!pyparams.is_none()) {
-    params = nb::cast<MolOps::AdjustQueryParameters>(pyparams);
+  if (pyparams) {
+    params = *pyparams;
   }
   return GenericGroups::adjustQueryPropertiesWithGenericGroups(mol, &params);
 }
@@ -998,12 +1012,13 @@ void setDoubleBondNeighborDirectionsHelper(ROMol &mol, nb::object confObj) {
   MolOps::setDoubleBondNeighborDirections(mol, conf);
 }
 
-void setAtomSymbols(MolzipParams &p, nb::object symbols) {
+void setAtomSymbols(MolzipParams &p,
+                    const std::optional<PySequenceOf<std::string>> &symbols) {
   p.atomSymbols.clear();
   if (symbols) {
-    unsigned int nVs = nb::len(symbols);
+    unsigned int nVs = nb::len(*symbols);
     for (unsigned int i = 0; i < nVs; ++i) {
-      p.atomSymbols.push_back(nb::cast<std::string>(symbols[i]));
+      p.atomSymbols.push_back(nb::cast<std::string>((*symbols)[i]));
     }
   }
 }

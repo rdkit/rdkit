@@ -91,6 +91,27 @@ RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 template <typename T>
 using PyIterableOf = nb::typed<nb::iterable, T>;
 
+//! Python containers that name their element types in generated signatures:
+//! PyTupleOf<int> renders as tuple[int, ...], and they nest, so
+//! PyTupleOf<PyTupleOf<int>> renders as tuple[tuple[int, ...], ...]. A fixed
+//! length heterogeneous tuple is spelled out instead, as
+//! nb::typed<nb::tuple, double, int>. nanobind checks only the container: a
+//! returned value is not validated against the declared type, and an argument
+//! must be a tuple, list or dict, with its elements converted where they are
+//! read.
+template <typename T>
+using PyTupleOf = nb::typed<nb::tuple, T, nb::ellipsis>;
+template <typename T>
+using PyListOf = nb::typed<nb::list, T>;
+template <typename K, typename V>
+using PyDictOf = nb::typed<nb::dict, K, V>;
+
+//! A Python sequence whose elements convert to \c T, for arguments that are
+//! indexed or measured with len() rather than only iterated. Accepts anything
+//! passing PySequence_Check, which excludes sets and generators.
+template <typename T>
+using PySequenceOf = nb::typed<nb::sequence, T>;
+
 //! Text that reached us as either \c str or \c bytes. nanobind renders this
 //! as "str | bytes" in generated signatures and rejects anything else before
 //! the call is dispatched; pyObjectToString() gets at the text itself.

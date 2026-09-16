@@ -8692,6 +8692,37 @@ M  END
     with self.assertRaises(ValueError):
       sgroup.AddBracket(p for p in pts[:1])
 
+  def testMolOpsContainerParams(self):
+    m = Chem.MolFromSmiles('CCO')
+
+    atomMap = {}
+    self.assertEqual(len(Chem.FindAtomEnvironmentOfRadiusN(m, 1, 0, atomMap=atomMap)), 1)
+    self.assertEqual(atomMap, {0: 0, 1: 1})
+    with self.assertRaises(TypeError):
+      Chem.FindAtomEnvironmentOfRadiusN(m, 1, 0, atomMap=[])
+
+    # Output arguments are filled in place, so they must be a list or dict.
+    frags = []
+    Chem.GetMolFrags(Chem.MolFromSmiles('CC.O'), asMols=True, frags=frags)
+    self.assertEqual(frags, [0, 0, 1])
+    with self.assertRaises(TypeError):
+      Chem.GetMolFrags(m, asMols=True, frags=())
+    with self.assertRaises(TypeError):
+      Chem.RDKFingerprint(m, bitInfo=[])
+
+    self.assertEqual(Chem.PathToSubmol(m, (0, 1)).GetNumAtoms(), 3)
+    peptide = Chem.MolFromSequence('AG')
+    self.assertEqual(sorted(Chem.SplitMolByPDBResidues(peptide, whiteList=('ALA', ))), ['ALA'])
+
+    a = Chem.MolFromSmiles("[C@H]([Xe])(F)([V])")
+    b = Chem.MolFromSmiles("[Xe]N.[V]I")
+    p = Chem.MolzipParams()
+    p.label = Chem.MolzipLabel.AtomType
+    p.setAtomSymbols(("Xe", "V"))
+    self.assertEqual(Chem.MolToSmiles(Chem.molzip(a, b, p)), "N[C@@H](F)I")
+    p.setAtomSymbols(None)
+    self.assertNotEqual(Chem.MolToSmiles(Chem.molzip(a, b, p)), "N[C@@H](F)I")
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
