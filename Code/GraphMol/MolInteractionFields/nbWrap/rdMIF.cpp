@@ -73,9 +73,6 @@ NB_MODULE(rdMIF, m) {
       R"DOC(Module containing functions for calculating molecular interaction fields (MIFs)
 NOTE: This functionality is experimental and the API and/or results may change in future releases.)DOC";
 
-  nb::exception<ValueErrorException>(m, "MIFValueError", PyExc_ValueError);
-  nb::exception<IndexErrorException>(m, "MIFIndexError", PyExc_IndexError);
-
   nb::class_<Coulomb>(m, "Coulomb",
                       R"DOC(Class for calculation of electrostatic interaction (Coulomb energy) between probe and molecule in
         vacuum (no dielectric).

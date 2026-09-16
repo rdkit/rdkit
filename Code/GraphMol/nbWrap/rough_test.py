@@ -26,6 +26,7 @@ import numpy as np
 
 # import rdkit.Chem.rdDepictor
 from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
+from rdkit.Chem import rdMIF
 from rdkit.Chem import rdqueries
 
 from rdkit.Chem import rdChemReactions
@@ -8638,6 +8639,28 @@ M  END
     self.assertEqual(len(rings), 24)
     rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
     self.assertEqual(len(rings), 70)
+
+  def testExceptionsUseStandardTypes(self):
+    # assertRaises alone would not pin this down, since a subclass satisfies
+    # it too; the point is that the type is the builtin itself.
+    m = Chem.MolFromSmiles('CCO')
+    with self.assertRaises(ValueError) as caught:
+      Chem.RenumberAtoms(m, [0])
+    self.assertIs(type(caught.exception), ValueError)
+
+    v = DataStructs.RealValueVect(30)
+    with self.assertRaises(IndexError) as caught:
+      v[40]
+    self.assertIs(type(caught.exception), IndexError)
+    self.assertEqual(caught.exception.args, (40, ))
+
+    self.assertFalse(hasattr(rdBase, 'ValueErrorException'))
+    self.assertFalse(hasattr(rdBase, 'IndexErrorException'))
+
+    # rdMIF registers the same two C++ types, and whichever module registers
+    # last is the one that decides what gets raised, so it has to agree.
+    self.assertFalse(hasattr(rdMIF, 'MIFValueError'))
+    self.assertFalse(hasattr(rdMIF, 'MIFIndexError'))
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
