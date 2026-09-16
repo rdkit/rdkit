@@ -35,6 +35,7 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/variant.h>
+#include <nanobind/stl/filesystem.h>
 
 #include <ChemDraw/chemdraw.h>
 #include <ChemDraw/chemdrawreaction.h>
@@ -78,11 +79,11 @@ nb::tuple MolsFromChemDrawBlockHelper(
 }
 
 nb::tuple MolsFromChemDrawFileHelper(
-    const StringOrBytes &cdxml, bool sanitize, bool removeHs,
+    const std::filesystem::path &filename, bool sanitize, bool removeHs,
     RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
         RDKit::v2::NeedsCleanPolicy::TrustSource) {
   auto mols = RDKit::v2::MolsFromChemDrawFile(
-      pyObjectToString(cdxml),
+      filename.string(),
       {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy});
   nb::list res;
   for (auto &mol : mols) {
