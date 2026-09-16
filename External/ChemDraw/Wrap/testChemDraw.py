@@ -270,7 +270,7 @@ class TestChemDraw(unittest.TestCase):
          E="28"
          BS="N"
         /></fragment></page></CDXML>"""
-    mols = rdChemDraw.MolsFromChemDraw(cdxml)
+    mols = rdChemDraw.MolsFromChemDrawBlock(cdxml)
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
 
@@ -289,5 +289,9 @@ class TestChemDraw(unittest.TestCase):
     self.assertEqual(rxns[0].GetNumProductTemplates(), 1)
 
     self.assertEqual(len(rdChemDraw.ReactionsFromChemDrawFile(path)), 1)
+
+
+if __name__ == '__main__':
+  unittest.main()
 
 
