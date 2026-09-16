@@ -250,7 +250,10 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/hanickadot/compile-time-regular-expressions.git
   GIT_TAG        v3.11.0
 )
-FetchContent_MakeAvailable(ctre)
+FetchContent_GetProperties(ctre)
+if(NOT ctre_POPULATED)
+  FetchContent_Populate(ctre)
+endif()
 target_include_directories(rdkit_base INTERFACE
   $<BUILD_INTERFACE:${ctre_SOURCE_DIR}/include>)
 
