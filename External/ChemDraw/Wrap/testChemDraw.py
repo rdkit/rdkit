@@ -290,6 +290,12 @@ class TestChemDraw(unittest.TestCase):
 
     self.assertEqual(len(rdChemDraw.ReactionsFromChemDrawFile(path)), 1)
 
+  def test_cdx_file(self):
+    path = os.path.join(RDConfig.RDBaseDir, "Code", "GraphMol", "test_data", "CDX",
+                        "structure_1.cdx")
+    mols = rdChemDraw.MolsFromChemDrawFile(path)
+    self.assertEqual([Chem.MolToSmiles(m) for m in mols], ["C1CCOC1"])
+
 
 if __name__ == '__main__':
   unittest.main()
