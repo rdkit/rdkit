@@ -54,13 +54,13 @@ using namespace RDKit;
 namespace {
 
 nb::tuple MolsFromChemDrawBlockHelper(
-    const std::string &block, bool sanitize, bool removeHs,
+    const StringOrBytes &block, bool sanitize, bool removeHs,
     RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
         RDKit::v2::NeedsCleanPolicy::TrustSource) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
     mols = RDKit::v2::MolsFromChemDrawBlock(
-        block,
+        pyObjectToString(block),
         {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy});
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
