@@ -93,11 +93,12 @@ using PyIterableOf = nb::typed<nb::iterable, T>;
 
 //! Python containers that name their element types in generated signatures:
 //! PyTupleOf<int> renders as tuple[int, ...], and they nest, so
-//! PyTupleOf<PyTupleOf<int>> renders as tuple[tuple[int, ...], ...]. Use these
-//! for return types; nanobind does not validate a returned value against the
-//! declared type, so they are annotations rather than conversions. A fixed
+//! PyTupleOf<PyTupleOf<int>> renders as tuple[tuple[int, ...], ...]. A fixed
 //! length heterogeneous tuple is spelled out instead, as
-//! nb::typed<nb::tuple, double, int>.
+//! nb::typed<nb::tuple, double, int>. nanobind checks only the container: a
+//! returned value is not validated against the declared type, and an argument
+//! must be a tuple, list or dict, with its elements converted where they are
+//! read.
 template <typename T>
 using PyTupleOf = nb::typed<nb::tuple, T, nb::ellipsis>;
 template <typename T>
