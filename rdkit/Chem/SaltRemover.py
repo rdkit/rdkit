@@ -45,6 +45,9 @@ class InputFormat:
   SMILES = 'smiles'
 
 
+StrippedMol = namedtuple('StrippedMol', ['mol', 'deleted'])
+
+
 def _smartsFromSmartsLine(line):
   """
     Converts given line into a molecule using 'Chem.MolFromSmarts'.
@@ -239,7 +242,7 @@ class SaltRemover(object):
         '[Cl,Br]'
 
         Multiple occurrences of 'Cl' and without tuple destructuring
-        
+
         >>> mol = Chem.MolFromSmiles('CN(C)C.Cl.Cl')
         >>> tup = remover.StripMolWithDeleted(mol)
 
@@ -274,7 +277,6 @@ class SaltRemover(object):
         res = t
       return res
 
-    StrippedMol = namedtuple('StrippedMol', ['mol', 'deleted'])
     deleted = []
     if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
       return StrippedMol(mol, deleted)
