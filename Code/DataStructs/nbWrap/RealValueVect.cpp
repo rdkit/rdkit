@@ -74,7 +74,7 @@ struct realValVec_wrapper {
         .def("__getstate__", getObjectState<RealValueVect, rvvToString>)
         .def("__setstate__", setObjectState<RealValueVect>)
         .doc() = realValVectDoc.c_str();
-    m.def("ComputeL1Norm", computeL1Norm,
+    m.def("ComputeL1Norm", computeL1Norm, "v1"_a, "v2"_a,
           "Compute the distance between two real vector values\n");
   }
 };
