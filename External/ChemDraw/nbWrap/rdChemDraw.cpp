@@ -66,7 +66,7 @@ nb::tuple MolsFromChemDrawBlockHelper(
   try {
     mols = RDKit::v2::MolsFromChemDrawBlock(
         block,
-        {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy});
+        {sanitize, removeHs, RDKit::v2::CDXFormat::AUTO, needsCleanPolicy});
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -89,7 +89,7 @@ nb::tuple MolsFromChemDrawFileHelper(
         RDKit::v2::NeedsCleanPolicy::TrustSource) {
   auto mols = RDKit::v2::MolsFromChemDrawFile(
       pyObjectToString(cdxml),
-      {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy});
+      {sanitize, removeHs, RDKit::v2::CDXFormat::AUTO, needsCleanPolicy});
   nb::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr

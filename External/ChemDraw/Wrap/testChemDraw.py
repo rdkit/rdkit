@@ -11,7 +11,7 @@ import os
 import sys
 import unittest
 
-from rdkit import Chem
+from rdkit import Chem, RDConfig
 from rdkit.Chem import rdChemDraw
 
 class TestChemDraw(unittest.TestCase):
@@ -273,5 +273,11 @@ class TestChemDraw(unittest.TestCase):
     mols = rdChemDraw.MolsFromChemDraw(cdxml)
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
+
+  def test_cdx_file(self):
+    path = os.path.join(RDConfig.RDBaseDir, "Code", "GraphMol", "test_data", "CDX",
+                        "structure_1.cdx")
+    mols = rdChemDraw.MolsFromChemDrawFile(path)
+    self.assertEqual([Chem.MolToSmiles(m) for m in mols], ["C1CCOC1"])
 
 
