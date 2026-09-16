@@ -8639,6 +8639,12 @@ M  END
     rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
     self.assertEqual(len(rings), 70)
 
+  def testSupplierRejectsObjectWithoutRead(self):
+    for bad in (42, object()):
+      with self.subTest(arg=type(bad).__name__):
+        with self.assertRaises(ValueError):
+          Chem.ForwardSDMolSupplier(bad)
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
