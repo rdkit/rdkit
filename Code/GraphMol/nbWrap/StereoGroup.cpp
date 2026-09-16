@@ -31,7 +31,8 @@ of diastereomers.
 )DOC";
 
 StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
-                               nb::object atomIds, nb::object bondIds,
+                               const PyIterableOf<unsigned int> &atomIds,
+                               const PyIterableOf<unsigned int> &bondIds,
                                unsigned readId) {
   std::vector<Atom *> cppAtoms;
   std::vector<Bond *> cppBonds;

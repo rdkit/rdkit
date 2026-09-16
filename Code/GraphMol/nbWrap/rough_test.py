@@ -8659,6 +8659,19 @@ M  END
     self.assertIn('str | bytes', Chem.MolFromSmiles.__doc__)
     self.assertIn('str | bytes', Chem.MolFromMolBlock.__doc__)
 
+  def testSequenceParamsAcceptAnyIterable(self):
+    m = Chem.RWMol(Chem.MolFromSmiles('C[C@H](F)Cl'))
+    group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m,
+                                          (i for i in [1]))
+    self.assertEqual(len(group.GetAtoms()), 1)
+    for bad in (42, None):
+      with self.subTest(value=bad):
+        with self.assertRaises(TypeError):
+          Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, bad)
+
+  def testSequenceParamSignaturesAreTyped(self):
+    self.assertIn('collections.abc.Iterable[int]', Chem.rdchem.CreateStereoGroup.__doc__)
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

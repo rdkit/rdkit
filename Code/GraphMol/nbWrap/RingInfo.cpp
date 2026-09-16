@@ -95,8 +95,8 @@ nb::tuple bondRingFamilies(const RingInfo *self) {
   return nb::tuple(res);
 }
 
-void addRing(RingInfo *self, const nb::object &atomRing,
-             const nb::object &bondRing) {
+void addRing(RingInfo *self, const PyIterableOf<int> &atomRing,
+             const PyIterableOf<int> &bondRing) {
   auto atomIds = pythonObjectToVect<int>(atomRing);
   auto bondIds = pythonObjectToVect<int>(bondRing);
   const unsigned int nAts = atomIds ? atomIds->size() : 0;

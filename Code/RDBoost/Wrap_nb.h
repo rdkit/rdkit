@@ -81,6 +81,13 @@ RDKIT_RDBOOST_EXPORT void throw_runtime_error(
 RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 #endif
 
+//! A Python iterable whose elements convert to \c T. nanobind renders this as
+//! collections.abc.Iterable[T] in generated signatures and rejects
+//! non-iterables at the call boundary; element types are checked as they are
+//! converted. Wrap it in std::optional for arguments that also accept None.
+template <typename T>
+using PyIterableOf = nb::typed<nb::iterable, T>;
+
 //! NOTE: this returns a nullptr if obj is None or empty
 template <typename T>
 std::unique_ptr<std::vector<T>> pythonObjectToVect(const nb::object &obj,
