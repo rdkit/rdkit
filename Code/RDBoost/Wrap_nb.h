@@ -18,6 +18,7 @@
 #include <cstdint>
 
 #include <list>
+#include <optional>
 #include <string_view>
 #include <vector>
 #include <RDGeneral/Exceptions.h>
@@ -123,6 +124,28 @@ void pythonObjectToVect(const nb::object &obj, std::vector<T> &res) {
     res.clear();
     std::transform(obj.begin(), obj.end(), std::back_inserter(res),
                    [](const auto &v) { return nb::cast<T>(v); });
+  } else {
+    res.clear();
+  }
+}
+
+//! Overloads for arguments that accept None as well as an iterable. An empty
+//! optional is treated exactly as None was, so call sites are unchanged.
+template <typename T>
+std::unique_ptr<std::vector<T>> pythonObjectToVect(
+    const std::optional<PyIterableOf<T>> &obj, T maxV) {
+  return obj ? pythonObjectToVect<T>(*obj, maxV) : nullptr;
+}
+template <typename T>
+std::unique_ptr<std::vector<T>> pythonObjectToVect(
+    const std::optional<PyIterableOf<T>> &obj) {
+  return obj ? pythonObjectToVect<T>(*obj) : nullptr;
+}
+template <typename T>
+void pythonObjectToVect(const std::optional<PyIterableOf<T>> &obj,
+                        std::vector<T> &res) {
+  if (obj) {
+    pythonObjectToVect<T>(*obj, res);
   } else {
     res.clear();
   }

@@ -205,7 +205,8 @@ slight accuracy penalty but significant speed gain if used.  Default=True.)DOC")
             }
             return nb::tuple(py_list);
           },
-          [](GaussianShape::ShapeInputOptions &opts, nb::object as) {
+          [](GaussianShape::ShapeInputOptions &opts,
+             const std::optional<PyIterableOf<unsigned int>> &as) {
             pythonObjectToVect<unsigned int>(as, opts.atomSubset);
           },
           "If not empty, use just these atoms in the molecule to form the ShapeInput object.")

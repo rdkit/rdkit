@@ -181,7 +181,8 @@ void drawMoleculeHelper1(MolDraw2D &self, const ROMol &mol,
 }
 
 void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
-                         nb::object highlight_atoms, nb::object highlight_bonds,
+                         const PyIterableOf<int> &highlight_atoms,
+                         const PyIterableOf<int> &highlight_bonds,
                          nb::object highlight_atom_map,
                          nb::object highlight_bond_map,
                          std::optional<nb::dict> highlight_atom_radii,
@@ -298,7 +299,7 @@ void drawMoleculeACS1996Helper(MolDraw2D &drawer, const ROMol &mol,
                                  har.get(), confId);
 }
 
-void drawMoleculesHelper2(MolDraw2D &self, nb::object pmols,
+void drawMoleculesHelper2(MolDraw2D &self, const PyIterableOf<ROMol *> &pmols,
                           nb::object highlight_atoms,
                           nb::object highlight_bonds,
                           nb::object highlight_atom_map,
@@ -516,8 +517,10 @@ void setMonochromeMode_helper2(RDKit::MolDraw2D &d2d, nb::tuple fg,
   RDKit::setMonochromeMode(d2d, fgc, bgc);
 }
 
-void contourAndDrawGaussiansHelper(RDKit::MolDraw2D &drawer, nb::object pylocs,
-                                   nb::object pyheights, nb::object pywidths,
+void contourAndDrawGaussiansHelper(RDKit::MolDraw2D &drawer,
+                                   const PyIterableOf<RDGeom::Point2D> &pylocs,
+                                   const PyIterableOf<double> &pyheights,
+                                   const PyIterableOf<double> &pywidths,
                                    unsigned int nContours, nb::object pylevels,
                                    const MolDraw2DUtils::ContourParams &params,
                                    std::optional<RDKit::ROMol *> mol) {
@@ -553,7 +556,8 @@ void contourAndDrawGaussiansHelper(RDKit::MolDraw2D &drawer, nb::object pylocs,
 void contourAndDrawGridHelper(
     RDKit::MolDraw2D &drawer,
     nb::ndarray<nb::numpy, double, nb::ndim<2>, nb::c_contig> data,
-    nb::object pyxcoords, nb::object pyycoords, unsigned int nContours,
+    const PyIterableOf<double> &pyxcoords,
+    const PyIterableOf<double> &pyycoords, unsigned int nContours,
     nb::object pylevels, const MolDraw2DUtils::ContourParams &params,
     std::optional<RDKit::ROMol *> mol) {
   std::unique_ptr<std::vector<double>> xcoords =
@@ -617,7 +621,8 @@ nb::tuple getContourColour(const RDKit::MolDraw2DUtils::ContourParams &params) {
   return colourToPyTuple(params.contourColour);
 }
 
-void drawPolygonHelper(RDKit::MolDraw2D &self, nb::object py_cds,
+void drawPolygonHelper(RDKit::MolDraw2D &self,
+                       const PyIterableOf<RDGeom::Point2D> &py_cds,
                        bool rawCoords) {
   std::unique_ptr<std::vector<RDGeom::Point2D>> cds =
       pythonObjectToVect<RDGeom::Point2D>(py_cds);

@@ -64,11 +64,10 @@ nb::tuple computeAtomCIPRanksHelper(ROMol &mol) {
   return nb::tuple(res);
 }
 
-nb::tuple fragmentOnSomeBondsHelper(const ROMol &mol, nb::object pyBondIndices,
-                                    unsigned int nToBreak, bool addDummies,
-                                    nb::object pyDummyLabels,
-                                    nb::object pyBondTypes,
-                                    bool returnCutsPerAtom) {
+nb::tuple fragmentOnSomeBondsHelper(
+    const ROMol &mol, const PyIterableOf<unsigned int> &pyBondIndices,
+    unsigned int nToBreak, bool addDummies, nb::object pyDummyLabels,
+    nb::object pyBondTypes, bool returnCutsPerAtom) {
   auto bondIndices = pythonObjectToVect(pyBondIndices, mol.getNumBonds());
   if (!bondIndices.get() || bondIndices->empty()) {
     throw ValueErrorException("empty bond indices");
@@ -141,7 +140,8 @@ nb::tuple getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
   return nb::steal<nb::tuple>(PySequence_Tuple(res.ptr()));
 }
 
-ROMol *fragmentOnBondsHelper(const ROMol &mol, nb::object pyBondIndices,
+ROMol *fragmentOnBondsHelper(const ROMol &mol,
+                             const PyIterableOf<unsigned int> &pyBondIndices,
                              bool addDummies, nb::object pyDummyLabels,
                              nb::object pyBondTypes, nb::object pyCutsPerAtom) {
   auto bondIndices = pythonObjectToVect(pyBondIndices, mol.getNumBonds());
@@ -193,7 +193,8 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, nb::object pyBondIndices,
   return res;
 }
 
-ROMol *renumberAtomsHelper(const ROMol &mol, nb::object &pyNewOrder) {
+ROMol *renumberAtomsHelper(const ROMol &mol,
+                           const PyIterableOf<unsigned int> &pyNewOrder) {
   if (nb::len(pyNewOrder) < mol.getNumAtoms()) {
     throw ValueErrorException("atomCounts shorter than the number of atoms");
   }
@@ -1117,8 +1118,9 @@ nb::object findMesoHelper(const ROMol &mol, bool includeIsotopes,
   return nb::tuple(res);
 }
 
-ROMol *copyMolSubsetHelper1(const ROMol &mol, nb::object pyAtomIndices,
-                            nb::object pyBondIndices,
+ROMol *copyMolSubsetHelper1(const ROMol &mol,
+                            const PyIterableOf<unsigned int> &pyAtomIndices,
+                            const PyIterableOf<unsigned int> &pyBondIndices,
                             const std::optional<SubsetOptions> options) {
   auto atomIndices = pythonObjectToVect<unsigned int>(pyAtomIndices);
   auto bondIndices = pythonObjectToVect<unsigned int>(pyBondIndices);
@@ -1134,8 +1136,10 @@ ROMol *copyMolSubsetHelper1(const ROMol &mol, nb::object pyAtomIndices,
       .release();
 }
 
-ROMol *copyMolSubsetHelper2(const ROMol &mol, nb::object pyAtomIndices,
-                            nb::object pyBondIndices, SubsetInfo &info,
+ROMol *copyMolSubsetHelper2(const ROMol &mol,
+                            const PyIterableOf<unsigned int> &pyAtomIndices,
+                            const PyIterableOf<unsigned int> &pyBondIndices,
+                            SubsetInfo &info,
                             const std::optional<SubsetOptions> options) {
   auto atomIndices = pythonObjectToVect<unsigned int>(pyAtomIndices);
   auto bondIndices = pythonObjectToVect<unsigned int>(pyBondIndices);
@@ -1151,7 +1155,8 @@ ROMol *copyMolSubsetHelper2(const ROMol &mol, nb::object pyAtomIndices,
       .release();
 }
 
-ROMol *copyMolSubsetHelper3(const ROMol &mol, nb::object path,
+ROMol *copyMolSubsetHelper3(const ROMol &mol,
+                            const PyIterableOf<unsigned int> &path,
                             const std::optional<SubsetOptions> options) {
   auto pathvect = pythonObjectToVect<unsigned int>(path);
   if (!pathvect.get()) {
@@ -1161,7 +1166,8 @@ ROMol *copyMolSubsetHelper3(const ROMol &mol, nb::object path,
       .release();
 }
 
-ROMol *copyMolSubsetHelper4(const ROMol &mol, nb::object path,
+ROMol *copyMolSubsetHelper4(const ROMol &mol,
+                            const PyIterableOf<unsigned int> &path,
                             SubsetInfo &selectionInfo,
                             const std::optional<SubsetOptions> options) {
   auto pathvect = pythonObjectToVect<unsigned int>(path);

@@ -369,7 +369,8 @@ ROMol *MolFromHELM(const StringOrBytes &seq, bool sanitize) {
   return static_cast<ROMol *>(newM);
 }
 
-std::string molFragmentToSmarts(const ROMol &mol, nb::object atomsToUse,
+std::string molFragmentToSmarts(const ROMol &mol,
+                                const PyIterableOf<int> &atomsToUse,
                                 nb::object bondsToUse,
                                 bool doIsomericSmarts = true) {
   auto atomIndices =
@@ -383,7 +384,8 @@ std::string molFragmentToSmarts(const ROMol &mol, nb::object atomsToUse,
                                     doIsomericSmarts);
 }
 
-std::string molFragmentToCXSmarts(const ROMol &mol, nb::object atomsToUse,
+std::string molFragmentToCXSmarts(const ROMol &mol,
+                                  const PyIterableOf<int> &atomsToUse,
                                   nb::object bondsToUse,
                                   bool doIsomericSmarts = true) {
   auto atomIndices =
@@ -419,9 +421,12 @@ struct cxsmilesfrag_gen {
 };
 
 template <typename F>
-std::string MolFragmentToSmilesHelper1(
-    const ROMol &mol, const SmilesWriteParams &params, nb::object atomsToUse,
-    nb::object bondsToUse, nb::object atomSymbols, nb::object bondSymbols) {
+std::string MolFragmentToSmilesHelper1(const ROMol &mol,
+                                       const SmilesWriteParams &params,
+                                       const PyIterableOf<int> &atomsToUse,
+                                       nb::object bondsToUse,
+                                       nb::object atomSymbols,
+                                       nb::object bondSymbols) {
   auto avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
@@ -447,10 +452,10 @@ std::string MolFragmentToSmilesHelper1(
 
 template <typename F>
 std::string MolFragmentToSmilesHelper2(
-    const ROMol &mol, nb::object atomsToUse, nb::object bondsToUse,
-    nb::object atomSymbols, nb::object bondSymbols, bool doIsomericSmiles,
-    bool doKekule, int rootedAtAtom, bool canonical, bool allBondsExplicit,
-    bool allHsExplicit) {
+    const ROMol &mol, const PyIterableOf<int> &atomsToUse,
+    nb::object bondsToUse, nb::object atomSymbols, nb::object bondSymbols,
+    bool doIsomericSmiles, bool doKekule, int rootedAtAtom, bool canonical,
+    bool allBondsExplicit, bool allHsExplicit) {
   SmilesWriteParams ps;
   ps.doIsomericSmiles = doIsomericSmiles;
   ps.doKekule = doKekule;
@@ -476,10 +481,10 @@ std::vector<unsigned int> CanonicalRankAtoms(
 }
 
 std::vector<int> CanonicalRankAtomsInFragment(
-    const ROMol &mol, nb::object atomsToUse, nb::object bondsToUse,
-    nb::object atomSymbols, bool breakTies = true, bool includeChirality = true,
-    bool includeIsotopes = true, bool includeAtomMaps = true,
-    bool includeChiralPresence = false) {
+    const ROMol &mol, const PyIterableOf<int> &atomsToUse,
+    nb::object bondsToUse, nb::object atomSymbols, bool breakTies = true,
+    bool includeChirality = true, bool includeIsotopes = true,
+    bool includeAtomMaps = true, bool includeChiralPresence = false) {
   std::unique_ptr<std::vector<int>> avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {

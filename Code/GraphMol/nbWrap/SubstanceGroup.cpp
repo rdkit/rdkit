@@ -68,7 +68,8 @@ SubstanceGroup *addMolSubstanceGroup(ROMol &mol, const SubstanceGroup &sgroup) {
   return &(getSubstanceGroups(mol).back());
 }
 
-void addBracketHelper(SubstanceGroup &self, const nb::object &pts) {
+void addBracketHelper(SubstanceGroup &self,
+                      const PyIterableOf<RDGeom::Point3D> &pts) {
   unsigned int sz = static_cast<unsigned int>(nb::len(pts));
   if (sz != 2 && sz != 3) {
     throw ValueErrorException("pts object have a length of 2 or 3");
@@ -110,19 +111,22 @@ nb::tuple getAttachPointsHelper(const SubstanceGroup &self) {
   return nb::tuple(res);
 }
 
-void SetAtomsHelper(SubstanceGroup &self, const nb::object &iterable) {
+void SetAtomsHelper(SubstanceGroup &self,
+                    const PyIterableOf<unsigned int> &iterable) {
   std::vector<unsigned int> atoms;
   pythonObjectToVect(iterable, atoms);
   self.setAtoms(atoms);
 }
 
-void SetParentAtomsHelper(SubstanceGroup &self, const nb::object &iterable) {
+void SetParentAtomsHelper(SubstanceGroup &self,
+                          const PyIterableOf<unsigned int> &iterable) {
   std::vector<unsigned int> patoms;
   pythonObjectToVect(iterable, patoms);
   self.setParentAtoms(patoms);
 }
 
-void SetBondsHelper(SubstanceGroup &self, const nb::object &iterable) {
+void SetBondsHelper(SubstanceGroup &self,
+                    const PyIterableOf<unsigned int> &iterable) {
   std::vector<unsigned int> bonds;
   pythonObjectToVect(iterable, bonds);
   self.setBonds(bonds);
