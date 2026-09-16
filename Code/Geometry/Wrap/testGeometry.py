@@ -803,6 +803,36 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(pt.y, pt2.y))
     self.assertTrue(feq(pt.z, pt2.z))
 
+  def test13ArgumentNames(self):
+    # Argument names are part of the API. Both sets of wrappers run this file,
+    # so passing these by keyword keeps the two callable the same way.
+    p3 = geom.Point3D(1., 0., 0.)
+    q3 = geom.Point3D(0., 1., 0.)
+    self.assertTrue(feq(p3.DotProduct(other=q3), 0.0))
+    self.assertTrue(feq(p3.AngleTo(other=q3), math.pi / 2))
+    p3.SignedAngleTo(other=q3)
+    p3.CrossProduct(other=q3)
+    p3.DirectionVector(other=q3)
+
+    p2 = geom.Point2D(1., 0.)
+    q2 = geom.Point2D(0., 1.)
+    self.assertTrue(feq(p2.DotProduct(other=q2), 0.0))
+    self.assertTrue(feq(p2.AngleTo(other=q2), math.pi / 2))
+    p2.SignedAngleTo(other=q2)
+    p2.DirectionVector(other=q2)
+
+    pn = geom.PointND(3)
+    qn = geom.PointND(3)
+    pn[0] = 1.
+    qn[1] = 1.
+    self.assertTrue(feq(pn.DotProduct(other=qn), 0.0))
+    self.assertTrue(feq(pn.AngleTo(other=qn), math.pi / 2))
+    pn.DirectionVector(other=qn)
+
+    grid = geom.UniformGrid3D(10., 10., 10.)
+    geom.ComputeGridCentroid(grid=grid, pt=geom.Point3D(0., 0., 0.),
+                             windowRadius=1.0)
+
 
 if __name__ == '__main__':
   print("Testing Geometry wrapper")
