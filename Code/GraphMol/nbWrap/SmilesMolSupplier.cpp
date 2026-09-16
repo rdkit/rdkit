@@ -11,6 +11,7 @@
 #include <string>
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 
 // ours
@@ -139,23 +140,19 @@ struct smimolsup_wrap {
   static void wrap(nb::module_ &m) {
     nb::class_<SmilesMolSupplier>(m, "SmilesMolSupplier",
                                   smilesMolSupplierClassDoc.c_str())
-        .def(nb::init<std::string, std::string, int, int, bool, bool>(),
-             "data"_a, "delimiter"_a = " ", "smilesColumn"_a = 0,
-             "nameColumn"_a = 1, "titleLine"_a = true, "sanitize"_a = true,
-             smsDocStr.c_str())
         .def(nb::init<>())
         .def(
             "__init__",
-            [](SmilesMolSupplier *self, nb::object fn, std::string delimiter,
-               int smilesColumn, int nameColumn, bool titleLine,
-               bool sanitize) {
-              nb::str fnStr(fn);
-              new (self) SmilesMolSupplier(fnStr.c_str(), delimiter.c_str(),
-                                           smilesColumn, nameColumn, titleLine,
-                                           sanitize);
+            [](SmilesMolSupplier *self, const std::filesystem::path &data,
+               const std::string &delimiter, int smilesColumn, int nameColumn,
+               bool titleLine, bool sanitize) {
+              new (self)
+                  SmilesMolSupplier(data.string(), delimiter, smilesColumn,
+                                    nameColumn, titleLine, sanitize);
             },
-            "fileName"_a, "delimiter"_a = " ", "smilesColumn"_a = 0,
-            "nameColumn"_a = 1, "titleLine"_a = true, "sanitize"_a = true)
+            "data"_a, "delimiter"_a = " ", "smilesColumn"_a = 0,
+            "nameColumn"_a = 1, "titleLine"_a = true, "sanitize"_a = true,
+            smsDocStr.c_str())
         .def("__enter__", &MolIOEnter<SmilesMolSupplier>,
              nb::rv_policy::reference_internal)
         .def("__exit__", &MolIOExit<SmilesMolSupplier>,

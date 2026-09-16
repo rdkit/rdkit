@@ -11,6 +11,7 @@
 #include <string>
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 
 // ours
@@ -110,9 +111,16 @@ struct tdtmolsup_wrap {
     nb::class_<TDTMolSupplier>(m, "TDTMolSupplier",
                                tdtMolSupplierClassDoc.c_str())
         .def(nb::init<>())
-        .def(nb::init<std::string, std::string, int, int, bool>(), "fileName"_a,
-             "nameRecord"_a = "", "confId2D"_a = -1, "confId3D"_a = -1,
-             "sanitize"_a = true)
+        .def(
+            "__init__",
+            [](TDTMolSupplier *self, const std::filesystem::path &fileName,
+               const std::string &nameRecord, int confId2D, int confId3D,
+               bool sanitize) {
+              new (self) TDTMolSupplier(fileName.string(), nameRecord, confId2D,
+                                        confId3D, sanitize);
+            },
+            "fileName"_a, "nameRecord"_a = "", "confId2D"_a = -1,
+            "confId3D"_a = -1, "sanitize"_a = true)
         .def("__enter__", &MolIOEnter<TDTMolSupplier>,
              nb::rv_policy::reference_internal)
         .def("__exit__", &MolIOExit<TDTMolSupplier>, "excType"_a = nb::none(),
