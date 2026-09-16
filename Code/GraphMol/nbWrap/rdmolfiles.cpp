@@ -16,6 +16,7 @@
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/optional.h>
+#include <nanobind/stl/variant.h>
 
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
@@ -45,19 +46,22 @@ using namespace nb::literals;
 using namespace RDKit;
 
 namespace RDKit {
-std::string pyObjectToString(nb::object input) {
-  if (nb::isinstance<nb::str>(input)) {
-    return nb::cast<std::string>(input);
-  } else if (nb::isinstance<nb::bytes>(input)) {
-    nb::bytes b = nb::cast<nb::bytes>(input);
-    return std::string(static_cast<const char *>(b.data()),
-                       static_cast<size_t>(b.size()));
+// Text-format parsers accept either str or bytes. nanobind renders this
+// variant as "str | bytes" in the generated signature and rejects anything
+// else before the call is dispatched.
+using StringOrBytes = std::variant<std::string, nb::bytes>;
+
+std::string pyObjectToString(const StringOrBytes &input) {
+  if (std::holds_alternative<std::string>(input)) {
+    return std::get<std::string>(input);
   }
-  std::wstring ws = nb::cast<std::wstring>(input);
-  return std::string(ws.begin(), ws.end());
+  const auto &bytes = std::get<nb::bytes>(input);
+  return std::string(static_cast<const char *>(bytes.data()),
+                     static_cast<size_t>(bytes.size()));
 }
 
-ROMol *MolFromSmiles(nb::object ismiles, bool sanitize, nb::dict replDict) {
+ROMol *MolFromSmiles(const StringOrBytes &ismiles, bool sanitize,
+                     nb::dict replDict) {
   std::map<std::string, std::string> replacements;
   const auto items = replDict.items();
   for (unsigned int i = 0; i < nb::len(items); ++i) {
@@ -75,7 +79,8 @@ ROMol *MolFromSmiles(nb::object ismiles, bool sanitize, nb::dict replDict) {
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromSmarts(nb::object ismarts, bool mergeHs, nb::dict replDict) {
+ROMol *MolFromSmarts(const StringOrBytes &ismarts, bool mergeHs,
+                     nb::dict replDict) {
   std::map<std::string, std::string> replacements;
   const auto items = replDict.items();
   for (unsigned int i = 0; i < nb::len(items); ++i) {
@@ -107,7 +112,7 @@ ROMol *MolFromTPLFile(const std::string &filename, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromTPLBlock(nb::object itplBlock, bool sanitize = true,
+ROMol *MolFromTPLBlock(const StringOrBytes &itplBlock, bool sanitize = true,
                        bool skipFirstConf = false) {
   std::istringstream inStream(pyObjectToString(itplBlock));
   unsigned int line = 0;
@@ -135,8 +140,8 @@ ROMol *MolFromMolFileHelper(const std::string &molFilename, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolBlock(nb::object imolBlock, bool sanitize, bool removeHs,
-                       bool strictParsing) {
+ROMol *MolFromMolBlock(const StringOrBytes &imolBlock, bool sanitize,
+                       bool removeHs, bool strictParsing) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   unsigned int line = 0;
   RWMol *newM = nullptr;
@@ -231,7 +236,8 @@ ROMol *MolFromMrvFile(const std::string &molFilename, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMrvBlock(nb::object imolBlock, bool sanitize, bool removeHs) {
+ROMol *MolFromMrvBlock(const StringOrBytes &imolBlock, bool sanitize,
+                       bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   RWMol *newM = nullptr;
   try {
@@ -254,7 +260,7 @@ ROMol *MolFromXYZFile(const char *xyzFilename) {
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromXYZBlock(nb::object ixyzBlock) {
+ROMol *MolFromXYZBlock(const StringOrBytes &ixyzBlock) {
   std::istringstream inStream(pyObjectToString(ixyzBlock));
   RWMol *newM = nullptr;
   try {
@@ -266,7 +272,8 @@ ROMol *MolFromXYZBlock(nb::object ixyzBlock) {
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromSVG(nb::object imolBlock, bool sanitize, bool removeHs) {
+ROMol *MolFromSVG(const StringOrBytes &imolBlock, bool sanitize,
+                  bool removeHs) {
   RWMol *res = nullptr;
   res = RDKitSVGToMol(pyObjectToString(imolBlock), sanitize, removeHs);
   return static_cast<ROMol *>(res);
@@ -316,8 +323,9 @@ ROMol *MolFromPDBFile(const std::string &filename, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromPDBBlock(nb::object molBlock, bool sanitize, bool removeHs,
-                       unsigned int flavor, bool proximityBonding) {
+ROMol *MolFromPDBBlock(const StringOrBytes &molBlock, bool sanitize,
+                       bool removeHs, unsigned int flavor,
+                       bool proximityBonding) {
   std::istringstream inStream(pyObjectToString(molBlock));
   RWMol *newM = nullptr;
   try {
@@ -330,7 +338,7 @@ ROMol *MolFromPDBBlock(nb::object molBlock, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromSequence(nb::object seq, bool sanitize, int flavor) {
+ROMol *MolFromSequence(const StringOrBytes &seq, bool sanitize, int flavor) {
   RWMol *newM = nullptr;
   try {
     newM = SequenceToMol(pyObjectToString(seq), sanitize, flavor);
@@ -340,7 +348,7 @@ ROMol *MolFromSequence(nb::object seq, bool sanitize, int flavor) {
   }
   return static_cast<ROMol *>(newM);
 }
-ROMol *MolFromFASTA(nb::object seq, bool sanitize, int flavor) {
+ROMol *MolFromFASTA(const StringOrBytes &seq, bool sanitize, int flavor) {
   RWMol *newM = nullptr;
   try {
     newM = FASTAToMol(pyObjectToString(seq), sanitize, flavor);
@@ -350,7 +358,7 @@ ROMol *MolFromFASTA(nb::object seq, bool sanitize, int flavor) {
   }
   return static_cast<ROMol *>(newM);
 }
-ROMol *MolFromHELM(nb::object seq, bool sanitize) {
+ROMol *MolFromHELM(const StringOrBytes &seq, bool sanitize) {
   RWMol *newM = nullptr;
   try {
     newM = HELMToMol(pyObjectToString(seq), sanitize);
@@ -513,7 +521,7 @@ std::vector<int> CanonicalRankAtomsInFragment(
   return resRanks;
 }
 
-ROMol *MolFromSmilesHelper(nb::object ismiles,
+ROMol *MolFromSmilesHelper(const StringOrBytes &ismiles,
                            const SmilesParserParams &params) {
   std::string smiles = pyObjectToString(ismiles);
 
@@ -524,7 +532,7 @@ ROMol *MolFromSmilesHelper(nb::object ismiles,
   }
 }
 
-ROMol *MolFromSmartsHelper(nb::object ismiles,
+ROMol *MolFromSmartsHelper(const StringOrBytes &ismiles,
                            const SmartsParserParams &params) {
   std::string smiles = pyObjectToString(ismiles);
 
@@ -713,7 +721,8 @@ nb::object MolsFromCDXMLFile(const std::string &filename, bool sanitize,
 }
 
 nb::tuple MolsFromCDXMLHelper(
-    nb::object cdxml, RDKit::v2::CDXMLParser::CDXMLParserParams *pyParams) {
+    const StringOrBytes &cdxml,
+    RDKit::v2::CDXMLParser::CDXMLParserParams *pyParams) {
   RDKit::v2::CDXMLParser::CDXMLParserParams params;
   if (pyParams) {
     params = *pyParams;
@@ -756,7 +765,8 @@ nb::object MolsFromCDXMLFileHelper(
   return nb::tuple(res);
 }
 
-nb::tuple MolsFromCDXML(nb::object cdxml, bool sanitize, bool removeHs) {
+nb::tuple MolsFromCDXML(const StringOrBytes &cdxml, bool sanitize,
+                        bool removeHs) {
   auto mols = CDXMLToMols(pyObjectToString(cdxml), sanitize, removeHs);
   nb::list res;
   for (auto &mol : mols) {

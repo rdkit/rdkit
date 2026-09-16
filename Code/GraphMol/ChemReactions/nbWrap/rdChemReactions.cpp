@@ -11,7 +11,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
-#include <nanobind/stl/wstring.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/tuple.h>
 
 #include <GraphMol/MolPickler.h>
@@ -42,12 +42,18 @@ void wrap_enumeration(nb::module_ &m);
 
 namespace RDKit {
 
-std::string pyObjectToString(nb::object input) {
-  if (nb::isinstance<nb::str>(input)) {
-    return nb::cast<std::string>(input);
+// Text-format parsers accept either str or bytes. nanobind renders this
+// variant as "str | bytes" in the generated signature and rejects anything
+// else before the call is dispatched.
+using StringOrBytes = std::variant<std::string, nb::bytes>;
+
+std::string pyObjectToString(const StringOrBytes &input) {
+  if (std::holds_alternative<std::string>(input)) {
+    return std::get<std::string>(input);
   }
-  std::wstring ws = nb::cast<std::wstring>(input);
-  return std::string(ws.begin(), ws.end());
+  const auto &bytes = std::get<nb::bytes>(input);
+  return std::string(static_cast<const char *>(bytes.data()),
+                     static_cast<size_t>(bytes.size()));
 }
 
 nb::bytes ReactionToBinaryWithProps(const ChemicalReaction &self,
@@ -284,8 +290,8 @@ ChemicalReaction *ReactionFromMrvFile(const char *rxnFilename, bool sanitize,
   return newR;
 }
 
-ChemicalReaction *ReactionFromMrvBlock(nb::object imolBlock, bool sanitize,
-                                       bool removeHs) {
+ChemicalReaction *ReactionFromMrvBlock(const StringOrBytes &imolBlock,
+                                       bool sanitize, bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   ChemicalReaction *newR = nullptr;
   try {
@@ -316,7 +322,7 @@ nb::tuple ReactionsFromCDXMLFile(const char *filename, bool sanitize,
   return nb::tuple(res);
 }
 
-nb::tuple ReactionsFromCDXMLBlock(nb::object imolBlock, bool sanitize,
+nb::tuple ReactionsFromCDXMLBlock(const StringOrBytes &imolBlock, bool sanitize,
                                   bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;

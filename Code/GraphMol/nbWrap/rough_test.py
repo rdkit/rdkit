@@ -8639,6 +8639,26 @@ M  END
     rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
     self.assertEqual(len(rings), 70)
 
+  def testTextParsersAcceptStrOrBytes(self):
+    molBlock = Chem.MolToMolBlock(Chem.MolFromSmiles('CCO'))
+    cases = [
+      (Chem.MolFromSmiles, 'CCO'),
+      (Chem.MolFromSmarts, '[#6]'),
+      (Chem.MolFromMolBlock, molBlock),
+      (Chem.MolFromSequence, 'AAA'),
+    ]
+    for parser, text in cases:
+      with self.subTest(parser=parser.__name__):
+        self.assertIsNotNone(parser(text))
+        self.assertIsNotNone(parser(text.encode()))
+        with self.assertRaises(TypeError):
+          parser(42)
+
+  def testTextParserSignaturesAreTyped(self):
+    # The generated signature names the accepted types rather than "object".
+    self.assertIn('str | bytes', Chem.MolFromSmiles.__doc__)
+    self.assertIn('str | bytes', Chem.MolFromMolBlock.__doc__)
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
