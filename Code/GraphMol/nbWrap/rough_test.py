@@ -8655,7 +8655,7 @@ M  END
           parser(42)
 
   def testTextParserSignaturesAreTyped(self):
-    # The generated signature names the accepted types rather than "object".
+    # The generated signature names the accepted types.
     self.assertIn('str | bytes', Chem.MolFromSmiles.__doc__)
     self.assertIn('str | bytes', Chem.MolFromMolBlock.__doc__)
 

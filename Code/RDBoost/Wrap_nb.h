@@ -161,7 +161,7 @@ void pythonObjectToVect(const nb::object &obj, std::vector<T> &res) {
 }
 
 //! Overloads for arguments that accept None as well as an iterable. An empty
-//! optional is treated exactly as None was, so call sites are unchanged.
+//! optional produces a null vector, or clears the output vector.
 template <typename T>
 std::unique_ptr<std::vector<T>> pythonObjectToVect(
     const std::optional<PyIterableOf<T>> &obj, T maxV) {
