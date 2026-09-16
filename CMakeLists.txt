@@ -243,6 +243,17 @@ FetchContent_Declare(
   GIT_TAG        c35576bed0295689540b39873126129adfa0b4c8 # 0.11.3
 )
 
+# CTRE is header-only. Keep its include directory build-only because no public
+# RDKit header exposes CTRE types.
+FetchContent_Declare(
+  ctre
+  GIT_REPOSITORY https://github.com/hanickadot/compile-time-regular-expressions.git
+  GIT_TAG        v3.11.0
+)
+FetchContent_MakeAvailable(ctre)
+target_include_directories(rdkit_base INTERFACE
+  $<BUILD_INTERFACE:${ctre_SOURCE_DIR}/include>)
+
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
   set(RDKit_LibDir "${CMAKE_SOURCE_DIR}/lib")
