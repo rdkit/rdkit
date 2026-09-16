@@ -8662,6 +8662,16 @@ M  END
     self.assertFalse(hasattr(rdMIF, 'MIFValueError'))
     self.assertFalse(hasattr(rdMIF, 'MIFIndexError'))
 
+  def testFunctionsAreRegisteredOnce(self):
+    # A name bound twice to the same function lists the same signature twice
+    # in its docstring.
+    for fn in (Chem.MolFromMolBlock, rdqueries.HasPropQueryBond):
+      with self.subTest(fn=fn.__name__):
+        signatures = [
+          line for line in fn.__doc__.splitlines() if line.startswith(fn.__name__ + '(')
+        ]
+        self.assertEqual(len(signatures), 1)
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
