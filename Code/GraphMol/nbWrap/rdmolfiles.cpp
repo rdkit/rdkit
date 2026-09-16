@@ -121,22 +121,6 @@ ROMol *MolFromTPLBlock(nb::object itplBlock, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolFileHelper(const std::filesystem::path &molFilename,
-                            bool sanitize, bool removeHs, bool strictParsing) {
-  RWMol *newM = nullptr;
-  try {
-    newM =
-        MolFileToMol(molFilename.string(), sanitize, removeHs, strictParsing);
-  } catch (RDKit::BadFileException &e) {
-    PyErr_SetString(PyExc_IOError, e.what());
-    throw nb::python_error();
-  } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
-  } catch (...) {
-  }
-  return static_cast<ROMol *>(newM);
-}
-
 ROMol *MolFromMolBlock(nb::object imolBlock, bool sanitize, bool removeHs,
                        bool strictParsing) {
   std::istringstream inStream(pyObjectToString(imolBlock));
@@ -924,33 +908,6 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolFromTPLBlock", RDKit::MolFromTPLBlock, "tplBlock"_a,
         "sanitize"_a = true, "skipFirstConf"_a = false, docString.c_str(),
         nb::rv_policy::take_ownership);
-
-  docString =
-      R"DOC(Construct a molecule from a Mol file.
-
-    ARGUMENTS:
-
-      - fileName: name of the file to read
-
-      - sanitize: (optional) toggles sanitization of the molecule.
-        Defaults to true.
-
-      - removeHs: (optional) toggles removing hydrogens from the molecule.
-        This only make sense when sanitization is done.
-        Defaults to true.
-
-      - strictParsing: (optional) if this is false, the parser is more lax about.
- correctness of the content.
- Defaults to true.
-
- RETURNS :
-
- a Mol object, None on failure.
-
- )DOC";
-  m.def("MolFromMolFile", RDKit::MolFromMolFileHelper, "molFileName"_a,
-        "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true,
-        docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a Mol block.

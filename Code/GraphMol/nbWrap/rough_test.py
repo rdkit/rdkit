@@ -8651,7 +8651,12 @@ M  END
       for arg in (path, path.encode(), pathlib.Path(path)):
         with self.subTest(kind=type(arg).__name__):
           self.assertIsNotNone(Chem.MolFromMolFile(arg))
-    self.assertIn('os.PathLike', Chem.MolFromMolFile.__doc__)
+    signatures = [
+      line for line in Chem.MolFromMolFile.__doc__.splitlines()
+      if line.startswith('MolFromMolFile(')
+    ]
+    self.assertEqual(len(signatures), 1)
+    self.assertIn('os.PathLike', signatures[0])
 
   def testSupplierAndWriterFilenamesAcceptPathLike(self):
     # Suppliers and writers take a filename as str, bytes or os.PathLike, and
