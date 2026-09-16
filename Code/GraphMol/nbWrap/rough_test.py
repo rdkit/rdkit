@@ -8652,6 +8652,7 @@ M  END
     with self.assertRaises(IndexError) as caught:
       v[40]
     self.assertIs(type(caught.exception), IndexError)
+    self.assertEqual(caught.exception.args, (40, ))
 
     self.assertFalse(hasattr(rdBase, 'ValueErrorException'))
     self.assertFalse(hasattr(rdBase, 'IndexErrorException'))

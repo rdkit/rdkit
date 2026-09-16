@@ -290,7 +290,10 @@ NB_MODULE(rdBase, m) {
         } catch (const KeyErrorException &e) {
           PyErr_SetString(PyExc_KeyError, e.key().c_str());
         } catch (const IndexErrorException &e) {
-          PyErr_SetString(PyExc_IndexError, e.what());
+          // The index is the exception's value, so that IndexError.args
+          // carries the index itself rather than a rendered message.
+          nb::object index = nb::steal(PyLong_FromLong(e.index()));
+          PyErr_SetObject(PyExc_IndexError, index.ptr());
         } catch (const ValueErrorException &e) {
           PyErr_SetString(PyExc_ValueError, e.what());
         }
