@@ -97,14 +97,20 @@ ROMol *renumberAtoms(const ROMol &mol,
     RingInfo *nRings = res->getRingInfo();
     nRings->reset();
     nRings->initialize();
+    VECT_INT_VECT newAtomRings;
+    VECT_INT_VECT newBondRings;
+    newAtomRings.reserve(oRings->numRings());
+    newBondRings.reserve(oRings->numRings());
     for (unsigned int i = 0; i < oRings->numRings(); ++i) {
-      const INT_VECT &oRing = oRings->atomRings()[i];
-      INT_VECT nRing(oRing.size());
+      const auto oRing = oRings->atomRings()[i];
+      newAtomRings.emplace_back(oRing.size());
       for (unsigned int j = 0; j < oRing.size(); ++j) {
-        nRing[j] = revOrder[oRing[j]];
+        newAtomRings.back()[j] = revOrder[oRing[j]];
       }
-      nRings->addRing(nRing, oRings->bondRings()[i]);
+      const auto oldBondRing = oRings->bondRings()[i];
+      newBondRings.emplace_back(oldBondRing.begin(), oldBondRing.end());
     }
+    nRings->addRings(newAtomRings, newBondRings);
   }
 
   if (mol.getStereoGroups().size()) {

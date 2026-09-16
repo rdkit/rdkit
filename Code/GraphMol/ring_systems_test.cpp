@@ -43,14 +43,17 @@ TEST_CASE("missing rings") {
     auto m = "O=C=NC1=CC2C3=C(C=C1)C2=C(N=C=O)C=C3"_smiles;
     REQUIRE(m);
     MolOps::symmetrizeSSSR(*m);
-    auto arings = m->getRingInfo()->atomRings();
+    const auto arings = m->getRingInfo()->atomRings();
     REQUIRE(arings.size() == 5);
     std::vector<std::vector<int>> expected{{5, 6, 7, 10},
                                            {5, 6, 16, 15, 11, 10},
                                            {6, 7, 10, 11, 15, 16},
                                            {3, 4, 5, 6, 7, 8, 9},
                                            {3, 4, 5, 10, 7, 8, 9}};
-    CHECK(arings == expected);
+    REQUIRE(arings.size() == expected.size());
+    for (size_t i = 0; i < arings.size(); ++i) {
+      CHECK(std::ranges::equal(arings[i], expected[i]));
+    }
   }
 }
 

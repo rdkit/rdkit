@@ -17,6 +17,7 @@
 
 #include <vector>
 #include <string>
+#include <span>
 #include <ForceField/MMFF/Params.h>
 #include <RDGeneral/types.h>
 #include <cstdint>
@@ -212,7 +213,7 @@ RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int isTorsionInRingOfSize4or5(
     const ROMol &mol, const unsigned int idx1, const unsigned int idx2,
     const unsigned int idx3, const unsigned int idx4);
 RDKIT_FORCEFIELDHELPERS_EXPORT bool isRingAromatic(
-    const ROMol &mol, const INT_VECT &ringIndxVect);
+    const ROMol &mol, std::span<const int> ringIndices);
 RDKIT_FORCEFIELDHELPERS_EXPORT bool isAtomInAromaticRingOfSize(
     const Atom *atom, const unsigned int ringSize);
 RDKIT_FORCEFIELDHELPERS_EXPORT bool isAtomNOxide(const Atom *atom);
