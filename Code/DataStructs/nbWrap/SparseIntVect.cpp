@@ -22,15 +22,15 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 namespace {
-  template <typename IndexType>
-  nb::bytes SIVToBinaryText(const SparseIntVect<IndexType> &siv) {
-    std::string res = siv.toString();
-    return nb::bytes(res.c_str(), res.length());
-  }
-  template <typename IndexType>
-  std::string SIVToString(const SparseIntVect<IndexType> &siv) {
-    return siv.toString();
-  }
+template <typename IndexType>
+nb::bytes SIVToBinaryText(const SparseIntVect<IndexType> &siv) {
+  std::string res = siv.toString();
+  return nb::bytes(res.c_str(), res.length());
+}
+template <typename IndexType>
+std::string SIVToString(const SparseIntVect<IndexType> &siv) {
+  return siv.toString();
+}
 }  // namespace
 
 namespace {
@@ -44,8 +44,7 @@ void pyUpdateFromSequence(SparseIntVect<IndexType> &vect,
 }
 
 template <typename IndexType>
-PyDictOf<IndexType, int> pyGetNonzeroElements(
-    SparseIntVect<IndexType> &vect) {
+PyDictOf<IndexType, int> pyGetNonzeroElements(SparseIntVect<IndexType> &vect) {
   nb::dict res;
   auto iter = vect.getNonzeroElements().begin();
   while (iter != vect.getNonzeroElements().end()) {
