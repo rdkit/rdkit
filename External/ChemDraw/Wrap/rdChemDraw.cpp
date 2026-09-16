@@ -149,6 +149,10 @@ python::object ReactionsFromChemDrawBlockHelper(python::object imolBlock,
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdChemDraw) {
+  // The reaction parsers below return ChemicalReaction objects, which are
+  // registered by rdChemReactions.
+  python::import("rdkit.Chem.rdChemReactions");
+
   python::scope().attr("__doc__") =
       "Module containing classes and functions for working with ChemDraw files.";
 

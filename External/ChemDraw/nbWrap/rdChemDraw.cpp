@@ -142,6 +142,10 @@ nb::tuple ReactionsFromChemDrawBlockHelper(nb::object imolBlock, bool sanitize,
 }  // namespace
 
 NB_MODULE(rdChemDraw, m) {
+  // The reaction parsers below return ChemicalReaction objects, which are
+  // registered by rdChemReactions.
+  nb::module_::import_("rdkit.Chem.rdChemReactions");
+
   m.doc() =
       "Module containing classes and functions for working with ChemDraw files.";
 

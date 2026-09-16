@@ -11,7 +11,7 @@ import os
 import sys
 import unittest
 
-from rdkit import Chem
+from rdkit import Chem, RDConfig
 from rdkit.Chem import rdChemDraw
 
 class TestChemDraw(unittest.TestCase):
@@ -273,5 +273,21 @@ class TestChemDraw(unittest.TestCase):
     mols = rdChemDraw.MolsFromChemDraw(cdxml)
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
+
+  def test_reactions_without_explicit_import(self):
+    # These return ChemicalReaction objects, which only rdChemReactions
+    # registers. Nothing above imports it, so this is the state a caller is
+    # in after importing rdChemDraw alone.
+    path = os.path.join(RDConfig.RDBaseDir, "Code", "GraphMol", "test_data",
+                        "CDXML", "reaction-with-boc.cdxml")
+    with open(path) as inF:
+      block = inF.read()
+
+    rxns = rdChemDraw.ReactionsFromChemDrawBlock(block)
+    self.assertEqual(len(rxns), 1)
+    self.assertEqual(rxns[0].GetNumReactantTemplates(), 1)
+    self.assertEqual(rxns[0].GetNumProductTemplates(), 1)
+
+    self.assertEqual(len(rdChemDraw.ReactionsFromChemDrawFile(path)), 1)
 
 
