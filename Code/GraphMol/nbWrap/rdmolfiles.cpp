@@ -16,6 +16,7 @@
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/optional.h>
+#include <nanobind/stl/filesystem.h>
 
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
@@ -93,11 +94,11 @@ ROMol *MolFromSmarts(nb::object ismarts, bool mergeHs, nb::dict replDict) {
   }
   return static_cast<ROMol *>(newM);
 }
-ROMol *MolFromTPLFile(const std::string &filename, bool sanitize = true,
-                      bool skipFirstConf = false) {
+ROMol *MolFromTPLFile(const std::filesystem::path &filename,
+                      bool sanitize = true, bool skipFirstConf = false) {
   RWMol *newM;
   try {
-    newM = TPLFileToMol(filename, sanitize, skipFirstConf);
+    newM = TPLFileToMol(filename.string(), sanitize, skipFirstConf);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -120,11 +121,12 @@ ROMol *MolFromTPLBlock(nb::object itplBlock, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolFileHelper(const std::string &molFilename, bool sanitize,
-                            bool removeHs, bool strictParsing) {
+ROMol *MolFromMolFileHelper(const std::filesystem::path &molFilename,
+                            bool sanitize, bool removeHs, bool strictParsing) {
   RWMol *newM = nullptr;
   try {
-    newM = MolFileToMol(molFilename, sanitize, removeHs, strictParsing);
+    newM =
+        MolFileToMol(molFilename.string(), sanitize, removeHs, strictParsing);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -150,11 +152,12 @@ ROMol *MolFromMolBlock(nb::object imolBlock, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolFile(const std::string &molFilename, bool sanitize,
+ROMol *MolFromMolFile(const std::filesystem::path &molFilename, bool sanitize,
                       bool removeHs, bool strictParsing) {
   RWMol *newM = nullptr;
   try {
-    newM = MolFileToMol(molFilename, sanitize, removeHs, strictParsing);
+    newM =
+        MolFileToMol(molFilename.string(), sanitize, removeHs, strictParsing);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -191,7 +194,7 @@ RDKit::ROMol *MolFromSCSRBlock(
 }
 
 RDKit::ROMol *MolFromSCSRFile(
-    const std::string &molFilename, bool sanitize, bool removeHs,
+    const std::filesystem::path &molFilename, bool sanitize, bool removeHs,
     std::optional<RDKit::v2::FileParsers::MolFromSCSRParams> pyparams) {
   auto scsrParams = pyparams.has_value()
                         ? *pyparams
@@ -201,8 +204,8 @@ RDKit::ROMol *MolFromSCSRFile(
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = false;
-    auto mol = RDKit::v2::FileParsers::MolFromSCSRFile(molFilename, params,
-                                                       scsrParams);
+    auto mol = RDKit::v2::FileParsers::MolFromSCSRFile(molFilename.string(),
+                                                       params, scsrParams);
 
     return static_cast<ROMol *>(mol.release());
 
@@ -216,11 +219,11 @@ RDKit::ROMol *MolFromSCSRFile(
   return static_cast<ROMol *>(nullptr);
 }
 
-ROMol *MolFromMrvFile(const std::string &molFilename, bool sanitize,
+ROMol *MolFromMrvFile(const std::filesystem::path &molFilename, bool sanitize,
                       bool removeHs) {
   RWMol *newM = nullptr;
   try {
-    newM = MrvFileToMol(molFilename, sanitize, removeHs);
+    newM = MrvFileToMol(molFilename.string(), sanitize, removeHs);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -272,12 +275,13 @@ ROMol *MolFromSVG(nb::object imolBlock, bool sanitize, bool removeHs) {
   return static_cast<ROMol *>(res);
 }
 
-ROMol *MolFromMol2File(const std::string &molFilename, bool sanitize = true,
-                       bool removeHs = true, bool cleanupSubstructures = true) {
+ROMol *MolFromMol2File(const std::filesystem::path &molFilename,
+                       bool sanitize = true, bool removeHs = true,
+                       bool cleanupSubstructures = true) {
   RWMol *newM;
   try {
-    newM = Mol2FileToMol(molFilename, sanitize, removeHs, Mol2Type::CORINA,
-                         cleanupSubstructures);
+    newM = Mol2FileToMol(molFilename.string(), sanitize, removeHs,
+                         Mol2Type::CORINA, cleanupSubstructures);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -301,11 +305,13 @@ ROMol *MolFromMol2Block(std::string mol2Block, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromPDBFile(const std::string &filename, bool sanitize, bool removeHs,
-                      unsigned int flavor, bool proximityBonding) {
+ROMol *MolFromPDBFile(const std::filesystem::path &filename, bool sanitize,
+                      bool removeHs, unsigned int flavor,
+                      bool proximityBonding) {
   RWMol *newM = nullptr;
   try {
-    newM = PDBFileToMol(filename, sanitize, removeHs, flavor, proximityBonding);
+    newM = PDBFileToMol(filename.string(), sanitize, removeHs, flavor,
+                        proximityBonding);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -548,7 +554,7 @@ nb::list MolToRandomSmilesHelper(const ROMol &mol, unsigned int numSmiles,
   return pyres;
 }
 
-ROMol *MolFromPNGFile(const std::string &filename,
+ROMol *MolFromPNGFile(const std::filesystem::path &filename,
                       SmilesParserParams *pyParams) {
   SmilesParserParams params;
   if (pyParams) {
@@ -556,7 +562,7 @@ ROMol *MolFromPNGFile(const std::string &filename,
   }
   ROMol *newM = nullptr;
   try {
-    newM = PNGFileToMol(filename, params);
+    newM = PNGFileToMol(filename.string(), params);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -580,23 +586,24 @@ ROMol *MolFromPNGString(nb::bytes png, SmilesParserParams *params) {
 }
 
 nb::object addMolToPNGFileHelperParams(const ROMol &mol,
-                                       const std::string &fname,
+                                       const std::filesystem::path &fname,
                                        const PNGMetadataParams &params) {
-  auto res = addMolToPNGFile(mol, fname, params);
+  auto res = addMolToPNGFile(mol, fname.string(), params);
 
   nb::object retval = nb::object(nb::steal<nb::object>(
       PyBytes_FromStringAndSize(res.c_str(), res.length())));
   return retval;
 }
 
-nb::object addMolToPNGFileHelper(const ROMol &mol, const std::string &fname,
+nb::object addMolToPNGFileHelper(const ROMol &mol,
+                                 const std::filesystem::path &fname,
                                  bool includePkl, bool includeSmiles,
                                  bool includeMol) {
   PNGMetadataParams params;
   params.includePkl = includePkl;
   params.includeSmiles = includeSmiles;
   params.includeMol = includeMol;
-  return addMolToPNGFileHelperParams(mol, fname, params);
+  return addMolToPNGFileHelperParams(mol, fname.string(), params);
 }
 
 nb::object addMolToPNGStringHelperParams(const ROMol &mol, nb::bytes png,
@@ -638,10 +645,10 @@ std::vector<std::pair<std::string, std::string>> dictToMetadata(
 }
 
 nb::object addMetadataToPNGFileHelper(nb::dict pymetadata,
-                                      const std::string &fname) {
+                                      const std::filesystem::path &fname) {
   auto metadata = dictToMetadata(pymetadata);
 
-  auto res = addMetadataToPNGFile(fname, metadata);
+  auto res = addMetadataToPNGFile(fname.string(), metadata);
 
   nb::bytes retval(res.c_str(), res.length());
   return retval;
@@ -655,12 +662,12 @@ nb::bytes addMetadataToPNGStringHelper(nb::dict pymetadata, nb::bytes png) {
   return retval;
 }
 
-nb::object MolsFromPNGFile(const std::string &filename, const std::string &tag,
-                           SmilesParserParams *params) {
+nb::object MolsFromPNGFile(const std::filesystem::path &filename,
+                           const std::string &tag, SmilesParserParams *params) {
   std::vector<std::unique_ptr<ROMol>> mols;
   try {
-    mols =
-        PNGFileToMols(filename, tag, params ? *params : SmilesParserParams());
+    mols = PNGFileToMols(filename.string(), tag,
+                         params ? *params : SmilesParserParams());
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -691,11 +698,11 @@ nb::tuple MolsFromPNGString(nb::bytes png, const std::string &tag,
   return nb::tuple(res);
 }
 
-nb::object MolsFromCDXMLFile(const std::string &filename, bool sanitize,
-                             bool removeHs) {
+nb::object MolsFromCDXMLFile(const std::filesystem::path &filename,
+                             bool sanitize, bool removeHs) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
-    mols = CDXMLFileToMols(filename, sanitize, removeHs);
+    mols = CDXMLFileToMols(filename.string(), sanitize, removeHs);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -730,7 +737,7 @@ nb::tuple MolsFromCDXMLHelper(
 }
 
 nb::object MolsFromCDXMLFileHelper(
-    const std::string &filename,
+    const std::filesystem::path &filename,
     RDKit::v2::CDXMLParser::CDXMLParserParams *pyParams) {
   RDKit::v2::CDXMLParser::CDXMLParserParams params(
       true, true, RDKit::v2::CDXMLParser::CDXMLFormat::Auto);
@@ -739,7 +746,7 @@ nb::object MolsFromCDXMLFileHelper(
   }
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
-    mols = RDKit::v2::CDXMLParser::MolsFromCDXMLFile(filename, params);
+    mols = RDKit::v2::CDXMLParser::MolsFromCDXMLFile(filename.string(), params);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();

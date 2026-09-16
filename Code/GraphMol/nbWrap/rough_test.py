@@ -14,6 +14,7 @@ import gzip
 import importlib.util
 import logging
 import os
+import pathlib
 import pickle
 import sys
 import tempfile
@@ -8638,6 +8639,19 @@ M  END
     self.assertEqual(len(rings), 24)
     rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
     self.assertEqual(len(rings), 70)
+
+  def testFilenameParamsAcceptPathLike(self):
+    # Filename arguments take str, bytes and os.PathLike, which is the set the
+    # Boost wrappers accept.
+    mol = Chem.MolFromSmiles('CCO')
+    with tempfile.TemporaryDirectory() as tmpDir:
+      path = os.path.join(tmpDir, 'mol.mol')
+      with open(path, 'w') as outF:
+        outF.write(Chem.MolToMolBlock(mol))
+      for arg in (path, path.encode(), pathlib.Path(path)):
+        with self.subTest(kind=type(arg).__name__):
+          self.assertIsNotNone(Chem.MolFromMolFile(arg))
+    self.assertIn('os.PathLike', Chem.MolFromMolFile.__doc__)
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
