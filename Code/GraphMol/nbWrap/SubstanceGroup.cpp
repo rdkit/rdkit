@@ -70,17 +70,19 @@ SubstanceGroup *addMolSubstanceGroup(ROMol &mol, const SubstanceGroup &sgroup) {
 
 void addBracketHelper(SubstanceGroup &self,
                       const PyIterableOf<RDGeom::Point3D> &pts) {
-  unsigned int sz = static_cast<unsigned int>(nb::len(pts));
+  // The size is taken from the converted vector rather than the argument, so
+  // that any iterable works and not only the ones that support len().
+  auto ptVec = pythonObjectToVect<RDGeom::Point3D>(pts);
+  if (!ptVec) {
+    throw ValueErrorException(
+        "could not interpret pts as a sequence of 3D points");
+  }
+  unsigned int sz = static_cast<unsigned int>(ptVec->size());
   if (sz != 2 && sz != 3) {
     throw ValueErrorException("pts object have a length of 2 or 3");
   }
 
   SubstanceGroup::Bracket bkt;
-  auto ptVec = pythonObjectToVect<RDGeom::Point3D>(pts);
-  if (!ptVec || ptVec->size() != sz) {
-    throw ValueErrorException(
-        "could not interpret pts as a sequence of 3D points");
-  }
   for (unsigned int i = 0; i < sz; ++i) {
     bkt[i] = (*ptVec)[i];
   }

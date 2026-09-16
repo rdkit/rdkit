@@ -196,12 +196,14 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol,
 
 ROMol *renumberAtomsHelper(const ROMol &mol,
                            const PyIterableOf<unsigned int> &pyNewOrder) {
-  if (nb::len(pyNewOrder) < mol.getNumAtoms()) {
-    throw ValueErrorException("atomCounts shorter than the number of atoms");
-  }
+  // The size is taken from the converted vector rather than the argument, so
+  // that any iterable works and not only the ones that support len().
   auto newOrder = pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
   if (!newOrder) {
     throw ValueErrorException("newOrder argument must be non-empty");
+  }
+  if (newOrder->size() < mol.getNumAtoms()) {
+    throw ValueErrorException("atomCounts shorter than the number of atoms");
   }
   ROMol *res = MolOps::renumberAtoms(mol, *newOrder);
   return res;
