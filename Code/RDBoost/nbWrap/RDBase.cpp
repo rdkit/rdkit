@@ -283,16 +283,16 @@ void seedRNG(unsigned int seed) { std::srand(seed); }
 NB_MODULE(rdBase, m) {
   m.doc() = "Module containing basic definitions for wrapped C++ code";
   RDLog::InitLogs();
-  nb::exception<IndexErrorException>(m, "IndexErrorException",
-                                     PyExc_IndexError);
-  nb::exception<ValueErrorException>(m, "ValueErrorException",
-                                     PyExc_ValueError);
   nb::register_exception_translator(
       [](const std::exception_ptr &p, void * /* unused */) {
         try {
           std::rethrow_exception(p);
         } catch (const KeyErrorException &e) {
           PyErr_SetString(PyExc_KeyError, e.key().c_str());
+        } catch (const IndexErrorException &e) {
+          PyErr_SetString(PyExc_IndexError, e.what());
+        } catch (const ValueErrorException &e) {
+          PyErr_SetString(PyExc_ValueError, e.what());
         }
       });
 #if INVARIANT_EXCEPTION_METHOD
