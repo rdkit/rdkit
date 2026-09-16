@@ -21,21 +21,16 @@ using namespace RDKit;
 namespace nb = nanobind;
 using namespace nb::literals;
 
-template <typename IndexType>
-using DictOfNonzeroElements = nb::typed<nb::dict, IndexType, int>;
-using ListOfCounts = nb::typed<nb::list, int>;
-using ListOfSimilarities = nb::typed<nb::list, double>;
-
 namespace {
-template <typename IndexType>
-nb::bytes SIVToBinaryText(const SparseIntVect<IndexType> &siv) {
-  std::string res = siv.toString();
-  return nb::bytes(res.c_str(), res.length());
-}
-template <typename IndexType>
-std::string SIVToString(const SparseIntVect<IndexType> &siv) {
-  return siv.toString();
-}
+  template <typename IndexType>
+  nb::bytes SIVToBinaryText(const SparseIntVect<IndexType> &siv) {
+    std::string res = siv.toString();
+    return nb::bytes(res.c_str(), res.length());
+  }
+  template <typename IndexType>
+  std::string SIVToString(const SparseIntVect<IndexType> &siv) {
+    return siv.toString();
+  }
 }  // namespace
 
 namespace {
@@ -49,7 +44,7 @@ void pyUpdateFromSequence(SparseIntVect<IndexType> &vect,
 }
 
 template <typename IndexType>
-DictOfNonzeroElements<IndexType> pyGetNonzeroElements(
+PyDictOf<IndexType, int> pyGetNonzeroElements(
     SparseIntVect<IndexType> &vect) {
   nb::dict res;
   auto iter = vect.getNonzeroElements().begin();
@@ -57,11 +52,11 @@ DictOfNonzeroElements<IndexType> pyGetNonzeroElements(
     res[nb::cast(iter->first)] = nb::cast(iter->second);
     ++iter;
   }
-  return DictOfNonzeroElements<IndexType>(res);
+  return PyDictOf<IndexType, int>(res);
 }
 
 template <typename IndexType>
-ListOfCounts pyToList(SparseIntVect<IndexType> &vect) {
+PyListOf<int> pyToList(SparseIntVect<IndexType> &vect) {
   nb::list res;
   for (IndexType i = 0; i < vect.getLength(); ++i) {
     res.append(0);
@@ -69,43 +64,43 @@ ListOfCounts pyToList(SparseIntVect<IndexType> &vect) {
   for (auto iter : vect.getNonzeroElements()) {
     res[static_cast<size_t>(iter.first)] = iter.second;
   }
-  return ListOfCounts(res);
+  return PyListOf<int>(res);
 }
 
 template <typename T>
-ListOfSimilarities BulkDice(const T &siv1, const nb::iterable &sivs,
-                            bool returnDistance) {
+PyListOf<double> BulkDice(const T &siv1, const nb::iterable &sivs,
+                          bool returnDistance) {
   nb::list res;
   for (auto siv : sivs) {
     const auto &siv2 = nb::cast<const T &>(siv);
     auto simVal = DiceSimilarity(siv1, siv2, returnDistance);
     res.append(simVal);
   }
-  return ListOfSimilarities(res);
+  return PyListOf<double>(res);
 }
 
 template <typename T>
-ListOfSimilarities BulkTanimoto(const T &siv1, const nb::iterable &sivs,
-                                bool returnDistance) {
+PyListOf<double> BulkTanimoto(const T &siv1, const nb::iterable &sivs,
+                              bool returnDistance) {
   nb::list res;
   for (auto siv : sivs) {
     const auto &siv2 = nb::cast<const T &>(siv);
     auto simVal = TanimotoSimilarity(siv1, siv2, returnDistance);
     res.append(simVal);
   }
-  return ListOfSimilarities(res);
+  return PyListOf<double>(res);
 }
 
 template <typename T>
-ListOfSimilarities BulkTversky(const T &siv1, const nb::iterable &sivs,
-                               double a, double b, bool returnDistance) {
+PyListOf<double> BulkTversky(const T &siv1, const nb::iterable &sivs, double a,
+                             double b, bool returnDistance) {
   nb::list res;
   for (auto siv : sivs) {
     const auto &siv2 = nb::cast<const T &>(siv);
     auto simVal = TverskySimilarity(siv1, siv2, a, b, returnDistance);
     res.append(simVal);
   }
-  return ListOfSimilarities(res);
+  return PyListOf<double>(res);
 }
 }  // namespace
 

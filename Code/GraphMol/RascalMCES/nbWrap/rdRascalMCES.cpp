@@ -25,10 +25,8 @@ using namespace nb::literals;
 
 namespace {
 
-using ListOfIntPairs = nb::typed<nb::list, nb::typed<nb::tuple, int, int>>;
-using ListOfIntLists = nb::typed<nb::list, nb::typed<nb::list, unsigned int>>;
-using ListOfRascalResults =
-    nb::typed<nb::list, RDKit::RascalMCES::RascalResult>;
+using ListOfIntPairs = PyListOf<nb::typed<nb::tuple, int, int>>;
+using ListOfRascalResults = PyListOf<RDKit::RascalMCES::RascalResult>;
 
 ListOfIntPairs convertVecPairInt(const std::vector<std::pair<int, int>> &vec) {
   ListOfIntPairs pyres;
@@ -52,9 +50,9 @@ std::vector<std::shared_ptr<RDKit::ROMol>> extractMols(nb::object mols) {
   return cmols;
 }
 
-ListOfIntLists packOutputMols(
+PyListOf<PyListOf<unsigned int>> packOutputMols(
     const std::vector<std::vector<unsigned int>> &clusters) {
-  ListOfIntLists pyres;
+  PyListOf<PyListOf<unsigned int>> pyres;
   for (const auto &clus : clusters) {
     nb::list mols;
     for (auto m : clus) {

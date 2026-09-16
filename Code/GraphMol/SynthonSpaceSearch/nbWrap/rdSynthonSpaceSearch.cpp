@@ -41,7 +41,7 @@ void throwCancelled(const char *msg) {
   throw nb::python_error();
 }
 
-using ListOfMols = nb::typed<nb::list, ROMol *>;
+using ListOfMols = PyListOf<ROMol *>;
 
 ListOfMols hitMolecules_helper(const SynthonSpaceSearch::SearchResults &res) {
   ListOfMols pyres;

@@ -10,6 +10,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <algorithm>
 
@@ -23,8 +24,6 @@ using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
-using TupleOfStrings = nb::typed<nb::tuple, std::string, nb::ellipsis>;
-using DictOfStrings = nb::typed<nb::dict, std::string, std::string>;
 
 int getNumMolFeatures(const MolChemicalFeatureFactory &factory,
                       const ROMol &mol,
@@ -53,7 +52,8 @@ std::shared_ptr<MolChemicalFeature> getMolFeature(
   return std::shared_ptr<MolChemicalFeature>(holder, holder->get());
 }
 
-TupleOfStrings getFeatureFamilies(const MolChemicalFeatureFactory &factory) {
+PyTupleOf<std::string> getFeatureFamilies(
+    const MolChemicalFeatureFactory &factory) {
   std::vector<std::string> fams;
   for (auto iter = factory.beginFeatureDefs();
        iter != factory.endFeatureDefs(); ++iter) {
@@ -66,11 +66,12 @@ TupleOfStrings getFeatureFamilies(const MolChemicalFeatureFactory &factory) {
   for (const auto &f : fams) {
     res.append(f);
   }
-  return TupleOfStrings(nb::tuple(res));
+  return PyTupleOf<std::string>(nb::tuple(res));
 }
 
-DictOfStrings getFeatureDefs(const MolChemicalFeatureFactory &factory) {
-  DictOfStrings res;
+PyDictOf<std::string, std::string> getFeatureDefs(
+    const MolChemicalFeatureFactory &factory) {
+  PyDictOf<std::string, std::string> res;
   for (auto iter = factory.beginFeatureDefs();
        iter != factory.endFeatureDefs(); ++iter) {
     std::string key = (*iter)->getFamily() + "." + (*iter)->getType();

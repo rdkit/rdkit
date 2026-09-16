@@ -39,8 +39,8 @@ using namespace RDKit;
 namespace {
 
 using RGBATuple = nb::typed<nb::tuple, double, double, double, double>;
-using RGBATupleSequence = nb::typed<nb::tuple, RGBATuple, nb::ellipsis>;
-using AtomPaletteDict = nb::typed<nb::dict, int, RGBATuple>;
+using RGBATupleSequence = PyTupleOf<RGBATuple>;
+using AtomPaletteDict = PyDictOf<int, RGBATuple>;
 using MolSizeTuple = nb::typed<nb::tuple, int, int>;
 
 struct IntStringMap {

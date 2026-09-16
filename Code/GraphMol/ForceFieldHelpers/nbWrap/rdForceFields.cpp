@@ -10,6 +10,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/unique_ptr.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <GraphMol/GraphMol.h>
 
@@ -29,8 +30,7 @@ using namespace nb::literals;
 
 namespace RDKit {
 
-using ConformerEnergyList =
-    nb::typed<nb::list, nb::typed<nb::tuple, int, double>>;
+using ConformerEnergyList = PyListOf<nb::typed<nb::tuple, int, double>>;
 
 int UFFHelper(ROMol &mol, int maxIters, double vdwThresh, int confId,
               bool ignoreInterfragInteractions) {

@@ -142,7 +142,7 @@ bool FilterCatalogRemoveEntry(FilterCatalog &fc, nb::object obj) {
   return fc.removeEntry(idx);
 }
 
-using DictOfMols = nb::typed<nb::dict, std::string, ROMol *>;
+using DictOfMols = PyDictOf<std::string, ROMol *>;
 
 DictOfMols GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
   const std::map<std::string, ROMOL_SPTR> &flattened =

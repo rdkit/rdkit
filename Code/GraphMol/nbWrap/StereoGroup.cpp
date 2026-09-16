@@ -62,8 +62,8 @@ StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
   return sg;
 }
 
-using AtomSequence = nb::typed<nb::tuple, Atom *, nb::ellipsis>;
-using BondSequence = nb::typed<nb::tuple, Bond *, nb::ellipsis>;
+using AtomSequence = PyTupleOf<Atom *>;
+using BondSequence = PyTupleOf<Bond *>;
 
 AtomSequence getAtomsHelper(StereoGroup &sg) {
   nb::list res;

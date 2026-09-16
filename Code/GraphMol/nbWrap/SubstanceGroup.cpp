@@ -87,14 +87,12 @@ void addBracketHelper(SubstanceGroup &self,
   self.addBracket(bkt);
 }
 
-using CStateSequence =
-    nb::typed<nb::tuple, SubstanceGroup::CState, nb::ellipsis>;
+using CStateSequence = PyTupleOf<SubstanceGroup::CState>;
 using BracketSequence = nb::typed<
     nb::tuple,
     nb::typed<nb::tuple, RDGeom::Point3D, RDGeom::Point3D, RDGeom::Point3D>,
     nb::ellipsis>;
-using AttachPointSequence =
-    nb::typed<nb::tuple, SubstanceGroup::AttachPoint, nb::ellipsis>;
+using AttachPointSequence = PyTupleOf<SubstanceGroup::AttachPoint>;
 
 CStateSequence getCStatesHelper(const SubstanceGroup &self) {
   nb::list res;

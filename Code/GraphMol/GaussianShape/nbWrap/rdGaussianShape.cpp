@@ -33,10 +33,8 @@ namespace helpers {
 
 using CustomFeatureTuple = nb::typed<nb::tuple, int, RDGeom::Point3D, double,
                                      std::vector<unsigned int>>;
-using ConformerFeatureSequence =
-    nb::typed<nb::tuple, CustomFeatureTuple, nb::ellipsis>;
-using CustomFeatureSequence =
-    nb::typed<nb::tuple, ConformerFeatureSequence, nb::ellipsis>;
+using ConformerFeatureSequence = PyTupleOf<CustomFeatureTuple>;
+using CustomFeatureSequence = PyTupleOf<ConformerFeatureSequence>;
 using BestSimilarityResult =
     nb::typed<nb::tuple, nb::typed<nb::tuple, double, double, double>,
               unsigned int, unsigned int, nb::typed<nb::list, double>>;
@@ -507,7 +505,6 @@ fitShape : ShapeInput
     fit shape
 overlayOpts: ShapeOverlayOptions, optional
     Options for controlling the overlay
-
 
 Returns
 -------

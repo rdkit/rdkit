@@ -55,26 +55,21 @@ NB_MAKE_OPAQUE(std::map<unsigned int, unsigned int>);
 
 namespace RDKit {
 
-using TupleOfInts = nb::typed<nb::tuple, int, nb::ellipsis>;
-using TupleOfMols = nb::typed<nb::tuple, ROMOL_SPTR, nb::ellipsis>;
+using TupleOfMols = PyTupleOf<ROMOL_SPTR>;
 using TupleOfTwoBools = nb::typed<nb::tuple, bool, bool>;
-using TupleOfIntPairs =
-    nb::typed<nb::tuple, nb::typed<nb::tuple, int, int>, nb::ellipsis>;
-using TupleOfSubgraphPaths =
-    nb::typed<nb::tuple, nb::typed<nb::list, nb::typed<nb::list, int>>,
-              nb::ellipsis>;
-using TupleOfSanitizationProblems =
-    nb::typed<nb::tuple, MolSanitizeException *, nb::ellipsis>;
-using DictOfMols = nb::typed<nb::dict, std::string, ROMOL_SPTR>;
+using TupleOfIntPairs = PyTupleOf<nb::typed<nb::tuple, int, int>>;
+using TupleOfSubgraphPaths = PyTupleOf<PyListOf<PyListOf<int>>>;
+using TupleOfSanitizationProblems = PyTupleOf<MolSanitizeException *>;
+using DictOfMols = PyDictOf<std::string, ROMOL_SPTR>;
 
-TupleOfInts computeAtomCIPRanksHelper(ROMol &mol) {
+PyTupleOf<int> computeAtomCIPRanksHelper(ROMol &mol) {
   UINT_VECT atomRanks;
   Chirality::assignAtomCIPRanks(mol, atomRanks);
   nb::list res;
   for (auto rank : atomRanks) {
     res.append(rank);
   }
-  return TupleOfInts(nb::tuple(res));
+  return PyTupleOf<int>(nb::tuple(res));
 }
 
 nb::tuple fragmentOnSomeBondsHelper(
@@ -141,7 +136,7 @@ nb::tuple fragmentOnSomeBondsHelper(
   }
 }
 
-TupleOfInts getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
+PyTupleOf<int> getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
   if (aid1 < 0 || aid1 >= rdcast<int>(mol.getNumAtoms()) || aid2 < 0 ||
       aid2 >= rdcast<int>(mol.getNumAtoms())) {
     throw ValueErrorException("bad atom index");
@@ -150,7 +145,7 @@ TupleOfInts getShortestPathHelper(const ROMol &mol, int aid1, int aid2) {
   for (const auto atomIdx : MolOps::getShortestPath(mol, aid1, aid2)) {
     res.append(atomIdx);
   }
-  return TupleOfInts(nb::steal<nb::tuple>(PySequence_Tuple(res.ptr())));
+  return PyTupleOf<int>(nb::steal<nb::tuple>(PySequence_Tuple(res.ptr())));
 }
 
 ROMol *fragmentOnBondsHelper(const ROMol &mol,

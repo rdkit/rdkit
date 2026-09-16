@@ -13,22 +13,19 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
 using namespace RDKit;
 
 using SimilarityNeighbor = nb::typed<nb::tuple, double, unsigned int>;
-using TupleOfSimilarityNeighbors =
-    nb::typed<nb::tuple, SimilarityNeighbor, nb::ellipsis>;
+using TupleOfSimilarityNeighbors = PyTupleOf<SimilarityNeighbor>;
 using MultiSimilarityNeighbor =
     nb::typed<nb::tuple, double, unsigned int, unsigned int>;
-using TupleOfMultiSimilarityNeighbors =
-    nb::typed<nb::tuple, MultiSimilarityNeighbor, nb::ellipsis>;
+using TupleOfMultiSimilarityNeighbors = PyTupleOf<MultiSimilarityNeighbor>;
 using NeighborIndexPair = nb::typed<nb::tuple, unsigned int, unsigned int>;
-using TupleOfNeighborIndexPairs =
-    nb::typed<nb::tuple, NeighborIndexPair, nb::ellipsis>;
-using TupleOfNeighborIndices = nb::typed<nb::tuple, unsigned int, nb::ellipsis>;
+using TupleOfNeighborIndexPairs = PyTupleOf<NeighborIndexPair>;
 using FingerprintAndId = nb::typed<nb::tuple, ExplicitBitVect, std::string>;
 
 namespace {
@@ -66,15 +63,15 @@ TupleOfSimilarityNeighbors tverskyNbrHelper(const FPBReader *self,
   return TupleOfSimilarityNeighbors(toTuple(result));
 }
 
-TupleOfNeighborIndices containingNbrHelper(const FPBReader *self,
-                                           const nb::bytes &bytes) {
+PyTupleOf<unsigned int> containingNbrHelper(const FPBReader *self,
+                                            const nb::bytes &bytes) {
   const auto *bv = bytesToFP(bytes);
   std::vector<unsigned int> nbrs = self->getContainingNeighbors(bv);
   nb::list result;
   for (auto &nbr : nbrs) {
     result.append(nbr);
   }
-  return TupleOfNeighborIndices(toTuple(result));
+  return PyTupleOf<unsigned int>(toTuple(result));
 }
 
 TupleOfMultiSimilarityNeighbors multiTaniNbrHelper(const MultiFPBReader *self,

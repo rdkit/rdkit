@@ -48,7 +48,7 @@ using namespace RDKit;
 
 namespace RDKit {
 // Return annotation for sequences of molecules; renders as "tuple[Mol, ...]".
-using TupleOfMol = nb::typed<nb::tuple, ROMol *, nb::ellipsis>;
+using TupleOfMol = PyTupleOf<ROMol *>;
 
 // Return annotation for the PNG helpers, which hand back binary data in an
 // object holding bytes; renders as "bytes".

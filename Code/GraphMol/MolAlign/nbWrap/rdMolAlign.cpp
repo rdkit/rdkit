@@ -14,6 +14,7 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/optional.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <ForceField/nbWrap/PyForceField.h>
 #include <GraphMol/GraphMol.h>
@@ -31,13 +32,10 @@ using namespace RDKit;
 namespace {
 
 using Transform4x4 = nb::ndarray<nb::numpy, double, nb::ndim<2>>;
-using MatchList = nb::typed<nb::list, nb::typed<nb::tuple, int, int>>;
+using MatchList = PyListOf<nb::typed<nb::tuple, int, int>>;
 using RmsdTransResult = nb::typed<nb::tuple, double, Transform4x4>;
 using RmsdTransMatchResult =
     nb::typed<nb::tuple, double, Transform4x4, MatchList>;
-using TupleOfDouble = nb::typed<nb::tuple, double, nb::ellipsis>;
-using ListOfDouble = nb::typed<nb::list, double>;
-using ListOfIntList = nb::typed<nb::list, nb::typed<nb::list, int>>;
 
 // -- Sequence translation helpers --
 
@@ -201,8 +199,8 @@ struct NbO3A {
 
   double score() { return o3a->score(); }
 
-  ListOfIntList matches() {
-    ListOfIntList result;
+  PyListOf<PyListOf<int>> matches() {
+    PyListOf<PyListOf<int>> result;
     const MatchVectType *m = o3a->matches();
     for (const auto &p : *m) {
       nb::list pair;
@@ -213,8 +211,8 @@ struct NbO3A {
     return result;
   }
 
-  ListOfDouble weights() {
-    ListOfDouble result;
+  PyListOf<double> weights() {
+    PyListOf<double> result;
     const RDNumeric::DoubleVector *w = o3a->weights();
     for (unsigned int i = 0; i < w->size(); ++i) {
       result.append((*w)[i]);
@@ -223,7 +221,7 @@ struct NbO3A {
   }
 };
 
-using TupleOfO3A = nb::typed<nb::tuple, NbO3A, nb::ellipsis>;
+using TupleOfO3A = PyTupleOf<NbO3A>;
 
 // -- Module functions --
 
@@ -354,9 +352,9 @@ double getBestRMSParams(ROMol &prbMol, ROMol &refMol,
   return rmsd;
 }
 
-TupleOfDouble getAllConformerBestRMS(ROMol &mol, int numThreads, nb::object map,
-                                     int maxMatches, bool symmetrize,
-                                     nb::object weights) {
+PyTupleOf<double> getAllConformerBestRMS(ROMol &mol, int numThreads,
+                                         nb::object map, int maxMatches,
+                                         bool symmetrize, nb::object weights) {
   NbBestAlignmentParams nbParams;
   nbParams.maxMatches = maxMatches;
   nbParams.symmetrizeConjugatedTerminalGroups = symmetrize;
@@ -378,10 +376,10 @@ TupleOfDouble getAllConformerBestRMS(ROMol &mol, int numThreads, nb::object map,
   for (double v : rmsds) {
     res.append(v);
   }
-  return TupleOfDouble(nb::tuple(res));
+  return PyTupleOf<double>(nb::tuple(res));
 }
 
-TupleOfDouble getAllConformerBestRMSParams(
+PyTupleOf<double> getAllConformerBestRMSParams(
     ROMol &mol, const NbBestAlignmentParams &nbParams) {
   auto [params, weightsOwner] = nbParams.toNative();
   std::vector<double> rmsds;
@@ -393,10 +391,10 @@ TupleOfDouble getAllConformerBestRMSParams(
   for (double v : rmsds) {
     res.append(v);
   }
-  return TupleOfDouble(nb::tuple(res));
+  return PyTupleOf<double>(nb::tuple(res));
 }
 
-TupleOfDouble getAllConformerBestRMSToRef(
+PyTupleOf<double> getAllConformerBestRMSToRef(
     const ROMol &prbMol, const ROMol &refMol,
     const std::optional<NbBestAlignmentParams> &nbParams) {
   MolAlign::BestAlignmentParams params;
@@ -415,7 +413,7 @@ TupleOfDouble getAllConformerBestRMSToRef(
   for (const double v : rmsds) {
     res.append(v);
   }
-  return TupleOfDouble(nb::tuple(res));
+  return PyTupleOf<double>(nb::tuple(res));
 }
 
 double calcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,

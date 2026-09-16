@@ -59,9 +59,7 @@ struct AtomPairsParameters {};
 
 namespace {
 
-using ListOfFloatLists = nb::typed<nb::list, nb::typed<nb::list, double>>;
-using DictOfPointLists =
-    nb::typed<nb::dict, unsigned int, nb::typed<nb::list, RDGeom::Point3D>>;
+using DictOfPointLists = PyDictOf<unsigned int, PyListOf<RDGeom::Point3D>>;
 
 static std::string nanobindInternalsKeyName;
 
@@ -626,7 +624,8 @@ std::vector<double> GetUSR(const RDKit::ROMol &mol, int confId) {
   return descriptor;
 }
 
-ListOfFloatLists GetUSRDistributions(nb::object coords, nb::object points) {
+PyListOf<PyListOf<double>> GetUSRDistributions(nb::object coords,
+                                               nb::object points) {
   unsigned int numCoords = nb::len(coords);
   if (numCoords == 0) {
     throw ValueErrorException("no coordinates");
@@ -657,11 +656,11 @@ ListOfFloatLists GetUSRDistributions(nb::object coords, nb::object points) {
   for (const auto *pt : c) {
     delete pt;
   }
-  return ListOfFloatLists(pyDist);
+  return PyListOf<PyListOf<double>>(pyDist);
 }
 
-ListOfFloatLists GetUSRDistributionsFromPoints(nb::object coords,
-                                               nb::object points) {
+PyListOf<PyListOf<double>> GetUSRDistributionsFromPoints(nb::object coords,
+                                                         nb::object points) {
   unsigned int numCoords = nb::len(coords);
   unsigned int numPts = nb::len(points);
   if (numCoords == 0) {
@@ -688,7 +687,7 @@ ListOfFloatLists GetUSRDistributionsFromPoints(nb::object coords,
     }
     pyDist.append(pytmp);
   }
-  return ListOfFloatLists(pyDist);
+  return PyListOf<PyListOf<double>>(pyDist);
 }
 
 std::vector<double> GetUSRFromDistributions(nb::object distances) {

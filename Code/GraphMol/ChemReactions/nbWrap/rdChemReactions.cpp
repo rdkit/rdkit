@@ -43,12 +43,9 @@ void wrap_enumeration(nb::module_ &m);
 
 namespace RDKit {
 
-using TupleOfMolTuples =
-    nb::typed<nb::tuple, nb::typed<nb::tuple, ROMol *, nb::ellipsis>,
-              nb::ellipsis>;
-using TupleOfReactions = nb::typed<nb::tuple, ChemicalReaction *, nb::ellipsis>;
-using TupleOfIntTuples =
-    nb::typed<nb::tuple, nb::typed<nb::tuple, int, nb::ellipsis>, nb::ellipsis>;
+using TupleOfMolTuples = PyTupleOf<PyTupleOf<ROMol *>>;
+using TupleOfReactions = PyTupleOf<ChemicalReaction *>;
+using TupleOfIntTuples = PyTupleOf<PyTupleOf<int>>;
 using TupleOfLabelTuples = nb::typed<
     nb::tuple,
     nb::typed<nb::tuple, nb::typed<nb::tuple, unsigned int, std::string>,

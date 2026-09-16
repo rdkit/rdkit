@@ -25,6 +25,7 @@ NB_MAKE_OPAQUE(std::vector<
                RDKit::MolStandardize::TautomerScoringFunctions::SubstructTerm>);
 
 #include <nanobind/stl/vector.h>
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -32,14 +33,9 @@ using namespace RDKit;
 
 namespace {
 
-using TupleOfInts = nb::typed<nb::tuple, int, nb::ellipsis>;
-using TupleOfStrings = nb::typed<nb::tuple, std::string, nb::ellipsis>;
-using TupleOfTautomers =
-    nb::typed<nb::tuple, MolStandardize::Tautomer *, nb::ellipsis>;
+using TupleOfTautomers = PyTupleOf<MolStandardize::Tautomer *>;
 using TupleOfTautomerItems =
-    nb::typed<nb::tuple,
-              nb::typed<nb::tuple, std::string, MolStandardize::Tautomer *>,
-              nb::ellipsis>;
+    PyTupleOf<nb::typed<nb::tuple, std::string, MolStandardize::Tautomer *>>;
 
 std::shared_ptr<RDKit::ROMol> toStd(const RDKit::ROMOL_SPTR &bptr) {
   return {bptr.get(), [b = bptr](RDKit::ROMol *) {}};
@@ -57,13 +53,13 @@ std::vector<std::shared_ptr<RDKit::ROMol>> tERTautomersGetterHelper(
 }
 
 template <typename T>
-TupleOfInts bitsetToTuple(const boost::dynamic_bitset<T> &bs) {
+PyTupleOf<int> bitsetToTuple(const boost::dynamic_bitset<T> &bs) {
   nb::list atList;
   for (auto i = bs.find_first(); i != boost::dynamic_bitset<T>::npos;
        i = bs.find_next(i)) {
     atList.append(i);
   }
-  return TupleOfInts(nb::tuple(atList));
+  return PyTupleOf<int>(nb::tuple(atList));
 }
 
 struct TautomerEnumeratorCallbackTrampoline
@@ -77,13 +73,13 @@ struct TautomerEnumeratorCallbackTrampoline
   }
 };
 
-TupleOfStrings smilesTautomerMapKeysHelper(
+PyTupleOf<std::string> smilesTautomerMapKeysHelper(
     const MolStandardize::SmilesTautomerMap &self) {
   nb::list keys;
   for (const auto &pair : self) {
     keys.append(pair.first);
   }
-  return TupleOfStrings(nb::tuple(keys));
+  return PyTupleOf<std::string>(nb::tuple(keys));
 }
 
 TupleOfTautomers smilesTautomerMapValuesHelper(
