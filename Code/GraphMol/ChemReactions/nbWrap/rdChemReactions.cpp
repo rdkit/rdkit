@@ -43,20 +43,6 @@ void wrap_enumeration(nb::module_ &m);
 
 namespace RDKit {
 
-// Text-format parsers accept either str or bytes. nanobind renders this
-// variant as "str | bytes" in the generated signature and rejects anything
-// else before the call is dispatched.
-using StringOrBytes = std::variant<std::string, nb::bytes>;
-
-std::string pyObjectToString(const StringOrBytes &input) {
-  if (std::holds_alternative<std::string>(input)) {
-    return std::get<std::string>(input);
-  }
-  const auto &bytes = std::get<nb::bytes>(input);
-  return std::string(static_cast<const char *>(bytes.data()),
-                     static_cast<size_t>(bytes.size()));
-}
-
 nb::bytes ReactionToBinaryWithProps(const ChemicalReaction &self,
                                     unsigned int props) {
   std::string res;

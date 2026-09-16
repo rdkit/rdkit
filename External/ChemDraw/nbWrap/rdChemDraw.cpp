@@ -50,14 +50,6 @@ using namespace RDKit;
 
 namespace {
 
-std::string pyObjectToString(nb::object input) {
-  if (nb::isinstance<nb::str>(input)) {
-    return nb::cast<std::string>(input);
-  }
-  std::wstring ws = nb::cast<std::wstring>(input);
-  return std::string(ws.begin(), ws.end());
-}
-
 nb::tuple MolsFromChemDrawBlockHelper(
     const std::string &block, bool sanitize, bool removeHs,
     RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
@@ -84,11 +76,11 @@ nb::tuple MolsFromChemDrawBlockHelper(
 }
 
 nb::tuple MolsFromChemDrawFileHelper(
-    nb::object cdxml, bool sanitize, bool removeHs,
+    const std::string &filename, bool sanitize, bool removeHs,
     RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
         RDKit::v2::NeedsCleanPolicy::TrustSource) {
   auto mols = RDKit::v2::MolsFromChemDrawFile(
-      pyObjectToString(cdxml),
+      filename,
       {sanitize, removeHs, RDKit::v2::CDXFormat::CDXML, needsCleanPolicy});
   nb::list res;
   for (auto &mol : mols) {
@@ -120,9 +112,9 @@ nb::tuple ReactionsFromChemDrawFileHelper(const std::string &filename,
   return nb::tuple(res);
 }
 
-nb::tuple ReactionsFromChemDrawBlockHelper(nb::object imolBlock, bool sanitize,
-                                           bool removeHs) {
-  std::istringstream inStream(pyObjectToString(imolBlock));
+nb::tuple ReactionsFromChemDrawBlockHelper(const std::string &imolBlock,
+                                           bool sanitize, bool removeHs) {
+  std::istringstream inStream(imolBlock);
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {
     rxns = RDKit::v2::ChemDrawDataStreamToChemicalReactions(inStream, sanitize,

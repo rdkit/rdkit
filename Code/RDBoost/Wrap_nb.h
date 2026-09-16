@@ -20,12 +20,14 @@
 #include <list>
 #include <optional>
 #include <string_view>
+#include <variant>
 #include <vector>
 #include <RDGeneral/Exceptions.h>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/variant.h>
 namespace nb = nanobind;
 
 // pattern for this from the "Better alternative" section of this StackOverflow
@@ -88,6 +90,20 @@ RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 //! converted. Wrap it in std::optional for arguments that also accept None.
 template <typename T>
 using PyIterableOf = nb::typed<nb::iterable, T>;
+
+//! Text that reached us as either \c str or \c bytes. nanobind renders this
+//! as "str | bytes" in generated signatures and rejects anything else before
+//! the call is dispatched; pyObjectToString() gets at the text itself.
+using StringOrBytes = std::variant<std::string, nb::bytes>;
+
+inline std::string pyObjectToString(const StringOrBytes &input) {
+  if (std::holds_alternative<std::string>(input)) {
+    return std::get<std::string>(input);
+  }
+  const auto &bytes = std::get<nb::bytes>(input);
+  return std::string(static_cast<const char *>(bytes.data()),
+                     static_cast<size_t>(bytes.size()));
+}
 
 //! NOTE: this returns a nullptr if obj is None or empty
 template <typename T>
