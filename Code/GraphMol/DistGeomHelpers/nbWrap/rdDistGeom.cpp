@@ -9,6 +9,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
+#include <nanobind/stl/map.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 
@@ -34,12 +35,8 @@ struct PyEmbedParameters : public RDKit::DGeomHelpers::EmbedParameters {
   PyEmbedParameters(const RDKit::DGeomHelpers::EmbedParameters &other)
       : RDKit::DGeomHelpers::EmbedParameters(other) {}
 
-  void setCoordMap(const nb::dict &cmap) {
-    d_coordMap.reset(new std::map<int, RDGeom::Point3D>());
-    for (auto item : cmap) {
-      (*d_coordMap)[nb::cast<int>(item.first)] =
-          nb::cast<RDGeom::Point3D>(item.second);
-    }
+  void setCoordMap(const std::map<int, RDGeom::Point3D> &cmap) {
+    d_coordMap = std::make_unique<std::map<int, RDGeom::Point3D>>(cmap);
     coordMap = d_coordMap.get();
   }
 
@@ -89,17 +86,15 @@ namespace RDKit {
 static int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
                          bool clearConfs, bool useRandomCoords,
                          double boxSizeMult, bool randNegEig,
-                         unsigned int numZeroFail, nb::dict coordMap,
+                         unsigned int numZeroFail,
+                         const std::map<int, RDGeom::Point3D> &coordMap,
                          double forceTol, bool ignoreSmoothingFailures,
                          bool enforceChirality, bool useExpTorsionAnglePrefs,
                          bool useBasicKnowledge, bool printExpTorsionAngles,
                          bool useSmallRingTorsions, bool useMacrocycleTorsions,
                          unsigned int ETversion, bool useMacrocycle14config) {
-  std::map<int, RDGeom::Point3D> pMap;
-  for (auto item : coordMap) {
-    pMap[nb::cast<int>(item.first)] = nb::cast<RDGeom::Point3D>(item.second);
-  }
-  std::map<int, RDGeom::Point3D> *pMapPtr = pMap.empty() ? nullptr : &pMap;
+  const std::map<int, RDGeom::Point3D> *pMapPtr =
+      coordMap.empty() ? nullptr : &coordMap;
 
   DGeomHelpers::EmbedParameters params{
       .maxIterations = maxAttempts,
@@ -149,17 +144,15 @@ static int EmbedMolecule2(ROMol &mol, PyEmbedParameters &params) {
 static INT_VECT EmbedMultipleConfs(
     ROMol &mol, unsigned int numConfs, unsigned int maxAttempts, int seed,
     bool clearConfs, bool useRandomCoords, double boxSizeMult, bool randNegEig,
-    unsigned int numZeroFail, double pruneRmsThresh, nb::dict coordMap,
-    double forceTol, bool ignoreSmoothingFailures, bool enforceChirality,
-    int numThreads, bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
+    unsigned int numZeroFail, double pruneRmsThresh,
+    const std::map<int, RDGeom::Point3D> &coordMap, double forceTol,
+    bool ignoreSmoothingFailures, bool enforceChirality, int numThreads,
+    bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
     bool printExpTorsionAngles, bool useSmallRingTorsions,
     bool useMacrocycleTorsions, unsigned int ETversion,
     bool useMacrocycle14config) {
-  std::map<int, RDGeom::Point3D> pMap;
-  for (auto item : coordMap) {
-    pMap[nb::cast<int>(item.first)] = nb::cast<RDGeom::Point3D>(item.second);
-  }
-  std::map<int, RDGeom::Point3D> *pMapPtr = pMap.empty() ? nullptr : &pMap;
+  const std::map<int, RDGeom::Point3D> *pMapPtr =
+      coordMap.empty() ? nullptr : &coordMap;
 
   bool onlyHeavyAtomsForRMS = false;
   DGeomHelpers::EmbedParameters params{

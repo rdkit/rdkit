@@ -12,6 +12,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/stl/map.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
@@ -61,14 +62,7 @@ std::string pyObjectToString(const StringOrBytes &input) {
 }
 
 ROMol *MolFromSmiles(const StringOrBytes &ismiles, bool sanitize,
-                     nb::dict replDict) {
-  std::map<std::string, std::string> replacements;
-  const auto items = replDict.items();
-  for (unsigned int i = 0; i < nb::len(items); ++i) {
-    const auto item = items[i];
-    replacements[nb::cast<std::string>(item[0])] =
-        nb::cast<std::string>(item[1]);
-  }
+                     std::map<std::string, std::string> replacements) {
   RWMol *newM;
   std::string smiles = pyObjectToString(ismiles);
   try {
@@ -80,14 +74,7 @@ ROMol *MolFromSmiles(const StringOrBytes &ismiles, bool sanitize,
 }
 
 ROMol *MolFromSmarts(const StringOrBytes &ismarts, bool mergeHs,
-                     nb::dict replDict) {
-  std::map<std::string, std::string> replacements;
-  const auto items = replDict.items();
-  for (unsigned int i = 0; i < nb::len(items); ++i) {
-    const auto item = items[i];
-    replacements[nb::cast<std::string>(item[0])] =
-        nb::cast<std::string>(item[1]);
-  }
+                     std::map<std::string, std::string> replacements) {
   std::string smarts = pyObjectToString(ismarts);
 
   RWMol *newM;
@@ -369,10 +356,10 @@ ROMol *MolFromHELM(const StringOrBytes &seq, bool sanitize) {
   return static_cast<ROMol *>(newM);
 }
 
-std::string molFragmentToSmarts(const ROMol &mol,
-                                const PyIterableOf<int> &atomsToUse,
-                                nb::object bondsToUse,
-                                bool doIsomericSmarts = true) {
+std::string molFragmentToSmarts(
+    const ROMol &mol, const PyIterableOf<int> &atomsToUse,
+    const std::optional<PyIterableOf<int>> &bondsToUse,
+    bool doIsomericSmarts = true) {
   auto atomIndices =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!atomIndices) {
@@ -384,10 +371,10 @@ std::string molFragmentToSmarts(const ROMol &mol,
                                     doIsomericSmarts);
 }
 
-std::string molFragmentToCXSmarts(const ROMol &mol,
-                                  const PyIterableOf<int> &atomsToUse,
-                                  nb::object bondsToUse,
-                                  bool doIsomericSmarts = true) {
+std::string molFragmentToCXSmarts(
+    const ROMol &mol, const PyIterableOf<int> &atomsToUse,
+    const std::optional<PyIterableOf<int>> &bondsToUse,
+    bool doIsomericSmarts = true) {
   auto atomIndices =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!atomIndices) {
@@ -421,12 +408,12 @@ struct cxsmilesfrag_gen {
 };
 
 template <typename F>
-std::string MolFragmentToSmilesHelper1(const ROMol &mol,
-                                       const SmilesWriteParams &params,
-                                       const PyIterableOf<int> &atomsToUse,
-                                       nb::object bondsToUse,
-                                       nb::object atomSymbols,
-                                       nb::object bondSymbols) {
+std::string MolFragmentToSmilesHelper1(
+    const ROMol &mol, const SmilesWriteParams &params,
+    const PyIterableOf<int> &atomsToUse,
+    const std::optional<PyIterableOf<int>> &bondsToUse,
+    const std::optional<PyIterableOf<std::string>> &atomSymbols,
+    const std::optional<PyIterableOf<std::string>> &bondSymbols) {
   auto avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
@@ -453,7 +440,9 @@ std::string MolFragmentToSmilesHelper1(const ROMol &mol,
 template <typename F>
 std::string MolFragmentToSmilesHelper2(
     const ROMol &mol, const PyIterableOf<int> &atomsToUse,
-    nb::object bondsToUse, nb::object atomSymbols, nb::object bondSymbols,
+    const std::optional<PyIterableOf<int>> &bondsToUse,
+    const std::optional<PyIterableOf<std::string>> &atomSymbols,
+    const std::optional<PyIterableOf<std::string>> &bondSymbols,
     bool doIsomericSmiles, bool doKekule, int rootedAtAtom, bool canonical,
     bool allBondsExplicit, bool allHsExplicit) {
   SmilesWriteParams ps;
@@ -482,9 +471,11 @@ std::vector<unsigned int> CanonicalRankAtoms(
 
 std::vector<int> CanonicalRankAtomsInFragment(
     const ROMol &mol, const PyIterableOf<int> &atomsToUse,
-    nb::object bondsToUse, nb::object atomSymbols, bool breakTies = true,
-    bool includeChirality = true, bool includeIsotopes = true,
-    bool includeAtomMaps = true, bool includeChiralPresence = false) {
+    const std::optional<PyIterableOf<int>> &bondsToUse,
+    const std::optional<PyIterableOf<std::string>> &atomSymbols,
+    bool breakTies = true, bool includeChirality = true,
+    bool includeIsotopes = true, bool includeAtomMaps = true,
+    bool includeChiralPresence = false) {
   std::unique_ptr<std::vector<int>> avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {

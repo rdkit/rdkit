@@ -164,11 +164,11 @@ std::map<int, std::vector<DrawColour>> *pyDictToMapColourVec(nb::object pyo) {
   return res;
 }
 
-void drawMoleculeHelper1(MolDraw2D &self, const ROMol &mol,
-                         nb::object highlight_atoms,
-                         nb::object highlight_atom_map,
-                         std::optional<nb::dict> highlight_atom_radii,
-                         int confId, std::string legend) {
+void drawMoleculeHelper1(
+    MolDraw2D &self, const ROMol &mol,
+    const std::optional<PyIterableOf<int>> &highlight_atoms,
+    nb::object highlight_atom_map, std::optional<nb::dict> highlight_atom_radii,
+    int confId, std::string legend) {
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   ColourPalette *ham = pyDictToColourMap(highlight_atom_map);
@@ -203,13 +203,13 @@ void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
   delete har;
 }
 
-nb::tuple getMolSizeHelper(MolDraw2D &self, const ROMol &mol,
-                           nb::object highlight_atoms,
-                           nb::object highlight_bonds,
-                           nb::object highlight_atom_map,
-                           nb::object highlight_bond_map,
-                           std::optional<nb::dict> highlight_atom_radii,
-                           int confId, std::string legend) {
+nb::tuple getMolSizeHelper(
+    MolDraw2D &self, const ROMol &mol,
+    const std::optional<PyIterableOf<int>> &highlight_atoms,
+    const std::optional<PyIterableOf<int>> &highlight_bonds,
+    nb::object highlight_atom_map, nb::object highlight_bond_map,
+    std::optional<nb::dict> highlight_atom_radii, int confId,
+    std::string legend) {
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   std::unique_ptr<std::vector<int>> highlightBonds =
@@ -260,7 +260,8 @@ void drawMoleculeWithHighlightsHelper(
 
 void prepareAndDrawMoleculeHelper(
     MolDraw2D &drawer, const ROMol &mol, std::string legend,
-    nb::object highlight_atoms, nb::object highlight_bonds,
+    const std::optional<PyIterableOf<int>> &highlight_atoms,
+    const std::optional<PyIterableOf<int>> &highlight_bonds,
     nb::object highlight_atom_map, nb::object highlight_bond_map,
     std::optional<nb::dict> highlight_atom_radii, int confId, bool kekulize) {
   std::unique_ptr<std::vector<int>> highlightAtoms =
@@ -279,13 +280,12 @@ void prepareAndDrawMoleculeHelper(
   delete har;
 }
 
-void drawMoleculeACS1996Helper(MolDraw2D &drawer, const ROMol &mol,
-                               std::string legend, nb::object highlight_atoms,
-                               nb::object highlight_bonds,
-                               nb::object highlight_atom_map,
-                               nb::object highlight_bond_map,
-                               std::optional<nb::dict> highlight_atom_radii,
-                               int confId) {
+void drawMoleculeACS1996Helper(
+    MolDraw2D &drawer, const ROMol &mol, std::string legend,
+    const std::optional<PyIterableOf<int>> &highlight_atoms,
+    const std::optional<PyIterableOf<int>> &highlight_bonds,
+    nb::object highlight_atom_map, nb::object highlight_bond_map,
+    std::optional<nb::dict> highlight_atom_radii, int confId) {
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   std::unique_ptr<std::vector<int>> highlightBonds =
@@ -299,13 +299,13 @@ void drawMoleculeACS1996Helper(MolDraw2D &drawer, const ROMol &mol,
                                  har.get(), confId);
 }
 
-void drawMoleculesHelper2(MolDraw2D &self, const PyIterableOf<ROMol *> &pmols,
-                          nb::object highlight_atoms,
-                          nb::object highlight_bonds,
-                          nb::object highlight_atom_map,
-                          nb::object highlight_bond_map,
-                          nb::object highlight_atom_radii, nb::object pconfIds,
-                          nb::object plegends) {
+void drawMoleculesHelper2(
+    MolDraw2D &self, const PyIterableOf<ROMol *> &pmols,
+    nb::object highlight_atoms, nb::object highlight_bonds,
+    nb::object highlight_atom_map, nb::object highlight_bond_map,
+    nb::object highlight_atom_radii,
+    const std::optional<PyIterableOf<int>> &pconfIds,
+    const std::optional<PyIterableOf<std::string>> &plegends) {
   std::unique_ptr<std::vector<ROMol *>> mols =
       pythonObjectToVect<ROMol *>(pmols);
   if (mols == nullptr || !mols->size()) {
@@ -386,7 +386,7 @@ void drawMoleculesHelper2(MolDraw2D &self, const PyIterableOf<ROMol *> &pmols,
 void drawReactionHelper(MolDraw2D &self, const ChemicalReaction &rxn,
                         bool highlightByReactant,
                         nb::object phighlightColorsReactants,
-                        nb::object pconfIds) {
+                        const std::optional<PyIterableOf<int>> &pconfIds) {
   std::unique_ptr<std::vector<DrawColour>> highlightColorsReactants;
   if (!phighlightColorsReactants.is_none()) {
     highlightColorsReactants.reset(new std::vector<DrawColour>);
@@ -517,13 +517,12 @@ void setMonochromeMode_helper2(RDKit::MolDraw2D &d2d, nb::tuple fg,
   RDKit::setMonochromeMode(d2d, fgc, bgc);
 }
 
-void contourAndDrawGaussiansHelper(RDKit::MolDraw2D &drawer,
-                                   const PyIterableOf<RDGeom::Point2D> &pylocs,
-                                   const PyIterableOf<double> &pyheights,
-                                   const PyIterableOf<double> &pywidths,
-                                   unsigned int nContours, nb::object pylevels,
-                                   const MolDraw2DUtils::ContourParams &params,
-                                   std::optional<RDKit::ROMol *> mol) {
+void contourAndDrawGaussiansHelper(
+    RDKit::MolDraw2D &drawer, const PyIterableOf<RDGeom::Point2D> &pylocs,
+    const PyIterableOf<double> &pyheights, const PyIterableOf<double> &pywidths,
+    unsigned int nContours, const std::optional<PyIterableOf<double>> &pylevels,
+    const MolDraw2DUtils::ContourParams &params,
+    std::optional<RDKit::ROMol *> mol) {
   std::unique_ptr<std::vector<RDGeom::Point2D>> locs =
       pythonObjectToVect<RDGeom::Point2D>(pylocs);
   if (!locs) {
@@ -540,7 +539,7 @@ void contourAndDrawGaussiansHelper(RDKit::MolDraw2D &drawer,
     throw nb::value_error("widths argument must be non-empty");
   }
   std::unique_ptr<std::vector<double>> levels;
-  if (!pylevels.is_none()) {
+  if (pylevels) {
     levels = pythonObjectToVect<double>(pylevels);
   } else {
     levels = std::unique_ptr<std::vector<double>>(new std::vector<double>);
@@ -558,7 +557,8 @@ void contourAndDrawGridHelper(
     nb::ndarray<nb::numpy, double, nb::ndim<2>, nb::c_contig> data,
     const PyIterableOf<double> &pyxcoords,
     const PyIterableOf<double> &pyycoords, unsigned int nContours,
-    nb::object pylevels, const MolDraw2DUtils::ContourParams &params,
+    const std::optional<PyIterableOf<double>> &pylevels,
+    const MolDraw2DUtils::ContourParams &params,
     std::optional<RDKit::ROMol *> mol) {
   std::unique_ptr<std::vector<double>> xcoords =
       pythonObjectToVect<double>(pyxcoords);
@@ -571,7 +571,7 @@ void contourAndDrawGridHelper(
     throw nb::value_error("ycoords argument must be non-empty");
   }
   std::unique_ptr<std::vector<double>> levels;
-  if (!pylevels.is_none()) {
+  if (pylevels) {
     levels = pythonObjectToVect<double>(pylevels);
   } else {
     levels = std::unique_ptr<std::vector<double>>(new std::vector<double>);
@@ -676,9 +676,9 @@ void updateDrawerParamsHelper(RDKit::MolDraw2D &obj, std::string json) {
 }
 
 std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
-                     nb::object pyHighlightAtoms, bool kekulize,
-                     unsigned int lineWidthMult, bool includeAtomCircles,
-                     int confId) {
+                     const std::optional<PyIterableOf<int>> &pyHighlightAtoms,
+                     bool kekulize, unsigned int lineWidthMult,
+                     bool includeAtomCircles, int confId) {
   RDUNUSED_PARAM(kekulize);
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
@@ -692,13 +692,12 @@ std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
   return outs.str();
 }
 
-std::string molToACS1996SVG(const ROMol &mol, std::string legend,
-                            nb::object highlight_atoms,
-                            nb::object highlight_bonds,
-                            nb::object highlight_atom_map,
-                            nb::object highlight_bond_map,
-                            std::optional<nb::dict> highlight_atom_radii,
-                            int confId) {
+std::string molToACS1996SVG(
+    const ROMol &mol, std::string legend,
+    const std::optional<PyIterableOf<int>> &highlight_atoms,
+    const std::optional<PyIterableOf<int>> &highlight_bonds,
+    nb::object highlight_atom_map, nb::object highlight_bond_map,
+    std::optional<nb::dict> highlight_atom_radii, int confId) {
   std::stringstream outs;
   MolDraw2DSVG drawer(-1, -1, outs);
   drawMoleculeACS1996Helper(drawer, mol, legend, highlight_atoms,

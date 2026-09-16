@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
@@ -184,10 +185,11 @@ nb::tuple getSearchOrderHelper(const SubstructLibrary &self) {
   return nb::tuple(res);
 }
 
-void setSearchOrderHelper(SubstructLibrary &self, nb::handle seq) {
-  nb::object seq_obj = nb::borrow(seq);
+void setSearchOrderHelper(
+    SubstructLibrary &self,
+    const std::optional<PyIterableOf<unsigned int>> &seq) {
   std::unique_ptr<std::vector<unsigned int>> sorder =
-      pythonObjectToVect<unsigned int>(seq_obj);
+      pythonObjectToVect<unsigned int>(seq);
   if (sorder) {
     self.setSearchOrder(*sorder);
   } else {

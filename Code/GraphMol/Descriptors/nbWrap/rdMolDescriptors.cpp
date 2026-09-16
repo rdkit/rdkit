@@ -15,6 +15,7 @@
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/map.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/trampoline.h>
 
 #include <RDBoost/Wrap_nb.h>
@@ -258,7 +259,9 @@ std::vector<double> calcAUTOCORR2Ds(const RDKit::ROMol &mol,
 
 RDKit::SparseIntVect<std::int32_t> *GetAtomPairFingerprint(
     const RDKit::ROMol &mol, unsigned int minLength, unsigned int maxLength,
-    nb::object fromAtoms, nb::object ignoreAtoms, nb::object atomInvariants,
+    const std::optional<PyIterableOf<std::uint32_t>> &fromAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &ignoreAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &atomInvariants,
     bool includeChirality, bool use2D, int confId) {
   std::unique_ptr<std::vector<std::uint32_t>> fvect =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
@@ -276,21 +279,18 @@ RDKit::SparseIntVect<std::int32_t> *GetAtomPairFingerprint(
 
 RDKit::SparseIntVect<std::int32_t> *GetHashedAtomPairFingerprint(
     const RDKit::ROMol &mol, unsigned int nBits, unsigned int minLength,
-    unsigned int maxLength, nb::object fromAtoms, nb::object ignoreAtoms,
-    nb::object atomInvariants, bool includeChirality, bool use2D, int confId) {
+    unsigned int maxLength,
+    const std::optional<PyIterableOf<std::uint32_t>> &fromAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &ignoreAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &atomInvariants,
+    bool includeChirality, bool use2D, int confId) {
   std::unique_ptr<std::vector<std::uint32_t>> fvect =
-      fromAtoms.is_none() ? nullptr
-                          : pythonObjectToVect(fromAtoms, mol.getNumAtoms());
+      pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::unique_ptr<std::vector<std::uint32_t>> ivect =
-      ignoreAtoms.is_none()
-          ? nullptr
-          : pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<std::uint32_t>> invvect =
-      atomInvariants.is_none()
-          ? nullptr
-          : pythonObjectToVect(
-                atomInvariants,
-                static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
+      pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
+      atomInvariants,
+      static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   RDKit::SparseIntVect<std::int32_t> *res;
   res = RDKit::AtomPairs::getHashedAtomPairFingerprint(
       mol, nBits, minLength, maxLength, fvect.get(), ivect.get(), invvect.get(),
@@ -299,21 +299,18 @@ RDKit::SparseIntVect<std::int32_t> *GetHashedAtomPairFingerprint(
 }
 
 RDKit::SparseIntVect<boost::int64_t> *GetTopologicalTorsionFingerprint(
-    const RDKit::ROMol &mol, unsigned int targetSize, nb::object fromAtoms,
-    nb::object ignoreAtoms, nb::object atomInvariants, bool includeChirality) {
+    const RDKit::ROMol &mol, unsigned int targetSize,
+    const std::optional<PyIterableOf<std::uint32_t>> &fromAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &ignoreAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &atomInvariants,
+    bool includeChirality) {
   std::unique_ptr<std::vector<std::uint32_t>> fvect =
-      fromAtoms.is_none() ? nullptr
-                          : pythonObjectToVect(fromAtoms, mol.getNumAtoms());
+      pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::unique_ptr<std::vector<std::uint32_t>> ivect =
-      ignoreAtoms.is_none()
-          ? nullptr
-          : pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<std::uint32_t>> invvect =
-      atomInvariants.is_none()
-          ? nullptr
-          : pythonObjectToVect(
-                atomInvariants,
-                static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
+      pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
+      atomInvariants,
+      static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   if (targetSize * RDKit::AtomPairs::codeSize > 64) {
     std::ostringstream errout;
     errout << "Maximum supported topological torsion path length is "
@@ -330,21 +327,17 @@ RDKit::SparseIntVect<boost::int64_t> *GetTopologicalTorsionFingerprint(
 
 RDKit::SparseIntVect<boost::int64_t> *GetHashedTopologicalTorsionFingerprint(
     const RDKit::ROMol &mol, unsigned int nBits, unsigned int targetSize,
-    nb::object fromAtoms, nb::object ignoreAtoms, nb::object atomInvariants,
+    const std::optional<PyIterableOf<std::uint32_t>> &fromAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &ignoreAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &atomInvariants,
     bool includeChirality) {
   std::unique_ptr<std::vector<std::uint32_t>> fvect =
-      fromAtoms.is_none() ? nullptr
-                          : pythonObjectToVect(fromAtoms, mol.getNumAtoms());
+      pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::unique_ptr<std::vector<std::uint32_t>> ivect =
-      ignoreAtoms.is_none()
-          ? nullptr
-          : pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<std::uint32_t>> invvect =
-      atomInvariants.is_none()
-          ? nullptr
-          : pythonObjectToVect(
-                atomInvariants,
-                static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
+      pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
+      atomInvariants,
+      static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   RDKit::SparseIntVect<boost::int64_t> *res;
   res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(
       mol, nBits, targetSize, fvect.get(), ivect.get(), invvect.get(),
@@ -354,21 +347,17 @@ RDKit::SparseIntVect<boost::int64_t> *GetHashedTopologicalTorsionFingerprint(
 
 ExplicitBitVect *GetHashedTopologicalTorsionFingerprintAsBitVect(
     const RDKit::ROMol &mol, unsigned int nBits, unsigned int targetSize,
-    nb::object fromAtoms, nb::object ignoreAtoms, nb::object atomInvariants,
+    const std::optional<PyIterableOf<std::uint32_t>> &fromAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &ignoreAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &atomInvariants,
     unsigned int nBitsPerEntry, bool includeChirality) {
   std::unique_ptr<std::vector<std::uint32_t>> fvect =
-      fromAtoms.is_none() ? nullptr
-                          : pythonObjectToVect(fromAtoms, mol.getNumAtoms());
+      pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::unique_ptr<std::vector<std::uint32_t>> ivect =
-      ignoreAtoms.is_none()
-          ? nullptr
-          : pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<std::uint32_t>> invvect =
-      atomInvariants.is_none()
-          ? nullptr
-          : pythonObjectToVect(
-                atomInvariants,
-                static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
+      pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
+      atomInvariants,
+      static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   ExplicitBitVect *res;
   res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(
       mol, nBits, targetSize, fvect.get(), ivect.get(), invvect.get(),
@@ -378,22 +367,18 @@ ExplicitBitVect *GetHashedTopologicalTorsionFingerprintAsBitVect(
 
 ExplicitBitVect *GetHashedAtomPairFingerprintAsBitVect(
     const RDKit::ROMol &mol, unsigned int nBits, unsigned int minLength,
-    unsigned int maxLength, nb::object fromAtoms, nb::object ignoreAtoms,
-    nb::object atomInvariants, unsigned int nBitsPerEntry,
-    bool includeChirality, bool use2D, int confId) {
+    unsigned int maxLength,
+    const std::optional<PyIterableOf<std::uint32_t>> &fromAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &ignoreAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &atomInvariants,
+    unsigned int nBitsPerEntry, bool includeChirality, bool use2D, int confId) {
   std::unique_ptr<std::vector<std::uint32_t>> fvect =
-      fromAtoms.is_none() ? nullptr
-                          : pythonObjectToVect(fromAtoms, mol.getNumAtoms());
+      pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::unique_ptr<std::vector<std::uint32_t>> ivect =
-      ignoreAtoms.is_none()
-          ? nullptr
-          : pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
-  std::unique_ptr<std::vector<std::uint32_t>> invvect =
-      atomInvariants.is_none()
-          ? nullptr
-          : pythonObjectToVect(
-                atomInvariants,
-                static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
+      pythonObjectToVect(ignoreAtoms, mol.getNumAtoms());
+  std::unique_ptr<std::vector<std::uint32_t>> invvect = pythonObjectToVect(
+      atomInvariants,
+      static_cast<unsigned int>(1 << RDKit::AtomPairs::codeSize));
   ExplicitBitVect *res;
   res = RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(
       mol, nBits, minLength, maxLength, fvect.get(), ivect.get(), invvect.get(),
@@ -546,11 +531,12 @@ RDKit::SparseIntVect<std::uint32_t> *GetHashedMorganFingerprint(
 }
 
 [[deprecated("please use MorganGenerator")]] ExplicitBitVect *
-GetMorganFingerprintBV(const RDKit::ROMol &mol, unsigned int radius,
-                       unsigned int nBits, nb::object invariants,
-                       nb::object fromAtoms, bool useChirality,
-                       bool useBondTypes, bool useFeatures, nb::object bitInfo,
-                       bool includeRedundantEnvironments) {
+GetMorganFingerprintBV(
+    const RDKit::ROMol &mol, unsigned int radius, unsigned int nBits,
+    nb::object invariants,
+    const std::optional<PyIterableOf<std::uint32_t>> &fromAtoms,
+    bool useChirality, bool useBondTypes, bool useFeatures, nb::object bitInfo,
+    bool includeRedundantEnvironments) {
   RDLog::deprecationWarning("please use MorganGenerator");
   std::vector<boost::uint32_t> *invars = nullptr;
   bool haveInvars = false;
@@ -574,8 +560,7 @@ GetMorganFingerprintBV(const RDKit::ROMol &mol, unsigned int radius,
   }
 
   std::unique_ptr<std::vector<std::uint32_t>> froms =
-      fromAtoms.is_none() ? nullptr
-                          : pythonObjectToVect(fromAtoms, mol.getNumAtoms());
+      pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = nullptr;
   if (!bitInfo.is_none()) {
     bitInfoMap = new RDKit::MorganFingerprints::BitInfoMap();
@@ -838,12 +823,10 @@ std::vector<double> CalcPEOEVSA(const RDKit::ROMol &mol, nb::object bins,
 
 std::vector<double> CalcCustomPropVSA(const RDKit::ROMol &mol,
                                       const std::string customPropName,
-                                      nb::list bins, bool force) {
-  unsigned int nBins = nb::len(bins);
-  std::vector<double> lbins(nBins, 0.0);
-  for (unsigned int i = 0; i < nBins; ++i) {
-    lbins[i] = nb::cast<double>(bins[i]);
-  }
+                                      const PyIterableOf<double> &bins,
+                                      bool force) {
+  std::vector<double> lbins;
+  pythonObjectToVect<double>(bins, lbins);
   return RDKit::Descriptors::calcCustomProp_VSA(mol, customPropName, lbins,
                                                 force);
 }
@@ -1572,12 +1555,12 @@ query.Match( mol ))DOC",
       .def(
           "__init__",
           [](RDKit::Descriptors::DoubleCubicLatticeVolume *self,
-             const RDKit::ROMol &mol, const nb::list &radii, bool isProtein,
-             bool includeLigand, double probeRadius, int confId) {
+             const RDKit::ROMol &mol, const PyIterableOf<double> &radii,
+             bool isProtein, bool includeLigand, double probeRadius,
+             int confId) {
             std::vector<double> radiiAsVector;
             radiiAsVector.reserve(mol.getNumAtoms());
-            pythonObjectToVect<double>(nb::cast<nb::object>(radii),
-                                       radiiAsVector);
+            pythonObjectToVect<double>(radii, radiiAsVector);
             new (self) RDKit::Descriptors::DoubleCubicLatticeVolume(
                 mol, std::move(radiiAsVector), isProtein, includeLigand,
                 probeRadius, confId);

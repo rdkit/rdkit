@@ -148,7 +148,7 @@ class ReadWriteMol : public RWMol {
     PRECONDITION(bond, "bad bond");
     replaceBond(idx, bond, preserveProps, keepSGroups);
   };
-  void SetStereoGroups(nb::list &stereo_groups) {
+  void SetStereoGroups(const PyIterableOf<StereoGroup> &stereo_groups) {
     std::vector<StereoGroup> groups;
     pythonObjectToVect<StereoGroup>(stereo_groups, groups);
     for (const auto &group : groups) {

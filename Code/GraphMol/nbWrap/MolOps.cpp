@@ -13,6 +13,7 @@
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/unique_ptr.h>
 #include <nanobind/stl/map.h>
+#include <nanobind/stl/optional.h>
 #include <RDBoost/boost_shared_ptr.h>
 
 #include <string>
@@ -305,9 +306,9 @@ void addRecursiveQueriesHelper(ROMol &mol, nb::dict replDict,
 }
 
 ROMol *addHs2(const ROMol &orig, MolOps::AddHsParameters params,
-              nb::object onlyOnAtoms) {
+              const std::optional<PyIterableOf<unsigned int>> &onlyOnAtoms) {
   std::unique_ptr<std::vector<unsigned int>> onlyOn;
-  if (!onlyOnAtoms.is_none()) {
+  if (onlyOnAtoms) {
     onlyOn = pythonObjectToVect(onlyOnAtoms, orig.getNumAtoms());
   }
   auto res = std::make_unique<RWMol>(orig);
@@ -316,7 +317,8 @@ ROMol *addHs2(const ROMol &orig, MolOps::AddHsParameters params,
 }
 
 ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
-             nb::object onlyOnAtoms, bool addResidueInfo) {
+             const std::optional<PyIterableOf<unsigned int>> &onlyOnAtoms,
+             bool addResidueInfo) {
   MolOps::AddHsParameters params{explicitOnly, addCoords, addResidueInfo};
   return addHs2(orig, params, onlyOnAtoms);
 }
@@ -652,7 +654,7 @@ ExplicitBitVect *wrapLayeredFingerprint(
     const ROMol &mol, unsigned int layerFlags, unsigned int minPath,
     unsigned int maxPath, unsigned int fpSize, nb::object atomCounts,
     std::optional<ExplicitBitVect *> includeOnlyBits, bool branchedPaths,
-    nb::object fromAtoms) {
+    const std::optional<PyIterableOf<unsigned int>> &fromAtoms) {
   std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   std::unique_ptr<std::vector<unsigned int>> atomCountsV;
@@ -725,7 +727,9 @@ ExplicitBitVect *wrapRDKFingerprintMol(
     const ROMol &mol, unsigned int minPath, unsigned int maxPath,
     unsigned int fpSize, unsigned int nBitsPerHash, bool useHs,
     double tgtDensity, unsigned int minSize, bool branchedPaths,
-    bool useBondOrder, nb::object atomInvariants, nb::object fromAtoms,
+    bool useBondOrder,
+    const std::optional<PyIterableOf<unsigned int>> &atomInvariants,
+    const std::optional<PyIterableOf<unsigned int>> &fromAtoms,
     nb::object atomBits, nb::object bitInfo) {
   std::unique_ptr<std::vector<unsigned int>> lAtomInvariants =
       pythonObjectToVect<unsigned int>(atomInvariants);
@@ -778,8 +782,10 @@ ExplicitBitVect *wrapRDKFingerprintMol(
 
 SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
     const ROMol &mol, unsigned int minPath, unsigned int maxPath, bool useHs,
-    bool branchedPaths, bool useBondOrder, nb::object atomInvariants,
-    nb::object fromAtoms, nb::object atomBits, nb::object bitInfo) {
+    bool branchedPaths, bool useBondOrder,
+    const std::optional<PyIterableOf<unsigned int>> &atomInvariants,
+    const std::optional<PyIterableOf<unsigned int>> &fromAtoms,
+    nb::object atomBits, nb::object bitInfo) {
   std::unique_ptr<std::vector<unsigned int>> lAtomInvariants =
       pythonObjectToVect<unsigned int>(atomInvariants);
   std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
@@ -1009,7 +1015,8 @@ ROMol *molzip_new(const ROMol &a, const std::optional<MolzipParams> p) {
   return molzip(a, p.value_or(MolzipParams())).release();
 }
 
-ROMol *molzipHelper(nb::object &pmols, const std::optional<MolzipParams> p) {
+ROMol *molzipHelper(const PyIterableOf<ROMOL_SPTR> &pmols,
+                    const std::optional<MolzipParams> p) {
   auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
   if (mols == nullptr || mols->empty()) {
     return nullptr;
@@ -3020,10 +3027,7 @@ The atoms to zip can be specified with the MolzipParams class.\n\
         "zip together multiple molecules within a combined molecule using the given matching parameters",
         nb::rv_policy::take_ownership);
 
-    m.def("molzipFragments",
-          (ROMol * (*)(nb::object &, const std::optional<MolzipParams>)) &
-              molzipHelper,
-          "mols"_a, "params"_a = nb::none(),
+    m.def("molzipFragments", &molzipHelper, "mols"_a, "params"_a = nb::none(),
           "zip together multiple molecules from an R group decomposition \n\
 using the given matching parameters.  The first molecule in the list\n\
 must be the core",

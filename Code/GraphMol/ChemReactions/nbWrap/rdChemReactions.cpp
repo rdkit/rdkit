@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/map.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/variant.h>
@@ -261,18 +262,16 @@ bool IsMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol) {
   return isMoleculeAgentOfReaction(rxn, mol, which);
 }
 
-ChemicalReaction *ReactionFromSmarts(const char *smarts, nb::dict replDict,
-                                     bool useSmiles) {
+ChemicalReaction *ReactionFromSmarts(
+    const char *smarts, std::map<std::string, std::string> replDict,
+    bool useSmiles) {
   PRECONDITION(smarts, "null SMARTS string");
-  std::map<std::string, std::string> replacements;
-  for (auto [k, v] : replDict) {
-    replacements[nb::cast<std::string>(k)] = nb::cast<std::string>(v);
-  }
-  return RxnSmartsToChemicalReaction(smarts, &replacements, useSmiles);
+  return RxnSmartsToChemicalReaction(smarts, &replDict, useSmiles);
 }
 
-ChemicalReaction *ReactionFromSmiles(const char *smiles, nb::dict replDict) {
-  return ReactionFromSmarts(smiles, replDict, true);
+ChemicalReaction *ReactionFromSmiles(
+    const char *smiles, std::map<std::string, std::string> replDict) {
+  return ReactionFromSmarts(smiles, std::move(replDict), true);
 }
 
 ChemicalReaction *ReactionFromMrvFile(const char *rxnFilename, bool sanitize,
