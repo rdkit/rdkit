@@ -34,6 +34,7 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/stl/filesystem.h>
 
 #include <ChemDraw/chemdraw.h>
 #include <ChemDraw/chemdrawreaction.h>
@@ -99,12 +100,12 @@ nb::tuple MolsFromChemDrawFileHelper(
   return nb::tuple(res);
 }
 
-nb::tuple ReactionsFromChemDrawFileHelper(const std::string &filename,
+nb::tuple ReactionsFromChemDrawFileHelper(const std::filesystem::path &filename,
                                           bool sanitize, bool removeHs) {
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {
-    rxns = RDKit::v2::ChemDrawFileToChemicalReactions(filename, sanitize,
-                                                      removeHs);
+    rxns = RDKit::v2::ChemDrawFileToChemicalReactions(filename.string(),
+                                                      sanitize, removeHs);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
