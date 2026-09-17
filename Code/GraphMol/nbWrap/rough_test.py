@@ -8660,6 +8660,11 @@ M  END
     self.assertIn('str | bytes', Chem.MolFromSmiles.__doc__)
     self.assertIn('str | bytes', Chem.MolFromMolBlock.__doc__)
 
+  def testCallbackAndMappingSignaturesAreTyped(self):
+    self.assertIn('Callable[[rdkit.Chem.rdchem.Atom, rdkit.Chem.rdchem.Atom], bool]',
+                  Chem.SubstructMatchParameters.setExtraAtomCheckFunc.__doc__)
+    self.assertIn('metadata: dict[str, str]', Chem.AddMetadataToPNGString.__doc__)
+
   def testSequenceParamsAcceptAnyIterable(self):
     m = Chem.RWMol(Chem.MolFromSmiles('C[C@H](F)Cl'))
     group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m,

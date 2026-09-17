@@ -88,17 +88,23 @@ bool HasSubstructMatchStr(nb::bytes pkl, const ROMol &query,
 
 namespace {
 
-void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
-                                 nb::object func) {
+void setSubstructMatchFinalCheck(
+    SubstructMatchParameters &ps,
+    const nb::typed<nb::callable,
+                    bool(const ROMol &, std::vector<unsigned int>)> &func) {
   ps.extraFinalCheck =
       pyMatchFunctor<ROMol, std::span<const unsigned int>>(func);
 }
 
-void setExtraAtomCheckFunc(SubstructMatchParameters &ps, nb::object func) {
+void setExtraAtomCheckFunc(
+    SubstructMatchParameters &ps,
+    const nb::typed<nb::callable, bool(const Atom &, const Atom &)> &func) {
   ps.extraAtomCheck = pyMatchFunctor<Atom, Atom>(func);
 }
 
-void setExtraBondCheckFunc(SubstructMatchParameters &ps, nb::object func) {
+void setExtraBondCheckFunc(
+    SubstructMatchParameters &ps,
+    const nb::typed<nb::callable, bool(const Bond &, const Bond &)> &func) {
   ps.extraBondCheck = pyMatchFunctor<Bond, Bond>(func);
 }
 

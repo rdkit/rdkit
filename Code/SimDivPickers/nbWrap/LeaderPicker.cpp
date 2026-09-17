@@ -55,10 +55,11 @@ RDKit::INT_VECT LazyVectorLeaderPicks(LeaderPicker *picker,
   return res;
 }
 
-RDKit::INT_VECT LazyLeaderPicks(LeaderPicker *picker, nb::object distFunc,
-                                int poolSize, double threshold, int pickSize,
-                                const PySequenceOf<int> &firstPicks,
-                                int numThreads) {
+RDKit::INT_VECT LazyLeaderPicks(
+    LeaderPicker *picker,
+    const nb::typed<nb::callable, double(unsigned int, unsigned int)> &distFunc,
+    int poolSize, double threshold, int pickSize,
+    const PySequenceOf<int> &firstPicks, int numThreads) {
   pyobjFunctor functor(distFunc);
   RDKit::INT_VECT res;
   LazyLeaderHelper(picker, functor, poolSize, threshold, pickSize, firstPicks,

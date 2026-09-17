@@ -610,7 +610,7 @@ nb::object addMolToPNGStringHelper(const ROMol &mol, nb::bytes png,
 }
 
 std::vector<std::pair<std::string, std::string>> dictToMetadata(
-    nb::dict pymetadata) {
+    const PyDictOf<std::string, std::string> &pymetadata) {
   std::vector<std::pair<std::string, std::string>> metadata;
 
   for (const auto &[k, v] : pymetadata) {
@@ -627,8 +627,9 @@ std::vector<std::pair<std::string, std::string>> dictToMetadata(
   return metadata;
 }
 
-nb::object addMetadataToPNGFileHelper(nb::dict pymetadata,
-                                      const std::string &fname) {
+nb::object addMetadataToPNGFileHelper(
+    const PyDictOf<std::string, std::string> &pymetadata,
+    const std::string &fname) {
   auto metadata = dictToMetadata(pymetadata);
 
   auto res = addMetadataToPNGFile(fname, metadata);
@@ -636,7 +637,8 @@ nb::object addMetadataToPNGFileHelper(nb::dict pymetadata,
   nb::bytes retval(res.c_str(), res.length());
   return retval;
 }
-nb::bytes addMetadataToPNGStringHelper(nb::dict pymetadata, nb::bytes png) {
+nb::bytes addMetadataToPNGStringHelper(
+    const PyDictOf<std::string, std::string> &pymetadata, nb::bytes png) {
   auto metadata = dictToMetadata(pymetadata);
   std::string pngStr(static_cast<const char *>(png.data()), png.size());
   auto res = addMetadataToPNGString(pngStr, metadata);

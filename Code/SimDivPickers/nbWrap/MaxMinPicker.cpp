@@ -61,10 +61,11 @@ void LazyMaxMinHelper(MaxMinPicker *picker, T functor, unsigned int poolSize,
 }
 }  // end of anonymous namespace
 
-RDKit::INT_VECT LazyMaxMinPicks(MaxMinPicker *picker, nb::object distFunc,
-                                int poolSize, int pickSize,
-                                const PySequenceOf<int> &firstPicks, int seed,
-                                nb::object useCache) {
+RDKit::INT_VECT LazyMaxMinPicks(
+    MaxMinPicker *picker,
+    const nb::typed<nb::callable, double(unsigned int, unsigned int)> &distFunc,
+    int poolSize, int pickSize, const PySequenceOf<int> &firstPicks, int seed,
+    nb::object useCache) {
   if (!useCache.is_none()) {
     BOOST_LOG(rdWarningLog)
         << "the useCache argument is deprecated and ignored" << std::endl;
@@ -78,8 +79,10 @@ RDKit::INT_VECT LazyMaxMinPicks(MaxMinPicker *picker, nb::object distFunc,
 }
 
 std::tuple<RDKit::INT_VECT, double> LazyMaxMinPicksWithThreshold(
-    MaxMinPicker *picker, nb::object distFunc, int poolSize, int pickSize,
-    double threshold, const PySequenceOf<int> &firstPicks, int seed) {
+    MaxMinPicker *picker,
+    const nb::typed<nb::callable, double(unsigned int, unsigned int)> &distFunc,
+    int poolSize, int pickSize, double threshold,
+    const PySequenceOf<int> &firstPicks, int seed) {
   pyobjFunctor functor(distFunc);
   RDKit::INT_VECT res;
   LazyMaxMinHelper(picker, functor, poolSize, pickSize, firstPicks, seed, res,

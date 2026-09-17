@@ -496,21 +496,10 @@ std::vector<double> BCUT(const RDKit::ROMol &mol) {
   return RDKit::Descriptors::BCUT2D(mol);
 }
 
-std::pair<double, double> BCUT2D_list(const RDKit::ROMol &m,
-                                      nb::list atomprops) {
+std::pair<double, double> BCUT2D_props(const RDKit::ROMol &m,
+                                       const PyIterableOf<double> &atomprops) {
   std::vector<double> dvec;
-  for (size_t i = 0; i < nb::len(atomprops); ++i) {
-    dvec.push_back(nb::cast<double>(atomprops[i]));
-  }
-  return RDKit::Descriptors::BCUT2D(m, dvec);
-}
-
-std::pair<double, double> BCUT2D_tuple(const RDKit::ROMol &m,
-                                       nb::tuple atomprops) {
-  std::vector<double> dvec;
-  for (size_t i = 0; i < nb::len(atomprops); ++i) {
-    dvec.push_back(nb::cast<double>(atomprops[i]));
-  }
+  pythonObjectToVect<double>(atomprops, dvec);
   return RDKit::Descriptors::BCUT2D(m, dvec);
 }
 #endif
@@ -1746,24 +1735,19 @@ returns [mass eigen value high, mass eigen value low,
          crippen lowgp  eigenvalue high, crippen lowgp  low,
          crippen mr eigenvalue high, crippen mr low])DOC");
 
-  m.def(
-      "BCUT2D", BCUT2D_list, "mol"_a, "atom_props"_a,
-      R"DOC(Returns a 2D BCUT (eigen value hi, eigenvalue low) given the molecule
-and the specified atom props
- atom_props must be a list or tuple of floats equal in
-size to the number of atoms in mol)DOC");
-
-  m.def(
-      "BCUT2D", BCUT2D_tuple, "mol"_a, "atom_props"_a,
-      R"DOC(Returns a 2D BCUT (eigen value hi, eigenvalue low) given the molecule
-and the specified atom props
- atom_props must be a list or tuple of floats equal in
-size to the number of atoms in mol)DOC");
-
+  // Registered before the overload taking atom_props, which would otherwise
+  // capture a property name: a str is an iterable too.
   m.def("BCUT2D", BCUT_atomprops, "mol"_a, "atom_propname"_a,
         R"DOC(Returns a 2D BCUT (eigen value high, eigen value low) given the
 molecule and the specified atom prop name
 atom_propname must exist on each atom and be convertible to a float)DOC");
+
+  m.def(
+      "BCUT2D", BCUT2D_props, "mol"_a, "atom_props"_a,
+      R"DOC(Returns a 2D BCUT (eigen value hi, eigenvalue low) given the molecule
+and the specified atom props
+ atom_props must be an iterable of floats equal in
+size to the number of atoms in mol)DOC");
 
   m.def("CalcOxidationNumbers", RDKit::Descriptors::calcOxidationNumbers,
         "mol"_a,

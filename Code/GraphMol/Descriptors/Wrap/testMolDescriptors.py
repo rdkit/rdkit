@@ -705,6 +705,8 @@ class TestCase(unittest.TestCase):
     # might need feq
     self.assertEqual(list(bcut1), list(bcut2))
     self.assertEqual(list(bcut3), list(bcut2))
+    if rdBase._wrapperType == 'nanobind':
+      self.assertEqual(list(rdMD.BCUT2D(m, (p for p in props))), list(bcut2))
 
     props.append(0.0)
     try:
