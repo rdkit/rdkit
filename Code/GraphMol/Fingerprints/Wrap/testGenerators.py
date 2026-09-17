@@ -97,6 +97,19 @@ class TestCase(unittest.TestCase):
     self.assertEqual(g.GetSparseCountFingerprint(ms[0]), g2.GetSparseCountFingerprint(ms[0]))
     self.assertEqual(g.GetSparseCountFingerprint(ms[1]), g2.GetSparseCountFingerprint(ms[1]))
 
+  def testMorganFeatureAtomInvGenPatterns(self):
+    m = Chem.MolFromSmiles('OCCN')
+    default = rdFingerprintGenerator.GetMorganGenerator(
+      radius=2, atomInvariantsGenerator=rdFingerprintGenerator.GetMorganFeatureAtomInvGen())
+    pattern = Chem.MolFromSmarts('[OX2]')
+    for patterns in ([pattern], (pattern, )):
+      with self.subTest(kind=type(patterns).__name__):
+        # The patterns replace the default feature definitions.
+        invGen = rdFingerprintGenerator.GetMorganFeatureAtomInvGen(patterns)
+        g = rdFingerprintGenerator.GetMorganGenerator(radius=2, atomInvariantsGenerator=invGen)
+        self.assertNotEqual(g.GetSparseCountFingerprint(m).GetNonzeroElements(),
+                            default.GetSparseCountFingerprint(m).GetNonzeroElements())
+
   def testRDKitFPGenerator(self):
     m = Chem.MolFromSmiles('CCCCC')
     g = rdFingerprintGenerator.GetRDKitFPGenerator()
