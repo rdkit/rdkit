@@ -34,8 +34,8 @@ class RDKIT_DEPICTOR_EXPORT CoordinateTemplates {
 
    */
   static CoordinateTemplates &getRingSystemTemplates() {
-    static CoordinateTemplates template_mols;
-    return template_mols;
+    static CoordinateTemplates templateMols;
+    return templateMols;
   }
 
   bool hasTemplateOfSize(unsigned int atomCount) {
@@ -75,9 +75,10 @@ class RDKIT_DEPICTOR_EXPORT CoordinateTemplates {
       if (!mol) {
         continue;
       }
-      // Initialize ring info using symmetrizeSSSR to match depictor ring counting
+      // Initialize ring info using findSSSR to match depictor ring counting
       RDKit::VECT_INT_VECT arings;
-      RDKit::MolOps::symmetrizeSSSR(*mol, arings);
+      bool includeDativeBonds = true;
+      RDKit::MolOps::findSSSR(*mol, arings, includeDativeBonds);
       m_templates[mol->getNumAtoms()].push_back(mol);
     }
   }

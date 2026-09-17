@@ -674,7 +674,49 @@ M  END)""")
     for aid, expected_position in coord_map.items():
       actual_position = mol.GetConformer().GetAtomPosition(aid)
       self.assertAlmostEqual(actual_position.x, expected_position.x)
-      self.assertAlmostEqual(actual_position.y, actual_position.y)
+      self.assertAlmostEqual(actual_position.y, expected_position.y)
+
+  def testDeNovoMacrocycleGeneration(self):
+    with rdDepictor.UsingCoordGen(False):
+      # This fused macrocycle cannot use a strict ring-system template, so it
+      # reaches the optional de-novo fallback when ring templates are enabled.
+      smiles = 'O=C1CCc2ccc(c(Br)c2)Oc2cc(cc(Br)c2O)CCN1'
+      coordinates = []
+
+      # Generate the same molecule with the polygon fallback and with the
+      # de-novo macrocycle generator, keeping every other option unchanged.
+      for use_de_novo in (False, True):
+        mol = Chem.MolFromSmiles(smiles)
+        conf_id = rdDepictor.Compute2DCoords(
+          mol, useRingTemplates=True, useDeNovoMacrocycleGeneration=use_de_novo)
+
+        self.assertEqual(conf_id, 0)
+        self.assertEqual(mol.GetNumConformers(), 1)
+        positions = mol.GetConformer().GetPositions()
+        self.assertTrue(np.isfinite(positions).all())
+
+        # Any coincident or nearly coincident atoms indicate a problematic
+        # depiction, irrespective of which macrocycle path generated it.
+        pair_distances = [
+          np.linalg.norm(positions[i] - positions[j]) for i in range(mol.GetNumAtoms())
+          for j in range(i + 1, mol.GetNumAtoms())
+        ]
+        self.assertGreater(min(pair_distances), 0.5)
+
+        if use_de_novo:
+          # The de-novo result should preserve the standard 1.5 A depiction
+          # bond length, allowing a small tolerance for fused-ring refinement.
+          bond_lengths = [
+            np.linalg.norm(positions[bond.GetBeginAtomIdx()] -
+                           positions[bond.GetEndAtomIdx()]) for bond in mol.GetBonds()
+          ]
+          self.assertTrue(np.allclose(bond_lengths, 1.5, atol=0.15))
+
+        coordinates.append(positions)
+
+      # A difference proves that the Python flag is forwarded to the C++ path
+      # instead of being accepted by the wrapper and then ignored.
+      self.assertFalse(np.allclose(coordinates[0], coordinates[1]))
 
   def testUseMultipleTemplates(self):
     with rdDepictor.UsingCoordGen(False):

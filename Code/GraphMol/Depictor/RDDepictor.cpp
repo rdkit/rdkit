@@ -247,7 +247,8 @@ void embedFusedSystems(const RDKit::ROMol &mol,
                        const RDKit::VECT_INT_VECT &arings,
                        std::list<EmbeddedFrag> &efrags,
                        const RDGeom::INT_POINT2D_MAP *coordMap,
-                       bool useRingTemplates) {
+                       bool useRingTemplates,
+                       bool useDeNovoMacrocycleGeneration) {
   RDKit::INT_INT_VECT_MAP neighMap;
   RingUtils::makeRingNeighborMap(arings, neighMap);
 
@@ -279,7 +280,8 @@ void embedFusedSystems(const RDKit::ROMol &mol,
       }
       allowRingTemplates = (coordMapAtoms.count() < 2);
     }
-    EmbeddedFrag efrag(&mol, frings, allowRingTemplates);
+    EmbeddedFrag efrag(&mol, frings, allowRingTemplates,
+                       useDeNovoMacrocycleGeneration);
     efrag.setupNewNeighs();
     efrags.push_back(efrag);
     size_t rix;
@@ -411,7 +413,8 @@ struct ThetaBin {
 void computeInitialCoords(RDKit::ROMol &mol,
                           const RDGeom::INT_POINT2D_MAP *coordMap,
                           std::list<EmbeddedFrag> &efrags,
-                          bool useRingTemplates) {
+                          bool useRingTemplates,
+                          bool useDeNovoMacrocycleGeneration) {
   std::vector<int> atomRanks;
   atomRanks.resize(mol.getNumAtoms());
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
@@ -421,7 +424,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
 
   // first find all the rings
   bool includeDativeBonds = true;
-  RDKit::MolOps::symmetrizeSSSR(mol, arings, includeDativeBonds);
+  RDKit::MolOps::findSSSR(mol, arings, includeDativeBonds);
 
   // do stereochemistry
   RDKit::MolOps::assignStereochemistry(mol, false);
@@ -441,7 +444,8 @@ void computeInitialCoords(RDKit::ROMol &mol,
   if (arings.size() > 0) {
     // first deal with the fused rings
     DepictorLocal::embedFusedSystems(mol, arings, efrags, coordMap,
-                                     useRingTemplates);
+                                     useRingTemplates,
+                                     useDeNovoMacrocycleGeneration);
   }
 
   // do non-tetrahedral stereo
@@ -500,6 +504,7 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
   auto *conf = new RDKit::Conformer(mol.getNumAtoms());
   conf->set3D(false);
   std::list<EmbeddedFrag>::iterator eri;
+
   for (const auto &efrag : efrags) {
     for (const auto &eai : efrag.GetEmbeddedAtoms()) {
       const auto &cr = eai.second.loc;
@@ -507,6 +512,7 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
       conf->setAtomPos(eai.first, fcr);
     }
   }
+
   unsigned int confId = 0;
   if (clearConfs) {
     // clear all the conformation on the molecules and assign conf ID 0 to this
@@ -528,21 +534,21 @@ void setRingSystemTemplates(const std::string template_path) {
   // with the default templates if different templates are set using
   // `RDDepictor::SetRingSystemTemplates`, the default templates are replaced by
   // the new templates
-  CoordinateTemplates &coordinate_templates =
+  CoordinateTemplates &coordinateTemplates =
       CoordinateTemplates::getRingSystemTemplates();
-  coordinate_templates.setRingSystemTemplates(template_path);
+  coordinateTemplates.setRingSystemTemplates(template_path);
 }
 
 void addRingSystemTemplates(const std::string template_path) {
-  CoordinateTemplates &coordinate_templates =
+  CoordinateTemplates &coordinateTemplates =
       CoordinateTemplates::getRingSystemTemplates();
-  coordinate_templates.addRingSystemTemplates(template_path);
+  coordinateTemplates.addRingSystemTemplates(template_path);
 }
 
 void loadDefaultRingSystemTemplates() {
-  CoordinateTemplates &coordinate_templates =
+  CoordinateTemplates &coordinateTemplates =
       CoordinateTemplates::getRingSystemTemplates();
-  coordinate_templates.loadDefaultTemplates();
+  coordinateTemplates.loadDefaultTemplates();
 }
 
 unsigned int compute2DCoords(RDKit::ROMol &mol,
@@ -551,7 +557,8 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
                              unsigned int nFlipsPerSample,
                              unsigned int nSamples, int sampleSeed,
                              bool permuteDeg4Nodes, bool forceRDKit,
-                             bool useRingTemplates) {
+                             bool useRingTemplates,
+                             bool useDeNovoMacrocycleGeneration) {
   Compute2DCoordParameters params;
   params.coordMap = coordMap;
   params.canonOrient = canonOrient;
@@ -562,6 +569,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   params.permuteDeg4Nodes = permuteDeg4Nodes;
   params.forceRDKit = forceRDKit;
   params.useRingTemplates = useRingTemplates;
+  params.useDeNovoMacrocycleGeneration = useDeNovoMacrocycleGeneration;
   return compute2DCoords(mol, params);
 }
 
@@ -598,7 +606,8 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   RDKit::ROMol cp(mol);
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
-  computeInitialCoords(cp, params.coordMap, efrags, params.useRingTemplates);
+  computeInitialCoords(cp, params.coordMap, efrags, params.useRingTemplates,
+                       params.useDeNovoMacrocycleGeneration);
 
 #if 1
   // perform random sampling here to improve the density
@@ -701,7 +710,7 @@ unsigned int compute2DCoordsMimicDistMat(
     unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes, bool) {
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
-  computeInitialCoords(mol, nullptr, efrags, false);
+  computeInitialCoords(mol, nullptr, efrags, false, false);
 
   // now perform random flips of rotatable bonds so that we can sample the space
   // and try to mimic the distances in dmat
