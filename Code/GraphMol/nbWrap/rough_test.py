@@ -8707,7 +8707,7 @@ M  END
         self.assertEqual(parameter_annotations(func)[overload][parameter], expected)
 
   def testSignaturesNameTypesFromOtherModules(self):
-    # A fresh interpreter, so that only the modules each module imports itself are loaded.
+    # A fresh interpreter loads only the modules these two import themselves.
     code = ('import json\n'
             'from rdkit.Chem import rdMolProcessing, rdSynthonSpaceSearch\n'
             'functions = [rdMolProcessing.GetFingerprintsForMolsInFile,\n'

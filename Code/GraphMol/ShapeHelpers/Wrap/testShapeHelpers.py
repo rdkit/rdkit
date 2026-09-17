@@ -97,8 +97,8 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(uc2.Length(), 0.0, 3)
 
   @unittest.skipIf(rdBase._wrapperType == 'boost',
-                   'the Boost wrappers accept a nested list and ignore a string')
-  def test3TransformTypes(self):
+                   'the Boost wrappers accept a nested list and a string')
+  def test2TransformTypes(self):
     m = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ShapeHelpers', 'test_data', '1oir.mol'))
     conf = m.GetConformer()

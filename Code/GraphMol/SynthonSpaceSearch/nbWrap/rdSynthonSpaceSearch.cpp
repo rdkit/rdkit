@@ -115,7 +115,8 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper2(
 using SearchCallback =
     nb::typed<nb::callable, std::optional<bool>(PyListOf<ROMol>)>;
 
-//! Returns up to the requested number of conformers for a SMILES, or None.
+//! Returns a molecule with up to the requested number of conformers for a
+//! SMILES, or None.
 using ConformerGenerator =
     nb::typed<nb::callable, std::optional<ROMol>(std::string, unsigned int)>;
 
