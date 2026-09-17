@@ -53,6 +53,10 @@ GitHub)
   Boost.Python wrapper could not convert a list or a tuple of molecules, so it
   silently used the default feature definitions instead; fingerprints from a
   generator built with `patterns` change accordingly.
+- `getFeatureInvariants()` and `MorganFeatureAtomInvGenerator`
+  (`GetMorganFeatureAtomInvGen()` from Python) now raise a `ValueError` for more
+  than 32 patterns. Each pattern is one bit of a 32-bit invariant, and the
+  patterns past the 32nd were shifted out of it.
 - Creating a reader from a Python file object with no `read` attribute now
   raises `ValueError`. Such an object was accepted before, and reading from it
   returned no molecules.

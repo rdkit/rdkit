@@ -110,6 +110,13 @@ class TestCase(unittest.TestCase):
         self.assertNotEqual(g.GetSparseCountFingerprint(m).GetNonzeroElements(),
                             default.GetSparseCountFingerprint(m).GetNonzeroElements())
 
+  def testMorganFeatureAtomInvGenPatternLimit(self):
+    pattern = Chem.MolFromSmarts('[OX2]')
+    # Each pattern is one bit of a 32-bit atom invariant.
+    rdFingerprintGenerator.GetMorganFeatureAtomInvGen([pattern] * 32)
+    with self.assertRaises(ValueError):
+      rdFingerprintGenerator.GetMorganFeatureAtomInvGen([pattern] * 33)
+
   def testRDKitFPGenerator(self):
     m = Chem.MolFromSmiles('CCCCC')
     g = rdFingerprintGenerator.GetRDKitFPGenerator()
