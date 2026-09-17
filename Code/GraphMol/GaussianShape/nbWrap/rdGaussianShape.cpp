@@ -226,7 +226,9 @@ and optionally a list of indices of the atoms that the feature was derived from.
             }
             return nb::tuple(py_list);
           },
-          [](GaussianShape::ShapeInputOptions &opts, nb::object ar) {
+          [](GaussianShape::ShapeInputOptions &opts,
+             const PySequenceOf<nb::typed<nb::tuple, unsigned int, double>>
+                 &ar) {
             int len = nb::len(ar);
             opts.atomRadii.resize(len);
             for (int i = 0; i < len; i++) {
