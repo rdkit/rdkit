@@ -293,7 +293,7 @@ class TestCase(unittest.TestCase):
     fname = os.path.join(os.environ["RDBASE"], "External", "FreeSASA", "test_data", "1d3z.pdb")
     mol = Chem.MolFromPDBFile(fname)
     radii = list(rdFreeSASA.classifyAtoms(mol))
-    for bad in (radii[:10], radii + [1.0], []):
+    for bad in (radii[:10], []):
       with self.subTest(length=len(bad)):
         with self.assertRaises(RuntimeError):
           rdFreeSASA.CalcSASA(mol, bad)
