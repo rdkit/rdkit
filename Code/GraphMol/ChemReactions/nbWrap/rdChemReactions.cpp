@@ -389,7 +389,7 @@ PreprocessResult PreprocessReaction(
     ChemicalReaction &reaction, const PyDictOf<std::string, ROMol> &queryDict,
     std::string propName) {
   std::map<std::string, ROMOL_SPTR> queries;
-  unsigned int size = nb::len(queryDict);
+  unsigned int size = queryDict.size();
   if (!size) {
     const bool normalized = true;
     queries = GetFlattenedFunctionalGroupHierarchy(normalized);

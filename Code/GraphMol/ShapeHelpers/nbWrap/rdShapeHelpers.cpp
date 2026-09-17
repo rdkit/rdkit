@@ -222,7 +222,7 @@ of the box from the origin)DOC");
       "ComputeUnionBox",
       [](const nb::typed<nb::tuple, RDGeom::Point3D, RDGeom::Point3D> &box1,
          const nb::typed<nb::tuple, RDGeom::Point3D, RDGeom::Point3D> &box2) {
-        if (nb::len(box1) != 2 || nb::len(box2) != 2) {
+        if (box1.size() != 2 || box2.size() != 2) {
           throw nb::value_error(
               "In correct format for one of the box: expecting a tuple of two "
               "Point3D");
