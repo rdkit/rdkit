@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <RDBoost/Wrap_nb.h>
 #include <nanobind/ndarray.h>
 #include <ML/InfoTheory/CorrMatGenerator.h>
 #include <RDGeneral/types.h>
@@ -31,7 +32,7 @@ nb::ndarray<nb::numpy, double, nb::ndim<1>> getCorrMatrix(
   return nb::ndarray<nb::numpy, double, nb::ndim<1>>(data, {dim}, owner);
 }
 
-void setBitList(BitCorrMatGenerator *cmGen, nb::iterable bitList) {
+void setBitList(BitCorrMatGenerator *cmGen, const PyIterableOf<int> &bitList) {
   RDKit::INT_VECT res;
   for (auto item : bitList) {
     res.push_back(nb::cast<int>(item));

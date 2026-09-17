@@ -48,7 +48,8 @@ struct PyEmbedParameters : public RDKit::DGeomHelpers::EmbedParameters {
     return nb::tuple(lst);
   }
 
-  void setCPCI(const nb::dict &CPCIdict) {
+  void setCPCI(const PyDictOf<nb::typed<nb::tuple, unsigned int, unsigned int>,
+                              double> &CPCIdict) {
     CPCI = std::make_shared<
         std::map<std::pair<unsigned int, unsigned int>, double>>();
     for (auto item : CPCIdict) {

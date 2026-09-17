@@ -49,7 +49,7 @@ struct IntStringMap {
 
 //! (r, g, b) or (r, g, b, a), with each component between 0 and 1
 using PyColour = PyTupleOf<float>;
-//! index -> colour
+//! index -> color
 using PyColourMap = PyDictOf<int, PyColour>;
 
 void tagAtomHelper(
@@ -453,40 +453,40 @@ RGBATuple getQyColour(const RDKit::MolDrawOptions &self) {
 RGBATuple getHighlightColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.highlightColour);
 }
-void setBgColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
+void setBgColour(RDKit::MolDrawOptions &self, const PyColour &tpl) {
   self.backgroundColour = pyTupleToDrawColour(tpl);
 }
-void setQyColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
+void setQyColour(RDKit::MolDrawOptions &self, const PyColour &tpl) {
   self.queryColour = pyTupleToDrawColour(tpl);
 }
-void setHighlightColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
+void setHighlightColour(RDKit::MolDrawOptions &self, const PyColour &tpl) {
   self.highlightColour = pyTupleToDrawColour(tpl);
 }
 RGBATuple getSymbolColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.symbolColour);
 }
-void setSymbolColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
+void setSymbolColour(RDKit::MolDrawOptions &self, const PyColour &tpl) {
   self.symbolColour = pyTupleToDrawColour(tpl);
 }
 RGBATuple getLegendColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.legendColour);
 }
-void setLegendColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
+void setLegendColour(RDKit::MolDrawOptions &self, const PyColour &tpl) {
   self.legendColour = pyTupleToDrawColour(tpl);
 }
 RGBATuple getAnnotationColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.annotationColour);
 }
-void setAnnotationColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
+void setAnnotationColour(RDKit::MolDrawOptions &self, const PyColour &tpl) {
   self.annotationColour = pyTupleToDrawColour(tpl);
 }
-void setAtomNoteColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
+void setAtomNoteColour(RDKit::MolDrawOptions &self, const PyColour &tpl) {
   self.atomNoteColour = pyTupleToDrawColour(tpl);
 }
 RGBATuple getAtomNoteColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.atomNoteColour);
 }
-void setBondNoteColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
+void setBondNoteColour(RDKit::MolDrawOptions &self, const PyColour &tpl) {
   self.bondNoteColour = pyTupleToDrawColour(tpl);
 }
 RGBATuple getBondNoteColour(const RDKit::MolDrawOptions &self) {
@@ -495,7 +495,8 @@ RGBATuple getBondNoteColour(const RDKit::MolDrawOptions &self) {
 RGBATuple getVariableAttachmentColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.variableAttachmentColour);
 }
-void setVariableAttachmentColour(RDKit::MolDrawOptions &self, nb::tuple tpl) {
+void setVariableAttachmentColour(RDKit::MolDrawOptions &self,
+                                 const PyColour &tpl) {
   self.variableAttachmentColour = pyTupleToDrawColour(tpl);
 }
 void useDefaultAtomPalette(RDKit::MolDrawOptions &self) {
@@ -525,15 +526,15 @@ AtomPaletteDict getAtomPalette(const RDKit::MolDrawOptions &self) {
   return AtomPaletteDict(res);
 }
 
-void setMonochromeMode_helper1(RDKit::MolDrawOptions &options, nb::tuple fg,
-                               nb::tuple bg) {
+void setMonochromeMode_helper1(RDKit::MolDrawOptions &options,
+                               const PyColour &fg, const PyColour &bg) {
   auto fgc = pyTupleToDrawColour(fg);
   auto bgc = pyTupleToDrawColour(bg);
   RDKit::setMonochromeMode(options, fgc, bgc);
 }
 
-void setMonochromeMode_helper2(RDKit::MolDraw2D &d2d, nb::tuple fg,
-                               nb::tuple bg) {
+void setMonochromeMode_helper2(RDKit::MolDraw2D &d2d, const PyColour &fg,
+                               const PyColour &bg) {
   auto fgc = pyTupleToDrawColour(fg);
   auto bgc = pyTupleToDrawColour(bg);
   RDKit::setMonochromeMode(d2d, fgc, bgc);
@@ -636,7 +637,7 @@ RGBATupleSequence getColoursHelper(
 }
 
 void setContourColour(RDKit::MolDraw2DUtils::ContourParams &params,
-                      nb::tuple tpl) {
+                      const PyColour &tpl) {
   params.contourColour = pyTupleToDrawColour(tpl);
 }
 
@@ -657,16 +658,17 @@ void drawPolygonHelper(RDKit::MolDraw2D &self,
 }
 
 void drawAttachmentLineHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
-                              const Point2D &cds2, nb::tuple pycol, double len,
-                              unsigned int nSegments, bool rawCoords) {
+                              const Point2D &cds2, const PyColour &pycol,
+                              double len, unsigned int nSegments,
+                              bool rawCoords) {
   auto col = pyTupleToDrawColour(pycol);
   self.drawAttachmentLine(cds1, cds2, col, len, nSegments, rawCoords);
 }
 
 void drawWavyLineHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
-                        const Point2D &cds2, nb::tuple pycol1, nb::tuple pycol2,
-                        unsigned int nSegments, double vertOffset,
-                        bool rawCoords) {
+                        const Point2D &cds2, const PyColour &pycol1,
+                        const PyColour &pycol2, unsigned int nSegments,
+                        double vertOffset, bool rawCoords) {
   auto col1 = pyTupleToDrawColour(pycol1);
   auto col2 = pyTupleToDrawColour(pycol2);
   self.drawWavyLine(cds1, cds2, col1, col2, nSegments, vertOffset, rawCoords);
@@ -687,7 +689,7 @@ void setDrawOptions(RDKit::MolDraw2D &self, const MolDrawOptions &opts) {
   self.drawOptions() = opts;
 }
 
-void setDrawerColour(RDKit::MolDraw2D &self, nb::tuple tpl) {
+void setDrawerColour(RDKit::MolDraw2D &self, const PyColour &tpl) {
   self.setColour(pyTupleToDrawColour(tpl));
 }
 
@@ -904,7 +906,7 @@ NB_MODULE(rdMolDraw2D, m) {
           [](RDKit::MolDrawOptions &self) {
             return IntStringMap{&self.atomLabels};
           },
-          [](RDKit::MolDrawOptions &self, nb::dict d) {
+          [](RDKit::MolDrawOptions &self, const PyDictOf<int, std::string> &d) {
             self.atomLabels.clear();
             for (auto item : d) {
               self.atomLabels[nb::cast<int>(item.first)] =

@@ -36,12 +36,12 @@ static std::unique_ptr<RDKit::MatchVectType> translateAtomMap(
   return res;
 }
 
-static unsigned int compute2DCoordsHelper(RDKit::ROMol &mol, bool canonOrient,
-                                          bool clearConfs, nb::dict coordMap,
-                                          unsigned int nFlipsPerSample,
-                                          unsigned int nSamples, int sampleSeed,
-                                          int permuteDeg4Nodes, double bondLength,
-                                          bool forceRDKit, bool useRingTemplates) {
+static unsigned int compute2DCoordsHelper(
+    RDKit::ROMol &mol, bool canonOrient, bool clearConfs,
+    const PyDictOf<unsigned int, RDGeom::Point2D> &coordMap,
+    unsigned int nFlipsPerSample, unsigned int nSamples, int sampleSeed,
+    int permuteDeg4Nodes, double bondLength, bool forceRDKit,
+    bool useRingTemplates) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
   for (auto item : coordMap) {

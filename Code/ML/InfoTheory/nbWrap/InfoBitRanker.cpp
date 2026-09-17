@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <nanobind/nanobind.h>
+#include <RDBoost/Wrap_nb.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
 #include <ML/InfoTheory/InfoBitRanker.h>
@@ -46,7 +47,7 @@ void AccumulateVotes(InfoBitRanker *ranker, nb::object bitVect, int label) {
   }
 }
 
-void SetBiasList(InfoBitRanker *ranker, nb::iterable classList) {
+void SetBiasList(InfoBitRanker *ranker, const PyIterableOf<int> &classList) {
   RDKit::INT_VECT cList;
   for (auto item : classList) {
     cList.push_back(nb::cast<int>(item));
@@ -54,7 +55,7 @@ void SetBiasList(InfoBitRanker *ranker, nb::iterable classList) {
   ranker->setBiasList(cList);
 }
 
-void SetMaskBits(InfoBitRanker *ranker, nb::iterable maskBits) {
+void SetMaskBits(InfoBitRanker *ranker, const PyIterableOf<int> &maskBits) {
   RDKit::INT_VECT cList;
   for (auto item : maskBits) {
     cList.push_back(nb::cast<int>(item));

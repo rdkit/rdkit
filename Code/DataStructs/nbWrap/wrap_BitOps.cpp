@@ -53,8 +53,8 @@ double SimilarityWrapper(const T &bv1, const nb::bytes &pkl, double a, double b,
 }
 
 template <typename T>
-ListOfClosestNeighbors NeighborWrapper(const nb::iterable &queries,
-                                       const nb::iterable &bvs,
+ListOfClosestNeighbors NeighborWrapper(const PyIterableOf<T> &queries,
+                                       const PyIterableOf<T> &bvs,
                                        double (*metric)(const T &, const T &)) {
   nb::list res;
   std::vector<const T *> bvPtrs;
@@ -79,7 +79,7 @@ ListOfClosestNeighbors NeighborWrapper(const nb::iterable &queries,
 }
 
 template <typename T>
-PyListOf<double> BulkWrapper(const T &bv1, const nb::iterable &bvs,
+PyListOf<double> BulkWrapper(const T &bv1, const PyIterableOf<T> &bvs,
                              double (*metric)(const T &, const T &),
                              bool returnDistance) {
   nb::list res;
@@ -95,7 +95,7 @@ PyListOf<double> BulkWrapper(const T &bv1, const nb::iterable &bvs,
 }
 
 template <typename T>
-PyListOf<double> BulkWrapper(const T &bv1, const nb::iterable &bvs, double a,
+PyListOf<double> BulkWrapper(const T &bv1, const PyIterableOf<T> &bvs, double a,
                              double b,
                              double (*metric)(const T &, const T &, double,
                                               double),
@@ -120,15 +120,15 @@ PyListOf<double> BulkWrapper(const T &bv1, const nb::iterable &bvs, double a,
                              returnDistance);                                  \
   }                                                                            \
   template <typename T>                                                        \
-  PyListOf<double> Bulk##_metricname_(const T &bv1, const nb::iterable &bvs,   \
-                                      bool returnDistance) {                   \
+  PyListOf<double> Bulk##_metricname_(                                         \
+      const T &bv1, const PyIterableOf<T> &bvs, bool returnDistance) {         \
     return BulkWrapper(bv1, bvs,                                               \
                        (double (*)(const T &, const T &))_metricname_,         \
                        returnDistance);                                        \
   }                                                                            \
   template <typename T>                                                        \
-  ListOfClosestNeighbors _metricname_##Neighbors(const nb::iterable &queries,  \
-                                                 const nb::iterable &bvs) {    \
+  ListOfClosestNeighbors _metricname_##Neighbors(                              \
+      const PyIterableOf<T> &queries, const PyIterableOf<T> &bvs) {            \
     return NeighborWrapper<T>(queries, bvs,                                    \
                               (double (*)(const T &, const T &))_metricname_); \
   }
@@ -156,7 +156,7 @@ double TverskySimilarity_w(const T1 &bv1, const T2 &bv2, double a, double b,
 }
 
 template <typename T>
-PyListOf<double> BulkTverskySimilarity(const T &bv1, const nb::iterable &bvs,
+PyListOf<double> BulkTverskySimilarity(const T &bv1, const PyIterableOf<T> &bvs,
                                        double a, double b,
                                        bool returnDistance) {
   return BulkWrapper(
@@ -177,11 +177,11 @@ bool AllProbeBitsMatchBytes(const T &probe, const nb::bytes &ref) {
     m.def(#_funcname_, (double (*)(const EBV &, const EBV &))_funcname_, \
           "v1"_a, "v2"_a, _help_);                                       \
     m.def(#_bulkname_,                                                   \
-          (PyListOf<double> (*)(const SBV &, const nb::iterable &,       \
+          (PyListOf<double> (*)(const SBV &, const PyIterableOf<SBV> &,  \
                                 bool))_bulkname_<SBV>,                   \
           "v1"_a, "v2"_a, "returnDistance"_a = false);                   \
     m.def(#_bulkname_,                                                   \
-          (PyListOf<double> (*)(const EBV &, const nb::iterable &,       \
+          (PyListOf<double> (*)(const EBV &, const PyIterableOf<EBV> &,  \
                                 bool))_bulkname_<EBV>,                   \
           "v1"_a, "v2"_a, "returnDistance"_a = false, _help_);           \
   }
@@ -199,11 +199,11 @@ bool AllProbeBitsMatchBytes(const T &probe, const nb::bytes &ref) {
           (double (*)(const EBV &, const nb::bytes &, bool))_name_w_, "bv1"_a, \
           "pkl"_a, "returnDistance"_a = false, _help_);                        \
     m.def(#_bulkname_,                                                         \
-          (PyListOf<double> (*)(const SBV &, const nb::iterable &,             \
+          (PyListOf<double> (*)(const SBV &, const PyIterableOf<SBV> &,        \
                                 bool))_bulkname_<SBV>,                         \
           "bv1"_a, "bvList"_a, "returnDistance"_a = false);                    \
     m.def(#_bulkname_,                                                         \
-          (PyListOf<double> (*)(const EBV &, const nb::iterable &,             \
+          (PyListOf<double> (*)(const EBV &, const PyIterableOf<EBV> &,        \
                                 bool))_bulkname_<EBV>,                         \
           "bv1"_a, "bvList"_a, "returnDistance"_a = false, _help_);            \
     m.def(#_funcname_ "Neighbors", _funcname_##Neighbors<ExplicitBitVect>,     \
@@ -260,15 +260,16 @@ struct BitOps_wrapper {
             (double (*)(const EBV &, const nb::bytes &, double, double,
                         bool))TverskySimilarity_w,
             "bv1"_a, "pkl"_a, "a"_a, "b"_a, "returnDistance"_a = false, help);
-      m.def("BulkTverskySimilarity",
-            (PyListOf<double> (*)(const SBV &, const nb::iterable &, double,
-                                  double, bool))BulkTverskySimilarity<SBV>,
-            "bv1"_a, "bvList"_a, "a"_a, "b"_a, "returnDistance"_a = false);
-      m.def("BulkTverskySimilarity",
-            (PyListOf<double> (*)(const EBV &, const nb::iterable &, double,
-                                  double, bool))BulkTverskySimilarity<EBV>,
-            "bv1"_a, "bvList"_a, "a"_a, "b"_a, "returnDistance"_a = false,
-            help);
+      m.def(
+          "BulkTverskySimilarity",
+          (PyListOf<double> (*)(const SBV &, const PyIterableOf<SBV> &, double,
+                                double, bool))BulkTverskySimilarity<SBV>,
+          "bv1"_a, "bvList"_a, "a"_a, "b"_a, "returnDistance"_a = false);
+      m.def(
+          "BulkTverskySimilarity",
+          (PyListOf<double> (*)(const EBV &, const PyIterableOf<EBV> &, double,
+                                double, bool))BulkTverskySimilarity<EBV>,
+          "bv1"_a, "bvList"_a, "a"_a, "b"_a, "returnDistance"_a = false, help);
     }
 
     DBL_DEF(OnBitSimilarity, BulkOnBitSimilarity,

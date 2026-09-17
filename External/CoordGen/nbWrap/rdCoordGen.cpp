@@ -23,7 +23,8 @@ namespace RDKit {
 
 namespace {
 
-void SetCoordMap(CoordGen::CoordGenParams *self, nb::dict coordMap) {
+void SetCoordMap(CoordGen::CoordGenParams *self,
+                 const PyDictOf<unsigned int, RDGeom::Point2D> &coordMap) {
   self->coordMap.clear();
   for (auto item : coordMap) {
     unsigned int id = nb::cast<unsigned int>(item.first);

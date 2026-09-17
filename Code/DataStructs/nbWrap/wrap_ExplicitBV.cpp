@@ -22,13 +22,13 @@ using namespace nb::literals;
 
 using EBV = ExplicitBitVect;
 
-void SetBitsFromList(EBV *bv, const nb::iterable &onBitList) {
+void SetBitsFromList(EBV *bv, const PyIterableOf<unsigned int> &onBitList) {
   for (auto item : onBitList) {
     bv->setBit(nb::cast<unsigned int>(item));
   }
 }
 
-void UnSetBitsFromList(EBV *bv, const nb::iterable &offBitList) {
+void UnSetBitsFromList(EBV *bv, const PyIterableOf<unsigned int> &offBitList) {
   for (auto item : offBitList) {
     bv->unsetBit(nb::cast<unsigned int>(item));
   }

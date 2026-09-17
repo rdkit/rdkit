@@ -21,13 +21,13 @@ using namespace nb::literals;
 
 using SBV = SparseBitVect;
 
-void SetBitsFromList(SBV *bv, const nb::iterable &onBitList) {
+void SetBitsFromList(SBV *bv, const PyIterableOf<unsigned int> &onBitList) {
   for (auto item : onBitList) {
     bv->setBit(nb::cast<unsigned int>(item));
   }
 }
 
-void UnSetBitsFromList(SBV *bv, const nb::iterable &offBitList) {
+void UnSetBitsFromList(SBV *bv, const PyIterableOf<unsigned int> &offBitList) {
   for (auto item : offBitList) {
     bv->unsetBit(nb::cast<unsigned int>(item));
   }

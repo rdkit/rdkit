@@ -8664,6 +8664,9 @@ M  END
     self.assertIn('Callable[[rdkit.Chem.rdchem.Atom, rdkit.Chem.rdchem.Atom], bool]',
                   Chem.SubstructMatchParameters.setExtraAtomCheckFunc.__doc__)
     self.assertIn('metadata: dict[str, str]', Chem.AddMetadataToPNGString.__doc__)
+    self.assertIn('bvList: collections.abc.Iterable[rdkit.DataStructs.cDataStructs.ExplicitBitVect]',
+                  DataStructs.BulkTanimotoSimilarity.__doc__)
+    self.assertIn('queries: dict[str, rdkit.Chem.rdchem.Mol]', Chem.MolAddRecursiveQueries.__doc__)
 
   def testSequenceParamsAcceptAnyIterable(self):
     m = Chem.RWMol(Chem.MolFromSmiles('C[C@H](F)Cl'))

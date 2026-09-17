@@ -36,7 +36,7 @@ std::string SIVToString(const SparseIntVect<IndexType> &siv) {
 namespace {
 template <typename IndexType>
 void pyUpdateFromSequence(SparseIntVect<IndexType> &vect,
-                          const nb::iterable &seq) {
+                          const PyIterableOf<IndexType> &seq) {
   for (auto item : seq) {
     IndexType idx = nb::cast<IndexType>(item);
     vect.setVal(idx, vect[idx] + 1);
@@ -67,7 +67,7 @@ PyListOf<int> pyToList(SparseIntVect<IndexType> &vect) {
 }
 
 template <typename T>
-PyListOf<double> BulkDice(const T &siv1, const nb::iterable &sivs,
+PyListOf<double> BulkDice(const T &siv1, const PyIterableOf<T> &sivs,
                           bool returnDistance) {
   nb::list res;
   for (auto siv : sivs) {
@@ -79,7 +79,7 @@ PyListOf<double> BulkDice(const T &siv1, const nb::iterable &sivs,
 }
 
 template <typename T>
-PyListOf<double> BulkTanimoto(const T &siv1, const nb::iterable &sivs,
+PyListOf<double> BulkTanimoto(const T &siv1, const PyIterableOf<T> &sivs,
                               bool returnDistance) {
   nb::list res;
   for (auto siv : sivs) {
@@ -91,8 +91,8 @@ PyListOf<double> BulkTanimoto(const T &siv1, const nb::iterable &sivs,
 }
 
 template <typename T>
-PyListOf<double> BulkTversky(const T &siv1, const nb::iterable &sivs, double a,
-                             double b, bool returnDistance) {
+PyListOf<double> BulkTversky(const T &siv1, const PyIterableOf<T> &sivs,
+                             double a, double b, bool returnDistance) {
   nb::list res;
   for (auto siv : sivs) {
     const auto &siv2 = nb::cast<const T &>(siv);

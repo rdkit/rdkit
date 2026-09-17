@@ -353,9 +353,9 @@ TupleOfIntTuples GetReactingAtoms(const ChemicalReaction &self,
   return TupleOfIntTuples(nb::tuple(res));
 }
 
-nb::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
-                                         nb::dict queryDict,
-                                         std::string propName, bool getLabels) {
+nb::object AddRecursiveQueriesToReaction(
+    ChemicalReaction &self, const PyDictOf<std::string, ROMol> &queryDict,
+    std::string propName, bool getLabels) {
   std::map<std::string, ROMOL_SPTR> queries;
   for (auto [k, v] : queryDict) {
     ROMol *m = nb::cast<ROMol *>(v);
@@ -385,8 +385,9 @@ nb::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
   }
 }
 
-PreprocessResult PreprocessReaction(ChemicalReaction &reaction,
-                                    nb::dict queryDict, std::string propName) {
+PreprocessResult PreprocessReaction(
+    ChemicalReaction &reaction, const PyDictOf<std::string, ROMol> &queryDict,
+    std::string propName) {
   std::map<std::string, ROMOL_SPTR> queries;
   unsigned int size = nb::len(queryDict);
   if (!size) {

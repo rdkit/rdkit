@@ -310,7 +310,8 @@ DictOfMols parseQueryDefFileHelper(nb::object &input, bool standardize,
   return DictOfMols(res);
 }
 
-void addRecursiveQueriesHelper(ROMol &mol, nb::dict replDict,
+void addRecursiveQueriesHelper(ROMol &mol,
+                               const PyDictOf<std::string, ROMol> &replDict,
                                std::string propName) {
   std::map<std::string, ROMOL_SPTR> replacements;
   const auto items = replDict.items();
@@ -1047,7 +1048,8 @@ ROMol *molzipHelper(const PyIterableOf<ROMOL_SPTR> &pmols,
   return molzip(*mols, p.value_or(MolzipParams())).release();
 }
 
-ROMol *rgroupRowZipHelper(nb::dict row, const std::optional<MolzipParams> p) {
+ROMol *rgroupRowZipHelper(const PyDictOf<std::string, ROMol> &row,
+                          const std::optional<MolzipParams> p) {
   std::map<std::string, ROMOL_SPTR> rgroup_row;
   nb::list items = row.items();
   for (size_t i = 0; i < (size_t)nb::len(items); ++i) {
