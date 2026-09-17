@@ -40,6 +40,7 @@
 #include <RDGeneral/RDThreads.h>
 #include <cmath>
 #include <cstddef>
+#include <memory>
 #include <vector>
 #include <chrono>  // for time-related functions
 
@@ -1495,9 +1496,11 @@ bool setupInitialBoundsMatrix(
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
     setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
                    scaleVDW, set15bounds, true, true,
-                   &etkdgDetails.path14Configs);
+                   &etkdgDetails.path14Configs,
+                   &(*etkdgDetails.internalCoords));
   } else {
-    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
+    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds, true, true,
+                   nullptr, &(*etkdgDetails.internalCoords));
   }
   double tol = 0.0;
   if (coordMap) {
@@ -1846,8 +1849,11 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 
     DistGeom::BoundsMatPtr mmat;
 
-    params.internalCoords =
-        std::make_shared<InternalCoordinates>(piece->getNumBonds());
+    etkdgDetails.internalCoords =
+        params.initialEmbeddingMode ==
+                InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING
+            ? std::make_unique<InternalCoordinates>(piece->getNumBonds())
+            : nullptr;
 
     if (params.boundsMat == nullptr || molFrags.size() > 1) {
       // The user didn't provide one, so create and initialize the distance
@@ -1893,7 +1899,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     DistGeom::ZMatPtr zmat = std::make_shared<DistGeom::ZMatrix>(nAtoms);
     if (params.initialEmbeddingMode ==
         InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING) {
-      setMoleculeDFS(*piece.get(), zmat, *params.internalCoords);
+      setMoleculeDFS(*piece.get(), zmat, *etkdgDetails.internalCoords);
       correctChiralCenters(*piece.get(), zmat);
     }
 

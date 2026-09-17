@@ -1576,7 +1576,7 @@ void initBoundsMat(DistGeom::BoundsMatPtr mmat, double defaultMin,
 void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     const EmbedParameters &params, bool scaleVDW,
                     bool set15bounds, bool set14bounds, bool set13bounds,
-                    PATH14_VECT *paths14) {
+                    PATH14_VECT *paths14, InternalCoordinates *internalCoords) {
   PRECONDITION(mmat.get(), "bad pointer");
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -1615,9 +1615,9 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
   if (params.initialEmbeddingMode ==
           InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING &&
-      params.internalCoords != nullptr) {
+      internalCoords != nullptr) {
     assert(params.internalCoords != nullptr);
-    collectInternalCoordinates(mol, *params.internalCoords, accumData);
+    collectInternalCoordinates(mol, *internalCoords, accumData);
   }
   if (paths14) {
     *paths14 = accumData.paths14;
@@ -1685,9 +1685,9 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                     std::vector<std::vector<int>> &angles,
                     const EmbedParameters &params, bool scaleVDW,
                     bool set15bounds, bool set14bounds, bool set13bounds,
-                    PATH14_VECT *paths14) {
+                    PATH14_VECT *paths14, InternalCoordinates *internalCoords) {
   setTopolBounds(mol, mmat, params, scaleVDW, set15bounds, set14bounds,
-                 set13bounds, paths14);
+                 set13bounds, paths14, internalCoords);
   bonds.clear();
   angles.clear();
   collectBondsAndAngles(mol, bonds, angles);
