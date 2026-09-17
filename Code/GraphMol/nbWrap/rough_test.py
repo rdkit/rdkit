@@ -52,7 +52,12 @@ exec(code, TestReplaceCore.__dict__)
 
 
 def signature_annotations(signature):
-  """Returns a {parameter: annotation} dict for one nanobind signature string."""
+  """Returns a {parameter: annotation} dict for one nanobind signature string.
+
+  Raises:
+    SyntaxError: If the signature names a numpy.ndarray, which nanobind writes with keyword
+      arguments inside the brackets.
+  """
   # nanobind writes each default value as a \N placeholder, which is not valid Python.
   args = ast.parse(re.sub(r'\\\d+', '...', signature) + ': ...').body[0].args
   return {arg.arg: ast.unparse(arg.annotation)
@@ -8694,6 +8699,8 @@ M  END
       (rdMolStandardize.CleanupInPlace, 1, 'mols',
        'collections.abc.Iterable[rdkit.Chem.rdchem.Mol]'),
       (Chem.SetDoubleBondNeighborDirections, 0, 'conf', 'rdkit.Chem.rdchem.Conformer | None'),
+      (rdChemReactions.EnumerateLibrary.__init__, 1, 'reagents',
+       'collections.abc.Iterable[collections.abc.Iterable[rdkit.Chem.rdchem.Mol]]'),
     ]
     for func, overload, parameter, expected in cases:
       with self.subTest(func=func.__name__, parameter=parameter):

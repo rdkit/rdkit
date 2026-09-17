@@ -9,6 +9,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/tuple.h>
 
 #include <GraphMol/ROMol.h>
@@ -28,10 +29,12 @@ using namespace RDKit;
 
 namespace {
 
-static void copyTransform(
-    const nb::ndarray<nb::numpy, const double, nb::ndim<2>, nb::c_contig>
-        &transMat,
-    RDGeom::Transform3D &trans) {
+//! A 4x4 transformation matrix.
+using TransformMatrix =
+    nb::ndarray<nb::numpy, const double, nb::ndim<2>, nb::c_contig>;
+
+static void copyTransform(const TransformMatrix &transMat,
+                          RDGeom::Transform3D &trans) {
   unsigned int nrows = transMat.shape(0);
   unsigned int ncols = transMat.shape(1);
   if ((nrows != 4) || (ncols != 4)) {
@@ -53,14 +56,11 @@ NB_MODULE(rdShapeHelpers, m) {
   m.def(
       "EncodeShape",
       [](const ROMol &mol, RDGeom::UniformGrid3D &grid, int confId,
-         nb::object trans, double vdwScale, double stepSize, int maxLayers,
-         bool ignoreHs) {
-        if (!trans.is_none()) {
-          auto transMat = nb::cast<
-              nb::ndarray<nb::numpy, const double, nb::ndim<2>, nb::c_contig>>(
-              trans);
+         const std::optional<TransformMatrix> &trans, double vdwScale,
+         double stepSize, int maxLayers, bool ignoreHs) {
+        if (trans) {
           RDGeom::Transform3D ctrans;
-          copyTransform(transMat, ctrans);
+          copyTransform(*trans, ctrans);
           MolShapes::EncodeShape(mol, grid, confId, &ctrans, vdwScale, stepSize,
                                  maxLayers, ignoreHs);
         } else {
@@ -181,14 +181,12 @@ ARGUMENTS:
 
   m.def(
       "ComputeConfDimsAndOffset",
-      [](const Conformer &conf, nb::object trans, double padding) {
+      [](const Conformer &conf, const std::optional<TransformMatrix> &trans,
+         double padding) {
         RDGeom::Point3D dims, offSet;
-        if (!trans.is_none()) {
-          auto transMat = nb::cast<
-              nb::ndarray<nb::numpy, const double, nb::ndim<2>, nb::c_contig>>(
-              trans);
+        if (trans) {
           RDGeom::Transform3D ctrans;
-          copyTransform(transMat, ctrans);
+          copyTransform(*trans, ctrans);
           MolShapes::computeConfDimsAndOffset(conf, dims, offSet, &ctrans,
                                               padding);
         } else {
@@ -203,14 +201,12 @@ of the box from the origin)DOC");
 
   m.def(
       "ComputeConfBox",
-      [](const Conformer &conf, nb::object trans, double padding) {
+      [](const Conformer &conf, const std::optional<TransformMatrix> &trans,
+         double padding) {
         RDGeom::Point3D lowerCorner, upperCorner;
-        if (!trans.is_none()) {
-          auto transMat = nb::cast<
-              nb::ndarray<nb::numpy, const double, nb::ndim<2>, nb::c_contig>>(
-              trans);
+        if (trans) {
           RDGeom::Transform3D ctrans;
-          copyTransform(transMat, ctrans);
+          copyTransform(*trans, ctrans);
           MolShapes::computeConfBox(conf, lowerCorner, upperCorner, &ctrans,
                                     padding);
         } else {

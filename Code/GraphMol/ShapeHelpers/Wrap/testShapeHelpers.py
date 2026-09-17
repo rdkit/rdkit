@@ -1,7 +1,9 @@
 import os
 import unittest
 
-from rdkit import Chem, DataStructs, RDConfig
+import numpy
+
+from rdkit import Chem, DataStructs, RDConfig, rdBase
 from rdkit.Chem import rdMolAlign
 from rdkit.Chem import rdMolTransforms as rdmt
 from rdkit.Chem import rdShapeHelpers as rdshp
@@ -93,6 +95,22 @@ class TestCase(unittest.TestCase):
     uc2 -= geom.Point3D(10.752, 33.799, 12.557)
     self.assertAlmostEqual(lc2.Length(), 0.0, 3)
     self.assertAlmostEqual(uc2.Length(), 0.0, 3)
+
+  @unittest.skipIf(rdBase._wrapperType == 'boost',
+                   'the Boost wrappers accept a nested list and ignore a string')
+  def test3TransformTypes(self):
+    m = Chem.MolFromMolFile(
+      os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ShapeHelpers', 'test_data', '1oir.mol'))
+    conf = m.GetConformer()
+    # NumPy arrays of another dtype or memory order are converted.
+    for trans in (numpy.eye(4), numpy.eye(4, dtype=int), numpy.asfortranarray(numpy.eye(4))):
+      rdshp.ComputeConfBox(conf, trans)
+    for trans in (numpy.eye(4).tolist(), 'x'):
+      with self.subTest(trans=trans):
+        with self.assertRaises(TypeError):
+          rdshp.ComputeConfBox(conf, trans)
+    with self.assertRaises(ValueError):
+      rdshp.ComputeConfBox(conf, numpy.eye(3))
 
 
 if __name__ == '__main__':
