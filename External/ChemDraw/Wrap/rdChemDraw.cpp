@@ -295,7 +295,7 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
         ValueError [default CDXML]
 
      RETURNS:
-       an iterator of parsed ChemicalReaction objects.)DOC";
+       the ChemDraw string.)DOC";
 
   python::def(
       "MolToChemDrawBlock", v2::MolToChemDrawBlock,
