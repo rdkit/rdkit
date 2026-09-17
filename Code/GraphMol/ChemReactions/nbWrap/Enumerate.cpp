@@ -30,6 +30,9 @@ std::vector<RDKit::MOL_SPTR_VECT> ConvertToVect(nb::object bbs) {
   for (nb::handle row_handle : bbs) {
     RDKit::MOL_SPTR_VECT reacts;
     for (nb::handle mol_handle : row_handle) {
+      if (mol_handle.is_none()) {
+        throw nb::value_error("reaction called with None reactants");
+      }
       reacts.push_back(nb::cast<RDKit::ROMOL_SPTR>(mol_handle));
     }
     vect.push_back(std::move(reacts));

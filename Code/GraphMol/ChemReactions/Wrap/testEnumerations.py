@@ -659,6 +659,11 @@ class TestCase(unittest.TestCase):
     products = sorted(Chem.MolToSmiles(mol) for prods in en for mols in prods for mol in mols)
     self.assertEqual(products, expected)
 
+  def testNoneReagent(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]')
+    with self.assertRaises(ValueError):
+      rdChemReactions.EnumerateLibrary(rxn, [[Chem.MolFromSmiles('CC(=O)O')], [None]])
+
 
 if __name__ == '__main__':
   unittest.main()
