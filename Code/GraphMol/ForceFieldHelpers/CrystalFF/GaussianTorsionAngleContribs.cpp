@@ -49,7 +49,7 @@ double getEnergy(const std::vector<double> &heights,
     const double t4 = std::exp(-d4 * d4 * cinv);
     result += a * (t1 + t2 + t3 + t4);
   }
-  return -KT * std::log(result);
+  return -std::log(result);
 }
 
 double getdEdPhi(const std::vector<double> &heights,
@@ -73,7 +73,7 @@ double getdEdPhi(const std::vector<double> &heights,
     innerDerivs += a * cinv * (-t1 * d1 + t2 * d2 - t3 * d3 + t4 * d4);
     denominator += a * (t1 + t2 + t3 + t4);
   }
-  return -2 * KT * innerDerivs / denominator;
+  return -2 * innerDerivs / denominator;
 }
 
 GaussianTorsionAngleContribs::GaussianTorsionAngleContribs(ForceField *owner) {
