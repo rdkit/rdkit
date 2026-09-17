@@ -247,6 +247,18 @@ macro(rdkit_nanobind_extension)
 
     INSTALL(TARGETS ${RDKPY_NAME}
             LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST} COMPONENT python)
+    # The module's type stub is generated from the built module by the
+    # nanobind_stubs target and committed beside its sources, so builds that
+    # cannot import the module, such as cross-compiled ones, still install it.
+    set(RDKPY_STUB "${CMAKE_CURRENT_SOURCE_DIR}/${RDKPY_NAME}.pyi")
+    if(EXISTS "${RDKPY_STUB}")
+      INSTALL(FILES "${RDKPY_STUB}"
+              DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST} COMPONENT python)
+    endif()
+    string(REPLACE "/" "." RDKPY_MODULE "rdkit/${RDKPY_DEST}/${RDKPY_NAME}")
+    string(REPLACE ".." "." RDKPY_MODULE "${RDKPY_MODULE}")
+    set_property(GLOBAL APPEND PROPERTY RDK_NANOBIND_STUBS
+                 "${RDKPY_MODULE}" "${RDKPY_STUB}")
     set_target_properties(nanobind
       PROPERTIES
       LIBRARY_OUTPUT_DIRECTORY  ${RDK_LIBRARY_OUTPUT_DIRECTORY} )
@@ -255,6 +267,39 @@ macro(rdkit_nanobind_extension)
             COMPONENT ${sharedLibComponent})
   endif(RDK_BUILD_NANOBIND_WRAPPERS)
 endmacro(rdkit_nanobind_extension)
+
+# Installs the py.typed marker that points type checkers at the stubs installed
+# beside the nanobind modules, and adds the nanobind_stubs target, which
+# regenerates the committed stubs from the installed modules. Call it after
+# every rdkit_nanobind_extension.
+function(rdkit_nanobind_stubs)
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/py.typed" "")
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/py.typed"
+          DESTINATION ${RDKit_PythonDir} COMPONENT python)
+
+  get_filename_component(python_dir "${RDKit_PythonDir}" DIRECTORY)
+  set(patterns "${CMAKE_SOURCE_DIR}/Code/RDBoost/nanobind_stub_patterns.txt")
+  set(python ${Python_EXECUTABLE})
+  if(APPLE)
+    # macOS removes DYLD_LIBRARY_PATH from commands run through /bin/sh, so it
+    # is set here for modules that locate the RDKit libraries through it.
+    get_filename_component(lib_dir "${RDKit_LibDir}" ABSOLUTE
+                           BASE_DIR "${CMAKE_INSTALL_PREFIX}")
+    set(python ${CMAKE_COMMAND} -E env "DYLD_LIBRARY_PATH=${lib_dir}"
+        ${Python_EXECUTABLE})
+  endif()
+  get_property(stubs GLOBAL PROPERTY RDK_NANOBIND_STUBS)
+  set(commands)
+  while(stubs)
+    list(POP_FRONT stubs module stub)
+    list(APPEND commands COMMAND ${python} -m nanobind.stubgen -q
+         -i ${python_dir} -p ${patterns}
+         -m ${module} -o ${stub})
+  endwhile()
+  add_custom_target(nanobind_stubs ${commands}
+    COMMENT "Regenerating the nanobind stubs from the installed modules"
+    VERBATIM)
+endfunction(rdkit_nanobind_stubs)
 
 
 macro(rdkit_test)
