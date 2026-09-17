@@ -61,12 +61,12 @@ std::string pyObjectToString(nb::object input) {
 nb::tuple MolsFromChemDrawBlockHelper(
     const std::string &block, bool sanitize, bool removeHs,
     RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
-        RDKit::v2::NeedsCleanPolicy::TrustSource) {
+        RDKit::v2::NeedsCleanPolicy::TrustSource,
+    RDKit::v2::CDXFormat format = RDKit::v2::CDXFormat::AUTO) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
     mols = RDKit::v2::MolsFromChemDrawBlock(
-        block,
-        {sanitize, removeHs, RDKit::v2::CDXFormat::AUTO, needsCleanPolicy});
+        block, {sanitize, removeHs, format, needsCleanPolicy});
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -86,10 +86,10 @@ nb::tuple MolsFromChemDrawBlockHelper(
 nb::tuple MolsFromChemDrawFileHelper(
     nb::object cdxml, bool sanitize, bool removeHs,
     RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
-        RDKit::v2::NeedsCleanPolicy::TrustSource) {
+        RDKit::v2::NeedsCleanPolicy::TrustSource,
+    RDKit::v2::CDXFormat format = RDKit::v2::CDXFormat::AUTO) {
   auto mols = RDKit::v2::MolsFromChemDrawFile(
-      pyObjectToString(cdxml),
-      {sanitize, removeHs, RDKit::v2::CDXFormat::AUTO, needsCleanPolicy});
+      pyObjectToString(cdxml), {sanitize, removeHs, format, needsCleanPolicy});
   nb::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
@@ -151,7 +151,8 @@ NB_MODULE(rdChemDraw, m) {
 
   nb::enum_<v2::CDXFormat>(m, "CDXFormat")
       .value("CDX", v2::CDXFormat::CDX)
-      .value("CDXML", v2::CDXFormat::CDXML);
+      .value("CDXML", v2::CDXFormat::CDXML)
+      .value("AUTO", v2::CDXFormat::AUTO);
 
   nb::enum_<v2::NeedsCleanPolicy>(m, "NeedsCleanPolicy")
       .value("TrustSource", v2::NeedsCleanPolicy::TrustSource)
@@ -161,6 +162,7 @@ NB_MODULE(rdChemDraw, m) {
   m.def("MolsFromChemDrawFile", MolsFromChemDrawFileHelper, "filename"_a,
         "sanitize"_a = true, "removeHs"_a = true,
         "needsCleanPolicy"_a = v2::NeedsCleanPolicy::TrustSource,
+        "format"_a = v2::CDXFormat::AUTO,
         R"DOC(Extract all molecules from a ChemDraw file.
 
 Note that the ChemDraw format is large and complex, the RDKit doesn't support
@@ -180,12 +182,17 @@ ARGUMENTS:
   recompute hydrogens. `TrustExplicitHydrogens` preserves the literal
   source metadata when sanitize is True. [default TrustSource]
 
+  - format: the input format. `AUTO` reads CDX when the data starts with the
+  CDX header and CDXML otherwise; `CDX` or `CDXML` skips that check.
+  [default AUTO]
+
 RETURNS:
   a tuple of parsed Mol objects.)DOC");
 
   m.def("MolsFromChemDrawBlock", MolsFromChemDrawBlockHelper, "block"_a,
         "sanitize"_a = true, "removeHs"_a = true,
         "needsCleanPolicy"_a = v2::NeedsCleanPolicy::TrustSource,
+        "format"_a = v2::CDXFormat::AUTO,
         R"DOC(Extract all molecules from a ChemDraw block.
 
 Note that the ChemDraw format is large and complex, the RDKit doesn't support
@@ -204,6 +211,10 @@ ARGUMENTS:
   `TrustSource` honors `NeedsClean` by allowing sanitization to
   recompute hydrogens. `TrustExplicitHydrogens` preserves the literal
   source metadata when sanitize is True. [default TrustSource]
+
+  - format: the input format. `AUTO` reads CDX when the data starts with the
+  CDX header and CDXML otherwise; `CDX` or `CDXML` skips that check.
+  [default AUTO]
 
 RETURNS:
   a tuple of parsed Mol objects.)DOC");
@@ -255,7 +266,8 @@ ARGUMENTS:
 
   - mol: the molecule to convert
 
-  - format: The ChemDraw format to use, CDXML/CDX [default CDXML]
+  - format: The ChemDraw format to use, CDXML/CDX; AUTO raises a ValueError
+  [default CDXML]
 
 RETURNS:
   the ChemDraw string.)DOC");

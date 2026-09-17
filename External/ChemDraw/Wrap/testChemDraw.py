@@ -296,6 +296,23 @@ class TestChemDraw(unittest.TestCase):
     mols = rdChemDraw.MolsFromChemDrawFile(path)
     self.assertEqual([Chem.MolToSmiles(m) for m in mols], ["C1CCOC1"])
 
+  def test_explicit_format(self):
+    path = os.path.join(RDConfig.RDBaseDir, "Code", "GraphMol", "test_data", "CDX",
+                        "structure_1.cdx")
+    mols = rdChemDraw.MolsFromChemDrawFile(path, format=rdChemDraw.CDXFormat.CDX)
+    self.assertEqual([Chem.MolToSmiles(m) for m in mols], ["C1CCOC1"])
+
+    cdxml = rdChemDraw.MolToChemDrawBlock(Chem.MolFromSmiles("C1CCOC1"))
+    for fmt in (rdChemDraw.CDXFormat.AUTO, rdChemDraw.CDXFormat.CDXML):
+      mols = rdChemDraw.MolsFromChemDrawBlock(cdxml, format=fmt)
+      self.assertEqual([Chem.MolToSmiles(m) for m in mols], ["C1CCOC1"])
+    # CDXML text does not parse as CDX, and the block reader returns nothing
+    self.assertEqual(
+      len(rdChemDraw.MolsFromChemDrawBlock(cdxml, format=rdChemDraw.CDXFormat.CDX)), 0)
+
+    with self.assertRaises(ValueError):
+      rdChemDraw.MolToChemDrawBlock(Chem.MolFromSmiles("C"), format=rdChemDraw.CDXFormat.AUTO)
+
 
 if __name__ == '__main__':
   unittest.main()
