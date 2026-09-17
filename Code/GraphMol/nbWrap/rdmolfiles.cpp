@@ -947,34 +947,6 @@ NB_MODULE(rdmolfiles, m) {
         docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
-      R"DOC(Construct a molecule from a Mol block.
-
-    ARGUMENTS:
-
-      - molBlock: string containing the Mol block
-
-      - sanitize: (optional) toggles sanitization of the molecule.
-        Defaults to True.
-
-      - removeHs: (optional) toggles removing hydrogens from the molecule.
-        This only make sense when sanitization is done.
-        Defaults to true.
-
-      - strictParsing: (optional) if this is false, the parser is more lax about.
- correctness of the content.
- Defaults to true.
-
- RETURNS :
-
- a Mol object, None on failure
-          .
-
- )DOC";
-  m.def("MolFromMolBlock", RDKit::MolFromMolBlock, "molBlock"_a,
-        "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true,
-        docString.c_str(), nb::rv_policy::take_ownership);
-
-  docString =
       R"DOC(Construct a molecule from a Marvin (Mrv) file.
 
     ARGUMENTS:

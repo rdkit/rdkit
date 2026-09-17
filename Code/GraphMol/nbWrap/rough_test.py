@@ -30,6 +30,7 @@ import numpy as np
 
 # import rdkit.Chem.rdDepictor
 from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
+from rdkit.Chem import rdMIF
 from rdkit.Chem import rdqueries
 
 from rdkit.Chem import rdChemReactions, rdSynthonSpaceSearch
@@ -8794,6 +8795,39 @@ M  END
     self.assertEqual(Chem.MolToSmiles(Chem.molzip(a, b, p)), "N[C@@H](F)I")
     p.setAtomSymbols(None)
     self.assertNotEqual(Chem.MolToSmiles(Chem.molzip(a, b, p)), "N[C@@H](F)I")
+
+  def testExceptionsUseStandardTypes(self):
+    # assertRaises alone would not pin this down, since a subclass satisfies
+    # it too; the point is that the type is the builtin itself.
+    m = Chem.MolFromSmiles('CCO')
+    with self.assertRaises(ValueError) as caught:
+      Chem.RenumberAtoms(m, [0])
+    self.assertIs(type(caught.exception), ValueError)
+
+    v = DataStructs.RealValueVect(30)
+    with self.assertRaises(IndexError) as caught:
+      v[40]
+    self.assertIs(type(caught.exception), IndexError)
+    self.assertEqual(caught.exception.args, (40, ))
+
+    self.assertFalse(hasattr(rdBase, 'ValueErrorException'))
+    self.assertFalse(hasattr(rdBase, 'IndexErrorException'))
+
+    # rdMIF is imported at the top of this file, so these checks also cover
+    # the state after importing it: a module registering its own Python type
+    # for these C++ exceptions would replace the builtins everywhere.
+    self.assertFalse(hasattr(rdMIF, 'MIFValueError'))
+    self.assertFalse(hasattr(rdMIF, 'MIFIndexError'))
+
+  def testFunctionsAreRegisteredOnce(self):
+    # A name bound twice to the same function lists the same signature twice
+    # in its docstring.
+    for fn in (Chem.MolFromMolBlock, rdqueries.HasPropQueryBond):
+      with self.subTest(fn=fn.__name__):
+        signatures = [
+          line for line in fn.__doc__.splitlines() if line.startswith(fn.__name__ + '(')
+        ]
+        self.assertEqual(len(signatures), 1)
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
