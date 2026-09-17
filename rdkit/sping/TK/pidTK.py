@@ -27,7 +27,6 @@ __date__ = "April 8, 1999"
 __author__ = "Perry Stoll,  perry.stoll@mail.com "
 
 # fixups by chris lee, cwlee@artsci.wustl.edu
-# $Id$
 # - added drawImage scaling support
 # - shifted baseline y parameter in drawString to work around font metric
 #         shift due to Tkinter's Canvas text_item object

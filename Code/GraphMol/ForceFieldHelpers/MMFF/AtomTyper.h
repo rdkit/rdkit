@@ -12,10 +12,13 @@
 #include <RDGeneral/export.h>
 #ifndef _RD_MMFFATOMTYPER_H__
 #define _RD_MMFFATOMTYPER_H__
+#include <boost/shared_ptr.hpp>
+#include <iostream>
 
 #include <vector>
 #include <string>
 #include <ForceField/MMFF/Params.h>
+#include <RDGeneral/types.h>
 #include <cstdint>
 
 namespace RDKit {
@@ -68,7 +71,7 @@ enum {
   CONSTANT = 1,
   DISTANCE = 2
 };
-enum {
+enum MMFFVerbosity {
   MMFF_VERBOSITY_NONE = 0,
   MMFF_VERBOSITY_LOW = 1,
   MMFF_VERBOSITY_HIGH = 2

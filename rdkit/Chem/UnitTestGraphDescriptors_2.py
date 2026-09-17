@@ -1,6 +1,4 @@
-# $Id$
-#
-#  Copyright (C) 2003-2006  Rational Discovery LLC
+#  Copyright (C) 2003-2026  Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -94,6 +92,13 @@ class TestCase(unittest.TestCase):
       # treatment of aromatic atoms. (Tests pass actually even without the filter!)
       self.__testDesc('PP_descrs_regress.2.csv', 1, GraphDescriptors.BertzCT,
                       molFilter=_hasAromaticAtoms)
+
+  def testGithub8421(self):
+    # BertzCT was platform dependent: the InfoEntropy wrapper silently returned
+    # 0.0 for numpy's default integer dtype on Windows, which dropped the atom
+    # type term of the sum
+    m = Chem.MolFromSmiles('Fc1cccc(C2(c3nnc(Cc4cccc5ccccc45)o3)CCOCC2)c1')
+    self.assertAlmostEqual(GraphDescriptors.BertzCT(m), 1143.0567597744753, delta=1e-4)
 
   def testHallKierAlpha(self):
     self.__testDesc('PP_descrs_regress.csv', 3, GraphDescriptors.HallKierAlpha)
@@ -469,11 +474,11 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       for i in range(1, 6):
-        cnt = len(Chem.FindAllPathsOfLengthN(m, i, useBonds=1))
-        assert cnt == res[i], (smi, i, cnt, res[i], Chem.FindAllPathsOfLengthN(m, i, useBonds=1))
-        cnt = len(Chem.FindAllPathsOfLengthN(m, i + 1, useBonds=0))
+        cnt = len(Chem.FindAllPathsOfLengthN(m, i, useBonds=True))
+        assert cnt == res[i], (smi, i, cnt, res[i], Chem.FindAllPathsOfLengthN(m, i, useBonds=True))
+        cnt = len(Chem.FindAllPathsOfLengthN(m, i + 1, useBonds=False))
         assert cnt == res[i], (smi, i, cnt, res[i],
-                               Chem.FindAllPathsOfLengthN(m, i + 1, useBonds=1))
+                               Chem.FindAllPathsOfLengthN(m, i + 1, useBonds=False))
 
 
 class TestCase_python(unittest.TestCase):

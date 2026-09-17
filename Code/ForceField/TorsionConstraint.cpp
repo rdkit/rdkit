@@ -13,7 +13,6 @@
 #include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/Invariant.h>
 
-#include <boost/math/special_functions/round.hpp>
 
 #include <cmath>
 

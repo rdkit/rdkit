@@ -1,3 +1,5 @@
+include(CatchShardTests)
+
 include(BoostUtils)
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 # Mac OS X specific code
@@ -25,6 +27,33 @@ endif()
 set(RDKit_BUILDNAME "${CMAKE_SYSTEM_NAME}|${CMAKE_SYSTEM_VERSION}|${systemAttribute}|${compilerID}|${bit3264}")
 set(RDKit_EXPORTED_TARGETS rdkit-targets)
 set(RDKitPython_EXPORTED_TARGETS rdkitpython-targets)
+
+
+# Enable CMake unity (jumbo) builds for an rdkit_library target when
+# RDK_USE_UNITY_BUILDS is set: the library's sources are concatenated into a few
+# translation units so shared headers are parsed once per batch instead of once
+# per file. Skipped for vendored third-party code under External/ and for the
+# libraries listed in RDK_UNITY_BUILD_EXCLUDED_LIBRARIES (which still have
+# file-local symbol collisions to resolve). Implemented as a function so its
+# locals don't leak into the calling directory scope.
+function(rdkit_maybe_enable_unity_build target)
+  if(NOT RDK_USE_UNITY_BUILDS)
+    return()
+  endif()
+  # never unity-build vendored third-party code under External/
+  string(FIND "${CMAKE_CURRENT_SOURCE_DIR}/" "${CMAKE_SOURCE_DIR}/External/" extPos)
+  if(NOT extPos EQUAL -1)
+    return()
+  endif()
+  list(FIND RDK_UNITY_BUILD_EXCLUDED_LIBRARIES "${target}" excluded)
+  if(NOT excluded EQUAL -1)
+    return()
+  endif()
+  set_target_properties(${target} PROPERTIES UNITY_BUILD ON)
+  if(TARGET ${target}_static)
+    set_target_properties(${target}_static PROPERTIES UNITY_BUILD ON)
+  endif()
+endfunction()
 
 
 macro(rdkit_library)
@@ -137,6 +166,7 @@ macro(rdkit_library)
                         ARCHIVE_OUTPUT_DIRECTORY ${RDK_ARCHIVE_OUTPUT_DIRECTORY}
                         RUNTIME_OUTPUT_DIRECTORY ${RDK_RUNTIME_OUTPUT_DIRECTORY}
                         LIBRARY_OUTPUT_DIRECTORY ${RDK_LIBRARY_OUTPUT_DIRECTORY})
+  rdkit_maybe_enable_unity_build(${RDKLIB_NAME})
 endmacro(rdkit_library)
 
 macro(rdkit_headers)
@@ -161,8 +191,8 @@ macro(rdkit_python_extension)
     ${ARGN})
   CAR(RDKPY_NAME ${RDKPY_DEFAULT_ARGS})
   CDR(RDKPY_SOURCES ${RDKPY_DEFAULT_ARGS})
-  if(RDK_BUILD_PYTHON_WRAPPERS)
-    Python3_add_library(${RDKPY_NAME} MODULE ${RDKPY_SOURCES})
+  if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+    Python_add_library(${RDKPY_NAME} MODULE ${RDKPY_SOURCES})
     set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
 
     if(WIN32)
@@ -184,8 +214,48 @@ macro(rdkit_python_extension)
 
     INSTALL(TARGETS ${RDKPY_NAME}
             LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST} COMPONENT python)
-  endif(RDK_BUILD_PYTHON_WRAPPERS)
+  endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 endmacro(rdkit_python_extension)
+
+macro(rdkit_nanobind_extension)
+  PARSE_ARGUMENTS(RDKPY
+    "LINK_LIBRARIES;DEPENDS;DEST"
+    ""
+    ${ARGN})
+  CAR(RDKPY_NAME ${RDKPY_DEFAULT_ARGS})
+  CDR(RDKPY_SOURCES ${RDKPY_DEFAULT_ARGS})
+  if(RDK_BUILD_NANOBIND_WRAPPERS)
+    nanobind_add_module(${RDKPY_NAME} NB_SHARED ${RDKPY_SOURCES})
+    set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
+
+#    if(WIN32)
+#      set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd"
+#                           LIBRARY_OUTPUT_DIRECTORY
+#                           ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
+#    else(WIN32)
+#        set_target_properties(${RDKPY_NAME} PROPERTIES
+#                              LIBRARY_OUTPUT_DIRECTORY
+#                              ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
+#    endif(WIN32)
+
+    target_link_libraries(${RDKPY_NAME} PUBLIC ${RDKPY_LINK_LIBRARIES}
+                            rdkit_py_base rdkit_base )
+#    if("${PYTHON_LDSHARED}" STREQUAL "")
+#    else()
+#      set_target_properties(${RDKPY_NAME} PROPERTIES LINK_FLAGS ${PYTHON_LDSHARED})
+#    endif()
+
+    INSTALL(TARGETS ${RDKPY_NAME}
+            LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST} COMPONENT python)
+    set_target_properties(nanobind
+      PROPERTIES
+      LIBRARY_OUTPUT_DIRECTORY  ${RDK_LIBRARY_OUTPUT_DIRECTORY} )
+    INSTALL(TARGETS nanobind 
+            DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
+            COMPONENT ${sharedLibComponent})
+  endif(RDK_BUILD_NANOBIND_WRAPPERS)
+endmacro(rdkit_nanobind_extension)
+
 
 macro(rdkit_test)
   PARSE_ARGUMENTS(RDKTEST
@@ -203,7 +273,7 @@ endmacro(rdkit_test)
 
 macro(rdkit_catch_test)
   PARSE_ARGUMENTS(RDKTEST
-    "LINK_LIBRARIES;DEPENDS;DEST"
+    "LINK_LIBRARIES;DEPENDS;DEST;CLIARGS;SHARD_COUNT"
     ""
     ${ARGN})
   CAR(RDKTEST_NAME ${RDKTEST_DEFAULT_ARGS})
@@ -211,7 +281,11 @@ macro(rdkit_catch_test)
   if(RDK_BUILD_CPP_TESTS)
     add_executable(${RDKTEST_NAME} ${RDKTEST_SOURCES})
     target_link_libraries(${RDKTEST_NAME} PRIVATE rdkitCatch ${RDKTEST_LINK_LIBRARIES} Catch2::Catch2)
-    add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME})
+    if(${RDKTEST_SHARD_COUNT})
+      catch_add_sharded_tests(${RDKTEST_NAME} SHARD_COUNT ${RDKTEST_SHARD_COUNT})
+    else()
+      add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME} ${RDKTEST_CLIARGS})
+    endif()
   endif(RDK_BUILD_CPP_TESTS)
 endmacro(rdkit_catch_test)
 
@@ -222,24 +296,24 @@ macro(add_pytest)
     ${ARGN})
   CAR(PYTEST_NAME ${PYTEST_DEFAULT_ARGS})
   CDR(PYTEST_SOURCES ${PYTEST_DEFAULT_ARGS})
-  if(RDK_BUILD_PYTHON_WRAPPERS)
-    add_test(${PYTEST_NAME}  ${Python3_EXECUTABLE}
+  if(RDK_BUILD_BOOST_PYTHON_WRAPPERS OR RDK_BUILD_NANOBIND_WRAPPERS)
+    add_test(${PYTEST_NAME}  ${Python_EXECUTABLE}
              ${PYTEST_SOURCES})
     SET(RDKIT_PYTEST_CACHE "${PYTEST_NAME};${RDKIT_PYTEST_CACHE}" CACHE INTERNAL "Global list of python tests")
-  endif(RDK_BUILD_PYTHON_WRAPPERS)
+  endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS OR RDK_BUILD_NANOBIND_WRAPPERS)
 endmacro(add_pytest)
 
 function(add_jupytertest testname workingdir notebook)
-  if(RDK_BUILD_PYTHON_WRAPPERS AND RDK_NBVAL_AVAILABLE)
-    add_test(NAME ${testname}  COMMAND ${Python3_EXECUTABLE} -m pytest --nbval ${notebook}
+  if((RDK_BUILD_BOOST_PYTHON_WRAPPERS OR RDK_BUILD_NANOBIND_WRAPPERS) AND RDK_NBVAL_AVAILABLE)
+    add_test(NAME ${testname}  COMMAND ${Python_EXECUTABLE} -m pytest --nbval ${notebook}
        WORKING_DIRECTORY ${workingdir} )
     SET(RDKIT_JUPYTERTEST_CACHE "${testname};${RDKIT_JUPYTERTEST_CACHE}" CACHE INTERNAL "Global list of jupyter tests")
   endif()
 endfunction(add_jupytertest)
 
 function(add_pythonpytest testname workingdir)
-  if(RDK_BUILD_PYTHON_WRAPPERS)
-    add_test(NAME ${testname}  COMMAND ${Python3_EXECUTABLE} -m pytest 
+  if(RDK_BUILD_BOOST_PYTHON_WRAPPERS OR RDK_BUILD_NANOBIND_WRAPPERS)
+    add_test(NAME ${testname}  COMMAND ${Python_EXECUTABLE} -m pytest 
        WORKING_DIRECTORY ${workingdir} )
     SET(RDKIT_PYTHONTEST_CACHE "${testname};${RDKIT_PYTHONTEST_CACHE}" CACHE INTERNAL "Global list of pytest tests")
   endif()
@@ -312,7 +386,9 @@ function(createExportTestHeaders)
     file(APPEND "${CMAKE_BINARY_DIR}/${exportPath}.tmp"
       "\n"
       "// RDKIT_${exportLib}_EXPORT definitions\n"
-      "#ifdef RDKIT_${exportLib}_BUILD\n"
+      "#ifdef RDKIT_${exportLib}_LOCAL_BUILD\n"
+      "#define RDKIT_${exportLib}_EXPORT\n"
+      "#elif defined(RDKIT_${exportLib}_BUILD)\n"
       "#define RDKIT_${exportLib}_EXPORT RDKIT_EXPORT_API\n"
       "#else\n"
       "#define RDKIT_${exportLib}_EXPORT RDKIT_IMPORT_API\n"

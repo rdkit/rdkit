@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2009 Greg Landrum
 //

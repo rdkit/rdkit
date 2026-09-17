@@ -10,6 +10,10 @@
 #include <RDGeneral/export.h>
 #ifndef RD_CANONICALIZESTEROGROUPS_H
 #define RD_CANONICALIZESTEROGROUPS_H
+#include <stdexcept>
+namespace RDKit {
+class ROMol;
+}  // namespace RDKit
 
 #include <string>
 #include <vector>

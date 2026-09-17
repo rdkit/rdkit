@@ -18,6 +18,13 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/Exceptions.h>
 
+#ifdef RDK_HAS_EIGEN3
+// Eigen module headers (LU/QR/SVD/...) must be included at global scope, not
+// inside a namespace. MolTransforms.h only needs the Matrix3d/Vector3d typedefs
+// (from Eigen/Core), so the full Eigen/Dense include lives here in the impl.
+#include <Eigen/Dense>
+#endif
+
 #ifndef RDK_HAS_EIGEN3
 constexpr double EIGEN_TOLERANCE = 5.0e-2;
 #endif
@@ -149,7 +156,6 @@ void computeInertiaTerms(const Conformer &conf, const RDGeom::Point3D &center,
 }  // namespace
 
 #ifdef RDK_HAS_EIGEN3
-#include <Eigen/Dense>
 
 namespace {
 bool getEigenValEigenVectHelper(Eigen::Matrix3d &eigVecs,
@@ -471,17 +477,13 @@ void _toBeMovedIdxList(const ROMol &mol, unsigned int iAtomId,
   visitedIdx[jAtomId] = 1;
   unsigned int tIdx;
   unsigned int wIdx;
-  ROMol::ADJ_ITER nbrIdx;
-  ROMol::ADJ_ITER endNbrs;
   bool doMainLoop;
   while (stack.size()) {
     doMainLoop = false;
     tIdx = stack.top();
     const Atom *tAtom = mol.getAtomWithIdx(tIdx);
-    boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(tAtom);
-    unsigned int eIdx;
-    for (eIdx = 0; nbrIdx != endNbrs; ++nbrIdx, ++eIdx) {
-      wIdx = (mol[*nbrIdx])->getIdx();
+    for (auto atom : mol.atomNeighbors(tAtom)) {
+      wIdx = atom->getIdx();
       if (!visitedIdx[wIdx]) {
         visitedIdx[wIdx] = 1;
         stack.push(wIdx);

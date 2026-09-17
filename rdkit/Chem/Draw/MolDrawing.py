@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (C) 2008-2011 Greg Landrum
 #
 #   @@ All Rights Reserved @@

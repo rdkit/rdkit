@@ -646,8 +646,7 @@ class MarvinCMLWriter {
           marvinDataSgroup->molID = 'm' + std::to_string(++tempMolCount);
           if (!sgroup.getPropIfPresent("FIELDNAME",
                                        marvinDataSgroup->fieldName)) {
-            throw MarvinWriterException(
-                "FIELDNAME not found for a SuperatomSgroup");
+            marvinDataSgroup->fieldName = "";  // FIELDNAME is optional
           }
 
           if (!sgroup.getPropIfPresent("QUERYTYPE",

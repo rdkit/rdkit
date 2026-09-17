@@ -634,7 +634,7 @@ const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
   char dest[128];
 #ifndef _MSC_VER
   snprintf(dest, 128,
-           "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x, y,
+           "%10.4f%10.4f%10.4f %3s%2d%3d%3u%3d%3d%3d  0%3d%3d%3d%3d%3d", x, y,
            z, symbol.c_str(), massDiff, chg, parityFlag, hCount, stereoCare,
            totValence, rxnComponentType, rxnComponentNumber, atomMapNumber,
            inversionFlag, exactChangeFlag);
@@ -644,7 +644,7 @@ const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
   // safe. I just used the snprintf above to prevent linters from complaining
   // about use of sprintf
   sprintf_s(dest, 128,
-            "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x, y,
+            "%10.4f%10.4f%10.4f %3s%2d%3d%3u%3d%3d%3d  0%3d%3d%3d%3d%3d", x, y,
             z, symbol.c_str(), massDiff, chg, parityFlag, hCount, stereoCare,
             totValence, rxnComponentType, rxnComponentNumber, atomMapNumber,
             inversionFlag, exactChangeFlag);

@@ -1,4 +1,3 @@
-// $Id$
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.

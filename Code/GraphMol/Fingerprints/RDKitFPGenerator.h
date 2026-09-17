@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2026 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -87,7 +87,7 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomEnv
       const std::uint64_t fpSize = 0                     // unused
   ) const override;
   void updateAdditionalOutput(AdditionalOutput *output,
-                              size_t bitId) const override;
+                              std::uint64_t bitId) const override;
 
   /**
   \brief Construct a new RDKitFPAtomEnv object
@@ -108,6 +108,19 @@ template <typename OutputType>
 class RDKIT_FINGERPRINTS_EXPORT RDKitFPEnvGenerator
     : public AtomEnvironmentGenerator<OutputType> {
  public:
+  /**
+   \brief Get the atom environments for a molecule
+
+    \param mol               molecule to generate the atom-environments from
+    \param arguments         fingerprint type specific arguments
+    \param fromAtoms         only generate subgraphs starting at these atoms
+    \param ignoreAtoms      ignore any subgraphs that contain these atoms
+    \param confId           IGNORED
+    \param additionalOutput IGNORED
+    \param atomInvariants   atom invariants to be used
+    \param bondInvariants   IGNORED
+    \param hashResults      IGNORED
+  */
   std::vector<AtomEnvironment<OutputType> *> getEnvironments(
       const ROMol &mol, FingerprintArguments *arguments,
       const std::vector<std::uint32_t> *fromAtoms,

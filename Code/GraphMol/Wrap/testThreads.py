@@ -1,5 +1,4 @@
 import multiprocessing
-import sys
 import threading
 
 from rdkit import Chem

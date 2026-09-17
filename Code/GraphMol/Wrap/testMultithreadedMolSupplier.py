@@ -1,10 +1,8 @@
-import doctest
 import gzip
 import os
-import sys
 import unittest
 
-from rdkit import Chem, RDConfig, __version__, rdBase
+from rdkit import Chem, RDConfig
 
 
 class TestCase(unittest.TestCase):
@@ -24,7 +22,7 @@ class TestCase(unittest.TestCase):
                          'fewSmi.csv')
     # fileN = "../FileParsers/test_data/fewSmi.csv"
     smiSup = Chem.MultithreadedSmilesMolSupplier(fileN, delimiter=",", smilesColumn=1, nameColumn=0,
-                                                 titleLine=0)
+                                                 titleLine=False)
     names = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
     props = [
       "34.14", "25.78", "106.51", "82.78", "60.16", "87.74", "37.38", "77.28", "65.18", "0.00"
@@ -50,7 +48,7 @@ class TestCase(unittest.TestCase):
     confusedProps = []
     i = 0
     with Chem.MultithreadedSmilesMolSupplier(fileN, delimiter=",", smilesColumn=1, nameColumn=0,
-                                             titleLine=0) as smiSup:
+                                             titleLine=False) as smiSup:
       for mol in smiSup:
         if mol is not None:
           self.assertTrue(mol.HasProp("_Name"))

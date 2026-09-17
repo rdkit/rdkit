@@ -12,7 +12,7 @@ import sys
 import unittest
 
 from rdkit import Chem
-from rdkit.Chem import rdChemDraw, rdChemDrawReaction
+from rdkit.Chem import rdChemDraw
 
 class TestChemDraw(unittest.TestCase):
 

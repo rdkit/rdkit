@@ -1209,3 +1209,36 @@ TEST_CASE("Multiple Core Hits") {
 ])JSON"));
   }
 }
+
+TEST_CASE("includeTargetMolInResults with Multiple Core Hits") {
+  std::vector<ROMOL_SPTR> cores{"[*:1]c1c([*:2])cccc1"_smarts};
+  REQUIRE(cores.front());
+  std::vector<ROMOL_SPTR> mols{"c1ccc(C)c(N)c1"_smiles,
+                               "c1ccc(F)c(O)c1"_smiles,
+                               "c1ccc(c2ccccc2)c(N)c1"_smiles};
+  bool areMolsNonNull = std::all_of(mols.begin(), mols.end(),
+                                    [](const auto &mol) { return mol; });
+  REQUIRE(areMolsNonNull);
+
+  RGroupDecompositionParameters ps;
+  ps.allowMultipleCoresInSameMol = true;
+  ps.includeTargetMolInResults = true;
+
+  RGroupRows rows;
+  auto n = RGroupDecompose(cores, mols, rows, nullptr, ps);
+  CHECK(n == mols.size());
+  CHECK(rows.size() > mols.size());
+
+  for (const auto &row : rows) {
+    CHECK(row.find(RGroupData::getMolLabel()) != row.end());
+    CHECK(row.find(RGroupData::getCoreLabel()) != row.end());
+  }
+
+  RGroupColumns cols;
+  n = RGroupDecompose(cores, mols, cols, nullptr, ps);
+  CHECK(n == mols.size());
+  REQUIRE(cols.count(RGroupData::getMolLabel()) == 1);
+  REQUIRE(cols.count(RGroupData::getCoreLabel()) == 1);
+  CHECK(cols[RGroupData::getMolLabel()].size() == rows.size());
+  CHECK(cols[RGroupData::getCoreLabel()].size() == rows.size());
+}

@@ -1,4 +1,3 @@
-// $Id$
 //
 // Copyright (c) 2001-2008 greg Landrum and Rational Discovery LLC
 //  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.

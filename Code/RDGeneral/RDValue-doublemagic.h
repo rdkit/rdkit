@@ -33,6 +33,7 @@
 #define RDKIT_RDVALUE_PTRMAGIC_H
 
 #include <cstdint>
+#include <type_traits>
 #include <cassert>
 #include <any>
 #include "Invariant.h"
@@ -43,8 +44,6 @@
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/utility.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/type_traits.hpp>
-#include <boost/static_assert.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <cmath>
 #include "LocaleSwitcher.h"
@@ -61,7 +60,7 @@ namespace RDKit {
 // top memory down
 // Example check:
 //     std::string *pointer = new std::string(v);
-//      assert((reinterpret_cast<boost::uint64_t>(pointer) & StringTag) == 0);
+//      assert((reinterpret_cast<std::uint64_t>(pointer) & StringTag) == 0);
 
 //  implementations, need a typedef at compile time to figure this out.
 //  current implementation is probably little endian, need to check.
@@ -90,99 +89,99 @@ namespace RDKit {
 */
 
 namespace RDTypeTag {
-static const boost::uint64_t NaN = 0xfff7FFFFFFFFFFFF;        // signalling NaN
-static const boost::uint64_t MaxDouble = 0xfff8000000000000;  //
-static const boost::uint64_t DoubleTag = 0xfff8000000000000;  //
-static const boost::uint64_t FloatTag = 0xfff9000000000000;   //
-static const boost::uint64_t IntTag = 0xfffa000000000000;     //
-static const boost::uint64_t UnsignedIntTag = 0xfffb000000000000;  //
-static const boost::uint64_t BoolTag = 0xfffc000000000000;         //
+static const std::uint64_t NaN = 0xfff7FFFFFFFFFFFF;        // signalling NaN
+static const std::uint64_t MaxDouble = 0xfff8000000000000;  //
+static const std::uint64_t DoubleTag = 0xfff8000000000000;  //
+static const std::uint64_t FloatTag = 0xfff9000000000000;   //
+static const std::uint64_t IntTag = 0xfffa000000000000;     //
+static const std::uint64_t UnsignedIntTag = 0xfffb000000000000;  //
+static const std::uint64_t BoolTag = 0xfffc000000000000;         //
 
 // PTR Tags use the last 3 bits for typing info
-static const boost::uint64_t PtrTag = 0xffff000000000000;
-static const boost::uint64_t StringTag = 0xffff000000000001;          // 001
-static const boost::uint64_t VecDoubleTag = 0xffff000000000002;       // 010
-static const boost::uint64_t VecFloatTag = 0xffff000000000003;        // 011
-static const boost::uint64_t VecIntTag = 0xffff000000000004;          // 100
-static const boost::uint64_t VecUnsignedIntTag = 0xffff000000000005;  // 101
-static const boost::uint64_t VecStringTag = 0xffff000000000006;       // 110
-static const boost::uint64_t AnyTag = 0xffff000000000007;             // 111
+static const std::uint64_t PtrTag = 0xffff000000000000;
+static const std::uint64_t StringTag = 0xffff000000000001;          // 001
+static const std::uint64_t VecDoubleTag = 0xffff000000000002;       // 010
+static const std::uint64_t VecFloatTag = 0xffff000000000003;        // 011
+static const std::uint64_t VecIntTag = 0xffff000000000004;          // 100
+static const std::uint64_t VecUnsignedIntTag = 0xffff000000000005;  // 101
+static const std::uint64_t VecStringTag = 0xffff000000000006;       // 110
+static const std::uint64_t AnyTag = 0xffff000000000007;             // 111
 
 // Retrieves the tag (and PtrMask) from the type
 template <class T>
-inline boost::uint64_t GetTag() {
+inline std::uint64_t GetTag() {
   return AnyTag;
 }
 template <>
-inline boost::uint64_t GetTag<double>() {
+inline std::uint64_t GetTag<double>() {
   return MaxDouble;
 }
 template <>
-inline boost::uint64_t GetTag<float>() {
+inline std::uint64_t GetTag<float>() {
   return FloatTag;
 }
 template <>
-inline boost::uint64_t GetTag<int>() {
+inline std::uint64_t GetTag<int>() {
   return IntTag;
 }
 template <>
-inline boost::uint64_t GetTag<unsigned int>() {
+inline std::uint64_t GetTag<unsigned int>() {
   return UnsignedIntTag;
 }
 template <>
-inline boost::uint64_t GetTag<bool>() {
+inline std::uint64_t GetTag<bool>() {
   return BoolTag;
 }
 template <>
-inline boost::uint64_t GetTag<std::string>() {
+inline std::uint64_t GetTag<std::string>() {
   return StringTag;
 }
 template <>
-inline boost::uint64_t GetTag<std::vector<double>>() {
+inline std::uint64_t GetTag<std::vector<double>>() {
   return VecDoubleTag;
 }
 template <>
-inline boost::uint64_t GetTag<std::vector<float>>() {
+inline std::uint64_t GetTag<std::vector<float>>() {
   return VecFloatTag;
 }
 template <>
-inline boost::uint64_t GetTag<std::vector<int>>() {
+inline std::uint64_t GetTag<std::vector<int>>() {
   return VecIntTag;
 }
 template <>
-inline boost::uint64_t GetTag<std::vector<unsigned int>>() {
+inline std::uint64_t GetTag<std::vector<unsigned int>>() {
   return VecUnsignedIntTag;
 }
 template <>
-inline boost::uint64_t GetTag<std::vector<std::string>>() {
+inline std::uint64_t GetTag<std::vector<std::string>>() {
   return VecStringTag;
 }
 template <>
-inline boost::uint64_t GetTag<std::any>() {
+inline std::uint64_t GetTag<std::any>() {
   return AnyTag;
 }
 }  // namespace RDTypeTag
 
 struct RDValue {
   // Bit Twidling for conversion from the Tag to a Pointer
-  static const boost::uint64_t TagMask = 0xFFFF000000000000;
-  static const boost::uint64_t PointerTagMask = 0xFFFF000000000007;
-  static const boost::uint64_t ApplyMask = 0x0000FFFFFFFFFFFF;
-  static const boost::uint64_t ApplyPtrMask = 0x0000FFFFFFFFFFF8;
+  static const std::uint64_t TagMask = 0xFFFF000000000000;
+  static const std::uint64_t PointerTagMask = 0xFFFF000000000007;
+  static const std::uint64_t ApplyMask = 0x0000FFFFFFFFFFFF;
+  static const std::uint64_t ApplyPtrMask = 0x0000FFFFFFFFFFF8;
 
   union {
     double doubleBits;
-    boost::uint64_t otherBits;
+    std::uint64_t otherBits;
   };
 
   inline RDValue() : doubleBits(0.0) {}
 
   inline RDValue(double number) {
-    if (boost::math::isnan(number)) {
+    if (std::isnan(number)) {
       // Store a signalling NaN for NaN's.
       //  quiet NaNs are used for other types.
       otherBits = RDTypeTag::NaN;
-      assert(boost::math::isnan(doubleBits));
+      assert(std::isnan(doubleBits));
     } else {
       doubleBits = number;
     }
@@ -194,98 +193,98 @@ struct RDValue {
   }
 
   inline RDValue(int32_t number) {
-    otherBits = (((boost::uint64_t)number) & ApplyMask) | RDTypeTag::IntTag;
+    otherBits = (((std::uint64_t)number) & ApplyMask) | RDTypeTag::IntTag;
   }
 
   inline RDValue(unsigned int number) {
     otherBits =
-        (((boost::uint64_t)number) & ApplyMask) | RDTypeTag::UnsignedIntTag;
+        (((std::uint64_t)number) & ApplyMask) | RDTypeTag::UnsignedIntTag;
   }
 
   inline RDValue(bool number) {
     otherBits =
-        (static_cast<boost::uint64_t>(number) & ApplyMask) | RDTypeTag::BoolTag;
+        (static_cast<std::uint64_t>(number) & ApplyMask) | RDTypeTag::BoolTag;
   }
 
   inline RDValue(std::any *pointer) {
     // ensure that the pointer really is only 48 bit
-    assert((reinterpret_cast<boost::uint64_t>(pointer) & RDTypeTag::AnyTag) ==
+    assert((reinterpret_cast<std::uint64_t>(pointer) & RDTypeTag::AnyTag) ==
            0);
-    otherBits = reinterpret_cast<boost::uint64_t>(pointer) | RDTypeTag::AnyTag;
+    otherBits = reinterpret_cast<std::uint64_t>(pointer) | RDTypeTag::AnyTag;
   }
 
   inline RDValue(const std::any &any) {
     // ensure that the pointer really is only 48 bit
     std::any *pointer = new std::any(any);
-    assert((reinterpret_cast<boost::uint64_t>(pointer) & RDTypeTag::AnyTag) ==
+    assert((reinterpret_cast<std::uint64_t>(pointer) & RDTypeTag::AnyTag) ==
            0);
-    otherBits = reinterpret_cast<boost::uint64_t>(pointer) | RDTypeTag::AnyTag;
+    otherBits = reinterpret_cast<std::uint64_t>(pointer) | RDTypeTag::AnyTag;
   }
 
   // Unknown types are stored as std::any
   template <class T>
   inline RDValue(const T &v) {
     std::any *pointer = new std::any(v);
-    assert((reinterpret_cast<boost::uint64_t>(pointer) & RDTypeTag::AnyTag) ==
+    assert((reinterpret_cast<std::uint64_t>(pointer) & RDTypeTag::AnyTag) ==
            0);
-    otherBits = reinterpret_cast<boost::uint64_t>(pointer) | RDTypeTag::AnyTag;
+    otherBits = reinterpret_cast<std::uint64_t>(pointer) | RDTypeTag::AnyTag;
   }
 
   inline RDValue(const std::string &v) {
     std::string *pointer = new std::string(v);
-    assert((reinterpret_cast<boost::uint64_t>(pointer) &
+    assert((reinterpret_cast<std::uint64_t>(pointer) &
             RDTypeTag::StringTag) == 0);
     otherBits =
-        reinterpret_cast<boost::uint64_t>(pointer) | RDTypeTag::StringTag;
+        reinterpret_cast<std::uint64_t>(pointer) | RDTypeTag::StringTag;
   }
 
   inline RDValue(const std::vector<double> &v) {
     std::vector<double> *pointer = new std::vector<double>(v);
-    assert((reinterpret_cast<boost::uint64_t>(pointer) &
+    assert((reinterpret_cast<std::uint64_t>(pointer) &
             RDTypeTag::VecDoubleTag) == 0);
     otherBits =
-        reinterpret_cast<boost::uint64_t>(pointer) | RDTypeTag::VecDoubleTag;
+        reinterpret_cast<std::uint64_t>(pointer) | RDTypeTag::VecDoubleTag;
   }
 
   inline RDValue(const std::vector<float> &v) {
     std::vector<float> *pointer = new std::vector<float>(v);
-    assert((reinterpret_cast<boost::uint64_t>(pointer) &
+    assert((reinterpret_cast<std::uint64_t>(pointer) &
             RDTypeTag::VecFloatTag) == 0);
     otherBits =
-        reinterpret_cast<boost::uint64_t>(pointer) | RDTypeTag::VecFloatTag;
+        reinterpret_cast<std::uint64_t>(pointer) | RDTypeTag::VecFloatTag;
   }
 
   inline RDValue(const std::vector<int> &v) {
     std::vector<int> *pointer = new std::vector<int>(v);
-    assert((reinterpret_cast<boost::uint64_t>(pointer) &
+    assert((reinterpret_cast<std::uint64_t>(pointer) &
             RDTypeTag::VecIntTag) == 0);
     otherBits =
-        reinterpret_cast<boost::uint64_t>(pointer) | RDTypeTag::VecIntTag;
+        reinterpret_cast<std::uint64_t>(pointer) | RDTypeTag::VecIntTag;
   }
 
   inline RDValue(const std::vector<unsigned int> &v) {
     std::vector<unsigned int> *pointer = new std::vector<unsigned int>(v);
-    assert((reinterpret_cast<boost::uint64_t>(pointer) &
+    assert((reinterpret_cast<std::uint64_t>(pointer) &
             RDTypeTag::VecIntTag) == 0);
-    otherBits = reinterpret_cast<boost::uint64_t>(pointer) |
+    otherBits = reinterpret_cast<std::uint64_t>(pointer) |
                 RDTypeTag::VecUnsignedIntTag;
   }
 
   inline RDValue(const std::vector<std::string> &v) {
     std::vector<std::string> *pointer = new std::vector<std::string>(v);
-    assert((reinterpret_cast<boost::uint64_t>(pointer) &
+    assert((reinterpret_cast<std::uint64_t>(pointer) &
             RDTypeTag::VecStringTag) == 0);
     otherBits =
-        reinterpret_cast<boost::uint64_t>(pointer) | RDTypeTag::VecStringTag;
+        reinterpret_cast<std::uint64_t>(pointer) | RDTypeTag::VecStringTag;
   }
 
-  boost::uint64_t getTag() const {
+  std::uint64_t getTag() const {
     if (otherBits < RDTypeTag::MaxDouble ||
         (otherBits & RDTypeTag::NaN) == RDTypeTag::NaN) {
       return RDTypeTag::DoubleTag;
     }
 
-    boost::uint64_t tag = otherBits & TagMask;
+    std::uint64_t tag = otherBits & TagMask;
     if (tag == RDTypeTag::PtrTag) return otherBits & PointerTagMask;
     return tag;
   }
@@ -371,7 +370,7 @@ inline void copy_rdvalue(RDValue &dest, const RDValue &src) {
 template <class T>
 inline bool rdvalue_is(const RDValue_cast_t) {
   const short tag =
-      RDTypeTag::GetTag<typename boost::remove_reference<T>::type>();
+      RDTypeTag::GetTag<typename std::remove_reference<T>::type>();
   if (v.getTag() == tag) return true;
 
   // If we are an Any tag, check the any type info
@@ -419,15 +418,15 @@ typedef RDValue RDValue_cast_t;
 template <class T>
 inline T rdvalue_cast(RDValue_cast_t v) {
   // Disable reference and pointer casts to POD data.
-  BOOST_STATIC_ASSERT(!(
-      (boost::is_pointer<T>::value &&
-       (boost::is_integral<typename boost::remove_pointer<T>::type>::value ||
-        boost::is_floating_point<
-            typename boost::remove_pointer<T>::type>::value)) ||
-      (boost::is_reference<T>::value &&
-       (boost::is_integral<typename boost::remove_reference<T>::type>::value ||
-        boost::is_floating_point<
-            typename boost::remove_reference<T>::type>::value))));
+  static_assert(
+      !((std::is_pointer<T>::value &&
+         (std::is_integral<typename std::remove_pointer<T>::type>::value ||
+          std::is_floating_point<typename std::remove_pointer<T>::type>::value)) ||
+        (std::is_reference<T>::value &&
+         (std::is_integral<typename std::remove_reference<T>::type>::value ||
+          std::is_floating_point<
+              typename std::remove_reference<T>::type>::value))),
+      "rdvalue_cast cannot be used for pointer or reference casts to POD data");
 
   if (rdvalue_is<std::any>(v)) {
     return std::any_cast<T>(*v.ptrCast<std::any>());

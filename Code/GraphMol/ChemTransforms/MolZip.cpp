@@ -514,7 +514,7 @@ std::unique_ptr<ROMol> molzip(
             // correctly
             auto &bond = mappings[molno];
             CHECK_INVARIANT(
-                bondType = bond.linkerBondType,
+                bondType == bond.linkerBondType,
                 ("molzip: LINKER bond with labels: " + std::to_string(molno) +
                  "," + std::to_string(attached_molno) +
                  " has inconsistent bond types"));
@@ -710,12 +710,12 @@ std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
   std::optional attachmentMappingOption = std::map<int, int>();
   auto zippedMol = molzip(*combinedMol, b, params, attachmentMappingOption);
 
-  if (params.generateCoordinates && zippedMol->getNumAtoms() > 0) {
+  if (params.generateCoordinates && zippedMol && zippedMol->getNumAtoms() > 0) {
     const auto confId = RDDepict::compute2DCoords(*zippedMol);
     const auto zippedConf = zippedMol->getConformer(confId);
     auto attachmentMapping = *attachmentMappingOption;
     for (auto &mol : decomposition) {
-      const auto newConf = new Conformer(mol->getNumAtoms());
+      auto newConf = std::make_unique<Conformer>(mol->getNumAtoms());
       newConf->set3D(false);
       for (const auto atom : mol->atoms()) {
         int zippedIndex = atom->getProp<int>(indexPropName);
@@ -725,17 +725,19 @@ std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
           zippedIndex = (*attachment).second;
         }
         auto zipppedAtoms = zippedMol->atoms();
-        auto zippedAtom = std::find_if(
-            zipppedAtoms.begin(), zipppedAtoms.end(),
-            [zippedIndex](const Atom *zippedAtom) {
+        auto zippedAtom = std::ranges::find_if(
+            zipppedAtoms, [zippedIndex](const Atom *zippedAtom) {
               const auto index = zippedAtom->getProp<int>(indexPropName);
               return index == zippedIndex;
             });
 
+        CHECK_INVARIANT(zippedAtom != zipppedAtoms.end(),
+                        "molzip: cannot map atom into zipped molecule");
+
         newConf->setAtomPos(atom->getIdx(),
                             zippedConf.getAtomPos((*zippedAtom)->getIdx()));
       }
-      mol->addConformer(newConf, true);
+      mol->addConformer(newConf.release(), true);
     }
     for (const auto atom : zippedMol->atoms()) {
       atom->clearProp(indexPropName);

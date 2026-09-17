@@ -286,6 +286,7 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
   std::vector<int> next(nAts);
   std::vector<int> changed(nAts, 1);
   std::vector<char> touched(nAts, 0);
+  std::vector<int> hanoiTemp(nAts);
   int activeset;
   CreateSinglePartition(nAts, order, count, atoms);
 // ActivatePartitions(nAts,order,count,activeset,next,changed);
@@ -307,7 +308,7 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
   }
 #endif
   RefinePartitions(mol, atoms, ftor, true, order, count, activeset, next,
-                   changed, touched);
+                   changed, touched, &hanoiTemp);
 #ifdef VERBOSE_CANON
   std::cerr << "2--------" << std::endl;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -326,7 +327,7 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
                                               bondsInPlay);
     ActivatePartitions(nAts, order, count, activeset, next, changed);
     RefinePartitions(mol, atoms, scftor, true, order, count, activeset, next,
-                     changed, touched);
+                     changed, touched, &hanoiTemp);
 #ifdef VERBOSE_CANON
     std::cerr << "2a--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -363,7 +364,7 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
     compareRingAtomsConcerningNumNeighbors(atoms, nAts, mol);
     ActivatePartitions(nAts, order, count, activeset, next, changed);
     RefinePartitions(mol, atoms, sftor, true, order, count, activeset, next,
-                     changed, touched);
+                     changed, touched, &hanoiTemp);
 #ifdef VERBOSE_CANON
     std::cerr << "2b--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -374,7 +375,7 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
   }
   if (breakTies) {
     BreakTies(mol, atoms, ftor, true, order, count, activeset, next, changed,
-              touched);
+              touched, &hanoiTemp);
 #ifdef VERBOSE_CANON
     std::cerr << "3--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -398,9 +399,10 @@ bool hasRingNbr(const ROMol &mol, const Atom *at) {
   return false;
 }
 
-void getNbrs(const ROMol &mol, const Atom *at, int *ids) {
+void getNbrs(const ROMol &mol, const Atom *at, const std::span<int> ids) {
   PRECONDITION(at, "bad pointer");
-  PRECONDITION(ids, "bad pointer");
+  PRECONDITION(ids.size() >= at->getDegree(),
+               "neighbor ID storage is too small");
   ROMol::ADJ_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomNeighbors(at);
   unsigned int idx = 0;
@@ -483,7 +485,7 @@ bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
   }
   return res;
 }
-void getBonds(const ROMol &mol, const Atom *at, std::vector<bondholder> &nbrs,
+void getBonds(const ROMol &mol, const Atom *at, BondholderVector &nbrs,
               bool includeChirality,
               const std::vector<Canon::canon_atom> &atoms) {
   PRECONDITION(at, "bad pointer");
@@ -499,7 +501,7 @@ void getBonds(const ROMol &mol, const Atom *at, std::vector<bondholder> &nbrs,
 }
 
 void getChiralBonds(const ROMol &mol, const Atom *at,
-                    std::vector<bondholder> &nbrs) {
+                    BondholderVector &nbrs) {
   PRECONDITION(at, "bad pointer");
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(at);
@@ -564,13 +566,15 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
 }
 
 void basicInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
-                        const int &idx) {
+                        const int &idx,
+                        const std::span<int> neighborIds) {
   atom.atom = mol.getAtomWithIdx(idx);
   atom.index = idx;
   atom.p_symbol = nullptr;
   atom.degree = atom.atom->getDegree();
-  atom.nbrIds = std::make_unique<int[]>(atom.degree);
-  getNbrs(mol, atom.atom, atom.nbrIds.get());
+  TEST_ASSERT(neighborIds.size() >= atom.degree);
+  atom.nbrIds = neighborIds.first(atom.degree);
+  getNbrs(mol, atom.atom, atom.nbrIds);
 }
 
 void advancedInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
@@ -585,9 +589,13 @@ void advancedInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
 }  // end anonymous namespace
 
 void initCanonAtoms(const ROMol &mol, std::vector<Canon::canon_atom> &atoms,
-                    bool includeChirality, bool includeStereoGroups) {
+                    std::span<int> neighborIds, bool includeChirality,
+                    bool includeStereoGroups) {
+  PRECONDITION(neighborIds.size() >= 2 * mol.getNumBonds(),
+               "neighbor ID storage is too small");
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    basicInitCanonAtom(mol, atoms[i], i);
+    basicInitCanonAtom(mol, atoms[i], i, neighborIds);
+    neighborIds = neighborIds.subspan(atoms[i].degree);
     advancedInitCanonAtom(mol, atoms[i], i);
     atoms[i].bonds.reserve(atoms[i].degree);
     getBonds(mol, atoms[i].atom, atoms[i].bonds, includeChirality, atoms);
@@ -612,12 +620,15 @@ void initFragmentCanonAtoms(const ROMol &mol,
                             const std::vector<std::string> *bondSymbols,
                             const boost::dynamic_bitset<> &atomsInPlay,
                             const boost::dynamic_bitset<> &bondsInPlay,
+                            std::span<int> neighborIds,
                             bool needsInit) {
   needsInit = true;
   PRECONDITION(!atomSymbols || atomSymbols->size() == mol.getNumAtoms(),
                "bad atom symbols");
   PRECONDITION(!bondSymbols || bondSymbols->size() == mol.getNumBonds(),
                "bad bond symbols");
+  PRECONDITION(neighborIds.size() >= 2 * mol.getNumBonds(),
+               "neighbor ID storage is too small");
   // start by initializing the atoms
   for (const auto atom : mol.atoms()) {
     auto i = atom->getIdx();
@@ -634,7 +645,8 @@ void initFragmentCanonAtoms(const ROMol &mol,
         atomsi.p_symbol = nullptr;
       }
       if (needsInit) {
-        atomsi.nbrIds = std::make_unique<int[]>(atom->getDegree());
+        atomsi.nbrIds = neighborIds.first(atom->getDegree());
+        neighborIds = neighborIds.subspan(atom->getDegree());
         advancedInitCanonAtom(mol, atomsi, i);
         atomsi.bonds.reserve(4);
       }
@@ -691,22 +703,50 @@ void initFragmentCanonAtoms(const ROMol &mol,
 }
 
 void initChiralCanonAtoms(const ROMol &mol,
-                          std::vector<Canon::canon_atom> &atoms) {
+                          std::vector<Canon::canon_atom> &atoms,
+                          std::span<int> neighborIds) {
+  PRECONDITION(neighborIds.size() >= 2 * mol.getNumBonds(),
+               "neighbor ID storage is too small");
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    basicInitCanonAtom(mol, atoms[i], i);
+    basicInitCanonAtom(mol, atoms[i], i, neighborIds);
+    neighborIds = neighborIds.subspan(atoms[i].degree);
     getChiralBonds(mol, atoms[i].atom, atoms[i].bonds);
   }
 }
 
 }  // namespace detail
-void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
+template <typename Bondholders>
+void updateAtomNeighborIndexImpl(canon_atom *atoms, Bondholders &nbrs) {
   PRECONDITION(atoms, "bad pointer");
   for (auto &nbr : nbrs) {
     unsigned nbrIdx = nbr.nbrIdx;
     unsigned newSymClass = atoms[nbrIdx].index;
     nbr.nbrSymClass = newSymClass;
   }
-  std::sort(nbrs.begin(), nbrs.end(), bondholder::greater);
+  // Neighbor lists are normally very short and already close to sorted after
+  // partition refinement. Insertion sort avoids std::sort's setup overhead and
+  // minimizes movement in that common case.
+  for (size_t i = 1; i < nbrs.size(); ++i) {
+    if (!bondholder::greater(nbrs[i], nbrs[i - 1])) {
+      continue;
+    }
+    auto value = std::move(nbrs[i]);
+    size_t j = i;
+    do {
+      nbrs[j] = std::move(nbrs[j - 1]);
+      --j;
+    } while (j && bondholder::greater(value, nbrs[j - 1]));
+    nbrs[j] = std::move(value);
+  }
+}
+
+void updateAtomNeighborIndex(canon_atom *atoms,
+                             std::vector<bondholder> &nbrs) {
+  updateAtomNeighborIndexImpl(atoms, nbrs);
+}
+
+void updateAtomNeighborIndex(canon_atom *atoms, BondholderVector &nbrs) {
+  updateAtomNeighborIndexImpl(atoms, nbrs);
 }
 
 // This routine calculates the number of swaps that would be required to
@@ -721,8 +761,9 @@ void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
 // that have the same priority so far.  If any two are the same, we do NOT use
 // that neighbor to determine the priority of the atom of interest.
 
-void updateAtomNeighborNumSwaps(
-    canon_atom *atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx,
+template <typename Bondholders>
+void updateAtomNeighborNumSwapsImpl(
+    canon_atom *atoms, Bondholders &nbrs, unsigned int atomIdx,
     std::vector<std::pair<unsigned int, unsigned int>> &result) {
   bool isRingAtom = queryIsAtomInRing(atoms[atomIdx].atom);
   for (auto &nbr : nbrs) {
@@ -779,6 +820,18 @@ void updateAtomNeighborNumSwaps(
   sort(result.begin(), result.end());
 }
 
+void updateAtomNeighborNumSwaps(
+    canon_atom *atoms, std::vector<bondholder> &nbrs, unsigned int atomIdx,
+    std::vector<std::pair<unsigned int, unsigned int>> &result) {
+  updateAtomNeighborNumSwapsImpl(atoms, nbrs, atomIdx, result);
+}
+
+void updateAtomNeighborNumSwaps(
+    canon_atom *atoms, BondholderVector &nbrs, unsigned int atomIdx,
+    std::vector<std::pair<unsigned int, unsigned int>> &result) {
+  updateAtomNeighborNumSwapsImpl(atoms, nbrs, atomIdx, result);
+}
+
 void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                   bool breakTies, bool includeChirality, bool includeIsotopes,
                   bool includeAtomMaps, bool includeChiralPresence,
@@ -796,7 +849,9 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   res.resize(mol.getNumAtoms());
 
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
-  initCanonAtoms(mol, atoms, includeChirality, includeStereoGroups);
+  std::vector<int> neighborIds(2 * mol.getNumBonds());
+  initCanonAtoms(mol, atoms, neighborIds, includeChirality,
+                 includeStereoGroups);
   AtomCompareFunctor ftor(&atoms.front(), mol);
   ftor.df_useIsotopes = includeIsotopes;
   ftor.df_useChirality = includeChirality;
@@ -845,8 +900,10 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   res.resize(mol.getNumAtoms());
 
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
+  std::vector<int> neighborIds(2 * mol.getNumBonds());
   detail::initFragmentCanonAtoms(mol, atoms, includeChirality, atomSymbols,
-                                 bondSymbols, atomsInPlay, bondsInPlay, true);
+                                 bondSymbols, atomsInPlay, bondsInPlay,
+                                 neighborIds, true);
 
   AtomCompareFunctor ftor(&atoms.front(), mol, &atomsInPlay, &bondsInPlay);
   ftor.df_useIsotopes = includeIsotopes;
@@ -881,7 +938,8 @@ void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   res.resize(mol.getNumAtoms());
 
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
-  detail::initChiralCanonAtoms(mol, atoms);
+  std::vector<int> neighborIds(2 * mol.getNumBonds());
+  detail::initChiralCanonAtoms(mol, atoms, neighborIds);
   ChiralAtomCompareFunctor ftor(&atoms.front(), mol);
 
   std::vector<int> order(mol.getNumAtoms());

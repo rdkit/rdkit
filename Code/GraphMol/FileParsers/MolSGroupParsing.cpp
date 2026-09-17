@@ -943,8 +943,12 @@ std::vector<T> ParseV3000Array(std::stringstream &stream, int maxV,
   }
 
   unsigned int count = 0;
-  stream >> count;
   std::vector<T> values;
+  stream >> count;
+  if (stream.fail()) {
+    SGroupWarnOrThrow(strictParsing, "invalid count value in V3000 array");
+    return values;
+  }
   if (maxV >= 0 && count > static_cast<unsigned int>(maxV)) {
     SGroupWarnOrThrow(strictParsing, "invalid count value");
     return values;
@@ -954,10 +958,14 @@ std::vector<T> ParseV3000Array(std::stringstream &stream, int maxV,
   T value;
   for (unsigned i = 0; i < count; ++i) {
     stream >> value;
+    if (stream.fail()) {
+      SGroupWarnOrThrow(strictParsing, "invalid value in V3000 array");
+      return values;
+    }
     values.push_back(value);
   }
   paren = stream.get();  // discard parentheses
-  if (paren != ')') {
+  if (stream.fail() || paren != ')') {
     BOOST_LOG(rdWarningLog)
         << "WARNING: final character of V3000 array is not ')'" << std::endl;
   }
@@ -972,10 +980,17 @@ template std::vector<int> ParseV3000Array(std::stringstream &stream, int, bool);
 void ParseV3000CStateLabel(RWMol *mol, SubstanceGroup &sgroup,
                            std::stringstream &stream, unsigned int line,
                            bool strictParsing) {
-  stream.get();  // discard parentheses
+  auto paren = stream.get();  // discard parentheses
+  if (paren != '(') {
+    std::ostringstream errout;
+    errout << "Missing parentheses for CSTATE field on line " << line;
+    SGroupWarnOrThrow<>(strictParsing, errout.str());
+    sgroup.setIsValid(false);
+    return;
+  }
 
-  unsigned int count;
-  unsigned int bondMark;
+  unsigned int count = 0;
+  unsigned int bondMark = 0;
   stream >> count >> bondMark;
 
   std::string type = sgroup.getProp<std::string>("TYPE");
@@ -1002,20 +1017,40 @@ void ParseV3000CStateLabel(RWMol *mol, SubstanceGroup &sgroup,
     return;
   }
 
-  stream.get();  // discard final parentheses
+  paren = stream.get();  // discard parentheses
+  if (paren != ')') {
+    BOOST_LOG(rdWarningLog)
+        << "WARNING: final character of CSTATE field is not ')'" << std::endl;
+  }
 }
 
 void ParseV3000SAPLabel(RWMol *mol, SubstanceGroup &sgroup,
                         std::stringstream &stream, bool strictParsing) {
-  stream.get();  // discard parentheses
-
+  auto paren = stream.get();  // discard parentheses
+  if (paren != '(') {
+    SGroupWarnOrThrow<>(strictParsing, "Missing parentheses for SAP field");
+    sgroup.setIsValid(false);
+    return;
+  }
   unsigned int count = 0;
   unsigned int aIdxMark = 0;
   std::string lvIdxStr;  // In V3000 this may be a string
   std::string sapIdStr;
   stream >> count >> aIdxMark >> lvIdxStr >> sapIdStr;
 
+  if (stream.fail() || lvIdxStr.empty() || sapIdStr.empty() ||
+      sapIdStr.back() != ')') {
+    SGroupWarnOrThrow<>(strictParsing, "Invalid SAP field");
+    sgroup.setIsValid(false);
+    return;
+  }
   // remove final parentheses that gets parsed into sapIdStr
+  if (sapIdStr.back() != ')') {
+    SGroupWarnOrThrow<>(strictParsing,
+                        "Missing closing parentheses for SAP field");
+    sgroup.setIsValid(false);
+    return;
+  }
   sapIdStr.pop_back();
 
   unsigned int aIdx = mol->getAtomWithBookmark(aIdxMark)->getIdx();
@@ -1088,29 +1123,31 @@ void ParseV3000ParseLabel(const std::string &label,
   PRECONDITION(mol, "bad mol");
   // TODO: we could handle these in a more structured way
   try {
+    // all calls to ParseV3000Array are done with the "strictParsing" flag set
+    // to true because we will handle parse failures in the catch below.
     if (label == "XBHEAD" || label == "XBCORR") {
-      std::vector<unsigned int> bvect = ParseV3000Array<unsigned int>(
-          lineStream, mol->getNumBonds(), strictParsing);
+      std::vector<unsigned int> bvect =
+          ParseV3000Array<unsigned int>(lineStream, mol->getNumBonds(), true);
       std::transform(bvect.begin(), bvect.end(), bvect.begin(),
                      [](unsigned int v) -> unsigned int { return v - 1; });
       sgroup.setProp(label, bvect);
     } else if (label == "ATOMS") {
       for (auto atomIdx : ParseV3000Array<unsigned int>(
-               lineStream, mol->getNumAtoms(), strictParsing)) {
+               lineStream, mol->getNumAtoms(), true)) {
         sgroup.addAtomWithBookmark(atomIdx);
       }
     } else if (label == "PATOMS") {
       for (auto patomIdx : ParseV3000Array<unsigned int>(
-               lineStream, mol->getNumAtoms(), strictParsing)) {
+               lineStream, mol->getNumAtoms(), true)) {
         sgroup.addParentAtomWithBookmark(patomIdx);
       }
     } else if (label == "CBONDS" || label == "XBONDS") {
       for (auto bondIdx : ParseV3000Array<unsigned int>(
-               lineStream, mol->getNumBonds(), strictParsing)) {
+               lineStream, mol->getNumBonds(), true)) {
         sgroup.addBondWithBookmark(bondIdx);
       }
     } else if (label == "BRKXYZ") {
-      auto coords = ParseV3000Array<double>(lineStream, 9, strictParsing);
+      auto coords = ParseV3000Array<double>(lineStream, 9, true);
       if (coords.size() != 9) {
         std::ostringstream errout;
         errout << "Unexpected number of coordinates for BRKXYZ on line "
@@ -1126,9 +1163,9 @@ void ParseV3000ParseLabel(const std::string &label,
       }
       sgroup.addBracket(bracket);
     } else if (label == "CSTATE") {
-      ParseV3000CStateLabel(mol, sgroup, lineStream, line, strictParsing);
+      ParseV3000CStateLabel(mol, sgroup, lineStream, line, true);
     } else if (label == "SAP") {
-      ParseV3000SAPLabel(mol, sgroup, lineStream, strictParsing);
+      ParseV3000SAPLabel(mol, sgroup, lineStream, true);
     } else if (label == "PARENT") {
       // Store relationship until all SGroups have been read
       unsigned int parentIdx;
@@ -1221,14 +1258,22 @@ std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
   }
 
   for (unsigned int si = 0; si < nSgroups; ++si) {
-    unsigned int sequenceId;
-    unsigned int externalId;
+    unsigned int sequenceId = 0;
+    unsigned int externalId = 0;
     std::string type;
 
     std::stringstream lineStream(tempStr);
     lineStream >> sequenceId;
     lineStream >> type;
     lineStream >> externalId;
+    if (lineStream.bad()) {
+      std::ostringstream errout;
+      errout << "Failed to parse SGroup header on line " << line;
+      SGroupWarnOrThrow<>(strictParsing, errout.str());
+      tempStr = FileParserUtils::getV3000Line(inStream, line);
+      boost::trim_right(tempStr);
+      continue;
+    }
 
     std::set<std::string> parsedLabels;
     if (strictParsing && !SubstanceGroupChecks::isValidType(type)) {
@@ -1276,13 +1321,9 @@ std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
         std::ostringstream errout;
         errout << "Found character '" << spacer
                << "' when expecting a separator (space) on line " << line;
-        if (strictParsing) {
-          throw FileParseException(errout.str());
-        } else {
-          BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
-          sgroup.setIsValid(false);
-          continue;
-        }
+        SGroupWarnOrThrow<>(strictParsing, errout.str());
+        sgroup.setIsValid(false);
+        continue;
       }
 
       std::getline(lineStream, label, '=');
@@ -1331,13 +1372,9 @@ std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
         if (spacer == ' ') {
           std::ostringstream errout;
           errout << "Found unexpected whitespace at DEFAULT label " << label;
-          if (strictParsing) {
-            throw FileParseException(errout.str());
-          } else {
-            BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
-            sgroup.setIsValid(false);
-            continue;
-          }
+          SGroupWarnOrThrow<>(strictParsing, errout.str());
+          sgroup.setIsValid(false);
+          continue;
         } else if (spacer == '(') {
           std::getline(lineStream, label, ')');
           lineStream.get(spacer);
@@ -1362,11 +1399,7 @@ std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
     std::ostringstream errout;
     errout << "Found " << sGroupMap.size() << " SGroups when " << nSgroups
            << " were expected." << std::endl;
-    if (strictParsing) {
-      throw FileParseException(errout.str());
-    } else {
-      BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
-    }
+    SGroupWarnOrThrow<>(strictParsing, errout.str());
   }
   // SGroups successfully parsed, now add them to the molecule
   for (const auto &sg : sGroupMap) {

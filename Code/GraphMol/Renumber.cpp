@@ -21,11 +21,14 @@ ROMol *renumberAtoms(const ROMol &mol,
   unsigned int nAts = mol.getNumAtoms();
   PRECONDITION(newOrder.size() == nAts, "bad newOrder size");
 
-  std::vector<unsigned int> revOrder(nAts);
+  std::vector<unsigned int> revOrder(nAts, nAts);
   for (unsigned int nIdx = 0; nIdx < nAts; ++nIdx) {
     unsigned int oIdx = newOrder[nIdx];
-    if (oIdx > nAts) {
+    if (oIdx >= nAts) {
       throw ValueErrorException("idx value exceeds numAtoms");
+    }
+    if (revOrder[oIdx] != nAts) {
+      throw ValueErrorException("newOrder contains duplicate indices");
     }
     revOrder[oIdx] = nIdx;
   }

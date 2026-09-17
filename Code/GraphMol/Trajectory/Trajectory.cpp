@@ -75,14 +75,18 @@ const Snapshot &Trajectory::getSnapshot(unsigned int snapshotNum) const {
 unsigned int Trajectory::insertSnapshot(unsigned int snapshotNum, Snapshot s) {
   URANGE_CHECK(snapshotNum, d_snapshotVect->size() + 1);
   s.d_trajectory = this;
-  return (d_snapshotVect->insert(d_snapshotVect->begin() + snapshotNum, s) -
-          d_snapshotVect->begin());
+  // the two operands of the subtraction are unsequenced, so begin() must not
+  // be read in the same expression as the insert() that invalidates it
+  auto pos = d_snapshotVect->insert(d_snapshotVect->begin() + snapshotNum, s);
+  return static_cast<unsigned int>(pos - d_snapshotVect->begin());
 }
 
 unsigned int Trajectory::removeSnapshot(unsigned int snapshotNum) {
   URANGE_CHECK(snapshotNum, d_snapshotVect->size());
-  return (d_snapshotVect->erase(d_snapshotVect->begin() + snapshotNum) -
-          d_snapshotVect->begin());
+  // as above: erasing at begin() invalidates the iterator this would compare
+  // against, and the order the two operands are evaluated in is unspecified
+  auto pos = d_snapshotVect->erase(d_snapshotVect->begin() + snapshotNum);
+  return static_cast<unsigned int>(pos - d_snapshotVect->begin());
 }
 
 unsigned int Trajectory::addConformersToMol(ROMol &mol, int from, int to) {

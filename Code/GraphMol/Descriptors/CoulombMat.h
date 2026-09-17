@@ -27,6 +27,9 @@
 
 #ifndef CoulombMatRDKIT_H_MAY2018
 #define CoulombMatRDKIT_H_MAY2018
+#include <RDGeneral/export.h>
+#include <vector>
+#include <string>
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {

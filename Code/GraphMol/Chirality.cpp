@@ -43,18 +43,6 @@ bool shouldDetectDoubleBondStereo(const Bond *bond) {
               Chirality::minRingSizeForDoubleBondStereo);
 }
 
-bool getValFromEnvironment(const char *var, bool defVal) {
-  auto evar = std::getenv(var);
-  if (evar != nullptr) {
-    if (!strcmp(evar, "0")) {
-      return false;
-    } else {
-      return true;
-    }
-  }
-  return defVal;
-}
-
 bool is_regular_h(const Atom &atom) {
   return atom.getAtomicNum() == 1 && atom.getIsotope() == 0;
 }
@@ -844,12 +832,6 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
 
   return res;
 }
-
-#ifdef _WIN32
-int setenv(const char *name, const char *value, int) {
-  return _putenv_s(name, value);
-}
-#endif
 
 void setAllowNontetrahedralChirality(bool val) {
   if (val) {
@@ -3022,10 +3004,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
               }
             }  // end of check that beg and end atoms have at least 1
                // neighbor:
-          }    // end of 2 and 3 coordinated atoms only
-        }      // end of we want it or CIP code is not set
-      }        // end of double bond
-    }          // end of for loop over all bonds
+          }  // end of 2 and 3 coordinated atoms only
+        }  // end of we want it or CIP code is not set
+      }  // end of double bond
+    }  // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }

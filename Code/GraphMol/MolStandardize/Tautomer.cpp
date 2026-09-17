@@ -341,6 +341,43 @@ int scoreHeteroHs(const ROMol &mol) {
 }
 }  // namespace TautomerScoringFunctions
 
+namespace {
+const RingInfo *getFastRingInfo(ROMol &mol) {
+  // We only need to know whether the bond is in a ring; avoid forcing
+  // SymmSSSR here since that has a performance cost.
+  // this might be not precise enough for large rings like 9-or-more macrocycles
+  auto ringInfo = mol.getRingInfo();
+  if (!ringInfo->isFindFastOrBetter()) {
+    MolOps::fastFindRings(mol);
+  }
+  return ringInfo;
+}
+
+bool isTautomerBondAtRing(const RingInfo *ringInfo, const Bond &bond) {
+  // either inside a ring or connecting two ring atoms
+  const bool bondInRing = ringInfo && ringInfo->numBondRings(bond.getIdx()) != 0;
+  const bool beginInRing =
+      ringInfo && ringInfo->numAtomRings(bond.getBeginAtomIdx()) != 0;
+  const bool endInRing =
+      ringInfo && ringInfo->numAtomRings(bond.getEndAtomIdx()) != 0;
+  return bondInRing || (beginInRing && endInRing);
+}
+
+Bond::BondStereo getClearedTautomerBondStereo(const RingInfo *ringInfo,
+                                              const Bond &bond) {
+  return (bond.getBondType() == Bond::DOUBLE &&
+          !isTautomerBondAtRing(ringInfo, bond))
+             ? Bond::STEREOANY
+             : Bond::STEREONONE;
+}
+
+bool hasValidSpecifiedDoubleBondStereo(const Bond &bond) {
+  const auto stereo = bond.getStereo();
+  return bond.getBondType() == Bond::DOUBLE && stereo >= Bond::STEREOZ &&
+         stereo <= Bond::STEREOTRANS && bond.getStereoAtoms().size() == 2;
+}
+}  // namespace
+
 TautomerEnumerator::TautomerEnumerator(const CleanupParameters &params)
     : d_maxTautomers(params.maxTautomers),
       d_maxTransforms(params.maxTransforms),
@@ -426,38 +463,17 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
       }
     }
     auto tautBond = tautBonds[bondIdx];
-    if (tautBond->getBondType() != Bond::DOUBLE || d_removeBondStereo) {
+    if (tautBond->getBondType() != Bond::DOUBLE || d_removeBondStereo ||
+        !hasValidSpecifiedDoubleBondStereo(*bond)) {
       // When bond stereo is being removed for bonds involved in tautomerism,
-      // use STEREOANY (for *non-ring* double bonds) instead of STEREONONE.
+      // use STEREOANY (for double bonds not in rings or connecting two ring atoms)
+      // instead of STEREONONE.
       // This prevents downstream tools (notably InChI) from inferring a specific E/Z
       // assignment from 2D coordinates after bond orders have been changed.
-      bool isRingBond = false;
-      if (tautBond->getBondType() == Bond::DOUBLE) {
-        auto ringInfo = taut.getRingInfo();
-        // We only need to know whether the bond is in a ring; avoid forcing
-        // SymmSSSR here since that has a performance cost.
-        // this might be not precise enough for large rings like 9-or-more macrocycles
-        if (!ringInfo || !ringInfo->isFindFastOrBetter()) {
-          MolOps::fastFindRings(taut);
-          ringInfo = taut.getRingInfo();
-        }
-        if (ringInfo) {
-          const auto tbidx = tautBond->getIdx();
-          const bool bondInRing = ringInfo->numBondRings(tbidx) != 0;
-          const bool beginInRing =
-              ringInfo->numAtomRings(tautBond->getBeginAtomIdx()) != 0;
-          const bool endInRing =
-              ringInfo->numAtomRings(tautBond->getEndAtomIdx()) != 0;
-          // Only set STEREOANY on clearly non-ring bonds. Using atom-in-ring as
-          // a fallback avoids any edge cases where bond indices or ring data
-          // aren't aligned during enumeration.
-          isRingBond = bondInRing || (beginInRing && endInRing);
-        }
-      }
-      const auto targetStereo = (tautBond->getBondType() == Bond::DOUBLE &&
-                                 !isRingBond)
-                                    ? Bond::STEREOANY
-                                    : Bond::STEREONONE;
+      const RingInfo *ringInfo =
+          tautBond->getBondType() == Bond::DOUBLE ? getFastRingInfo(taut)
+                                                  : nullptr;
+      const auto targetStereo = getClearedTautomerBondStereo(ringInfo, *tautBond);
       modified |= (tautBond->getStereo() != targetStereo);
       tautBond->setStereo(targetStereo);
       tautBond->getStereoAtoms().clear();
@@ -487,12 +503,7 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     // coordinate-based E/Z inference. If bond stereo removal is enabled,
     // re-apply our contract to the bonds involved in tautomerism.
     if (d_removeBondStereo) {
-      auto ringInfo = taut.getRingInfo();
-      if (!ringInfo || !ringInfo->isFindFastOrBetter()) {
-        // might prefer more expensive calc here to better support 9-or-more macrocycles
-        MolOps::fastFindRings(taut);
-        ringInfo = taut.getRingInfo();
-      }
+      const auto ringInfo = getFastRingInfo(taut);
       for (auto bond : taut.bonds()) {
         const auto bondIdx = bond->getIdx();
         if (!res.d_modifiedBonds.test(bondIdx)) {
@@ -503,15 +514,7 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
           bond->getStereoAtoms().clear();
           continue;
         }
-
-        const bool bondInRing = ringInfo && ringInfo->numBondRings(bondIdx);
-        const bool beginInRing =
-            ringInfo && ringInfo->numAtomRings(bond->getBeginAtomIdx());
-        const bool endInRing =
-            ringInfo && ringInfo->numAtomRings(bond->getEndAtomIdx());
-        const bool isRingBond = bondInRing || (beginInRing && endInRing);
-
-        bond->setStereo(isRingBond ? Bond::STEREONONE : Bond::STEREOANY);
+        bond->setStereo(getClearedTautomerBondStereo(ringInfo, *bond));
         bond->getStereoAtoms().clear();
       }
     }
@@ -857,21 +860,41 @@ ROMol *TautomerEnumerator::pickCanonical(
   } else {
     // Calculate score for each tautomer
     int bestScore = std::numeric_limits<int>::min();
+    unsigned int bestStereo = 0;
     std::string bestSmiles = "";
     for (const auto &t : tautRes.d_tautomers) {
       auto score = scoreFunc(*t.second.tautomer);
 #ifdef VERBOSE_ENUMERATION
       std::cerr << "  " << t.first << " " << score << std::endl;
 #endif
+      if (score < bestScore) {
+        continue;
+      }
+      auto nStereo = detail::countSpecifiedStereo(*t.second.tautomer);
+      bool better = false;
       if (score > bestScore) {
+        better = true;
+      } else {
+        // Break the tie on retained stereochemistry before falling back to
+        // lexicographic SMILES order. A transform that destroys and then
+        // regenerates an sp3 stereocentre puts a stereo-unspecified twin of an
+        // equally-scoring tautomer into the pool, and '[' (0x5B) sorts after
+        // every atom letter, so the lexicographic comparison alone always
+        // prefers the twin: "CC(=O)C(C)O" beats "CC(=O)[C@H](C)O". That silently
+        // merged both acetoin enantiomers even with tautomerRemoveSp3Stereo set
+        // to false. Comparing stereo first keeps the result canonical, since
+        // the count is a property of the tautomer rather than of the input.
+        if (nStereo > bestStereo) {
+          better = true;
+        } else if (nStereo == bestStereo && t.first < bestSmiles) {
+          better = true;
+        }
+      }
+      if (better) {
         bestScore = score;
+        bestStereo = nStereo;
         bestSmiles = t.first;
         bestMol = t.second.tautomer;
-      } else if (score == bestScore) {
-        if (t.first < bestSmiles) {
-          bestSmiles = t.first;
-          bestMol = t.second.tautomer;
-        }
       }
     }
   }

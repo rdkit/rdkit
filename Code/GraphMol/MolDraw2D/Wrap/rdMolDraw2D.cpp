@@ -1060,6 +1060,19 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "if all specified stereocenters are in a single "
                      "StereoGroup, show a molecule-level annotation instead of "
                      "the individual labels. Default is false.")
+      .def_readwrite(
+          "stereoGroupAndLabel", &RDKit::MolDrawOptions::stereoGroupAndLabel,
+          "String to use for enhanced stereo 'AND' groups.  Default='and'.")
+      .def_readwrite(
+          "stereoGroupOrLabel", &RDKit::MolDrawOptions::stereoGroupOrLabel,
+          "String to use for enhanced stereo 'OR' groups.  Default='or'.")
+      .def_readwrite(
+          "stereoGroupAbsLabel", &RDKit::MolDrawOptions::stereoGroupAbsLabel,
+          "String to use for enhanced stereo 'ABS' groups.  Default='abs'.")
+      .def_readwrite(
+          "addStereoGroupAnnotation",
+          &RDKit::MolDrawOptions::addStereoGroupAnnotation,
+          "Whether to add the enhanced stereo labels.  Default is True.")
       .def_readwrite("unspecifiedStereoIsUnknown",
                      &RDKit::MolDrawOptions::unspecifiedStereoIsUnknown,
                      "if true, double bonds with unspecified stereo are drawn"

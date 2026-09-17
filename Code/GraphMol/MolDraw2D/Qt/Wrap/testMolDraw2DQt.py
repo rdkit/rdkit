@@ -1,8 +1,8 @@
 import sys
 import unittest
 
-from rdkit import Chem, RDConfig
-from rdkit.Chem import AllChem, Draw, rdDepictor
+from rdkit import Chem
+from rdkit.Chem import Draw
 from rdkit.Chem.Draw import rdMolDraw2DQt
 
 try:

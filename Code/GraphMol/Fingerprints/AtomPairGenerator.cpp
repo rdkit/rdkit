@@ -106,7 +106,7 @@ void AtomPairArguments::fromJSON(const boost::property_tree::ptree &pt) {
 
 template <typename OutputType>
 void AtomPairAtomEnv<OutputType>::updateAdditionalOutput(
-    AdditionalOutput *additionalOutput, size_t bitId) const {
+    AdditionalOutput *additionalOutput, std::uint64_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
   if (additionalOutput->bitInfoMap) {
     (*additionalOutput->bitInfoMap)[bitId].emplace_back(d_atomIdFirst,

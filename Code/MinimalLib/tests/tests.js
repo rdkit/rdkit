@@ -396,7 +396,16 @@ function test_substruct_library(done) {
     const numBitOptions = [-1, 0];
     var patternFpArray = [];
     var sslibObjs = [];
-    numBitOptions.forEach((numBits, optIdx) => {
+    // The numBits options must be processed sequentially rather than with a
+    // concurrent forEach: the numBits === 0 pass has no pattern fingerprints of
+    // its own and deliberately reuses the ones generated during the
+    // numBits === -1 pass via the shared patternFpArray. Launching both
+    // readline streams at once made the completion order of their 'close'
+    // events nondeterministic, so the numBits === 0 pass could finish first and
+    // find patternFpArray still empty (assertion "0 == 300"). Chaining the
+    // passes guarantees the numBits === -1 pass completes first.
+    function runOption(optIdx) {
+        var numBits = numBitOptions[optIdx];
         var smiReader = readline.createInterface({
             input: fs.createReadStream(__dirname + '/../../GraphMol/test_data/compounds.smi')
         });
@@ -490,9 +499,12 @@ function test_substruct_library(done) {
                 sslibObjs.forEach((sslib) => {
                     sslib.delete();
                 });
+            } else {
+                runOption(optIdx + 1);
             }
         });
-    });
+    }
+    runOption(0);
 }
 
 function test_substruct_library_merge_hs() {

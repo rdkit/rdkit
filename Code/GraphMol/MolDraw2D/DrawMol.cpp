@@ -29,6 +29,7 @@
 #include <GraphMol/MolDraw2D/DrawShape.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <GraphMol/MolDraw2D/MolDraw2DSGroupData.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolEnumerator/LinkNode.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
@@ -221,7 +222,9 @@ void DrawMol::extractAll(double scale) {
   if (drawOptions_.addStereoAnnotation) {
     extractCIPCodes(drawOptions_.showAllCIPCodes);
   }
-  extractStereoGroups();  // always show StereoGroups
+  if (drawOptions_.addStereoGroupAnnotation) {
+    extractStereoGroups();
+  }
   extractBondNotes();
   extractRadicals();
   extractSGroupData();
@@ -374,8 +377,8 @@ void DrawMol::extractAttachments() {
       }
       if (at1->getAtomicNum() == 0 && at1->getDegree() == 1) {
         Point2D &at1_cds = atCds_[at1->getIdx()];
-        const auto &iter_pair = drawMol_->getAtomNeighbors(at1);
-        const Atom *at2 = (*drawMol_)[*iter_pair.first];
+        auto nbrIter = drawMol_->atomNeighbors(at1);
+        const Atom *at2 = *nbrIter.begin();
         Point2D &at2_cds = atCds_[at2->getIdx()];
         Point2D perp = calcPerpendicular(at1_cds, at2_cds);
         Point2D p1 =
@@ -536,13 +539,15 @@ void DrawMol::extractStereoGroups() {
 
     switch (group.getGroupType()) {
       case RDKit::StereoGroupType::STEREO_ABSOLUTE:
-        stereoGroupType = "abs";
+        stereoGroupType = drawOptions_.stereoGroupAbsLabel;
         break;
       case RDKit::StereoGroupType::STEREO_OR:
-        stereoGroupType = "or" + std::to_string(++orCount);
+        stereoGroupType =
+            drawOptions_.stereoGroupOrLabel + std::to_string(++orCount);
         break;
       case RDKit::StereoGroupType::STEREO_AND:
-        stereoGroupType = "and" + std::to_string(++andCount);
+        stereoGroupType =
+            drawOptions_.stereoGroupAndLabel + std::to_string(++andCount);
         break;
       default:
         throw ValueErrorException("Unrecognized stereo group type");
@@ -792,7 +797,12 @@ void DrawMol::extractBrackets() {
       // bracket is largely horizontal or largely vertical.
       const auto &brkShp = *postShapes_.back();
       Point2D longline = brkShp.points_[1] - brkShp.points_[2];
-      longline.normalize();
+      try {
+        longline.normalize();
+      } catch (std::runtime_error &e) {
+        // the bracket had no length so can be ignored.
+        continue;
+      }
       static const double cos45 = 1.0 / sqrt(2.0);
       bool horizontal = fabs(longline.x) > cos45;
       size_t labelBrk = postShapes_.size() - 1;
@@ -2874,20 +2884,18 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
   }
   const Point2D &at_cds = atCds_[atom->getIdx()];
   std::vector<Point2D> bond_vecs;
-  for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(atom))) {
+  for (auto nbr : drawMol_->atomNeighbors(atom)) {
     // If the nbr has the same coords as atom, bond_vec comes out as NaN, NaN
     // (issue 6559), so use a short arbitrary vector instead.
     Point2D bond_vec;
-    if ((at_cds - atCds_[nbr]).lengthSq() < 0.0001) {
-      bond_vec.x = 0.1;
-      bond_vec.y = 0.1;
-    } else {
-      bond_vec = at_cds.directionVector(atCds_[nbr]);
+    try {
+      bond_vec = at_cds.directionVector(atCds_[nbr->getIdx()]);
+    } catch (const std::runtime_error &e) {
+      bond_vec.x = 0.7071;
+      bond_vec.y = 0.7071;
     }
-    bond_vec.normalize();
     bond_vecs.push_back(bond_vec);
   }
-
   Point2D ret_vec;
   if (bond_vecs.size() == 1) {
     if (!atomLabels_[atom->getIdx()]) {
@@ -2923,7 +2931,12 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
         double ang = acos(bond_vecs[i].dotProduct(bond_vecs[j]));
         if (ang < discrim) {
           ret_vec = bond_vecs[i] + bond_vecs[j];
-          ret_vec.normalize();
+          try {
+            ret_vec.normalize();
+          } catch (const std::runtime_error &e) {
+            // normalize throws on zero-length bond.
+            continue;
+          }
           discrim = -1.0;
           break;
         }
@@ -3604,8 +3617,8 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     Point2D l2 = l2s.directionVector(l2f);
     l2f = l2s + l2 * 2.0 * bl;
     Point2D ip;
-    for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(at2))) {
-      auto nbr_cds = atCds_[nbr];
+    for (auto nbr : drawMol_->atomNeighbors(at2)) {
+      auto nbr_cds = atCds_[nbr->getIdx()];
       if (doLinesIntersect(l1s, l1f, at2_cds, nbr_cds, &ip)) {
         l1f = ip;
       }
@@ -3653,15 +3666,15 @@ Point2D DrawMol::doubleBondEnd(unsigned int at1, unsigned int at2,
   v23perp.normalize();
 
   Point2D bis = v21 + v23;
-  if (bis.lengthSq() < 1.0e-6) {
+  try {
+    bis.normalize();
+  } catch (std::exception &e) {
     // if the bonds are colinear, bis comes out as 0, and thus normalizes
     // to NaN which gives a very ugly result (Github #6027).  It's safe
-    // to use v23perp in this case, so long as is on the right side of the
+    // to use v23perp in this case, so long as it is on the right side of the
     // bond, which will be checked on return.
     return (atCds_[at2] - v23perp * offset);
   }
-
-  bis.normalize();
   if (v23perp.dotProduct(bis) < 0.0) {
     v23perp = v23perp * -1.0;
   }
@@ -4016,10 +4029,8 @@ DrawColour DrawMol::getColour(int atom_idx) const {
       const auto *atomPtr = drawMol_->getAtomWithIdx(atom_idx);
       int numBonds = 0, numHighBonds = 0;
       std::unique_ptr<DrawColour> highCol;
-      for (const auto &nbri :
-           boost::make_iterator_range(drawMol_->getAtomBonds(atomPtr))) {
+      for (const auto nbr : drawMol_->atomBonds(atomPtr)) {
         ++numBonds;
-        const auto &nbr = (*drawMol_)[nbri];
         if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
                       nbr->getIdx()) != highlightBonds_.end() ||
             highlightBondMap_.find(nbr->getIdx()) != highlightBondMap_.end()) {
@@ -4075,26 +4086,30 @@ void centerMolForDrawing(RWMol &mol, int confId) {
 
 // ****************************************************************************
 bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
-  if (atom.getDegree() == 2) {
-    Point2D bond_vecs[2];
-    Bond::BondType bts[2];
-    Point2D const &at1_cds = atCds[atom.getIdx()];
-    ROMol const &mol = atom.getOwningMol();
-    int i = 0;
-    for (auto nbr : make_iterator_range(mol.getAtomNeighbors(&atom))) {
-      try {
-        Point2D bond_vec = at1_cds.directionVector(atCds[nbr]);
-        bond_vecs[i] = bond_vec;
-        bts[i] = mol.getBondBetweenAtoms(atom.getIdx(), nbr)->getBondType();
-      } catch (std::runtime_error &e) {
-        // A zero-length vector throws and can be ignored.
-        continue;
-      }
-      ++i;
-    }
-    return (bts[0] == bts[1] && bond_vecs[0].dotProduct(bond_vecs[1]) < -0.95);
+  if (atom.getDegree() != 2) {
+    return false;
   }
-  return false;
+  Point2D bond_vecs[2];
+  Bond::BondType bts[2] = {Bond::BondType::UNSPECIFIED,
+                           Bond::BondType::UNSPECIFIED};
+  Point2D const &at1_cds = atCds[atom.getIdx()];
+  ROMol const &mol = atom.getOwningMol();
+  int i = 0;
+  for (const auto nbr : mol.atomNeighbors(&atom)) {
+    const auto nbri = nbr->getIdx();
+    try {
+      Point2D bond_vec = at1_cds.directionVector(atCds[nbri]);
+      bond_vecs[i] = bond_vec;
+    } catch (const std::runtime_error &) {
+      // A zero-length vector throws and can be ignored.
+      // but we still need to get the bond type and increment
+      // the counter
+    }
+    bts[i] =
+        mol.getBondBetweenAtoms(atom.getIdx(), nbr->getIdx())->getBondType();
+    ++i;
+  }
+  return (bts[0] == bts[1] && bond_vecs[0].dotProduct(bond_vecs[1]) < -0.95);
 }
 
 // ****************************************************************************

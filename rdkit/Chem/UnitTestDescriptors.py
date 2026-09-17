@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2007-2017 Greg Landrum
+#  Copyright (C) 2007-2026 Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -190,7 +190,6 @@ class TestCase(unittest.TestCase):
 
   def testGet3DMolDescriptors(self):
     mol = Chem.MolFromSmiles('CCCO')
-
     # check ValueError raised when no 3D coordinates supplied
     with self.assertRaises(ValueError):
       Descriptors3D.CalcMolDescriptors3D(mol)
@@ -211,7 +210,6 @@ class TestCase(unittest.TestCase):
     descs2 = Descriptors3D.CalcMolDescriptors3D(mol, confId=2)
     for key in descs:
       self.assertNotEqual(descs2[key], descs[key])
-
 
 if __name__ == '__main__':
   unittest.main()

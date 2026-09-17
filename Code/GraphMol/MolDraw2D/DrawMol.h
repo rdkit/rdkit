@@ -85,7 +85,7 @@ class DrawMol {
    \param drawOptions  : a MolDrawOptions object from the owning MolDraw2D
    \param textDrawer   : a DrawText object from the owning MolDraw2D
    \param xmin         : minimum value expected in X
-   \param xmax         : miaximum value expected in X
+   \param xmax         : maximum value expected in X
    \param ymin         : minimum value expected in Y
    \param ymax         : maximum value expected in Y
    \param scale        : scale to use
@@ -133,7 +133,7 @@ class DrawMol {
   void draw(MolDraw2D &drawer) const;
   void drawRadicals(MolDraw2D &drawer) const;
   void resetEverything();
-  // reduce width_ and height_ to just accomodate the Xrange_ and YRange_
+  // reduce width_ and height_ to just accommodate the Xrange_ and YRange_
   // at the current scale.  Recentres everything.  So the DrawMol takes up
   // no more screen real estate than it needs.
   void shrinkToFit(bool withPadding = true);
@@ -268,7 +268,7 @@ class DrawMol {
   std::map<int, DrawColour> highlightBondMap_;
   std::vector<std::pair<DrawColour, DrawColour>> bondColours_;
   std::map<int, double> highlightRadii_;
-  bool includeAnnotations_;
+  bool includeAnnotations_ = false;
   bool isReactionMol_;
   std::string legend_;
 
@@ -309,7 +309,7 @@ class DrawMol {
   // for the legend.  For Left/Right, legendWidth_ is the side strip.
   // molWidth_ is the width available for the molecule (drawWidth_ for
   // Bottom/Top, drawWidth_ - legendWidth_ for Left/Right).  In pixels.
-  int molHeight_, legendHeight_ = 0;
+  int molHeight_ = 0, legendHeight_ = 0;
   int molWidth_ = 0, legendWidth_ = 0;
   bool drawingInitialised_ = false;
   // when drawing the atoms and bonds in an SVG, they are given a class

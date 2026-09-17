@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (C) 2001-2006  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
@@ -15,7 +13,6 @@ relevant... but tests are tests
 
 """
 import os
-import pickle
 import unittest
 
 from rdkit import Chem, RDConfig

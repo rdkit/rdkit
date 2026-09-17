@@ -1137,8 +1137,8 @@ This also works with multiple implicit Hs: ``C[Pt@SP1H2]Cl`` and ``C[Pt@SP1]([H]
 Missing ligands
 ^^^^^^^^^^^^^^^
 
-Coordination environments with missing ligands are treated as if the missing ligands were at the end of the ligand ordering.
-For example, this invented complex can be presented with the SMILES ``O[Mn@OH1](Cl)(C)(N)F``.
+Internally coordination environments with missing ligands are treated as if the missing ligands were at the end of the ligand ordering.
+However in SMILES they are treated the same as implicit hydrogens. For example, this invented square pyramidal complex can be presented with the SMILES ``O[Mn@OH28](Cl)(C)(N)F`` which is interpreted as: ``O[Mn@OH28](*)(Cl)(C)(N)F``.
 
 .. |nts_missing1| image:: images/nontetstereo_missing1.png
    :align: middle
@@ -1803,12 +1803,13 @@ Here are the steps involved, in order.
      valence states. This step is always performed, but if it is "skipped"
      the test for non-standard valences will not be carried out.
 
-  5. ``symmetrizeSSSR``: calls the symmetrized smallest set of smallest rings
-     algorithm (discussed in the Getting Started document).
 
-  6. ``Kekulize``: converts aromatic rings to their Kekule form. Will raise an
+  5. ``Kekulize``: converts aromatic rings to their Kekule form. Will raise an
      exception if a ring cannot be kekulized or if aromatic bonds are found
      outside of rings.
+
+  6. ``symmetrizeSSSR``: calls the symmetrized smallest set of smallest rings
+     algorithm (discussed in the Getting Started document).
 
   7. ``assignRadicals``: determines the number of radical electrons (if any) on
      each atom.

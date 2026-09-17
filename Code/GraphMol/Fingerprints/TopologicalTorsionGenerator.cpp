@@ -66,7 +66,7 @@ void TopologicalTorsionArguments::fromJSON(
 
 template <typename OutputType>
 void TopologicalTorsionAtomEnv<OutputType>::updateAdditionalOutput(
-    AdditionalOutput *additionalOutput, size_t bitId) const {
+    AdditionalOutput *additionalOutput, std::uint64_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
   if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
     for (auto aid : d_atomPath) {

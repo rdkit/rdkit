@@ -49,6 +49,8 @@
 %ignore RDKit::getTwiceBondType(const RDKit::Bond &b);
 %ignore RDKit::Bond::setQuery;
 %ignore RDKit::Bond::expandQuery;
+%ignore RDKit::Bond::getMacroBondInfo;
+%ignore RDKit::Bond::setMacroBondInfo;
 
 %include <GraphMol/Bond.h>
 
@@ -81,4 +83,3 @@
   }
 
 }
-

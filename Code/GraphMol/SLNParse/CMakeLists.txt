@@ -10,6 +10,13 @@ if(MSVC)
   ADD_DEFINITIONS("/D YY_NO_UNISTD_H")
 endif(MSVC)
 
+if(CMAKE_COMPILER_IS_CLANG AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 15)
+# the output from bison triggers some warnings we can safely ignore with clang 16+
+set_source_files_properties(sln.tab.cpp PROPERTIES COMPILE_OPTIONS "-Wno-unused-but-set-variable")
+endif()
+
+
+
 if(FLEX_EXECUTABLE)
   FLEX_TARGET(SlnL sln.ll
               ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysln.cpp
@@ -52,6 +59,10 @@ rdkit_headers(SLNAttribs.h
 rdkit_test(testSLNParse test.cpp
            LINK_LIBRARIES SLNParse SmilesParse SubstructMatch )
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
 endif()

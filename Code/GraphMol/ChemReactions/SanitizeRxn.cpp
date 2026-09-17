@@ -150,14 +150,6 @@ struct AtomInfo {
   }
 };
 
-std::string makeReactantErrorMessage(const std::string &error,
-                                     const AtomInfo &at) {
-  std::ostringstream str;
-  str << error << " for reactant idx: " << at.templateIdx
-      << " atom: " << at.atom->getIdx();
-  return str.str();
-}
-
 std::string makeProductErrorMessage(const std::string &error,
                                     const AtomInfo &at) {
   std::ostringstream str;

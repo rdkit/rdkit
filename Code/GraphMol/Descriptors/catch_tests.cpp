@@ -681,6 +681,7 @@ TEST_CASE("DCLV") {
   }
 }
 
+#ifdef RDK_HAS_EIGEN3
 TEST_CASE("Github #7364: BCUT descriptors failing for moleucles with Hs") {
   SECTION("as reported") {
     auto m = "CCOC#CCC(C(=O)c1ccc(C)cc1)N1CCCC1"_smiles;
@@ -693,6 +694,7 @@ TEST_CASE("Github #7364: BCUT descriptors failing for moleucles with Hs") {
     CHECK(ref == val);
   }
 }
+#endif
 
 TEST_CASE(
     "Github #6757: numAtomStereoCenters fails if molecule is sanitized a second time") {

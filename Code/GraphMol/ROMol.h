@@ -133,19 +133,25 @@ struct CXXAtomIterator {
     size_t osizeBonds{0};
 
     inline void checkIterator() const {
-      if ((CheckedAtoms && boost::num_vertices(*graph) != osizeAtoms) ||
-          (CheckedBonds && boost::num_edges(*graph) != osizeBonds)) {
-        throw std::runtime_error("molecule modified during iteration");
+      if constexpr (CheckedAtoms) {
+        if (boost::num_vertices(*graph) != osizeAtoms) {
+          throw std::runtime_error("molecule modified during iteration");
+        }
+      }
+      if constexpr (CheckedBonds) {
+        if (boost::num_edges(*graph) != osizeBonds) {
+          throw std::runtime_error("molecule modified during iteration");
+        }
       }
     }
 
-    CXXAtomIter() {};
+    CXXAtomIter(){};
 
     CXXAtomIter(Graph *graph, Iterator pos) : graph(graph), pos(pos) {
-      if (CheckedAtoms) {
+      if constexpr (CheckedAtoms) {
         osizeAtoms = boost::num_vertices(*graph);
       }
-      if (CheckedBonds) {
+      if constexpr (CheckedBonds) {
         osizeBonds = boost::num_edges(*graph);
       }
     }
@@ -165,42 +171,53 @@ struct CXXAtomIterator {
     }
 
     CXXAtomIter &operator++() {
+      checkIterator();
       ++pos;
       return *this;
     }
     CXXAtomIter operator++(int) {
+      checkIterator();
       CXXAtomIter tmp = *this;
       ++(*this);
       return tmp;
     }
     CXXAtomIter &operator--() {
+      checkIterator();
       --pos;
       return *this;
     }
     CXXAtomIter operator+(difference_type n) const {
+      checkIterator();
       return CXXAtomIter(graph, pos + n);
     }
     CXXAtomIter operator-(difference_type n) const {
+      checkIterator();
       return CXXAtomIter(graph, pos - n);
     }
 
     CXXAtomIter operator--(int) {
+      checkIterator();
       CXXAtomIter tmp = *this;
       --(*this);
       return tmp;
     }
     CXXAtomIter &operator+=(difference_type n) {
+      checkIterator();
       pos += n;
       return *this;
     }
     CXXAtomIter &operator-=(difference_type n) {
+      checkIterator();
       pos -= n;
       return *this;
     }
     difference_type operator-(const CXXAtomIter &other) const {
+      checkIterator();
+      other.checkIterator();
       return pos - other.pos;
     }
     friend CXXAtomIter operator+(difference_type n, const CXXAtomIter &it) {
+      it.checkIterator();
       return CXXAtomIter(it.graph, it.pos + n);
     }
 
@@ -220,7 +237,7 @@ struct CXXAtomIterator {
     std::tie(vstart, vend) = boost::vertices(*graph);
   }
   CXXAtomIterator(Graph *graph, Iterator start, Iterator end)
-      : graph(graph), vstart(start), vend(end) {};
+      : graph(graph), vstart(start), vend(end){};
   CXXAtomIter begin() { return {graph, vstart}; }
   CXXAtomIter end() { return {graph, vend}; }
   size_t size() const { return vend - vstart; }
@@ -250,37 +267,45 @@ struct CXXBondIterator {
     Iterator pos;
     size_t osize{0};
 
-    CXXBondIter() {};
+    inline void checkIterator() const {
+      if constexpr (Checked) {
+        if (boost::num_edges(*graph) != osize) {
+          throw std::runtime_error("molecule modified during iteration");
+        }
+      }
+    }
+
+    CXXBondIter(){};
 
     CXXBondIter(Graph *graph, Iterator pos) : graph(graph), pos(pos) {
-      if (Checked) {
+      if constexpr (Checked) {
         osize = boost::num_edges(*graph);
       }
     }
     // we only return const references since we don't want clients modifying the
     // graph itself through these iterators
     const_reference operator*() const {
-      if (Checked) {
-        if (boost::num_edges(*graph) != osize) {
-          throw std::runtime_error("molecule modified during iteration");
-        }
-      }
+      checkIterator();
       return (*graph)[*pos];
     }
     CXXBondIter &operator++() {
+      checkIterator();
       ++pos;
       return *this;
     }
     CXXBondIter operator++(int) {
+      checkIterator();
       CXXBondIter tmp = *this;
       ++(*this);
       return tmp;
     }
     CXXBondIter &operator--() {
+      checkIterator();
       --pos;
       return *this;
     }
     CXXBondIter operator--(int) {
+      checkIterator();
       CXXBondIter tmp = *this;
       --(*this);
       return tmp;
@@ -299,7 +324,7 @@ struct CXXBondIterator {
     vend = vs.second;
   }
   CXXBondIterator(Graph *graph, Iterator start, Iterator end)
-      : graph(graph), vstart(start), vend(end) {};
+      : graph(graph), vstart(start), vend(end){};
   CXXBondIter begin() { return {graph, vstart}; }
   CXXBondIter end() { return {graph, vend}; }
   size_t size() const {
@@ -546,14 +571,14 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     if (this == &o) {
       return *this;
     }
+    // d_graph owns its atom and bond pointers, so release the current graph
+    // before replacing its containers with those from o.
+    destroy();
+    dp_ringInfo = std::exchange(o.dp_ringInfo, nullptr);
     RDProps::operator=(std::move(o));
     d_graph = std::move(o.d_graph);
     d_atomBookmarks = std::move(o.d_atomBookmarks);
     d_bondBookmarks = std::move(o.d_bondBookmarks);
-    if (dp_ringInfo) {
-      delete dp_ringInfo;
-    }
-    dp_ringInfo = std::exchange(o.dp_ringInfo, nullptr);
 
     d_confs = std::move(o.d_confs);
     d_sgroups = std::move(o.d_sgroups);
@@ -927,6 +952,11 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! \name Properties
   //! @{
 
+  //! sets the molecule name/title; equivalent to setting the \c _Name property
+  void setName(const std::string &name) const;
+  //! gets the molecule name/title stored in \c _Name, or an empty string if
+  //! absent
+  std::string getName() const;
   //! clears all of our \c computed \c properties
   void clearComputedProps(bool includeRings = true) const;
   //! calculates any of our lazy \c properties
@@ -997,8 +1027,8 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   friend RDKIT_GRAPHMOL_EXPORT std::vector<SubstanceGroup> &getSubstanceGroups(
       ROMol &);
-  friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup> &
-  getSubstanceGroups(const ROMol &);
+  friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup>
+      &getSubstanceGroups(const ROMol &);
   void clearSubstanceGroups() { d_sgroups.clear(); }
 
  protected:

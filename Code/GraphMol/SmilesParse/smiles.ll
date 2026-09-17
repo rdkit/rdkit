@@ -7,7 +7,6 @@
 
 %{
 
-// $Id$
 //
 //  Copyright (C) 2001-2010 Randal Henne, Greg Landrum and Rational Discovery LLC
 //

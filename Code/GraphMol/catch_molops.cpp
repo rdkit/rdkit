@@ -717,13 +717,17 @@ TEST_CASE("Test findRingFamilies") {
     auto m = R"SMI(C1CCCCC1)SMI"_smiles;
     REQUIRE(m);
 
+    auto r = m->getRingInfo();
+    REQUIRE(r);
+
+    // ring families are initialized during findSSSR
+    REQUIRE(r->areRingFamiliesInitialized());
+    r->resetRingFamilies();
+
     // Make one bond a ZOB; this breaks the cyclohexane ring
     m->getBondWithIdx(0)->setBondType(Bond::ZERO);
 
     MolOps::findRingFamilies(*m);
-
-    auto r = m->getRingInfo();
-    REQUIRE(r);
 
     REQUIRE(r->areRingFamiliesInitialized());
     CHECK(r->atomRingFamilies().empty() == true);
@@ -737,11 +741,14 @@ TEST_CASE("Test findRingFamilies") {
     auto m = R"SMI(N->1CCN->[Pt]1)SMI"_smiles;
     REQUIRE(m);
 
-    MolOps::findRingFamilies(*m, includeDativeBonds);
-
     auto r = m->getRingInfo();
     REQUIRE(r);
 
+    // ring families are initialized during findSSSR
+    REQUIRE(r->areRingFamiliesInitialized());
+    r->resetRingFamilies();
+
+    MolOps::findRingFamilies(*m, includeDativeBonds);
     REQUIRE(r->areRingFamiliesInitialized());
 
     unsigned int numRings = (includeDativeBonds ? 1 : 0);
@@ -756,11 +763,15 @@ TEST_CASE("Test findRingFamilies") {
     auto m = "CC1O[H]O=C(C)C1 |H:4.3|"_smiles;
     REQUIRE(m);
 
-    constexpr bool includeDativeBonds = false;
-    MolOps::findRingFamilies(*m, includeDativeBonds, includeHydrogenBonds);
-
     auto r = m->getRingInfo();
     REQUIRE(r);
+
+    // ring families are initialized during findSSSR
+    REQUIRE(r->areRingFamiliesInitialized());
+    r->resetRingFamilies();
+
+    constexpr bool includeDativeBonds = false;
+    MolOps::findRingFamilies(*m, includeDativeBonds, includeHydrogenBonds);
 
     REQUIRE(r->areRingFamiliesInitialized());
 

@@ -8,13 +8,13 @@
 //  of the RDKit source tree.
 //
 
+#include <array>
 #include <cstdlib>
 #include <optional>
 #include <ranges>
 
 #include <catch2/catch_all.hpp>
 
-#include <boost/noncopyable.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/StereoGroup.h>
@@ -40,6 +40,20 @@ unsigned count_wedged_bonds(const ROMol &mol) {
     }
   }
   return nWedged;
+}
+
+RWMol makeDummySubstitutedCarbon(
+    const std::array<const char *, 4> &dummyLabels) {
+  RWMol mol;
+  const auto center = mol.addAtom();
+  mol.getAtomWithIdx(center)->setAtomicNum(6);
+  for (const auto label : dummyLabels) {
+    const auto idx = mol.addAtom();
+    mol.getAtomWithIdx(idx)->setProp(common_properties::dummyLabel, label);
+    mol.addBond(center, idx, Bond::BondType::SINGLE);
+  }
+  mol.updatePropertyCache(false);
+  return mol;
 }
 
 TEST_CASE("bond StereoInfo", "[unittest]") {
@@ -474,6 +488,16 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
       std::vector<unsigned> catoms = {0, 2, 3};
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
+  }
+  SECTION("dummy labels distinguish controlling atoms") {
+    auto distinct = makeDummySubstitutedCarbon({"A", "B", "C", "D"});
+    auto stereoInfo = Chirality::findPotentialStereo(distinct);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 0);
+
+    auto duplicate = makeDummySubstitutedCarbon({"A", "B", "C", "C"});
+    stereoInfo = Chirality::findPotentialStereo(duplicate);
+    CHECK(stereoInfo.empty());
   }
 }
 
@@ -3303,7 +3327,7 @@ TEST_CASE(
 void testStereoValidationFromMol(std::string molBlock,
                                  std::string expectedSmiles, bool legacyFlag,
                                  bool canonicalFlag = false) {
-  RDKit::Chirality::setUseLegacyStereoPerception(legacyFlag);
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(legacyFlag);
 
   std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock, true, false, false));
   REQUIRE(mol);
@@ -3324,7 +3348,6 @@ void testStereoValidationFromMol(std::string molBlock,
                        RDKit::SmilesWrite::CXSmilesFields::CX_POLYMER;
 
   auto outSmiles = MolToCXSmiles(*mol, smilesWriteParams, flags);
-  RDKit::Chirality::setUseLegacyStereoPerception(false);
 
   CHECK(outSmiles == expectedSmiles);
 }

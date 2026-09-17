@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 
@@ -197,6 +198,116 @@ bool replaceFragments(RWMol &mol) {
   return true;
 }
 namespace {
+Bond::BondStereo getChemDrawBondStereo(CDXBondCIPType cip) {
+  switch (cip) {
+    case kCDXCIPBond_E:
+      return Bond::BondStereo::STEREOE;
+    case kCDXCIPBond_Z:
+      return Bond::BondStereo::STEREOZ;
+    default:
+      return Bond::BondStereo::STEREONONE;
+  }
+}
+
+void getStereoNeighbors(const Bond *bond, std::vector<const Atom *> &beginAtoms,
+                        std::vector<const Atom *> &endAtoms) {
+  beginAtoms.clear();
+  endAtoms.clear();
+  const auto &mol = bond->getOwningMol();
+  for (const auto neighbor : mol.atomNeighbors(bond->getBeginAtom())) {
+    if (neighbor != bond->getEndAtom()) {
+      beginAtoms.push_back(neighbor);
+    }
+  }
+  for (const auto neighbor : mol.atomNeighbors(bond->getEndAtom())) {
+    if (neighbor != bond->getBeginAtom()) {
+      endAtoms.push_back(neighbor);
+    }
+  }
+}
+
+// ChemDraw's BS=E/Z flag preserves the drawn same-side/opposite-side relation,
+// but not the exact controlling atom pair RDKit needs for setStereoAtoms().
+// Prefer the 2D drawing here because symmetry-hidden oximes can leave the CIP
+// neighbor choice unresolved until after other stereochemistry is assigned.
+bool getStereoAtomsFromGeometry(const Bond *bond, Bond::BondStereo stereo,
+                                INT_VECT &stereoAtoms) {
+  stereoAtoms.clear();
+  if (stereo != Bond::BondStereo::STEREOE &&
+      stereo != Bond::BondStereo::STEREOZ) {
+    return false;
+  }
+
+  std::vector<const Atom *> beginAtoms;
+  std::vector<const Atom *> endAtoms;
+  getStereoNeighbors(bond, beginAtoms, endAtoms);
+  if (beginAtoms.empty() || endAtoms.empty()) {
+    return false;
+  }
+  if (beginAtoms.size() == 1u && endAtoms.size() == 1u) {
+    stereoAtoms = {static_cast<int>(beginAtoms[0]->getIdx()),
+                   static_cast<int>(endAtoms[0]->getIdx())};
+    return true;
+  }
+
+  if (!bond->getOwningMol().getNumConformers()) {
+    return false;
+  }
+  const auto &conf = bond->getOwningMol().getConformer();
+  if (conf.is3D()) {
+    return false;
+  }
+
+  const auto beginPos = conf.getAtomPos(bond->getBeginAtomIdx());
+  const auto endPos = conf.getAtomPos(bond->getEndAtomIdx());
+  const auto bondVec = endPos - beginPos;
+  double bestScore = -1.0;
+
+  for (const auto beginAtom : beginAtoms) {
+    const auto beginStereoPos = conf.getAtomPos(beginAtom->getIdx());
+    const auto beginVec = beginStereoPos - beginPos;
+    // Use the same signed 2D area test as Depictor/EmbeddedFrag.cpp.
+    const auto beginSide = bondVec.x * beginVec.y - bondVec.y * beginVec.x;
+    if (std::abs(beginSide) < 1e-6) {
+      continue;
+    }
+    for (const auto endAtom : endAtoms) {
+      const auto endStereoPos = conf.getAtomPos(endAtom->getIdx());
+      const auto endVec = endStereoPos - beginPos;
+      const auto endSide = bondVec.x * endVec.y - bondVec.y * endVec.x;
+      if (std::abs(endSide) < 1e-6) {
+        continue;
+      }
+      const bool sameSide = beginSide * endSide > 0.0;
+      const bool matches =
+          (stereo == Bond::BondStereo::STEREOZ && sameSide) ||
+          (stereo == Bond::BondStereo::STEREOE && !sameSide);
+      if (!matches) {
+        continue;
+      }
+      const auto score = std::abs(beginSide) + std::abs(endSide);
+      if (score > bestScore) {
+        bestScore = score;
+        stereoAtoms = {static_cast<int>(beginAtom->getIdx()),
+                       static_cast<int>(endAtom->getIdx())};
+      }
+    }
+  }
+  return stereoAtoms.size() == 2u;
+}
+
+bool hasAtropStereoBond(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  for (const auto bond : atom->getOwningMol().atomBonds(atom)) {
+    const auto stereo = bond->getStereo();
+    if (stereo == Bond::BondStereo::STEREOATROPCW ||
+        stereo == Bond::BondStereo::STEREOATROPCCW) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Atom::ChiralType getChirality(ROMol &mol, Atom *center_atom, Conformer &conf) {
   if (center_atom->hasProp(CDX_BOND_ORDERING)) {
     auto bond_ordering =
@@ -265,6 +376,48 @@ Atom::ChiralType getChirality(ROMol &mol, Atom *center_atom, Conformer &conf) {
   return Atom::ChiralType::CHI_UNSPECIFIED;
 }
 }  // namespace
+
+void checkChemDrawDoubleBondGeometries(RWMol &mol) {
+  std::vector<std::pair<Bond *, Bond::BondStereo>> unsetDoubleBonds;
+  for (auto bond : mol.bonds()) {
+    if (bond->getBondType() != Bond::BondType::DOUBLE ||
+        bond->getStereo() != Bond::BondStereo::STEREONONE) {
+      continue;
+    }
+    CDXBondCIPType cip;
+    if (!bond->getPropIfPresent<CDXBondCIPType>(CDX_BOND_CIP, cip)) {
+      continue;
+    }
+    auto stereo = getChemDrawBondStereo(cip);
+    if (stereo != Bond::BondStereo::STEREONONE) {
+      unsetDoubleBonds.emplace_back(bond, stereo);
+    }
+  }
+  if (unsetDoubleBonds.empty()) {
+    return;
+  }
+
+  bool haveRanks = false;
+  UINT_VECT ranks;
+  for (const auto &entry : unsetDoubleBonds) {
+    auto bond = entry.first;
+    bond->setStereo(entry.second);
+    INT_VECT stereoAtoms;
+    if (!getStereoAtomsFromGeometry(bond, entry.second, stereoAtoms)) {
+      if (!haveRanks) {
+        Chirality::assignAtomCIPRanks(mol, ranks);
+        haveRanks = true;
+      }
+      stereoAtoms = Chirality::findStereoAtoms(bond);
+    }
+    if (stereoAtoms.size() != 2) {
+      bond->setStereo(Bond::BondStereo::STEREONONE);
+      continue;
+    }
+    bond->setStereoAtoms(stereoAtoms[0], stereoAtoms[1]);
+  }
+}
+
 void checkChemDrawTetrahedralGeometries(RWMol &mol) {
   std::vector<std::pair<char, Atom *>> unsetTetrahedralAtoms;
   Conformer *conf = nullptr;
@@ -276,6 +429,10 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
   for (auto atom : mol.atoms()) {
     // only deal with unspecified chiralities
     if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
+      atom->clearProp(CDX_CIP);
+      continue;
+    }
+    if (hasAtropStereoBond(atom)) {
       atom->clearProp(CDX_CIP);
       continue;
     }

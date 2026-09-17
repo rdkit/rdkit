@@ -3,7 +3,7 @@ import unittest
 
 import numpy
 
-from rdkit import DataStructs, RDConfig
+from rdkit import DataStructs
 from rdkit.DataManip.Metric import rdMetricMatrixCalc as rdmmc
 
 

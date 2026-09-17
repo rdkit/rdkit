@@ -56,7 +56,7 @@ if (RDK_BUILD_CAIRO_SUPPORT)
 endif()
 if (RDK_BUILD_CHEMDRAW_SUPPORT)
   SET(CMAKE_SWIG_FLAGS "-DRDK_BUILD_CHEMDRAW_SUPPORT" ${CMAKE_SWIG_FLAGS} )
-endif()  
+endif()
 
 FILE(GLOB SWIG_SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../*.i")
 
@@ -82,8 +82,9 @@ SWIG_ADD_LIBRARY(RDKFuncs TYPE MODULE LANGUAGE CSharp SOURCES GraphMolCSharp.i )
 # as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
 # link error if they aren't there.
 if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  find_package(EXPAT REQUIRED)
   SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
-      rdkit_base ${RDKit_THREAD_LIBS} ChemDraw expat)
+      rdkit_base ${RDKit_THREAD_LIBS} ChemDraw expatpp EXPAT::EXPAT)
 else ()
   SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
       rdkit_base ${RDKit_THREAD_LIBS})
@@ -102,21 +103,22 @@ if (RDK_BUILD_DOTNET_CSHARP_TESTS OR MSVC)
 
   ADD_CUSTOM_COMMAND(
     OUTPUT RDKitDotNetLib SYMBOLIC
-  
+
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:RDKFuncs> ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND ${DOTNET_EXE} build RDKitDotNetCore.sln
+    COMMAND ${DOTNET_EXE} build RDKitDotNetCore.sln -c ${CMAKE_BUILD_TYPE} -p:Platform="Any CPU"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     DEPENDS RDKFuncs
   )
-  
+
   ADD_CUSTOM_TARGET(RDKitDotNet ALL
      DEPENDS RDKFuncs RDKitDotNetLib
      COMMENT "Building RDKit DotNet project"
   )
-  
+
   ADD_TEST(
     NAME CSharpTests
-    COMMAND ${DOTNET_EXE} test RDKitDotNetCore.sln "-l:console$<SEMICOLON>verbosity=normal" 
+    COMMAND ${DOTNET_EXE} test RDKitDotNetCore.sln "-l:console$<SEMICOLON>verbosity=normal"
+     -c ${CMAKE_BUILD_TYPE} -p:Platform="Any CPU"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   )
 else(RDK_BUILD_DOTNET_CSHARP_TESTS OR MSVC)

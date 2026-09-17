@@ -115,7 +115,7 @@ TEST_CASE("timeout") {
     opts.maxBondMatchPairs = 2000;
     auto res = rascalMCES(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().getBondMatches().size() >= 39);
+    CHECK(res.front().getBondMatches().size() >= 39);
     check_smarts_ok(*m1, *m2, res.front());
   }
   {
@@ -124,7 +124,7 @@ TEST_CASE("timeout") {
     opts.maxBondMatchPairs = 2000;
     auto res = rascalMCES(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().getBondMatches().size() >= 44);
+    CHECK(res.front().getBondMatches().size() >= 44);
     check_smarts_ok(*m1, *m2, res.front());
   }
   {
@@ -133,7 +133,7 @@ TEST_CASE("timeout") {
     opts.maxBondMatchPairs = 2000;
     auto res = rascalMCES(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
-    REQUIRE(res.front().getBondMatches().size() >= 44);
+    CHECK(res.front().getBondMatches().size() >= 44);
     check_smarts_ok(*m1, *m2, res.front());
   }
 }

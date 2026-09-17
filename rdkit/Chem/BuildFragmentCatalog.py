@@ -580,7 +580,7 @@ if __name__ == '__main__':
       except Exception:
         obls = None
       else:
-        if len(obls) < (inD.count('\n') - 1):
+        if details.numMols > 0 and len(obls) < details.numMols:
           obls = None
   scores = None
   if details.doScore:

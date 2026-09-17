@@ -47,6 +47,7 @@
 #include <RDGeneral/export.h>
 #ifndef PBFRDKIT_H_SEPT2016
 #define PBFRDKIT_H_SEPT2016
+#include <string>
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {
