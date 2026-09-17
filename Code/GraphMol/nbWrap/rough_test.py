@@ -8657,8 +8657,9 @@ M  END
     self.assertFalse(hasattr(rdBase, 'ValueErrorException'))
     self.assertFalse(hasattr(rdBase, 'IndexErrorException'))
 
-    # rdMIF registers the same two C++ types, and whichever module registers
-    # last is the one that decides what gets raised, so it has to agree.
+    # rdMIF is imported at the top of this file, so these checks also cover
+    # the state after importing it: a module registering its own Python type
+    # for these C++ exceptions would replace the builtins everywhere.
     self.assertFalse(hasattr(rdMIF, 'MIFValueError'))
     self.assertFalse(hasattr(rdMIF, 'MIFIndexError'))
 
