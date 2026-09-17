@@ -12,6 +12,7 @@
 #include <string>
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 
 // ours
@@ -122,12 +123,22 @@ struct multiSmiMolSup_wrap {
         m, "MultithreadedSmilesMolSupplier",
         multiSmilesMolSupplierClassDoc.c_str())
         .def(nb::init<>())
-        .def(nb::init<std::string, std::string, int, int, bool, bool,
-                      unsigned int, size_t, size_t>(),
-             "fileName"_a, "delimiter"_a = " \t", "smilesColumn"_a = 0,
-             "nameColumn"_a = 1, "titleLine"_a = true, "sanitize"_a = true,
-             "numWriterThreads"_a = 1, "sizeInputQueue"_a = 5,
-             "sizeOutputQueue"_a = 5, multiSmsDocStr.c_str())
+        .def(
+            "__init__",
+            [](MultithreadedSmilesMolSupplier *self,
+               const std::filesystem::path &fileName,
+               const std::string &delimiter, int smilesColumn, int nameColumn,
+               bool titleLine, bool sanitize, unsigned int numWriterThreads,
+               size_t sizeInputQueue, size_t sizeOutputQueue) {
+              new (self) MultithreadedSmilesMolSupplier(
+                  fileName.string(), delimiter, smilesColumn, nameColumn,
+                  titleLine, sanitize, numWriterThreads, sizeInputQueue,
+                  sizeOutputQueue);
+            },
+            "fileName"_a, "delimiter"_a = " \t", "smilesColumn"_a = 0,
+            "nameColumn"_a = 1, "titleLine"_a = true, "sanitize"_a = true,
+            "numWriterThreads"_a = 1, "sizeInputQueue"_a = 5,
+            "sizeOutputQueue"_a = 5, multiSmsDocStr.c_str())
         .def("__iter__", &MTMolSupplIter<MultithreadedSmilesMolSupplier>,
              nb::rv_policy::reference_internal)
         .def("__enter__", &MolIOEnter<MultithreadedSmilesMolSupplier>,

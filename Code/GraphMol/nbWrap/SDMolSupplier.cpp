@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 
@@ -131,14 +132,11 @@ struct sdmolsup_wrap {
   static void wrap(nb::module_ &m) {
     nb::class_<SDMolSupplier>(m, "SDMolSupplier", sdMolSupplierClassDoc.c_str())
         .def(nb::init<>())
-        .def(nb::init<std::string, bool, bool, bool>(), "fileName"_a,
-             "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true)
         .def(
             "__init__",
-            [](SDMolSupplier *self, nb::object fn, bool sanitize, bool removeHs,
-               bool strictParsing) {
-              nb::str fnStr(fn);
-              new (self) SDMolSupplier(fnStr.c_str(), sanitize, removeHs,
+            [](SDMolSupplier *self, const std::filesystem::path &fileName,
+               bool sanitize, bool removeHs, bool strictParsing) {
+              new (self) SDMolSupplier(fileName.string(), sanitize, removeHs,
                                        strictParsing);
             },
             "fileName"_a, "sanitize"_a = true, "removeHs"_a = true,

@@ -11,6 +11,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 
@@ -58,10 +59,10 @@ extractChargesAndPositions(const nb::object &charges,
 }
 
 std::tuple<RDGeom::UniformRealValueGrid3D *, RDKit::ROMol *> readCubeFileHelper(
-    const std::string &filename) {
+    const std::filesystem::path &filename) {
   std::unique_ptr<RDGeom::UniformRealValueGrid3D> grd(
       new RDGeom::UniformRealValueGrid3D());
-  auto res = readFromCubeFile(*grd, filename);
+  auto res = readFromCubeFile(*grd, filename.string());
   return std::make_tuple(grd.release(),
                          static_cast<RDKit::ROMol *>(res.release()));
 }
@@ -386,8 +387,10 @@ NOTE: This functionality is experimental and the API and/or results may change i
   m.def(
       "WriteToCubeFile",
       [](const RDGeom::UniformRealValueGrid3D &grid,
-         const std::string &filename, const RDKit::ROMol *mol,
-         int confId) { writeToCubeFile(grid, filename, mol, confId); },
+         const std::filesystem::path &filename, const RDKit::ROMol *mol,
+         int confId) {
+        writeToCubeFile(grid, filename.string(), mol, confId);
+      },
       "grid"_a, "filename"_a, "mol"_a = nb::none(), "confId"_a = -1,
       R"DOC(Writes Grid to a file in Gaussian CUBE format.
 

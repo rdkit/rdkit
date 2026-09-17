@@ -16,6 +16,7 @@ import importlib.util
 import json
 import logging
 import os
+import pathlib
 import pickle
 import re
 import subprocess
@@ -8820,14 +8821,49 @@ M  END
     self.assertFalse(hasattr(rdMIF, 'MIFIndexError'))
 
   def testFunctionsAreRegisteredOnce(self):
-    # A name bound twice to the same function lists the same signature twice
-    # in its docstring.
-    for fn in (Chem.MolFromMolBlock, rdqueries.HasPropQueryBond):
+    # A name bound twice to the same function has two overloads with the same signature.
+    for fn in (Chem.MolFromMolBlock, Chem.MolFromMolFile, rdqueries.HasPropQueryBond):
       with self.subTest(fn=fn.__name__):
-        signatures = [
-          line for line in fn.__doc__.splitlines() if line.startswith(fn.__name__ + '(')
-        ]
-        self.assertEqual(len(signatures), 1)
+        self.assertEqual(len(fn.__nb_signature__), 1)
+
+  def testFilenameParamsAcceptPathLike(self):
+    # Filename arguments take str, bytes and os.PathLike.
+    mol = Chem.MolFromSmiles('CCO')
+    with tempfile.TemporaryDirectory() as tmpDir:
+      path = os.path.join(tmpDir, 'mol.mol')
+      with open(path, 'w') as outF:
+        outF.write(Chem.MolToMolBlock(mol))
+      for arg in (path, path.encode(), pathlib.Path(path)):
+        with self.subTest(kind=type(arg).__name__):
+          self.assertIsNotNone(Chem.MolFromMolFile(arg))
+    self.assertEqual(parameter_annotations(Chem.MolFromMolFile)[0]['molFileName'],
+                     'str | os.PathLike')
+
+  def testSupplierAndWriterFilenamesAcceptPathLike(self):
+    # Suppliers and writers take a filename as str, bytes or os.PathLike, and
+    # the ones with a file-object overload still accept a file object.
+    mol = Chem.MolFromSmiles('CCO')
+    with tempfile.TemporaryDirectory() as tmpDir:
+      sdf = os.path.join(tmpDir, 'mols.sdf')
+      for arg in (sdf, sdf.encode(), pathlib.Path(sdf)):
+        with self.subTest(kind=type(arg).__name__):
+          with Chem.SDWriter(arg) as writer:
+            writer.write(mol)
+          self.assertEqual(len(Chem.SDMolSupplier(arg)), 1)
+          self.assertEqual(len(list(Chem.ForwardSDMolSupplier(arg))), 1)
+
+      with open(sdf, 'rb') as inF:
+        self.assertEqual(len(list(Chem.ForwardSDMolSupplier(inF))), 1)
+    out = StringIO()
+    with Chem.SDWriter(out) as writer:
+      writer.write(mol)
+    self.assertIn('$$$$', out.getvalue())
+
+  def testSupplierRejectsObjectWithoutRead(self):
+    for bad in (42, object()):
+      with self.subTest(arg=type(bad).__name__):
+        with self.assertRaises(ValueError):
+          Chem.ForwardSDMolSupplier(bad)
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

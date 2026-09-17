@@ -10,6 +10,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 
 #include <GraphMol/MolProcessing/MolProcessing.h>
 #include <GraphMol/FileParsers/GeneralFileReader.h>
@@ -22,13 +23,14 @@ using namespace RDKit;
 namespace {
 template <typename OutputType>
 nb::tuple getFingerprintsHelper(
-    const std::string &fileName, FingerprintGenerator<OutputType> *generator,
+    const std::filesystem::path &fileName,
+    FingerprintGenerator<OutputType> *generator,
     const GeneralMolSupplier::SupplierOptions &options) {
   std::vector<std::unique_ptr<ExplicitBitVect>> fps;
   {
     NOGIL gil;
-    fps = MolProcessing::getFingerprintsForMolsInFile(fileName, options,
-                                                      generator);
+    fps = MolProcessing::getFingerprintsForMolsInFile(fileName.string(),
+                                                      options, generator);
   }
   nb::list pyFingerprints;
   for (auto &fp : fps) {
