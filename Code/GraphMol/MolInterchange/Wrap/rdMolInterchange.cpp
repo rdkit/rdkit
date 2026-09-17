@@ -35,7 +35,12 @@ python::tuple JSONToMols(const std::string &jsonBlock,
 
 std::string MolsToJSON(const python::object &mols,
                        const python::object pyparams) {
-  auto pymols = pythonObjectToVect<const RDKit::ROMol *>(mols);
+  // pymols point into these; a generator releases each item as it advances.
+  python::list items;
+  if (mols) {
+    items = python::list(mols);
+  }
+  auto pymols = pythonObjectToVect<const RDKit::ROMol *>(items);
   if (!pymols) {
     return "";
   }

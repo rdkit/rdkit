@@ -52,8 +52,10 @@ template <typename T>
 nb::list NeighborWrapper(const nb::iterable &queries, const nb::iterable &bvs,
                          double (*metric)(const T &, const T &)) {
   nb::list res;
+  // bvPtrs point into these; a generator releases each item as it advances.
+  nb::list items(bvs);
   std::vector<const T *> bvPtrs;
-  for (auto item : bvs) {
+  for (auto item : items) {
     bvPtrs.push_back(&nb::cast<const T &>(item));
   }
 

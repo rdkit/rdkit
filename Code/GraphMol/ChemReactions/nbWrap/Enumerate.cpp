@@ -12,6 +12,7 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <RDBoost/Wrap_nb.h>
+#include <RDBoost/boost_shared_ptr.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <GraphMol/ChemReactions/Enumerate/RandomSample.h>
 #include <GraphMol/ChemReactions/Enumerate/RandomSampleAllBBs.h>
@@ -29,7 +30,7 @@ std::vector<RDKit::MOL_SPTR_VECT> ConvertToVect(nb::object bbs) {
   for (nb::handle row_handle : bbs) {
     RDKit::MOL_SPTR_VECT reacts;
     for (nb::handle mol_handle : row_handle) {
-      reacts.push_back(RDKit::ROMOL_SPTR(nb::cast<RDKit::ROMol *>(mol_handle), [](RDKit::ROMol *) {}));
+      reacts.push_back(nb::cast<RDKit::ROMOL_SPTR>(mol_handle));
     }
     vect.push_back(std::move(reacts));
   }

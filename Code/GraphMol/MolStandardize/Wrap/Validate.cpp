@@ -61,7 +61,13 @@ MolStandardize::MolVSValidation *getMolVSValidation(
 
 MolStandardize::AllowedAtomsValidation *getAllowedAtomsValidation(
     python::object atoms) {
-  auto p_atomList = pythonObjectToVect<Atom *>(atoms);
+  // p_atomList points into these; a generator releases each item as it
+  // advances.
+  python::list items;
+  if (atoms) {
+    items = python::list(atoms);
+  }
+  auto p_atomList = pythonObjectToVect<Atom *>(items);
   if (!p_atomList) {
     throw_value_error("allowedAtoms argument must be non-empty");
   }
@@ -74,7 +80,13 @@ MolStandardize::AllowedAtomsValidation *getAllowedAtomsValidation(
 
 MolStandardize::DisallowedAtomsValidation *getDisallowedAtomsValidation(
     python::object atoms) {
-  auto p_atomList = pythonObjectToVect<Atom *>(atoms);
+  // p_atomList points into these; a generator releases each item as it
+  // advances.
+  python::list items;
+  if (atoms) {
+    items = python::list(atoms);
+  }
+  auto p_atomList = pythonObjectToVect<Atom *>(items);
   if (!p_atomList) {
     throw_value_error("disallowedAtoms must be non-empty");
   }

@@ -5,7 +5,7 @@ import unittest
 
 import numpy
 
-from rdkit import DataStructs
+from rdkit import DataStructs, rdBase
 
 
 def feq(a, b, tol=1e-4):
@@ -333,6 +333,22 @@ class TestCase(unittest.TestCase):
 
     self.assertEqual(bv1.ToBitString(),
                      '1001001001001001001001001001001001001001001001001001001001001001')
+
+  @unittest.skipIf(rdBase._wrapperType == 'boost', 'the Boost wrappers need a sequence')
+  def test17NeighborsFromGenerator(self):
+
+    def bitVect(seed):
+      rng = random.Random(seed)
+      bv = DataStructs.ExplicitBitVect(2048)
+      for bit in rng.sample(range(2048), 200):
+        bv.SetBit(bit)
+      return bv
+
+    queries = [bitVect(i) for i in range(2)]
+    expected = DataStructs.TanimotoSimilarityNeighbors(queries, [bitVect(i) for i in range(5)])
+    # Each bit vector is referenced only by the generator that yields it.
+    self.assertEqual(
+      DataStructs.TanimotoSimilarityNeighbors(queries, (bitVect(i) for i in range(5))), expected)
 
 
 if __name__ == '__main__':

@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from rdkit import Chem, DataStructs
+from rdkit import Chem, DataStructs, rdBase
 from rdkit.Chem import rdFingerprintGenerator
 
 
@@ -423,6 +423,38 @@ class TestCase(unittest.TestCase):
     fp = g.GetSparseCountFingerprint(m, ignoreAtoms=[2])
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 0)
+
+  def testFeatureAtomInvGenFromGenerator(self):
+    smarts = ['[OX2]', '[NX3]']
+    m = Chem.MolFromSmiles('OCCN')
+    invGen = rdFingerprintGenerator.GetMorganFeatureAtomInvGen(
+      [Chem.MolFromSmarts(sma) for sma in smarts])
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=2, atomInvariantsGenerator=invGen)
+    expected = g.GetSparseCountFingerprint(m).GetNonzeroElements()
+    # Each pattern is referenced only by the generator that yields it.
+    invGen = rdFingerprintGenerator.GetMorganFeatureAtomInvGen(
+      Chem.MolFromSmarts(sma) for sma in smarts)
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=2, atomInvariantsGenerator=invGen)
+    self.assertEqual(g.GetSparseCountFingerprint(m).GetNonzeroElements(), expected)
+
+  @unittest.skipIf(rdBase._wrapperType == 'boost', 'the Boost wrappers need a sequence')
+  def testFingerprintsFromGenerator(self):
+    smiles = ['c1ccccc1O', 'c1ccccc1N', 'CCOC(=O)C', 'CC(C)CC(=O)O']
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=2)
+    fps = g.GetFingerprints([Chem.MolFromSmiles(smi) for smi in smiles])
+    expected = [fp.ToBitString() for fp in fps]
+    # Each molecule is referenced only by the generator that yields it.
+    fps = g.GetFingerprints(Chem.MolFromSmiles(smi) for smi in smiles)
+    self.assertEqual([fp.ToBitString() for fp in fps], expected)
+
+  @unittest.skipIf(rdBase._wrapperType == 'boost', 'the Boost wrappers need a sequence')
+  def testBulkFingerprintsFromGenerator(self):
+    smiles = ['c1ccccc1O', 'c1ccccc1N', 'CCOC(=O)C', 'CC(C)CC(=O)O']
+    fps = rdFingerprintGenerator.GetFPs([Chem.MolFromSmiles(smi) for smi in smiles])
+    expected = [fp.ToBitString() for fp in fps]
+    # Each molecule is referenced only by the generator that yields it.
+    fps = rdFingerprintGenerator.GetFPs(Chem.MolFromSmiles(smi) for smi in smiles)
+    self.assertEqual([fp.ToBitString() for fp in fps], expected)
 
 
 if __name__ == '__main__':
