@@ -4,3 +4,8 @@
 # RGroupCoreAlignment.None is an alias of NoAlignment, and a stub cannot assign
 # to None.
 ^rdkit\.Chem\.rdRGroupDecomposition\.RGroupCoreAlignment\.None$:
+
+# rdBase's version and build strings describe the build the stub was generated
+# from, so the stub gives their types without values.
+^rdkit\.rdBase\.(rdkitVersion|boostVersion|rdkitBuild)$:
+    \1: str

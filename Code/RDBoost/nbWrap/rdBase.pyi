@@ -2,11 +2,11 @@
 
 
 
-rdkitVersion: str = '2026.09.1pre'
+rdkitVersion: str
 
-boostVersion: str = ''
+boostVersion: str
 
-rdkitBuild: str = 'Darwin|25.6.0|UNIX|AppleClang|64-bit'
+rdkitBuild: str
 
 def LogToCppStreams() -> None:
     """Initialize RDKit logs with C++ streams"""
