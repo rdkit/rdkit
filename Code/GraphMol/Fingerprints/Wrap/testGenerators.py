@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from rdkit import Chem, DataStructs
+from rdkit import Chem, DataStructs, rdBase
 from rdkit.Chem import rdFingerprintGenerator
 
 
@@ -424,6 +424,19 @@ class TestCase(unittest.TestCase):
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 0)
 
+  def testArgumentTypes(self):
+    mol = Chem.MolFromSmiles('c1ccccc1CCO')
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=2)
+    fp = g.GetFingerprint(mol, fromAtoms=[0, 1])
+    self.assertEqual(g.GetFingerprint(mol, fromAtoms=(0, 1)), fp)
+    with self.assertRaises(TypeError):
+      g.GetFingerprint(mol, additionalOutput=5)
+    if rdBase._wrapperType == 'nanobind':
+      self.assertEqual(g.GetFingerprint(mol, fromAtoms=np.array([0, 1])), fp)
+      self.assertEqual(g.GetFingerprint(mol, fromAtoms=(i for i in (0, 1))), fp)
+      with self.assertRaises(TypeError):
+        rdFingerprintGenerator.GetMorganGenerator(
+          radius=2, atomInvariantsGenerator=rdFingerprintGenerator.GetMorganBondInvGen())
 
 if __name__ == '__main__':
   unittest.main()
