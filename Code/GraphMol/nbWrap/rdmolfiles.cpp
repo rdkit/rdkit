@@ -587,7 +587,7 @@ nb::object addMolToPNGFileHelper(const ROMol &mol,
   params.includePkl = includePkl;
   params.includeSmiles = includeSmiles;
   params.includeMol = includeMol;
-  return addMolToPNGFileHelperParams(mol, fname.string(), params);
+  return addMolToPNGFileHelperParams(mol, fname, params);
 }
 
 nb::object addMolToPNGStringHelperParams(const ROMol &mol, nb::bytes png,

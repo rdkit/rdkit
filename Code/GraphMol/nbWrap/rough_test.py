@@ -8641,8 +8641,7 @@ M  END
     self.assertEqual(len(rings), 70)
 
   def testFilenameParamsAcceptPathLike(self):
-    # Filename arguments take str, bytes and os.PathLike, which is the set the
-    # Boost wrappers accept.
+    # Filename arguments take str, bytes and os.PathLike.
     mol = Chem.MolFromSmiles('CCO')
     with tempfile.TemporaryDirectory() as tmpDir:
       path = os.path.join(tmpDir, 'mol.mol')
