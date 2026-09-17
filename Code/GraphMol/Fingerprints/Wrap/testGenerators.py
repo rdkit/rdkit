@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from rdkit import Chem, DataStructs, rdBase
+from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator
 
 
@@ -437,24 +437,23 @@ class TestCase(unittest.TestCase):
     g = rdFingerprintGenerator.GetMorganGenerator(radius=2, atomInvariantsGenerator=invGen)
     self.assertEqual(g.GetSparseCountFingerprint(m).GetNonzeroElements(), expected)
 
-  @unittest.skipIf(rdBase._wrapperType == 'boost', 'the Boost wrappers need a sequence')
-  def testFingerprintsFromGenerator(self):
+  def testFingerprintsFromIterables(self):
     smiles = ['c1ccccc1O', 'c1ccccc1N', 'CCOC(=O)C', 'CC(C)CC(=O)O']
     g = rdFingerprintGenerator.GetMorganGenerator(radius=2)
-    fps = g.GetFingerprints([Chem.MolFromSmiles(smi) for smi in smiles])
-    expected = [fp.ToBitString() for fp in fps]
-    # Each molecule is referenced only by the generator that yields it.
-    fps = g.GetFingerprints(Chem.MolFromSmiles(smi) for smi in smiles)
-    self.assertEqual([fp.ToBitString() for fp in fps], expected)
-
-  @unittest.skipIf(rdBase._wrapperType == 'boost', 'the Boost wrappers need a sequence')
-  def testBulkFingerprintsFromGenerator(self):
-    smiles = ['c1ccccc1O', 'c1ccccc1N', 'CCOC(=O)C', 'CC(C)CC(=O)O']
-    fps = rdFingerprintGenerator.GetFPs([Chem.MolFromSmiles(smi) for smi in smiles])
-    expected = [fp.ToBitString() for fp in fps]
-    # Each molecule is referenced only by the generator that yields it.
-    fps = rdFingerprintGenerator.GetFPs(Chem.MolFromSmiles(smi) for smi in smiles)
-    self.assertEqual([fp.ToBitString() for fp in fps], expected)
+    mols = [Chem.MolFromSmiles(smi) for smi in smiles]
+    expected = [fp.ToBitString() for fp in g.GetFingerprints(mols)]
+    bulkExpected = [fp.ToBitString() for fp in rdFingerprintGenerator.GetFPs(mols)]
+    # Each molecule below is referenced only by the generator or supplier that yields it; the
+    # supplier builds a new molecule each time it is indexed.
+    for label, make in (
+      ('generator', lambda: (Chem.MolFromSmiles(smi) for smi in smiles)),
+      ('supplier',
+       lambda: Chem.SmilesMolSupplierFromText('\n'.join(smiles), nameColumn=-1, titleLine=False)),
+    ):
+      with self.subTest(argument=label):
+        self.assertEqual([fp.ToBitString() for fp in g.GetFingerprints(make())], expected)
+        self.assertEqual([fp.ToBitString() for fp in rdFingerprintGenerator.GetFPs(make())],
+                         bulkExpected)
 
 
 if __name__ == '__main__':

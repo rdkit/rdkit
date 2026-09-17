@@ -36,7 +36,7 @@ import pickle
 import unittest
 import tempfile
 
-from rdkit import Chem, RDConfig, rdBase
+from rdkit import Chem, RDConfig
 from rdkit.Chem import AllChem, rdChemReactions
 from rdkit.Chem.SimpleEnum import Enumerator
 
@@ -790,7 +790,6 @@ M  END
       self.assertEqual(nrxn.GetNumReactantTemplates(), 2)
       self.assertEqual(nrxn.GetNumProductTemplates(), 1)
 
-  @unittest.skipIf(rdBase._wrapperType == 'boost', 'the Boost wrappers need a tuple or list')
   def testRunReactantsFromSupplier(self):
     rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]')
     smiles = 'CC(=O)O\nNC\n'
