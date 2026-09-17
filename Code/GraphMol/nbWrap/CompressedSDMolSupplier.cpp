@@ -27,6 +27,7 @@ namespace io = boost::iostreams;
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
+#include <RDBoost/Wrap_nb.h>
 #include "ContextManagers.h"
 
 namespace nb = nanobind;
@@ -40,7 +41,7 @@ ForwardSDMolSupplier *ForwardMolSupplIter(ForwardSDMolSupplier *suppl) {
   return suppl;
 }
 
-ROMol *ForwardMolSupplNext(ForwardSDMolSupplier *suppl) {
+Nullable<ROMol *> ForwardMolSupplNext(ForwardSDMolSupplier *suppl) {
   ROMol *res = nullptr;
   if (!suppl->atEnd()) {
     try {

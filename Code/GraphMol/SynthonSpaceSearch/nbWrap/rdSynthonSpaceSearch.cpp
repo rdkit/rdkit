@@ -418,7 +418,9 @@ void setUserConfGen_helper2(SynthonSpaceSearch::SynthonSpaceSearchParams &ps,
 }  // namespace
 
 NB_MODULE(rdSynthonSpaceSearch, m) {
+  nb::module_::import_("rdkit.Chem.rdEnumerateStereoisomers");
   nb::module_::import_("rdkit.Chem.rdFingerprintGenerator");
+  nb::module_::import_("rdkit.Chem.rdGaussianShape");
   nb::module_::import_("rdkit.Chem.rdGeneralizedSubstruct");
   nb::module_::import_("rdkit.Chem.rdRascalMCES");
 
@@ -740,7 +742,7 @@ used to create this space.)DOC")
 extended query.)DOC")
       .def(
           "SubstructureSearch", &substructureSearch_helper4, "query"_a,
-          "substructMatchParams"_a = nb::none(), "params"_a = nb::none(),
+          nb::arg("substructMatchParams").none(), nb::arg("params").none(),
           "startLine"_a, "finishLine"_a,
           R"DOC(Take the contents of params.possibleHitsFile, which is assumed to have
 been written by an earlier search, and extract those that are indeed
@@ -748,9 +750,15 @@ hits.  It makes sense that params is the same as the one used to
 generate the possible hits, but this is not essential.  You could search
 at a higher similarity threshold than used to create the possible hits,
 for example.)DOC")
+      // A Python signature cannot put required parameters after defaulted
+      // ones, so a line range passed by keyword, with the parameters before it
+      // left out, is a separate overload.
+      .def("SubstructureSearch", &substructureSearch_helper4, "query"_a,
+           "substructMatchParams"_a = nb::none(), "params"_a = nb::none(),
+           nb::kw_only(), "startLine"_a, "finishLine"_a)
       .def(
           "SubstructureSearch", &substructureSearch_helper5, "query"_a,
-          "substructMatchParams"_a = nb::none(), "params"_a = nb::none(),
+          nb::arg("substructMatchParams").none(), nb::arg("params").none(),
           "startLine"_a, "finishLine"_a,
           R"DOC(Take the contents of params.possibleHitsFile, which is assumed to have
 been written by an earlier search, and extract those that are indeed
@@ -758,6 +766,12 @@ hits.  It makes sense that params is the same as the one used to
 generate the possible hits, but this is not essential.  You could search
 at a higher similarity threshold than used to create the possible hits,
 for example.)DOC")
+      // A Python signature cannot put required parameters after defaulted
+      // ones, so a line range passed by keyword, with the parameters before it
+      // left out, is a separate overload.
+      .def("SubstructureSearch", &substructureSearch_helper5, "query"_a,
+           "substructMatchParams"_a = nb::none(), "params"_a = nb::none(),
+           nb::kw_only(), "startLine"_a, "finishLine"_a)
       .def(
           "SubstructureSearchIncremental", &substructureSearch_helper3,
           "query"_a, "callback"_a, "substructMatchParams"_a = nb::none(),

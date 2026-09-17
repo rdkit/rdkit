@@ -275,8 +275,8 @@ ChemicalReaction *ReactionFromSmiles(
   return ReactionFromSmarts(smiles, std::move(replDict), true);
 }
 
-ChemicalReaction *ReactionFromMrvFile(const char *rxnFilename, bool sanitize,
-                                      bool removeHs) {
+Nullable<ChemicalReaction *> ReactionFromMrvFile(const char *rxnFilename,
+                                                 bool sanitize, bool removeHs) {
   ChemicalReaction *newR = nullptr;
   try {
     newR = MrvFileToChemicalReaction(rxnFilename, sanitize, removeHs);
@@ -290,8 +290,8 @@ ChemicalReaction *ReactionFromMrvFile(const char *rxnFilename, bool sanitize,
   return newR;
 }
 
-ChemicalReaction *ReactionFromMrvBlock(const StringOrBytes &imolBlock,
-                                       bool sanitize, bool removeHs) {
+Nullable<ChemicalReaction *> ReactionFromMrvBlock(
+    const StringOrBytes &imolBlock, bool sanitize, bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   ChemicalReaction *newR = nullptr;
   try {
@@ -901,10 +901,17 @@ of the replacements argument.)DOC",
         "flags"_a = RDKit::SmilesWrite::CXSmilesFields::CX_ALL,
         "construct a reaction CXSMILES string for a ChemicalReaction");
 
-  m.def("ReactionFromRxnFile", RDKit::RxnFileToChemicalReaction, "filename"_a,
-        "sanitize"_a = false, "removeHs"_a = false, "strictParsing"_a = true,
-        "construct a ChemicalReaction from an MDL rxn file",
-        nb::rv_policy::take_ownership);
+  m.def(
+      "ReactionFromRxnFile",
+      [](const std::string &filename, bool sanitize, bool removeHs,
+         bool strictParsing) -> Nullable<RDKit::ChemicalReaction *> {
+        return RDKit::RxnFileToChemicalReaction(filename, sanitize, removeHs,
+                                                strictParsing);
+      },
+      "filename"_a, "sanitize"_a = false, "removeHs"_a = false,
+      "strictParsing"_a = true,
+      "construct a ChemicalReaction from an MDL rxn file",
+      nb::rv_policy::take_ownership);
 
   m.def("ReactionFromRxnBlock", RDKit::RxnBlockToChemicalReaction, "rxnblock"_a,
         "sanitize"_a = false, "removeHs"_a = false, "strictParsing"_a = true,

@@ -19,6 +19,7 @@
 #include <GraphMol/FileParsers/MultithreadedSDMolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
+#include <RDBoost/Wrap_nb.h>
 #include "ContextManagers.h"
 
 namespace nb = nanobind;
@@ -33,7 +34,7 @@ T *MTMolSupplIter(T *suppl) {
 }
 
 template <typename T>
-ROMol *MolForwardSupplNext(T *suppl) {
+Nullable<ROMol *> MolForwardSupplNext(T *suppl) {
   ROMol *res = nullptr;
   if (!suppl->atEnd()) {
     try {

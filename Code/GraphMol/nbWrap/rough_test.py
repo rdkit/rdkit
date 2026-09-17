@@ -8826,6 +8826,22 @@ M  END
       with self.subTest(fn=fn.__name__):
         self.assertEqual(len(fn.__nb_signature__), 1)
 
+  def testSetNoImplicitArgumentAndDocstring(self):
+    atom = Chem.MolFromSmiles('CC').GetAtomWithIdx(0)
+    atom.SetNoImplicit(what=True)
+    self.assertTrue(atom.GetNoImplicit())
+    self.assertIn('disallows', Chem.Atom.SetNoImplicit.__doc__)
+
+  def testMrvWriterParams(self):
+    mol = Chem.MolFromSmiles('C[C@H](F)Cl')
+    params = Chem.MrvWriterParams()
+    self.assertEqual(Chem.MolToMrvBlock(mol, params), Chem.MolToMrvBlock(mol))
+    params.includeStereo = False
+    params.prettyPrint = True
+    self.assertEqual(Chem.MolToMrvBlock(mol, params),
+                     Chem.MolToMrvBlock(mol, includeStereo=False, prettyPrint=True))
+    self.assertNotEqual(Chem.MolToMrvBlock(mol, params), Chem.MolToMrvBlock(mol))
+
   def testFilenameParamsAcceptPathLike(self):
     # Filename arguments take str, bytes and os.PathLike.
     mol = Chem.MolFromSmiles('CCO')

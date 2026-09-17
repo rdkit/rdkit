@@ -963,9 +963,10 @@ ROMol *canonicalizeStereoGroupsHelper(
   ;
 }
 
-ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core, nb::object match,
-                         bool replaceDummies, bool labelByIndex,
-                         bool requireDummyMatch = false) {
+Nullable<ROMol *> replaceCoreHelper(const ROMol &mol, const ROMol &core,
+                                    nb::object match, bool replaceDummies,
+                                    bool labelByIndex,
+                                    bool requireDummyMatch = false) {
   // convert input to MatchVect
   MatchVectType matchVect;
 
@@ -1026,17 +1027,18 @@ void setAtomSymbols(MolzipParams &p,
   }
 }
 
-ROMol *molzip_new(const ROMol &a, const ROMol &b,
-                  const std::optional<MolzipParams> p) {
+Nullable<ROMol *> molzip_new(const ROMol &a, const ROMol &b,
+                             const std::optional<MolzipParams> p) {
   return molzip(a, b, p.value_or(MolzipParams())).release();
 }
 
-ROMol *molzip_new(const ROMol &a, const std::optional<MolzipParams> p) {
+Nullable<ROMol *> molzip_new(const ROMol &a,
+                             const std::optional<MolzipParams> p) {
   return molzip(a, p.value_or(MolzipParams())).release();
 }
 
-ROMol *molzipHelper(const PyIterableOf<ROMOL_SPTR> &pmols,
-                    const std::optional<MolzipParams> p) {
+Nullable<ROMol *> molzipHelper(const PyIterableOf<ROMOL_SPTR> &pmols,
+                               const std::optional<MolzipParams> p) {
   auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
   if (mols == nullptr || mols->empty()) {
     return nullptr;
@@ -1044,8 +1046,8 @@ ROMol *molzipHelper(const PyIterableOf<ROMOL_SPTR> &pmols,
   return molzip(*mols, p.value_or(MolzipParams())).release();
 }
 
-ROMol *rgroupRowZipHelper(const PyDictOf<std::string, ROMol> &row,
-                          const std::optional<MolzipParams> p) {
+Nullable<ROMol *> rgroupRowZipHelper(const PyDictOf<std::string, ROMol> &row,
+                                     const std::optional<MolzipParams> p) {
   std::map<std::string, ROMOL_SPTR> rgroup_row;
   nb::list items = row.items();
   for (size_t i = 0; i < (size_t)nb::len(items); ++i) {
@@ -2781,9 +2783,14 @@ ARGUMENTS:\n\
 \n\
     - ReplaceSidechains('C1CC2C1CCC2','C1CCC1') -> '[Xa]C1CCC1[Xb]'\n\
 \n";
-    m.def("ReplaceSidechains", replaceSidechains, "mol"_a, "coreQuery"_a,
-          "useChirality"_a = false, docString.c_str(),
-          nb::rv_policy::take_ownership);
+    m.def(
+        "ReplaceSidechains",
+        [](const ROMol &mol, const ROMol &coreQuery,
+           bool useChirality) -> Nullable<ROMol *> {
+          return replaceSidechains(mol, coreQuery, useChirality);
+        },
+        "mol"_a, "coreQuery"_a, "useChirality"_a = false, docString.c_str(),
+        nb::rv_policy::take_ownership);
 
     // ------------------------------------------------------------------------
     docString =
@@ -2913,13 +2920,18 @@ EXAMPLES:\n\n\
    '[1*]CN'\n\
 \n\
 \n";
-    m.def("ReplaceCore",
-          (ROMol * (*)(const ROMol &, const ROMol &, bool, bool, bool, bool))
-              replaceCore,
-          "mol"_a, "coreQuery"_a, "replaceDummies"_a = true,
-          "labelByIndex"_a = false, "requireDummyMatch"_a = false,
-          "useChirality"_a = false, docString.c_str(),
-          nb::rv_policy::take_ownership);
+    m.def(
+        "ReplaceCore",
+        [](const ROMol &mol, const ROMol &coreQuery, bool replaceDummies,
+           bool labelByIndex, bool requireDummyMatch,
+           bool useChirality) -> Nullable<ROMol *> {
+          return replaceCore(mol, coreQuery, replaceDummies, labelByIndex,
+                             requireDummyMatch, useChirality);
+        },
+        "mol"_a, "coreQuery"_a, "replaceDummies"_a = true,
+        "labelByIndex"_a = false, "requireDummyMatch"_a = false,
+        "useChirality"_a = false, docString.c_str(),
+        nb::rv_policy::take_ownership);
 
     docString = R"DOC(Return a new molecule with all BRICS bonds broken)DOC";
     m.def("FragmentOnBRICSBonds", MolFragmenter::fragmentOnBRICSBonds, "mol"_a,
@@ -3035,15 +3047,16 @@ The atoms to zip can be specified with the MolzipParams class.\n\
     ";
 
     m.def("molzip",
-          (ROMol * (*)(const ROMol &, const ROMol &,
-                       const std::optional<MolzipParams>)) &
+          (Nullable<ROMol *>(*)(const ROMol &, const ROMol &,
+                                const std::optional<MolzipParams>)) &
               molzip_new,
           "a"_a, "b"_a, "params"_a = nb::none(),
           "zip together two molecules using the given matching parameters",
           nb::rv_policy::take_ownership);
     m.def(
         "molzip",
-        (ROMol * (*)(const ROMol &, const std::optional<MolzipParams>)) &
+        (Nullable<ROMol *>(*)(const ROMol &,
+                              const std::optional<MolzipParams>)) &
             molzip_new,
         "a"_a, "params"_a = nb::none(),
         "zip together multiple molecules within a combined molecule using the given matching parameters",
@@ -3067,11 +3080,8 @@ must be the core",
         "  >>> for rgroup in rgroups:\n"
         "  ...     mol = rgd.molzip(rgroup)\n"
         "\n";
-    m.def("molzip",
-          (ROMol * (*)(nb::dict, const std::optional<MolzipParams>)) &
-              rgroupRowZipHelper,
-          "row"_a, "params"_a = nb::none(), docString.c_str(),
-          nb::rv_policy::take_ownership);
+    m.def("molzip", &rgroupRowZipHelper, "row"_a, "params"_a = nb::none(),
+          docString.c_str(), nb::rv_policy::take_ownership);
     // ------------------------------------------------------------------------
     docString =
         "Adds a recursive query to an atom\n\

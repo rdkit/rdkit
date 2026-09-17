@@ -20,6 +20,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
+#include <RDBoost/Wrap_nb.h>
 #include "ContextManagers.h"
 
 namespace nb = nanobind;
@@ -35,7 +36,7 @@ T *MolSupplIter(T *suppl) {
 }
 
 template <typename T>
-ROMol *MolSupplNext(T *suppl) {
+Nullable<ROMol *> MolSupplNext(T *suppl) {
   ROMol *res = nullptr;
   if (!suppl->atEnd()) {
     try {
@@ -53,7 +54,7 @@ ROMol *MolSupplNext(T *suppl) {
 }
 
 template <typename T>
-ROMol *MolSupplGetItem(T *suppl, int idx) {
+Nullable<ROMol *> MolSupplGetItem(T *suppl, int idx) {
   ROMol *res = nullptr;
   if (idx < 0) {
     idx = static_cast<int>(suppl->length()) + idx;

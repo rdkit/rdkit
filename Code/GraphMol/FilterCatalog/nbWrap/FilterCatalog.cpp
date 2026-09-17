@@ -267,7 +267,10 @@ True
            "pat"_a,
            "Set the smarts pattern for the Smarts Matcher (warning: "
            "MinimumCount is not reset)")
-      .def("GetPattern", &SmartsMatcher::getPattern)
+      .def("GetPattern",
+           [](const SmartsMatcher &self) -> Nullable<ROMOL_SPTR> {
+             return self.getPattern();
+           })
       .def("GetMinCount", &SmartsMatcher::getMinCount,
            "Get the minimum times pattern must appear for the filter to match")
       .def("SetMinCount", &SmartsMatcher::setMinCount, "count"_a,

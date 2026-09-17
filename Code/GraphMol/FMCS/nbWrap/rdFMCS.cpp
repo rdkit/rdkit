@@ -577,7 +577,10 @@ NB_MODULE(rdFMCS, m) {
       .def_ro("numBonds", &RDKit::MCSResult::NumBonds, "number of bonds in MCS")
       .def_prop_ro(
           "queryMol",
-          [](const RDKit::MCSResult &self) { return toStd(self.QueryMol); },
+          [](const RDKit::MCSResult &self)
+              -> Nullable<std::shared_ptr<RDKit::ROMol>> {
+            return toStd(self.QueryMol);
+          },
           "query molecule for the MCS")
       .def_ro("smartsString", &RDKit::MCSResult::SmartsString,
               "SMARTS string for the MCS")

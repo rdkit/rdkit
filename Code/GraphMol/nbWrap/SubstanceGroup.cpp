@@ -273,7 +273,7 @@ Note that this does not update properties, CStates or Attachment Points.)DOC")
     - If the property has not been set, a KeyError exception will be raised.
 )DOC")
         .def("GetProp", GetPyPropOrDefault<SubstanceGroup>, "key"_a,
-             "autoConvert"_a = false, nb::arg("default").none(),
+             "autoConvert"_a = false, "default"_a = nb::none(),
              R"DOC(Returns the value of the property.
 
   ARGUMENTS:

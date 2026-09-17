@@ -32,8 +32,12 @@ NB_MODULE(rdAbbreviations, m) {
       .def_rw("displayLabelW",
               &Abbreviations::AbbreviationDefinition::displayLabelW,
               "the label in a drawing when the bond comes from the west")
-      .def_rw(
-          "mol", &Abbreviations::AbbreviationDefinition::mol,
+      .def_prop_rw(
+          "mol",
+          [](const Abbreviations::AbbreviationDefinition &self)
+              -> Nullable<std::shared_ptr<ROMol>> { return self.mol; },
+          [](Abbreviations::AbbreviationDefinition &self,
+             std::shared_ptr<ROMol> mol) { self.mol = std::move(mol); },
           "the query molecule (should have a dummy as the first atom if "
           "includesXBonds is true)")
       .def_rw("includesXBonds",

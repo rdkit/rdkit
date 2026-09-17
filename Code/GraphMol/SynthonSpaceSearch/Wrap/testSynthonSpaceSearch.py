@@ -243,6 +243,9 @@ class TestCase(unittest.TestCase):
                                               params=params, startLine=0,
                                               finishLine=1000)
     self.assertEqual(220, len(results.GetHitMolecules()))
+    results = synthonspace.SubstructureSearch(query, params=params, startLine=0,
+                                              finishLine=1000)
+    self.assertEqual(220, len(results.GetHitMolecules()))
     Path(params.possibleHitsFile).unlink()
 
     fName = self.sssDir / "extended_query.csv"

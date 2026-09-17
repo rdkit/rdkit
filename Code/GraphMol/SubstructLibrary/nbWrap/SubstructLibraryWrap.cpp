@@ -485,8 +485,14 @@ void wrap_substructlibrary(nb::module_ &m) {
       .def("__len__", &MolHolderBase::size)
       .def("AddMol", &MolHolderBase::addMol, "m"_a,
            "Adds molecule to the molecule holder")
-      .def("GetMol", &MolHolderBase::getMol, "arg1"_a,
-           R"DOC(Returns a particular molecule in the molecule holder
+      .def(
+          "GetMol",
+          [](const MolHolderBase &self,
+             unsigned int idx) -> Nullable<boost::shared_ptr<ROMol>> {
+            return self.getMol(idx);
+          },
+          "arg1"_a,
+          R"DOC(Returns a particular molecule in the molecule holder
 
   ARGUMENTS:
     - idx: which molecule to return
@@ -637,8 +643,14 @@ void wrap_substructlibrary(nb::module_ &m) {
       LARGE_DEF(ExtendedQueryMol)
       // clang-format on
 
-      .def("GetMol", &SubstructLibrary::getMol, "idx"_a,
-           R"DOC(Returns a particular molecule in the molecule holder
+      .def(
+          "GetMol",
+          [](const SubstructLibrary &self,
+             unsigned int idx) -> Nullable<boost::shared_ptr<ROMol>> {
+            return self.getMol(idx);
+          },
+          "idx"_a,
+          R"DOC(Returns a particular molecule in the molecule holder
 
   ARGUMENTS:
     - idx: which molecule to return

@@ -55,8 +55,9 @@ using TupleOfMol = PyTupleOf<ROMol *>;
 // object holding bytes; renders as "bytes".
 using BytesObject = nb::typed<nb::object, nb::bytes>;
 
-ROMol *MolFromSmiles(const StringOrBytes &ismiles, bool sanitize,
-                     std::map<std::string, std::string> replacements) {
+Nullable<ROMol *> MolFromSmiles(
+    const StringOrBytes &ismiles, bool sanitize,
+    std::map<std::string, std::string> replacements) {
   RWMol *newM;
   std::string smiles = pyObjectToString(ismiles);
   try {
@@ -67,8 +68,9 @@ ROMol *MolFromSmiles(const StringOrBytes &ismiles, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromSmarts(const StringOrBytes &ismarts, bool mergeHs,
-                     std::map<std::string, std::string> replacements) {
+Nullable<ROMol *> MolFromSmarts(
+    const StringOrBytes &ismarts, bool mergeHs,
+    std::map<std::string, std::string> replacements) {
   std::string smarts = pyObjectToString(ismarts);
 
   RWMol *newM;
@@ -79,8 +81,9 @@ ROMol *MolFromSmarts(const StringOrBytes &ismarts, bool mergeHs,
   }
   return static_cast<ROMol *>(newM);
 }
-ROMol *MolFromTPLFile(const std::filesystem::path &filename,
-                      bool sanitize = true, bool skipFirstConf = false) {
+Nullable<ROMol *> MolFromTPLFile(const std::filesystem::path &filename,
+                                 bool sanitize = true,
+                                 bool skipFirstConf = false) {
   RWMol *newM;
   try {
     newM = TPLFileToMol(filename.string(), sanitize, skipFirstConf);
@@ -93,8 +96,9 @@ ROMol *MolFromTPLFile(const std::filesystem::path &filename,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromTPLBlock(const StringOrBytes &itplBlock, bool sanitize = true,
-                       bool skipFirstConf = false) {
+Nullable<ROMol *> MolFromTPLBlock(const StringOrBytes &itplBlock,
+                                  bool sanitize = true,
+                                  bool skipFirstConf = false) {
   std::istringstream inStream(pyObjectToString(itplBlock));
   unsigned int line = 0;
   RWMol *newM;
@@ -106,8 +110,8 @@ ROMol *MolFromTPLBlock(const StringOrBytes &itplBlock, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolBlock(const StringOrBytes &imolBlock, bool sanitize,
-                       bool removeHs, bool strictParsing) {
+Nullable<ROMol *> MolFromMolBlock(const StringOrBytes &imolBlock, bool sanitize,
+                                  bool removeHs, bool strictParsing) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   unsigned int line = 0;
   RWMol *newM = nullptr;
@@ -121,8 +125,9 @@ ROMol *MolFromMolBlock(const StringOrBytes &imolBlock, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolFile(const std::filesystem::path &molFilename, bool sanitize,
-                      bool removeHs, bool strictParsing) {
+Nullable<ROMol *> MolFromMolFile(const std::filesystem::path &molFilename,
+                                 bool sanitize, bool removeHs,
+                                 bool strictParsing) {
   RWMol *newM = nullptr;
   try {
     newM =
@@ -137,7 +142,7 @@ ROMol *MolFromMolFile(const std::filesystem::path &molFilename, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-RDKit::ROMol *MolFromSCSRBlock(
+Nullable<ROMol *> MolFromSCSRBlock(
     const std::string &molBlock, bool sanitize, bool removeHs,
     std::optional<RDKit::v2::FileParsers::MolFromSCSRParams> pyparams) {
   auto scsrParams = pyparams.has_value()
@@ -162,7 +167,7 @@ RDKit::ROMol *MolFromSCSRBlock(
   return static_cast<ROMol *>(nullptr);
 }
 
-RDKit::ROMol *MolFromSCSRFile(
+Nullable<ROMol *> MolFromSCSRFile(
     const std::filesystem::path &molFilename, bool sanitize, bool removeHs,
     std::optional<RDKit::v2::FileParsers::MolFromSCSRParams> pyparams) {
   auto scsrParams = pyparams.has_value()
@@ -188,8 +193,8 @@ RDKit::ROMol *MolFromSCSRFile(
   return static_cast<ROMol *>(nullptr);
 }
 
-ROMol *MolFromMrvFile(const std::filesystem::path &molFilename, bool sanitize,
-                      bool removeHs) {
+Nullable<ROMol *> MolFromMrvFile(const std::filesystem::path &molFilename,
+                                 bool sanitize, bool removeHs) {
   RWMol *newM = nullptr;
   try {
     newM = MrvFileToMol(molFilename.string(), sanitize, removeHs);
@@ -203,8 +208,8 @@ ROMol *MolFromMrvFile(const std::filesystem::path &molFilename, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMrvBlock(const StringOrBytes &imolBlock, bool sanitize,
-                       bool removeHs) {
+Nullable<ROMol *> MolFromMrvBlock(const StringOrBytes &imolBlock, bool sanitize,
+                                  bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   RWMol *newM = nullptr;
   try {
@@ -216,7 +221,7 @@ ROMol *MolFromMrvBlock(const StringOrBytes &imolBlock, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromXYZFile(const char *xyzFilename) {
+Nullable<ROMol *> MolFromXYZFile(const char *xyzFilename) {
   RWMol *newM = nullptr;
   try {
     newM = XYZFileToMol(xyzFilename);
@@ -227,7 +232,7 @@ ROMol *MolFromXYZFile(const char *xyzFilename) {
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromXYZBlock(const StringOrBytes &ixyzBlock) {
+Nullable<ROMol *> MolFromXYZBlock(const StringOrBytes &ixyzBlock) {
   std::istringstream inStream(pyObjectToString(ixyzBlock));
   RWMol *newM = nullptr;
   try {
@@ -239,16 +244,16 @@ ROMol *MolFromXYZBlock(const StringOrBytes &ixyzBlock) {
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromSVG(const StringOrBytes &imolBlock, bool sanitize,
-                  bool removeHs) {
+Nullable<ROMol *> MolFromSVG(const StringOrBytes &imolBlock, bool sanitize,
+                             bool removeHs) {
   RWMol *res = nullptr;
   res = RDKitSVGToMol(pyObjectToString(imolBlock), sanitize, removeHs);
   return static_cast<ROMol *>(res);
 }
 
-ROMol *MolFromMol2File(const std::filesystem::path &molFilename,
-                       bool sanitize = true, bool removeHs = true,
-                       bool cleanupSubstructures = true) {
+Nullable<ROMol *> MolFromMol2File(const std::filesystem::path &molFilename,
+                                  bool sanitize = true, bool removeHs = true,
+                                  bool cleanupSubstructures = true) {
   RWMol *newM;
   try {
     newM = Mol2FileToMol(molFilename.string(), sanitize, removeHs,
@@ -262,9 +267,9 @@ ROMol *MolFromMol2File(const std::filesystem::path &molFilename,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMol2Block(std::string mol2Block, bool sanitize = true,
-                        bool removeHs = true,
-                        bool cleanupSubstructures = true) {
+Nullable<ROMol *> MolFromMol2Block(std::string mol2Block, bool sanitize = true,
+                                   bool removeHs = true,
+                                   bool cleanupSubstructures = true) {
   std::istringstream inStream(mol2Block);
   RWMol *newM;
   try {
@@ -276,9 +281,9 @@ ROMol *MolFromMol2Block(std::string mol2Block, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromPDBFile(const std::filesystem::path &filename, bool sanitize,
-                      bool removeHs, unsigned int flavor,
-                      bool proximityBonding) {
+Nullable<ROMol *> MolFromPDBFile(const std::filesystem::path &filename,
+                                 bool sanitize, bool removeHs,
+                                 unsigned int flavor, bool proximityBonding) {
   RWMol *newM = nullptr;
   try {
     newM = PDBFileToMol(filename.string(), sanitize, removeHs, flavor,
@@ -293,9 +298,9 @@ ROMol *MolFromPDBFile(const std::filesystem::path &filename, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromPDBBlock(const StringOrBytes &molBlock, bool sanitize,
-                       bool removeHs, unsigned int flavor,
-                       bool proximityBonding) {
+Nullable<ROMol *> MolFromPDBBlock(const StringOrBytes &molBlock, bool sanitize,
+                                  bool removeHs, unsigned int flavor,
+                                  bool proximityBonding) {
   std::istringstream inStream(pyObjectToString(molBlock));
   RWMol *newM = nullptr;
   try {
@@ -308,7 +313,8 @@ ROMol *MolFromPDBBlock(const StringOrBytes &molBlock, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromSequence(const StringOrBytes &seq, bool sanitize, int flavor) {
+Nullable<ROMol *> MolFromSequence(const StringOrBytes &seq, bool sanitize,
+                                  int flavor) {
   RWMol *newM = nullptr;
   try {
     newM = SequenceToMol(pyObjectToString(seq), sanitize, flavor);
@@ -318,7 +324,8 @@ ROMol *MolFromSequence(const StringOrBytes &seq, bool sanitize, int flavor) {
   }
   return static_cast<ROMol *>(newM);
 }
-ROMol *MolFromFASTA(const StringOrBytes &seq, bool sanitize, int flavor) {
+Nullable<ROMol *> MolFromFASTA(const StringOrBytes &seq, bool sanitize,
+                               int flavor) {
   RWMol *newM = nullptr;
   try {
     newM = FASTAToMol(pyObjectToString(seq), sanitize, flavor);
@@ -328,7 +335,7 @@ ROMol *MolFromFASTA(const StringOrBytes &seq, bool sanitize, int flavor) {
   }
   return static_cast<ROMol *>(newM);
 }
-ROMol *MolFromHELM(const StringOrBytes &seq, bool sanitize) {
+Nullable<ROMol *> MolFromHELM(const StringOrBytes &seq, bool sanitize) {
   RWMol *newM = nullptr;
   try {
     newM = HELMToMol(pyObjectToString(seq), sanitize);
@@ -500,8 +507,8 @@ std::vector<int> CanonicalRankAtomsInFragment(
   return resRanks;
 }
 
-ROMol *MolFromSmilesHelper(const StringOrBytes &ismiles,
-                           const SmilesParserParams &params) {
+Nullable<ROMol *> MolFromSmilesHelper(const StringOrBytes &ismiles,
+                                      const SmilesParserParams &params) {
   std::string smiles = pyObjectToString(ismiles);
 
   try {
@@ -511,8 +518,8 @@ ROMol *MolFromSmilesHelper(const StringOrBytes &ismiles,
   }
 }
 
-ROMol *MolFromSmartsHelper(const StringOrBytes &ismiles,
-                           const SmartsParserParams &params) {
+Nullable<ROMol *> MolFromSmartsHelper(const StringOrBytes &ismiles,
+                                      const SmartsParserParams &params) {
   std::string smiles = pyObjectToString(ismiles);
 
   try {
@@ -535,8 +542,8 @@ nb::typed<nb::list, std::string> MolToRandomSmilesHelper(
   return nb::typed<nb::list, std::string>(pyres);
 }
 
-ROMol *MolFromPNGFile(const std::filesystem::path &filename,
-                      SmilesParserParams *pyParams) {
+Nullable<ROMol *> MolFromPNGFile(const std::filesystem::path &filename,
+                                 SmilesParserParams *pyParams) {
   SmilesParserParams params;
   if (pyParams) {
     params = *pyParams;
@@ -554,7 +561,7 @@ ROMol *MolFromPNGFile(const std::filesystem::path &filename,
   return newM;
 }
 
-ROMol *MolFromPNGString(nb::bytes png, SmilesParserParams *params) {
+Nullable<ROMol *> MolFromPNGString(nb::bytes png, SmilesParserParams *params) {
   ROMol *newM = nullptr;
   try {
     std::string pngStr(static_cast<const char *>(png.data()), png.size());
@@ -1399,6 +1406,18 @@ NB_MODULE(rdmolfiles, m) {
         "mol"_a, "includeStereo"_a = true, "confId"_a = -1, "kekulize"_a = true,
         "prettyPrint"_a = false, docString.c_str());
 
+  nb::class_<MrvWriterParams>(m, "MrvWriterParams",
+                              "Parameters controlling Marvin (Mrv) writing")
+      .def(nb::init<>())
+      .def_rw("includeStereo", &MrvWriterParams::includeStereo,
+              "include stereochemical information")
+      .def_rw("kekulize", &MrvWriterParams::kekulize,
+              "kekulize the molecule before it is written")
+      .def_rw("prettyPrint", &MrvWriterParams::prettyPrint,
+              "make the output more human readable")
+      .def_rw("precision", &MrvWriterParams::precision,
+              "number of significant digits in the coordinates");
+
   docString =
       R"DOC(Returns a Marvin (Mrv) Mol block for a molecule
     ARGUMENTS:
@@ -1594,12 +1613,20 @@ NB_MODULE(rdmolfiles, m) {
         nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct an atom from a SMILES string)DOC";
-  m.def("AtomFromSmiles", SmilesToAtom, "SMILES"_a, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def(
+      "AtomFromSmiles",
+      [](const std::string &text) -> Nullable<Atom *> {
+        return SmilesToAtom(text);
+      },
+      "SMILES"_a, docString.c_str(), nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct a bond from a SMILES string)DOC";
-  m.def("BondFromSmiles", SmilesToBond, "SMILES"_a, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def(
+      "BondFromSmiles",
+      [](const std::string &text) -> Nullable<Bond *> {
+        return SmilesToBond(text);
+      },
+      "SMILES"_a, docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a SMARTS string.
@@ -1626,12 +1653,20 @@ NB_MODULE(rdmolfiles, m) {
         nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct an atom from a SMARTS string)DOC";
-  m.def("AtomFromSmarts", SmartsToAtom, "SMARTS"_a, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def(
+      "AtomFromSmarts",
+      [](const std::string &text) -> Nullable<Atom *> {
+        return SmartsToAtom(text);
+      },
+      "SMARTS"_a, docString.c_str(), nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct a bond from a SMARTS string)DOC";
-  m.def("BondFromSmarts", SmartsToBond, "SMARTS"_a, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def(
+      "BondFromSmarts",
+      [](const std::string &text) -> Nullable<Bond *> {
+        return SmartsToBond(text);
+      },
+      "SMARTS"_a, docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a SMARTS string.

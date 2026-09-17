@@ -117,6 +117,33 @@ using PyDictOf = nb::typed<nb::dict, K, V>;
 template <typename T>
 using PySequenceOf = nb::typed<nb::sequence, T>;
 
+//! A returned pointer that can be null, such as the result of a parser that
+//! fails. It converts as \c Pointer does, with a null pointer becoming None,
+//! and nanobind renders it as "T | None" in generated signatures. \c Pointer is
+//! a raw, shared or unique pointer.
+template <typename Pointer>
+struct Nullable {
+  Nullable() = default;
+  Nullable(Pointer pointer) : pointer(std::move(pointer)) {}
+  Pointer pointer{};
+};
+
+namespace nanobind::detail {
+template <typename Pointer>
+struct type_caster<Nullable<Pointer>> {
+  using Caster = make_caster<Pointer>;
+  NB_TYPE_CASTER(Nullable<Pointer>, optional_name(Caster::Name))
+
+  bool from_python(handle, uint8_t, cleanup_list *) noexcept { return false; }
+
+  template <typename T>
+  static handle from_cpp(T &&value, rv_policy policy,
+                         cleanup_list *cleanup) noexcept {
+    return Caster::from_cpp(std::forward<T>(value).pointer, policy, cleanup);
+  }
+};
+}  // namespace nanobind::detail
+
 //! Text that reached us as either \c str or \c bytes. nanobind renders this
 //! as "str | bytes" in generated signatures and rejects anything else before
 //! the call is dispatched; pyObjectToString() gets at the text itself.

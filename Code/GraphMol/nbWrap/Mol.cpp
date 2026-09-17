@@ -545,8 +545,10 @@ struct mol_wrapper {
         .def("RemoveConformer", &ROMol::removeConformer, "id"_a,
              "Remove the conformer with the specified ID")
         .def("GetBondBetweenAtoms",
-             (Bond * (ROMol::*)(unsigned int, unsigned int)) &
-                 ROMol::getBondBetweenAtoms,
+             [](ROMol &self, unsigned int idx1,
+                unsigned int idx2) -> Nullable<Bond *> {
+              return self.getBondBetweenAtoms(idx1, idx2);
+             },
              nb::rv_policy::reference_internal, "idx1"_a, "idx2"_a,
              R"DOC(Returns the bond between two atoms, if there is one.
 

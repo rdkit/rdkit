@@ -24,6 +24,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDBoost/python_streambuf_nb.h>
+#include <RDBoost/Wrap_nb.h>
 #include "ContextManagers.h"
 
 namespace nb = nanobind;
@@ -92,7 +93,7 @@ LocalForwardSDMolSupplier *FwdMolSupplIter(LocalForwardSDMolSupplier *self) {
 }
 
 template <typename T>
-RDKit::ROMol *MolForwardSupplNext(T *suppl) {
+Nullable<RDKit::ROMol *> MolForwardSupplNext(T *suppl) {
   RDKit::ROMol *res = nullptr;
   if (!suppl->atEnd()) {
     try {
@@ -156,7 +157,8 @@ struct forwardsdmolsup_wrap {
              "traceback"_a = nb::none())
         .def(
             "__next__",
-            (ROMol * (*)(LocalForwardSDMolSupplier *)) & MolForwardSupplNext,
+            (Nullable<ROMol *>(*)(LocalForwardSDMolSupplier *)) &
+                MolForwardSupplNext,
             nb::rv_policy::take_ownership,
             R"DOC(Returns the next molecule in the file. Raises _StopIteration_ on EOF.
 )DOC")
