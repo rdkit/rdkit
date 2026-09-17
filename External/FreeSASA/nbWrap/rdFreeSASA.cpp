@@ -50,7 +50,8 @@ NB_MODULE(rdFreeSASA, m) {
       .def_rw("algorithm", &FreeSASA::SASAOpts::algorithm)
       .def_rw("classifier", &FreeSASA::SASAOpts::classifier)
       .def_rw("probeRadius", &FreeSASA::SASAOpts::probeRadius)
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def(
       "classifyAtoms",

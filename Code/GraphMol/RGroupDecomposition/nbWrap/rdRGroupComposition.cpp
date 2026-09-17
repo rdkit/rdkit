@@ -340,7 +340,8 @@ once in the same molecule if the sets of matched atoms are not equal
               &RDKit::RGroupDecompositionParameters::substructmatchParams)
       .def_rw("includeTargetMolInResults",
               &RDKit::RGroupDecompositionParameters::includeTargetMolInResults)
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<RDKit::RGroupDecompositionHelper>(m, "RGroupDecomposition")
       .def(nb::init<nb::object>(), "cores"_a,

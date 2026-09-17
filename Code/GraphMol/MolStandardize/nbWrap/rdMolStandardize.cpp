@@ -507,7 +507,8 @@ NB_MODULE(rdMolStandardize, m) {
                   largestFragmentChooserCountHeavyAtomsOnly,
               "whether LargestFragmentChooser should only count "
               "heavy atoms (defaults to False)")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def("UpdateParamsFromJSON",
         &RDKit::MolStandardize::updateCleanupParamsFromJSON, "params"_a,

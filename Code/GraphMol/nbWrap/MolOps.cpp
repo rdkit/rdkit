@@ -2995,7 +2995,8 @@ will be aligned along connection vectors in the output molecule")
         .def("setAtomSymbols", &RDKit::setAtomSymbols, "symbols"_a,
              "Set the atom symbols used to zip mols together when using "
              "AtomType labeling")
-        .def("__setattr__", &safeSetattr);
+        .def("__setattr__", &safeSetattr, nb::arg("name"),
+             nb::arg("value").none());
 
     docString =
         "molzip: zip molecules together preserving bond and atom stereochemistry.\n\

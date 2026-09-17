@@ -1013,7 +1013,8 @@ NB_MODULE(rdMolDescriptors, m) {
                           [](nb::object) {
                             return RDKit::AtomPairs::numAtomPairFingerprintBits;
                           })
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def("GetAtomPairAtomCode", RDKit::AtomPairs::getAtomCode, "atom"_a,
         "branchSubtract"_a = 0, "includeChirality"_a = false,

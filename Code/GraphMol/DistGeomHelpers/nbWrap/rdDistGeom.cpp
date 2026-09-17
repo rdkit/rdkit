@@ -583,7 +583,8 @@ used during structural minimisation stage)DOC")
               "symmetrize terminal conjugated groups for RMSD pruning")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap,
            "sets the coordmap to be used")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def("EmbedMultipleConfs", &RDKit::EmbedMultipleConfs2, "mol"_a,
         "numConfs"_a, "params"_a,

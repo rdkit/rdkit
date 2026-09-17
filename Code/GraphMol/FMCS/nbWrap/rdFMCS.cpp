@@ -691,7 +691,8 @@ user-defined subclass of rdFMCS.MCSAcceptance)DOC")
       .def_prop_rw("StoreAll", &RDKit::PyMCSParameters::getStoreAll,
                    &RDKit::PyMCSParameters::setStoreAll,
                    "toggles storage of degenerate MCSs")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   // MCSAtomCompareParameters
   nb::class_<RDKit::MCSAtomCompareParameters>(
@@ -716,7 +717,8 @@ user-defined subclass of rdFMCS.MCSAcceptance)DOC")
               "results cannot include lone ring atoms")
       .def_rw("MatchIsotope", &RDKit::MCSAtomCompareParameters::MatchIsotope,
               "use isotope atom queries in MCSResults")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   // MCSBondCompareParameters
   nb::class_<RDKit::MCSBondCompareParameters>(
@@ -741,7 +743,8 @@ must be the same in both query and target, i.e. decalin
 won't match cyclodecane)DOC")
       .def_rw("MatchStereo", &RDKit::MCSBondCompareParameters::MatchStereo,
               "include bond stereo in the comparison")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   // MCSProgressData
   nb::class_<RDKit::PyMCSProgressData>(m, "MCSProgressData",

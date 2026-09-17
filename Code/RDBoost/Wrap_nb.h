@@ -64,6 +64,10 @@ std::shared_ptr<T> toStd(boost::shared_ptr<T> bptr) {
 
   \throws AttributeError if the attribute does not exist
   \throws Python error if assignment fails
+
+  nanobind rejects None for an nb::object argument not annotated with .none(),
+  so register it with nb::arg("name"), nb::arg("value").none() to let
+  attributes whose setters accept None be set to None.
 */
 inline void safeSetattr(nb::object self, std::string const &name,
                         nb::object const &value) {

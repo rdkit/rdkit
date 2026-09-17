@@ -1102,7 +1102,8 @@ DrawElement items.  Default=DrawElement.ALL)DOC")
       .def_rw("addStereoGroupAnnotation",
               &RDKit::MolDrawOptions::addStereoGroupAnnotation,
               "Whether to add the enhanced stereo labels.  Default is True.")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<RDKit::MolDraw2D>(m, "MolDraw2D", "Drawer abstract base class")
       .def("SetFontSize", &RDKit::MolDraw2D::setFontSize, "new_size"_a,
@@ -1372,7 +1373,8 @@ Returns a modified copy of the molecule.)DOC",
                    "the color to use for drawing the contours")
       .def("setContourColour", &setContourColour, "colour"_a)
       .def("setColourMap", &setColoursHelper, "colours"_a)
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def("ContourAndDrawGaussians", &contourAndDrawGaussiansHelper, "drawer"_a,
         "locs"_a, "heights"_a, "widths"_a, "nContours"_a = 10,

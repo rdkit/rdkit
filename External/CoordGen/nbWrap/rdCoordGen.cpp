@@ -90,7 +90,8 @@ coordinates most of the time, this is the default setting for the RDKit)DOC")
       .def_rw("treatNonterminalBondsToMetalAsZOBs",
               &RDKit::CoordGen::CoordGenParams::
                   treatNonterminalBondsToMetalAsZeroOrder)
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def("SetDefaultTemplateFileDir", &RDKit::SetDefaultTemplateFileDir,
         "dir"_a);

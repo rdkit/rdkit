@@ -253,7 +253,8 @@ A list of tuples of [int, float].)DOC")
       .def_rw(
           "includeDummies", &GaussianShape::ShapeInputOptions::includeDummies,
           "Whether to include dummy atoms in the shape or not.  Default=True.")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<GaussianShape::ShapeOverlayOptions>(
       m, "ShapeOverlayOptions",
@@ -320,7 +321,8 @@ units the coordinates are in.)DOC")
           R"DOC(Optimisation stops when the shape Tversky score changes by less
 than this amount after an optimisation step.  A larger number is
 faster but gives less precise overlays.  Default=0.001.)DOC")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<GaussianShape::ShapeInput>(m, "ShapeInput", "ShapeInput object")
       .def(
@@ -385,7 +387,8 @@ faster but gives less precise overlays.  Default=0.001.)DOC")
            " is when one shape is entirely inside the other.  This returns"
            " the similarity in that case, which is the upper bound on what"
            " is achievable between these 2 shapes.")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def(
       "AlignMol",

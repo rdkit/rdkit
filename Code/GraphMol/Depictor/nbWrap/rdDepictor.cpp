@@ -294,7 +294,8 @@ adjustMolBlockWedging is True)DOC")
       .def_rw(
           "useRingTemplates", &ConstrainedDepictionParams::useRingTemplates,
           "use templates to generate coordinates of complex ring systems")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def(
       "Compute2DCoords", compute2DCoordsHelper,

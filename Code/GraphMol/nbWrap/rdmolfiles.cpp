@@ -1187,7 +1187,8 @@ NB_MODULE(rdmolfiles, m) {
       .def_rw(
           "precision", &RDKit::MolWriterParams::precision,
           "precision of coordinates (only available in V3000)(default=false)")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<RDKit::v2::FileParsers::MolFromSCSRParams>(
       m, "MolFromSCSRParams",
@@ -1203,7 +1204,8 @@ NB_MODULE(rdmolfiles, m) {
       .def_rw("scsrBaseHbondOptions",
               &RDKit::v2::FileParsers::MolFromSCSRParams::scsrBaseHbondOptions,
               "One of Ignore, UseSapAll(default) , UseSapOne, Auto")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   docString =
       R"DOC(Construct a molecule from an SCSR Mol block.
@@ -1577,7 +1579,8 @@ NB_MODULE(rdmolfiles, m) {
       .def_rw("removeHs", &RDKit::SmilesParserParams::removeHs,
               "controls whether or not Hs are removed before the "
               "molecule is returned")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
   nb::class_<RDKit::SmartsParserParams>(m, "SmartsParserParams",
                                         "Parameters controlling SMARTS parsing")
       .def(nb::init<>())
@@ -1592,7 +1595,8 @@ NB_MODULE(rdmolfiles, m) {
               "causes molecule parsing to fail")
       .def_rw("mergeHs", &RDKit::SmartsParserParams::mergeHs,
               "toggles merging H atoms in the SMARTS into neighboring atoms")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   docString =
       R"DOC(Construct a molecule from a SMILES string.
@@ -1733,7 +1737,8 @@ NB_MODULE(rdmolfiles, m) {
       .def_rw("ignoreAtomMapNumbers",
               &RDKit::SmilesWriteParams::ignoreAtomMapNumbers,
               "ignore atom map numbers when canonicalizing the molecule")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def("MolToSmiles",
         (std::string (*)(const ROMol &,
@@ -2529,7 +2534,8 @@ NB_MODULE(rdmolfiles, m) {
       .def_rw(
           "restoreBondDirs", &RDKit::PNGMetadataParams::restoreBondDirs,
           "choose what to do with bond dirs in the CXSMILES string (default=rdkit.Chem.rdmolfiles.RestoreBondDirOption.RestoreBondDirOptionClear)")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   docString =
       R"DOC(Construct a molecule from metadata in a PNG string.
@@ -2637,7 +2643,8 @@ NB_MODULE(rdmolfiles, m) {
       .def_rw(
           "format", &RDKit::v2::CDXMLParser::CDXMLParserParams::format,
           "ChemDraw format One of Auto, CDXML, CDX.  For data streams, Auto defaults to CDXML")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   docString =
       R"DOC(Construct a molecule from a cdxml file.

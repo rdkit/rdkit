@@ -616,7 +616,8 @@ use 7 threads.  Default=1.)DOC")
  conformer generator to generate conformers for the synthons.  The function should
  take a SMILES string and the maximum number of conformers to generated and
  return a molecule object.)DOC")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<SynthonSpaceSearch::ShapeBuildParams>(
       m, "ShapeBuildParams",
@@ -676,7 +677,8 @@ use 7 threads.  Default=1.)DOC")
  conformer generator to generate conformers for the synthons.  The function should
  take a SMILES string and the maximum number of conformers to generated and
  return a molecule object.)DOC")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<SynthonSpaceSearch::SynthonSpace>(m, "SynthonSpace",
                                                "SynthonSpaceSearch object.")

@@ -132,7 +132,8 @@ NB_MODULE(rdShapeAlign, m) {
       .def_rw("normalize", &ShapeInputOptions::normalize,
               R"DOC(Whether to normalise the shape by putting into
 its inertial frame.  Default=True.)DOC")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<ShapeInput>(m, "ShapeInput")
       .def_rw("coord", &ShapeInput::coord)

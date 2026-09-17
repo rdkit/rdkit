@@ -337,7 +337,8 @@ struct mol_wrapper {
             &RDKit::SubstructMatchParameters::
                 extraBondCheckOverridesDefaultCheck,
             "if set, only the extraBondCheck will be used to determine whether or not bonds match")
-        .def("__setattr__", &safeSetattr);
+        .def("__setattr__", &safeSetattr, nb::arg("name"),
+             nb::arg("value").none());
 
     nb::class_<AtomSeqHolder<>>(m, "_AtomSeqHolder1",
                                 "A sequence-like holder of a molecule's atoms")

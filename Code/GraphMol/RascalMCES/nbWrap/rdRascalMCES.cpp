@@ -187,7 +187,8 @@ is > 0, it will over-ride the
 similarityThreshold.
 Note that this refers to the
 minimum number of BONDS in the MCES. Default=0.)DOC")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def(
       "FindMCES",
@@ -241,7 +242,8 @@ their MCESs is greater than this.  Default=0.9.)DOC")
       .def_rw("clusterMergeSim",
               &RDKit::RascalMCES::RascalClusterOptions::clusterMergeSim,
               "Two clusters are merged if the fraction of molecules they have in common is greater than this.  Default=0.6.")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def(
       "RascalCluster",

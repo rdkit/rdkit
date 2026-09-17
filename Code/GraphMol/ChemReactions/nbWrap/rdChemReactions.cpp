@@ -482,7 +482,8 @@ fingerprints of chemical reactions.)DOC")
               &RDKit::ReactionFingerprintParams::nonAgentWeight)
       .def_rw("agentWeight", &RDKit::ReactionFingerprintParams::agentWeight)
       .def_rw("includeAgents", &RDKit::ReactionFingerprintParams::includeAgents)
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<RDKit::ChemicalReaction>(
       m, "ChemicalReaction", nb::dynamic_attr(),
