@@ -1,36 +1,18 @@
 #  Copyright (C) 2026  Steven Kearnes and other RDKit contributors
 #         All Rights Reserved
-"""Tests the nanobind signatures and the type stubs installed beside the modules."""
+"""Tests the signatures of the nanobind wrappers."""
 
 import ast
-import concurrent.futures
-import difflib
-import importlib.machinery
 import json
-import os
-import pathlib
 import re
 import subprocess
 import sys
-import tempfile
 import unittest
 
-import nanobind
-
-import rdkit
-from rdkit import Chem, DataStructs, RDConfig, rdBase
+from rdkit import Chem, DataStructs, rdBase
 from rdkit.Chem import (rdChemReactions, rdEnumerateStereoisomers, rdFMCS, rdSubstructLibrary,
                         rdSynthonSpaceSearch)
 from rdkit.Chem.MolStandardize import rdMolStandardize
-
-PATTERNS = pathlib.Path(RDConfig.RDBaseDir, 'Code', 'RDBoost', 'nanobind_stub_patterns.txt')
-
-# The committed stubs were generated with this version of nanobind. Other versions can format a
-# stub differently, so the stubs are compared with freshly generated ones only under this one.
-STUBGEN_VERSION = '2.15.0'
-
-REGENERATE = ('Regenerate the stubs by installing RDKit and building the nanobind_stubs target, '
-              'then commit them.')
 
 
 def signature_annotations(signature):
@@ -62,105 +44,6 @@ def parse_signature(signature):
   # the name out of a property's getter and setter.
   signature = re.sub(r'\\\d+', '...', re.sub(r'^def \(', 'def property(', signature))
   return ast.parse(signature + ': ...').body[0]
-
-
-def compiled_modules():
-  """Returns a {module name: path} dict for the compiled modules in the installed rdkit package."""
-  package = pathlib.Path(rdkit.__file__).parent
-  suffixes = sorted(importlib.machinery.EXTENSION_SUFFIXES, key=len, reverse=True)
-  modules = {}
-  for path in package.rglob('*'):
-    suffix = next((s for s in suffixes if path.name.endswith(s)), None)
-    if suffix:
-      parts = path.relative_to(package.parent).parent.parts
-      modules['.'.join(parts + (path.name[:-len(suffix)], ))] = path
-  return modules
-
-
-def installed_stub(name, path):
-  """Returns the path of the stub installed beside a compiled module."""
-  return path.with_name(name.rsplit('.', 1)[-1] + '.pyi')
-
-
-def generate_stub(name, directory):
-  """Generates the stub for a module with the options the nanobind_stubs target uses.
-
-  Returns:
-    The text of the generated stub.
-  """
-  output = pathlib.Path(directory, name + '.pyi')
-  subprocess.run([
-    sys.executable, '-m', 'nanobind.stubgen', '-q', '-p',
-    str(PATTERNS), '-m', name, '-o',
-    str(output)
-  ], check=True, capture_output=True, text=True)
-  return output.read_text()
-
-
-def unresolved_names(stub):
-  """Returns the type names that a stub's annotations quote because stubgen could not resolve them.
-
-  nanobind names a type by its C++ name, such as RDKit::MrvWriterParams, until the module that
-  registers it is imported, and stubgen quotes a name it cannot import.
-  """
-  annotations = []
-  for node in ast.walk(ast.parse(stub)):
-    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-      args = node.args
-      annotations += [arg.annotation for arg in args.posonlyargs + args.args + args.kwonlyargs]
-      annotations += [args.vararg and args.vararg.annotation,
-                      args.kwarg and args.kwarg.annotation, node.returns]
-    elif isinstance(node, ast.AnnAssign):
-      annotations.append(node.annotation)
-  names = set()
-  pending = [a for a in annotations if a is not None]
-  while pending:
-    node = pending.pop()
-    if isinstance(node, ast.Constant) and isinstance(node.value, str):
-      names.add(node.value)
-    elif not isinstance(node, ast.Call):
-      # A call holds metadata, such as the dict(shape=..., order='C') of a NumPy array.
-      pending.extend(ast.iter_child_nodes(node))
-  return sorted(names)
-
-
-class TestStubs(unittest.TestCase):
-
-  @classmethod
-  def setUpClass(cls):
-    cls.modules = compiled_modules()
-
-  def testEveryModuleHasAStub(self):
-    self.assertTrue(self.modules)
-    missing = sorted(name for name, path in self.modules.items()
-                     if not installed_stub(name, path).exists())
-    self.assertEqual(missing, [], REGENERATE)
-
-  def testStubsAreValidPython(self):
-    for name, path in sorted(self.modules.items()):
-      stub = installed_stub(name, path)
-      if not stub.exists():
-        continue
-      with self.subTest(module=name):
-        text = stub.read_text()
-        ast.parse(text, filename=str(stub))
-        self.assertEqual(unresolved_names(text), [])
-
-  @unittest.skipIf(nanobind.__version__ != STUBGEN_VERSION,
-                   f'the stubs were generated with nanobind {STUBGEN_VERSION}')
-  def testStubsAreCurrent(self):
-    names = sorted(name for name, path in self.modules.items()
-                   if installed_stub(name, path).exists())
-    with tempfile.TemporaryDirectory() as directory, \
-        concurrent.futures.ThreadPoolExecutor(os.cpu_count()) as pool:
-      generated = dict(zip(names, pool.map(lambda name: generate_stub(name, directory), names)))
-    for name in names:
-      with self.subTest(module=name):
-        installed = installed_stub(name, self.modules[name]).read_text()
-        if installed != generated[name]:
-          diff = difflib.unified_diff(installed.splitlines(), generated[name].splitlines(),
-                                      'installed', 'generated', lineterm='')
-          self.fail('\n'.join(list(diff)[:60] + [REGENERATE]))
 
 
 class TestSignatures(unittest.TestCase):

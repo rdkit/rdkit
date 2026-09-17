@@ -1,6 +1,0 @@
-# Patterns that nanobind.stubgen applies to the generated stubs. The syntax is
-# described at https://nanobind.readthedocs.io/en/latest/typing.html
-
-# RGroupCoreAlignment.None is an alias of NoAlignment, and a stub cannot assign
-# to None.
-^rdkit\.Chem\.rdRGroupDecomposition\.RGroupCoreAlignment\.None$:

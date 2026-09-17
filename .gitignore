@@ -80,8 +80,6 @@ __pycache__/
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
-/rdkit/py.typed
-/rdkit/**/*.pyi
 
 #- Files created during tests
 /Code/ForceField/MMFF/test_data/MMFF94_dative_min.sdf
