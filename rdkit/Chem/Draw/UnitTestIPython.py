@@ -133,7 +133,8 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('c1ccccc1O')
     m.__sssAtoms = [0, 1, 2]
     # These two calls should fail if the methods haven't ben updated
-    png = IPythonConsole._toPNG(m)
+    if hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+      png = IPythonConsole._toPNG(m)
     svg = IPythonConsole._toSVG(m)
 
 

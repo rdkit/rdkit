@@ -265,7 +265,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   //! do the actual work of de-pickling a molecule
   template <typename T>
   static void _depickle(std::istream &ss, ROMol *mol, int version, int numAtoms,
-                        unsigned int propertyFlags);
+                        int numBonds, unsigned int propertyFlags);
 
   //! extract atomic data from a pickle and add the resulting Atom to the
   /// molecule

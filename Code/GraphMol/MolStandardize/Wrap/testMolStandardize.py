@@ -718,7 +718,7 @@ chlorine	[Cl]
       def __call__(self, mol, res):
         self._parent.assertTrue(isinstance(mol, Chem.Mol))
         self._parent.assertTrue(isinstance(res, rdMolStandardize.TautomerEnumeratorResult))
-        return (datetime.now() - self._start_time < self._timeout)
+        return (datetime.now() - self._start_time) < self._timeout
 
     class MyBrokenCallback(rdMolStandardize.TautomerEnumeratorCallback):
       pass
@@ -1025,8 +1025,8 @@ chlorine	[Cl]
       {"name":"phenol","acid":"c[OH]","base":"c[O-]"}
     ],
     "fragmentData":[
-      {"name":"hydrogen", "smarts":"[H]"}, 
-      {"name":"fluorine", "smarts":"[F]"}, 
+      {"name":"hydrogen", "smarts":"[H]"},
+      {"name":"fluorine", "smarts":"[F]"},
       {"name":"chlorine", "smarts":"[Cl]"}
     ],
     "tautomerTransformData":[
@@ -1234,7 +1234,7 @@ chlorine	[Cl]
     # featuresValidation
     mol = Chem.MolFromMolBlock(
       '''
-  Mrv2311 01162413552D          
+  Mrv2311 01162413552D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1260,7 +1260,7 @@ M  END
     self.assertEqual(len(errinfo), 0)
 
     mol = Chem.MolFromMolBlock('''
-  Mrv2311 01162411552D          
+  Mrv2311 01162411552D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1300,7 +1300,7 @@ M  END
 
     mol = Chem.MolFromMolBlock(
       '''
-  Mrv2311 02272411562D          
+  Mrv2311 02272411562D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1345,7 +1345,7 @@ M  END
     # disallowedRadicalValidation
     mol = Chem.MolFromMolBlock(
       '''
-  Mrv2311 02082417212D          
+  Mrv2311 02082417212D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1370,7 +1370,7 @@ M  END
     # is2DValidation
     mol = Chem.MolFromMolBlock(
       '''
-                    2D          
+                    2D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1408,7 +1408,7 @@ M  END
 
     mol = Chem.MolFromMolBlock(
       '''
-                    2D          
+                    2D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1432,7 +1432,7 @@ M  END
     # AtomClashValidation
     mol = Chem.MolFromMolBlock(
       '''
-                    2D          
+                    2D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1467,7 +1467,7 @@ M  END
 
     mol = Chem.MolFromMolBlock(
       '''
-          10052311582D          
+          10052311582D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1504,7 +1504,7 @@ M  END
 
     # invalid input molblock
     molblock = '''
-             sldfj;ldskfj sldkjfsd;lkf 
+             sldfj;ldskfj sldkjfsd;lkf
 M  V30 BEGIN CTAB
 '''
     result = pipeline.run(molblock)
@@ -1514,7 +1514,7 @@ M  V30 BEGIN CTAB
 
     # R group
     molblock = '''
-  Mrv2311 01162413552D          
+  Mrv2311 01162413552D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1537,7 +1537,7 @@ M  END
 
     # no atoms
     molblock = '''
-          10052313452D          
+          10052313452D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1553,7 +1553,7 @@ M  END
 
     # neutral quaternary N
     molblock = '''
-          10242314442D          
+          10242314442D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1588,7 +1588,7 @@ M  END
       ))
 
     molblock = '''
-                    2D          
+                    2D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1611,7 +1611,7 @@ M  END
     self.assertTrue(result.status & rdMolStandardize.PipelineStatus.IS2D_VALIDATION_ERROR)
 
     molblock = '''
-                    2D          
+                    2D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1638,7 +1638,7 @@ M  END
     self.assertTrue(result.status & rdMolStandardize.PipelineStatus.LAYOUT2D_VALIDATION_ERROR)
 
     molblock = '''
-                    2D          
+                    2D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1669,7 +1669,7 @@ M  END
       | rdMolStandardize.PipelineStatus.STEREO_VALIDATION_ERROR)
 
     molblock = '''
-          10282320572D          
+          10282320572D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1711,7 +1711,7 @@ M  END
     self.assertEqual(outputSmiles, "CC(=O)O")
 
     molblock = '''
-          10282320572D          
+          10282320572D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1748,7 +1748,7 @@ M  END
     self.assertEqual(outputSmiles, "C[N+](=O)[O-]")
 
     molblock = '''
-          10282320572D          
+          10282320572D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1797,7 +1797,7 @@ M  END
     pipeline = rdMolStandardize.Pipeline(options)
 
     molblock = '''
-  Mrv2311 02072415362D          
+  Mrv2311 02072415362D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -1836,7 +1836,7 @@ M  END
 
     # no atoms
     molblock = '''
-          10052313452D          
+          10052313452D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB

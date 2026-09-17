@@ -40,7 +40,6 @@
 #include <RDGeneral/RDThreads.h>
 #include <cmath>
 #include <cstddef>
-#include <stdexcept>
 #include <vector>
 #include <chrono>  // for time-related functions
 
@@ -1354,8 +1353,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }  // if block - heavy atom check
-  }  // for loop over atoms
+    }    // if block - heavy atom check
+  }      // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -1459,7 +1458,8 @@ bool setupInitialBoundsMatrix(
   bool scaleVDW = false;
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
     setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
-                   scaleVDW, set15bounds);
+                   scaleVDW, set15bounds, true, true,
+                   &etkdgDetails.path14Configs);
   } else {
     setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
   }
@@ -1802,8 +1802,6 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
             ? ForceFields::CrystalFF::ETKDGForceConsts::SEQ::Cosine
             : ForceFields::CrystalFF::ETKDGForceConsts::AIO::Cosine;
 
-    EmbeddingOps::initETKDG(piece.get(), params, etkdgDetails);
-
     DistGeom::BoundsMatPtr mmat;
     if (params.boundsMat == nullptr || molFrags.size() > 1) {
       // The user didn't provide one, so create and initialize the distance
@@ -1829,6 +1827,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       mmat.reset(new DistGeom::BoundsMatrix(*params.boundsMat));
     }
 
+    EmbeddingOps::initETKDG(piece.get(), params, etkdgDetails);
     // find all the chiral centers in the molecule
     MolOps::assignStereochemistry(*piece);
     DistGeom::VECT_CHIRALSET chiralCenters;

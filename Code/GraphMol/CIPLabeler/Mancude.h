@@ -31,14 +31,25 @@ namespace CIPLabeler {
 
 class CIPMol;
 
-enum class Type {
-  Cv4D3,       // =C(X)-
-  Nv3D2,       // =N-
-  Nv4D3Plus,   // =[N+]<
-  Nv2D2Minus,  // -[N-]-
-  Cv3D3Minus,  // -[C(X)-]-
-  Ov3D2Plus,   // -[O+]=
-  Other
+// boost::rational reduces its numerator and denominator on construction. The
+// unreduced denominator is also significant here: it records that an atomic
+// number was averaged over a Mancude system, even when the average happens to
+// be an integer (for example, 12/3). Keep both the value used for comparison
+// and that metadata.
+class FractionalAtomicNum {
+ public:
+  FractionalAtomicNum(int numerator, int denominator)
+      : d_numerator{numerator}, d_denominator{denominator} {}
+
+  boost::rational<int> value() const { return {d_numerator, d_denominator}; }
+
+  int numerator() const { return d_numerator; }
+  int denominator() const { return d_denominator; }
+  bool isAveraged() const { return d_denominator > 1; }
+
+ private:
+  int d_numerator = 0;
+  int d_denominator = 0;
 };
 
 /**
@@ -48,7 +59,7 @@ enum class Type {
  * priority.
  *
  */
-std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol);
+std::vector<FractionalAtomicNum> calcFracAtomNums(const CIPMol &mol);
 
 }  // namespace CIPLabeler
 }  // namespace RDKit

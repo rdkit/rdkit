@@ -14,6 +14,7 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <string_view>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -1385,7 +1386,8 @@ RDKIT_GRAPHMOL_EXPORT void expandAttachmentPoints(RWMol &mol,
  *
  * @param mol the molecule of interest
  * @param markedOnly if true, only dummy atoms with the _fromAttachPoint
- *    property will be collapsed
+ *    property or a valid _AP<n> atom label will be collapsed. The numeric
+ *    suffix of an atom label is an identifier, not an MDL ATTCHPT position.
  *
  * In order for a dummy atom to be considered for collapsing it must have:
  * - degree 1 with a single or unspecified bond
@@ -1395,6 +1397,34 @@ RDKIT_GRAPHMOL_EXPORT void expandAttachmentPoints(RWMol &mol,
  */
 RDKIT_GRAPHMOL_EXPORT void collapseAttachmentPoints(RWMol &mol,
                                                     bool markedOnly = true);
+
+//! prefix used for numbered explicit attachment-point atom labels
+inline constexpr std::string_view attachmentPointLabelPrefix = "_AP";
+
+//! returns the positive integer from a valid _AP<n> attachment-point label
+/*!
+ * The atom must be a degree-one dummy atom whose atomLabel consists of
+ * attachmentPointLabelPrefix followed by a positive decimal integer. Returns
+ * 0 if the atom does not have a valid numbered attachment-point label.
+ *
+ * This number is a label identifier, not an MDL ATTCHPT position.
+ *
+ * @param atom the atom to inspect
+ */
+RDKIT_GRAPHMOL_EXPORT unsigned int getAttachmentPointLabelNumber(
+    const Atom *atom);
+
+//! returns whether an atom is a marked explicit attachment point
+/*!
+ * A marked explicit attachment point is a degree-one dummy atom with the
+ * _fromAttachPoint property or a valid _AP<n> atom label, where n is a
+ * positive decimal integer. This checks attachment-point identity only; it
+ * does not check whether the atom can currently be collapsed. In particular,
+ * an attachment point connected by a wedged bond is still considered marked.
+ *
+ * @param atom the atom to inspect
+ */
+RDKIT_GRAPHMOL_EXPORT bool isMarkedAttachmentPoint(const Atom *atom);
 
 namespace details {
 //! attachment points encoded as attachPt properties are added to the graph as
@@ -1415,12 +1445,11 @@ RDKIT_GRAPHMOL_EXPORT unsigned int addExplicitAttachmentPoint(
     RWMol &mol, unsigned int atomIdx, unsigned int val, bool addAsQuery = true,
     bool addCoords = true);
 
-//! returns whether or not an atom is an attachment point
+//! returns whether an atom is eligible to be collapsed as an attachment point
 /*!
  *
- * @param mol the molecule of interest
- * @param markedOnly if true, only dummy atoms with the _fromAttachPoint
- *    property will be collapsed
+ * @param atom the atom to inspect
+ * @param markedOnly if true, only marked attachment points will be collapsed
  *
  * In order for a dummy atom to be considered for collapsing it must have:
  * - degree 1 with a single or unspecified bond

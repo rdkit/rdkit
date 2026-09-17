@@ -54,7 +54,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
 
   //! the type of Bond
-  typedef enum {
+  enum BondType : std::uint8_t {
     UNSPECIFIED = 0,
     SINGLE,
     DOUBLE,
@@ -78,10 +78,10 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     OTHER,
     ZERO  //!< Zero-order bond (from
     // http://pubs.acs.org/doi/abs/10.1021/ci200488k)
-  } BondType;
+  };
 
   //! the bond's direction (for chirality)
-  typedef enum {
+  enum BondDir : std::uint8_t {
     NONE = 0,    //!< no special style
     BEGINWEDGE,  //!< wedged: narrow at begin
     BEGINDASH,   //!< dashed: narrow at begin
@@ -90,12 +90,12 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     ENDUPRIGHT,    //!<  ditto
     EITHERDOUBLE,  //!< a "crossed" double bond
     UNKNOWN,       //!< intentionally unspecified stereochemistry
-  } BondDir;
+  };
 
   //! the nature of the bond's stereochem (for cis/trans)
-  typedef enum {     // stereochemistry of double bonds
-    STEREONONE = 0,  // no special style
-    STEREOANY,       // intentionally unspecified
+  enum BondStereo : std::uint8_t {  // stereochemistry of double bonds
+    STEREONONE = 0,                 // no special style
+    STEREOANY,                      // intentionally unspecified
     // -- Put any true specifications about this point so
     // that we can do comparisons like if(bond->getStereo()>Bond::STEREOANY)
     STEREOZ,         // Z double bond
@@ -104,7 +104,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     STEREOTRANS,     // trans double bond
     STEREOATROPCW,   //  atropisomer clockwise rotation
     STEREOATROPCCW,  //  atropisomer counter clockwise rotation
-  } BondStereo;
+  };
 
   Bond();
   //! construct with a particular BondType
