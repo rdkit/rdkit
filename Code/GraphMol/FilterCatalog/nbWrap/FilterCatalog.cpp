@@ -120,7 +120,8 @@ std::vector<FilterMatch> FilterCatalogEntryGetMatches(FilterCatalogEntry &fm,
   return std::vector<FilterMatch>();
 }
 
-void SetOffPatterns(ExclusionList &fc, nb::object list) {
+void SetOffPatterns(ExclusionList &fc,
+                    const PyIterableOf<FilterMatcherBase> &list) {
   std::vector<boost::shared_ptr<FilterMatcherBase>> temp;
   for (auto item : list) {
     FilterMatcherBase *matcher = nb::cast<FilterMatcherBase *>(item);

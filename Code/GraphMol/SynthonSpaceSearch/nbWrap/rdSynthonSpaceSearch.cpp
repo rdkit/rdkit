@@ -67,12 +67,8 @@ nb::object get_excludedVolume(
 }
 
 void set_excludedVolume(SynthonSpaceSearch::SynthonSpaceSearchParams &params,
-                        const nb::object &pyExcVol) {
-  if (pyExcVol.is_none()) {
-    params.excludedVolume = nullptr;
-    return;
-  }
-  params.excludedVolume = nb::cast<GaussianShape::ShapeInput *>(pyExcVol);
+                        std::optional<GaussianShape::ShapeInput *> pyExcVol) {
+  params.excludedVolume = pyExcVol.value_or(nullptr);
 }
 
 SynthonSpaceSearch::SearchResults substructureSearch_helper1(

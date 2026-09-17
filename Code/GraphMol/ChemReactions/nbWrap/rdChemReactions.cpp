@@ -10,6 +10,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/map.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/variant.h>
@@ -61,7 +62,8 @@ std::string ReactionToBinaryString(const ChemicalReaction &self) {
   return res;
 }
 
-nb::tuple RunReactants(ChemicalReaction *self, nb::object reactants,
+nb::tuple RunReactants(ChemicalReaction *self,
+                       const PySequenceOf<ROMol> &reactants,
                        unsigned int maxProducts) {
   if (!self->isInitialized()) {
     NOGIL gil;
@@ -163,49 +165,50 @@ ROMol *GetAgentTemplate(const ChemicalReaction *self, unsigned int which) {
   return const_cast<ROMol *>(iter->get());
 }
 
-void RemoveUnmappedReactantTemplates(ChemicalReaction *self,
-                                     double thresholdUnmappedAtoms,
-                                     bool moveToAgentTemplates,
-                                     nb::object targetList) {
-  if (targetList.is_none()) {
+void RemoveUnmappedReactantTemplates(
+    ChemicalReaction *self, double thresholdUnmappedAtoms,
+    bool moveToAgentTemplates,
+    const std::optional<PyListOf<ROMol>> &targetList) {
+  if (!targetList) {
     self->removeUnmappedReactantTemplates(thresholdUnmappedAtoms,
                                           moveToAgentTemplates);
   } else {
     MOL_SPTR_VECT tmp;
     self->removeUnmappedReactantTemplates(thresholdUnmappedAtoms,
                                           moveToAgentTemplates, &tmp);
-    nb::list molList = nb::cast<nb::list>(targetList);
+    nb::list molList = *targetList;
     for (auto &mol : tmp) {
       molList.append(toStd(mol));
     }
   }
 }
 
-void RemoveUnmappedProductTemplates(ChemicalReaction *self,
-                                    double thresholdUnmappedAtoms,
-                                    bool moveToAgentTemplates,
-                                    nb::object targetList) {
-  if (targetList.is_none()) {
+void RemoveUnmappedProductTemplates(
+    ChemicalReaction *self, double thresholdUnmappedAtoms,
+    bool moveToAgentTemplates,
+    const std::optional<PyListOf<ROMol>> &targetList) {
+  if (!targetList) {
     self->removeUnmappedProductTemplates(thresholdUnmappedAtoms,
                                          moveToAgentTemplates);
   } else {
     MOL_SPTR_VECT tmp;
     self->removeUnmappedProductTemplates(thresholdUnmappedAtoms,
                                          moveToAgentTemplates, &tmp);
-    nb::list molList = nb::cast<nb::list>(targetList);
+    nb::list molList = *targetList;
     for (auto &mol : tmp) {
       molList.append(toStd(mol));
     }
   }
 }
 
-void RemoveAgentTemplates(ChemicalReaction &self, nb::object targetList) {
-  if (targetList.is_none()) {
+void RemoveAgentTemplates(ChemicalReaction &self,
+                          const std::optional<PyListOf<ROMol>> &targetList) {
+  if (!targetList) {
     self.removeAgentTemplates();
   } else {
     MOL_SPTR_VECT tmp;
     self.removeAgentTemplates(&tmp);
-    nb::list molList = nb::cast<nb::list>(targetList);
+    nb::list molList = *targetList;
     for (auto &mol : tmp) {
       molList.append(toStd(mol));
     }
@@ -1182,15 +1185,11 @@ One unrecognized group type in a comma-separated list makes the whole thing fail
   m.def(
       "SanitizeRxn",
       [](RDKit::ChemicalReaction &rxn, unsigned int sanitizeOps,
-         nb::object params, bool catchErrors) {
-        if (params.is_none()) {
-          return RDKit::sanitizeReaction(
-              rxn, sanitizeOps, RDKit::RxnOps::DefaultRxnAdjustParams(),
-              catchErrors);
-        }
+         const std::optional<RDKit::MolOps::AdjustQueryParameters> &params,
+         bool catchErrors) {
         return RDKit::sanitizeReaction(
             rxn, sanitizeOps,
-            nb::cast<const RDKit::MolOps::AdjustQueryParameters &>(params),
+            params.value_or(RDKit::RxnOps::DefaultRxnAdjustParams()),
             catchErrors);
       },
       "rxn"_a,

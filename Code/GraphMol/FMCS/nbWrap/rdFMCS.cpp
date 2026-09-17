@@ -503,8 +503,8 @@ class PyMCSParameters {
 // -------------------------------------------------------------------
 // FindMCS wrappers
 // -------------------------------------------------------------------
-MCSResult *FindMCSWrapper(nb::object mols, bool maximizeBonds, double threshold,
-                          unsigned int timeout, bool verbose,
+MCSResult *FindMCSWrapper(const PySequenceOf<ROMol> &mols, bool maximizeBonds,
+                          double threshold, unsigned int timeout, bool verbose,
                           bool matchValences, bool ringMatchesRingOnly,
                           bool completeRingsOnly, bool matchChiralTag,
                           AtomComparator atomComp, BondComparator bondComp,
@@ -545,7 +545,8 @@ MCSResult *FindMCSWrapper(nb::object mols, bool maximizeBonds, double threshold,
   return res;
 }
 
-MCSResult *FindMCSWrapper2(nb::object mols, PyMCSParameters &pyMcsParams) {
+MCSResult *FindMCSWrapper2(const PySequenceOf<ROMol> &mols,
+                           PyMCSParameters &pyMcsParams) {
   std::vector<ROMOL_SPTR> ms;
   unsigned int nElems = nb::len(mols);
   ms.resize(nElems);
