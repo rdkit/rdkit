@@ -49,6 +49,13 @@ GitHub)
   returns only points which are actually on the surface. Previously all
   potential surface points for each atom were returned. You can get the old
   result by setting the `allPoints` argument to true.
+- `GetMorganFeatureAtomInvGen()` now uses the `patterns` it is given. The
+  Boost.Python wrapper could not convert a list or a tuple of molecules, so it
+  silently used the default feature definitions instead; fingerprints from a
+  generator built with `patterns` change accordingly.
+- Creating a reader from a Python file object with no `read` attribute now
+  raises `ValueError`. Such an object was accepted before, and reading from it
+  returned no molecules.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use
