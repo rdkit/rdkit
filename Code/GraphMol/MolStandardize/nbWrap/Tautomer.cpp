@@ -25,12 +25,17 @@ NB_MAKE_OPAQUE(std::vector<
                RDKit::MolStandardize::TautomerScoringFunctions::SubstructTerm>);
 
 #include <nanobind/stl/vector.h>
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
+
+using TupleOfTautomers = PyTupleOf<MolStandardize::Tautomer *>;
+using TupleOfTautomerItems =
+    PyTupleOf<nb::typed<nb::tuple, std::string, MolStandardize::Tautomer *>>;
 
 std::shared_ptr<RDKit::ROMol> toStd(const RDKit::ROMOL_SPTR &bptr) {
   return {bptr.get(), [b = bptr](RDKit::ROMol *) {}};
@@ -48,13 +53,13 @@ std::vector<std::shared_ptr<RDKit::ROMol>> tERTautomersGetterHelper(
 }
 
 template <typename T>
-nb::tuple bitsetToTuple(const boost::dynamic_bitset<T> &bs) {
+PyTupleOf<int> bitsetToTuple(const boost::dynamic_bitset<T> &bs) {
   nb::list atList;
   for (auto i = bs.find_first(); i != boost::dynamic_bitset<T>::npos;
        i = bs.find_next(i)) {
     atList.append(i);
   }
-  return nb::tuple(atList);
+  return PyTupleOf<int>(nb::tuple(atList));
 }
 
 struct TautomerEnumeratorCallbackTrampoline
@@ -68,26 +73,26 @@ struct TautomerEnumeratorCallbackTrampoline
   }
 };
 
-nb::tuple smilesTautomerMapKeysHelper(
+PyTupleOf<std::string> smilesTautomerMapKeysHelper(
     const MolStandardize::SmilesTautomerMap &self) {
   nb::list keys;
   for (const auto &pair : self) {
     keys.append(pair.first);
   }
-  return nb::tuple(keys);
+  return PyTupleOf<std::string>(nb::tuple(keys));
 }
 
-nb::tuple smilesTautomerMapValuesHelper(
+TupleOfTautomers smilesTautomerMapValuesHelper(
     const MolStandardize::SmilesTautomerMap &self) {
   nb::list values;
   for (const auto &pair : self) {
     auto *t = new MolStandardize::Tautomer(pair.second);
     values.append(nb::cast(t, nb::rv_policy::take_ownership));
   }
-  return nb::tuple(values);
+  return TupleOfTautomers(nb::tuple(values));
 }
 
-nb::tuple smilesTautomerMapItemsHelper(
+TupleOfTautomerItems smilesTautomerMapItemsHelper(
     const MolStandardize::SmilesTautomerMap &self) {
   nb::list items;
   for (const auto &pair : self) {
@@ -95,7 +100,7 @@ nb::tuple smilesTautomerMapItemsHelper(
     items.append(
         nb::make_tuple(pair.first, nb::cast(t, nb::rv_policy::take_ownership)));
   }
-  return nb::tuple(items);
+  return TupleOfTautomerItems(nb::tuple(items));
 }
 
 nb::object getCallbackHelper(const MolStandardize::TautomerEnumerator &te) {

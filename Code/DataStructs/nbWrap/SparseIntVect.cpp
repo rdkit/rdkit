@@ -44,18 +44,18 @@ void pyUpdateFromSequence(SparseIntVect<IndexType> &vect,
 }
 
 template <typename IndexType>
-nb::dict pyGetNonzeroElements(SparseIntVect<IndexType> &vect) {
+PyDictOf<IndexType, int> pyGetNonzeroElements(SparseIntVect<IndexType> &vect) {
   nb::dict res;
   auto iter = vect.getNonzeroElements().begin();
   while (iter != vect.getNonzeroElements().end()) {
     res[nb::cast(iter->first)] = nb::cast(iter->second);
     ++iter;
   }
-  return res;
+  return PyDictOf<IndexType, int>(res);
 }
 
 template <typename IndexType>
-nb::list pyToList(SparseIntVect<IndexType> &vect) {
+PyListOf<int> pyToList(SparseIntVect<IndexType> &vect) {
   nb::list res;
   for (IndexType i = 0; i < vect.getLength(); ++i) {
     res.append(0);
@@ -63,43 +63,43 @@ nb::list pyToList(SparseIntVect<IndexType> &vect) {
   for (auto iter : vect.getNonzeroElements()) {
     res[static_cast<size_t>(iter.first)] = iter.second;
   }
-  return res;
+  return PyListOf<int>(res);
 }
 
 template <typename T>
-nb::list BulkDice(const T &siv1, const nb::iterable &sivs,
-                  bool returnDistance) {
+PyListOf<double> BulkDice(const T &siv1, const nb::iterable &sivs,
+                          bool returnDistance) {
   nb::list res;
   for (auto siv : sivs) {
     const auto &siv2 = nb::cast<const T &>(siv);
     auto simVal = DiceSimilarity(siv1, siv2, returnDistance);
     res.append(simVal);
   }
-  return res;
+  return PyListOf<double>(res);
 }
 
 template <typename T>
-nb::list BulkTanimoto(const T &siv1, const nb::iterable &sivs,
-                      bool returnDistance) {
+PyListOf<double> BulkTanimoto(const T &siv1, const nb::iterable &sivs,
+                              bool returnDistance) {
   nb::list res;
   for (auto siv : sivs) {
     const auto &siv2 = nb::cast<const T &>(siv);
     auto simVal = TanimotoSimilarity(siv1, siv2, returnDistance);
     res.append(simVal);
   }
-  return res;
+  return PyListOf<double>(res);
 }
 
 template <typename T>
-nb::list BulkTversky(const T &siv1, const nb::iterable &sivs, double a,
-                     double b, bool returnDistance) {
+PyListOf<double> BulkTversky(const T &siv1, const nb::iterable &sivs, double a,
+                             double b, bool returnDistance) {
   nb::list res;
   for (auto siv : sivs) {
     const auto &siv2 = nb::cast<const T &>(siv);
     auto simVal = TverskySimilarity(siv1, siv2, a, b, returnDistance);
     res.append(simVal);
   }
-  return res;
+  return PyListOf<double>(res);
 }
 }  // namespace
 

@@ -12,6 +12,7 @@
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/trampoline.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Validate.h>
@@ -37,9 +38,10 @@ struct ValidationMethodTrampoline : MolStandardize::ValidationMethod {
 
 // Wrap ValidationMethod::validate and convert the returned
 // vector into a Python list of strings
-nb::list pythonValidateMethod(const MolStandardize::ValidationMethod &self,
-                              const ROMol &mol, bool reportAllFailures) {
-  nb::list res;
+PyListOf<std::string> pythonValidateMethod(
+    const MolStandardize::ValidationMethod &self, const ROMol &mol,
+    bool reportAllFailures) {
+  PyListOf<std::string> res;
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
   for (const auto &msg : errout) {
@@ -86,8 +88,8 @@ MolStandardize::DisallowedAtomsValidation *getDisallowedAtomsValidation(
   return new MolStandardize::DisallowedAtomsValidation(satoms);
 }
 
-nb::list standardizeSmilesHelper(const std::string &smiles) {
-  nb::list res;
+PyListOf<std::string> standardizeSmilesHelper(const std::string &smiles) {
+  PyListOf<std::string> res;
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       MolStandardize::validateSmiles(smiles);
   for (const auto &msg : errout) {

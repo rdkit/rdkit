@@ -59,6 +59,8 @@ struct AtomPairsParameters {};
 
 namespace {
 
+using DictOfPointLists = PyDictOf<unsigned int, PyListOf<RDGeom::Point3D>>;
+
 static std::string nanobindInternalsKeyName;
 
 nb::dict getBuiltinsDict() {
@@ -621,7 +623,7 @@ std::vector<double> GetUSR(const RDKit::ROMol &mol, int confId) {
   return descriptor;
 }
 
-nb::list GetUSRDistributions(
+PyListOf<PyListOf<double>> GetUSRDistributions(
     const PySequenceOf<RDGeom::Point3D> &coords,
     const std::optional<PyListOf<RDGeom::Point3D>> &points) {
   unsigned int numCoords = nb::len(coords);
@@ -654,10 +656,10 @@ nb::list GetUSRDistributions(
   for (const auto *pt : c) {
     delete pt;
   }
-  return pyDist;
+  return PyListOf<PyListOf<double>>(pyDist);
 }
 
-nb::list GetUSRDistributionsFromPoints(
+PyListOf<PyListOf<double>> GetUSRDistributionsFromPoints(
     const PySequenceOf<RDGeom::Point3D> &coords,
     const PySequenceOf<RDGeom::Point3D> &points) {
   unsigned int numCoords = nb::len(coords);
@@ -686,7 +688,7 @@ nb::list GetUSRDistributionsFromPoints(
     }
     pyDist.append(pytmp);
   }
-  return pyDist;
+  return PyListOf<PyListOf<double>>(pyDist);
 }
 
 std::vector<double> GetUSRFromDistributions(
@@ -954,7 +956,7 @@ double getPartialVolumeHelper(
   return self.getPartialVolume(atoms);
 }
 
-nb::dict getSurfacePointsHelper(
+DictOfPointLists getSurfacePointsHelper(
     RDKit::Descriptors::DoubleCubicLatticeVolume &self, bool allPoints) {
   const std::map<unsigned int, std::vector<RDGeom::Point3D>> &points =
       self.getSurfacePoints(allPoints);
@@ -967,7 +969,7 @@ nb::dict getSurfacePointsHelper(
     }
     surfacePoints[nb::int_(it.first)] = points3D;
   }
-  return surfacePoints;
+  return DictOfPointLists(surfacePoints);
 }
 
 }  // namespace

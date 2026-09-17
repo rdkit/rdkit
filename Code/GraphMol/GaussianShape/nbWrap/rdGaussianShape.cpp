@@ -31,6 +31,17 @@ namespace RDKit {
 
 namespace helpers {
 
+using CustomFeatureTuple = nb::typed<nb::tuple, int, RDGeom::Point3D, double,
+                                     std::vector<unsigned int>>;
+using ConformerFeatureSequence = PyTupleOf<CustomFeatureTuple>;
+using CustomFeatureSequence = PyTupleOf<ConformerFeatureSequence>;
+using BestSimilarityResult =
+    nb::typed<nb::tuple, nb::typed<nb::tuple, double, double, double>,
+              unsigned int, unsigned int, nb::typed<nb::list, double>>;
+using ScoreAllConformersResult =
+    nb::typed<nb::tuple, nb::typed<nb::list, nb::typed<nb::list, double>>, int,
+              int, nb::typed<nb::list, double>>;
+
 void set_customFeatures(GaussianShape::ShapeInputOptions &shp, nb::object s) {
   shp.customFeatures.clear();
   auto numVecs = nb::len(s);
@@ -59,7 +70,8 @@ void set_customFeatures(GaussianShape::ShapeInputOptions &shp, nb::object s) {
   }
 }
 
-nb::tuple get_customFeatures(const GaussianShape::ShapeInputOptions &shp) {
+CustomFeatureSequence get_customFeatures(
+    const GaussianShape::ShapeInputOptions &shp) {
   nb::list allFeatLists;
   for (const auto &feats : shp.customFeatures) {
     nb::list featList;
@@ -73,7 +85,7 @@ nb::tuple get_customFeatures(const GaussianShape::ShapeInputOptions &shp) {
     }
     allFeatLists.append(nb::tuple(featList));
   }
-  return nb::tuple(allFeatLists);
+  return CustomFeatureSequence(nb::tuple(allFeatLists));
 }
 
 double getShapeVolumeHelper(const GaussianShape::ShapeInput &shape) {
@@ -84,7 +96,7 @@ double getColorVolumeHelper(const GaussianShape::ShapeInput &shape) {
   return shape.getColorVolume();
 }
 
-nb::tuple bestSimilarity_helper(
+BestSimilarityResult bestSimilarity_helper(
     GaussianShape::ShapeInput &refShape,
     const GaussianShape::ShapeInput &fitShape, double threshold,
     std::optional<GaussianShape::ShapeOverlayOptions> py_overlayOpts) {
@@ -104,7 +116,7 @@ nb::tuple bestSimilarity_helper(
     }
   }
   results.append(pyMatrix);
-  return nb::tuple(results);
+  return BestSimilarityResult(nb::tuple(results));
 }
 
 double maxPossibleSimilarity_helper(
@@ -120,7 +132,7 @@ ROMol *shapeToMol_helper(GaussianShape::ShapeInput &shape, bool includeColors,
   return static_cast<ROMol *>(mol.release());
 }
 
-nb::tuple scoreMolAllConfs_helper(
+ScoreAllConformersResult scoreMolAllConfs_helper(
     const ROMol &ref, const ROMol &fit,
     std::optional<GaussianShape::ShapeInputOptions> py_refOpts,
     std::optional<GaussianShape::ShapeInputOptions> py_fitOpts,
@@ -153,7 +165,7 @@ nb::tuple scoreMolAllConfs_helper(
     }
   }
   results.append(pyMatrix);
-  return nb::tuple(results);
+  return ScoreAllConformersResult(nb::tuple(results));
 }
 
 }  // namespace helpers
@@ -498,7 +510,6 @@ fitShape : ShapeInput
     fit shape
 overlayOpts: ShapeOverlayOptions, optional
     Options for controlling the overlay
-
 
 Returns
 -------

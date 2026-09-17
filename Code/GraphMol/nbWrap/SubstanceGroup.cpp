@@ -89,28 +89,35 @@ void addBracketHelper(SubstanceGroup &self,
   self.addBracket(bkt);
 }
 
-nb::tuple getCStatesHelper(const SubstanceGroup &self) {
+using CStateSequence = PyTupleOf<SubstanceGroup::CState>;
+using BracketSequence = nb::typed<
+    nb::tuple,
+    nb::typed<nb::tuple, RDGeom::Point3D, RDGeom::Point3D, RDGeom::Point3D>,
+    nb::ellipsis>;
+using AttachPointSequence = PyTupleOf<SubstanceGroup::AttachPoint>;
+
+CStateSequence getCStatesHelper(const SubstanceGroup &self) {
   nb::list res;
   for (const auto &cs : self.getCStates()) {
     res.append(cs);
   }
-  return nb::tuple(res);
+  return CStateSequence(nb::tuple(res));
 }
 
-nb::tuple getBracketsHelper(const SubstanceGroup &self) {
+BracketSequence getBracketsHelper(const SubstanceGroup &self) {
   nb::list res;
   for (const auto &brk : self.getBrackets()) {
     res.append(nb::make_tuple(brk[0], brk[1], brk[2]));
   }
-  return nb::tuple(res);
+  return BracketSequence(nb::tuple(res));
 }
 
-nb::tuple getAttachPointsHelper(const SubstanceGroup &self) {
+AttachPointSequence getAttachPointsHelper(const SubstanceGroup &self) {
   nb::list res;
   for (const auto &ap : self.getAttachPoints()) {
     res.append(ap);
   }
-  return nb::tuple(res);
+  return AttachPointSequence(nb::tuple(res));
 }
 
 void SetAtomsHelper(SubstanceGroup &self,

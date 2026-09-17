@@ -80,7 +80,7 @@ std::string ToBase64(SBV &self) {
   return res;
 }
 
-nb::list SparseToList(const SparseBitVect &sv) {
+PyListOf<int> SparseToList(const SparseBitVect &sv) {
   nb::list l;
   if (sv.getNumBits()) {
     for (unsigned int i = 0; i < sv.getNumBits(); ++i) {
@@ -90,7 +90,7 @@ nb::list SparseToList(const SparseBitVect &sv) {
       l[static_cast<size_t>(i)] = 1;
     }
   }
-  return l;
+  return PyListOf<int>(l);
 }
 
 std::string sbvClassDoc =

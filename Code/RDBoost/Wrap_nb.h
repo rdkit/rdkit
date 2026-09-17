@@ -19,6 +19,7 @@
 
 #include <list>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <variant>
 #include <vector>

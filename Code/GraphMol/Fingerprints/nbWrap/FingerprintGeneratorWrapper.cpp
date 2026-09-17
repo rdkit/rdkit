@@ -9,9 +9,11 @@
 //
 
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/vector.h>
+#include <RDBoost/Wrap_nb.h>
 #include <string>
 #include <numpy/npy_common.h>
 #include <numpy/ndarrayobject.h>
@@ -161,9 +163,19 @@ ExplicitBitVect *getFingerprint(
   return result.release();
 }
 
+//! A tuple whose elements are all of type \c T.
+
+//! A list whose elements are all of type \c T.
+
+//! A one-dimensional NumPy array with element type \c T.
+template <typename T>
+using NumPyArrayOf =
+    nb::typed<nb::object, nb::ndarray<T, nb::numpy, nb::ndim<1>>>;
+
 template <typename ReturnType, typename FuncType>
-nb::tuple mtgetFingerprints(FuncType func, const PyIterableOf<ROMol> &mols,
-                            int numThreads) {
+PyTupleOf<ReturnType> mtgetFingerprints(FuncType func,
+                                        const PyIterableOf<ROMol> &mols,
+                                        int numThreads) {
   std::vector<const ROMol *> tmols;
   for (auto item : mols) {
     tmols.push_back(nb::cast<const ROMol *>(item));
@@ -178,12 +190,13 @@ nb::tuple mtgetFingerprints(FuncType func, const PyIterableOf<ROMol> &mols,
   for (auto &fp : fps) {
     result.append(nb::cast(fp.release(), nb::rv_policy::take_ownership));
   }
-  return nb::tuple(result);
+  return PyTupleOf<ReturnType>(nb::tuple(result));
 }
 
 template <typename OutputType>
-nb::tuple getFingerprints(const FingerprintGenerator<OutputType> *fpGen,
-                          const PyIterableOf<ROMol> &mols, int numThreads) {
+PyTupleOf<ExplicitBitVect> getFingerprints(
+    const FingerprintGenerator<OutputType> *fpGen,
+    const PyIterableOf<ROMol> &mols, int numThreads) {
   auto fpfunc = [&fpGen](const std::vector<const ROMol *> &tmols,
                          int numThreads) {
     return fpGen->getFingerprints(tmols, numThreads);
@@ -193,9 +206,9 @@ nb::tuple getFingerprints(const FingerprintGenerator<OutputType> *fpGen,
 }
 
 template <typename OutputType>
-nb::tuple getCountFingerprints(const FingerprintGenerator<OutputType> *fpGen,
-                               const PyIterableOf<ROMol> &mols,
-                               int numThreads) {
+PyTupleOf<SparseIntVect<std::uint32_t>> getCountFingerprints(
+    const FingerprintGenerator<OutputType> *fpGen,
+    const PyIterableOf<ROMol> &mols, int numThreads) {
   auto fpfunc = [&fpGen](const std::vector<const ROMol *> &tmols,
                          int numThreads) {
     return fpGen->getCountFingerprints(tmols, numThreads);
@@ -205,9 +218,9 @@ nb::tuple getCountFingerprints(const FingerprintGenerator<OutputType> *fpGen,
 }
 
 template <typename OutputType>
-nb::tuple getSparseFingerprints(const FingerprintGenerator<OutputType> *fpGen,
-                                const PyIterableOf<ROMol> &mols,
-                                int numThreads) {
+PyTupleOf<SparseBitVect> getSparseFingerprints(
+    const FingerprintGenerator<OutputType> *fpGen,
+    const PyIterableOf<ROMol> &mols, int numThreads) {
   auto fpfunc = [&fpGen](const std::vector<const ROMol *> &tmols,
                          int numThreads) {
     return fpGen->getSparseFingerprints(tmols, numThreads);
@@ -217,7 +230,7 @@ nb::tuple getSparseFingerprints(const FingerprintGenerator<OutputType> *fpGen,
 }
 
 template <typename OutputType>
-nb::tuple getSparseCountFingerprints(
+PyTupleOf<SparseIntVect<OutputType>> getSparseCountFingerprints(
     const FingerprintGenerator<OutputType> *fpGen,
     const PyIterableOf<ROMol> &mols, int numThreads) {
   auto fpfunc = [&fpGen](const std::vector<const ROMol *> &tmols,
@@ -229,7 +242,7 @@ nb::tuple getSparseCountFingerprints(
 }
 
 template <typename OutputType>
-nb::object getNumPyFingerprint(
+NumPyArrayOf<std::uint8_t> getNumPyFingerprint(
     const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
     const std::optional<PyIterableOf<std::uint32_t>> &py_fromAtoms,
     const std::optional<PyIterableOf<std::uint32_t>> &py_ignoreAtoms,
@@ -252,11 +265,11 @@ nb::object getNumPyFingerprint(
     }
   }
   Py_DECREF(one);
-  return nb::steal<nb::object>(arr);
+  return NumPyArrayOf<std::uint8_t>(nb::steal<nb::object>(arr));
 }
 
 template <typename OutputType>
-nb::object getNumPyCountFingerprint(
+NumPyArrayOf<std::uint32_t> getNumPyCountFingerprint(
     const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
     const std::optional<PyIterableOf<std::uint32_t>> &py_fromAtoms,
     const std::optional<PyIterableOf<std::uint32_t>> &py_ignoreAtoms,
@@ -280,7 +293,7 @@ nb::object getNumPyCountFingerprint(
       Py_DECREF(val);
     }
   }
-  return nb::steal<nb::object>(arr);
+  return NumPyArrayOf<std::uint32_t>(nb::steal<nb::object>(arr));
 }
 
 const std::vector<const ROMol *> convertPyArgumentsForBulk(
@@ -294,7 +307,7 @@ const std::vector<const ROMol *> convertPyArgumentsForBulk(
   return molVect;
 }
 
-nb::list getSparseCountFPBulkPy(
+PyListOf<SparseIntVect<std::uint64_t>> getSparseCountFPBulkPy(
     const std::optional<PyIterableOf<ROMol>> &py_molVect, FPType fPType) {
   const auto molVect = convertPyArgumentsForBulk(py_molVect);
   auto tempResult = getSparseCountFPBulk(molVect, fPType);
@@ -304,11 +317,11 @@ nb::list getSparseCountFPBulkPy(
     result.append(nb::cast(it, nb::rv_policy::take_ownership));
   }
   delete tempResult;
-  return result;
+  return PyListOf<SparseIntVect<std::uint64_t>>(result);
 }
 
-nb::list getSparseFPBulkPy(const std::optional<PyIterableOf<ROMol>> &py_molVect,
-                           FPType fpType) {
+PyListOf<SparseBitVect> getSparseFPBulkPy(
+    const std::optional<PyIterableOf<ROMol>> &py_molVect, FPType fpType) {
   const std::vector<const ROMol *> molVect =
       convertPyArgumentsForBulk(py_molVect);
   auto tempResult = getSparseFPBulk(molVect, fpType);
@@ -318,11 +331,11 @@ nb::list getSparseFPBulkPy(const std::optional<PyIterableOf<ROMol>> &py_molVect,
     result.append(nb::cast(it, nb::rv_policy::take_ownership));
   }
   delete tempResult;
-  return result;
+  return PyListOf<SparseBitVect>(result);
 }
 
-nb::list getCountFPBulkPy(const std::optional<PyIterableOf<ROMol>> &py_molVect,
-                          FPType fPType) {
+PyListOf<SparseIntVect<std::uint32_t>> getCountFPBulkPy(
+    const std::optional<PyIterableOf<ROMol>> &py_molVect, FPType fPType) {
   const std::vector<const ROMol *> molVect =
       convertPyArgumentsForBulk(py_molVect);
   auto tempResult = getCountFPBulk(molVect, fPType);
@@ -332,11 +345,11 @@ nb::list getCountFPBulkPy(const std::optional<PyIterableOf<ROMol>> &py_molVect,
     result.append(nb::cast(it, nb::rv_policy::take_ownership));
   }
   delete tempResult;
-  return result;
+  return PyListOf<SparseIntVect<std::uint32_t>>(result);
 }
 
-nb::list getFPBulkPy(const std::optional<PyIterableOf<ROMol>> &py_molVect,
-                     FPType fPType) {
+PyListOf<ExplicitBitVect> getFPBulkPy(
+    const std::optional<PyIterableOf<ROMol>> &py_molVect, FPType fPType) {
   const std::vector<const ROMol *> molVect =
       convertPyArgumentsForBulk(py_molVect);
   auto tempResult = getFPBulk(molVect, fPType);
@@ -346,7 +359,7 @@ nb::list getFPBulkPy(const std::optional<PyIterableOf<ROMol>> &py_molVect,
     result.append(nb::cast(it, nb::rv_policy::take_ownership));
   }
   delete tempResult;
-  return result;
+  return PyListOf<ExplicitBitVect>(result);
 }
 
 nb::object getAtomCountsHelper(const AdditionalOutput &ao) {

@@ -44,6 +44,18 @@ void wrap_enumeration(nb::module_ &m);
 
 namespace RDKit {
 
+using TupleOfMolTuples = PyTupleOf<PyTupleOf<ROMol *>>;
+using TupleOfReactions = PyTupleOf<ChemicalReaction *>;
+using TupleOfIntTuples = PyTupleOf<PyTupleOf<int>>;
+using TupleOfLabelTuples = nb::typed<
+    nb::tuple,
+    nb::typed<nb::tuple, nb::typed<nb::tuple, unsigned int, std::string>,
+              nb::ellipsis>,
+    nb::ellipsis>;
+using PreprocessResult =
+    nb::typed<nb::tuple, unsigned int, unsigned int, unsigned int, unsigned int,
+              TupleOfLabelTuples>;
+
 nb::bytes ReactionToBinaryWithProps(const ChemicalReaction &self,
                                     unsigned int props) {
   std::string res;
@@ -62,9 +74,9 @@ std::string ReactionToBinaryString(const ChemicalReaction &self) {
   return res;
 }
 
-nb::tuple RunReactants(ChemicalReaction *self,
-                       const PySequenceOf<ROMol> &reactants,
-                       unsigned int maxProducts) {
+TupleOfMolTuples RunReactants(ChemicalReaction *self,
+                              const PySequenceOf<ROMol> &reactants,
+                              unsigned int maxProducts) {
   if (!self->isInitialized()) {
     NOGIL gil;
     self->initReactantMatchers();
@@ -92,11 +104,11 @@ nb::tuple RunReactants(ChemicalReaction *self,
     }
     res.append(nb::tuple(inner));
   }
-  return nb::tuple(res);
+  return TupleOfMolTuples(nb::tuple(res));
 }
 
-nb::tuple RunReactant(ChemicalReaction *self, ROMol &reactant,
-                      unsigned int reactionIdx) {
+TupleOfMolTuples RunReactant(ChemicalReaction *self, ROMol &reactant,
+                             unsigned int reactionIdx) {
   ROMOL_SPTR react(&reactant, [](ROMol *) {});
   std::vector<MOL_SPTR_VECT> mols;
   {
@@ -114,7 +126,7 @@ nb::tuple RunReactant(ChemicalReaction *self, ROMol &reactant,
     }
     res.append(nb::tuple(inner));
   }
-  return nb::tuple(res);
+  return TupleOfMolTuples(nb::tuple(res));
 }
 
 bool RunReactantInPlace(ChemicalReaction *self, ROMol &reactant,
@@ -291,8 +303,8 @@ ChemicalReaction *ReactionFromMrvBlock(const StringOrBytes &imolBlock,
   return newR;
 }
 
-nb::tuple ReactionsFromCDXMLFile(const char *filename, bool sanitize,
-                                 bool removeHs) {
+TupleOfReactions ReactionsFromCDXMLFile(const char *filename, bool sanitize,
+                                        bool removeHs) {
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {
     rxns = CDXMLFileToChemicalReactions(filename, sanitize, removeHs);
@@ -307,11 +319,11 @@ nb::tuple ReactionsFromCDXMLFile(const char *filename, bool sanitize,
   for (auto &rxn : rxns) {
     res.append(nb::cast(rxn.release(), nb::rv_policy::take_ownership));
   }
-  return nb::tuple(res);
+  return TupleOfReactions(nb::tuple(res));
 }
 
-nb::tuple ReactionsFromCDXMLBlock(const StringOrBytes &imolBlock, bool sanitize,
-                                  bool removeHs) {
+TupleOfReactions ReactionsFromCDXMLBlock(const StringOrBytes &imolBlock,
+                                         bool sanitize, bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {
@@ -324,10 +336,11 @@ nb::tuple ReactionsFromCDXMLBlock(const StringOrBytes &imolBlock, bool sanitize,
   for (auto &rxn : rxns) {
     res.append(nb::cast(rxn.release(), nb::rv_policy::take_ownership));
   }
-  return nb::tuple(res);
+  return TupleOfReactions(nb::tuple(res));
 }
 
-nb::tuple GetReactingAtoms(const ChemicalReaction &self, bool mappedAtomsOnly) {
+TupleOfIntTuples GetReactingAtoms(const ChemicalReaction &self,
+                                  bool mappedAtomsOnly) {
   nb::list res;
   VECT_INT_VECT rAs = getReactingAtoms(self, mappedAtomsOnly);
   for (auto &rA : rAs) {
@@ -337,7 +350,7 @@ nb::tuple GetReactingAtoms(const ChemicalReaction &self, bool mappedAtomsOnly) {
     }
     res.append(nb::tuple(inner));
   }
-  return nb::tuple(res);
+  return TupleOfIntTuples(nb::tuple(res));
 }
 
 nb::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
@@ -372,8 +385,8 @@ nb::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
   }
 }
 
-nb::object PreprocessReaction(ChemicalReaction &reaction, nb::dict queryDict,
-                              std::string propName) {
+PreprocessResult PreprocessReaction(ChemicalReaction &reaction,
+                                    nb::dict queryDict, std::string propName) {
   std::map<std::string, ROMOL_SPTR> queries;
   unsigned int size = nb::len(queryDict);
   if (!size) {
@@ -408,8 +421,8 @@ nb::object PreprocessReaction(ChemicalReaction &reaction, nb::dict queryDict,
     }
     reactantLabels.append(nb::tuple(tmpLabels));
   }
-  return nb::make_tuple(nWarn, nError, nReactants, nProducts,
-                        nb::tuple(reactantLabels));
+  return PreprocessResult(nb::make_tuple(nWarn, nError, nReactants, nProducts,
+                                         nb::tuple(reactantLabels)));
 }
 
 RxnOps::SanitizeRxnFlags sanitizeReaction(
@@ -640,7 +653,7 @@ single product reactions.)DOC")
       .def(
           "GetReactants",
           [](const RDKit::ChemicalReaction &rxn) {
-            nb::list res;
+            PyListOf<RDKit::ROMol *> res;
             for (const auto &mol : rxn.getReactants()) {
               res.append(toStd(mol));
             }
@@ -650,7 +663,7 @@ single product reactions.)DOC")
       .def(
           "GetProducts",
           [](const RDKit::ChemicalReaction &rxn) {
-            nb::list res;
+            PyListOf<RDKit::ROMol *> res;
             for (const auto &mol : rxn.getProducts()) {
               res.append(toStd(mol));
             }
@@ -660,7 +673,7 @@ single product reactions.)DOC")
       .def(
           "GetAgents",
           [](const RDKit::ChemicalReaction &rxn) {
-            nb::list res;
+            PyListOf<RDKit::ROMol *> res;
             for (const auto &mol : rxn.getAgents()) {
               res.append(toStd(mol));
             }
