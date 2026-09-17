@@ -59,17 +59,17 @@ static unsigned int compute2DCoordsHelper(RDKit::ROMol &mol, bool canonOrient,
   if (bondLength > 0) {
     RDDepict::BOND_LEN = bondLength;
   }
-  Compute2DCoordParameters params;
-  params.coordMap = cMap.empty() ? nullptr : &cMap;
-  params.canonOrient = canonOrient;
-  params.clearConfs = clearConfs;
-  params.nFlipsPerSample = nFlipsPerSample;
-  params.nSamples = nSamples;
-  params.sampleSeed = sampleSeed;
-  params.permuteDeg4Nodes = permuteDeg4Nodes;
-  params.forceRDKit = forceRDKit;
-  params.useRingTemplates = useRingTemplates;
-  params.usePathAngleExpansion = usePathAngleExpansion;
+  Compute2DCoordParameters params{
+      .coordMap = cMap.empty() ? nullptr : &cMap,
+      .canonOrient = canonOrient,
+      .clearConfs = clearConfs,
+      .nFlipsPerSample = nFlipsPerSample,
+      .nSamples = nSamples,
+      .sampleSeed = sampleSeed,
+      .permuteDeg4Nodes = static_cast<bool>(permuteDeg4Nodes),
+      .forceRDKit = forceRDKit,
+      .useRingTemplates = useRingTemplates,
+      .usePathAngleExpansion = usePathAngleExpansion};
   unsigned int res = RDDepict::compute2DCoords(mol, params);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
@@ -326,7 +326,7 @@ adjustMolBlockWedging is True)DOC")
       "coordMap"_a = nb::dict(), "nFlipsPerSample"_a = 0, "nSample"_a = 0,
       "sampleSeed"_a = 0, "permuteDeg4Nodes"_a = 0, "bondLength"_a = -1.0,
       "forceRDKit"_a = false, "useRingTemplates"_a = false,
-      "usePathAngleExpansion"_a = false,
+      "usePathAngleExpansion"_a = true,
       R"DOC(Compute 2D coordinates for a molecule.
   The resulting coordinates are stored on each atom of the molecule
 

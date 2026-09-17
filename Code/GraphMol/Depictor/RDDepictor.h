@@ -90,7 +90,7 @@ struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
                                   //!< preferCoordGen is set to true
   bool useRingTemplates = false;  //!< whether to use ring system templates for
                                   //!< generating initial coordinates
-  bool usePathAngleExpansion = false;  //!< use path angle expansion for
+  bool usePathAngleExpansion = true;  //!< use path angle expansion for
                                        //!< collision resolution
 };
 

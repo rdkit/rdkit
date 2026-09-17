@@ -22,6 +22,8 @@
 #include "RDDepictor.h"
 #include <algorithm>
 #include <ranges>
+#include <unordered_map>
+#include <unordered_set>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -2404,7 +2406,7 @@ std::vector<unsigned int> EmbeddedFrag::getAtomsOnSide(unsigned int center,
 
   std::vector<unsigned int> result;
   std::queue<unsigned int> queue;
-  std::set<unsigned int> visited;
+  std::unordered_set<unsigned int> visited;
 
   // Don't cross these atoms
   visited.insert(center);
@@ -2466,7 +2468,8 @@ bool EmbeddedFrag::openAngleByIncrement(unsigned int prevAtom,
 
   // If the two traversals overlap, there is an alternate path around the
   // center. Rotating either partial side would distort bonds in that cycle.
-  std::set<unsigned int> side1Atoms(atomsSide1.begin(), atomsSide1.end());
+  std::unordered_set<unsigned int> side1Atoms(atomsSide1.begin(),
+                                              atomsSide1.end());
   if (std::any_of(atomsSide2.begin(), atomsSide2.end(),
                   [&](auto aid) { return side1Atoms.count(aid); })) {
     return false;
@@ -2562,8 +2565,8 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
   //
 
   // OPTIMIZATION: Pre-compute ring membership for each atom
-  // Build a map: atom_id -> set of ring indices containing that atom
-  std::map<int, std::set<int>> atomRings;
+  // Build a map: atom_id -> ring indices containing that atom
+  std::unordered_map<int, std::unordered_set<int>> atomRings;
   auto ringInfo = dp_mol->getRingInfo();
   for (size_t ringIdx = 0; ringIdx < ringInfo->atomRings().size(); ++ringIdx) {
     const auto &ring = ringInfo->atomRings()[ringIdx];
@@ -2590,7 +2593,14 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
     return PAIR_I_I(std::min(collision.first, collision.second),
                     std::max(collision.first, collision.second));
   };
-  std::set<PAIR_I_I> skippedCollisions;
+  struct CollisionHash {
+    std::size_t operator()(const PAIR_I_I &collision) const noexcept {
+      const auto firstHash = std::hash<int>{}(collision.first);
+      const auto secondHash = std::hash<int>{}(collision.second);
+      return firstHash ^ (secondHash << 1);
+    }
+  };
+  std::unordered_set<PAIR_I_I, CollisionHash> skippedCollisions;
   auto filterSkippedCollisions = [&](std::vector<PAIR_I_I> collisions) {
     collisions.erase(
         std::remove_if(collisions.begin(), collisions.end(),
@@ -2606,7 +2616,9 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
 
   // Track total rotation applied at each angle
   // Key: (collision pair, atom index), Value: cumulative rotation in radians
-  std::map<std::pair<int, int>, std::map<unsigned int, double>> angleTotals;
+  std::unordered_map<PAIR_I_I, std::unordered_map<unsigned int, double>,
+                     CollisionHash>
+      angleTotals;
 
   unsigned int iter = 0;
 
@@ -2636,24 +2648,18 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
       auto centerAtom = pathVec[i];
       auto nextAtom = pathVec[i + 1];
 
-      // Check if all three atoms are in the SAME ring using set intersection
+      // Check if all three atoms are in the SAME ring using ring membership
+      // lookups.
       bool allInSameRing = false;
       if (atomRings.count(prevAtom) && atomRings.count(centerAtom) &&
           atomRings.count(nextAtom)) {
-        // Find intersection of ring sets
-        std::set<int> temp;
-        std::set_intersection(
-            atomRings[prevAtom].begin(), atomRings[prevAtom].end(),
-            atomRings[centerAtom].begin(), atomRings[centerAtom].end(),
-            std::inserter(temp, temp.begin()));
-
-        std::set<int> commonRings;
-        std::set_intersection(temp.begin(), temp.end(),
-                              atomRings[nextAtom].begin(),
-                              atomRings[nextAtom].end(),
-                              std::inserter(commonRings, commonRings.begin()));
-
-        allInSameRing = !commonRings.empty();
+        const auto &prevRings = atomRings.at(prevAtom);
+        const auto &centerRings = atomRings.at(centerAtom);
+        const auto &nextRings = atomRings.at(nextAtom);
+        allInSameRing = std::any_of(
+            prevRings.begin(), prevRings.end(), [&](const auto ringIdx) {
+              return centerRings.count(ringIdx) && nextRings.count(ringIdx);
+            });
       }
 
       if (allInSameRing) {
@@ -2673,7 +2679,7 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
 
     // Save state
     auto prevCollisionCount = allColls.size();
-    std::map<int, RDGeom::Point2D> savedPositions;
+    std::unordered_map<int, RDGeom::Point2D> savedPositions;
 
     for (const auto &ea : d_eatoms) {
       savedPositions[ea.first] = ea.second.loc;
