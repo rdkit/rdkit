@@ -47,12 +47,17 @@ struct IntStringMap {
   std::map<int, std::string> *dp_map;
 };
 
-void tagAtomHelper(MolDraw2DSVG &self, const ROMol &mol, double radius,
-                   nb::object pyo) {
+//! (r, g, b) or (r, g, b, a), with each component between 0 and 1
+using PyColour = PyTupleOf<float>;
+//! index -> colour
+using PyColourMap = PyDictOf<int, PyColour>;
+
+void tagAtomHelper(
+    MolDraw2DSVG &self, const ROMol &mol, double radius,
+    const std::optional<PyDictOf<std::string, std::string>> &pyo) {
   std::map<std::string, std::string> events;
-  if (!pyo.is_none()) {
-    auto tDict = nb::cast<nb::dict>(pyo);
-    for (auto item : tDict) {
+  if (pyo) {
+    for (auto item : *pyo) {
       events[nb::cast<std::string>(item.first)] =
           nb::cast<std::string>(item.second);
     }
@@ -60,8 +65,7 @@ void tagAtomHelper(MolDraw2DSVG &self, const ROMol &mol, double radius,
   self.tagAtoms(mol, radius, events);
 }
 
-void pyDictToColourMap(nb::object pyo, ColourPalette &res) {
-  auto tDict = nb::cast<nb::dict>(pyo);
+void pyDictToColourMap(const nb::dict &tDict, ColourPalette &res) {
   for (auto item : tDict) {
     auto tpl = nb::cast<nb::tuple>(item.second);
     float r = nb::cast<float>(tpl[0]);
@@ -76,11 +80,11 @@ void pyDictToColourMap(nb::object pyo, ColourPalette &res) {
   }
 }
 
-ColourPalette *pyDictToColourMap(nb::object pyo) {
+ColourPalette *pyDictToColourMap(const std::optional<PyColourMap> &pyo) {
   ColourPalette *res = nullptr;
-  if (!pyo.is_none()) {
+  if (pyo) {
     res = new ColourPalette;
-    pyDictToColourMap(pyo, *res);
+    pyDictToColourMap(*pyo, *res);
   }
   return res;
 }
@@ -91,7 +95,8 @@ void pyDictToDoubleMap(nb::dict tDict, std::map<int, double> &res) {
   }
 }
 
-std::map<int, double> *pyDictToDoubleMap(std::optional<nb::dict> pyo) {
+std::map<int, double> *pyDictToDoubleMap(
+    const std::optional<PyDictOf<int, double>> &pyo) {
   std::map<int, double> *res = nullptr;
   if (pyo.has_value()) {
     res = new std::map<int, double>;
@@ -100,18 +105,18 @@ std::map<int, double> *pyDictToDoubleMap(std::optional<nb::dict> pyo) {
   return res;
 }
 
-void pyDictToIntMap(nb::object pyo, std::map<int, int> &res) {
-  auto tDict = nb::cast<nb::dict>(pyo);
+void pyDictToIntMap(const nb::dict &tDict, std::map<int, int> &res) {
   for (auto item : tDict) {
     res[nb::cast<int>(item.first)] = nb::cast<int>(item.second);
   }
 }
 
-std::map<int, int> *pyDictToIntMap(nb::object pyo) {
+std::map<int, int> *pyDictToIntMap(
+    const std::optional<PyDictOf<int, int>> &pyo) {
   std::map<int, int> *res = nullptr;
-  if (!pyo.is_none()) {
+  if (pyo) {
     res = new std::map<int, int>;
-    pyDictToIntMap(pyo, *res);
+    pyDictToIntMap(*pyo, *res);
   }
   return res;
 }
@@ -140,18 +145,16 @@ DrawColour pyTupleToDrawColour(const nb::tuple tpl) {
   return DrawColour(r, g, b, a);
 }
 
-void pyListToColourVec(nb::object pyo, std::vector<DrawColour> &res) {
+void pyListToColourVec(const nb::list &tList, std::vector<DrawColour> &res) {
   res.clear();
-  auto tList = nb::cast<nb::list>(pyo);
   for (size_t i = 0; i < nb::len(tList); ++i) {
     auto tpl = nb::cast<nb::tuple>(tList[i]);
     res.push_back(pyTupleToDrawColour(tpl));
   }
 }
 
-void pyDictToMapColourVec(nb::object pyo,
+void pyDictToMapColourVec(const nb::dict &tDict,
                           std::map<int, std::vector<DrawColour>> &res) {
-  auto tDict = nb::cast<nb::dict>(pyo);
   for (auto item : tDict) {
     auto pl = nb::cast<nb::list>(item.second);
     std::vector<DrawColour> v;
@@ -160,11 +163,12 @@ void pyDictToMapColourVec(nb::object pyo,
   }
 }
 
-std::map<int, std::vector<DrawColour>> *pyDictToMapColourVec(nb::object pyo) {
+std::map<int, std::vector<DrawColour>> *pyDictToMapColourVec(
+    const std::optional<PyDictOf<int, PyListOf<PyColour>>> &pyo) {
   std::map<int, std::vector<DrawColour>> *res = nullptr;
-  if (!pyo.is_none()) {
+  if (pyo) {
     res = new std::map<int, std::vector<DrawColour>>;
-    pyDictToMapColourVec(pyo, *res);
+    pyDictToMapColourVec(*pyo, *res);
   }
   return res;
 }
@@ -172,7 +176,8 @@ std::map<int, std::vector<DrawColour>> *pyDictToMapColourVec(nb::object pyo) {
 void drawMoleculeHelper1(
     MolDraw2D &self, const ROMol &mol,
     const std::optional<PyIterableOf<int>> &highlight_atoms,
-    nb::object highlight_atom_map, std::optional<nb::dict> highlight_atom_radii,
+    const std::optional<PyColourMap> &highlight_atom_map,
+    const std::optional<PyDictOf<int, double>> &highlight_atom_radii,
     int confId, std::string legend) {
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
@@ -185,13 +190,13 @@ void drawMoleculeHelper1(
   delete har;
 }
 
-void drawMoleculeHelper2(MolDraw2D &self, const ROMol &mol,
-                         const PyIterableOf<int> &highlight_atoms,
-                         const PyIterableOf<int> &highlight_bonds,
-                         nb::object highlight_atom_map,
-                         nb::object highlight_bond_map,
-                         std::optional<nb::dict> highlight_atom_radii,
-                         int confId, std::string legend) {
+void drawMoleculeHelper2(
+    MolDraw2D &self, const ROMol &mol, const PyIterableOf<int> &highlight_atoms,
+    const PyIterableOf<int> &highlight_bonds,
+    const std::optional<PyColourMap> &highlight_atom_map,
+    const std::optional<PyColourMap> &highlight_bond_map,
+    const std::optional<PyDictOf<int, double>> &highlight_atom_radii,
+    int confId, std::string legend) {
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   std::unique_ptr<std::vector<int>> highlightBonds =
@@ -212,9 +217,10 @@ MolSizeTuple getMolSizeHelper(
     MolDraw2D &self, const ROMol &mol,
     const std::optional<PyIterableOf<int>> &highlight_atoms,
     const std::optional<PyIterableOf<int>> &highlight_bonds,
-    nb::object highlight_atom_map, nb::object highlight_bond_map,
-    std::optional<nb::dict> highlight_atom_radii, int confId,
-    std::string legend) {
+    const std::optional<PyColourMap> &highlight_atom_map,
+    const std::optional<PyColourMap> &highlight_bond_map,
+    const std::optional<PyDictOf<int, double>> &highlight_atom_radii,
+    int confId, std::string legend) {
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   std::unique_ptr<std::vector<int>> highlightBonds =
@@ -234,9 +240,11 @@ MolSizeTuple getMolSizeHelper(
 
 void drawMoleculeWithHighlightsHelper(
     MolDraw2D &self, const ROMol &mol, std::string legend,
-    nb::object highlight_atom_map, nb::object highlight_bond_map,
-    std::optional<nb::dict> highlight_atom_radii,
-    nb::object highlight_linewidth_multipliers, int confId) {
+    const std::optional<PyDictOf<int, PyListOf<PyColour>>> &highlight_atom_map,
+    const std::optional<PyDictOf<int, PyListOf<PyColour>>> &highlight_bond_map,
+    const std::optional<PyDictOf<int, double>> &highlight_atom_radii,
+    const std::optional<PyDictOf<int, int>> &highlight_linewidth_multipliers,
+    int confId) {
   std::map<int, std::vector<DrawColour>> *ham =
       pyDictToMapColourVec(highlight_atom_map);
   if (!ham) {
@@ -267,8 +275,10 @@ void prepareAndDrawMoleculeHelper(
     MolDraw2D &drawer, const ROMol &mol, std::string legend,
     const std::optional<PyIterableOf<int>> &highlight_atoms,
     const std::optional<PyIterableOf<int>> &highlight_bonds,
-    nb::object highlight_atom_map, nb::object highlight_bond_map,
-    std::optional<nb::dict> highlight_atom_radii, int confId, bool kekulize) {
+    const std::optional<PyColourMap> &highlight_atom_map,
+    const std::optional<PyColourMap> &highlight_bond_map,
+    const std::optional<PyDictOf<int, double>> &highlight_atom_radii,
+    int confId, bool kekulize) {
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   std::unique_ptr<std::vector<int>> highlightBonds =
@@ -289,8 +299,10 @@ void drawMoleculeACS1996Helper(
     MolDraw2D &drawer, const ROMol &mol, std::string legend,
     const std::optional<PyIterableOf<int>> &highlight_atoms,
     const std::optional<PyIterableOf<int>> &highlight_bonds,
-    nb::object highlight_atom_map, nb::object highlight_bond_map,
-    std::optional<nb::dict> highlight_atom_radii, int confId) {
+    const std::optional<PyColourMap> &highlight_atom_map,
+    const std::optional<PyColourMap> &highlight_bond_map,
+    const std::optional<PyDictOf<int, double>> &highlight_atom_radii,
+    int confId) {
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   std::unique_ptr<std::vector<int>> highlightBonds =
@@ -306,9 +318,12 @@ void drawMoleculeACS1996Helper(
 
 void drawMoleculesHelper2(
     MolDraw2D &self, const PyIterableOf<ROMol *> &pmols,
-    nb::object highlight_atoms, nb::object highlight_bonds,
-    nb::object highlight_atom_map, nb::object highlight_bond_map,
-    nb::object highlight_atom_radii,
+    const std::optional<PySequenceOf<PyIterableOf<int>>> &highlight_atoms,
+    const std::optional<PySequenceOf<PyIterableOf<int>>> &highlight_bonds,
+    const std::optional<PySequenceOf<PyColourMap>> &highlight_atom_map,
+    const std::optional<PySequenceOf<PyColourMap>> &highlight_bond_map,
+    const std::optional<PySequenceOf<PyDictOf<int, double>>>
+        &highlight_atom_radii,
     const std::optional<PyIterableOf<int>> &pconfIds,
     const std::optional<PyIterableOf<std::string>> &plegends) {
   std::unique_ptr<std::vector<ROMol *>> mols =
@@ -318,64 +333,67 @@ void drawMoleculesHelper2(
   }
   unsigned int nThere = mols->size();
   std::unique_ptr<std::vector<std::vector<int>>> highlightAtoms;
-  if (!highlight_atoms.is_none() && nb::len(highlight_atoms)) {
-    if (nb::len(highlight_atoms) != nThere) {
+  if (highlight_atoms && nb::len(*highlight_atoms)) {
+    if (nb::len(*highlight_atoms) != nThere) {
       throw ValueErrorException(
           "If highlightAtoms is provided it must be the same length as the "
           "molecule list.");
     }
     highlightAtoms.reset(new std::vector<std::vector<int>>(nThere));
     for (unsigned int i = 0; i < nThere; ++i) {
-      pythonObjectToVect(highlight_atoms[i], (*highlightAtoms)[i]);
+      pythonObjectToVect((*highlight_atoms)[i], (*highlightAtoms)[i]);
     }
   }
   std::unique_ptr<std::vector<std::vector<int>>> highlightBonds;
-  if (!highlight_bonds.is_none() && nb::len(highlight_bonds)) {
-    if (nb::len(highlight_bonds) != nThere) {
+  if (highlight_bonds && nb::len(*highlight_bonds)) {
+    if (nb::len(*highlight_bonds) != nThere) {
       throw ValueErrorException(
           "If highlightBonds is provided it must be the same length as the "
           "molecule list.");
     }
     highlightBonds.reset(new std::vector<std::vector<int>>(nThere));
     for (unsigned int i = 0; i < nThere; ++i) {
-      pythonObjectToVect(highlight_bonds[i], (*highlightBonds)[i]);
+      pythonObjectToVect((*highlight_bonds)[i], (*highlightBonds)[i]);
     }
   }
 
   std::unique_ptr<std::vector<ColourPalette>> highlightAtomMap;
-  if (!highlight_atom_map.is_none() && nb::len(highlight_atom_map)) {
-    if (nb::len(highlight_atom_map) != nThere) {
+  if (highlight_atom_map && nb::len(*highlight_atom_map)) {
+    if (nb::len(*highlight_atom_map) != nThere) {
       throw ValueErrorException(
           "If highlightAtomMap is provided it must be the same length as the "
           "molecule list.");
     }
     highlightAtomMap.reset(new std::vector<ColourPalette>(nThere));
     for (unsigned int i = 0; i < nThere; ++i) {
-      pyDictToColourMap(highlight_atom_map[i], (*highlightAtomMap)[i]);
+      pyDictToColourMap(nb::cast<nb::dict>((*highlight_atom_map)[i]),
+                        (*highlightAtomMap)[i]);
     }
   }
   std::unique_ptr<std::vector<ColourPalette>> highlightBondMap;
-  if (!highlight_bond_map.is_none() && nb::len(highlight_bond_map)) {
-    if (nb::len(highlight_bond_map) != nThere) {
+  if (highlight_bond_map && nb::len(*highlight_bond_map)) {
+    if (nb::len(*highlight_bond_map) != nThere) {
       throw ValueErrorException(
           "If highlightBondMap is provided it must be the same length as the "
           "molecule list.");
     }
     highlightBondMap.reset(new std::vector<ColourPalette>(nThere));
     for (unsigned int i = 0; i < nThere; ++i) {
-      pyDictToColourMap(highlight_bond_map[i], (*highlightBondMap)[i]);
+      pyDictToColourMap(nb::cast<nb::dict>((*highlight_bond_map)[i]),
+                        (*highlightBondMap)[i]);
     }
   }
   std::unique_ptr<std::vector<std::map<int, double>>> highlightRadii;
-  if (!highlight_atom_radii.is_none() && nb::len(highlight_atom_radii)) {
-    if (nb::len(highlight_atom_radii) != nThere) {
+  if (highlight_atom_radii && nb::len(*highlight_atom_radii)) {
+    if (nb::len(*highlight_atom_radii) != nThere) {
       throw ValueErrorException(
           "If highlightAtomRadii is provided it must be the same length as the "
           "molecule list.");
     }
     highlightRadii.reset(new std::vector<std::map<int, double>>(nThere));
     for (unsigned int i = 0; i < nThere; ++i) {
-      pyDictToDoubleMap(highlight_atom_radii[i], (*highlightRadii)[i]);
+      pyDictToDoubleMap(nb::cast<nb::dict>((*highlight_atom_radii)[i]),
+                        (*highlightRadii)[i]);
     }
   }
   std::unique_ptr<std::vector<int>> confIds = pythonObjectToVect<int>(pconfIds);
@@ -388,14 +406,14 @@ void drawMoleculesHelper2(
                      confIds.get());
 }
 
-void drawReactionHelper(MolDraw2D &self, const ChemicalReaction &rxn,
-                        bool highlightByReactant,
-                        nb::object phighlightColorsReactants,
-                        const std::optional<PyIterableOf<int>> &pconfIds) {
+void drawReactionHelper(
+    MolDraw2D &self, const ChemicalReaction &rxn, bool highlightByReactant,
+    const std::optional<PyListOf<PyColour>> &phighlightColorsReactants,
+    const std::optional<PyIterableOf<int>> &pconfIds) {
   std::unique_ptr<std::vector<DrawColour>> highlightColorsReactants;
-  if (!phighlightColorsReactants.is_none()) {
+  if (phighlightColorsReactants) {
     highlightColorsReactants.reset(new std::vector<DrawColour>);
-    pyListToColourVec(phighlightColorsReactants, *highlightColorsReactants);
+    pyListToColourVec(*phighlightColorsReactants, *highlightColorsReactants);
   }
 
   std::unique_ptr<std::vector<int>> confIds = pythonObjectToVect<int>(pconfIds);
@@ -411,12 +429,11 @@ nb::bytes getCairoDrawingText(const RDKit::MolDraw2DCairo &self) {
 }
 #endif
 
-ROMol *prepMolForDrawing(nb::object mol, bool kekulize, bool addChiralHs,
+ROMol *prepMolForDrawing(const ROMol *m, bool kekulize, bool addChiralHs,
                          bool wedgeBonds, bool forceCoords, bool wavyBonds) {
-  if (mol.is_none()) {
+  if (!m) {
     throw std::runtime_error("molecule must not be None");
   }
-  const ROMol *m = nb::cast<const ROMol *>(mol);
   auto *res = new RWMol(*m);
   MolDraw2DUtils::prepareMolForDrawing(*res, kekulize, addChiralHs, wedgeBonds,
                                        forceCoords, wavyBonds);
@@ -493,10 +510,10 @@ void useAvalonAtomPalette(RDKit::MolDrawOptions &self) {
 void useCDKAtomPalette(RDKit::MolDrawOptions &self) {
   assignCDKPalette(self.atomColourPalette);
 }
-void updateAtomPalette(RDKit::MolDrawOptions &self, nb::object cmap) {
+void updateAtomPalette(RDKit::MolDrawOptions &self, const PyColourMap &cmap) {
   pyDictToColourMap(cmap, self.atomColourPalette);
 }
-void setAtomPalette(RDKit::MolDrawOptions &self, nb::object cmap) {
+void setAtomPalette(RDKit::MolDrawOptions &self, const PyColourMap &cmap) {
   self.atomColourPalette.clear();
   updateAtomPalette(self, cmap);
 }
@@ -601,7 +618,7 @@ void contourAndDrawGridHelper(
 }
 
 void setColoursHelper(RDKit::MolDraw2DUtils::ContourParams &params,
-                      nb::object pycolors) {
+                      const PySequenceOf<PyColour> &pycolors) {
   std::vector<RDKit::DrawColour> cs;
   for (size_t i = 0; i < nb::len(pycolors); ++i) {
     cs.push_back(pyTupleToDrawColour(nb::cast<nb::tuple>(pycolors[i])));
@@ -657,10 +674,11 @@ void drawWavyLineHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
 
 void drawArrowHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
                      const Point2D &cds2, bool asPolygon, double frac,
-                     double angle, nb::object pycol, bool rawCoords) {
+                     double angle, const std::optional<PyColour> &pycol,
+                     bool rawCoords) {
   DrawColour col{0.0, 0.0, 0.0};
-  if (!pycol.is_none()) {
-    col = pyTupleToDrawColour(nb::cast<nb::tuple>(pycol));
+  if (pycol) {
+    col = pyTupleToDrawColour(*pycol);
   }
   self.drawArrow(cds1, cds2, asPolygon, frac, angle, col, rawCoords);
 }
@@ -702,8 +720,10 @@ std::string molToACS1996SVG(
     const ROMol &mol, std::string legend,
     const std::optional<PyIterableOf<int>> &highlight_atoms,
     const std::optional<PyIterableOf<int>> &highlight_bonds,
-    nb::object highlight_atom_map, nb::object highlight_bond_map,
-    std::optional<nb::dict> highlight_atom_radii, int confId) {
+    const std::optional<PyColourMap> &highlight_atom_map,
+    const std::optional<PyColourMap> &highlight_bond_map,
+    const std::optional<PyDictOf<int, double>> &highlight_atom_radii,
+    int confId) {
   std::stringstream outs;
   MolDraw2DSVG drawer(-1, -1, outs);
   drawMoleculeACS1996Helper(drawer, mol, legend, highlight_atoms,
@@ -734,12 +754,8 @@ void drawStringHelper(MolDraw2D &self, std::string text, const Point2D &loc,
 }
 
 void setScaleHelper(MolDraw2D &self, int width, int height, const Point2D &minv,
-                    const Point2D &maxv, nb::object mol) {
-  ROMol *mol_p = nullptr;
-  if (!mol.is_none()) {
-    mol_p = nb::cast<RDKit::ROMol *>(mol);
-  }
-  self.setScale(width, height, minv, maxv, mol_p);
+                    const Point2D &maxv, const ROMol *mol) {
+  self.setScale(width, height, minv, maxv, mol);
 }
 
 }  // namespace

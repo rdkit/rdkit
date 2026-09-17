@@ -143,6 +143,14 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(tpl[0], 1.0, places=3)
     self.assertAlmostEqual(tpl[1], 1.0, places=3)
 
+  def test10_ArgumentTypes(self):
+    opts = rdShapeAlign.ShapeInputOptions()
+    opts.atomSubset = (0, 1, 2)
+    self.assertEqual(tuple(opts.atomSubset), (0, 1, 2))
+    opts.atomRadii = ((0, 1.5), )
+    self.assertEqual(len(opts.atomRadii), 1)
+    with self.assertRaises(TypeError):
+      rdShapeAlign.PrepareConformer(self.ref, -1, 5)
 
 if __name__ == '__main__':
   unittest.main()

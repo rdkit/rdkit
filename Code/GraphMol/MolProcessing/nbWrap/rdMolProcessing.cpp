@@ -22,17 +22,8 @@ using namespace RDKit;
 namespace {
 template <typename OutputType>
 nb::tuple getFingerprintsHelper(
-    const std::string &fileName, nb::object pyGenerator,
+    const std::string &fileName, FingerprintGenerator<OutputType> *generator,
     const GeneralMolSupplier::SupplierOptions &options) {
-  FingerprintGenerator<OutputType> *generator = nullptr;
-  if (!pyGenerator.is_none()) {
-    try {
-      generator = nb::cast<FingerprintGenerator<OutputType> *>(pyGenerator);
-    } catch (const nb::cast_error &) {
-      throw nb::next_overload();
-    }
-  }
-
   std::vector<std::unique_ptr<ExplicitBitVect>> fps;
   {
     NOGIL gil;

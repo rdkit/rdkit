@@ -13,7 +13,9 @@
 #include <ForceField/MMFF/Params.h>
 #include <GraphMol/Trajectory/Snapshot.h>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
+#include <RDBoost/Wrap_nb.h>
 #include <memory>
 #include <vector>
 #include <algorithm>
@@ -42,12 +44,13 @@ class PyForceField {
     return idx;
   }
 
-  double calcEnergyWithPos(nb::object pos = nb::none());
+  double calcEnergyWithPos(
+      const std::optional<PySequenceOf<double>> &pos = std::nullopt);
 
   double calcEnergy() { return calcEnergyWithPos(); }
 
   nb::typed<nb::tuple, double, nb::ellipsis> calcGradWithPos(
-      nb::object pos = nb::none());
+      const std::optional<PySequenceOf<double>> &pos = std::nullopt);
 
   nb::typed<nb::tuple, double, nb::ellipsis> positions();
 

@@ -413,18 +413,23 @@ double hkAlphaHelper(const RDKit::ROMol &mol, nb::object atomContribs) {
   return kappaHelper(RDKit::Descriptors::calcHallKierAlpha, mol, atomContribs);
 }
 
+//! Filled in place with bit id -> ((atom index, radius), ...).
+using MorganBitInfo = PyDictOf<int, PyTupleOf<nb::typed<nb::tuple, int, int>>>;
+
 [[deprecated(
     "please use MorganGenerator")]] RDKit::SparseIntVect<std::uint32_t> *
-MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius, int nBits,
-                        nb::object invariants, nb::object fromAtoms,
-                        bool useChirality, bool useBondTypes, bool useFeatures,
-                        bool useCounts, nb::object bitInfo,
-                        bool includeRedundantEnvironments) {
+MorganFingerprintHelper(
+    const RDKit::ROMol &mol, unsigned int radius, int nBits,
+    const std::optional<PySequenceOf<std::uint32_t>> &invariants,
+    const std::optional<PySequenceOf<std::uint32_t>> &fromAtoms,
+    bool useChirality, bool useBondTypes, bool useFeatures, bool useCounts,
+    const std::optional<MorganBitInfo> &bitInfo,
+    bool includeRedundantEnvironments) {
   RDLog::deprecationWarning("please use MorganGenerator");
   std::vector<boost::uint32_t> *invars = nullptr;
   bool haveInvars = false;
-  if (!invariants.is_none()) {
-    unsigned int nInvar = nb::len(invariants);
+  if (invariants) {
+    unsigned int nInvar = nb::len(*invariants);
     if (nInvar) {
       haveInvars = true;
       if (nInvar != mol.getNumAtoms()) {
@@ -433,7 +438,7 @@ MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius, int nBits,
       }
       invars = new std::vector<std::uint32_t>(mol.getNumAtoms());
       for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-        (*invars)[i] = nb::cast<std::uint32_t>(invariants[i]);
+        (*invars)[i] = nb::cast<std::uint32_t>((*invariants)[i]);
       }
     }
   }
@@ -442,17 +447,17 @@ MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius, int nBits,
     RDKit::MorganFingerprints::getFeatureInvariants(mol, *invars);
   }
   std::vector<std::uint32_t> *froms = nullptr;
-  if (!fromAtoms.is_none()) {
-    unsigned int nFrom = nb::len(fromAtoms);
+  if (fromAtoms) {
+    unsigned int nFrom = nb::len(*fromAtoms);
     if (nFrom) {
       froms = new std::vector<std::uint32_t>();
       for (unsigned int i = 0; i < nFrom; ++i) {
-        froms->push_back(nb::cast<std::uint32_t>(fromAtoms[i]));
+        froms->push_back(nb::cast<std::uint32_t>((*fromAtoms)[i]));
       }
     }
   }
   RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = nullptr;
-  if (!bitInfo.is_none()) {
+  if (bitInfo) {
     bitInfoMap = new RDKit::MorganFingerprints::BitInfoMap();
   }
   RDKit::SparseIntVect<std::uint32_t> *res;
@@ -468,8 +473,8 @@ MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius, int nBits,
         useBondTypes, false, bitInfoMap, includeRedundantEnvironments);
   }
   if (bitInfoMap) {
-    bitInfo.attr("clear")();
-    nb::dict biDict = nb::cast<nb::dict>(bitInfo);
+    nb::dict biDict = *bitInfo;
+    biDict.clear();
     for (RDKit::MorganFingerprints::BitInfoMap::const_iterator iter =
              bitInfoMap->begin();
          iter != bitInfoMap->end(); ++iter) {
@@ -513,9 +518,11 @@ std::pair<double, double> BCUT2D_tuple(const RDKit::ROMol &m,
 #endif
 
 RDKit::SparseIntVect<std::uint32_t> *GetMorganFingerprint(
-    const RDKit::ROMol &mol, unsigned int radius, nb::object invariants,
-    nb::object fromAtoms, bool useChirality, bool useBondTypes,
-    bool useFeatures, bool useCounts, nb::object bitInfo,
+    const RDKit::ROMol &mol, unsigned int radius,
+    const std::optional<PySequenceOf<std::uint32_t>> &invariants,
+    const std::optional<PySequenceOf<std::uint32_t>> &fromAtoms,
+    bool useChirality, bool useBondTypes, bool useFeatures, bool useCounts,
+    const std::optional<MorganBitInfo> &bitInfo,
     bool includeRedundantEnvironments) {
   return MorganFingerprintHelper(
       mol, radius, -1, invariants, fromAtoms, useChirality, useBondTypes,
@@ -524,8 +531,10 @@ RDKit::SparseIntVect<std::uint32_t> *GetMorganFingerprint(
 
 RDKit::SparseIntVect<std::uint32_t> *GetHashedMorganFingerprint(
     const RDKit::ROMol &mol, unsigned int radius, unsigned int nBits,
-    nb::object invariants, nb::object fromAtoms, bool useChirality,
-    bool useBondTypes, bool useFeatures, nb::object bitInfo,
+    const std::optional<PySequenceOf<std::uint32_t>> &invariants,
+    const std::optional<PySequenceOf<std::uint32_t>> &fromAtoms,
+    bool useChirality, bool useBondTypes, bool useFeatures,
+    const std::optional<MorganBitInfo> &bitInfo,
     bool includeRedundantEnvironments) {
   return MorganFingerprintHelper(mol, radius, nBits, invariants, fromAtoms,
                                  useChirality, useBondTypes, useFeatures, true,
@@ -535,15 +544,16 @@ RDKit::SparseIntVect<std::uint32_t> *GetHashedMorganFingerprint(
 [[deprecated("please use MorganGenerator")]] ExplicitBitVect *
 GetMorganFingerprintBV(
     const RDKit::ROMol &mol, unsigned int radius, unsigned int nBits,
-    nb::object invariants,
+    const std::optional<PySequenceOf<std::uint32_t>> &invariants,
     const std::optional<PyIterableOf<std::uint32_t>> &fromAtoms,
-    bool useChirality, bool useBondTypes, bool useFeatures, nb::object bitInfo,
+    bool useChirality, bool useBondTypes, bool useFeatures,
+    const std::optional<MorganBitInfo> &bitInfo,
     bool includeRedundantEnvironments) {
   RDLog::deprecationWarning("please use MorganGenerator");
   std::vector<boost::uint32_t> *invars = nullptr;
   bool haveInvars = false;
-  if (!invariants.is_none()) {
-    unsigned int nInvar = nb::len(invariants);
+  if (invariants) {
+    unsigned int nInvar = nb::len(*invariants);
     if (nInvar) {
       haveInvars = true;
       if (nInvar != mol.getNumAtoms()) {
@@ -552,7 +562,7 @@ GetMorganFingerprintBV(
       }
       invars = new std::vector<std::uint32_t>(mol.getNumAtoms());
       for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-        (*invars)[i] = nb::cast<std::uint32_t>(invariants[i]);
+        (*invars)[i] = nb::cast<std::uint32_t>((*invariants)[i]);
       }
     }
   }
@@ -564,7 +574,7 @@ GetMorganFingerprintBV(
   std::unique_ptr<std::vector<std::uint32_t>> froms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = nullptr;
-  if (!bitInfo.is_none()) {
+  if (bitInfo) {
     bitInfoMap = new RDKit::MorganFingerprints::BitInfoMap();
   }
   ExplicitBitVect *res;
@@ -572,7 +582,7 @@ GetMorganFingerprintBV(
       mol, radius, nBits, invars, froms.get(), useChirality, useBondTypes,
       false, bitInfoMap, includeRedundantEnvironments);
   if (bitInfoMap) {
-    nb::dict biDict = nb::cast<nb::dict>(bitInfo);
+    nb::dict biDict = *bitInfo;
     biDict.clear();
     for (RDKit::MorganFingerprints::BitInfoMap::const_iterator iter =
              bitInfoMap->begin();
@@ -624,8 +634,9 @@ std::vector<double> GetUSR(const RDKit::ROMol &mol, int confId) {
   return descriptor;
 }
 
-PyListOf<PyListOf<double>> GetUSRDistributions(nb::object coords,
-                                               nb::object points) {
+PyListOf<PyListOf<double>> GetUSRDistributions(
+    const PySequenceOf<RDGeom::Point3D> &coords,
+    const std::optional<PyListOf<RDGeom::Point3D>> &points) {
   unsigned int numCoords = nb::len(coords);
   if (numCoords == 0) {
     throw ValueErrorException("no coordinates");
@@ -639,8 +650,8 @@ PyListOf<PyListOf<double>> GetUSRDistributions(nb::object coords,
   std::vector<RDGeom::Point3D> pts(4);
   std::vector<std::vector<double>> distances(4);
   RDKit::Descriptors::calcUSRDistributions(c, distances, pts);
-  if (!points.is_none()) {
-    nb::list tmpPts = nb::cast<nb::list>(points);
+  if (points) {
+    nb::list tmpPts = *points;
     for (const auto &p : pts) {
       tmpPts.append(p);
     }
@@ -659,8 +670,9 @@ PyListOf<PyListOf<double>> GetUSRDistributions(nb::object coords,
   return PyListOf<PyListOf<double>>(pyDist);
 }
 
-PyListOf<PyListOf<double>> GetUSRDistributionsFromPoints(nb::object coords,
-                                                         nb::object points) {
+PyListOf<PyListOf<double>> GetUSRDistributionsFromPoints(
+    const PySequenceOf<RDGeom::Point3D> &coords,
+    const PySequenceOf<RDGeom::Point3D> &points) {
   unsigned int numCoords = nb::len(coords);
   unsigned int numPts = nb::len(points);
   if (numCoords == 0) {
@@ -690,7 +702,8 @@ PyListOf<PyListOf<double>> GetUSRDistributionsFromPoints(nb::object coords,
   return PyListOf<PyListOf<double>>(pyDist);
 }
 
-std::vector<double> GetUSRFromDistributions(nb::object distances) {
+std::vector<double> GetUSRFromDistributions(
+    const PySequenceOf<PySequenceOf<double>> &distances) {
   unsigned int numDist = nb::len(distances);
   if (numDist == 0) {
     throw ValueErrorException("no distances");
@@ -713,8 +726,9 @@ std::vector<double> GetUSRFromDistributions(nb::object distances) {
   return descriptor;
 }
 
-double GetUSRScore(nb::object descriptor1, nb::object descriptor2,
-                   nb::object weights) {
+double GetUSRScore(const PySequenceOf<double> &descriptor1,
+                   const PySequenceOf<double> &descriptor2,
+                   const PySequenceOf<double> &weights) {
   unsigned int numElements = nb::len(descriptor1);
   if (numElements != nb::len(descriptor2)) {
     throw ValueErrorException("descriptors must have the same length");
@@ -738,8 +752,11 @@ double GetUSRScore(nb::object descriptor1, nb::object descriptor2,
   return RDKit::Descriptors::calcUSRScore(d1, d2, w);
 }
 
-std::vector<double> GetUSRCAT(const RDKit::ROMol &mol,
-                              nb::object atomSelections, int confId) {
+std::vector<double> GetUSRCAT(
+    const RDKit::ROMol &mol,
+    const std::optional<PySequenceOf<PySequenceOf<unsigned int>>>
+        &atomSelections,
+    int confId) {
   if (mol.getNumConformers() == 0) {
     throw ValueErrorException("no conformers");
   }
@@ -749,14 +766,14 @@ std::vector<double> GetUSRCAT(const RDKit::ROMol &mol,
 
   std::vector<std::vector<unsigned int>> atomIds;
   unsigned int sizeDescriptor = 60;
-  if (!atomSelections.is_none()) {
-    unsigned int numSel = nb::len(atomSelections);
+  if (atomSelections) {
+    unsigned int numSel = nb::len(*atomSelections);
     if (numSel == 0) {
       throw ValueErrorException("empty atom selections");
     }
     atomIds.resize(numSel);
     for (unsigned int i = 0; i < numSel; ++i) {
-      nb::object inner = atomSelections[i];
+      nb::object inner = (*atomSelections)[i];
       unsigned int numPts = nb::len(inner);
       std::vector<unsigned int> tmpIds(numPts);
       for (unsigned int j = 0; j < numPts; ++j) {
@@ -771,15 +788,16 @@ std::vector<double> GetUSRCAT(const RDKit::ROMol &mol,
   return descriptor;
 }
 
-std::vector<double> CalcSlogPVSA(const RDKit::ROMol &mol, nb::object bins,
-                                 bool force) {
+std::vector<double> CalcSlogPVSA(
+    const RDKit::ROMol &mol, const std::optional<PySequenceOf<double>> &bins,
+    bool force) {
   std::vector<double> *lbins = nullptr;
-  if (!bins.is_none()) {
-    unsigned int nBins = nb::len(bins);
+  if (bins) {
+    unsigned int nBins = nb::len(*bins);
     if (nBins) {
       lbins = new std::vector<double>(nBins, 0.0);
       for (unsigned int i = 0; i < nBins; ++i) {
-        (*lbins)[i] = nb::cast<double>(bins[i]);
+        (*lbins)[i] = nb::cast<double>((*bins)[i]);
       }
     }
   }
@@ -789,15 +807,16 @@ std::vector<double> CalcSlogPVSA(const RDKit::ROMol &mol, nb::object bins,
   return res;
 }
 
-std::vector<double> CalcSMRVSA(const RDKit::ROMol &mol, nb::object bins,
+std::vector<double> CalcSMRVSA(const RDKit::ROMol &mol,
+                               const std::optional<PySequenceOf<double>> &bins,
                                bool force) {
   std::vector<double> *lbins = nullptr;
-  if (!bins.is_none()) {
-    unsigned int nBins = nb::len(bins);
+  if (bins) {
+    unsigned int nBins = nb::len(*bins);
     if (nBins) {
       lbins = new std::vector<double>(nBins, 0.0);
       for (unsigned int i = 0; i < nBins; ++i) {
-        (*lbins)[i] = nb::cast<double>(bins[i]);
+        (*lbins)[i] = nb::cast<double>((*bins)[i]);
       }
     }
   }
@@ -807,15 +826,16 @@ std::vector<double> CalcSMRVSA(const RDKit::ROMol &mol, nb::object bins,
   return res;
 }
 
-std::vector<double> CalcPEOEVSA(const RDKit::ROMol &mol, nb::object bins,
+std::vector<double> CalcPEOEVSA(const RDKit::ROMol &mol,
+                                const std::optional<PySequenceOf<double>> &bins,
                                 bool force) {
   std::vector<double> *lbins = nullptr;
-  if (!bins.is_none()) {
-    unsigned int nBins = nb::len(bins);
+  if (bins) {
+    unsigned int nBins = nb::len(*bins);
     if (nBins) {
       lbins = new std::vector<double>(nBins, 0.0);
       for (unsigned int i = 0; i < nBins; ++i) {
-        (*lbins)[i] = nb::cast<double>(bins[i]);
+        (*lbins)[i] = nb::cast<double>((*bins)[i]);
       }
     }
   }
@@ -839,12 +859,13 @@ std::vector<unsigned int> CalcMQNs(const RDKit::ROMol &mol, bool force) {
   return RDKit::Descriptors::calcMQNs(mol, force);
 }
 
-unsigned int numSpiroAtoms(const RDKit::ROMol &mol, nb::object pyatoms) {
+unsigned int numSpiroAtoms(const RDKit::ROMol &mol,
+                           const std::optional<PyListOf<int>> &pyatoms) {
   std::vector<unsigned int> ats;
-  unsigned int res = RDKit::Descriptors::calcNumSpiroAtoms(
-      mol, !pyatoms.is_none() ? &ats : nullptr);
-  if (!pyatoms.is_none()) {
-    nb::list pyres = nb::cast<nb::list>(pyatoms);
+  unsigned int res =
+      RDKit::Descriptors::calcNumSpiroAtoms(mol, pyatoms ? &ats : nullptr);
+  if (pyatoms) {
+    nb::list pyres = *pyatoms;
     for (const auto d : ats) {
       pyres.append(d);
     }
@@ -852,12 +873,13 @@ unsigned int numSpiroAtoms(const RDKit::ROMol &mol, nb::object pyatoms) {
   return res;
 }
 
-unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol, nb::object pyatoms) {
+unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol,
+                                const std::optional<PyListOf<int>> &pyatoms) {
   std::vector<unsigned int> ats;
-  unsigned int res = RDKit::Descriptors::calcNumBridgeheadAtoms(
-      mol, !pyatoms.is_none() ? &ats : nullptr);
-  if (!pyatoms.is_none()) {
-    nb::list pyres = nb::cast<nb::list>(pyatoms);
+  unsigned int res =
+      RDKit::Descriptors::calcNumBridgeheadAtoms(mol, pyatoms ? &ats : nullptr);
+  if (pyatoms) {
+    nb::list pyres = *pyatoms;
     for (const auto d : ats) {
       pyres.append(d);
     }
@@ -902,12 +924,13 @@ int registerPropertyHelper(
   return res;
 }
 
-// Convert nb::object of atom indices to boost::dynamic_bitset
+// Convert atom indices to boost::dynamic_bitset
 boost::dynamic_bitset<> objectToDynBitset(
-    const nb::object &obj, boost::dynamic_bitset<>::size_type maxV) {
+    const std::optional<PyIterableOf<size_t>> &obj,
+    boost::dynamic_bitset<>::size_type maxV) {
   boost::dynamic_bitset<> res(maxV);
-  if (!obj.is_none()) {
-    for (auto item : obj) {
+  if (obj) {
+    for (auto item : *obj) {
       auto idx = nb::cast<boost::dynamic_bitset<>::size_type>(item);
       if (idx < maxV) {
         res.set(idx);
@@ -919,7 +942,7 @@ boost::dynamic_bitset<> objectToDynBitset(
 
 double getPartialSurfaceAreaHelper(
     RDKit::Descriptors::DoubleCubicLatticeVolume &self,
-    const nb::object &atomIdxs) {
+    const std::optional<PyIterableOf<size_t>> &atomIdxs) {
   unsigned int numAtoms = self.mol.getNumAtoms();
   auto atoms = objectToDynBitset(atomIdxs, numAtoms);
 
@@ -933,7 +956,7 @@ double getPartialSurfaceAreaHelper(
 
 double getPartialVolumeHelper(
     RDKit::Descriptors::DoubleCubicLatticeVolume &self,
-    const nb::object &atomIdxs) {
+    const std::optional<PyIterableOf<size_t>> &atomIdxs) {
   unsigned int numAtoms = self.mol.getNumAtoms();
   auto atoms = objectToDynBitset(atomIdxs, numAtoms);
   if (atoms.empty()) {

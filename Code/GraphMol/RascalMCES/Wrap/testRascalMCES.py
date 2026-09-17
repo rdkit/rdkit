@@ -218,6 +218,13 @@ class TestCase(unittest.TestCase):
     results = rdRascalMCES.FindMCES(mol1, mol2, opts)
     self.assertFalse(results)
 
-    
+  def testOptionsType(self):
+    mols = (Chem.MolFromSmiles('c1ccccc1CCO'), Chem.MolFromSmiles('c1ccccc1CCN'))
+    self.assertEqual(len(rdRascalMCES.RascalButinaCluster(mols)), 1)
+    with self.assertRaises(TypeError):
+      rdRascalMCES.FindMCES(mols[0], mols[1], 5)
+    with self.assertRaises(TypeError):
+      rdRascalMCES.RascalCluster(mols, 5)
+
 if __name__ == "__main__":
   unittest.main()

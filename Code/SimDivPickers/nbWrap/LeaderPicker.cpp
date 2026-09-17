@@ -10,6 +10,7 @@
 #include <nanobind/stl/vector.h>
 
 #include "PickerHelpers.h"
+#include <RDBoost/Wrap_nb.h>
 
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
@@ -25,7 +26,7 @@ namespace {
 template <typename T>
 void LazyLeaderHelper(LeaderPicker *picker, T functor, unsigned int poolSize,
                       double &threshold, unsigned int pickSize,
-                      nb::object firstPicks, RDKit::INT_VECT &res,
+                      const PySequenceOf<int> &firstPicks, RDKit::INT_VECT &res,
                       int nThreads) {
   RDKit::INT_VECT firstPickVect;
   auto len = nb::len(firstPicks);
@@ -37,9 +38,11 @@ void LazyLeaderHelper(LeaderPicker *picker, T functor, unsigned int poolSize,
 }
 }  // end of anonymous namespace
 
-RDKit::INT_VECT LazyVectorLeaderPicks(LeaderPicker *picker, nb::object objs,
+RDKit::INT_VECT LazyVectorLeaderPicks(LeaderPicker *picker,
+                                      const PySequenceOf<ExplicitBitVect> &objs,
                                       int poolSize, double threshold,
-                                      int pickSize, nb::object firstPicks,
+                                      int pickSize,
+                                      const PySequenceOf<int> &firstPicks,
                                       int numThreads) {
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
@@ -54,7 +57,8 @@ RDKit::INT_VECT LazyVectorLeaderPicks(LeaderPicker *picker, nb::object objs,
 
 RDKit::INT_VECT LazyLeaderPicks(LeaderPicker *picker, nb::object distFunc,
                                 int poolSize, double threshold, int pickSize,
-                                nb::object firstPicks, int numThreads) {
+                                const PySequenceOf<int> &firstPicks,
+                                int numThreads) {
   pyobjFunctor functor(distFunc);
   RDKit::INT_VECT res;
   LazyLeaderHelper(picker, functor, poolSize, threshold, pickSize, firstPicks,

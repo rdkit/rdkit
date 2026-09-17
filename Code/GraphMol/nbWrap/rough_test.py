@@ -30,6 +30,7 @@ from rdkit.Chem import rdqueries
 
 from rdkit.Chem import rdChemReactions
 from rdkit.Chem.Scaffolds import MurckoScaffold
+from rdkit.Geometry import Point3D
 
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
@@ -8671,6 +8672,56 @@ M  END
 
   def testSequenceParamSignaturesAreTyped(self):
     self.assertIn('collections.abc.Iterable[int]', Chem.rdchem.CreateStereoGroup.__doc__)
+
+  def testLengthCheckedParamsAcceptGenerators(self):
+    # These two validate a length, and a generator is iterable but has no
+    # len(), so the length has to come from the converted vector.
+    m = Chem.MolFromSmiles('CCO')
+    order = list(range(m.GetNumAtoms()))
+    self.assertEqual(Chem.MolToSmiles(Chem.RenumberAtoms(m, (i for i in order))),
+                     Chem.MolToSmiles(Chem.RenumberAtoms(m, order)))
+    with self.assertRaises(ValueError):
+      Chem.RenumberAtoms(m, [0])
+    with self.assertRaises(ValueError):
+      Chem.RenumberAtoms(m, [0, 1, 99])
+
+    pts = [Point3D(0, 0, 0), Point3D(1, 0, 0)]
+    sgroup = Chem.CreateMolSubstanceGroup(Chem.RWMol(m), 'SRU')
+    sgroup.AddBracket(p for p in pts)
+    self.assertEqual(len(sgroup.GetBrackets()), 1)
+    with self.assertRaises(ValueError):
+      sgroup.AddBracket(p for p in pts[:1])
+
+  def testMolOpsContainerParams(self):
+    m = Chem.MolFromSmiles('CCO')
+
+    atomMap = {}
+    self.assertEqual(len(Chem.FindAtomEnvironmentOfRadiusN(m, 1, 0, atomMap=atomMap)), 1)
+    self.assertEqual(atomMap, {0: 0, 1: 1})
+    with self.assertRaises(TypeError):
+      Chem.FindAtomEnvironmentOfRadiusN(m, 1, 0, atomMap=[])
+
+    # Output arguments are filled in place, so they must be a list or dict.
+    frags = []
+    Chem.GetMolFrags(Chem.MolFromSmiles('CC.O'), asMols=True, frags=frags)
+    self.assertEqual(frags, [0, 0, 1])
+    with self.assertRaises(TypeError):
+      Chem.GetMolFrags(m, asMols=True, frags=())
+    with self.assertRaises(TypeError):
+      Chem.RDKFingerprint(m, bitInfo=[])
+
+    self.assertEqual(Chem.PathToSubmol(m, (0, 1)).GetNumAtoms(), 3)
+    peptide = Chem.MolFromSequence('AG')
+    self.assertEqual(sorted(Chem.SplitMolByPDBResidues(peptide, whiteList=('ALA', ))), ['ALA'])
+
+    a = Chem.MolFromSmiles("[C@H]([Xe])(F)([V])")
+    b = Chem.MolFromSmiles("[Xe]N.[V]I")
+    p = Chem.MolzipParams()
+    p.label = Chem.MolzipLabel.AtomType
+    p.setAtomSymbols(("Xe", "V"))
+    self.assertEqual(Chem.MolToSmiles(Chem.molzip(a, b, p)), "N[C@@H](F)I")
+    p.setAtomSymbols(None)
+    self.assertNotEqual(Chem.MolToSmiles(Chem.molzip(a, b, p)), "N[C@@H](F)I")
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

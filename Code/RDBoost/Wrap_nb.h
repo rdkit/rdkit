@@ -28,6 +28,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/variant.h>
 namespace nb = nanobind;
 
 // pattern for this from the "Better alternative" section of this StackOverflow
@@ -106,12 +107,17 @@ using PyListOf = nb::typed<nb::list, T>;
 template <typename K, typename V>
 using PyDictOf = nb::typed<nb::dict, K, V>;
 
-//! Text-format parsers accept either str or bytes. nanobind renders this
-//! variant as "str | bytes" in the generated signature and rejects anything
-//! else before the call is dispatched.
+//! A Python sequence whose elements convert to \c T, for arguments that are
+//! indexed or measured with len() rather than only iterated. Accepts anything
+//! passing PySequence_Check, which excludes sets and generators.
+template <typename T>
+using PySequenceOf = nb::typed<nb::sequence, T>;
+
+//! Text that reached us as either \c str or \c bytes. nanobind renders this
+//! as "str | bytes" in generated signatures and rejects anything else before
+//! the call is dispatched; pyObjectToString() gets at the text itself.
 using StringOrBytes = std::variant<std::string, nb::bytes>;
 
-//! Returns the text of \c input, whether it arrived as str or as bytes.
 inline std::string pyObjectToString(const StringOrBytes &input) {
   if (std::holds_alternative<std::string>(input)) {
     return std::get<std::string>(input);

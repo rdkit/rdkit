@@ -617,6 +617,27 @@ class TestCase(unittest.TestCase):
     for i, (a, b) in enumerate(zip(expected, rmsds)):
       self.assertAlmostEqual(a, b, delta=0.0001, msg=f"Mismatch at index {i}")
 
+  def test21SequenceArguments(self):
+    mol = Chem.AddHs(Chem.MolFromSmiles('OCC(=O)N'))
+    AllChem.EmbedMultipleConfs(mol, 2, randomSeed=42)
+    heavy = tuple(atom.GetIdx() for atom in mol.GetAtoms() if atom.GetAtomicNum() > 1)
+    atomMap = tuple([i, i] for i in heavy)
+    rmsd = rdMolAlign.AlignMol(Chem.Mol(mol), mol, 1, 0, atomMap=atomMap)
+    self.assertAlmostEqual(
+      rdMolAlign.AlignMol(Chem.Mol(mol), mol, 1, 0, atomMap=atomMap, weights=(1.0, ) * len(heavy)),
+      rmsd)
+    self.assertAlmostEqual(rdMolAlign.CalcRMS(mol, mol, 1, 0, map=(atomMap, )),
+                           rdMolAlign.CalcRMS(mol, mol, 1, 0, map=[list(atomMap)]))
+    rdMolAlign.AlignMolConformers(Chem.Mol(mol), atomIds=heavy, confIds=(0, 1))
+    with self.assertRaises((TypeError, ValueError)):
+      rdMolAlign.AlignMol(Chem.Mol(mol), mol, 1, 0, atomMap=5)
+
+    params = rdMolAlign.BestAlignmentParams()
+    params.map = (atomMap, )
+    params.weights = (1.0, ) * len(heavy)
+    self.assertEqual(len(params.map), 1)
+    self.assertEqual(len(params.weights), len(heavy))
+
 
 if __name__ == '__main__':
   print("Testing MolAlign Wrappers")

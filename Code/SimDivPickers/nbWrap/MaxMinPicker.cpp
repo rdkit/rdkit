@@ -12,6 +12,7 @@
 #include <nanobind/ndarray.h>
 
 #include "PickerHelpers.h"
+#include <RDBoost/Wrap_nb.h>
 
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
@@ -26,11 +27,10 @@ using namespace nb::literals;
 namespace RDPickers {
 
 // REVIEW: the poolSize can be pulled from the numeric array
-RDKit::INT_VECT MaxMinPicks(MaxMinPicker *picker,
-                            nb::ndarray<nb::numpy, double, nb::ndim<1>,
-                                        nb::c_contig> distMat,
-                            int poolSize, int pickSize,
-                            nb::object firstPicks, int seed) {
+RDKit::INT_VECT MaxMinPicks(
+    MaxMinPicker *picker,
+    nb::ndarray<nb::numpy, double, nb::ndim<1>, nb::c_contig> distMat,
+    int poolSize, int pickSize, const PySequenceOf<int> &firstPicks, int seed) {
   if (pickSize >= poolSize) {
     throw nb::value_error("pickSize must be less than poolSize");
   }
@@ -48,8 +48,9 @@ RDKit::INT_VECT MaxMinPicks(MaxMinPicker *picker,
 namespace {
 template <typename T>
 void LazyMaxMinHelper(MaxMinPicker *picker, T functor, unsigned int poolSize,
-                      unsigned int pickSize, nb::object firstPicks,
-                      int seed, RDKit::INT_VECT &res, double &threshold) {
+                      unsigned int pickSize,
+                      const PySequenceOf<int> &firstPicks, int seed,
+                      RDKit::INT_VECT &res, double &threshold) {
   RDKit::INT_VECT firstPickVect;
   auto len = nb::len(firstPicks);
   for (size_t i = 0; i < len; ++i) {
@@ -62,7 +63,7 @@ void LazyMaxMinHelper(MaxMinPicker *picker, T functor, unsigned int poolSize,
 
 RDKit::INT_VECT LazyMaxMinPicks(MaxMinPicker *picker, nb::object distFunc,
                                 int poolSize, int pickSize,
-                                nb::object firstPicks, int seed,
+                                const PySequenceOf<int> &firstPicks, int seed,
                                 nb::object useCache) {
   if (!useCache.is_none()) {
     BOOST_LOG(rdWarningLog)
@@ -78,7 +79,7 @@ RDKit::INT_VECT LazyMaxMinPicks(MaxMinPicker *picker, nb::object distFunc,
 
 std::tuple<RDKit::INT_VECT, double> LazyMaxMinPicksWithThreshold(
     MaxMinPicker *picker, nb::object distFunc, int poolSize, int pickSize,
-    double threshold, nb::object firstPicks, int seed) {
+    double threshold, const PySequenceOf<int> &firstPicks, int seed) {
   pyobjFunctor functor(distFunc);
   RDKit::INT_VECT res;
   LazyMaxMinHelper(picker, functor, poolSize, pickSize, firstPicks, seed, res,
@@ -86,10 +87,11 @@ std::tuple<RDKit::INT_VECT, double> LazyMaxMinPicksWithThreshold(
   return std::make_tuple(res, threshold);
 }
 
-RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, nb::object objs,
+RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker,
+                                      const PySequenceOf<ExplicitBitVect> &objs,
                                       int poolSize, int pickSize,
-                                      nb::object firstPicks, int seed,
-                                      nb::object useCache) {
+                                      const PySequenceOf<int> &firstPicks,
+                                      int seed, nb::object useCache) {
   if (!useCache.is_none()) {
     BOOST_LOG(rdWarningLog)
         << "the useCache argument is deprecated and ignored" << std::endl;
@@ -108,8 +110,9 @@ RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, nb::object objs,
 }
 
 std::tuple<RDKit::INT_VECT, double> LazyVectorMaxMinPicksWithThreshold(
-    MaxMinPicker *picker, nb::object objs, int poolSize, int pickSize,
-    double threshold, nb::object firstPicks, int seed) {
+    MaxMinPicker *picker, const PySequenceOf<ExplicitBitVect> &objs,
+    int poolSize, int pickSize, double threshold,
+    const PySequenceOf<int> &firstPicks, int seed) {
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
     bvs[i] = nb::cast<const ExplicitBitVect *>(objs[i]);
