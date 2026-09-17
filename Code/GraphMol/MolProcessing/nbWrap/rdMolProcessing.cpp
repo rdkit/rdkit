@@ -40,6 +40,8 @@ nb::tuple getFingerprintsHelper(
 }  // namespace
 
 NB_MODULE(rdMolProcessing, m) {
+  nb::module_::import_("rdkit.Chem.rdFingerprintGenerator");
+
   m.doc() = "Module containing functions for working with groups of molecules";
 
   nb::class_<GeneralMolSupplier::SupplierOptions>(m, "SupplierOptions",

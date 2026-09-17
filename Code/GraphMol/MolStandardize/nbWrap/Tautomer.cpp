@@ -152,6 +152,9 @@ void setCallbackHelper(MolStandardize::TautomerEnumerator &te,
   te.setCallback(cppObj);
 }
 
+//! Scores a tautomer; the highest-scoring one is canonical.
+using ScoreFunction = nb::typed<nb::callable, int(const ROMol &)>;
+
 class pyobjFunctor {
  public:
   pyobjFunctor(nb::object obj) : dp_obj(std::move(obj)) {}
@@ -175,7 +178,7 @@ ROMol *canonicalizeHelper(const MolStandardize::TautomerEnumerator &self,
 }
 
 ROMol *canonicalizeHelper2(const MolStandardize::TautomerEnumerator &self,
-                           const ROMol &mol, nb::object scoreFunc) {
+                           const ROMol &mol, const ScoreFunction &scoreFunc) {
   pyobjFunctor ftor(scoreFunc);
   return self.canonicalize(mol, ftor);
 }
@@ -212,7 +215,8 @@ ROMol *pickCanonicalHelper(const MolStandardize::TautomerEnumerator &self,
 }
 
 ROMol *pickCanonicalHelper2(const MolStandardize::TautomerEnumerator &self,
-                            const nb::object &o, nb::object scoreFunc) {
+                            const nb::object &o,
+                            const ScoreFunction &scoreFunc) {
   pyobjFunctor ftor(scoreFunc);
   try {
     auto e = nb::cast<MolStandardize::TautomerEnumeratorResult *>(o);

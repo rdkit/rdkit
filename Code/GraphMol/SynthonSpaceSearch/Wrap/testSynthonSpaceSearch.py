@@ -40,7 +40,7 @@ import sys
 
 from pathlib import Path
 
-from rdkit import Chem
+from rdkit import Chem, rdBase
 from rdkit.Chem import (rdSynthonSpaceSearch, rdFingerprintGenerator,
                         rdRascalMCES, rdGeneralizedSubstruct, rdMolDescriptors,
                         rdDistGeom, rdGaussianShape)
@@ -419,6 +419,21 @@ class TestCase(unittest.TestCase):
     hits = synthonspace.ShapeSearch(query, ssparams, 0, 100000)
     self.assertEqual(len(hits.GetHitMolecules()), 3)
     phf.unlink()
+
+  def testArgumentTypes(self):
+    space = rdSynthonSpaceSearch.SynthonSpace()
+    query = Chem.MolFromSmiles('c1ccccc1')
+    with self.assertRaises(TypeError):
+      space.RascalSearch(query, 5)
+
+  @unittest.skipIf(rdBase._wrapperType == 'boost', 'the Boost wrappers do not check these types')
+  def testGeneratorAndCallbackTypes(self):
+    space = rdSynthonSpaceSearch.SynthonSpace()
+    query = Chem.MolFromSmiles('c1ccccc1')
+    with self.assertRaises(TypeError):
+      space.FingerprintSearch(query, 5)
+    with self.assertRaises(TypeError):
+      rdSynthonSpaceSearch.ShapeBuildParams().setUserConformerGenerator(5)
 
   def testShapeInterimFile(self):
     with tempfile.NamedTemporaryFile(delete=False) as tmp:

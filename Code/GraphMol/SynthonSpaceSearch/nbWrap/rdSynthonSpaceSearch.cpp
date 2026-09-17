@@ -110,6 +110,15 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper2(
   return results;
 }
 
+//! Receives each batch of hits and returns True once it has enough, or False
+//! or None to continue the search.
+using SearchCallback =
+    nb::typed<nb::callable, std::optional<bool>(PyListOf<ROMol>)>;
+
+//! Returns up to the requested number of conformers for a SMILES, or None.
+using ConformerGenerator =
+    nb::typed<nb::callable, std::optional<ROMol>(std::string, unsigned int)>;
+
 struct CallbackAdapter {
   nb::object py_callable;
 
@@ -128,7 +137,7 @@ struct CallbackAdapter {
 
 void substructureSearch_helper3(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    nb::object py_callable,
+    const SearchCallback &py_callable,
     const std::optional<SubstructMatchParameters> &py_smParams,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
@@ -181,16 +190,14 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper5(
 
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const nb::object &fingerprintGenerator,
+    const FingerprintGenerator<std::uint64_t> &fingerprintGenerator,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    const FingerprintGenerator<std::uint64_t> *fpGen =
-        nb::cast<FingerprintGenerator<std::uint64_t> *>(fingerprintGenerator);
     results = self.fingerprintSearch(
-        query, *fpGen,
+        query, fingerprintGenerator,
         py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
   }
   if (results.getCancelled()) {
@@ -201,30 +208,27 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
 
 void fingerprintSearch_helper2(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const nb::object &fingerprintGenerator, nb::object py_callable,
+    const FingerprintGenerator<std::uint64_t> &fingerprintGenerator,
+    const SearchCallback &py_callable,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
-  const FingerprintGenerator<std::uint64_t> *fpGen =
-      nb::cast<FingerprintGenerator<std::uint64_t> *>(fingerprintGenerator);
   CallbackAdapter callback{py_callable};
   self.fingerprintSearch(
-      query, *fpGen, callback,
+      query, fingerprintGenerator, callback,
       py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
 }
 
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper3(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const nb::object &fingerprintGenerator,
+    const FingerprintGenerator<std::uint64_t> &fingerprintGenerator,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params,
     std::uint64_t startLine, std::uint64_t finishLine) {
-  const FingerprintGenerator<std::uint64_t> *fpGen =
-      nb::cast<FingerprintGenerator<std::uint64_t> *>(fingerprintGenerator);
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
     results = self.fingerprintSearch(
-        query, *fpGen,
+        query, fingerprintGenerator,
         py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()),
         startLine, finishLine);
   }
@@ -236,11 +240,9 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper3(
 
 SynthonSpaceSearch::SearchResults rascalSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const nb::object &py_rascalOptions,
+    const RascalMCES::RascalOptions &rascalOptions,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
-  RascalMCES::RascalOptions rascalOptions =
-      nb::cast<RascalMCES::RascalOptions>(py_rascalOptions);
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
@@ -257,7 +259,7 @@ SynthonSpaceSearch::SearchResults rascalSearch_helper(
 void rascalSearch_helper2(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const std::optional<RascalMCES::RascalOptions> &py_rascalOptions,
-    nb::object py_callable,
+    const SearchCallback &py_callable,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
   CallbackAdapter callback{py_callable};
@@ -268,12 +270,10 @@ void rascalSearch_helper2(
 
 SynthonSpaceSearch::SearchResults rascalSearch_helper3(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const nb::object &py_rascalOptions,
+    const RascalMCES::RascalOptions &rascalOptions,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params,
     std::uint64_t startLine, std::uint64_t finishLine) {
-  RascalMCES::RascalOptions rascalOptions =
-      nb::cast<RascalMCES::RascalOptions>(py_rascalOptions);
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
@@ -330,12 +330,9 @@ void reportSynthonUsage_helper(const SynthonSpaceSearch::SynthonSpace &self) {
 
 void convertTextToDBFile_helper(
     const std::filesystem::path &inFilename,
-    const std::filesystem::path &outFilename, nb::object fpGen,
+    const std::filesystem::path &outFilename,
+    const FingerprintGenerator<std::uint64_t> *fpGen,
     const std::optional<SynthonSpaceSearch::ShapeBuildParams> &py_shapeParams) {
-  const FingerprintGenerator<std::uint64_t> *fpGenCpp = nullptr;
-  if (!fpGen.is_none()) {
-    fpGenCpp = nb::cast<FingerprintGenerator<std::uint64_t> *>(fpGen);
-  }
   std::optional<SynthonSpaceSearch::ShapeBuildParams> shapeParams;
   if (py_shapeParams) {
     shapeParams = *py_shapeParams;
@@ -343,7 +340,7 @@ void convertTextToDBFile_helper(
 
   bool cancelled = false;
   SynthonSpaceSearch::convertTextToDBFile(
-      inFilename.string(), outFilename.string(), cancelled, fpGenCpp,
+      inFilename.string(), outFilename.string(), cancelled, fpGen,
       shapeParams ? &(*shapeParams) : nullptr);
   if (cancelled) {
     throwCancelled("Database conversion cancelled");
@@ -380,7 +377,7 @@ void buildShapes_helper(
 }
 
 void setUserConfGen_helper(SynthonSpaceSearch::ShapeBuildParams &ps,
-                           nb::object func) {
+                           ConformerGenerator func) {
   ps.userConformerGenerator =
       [func = std::move(func)](
           const std::string &smiles,
@@ -399,7 +396,7 @@ void setUserConfGen_helper(SynthonSpaceSearch::ShapeBuildParams &ps,
 }
 
 void setUserConfGen_helper2(SynthonSpaceSearch::SynthonSpaceSearchParams &ps,
-                            nb::object func) {
+                            ConformerGenerator func) {
   ps.userConformerGenerator =
       [func = std::move(func)](
           const std::string &smiles,
@@ -420,6 +417,9 @@ void setUserConfGen_helper2(SynthonSpaceSearch::SynthonSpaceSearchParams &ps,
 }  // namespace
 
 NB_MODULE(rdSynthonSpaceSearch, m) {
+  nb::module_::import_("rdkit.Chem.rdFingerprintGenerator");
+  nb::module_::import_("rdkit.Chem.rdRascalMCES");
+
   m.doc() =
       R"DOC(Module containing implementation of SynthonSpace search of
 Synthon-based chemical libraries such as Enamine REAL.

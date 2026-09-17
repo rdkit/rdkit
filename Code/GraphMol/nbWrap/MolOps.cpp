@@ -1011,11 +1011,7 @@ ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core, nb::object match,
                      requireDummyMatch);
 }
 
-void setDoubleBondNeighborDirectionsHelper(ROMol &mol, nb::object confObj) {
-  Conformer *conf = nullptr;
-  if (confObj) {
-    conf = nb::cast<Conformer *>(confObj);
-  }
+void setDoubleBondNeighborDirectionsHelper(ROMol &mol, Conformer *conf) {
   MolOps::setDoubleBondNeighborDirections(mol, conf);
 }
 

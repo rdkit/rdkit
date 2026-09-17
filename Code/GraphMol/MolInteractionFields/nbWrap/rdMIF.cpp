@@ -388,14 +388,9 @@ NOTE: This functionality is experimental and the API and/or results may change i
 
   m.def(
       "WriteToCubeFile",
-      [](const RDGeom::UniformRealValueGrid3D &grid, const std::string &filename,
-         const nb::object &mol, int confId) {
-        const RDKit::ROMol *molPtr = nullptr;
-        if (!mol.is_none()) {
-          molPtr = nb::cast<const RDKit::ROMol *>(mol);
-        }
-        writeToCubeFile(grid, filename, molPtr, confId);
-      },
+      [](const RDGeom::UniformRealValueGrid3D &grid,
+         const std::string &filename, const RDKit::ROMol *mol,
+         int confId) { writeToCubeFile(grid, filename, mol, confId); },
       "grid"_a, "filename"_a, "mol"_a = nb::none(), "confId"_a = -1,
       R"DOC(Writes Grid to a file in Gaussian CUBE format.
 

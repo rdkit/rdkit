@@ -8,13 +8,17 @@ it's intended to be shallow, but broad
 
 """
 
+import ast
 import doctest
 import gc
 import gzip
 import importlib.util
+import json
 import logging
 import os
 import pickle
+import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -28,7 +32,8 @@ import numpy as np
 from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
 from rdkit.Chem import rdqueries
 
-from rdkit.Chem import rdChemReactions
+from rdkit.Chem import rdChemReactions, rdSynthonSpaceSearch
+from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem.Scaffolds import MurckoScaffold
 from rdkit.Geometry import Point3D
 
@@ -44,6 +49,19 @@ def ReplaceCore(*a, **kw):
     return Chem.ReplaceCore(*a, **kw)
 """ % "\n".join([x.lstrip() for x in Chem.ReplaceCore.__doc__.split("\n")])
 exec(code, TestReplaceCore.__dict__)
+
+
+def signature_annotations(signature):
+  """Returns a {parameter: annotation} dict for one nanobind signature string."""
+  # nanobind writes each default value as a \N placeholder, which is not valid Python.
+  args = ast.parse(re.sub(r'\\\d+', '...', signature) + ': ...').body[0].args
+  return {arg.arg: ast.unparse(arg.annotation)
+          for arg in args.args + args.kwonlyargs if arg.annotation}
+
+
+def parameter_annotations(func):
+  """Returns a {parameter: annotation} dict for each overload of a nanobind function."""
+  return [signature_annotations(signature) for signature, _, _ in func.__nb_signature__]
 
 
 @contextmanager
@@ -8656,17 +8674,53 @@ M  END
           parser(42)
 
   def testTextParserSignaturesAreTyped(self):
-    # The generated signature names the accepted types.
-    self.assertIn('str | bytes', Chem.MolFromSmiles.__doc__)
-    self.assertIn('str | bytes', Chem.MolFromMolBlock.__doc__)
+    self.assertEqual(parameter_annotations(Chem.MolFromSmiles)[0]['SMILES'], 'str | bytes')
+    self.assertEqual(parameter_annotations(Chem.MolFromMolBlock)[0]['molBlock'], 'str | bytes')
 
   def testCallbackAndMappingSignaturesAreTyped(self):
-    self.assertIn('Callable[[rdkit.Chem.rdchem.Atom, rdkit.Chem.rdchem.Atom], bool]',
-                  Chem.SubstructMatchParameters.setExtraAtomCheckFunc.__doc__)
-    self.assertIn('metadata: dict[str, str]', Chem.AddMetadataToPNGString.__doc__)
-    self.assertIn('bvList: collections.abc.Iterable[rdkit.DataStructs.cDataStructs.ExplicitBitVect]',
-                  DataStructs.BulkTanimotoSimilarity.__doc__)
-    self.assertIn('queries: dict[str, rdkit.Chem.rdchem.Mol]', Chem.MolAddRecursiveQueries.__doc__)
+    cases = [
+      (Chem.SubstructMatchParameters.setExtraAtomCheckFunc, 0, 'func',
+       'collections.abc.Callable[[rdkit.Chem.rdchem.Atom, rdkit.Chem.rdchem.Atom], bool]'),
+      (Chem.AddMetadataToPNGString, 0, 'metadata', 'dict[str, str]'),
+      (DataStructs.BulkTanimotoSimilarity, 1, 'bvList',
+       'collections.abc.Iterable[rdkit.DataStructs.cDataStructs.ExplicitBitVect]'),
+      (Chem.MolAddRecursiveQueries, 0, 'queries', 'dict[str, rdkit.Chem.rdchem.Mol]'),
+      (rdSynthonSpaceSearch.SynthonSpace.SubstructureSearchIncremental, 0, 'callback',
+       'collections.abc.Callable[[list[rdkit.Chem.rdchem.Mol]], bool | None]'),
+      (rdSynthonSpaceSearch.ShapeBuildParams.setUserConformerGenerator, 0, 'func',
+       'collections.abc.Callable[[str, int], rdkit.Chem.rdchem.Mol | None]'),
+      (rdMolStandardize.TautomerEnumerator.Canonicalize, 1, 'scoreFunc',
+       'collections.abc.Callable[[rdkit.Chem.rdchem.Mol], int]'),
+      (rdMolStandardize.CleanupInPlace, 1, 'mols',
+       'collections.abc.Iterable[rdkit.Chem.rdchem.Mol]'),
+      (Chem.SetDoubleBondNeighborDirections, 0, 'conf', 'rdkit.Chem.rdchem.Conformer | None'),
+    ]
+    for func, overload, parameter, expected in cases:
+      with self.subTest(func=func.__name__, parameter=parameter):
+        self.assertEqual(parameter_annotations(func)[overload][parameter], expected)
+
+  def testSignaturesNameTypesFromOtherModules(self):
+    # A fresh interpreter, so that only the modules each module imports itself are loaded.
+    code = ('import json\n'
+            'from rdkit.Chem import rdMolProcessing, rdSynthonSpaceSearch\n'
+            'functions = [rdMolProcessing.GetFingerprintsForMolsInFile,\n'
+            '             rdSynthonSpaceSearch.SynthonSpace.FingerprintSearch,\n'
+            '             rdSynthonSpaceSearch.SynthonSpace.RascalSearch]\n'
+            'print(json.dumps([[sig for sig, _, _ in f.__nb_signature__] for f in functions]))\n')
+    output = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True,
+                            check=True).stdout
+    processing, fingerprint, rascal = json.loads(output)
+    for signature in processing + fingerprint + rascal:
+      # An unregistered type is rendered as its C++ name, such as RDKit::RascalMCES::RascalOptions.
+      self.assertNotIn('::', signature)
+    self.assertEqual(
+      signature_annotations(processing[1])['generator'],
+      'rdkit.Chem.rdFingerprintGenerator.FingerprintGenerator64 | None')
+    self.assertEqual(
+      signature_annotations(fingerprint[0])['fingerprintGenerator'],
+      'rdkit.Chem.rdFingerprintGenerator.FingerprintGenerator64')
+    self.assertEqual(
+      signature_annotations(rascal[0])['rascalOptions'], 'rdkit.Chem.rdRascalMCES.RascalOptions')
 
   def testSequenceParamsAcceptAnyIterable(self):
     m = Chem.RWMol(Chem.MolFromSmiles('C[C@H](F)Cl'))
@@ -8679,7 +8733,8 @@ M  END
           Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, bad)
 
   def testSequenceParamSignaturesAreTyped(self):
-    self.assertIn('collections.abc.Iterable[int]', Chem.rdchem.CreateStereoGroup.__doc__)
+    self.assertEqual(parameter_annotations(Chem.rdchem.CreateStereoGroup)[0]['atomIds'],
+                     'collections.abc.Iterable[int]')
 
   def testLengthCheckedParamsAcceptGenerators(self):
     # These two validate a length, and a generator is iterable but has no
@@ -8708,6 +8763,8 @@ M  END
     self.assertEqual(atomMap, {0: 0, 1: 1})
     with self.assertRaises(TypeError):
       Chem.FindAtomEnvironmentOfRadiusN(m, 1, 0, atomMap=[])
+    with self.assertRaises(TypeError):
+      Chem.SetDoubleBondNeighborDirections(m, 5)
 
     # Output arguments are filled in place, so they must be a list or dict.
     frags = []

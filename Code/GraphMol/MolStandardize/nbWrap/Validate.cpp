@@ -134,7 +134,9 @@ void wrap_validate(nb::module_ &m) {
              MolStandardize::ValidationMethod>(m, "MolVSValidation")
       .def(nb::init<>())
       .def("__init__",
-           [](MolStandardize::MolVSValidation *self, nb::object validations) {
+           [](MolStandardize::MolVSValidation *self,
+              const PyIterableOf<MolStandardize::ValidationMethod>
+                  &validations) {
              std::unique_ptr<MolStandardize::MolVSValidation> v(
                  getMolVSValidation(validations));
              new (self) MolStandardize::MolVSValidation(*v);
@@ -145,7 +147,7 @@ void wrap_validate(nb::module_ &m) {
              MolStandardize::ValidationMethod>(m, "AllowedAtomsValidation")
       .def("__init__",
            [](MolStandardize::AllowedAtomsValidation *self,
-              nb::object atoms) {
+              const PyIterableOf<Atom> &atoms) {
              std::unique_ptr<MolStandardize::AllowedAtomsValidation> v(
                  getAllowedAtomsValidation(atoms));
              new (self) MolStandardize::AllowedAtomsValidation(*v);
@@ -156,7 +158,7 @@ void wrap_validate(nb::module_ &m) {
              MolStandardize::ValidationMethod>(m, "DisallowedAtomsValidation")
       .def("__init__",
            [](MolStandardize::DisallowedAtomsValidation *self,
-              nb::object atoms) {
+              const PyIterableOf<Atom> &atoms) {
              std::unique_ptr<MolStandardize::DisallowedAtomsValidation> v(
                  getDisallowedAtomsValidation(atoms));
              new (self) MolStandardize::DisallowedAtomsValidation(*v);

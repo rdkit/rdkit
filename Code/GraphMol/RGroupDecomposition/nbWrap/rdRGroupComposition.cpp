@@ -160,7 +160,7 @@ class RGroupDecompositionHelper {
   }
 };
 
-nb::object RGroupDecomp(nb::object cores, nb::object mols,
+nb::object RGroupDecomp(nb::object cores, const PyIterableOf<ROMol> &mols,
                         bool asSmiles = false, bool asRows = true,
                         const RGroupDecompositionParameters &options =
                             RGroupDecompositionParameters()) {

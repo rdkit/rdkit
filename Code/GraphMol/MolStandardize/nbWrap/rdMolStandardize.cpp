@@ -210,7 +210,7 @@ void tautomerParentInPlaceHelper(
 
 template <typename FUNCTYPE>
 void mtinPlaceHelper(
-    nb::object pymols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &pymols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     FUNCTYPE func) {
   nb::list molList(pymols);
@@ -229,7 +229,7 @@ void mtinPlaceHelper(
 
 template <typename FUNCTYPE>
 void mtinPlaceHelper2(
-    nb::object pymols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &pymols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize, FUNCTYPE func) {
   nb::list molList(pymols);
@@ -247,7 +247,7 @@ void mtinPlaceHelper2(
 }
 
 void mtcleanupInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params) {
   mtinPlaceHelper(
       mols, numThreads, params,
@@ -257,7 +257,7 @@ void mtcleanupInPlaceHelper(
 }
 
 void mtnormalizeInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params) {
   mtinPlaceHelper(
       mols, numThreads, params,
@@ -267,7 +267,7 @@ void mtnormalizeInPlaceHelper(
 }
 
 void mtreionizeInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params) {
   mtinPlaceHelper(
       mols, numThreads, params,
@@ -277,7 +277,7 @@ void mtreionizeInPlaceHelper(
 }
 
 void mtremoveFragmentsInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params) {
   mtinPlaceHelper(
       mols, numThreads, params,
@@ -287,7 +287,7 @@ void mtremoveFragmentsInPlaceHelper(
 }
 
 void mtfragmentParentInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize) {
   mtinPlaceHelper2(mols, numThreads, params, skip_standardize,
@@ -298,7 +298,7 @@ void mtfragmentParentInPlaceHelper(
 }
 
 void mtstereoParentInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize) {
   mtinPlaceHelper2(
@@ -309,7 +309,7 @@ void mtstereoParentInPlaceHelper(
 }
 
 void mtisotopeParentInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize) {
   mtinPlaceHelper2(
@@ -320,7 +320,7 @@ void mtisotopeParentInPlaceHelper(
 }
 
 void mtchargeParentInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize) {
   mtinPlaceHelper2(
@@ -331,7 +331,7 @@ void mtchargeParentInPlaceHelper(
 }
 
 void mtsuperParentInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize) {
   mtinPlaceHelper2(
@@ -342,7 +342,7 @@ void mtsuperParentInPlaceHelper(
 }
 
 void mttautomerParentInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize) {
   mtinPlaceHelper2(mols, numThreads, params, skip_standardize,
