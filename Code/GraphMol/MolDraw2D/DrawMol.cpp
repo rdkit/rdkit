@@ -1430,7 +1430,7 @@ std::pair<std::string, OrientType> DrawMol::getAtomSymbolAndOrientation(
 // ****************************************************************************
 std::string getAtomListText(const Atom &atom) {
   PRECONDITION(atom.hasQuery(), "no query");
-  PRECONDITION(isAtomListQuery(atom), "query is not an atom list");
+  PRECONDITION(isAtomListQuery(&atom), "query is not an atom list");
 
   std::string res = "";
   if (atom.getQuery()->getNegation()) {
