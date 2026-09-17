@@ -200,6 +200,9 @@ PyForceField::minimizeTrajectory(unsigned int snapshotFreq, int maxIts,
 }
 
 NB_MODULE(rdForceField, m) {
+  nb::module_::import_("rdkit.Chem.rdchem");
+  nb::module_::import_("rdkit.Geometry.rdGeometry");
+
   m.doc() = "Exposes the ForceField class";
 
   // Minimal Snapshot binding needed for MinimizeTrajectory return value.

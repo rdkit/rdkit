@@ -763,6 +763,8 @@ void setScaleHelper(MolDraw2D &self, int width, int height, const Point2D &minv,
 }  // namespace
 
 NB_MODULE(rdMolDraw2D, m) {
+  nb::module_::import_("rdkit.Chem.rdChemReactions");
+
   m.doc() = "Module containing a C++ implementation of 2D molecule drawing";
 
   rdkit_import_array();

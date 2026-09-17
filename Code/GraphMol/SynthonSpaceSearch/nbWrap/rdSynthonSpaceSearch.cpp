@@ -419,6 +419,7 @@ void setUserConfGen_helper2(SynthonSpaceSearch::SynthonSpaceSearchParams &ps,
 
 NB_MODULE(rdSynthonSpaceSearch, m) {
   nb::module_::import_("rdkit.Chem.rdFingerprintGenerator");
+  nb::module_::import_("rdkit.Chem.rdGeneralizedSubstruct");
   nb::module_::import_("rdkit.Chem.rdRascalMCES");
 
   m.doc() =
