@@ -180,6 +180,18 @@ class TestCase(unittest.TestCase):
     )
     self.assertRaises(ValueError, lambda: rdAlg.GetAlignmentTransform(refPts, prbPts))
 
+  def test6Weights(self):
+    pts = (
+      Geometry.Point3D(0.0, 0.0, 0.0),
+      Geometry.Point3D(1.0, 0.0, 0.0),
+      Geometry.Point3D(0.0, 1.0, 0.0),
+    )
+    for weights in ([1.0, 1.0, 2.0], (1.0, 1.0, 2.0), np.array([1.0, 1.0, 2.0])):
+      ssd, _ = rdAlg.GetAlignmentTransform(pts, pts, weights=weights)
+      self.assertAlmostEqual(ssd, 0.0)
+    with self.assertRaises((TypeError, ValueError)):
+      rdAlg.GetAlignmentTransform(pts, pts, weights=1.0)
+
 
 if __name__ == '__main__':
   print("Testing Alignment Wrapper code:")

@@ -9,11 +9,13 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
+#include <nanobind/stl/optional.h>
 
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
 #include <Numerics/Vector.h>
 #include <Numerics/Alignment/AlignPoints.h>
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -63,9 +65,10 @@ auto makeTransform4x4(const RDGeom::Transform3D &trans) {
   return nb::ndarray<nb::numpy, double, nb::ndim<2>>(resData, {4, 4}, owner);
 }
 
-nb::tuple AlignPointPairs(nb::object refPoints, nb::object probePoints,
-                          nb::object weights = nb::none(), bool reflect = false,
-                          unsigned int maxIterations = 50) {
+nb::tuple AlignPointPairs(
+    nb::object refPoints, nb::object probePoints,
+    const std::optional<PySequenceOf<double>> &weights = std::nullopt,
+    bool reflect = false, unsigned int maxIterations = 50) {
   std::vector<RDGeom::Point3D> refOwned, probeOwned;
   fillPointVec(refPoints, refOwned);
   fillPointVec(probePoints, probeOwned);
@@ -79,16 +82,15 @@ nb::tuple AlignPointPairs(nb::object refPoints, nb::object probePoints,
   for (auto &p : probeOwned) probePts.push_back(&p);
 
   std::unique_ptr<RDNumeric::DoubleVector> wtsVec;
-  if (!weights.is_none()) {
-    auto wseq = nb::cast<nb::sequence>(weights);
-    auto nwts = nb::len(wseq);
+  if (weights) {
+    auto nwts = nb::len(*weights);
     if (nwts != refOwned.size()) {
       throw nb::value_error(
           "Number of weights supplied do not match the number of points");
     }
     wtsVec = std::make_unique<RDNumeric::DoubleVector>(nwts);
     size_t i = 0;
-    for (auto w : wseq) {
+    for (auto w : *weights) {
       wtsVec->setVal(i++, nb::cast<double>(w));
     }
   }

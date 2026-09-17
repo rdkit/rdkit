@@ -122,11 +122,12 @@ nb::tuple ForceFieldGetExtraPointLoc(PyForceField *self, unsigned int idx) {
                         self->extraPoints[idx]->z);
 }
 
-double PyForceField::calcEnergyWithPos(nb::object pos) {
+double PyForceField::calcEnergyWithPos(
+    const std::optional<PySequenceOf<double>> &pos) {
   PRECONDITION(this->field, "no force field");
-  if (!pos.is_none()) {
+  if (pos) {
     size_t s = this->field->dimension() * this->field->numPoints();
-    size_t numElements = nb::len(pos);
+    size_t numElements = nb::len(*pos);
     if (s != numElements) {
       throw ValueErrorException(
           "The Python container must have length equal to Dimension() * "
@@ -134,7 +135,7 @@ double PyForceField::calcEnergyWithPos(nb::object pos) {
     }
     std::vector<double> c(s);
     for (size_t i = 0; i < s; ++i) {
-      c[i] = nb::cast<double>(pos[nb::cast(i)]);
+      c[i] = nb::cast<double>((*pos)[nb::cast(i)]);
     }
     return this->field->calcEnergy(c.data());
   } else {
@@ -154,12 +155,13 @@ nb::tuple PyForceField::positions() {
   return nb::tuple(coordList);
 }
 
-nb::tuple PyForceField::calcGradWithPos(nb::object pos) {
+nb::tuple PyForceField::calcGradWithPos(
+    const std::optional<PySequenceOf<double>> &pos) {
   PRECONDITION(this->field, "no force field");
   size_t s = this->field->dimension() * this->field->numPoints();
   std::vector<double> g(s, 0.0);
-  if (!pos.is_none()) {
-    size_t numElements = nb::len(pos);
+  if (pos) {
+    size_t numElements = nb::len(*pos);
     if (s != numElements) {
       throw ValueErrorException(
           "The Python container must have length equal to Dimension() * "
@@ -167,7 +169,7 @@ nb::tuple PyForceField::calcGradWithPos(nb::object pos) {
     }
     std::vector<double> c(s);
     for (size_t i = 0; i < s; ++i) {
-      c[i] = nb::cast<double>(pos[nb::cast(i)]);
+      c[i] = nb::cast<double>((*pos)[nb::cast(i)]);
     }
     this->field->calcGrad(c.data(), g.data());
   } else {

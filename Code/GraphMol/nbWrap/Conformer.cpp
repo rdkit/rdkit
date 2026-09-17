@@ -19,6 +19,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
 #include <Geometry/point.h>
+#include <RDBoost/Wrap_nb.h>
 #include <GraphMol/Conformer.h>
 
 namespace nb = nanobind;
@@ -81,7 +82,8 @@ void SetPos(Conformer *conf,
   }
 }
 
-void SetAtomPos(Conformer *conf, unsigned int aid, nb::object loc) {
+void SetAtomPos(Conformer *conf, unsigned int aid,
+                const PyIterableOf<double> &loc) {
   try {
     std::vector<double> coords;
     for (auto item : loc) {
