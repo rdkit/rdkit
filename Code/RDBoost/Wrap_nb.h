@@ -111,9 +111,9 @@ using PyListOf = nb::typed<nb::list, T>;
 template <typename K, typename V>
 using PyDictOf = nb::typed<nb::dict, K, V>;
 
-//! A list an argument fills in place, at a length the caller chooses. The
-//! element type stays Any because list[T] is invariant: naming it would reject
-//! the placeholders callers preallocate with, such as [0] * n or [None] * n,
+//! A list an argument fills in place, at a length the caller chooses. Its
+//! element type is Any because list[T] is invariant: naming it would reject the
+//! placeholders a caller preallocates with, such as [0] * n or [None] * n,
 //! which the wrapper overwrites without reading.
 using PyOutputList = nb::typed<nb::list, nb::any>;
 
