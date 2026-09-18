@@ -306,7 +306,7 @@ bool isUnsaturated(const Atom *atom, const ROMol &mol) {
   return false;
 }
 
-bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
+RDKIT_GRAPHMOL_EXPORT bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
   // list queries are series of nested ors of AtomAtomicNum queries
   PRECONDITION(q, "bad query");
   bool res = false;
@@ -328,7 +328,7 @@ bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
   return res;
 }
 
-bool atomHasFourthValence(const Atom *atom) {
+RDKIT_GRAPHMOL_EXPORT bool atomHasFourthValence(const Atom *atom) {
   if (atom->getNumExplicitHs() == 1 ||
       (!atom->needsUpdatePropertyCache() &&
        atom->getValence(Atom::ValenceType::IMPLICIT) == 1)) {
