@@ -147,10 +147,26 @@ class TestCase(unittest.TestCase):
     opts = rdShapeAlign.ShapeInputOptions()
     opts.atomSubset = (0, 1, 2)
     self.assertEqual(tuple(opts.atomSubset), (0, 1, 2))
+    opts.notColorAtoms = (0, )
+    self.assertEqual(tuple(opts.notColorAtoms), (0, ))
     opts.atomRadii = ((0, 1.5), )
     self.assertEqual(len(opts.atomRadii), 1)
     with self.assertRaises(TypeError):
       rdShapeAlign.PrepareConformer(self.ref, -1, 5)
+
+  def test11_NoneClearsAtomLists(self):
+    opts = rdShapeAlign.ShapeInputOptions()
+    opts.atomSubset = (0, 1, 2)
+    opts.notColorAtoms = (0, )
+    opts.atomSubset = None
+    opts.notColorAtoms = None
+    self.assertEqual(tuple(opts.atomSubset), ())
+    self.assertEqual(tuple(opts.notColorAtoms), ())
+
+    shp = rdShapeAlign.PrepareConformer(self.ref, -1, opts)
+    self.assertEqual(len(shp.shift), 3)
+    shp.shift = None
+    self.assertEqual(len(shp.shift), 0)
 
 if __name__ == '__main__':
   unittest.main()

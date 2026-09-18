@@ -64,7 +64,8 @@ NB_MODULE(rdShapeAlign, m) {
             }
             return nb::tuple(py_list);
           },
-          [](ShapeInputOptions &opts, const PyIterableOf<unsigned int> &as) {
+          [](ShapeInputOptions &opts,
+             const std::optional<PyIterableOf<unsigned int>> &as) {
             pythonObjectToVect<unsigned int>(as, opts.atomSubset);
           },
           "If not empty, use just these atoms in the molecule to form the ShapeInput object.")
@@ -77,7 +78,8 @@ NB_MODULE(rdShapeAlign, m) {
             }
             return nb::tuple(py_list);
           },
-          [](ShapeInputOptions &opts, const PyIterableOf<unsigned int> &nca) {
+          [](ShapeInputOptions &opts,
+             const std::optional<PyIterableOf<unsigned int>> &nca) {
             pythonObjectToVect<unsigned int>(nca, opts.notColorAtoms);
           },
           "Any atoms mentioned here by index should not be used in a color feature.")
@@ -149,7 +151,7 @@ its inertial frame.  Default=True.)DOC")
             }
             return py_list;
           },
-          [](ShapeInput &shp, const PyIterableOf<double> &s) {
+          [](ShapeInput &shp, const std::optional<PyIterableOf<double>> &s) {
             pythonObjectToVect<double>(s, shp.shift);
           },
           "Translation of centre of shape coordinates to origin.")
