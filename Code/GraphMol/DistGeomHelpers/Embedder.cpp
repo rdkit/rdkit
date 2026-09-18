@@ -1744,6 +1744,33 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         << std::endl;
   }
 
+  INT_VECT fragMapping;
+  std::vector<ROMOL_SPTR> molFrags;
+
+  if (params.embedFragmentsSeparately) {
+    molFrags = MolOps::getMolFrags(mol, true, &fragMapping);
+  } else {
+    molFrags.push_back(ROMOL_SPTR(new ROMol(mol)));
+    fragMapping.resize(mol.getNumAtoms());
+    std::fill(fragMapping.begin(), fragMapping.end(), 0);
+  }
+  
+  const std::map<int, RDGeom::Point3D> *coordMap = params.coordMap;
+  if (molFrags.size() > 1 && coordMap) {
+    BOOST_LOG(rdWarningLog)
+        << "Constrained conformer generation (via the coordMap argument) "
+           "does not work with molecules that have multiple fragments."
+        << std::endl;
+    coordMap = nullptr;
+  }
+  if (molFrags.size() > 1 && params.confToOptimize) {
+    BOOST_LOG(rdWarningLog)
+        << "Seeded conformer generation (via the confToOptimize argument) "
+           "does not work with molecules that have multiple fragments."
+        << std::endl;
+    params.confToOptimize = nullptr;
+  }
+
   // initialize the conformers we're going to be creating:
   std::vector<std::unique_ptr<Conformer>> confs;
   if (!params.confToOptimize){
@@ -1765,23 +1792,6 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   boost::dynamic_bitset<> confsOk(numConfs);
   confsOk.set();
 
-  INT_VECT fragMapping;
-  std::vector<ROMOL_SPTR> molFrags;
-  if (params.embedFragmentsSeparately) {
-    molFrags = MolOps::getMolFrags(mol, true, &fragMapping);
-  } else {
-    molFrags.push_back(ROMOL_SPTR(new ROMol(mol)));
-    fragMapping.resize(mol.getNumAtoms());
-    std::fill(fragMapping.begin(), fragMapping.end(), 0);
-  }
-  const std::map<int, RDGeom::Point3D> *coordMap = params.coordMap;
-  if (molFrags.size() > 1 && coordMap) {
-    BOOST_LOG(rdWarningLog)
-        << "Constrained conformer generation (via the coordMap argument) "
-           "does not work with molecules that have multiple fragments."
-        << std::endl;
-    coordMap = nullptr;
-  }
   boost::dynamic_bitset<> constrainedAtoms(mol.getNumAtoms());
   if (coordMap) {
     for (const auto &entry : *coordMap) {
