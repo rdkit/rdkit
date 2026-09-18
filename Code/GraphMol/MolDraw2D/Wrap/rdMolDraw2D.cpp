@@ -315,8 +315,13 @@ void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
                           python::object highlight_bond_map,
                           python::object highlight_atom_radii,
                           python::object pconfIds, python::object plegends) {
+  // mols point into these; a generator releases each item as it advances.
+  python::list items;
+  if (pmols) {
+    items = python::list(pmols);
+  }
   std::unique_ptr<std::vector<ROMol *>> mols =
-      pythonObjectToVect<ROMol *>(pmols);
+      pythonObjectToVect<ROMol *>(items);
   if (mols == nullptr || !mols->size()) {
     return;
   }

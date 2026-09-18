@@ -13,6 +13,7 @@
 #include <nanobind/stl/string.h>
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap_nb.h>
+#include <RDBoost/boost_shared_ptr.h>
 #include <GraphMol/FMCS/FMCS.h>
 
 #define COMPARE_FUNC_NAME "__call__"
@@ -517,8 +518,7 @@ MCSResult *FindMCSWrapper(nb::object mols, bool maximizeBonds, double threshold,
     if (mol_obj.is_none()) {
       throw nb::value_error("molecule is None");
     }
-    ROMOL_SPTR react(nb::cast<ROMol *>(mol_obj), [](ROMol *) {});
-    ms[i] = react;
+    ms[i] = nb::cast<ROMOL_SPTR>(mol_obj);
   }
   MCSParameters p;
   p.Threshold = threshold;
@@ -554,8 +554,7 @@ MCSResult *FindMCSWrapper2(nb::object mols, PyMCSParameters &pyMcsParams) {
     if (mol_obj.is_none()) {
       throw nb::value_error("molecule is None");
     }
-    ROMOL_SPTR react(nb::cast<ROMol *>(mol_obj), [](ROMol *) {});
-    ms[i] = react;
+    ms[i] = nb::cast<ROMOL_SPTR>(mol_obj);
   }
 
   MCSResult *res = nullptr;

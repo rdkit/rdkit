@@ -168,8 +168,10 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
 
 template <typename ReturnType, typename FuncType>
 nb::tuple mtgetFingerprints(FuncType func, nb::object mols, int numThreads) {
+  // tmols point into these; a generator releases each item as it advances.
+  nb::list items(mols);
   std::vector<const ROMol *> tmols;
-  for (auto item : mols) {
+  for (auto item : items) {
     tmols.push_back(nb::cast<const ROMol *>(item));
   }
 
@@ -279,11 +281,14 @@ nb::object getNumPyCountFingerprint(
   return nb::steal<nb::object>(arr);
 }
 
+//! The returned pointers are valid while \c items, which holds the molecules,
+//! is alive; a generator releases each molecule as it advances.
 const std::vector<const ROMol *> convertPyArgumentsForBulk(
-    nb::object py_molVect) {
+    nb::object py_molVect, nb::list &items) {
   std::vector<const ROMol *> molVect;
   if (!py_molVect.is_none()) {
-    for (auto item : py_molVect) {
+    items = nb::list(py_molVect);
+    for (auto item : items) {
       molVect.push_back(nb::cast<const ROMol *>(item));
     }
   }
@@ -291,7 +296,8 @@ const std::vector<const ROMol *> convertPyArgumentsForBulk(
 }
 
 nb::list getSparseCountFPBulkPy(nb::object py_molVect, FPType fPType) {
-  const auto molVect = convertPyArgumentsForBulk(py_molVect);
+  nb::list items;
+  const auto molVect = convertPyArgumentsForBulk(py_molVect, items);
   auto tempResult = getSparseCountFPBulk(molVect, fPType);
   nb::list result;
 
@@ -303,8 +309,9 @@ nb::list getSparseCountFPBulkPy(nb::object py_molVect, FPType fPType) {
 }
 
 nb::list getSparseFPBulkPy(nb::object py_molVect, FPType fpType) {
+  nb::list items;
   const std::vector<const ROMol *> molVect =
-      convertPyArgumentsForBulk(py_molVect);
+      convertPyArgumentsForBulk(py_molVect, items);
   auto tempResult = getSparseFPBulk(molVect, fpType);
   nb::list result;
 
@@ -316,8 +323,9 @@ nb::list getSparseFPBulkPy(nb::object py_molVect, FPType fpType) {
 }
 
 nb::list getCountFPBulkPy(nb::object py_molVect, FPType fPType) {
+  nb::list items;
   const std::vector<const ROMol *> molVect =
-      convertPyArgumentsForBulk(py_molVect);
+      convertPyArgumentsForBulk(py_molVect, items);
   auto tempResult = getCountFPBulk(molVect, fPType);
   nb::list result;
 
@@ -329,8 +337,9 @@ nb::list getCountFPBulkPy(nb::object py_molVect, FPType fPType) {
 }
 
 nb::list getFPBulkPy(nb::object py_molVect, FPType fPType) {
+  nb::list items;
   const std::vector<const ROMol *> molVect =
-      convertPyArgumentsForBulk(py_molVect);
+      convertPyArgumentsForBulk(py_molVect, items);
   auto tempResult = getFPBulk(molVect, fPType);
   nb::list result;
 

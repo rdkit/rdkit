@@ -49,6 +49,14 @@ GitHub)
   returns only points which are actually on the surface. Previously all
   potential surface points for each atom were returned. You can get the old
   result by setting the `allPoints` argument to true.
+- `calcSASA()` (`rdFreeSASA.CalcSASA()` from Python) now requires `radii` to
+  have exactly one entry per atom. A shorter vector was read past its end,
+  returning `nan` or crashing, and the extra entries of a longer one were
+  ignored.
+- `DoubleCubicLatticeVolume` now requires `radii` to be empty, which asks for
+  the van der Waals radii, or to have one entry per atom. A vector of any other
+  length was read past its end, and the areas and volumes that came back looked
+  plausible.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use

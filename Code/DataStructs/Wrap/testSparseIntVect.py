@@ -241,6 +241,24 @@ class TestCase(unittest.TestCase):
     self.assertEqual(l, l2)
     self.assertEqual(l, l3)
 
+  def test8BulkFromIterables(self):
+    vs = []
+    for i in range(6):
+      v = ds.IntSparseIntVect(10)
+      v[i] = i + 1
+      v[(i + 3) % 10] = 2
+      vs.append(v)
+    expected = [list(ds.BulkDiceSimilarity(vs[0], vs[1:])),
+                list(ds.BulkTanimotoSimilarity(vs[0], vs[1:])),
+                list(ds.BulkTverskySimilarity(vs[0], vs[1:], 0.5, 0.5))]
+    for label, make in (('tuple', lambda: tuple(vs[1:])), ('generator', lambda: iter(vs[1:]))):
+      with self.subTest(argument=label):
+        self.assertEqual([
+          list(ds.BulkDiceSimilarity(vs[0], make())),
+          list(ds.BulkTanimotoSimilarity(vs[0], make())),
+          list(ds.BulkTverskySimilarity(vs[0], make(), 0.5, 0.5))
+        ], expected)
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -44,14 +44,18 @@ template <typename T>
 python::list NeighborWrapper(python::object queries, python::object bvs,
                              double (*metric)(const T &, const T &)) {
   python::list res;
-  unsigned int nbvs = python::len(bvs);
-  unsigned int nqs = python::len(queries);
+  // Lists accept any iterable and keep each item alive while it is used; a
+  // supplier builds a new object each time it is indexed.
+  python::list queryItems(queries);
+  python::list bvItems(bvs);
+  unsigned int nbvs = python::len(bvItems);
+  unsigned int nqs = python::len(queryItems);
   for (unsigned int i = 0; i < nqs; ++i) {
-    const T *bv1 = python::extract<const T *>(queries[i])();
+    const T *bv1 = python::extract<const T *>(queryItems[i])();
     double closest = -1;
     unsigned nbr;
     for (unsigned int j = 0; j < nbvs; ++j) {
-      const T *bv2 = python::extract<const T *>(bvs[j])();
+      const T *bv2 = python::extract<const T *>(bvItems[j])();
       auto sim = metric(*bv1, *bv2);
       if (sim > closest) {
         closest = sim;
@@ -68,9 +72,11 @@ python::list BulkWrapper(const T *bv1, python::object bvs,
                          double (*metric)(const T &, const T &),
                          bool returnDistance) {
   python::list res;
-  unsigned int nbvs = python::len(bvs);
+  // A list accepts any iterable and keeps each item alive while it is used.
+  python::list items(bvs);
+  unsigned int nbvs = python::len(items);
   for (unsigned int i = 0; i < nbvs; ++i) {
-    const T *bv2 = python::extract<const T *>(bvs[i])();
+    const T *bv2 = python::extract<const T *>(items[i])();
     auto sim = metric(*bv1, *bv2);
     if (returnDistance) {
       sim = 1.0 - sim;
@@ -85,9 +91,11 @@ python::list BulkWrapper(const T *bv1, python::object bvs, double a, double b,
                          double (*metric)(const T &, const T &, double, double),
                          bool returnDistance) {
   python::list res;
-  unsigned int nbvs = python::len(bvs);
+  // A list accepts any iterable and keeps each item alive while it is used.
+  python::list items(bvs);
+  unsigned int nbvs = python::len(items);
   for (unsigned int i = 0; i < nbvs; ++i) {
-    const T *bv2 = python::extract<T *>(bvs[i])();
+    const T *bv2 = python::extract<T *>(items[i])();
     auto sim = metric(*bv1, *bv2, a, b);
     if (returnDistance) {
       sim = 1.0 - sim;

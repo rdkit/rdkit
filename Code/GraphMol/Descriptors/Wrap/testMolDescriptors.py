@@ -820,7 +820,18 @@ class TestCase(unittest.TestCase):
         self.assertTrue(len(all_pts[i]) == 320)
         self.assertTrue(len(all_pts[i]) >= len(pts[i]))
 
-        
+  def testDCLVRadiiLength(self):
+    fname = str(Path(environ["RDBASE"]) / 'Code' / 'GraphMol' / 'Descriptors' / 'test_data' /
+                'ethane.sdf')
+    mol = Chem.MolFromMolFile(fname)
+    self.assertEqual(mol.GetNumAtoms(), 2)
+    expected = rdMD.DoubleCubicLatticeVolume(mol, [1.7, 1.7]).GetSurfaceArea()
+    # an empty list asks for the default radii, as leaving the argument out does
+    self.assertAlmostEqual(rdMD.DoubleCubicLatticeVolume(mol, []).GetSurfaceArea(), expected)
+    for bad in ([1.7], [1.7, 1.7, 1.7]):
+      with self.subTest(length=len(bad)):
+        with self.assertRaises(RuntimeError):
+          rdMD.DoubleCubicLatticeVolume(mol, bad)
 
 
 if __name__ == '__main__':
