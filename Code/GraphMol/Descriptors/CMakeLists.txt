@@ -5,7 +5,7 @@ if(RDK_BUILD_DESCRIPTORS3D)
 
 endif(RDK_BUILD_DESCRIPTORS3D)
 
-if(RDK_BUILD_OSMORDRED)
+if(RDK_BUILD_OSMORDRED_SUPPORT)
  message("-- adding OSMORDRED Descriptors")
  find_package(LAPACK REQUIRED)
  find_package(LAPACKE REQUIRED)
@@ -28,7 +28,7 @@ if(RDK_BUILD_OSMORDRED)
  set(SMARTS291_SOURCES smarts291/abraham_integration.cpp smarts291/abraham_queries.cpp)
 
  include_directories(Descriptors LAPACK::LAPACK ${LAPACK_INCLUDE_DIRS})
-endif(RDK_BUILD_OSMORDRED)
+endif(RDK_BUILD_OSMORDRED_SUPPORT)
 
 
 rdkit_library(Descriptors
@@ -100,7 +100,7 @@ endif(RDK_BUILD_DESCRIPTORS3D)
 
 rdkit_catch_test(descriptorsTestCatch catch_tests.cpp LINK_LIBRARIES Descriptors SmilesParse FileParsers)
 
-if(RDK_BUILD_OSMORDRED)
+if(RDK_BUILD_OSMORDRED_SUPPORT)
  rdkit_catch_test(testOsmordred test_osmordred.cpp LINK_LIBRARIES Descriptors SmilesParse FileParsers)
  rdkit_catch_test(testSMARTS291 smarts291/test_smarts291.cpp LINK_LIBRARIES Descriptors SmilesParse FileParsers)
 endif(RDK_BUILD_OSMORDRED)
