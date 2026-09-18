@@ -254,6 +254,10 @@ macro(rdkit_nanobind_extension)
     if(EXISTS "${RDKPY_STUB}")
       INSTALL(FILES "${RDKPY_STUB}"
               DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST} COMPONENT python)
+    else()
+      message(WARNING "${RDKPY_NAME} installs into a typed package without a "
+              "type stub. Build the nanobind_stubs target and commit "
+              "${RDKPY_STUB}.")
     endif()
     string(REPLACE "/" "." RDKPY_MODULE "rdkit/${RDKPY_DEST}/${RDKPY_NAME}")
     string(REPLACE ".." "." RDKPY_MODULE "${RDKPY_MODULE}")

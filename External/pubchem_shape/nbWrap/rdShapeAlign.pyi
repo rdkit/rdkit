@@ -44,7 +44,7 @@ class ShapeInputOptions:
         """
 
     @atomSubset.setter
-    def atomSubset(self, arg: Iterable[int], /) -> None: ...
+    def atomSubset(self, arg: Iterable[int] | None) -> None: ...
 
     @property
     def notColorAtoms(self) -> tuple:
@@ -53,7 +53,7 @@ class ShapeInputOptions:
         """
 
     @notColorAtoms.setter
-    def notColorAtoms(self, arg: Iterable[int], /) -> None: ...
+    def notColorAtoms(self, arg: Iterable[int] | None) -> None: ...
 
     @property
     def atomRadii(self) -> tuple:
@@ -113,7 +113,7 @@ class ShapeInput:
         """Translation of centre of shape coordinates to origin."""
 
     @shift.setter
-    def shift(self, arg: Iterable[float], /) -> None: ...
+    def shift(self, arg: Iterable[float] | None) -> None: ...
 
     @property
     def inertialRot(self) -> list:

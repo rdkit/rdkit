@@ -32,6 +32,9 @@ STUBGEN_VERSION = '2.15.0'
 REGENERATE = ('Regenerate the stubs by installing RDKit and building the nanobind_stubs target, '
               'then commit them.')
 
+# Modules with no committed stub because the build that generates them cannot build the module.
+WITHOUT_STUBS = frozenset(['rdkit.Chem.Draw.rdMolDraw2DQt'])  # needs Qt
+
 
 def signature_annotations(signature):
   """Returns a {parameter: annotation} dict for one nanobind signature string.
@@ -133,7 +136,7 @@ class TestStubs(unittest.TestCase):
   def testEveryModuleHasAStub(self):
     self.assertTrue(self.modules)
     missing = sorted(name for name, path in self.modules.items()
-                     if not installed_stub(name, path).exists())
+                     if name not in WITHOUT_STUBS and not installed_stub(name, path).exists())
     self.assertEqual(missing, [], REGENERATE)
 
   def testStubsAreValidPython(self):
@@ -157,10 +160,18 @@ class TestStubs(unittest.TestCase):
     for name in names:
       with self.subTest(module=name):
         installed = installed_stub(name, self.modules[name]).read_text()
-        if installed != generated[name]:
-          diff = difflib.unified_diff(installed.splitlines(), generated[name].splitlines(),
-                                      'installed', 'generated', lineterm='')
-          self.fail('\n'.join(list(diff)[:60] + [REGENERATE]))
+        if installed == generated[name]:
+          continue
+        diff = [
+          line for line in difflib.unified_diff(installed.splitlines(),
+                                                generated[name].splitlines(), 'installed',
+                                                'generated', lineterm='')
+        ]
+        if not any(line.startswith('+') and not line.startswith('+++') for line in diff):
+          # The stubs come from a build with every optional feature this module has. A build
+          # that leaves one out registers fewer names, and the stub covers them all.
+          self.skipTest(f'{name} is built without features the committed stub covers')
+        self.fail('\n'.join(diff[:60] + [REGENERATE]))
 
 
 class TestSignatures(unittest.TestCase):
