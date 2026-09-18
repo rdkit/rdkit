@@ -2951,11 +2951,10 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
     return {};
   }
 
-  std::string smi = MolToSmiles(mol);
-
   bool debug = false;  // (smi=="FP(F)F" || smi=="BrBr");
 
   if (debug) {
+    std::string smi = MolToSmiles(mol);
     BOOST_LOG(rdWarningLog) << "Debugging enabled for molecule: " << smi
                             << "n & NumAtoms: " << nAtoms << std::endl;
   }
@@ -3080,8 +3079,7 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
         for (int pos = start; pos <= stop; ++pos) {
           int rootIdx = M[atomIdx][pos];
           if (rootIdx < 0 || rootIdx >= nAtoms) {
-            std::cout << "Atom index out of boundaries:" << rootIdx
-                      << "smile:" << smi << "\n";
+            std::cout << "Atom index out of boundaries:" << rootIdx << std::endl;
             continue;
           }
           const Atom *rootAtom = mol.getAtomWithIdx(rootIdx);
@@ -3213,6 +3211,7 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
   }
 
   if (debug) {
+    std::string smi = MolToSmiles(mol);
     BOOST_LOG(rdDebugLog) << "Final CN values for " << smi << ":\n";
     for (const auto &[r, values] : CN) {
       BOOST_LOG(rdDebugLog) << "Radius " << r << ": ";
