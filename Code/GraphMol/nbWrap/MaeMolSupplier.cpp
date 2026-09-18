@@ -148,8 +148,8 @@ struct maemolsup_wrap {
         .def("__len__", &MaeMolSupplier::length)
         .def(
             "SetData",
-            [](MaeMolSupplier &self, const StringOrBytes &data, bool sanitize,
-               bool removeHs) {
+            [](LocalMaeMolSupplier &self, const StringOrBytes &data,
+               bool sanitize, bool removeHs) {
               self.setData(pyObjectToString(data), sanitize, removeHs);
             },
             "data"_a, "sanitize"_a = true, "removeHs"_a = true,
