@@ -10,6 +10,7 @@
 
 #include <string>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/string.h>
@@ -121,21 +122,22 @@ AttachPointSequence getAttachPointsHelper(const SubstanceGroup &self) {
 }
 
 void SetAtomsHelper(SubstanceGroup &self,
-                    const PyIterableOf<unsigned int> &iterable) {
+                    const std::optional<PyIterableOf<unsigned int>> &iterable) {
   std::vector<unsigned int> atoms;
   pythonObjectToVect(iterable, atoms);
   self.setAtoms(atoms);
 }
 
-void SetParentAtomsHelper(SubstanceGroup &self,
-                          const PyIterableOf<unsigned int> &iterable) {
+void SetParentAtomsHelper(
+    SubstanceGroup &self,
+    const std::optional<PyIterableOf<unsigned int>> &iterable) {
   std::vector<unsigned int> patoms;
   pythonObjectToVect(iterable, patoms);
   self.setParentAtoms(patoms);
 }
 
 void SetBondsHelper(SubstanceGroup &self,
-                    const PyIterableOf<unsigned int> &iterable) {
+                    const std::optional<PyIterableOf<unsigned int>> &iterable) {
   std::vector<unsigned int> bonds;
   pythonObjectToVect(iterable, bonds);
   self.setBonds(bonds);

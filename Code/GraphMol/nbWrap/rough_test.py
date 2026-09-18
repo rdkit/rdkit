@@ -8720,6 +8720,10 @@ M  END
   def testMolOpsContainerParams(self):
     m = Chem.MolFromSmiles('CCO')
 
+    # molzipFragments takes None for an empty list, as the Boost wrappers do
+    self.assertIsNone(Chem.molzipFragments(None))
+    self.assertIsNone(Chem.molzipFragments([]))
+
     atomMap = {}
     self.assertEqual(len(Chem.FindAtomEnvironmentOfRadiusN(m, 1, 0, atomMap=atomMap)), 1)
     self.assertEqual(atomMap, {0: 0, 1: 1})
