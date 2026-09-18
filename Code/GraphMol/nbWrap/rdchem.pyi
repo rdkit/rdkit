@@ -3196,19 +3196,19 @@ class SubstanceGroup:
     def GetBonds(self) -> list[int]:
         """returns a list of the indices of the bonds in this SubstanceGroup"""
 
-    def SetAtoms(self, iterable: Iterable[int]) -> None:
+    def SetAtoms(self, iterable: Iterable[int] | None) -> None:
         """
         Set the list of the indices of the atoms in this SubstanceGroup.
         Note that this does not update properties, CStates or Attachment Points.
         """
 
-    def SetParentAtoms(self, iterable: Iterable[int]) -> None:
+    def SetParentAtoms(self, iterable: Iterable[int] | None) -> None:
         """
         Set the list of the indices of the parent atoms in this SubstanceGroup.
         Note that this does not update properties, CStates or Attachment Points.
         """
 
-    def SetBonds(self, iterable: Iterable[int]) -> None:
+    def SetBonds(self, iterable: Iterable[int] | None) -> None:
         """
         Set the list of the indices of the bonds in this SubstanceGroup.
         Note that this does not update properties, CStates or Attachment Points.

@@ -1812,7 +1812,7 @@ def molzip(row: dict[str, rdkit.Chem.rdchem.Mol], params: MolzipParams | None = 
       ...     mol = rgd.molzip(rgroup)
     """
 
-def molzipFragments(mols: Iterable[rdkit.Chem.rdchem.Mol], params: MolzipParams | None = None) -> rdkit.Chem.rdchem.Mol | None:
+def molzipFragments(mols: Iterable[rdkit.Chem.rdchem.Mol] | None, params: MolzipParams | None = None) -> rdkit.Chem.rdchem.Mol | None:
     """
     zip together multiple molecules from an R group decomposition 
     using the given matching parameters.  The first molecule in the list

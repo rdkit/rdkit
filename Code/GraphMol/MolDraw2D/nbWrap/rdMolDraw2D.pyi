@@ -815,7 +815,7 @@ class MolDraw2D:
     def DrawMolecule(self, mol: rdkit.Chem.rdchem.Mol, highlightAtoms: Iterable[int] | None = None, highlightAtomColors: dict[int, tuple[float, ...]] | None = None, highlightAtomRadii: dict[int, float] | None = None, confId: int = -1, legend: str = '') -> None: ...
 
     @overload
-    def DrawMolecule(self, mol: rdkit.Chem.rdchem.Mol, highlightAtoms: Iterable[int], highlightBonds: Iterable[int], highlightAtomColors: dict[int, tuple[float, ...]] | None = None, highlightBondColors: dict[int, tuple[float, ...]] | None = None, highlightAtomRadii: dict[int, float] | None = None, confId: int = -1, legend: str = '') -> None:
+    def DrawMolecule(self, mol: rdkit.Chem.rdchem.Mol, highlightAtoms: Iterable[int] | None, highlightBonds: Iterable[int] | None, highlightAtomColors: dict[int, tuple[float, ...]] | None = None, highlightBondColors: dict[int, tuple[float, ...]] | None = None, highlightAtomRadii: dict[int, float] | None = None, confId: int = -1, legend: str = '') -> None:
         """renders a molecule"""
 
     def GetMolSize(self, mol: rdkit.Chem.rdchem.Mol, highlightAtoms: Iterable[int] | None = None, highlightBonds: Iterable[int] | None = None, highlightAtomColors: dict[int, tuple[float, ...]] | None = None, highlightBondColors: dict[int, tuple[float, ...]] | None = None, highlightAtomRadii: dict[int, float] | None = None, confId: int = -1, legend: str = '') -> tuple[int, int]:
