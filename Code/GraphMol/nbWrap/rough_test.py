@@ -8645,11 +8645,16 @@ M  END
 
   def testTextParsersAcceptStrOrBytes(self):
     molBlock = Chem.MolToMolBlock(Chem.MolFromSmiles('CCO'))
+    with open(
+        os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                     'benzene.mol2')) as inF:
+      mol2Block = inF.read()
     cases = [
       (Chem.MolFromSmiles, 'CCO'),
       (Chem.MolFromSmarts, '[#6]'),
       (Chem.MolFromMolBlock, molBlock),
       (Chem.MolFromSequence, 'AAA'),
+      (Chem.MolFromMol2Block, mol2Block),
     ]
     for parser, text in cases:
       with self.subTest(parser=parser.__name__):
@@ -8657,6 +8662,22 @@ M  END
         self.assertIsNotNone(parser(text.encode()))
         with self.assertRaises(TypeError):
           parser(42)
+
+  def testSupplierTextAcceptsStrOrBytes(self):
+    smiText = 'CCO ethanol\nCCC propane\n'
+    tdtText = '$SMI<CCO>\n|\n'
+    for text in (smiText, smiText.encode()):
+      with self.subTest(kind=type(text).__name__):
+        suppl = Chem.SmilesMolSupplierFromText(text, titleLine=False)
+        self.assertEqual([Chem.MolToSmiles(mol) for mol in suppl], ['CCO', 'CCC'])
+        suppl = Chem.SmilesMolSupplier()
+        suppl.SetData(text, titleLine=False)
+        self.assertEqual([Chem.MolToSmiles(mol) for mol in suppl], ['CCO', 'CCC'])
+    for text in (tdtText, tdtText.encode()):
+      with self.subTest(kind=type(text).__name__):
+        suppl = Chem.TDTMolSupplier()
+        suppl.SetData(text)
+        self.assertEqual([Chem.MolToSmiles(mol) for mol in suppl], ['CCO'])
 
   def testSequenceParamsAcceptAnyIterable(self):
     m = Chem.RWMol(Chem.MolFromSmiles('C[C@H](F)Cl'))

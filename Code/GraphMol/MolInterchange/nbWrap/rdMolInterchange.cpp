@@ -86,9 +86,10 @@ RETURNS:
 
   m.def(
       "JSONToMols",
-      [](const std::string &jsonBlock,
+      [](const StringOrBytes &jsonBlock,
          const RDKit::MolInterchange::JSONParseParameters &params) {
-        auto mols = RDKit::MolInterchange::JSONDataToMols(jsonBlock, params);
+        auto mols = RDKit::MolInterchange::JSONDataToMols(
+            pyObjectToString(jsonBlock), params);
         nb::list result;
         for (auto &mol : mols) {
           result.append(mol);
