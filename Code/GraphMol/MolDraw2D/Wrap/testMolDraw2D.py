@@ -1040,6 +1040,16 @@ M  END
     params.setColourMap(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0)))
     self.assertEqual(len(params.colourMap), 2)
 
+  def testDrawMoleculeNoneHighlights(self):
+    # the two-list form takes None for either list, as the one-list form does
+    m = Chem.MolFromSmiles('c1ccccc1O')
+    for atoms, bonds in (([0], None), (None, [0]), (None, None)):
+      with self.subTest(highlightAtoms=atoms, highlightBonds=bonds):
+        d2d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+        d2d.DrawMolecule(m, highlightAtoms=atoms, highlightBonds=bonds)
+        d2d.FinishDrawing()
+        self.assertIn('svg', d2d.GetDrawingText())
+
 
 if __name__ == "__main__":
   unittest.main()
