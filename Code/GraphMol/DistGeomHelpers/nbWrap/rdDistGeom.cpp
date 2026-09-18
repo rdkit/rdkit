@@ -64,7 +64,7 @@ struct PyEmbedParameters : public RDKit::DGeomHelpers::EmbedParameters {
 
   void setConfToOptimize(const nb::object &pyConf){
     RDKit::Conformer &conf = nb::cast<RDKit::Conformer&>(pyConf);
-    this->confToOptimize=&conf
+    this->confToOptimize=&conf;
   }
 
   void setBoundsMatrix(
