@@ -258,6 +258,8 @@ def listToLists(lst):
 
 
 def _toPNG(mol):
+  if ipython_useSVG or not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+    return None
   if hasattr(mol, '__sssAtoms'):
     highlightAtoms = listToLists(mol.__sssAtoms)
     return Draw.DrawMolWithMatches(mol, highlightAtoms, molSize=molSize,
@@ -285,6 +287,8 @@ def _toSVG(mol):
 
 
 def _toReactionPNG(rxn):
+  if ipython_useSVG or not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+    return None
   rc = copy.deepcopy(rxn)
   return Draw.ReactionToImage(rc, subImgSize=(int(molSize[0] / 3), molSize[1]),
                               highlightByReactant=highlightByReactant, drawOptions=drawOptions,
@@ -300,6 +304,8 @@ def _toReactionSVG(rxn):
 
 
 def _toMolBundlePNG(bundle):
+  if ipython_useSVG or not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
+    return None
   if Draw._MolsToGridImageSaved is not None:
     fn = Draw._MolsToGridImageSaved
   else:
