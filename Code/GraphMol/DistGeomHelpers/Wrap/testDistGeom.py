@@ -933,6 +933,19 @@ class TestCase(unittest.TestCase):
     # make sure our signal handler is once again active:
     self.assertEqual(signal.getsignal(signal.SIGINT), handler)
 
+  def testConfToOptimize(self):
+    mol = Chem.MolFromSmiles("c1ccccc1[C@@H](Cl)CCC(O)CC")
+    mol = Chem.AddHs(mol)
+    ps = rdDistGeom.ETDGv2()
+    ps.randomSeed = 0xc0ffee
+    rdDistGeom.EmbedMolecule(mol, ps)
+    mol2 = Chem.Mol(mol)
+    ps = rdDistGeom.ETKDGv2()
+    ps.SetConfToOptimize(mol2.GetConformer())
+    rdDistGeom.EmbedMolecule(mol2, ps)
+    rmsd = rdMolAlign.GetBestRMS(Chem.RemoveHs(mol),Chem.RemoveHs(mol2))
+    self.assertGreater(rmsd, .22)
+    self.assertLess(rmsd, .24)
 
 if __name__ == '__main__':
   unittest.main()

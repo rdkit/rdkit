@@ -867,7 +867,7 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
 }
 
 bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
-                 EmbedParameters &embedParams, int seed, TimePoint *end_time) {
+                 EmbedParameters &embedParams, int seed, TimePoint *end_time, const bool onlyRefine = false) {
   PRECONDITION(positions, "bogus positions");
   if (embedParams.maxIterations == 0) {
     embedParams.maxIterations = 10 * positions->size();
@@ -913,7 +913,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     if (ControlCHandler::getGotSignal()) {
       return false;
     }
-    gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
+    gotCoords = onlyRefine? true :  EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
     if (!gotCoords) {
       if (embedParams.trackFailures) {
@@ -1033,7 +1033,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
 
 bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
                     EmbedParameters &embedParams, int seed,
-                    TimePoint *end_time) {
+                    TimePoint *end_time, const bool onlyRefine = false) {
   PRECONDITION(positions, "bogus positions");
   if (embedParams.maxIterations == 0) {
     embedParams.maxIterations = 10 * positions->size();
@@ -1076,6 +1076,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     }
 
     // Get Initial positions
+    if (!onlyRefine){
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
     if (!gotCoords) {
@@ -1086,6 +1087,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
         embedParams.failures[EmbedFailureCauses::INITIAL_COORDS]++;
       }
       continue;
+    }
     }
 
     // check ctrl-C
@@ -1563,6 +1565,8 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
   // pointers from those
   std::vector<std::unique_ptr<RDGeom::Point>> positionsStore;
   positionsStore.reserve(nAtoms);
+  const bool onlyRefine = static_cast<bool>(params->confToOptimize);
+
   for (unsigned int i = 0; i < nAtoms; ++i) {
     if (eargs->fourD) {
       positionsStore.emplace_back(new RDGeom::PointND(4));
@@ -1570,6 +1574,15 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
       positionsStore.emplace_back(new RDGeom::Point3D());
     }
     positions[i] = positionsStore[i].get();
+  }
+  
+  if (onlyRefine){
+        auto conf = params->confToOptimize;
+  for (std::size_t i = 0; i<nAtoms ; ++i){
+      (*positions[i])[0] = conf->getAtomPos(i).x;
+      (*positions[i])[1] = conf->getAtomPos(i).y;
+      (*positions[i])[2] = conf->getAtomPos(i).z;
+    }
   }
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
     if (ControlCHandler::getGotSignal() ||
@@ -1627,11 +1640,11 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
                                ? EmbeddingOps::embedPoints
                                : EmbeddingOps::embedPointsAIO;
     const bool gotCoords =
-        embedFunc(&positions, *eargs, *params, new_seed, end_time);
+        embedFunc(&positions, *eargs, *params, new_seed, end_time, onlyRefine);
 
     // copy the coordinates into the correct conformer
     if (gotCoords) {
-      auto &conf = (*eargs->confs)[ci];
+      auto conf = params->confToOptimize ? params->confToOptimize : (*eargs->confs)[ci].get();
       unsigned int fragAtomIdx = 0;
       for (unsigned int i = 0; i < conf->getNumAtoms(); ++i) {
         if (!eargs->fragMapping ||
@@ -1732,15 +1745,22 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   }
 
   // initialize the conformers we're going to be creating:
+  std::vector<std::unique_ptr<Conformer>> confs;
+  if (!params.confToOptimize){
   if (params.clearConfs) {
     res.clear();
     mol.clearConformers();
   }
-  std::vector<std::unique_ptr<Conformer>> confs;
   confs.reserve(numConfs);
   for (unsigned int i = 0; i < numConfs; ++i) {
     confs.emplace_back(new Conformer(mol.getNumAtoms()));
   }
+  } else {
+    numConfs = 1;
+    confs.reserve(1); 
+    confs.emplace_back(new Conformer(*params.confToOptimize));
+  }
+
 
   boost::dynamic_bitset<> confsOk(numConfs);
   confsOk.set();
@@ -1849,7 +1869,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     if (params.useRandomCoords || chiralCenters.size() > 0) {
       fourD = true;
     }
-    int numThreads = getNumThreadsToUse(params.numThreads);
+    int numThreads = getNumThreadsToUse(params.confToOptimize ? 1:params.numThreads);
 
     ControlCHandler hdlr;
 
