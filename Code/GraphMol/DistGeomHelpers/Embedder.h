@@ -16,6 +16,7 @@
 #include <utility>
 #include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/Conformer.h>
 #include <boost/shared_ptr.hpp>
 #include <DistGeom/BoundsMatrix.h>
 
@@ -123,6 +124,8 @@ enum EmbedFailureCauses {
                    of times each embedding check fails
   enableSequentialRandomSeeds    handle the random number seeds so that
                                  conformer generation can be restarted
+  confToOptimize If a conformer pointer is provided, this conformer is refined with
+  the ETKDG force field.
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations{0};
@@ -161,6 +164,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   std::vector<unsigned int> failures{};
   bool enableSequentialRandomSeeds{false};
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
+  Conformer *confToOptimize{nullptr};
 };
 
 //! update parameters from a JSON string

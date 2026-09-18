@@ -62,6 +62,11 @@ struct PyEmbedParameters : public RDKit::DGeomHelpers::EmbedParameters {
     }
   }
 
+  void setConfToOptimize(const nb::object &pyConf){
+    RDKit::Conformer &conf = nb::cast<RDKit::Conformer&>(pyConf);
+    this->confToOptimize=&conf;
+  }
+
   void setBoundsMatrix(
       nb::ndarray<nb::numpy, double, nb::ndim<2>, nb::c_contig> bm) {
     if (bm.shape(0) != bm.shape(1)) {
@@ -590,6 +595,7 @@ used during structural minimisation stage)DOC")
               "symmetrize terminal conjugated groups for RMSD pruning")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap,
            "sets the coordmap to be used")
+      .def("SetConfToOptimize", &PyEmbedParameters::setConfToOptimize, "If a Conformer is provided, this conformer is minimized in place with the ETKDG Force Field.")
       .def("__setattr__", &safeSetattr);
 
   m.def("EmbedMultipleConfs", &RDKit::EmbedMultipleConfs2, "mol"_a,
