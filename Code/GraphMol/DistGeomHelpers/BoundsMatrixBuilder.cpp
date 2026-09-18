@@ -313,15 +313,13 @@ auto set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
   CHECK_INVARIANT(accumData.bondLengths.size() >= mol.getNumBonds(),
                   "Wrong size accumData");
-
   auto [atomParams, foundAll] = paramF(mol);
-
   if (!isFallback && !foundAll) {
     BOOST_LOG(rdWarningLog)
         << "Molecule was not parametrized succesfully with the selected force field. "
            "Falling back to the Universal Force Field!"
         << std::endl;
-    return std::make_pair(false, atomParams);
+    return std::make_pair(foundAll, atomParams);
   }
   boost::dynamic_bitset<> squishAtoms(mol.getNumAtoms());
   // find larger heteroatoms in conjugated 5 rings, because we need to add a
@@ -338,11 +336,11 @@ auto set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     std::ranges::for_each(mol.bonds(), setBitsIfSquishBond);
   }
 
+  bool success = true;
   for (const auto bond : mol.bonds()) {
     const auto begId = bond->getBeginAtomIdx();
     const auto endId = bond->getEndAtomIdx();
     auto bl = calcF(mol, *bond, atomParams, begId, endId);
-
     // we found 12 distances
     if (bl > FAILED12) {
       double extraSquish = 0.0;
@@ -382,6 +380,7 @@ auto set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       accumData.bondLengths[bond->getIdx()] = bl;
       mmat->setUpperBound(begId, endId, upperScale * bl);
       mmat->setLowerBound(begId, endId, lowerScale * bl);
+      success = false;
     }
     // We tried with the FF but failed, so we redo with the fallback.
     else {
@@ -394,7 +393,7 @@ auto set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     unsigned int pid = getUnifiedId(begId, endId, mol.getNumAtoms());
     accumData.visited12Bounds.set(pid);
   }
-  return std::make_pair(false, atomParams);
+  return std::make_pair(success, atomParams);
 }
 
 inline bool isHBondAcceptor(const Atom *atom) {
