@@ -6,6 +6,8 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
+    # The nanobind pin below is the version the committed stubs were generated with, which
+    # testTyping.py names as STUBGEN_VERSION; it skips the stub comparison under any other.
     conda create --name rdkit_build -c conda-forge --override-channels  $(python) cmake \
         libboost-devel=$(boost_version) \
         libboost=$(boost_version) \
