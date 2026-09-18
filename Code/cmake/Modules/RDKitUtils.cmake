@@ -172,15 +172,20 @@ endmacro(rdkit_library)
 macro(rdkit_headers)
   if (NOT RDK_INSTALL_INTREE)
     PARSE_ARGUMENTS(RDKHDR
-      "DEST"
+      "DEST;COMPONENT"
       ""
       ${ARGN})
     # RDKHDR_DEFAULT_ARGS -> RDKHDR_DEST
-    if(RDK_INSTALL_DEV_COMPONENT)
+    if(NOT RDKHDR_COMPONENT)
+      set(RDKHDR_COMPONENT dev)
+    endif()
+    # Headers in the dev component follow RDK_INSTALL_DEV_COMPONENT; ones assigned
+    # to another component are installed whenever that component is.
+    if(RDK_INSTALL_DEV_COMPONENT OR NOT "${RDKHDR_COMPONENT}" STREQUAL "dev")
       install(FILES ${RDKHDR_DEFAULT_ARGS}
               DESTINATION ${RDKit_HdrDir}/${RDKHDR_DEST}
-              COMPONENT dev )
-    endif(RDK_INSTALL_DEV_COMPONENT)
+              COMPONENT ${RDKHDR_COMPONENT})
+    endif()
   endif(NOT RDK_INSTALL_INTREE)
 endmacro(rdkit_headers)
 

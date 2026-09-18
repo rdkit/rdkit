@@ -16,7 +16,8 @@ rdkit_headers(Wrap.h PySequenceHolder.h
               boost_numpy.h
               python_streambuf.h
               pyint_api.h
-              DEST RDBoost)
+              DEST RDBoost
+              COMPONENT python)
 
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.13.0")
    cmake_policy(SET CMP0079 NEW)
@@ -28,7 +29,8 @@ if(RDK_BUILD_NANOBIND_WRAPPERS)
 
 rdkit_headers(Wrap.h PySequenceHolder.h
               python_streambuf.h
-              DEST RDBoost)
+              DEST RDBoost
+              COMPONENT python)
 
 
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.13.0")
