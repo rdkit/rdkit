@@ -132,8 +132,8 @@ std::vector<double> computeTPSAContribs(const RDKit::ROMol &mol, bool force,
 
 std::vector<std::pair<double, double>> computeCrippenContribs(
     const RDKit::ROMol &mol, bool force = false,
-    const std::optional<PyListOf<unsigned int>> &atomTypes = std::nullopt,
-    const std::optional<PyListOf<std::string>> &atomTypeLabels = std::nullopt) {
+    const std::optional<PyOutputList> &atomTypes = std::nullopt,
+    const std::optional<PyOutputList> &atomTypeLabels = std::nullopt) {
   std::optional<std::vector<unsigned int>> tAtomTypes;
   std::optional<std::vector<std::string>> tAtomTypeLabels;
 
@@ -391,7 +391,7 @@ ExplicitBitVect *GetHashedAtomPairFingerprintAsBitVect(
 
 double kappaHelper(double (*fn)(const RDKit::ROMol &, std::vector<double> *),
                    const RDKit::ROMol &mol,
-                   const std::optional<PyListOf<double>> &atomContribs) {
+                   const std::optional<PyOutputList> &atomContribs) {
   std::optional<std::vector<double>> lContribs;
   if (atomContribs) {
     nb::list acl = *atomContribs;
@@ -412,7 +412,7 @@ double kappaHelper(double (*fn)(const RDKit::ROMol &, std::vector<double> *),
 }
 
 double hkAlphaHelper(const RDKit::ROMol &mol,
-                     const std::optional<PyListOf<double>> &atomContribs) {
+                     const std::optional<PyOutputList> &atomContribs) {
   return kappaHelper(RDKit::Descriptors::calcHallKierAlpha, mol, atomContribs);
 }
 
