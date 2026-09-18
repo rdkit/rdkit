@@ -12,6 +12,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -70,6 +71,11 @@ MorganAtomInvGenerator *MorganAtomInvGenerator::clone() const {
 MorganFeatureAtomInvGenerator::MorganFeatureAtomInvGenerator(
     const std::vector<const ROMol *> *patterns) {
   if (patterns) {
+    // getFeatureInvariants() gives each pattern one bit of a 32-bit invariant.
+    if (patterns->size() > 32) {
+      throw ValueErrorException(
+          "MorganFeatureAtomInvGenerator takes at most 32 patterns");
+    }
     dp_patterns = new std::vector<const ROMol *>;
     dp_patterns->reserve(patterns->size());
     for (auto pattern : *patterns) {
