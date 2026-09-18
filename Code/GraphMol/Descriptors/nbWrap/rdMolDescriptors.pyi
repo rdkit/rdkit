@@ -2,7 +2,7 @@
 
 from collections.abc import Iterable, Sequence
 import enum
-from typing import Final, overload
+from typing import Any, Final, overload
 
 import rdkit.Chem.rdchem
 import rdkit.DataStructs.cDataStructs
@@ -290,7 +290,7 @@ def CalcChi4n(mol: rdkit.Chem.rdchem.Mol, force: bool = False) -> float:
     Similar to ChiXv, but uses uses nVal instead of valence. This makes a big difference after we get out of the first row.
     """
 
-def CalcHallKierAlpha(mol: rdkit.Chem.rdchem.Mol, atomContribs: list[float] | None = None) -> float:
+def CalcHallKierAlpha(mol: rdkit.Chem.rdchem.Mol, atomContribs: list[Any] | None = None) -> float:
     """
     From equation (58) of Rev. Comp. Chem. vol 2, 367-422, (1991).
     NOTE: Because hybridization is used to calculate this, results may
