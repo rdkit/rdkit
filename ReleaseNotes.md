@@ -54,9 +54,7 @@ GitHub)
   (previously `dev`), and the shared `nanobind` library (previously whichever
   component the preceding `rdkit_library()` call happened to leave set).
   Packagers who install components selectively need to include `python` to keep
-  these files. Headers assigned to a component other than `dev` are also no
-  longer gated on `RDK_INSTALL_DEV_COMPONENT`, so a build with that switch off
-  installs the `RDBoost` headers alongside the `RDBoost` library.
+  these files.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use

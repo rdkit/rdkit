@@ -179,13 +179,11 @@ macro(rdkit_headers)
     if(NOT RDKHDR_COMPONENT)
       set(RDKHDR_COMPONENT dev)
     endif()
-    # Headers in the dev component follow RDK_INSTALL_DEV_COMPONENT; ones assigned
-    # to another component are installed whenever that component is.
-    if(RDK_INSTALL_DEV_COMPONENT OR NOT "${RDKHDR_COMPONENT}" STREQUAL "dev")
+    if(RDK_INSTALL_DEV_COMPONENT)
       install(FILES ${RDKHDR_DEFAULT_ARGS}
               DESTINATION ${RDKit_HdrDir}/${RDKHDR_DEST}
               COMPONENT ${RDKHDR_COMPONENT})
-    endif()
+    endif(RDK_INSTALL_DEV_COMPONENT)
   endif(NOT RDK_INSTALL_INTREE)
 endmacro(rdkit_headers)
 
@@ -255,8 +253,8 @@ macro(rdkit_nanobind_extension)
     set_target_properties(nanobind
       PROPERTIES
       LIBRARY_OUTPUT_DIRECTORY  ${RDK_LIBRARY_OUTPUT_DIRECTORY} )
-    # The shared nanobind runtime is tied to the Python ABI, so it belongs with the
-    # wrappers rather than with the flavor-independent C++ libraries.
+    # The shared nanobind runtime is tied to the Python ABI, so it ships with the
+    # wrappers.
     INSTALL(TARGETS nanobind
             DESTINATION ${RDKit_LibDir}
             COMPONENT python)
