@@ -29,7 +29,9 @@ std::vector<std::string> split(std::string_view input) {
     result.emplace_back(input.substr(previousEnd, delimiterStart - previousEnd));
     previousEnd = delimiterStart + delimiter.size();
   }
-  result.emplace_back(input.substr(previousEnd));
+  if (previousEnd < input.size()) {
+    result.emplace_back(input.substr(previousEnd));
+  }
   return result;
 }
 
