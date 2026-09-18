@@ -132,13 +132,14 @@ std::vector<double> computeTPSAContribs(const RDKit::ROMol &mol, bool force,
 
 std::vector<std::pair<double, double>> computeCrippenContribs(
     const RDKit::ROMol &mol, bool force = false,
-    nb::object atomTypes = nb::none(), nb::object atomTypeLabels = nb::none()) {
+    const std::optional<PyListOf<unsigned int>> &atomTypes = std::nullopt,
+    const std::optional<PyListOf<std::string>> &atomTypeLabels = std::nullopt) {
   std::optional<std::vector<unsigned int>> tAtomTypes;
   std::optional<std::vector<std::string>> tAtomTypeLabels;
 
-  if (!atomTypes.is_none()) {
-    auto atList = nb::cast<nb::list>(atomTypes);
-    auto n = nb::len(atList);
+  if (atomTypes) {
+    nb::list atList = *atomTypes;
+    auto n = atList.size();
     if (n != 0) {
       if (n != mol.getNumAtoms()) {
         throw ValueErrorException(
@@ -148,8 +149,8 @@ std::vector<std::pair<double, double>> computeCrippenContribs(
       tAtomTypes.emplace(mol.getNumAtoms(), 0u);
     }
   }
-  if (!atomTypeLabels.is_none()) {
-    auto atLabelList = nb::cast<nb::list>(atomTypeLabels);
+  if (atomTypeLabels) {
+    nb::list atLabelList = *atomTypeLabels;
     auto n = nb::len(atLabelList);
     if (n != 0) {
       if (n != mol.getNumAtoms()) {
@@ -170,13 +171,13 @@ std::vector<std::pair<double, double>> computeCrippenContribs(
       tAtomTypeLabels ? &(*tAtomTypeLabels) : nullptr);
 
   if (tAtomTypes) {
-    auto atList = nb::cast<nb::list>(atomTypes);
+    nb::list atList = *atomTypes;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       atList[i] = nb::int_((*tAtomTypes)[i]);
     }
   }
   if (tAtomTypeLabels) {
-    auto atLabelList = nb::cast<nb::list>(atomTypeLabels);
+    nb::list atLabelList = *atomTypeLabels;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       atLabelList[i] = nb::str((*tAtomTypeLabels)[i].c_str());
     }
@@ -389,11 +390,12 @@ ExplicitBitVect *GetHashedAtomPairFingerprintAsBitVect(
 }
 
 double kappaHelper(double (*fn)(const RDKit::ROMol &, std::vector<double> *),
-                   const RDKit::ROMol &mol, nb::object atomContribs) {
+                   const RDKit::ROMol &mol,
+                   const std::optional<PyListOf<double>> &atomContribs) {
   std::optional<std::vector<double>> lContribs;
-  if (!atomContribs.is_none()) {
-    auto acl = nb::cast<nb::list>(atomContribs);
-    if (nb::len(acl) != mol.getNumAtoms()) {
+  if (atomContribs) {
+    nb::list acl = *atomContribs;
+    if (acl.size() != mol.getNumAtoms()) {
       throw ValueErrorException(
           "length of atomContribs list != number of atoms");
     }
@@ -401,7 +403,7 @@ double kappaHelper(double (*fn)(const RDKit::ROMol &, std::vector<double> *),
   }
   double res = fn(mol, lContribs ? &(*lContribs) : nullptr);
   if (lContribs) {
-    auto acl = nb::cast<nb::list>(atomContribs);
+    nb::list acl = *atomContribs;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       acl[i] = nb::float_((*lContribs)[i]);
     }
@@ -409,7 +411,8 @@ double kappaHelper(double (*fn)(const RDKit::ROMol &, std::vector<double> *),
   return res;
 }
 
-double hkAlphaHelper(const RDKit::ROMol &mol, nb::object atomContribs) {
+double hkAlphaHelper(const RDKit::ROMol &mol,
+                     const std::optional<PyListOf<double>> &atomContribs) {
   return kappaHelper(RDKit::Descriptors::calcHallKierAlpha, mol, atomContribs);
 }
 
