@@ -20,6 +20,9 @@
 #include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
+#include <ForceField/UFF/BondStretch.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <Geometry/Utils.h>
@@ -37,7 +40,6 @@
 #ifdef RDK_TEST_MULTITHREADED
 #include <csignal>
 #include <thread>
-#include <chrono>
 #endif
 
 using namespace RDKit;
@@ -2416,7 +2418,38 @@ TEST_CASE("TransAmideKTerm") {
   }
 }
 
-TEST_CASE("MMFF Bounds"){
-  SECTION("Correct 12/13"){}
-  SECTION("Fallback to UFF if fails"){}
-}
+TEST_CASE("MMFFBounds"){
+
+  SECTION("Correct 12/13"){
+  auto mol = "CC"_smiles;
+  MolOps::addHs(*mol);
+  DistGeom::BoundsMatPtr mmat;
+  mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+  DGeomHelpers::initBoundsMat(mmat);
+  DGeomHelpers::setTopolBounds(*mol, mmat, true, false, false, true, true, true, DGeomHelpers::EmbedFF::MMFF);
+  SECTION("Bonds"){
+    auto params = MMFF::MMFFMolProperties(*mol);
+    MMFF::MMFFBond bondProps;
+    unsigned int bOrder = mol->getBondBetweenAtoms(0,1)->getBondType();
+    params.getMMFFBondStretchParams(*mol, 0, 1, bOrder, bondProps);
+    CHECK(mmat->getUpperBound(0,1) == bondProps.r0 + 0.01);
+    CHECK(mmat->getLowerBound(0,1) == bondProps.r0 - 0.01);
+  
+  }
+  SECTION("Angles"){}
+ }
+  SECTION("Fallback to UFF if fails"){
+  auto mol = "CCB"_smiles;
+  MolOps::addHs(*mol);
+  DistGeom::BoundsMatPtr mmat;
+  mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+  DGeomHelpers::initBoundsMat(mmat);
+  DGeomHelpers::setTopolBounds(*mol, mmat, true, false, false, true, true, true, DGeomHelpers::EmbedFF::MMFF);
+  auto [params, s] = UFF::getAtomTypes(*mol);
+  auto bOrder = mol->getBondBetweenAtoms(0,1)->getBondTypeAsDouble();
+  double r0 = ForceFields::UFF::Utils::calcBondRestLength(bOrder, params[0], params[1]);
+    CHECK(mmat->getUpperBound(0,1) == r0 + 0.01);
+    CHECK(mmat->getLowerBound(0,1) == r0 - 0.01);
+  }
+  }
+
