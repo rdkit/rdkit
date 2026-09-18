@@ -410,9 +410,11 @@ class TestCase(unittest.TestCase):
     g1 = rdFingerprintGenerator.GetAtomPairGenerator()
     fp1 = g1.GetFingerprint(m)
     jsonStr = g1.ToJSON()
-    g2 = rdFingerprintGenerator.FingerprintGeneratorFromJSON(jsonStr)
-    fp2 = g2.GetFingerprint(m)
-    self.assertEqual(fp1, fp2)
+    for text in (jsonStr, jsonStr.encode()):
+      with self.subTest(kind=type(text).__name__):
+        g2 = rdFingerprintGenerator.FingerprintGeneratorFromJSON(text)
+        fp2 = g2.GetFingerprint(m)
+        self.assertEqual(fp1, fp2)
 
   def testRDKitFPGeneratorAndFromAtoms(self):
     m = Chem.MolFromSmiles('CCCO')

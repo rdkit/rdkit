@@ -340,6 +340,13 @@ Pyridine oxide to n+O-	[n:1]=[O:2]>>[n+:1][O-:2]
     normalizer1 = rdMolStandardize.Normalizer()
     params = rdMolStandardize.CleanupParameters()
     normalizer2 = rdMolStandardize.NormalizerFromData(data, params)
+    # the transform data reads the same from bytes
+    self.assertEqual(
+      Chem.MolToSmiles(
+        rdMolStandardize.NormalizerFromData(data.encode(), params).normalize(
+          Chem.MolFromSmiles("O=N(=O)CCN=N#N", sanitize=False))),
+      Chem.MolToSmiles(normalizer2.normalize(
+        Chem.MolFromSmiles("O=N(=O)CCN=N#N", sanitize=False))))
 
     imol = Chem.MolFromSmiles("O=N(=O)CCN=N#N", sanitize=False)
     mol1 = normalizer1.normalize(imol)

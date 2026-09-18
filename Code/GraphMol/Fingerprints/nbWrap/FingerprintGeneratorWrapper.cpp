@@ -711,8 +711,8 @@ NB_MODULE(rdFingerprintGenerator, m) {
 
   m.def(
       "FingerprintGeneratorFromJSON",
-      [](const std::string &jsonStr) {
-        return generatorFromJSON(jsonStr).release();
+      [](const StringOrBytes &jsonStr) {
+        return generatorFromJSON(pyObjectToString(jsonStr)).release();
       },
       "jsonString"_a, "Deserialize a FingerprintGenerator from a JSON string",
       nb::rv_policy::take_ownership);

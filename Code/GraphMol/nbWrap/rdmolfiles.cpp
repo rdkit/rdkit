@@ -143,12 +143,12 @@ Nullable<ROMol *> MolFromMolFile(const std::filesystem::path &molFilename,
 }
 
 Nullable<ROMol *> MolFromSCSRBlock(
-    const std::string &molBlock, bool sanitize, bool removeHs,
+    const StringOrBytes &molBlock, bool sanitize, bool removeHs,
     std::optional<RDKit::v2::FileParsers::MolFromSCSRParams> pyparams) {
   auto scsrParams = pyparams.has_value()
                         ? *pyparams
                         : RDKit::v2::FileParsers::MolFromSCSRParams();
-  std::istringstream inStream(molBlock);
+  std::istringstream inStream(pyObjectToString(molBlock));
   unsigned int line = 0;
   try {
     RDKit::v2::FileParsers::MolFileParserParams params;
@@ -267,10 +267,10 @@ Nullable<ROMol *> MolFromMol2File(const std::filesystem::path &molFilename,
   return static_cast<ROMol *>(newM);
 }
 
-Nullable<ROMol *> MolFromMol2Block(std::string mol2Block, bool sanitize = true,
-                                   bool removeHs = true,
+Nullable<ROMol *> MolFromMol2Block(const StringOrBytes &mol2Block,
+                                   bool sanitize = true, bool removeHs = true,
                                    bool cleanupSubstructures = true) {
-  std::istringstream inStream(mol2Block);
+  std::istringstream inStream(pyObjectToString(mol2Block));
   RWMol *newM;
   try {
     newM = Mol2DataStreamToMol(inStream, sanitize, removeHs, Mol2Type::CORINA,

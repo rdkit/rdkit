@@ -146,8 +146,14 @@ struct maemolsup_wrap {
              R"DOC(Resets our position in the file to the beginning.
 )DOC")
         .def("__len__", &MaeMolSupplier::length)
-        .def("SetData", &MaeMolSupplier::setData, "data"_a, "sanitize"_a = true,
-             "removeHs"_a = true, R"DOC(Sets the text to be parsed.)DOC")
+        .def(
+            "SetData",
+            [](MaeMolSupplier &self, const StringOrBytes &data, bool sanitize,
+               bool removeHs) {
+              self.setData(pyObjectToString(data), sanitize, removeHs);
+            },
+            "data"_a, "sanitize"_a = true, "removeHs"_a = true,
+            R"DOC(Sets the text to be parsed.)DOC")
         .def("atEnd", &MaeMolSupplier::atEnd,
              R"DOC(Returns whether or not we have hit EOF.
 )DOC");

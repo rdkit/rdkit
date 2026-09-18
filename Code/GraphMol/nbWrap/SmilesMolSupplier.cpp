@@ -75,10 +75,12 @@ Nullable<ROMol *> MolSupplGetItem(T *suppl, int idx) {
 }  // namespace
 
 SmilesMolSupplier *SmilesSupplierFromText(
-    std::string text, std::string delimiter = " ", int smilesColumn = 0,
-    int nameColumn = 1, bool titleLine = true, bool sanitize = true) {
+    const StringOrBytes &text, std::string delimiter = " ",
+    int smilesColumn = 0, int nameColumn = 1, bool titleLine = true,
+    bool sanitize = true) {
   auto *res = new SmilesMolSupplier();
-  res->setData(text, delimiter, smilesColumn, nameColumn, titleLine, sanitize);
+  res->setData(pyObjectToString(text), delimiter, smilesColumn, nameColumn,
+               titleLine, sanitize);
   return res;
 }
 
@@ -172,9 +174,16 @@ struct smimolsup_wrap {
              R"DOC(Resets our position in the file to the beginning.
 )DOC")
         .def("__len__", &SmilesMolSupplier::length)
-        .def("SetData", &SmilesMolSupplier::setData, "data"_a,
-             "delimiter"_a = " ", "smilesColumn"_a = 0, "nameColumn"_a = 1,
-             "titleLine"_a = true, "sanitize"_a = true,
+        .def(
+            "SetData",
+            [](SmilesMolSupplier &self, const StringOrBytes &data,
+               const std::string &delimiter, int smilesColumn, int nameColumn,
+               bool titleLine, bool sanitize) {
+              self.setData(pyObjectToString(data), delimiter, smilesColumn,
+                           nameColumn, titleLine, sanitize);
+            },
+            "data"_a, "delimiter"_a = " ", "smilesColumn"_a = 0,
+            "nameColumn"_a = 1, "titleLine"_a = true, "sanitize"_a = true,
              R"DOC(Sets the text to be parsed.)DOC")
         .def("GetItemText", &SmilesMolSupplier::getItemText, "index"_a,
              R"DOC(Returns the text for an item.)DOC");

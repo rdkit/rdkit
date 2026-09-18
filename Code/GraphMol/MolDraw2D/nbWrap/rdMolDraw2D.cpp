@@ -693,12 +693,13 @@ void setDrawerColour(RDKit::MolDraw2D &self, const PyColour &tpl) {
   self.setColour(pyTupleToDrawColour(tpl));
 }
 
-void updateMolDrawOptionsHelper(RDKit::MolDrawOptions &obj, std::string json) {
-  MolDraw2DUtils::updateMolDrawOptionsFromJSON(obj, json);
+void updateMolDrawOptionsHelper(RDKit::MolDrawOptions &obj,
+                                const StringOrBytes &json) {
+  MolDraw2DUtils::updateMolDrawOptionsFromJSON(obj, pyObjectToString(json));
 }
 
-void updateDrawerParamsHelper(RDKit::MolDraw2D &obj, std::string json) {
-  MolDraw2DUtils::updateDrawerParamsFromJSON(obj, json);
+void updateDrawerParamsHelper(RDKit::MolDraw2D &obj, const StringOrBytes &json) {
+  MolDraw2DUtils::updateDrawerParamsFromJSON(obj, pyObjectToString(json));
 }
 
 std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,

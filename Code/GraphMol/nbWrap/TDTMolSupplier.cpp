@@ -139,9 +139,17 @@ struct tdtmolsup_wrap {
              R"DOC(Resets our position in the file to the beginning.
 )DOC")
         .def("__len__", &TDTMolSupplier::length)
-        .def("SetData", &TDTMolSupplier::setData, "data"_a, "nameRecord"_a = "",
-             "confId2D"_a = -1, "confId3D"_a = -1, "sanitize"_a = true,
-             R"DOC(Sets the text to be parsed.)DOC")
+        .def(
+            "SetData",
+            [](TDTMolSupplier &self, const StringOrBytes &data,
+               const std::string &nameRecord, int confId2D, int confId3D,
+               bool sanitize) {
+              self.setData(pyObjectToString(data), nameRecord, confId2D,
+                           confId3D, sanitize);
+            },
+            "data"_a, "nameRecord"_a = "", "confId2D"_a = -1,
+            "confId3D"_a = -1, "sanitize"_a = true,
+            R"DOC(Sets the text to be parsed.)DOC")
         .def("GetItemText", &TDTMolSupplier::getItemText, "index"_a,
              R"DOC(Returns the text for an item.)DOC");
   };
