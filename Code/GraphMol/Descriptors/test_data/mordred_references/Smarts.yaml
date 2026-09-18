@@ -1,0 +1,32 @@
+# PaDEL-descriptor
+- names: nAcid
+  results:
+    Hexane: 0
+    Benzene: 0
+    Caffeine: 0
+    Cyanidin: 0
+    Lycopene: 0
+    Epicatechin: 0
+    Limonene: 0
+    Allicin: 0
+    Glutathione: 2
+    Digoxin: 0
+    Capsaicin: 0
+    EllagicAcid: 0
+    Astaxanthin: 0
+
+- names: nBase
+  results:
+    Hexane: 0
+    Benzene: 0
+    Caffeine: 0
+    Cyanidin: skip
+    Lycopene: 0
+    Epicatechin: 0
+    Limonene: 0
+    Allicin: 0
+    Glutathione: 1
+    Digoxin: 0
+    Capsaicin: 0
+    EllagicAcid: 0
+    Astaxanthin: 0

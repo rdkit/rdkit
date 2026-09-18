@@ -14,7 +14,7 @@ steps:
         libboost-devel=$(boost_version) \
         eigen \
         cairo freetype \
-        ccache
+        ccache lapack liblapacke blas
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
@@ -41,6 +41,7 @@ steps:
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
     -DRDK_BUILD_PGSQL=ON \
+    -DRDK_BUILD_OSMORDRED_SUPPORT=OFF \
     -DPostgreSQL_CONFIG=/usr/bin/pg_config
   displayName: Configure build (Run CMake)
 - bash: |
