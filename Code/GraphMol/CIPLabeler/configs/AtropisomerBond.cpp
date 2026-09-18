@@ -29,7 +29,8 @@ AtropisomerBond::AtropisomerBond(const CIPMol &mol, Bond *bond, Atom *startAtom,
 
   Atropisomers::AtropAtomAndBondVec atomAndBondVecs[2];
   if (!Atropisomers::getAtropisomerAtomsAndBonds(bond, atomAndBondVecs,
-                                                 bond->getOwningMol())) {
+                                                 bond->getOwningMol()) ||
+      atomAndBondVecs[0].second.empty() || atomAndBondVecs[1].second.empty()) {
     return;  // not an atropisomer
   }
   auto atom1 = mol.getAtom(atomAndBondVecs[0].second[0]->getOtherAtomIdx(
@@ -75,10 +76,6 @@ bool AtropisomerBond::hasPrimaryLabel() const {
   return dp_bond->hasProp(common_properties::_CIPCode);
 }
 
-void AtropisomerBond::resetPrimaryLabel() const {
-  dp_bond->clearProp(common_properties::_CIPCode);
-}
-
 Descriptor AtropisomerBond::label(const Rules &comp) {
   auto &digraph = getDigraph();
   auto root1 = digraph.getOriginalRoot();
@@ -111,6 +108,10 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
 
   removeDuplicatesAndHs(edges1);
   removeDuplicatesAndHs(edges2);
+
+  if (getCarriers().size() != 2 || edges1.empty() || edges2.empty()) {
+    return Descriptor::ns;
+  }
 
   auto carriers = std::vector<Atom *>(getCarriers());
   auto config = d_cfg;
@@ -170,13 +171,13 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
     }
   }
   if (config == Bond::STEREOATROPCCW) {
-    if (priority1.isPseudoAsymetric() || priority2.isPseudoAsymetric()) {
+    if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
       return Descriptor::m;
     } else {
       return Descriptor::M;
     }
   } else if (config == Bond::STEREOATROPCW) {
-    if (priority1.isPseudoAsymetric() || priority2.isPseudoAsymetric()) {
+    if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
       return Descriptor::p;
     } else {
       return Descriptor::P;

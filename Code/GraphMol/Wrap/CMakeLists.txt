@@ -99,3 +99,6 @@ add_pytest(pySubsetTest
 
 add_pytest(pyTestLazyNumpy
          ${CMAKE_CURRENT_SOURCE_DIR}/test_lazy_numpy.py)
+
+add_pytest(pySubstructTest
+         ${CMAKE_CURRENT_SOURCE_DIR}/test_substruct.py)

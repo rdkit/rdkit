@@ -512,6 +512,7 @@ TEST_CASE("Greg Space Failure") {
 
   SubstructMatchParameters matchParams;
   SynthonSpaceSearchParams params;
+  params.timeOut = 0;
   auto results =
       synthonspace.substructureSearch(*queryMol, matchParams, params);
   CHECK(results.getHitMolecules().size() == 1);

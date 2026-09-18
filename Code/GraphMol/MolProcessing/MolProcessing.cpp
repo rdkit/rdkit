@@ -102,13 +102,12 @@ std::vector<std::unique_ptr<T>> worker(v2::FileParsers::MolSupplier *suppl,
 /*!
    \param fileName the name of the file to read
    \param options options controlling how the file is read, if not provided
-           four threads will be used whegn reading the file
+           four threads will be used when reading the file
    \param generator the fingerprint generator to use, if not provided,
            Morgan fingerprints with radius of 3 will be used.
 
-   \return an ExplicitBitVect,bitset pair, the first containing the
-           fingerprints and the second a bitset indicating which molecules were
-           successfully read
+   \return a vector containing the fingerprints in input order. Entries for
+           molecules that could not be read are null.
 */
 template <typename OutputType>
 std::vector<std::unique_ptr<ExplicitBitVect>> getFingerprintsForMolsInFile(
