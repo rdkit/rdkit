@@ -96,12 +96,8 @@ namespace Osmordred {
 // Returns true if molecule has >10 rings OR >200 heavy atoms
 // This prevents Osmordred.Calculate from hanging on very complex molecules
 bool isMoleculeTooLarge(const ROMol &mol) {
-  const RingInfo *ri = mol.getRingInfo();
-  int numRings = 0;
-  if (ri && ri->isInitialized()) {
-    numRings = ri->numRings();
-  }
-
+  const RingInfo *ri = getRings(mol);
+  int numRings = ri->numRings();
   int numHeavyAtoms = mol.getNumHeavyAtoms();
 
   // Filter: >10 rings OR >200 heavy atoms
@@ -178,11 +174,7 @@ void solveLinearSystem(const ROMol &mol, std::vector<double>& A, std::vector<dou
 
 // Function to count the number of endocyclic single bonds
 int calcEndocyclicSingleBonds(const ROMol &mol) {
-  const RingInfo *ri = mol.getRingInfo();
-  if (!ri || !ri->isInitialized()) {
-    return 0;  // No ring information available
-  }
-
+  const RingInfo *ri = getRings(mol);
   std::unordered_set<int> bondIndices;
 
   // Collect all bond indices involved in rings
@@ -1940,13 +1932,12 @@ std::vector<double> calcEccentricConnectivityIndex(const ROMol &mol) {
 // Function to find rings in a molecule using RDKit's ring detection
 std::vector<std::vector<int>> findRings(const ROMol &mol) {
   std::vector<std::vector<int>> rings;
-  RingInfo *ri = mol.getRingInfo();
-  if (ri) {
-    for (size_t i = 0; i < ri->numRings(); ++i) {
-      std::vector<int> ring = ri->bondRings()[i];
-      rings.push_back(ring);
-    }
+  RingInfo *ri = getRings(mol);
+  for (size_t i = 0; i < ri->numRings(); ++i) {
+    std::vector<int> ring = ri->bondRings()[i];
+    rings.push_back(ring);
   }
+
   return rings;
 }
 
