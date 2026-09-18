@@ -14,7 +14,9 @@ import gzip
 import importlib.util
 import logging
 import os
+import pathlib
 import pickle
+import re
 import sys
 import tempfile
 import unittest
@@ -26,10 +28,12 @@ import numpy as np
 
 # import rdkit.Chem.rdDepictor
 from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
+from rdkit.Chem import rdMIF
 from rdkit.Chem import rdqueries
 
 from rdkit.Chem import rdChemReactions
 from rdkit.Chem.Scaffolds import MurckoScaffold
+from rdkit.Geometry import Point3D
 
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
@@ -8638,6 +8642,199 @@ M  END
     self.assertEqual(len(rings), 24)
     rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
     self.assertEqual(len(rings), 70)
+
+  def testTextParsersAcceptStrOrBytes(self):
+    molBlock = Chem.MolToMolBlock(Chem.MolFromSmiles('CCO'))
+    with open(
+        os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                     'benzene.mol2')) as inF:
+      mol2Block = inF.read()
+    cases = [
+      (Chem.MolFromSmiles, 'CCO'),
+      (Chem.MolFromSmarts, '[#6]'),
+      (Chem.MolFromMolBlock, molBlock),
+      (Chem.MolFromSequence, 'AAA'),
+      (Chem.MolFromMol2Block, mol2Block),
+    ]
+    for parser, text in cases:
+      with self.subTest(parser=parser.__name__):
+        self.assertIsNotNone(parser(text))
+        self.assertIsNotNone(parser(text.encode()))
+        with self.assertRaises(TypeError):
+          parser(42)
+
+  def testSupplierTextAcceptsStrOrBytes(self):
+    smiText = 'CCO ethanol\nCCC propane\n'
+    tdtText = '$SMI<CCO>\n|\n'
+    for text in (smiText, smiText.encode()):
+      with self.subTest(kind=type(text).__name__):
+        suppl = Chem.SmilesMolSupplierFromText(text, titleLine=False)
+        self.assertEqual([Chem.MolToSmiles(mol) for mol in suppl], ['CCO', 'CCC'])
+        suppl = Chem.SmilesMolSupplier()
+        suppl.SetData(text, titleLine=False)
+        self.assertEqual([Chem.MolToSmiles(mol) for mol in suppl], ['CCO', 'CCC'])
+    for text in (tdtText, tdtText.encode()):
+      with self.subTest(kind=type(text).__name__):
+        suppl = Chem.TDTMolSupplier()
+        suppl.SetData(text)
+        self.assertEqual([Chem.MolToSmiles(mol) for mol in suppl], ['CCO'])
+    if hasattr(Chem, 'MaeMolSupplier'):
+      # this block has no m_atom table, so reading it raises
+      maeBlock = 'f_m_ct {\n  s_m_title\n  :::\n  \n  }\n}'
+      for text in (maeBlock, maeBlock.encode()):
+        with self.subTest(kind=type(text).__name__, supplier='Mae'):
+          with Chem.MaeMolSupplier() as suppl:
+            suppl.SetData(text)
+            self.assertRaisesRegex(RuntimeError, r'Indexed block not found: m_atom',
+                                   lambda: next(suppl))
+
+  def testSequenceParamsAcceptAnyIterable(self):
+    m = Chem.RWMol(Chem.MolFromSmiles('C[C@H](F)Cl'))
+    group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m,
+                                          (i for i in [1]))
+    self.assertEqual(len(group.GetAtoms()), 1)
+    for bad in (42, None):
+      with self.subTest(value=bad):
+        with self.assertRaises(TypeError):
+          Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, bad)
+
+  def testLengthCheckedParamsAcceptGenerators(self):
+    # These two validate a length, and a generator is iterable but has no
+    # len(), so the length has to come from the converted vector.
+    m = Chem.MolFromSmiles('CCO')
+    order = list(range(m.GetNumAtoms()))
+    self.assertEqual(Chem.MolToSmiles(Chem.RenumberAtoms(m, (i for i in order))),
+                     Chem.MolToSmiles(Chem.RenumberAtoms(m, order)))
+    with self.assertRaises(ValueError):
+      Chem.RenumberAtoms(m, [0])
+    with self.assertRaises(ValueError):
+      Chem.RenumberAtoms(m, [0, 1, 99])
+
+    pts = [Point3D(0, 0, 0), Point3D(1, 0, 0)]
+    sgroup = Chem.CreateMolSubstanceGroup(Chem.RWMol(m), 'SRU')
+    sgroup.AddBracket(p for p in pts)
+    self.assertEqual(len(sgroup.GetBrackets()), 1)
+    with self.assertRaises(ValueError):
+      sgroup.AddBracket(p for p in pts[:1])
+
+  def testMolOpsContainerParams(self):
+    m = Chem.MolFromSmiles('CCO')
+
+    # molzipFragments takes None for an empty list, as the Boost wrappers do
+    self.assertIsNone(Chem.molzipFragments(None))
+    self.assertIsNone(Chem.molzipFragments([]))
+
+    atomMap = {}
+    self.assertEqual(len(Chem.FindAtomEnvironmentOfRadiusN(m, 1, 0, atomMap=atomMap)), 1)
+    self.assertEqual(atomMap, {0: 0, 1: 1})
+    with self.assertRaises(TypeError):
+      Chem.FindAtomEnvironmentOfRadiusN(m, 1, 0, atomMap=[])
+    with self.assertRaises(TypeError):
+      Chem.SetDoubleBondNeighborDirections(m, 5)
+
+    # Output arguments are filled in place, so they must be a list or dict.
+    frags = []
+    Chem.GetMolFrags(Chem.MolFromSmiles('CC.O'), asMols=True, frags=frags)
+    self.assertEqual(frags, [0, 0, 1])
+    with self.assertRaises(TypeError):
+      Chem.GetMolFrags(m, asMols=True, frags=())
+    with self.assertRaises(TypeError):
+      Chem.RDKFingerprint(m, bitInfo=[])
+
+    self.assertEqual(Chem.PathToSubmol(m, (0, 1)).GetNumAtoms(), 3)
+    peptide = Chem.MolFromSequence('AG')
+    self.assertEqual(sorted(Chem.SplitMolByPDBResidues(peptide, whiteList=('ALA', ))), ['ALA'])
+
+    a = Chem.MolFromSmiles("[C@H]([Xe])(F)([V])")
+    b = Chem.MolFromSmiles("[Xe]N.[V]I")
+    p = Chem.MolzipParams()
+    p.label = Chem.MolzipLabel.AtomType
+    p.setAtomSymbols(("Xe", "V"))
+    self.assertEqual(Chem.MolToSmiles(Chem.molzip(a, b, p)), "N[C@@H](F)I")
+    p.setAtomSymbols(None)
+    self.assertNotEqual(Chem.MolToSmiles(Chem.molzip(a, b, p)), "N[C@@H](F)I")
+
+  def testExceptionsUseStandardTypes(self):
+    # assertRaises alone would not pin this down, since a subclass satisfies
+    # it too; the point is that the type is the builtin itself.
+    m = Chem.MolFromSmiles('CCO')
+    with self.assertRaises(ValueError) as caught:
+      Chem.RenumberAtoms(m, [0])
+    self.assertIs(type(caught.exception), ValueError)
+
+    v = DataStructs.RealValueVect(30)
+    with self.assertRaises(IndexError) as caught:
+      v[40]
+    self.assertIs(type(caught.exception), IndexError)
+    self.assertEqual(caught.exception.args, (40, ))
+
+    self.assertFalse(hasattr(rdBase, 'ValueErrorException'))
+    self.assertFalse(hasattr(rdBase, 'IndexErrorException'))
+
+    # rdMIF is imported at the top of this file, so these checks also cover
+    # the state after importing it: a module registering its own Python type
+    # for these C++ exceptions would replace the builtins everywhere.
+    self.assertFalse(hasattr(rdMIF, 'MIFValueError'))
+    self.assertFalse(hasattr(rdMIF, 'MIFIndexError'))
+
+  def testFunctionsAreRegisteredOnce(self):
+    # A name bound twice to the same function has two overloads with the same signature.
+    for fn in (Chem.MolFromMolBlock, Chem.MolFromMolFile, rdqueries.HasPropQueryBond):
+      with self.subTest(fn=fn.__name__):
+        self.assertEqual(len(fn.__nb_signature__), 1)
+
+  def testSetNoImplicitArgumentAndDocstring(self):
+    atom = Chem.MolFromSmiles('CC').GetAtomWithIdx(0)
+    atom.SetNoImplicit(what=True)
+    self.assertTrue(atom.GetNoImplicit())
+    self.assertIn('disallows', Chem.Atom.SetNoImplicit.__doc__)
+
+  def testMrvWriterParams(self):
+    mol = Chem.MolFromSmiles('C[C@H](F)Cl')
+    params = Chem.MrvWriterParams()
+    self.assertEqual(Chem.MolToMrvBlock(mol, params), Chem.MolToMrvBlock(mol))
+    params.includeStereo = False
+    params.prettyPrint = True
+    self.assertEqual(Chem.MolToMrvBlock(mol, params),
+                     Chem.MolToMrvBlock(mol, includeStereo=False, prettyPrint=True))
+    self.assertNotEqual(Chem.MolToMrvBlock(mol, params), Chem.MolToMrvBlock(mol))
+
+  def testFilenameParamsAcceptPathLike(self):
+    # Filename arguments take str, bytes and os.PathLike.
+    mol = Chem.MolFromSmiles('CCO')
+    with tempfile.TemporaryDirectory() as tmpDir:
+      path = os.path.join(tmpDir, 'mol.mol')
+      with open(path, 'w') as outF:
+        outF.write(Chem.MolToMolBlock(mol))
+      for arg in (path, path.encode(), pathlib.Path(path)):
+        with self.subTest(kind=type(arg).__name__):
+          self.assertIsNotNone(Chem.MolFromMolFile(arg))
+
+  def testSupplierAndWriterFilenamesAcceptPathLike(self):
+    # Suppliers and writers take a filename as str, bytes or os.PathLike, and
+    # the ones with a file-object overload still accept a file object.
+    mol = Chem.MolFromSmiles('CCO')
+    with tempfile.TemporaryDirectory() as tmpDir:
+      sdf = os.path.join(tmpDir, 'mols.sdf')
+      for arg in (sdf, sdf.encode(), pathlib.Path(sdf)):
+        with self.subTest(kind=type(arg).__name__):
+          with Chem.SDWriter(arg) as writer:
+            writer.write(mol)
+          self.assertEqual(len(Chem.SDMolSupplier(arg)), 1)
+          self.assertEqual(len(list(Chem.ForwardSDMolSupplier(arg))), 1)
+
+      with open(sdf, 'rb') as inF:
+        self.assertEqual(len(list(Chem.ForwardSDMolSupplier(inF))), 1)
+    out = StringIO()
+    with Chem.SDWriter(out) as writer:
+      writer.write(mol)
+    self.assertIn('$$$$', out.getvalue())
+
+  def testSupplierRejectsObjectWithoutRead(self):
+    for bad in (42, object()):
+      with self.subTest(arg=type(bad).__name__):
+        with self.assertRaises(ValueError):
+          Chem.ForwardSDMolSupplier(bad)
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

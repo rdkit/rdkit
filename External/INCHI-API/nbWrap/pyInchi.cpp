@@ -37,6 +37,7 @@
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/boost_shared_ptr.h>
+#include <RDBoost/Wrap_nb.h>
 #include "../inchi.h"
 
 namespace nb = nanobind;
@@ -47,14 +48,9 @@ NB_MODULE(rdinchi, m) {
       "InchiToMol",
       [](const std::string &inchi, bool sanitize, bool removeHs) {
         RDKit::ExtraInchiReturnValues rv;
-        RDKit::ROMol *mol = RDKit::InchiToMol(inchi, rv, sanitize, removeHs);
-        if (mol == nullptr) {
-          return std::make_tuple(RDKit::ROMOL_SPTR(), rv.returnCode,
-                                 rv.messagePtr, rv.logPtr);
-        } else {
-          return std::make_tuple(RDKit::ROMOL_SPTR(mol), rv.returnCode,
-                                 rv.messagePtr, rv.logPtr);
-        }
+        RDKit::ROMOL_SPTR mol(RDKit::InchiToMol(inchi, rv, sanitize, removeHs));
+        return std::make_tuple(Nullable<RDKit::ROMOL_SPTR>(mol), rv.returnCode,
+                               rv.messagePtr, rv.logPtr);
       },
       "inchi"_a, "sanitize"_a = true, "removeHs"_a = true,
       R"DOC(return a ROMol for a InChI string

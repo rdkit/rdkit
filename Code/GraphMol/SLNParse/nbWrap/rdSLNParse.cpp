@@ -40,6 +40,7 @@
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/SanitException.h>
 #include <RDGeneral/FileParseException.h>
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -54,7 +55,8 @@ NB_MODULE(rdSLNParse, m) {
 
   m.def(
       "MolFromSLN",
-      [](std::string sln, bool sanitize, bool debugParser) -> RDKit::ROMol * {
+      [](std::string sln, bool sanitize,
+         bool debugParser) -> Nullable<RDKit::ROMol *> {
         return static_cast<RDKit::ROMol *>(
             RDKit::SLNToMol(sln, sanitize, debugParser));
       },
@@ -79,7 +81,8 @@ NB_MODULE(rdSLNParse, m) {
 
   m.def(
       "MolFromQuerySLN",
-      [](std::string sln, bool mergeHs, bool debugParser) -> RDKit::ROMol * {
+      [](std::string sln, bool mergeHs,
+         bool debugParser) -> Nullable<RDKit::ROMol *> {
         return static_cast<RDKit::ROMol *>(
             RDKit::SLNQueryToMol(sln, mergeHs, debugParser));
       },

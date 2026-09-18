@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
@@ -184,10 +185,11 @@ nb::tuple getSearchOrderHelper(const SubstructLibrary &self) {
   return nb::tuple(res);
 }
 
-void setSearchOrderHelper(SubstructLibrary &self, nb::handle seq) {
-  nb::object seq_obj = nb::borrow(seq);
+void setSearchOrderHelper(
+    SubstructLibrary &self,
+    const std::optional<PyIterableOf<unsigned int>> &seq) {
   std::unique_ptr<std::vector<unsigned int>> sorder =
-      pythonObjectToVect<unsigned int>(seq_obj);
+      pythonObjectToVect<unsigned int>(seq);
   if (sorder) {
     self.setSearchOrder(*sorder);
   } else {
@@ -483,8 +485,14 @@ void wrap_substructlibrary(nb::module_ &m) {
       .def("__len__", &MolHolderBase::size)
       .def("AddMol", &MolHolderBase::addMol, "m"_a,
            "Adds molecule to the molecule holder")
-      .def("GetMol", &MolHolderBase::getMol, "arg1"_a,
-           R"DOC(Returns a particular molecule in the molecule holder
+      .def(
+          "GetMol",
+          [](const MolHolderBase &self,
+             unsigned int idx) -> Nullable<boost::shared_ptr<ROMol>> {
+            return self.getMol(idx);
+          },
+          "arg1"_a,
+          R"DOC(Returns a particular molecule in the molecule holder
 
   ARGUMENTS:
     - idx: which molecule to return
@@ -635,8 +643,14 @@ void wrap_substructlibrary(nb::module_ &m) {
       LARGE_DEF(ExtendedQueryMol)
       // clang-format on
 
-      .def("GetMol", &SubstructLibrary::getMol, "idx"_a,
-           R"DOC(Returns a particular molecule in the molecule holder
+      .def(
+          "GetMol",
+          [](const SubstructLibrary &self,
+             unsigned int idx) -> Nullable<boost::shared_ptr<ROMol>> {
+            return self.getMol(idx);
+          },
+          "idx"_a,
+          R"DOC(Returns a particular molecule in the molecule holder
 
   ARGUMENTS:
     - idx: which molecule to return

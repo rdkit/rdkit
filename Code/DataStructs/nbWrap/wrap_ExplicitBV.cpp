@@ -22,13 +22,13 @@ using namespace nb::literals;
 
 using EBV = ExplicitBitVect;
 
-void SetBitsFromList(EBV *bv, const nb::iterable &onBitList) {
+void SetBitsFromList(EBV *bv, const PyIterableOf<unsigned int> &onBitList) {
   for (auto item : onBitList) {
     bv->setBit(nb::cast<unsigned int>(item));
   }
 }
 
-void UnSetBitsFromList(EBV *bv, const nb::iterable &offBitList) {
+void UnSetBitsFromList(EBV *bv, const PyIterableOf<unsigned int> &offBitList) {
   for (auto item : offBitList) {
     bv->unsetBit(nb::cast<unsigned int>(item));
   }
@@ -81,10 +81,10 @@ std::string ToBase64(EBV &self) {
   return res;
 }
 
-nb::list ExplicitToList(const ExplicitBitVect &sv) {
+PyListOf<int> ExplicitToList(const ExplicitBitVect &sv) {
   nb::list l;
   if (!sv.dp_bits) {
-    return l;
+    return PyListOf<int>(l);
   }
 
   auto count = sv.getNumBits();
@@ -98,7 +98,7 @@ nb::list ExplicitToList(const ExplicitBitVect &sv) {
       pos = sv.dp_bits->find_next(pos);
     }
   }
-  return l;
+  return PyListOf<int>(l);
 }
 
 std::string ebvClassDoc =

@@ -21,7 +21,8 @@ using namespace nb::literals;
 
 namespace {
 using namespace RDKit;
-nb::tuple atomRings(const RingInfo *self) {
+
+PyTupleOf<PyTupleOf<int>> atomRings(const RingInfo *self) {
   nb::list res;
   for (const auto &ring : self->atomRings()) {
     nb::list ringAsList;
@@ -30,9 +31,9 @@ nb::tuple atomRings(const RingInfo *self) {
     }
     res.append(nb::tuple(ringAsList));
   }
-  return nb::tuple(res);
+  return PyTupleOf<PyTupleOf<int>>(nb::tuple(res));
 }
-nb::tuple bondRings(const RingInfo *self) {
+PyTupleOf<PyTupleOf<int>> bondRings(const RingInfo *self) {
   nb::list res;
   for (const auto &ring : self->bondRings()) {
     nb::list ringAsList;
@@ -41,38 +42,38 @@ nb::tuple bondRings(const RingInfo *self) {
     }
     res.append(nb::tuple(ringAsList));
   }
-  return nb::tuple(res);
+  return PyTupleOf<PyTupleOf<int>>(nb::tuple(res));
 }
-nb::tuple atomMembers(const RingInfo *self, unsigned int idx) {
+PyTupleOf<int> atomMembers(const RingInfo *self, unsigned int idx) {
   nb::list res;
   for (const auto v : self->atomMembers(idx)) {
     res.append(v);
   }
-  return nb::tuple(res);
+  return PyTupleOf<int>(nb::tuple(res));
 }
-nb::tuple bondMembers(const RingInfo *self, unsigned int idx) {
+PyTupleOf<int> bondMembers(const RingInfo *self, unsigned int idx) {
   nb::list res;
   for (const auto v : self->bondMembers(idx)) {
     res.append(v);
   }
-  return nb::tuple(res);
+  return PyTupleOf<int>(nb::tuple(res));
 }
-nb::tuple atomRingSizes(const RingInfo *self, unsigned int idx) {
+PyTupleOf<int> atomRingSizes(const RingInfo *self, unsigned int idx) {
   nb::list res;
   for (const auto v : self->atomRingSizes(idx)) {
     res.append(v);
   }
-  return nb::tuple(res);
+  return PyTupleOf<int>(nb::tuple(res));
 }
-nb::tuple bondRingSizes(const RingInfo *self, unsigned int idx) {
+PyTupleOf<int> bondRingSizes(const RingInfo *self, unsigned int idx) {
   nb::list res;
   for (const auto v : self->bondRingSizes(idx)) {
     res.append(v);
   }
-  return nb::tuple(res);
+  return PyTupleOf<int>(nb::tuple(res));
 }
 
-nb::tuple atomRingFamilies(const RingInfo *self) {
+PyTupleOf<PyTupleOf<int>> atomRingFamilies(const RingInfo *self) {
   nb::list res;
   for (const auto &ring : self->atomRingFamilies()) {
     nb::list ringAsList;
@@ -81,9 +82,9 @@ nb::tuple atomRingFamilies(const RingInfo *self) {
     }
     res.append(nb::tuple(ringAsList));
   }
-  return nb::tuple(res);
+  return PyTupleOf<PyTupleOf<int>>(nb::tuple(res));
 }
-nb::tuple bondRingFamilies(const RingInfo *self) {
+PyTupleOf<PyTupleOf<int>> bondRingFamilies(const RingInfo *self) {
   nb::list res;
   for (const auto &ring : self->bondRingFamilies()) {
     nb::list ringAsList;
@@ -92,11 +93,11 @@ nb::tuple bondRingFamilies(const RingInfo *self) {
     }
     res.append(nb::tuple(ringAsList));
   }
-  return nb::tuple(res);
+  return PyTupleOf<PyTupleOf<int>>(nb::tuple(res));
 }
 
-void addRing(RingInfo *self, const nb::object &atomRing,
-             const nb::object &bondRing) {
+void addRing(RingInfo *self, const PyIterableOf<int> &atomRing,
+             const PyIterableOf<int> &bondRing) {
   auto atomIds = pythonObjectToVect<int>(atomRing);
   auto bondIds = pythonObjectToVect<int>(bondRing);
   const unsigned int nAts = atomIds ? atomIds->size() : 0;

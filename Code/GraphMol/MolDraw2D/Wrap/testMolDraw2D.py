@@ -692,6 +692,9 @@ M  END''')
     drawOptions = rdMolDraw2D.MolDrawOptions()
     rdMolDraw2D.UpdateMolDrawOptionsFromJSON(drawOptions, '{"addAtomIndices": 1}')
     self.assertTrue(drawOptions.addAtomIndices)
+    bytesOptions = rdMolDraw2D.MolDrawOptions()
+    rdMolDraw2D.UpdateMolDrawOptionsFromJSON(bytesOptions, b'{"addAtomIndices": 1}')
+    self.assertTrue(bytesOptions.addAtomIndices)
     d2d = rdMolDraw2D.MolDraw2DSVG(250, 200, -1, -1, True)
     d2d.SetDrawOptions(drawOptions)
     d2d.DrawMolecule(m)
@@ -1010,6 +1013,42 @@ M  END
     d2d.drawOptions().stereoGroupOrLabel = "OR"
     d2d.drawOptions().stereoGroupAbsLabel = "_AbS_"
     d2d.drawOptions().addStereoGroupAnnotation = False
+
+  def testContainerArguments(self):
+    m = Chem.MolFromSmiles('c1ccccc1O')
+    rdDepictor.Compute2DCoords(m)
+    d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+    d.DrawMoleculeWithHighlights(m, "", None, None, None, None)
+    d.FinishDrawing()
+
+    d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+    with self.assertRaises(TypeError):
+      d.DrawMolecule(m, highlightAtoms=[0], highlightAtomColors=[(1.0, 0.0, 0.0)])
+    with self.assertRaises(TypeError):
+      d.DrawArrow(Geometry.Point2D(0, 0), Geometry.Point2D(1, 1), color=[1.0, 0.0, 0.0])
+    opts = rdMolDraw2D.MolDrawOptions()
+    with self.assertRaises(TypeError):
+      opts.setAtomPalette([(1.0, 0.0, 0.0)])
+
+    d = rdMolDraw2D.MolDraw2DSVG(500, 200, 250, 200)
+    d.DrawMolecules([m, m], highlightAtoms=((0, ), (1, )),
+                    highlightAtomColors=({0: (1.0, 0.0, 0.0)}, {1: (0.0, 1.0, 0.0)}))
+    d.FinishDrawing()
+    self.assertIn('#FF0000', d.GetDrawingText())
+
+    params = rdMolDraw2D.ContourParams()
+    params.setColourMap(((1.0, 0.0, 0.0), (0.0, 0.0, 1.0)))
+    self.assertEqual(len(params.colourMap), 2)
+
+  def testDrawMoleculeNoneHighlights(self):
+    # the two-list form takes None for either list, as the one-list form does
+    m = Chem.MolFromSmiles('c1ccccc1O')
+    for atoms, bonds in (([0], None), (None, [0]), (None, None)):
+      with self.subTest(highlightAtoms=atoms, highlightBonds=bonds):
+        d2d = rdMolDraw2D.MolDraw2DSVG(250, 200)
+        d2d.DrawMolecule(m, highlightAtoms=atoms, highlightBonds=bonds)
+        d2d.FinishDrawing()
+        self.assertIn('svg', d2d.GetDrawingText())
 
 
 if __name__ == "__main__":

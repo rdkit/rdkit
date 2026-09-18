@@ -721,6 +721,8 @@ M  END
     matches = []
     self.assertEqual(rgd.GetMatchingCoreIdx(smol, matches), -1)
     self.assertEqual(len(matches), 0)
+    with self.assertRaises((TypeError, AttributeError)):
+      rgd.GetMatchingCoreIdx(cmol, ())
     cmol_h = Chem.AddHs(cmol)
     nmol_h = Chem.AddHs(nmol)
     self.assertTrue(cmol_h.HasSubstructMatch(core))

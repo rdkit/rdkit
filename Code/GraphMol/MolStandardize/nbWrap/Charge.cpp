@@ -10,6 +10,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
+#include <RDBoost/Wrap_nb.h>
 #include <nanobind/stl/vector.h>
 
 #include <optional>
@@ -37,10 +38,10 @@ void reionizeInPlaceHelper(MolStandardize::Reionizer &self, ROMol &mol) {
 }
 
 MolStandardize::Reionizer *reionizerFromData(
-    const std::string &data,
+    const StringOrBytes &data,
     const std::optional<std::vector<MolStandardize::ChargeCorrection>>
         &chargeCorrections) {
-  std::istringstream sstr(data);
+  std::istringstream sstr(pyObjectToString(data));
   return new MolStandardize::Reionizer(
       sstr, chargeCorrections.value_or(
                 std::vector<MolStandardize::ChargeCorrection>()));

@@ -21,13 +21,13 @@ using namespace nb::literals;
 
 using SBV = SparseBitVect;
 
-void SetBitsFromList(SBV *bv, const nb::iterable &onBitList) {
+void SetBitsFromList(SBV *bv, const PyIterableOf<unsigned int> &onBitList) {
   for (auto item : onBitList) {
     bv->setBit(nb::cast<unsigned int>(item));
   }
 }
 
-void UnSetBitsFromList(SBV *bv, const nb::iterable &offBitList) {
+void UnSetBitsFromList(SBV *bv, const PyIterableOf<unsigned int> &offBitList) {
   for (auto item : offBitList) {
     bv->unsetBit(nb::cast<unsigned int>(item));
   }
@@ -80,7 +80,7 @@ std::string ToBase64(SBV &self) {
   return res;
 }
 
-nb::list SparseToList(const SparseBitVect &sv) {
+PyListOf<int> SparseToList(const SparseBitVect &sv) {
   nb::list l;
   if (sv.getNumBits()) {
     for (unsigned int i = 0; i < sv.getNumBits(); ++i) {
@@ -90,7 +90,7 @@ nb::list SparseToList(const SparseBitVect &sv) {
       l[static_cast<size_t>(i)] = 1;
     }
   }
-  return l;
+  return PyListOf<int>(l);
 }
 
 std::string sbvClassDoc =

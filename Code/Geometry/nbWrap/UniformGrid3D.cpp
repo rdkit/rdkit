@@ -203,6 +203,7 @@ struct uGrid3D_wrapper {
               computeGridCentroid(grid, pt, windowRadius, weightSum);
           return std::make_tuple(weightSum, centroid);
         },
+        "grid"_a, "pt"_a, "windowRadius"_a,
         "Compute the grid point at the center of sphere around a Point3D");
     m.def("FindGridTerminalPoints", &findGridTerminalPoints, "grid"_a,
           "windowRadius"_a, "inclusionFraction"_a,

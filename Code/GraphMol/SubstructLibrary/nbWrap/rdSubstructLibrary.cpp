@@ -15,4 +15,9 @@ namespace RDKit {
 void wrap_substructlibrary(nb::module_ &m);
 }
 
-NB_MODULE(rdSubstructLibrary, m) { RDKit::wrap_substructlibrary(m); }
+NB_MODULE(rdSubstructLibrary, m) {
+  nb::module_::import_("rdkit.Chem.rdGeneralizedSubstruct");
+  nb::module_::import_("rdkit.Chem.rdTautomerQuery");
+
+  RDKit::wrap_substructlibrary(m);
+}
