@@ -6,9 +6,9 @@ if(RDK_BUILD_DESCRIPTORS3D)
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 if(RDK_BUILD_OSMORDRED_SUPPORT)
- if(not RDK_HAS_EIGEN)
+ if(NOT RDK_HAS_EIGEN)
    message(FATAL_ERROR, "-- cannot build OSMORDRED support without eigen")
- end(not RDKIT_HAS_EIGEN)
+ endif(not RDKIT_HAS_EIGEN)
  
  message("-- adding OSMORDRED Descriptors")
  find_package(LAPACK REQUIRED)
@@ -31,7 +31,7 @@ if(RDK_BUILD_OSMORDRED_SUPPORT)
  set(SMARTS291_HDRS smarts291/SMARTS291.h smarts291/abraham_queries.h)
  set(SMARTS291_SOURCES smarts291/abraham_integration.cpp smarts291/abraham_queries.cpp)
 
- include_directories(Descriptors LAPACK::LAPACK ${LAPACK_INCLUDE_DIRS} ${LAPACKE_INCLUDE_DIRS}))
+ include_directories(Descriptors LAPACK::LAPACK ${LAPACK_INCLUDE_DIRS} ${LAPACKE_INCLUDE_DIRS})
 endif(RDK_BUILD_OSMORDRED_SUPPORT)
 
 
