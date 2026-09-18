@@ -1037,8 +1037,9 @@ Nullable<ROMol *> molzip_new(const ROMol &a,
   return molzip(a, p.value_or(MolzipParams())).release();
 }
 
-Nullable<ROMol *> molzipHelper(const PyIterableOf<ROMOL_SPTR> &pmols,
-                               const std::optional<MolzipParams> p) {
+Nullable<ROMol *> molzipHelper(
+    const std::optional<PyIterableOf<ROMOL_SPTR>> &pmols,
+    const std::optional<MolzipParams> p) {
   auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
   if (mols == nullptr || mols->empty()) {
     return nullptr;

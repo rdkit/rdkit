@@ -191,8 +191,9 @@ void drawMoleculeHelper1(
 }
 
 void drawMoleculeHelper2(
-    MolDraw2D &self, const ROMol &mol, const PyIterableOf<int> &highlight_atoms,
-    const PyIterableOf<int> &highlight_bonds,
+    MolDraw2D &self, const ROMol &mol,
+    const std::optional<PyIterableOf<int>> &highlight_atoms,
+    const std::optional<PyIterableOf<int>> &highlight_bonds,
     const std::optional<PyColourMap> &highlight_atom_map,
     const std::optional<PyColourMap> &highlight_bond_map,
     const std::optional<PyDictOf<int, double>> &highlight_atom_radii,
