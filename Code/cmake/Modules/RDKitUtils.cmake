@@ -250,9 +250,11 @@ macro(rdkit_nanobind_extension)
     set_target_properties(nanobind
       PROPERTIES
       LIBRARY_OUTPUT_DIRECTORY  ${RDK_LIBRARY_OUTPUT_DIRECTORY} )
-    INSTALL(TARGETS nanobind 
-            DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-            COMPONENT ${sharedLibComponent})
+    # The shared nanobind runtime is tied to the Python ABI, so it belongs with the
+    # wrappers rather than with the flavor-independent C++ libraries.
+    INSTALL(TARGETS nanobind
+            DESTINATION ${RDKit_LibDir}
+            COMPONENT python)
   endif(RDK_BUILD_NANOBIND_WRAPPERS)
 endmacro(rdkit_nanobind_extension)
 
