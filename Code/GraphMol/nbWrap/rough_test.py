@@ -8678,6 +8678,15 @@ M  END
         suppl = Chem.TDTMolSupplier()
         suppl.SetData(text)
         self.assertEqual([Chem.MolToSmiles(mol) for mol in suppl], ['CCO'])
+    if hasattr(Chem, 'MaeMolSupplier'):
+      # this block has no m_atom table, so reading it raises
+      maeBlock = 'f_m_ct {\n  s_m_title\n  :::\n  \n  }\n}'
+      for text in (maeBlock, maeBlock.encode()):
+        with self.subTest(kind=type(text).__name__, supplier='Mae'):
+          with Chem.MaeMolSupplier() as suppl:
+            suppl.SetData(text)
+            self.assertRaisesRegex(RuntimeError, r'Indexed block not found: m_atom',
+                                   lambda: next(suppl))
 
   def testSequenceParamsAcceptAnyIterable(self):
     m = Chem.RWMol(Chem.MolFromSmiles('C[C@H](F)Cl'))
