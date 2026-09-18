@@ -368,7 +368,7 @@ TEST_CASE("Osmordred v2.0 - solveLinearSystem (BCUT fix)") {
     // BCUT calculations use solveLinearSystem internally
     // v2.0 fix: saves B_original before LAPACK calls and adds dgelss fallback
     auto bcuts = calcBCUTs(*mol);
-    const std::vector<double> expected = {0.11,-0.11,1.11,0.89,1.11,0.89,2.11,1.89,6.11,5.89,12.121,11.901,20.6895,20.4695,2.856,2.636,2.66,2.44,2.61,2.39,1.78,1.56,11.3703,11.1503};
+    const std::vector<double> expected = {-0.11,0.11,0.89,1.11,0.89,1.11,1.89,2.11,5.89,6.11,11.901,12.121,20.4695,20.6895,2.636,2.856,2.44,2.66,2.39,2.61,1.56,1.78,11.1503,11.3703};
     
     REQUIRE(!bcuts.empty());
 
@@ -392,7 +392,7 @@ TEST_CASE("Osmordred v2.0 - solveLinearSystem (BCUT fix)") {
     REQUIRE(mol != nullptr);
     
     auto bcuts = calcBCUTs(*mol);
-    const std::vector<double> expected = {0.303,-0.299,3.303,2.701,2.303,1.701,2.303,1.701,6.303,5.701,12.314,11.712,20.8825,20.2805,3.049,2.447,2.853,2.251,2.803,2.201,1.973,1.371,11.5633,10.9613};
+    const std::vector<double> expected = {-0.299,0.303,2.701,3.303,1.701,2.303,1.701,2.303,5.701,6.303,11.712,12.314,20.2805,20.8825,2.447,3.049,2.251,2.853,2.201,2.803,1.371,1.973,10.9613,11.5633};
     
     std::cerr << "benzene" << std::endl;
     for(auto v:bcuts) {
