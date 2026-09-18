@@ -32,7 +32,7 @@ STUBGEN_VERSION = '2.15.0'
 REGENERATE = ('Regenerate the stubs by installing RDKit and building the nanobind_stubs target, '
               'then commit them.')
 
-# Modules with no committed stub because the build that generates them cannot build the module.
+# Modules with no committed stub, because the build the stubs come from cannot build them.
 WITHOUT_STUBS = frozenset(['rdkit.Chem.Draw.rdMolDraw2DQt'])  # needs Qt
 
 
@@ -168,8 +168,8 @@ class TestStubs(unittest.TestCase):
                                                 'generated', lineterm='')
         ]
         if not any(line.startswith('+') and not line.startswith('+++') for line in diff):
-          # The stubs come from a build with every optional feature this module has. A build
-          # that leaves one out registers fewer names, and the stub covers them all.
+          # The committed stubs come from a build with every optional feature, so a build that
+          # leaves one out registers fewer names than its stub covers.
           self.skipTest(f'{name} is built without features the committed stub covers')
         self.fail('\n'.join(diff[:60] + [REGENERATE]))
 
