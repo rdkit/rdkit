@@ -175,8 +175,6 @@ std::vector<double> calcOsmordred(const ROMol &mol) {
   return out;
 }
 
-// v2.0: Timeout constant for Osmordred computation (60 seconds = 1 minute)
-constexpr int OSMORDRED_TIMEOUT_SECONDS = 60;
 
 // v2.0: Single molecule with timeout protection (all-or-nothing)
 // Returns NaN vector if computation exceeds timeout_seconds
@@ -201,7 +199,7 @@ std::vector<double> calcOsmordredWithTimeout(const ROMol &mol,
 // canonical LOST). For tautomer-canonical mols use
 // calcOsmordredBatchFromMols(mols) with mols from ToBinary.
 std::vector<std::vector<double>> calcOsmordredBatch(
-    const std::vector<std::string> &smiles_list, int n_jobs) {
+  const std::vector<std::string> &smiles_list, int n_jobs, int timeout_seconds) {
   std::vector<std::vector<double>> results;
   results.reserve(smiles_list.size());
 
@@ -220,7 +218,7 @@ std::vector<std::vector<double>> calcOsmordredBatch(
       });
 
       auto status =
-          future.wait_for(std::chrono::seconds(OSMORDRED_TIMEOUT_SECONDS));
+	future.wait_for(std::chrono::seconds(timeout_seconds));
       if (status == std::future_status::ready) {
         results.push_back(future.get());
       } else {
@@ -276,7 +274,7 @@ std::vector<std::vector<double>> calcOsmordredBatch(
 // Python binding uses mol.ToBinary() -> MolPickler::molFromPickle -> these
 // mols.
 std::vector<std::vector<double>> calcOsmordredBatchFromMols(
-    const std::vector<const ROMol *> &mols, int n_jobs) {
+  const std::vector<const ROMol *> &mols, int n_jobs, int timeout_seconds) {
   size_t n = mols.size();
   std::vector<std::vector<double>> results(n);
 
@@ -318,7 +316,8 @@ std::vector<std::vector<double>> calcOsmordredBatchFromMols(
                                 return nanRow;
                               }
                             });
-      if (fut.wait_for(std::chrono::seconds(OSMORDRED_TIMEOUT_SECONDS)) ==
+      // is this timeout per mol or per job?
+      if (fut.wait_for(std::chrono::seconds(timeout_seconds)) ==
           std::future_status::ready) {
         results[i] = fut.get();
       } else {

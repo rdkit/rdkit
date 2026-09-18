@@ -223,12 +223,12 @@ Eigen::MatrixXd floydWarshall(Eigen::MatrixXd &A);
 std::vector<std::vector<double>> floydWarshallL(
     std::vector<std::vector<double>> &matrix);
 
-template<MOL>
-const RingInfo * getRings(const MOL &m) {
-  if (!m->getRingInfo()->isSssrOrBetter()) {
-    RDKit::MolOps::findSSSR(*mol);
+template<class MOL>
+const RingInfo & getRings(const MOL &mol) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isSssrOrBetter()) {
+    RDKit::MolOps::findSSSR(mol);
   }
-  return m.getRingInfo();
+  return *mol.getRingInfo();
 }
 
 }  // namespace Osmordred

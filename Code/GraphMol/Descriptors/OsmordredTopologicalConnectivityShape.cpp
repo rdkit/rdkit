@@ -1707,8 +1707,8 @@ double getEtaNonSigmaContribute(const Bond &bond) {
 }
 
 bool isAtomInRing(const Atom &atom) {
-  const RingInfo *ringInfo = getRings(atom.getOwningMol());
-  return ringInfo->numAtomRings(atom.getIdx()) > 0;
+  const RingInfo &ringInfo = getRings(atom.getOwningMol());
+  return ringInfo.numAtomRings(atom.getIdx()) > 0;
 }
 
 // Helper function to calculate eta_beta_delta

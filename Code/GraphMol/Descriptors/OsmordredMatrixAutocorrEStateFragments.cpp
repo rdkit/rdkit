@@ -2107,7 +2107,7 @@ std::vector<double> calcAutoCorrelation(const ROMol &mol) {
 
 std::unordered_set<int> findLinkersWithBFS(
     const ROMol &mol, const std::unordered_set<int> &ringAtoms) {
-  const RingInfo *ringInfo = getRings(mol);
+  const RingInfo &ringInfo = getRings(mol);
   std::unordered_set<int> nonRingAtoms;
   std::unordered_set<int> linkers;
 
@@ -2120,7 +2120,7 @@ std::unordered_set<int> findLinkersWithBFS(
   }
 
   // Perform BFS for each pair of fused rings
-  std::vector<std::vector<int>> atomRings = ringInfo->atomRings();
+  std::vector<std::vector<int>> atomRings = ringInfo.atomRings();
   for (unsigned int i = 0; i < atomRings.size(); ++i) {
     for (unsigned int j = i + 1; j < atomRings.size(); ++j) {
       // Identify start atoms (non-ring neighbors of the first ring)
@@ -2176,11 +2176,11 @@ std::unordered_set<int> findLinkersWithBFS(
 
 // Function to calculate the FMF ratio
 double Framework(const ROMol &mol) {
-  const RingInfo *ringInfo = getRings(mol);
+  const RingInfo &ringInfo = getRings(mol);
   std::unordered_set<int> ringAtoms;
 
   // Collect all atoms that are part of rings
-  std::vector<std::vector<int>> atomRings = ringInfo->atomRings();
+  std::vector<std::vector<int>> atomRings = ringInfo.atomRings();
   for (const auto &ring : atomRings) {
     for (int atom : ring) {
       ringAtoms.insert(atom);
