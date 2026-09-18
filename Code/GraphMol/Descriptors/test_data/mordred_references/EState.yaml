@@ -5,4 +5,4 @@
 - names: [SdO, SsOH, SsNH2, SaaN, SaaNH, SaaCH, SaasC, SsssCH, SdssC, SsCH3]
   digit: 0
   results:
-    Histidine: [10.263, 8.418, 5.257, 3.840, 2.714, skip, 0.666, -0.863, -1.006, 0]
+    Histidine: [10.263, 8.418, 5.257, 3.731, 2.768, skip, 0.736, -0.851, -1.006, 0]

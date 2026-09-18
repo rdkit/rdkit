@@ -641,10 +641,10 @@ static const std::vector<std::pair<std::string, std::string>> esPatterns = {
     {"ssBH", "[BD2H](-*)-*"},
     {"sssB", "[BD3](-*)(-*)-*"},
     {"ssssB", "[BD4](-*)(-*)(-*)-*"},
-    {"sCH3", "[CD1H3]-*"},
-    {"dCH2", "[CD1H2]=*"},
-    {"ssCH2", "[CD2H2](-*)-*"},
-    {"tCH", "[CD1H]#*"},
+    {"sCH3", "[CD1H3]"},  // v3 fix #10: single-atom pattern (no uniquify collapse)
+    {"dCH2", "[CD1H2;$(*=*)]"},
+    {"ssCH2", "[CD2H2]"},
+    {"tCH", "[CD1H;$(*#*)]"},
     {"dsCH", "[CD2H](=*)-*"},
     {"aaCH", "[C,c;D2H](:*):*"},
     {"sssCH", "[CD3H](-*)(-*)-*"},
@@ -724,10 +724,10 @@ static const std::vector<std::pair<std::string, std::string>>
         {"ssBH", "[BD2H](-*)-*"},
         {"sssB", "[BD3](-*)(-*)-*"},
         {"ssssB", "[BD4](-*)(-*)(-*)-*"},
-        {"sCH3", "[CD1H3]-*"},
-        {"dCH2", "[CD1H2]=*"},
-        {"ssCH2", "[CD2H2](-*)-*"},
-        {"tCH", "[CD1H]#*"},
+        {"sCH3", "[CD1H3]"},  // v3 fix #10: single-atom pattern (no uniquify collapse)
+        {"dCH2", "[CD1H2;$(*=*)]"},
+        {"ssCH2", "[CD2H2]"},
+        {"tCH", "[CD1H;$(*#*)]"},
         {"dsCH", "[CD2H](=*)-*"},
         {"aaCH", "[C,c;D2H](:*):*"},
         {"sssCH", "[CD3H](-*)(-*)-*"},
@@ -1109,14 +1109,20 @@ std::vector<double> calcHEStateDescs(const ROMol &mol) {
   for (const auto &[name, pattern] : hsQueries) {
     if (!pattern) continue;  // Skip invalid SMARTS patterns
 
-    // Find all substructure matches
+    // v3 fix #2 (HEState): count DISTINCT anchor atoms. Match with
+    // uniquify=false and dedup on the anchor (match[0]) so each H-bearing atom
+    // of a type is counted exactly once -- fixes both the uniquify-by-set
+    // collapse of bonded same-type atoms (e.g. ethane HCsats, acetylene HtCH)
+    // and the over-count of one anchor with several matching neighbours
+    // (e.g. HCHnX, HCsatu). HEState is an osmordred extension (not in Mordred).
     std::vector<MatchVectType> matches;
-    SubstructMatch(mol, *pattern, matches, true);
+    SubstructMatch(mol, *pattern, matches, false);
+    std::unordered_set<int> anchors;
+    for (const auto &match : matches) anchors.insert(match[0].second);
 
-    // Update counts, sums, max, and min
-    counts[i] = static_cast<int>(matches.size());
-    for (const auto &match : matches) {
-      int atomIdx = match[0].second;  // Atom index from the match
+    // Update counts, sums, max, and min over distinct anchor atoms
+    counts[i] = static_cast<int>(anchors.size());
+    for (int atomIdx : anchors) {
       double value = hesIndices[atomIdx];
       sums[i] += value;
       maxValues[i] = std::max(maxValues[i], value);
@@ -1470,15 +1476,14 @@ double computeAtomicId(const Graph &graph, int atomIdx, double epsilon,
 std::vector<double> computeAtomicIds(const ROMol &mol, double epsilon) {
   int natoms = mol.getNumAtoms();
   std::vector<double> atomicIds(natoms, 0.0);
-  if (natoms > 1) {
-    Graph graph = buildGraph(mol);
-    double limit = 1.0 / (epsilon * epsilon);
+  // v3 fix #9: removed natoms>1 guard so single-atom mols get base ID 1.0 (matches Mordred)
+  Graph graph = buildGraph(mol);
+  double limit = 1.0 / (epsilon * epsilon);
 
-    for (int atomIdx = 0; atomIdx < natoms; ++atomIdx) {
-      std::unordered_set<int> visited;
-      double id = computeAtomicId(graph, atomIdx, epsilon, 1.0, visited, limit);
-      atomicIds[atomIdx] = 1.0 + id / 2.0;  // Normalize
-    }
+  for (int atomIdx = 0; atomIdx < natoms; ++atomIdx) {
+    std::unordered_set<int> visited;
+    double id = computeAtomicId(graph, atomIdx, epsilon, 1.0, visited, limit);
+    atomicIds[atomIdx] = 1.0 + id / 2.0;  // Normalize
   }
   return atomicIds;
 }
