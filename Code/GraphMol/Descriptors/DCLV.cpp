@@ -259,6 +259,8 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(
       radii_.push_back(tbl->getRvdw(atom->getAtomicNum()));
     }
   }
+  PRECONDITION(radii_.size() == mol.getNumAtoms(),
+               "radii must be empty or have one entry per atom");
 
   positions = mol.getConformer(confId).getPositions();
   maxRadius = *std::max_element(radii_.begin(), radii_.end());

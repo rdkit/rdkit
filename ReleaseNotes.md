@@ -53,6 +53,10 @@ GitHub)
   have exactly one entry per atom. A shorter vector was read past its end,
   returning `nan` or crashing, and the extra entries of a longer one were
   ignored.
+- `DoubleCubicLatticeVolume` now requires `radii` to be empty, which asks for
+  the van der Waals radii, or to have one entry per atom. A vector of any other
+  length was read past its end, and the areas and volumes that came back looked
+  plausible.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use
