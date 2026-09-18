@@ -19,8 +19,8 @@ import nanobind
 
 import rdkit
 from rdkit import Chem, DataStructs, RDConfig, rdBase
-from rdkit.Chem import (rdChemReactions, rdEnumerateStereoisomers, rdFMCS, rdSubstructLibrary,
-                        rdSynthonSpaceSearch)
+from rdkit.Chem import (rdChemReactions, rdEnumerateStereoisomers, rdFMCS, rdMolDescriptors,
+                        rdSubstructLibrary, rdSynthonSpaceSearch)
 from rdkit.Chem.MolStandardize import rdMolStandardize
 
 PATTERNS = pathlib.Path(RDConfig.RDBaseDir, 'Code', 'RDBoost', 'nanobind_stub_patterns.txt')
@@ -199,6 +199,10 @@ class TestSignatures(unittest.TestCase):
       (Chem.SetDoubleBondNeighborDirections, 0, 'conf', 'rdkit.Chem.rdchem.Conformer | None'),
       (rdChemReactions.EnumerateLibrary.__init__, 1, 'reagents',
        'collections.abc.Iterable[collections.abc.Iterable[rdkit.Chem.rdchem.Mol]]'),
+      # A list the wrapper fills by index keeps Any elements, so a caller can preallocate it
+      # with placeholders of any type.
+      (rdMolDescriptors.CalcHallKierAlpha, 0, 'atomContribs', 'list[typing.Any] | None'),
+      (rdMolDescriptors._CalcCrippenContribs, 0, 'atomTypeLabels', 'list[typing.Any] | None'),
     ]
     for func, overload, parameter, expected in cases:
       with self.subTest(func=func.__name__, parameter=parameter):
