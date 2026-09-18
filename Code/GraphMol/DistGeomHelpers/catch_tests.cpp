@@ -27,6 +27,7 @@
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
 #include "BoundsMatrixBuilderDetails.h"
+#include "catch2/catch_test_macros.hpp"
 #include <tuple>
 #include <map>
 #include <limits>
@@ -2413,4 +2414,9 @@ TEST_CASE("TransAmideKTerm") {
       THEN("Expect some cis") { CHECK(not allTrans(*mol, ps, 1, 3, 5, 6)); }
     }
   }
+}
+
+TEST_CASE("MMFF Bounds"){
+  SECTION("Correct 12/13"){}
+  SECTION("Fallback to UFF if fails"){}
 }
