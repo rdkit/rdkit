@@ -448,7 +448,7 @@ class Reionizer:
     def reionizeInPlace(self, mol: rdkit.Chem.rdchem.Mol) -> None:
         """modifies the input molecule"""
 
-def ReionizerFromData(paramData: str, chargeCorrections: Sequence[ChargeCorrection] | None = None) -> Reionizer:
+def ReionizerFromData(paramData: str | bytes, chargeCorrections: Sequence[ChargeCorrection] | None = None) -> Reionizer:
     """
     creates a reionizer from a string containing parameter data and a list of charge corrections
     """
@@ -541,7 +541,7 @@ class FragmentRemover:
     def removeInPlace(self, mol: rdkit.Chem.rdchem.Mol) -> None:
         """modifies the molecule in place"""
 
-def FragmentRemoverFromData(fragmentData: str, leave_last: bool = True, skip_if_all_match: bool = False) -> FragmentRemover:
+def FragmentRemoverFromData(fragmentData: str | bytes, leave_last: bool = True, skip_if_all_match: bool = False) -> FragmentRemover:
     """creates a FragmentRemover from a string containing parameter data"""
 
 class LargestFragmentChooser:
@@ -568,7 +568,7 @@ class Normalizer:
     def normalizeInPlace(self, mol: rdkit.Chem.rdchem.Mol) -> None:
         """modifies the input molecule"""
 
-def NormalizerFromData(paramData: str, params: CleanupParameters) -> Normalizer:
+def NormalizerFromData(paramData: str | bytes, params: CleanupParameters) -> Normalizer:
     """creates a Normalizer from a string containing normalization SMARTS"""
 
 def NormalizerFromParams(params: CleanupParameters) -> Normalizer:

@@ -172,7 +172,7 @@ def MolFromMol2File(mol2FileName: str | os.PathLike, sanitize: bool = True, remo
           a Mol object, None on failure.
     """
 
-def MolFromMol2Block(mol2Block: str, sanitize: bool = True, removeHs: bool = True, cleanupSubstructures: bool = True) -> rdkit.Chem.rdchem.Mol | None:
+def MolFromMol2Block(mol2Block: str | bytes, sanitize: bool = True, removeHs: bool = True, cleanupSubstructures: bool = True) -> rdkit.Chem.rdchem.Mol | None:
     """
     Construct a molecule from a Tripos Mol2 block.
         NOTE:
@@ -315,7 +315,7 @@ class MolFromSCSRParams:
 
     def __setattr__(self, name: str, value: object | None) -> None: ...
 
-def MolFromSCSRBlock(molBlock: str, sanitize: bool = True, removeHs: bool = True, molFromSCSRParams: MolFromSCSRParams | None = None) -> rdkit.Chem.rdchem.Mol | None:
+def MolFromSCSRBlock(molBlock: str | bytes, sanitize: bool = True, removeHs: bool = True, molFromSCSRParams: MolFromSCSRParams | None = None) -> rdkit.Chem.rdchem.Mol | None:
     """
     Construct a molecule from an SCSR Mol block.
             ARGUMENTS:
@@ -2228,7 +2228,7 @@ class TDTMolSupplier:
 
     def __len__(self) -> int: ...
 
-    def SetData(self, data: str, nameRecord: str = '', confId2D: int = -1, confId3D: int = -1, sanitize: bool = True) -> None:
+    def SetData(self, data: str | bytes, nameRecord: str = '', confId2D: int = -1, confId3D: int = -1, sanitize: bool = True) -> None:
         """Sets the text to be parsed."""
 
     def GetItemText(self, index: int) -> str:
@@ -2312,13 +2312,13 @@ class SmilesMolSupplier:
 
     def __len__(self) -> int: ...
 
-    def SetData(self, data: str, delimiter: str = ' ', smilesColumn: int = 0, nameColumn: int = 1, titleLine: bool = True, sanitize: bool = True) -> None:
+    def SetData(self, data: str | bytes, delimiter: str = ' ', smilesColumn: int = 0, nameColumn: int = 1, titleLine: bool = True, sanitize: bool = True) -> None:
         """Sets the text to be parsed."""
 
     def GetItemText(self, index: int) -> str:
         """Returns the text for an item."""
 
-def SmilesMolSupplierFromText(text: str, delimiter: str = ' ', smilesColumn: int = 0, nameColumn: int = 1, titleLine: bool = True, sanitize: bool = True) -> SmilesMolSupplier: ...
+def SmilesMolSupplierFromText(text: str | bytes, delimiter: str = ' ', smilesColumn: int = 0, nameColumn: int = 1, titleLine: bool = True, sanitize: bool = True) -> SmilesMolSupplier: ...
 
 class MaeMolSupplier:
     """
@@ -2368,7 +2368,7 @@ class MaeMolSupplier:
 
     def __len__(self) -> int: ...
 
-    def SetData(self, data: str, sanitize: bool = True, removeHs: bool = True) -> None:
+    def SetData(self, data: str | bytes, sanitize: bool = True, removeHs: bool = True) -> None:
         """Sets the text to be parsed."""
 
     def atEnd(self) -> bool:

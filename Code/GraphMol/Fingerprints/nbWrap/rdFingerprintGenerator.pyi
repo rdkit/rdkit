@@ -457,7 +457,7 @@ def GetCountFPs(molecules: Iterable[rdkit.Chem.rdchem.Mol] | None = None, fpType
 
 def GetFPs(molecules: Iterable[rdkit.Chem.rdchem.Mol] | None = None, fpType: FPType = FPType.MorganFP) -> list[rdkit.DataStructs.cDataStructs.ExplicitBitVect]: ...
 
-def FingerprintGeneratorFromJSON(jsonString: str) -> FingerprintGenerator64:
+def FingerprintGeneratorFromJSON(jsonString: str | bytes) -> FingerprintGenerator64:
     """Deserialize a FingerprintGenerator from a JSON string"""
 
 class AtomPairFingerprintOptions(FingerprintOptions):

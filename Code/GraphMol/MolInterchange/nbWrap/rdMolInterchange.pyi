@@ -84,7 +84,7 @@ def MolsToJSON(mols: Iterable[rdkit.Chem.rdchem.Mol], params: JSONWriteParameter
       a string
     """
 
-def JSONToMols(jsonBlock: str, params: JSONParseParameters = ...) -> tuple:
+def JSONToMols(jsonBlock: str | bytes, params: JSONParseParameters = ...) -> tuple:
     """
     Convert JSON to a tuple of molecules
 
