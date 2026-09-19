@@ -2450,8 +2450,8 @@ TEST_CASE("MMFFBounds") {
       double lb = std::sqrt(
           2 * r0 * r0 *
           (1 - std::cos(aProp.theta0 * std::numbers::pi / 180.0 - 0.035)));
-      CHECK(mmat->getUpperBound(0, 1) == ub);
-      CHECK(mmat->getLowerBound(0, 1) == lb);
+      CHECK(mmat->getUpperBound(0, 2) == ub);
+      CHECK(mmat->getLowerBound(0, 2) == lb);
     }
   }
   SECTION("Fallback to UFF if fails") {
@@ -2466,7 +2466,7 @@ TEST_CASE("MMFFBounds") {
     auto bOrder = mol->getBondBetweenAtoms(0, 1)->getBondTypeAsDouble();
     double r0 = ForceFields::UFF::Utils::calcBondRestLength(bOrder, params[0],
                                                             params[1]);
-    CHECK(mmat->getUpperBound(0, 2) == r0 + 0.01);
-    CHECK(mmat->getLowerBound(0, 2) == r0 - 0.01);
+    CHECK(mmat->getUpperBound(0, 1) == r0 + 0.01);
+    CHECK(mmat->getLowerBound(0, 1) == r0 - 0.01);
   }
 }
