@@ -465,9 +465,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
         bonds modified during transformation are any bonds whose order is
         changed during the tautomer transform (these are the bonds between the
         "donor" and the "acceptor")
-      - if any atoms in the molecule have the "_protected" property set, they
-        will not be considered for tautomerization. Any transformations
-        involving these atoms will be skipped.
+      - if any atoms in the molecule have the common_properties::_protected
+        property set, they will not be considered for tautomerization. Any
+        transformations involving these atoms will be skipped.
 
   */
   TautomerEnumeratorResult enumerate(const ROMol &mol) const;

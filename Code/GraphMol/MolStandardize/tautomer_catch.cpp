@@ -34,7 +34,7 @@ TEST_CASE("exclude tautomer regions") {
       for (const auto &protectedAtoms : protectedAtomsVec) {
         ROMol mcopy(*m);
         for (auto i : protectedAtoms) {
-          mcopy.getAtomWithIdx(i)->setProp("_protected", 1);
+          mcopy.getAtomWithIdx(i)->setProp(common_properties::_protected, 1);
         }
         auto tauts = te.enumerate(mcopy);
         CHECK(tauts.size() == 1);
@@ -43,7 +43,7 @@ TEST_CASE("exclude tautomer regions") {
     {  // blocking non-participating atoms doesn't affect anything
       ROMol mcopy(*m);
       for (auto i : {0, 1, 2}) {
-        mcopy.getAtomWithIdx(i)->setProp("_protected", 1);
+        mcopy.getAtomWithIdx(i)->setProp(common_properties::_protected, 1);
       }
       auto tauts = te.enumerate(mcopy);
       CHECK(tauts.size() == 2);
@@ -62,7 +62,7 @@ TEST_CASE("exclude tautomer regions") {
     {  // blocking non-participating atoms doesn't affect anything
       ROMol mcopy(*m);
       for (auto i : {3, 4, 5}) {
-        mcopy.getAtomWithIdx(i)->setProp("_protected", 1);
+        mcopy.getAtomWithIdx(i)->setProp(common_properties::_protected, 1);
       }
       std::unique_ptr<ROMol> taut{te.canonicalize(mcopy)};
       CHECK(taut);

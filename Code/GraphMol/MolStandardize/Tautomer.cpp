@@ -597,7 +597,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 
   boost::dynamic_bitset<> protectedAtoms(mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
-    if (atom->hasProp("_protected")) {
+    if (atom->hasProp(common_properties::_protected)) {
       protectedAtoms.set(atom->getIdx());
     }
   }
