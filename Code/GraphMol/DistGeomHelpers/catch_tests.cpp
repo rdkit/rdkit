@@ -2444,11 +2444,13 @@ TEST_CASE("MMFFBounds") {
       unsigned int angleType;
       MMFF::MMFFAngle aProp;
       params.getMMFFAngleBendParams(*mol, 0, 1, 2, angleType, aProp);
+      double ubr = r0 + 0.01;
+      double lbr = r0 - 0.01;
       double ub = std::sqrt(
-          2 * r0 * r0 *
+          2 * ubr * ubr *
           (1 - std::cos(aProp.theta0 * std::numbers::pi / 180.0 + 0.035)));
       double lb = std::sqrt(
-          2 * r0 * r0 *
+          2 * lbr * lbr *
           (1 - std::cos(aProp.theta0 * std::numbers::pi / 180.0 - 0.035)));
       CHECK(mmat->getUpperBound(0, 2) == ub);
       CHECK(mmat->getLowerBound(0, 2) == lb);
