@@ -2345,7 +2345,8 @@ TEST_CASE("Github #9461") {
   DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
   DGeomHelpers::setTopolBounds(*mol, bm);
 
-  CHECK_THAT(bm->getUpperBound(0, 1) - bm->getLowerBound(0, 1), Catch::Matchers::WithinAbs(0.02, 1e-4));
+  CHECK_THAT(bm->getUpperBound(0, 1) - bm->getLowerBound(0, 1),
+             Catch::Matchers::WithinAbs(0.02, 1e-4));
 }
 
 TEST_CASE("TransAmideKTerm") {
@@ -2418,38 +2419,52 @@ TEST_CASE("TransAmideKTerm") {
   }
 }
 
-TEST_CASE("MMFFBounds"){
-
-  SECTION("Correct 12/13"){
-  auto mol = "CC"_smiles;
-  MolOps::addHs(*mol);
-  DistGeom::BoundsMatPtr mmat;
-  mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
-  DGeomHelpers::initBoundsMat(mmat);
-  DGeomHelpers::setTopolBounds(*mol, mmat, true, false, false, true, true, true, DGeomHelpers::EmbedFF::MMFF);
-  SECTION("Bonds"){
+TEST_CASE("MMFFBounds") {
+  SECTION("Correct 12/13") {
+    auto mol = "CCC"_smiles;
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr mmat;
+    mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+    DGeomHelpers::initBoundsMat(mmat);
+    DGeomHelpers::setTopolBounds(*mol, mmat, true, false, false, true, true,
+                                 true, DGeomHelpers::EmbedFF::MMFF);
     auto params = MMFF::MMFFMolProperties(*mol);
-    MMFF::MMFFBond bondProps;
-    unsigned int bOrder = mol->getBondBetweenAtoms(0,1)->getBondType();
-    params.getMMFFBondStretchParams(*mol, 0, 1, bOrder, bondProps);
-    CHECK(mmat->getUpperBound(0,1) == bondProps.r0 + 0.01);
-    CHECK(mmat->getLowerBound(0,1) == bondProps.r0 - 0.01);
-  
+    double r0;
+    SECTION("Bonds") {
+      MMFF::MMFFBond bondProps;
+      unsigned int bOrder = mol->getBondBetweenAtoms(0, 1)->getBondType();
+      params.getMMFFBondStretchParams(*mol, 0, 1, bOrder, bondProps);
+      r0 = bondProps.r0;
+      CHECK(mmat->getUpperBound(0, 1) == bondProps.r0 + 0.01);
+      CHECK(mmat->getLowerBound(0, 1) == bondProps.r0 - 0.01);
+    }
+    SECTION("Angles") {
+      unsigned int angleType;
+      MMFF::MMFFAngle aProp;
+      params.getMMFFAngleBendParams(*mol, 0, 1, 2, angleType, aProp);
+      double ub = std::sqrt(
+          2 * r0 * r0 *
+          (1 - std::cos(aProp.theta0 * std::numbers::pi / 180.0 + 0.035)));
+      double lb = std::sqrt(
+          2 * r0 * r0 *
+          (1 - std::cos(aProp.theta0 * std::numbers::pi / 180.0 - 0.035)));
+      CHECK(mmat->getUpperBound(0, 1) == ub);
+      CHECK(mmat->getLowerBound(0, 1) == lb);
+    }
   }
-  SECTION("Angles"){}
- }
-  SECTION("Fallback to UFF if fails"){
-  auto mol = "CCB"_smiles;
-  MolOps::addHs(*mol);
-  DistGeom::BoundsMatPtr mmat;
-  mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
-  DGeomHelpers::initBoundsMat(mmat);
-  DGeomHelpers::setTopolBounds(*mol, mmat, true, false, false, true, true, true, DGeomHelpers::EmbedFF::MMFF);
-  auto [params, s] = UFF::getAtomTypes(*mol);
-  auto bOrder = mol->getBondBetweenAtoms(0,1)->getBondTypeAsDouble();
-  double r0 = ForceFields::UFF::Utils::calcBondRestLength(bOrder, params[0], params[1]);
-    CHECK(mmat->getUpperBound(0,1) == r0 + 0.01);
-    CHECK(mmat->getLowerBound(0,1) == r0 - 0.01);
+  SECTION("Fallback to UFF if fails") {
+    auto mol = "CCB"_smiles;
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr mmat;
+    mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+    DGeomHelpers::initBoundsMat(mmat);
+    DGeomHelpers::setTopolBounds(*mol, mmat, true, false, false, true, true,
+                                 true, DGeomHelpers::EmbedFF::MMFF);
+    auto [params, s] = UFF::getAtomTypes(*mol);
+    auto bOrder = mol->getBondBetweenAtoms(0, 1)->getBondTypeAsDouble();
+    double r0 = ForceFields::UFF::Utils::calcBondRestLength(bOrder, params[0],
+                                                            params[1]);
+    CHECK(mmat->getUpperBound(0, 1) == r0 + 0.01);
+    CHECK(mmat->getLowerBound(0, 1) == r0 - 0.01);
   }
-  }
-
+}
