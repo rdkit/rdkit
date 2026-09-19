@@ -28,14 +28,25 @@ TEST_CASE("exclude tautomer regions") {
       auto tauts = te.enumerate(*m);
       CHECK(tauts.size() == 2);
     }
-    std::cerr << "------------------------------\n\n\n\n" << std::endl;
     {  // blocking
+      std::vector<std::vector<unsigned int>> protectedAtomsVec = {
+          {3, 4, 5}, {3}, {4, 5}, {3, 5}};
+      for (const auto &protectedAtoms : protectedAtomsVec) {
+        ROMol mcopy(*m);
+        for (auto i : protectedAtoms) {
+          mcopy.getAtomWithIdx(i)->setProp("_protected", 1);
+        }
+        auto tauts = te.enumerate(mcopy);
+        CHECK(tauts.size() == 1);
+      }
+    }
+    {  // blocking non-participating atoms
       ROMol mcopy(*m);
-      for (auto i : {4, 5}) {
+      for (auto i : {0, 1, 2, 4}) {
         mcopy.getAtomWithIdx(i)->setProp("_protected", 1);
       }
       auto tauts = te.enumerate(mcopy);
-      CHECK(tauts.empty());
+      CHECK(tauts.size() == 2);
     }
   }
 }

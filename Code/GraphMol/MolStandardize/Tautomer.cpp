@@ -561,23 +561,15 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
   return tresult.tautomers();
 }
 
-unsigned int getNonProtectedMatches(const ROMol &mol, const ROMol &query,
-                                    std::vector<MatchVectType> &matches) {
-  boost::dynamic_bitset<> protectedAtoms(mol.getNumAtoms());
-  for (const auto atom : mol.atoms()) {
-    if (atom->hasProp("_protected")) {
-      protectedAtoms.set(atom->getIdx());
-    }
-  }
+unsigned int getNonProtectedMatches(
+    const ROMol &mol, const boost::dynamic_bitset<> &protectedAtoms,
+    const ROMol &query, std::vector<MatchVectType> &matches) {
   std::vector<MatchVectType> tmatches;
   SubstructMatch(mol, query, tmatches);
   matches.reserve(tmatches.size());
   for (auto &match : tmatches) {
     bool protectedFound = false;
-    for (const auto &pair : match) {
-      std::cerr << "Checking atom " << pair.second
-                << " for protection: " << protectedAtoms.test(pair.second)
-                << std::endl;
+    for (const auto &pair : {match.front(), match.back()}) {
       if (protectedAtoms.test(pair.second)) {
         protectedFound = true;
         break;
@@ -603,10 +595,11 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
   const std::vector<TautomerTransform> &transforms =
       tautparams->getTransforms();
 
-  for (const auto atm : mol.atoms()) {
-    std::cerr << "Atom " << atm->getIdx() << " is "
-              << (atm->hasProp("_protected") ? "protected" : "not protected")
-              << std::endl;
+  boost::dynamic_bitset<> protectedAtoms(mol.getNumAtoms());
+  for (const auto atom : mol.atoms()) {
+    if (atom->hasProp("_protected")) {
+      protectedAtoms.set(atom->getIdx());
+    }
   }
 
   // Enumerate all possible tautomers and return them as a vector.
@@ -684,9 +677,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
         // kmol is the kekulized version of the tautomer (created lazily)
         const auto &kmol = smilesTautomerPair.second.getKekulized();
         std::vector<MatchVectType> matches;
-        unsigned int matched =
-            getNonProtectedMatches(*kmol, *(transform.Mol), matches);
-        std::cerr << "Found " << matched << std::endl;
+        unsigned int matched = getNonProtectedMatches(
+            *kmol, protectedAtoms, *(transform.Mol), matches);
         if (!matched) {
           continue;
         }
