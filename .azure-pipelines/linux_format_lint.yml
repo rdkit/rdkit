@@ -12,10 +12,15 @@
         yapf=$(yapf_version) \
         pycodestyle=$(pycodestyle_version) \
         clang-format=$(clang_format_version)
-    conda activate rdkit_build
+    conda activate rdkit_format
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
   displayName: Setup lint environment
+  
 
 - bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_format
     PY_FILES=$(git diff --name-only --diff-filter=ACMRTUXB master | grep -E '\.py$')
 
     if [ -n "$PY_FILES" ]; then
@@ -40,6 +45,8 @@
   displayName: "Check Python Formatting (YAPF & PEP8)"
 
 - bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_format
     CPP_FILES=$(git diff --name-only --diff-filtered=ACMRTUXB master | \
         grep -E '.(c|h|cpp|hpp|cc|cxx)$')
 
