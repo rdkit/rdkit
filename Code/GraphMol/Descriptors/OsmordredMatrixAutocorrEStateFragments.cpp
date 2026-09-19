@@ -2305,19 +2305,11 @@ std::vector<int> NamePosES(
     if (SubstructMatch(mol, *entry.second, qmatches, true)) {
       for (unsigned int i = 0; i < qmatches.size(); ++i) {
         int atomIdx = qmatches[i][0].second;
-        // std::cout << entry.first << ":" << atomIdx << ": " << idx+1 << "\n";
         pos[atomIdx] = idx + 1;
       }
     }
   }
 
-  /*std::cout << "C++ nPatts: " << queries.size() << std::endl;
-  std::cout << "pos : ";
-  for (int i=0; i< pos.size();i++) {
-      std::cout << pos[i] << " ";
-  }
-  std::cout << "\n";
-  */
   return pos;
 }
 
@@ -2329,25 +2321,10 @@ BondEStateResult getBEStateFeatures(const ROMol &mol, bool extended) {
   // Precompute atomic EState indices
   std::vector<double> Is = calcIStateIndices(mol);
 
-  /*std::cout << "IStatesIndices : ";
-  for (int i=0; i< Is.size();i++) {
-      std::cout << Is[i] << " ";
-  }
-  std::cout << "\n";
-  */
   // Get the distance matrix using RDKit's MolOps::getDistanceMat
   double *dists = MolOps::getDistanceMat(
       mol, false, false, false);  // no bond order, no weights, no hydrogens
 
-  /*
-  for (int i=0; i<nAtoms; i++){
-      for (int j=0; j<nAtoms; j++){
-          std::cout << dists[j * nAtoms + i]+1. << ", ";
-      }
-      std::cout << "\n";
-  }
-  std::cout << "\n";
-  */
 
   // Bond-specific indices
   std::vector<double> Iij(nBonds, 0.0);
@@ -2425,27 +2402,6 @@ BondEStateResult getBEStateFeatures(const ROMol &mol, bool extended) {
   for (size_t i = 0; i < nBonds; ++i) {
     BEStotal[i] = BES[i] + Iij[i];
   }
-  /*
-  std::cout << "Iij : ";
-  for (int i=0; i< Iij.size();i++) {
-      std::cout << Iij[i] << " ";
-  }
-  std::cout << "\n";
-
-
-  std::cout << "BES : ";
-  for (int i=0; i< BES.size();i++) {
-      std::cout << BES[i] << " ";
-  }
-  std::cout << "\n";
-
-
-  std::cout << "BEStotal : ";
-  for (int i=0; i< BEStotal.size();i++) {
-      std::cout << BEStotal[i] << " ";
-  }
-  std::cout << "\n";
-  */
 
   // Summ contributions by bond code
   std::unordered_map<std::string, std::vector<double>> codeMap;
@@ -2464,13 +2420,7 @@ BondEStateResult getBEStateFeatures(const ROMol &mol, bool extended) {
     minBES.push_back(*std::min_element(values.begin(), values.end()));
     maxBES.push_back(*std::max_element(values.begin(), values.end()));
   }
-  /*
-  std::sort(SumKeys.begin(), SumKeys.end());
-  for (const auto &k : SumKeys) {
-      std::cout << k << " ";
-  }
-  std::cout << "\n";
-  */
+  
   return {SumKeys, BEStotal, SumBES, nBES, minBES, maxBES};
 }
 
@@ -2494,10 +2444,6 @@ std::vector<double> calcBEStateDescs(const ROMol &mol) {
 
   // Process each descriptor
   for (size_t i = 0; i < SumBES_i.size(); ++i) {
-    // std::cout << "Key: " << SumKeys_i[i] << " BEStotal: " << BEStotal_i[i] <<
-    // " SumBES:" << SumBES_i[i] << " nBES:" << nBES_i[i] << " minBES:" <<
-    // minBES_i[i] << " maxBES:" << maxBES_i[i] << "\n";
-
     const auto &pattern = SumKeys_i[i];
     const auto &descriptor =
         pattern.substr(1);  // Extract the key after "S" only one to remove!
@@ -2507,8 +2453,6 @@ std::vector<double> calcBEStateDescs(const ROMol &mol) {
     if (it != orgbondkeys.end()) {
       // Get the position index
       size_t posidx = std::distance(orgbondkeys.begin(), it);
-
-      // std::cout << "found at position: " << posidx <<"\n";
 
       if (posidx < sumsBES.size()) {
         // Update the corresponding values
@@ -3120,17 +3064,18 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
     return {};
   }
 
-  bool debug = false;  // (smi=="FP(F)F" || smi=="BrBr");
-
-  if (debug) {
+#ifdef DEBUG
+  {
     std::string smi = MolToSmiles(mol);
     BOOST_LOG(rdWarningLog) << "Debugging enabled for molecule: " << smi
                             << "n & NumAtoms: " << nAtoms << std::endl;
   }
-
+#endif
+  
   auto [M, SP] = initializeMatrixAndSP(nAtoms, maxRadius);
 
-  if (debug) {
+#ifdef DEBUG
+  {
     BOOST_LOG(rdDebugLog) << "Initial M matrix:\n";
     for (const auto &row : M) {
       for (int val : row) {
@@ -3147,7 +3092,8 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
       BOOST_LOG(rdDebugLog) << "\n";
     }
   }
-
+#endif
+  
   std::map<int, std::vector<std::vector<int>>> CN;  // Combined CN and AN
   std::map<int, std::vector<int>> clustersByAN;
 
@@ -3176,7 +3122,8 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
         mol.getAtomWithIdx(atomIdx)->getAtomicNum());  // Last atomic number
   }
 
-  if (debug) {
+#ifdef DEBUG
+  {
     BOOST_LOG(rdDebugLog) << "\nM matrix before radius 1:\n";
     for (const auto &row : M) {
       for (int val : row) {
@@ -3193,7 +3140,8 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
       BOOST_LOG(rdDebugLog) << "\n";
     }
   }
-
+#endif
+  
   for (int r = 1; r <= maxRadius; ++r) {
     bool stopExpansion = true;
 
@@ -3238,17 +3186,19 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
         std::vector<int> eqKeys;
         std::vector<int> neighbors;
 
-        if (debug) {
+#ifdef DEBUG
+	{
           BOOST_LOG(rdDebugLog)
               << "Radius " << r << ", Atom " << atomIdx
               << " .Symbol: " << mol.getAtomWithIdx(atomIdx)->getSymbol()
               << ", Start " << start << ", Stop " << stop << std::endl;
         }
-
+#endif
+	
         for (int pos = start; pos <= stop; ++pos) {
           int rootIdx = M[atomIdx][pos];
           if (rootIdx < 0 || rootIdx >= nAtoms) {
-            std::cout << "Atom index out of boundaries:" << rootIdx << std::endl;
+            BOOST_LOG(rdWarningLog) << "Atom index out of boundaries:" << rootIdx << std::endl;
             continue;
           }
           const Atom *rootAtom = mol.getAtomWithIdx(rootIdx);
@@ -3360,7 +3310,8 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
 
     clusters = newClusters;
 
-    if (debug) {
+#ifdef DEBUG
+    {
       BOOST_LOG(rdDebugLog) << "M Matrix after radius " << r << ":\n";
       for (const auto &row : M) {
         for (int val : row) {
@@ -3377,14 +3328,15 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
         BOOST_LOG(rdDebugLog) << std::endl;
       }
     }
-
+#endif
+    
     CN[r].resize(2);  // Two vectors: sizes and last atomic values
     for (auto &cluster : clusters) {
       if (cluster.empty()) continue;  // Skip empty clusters
       int atomIdx = cluster.back();   // Atom index
 
       if (atomIdx < 0 || atomIdx >= nAtoms) {
-        std::cout << "Atom index out of boundaries:" << atomIdx << "\n";
+        BOOST_LOG(rdWarningLog) << "Atom index out of boundaries:" << atomIdx << "\n";
         continue;
       }
 
@@ -3398,14 +3350,15 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
 
     if (stopExpansion || std::all_of(clusters.begin(), clusters.end(),
                                      [](auto &c) { return c.size() == 1; })) {
-      if (debug) {
+#ifdef DEBUG
+      {
         BOOST_LOG(rdDebugLog)
             << "Stopping expansion at radius " << r << " - Reason: "
             << (stopExpansion ? "No new neighbors"
                               : "All clusters are singletons")
             << std::endl;
       }
-
+#endif
       break;
     }
   }
@@ -3414,12 +3367,13 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
 
   if (!CN.empty()) {
     auto lastRadius = CN.rbegin()->first;
-    for (int rr = lastRadius + 1; rr <= maxRadius; ++rr) {
+    for (int rr = lastRadius + 1; rr <=  maxRadius; ++rr) {
       CN[rr] = CN[lastRadius];
     }
   }
 
-  if (debug) {
+#ifdef DEBUG
+  {
     std::string smi = MolToSmiles(mol);
     BOOST_LOG(rdDebugLog) << "Final CN values for " << smi << ":\n";
     for (const auto &[r, values] : CN) {
@@ -3430,12 +3384,7 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
       BOOST_LOG(rdDebugLog) << std::endl;
     }
   }
-
-  // clean up the memory!
-  // M.clear();
-  // SP.clear();
-  // clustersByAN.clear();
-  // clusters.clear();
+#endif  
 
   return CN;
 }
