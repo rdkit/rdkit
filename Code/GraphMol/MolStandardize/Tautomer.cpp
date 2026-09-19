@@ -569,7 +569,7 @@ unsigned int getNonProtectedMatches(
   matches.reserve(tmatches.size());
   for (auto &match : tmatches) {
     bool protectedFound = false;
-    for (const auto &pair : {match.front(), match.back()}) {
+    for (const auto &pair : match) {
       if (protectedAtoms.test(pair.second)) {
         protectedFound = true;
         break;
