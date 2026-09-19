@@ -154,7 +154,7 @@ an optional vector of weights can be passed.)DOC");
 
   m.def(
       "ComputeCanonicalTransform", computeCanonTrans, "conf"_a,
-      "center"_a = static_cast<RDGeom::Point3D *>(nullptr),
+      "center"_a = nb::none(),
       "normalizeCovar"_a = false, "ignoreHs"_a = true,
       R"DOC(Compute the transformation required to align a conformer so that
 the principal axes align up with the x,y,z axes.
@@ -204,7 +204,7 @@ Returns a (principal axes, principal moments) tuple)DOC");
 
   m.def(
       "CanonicalizeConformer", MolTransforms::canonicalizeConformer, "conf"_a,
-      "center"_a = static_cast<RDGeom::Point3D *>(nullptr),
+      "center"_a = nb::none(),
       "normalizeCovar"_a = false, "ignoreHs"_a = true,
       R"DOC(Canonicalize the orientation of a conformer so that its principal axes
 around the specified center point coincide with the x, y, z axes.
