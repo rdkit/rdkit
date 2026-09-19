@@ -42,7 +42,7 @@
     else
       echo "No Python files were modified."
     fi
-  displayName: "Check Python Formatting (YAPF & PEP8)"
+  displayName: "Check Python Formatting (YAPF & pycodestyle)"
 
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -56,4 +56,4 @@
     else
       echo "No C/C++ files were modified."
     fi
-  displayName: "Format C/C++ files (clang-format)"
+  displayName: "Check Formatting of C/C++ files (clang-format)"
