@@ -46,6 +46,18 @@ enum class EmbedFF : std::uint8_t {
   MMFF
 };
 
+inline std::ostream &operator<<(std::ostream &os, const EmbedFF &eff) {
+  os << static_cast<int>(eff);
+  return os;
+}
+inline std::istream &operator>>(std::istream &is, EmbedFF &eff) {
+  int val;
+  if (is >> val) {
+    eff = static_cast<EmbedFF>(val);
+  }
+  return is;
+}
+
 //! Parameter object for controlling embedding
 /*!
   numConfs       Number of conformations to be generated
