@@ -30,7 +30,7 @@ TEST_CASE("exclude tautomer regions") {
     }
     {  // blocking
       std::vector<std::vector<unsigned int>> protectedAtomsVec = {
-          {3, 4, 5}, {3}, {4, 5}, {3, 5}};
+          {3, 4, 5}, {3}, {4}, {5}, {4, 5}, {3, 5}};
       for (const auto &protectedAtoms : protectedAtomsVec) {
         ROMol mcopy(*m);
         for (auto i : protectedAtoms) {
@@ -40,13 +40,33 @@ TEST_CASE("exclude tautomer regions") {
         CHECK(tauts.size() == 1);
       }
     }
-    {  // blocking non-participating atoms
+    {  // blocking non-participating atoms doesn't affect anything
       ROMol mcopy(*m);
-      for (auto i : {0, 1, 2, 4}) {
+      for (auto i : {0, 1, 2}) {
         mcopy.getAtomWithIdx(i)->setProp("_protected", 1);
       }
       auto tauts = te.enumerate(mcopy);
       CHECK(tauts.size() == 2);
+    }
+  }
+  SECTION("canonicalization") {
+    MolStandardize::CleanupParameters params;
+    MolStandardize::TautomerEnumerator te(params);
+    auto m = "CCCC=CO"_smiles;
+    REQUIRE(m);
+    {  // baseline
+      std::unique_ptr<ROMol> taut{te.canonicalize(*m)};
+      CHECK(taut);
+      CHECK(MolToSmiles(*taut) == "CCCCC=O");
+    }
+    {  // blocking non-participating atoms doesn't affect anything
+      ROMol mcopy(*m);
+      for (auto i : {3, 4, 5}) {
+        mcopy.getAtomWithIdx(i)->setProp("_protected", 1);
+      }
+      std::unique_ptr<ROMol> taut{te.canonicalize(mcopy)};
+      CHECK(taut);
+      CHECK(MolToSmiles(*taut) == "CCCC=CO");
     }
   }
 }
