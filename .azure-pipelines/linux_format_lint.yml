@@ -21,13 +21,13 @@
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_format
-    PY_FILES=$(git diff --name-only --diff-filter=ACMRTUXB master | grep -E '\.py$')
+    PY_FILES=$(git diff --name-only --diff-filter=ACMRTUXB origin/master | grep -E '\.py$' || true)
 
     if [ -n "$PY_FILES" ]; then
       echo -e "Checking the following Python files:\n$PY_FILES\n"
       
       echo "--- Running YAPF ---"
-      YAPF_DIFF=$(yapf $PY_FILES)
+      YAPF_DIFF=$(yapf --diff $PY_FILES)
       if [ -n "$YAPF_DIFF" ]; then
         echo "$YAPF_DIFF"
         echo "ERROR: yapf found formatting violations. See diff above."
@@ -47,8 +47,8 @@
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_format
-    CPP_FILES=$(git diff --name-only --diff-filtered=ACMRTUXB master | \
-        grep -E '.(c|h|cpp|hpp|cc|cxx)$')
+    CPP_FILES=$(git diff --name-only --diff-filter=ACMRTUXB origin/master | \
+        grep -E '\.(c|h|cpp|hpp|cc|cxx)$')
 
     if [ -n "$CPP_FILES" ]; then
       echo -e "Checking the following C/C++ files:\n$CPP_FILES\n"
