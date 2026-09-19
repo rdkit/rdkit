@@ -3127,11 +3127,34 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
         if (!neighbors.empty()) {
           stopExpansion =
               false;  // Continue expansion if new neighbors are found
-          for (int i = 0; i < static_cast<int>(neighbors.size()); ++i) {
+          // M is the per-root VISITED SET, not a multiset. The guard above only
+          // scans slots [0, stop] -- the PREVIOUS radii -- so an atom reached
+          // from several roots of the CURRENT shell is collected once per
+          // reaching root. Writing those duplicates into M consumes slots, and
+          // a row is only nAtoms wide, so on fused polycyclics it fills before
+          // the BFS has covered the molecule (ellagic acid at r=5: 78 duplicate
+          // reaches, 51 neighbours dropped). Once a row is full
+          // findLastOccupied finds no -1, returns nAtoms - 1, hence freeSlot ==
+          // nAtoms and every later neighbour is silently discarded. Atoms
+          // overflow at different points, so their keys diverge and a
+          // symmetry-equivalent pair splits: IC5 of ellagic acid then exceeds
+          // the automorphism-orbit entropy, which no IC definition permits.
+          //
+          // The duplicates must STAY in eqKeys -- they carry path multiplicity
+          // and are part of the descriptor -- so dedup only this write.
+          std::vector<int> distinctNeighbors;
+          distinctNeighbors.reserve(neighbors.size());
+          for (int nbIdx : neighbors) {
+            if (std::find(distinctNeighbors.begin(), distinctNeighbors.end(),
+                          nbIdx) == distinctNeighbors.end()) {
+              distinctNeighbors.push_back(nbIdx);
+            }
+          }
+          for (int i = 0; i < static_cast<int>(distinctNeighbors.size()); ++i) {
             int freeSlot = findLastOccupied(M, atomIdx) + 1;
             if (i == 0) SP[atomIdx][r] = (freeSlot < nAtoms) ? freeSlot : -2;
             if (freeSlot < nAtoms) {
-              M[atomIdx][freeSlot] = neighbors[i];
+              M[atomIdx][freeSlot] = distinctNeighbors[i];
             }
           }
         }
