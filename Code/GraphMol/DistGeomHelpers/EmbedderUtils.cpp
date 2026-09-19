@@ -25,6 +25,7 @@ namespace DGeomHelpers {
   X(boxSizeMult)                                  \
   X(clearConfs)                                   \
   X(embedFragmentsSeparately)                     \
+  X(embedForceField)                              \
   X(enableSequentialRandomSeeds)                  \
   X(enforceChirality)                             \
   X(ETversion)                                    \

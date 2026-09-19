@@ -2429,16 +2429,18 @@ TEST_CASE("MMFFBounds") {
     DGeomHelpers::setTopolBounds(*mol, mmat, true, false, false, true, true,
                                  true, DGeomHelpers::EmbedFF::MMFF);
     auto params = MMFF::MMFFMolProperties(*mol);
-    double r0;
     SECTION("Bonds") {
       MMFF::MMFFBond bondProps;
       unsigned int bOrder = mol->getBondBetweenAtoms(0, 1)->getBondType();
       params.getMMFFBondStretchParams(*mol, 0, 1, bOrder, bondProps);
-      r0 = bondProps.r0;
       CHECK(mmat->getUpperBound(0, 1) == bondProps.r0 + 0.01);
       CHECK(mmat->getLowerBound(0, 1) == bondProps.r0 - 0.01);
     }
     SECTION("Angles") {
+      MMFF::MMFFBond bondProps;
+      unsigned int bOrder = mol->getBondBetweenAtoms(0, 1)->getBondType();
+      params.getMMFFBondStretchParams(*mol, 0, 1, bOrder, bondProps);
+      double r0 = bondProps.r0;
       unsigned int angleType;
       MMFF::MMFFAngle aProp;
       params.getMMFFAngleBendParams(*mol, 0, 1, 2, angleType, aProp);
@@ -2464,7 +2466,7 @@ TEST_CASE("MMFFBounds") {
     auto bOrder = mol->getBondBetweenAtoms(0, 1)->getBondTypeAsDouble();
     double r0 = ForceFields::UFF::Utils::calcBondRestLength(bOrder, params[0],
                                                             params[1]);
-    CHECK(mmat->getUpperBound(0, 1) == r0 + 0.01);
-    CHECK(mmat->getLowerBound(0, 1) == r0 - 0.01);
+    CHECK(mmat->getUpperBound(0, 2) == r0 + 0.01);
+    CHECK(mmat->getLowerBound(0, 2) == r0 - 0.01);
   }
 }

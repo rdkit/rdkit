@@ -344,7 +344,7 @@ auto set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     // we found 12 distances
     if (bl > FAILED12) {
       double extraSquish = 0.0;
-      if (squishAtoms[begId] || squishAtoms[endId]) {
+      if (squishAtoms[begId] && squishAtoms[endId]) {
         extraSquish = 0.2;  // empirical
       }
 
