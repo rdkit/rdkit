@@ -34,6 +34,7 @@
 #include <tuple>
 #include <map>
 #include <limits>
+#include <numbers>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
