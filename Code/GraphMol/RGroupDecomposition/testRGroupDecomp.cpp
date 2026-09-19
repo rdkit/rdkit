@@ -47,6 +47,7 @@
 #include <boost/tokenizer.hpp>
 #include <regex>
 
+#include <cmath>
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 using namespace RDKit;
@@ -2067,8 +2068,8 @@ M  END
       if (atom->getAtomicNum() == 0 && atom->getAtomMapNum() == 2) {
         ++r2Num;
         auto &r2Coord = rgdCore->getConformer().getAtomPos(atom->getIdx());
-        REQUIRE(fabs(r2Coord.x) > 1e-4);
-        REQUIRE(fabs(r2Coord.y) > 1e-4);
+        REQUIRE(std::fabs(r2Coord.x) > 1e-4);
+        REQUIRE(std::fabs(r2Coord.y) > 1e-4);
         for (const auto &nbri :
              boost::make_iterator_range(rgdCore->getAtomNeighbors(atom))) {
           const auto nbr = (*rgdCore)[nbri];
@@ -2077,7 +2078,7 @@ M  END
           REQUIRE(bond);
           auto &nbrCoord = rgdCore->getConformer().getAtomPos(nbr->getIdx());
           auto bondLen = (nbrCoord - r2Coord).length();
-          REQUIRE(fabs(bondLen - 1.0) < 0.1);
+          REQUIRE(std::fabs(bondLen - 1.0) < 0.1);
         }
         REQUIRE(atom->getDegree() == 1);
       }
@@ -2453,10 +2454,10 @@ M  END
     const auto &molInPoint = Helper::findPointForAtomNumber(*mol, atomNumber);
     const auto &coreOutPoint =
         Helper::findPointForAtomNumber(*coreOut, atomNumber);
-    REQUIRE(fabs(coreInPoint.x - molInPoint.x) > 0.25);
-    REQUIRE(fabs(coreOutPoint.x - molInPoint.x) < 1e-10);
-    REQUIRE(fabs(coreInPoint.y - molInPoint.y) > 0.25);
-    REQUIRE(fabs(coreOutPoint.y - molInPoint.y) < 1e-10);
+    REQUIRE(std::fabs(coreInPoint.x - molInPoint.x) > 0.25);
+    REQUIRE(std::fabs(coreOutPoint.x - molInPoint.x) < 1e-10);
+    REQUIRE(std::fabs(coreInPoint.y - molInPoint.y) > 0.25);
+    REQUIRE(std::fabs(coreOutPoint.y - molInPoint.y) < 1e-10);
   }
 }
 
@@ -2769,7 +2770,7 @@ M  END
   auto p1 = conf.getAtomPos(dummy->getIdx());
   auto p2 = conf.getAtomPos(neighborIndex);
   auto length = (p1 - p2).length();
-  REQUIRE(fabs(length - 1.0) < 0.25);
+  REQUIRE(std::fabs(length - 1.0) < 0.25);
 }
 
 TEST_CASE("testMultipleGroupsToUnlabelledCoreAtomGithub5573",
@@ -3291,9 +3292,9 @@ M  END
     auto &dummyPoint = conf.getAtomPos(dummy->getIdx());
     auto &neighborPoint = conf.getAtomPos(neighbor->getIdx());
     auto length = (dummyPoint - neighborPoint).length();
-    REQUIRE(fabs(length - 1.0) < 0.005);
+    REQUIRE(std::fabs(length - 1.0) < 0.005);
     // R2 dummy should be directly above neighbor
-    REQUIRE(fabs(dummyPoint.x - neighborPoint.x) < 0.05);
+    REQUIRE(std::fabs(dummyPoint.x - neighborPoint.x) < 0.05);
   }
 
   {
@@ -3309,8 +3310,8 @@ M  END
     // R2 dummy should be over input chiral oxygen, which is first oxygen of
     // degree 2 in input mol block
     auto &inputPoint = mol2->getConformer(0).getAtomPos(15);
-    REQUIRE(fabs(dummyPoint.x - inputPoint.x) < 0.05);
-    REQUIRE(fabs(dummyPoint.y - inputPoint.y) < 0.05);
+    REQUIRE(std::fabs(dummyPoint.x - inputPoint.x) < 0.05);
+    REQUIRE(std::fabs(dummyPoint.y - inputPoint.y) < 0.05);
   }
 }
 

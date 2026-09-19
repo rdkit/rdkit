@@ -58,6 +58,7 @@
 
 #include <Eigen/Dense>
 
+#include <cmath>
 namespace RDKit {
 namespace Descriptors {
 namespace {
@@ -140,7 +141,7 @@ double PBF(const ROMol &mol, int confId) {
   for (unsigned int i = 0; i < 3; ++i) {
     denom += plane[i] * plane[i];
   }
-  denom = sqrt(denom);
+  denom = std::sqrt(denom);
 
   double res = 0.0;
   for (unsigned int i = 0; i < numAtoms; ++i) {

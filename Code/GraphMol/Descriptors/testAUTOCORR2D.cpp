@@ -15,11 +15,11 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/RDLog.h>
 #include <vector>
-#include <algorithm>
 #include <fstream>
 #include <sstream>
 
 #include <GraphMol/Descriptors/AUTOCORR2D.h>
+#include <cmath>
 using namespace RDKit;
 
 void testautocorrelation() {
@@ -71,11 +71,11 @@ void testautocorrelation() {
     for (int i = 0; i < 192; i++) {
       double ref = atof(myrow[i + 1].c_str());
 
-      if (fabs(ref - res2d[i]) > 0.05) {
+      if (std::fabs(ref - res2d[i]) > 0.05) {
         std::cout << "value mismatch: pos" << i << " " << inm << " " << ref
                   << " " << res2d[i] << std::endl;
       }
-      TEST_ASSERT(fabs(ref - res2d[i]) < 0.05);
+      TEST_ASSERT(std::fabs(ref - res2d[i]) < 0.05);
     }
 
     res2d.clear();

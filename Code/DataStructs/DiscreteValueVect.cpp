@@ -138,7 +138,7 @@ unsigned int computeL1Norm(const DiscreteValueVect &v1,
         sd2++;
         continue;
       }
-      res += abs((*sd1) - (*sd2));
+      res += std::abs((*sd1) - (*sd2));
       sd1++;
       sd2++;
     }

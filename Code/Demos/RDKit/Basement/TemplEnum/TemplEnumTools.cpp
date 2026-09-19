@@ -7,6 +7,7 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 
+#include <cmath>
 namespace TemplateEnum {
 using namespace RDKit;
 
@@ -95,9 +96,9 @@ void orientSidechain(RWMol *mol, RWMol *sidechain, int molAttachIdx,
   double sinT, cosT;
   cosT = Us.dotProduct(Um);
   if (cosT > 1.0) cosT = 1.0;
-  if (fabs(cosT) < 1.0) {
+  if (std::fabs(cosT) < 1.0) {
     tmpTform.setToIdentity();
-    sinT = sqrt(1.0 - cosT * cosT);
+    sinT = std::sqrt(1.0 - cosT * cosT);
     RDGeom::Point3D rotnAxis = Us.crossProduct(Um);
     rotnAxis.normalize();
     std::cerr << "ax=array([" << rotnAxis.x << "," << rotnAxis.y << ","
@@ -106,7 +107,7 @@ void orientSidechain(RWMol *mol, RWMol *sidechain, int molAttachIdx,
     templateTform *= tmpTform;
   } else if (cosT == 1.0) {
     RDGeom::Point3D normal(1, 0, 0);
-    if (fabs(Us.dotProduct(normal)) == 1.0) {
+    if (std::fabs(Us.dotProduct(normal)) == 1.0) {
       normal = RDGeom::Point3D(0, 1, 0);
     }
     RDGeom::Point3D rotnAxis = Us.crossProduct(normal);

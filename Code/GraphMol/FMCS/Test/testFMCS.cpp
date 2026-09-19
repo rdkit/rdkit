@@ -30,6 +30,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#include <cmath>
 #ifdef _WIN32
 #include <RDGeneral/test.h>
 #else
@@ -328,7 +329,7 @@ void testFileMCSB(const char *test, unsigned int timeout = 30,
     if (!referenceResults.empty()) {
       fprintf(
           f, "# %u REFCMP: time %s %.2f sec.\n", n + 1,
-          fabs(referenceResultsTime[n] - sec) < sec / 25.
+          std::fabs(referenceResultsTime[n] - sec) < sec / 25.
               ? "EQUAL"
               : (referenceResultsTime[n] < sec
                      ? (sec < .7 ? "slow" : "SLOW")

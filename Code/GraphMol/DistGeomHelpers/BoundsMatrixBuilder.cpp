@@ -29,6 +29,7 @@
 #include "BoundsMatrixBuilder.h"
 #include "BoundsMatrixBuilderDetails.h"
 
+#include <cmath>
 const double DIST12_DELTA = 0.01;
 const double ANGLE_DELTA = 0.035;
 // const double RANGLE_DELTA = 0.0837; // tolerance for bond angles
@@ -1317,7 +1318,7 @@ void _collect14Bounds(
       if (du < dl) {
         std::swap(du, dl);
       }
-      if (fabs(du - dl) < DIST12_DELTA) {
+      if (std::fabs(du - dl) < DIST12_DELTA) {
         dl -= GEN_DIST_TOL;
         du += GEN_DIST_TOL;
       }
@@ -1334,7 +1335,7 @@ void _collect14Bounds(
       return;
   }
 
-  if (fabs(du - dl) < DIST12_DELTA) {
+  if (std::fabs(du - dl) < DIST12_DELTA) {
     // just to maker sure that lower and upper bound are not too close to each
     // other
     dl -= GEN_DIST_TOL;
@@ -1651,17 +1652,17 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 */
 double _compute15DistsCisCis(double d1, double d2, double d3, double d4,
                              double ang12, double ang23, double ang34) {
-  double dx14 = d2 - d3 * cos(ang23) - d1 * cos(ang12);
-  double dy14 = d3 * sin(ang23) - d1 * sin(ang12);
-  double d14 = sqrt(dx14 * dx14 + dy14 * dy14);
-  double cval = (d3 - d2 * cos(ang23) + d1 * cos(ang12 + ang23)) / d14;
+  double dx14 = d2 - d3 * std::cos(ang23) - d1 * std::cos(ang12);
+  double dy14 = d3 * std::sin(ang23) - d1 * std::sin(ang12);
+  double d14 = std::sqrt(dx14 * dx14 + dy14 * dy14);
+  double cval = (d3 - d2 * std::cos(ang23) + d1 * std::cos(ang12 + ang23)) / d14;
   if (cval > 1.0) {
     cval = 1.0;
   } else if (cval < -1.0) {
     cval = -1.0;
   }
 
-  double ang143 = acos(cval);
+  double ang143 = std::acos(cval);
   double ang145 = ang34 - ang143;
   double res = RDGeom::compute13Dist(d14, d4, ang145);
   return res;
@@ -1690,17 +1691,17 @@ double _compute15DistsCisCis(double d1, double d2, double d3, double d4,
 */
 double _compute15DistsCisTrans(double d1, double d2, double d3, double d4,
                                double ang12, double ang23, double ang34) {
-  double dx14 = d2 - d3 * cos(ang23) - d1 * cos(ang12);
-  double dy14 = d3 * sin(ang23) - d1 * sin(ang12);
-  double d14 = sqrt(dx14 * dx14 + dy14 * dy14);
-  double cval = (d3 - d2 * cos(ang23) + d1 * cos(ang12 + ang23)) / d14;
+  double dx14 = d2 - d3 * std::cos(ang23) - d1 * std::cos(ang12);
+  double dy14 = d3 * std::sin(ang23) - d1 * std::sin(ang12);
+  double d14 = std::sqrt(dx14 * dx14 + dy14 * dy14);
+  double cval = (d3 - d2 * std::cos(ang23) + d1 * std::cos(ang12 + ang23)) / d14;
   if (cval > 1.0) {
     cval = 1.0;
   } else if (cval < -1.0) {
     cval = -1.0;
   }
 
-  double ang143 = acos(cval);
+  double ang143 = std::acos(cval);
   double ang145 = ang34 + ang143;
   return RDGeom::compute13Dist(d14, d4, ang145);
 }
@@ -1731,17 +1732,17 @@ double _compute15DistsCisTrans(double d1, double d2, double d3, double d4,
 */
 double _compute15DistsTransTrans(double d1, double d2, double d3, double d4,
                                  double ang12, double ang23, double ang34) {
-  double dx14 = d2 - d3 * cos(ang23) - d1 * cos(ang12);
-  double dy14 = d3 * sin(ang23) + d1 * sin(ang12);
-  double d14 = sqrt(dx14 * dx14 + dy14 * dy14);
-  double cval = (d3 - d2 * cos(ang23) + d1 * cos(ang12 - ang23)) / d14;
+  double dx14 = d2 - d3 * std::cos(ang23) - d1 * std::cos(ang12);
+  double dy14 = d3 * std::sin(ang23) + d1 * std::sin(ang12);
+  double d14 = std::sqrt(dx14 * dx14 + dy14 * dy14);
+  double cval = (d3 - d2 * std::cos(ang23) + d1 * std::cos(ang12 - ang23)) / d14;
   if (cval > 1.0) {
     cval = 1.0;
   } else if (cval < -1.0) {
     cval = -1.0;
   }
 
-  double ang143 = acos(cval);
+  double ang143 = std::acos(cval);
   double ang145 = ang34 + ang143;
   return RDGeom::compute13Dist(d14, d4, ang145);
 }
@@ -1774,18 +1775,18 @@ double _compute15DistsTransTrans(double d1, double d2, double d3, double d4,
 */
 double _compute15DistsTransCis(double d1, double d2, double d3, double d4,
                                double ang12, double ang23, double ang34) {
-  double dx14 = d2 - d3 * cos(ang23) - d1 * cos(ang12);
-  double dy14 = d3 * sin(ang23) + d1 * sin(ang12);
-  double d14 = sqrt(dx14 * dx14 + dy14 * dy14);
+  double dx14 = d2 - d3 * std::cos(ang23) - d1 * std::cos(ang12);
+  double dy14 = d3 * std::sin(ang23) + d1 * std::sin(ang12);
+  double d14 = std::sqrt(dx14 * dx14 + dy14 * dy14);
 
-  double cval = (d3 - d2 * cos(ang23) + d1 * cos(ang12 - ang23)) / d14;
+  double cval = (d3 - d2 * std::cos(ang23) + d1 * std::cos(ang12 - ang23)) / d14;
   if (cval > 1.0) {
     cval = 1.0;
   } else if (cval < -1.0) {
     cval = -1.0;
   }
 
-  double ang143 = acos(cval);
+  double ang143 = std::acos(cval);
   double ang145 = ang34 - ang143;
   return RDGeom::compute13Dist(d14, d4, ang145);
 }

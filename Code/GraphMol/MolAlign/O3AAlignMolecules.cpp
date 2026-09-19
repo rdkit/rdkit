@@ -21,6 +21,7 @@
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/RDThreads.h>
 
+#include <cmath>
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <thread>
 #include <future>
@@ -564,7 +565,7 @@ MolHistogram::MolHistogram(const ROMol &mol, const double *dmat,
       d_h[y][j] = 0;
     }
     for (unsigned int j = 0; j < nAtoms; ++j) {
-      auto dist = static_cast<unsigned int>(floor(dmat[i * nAtoms + j]));
+      auto dist = static_cast<unsigned int>(std::floor(dmat[i * nAtoms + j]));
       if (dist < O3_MAX_H_BINS) {
         ++d_h[y][dist];
       }
@@ -589,7 +590,7 @@ int o3aMMFFCostFunc(const unsigned int prbIdx, const unsigned int refIdx,
 
   return std::lround(
       (static_cast<double>(((O3AFuncData *)data)->coeff) * O3_CHARGE_WEIGHT *
-           fabs((static_cast<MMFF::MMFFMolProperties *>(
+           std::fabs((static_cast<MMFF::MMFFMolProperties *>(
                      (static_cast<O3AFuncData *>(data))->refProp))
                     ->getMMFFPartialCharge(refIdx) -
                 (static_cast<MMFF::MMFFMolProperties *>(
@@ -609,7 +610,7 @@ int o3aCrippenCostFunc(const unsigned int prbIdx, const unsigned int refIdx,
   return std::lround(
       (static_cast<double>((static_cast<O3AFuncData *>(data))->coeff) *
            O3_CHARGE_WEIGHT *
-           fabs((*(static_cast<std::vector<double> *>(
+           std::fabs((*(static_cast<std::vector<double> *>(
                     (static_cast<O3AFuncData *>(data))->refProp)))[refIdx] -
                 (*(static_cast<std::vector<double> *>(
                     (static_cast<O3AFuncData *>(data))->prbProp)))[prbIdx]) +
@@ -999,7 +1000,7 @@ void SDM::fillFromLAP(LAP &lap) {
       // - the absolute value of the difference between the two distances is
       // computed
       //   and placed in diff[i][j]
-      diff[i][j] = fabs(
+      diff[i][j] = std::fabs(
           (refPos[d_SDMPtrVect[i]->idx[0]] - refPos[d_SDMPtrVect[j]->idx[0]])
               .length() -
           (prbPos[d_SDMPtrVect[i]->idx[1]] - prbPos[d_SDMPtrVect[j]->idx[1]])
@@ -1102,13 +1103,13 @@ double o3aMMFFWeightFunc(const unsigned int prbIdx, const unsigned int refIdx,
   return static_cast<double>(O3_MAX_WEIGHT_COEFF -
                              (static_cast<O3AFuncData *>(data))->weight) *
              ((1.0 + O3_CHARGE_COEFF *
-                         fabs((static_cast<MMFF::MMFFMolProperties *>(
+                         std::fabs((static_cast<MMFF::MMFFMolProperties *>(
                                    (static_cast<O3AFuncData *>(data))->refProp))
                                   ->getMMFFPartialCharge(refIdx) +
                               (static_cast<MMFF::MMFFMolProperties *>(
                                    (static_cast<O3AFuncData *>(data))->prbProp))
                                   ->getMMFFPartialCharge(prbIdx))) /
-              (1.0 + fabs((static_cast<MMFF::MMFFMolProperties *>(
+              (1.0 + std::fabs((static_cast<MMFF::MMFFMolProperties *>(
                                (static_cast<O3AFuncData *>(data))->refProp))
                               ->getMMFFPartialCharge(refIdx) -
                           (static_cast<MMFF::MMFFMolProperties *>(
@@ -1122,12 +1123,12 @@ double o3aCrippenWeightFunc(const unsigned int prbIdx,
                             const unsigned int refIdx, void *data) {
   return (
       0.01 +
-      fabs((*(static_cast<std::vector<double> *>(
+      std::fabs((*(static_cast<std::vector<double> *>(
                (static_cast<O3AFuncData *>(data))->refProp)))[refIdx] +
            (*(static_cast<std::vector<double> *>(
                (static_cast<O3AFuncData *>(data))->prbProp)))[prbIdx]) /
           (1.0 +
-           fabs((*(static_cast<std::vector<double> *>(
+           std::fabs((*(static_cast<std::vector<double> *>(
                     (static_cast<O3AFuncData *>(data))->refProp)))[refIdx] -
                 (*(static_cast<std::vector<double> *>(
                     (static_cast<O3AFuncData *>(data))->prbProp)))[prbIdx])));
@@ -1167,13 +1168,13 @@ double o3aMMFFScoringFunc(const unsigned int prbIdx, const unsigned int refIdx,
       (static_cast<O3AFuncData *>(data))->prbConf->getPositions();
 
   double sqDist = (refPos[refIdx] - prbPos[prbIdx]).lengthSq();
-  double chargeDiff = fabs((static_cast<MMFF::MMFFMolProperties *>(
+  double chargeDiff = std::fabs((static_cast<MMFF::MMFFMolProperties *>(
                                 (static_cast<O3AFuncData *>(data))->refProp))
                                ->getMMFFPartialCharge(refIdx) -
                            (static_cast<MMFF::MMFFMolProperties *>(
                                 (static_cast<O3AFuncData *>(data))->prbProp))
                                ->getMMFFPartialCharge(prbIdx));
-  double chargeSum = fabs((static_cast<MMFF::MMFFMolProperties *>(
+  double chargeSum = std::fabs((static_cast<MMFF::MMFFMolProperties *>(
                                (static_cast<O3AFuncData *>(data))->refProp))
                               ->getMMFFPartialCharge(refIdx) +
                           (static_cast<MMFF::MMFFMolProperties *>(
@@ -1182,7 +1183,7 @@ double o3aMMFFScoringFunc(const unsigned int prbIdx, const unsigned int refIdx,
 
   return ((O3_SCORING_FUNCTION_ALPHA +
            (1.0 + O3_CHARGE_COEFF * chargeSum) / (1.0 + chargeDiff)) *
-          exp(-O3_SCORING_FUNCTION_BETA * sqDist));
+          std::exp(-O3_SCORING_FUNCTION_BETA * sqDist));
 }
 
 double o3aCrippenScoringFunc(const unsigned int prbIdx,
@@ -1194,19 +1195,19 @@ double o3aCrippenScoringFunc(const unsigned int prbIdx,
 
   double sqDist = (refPos[refIdx] - prbPos[prbIdx]).lengthSq();
   double logpDiff =
-      fabs((*(static_cast<std::vector<double> *>(
+      std::fabs((*(static_cast<std::vector<double> *>(
                (static_cast<O3AFuncData *>(data))->refProp)))[refIdx] -
            (*(static_cast<std::vector<double> *>(
                (static_cast<O3AFuncData *>(data))->prbProp)))[prbIdx]);
   double logpSum =
-      fabs((*(static_cast<std::vector<double> *>(
+      std::fabs((*(static_cast<std::vector<double> *>(
                (static_cast<O3AFuncData *>(data))->refProp)))[refIdx] +
            (*(static_cast<std::vector<double> *>(
                (static_cast<O3AFuncData *>(data))->prbProp)))[prbIdx]);
 
   return ((O3_SCORING_FUNCTION_ALPHA +
            (1.0 + O3_CRIPPEN_COEFF * logpSum) / (1.0 + logpDiff)) *
-          exp(-O3_SCORING_FUNCTION_BETA * sqDist));
+          std::exp(-O3_SCORING_FUNCTION_BETA * sqDist));
 }
 
 double SDM::scoreAlignment(double (*scoringFunc)(const unsigned int,
@@ -1541,7 +1542,7 @@ double _rmsdMatchVect(ROMol *d_prbMol, const ROMol *d_refMol,
       // first pair element is prb, second is ref
       rmsd += (prbPos[i.first] - refPos[i.second]).lengthSq();
     }
-    rmsd = sqrt(rmsd / (*matchVect).size());
+    rmsd = std::sqrt(rmsd / (*matchVect).size());
   } else {
     RDGeom::Point3D refCtd;
     RDGeom::Point3D prbCtd;

@@ -37,9 +37,9 @@ double computeEnergy(const RDGeom::Point3D &p1, const RDGeom::Point3D &p2,
   const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
   const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
                                std::max(1.0e-5, r[1].lengthSq())};
-  double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
+  double cosTheta = r[0].dotProduct(r[1]) / std::sqrt(rLengthSq[0] * rLengthSq[1]);
   cosTheta = std::clamp(cosTheta, -1.0, 1.0);
-  const double angle = RAD2DEG * acos(cosTheta);
+  const double angle = RAD2DEG * std::acos(cosTheta);
   const double angleTerm = computeAngleTerm(angle, contrib);
   return contrib.forceConstant * angleTerm * angleTerm;
 }
@@ -81,9 +81,9 @@ void AngleConstraintContribs::addContrib(unsigned int idx1, unsigned int idx2,
     const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
     const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
                                  std::max(1.0e-5, r[1].lengthSq())};
-    double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
+    double cosTheta = r[0].dotProduct(r[1]) / std::sqrt(rLengthSq[0] * rLengthSq[1]);
     cosTheta = std::clamp(cosTheta, -1.0, 1.0);
-    const double angle = RAD2DEG * acos(cosTheta);
+    const double angle = RAD2DEG * std::acos(cosTheta);
     minAngleDeg += angle;
     maxAngleDeg += angle;
   }
@@ -148,9 +148,9 @@ void AngleConstraintContribs::getGrad(double *pos, double *grad) const {
     const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
     const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
                                  std::max(1.0e-5, r[1].lengthSq())};
-    double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
+    double cosTheta = r[0].dotProduct(r[1]) / std::sqrt(rLengthSq[0] * rLengthSq[1]);
     cosTheta = std::clamp(cosTheta, -1.0, 1.0);
-    const double angle = RAD2DEG * acos(cosTheta);
+    const double angle = RAD2DEG * std::acos(cosTheta);
     const double angleTerm = computeAngleTerm(angle, contrib);
 
     const double dE_dTheta = 2.0 * RAD2DEG * contrib.forceConstant * angleTerm;

@@ -30,7 +30,7 @@ double calcOopChi(const RDGeom::Point3D &iPoint, const RDGeom::Point3D &jPoint,
   double sinChi = n.dotProduct(rJL);
   clipToOne(sinChi);
 
-  return RAD2DEG * asin(sinChi);
+  return RAD2DEG * std::asin(sinChi);
 }
 
 double calcOopBendForceConstant(const MMFFOop *mmffOopParams) {
@@ -147,13 +147,13 @@ void OopBendContrib::getSingleGrad(double *pos, double *grad, unsigned int termI
   double sinChi = rJL.dotProduct(n);
   clipToOne(sinChi);
   double cosChiSq = 1.0 - sinChi * sinChi;
-  double cosChi = std::max(((cosChiSq > 0.0) ? sqrt(cosChiSq) : 0.0), 1.0e-8);
-  double chi = RAD2DEG * asin(sinChi);
+  double cosChi = std::max(((cosChiSq > 0.0) ? std::sqrt(cosChiSq) : 0.0), 1.0e-8);
+  double chi = RAD2DEG * std::asin(sinChi);
   double cosTheta = rJI.dotProduct(rJK);
   clipToOne(cosTheta);
   double sinThetaSq = std::max(1.0 - cosTheta * cosTheta, 1.0e-8);
   double sinTheta =
-      std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
+      std::max(((sinThetaSq > 0.0) ? std::sqrt(sinThetaSq) : 0.0), 1.0e-8);
 
   double dE_dChi = RAD2DEG * c2 * d_koop[termIdx] * chi;
   RDGeom::Point3D t1 = rJL.crossProduct(rJK);

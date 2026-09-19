@@ -22,6 +22,7 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/test_fixtures.h>
 
+#include <cmath>
 using namespace RDKit;
 
 TEST_CASE(
@@ -647,7 +648,7 @@ M  END
   auto bondLength11_12 =
       MolTransforms::getBondLength(mol->getConformer(), 11, 12);
   auto bondLength5_6 = MolTransforms::getBondLength(mol->getConformer(), 5, 6);
-  REQUIRE(fabs(bondLength11_12 - bondLength5_6) < 1.e-4);
+  REQUIRE(std::fabs(bondLength11_12 - bondLength5_6) < 1.e-4);
   REQUIRE(bondLength11_12 > 2.3);
   SECTION("alignOnly false/true") {
     for (auto alignOnly : {false, true}) {
@@ -676,7 +677,7 @@ M  END
           MolTransforms::getBondLength(mol->getConformer(), 11, 12);
       auto bondLengthAli5_6 =
           MolTransforms::getBondLength(mol->getConformer(), 5, 6);
-      CHECK(fabs(bondLengthAli11_12 - bondLengthAli5_6) < 1.e-4);
+      CHECK(std::fabs(bondLengthAli11_12 - bondLengthAli5_6) < 1.e-4);
       if (alignOnly) {
         CHECK(bondLengthAli11_12 > 2.3);
       } else {

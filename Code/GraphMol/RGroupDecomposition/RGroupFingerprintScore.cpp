@@ -17,6 +17,7 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <cmath>
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
@@ -236,7 +237,7 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
   // double the penalty to catch systems like
   // https://github.com/rdkit/rdkit/issues/3896
 
-  auto rootSum = sqrt(sum);
+  auto rootSum = std::sqrt(sum);
   auto score = rootSum + 2.0 * rgroupPenalty;
   score = rootSum;
 
@@ -328,7 +329,7 @@ double VarianceDataForLabel::variance() const {
   std::cerr << std::endl;
 #endif
 #ifdef DEBUG
-  auto rmsVariance = sqrt(totalVariance);
+  auto rmsVariance = std::sqrt(totalVariance);
   std::cerr << "Total Variance " << totalVariance << " RMS Variance "
             << rmsVariance << std::endl;
 #endif

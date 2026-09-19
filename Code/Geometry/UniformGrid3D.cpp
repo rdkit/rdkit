@@ -15,6 +15,7 @@
 #include <fstream>
 #include <cstdint>
 
+#include <cmath>
 namespace {
 // file-local tolerances; named distinctly from the same-purpose constants in
 // UniformRealValueGrid3D.cpp so the two don't become ambiguous under unity builds
@@ -56,9 +57,9 @@ void UniformGrid3D::initGrid(
   PRECONDITION(dimY > 0.0, "Invalid y-dimension for grid");
   PRECONDITION(dimZ > 0.0, "Invalid z-dimension for grid");
   PRECONDITION(spacing > 0.0, "Invalid spacing for grid");
-  d_numX = static_cast<unsigned int>(floor(dimX / spacing + 0.5));
-  d_numY = static_cast<unsigned int>(floor(dimY / spacing + 0.5));
-  d_numZ = static_cast<unsigned int>(floor(dimZ / spacing + 0.5));
+  d_numX = static_cast<unsigned int>(std::floor(dimX / spacing + 0.5));
+  d_numY = static_cast<unsigned int>(std::floor(dimY / spacing + 0.5));
+  d_numZ = static_cast<unsigned int>(std::floor(dimZ / spacing + 0.5));
   PRECONDITION((!data) || data->getValueType() == valType,
                "grid data type mismatch");
   PRECONDITION((!data) || data->getLength() == d_numX * d_numY * d_numZ,
@@ -112,9 +113,9 @@ int UniformGrid3D::getGridPointIndex(const Point3D &point) const {
   tPt -= d_offSet;  // d_origin;
   tPt /= d_spacing;
   double move = 0.5;
-  int xi = static_cast<int>(floor(tPt.x + move));
-  int yi = static_cast<int>(floor(tPt.y + move));
-  int zi = static_cast<int>(floor(tPt.z + move));
+  int xi = static_cast<int>(std::floor(tPt.x + move));
+  int yi = static_cast<int>(std::floor(tPt.y + move));
+  int zi = static_cast<int>(std::floor(tPt.z + move));
 
   if ((xi < 0) || (xi >= static_cast<int>(d_numX))) {
     return -1;
@@ -173,7 +174,7 @@ bool UniformGrid3D::compareParams(const UniformGrid3D &other) const {
     return false;
   }
 
-  if (fabs(d_spacing - other.getSpacing()) > GRID_SPACING_TOL) {
+  if (std::fabs(d_spacing - other.getSpacing()) > GRID_SPACING_TOL) {
     return false;
   }
   Point3D dOffset = d_offSet;
@@ -216,12 +217,12 @@ void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
   double gRad2 = gRadius * gRadius;
   double bgRad2 = bgRad * bgRad;
   double dx, dy, dz, d, d2, dy2z2, dz2;
-  int xmax = static_cast<int>(floor(gPt.x + gRadius));
-  int xmin = static_cast<int>(ceil(gPt.x - gRadius));
-  int ymax = static_cast<int>(floor(gPt.y + gRadius));
-  int ymin = static_cast<int>(ceil(gPt.y - gRadius));
-  int zmax = static_cast<int>(floor(gPt.z + gRadius));
-  int zmin = static_cast<int>(ceil(gPt.z - gRadius));
+  int xmax = static_cast<int>(std::floor(gPt.x + gRadius));
+  int xmin = static_cast<int>(std::ceil(gPt.x - gRadius));
+  int ymax = static_cast<int>(std::floor(gPt.y + gRadius));
+  int ymin = static_cast<int>(std::ceil(gPt.y - gRadius));
+  int zmax = static_cast<int>(std::floor(gPt.z + gRadius));
+  int zmin = static_cast<int>(std::ceil(gPt.z - gRadius));
 
   unsigned int oval, val, valChange;
   int ptId1, ptId2;
@@ -252,7 +253,7 @@ void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
                     if (d2 < bgRad2) {
                       val = maxVal;
                     } else {
-                      d = sqrt(d2);
+                      d = std::sqrt(d2);
                       valChange = (static_cast<unsigned int>(
                                       (d - bgRad) / gStepSize + 1)) *
                                   (valStep);
@@ -396,9 +397,9 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
           << std::endl;
   outStrm << dimX - 1 << " " << dimY - 1 << " " << dimZ - 1 << std::endl;
 
-  int outX1 = static_cast<int>(floor(offSet.x + 0.5));
+  int outX1 = static_cast<int>(std::floor(offSet.x + 0.5));
   int outX2 =
-      static_cast<int>(floor(offSet.x + 0.5)) + static_cast<int>(dimX - 1);
+      static_cast<int>(std::floor(offSet.x + 0.5)) + static_cast<int>(dimX - 1);
   // REVIEW: ok - here is a fix to try and make the grid closer to the molecule
   // when displayed
   // (at least in PyMol). The difference between the pair of values (outX1,
@@ -408,10 +409,10 @@ void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
   // dimY and dimZ respectively. Not sure why this should be the case, but
   // almost always we get a
   // better display in PyMol.
-  int outY1 = static_cast<int>(floor(offSet.y + 0.5));
-  int outY2 = static_cast<int>(floor(offSet.y + 0.5)) + static_cast<int>(dimY);
-  int outZ1 = static_cast<int>(floor(offSet.z + 0.5));
-  int outZ2 = static_cast<int>(floor(offSet.z + 0.5)) + static_cast<int>(dimZ);
+  int outY1 = static_cast<int>(std::floor(offSet.y + 0.5));
+  int outY2 = static_cast<int>(std::floor(offSet.y + 0.5)) + static_cast<int>(dimY);
+  int outZ1 = static_cast<int>(std::floor(offSet.z + 0.5));
+  int outZ2 = static_cast<int>(std::floor(offSet.z + 0.5)) + static_cast<int>(dimZ);
 
   outStrm << "1"
           << " " << outX1 << " " << outX2 << " " << outY1 << " " << outY2 << " "

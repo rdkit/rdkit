@@ -13,6 +13,7 @@
 #include <Geometry/Transform3D.h>
 #include <Numerics/Vector.h>
 
+#include <cmath>
 constexpr double TOLERANCE = 1.e-6;
 
 namespace RDNumeric {
@@ -181,29 +182,29 @@ unsigned int jacobi(double quad[4][4], double eigenVals[4],
     diagNorm = 0.0;
     offDiagNorm = 0.0;
     for (j = 0; j <= 3; j++) {
-      diagNorm += fabs(eigenVals[j]);
+      diagNorm += std::fabs(eigenVals[j]);
       for (i = 0; i <= j - 1; i++) {
-        offDiagNorm += fabs(quad[i][j]);
+        offDiagNorm += std::fabs(quad[i][j]);
       }
     }
-    if (fabs(diagNorm) > 1.e-16 && (offDiagNorm / diagNorm) <= TOLERANCE) {
+    if (std::fabs(diagNorm) > 1.e-16 && (offDiagNorm / diagNorm) <= TOLERANCE) {
       goto Exit_now;
     }
     for (j = 1; j <= 3; j++) {
       for (i = 0; i <= j - 1; i++) {
         b = quad[i][j];
-        if (fabs(b) > 0.0) {
+        if (std::fabs(b) > 0.0) {
           dma = eigenVals[j] - eigenVals[i];
-          if ((fabs(dma) + fabs(b)) <= fabs(dma)) {
+          if ((std::fabs(dma) + std::fabs(b)) <= std::fabs(dma)) {
             t = b / dma;
           } else {
             q = 0.5 * dma / b;
-            t = 1.0 / (fabs(q) + sqrt(1.0 + q * q));
+            t = 1.0 / (std::fabs(q) + std::sqrt(1.0 + q * q));
             if (q < 0.0) {
               t = -t;
             }
           }
-          c = 1.0 / sqrt(t * t + 1.0);
+          c = 1.0 / std::sqrt(t * t + 1.0);
           s = t * c;
           quad[i][j] = 0.0;
           for (k = 0; k <= i - 1; k++) {
@@ -323,7 +324,7 @@ double AlignPoints(const RDGeom::Point3DConstPtrVect &refPoints,
   double ssr = eigenVals[0] - (pptSum.lengthSq() + rptSum.lengthSq()) / wtsSum +
                rptSumLenSq + pptSumLenSq;
 
-  if ((ssr < 0.0) && (fabs(ssr) < TOLERANCE)) {
+  if ((ssr < 0.0) && (std::fabs(ssr) < TOLERANCE)) {
     ssr = 0.0;
   }
   if (reflect) {

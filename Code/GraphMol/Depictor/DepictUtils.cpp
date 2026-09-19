@@ -50,13 +50,13 @@ RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
   double ang = 2 * M_PI / na;
 
   // compute the arm length
-  double al = BOND_LEN / (sqrt(2 * (1 - cos(ang))));
+  double al = BOND_LEN / (std::sqrt(2 * (1 - std::cos(ang))));
 
   RDGeom::INT_POINT2D_MAP res;
 
   for (unsigned int i = 0; i < na; ++i) {
-    auto x = al * cos(i * ang);
-    auto y = al * sin(i * ang);
+    auto x = al * std::cos(i * ang);
+    auto y = al * std::sin(i * ang);
     RDGeom::Point2D loc(x, y);
     res[ring[i]] = loc;
   }
@@ -544,14 +544,14 @@ INT_PAIR_VECT findBondsPairsToPermuteDeg4(const RDGeom::Point2D &center,
   // the bond to the first neighbor; i.e. we want to find b3 and b4 in the above
   // picture
   double dp1 = nbrPts[0].dotProduct(nbrPts[1]);
-  if (fabs(dp1) < 1.e-3) {
+  if (std::fabs(dp1) < 1.e-3) {
     // the first two vectors are perpendicular to each other. We now have b1
     // and b3 we need to find b4
     INT_PAIR p1(nbrBids[0], nbrBids[1]);
     res.push_back(p1);
 
     double dp2 = nbrPts[0].dotProduct(nbrPts[2]);
-    if (fabs(dp2) < 1.e-3) {
+    if (std::fabs(dp2) < 1.e-3) {
       // now we found b4 as well return the results
       INT_PAIR p2(nbrBids[0], nbrBids[2]);
       res.push_back(p2);

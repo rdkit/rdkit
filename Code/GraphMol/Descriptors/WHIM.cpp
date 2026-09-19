@@ -49,7 +49,7 @@ namespace {
 MolData3Ddescriptors moldata3D;
 
 double roundn(double in, int factor) {
-  return std::round(in * pow(10., factor)) / pow(10., factor);
+  return std::round(in * std::pow(10., factor)) / std::pow(10., factor);
 }
 
 MatrixXd GetCenterMatrix(MatrixXd &Mat) {
@@ -79,7 +79,7 @@ std::vector<double> getWhimD(std::vector<double> weightvector,
   double weight = WeightMat.diagonal().sum();
   // fix issue if the sum is close to zeros
   // only for the charges cases normally
-  if (fabs(weight) < 1e-4) {
+  if (std::fabs(weight) < 1e-4) {
     weight = 1.0;
     // std::cerr << "fix weight sum:\n";
   }
@@ -123,19 +123,19 @@ std::vector<double> getWhimD(std::vector<double> weightvector,
 
   //  inverse of the kurtosis
   if (v1.array().pow(4).sum() > 0) {
-    w[10] = numAtoms * pow(w[0], 2) / v1.array().pow(4).sum();  // E1
+    w[10] = numAtoms * std::pow(w[0], 2) / v1.array().pow(4).sum();  // E1
   } else {
     w[10] = 0.0;
   }
 
   if (v2.array().pow(4).sum() > 0) {
-    w[11] = numAtoms * pow(w[1], 2) / v2.array().pow(4).sum();  // E2
+    w[11] = numAtoms * std::pow(w[1], 2) / v2.array().pow(4).sum();  // E2
   } else {
     w[11] = 0.0;
   }
 
   if (v3.array().pow(4).sum() > 0) {
-    w[12] = numAtoms * pow(w[2], 2) / v3.array().pow(4).sum();  // E3
+    w[12] = numAtoms * std::pow(w[2], 2) / v3.array().pow(4).sum();  // E3
   } else {
     w[12] = 0.0;
   }
@@ -199,18 +199,18 @@ std::vector<double> getWhimD(std::vector<double> weightvector,
     gamma[i] = 0.0;
     double gammainv = 1.0;
     if (ns == 0) {
-      gammainv = 1.0 - (na / nAT) * log(1.0 / nAT) / log(2.);
+      gammainv = 1.0 - (na / nAT) * std::log(1.0 / nAT) / std::log(2.);
     }
     if (ns > 0) {
-      gammainv = 1.0 - ((ns / nAT) * log(ns / nAT) / log(2.) +
-                        (na / nAT) * log(1.0 / nAT) / log(2.));
+      gammainv = 1.0 - ((ns / nAT) * std::log(ns / nAT) / std::log(2.) +
+                        (na / nAT) * std::log(1.0 / nAT) / std::log(2.));
     }
     gamma[i] = 1.0 / gammainv;
   }
   w[14] = gamma[0];  // G1
   w[15] = gamma[1];  // G2
   w[16] = gamma[2];  // G3
-  w[17] = pow(gamma[0] * gamma[1] * gamma[2], 1.0 / 3.0);
+  w[17] = std::pow(gamma[0] * gamma[1] * gamma[2], 1.0 / 3.0);
   delete svd;
 
   return w;

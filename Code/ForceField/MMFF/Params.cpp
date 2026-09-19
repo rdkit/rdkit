@@ -8286,7 +8286,7 @@ MMFFVdWCollection::MMFFVdWCollection(std::string mmffVdW) {
         mmffVdWObj.DA = (boost::lexical_cast<std::string>(*token)).at(0);
         ++token;
         mmffVdWObj.R_star =
-            mmffVdWObj.A_i * pow(mmffVdWObj.alpha_i, this->power);
+            mmffVdWObj.A_i * std::pow(mmffVdWObj.alpha_i, this->power);
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
         d_params[atomType] = mmffVdWObj;
 #else

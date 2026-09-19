@@ -18,6 +18,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/DrawMolMCHLasso.h>
 
+#include <cmath>
 namespace RDKit {
 namespace MolDraw2D_detail {
 
@@ -306,7 +307,7 @@ void intersectingCirclePointsDiffSize(const Point2D &at1Cds, double rad1,
   double a2 = dist + rad1 - rad2;
   double a3 = dist - rad1 + rad2;
   double a4 = rad1 + rad2 - dist;
-  double area = sqrt(a1 * a2 * a3 * a4) / 4.0;
+  double area = std::sqrt(a1 * a2 * a3 * a4) / 4.0;
   double c = (rad1 * rad1 - rad2 * rad2) / (2.0 * dist2);
   // x values
   double val1 = (at1Cds.x + at2Cds.x) / 2.0 + (at2Cds.x - at1Cds.x) * c;
@@ -322,7 +323,7 @@ void intersectingCirclePointsDiffSize(const Point2D &at1Cds, double rad1,
 
   // Finally, need to check that the 2 combinations of y for x we've taken
   // are the correct 2 by making sure isect1 is on the circle
-  if (fabs((isect1 - at1Cds).length() - rad1 * rad1) > 1.0e-8) {
+  if (std::fabs((isect1 - at1Cds).length() - rad1 * rad1) > 1.0e-8) {
     std::swap(isect1.y, isect2.y);
   }
 }
@@ -331,7 +332,7 @@ void intersectingCirclePointsDiffSize(const Point2D &at1Cds, double rad1,
 void intersectingCirclePoints(const Point2D &at1Cds, double rad1,
                               const Point2D &at2Cds, double rad2,
                               Point2D &isect1, Point2D &isect2) {
-  if (fabs(rad1 - rad2) < 1.0e-8) {
+  if (std::fabs(rad1 - rad2) < 1.0e-8) {
     intersectingCirclePointsSameSize(at1Cds, at2Cds, rad1, isect1, isect2);
   } else {
     intersectingCirclePointsDiffSize(at1Cds, rad1, at2Cds, rad2, isect1,
@@ -360,9 +361,9 @@ bool areArcEndsInOtherCircle(const Point2D &centre, double radius, double ang1,
                              const std::vector<unsigned int> &otherAtoms,
                              int lassoNum) {
   ang1 *= M_PI / 180.0;
-  Point2D end1{centre.x + radius * cos(ang1), centre.y + radius * sin(ang1)};
+  Point2D end1{centre.x + radius * std::cos(ang1), centre.y + radius * std::sin(ang1)};
   ang2 *= M_PI / 180.0;
-  Point2D end2{centre.x + radius * cos(ang2), centre.y + radius * sin(ang2)};
+  Point2D end2{centre.x + radius * std::cos(ang2), centre.y + radius * std::sin(ang2)};
 
   for (size_t i = 0; i < otherAtoms.size(); ++i) {
     if (otherAtoms[i] == atNum) {

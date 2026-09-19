@@ -108,7 +108,7 @@ void TorsionAngleContribM6::getGrad(double *pos, double *grad) const {
   double cosPhi = t[0].dotProduct(t[1]);
   clipToOne(cosPhi);
   double sinPhiSq = 1.0 - cosPhi * cosPhi;
-  double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
+  double sinPhi = ((sinPhiSq > 0.0) ? std::sqrt(sinPhiSq) : 0.0);
   double cosPhi2 = cosPhi * cosPhi;
   double cosPhi3 = cosPhi * cosPhi2;
   double cosPhi4 = cosPhi * cosPhi3;
