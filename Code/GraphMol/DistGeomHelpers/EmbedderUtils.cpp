@@ -25,7 +25,6 @@ namespace DGeomHelpers {
   X(boxSizeMult)                                  \
   X(clearConfs)                                   \
   X(embedFragmentsSeparately)                     \
-  X(embedForceField)                              \
   X(enableSequentialRandomSeeds)                  \
   X(enforceChirality)                             \
   X(ETversion)                                    \
@@ -65,6 +64,10 @@ void updateEmbedParametersFromJSON(EmbedParameters &params,
   boost::property_tree::read_json(ss, pt);
 
   EMBED_PARAMS_FIELDS(PT_OPT_GET)
+
+  if (auto opt = pt.get_optional<int>("embedForceField")) {
+    params.embedForceField = static_cast<EmbedFF>(*opt);
+  }
 
   std::map<int, RDGeom::Point3D> *cmap = nullptr;
   const auto coordMap = pt.get_child_optional("coordMap");
@@ -129,6 +132,8 @@ std::string embedParametersToJSON(const EmbedParameters &params) {
 
     pt.add_child("boundsMatrix", matrixPT);
   }
+
+  PT_OPT_PUT(embedForceField)
 
   std::ostringstream ss;
   boost::property_tree::write_json(ss, pt, false);
