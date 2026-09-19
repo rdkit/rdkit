@@ -502,6 +502,18 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("useMacrocycle14config") = true),
       docString.c_str());
 
+  python::enum_<RDKit::DGeomHelpers::InitialEmbeddingMode>(
+      "InitialEmbeddingMode")
+      .value("DG_EMBEDDING",
+             RDKit::DGeomHelpers::InitialEmbeddingMode::DG_EMBEDDING)
+      .value("INTERNAL_COORDINATE_EMBEDDING",
+             RDKit::DGeomHelpers::InitialEmbeddingMode::
+                 INTERNAL_COORDINATE_EMBEDDING)
+      .value("RANDOM_COORDINATE_EMBEDDING",
+             RDKit::DGeomHelpers::InitialEmbeddingMode::
+                 RANDOM_COORDINATE_EMBEDDING)
+      .export_values();
+
   python::enum_<RDKit::DGeomHelpers::EmbedFailureCauses>("EmbedFailureCauses")
       .value("INITIAL_COORDS",
              RDKit::DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS)
@@ -673,6 +685,12 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "symmetrizeConjugatedTerminalGroupsForPruning",
           &PyEmbedParameters::symmetrizeConjugatedTerminalGroupsForPruning,
           "symmetrize terminal conjugated groups for RMSD pruning")
+      .def_readwrite(
+          "initialEmbeddingMode", &PyEmbedParameters::initialEmbeddingMode,
+          "Mode for initial embedding: DG_EMBEDDING, INTERNAL_CORRDINATE_EMBEDDING, RANDOM_COORDINATE_EMBEDDING")
+      .def_readwrite("onlyInitialEmbedding",
+                     &PyEmbedParameters::onlyInitialEmbedding,
+                     "Only generates initial embedding")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap, python::args("self"),
            "sets the coordmap to be used")
       .def("__setattr__", &safeSetattr);
