@@ -33,6 +33,8 @@
 #include "OsmordredHelpers.h"
 #include <boost/functional/hash.hpp>  // For custom hashing of pairs
 #include <GraphMol/MolOps.h>
+#include <RDGeneral/Exceptions.h>
+#include <GraphMol/SanitException.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -2859,20 +2861,48 @@ std::vector<double> calcAbrahams(const ROMol &mol) {
 // an empty key is a key too to discrimitate!
 
 int generateKey(int rootNum, int rootDeg, int bondOrder, int neighNum) {
-  // The neighbour DEGREE is deliberately not part of the key.
-  //
-  // osmordred v3 folded it in "for Mordred parity". Mordred is not the right
-  // reference: measured against POLLY -- Basak's own software, 411 molecules x
-  // r=0..5 -- Mordred agrees on 49.8% of values, and folding neighbour degree
-  // in here dropped this implementation from 88.0% to 66.1%. At r=1 it is
-  // catastrophic, 80.3% -> 16.1%, because it splits atoms Basak keeps together:
-  // Basak labels a vertex by (element, VALENCY), and in a hydrogen-filled graph
-  // an sp2 carbon has degree 3 but valency 4. Basak's own worked example
-  // (2-butenol, Roy/Basak/Harriss/Magnuson 1983, Table 1) gives IC1 = 2.0349
-  // with the partition [1,1,1,1,2,7]; keying on neighbour degree gives 2.4997
-  // and [1,1,1,1,2,2,5], which is Mordred's answer, not Basak's.
+  // BASAK flavour: the neighbour DEGREE is deliberately excluded. See
+  // ICKeyFlavor in Osmordred.h for the measurements behind that choice.
   return (rootNum * 10 + rootDeg) * 1000 + bondOrder * 100 + neighNum;
 }
+
+//! EXTENDED flavour: osmordred v3 folded the neighbour degree in as well.
+int generateKeyExtended(int rootNum, int rootDeg, int bondOrder, int neighNum,
+                        int neighDeg) {
+  return generateKey(rootNum, rootDeg, bondOrder, neighNum) * 10 + neighDeg;
+}
+
+namespace {
+//! Bonds inside a nitro / carboxylate / sulfonate group, as (min,max) atom idx.
+//! RDKit writes these charge-separated, which makes two chemically equivalent
+//! oxygens inequivalent in the graph; see InformationContentOptions.
+std::set<std::pair<int, int>> delocalizedBonds(const ROMol &mol) {
+  static const std::vector<std::string> patterns = {
+      "[N+](=O)[O-]", "[CX3](=O)[O-]", "[SX4](=O)(=O)[O-]"};
+  std::set<std::pair<int, int>> out;
+  for (const auto &smarts : patterns) {
+    std::unique_ptr<ROMol> query(SmartsToMol(smarts));
+    if (!query) continue;
+    std::vector<MatchVectType> matches;
+    SubstructMatch(mol, *query, matches, true);
+    for (const auto &match : matches) {
+      for (size_t a = 0; a < match.size(); ++a) {
+        for (size_t b = a + 1; b < match.size(); ++b) {
+          int i = match[a].second, j = match[b].second;
+          if (mol.getBondBetweenAtoms(i, j)) {
+            out.insert({std::min(i, j), std::max(i, j)});
+          }
+        }
+      }
+    }
+  }
+  return out;
+}
+
+//! One code for every bond inside a delocalized group, so the two oxygens of a
+//! nitro group stop being distinguishable by bond order alone.
+constexpr int DELOCALIZED_BOND_CODE = 5;
+}  // namespace
 
 int getbondtypeint(const Bond::BondType &bd) {
   if (bd == Bond::BondType::AROMATIC) {
@@ -2950,8 +2980,16 @@ std::vector<std::vector<int>> updateClustersWithKeys(
 
 // Main pipeline
 std::map<int, std::vector<std::vector<int>>> computePipeline(
-    RWMol &mol, int maxRadius, bool addDeadKeys = false) {
+    RWMol &mol, int maxRadius,
+    const InformationContentOptions &options = InformationContentOptions(),
+    bool addDeadKeys = false) {
   int nAtoms = rdcast<int>(mol.getNumAtoms());
+
+  // Bonds whose code is flattened so the two oxygens of a nitro group (and the
+  // like) stop being separable by bond order. Empty unless asked for.
+  const std::set<std::pair<int, int>> deloc =
+      options.equalizeDelocalizedBonds ? delocalizedBonds(mol)
+                                       : std::set<std::pair<int, int>>();
 
   if (nAtoms == 0) {
     BOOST_LOG(rdWarningLog) << "Error: Molecule has no atoms." << std::endl;
@@ -3091,7 +3129,12 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
           }
           const Atom *rootAtom = mol.getAtomWithIdx(rootIdx);
           int rootNum = rootAtom->getAtomicNum();
-          int rootDeg = rootAtom->getDegree();
+          // Basak's paper labels a vertex by (element, valency); DEGREE is the
+          // default because it scores better against POLLY. See ICVertexLabel.
+          int rootDeg =
+              options.vertexLabel == ICVertexLabel::VALENCY
+                  ? rdcast<int>(rootAtom->getTotalValence())
+                  : rdcast<int>(rootAtom->getDegree());
 
           for (const auto &nb : mol.atomNeighbors(rootAtom)) {
             int nbIdx = nb->getIdx();
@@ -3103,12 +3146,27 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
 
             neighbors.push_back(nbIdx);
             const Bond *bond = mol.getBondBetweenAtoms(rootIdx, nbIdx);
-            int bondOrder = getbondtypeint(
-                bond->getBondType());  // don't need kekulize like in Mordred
-            int neighNum = mol.getAtomWithIdx(nbIdx)->getAtomicNum();
-            // See generateKey: the neighbour degree is deliberately excluded.
+            int bondOrder;
+            if (!deloc.empty() &&
+                deloc.count({std::min(rootIdx, nbIdx),
+                             std::max(rootIdx, nbIdx)})) {
+              bondOrder = DELOCALIZED_BOND_CODE;
+            } else if (options.aromaticHandling ==
+                           ICAromaticHandling::KEKULIZED &&
+                       bond->getBondType() == Bond::BondType::AROMATIC) {
+              // The molecule was kekulized up front, so an AROMATIC bond here
+              // means kekulization failed; fall back to the single-bond code.
+              bondOrder = 1;
+            } else {
+              bondOrder = getbondtypeint(bond->getBondType());
+            }
+            const Atom *neighAtom = mol.getAtomWithIdx(nbIdx);
+            int neighNum = neighAtom->getAtomicNum();
             eqKeys.push_back(
-                generateKey(rootNum, rootDeg, bondOrder, neighNum));
+                options.keyFlavor == ICKeyFlavor::EXTENDED
+                    ? generateKeyExtended(rootNum, rootDeg, bondOrder, neighNum,
+                                          rdcast<int>(neighAtom->getDegree()))
+                    : generateKey(rootNum, rootDeg, bondOrder, neighNum));
           }
         }
 
@@ -3297,9 +3355,27 @@ std::vector<double> ShannonEntropies(
   return icvalues;
 }
 
-std::vector<double> calcInformationContent(const ROMol &mol, int maxradius) {
+std::vector<double> calcInformationContent(
+    const ROMol &mol, int maxradius,
+    const InformationContentOptions &options) {
+  if (maxradius < 0) {
+    throw ValueErrorException(
+        "calcInformationContent: maxradius must be non-negative");
+  }
   std::unique_ptr<RWMol> hmol(new RWMol(mol));
   MolOps::addHs(*hmol);
+
+  if (options.aromaticHandling == ICAromaticHandling::KEKULIZED) {
+    try {
+      MolOps::Kekulize(*hmol, true);
+    } catch (const MolSanitizeException &) {
+      // Leave the aromatic form; the key site falls back to the single-bond
+      // code for any bond still flagged aromatic.
+      BOOST_LOG(rdWarningLog) << "calcInformationContent: kekulization failed, "
+                                 "using the aromatic form"
+                              << std::endl;
+    }
+  }
 
   int nAtoms = hmol->getNumAtoms();
 
@@ -3317,7 +3393,7 @@ std::vector<double> calcInformationContent(const ROMol &mol, int maxradius) {
   double log2nA = std::log(static_cast<double>(nAtoms)) / std::log(2);
   double log2nB = std::log(static_cast<double>(nBonds)) / std::log(2);
 
-  auto CN = computePipeline(*hmol, maxradius);
+  auto CN = computePipeline(*hmol, maxradius, options);
 
   if (CN.empty()) {
     BOOST_LOG(rdWarningLog)
@@ -3326,6 +3402,10 @@ std::vector<double> calcInformationContent(const ROMol &mol, int maxradius) {
   }
 
   return ShannonEntropies(CN, maxradius, log2nA, log2nB, nAtoms);
+}
+
+std::vector<double> calcInformationContent(const ROMol &mol, int maxradius) {
+  return calcInformationContent(mol, maxradius, InformationContentOptions());
 }
 
 std::vector<double> calcInformationContent_(const ROMol &mol) {

@@ -163,6 +163,80 @@ def test_plain_molecules_agree_better_than_resonance_asymmetric(agreement):
         )
 
 
+# ---------------------------------------------------------------------------
+# Options.  Skipped on builds that predate InformationContentOptions.
+# ---------------------------------------------------------------------------
+
+has_options = hasattr(rdMD, "InformationContentOptions")
+needs_options = pytest.mark.skipif(
+    not has_options, reason="build predates InformationContentOptions"
+)
+
+# 2-butenol, from Basak's own Table 1 (Roy/Basak/Harriss/Magnuson 1983).
+BUTENOL = "CC=CCO"
+BASAK_TABLE1 = {0: 1.2389, 1: 2.0349, 2: 3.0270, 3: 3.1808}
+
+
+@needs_options
+def test_default_options_are_basak():
+    """The default must reproduce Basak's published worked example."""
+    mol = Chem.MolFromSmiles(BUTENOL)
+    values = list(rdMD.CalcInformationContent(mol, MAXRADIUS))
+    for order, expected in BASAK_TABLE1.items():
+        assert abs(values[order] - expected) < 5e-4, (
+            f"default options give IC{order} = {values[order]:.6f}, "
+            f"Basak Table 1 says {expected}"
+        )
+
+
+@needs_options
+def test_extended_flavour_differs_at_order_one():
+    """EXTENDED is the osmordred v3 key; it lands on mordred's answer at r=1."""
+    mol = Chem.MolFromSmiles(BUTENOL)
+    opts = rdMD.InformationContentOptions()
+    opts.keyFlavor = rdMD.ICKeyFlavor.EXTENDED
+    extended = list(rdMD.CalcInformationContent(mol, MAXRADIUS, opts))
+    assert abs(extended[1] - 2.4997) < 5e-4, (
+        f"EXTENDED IC1 = {extended[1]:.6f}, expected mordred's 2.4997"
+    )
+    assert abs(extended[1] - BASAK_TABLE1[1]) > 0.4, "EXTENDED should not be Basak"
+
+
+@needs_options
+def test_options_round_trip():
+    opts = rdMD.InformationContentOptions()
+    assert opts.keyFlavor == rdMD.ICKeyFlavor.BASAK
+    assert opts.aromaticHandling == rdMD.ICAromaticHandling.DISTINCT
+    assert opts.vertexLabel == rdMD.ICVertexLabel.DEGREE
+    assert opts.equalizeDelocalizedBonds is False
+    opts.equalizeDelocalizedBonds = True
+    assert opts.equalizeDelocalizedBonds is True
+
+
+@needs_options
+def test_delocalized_equalisation_merges_nitro_oxygens():
+    """Nitro is written [N+](=O)[O-], so its two equivalent oxygens differ by
+    bond order.  Equalising the delocalised bonds should lower IC (fewer
+    classes) rather than raise it."""
+    mol = Chem.MolFromSmiles("CC[N+](=O)[O-]")
+    plain = list(rdMD.CalcInformationContent(mol, MAXRADIUS))
+    opts = rdMD.InformationContentOptions()
+    opts.equalizeDelocalizedBonds = True
+    merged = list(rdMD.CalcInformationContent(mol, MAXRADIUS, opts))
+    assert merged[1] <= plain[1] + 1e-9, (
+        "equalising delocalised bonds should not increase IC1: "
+        f"{plain[1]:.6f} -> {merged[1]:.6f}"
+    )
+
+
+@needs_options
+def test_negative_radius_raises():
+    """Regression: the radius used to reach initializeMatrixAndSP unguarded
+    and write out of bounds, segfaulting the interpreter."""
+    with pytest.raises(Exception):
+        rdMD.CalcInformationContent(Chem.MolFromSmiles("c1ccccc1"), -1)
+
+
 if __name__ == "__main__":
     import sys
 
