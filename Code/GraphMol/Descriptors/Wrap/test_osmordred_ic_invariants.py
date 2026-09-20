@@ -239,16 +239,15 @@ def test_derived_families_follow_their_definitions(name):
         )
 
 
-@pytest.mark.skip(
-    reason="CalcInformationContent(mol, -1) SEGFAULTS: calcInformationContent "
-    "takes a signed radius and reaches initializeMatrixAndSP with no guard, "
-    "creating zero-length SP rows and then writing SP[i][0]. Verified to crash "
-    "the interpreter, so it cannot be xfailed -- it would take the suite with "
-    "it. Un-skip once the radius is validated."
-)
 def test_negative_radius_is_rejected():
-    """A negative radius must raise, not write out of bounds."""
-    with pytest.raises(Exception):
+    """A negative radius must raise, not write out of bounds.
+
+    This used to segfault: calcInformationContent took a signed radius and
+    reached initializeMatrixAndSP unguarded, creating zero-length SP rows and
+    then writing SP[i][0]. The guard landed with InformationContentOptions and
+    is verified on a real build to raise ValueError.
+    """
+    with pytest.raises(ValueError):
         rdMD.CalcInformationContent(_mol("Benzene"), -1)
 
 
