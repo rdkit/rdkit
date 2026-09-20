@@ -2176,10 +2176,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
     python::enum_<RDKit::Descriptors::Osmordred::ICKeyFlavor>(
         "ICKeyFlavor",
         "Which equivalence key the InformationContent descriptors use.\n"
-        "  BASAK    - neighbour degree excluded; reproduces Basak/POLLY "
-        "(88.0% of 2466 reference values). This is what osmordred v2 did.\n"
-        "  EXTENDED - neighbour degree included (osmordred v3): 66.1%.\n"
-        "  MORDRED  - faithful reproduction of the mordred package (49.8%).\n"
+        "  BASAK    - the NATIVE criterion: what Basak defined and what his own "
+        "software POLLY computes (88.0% of 2466 reference values). Default.\n"
+        "  EXTENDED - the native key plus neighbour degree, added for mordred "
+        "parity. Native in neither direction: 66.1%, worse than BASAK, and "
+        "still not mordred. Kept for reproducing older osmordred numbers.\n"
+        "  MORDRED  - the ENFORCED criterion: mordred's later reinterpretation, "
+        "a stricter atom-identity rule Basak did not specify and POLLY does not "
+        "produce (49.8%).\n"
         "v2's key was markedly closer to Basak than mordred is. MORDRED is a "
         "different algorithm, not a key tweak: it kekulizes and compares "
         "root-to-leaf path codes, so it is the slow path. Use it to reproduce "

@@ -49,7 +49,17 @@ Both partition the atoms of the hydrogen-filled graph into classes by their
 radius-`r` environment, then take the Shannon entropy. They differ in what
 "environment" means.
 
-|  | `BASAK` (default) | `MORDRED` |
+The useful way to hold them apart:
+
+- **`BASAK` is the native criterion.** It is what the author defined and what
+  his own software computes. It is the default, and it is what you want unless
+  you have a specific reason otherwise.
+- **`MORDRED` is the enforced criterion.** It is a later reinterpretation
+  imposed by the mordred package — a stricter atom-identity rule that Basak did
+  not specify and that his software does not produce. It is here so that mordred
+  numbers can be reproduced on demand, not because it is the better reading.
+
+|  | `BASAK` — native (default) | `MORDRED` — enforced |
 |---|---|---|
 | preprocessing | none | **kekulize**, then add H |
 | order 0 | group by atomic number | group by atomic number |
@@ -57,9 +67,11 @@ radius-`r` environment, then take the Shannon entropy. They differ in what
 | radius growth | frontier extended in place, `M`/`SP` carried forward | tree expanded one shell further |
 | cost | ~9,700 key integers on the reference set | ~158,400 — about **16×**, growing superlinearly with radius |
 
-`EXTENDED` is a third value: the `BASAK` key with the neighbour degree folded in
-as well. It was added "for Mordred parity" and is kept only so that older
-osmordred numbers can be reproduced.
+`EXTENDED` is a third value, and a cautionary one: the native key with the
+neighbour degree folded in, added "for Mordred parity". It ends up native in
+neither direction — 66.1% against POLLY, worse than the native 88.0%, while
+still not reproducing mordred. It is kept only so that older osmordred numbers
+can be reproduced.
 
 ### On the radius loop
 

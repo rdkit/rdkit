@@ -59,9 +59,18 @@ namespace Osmordred {
   [1,1,1,1,2,2,5], which is mordred's answer.
 */
 enum class ICKeyFlavor {
-  BASAK,     //!< neighbour degree excluded; reproduces Basak/POLLY (default)
-  EXTENDED,  //!< neighbour degree included (osmordred v3 behaviour)
-  MORDRED,   //!< faithful reproduction of the mordred package; see below
+  //! NATIVE criterion: what Basak defined and what his own software (POLLY)
+  //! computes. 88.0% agreement with POLLY over 2466 values. The default.
+  BASAK,
+  //! The native key with the neighbour degree folded in, added "for Mordred
+  //! parity". Native in neither direction: 66.1%, worse than BASAK, and it
+  //! still does not reproduce mordred. Kept only to reproduce older osmordred
+  //! numbers.
+  EXTENDED,
+  //! ENFORCED criterion: the mordred package's later reinterpretation, a
+  //! stricter atom-identity rule Basak did not specify and POLLY does not
+  //! produce. 49.8% agreement with POLLY. Use it to reproduce mordred.
+  MORDRED,
 };
 
 /*!
