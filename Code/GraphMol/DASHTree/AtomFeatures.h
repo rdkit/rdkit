@@ -137,6 +137,26 @@ inline std::uint16_t withConAtom(std::uint16_t partialKey, int conAtom) {
                                     ((conAtom + 1) << keyConAtomShift));
 }
 
+//! \name the components of a packed key
+//! The inverse of packMatchKey. A component the key does not have -- the
+//! attachment of a branch root, or of the heavy-atom child of a hydrogen
+//! root -- comes back as -1, which is what packMatchKey was given for it.
+//@{
+inline int keyAtomType(std::uint16_t key) {
+  return key & ((1 << keyAtomTypeBits) - 1);
+}
+inline int keyConAtom(std::uint16_t key) {
+  return static_cast<int>((key >> keyConAtomShift) &
+                          ((1 << keyConAtomBits) - 1)) -
+         1;
+}
+inline int keyConType(std::uint16_t key) {
+  return static_cast<int>((key >> keyConTypeShift) &
+                          ((1 << keyConTypeBits) - 1)) -
+         1;
+}
+//@}
+
 }  // namespace DASH
 }  // namespace RDKit
 

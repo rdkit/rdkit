@@ -77,6 +77,18 @@ python::list getAtomNodePath(const DASH::DASHTree &self, const ROMol &mol,
   return res;
 }
 
+python::tuple getMatchedSubstructure(const DASH::DASHTree &self,
+                                     const ROMol &mol, unsigned int atomIdx,
+                                     const DASH::DASHParams &params) {
+  std::vector<unsigned int> atoms;
+  self.getMatchedSubstructure(mol, atomIdx, atoms, params);
+  python::list res;
+  for (const auto atom : atoms) {
+    res.append(atom);
+  }
+  return python::tuple(res);
+}
+
 python::list getMolProperty(const DASH::DASHTree &self, const ROMol &mol,
                             const std::string &property,
                             const DASH::DASHParams &params) {
@@ -177,14 +189,36 @@ python::list getMolPropertyBatch(const DASH::DASHTree &self,
   return nestedToPython(values);
 }
 
+python::tuple featureToPython(const DASH::AtomFeature &feature) {
+  return python::make_tuple(feature.atomicNum, feature.degree,
+                            feature.formalCharge, feature.conjugated,
+                            feature.numHs);
+}
+
 python::tuple atomFeature(unsigned int index) {
   if (index >= DASH::numAtomFeatures) {
     throw_value_error("atom feature index out of range");
   }
-  const DASH::AtomFeature &feature = DASH::getAtomFeatureTable()[index];
-  return python::make_tuple(feature.atomicNum, feature.degree,
-                            feature.formalCharge, feature.conjugated,
-                            feature.numHs);
+  return featureToPython(DASH::getAtomFeatureTable()[index]);
+}
+
+python::tuple nodeFeature(const DASH::DASHTreeNode &self) {
+  return featureToPython(self.getFeature());
+}
+
+//! \brief __getitem__ over the children
+/*!
+  Negative indices count from the end. Past the end is an IndexError rather
+  than the ValueError GetChild raises, because that is what ends a for-loop
+  over the node.
+*/
+DASH::DASHTreeNode nodeGetItem(const DASH::DASHTreeNode &self, int i) {
+  const int n = static_cast<int>(self.getNumChildren());
+  const int index = i < 0 ? i + n : i;
+  if (index < 0 || index >= n) {
+    throw_index_error(i);  // the index as the caller wrote it
+  }
+  return self.getChild(static_cast<unsigned int>(index));
 }
 
 int atomFeatureIndexForAtom(const Atom *atom) {
@@ -252,6 +286,68 @@ BOOST_PYTHON_MODULE(rdDASHTree) {
       .def_readwrite("params", &DASH::ChargeOptions::params,
                      "the DASHParams controlling the match");
 
+  python::class_<DASH::DASHTreeNode>(
+      "DASHTreeNode",
+      "One node of a DASH tree.\n\n"
+      "A node describes itself relative to its parent: the atom-feature "
+      "class of\n"
+      "the atom it adds to the matched substructure (GetAtomFeatureIndex, "
+      "GetFeature),\n"
+      "the position in that substructure of the atom it attaches to "
+      "(GetConAtom),\n"
+      "and the bond descriptor between them (GetConType: 1, 2, 3 for the "
+      "bond\n"
+      "order, 4 for a conjugated bond). A branch root, and the heavy-atom "
+      "child of\n"
+      "a hydrogen root, attach to nothing and report -1 for both.\n\n"
+      "A node is a sequence of its children: len(node), node[i] and\n"
+      "'for child in node' all work.\n\n"
+      "Handles read straight from the mapped file and are cheap to copy; the "
+      "tree\n"
+      "they came from is kept alive for as long as one exists.\n",
+      python::no_init)
+      .def("GetBranch", &DASH::DASHTreeNode::getBranch, python::args("self"),
+           "Returns the branch the node belongs to.")
+      .def("GetId", &DASH::DASHTreeNode::getId, python::args("self"),
+           "Returns the node's id within its branch, as GetAtomNodePath "
+           "reports it.")
+      .def("GetKey", &DASH::DASHTreeNode::getKey, python::args("self"),
+           "Returns the packed 16-bit match key.")
+      .def("GetAtomFeatureIndex", &DASH::DASHTreeNode::getAtomFeatureIndex,
+           python::args("self"),
+           "Returns the atom-feature class of the atom this node adds.")
+      .def("GetFeature", nodeFeature, python::args("self"),
+           "Returns that class as (atomicNum, degree, formalCharge, "
+           "conjugated, numHs).")
+      .def("GetConAtom", &DASH::DASHTreeNode::getConAtom, python::args("self"),
+           "Returns the position of the substructure atom this node attaches "
+           "to,\n-1 for none.")
+      .def("GetConType", &DASH::DASHTreeNode::getConType, python::args("self"),
+           "Returns the bond descriptor of that attachment, -1 for none.")
+      .def("GetNumChildren", &DASH::DASHTreeNode::getNumChildren,
+           python::args("self"), "Returns how many children the node has.")
+      .def("GetChild", &DASH::DASHTreeNode::getChild,
+           python::with_custodian_and_ward_postcall<0, 1>(),
+           python::args("self", "i"),
+           "Returns the i-th child. Raises ValueError from GetNumChildren() "
+           "on.")
+      .def("__len__", &DASH::DASHTreeNode::getNumChildren,
+           python::args("self"), "The number of children.")
+      .def("__getitem__", nodeGetItem,
+           python::with_custodian_and_ward_postcall<0, 1>(),
+           python::args("self", "i"),
+           "The i-th child, counting from the end for negative i. IndexError "
+           "past\nthe end, which is what ends a for-loop over the node.")
+      .def("GetAttention", &DASH::DASHTreeNode::getAttention,
+           python::args("self"),
+           "Returns the attention weight the tree assigned to this node.")
+      .def("Stops", &DASH::DASHTreeNode::stops, python::args("self"),
+           "Returns whether a descent at the default threshold stops here.")
+      .def("GetValue", &DASH::DASHTreeNode::getValue,
+           python::args("self", "property"),
+           "Returns the value of a property at this node, NaN if it carries "
+           "none.\nRaises ValueError if the property was not resolved.");
+
   python::class_<DASH::DASHTree, boost::noncopyable>(
       "DASHTree", "A memory-mapped DASH tree.", python::no_init)
       .def("__init__",
@@ -308,6 +404,28 @@ BOOST_PYTHON_MODULE(rdDASHTree) {
            "  Pass sourceNodeIds=True for the numbering the DASH-tree python\n"
            "  package uses rather than the container's own. That needs a file\n"
            "  carrying it -- see HasSourceNodeIds().\n")
+      .def("GetMatchedSubstructure", getMatchedSubstructure,
+           (python::arg("self"), python::arg("mol"), python::arg("atomIdx"),
+            python::arg("params") = DASH::DASHParams()),
+           "Returns the atom indices a match covers, as a tuple in the order "
+           "the\n"
+           "descent added them: entry i is the atom that node i of the path\n"
+           "matched, and the position a node's GetConAtom refers to. A "
+           "hydrogen\n"
+           "is matched through its heavy neighbour, so for one the tuple "
+           "starts at\n"
+           "that neighbour.\n")
+
+      .def("GetRoot", &DASH::DASHTree::getRoot,
+           python::with_custodian_and_ward_postcall<0, 1>(),
+           python::args("self", "branch"),
+           "Returns the root node of a branch.")
+      .def("GetNode", &DASH::DASHTree::getNode,
+           python::with_custodian_and_ward_postcall<0, 1>(),
+           python::args("self", "branch", "nodeId"),
+           "Returns a node by branch and id, in the numbering GetAtomNodePath\n"
+           "reports: GetNode(path[0], path[k]) is the k-th node of a match.\n")
+
       .def("GetAtomProperty", &DASH::DASHTree::getAtomProperty,
            (python::arg("self"), python::arg("mol"), python::arg("atomIdx"),
             python::arg("property"),

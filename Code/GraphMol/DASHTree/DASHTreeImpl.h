@@ -221,6 +221,8 @@ class MolMatcher {
 
   //! node ids of the last match, root first
   const std::vector<std::uint32_t> &path() const { return d_path; }
+  //! molecule atoms of the last match, in the order the descent added them
+  const std::vector<std::uint32_t> &subgraph() const { return d_subgraph; }
 
   //! \brief the deepest value on the last match's path, NaN if there is none
   /*!
