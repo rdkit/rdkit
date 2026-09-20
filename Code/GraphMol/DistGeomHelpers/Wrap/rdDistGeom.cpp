@@ -16,6 +16,7 @@
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 
 #include <GraphMol/GraphMol.h>
+#include <GraphMol/Conformer.h>
 #include <RDBoost/Wrap.h>
 #include <RDGeneral/ControlCHandler.h>
 
@@ -98,6 +99,10 @@ struct PyEmbedParameters
         new DistGeom::BoundsMatrix(nrows, sdata));
   }
 
+  void setConfToOptimize(const python::object &pyConf){
+    RDKit::Conformer& conf = boost::python::extract<RDKit::Conformer&>(pyConf);
+    this->confToOptimize = &conf;
+  }
  private:
   std::unique_ptr<std::map<int, RDGeom::Point3D>> d_coordMap;
 };
@@ -675,6 +680,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "symmetrize terminal conjugated groups for RMSD pruning")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap, python::args("self"),
            "sets the coordmap to be used")
+      .def("SetConfToOptimize", &PyEmbedParameters::setConfToOptimize,python::args("self"),  "If a Conformer is provided, this conformer is minimized in place with the ETKDG Force Field.")
       .def("__setattr__", &safeSetattr);
 
   docString =
