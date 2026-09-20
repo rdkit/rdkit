@@ -61,7 +61,24 @@ namespace Osmordred {
 enum class ICKeyFlavor {
   BASAK,     //!< neighbour degree excluded; reproduces Basak/POLLY (default)
   EXTENDED,  //!< neighbour degree included (osmordred v3 behaviour)
+  MORDRED,   //!< faithful reproduction of the mordred package; see below
 };
+
+/*!
+  MORDRED is a different algorithm, not a tweak to the key above. mordred
+  kekulizes, treats order 0 as a plain atomic-number grouping, and for order
+  r >= 1 compares the sorted multiset of complete root-to-leaf PATH codes of a
+  BFS tree rebuilt per atom -- where BASAK/EXTENDED compare a flat multiset of
+  one-step edge descriptors over the newly reached shell.
+
+  It exists for reproducibility, not speed: path codes carry ~16x more key data
+  than the flat key and that grows superlinearly with radius, so MORDRED is and
+  will remain the slow path.
+
+  Verified to reproduce the mordred package exactly (0 mismatches over 894
+  values) and to pass every entry of
+  test_data/mordred_references/InformationContent.yaml (0 of 344).
+*/
 
 //! How aromatic bonds are encoded in the equivalence key.
 /*!

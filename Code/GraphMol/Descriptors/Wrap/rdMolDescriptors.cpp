@@ -2179,10 +2179,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
         "  BASAK    - neighbour degree excluded; reproduces Basak/POLLY "
         "(88.0% of 2466 reference values). This is what osmordred v2 did.\n"
         "  EXTENDED - neighbour degree included (osmordred v3): 66.1%.\n"
-        "For reference the mordred package reaches 49.8% on the same set, so "
-        "v2's key was markedly closer to Basak than mordred is.")
+        "  MORDRED  - faithful reproduction of the mordred package (49.8%).\n"
+        "v2's key was markedly closer to Basak than mordred is. MORDRED is a "
+        "different algorithm, not a key tweak: it kekulizes and compares "
+        "root-to-leaf path codes, so it is the slow path. Use it to reproduce "
+        "mordred, not for speed.")
         .value("BASAK", RDKit::Descriptors::Osmordred::ICKeyFlavor::BASAK)
-        .value("EXTENDED", RDKit::Descriptors::Osmordred::ICKeyFlavor::EXTENDED);
+        .value("EXTENDED", RDKit::Descriptors::Osmordred::ICKeyFlavor::EXTENDED)
+        .value("MORDRED", RDKit::Descriptors::Osmordred::ICKeyFlavor::MORDRED);
 
     python::enum_<RDKit::Descriptors::Osmordred::ICAromaticHandling>(
         "ICAromaticHandling",

@@ -2873,6 +2873,117 @@ int generateKeyExtended(int rootNum, int rootDeg, int bondOrder, int neighNum,
 }
 
 namespace {
+//! ---------------------------------------------------------------------
+//! mordred's InformationContent, reproduced faithfully.
+//!
+//! Structure mirrors mordred's BFSTree so the traversal order matches: the
+//! `visited` set grows as the frontier is walked, so which branch claims a
+//! shared atom depends on that order. Children are stored in RDKit neighbour
+//! order, which is what mordred's dict insertion order gives it.
+//! ---------------------------------------------------------------------
+struct MordredNode {
+  int atom;
+  bool expanded = false;
+  std::vector<MordredNode> children;
+};
+
+//! One pass of mordred's BFSTree._expand: walk the frontier depth-first,
+//! left to right, marking each node visited and giving leaves their unvisited
+//! neighbours as children.
+void mordredExpand(MordredNode &node, const ROMol &mol,
+                   std::set<int> &visited) {
+  visited.insert(node.atom);
+  if (!node.expanded) {
+    node.expanded = true;
+    const Atom *atom = mol.getAtomWithIdx(node.atom);
+    for (const auto &nbr : mol.atomNeighbors(atom)) {
+      int idx = rdcast<int>(nbr->getIdx());
+      if (!visited.count(idx)) {
+        MordredNode child;
+        child.atom = idx;
+        node.children.push_back(child);
+      }
+    }
+    return;
+  }
+  for (auto &child : node.children) {
+    mordredExpand(child, mol, visited);
+  }
+}
+
+//! mordred's BFSTree._code: one code per root-to-leaf path, each recording the
+//! (atomicNum, degree) of every vertex and the bond type of every step.
+void mordredCollect(const MordredNode &node, const ROMol &mol, int parent,
+                    std::vector<int> trail,
+                    std::vector<std::vector<int>> &out) {
+  if (parent >= 0) {
+    const Bond *bond = mol.getBondBetweenAtoms(parent, node.atom);
+    trail.push_back(bond ? static_cast<int>(bond->getBondType()) : 0);
+  }
+  const Atom *atom = mol.getAtomWithIdx(node.atom);
+  trail.push_back(rdcast<int>(atom->getAtomicNum()));
+  trail.push_back(rdcast<int>(atom->getDegree()));
+  if (node.children.empty()) {
+    out.push_back(trail);
+    return;
+  }
+  for (const auto &child : node.children) {
+    mordredCollect(child, mol, node.atom, trail, out);
+  }
+}
+
+//! Class sizes per order, following mordred exactly. Order 0 is mordred's own
+//! special case: group by atomic number, not by the tree code.
+//! Returns the same CN shape the rest of the pipeline uses:
+//! CN[r][0] = class sizes, CN[r][1] = a representative atomic number per class
+//! (MIC/ZMIC need the latter).
+std::map<int, std::vector<std::vector<int>>> mordredCN(const ROMol &mol,
+                                                       int maxRadius) {
+  const int nAtoms = rdcast<int>(mol.getNumAtoms());
+  std::map<int, std::vector<std::vector<int>>> CN;
+  for (int r = 0; r <= maxRadius; ++r) CN[r].resize(2);
+
+  std::map<int, int> byAtomicNum;
+  for (const auto atom : mol.atoms()) {
+    byAtomicNum[atom->getAtomicNum()]++;
+  }
+  for (const auto &kv : byAtomicNum) {
+    CN[0][0].push_back(kv.second);
+    CN[0][1].push_back(kv.first);
+  }
+
+  // codes[order][atom]; built once per atom by expanding incrementally rather
+  // than rebuilding the tree for every order, which is equivalent and avoids
+  // mordred's ~3x redundancy.
+  // code -> (count, representative atomic number)
+  std::vector<std::map<std::vector<std::vector<int>>, std::pair<int, int>>>
+      tally(maxRadius + 1);
+  for (int i = 0; i < nAtoms; ++i) {
+    MordredNode root;
+    root.atom = i;
+    // mordred clears `visited` only in reset(); it ACCUMULATES across every
+    // expand() for this root. Clearing it per order would let an already
+    // claimed atom be reached again and is the easy way to get this wrong.
+    std::set<int> visited{i};
+    for (int order = 1; order <= maxRadius; ++order) {
+      mordredExpand(root, mol, visited);
+      std::vector<std::vector<int>> codes;
+      mordredCollect(root, mol, -1, {}, codes);
+      std::sort(codes.begin(), codes.end());
+      auto &slot = tally[order][codes];
+      slot.first++;
+      slot.second = rdcast<int>(mol.getAtomWithIdx(i)->getAtomicNum());
+    }
+  }
+  for (int order = 1; order <= maxRadius; ++order) {
+    for (const auto &kv : tally[order]) {
+      CN[order][0].push_back(kv.second.first);
+      CN[order][1].push_back(kv.second.second);
+    }
+  }
+  return CN;
+}
+
 //! Bonds inside a nitro / carboxylate / sulfonate group, as (min,max) atom idx.
 //! RDKit writes these charge-separated, which makes two chemically equivalent
 //! oxygens inequivalent in the graph; see InformationContentOptions.
@@ -3364,6 +3475,28 @@ std::vector<double> calcInformationContent(
   }
   std::unique_ptr<RWMol> hmol(new RWMol(mol));
   MolOps::addHs(*hmol);
+
+  if (options.keyFlavor == ICKeyFlavor::MORDRED) {
+    // mordred kekulizes; without this the codes differ on every aromatic
+    // molecule. Its order-0 special case lives in mordredCN.
+    try {
+      MolOps::Kekulize(*hmol, true);
+    } catch (const MolSanitizeException &) {
+      BOOST_LOG(rdWarningLog) << "calcInformationContent: kekulization failed "
+                                 "for the MORDRED flavor"
+                              << std::endl;
+    }
+    double nBondsM = 0.;
+    for (auto &bond : hmol->bonds()) {
+      nBondsM += getbondtypeindouble(bond->getBondType());
+    }
+    const int nAtomsM = rdcast<int>(hmol->getNumAtoms());
+    auto CNm = mordredCN(*hmol, maxradius);
+    return ShannonEntropies(CNm, maxradius,
+                            std::log(static_cast<double>(nAtomsM)) / std::log(2),
+                            nBondsM > 1 ? std::log(nBondsM) / std::log(2) : 0.,
+                            nAtomsM);
+  }
 
   if (options.aromaticHandling == ICAromaticHandling::KEKULIZED) {
     try {
