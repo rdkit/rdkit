@@ -7,27 +7,35 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-"""Expected IC/TIC/SIC/BIC/CIC tables for both ICKeyFlavor options.
+"""Expected-value tables for the ICKeyFlavor options.
 
-Two CSVs, over the 31 molecules of `mordred_references/structures.smi`, with
-IC/TIC/SIC/BIC/CIC at r=0..5.  They do NOT have the same standing, and it
-matters which is which:
+Three CSVs.  They do NOT have the same standing, and it matters which is which:
 
-`ic_expected_mordred.csv` is an **oracle**.  It is the output of the mordred
-package itself, so `ICKeyFlavor.MORDRED` failing against it means this
-implementation is wrong, not that the file is stale.
+`ic_expected_basak_polly.csv` is the **oracle for BASAK**.  Its expected values
+are POLLY's -- the program Basak's own group wrote -- for the 319 of 411 POLLY
+molecules where the compiled default agreed at every order (r=0..5, tol 0.0015)
+when the table was generated (rdkit 2026.09.1pre).  It pins the part of the
+default we know is right against Basak himself, so a failure here is a
+regression against Basak, not against ourselves.  The remaining 92 molecules --
+where the default does not yet match POLLY -- are deliberately absent; the full
+comparison lives in test_osmordred_ic_basak_polly.py.  BASAK does not kekulize,
+so this table does not need regenerating across RDKit releases.
 
-`ic_expected_basak.csv` is a **regression baseline**, not an oracle.  It is the
-output of this implementation's default flavour.  It catches a change to the
-default; it cannot tell you the default is right.  What independently validates
-BASAK lives elsewhere:
+`ic_expected_mordred.csv` is the **oracle for MORDRED**: the output of the
+mordred package itself, over the 31 `structures.smi` molecules, IC/TIC/SIC/BIC/
+CIC at r=0..5.  mordred kekulizes, and which Kekule structure RDKit returns is a
+property of the release, so this table is generated under rdkit 2026.09.1pre and
+MUST be regenerated per release.  Its NaNs (degenerate SIC/BIC denominators)
+are mordred's; osmordred returns 0 there by a documented convention.
 
-  * `basak_polly_ic_413.csv` -- 413 molecules from POLLY, Basak's own software
-  * Basak 1983 Table 1 -- 2-butenol IC0..IC3, reproduced exactly
-  * Basak 1983 Table 2 -- ten aliphatic alcohols, IC0 and CIC1
+`ic_expected_basak.csv` is a **regression baseline**, not an oracle: the
+default's own output over the same 31 molecules.  It catches a change to the
+default; it cannot tell you the default is right.
 
-So: if the BASAK test fails, first ask whether the default *should* have moved.
-If the MORDRED test fails, the implementation is wrong.
+So: BASAK failing against the POLLY oracle means we broke something Basak got
+right.  BASAK failing against its baseline means the default moved -- decide
+whether it should have.  MORDRED failing against its table means the
+implementation is wrong.
 """
 
 from __future__ import annotations
@@ -48,6 +56,7 @@ DATA_DIR = os.path.join(
 )
 BASAK_CSV = os.path.join(DATA_DIR, "ic_expected_basak.csv")
 MORDRED_CSV = os.path.join(DATA_DIR, "ic_expected_mordred.csv")
+BASAK_POLLY_CSV = os.path.join(DATA_DIR, "ic_expected_basak_polly.csv")
 
 pytestmark = pytest.mark.skipif(
     not hasattr(rdMD, "InformationContentOptions") or not os.path.exists(BASAK_CSV),
@@ -122,6 +131,36 @@ def test_mordred_flavor_matches_the_mordred_table():
     assert checked > 700, f"only {checked} values checked"
     assert not failures, (
         f"{len(failures)} of {checked} values disagree with the mordred package:\n  "
+        + "\n  ".join(failures[:12])
+    )
+
+
+@pytest.mark.skipif(
+    not os.path.exists(BASAK_POLLY_CSV), reason="POLLY-validated table missing"
+)
+def test_basak_flavor_matches_the_polly_oracle():
+    """ORACLE. Expected values are POLLY's own (Basak's software), on the POLLY
+    molecules where the default agreed at every order when generated. POLLY
+    prints 3-4 decimals, hence the tolerance."""
+    failures = []
+    checked = 0
+    for row in _table(BASAK_POLLY_CSV):
+        mol = Chem.MolFromSmiles(row["smiles"])
+        if mol is None:
+            continue
+        values = list(rdMD.CalcInformationContent(mol, MAXRADIUS))
+        for order in range(MAXRADIUS + 1):
+            want = float(row[f"IC{order}"])
+            got = values[order]
+            checked += 1
+            if abs(want - got) > 0.0015:
+                failures.append(
+                    f"IC{order} POLLY#{row['polly_no']}: got {got:.4f}, POLLY {want:.4f}"
+                )
+    assert checked >= 1800, f"only {checked} values checked; table truncated?"
+    assert not failures, (
+        f"{len(failures)} of {checked} values disagree with POLLY on molecules "
+        f"the default previously matched -- a regression against Basak:\n  "
         + "\n  ".join(failures[:12])
     )
 

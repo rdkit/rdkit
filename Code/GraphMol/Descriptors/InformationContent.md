@@ -205,8 +205,17 @@ The values themselves, for the worst-affected molecule:
 | SIC1 Lycopene | 0.371 | **0.2636** | 0.3709 |
 | BIC1 Lycopene | 0.362 | **0.2570** | 0.3616 |
 
-Complete tables for every molecule and both flavours are in
-`test_data/ic_expected_basak.csv` and `test_data/ic_expected_mordred.csv`.
+Complete tables are in `test_data/`:
+
+| file | what the expected values are | standing |
+|---|---|---|
+| `ic_expected_basak_polly.csv` | **POLLY's own values** (Basak's software) for the 319 of 411 POLLY molecules where the default agrees at every order | **oracle for `BASAK`** — a failure is a regression against Basak himself |
+| `ic_expected_mordred.csv` | the mordred package's output, 31 `structures.smi` molecules | **oracle for `MORDRED`** — regenerate per RDKit release (mordred kekulizes) |
+| `ic_expected_basak.csv` | this implementation's default, same 31 molecules | regression baseline only — catches a moved default, cannot vouch for it |
+
+The 92 POLLY molecules the default does not yet match are deliberately absent
+from the first table; the full 411-molecule comparison, including them, is
+`test_osmordred_ic_basak_polly.py`.
 
 **If you need the old numbers back**, set `keyFlavor = ICKeyFlavor.EXTENDED`.
 That restores the pre-change behaviour exactly: 25 failures against the same
