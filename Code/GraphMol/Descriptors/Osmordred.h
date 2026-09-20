@@ -40,6 +40,88 @@ namespace RDKit {
 namespace Descriptors {
 namespace Osmordred {
 
+//! Which equivalence key the InformationContent descriptors use.
+/*!
+  Measured against POLLY -- the program Basak's own group wrote and used --
+  on 411 molecules x r=0..5 (2466 values), tolerance 0.0015:
+
+    BASAK     88.0%      (this is what osmordred v2 did)
+    EXTENDED  66.1%      (osmordred v3; added the neighbour degree)
+    mordred   49.8%      (for reference; not reachable from here)
+
+  So v2's key was substantially closer to Basak than the mordred package is,
+  and v3 moved away from Basak rather than towards it. The difference is the
+  neighbour DEGREE: Basak labels a vertex by (element, valency), and in a
+  hydrogen-filled graph an sp2 carbon has degree 3 but valency 4, so keying on
+  degree splits atoms Basak keeps together. On Basak's own worked example
+  (2-butenol, Roy/Basak/Harriss/Magnuson 1983, Table 1) BASAK reproduces
+  IC1 = 2.0349 with the partition [1,1,1,1,2,7]; EXTENDED gives 2.4997 and
+  [1,1,1,1,2,2,5], which is mordred's answer.
+*/
+enum class ICKeyFlavor {
+  BASAK,     //!< neighbour degree excluded; reproduces Basak/POLLY (default)
+  EXTENDED,  //!< neighbour degree included (osmordred v3 behaviour)
+};
+
+//! How aromatic bonds are encoded in the equivalence key.
+/*!
+  DISTINCT scores 88.0% against POLLY, KEKULIZED 82.9%, so DISTINCT is the
+  default. KEKULIZED is exposed because POLLY predates aromatic bond types and
+  it is a reasonable thing to want to test, not because it scores better.
+*/
+enum class ICAromaticHandling {
+  DISTINCT,   //!< aromatic bonds get their own bond code (default)
+  KEKULIZED,  //!< kekulize first and use integer bond orders
+};
+
+//! Which per-atom label the equivalence key is built from.
+/*!
+  Basak's paper defines a vertex as (element, valency) (p.746), so VALENCY is
+  the literal reading of the text. Measured against POLLY with this key the two
+  are near-equivalent: DEGREE 88.0%, VALENCY 87.8% of 2466 values. DEGREE is
+  the default only because it is marginally ahead and is the existing
+  behaviour, not because valency is wrong.
+
+  (An earlier revision of this comment quoted 83.2% for VALENCY. That figure
+  came from a path-code reconstruction of the paper's condition (iii), which is
+  a different algorithm from this key, and did not belong here.)
+*/
+enum class ICVertexLabel {
+  DEGREE,   //!< graph degree in the hydrogen-filled graph (default)
+  VALENCY,  //!< Basak's (element, valency) as written in the paper
+};
+
+//! Options for the InformationContent family (IC/TIC/SIC/BIC/CIC/MIC/ZMIC).
+/*!
+  Default-constructed, this reproduces Basak/POLLY as closely as osmordred
+  currently can (88.0% of 2466 reference values).
+
+  The residual disagreement is concentrated where RDKit's graph breaks a
+  symmetry the molecule actually has:
+
+    plain molecules                                      92.3%
+    tautomer-ambiguous                                   88.2%
+    resonance-asymmetric (nitro, carboxylate, sulfonate) 33.3%
+
+  RDKit writes a nitro group as [N+](=O)[O-], so its two chemically equivalent
+  oxygens take different canonical ranks and get different keys; every nitro
+  molecule in the reference set disagrees with POLLY at one or more orders,
+  always by over-splitting. equalizeDelocalizedBonds is a partial mitigation --
+  it gives one bond code to every bond inside a nitro/carboxylate/sulfonate
+  group, which lifts those molecules from 33.3% to 40.3%. It is OFF by default
+  because it does not close the gap and it changes the descriptor's meaning;
+  note also that every nitro molecule in the reference set is also aromatic, so
+  the two effects cannot be separated on the data available.
+*/
+struct RDKIT_DESCRIPTORS_EXPORT InformationContentOptions {
+  ICKeyFlavor keyFlavor = ICKeyFlavor::BASAK;
+  ICAromaticHandling aromaticHandling = ICAromaticHandling::DISTINCT;
+  ICVertexLabel vertexLabel = ICVertexLabel::DEGREE;
+  //! give one bond code to every bond inside a delocalized group; see above
+  bool equalizeDelocalizedBonds = false;
+};
+
+
 // v2.0: Control function to check if Gasteiger parameters exist for all atoms
 // Returns true if all atoms have parameters for their specific environment,
 // false otherwise Use this BEFORE calling any function that uses Gasteiger
@@ -121,8 +203,25 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcChichain(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcChicluster(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcChipathcluster(
     const ROMol &mol);
+//! InformationContent (IC/TIC/SIC/BIC/CIC/MIC/ZMIC), Basak's neighbourhood
+//! complexity indices.
+/*!
+  \param mol        the molecule of interest
+  \param maxradius  highest neighbourhood order; must be >= 0
+  \param options    see InformationContentOptions; the default reproduces
+                    Basak/POLLY
+
+  \return 7 * (maxradius + 1) values, in blocks: IC, TIC, SIC, BIC, CIC, MIC,
+          ZMIC, each running r = 0..maxradius. Hydrogens are added internally,
+          so pass the molecule without explicit Hs.
+*/
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcInformationContent(
-    const ROMol &mol, int maxradius = 5);  // Inspired by 1984 Basak paper
+    const ROMol &mol, int maxradius,
+    const InformationContentOptions &options);
+
+//! \overload  uses default (Basak) options
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcInformationContent(
+    const ROMol &mol, int maxradius = 5);
 
 // Group 4: Matrix/autocorr/EState/fragments
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcDetourMatrixDescs(

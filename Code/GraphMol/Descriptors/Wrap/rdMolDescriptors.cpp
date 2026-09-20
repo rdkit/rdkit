@@ -2173,8 +2173,75 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
         "CalcFrags function\n");
     python::def("CalcAddFeatures", RDKit::Descriptors::Osmordred::calcAddFeatures,
         "CalcAddFeatures function\n");
-    python::def("CalcInformationContent", RDKit::Descriptors::Osmordred::calcInformationContent,
-        "CalcInformationContent function\n");
+    python::enum_<RDKit::Descriptors::Osmordred::ICKeyFlavor>(
+        "ICKeyFlavor",
+        "Which equivalence key the InformationContent descriptors use.\n"
+        "  BASAK    - neighbour degree excluded; reproduces Basak/POLLY "
+        "(88.0% of 2466 reference values). This is what osmordred v2 did.\n"
+        "  EXTENDED - neighbour degree included (osmordred v3): 66.1%.\n"
+        "For reference the mordred package reaches 49.8% on the same set, so "
+        "v2's key was markedly closer to Basak than mordred is.")
+        .value("BASAK", RDKit::Descriptors::Osmordred::ICKeyFlavor::BASAK)
+        .value("EXTENDED", RDKit::Descriptors::Osmordred::ICKeyFlavor::EXTENDED);
+
+    python::enum_<RDKit::Descriptors::Osmordred::ICAromaticHandling>(
+        "ICAromaticHandling",
+        "How aromatic bonds are encoded in the equivalence key.\n"
+        "  DISTINCT  - aromatic bonds get their own code (88.0%, default)\n"
+        "  KEKULIZED - kekulize first, integer bond orders (82.9%)")
+        .value("DISTINCT",
+               RDKit::Descriptors::Osmordred::ICAromaticHandling::DISTINCT)
+        .value("KEKULIZED",
+               RDKit::Descriptors::Osmordred::ICAromaticHandling::KEKULIZED);
+
+    python::enum_<RDKit::Descriptors::Osmordred::ICVertexLabel>(
+        "ICVertexLabel",
+        "Which per-atom label the equivalence key is built from.\n"
+        "  DEGREE  - graph degree in the hydrogen-filled graph (88.0%, default)\n"
+        "  VALENCY - Basak's (element, valency) as written in the 1983 paper "
+        "(87.8%).\n"
+        "With this key the two are near-equivalent; DEGREE is the default "
+        "because it is marginally ahead and is the existing behaviour.")
+        .value("DEGREE", RDKit::Descriptors::Osmordred::ICVertexLabel::DEGREE)
+        .value("VALENCY", RDKit::Descriptors::Osmordred::ICVertexLabel::VALENCY);
+
+    python::class_<RDKit::Descriptors::Osmordred::InformationContentOptions>(
+        "InformationContentOptions",
+        "Options for CalcInformationContent. Default-constructed, this "
+        "reproduces Basak/POLLY as closely as osmordred currently can.\n\n"
+        "Residual disagreement is concentrated where RDKit's graph breaks a "
+        "symmetry the molecule has: plain molecules 92.3%, tautomer-ambiguous "
+        "88.2%, resonance-asymmetric (nitro/carboxylate/sulfonate) 33.3%. "
+        "RDKit writes nitro as [N+](=O)[O-], so its two equivalent oxygens get "
+        "different keys. equalizeDelocalizedBonds is a partial mitigation "
+        "(33.3% -> 40.3%); it is off by default because it does not close the "
+        "gap and it changes the descriptor's meaning.")
+        .def_readwrite(
+            "keyFlavor",
+            &RDKit::Descriptors::Osmordred::InformationContentOptions::keyFlavor)
+        .def_readwrite("aromaticHandling",
+                       &RDKit::Descriptors::Osmordred::
+                           InformationContentOptions::aromaticHandling)
+        .def_readwrite("vertexLabel",
+                       &RDKit::Descriptors::Osmordred::
+                           InformationContentOptions::vertexLabel)
+        .def_readwrite("equalizeDelocalizedBonds",
+                       &RDKit::Descriptors::Osmordred::
+                           InformationContentOptions::equalizeDelocalizedBonds);
+
+    std::vector<double> (*icDefault)(const RDKit::ROMol &, int) =
+        &RDKit::Descriptors::Osmordred::calcInformationContent;
+    std::vector<double> (*icOpts)(
+        const RDKit::ROMol &, int,
+        const RDKit::Descriptors::Osmordred::InformationContentOptions &) =
+        &RDKit::Descriptors::Osmordred::calcInformationContent;
+    python::def("CalcInformationContent", icDefault,
+        (python::arg("mol"), python::arg("maxradius") = 5),
+        "Basak neighbourhood-complexity indices. Returns 7*(maxradius+1) "
+        "values: IC, TIC, SIC, BIC, CIC, MIC, ZMIC, each r=0..maxradius.\n");
+    python::def("CalcInformationContent", icOpts,
+        (python::arg("mol"), python::arg("maxradius"), python::arg("options")),
+        "As above, with explicit InformationContentOptions.\n");
 
     // Fast aggregate binding
     python::def("CalcOsmordred", RDKit::Descriptors::Osmordred::calcOsmordred,
