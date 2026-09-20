@@ -48,10 +48,14 @@
 #include <string>
 #include <vector>
 
+#include "AtomFeatures.h"
+
 namespace RDKit {
 class ROMol;
 
 namespace DASH {
+
+class DASHTreeNode;
 
 //! \brief controls how far a subgraph match descends
 struct RDKIT_DASHTREE_EXPORT DASHParams {
@@ -218,6 +222,34 @@ class RDKIT_DASHTREE_EXPORT DASHTree {
                               const ChargeOptions &options = ChargeOptions(),
                               int numThreads = 1) const;
 
+  // -------------------------------------------------------------------------
+  //  the tree itself
+  // -------------------------------------------------------------------------
+  //! the root node of a branch
+  DASHTreeNode getRoot(unsigned int branch) const;
+
+  //! \brief a node by branch and id
+  /*!
+    Ids are the container's own, counted from the branch root -- the numbering
+    getAtomNodePath() reports -- so \c getNode(path[0], path[k]) is the k-th
+    node a match descended through.
+
+    \throws ValueErrorException if the branch or the id is out of range
+  */
+  DASHTreeNode getNode(unsigned int branch, std::uint32_t nodeId) const;
+
+  //! \brief the molecule atoms a match covers
+  /*!
+    \param atoms overwritten with the atom indices in the order the descent
+           added them: position i is the atom that node i of the path matched,
+           and the position a node key's conAtom refers to. A hydrogen is
+           matched through its heavy neighbour, so for one the list starts at
+           that neighbour and the hydrogen itself is not in it.
+  */
+  void getMatchedSubstructure(const ROMol &mol, unsigned int atomIdx,
+                              std::vector<unsigned int> &atoms,
+                              const DASHParams &params = DASHParams()) const;
+
   //! \brief the mapped container
   /*!
     Named here so the library's own translation units can refer to it; it is
@@ -227,6 +259,55 @@ class RDKIT_DASHTREE_EXPORT DASHTree {
 
  private:
   std::unique_ptr<Impl> d_impl;
+  friend class DASHTreeNode;
+};
+
+//! \brief one node of a mapped tree
+/*!
+  A handle -- the tree and a node id -- that reads straight out of the mapped
+  file, so it costs nothing to copy and one load to query. It borrows the tree
+  and must not outlive it.
+
+  A node describes itself relative to its parent: the atom-feature class of the
+  atom it adds to the substructure, the position in the substructure of the
+  atom that one attaches to, and the bond descriptor between them (1, 2, 3 for
+  the bond order, 4 for a conjugated bond). A branch root, and the heavy-atom
+  child of a hydrogen root, attach to nothing and report -1 for both.
+*/
+class RDKIT_DASHTREE_EXPORT DASHTreeNode {
+ public:
+  //! the branch the node belongs to
+  unsigned int getBranch() const;
+  //! the node's id within its branch, as getAtomNodePath() reports it
+  std::uint32_t getId() const;
+  //! the packed match key, see AtomFeatures.h
+  std::uint16_t getKey() const;
+  //! atom-feature class of the atom this node adds
+  int getAtomFeatureIndex() const;
+  //! that class as a tuple
+  const AtomFeature &getFeature() const;
+  //! position of the substructure atom it attaches to, -1 for none
+  int getConAtom() const;
+  //! bond descriptor of that attachment, -1 for none
+  int getConType() const;
+  unsigned int getNumChildren() const;
+  //! \throws ValueErrorException if \p i is not below getNumChildren()
+  DASHTreeNode getChild(unsigned int i) const;
+  //! the attention weight the tree assigned to this node
+  float getAttention() const;
+  //! does a descent at the default threshold stop here
+  bool stops() const;
+  //! \brief the value of a property at this node, NaN if it carries none
+  /*!
+    \throws ValueErrorException if \p property was not resolved
+  */
+  double getValue(const std::string &property) const;
+
+ private:
+  DASHTreeNode(const DASHTree::Impl &impl, std::uint32_t absoluteId);
+  const DASHTree::Impl *dp_impl;
+  std::uint32_t d_abs;  //!< the container-wide id
+  friend class DASHTree;
 };
 
 //! \brief the current container format version

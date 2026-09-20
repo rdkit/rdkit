@@ -9,7 +9,9 @@
 //
 #include <catch2/catch_all.hpp>
 
+#include <cmath>
 #include <cstdlib>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -20,6 +22,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/BadFileException.h>
+#include <RDGeneral/Exceptions.h>
 
 using namespace RDKit;
 
@@ -55,6 +58,13 @@ TEST_CASE("DASH packed match key", "[DASHTree]") {
   CHECK(DASH::withConAtom(DASH::packPartialMatchKey(27, 1),
                           DASH::maxKeyConAtom + 1) == DASH::noMatchKey);
   CHECK(DASH::packMatchKey(27, 0, 12) != DASH::packMatchKey(27, 0, 4));
+  // and a key unpacks to what it was packed from, -1 included
+  const std::uint16_t key = DASH::packMatchKey(27, 2, 4);
+  CHECK(DASH::keyAtomType(key) == 27);
+  CHECK(DASH::keyConAtom(key) == 2);
+  CHECK(DASH::keyConType(key) == 4);
+  CHECK(DASH::keyConAtom(DASH::packMatchKey(27, -1, -1)) == -1);
+  CHECK(DASH::keyConType(DASH::packMatchKey(27, -1, -1)) == -1);
 }
 
 TEST_CASE("DASH assignment", "[DASHTree]") {
@@ -106,4 +116,40 @@ TEST_CASE("DASH assignment", "[DASHTree]") {
     REQUIRE(batch.size() == ptrs.size());
     CHECK(batch.back() == single);
   }
+
+  // the nodes of a match are reachable by the ids the path reports, each is a
+  // child of the one before, and the matched atoms line up with them
+  const ROMol &ethanol = *ptrs.front();
+  std::vector<std::uint32_t> path;
+  tree.getAtomNodePath(ethanol, 0, path);
+  REQUIRE(path.size() >= 3);
+  DASH::DASHTreeNode node = tree.getRoot(path[0]);
+  CHECK(node.getId() == path[1]);
+  CHECK(node.getAtomFeatureIndex() == static_cast<int>(path[0]));
+  CHECK(node.getConAtom() == -1);
+  CHECK(node.getConType() == -1);
+  for (std::size_t i = 2; i < path.size(); ++i) {
+    bool isChild = false;
+    for (unsigned int c = 0; c < node.getNumChildren() && !isChild; ++c) {
+      isChild = node.getChild(c).getId() == path[i];
+    }
+    CHECK(isChild);
+    node = tree.getNode(path[0], path[i]);
+    CHECK(node.getBranch() == path[0]);
+    CHECK(node.getConAtom() >= 0);
+    CHECK(node.getConType() >= 1);
+  }
+  CHECK_THROWS_AS(node.getChild(node.getNumChildren()), ValueErrorException);
+  CHECK_THROWS_AS(tree.getNode(tree.numBranches(), 0), ValueErrorException);
+  CHECK_THROWS_AS(node.getValue("no_such_property"), ValueErrorException);
+  // the deepest node on the path carrying a value is what the atom gets
+  double deepest = std::numeric_limits<double>::quiet_NaN();
+  for (std::size_t i = path.size(); i-- > 1 && std::isnan(deepest);) {
+    deepest = tree.getNode(path[0], path[i]).getValue("result");
+  }
+  CHECK(deepest == tree.getAtomProperty(ethanol, 0, "result"));
+  std::vector<unsigned int> atoms;
+  tree.getMatchedSubstructure(ethanol, 0, atoms);
+  REQUIRE(atoms.size() == path.size() - 1);
+  CHECK(atoms.front() == 0);
 }

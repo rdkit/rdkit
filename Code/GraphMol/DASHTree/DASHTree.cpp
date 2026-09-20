@@ -162,10 +162,14 @@ DASHTree::Impl::Impl(const std::string &filename,
         "'" + filename +
         "' uses match keys outside the range this build can encode");
   }
+  // the roots must ascend: a branch owns every id up to the next root, which
+  // is what lets a node be addressed by branch and offset
   for (std::uint32_t b = 0; b < d_header.numBranches; ++b) {
-    if (d_branchRoot[b] >= nNodes) {
-      throw ValueErrorException("'" + filename +
-                                "' is corrupt: branch root out of range");
+    if (d_branchRoot[b] >= nNodes ||
+        (b && d_branchRoot[b] <= d_branchRoot[b - 1])) {
+      throw ValueErrorException(
+          "'" + filename +
+          "' is corrupt: branch roots out of range or out of order");
     }
   }
 
@@ -579,6 +583,119 @@ void DASHTree::getMolProperty(const ROMol &mol, const std::string &property,
     matcher.match(i, params);
     res[i] = matcher.pathValue(column);
   }
+}
+
+// ---------------------------------------------------------------------------
+//  the tree itself
+// ---------------------------------------------------------------------------
+
+DASHTreeNode DASHTree::getRoot(unsigned int branch) const {
+  return getNode(branch, 0);
+}
+
+DASHTreeNode DASHTree::getNode(unsigned int branch,
+                               std::uint32_t nodeId) const {
+  const std::uint32_t nBranches = d_impl->d_header.numBranches;
+  if (branch >= nBranches) {
+    throw ValueErrorException("branch " + std::to_string(branch) +
+                              " is out of range; the tree has " +
+                              std::to_string(nBranches));
+  }
+  // branches tile the node array in order, so one owns every id up to the
+  // next root
+  const std::uint32_t root = d_impl->d_branchRoot[branch];
+  const std::uint32_t end = branch + 1 < nBranches
+                                ? d_impl->d_branchRoot[branch + 1]
+                                : d_impl->d_header.numNodes;
+  if (nodeId >= end - root) {
+    throw ValueErrorException("node " + std::to_string(nodeId) +
+                              " is out of range; branch " +
+                              std::to_string(branch) + " has " +
+                              std::to_string(end - root) + " nodes");
+  }
+  return DASHTreeNode(*d_impl, root + nodeId);
+}
+
+void DASHTree::getMatchedSubstructure(const ROMol &mol, unsigned int atomIdx,
+                                      std::vector<unsigned int> &atoms,
+                                      const DASHParams &params) const {
+  if (atomIdx >= mol.getNumAtoms()) {
+    throw ValueErrorException("atom index " + std::to_string(atomIdx) +
+                              " is out of range");
+  }
+  MolMatcher matcher(*d_impl);
+  matcher.setMolecule(mol);
+  matcher.match(atomIdx, params);
+  const auto &subgraph = matcher.subgraph();
+  atoms.assign(subgraph.begin(), subgraph.end());
+}
+
+// ---------------------------------------------------------------------------
+//  DASHTreeNode
+// ---------------------------------------------------------------------------
+
+DASHTreeNode::DASHTreeNode(const DASHTree::Impl &impl, std::uint32_t absoluteId)
+    : dp_impl(&impl), d_abs(absoluteId) {}
+
+unsigned int DASHTreeNode::getBranch() const {
+  const std::uint32_t *begin = dp_impl->d_branchRoot;
+  const std::uint32_t *end = begin + dp_impl->d_header.numBranches;
+  // the roots ascend, so the branch is the last root at or below this id
+  return static_cast<unsigned int>(std::upper_bound(begin, end, d_abs) -
+                                   begin) -
+         1;
+}
+
+std::uint32_t DASHTreeNode::getId() const {
+  return d_abs - dp_impl->d_branchRoot[getBranch()];
+}
+
+std::uint16_t DASHTreeNode::getKey() const {
+  return dp_impl->d_node[d_abs].key;
+}
+
+int DASHTreeNode::getAtomFeatureIndex() const {
+  return keyAtomType(getKey());
+}
+
+const AtomFeature &DASHTreeNode::getFeature() const {
+  const int index = getAtomFeatureIndex();
+  if (index >= static_cast<int>(numAtomFeatures)) {
+    throw ValueErrorException("node " + std::to_string(getId()) +
+                              " names atom feature " + std::to_string(index) +
+                              ", which does not exist");
+  }
+  return getAtomFeatureTable()[index];
+}
+
+int DASHTreeNode::getConAtom() const { return keyConAtom(getKey()); }
+
+int DASHTreeNode::getConType() const { return keyConType(getKey()); }
+
+unsigned int DASHTreeNode::getNumChildren() const {
+  return dp_impl->d_node[d_abs].numChildren;
+}
+
+DASHTreeNode DASHTreeNode::getChild(unsigned int i) const {
+  const NodeRecord &record = dp_impl->d_node[d_abs];
+  if (i >= record.numChildren) {
+    throw ValueErrorException(
+        "node " + std::to_string(getId()) + " of branch " +
+        std::to_string(getBranch()) + " has " +
+        std::to_string(record.numChildren) + " children, no child " +
+        std::to_string(i));
+  }
+  return DASHTreeNode(*dp_impl, record.firstChild + i);
+}
+
+float DASHTreeNode::getAttention() const { return dp_impl->d_nodeAttn[d_abs]; }
+
+bool DASHTreeNode::stops() const {
+  return dp_impl->d_node[d_abs].flags & nodeFlagStop;
+}
+
+double DASHTreeNode::getValue(const std::string &property) const {
+  return dp_impl->property(property).value(d_abs);
 }
 
 }  // namespace DASH
