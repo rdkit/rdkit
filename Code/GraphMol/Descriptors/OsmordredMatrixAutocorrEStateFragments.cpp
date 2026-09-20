@@ -2858,13 +2858,20 @@ std::vector<double> calcAbrahams(const ROMol &mol) {
 // TODO : check if "-2" case is properly used in cluster because by definition
 // an empty key is a key too to discrimitate!
 
-int generateKey(int rootNum, int rootDeg, int bondOrder, int neighNum,
-                int neighDeg) {
-  // osmordredv3: fold in the NEIGHBOR degree too (Mordred parity). The radius-0
-  // partition is atomic-number only (built before the r>=1 loop), so adding
-  // neighbor degree here only refines r>=1 -> no radius-0 regressions.
-  return ((rootNum * 10 + rootDeg) * 1000 + bondOrder * 100 + neighNum) * 10 +
-         neighDeg;
+int generateKey(int rootNum, int rootDeg, int bondOrder, int neighNum) {
+  // The neighbour DEGREE is deliberately not part of the key.
+  //
+  // osmordred v3 folded it in "for Mordred parity". Mordred is not the right
+  // reference: measured against POLLY -- Basak's own software, 411 molecules x
+  // r=0..5 -- Mordred agrees on 49.8% of values, and folding neighbour degree
+  // in here dropped this implementation from 88.0% to 66.1%. At r=1 it is
+  // catastrophic, 80.3% -> 16.1%, because it splits atoms Basak keeps together:
+  // Basak labels a vertex by (element, VALENCY), and in a hydrogen-filled graph
+  // an sp2 carbon has degree 3 but valency 4. Basak's own worked example
+  // (2-butenol, Roy/Basak/Harriss/Magnuson 1983, Table 1) gives IC1 = 2.0349
+  // with the partition [1,1,1,1,2,7]; keying on neighbour degree gives 2.4997
+  // and [1,1,1,1,2,2,5], which is Mordred's answer, not Basak's.
+  return (rootNum * 10 + rootDeg) * 1000 + bondOrder * 100 + neighNum;
 }
 
 int getbondtypeint(const Bond::BondType &bd) {
@@ -3099,12 +3106,9 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
             int bondOrder = getbondtypeint(
                 bond->getBondType());  // don't need kekulize like in Mordred
             int neighNum = mol.getAtomWithIdx(nbIdx)->getAtomicNum();
-            int neighDeg = mol.getAtomWithIdx(nbIdx)->getDegree();
-            // osmordredv3: key on both the root (rootNum/rootDeg) and the
-            // neighbor (neighNum/neighDeg) for Mordred parity -- was keyed on
-            // root degree + neighbor atomic number only.
+            // See generateKey: the neighbour degree is deliberately excluded.
             eqKeys.push_back(
-                generateKey(rootNum, rootDeg, bondOrder, neighNum, neighDeg));
+                generateKey(rootNum, rootDeg, bondOrder, neighNum));
           }
         }
 
