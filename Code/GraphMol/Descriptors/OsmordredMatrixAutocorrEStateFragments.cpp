@@ -33,6 +33,7 @@
 #include "OsmordredHelpers.h"
 #include <boost/functional/hash.hpp>  // For custom hashing of pairs
 #include <GraphMol/MolOps.h>
+#include <cstdlib>
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/SanitException.h>
 #include <GraphMol/RDKitBase.h>
@@ -2896,8 +2897,13 @@ void mordredExpand(MordredNode &node, const ROMol &mol,
   if (!node.expanded) {
     node.expanded = true;
     const Atom *atom = mol.getAtomWithIdx(node.atom);
-    for (const auto &nbr : mol.atomNeighbors(atom)) {
-      int idx = rdcast<int>(nbr->getIdx());
+    // Iterate BONDS, not the adjacency iterator. mordred walks
+    // atom.GetNeighbors(), whose order follows the atom's bond list, and the
+    // order decides which branch claims a ring-closure atom -- so a different
+    // order silently yields different path codes on fused ring systems even
+    // though the tree has the same shape.
+    for (const auto &bnd : mol.atomBonds(atom)) {
+      int idx = rdcast<int>(bnd->getOtherAtomIdx(node.atom));
       if (!visited.count(idx)) {
         MordredNode child;
         child.atom = idx;
@@ -3474,11 +3480,12 @@ std::vector<double> calcInformationContent(
         "calcInformationContent: maxradius must be non-negative");
   }
   std::unique_ptr<RWMol> hmol(new RWMol(mol));
-  MolOps::addHs(*hmol);
-
   if (options.keyFlavor == ICKeyFlavor::MORDRED) {
-    // mordred kekulizes; without this the codes differ on every aromatic
-    // molecule. Its order-0 special case lives in mordredCN.
+    // Kekulize BEFORE adding hydrogens. Both orders give a valid Kekule
+    // structure, but not necessarily the SAME one, and these descriptors are
+    // sensitive to which alternation is chosen -- kekulizing after addHs picks
+    // a different resonance form on fused aromatics and silently changes the
+    // path codes. mordred kekulizes the heavy-atom molecule, so match that.
     try {
       MolOps::Kekulize(*hmol, true);
     } catch (const MolSanitizeException &) {
@@ -3486,6 +3493,10 @@ std::vector<double> calcInformationContent(
                                  "for the MORDRED flavor"
                               << std::endl;
     }
+  }
+  MolOps::addHs(*hmol);
+
+  if (options.keyFlavor == ICKeyFlavor::MORDRED) {
     double nBondsM = 0.;
     for (auto &bond : hmol->bonds()) {
       nBondsM += getbondtypeindouble(bond->getBondType());

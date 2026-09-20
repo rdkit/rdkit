@@ -168,6 +168,65 @@ The other published worked values — n-propanol `IC2 = 2.855` with partition
 reproduced by both, so 2-butenol is the only published case that discriminates.
 The POLLY table is what makes the difference measurable at scale.
 
+## Why this no longer matches `mordred_references`, and what the values now are
+
+`test_data/mordred_references/InformationContent.yaml` holds **mordred's**
+values. The default criterion is Basak's. So the default does not match that
+file and cannot be expected to: **94 of its 369 IC-family entries now differ**,
+against 25 before the criterion changed. That is the intended consequence of
+choosing a different reference, not a regression, and the numbers are given here
+so nobody has to rediscover that.
+
+The disagreement is concentrated at order 1, which is exactly where Basak and
+mordred part company (80.3% versus 14.4% agreement with POLLY):
+
+| family | r=1 | r=2 | r=3 | r=4 | r=5 |
+|---|---:|---:|---:|---:|---:|
+| IC | 9 | 8 | 3 | 3 | 1 |
+| TIC | 9 | 8 | 4 | 3 | 2 |
+| CIC | 9 | 8 | 3 | 3 | 1 |
+| SIC | 6 | 3 | 1 | 0 | 0 |
+| BIC | 6 | 3 | 1 | 0 | 0 |
+
+`SIC` and `BIC` appear for the first time only because they are `IC` divided by
+a constant. Three molecules account for all of it: Lycopene, Astaxanthin and
+EllagicAcid.
+
+The values themselves, for the worst-affected molecule:
+
+| descriptor | reference (mordred) | `BASAK` (default) | `EXTENDED` (old) |
+|---|---:|---:|---:|
+| IC1 Lycopene | 2.442 | **1.7361** | 2.4423 |
+| IC2 Lycopene | 3.333 | **2.9786** | 3.2493 |
+| IC3 Lycopene | 4.193 | **3.6065** | 4.0268 |
+| IC4 Lycopene | 4.548 | **4.3239** | 4.4230 |
+| IC5 Lycopene | 4.673 | **4.5323** | 4.5897 |
+| TIC1 Lycopene | 234.457 | **166.6666** | 234.4572 |
+| SIC1 Lycopene | 0.371 | **0.2636** | 0.3709 |
+| BIC1 Lycopene | 0.362 | **0.2570** | 0.3616 |
+
+Complete tables for every molecule and both flavours are in
+`test_data/ic_expected_basak.csv` and `test_data/ic_expected_mordred.csv`.
+
+**If you need the old numbers back**, set `keyFlavor = ICKeyFlavor.EXTENDED`.
+That restores the pre-change behaviour exactly: 25 failures against the same
+file, the same count as before. Verified on a real build.
+
+## A caution: mordred's values are not a function of the graph alone
+
+Reproducing mordred exactly turned out to require kekulizing, and a molecule
+generally has more than one valid Kekule structure. Which one is chosen changes
+the bond types that go into the path codes, and therefore changes the
+descriptor.
+
+This is not hypothetical. For ellagic acid, RDKit's `Kekulize` reached from C++
+and from Python selects different -- both valid -- structures: bond(11,12) is
+single in one and double in the other. The resulting IC values differ
+substantially. So `MORDRED` values depend on a choice that is not determined by
+the molecular graph, which is worth knowing before treating them as canonical.
+
+The `BASAK` default does not kekulize and is not exposed to this.
+
 ## What `MORDRED` is for
 
 Reproducing the mordred package, not speed. It matches it on 894/894 values and
