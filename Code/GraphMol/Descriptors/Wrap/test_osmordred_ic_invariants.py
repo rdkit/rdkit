@@ -110,12 +110,15 @@ ORBIT_CEILING = {
     "Astaxanthin": (96, 35, 4.881328),
 }
 
-# Known open defect: the radius-5 partition of ellagic acid splits one
-# genuinely symmetry-equivalent pair, putting IC5 above the orbit ceiling
-# (3.878783 > 3.807355).  Tracked as part of the InformationContent rework.
-# strict=True, so this flips to a failure the moment it is fixed -- that is the
-# signal to delete this entry.
-KNOWN_CEILING_VIOLATIONS = {("EllagicAcid", 5)}
+# Molecules/radii exempted from the ceiling check.  Empty, and it should stay
+# that way: a breach is a defect under any IC definition, not a convention
+# difference.  The one former entry -- EllagicAcid IC5 at 3.878783 against a
+# ceiling of 3.807355 -- was the M-row overflow fixed in #43.
+#
+# Note these are skipped via an imperative pytest.xfail(), which does NOT run
+# the assertion, so an entry here silently removes coverage rather than
+# reporting an unexpected pass.  Add one only with a tracking note.
+KNOWN_CEILING_VIOLATIONS: set[tuple[str, int]] = set()
 
 
 def _mol(name):
