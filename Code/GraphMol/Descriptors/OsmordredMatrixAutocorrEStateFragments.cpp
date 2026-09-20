@@ -35,6 +35,7 @@
 #include <GraphMol/MolOps.h>
 #include <cstdlib>
 #include <RDGeneral/Exceptions.h>
+#include <RDGeneral/Invariant.h>
 #include <GraphMol/SanitException.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -2945,6 +2946,7 @@ void mordredCollect(const MordredNode &node, const ROMol &mol, int parent,
 //! (MIC/ZMIC need the latter).
 std::map<int, std::vector<std::vector<int>>> mordredCN(const ROMol &mol,
                                                        int maxRadius) {
+  PRECONDITION(maxRadius >= 0, "maxRadius must be non-negative");
   const int nAtoms = rdcast<int>(mol.getNumAtoms());
   std::map<int, std::vector<std::vector<int>>> CN;
   for (int r = 0; r <= maxRadius; ++r) CN[r].resize(2);
@@ -3050,6 +3052,10 @@ double getbondtypeindouble(const Bond::BondType &bd) {
 // Initialize adjacency and shortest-path matrices
 std::tuple<std::vector<std::vector<int>>, std::vector<std::vector<int>>>
 initializeMatrixAndSP(int nAtoms, int maxradius) {
+  // A negative radius would size SP's rows to zero and the SP[i][0] write
+  // below would go out of bounds. Refuse it here, not only at the API, so no
+  // internal caller can ever reach the write.
+  PRECONDITION(maxradius >= 0, "maxradius must be non-negative");
   std::vector<std::vector<int>> M(
       nAtoms, std::vector<int>(nAtoms, -1));  // not sure of N+1 here ???
   std::vector<std::vector<int>> SP(nAtoms, std::vector<int>(maxradius + 1, -1));
@@ -3100,6 +3106,7 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
     RWMol &mol, int maxRadius,
     const InformationContentOptions &options = InformationContentOptions(),
     bool addDeadKeys = false) {
+  PRECONDITION(maxRadius >= 0, "maxRadius must be non-negative");
   int nAtoms = rdcast<int>(mol.getNumAtoms());
 
   // Bonds whose code is flattened so the two oxygens of a nitro group (and the
@@ -3502,11 +3509,16 @@ std::vector<double> calcInformationContent(
       nBondsM += getbondtypeindouble(bond->getBondType());
     }
     const int nAtomsM = rdcast<int>(hmol->getNumAtoms());
+    const double log2nA_M = std::log(static_cast<double>(nAtomsM)) / std::log(2);
+    const double log2nB_M = nBondsM > 1 ? std::log(nBondsM) / std::log(2) : 0.;
     auto CNm = mordredCN(*hmol, maxradius);
-    return ShannonEntropies(CNm, maxradius,
-                            std::log(static_cast<double>(nAtomsM)) / std::log(2),
-                            nBondsM > 1 ? std::log(nBondsM) / std::log(2) : 0.,
-                            nAtomsM);
+    // Deliberate departure from mordred: when the denominator of SIC (log2 A)
+    // or BIC (log2 B) is degenerate -- a single atom, or at most one bond --
+    // mordred returns NaN from a 0/0. IC is identically zero in every such case
+    // (one atom is one class; two identical atoms stay one class at every
+    // radius), so 0 is the continuous value and it is what ShannonEntropies
+    // already returns. Both flavours share that convention; the tests know it.
+    return ShannonEntropies(CNm, maxradius, log2nA_M, log2nB_M, nAtomsM);
   }
 
   if (options.aromaticHandling == ICAromaticHandling::KEKULIZED) {

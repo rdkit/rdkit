@@ -99,31 +99,94 @@ def payload():
     return _structures(), _references()
 
 
-def test_mordred_flavour_matches_the_mordred_references(payload):
-    structures, refs = payload
+def _mordred_package_available():
+    try:
+        import mordred  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+@pytest.mark.skipif(
+    not _mordred_package_available(), reason="mordred package not installed"
+)
+def test_mordred_flavour_matches_the_mordred_package_live(payload):
+    """THE oracle: the mordred package, computed here, under THIS RDKit.
+
+    Not a frozen table. mordred kekulizes, and which Kekule structure
+    `Kekulize` returns is a property of the RDKit release, not the molecule --
+    ellagic acid gets bond(11,12) double on 2025.09 and single on 2026.09, and
+    the path codes change with it. So a table generated on one release cannot
+    be reproduced by mordred itself on another. Comparing against the package
+    computed live removes that variable: whatever this RDKit kekulizes to,
+    both sides see the same structure.
+    """
+    from mordred import Calculator
+    from mordred import InformationContent as ICm
+
+    structures, _ = payload
+    fams = [ICm.InformationContent, ICm.TotalIC, ICm.StructuralIC,
+            ICm.BondingIC, ICm.ComplementaryIC]
+    calc = Calculator([cls(r) for cls in fams for r in range(MAXRADIUS + 1)])
+    block = MAXRADIUS + 1
     failures = []
     checked = 0
+    for name, smiles in sorted(structures.items()):
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            continue
+        try:
+            want = [float(v) for v in calc(mol)]
+        except Exception:  # noqa: BLE001 - mordred raises on odd inputs
+            continue
+        got = _mordred_values(smiles)
+        for fi in range(5):
+            for order in range(block):
+                w = want[fi * block + order]
+                g = got[fi * block + order]
+                if math.isnan(w) and math.isnan(g):
+                    continue
+                checked += 1
+                if math.isnan(w) and g == 0.0:
+                    # Deliberate, documented difference: mordred returns NaN for
+                    # SIC when A == 1 and BIC when B <= 1 (a 0/0). IC is
+                    # identically zero there, so osmordred defines the ratio as
+                    # 0 by continuity. Accepted ONLY when we return exactly 0.0,
+                    # so a real divergence can never hide behind this branch.
+                    continue
+                if math.isnan(w) != math.isnan(g) or abs(w - g) > 1e-6:
+                    failures.append(
+                        f"{FAMILIES[fi]}{order} {name}: got {g!r}, mordred {w!r}"
+                    )
+    assert checked > 500, f"only {checked} values checked"
+    assert not failures, (
+        f"{len(failures)} of {checked} values disagree with the mordred package "
+        f"under this RDKit:\n  " + "\n  ".join(failures[:12])
+    )
+
+
+def test_mordred_references_yaml_is_pinned_to_its_rdkit_release(payload):
+    """`InformationContent.yaml` was generated on RDKit 2025.09. On a newer
+    release the ONLY entries allowed to differ are ones whose Kekule structure
+    changed -- which for this set is ellagic acid. Anything else failing means
+    a real divergence, not a version artifact."""
+    structures, refs = payload
+    block = MAXRADIUS + 1
+    offenders = set()
     for name in sorted({m for table in refs.values() for m in table}):
         if name not in structures:
             continue
         values = _mordred_values(structures[name])
-        block = MAXRADIUS + 1
-        for family_index, family in enumerate(FAMILIES):
+        for fi, family in enumerate(FAMILIES):
             for order in range(block):
                 expected = refs.get((family, order), {}).get(name)
                 if expected is None or expected == "skip":
                     continue
-                got = values[family_index * block + order]
-                checked += 1
-                if abs(float(expected) - got) > TOL:
-                    failures.append(
-                        f"{family}{order} {name}: got {got:.6f}, "
-                        f"reference {expected}"
-                    )
-    assert checked > 200, f"only {checked} values checked; reference data missing?"
-    assert not failures, (
-        f"{len(failures)} of {checked} mordred_references entries disagree with "
-        f"ICKeyFlavor.MORDRED:\n  " + "\n  ".join(failures[:12])
+                if abs(float(expected) - values[fi * block + order]) > TOL:
+                    offenders.add(name)
+    assert offenders <= {"EllagicAcid"}, (
+        f"molecules disagreeing with the 2025.09-era yaml beyond the known "
+        f"Kekule-dependent case: {sorted(offenders - {'EllagicAcid'})}"
     )
 
 

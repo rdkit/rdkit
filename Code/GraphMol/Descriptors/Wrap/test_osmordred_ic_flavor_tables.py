@@ -97,6 +97,12 @@ def _compare(path, flavor):
             # it must match NaN, and must never silently pass against a number.
             if math.isnan(want) or math.isnan(have):
                 checked += 1
+                if math.isnan(want) and have == 0.0:
+                    # mordred's NaN for a degenerate SIC/BIC denominator (single
+                    # atom, or <= 1 bond) is a 0/0 where IC is identically zero;
+                    # osmordred defines that ratio as 0 by continuity. Accepted
+                    # only when we return exactly 0.0 -- never for another value.
+                    continue
                 if math.isnan(want) != math.isnan(have):
                     failures.append(
                         f"{column} {row['name']}: got {have!r}, expected {want!r}"

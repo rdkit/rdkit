@@ -212,20 +212,56 @@ Complete tables for every molecule and both flavours are in
 That restores the pre-change behaviour exactly: 25 failures against the same
 file, the same count as before. Verified on a real build.
 
-## A caution: mordred's values are not a function of the graph alone
+## A caution: mordred's values are pinned to an RDKit version
 
-Reproducing mordred exactly turned out to require kekulizing, and a molecule
-generally has more than one valid Kekule structure. Which one is chosen changes
-the bond types that go into the path codes, and therefore changes the
-descriptor.
+Reproducing mordred exactly requires kekulizing, and a molecule generally has
+more than one valid Kekule structure. Which one `Kekulize` returns is a property
+of the RDKit release, not of the molecule -- and the path codes, and therefore
+the descriptor, change with it.
 
-This is not hypothetical. For ellagic acid, RDKit's `Kekulize` reached from C++
-and from Python selects different -- both valid -- structures: bond(11,12) is
-single in one and double in the other. The resulting IC values differ
-substantially. So `MORDRED` values depend on a choice that is not determined by
-the molecular graph, which is worth knowing before treating them as canonical.
+This is measured, not hypothetical. For ellagic acid:
+
+| | bond(11,12) | bond(11,16) | IC2 | IC5 |
+|---|---|---|---:|---:|
+| RDKit 2025.09.4, Python `Chem.Kekulize` | double | single | 3.5216 | 3.8074 |
+| RDKit 2026.09.1pre, Python `Chem.Kekulize` | single | double | 3.8788 | 4.8074 |
+| RDKit 2026.09.1pre, this C++ `MolOps::Kekulize` | single | double | 3.8788 | 4.8074 |
+
+Under the **same** RDKit, the C++ port and a Python transliteration of it agree
+bit for bit. Across RDKit releases, Python disagrees with itself. So the
+`mordred_references/InformationContent.yaml` values -- generated against the
+older release -- are not reproducible by *anything* running on the newer one,
+the mordred package included. The 20 entries that fail under `MORDRED` are
+exactly the ellagic acid values whose Kekule structure changed.
+
+Two consequences follow:
+
+- A `MORDRED` reference table must be regenerated under the RDKit it will be
+  tested against, and the test should say which release produced it.
+- `MORDRED` values are not a function of the molecular graph alone. Treat them
+  as "what mordred produced on release X", not as canonical.
 
 The `BASAK` default does not kekulize and is not exposed to this.
+
+## One deliberate departure from mordred: 0, not NaN, for a degenerate denominator
+
+`SIC_r = IC_r / log2(A)` and `BIC_r = IC_r / log2(B)`. For a single atom
+`log2(A) = 0`; for at most one bond `log2(B) <= 0`. mordred divides anyway and
+returns **NaN**. osmordred returns **0**, in both flavours, and this is a choice
+made on purpose rather than an omission:
+
+- In every such case `IC_r` is identically zero — one atom is one class, and two
+  identical atoms remain one class at every radius — so the ratio is `0/0`, and
+  0 is its value by continuity. There is no finite alternative that is more
+  correct, and NaN is not a value.
+- A descriptor vector that carries NaN has to be cleaned before any model can
+  consume it. A zero does not.
+
+In the reference set this affects `[Na+].[Cl-]`, `[K+]` and `II` only. The
+`MORDRED` tests treat mordred's NaN as agreeing with osmordred's 0 **only when
+osmordred returns exactly 0.0** — never for any other value — so this convention
+cannot mask a real divergence. Every other value agrees with the mordred package
+to 1e-6 under the same RDKit release.
 
 ## What `MORDRED` is for
 
