@@ -76,11 +76,15 @@ enum class ICAromaticHandling {
 
 //! Which per-atom label the equivalence key is built from.
 /*!
-  Basak's paper defines a vertex as (element, valency) (p.746). VALENCY is
-  therefore the literal reading of the text -- but a faithful path-code
-  implementation using it scores 83.2% against POLLY, BELOW the 88.0% that
-  DEGREE reaches here, so the paper's prose and POLLY's behaviour differ.
-  DEGREE remains the default; VALENCY is exposed for investigation.
+  Basak's paper defines a vertex as (element, valency) (p.746), so VALENCY is
+  the literal reading of the text. Measured against POLLY with this key the two
+  are near-equivalent: DEGREE 88.0%, VALENCY 87.8% of 2466 values. DEGREE is
+  the default only because it is marginally ahead and is the existing
+  behaviour, not because valency is wrong.
+
+  (An earlier revision of this comment quoted 83.2% for VALENCY. That figure
+  came from a path-code reconstruction of the paper's condition (iii), which is
+  a different algorithm from this key, and did not belong here.)
 */
 enum class ICVertexLabel {
   DEGREE,   //!< graph degree in the hydrogen-filled graph (default)

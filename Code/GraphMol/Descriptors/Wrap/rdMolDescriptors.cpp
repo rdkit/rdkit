@@ -2198,10 +2198,10 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
         "ICVertexLabel",
         "Which per-atom label the equivalence key is built from.\n"
         "  DEGREE  - graph degree in the hydrogen-filled graph (88.0%, default)\n"
-        "  VALENCY - Basak's (element, valency) as written in the 1983 paper.\n"
-        "The paper's text says valency, but a faithful path-code implementation "
-        "using it scores 83.2%, below DEGREE, so the prose and POLLY's actual "
-        "behaviour differ.")
+        "  VALENCY - Basak's (element, valency) as written in the 1983 paper "
+        "(87.8%).\n"
+        "With this key the two are near-equivalent; DEGREE is the default "
+        "because it is marginally ahead and is the existing behaviour.")
         .value("DEGREE", RDKit::Descriptors::Osmordred::ICVertexLabel::DEGREE)
         .value("VALENCY", RDKit::Descriptors::Osmordred::ICVertexLabel::VALENCY);
 
