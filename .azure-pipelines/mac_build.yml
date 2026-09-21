@@ -1,8 +1,8 @@
 steps:
 - bash: |
     export CONDA=/tmp/miniforge
-    wget https://github.com/conda-forge/miniforge/releases/download/24.9.0-0/Miniforge3-24.9.0-0-MacOSX-x86_64.sh
-    bash Miniforge3-24.9.0-0-MacOSX-x86_64.sh -b -p ${CONDA}
+    wget https://github.com/conda-forge/miniforge/releases/download/26.5.3-0/Miniforge3-26.5.3-0-MacOSX-x86_64.sh
+    bash Miniforge3-26.5.3-0-MacOSX-x86_64.sh -b -p ${CONDA}
   displayName: install conda
 - script: |
     echo "Removing homebrew from Azure to avoid conflicts."
@@ -26,7 +26,7 @@ steps:
         libboost=$(boost_version) libboost-devel=$(boost_version) \
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         qt \
-        numpy matplotlib=3.8 cairo pillow eigen pandas=2.1  \
+        numpy matplotlib cairo pillow eigen pandas=3  \
         jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval make ccache
   displayName: Setup build environment
 - template: _templates/steps_setup_cache.yml
@@ -83,6 +83,9 @@ steps:
     export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    echo -e "Current build stats:"
+    ccache --show-log-stats
+    echo -e "Global stats:"
     ccache -s
   displayName: "Show ccache stats"
 - bash: |

@@ -8,7 +8,7 @@
 # docker build --target local-src-stage -t rdkit-minimallib-rdkit-src \
 #   --build-arg http_proxy=$HTTP_PROXY \
 #   --build-arg https_proxy=$HTTP_PROXY \
-#   --network=host -f Dockerfile_2_rdkit_copy_from_local ../../..
+#   --network=host -f 02_rdkit_copy.Dockerfile ../../..
 
 
 FROM rdkit-minimallib-deps AS local-src-stage

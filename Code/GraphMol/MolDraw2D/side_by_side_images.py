@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # quick script for comparing SVGs in 2 different directories.
 import argparse
-import glob
 import hashlib
 from pathlib import Path
 

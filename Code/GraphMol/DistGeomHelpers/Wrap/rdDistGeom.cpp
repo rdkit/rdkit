@@ -408,7 +408,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - ETversion : version of the standard torsion definitions to use. NOTE for both\n\
                   ETKDGv2 and ETKDGv3 this should be 2 since ETKDGv3 uses the ETKDGv2\n\
                   definitions for standard torsions\n\
-    - useMacrocycle14config : use the 1-4 distance bounds from ETKDGv3\n\
+    - useMacrocycle14config : This forces amides and esters to be trans in macrocycles.\n\
+                              This does not affect chain amides / esters!\n\
 \n\
  RETURNS:\n\n\
     ID of the new conformation added to the molecule or -1 if the embedding fails.\n\
@@ -634,9 +635,9 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite("useMacrocycleTorsions",
                      &PyEmbedParameters::useMacrocycleTorsions,
                      "impose macrocycle torsion angle preferences")
-      .def_readwrite("useMacrocycle14config",
-                     &PyEmbedParameters::useMacrocycle14config,
-                     "use the 1-4 distance bounds from ETKDGv3")
+      .def_readwrite(
+          "useMacrocycle14config", &PyEmbedParameters::useMacrocycle14config,
+          "This forces amides and esters to be trans in macrocycles. This does not affect chain amides / esters!")
       .def_readwrite("useLegacyImplementation",
                      &PyEmbedParameters::useLegacyImplementation,
                      "Whether to use the combined minimization approach")
@@ -657,7 +658,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
            "set the customised pairwise Columb-like interaction to atom pairs."
            "used during structural minimisation stage")
       .def_readwrite("forceTransAmides", &PyEmbedParameters::forceTransAmides,
-                     "constrain amide bonds to be trans")
+                     "This forces chain amides and esters to be trans. "
+                     "This does not affect amides / esters in macrocycles!")
       .def_readwrite(
           "trackFailures", &PyEmbedParameters::trackFailures,
           "keep track of which checks during the embedding process fail")

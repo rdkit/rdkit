@@ -7,7 +7,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#if defined(__clang__) || defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>

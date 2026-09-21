@@ -13,7 +13,6 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolPickler.h>
-#include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>

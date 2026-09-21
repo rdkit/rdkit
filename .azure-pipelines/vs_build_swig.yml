@@ -60,6 +60,9 @@ steps:
   displayName: Build
 - script: |
     call activate rdkit_build
+    echo Current build stats:
+    ccache --show-log-stats
+    echo Global stats:
     ccache -s
   displayName: "Show ccache stats"
 - script: |

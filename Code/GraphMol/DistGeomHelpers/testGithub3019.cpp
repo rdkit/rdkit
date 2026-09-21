@@ -13,23 +13,18 @@
 #include "Embedder.h"
 
 namespace {
-void runTest(const bool legacy){
-     auto m = RDKit::v2::SmilesParse::MolFromSmiles(std::string(2000, 'C'));
-    REQUIRE(m);
-    CHECK(m->getNumAtoms() == 2000);
-    RDKit::DGeomHelpers::EmbedParameters params{
-        .randomSeed = 0xf00d, .useLegacyImplementation = legacy};
-    int cid = RDKit::DGeomHelpers::EmbedMolecule(*m, params);
-    CHECK(cid >= 0);
+void runTest(const bool legacy) {
+  auto m = RDKit::v2::SmilesParse::MolFromSmiles(std::string(2000, 'C'));
+  REQUIRE(m);
+  CHECK(m->getNumAtoms() == 2000);
+  RDKit::DGeomHelpers::EmbedParameters params{
+      .randomSeed = 0xf00d, .useLegacyImplementation = legacy};
+  int cid = RDKit::DGeomHelpers::EmbedMolecule(*m, params);
+  CHECK(cid >= 0);
 }
 }  // namespace
 
 const std::string rdbase = getenv("RDBASE");
 
-
-TEST_CASE("testGithub3019Legacy") {
-    runTest(true);
-}
-TEST_CASE("testGithub3019AIO") {
-    runTest(false);
-}
+TEST_CASE("testGithub3019Legacy") { runTest(true); }
+TEST_CASE("testGithub3019AIO") { runTest(false); }

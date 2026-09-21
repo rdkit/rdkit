@@ -681,7 +681,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     };
     // we can't just copy the rings over: we're going to rearrange them so that
     // we try to favor starting the traversal of any ring from an atom that is
-    // at the end of a wedged ring bond. This is part of our attempt to avoid
+    // at the beginning of a wedged ring bond. This is part of our attempt to avoid
     // assigning double bonds to bonds with wedging
     for (const auto &ring : allrings) {
       if (containsNonDummy(ring)) {
