@@ -208,6 +208,8 @@ std::vector<double> calcOsmordred(const ROMol &mol, const OsmordredOptions &opts
     return calcOsmordred(mol, opts, &end_time_storage);
   } catch(ValueErrorException) {
     return std::vector<double>(NUM_OSMORDRED, std::numeric_limits<double>::quiet_NaN());
+  } catch(std::runtime_error) {
+    return std::vector<double>(NUM_OSMORDRED, std::numeric_limits<double>::quiet_NaN());
   }
 }
 
