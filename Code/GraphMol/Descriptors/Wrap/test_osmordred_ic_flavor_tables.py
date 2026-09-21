@@ -195,7 +195,13 @@ def test_the_two_tables_actually_differ():
                 continue
             if abs(a - b) > 1e-4:
                 differing += 1
+
     assert differing > 100, (
         f"only {differing} values differ between the two tables; the flavours "
         f"should disagree substantially"
     )
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(pytest.main([__file__, "-v"]))
