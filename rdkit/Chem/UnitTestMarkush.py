@@ -75,10 +75,27 @@ class TestCase(unittest.TestCase):
     self.assertIsInstance(formula.queries, tuple)
     self.assertTrue(Markush.IsInMarkushScope(formula, ethanol))
     self.assertTrue(Markush.IsInMarkushScope(formula, benzene))
+    self.assertFalse(Markush.IsInMarkushScope(formula, Chem.MolFromSmiles('CCCO')))
     self.assertEqual(
         [Chem.MolToSmiles(mol)
          for mol in Markush.EnumerateMarkush(formula, (benzene, ethanol))],
         ['c1ccccc1', 'CCO'])
+
+  def testMadeFormulaPreservesChirality(self):
+    first = Chem.MolFromSmiles('C[C@H](F)Cl')
+    second = Chem.MolFromSmiles('C[C@@H](F)Cl')
+    formula = Markush.MakeMarkushFormula((first, ))
+
+    self.assertTrue(Markush.IsInMarkushScope(formula, first))
+    self.assertFalse(Markush.IsInMarkushScope(formula, second))
+
+  def testDefaultGenericMatchingPreservesChirality(self):
+    query = Chem.MolFromSmarts('C[C@H](F)Cl')
+    first = Chem.MolFromSmiles('C[C@H](F)Cl')
+    second = Chem.MolFromSmiles('C[C@@H](F)Cl')
+
+    self.assertTrue(Markush.IsInMarkushScope(query, first))
+    self.assertFalse(Markush.IsInMarkushScope(query, second))
 
   def testInvalidInputsAreRejected(self):
     molecule = Chem.MolFromSmiles('CC')
@@ -94,6 +111,8 @@ class TestCase(unittest.TestCase):
       Markush.MakeMarkushFormula((None, ))
     with self.assertRaisesRegex(ValueError, '^a Markush formula needs at least one query$'):
       Markush.MakeMarkushFormula(())
+    with self.assertRaisesRegex(ValueError, '^Markush queries cannot be None$'):
+      Markush.EnumerateMarkush(None, ())
 
 
 if __name__ == '__main__':

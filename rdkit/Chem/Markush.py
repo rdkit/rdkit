@@ -27,18 +27,26 @@ class MarkushFormula:
   build a formula which explicitly covers a collection of molecules.
   """
 
-  def __init__(self, queries):
+  def __init__(self, queries, identities=None):
     self.queries = tuple(queries)
     if not self.queries:
       raise ValueError("a Markush formula needs at least one query")
     if any(query is None for query in self.queries):
       raise ValueError("Markush queries cannot be None")
+    self.identities = None if identities is None else frozenset(identities)
 
 
 def _generic_match_parameters():
   params = Chem.SubstructMatchParameters()
   params.useGenericMatchers = True
+  params.useChirality = True
   return params
+
+
+def _as_formula(formula):
+  if not isinstance(formula, MarkushFormula):
+    formula = MarkushFormula((formula, ))
+  return formula
 
 
 def IsInMarkushScope(formula, molecule, params=None):
@@ -50,8 +58,9 @@ def IsInMarkushScope(formula, molecule, params=None):
   """
   if molecule is None:
     raise ValueError("molecule cannot be None")
-  if not isinstance(formula, MarkushFormula):
-    formula = MarkushFormula((formula, ))
+  formula = _as_formula(formula)
+  if formula.identities is not None:
+    return Chem.MolToSmiles(molecule) in formula.identities
   if params is None:
     params = _generic_match_parameters()
   return any(molecule.HasSubstructMatch(query, params) for query in formula.queries)
@@ -66,6 +75,7 @@ def EnumerateMarkush(formula, candidates, params=None):
   """
   result = []
   seen = set()
+  formula = _as_formula(formula)
   for molecule in candidates:
     if molecule is None:
       raise ValueError("candidate molecules cannot be None")
@@ -85,6 +95,7 @@ def MakeMarkushFormula(molecules):
   avoids inventing unverified R-group generalizations.
   """
   queries = []
+  identities = []
   seen = set()
   for molecule in molecules:
     if molecule is None:
@@ -92,5 +103,6 @@ def MakeMarkushFormula(molecules):
     key = Chem.MolToSmiles(molecule)
     if key not in seen:
       seen.add(key)
+      identities.append(key)
       queries.append(Chem.MolFromSmarts(Chem.MolToSmarts(molecule)))
-  return MarkushFormula(queries)
+  return MarkushFormula(queries, identities)

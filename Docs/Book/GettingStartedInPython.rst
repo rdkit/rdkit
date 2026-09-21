@@ -1259,7 +1259,8 @@ an explicit candidate library. Results are unique by canonical isomeric SMILES:
 
 To build a conservative formula covering a set of molecules, use
 ``MakeMarkushFormula``. It creates one SMARTS alternative per distinct input
-molecule and therefore does not infer unsupported R-group generalizations.
+molecule and exactly matches those molecular identities; it does not infer
+unsupported R-group generalizations.
 
 .. doctest::
 
