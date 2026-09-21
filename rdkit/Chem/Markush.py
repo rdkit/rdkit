@@ -27,13 +27,19 @@ class MarkushFormula:
   build a formula which explicitly covers a collection of molecules.
   """
 
-  def __init__(self, queries, identities=None):
+  def __init__(self, queries):
     self.queries = tuple(queries)
     if not self.queries:
       raise ValueError("a Markush formula needs at least one query")
     if any(query is None for query in self.queries):
       raise ValueError("Markush queries cannot be None")
-    self.identities = None if identities is None else frozenset(identities)
+
+
+class _ExactMarkushFormula(MarkushFormula):
+
+  def __init__(self, queries, identities):
+    super().__init__(queries)
+    self._identities = frozenset(identities)
 
 
 def _generic_match_parameters():
@@ -59,8 +65,8 @@ def IsInMarkushScope(formula, molecule, params=None):
   if molecule is None:
     raise ValueError("molecule cannot be None")
   formula = _as_formula(formula)
-  if formula.identities is not None:
-    return Chem.MolToSmiles(molecule) in formula.identities
+  if isinstance(formula, _ExactMarkushFormula):
+    return Chem.MolToSmiles(molecule) in formula._identities
   if params is None:
     params = _generic_match_parameters()
   return any(molecule.HasSubstructMatch(query, params) for query in formula.queries)
@@ -105,4 +111,4 @@ def MakeMarkushFormula(molecules):
       seen.add(key)
       identities.append(key)
       queries.append(Chem.MolFromSmarts(Chem.MolToSmarts(molecule)))
-  return MarkushFormula(queries, identities)
+  return _ExactMarkushFormula(queries, identities)

@@ -89,6 +89,12 @@ class TestCase(unittest.TestCase):
     self.assertTrue(Markush.IsInMarkushScope(formula, first))
     self.assertFalse(Markush.IsInMarkushScope(formula, second))
 
+  def testFormulaIdentitiesCannotBeSuppliedByCallers(self):
+    query = Chem.MolFromSmarts('CCO')
+
+    with self.assertRaises(TypeError):
+      Markush.MarkushFormula((query, ), identities=('CCO', ))
+
   def testDefaultGenericMatchingPreservesChirality(self):
     query = Chem.MolFromSmarts('C[C@H](F)Cl')
     first = Chem.MolFromSmiles('C[C@H](F)Cl')
