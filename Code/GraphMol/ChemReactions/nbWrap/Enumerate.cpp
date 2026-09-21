@@ -24,7 +24,10 @@ using namespace nb::literals;
 
 namespace RDKit {
 
-std::vector<RDKit::MOL_SPTR_VECT> ConvertToVect(nb::object bbs) {
+//! One iterable of reagent molecules per reactant template.
+using Reagents = PyIterableOf<PyIterableOf<RDKit::ROMol>>;
+
+std::vector<RDKit::MOL_SPTR_VECT> ConvertToVect(const Reagents &bbs) {
   std::vector<RDKit::MOL_SPTR_VECT> vect;
   for (nb::handle row_handle : bbs) {
     RDKit::MOL_SPTR_VECT reacts;
@@ -63,7 +66,7 @@ nb::bytes EnumerateLibraryBase_Serialize(const EnumerateLibraryBase &en) {
 }
 
 void ToBBS(EnumerationStrategyBase &rgroup, ChemicalReaction &rxn,
-           nb::object ob) {
+           const Reagents &ob) {
   rgroup.initialize(rxn, ConvertToVect(ob));
 }
 
@@ -208,7 +211,7 @@ for result in itertools.islice(libary2, 1000):
       .def(nb::init<>())
       .def("__init__",
            [](RDKit::EnumerateLibrary *self,
-              const RDKit::ChemicalReaction &rxn, nb::object bbs,
+              const RDKit::ChemicalReaction &rxn, const Reagents &bbs,
               const RDKit::EnumerationParams &params) {
              new (self)
                  RDKit::EnumerateLibrary(rxn, RDKit::ConvertToVect(bbs), params);
@@ -216,7 +219,7 @@ for result in itertools.islice(libary2, 1000):
            "rxn"_a, "reagents"_a, "params"_a = RDKit::EnumerationParams())
       .def("__init__",
            [](RDKit::EnumerateLibrary *self,
-              const RDKit::ChemicalReaction &rxn, nb::object bbs,
+              const RDKit::ChemicalReaction &rxn, const Reagents &bbs,
               const RDKit::EnumerationStrategyBase &enumerator,
               const RDKit::EnumerationParams &params) {
              new (self) RDKit::EnumerateLibrary(

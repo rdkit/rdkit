@@ -9,6 +9,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Fragment.h>
@@ -39,10 +40,10 @@ void chooseInPlaceHelper(MolStandardize::LargestFragmentChooser &self,
   self.chooseInPlace(static_cast<RWMol &>(mol));
 }
 
-MolStandardize::FragmentRemover *removerFromParams(const std::string &data,
+MolStandardize::FragmentRemover *removerFromParams(const StringOrBytes &data,
                                                    bool leave_last,
                                                    bool skip_if_all_match) {
-  std::istringstream sstr(data);
+  std::istringstream sstr(pyObjectToString(data));
   return new MolStandardize::FragmentRemover(sstr, leave_last,
                                              skip_if_all_match);
 }

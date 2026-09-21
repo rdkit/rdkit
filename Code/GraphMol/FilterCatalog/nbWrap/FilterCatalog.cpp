@@ -120,7 +120,8 @@ std::vector<FilterMatch> FilterCatalogEntryGetMatches(FilterCatalogEntry &fm,
   return std::vector<FilterMatch>();
 }
 
-void SetOffPatterns(ExclusionList &fc, nb::object list) {
+void SetOffPatterns(ExclusionList &fc,
+                    const PyIterableOf<FilterMatcherBase> &list) {
   std::vector<boost::shared_ptr<FilterMatcherBase>> temp;
   for (auto item : list) {
     FilterMatcherBase *matcher = nb::cast<FilterMatcherBase *>(item);
@@ -142,10 +143,12 @@ bool FilterCatalogRemoveEntry(FilterCatalog &fc, nb::object obj) {
   return fc.removeEntry(idx);
 }
 
-nb::dict GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
+using DictOfMols = PyDictOf<std::string, ROMol *>;
+
+DictOfMols GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
   const std::map<std::string, ROMOL_SPTR> &flattened =
       GetFlattenedFunctionalGroupHierarchy(normalize);
-  nb::dict dict;
+  DictOfMols dict;
   for (const auto &it : flattened) {
     dict[it.first.c_str()] = it.second;
   }
@@ -264,7 +267,10 @@ True
            "pat"_a,
            "Set the smarts pattern for the Smarts Matcher (warning: "
            "MinimumCount is not reset)")
-      .def("GetPattern", &SmartsMatcher::getPattern)
+      .def("GetPattern",
+           [](const SmartsMatcher &self) -> Nullable<ROMOL_SPTR> {
+             return self.getPattern();
+           })
       .def("GetMinCount", &SmartsMatcher::getMinCount,
            "Get the minimum times pattern must appear for the filter to match")
       .def("SetMinCount", &SmartsMatcher::setMinCount, "count"_a,

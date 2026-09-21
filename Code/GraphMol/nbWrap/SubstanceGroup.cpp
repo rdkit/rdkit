@@ -10,6 +10,7 @@
 
 #include <string>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/string.h>
@@ -68,61 +69,75 @@ SubstanceGroup *addMolSubstanceGroup(ROMol &mol, const SubstanceGroup &sgroup) {
   return &(getSubstanceGroups(mol).back());
 }
 
-void addBracketHelper(SubstanceGroup &self, const nb::object &pts) {
-  unsigned int sz = static_cast<unsigned int>(nb::len(pts));
+void addBracketHelper(SubstanceGroup &self,
+                      const PyIterableOf<RDGeom::Point3D> &pts) {
+  // The size is taken from the converted vector rather than the argument, so
+  // that any iterable works and not only the ones that support len().
+  auto ptVec = pythonObjectToVect<RDGeom::Point3D>(pts);
+  if (!ptVec) {
+    throw ValueErrorException(
+        "could not interpret pts as a sequence of 3D points");
+  }
+  unsigned int sz = static_cast<unsigned int>(ptVec->size());
   if (sz != 2 && sz != 3) {
     throw ValueErrorException("pts object have a length of 2 or 3");
   }
 
   SubstanceGroup::Bracket bkt;
-  auto ptVec = pythonObjectToVect<RDGeom::Point3D>(pts);
-  if (!ptVec || ptVec->size() != sz) {
-    throw ValueErrorException(
-        "could not interpret pts as a sequence of 3D points");
-  }
   for (unsigned int i = 0; i < sz; ++i) {
     bkt[i] = (*ptVec)[i];
   }
   self.addBracket(bkt);
 }
 
-nb::tuple getCStatesHelper(const SubstanceGroup &self) {
+using CStateSequence = PyTupleOf<SubstanceGroup::CState>;
+using BracketSequence = nb::typed<
+    nb::tuple,
+    nb::typed<nb::tuple, RDGeom::Point3D, RDGeom::Point3D, RDGeom::Point3D>,
+    nb::ellipsis>;
+using AttachPointSequence = PyTupleOf<SubstanceGroup::AttachPoint>;
+
+CStateSequence getCStatesHelper(const SubstanceGroup &self) {
   nb::list res;
   for (const auto &cs : self.getCStates()) {
     res.append(cs);
   }
-  return nb::tuple(res);
+  return CStateSequence(nb::tuple(res));
 }
 
-nb::tuple getBracketsHelper(const SubstanceGroup &self) {
+BracketSequence getBracketsHelper(const SubstanceGroup &self) {
   nb::list res;
   for (const auto &brk : self.getBrackets()) {
     res.append(nb::make_tuple(brk[0], brk[1], brk[2]));
   }
-  return nb::tuple(res);
+  return BracketSequence(nb::tuple(res));
 }
 
-nb::tuple getAttachPointsHelper(const SubstanceGroup &self) {
+AttachPointSequence getAttachPointsHelper(const SubstanceGroup &self) {
   nb::list res;
   for (const auto &ap : self.getAttachPoints()) {
     res.append(ap);
   }
-  return nb::tuple(res);
+  return AttachPointSequence(nb::tuple(res));
 }
 
-void SetAtomsHelper(SubstanceGroup &self, const nb::object &iterable) {
+void SetAtomsHelper(SubstanceGroup &self,
+                    const std::optional<PyIterableOf<unsigned int>> &iterable) {
   std::vector<unsigned int> atoms;
   pythonObjectToVect(iterable, atoms);
   self.setAtoms(atoms);
 }
 
-void SetParentAtomsHelper(SubstanceGroup &self, const nb::object &iterable) {
+void SetParentAtomsHelper(
+    SubstanceGroup &self,
+    const std::optional<PyIterableOf<unsigned int>> &iterable) {
   std::vector<unsigned int> patoms;
   pythonObjectToVect(iterable, patoms);
   self.setParentAtoms(patoms);
 }
 
-void SetBondsHelper(SubstanceGroup &self, const nb::object &iterable) {
+void SetBondsHelper(SubstanceGroup &self,
+                    const std::optional<PyIterableOf<unsigned int>> &iterable) {
   std::vector<unsigned int> bonds;
   pythonObjectToVect(iterable, bonds);
   self.setBonds(bonds);
@@ -260,7 +275,7 @@ Note that this does not update properties, CStates or Attachment Points.)DOC")
     - If the property has not been set, a KeyError exception will be raised.
 )DOC")
         .def("GetProp", GetPyPropOrDefault<SubstanceGroup>, "key"_a,
-             "autoConvert"_a = false, nb::arg("default").none(),
+             "autoConvert"_a = false, "default"_a = nb::none(),
              R"DOC(Returns the value of the property.
 
   ARGUMENTS:

@@ -705,6 +705,8 @@ class TestCase(unittest.TestCase):
     # might need feq
     self.assertEqual(list(bcut1), list(bcut2))
     self.assertEqual(list(bcut3), list(bcut2))
+    if rdBase._wrapperType == 'nanobind':
+      self.assertEqual(list(rdMD.BCUT2D(m, (p for p in props))), list(bcut2))
 
     props.append(0.0)
     try:
@@ -820,7 +822,37 @@ class TestCase(unittest.TestCase):
         self.assertTrue(len(all_pts[i]) == 320)
         self.assertTrue(len(all_pts[i]) >= len(pts[i]))
 
-        
+
+
+  def testContainerArguments(self):
+    m = Chem.MolFromSmiles('CCOC(=O)c1ccccc1')
+
+    # Output arguments are filled in place, so they must be a list or dict.
+    bitInfo = {}
+    rdMD.GetMorganFingerprintAsBitVect(m, 2, bitInfo=bitInfo)
+    self.assertTrue(bitInfo)
+    with self.assertRaises(TypeError):
+      rdMD.GetMorganFingerprintAsBitVect(m, 2, bitInfo=[])
+    atoms = []
+    self.assertEqual(rdMD.CalcNumSpiroAtoms(Chem.MolFromSmiles('C1CCC12CCC2'), atoms=atoms), 1)
+    self.assertEqual(atoms, [3])
+    with self.assertRaises(TypeError):
+      rdMD.CalcNumSpiroAtoms(m, atoms=())
+
+    mh = Chem.AddHs(m)
+    AllChem.EmbedMolecule(mh, randomSeed=42)
+    coords = tuple(mh.GetConformer().GetAtomPosition(i) for i in range(mh.GetNumAtoms()))
+    points = []
+    rdMD.GetUSRDistributions(coords, points)
+    self.assertEqual(len(points), 4)
+    with self.assertRaises(TypeError):
+      rdMD.GetUSRDistributions(coords, ())
+    self.assertEqual(len(rdMD.SlogP_VSA_(m, bins=(0.0, 1.0), force=True)), 3)
+
+    dclv = rdMD.DoubleCubicLatticeVolume(mh, isProtein=False)
+    self.assertGreater(dclv.GetPartialSurfaceArea(i for i in (0, 1)), 0)
+    self.assertEqual(dclv.GetPartialSurfaceArea(None), 0)
+    self.assertEqual(dclv.GetPartialVolume(None), 0)
 
 
 if __name__ == '__main__':

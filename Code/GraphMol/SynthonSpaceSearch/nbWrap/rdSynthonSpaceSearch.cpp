@@ -41,8 +41,10 @@ void throwCancelled(const char *msg) {
   throw nb::python_error();
 }
 
-nb::list hitMolecules_helper(const SynthonSpaceSearch::SearchResults &res) {
-  nb::list pyres;
+using ListOfMols = PyListOf<ROMol *>;
+
+ListOfMols hitMolecules_helper(const SynthonSpaceSearch::SearchResults &res) {
+  ListOfMols pyres;
   for (const auto &r : res.getHitMolecules()) {
     pyres.append(nb::cast(new ROMol(*r), nb::rv_policy::take_ownership));
   }
@@ -67,12 +69,8 @@ nb::object get_excludedVolume(
 }
 
 void set_excludedVolume(SynthonSpaceSearch::SynthonSpaceSearchParams &params,
-                        const nb::object &pyExcVol) {
-  if (pyExcVol.is_none()) {
-    params.excludedVolume = nullptr;
-    return;
-  }
-  params.excludedVolume = nb::cast<GaussianShape::ShapeInput *>(pyExcVol);
+                        std::optional<GaussianShape::ShapeInput *> pyExcVol) {
+  params.excludedVolume = pyExcVol.value_or(nullptr);
 }
 
 SynthonSpaceSearch::SearchResults substructureSearch_helper1(
@@ -112,6 +110,16 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper2(
   return results;
 }
 
+//! Receives each batch of hits and returns True once it has enough, or False
+//! or None to continue the search.
+using SearchCallback =
+    nb::typed<nb::callable, std::optional<bool>(PyListOf<ROMol>)>;
+
+//! Returns a molecule with up to the requested number of conformers for a
+//! SMILES, or None.
+using ConformerGenerator =
+    nb::typed<nb::callable, std::optional<ROMol>(std::string, unsigned int)>;
+
 struct CallbackAdapter {
   nb::object py_callable;
 
@@ -130,7 +138,7 @@ struct CallbackAdapter {
 
 void substructureSearch_helper3(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    nb::object py_callable,
+    const SearchCallback &py_callable,
     const std::optional<SubstructMatchParameters> &py_smParams,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
@@ -183,16 +191,14 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper5(
 
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const nb::object &fingerprintGenerator,
+    const FingerprintGenerator<std::uint64_t> &fingerprintGenerator,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    const FingerprintGenerator<std::uint64_t> *fpGen =
-        nb::cast<FingerprintGenerator<std::uint64_t> *>(fingerprintGenerator);
     results = self.fingerprintSearch(
-        query, *fpGen,
+        query, fingerprintGenerator,
         py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
   }
   if (results.getCancelled()) {
@@ -203,30 +209,27 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
 
 void fingerprintSearch_helper2(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const nb::object &fingerprintGenerator, nb::object py_callable,
+    const FingerprintGenerator<std::uint64_t> &fingerprintGenerator,
+    const SearchCallback &py_callable,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
-  const FingerprintGenerator<std::uint64_t> *fpGen =
-      nb::cast<FingerprintGenerator<std::uint64_t> *>(fingerprintGenerator);
   CallbackAdapter callback{py_callable};
   self.fingerprintSearch(
-      query, *fpGen, callback,
+      query, fingerprintGenerator, callback,
       py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
 }
 
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper3(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const nb::object &fingerprintGenerator,
+    const FingerprintGenerator<std::uint64_t> &fingerprintGenerator,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params,
     std::uint64_t startLine, std::uint64_t finishLine) {
-  const FingerprintGenerator<std::uint64_t> *fpGen =
-      nb::cast<FingerprintGenerator<std::uint64_t> *>(fingerprintGenerator);
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
     results = self.fingerprintSearch(
-        query, *fpGen,
+        query, fingerprintGenerator,
         py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()),
         startLine, finishLine);
   }
@@ -238,11 +241,9 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper3(
 
 SynthonSpaceSearch::SearchResults rascalSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const nb::object &py_rascalOptions,
+    const RascalMCES::RascalOptions &rascalOptions,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
-  RascalMCES::RascalOptions rascalOptions =
-      nb::cast<RascalMCES::RascalOptions>(py_rascalOptions);
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
@@ -259,7 +260,7 @@ SynthonSpaceSearch::SearchResults rascalSearch_helper(
 void rascalSearch_helper2(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const std::optional<RascalMCES::RascalOptions> &py_rascalOptions,
-    nb::object py_callable,
+    const SearchCallback &py_callable,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
   CallbackAdapter callback{py_callable};
@@ -270,12 +271,10 @@ void rascalSearch_helper2(
 
 SynthonSpaceSearch::SearchResults rascalSearch_helper3(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const nb::object &py_rascalOptions,
+    const RascalMCES::RascalOptions &rascalOptions,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params,
     std::uint64_t startLine, std::uint64_t finishLine) {
-  RascalMCES::RascalOptions rascalOptions =
-      nb::cast<RascalMCES::RascalOptions>(py_rascalOptions);
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
@@ -332,12 +331,9 @@ void reportSynthonUsage_helper(const SynthonSpaceSearch::SynthonSpace &self) {
 
 void convertTextToDBFile_helper(
     const std::filesystem::path &inFilename,
-    const std::filesystem::path &outFilename, nb::object fpGen,
+    const std::filesystem::path &outFilename,
+    const FingerprintGenerator<std::uint64_t> *fpGen,
     const std::optional<SynthonSpaceSearch::ShapeBuildParams> &py_shapeParams) {
-  const FingerprintGenerator<std::uint64_t> *fpGenCpp = nullptr;
-  if (!fpGen.is_none()) {
-    fpGenCpp = nb::cast<FingerprintGenerator<std::uint64_t> *>(fpGen);
-  }
   std::optional<SynthonSpaceSearch::ShapeBuildParams> shapeParams;
   if (py_shapeParams) {
     shapeParams = *py_shapeParams;
@@ -345,7 +341,7 @@ void convertTextToDBFile_helper(
 
   bool cancelled = false;
   SynthonSpaceSearch::convertTextToDBFile(
-      inFilename.string(), outFilename.string(), cancelled, fpGenCpp,
+      inFilename.string(), outFilename.string(), cancelled, fpGen,
       shapeParams ? &(*shapeParams) : nullptr);
   if (cancelled) {
     throwCancelled("Database conversion cancelled");
@@ -382,7 +378,7 @@ void buildShapes_helper(
 }
 
 void setUserConfGen_helper(SynthonSpaceSearch::ShapeBuildParams &ps,
-                           nb::object func) {
+                           ConformerGenerator func) {
   ps.userConformerGenerator =
       [func = std::move(func)](
           const std::string &smiles,
@@ -401,7 +397,7 @@ void setUserConfGen_helper(SynthonSpaceSearch::ShapeBuildParams &ps,
 }
 
 void setUserConfGen_helper2(SynthonSpaceSearch::SynthonSpaceSearchParams &ps,
-                            nb::object func) {
+                            ConformerGenerator func) {
   ps.userConformerGenerator =
       [func = std::move(func)](
           const std::string &smiles,
@@ -422,6 +418,12 @@ void setUserConfGen_helper2(SynthonSpaceSearch::SynthonSpaceSearchParams &ps,
 }  // namespace
 
 NB_MODULE(rdSynthonSpaceSearch, m) {
+  nb::module_::import_("rdkit.Chem.rdEnumerateStereoisomers");
+  nb::module_::import_("rdkit.Chem.rdFingerprintGenerator");
+  nb::module_::import_("rdkit.Chem.rdGaussianShape");
+  nb::module_::import_("rdkit.Chem.rdGeneralizedSubstruct");
+  nb::module_::import_("rdkit.Chem.rdRascalMCES");
+
   m.doc() =
       R"DOC(Module containing implementation of SynthonSpace search of
 Synthon-based chemical libraries such as Enamine REAL.
@@ -620,7 +622,8 @@ use 7 threads.  Default=1.)DOC")
  conformer generator to generate conformers for the synthons.  The function should
  take a SMILES string and the maximum number of conformers to generated and
  return a molecule object.)DOC")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<SynthonSpaceSearch::ShapeBuildParams>(
       m, "ShapeBuildParams",
@@ -680,7 +683,8 @@ use 7 threads.  Default=1.)DOC")
  conformer generator to generate conformers for the synthons.  The function should
  take a SMILES string and the maximum number of conformers to generated and
  return a molecule object.)DOC")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<SynthonSpaceSearch::SynthonSpace>(m, "SynthonSpace",
                                                "SynthonSpaceSearch object.")
@@ -738,7 +742,7 @@ used to create this space.)DOC")
 extended query.)DOC")
       .def(
           "SubstructureSearch", &substructureSearch_helper4, "query"_a,
-          "substructMatchParams"_a = nb::none(), "params"_a = nb::none(),
+          nb::arg("substructMatchParams").none(), nb::arg("params").none(),
           "startLine"_a, "finishLine"_a,
           R"DOC(Take the contents of params.possibleHitsFile, which is assumed to have
 been written by an earlier search, and extract those that are indeed
@@ -746,9 +750,15 @@ hits.  It makes sense that params is the same as the one used to
 generate the possible hits, but this is not essential.  You could search
 at a higher similarity threshold than used to create the possible hits,
 for example.)DOC")
+      // A Python signature cannot put required parameters after defaulted
+      // ones, so a line range passed by keyword, with the parameters before it
+      // left out, is a separate overload.
+      .def("SubstructureSearch", &substructureSearch_helper4, "query"_a,
+           "substructMatchParams"_a = nb::none(), "params"_a = nb::none(),
+           nb::kw_only(), "startLine"_a, "finishLine"_a)
       .def(
           "SubstructureSearch", &substructureSearch_helper5, "query"_a,
-          "substructMatchParams"_a = nb::none(), "params"_a = nb::none(),
+          nb::arg("substructMatchParams").none(), nb::arg("params").none(),
           "startLine"_a, "finishLine"_a,
           R"DOC(Take the contents of params.possibleHitsFile, which is assumed to have
 been written by an earlier search, and extract those that are indeed
@@ -756,6 +766,12 @@ hits.  It makes sense that params is the same as the one used to
 generate the possible hits, but this is not essential.  You could search
 at a higher similarity threshold than used to create the possible hits,
 for example.)DOC")
+      // A Python signature cannot put required parameters after defaulted
+      // ones, so a line range passed by keyword, with the parameters before it
+      // left out, is a separate overload.
+      .def("SubstructureSearch", &substructureSearch_helper5, "query"_a,
+           "substructMatchParams"_a = nb::none(), "params"_a = nb::none(),
+           nb::kw_only(), "startLine"_a, "finishLine"_a)
       .def(
           "SubstructureSearchIncremental", &substructureSearch_helper3,
           "query"_a, "callback"_a, "substructMatchParams"_a = nb::none(),

@@ -503,8 +503,8 @@ class PyMCSParameters {
 // -------------------------------------------------------------------
 // FindMCS wrappers
 // -------------------------------------------------------------------
-MCSResult *FindMCSWrapper(nb::object mols, bool maximizeBonds, double threshold,
-                          unsigned int timeout, bool verbose,
+MCSResult *FindMCSWrapper(const PySequenceOf<ROMol> &mols, bool maximizeBonds,
+                          double threshold, unsigned int timeout, bool verbose,
                           bool matchValences, bool ringMatchesRingOnly,
                           bool completeRingsOnly, bool matchChiralTag,
                           AtomComparator atomComp, BondComparator bondComp,
@@ -545,7 +545,8 @@ MCSResult *FindMCSWrapper(nb::object mols, bool maximizeBonds, double threshold,
   return res;
 }
 
-MCSResult *FindMCSWrapper2(nb::object mols, PyMCSParameters &pyMcsParams) {
+MCSResult *FindMCSWrapper2(const PySequenceOf<ROMol> &mols,
+                           PyMCSParameters &pyMcsParams) {
   std::vector<ROMOL_SPTR> ms;
   unsigned int nElems = nb::len(mols);
   ms.resize(nElems);
@@ -576,7 +577,10 @@ NB_MODULE(rdFMCS, m) {
       .def_ro("numBonds", &RDKit::MCSResult::NumBonds, "number of bonds in MCS")
       .def_prop_ro(
           "queryMol",
-          [](const RDKit::MCSResult &self) { return toStd(self.QueryMol); },
+          [](const RDKit::MCSResult &self)
+              -> Nullable<std::shared_ptr<RDKit::ROMol>> {
+            return toStd(self.QueryMol);
+          },
           "query molecule for the MCS")
       .def_ro("smartsString", &RDKit::MCSResult::SmartsString,
               "SMARTS string for the MCS")
@@ -690,7 +694,8 @@ user-defined subclass of rdFMCS.MCSAcceptance)DOC")
       .def_prop_rw("StoreAll", &RDKit::PyMCSParameters::getStoreAll,
                    &RDKit::PyMCSParameters::setStoreAll,
                    "toggles storage of degenerate MCSs")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   // MCSAtomCompareParameters
   nb::class_<RDKit::MCSAtomCompareParameters>(
@@ -715,7 +720,8 @@ user-defined subclass of rdFMCS.MCSAcceptance)DOC")
               "results cannot include lone ring atoms")
       .def_rw("MatchIsotope", &RDKit::MCSAtomCompareParameters::MatchIsotope,
               "use isotope atom queries in MCSResults")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   // MCSBondCompareParameters
   nb::class_<RDKit::MCSBondCompareParameters>(
@@ -740,7 +746,8 @@ must be the same in both query and target, i.e. decalin
 won't match cyclodecane)DOC")
       .def_rw("MatchStereo", &RDKit::MCSBondCompareParameters::MatchStereo,
               "include bond stereo in the comparison")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   // MCSProgressData
   nb::class_<RDKit::PyMCSProgressData>(m, "MCSProgressData",

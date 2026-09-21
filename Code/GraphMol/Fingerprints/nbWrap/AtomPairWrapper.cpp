@@ -23,19 +23,19 @@ namespace AtomPairWrapper {
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getAtomPairGenerator(
     unsigned int minDistance, unsigned int maxDistance, bool includeChirality,
-    bool use2D, bool countSimulation, nb::object py_countBounds,
-    std::uint32_t fpSize, nb::object py_atomInvGen) {
+    bool use2D, bool countSimulation,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_countBounds,
+    std::uint32_t fpSize, AtomInvariantsGenerator *py_atomInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
 
-  if (!py_atomInvGen.is_none()) {
-    atomInvariantsGenerator =
-        nb::cast<AtomInvariantsGenerator *>(py_atomInvGen)->clone();
+  if (py_atomInvGen) {
+    atomInvariantsGenerator = py_atomInvGen->clone();
   }
 
   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
-  if (!py_countBounds.is_none()) {
+  if (py_countBounds) {
     countBounds.clear();
-    for (auto item : py_countBounds) {
+    for (auto item : *py_countBounds) {
       countBounds.push_back(nb::cast<std::uint32_t>(item));
     }
   }

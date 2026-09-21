@@ -15,13 +15,15 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolChemicalFeatures/MolChemicalFeature.h>
 #include <GraphMol/MolChemicalFeatures/MolChemicalFeatureFactory.h>
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
-nb::list GetAtomMatch(nb::object featMatch, int maxAts = 1024) {
+nb::list GetAtomMatch(const PySequenceOf<MolChemicalFeature> &featMatch,
+                      int maxAts = 1024) {
   nb::list res;
   auto nEntries = nb::len(featMatch);
 

@@ -103,14 +103,15 @@ void wrap_point(nb::module_ &m) {
            "Normalize the vector (using L2 norm)")
       .def("Length", &Point2D::length, "Length of the vector")
       .def("LengthSq", &Point2D::lengthSq, "Square of the length")
-      .def("DotProduct", &Point2D::dotProduct, "Dot product with another point")
-      .def("AngleTo", &Point2D::angleTo,
+      .def("DotProduct", &Point2D::dotProduct, "other"_a,
+           "Dot product with another point")
+      .def("AngleTo", &Point2D::angleTo, "other"_a,
            "determines the angle between a vector to this point (between 0 "
            "and PI)")
-      .def("SignedAngleTo", &Point2D::signedAngleTo,
+      .def("SignedAngleTo", &Point2D::signedAngleTo, "other"_a,
            "determines the signed angle between a vector to this point "
            "(between 0 and 2*PI)")
-      .def("DirectionVector", &Point2D::directionVector,
+      .def("DirectionVector", &Point2D::directionVector, "other"_a,
            "return a normalized direction vector from this point to another")
       .def("__getstate__",
            [](const Point2D &pt) { return std::make_tuple(pt.x, pt.y); })
@@ -147,16 +148,17 @@ void wrap_point(nb::module_ &m) {
            "Normalize the vector (using L2 norm)")
       .def("Length", &Point3D::length, "Length of the vector")
       .def("LengthSq", &Point3D::lengthSq, "Square of the length")
-      .def("DotProduct", &Point3D::dotProduct, "Dot product with another point")
-      .def("CrossProduct", &Point3D::crossProduct,
+      .def("DotProduct", &Point3D::dotProduct, "other"_a,
+           "Dot product with another point")
+      .def("CrossProduct", &Point3D::crossProduct, "other"_a,
            "Get the cross product between two points")
-      .def("AngleTo", &Point3D::angleTo,
+      .def("AngleTo", &Point3D::angleTo, "other"_a,
            "determines the angle between a vector to this point (between 0 "
            "and PI)")
-      .def("SignedAngleTo", &Point3D::signedAngleTo,
+      .def("SignedAngleTo", &Point3D::signedAngleTo, "other"_a,
            "determines the signed angle between a vector to this point "
            "(between 0 and 2*PI)")
-      .def("DirectionVector", &Point3D::directionVector,
+      .def("DirectionVector", &Point3D::directionVector, "other"_a,
            "return a normalized direction vector from this point to another")
       .def(
           "Distance",
@@ -200,14 +202,15 @@ void wrap_point(nb::module_ &m) {
            "Normalize the vector (using L2 norm)")
       .def("Length", &PointND::length, "Length of the vector")
       .def("LengthSq", &PointND::lengthSq, "Square of the length")
-      .def("DotProduct", &PointND::dotProduct, "Dot product with another point")
-      .def("AngleTo", &PointND::angleTo,
+      .def("DotProduct", &PointND::dotProduct, "other"_a,
+           "Dot product with another point")
+      .def("AngleTo", &PointND::angleTo, "other"_a,
            "determines the angle between a vector to this point (between 0 "
            "and PI)")
       // .def("SignedAngleTo", &PointND::signedAngleTo,
       //      "determines the signed angle between a vector to this point "
       //      "(between 0 and 2*PI)")
-      .def("DirectionVector", &PointND::directionVector,
+      .def("DirectionVector", &PointND::directionVector, "other"_a,
            "return a normalized direction vector from this point to another")
       .def("__getstate__",
            [](const PointND &pt) {

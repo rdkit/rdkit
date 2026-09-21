@@ -10,6 +10,7 @@
 #define NO_IMPORT_ARRAY
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 
 #include <memory>
@@ -19,6 +20,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <RDBoost/python_streambuf_nb.h>
 #include <RDGeneral/FileParseException.h>
+#include <RDBoost/Wrap_nb.h>
 #include "ContextManagers.h"
 
 namespace nb = nanobind;
@@ -43,9 +45,9 @@ class LocalMaeMolSupplier : public RDKit::MaeMolSupplier {
         new RDKit::v2::FileParsers::MaeMolSupplier(inStream, owner, params));
   }
 
-  LocalMaeMolSupplier(const std::string &fname, bool sanitize = true,
+  LocalMaeMolSupplier(const std::filesystem::path &fname, bool sanitize = true,
                       bool removeHs = true)
-      : RDKit::MaeMolSupplier(fname, sanitize, removeHs) {}
+      : RDKit::MaeMolSupplier(fname.string(), sanitize, removeHs) {}
 
  private:
   std::unique_ptr<streambuf> dp_streambuf = nullptr;
@@ -54,7 +56,7 @@ class LocalMaeMolSupplier : public RDKit::MaeMolSupplier {
 LocalMaeMolSupplier *FwdMolSupplIter(LocalMaeMolSupplier *self) { return self; }
 
 template <typename T>
-ROMol *MolSupplNext(T *suppl) {
+Nullable<ROMol *> MolSupplNext(T *suppl) {
   ROMol *res = nullptr;
   if (!suppl->atEnd()) {
     try {
@@ -71,7 +73,7 @@ ROMol *MolSupplNext(T *suppl) {
 }
 
 template <typename T>
-ROMol *MolSupplGetItem(T *suppl, int idx) {
+Nullable<ROMol *> MolSupplGetItem(T *suppl, int idx) {
   ROMol *res = nullptr;
   if (idx < 0) {
     idx = static_cast<int>(suppl->length()) + idx;
@@ -123,15 +125,15 @@ struct maemolsup_wrap {
     nb::class_<LocalMaeMolSupplier>(m, "MaeMolSupplier",
                                     maeMolSupplierClassDoc.c_str())
         .def(nb::init<>())
-        .def(nb::init<std::string, bool, bool>(), "filename"_a,
+        .def(nb::init<std::filesystem::path, bool, bool>(), "filename"_a,
              "sanitize"_a = true, "removeHs"_a = true)
         .def(nb::init<nb::object, bool, bool>(), "fileobj"_a,
              "sanitize"_a = true, "removeHs"_a = true)
         .def("__enter__", &MolIOEnter<LocalMaeMolSupplier>,
              nb::rv_policy::reference_internal)
-        .def("__exit__",
-             &MolIOExit < LocalMaeMolSupplier >, "excType"_a = nb::none(),
-             "excValue"_a = nb::none(), "traceback"_a = nb::none())
+        .def("__exit__", &MolIOExit<LocalMaeMolSupplier>,
+             "excType"_a = nb::none(), "excValue"_a = nb::none(),
+             "traceback"_a = nb::none())
         .def("__iter__", &FwdMolSupplIter, nb::rv_policy::reference_internal)
         .def(
             "__next__", &MolSupplNext<LocalMaeMolSupplier>,
@@ -144,8 +146,14 @@ struct maemolsup_wrap {
              R"DOC(Resets our position in the file to the beginning.
 )DOC")
         .def("__len__", &MaeMolSupplier::length)
-        .def("SetData", &MaeMolSupplier::setData, "data"_a, "sanitize"_a = true,
-             "removeHs"_a = true, R"DOC(Sets the text to be parsed.)DOC")
+        .def(
+            "SetData",
+            [](LocalMaeMolSupplier &self, const StringOrBytes &data,
+               bool sanitize, bool removeHs) {
+              self.setData(pyObjectToString(data), sanitize, removeHs);
+            },
+            "data"_a, "sanitize"_a = true, "removeHs"_a = true,
+            R"DOC(Sets the text to be parsed.)DOC")
         .def("atEnd", &MaeMolSupplier::atEnd,
              R"DOC(Returns whether or not we have hit EOF.
 )DOC");

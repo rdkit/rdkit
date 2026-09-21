@@ -9,6 +9,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/shared_ptr.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 
 #include <fstream>
@@ -27,11 +28,13 @@ void wrap_factory(nb::module_ &m);
 void wrap_ChemicalFeatureUtils(nb::module_ &m);
 
 namespace {
-MolChemicalFeatureFactory *buildFeatFactory(const std::string &fileName) {
-  std::ifstream inStream(fileName);
+MolChemicalFeatureFactory *buildFeatFactory(
+    const std::filesystem::path &fileName) {
+  std::ifstream inStream(fileName.string());
   if (!inStream.is_open()) {
-    PyErr_SetString(PyExc_IOError,
-                    ("File: " + fileName + " could not be opened.").c_str());
+    PyErr_SetString(
+        PyExc_IOError,
+        ("File: " + fileName.string() + " could not be opened.").c_str());
     throw nb::python_error();
   }
   return buildFeatureFactory(static_cast<std::istream &>(inStream));

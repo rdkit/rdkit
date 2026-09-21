@@ -9,12 +9,16 @@
 //
 
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/vector.h>
+#include <RDBoost/Wrap_nb.h>
 #include <string>
 #include <numpy/npy_common.h>
 #include <numpy/ndarrayobject.h>
 #include <RDBoost/import_array.h>
+#include <RDBoost/Wrap_nb.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/nbWrap/AtomPairWrapper.cpp>
@@ -36,23 +40,20 @@ namespace RDKit {
 namespace FingerprintWrapper {
 
 void convertPyArguments(
-    nb::object py_fromAtoms, nb::object py_ignoreAtoms, nb::object py_atomInvs,
-    nb::object py_bondInvs,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_fromAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_ignoreAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_atomInvs,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_bondInvs,
     std::unique_ptr<std::vector<std::uint32_t>> &fromAtoms,
     std::unique_ptr<std::vector<std::uint32_t>> &ignoreAtoms,
     std::unique_ptr<std::vector<std::uint32_t>> &customAtomInvariants,
     std::unique_ptr<std::vector<std::uint32_t>> &customBondInvariants) {
-  auto convert = [](nb::object obj,
+  // an empty sequence is treated like None
+  auto convert = [](const std::optional<PyIterableOf<std::uint32_t>> &obj,
                     std::unique_ptr<std::vector<std::uint32_t>> &vec) {
-    if (!obj.is_none()) {
-      size_t len = nb::len(obj);
-      if (len) {
-        vec.reset(new std::vector<std::uint32_t>());
-        vec->reserve(len);
-        for (auto item : obj) {
-          vec->push_back(nb::cast<std::uint32_t>(item));
-        }
-      }
+    vec = pythonObjectToVect<std::uint32_t>(obj);
+    if (vec && vec->empty()) {
+      vec.reset();
     }
   };
   convert(py_fromAtoms, fromAtoms);
@@ -64,9 +65,12 @@ void convertPyArguments(
 template <typename OutputType>
 SparseIntVect<OutputType> *getSparseCountFingerprint(
     const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
-    nb::object py_fromAtoms, nb::object py_ignoreAtoms, const int confId,
-    nb::object py_atomInvs, nb::object py_bondInvs,
-    nb::object py_additionalOutput) {
+    const std::optional<PyIterableOf<std::uint32_t>> &py_fromAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_ignoreAtoms,
+    const int confId,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_atomInvs,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_bondInvs,
+    AdditionalOutput *additionalOutput) {
   std::unique_ptr<std::vector<std::uint32_t>> fromAtoms;
   std::unique_ptr<std::vector<std::uint32_t>> ignoreAtoms;
   std::unique_ptr<std::vector<std::uint32_t>> customAtomInvariants;
@@ -75,10 +79,6 @@ SparseIntVect<OutputType> *getSparseCountFingerprint(
   convertPyArguments(py_fromAtoms, py_ignoreAtoms, py_atomInvs, py_bondInvs,
                      fromAtoms, ignoreAtoms, customAtomInvariants,
                      customBondInvariants);
-  AdditionalOutput *additionalOutput = nullptr;
-  if (!py_additionalOutput.is_none()) {
-    additionalOutput = nb::cast<AdditionalOutput *>(py_additionalOutput);
-  }
 
   FingerprintFuncArguments args(fromAtoms.get(), ignoreAtoms.get(), confId,
                                 additionalOutput, customAtomInvariants.get(),
@@ -91,9 +91,12 @@ SparseIntVect<OutputType> *getSparseCountFingerprint(
 template <typename OutputType>
 SparseBitVect *getSparseFingerprint(
     const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
-    nb::object py_fromAtoms, nb::object py_ignoreAtoms, const int confId,
-    nb::object py_atomInvs, nb::object py_bondInvs,
-    nb::object py_additionalOutput) {
+    const std::optional<PyIterableOf<std::uint32_t>> &py_fromAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_ignoreAtoms,
+    const int confId,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_atomInvs,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_bondInvs,
+    AdditionalOutput *additionalOutput) {
   std::unique_ptr<std::vector<std::uint32_t>> fromAtoms;
   std::unique_ptr<std::vector<std::uint32_t>> ignoreAtoms;
   std::unique_ptr<std::vector<std::uint32_t>> customAtomInvariants;
@@ -101,10 +104,6 @@ SparseBitVect *getSparseFingerprint(
   convertPyArguments(py_fromAtoms, py_ignoreAtoms, py_atomInvs, py_bondInvs,
                      fromAtoms, ignoreAtoms, customAtomInvariants,
                      customBondInvariants);
-  AdditionalOutput *additionalOutput = nullptr;
-  if (!py_additionalOutput.is_none()) {
-    additionalOutput = nb::cast<AdditionalOutput *>(py_additionalOutput);
-  }
 
   FingerprintFuncArguments args(fromAtoms.get(), ignoreAtoms.get(), confId,
                                 additionalOutput, customAtomInvariants.get(),
@@ -117,9 +116,12 @@ SparseBitVect *getSparseFingerprint(
 template <typename OutputType>
 SparseIntVect<std::uint32_t> *getCountFingerprint(
     const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
-    nb::object py_fromAtoms, nb::object py_ignoreAtoms, const int confId,
-    nb::object py_atomInvs, nb::object py_bondInvs,
-    nb::object py_additionalOutput) {
+    const std::optional<PyIterableOf<std::uint32_t>> &py_fromAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_ignoreAtoms,
+    const int confId,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_atomInvs,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_bondInvs,
+    AdditionalOutput *additionalOutput) {
   std::unique_ptr<std::vector<std::uint32_t>> fromAtoms;
   std::unique_ptr<std::vector<std::uint32_t>> ignoreAtoms;
   std::unique_ptr<std::vector<std::uint32_t>> customAtomInvariants;
@@ -127,10 +129,6 @@ SparseIntVect<std::uint32_t> *getCountFingerprint(
   convertPyArguments(py_fromAtoms, py_ignoreAtoms, py_atomInvs, py_bondInvs,
                      fromAtoms, ignoreAtoms, customAtomInvariants,
                      customBondInvariants);
-  AdditionalOutput *additionalOutput = nullptr;
-  if (!py_additionalOutput.is_none()) {
-    additionalOutput = nb::cast<AdditionalOutput *>(py_additionalOutput);
-  }
 
   FingerprintFuncArguments args(fromAtoms.get(), ignoreAtoms.get(), confId,
                                 additionalOutput, customAtomInvariants.get(),
@@ -141,11 +139,14 @@ SparseIntVect<std::uint32_t> *getCountFingerprint(
 }
 
 template <typename OutputType>
-ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
-                                const ROMol &mol, nb::object py_fromAtoms,
-                                nb::object py_ignoreAtoms, const int confId,
-                                nb::object py_atomInvs, nb::object py_bondInvs,
-                                nb::object py_additionalOutput) {
+ExplicitBitVect *getFingerprint(
+    const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_fromAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_ignoreAtoms,
+    const int confId,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_atomInvs,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_bondInvs,
+    AdditionalOutput *additionalOutput) {
   std::unique_ptr<std::vector<std::uint32_t>> fromAtoms;
   std::unique_ptr<std::vector<std::uint32_t>> ignoreAtoms;
   std::unique_ptr<std::vector<std::uint32_t>> customAtomInvariants;
@@ -153,10 +154,6 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
   convertPyArguments(py_fromAtoms, py_ignoreAtoms, py_atomInvs, py_bondInvs,
                      fromAtoms, ignoreAtoms, customAtomInvariants,
                      customBondInvariants);
-  AdditionalOutput *additionalOutput = nullptr;
-  if (!py_additionalOutput.is_none()) {
-    additionalOutput = nb::cast<AdditionalOutput *>(py_additionalOutput);
-  }
 
   FingerprintFuncArguments args(fromAtoms.get(), ignoreAtoms.get(), confId,
                                 additionalOutput, customAtomInvariants.get(),
@@ -166,8 +163,19 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
   return result.release();
 }
 
+//! A tuple whose elements are all of type \c T.
+
+//! A list whose elements are all of type \c T.
+
+//! A one-dimensional NumPy array with element type \c T.
+template <typename T>
+using NumPyArrayOf =
+    nb::typed<nb::object, nb::ndarray<T, nb::numpy, nb::ndim<1>>>;
+
 template <typename ReturnType, typename FuncType>
-nb::tuple mtgetFingerprints(FuncType func, nb::object mols, int numThreads) {
+PyTupleOf<ReturnType> mtgetFingerprints(FuncType func,
+                                        const PyIterableOf<ROMol> &mols,
+                                        int numThreads) {
   std::vector<const ROMol *> tmols;
   for (auto item : mols) {
     tmols.push_back(nb::cast<const ROMol *>(item));
@@ -182,12 +190,13 @@ nb::tuple mtgetFingerprints(FuncType func, nb::object mols, int numThreads) {
   for (auto &fp : fps) {
     result.append(nb::cast(fp.release(), nb::rv_policy::take_ownership));
   }
-  return nb::tuple(result);
+  return PyTupleOf<ReturnType>(nb::tuple(result));
 }
 
 template <typename OutputType>
-nb::tuple getFingerprints(const FingerprintGenerator<OutputType> *fpGen,
-                          nb::object mols, int numThreads) {
+PyTupleOf<ExplicitBitVect> getFingerprints(
+    const FingerprintGenerator<OutputType> *fpGen,
+    const PyIterableOf<ROMol> &mols, int numThreads) {
   auto fpfunc = [&fpGen](const std::vector<const ROMol *> &tmols,
                          int numThreads) {
     return fpGen->getFingerprints(tmols, numThreads);
@@ -197,8 +206,9 @@ nb::tuple getFingerprints(const FingerprintGenerator<OutputType> *fpGen,
 }
 
 template <typename OutputType>
-nb::tuple getCountFingerprints(const FingerprintGenerator<OutputType> *fpGen,
-                               nb::object mols, int numThreads) {
+PyTupleOf<SparseIntVect<std::uint32_t>> getCountFingerprints(
+    const FingerprintGenerator<OutputType> *fpGen,
+    const PyIterableOf<ROMol> &mols, int numThreads) {
   auto fpfunc = [&fpGen](const std::vector<const ROMol *> &tmols,
                          int numThreads) {
     return fpGen->getCountFingerprints(tmols, numThreads);
@@ -208,8 +218,9 @@ nb::tuple getCountFingerprints(const FingerprintGenerator<OutputType> *fpGen,
 }
 
 template <typename OutputType>
-nb::tuple getSparseFingerprints(const FingerprintGenerator<OutputType> *fpGen,
-                                nb::object mols, int numThreads) {
+PyTupleOf<SparseBitVect> getSparseFingerprints(
+    const FingerprintGenerator<OutputType> *fpGen,
+    const PyIterableOf<ROMol> &mols, int numThreads) {
   auto fpfunc = [&fpGen](const std::vector<const ROMol *> &tmols,
                          int numThreads) {
     return fpGen->getSparseFingerprints(tmols, numThreads);
@@ -219,9 +230,9 @@ nb::tuple getSparseFingerprints(const FingerprintGenerator<OutputType> *fpGen,
 }
 
 template <typename OutputType>
-nb::tuple getSparseCountFingerprints(
-    const FingerprintGenerator<OutputType> *fpGen, nb::object mols,
-    int numThreads) {
+PyTupleOf<SparseIntVect<OutputType>> getSparseCountFingerprints(
+    const FingerprintGenerator<OutputType> *fpGen,
+    const PyIterableOf<ROMol> &mols, int numThreads) {
   auto fpfunc = [&fpGen](const std::vector<const ROMol *> &tmols,
                          int numThreads) {
     return fpGen->getSparseCountFingerprints(tmols, numThreads);
@@ -231,14 +242,17 @@ nb::tuple getSparseCountFingerprints(
 }
 
 template <typename OutputType>
-nb::object getNumPyFingerprint(const FingerprintGenerator<OutputType> *fpGen,
-                               const ROMol &mol, nb::object py_fromAtoms,
-                               nb::object py_ignoreAtoms, const int confId,
-                               nb::object py_atomInvs, nb::object py_bondInvs,
-                               nb::object py_additionalOutput) {
+NumPyArrayOf<std::uint8_t> getNumPyFingerprint(
+    const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_fromAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_ignoreAtoms,
+    const int confId,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_atomInvs,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_bondInvs,
+    AdditionalOutput *additionalOutput) {
   std::unique_ptr<ExplicitBitVect> ebv{
       getFingerprint(fpGen, mol, py_fromAtoms, py_ignoreAtoms, confId,
-                     py_atomInvs, py_bondInvs, py_additionalOutput)};
+                     py_atomInvs, py_bondInvs, additionalOutput)};
 
   npy_intp size[1] = {static_cast<npy_intp>(ebv->size())};
   PyObject *arr = PyArray_ZEROS(1, size, NPY_UINT8, 0);
@@ -251,18 +265,21 @@ nb::object getNumPyFingerprint(const FingerprintGenerator<OutputType> *fpGen,
     }
   }
   Py_DECREF(one);
-  return nb::steal<nb::object>(arr);
+  return NumPyArrayOf<std::uint8_t>(nb::steal<nb::object>(arr));
 }
 
 template <typename OutputType>
-nb::object getNumPyCountFingerprint(
+NumPyArrayOf<std::uint32_t> getNumPyCountFingerprint(
     const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
-    nb::object py_fromAtoms, nb::object py_ignoreAtoms, const int confId,
-    nb::object py_atomInvs, nb::object py_bondInvs,
-    nb::object py_additionalOutput) {
+    const std::optional<PyIterableOf<std::uint32_t>> &py_fromAtoms,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_ignoreAtoms,
+    const int confId,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_atomInvs,
+    const std::optional<PyIterableOf<std::uint32_t>> &py_bondInvs,
+    AdditionalOutput *additionalOutput) {
   std::unique_ptr<SparseIntVect<uint32_t>> fp{
       getCountFingerprint(fpGen, mol, py_fromAtoms, py_ignoreAtoms, confId,
-                          py_atomInvs, py_bondInvs, py_additionalOutput)};
+                          py_atomInvs, py_bondInvs, additionalOutput)};
 
   npy_intp size[1] = {static_cast<npy_intp>(fp->size())};
   PyObject *arr = PyArray_ZEROS(1, size, NPY_UINT32, 0);
@@ -276,21 +293,22 @@ nb::object getNumPyCountFingerprint(
       Py_DECREF(val);
     }
   }
-  return nb::steal<nb::object>(arr);
+  return NumPyArrayOf<std::uint32_t>(nb::steal<nb::object>(arr));
 }
 
 const std::vector<const ROMol *> convertPyArgumentsForBulk(
-    nb::object py_molVect) {
+    const std::optional<PyIterableOf<ROMol>> &py_molVect) {
   std::vector<const ROMol *> molVect;
-  if (!py_molVect.is_none()) {
-    for (auto item : py_molVect) {
+  if (py_molVect) {
+    for (auto item : *py_molVect) {
       molVect.push_back(nb::cast<const ROMol *>(item));
     }
   }
   return molVect;
 }
 
-nb::list getSparseCountFPBulkPy(nb::object py_molVect, FPType fPType) {
+PyListOf<SparseIntVect<std::uint64_t>> getSparseCountFPBulkPy(
+    const std::optional<PyIterableOf<ROMol>> &py_molVect, FPType fPType) {
   const auto molVect = convertPyArgumentsForBulk(py_molVect);
   auto tempResult = getSparseCountFPBulk(molVect, fPType);
   nb::list result;
@@ -299,10 +317,11 @@ nb::list getSparseCountFPBulkPy(nb::object py_molVect, FPType fPType) {
     result.append(nb::cast(it, nb::rv_policy::take_ownership));
   }
   delete tempResult;
-  return result;
+  return PyListOf<SparseIntVect<std::uint64_t>>(result);
 }
 
-nb::list getSparseFPBulkPy(nb::object py_molVect, FPType fpType) {
+PyListOf<SparseBitVect> getSparseFPBulkPy(
+    const std::optional<PyIterableOf<ROMol>> &py_molVect, FPType fpType) {
   const std::vector<const ROMol *> molVect =
       convertPyArgumentsForBulk(py_molVect);
   auto tempResult = getSparseFPBulk(molVect, fpType);
@@ -312,10 +331,11 @@ nb::list getSparseFPBulkPy(nb::object py_molVect, FPType fpType) {
     result.append(nb::cast(it, nb::rv_policy::take_ownership));
   }
   delete tempResult;
-  return result;
+  return PyListOf<SparseBitVect>(result);
 }
 
-nb::list getCountFPBulkPy(nb::object py_molVect, FPType fPType) {
+PyListOf<SparseIntVect<std::uint32_t>> getCountFPBulkPy(
+    const std::optional<PyIterableOf<ROMol>> &py_molVect, FPType fPType) {
   const std::vector<const ROMol *> molVect =
       convertPyArgumentsForBulk(py_molVect);
   auto tempResult = getCountFPBulk(molVect, fPType);
@@ -325,10 +345,11 @@ nb::list getCountFPBulkPy(nb::object py_molVect, FPType fPType) {
     result.append(nb::cast(it, nb::rv_policy::take_ownership));
   }
   delete tempResult;
-  return result;
+  return PyListOf<SparseIntVect<std::uint32_t>>(result);
 }
 
-nb::list getFPBulkPy(nb::object py_molVect, FPType fPType) {
+PyListOf<ExplicitBitVect> getFPBulkPy(
+    const std::optional<PyIterableOf<ROMol>> &py_molVect, FPType fPType) {
   const std::vector<const ROMol *> molVect =
       convertPyArgumentsForBulk(py_molVect);
   auto tempResult = getFPBulk(molVect, fPType);
@@ -338,7 +359,7 @@ nb::list getFPBulkPy(nb::object py_molVect, FPType fPType) {
     result.append(nb::cast(it, nb::rv_policy::take_ownership));
   }
   delete tempResult;
-  return result;
+  return PyListOf<ExplicitBitVect>(result);
 }
 
 nb::object getAtomCountsHelper(const AdditionalOutput &ao) {
@@ -657,7 +678,8 @@ NB_MODULE(rdFingerprintGenerator, m) {
               "number of bits to set for each feature")
       .def(
           "SetCountBounds",
-          [](FingerprintArguments &opts, nb::object bounds) {
+          [](FingerprintArguments &opts,
+             const PyIterableOf<std::uint32_t> &bounds) {
             opts.d_countBounds.clear();
             for (auto item : bounds) {
               opts.d_countBounds.push_back(nb::cast<std::uint32_t>(item));
@@ -689,8 +711,8 @@ NB_MODULE(rdFingerprintGenerator, m) {
 
   m.def(
       "FingerprintGeneratorFromJSON",
-      [](const std::string &jsonStr) {
-        return generatorFromJSON(jsonStr).release();
+      [](const StringOrBytes &jsonStr) {
+        return generatorFromJSON(pyObjectToString(jsonStr)).release();
       },
       "jsonString"_a, "Deserialize a FingerprintGenerator from a JSON string",
       nb::rv_policy::take_ownership);

@@ -9,6 +9,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Normalize.h>
@@ -29,8 +30,9 @@ void normalizeInPlaceHelper(MolStandardize::Normalizer &self, ROMol &mol) {
 }
 
 MolStandardize::Normalizer *normalizerFromDataAndParams(
-    const std::string &data, const MolStandardize::CleanupParameters &params) {
-  std::istringstream sstr(data);
+    const StringOrBytes &data,
+    const MolStandardize::CleanupParameters &params) {
+  std::istringstream sstr(pyObjectToString(data));
   return new MolStandardize::Normalizer(sstr, params.maxRestarts);
 }
 

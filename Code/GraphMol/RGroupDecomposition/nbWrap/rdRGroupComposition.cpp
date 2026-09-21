@@ -31,6 +31,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <chrono>
@@ -76,20 +77,24 @@ class RGroupDecompositionHelper {
     return decomp->add(mol);
   }
 
-  int GetMatchingCoreIdx(const ROMol &mol, nb::object matches) {
+  int GetMatchingCoreIdx(
+      const ROMol &mol,
+      const std::optional<PyListOf<PyTupleOf<nb::typed<nb::tuple, int, int>>>>
+          &matches) {
     std::vector<MatchVectType> matchVect;
     int coreIdx;
     {
       NOGIL gil;
       coreIdx = decomp->getMatchingCoreIdx(mol, &matchVect);
     }
-    if (!matches.is_none() && nb::isinstance<nb::list>(matches)) {
+    if (matches) {
+      nb::list matchList = *matches;
       for (const auto &match : matchVect) {
         nb::list atomMap;
         for (const auto &pair : match) {
           atomMap.append(nb::make_tuple(pair.first, pair.second));
         }
-        matches.attr("append")(nb::tuple(atomMap));
+        matchList.append(nb::tuple(atomMap));
       }
     }
     return coreIdx;
@@ -155,7 +160,7 @@ class RGroupDecompositionHelper {
   }
 };
 
-nb::object RGroupDecomp(nb::object cores, nb::object mols,
+nb::object RGroupDecomp(nb::object cores, const PyIterableOf<ROMol> &mols,
                         bool asSmiles = false, bool asRows = true,
                         const RGroupDecompositionParameters &options =
                             RGroupDecompositionParameters()) {
@@ -335,7 +340,8 @@ once in the same molecule if the sets of matched atoms are not equal
               &RDKit::RGroupDecompositionParameters::substructmatchParams)
       .def_rw("includeTargetMolInResults",
               &RDKit::RGroupDecompositionParameters::includeTargetMolInResults)
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<RDKit::RGroupDecompositionHelper>(m, "RGroupDecomposition")
       .def(nb::init<nb::object>(), "cores"_a,
