@@ -64,8 +64,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 FAMILIES = ("IC", "TIC", "SIC", "BIC", "CIC")
-MAXRADIUS = rdMD.InformationContentOptions()
-MAXRADIUS.maxradius = 5
+MAXRADIUS = 5
 # The tables carry 6 decimals; allow for the last of them.
 TOL = 2e-5
 
@@ -81,7 +80,7 @@ def _computed(smiles, flavor):
         return None
     opts = rdMD.InformationContentOptions()
     opts.keyFlavor = flavor
-    opts.maxradius = MAXRADIUS.maxradius
+    opts.maxradius = MAXRADIUS
     values = list(rdMD.CalcInformationContent(mol, opts))
     block = MAXRADIUS + 1
     return {
@@ -150,7 +149,9 @@ def test_basak_flavor_matches_the_polly_oracle():
         mol = Chem.MolFromSmiles(row["smiles"])
         if mol is None:
             continue
-        values = list(rdMD.CalcInformationContent(mol, MAXRADIUS))
+        opts = rdMD.InformationContentOptions()
+        opts.maxradius = MAXRADIUS
+        values = list(rdMD.CalcInformationContent(mol, opts))
         for order in range(MAXRADIUS + 1):
             want = float(row[f"IC{order}"])
             got = values[order]
