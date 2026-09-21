@@ -72,7 +72,7 @@ constexpr Params Gaussian = {.distance = 2.15,
                              .fourthDim = 2.15,
                              .kTermAngle = 0.1,
                              .kTermImproper = .001,
-                             .kTermTorsion = .25,
+                             .kTermTorsion = .75,
                              .etTermScaling = 0.05};
 
 }  // namespace AIO
@@ -85,7 +85,7 @@ using GaussianExp_T = std::tuple<std::vector<double>, std::vector<double>,
 using TorsionLookup = std::vector<std::vector<double>>;
 template <typename T>
 concept TorsionAngleType = std::is_same_v<T, ExpTorsionAngle> ||
-    std::is_same_v<T, GaussianExpTorsionAngle>;
+                           std::is_same_v<T, GaussianExpTorsionAngle>;
 
 template <typename T>
 concept TorsionParamType =
