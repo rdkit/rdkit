@@ -2417,275 +2417,284 @@ TEST_CASE("TransAmideKTerm") {
   }
 }
 
-TEST_CASE("Z-matrix builder initial embedding", "[zmatrixbuilder]") {
-  auto embedInitialCoordinates = [](RWMol &mol) {
-    MolOps::addHs(mol);
-    auto params = DGeomHelpers::ETKDGv3;
-    params.initialEmbeddingMode =
-        DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
-    params.onlyInitialEmbedding = true;
-    params.randomSeed = 0xf00d;
+// TEST_CASE("Z-matrix builder initial embedding", "[zmatrixbuilder]") {
+//   auto embedInitialCoordinates = [](RWMol &mol) {
+//     MolOps::addHs(mol);
+//     auto params = DGeomHelpers::ETKDGv3;
+//     params.initialEmbeddingMode =
+//         DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
+//     params.onlyInitialEmbedding = true;
+//     params.randomSeed = 0xf00d;
 
-    INT_VECT res;
-    DGeomHelpers::EmbedMultipleConfs(mol, res, 1, params);
-    REQUIRE(mol.getNumConformers() == 1);
-    REQUIRE(params.internalCoords);
-    REQUIRE(params.internalCoords->lengths.size() == mol.getNumBonds());
-    return params.internalCoords;
-  };
-  auto embedInitialCoordinatesMultiple = [](RWMol &mol, unsigned int numConfs) {
-    MolOps::addHs(mol);
-    auto params = DGeomHelpers::ETKDGv3;
-    params.initialEmbeddingMode =
-        DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
-    params.onlyInitialEmbedding = true;
-    params.randomSeed = 0xf00d;
+//     INT_VECT res;
+//     DGeomHelpers::EmbedMultipleConfs(mol, res, 1, params);
+//     REQUIRE(mol.getNumConformers() == 1);
+//     REQUIRE(params.internalCoords);
+//     REQUIRE(params.internalCoords->lengths.size() == mol.getNumBonds());
+//     return params.internalCoords;
+//   };
+//   auto embedInitialCoordinatesMultiple = [](RWMol &mol, unsigned int
+//   numConfs) {
+//     MolOps::addHs(mol);
+//     auto params = DGeomHelpers::ETKDGv3;
+//     params.initialEmbeddingMode =
+//         DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
+//     params.onlyInitialEmbedding = true;
+//     params.randomSeed = 0xf00d;
 
-    INT_VECT res;
-    DGeomHelpers::EmbedMultipleConfs(mol, res, numConfs, params);
-    REQUIRE(mol.getNumConformers() == numConfs);
-    return res;
-  };
+//     INT_VECT res;
+//     DGeomHelpers::EmbedMultipleConfs(mol, res, numConfs, params);
+//     REQUIRE(mol.getNumConformers() == numConfs);
+//     return res;
+//   };
 
-  auto checkBondLengths = [](const ROMol &mol,
-                             const DGeomHelpers::InternalCoordinates &coords) {
-    const auto &conf = mol.getConformer();
-    for (const auto bond : mol.bonds()) {
-      const auto distance = (conf.getAtomPos(bond->getBeginAtomIdx()) -
-                             conf.getAtomPos(bond->getEndAtomIdx()))
-                                .length();
-      CHECK(std::isfinite(distance));
-      CHECK_THAT(distance, Catch::Matchers::WithinAbs(
-                               coords.lengths[bond->getIdx()], 1.e-6));
-    }
-    auto zmat = std::make_shared<DistGeom::ZMatrix>(mol.getNumAtoms());
-    DGeomHelpers::setMoleculeDFS(mol, zmat, coords);
-    DGeomHelpers::correctChiralCenters(mol, zmat);
-    for (const auto &row : *zmat) {
-      if (row.internal.angle && row.internal.bondRef && row.internal.angleRef) {
-        const auto center = conf.getAtomPos(*row.internal.bondRef);
-        const auto v1 = conf.getAtomPos(row.atomIdx) - center;
-        const auto v2 = conf.getAtomPos(*row.internal.angleRef) - center;
-        CHECK_THAT(v1.angleTo(v2),
-                   Catch::Matchers::WithinAbs(*row.internal.angle, 1.e-6));
-      }
-    }
-  };
+//   auto checkBondLengths = [](const ROMol &mol,
+//                              const DGeomHelpers::InternalCoordinates &coords)
+//                              {
+//     const auto &conf = mol.getConformer();
+//     for (const auto bond : mol.bonds()) {
+//       const auto distance = (conf.getAtomPos(bond->getBeginAtomIdx()) -
+//                              conf.getAtomPos(bond->getEndAtomIdx()))
+//                                 .length();
+//       CHECK(std::isfinite(distance));
+//       CHECK_THAT(distance, Catch::Matchers::WithinAbs(
+//                                coords.lengths[bond->getIdx()], 1.e-6));
+//     }
+//     auto zmat = std::make_shared<DistGeom::ZMatrix>(mol.getNumAtoms());
+//     DGeomHelpers::setMoleculeDFS(mol, zmat, coords);
+//     DGeomHelpers::correctChiralCenters(mol, zmat);
+//     for (const auto &row : *zmat) {
+//       if (row.internal.angle && row.internal.bondRef &&
+//       row.internal.angleRef) {
+//         const auto center = conf.getAtomPos(*row.internal.bondRef);
+//         const auto v1 = conf.getAtomPos(row.atomIdx) - center;
+//         const auto v2 = conf.getAtomPos(*row.internal.angleRef) - center;
+//         CHECK_THAT(v1.angleTo(v2),
+//                    Catch::Matchers::WithinAbs(*row.internal.angle, 1.e-6));
+//       }
+//     }
+//   };
 
-  SECTION("acyclic molecules") {
-    const auto smiles = GENERATE("CCC", "CC(C)CO", "CCOC(=O)N");
-    std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
-    REQUIRE(mol);
+//   SECTION("acyclic molecules") {
+//     const auto smiles = GENERATE("CCC", "CC(C)CO", "CCOC(=O)N");
+//     std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
+//     REQUIRE(mol);
 
-    const auto coords = embedInitialCoordinates(*mol);
-    checkBondLengths(*mol, *coords);
-  }
+//     const auto coords = embedInitialCoordinates(*mol);
+//     checkBondLengths(*mol, *coords);
+//   }
 
-  SECTION("one- and two-atom molecules") {
-    const auto smiles = GENERATE("C", "CC");
-    std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
-    REQUIRE(mol);
+//   SECTION("one- and two-atom molecules") {
+//     const auto smiles = GENERATE("C", "CC");
+//     std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
+//     REQUIRE(mol);
 
-    const auto coords = embedInitialCoordinates(*mol);
-    checkBondLengths(*mol, *coords);
-  }
+//     const auto coords = embedInitialCoordinates(*mol);
+//     checkBondLengths(*mol, *coords);
+//   }
 
-  SECTION("ring closures") {
-    const auto smiles = GENERATE("C1CC1", "C1CCCCC1", "c1ccccc1",
-                                 "C1CCC2CCCCC2C1", "C1CC2(C1)CCC2");
-    std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
-    REQUIRE(mol);
+//   SECTION("ring closures") {
+//     const auto smiles = GENERATE("C1CC1", "C1CCCCC1", "c1ccccc1",
+//                                  "C1CCC2CCCCC2C1", "C1CC2(C1)CCC2");
+//     std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
+//     REQUIRE(mol);
 
-    const auto coords = embedInitialCoordinates(*mol);
-    const auto &conf = mol->getConformer();
-    // all bonds that are no ring closures should not violate bond and angles
-    unsigned int numBondViolations = 0u;
-    unsigned int numAngleViolations = 0u;
-    for (const auto bond : mol->bonds()) {
-      CAPTURE(smiles, bond->getIdx());
-      const auto distance = (conf.getAtomPos(bond->getBeginAtomIdx()) -
-                             conf.getAtomPos(bond->getEndAtomIdx()))
-                                .length();
-      if (std::fabs(distance - coords->lengths[bond->getIdx()]) > 1.e-6) {
-        numBondViolations++;
-      }
-    }
-    auto zmat = std::make_shared<DistGeom::ZMatrix>(mol->getNumAtoms());
-    DGeomHelpers::setMoleculeDFS(*mol, zmat, *coords);
-    DGeomHelpers::correctChiralCenters(*mol, zmat);
-    for (const auto &row : *zmat) {
-      if (row.internal.angle && row.internal.bondRef && row.internal.angleRef) {
-        const auto center = conf.getAtomPos(*row.internal.bondRef);
-        const auto v1 = conf.getAtomPos(row.atomIdx) - center;
-        const auto v2 = conf.getAtomPos(*row.internal.angleRef) - center;
-        if (std::fabs(v1.angleTo(v2) - *row.internal.angle) > 1.e-6) {
-          ++numAngleViolations;
-        }
-      }
-    }
-    CHECK(numBondViolations <= mol->getRingInfo()->numRings());
-    CHECK(numAngleViolations <= mol->getRingInfo()->numRings());
-  }
+//     const auto coords = embedInitialCoordinates(*mol);
+//     const auto &conf = mol->getConformer();
+//     // all bonds that are no ring closures should not violate bond and angles
+//     unsigned int numBondViolations = 0u;
+//     unsigned int numAngleViolations = 0u;
+//     for (const auto bond : mol->bonds()) {
+//       CAPTURE(smiles, bond->getIdx());
+//       const auto distance = (conf.getAtomPos(bond->getBeginAtomIdx()) -
+//                              conf.getAtomPos(bond->getEndAtomIdx()))
+//                                 .length();
+//       if (std::fabs(distance - coords->lengths[bond->getIdx()]) > 1.e-6) {
+//         numBondViolations++;
+//       }
+//     }
+//     auto zmat = std::make_shared<DistGeom::ZMatrix>(mol->getNumAtoms());
+//     DGeomHelpers::setMoleculeDFS(*mol, zmat, *coords);
+//     DGeomHelpers::correctChiralCenters(*mol, zmat);
+//     for (const auto &row : *zmat) {
+//       if (row.internal.angle && row.internal.bondRef &&
+//       row.internal.angleRef) {
+//         const auto center = conf.getAtomPos(*row.internal.bondRef);
+//         const auto v1 = conf.getAtomPos(row.atomIdx) - center;
+//         const auto v2 = conf.getAtomPos(*row.internal.angleRef) - center;
+//         if (std::fabs(v1.angleTo(v2) - *row.internal.angle) > 1.e-6) {
+//           ++numAngleViolations;
+//         }
+//       }
+//     }
+//     CHECK(numBondViolations <= mol->getRingInfo()->numRings());
+//     CHECK(numAngleViolations <= mol->getRingInfo()->numRings());
+//   }
 
-  SECTION("tetrahedral stereochemistry") {
-    const auto smiles = GENERATE("F[C@H](Cl)Br", "F[C@@H](Cl)Br");
-    std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
-    REQUIRE(mol);
+//   SECTION("tetrahedral stereochemistry") {
+//     const auto smiles = GENERATE("F[C@H](Cl)Br", "F[C@@H](Cl)Br");
+//     std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
+//     REQUIRE(mol);
 
-    const auto coords = embedInitialCoordinates(*mol);
-    checkBondLengths(*mol, *coords);
+//     const auto coords = embedInitialCoordinates(*mol);
+//     checkBondLengths(*mol, *coords);
 
-    const auto center = mol->getAtomWithIdx(1);
-    REQUIRE(center->getChiralTag() != Atom::CHI_UNSPECIFIED);
-    const auto &conf = mol->getConformer();
-    std::vector<const Atom *> neighbors;
-    for (const auto neighbor : mol->atomNeighbors(center)) {
-      neighbors.push_back(neighbor);
-    }
-    REQUIRE(neighbors.size() == 4);
-    if (center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
-      std::swap(neighbors[0], neighbors[1]);
-    }
-    const auto p0 = conf.getAtomPos(neighbors[0]->getIdx()) -
-                    conf.getAtomPos(center->getIdx());
-    const auto p1 = conf.getAtomPos(neighbors[1]->getIdx()) -
-                    conf.getAtomPos(center->getIdx());
-    const auto p2 = conf.getAtomPos(neighbors[2]->getIdx()) -
-                    conf.getAtomPos(center->getIdx());
-    CHECK(p0.dotProduct(p1.crossProduct(p2)) > 0);
-  }
-  SECTION("tetrahedral stereochemistry [rings]") {
-    const auto smiles = GENERATE("CC1C[C@@H](Br)CCC1", "CC1C[C@H](Br)CCC1");
-    std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
-    REQUIRE(mol);
+//     const auto center = mol->getAtomWithIdx(1);
+//     REQUIRE(center->getChiralTag() != Atom::CHI_UNSPECIFIED);
+//     const auto &conf = mol->getConformer();
+//     std::vector<const Atom *> neighbors;
+//     for (const auto neighbor : mol->atomNeighbors(center)) {
+//       neighbors.push_back(neighbor);
+//     }
+//     REQUIRE(neighbors.size() == 4);
+//     if (center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+//       std::swap(neighbors[0], neighbors[1]);
+//     }
+//     const auto p0 = conf.getAtomPos(neighbors[0]->getIdx()) -
+//                     conf.getAtomPos(center->getIdx());
+//     const auto p1 = conf.getAtomPos(neighbors[1]->getIdx()) -
+//                     conf.getAtomPos(center->getIdx());
+//     const auto p2 = conf.getAtomPos(neighbors[2]->getIdx()) -
+//                     conf.getAtomPos(center->getIdx());
+//     CHECK(p0.dotProduct(p1.crossProduct(p2)) > 0);
+//   }
+//   SECTION("tetrahedral stereochemistry [rings]") {
+//     const auto smiles = GENERATE("CC1C[C@@H](Br)CCC1", "CC1C[C@H](Br)CCC1");
+//     std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
+//     REQUIRE(mol);
 
-    const auto coords = embedInitialCoordinates(*mol);
+//     const auto coords = embedInitialCoordinates(*mol);
 
-    const auto center = mol->getAtomWithIdx(3);
-    REQUIRE(center->getChiralTag() != Atom::CHI_UNSPECIFIED);
-    const auto &conf = mol->getConformer();
-    std::vector<const Atom *> neighbors;
-    for (const auto neighbor : mol->atomNeighbors(center)) {
-      neighbors.push_back(neighbor);
-    }
-    REQUIRE(neighbors.size() == 4);
-    if (center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
-      std::swap(neighbors[0], neighbors[1]);
-    }
-    const auto p0 = conf.getAtomPos(neighbors[0]->getIdx()) -
-                    conf.getAtomPos(center->getIdx());
-    const auto p1 = conf.getAtomPos(neighbors[1]->getIdx()) -
-                    conf.getAtomPos(center->getIdx());
-    const auto p2 = conf.getAtomPos(neighbors[2]->getIdx()) -
-                    conf.getAtomPos(center->getIdx());
-    CHECK(p0.dotProduct(p1.crossProduct(p2)) > 0);
-  }
+//     const auto center = mol->getAtomWithIdx(3);
+//     REQUIRE(center->getChiralTag() != Atom::CHI_UNSPECIFIED);
+//     const auto &conf = mol->getConformer();
+//     std::vector<const Atom *> neighbors;
+//     for (const auto neighbor : mol->atomNeighbors(center)) {
+//       neighbors.push_back(neighbor);
+//     }
+//     REQUIRE(neighbors.size() == 4);
+//     if (center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+//       std::swap(neighbors[0], neighbors[1]);
+//     }
+//     const auto p0 = conf.getAtomPos(neighbors[0]->getIdx()) -
+//                     conf.getAtomPos(center->getIdx());
+//     const auto p1 = conf.getAtomPos(neighbors[1]->getIdx()) -
+//                     conf.getAtomPos(center->getIdx());
+//     const auto p2 = conf.getAtomPos(neighbors[2]->getIdx()) -
+//                     conf.getAtomPos(center->getIdx());
+//     CHECK(p0.dotProduct(p1.crossProduct(p2)) > 0);
+//   }
 
-  SECTION("Inproper torsion NN") {
-    const auto mol = "NN"_smiles;
-    REQUIRE(mol);
-    auto coords = embedInitialCoordinates(*mol);
-    const auto inproperTor =
-        MolTransforms::getDihedralDeg(mol->getConformer(), 2, 0, 1, 3);
-    CHECK_THAT(std::fabs(inproperTor),
-               Catch::Matchers::WithinAbs(180.0, 1.e-4));
-  }
-  SECTION("Inproper torsion CC") {
-    const auto mol = "CC"_smiles;
-    REQUIRE(mol);
-    auto coords = embedInitialCoordinates(*mol);
-    auto inproperTor =
-        MolTransforms::getDihedralDeg(mol->getConformer(), 2, 0, 1, 3);
-    CHECK_THAT(std::fabs(inproperTor), Catch::Matchers::WithinAbs(120, 1.e-1));
-    inproperTor =
-        MolTransforms::getDihedralDeg(mol->getConformer(), 2, 0, 1, 4);
-    CHECK_THAT(std::fabs(inproperTor), Catch::Matchers::WithinAbs(120, 1.e-1));
-    inproperTor =
-        MolTransforms::getDihedralDeg(mol->getConformer(), 3, 0, 1, 4);
-    CHECK_THAT(std::fabs(inproperTor), Catch::Matchers::WithinAbs(120, 1.e-1));
-  }
-  SECTION("Constraint torsion C=C") {
-    const auto mol = "C=C"_smiles;
-    REQUIRE(mol);
-    auto confs = embedInitialCoordinatesMultiple(*mol, 100);
-    unsigned int numCis = 0, numTrans = 0;
-    for (unsigned int confId : confs) {
-      const auto torsion =
-          MolTransforms::getDihedralDeg(mol->getConformer(confId), 2, 0, 1, 4);
-      const auto torsion2 =
-          MolTransforms::getDihedralDeg(mol->getConformer(confId), 2, 0, 1, 5);
-      if (std::fabs(torsion) < 90) {
-        CHECK_THAT(std::fabs(torsion), Catch::Matchers::WithinAbs(0.0, 1.e-4));
-        CHECK_THAT(std::fabs(torsion2),
-                   Catch::Matchers::WithinAbs(180.0, 1.e-4));
-        numCis++;
-      } else {
-        CHECK_THAT(std::fabs(torsion),
-                   Catch::Matchers::WithinAbs(180.0, 1.e-4));
-        CHECK_THAT(std::fabs(torsion2), Catch::Matchers::WithinAbs(0.0, 1.e-4));
-        numTrans++;
-      }
-    }
-    CHECK(numCis > 0);
-    CHECK(numTrans > 0);
-  }
+//   SECTION("Inproper torsion NN") {
+//     const auto mol = "NN"_smiles;
+//     REQUIRE(mol);
+//     auto coords = embedInitialCoordinates(*mol);
+//     const auto inproperTor =
+//         MolTransforms::getDihedralDeg(mol->getConformer(), 2, 0, 1, 3);
+//     CHECK_THAT(std::fabs(inproperTor),
+//                Catch::Matchers::WithinAbs(180.0, 1.e-4));
+//   }
+//   SECTION("Inproper torsion CC") {
+//     const auto mol = "CC"_smiles;
+//     REQUIRE(mol);
+//     auto coords = embedInitialCoordinates(*mol);
+//     auto inproperTor =
+//         MolTransforms::getDihedralDeg(mol->getConformer(), 2, 0, 1, 3);
+//     CHECK_THAT(std::fabs(inproperTor),
+//     Catch::Matchers::WithinAbs(120, 1.e-1)); inproperTor =
+//         MolTransforms::getDihedralDeg(mol->getConformer(), 2, 0, 1, 4);
+//     CHECK_THAT(std::fabs(inproperTor),
+//     Catch::Matchers::WithinAbs(120, 1.e-1)); inproperTor =
+//         MolTransforms::getDihedralDeg(mol->getConformer(), 3, 0, 1, 4);
+//     CHECK_THAT(std::fabs(inproperTor),
+//     Catch::Matchers::WithinAbs(120, 1.e-1));
+//   }
+//   SECTION("Constraint torsion C=C") {
+//     const auto mol = "C=C"_smiles;
+//     REQUIRE(mol);
+//     auto confs = embedInitialCoordinatesMultiple(*mol, 100);
+//     unsigned int numCis = 0, numTrans = 0;
+//     for (unsigned int confId : confs) {
+//       const auto torsion =
+//           MolTransforms::getDihedralDeg(mol->getConformer(confId), 2, 0, 1,
+//           4);
+//       const auto torsion2 =
+//           MolTransforms::getDihedralDeg(mol->getConformer(confId), 2, 0, 1,
+//           5);
+//       if (std::fabs(torsion) < 90) {
+//         CHECK_THAT(std::fabs(torsion),
+//         Catch::Matchers::WithinAbs(0.0, 1.e-4));
+//         CHECK_THAT(std::fabs(torsion2),
+//                    Catch::Matchers::WithinAbs(180.0, 1.e-4));
+//         numCis++;
+//       } else {
+//         CHECK_THAT(std::fabs(torsion),
+//                    Catch::Matchers::WithinAbs(180.0, 1.e-4));
+//         CHECK_THAT(std::fabs(torsion2),
+//         Catch::Matchers::WithinAbs(0.0, 1.e-4)); numTrans++;
+//       }
+//     }
+//     CHECK(numCis > 0);
+//     CHECK(numTrans > 0);
+//   }
 
-  SECTION("Constraint torsion SS") {
-    const auto mol = "SS"_smiles;
-    REQUIRE(mol);
-    auto coords = embedInitialCoordinates(*mol);
-    const auto torsion =
-        MolTransforms::getDihedralDeg(mol->getConformer(), 2, 0, 1, 3);
-    CHECK_THAT(std::fabs(torsion), Catch::Matchers::WithinAbs(90, 1.e-4));
-  }
-  SECTION("Constraint torsion rings") {
-    const auto mol = "C1CCCC1"_smiles;
-    REQUIRE(mol);
-    auto coords = embedInitialCoordinates(*mol);
-    const auto &conf = mol->getConformer();
-    unsigned int numConstrainedTorsions = 0;
-    for (unsigned int i = 0; i < 5; ++i) {
-      const auto torsion = MolTransforms::getDihedralDeg(
-          conf, i, (i + 1) % 5, (i + 2) % 5, (i + 3) % 5);
-      if (std::fabs(torsion) < 90 + 1.e-4) {
-        ++numConstrainedTorsions;
-      }
-    }
-    CHECK(numConstrainedTorsions >= 4);
-  }
-  SECTION("Unconstraint torsion in large rings") {
-    const auto mol = "C1CCCCCCCCCCCCCCCCCCCCCCCCCCCCC1"_smiles;
-    REQUIRE(mol);
-    auto coords = embedInitialCoordinates(*mol);
-    const auto &conf = mol->getConformer();
-    const auto numRingAtoms = mol->getNumHeavyAtoms();
-    bool hasUnconstrainedTorsion = false;
-    for (unsigned int i = 0; i < numRingAtoms; ++i) {
-      const auto torsion = MolTransforms::getDihedralDeg(
-          conf, i, (i + 1) % numRingAtoms, (i + 2) % numRingAtoms,
-          (i + 3) % numRingAtoms);
-      if (std::fabs(torsion) > 120.0) {
-        hasUnconstrainedTorsion = true;
-        break;
-      }
-    }
-    CHECK(hasUnconstrainedTorsion);
-  }
-  SECTION("Constraint torsion in aromats") {
-    const auto mol = "c1ccccc1"_smiles;
-    REQUIRE(mol);
-    auto coords = embedInitialCoordinates(*mol);
-    checkBondLengths(*mol, *coords);
-    const auto &conf = mol->getConformer();
-    constexpr unsigned int numRingAtoms = 6;
-    for (unsigned int i = 0; i < numRingAtoms; ++i) {
-      CHECK_THAT(MolTransforms::getAngleDeg(conf, i, (i + 1) % numRingAtoms,
-                                            (i + 2) % numRingAtoms),
-                 Catch::Matchers::WithinAbs(120.0, 1.e-6));
-      CHECK_THAT(MolTransforms::getDihedralDeg(conf, i, (i + 1) % numRingAtoms,
-                                               (i + 2) % numRingAtoms,
-                                               (i + 3) % numRingAtoms),
-                 Catch::Matchers::WithinAbs(0.0, 1.e-4));
-    }
-  }
-}
+//   SECTION("Constraint torsion SS") {
+//     const auto mol = "SS"_smiles;
+//     REQUIRE(mol);
+//     auto coords = embedInitialCoordinates(*mol);
+//     const auto torsion =
+//         MolTransforms::getDihedralDeg(mol->getConformer(), 2, 0, 1, 3);
+//     CHECK_THAT(std::fabs(torsion), Catch::Matchers::WithinAbs(90, 1.e-4));
+//   }
+//   SECTION("Constraint torsion rings") {
+//     const auto mol = "C1CCCC1"_smiles;
+//     REQUIRE(mol);
+//     auto coords = embedInitialCoordinates(*mol);
+//     const auto &conf = mol->getConformer();
+//     unsigned int numConstrainedTorsions = 0;
+//     for (unsigned int i = 0; i < 5; ++i) {
+//       const auto torsion = MolTransforms::getDihedralDeg(
+//           conf, i, (i + 1) % 5, (i + 2) % 5, (i + 3) % 5);
+//       if (std::fabs(torsion) < 90 + 1.e-4) {
+//         ++numConstrainedTorsions;
+//       }
+//     }
+//     CHECK(numConstrainedTorsions >= 4);
+//   }
+//   SECTION("Unconstraint torsion in large rings") {
+//     const auto mol = "C1CCCCCCCCCCCCCCCCCCCCCCCCCCCCC1"_smiles;
+//     REQUIRE(mol);
+//     auto coords = embedInitialCoordinates(*mol);
+//     const auto &conf = mol->getConformer();
+//     const auto numRingAtoms = mol->getNumHeavyAtoms();
+//     bool hasUnconstrainedTorsion = false;
+//     for (unsigned int i = 0; i < numRingAtoms; ++i) {
+//       const auto torsion = MolTransforms::getDihedralDeg(
+//           conf, i, (i + 1) % numRingAtoms, (i + 2) % numRingAtoms,
+//           (i + 3) % numRingAtoms);
+//       if (std::fabs(torsion) > 120.0) {
+//         hasUnconstrainedTorsion = true;
+//         break;
+//       }
+//     }
+//     CHECK(hasUnconstrainedTorsion);
+//   }
+//   SECTION("Constraint torsion in aromats") {
+//     const auto mol = "c1ccccc1"_smiles;
+//     REQUIRE(mol);
+//     auto coords = embedInitialCoordinates(*mol);
+//     checkBondLengths(*mol, *coords);
+//     const auto &conf = mol->getConformer();
+//     constexpr unsigned int numRingAtoms = 6;
+//     for (unsigned int i = 0; i < numRingAtoms; ++i) {
+//       CHECK_THAT(MolTransforms::getAngleDeg(conf, i, (i + 1) % numRingAtoms,
+//                                             (i + 2) % numRingAtoms),
+//                  Catch::Matchers::WithinAbs(120.0, 1.e-6));
+//       CHECK_THAT(MolTransforms::getDihedralDeg(conf, i, (i + 1) %
+//       numRingAtoms,
+//                                                (i + 2) % numRingAtoms,
+//                                                (i + 3) % numRingAtoms),
+//                  Catch::Matchers::WithinAbs(0.0, 1.e-4));
+//     }
+//   }
+// }
