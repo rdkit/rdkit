@@ -70,8 +70,14 @@
 namespace RDKit {
 namespace Descriptors {
 namespace Osmordred {
+using Clock = std::chrono::steady_clock;
+using TimePoint = Clock::time_point;
+
+namespace {
+
+  
 // Fast aggregate: compute all descriptors in C++ in one pass
-std::vector<double> calcOsmordred(const ROMol &mol) {
+std::vector<double> calcOsmordred(const ROMol &mol, TimePoint *end_time) {
   // Silence RDKit warnings locally
   RDLog::LogStateSetter guard;
 
@@ -96,13 +102,25 @@ std::vector<double> calcOsmordred(const ROMol &mol) {
   // helpers exist (e.g., Adj/Dist matrices), we call the descriptor that
   // accepts version flags so we do not duplicate logic.
 
-  // Collect results with minimal inserts
-  auto append = [&out](const std::vector<double> &v) {
-    out.insert(out.end(), v.begin(), v.end());
+  auto checkTimeout = [&]() {
+    if (end_time && Clock::now() >= *end_time) {
+      BOOST_LOG(rdErrorLog) << "Mordred calculation timed out" << std::endl;
+      throw ValueErrorException("Mordred calculation timed out");
+    }
   };
-  auto appendInt = [&out](const std::vector<int> &v) {
+  
+  // Collect results with minimal inserts
+  auto append = [&](const std::vector<double> &v) {
+    out.insert(out.end(), v.begin(), v.end());
+    checkTimeout();
+  };
+  
+  auto appendInt = [&](const std::vector<int> &v) {
     out.reserve(out.size() + v.size());
-    for (int x : v) out.push_back(static_cast<double>(x));
+    for (int x : v) {
+      out.push_back(static_cast<double>(x));
+    }
+    checkTimeout();
   };
 
   append(calcABCIndex(mol));            // addNames("ABCIndex", 2);
@@ -174,23 +192,21 @@ std::vector<double> calcOsmordred(const ROMol &mol) {
   append(calcAddFeatures(mol));   // addNames("AddFeatures", 7);
   return out;
 }
-
+}
 
 // v2.0: Single molecule with timeout protection (all-or-nothing)
 // Returns NaN vector if computation exceeds timeout_seconds
-std::vector<double> calcOsmordredWithTimeout(const ROMol &mol,
-                                             int timeout_seconds) {
-  auto future =
-      std::async(std::launch::async, [&mol]() { return calcOsmordred(mol); });
+std::vector<double> calcOsmordred(const ROMol &mol,
+				  int timeout_seconds) {
 
   int actual_timeout =
-      timeout_seconds > 0 ? timeout_seconds : OSMORDRED_TIMEOUT_SECONDS;
-  auto status = future.wait_for(std::chrono::seconds(actual_timeout));
+    timeout_seconds > 0 ? timeout_seconds : OSMORDRED_TIMEOUT_SECONDS;
+  
+  TimePoint end_time_storage = Clock::now() + std::chrono::seconds(actual_timeout);
 
-  if (status == std::future_status::ready) {
-    return future.get();
-  } else {
-    // Timeout - return NaN vector (3585 NaN values)
+  try {
+    return calcOsmordred(mol, &end_time_storage);
+  } catch(ValueErrorException) {
     return std::vector<double>(3585, std::numeric_limits<double>::quiet_NaN());
   }
 }
@@ -198,32 +214,28 @@ std::vector<double> calcOsmordredWithTimeout(const ROMol &mol,
 // v2.0: Batch version from SMILES: parses each SMILES -> NEW mol (tautomer
 // canonical LOST). For tautomer-canonical mols use
 // calcOsmordredBatchFromMols(mols) with mols from ToBinary.
-std::vector<std::vector<double>> calcOsmordredBatch(
+std::vector<std::vector<double>> calcOsmordred(
   const std::vector<std::string> &smiles_list, int n_jobs, int timeout_seconds) {
   std::vector<std::vector<double>> results;
   results.reserve(smiles_list.size());
 
   unsigned int nThreads = getNumThreadsToUse(n_jobs);
-
   if (nThreads <= 1 || smiles_list.size() < 10) {
     for (const auto &smi : smiles_list) {
-      auto future = std::async(std::launch::async, [&smi]() {
-        ROMol *mol = SmilesToMol(smi);
-        if (mol) {
-          auto desc = calcOsmordred(*mol);
-          delete mol;
-          return desc;
-        }
-        return std::vector<double>();
-      });
 
-      auto status =
-	future.wait_for(std::chrono::seconds(timeout_seconds));
-      if (status == std::future_status::ready) {
-        results.push_back(future.get());
-      } else {
-        results.push_back(std::vector<double>(
+      ROMol *mol = SmilesToMol(smi);
+      try {
+	if(mol) {
+	  results.push_back(calcOsmordred(*mol, timeout_seconds));
+	  delete mol;
+	} else {
+	  results.push_back(std::vector<double>(
+	    3585, std::numeric_limits<double>::quiet_NaN()));
+	}
+      } catch (ValueErrorException) {
+	results.push_back(std::vector<double>(
             3585, std::numeric_limits<double>::quiet_NaN()));
+	delete mol;
       }
     }
     return results;
@@ -236,15 +248,15 @@ std::vector<std::vector<double>> calcOsmordredBatch(
   for (size_t idx = 0; idx < smiles_list.size(); ++idx) {
     const auto &smi = smiles_list[idx];
 
-    futures.emplace_back(std::async(std::launch::async, [smi]() {
+    futures.emplace_back(std::async(std::launch::async, [smi, timeout_seconds]() {
       try {
         ROMol *mol = SmilesToMol(smi);
         if (mol) {
           try {
-            std::vector<double> descriptors = calcOsmordred(*mol);
+            std::vector<double> descriptors = calcOsmordred(*mol, timeout_seconds);
             delete mol;
             return descriptors;
-          } catch (...) {
+          } catch(ValueErrorException) {
             delete mol;
             return std::vector<double>();
           }
@@ -258,13 +270,7 @@ std::vector<std::vector<double>> calcOsmordredBatch(
   }
 
   for (auto &f : futures) {
-    auto status = f.wait_for(std::chrono::seconds(OSMORDRED_TIMEOUT_SECONDS));
-    if (status == std::future_status::ready) {
-      results.push_back(f.get());
-    } else {
-      results.push_back(
-          std::vector<double>(3585, std::numeric_limits<double>::quiet_NaN()));
-    }
+    results.push_back(f.get());
   }
 
   return results;
@@ -273,7 +279,7 @@ std::vector<std::vector<double>> calcOsmordredBatch(
 // v2.0: Batch version from mol objects: PRESERVES tautomer canonical.
 // Python binding uses mol.ToBinary() -> MolPickler::molFromPickle -> these
 // mols.
-std::vector<std::vector<double>> calcOsmordredBatchFromMols(
+std::vector<std::vector<double>> calcOsmordred(
   const std::vector<const ROMol *> &mols, int n_jobs, int timeout_seconds) {
   size_t n = mols.size();
   std::vector<std::vector<double>> results(n);
@@ -309,20 +315,15 @@ std::vector<std::vector<double>> calcOsmordredBatchFromMols(
         continue;
       }
       auto fut = std::async(std::launch::async,
-                            [mol, &nanRow]() -> std::vector<double> {
+                            [mol, &nanRow, timeout_seconds]() -> std::vector<double> {
                               try {
-                                return calcOsmordred(*mol);
-                              } catch (...) {
+                                return calcOsmordred(*mol, timeout_seconds);
+                              } catch (ValueErrorException) {
                                 return nanRow;
                               }
                             });
       // is this timeout per mol or per job?
-      if (fut.wait_for(std::chrono::seconds(timeout_seconds)) ==
-          std::future_status::ready) {
-        results[i] = fut.get();
-      } else {
-        results[i] = nanRow;
-      }
+      results[i] = fut.get();
     }
   };
   std::vector<std::thread> pool;

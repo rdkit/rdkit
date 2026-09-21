@@ -558,7 +558,7 @@ TEST_CASE("Osmordred v2.0 - Timeout and Batch Functions") {
     auto mol = "CCO"_smiles;
     REQUIRE(mol != nullptr);
     
-    auto result = calcOsmordredWithTimeout(*mol, 60);
+    auto result = calcOsmordred(*mol, 60);
     REQUIRE(!result.empty());
     REQUIRE(result.size() == 3588);
     
@@ -573,10 +573,10 @@ TEST_CASE("Osmordred v2.0 - Timeout and Batch Functions") {
     REQUIRE(has_valid);
   }
   
-  SECTION("calcOsmordredBatch basic test") {
+  SECTION("calcOsmordred basic test") {
     std::vector<std::string> smiles_list = {"CCO", "CCC", "c1ccccc1"};
     
-    auto results = calcOsmordredBatch(smiles_list, 0);
+    auto results = calcOsmordred(smiles_list, 0);
     REQUIRE(results.size() == 3);
     
     for (const auto& result : results) {
@@ -584,10 +584,10 @@ TEST_CASE("Osmordred v2.0 - Timeout and Batch Functions") {
     }
   }
   
-  SECTION("calcOsmordredBatch with invalid SMILES") {
+  SECTION("calcOsmordred with invalid SMILES") {
     std::vector<std::string> smiles_list = {"CCO", "INVALID", "CCC"};
     
-    auto results = calcOsmordredBatch(smiles_list, 0);
+    auto results = calcOsmordred(smiles_list, 0);
     REQUIRE(results.size() == 3);
     
     // First and third should have valid results
@@ -802,7 +802,7 @@ TEST_CASE("Osmordred v2.0 - NCI Dataset Stress Test") {
     boost::logging::disable_logs("rdApp.*");
     
     // Test batch processing
-    auto results = calcOsmordredBatch(smiles_list, 0);
+    auto results = calcOsmordred(smiles_list, 0);
     
     // Re-enable logging
     boost::logging::enable_logs("rdApp.*");
@@ -858,7 +858,7 @@ TEST_CASE("Osmordred v2.0 - NCI Dataset Stress Test") {
     boost::logging::disable_logs("rdApp.*");
     
     // Get batch results
-    auto batch_results = calcOsmordredBatch(test_smiles, 0);
+    auto batch_results = calcOsmordred(test_smiles, 0);
     REQUIRE(batch_results.size() == test_smiles.size());
     
     // Compare with individual results

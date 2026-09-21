@@ -301,30 +301,23 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcANN(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcDN2Z(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcFrags(const ROMol &mol);
 
-// Aggregated fast path that calls all Osmordred descriptors in C++
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcOsmordred(const ROMol &mol);
-
 // v2.0: Timeout constant for Osmordred computation (60 seconds = 1 minute)
 constexpr int OSMORDRED_TIMEOUT_SECONDS = 60;
 
-// v2.0: Single molecule with timeout protection (default 60 seconds)
-// Returns NaN vector (3585 NaN values) if computation exceeds timeout
-// This is the RECOMMENDED function for production use to prevent hanging
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcOsmordredWithTimeout(
-    const ROMol &mol, int timeout_seconds = OSMORDRED_TIMEOUT_SECONDS);
+// Aggregated fast path that calls all Osmordred descriptors in C++
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcOsmordred(const ROMol &mol, int timeout_seconds=0);
 
 // v2.0: Batch from SMILES: parses each SMILES with SmilesToMol() -> NEW mol.
 // Tautomer canonical LOST.
-RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>> calcOsmordredBatch(
+RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>> calcOsmordred(
     const std::vector<std::string> &smiles_list, int n_jobs = 0,
     int timeout_seconds = OSMORDRED_TIMEOUT_SECONDS);
 
 // v2.0: Batch from mol objects (Python Mol via ToBinary/MolPickler). PRESERVES
 // tautomer canonical.
 RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>>
-calcOsmordredBatchFromMols(const std::vector<const ROMol *> &mols,
-                           int n_jobs = 0,
-			   int timeout_seconds = OSMORDRED_TIMEOUT_SECONDS);
+calcOsmordred(const std::vector<const ROMol *> &mols,
+	      int n_jobs = 0, int timeout_seconds = OSMORDRED_TIMEOUT_SECONDS);
 // v2.0: Get descriptor names in the same order as calcOsmordred returns values
 RDKIT_DESCRIPTORS_EXPORT std::vector<std::string> getOsmordredDescriptorNames();
 
