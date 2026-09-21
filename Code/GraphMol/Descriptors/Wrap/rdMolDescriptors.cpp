@@ -965,6 +965,7 @@ python::dict getSurfacePointsHelper(
   return surfacePoints;
 }
 
+#ifdef RDK_BUILD_OSMORDRED_SUPPORT  
 std::vector<std::vector<double>>
 calcOsmordredPythonBatch(const python::list &items,
                          int nJobs,
@@ -1030,6 +1031,7 @@ calcOsmordredPythonBatch(const python::list &items,
   // unreachable, but silences some compilers
   return {};
 }
+#endif
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
