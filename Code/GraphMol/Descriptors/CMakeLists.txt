@@ -8,7 +8,7 @@ endif(RDK_BUILD_DESCRIPTORS3D)
 if(RDK_BUILD_OSMORDRED_SUPPORT)
  if(NOT RDK_HAS_EIGEN)
    message(FATAL_ERROR, "-- cannot build OSMORDRED support without eigen")
- endif(not RDKIT_HAS_EIGEN)
+ endif(NOT RDK_HAS_EIGEN)
  
  message("-- adding OSMORDRED Descriptors")
  find_package(LAPACK REQUIRED)
