@@ -91,7 +91,8 @@ def _mordred_values(smiles):
     assert mol is not None, f"could not parse {smiles}"
     opts = rdMD.InformationContentOptions()
     opts.keyFlavor = rdMD.ICKeyFlavor.MORDRED
-    return list(rdMD.CalcInformationContent(mol, MAXRADIUS, opts))
+    opts.maxradius = MAXRADIUS
+    return list(rdMD.CalcInformationContent(mol, opts))
 
 
 @pytest.fixture(scope="module")
@@ -195,10 +196,11 @@ def test_mordred_flavour_differs_from_the_basak_default(payload):
     mean the default had silently reverted to mordred's criterion."""
     structures, _ = payload
     mol = Chem.MolFromSmiles(structures["Lycopene"])
-    default = list(rdMD.CalcInformationContent(mol, MAXRADIUS))
     opts = rdMD.InformationContentOptions()
+    opts.maxradius = MAXRADIUS
+    default = list(rdMD.CalcInformationContent(mol, opts))
     opts.keyFlavor = rdMD.ICKeyFlavor.MORDRED
-    mordred = list(rdMD.CalcInformationContent(mol, MAXRADIUS, opts))
+    mordred = list(rdMD.CalcInformationContent(mol, opts))
     assert any(abs(a - b) > 0.01 for a, b in zip(default, mordred)), (
         "MORDRED and the Basak default produce the same values for Lycopene; "
         "one of them is not doing what it says"
@@ -208,7 +210,10 @@ def test_mordred_flavour_differs_from_the_basak_default(payload):
 def test_basak_default_is_unchanged_by_this_flavour(payload):
     """Adding MORDRED must not move the default. 2-butenol, Basak Table 1."""
     mol = Chem.MolFromSmiles("CC=CCO")
-    values = list(rdMD.CalcInformationContent(mol, MAXRADIUS))
+    opts = rdMD.InformationContentOptions()
+    opts.maxradius = MAXRADIUS
+
+    values = list(rdMD.CalcInformationContent(mol, opts))
     for order, expected in {0: 1.2389, 1: 2.0349, 2: 3.0270, 3: 3.1808}.items():
         assert abs(values[order] - expected) < 5e-4, (
             f"default IC{order} = {values[order]:.6f}, Basak Table 1 says {expected}"

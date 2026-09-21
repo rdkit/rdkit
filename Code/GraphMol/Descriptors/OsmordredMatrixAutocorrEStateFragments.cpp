@@ -86,7 +86,12 @@
 namespace RDKit {
 namespace Descriptors {
 namespace Osmordred {
-
+namespace {
+std::vector<double> nans(int size) {
+    std::vector<double> res(size, std::numeric_limits<double>::quiet_NaN());
+    return res;
+}
+}
 // option using inspired CDS paper
 // https://www.sciencedirect.com/org/science/article/pii/S2635098X24001426
 //  full step matrix implements
@@ -3429,9 +3434,9 @@ std::vector<double> ShannonEntropies(
 }
 
 std::vector<double> calcInformationContent(
-    const ROMol &mol, int maxradius,
+    const ROMol &mol,
     const InformationContentOptions &options) {
-  if (maxradius < 0) {
+  if (options.maxradius < 0) {
     throw ValueErrorException(
         "calcInformationContent: maxradius must be non-negative");
   }
@@ -3460,14 +3465,14 @@ std::vector<double> calcInformationContent(
     const int nAtomsM = rdcast<int>(hmol->getNumAtoms());
     const double log2nA_M = std::log(static_cast<double>(nAtomsM)) / std::log(2);
     const double log2nB_M = nBondsM > 1 ? std::log(nBondsM) / std::log(2) : 0.;
-    auto CNm = mordredCN(*hmol, maxradius);
+    auto CNm = mordredCN(*hmol, options.maxradius);
     // Deliberate departure from mordred: when the denominator of SIC (log2 A)
     // or BIC (log2 B) is degenerate -- a single atom, or at most one bond --
     // mordred returns NaN from a 0/0. IC is identically zero in every such case
     // (one atom is one class; two identical atoms stay one class at every
     // radius), so 0 is the continuous value and it is what ShannonEntropies
     // already returns. Both flavours share that convention; the tests know it.
-    return ShannonEntropies(CNm, maxradius, log2nA_M, log2nB_M, nAtomsM);
+    return ShannonEntropies(CNm, options.maxradius, log2nA_M, log2nB_M, nAtomsM);
   }
 
   if (options.aromaticHandling == ICAromaticHandling::KEKULIZED) {
@@ -3487,7 +3492,7 @@ std::vector<double> calcInformationContent(
   if (nAtoms == 0) {
     BOOST_LOG(rdWarningLog)
         << "Error: Molecule has no atoms after adding hydrogens." << std::endl;
-    return {};
+    return nans(42);
   }
 
   double nBonds = 0.;
@@ -3498,69 +3503,17 @@ std::vector<double> calcInformationContent(
   double log2nA = std::log(static_cast<double>(nAtoms)) / std::log(2);
   double log2nB = std::log(static_cast<double>(nBonds)) / std::log(2);
 
-  auto CN = computePipeline(*hmol, maxradius, options);
+  auto CN = computePipeline(*hmol, options.maxradius, options);
 
   if (CN.empty()) {
     BOOST_LOG(rdWarningLog)
         << "Error: ComputePipeline returned empty CN." << std::endl;
-    return {};
+    return nans(42);
   }
 
-  return ShannonEntropies(CN, maxradius, log2nA, log2nB, nAtoms);
+  return ShannonEntropies(CN, options.maxradius, log2nA, log2nB, nAtoms);
 }
 
-std::vector<double> calcInformationContent(const ROMol &mol, int maxradius) {
-  return calcInformationContent(mol, maxradius, InformationContentOptions());
-}
-
-std::vector<double> calcInformationContent_(const ROMol &mol) {
-  int maxradius = 5;
-  // Dynamically allocate RWMol using new
-  RWMol *hmol = new RWMol(mol);
-
-  try {
-    // Add hydrogens
-    MolOps::addHs(*hmol);
-
-    int nAtoms = hmol->getNumAtoms();
-    if (nAtoms == 0) {
-      BOOST_LOG(rdWarningLog)
-          << "Error: Molecule has no atoms after adding hydrogens."
-          << std::endl;
-      delete hmol;  // Clean up memory
-      return {};
-    }
-
-    double nBonds = 0.0;
-    for (auto &bond : hmol->bonds()) {
-      nBonds += getbondtypeindouble(bond->getBondType());
-    }
-
-    double log2nA = std::log(static_cast<double>(nAtoms)) / std::log(2);
-    double log2nB =
-        (nBonds > 0) ? std::log(static_cast<double>(nBonds)) / std::log(2) : 0;
-
-    auto CN = computePipeline(*hmol, maxradius);
-    if (CN.empty()) {
-      BOOST_LOG(rdWarningLog)
-          << "Error: ComputePipeline returned empty CN." << std::endl;
-      delete hmol;  // Clean up memory
-      return {};
-    }
-
-    // Calculate Shannon Entropies
-    std::vector<double> icvalues =
-        ShannonEntropies(CN, maxradius, log2nA, log2nB, nAtoms);
-
-    delete hmol;  // Clean up memory
-    return icvalues;
-
-  } catch (const std::exception &e) {
-    BOOST_LOG(rdWarningLog) << "Error: " << e.what() << std::endl;
-    delete hmol;  // Clean up memory
-    return {};
-  }
-}
 
 // triplet example AZ
 

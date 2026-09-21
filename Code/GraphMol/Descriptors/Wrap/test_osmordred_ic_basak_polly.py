@@ -68,6 +68,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 MAXRADIUS = 5
+
 # POLLY values are printed to 3-4 decimals.
 TOL = 0.0015
 
@@ -94,11 +95,13 @@ def _agreement():
     per = defaultdict(lambda: [0, 0])
     split = defaultdict(lambda: [0, 0])
     queries = [Chem.MolFromSmarts(s) for s in RESONANCE_SMARTS]
+    opts = rdMD.InformationContentOptions()
+    opts.maxradius = MAXRADIUS
     for row in _rows():
         mol = Chem.MolFromSmiles(row["SMILES"])
         if mol is None:
             continue
-        values = list(rdMD.CalcInformationContent(mol, MAXRADIUS))
+        values = list(rdMD.CalcInformationContent(mol, opts))
         resonant = any(q is not None and mol.HasSubstructMatch(q) for q in queries)
         key = "resonance-asymmetric" if resonant else "plain"
         for order in range(MAXRADIUS + 1):
@@ -181,7 +184,9 @@ BASAK_TABLE1 = {0: 1.2389, 1: 2.0349, 2: 3.0270, 3: 3.1808}
 def test_default_options_are_basak():
     """The default must reproduce Basak's published worked example."""
     mol = Chem.MolFromSmiles(BUTENOL)
-    values = list(rdMD.CalcInformationContent(mol, MAXRADIUS))
+    opts = rdMD.InformationContentOptions()
+    opts.maxradius = MAXRADIUS
+    values = list(rdMD.CalcInformationContent(mol, opts))
     for order, expected in BASAK_TABLE1.items():
         assert abs(values[order] - expected) < 5e-4, (
             f"default options give IC{order} = {values[order]:.6f}, "
@@ -195,7 +200,8 @@ def test_extended_flavour_differs_at_order_one():
     mol = Chem.MolFromSmiles(BUTENOL)
     opts = rdMD.InformationContentOptions()
     opts.keyFlavor = rdMD.ICKeyFlavor.EXTENDED
-    extended = list(rdMD.CalcInformationContent(mol, MAXRADIUS, opts))
+    opts.maxradius = MAXRADIUS
+    extended = list(rdMD.CalcInformationContent(mol, opts))
     assert abs(extended[1] - 2.4997) < 5e-4, (
         f"EXTENDED IC1 = {extended[1]:.6f}, expected mordred's 2.4997"
     )
@@ -219,10 +225,12 @@ def test_delocalized_equalisation_merges_nitro_oxygens():
     bond order.  Equalising the delocalised bonds should lower IC (fewer
     classes) rather than raise it."""
     mol = Chem.MolFromSmiles("CC[N+](=O)[O-]")
-    plain = list(rdMD.CalcInformationContent(mol, MAXRADIUS))
     opts = rdMD.InformationContentOptions()
+    opts.maxradius = MAXRADIUS
+
+    plain = list(rdMD.CalcInformationContent(mol, opts))
     opts.equalizeDelocalizedBonds = True
-    merged = list(rdMD.CalcInformationContent(mol, MAXRADIUS, opts))
+    merged = list(rdMD.CalcInformationContent(mol, opts))
     assert merged[1] <= plain[1] + 1e-9, (
         "equalising delocalised bonds should not increase IC1: "
         f"{plain[1]:.6f} -> {merged[1]:.6f}"
@@ -234,6 +242,8 @@ def test_negative_radius_raises():
     """Regression: the radius used to reach initializeMatrixAndSP unguarded
     and write out of bounds, segfaulting the interpreter."""
     with pytest.raises(Exception):
+        opts = rdMD.InformationContentOptions()
+        opts.maxradius = -1
         rdMD.CalcInformationContent(Chem.MolFromSmiles("c1ccccc1"), -1)
 
 

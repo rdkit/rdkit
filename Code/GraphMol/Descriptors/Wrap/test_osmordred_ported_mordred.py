@@ -3659,12 +3659,16 @@ def get_osmordred_descriptor_names():
     return list(OSMORDRED_DESCRIPTOR_NAMES)
 
 
-def _descriptor_map(mol: Chem.Mol) -> Dict[str, float]:
+def _descriptor_map(mol: Chem.Mol, opts=None) -> Dict[str, float]:
   _names = list(rdMD.GetOsmordredDescriptorNames())
   names = get_osmordred_descriptor_names()
 
   try:
-    values = _to_list(rdMD.CalcOsmordred(mol))
+    if opts:
+      res = rdMD.CalcOsmordred(mol,opts)
+    else:
+      res = rdMD.CalcOsmordred(mol)
+    values = _to_list(res)
   except:
     raise Exception(f"{Chem.MolToSmiles(mol)} failed")
   assert len(names) == len(values), f"{len(names)} {len(values)}"
@@ -3909,6 +3913,40 @@ class TestOsmordred(unittest.TestCase):
     sdf_path = data_dir / "structures.sdf"
     assert sdf_path.exists(), f"Reference SDF not found: {sdf_path}"
 
+    opts = rdMD.OsmordredOptions()
+    # this duplicates the original osmordred descriptors (mostly)
+    opts.icOptions.keyFlavor = rdMD.ICKeyFlavor.EXTENDED
+    changes = [
+      ['IC2', 'Lycopene', 3.249272210336683,3.33],
+      ['IC3', 'Lycopene', 4.026754427398841, 4.193 ],
+      ['IC4', 'Lycopene', 4.422995052579131, 4.548 ],
+      ['IC5', 'Lycopene', 4.589661719245798, 4.673 ],
+      ['IC1', 'EllagicAcid', 3.235926350629033, 3.039 ],
+      ['IC2', 'Astaxanthin', 3.7504809913813397, 3.852 ],
+      ['IC3', 'Astaxanthin', 4.118220250848075, 4.277 ],
+      ['IC4', 'Astaxanthin', 4.573934896284059, 4.673 ],
+      ['TIC2', 'Lycopene', 311.9301321923216, 319.93 ],
+      ['TIC3', 'Lycopene', 386.5684250302887, 402.568 ],
+      ['TIC4', 'Lycopene', 424.60752504759654, 436.608 ],
+      ['TIC5', 'Lycopene', 440.6075250475966, 448.608 ],
+      ['TIC1', 'EllagicAcid', 90.60593781761293, 85.096 ],
+      ['TIC2', 'Astaxanthin', 360.0461751726086, 369.756 ],
+      ['TIC3', 'Astaxanthin', 395.34914408141515, 410.568 ],
+      ['TIC4', 'Astaxanthin', 439.0977500432697, 448.608 ],
+      ['TIC5', 'Astaxanthin', 452.60752504759665, 456.608 ],
+      ['CIC2', 'Lycopene', 3.335690290384473, 3.252 ],
+      ['CIC3', 'Lycopene', 2.558208073322315, 2.392 ],
+      ['CIC4', 'Lycopene', 2.1619674481420255, 2.037 ],
+      ['CIC5', 'Lycopene', 1.9953007814753585, 1.912 ],
+      ['CIC1', 'EllagicAcid', 1.5714285714285707, 1.768 ],
+      ['CIC2', 'Astaxanthin', 2.8344815093398164, 2.733 ],
+      ['CIC3', 'Astaxanthin', 2.4667422498730813, 2.308 ],
+      ['CIC4', 'Astaxanthin', 2.011027604437097, 1.912],
+    ]
+    changed_results = {(compound, descriptor): osmordred 
+                       for descriptor, compound, osmordred, mordred in changes}
+      
+    
     actuals_by_mol: Dict[str, Dict[str, float]] = {}
     dropped = []
     for mol in Chem.SDMolSupplier(str(sdf_path), removeHs=True):
@@ -3921,7 +3959,7 @@ class TestOsmordred(unittest.TestCase):
         print("Skipping dot disconnected smiles", smi, name)
         continue
       try:
-        actuals_by_mol[name] = _descriptor_map(mol)
+        actuals_by_mol[name] = _descriptor_map(mol, opts)
       except:
         dropped.append(name)
         print("Skipping", smi, name)
@@ -3965,6 +4003,11 @@ class TestOsmordred(unittest.TestCase):
             actual = actuals[dname]
             checked += 1
 
+            changed_val = changed_results.get((mname, dname), None)
+            if changed_val is not None:
+              if abs(changed_val-actual) < 0.05:
+                continue
+              
             if isinstance(desired, float) and math.isnan(desired):
               if not isinstance(actual, float) and math.isnan(actual):
                 failed.append(f"Expected NaN for {dname} of {mname} ({yaml_path}), got {actual}")

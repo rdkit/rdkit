@@ -64,7 +64,8 @@ pytestmark = pytest.mark.skipif(
 )
 
 FAMILIES = ("IC", "TIC", "SIC", "BIC", "CIC")
-MAXRADIUS = 5
+MAXRADIUS = rdMD.InformationContentOptions()
+MAXRADIUS.maxradius = 5
 # The tables carry 6 decimals; allow for the last of them.
 TOL = 2e-5
 
@@ -80,7 +81,8 @@ def _computed(smiles, flavor):
         return None
     opts = rdMD.InformationContentOptions()
     opts.keyFlavor = flavor
-    values = list(rdMD.CalcInformationContent(mol, MAXRADIUS, opts))
+    opts.maxradius = MAXRADIUS.maxradius
+    values = list(rdMD.CalcInformationContent(mol, opts))
     block = MAXRADIUS + 1
     return {
         f"{fam}{order}": values[index * block + order]

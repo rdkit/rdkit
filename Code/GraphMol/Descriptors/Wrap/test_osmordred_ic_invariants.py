@@ -127,10 +127,12 @@ def _mol(name):
     return mol
 
 
-def _ic(mol, maxradius=MAXRADIUS):
+def _ic(mol):
     """Return {family: [value at r=0..maxradius]}."""
-    values = list(rdMD.CalcInformationContent(mol, maxradius))
-    block = maxradius + 1
+    opts = rdMD.InformationContentOptions()
+    opts.maxradius = MAXRADIUS
+    values = list(rdMD.CalcInformationContent(mol, opts))
+    block = opts.maxradius + 1
     assert len(values) == len(FAMILIES) * block, (
         f"expected {len(FAMILIES) * block} values, got {len(values)}"
     )
@@ -248,7 +250,9 @@ def test_negative_radius_is_rejected():
     is verified on a real build to raise ValueError.
     """
     with pytest.raises(ValueError):
-        rdMD.CalcInformationContent(_mol("Benzene"), -1)
+        opts = rdMD.InformationContentOptions()
+        opts.maxradius = -1
+        rdMD.CalcInformationContent(_mol("Benzene"), opts)
 
 
 if __name__ == "__main__":

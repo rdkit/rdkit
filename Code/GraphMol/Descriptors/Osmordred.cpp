@@ -77,7 +77,8 @@ namespace {
 
   
 // Fast aggregate: compute all descriptors in C++ in one pass
-std::vector<double> calcOsmordred(const ROMol &mol, TimePoint *end_time) {
+std::vector<double> calcOsmordred(const ROMol &mol, const OsmordredOptions &opts,
+				  TimePoint *end_time) {
   // Silence RDKit warnings locally
   RDLog::LogStateSetter guard;
 
@@ -104,6 +105,7 @@ std::vector<double> calcOsmordred(const ROMol &mol, TimePoint *end_time) {
 
   auto checkTimeout = [&]() {
     if (end_time && Clock::now() >= *end_time) {
+      std::cerr << "*" << std::endl;
       BOOST_LOG(rdErrorLog) << "Mordred calculation timed out" << std::endl;
       throw ValueErrorException("Mordred calculation timed out");
     }
@@ -149,7 +151,7 @@ std::vector<double> calcOsmordred(const ROMol &mol, TimePoint *end_time) {
   append(calcFramework(mol));              // addNames("Framework", 1);
   append(calcHydrogenBond(mol));           // addNames("HydrogenBond", 2);
   append(calcLogS(mol));                   // addNames("LogS", 1);
-  append(calcInformationContent(mol, 5));  // addNames("InformationContent",
+  append(calcInformationContent(mol, opts.icOptions));  // addNames("InformationContent",
                                            // 42);
   append(calcKappaShapeIndex(mol));   // addNames("KappaShapeIndex", 3);
   appendInt(calcLipinskiGhose(mol));  // addNames("Lipinski", 2);
@@ -194,20 +196,18 @@ std::vector<double> calcOsmordred(const ROMol &mol, TimePoint *end_time) {
 }
 }
 
+constexpr int NUM_OSMORDRED = 3588;
 // v2.0: Single molecule with timeout protection (all-or-nothing)
 // Returns NaN vector if computation exceeds timeout_seconds
-std::vector<double> calcOsmordred(const ROMol &mol,
-				  int timeout_seconds) {
-
-  int actual_timeout =
-    timeout_seconds > 0 ? timeout_seconds : OSMORDRED_TIMEOUT_SECONDS;
+std::vector<double> calcOsmordred(const ROMol &mol, const OsmordredOptions &opts) {
+  int actual_timeout = opts.timeout;
   
   TimePoint end_time_storage = Clock::now() + std::chrono::seconds(actual_timeout);
 
   try {
-    return calcOsmordred(mol, &end_time_storage);
+    return calcOsmordred(mol, opts, &end_time_storage);
   } catch(ValueErrorException) {
-    return std::vector<double>(3585, std::numeric_limits<double>::quiet_NaN());
+    return std::vector<double>(NUM_OSMORDRED, std::numeric_limits<double>::quiet_NaN());
   }
 }
 
@@ -215,7 +215,7 @@ std::vector<double> calcOsmordred(const ROMol &mol,
 // canonical LOST). For tautomer-canonical mols use
 // calcOsmordredBatchFromMols(mols) with mols from ToBinary.
 std::vector<std::vector<double>> calcOsmordred(
-  const std::vector<std::string> &smiles_list, int n_jobs, int timeout_seconds) {
+  const std::vector<std::string> &smiles_list, int n_jobs, const OsmordredOptions &opts) {
   std::vector<std::vector<double>> results;
   results.reserve(smiles_list.size());
 
@@ -226,7 +226,7 @@ std::vector<std::vector<double>> calcOsmordred(
       ROMol *mol = SmilesToMol(smi);
       try {
 	if(mol) {
-	  results.push_back(calcOsmordred(*mol, timeout_seconds));
+	  results.push_back(calcOsmordred(*mol, opts));
 	  delete mol;
 	} else {
 	  results.push_back(std::vector<double>(
@@ -234,7 +234,7 @@ std::vector<std::vector<double>> calcOsmordred(
 	}
       } catch (ValueErrorException) {
 	results.push_back(std::vector<double>(
-            3585, std::numeric_limits<double>::quiet_NaN()));
+            NUM_OSMORDRED, std::numeric_limits<double>::quiet_NaN()));
 	delete mol;
       }
     }
@@ -248,12 +248,12 @@ std::vector<std::vector<double>> calcOsmordred(
   for (size_t idx = 0; idx < smiles_list.size(); ++idx) {
     const auto &smi = smiles_list[idx];
 
-    futures.emplace_back(std::async(std::launch::async, [smi, timeout_seconds]() {
+    futures.emplace_back(std::async(std::launch::async, [&]() {
       try {
         ROMol *mol = SmilesToMol(smi);
         if (mol) {
           try {
-            std::vector<double> descriptors = calcOsmordred(*mol, timeout_seconds);
+            std::vector<double> descriptors = calcOsmordred(*mol, opts);
             delete mol;
             return descriptors;
           } catch(ValueErrorException) {
@@ -280,7 +280,7 @@ std::vector<std::vector<double>> calcOsmordred(
 // Python binding uses mol.ToBinary() -> MolPickler::molFromPickle -> these
 // mols.
 std::vector<std::vector<double>> calcOsmordred(
-  const std::vector<const ROMol *> &mols, int n_jobs, int timeout_seconds) {
+  const std::vector<const ROMol *> &mols, int n_jobs, const OsmordredOptions &opts) {
   size_t n = mols.size();
   std::vector<std::vector<double>> results(n);
 
@@ -293,7 +293,7 @@ std::vector<std::vector<double>> calcOsmordred(
     for (size_t i = 0; i < n; ++i) {
       const ROMol *mol = mols[i];
       try {
-        results[i] = mol ? calcOsmordred(*mol) : nanRow;
+        results[i] = mol ? calcOsmordred(*mol, opts) : nanRow;
       } catch (...) {
         results[i] = nanRow;
       }
@@ -315,9 +315,9 @@ std::vector<std::vector<double>> calcOsmordred(
         continue;
       }
       auto fut = std::async(std::launch::async,
-                            [mol, &nanRow, timeout_seconds]() -> std::vector<double> {
+                            [mol, &nanRow, &opts]() -> std::vector<double> {
                               try {
-                                return calcOsmordred(*mol, timeout_seconds);
+                                return calcOsmordred(*mol, opts);
                               } catch (ValueErrorException) {
                                 return nanRow;
                               }
@@ -858,6 +858,10 @@ std::vector<std::string> getOsmordredDescriptorNames() {
   names.insert(names.end(), {"nBridgedBonds", "nHydroxylPrimary", "nHydroxylSecondary", "nHydroxylTertiary", "isPolyAcid", "isPolyAlcohol", "nEndocyclicSingleBonds"});
 
   return names;
+}
+
+int getNumOsmordredDescriptors() {
+  return 3588;
 }
 
 }  // namespace Osmordred

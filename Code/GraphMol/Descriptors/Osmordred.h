@@ -145,6 +145,7 @@ struct RDKIT_DESCRIPTORS_EXPORT InformationContentOptions {
   ICVertexLabel vertexLabel = ICVertexLabel::DEGREE;
   //! give one bond code to every bond inside a delocalized group; see above
   bool equalizeDelocalizedBonds = false;
+  int maxradius = 5;
 };
 
 
@@ -233,7 +234,6 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcChipathcluster(
 //! complexity indices.
 /*!
   \param mol        the molecule of interest
-  \param maxradius  highest neighbourhood order; must be >= 0
   \param options    see InformationContentOptions; the default reproduces
                     Basak/POLLY
 
@@ -242,12 +242,8 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcChipathcluster(
           so pass the molecule without explicit Hs.
 */
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcInformationContent(
-    const ROMol &mol, int maxradius,
-    const InformationContentOptions &options);
-
-//! \overload  uses default (Basak) options
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcInformationContent(
-    const ROMol &mol, int maxradius = 5);
+    const ROMol &mol,
+    const InformationContentOptions &options=InformationContentOptions());
 
 // Group 4: Matrix/autocorr/EState/fragments
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcDetourMatrixDescs(
@@ -301,25 +297,29 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcANN(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcDN2Z(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcFrags(const ROMol &mol);
 
-// v2.0: Timeout constant for Osmordred computation (60 seconds = 1 minute)
-constexpr int OSMORDRED_TIMEOUT_SECONDS = 60;
+struct OsmordredOptions {
+  InformationContentOptions icOptions;
+  int timeout = 60; // !< Time to spend (in seconds) on a single molecule
+};
 
-// Aggregated fast path that calls all Osmordred descriptors in C++
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcOsmordred(const ROMol &mol, int timeout_seconds=0);
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcOsmordred(const ROMol &mol,
+							   const OsmordredOptions &opts=OsmordredOptions());
 
-// v2.0: Batch from SMILES: parses each SMILES with SmilesToMol() -> NEW mol.
+// Batch from SMILES: parses each SMILES with SmilesToMol() -> NEW mol.
 // Tautomer canonical LOST.
 RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>> calcOsmordred(
     const std::vector<std::string> &smiles_list, int n_jobs = 0,
-    int timeout_seconds = OSMORDRED_TIMEOUT_SECONDS);
+    const OsmordredOptions &opts=OsmordredOptions());
 
-// v2.0: Batch from mol objects (Python Mol via ToBinary/MolPickler). PRESERVES
+// Batch from mol objects (Python Mol via ToBinary/MolPickler). PRESERVES
 // tautomer canonical.
 RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>>
-calcOsmordred(const std::vector<const ROMol *> &mols,
-	      int n_jobs = 0, int timeout_seconds = OSMORDRED_TIMEOUT_SECONDS);
-// v2.0: Get descriptor names in the same order as calcOsmordred returns values
+calcOsmordred(const std::vector<const ROMol *> &mols, int n_jobs = 0,
+	      const OsmordredOptions &opts=OsmordredOptions());
+
+// Get descriptor names in the same order as calcOsmordred returns values
 RDKIT_DESCRIPTORS_EXPORT std::vector<std::string> getOsmordredDescriptorNames();
+RDKIT_DESCRIPTORS_EXPORT int getNumOsmordredDescriptors();
 
 }  // namespace Osmordred
 }  // namespace Descriptors

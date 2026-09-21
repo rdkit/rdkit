@@ -968,7 +968,7 @@ python::dict getSurfacePointsHelper(
 std::vector<std::vector<double>>
 calcOsmordredPythonBatch(const python::list &items,
                          int nJobs,
-                         int timeoutSeconds) {
+			 const RDKit::Descriptors::Osmordred::OsmordredOptions &opts) {
   const auto n = python::len(items);
 
   if (n == 0) {
@@ -997,7 +997,7 @@ calcOsmordredPythonBatch(const python::list &items,
     }
 
     return RDKit::Descriptors::Osmordred::calcOsmordred(
-        values, nJobs, timeoutSeconds);
+        values, nJobs, opts);
   }
 
   // std::vector<ROMol>
@@ -1019,7 +1019,7 @@ calcOsmordredPythonBatch(const python::list &items,
     }
 
     return RDKit::Descriptors::Osmordred::calcOsmordred(
-        values, nJobs, timeoutSeconds);
+        values, nJobs, opts);
   }
 
   PyErr_SetString(
@@ -2300,62 +2300,47 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                            InformationContentOptions::vertexLabel)
         .def_readwrite("equalizeDelocalizedBonds",
                        &RDKit::Descriptors::Osmordred::
-                           InformationContentOptions::equalizeDelocalizedBonds);
+                           InformationContentOptions::equalizeDelocalizedBonds)
+        .def_readwrite("maxradius",
+                       &RDKit::Descriptors::Osmordred::
+                           InformationContentOptions::maxradius);
 
-    std::vector<double> (*icDefault)(const RDKit::ROMol &, int) =
-        &RDKit::Descriptors::Osmordred::calcInformationContent;
-    std::vector<double> (*icOpts)(
-        const RDKit::ROMol &, int,
-        const RDKit::Descriptors::Osmordred::InformationContentOptions &) =
-        &RDKit::Descriptors::Osmordred::calcInformationContent;
-    python::def("CalcInformationContent", icDefault,
-        (python::arg("mol"), python::arg("maxradius") = 5),
-        "Basak neighbourhood-complexity indices. Returns 7*(maxradius+1) "
-        "values: IC, TIC, SIC, BIC, CIC, MIC, ZMIC, each r=0..maxradius.\n");
-    python::def("CalcInformationContent", icOpts,
-        (python::arg("mol"), python::arg("maxradius"), python::arg("options")),
-        "As above, with explicit InformationContentOptions.\n");
+    python::def("CalcInformationContent", RDKit::Descriptors::Osmordred::calcInformationContent,
+		(python::arg("mol"),
+		 python::arg("opts")=RDKit::Descriptors::Osmordred::InformationContentOptions()),
+        "Basak neighbourhood-complexity indices. Returns 7*(opts.maxradius+1) "
+        "values: IC, TIC, SIC, BIC, CIC, MIC, ZMIC, each r=0..opts.maxradius.\n");
 
+    python::class_<RDKit::Descriptors::Osmordred::OsmordredOptions>(
+								    "OsmordredOptions",
+								    "Osmordred calculation options.")
+		.def_readwrite("icOptions", 
+			       &RDKit::Descriptors::Osmordred::OsmordredOptions::icOptions,
+			       "Options for calculating information content.")
+		.def_readwrite("timeout", 
+			       &RDKit::Descriptors::Osmordred::OsmordredOptions::timeout,
+			       "Per molecule limit for calculation. Note, if a single descriptor"
+			       "takes longer than timeout, that individual calculation will not be halted.");
+			       
     // Fast aggregate binding
     //python::def("CalcOsmordred", RDKit::Descriptors::Osmordred::calcOsmordred,
     //    "Compute all Osmordred descriptors at once (fast path)\n");
     
     // v2.0: Single molecule with timeout protection (all-or-nothing)
-    python::def("CalcOsmordred", (std::vector<double>(*)(const RDKit::ROMol&, int))::RDKit::Descriptors::Osmordred::calcOsmordred,
-        (python::arg("mol"), python::arg("timeout_seconds")=60),
+    python::def("CalcOsmordred", (std::vector<double>(*)(
+        const RDKit::ROMol&, const RDKit::Descriptors::Osmordred::OsmordredOptions&))::RDKit::Descriptors::Osmordred::calcOsmordred,
+		(python::arg("mol"), python::arg("opts")=RDKit::Descriptors::Osmordred::OsmordredOptions()),
         "Compute Osmordred descriptors with timeout protection (default 60 seconds).\n"
         "Returns NaN vector (3585 NaN values) if computation exceeds timeout.\n"
         "This is the RECOMMENDED function to prevent hanging on complex molecules.\n");
     
     // v2.0: Batch version with parallel processing and timeout
     python::def("CalcOsmordred", calcOsmordredPythonBatch,
-		(python::arg("smiles_list"), python::arg("n_jobs")=0, python::arg("timeout_seconds")=60),
-        "BATCH: Compute all Osmordred descriptors for multiple molecules in parallel.\n"
+		(python::arg("mols"), python::arg("n_jobs")=0, python::arg("opts")=RDKit::Descriptors::Osmordred::OsmordredOptions()),
+        "BATCH: Compute all Osmordred descriptors for multiple molecules (or smiles) in parallel.\n"
         "Each molecule has a 60-second timeout - returns NaN if exceeded.\n"
         "Returns vector of descriptor vectors (one per molecule).\n");
-	/*
-    // v2.0: Batch from mol objects (preserves tautomer canonical)
-    python::def("CalcOsmordred",
-        +[](const python::list& mol_list, int n_jobs) {
-            std::vector<std::unique_ptr<RDKit::ROMol>> owned;
-            std::vector<const RDKit::ROMol*> mols;
-            owned.reserve(python::len(mol_list));
-            mols.reserve(python::len(mol_list));
-	    python::stl_input_iterator<RDKit::ROMOL_SPTR> iter(mol_list), end;
-	    while (iter != end) {
-	      if (!*iter) {
-		mols.push_back(nullptr);
-	      } else {
-		mols.push_back(iter->get());
-	      }
-	      ++iter;
-	    }
-            return RDKit::Descriptors::Osmordred::calcOsmordred(mols, n_jobs);
-        },
-        (python::arg("mols"), python::arg("n_jobs")=0),
-        "BATCH: Compute Osmordred descriptors from mol objects.\n"
-        "Accepts list of RDKit Mol objects (can contain None). Returns NaN row for invalid/failed.\n");
-    */
+
     python::def("GetOsmordredDescriptorNames", RDKit::Descriptors::Osmordred::getOsmordredDescriptorNames,
         "Get descriptor names in the same order as CalcOsmordred returns values.\n"
         "Returns a list of strings where multi-value descriptors have suffixes like '_1', '_2', etc.\n");

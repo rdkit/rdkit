@@ -210,10 +210,13 @@ TEST_CASE("Osmordred Information Content") {
     REQUIRE(!info_content.empty());
     
     // Test with different max radius
-    auto info_content_r3 = calcInformationContent(*mol, 3);
+    InformationContentOptions options;
+    options.maxradius= 3;
+    auto info_content_r3 = calcInformationContent(*mol, options);
     REQUIRE(!info_content_r3.empty());
-    
-    auto info_content_r7 = calcInformationContent(*mol, 7);
+
+    options.maxradius= 7;    
+    auto info_content_r7 = calcInformationContent(*mol, options);
     REQUIRE(!info_content_r7.empty());
   }
 }
@@ -557,8 +560,10 @@ TEST_CASE("Osmordred v2.0 - Timeout and Batch Functions") {
   SECTION("calcOsmordredWithTimeout basic test") {
     auto mol = "CCO"_smiles;
     REQUIRE(mol != nullptr);
-    
-    auto result = calcOsmordred(*mol, 60);
+
+    OsmordredOptions opts;
+    opts.timeout = 60;
+    auto result = calcOsmordred(*mol, opts);
     REQUIRE(!result.empty());
     REQUIRE(result.size() == 3588);
     
@@ -571,6 +576,21 @@ TEST_CASE("Osmordred v2.0 - Timeout and Batch Functions") {
       }
     }
     REQUIRE(has_valid);
+
+    opts.timeout = 0; // should just fail
+    result = calcOsmordred(*mol, opts);
+    REQUIRE(!result.empty());
+    REQUIRE(result.size() == 3588);
+    // Should have valid results for ethanol
+    has_valid = false;
+    for (const auto& val : result) {
+      if (!std::isnan(val)) {
+        has_valid = true;
+        break;
+      }
+    }
+    REQUIRE(!has_valid);
+
   }
   
   SECTION("calcOsmordred basic test") {
@@ -979,7 +999,6 @@ TEST_CASE("Osmordred full descriptor width on tiny/degenerate molecules (singula
   // solveLinearSystem dgelss (SVD pseudo-inverse) fallback makes the solve
   // succeed, so the full descriptor vector must be returned. Regression guard for
   // the ethylene/methane "short vector" bug. Count is read dynamically so this
-  // passes for both v2 (3585) and v3 (3588).
   const size_t ND = getOsmordredDescriptorNames().size();
   REQUIRE(ND > 0);
 

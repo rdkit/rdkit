@@ -368,16 +368,20 @@ class TestOsmordred(unittest.TestCase):
         self.assertIsNotNone(self.ethanol)
         
         # Test information content
-        info_content = rdMD.CalcInformationContent(self.ethanol, 5)
+        opts = rdMD.InformationContentOptions()
+        opts.maxradius = 5
+        info_content = rdMD.CalcInformationContent(self.ethanol, opts)
         info_content_list = to_list(info_content)
         self.assertGreater(len(info_content_list), 0)
         
         # Test with different max radius
-        info_content_r3 = rdMD.CalcInformationContent(self.ethanol, 3)
+        opts.maxradius = 3
+        info_content_r3 = rdMD.CalcInformationContent(self.ethanol,opts)
         info_content_r3_list = to_list(info_content_r3)
         self.assertGreater(len(info_content_r3_list), 0)
-        
-        info_content_r7 = rdMD.CalcInformationContent(self.ethanol, 7)
+
+        opts.maxradius = 7
+        info_content_r7 = rdMD.CalcInformationContent(self.ethanol, opts)
         info_content_r7_list = to_list(info_content_r7)
         self.assertGreater(len(info_content_r7_list), 0)
         
