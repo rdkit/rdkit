@@ -14,9 +14,14 @@ from rdkit.Chem import Markush
 
 class TestCase(unittest.TestCase):
 
-  def testGenericScopeUsesGenericMatchersByDefault(self):
-    query = Chem.MolFromSmarts('OC* |$;;ARY$|')
+  @staticmethod
+  def _generic_query(smarts):
+    query = Chem.MolFromSmarts(smarts)
     Chem.SetGenericQueriesFromProperties(query)
+    return query
+
+  def testGenericScopeUsesGenericMatchersByDefault(self):
+    query = self._generic_query('OC* |$;;ARY$|')
 
     self.assertTrue(
         Markush.IsInMarkushScope(query, Chem.MolFromSmiles('c1ccccc1CO')))
@@ -24,8 +29,7 @@ class TestCase(unittest.TestCase):
         Markush.IsInMarkushScope(query, Chem.MolFromSmiles('C1CCCCC1CO')))
 
   def testExplicitParametersOverrideDefaultMatchingPolicy(self):
-    query = Chem.MolFromSmarts('OC* |$;;ARY$|')
-    Chem.SetGenericQueriesFromProperties(query)
+    query = self._generic_query('OC* |$;;ARY$|')
     parameters = Chem.SubstructMatchParameters()
 
     self.assertTrue(
@@ -33,8 +37,7 @@ class TestCase(unittest.TestCase):
                                  parameters))
 
   def testEnumerationFiltersAndDeduplicatesInInputOrder(self):
-    query = Chem.MolFromSmarts('OC* |$;;ARY$|')
-    Chem.SetGenericQueriesFromProperties(query)
+    query = self._generic_query('OC* |$;;ARY$|')
     candidates = [
         Chem.MolFromSmiles('c1ccccc1CO'),
         Chem.MolFromSmiles('C1CCCCC1CO'),
@@ -47,8 +50,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(Chem.MolToSmiles(result[0]), 'OCc1ccccc1')
 
   def testEnumerationHonorsExplicitParameters(self):
-    query = Chem.MolFromSmarts('OC* |$;;ARY$|')
-    Chem.SetGenericQueriesFromProperties(query)
+    query = self._generic_query('OC* |$;;ARY$|')
     parameters = Chem.SubstructMatchParameters()
 
     result = Markush.EnumerateMarkush(
@@ -57,13 +59,41 @@ class TestCase(unittest.TestCase):
     self.assertEqual([Chem.MolToSmiles(mol) for mol in result], ['OCC1CCCCC1'])
 
   def testEnumerationHandlesEmptyAndNonMatchingCandidateSets(self):
-    query = Chem.MolFromSmarts('OC* |$;;ARY$|')
-    Chem.SetGenericQueriesFromProperties(query)
+    query = self._generic_query('OC* |$;;ARY$|')
 
     self.assertEqual(Markush.EnumerateMarkush(query, ()), ())
     self.assertEqual(
         Markush.EnumerateMarkush(query, (Chem.MolFromSmiles('C1CCCCC1CO'), )),
         ())
+
+  def testDocumentedGenericGroupExamplesAndEnumeration(self):
+    # These Beilstein/Reaxys generic-group meanings are documented in the RDKit
+    # Book, "Generic (Markush) queries in substructure matching" section.
+    cases = (
+        ('O* |$;ALK$|', 'CCO', 'O=C=O'),  # ethanol: alkyl; carbon dioxide: not alkyl
+        ('C* |$;AEL$|', 'CC=C', 'CCC'),  # propene: alkenyl; propane: not alkenyl
+        ('C* |$;AYL$|', 'CC#C', 'CCC'),  # propyne: alkynyl; propane: not alkynyl
+        ('C* |$;AOX$|', 'COC', 'CCC'),  # dimethyl ether: alkoxy; propane: not alkoxy
+        ('C* |$;CAL$|', 'CC1CCCCC1', 'Cc1ccccc1'),
+        # ethylcyclohexane; ethylbenzene
+        ('C* |$;CEL$|', 'CC1=CC=CC=C1', 'CC1CCCCC1'),
+        # ethylbenzene; ethylcyclohexane
+        ('C* |$;HAR$|', 'Cc1ccncc1', 'Cc1ccccc1'),
+        # methylpyridine; ethylbenzene
+    )
+    for smarts, matching_smiles, nonmatching_smiles in cases:
+      with self.subTest(smarts=smarts):
+        query = self._generic_query(smarts)
+        matching = Chem.MolFromSmiles(matching_smiles)
+        nonmatching = Chem.MolFromSmiles(nonmatching_smiles)
+
+        self.assertTrue(Markush.IsInMarkushScope(query, matching))
+        self.assertFalse(Markush.IsInMarkushScope(query, nonmatching))
+        self.assertEqual(
+            [Chem.MolToSmiles(mol)
+             for mol in Markush.EnumerateMarkush(query,
+                                                   (nonmatching, matching))],
+            [Chem.MolToSmiles(matching)])
 
   def testMakeFormulaCoversInputsAndRemovesDuplicates(self):
     ethanol = Chem.MolFromSmiles('CCO')
