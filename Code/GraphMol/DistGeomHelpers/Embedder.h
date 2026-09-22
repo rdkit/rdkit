@@ -160,8 +160,6 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int timeout{0};
   bool useLegacyImplementation{true};
   InitialEmbeddingMode initialEmbeddingMode{InitialEmbeddingMode::DG_EMBEDDING};
-  // std::shared_ptr<InternalCoordinates> internalCoords{nullptr};
-  std::shared_ptr<InternalCoordinates> internalCoordinateConstraints{nullptr};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI{
       nullptr};
   void (*callback)(unsigned int){nullptr};
