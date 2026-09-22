@@ -295,7 +295,7 @@ static nb::tuple getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
       }
       return nb::tuple(result);
     default:
-      throw std::invalid_argument("ETversion needs to be either 1, 2 or 4.")
+      throw std::invalid_argument("ETversion needs to be either 1, 2 or 4.");
   }
 }
 
