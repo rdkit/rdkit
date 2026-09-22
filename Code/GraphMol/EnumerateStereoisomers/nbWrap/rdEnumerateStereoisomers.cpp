@@ -54,24 +54,31 @@ is greater than maxIsomers, a random subset will be yielded.  If 0, there
 is no maximum.  Since every additional stereocenter doubles the number of
 results (and execution time) it's important to keep an eye on this.)DOC")
       .def_rw("randomSeed", &StereoEnumerationOptions::randomSeed,
-              "Seed for random number generator.  Default=-1 means no seed.");
+              "Seed for random number generator.  Default=-1 means no seed.")
+      .def_rw(
+          "useRingSystemFilter", &StereoEnumerationOptions::useRingSystemFilter,
+          "filter out stereoisomers containing ring systems that are known to be"
+          " impossible in 3D space.  Default=True.");
 
   nb::class_<StereoisomerEnumerator>(m, "StereoisomerEnumerator",
                                      "Stereoisomer enumerator.")
-      .def("__init__",
-           [](StereoisomerEnumerator *self, const ROMol &mol, bool verbose) {
-             new (self)
-                 StereoisomerEnumerator(mol, StereoEnumerationOptions(), verbose);
-           },
-           "mol"_a, "verbose"_a = false)
-      .def("__init__",
-           [](StereoisomerEnumerator *self, const ROMol &mol,
-              const StereoEnumerationOptions &options, bool verbose) {
-             new (self) StereoisomerEnumerator(mol, options, verbose);
-           },
-           "mol"_a, "options"_a, "verbose"_a = false)
+      .def(
+          "__init__",
+          [](StereoisomerEnumerator *self, const ROMol &mol, bool verbose) {
+            new (self) StereoisomerEnumerator(mol, StereoEnumerationOptions(),
+                                              verbose);
+          },
+          "mol"_a, "verbose"_a = false)
+      .def(
+          "__init__",
+          [](StereoisomerEnumerator *self, const ROMol &mol,
+             const StereoEnumerationOptions &options, bool verbose) {
+            new (self) StereoisomerEnumerator(mol, options, verbose);
+          },
+          "mol"_a, "options"_a, "verbose"_a = false)
       .def("next", &StereoisomerEnumerator::next,
            "Get next isomer in the sequence, or None if at the end.")
-      .def("GetStereoisomerCount", &StereoisomerEnumerator::getStereoisomerCount,
+      .def("GetStereoisomerCount",
+           &StereoisomerEnumerator::getStereoisomerCount,
            "Get the number of stereoisomers.");
 }
