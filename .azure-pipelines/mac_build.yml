@@ -27,7 +27,12 @@ steps:
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         qt \
         numpy matplotlib cairo pillow eigen pandas=3  \
-        jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval make ccache lapack liblapacke blas 
+        jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval make ccache lapack liblapacke blas
+    echo "blas/lapacke diagnostics"
+    conda list | grep -E 'blas|lapack|openblas|mkl'
+    find "$CONDA_PREFIX" -iname '*lapacke*'
+    find "$CONDA_PREFIX" -iname 'lapacke.h'
+    find "$CONDA_PREFIX" -iname 'liblapacke*'
   displayName: Setup build environment
 - template: _templates/steps_setup_cache.yml
 - bash: |
