@@ -297,7 +297,7 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcANN(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcDN2Z(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcFrags(const ROMol &mol);
 
-struct OsmordredOptions {
+struct RDKIT_DESCRIPTORS_EXPORT OsmordredOptions {
   InformationContentOptions icOptions;
   int timeout = 60; // !< Time to spend (in seconds) on a single molecule
   bool isValid() const; // !< are the options valid for calculating descriptors
