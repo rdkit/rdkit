@@ -480,9 +480,6 @@ RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv3;
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters srETKDGv3;
 
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv4;
-RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters srETKDGv4;
-RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters mcETKDGv4;
-RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters srmcETKDGv4;
 }  // namespace DGeomHelpers
 }  // namespace RDKit
 
