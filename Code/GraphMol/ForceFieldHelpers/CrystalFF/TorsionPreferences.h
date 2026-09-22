@@ -110,8 +110,8 @@ struct CrystalFFDetails {
   double *distMat;
   ETKDGForceConsts::Params forceConsts;
   std::vector<RDKit::DGeomHelpers::Path14Configuration> path14Configs;
-  TorsionLookup cosPhiToEnergy;
-  TorsionLookup cosPhiToGrad;
+  TorsionLookup phiToEnergy;
+  TorsionLookup phiToGrad;
 };
 
 //! Get the experimental torsional angles in a molecule

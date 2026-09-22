@@ -554,9 +554,9 @@ void populateRefTable(CrystalFFDetails<GaussianExp_T> &details) {
         return std::ranges::distance(sorted.begin(),
                                      std::ranges::lower_bound(sorted, x));
       });
-  details.cosPhiToEnergy.resize(sorted.size(),
+  details.phiToEnergy.resize(sorted.size(),
                                 std::vector<double>(LOOKUP_GRID_SIZE));
-  details.cosPhiToGrad.resize(sorted.size(),
+  details.phiToGrad.resize(sorted.size(),
                               std::vector<double>(LOOKUP_GRID_SIZE));
   for (std::size_t torsionIdx = 0; torsionIdx < sorted.size(); ++torsionIdx) {
     auto it = std::ranges::find(details.torsionIdx, torsionIdx);
@@ -566,9 +566,9 @@ void populateRefTable(CrystalFFDetails<GaussianExp_T> &details) {
     auto &widths = std::get<2>(details.expTorsionAngles[termIdx]);
     for (std::size_t gridPoint = 0; gridPoint < LOOKUP_GRID_SIZE; ++gridPoint) {
       const double phi = gridPoint * std::numbers::pi / (LOOKUP_GRID_SIZE - 1);
-      details.cosPhiToEnergy[torsionIdx][gridPoint] =
+      details.phiToEnergy[torsionIdx][gridPoint] =
           getEnergy(heights, positions, widths, phi);
-      details.cosPhiToGrad[torsionIdx][gridPoint] =
+      details.phiToGrad[torsionIdx][gridPoint] =
           getdEdPhi(heights, positions, widths, phi);
     }
   }
