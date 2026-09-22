@@ -2179,8 +2179,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
         "CalcMR function\n");
     python::def("CalcFlexibility", RDKit::Descriptors::Osmordred::calcFlexibility,
         "CalcFlexibility function\n");
-    python::def("CalcODT", RDKit::Descriptors::Osmordred::calcODT,
-        "CalcODT function\n");
     python::def("CalcSchultz", RDKit::Descriptors::Osmordred::calcSchultz,
         "CalcSchultz function\n");
     python::def("CalcRNCGRPCG", RDKit::Descriptors::Osmordred::calcRNCG_RPCG,

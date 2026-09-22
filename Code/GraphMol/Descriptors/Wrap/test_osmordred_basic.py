@@ -9,7 +9,7 @@ import unittest
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors as rdMD
-
+import math
 
 def to_list(result):
     """Convert RDKit vector objects to Python lists."""
@@ -131,13 +131,11 @@ class TestOsmordred(unittest.TestCase):
         
         # Test van der Waals volume
         vdw_vol = rdMD.CalcVdwVolumeABC(self.ethanol)
-        vdw_vol_list = to_list(vdw_vol)
-        self.assertGreater(vdw_vol_list[0], 0.0)
+        self.assertGreater(vdw_vol, 0.0)
         
         # Test McGowan volume
         mcgowan_vol = rdMD.CalcMcGowanVolume(self.ethanol)
-        mcgowan_vol_list = to_list(mcgowan_vol)
-        self.assertGreater(mcgowan_vol_list[0], 0.0)
+        self.assertGreater(mcgowan_vol, 0.0)
         
         # Test polarizability
         polarizability = rdMD.CalcPolarizability(self.ethanol)
@@ -151,8 +149,7 @@ class TestOsmordred(unittest.TestCase):
         
         # Test LogS
         logs = rdMD.CalcLogS(self.ethanol)
-        logs_list = to_list(logs)
-        self.assertIsInstance(logs_list, list)
+        self.assertTrue(math.isfinite(logs))
         
     @unittest.skipIf(rdMD.HasOsmordredSupport() == False, "No osmordred support")
     def test_topological_descriptors(self):
@@ -166,13 +163,11 @@ class TestOsmordred(unittest.TestCase):
         
         # Test Balaban J index
         balaban_j = rdMD.CalcBalabanJ(self.ethanol)
-        balaban_j_list = to_list(balaban_j)
-        self.assertGreater(len(balaban_j_list), 0)
+        self.assertGreater(balaban_j, 0)
         
         # Test Bertz CT index
         bertz_ct = rdMD.CalcBertzCT(self.ethanol)
-        bertz_ct_list = to_list(bertz_ct)
-        self.assertGreater(len(bertz_ct_list), 0)
+        self.assertGreater(bertz_ct, 0)
         
         # Test Zagreb index
         zagreb = rdMD.CalcZagrebIndex(self.ethanol)
@@ -181,8 +176,7 @@ class TestOsmordred(unittest.TestCase):
         
         # Test eccentric connectivity index
         eccentric = rdMD.CalcEccentricConnectivityIndex(self.ethanol)
-        eccentric_list = to_list(eccentric)
-        self.assertGreater(len(eccentric_list), 0)
+        self.assertGreater(eccentric, 0)
         
     @unittest.skipIf(rdMD.HasOsmordredSupport() == False, "No osmordred support")
     def test_chi_descriptors(self):
@@ -309,8 +303,11 @@ class TestOsmordred(unittest.TestCase):
         for func in functions_simple:
             try:
                 result = func(self.complex_mol)
-                result_list = to_list(result)
-                self.assertGreater(len(result_list), 0)
+                if type(result) == float:
+                    self.assertTrue(math.isfinite(result))
+                else:
+                    result_list = to_list(result)
+                    self.assertGreater(len(result_list), 0)
             except Exception as e:
                 self.fail(f"Function {func.__name__} failed: {e}")
         
@@ -407,7 +404,7 @@ class TestOsmordred(unittest.TestCase):
             'CalcAcidicGroupCount', 'CalcBasicGroupCount', 'CalcCountAromaticAtoms',
             'CalcCountAromaticBonds', 'CalcBEState', 'CalcHEState',
             'CalcAlphaKappaShapeIndex', 'CalcAbrahams', 'CalcPol', 'CalcMR',
-            'CalcFlexibility', 'CalcODT', 'CalcSchultz', 'CalcRNCGRPCG',
+            'CalcFlexibility', 'CalcSchultz', 'CalcRNCGRPCG',
             'CalcAZV', 'CalcASV', 'CalcDSV', 'CalcAZS', 'CalcASZ', 'CalcDN2S',
             'CalcDN2I', 'CalcASI', 'CalcDSI', 'CalcASN', 'CalcDSN', 'CalcDN2N',
             'CalcANS', 'CalcANV', 'CalcAZN', 'CalcANZ', 'CalcANI', 'CalcDSZ',

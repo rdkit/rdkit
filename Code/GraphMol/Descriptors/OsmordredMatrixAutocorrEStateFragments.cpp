@@ -2184,7 +2184,7 @@ std::unordered_set<int> findLinkersWithBFS(
 }
 
 // Function to calculate the FMF ratio
-double Framework(const ROMol &mol) {
+double calcFramework(const ROMol &mol) {
   const RingInfo &ringInfo = getRings(mol);
   std::unordered_set<int> ringAtoms;
 
@@ -2210,12 +2210,6 @@ double Framework(const ROMol &mol) {
   double FMF = static_cast<double>(frameworkAtoms) / totalAtoms;
 
   return FMF;
-}
-
-std::vector<double> calcFramework(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
-  res[0] = Framework(mol);
-  return res;
 }
 
 // BRStates: Tetko version only organis !

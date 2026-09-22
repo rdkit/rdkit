@@ -64,28 +64,33 @@ TEST_CASE("Osmordred Basic Functionality") {
     REQUIRE(mol != nullptr);
     
     // Test that all functions return non-empty results
+    // vector checks
     REQUIRE(!calcABCIndex(*mol).empty());
     REQUIRE(!calcAcidBase(*mol).empty());
     REQUIRE(!calcAromatic(*mol).empty());
     REQUIRE(!calcAtomCounts(*mol).empty());
-    REQUIRE(!calcBalabanJ(*mol).empty());
-    REQUIRE(!calcBertzCT(*mol).empty());
     REQUIRE(!calcBondCounts(*mol).empty());
-    REQUIRE(!calcVertexAdjacencyInformation(*mol).empty());
     REQUIRE(!calcWeight(*mol).empty());
     REQUIRE(!calcWienerIndex(*mol).empty());
-    REQUIRE(!calcVdwVolumeABC(*mol).empty());
     REQUIRE(!calcTopoPSA(*mol).empty());
     REQUIRE(!calcSLogP(*mol).empty());
     REQUIRE(!calcHydrogenBond(*mol).empty());
-    REQUIRE(!calcLogS(*mol).empty());
     REQUIRE(!calcLipinskiGhose(*mol).empty());
-    REQUIRE(!calcMcGowanVolume(*mol).empty());
     REQUIRE(!calcPolarizability(*mol).empty());
     REQUIRE(!calcRotatableBond(*mol).empty());
-    REQUIRE(!calcFragmentComplexity(*mol).empty());
     REQUIRE(!calcConstitutional(*mol).empty());
     REQUIRE(!calcTopologicalIndex(*mol).empty());
+
+    // double
+    REQUIRE(calcBertzCT(*mol) > 0.0);
+    REQUIRE(calcBalabanJ(*mol) > 0.0);
+    REQUIRE(calcVertexAdjacencyInformation(*mol) > 0.0);
+    REQUIRE(calcLogS(*mol) == Catch::Approx(-7.7054571933));
+    REQUIRE(calcMcGowanVolume(*mol) > 0.0);
+    REQUIRE(calcVdwVolumeABC(*mol) > 0.0);
+    REQUIRE(calcFragmentComplexity(*mol) > 0.0);
+
+
   }
 }
 
@@ -259,16 +264,16 @@ TEST_CASE("Osmordred Edge Cases") {
     
     // Test that all functions work with larger molecules
     REQUIRE(!calcABCIndex(*mol).empty());
-    REQUIRE(!calcBertzCT(*mol).empty());
+    REQUIRE(calcBertzCT(*mol) > 0.0);
     REQUIRE(!calcWienerIndex(*mol).empty());
-    REQUIRE(!calcVdwVolumeABC(*mol).empty());
+    REQUIRE(calcVdwVolumeABC(*mol) > 0.0);
     REQUIRE(!calcTopoPSA(*mol).empty());
     REQUIRE(!calcSLogP(*mol).empty());
-    REQUIRE(!calcLogS(*mol).empty());
-    REQUIRE(!calcMcGowanVolume(*mol).empty());
+    REQUIRE(calcLogS(*mol) == Catch::Approx(-4.2143586831));
+    REQUIRE(calcMcGowanVolume(*mol) > 0.0);
     REQUIRE(!calcPolarizability(*mol).empty());
     REQUIRE(!calcRotatableBond(*mol).empty());
-    REQUIRE(!calcFragmentComplexity(*mol).empty());
+    REQUIRE(calcFragmentComplexity(*mol) > 0.0);
     REQUIRE(!calcConstitutional(*mol).empty());
     REQUIRE(!calcTopologicalIndex(*mol).empty());
   }
@@ -303,12 +308,10 @@ TEST_CASE("Osmordred Validation Tests") {
     REQUIRE(mw[0] > 0.0); // Molecular weight should be positive
     
     auto vdw_vol = calcVdwVolumeABC(*mol);
-    REQUIRE(!vdw_vol.empty());
-    REQUIRE(vdw_vol[0] > 0.0); // Volume should be positive
+    REQUIRE(vdw_vol > 0.0); // Volume should be positive
     
     auto mcgowan_vol = calcMcGowanVolume(*mol);
-    REQUIRE(!mcgowan_vol.empty());
-    REQUIRE(mcgowan_vol[0] > 0.0); // McGowan volume should be positive
+    REQUIRE(mcgowan_vol > 0.0); // McGowan volume should be positive
   }
 }
 // ============================================================
@@ -336,6 +339,7 @@ TEST_CASE("Osmordred v2.0 - isMoleculeTooLarge") {
     auto result = calcOsmordred(*mol);
     REQUIRE(!result.empty());
     REQUIRE(result.size() == 3588);
+    REQUIRE(result.size() == getNumOsmordredDescriptors());
     
     delete mol;
   }

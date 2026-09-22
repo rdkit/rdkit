@@ -166,20 +166,23 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcAcidBase(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcAromatic(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcAtomCounts(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcBondCounts(const ROMol &mol);
+
+//! calcWeight reeturns ExactMW and Average MW per atom
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcWeight(const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcVdwVolumeABC(const ROMol &mol);
+  
+RDKIT_DESCRIPTORS_EXPORT double calcVdwVolumeABC(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcTopoPSA(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcSLogP(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcHydrogenBond(const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcLogS(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcLogS(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcLipinskiGhose(const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcMcGowanVolume(
+RDKIT_DESCRIPTORS_EXPORT double calcMcGowanVolume(
     const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcPolarizability(
     const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcRotatableBond(
     const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcFragmentComplexity(
+RDKIT_DESCRIPTORS_EXPORT double calcFragmentComplexity(
     const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcConstitutional(
     const ROMol &mol);
@@ -189,19 +192,19 @@ RDKIT_DESCRIPTORS_EXPORT int calcBasicGroupCount(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT int countAromaticAtoms(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT int countAromaticBonds(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcAbrahams(const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcPol(const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcMR(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcPol(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcMR(const ROMol &mol);
 
 // Group 3: Topological indices/connectivity/shape
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcBalabanJ(const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcBertzCT(const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcVertexAdjacencyInformation(
+RDKIT_DESCRIPTORS_EXPORT double calcBalabanJ(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcBertzCT(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcVertexAdjacencyInformation(
     const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcWienerIndex(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcTopologicalIndex(
     const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcCarbonTypes(const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcEccentricConnectivityIndex(
+RDKIT_DESCRIPTORS_EXPORT double calcEccentricConnectivityIndex(
     const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcZagrebIndex(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcMolecularDistanceEdgeDescs(
@@ -216,13 +219,12 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcKappaShapeIndex(
     const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcAlphaKappaShapeIndex(
     const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcFlexibility(const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcODT(const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcSchultz(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcFlexibility(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcSchultz(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcRNCG_RPCG(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcRingDescriptors(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcMolecularId(const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcFramework(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcFramework(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcExtendedTopochemicalAtom(
     const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcChipath(const ROMol &mol);
@@ -320,7 +322,7 @@ calcOsmordred(const std::vector<const ROMol *> &mols, int n_jobs = 0,
 
 // Get descriptor names in the same order as calcOsmordred returns values
 RDKIT_DESCRIPTORS_EXPORT std::vector<std::string> getOsmordredDescriptorNames();
-RDKIT_DESCRIPTORS_EXPORT int getNumOsmordredDescriptors();
+RDKIT_DESCRIPTORS_EXPORT unsigned int getNumOsmordredDescriptors();
 
 }  // namespace Osmordred
 }  // namespace Descriptors

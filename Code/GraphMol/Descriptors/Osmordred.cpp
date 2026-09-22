@@ -126,7 +126,13 @@ std::vector<double> calcOsmordred(const ROMol &mol, const OsmordredOptions &opts
     out.insert(out.end(), v.begin(), v.end());
     checkTimeout();
   };
-  
+
+    // Collect results with minimal inserts
+  auto append1 = [&](double v) {
+    out.push_back(v);
+    checkTimeout();
+  };
+
   auto appendInt = [&](const std::vector<int> &v) {
     out.reserve(out.size() + v.size());
     for (int x : v) {
@@ -142,9 +148,9 @@ std::vector<double> calcOsmordred(const ROMol &mol, const OsmordredOptions &opts
   appendInt(calcAtomCounts(mol));       // addNames("AtomCount", 17);
   append(calcAutoCorrelation(mol));     // addNames("Autocorrelation", 606);
   append(calcBCUTs(mol));               // addNames("BCUT", 24);
-  append(calcBalabanJ(mol));            // addNames("BalabanJ", 1);
+  append1(calcBalabanJ(mol));            // addNames("BalabanJ", 1);
   append(calcBaryszMatrixDescsL(mol));  // addNames("BaryszMatrix", 104);
-  append(calcBertzCT(mol));             // addNames("BertzCT", 1);
+  append1(calcBertzCT(mol));             // addNames("BertzCT", 1);
   appendInt(calcBondCounts(mol));       // addNames("BondCount", 9);
   append(calcRNCG_RPCG(mol));           // addNames("RNCGRPCG", 2);
   append(calcCarbonTypes(mol));         // addNames("CarbonTypes", 11);
@@ -153,19 +159,19 @@ std::vector<double> calcOsmordred(const ROMol &mol, const OsmordredOptions &opts
   append(calcDetourMatrixDescsL(mol));  // addNames("DetourMatrix", 14);
   append(calcDistMatrixDescsL(mol));    // addNames("DistanceMatrix", 12);
   append(calcEStateDescs(mol, doExEstate));  // addNames("EState", 404);
-  append(calcEccentricConnectivityIndex(
+  append1(calcEccentricConnectivityIndex(
       mol));  // addNames("EccentricConnectivityIndex", 1);
   append(calcExtendedTopochemicalAtom(
       mol));  // addNames("ExtendedTopochemicalAtom", 45);
-  append(calcFragmentComplexity(mol));     // addNames("FragmentComplexity", 1);
-  append(calcFramework(mol));              // addNames("Framework", 1);
+  append1(calcFragmentComplexity(mol));     // addNames("FragmentComplexity", 1);
+  append1(calcFramework(mol));              // addNames("Framework", 1);
   append(calcHydrogenBond(mol));           // addNames("HydrogenBond", 2);
-  append(calcLogS(mol));                   // addNames("LogS", 1);
+  append1(calcLogS(mol));                   // addNames("LogS", 1);
   append(calcInformationContent(mol, opts.icOptions));  // addNames("InformationContent",
                                            // 42);
   append(calcKappaShapeIndex(mol));   // addNames("KappaShapeIndex", 3);
   appendInt(calcLipinskiGhose(mol));  // addNames("Lipinski", 2);
-  append(calcMcGowanVolume(mol));     // addNames("McGowanVolume", 1);
+  append1(calcMcGowanVolume(mol));     // addNames("McGowanVolume", 1);
   append(calcMoeType(mol));           // addNames("MoeType", 54);
   append(calcMolecularDistanceEdgeDescs(
       mol));                        // addNames("MolecularDistanceEdge", 19);
@@ -179,17 +185,17 @@ std::vector<double> calcOsmordred(const ROMol &mol, const OsmordredOptions &opts
   append(calcTopologicalChargeDescs(mol));  // addNames("TopologicalCharge",
                                             // 21);
   append(calcTopologicalIndex(mol));  // addNames("TopologicalIndex", 4);
-  append(calcVdwVolumeABC(mol));      // addNames("VdwVolumeABC", 1);
-  append(calcVertexAdjacencyInformation(
+  append1(calcVdwVolumeABC(mol));      // addNames("VdwVolumeABC", 1);
+  append1(calcVertexAdjacencyInformation(
       mol));                    // addNames("VertexAdjacencyInformation", 1);
   append(calcWalkCounts(mol));  // addNames("WalkCount", 21);
   append(calcWeight(mol));      // addNames("Weight", 2);
   appendInt(calcWienerIndex(mol));        // addNames("WienerIndex", 2);
   append(calcZagrebIndex(mol));           // addNames("ZagrebIndex", 4);
-  append(calcPol(mol));                   // addNames("Pol", 1);
-  append(calcMR(mol));                    // addNames("MR", 1);
-  append(calcFlexibility(mol));           // addNames("Flexibility", 1);
-  append(calcSchultz(mol));               // addNames("Schultz", 1);
+  append1(calcPol(mol));                   // addNames("Pol", 1);
+  append1(calcMR(mol));                    // addNames("MR", 1);
+  append1(calcFlexibility(mol));           // addNames("Flexibility", 1);
+  append1(calcSchultz(mol));               // addNames("Schultz", 1);
   append(calcAlphaKappaShapeIndex(mol));  // addNames("AlphaKappaShapeIndex",
                                           // 3);
   append(calcHEStateDescs(mol));  // addNames("HEState", 88);
@@ -876,7 +882,7 @@ std::vector<std::string> getOsmordredDescriptorNames() {
   return names;
 }
 
-int getNumOsmordredDescriptors() {
+unsigned int getNumOsmordredDescriptors() {
   return NUM_OSMORDRED;
 }
 

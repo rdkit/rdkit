@@ -707,17 +707,11 @@ double calcalphaKappa3fix(const ROMol &mol) {
   return kappa;
 }
 
-double Flexibility(const ROMol &mol) {
+double calcFlexibility(const ROMol &mol) {
   double AK1 = calcalphaKappa1(mol);
   double AK2 = calcalphaKappa2(mol);
   int numHeavyAtom = mol.getNumHeavyAtoms();
   return AK1 * AK2 / static_cast<double>(numHeavyAtom);
-}
-
-std::vector<double> calcFlexibility(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
-  res[0] = Flexibility(mol);
-  return res;
 }
 
 std::vector<double> calcAlphaKappaShapeIndex(const ROMol &mol) {

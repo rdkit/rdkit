@@ -535,7 +535,7 @@ std::vector<double> _VertexDegrees(const double *distances,
   return res;
 }
 
-double BalabanJ(const ROMol &mol) {
+double calcBalabanJ(const ROMol &mol) {
   double q = mol.getNumBonds();
   unsigned int n = mol.getNumAtoms();
 
@@ -561,12 +561,6 @@ double BalabanJ(const ROMol &mol) {
   double J = (mu + 1 != 0) ? (q / (mu + 1)) * sum_ : 0.0;
 
   return J;
-}
-
-std::vector<double> calcBalabanJ(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
-  res[0] = BalabanJ(mol);
-  return res;
 }
 
 // bertyCT related functions (InfoGain can be found in rdkit ML/InfoGainFuncs
@@ -715,7 +709,7 @@ double CalculateEntropies(
 }
 
 // Main BertzCT function (refactored)
-double BertzCT(const ROMol &mol) {
+double calcBertzCT(const ROMol &mol) {
   int cutoff = 100;
   std::unordered_map<int, double> atomTypeDict;  // Maps atom type to count
   std::unordered_map<std::string, double>
@@ -780,12 +774,6 @@ double BertzCT(const ROMol &mol) {
 
   // Calculate and return the final entropy-based complexity value
   return CalculateEntropies(connectionDict, atomTypeDict, numAtoms);
-}
-
-std::vector<double> calcBertzCT(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
-  res[0] = BertzCT(mol);
-  return res;
 }
 
 // bondCount
@@ -929,7 +917,7 @@ std::vector<double> calcCarbonTypes(const ROMol &mol) {
 }
 
 // VertexAdjacencyInformation
-double VertexAdjacencyInformation(const ROMol &mol) {
+double calcVertexAdjacencyInformation(const ROMol &mol) {
   int m = 0;
 
   // Count the number of heavy-heavy bonds
@@ -944,12 +932,6 @@ double VertexAdjacencyInformation(const ROMol &mol) {
 
   // Calculate the descriptor value
   return 1.0 + std::log2(static_cast<double>(m));
-}
-
-std::vector<double> calcVertexAdjacencyInformation(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
-  res[0] = VertexAdjacencyInformation(mol);
-  return res;
 }
 
 // WalkCount
@@ -1032,62 +1014,8 @@ std::vector<double> calcWalkCounts(const ROMol &mol) {
   return results;
 }
 
-/*
-    std::vector<double> calcWalkCountsBlas(const ROMol &mol) {
-        const int maxOrder = 10;  // Maximum order of walks
-        unsigned int nAtoms = mol.getNumAtoms();
-
-        // Get adjacency matrix from RDKit
-        std::vector<double> adjMat(nAtoms * nAtoms, 0.0);
-        double* adjFlat = MolOps::getAdjacencyMatrix(mol, false, false, false,
-   "noBO"); std::copy(adjFlat, adjFlat + nAtoms * nAtoms, adjMat.begin());
-
-        std::vector<double> powerMatrix(adjMat); // Start with A^1
-        std::vector<double> results(21, 0.0);
-
-        // Initialize totals with the number of atoms
-        double totalMWC10 = nAtoms, totalSRW10 = nAtoms;
-
-        for (int order = 1; order <= maxOrder; ++order) {
-            if (order > 1) {
-                // Compute powerMatrix = powerMatrix * adjMat using BLAS (dgemm:
-   C = alpha*A*B + beta*C) std::vector<double> tempMatrix(nAtoms * nAtoms, 0.0);
-                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                            nAtoms, nAtoms, nAtoms,
-                            1.0, powerMatrix.data(), nAtoms,
-                                adjMat.data(), nAtoms,
-                            0.0, tempMatrix.data(), nAtoms);
-                powerMatrix = tempMatrix;
-            }
-
-            // Compute MWC (full matrix sum)
-            double mwc = (order == 1) ? 0.5 * std::accumulate(adjMat.begin(),
-   adjMat.end(), 0.0) : std::log(std::accumulate(powerMatrix.begin(),
-   powerMatrix.end(), 0.0) + 1.0); results[order - 1] = mwc;
-
-            // Compute SRW (sum of diagonal elements)
-            double srw = 0.0;
-            for (unsigned int i = 0; i < nAtoms; ++i) {
-                srw += powerMatrix[i * nAtoms + i];
-            }
-            srw = std::log(srw + 1.0);
-
-            if (order > 1) {
-                results[maxOrder + order - 1] = srw;
-            }
-
-            // Accumulate totals
-            totalMWC10 += mwc;
-            totalSRW10 += srw;
-        }
-
-        results[maxOrder] = totalMWC10;  // Store TMWC10
-        results[20] = totalSRW10;  // Store TSRW10
-
-        return results;
-    }
-*/
-// Weight
+  
+// Weight - returns ExactMW and average MW per atom.
 // trick is to add the Hs for the average not only heavy atoms!
 // we need a function that can do this trick!!!
 std::vector<double> calcWeight(const ROMol &mol) {
@@ -1233,7 +1161,7 @@ const std::unordered_map<int, double> atomContributions = []() {
 
 // VdwVolumeABC
 // working "Need Hs explicit!"
-double VdwVolumeABC(const ROMol &mol) {
+double calcVdwVolumeABC(const ROMol &mol) {
   std::unique_ptr<ROMol> hmol(MolOps::addHs(mol));
 
   // Nb is the number of bonds
@@ -1259,12 +1187,7 @@ double VdwVolumeABC(const ROMol &mol) {
   return ac - 5.92 * Nb - 14.7 * NRa - 3.8 * NRA;
 }
 
-std::vector<double> calcVdwVolumeABC(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
-  res[0] = VdwVolumeABC(mol);
-  return res;
-}
-
+namespace {
 // TopoPSA (adding S & P atoms effect to rdkit version!)
 // working for my molecules but need a S, P molecules to check ...
 // Helper function to calculate hydrogen count
@@ -1277,7 +1200,7 @@ int hydrogenCount(const Atom *atom) {
   }
   return nH;
 }
-
+  
 // Helper function to count bond types
 std::unordered_map<Bond::BondType, int> bondTypeCount(const Atom *atom) {
   std::unordered_map<Bond::BondType, int> bondCounts;
@@ -1289,6 +1212,7 @@ std::unordered_map<Bond::BondType, int> bondTypeCount(const Atom *atom) {
     }
   }
   return bondCounts;
+}
 }
 
 // Function to calculate the phosphorus contribution to TPSA
@@ -1599,8 +1523,9 @@ GetSmartsLogs() {
       }();
   return compiledSmartsLogs;
 }
+  
 // Function to calculate LogS descriptor
-double LogS(const ROMol &mol) {
+double calcLogS(const ROMol &mol) {
   // Base formula contribution
   double molWeight = Descriptors::calcAMW(mol, false);  // Get molecular weight
   double logS = 0.89823 - 0.10369 * std::sqrt(molWeight);
@@ -1623,12 +1548,6 @@ double LogS(const ROMol &mol) {
   }
 
   return logS;
-}
-
-std::vector<double> calcLogS(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
-  res[0] = LogS(mol);
-  return res;
 }
 
 // Function to calculate Lipinski rule of 5
@@ -1675,7 +1594,7 @@ std::vector<int> calcLipinskiGhose(const ROMol &mol) {
   return {lipinski, ghoseFilter};
 }
 
-double McGowanVolume(const ROMol &mol) {
+double calcMcGowanVolume(const ROMol &mol) {
   // In Padel code this is /100 in order to match the Polarisability equation
   double res = 0.;
   std::unique_ptr<ROMol> hmol(MolOps::addHs(mol));
@@ -1691,12 +1610,6 @@ double McGowanVolume(const ROMol &mol) {
   double finalres = res - hmol->getNumBonds() * 6.56;
 
   return finalres;
-}
-
-std::vector<double> calcMcGowanVolume(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
-  res[0] = McGowanVolume(mol);
-  return res;
 }
 
 // SMARTS patterns for fragments
@@ -1750,7 +1663,7 @@ int getNumHs(const ROMol &mol) {
 }
 
 // Function to calculate polarity descriptor
-double Polarity(const ROMol &mol) {
+double calcPol(const ROMol &mol) {
   double res = -1.529;  // Intercept value
 
   // Add contributions from precompiled SMARTS patterns
@@ -1769,30 +1682,12 @@ double Polarity(const ROMol &mol) {
   return res;
 }
 
-std::vector<double> calcPol(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
-  res[0] = Polarity(mol);
-  return res;
-}
-
-double MRvalue(const ROMol &mol) { return 4. / 3. * M_PI * Polarity(mol); }
-
-std::vector<double> calcMR(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
-  res[0] = MRvalue(mol);
-  return res;
-}
-
-double ODT(const ROMol &) { return 1; }
-
-std::vector<double> calcODT(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
-  res[0] = ODT(mol);
-  return res;
+double calcMR(const ROMol &mol) {
+  return 4. / 3. * M_PI * calcPol(mol);
 }
 
 // Function to calculate the Schultz descriptor
-double Schultz(const ROMol &mol) {
+double calcSchultz(const ROMol &mol) {
   // Get the number of atoms in the molecule
   int nAtoms = mol.getNumAtoms();
   if (nAtoms == 0) return 0.0;
@@ -1822,11 +1717,6 @@ double Schultz(const ROMol &mol) {
   }
 
   return schultz;
-}
-std::vector<double> calcSchultz(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
-  res[0] = Schultz(mol);
-  return res;
 }
 
 // Combined function for calculating both atomic and bond polarizability
@@ -1880,7 +1770,7 @@ std::vector<double> calcRotatableBond(const ROMol &mol) {
   return res;
 }
 
-double FragmentComplexity(const ROMol &mol) {
+double calcFragmentComplexity(const ROMol &mol) {
   // Number of atoms (A)
   int A = mol.getNumAtoms();
 
@@ -1901,15 +1791,8 @@ double FragmentComplexity(const ROMol &mol) {
   return fragCpx;
 }
 
-std::vector<double> calcFragmentComplexity(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
-  res[0] = FragmentComplexity(mol);
-  return res;
-}
-
 // it is not correct!!!!
-std::vector<double> calcEccentricConnectivityIndex(const ROMol &mol) {
-  std::vector<double> res(1, 0.);
+double calcEccentricConnectivityIndex(const ROMol &mol) {
   Eigen::VectorXd E = calculateEccentricity(mol);
   std::vector<double> V = calcValence(mol);
 
@@ -1924,9 +1807,7 @@ std::vector<double> calcEccentricConnectivityIndex(const ROMol &mol) {
     productSum += static_cast<int>(E[i]) *
                   V[i];  // Cast E[i] to int and multiply with V[i]
   }
-  res[0] = productSum;
-  // Return the result as an integer
-  return res;  // static_cast<int>(productSum);
+  return productSum;
 }
 
 // Function to find rings in a molecule using RDKit's ring detection
