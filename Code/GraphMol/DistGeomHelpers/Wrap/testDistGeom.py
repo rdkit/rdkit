@@ -576,6 +576,30 @@ class TestCase(unittest.TestCase):
     runTest(fn, smiles, params, True)
     runTest(fn, smiles, params, False)
 
+    fn = 'simple_torsion.etkdgv4.mol'
+    smiles = "OCCC"
+    params = rdDistGeom.ETKDGv4()
+    runTest(fn, smiles, params, True)
+    runTest(fn, smiles, params, False)
+
+    fn = 'simple_torsion.smallring.etkdgv4.mol'
+    smiles = "C1CCCCC1"
+    params = rdDistGeom.srETKDGv4()
+    runTest(fn, smiles, params, True)
+    runTest(fn, smiles, params, False)
+
+    fn = 'simple_torsion.macrocycle.etkdgv4.mol'
+    smiles = "C1NCCCCCCCCC1"
+    params = rdDistGeom.mcETKDGv4()
+    runTest(fn, smiles, params, True)
+    runTest(fn, smiles, params, False)
+
+    fn = 'simple_torsion.sr_mc.etkdgv4.mol'
+    smiles = "C2CNCC1CCCCC1CCC2"
+    params = rdDistGeom.srmcETKDGv4()
+    runTest(fn, smiles, params, True)
+    runTest(fn, smiles, params, False)
+
   def assertDeterministicWithSeed(self, seed):
     input_mol = Chem.MolFromSmiles('CN(Cc1cnc2nc(N)nc(N)c2n1)c1ccc(C(=O)NC(CCC(=O)O)C(=O)O)cc1')
 

@@ -241,30 +241,58 @@ static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
                              set15bounds, set14bounds, set13bounds);
 }
 
-static nb::list getExpTorsHelper(const ROMol &mol, bool useExpTorsions,
-                                 bool useSmallRingTorsions,
-                                 bool useMacrocycleTorsions,
-                                 bool useBasicKnowledge, unsigned int version,
-                                 bool verbose) {
-  ForceFields::CrystalFF::CrystalFFDetails details;
-  std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
-                         const ForceFields::CrystalFF::ExpTorsionAngle *>>
-      torsionBonds;
-  ForceFields::CrystalFF::getExperimentalTorsions(
-      mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
-      useMacrocycleTorsions, useBasicKnowledge, version, verbose);
-  nb::list result;
-  for (const auto &pr : torsionBonds) {
-    nb::dict d;
-    d["bondIndex"] = std::get<0>(pr);
-    d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
-    d["smarts"] = std::get<2>(pr)->smarts;
-    d["V"] = std::get<2>(pr)->V;
-    d["signs"] = std::get<2>(pr)->signs;
-    d["atomIndices"] = std::get<1>(pr);
-    result.append(d);
+static nb::list getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
+                                 const bool useSmallRingTorsions,
+                                 const bool useMacrocycleTorsions,
+                                 const bool useBasicKnowledge,
+                                 const unsigned int version, const bool verbose,
+                                 const unsigned int fitVersion) {
+  switch (fitVersion) {
+    case 1:
+      ForceFields::CrystalFF::CrystalFFDetails details;
+      std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                             const ForceFields::CrystalFF::ExpTorsionAngle *>>
+          torsionBonds;
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      nb::list result;
+      for (const auto &pr : torsionBonds) {
+        nb::dict d;
+        d["bondIndex"] = std::get<0>(pr);
+        d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
+        d["smarts"] = std::get<2>(pr)->smarts;
+        d["V"] = std::get<2>(pr)->V;
+        d["signs"] = std::get<2>(pr)->signs;
+        d["atomIndices"] = std::get<1>(pr);
+        result.append(d);
+      }
+      return result;
+    case 2:
+      ForceFields::CrystalFF::CrystalFFDetails<
+          ForceFields::CrystalFF::GaussianExp_T>
+          details;
+      std::vector<
+          std::tuple<unsigned int, std::vector<unsigned int>,
+                     const ForceFields::CrystalFF::GaussianExpTorsionAngle *>>
+          torsionBonds;
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      nb::list result;
+      for (const auto &pr : torsionBonds) {
+        nb::dict d;
+        d["bondIndex"] = std::get<0>(pr);
+        d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
+        d["smarts"] = std::get<2>(pr)->smarts;
+        d["positions"] = std::get<2>(pr)->positions;
+        d["widths"] = std::get<2>(pr)->widths;
+        d["heights"] = std::get<2>(pr)->heights;
+        d["atomIndices"] = std::get<1>(pr);
+        result.append(d);
+      }
+      return result;
   }
-  return result;
 }
 
 }  // namespace RDKit

@@ -1382,81 +1382,169 @@ TEST_CASE("testEmbedParameters") {
     // std::cerr << MolToMolBlock(*mol) << std::endl;
     // std::cerr << fname << std::endl;
   };
-  SECTION("default params") {
-    std::string fname = "simple_torsion.dg.mol";
-    std::string smiles = "OCCC";
-    DGeomHelpers::EmbedParameters params;
-    params.randomSeed = 42;
-    runTest(smiles, fname, params);
+  const std::string SIMPLE_SMILES = "OCCC";
+  const std::string MC_SMILES = "C1NCCCCCCCCC1";
+  const std::string SR_SMILES = "C1CCCCC1";
+  const std::string SRMC_SMILES = "C2CNCC1CCCCC1CCC2";
+
+  SECTION("Manual Creation") {
+    SECTION("default params") {
+      std::string fname = "simple_torsion.dg.mol";
+      DGeomHelpers::EmbedParameters params;
+      runTest(SIMPLE_SMILES, fname, params);
+    }
+
+    SECTION("default etdg") {
+      std::string fname = "simple_torsion.etdg.mol";
+      DGeomHelpers::EmbedParameters params{.useExpTorsionAnglePrefs = true};
+      runTest(SIMPLE_SMILES, fname, params);
+    }
+
+    SECTION("ETKDGv1") {
+      std::string fname = "simple_torsion.etkdg.mol";
+      DGeomHelpers::EmbedParameters params{.useExpTorsionAnglePrefs = true,
+                                           .useBasicKnowledge = true};
+      runTest(SIMPLE_SMILES, fname, params);
+    }
+
+    SECTION("ETKDGv2") {
+      std::string fname = "torsion.etkdg.v2.mol";
+      std::string smiles = "n1cccc(C)c1ON";
+      DGeomHelpers::EmbedParameters params{.useExpTorsionAnglePrefs = true,
+                                           .useBasicKnowledge = true,
+                                           .ETversion = 2};
+      runTest(smiles, fname, params);
+    }
+
+    SECTION("ETKDGv3") {
+      std::string fname = "simple_torsion.macrocycle.etkdgv3.mol";
+      DGeomHelpers::EmbedParameters params{.useExpTorsionAnglePrefs = true,
+                                           .useBasicKnowledge = true,
+                                           .ETversion = 2,
+                                           .useMacrocycleTorsions = true,
+                                           .useMacrocycle14config = true};
+
+      runTest(MC_SMILES, fname, params);
+    }
+
+    SECTION("srETKDGv3") {
+      std::string fname = "simple_torsion.smallring.etkdgv3.mol";
+      DGeomHelpers::EmbedParameters params{.useExpTorsionAnglePrefs = true,
+                                           .useBasicKnowledge = true,
+                                           .ETversion = 2,
+                                           .useSmallRingTorsions = true};
+      runTest(SR_SMILES, fname, params);
+    }
+
+    SECTION("ETKDGv4") {
+      std::string fname = "simple_torsion.etkdgv4.mol";
+      DGeomHelpers::EmbedParameters params{.useExpTorsionAnglePrefs = true,
+                                           .useBasicKnowledge = true,
+                                           .ETversion = 4,
+                                           .fitVersion = 2};
+      runTest(SIMPLE_SMILES, fname, params);
+    }
+
+    SECTION("mcETKDGv4") {
+      std::string fname = "simple_torsion.macrocycle.etkdgv4.mol";
+      DGeomHelpers::EmbedParameters params{.useExpTorsionAnglePrefs = true,
+                                           .useBasicKnowledge = true,
+                                           .ETversion = 4,
+                                           .useMacrocycleTorsions = true,
+                                           .useMacrocycle14config = true,
+                                           .fitVersion = 2};
+      runTest(MC_SMILES, fname, params);
+    }
+
+    SECTION("srETKDGv4") {
+      std::string fname = "simple_torsion.smallring.etkdgv4.mol";
+      DGeomHelpers::EmbedParameters params{.useExpTorsionAnglePrefs = true,
+                                           .useBasicKnowledge = true,
+                                           .ETversion = 4,
+                                           .useSmallRingTorsions = true,
+                                           .fitVersion = 2};
+      runTest(SR_SMILES, fname, params);
+    }
+    SECTION("srmcETKDGv4") {
+      std::string fname = "simple_torsion.sr_mc.etkdgv4.mol";
+      DGeomHelpers::EmbedParameters params{.useExpTorsionAnglePrefs = true,
+                                           .useBasicKnowledge = true,
+                                           .ETversion = 4,
+                                           .useSmallRingTorsions = true,
+                                           .useMacrocycleTorsions = true,
+                                           .useMacrocycle14config = true,
+                                           .fitVersion = 2};
+      runTest(SRMC_SMILES, fname, params);
+    }
+
+    SECTION("KDG") {
+      std::string fname = "simple_torsion.kdg.mol";
+      DGeomHelpers::EmbedParameters params{.useBasicKnowledge = true};
+      runTest(SIMPLE_SMILES, fname, params);
+    }
   }
-  SECTION("default etdg") {
-    std::string fname = "simple_torsion.etdg.mol";
-    std::string smiles = "OCCC";
-    DGeomHelpers::EmbedParameters params;
-    params.useExpTorsionAnglePrefs = true;
-    runTest(smiles, fname, params);
-  }
-  SECTION("ETKDGv1") {
-    std::string fname = "simple_torsion.etkdg.mol";
-    std::string smiles = "OCCC";
-    DGeomHelpers::EmbedParameters params;
-    params.useExpTorsionAnglePrefs = true;
-    params.useBasicKnowledge = true;
-    runTest(smiles, fname, params);
-  }
-  SECTION("ETKDGv2") {
-    std::string fname = "torsion.etkdg.v2.mol";
-    std::string smiles = "n1cccc(C)c1ON";
-    DGeomHelpers::EmbedParameters params;
-    params.useExpTorsionAnglePrefs = true;
-    params.useBasicKnowledge = true;
-    params.ETversion = 2;
-    runTest(smiles, fname, params);
-  }
-  SECTION("KDG") {
-    std::string fname = "simple_torsion.kdg.mol";
-    std::string smiles = "OCCC";
-    DGeomHelpers::EmbedParameters params;
-    params.useBasicKnowledge = true;
-    runTest(smiles, fname, params);
-  }
-  //------------
-  // using the pre-defined parameter sets
-  SECTION("predefined ETDG") {
-    std::string fname = "simple_torsion.etdg.mol";
-    std::string smiles = "OCCC";
-    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETDG);
-    runTest(smiles, fname, params);
-  }
-  SECTION("predefined ETKDG") {
-    std::string fname = "simple_torsion.etkdg.mol";
-    std::string smiles = "OCCC";
-    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
-    runTest(smiles, fname, params);
-  }
-  SECTION("predefined KDG") {
-    std::string fname = "simple_torsion.kdg.mol";
-    std::string smiles = "OCCC";
-    DGeomHelpers::EmbedParameters params(DGeomHelpers::KDG);
-    runTest(smiles, fname, params);
-  }
-  SECTION("predefined srETKDGv3") {
-    std::string fname = "simple_torsion.smallring.etkdgv3.mol";
-    std::string smiles = "C1CCCCC1";
-    DGeomHelpers::EmbedParameters params(DGeomHelpers::srETKDGv3);
-    runTest(smiles, fname, params);
-  }
-  SECTION("predefined ETKDG - macrocycle") {
-    std::string fname = "simple_torsion.macrocycle.etkdg.mol";
-    std::string smiles = "O=C1NCCCCCCCCC1";
-    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDG);
-    runTest(smiles, fname, params);
-  }
-  SECTION("predefined ETKDGv3 - macrocycle") {
-    std::string fname = "simple_torsion.macrocycle.etkdgv3.mol";
-    std::string smiles = "C1NCCCCCCCCC1";
-    DGeomHelpers::EmbedParameters params(DGeomHelpers::ETKDGv3);
-    runTest(smiles, fname, params);
+
+  SECTION("Predefined") {
+    SECTION("ETDG") {
+      std::string fname = "simple_torsion.etdg.mol";
+      auto params = DGeomHelpers::ETDG;
+      runTest(SIMPLE_SMILES, fname, params);
+    }
+
+    SECTION("predefined ETKDG") {
+      std::string fname = "simple_torsion.etkdg.mol";
+      auto params = DGeomHelpers::ETKDG;
+      runTest(SIMPLE_SMILES, fname, params);
+    }
+
+    SECTION("predefined KDG") {
+      std::string fname = "simple_torsion.kdg.mol";
+      auto params = DGeomHelpers::KDG;
+      runTest(SIMPLE_SMILES, fname, params);
+    }
+
+    SECTION("predefined srETKDGv3") {
+      std::string fname = "simple_torsion.smallring.etkdgv3.mol";
+      auto params = DGeomHelpers::srETKDGv3;
+      runTest(SR_SMILES, fname, params);
+    }
+
+    SECTION("predefined ETKDG - macrocycle") {
+      std::string fname = "simple_torsion.macrocycle.etkdg.mol";
+      std::string smiles = "O=C1NCCCCCCCCC1";
+      auto params = DGeomHelpers::ETKDG;
+      runTest(smiles, fname, params);
+    }
+
+    SECTION("predefined ETKDGv3 - macrocycle") {
+      std::string fname = "simple_torsion.macrocycle.etkdgv3.mol";
+      auto params = DGeomHelpers::ETKDGv3;
+      runTest(MC_SMILES, fname, params);
+    }
+
+    SECTION("predefined ETKDGv4") {
+      std::string fname = "simple_torsion.etkdgv4.mol";
+      auto params = DGeomHelpers::ETKDGv4;
+      runTest(SIMPLE_SMILES, fname, params);
+    }
+
+    SECTION("predefined mcETKDGv4") {
+      std::string fname = "simple_torsion.macrocycle.etkdgv4.mol";
+      auto params = DGeomHelpers::mcETKDGv4;
+      runTest(MC_SMILES, fname, params);
+    }
+
+    SECTION("predefined srETKDGv4") {
+      std::string fname = "simple_torsion.smallring.etkdgv4.mol";
+      auto params = DGeomHelpers::srETKDGv4;
+      runTest(SR_SMILES, fname, params);
+    }
+
+    SECTION("predefined srmcETKDGv4") {
+      std::string fname = "simple_torsion.sr_mc.etkdgv4.mol";
+      auto params = DGeomHelpers::srmcETKDGv4;
+      runTest(SRMC_SMILES, fname, params);
+    }
   }
 }
 
