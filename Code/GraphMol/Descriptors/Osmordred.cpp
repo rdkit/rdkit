@@ -73,6 +73,15 @@ namespace Osmordred {
 using Clock = std::chrono::steady_clock;
 using TimePoint = Clock::time_point;
 
+// We're stuck in a bit of a bind because maxradius changes the number of information content
+// descriptors which changes the total number, so when using the calcOsmordred function it MUST be 5
+bool OsmordredOptions::isValid() const {
+  if(icOptions.maxradius != 5) {
+    BOOST_LOG(rdErrorLog) << "Whan calculating the entire osmordred descriptor set, information content maxradius must be 5\nUse calcInformationContent independently when changing maxradius" << std::endl;
+    return false;
+  }
+  return true;
+}
 namespace {
 
   
@@ -80,6 +89,7 @@ namespace {
 std::vector<double> calcOsmordred(const ROMol &mol, const OsmordredOptions &opts,
 				  TimePoint *end_time) {
   // Silence RDKit warnings locally
+  PRECONDITION(opts.isValid(), "Invalid Osmordred Options");
   RDLog::LogStateSetter guard;
 
   std::vector<double> out;
@@ -200,6 +210,7 @@ constexpr int NUM_OSMORDRED = 3588;
 // v2.0: Single molecule with timeout protection (all-or-nothing)
 // Returns NaN vector if computation exceeds timeout_seconds
 std::vector<double> calcOsmordred(const ROMol &mol, const OsmordredOptions &opts) {
+  PRECONDITION(opts.isValid(), "Invalid Osmordred Options");
   int actual_timeout = opts.timeout;
   
   TimePoint end_time_storage = Clock::now() + std::chrono::seconds(actual_timeout);
@@ -218,6 +229,7 @@ std::vector<double> calcOsmordred(const ROMol &mol, const OsmordredOptions &opts
 // calcOsmordredBatchFromMols(mols) with mols from ToBinary.
 std::vector<std::vector<double>> calcOsmordred(
   const std::vector<std::string> &smiles_list, int n_jobs, const OsmordredOptions &opts) {
+  PRECONDITION(opts.isValid(), "Invalid Osmordred Options");
   std::vector<std::vector<double>> results;
   results.reserve(smiles_list.size());
 
@@ -283,11 +295,13 @@ std::vector<std::vector<double>> calcOsmordred(
 // mols.
 std::vector<std::vector<double>> calcOsmordred(
   const std::vector<const ROMol *> &mols, int n_jobs, const OsmordredOptions &opts) {
+  PRECONDITION(opts.isValid(), "Invalid Osmordred Options");
+
   size_t n = mols.size();
   std::vector<std::vector<double>> results(n);
 
   unsigned int nThreads = getNumThreadsToUse(n_jobs);
-  const size_t nFeatures = getOsmordredDescriptorNames().size();
+  const size_t nFeatures = getNumOsmordredDescriptors();
   const std::vector<double> nanRow(nFeatures,
                                    std::numeric_limits<double>::quiet_NaN());
 
@@ -342,7 +356,7 @@ std::vector<std::vector<double>> calcOsmordred(
 // v2.0: Get descriptor names in the same order as calcOsmordred returns values
 std::vector<std::string> getOsmordredDescriptorNames() {
   std::vector<std::string> names;
-  names.reserve(3588);
+  names.reserve(NUM_OSMORDRED);
 
   // osmordredv3: real Mordred-style names (was addNames placeholders)
   // ABCIndex (2)
@@ -863,7 +877,7 @@ std::vector<std::string> getOsmordredDescriptorNames() {
 }
 
 int getNumOsmordredDescriptors() {
-  return 3588;
+  return NUM_OSMORDRED;
 }
 
 }  // namespace Osmordred

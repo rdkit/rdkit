@@ -208,16 +208,29 @@ TEST_CASE("Osmordred Information Content") {
     
     auto info_content = calcInformationContent(*mol);
     REQUIRE(!info_content.empty());
+    REQUIRE(info_content.size() == 42); // default descriptor length
     
     // Test with different max radius
     InformationContentOptions options;
     options.maxradius= 3;
     auto info_content_r3 = calcInformationContent(*mol, options);
     REQUIRE(!info_content_r3.empty());
-
+    
     options.maxradius= 7;    
     auto info_content_r7 = calcInformationContent(*mol, options);
-    REQUIRE(!info_content_r7.empty());
+
+    // Ensure we catch maxradius errors when calculating the whole
+    //  descriptor list
+    OsmordredOptions opts;
+    REQUIRE(opts.isValid());
+    opts.icOptions.maxradius = 7;
+    REQUIRE(!opts.isValid());
+    
+    try {
+      calcOsmordred(*mol, opts);
+      REQUIRE(false);
+    } catch (...) {
+    }
   }
 }
 

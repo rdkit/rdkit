@@ -300,6 +300,7 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcFrags(const ROMol &mol);
 struct OsmordredOptions {
   InformationContentOptions icOptions;
   int timeout = 60; // !< Time to spend (in seconds) on a single molecule
+  bool isValid() const; // !< are the options valid for calculating descriptors
 };
 
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcOsmordred(const ROMol &mol,
