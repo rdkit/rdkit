@@ -242,15 +242,15 @@ static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
 }
 
 static nb::tuple getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
-                                 const bool useSmallRingTorsions,
-                                 const bool useMacrocycleTorsions,
-                                 const bool useBasicKnowledge,
-                                 const unsigned int version,
-                                 const bool verbose) {
+                                  const bool useSmallRingTorsions,
+                                  const bool useMacrocycleTorsions,
+                                  const bool useBasicKnowledge,
+                                  const unsigned int version,
+                                  const bool verbose) {
   switch (version) {
     case 1:
       [[fallthrough]];
-    case 2:
+    case 2: {
       ForceFields::CrystalFF::CrystalFFDetails details;
       std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
                              const ForceFields::CrystalFF::ExpTorsionAngle *>>
@@ -270,7 +270,8 @@ static nb::tuple getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
         result.append(d);
       }
       return nb::tuple(result);
-    case 4:
+    }
+    case 4: {
       ForceFields::CrystalFF::CrystalFFDetails<
           ForceFields::CrystalFF::GaussianExp_T>
           details;
@@ -294,6 +295,7 @@ static nb::tuple getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
         result.append(d);
       }
       return nb::tuple(result);
+    }
     default:
       throw std::invalid_argument("ETversion needs to be either 1, 2 or 4.");
   }
