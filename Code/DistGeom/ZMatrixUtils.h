@@ -54,7 +54,8 @@ struct TorsionRange {
     d_qUpper = quantize(upper);
     if (d_qLower == d_qUpper) {
       // full range
-      d_qUpper -= 2 * d_qLower;
+      d_qUpper = static_cast<int64_t>(M_PI * TORSION_PRECISION);
+      d_qLower = -static_cast<int64_t>(M_PI * TORSION_PRECISION);
     }
   }
 
@@ -69,7 +70,7 @@ struct TorsionRange {
       return value >= d_qLower && value <= d_qUpper;
     }
     // range across M_PI and -M_PI
-    return value <= d_qLower && value >= d_qUpper;
+    return (value < d_qLower) != (value > d_qUpper);
   }
 
   bool contains(const double value) const { return qContains(quantize(value)); }

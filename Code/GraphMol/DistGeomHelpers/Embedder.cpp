@@ -1497,10 +1497,10 @@ bool setupInitialBoundsMatrix(
     setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
                    scaleVDW, set15bounds, true, true,
                    &etkdgDetails.path14Configs,
-                   &(*etkdgDetails.internalCoords));
+                   etkdgDetails.internalCoords.get());
   } else {
     setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds, true, true,
-                   nullptr, &(*etkdgDetails.internalCoords));
+                   nullptr, etkdgDetails.internalCoords.get());
   }
   double tol = 0.0;
   if (coordMap) {
@@ -1879,9 +1879,10 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         // making sure, we collect internal coordinates
         mmat.reset(new DistGeom::BoundsMatrix(nAtoms));
         setTopolBounds(
-            *piece.get(), mmat,
-            params);  // for now, we use the bounds matrix internal coordinates,
-                      // in future, this should be an independend instance
+            *piece.get(), mmat, params, false, true, true, true, nullptr,
+            etkdgDetails.internalCoords.get());  // for now, we use the bounds
+                                                 // matrix internal coordinates,
+        // in future, this should be an independend instance
       }
       collectBondsAndAngles((*piece.get()), etkdgDetails.bonds,
                             etkdgDetails.angles);

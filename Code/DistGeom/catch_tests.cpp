@@ -50,6 +50,32 @@ TEST_CASE("Torsion Candidates") {
     CHECK_FALSE(DistGeom::less(cand1, cand3));
   }
 
+  SECTION("Contains") {
+    DistGeom::TorsionCandidates fullRange =
+        DistGeom::TorsionRange(0.0, 2.0 * M_PI);
+    CHECK(DistGeom::contains(fullRange, 0.0));
+    CHECK(DistGeom::contains(fullRange, 2.0 * M_PI));
+    CHECK(DistGeom::contains(fullRange, 1.0));
+    DistGeom::TorsionCandidates range2 = DistGeom::TorsionRange(2.0, 4.0);
+    CHECK(DistGeom::contains(range2, 2.0));
+    CHECK(DistGeom::contains(range2, 4.0));
+    CHECK(DistGeom::contains(range2, M_PI));
+    CHECK_FALSE(DistGeom::contains(range2, 0.0));
+    CHECK_FALSE(DistGeom::contains(range2, 5.0));
+    DistGeom::TorsionCandidates rangeAcross = DistGeom::TorsionRange(-4.0, 1.0);
+    CHECK(DistGeom::contains(rangeAcross, 1.0));
+    CHECK(DistGeom::contains(rangeAcross, -4.0));
+    CHECK(DistGeom::contains(rangeAcross, 0));
+    CHECK_FALSE(DistGeom::contains(rangeAcross, 2.0));
+
+    CHECK(DistGeom::contains(cand3, 0.0));
+    CHECK(DistGeom::contains(cand4, -1.3));
+    CHECK(DistGeom::contains(cand4, 4.0));
+
+    DistGeom::TorsionCandidates cand5 = DistGeom::TorsionValues({2.0 * M_PI});
+    CHECK(DistGeom::contains(cand5, 2.0 * M_PI));
+  }
+
   SECTION("Merge") {
     auto merge12 = DistGeom::merge(cand1, cand2);
     CHECK_NOTHROW(std::get<DistGeom::TorsionRange>(merge12));
