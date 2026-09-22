@@ -3958,12 +3958,8 @@ class TestOsmordred(unittest.TestCase):
         dropped.append(name)
         print("Skipping dot disconnected smiles", smi, name)
         continue
-      try:
-        actuals_by_mol[name] = _descriptor_map(mol, opts)
-      except:
-        dropped.append(name)
-        print("Skipping", smi, name)
-        continue
+
+      actuals_by_mol[name] = _descriptor_map(mol, opts)
 
     yaml_paths = sorted(data_dir.rglob("*.yaml"))
     assert yaml_paths, f"No YAML files found under {data_dir}"
