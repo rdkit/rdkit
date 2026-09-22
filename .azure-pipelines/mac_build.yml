@@ -28,17 +28,17 @@ steps:
         qt \
         numpy matplotlib cairo pillow eigen pandas=3  \
         jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval make ccache lapack liblapacke blas
-    echo "blas/lapacke diagnostics"
-    conda list | grep -E 'blas|lapack|openblas|mkl'
-    find "$CONDA_PREFIX" -iname '*lapacke*'
-    find "$CONDA_PREFIX" -iname 'lapacke.h'
-    find "$CONDA_PREFIX" -iname 'liblapacke*'
   displayName: Setup build environment
 - template: _templates/steps_setup_cache.yml
 - bash: |
     export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    echo "blas/lapacke diagnostics"
+    conda list | grep -E 'blas|lapack|openblas|mkl'
+    find "$CONDA_PREFIX" -iname '*lapacke*'
+    find "$CONDA_PREFIX" -iname 'lapacke.h'
+    find "$CONDA_PREFIX" -iname 'liblapacke*'
     ls -l /Library
     ls -l /Library/Developer
     ls -l /Library/Developer/CommandLineTools

@@ -26,7 +26,7 @@ if(RDK_BUILD_OSMORDRED_SUPPORT)
  	      OsmordredTopologicalConnectivityShape.cpp
 	      OsmordredMatrixAutocorrEStateFragments.cpp)
 
- include_directories(Descriptors LAPACK::LAPACK ${LAPACK_INCLUDE_DIRS} ${LAPACKE_INCLUDE_DIRS})
+ include_directories(Descriptors LAPACK::LAPACK LAPACKE::LAPACKE ${LAPACK_INCLUDE_DIRS} ${LAPACKE_INCLUDE_DIRS})
 endif(RDK_BUILD_OSMORDRED_SUPPORT)
 
 
