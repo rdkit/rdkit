@@ -33,6 +33,8 @@ class MarkushFormula:
       raise ValueError("a Markush formula needs at least one query")
     if any(query is None for query in self.queries):
       raise ValueError("Markush queries cannot be None")
+    if any(not isinstance(query, Chem.Mol) for query in self.queries):
+      raise TypeError("Markush queries must be RDKit molecules")
 
 
 class _ExactMarkushFormula(MarkushFormula):
@@ -55,6 +57,21 @@ def _as_formula(formula):
   return formula
 
 
+def _require_molecule(molecule, none_message, type_message):
+  if molecule is None:
+    raise ValueError(none_message)
+  if not isinstance(molecule, Chem.Mol):
+    raise TypeError(type_message)
+
+
+def _match_parameters(params):
+  if params is None:
+    return _generic_match_parameters()
+  if not isinstance(params, Chem.SubstructMatchParameters):
+    raise TypeError("params must be SubstructMatchParameters or None")
+  return params
+
+
 def IsInMarkushScope(formula, molecule, params=None):
   """Return whether ``molecule`` matches at least one formula alternative.
 
@@ -62,13 +79,12 @@ def IsInMarkushScope(formula, molecule, params=None):
   :class:`~rdkit.Chem.rdchem.SubstructMatchParameters` instance to change the
   matching policy.
   """
-  if molecule is None:
-    raise ValueError("molecule cannot be None")
+  _require_molecule(molecule, "molecule cannot be None",
+                    "molecule must be an RDKit molecule")
   formula = _as_formula(formula)
+  params = _match_parameters(params)
   if isinstance(formula, _ExactMarkushFormula):
     return Chem.MolToSmiles(molecule) in formula._identities
-  if params is None:
-    params = _generic_match_parameters()
   return any(molecule.HasSubstructMatch(query, params) for query in formula.queries)
 
 
@@ -82,9 +98,10 @@ def EnumerateMarkush(formula, candidates, params=None):
   result = []
   seen = set()
   formula = _as_formula(formula)
+  params = _match_parameters(params)
   for molecule in candidates:
-    if molecule is None:
-      raise ValueError("candidate molecules cannot be None")
+    _require_molecule(molecule, "candidate molecules cannot be None",
+                      "candidate molecules must be RDKit molecules")
     if IsInMarkushScope(formula, molecule, params):
       key = Chem.MolToSmiles(molecule)
       if key not in seen:
@@ -104,8 +121,8 @@ def MakeMarkushFormula(molecules):
   identities = []
   seen = set()
   for molecule in molecules:
-    if molecule is None:
-      raise ValueError("molecules cannot contain None")
+    _require_molecule(molecule, "molecules cannot contain None",
+                      "molecules must be RDKit molecules")
     key = Chem.MolToSmiles(molecule)
     if key not in seen:
       seen.add(key)
