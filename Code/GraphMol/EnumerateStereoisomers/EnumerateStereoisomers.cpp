@@ -19,6 +19,7 @@
 #include <GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h>
 #include <GraphMol/EnumerateStereoisomers/Flippers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include "RingSystemFilter.h"
 
 namespace RDKit {
 namespace EnumerateStereoisomers {
@@ -60,6 +61,11 @@ StereoisomerEnumerator::StereoisomerEnumerator(
     d_randGen.reset(new std::mt19937(std::random_device()()));
   } else {
     d_randGen.reset(new std::mt19937(d_options.randomSeed));
+  }
+
+  if (d_options.useRingSystemFilter) {
+    getRingPatternsParityRelations(mol, d_pattern_same_parity,
+                                   d_pattern_opposite_parity);
   }
 }
 
@@ -116,6 +122,39 @@ void StereoisomerEnumerator::buildFlippers() {
   }
 }
 
+bool StereoisomerEnumerator::passesRingPatternsCheck() const {
+  // We already matched the input mol against the patterns,
+  // so we know that i and j are (pseudo)chiral. Now, check
+  // if the current parities are compatible with the pattern
+  for (auto [i, j] : d_pattern_same_parity) {
+    for (auto x : {i, j}) {
+      if (d_mol.getAtomWithIdx(x)->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+          d_mol.getAtomWithIdx(x)->getChiralTag() !=
+              Atom::CHI_TETRAHEDRAL_CCW) {
+        throw std::logic_error("Atom is not CW/CCW as expected");
+      }
+    }
+    if (d_mol.getAtomWithIdx(i)->getChiralTag() !=
+        d_mol.getAtomWithIdx(j)->getChiralTag()) {
+      return false;
+    }
+  }
+  for (auto [i, j] : d_pattern_opposite_parity) {
+    for (auto x : {i, j}) {
+      if (d_mol.getAtomWithIdx(x)->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+          d_mol.getAtomWithIdx(x)->getChiralTag() !=
+              Atom::CHI_TETRAHEDRAL_CCW) {
+        throw std::logic_error("Atom is not CW/CCW as expected");
+      }
+    }
+    if (d_mol.getAtomWithIdx(i)->getChiralTag() ==
+        d_mol.getAtomWithIdx(j)->getChiralTag()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
   boost::dynamic_bitset<> nextConfig{d_flippers.size()};
   while (d_seen.size() < d_totalPoss) {
@@ -128,6 +167,13 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
       for (size_t i = 0; i < d_flippers.size(); i++) {
         d_flippers[i]->flip(nextConfig[i]);
       }
+
+      // Check whether this isomer is valid, according to the patterns
+      // we're using
+      if (d_options.useRingSystemFilter && !passesRingPatternsCheck()) {
+        continue;
+      }
+
       // We don't need StereoGroups any more so remove them.
       std::unique_ptr<ROMol> isomer;
       if (!d_mol.getStereoGroups().empty()) {

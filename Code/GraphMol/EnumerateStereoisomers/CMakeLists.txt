@@ -1,6 +1,6 @@
 
 rdkit_library(EnumerateStereoisomers
-        EnumerateStereoisomers.cpp Flippers.cpp
+        EnumerateStereoisomers.cpp Flippers.cpp RingSystemFilter.cpp
         LINK_LIBRARIES SmilesParse FileParsers GraphMol CIPLabeler DistGeomHelpers DistGeometry)
 target_compile_definitions(EnumerateStereoisomers PRIVATE RDKIT_ENUMERATESTEREOISOMERS_BUILD)
 
