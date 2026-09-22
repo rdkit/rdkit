@@ -44,9 +44,9 @@ enum EmbedFailureCauses {
 };
 
 enum class InitialEmbeddingMode {
-  DG_EMBEDDING,
-  INTERNAL_COORDINATE_EMBEDDING,
-  RANDOM_COORDINATE_EMBEDDING
+  DG_EMBEDDING = 0,
+  INTERNAL_COORDINATE_EMBEDDING = 1,
+  RANDOM_COORDINATE_EMBEDDING = 2
 };
 
 //! Parameter object for controlling embedding
@@ -469,6 +469,20 @@ inline INT_VECT EmbedMultipleConfs(
   EmbedMultipleConfs(mol, res, numConfs, params);
   return res;
 };
+
+// Overloads for serialization to JSON
+inline std::ostream &operator<<(std::ostream &os,
+                                const InitialEmbeddingMode &eff) {
+  os << static_cast<int>(eff);
+  return os;
+}
+inline std::istream &operator>>(std::istream &is, InitialEmbeddingMode &eff) {
+  int val;
+  if (is >> val) {
+    eff = static_cast<InitialEmbeddingMode>(val);
+  }
+  return is;
+}
 
 //! Parameters corresponding to plain Distance Geometry
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters DG;

@@ -86,12 +86,17 @@ void updateEmbedParametersFromJSON(EmbedParameters &params,
     }
     params.coordMap = cmap;
   }
+
+  if (auto opt = pt.get_optional<int>("initialEmbeddingMode")) {
+    params.initialEmbeddingMode = static_cast<InitialEmbeddingMode>(*opt);
+  }
 }
 
 std::string embedParametersToJSON(const EmbedParameters &params) {
   boost::property_tree::ptree pt;
 
   EMBED_PARAMS_FIELDS(PT_OPT_PUT)
+  PT_OPT_PUT(initialEmbeddingMode)
 
   if (params.coordMap) {
     boost::property_tree::ptree coordMapPT;
