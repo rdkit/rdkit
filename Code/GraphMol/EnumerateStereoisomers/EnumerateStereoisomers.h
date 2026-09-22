@@ -57,6 +57,10 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
                                 // keep an eye on this.
   int randomSeed{-1};  // Seed for random number generator.  -1 means don't
                        // seed.
+
+  bool useRingSystemFilter{
+      true};  // filter out stereoisomers containing ring systems that
+              // are known to be impossible in 3D space
 };
 
 // Class that enumerates the stereoisomers of a molecule.  Acts like a
