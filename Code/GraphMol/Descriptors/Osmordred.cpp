@@ -223,9 +223,9 @@ std::vector<double> calcOsmordred(const ROMol &mol, const OsmordredOptions &opts
 
   try {
     return calcOsmordred(mol, opts, &end_time_storage);
-  } catch(ValueErrorException) {
+  } catch(const ValueErrorException &) {
     return std::vector<double>(NUM_OSMORDRED, std::numeric_limits<double>::quiet_NaN());
-  } catch(std::runtime_error) {
+  } catch(const std::runtime_error &) {
     return std::vector<double>(NUM_OSMORDRED, std::numeric_limits<double>::quiet_NaN());
   }
 }
@@ -278,7 +278,7 @@ std::vector<std::vector<double>> calcOsmordred(
                             [&mol, &nanRow, &opts]() -> std::vector<double> {
                               try {
                                 return calcOsmordred(*mol, opts);
-                              } catch (ValueErrorException) {
+                              } catch (const ValueErrorException &) {
                                 return nanRow;
                               }
                             });
@@ -341,7 +341,7 @@ std::vector<std::vector<double>> calcOsmordred(
                             [mol, &nanRow, &opts]() -> std::vector<double> {
                               try {
                                 return calcOsmordred(*mol, opts);
-                              } catch (ValueErrorException) {
+                              } catch (const ValueErrorException &) {
                                 return nanRow;
                               }
                             });
