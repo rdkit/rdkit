@@ -221,6 +221,8 @@ class TestCase(unittest.TestCase):
 
   def testInvalidInputsAreRejected(self):
     molecule = Chem.MolFromSmiles('CC')
+    with self.assertRaisesRegex(TypeError, '^Markush queries must be iterable$'):
+      Markush.MarkushFormula(None)
     with self.assertRaisesRegex(ValueError, '^a Markush formula needs at least one query$'):
       Markush.MarkushFormula(())
     with self.assertRaisesRegex(ValueError, '^Markush queries cannot be None$'):
@@ -237,10 +239,14 @@ class TestCase(unittest.TestCase):
       Markush.EnumerateMarkush(molecule, (molecule, None))
     with self.assertRaisesRegex(TypeError, '^candidate molecules must be RDKit molecules$'):
       Markush.EnumerateMarkush(molecule, ('CC', ))
+    with self.assertRaisesRegex(TypeError, '^candidates must be iterable$'):
+      Markush.EnumerateMarkush(molecule, None)
     with self.assertRaisesRegex(ValueError, '^molecules cannot contain None$'):
       Markush.MakeMarkushFormula((None, ))
     with self.assertRaisesRegex(TypeError, '^molecules must be RDKit molecules$'):
       Markush.MakeMarkushFormula(('CC', ))
+    with self.assertRaisesRegex(TypeError, '^molecules must be iterable$'):
+      Markush.MakeMarkushFormula(None)
     with self.assertRaisesRegex(ValueError, '^a Markush formula needs at least one query$'):
       Markush.MakeMarkushFormula(())
     with self.assertRaisesRegex(ValueError, '^Markush queries cannot be None$'):

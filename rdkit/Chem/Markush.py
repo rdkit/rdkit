@@ -28,7 +28,7 @@ class MarkushFormula:
   """
 
   def __init__(self, queries):
-    self.queries = tuple(queries)
+    self.queries = _as_tuple(queries, "Markush queries")
     if not self.queries:
       raise ValueError("a Markush formula needs at least one query")
     if any(query is None for query in self.queries):
@@ -55,6 +55,21 @@ def _as_formula(formula):
   if not isinstance(formula, MarkushFormula):
     formula = MarkushFormula((formula, ))
   return formula
+
+
+def _as_tuple(values, name):
+  try:
+    return tuple(values)
+  except TypeError:
+    raise TypeError(f"{name} must be iterable") from None
+
+
+def _require_iterable(values, name):
+  try:
+    iter(values)
+  except TypeError:
+    raise TypeError(f"{name} must be iterable") from None
+  return values
 
 
 def _require_molecule(molecule, none_message, type_message):
@@ -99,7 +114,7 @@ def EnumerateMarkush(formula, candidates, params=None):
   seen = set()
   formula = _as_formula(formula)
   params = _match_parameters(params)
-  for molecule in candidates:
+  for molecule in _require_iterable(candidates, "candidates"):
     _require_molecule(molecule, "candidate molecules cannot be None",
                       "candidate molecules must be RDKit molecules")
     if IsInMarkushScope(formula, molecule, params):
@@ -120,7 +135,7 @@ def MakeMarkushFormula(molecules):
   queries = []
   identities = []
   seen = set()
-  for molecule in molecules:
+  for molecule in _require_iterable(molecules, "molecules"):
     _require_molecule(molecule, "molecules cannot contain None",
                       "molecules must be RDKit molecules")
     key = Chem.MolToSmiles(molecule)
