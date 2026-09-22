@@ -386,8 +386,8 @@ void addExperimentalTorsionTerms(
     }
     atomPairs[idx] = excludeTorsion;
     torsionContribs->addContrib(
-        i, j, k, l, etkdgDetails.cosPhiToEnergy[etkdgDetails.torsionIdx[t]],
-        etkdgDetails.cosPhiToGrad[etkdgDetails.torsionIdx[t]],
+        i, j, k, l, etkdgDetails.phiToEnergy[etkdgDetails.torsionIdx[t]],
+        etkdgDetails.phiToGrad[etkdgDetails.torsionIdx[t]],
         get<3>(etkdgDetails.expTorsionAngles[t]));
     doneBonds[bidx] = 1;
   }
