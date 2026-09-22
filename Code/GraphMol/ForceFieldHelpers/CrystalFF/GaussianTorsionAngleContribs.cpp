@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 #include <numbers>
+#include <algorithm>
 #include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
 #include <ForceField/MMFF/Params.h>
@@ -21,7 +22,6 @@
 namespace ForceFields {
 namespace CrystalFF {
 constexpr double twoPI = 2 * std::numbers::pi;
-constexpr double KT = 2.479;
 
 inline double interpolate(const std::vector<double> &table, double phi) {
   const double norm = phi * (table.size() - 1) / std::numbers::pi;
