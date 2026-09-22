@@ -49,7 +49,8 @@ namespace DGeomHelpers {
   X(useRandomCoords)                              \
   X(useSmallRingTorsions)                         \
   X(useSymmetryForPruning)                        \
-  X(verbose)
+  X(verbose)                                      \
+  X(onlyInitialEmbedding)
 
 #define PT_OPT_GET(opt) params.opt = pt.get(#opt, params.opt);
 #define PT_OPT_PUT(opt) pt.put(#opt, params.opt);

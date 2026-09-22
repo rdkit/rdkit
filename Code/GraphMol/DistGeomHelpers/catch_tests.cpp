@@ -229,8 +229,52 @@ TEST_CASE("update parameters from JSON") {
     auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
     CHECK(v1.angleTo(v2) == Catch::Approx(M_PI / 2).margin(0.15));
   }
-
-  // internal coord embedding
+  SECTION("IC Embedding inital") {
+    std::string fname = getPath("torsion.initial.ic.mol", true);
+    std::string smiles = "n1cccc(C)c1ON";
+    std::string json = R"JSON({"randomSeed":42,
+    "useExpTorsionAnglePrefs":true,
+    "useBasicKnowledge":true,
+    "initialEmbeddingMode":1,
+    "onlyInitialEmbedding":true,
+    "ETversion":2,"useLegacyImplementation":)JSON" +
+                       std::string(legacyETKDG ? "true" : "false") + "}";
+    runTest(smiles, fname, json);
+  }
+  SECTION("IC Embedding simple initial") {
+    std::string fname = getPath("simple_torsion.initial.ic.mol", legacyETKDG);
+    std::string smiles = "OCCC";
+    std::string json = R"JSON({"randomSeed":42,
+    "useExpTorsionAnglePrefs":true,
+    "useBasicKnowledge":true,
+    "initialEmbeddingMode":1,
+    "onlyInitialEmbedding":true,
+    "ETversion":2,"useLegacyImplementation":)JSON" +
+                       std::string(legacyETKDG ? "true" : "false") + "}";
+    runTest(smiles, fname, json);
+  }
+  SECTION("IC Embedding") {
+    std::string fname = getPath("torsion.ETKDG.ic.mol", legacyETKDG);
+    std::string smiles = "n1cccc(C)c1ON";
+    std::string json = R"JSON({"randomSeed":42,
+    "useExpTorsionAnglePrefs":true,
+    "useBasicKnowledge":true,
+    "initialEmbeddingMode":1,
+    "ETversion":2,"useLegacyImplementation":)JSON" +
+                       std::string(legacyETKDG ? "true" : "false") + "}";
+    runTest(smiles, fname, json);
+  }
+  SECTION("IC Embedding simple initial") {
+    std::string fname = getPath("simple_torsion.ETKDG.ic.mol", legacyETKDG);
+    std::string smiles = "OCCC";
+    std::string json = R"JSON({"randomSeed":42,
+    "useExpTorsionAnglePrefs":true,
+    "useBasicKnowledge":true,
+    "initialEmbeddingMode":1,
+    "ETversion":2,"useLegacyImplementation":)JSON" +
+                       std::string(legacyETKDG ? "true" : "false") + "}";
+    runTest(smiles, fname, json);
+  }
 }
 
 TEST_CASE("EmbedParameters to JSON") {
@@ -238,7 +282,7 @@ TEST_CASE("EmbedParameters to JSON") {
     auto ps = DGeomHelpers::KDG;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","initialEmbeddingMode":"0"})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","onlyInitialEmbedding":"false","initialEmbeddingMode":"0"})JSON";
     CHECK(json == goal);
   }
   SECTION("With CoordMap") {
@@ -249,7 +293,7 @@ TEST_CASE("EmbedParameters to JSON") {
     ps.coordMap = coordMap;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","initialEmbeddingMode":"0","coordMap":{"3":["1.100000","2.200000","3.300000"]}})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","onlyInitialEmbedding":"false","initialEmbeddingMode":"0","coordMap":{"3":["1.100000","2.200000","3.300000"]}})JSON";
     CHECK(json == goal);
     delete coordMap;
   }
@@ -268,7 +312,7 @@ TEST_CASE("EmbedParameters to JSON") {
     ps.boundsMat = mat;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","initialEmbeddingMode":"0","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6536523290585412"],["0.98025420400136154","1.5809872790648758","0"]]})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","onlyInitialEmbedding":"false","initialEmbeddingMode":"0","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6536523290585412"],["0.98025420400136154","1.5809872790648758","0"]]})JSON";
     CHECK(json == goal);
   }
   SECTION("Round trip") {
@@ -2651,6 +2695,26 @@ TEST_CASE("Bounds violations - internal coordinate embedding") {
 
     CHECK(num12violations(bm, *mol) == 0);
     CHECK(num13violations(bm, distMat, *mol) == 0);
+  }
+
+  SECTION("Rigid") {
+    const auto smiles =
+        GENERATE("C=C", "c1ccccc1", "O=CNc3ncc2c(cnc1nccnc12)n3");
+    auto mol = embedInitialCoordinates(smiles, 1);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    for (auto i : std::views::iota(0u, mol->getNumAtoms() - 1u)) {
+      auto posI = mol->getConformer().getAtomPos(i);
+      for (auto j : std::views::iota(i + 1, mol->getNumAtoms())) {
+        auto posJ = mol->getConformer().getAtomPos(j);
+        double embeddedDist = (posI - posJ).length();
+        CHECK(embeddedDist <= bm->getUpperBound(i, j) + 0.05);
+        CHECK(embeddedDist >= bm->getLowerBound(i, j) - 0.05);
+      }
+    }
   }
 
   SECTION("Ring closures (simple)") {
