@@ -4005,7 +4005,8 @@ class TestOsmordred(unittest.TestCase):
                 continue
               
             if isinstance(desired, float) and math.isnan(desired):
-              if not isinstance(actual, float) and math.isnan(actual):
+              # we report 0.0 for a few items where mordred reports NaN
+              if actual != 0.0 and not math.isnan(actual):
                 failed.append(f"Expected NaN for {dname} of {mname} ({yaml_path}), got {actual}")
                 failures[dname] += 1
                 continue
