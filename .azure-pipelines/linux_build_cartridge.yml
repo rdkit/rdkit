@@ -14,7 +14,7 @@ steps:
         libboost-devel=$(boost_version) \
         eigen \
         cairo freetype \
-        ccache lapack liblapacke blas
+        ccache lapack liblapacke blas blas-devel
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict

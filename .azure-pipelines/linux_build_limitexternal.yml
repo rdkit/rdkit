@@ -13,7 +13,7 @@ steps:
         libboost=$(boost_version) libboost-devel=$(boost_version) \
         libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         numpy pillow eigen pandas=3 \
-        qt pytest ccache lapack liblapacke blas
+        qt pytest ccache
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
