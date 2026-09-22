@@ -484,6 +484,7 @@ inline std::ostream &operator<<(std::ostream &os,
       os << "RANDOM_COORDINATE_EMBEDDING";
       return os;
   }
+  return os;
 }
 
 inline std::istream &operator>>(std::istream &is, InitialEmbeddingMode &mode) {

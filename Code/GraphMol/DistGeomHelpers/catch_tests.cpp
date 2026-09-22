@@ -2597,8 +2597,10 @@ TEST_CASE("Z-Matrix Builder Basics") {
           double inproperTor = MolTransforms::getDihedralRad(
               mol->getConformer(), row.atomIdx, row.internal.bondRef.value(),
               row.internal.angleRef.value(), row.torsionDependence->reference);
-          CHECK_THAT(inproperTor, Catch::Matchers::WithinAbs(
-                                      row.torsionDependence->offset, 1.e-4));
+          CHECK_THAT(
+              std::fmod(inproperTor, 2 * M_PI),
+              Catch::Matchers::WithinAbs(
+                  std::fmod(row.torsionDependence->offset, 2 * M_PI), 1.e-4));
         } else {
           double torsion = MolTransforms::getDihedralRad(
               mol->getConformer(), row.atomIdx, row.internal.bondRef.value(),
