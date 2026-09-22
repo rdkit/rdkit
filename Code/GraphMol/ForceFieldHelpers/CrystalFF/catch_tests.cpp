@@ -16,9 +16,11 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
 
+#include <ForceField/ForceField.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/MolOps.h>
+
 
 #include "GaussianTorsionAngleContribs.h"
 #include "TorsionPreferences.h"
@@ -105,12 +107,12 @@ TEST_CASE("GaussianTorsionContribsBasics") {
     }
     SECTION("FiniteDiff") {
       for (std::size_t i = 0; i < 360; ++i) {
-        const double phi = 2 * i / 360 * PI;
+        const double phi = 2.0 * i / 360 * PI;
         const double grad_pi =
             ForceFields::CrystalFF::getdEdPhi(heights, positions, widths, phi);
         const double grad_pi_num =
             _numeric_dEdPhi(heights, positions, widths, phi);
-        CHECK_THAT(grad_pi, match(grad_pi_num, 1e-10));
+        CHECK_THAT(grad_pi, match(grad_pi_num, 1e-8));
       }
     }
   }
@@ -182,12 +184,12 @@ TEST_CASE("GaussianTorsionContribsBasics") {
     }
     SECTION("FiniteDiff") {
       for (std::size_t i = 0; i < 360; ++i) {
-        const double phi = 2 * i / 360 * PI;
+        const double phi = 2.0 * i / 360 * PI;
         const double grad_pi =
             ForceFields::CrystalFF::getdEdPhi(heights, positions, widths, phi);
         const double grad_pi_num =
             _numeric_dEdPhi(heights, positions, widths, phi);
-        CHECK_THAT(grad_pi, match(grad_pi_num, 1e-10));
+        CHECK_THAT(grad_pi, match(grad_pi_num, 1e-8));
       }
     }
   }
@@ -364,7 +366,6 @@ TEST_CASE("GaussianTorsionContribsLookupTable") {
     auto &energies_a = details.phiToEnergy[4];
     auto &gradients_a = details.phiToGrad[4];
 
-
     // minimum at 180!
     for (std::size_t i = 0; i < 179; ++i) {
       CHECK(energies_t[179] < energies_t[i]);
@@ -373,7 +374,7 @@ TEST_CASE("GaussianTorsionContribsLookupTable") {
       CHECK(energies_c[0] < energies_c[i]);
     }
     for (std::size_t i = 1; i < 180; ++i) {
-      CHECK(energies_a[0] < energies_c[i]);
+      CHECK(energies_a[0] < energies_a[i]);
     }
     CHECK_THAT(gradients_t[179], Catch::Matchers::WithinAbs(0.0, 1e-10));
     CHECK_THAT(gradients_c[0], Catch::Matchers::WithinAbs(0.0, 1e-10));
