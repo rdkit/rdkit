@@ -699,10 +699,11 @@ bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
           field.reset(DistGeom::constructAllInOneForceField(
               *eargs.mmat, *positions, details, eargs.chiralCenters,
               *embedParams.CPCI, nullptr, &fixedPts));
+        } else {
+          field.reset(DistGeom::constructAllInOneForceField(
+              *eargs.mmat, *positions, details, eargs.chiralCenters, nullptr,
+              &fixedPts));
         }
-        field.reset(DistGeom::constructAllInOneForceField(
-            *eargs.mmat, *positions, details, eargs.chiralCenters, nullptr,
-            &fixedPts));
         return field;
       },
       *eargs.etkdgDetails);
