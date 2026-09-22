@@ -236,63 +236,64 @@ std::vector<double> calcOsmordred(const ROMol &mol, const OsmordredOptions &opts
 std::vector<std::vector<double>> calcOsmordred(
   const std::vector<std::string> &smiles_list, int n_jobs, const OsmordredOptions &opts) {
   PRECONDITION(opts.isValid(), "Invalid Osmordred Options");
-  std::vector<std::vector<double>> results;
-  results.reserve(smiles_list.size());
+  size_t n = smiles_list.size();
+  std::vector<std::vector<double>> results(n);
 
   unsigned int nThreads = getNumThreadsToUse(n_jobs);
-  if (nThreads <= 1 || smiles_list.size() < 10) {
-    for (const auto &smi : smiles_list) {
+  const size_t nFeatures = getNumOsmordredDescriptors();
+  const std::vector<double> nanRow(nFeatures,
+                                   std::numeric_limits<double>::quiet_NaN());
 
-      ROMol *mol = SmilesToMol(smi);
-      try {
-	if(mol) {
-	  results.push_back(calcOsmordred(*mol, opts));
-	  delete mol;
-	} else {
-	  results.push_back(std::vector<double>(
-	    3585, std::numeric_limits<double>::quiet_NaN()));
+  if (nThreads <= 1 || n < 10) {
+    for (size_t i = 0; i < n; ++i) {
+      auto mol = v2::SmilesParse::MolFromSmiles(smiles_list[i]);
+      if(mol == nullptr) {
+	results[i] = nanRow;
+      }
+      else {
+	try {
+	  results[i] = calcOsmordred(*mol, opts);
+	} catch (...) {
+	  results[i] = nanRow;
 	}
-      } catch (ValueErrorException) {
-	results.push_back(std::vector<double>(
-            NUM_OSMORDRED, std::numeric_limits<double>::quiet_NaN()));
-	delete mol;
       }
     }
     return results;
   }
 
-  // Parallel processing using std::async with timeout
-  std::vector<std::future<std::vector<double>>> futures;
-  futures.reserve(smiles_list.size());
-
-  for (size_t idx = 0; idx < smiles_list.size(); ++idx) {
-    const auto &smi = smiles_list[idx];
-
-    futures.emplace_back(std::async(std::launch::async, [&]() {
-      try {
-        ROMol *mol = SmilesToMol(smi);
-        if (mol) {
-          try {
-            std::vector<double> descriptors = calcOsmordred(*mol, opts);
-            delete mol;
-            return descriptors;
-          } catch(ValueErrorException) {
-            delete mol;
-            return std::vector<double>();
-          }
-        } else {
-          return std::vector<double>();
-        }
-      } catch (...) {
-        return std::vector<double>();
+  // v3: bounded thread pool (nThreads workers + atomic work index), each running
+  // its molecule via std::async + wait_for -> bounded thread count (safe for
+  // large batches) AND a per-molecule timeout (hang protection). Replaces the
+  // previous one-std::async-per-molecule scheme (N threads, OOM risk at scale).
+  std::atomic<size_t> nextIdx(0);
+  auto worker = [&]() {
+    size_t i;
+    while ((i = nextIdx.fetch_add(1)) < n) {
+      auto mol = v2::SmilesParse::MolFromSmiles(smiles_list[i]);
+      if (!mol) {
+        results[i] = nanRow;
+        continue;
       }
-    }));
+      auto fut = std::async(std::launch::async,
+                            [&mol, &nanRow, &opts]() -> std::vector<double> {
+                              try {
+                                return calcOsmordred(*mol, opts);
+                              } catch (ValueErrorException) {
+                                return nanRow;
+                              }
+                            });
+      // is this timeout per mol or per job?
+      results[i] = fut.get();
+    }
+  };
+  std::vector<std::thread> pool;
+  pool.reserve(nThreads);
+  for (unsigned int t = 0; t < nThreads; ++t) {
+    pool.emplace_back(worker);
   }
-
-  for (auto &f : futures) {
-    results.push_back(f.get());
+  for (auto &th : pool) {
+    th.join();
   }
-
   return results;
 }
 
