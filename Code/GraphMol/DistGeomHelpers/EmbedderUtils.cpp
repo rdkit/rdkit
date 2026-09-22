@@ -88,11 +88,12 @@ void updateEmbedParametersFromJSON(EmbedParameters &params,
     params.coordMap = cmap;
   }
 
-  if (auto opt = pt.get_optional<int>("initialEmbeddingMode")) {
-    int val = opt.value_or(0);
-    ASSERT_INVARIANT(val <= 2 && val >= 0,
-                     "Initial embedding option must be in range [0,2]");
-    params.initialEmbeddingMode = static_cast<InitialEmbeddingMode>(val);
+  if (auto opt = pt.get_optional<std::string>("initialEmbeddingMode")) {
+    std::stringstream valS{*opt};
+    if (!(valS >> params.initialEmbeddingMode)) {
+      throw std::invalid_argument(
+          "Initial embedding option must be either 'DG_EMBEDDING', 'INTERNAL_COORDINATE_EMBEDDING', or 'RANDOM_COORDINATE_EMBEDDING'");
+    }
   }
 }
 

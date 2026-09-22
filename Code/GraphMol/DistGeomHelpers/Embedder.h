@@ -472,14 +472,32 @@ inline INT_VECT EmbedMultipleConfs(
 
 // Overloads for serialization to JSON
 inline std::ostream &operator<<(std::ostream &os,
-                                const InitialEmbeddingMode &eff) {
-  os << static_cast<int>(eff);
-  return os;
+                                const InitialEmbeddingMode &mode) {
+  switch (mode) {
+    case InitialEmbeddingMode::DG_EMBEDDING:
+      os << "DG_EMBEDDING";
+      return os;
+    case InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING:
+      os << "INTERNAL_COORDINATE_EMBEDDING";
+      return os;
+    case InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING:
+      os << "RANDOM_COORDINATE_EMBEDDING";
+      return os;
+  }
 }
-inline std::istream &operator>>(std::istream &is, InitialEmbeddingMode &eff) {
-  int val;
+
+inline std::istream &operator>>(std::istream &is, InitialEmbeddingMode &mode) {
+  std::string val;
   if (is >> val) {
-    eff = static_cast<InitialEmbeddingMode>(val);
+    if (val == "DG_EMBEDDING") {
+      mode = InitialEmbeddingMode::DG_EMBEDDING;
+    } else if (val == "INTERNAL_COORDINATE_EMBEDDING") {
+      mode = InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
+    } else if (val == "RANDOM_COORDINATE_EMBEDDING") {
+      mode = InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING;
+    } else {
+      is.setstate(std::ios::failbit);
+    }
   }
   return is;
 }
