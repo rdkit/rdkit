@@ -1899,8 +1899,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     DistGeom::ZMatPtr zmat = std::make_shared<DistGeom::ZMatrix>(nAtoms);
     if (params.initialEmbeddingMode ==
         InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING) {
-      setMoleculeDFS(*piece.get(), zmat, *etkdgDetails.internalCoords);
-      correctChiralCenters(*piece.get(), zmat);
+      setMoleculeDFS(*piece.get(), *zmat, *etkdgDetails.internalCoords);
+      correctChiralCenters(*piece.get(), *zmat);
     }
 
     // find double bonds

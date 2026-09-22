@@ -1616,7 +1616,6 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   if (params.initialEmbeddingMode ==
           InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING &&
       internalCoords != nullptr) {
-    assert(params.internalCoords != nullptr);
     collectInternalCoordinates(mol, *internalCoords, accumData);
   }
   if (paths14) {

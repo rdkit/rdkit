@@ -52,6 +52,10 @@ struct TorsionRange {
     PRECONDITION(lower <= upper, "Invalid range");
     d_qLower = quantize(lower);
     d_qUpper = quantize(upper);
+    if (d_qLower == d_qUpper) {
+      // full range
+      d_qUpper -= 2 * d_qLower;
+    }
   }
 
   TorsionRange(int64_t qLower, int64_t qUpper)
@@ -68,6 +72,8 @@ struct TorsionRange {
     return value <= d_qLower && value >= d_qUpper;
   }
 
+  bool contains(const double value) const { return qContains(quantize(value)); }
+
   double width() const {
     auto res = upper - lower;
     if (res < 0) {
@@ -79,6 +85,10 @@ struct TorsionRange {
 
   bool operator<(const TorsionRange &other) const {
     return this->width() < other.width();
+  }
+
+  bool operator==(const TorsionRange &other) const {
+    return this->d_qLower == other.d_qLower && this->d_qUpper == other.d_qUpper;
   }
 
   double sample(RDKit::double_source_type &rng) const {
@@ -128,14 +138,23 @@ struct TorsionValues {
     // [-M_PI, M_PI] again
     return dequantize(*it);
   }
-
+  bool operator==(const TorsionValues &other) const {
+    return content == other.content;
+  }
   double firstValue() const { return dequantize(*content.begin()); }
 
-  std::pair<iterator, bool> insert(double val) {
+  std::pair<iterator, bool> insert(const double val) {
     return content.insert(quantize(val));
   }
 
-  std::pair<iterator, bool> insertQ(int64_t val) { return content.insert(val); }
+  std::pair<iterator, bool> insertQ(const int64_t val) {
+    return content.insert(val);
+  }
+
+  bool contains(const double value) const {
+    const std::int64_t qVal = quantize(value);
+    return content.contains(qVal);
+  }
 
  private:
   std::unordered_set<int64_t> content;
@@ -199,6 +218,20 @@ inline bool less(const TorsionValues &lhs, const TorsionValues &rhs) {
   return lhs.size() < rhs.size();
 }
 
+inline bool equal(const TorsionRange &lhs, const TorsionRange &rhs) {
+  return lhs == rhs;
+}
+
+inline bool equal(const TorsionRange &, const TorsionValues &) {
+  return false;  // distinct values are more constraint than ranges
+}
+
+inline bool equal(const TorsionValues &, const TorsionRange &) { return false; }
+
+inline bool equal(const TorsionValues &lhs, const TorsionValues &rhs) {
+  return lhs == rhs;
+}
+
 };  // namespace
 
 inline TorsionCandidates merge(const TorsionCandidates &lhs,
@@ -227,6 +260,20 @@ inline bool less(const TorsionCandidates &lhs, const TorsionCandidates &rhs) {
       [](const auto &l, const auto &r) -> bool { return less(l, r); }, lhs,
       rhs);
 }
+inline bool equal(const TorsionCandidates &lhs, const TorsionCandidates &rhs) {
+  // lhs < rhs => lhs is more constraint than rhs
+  return std::visit(
+      [](const auto &l, const auto &r) -> bool { return equal(l, r); }, lhs,
+      rhs);
+}
+
+inline bool contains(const TorsionCandidates &torsionCand, const double value) {
+  // lhs < rhs => lhs is more constraint than rhs
+  return std::visit(
+      [value](const auto &x) -> bool { return x.contains(value); },
+      torsionCand);
+}
+
 }  // namespace DistGeom
 
 #endif

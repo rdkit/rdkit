@@ -45,7 +45,7 @@ struct InternalCoordinates {
   internal coordinates, since they are accessed by their bond ids)
 */
 RDKIT_DISTGEOMHELPERS_EXPORT void setMoleculeDFS(
-    const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
+    const ROMol &mol, DistGeom::ZMatrix &zmat,
     const InternalCoordinates &internalCoords);
 
 //! Generates a Z-Matrix via a DFS walk through the molecule, as starting point,
@@ -61,7 +61,7 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setMoleculeDFS(
   \param secondAtomIdx Second row in zmatrix
 */
 RDKIT_DISTGEOMHELPERS_EXPORT void setMoleculeDFS(
-    const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
+    const ROMol &mol, DistGeom::ZMatrix &zmat,
     const InternalCoordinates &internalCoords, unsigned int firstAtomIdx,
     unsigned int secondAtomIdx);
 
@@ -71,8 +71,8 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setMoleculeDFS(
   \param mol  Corresponding molecule
   \param zmat ZMatrix
 */
-RDKIT_DISTGEOMHELPERS_EXPORT void correctChiralCenters(
-    const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat);
+RDKIT_DISTGEOMHELPERS_EXPORT void correctChiralCenters(const ROMol &mol,
+                                                       DistGeom::ZMatrix &zmat);
 
 }  // namespace DGeomHelpers
 }  // namespace RDKit

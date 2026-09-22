@@ -90,6 +90,20 @@ void addNeighborsToStack(const unsigned int atomIdx,
     const auto next = std::next(
         first);  // it should be handelt first => adding it as last to the stack
     std::ranges::rotate(bonds, next == bonds.end() ? bonds.begin() : next);
+
+    const auto &torsion = bondToTorsion(*first);
+    if (std::holds_alternative<DistGeom::TorsionRange>(torsion)) {
+      DistGeom::TorsionRange range = std::get<DistGeom::TorsionRange>(torsion);
+      if (range.upper - range.lower >= M_PI * 2.0 - 1e-6) {
+        // all unconstraint => order by ring size s.t., non-rings are handled
+        // first
+        const auto rInfo = mol.getRingInfo();
+        std::ranges::sort(bonds, std::ranges::greater(),
+                          [&rInfo](const auto *bnd) {
+                            return rInfo->minBondRingSize(bnd->getIdx());
+                          });
+      }
+    }
   }
 
   for (const auto *bond : bonds) {
@@ -138,7 +152,7 @@ void ringClosure(const unsigned int atomIdx, const unsigned int precursorIdx,
 }
 
 void addElement(const Atom *atom, const unsigned int precursorIdx,
-                const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
+                const ROMol &mol, DistGeom::ZMatrix &zmat,
                 const InternalCoordinates &internalCoords,
                 Type14References &references) {
   const auto &[tRef, ref1, ref2Opt] =
@@ -195,9 +209,9 @@ void addElement(const Atom *atom, const unsigned int precursorIdx,
                      mol.getNumBonds())));
   }
 
-  zmat->addElement(atom->getIdx(), bl, precursorIdx, {ba}, {ref1}, torsion,
-                   torsiondependence ? std::nullopt : ref2Opt,
-                   torsiondependence);
+  zmat.addElement(atom->getIdx(), bl, precursorIdx, {ba}, {ref1}, torsion,
+                  torsiondependence ? std::nullopt : ref2Opt,
+                  torsiondependence);
 
   std::get<0>(references[precursorIdx].value()) = {atom->getIdx()};
 
@@ -206,7 +220,7 @@ void addElement(const Atom *atom, const unsigned int precursorIdx,
   references[atom->getIdx()] = {{}, precursorIdx, {ref1}};
 }
 
-void setMoleculeDFS(const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
+void setMoleculeDFS(const ROMol &mol, DistGeom::ZMatrix &zmat,
                     const InternalCoordinates &internalCoords) {
   if (mol.getNumAtoms() == 1) {
     setMoleculeDFS(mol, zmat, internalCoords, 0, 0);
@@ -243,7 +257,7 @@ void setMoleculeDFS(const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
                  secondAtom->getIdx());
 }
 
-void setMoleculeDFS(const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
+void setMoleculeDFS(const ROMol &mol, DistGeom::ZMatrix &zmat,
                     const InternalCoordinates &internalCoords,
                     unsigned int firstAtomIdx, unsigned int secondAtomIdx) {
   const auto nAtoms = mol.getNumAtoms();
@@ -264,13 +278,13 @@ void setMoleculeDFS(const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
     std::swap(firstAtomIdx, secondAtomIdx);
   }
 
-  zmat->addElement(firstAtomIdx);
+  zmat.addElement(firstAtomIdx);
 
   if (nAtoms == 1) {
     return;
   }
 
-  zmat->addElement(
+  zmat.addElement(
       secondAtomIdx,
       internalCoords.lengths
           [mol.getBondBetweenAtoms(firstAtomIdx, secondAtomIdx)->getIdx()],
@@ -281,11 +295,11 @@ void setMoleculeDFS(const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
   }
 
   addNeighborsToStack(firstAtomIdx, secondAtomIdx, mol, stack, visitedAtoms,
-                      *zmat, internalCoords);
+                      zmat, internalCoords);
   visitedAtoms.set(firstAtomIdx);
 
   addNeighborsToStack(secondAtomIdx, firstAtomIdx, mol, stack, visitedAtoms,
-                      *zmat, internalCoords);
+                      zmat, internalCoords);
 
   visitedAtoms.set(secondAtomIdx);
   visitedBonds.set(
@@ -313,7 +327,7 @@ void setMoleculeDFS(const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
                  references);
       visitedAtoms.set(idx);
 
-      addNeighborsToStack(idx, precursor, mol, stack, visitedAtoms, *zmat,
+      addNeighborsToStack(idx, precursor, mol, stack, visitedAtoms, zmat,
                           internalCoords);
     } else {
       ringClosure(idx, precursor, references);
@@ -323,12 +337,11 @@ void setMoleculeDFS(const ROMol &mol, std::shared_ptr<DistGeom::ZMatrix> zmat,
   }
 }
 
-void correctChiralCenters(const ROMol &mol,
-                          std::shared_ptr<DistGeom::ZMatrix> zmat) {
+void correctChiralCenters(const ROMol &mol, DistGeom::ZMatrix &zmat) {
   for (const auto &row :
-       *zmat | std::views::drop(3)  // do not visit first 4 element -> the four
-                                    // atoms can only span a torsion -> we
-                                    // cannot have a torsion dependence here
+       zmat | std::views::drop(3)  // do not visit first 4 element -> the four
+                                   // atoms can only span a torsion -> we
+                                   // cannot have a torsion dependence here
            | std::views::reverse) {
     const auto centerIdx = *row.internal.bondRef;
     if (!row.torsionDependence) {
@@ -366,7 +379,7 @@ void correctChiralCenters(const ROMol &mol,
                        2;  // if odd => counterclockwise @Greg Landrum?
     if (isCCW != (chiralTag == Atom::CHI_TETRAHEDRAL_CCW)) {
       // center is in wrong order => we need to inverse the offsets
-      zmat->invertTorsionDependence(currentIdx);
+      zmat.invertTorsionDependence(currentIdx);
     }
   }
 }
