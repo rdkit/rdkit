@@ -456,6 +456,18 @@ RETURNS:
       .value("CLASH", RDKit::DGeomHelpers::EmbedFailureCauses::CLASH)
       .export_values();
 
+  nb::enum_<RDKit::DGeomHelpers::InitialEmbeddingMode>(
+      m, "InitialEmbeddingMode", nb::is_arithmetic())
+      .value("DG_EMBEDDING",
+             RDKit::DGeomHelpers::InitialEmbeddingMode::DG_EMBEDDING)
+      .value("INTERNAL_COORDINATE_EMBEDDING",
+             RDKit::DGeomHelpers::InitialEmbeddingMode::
+                 INTERNAL_COORDINATE_EMBEDDING)
+      .value("RANDOM_COORDINATE_EMBEDDING",
+             RDKit::DGeomHelpers::InitialEmbeddingMode::
+                 RANDOM_COORDINATE_EMBEDDING)
+      .export_values();
+
   m.def(
       "OrderedEmbedFailureCauses",
       +[](const bool legacyImplementation = true) {
@@ -555,9 +567,15 @@ conformations that are at least this far apart from each other)DOC")
               &PyEmbedParameters::useMacrocycle14config,
               "This forces amides and esters to be trans in macrocycles. "
               "This does not affect chain amides / esters!")
+      .def_rw(
+          "onlyInitialEmbedding", &PyEmbedParameters::onlyInitialEmbedding,
+          "If true, only the initial embedding is generated (default=false)")
       .def_rw("useLegacyImplementation",
               &PyEmbedParameters::useLegacyImplementation,
               "whether to use the combined minimization approach")
+      .def_rw(
+          "initialEmbeddingMode", &PyEmbedParameters::initialEmbeddingMode,
+          "Mode for initial embedding: DG_EMBEDDING, INTERNAL_CORRDINATE_EMBEDDING, RANDOM_COORDINATE_EMBEDDING")
       .def_rw(
           "boundsMatForceScaling", &PyEmbedParameters::boundsMatForceScaling,
           R"DOC(scale the weights of the atom pair distance restraints relative to
