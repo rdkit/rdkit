@@ -7,6 +7,8 @@ rdkit_catch_test(
     crystalForceFieldCatch
         catch_tests.cpp
     LINK_LIBRARIES
+        DistGeomHelpers
         ForceFieldHelpers
+        MolTransforms
         SmilesParse
 ) 

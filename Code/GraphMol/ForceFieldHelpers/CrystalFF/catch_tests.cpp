@@ -17,6 +17,8 @@
 #include <catch2/matchers/catch_matchers_all.hpp>
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
+#include <GraphMol/MolOps.h>
 
 #include "GaussianTorsionAngleContribs.h"
 #include "TorsionPreferences.h"
@@ -232,14 +234,14 @@ TEST_CASE("GaussianTorsionContribsLookupTable") {
   const bool useMacrocycleTorsions = false;
   const bool useBasicKnowledge = true;
   const unsigned int version = 4;
+  std::vector<
+      std::tuple<unsigned int, std::vector<unsigned int>,
+                 const ForceFields::CrystalFF::GaussianExpTorsionAngle *>>
+      torsionBonds;
   SECTION("simple molecule") {
     auto mol = "CCCC"_smiles;
+    MolOps::addHs(*mol);
     GaussianDetails details;
-
-    std::vector<
-        std::tuple<unsigned int, std::vector<unsigned int>,
-                   const ForceFields::CrystalFF::GaussianExpTorsionAngle *>>
-        torsionBonds;
 
     ForceFields::CrystalFF::getExperimentalTorsions(
         *mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
@@ -262,11 +264,8 @@ TEST_CASE("GaussianTorsionContribsLookupTable") {
   }
   SECTION("molecule w/ aromat") {
     auto mol = "c1ccccc1CC"_smiles;
+    MolOps::addHs(*mol);
     GaussianDetails details;
-    std::vector<
-        std::tuple<unsigned int, std::vector<unsigned int>,
-                   const ForceFields::CrystalFF::GaussianExpTorsionAngle *>>
-        torsionBonds;
 
     ForceFields::CrystalFF::getExperimentalTorsions(
         *mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
@@ -288,33 +287,96 @@ TEST_CASE("GaussianTorsionContribsLookupTable") {
     }
     CHECK_THAT(gradients[0], Catch::Matchers::WithinAbs(0.0, 1e-10));
   }
-//   SECTION("molecule w/ amide") {
-//     auto mol = "CCC(=O)NC"_smiles;
-//     GaussianDetails details;
-//     std::vector<
-//         std::tuple<unsigned int, std::vector<unsigned int>,
-//                    const ForceFields::CrystalFF::GaussianExpTorsionAngle *>>
-//         torsionBonds;
+  SECTION("molecule w/ amide") {
+    auto mol = "CCC(=O)NC"_smiles;
+    MolOps::addHs(*mol);
+    GaussianDetails details;
 
-//     ForceFields::CrystalFF::getExperimentalTorsions(
-//         *mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
-//         useMacrocycleTorsions, useBasicKnowledge, version);
+    // needed to set cis / trans in amides...
+    DistGeom::BoundsMatPtr mmat;
+    mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+    DGeomHelpers::initBoundsMat(mmat);
+    auto params = DGeomHelpers::KDG;
+    DGeomHelpers::setTopolBounds(*mol, mmat, params, false, true, true, true,
+                                 &details.path14Configs);
 
-//     ForceFields::CrystalFF::populateRefTable(details);
+    ForceFields::CrystalFF::getExperimentalTorsions(
+        *mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+        useMacrocycleTorsions, useBasicKnowledge, version);
 
-//     // aromat and 1 exp torsion
-//     REQUIRE(details.phiToEnergy.size() == 2);
-//     REQUIRE(details.phiToGrad.size() == 2);
+    ForceFields::CrystalFF::populateRefTable(details);
 
-//     // aromatic should come last
-//     auto &energies = details.phiToEnergy[1];
-//     auto &gradients = details.phiToGrad[1];
+    // 2 for the amide and 2 exp torsion
+    REQUIRE(details.phiToEnergy.size() == 4);
+    REQUIRE(details.phiToGrad.size() == 4);
 
-//     // minimum at 180!
-//     for (std::size_t i = 0; i < 179; ++i) {
-//       CHECK(energies[179] < energies[i]);
-//     }
-//     CHECK_THAT(gradients[179], Catch::Matchers::WithinAbs(0.0, 1e-10));
-//   }
-//   SECTION("molecule w/ aromat and amide") {}
+    // after reordering trans should be second last
+    auto &energies_t = details.phiToEnergy[2];
+    auto &gradients_t = details.phiToGrad[2];
+
+    // and_cis last
+    auto &energies_c = details.phiToEnergy[3];
+    auto &gradients_c = details.phiToGrad[3];
+
+    // minimum at 180!
+    for (std::size_t i = 0; i < 179; ++i) {
+      CHECK(energies_t[179] < energies_t[i]);
+    }
+    for (std::size_t i = 1; i < 180; ++i) {
+      CHECK(energies_c[0] < energies_c[i]);
+    }
+    CHECK_THAT(gradients_t[179], Catch::Matchers::WithinAbs(0.0, 1e-10));
+    CHECK_THAT(gradients_c[0], Catch::Matchers::WithinAbs(0.0, 1e-10));
+  }
+
+  SECTION("molecule w/ amide and aromat") {
+    auto mol = "c1ccccc1C(=O)NC"_smiles;
+    MolOps::addHs(*mol);
+    GaussianDetails details;
+
+    // needed to set cis / trans in amides...
+    DistGeom::BoundsMatPtr mmat;
+    mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+    DGeomHelpers::initBoundsMat(mmat);
+    auto params = DGeomHelpers::KDG;
+    DGeomHelpers::setTopolBounds(*mol, mmat, params, false, true, true, true,
+                                 &details.path14Configs);
+
+    ForceFields::CrystalFF::getExperimentalTorsions(
+        *mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+        useMacrocycleTorsions, useBasicKnowledge, version);
+
+    ForceFields::CrystalFF::populateRefTable(details);
+
+    // 2 for the amide and 2 exp torsion 1 aromat
+    REQUIRE(details.phiToEnergy.size() == 5);
+    REQUIRE(details.phiToGrad.size() == 5);
+
+    // after reordering trans should be second last
+    auto &energies_t = details.phiToEnergy[2];
+    auto &gradients_t = details.phiToGrad[2];
+
+    // and cis second to last
+    auto &energies_c = details.phiToEnergy[3];
+    auto &gradients_c = details.phiToGrad[3];
+
+    // and aromat last
+    auto &energies_a = details.phiToEnergy[4];
+    auto &gradients_a = details.phiToGrad[4];
+
+
+    // minimum at 180!
+    for (std::size_t i = 0; i < 179; ++i) {
+      CHECK(energies_t[179] < energies_t[i]);
+    }
+    for (std::size_t i = 1; i < 180; ++i) {
+      CHECK(energies_c[0] < energies_c[i]);
+    }
+    for (std::size_t i = 1; i < 180; ++i) {
+      CHECK(energies_a[0] < energies_c[i]);
+    }
+    CHECK_THAT(gradients_t[179], Catch::Matchers::WithinAbs(0.0, 1e-10));
+    CHECK_THAT(gradients_c[0], Catch::Matchers::WithinAbs(0.0, 1e-10));
+    CHECK_THAT(gradients_a[0], Catch::Matchers::WithinAbs(0.0, 1e-10));
+  }
 }
