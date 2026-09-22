@@ -945,9 +945,6 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
 
-    if (embedParams.onlyInitialEmbedding) {
-      return gotCoords;
-    }
     if (!gotCoords) {
       if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -958,6 +955,10 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     } else {
       if (ControlCHandler::getGotSignal()) {
         return false;
+      }
+      // we only return initial embedding if successful
+      if (embedParams.onlyInitialEmbedding) {
+        return gotCoords;
       }
       gotCoords =
           EmbeddingOps::firstMinimization(positions, eargs, embedParams);
@@ -1112,9 +1113,6 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
 
-    if (embedParams.onlyInitialEmbedding) {
-      return gotCoords;
-    }
     if (!gotCoords) {
       if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -1128,6 +1126,10 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     // check ctrl-C
     if (ControlCHandler::getGotSignal()) {
       return false;
+    }
+
+    if (embedParams.onlyInitialEmbedding) {
+      return gotCoords;
     }
 
     // run Minimization
