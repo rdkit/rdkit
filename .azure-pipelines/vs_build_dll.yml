@@ -12,7 +12,7 @@ steps:
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
         freetype cairo eigen ^
-        numpy matplotlib pillow pandas=3 expat ccache ninja lapack liblapacke "blas=*=openblas" blas-devel
+        numpy matplotlib pillow pandas=3 expat ccache ninja lapack liblapacke "blas=*=openblas" blas-devel pyyaml 
     call activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
