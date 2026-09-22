@@ -139,7 +139,7 @@ std::vector<double> calcEStateIndices(const RDKit::ROMol &mol) {
   std::vector<double> res(numAtoms, 0.0);
   for (int i = 0; i < numAtoms; ++i) {
     res[i] = accum[i] + Is[i];
-    mol.getAtomWithIdx(i)->setProp("EState", res[i]);
+    //mol.getAtomWithIdx(i)->setProp("EState", res[i]);
   }
   return res;
 }
@@ -160,7 +160,7 @@ std::vector<double> calcIStateIndices(const RDKit::ROMol &mol) {
       int N = GetPrincipalQuantumNumber(atomicNum);
       Is[i] = (4.0 / (N * N) * dv + 1.0) / degree;
     }
-    mol.getAtomWithIdx(i)->setProp("IState", Is[i]);
+    //mol.getAtomWithIdx(i)->setProp("IState", Is[i]);
   }
   return Is;
 }
