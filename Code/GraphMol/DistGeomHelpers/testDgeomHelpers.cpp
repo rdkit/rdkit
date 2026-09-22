@@ -1440,8 +1440,7 @@ TEST_CASE("testEmbedParameters") {
       std::string fname = "simple_torsion.etkdgv4.mol";
       DGeomHelpers::EmbedParameters params{.useExpTorsionAnglePrefs = true,
                                            .useBasicKnowledge = true,
-                                           .ETversion = 4,
-                                           .fitVersion = 2};
+                                           .ETversion = 4};
       runTest(SIMPLE_SMILES, fname, params);
     }
 
@@ -1451,8 +1450,7 @@ TEST_CASE("testEmbedParameters") {
                                            .useBasicKnowledge = true,
                                            .ETversion = 4,
                                            .useMacrocycleTorsions = true,
-                                           .useMacrocycle14config = true,
-                                           .fitVersion = 2};
+                                           .useMacrocycle14config = true};
       runTest(MC_SMILES, fname, params);
     }
 
@@ -1461,8 +1459,7 @@ TEST_CASE("testEmbedParameters") {
       DGeomHelpers::EmbedParameters params{.useExpTorsionAnglePrefs = true,
                                            .useBasicKnowledge = true,
                                            .ETversion = 4,
-                                           .useSmallRingTorsions = true,
-                                           .fitVersion = 2};
+                                           .useSmallRingTorsions = true};
       runTest(SR_SMILES, fname, params);
     }
     SECTION("srmcETKDGv4") {
@@ -1472,8 +1469,7 @@ TEST_CASE("testEmbedParameters") {
                                            .ETversion = 4,
                                            .useSmallRingTorsions = true,
                                            .useMacrocycleTorsions = true,
-                                           .useMacrocycle14config = true,
-                                           .fitVersion = 2};
+                                           .useMacrocycle14config = true};
       runTest(SRMC_SMILES, fname, params);
     }
 
@@ -1523,26 +1519,8 @@ TEST_CASE("testEmbedParameters") {
     }
 
     SECTION("predefined ETKDGv4") {
-      std::string fname = "simple_torsion.etkdgv4.mol";
-      auto params = DGeomHelpers::ETKDGv4;
-      runTest(SIMPLE_SMILES, fname, params);
-    }
-
-    SECTION("predefined mcETKDGv4") {
-      std::string fname = "simple_torsion.macrocycle.etkdgv4.mol";
-      auto params = DGeomHelpers::mcETKDGv4;
-      runTest(MC_SMILES, fname, params);
-    }
-
-    SECTION("predefined srETKDGv4") {
-      std::string fname = "simple_torsion.smallring.etkdgv4.mol";
-      auto params = DGeomHelpers::srETKDGv4;
-      runTest(SR_SMILES, fname, params);
-    }
-
-    SECTION("predefined srmcETKDGv4") {
       std::string fname = "simple_torsion.sr_mc.etkdgv4.mol";
-      auto params = DGeomHelpers::srmcETKDGv4;
+      auto params = DGeomHelpers::ETKDGv4;
       runTest(SRMC_SMILES, fname, params);
     }
   }
@@ -1938,4 +1916,34 @@ TEST_CASE("testHydrogenBondBasics") {
   auto dist = MolTransforms::getBondLength(mol->getConformer(), 3, 4);
   CHECK(dist < mat->getUpperBound(4, 3) + 0.005);  // allow minimal violations
   CHECK(dist > mat->getLowerBound(4, 3) - 0.005);
+}
+
+TEST_CASE("ETKDGv4-Benzamide") {
+  auto mol = "c1ccccc1C(=O)N"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  REQUIRE(mol);
+
+  const auto run = [&mol](DGeomHelpers::EmbedParameters &params,
+                          const double expected, const double expected2) {
+    params.randomSeed = 0xfc0ffee;
+    INT_VECT cids;
+    DGeomHelpers::EmbedMultipleConfs(*mol, cids, 10, params);
+    for (const auto cid : cids) {
+      const auto &conf = mol->getConformer(cid);
+      const double tors =
+          std::fabs(MolTransforms::getDihedralDeg(conf, 4, 5, 6, 8));
+      CHECK_THAT(tors, Catch::Matchers::WithinAbs(expected, 2.0) ||
+                           Catch::Matchers::WithinAbs(expected2, 2.0));
+    }
+  };
+
+  SECTION("v3") {
+    auto params = DGeomHelpers::ETKDGv3;
+    run(params, 180.0, 0.0);
+  }
+  SECTION("v4") {
+    auto params = DGeomHelpers::ETKDGv4;
+    run(params, 157.0, 26.0);
+  }
 }

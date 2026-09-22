@@ -158,38 +158,10 @@ const EmbedParameters srETKDGv3{.useExpTorsionAnglePrefs = true,
 const EmbedParameters ETKDGv4{.useExpTorsionAnglePrefs = true,
                               .useBasicKnowledge = true,
                               .ETversion = 4,
-                              .useSmallRingTorsions = false,
-                              .useMacrocycleTorsions = false,
-                              .useMacrocycle14config = false,
-                              .useLegacyImplementation = false,
-                              .fitVersion = 2};
-
-const EmbedParameters srETKDGv4{.useExpTorsionAnglePrefs = true,
-                                .useBasicKnowledge = true,
-                                .ETversion = 4,
-                                .useSmallRingTorsions = true,
-                                .useMacrocycleTorsions = false,
-                                .useMacrocycle14config = false,
-                                .useLegacyImplementation = false,
-                                .fitVersion = 2};
-
-const EmbedParameters mcETKDGv4{.useExpTorsionAnglePrefs = true,
-                                .useBasicKnowledge = true,
-                                .ETversion = 4,
-                                .useSmallRingTorsions = false,
-                                .useMacrocycleTorsions = true,
-                                .useMacrocycle14config = true,
-                                .useLegacyImplementation = false,
-                                .fitVersion = 2};
-
-const EmbedParameters srmcETKDGv4{.useExpTorsionAnglePrefs = true,
-                                  .useBasicKnowledge = true,
-                                  .ETversion = 4,
-                                  .useSmallRingTorsions = true,
-                                  .useMacrocycleTorsions = true,
-                                  .useMacrocycle14config = true,
-                                  .useLegacyImplementation = false,
-                                  .fitVersion = 2};
+                              .useSmallRingTorsions = true,
+                              .useMacrocycleTorsions = true,
+                              .useMacrocycle14config = true,
+                              .useLegacyImplementation = false};
 
 template <typename T>
 concept TorsionParamType = ForceFields::CrystalFF::TorsionParamType<T>;
@@ -1530,12 +1502,12 @@ void initETKDG(ROMol *mol, const EmbedParameters &params,
   PRECONDITION(mol, "bad molecule");
   unsigned int nAtoms = mol->getNumAtoms();
   namespace FC = ForceFields::CrystalFF::ETKDGForceConsts;
-  if (params.fitVersion == 1) {
-    etkdgDetails.forceConsts =
-        params.useLegacyImplementation ? FC::SEQ::Cosine : FC::AIO::Cosine;
-  } else {
+  if (params.ETversion == 4) {
     etkdgDetails.forceConsts =
         params.useLegacyImplementation ? FC::SEQ::Gaussian : FC::AIO::Gaussian;
+  } else {
+    etkdgDetails.forceConsts =
+        params.useLegacyImplementation ? FC::SEQ::Cosine : FC::AIO::Cosine;
   }
 
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
@@ -1907,14 +1879,14 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     std::unique_ptr<detail::DetailVariant> etkdgDetails;
     namespace CFF = ForceFields::CrystalFF;
 
-    if (params.fitVersion == 1) {
+    if (params.ETversion == 1 || params.ETversion == 2) {
       etkdgDetails = std::make_unique<detail::DetailVariant>(
           CFF::CrystalFFDetails<CFF::CosineExp_T>{});
-    } else if (params.fitVersion == 2) {
+    } else if (params.ETversion == 4) {
       etkdgDetails = std::make_unique<detail::DetailVariant>(
           CFF::CrystalFFDetails<CFF::GaussianExp_T>{});
     } else {
-      throw std::invalid_argument("fitVersion needs to be either 1 or 2.");
+      throw std::invalid_argument("ETversion needs to be either 1, 2 or 4.");
     }
 
     std::visit(

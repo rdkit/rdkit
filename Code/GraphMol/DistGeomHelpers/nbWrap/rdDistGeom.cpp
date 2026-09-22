@@ -241,14 +241,16 @@ static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
                              set15bounds, set14bounds, set13bounds);
 }
 
-static nb::list getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
+static nb::tuple getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
                                  const bool useSmallRingTorsions,
                                  const bool useMacrocycleTorsions,
                                  const bool useBasicKnowledge,
-                                 const unsigned int version, const bool verbose,
-                                 const unsigned int fitVersion) {
-  switch (fitVersion) {
+                                 const unsigned int version,
+                                 const bool verbose) {
+  switch (version) {
     case 1:
+      [[fallthrough]];
+    case 2:
       ForceFields::CrystalFF::CrystalFFDetails details;
       std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
                              const ForceFields::CrystalFF::ExpTorsionAngle *>>
@@ -267,8 +269,8 @@ static nb::list getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
         d["atomIndices"] = std::get<1>(pr);
         result.append(d);
       }
-      return result;
-    case 2:
+      return nb::tuple(result);
+    case 4:
       ForceFields::CrystalFF::CrystalFFDetails<
           ForceFields::CrystalFF::GaussianExp_T>
           details;
@@ -291,7 +293,9 @@ static nb::list getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
         d["atomIndices"] = std::get<1>(pr);
         result.append(d);
       }
-      return result;
+      return nb::tuple(result);
+    default:
+      throw std::invalid_argument("ETversion needs to be either 1, 2 or 4.")
   }
 }
 
@@ -618,9 +622,6 @@ used during structural minimisation stage)DOC")
               "symmetrize terminal conjugated groups for RMSD pruning")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap,
            "sets the coordmap to be used")
-      .def_rw(
-          "fitVersion", &PyEmbedParameters::fitVersion,
-          "Which functional form to use for the experimental torsion terms. 1 = Cosine, 2 = Gaussian.")
       .def("__setattr__", &safeSetattr);
 
   m.def("EmbedMultipleConfs", &RDKit::EmbedMultipleConfs2, "mol"_a,
@@ -687,18 +688,6 @@ version 3 (macrocycles).)DOC");
       "ETKDGv4",
       []() { return PyEmbedParameters(RDKit::DGeomHelpers::ETKDGv4); },
       R"DOC(Returns an EmbedParameters object for the ETKDG method - version 4.)DOC");
-  m.def(
-      "srETKDGv4",
-      []() { return PyEmbedParameters(RDKit::DGeomHelpers::srETKDGv4); },
-      R"DOC(Returns an EmbedParameters object for the ETKDG method - version 4 (small rings).)DOC");
-  m.def(
-      "mcETKDGv4",
-      []() { return PyEmbedParameters(RDKit::DGeomHelpers::mcETKDGv4); },
-      R"DOC(Returns an EmbedParameters object for the ETKDG method - version 4 (macrocycles).)DOC");
-  m.def(
-      "srmcETKDGv4",
-      []() { return PyEmbedParameters(RDKit::DGeomHelpers::srmcETKDGv4); },
-      R"DOC(Returns an EmbedParameters object for the ETKDG method - version 4 (small rings and macrocycles).)DOC");
 
   m.def("GetMoleculeBoundsMatrix", &RDKit::getMolBoundsMatrix, "mol"_a,
         "set15bounds"_a = true, "scaleVDW"_a = false,

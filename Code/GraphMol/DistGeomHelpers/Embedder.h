@@ -161,7 +161,6 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   std::vector<unsigned int> failures{};
   bool enableSequentialRandomSeeds{false};
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
-  std::size_t fitVersion{1};
 };
 
 //! update parameters from a JSON string

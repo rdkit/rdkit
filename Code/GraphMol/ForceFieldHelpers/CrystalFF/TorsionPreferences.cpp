@@ -138,6 +138,7 @@ const ExpTorsionAngleCollection<T> *ExpTorsionAngleCollection<T>::getParams(
 
   return &(param_flyweight(params).get());
 }
+
 template <TorsionAngleType T>
 const ExpTorsionAngleCollection<T> *ExpTorsionAngleCollection<T>::getParams(
     unsigned int version, bool useSmallRingTorsions, bool useMacrocycleTorsions,

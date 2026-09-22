@@ -311,69 +311,64 @@ PyEmbedParameters *getDG() { return new PyEmbedParameters(DGeomHelpers::DG); }
 PyEmbedParameters *getETKDGv4() {
   return new PyEmbedParameters(DGeomHelpers::ETKDGv4);
 }
-PyEmbedParameters *getsrETKDGv4() {
-  return new PyEmbedParameters(DGeomHelpers::srETKDGv4);
-}
-PyEmbedParameters *getmcETKDGv4() {
-  return new PyEmbedParameters(DGeomHelpers::mcETKDGv4);
-}
-PyEmbedParameters *getsrmcETKDGv4() {
-  return new PyEmbedParameters(DGeomHelpers::srmcETKDGv4);
-}
 
 python::tuple getExpTorsHelper(const RDKit::ROMol &mol,
                                const bool useExpTorsions,
                                const bool useSmallRingTorsions,
                                const bool useMacrocycleTorsions,
                                const bool useBasicKnowledge,
-                               const unsigned int version, const bool verbose,
-                               const unsigned int fitVersion) {
-  if (fitVersion == 1) {
-    ForceFields::CrystalFF::CrystalFFDetails details;
-    std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
-                           const ForceFields::CrystalFF::ExpTorsionAngle *>>
-        torsionBonds;
-    ForceFields::CrystalFF::getExperimentalTorsions(
-        mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
-        useMacrocycleTorsions, useBasicKnowledge, version, verbose);
-    python::list result;
-    for (const auto &pr : torsionBonds) {
-      python::dict d;
-      d["bondIndex"] = std::get<0>(pr);
-      d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
-      d["smarts"] = std::get<2>(pr)->smarts;
-      d["V"] = std::get<2>(pr)->V;
-      d["signs"] = std::get<2>(pr)->signs;
-      d["atomIndices"] = std::get<1>(pr);
-      result.append(d);
+                               const unsigned int version, const bool verbose) {
+  switch (version) {
+    case 1:
+      [[fallthrough]];
+    case 2: {
+      ForceFields::CrystalFF::CrystalFFDetails details;
+      std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                             const ForceFields::CrystalFF::ExpTorsionAngle *>>
+          torsionBonds;
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      python::list result;
+      for (const auto &pr : torsionBonds) {
+        python::dict d;
+        d["bondIndex"] = std::get<0>(pr);
+        d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
+        d["smarts"] = std::get<2>(pr)->smarts;
+        d["V"] = std::get<2>(pr)->V;
+        d["signs"] = std::get<2>(pr)->signs;
+        d["atomIndices"] = std::get<1>(pr);
+        result.append(d);
+      }
+      return python::tuple(result);
     }
-    return python::tuple(result);
-  } else if (fitVersion == 2) {
-    ForceFields::CrystalFF::CrystalFFDetails<
-        ForceFields::CrystalFF::GaussianExp_T>
-        details;
-    std::vector<
-        std::tuple<unsigned int, std::vector<unsigned int>,
-                   const ForceFields::CrystalFF::GaussianExpTorsionAngle *>>
-        torsionBonds;
-    ForceFields::CrystalFF::getExperimentalTorsions(
-        mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
-        useMacrocycleTorsions, useBasicKnowledge, version, verbose);
-    python::list result;
-    for (const auto &pr : torsionBonds) {
-      python::dict d;
-      d["bondIndex"] = std::get<0>(pr);
-      d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
-      d["smarts"] = std::get<2>(pr)->smarts;
-      d["positions"] = std::get<2>(pr)->positions;
-      d["widths"] = std::get<2>(pr)->widths;
-      d["heights"] = std::get<2>(pr)->heights;
-      d["atomIndices"] = std::get<1>(pr);
-      result.append(d);
+    case 4: {
+      ForceFields::CrystalFF::CrystalFFDetails<
+          ForceFields::CrystalFF::GaussianExp_T>
+          details;
+      std::vector<
+          std::tuple<unsigned int, std::vector<unsigned int>,
+                     const ForceFields::CrystalFF::GaussianExpTorsionAngle *>>
+          torsionBonds;
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      python::list result;
+      for (const auto &pr : torsionBonds) {
+        python::dict d;
+        d["bondIndex"] = std::get<0>(pr);
+        d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
+        d["smarts"] = std::get<2>(pr)->smarts;
+        d["positions"] = std::get<2>(pr)->positions;
+        d["widths"] = std::get<2>(pr)->widths;
+        d["heights"] = std::get<2>(pr)->heights;
+        d["atomIndices"] = std::get<1>(pr);
+        result.append(d);
+      }
+      return python::tuple(result);
     }
-    return python::tuple(result);
-  } else {
-    throw std::invalid_argument("fitVersion can only be 1 or 2.");
+    default:
+      throw std::invalid_argument("ETversion can only be 1, 2 or 4.");
   }
 }
 
@@ -381,8 +376,7 @@ python::tuple getExpTorsHelperWithParams(
     const RDKit::ROMol &mol, const DGeomHelpers::EmbedParameters &ps) {
   return getExpTorsHelper(mol, ps.useExpTorsionAnglePrefs,
                           ps.useSmallRingTorsions, ps.useMacrocycleTorsions,
-                          ps.useBasicKnowledge, ps.ETversion, ps.verbose,
-                          ps.fitVersion);
+                          ps.useBasicKnowledge, ps.ETversion, ps.verbose);
 }
 
 python::str embedParametersToJSONHelper(
@@ -429,8 +423,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("useSmallRingTorsions") = false,
        python::arg("useMacrocycleTorsions") = true,
        python::arg("useBasicKnowledge") = true, python::arg("ETversion") = 2,
-       python::arg("printExpTorsionAngles") = false,
-       python::arg("fitVersion") = 1),
+       python::arg("printExpTorsionAngles") = false),
       "returns information about the bonds corresponding to experimental torsions");
   python::def(
       "GetExperimentalTorsions", RDKit::getExpTorsHelperWithParams,
@@ -743,9 +736,6 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "symmetrize terminal conjugated groups for RMSD pruning")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap, python::args("self"),
            "sets the coordmap to be used")
-      .def_readwrite(
-          "fitVersion", &PyEmbedParameters::fitVersion,
-          "Which functional form to use for the experimental torsion terms. 1 = Cosine, 2 = Gaussian.")
       .def("__setattr__", &safeSetattr);
 
   docString =
@@ -810,18 +800,6 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   python::def("ETKDGv4", RDKit::getETKDGv4,
               "Returns an EmbedParameters object for the ETKDG method - "
               "version 4.",
-              python::return_value_policy<python::manage_new_object>());
-  python::def("srETKDGv4", RDKit::getsrETKDGv4,
-              "Returns an EmbedParameters object for the ETKDG method - "
-              "version 4 (small rings).",
-              python::return_value_policy<python::manage_new_object>());
-  python::def("mcETKDGv4", RDKit::getmcETKDGv4,
-              "Returns an EmbedParameters object for the ETKDG method - "
-              "version 4 (macrocycles).",
-              python::return_value_policy<python::manage_new_object>());
-  python::def("srmcETKDGv4", RDKit::getsrmcETKDGv4,
-              "Returns an EmbedParameters object for the ETKDG method - "
-              "version 4 (small rings and macrocycles).",
               python::return_value_policy<python::manage_new_object>());
   docString =
       "Returns the distance bounds matrix for a molecule\n\
