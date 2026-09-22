@@ -1451,11 +1451,11 @@ M  END
     assert(!svg2.includes("atom-18"));
     assert(!svg2.includes("atom-19"));
     var molblock = mol.get_molblock();
-    assert(molblock.includes("4  5  1  6"));
-    assert(molblock.includes("8  6  1  6"));
+    assert(molblock.includes("4  9  1  1"));
+    assert(molblock.includes("8  9  1  1"));
     molblock = mol.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
-    assert(!molblock.includes("4  5  1  6"));
-    assert(!molblock.includes("8  6  1  6"));
+    assert(molblock.includes("4  9  1  1"));
+    assert(molblock.includes("8  9  1  1"));
     assert(molblock.includes("6  7  1  1"));
     // Here we want to test that the original molblock wedging is preserved and inverted
     // as the coordinates are rigid-body rotated
@@ -1465,8 +1465,6 @@ M  END
     molblock = molCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
     assert(molblock.split('\n').some(line => line.match(/^ [1 ]\d [1 ]\d  [12]  6 *$/)));
     assert(!molblock.split('\n').some(line => line.match(/^ [1 ]\d [1 ]\d  [12]  1 *$/)));
-    assert(!molblock.includes("4  5  1  6"));
-    assert(!molblock.includes("8  6  1  6"));
     assert(molblock.includes("6  7  1  6"));
     molCopy.delete();
     // Here we want to test that the original molblock wedging gets cleared
@@ -3154,13 +3152,13 @@ M  END
             const canonicalCXSmiles = mol.get_cxsmiles();
             const [_, canonicalSmiles, wedging] = canonicalCXSmiles.match(/^(\S+) \|\([^\)]+\),([^\|]+)\|$/);
             assert(canonicalSmiles === 'N[C@@H]1C[C@@H]2C[C@H]1[C@@H](O)C2');
-            assert(wedging === 'wD:3.2,5.5,wU:1.0,6.7');
+            assert(wedging === 'wU:1.0,3.3,5.4,6.7');
         }
         ['{}', ''].forEach((emptyJson) => {
             const canonicalCXSmiles = mol.get_cxsmiles(emptyJson);
             const [_, canonicalSmiles, wedging] = canonicalCXSmiles.match(/^(\S+) \|\([^\)]+\),([^\|]+)\|$/);
             assert(canonicalSmiles === 'N[C@@H]1C[C@@H]2C[C@H]1[C@@H](O)C2');
-            assert(wedging === 'wD:3.2,5.5,wU:1.0,6.7');
+            assert(wedging === 'wU:1.0,3.3,5.4,6.7');
         });
         {
             const canonicalCXSmiles = mol.get_cxsmiles(JSON.stringify({restoreBondDirOption: 'RestoreBondDirOptionTrue'}));
