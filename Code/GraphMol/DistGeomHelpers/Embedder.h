@@ -46,17 +46,6 @@ enum class EmbedFF : std::uint8_t {
   MMFF
 };
 
-inline std::ostream &operator<<(std::ostream &os, const EmbedFF &eff) {
-  os << static_cast<int>(eff);
-  return os;
-}
-inline std::istream &operator>>(std::istream &is, EmbedFF &eff) {
-  int val;
-  if (is >> val) {
-    eff = static_cast<EmbedFF>(val);
-  }
-  return is;
-}
 
 //! Parameter object for controlling embedding
 /*!
@@ -478,6 +467,19 @@ inline INT_VECT EmbedMultipleConfs(
   EmbedMultipleConfs(mol, res, numConfs, params);
   return res;
 };
+
+// Overload for JSON Serialization.
+inline std::ostream &operator<<(std::ostream &os, const EmbedFF &eff) {
+  os << static_cast<int>(eff);
+  return os;
+}
+inline std::istream &operator>>(std::istream &is, EmbedFF &eff) {
+  int val;
+  if (is >> val) {
+    eff = static_cast<EmbedFF>(val);
+  }
+  return is;
+}
 
 //! Parameters corresponding to plain Distance Geometry
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters DG;
