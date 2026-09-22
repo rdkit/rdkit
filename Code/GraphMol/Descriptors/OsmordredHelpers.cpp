@@ -30,7 +30,7 @@
 //
 #include "OsmordredHelpers.h"
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#ibclude <stack>
+#include <stack>
 
 namespace RDKit {
 namespace Descriptors {
