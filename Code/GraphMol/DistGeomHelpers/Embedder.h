@@ -484,18 +484,18 @@ inline std::ostream &operator<<(std::ostream &os, const EmbedFF &eff) {
   return os;
 }
 inline std::istream &operator>>(std::istream &is, EmbedFF &eff) {
+  eff = EmbedFF::UFF;
+
   std::string val;
   if (is >> val) {
     if (val == "MMFF") {
       eff = EmbedFF::MMFF;
-    } else if (val == "UFF") {
-      eff = EmbedFF::UFF;
-    } else {
+    }
+    else if (val != "UFF") {
       BOOST_LOG(rdWarningLog)
           << "Provided embedForceField " << val
           << " in JSON is not valid. Choose between UFF and MMFF. Falling back to UFF."
           << std::endl;
-      eff = EmbedFF::UFF;
     }
   }
   return is;
