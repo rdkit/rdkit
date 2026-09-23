@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2026 Niels Maeder and other RDKit contributors
+//  Copyright (C) 2026 ETH Zurich and other RDKit contributors
+//  Author: Niels Maeder
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
