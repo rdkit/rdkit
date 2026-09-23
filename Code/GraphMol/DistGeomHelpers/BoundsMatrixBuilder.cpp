@@ -278,6 +278,9 @@ std::pair<UFF::AtomicParamVect, bool> parametrizeUFF(const ROMol &mol) {
   return UFF::getAtomTypes(mol);
 }
 
+// The molecule is passed by value as creating a MMFFMolProperties
+// object with a molecule is kekulizing the molecule. Setting 1-2 and 1-3
+// distances, should not change your molecule object when doing embedding.
 std::pair<MMFF::MMFFMolProperties, bool> parametrizeMMFF(ROMol mol) {
   const auto params = MMFF::MMFFMolProperties(mol);
   return std::make_pair(params, params.isValid());
