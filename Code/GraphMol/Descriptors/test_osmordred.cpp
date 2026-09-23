@@ -621,42 +621,39 @@ TEST_CASE("Osmordred v2.0 - Timeout and Batch Functions") {
     }
   }
   
-  SECTION("calcOsmordred with invalid SMILES") {
-    std::vector<std::string> smiles_list = {"CCO", "INVALID", "CCO |asdfasdf|", "CCC"};
-    
-    auto results = calcOsmordred(smiles_list, 0);
-    REQUIRE(results.size() == 4);
-    
-    // First and third should have valid results
-    bool first_valid = false;
-    for (const auto& val : results[0]) {
-      if (!std::isnan(val)) {
-        first_valid = true;
-        break;
-      }
-    }
-    REQUIRE(first_valid);
-    
-    // Second (invalid) should be all NaN
-    bool second_all_nan = true;
-    for (const auto& val : results[1]) {
-      if (!std::isnan(val)) {
-        second_all_nan = false;
-        break;
-      }
-    }
-    REQUIRE(second_all_nan);
+  SECTION("calcOsmordred with invalid SMILES (with threading)") {
+    std::vector<std::string> smiles_list = {"CCO", "INVALID", "CCO |asdfasdf|", "CCC",
+					    "CCO", "INVALID", "CCO |asdfasdf|", "CCC",
+					    "CCO", "INVALID", "CCO |asdfasdf|", "CCC"};
 
-  
-    // third (invalid) should be all NaN
-    bool third_all_nan = true;
-    for (const auto& val : results[2]) {
-      if (!std::isnan(val)) {
-        third_all_nan = false;
-        break;
+    std::vector<int> valid{0,3,4,7,8,11};
+    std::vector<int> invalid{1,2,5,6,9,10};
+    
+    for(int njobs=0; njobs < 3; ++njobs) {
+
+      auto results = calcOsmordred(smiles_list, njobs);
+      REQUIRE(results.size() == 12);
+      auto names = getOsmordredDescriptorNames();
+      for(auto good : valid) {
+	unsigned int nancount = 0;
+	for (const auto& val : results[good]) {
+	  if (std::isnan(val)) {
+	    nancount ++;
+	  }
+	}
+	REQUIRE(nancount < names.size());
+      }
+      
+      for(auto bad : invalid) {
+	unsigned int nancount = 0;
+	for (const auto& val : results[bad]) {
+	  if (std::isnan(val)) {
+	    nancount++;
+	  }
+	}
+	REQUIRE(nancount == names.size());
       }
     }
-    REQUIRE(third_all_nan);
   }
 
 
