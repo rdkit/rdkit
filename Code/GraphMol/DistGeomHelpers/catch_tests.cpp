@@ -2572,10 +2572,13 @@ void checkRowEmbedding(DistGeom::ZMatrix::ZMatrixRow row, Level level,
 };
 
 std::unique_ptr<ROMol> embedInitialCoordinates(std::string smiles,
-                                               unsigned int numConfs) {
+                                               unsigned int numConfs,
+                                               bool addHs = true) {
   std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
   REQUIRE(mol);
-  MolOps::addHs(*mol);
+  if (addHs) {
+    MolOps::addHs(*mol);
+  }
   auto params = DGeomHelpers::ETKDGv3;
   params.initialEmbeddingMode =
       DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
@@ -2587,6 +2590,43 @@ std::unique_ptr<ROMol> embedInitialCoordinates(std::string smiles,
   CHECK(mol->getNumConformers() == numConfs);
   return mol;
 };
+
+unsigned int num12violations(const DistGeom::BoundsMatPtr bm,
+                             const ROMol &mol) {
+  unsigned int numViolations = 0;
+  for (auto bnd : mol.bonds()) {
+    unsigned int aid1 = bnd->getBeginAtomIdx(), aid2 = bnd->getEndAtomIdx();
+    double embeddedLength =
+        MolTransforms::getBondLength(mol.getConformer(), aid1, aid2);
+    if (embeddedLength > bm->getUpperBound(aid1, aid2) ||
+        embeddedLength < bm->getLowerBound(aid1, aid2)) {
+      numViolations++;
+    }
+  }
+  return numViolations;
+};
+unsigned int num13violations(const DistGeom::BoundsMatPtr bm, const double *dm,
+                             const ROMol &mol) {
+  unsigned int numViolations = 0;
+  for (auto aid1 : std::views::iota(0u, mol.getNumAtoms() - 1u)) {
+    for (auto aid3 : std::views::iota(aid1 + 1u, mol.getNumAtoms())) {
+      auto pid =
+          std::max(aid1, aid3) * mol.getNumAtoms() + std::min(aid1, aid3);
+      if (dm[pid] < 1.9 || dm[pid] > 2.1) {
+        continue;
+      }
+      auto pos1 = mol.getConformer().getAtomPos(aid1);
+      auto pos3 = mol.getConformer().getAtomPos(aid3);
+      double embeddedDist = (pos1 - pos3).length();
+      if (embeddedDist > bm->getUpperBound(aid1, aid3) ||
+          embeddedDist < bm->getLowerBound(aid1, aid3)) {
+        numViolations++;
+      }
+    }
+  }
+  return numViolations;
+};
+
 }  // namespace
 
 TEST_CASE("Z-Matrix Builder Basics") {
@@ -2651,43 +2691,24 @@ TEST_CASE("Z-Matrix Builder Basics") {
 }
 
 TEST_CASE("Bounds violations - internal coordinate embedding") {
-  auto num12violations = [](const DistGeom::BoundsMatPtr bm, const ROMol &mol) {
-    unsigned int numViolations = 0;
-    for (auto bnd : mol.bonds()) {
-      unsigned int aid1 = bnd->getBeginAtomIdx(), aid2 = bnd->getEndAtomIdx();
-      double embeddedLength =
-          MolTransforms::getBondLength(mol.getConformer(), aid1, aid2);
-      if (embeddedLength > bm->getUpperBound(aid1, aid2) ||
-          embeddedLength < bm->getLowerBound(aid1, aid2)) {
-        numViolations++;
-      }
-    }
-    return numViolations;
-  };
-  auto num13violations = [](const DistGeom::BoundsMatPtr bm, const double *dm,
-                            const ROMol &mol) {
-    unsigned int numViolations = 0;
-    for (auto aid1 : std::views::iota(0u, mol.getNumAtoms() - 1u)) {
-      for (auto aid3 : std::views::iota(aid1 + 1u, mol.getNumAtoms())) {
-        auto pid =
-            std::max(aid1, aid3) * mol.getNumAtoms() + std::min(aid1, aid3);
-        if (dm[pid] < 1.9 || dm[pid] > 2.1) {
-          continue;
-        }
-        auto pos1 = mol.getConformer().getAtomPos(aid1);
-        auto pos3 = mol.getConformer().getAtomPos(aid3);
-        double embeddedDist = (pos1 - pos3).length();
-        if (embeddedDist > bm->getUpperBound(aid1, aid3) ||
-            embeddedDist < bm->getLowerBound(aid1, aid3)) {
-          numViolations++;
-        }
-      }
-    }
-    return numViolations;
-  };
+  SECTION("Tiny") {
+    // here we are explicitly not adding Hs since we are testing the cases for
+    // 1, 2, and 3 atoms
+    const auto smiles = GENERATE("C", "CC", "CCC");
+    auto mol = embedInitialCoordinates(smiles, 1, false);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    auto distMat = MolOps::getDistanceMat(*mol);
+
+    CHECK(num12violations(bm, *mol) == 0);
+    CHECK(num13violations(bm, distMat, *mol) == 0);
+  }
 
   SECTION("Acyclic") {
-    const auto smiles = GENERATE("CCC", "CC(C)CO", "CCOC(=O)N", "O=CN(F)S");
+    const auto smiles =
+        GENERATE("C", "CC", "CCC", "CC(C)CO", "CCOC(=O)N", "O=CN(F)S");
     auto mol = embedInitialCoordinates(smiles, 1);
 
     DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};

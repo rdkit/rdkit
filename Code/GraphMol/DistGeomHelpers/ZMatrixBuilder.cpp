@@ -227,10 +227,6 @@ void setMoleculeDFS(const ROMol &mol, DistGeom::ZMatrix &zmat,
     return;
   }
 
-  if (mol.getNumAtoms() == 2) {
-    setMoleculeDFS(mol, zmat, internalCoords, 0, 1);
-  }
-
   // start with a non-ring bond that is somewhere at the end of a chain
   // 1. prefer bonds where both atoms are not in the ring
   auto *rInfo = mol.getRingInfo();
