@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// #define DEBUG_EMBEDDING 0
+
 #include "Embedder.h"
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/DistGeomUtils.h>
@@ -20,6 +20,7 @@
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/RingInfo.h>
 #include <GraphMol/Atropisomers.h>
+#include <Geometry/point.h>
 
 #include <GraphMol/Conformer.h>
 #include <RDGeneral/types.h>
@@ -664,9 +665,13 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
 
     if (field2->calcEnergy() > nCenters * planarityTolerance) {
 #ifdef DEBUG_EMBEDDING
-      std::cerr << "   planar fail: " << field2->calcEnergy() << " "
-                << eargs.etkdgDetails->improperAtoms.size() * planarityTolerance
-                << std::endl;
+      std::visit(
+          [&field2, planarityTolerance](const auto &details) {
+            std::cerr << "   planar fail: " << field2->calcEnergy() << " "
+                      << details.improperAtoms.size() * planarityTolerance
+                      << std::endl;
+          },
+          *eargs.etkdgDetails);
 #endif
       planar = false;
     }

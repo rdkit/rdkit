@@ -14,10 +14,19 @@
 
 #include <map>
 #include <utility>
-#include <Geometry/point.h>
+#include <vector>
 #include <GraphMol/ROMol.h>
 #include <boost/shared_ptr.hpp>
-#include <DistGeom/BoundsMatrix.h>
+
+namespace DistGeom {
+class BoundsMatrix;
+class ChiralSet;
+using VECT_CHIRALSET = std::vector<boost::shared_ptr<ChiralSet>>;
+}  // namespace DistGeom
+
+namespace RDGeom {
+class Point3D;
+}
 
 namespace RDKit {
 namespace DGeomHelpers {
@@ -480,6 +489,12 @@ RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv3;
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters srETKDGv3;
 
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv4;
+
+RDKIT_DISTGEOMHELPERS_EXPORT void findChiralSets(
+    const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
+    DistGeom::VECT_CHIRALSET &tetrahedralCenters,
+    const std::map<int, RDGeom::Point3D> *coordmap);
+
 }  // namespace DGeomHelpers
 }  // namespace RDKit
 

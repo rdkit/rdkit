@@ -246,6 +246,7 @@ void getExperimentalTorsions(
   details.expTorsionAtoms.clear();
   details.expTorsionAngles.clear();
   details.improperAtoms.clear();
+  details.torsionIdx.clear();
 
   unsigned int aid1, aid2, aid3, aid4;
   unsigned int bid2;

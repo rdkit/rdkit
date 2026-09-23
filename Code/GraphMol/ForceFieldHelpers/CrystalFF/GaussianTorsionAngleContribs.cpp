@@ -56,6 +56,12 @@ double getEnergy(const std::vector<double> &heights,
 double getdEdPhi(const std::vector<double> &heights,
                  const std::vector<double> &positions,
                  const std::vector<double> &widths, double phi) {
+  // This seems like a lot of overhead, but makes the code safer, what should i
+  // do?
+  // PRECONDITION(heights.size() == positions.size(),
+  //              "positions, heights and widths need to be the same size.")
+  // PRECONDITION(heights.size() == widths.size(),
+  //              "positions, heights and widths need to be the same size.")
   double innerDerivs = 0.0;
   double denominator = 0.0;
   for (size_t i = 0; i < heights.size(); ++i) {
@@ -89,6 +95,12 @@ void GaussianTorsionAngleContribs::addContrib(
   PRECONDITION((idx1 != idx2) && (idx1 != idx3) && (idx1 != idx4) &&
                    (idx2 != idx3) && (idx2 != idx4) && (idx3 != idx4),
                "degenerate points");
+  // This seems like a lot of overhead, but makes the code safer, what should i
+  // do?
+  // PRECONDITION(energies.size() >= 2,
+  //              "lookup table must contain at least two values")
+  // PRECONDITION(gradients.size() >= 2,
+  //              "lookup table must contain at least two values")
   URANGE_CHECK(idx1, dp_forceField->positions().size());
   URANGE_CHECK(idx2, dp_forceField->positions().size());
   URANGE_CHECK(idx3, dp_forceField->positions().size());

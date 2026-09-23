@@ -309,6 +309,11 @@ NB_MODULE(rdDistGeom, m) {
 distance geometry)DOC";
 
   m.def(
+      "GetChiralSets",
+      [](const RDKit::ROMol &mol) { return RDKit::getChiralSets(mol); },
+      "mol"_a, "Get chiral sets in a molecule.");
+
+  m.def(
       "GetExperimentalTorsions",
       [](const RDKit::ROMol &mol, bool useExpTorsionAnglePrefs,
          bool useSmallRingTorsions, bool useMacrocycleTorsions,

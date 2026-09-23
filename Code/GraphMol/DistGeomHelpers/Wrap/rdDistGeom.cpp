@@ -413,7 +413,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   rdkit_import_array();
 
   python::def("GetChiralSets", RDKit::getChiralSets, python::arg("mol"),
-              "Get Chiral sets as used in ETKDG code.");
+              "Get chiral sets as in a molecule.");
 
   // RegisterListConverter<RDKit::Atom*>();
 

@@ -46,8 +46,8 @@ struct RDKIT_FORCEFIELDHELPERS_EXPORT GaussianTorsionAngleContribsParams {
         idx2(idx2),
         idx3(idx3),
         idx4(idx4),
-        energies(energies),
-        gradients(gradients),
+        energies(std::move(energies)),
+        gradients(std::move(gradients)),
         scaling(scaling) {}
 };
 
@@ -63,14 +63,15 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT GaussianTorsionAngleContribs
   GaussianTorsionAngleContribs(ForceField *owner);
   ~GaussianTorsionAngleContribs() = default;
   //! Add contribution to this collection.
+  //! The caller is responsible that the energies and gradient lookuptables
+  //! have at least to elements each!
   /*!
     \param idx1           index of atom1 in the ForceField's positions
     \param idx2           index of atom2 in the ForceField's positions
     \param idx3           index of atom3 in the ForceField's positions
     \param idx4           index of atom4 in the ForceField's positions
-    \param heights        heights of the gaussians
-    \param positions      positions of the gaussians
-    \param widths         widths of the gaussians
+    \param energies       lookup table for the energies
+    \param gradients      lookup table for the gradients
     \param scaling        Scaling factor for energy and gradient (for K terms)
   */
   void addContrib(std::size_t idx1, std::size_t idx2, std::size_t idx3,
@@ -104,20 +105,32 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT GaussianTorsionAngleContribs
 };
 
 //! Calculate the torsion energy as described in 10.1021/acs.jcim.5b00654, this
-//! can be used with any i > 0.
+//! can be used with any any number of heights, positions and widths.
+//! The caller is responsible that the size of the three parameter objects are
+//! the same.
 /*!
  \param heights        heights of the gaussians
  \param positions      positions of the gaussians
  \param widths         widths of the gaussians
- \param cosPhi         cosine of the torsion angle phi
+ \param phi            the torsion angle in radians
 */
 RDKIT_FORCEFIELDHELPERS_EXPORT double getEnergy(
     const std::vector<double> &heights, const std::vector<double> &positions,
-    const std::vector<double> &widths, const double cosPhi);
+    const std::vector<double> &widths, const double phi);
 
+//! Calculate the torsion gradient as described in 10.1021/acs.jcim.5b00654,
+//! this can be used with any any number of heights, positions and widths. The
+//! caller is responsible that the size of the three parameter objects are the
+//! same.
+/*!
+ \param heights        heights of the gaussians
+ \param positions      positions of the gaussians
+ \param widths         widths of the gaussians
+ \param phi            the torsion angle in radians
+*/
 RDKIT_FORCEFIELDHELPERS_EXPORT double getdEdPhi(
     const std::vector<double> &heights, const std::vector<double> &positions,
-    const std::vector<double> &widths, const double cosPhi);
+    const std::vector<double> &widths, const double phi);
 }  // namespace CrystalFF
 }  // namespace ForceFields
 
