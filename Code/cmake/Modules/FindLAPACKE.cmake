@@ -5,10 +5,14 @@
 #                          All rights reserved.
 # @copyright (c) 2012-2016 Inria. All rights reserved.
 # @copyright (c) 2012-2014 Bordeaux INP, CNRS (LaBRI UMR 5800), Inria, Univ. Bordeaux. All rights reserved.
+# @copyright (c) The RDKit and other contributors
 #
 ###
 #
 # - Find LAPACKE include dirs and libraries
+#   supports lapacke as installed by openblas:
+#    conda install lapack liblapacke "blas=*=openblas" blas-devel
+#
 # Use this module by invoking find_package with the form:
 #  find_package(LAPACKE
 #               [REQUIRED] # Fail with error if lapacke is not found
@@ -164,7 +168,7 @@ if (LAPACK_FOUND)
       list(APPEND _inc_env "${ENV_LAPACKE_DIR}/include/lapacke")
     else()
       if(WIN32)
-        string(REPLACE ":" ";" _inc_env "$ENV{INCLUDE}")
+        set(_inc_env "$ENV{INCLUDE}")
       else()
         string(REPLACE ":" ";" _path_env "$ENV{INCLUDE}")
         list(APPEND _inc_env "${_path_env}")
@@ -175,6 +179,9 @@ if (LAPACK_FOUND)
         string(REPLACE ":" ";" _path_env "$ENV{INCLUDE_PATH}")
         list(APPEND _inc_env "${_path_env}")
       endif()
+    endif()
+    if(DEFINED ENV{CONDA_PREFIX} AND NOT "$ENV{CONDA_PREFIX}" STREQUAL "")
+      list(APPEND _inc_env "$ENV{CONDA_PREFIX}/include" "$ENV{CONDA_PREFIX}/Library/include")
     endif()
     list(APPEND _inc_env "${CMAKE_PLATFORM_IMPLICIT_INCLUDE_DIRECTORIES}")
     list(APPEND _inc_env "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}")
@@ -188,19 +195,22 @@ if (LAPACK_FOUND)
       set(LAPACKE_lapacke.h_DIRS "LAPACKE_lapacke.h_DIRS-NOTFOUND")
       find_path(LAPACKE_lapacke.h_DIRS
         NAMES lapacke.h
-        HINTS ${LAPACKE_INCDIR})
+        HINTS ${LAPACKE_INCDIR}
+        PATH_SUFFIXES openblas)
     else()
       if(LAPACKE_DIR)
         set(LAPACKE_lapacke.h_DIRS "LAPACKE_lapacke.h_DIRS-NOTFOUND")
         find_path(LAPACKE_lapacke.h_DIRS
           NAMES lapacke.h
           HINTS ${LAPACKE_DIR}
-          PATH_SUFFIXES "include" "include/lapacke")
+          PATH_SUFFIXES "include" "include/lapacke" "include/openblas"
+            "Library/include" "Library/include/openblas")
       else()
         set(LAPACKE_lapacke.h_DIRS "LAPACKE_lapacke.h_DIRS-NOTFOUND")
         find_path(LAPACKE_lapacke.h_DIRS
           NAMES lapacke.h
-          HINTS ${_inc_env})
+          HINTS ${_inc_env}
+          PATH_SUFFIXES openblas)
       endif()
     endif()
     mark_as_advanced(LAPACKE_lapacke.h_DIRS)
@@ -231,7 +241,7 @@ if (LAPACK_FOUND)
       list(APPEND _lib_env "${ENV_LAPACKE_DIR}/lib")
     else()
       if(WIN32)
-        string(REPLACE ":" ";" _lib_env "$ENV{LIB}")
+        set(_lib_env "$ENV{LIB}")
       else()
         if(APPLE)
           string(REPLACE ":" ";" _lib_env "$ENV{DYLD_LIBRARY_PATH}")
@@ -241,6 +251,9 @@ if (LAPACK_FOUND)
         list(APPEND _lib_env "${CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES}")
         list(APPEND _lib_env "${CMAKE_C_IMPLICIT_LINK_DIRECTORIES}")
       endif()
+    endif()
+    if(DEFINED ENV{CONDA_PREFIX} AND NOT "$ENV{CONDA_PREFIX}" STREQUAL "")
+      list(APPEND _lib_env "$ENV{CONDA_PREFIX}/lib" "$ENV{CONDA_PREFIX}/Library/lib")
     endif()
     list(REMOVE_DUPLICATES _lib_env)
 
@@ -271,7 +284,7 @@ if (LAPACK_FOUND)
         find_library(LAPACKE_lapacke_LIBRARY
           NAMES ${LAPACKE_lapacke_NAMES}
           HINTS ${LAPACKE_DIR}
-          PATH_SUFFIXES lib lib32 lib64)
+          PATH_SUFFIXES lib lib32 lib64 Library/lib)
       else()
         set(LAPACKE_lapacke_LIBRARY "LAPACKE_lapacke_LIBRARY-NOTFOUND")
         find_library(LAPACKE_lapacke_LIBRARY
@@ -355,9 +368,6 @@ if (LAPACK_FOUND)
       set(CMAKE_REQUIRED_INCLUDES "${REQUIRED_INCDIRS}")
       set(CMAKE_REQUIRED_LIBRARIES)
       list(APPEND CMAKE_REQUIRED_LIBRARIES "${REQUIRED_LDFLAGS}")
-      foreach(lib_dir ${REQUIRED_LIBDIRS})
-        list(APPEND CMAKE_REQUIRED_LIBRARIES "-L${lib_dir}")
-      endforeach()
       list(APPEND CMAKE_REQUIRED_LIBRARIES "${REQUIRED_LIBS}")
       string(REGEX REPLACE "^ -" "-" CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES}")
 
@@ -400,6 +410,35 @@ else(LAPACK_FOUND)
 
 endif(LAPACK_FOUND)
 
+# Even when LAPACKE_dgeqrf is provided by the LAPACK library, its C header
+# must be found separately. LAPACK_INCLUDE_DIRS does not imply lapacke.h.
+if(LAPACKE_WORKS AND NOT LAPACKE_lapacke.h_DIRS)
+  set(_lapacke_header_hints)
+  if(LAPACKE_INCDIR)
+    list(APPEND _lapacke_header_hints "${LAPACKE_INCDIR}")
+  endif()
+  if(LAPACKE_DIR)
+    list(APPEND _lapacke_header_hints "${LAPACKE_DIR}/include"
+      "${LAPACKE_DIR}/Library/include")
+  endif()
+  if(DEFINED ENV{CONDA_PREFIX} AND NOT "$ENV{CONDA_PREFIX}" STREQUAL "")
+    list(APPEND _lapacke_header_hints "$ENV{CONDA_PREFIX}/include"
+      "$ENV{CONDA_PREFIX}/Library/include")
+  endif()
+  find_path(LAPACKE_lapacke.h_DIRS NAMES lapacke.h
+    HINTS ${_lapacke_header_hints}
+    PATH_SUFFIXES openblas)
+  mark_as_advanced(LAPACKE_lapacke.h_DIRS)
+endif()
+if(LAPACKE_WORKS)
+  if(LAPACKE_lapacke.h_DIRS)
+    set(LAPACKE_INCLUDE_DIRS "${LAPACKE_lapacke.h_DIRS}")
+    set(LAPACKE_INCLUDE_DIRS_DEP "${LAPACKE_lapacke.h_DIRS};${LAPACK_INCLUDE_DIRS}")
+  else()
+    set(LAPACKE_INCLUDE_DIRS "LAPACKE_INCLUDE_DIRS-NOTFOUND")
+  endif()
+endif()
+
 if (LAPACKE_LIBRARIES)
   list(GET LAPACKE_LIBRARIES 0 first_lib)
   get_filename_component(first_lib_path "${first_lib}" PATH)
@@ -418,4 +457,5 @@ mark_as_advanced(LAPACKE_DIR_FOUND)
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(LAPACKE DEFAULT_MSG
   LAPACKE_LIBRARIES
+  LAPACKE_INCLUDE_DIRS
   LAPACKE_WORKS)
