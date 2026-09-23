@@ -37,7 +37,6 @@
 #ifdef RDK_TEST_MULTITHREADED
 #include <csignal>
 #include <thread>
-#include <chrono>
 #endif
 
 using namespace RDKit;
@@ -2463,6 +2462,133 @@ TEST_CASE("TransAmideKTerm") {
   }
 }
 
+namespace {
+
+enum class Level {
+  BOND_REF = 0,
+  ANGLE_REF = 1,
+  FULL
+};
+
+void checkRowReferences(const DistGeom::ZMatrix::ZMatrixRow row,
+                        const Level level, ROMol &mol,
+                        DGeomHelpers::InternalCoordinates &coords) {
+  Bond *bnd1, *bnd2, *bnd3;
+  switch (level) {
+    case Level::FULL:
+      CHECK(row.internal.torsionRef.has_value() !=
+            row.torsionDependence.has_value());  // either way not both
+      CHECK(row.internal.angleRef);
+      CHECK(row.internal.bondRef);  // need them for bnd3
+      bnd3 = row.internal.torsionRef
+                 ? mol.getBondBetweenAtoms(row.internal.torsionRef.value(),
+                                           row.internal.angleRef.value())
+                 : mol.getBondBetweenAtoms(row.torsionDependence->reference,
+                                           row.internal.bondRef.value());
+      CHECK(bnd3);
+      [[fallthrough]];
+    case Level::ANGLE_REF:
+      CHECK(row.internal.angleRef);
+      CHECK(row.internal.bondRef);
+      bnd2 = mol.getBondBetweenAtoms(row.internal.angleRef.value(),
+                                     row.internal.bondRef.value());
+      CHECK(bnd2);
+      [[fallthrough]];
+    case Level::BOND_REF:
+      CHECK(row.internal.bondRef);
+      bnd1 = mol.getBondBetweenAtoms(row.internal.bondRef.value(), row.atomIdx);
+      CHECK(bnd1);
+  }
+  switch (level) {
+    case Level::FULL:
+      CHECK((row.internal.torsionRef && row.internal.torsion) !=
+            row.torsionDependence.has_value());
+      if (row.torsionDependence) {
+        double expected =
+            2.0 * M_PI /
+            static_cast<double>(
+                mol.getAtomWithIdx(row.internal.bondRef.value())->getDegree() -
+                1u);  // per definition something that is a bond ref within a
+                      // torsion must have a degree of >= 2
+        CHECK_THAT(row.torsionDependence->offset,
+                   Catch::Matchers::WithinAbs(expected, 1.e-6));
+      } else {
+        const DistGeom::TorsionCandidates &expected =
+            coords.torsionRange
+                .find(DGeomHelpers::getUnifiedId(bnd1->getIdx(), bnd2->getIdx(),
+                                                 bnd3->getIdx(),
+                                                 mol.getNumBonds()))
+                ->second;
+        CHECK(DistGeom::equal(row.internal.torsion.value(), expected));
+      }
+      [[fallthrough]];
+    case Level::ANGLE_REF:
+      CHECK(row.internal.angle);
+      CHECK_THAT(row.internal.angle.value(),
+                 Catch::Matchers::WithinAbs(
+                     coords.angles[DGeomHelpers::getUnifiedId(
+                         bnd1->getIdx(), bnd2->getIdx(), mol.getNumBonds())],
+                     1.e-6));
+      [[fallthrough]];
+    case Level::BOND_REF:
+      CHECK(row.internal.length);
+      CHECK_THAT(
+          row.internal.length.value(),
+          Catch::Matchers::WithinAbs(coords.lengths[bnd1->getIdx()], 1.e-6));
+  }
+};
+
+void checkRowEmbedding(DistGeom::ZMatrix::ZMatrixRow row, Level level,
+                       ROMol &mol) {
+  switch (level) {
+    case Level::FULL:
+      if (row.torsionDependence) {
+        double inproperTor = MolTransforms::getDihedralRad(
+            mol.getConformer(), row.atomIdx, row.internal.bondRef.value(),
+            row.internal.angleRef.value(), row.torsionDependence->reference);
+        CHECK_THAT(
+            std::fmod(inproperTor, 2 * M_PI),
+            Catch::Matchers::WithinAbs(
+                std::fmod(row.torsionDependence->offset, 2 * M_PI), 1.e-4));
+      } else {
+        double torsion = MolTransforms::getDihedralRad(
+            mol.getConformer(), row.atomIdx, row.internal.bondRef.value(),
+            row.internal.angleRef.value(), row.internal.torsionRef.value());
+        CHECK(DistGeom::contains(row.internal.torsion.value(), torsion));
+      }
+      [[fallthrough]];
+    case Level::ANGLE_REF:
+      CHECK_THAT(MolTransforms::getAngleRad(mol.getConformer(), row.atomIdx,
+                                            row.internal.bondRef.value(),
+                                            row.internal.angleRef.value()),
+                 Catch::Matchers::WithinAbs(row.internal.angle.value(), 1.e-4));
+      [[fallthrough]];
+    case Level::BOND_REF:
+      CHECK_THAT(
+          MolTransforms::getBondLength(mol.getConformer(), row.atomIdx,
+                                       row.internal.bondRef.value()),
+          Catch::Matchers::WithinAbs(row.internal.length.value(), 1.e-4));
+  }
+};
+
+std::unique_ptr<ROMol> embedInitialCoordinates(std::string smiles,
+                                               unsigned int numConfs) {
+  std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  params.initialEmbeddingMode =
+      DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
+  params.onlyInitialEmbedding = true;
+  params.randomSeed = 0xf00d;
+
+  INT_VECT res;
+  DGeomHelpers::EmbedMultipleConfs(*mol, res, numConfs, params);
+  CHECK(mol->getNumConformers() == numConfs);
+  return mol;
+};
+}  // namespace
+
 TEST_CASE("Z-Matrix Builder Basics") {
   const auto smiles = GENERATE("CCC", "CC(C)CO", "CCOC(=O)N", "O=CN(F)S",
                                "CC#CC",                          // acyclic
@@ -2506,148 +2632,23 @@ TEST_CASE("Z-Matrix Builder Basics") {
     }
   }
 
-  enum class Level {
-    BOND_REF = 0,
-    ANGLE_REF = 1,
-    FULL
-  };
-
-  auto checkRowReferences = [&coords, &mol](DistGeom::ZMatrix::ZMatrixRow row,
-                                            Level level) {
-    Bond *bnd1, *bnd2, *bnd3;
-    switch (level) {
-      case Level::FULL:
-        CHECK(row.internal.torsionRef.has_value() !=
-              row.torsionDependence.has_value());  // either way not both
-        CHECK(row.internal.angleRef);
-        CHECK(row.internal.bondRef);  // need them for bnd3
-        bnd3 = row.internal.torsionRef
-                   ? mol->getBondBetweenAtoms(row.internal.torsionRef.value(),
-                                              row.internal.angleRef.value())
-                   : mol->getBondBetweenAtoms(row.torsionDependence->reference,
-                                              row.internal.bondRef.value());
-        CHECK(bnd3);
-        [[fallthrough]];
-      case Level::ANGLE_REF:
-        CHECK(row.internal.angleRef);
-        CHECK(row.internal.bondRef);
-        bnd2 = mol->getBondBetweenAtoms(row.internal.angleRef.value(),
-                                        row.internal.bondRef.value());
-        CHECK(bnd2);
-        [[fallthrough]];
-      case Level::BOND_REF:
-        CHECK(row.internal.bondRef);
-        bnd1 =
-            mol->getBondBetweenAtoms(row.internal.bondRef.value(), row.atomIdx);
-        CHECK(bnd1);
-    }
-    switch (level) {
-      case Level::FULL:
-        CHECK((row.internal.torsionRef && row.internal.torsion) !=
-              row.torsionDependence.has_value());
-        if (row.torsionDependence) {
-          double expected =
-              2.0 * M_PI /
-              static_cast<double>(
-                  mol->getAtomWithIdx(row.internal.bondRef.value())
-                      ->getDegree() -
-                  1u);  // per definition something that is a bond ref within a
-                        // torsion must have a degree of >= 2
-          CHECK_THAT(row.torsionDependence->offset,
-                     Catch::Matchers::WithinAbs(expected, 1.e-6));
-        } else {
-          const DistGeom::TorsionCandidates &expected =
-              coords.torsionRange
-                  .find(DGeomHelpers::getUnifiedId(
-                      bnd1->getIdx(), bnd2->getIdx(), bnd3->getIdx(),
-                      mol->getNumBonds()))
-                  ->second;
-          CHECK(DistGeom::equal(row.internal.torsion.value(), expected));
-        }
-        [[fallthrough]];
-      case Level::ANGLE_REF:
-        CHECK(row.internal.angle);
-        CHECK_THAT(row.internal.angle.value(),
-                   Catch::Matchers::WithinAbs(
-                       coords.angles[DGeomHelpers::getUnifiedId(
-                           bnd1->getIdx(), bnd2->getIdx(), mol->getNumBonds())],
-                       1.e-6));
-        [[fallthrough]];
-      case Level::BOND_REF:
-        CHECK(row.internal.length);
-        CHECK_THAT(
-            row.internal.length.value(),
-            Catch::Matchers::WithinAbs(coords.lengths[bnd1->getIdx()], 1.e-6));
-    }
-  };
-
   SECTION("Internal coordinates -> Z-matrix") {
-    checkRowReferences(zmat[1], Level::BOND_REF);
-    checkRowReferences(zmat[2], Level::ANGLE_REF);
+    checkRowReferences(zmat[1], Level::BOND_REF, *mol, coords);
+    checkRowReferences(zmat[2], Level::ANGLE_REF, *mol, coords);
     for (const auto &row : zmat | std::views::drop(3)) {
-      checkRowReferences(row, Level::FULL);
+      checkRowReferences(row, Level::FULL, *mol, coords);
     }
   }
-
-  auto checkRowEmbedding = [&mol](DistGeom::ZMatrix::ZMatrixRow row,
-                                  Level level) {
-    switch (level) {
-      case Level::FULL:
-        if (row.torsionDependence) {
-          double inproperTor = MolTransforms::getDihedralRad(
-              mol->getConformer(), row.atomIdx, row.internal.bondRef.value(),
-              row.internal.angleRef.value(), row.torsionDependence->reference);
-          CHECK_THAT(
-              std::fmod(inproperTor, 2 * M_PI),
-              Catch::Matchers::WithinAbs(
-                  std::fmod(row.torsionDependence->offset, 2 * M_PI), 1.e-4));
-        } else {
-          double torsion = MolTransforms::getDihedralRad(
-              mol->getConformer(), row.atomIdx, row.internal.bondRef.value(),
-              row.internal.angleRef.value(), row.internal.torsionRef.value());
-          CHECK(DistGeom::contains(row.internal.torsion.value(), torsion));
-        }
-        [[fallthrough]];
-      case Level::ANGLE_REF:
-        CHECK_THAT(
-            MolTransforms::getAngleRad(mol->getConformer(), row.atomIdx,
-                                       row.internal.bondRef.value(),
-                                       row.internal.angleRef.value()),
-            Catch::Matchers::WithinAbs(row.internal.angle.value(), 1.e-4));
-        [[fallthrough]];
-      case Level::BOND_REF:
-        CHECK_THAT(
-            MolTransforms::getBondLength(mol->getConformer(), row.atomIdx,
-                                         row.internal.bondRef.value()),
-            Catch::Matchers::WithinAbs(row.internal.length.value(), 1.e-4));
-    }
-  };
 
   SECTION("Z-matrix -> 3D coordinates") {
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
-    checkRowEmbedding(zmat[1], Level::BOND_REF);
-    checkRowEmbedding(zmat[2], Level::ANGLE_REF);
+    checkRowEmbedding(zmat[1], Level::BOND_REF, *mol);
+    checkRowEmbedding(zmat[2], Level::ANGLE_REF, *mol);
     for (const auto &row : zmat | std::views::drop(3)) {
-      checkRowEmbedding(row, Level::FULL);
+      checkRowEmbedding(row, Level::FULL, *mol);
     }
   }
 }
-
-auto embedInitialCoordinates = [](std::string smiles, unsigned int numConfs) {
-  std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
-  REQUIRE(mol);
-  MolOps::addHs(*mol);
-  auto params = DGeomHelpers::ETKDGv3;
-  params.initialEmbeddingMode =
-      DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
-  params.onlyInitialEmbedding = true;
-  params.randomSeed = 0xf00d;
-
-  INT_VECT res;
-  DGeomHelpers::EmbedMultipleConfs(*mol, res, numConfs, params);
-  CHECK(mol->getNumConformers() == numConfs);
-  return mol;
-};
 
 TEST_CASE("Bounds violations - internal coordinate embedding") {
   auto num12violations = [](const DistGeom::BoundsMatPtr bm, const ROMol &mol) {
@@ -2851,7 +2852,7 @@ TEST_CASE("Constraint torsions (initial embedding (IC))") {
 TEST_CASE("Z-Matrix Chirality") {
   SECTION("tetrahedral stereochemistry") {
     const auto smiles = GENERATE("F[C@H](Cl)Br", "F[C@@H](Cl)Br");
-    std::unique_ptr<RWMol> mol = embedInitialCoordinates(smiles, 1);
+    std::unique_ptr<ROMol> mol = embedInitialCoordinates(smiles, 1);
 
     const auto center = mol->getAtomWithIdx(1);
     REQUIRE(center->getChiralTag() != Atom::CHI_UNSPECIFIED);
@@ -2874,7 +2875,7 @@ TEST_CASE("Z-Matrix Chirality") {
   }
   SECTION("tetrahedral stereochemistry [rings]") {
     const auto smiles = GENERATE("CC1C[C@@H](Br)CCC1", "CC1C[C@H](Br)CCC1");
-    std::unique_ptr<RWMol> mol = embedInitialCoordinates(smiles, 1);
+    std::unique_ptr<ROMol> mol = embedInitialCoordinates(smiles, 1);
 
     const auto center = mol->getAtomWithIdx(3);
     REQUIRE(center->getChiralTag() != Atom::CHI_UNSPECIFIED);

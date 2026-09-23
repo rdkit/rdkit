@@ -122,8 +122,6 @@ class RDKIT_DISTGEOMETRY_EXPORT ZMatrix {
     d_order.reserve(nElements);
   }
 
-  ~ZMatrix() = default;
-
   void addElement(unsigned int idx, std::optional<double> length = {},
                   std::optional<unsigned int> bondRef = {},
                   std::optional<double> angle = {},

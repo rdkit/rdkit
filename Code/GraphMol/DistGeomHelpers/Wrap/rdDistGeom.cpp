@@ -690,7 +690,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "Mode for initial embedding: DG_EMBEDDING, INTERNAL_CORRDINATE_EMBEDDING, RANDOM_COORDINATE_EMBEDDING")
       .def_readwrite("onlyInitialEmbedding",
                      &PyEmbedParameters::onlyInitialEmbedding,
-                     "Only generates initial embedding")
+                     "Only generates the initial 3D embedding")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap, python::args("self"),
            "sets the coordmap to be used")
       .def("__setattr__", &safeSetattr);

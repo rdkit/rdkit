@@ -569,7 +569,7 @@ conformations that are at least this far apart from each other)DOC")
               "This does not affect chain amides / esters!")
       .def_rw(
           "onlyInitialEmbedding", &PyEmbedParameters::onlyInitialEmbedding,
-          "If true, only the initial embedding is generated (default=false)")
+          "If true, only the initial 3D embedding is generated (default=false)")
       .def_rw("useLegacyImplementation",
               &PyEmbedParameters::useLegacyImplementation,
               "whether to use the combined minimization approach")
