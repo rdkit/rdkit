@@ -493,7 +493,7 @@ RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv4;
 RDKIT_DISTGEOMHELPERS_EXPORT void findChiralSets(
     const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
     DistGeom::VECT_CHIRALSET &tetrahedralCenters,
-    const std::map<int, RDGeom::Point3D> *coordmap);
+    const std::map<int, RDGeom::Point3D> *coordMap);
 
 }  // namespace DGeomHelpers
 }  // namespace RDKit

@@ -310,7 +310,7 @@ distance geometry)DOC";
 
   m.def(
       "GetChiralSets",
-      [](const RDKit::ROMol &mol) { return RDKit::getChiralSets(mol); },
+      [](const RDKit::ROMol &mol) { return RDKit::DGeomHelpers::findChiralSets(mol); },
       "mol"_a, "Get chiral sets in a molecule.");
 
   m.def(
@@ -694,7 +694,7 @@ version 3 (macrocycles).)DOC");
   m.def(
       "ETKDGv4",
       []() { return PyEmbedParameters(RDKit::DGeomHelpers::ETKDGv4); },
-      R"DOC(Returns an EmbedParameters object for the ETKDG method - version 4.)DOC");
+      "Returns an EmbedParameters object for the ETKDG method - version 4.");
 
   m.def("GetMoleculeBoundsMatrix", &RDKit::getMolBoundsMatrix, "mol"_a,
         "set15bounds"_a = true, "scaleVDW"_a = false,

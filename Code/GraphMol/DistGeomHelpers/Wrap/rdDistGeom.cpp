@@ -383,19 +383,11 @@ python::str embedParametersToJSONHelper(
     const DGeomHelpers::EmbedParameters &ps) {
   return python::str(embedParametersToJSON(ps));
 }
-namespace DGeomHelpers {
-namespace EmbeddingOps {
-RDKIT_DISTGEOMHELPERS_EXPORT void findChiralSets(
-    const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
-    DistGeom::VECT_CHIRALSET &tetrahedralCenters,
-    const std::map<int, RDGeom::Point3D> *coordMap);
-}
-}  // namespace DGeomHelpers
 
 python::tuple getChiralSets(const RDKit::ROMol &mol) {
   DistGeom::VECT_CHIRALSET chiralCenters;
   DistGeom::VECT_CHIRALSET tetrahedralCenters;
-  DGeomHelpers::EmbeddingOps::findChiralSets(mol, chiralCenters,
+  DGeomHelpers::findChiralSets(mol, chiralCenters,
                                              tetrahedralCenters, nullptr);
   std::vector<unsigned int> centers;
   for (const auto &val : chiralCenters) {

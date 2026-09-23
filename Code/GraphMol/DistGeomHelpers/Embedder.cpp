@@ -1343,6 +1343,112 @@ RDKIT_DISTGEOMHELPERS_EXPORT void findDoubleBonds(
     }
   }
 }
+
+void adjustBoundsMatFromCoordMap(
+    DistGeom::BoundsMatPtr mmat, unsigned int,
+    const std::map<int, RDGeom::Point3D> *coordMap) {
+  for (auto iIt = coordMap->begin(); iIt != coordMap->end(); ++iIt) {
+    unsigned int iIdx = iIt->first;
+    const RDGeom::Point3D &iPoint = iIt->second;
+    auto jIt = iIt;
+    while (++jIt != coordMap->end()) {
+      unsigned int jIdx = jIt->first;
+      const RDGeom::Point3D &jPoint = jIt->second;
+      double dist = (iPoint - jPoint).length();
+      mmat->setUpperBound(iIdx, jIdx, dist);
+      mmat->setLowerBound(iIdx, jIdx, dist);
+    }
+  }
+}
+
+template <TorsionParamType T>
+void initETKDG(ROMol *mol, const EmbedParameters &params,
+               ForceFields::CrystalFF::CrystalFFDetails<T> &etkdgDetails) {
+  PRECONDITION(mol, "bad molecule");
+  unsigned int nAtoms = mol->getNumAtoms();
+  namespace FC = ForceFields::CrystalFF::ETKDGForceConsts;
+  if (params.ETversion == 4) {
+    etkdgDetails.forceConsts =
+        params.useLegacyImplementation ? FC::SEQ::Gaussian : FC::AIO::Gaussian;
+  } else {
+    etkdgDetails.forceConsts =
+        params.useLegacyImplementation ? FC::SEQ::Cosine : FC::AIO::Cosine;
+  }
+
+  if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
+    ForceFields::CrystalFF::getExperimentalTorsions(
+        *mol, etkdgDetails, params.useExpTorsionAnglePrefs,
+        params.useSmallRingTorsions, params.useMacrocycleTorsions,
+        params.useBasicKnowledge, params.ETversion, params.verbose);
+    etkdgDetails.atomNums.resize(nAtoms);
+    for (unsigned int i = 0; i < nAtoms; ++i) {
+      etkdgDetails.atomNums[i] = mol->getAtomWithIdx(i)->getAtomicNum();
+    }
+  }
+  if constexpr (std::is_same_v<T, ForceFields::CrystalFF::GaussianExp_T>) {
+    ForceFields::CrystalFF::populateRefTable(etkdgDetails);
+  }
+  etkdgDetails.boundsMatForceScaling = params.boundsMatForceScaling;
+}
+
+template <TorsionParamType T>
+bool setupInitialBoundsMatrix(
+    ROMol *mol, DistGeom::BoundsMatPtr mmat,
+    const std::map<int, RDGeom::Point3D> *coordMap,
+    const EmbedParameters &params,
+    ForceFields::CrystalFF::CrystalFFDetails<T> &etkdgDetails) {
+  PRECONDITION(mol, "bad molecule");
+  unsigned int nAtoms = mol->getNumAtoms();
+  bool set15bounds = true;
+  bool scaleVDW = false;
+  if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
+    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
+                   scaleVDW, set15bounds, true, true,
+                   &etkdgDetails.path14Configs);
+  } else {
+    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
+  }
+  double tol = 0.0;
+  if (coordMap) {
+    adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
+    tol = 0.05;
+  }
+  if (!DistGeom::triangleSmoothBounds(mmat, tol)) {
+    // ok this bound matrix failed to triangle smooth - re-compute the
+    // bounds matrix without 15 bounds and with VDW scaling
+    initBoundsMat(mmat);
+    bool scaleVDW = true;
+    bool set15bounds = false;
+    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
+
+    if (coordMap) {
+      adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
+    }
+
+    // try triangle smoothing again
+    if (!DistGeom::triangleSmoothBounds(mmat, tol)) {
+      // ok, we're not going to be able to smooth this,
+      if (params.ignoreSmoothingFailures) {
+        // proceed anyway with the more relaxed bounds matrix
+        initBoundsMat(mmat);
+        bool scaleVDW = true;
+        bool set15bounds = false;
+        setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
+
+        if (coordMap) {
+          adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
+        }
+      } else {
+        BOOST_LOG(rdWarningLog)
+            << "Could not triangle bounds smooth molecule." << std::endl;
+        return false;
+      }
+    }
+  }
+  return true;
+}
+}  // namespace EmbeddingOps
+
 void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
                     DistGeom::VECT_CHIRALSET &tetrahedralCenters,
                     const std::map<int, RDGeom::Point3D> *coordMap) {
@@ -1484,111 +1590,6 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
     chiralCenters.push_back(cptr);
   }
 }
-
-void adjustBoundsMatFromCoordMap(
-    DistGeom::BoundsMatPtr mmat, unsigned int,
-    const std::map<int, RDGeom::Point3D> *coordMap) {
-  for (auto iIt = coordMap->begin(); iIt != coordMap->end(); ++iIt) {
-    unsigned int iIdx = iIt->first;
-    const RDGeom::Point3D &iPoint = iIt->second;
-    auto jIt = iIt;
-    while (++jIt != coordMap->end()) {
-      unsigned int jIdx = jIt->first;
-      const RDGeom::Point3D &jPoint = jIt->second;
-      double dist = (iPoint - jPoint).length();
-      mmat->setUpperBound(iIdx, jIdx, dist);
-      mmat->setLowerBound(iIdx, jIdx, dist);
-    }
-  }
-}
-
-template <TorsionParamType T>
-void initETKDG(ROMol *mol, const EmbedParameters &params,
-               ForceFields::CrystalFF::CrystalFFDetails<T> &etkdgDetails) {
-  PRECONDITION(mol, "bad molecule");
-  unsigned int nAtoms = mol->getNumAtoms();
-  namespace FC = ForceFields::CrystalFF::ETKDGForceConsts;
-  if (params.ETversion == 4) {
-    etkdgDetails.forceConsts =
-        params.useLegacyImplementation ? FC::SEQ::Gaussian : FC::AIO::Gaussian;
-  } else {
-    etkdgDetails.forceConsts =
-        params.useLegacyImplementation ? FC::SEQ::Cosine : FC::AIO::Cosine;
-  }
-
-  if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
-    ForceFields::CrystalFF::getExperimentalTorsions(
-        *mol, etkdgDetails, params.useExpTorsionAnglePrefs,
-        params.useSmallRingTorsions, params.useMacrocycleTorsions,
-        params.useBasicKnowledge, params.ETversion, params.verbose);
-    etkdgDetails.atomNums.resize(nAtoms);
-    for (unsigned int i = 0; i < nAtoms; ++i) {
-      etkdgDetails.atomNums[i] = mol->getAtomWithIdx(i)->getAtomicNum();
-    }
-  }
-  if constexpr (std::is_same_v<T, ForceFields::CrystalFF::GaussianExp_T>) {
-    ForceFields::CrystalFF::populateRefTable(etkdgDetails);
-  }
-  etkdgDetails.boundsMatForceScaling = params.boundsMatForceScaling;
-}
-
-template <TorsionParamType T>
-bool setupInitialBoundsMatrix(
-    ROMol *mol, DistGeom::BoundsMatPtr mmat,
-    const std::map<int, RDGeom::Point3D> *coordMap,
-    const EmbedParameters &params,
-    ForceFields::CrystalFF::CrystalFFDetails<T> &etkdgDetails) {
-  PRECONDITION(mol, "bad molecule");
-  unsigned int nAtoms = mol->getNumAtoms();
-  bool set15bounds = true;
-  bool scaleVDW = false;
-  if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
-    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
-                   scaleVDW, set15bounds, true, true,
-                   &etkdgDetails.path14Configs);
-  } else {
-    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
-  }
-  double tol = 0.0;
-  if (coordMap) {
-    adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
-    tol = 0.05;
-  }
-  if (!DistGeom::triangleSmoothBounds(mmat, tol)) {
-    // ok this bound matrix failed to triangle smooth - re-compute the
-    // bounds matrix without 15 bounds and with VDW scaling
-    initBoundsMat(mmat);
-    bool scaleVDW = true;
-    bool set15bounds = false;
-    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
-
-    if (coordMap) {
-      adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
-    }
-
-    // try triangle smoothing again
-    if (!DistGeom::triangleSmoothBounds(mmat, tol)) {
-      // ok, we're not going to be able to smooth this,
-      if (params.ignoreSmoothingFailures) {
-        // proceed anyway with the more relaxed bounds matrix
-        initBoundsMat(mmat);
-        bool scaleVDW = true;
-        bool set15bounds = false;
-        setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
-
-        if (coordMap) {
-          adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
-        }
-      } else {
-        BOOST_LOG(rdWarningLog)
-            << "Could not triangle bounds smooth molecule." << std::endl;
-        return false;
-      }
-    }
-  }
-  return true;
-}
-}  // namespace EmbeddingOps
 
 void _fillAtomPositions(RDGeom::Point3DConstPtrVect &pts, const Conformer &conf,
                         const ROMol &, const std::vector<unsigned int> &match) {
@@ -1944,7 +1945,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     MolOps::assignStereochemistry(*piece);
     DistGeom::VECT_CHIRALSET chiralCenters;
     DistGeom::VECT_CHIRALSET tetrahedralCarbons;
-    EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons,
+    findChiralSets(*piece, chiralCenters, tetrahedralCarbons,
                                  coordMap);
 
     // find double bonds
