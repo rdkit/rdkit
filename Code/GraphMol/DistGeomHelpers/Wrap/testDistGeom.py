@@ -905,7 +905,7 @@ class TestCase(unittest.TestCase):
 
     ps.embedForceField = rdDistGeom.EmbedFF.MMFF
     json = rdDistGeom.EmbedParametersToJSON(ps)
-    self.assertIn('"EmbedForceField":"MMFF"', json)
+    self.assertIn('"embedForceField":"MMFF"', json)
 
 
   def testOrderedFailureCauses(self):
