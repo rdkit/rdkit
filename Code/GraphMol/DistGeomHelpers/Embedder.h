@@ -495,6 +495,7 @@ inline std::istream &operator>>(std::istream &is, EmbedFF &eff) {
           << "Provided embedForceField " << val
           << " in JSON is not valid. Choose between UFF and MMFF. Falling back to UFF."
           << std::endl;
+      eff = EmbedFF::UFF;
     }
   }
   return is;

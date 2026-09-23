@@ -241,7 +241,7 @@ TEST_CASE("updateParamsFromJSON") {
 
     json = R"JSON({"embedForceField":"MMFF"})JSON";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
-    CHECK(params.embedForceField == DGeomHelpers::EmbedFF::UFF);
+    CHECK(params.embedForceField == DGeomHelpers::EmbedFF::MMFF);
 
     json = R"JSON({"embedForceField":"FAULTYFF"})JSON";
     DGeomHelpers::updateEmbedParametersFromJSON(params, json);
@@ -255,7 +255,7 @@ TEST_CASE("EmbedParameters to JSON") {
     auto ps = DGeomHelpers::KDG;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","embedForceField":"UFF"})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedForceField":"UFF","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false"})JSON";
     CHECK(json == goal);
   }
   SECTION("With CoordMap") {
@@ -266,7 +266,7 @@ TEST_CASE("EmbedParameters to JSON") {
     ps.coordMap = coordMap;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","coordMap":{"3":["1.100000","2.200000","3.300000"]},"embedForceField":"UFF"})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedForceField":"UFF","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","coordMap":{"3":["1.100000","2.200000","3.300000"]}})JSON";
     CHECK(json == goal);
     delete coordMap;
   }
@@ -285,7 +285,7 @@ TEST_CASE("EmbedParameters to JSON") {
     ps.boundsMat = mat;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6536523290585412"],["0.98025420400136154","1.5809872790648758","0"]],"embedForceField":"UFF"})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedForceField":"UFF","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6536523290585412"],["0.98025420400136154","1.5809872790648758","0"]]})JSON";
     CHECK(json == goal);
   }
   SECTION("Round trip") {
@@ -299,11 +299,11 @@ TEST_CASE("EmbedParameters to JSON") {
   SECTION("EmbedForceField") {
     auto ps = DGeomHelpers::ETKDGv3;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
-    CHECK_THAT(json, Catch::Matchers::ContainsSubstring(R"("EmbedForceField":"UFF")"));
+    CHECK_THAT(json, Catch::Matchers::ContainsSubstring(R"("embedForceField":"UFF")"));
 
     ps.embedForceField = DGeomHelpers::EmbedFF::MMFF;
     json = DGeomHelpers::embedParametersToJSON(ps);
-    CHECK_THAT(json, Catch::Matchers::ContainsSubstring(R"("EmbedForceField":"MMFF")"));
+    CHECK_THAT(json, Catch::Matchers::ContainsSubstring(R"("embedForceField":"MMFF")"));
   }
 }
 
