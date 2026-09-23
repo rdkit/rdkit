@@ -26,7 +26,12 @@ import os
 import re
 
 import pytest
-import yaml
+
+try:
+  import yaml
+except ImportError:  # pragma: nocover
+  yaml = None
+
 
 from rdkit import Chem, RDConfig, RDLogger
 from rdkit.Chem import rdMolDescriptors as rdMD
@@ -222,5 +227,5 @@ def test_basak_default_is_unchanged_by_this_flavour(payload):
 
 if __name__ == "__main__":
     import sys
-
-    sys.exit(pytest.main([__file__, "-v"]))
+    if yaml:
+        sys.exit(pytest.main([__file__, "-v"]))

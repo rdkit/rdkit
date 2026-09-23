@@ -3905,6 +3905,9 @@ class TestOsmordred(unittest.TestCase):
 
   @pytest.mark.skipif(yaml is None, reason="PyYAML is required for Mordred YAML reference tests")
   def test_ported_yaml_references(self):
+    if not yaml:
+      return
+    
     data_dir = Path(os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol',
                                  'Descriptors', 'test_data', 'mordred_references'))
 
