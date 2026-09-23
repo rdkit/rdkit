@@ -50,6 +50,13 @@ TEST_CASE("Torsion Candidates") {
     CHECK_FALSE(DistGeom::less(cand1, cand3));
   }
 
+  SECTION("Eqaul") {
+    CHECK(DistGeom::equal(DistGeom::TorsionValues{-M_PI},
+                          DistGeom::TorsionValues{M_PI}));
+    CHECK_FALSE(DistGeom::equal(DistGeom::TorsionValues{0.0},
+                                DistGeom::TorsionValues{M_PI}));
+  }
+
   SECTION("Contains") {
     DistGeom::TorsionCandidates fullRange =
         DistGeom::TorsionRange(0.0, 2.0 * M_PI);
