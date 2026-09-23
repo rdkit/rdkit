@@ -16,6 +16,7 @@
 
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/TriangleSmooth.h>
+#include <DistGeom/ChiralSet.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 
 #include <GraphMol/GraphMol.h>
@@ -310,7 +311,18 @@ distance geometry)DOC";
 
   m.def(
       "GetChiralSets",
-      [](const RDKit::ROMol &mol) { return RDKit::DGeomHelpers::findChiralSets(mol); },
+      [](const RDKit::ROMol &mol) {
+        DistGeom::VECT_CHIRALSET chiralCenters;
+        DistGeom::VECT_CHIRALSET tetrahedralCenters;
+        RDKit::DGeomHelpers::findChiralSets(mol, chiralCenters,
+                                            tetrahedralCenters, nullptr);
+        std::vector<unsigned int> centers;
+        centers.reserve(chiralCenters.size());
+        for (const auto &val : chiralCenters) {
+          centers.push_back(val->idx0);
+        }
+        return nb::tuple(centers);
+      },
       "mol"_a, "Get chiral sets in a molecule.");
 
   m.def(
