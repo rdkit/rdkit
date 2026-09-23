@@ -246,7 +246,14 @@ std::vector<std::vector<double>> calcOsmordred(
 
   if (nThreads <= 1 || n < 10) {
     for (size_t i = 0; i < n; ++i) {
-      auto mol = v2::SmilesParse::MolFromSmiles(smiles_list[i]);
+      std::unique_ptr<RDKit::RWMol> mol;
+
+      try {
+	mol = v2::SmilesParse::MolFromSmiles(smiles_list[i]);
+      } catch(const SmilesParseException &) {
+	mol = nullptr;
+      }
+      
       if(mol == nullptr) {
 	results[i] = nanRow;
       }
@@ -269,8 +276,13 @@ std::vector<std::vector<double>> calcOsmordred(
   auto worker = [&]() {
     size_t i;
     while ((i = nextIdx.fetch_add(1)) < n) {
-      auto mol = v2::SmilesParse::MolFromSmiles(smiles_list[i]);
-      if (!mol) {
+      std::unique_ptr<RDKit::RWMol> mol;
+      try {
+	mol = v2::SmilesParse::MolFromSmiles(smiles_list[i]);
+      } catch(const SmilesParseException&) {
+	mol = nullptr;
+      }
+      if (mol == nullptr) {
         results[i] = nanRow;
         continue;
       }
