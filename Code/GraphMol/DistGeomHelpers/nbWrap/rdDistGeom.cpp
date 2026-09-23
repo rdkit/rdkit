@@ -302,6 +302,17 @@ static nb::tuple getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
   }
 }
 
+static nb::tuple getChiralSets(const RDKit::ROMol &mol) {
+  DistGeom::VECT_CHIRALSET chiralCenters;
+  DistGeom::VECT_CHIRALSET tetrahedralCenters;
+  DGeomHelpers::findChiralSets(mol, chiralCenters, tetrahedralCenters, nullptr);
+  nb::list centers;
+  for (const auto &val : chiralCenters) {
+    centers.append(val->d_idx0);
+  }
+  return nb::tuple(centers);
+}
+
 }  // namespace RDKit
 
 NB_MODULE(rdDistGeom, m) {
@@ -311,18 +322,7 @@ distance geometry)DOC";
 
   m.def(
       "GetChiralSets",
-      [](const RDKit::ROMol &mol) {
-        DistGeom::VECT_CHIRALSET chiralCenters;
-        DistGeom::VECT_CHIRALSET tetrahedralCenters;
-        RDKit::DGeomHelpers::findChiralSets(mol, chiralCenters,
-                                            tetrahedralCenters, nullptr);
-        std::vector<unsigned int> centers;
-        centers.reserve(chiralCenters.size());
-        for (const auto &val : chiralCenters) {
-          centers.push_back(val->idx0);
-        }
-        return nb::tuple(centers);
-      },
+      [](const RDKit::ROMol &mol) { return RDKit::getChiralSets(mol); },
       "mol"_a, "Get chiral sets in a molecule.");
 
   m.def(
