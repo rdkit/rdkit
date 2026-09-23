@@ -276,6 +276,14 @@ int pickBondToWedge(
     const Atom *atom, const ROMol &mol, const INT_VECT &nChiralNbrs,
     const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds,
     int noNbrs) {
+  const Chirality::BondWedgingParameters params;
+  return pickBondToWedge(atom, mol, nChiralNbrs, wedgeBonds, noNbrs, params);
+}
+
+int pickBondToWedge(
+    const Atom *atom, const ROMol &mol, const INT_VECT &nChiralNbrs,
+    const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds,
+    int noNbrs, const Chirality::BondWedgingParameters &params) {
   // here is what we are going to do
   // - at each chiral center look for a bond that is begins at the atom and
   //   is not yet picked to be wedged for a different chiral center, preferring
@@ -300,8 +308,12 @@ int pickBondToWedge(
 
     int bid = bond->getIdx();
     if (wedgeBonds.find(bid) == wedgeBonds.end()) {
-      // very strong preference for Hs:
       auto *oatom = bond->getOtherAtom(atom);
+      if (!params.wedgeAttachmentPointBonds &&
+          oatom->hasProp(common_properties::_fromAttachPoint)) {
+        continue;
+      }
+      // very strong preference for Hs:
       if (oatom->getAtomicNum() == 1) {
         nbrScores.emplace_back(-1000000,
                                bid);  // lower than anything else can be
@@ -399,8 +411,8 @@ std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
     if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW) {
       break;
     }
-    auto bnd1 =
-        detail::pickBondToWedge(atom, mol, nChiralNbrs, wedgeInfo, noNbrs);
+    auto bnd1 = detail::pickBondToWedge(atom, mol, nChiralNbrs, wedgeInfo,
+                                        noNbrs, *params);
     if (bnd1 >= 0) {
       auto wi = std::unique_ptr<RDKit::Chirality::WedgeInfoChiral>(
           new RDKit::Chirality::WedgeInfoChiral(idx));
@@ -417,8 +429,8 @@ namespace {
 // 1. only degree four atoms (IUPAC)
 // 2. no ring bonds (IUPAC)
 // 3. not to chiral atoms (general IUPAC wedging rule)
-void addSecondWedgeAroundAtom(ROMol &mol, Bond *refBond,
-                              const Conformer *conf) {
+void addSecondWedgeAroundAtom(ROMol &mol, Bond *refBond, const Conformer *conf,
+                              bool wedgeAttachmentPointBonds) {
   PRECONDITION(refBond, "no reference bond provided");
   PRECONDITION(conf, "no conformer provided");
   auto atom = refBond->getBeginAtom();
@@ -435,10 +447,12 @@ void addSecondWedgeAroundAtom(ROMol &mol, Bond *refBond,
   unsigned int bestDegree = 100;
   Bond *bondToWedge = nullptr;
   for (auto bond : mol.atomBonds(atom)) {
+    const auto otherAtom = bond->getOtherAtom(atom);
     if (bond == refBond || bond->getBondType() != Bond::BondType::SINGLE ||
         bond->getBondDir() != Bond::BondDir::NONE ||
-        bond->getOtherAtom(atom)->getChiralTag() !=
-            Atom::ChiralType::CHI_UNSPECIFIED ||
+        otherAtom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED ||
+        (!wedgeAttachmentPointBonds &&
+         otherAtom->hasProp(common_properties::_fromAttachPoint)) ||
         mol.getRingInfo()->numBondRings(bond->getIdx())) {
       continue;
     }
@@ -531,7 +545,8 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
         }
       }
       if (numWedged == 1) {
-        addSecondWedgeAroundAtom(mol, wedgedBond, conf);
+        addSecondWedgeAroundAtom(mol, wedgedBond, conf,
+                                 params->wedgeAttachmentPointBonds);
       }
     }
   }
