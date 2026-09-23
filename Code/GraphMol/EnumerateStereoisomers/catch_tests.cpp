@@ -24,13 +24,33 @@
 using namespace RDKit;
 using namespace RDKit::EnumerateStereoisomers;
 
-TEST_CASE("Simple test") {
+TEST_CASE("Base tests") {
   auto m1 = "BrC=CC1OC(C2)(F)C2(Cl)C1"_smiles;
   REQUIRE(m1);
-  {
-    StereoisomerEnumerator enu(*m1);
+
+  // using the patterns and/or embedding results in the same
+  // stereoisomers being returned (the patterns enforce that
+  // we only return viable conformers without having to generate
+  // them )
+  const static std::unordered_set<std::string> expected{
+      R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
+      R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
+      R"(F[C@@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2)",
+      R"(F[C@@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2)",
+      R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
+      R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
+      R"(F[C@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2)",
+      R"(F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2)",
+  };
+
+  SECTION("Base test, no patterns") {
+    // ring system patterns are enabled by default
+    StereoEnumerationOptions opts;
+    opts.useRingSystemFilter = false;
+
+    StereoisomerEnumerator enu(*m1, opts);
     CHECK(enu.getStereoisomerCount() == 16);
-    const static std::unordered_set<std::string> expected{
+    const static std::unordered_set<std::string> expectedNoPatterns{
         R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
         R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
         R"(F[C@@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2)",
@@ -52,53 +72,59 @@ TEST_CASE("Simple test") {
     while (auto isomer = enu.next()) {
       got.insert(MolToSmiles(*isomer));
     }
+    CHECK(got == expectedNoPatterns);
+  }
+
+  SECTION("Base test, with ring system patterns (default cfg)") {
+    StereoisomerEnumerator enu(*m1);
+
+    // 8 of these 16 stereoisomers are geometrically impossible
+    // in 3D space
+    CHECK(enu.getStereoisomerCount() == 16);
+
+    std::unordered_set<std::string> got;
+    while (auto isomer = enu.next()) {
+      got.insert(MolToSmiles(*isomer));
+    }
+    CHECK(got == expected);
+  }
+
+  SECTION("Embedding") {
+    auto m1 = "BrC=CC1OC(C2)(F)C2(Cl)C1"_smiles;
+    REQUIRE(m1);
+
+    StereoEnumerationOptions opts;
+    opts.tryEmbedding = true;
+    opts.useRingSystemFilter = GENERATE(false, true);
+    CAPTURE(opts.useRingSystemFilter);
+    StereoisomerEnumerator enu1(*m1, opts);
+
+    std::unordered_set<std::string> got;
+    while (auto isomer = enu1.next()) {
+      got.insert(MolToSmiles(*isomer));
+    }
+    CHECK(got == expected);
+
+    // Check we get the right number even with maxIsomers.
+    opts.maxIsomers = 8;
+    StereoisomerEnumerator enu2(*m1, opts);
+    got.clear();
+    while (auto isomer = enu2.next()) {
+      got.insert(MolToSmiles(*isomer));
+    }
+    CHECK(got == expected);
+
+    // Check no infinite loop when maxIsomers greater than
+    // possible.
+    opts.maxIsomers = 1024;
+    StereoisomerEnumerator enu3(*m1, opts);
+    got.clear();
+    while (auto isomer = enu3.next()) {
+      got.insert(MolToSmiles(*isomer));
+    }
     CHECK(got == expected);
   }
 }
-
-TEST_CASE("Embedding") {
-  auto m1 = "BrC=CC1OC(C2)(F)C2(Cl)C1"_smiles;
-  REQUIRE(m1);
-
-  StereoEnumerationOptions opts;
-  opts.tryEmbedding = true;
-  StereoisomerEnumerator enu1(*m1, opts);
-  const static std::unordered_set<std::string> expected{
-      R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
-      R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
-      R"(F[C@@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2)",
-      R"(F[C@@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2)",
-      R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
-      R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
-      R"(F[C@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2)",
-      R"(F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2)",
-  };
-  std::unordered_set<std::string> got;
-  while (auto isomer = enu1.next()) {
-    got.insert(MolToSmiles(*isomer));
-  }
-  CHECK(got == expected);
-
-  // Check we get the right number even with maxIsomers.
-  opts.maxIsomers = 8;
-  StereoisomerEnumerator enu2(*m1, opts);
-  got.clear();
-  while (auto isomer = enu2.next()) {
-    got.insert(MolToSmiles(*isomer));
-  }
-  CHECK(got == expected);
-
-  // Check no infinite loop when maxIsomers greater than
-  // possible.
-  opts.maxIsomers = 1024;
-  StereoisomerEnumerator enu3(*m1, opts);
-  got.clear();
-  while (auto isomer = enu3.next()) {
-    got.insert(MolToSmiles(*isomer));
-  }
-  CHECK(got == expected);
-}
-
 TEST_CASE("Unique") {
   auto m1 = "FC(Cl)C=CC=CC(F)Cl"_smiles;
   REQUIRE(m1);
@@ -125,60 +151,87 @@ TEST_CASE("Unique") {
 }
 
 TEST_CASE("Unassigned") {
-  auto m1 = "C/C(F)=C/[C@@H](C)Cl"_smiles;
-  REQUIRE(m1);
-  StereoEnumerationOptions opts;
-  StereoisomerEnumerator enu1(*m1, opts);
-  CHECK(enu1.getStereoisomerCount() == 1);
-  std::unordered_set<std::string> expected{"C/C(F)=C/[C@@H](C)Cl"};
-  std::unordered_set<std::string> got;
-  while (auto isomer = enu1.next()) {
-    got.insert(MolToSmiles(*isomer));
-    CHECK(!isomer->hasProp("_MolFileChiralFlag"));
-  }
-  CHECK(got == expected);
+  SECTION("default") {
+    auto m1 = "C/C(F)=C/[C@@H](C)Cl"_smiles;
+    REQUIRE(m1);
 
-  // Enumerate bond stereo only
-  auto m4 = "CC(F)=C[C@@H](C)Cl"_smiles;
-  REQUIRE(m4);
-  StereoisomerEnumerator enu4(*m4, opts);
-  CHECK(enu4.getStereoisomerCount() == 2);
-  got.clear();
-  while (auto isomer = enu4.next()) {
-    std::string prop;
-    CHECK(isomer->getPropIfPresent<std::string>("_MolFileChiralFlag", prop));
-    CHECK(prop == "1");
-    got.insert(MolToSmiles(*isomer));
-  }
-  expected = std::unordered_set<std::string>{
-      R"(C/C(F)=C/[C@@H](C)Cl)",
-      R"(C/C(F)=C\[C@@H](C)Cl)",
-  };
-  CHECK(got == expected);
+    StereoEnumerationOptions opts;
+    StereoisomerEnumerator enu1(*m1, opts);
 
-  auto m2 = "BrC=C[C@H]1OC(C2)(F)C2(Cl)C1"_smiles;
-  REQUIRE(m2);
-  StereoisomerEnumerator enu2(*m2, opts);
-  CHECK(enu2.getStereoisomerCount() == 8);
-  expected = std::unordered_set<std::string>{
-      R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
-      R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
-      R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
-      R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
-      R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
-      R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
-      R"(F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
-      R"(F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
-  };
-  got.clear();
-  while (auto isomer = enu2.next()) {
-    got.insert(MolToSmiles(*isomer));
-  }
-  CHECK(got == expected);
+    CHECK(enu1.getStereoisomerCount() == 1);
 
-  opts.onlyUnassigned = false;
-  StereoisomerEnumerator enu3(*m2, opts);
-  CHECK(enu3.getStereoisomerCount() == 16);
+    std::unordered_set<std::string> expected{"C/C(F)=C/[C@@H](C)Cl"};
+
+    std::unordered_set<std::string> got;
+    while (auto isomer = enu1.next()) {
+      got.insert(MolToSmiles(*isomer));
+      CHECK(!isomer->hasProp("_MolFileChiralFlag"));
+    }
+    CHECK(got == expected);
+  }
+
+  SECTION("Enumerate bond stereo only") {
+    auto m4 = "CC(F)=C[C@@H](C)Cl"_smiles;
+    REQUIRE(m4);
+
+    StereoEnumerationOptions opts;
+    StereoisomerEnumerator enu4(*m4, opts);
+
+    CHECK(enu4.getStereoisomerCount() == 2);
+
+    std::unordered_set<std::string> got;
+    while (auto isomer = enu4.next()) {
+      std::string prop;
+      CHECK(isomer->getPropIfPresent<std::string>("_MolFileChiralFlag", prop));
+      CHECK(prop == "1");
+      got.insert(MolToSmiles(*isomer));
+    }
+    std::unordered_set<std::string> expected{
+        R"(C/C(F)=C/[C@@H](C)Cl)",
+        R"(C/C(F)=C\[C@@H](C)Cl)",
+    };
+    CHECK(got == expected);
+  }
+
+  SECTION("Unassigned only") {
+    auto m2 = "BrC=C[C@H]1OC(C2)(F)C2(Cl)C1"_smiles;
+    REQUIRE(m2);
+
+    StereoEnumerationOptions opts;
+    opts.useRingSystemFilter = GENERATE(false, true);
+    CAPTURE(opts.useRingSystemFilter);
+
+    StereoisomerEnumerator enu2(*m2, opts);
+
+    CHECK(enu2.getStereoisomerCount() == 8);
+
+    std::unordered_set<std::string> expected{
+        R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
+        R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
+        R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
+        R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
+    };
+    if (opts.useRingSystemFilter == false) {
+      // These are geometrically impossible in 3D space.
+      // Using the ring system patterns prevents them
+      // from being returned (same as if we use embedding)
+      expected.insert({
+          R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
+          R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
+          R"(F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
+          R"(F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
+      });
+    }
+    std::unordered_set<std::string> got;
+    while (auto isomer = enu2.next()) {
+      got.insert(MolToSmiles(*isomer));
+    }
+    CHECK(got == expected);
+
+    opts.onlyUnassigned = false;
+    StereoisomerEnumerator enu3(*m2, opts);
+    CHECK(enu3.getStereoisomerCount() == 16);
+  }
 }
 
 TEST_CASE("Subset") {
@@ -413,7 +466,13 @@ TEST_CASE("Issue 7516") {
 
   auto m3 = "O=C(NC1CC2[NH+](C(C1)CC2)Cc3ccccc3)N"_smiles;
   REQUIRE(m2);
-  StereoisomerEnumerator enu3(*m3);
+
+  // This issue was reported before we added the ring system
+  // patterns, which suppress some invalid conformers here
+  StereoEnumerationOptions opts;
+  opts.useRingSystemFilter = false;
+
+  StereoisomerEnumerator enu3(*m3, opts);
   got.clear();
   while (auto isomer = enu3.next()) {
     got.insert(MolToSmiles(*isomer));
