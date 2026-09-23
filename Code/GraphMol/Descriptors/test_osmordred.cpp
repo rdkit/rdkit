@@ -622,10 +622,10 @@ TEST_CASE("Osmordred v2.0 - Timeout and Batch Functions") {
   }
   
   SECTION("calcOsmordred with invalid SMILES") {
-    std::vector<std::string> smiles_list = {"CCO", "INVALID", "CCC"};
+    std::vector<std::string> smiles_list = {"CCO", "INVALID", "CCO |asdfasdf|", "CCC"};
     
     auto results = calcOsmordred(smiles_list, 0);
-    REQUIRE(results.size() == 3);
+    REQUIRE(results.size() == 4);
     
     // First and third should have valid results
     bool first_valid = false;
@@ -646,9 +646,21 @@ TEST_CASE("Osmordred v2.0 - Timeout and Batch Functions") {
       }
     }
     REQUIRE(second_all_nan);
-  }
+
   
-  SECTION("getOsmordredDescriptorNames") {
+    // third (invalid) should be all NaN
+    bool third_all_nan = true;
+    for (const auto& val : results[2]) {
+      if (!std::isnan(val)) {
+        third_all_nan = false;
+        break;
+      }
+    }
+    REQUIRE(third_all_nan);
+  }
+
+
+SECTION("getOsmordredDescriptorNames") {
     auto names = getOsmordredDescriptorNames();
     REQUIRE(names.size() == 3588);
     
