@@ -28,22 +28,23 @@ struct overloaded : Ts... {
 
 namespace {
 constexpr double TORSION_PRECISION =
-    1e9;  // assuming torsions are between M_PI and -M_PI
-inline int64_t quantize(double val) {
-  val = std::fmod(val + M_PI, 2.0 * M_PI);
-  if (val < 0.0) {
-    val += 2.0 * M_PI;
-  }
-  val -= M_PI;
-
-  return static_cast<int64_t>(val * TORSION_PRECISION);
-}
+    1.e9;  // assuming torsions are between M_PI and -M_PI
 
 inline double dequantize(int64_t val) {
   return static_cast<double>(val) / TORSION_PRECISION;
 }
 
 }  // namespace
+
+inline int64_t quantize(double val, double precision = TORSION_PRECISION) {
+  val = std::fmod(val + M_PI, 2.0 * M_PI);
+  if (val < 0.0) {
+    val += 2.0 * M_PI;
+  }
+  val -= M_PI;
+
+  return static_cast<int64_t>(val * precision);
+}
 
 struct TorsionRange {
   double lower, upper;

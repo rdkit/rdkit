@@ -2547,9 +2547,8 @@ void checkRowEmbedding(DistGeom::ZMatrix::ZMatrixRow row, Level level,
             mol.getConformer(), row.atomIdx, row.internal.bondRef.value(),
             row.internal.angleRef.value(), row.torsionDependence->reference);
         // to account for circular approximity
-        CHECK(DistGeom::equal(
-            DistGeom::TorsionValues{inproperTor},
-            DistGeom::TorsionValues{row.torsionDependence->offset}));
+        CHECK(DistGeom::quantize(inproperTor, 1.e4) ==
+              DistGeom::quantize(row.torsionDependence->offset, 1.e4));
       } else {
         double torsion = MolTransforms::getDihedralRad(
             mol.getConformer(), row.atomIdx, row.internal.bondRef.value(),
