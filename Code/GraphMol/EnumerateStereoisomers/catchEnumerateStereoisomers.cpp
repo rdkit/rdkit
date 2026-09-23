@@ -125,6 +125,7 @@ TEST_CASE("Base tests") {
     CHECK(got == expected);
   }
 }
+
 TEST_CASE("Unique") {
   auto m1 = "FC(Cl)C=CC=CC(F)Cl"_smiles;
   REQUIRE(m1);
@@ -611,4 +612,90 @@ TEST_CASE("wiggly bonds and EnumerateStereoisomers") {
     CHECK(std::find(got.begin(), got.end(), "C[C@](F)(Cl)Br") != got.end());
     CHECK(std::find(got.begin(), got.end(), "C[C@@](F)(Cl)Br") != got.end());
   }
+}
+
+TEST_CASE("Ring system patterns") {
+  const auto enumerate = [](const char *smiles, bool useRingSystemFilter,
+                            bool tryEmbedding) {
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    REQUIRE(mol);
+
+    StereoEnumerationOptions opts;
+    opts.useRingSystemFilter = useRingSystemFilter;
+    opts.tryEmbedding = tryEmbedding;
+
+    StereoisomerEnumerator enu(*mol, opts);
+    std::unordered_set<std::string> result;
+    while (auto isomer = enu.next()) {
+      result.insert(MolToSmiles(*isomer));
+    }
+    return result;
+  };
+
+  const auto checkResults = [&enumerate](const char *smiles) {
+    const auto noPatterns = enumerate(smiles, false, false);
+    const auto withPatterns = enumerate(smiles, true, false);
+
+    REQUIRE(!noPatterns.empty());
+
+    // It is totally possible that we have a mol for which
+    // no possible 3D conformations exist, but all the cases
+    // in the test do have some possible conformation.
+    REQUIRE(!withPatterns.empty());
+
+    CHECK(noPatterns.size() > withPatterns.size());
+    for (const auto &isomer : withPatterns) {
+      CHECK(noPatterns.contains(isomer));
+    }
+  };
+
+  SECTION("Norbornane") { checkResults("CC12CCC(CC3=CCC(C(N)=O)CC3)(CC1)C2"); }
+
+  SECTION("adamantane") {
+    checkResults("CCCCCCCc1nnc(NC(=O)C23CC4CC(C2)CC(C3)C4)s1");
+  }
+
+  SECTION("C5_O") { checkResults("C1CC1C1C2CC2C2CC21"); }
+
+  SECTION("331-bicyclononane") {
+    checkResults("CCCC12CN3CC(CCC)(CN(C1)C3c1cc(Br)ccc1O)C2O");
+  }
+
+  SECTION("2,2,2-bicyclooctane") {
+    checkResults(
+        "CCOC(=O)C1=CC2C3C(=O)N(c4ccc(I)cc4)C(=O)C3C1C1C(=O)N(c3ccc(I)cc3)C(=O)C21");
+  }
+
+  SECTION("14-bicyclohept-1,4-dione") { checkResults("C1C2C3CC3C3CC3C12"); }
+
+  SECTION("misc_1") { checkResults("CN1C2(CC2)C2C(C3CC2C2(CC2)C32CC2)C12CC2"); }
+
+  SECTION("2,2,2-bicyclooctane") { checkResults("CC12CCC(N)(CC1)CC2"); }
+
+  SECTION("2,3,3-bicyclodecane") { checkResults("C1CC2CC3CCC3C1CC1CCC21"); }
+
+  SECTION("2,2,3-bicyclononane") { checkResults("C1CC2CCC(C1)CC2"); }
+
+  SECTION("1,1,3-bicycloheptane") { checkResults("CCCC1C(C)C(C)C2CC1C2C"); }
+
+  SECTION("misc_2") {
+    checkResults(
+        "CCOc1ccc(N2C(=O)C3C4C=CC(C3C2=O)C2C(=O)N(c3ccc(OCC)cc3)C(=O)C42)cc1");
+  }
+
+  SECTION("misc_3") { checkResults("C1C2CC3CC4CC3CC2CC14"); }
+
+  SECTION("misc_4") { checkResults("C1CC2C3CCC2C1C3"); }
+
+  SECTION("fused_5-5_membered_rings") {
+    checkResults("O=C(O)c1nnn(C2COC3C2OCC3n2nnc(C(=O)O)c2C(=O)O)c1C(=O)O");
+  }
+
+  SECTION("cyclopropacyclohexane") {
+    checkResults("O=C(O)C12C3CCCC1C32c1ccccc1");
+  }
+
+  SECTION("cyclopropacyclooctane") { checkResults("C1C2C1C1CC1C1CC1C1CC21"); }
+
+  SECTION("421-bicyclononane") { checkResults("C1CC2CC1C1CCC2C1"); }
 }
