@@ -12,6 +12,7 @@
 #ifndef RD_EMBEDDER_H_GUARD
 #define RD_EMBEDDER_H_GUARD
 
+#include <RDGeneral/RDLog.h>
 #include <map>
 #include <utility>
 #include <Geometry/point.h>
@@ -42,10 +43,9 @@ enum EmbedFailureCauses {
 };
 
 enum class EmbedFF : std::uint8_t {
-  UFF,
-  MMFF
+  UFF = 0,
+  MMFF = 1,
 };
-
 
 //! Parameter object for controlling embedding
 /*!
@@ -470,13 +470,32 @@ inline INT_VECT EmbedMultipleConfs(
 
 // Overload for JSON Serialization.
 inline std::ostream &operator<<(std::ostream &os, const EmbedFF &eff) {
+  switch (eff) {
+    case EmbedFF::MMFF:
+      os << "MMFF";
+      return os;
+    case EmbedFF::UFF:
+      [[fallthrough]];
+    default:
+      os << "UFF";
+      return os;
+  }
   os << static_cast<int>(eff);
   return os;
 }
 inline std::istream &operator>>(std::istream &is, EmbedFF &eff) {
-  int val;
+  std::string val;
   if (is >> val) {
-    eff = static_cast<EmbedFF>(val);
+    if (val == "MMFF") {
+      eff = EmbedFF::MMFF;
+    } else if (val == "UFF") {
+      eff = EmbedFF::UFF;
+    } else {
+      BOOST_LOG(rdWarningLog)
+          << "Provided embedForceField " << val
+          << " in JSON is not valid. Choose between UFF and MMFF. Falling back to UFF."
+          << std::endl;
+    }
   }
   return is;
 }
