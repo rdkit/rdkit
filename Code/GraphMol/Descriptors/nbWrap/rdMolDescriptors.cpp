@@ -506,6 +506,10 @@ std::vector<double> BCUT(const RDKit::ROMol &mol) {
   return RDKit::Descriptors::BCUT2D(mol);
 }
 
+std::vector<double>  BCUT_atomprops(const RDKit::ROMol &mol, const std::string &atomprops,  RDKit::Descriptors::BCUTOptions opts) {
+    return RDKit::Descriptors::BCUT2D(mol, atomprops, opts);
+}
+
 std::pair<double, double> BCUT2D_list(const RDKit::ROMol &m,
                                       nb::list atomprops) {
   std::vector<double> dvec;
@@ -1723,9 +1727,6 @@ query.Match( mol ))DOC",
 
 #ifdef RDK_HAS_EIGEN3
   m.attr("_BCUT2D_version") = RDKit::Descriptors::BCUT2DVersion;
-
-  std::pair<double, double> (*BCUT_atomprops)(
-      const RDKit::ROMol &, const std::string &) = &RDKit::Descriptors::BCUT2D;
 
   m.def(
       "BCUT2D", BCUT, "mol"_a,
