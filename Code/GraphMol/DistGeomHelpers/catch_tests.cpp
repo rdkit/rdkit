@@ -33,6 +33,9 @@
 #include <limits>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <DistGeom/ZMatrixUtils.h>
+#include <DistGeom/ZMatrix.h>
+#include "ZMatrixBuilder.h"
 
 #ifdef RDK_TEST_MULTITHREADED
 #include <csignal>
