@@ -17,6 +17,10 @@
 #include <algorithm>
 #include "RDGeneral/Invariant.h"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #ifndef RD_BOUNDS_MATRIX_BUILDER_DETAILS_H
 #define RD_BOUNDS_MATRIX_BUILDER_DETAILS_H
 

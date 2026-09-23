@@ -10,11 +10,15 @@
 //
 #include <RDGeneral/test.h>
 #include <catch2/catch_all.hpp>
+#include "ZMatrix.h"
+#include "ZMatrixUtils.h"
 
 #ifdef RDK_TEST_MULTITHREADED
 #include <csignal>
-#include "ZMatrix.h"
-#include "ZMatrixUtils.h"
+#endif
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
 #endif
 
 TEST_CASE("ZMatrix baiscs") {

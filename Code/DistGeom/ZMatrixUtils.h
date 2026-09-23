@@ -16,6 +16,11 @@
 #include <Numerics/SquareMatrix.h>
 #include <variant>
 #include <unordered_set>
+#include <cmath>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 namespace DistGeom {
 
