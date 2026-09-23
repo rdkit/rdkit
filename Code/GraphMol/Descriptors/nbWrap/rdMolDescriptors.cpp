@@ -502,30 +502,35 @@ MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius, int nBits,
 }
 
 #ifdef RDK_HAS_EIGEN3
-std::vector<double> BCUT(const RDKit::ROMol &mol) {
-  return RDKit::Descriptors::BCUT2D(mol);
+std::vector<double> BCUT(const RDKit::ROMol &mol,
+			 const RDKit::Descriptors::BCUTOptions &opts) {
+  return RDKit::Descriptors::BCUT2D(mol, opts);
 }
 
-std::vector<double>  BCUT_atomprops(const RDKit::ROMol &mol, const std::string &atomprops,  RDKit::Descriptors::BCUTOptions opts) {
+std::pair<double, double> BCUT_atomprops(const RDKit::ROMol &mol,
+				    const std::string &atomprops,
+				    const RDKit::Descriptors::BCUTOptions &opts) {
     return RDKit::Descriptors::BCUT2D(mol, atomprops, opts);
 }
 
 std::pair<double, double> BCUT2D_list(const RDKit::ROMol &m,
-                                      nb::list atomprops) {
+                                      nb::list atomprops,
+				      const RDKit::Descriptors::BCUTOptions &opts) {
   std::vector<double> dvec;
   for (size_t i = 0; i < nb::len(atomprops); ++i) {
     dvec.push_back(nb::cast<double>(atomprops[i]));
   }
-  return RDKit::Descriptors::BCUT2D(m, dvec);
+  return RDKit::Descriptors::BCUT2D(m, dvec, opts);
 }
 
 std::pair<double, double> BCUT2D_tuple(const RDKit::ROMol &m,
-                                       nb::tuple atomprops) {
+                                       nb::tuple atomprops,
+				       const RDKit::Descriptors::BCUTOptions &opts) {
   std::vector<double> dvec;
   for (size_t i = 0; i < nb::len(atomprops); ++i) {
     dvec.push_back(nb::cast<double>(atomprops[i]));
   }
-  return RDKit::Descriptors::BCUT2D(m, dvec);
+  return RDKit::Descriptors::BCUT2D(m, dvec, opts);
 }
 #endif
 
@@ -1727,9 +1732,16 @@ query.Match( mol ))DOC",
 
 #ifdef RDK_HAS_EIGEN3
   m.attr("_BCUT2D_version") = RDKit::Descriptors::BCUT2DVersion;
+  // exposes NumRotatableBondsOptions enum
+  nb::enum_<RDKit::Descriptors::BCUTOptions>(
+      m, "BCUTOptions",
+      R"DOC(Options for generating BCUT descriptors.
+BURDEN_MATRIX is the original, PERLMAN_MATRIX is from the Perlman paper)DOC")
+      .value("PERLMAN_MATRIX", RDKit::Descriptors::BCUTOptions::PERLMAN_MATRIX)
+      .value("BURDEN_MATRIX", RDKit::Descriptors::BCUTOptions::BURDEN_MATRIX);
 
   m.def(
-      "BCUT2D", BCUT, "mol"_a,
+      "BCUT2D", BCUT, "mol"_a, "opts"_a=RDKit::Descriptors::BCUTOptions(),
       R"DOC(Implements BCUT descriptors From J. Chem. Inf. Comput. Sci., Vol. 39, No. 1, 1999
 Diagonal elements are (currently) atomic mass, gasteiger charge,
 crippen logP and crippen MRReturns the 2D BCUT2D descriptors vector as described in
@@ -1740,6 +1752,7 @@ returns [mass eigen value high, mass eigen value low,
 
   m.def(
       "BCUT2D", BCUT2D_list, "mol"_a, "atom_props"_a,
+      "opts"_a=RDKit::Descriptors::BCUTOptions(),
       R"DOC(Returns a 2D BCUT (eigen value hi, eigenvalue low) given the molecule
 and the specified atom props
  atom_props must be a list or tuple of floats equal in
@@ -1747,12 +1760,14 @@ size to the number of atoms in mol)DOC");
 
   m.def(
       "BCUT2D", BCUT2D_tuple, "mol"_a, "atom_props"_a,
+      "opts"_a=RDKit::Descriptors::BCUTOptions(),
       R"DOC(Returns a 2D BCUT (eigen value hi, eigenvalue low) given the molecule
 and the specified atom props
  atom_props must be a list or tuple of floats equal in
 size to the number of atoms in mol)DOC");
 
   m.def("BCUT2D", BCUT_atomprops, "mol"_a, "atom_propname"_a,
+	"opts"_a=RDKit::Descriptors::BCUTOptions(),
         R"DOC(Returns a 2D BCUT (eigen value high, eigen value low) given the
 molecule and the specified atom prop name
 atom_propname must exist on each atom and be convertible to a float)DOC");
