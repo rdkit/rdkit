@@ -86,7 +86,8 @@
     RDKit::MMFF::MMFFMolProperties prbMP(prbMol);
     RDKit::MMFF::MMFFMolProperties refMP(refMol);
     if (!prbMP.isValid() || !refMP.isValid()) {
-      throw ValueErrorException("missing MMFF94 parameters for probe or reference molecule");
+      throw ValueErrorException(
+          "missing MMFF94 parameters for probe or reference molecule");
     }
     return new RDKit::MolAlign::O3A(prbMol, refMol, &prbMP, &refMP, atomTypes,
                                     prbCid, refCid, reflect, maxIters, options,

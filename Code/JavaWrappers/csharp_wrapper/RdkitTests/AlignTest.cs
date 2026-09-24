@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2025 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -121,6 +121,49 @@ public class AlignTest
         var rmsdCopy = RDKFuncs.getBestAlignmentTransform(prbCopy, refMol, bestTrans, bestMatch);
         AssertClose(rmsd, rmsdCopy, 0.001);
         Assert.Equal((int)refMol.getNumAtoms(), bestMatch.Count);
+    }
+
+    [Fact]
+    public void TestBestAlignmentParams()
+    {
+        var suppl = new SDMolSupplier(AlignDataFile("probe_mol.sdf"), true, false);
+        suppl.moveTo(1);
+        var prb = suppl.next();
+        var refMol = suppl.next();
+
+        // Hs are ignored by default
+        var ps = new BestAlignmentParams();
+        Assert.True(ps.ignoreHs);
+        AssertClose(1.8100, RDKFuncs.getBestRMS(new ROMol(prb), refMol, ps), 0.001);
+
+        ps.ignoreHs = false;
+        AssertClose(2.43449, RDKFuncs.getBestRMS(new ROMol(prb), refMol, ps), 0.001);
+
+        var bestTrans = new Transform3D();
+        var bestMatch = new Match_Vect();
+        var rmsd = RDKFuncs.getBestAlignmentTransform(new ROMol(prb), refMol, bestTrans, bestMatch, ps);
+        AssertClose(2.43449, rmsd, 0.001);
+        Assert.Equal((int)refMol.getNumAtoms(), bestMatch.Count);
+    }
+
+    [Fact]
+    public void TestGetAllConformerBestRMSToRef()
+    {
+        var prbMol = RWMol.MolFromSmiles("OCCCN1CCN(C)CC1");
+        DistanceGeom.EmbedMultipleConfs(prbMol, 5, 30, 42);
+        Assert.Equal(5u, prbMol.getNumConformers());
+        // the reference only has a copy of the first probe conformer
+        var refMol = new ROMol(prbMol, false, 0);
+        Assert.Equal(1u, refMol.getNumConformers());
+
+        var ps = new BestAlignmentParams();
+        var rmsds = RDKFuncs.getAllConformerBestRMSToRef(prbMol, refMol, ps);
+        Assert.Equal(5, rmsds.Count);
+        AssertClose(0.0, rmsds[0], 0.0001);
+        for (var i = 0; i < rmsds.Count; ++i)
+        {
+            AssertClose(RDKFuncs.getBestRMS(new ROMol(prbMol), refMol, ps, i, 0), rmsds[i], 0.0001);
+        }
     }
 
     [Fact]

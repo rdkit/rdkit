@@ -174,14 +174,66 @@ public class AlignTests extends GraphMolTest {
 				0.001);
 	}
 
-	@Test
-	public void testGetAllConformerBestRMS() {
-		SDMolSupplier suppl = new SDMolSupplier(alignDataFile("symmetric.confs.sdf"));
+	// equivalent of Python's Chem.MultiConfMolFromSDF()
+	private ROMol multiConfMolFromSDF(String name) {
+		SDMolSupplier suppl = new SDMolSupplier(alignDataFile(name));
 		ROMol mol = new ROMol(suppl.next());
 		while (!suppl.atEnd()) {
 			ROMol m = suppl.next();
 			mol.addConformer(new Conformer(m.getConformer()), true);
 		}
+		return mol;
+	}
+
+	@Test
+	public void testBestAlignmentParams() {
+		SDMolSupplier suppl = new SDMolSupplier(alignDataFile("probe_mol.sdf"), true, false);
+		suppl.moveTo(1);
+		ROMol prb = suppl.next();
+		ROMol ref = suppl.next();
+
+		// Hs are ignored by default
+		BestAlignmentParams params = new BestAlignmentParams();
+		assertTrue(params.getIgnoreHs());
+		assertEquals(1.8100, RDKFuncs.getBestRMS(new ROMol(prb), ref, params), 0.001);
+
+		params.setIgnoreHs(false);
+		assertEquals(2.43449, RDKFuncs.getBestRMS(new ROMol(prb), ref, params), 0.001);
+
+		Transform3D bestTrans = new Transform3D();
+		Match_Vect bestMatch = new Match_Vect();
+		double rmsd = RDKFuncs.getBestAlignmentTransform(new ROMol(prb), ref, bestTrans,
+				bestMatch, params);
+		assertEquals(2.43449, rmsd, 0.001);
+		assertEquals(ref.getNumAtoms(), bestMatch.size());
+	}
+
+	@Test
+	public void testGetAllConformerBestRMSToRef() {
+		ROMol prbMol = multiConfMolFromSDF("butane_prb.sdf");
+		SDMolSupplier refSuppl = new SDMolSupplier(alignDataFile("butane_ref.sdf"));
+		ROMol refMol = refSuppl.next();
+		BestAlignmentParams params = new BestAlignmentParams();
+		double[] expected = {0.19474, 0.86739, 0.87102, 0.35358, 0.35395};
+		Double_Vect rmsds = RDKFuncs.getAllConformerBestRMSToRef(prbMol, refMol, params);
+		assertEquals(expected.length, rmsds.size());
+		for (int i = 0; i < expected.length; ++i) {
+			assertEquals(expected[i], rmsds.get(i), 0.0001);
+		}
+
+		refMol = multiConfMolFromSDF("butane_ref.sdf");
+		double[] expectedMulti = {0.19474, 0.86739, 0.87102, 0.35358, 0.35395,
+				0.82243, 0.16809, 0.16859, 0.54966, 0.56173};
+		rmsds = RDKFuncs.getAllConformerBestRMSToRef(prbMol, refMol, params);
+		assertEquals(expectedMulti.length, rmsds.size());
+		for (int i = 0; i < expectedMulti.length; ++i) {
+			assertEquals(expectedMulti[i], rmsds.get(i), 0.0001);
+		}
+	}
+
+	@Test
+	public void testGetAllConformerBestRMS() {
+		ROMol mol = multiConfMolFromSDF("symmetric.confs.sdf");
 		long nconfs = mol.getNumConformers();
 		assertTrue(nconfs > 1);
 		Double_Vect origVals = RDKFuncs.getAllConformerBestRMS(mol);
