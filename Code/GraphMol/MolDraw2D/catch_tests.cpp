@@ -3607,7 +3607,6 @@ $$$$
 )CTAB"_ctab;
       
     CHECK(isAtomListQuery(m1->getAtomWithIdx(1)));
-    std::cerr << describeQuery(m1->getAtomWithIdx(1)) << std::endl;;
     int panelWidth = -1;
     int panelHeight = -1;
     bool noFreeType = true;
