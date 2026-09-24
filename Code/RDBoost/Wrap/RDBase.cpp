@@ -151,11 +151,9 @@ void DisableLog(std::string spec) { logging::disable_logs(spec); }
 
 std::string LogStatus() { return logging::log_status(); }
 
-void AttachFileToLog(std::string spec, std::string filename, int delay = 100) {
-  (void)spec;
-  (void)filename;
-  (void)delay;
-}
+void AttachFileToLog([[maybe_unused]] std::string spec,
+                     [[maybe_unused]] std::string filename,
+                     [[maybe_unused]] int delay = 100) {}
 
 void LogDebugMsg(const std::string &msg) {
   // NOGIL nogil;
@@ -196,11 +194,9 @@ class BlockLogs : public boost::noncopyable {
 
   BlockLogs *enter() { return this; }
 
-  void exit(python::object exc_type, python::object exc_val,
-            python::object traceback) {
-    RDUNUSED_PARAM(exc_type);
-    RDUNUSED_PARAM(exc_val);
-    RDUNUSED_PARAM(traceback);
+  void exit([[maybe_unused]] python::object exc_type,
+            [[maybe_unused]] python::object exc_val,
+            [[maybe_unused]] python::object traceback) {
     m_log_setter.reset();
   }
 

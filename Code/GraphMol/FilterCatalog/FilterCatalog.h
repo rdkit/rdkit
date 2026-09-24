@@ -111,8 +111,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogParams
 #ifdef RDK_USE_BOOST_SERIALIZATION
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    RDUNUSED_PARAM(version);
+  void serialize(Archive &ar, [[maybe_unused]] const unsigned int version) {
     ar & d_catalogs;
   }
 #endif
