@@ -12,6 +12,7 @@
 #ifndef RD_EMBEDDER_H_GUARD
 #define RD_EMBEDDER_H_GUARD
 
+#include <RDGeneral/RDLog.h>
 #include <map>
 #include <utility>
 #include <vector>
@@ -48,6 +49,11 @@ enum EmbedFailureCauses {
   KTERM_VIOLATION = 13,
   CLASH = 14,
   END_OF_ENUM = 15,
+};
+
+enum class EmbedFF : std::uint8_t {
+  UFF = 0,
+  MMFF = 1,
 };
 
 //! Parameter object for controlling embedding
@@ -132,6 +138,7 @@ enum EmbedFailureCauses {
                    of times each embedding check fails
   enableSequentialRandomSeeds    handle the random number seeds so that
                                  conformer generation can be restarted
+  embedFF Force Field to use to determine ideal 1-2 and 1-3 distances.
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations{0};
@@ -170,6 +177,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   std::vector<unsigned int> failures{};
   bool enableSequentialRandomSeeds{false};
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
+  EmbedFF embedForceField{EmbedFF::UFF};
 };
 
 //! update parameters from a JSON string
@@ -468,6 +476,39 @@ inline INT_VECT EmbedMultipleConfs(
   EmbedMultipleConfs(mol, res, numConfs, params);
   return res;
 };
+
+// Overload for JSON Serialization.
+inline std::ostream &operator<<(std::ostream &os, const EmbedFF &eff) {
+  switch (eff) {
+    case EmbedFF::MMFF:
+      os << "MMFF";
+      return os;
+    case EmbedFF::UFF:
+      [[fallthrough]];
+    default:
+      os << "UFF";
+      return os;
+  }
+  os << static_cast<int>(eff);
+  return os;
+}
+inline std::istream &operator>>(std::istream &is, EmbedFF &eff) {
+  eff = EmbedFF::UFF;
+
+  std::string val;
+  if (is >> val) {
+    if (val == "MMFF") {
+      eff = EmbedFF::MMFF;
+    }
+    else if (val != "UFF") {
+      BOOST_LOG(rdWarningLog)
+          << "Provided embedForceField " << val
+          << " in JSON is not valid. Choose between UFF and MMFF. Falling back to UFF."
+          << std::endl;
+    }
+  }
+  return is;
+}
 
 //! Parameters corresponding to plain Distance Geometry
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters DG;

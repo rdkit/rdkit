@@ -27,6 +27,7 @@ namespace DGeomHelpers {
   X(boundsMatForceScaling)                        \
   X(boxSizeMult)                                  \
   X(clearConfs)                                   \
+  X(embedForceField)                              \
   X(embedFragmentsSeparately)                     \
   X(enableSequentialRandomSeeds)                  \
   X(enforceChirality)                             \
