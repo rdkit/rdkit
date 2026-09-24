@@ -17,6 +17,7 @@
 #include <tuple>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
+#include <GraphMol/DistGeomHelpers/ZMatrixBuilder.h>
 
 namespace RDKit {
 class ROMol;
@@ -71,6 +72,7 @@ struct CrystalFFDetails {
   double *distMat;
   ETKDGForceConsts::Params forceConsts;
   std::vector<RDKit::DGeomHelpers::Path14Configuration> path14Configs;
+  std::unique_ptr<RDKit::DGeomHelpers::InternalCoordinates> internalCoords;
 };
 
 //! Get the experimental torsional angles in a molecule

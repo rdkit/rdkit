@@ -39,7 +39,8 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     const EmbedParameters &params, bool scaleVDW = false,
     bool set15bounds = true, bool set14bounds = true, bool set13bounds = true,
     PATH14_VECT *paths14 = nullptr,
-    const EmbedFF embedForceField = EmbedFF::UFF);
+    const EmbedFF embedForceField = EmbedFF::UFF,
+    InternalCoordinates *internalCoords = nullptr);
 
 //! Set upper and lower distance bounds between atoms in a molecule based on
 /// topology
@@ -81,7 +82,8 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     std::vector<std::vector<int>> &angles, const EmbedParameters &params,
     bool scaleVDW = false, bool set15bounds = true, bool set14bounds = true,
     bool set13bounds = true, PATH14_VECT *paths14 = nullptr,
-    const EmbedFF embedForceField = EmbedFF::UFF);
+    const EmbedFF embedForceField = EmbedFF::UFF,
+    InternalCoordinates *internalCoords = nullptr);
 /*! \overload for experimental torsion angle preferences
  */
 inline void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
