@@ -94,24 +94,45 @@ SubstructTerm::SubstructTerm(std::string aname, std::string asmarts, int ascore,
 const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs() {
   // Each term specifies:
   //   - name, SMARTS, score
-  //   - requiredElements: atomic numbers that must be present (empty = no filter)
+  //   - requiredElements: atomic numbers that must be present (empty = no
+  //   filter)
   //   - connectivitySmarts: bond-order-agnostic pattern for pre-screening
   // Since tautomerization only moves H and changes bond orders (never creates/
   // destroys heavy-atom bonds), we can skip patterns whose connectivity
   // prerequisites aren't met by the input molecule.
   static std::vector<SubstructTerm> substructureTerms{
-      {"benzoquinone", "[#6]1([#6]=[#6][#6]([#6]=[#6]1)=,:[N,S,O])=,:[N,S,O]", 25, {6}, "[#6]1(~[#6]~[#6]~[#6](~[#6]~[#6]~1)~[N,S,O])~[N,S,O]"},
+      {"benzoquinone",
+       "[#6]1([#6]=[#6][#6]([#6]=[#6]1)=,:[N,S,O])=,:[N,S,O]",
+       25,
+       {6},
+       "[#6]1(~[#6]~[#6]~[#6](~[#6]~[#6]~1)~[N,S,O])~[N,S,O]"},
       {"oxim", "[#6]=[N][OH]", 4, {6, 7, 8}, "[#6]~[#7]~[#8]"},
       {"C=O", "[#6]=,:[#8]", 2, {6, 8}, "[#6]~[#8]"},
       {"N=O", "[#7]=,:[#8]", 2, {7, 8}, "[#7]~[#8]"},
       {"P=O", "[#15]=,:[#8]", 2, {15, 8}, "[#15]~[#8]"},
       {"C=hetero", "[C]=[!#1;!#6]", 1, {6}, "[C]~[!#1;!#6]"},
-      {"C(=hetero)-hetero", "[C](=[!#1;!#6])[!#1;!#6]", 2, {6}, "[C](~[!#1;!#6])~[!#1;!#6]"},
+      {"C(=hetero)-hetero",
+       "[C](=[!#1;!#6])[!#1;!#6]",
+       2,
+       {6},
+       "[C](~[!#1;!#6])~[!#1;!#6]"},
       {"aromatic C = exocyclic N", "[c]=!@[N]", -1, {6, 7}, "[c]~[N]"},
       {"methyl", "[CX4H3]", 1, {6}, ""},
-      {"guanidine terminal=N", "[#7]C(=[NR0])[#7H0]", 1, {6, 7}, "[#7]~[#6]~[#7]"},
-      {"guanidine endocyclic=N", "[#7;R][#6;R]([N])=[#7;R]", 2, {6, 7}, "[#7]~[#6](~[N])~[#7]"},
-      {"aci-nitro", "[#6]=[N+]([O-])[OH]", -4, {6, 7, 8}, "[#6]~[#7](~[#8])~[#8]"}};
+      {"guanidine terminal=N",
+       "[#7]C(=[NR0])[#7H0]",
+       1,
+       {6, 7},
+       "[#7]~[#6]~[#7]"},
+      {"guanidine endocyclic=N",
+       "[#7;R][#6;R]([N])=[#7;R]",
+       2,
+       {6, 7},
+       "[#7]~[#6](~[N])~[#7]"},
+      {"aci-nitro",
+       "[#6]=[N+]([O-])[OH]",
+       -4,
+       {6, 7, 8},
+       "[#6]~[#7](~[#8])~[#8]"}};
   return substructureTerms;
 }
 
@@ -255,7 +276,8 @@ inline unsigned int countAromaticCarbonExocyclicN(const ROMol &mol) {
 }
 
 // Indices of the scoring patterns with dedicated matchers.
-// These must match the order of patterns in getDefaultTautomerScoreSubstructs().
+// These must match the order of patterns in
+// getDefaultTautomerScoreSubstructs().
 namespace {
 enum class PatternIdx {
   CarbonylO = 2,
@@ -355,7 +377,8 @@ const RingInfo *getFastRingInfo(ROMol &mol) {
 
 bool isTautomerBondAtRing(const RingInfo *ringInfo, const Bond &bond) {
   // either inside a ring or connecting two ring atoms
-  const bool bondInRing = ringInfo && ringInfo->numBondRings(bond.getIdx()) != 0;
+  const bool bondInRing =
+      ringInfo && ringInfo->numBondRings(bond.getIdx()) != 0;
   const bool beginInRing =
       ringInfo && ringInfo->numAtomRings(bond.getBeginAtomIdx()) != 0;
   const bool endInRing =
@@ -466,14 +489,15 @@ bool TautomerEnumerator::setTautomerStereoAndIsoHs(
     if (tautBond->getBondType() != Bond::DOUBLE || d_removeBondStereo ||
         !hasValidSpecifiedDoubleBondStereo(*bond)) {
       // When bond stereo is being removed for bonds involved in tautomerism,
-      // use STEREOANY (for double bonds not in rings or connecting two ring atoms)
-      // instead of STEREONONE.
-      // This prevents downstream tools (notably InChI) from inferring a specific E/Z
-      // assignment from 2D coordinates after bond orders have been changed.
-      const RingInfo *ringInfo =
-          tautBond->getBondType() == Bond::DOUBLE ? getFastRingInfo(taut)
-                                                  : nullptr;
-      const auto targetStereo = getClearedTautomerBondStereo(ringInfo, *tautBond);
+      // use STEREOANY (for double bonds not in rings or connecting two ring
+      // atoms) instead of STEREONONE. This prevents downstream tools (notably
+      // InChI) from inferring a specific E/Z assignment from 2D coordinates
+      // after bond orders have been changed.
+      const RingInfo *ringInfo = tautBond->getBondType() == Bond::DOUBLE
+                                     ? getFastRingInfo(taut)
+                                     : nullptr;
+      const auto targetStereo =
+          getClearedTautomerBondStereo(ringInfo, *tautBond);
       modified |= (tautBond->getStereo() != targetStereo);
       tautBond->setStereo(targetStereo);
       tautBond->getStereoAtoms().clear();
@@ -537,6 +561,27 @@ std::vector<ROMOL_SPTR> TautomerEnumerator::enumerate(
   return tresult.tautomers();
 }
 
+unsigned int getNonProtectedMatches(
+    const ROMol &mol, const boost::dynamic_bitset<> &protectedAtoms,
+    const ROMol &query, std::vector<MatchVectType> &matches) {
+  std::vector<MatchVectType> tmatches;
+  SubstructMatch(mol, query, tmatches);
+  matches.reserve(tmatches.size());
+  for (auto &match : tmatches) {
+    bool protectedFound = false;
+    for (const auto &pair : match) {
+      if (protectedAtoms.test(pair.second)) {
+        protectedFound = true;
+        break;
+      }
+    }
+    if (!protectedFound) {
+      matches.push_back(std::move(match));
+    }
+  }
+  return matches.size();
+}
+
 TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 #ifdef VERBOSE_ENUMERATION
   std::cout << "**********************************" << std::endl;
@@ -549,6 +594,13 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 
   const std::vector<TautomerTransform> &transforms =
       tautparams->getTransforms();
+
+  boost::dynamic_bitset<> protectedAtoms(mol.getNumAtoms());
+  for (const auto atom : mol.atoms()) {
+    if (atom->hasProp(common_properties::_protected)) {
+      protectedAtoms.set(atom->getIdx());
+    }
+  }
 
   // Enumerate all possible tautomers and return them as a vector.
   // smi is the input molecule SMILES
@@ -625,8 +677,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
         // kmol is the kekulized version of the tautomer (created lazily)
         const auto &kmol = smilesTautomerPair.second.getKekulized();
         std::vector<MatchVectType> matches;
-        unsigned int matched = SubstructMatch(*kmol, *(transform.Mol), matches);
-
+        unsigned int matched = getNonProtectedMatches(
+            *kmol, protectedAtoms, *(transform.Mol), matches);
         if (!matched) {
           continue;
         }
@@ -786,7 +838,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
             }
           }
           // Kekulized form will be created lazily when needed;
-          // canonical=true is used on demand for order-independent deduplication.
+          // canonical=true is used on demand for order-independent
+          // deduplication.
 #ifdef VERBOSE_ENUMERATION
           auto it = res.d_tautomers.find(tsmiles);
           if (it == res.d_tautomers.end()) {
@@ -802,9 +855,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           //     <<
           //     transform.Mol->getProp<std::string>(common_properties::_Name)
           //     << " produced tautomer " << tsmiles << std::endl;
-          res.d_tautomers[tsmiles] = Tautomer(
-              std::move(product),
-              numModifiedAtoms, numModifiedBonds);
+          res.d_tautomers[tsmiles] =
+              Tautomer(std::move(product), numModifiedAtoms, numModifiedBonds);
         }
       }
       smilesTautomerPair.second.d_done = true;
@@ -880,10 +932,11 @@ ROMol *TautomerEnumerator::pickCanonical(
         // regenerates an sp3 stereocentre puts a stereo-unspecified twin of an
         // equally-scoring tautomer into the pool, and '[' (0x5B) sorts after
         // every atom letter, so the lexicographic comparison alone always
-        // prefers the twin: "CC(=O)C(C)O" beats "CC(=O)[C@H](C)O". That silently
-        // merged both acetoin enantiomers even with tautomerRemoveSp3Stereo set
-        // to false. Comparing stereo first keeps the result canonical, since
-        // the count is a property of the tautomer rather than of the input.
+        // prefers the twin: "CC(=O)C(C)O" beats "CC(=O)[C@H](C)O". That
+        // silently merged both acetoin enantiomers even with
+        // tautomerRemoveSp3Stereo set to false. Comparing stereo first keeps
+        // the result canonical, since the count is a property of the tautomer
+        // rather than of the input.
         if (nStereo > bestStereo) {
           better = true;
         } else if (nStereo == bestStereo && t.first < bestSmiles) {
@@ -957,7 +1010,8 @@ void TautomerEnumerator::canonicalizeInPlace(
   TEST_ASSERT(tmp->getNumAtoms() == mol.getNumAtoms());
   TEST_ASSERT(tmp->getNumBonds() == mol.getNumBonds());
   // now copy the info from the canonical tautomer over to the input molecule
-  // iterate both molecules' atoms and bonds in parallel - they have matching indices
+  // iterate both molecules' atoms and bonds in parallel - they have matching
+  // indices
   {
     auto molAtomIt = mol.atoms().begin();
     for (const auto tmpAtom : tmp->atoms()) {

@@ -9,6 +9,7 @@
 //
 
 #include <RDGeneral/export.h>
+#include <memory>
 #ifndef RD_EMBEDDER_H_GUARD
 #define RD_EMBEDDER_H_GUARD
 
@@ -18,6 +19,7 @@
 #include <vector>
 #include <GraphMol/ROMol.h>
 #include <boost/shared_ptr.hpp>
+#include "ZMatrixBuilder.h"
 
 namespace DistGeom {
 class BoundsMatrix;
@@ -49,6 +51,12 @@ enum EmbedFailureCauses {
   KTERM_VIOLATION = 13,
   CLASH = 14,
   END_OF_ENUM = 15,
+};
+
+enum class InitialEmbeddingMode {
+  DG_EMBEDDING = 0,
+  INTERNAL_COORDINATE_EMBEDDING = 1,
+  RANDOM_COORDINATE_EMBEDDING = 2
 };
 
 enum class EmbedFF : std::uint8_t {
@@ -167,12 +175,14 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool useMacrocycle14config{false};
   unsigned int timeout{0};
   bool useLegacyImplementation{true};
+  InitialEmbeddingMode initialEmbeddingMode{InitialEmbeddingMode::DG_EMBEDDING};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI{
       nullptr};
   void (*callback)(unsigned int){nullptr};
   bool forceTransAmides{true};
   bool useSymmetryForPruning{true};
   double boundsMatForceScaling{1.0};
+  bool onlyInitialEmbedding{false};
   bool trackFailures{false};
   std::vector<unsigned int> failures{};
   bool enableSequentialRandomSeeds{false};
@@ -477,6 +487,38 @@ inline INT_VECT EmbedMultipleConfs(
   return res;
 };
 
+// Overloads for serialization to JSON
+inline std::ostream &operator<<(std::ostream &os,
+                                const InitialEmbeddingMode &mode) {
+  switch (mode) {
+    case InitialEmbeddingMode::DG_EMBEDDING:
+      os << "DG_EMBEDDING";
+      return os;
+    case InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING:
+      os << "INTERNAL_COORDINATE_EMBEDDING";
+      return os;
+    case InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING:
+      os << "RANDOM_COORDINATE_EMBEDDING";
+      return os;
+  }
+  return os;
+}
+
+inline std::istream &operator>>(std::istream &is, InitialEmbeddingMode &mode) {
+  std::string val;
+  if (is >> val) {
+    if (val == "DG_EMBEDDING") {
+      mode = InitialEmbeddingMode::DG_EMBEDDING;
+    } else if (val == "INTERNAL_COORDINATE_EMBEDDING") {
+      mode = InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
+    } else if (val == "RANDOM_COORDINATE_EMBEDDING") {
+      mode = InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING;
+    } else {
+      is.setstate(std::ios::failbit);
+    }
+  }
+  return is;
+}
 // Overload for JSON Serialization.
 inline std::ostream &operator<<(std::ostream &os, const EmbedFF &eff) {
   switch (eff) {
@@ -499,8 +541,7 @@ inline std::istream &operator>>(std::istream &is, EmbedFF &eff) {
   if (is >> val) {
     if (val == "MMFF") {
       eff = EmbedFF::MMFF;
-    }
-    else if (val != "UFF") {
+    } else if (val != "UFF") {
       BOOST_LOG(rdWarningLog)
           << "Provided embedForceField " << val
           << " in JSON is not valid. Choose between UFF and MMFF. Falling back to UFF."

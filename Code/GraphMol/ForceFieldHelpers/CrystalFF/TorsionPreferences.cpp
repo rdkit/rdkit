@@ -296,11 +296,11 @@ void getExperimentalTorsions(
   if (useBasicKnowledge) {
     // torsions for forced trans amides / esters
     auto is_forced_cis_or_trans = [](const auto &config) {
-      if (!config.type.isForced) {
+      if (!config.value.isForced) {
         return false;
       }
-      return config.type.type == DGeomHelpers::TorsionType::TRANS ||
-             config.type.type == DGeomHelpers::TorsionType::CIS;
+      return config.value.type == DGeomHelpers::TorsionType::TRANS ||
+             config.value.type == DGeomHelpers::TorsionType::CIS;
     };
     for (const auto &config :
          details.path14Configs | std::views::filter(is_forced_cis_or_trans)) {
@@ -323,7 +323,7 @@ void getExperimentalTorsions(
           details.constrainedAtoms[l]) {
         continue;
       }
-      const bool isCis = config.type.type == DGeomHelpers::TorsionType::CIS;
+      const bool isCis = config.value.type == DGeomHelpers::TorsionType::CIS;
       details.expTorsionAtoms.push_back(
           {static_cast<int>(i), static_cast<int>(j), static_cast<int>(k),
            static_cast<int>(l)});
