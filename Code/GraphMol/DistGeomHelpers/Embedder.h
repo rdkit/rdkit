@@ -13,6 +13,7 @@
 #ifndef RD_EMBEDDER_H_GUARD
 #define RD_EMBEDDER_H_GUARD
 
+#include <RDGeneral/RDLog.h>
 #include <map>
 #include <utility>
 #include <Geometry/point.h>
@@ -47,6 +48,11 @@ enum class InitialEmbeddingMode {
   DG_EMBEDDING = 0,
   INTERNAL_COORDINATE_EMBEDDING = 1,
   RANDOM_COORDINATE_EMBEDDING = 2
+};
+
+enum class EmbedFF : std::uint8_t {
+  UFF = 0,
+  MMFF = 1,
 };
 
 //! Parameter object for controlling embedding
@@ -131,6 +137,7 @@ enum class InitialEmbeddingMode {
                    of times each embedding check fails
   enableSequentialRandomSeeds    handle the random number seeds so that
                                  conformer generation can be restarted
+  embedFF Force Field to use to determine ideal 1-2 and 1-3 distances.
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations{0};
@@ -171,6 +178,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   std::vector<unsigned int> failures{};
   bool enableSequentialRandomSeeds{false};
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
+  EmbedFF embedForceField{EmbedFF::UFF};
 };
 
 //! update parameters from a JSON string
@@ -498,6 +506,37 @@ inline std::istream &operator>>(std::istream &is, InitialEmbeddingMode &mode) {
       mode = InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING;
     } else {
       is.setstate(std::ios::failbit);
+    }
+  }
+  return is;
+}
+// Overload for JSON Serialization.
+inline std::ostream &operator<<(std::ostream &os, const EmbedFF &eff) {
+  switch (eff) {
+    case EmbedFF::MMFF:
+      os << "MMFF";
+      return os;
+    case EmbedFF::UFF:
+      [[fallthrough]];
+    default:
+      os << "UFF";
+      return os;
+  }
+  os << static_cast<int>(eff);
+  return os;
+}
+inline std::istream &operator>>(std::istream &is, EmbedFF &eff) {
+  eff = EmbedFF::UFF;
+
+  std::string val;
+  if (is >> val) {
+    if (val == "MMFF") {
+      eff = EmbedFF::MMFF;
+    } else if (val != "UFF") {
+      BOOST_LOG(rdWarningLog)
+          << "Provided embedForceField " << val
+          << " in JSON is not valid. Choose between UFF and MMFF. Falling back to UFF."
+          << std::endl;
     }
   }
   return is;

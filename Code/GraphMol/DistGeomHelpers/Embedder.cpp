@@ -1498,11 +1498,12 @@ bool setupInitialBoundsMatrix(
   if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
     setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
                    scaleVDW, set15bounds, true, true,
-                   &etkdgDetails.path14Configs,
+                   &etkdgDetails.path14Configs, params.embedForceField,
                    etkdgDetails.internalCoords.get());
   } else {
     setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds, true, true,
-                   nullptr, etkdgDetails.internalCoords.get());
+                   nullptr, params.embedForceField,
+                   etkdgDetails.internalCoords.get());
   }
   double tol = 0.0;
   if (coordMap) {
@@ -1882,6 +1883,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         mmat.reset(new DistGeom::BoundsMatrix(nAtoms));
         setTopolBounds(
             *piece.get(), mmat, params, false, true, true, true, nullptr,
+            params.embedForceField,
             etkdgDetails.internalCoords.get());  // for now, we use the bounds
                                                  // matrix internal coordinates,
         // in future, this should be an independend instance

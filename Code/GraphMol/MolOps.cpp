@@ -34,6 +34,7 @@
 
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <Geometry/point.h>
 #include <GraphMol/QueryOps.h>
@@ -1295,13 +1296,50 @@ unsigned int addExplicitAttachmentPoint(RWMol &mol, unsigned int atomIdx,
   return idx;
 }
 
+}  // namespace details
+
+unsigned int getAttachmentPointLabelNumber(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  if (atom->getAtomicNum() != 0 || atom->getDegree() != 1) {
+    return 0;
+  }
+  std::string label;
+  if (!atom->getPropIfPresent(common_properties::atomLabel, label) ||
+      label.size() <= attachmentPointLabelPrefix.size() ||
+      label.compare(0, attachmentPointLabelPrefix.size(),
+                    attachmentPointLabelPrefix) != 0) {
+    return 0;
+  }
+  // lexical_cast accepts a leading sign, so check the suffix ourselves
+  const auto suffix = label.substr(attachmentPointLabelPrefix.size());
+  if (suffix.find_first_not_of("0123456789") != std::string::npos) {
+    return 0;
+  }
+  unsigned int result = 0;
+  try {
+    result = boost::lexical_cast<unsigned int>(suffix);
+  } catch (const boost::bad_lexical_cast &) {
+    return 0;
+  }
+  return result;
+}
+
+bool isMarkedAttachmentPoint(const Atom *atom) {
+  PRECONDITION(atom, "bad atom");
+  return atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
+         (atom->hasProp(common_properties::_fromAttachPoint) ||
+          getAttachmentPointLabelNumber(atom));
+}
+
+namespace details {
+
 bool isAttachmentPoint(const Atom *atom, bool markedOnly) {
   PRECONDITION(atom, "bad atom");
   PRECONDITION(atom->hasOwningMol(), "atom not associated with a molecule");
   if (atom->getAtomicNum() != 0 || atom->getDegree() != 1) {
     return false;
   }
-  if (markedOnly && !atom->hasProp(common_properties::_fromAttachPoint)) {
+  if (markedOnly && !isMarkedAttachmentPoint(atom)) {
     return false;
   }
   // we know that the atom is degree 1
@@ -1366,12 +1404,18 @@ void collapseAttachmentPoints(RWMol &mol, bool markedOnly) {
   for (auto atom : mol.atoms()) {
     if (details::isAttachmentPoint(atom, markedOnly)) {
       int value = 0;
-      atom->getPropIfPresent(common_properties::_fromAttachPoint, value);
+      const bool hasNativeMarker =
+          atom->getPropIfPresent(common_properties::_fromAttachPoint, value);
       if (markedOnly && (value < 0 || value > 2)) {
         BOOST_LOG(rdWarningLog)
             << "Invalid value for _fromAttachPoint: " << value << " on atom "
             << atom->getIdx() << ". Not collapsing this atom" << std::endl;
         continue;
+      }
+      if (markedOnly && !hasNativeMarker) {
+        // _AP<n> labels identify explicit attachment points, but n is not an
+        // MDL ATTCHPT position. Treat a label-only atom as position 1.
+        value = 1;
       }
       if (!markedOnly && !value) {
         value = 1;

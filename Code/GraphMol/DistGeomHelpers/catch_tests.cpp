@@ -20,6 +20,9 @@
 #include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
+#include <ForceField/UFF/BondStretch.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <Geometry/Utils.h>
@@ -31,6 +34,7 @@
 #include <tuple>
 #include <map>
 #include <limits>
+#include <numbers>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <DistGeom/ZMatrixUtils.h>
@@ -160,7 +164,7 @@ void compareConfs(const ROMol *m, const ROMol *expected, int molConfId = -1,
 }
 }  // namespace
 
-TEST_CASE("update parameters from JSON") {
+TEST_CASE("updateParamsFromJSON") {
   const auto getPath = [](const std::string file, const bool legacy) {
     std::string rdbase = getenv("RDBASE");
     std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
@@ -276,6 +280,21 @@ TEST_CASE("update parameters from JSON") {
     "ETversion":2,"useLegacyImplementation":)JSON" +
                        std::string(legacyETKDG ? "true" : "false") + "}";
     runTest(smiles, fname, json);
+
+    SECTION("set embedForceField") {
+      DGeomHelpers::EmbedParameters params;
+      std::string json = R"JSON({"embedForceField":"UFF"})JSON";
+      DGeomHelpers::updateEmbedParametersFromJSON(params, json);
+      CHECK(params.embedForceField == DGeomHelpers::EmbedFF::UFF);
+
+      json = R"JSON({"embedForceField":"MMFF"})JSON";
+      DGeomHelpers::updateEmbedParametersFromJSON(params, json);
+      CHECK(params.embedForceField == DGeomHelpers::EmbedFF::MMFF);
+
+      json = R"JSON({"embedForceField":"FAULTYFF"})JSON";
+      DGeomHelpers::updateEmbedParametersFromJSON(params, json);
+      CHECK(params.embedForceField == DGeomHelpers::EmbedFF::UFF);
+    }
   }
 }
 
@@ -284,7 +303,7 @@ TEST_CASE("EmbedParameters to JSON") {
     auto ps = DGeomHelpers::KDG;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","onlyInitialEmbedding":"false","initialEmbeddingMode":"DG_EMBEDDING"})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedForceField":"UFF","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","onlyInitialEmbedding":"false","initialEmbeddingMode":"DG_EMBEDDING"})JSON";
     CHECK(json == goal);
   }
   SECTION("With CoordMap") {
@@ -295,7 +314,7 @@ TEST_CASE("EmbedParameters to JSON") {
     ps.coordMap = coordMap;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","onlyInitialEmbedding":"false","initialEmbeddingMode":"DG_EMBEDDING","coordMap":{"3":["1.100000","2.200000","3.300000"]}})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedForceField":"UFF","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","onlyInitialEmbedding":"false","initialEmbeddingMode":"DG_EMBEDDING","coordMap":{"3":["1.100000","2.200000","3.300000"]}})JSON";
     CHECK(json == goal);
     delete coordMap;
   }
@@ -314,7 +333,7 @@ TEST_CASE("EmbedParameters to JSON") {
     ps.boundsMat = mat;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","onlyInitialEmbedding":"false","initialEmbeddingMode":"DG_EMBEDDING","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6536523290585412"],["0.98025420400136154","1.5809872790648758","0"]]})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedForceField":"UFF","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","onlyInitialEmbedding":"false","initialEmbeddingMode":"DG_EMBEDDING","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6536523290585412"],["0.98025420400136154","1.5809872790648758","0"]]})JSON";
     CHECK(json == goal);
   }
   SECTION("Round trip") {
@@ -324,6 +343,17 @@ TEST_CASE("EmbedParameters to JSON") {
     DGeomHelpers::updateEmbedParametersFromJSON(ps2, json);
     auto json2 = DGeomHelpers::embedParametersToJSON(ps2);
     CHECK(json == json2);
+  }
+  SECTION("EmbedForceField") {
+    auto ps = DGeomHelpers::ETKDGv3;
+    auto json = DGeomHelpers::embedParametersToJSON(ps);
+    CHECK_THAT(
+        json, Catch::Matchers::ContainsSubstring(R"("embedForceField":"UFF")"));
+
+    ps.embedForceField = DGeomHelpers::EmbedFF::MMFF;
+    json = DGeomHelpers::embedParametersToJSON(ps);
+    CHECK_THAT(json, Catch::Matchers::ContainsSubstring(
+                         R"("embedForceField":"MMFF")"));
   }
 }
 
@@ -441,8 +471,8 @@ TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
     }
 
     {
-      // note that things aren't quite as nice here since we don't actually have
-      // TBP UFF parameters
+      // note that things aren't quite as nice here since we don't actually
+      // have TBP UFF parameters
       auto m = "Cl[Pt@TB1]([35Cl])([36Cl])([37Cl])[38Cl]"_smiles;
       REQUIRE(m);
       CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
@@ -1506,12 +1536,12 @@ TEST_CASE("Torsion of non-sulfide *S-S*") {
       double bl3 = (bm->getUpperBound(2, 3) + bm->getLowerBound(2, 3)) / 2;
 
       // 1-3 to angle
-      // double distAngl12 = (bm->getUpperBound(0, 3) + bm->getLowerBound(0, 3))
-      // / 2; double distAngl23 = (bm->getUpperBound(2, 5) +
+      // double distAngl12 = (bm->getUpperBound(0, 3) + bm->getLowerBound(0,
+      // 3)) / 2; double distAngl23 = (bm->getUpperBound(2, 5) +
       // bm->getLowerBound(2, 5)) / 2;
 
-      // std::cout << std::pow(bl1, 2) + std::pow(bl2, 2) - std::pow(distAngl12,
-      // 2) << "; " << 2*bl1*bl2 << std::endl;
+      // std::cout << std::pow(bl1, 2) + std::pow(bl2, 2) -
+      // std::pow(distAngl12, 2) << "; " << 2*bl1*bl2 << std::endl;
 
       // TODO change this
       double ba12 =
@@ -1904,8 +1934,8 @@ TEST_CASE("Github9403: Bug: Overwritten stereo information in rings") {
     bnd->setStereo(Bond::BondStereo::STEREOTRANS);
 
     DGeomHelpers::setTopolBounds(*mol, bm);
-    // trans should be allowed but NOT cis for 0-5 and the other way araound for
-    // 0-4
+    // trans should be allowed but NOT cis for 0-5 and the other way araound
+    // for 0-4
     CHECK(bm->getLowerBound(0, 5) > bm->getUpperBound(0, 4));
     CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <= 1.1);
     CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <= 1.1);
@@ -1922,8 +1952,8 @@ TEST_CASE("Github9403: Bug: Overwritten stereo information in rings") {
 
     DGeomHelpers::setTopolBounds(*mol, bm);
 
-    // trans should be allowed but NOT cis for 0-5 and the other way araound for
-    // 0-4
+    // trans should be allowed but NOT cis for 0-5 and the other way araound
+    // for 0-4
     CHECK(bm->getLowerBound(0, 5) > bm->getUpperBound(0, 4));
     CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <= 1.1);
     CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <= 1.1);
@@ -1970,7 +2000,8 @@ TEST_CASE("Github #9404: competing 1-4s in six membered rings") {
 
     DGeomHelpers::setTopolBounds(*mol, bm);
 
-    // the 1-4 between atoms 0 and 3 must allow both CIS and TRANS configuration
+    // the 1-4 between atoms 0 and 3 must allow both CIS and TRANS
+    // configuration
     CHECK(bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3) > 0.2);
   }
   SECTION("Fused rings overlapping") {
@@ -2396,8 +2427,8 @@ TEST_CASE("Github #9461") {
 }
 
 TEST_CASE("TransAmideKTerm") {
-  /* Embed 10 confs of a molecule using the provided parameters and returns true
-  if all torsions around i,j,k,l are closer to +/-180 than to 0
+  /* Embed 10 confs of a molecule using the provided parameters and returns
+  true if all torsions around i,j,k,l are closer to +/-180 than to 0
   */
   auto allTrans = [](RWMol &mol, DGeomHelpers::EmbedParameters &ps,
                      const std::size_t i, const std::size_t j,
@@ -2653,7 +2684,8 @@ TEST_CASE("Z-Matrix Builder Basics") {
   params.onlyInitialEmbedding = true;
   params.randomSeed = 0xC0FFEE;
   DGeomHelpers::setTopolBounds(*mol, bm, params, false, false, true, true,
-                               nullptr, &coords);
+                               nullptr, RDKit::DGeomHelpers::EmbedFF::UFF,
+                               &coords);
 
   DistGeom::ZMatrix zmat(mol->getNumAtoms());
 
@@ -2662,8 +2694,8 @@ TEST_CASE("Z-Matrix Builder Basics") {
   SECTION("Starting policy") {
     CHECK(mol->getAtomWithIdx(zmat[0].atomIdx)->getDegree() == 1);
     auto rinfo = mol->getRingInfo();
-    // for testing mols there is a bond that is not attached to a ring -> should
-    // be used as starting point
+    // for testing mols there is a bond that is not attached to a ring ->
+    // should be used as starting point
     bool hasNonRingHeavyAtm =
         std::ranges::any_of(mol->atoms(), [rInfo](const Atom *atom) {
           return atom->getAtomicNum() > 1 &&
@@ -2918,5 +2950,58 @@ TEST_CASE("Z-Matrix Chirality") {
     const auto p2 = conf.getAtomPos(neighbors[2]->getIdx()) -
                     conf.getAtomPos(center->getIdx());
     CHECK(p0.dotProduct(p1.crossProduct(p2)) > 0);
+  }
+}
+TEST_CASE("MMFFBounds") {
+  SECTION("Correct 12/13") {
+    auto mol = "CCC"_smiles;
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr mmat;
+    mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+    DGeomHelpers::initBoundsMat(mmat);
+    DGeomHelpers::setTopolBounds(*mol, mmat, true, false, false, true, true,
+                                 true, DGeomHelpers::EmbedFF::MMFF);
+    auto params = MMFF::MMFFMolProperties(*mol);
+    SECTION("Bonds") {
+      MMFF::MMFFBond bondProps;
+      unsigned int bOrder = mol->getBondBetweenAtoms(0, 1)->getBondType();
+      params.getMMFFBondStretchParams(*mol, 0, 1, bOrder, bondProps);
+      CHECK(mmat->getUpperBound(0, 1) == bondProps.r0 + 0.01);
+      CHECK(mmat->getLowerBound(0, 1) == bondProps.r0 - 0.01);
+    }
+    SECTION("Angles") {
+      MMFF::MMFFBond bondProps;
+      unsigned int bOrder = mol->getBondBetweenAtoms(0, 1)->getBondType();
+      params.getMMFFBondStretchParams(*mol, 0, 1, bOrder, bondProps);
+      double r0 = bondProps.r0;
+      unsigned int angleType;
+      MMFF::MMFFAngle aProp;
+      params.getMMFFAngleBendParams(*mol, 0, 1, 2, angleType, aProp);
+      double ubr = r0 + 0.01;
+      double lbr = r0 - 0.01;
+      double ub = std::sqrt(
+          2 * ubr * ubr *
+          (1 - std::cos(aProp.theta0 * std::numbers::pi / 180.0 + 0.035)));
+      double lb = std::sqrt(
+          2 * lbr * lbr *
+          (1 - std::cos(aProp.theta0 * std::numbers::pi / 180.0 - 0.035)));
+      CHECK(mmat->getUpperBound(0, 2) == ub);
+      CHECK(mmat->getLowerBound(0, 2) == lb);
+    }
+  }
+  SECTION("Fallback to UFF if fails") {
+    auto mol = "CCB"_smiles;
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr mmat;
+    mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+    DGeomHelpers::initBoundsMat(mmat);
+    DGeomHelpers::setTopolBounds(*mol, mmat, true, false, false, true, true,
+                                 true, DGeomHelpers::EmbedFF::MMFF);
+    auto [params, s] = UFF::getAtomTypes(*mol);
+    auto bOrder = mol->getBondBetweenAtoms(0, 1)->getBondTypeAsDouble();
+    double r0 = ForceFields::UFF::Utils::calcBondRestLength(bOrder, params[0],
+                                                            params[1]);
+    CHECK(mmat->getUpperBound(0, 1) == r0 + 0.01);
+    CHECK(mmat->getLowerBound(0, 1) == r0 - 0.01);
   }
 }

@@ -583,6 +583,11 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       },
       python::arg("legacyImplementation") = true);
 
+  python::enum_<RDKit::DGeomHelpers::EmbedFF>("EmbedFF")
+      .value("UFF", RDKit::DGeomHelpers::EmbedFF::UFF)
+      .value("MMFF", RDKit::DGeomHelpers::EmbedFF::MMFF)
+      .export_values();
+
   python::class_<PyEmbedParameters, boost::noncopyable>(
       "EmbedParameters", "Parameters controlling embedding")
       .def_readwrite("maxIterations", &PyEmbedParameters::maxIterations,
@@ -693,6 +698,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                      "Only generates the initial 3D embedding")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap, python::args("self"),
            "sets the coordmap to be used")
+      .def_readwrite("embedForceField", &PyEmbedParameters::embedForceField,
+                     "Force Field to use for ideal 1-2 and 1-3 distances.")
       .def("__setattr__", &safeSetattr);
 
   docString =
