@@ -59,7 +59,7 @@ TEST_CASE("exclude tautomer regions") {
       CHECK(taut);
       CHECK(MolToSmiles(*taut) == "CCCCC=O");
     }
-    {  // blocking non-participating atoms doesn't affect anything
+    {  // blocking participating atoms prevents the SMILES from changing
       ROMol mcopy(*m);
       for (auto i : {3, 4, 5}) {
         mcopy.getAtomWithIdx(i)->setProp(common_properties::_protected, 1);
