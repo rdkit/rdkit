@@ -87,11 +87,12 @@ void addNeighborsToStack(const unsigned int atomIdx,
     const auto first =
         std::ranges::min_element(bonds, DistGeom::less, bondToTorsion);
 
+    const auto &torsion = bondToTorsion(*first);
+
     const auto next = std::next(
         first);  // it should be handelt first => adding it as last to the stack
     std::ranges::rotate(bonds, next == bonds.end() ? bonds.begin() : next);
 
-    const auto &torsion = bondToTorsion(*first);
     if (std::holds_alternative<DistGeom::TorsionRange>(torsion)) {
       DistGeom::TorsionRange range = std::get<DistGeom::TorsionRange>(torsion);
       if (range.upper - range.lower >= M_PI * 2.0 - 1e-6) {
