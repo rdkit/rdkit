@@ -1354,7 +1354,7 @@ TEST_CASE("testGithub971") {
 
 TEST_CASE("testEmbedParameters") {
   auto runTest = [](const std::string &smiles, const std::string &fname,
-                    DGeomHelpers::EmbedParameters &params) {
+                    DGeomHelpers::EmbedParameters &params, const unsigned int randomSeed = 42) {
     auto getPath = [](const std::string &file, const bool legacy) {
       std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
       if (!legacy) {
@@ -1372,7 +1372,7 @@ TEST_CASE("testEmbedParameters") {
     MolOps::addHs(*mol);
     REQUIRE(mol->getNumAtoms() == ref->getNumAtoms());
     params.useLegacyImplementation = legacyETKDG;
-    params.randomSeed = 42;
+    params.randomSeed = randomSeed;
     CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
 #if WRITE_MOLFILES
     MolToMolFile(*mol, file);
@@ -1470,7 +1470,9 @@ TEST_CASE("testEmbedParameters") {
                                            .useSmallRingTorsions = true,
                                            .useMacrocycleTorsions = true,
                                            .useMacrocycle14config = true};
-      runTest(SRMC_SMILES, fname, params);
+      // Vastly different conformers between macOS and ubuntu with random
+      // Seed 42
+      runTest(SRMC_SMILES, fname, params, 0xf00d);
     }
 
     SECTION("KDG") {
@@ -1521,7 +1523,9 @@ TEST_CASE("testEmbedParameters") {
     SECTION("predefined ETKDGv4") {
       std::string fname = "simple_torsion.sr_mc.etkdgv4.mol";
       auto params = DGeomHelpers::ETKDGv4;
-      runTest(SRMC_SMILES, fname, params);
+      // Vastly different conformers between macOS and ubuntu with random
+      // Seed 42
+      runTest(SRMC_SMILES, fname, params, 0xf00d);
     }
   }
 }
