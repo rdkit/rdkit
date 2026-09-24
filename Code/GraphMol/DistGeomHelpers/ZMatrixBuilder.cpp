@@ -171,7 +171,8 @@ void addElement(const Atom *atom, const unsigned int precursorIdx,
   if (internalCoords.angles.find(static_cast<std::uint64_t>(
           getUnifiedId(bndIdx1, bndIdx2, mol.getNumBonds()))) ==
       internalCoords.angles.end()) {
-    std::cerr << "Angle " << bndIdx1 << " " << bndIdx2 << " not found\n";
+    BOOST_LOG(rdWarningLog)
+        << "Angle " << bndIdx1 << " " << bndIdx2 << " not found\n";
   }
 
   double ba = internalCoords.angles.at(static_cast<std::uint64_t>(
@@ -199,9 +200,10 @@ void addElement(const Atom *atom, const unsigned int precursorIdx,
                 bndIdx1, bndIdx2,
                 mol.getBondBetweenAtoms(ref1, ref2Opt.value())->getIdx(),
                 mol.getNumBonds()))) == internalCoords.torsionRange.end()) {
-      std::cerr << "Torsion " << bndIdx1 << " " << bndIdx2 << " "
-                << mol.getBondBetweenAtoms(ref1, ref2Opt.value())->getIdx()
-                << " not found\n";
+      BOOST_LOG(rdWarningLog)
+          << "Torsion " << bndIdx1 << " " << bndIdx2 << " "
+          << mol.getBondBetweenAtoms(ref1, ref2Opt.value())->getIdx()
+          << " not found\n";
     }
     torsion = internalCoords.torsionRange.at(static_cast<std::uint64_t>(
         getUnifiedId(bndIdx1, bndIdx2,
@@ -309,7 +311,7 @@ void setMoleculeDFS(const ROMol &mol, DistGeom::ZMatrix &zmat,
   references[secondAtomIdx] = {std::nullopt, firstAtomIdx, std::nullopt};
 
   while (stack.size()) {
-    const auto &[idx, precursor] = stack.back();
+    const auto [idx, precursor] = stack.back();
     stack.pop_back();
 
     unsigned int bndIdx = mol.getBondBetweenAtoms(idx, precursor)->getIdx();
