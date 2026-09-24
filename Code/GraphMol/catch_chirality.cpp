@@ -6701,3 +6701,179 @@ TEST_CASE("Github #8108: assignStereochemistry should handle atropisomers",
           Bond::BondStereo::STEREONONE);
   }
 }
+
+namespace {
+// re-parses a mol block and returns the value of the stereo field (the fourth
+// column of the bond block) for the bond between begIdx and endIdx. Returns 0
+// if the field was not set.
+int getMolBlockBondStereo(const std::string &molBlock, unsigned int begIdx,
+                          unsigned int endIdx) {
+  std::unique_ptr<RWMol> m{MolBlockToMol(molBlock, false, false)};
+  REQUIRE(m);
+  const auto bond = m->getBondBetweenAtoms(begIdx, endIdx);
+  REQUIRE(bond);
+  int stereo = 0;
+  bond->getPropIfPresent(common_properties::_MolFileBondStereo, stereo);
+  return stereo;
+}
+
+// CC(Cl)[C@@H](C=O)C(=O)OC with a wiggly bond from atom 1 (whose stereo is
+// therefore unknown) to atom 3 (which is a defined stereocenter). Atom 3's
+// other neighbors both carry double bonds, so pickBondToWedge() scores them
+// well below the 1-3 bond and would pick the wiggly bond to wedge if wiggly
+// bonds were not claimed first.
+const std::string wigglyStealMolBlock = R"CTAB(
+     RDKit          2D
+
+ 10  9  0  0  0  0  0  0  0  0999 V2000
+    0.4497    2.3718    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2810    1.1232    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7779    1.2188    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    0.6153   -0.2210    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4466   -1.4696    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7810   -2.8138    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8816   -0.3167    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5473   -1.6609    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7129    0.9319    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2099    0.8363    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  2  4  1  4
+  4  5  1  1
+  5  6  2  0
+  4  7  1  0
+  7  8  2  0
+  7  9  1  0
+  9 10  1  0
+M  END
+)CTAB";
+}  // namespace
+
+TEST_CASE("wiggly bonds survive a mol block round trip") {
+  // The mol file parser perceives stereo from the bond wedging and then calls
+  // clearSingleBondDirFlags(), which leaves the wiggly bond as BondDir::NONE
+  // with _UnknownStereo=1. Writing the molecule back out has to re-derive the
+  // wiggly bond from that marker, exactly as it re-derives wedges and dashes
+  // from the chiral tags.
+  std::unique_ptr<RWMol> m{MolBlockToMol(wigglyStealMolBlock)};
+  REQUIRE(m);
+
+  const auto wigglyBond = m->getBondBetweenAtoms(1, 3);
+  REQUIRE(wigglyBond);
+  CHECK(wigglyBond->getBondDir() == Bond::BondDir::NONE);
+  int unknownStereo = 0;
+  CHECK(wigglyBond->getPropIfPresent(common_properties::_UnknownStereo,
+                                     unknownStereo));
+  CHECK(unknownStereo == 1);
+
+  const auto molBlock = MolToMolBlock(*m);
+  CHECK(getMolBlockBondStereo(molBlock, 1, 3) == 4);
+
+  // the V3000 writer shares the wedging logic, it just spells the result
+  // CFG=2 instead of a stereo field of 4
+  std::unique_ptr<RWMol> m3{MolBlockToMol(MolToV3KMolBlock(*m), false, false)};
+  REQUIRE(m3);
+  int cfg = 0;
+  CHECK(m3->getBondBetweenAtoms(1, 3)->getPropIfPresent(
+      common_properties::_MolFileBondCfg, cfg));
+  CHECK(cfg == 2);
+}
+
+TEST_CASE("wiggly bonds survive a round trip through an unsanitized mol") {
+  // the mol file writer updates the property cache of its working copy, so
+  // the wiggly bond is still recognized even though the molecule we hand it
+  // was never sanitized
+  std::unique_ptr<RWMol> m{MolBlockToMol(wigglyStealMolBlock, false, false)};
+  REQUIRE(m);
+
+  const auto molBlock = MolToMolBlock(*m, true, -1, false);  // no kekulization
+  CHECK(getMolBlockBondStereo(molBlock, 1, 3) == 4);
+}
+
+TEST_CASE("wedgeMolBonds does not steal a wiggly bond") {
+  // Atom 3 is a defined stereocenter which needs a wedge, and the best-scoring
+  // candidate is its bond to atom 1. That bond is already carrying the wiggly
+  // annotation for atom 1, so atom 3 has to make do with one of its other
+  // bonds instead of overwriting it.
+  std::unique_ptr<RWMol> m{MolBlockToMol(wigglyStealMolBlock)};
+  REQUIRE(m);
+  REQUIRE(m->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+
+  SECTION("wedgeMolBonds") {
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
+
+    const auto wigglyBond = m->getBondBetweenAtoms(1, 3);
+    REQUIRE(wigglyBond);
+    CHECK(wigglyBond->getBondDir() == Bond::BondDir::UNKNOWN);
+    // the narrow end of the squiggle belongs at the atom whose stereo is
+    // unknown
+    CHECK(wigglyBond->getBeginAtomIdx() == 1);
+
+    // atom 3 still gets its stereo expressed, just not on the wiggly bond
+    unsigned int nWedged = 0;
+    for (const auto bond : m->atomBonds(m->getAtomWithIdx(3))) {
+      if (bond->getBondDir() == Bond::BondDir::BEGINWEDGE ||
+          bond->getBondDir() == Bond::BondDir::BEGINDASH) {
+        ++nWedged;
+      }
+    }
+    CHECK(nWedged == 1);
+  }
+
+  SECTION("mol block round trip") {
+    const auto molBlock = MolToMolBlock(*m);
+    CHECK(getMolBlockBondStereo(molBlock, 1, 3) == 4);
+
+    std::unique_ptr<RWMol> m2{MolBlockToMol(molBlock)};
+    REQUIRE(m2);
+    CHECK(m2->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+  }
+}
+
+TEST_CASE("wiggly bonds are re-applied after clearSingleBondDirFlags") {
+  // the re-wedging cycle used by depiction code: clear the wedging, then let
+  // wedgeMolBonds() derive it again from the stereo annotations.
+  std::unique_ptr<RWMol> m{MolBlockToMol(wigglyStealMolBlock)};
+  REQUIRE(m);
+
+  MolOps::clearSingleBondDirFlags(*m);
+  Chirality::wedgeMolBonds(*m, &m->getConformer());
+
+  const auto wigglyBond = m->getBondBetweenAtoms(1, 3);
+  REQUIRE(wigglyBond);
+  CHECK(wigglyBond->getBondDir() == Bond::BondDir::UNKNOWN);
+}
+
+TEST_CASE("wiggly bonds flagging unknown double bond stereo are left alone") {
+  // A wiggly bond can also mean "the stereo of the adjacent double bond is
+  // unknown". Its begin atom is not a potential tetrahedral center, so it is
+  // not claimed, and the double bond is written as a crossed bond as before.
+  const std::string molBlock = R"CTAB(
+  t
+
+  4  3  0  0  0  0            999 V2000
+   -1.3000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6000    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  4
+  2  3  2  0
+  3  4  1  0
+M  END
+)CTAB";
+  std::unique_ptr<RWMol> m{MolBlockToMol(molBlock)};
+  REQUIRE(m);
+  REQUIRE(m->getBondBetweenAtoms(1, 2)->getStereo() ==
+          Bond::BondStereo::STEREOANY);
+
+  const auto wedgeBonds =
+      Chirality::pickBondsToWedge(*m, nullptr, &m->getConformer());
+  CHECK(wedgeBonds.find(m->getBondBetweenAtoms(0, 1)->getIdx()) ==
+        wedgeBonds.end());
+
+  const auto outBlock = MolToMolBlock(*m);
+  CHECK(getMolBlockBondStereo(outBlock, 0, 1) == 0);
+  CHECK(getMolBlockBondStereo(outBlock, 1, 2) == 3);
+}

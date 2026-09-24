@@ -235,6 +235,7 @@ struct RDKIT_GRAPHMOL_EXPORT BondWedgingParameters {
 enum class WedgeInfoType {
   WedgeInfoTypeChiral,
   WedgeInfoTypeAtropisomer,
+  WedgeInfoTypeWiggly,
 };
 
 class WedgeInfoBase {
@@ -280,6 +281,19 @@ class WedgeInfoAtropisomer : public WedgeInfoBase {
   }
 
   Bond::BondDir getDir() const override { return dir; }
+};
+
+//! a wiggly (squiggle) bond marking the stereochemistry at idx as explicitly
+//! unknown
+class WedgeInfoWiggly : public WedgeInfoBase {
+ public:
+  WedgeInfoWiggly(int atomId) : WedgeInfoBase(atomId){};
+  ~WedgeInfoWiggly() override {}
+
+  WedgeInfoType getType() const override {
+    return Chirality::WedgeInfoType::WedgeInfoTypeWiggly;
+  }
+  Bond::BondDir getDir() const override { return Bond::BondDir::UNKNOWN; }
 };
 
 namespace detail {

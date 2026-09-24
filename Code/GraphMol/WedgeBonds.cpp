@@ -47,6 +47,23 @@ std::tuple<unsigned int, unsigned int, unsigned int> getDoubleBondPresence(
   }
   return std::make_tuple(hasDouble, hasKnownDouble, hasAnyDouble);
 }
+
+// A wiggly bond expresses "the stereochemistry at my begin atom is unknown".
+// The mol file parsers and clearSingleBondDirFlags() both leave that annotation
+// behind as _UnknownStereo=1 with a BondDir of NONE, so checking BondDir alone
+// is not enough to recognize one.
+bool isWigglyBond(const Bond *bond) {
+  if (bond->getBondType() != Bond::SINGLE) {
+    return false;
+  }
+  if (bond->getBondDir() == Bond::UNKNOWN) {
+    return true;
+  }
+  int unknownStereo = 0;
+  return bond->getPropIfPresent(common_properties::_UnknownStereo,
+                                unknownStereo) &&
+         unknownStereo;
+}
 }  // namespace
 
 namespace detail {
@@ -256,11 +273,11 @@ Bond::BondDir determineBondWedgeState(
     return bond->getBondDir();
   }
 
-  if (wbi->second->getType() ==
-      Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer) {
-    return wbi->second->getDir();
-  } else {
+  if (wbi->second->getType() == Chirality::WedgeInfoType::WedgeInfoTypeChiral) {
     return determineBondWedgeState(bond, wbi->second->getIdx(), conf);
+  } else {
+    // atropisomers and wiggly bonds carry their direction directly
+    return wbi->second->getDir();
   }
 }
 
@@ -376,6 +393,32 @@ std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
   if (!params) {
     params = &defaultWedgingParams;
   }
+  std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> wedgeInfo;
+
+  // Claim the wiggly bonds first. They are stereo annotations in their own
+  // right, so they have to be re-applied by wedgeMolBonds() and written out by
+  // the mol file writers just like wedges and dashes are. Claiming them up
+  // front also keeps pickBondToWedge() from handing one of them to a
+  // neighboring chiral atom, which would silently discard the annotation.
+  // isAtomPotentialTetrahedralCenter() needs the property cache and ring info,
+  // so molecules which have neither (reaction templates, for example) are left
+  // alone.
+  if (!mol.needsUpdatePropertyCache()) {
+    for (const auto bond : mol.bonds()) {
+      if (!isWigglyBond(bond)) {
+        continue;
+      }
+      if (!mol.getRingInfo()->isSssrOrBetter()) {
+        MolOps::findSSSR(mol);
+      }
+      if (detail::isAtomPotentialTetrahedralCenter(bond->getBeginAtom())) {
+        wedgeInfo[bond->getIdx()] =
+            std::make_unique<Chirality::WedgeInfoWiggly>(
+                bond->getBeginAtomIdx());
+      }
+    }
+  }
+
   std::vector<unsigned int> indices(mol.getNumAtoms());
   std::iota(indices.begin(), indices.end(), 0);
   static int noNbrs = 100;
@@ -386,7 +429,6 @@ std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
                 return nChiralNbrs[i1] < nChiralNbrs[i2];
               });
   }
-  std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> wedgeInfo;
   for (auto idx : indices) {
     if (nChiralNbrs[idx] > noNbrs) {
       // std::cerr << " SKIPPING2: " << idx << std::endl;
@@ -488,7 +530,8 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
   // loop over the bonds we need to wedge:
   for (const auto &[wbi, wedgeInfo] : wedgeBonds) {
     if (wedgeInfo->getType() ==
-        Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer) {
+            Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer ||
+        wedgeInfo->getType() == Chirality::WedgeInfoType::WedgeInfoTypeWiggly) {
       mol.getBondWithIdx(wbi)->setBondDir(wedgeInfo->getDir());
     } else {  // chiral atom needs wedging
       auto bond = mol.getBondWithIdx(wbi);
