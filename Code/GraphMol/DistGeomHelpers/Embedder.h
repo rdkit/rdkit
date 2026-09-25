@@ -16,11 +16,20 @@
 #include <RDGeneral/RDLog.h>
 #include <map>
 #include <utility>
-#include <Geometry/point.h>
+#include <vector>
 #include <GraphMol/ROMol.h>
 #include <boost/shared_ptr.hpp>
-#include <DistGeom/BoundsMatrix.h>
 #include "ZMatrixBuilder.h"
+
+namespace DistGeom {
+class BoundsMatrix;
+class ChiralSet;
+using VECT_CHIRALSET = std::vector<boost::shared_ptr<ChiralSet>>;
+}  // namespace DistGeom
+
+namespace RDGeom {
+class Point3D;
+}
 
 namespace RDKit {
 namespace DGeomHelpers {
@@ -560,6 +569,8 @@ RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv3;
 //! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
 //! (10.1021/acs.jcim.0c00025) - the small ring part
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters srETKDGv3;
+
+RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv4;
 }  // namespace DGeomHelpers
 }  // namespace RDKit
 

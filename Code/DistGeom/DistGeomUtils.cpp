@@ -26,6 +26,7 @@
 #include <ForceField/UFF/Inversions.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleContribs.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/GaussianTorsionAngleContribs.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/PlanarityContribs.h>
 #include <boost/dynamic_bitset.hpp>
 #include <ForceField/MMFF/Nonbonded.h>
@@ -445,26 +446,44 @@ void addExperimentalTorsionTerms(
     boost::dynamic_bitset<> &atomPairs, const std::size_t numAtoms,
     const bool excludeTorsions = true) {
   PRECONDITION(ff, "bad force field");
-  auto torsionContribs =
-      std::make_unique<ForceFields::CrystalFF::TorsionAngleContribs>(ff);
+  namespace cf = ForceFields::CrystalFF;
   boost::dynamic_bitset<> doneBonds(numAtoms * numAtoms);
-  for (std::size_t t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
-    const std::size_t i = etkdgDetails.expTorsionAtoms[t][0];
-    const std::size_t j = etkdgDetails.expTorsionAtoms[t][1];
-    const std::size_t k = etkdgDetails.expTorsionAtoms[t][2];
-    const std::size_t l = etkdgDetails.expTorsionAtoms[t][3];
-    const std::size_t idx = i < l ? i * numAtoms + l : l * numAtoms + i;
+  std::unique_ptr<ForceFields::ForceFieldContrib> torsionContribs;
+  bool nonEmpty = false;
+  if (etkdgDetails.torsionParamKind == cf::TorsionParamKind::Gaussian) {
+    torsionContribs.reset(new cf::GaussianTorsionAngleContribs(ff));
+  } else {
+    torsionContribs.reset(new cf::TorsionAngleContribs(ff));
+  }
+  for (unsigned int t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
+    int i = etkdgDetails.expTorsionAtoms[t][0];
+    int j = etkdgDetails.expTorsionAtoms[t][1];
+    int k = etkdgDetails.expTorsionAtoms[t][2];
+    int l = etkdgDetails.expTorsionAtoms[t][3];
+    const int idx = i < l ? i * numAtoms + l : l * numAtoms + i;
     const std::size_t bidx = j < k ? j * numAtoms + k : k * numAtoms + j;
     if (doneBonds[bidx]) {
       continue;
     }
-    doneBonds[bidx] = true;
     atomPairs[idx] = excludeTorsions;
-    torsionContribs->addContrib(i, j, k, l,
-                                etkdgDetails.expTorsionAngles[t].second,
-                                etkdgDetails.expTorsionAngles[t].first);
+    if (etkdgDetails.torsionParamKind == cf::TorsionParamKind::Gaussian) {
+      const auto scaling = std::get<3>(
+          std::get<cf::GaussianExp_T>(etkdgDetails.expTorsionAngles[t]));
+      dynamic_cast<cf::GaussianTorsionAngleContribs *>(torsionContribs.get())
+          ->addContrib(
+              i, j, k, l, etkdgDetails.phiToEnergy[etkdgDetails.torsionIdx[t]],
+              etkdgDetails.phiToGrad[etkdgDetails.torsionIdx[t]], scaling);
+    } else {
+      const auto &cosine =
+          std::get<cf::CosineExp_T>(etkdgDetails.expTorsionAngles[t]);
+      dynamic_cast<cf::TorsionAngleContribs *>(torsionContribs.get())
+          ->addContrib(i, j, k, l, cosine.second, cosine.first);
+    }
+    nonEmpty = true;
+    doneBonds[bidx] = 1;
   }
-  if (!torsionContribs->empty()) {
+
+  if (nonEmpty) {
     ff->contribs().push_back(std::move(torsionContribs));
   }
 }
@@ -515,11 +534,12 @@ void add12Terms(ForceFields::ForceField *ff,
   \param atomPairs bit set for every atom pair in the molecule where
   a bit is set to one when the atom pair is the both end atoms of a 13
   contribution that is constrained here
-  \param positions A vector of pointers to 3D Points to write out the resulting
-  coordinates \param forceConstant force constant with which to constrain bond
-  distances \param isImproperConstrained bit vector with length of total num
-  atoms of the molecule where index of every central atom of improper torsion is
-  set to one \param useBasicKnowledge whether to use basic knowledge terms
+  \param positions A vector of pointers to 3D Points to write out the
+  resulting coordinates \param forceConstant force constant with which to
+  constrain bond distances \param isImproperConstrained bit vector with length
+  of total num atoms of the molecule where index of every central atom of
+  improper torsion is set to one \param useBasicKnowledge whether to use basic
+  knowledge terms
   \param mmat Bounds matrix from which 13 distances are used in case an angle
   is part of an improper torsion
   \param numAtoms number of atoms in molecule
@@ -567,7 +587,8 @@ void add13Terms(ForceFields::ForceField *ff,
   }
 }
 
-//! Add long distance constraints to bounds matrix borders or constrained atoms
+//! Add long distance constraints to bounds matrix borders or constrained
+//! atoms
 /// when provideds
 /*!
 
@@ -578,8 +599,8 @@ void add13Terms(ForceFields::ForceField *ff,
   with respect to each other
   \param positions A vector of pointers to 3D Points to write out the
   resulting coordinates
-  \param knownDistanceForceConstant force constant with which to constrain bond
-  distances
+  \param knownDistanceForceConstant force constant with which to constrain
+  bond distances
   \param mmat  Bounds matrix to use bounds from for constraints
   \param numAtoms number of atoms in molecule
 
@@ -835,7 +856,7 @@ void addPlanarityTerms(ForceFields::ForceField *ff, const double forceConst,
   }
 }
 
-RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
+ForceFields::ForceField *constructAllInOneForceField(
     const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
     const VECT_CHIRALSET *csets,
@@ -862,7 +883,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
   return field;
 }
 
-RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
+ForceFields::ForceField *constructAllInOneForceField(
     const BoundsMatrix &mmat, RDGeom::PointPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
     const VECT_CHIRALSET *csets,
@@ -884,7 +905,7 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructAllInOneForceField(
   return field;
 }
 
-RDKIT_DISTGEOMETRY_EXPORT void addTorsionTerms(
+void addTorsionTerms(
     ForceFields::ForceField *field,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
     const bool doK, const bool doET) {

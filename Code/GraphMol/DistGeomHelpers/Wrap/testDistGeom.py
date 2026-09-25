@@ -521,12 +521,12 @@ class TestCase(unittest.TestCase):
 
   def test9EmbedParams(self):
 
-    def runTest(filename, smiles, params, useLegacy):
+    def runTest(filename, smiles, params, useLegacy, randomSeed=42):
       mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
       fn = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'DistGeomHelpers', 'test_data',
                         '' if useLegacy else 'AIO', filename)
       ref = Chem.MolFromMolFile(fn, removeHs=False)
-      params.randomSeed = 42
+      params.randomSeed = randomSeed
       params.useLegacyImplementation = useLegacy
       self.assertEqual(rdDistGeom.EmbedMolecule(mol, params), 0)
       if OVERWRITE_TESTFILES:
@@ -575,6 +575,12 @@ class TestCase(unittest.TestCase):
     params = rdDistGeom.ETKDGv2()
     runTest(fn, smiles, params, True)
     runTest(fn, smiles, params, False)
+
+    fn = 'simple_torsion.sr_mc.etkdgv4.mol'
+    smiles = "C2CNCC1CCCCC1CCC2"
+    params = rdDistGeom.ETKDGv4()
+    runTest(fn, smiles, params, True, 0xf00d)
+    runTest(fn, smiles, params, False, 0xf00d)
 
   def assertDeterministicWithSeed(self, seed):
     input_mol = Chem.MolFromSmiles('CN(Cc1cnc2nc(N)nc(N)c2n1)c1ccc(C(=O)NC(CCC(=O)O)C(=O)O)cc1')

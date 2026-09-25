@@ -16,6 +16,7 @@
 
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/TriangleSmooth.h>
+#include <DistGeom/ChiralSet.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 
 #include <GraphMol/GraphMol.h>
@@ -241,32 +242,68 @@ static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
                              set15bounds, set14bounds, set13bounds);
 }
 
-static nb::list getExpTorsHelper(const ROMol &mol, bool useExpTorsions,
-                                 bool useSmallRingTorsions,
-                                 bool useMacrocycleTorsions,
-                                 bool useBasicKnowledge, unsigned int version,
-                                 bool verbose) {
-  ForceFields::CrystalFF::CrystalFFDetails details;
-  std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
-                         const ForceFields::CrystalFF::ExpTorsionAngle *>>
-      torsionBonds;
-  ForceFields::CrystalFF::getExperimentalTorsions(
-      mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
-      useMacrocycleTorsions, useBasicKnowledge, version, verbose);
-  nb::list result;
-  for (const auto &pr : torsionBonds) {
-    nb::dict d;
-    d["bondIndex"] = std::get<0>(pr);
-    d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
-    d["smarts"] = std::get<2>(pr)->smarts;
-    d["V"] = std::get<2>(pr)->V;
-    d["signs"] = std::get<2>(pr)->signs;
-    d["atomIndices"] = std::get<1>(pr);
-    result.append(d);
+static nb::tuple getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
+                                  const bool useSmallRingTorsions,
+                                  const bool useMacrocycleTorsions,
+                                  const bool useBasicKnowledge,
+                                  const unsigned int version,
+                                  const bool verbose) {
+  switch (version) {
+    case 1:
+      [[fallthrough]];
+    case 2: {
+      ForceFields::CrystalFF::CrystalFFDetails details;
+      std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                             ForceFields::CrystalFF::TorsionAnglePtrVariant>>
+          torsionBonds;
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      nb::list result;
+      for (const auto &pr : torsionBonds) {
+        const auto *angle =
+            std::get<const ForceFields::CrystalFF::ExpTorsionAngle *>(
+                std::get<2>(pr));
+        nb::dict d;
+        d["bondIndex"] = std::get<0>(pr);
+        d["torsionIndex"] = angle->torsionIdx;
+        d["smarts"] = angle->smarts;
+        d["V"] = angle->V;
+        d["signs"] = angle->signs;
+        d["atomIndices"] = std::get<1>(pr);
+        result.append(d);
+      }
+      return nb::tuple(result);
+    }
+    case 4: {
+      ForceFields::CrystalFF::CrystalFFDetails details;
+      std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                             ForceFields::CrystalFF::TorsionAnglePtrVariant>>
+          torsionBonds;
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      nb::list result;
+      for (const auto &pr : torsionBonds) {
+        const auto *angle =
+            std::get<const ForceFields::CrystalFF::GaussianExpTorsionAngle *>(
+                std::get<2>(pr));
+        nb::dict d;
+        d["bondIndex"] = std::get<0>(pr);
+        d["torsionIndex"] = angle->torsionIdx;
+        d["smarts"] = angle->smarts;
+        d["positions"] = angle->positions;
+        d["widths"] = angle->widths;
+        d["heights"] = angle->heights;
+        d["atomIndices"] = std::get<1>(pr);
+        result.append(d);
+      }
+      return nb::tuple(result);
+    }
+    default:
+      throw std::invalid_argument("ETversion needs to be either 1, 2 or 4.");
   }
-  return result;
 }
-
 }  // namespace RDKit
 
 NB_MODULE(rdDistGeom, m) {
@@ -676,6 +713,11 @@ version 3 (macrocycles).)DOC");
   m.def(
       "DG", []() { return PyEmbedParameters(RDKit::DGeomHelpers::DG); },
       "Returns an EmbedParameters object for plain distance geometry.");
+
+  m.def(
+      "ETKDGv4",
+      []() { return PyEmbedParameters(RDKit::DGeomHelpers::ETKDGv4); },
+      "Returns an EmbedParameters object for the ETKDG method - version 4.");
 
   m.def("GetMoleculeBoundsMatrix", &RDKit::getMolBoundsMatrix, "mol"_a,
         "set15bounds"_a = true, "scaleVDW"_a = false,

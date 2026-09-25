@@ -16,6 +16,9 @@
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
+#include <DistGeom/BoundsMatrix.h>
+#include <Geometry/point.h>
+
 namespace RDKit {
 namespace DGeomHelpers {
 

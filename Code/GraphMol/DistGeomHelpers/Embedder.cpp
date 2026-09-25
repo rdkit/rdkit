@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// #define DEBUG_EMBEDDING 0
+
 #include "Embedder.h"
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/DistGeomUtils.h>
@@ -20,6 +20,7 @@
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/RingInfo.h>
 #include <GraphMol/Atropisomers.h>
+#include <Geometry/point.h>
 
 #include <GraphMol/Conformer.h>
 #include <RDGeneral/types.h>
@@ -43,6 +44,10 @@
 #include <memory>
 #include <vector>
 #include <chrono>  // for time-related functions
+#include <variant>
+#include <array>
+#include <algorithm>
+#include <memory>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
@@ -154,7 +159,17 @@ const EmbedParameters srETKDGv3{.useExpTorsionAnglePrefs = true,
                                 .useMacrocycleTorsions = false,
                                 .useMacrocycle14config = false};
 
+const EmbedParameters ETKDGv4{.useExpTorsionAnglePrefs = true,
+                              .useBasicKnowledge = true,
+                              .ETversion = 4,
+                              .useSmallRingTorsions = true,
+                              .useMacrocycleTorsions = true,
+                              .useMacrocycle14config = true,
+                              .useLegacyImplementation = false};
+
 namespace detail {
+namespace cf = ForceFields::CrystalFF;
+
 struct EmbedArgs {
   boost::dynamic_bitset<> *confsOk;
   bool fourD;
@@ -169,11 +184,13 @@ struct EmbedArgs {
       *doubleBondEnds;
   std::vector<std::pair<std::vector<unsigned int>, int>> const
       *stereoDoubleBonds;
-  ForceFields::CrystalFF::CrystalFFDetails *etkdgDetails;
+  std::unique_ptr<cf::CrystalFFDetails> etkdgDetails;
   std::size_t hac;
 };
 
 }  // namespace detail
+
+constexpr std::array<unsigned int, 3> ALLOWED_ET_VERSIONS = {1, 2, 4};
 
 bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
                  const RDGeom::PointPtrVect &positions, bool verbose = false) {
@@ -351,9 +368,10 @@ bool clashCheck(const RDGeom::PointPtrVect *positions,
 
 bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
                   const detail::EmbedArgs &eargs) {
-  std::unique_ptr<ForceFields::ForceField> field(
+  const auto field = std::unique_ptr<ForceFields::ForceField>(
       DistGeom::construct3DImproperForceField(*eargs.mmat, positions,
                                               *eargs.etkdgDetails));
+
   double totalEnergy = 0.0;
   std::vector<double> energies;
 
@@ -372,7 +390,7 @@ bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
                                [threshold](double e) { return e > threshold; });
   };
   constexpr double planarityTolerance = 0.7;
-  const std::size_t nCenters =
+  std::size_t nCenters =
       std::ranges::count_if(eargs.etkdgDetails->angles,
                             [](const auto &angle) { return angle[3]; }) +
       eargs.etkdgDetails->improperAtoms.size();
@@ -470,11 +488,12 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
       fixedPts.set(v.first);
     }
   }
-  std::unique_ptr<ForceFields::ForceField> field(DistGeom::constructForceField(
-      *eargs.mmat, *positions, *eargs.chiralCenters,
-      eargs.etkdgDetails->forceConsts.distance,
-      eargs.etkdgDetails->forceConsts.chiral, 0.1, nullptr,
-      embedParams.basinThresh, &fixedPts));
+  auto field =
+      std::unique_ptr<ForceFields::ForceField>(DistGeom::constructForceField(
+          *eargs.mmat, *positions, *eargs.chiralCenters,
+          eargs.etkdgDetails->forceConsts.distance,
+          eargs.etkdgDetails->forceConsts.chiral, 0.1, nullptr,
+          embedParams.basinThresh, &fixedPts));
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
     for (const auto &v : *embedParams.coordMap) {
       field->fixedPoints().push_back(v.first);
@@ -558,12 +577,13 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
   // or have started from random coords. This
   // time removing the chiral constraints and
   // increasing the weight on the fourth dimension
+  auto field2 =
+      std::unique_ptr<ForceFields::ForceField>(DistGeom::constructForceField(
+          *eargs.mmat, *positions, *eargs.chiralCenters,
+          eargs.etkdgDetails->forceConsts.distance, 0.2,
+          eargs.etkdgDetails->forceConsts.fourthDim, nullptr,
+          embedParams.basinThresh));
 
-  std::unique_ptr<ForceFields::ForceField> field2(DistGeom::constructForceField(
-      *eargs.mmat, *positions, *eargs.chiralCenters,
-      eargs.etkdgDetails->forceConsts.distance, 0.2,
-      eargs.etkdgDetails->forceConsts.fourthDim, nullptr,
-      embedParams.basinThresh));
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
     for (const auto &v : *embedParams.coordMap) {
       field2->fixedPoints().push_back(v.first);
@@ -599,17 +619,18 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
 
   // create the force field
   std::unique_ptr<ForceFields::ForceField> field;
+  const auto &details = *eargs.etkdgDetails;
   if (embedParams.useBasicKnowledge) {  // ETKDG or KDG
     if (embedParams.CPCI != nullptr) {
-      field.reset(DistGeom::construct3DForceField(
-          *eargs.mmat, positions3D, *eargs.etkdgDetails, *embedParams.CPCI));
+      field.reset(std::move(DistGeom::construct3DForceField(
+          *eargs.mmat, positions3D, details, *embedParams.CPCI)));
     } else {
-      field.reset(DistGeom::construct3DForceField(*eargs.mmat, positions3D,
-                                                  *eargs.etkdgDetails));
+      field.reset(std::move(
+          DistGeom::construct3DForceField(*eargs.mmat, positions3D, details)));
     }
   } else {  // plain ETDG
-    field.reset(DistGeom::constructPlain3DForceField(*eargs.mmat, positions3D,
-                                                     *eargs.etkdgDetails));
+    field.reset(std::move(DistGeom::constructPlain3DForceField(
+        *eargs.mmat, positions3D, details)));
   }
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
     for (const auto &v : *embedParams.coordMap) {
@@ -629,7 +650,7 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
 
   if (embedParams.useBasicKnowledge) {
     // create a force field with only the impropers
-    std::unique_ptr<ForceFields::ForceField> field2(
+    const auto field2 = std::unique_ptr<ForceFields::ForceField>(
         DistGeom::construct3DImproperForceField(*eargs.mmat, positions3D,
                                                 *eargs.etkdgDetails));
     if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
@@ -641,8 +662,9 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
     field2->initialize();
     // check if the energy is low enough
     const double planarityTolerance = 0.7;
-    if (field2->calcEnergy() >
-        eargs.etkdgDetails->improperAtoms.size() * planarityTolerance) {
+    std::size_t nCenters = eargs.etkdgDetails->improperAtoms.size();
+
+    if (field2->calcEnergy() > nCenters * planarityTolerance) {
 #ifdef DEBUG_EMBEDDING
       std::cerr << "   planar fail: " << field2->calcEnergy() << " "
                 << eargs.etkdgDetails->improperAtoms.size() * planarityTolerance
@@ -682,6 +704,7 @@ bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
         *eargs.mmat, *positions, *eargs.etkdgDetails, eargs.chiralCenters,
         nullptr, &fixedPts));
   }
+
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
     for (const auto &v : *embedParams.coordMap) {
       field->fixedPoints().push_back(v.first);
@@ -738,33 +761,37 @@ bool doubleBondGeometryChecks(const RDGeom::PointPtrVect &positions,
       }
     }
   }
-  if (doSP2Centers and !eargs.etkdgDetails->improperAtoms.empty()) {
-    // this is the arrangement:
-    //     a0
-    //       \       [ilb]
-    //        a1 = a2
-    //       /       [ilb]
-    //     a3
-    // we want to be sure it's not actually:
-    //   ao - a1 = a2
-    //         |     [ilb]
-    //        a3
-    constexpr std::array<std::array<std::size_t, 3>, 3> triples{
-        {{{0, 1, 2}}, {{0, 1, 3}}, {{2, 1, 3}}}};
-    for (const auto &itm : eargs.etkdgDetails->improperAtoms) {
-      for (const auto [a, b, c] : triples) {
-        const auto &i = *positions[itm[a]];
-        const auto &j = *positions[itm[b]];
-        const auto &k = *positions[itm[c]];
-        const RDGeom::Point3D p1(i[0], i[1], i[2]);
-        const RDGeom::Point3D p2(j[0], j[1], j[2]);
-        const RDGeom::Point3D p3(k[0], k[1], k[2]);
-        RDGeom::Point3D p12 = p2 - p1;
-        RDGeom::Point3D p32 = p2 - p3;
-        p12.normalize();
-        p32.normalize();
-        if (p12.dotProduct(p32) + 1.0 < linearTol) {
-          return false;
+  if (doSP2Centers) {
+    const auto &improperAtoms = eargs.etkdgDetails->improperAtoms;
+
+    if (!improperAtoms.empty()) {
+      // this is the arrangement:
+      //     a0
+      //       \       [ilb]
+      //        a1 = a2
+      //       /       [ilb]
+      //     a3
+      // we want to be sure it's not actually:
+      //   ao - a1 = a2
+      //         |     [ilb]
+      //        a3
+      constexpr std::array<std::array<std::size_t, 3>, 3> triples{
+          {{{0, 1, 2}}, {{0, 1, 3}}, {{2, 1, 3}}}};
+      for (const auto &itm : improperAtoms) {
+        for (const auto [a, b, c] : triples) {
+          const auto &i = *positions[itm[a]];
+          const auto &j = *positions[itm[b]];
+          const auto &k = *positions[itm[c]];
+          const RDGeom::Point3D p1(i[0], i[1], i[2]);
+          const RDGeom::Point3D p2(j[0], j[1], j[2]);
+          const RDGeom::Point3D p3(k[0], k[1], k[2]);
+          RDGeom::Point3D p12 = p2 - p1;
+          RDGeom::Point3D p32 = p2 - p3;
+          p12.normalize();
+          p32.normalize();
+          if (p12.dotProduct(p32) + 1.0 < linearTol) {
+            return false;
+          }
         }
       }
     }
@@ -895,8 +922,9 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
   return _checkFinalCenterInVolume(positions, eargs, embedParams);
 }
 
-bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
-                 EmbedParameters &embedParams, int seed, TimePoint *end_time) {
+bool embedPoints(RDGeom::PointPtrVect *positions,
+                 const detail::EmbedArgs &eargs, EmbedParameters &embedParams,
+                 int seed, TimePoint *end_time) {
   PRECONDITION(positions, "bogus positions");
   if (embedParams.maxIterations == 0) {
     embedParams.maxIterations = 10 * positions->size();
@@ -1065,7 +1093,8 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   return gotCoords;
 }
 
-bool embedPointsAIO(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
+bool embedPointsAIO(RDGeom::PointPtrVect *positions,
+                    const detail::EmbedArgs &eargs,
                     EmbedParameters &embedParams, int seed,
                     TimePoint *end_time) {
   PRECONDITION(positions, "bogus positions");
@@ -1310,6 +1339,112 @@ RDKIT_DISTGEOMHELPERS_EXPORT void findDoubleBonds(
     }
   }
 }
+
+void adjustBoundsMatFromCoordMap(
+    DistGeom::BoundsMatPtr mmat, unsigned int,
+    const std::map<int, RDGeom::Point3D> *coordMap) {
+  for (auto iIt = coordMap->begin(); iIt != coordMap->end(); ++iIt) {
+    unsigned int iIdx = iIt->first;
+    const RDGeom::Point3D &iPoint = iIt->second;
+    auto jIt = iIt;
+    while (++jIt != coordMap->end()) {
+      unsigned int jIdx = jIt->first;
+      const RDGeom::Point3D &jPoint = jIt->second;
+      double dist = (iPoint - jPoint).length();
+      mmat->setUpperBound(iIdx, jIdx, dist);
+      mmat->setLowerBound(iIdx, jIdx, dist);
+    }
+  }
+}
+
+void initETKDG(ROMol *mol, const EmbedParameters &params,
+               ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
+  PRECONDITION(mol, "bad molecule");
+  unsigned int nAtoms = mol->getNumAtoms();
+  namespace FC = ForceFields::CrystalFF::ETKDGForceConsts;
+  if (params.ETversion == 4) {
+    etkdgDetails.forceConsts =
+        params.useLegacyImplementation ? FC::SEQ::Gaussian : FC::AIO::Gaussian;
+  } else {
+    etkdgDetails.forceConsts =
+        params.useLegacyImplementation ? FC::SEQ::Cosine : FC::AIO::Cosine;
+  }
+
+  if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
+    ForceFields::CrystalFF::getExperimentalTorsions(
+        *mol, etkdgDetails, params.useExpTorsionAnglePrefs,
+        params.useSmallRingTorsions, params.useMacrocycleTorsions,
+        params.useBasicKnowledge, params.ETversion, params.verbose);
+    etkdgDetails.atomNums.resize(nAtoms);
+    for (unsigned int i = 0; i < nAtoms; ++i) {
+      etkdgDetails.atomNums[i] = mol->getAtomWithIdx(i)->getAtomicNum();
+    }
+  }
+  if (params.ETversion == 4) {
+    ForceFields::CrystalFF::populateRefTable(etkdgDetails);
+  }
+  etkdgDetails.boundsMatForceScaling = params.boundsMatForceScaling;
+}
+
+bool setupInitialBoundsMatrix(
+    ROMol *mol, DistGeom::BoundsMatPtr mmat,
+    const std::map<int, RDGeom::Point3D> *coordMap,
+    const EmbedParameters &params,
+    ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
+  PRECONDITION(mol, "bad molecule");
+  unsigned int nAtoms = mol->getNumAtoms();
+  bool set15bounds = true;
+  bool scaleVDW = false;
+  if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
+    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
+                   scaleVDW, set15bounds, true, true,
+                   &etkdgDetails.path14Configs, params.embedForceField,
+                   etkdgDetails.internalCoords.get());
+  } else {
+    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds, true, true,
+                   nullptr, params.embedForceField,
+                   etkdgDetails.internalCoords.get());
+  }
+  double tol = 0.0;
+  if (coordMap) {
+    adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
+    tol = 0.05;
+  }
+  if (!DistGeom::triangleSmoothBounds(mmat, tol)) {
+    // ok this bound matrix failed to triangle smooth - re-compute the
+    // bounds matrix without 15 bounds and with VDW scaling
+    initBoundsMat(mmat);
+    bool scaleVDW = true;
+    bool set15bounds = false;
+    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
+
+    if (coordMap) {
+      adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
+    }
+
+    // try triangle smoothing again
+    if (!DistGeom::triangleSmoothBounds(mmat, tol)) {
+      // ok, we're not going to be able to smooth this,
+      if (params.ignoreSmoothingFailures) {
+        // proceed anyway with the more relaxed bounds matrix
+        initBoundsMat(mmat);
+        bool scaleVDW = true;
+        bool set15bounds = false;
+        setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
+
+        if (coordMap) {
+          adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
+        }
+      } else {
+        BOOST_LOG(rdWarningLog)
+            << "Could not triangle bounds smooth molecule." << std::endl;
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
                     DistGeom::VECT_CHIRALSET &tetrahedralCenters,
                     const std::map<int, RDGeom::Point3D> *coordMap) {
@@ -1450,99 +1585,6 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
     DistGeom::ChiralSetPtr cptr(cset);
     chiralCenters.push_back(cptr);
   }
-}
-
-void adjustBoundsMatFromCoordMap(
-    DistGeom::BoundsMatPtr mmat, unsigned int,
-    const std::map<int, RDGeom::Point3D> *coordMap) {
-  for (auto iIt = coordMap->begin(); iIt != coordMap->end(); ++iIt) {
-    unsigned int iIdx = iIt->first;
-    const RDGeom::Point3D &iPoint = iIt->second;
-    auto jIt = iIt;
-    while (++jIt != coordMap->end()) {
-      unsigned int jIdx = jIt->first;
-      const RDGeom::Point3D &jPoint = jIt->second;
-      double dist = (iPoint - jPoint).length();
-      mmat->setUpperBound(iIdx, jIdx, dist);
-      mmat->setLowerBound(iIdx, jIdx, dist);
-    }
-  }
-}
-
-void initETKDG(ROMol *mol, const EmbedParameters &params,
-               ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
-  PRECONDITION(mol, "bad molecule");
-  unsigned int nAtoms = mol->getNumAtoms();
-  if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
-    ForceFields::CrystalFF::getExperimentalTorsions(
-        *mol, etkdgDetails, params.useExpTorsionAnglePrefs,
-        params.useSmallRingTorsions, params.useMacrocycleTorsions,
-        params.useBasicKnowledge, params.ETversion, params.verbose);
-    etkdgDetails.atomNums.resize(nAtoms);
-    for (unsigned int i = 0; i < nAtoms; ++i) {
-      etkdgDetails.atomNums[i] = mol->getAtomWithIdx(i)->getAtomicNum();
-    }
-  }
-  etkdgDetails.boundsMatForceScaling = params.boundsMatForceScaling;
-}
-
-bool setupInitialBoundsMatrix(
-    ROMol *mol, DistGeom::BoundsMatPtr mmat,
-    const std::map<int, RDGeom::Point3D> *coordMap,
-    const EmbedParameters &params,
-    ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
-  PRECONDITION(mol, "bad molecule");
-  unsigned int nAtoms = mol->getNumAtoms();
-  bool set15bounds = true;
-  bool scaleVDW = false;
-  if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
-    setTopolBounds(*mol, mmat, etkdgDetails.bonds, etkdgDetails.angles, params,
-                   scaleVDW, set15bounds, true, true,
-                   &etkdgDetails.path14Configs, params.embedForceField,
-                   etkdgDetails.internalCoords.get());
-  } else {
-    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds, true, true,
-                   nullptr, params.embedForceField,
-                   etkdgDetails.internalCoords.get());
-  }
-  double tol = 0.0;
-  if (coordMap) {
-    adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
-    tol = 0.05;
-  }
-  if (!DistGeom::triangleSmoothBounds(mmat, tol)) {
-    // ok this bound matrix failed to triangle smooth - re-compute the
-    // bounds matrix without 15 bounds and with VDW scaling
-    initBoundsMat(mmat);
-    bool scaleVDW = true;
-    bool set15bounds = false;
-    setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
-
-    if (coordMap) {
-      adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
-    }
-
-    // try triangle smoothing again
-    if (!DistGeom::triangleSmoothBounds(mmat, tol)) {
-      // ok, we're not going to be able to smooth this,
-      if (params.ignoreSmoothingFailures) {
-        // proceed anyway with the more relaxed bounds matrix
-        initBoundsMat(mmat);
-        bool scaleVDW = true;
-        bool set15bounds = false;
-        setTopolBounds(*mol, mmat, params, scaleVDW, set15bounds);
-
-        if (coordMap) {
-          adjustBoundsMatFromCoordMap(mmat, nAtoms, coordMap);
-        }
-      } else {
-        BOOST_LOG(rdWarningLog)
-            << "Could not triangle bounds smooth molecule." << std::endl;
-        return false;
-      }
-    }
-  }
-  return true;
 }
 }  // namespace EmbeddingOps
 
@@ -1761,9 +1803,11 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   if (!mol.getNumAtoms()) {
     throw ValueErrorException("molecule has no atoms");
   }
-  if (params.ETversion < 1 || params.ETversion > 2) {
+
+  if (std::find(ALLOWED_ET_VERSIONS.begin(), ALLOWED_ET_VERSIONS.end(),
+                params.ETversion) == ALLOWED_ET_VERSIONS.end()) {
     throw ValueErrorException(
-        "Only version 1 and 2 of the experimental "
+        "Only version 1, 2 and 4 of the experimental "
         "torsion-angle preferences (ETversion) supported");
   }
 
@@ -1842,17 +1886,22 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     ROMOL_SPTR piece = molFrags[fragIdx];
     unsigned int nAtoms = piece->getNumAtoms();
 
-    ForceFields::CrystalFF::CrystalFFDetails etkdgDetails;
-    etkdgDetails.constrainedAtoms = constrainedAtoms;
-    etkdgDetails.distMat = MolOps::getDistanceMat(*piece.get());
-    etkdgDetails.forceConsts =
-        params.useLegacyImplementation
-            ? ForceFields::CrystalFF::ETKDGForceConsts::SEQ::Cosine
-            : ForceFields::CrystalFF::ETKDGForceConsts::AIO::Cosine;
+    std::unique_ptr<detail::cf::CrystalFFDetails> etkdgDetails;
+    namespace CFF = ForceFields::CrystalFF;
+
+    if (params.ETversion == 1 || params.ETversion == 2 ||
+        params.ETversion == 4) {
+      etkdgDetails = std::make_unique<CFF::CrystalFFDetails>();
+    } else {
+      throw std::invalid_argument("ETversion needs to be either 1, 2 or 4.");
+    }
+
+    etkdgDetails->constrainedAtoms = constrainedAtoms;
+    etkdgDetails->distMat = MolOps::getDistanceMat(*piece.get());
 
     DistGeom::BoundsMatPtr mmat;
 
-    etkdgDetails.internalCoords =
+    etkdgDetails->internalCoords =
         params.initialEmbeddingMode ==
                 InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING
             ? std::make_unique<InternalCoordinates>(piece->getNumBonds())
@@ -1864,7 +1913,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       mmat.reset(new DistGeom::BoundsMatrix(nAtoms));
       initBoundsMat(mmat);
       if (!EmbeddingOps::setupInitialBoundsMatrix(piece.get(), mmat, coordMap,
-                                                  params, etkdgDetails)) {
+                                                  params, *etkdgDetails)) {
         // return if we couldn't setup the bounds matrix
         // possible causes include a triangle smoothing failure
         return;
@@ -1877,34 +1926,35 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
             "size of boundsMat provided does not match the number of atoms in "
             "the molecule.");
       }
+
       if (params.initialEmbeddingMode ==
           InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING) {
         // making sure, we collect internal coordinates
         mmat.reset(new DistGeom::BoundsMatrix(nAtoms));
-        setTopolBounds(
-            *piece.get(), mmat, params, false, true, true, true, nullptr,
-            params.embedForceField,
-            etkdgDetails.internalCoords.get());  // for now, we use the bounds
-                                                 // matrix internal coordinates,
-        // in future, this should be an independend instance
+        setTopolBounds(*piece.get(), mmat, params, false, true, true, true,
+                       nullptr, params.embedForceField,
+                       etkdgDetails->internalCoords
+                           .get());  // for now, we use the bounds
+                                     // matrix internal coordinates,
+                                     // in future, this should be an
+                                     // independend instance
       }
-      collectBondsAndAngles((*piece.get()), etkdgDetails.bonds,
-                            etkdgDetails.angles);
+      collectBondsAndAngles((*piece.get()), etkdgDetails->bonds,
+                            etkdgDetails->angles);
       mmat.reset(new DistGeom::BoundsMatrix(*params.boundsMat));
     }
+    EmbeddingOps::initETKDG(piece.get(), params, *etkdgDetails);
 
-    EmbeddingOps::initETKDG(piece.get(), params, etkdgDetails);
     // find all the chiral centers in the molecule
     MolOps::assignStereochemistry(*piece);
     DistGeom::VECT_CHIRALSET chiralCenters;
     DistGeom::VECT_CHIRALSET tetrahedralCarbons;
-    EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons,
-                                 coordMap);
+    EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons, coordMap);
 
     DistGeom::ZMatPtr zmat = std::make_shared<DistGeom::ZMatrix>(nAtoms);
     if (params.initialEmbeddingMode ==
         InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING) {
-      setMoleculeDFS(*piece.get(), *zmat, *etkdgDetails.internalCoords);
+      setMoleculeDFS(*piece.get(), *zmat, *etkdgDetails->internalCoords);
       correctChiralCenters(*piece.get(), *zmat);
     }
 
@@ -1942,7 +1992,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                                &tetrahedralCarbons,
                                &doubleBondEnds,
                                &stereoDoubleBonds,
-                               &etkdgDetails,
+                               std::move(etkdgDetails),
                                piece->getNumHeavyAtoms()};
     if (numThreads == 1) {
       detail::embedHelper_(0, 1, &eargs, &params, end_time);
