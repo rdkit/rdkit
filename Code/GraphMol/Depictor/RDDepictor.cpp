@@ -618,6 +618,11 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     // if there are any remaining collisions
     eri.removeCollisionsOpenAngles();
     eri.removeCollisionsShortenBonds();
+
+    // Path angle expansion (off by default)
+    if (params.usePathAngleExpansion) {
+      eri.removeCollisionsPathAngleExpansion();
+    }
   }
   if (!params.coordMap || !params.coordMap->size()) {
     if (params.canonOrient && efrags.size()) {
