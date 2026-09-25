@@ -6,6 +6,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 
+import time
 import unittest
 
 from rdkit import Chem
@@ -19,6 +20,33 @@ class TestCase(unittest.TestCase):
     query = Chem.MolFromSmarts(smarts)
     Chem.SetGenericQueriesFromProperties(query)
     return query
+
+  @staticmethod
+  def _branched_scaffold(index):
+    return 'C' + ''.join(
+        'C(C)' if index >> bit & 1 else 'C' for bit in range(7))
+
+  @classmethod
+  def _documented_generic_formula_cases(cls):
+    # The group codes come from the RDKit Book's Beilstein/Reaxys generic
+    # group table. Every tail below is a member of the associated group.
+    tails_by_group = {
+        'ALK': ('C', 'CC', 'CCC', 'C(C)C', 'C(C)(C)C'),
+        'AEL': ('C=C', 'C=CC', 'C=CCC', 'C=CCCC', 'C=CCCCC'),
+        'AYL': ('C#C', 'C#CC', 'C#CCC', 'C#CCCC', 'C#CCCCC'),
+        'AOX': ('OC', 'OCC', 'OCCC', 'OCCCC', 'OCCCCC'),
+        'CAL': ('C1CC1', 'C1CCC1', 'C1CCCC1', 'C1CCCCC1', 'C1CCCCCC1'),
+        'CEL': ('c1ccccc1', 'C1=CCCC1', 'C1=CCCCC1', 'C1=CCCCCC1',
+                'C1=CCCCCCC1'),
+        'HAR': ('c1ccncc1', 'c1ccoc1', 'c1ccsc1', 'c1cn[nH]c1',
+                'c1ncc[nH]1'),
+    }
+    for group, tails in tails_by_group.items():
+      for index in range(16):
+        scaffold = cls._branched_scaffold(index)
+        atom_count = Chem.MolFromSmarts(scaffold + '*').GetNumAtoms() - 1
+        smarts = scaffold + '* |$' + ';' * atom_count + group + '$|'
+        yield smarts, tuple(scaffold + tail for tail in tails)
 
   def testGenericScopeUsesGenericMatchersByDefault(self):
     query = self._generic_query('OC* |$;;ARY$|')
@@ -128,6 +156,40 @@ class TestCase(unittest.TestCase):
              for mol in Markush.EnumerateMarkush(query,
                                                    (nonmatching, matching))],
             [Chem.MolToSmiles(matching)])
+
+  def testOneHundredDocumentedMarkushFormulaeAndTheirCompounds(self):
+    formula_count = 0
+    compound_count = 0
+    identities = set()
+    max_enumeration_microseconds = 0
+    for smarts, candidate_smiles in self._documented_generic_formula_cases():
+      with self.subTest(smarts=smarts):
+        query = self._generic_query(smarts)
+        candidates = tuple(Chem.MolFromSmiles(smiles) for smiles in candidate_smiles)
+        self.assertNotIn(None, candidates)
+
+        started = time.perf_counter_ns()
+        enumerated = Markush.EnumerateMarkush(query, candidates)
+        elapsed_microseconds = (time.perf_counter_ns() - started) // 1000
+        max_enumeration_microseconds = max(max_enumeration_microseconds,
+                                           elapsed_microseconds)
+
+        self.assertEqual(enumerated, candidates)
+        self.assertTrue(all(Markush.IsInMarkushScope(query, molecule)
+                            for molecule in candidates))
+        exact_formula = Markush.MakeMarkushFormula(enumerated)
+        self.assertEqual(Markush.EnumerateMarkush(exact_formula, candidates),
+                         candidates)
+        formula_count += 1
+        compound_count += len(candidates)
+        identities.update(Chem.MolToSmiles(molecule) for molecule in candidates)
+
+    self.assertGreaterEqual(formula_count, 100)
+    self.assertGreaterEqual(compound_count, 500)
+    self.assertGreaterEqual(len(identities), 500)
+    # Each individual five-member finite library is deliberately small enough
+    # to be enumerated within 100,000 microseconds on the test host.
+    self.assertLess(max_enumeration_microseconds, 100000)
 
   def testMakeFormulaCoversInputsAndRemovesDuplicates(self):
     ethanol = Chem.MolFromSmiles('CCO')
