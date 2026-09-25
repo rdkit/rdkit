@@ -30,8 +30,7 @@
 
 #include <string>
 #include <cmath>
-#include <iostream> 
-
+#include <iostream>
 
 using namespace RDGeom;
 using namespace RDKit;
@@ -137,19 +136,25 @@ void testTorsionPrefs() {
   TEST_ASSERT(details.expTorsionAngles.size() == 1);
   TEST_ASSERT(details.expTorsionAtoms[0][0] == 0);
   TEST_ASSERT(details.expTorsionAtoms[0][3] == 3);
-  TEST_ASSERT(details.expTorsionAngles[0].first.size() == 6);
-  TEST_ASSERT(details.expTorsionAngles[0].second.size() == 6);
+  TEST_ASSERT(
+      std::get<ForceFields::CrystalFF::CosineExp_T>(details.expTorsionAngles[0])
+          .first.size() == 6);
+  TEST_ASSERT(
+      std::get<ForceFields::CrystalFF::CosineExp_T>(details.expTorsionAngles[0])
+          .second.size() == 6);
 
   std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
-                         const ForceFields::CrystalFF::ExpTorsionAngle *>>
+                         ForceFields::CrystalFF::TorsionAnglePtrVariant>>
       torsionBonds;
   ForceFields::CrystalFF::getExperimentalTorsions(
       *mol, details, torsionBonds, true, false, false, false, 2, false);
   TEST_ASSERT(torsionBonds.size() == 1);
   TEST_ASSERT(std::get<0>(torsionBonds[0]) == 1);
-  TEST_ASSERT(std::get<2>(torsionBonds[0])->smarts ==
-              "[!#1:1][CX4H2:2]!@;-[CX4H2:3][!#1:4]");
-  TEST_ASSERT(std::get<2>(torsionBonds[0])->torsionIdx == 229);
+  const auto *angle0 =
+      std::get<const ForceFields::CrystalFF::ExpTorsionAngle *>(
+          std::get<2>(torsionBonds[0]));
+  TEST_ASSERT(angle0->smarts == "[!#1:1][CX4H2:2]!@;-[CX4H2:3][!#1:4]");
+  TEST_ASSERT(angle0->torsionIdx == 229);
 
   delete mol;
   mol = SmilesToMol("CCCCC");
@@ -245,8 +250,9 @@ M  END
   ff->initialize();
   TEST_ASSERT(ff);
 
-  auto c = std::make_unique<ForceFields::CrystalFF::PlanarityContribs>(ff.get());
-  c->addContrib(1,0,2,3,1.0);
+  auto c =
+      std::make_unique<ForceFields::CrystalFF::PlanarityContribs>(ff.get());
+  c->addContrib(1, 0, 2, 3, 1.0);
   ff->contribs().push_back(std::move(c));
 
   TEST_ASSERT(ff->calcEnergy() > 1.0);
