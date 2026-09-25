@@ -58,6 +58,38 @@
 %ignore RDKit::MolAlign::o3aCrippenWeightFunc;
 %ignore RDKit::MolAlign::o3aCrippenScoringFunc;
 %ignore RDKit::MolAlign::getO3AForProbeConfs;
+// these return pointers into the O3A; copies are returned below instead
+%ignore RDKit::MolAlign::O3A::matches;
+%ignore RDKit::MolAlign::O3A::weights;
+%rename(matches) RDKit::MolAlign::O3A::matchesCopy;
+%rename(weights) RDKit::MolAlign::O3A::weightsCopy;
+
+// O3A keeps raw pointers to the probe and reference molecules, which are
+// used again by align() and trans(). Hold references to their proxies so
+// they can't be garbage collected while the O3A is still alive. prbMol and
+// refMol are the argument names of the constructor defined below.
+#ifdef SWIGJAVA
+%typemap(javacode) RDKit::MolAlign::O3A %{
+  private ROMol prbMolRef;
+  private ROMol refMolRef;
+%}
+%typemap(javaconstruct) RDKit::MolAlign::O3A {
+    this($imcall, true);
+    prbMolRef = prbMol;
+    refMolRef = refMol;
+  }
+#endif
+#ifdef SWIGCSHARP
+%typemap(cscode) RDKit::MolAlign::O3A %{
+  private ROMol prbMolRef;
+  private ROMol refMolRef;
+%}
+%typemap(csconstruct, excode=SWIGEXCODE) RDKit::MolAlign::O3A %{: this($imcall, true) {$excode
+    prbMolRef = prbMol;
+    refMolRef = refMol;
+  }
+%}
+#endif
 
 %include <GraphMol/MolAlign/AlignMolecules.h>
 %include <GraphMol/MolAlign/O3AAlignMolecules.h>
@@ -92,5 +124,14 @@
     return new RDKit::MolAlign::O3A(prbMol, refMol, &prbMP, &refMP, atomTypes,
                                     prbCid, refCid, reflect, maxIters, options,
                                     constraintMap, constraintWeights);
+  }
+
+  RDKit::MatchVectType matchesCopy() {
+    const auto matchVect = $self->matches();
+    return matchVect ? *matchVect : RDKit::MatchVectType();
+  }
+  RDNumeric::DoubleVector weightsCopy() {
+    const auto weights = $self->weights();
+    return weights ? *weights : RDNumeric::DoubleVector(0);
   }
 }

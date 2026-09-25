@@ -9,7 +9,9 @@
 //
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using GraphMolWrap;
 using Xunit;
 
@@ -238,13 +240,54 @@ public class AlignTest
         var suppl = new SDMolSupplier(AlignDataFile("ref_e2.sdf"), true, false);
         var refMol = suppl.next();
         var prbMol = suppl.next();
-        using var o3a = new O3A(prbMol, refMol);
+        var o3a = new O3A(prbMol, refMol);
         var matches = o3a.matches();
         Assert.True(matches.Count > 0);
         Assert.Equal((uint)matches.Count, o3a.weights().size());
         var trans = new Transform3D();
         var transRmsd = o3a.trans(trans);
         AssertClose(transRmsd, o3a.align(), 1e-6);
+
+        // matches() and weights() return copies that outlive the O3A
+        var weights = o3a.weights();
+        var nMatches = matches.Count;
+        o3a.Dispose();
+        Assert.Equal(nMatches, matches.Count);
+        Assert.Equal((uint)nMatches, weights.size());
+        Assert.True(matches[0].first >= 0);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static O3A MakeO3AWithTemporaryMols(List<WeakReference> molRefs)
+    {
+        var suppl = new SDMolSupplier(AlignDataFile("ref_e2.sdf"), true, false);
+        var refMol = suppl.next();
+        var prbMol = suppl.next();
+        molRefs.Add(new WeakReference(refMol));
+        molRefs.Add(new WeakReference(prbMol));
+        return new O3A(prbMol, refMol);
+    }
+
+    [Fact]
+    public void TestO3AKeepsMolsAlive()
+    {
+        // the native O3A holds pointers to the molecules, so it must keep them
+        // alive after the caller's references have gone away
+        var molRefs = new List<WeakReference>();
+        var o3a = MakeO3AWithTemporaryMols(molRefs);
+        for (var i = 0; i < 5; ++i)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+        foreach (var molRef in molRefs)
+        {
+            Assert.True(molRef.IsAlive);
+        }
+        var transRmsd = o3a.trans(new Transform3D());
+        AssertClose(transRmsd, o3a.align(), 1e-6);
+        AssertClose(0.049, o3a.align(), 0.001);
+        GC.KeepAlive(o3a);
     }
 
     [Fact]

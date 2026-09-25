@@ -33,6 +33,9 @@ package org.RDKit;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -293,6 +296,41 @@ public class AlignTests extends GraphMolTest {
 		Transform3D trans = new Transform3D();
 		double transRmsd = o3a.trans(trans);
 		assertEquals(transRmsd, o3a.align(), 1e-6);
+
+		// matches() and weights() return copies that outlive the O3A
+		DoubleVector weights = o3a.weights();
+		long nMatches = matches.size();
+		o3a.delete();
+		assertEquals(nMatches, matches.size());
+		assertEquals(nMatches, weights.size());
+		assertTrue(matches.get(0).getFirst() >= 0);
+	}
+
+	private O3A makeO3AWithTemporaryMols(List<WeakReference<ROMol>> molRefs) {
+		SDMolSupplier suppl = new SDMolSupplier(alignDataFile("ref_e2.sdf"), true, false);
+		ROMol refMol = suppl.next();
+		ROMol prbMol = suppl.next();
+		molRefs.add(new WeakReference<ROMol>(refMol));
+		molRefs.add(new WeakReference<ROMol>(prbMol));
+		return new O3A(prbMol, refMol);
+	}
+
+	@Test
+	public void testO3AKeepsMolsAlive() {
+		// the native O3A holds pointers to the molecules, so it must keep them
+		// alive after the caller's references have gone away
+		List<WeakReference<ROMol>> molRefs = new ArrayList<WeakReference<ROMol>>();
+		O3A o3a = makeO3AWithTemporaryMols(molRefs);
+		for (int i = 0; i < 5; ++i) {
+			System.gc();
+			System.runFinalization();
+		}
+		for (WeakReference<ROMol> molRef : molRefs) {
+			assertNotNull(molRef.get());
+		}
+		double transRmsd = o3a.trans(new Transform3D());
+		assertEquals(transRmsd, o3a.align(), 1e-6);
+		assertEquals(0.049, o3a.align(), 0.001);
 	}
 
 	@Test(expected = GenericRDKitException.class)
