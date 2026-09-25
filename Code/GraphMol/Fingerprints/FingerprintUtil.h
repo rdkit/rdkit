@@ -120,7 +120,7 @@ const std::string morganConnectivityInvariantVersion = "1.0.0";
   \param mol:    the molecule to be considered
   \param invars : used to return the results
   \param patterns: if provided should contain the queries used to assign
-  atom-types.
+  atom-types, at most 32 of them, since each one is a bit of an invariant.
                    if not provided, feature definitions adapted from reference:
                    Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
                    will be used for Donor, Acceptor, Aromatic, Halogen, Basic,
