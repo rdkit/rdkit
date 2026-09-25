@@ -448,9 +448,11 @@ void addExperimentalTorsionTerms(
   PRECONDITION(ff, "bad force field");
   namespace cf = ForceFields::CrystalFF;
   boost::dynamic_bitset<> doneBonds(numAtoms * numAtoms);
+  std::unique_ptr<ForceFields::ForceFieldContrib> torsionContribs;
+  bool nonEmpty = false;
   if (etkdgDetails.torsionParamKind == cf::TorsionParamKind::Gaussian) {
-    auto torsionContribs =
-        std::make_unique<cf::GaussianTorsionAngleContribs>(ff);
+    auto lContribs = new cf::GaussianTorsionAngleContribs(ff);
+    torsionContribs.reset(lContribs);
     for (unsigned int t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
       int i = etkdgDetails.expTorsionAtoms[t][0];
       int j = etkdgDetails.expTorsionAtoms[t][1];
@@ -464,16 +466,15 @@ void addExperimentalTorsionTerms(
       atomPairs[idx] = excludeTorsions;
       const auto scaling = std::get<3>(
           std::get<cf::GaussianExp_T>(etkdgDetails.expTorsionAngles[t]));
-      torsionContribs->addContrib(
+      lContribs->addContrib(
           i, j, k, l, etkdgDetails.phiToEnergy[etkdgDetails.torsionIdx[t]],
           etkdgDetails.phiToGrad[etkdgDetails.torsionIdx[t]], scaling);
+      nonEmpty = true;
       doneBonds[bidx] = 1;
     }
-    if (!torsionContribs->empty()) {
-      ff->contribs().push_back(std::move(torsionContribs));
-    }
   } else {
-    auto torsionContribs = std::make_unique<cf::TorsionAngleContribs>(ff);
+    auto lContribs = new cf::TorsionAngleContribs(ff);
+    torsionContribs.reset(lContribs);
     for (std::size_t t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
       const std::size_t i = etkdgDetails.expTorsionAtoms[t][0];
       const std::size_t j = etkdgDetails.expTorsionAtoms[t][1];
@@ -484,15 +485,16 @@ void addExperimentalTorsionTerms(
       if (doneBonds[bidx]) {
         continue;
       }
-      doneBonds[bidx] = true;
       atomPairs[idx] = excludeTorsions;
       const auto &cosine =
           std::get<cf::CosineExp_T>(etkdgDetails.expTorsionAngles[t]);
-      torsionContribs->addContrib(i, j, k, l, cosine.second, cosine.first);
+      lContribs->addContrib(i, j, k, l, cosine.second, cosine.first);
+      doneBonds[bidx] = true;
+      nonEmpty = true;
     }
-    if (!torsionContribs->empty()) {
-      ff->contribs().push_back(std::move(torsionContribs));
-    }
+  }
+  if (nonEmpty) {
+    ff->contribs().push_back(std::move(torsionContribs));
   }
 }
 
