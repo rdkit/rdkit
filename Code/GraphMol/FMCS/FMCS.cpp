@@ -571,7 +571,7 @@ class RingBondCountVect {
   bool isRingFusionHonored() {
     for (const auto &ringBondCount : d_ringBondCountVect) {
       unsigned int ringIdx = &ringBondCount - &d_ringBondCountVect.front();
-      const auto &bondRings = d_ringInfo->bondRings().at(ringIdx);
+      const auto bondRings = d_ringInfo->bondRings().at(ringIdx);
       // if all or no bonds of this ring are part of MCS, no need to do further
       // checks
       const auto numRingBondsInMCS = ringBondCount.isMCSRingBond.count();

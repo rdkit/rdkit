@@ -166,20 +166,22 @@ void getExperimentalTorsions(
   // exclude bonds in bridged ring systems
   boost::dynamic_bitset<> excludedBonds(nb);
   const RingInfo *rinfo = mol.getRingInfo();
-  const VECT_INT_VECT &bondRings = rinfo->bondRings();
-  for (auto rii = bondRings.begin(); rii != bondRings.end(); ++rii) {
+  const auto bondRings = rinfo->bondRings();
+  for (size_t ringI = 0; ringI < bondRings.size(); ++ringI) {
+    const auto rii = bondRings[ringI];
     boost::dynamic_bitset<> rs1(nb);  // bitset for ring 1
-    for (auto riiv : *rii) {
+    for (auto riiv : rii) {
       rs1[riiv] = 1;
     }
-    for (auto rjj = rii + 1; rjj != bondRings.end(); ++rjj) {
+    for (size_t ringJ = ringI + 1; ringJ < bondRings.size(); ++ringJ) {
+      const auto rjj = bondRings[ringJ];
       // we don't worry about the overlap if both rings are macrocycles:
-      if (rii->size() >= MIN_MACROCYCLE_SIZE &&
-          rjj->size() >= MIN_MACROCYCLE_SIZE) {
+      if (rii.size() >= MIN_MACROCYCLE_SIZE &&
+          rjj.size() >= MIN_MACROCYCLE_SIZE) {
         continue;
       }
       unsigned int nInCommon = 0;
-      for (auto rjj_i : *rjj) {
+      for (auto rjj_i : rjj) {
         if (rs1[rjj_i]) {
           if (++nInCommon > 1) {
             break;
@@ -188,14 +190,14 @@ void getExperimentalTorsions(
       }
       if (nInCommon > 1) {  // more than one bond in common
         // exclude bonds from non-macrocycles:
-        if (rii->size() < MIN_MACROCYCLE_SIZE) {
-          for (unsigned int i = 0; i < rii->size(); i++) {
-            excludedBonds[(*rii)[i]] = 1;  // exclude all bonds of ring 1
+        if (rii.size() < MIN_MACROCYCLE_SIZE) {
+          for (unsigned int i = 0; i < rii.size(); i++) {
+            excludedBonds[rii[i]] = 1;  // exclude all bonds of ring 1
           }
         }
-        if (rjj->size() < MIN_MACROCYCLE_SIZE) {
-          for (unsigned int i = 0; i < rjj->size(); i++) {
-            excludedBonds[(*rjj)[i]] = 1;  // exclude all bonds of ring 2
+        if (rjj.size() < MIN_MACROCYCLE_SIZE) {
+          for (unsigned int i = 0; i < rjj.size(); i++) {
+            excludedBonds[rjj[i]] = 1;  // exclude all bonds of ring 2
           }
         }
       }
