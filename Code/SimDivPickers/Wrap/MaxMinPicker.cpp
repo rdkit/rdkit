@@ -107,9 +107,12 @@ RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, python::object objs,
     BOOST_LOG(rdWarningLog)
         << "the useCache argument is deprecated and ignored" << std::endl;
   }
+  // bvs point into these; a lazy sequence can build each item when indexed.
+  std::vector<python::object> items(poolSize);
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
-    bvs[i] = python::extract<const ExplicitBitVect *>(objs[i]);
+    items[i] = objs[i];
+    bvs[i] = python::extract<const ExplicitBitVect *>(items[i]);
   }
   pyBVFunctor<ExplicitBitVect> functor(bvs, TANIMOTO);
 
@@ -123,9 +126,12 @@ RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, python::object objs,
 python::tuple LazyVectorMaxMinPicksWithThreshold(
     MaxMinPicker *picker, python::object objs, int poolSize, int pickSize,
     double threshold, python::object firstPicks, int seed) {
+  // bvs point into these; a lazy sequence can build each item when indexed.
+  std::vector<python::object> items(poolSize);
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
-    bvs[i] = python::extract<const ExplicitBitVect *>(objs[i]);
+    items[i] = objs[i];
+    bvs[i] = python::extract<const ExplicitBitVect *>(items[i]);
   }
   pyBVFunctor<ExplicitBitVect> functor(bvs, TANIMOTO);
 

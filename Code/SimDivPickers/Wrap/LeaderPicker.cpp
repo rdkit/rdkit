@@ -45,9 +45,12 @@ RDKit::INT_VECT LazyVectorLeaderPicks(LeaderPicker *picker, python::object objs,
                                       int poolSize, double threshold,
                                       int pickSize, python::object firstPicks,
                                       int numThreads) {
+  // bvs point into these; a lazy sequence can build each item when indexed.
+  std::vector<python::object> items(poolSize);
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
-    bvs[i] = python::extract<const ExplicitBitVect *>(objs[i]);
+    items[i] = objs[i];
+    bvs[i] = python::extract<const ExplicitBitVect *>(items[i]);
   }
   pyBVFunctor<ExplicitBitVect> functor(bvs, TANIMOTO);
   RDKit::INT_VECT res;

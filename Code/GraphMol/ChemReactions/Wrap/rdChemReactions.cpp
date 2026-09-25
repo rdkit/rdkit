@@ -98,8 +98,7 @@ struct reaction_pickle_suite : rdkit_pickle_suite {
   };
 };
 
-template <typename T>
-PyObject *RunReactants(ChemicalReaction *self, T reactants,
+PyObject *RunReactants(ChemicalReaction *self, python::object reactants,
                        unsigned int maxProducts) {
   if (!self->isInitialized()) {
     NOGIL gil;
@@ -632,18 +631,7 @@ Sample Usage:
            (python::arg("self"), python::arg("targetList") = python::object()),
            "Removes agents from reaction. If targetList is provide the agents "
            "will be transferred to that list.")
-      .def("RunReactants",
-           (PyObject * (*)(RDKit::ChemicalReaction *, python::tuple,
-                           unsigned int maxProducts)) RDKit::RunReactants,
-           (python::arg("self"), python::arg("reactants"),
-            python::arg("maxProducts") = 1000),
-           "apply the reaction to a sequence of reactant molecules and return "
-           "the products as a tuple of tuples.  If maxProducts is not zero,"
-           " stop the reaction when maxProducts have been generated "
-           "[default=1000]")
-      .def("RunReactants",
-           (PyObject * (*)(RDKit::ChemicalReaction *, python::list,
-                           unsigned int maxProducts)) RDKit::RunReactants,
+      .def("RunReactants", RDKit::RunReactants,
            (python::arg("self"), python::arg("reactants"),
             python::arg("maxProducts") = 1000),
            "apply the reaction to a sequence of reactant molecules and return "

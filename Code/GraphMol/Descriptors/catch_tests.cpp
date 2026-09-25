@@ -649,6 +649,21 @@ TEST_CASE("DCLV") {
     CHECK(dclv.getPolarVolume(false, false) ==
           Catch::Approx(21.35).epsilon(0.05));  // N & O, no Hs
   }
+  SECTION("radii cover every atom") {
+    std::string sdfName =
+        pathName + "/Code/GraphMol/Descriptors/test_data/ethane.sdf";
+    auto m = v2::FileParsers::MolFromMolFile(sdfName);
+    REQUIRE(m);
+    REQUIRE(m->getNumAtoms() == 2);
+    // an empty vector asks for the default radii
+    CHECK(Descriptors::DoubleCubicLatticeVolume(*m, {}).getSurfaceArea() ==
+          Descriptors::DoubleCubicLatticeVolume(*m).getSurfaceArea());
+    for (const std::vector<double> &radii :
+         {std::vector<double>{1.7}, std::vector<double>{1.7, 1.7, 1.7}}) {
+      CHECK_THROWS_AS(Descriptors::DoubleCubicLatticeVolume(*m, radii),
+                      Invar::Invariant);
+    }
+  }
   SECTION("Partial Test") {
     std::string sdfName =
         pathName + "/Code/GraphMol/Descriptors/test_data/ethane.sdf";

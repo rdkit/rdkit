@@ -424,6 +424,37 @@ class TestCase(unittest.TestCase):
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 0)
 
+  def testFeatureAtomInvGenFromGenerator(self):
+    smarts = ['[OX2]', '[NX3]']
+    m = Chem.MolFromSmiles('OCCN')
+    invGen = rdFingerprintGenerator.GetMorganFeatureAtomInvGen(
+      [Chem.MolFromSmarts(sma) for sma in smarts])
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=2, atomInvariantsGenerator=invGen)
+    expected = g.GetSparseCountFingerprint(m).GetNonzeroElements()
+    # Each pattern is referenced only by the generator that yields it.
+    invGen = rdFingerprintGenerator.GetMorganFeatureAtomInvGen(
+      Chem.MolFromSmarts(sma) for sma in smarts)
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=2, atomInvariantsGenerator=invGen)
+    self.assertEqual(g.GetSparseCountFingerprint(m).GetNonzeroElements(), expected)
+
+  def testFingerprintsFromIterables(self):
+    smiles = ['c1ccccc1O', 'c1ccccc1N', 'CCOC(=O)C', 'CC(C)CC(=O)O']
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=2)
+    mols = [Chem.MolFromSmiles(smi) for smi in smiles]
+    expected = [fp.ToBitString() for fp in g.GetFingerprints(mols)]
+    bulkExpected = [fp.ToBitString() for fp in rdFingerprintGenerator.GetFPs(mols)]
+    # Each molecule below is referenced only by the generator or supplier that yields it; the
+    # supplier builds a new molecule each time it is indexed.
+    for label, make in (
+      ('generator', lambda: (Chem.MolFromSmiles(smi) for smi in smiles)),
+      ('supplier',
+       lambda: Chem.SmilesMolSupplierFromText('\n'.join(smiles), nameColumn=-1, titleLine=False)),
+    ):
+      with self.subTest(argument=label):
+        self.assertEqual([fp.ToBitString() for fp in g.GetFingerprints(make())], expected)
+        self.assertEqual([fp.ToBitString() for fp in rdFingerprintGenerator.GetFPs(make())],
+                         bulkExpected)
+
 
 if __name__ == '__main__':
   unittest.main()

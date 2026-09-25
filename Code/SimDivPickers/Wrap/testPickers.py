@@ -307,6 +307,35 @@ class TestCase(unittest.TestCase):
     lres = pkr.LazyPick(func, 100, 20)
     self.assertEqual(list(lres), [0, 21, 42, 63, 84])
 
+  def testLazyBitVectorPickFromLazySequence(self):
+
+    class Fingerprints:
+      """Builds a new bit vector each time it is indexed."""
+
+      def __len__(self):
+        return 20
+
+      def __getitem__(self, i):
+        if i >= len(self):
+          raise IndexError(i)
+        rng = random.Random(i)
+        bv = DataStructs.ExplicitBitVect(2048)
+        for bit in rng.sample(range(2048), 200):
+          bv.SetBit(bit)
+        return bv
+
+    fps = Fingerprints()
+    bvs = list(fps)
+    picker = rdSimDivPickers.MaxMinPicker()
+    self.assertEqual(list(picker.LazyBitVectorPick(fps, len(fps), 5, seed=42)),
+                     list(picker.LazyBitVectorPick(bvs, len(bvs), 5, seed=42)))
+    self.assertEqual(
+      list(picker.LazyBitVectorPickWithThreshold(fps, len(fps), 5, 0.5, seed=42)[0]),
+      list(picker.LazyBitVectorPickWithThreshold(bvs, len(bvs), 5, 0.5, seed=42)[0]))
+    picker = rdSimDivPickers.LeaderPicker()
+    self.assertEqual(list(picker.LazyBitVectorPick(fps, len(fps), 0.8)),
+                     list(picker.LazyBitVectorPick(bvs, len(bvs), 0.8)))
+
 
 if __name__ == '__main__':
   unittest.main()

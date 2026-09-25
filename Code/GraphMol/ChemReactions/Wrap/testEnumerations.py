@@ -644,5 +644,26 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(en.GetReagents()[1]) == 1)
     self.assertTrue(len(en.GetReagents()[2]) == 1)
 
+  def testLibraryKeepsReagents(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]')
+    acids = ['CC(=O)O', 'CCC(=O)O']
+    amines = ['NC', 'NCC']
+    expected = sorted(
+      Chem.MolToSmiles(
+        rxn.RunReactants((Chem.MolFromSmiles(acid), Chem.MolFromSmiles(amine)))[0][0])
+      for acid in acids for amine in amines)
+    # The library holds the only references to the reagents.
+    reagents = [[Chem.MolFromSmiles(smi) for smi in smiles] for smiles in (acids, amines)]
+    en = rdChemReactions.EnumerateLibrary(rxn, reagents)
+    del reagents
+    products = sorted(Chem.MolToSmiles(mol) for prods in en for mols in prods for mol in mols)
+    self.assertEqual(products, expected)
+
+  def testNoneReagent(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]')
+    with self.assertRaises(ValueError):
+      rdChemReactions.EnumerateLibrary(rxn, [[Chem.MolFromSmiles('CC(=O)O')], [None]])
+
+
 if __name__ == '__main__':
   unittest.main()

@@ -334,6 +334,44 @@ class TestCase(unittest.TestCase):
     self.assertEqual(bv1.ToBitString(),
                      '1001001001001001001001001001001001001001001001001001001001001001')
 
+  def test17SimilarityFromIterables(self):
+
+    def bitVect(seed):
+      rng = random.Random(seed)
+      bv = DataStructs.ExplicitBitVect(2048)
+      for bit in rng.sample(range(2048), 200):
+        bv.SetBit(bit)
+      return bv
+
+    class BitVects:
+      """Builds a new bit vector each time it is indexed, as a supplier does."""
+
+      def __init__(self, n):
+        self.n = n
+
+      def __len__(self):
+        return self.n
+
+      def __getitem__(self, i):
+        if i >= self.n:
+          raise IndexError(i)
+        return bitVect(i)
+
+    queries = [bitVect(i) for i in range(2)]
+    bvs = [bitVect(i) for i in range(5)]
+    neighbors = DataStructs.TanimotoSimilarityNeighbors(queries, bvs)
+    tanimoto = list(DataStructs.BulkTanimotoSimilarity(queries[0], bvs))
+    tversky = list(DataStructs.BulkTverskySimilarity(queries[0], bvs, 0.5, 0.5))
+    # Each bit vector below is referenced only by the generator or sequence that yields it.
+    for label, make in (('generator', lambda n: (bitVect(i) for i in range(n))),
+                        ('sequence', BitVects)):
+      with self.subTest(argument=label):
+        self.assertEqual(DataStructs.TanimotoSimilarityNeighbors(queries, make(5)), neighbors)
+        self.assertEqual(DataStructs.TanimotoSimilarityNeighbors(make(2), bvs), neighbors)
+        self.assertEqual(list(DataStructs.BulkTanimotoSimilarity(queries[0], make(5))), tanimoto)
+        self.assertEqual(list(DataStructs.BulkTverskySimilarity(queries[0], make(5), 0.5, 0.5)),
+                         tversky)
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -987,6 +987,21 @@ M  END
     self.assertEqual(len(cols["Mol"]), len(rows))
     self.assertEqual(len(cols["Core"]), len(rows))
 
+  def testCoresFromGenerator(self):
+    cores = ['c1ccccc1[*:1]', 'c1ccncc1[*:1]']
+    mols = [Chem.MolFromSmiles(smi) for smi in ('c1ccccc1O', 'c1ccncc1N', 'CCOC(=O)C')]
+
+    def decompose(rgd):
+      added = [rgd.Add(mol) for mol in mols]
+      self.assertTrue(rgd.Process())
+      return added, rgd.GetRGroupsAsRows(asSmiles=True)
+
+    expected = decompose(RGroupDecomposition([Chem.MolFromSmiles(smi) for smi in cores]))
+    self.assertEqual(expected[0], [0, 1, -1])
+    # Each core is referenced only by the generator that yields it.
+    rgd = RGroupDecomposition(Chem.MolFromSmiles(smi) for smi in cores)
+    self.assertEqual(decompose(rgd), expected)
+
 
 if __name__ == '__main__':
   rdBase.DisableLog("rdApp.debug")
