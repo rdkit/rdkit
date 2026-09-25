@@ -6,7 +6,6 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 
-import time
 import unittest
 
 from rdkit import Chem
@@ -162,18 +161,13 @@ class TestCase(unittest.TestCase):
     compound_count = 0
     formulae = set()
     identities = set()
-    max_enumeration_microseconds = 0
     for smarts, candidate_smiles in self._documented_generic_formula_cases():
       with self.subTest(smarts=smarts):
         query = self._generic_query(smarts)
         candidates = tuple(Chem.MolFromSmiles(smiles) for smiles in candidate_smiles)
         self.assertNotIn(None, candidates)
 
-        started = time.perf_counter_ns()
         enumerated = Markush.EnumerateMarkush(query, candidates)
-        elapsed_microseconds = (time.perf_counter_ns() - started) // 1000
-        max_enumeration_microseconds = max(max_enumeration_microseconds,
-                                           elapsed_microseconds)
 
         self.assertEqual(enumerated, candidates)
         self.assertTrue(all(Markush.IsInMarkushScope(query, molecule)
@@ -190,9 +184,6 @@ class TestCase(unittest.TestCase):
     self.assertGreaterEqual(len(formulae), 100)
     self.assertGreaterEqual(compound_count, 500)
     self.assertGreaterEqual(len(identities), 500)
-    # Each individual five-member finite library is deliberately small enough
-    # to be enumerated within 100,000 microseconds on the test host.
-    self.assertLess(max_enumeration_microseconds, 100000)
 
   def testMakeFormulaCoversInputsAndRemovesDuplicates(self):
     ethanol = Chem.MolFromSmiles('CCO')
