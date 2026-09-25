@@ -702,13 +702,13 @@ if(NOT RDK_INSTALL_INTREE)
     if(RDK_INSTALL_PYTHON_TESTS)
       install(DIRECTORY Scripts DESTINATION
         ${RDKit_ShareDir}
-        COMPONENT data
+        COMPONENT python
         PATTERN ".svn" EXCLUDE
         )
     else(RDK_INSTALL_PYTHON_TESTS)
       install(DIRECTORY Scripts DESTINATION
         ${RDKit_ShareDir}
-        COMPONENT data
+        COMPONENT python
         PATTERN ".svn" EXCLUDE
         PATTERN "run_python_tests.py" EXCLUDE
         )

@@ -172,14 +172,17 @@ endmacro(rdkit_library)
 macro(rdkit_headers)
   if (NOT RDK_INSTALL_INTREE)
     PARSE_ARGUMENTS(RDKHDR
-      "DEST"
+      "DEST;COMPONENT"
       ""
       ${ARGN})
     # RDKHDR_DEFAULT_ARGS -> RDKHDR_DEST
+    if(NOT RDKHDR_COMPONENT)
+      set(RDKHDR_COMPONENT dev)
+    endif()
     if(RDK_INSTALL_DEV_COMPONENT)
       install(FILES ${RDKHDR_DEFAULT_ARGS}
               DESTINATION ${RDKit_HdrDir}/${RDKHDR_DEST}
-              COMPONENT dev )
+              COMPONENT ${RDKHDR_COMPONENT})
     endif(RDK_INSTALL_DEV_COMPONENT)
   endif(NOT RDK_INSTALL_INTREE)
 endmacro(rdkit_headers)
@@ -250,9 +253,11 @@ macro(rdkit_nanobind_extension)
     set_target_properties(nanobind
       PROPERTIES
       LIBRARY_OUTPUT_DIRECTORY  ${RDK_LIBRARY_OUTPUT_DIRECTORY} )
-    INSTALL(TARGETS nanobind 
-            DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-            COMPONENT ${sharedLibComponent})
+    # The shared nanobind runtime is tied to the Python ABI, so it ships with the
+    # wrappers.
+    INSTALL(TARGETS nanobind
+            DESTINATION ${RDKit_LibDir}
+            COMPONENT python)
   endif(RDK_BUILD_NANOBIND_WRAPPERS)
 endmacro(rdkit_nanobind_extension)
 

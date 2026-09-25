@@ -49,6 +49,12 @@ GitHub)
   returns only points which are actually on the surface. Previously all
   potential surface points for each atom were returned. You can get the old
   result by setting the `allPoints` argument to true.
+- Python-coupled artifacts are now installed into the `python` cmake component:
+  the `Scripts` directory (previously `data`), the `RDBoost/` wrapper headers
+  (previously `dev`), and the shared `nanobind` library (previously whichever
+  component the preceding `rdkit_library()` call happened to leave set).
+  Packagers who install components selectively need to include `python` to keep
+  these files.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use
