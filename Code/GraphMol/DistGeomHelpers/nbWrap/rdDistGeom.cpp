@@ -254,44 +254,47 @@ static nb::tuple getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
     case 2: {
       ForceFields::CrystalFF::CrystalFFDetails details;
       std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
-                             const ForceFields::CrystalFF::ExpTorsionAngle *>>
+                             ForceFields::CrystalFF::TorsionAnglePtrVariant>>
           torsionBonds;
       ForceFields::CrystalFF::getExperimentalTorsions(
           mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
           useMacrocycleTorsions, useBasicKnowledge, version, verbose);
       nb::list result;
       for (const auto &pr : torsionBonds) {
+        const auto *angle =
+            std::get<const ForceFields::CrystalFF::ExpTorsionAngle *>(
+                std::get<2>(pr));
         nb::dict d;
         d["bondIndex"] = std::get<0>(pr);
-        d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
-        d["smarts"] = std::get<2>(pr)->smarts;
-        d["V"] = std::get<2>(pr)->V;
-        d["signs"] = std::get<2>(pr)->signs;
+        d["torsionIndex"] = angle->torsionIdx;
+        d["smarts"] = angle->smarts;
+        d["V"] = angle->V;
+        d["signs"] = angle->signs;
         d["atomIndices"] = std::get<1>(pr);
         result.append(d);
       }
       return nb::tuple(result);
     }
     case 4: {
-      ForceFields::CrystalFF::CrystalFFDetails<
-          ForceFields::CrystalFF::GaussianExp_T>
-          details;
-      std::vector<
-          std::tuple<unsigned int, std::vector<unsigned int>,
-                     const ForceFields::CrystalFF::GaussianExpTorsionAngle *>>
+      ForceFields::CrystalFF::CrystalFFDetails details;
+      std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                             ForceFields::CrystalFF::TorsionAnglePtrVariant>>
           torsionBonds;
       ForceFields::CrystalFF::getExperimentalTorsions(
           mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
           useMacrocycleTorsions, useBasicKnowledge, version, verbose);
       nb::list result;
       for (const auto &pr : torsionBonds) {
+        const auto *angle =
+            std::get<const ForceFields::CrystalFF::GaussianExpTorsionAngle *>(
+                std::get<2>(pr));
         nb::dict d;
         d["bondIndex"] = std::get<0>(pr);
-        d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
-        d["smarts"] = std::get<2>(pr)->smarts;
-        d["positions"] = std::get<2>(pr)->positions;
-        d["widths"] = std::get<2>(pr)->widths;
-        d["heights"] = std::get<2>(pr)->heights;
+        d["torsionIndex"] = angle->torsionIdx;
+        d["smarts"] = angle->smarts;
+        d["positions"] = angle->positions;
+        d["widths"] = angle->widths;
+        d["heights"] = angle->heights;
         d["atomIndices"] = std::get<1>(pr);
         result.append(d);
       }

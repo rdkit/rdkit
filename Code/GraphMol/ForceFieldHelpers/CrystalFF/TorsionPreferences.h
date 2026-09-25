@@ -15,6 +15,7 @@
 #include <utility>
 #include <memory>
 #include <tuple>
+#include <variant>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/DistGeomHelpers/ZMatrixBuilder.h>
@@ -88,19 +89,26 @@ template <typename T>
 concept TorsionAngleType = std::is_same_v<T, ExpTorsionAngle> ||
                            std::is_same_v<T, GaussianExpTorsionAngle>;
 
-template <typename T>
-concept TorsionParamType =
-    std::is_same_v<T, CosineExp_T> || std::is_same_v<T, GaussianExp_T>;
+//! Which functional form the parameters stored in a CrystalFFDetails
+//! instance use
+enum class TorsionParamKind {
+  Cosine,
+  Gaussian
+};
 
-template <TorsionParamType T>
-using MappedAngle_T =
-    std::conditional_t<std::is_same_v<T, CosineExp_T>, ExpTorsionAngle,
-                       GaussianExpTorsionAngle>;
+//! Holds either the cosine-series (ETKDGv1/v2) or the Gaussian-fit
+//! (ETKDGv4) parameters for a single torsion term
+using TorsionParamVariant = std::variant<CosineExp_T, GaussianExp_T>;
 
-template <TorsionParamType T = CosineExp_T>
-struct CrystalFFDetails {
+//! Points at the SMARTS-pattern entry (of whichever functional form was
+//! used) that produced a torsion match
+using TorsionAnglePtrVariant =
+    std::variant<const ExpTorsionAngle *, const GaussianExpTorsionAngle *>;
+
+struct RDKIT_FORCEFIELDHELPERS_EXPORT CrystalFFDetails {
+  TorsionParamKind torsionParamKind{TorsionParamKind::Cosine};
   std::vector<std::vector<int>> expTorsionAtoms;
-  std::vector<T> expTorsionAngles;
+  std::vector<TorsionParamVariant> expTorsionAngles;
   std::vector<std::size_t> torsionIdx;
   std::vector<std::vector<int>> improperAtoms;
   std::vector<std::pair<int, int>> bonds;
@@ -117,26 +125,23 @@ struct CrystalFFDetails {
 };
 
 //! Get the experimental torsional angles in a molecule
-template <TorsionParamType T>
 RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
-    const RDKit::ROMol &mol, CrystalFFDetails<T> &details,
+    const RDKit::ROMol &mol, CrystalFFDetails &details,
     bool useExpTorsions = false, bool useSmallRingTorsions = false,
     bool useMacrocycleTorsions = false, bool useBasicKnowledge = false,
     unsigned int version = 2, bool verbose = false);
 
 //! \overload
-template <TorsionParamType T>
 RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
-    const RDKit::ROMol &mol, CrystalFFDetails<T> &details,
+    const RDKit::ROMol &mol, CrystalFFDetails &details,
     std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
-                           const MappedAngle_T<T> *>> &torsionBonds,
+                           TorsionAnglePtrVariant>> &torsionBonds,
     bool useExpTorsions = false, bool useSmallRingTorsions = false,
     bool useMacrocycleTorsions = false, bool useBasicKnowledge = false,
     unsigned int version = 2, bool verbose = false);
 
 //! Populate the lookuptable for the minimizations
-RDKIT_FORCEFIELDHELPERS_EXPORT void populateRefTable(
-    CrystalFFDetails<GaussianExp_T> &details);
+RDKIT_FORCEFIELDHELPERS_EXPORT void populateRefTable(CrystalFFDetails &details);
 
 }  // namespace CrystalFF
 }  // namespace ForceFields

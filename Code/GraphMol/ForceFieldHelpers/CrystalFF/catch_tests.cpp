@@ -21,7 +21,6 @@
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/MolOps.h>
 
-
 #include "GaussianTorsionAngleContribs.h"
 #include "TorsionPreferences.h"
 
@@ -198,8 +197,7 @@ TEST_CASE("GaussianTorsionContribsBasics") {
 namespace {
 
 constexpr std::size_t LOOKUP_SIZE = 180;
-using GaussianDetails = ForceFields::CrystalFF::CrystalFFDetails<
-    ForceFields::CrystalFF::GaussianExp_T>;
+using GaussianDetails = ForceFields::CrystalFF::CrystalFFDetails;
 
 }  // namespace
 
@@ -210,10 +208,13 @@ TEST_CASE("GaussianTorsionContribsLookupTable") {
     const std::vector<double> widths{1.0};
 
     GaussianDetails details;
+    details.torsionParamKind =
+        ForceFields::CrystalFF::TorsionParamKind::Gaussian;
     // arbitrary index, should afterwards be mapped to 0
     details.torsionIdx = {123};
     details.expTorsionAngles.reserve(1);
-    details.expTorsionAngles.emplace_back(heights, positions, widths, 1.0);
+    details.expTorsionAngles.push_back(
+        ForceFields::CrystalFF::GaussianExp_T{heights, positions, widths, 1.0});
 
     ForceFields::CrystalFF::populateRefTable(details);
 
@@ -236,9 +237,8 @@ TEST_CASE("GaussianTorsionContribsLookupTable") {
   const bool useMacrocycleTorsions = false;
   const bool useBasicKnowledge = true;
   const unsigned int version = 4;
-  std::vector<
-      std::tuple<unsigned int, std::vector<unsigned int>,
-                 const ForceFields::CrystalFF::GaussianExpTorsionAngle *>>
+  std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                         ForceFields::CrystalFF::TorsionAnglePtrVariant>>
       torsionBonds;
   SECTION("simple molecule") {
     auto mol = "CCCC"_smiles;
