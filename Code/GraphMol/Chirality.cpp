@@ -929,6 +929,20 @@ void setStereoForBond(ROMol &mol, Bond *bond, Bond::BondStereo stereo,
     mol.setProp("_needsDetectBondStereo", 1);
   }
 }
+
+bool hasUnknownStereoAnnotation(const Bond *bond) {
+  int hasWigglyBond = 0;
+  return bond->getBondDir() == Bond::BondDir::UNKNOWN ||
+         (bond->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                                      hasWigglyBond) &&
+          hasWigglyBond);
+}
+
+bool isWigglyBond(const Bond *bond, const Atom *atom) {
+  return bond->getBeginAtomIdx() == atom->getIdx() &&
+         bond->getBondType() == Bond::BondType::SINGLE &&
+         hasUnknownStereoAnnotation(bond);
+}
 }  // namespace detail
 
 typedef std::pair<int, int> INT_PAIR;
@@ -3188,18 +3202,6 @@ static unsigned int OctahedralPermFrom3D(unsigned char *pair,
   return 0;
 }
 
-bool isWigglyBond(const Bond *bond, const Atom *atom) {
-  int hasWigglyBond = 0;
-  if (bond->getBeginAtomIdx() == atom->getIdx() &&
-      bond->getBondType() == Bond::BondType::SINGLE &&
-      (bond->getBondDir() == Bond::BondDir::UNKNOWN ||
-       (bond->getPropIfPresent<int>(common_properties::_UnknownStereo,
-                                    hasWigglyBond) &&
-        hasWigglyBond))) {
-    return true;
-  }
-  return false;
-}
 // The tolerance here is pretty high in order to accomodate things coming from
 // the dgeom code As we get more experience with real-world structures and/or
 // improve the dgeom code, we can think about lowering this.
@@ -3215,7 +3217,7 @@ static bool assignNontetrahedralChiralTypeFrom3D(ROMol &mol,
 
   // check for wiggly bonds
   for (const auto bond : mol.atomBonds(atom)) {
-    if (isWigglyBond(bond, atom)) {
+    if (Chirality::detail::isWigglyBond(bond, atom)) {
       return false;
     }
   }
@@ -3466,7 +3468,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     unsigned int nbrIdx = 0;
     int hasWigglyBond = 0;
     for (const auto bond : mol.atomBonds(atom)) {
-      hasWigglyBond = isWigglyBond(bond, atom);
+      hasWigglyBond = Chirality::detail::isWigglyBond(bond, atom);
       if (hasWigglyBond) {
         break;
       }

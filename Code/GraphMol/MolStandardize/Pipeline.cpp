@@ -423,6 +423,9 @@ RWMOL_SPTR reapplyWedging(RWMOL_SPTR mol, PipelineResult &result,
       continue;
     }
     bond->setBondDir(Bond::NONE);
+    // the "unknown stereo" annotation is also recorded as a property, and the
+    // mol file writers restore the wavy style from it
+    bond->clearProp(common_properties::_UnknownStereo);
     result.append(NORMALIZATION_APPLIED, "The \"wavy\" style of bond " +
                                              std::to_string(bond->getIdx()) +
                                              " was removed");
