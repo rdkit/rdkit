@@ -677,7 +677,9 @@ bool WedgeBondFromAtropisomerOneBondNoConf(
 
   for (auto atomAndBondVec : atomAndBondVecs) {
     for (auto endBond : atomAndBondVec.second) {
-      if (endBond->getBondDir() == Bond::UNKNOWN) {
+      // clearSingleBondDirFlags() replaces the UNKNOWN direction with the
+      // _UnknownStereo property, so both spellings have to be checked
+      if (Chirality::detail::hasUnknownStereoAnnotation(endBond)) {
         return false;  // not an atropisomer)
       }
     }
@@ -840,7 +842,9 @@ bool WedgeBondFromAtropisomerOneBond2d(
 
   for (auto atomAndBondVec : atomAndBondVecs) {
     for (auto endBond : atomAndBondVec.second) {
-      if (endBond->getBondDir() == Bond::UNKNOWN) {
+      // clearSingleBondDirFlags() replaces the UNKNOWN direction with the
+      // _UnknownStereo property, so both spellings have to be checked
+      if (Chirality::detail::hasUnknownStereoAnnotation(endBond)) {
         return false;  // not an atropisomer)
       }
     }
@@ -1061,7 +1065,9 @@ bool WedgeBondFromAtropisomerOneBond3d(
 
   for (auto atomAndBondVecs : atomAndBondVecs) {
     for (auto endBond : atomAndBondVecs.second) {
-      if (endBond->getBondDir() == Bond::UNKNOWN) {
+      // clearSingleBondDirFlags() replaces the UNKNOWN direction with the
+      // _UnknownStereo property, so both spellings have to be checked
+      if (Chirality::detail::hasUnknownStereoAnnotation(endBond)) {
         return false;  // not an atropisomer)
       }
     }
@@ -1121,7 +1127,7 @@ bool WedgeBondFromAtropisomerOneBond3d(
       // to be used for a chiral center
 
       if (!canHaveDirection(*bondToTry) ||
-          wedgeBonds.find(bond->getIdx()) != wedgeBonds.end()) {
+          wedgeBonds.find(bondToTry->getIdx()) != wedgeBonds.end()) {
         continue;  // must be a single bond and not already spoken
                    // for by a chiral center
       }
