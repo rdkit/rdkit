@@ -386,17 +386,6 @@ python::str embedParametersToJSONHelper(
     const DGeomHelpers::EmbedParameters &ps) {
   return python::str(embedParametersToJSON(ps));
 }
-
-python::tuple getChiralSets(const RDKit::ROMol &mol) {
-  DistGeom::VECT_CHIRALSET chiralCenters;
-  DistGeom::VECT_CHIRALSET tetrahedralCenters;
-  DGeomHelpers::findChiralSets(mol, chiralCenters, tetrahedralCenters, nullptr);
-  std::vector<unsigned int> centers;
-  for (const auto &val : chiralCenters) {
-    centers.push_back(val->d_idx0);
-  }
-  return python::tuple(centers);
-}
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
@@ -405,9 +394,6 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       "distance geometry";
 
   rdkit_import_array();
-
-  python::def("GetChiralSets", RDKit::getChiralSets, python::arg("mol"),
-              "Get chiral sets as in a molecule.");
 
   // RegisterListConverter<RDKit::Atom*>();
 

@@ -304,29 +304,12 @@ static nb::tuple getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
       throw std::invalid_argument("ETversion needs to be either 1, 2 or 4.");
   }
 }
-
-static nb::tuple getChiralSets(const RDKit::ROMol &mol) {
-  DistGeom::VECT_CHIRALSET chiralCenters;
-  DistGeom::VECT_CHIRALSET tetrahedralCenters;
-  DGeomHelpers::findChiralSets(mol, chiralCenters, tetrahedralCenters, nullptr);
-  nb::list centers;
-  for (const auto &val : chiralCenters) {
-    centers.append(val->d_idx0);
-  }
-  return nb::tuple(centers);
-}
-
 }  // namespace RDKit
 
 NB_MODULE(rdDistGeom, m) {
   m.doc() =
       R"DOC(Module containing functions to compute atomic coordinates in 3D using
 distance geometry)DOC";
-
-  m.def(
-      "GetChiralSets",
-      [](const RDKit::ROMol &mol) { return RDKit::getChiralSets(mol); },
-      "mol"_a, "Get chiral sets in a molecule.");
 
   m.def(
       "GetExperimentalTorsions",

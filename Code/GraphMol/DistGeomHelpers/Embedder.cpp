@@ -1444,7 +1444,6 @@ bool setupInitialBoundsMatrix(
   }
   return true;
 }
-}  // namespace EmbeddingOps
 
 void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
                     DistGeom::VECT_CHIRALSET &tetrahedralCenters,
@@ -1587,6 +1586,7 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
     chiralCenters.push_back(cptr);
   }
 }
+}  // namespace EmbeddingOps
 
 void _fillAtomPositions(RDGeom::Point3DConstPtrVect &pts, const Conformer &conf,
                         const ROMol &, const std::vector<unsigned int> &match) {
@@ -1949,7 +1949,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     MolOps::assignStereochemistry(*piece);
     DistGeom::VECT_CHIRALSET chiralCenters;
     DistGeom::VECT_CHIRALSET tetrahedralCarbons;
-    findChiralSets(*piece, chiralCenters, tetrahedralCarbons, coordMap);
+    EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons, coordMap);
 
     DistGeom::ZMatPtr zmat = std::make_shared<DistGeom::ZMatrix>(nAtoms);
     if (params.initialEmbeddingMode ==

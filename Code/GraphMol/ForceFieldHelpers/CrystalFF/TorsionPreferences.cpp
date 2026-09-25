@@ -572,27 +572,45 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
 }
 
 void populateRefTable(CrystalFFDetails &details) {
+  // Deduplicate torsion patterns to compute lookup tables (energies & gradients) 
+  // only once per unique pattern, while preserving evaluation order from `getExperimentalTorsions`.
+  // Keeping the order intact is crucial, since otherwise this would break the
+  // way trans amides are currently handled.
+
+  // Sort and deduplicate the original torsion indices.
   std::vector<std::size_t> sorted = details.torsionIdx;
   std::ranges::sort(sorted);
+
   auto [first, last] = std::ranges::unique(sorted);
   sorted.erase(first, last);
+
+  // Map each original torsion index in `details.torsionIdx` 
+  // to its 0-based rank inside `sorted`.
   std::ranges::transform(
       details.torsionIdx, details.torsionIdx.begin(), [&sorted](int x) {
         return std::ranges::distance(sorted.begin(),
                                      std::ranges::lower_bound(sorted, x));
       });
+
   details.phiToEnergy.resize(sorted.size(),
                              std::vector<double>(lookup_grid_size));
   details.phiToGrad.resize(sorted.size(),
                            std::vector<double>(lookup_grid_size));
+
   for (std::size_t torsionIdx = 0; torsionIdx < sorted.size(); ++torsionIdx) {
+    // Find the first matching occurrence of `torsionIdx` to locate its parameters
+    // inside `expTorsionAngles`.
     auto it = std::ranges::find(details.torsionIdx, torsionIdx);
     std::size_t termIdx = std::distance(details.torsionIdx.begin(), it);
+
+    // Unpack Gaussian parameters for energy/gradient evaluation.
     const auto &gaussianParams =
         std::get<GaussianExp_T>(details.expTorsionAngles[termIdx]);
     auto &heights = std::get<0>(gaussianParams);
     auto &positions = std::get<1>(gaussianParams);
     auto &widths = std::get<2>(gaussianParams);
+
+    // Evaluate energy and gradient across the grid range [0, pi].
     for (std::size_t gridPoint = 0; gridPoint < lookup_grid_size; ++gridPoint) {
       const double phi = gridPoint * std::numbers::pi / (lookup_grid_size - 1);
       details.phiToEnergy[torsionIdx][gridPoint] =

@@ -31,6 +31,7 @@ inline double interpolate(const std::vector<double> &table, double phi) {
   const double t = norm - static_cast<double>(idx);
   return table[idx] * (1.0 - t) + table[idx + 1] * t;
 }
+
 double getEnergy(const std::vector<double> &heights,
                  const std::vector<double> &positions,
                  const std::vector<double> &widths, const double phi) {
@@ -56,12 +57,6 @@ double getEnergy(const std::vector<double> &heights,
 double getdEdPhi(const std::vector<double> &heights,
                  const std::vector<double> &positions,
                  const std::vector<double> &widths, double phi) {
-  // This seems like a lot of overhead, but makes the code safer, what should i
-  // do?
-  // PRECONDITION(heights.size() == positions.size(),
-  //              "positions, heights and widths need to be the same size.")
-  // PRECONDITION(heights.size() == widths.size(),
-  //              "positions, heights and widths need to be the same size.")
   double innerDerivs = 0.0;
   double denominator = 0.0;
   for (size_t i = 0; i < heights.size(); ++i) {
@@ -80,6 +75,7 @@ double getdEdPhi(const std::vector<double> &heights,
     innerDerivs += a * cinv * (-t1 * d1 + t2 * d2 - t3 * d3 + t4 * d4);
     denominator += a * (t1 + t2 + t3 + t4);
   }
+  denominator = MMFF::isDoubleZero(denominator) ? 1e-10 : denominator;
   return -2 * innerDerivs / denominator;
 }
 
