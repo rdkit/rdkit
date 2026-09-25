@@ -6877,3 +6877,86 @@ M  END
   CHECK(getMolBlockBondStereo(outBlock, 0, 1) == 0);
   CHECK(getMolBlockBondStereo(outBlock, 1, 2) == 3);
 }
+
+TEST_CASE("atropisomer wedging does not steal a wiggly bond") {
+  // the bond marking the stereochemistry at the quaternary carbon as unknown
+  // is also the only candidate the atropisomer wedging has for expressing the
+  // axial stereochemistry. The atropisomer has to give way: a wedge here would
+  // assert a configuration the input explicitly declined to specify.
+  const std::string molBlock = R"CTAB(
+     RDKit          3D
+
+ 20 20  0  0  1  0  0  0  0  0999 V2000
+    0.7154   -2.4240   -0.9980 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7098   -1.8145   -0.6066 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8647   -2.6256   -0.1688 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9604   -2.0198    0.2767 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0233   -0.6654    0.3287 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0164    0.1830   -0.0597 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8356   -0.4258   -0.5221 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7969    0.4044   -1.0145 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1347    1.2026   -2.0512 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6500    0.4241   -0.2821 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -1.0960    1.9538   -0.1260 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -2.0327    2.3563    1.0164 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9317    2.7678   -1.7362 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4128   -0.1551    1.1854 C   0  0  1  0  0  0  0  0  0  0  0  0
+    0.3088    0.7574    1.9035 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5667   -0.6259    2.0631 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6835   -0.5283   -1.0250 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -1.5393   -0.5416   -2.8284 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1776   -0.3567   -0.7262 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2120    1.3954    0.0363 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  1  0
+  7  6  1  1
+  7  2  1  0
+  7  8  1  0
+  8  9  2  0
+ 10  8  1  6
+ 10 11  1  0
+ 11 12  1  1
+ 11 13  1  0
+ 10 14  1  0
+ 14 15  1  0
+ 14 16  1  1
+ 10 17  1  0
+ 17 18  1  0
+ 17 19  1  6
+  6 20  2  0
+M  END
+)CTAB";
+  std::unique_ptr<RWMol> m{MolBlockToMol(molBlock)};
+  REQUIRE(m);
+  REQUIRE(m->getBondBetweenAtoms(6, 7)->getStereo() ==
+          Bond::BondStereo::STEREOATROPCCW);
+
+  MolOps::clearSingleBondDirFlags(*m);
+  Chirality::clearMolBlockWedgingInfo(*m);
+
+  SECTION("wiggly bond at a potential stereocenter") {
+    // this one is claimed by pickBondsToWedge() before the atropisomer code
+    // ever gets a chance at it, and comes back out as a wiggly bond
+    const auto wigglyBond = m->getBondBetweenAtoms(9, 7);
+    REQUIRE(wigglyBond);
+    wigglyBond->setProp(common_properties::_UnknownStereo, 1);
+
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
+    CHECK(wigglyBond->getBondDir() == Bond::BondDir::UNKNOWN);
+  }
+  SECTION("wiggly bond on a plain atom at the atropisomer axis") {
+    // atom 6 is not a potential stereocenter, so nothing claims this bond on
+    // its behalf. It is still the atropisomer code's first choice for
+    // expressing the axial stereochemistry, and wedging it would overwrite an
+    // annotation the input deliberately made
+    const auto wigglyBond = m->getBondBetweenAtoms(6, 5);
+    REQUIRE(wigglyBond);
+    wigglyBond->setProp(common_properties::_UnknownStereo, 1);
+
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
+    CHECK(wigglyBond->getBondDir() == Bond::BondDir::NONE);
+  }
+}

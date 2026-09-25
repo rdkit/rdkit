@@ -47,23 +47,6 @@ std::tuple<unsigned int, unsigned int, unsigned int> getDoubleBondPresence(
   }
   return std::make_tuple(hasDouble, hasKnownDouble, hasAnyDouble);
 }
-
-// A wiggly bond expresses "the stereochemistry at my begin atom is unknown".
-// The mol file parsers and clearSingleBondDirFlags() both leave that annotation
-// behind as _UnknownStereo=1 with a BondDir of NONE, so checking BondDir alone
-// is not enough to recognize one.
-bool isWigglyBond(const Bond *bond) {
-  if (bond->getBondType() != Bond::SINGLE) {
-    return false;
-  }
-  if (bond->getBondDir() == Bond::UNKNOWN) {
-    return true;
-  }
-  int unknownStereo = 0;
-  return bond->getPropIfPresent(common_properties::_UnknownStereo,
-                                unknownStereo) &&
-         unknownStereo;
-}
 }  // namespace
 
 namespace detail {
@@ -405,7 +388,7 @@ std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
   // alone.
   if (!mol.needsUpdatePropertyCache()) {
     for (const auto bond : mol.bonds()) {
-      if (!isWigglyBond(bond)) {
+      if (!detail::isWigglyBond(bond, bond->getBeginAtom())) {
         continue;
       }
       if (!mol.getRingInfo()->isSssrOrBetter()) {
