@@ -27,6 +27,9 @@ class ForceFieldContrib;
 namespace ForceFields {
 namespace CrystalFF {
 
+//! Size of the energies and gradients lookup table
+constexpr std::size_t lookup_grid_size = 180;
+
 //! A term to capture all torsion constraint potentials.
 //!
 struct RDKIT_FORCEFIELDHELPERS_EXPORT GaussianTorsionAngleContribsParams {
@@ -107,7 +110,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT GaussianTorsionAngleContribs
 //! Calculate the torsion energy as described in 10.1021/acs.jcim.5b00654, this
 //! can be used with any any number of heights, positions and widths.
 //! The caller is responsible that the size of the three parameter objects are
-//! the same.
+//! the same and non zero. `widths` need to be strictly positive.
 /*!
  \param heights        heights of the gaussians
  \param positions      positions of the gaussians
@@ -121,7 +124,7 @@ RDKIT_FORCEFIELDHELPERS_EXPORT double getEnergy(
 //! Calculate the torsion gradient as described in 10.1021/acs.jcim.5b00654,
 //! this can be used with any any number of heights, positions and widths. The
 //! caller is responsible that the size of the three parameter objects are the
-//! same.
+//! same and non zero. `widths` need to be strictly positive.
 /*!
  \param heights        heights of the gaussians
  \param positions      positions of the gaussians

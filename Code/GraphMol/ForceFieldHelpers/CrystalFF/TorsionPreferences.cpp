@@ -50,7 +50,6 @@ const std::vector<double> AROMATIC_WIDTHS = {0.251};
 constexpr std::size_t AMIDE_TRANS_IDX = 2000;
 constexpr std::size_t AMIDE_CIS_IDX = 2001;
 constexpr std::size_t AROM_TORSION_IDX = 2002;
-constexpr std::size_t LOOKUP_GRID_SIZE = 180;
 
 /* SMARTS patterns for experimental torsion angle preferences
  * Version 1 taken from J. Med. Chem. 56, 1026-2028 (2013)
@@ -583,9 +582,9 @@ void populateRefTable(CrystalFFDetails &details) {
                                      std::ranges::lower_bound(sorted, x));
       });
   details.phiToEnergy.resize(sorted.size(),
-                             std::vector<double>(LOOKUP_GRID_SIZE));
+                             std::vector<double>(lookup_grid_size));
   details.phiToGrad.resize(sorted.size(),
-                           std::vector<double>(LOOKUP_GRID_SIZE));
+                           std::vector<double>(lookup_grid_size));
   for (std::size_t torsionIdx = 0; torsionIdx < sorted.size(); ++torsionIdx) {
     auto it = std::ranges::find(details.torsionIdx, torsionIdx);
     std::size_t termIdx = std::distance(details.torsionIdx.begin(), it);
@@ -594,8 +593,8 @@ void populateRefTable(CrystalFFDetails &details) {
     auto &heights = std::get<0>(gaussianParams);
     auto &positions = std::get<1>(gaussianParams);
     auto &widths = std::get<2>(gaussianParams);
-    for (std::size_t gridPoint = 0; gridPoint < LOOKUP_GRID_SIZE; ++gridPoint) {
-      const double phi = gridPoint * std::numbers::pi / (LOOKUP_GRID_SIZE - 1);
+    for (std::size_t gridPoint = 0; gridPoint < lookup_grid_size; ++gridPoint) {
+      const double phi = gridPoint * std::numbers::pi / (lookup_grid_size - 1);
       details.phiToEnergy[torsionIdx][gridPoint] =
           getEnergy(heights, positions, widths, phi);
       details.phiToGrad[torsionIdx][gridPoint] =
