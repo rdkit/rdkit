@@ -160,6 +160,7 @@ class TestCase(unittest.TestCase):
   def testOneHundredDocumentedMarkushFormulaeAndTheirCompounds(self):
     formula_count = 0
     compound_count = 0
+    formulae = set()
     identities = set()
     max_enumeration_microseconds = 0
     for smarts, candidate_smiles in self._documented_generic_formula_cases():
@@ -182,9 +183,11 @@ class TestCase(unittest.TestCase):
                          candidates)
         formula_count += 1
         compound_count += len(candidates)
+        formulae.add(smarts)
         identities.update(Chem.MolToSmiles(molecule) for molecule in candidates)
 
     self.assertGreaterEqual(formula_count, 100)
+    self.assertGreaterEqual(len(formulae), 100)
     self.assertGreaterEqual(compound_count, 500)
     self.assertGreaterEqual(len(identities), 500)
     # Each individual five-member finite library is deliberately small enough
