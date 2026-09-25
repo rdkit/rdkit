@@ -23,6 +23,7 @@
 namespace ForceFields {
 namespace CrystalFF {
 constexpr double twoPI = 2 * std::numbers::pi;
+constexpr double eps = std::numeric_limits<double>::min();
 
 inline double interpolate(const std::vector<double> &table, double phi) {
   const double norm = phi * (table.size() - 1) / std::numbers::pi;
@@ -75,7 +76,9 @@ double getdEdPhi(const std::vector<double> &heights,
     innerDerivs += a * cinv * (-t1 * d1 + t2 * d2 - t3 * d3 + t4 * d4);
     denominator += a * (t1 + t2 + t3 + t4);
   }
-  denominator = MMFF::isDoubleZero(denominator) ? 1e-10 : denominator;
+  if (denominator < eps) {
+    denominator = eps;
+  }
   return -2 * innerDerivs / denominator;
 }
 
