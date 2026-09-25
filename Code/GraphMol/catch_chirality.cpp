@@ -6971,17 +6971,19 @@ M  END
     Chirality::wedgeMolBonds(*m, &m->getConformer());
     CHECK(wigglyBond->getBondDir() == Bond::BondDir::UNKNOWN);
   }
-  SECTION("wiggly bond on a plain atom at the atropisomer axis") {
-    // atom 6 is not a potential stereocenter, but the annotation is still
-    // wedging information and still has to survive. This bond is also the
-    // atropisomer code's first choice for expressing the axial
-    // stereochemistry, and wedging it would overwrite an annotation the input
+  SECTION("wiggly bond which pickBondsToWedge() does not claim") {
+    // this one is in the aromatic ring, so it is not a wiggly bond as far as
+    // the wedging code is concerned and nothing claims it on any atom's
+    // behalf. It is still the atropisomer code's first choice for expressing
+    // the axial stereochemistry, which is why that code needs the check in
+    // its own right: wedging it would overwrite an annotation the input
     // deliberately made
     const auto wigglyBond = m->getBondBetweenAtoms(6, 5);
     REQUIRE(wigglyBond);
+    REQUIRE(wigglyBond->getBondType() == Bond::BondType::AROMATIC);
     wigglyBond->setProp(common_properties::_UnknownStereo, 1);
 
     Chirality::wedgeMolBonds(*m, &m->getConformer());
-    CHECK(wigglyBond->getBondDir() == Bond::BondDir::UNKNOWN);
+    CHECK(wigglyBond->getBondDir() == Bond::BondDir::NONE);
   }
 }
