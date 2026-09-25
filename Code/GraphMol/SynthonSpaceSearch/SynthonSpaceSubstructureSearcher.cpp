@@ -10,11 +10,10 @@
 
 #include <GraphMol/MolBundle.h>
 #include <GraphMol/MolOps.h>
-#include <GraphMol/QueryAtom.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSubstructureSearcher.h>
 #include <RDGeneral/ControlCHandler.h>
@@ -29,7 +28,7 @@ namespace {
 // synthon set since smaller, less complex fragments are more likely
 // to match something, so screen with that first.
 void reorderFragments(
-    std::vector<std::unique_ptr<ROMol>> &molFrags,
+    std::vector<std::shared_ptr<ROMol>> &molFrags,
     const std::vector<std::pair<void *, ExplicitBitVect *>> &allPattFPs) {
   std::vector<ExplicitBitVect *> pattFPs;
   pattFPs.reserve(molFrags.size());
@@ -54,16 +53,16 @@ void reorderFragments(
             });
 
   // Now put orderedFrags in the same order.
-  std::vector<std::unique_ptr<ROMol>> newFrags(molFrags.size());
+  std::vector<std::shared_ptr<ROMol>> newFrags(molFrags.size());
   for (size_t i = 0; i < fps.size(); ++i) {
-    newFrags[i] = std::move(molFrags[fps[i].first]);
+    newFrags[i] = molFrags[fps[i].first];
   }
-  molFrags = std::move(newFrags);
+  molFrags = newFrags;
 }
 
 // Collect the pattern fps for the fragments.
 std::vector<ExplicitBitVect *> gatherPatternFPs(
-    const std::vector<std::unique_ptr<ROMol>> &molFrags,
+    const std::vector<std::shared_ptr<ROMol>> &molFrags,
     const std::vector<std::pair<void *, ExplicitBitVect *>> &allPattFPs) {
   std::vector<ExplicitBitVect *> pattFPs;
   pattFPs.reserve(molFrags.size());
@@ -156,34 +155,80 @@ std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
   return passedFPs;
 }
 
+// Find the first synthon in the set that has no less than the required
+// number of atoms.  The fragment can't be a substructure match of the
+// synthon if it has more atoms than it.
+size_t findSynthonSearchStart(unsigned int fragNumAtoms, size_t synthonSetNum,
+                              const SynthonSet &reaction) {
+  size_t first = 0;
+  if (fragNumAtoms <=
+      reaction.getSubstructureOrderedSynthon(synthonSetNum, first)
+          .second->getSearchMol()
+          ->getNumAtoms()) {
+    return first;
+  }
+  // This is the procedure that https://en.wikipedia.org/wiki/Binary_search
+  // calls binary_search_leftmost.
+  size_t last = reaction.getSynthons()[synthonSetNum].size();
+  while (first < last) {
+    size_t mid = first + (last - first) / 2;
+    if (reaction.getSubstructureOrderedSynthon(synthonSetNum, mid)
+            .second->getSearchMol()
+            ->getNumAtoms() < fragNumAtoms) {
+      first = mid + 1;
+    } else {
+      last = mid;
+    }
+  }
+  return first;
+}
+
 // Take the fragged mol and flag all those synthons that have a fragment as
 // a substructure match.  Only do this for those synthons that have already
 // passed previous screening, and are flagged as such in passedScreens.
 std::vector<std::vector<size_t>> getHitSynthons(
     const std::vector<std::unique_ptr<ROMol>> &molFrags,
     const std::vector<boost::dynamic_bitset<>> &passedScreens,
-    const SynthonSet &reaction, const std::vector<unsigned int> &synthonOrder) {
+    const SynthonSet &reaction,
+    const std::vector<unsigned int> &synthonSetOrder) {
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
   std::vector<std::vector<size_t>> retSynthons;
+  // It makes sense to match fragments against synthon sets in order of
+  // smallest synthon set first because if a fragment doesn't have a match
+  // in a synthon set, the whole thing's a bust.  So if fragShapes[0] is matched
+  // against 1000 synthons and then fragShapes[1] is matched against 10 synthons
+  // and doesn't match any of them, the first set of matches was wasted time.
+  std::vector<std::pair<unsigned int, size_t>> fragOrders(
+      synthonSetOrder.size());
+  for (size_t i = 0; i < synthonSetOrder.size(); i++) {
+    fragOrders[i].first = i;
+    fragOrders[i].second = reaction.getSynthons()[synthonSetOrder[i]].size();
+  }
+  std::ranges::sort(fragOrders, [](const auto &a, const auto &b) {
+    return a.second < b.second;
+  });
+  synthonsToUse.reserve(reaction.getSynthons().size());
   for (const auto &synthonSet : reaction.getSynthons()) {
     synthonsToUse.emplace_back(synthonSet.size());
   }
 
-  // The tests must be applied for all permutations of synthon list against
-  // fragment.
-  auto synthonOrders =
-      details::permMFromN(molFrags.size(), reaction.getSynthons().size());
-
   // Match the fragment to the synthon set in this order.
-  for (size_t i = 0; i < synthonOrder.size(); ++i) {
-    const auto &synthonsSet = reaction.getSynthons()[synthonOrder[i]];
-    const auto &passedScreensSet = passedScreens[synthonOrder[i]];
+  for (size_t i = 0; i < synthonSetOrder.size(); ++i) {
+    const auto fragNum = fragOrders[i].first;
+    const auto &synthonsSet = reaction.getSynthons()[synthonSetOrder[fragNum]];
+    const auto &passedScreensSet = passedScreens[synthonSetOrder[fragNum]];
     bool fragMatched = false;
-    for (size_t j = 0; j < synthonsSet.size(); ++j) {
-      if (passedScreensSet[j]) {
-        if (const auto &[id, synthon] = synthonsSet[j];
-            !SubstructMatch(*synthon->getSearchMol(), *molFrags[i]).empty()) {
-          synthonsToUse[synthonOrder[i]][j] = true;
+    auto start = findSynthonSearchStart(molFrags[fragNum]->getNumAtoms(),
+                                        synthonSetOrder[fragNum], reaction);
+    for (size_t j = start; j < synthonsSet.size(); ++j) {
+      // Search them in the sorted order.
+      auto synthonNum = reaction.getSubstructureOrderedSynthonNum(
+          synthonSetOrder[fragNum], j);
+      if (passedScreensSet[synthonNum]) {
+        if (const auto &[id, synthon] = synthonsSet[synthonNum];
+            !SubstructMatch(*synthon->getSearchMol(), *molFrags[fragNum])
+                 .empty()) {
+          synthonsToUse[synthonSetOrder[fragNum]][synthonNum] = true;
           fragMatched = true;
         }
       }
@@ -211,37 +256,151 @@ std::vector<std::vector<size_t>> getHitSynthons(
   return retSynthons;
 }
 
+std::vector<std::shared_ptr<ROMol>> mergeFragments(
+    size_t i, size_t one, size_t two, const std::vector<size_t> &others,
+    const std::vector<std::shared_ptr<ROMol>> &fragSet) {
+  std::vector<std::shared_ptr<ROMol>> retFrags;
+  retFrags.emplace_back(std::make_shared<ROMol>(*fragSet[i]));
+  retFrags.emplace_back(
+      std::unique_ptr<ROMol>(combineMols(*fragSet[one], *fragSet[two])));
+  for (auto o : others) {
+    if (o != one && o != two) {
+      retFrags.emplace_back(std::make_shared<ROMol>(*fragSet[o]));
+    }
+  }
+  return retFrags;
+}
+std::vector<std::shared_ptr<ROMol>> mergeFragments(
+    size_t i, size_t one, size_t two, size_t three, size_t four,
+    const std::vector<std::shared_ptr<ROMol>> &fragSet) {
+  std::vector<std::shared_ptr<ROMol>> retFrags;
+  retFrags.emplace_back(std::make_shared<ROMol>(*fragSet[i]));
+  retFrags.emplace_back(
+      std::unique_ptr<ROMol>(combineMols(*fragSet[one], *fragSet[two])));
+  retFrags.emplace_back(
+      std::unique_ptr<ROMol>(combineMols(*fragSet[three], *fragSet[four])));
+  return retFrags;
+}
+
+// If there is a ring-forming reaction, we will need to merge all possible
+// pairs of fragments creating multiple possible fragment sets.  Do that for
+// all fragSets of size more than 2.
+std::vector<std::vector<std::shared_ptr<ROMol>>> mergeRingFormingFrags(
+    const std::vector<std::shared_ptr<ROMol>> &fragSet) {
+  std::vector<std::vector<std::shared_ptr<ROMol>>> fragSetCps;
+
+  // There can be 1 or 2 ring closures in a reaction, so
+  // either 2 of the synthons will be bidentate (1 ring closure), or
+  // 1 synthon will be 4-dentate.
+  // We need to allow for a query that only has a part-ring trying to match
+  // it. O=c1ncnc([c])c1[c] was ground zero for this. For a 1 ring-former,
+  // take each bi-dentate fragment and make all combinations of 1 pair from
+  // the rest and then the rest. Within the current constraint of only 4
+  // connectors being allowed, 2 ring forming reactions must mean a single
+  // 4-connector fragment and 4 1-connector fragments
+  const auto &connPatts = details::getConnectorPatterns(fragSet);
+  for (size_t i = 0; i < connPatts.size(); ++i) {
+    if (connPatts[i].count() > 1) {
+      std::vector<size_t> others;
+      for (size_t j = 0; j < connPatts.size(); ++j) {
+        if (i != j) {
+          others.push_back(j);
+        }
+      }
+      // If there are only 2 other fragments, it's easy
+      if (others.size() == 2) {
+        fragSetCps.push_back(
+            mergeFragments(i, others[0], others[1], others, fragSet));
+      } else if (others.size() == 3) {
+        // Merge each possible pair, leaving the other one
+        fragSetCps.push_back(
+            mergeFragments(i, others[0], others[1], others, fragSet));
+        fragSetCps.push_back(
+            mergeFragments(i, others[0], others[2], others, fragSet));
+        fragSetCps.push_back(
+            mergeFragments(i, others[1], others[2], others, fragSet));
+      } else if (others.size() == 4) {
+        // merge all combinations of pairs - it's the 4-dentate fragment
+        fragSetCps.push_back(mergeFragments(i, others[0], others[1], others[2],
+                                            others[3], fragSet));
+        fragSetCps.push_back(mergeFragments(i, others[0], others[2], others[1],
+                                            others[3], fragSet));
+        fragSetCps.push_back(mergeFragments(i, others[1], others[2], others[0],
+                                            others[3], fragSet));
+      }
+    }
+  }
+  return fragSetCps;
+}
+
 }  // namespace
 
-void SynthonSpaceSubstructureSearcher::extraSearchSetup(
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) {
+unsigned int SynthonSpaceSubstructureSearcher::getNumQueryFragmentsRequired() {
+  auto maxNumSynthons = getSpace()->getMaxNumSynthons();
+  auto maxNumConns = getSpace()->getMaxNumConnectors();
+  return std::max(maxNumSynthons, maxNumConns + 1);
+}
+
+bool SynthonSpaceSubstructureSearcher::extraSearchSetup(
+    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets,
+    const TimePoint *endTime) {
+  if (getSpace()->getHasRingFormer()) {
+    // If there is a reaction that has a pair of synthons that form a ring,
+    // extra merged fragments are required.
+    std::vector<std::vector<std::shared_ptr<ROMol>>> extraFragSets;
+    for (const auto &fragSet : fragSets) {
+      // There's no need to do this for a fragSet of size 2, because if there
+      // is a ring-forming reaction both fragments will be bi-dentate so might
+      // match, or at least one of them isn't, in which case there can't be a
+      // match.
+      if (fragSet.size() > 2) {
+        auto fragSetCps = mergeRingFormingFrags(fragSet);
+        for (auto &fs : fragSetCps) {
+          extraFragSets.emplace_back(fs);
+        }
+      }
+    }
+    for (auto &fs : extraFragSets) {
+      fragSets.emplace_back(fs);
+    }
+  }
   bool cancelled = false;
   auto fragSmiToFrag = details::mapFragsBySmiles(fragSets, cancelled);
-  if (cancelled) {
-    return;
+  if (cancelled || details::checkTimeOut(endTime)) {
+    return false;
   }
   // Now generate the pattern fingerprints for the fragments.
-  const auto pattFPSize = getSpace().getPatternFPSize();
+  const auto pattFPSize = getSpace()->getPatternFPSize();
   d_pattFPsPool.resize(fragSmiToFrag.size());
   d_connRegsPool.resize(fragSmiToFrag.size());
   d_connRegSmisPool.resize(fragSmiToFrag.size());
   d_connRegFPsPool.resize(fragSmiToFrag.size());
   unsigned int fragNum = 0;
   bool saidSomething = false;
+  int numDone = 100;
   for (auto &[fragSmi, frags] : fragSmiToFrag) {
     if (ControlCHandler::getGotSignal()) {
-      return;
+      return false;
+    }
+    --numDone;
+    if (!numDone) {
+      numDone = 100;
+      if (details::checkTimeOut(endTime)) {
+        return false;
+      }
     }
     // For the fingerprints, ring info is required, and this needs to be
     // done for every copy of the fragment. We also need to fix any
     // query atoms.
-    for (const auto &frag : frags) {
-      unsigned int otf;
-      sanitizeMol(*static_cast<RWMol *>(frag), otf, MolOps::SANITIZE_SYMMRINGS);
-
+    for (auto &frag : frags) {
+      if (!frag->getRingInfo()->isInitialized()) {
+        VECT_INT_VECT arings;
+        MolOps::symmetrizeSSSR(*frag, arings);
+      }
       // Query atoms may define the environment of the fragment (via recursive
-      // SMARTS, for example) that a potentially matching synthon may not have,
-      // so they need to be made more generic.  For example, if the query is
+      // SMARTS, for example) that a potentially matching synthon may not
+      // have, so they need to be made more generic.  For example, if the
+      // query is
       // [$(c1ccccc1),$(c1ccncc1),$(c1cnccc1)]C(=O)N1[C&!$(CC(=O))]CCC1
       // and it's split into [$(c1ccccc1),$(c1ccncc1),$(c1cnccc1)]C(=O)[1*]
       // that won't match the synthon [1*]c([*3])C(=O)[2*] even though the
@@ -249,10 +408,10 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
       // combined with a synthon such as [*1]ccccc[*3].  The downside is that
       // the fragment will become less discriminating leading to more false
       // positives in the initial screenout, hence the warning.
-      if (details::removeQueryAtoms(*static_cast<RWMol *>(frag)) &&
+      if (details::removeQueryAtoms(*reinterpret_cast<RWMol *>(frag)) &&
           !saidSomething) {
         saidSomething = true;
-        BOOST_LOG(rdWarningLog) << "Complex queries can be slow." << std::endl;
+        BOOST_LOG(rdInfoLog) << "Complex queries can be slow." << std::endl;
       }
     }
     d_pattFPsPool[fragNum] = std::unique_ptr<ExplicitBitVect>(
@@ -306,28 +465,26 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
   for (auto &fs : fragSets) {
     reorderFragments(fs, d_pattFPs);
   }
+  return true;
 }
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceSubstructureSearcher::searchFragSet(
-    const std::vector<std::unique_ptr<ROMol>> &fragSet,
+    const std::vector<std::shared_ptr<ROMol>> &fragSet,
     const SynthonSet &reaction) const {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
-
   const auto pattFPs = gatherPatternFPs(fragSet, d_pattFPs);
   std::vector<int> numFragConns;
   numFragConns.reserve(fragSet.size());
   for (const auto &frag : fragSet) {
     numFragConns.push_back(details::countConnections(*frag));
   }
-
   const auto conns = details::getConnectorPattern(fragSet);
-  // It can't be a hit if the number of fragments is more than the number
-  // of synthon sets because some of the molecule won't be matched in any
-  // of the potential products.  It can be less, in which case the unused
-  // synthon set will be used completely, possibly resulting in a large
-  // number of hits.
-  if (fragSet.size() > reaction.getSynthons().size()) {
+  // It can't be a hit if the number of fragments is more than 1 plus the
+  // number of bonds being formed in the reaction.  It can be less, in which
+  // case the unused synthon set will be used completely, possibly resulting
+  // in a large number of hits.
+  if (fragSet.size() > reaction.getConnectors().count() + 1) {
     return results;
   }
 
@@ -341,28 +498,28 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
     return results;
   }
 
-  // Get all the possible permutations of connector numbers compatible with
-  // the number of synthon sets in this reaction.  So if the
-  // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
-  // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
-  // that might be how they're labelled in the reaction database.
-
   // Need to copy orderedFrags into a working set, then apply the results to
   // the working copy below.
   std::vector<std::unique_ptr<ROMol>> fragSetCp(fragSet.size());
   for (unsigned int i = 0; i < fragSet.size(); ++i) {
     fragSetCp[i] = std::make_unique<ROMol>(*fragSet[i]);
   }
+
+  // Get all the possible permutations of connector numbers compatible with
+  // the number of synthon sets in this reaction.  So if the
+  // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
+  // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
+  // that might be how they're labelled in the reaction database.
   const auto connCombs = details::getConnectorPermutations(
       fragSetCp, conns, reaction.getConnectors());
 
   // Select only the synthons that have fingerprints that are a superset
   // of the fragment fingerprints.
   // Need to try all combinations of synthon orders.
-  const auto synthonOrders =
-      details::permMFromN(pattFPs.size(), reaction.getSynthons().size());
-  for (const auto &so : synthonOrders) {
-    auto passedScreens = screenSynthonsWithFPs(pattFPs, reaction, so);
+  const auto synthonSetOrders =
+      details::permMFromN(fragSetCp.size(), reaction.getSynthons().size());
+  for (const auto &sso : synthonSetOrders) {
+    auto passedScreens = screenSynthonsWithFPs(pattFPs, reaction, sso);
     // If none of the synthons passed the screens, move right along, nothing
     // to see.
     const bool skip = std::all_of(
@@ -385,7 +542,7 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
         }
       }
       auto theseSynthons =
-          getHitSynthons(fragSetCp, passedScreens, reaction, so);
+          getHitSynthons(fragSetCp, passedScreens, reaction, sso);
       if (!theseSynthons.empty()) {
         std::unique_ptr<SynthonSpaceHitSet> hs(
             new SynthonSpaceHitSet(reaction, theseSynthons, fragSet));
@@ -395,19 +552,37 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
       }
     }
   }
-
   return results;
 }
 
-bool SynthonSpaceSubstructureSearcher::verifyHit(ROMol &hit) const {
-  if (!SynthonSpaceSearcher::verifyHit(hit)) {
+double SynthonSpaceSubstructureSearcher::approxSimilarity(
+    const SynthonSpaceHitSet *hitset,
+    const std::vector<size_t> &synthNums) const {
+  int qbit = getQuery().getNumAtoms();
+  int numAtoms = 0;
+  for (size_t i = 0; i < synthNums.size(); i++) {
+    const auto &synth = hitset->synthonsToUse[i][synthNums[i]].second;
+    numAtoms += synth->getNumHeavyAtoms();
+  }
+  return static_cast<double>(qbit) / static_cast<double>(numAtoms);
+}
+
+bool SynthonSpaceSubstructureSearcher::verifyHit(
+    ROMol &hit, const std::string &rxnId,
+    const std::vector<const std::string *> &synthNames) {
+  if (!SynthonSpaceSearcher::verifyHit(hit, rxnId, synthNames)) {
     return false;
   }
-  return !SubstructMatch(hit, getQuery(), d_matchParams).empty();
+  if (!SubstructMatch(hit, getQuery(), d_matchParams).empty()) {
+    const auto prodName = details::buildProductName(rxnId, synthNames);
+    hit.setProp<std::string>(common_properties::_Name, prodName);
+    return true;
+  }
+  return false;
 }
 
 void SynthonSpaceSubstructureSearcher::getConnectorRegions(
-    const std::vector<std::unique_ptr<ROMol>> &molFrags,
+    const std::vector<std::shared_ptr<ROMol>> &molFrags,
     std::vector<std::vector<ROMol *>> &connRegs,
     std::vector<std::vector<const std::string *>> &connRegSmis,
     std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) const {

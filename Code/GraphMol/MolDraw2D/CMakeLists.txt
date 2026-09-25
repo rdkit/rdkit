@@ -35,11 +35,12 @@ rdkit_headers(MolDraw2D.h
         MolDraw2DJS.h
         MolDraw2DUtils.h
         MolDraw2DHelpers.h
+        MolDraw2DSGroupData.h
         DEST GraphMol/MolDraw2D
 )
 
 rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
-        MolDraw2DDetails.cpp MolDraw2DUtils.cpp AtomSymbol.cpp
+        MolDraw2DDetails.cpp MolDraw2DUtils.cpp MolDrawOptionsJSONParsers.cpp AtomSymbol.cpp
         DrawAnnotation.cpp DrawMol.cpp DrawMolMCH.cpp DrawMolMCHCircleAndLine.cpp
         DrawMolMCHLasso.cpp
         DrawShape.cpp DrawText.cpp DrawTextNotFT.cpp DrawTextSVG.cpp
@@ -76,11 +77,6 @@ if (RDK_BUILD_FREETYPE_SUPPORT)
         target_sources(MolDraw2D_static PRIVATE DrawText.cpp
                 DrawTextFT.cpp DrawTextFTSVG.cpp DrawTextFTJS.cpp)
     endif ()
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-        set(USE_FLAGS "-s USE_FREETYPE=1")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${USE_FLAGS}")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS}")
-    endif ()
     find_package(Freetype REQUIRED)
     target_include_directories(MolDraw2D PUBLIC ${FREETYPE_INCLUDE_DIRS})
     target_link_libraries(MolDraw2D PUBLIC ${FREETYPE_LIBRARIES})
@@ -105,6 +101,10 @@ rdkit_catch_test(moldraw2DTestCatch catch_tests.cpp LINK_LIBRARIES
 rdkit_test(moldraw2DRxnTest1 rxn_test1.cpp LINK_LIBRARIES
         MolDraw2D)
 
-if (RDK_BUILD_PYTHON_WRAPPERS)
+if (RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
 endif ()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()

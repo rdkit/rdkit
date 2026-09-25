@@ -10,6 +10,10 @@
 #include <RDGeneral/export.h>
 #ifndef RD_MOLINTERCHANGE_H_JAN2018
 #define RD_MOLINTERCHANGE_H_JAN2018
+namespace RDKit {
+class ROMol;
+class RWMol;
+}  // namespace RDKit
 
 /*! \file MolInterchange.h
 
@@ -24,7 +28,6 @@ https://github.com/mcs07/CommonChem
 */
 
 #include <string>
-#include <iostream>
 #include <vector>
 
 #include <boost/shared_ptr.hpp>

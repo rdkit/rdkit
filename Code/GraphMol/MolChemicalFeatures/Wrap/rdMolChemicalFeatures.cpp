@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //
@@ -13,7 +12,6 @@
 #include <GraphMol/MolChemicalFeatures/MolChemicalFeatureFactory.h>
 #include <fstream>
 #include <sstream>
-#include <iostream>
 #include <GraphMol/MolChemicalFeatures/FeatureParser.h>
 namespace python = boost::python;
 using namespace RDKit;

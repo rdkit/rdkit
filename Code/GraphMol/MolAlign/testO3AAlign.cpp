@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2018 Rational Discovery LLC
+//  Copyright (C) 2001-2026 Greg Landrum and other RDKit Contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -194,13 +194,12 @@ void testCrippenO3AMolHist() {
 }
 
 void testMMFFO3AConstraints() {
-  ROMol *m = SmilesToMol("n1ccc(cc1)-c1ccccc1");
-  TEST_ASSERT(m);
-  ROMol *m1 = MolOps::addHs(*m);
-  delete m;
+  std::string path = getenv("RDBASE");
+  path += "/Code/GraphMol/MolAlign/test_data/4_phenylpyridine.sdf";
+  auto fopts = v2::FileParsers::MolFileParserParams{.removeHs = false};
+  auto m1 = v2::FileParsers::MolFromMolFile(path, fopts);
   TEST_ASSERT(m1);
-  DGeomHelpers::EmbedMolecule(*m1);
-  MMFF::sanitizeMMFFMol((RWMol &)(*m1));
+  MMFF::sanitizeMMFFMol(*m1);
   MMFF::MMFFMolProperties mp(*m1);
   TEST_ASSERT(mp.isValid());
   ForceFields::ForceField *field = MMFF::constructForceField(*m1, &mp);
@@ -238,17 +237,15 @@ void testMMFFO3AConstraints() {
   d = (m3.getConformer().getAtomPos(cIdx) - m1->getConformer().getAtomPos(cIdx))
           .length();
   TEST_ASSERT(feq(d, 7.0, 1.0));
-  delete m1;
 }
 
 void testCrippenO3AConstraints() {
-  ROMol *m = SmilesToMol("n1ccc(cc1)-c1ccccc1");
-  TEST_ASSERT(m);
-  ROMol *m1 = MolOps::addHs(*m);
-  delete m;
+  std::string path = getenv("RDBASE");
+  path += "/Code/GraphMol/MolAlign/test_data/4_phenylpyridine.sdf";
+  auto fopts = v2::FileParsers::MolFileParserParams{.removeHs = false};
+  auto m1 = v2::FileParsers::MolFromMolFile(path, fopts);
   TEST_ASSERT(m1);
-  DGeomHelpers::EmbedMolecule(*m1);
-  MMFF::sanitizeMMFFMol((RWMol &)(*m1));
+  MMFF::sanitizeMMFFMol((*m1));
   MMFF::MMFFMolProperties mp(*m1);
   TEST_ASSERT(mp.isValid());
   ForceFields::ForceField *field = MMFF::constructForceField(*m1, &mp);
@@ -294,7 +291,6 @@ void testCrippenO3AConstraints() {
   d = (m3.getConformer().getAtomPos(cIdx) - m1->getConformer().getAtomPos(cIdx))
           .length();
   TEST_ASSERT(feq(d, 7.0, 1.0));
-  delete m1;
 }
 
 void testMMFFO3AConstraintsAndLocalOnly() {

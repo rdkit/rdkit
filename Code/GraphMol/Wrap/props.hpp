@@ -36,6 +36,7 @@
 #include <RDBoost/Wrap.h>
 #include <RDGeneral/Dict.h>
 #include <algorithm>
+#include <boost/algorithm/string.hpp>
 
 namespace RDKit {
 
@@ -75,18 +76,36 @@ bool AddToDict(const U &ob, boost::python::dict &dict, const std::string &key) {
   return true;
 }
 
+const std::string getPropsAsDictDocString =
+    "Returns a dictionary populated with properties.\n"
+    "When possible, string values will be converted to integers or doubles (trimming if necessary)\n"
+
+    " n.b. Some properties are not able to be converted to python "
+    "types.\n\n"
+    "  ARGUMENTS:\n"
+    "    - includePrivate: (optional) toggles inclusion of private "
+    "properties in the result set.\n"
+    "                      Defaults to False.\n"
+    "    - includeComputed: (optional) toggles inclusion of computed "
+    "properties in the result set.\n"
+    "                      Defaults to False.\n\n"
+    "    - autoConvertStrings: (optional) toggles automatic conversion of string "
+    "properties to integers or doubles.\n"
+    "                      Defaults to True.\n\n"
+    "  RETURNS: a dictionary\n";
+
 template <class T>
 boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
                                    bool includeComputed,
                                    bool autoConvertStrings = true) {
   boost::python::dict dict;
-  auto &rd_dict = obj.getDict();
-  auto &data = rd_dict.getData();
+  const auto &rd_dict = obj.getDict();
 
   STR_VECT keys = obj.getPropList(includePrivate, includeComputed);
-  for (auto &rdvalue : data) {
-    if (std::find(keys.begin(), keys.end(), rdvalue.key) == keys.end())
+  for (const auto &rdvalue : rd_dict) {
+    if (std::find(keys.begin(), keys.end(), rdvalue.key) == keys.end()) {
       continue;
+    }
     try {
       const auto tag = rdvalue.val.getTag();
       switch (tag) {
@@ -99,14 +118,16 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
         case RDTypeTag::StringTag: {
           auto value = from_rdvalue<std::string>(rdvalue.val);
           if (autoConvertStrings) {
+            auto trimVal = value;
+            boost::trim(trimVal);
             // Auto convert strings to ints and double if possible
             int ivalue;
-            if (boost::conversion::try_lexical_convert(value, ivalue)) {
+            if (boost::conversion::try_lexical_convert(trimVal, ivalue)) {
               dict[rdvalue.key] = ivalue;
               break;
             }
             double dvalue;
-            if (boost::conversion::try_lexical_convert(value, dvalue)) {
+            if (boost::conversion::try_lexical_convert(trimVal, dvalue)) {
               dict[rdvalue.key] = dvalue;
               break;
             }
@@ -175,7 +196,7 @@ PyObject *rawPy(T &&thing) {
 }
 
 template <class RDOb, class T>
-PyObject* GetProp(const RDOb *ob, const std::string &key) {
+PyObject *GetProp(const RDOb *ob, const std::string &key) {
   T res;
   try {
     if (!ob->getPropIfPresent(key, res)) {
@@ -183,9 +204,25 @@ PyObject* GetProp(const RDOb *ob, const std::string &key) {
       return nullptr;
     }
   } catch (const std::exception &e) {
-    auto msg = std::string("key `") + key +
-                              "` exists but does not result in " +
-                              GetTypeName<T>() + " reason: " + e.what();
+    auto msg = std::string("key `") + key + "` exists but does not result in " +
+               GetTypeName<T>() + " reason: " + e.what();
+    PyErr_SetString(PyExc_ValueError, msg.c_str());
+    return nullptr;
+  }
+  return rawPy(std::move(res));
+}
+
+template <class RDOb, class T>
+PyObject *GetPropOrDefault(const RDOb *ob, const std::string &key,
+                           T default_val) {
+  T res;
+  try {
+    if (!ob->getPropIfPresent(key, res)) {
+      return rawPy(std::move(default_val));
+    }
+  } catch (const std::exception &e) {
+    auto msg = std::string("key `") + key + "` exists but does not result in " +
+               GetTypeName<T>() + " reason: " + e.what();
     PyErr_SetString(PyExc_ValueError, msg.c_str());
     return nullptr;
   }
@@ -198,32 +235,43 @@ python::object autoConvertString(const RDOb *ob, const std::string &key) {
   double dvalue;
   std::string svalue;
 
-  if (ob->getPropIfPresent(key, ivalue))
-    return python::object(ivalue);
-  else if (ob->getPropIfPresent(key, dvalue))
-    return python::object(dvalue);
-  else if (ob->getPropIfPresent(key, svalue))
+  try {
+    if (ob->getPropIfPresent(key, ivalue)) {
+      return python::object(ivalue);
+    }
+  } catch (const std::bad_any_cast &) {}
+
+  try {
+    if (ob->getPropIfPresent(key, dvalue)) {
+      return python::object(dvalue);
+    }
+  } catch (const std::bad_any_cast &) {}
+
+  if (ob->getPropIfPresent(key, svalue)) {
     return python::object(svalue);
+  }
 
   return python::object();
 }
 
-
-
+// nullptr = raise KeyError; non-null = return *default_val_ptr as fallback
 template <class RDOb>
-PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
+PyObject *GetPyPropImpl(const RDOb *obj, const std::string &key,
+                        bool autoConvert, python::object *default_val_ptr) {
   python::object pobj;
   if (!autoConvert) {
     std::string res;
     if (obj->getPropIfPresent(key, res)) {
       return rawPy(res);
+    } else if (default_val_ptr && !obj->hasProp(key)) {
+      return rawPy(*default_val_ptr);
     } else {
       PyErr_SetString(PyExc_KeyError, key.c_str());
       return nullptr;
     }
   } else {
-    const auto &data = obj->getDict().getData();
-    for (auto &rdvalue : data) {
+    const auto &rd_dict = obj->getDict();
+    for (const auto &rdvalue : rd_dict) {
       if (rdvalue.key == key) {
         try {
           const auto tag = rdvalue.val.getTag();
@@ -237,6 +285,7 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
             case RDTypeTag::StringTag:
               if (autoConvert) {
                 pobj = autoConvertString(obj, rdvalue.key);
+                return rawPy(pobj);
               }
               return rawPy(from_rdvalue<std::string>(rdvalue.val));
             case RDTypeTag::FloatTag:
@@ -290,8 +339,26 @@ PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
       }
     }
   }
+  // We reach here only when autoConvert=true and the key was not returned by
+  // the loop above. Two cases: (a) key not in dict at all — hasProp is false,
+  // return default; (b) key exists as AnyTag (skipped by the loop) — hasProp
+  // is true, raise KeyError as the property cannot be converted.
+  if (default_val_ptr && !obj->hasProp(key)) {
+    return rawPy(*default_val_ptr);
+  }
   PyErr_SetString(PyExc_KeyError, key.c_str());
   return nullptr;
+}
+
+template <class RDOb>
+PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {
+  return GetPyPropImpl(obj, key, autoConvert, nullptr);
+}
+
+template <class RDOb>
+PyObject *GetPyPropOrDefault(const RDOb *obj, const std::string &key,
+                              bool autoConvert, python::object default_val) {
+  return GetPyPropImpl(obj, key, autoConvert, &default_val);
 }
 
 // Return policy for functions that directly return a PyObject* and

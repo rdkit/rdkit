@@ -9,7 +9,6 @@
 // e.g. the one that comes from a bug report.
 
 #include <cassert>
-#include <iostream>
 #include <fstream>
 #include <vector>
 

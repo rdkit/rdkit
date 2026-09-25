@@ -8,8 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#include <iostream>
-
 // our stuff
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -81,6 +79,9 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
   numBonds = 0;
   // std::cerr<<"    init from other: "<<this<<" "<<&other<<std::endl;
   // copy over the atoms
+  // Avoid repeated reallocations when copying: for MolGraph's vecS vertex
+  // container, reserving upfront can reduce allocation churn.
+  d_graph.m_vertices.reserve(other.getNumAtoms());
   for (const auto oatom : other.atoms()) {
     constexpr bool updateLabel = false;
     constexpr bool takeOwnership = true;
@@ -102,6 +103,7 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
 
   // enhanced stereochemical information
   d_stereo_groups.clear();
+  d_stereo_groups.reserve(other.d_stereo_groups.size());
   for (auto &otherGroup : other.d_stereo_groups) {
     std::vector<Atom *> atoms;
     for (auto &otherAtom : otherGroup.getAtoms()) {
@@ -166,15 +168,6 @@ void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
 void ROMol::initMol() {
   d_props.reset();
   dp_ringInfo = new RingInfo();
-  // ok every molecule contains a property entry called
-  // RDKit::detail::computedPropName
-  // which provides
-  //  list of property keys that correspond to value that have been computed
-  // this can used to blow out all computed properties while leaving the rest
-  // along
-  // initialize this list to an empty vector of strings
-  STR_VECT computed;
-  d_props.setVal(RDKit::detail::computedPropName, computed);
 }
 
 unsigned int ROMol::getAtomDegree(const Atom *at) const {
@@ -439,7 +432,35 @@ unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
 }
 
 void ROMol::setStereoGroups(std::vector<StereoGroup> stereo_groups) {
-  d_stereo_groups = std::move(stereo_groups);
+  auto is_abs = [](const auto &sg) {
+    return sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE;
+  };
+
+  // if there's more than one ABS group, merge them
+  if (auto num_abs = std::ranges::count_if(stereo_groups, is_abs);
+      num_abs <= 1) {
+    d_stereo_groups = std::move(stereo_groups);
+  } else {
+    std::vector<Atom *> abs_atoms;
+    std::vector<Bond *> abs_bonds;
+    std::vector<StereoGroup> new_stereo_groups;
+    new_stereo_groups.reserve(stereo_groups.size() - num_abs + 1);
+    for (auto &&sg : stereo_groups) {
+      if (is_abs(sg)) {
+        auto &other_atoms = sg.getAtoms();
+        auto &other_bonds = sg.getBonds();
+        abs_atoms.insert(abs_atoms.begin(), other_atoms.begin(),
+                         other_atoms.end());
+        abs_bonds.insert(abs_bonds.begin(), other_bonds.begin(),
+                         other_bonds.end());
+      } else {
+        new_stereo_groups.push_back(std::move(sg));
+      }
+    }
+    new_stereo_groups.emplace_back(StereoGroupType::STEREO_ABSOLUTE,
+                                   std::move(abs_atoms), std::move(abs_bonds));
+    d_stereo_groups = std::move(new_stereo_groups);
+  }
 }
 
 void ROMol::debugMol(std::ostream &str) const {
@@ -528,11 +549,10 @@ bool ROMol::hasQuery() const {
   return false;
 }
 
-ROMol::QueryAtomIterator ROMol::beginQueryAtoms(QueryAtom const *what) {
+ROMol::QueryAtomIterator ROMol::beginQueryAtoms(Atom const *what) {
   return QueryAtomIterator(this, what);
 }
-ROMol::ConstQueryAtomIterator ROMol::beginQueryAtoms(
-    QueryAtom const *what) const {
+ROMol::ConstQueryAtomIterator ROMol::beginQueryAtoms(Atom const *what) const {
   return ConstQueryAtomIterator(this, what);
 }
 ROMol::QueryAtomIterator ROMol::endQueryAtoms() {
@@ -566,6 +586,16 @@ ROMol::BondIterator ROMol::endBonds() {
 ROMol::ConstBondIterator ROMol::endBonds() const {
   auto [beg, end] = getEdges();
   return ConstBondIterator(this, end);
+}
+
+void ROMol::setName(const std::string &name) const {
+  setProp(common_properties::_Name, name);
+}
+
+std::string ROMol::getName() const {
+  std::string name;
+  getPropIfPresent(common_properties::_Name, name);
+  return name;
 }
 
 void ROMol::clearComputedProps(bool includeRings) const {

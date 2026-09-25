@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2007 Greg Landrum and Rational Discovery LLC
 //   @@ All Rights Reserved @@
@@ -14,7 +13,6 @@
 
 #include <RDGeneral/types.h>
 #include <DataStructs/BitVects.h>
-#include <iostream>
 
 /*! \brief Class used to rank bits based on a specified measure of information
  *

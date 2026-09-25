@@ -655,3 +655,66 @@ TEST_CASE("comparison") {
   CHECK(cp != abbrevs[1]);
   CHECK(abbrevs[1] == abbrevs[1]);
 }
+
+TEST_CASE("abbreviations without xbonds, Github #8902") {
+  SECTION("as reported") {
+    auto m = R"CTAB(ACID.mol
+ChemDraw10242518152D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 0.000000 -0.206250 0.000000 0  CHG=1
+M  V30 2 O 0.714471 -0.618750 0.000000 0  CHG=-1
+M  V30 3 O 0.000000 0.618750 0.000000 0
+M  V30 4 O -0.714471 -0.618750 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 1 3
+M  V30 3 1 1 4
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 1 ATOMS=(4 1 2 3 4) LABEL=HNO3
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 4);
+    Abbreviations::condenseAbbreviationSubstanceGroups(*m);
+    CHECK(m->getNumAtoms() == 1);
+    CHECK(MolToCXSmiles(*m) == "* |(0,-0.20625,),$HNO3$|");
+  }
+  SECTION("no xbonds, but still connected") {
+    auto m = R"CTAB(test
+ChemDraw10242518152D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 0.000000 -0.206250 0.000000 0  CHG=1
+M  V30 2 O 0.714471 -0.618750 0.000000 0  CHG=-1
+M  V30 3 O 0.000000 0.618750 0.000000 0
+M  V30 4 O -0.714471 -0.618750 0.000000 0
+M  V30 5 C 1.000000 0.206250 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 1 1 5
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 1 ATOMS=(4 1 2 3 4) LABEL=H2NO3
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 5);
+    Abbreviations::condenseAbbreviationSubstanceGroups(*m);
+    CHECK(m->getNumAtoms() == 2);
+    CHECK(MolToCXSmiles(*m) == "*C |(0,-0.20625,;1,0.20625,),$H2NO3;$|");
+  }
+}

@@ -25,7 +25,6 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
-#include <iostream>
 #include <iomanip>
 #include <cstdio>
 
@@ -157,9 +156,7 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
   unsigned int nChgs = 0;
   unsigned int nRads = 0;
   unsigned int nMassDiffs = 0;
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    const Atom *atom = *atomIt;
+  for (const auto atom : mol.atoms()) {
     if (atom->getFormalCharge() != 0) {
       ++nChgs;
       chgss << boost::format(" %3d %3d") % (atom->getIdx() + 1) %
@@ -223,7 +220,9 @@ bool hasComplexQuery(const Atom *atom) {
     //     for "C" or "c":
     //
     std::string descr = atom->getQuery()->getDescription();
-    if (descr == "AtomAtomicNum") {
+    if (descr == "AtomAtomicNum" &&
+        static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery())->getVal() ==
+            atom->getAtomicNum()) {
       res = false;
     } else if (descr == "AtomAnd") {
       if ((*atom->getQuery()->beginChildren())->getDescription() ==
@@ -284,12 +283,11 @@ const std::string GetMolFileQueryInfo(
 const std::string GetMolFileRGroupInfo(const RWMol &mol) {
   std::stringstream ss;
   unsigned int nEntries = 0;
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
+  for (const auto atom : mol.atoms()) {
     unsigned int lbl;
-    if ((*atomIt)->getPropIfPresent(common_properties::_MolFileRLabel, lbl)) {
-      ss << " " << std::setw(3) << (*atomIt)->getIdx() + 1 << " "
-         << std::setw(3) << lbl;
+    if (atom->getPropIfPresent(common_properties::_MolFileRLabel, lbl)) {
+      ss << " " << std::setw(3) << atom->getIdx() + 1 << " " << std::setw(3)
+         << lbl;
       ++nEntries;
     }
   }
@@ -302,12 +300,11 @@ const std::string GetMolFileRGroupInfo(const RWMol &mol) {
 
 const std::string GetMolFileAliasInfo(const RWMol &mol) {
   std::stringstream ss;
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
+  for (const auto atom : mol.atoms()) {
     std::string lbl;
-    if ((*atomIt)->getPropIfPresent(common_properties::molFileAlias, lbl)) {
+    if (atom->getPropIfPresent(common_properties::molFileAlias, lbl)) {
       if (!lbl.empty()) {
-        ss << "A  " << std::setw(3) << (*atomIt)->getIdx() + 1 << "\n"
+        ss << "A  " << std::setw(3) << atom->getIdx() + 1 << "\n"
            << lbl << "\n";
       }
     }
@@ -331,19 +328,18 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
   std::stringstream ss;
   unsigned int nEntries = 0;
   boost::dynamic_bitset<> atomsAffected(mol.getNumAtoms(), 0);
-  for (ROMol::ConstBondIterator bondIt = mol.beginBonds();
-       bondIt != mol.endBonds(); ++bondIt) {
-    if ((*bondIt)->getBondType() == Bond::ZERO) {
+  for (const auto bond : mol.bonds()) {
+    if (bond->getBondType() == Bond::ZERO) {
       ++nEntries;
-      ss << " " << std::setw(3) << (*bondIt)->getIdx() + 1 << " "
-         << std::setw(3) << 0;
+      ss << " " << std::setw(3) << bond->getIdx() + 1 << " " << std::setw(3)
+         << 0;
       if (nEntries == 8) {
         res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << "\n";
         nEntries = 0;
         ss.str("");
       }
-      atomsAffected[(*bondIt)->getBeginAtomIdx()] = 1;
-      atomsAffected[(*bondIt)->getEndAtomIdx()] = 1;
+      atomsAffected[bond->getBeginAtomIdx()] = 1;
+      atomsAffected[bond->getEndAtomIdx()] = 1;
     }
   }
   if (nEntries) {
@@ -586,7 +582,7 @@ void GetMolFileAtomProperties(const Atom *atom, const Conformer *conf,
       parityFlag = getAtomParityFlag(atom, conf);
     }
   }
-  
+
   if (hasNonDefaultValence(atom)) {
     if (atom->getTotalDegree() == 0) {
       // Specify zero valence for elements/metals without neighbors
@@ -609,12 +605,13 @@ const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
   GetMolFileAtomProperties(atom, conf, totValence, atomMapNumber, parityFlag, x,
                            y, z);
 
-  if( (x >= MAX_V2000_COORD || x <= MIN_V2000_COORD) ||
+  if ((x >= MAX_V2000_COORD || x <= MIN_V2000_COORD) ||
       (y >= MAX_V2000_COORD || y <= MIN_V2000_COORD) ||
-      (z >= MAX_V2000_COORD || z <= MIN_V2000_COORD) ) {
-    throw ValueErrorException("MolFile coordinates must be in (-100000, 1000000)");
+      (z >= MAX_V2000_COORD || z <= MIN_V2000_COORD)) {
+    throw ValueErrorException(
+        "MolFile coordinates must be in (-100000, 1000000)");
   }
-  
+
   int massDiff, chg, stereoCare, hCount, rxnComponentType, rxnComponentNumber,
       inversionFlag, exactChangeFlag;
   massDiff = 0;
@@ -637,7 +634,7 @@ const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
   char dest[128];
 #ifndef _MSC_VER
   snprintf(dest, 128,
-           "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x, y,
+           "%10.4f%10.4f%10.4f %3s%2d%3d%3u%3d%3d%3d  0%3d%3d%3d%3d%3d", x, y,
            z, symbol.c_str(), massDiff, chg, parityFlag, hCount, stereoCare,
            totValence, rxnComponentType, rxnComponentNumber, atomMapNumber,
            inversionFlag, exactChangeFlag);
@@ -647,7 +644,7 @@ const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
   // safe. I just used the snprintf above to prevent linters from complaining
   // about use of sprintf
   sprintf_s(dest, 128,
-            "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d", x, y,
+            "%10.4f%10.4f%10.4f %3s%2d%3d%3u%3d%3d%3d  0%3d%3d%3d%3d%3d", x, y,
             z, symbol.c_str(), massDiff, chg, parityFlag, hCount, stereoCare,
             totValence, rxnComponentType, rxnComponentNumber, atomMapNumber,
             inversionFlag, exactChangeFlag);
@@ -842,6 +839,12 @@ const std::string GetV3000MolFileAtomLine(
     if (atom->getPropIfPresent(common_properties::molAtomSeqId, iprop) &&
         iprop) {
       ss << " SEQID=" << iprop;
+    }
+    {
+      std::string sprop;
+      if (atom->getPropIfPresent(common_properties::molAtomSeqName, sprop)) {
+        ss << " SEQNAME=" << sprop;
+      }
     }
     if (atom->getPropIfPresent(common_properties::molRxnExactChange, iprop) &&
         iprop) {
@@ -1182,9 +1185,8 @@ std::string getV3000CTAB(const ROMol &tmol,
 
   boost::dynamic_bitset<> queryListAtoms(tmol.getNumAtoms());
   res += "M  V30 BEGIN ATOM\n";
-  for (ROMol::ConstAtomIterator atomIt = tmol.beginAtoms();
-       atomIt != tmol.endAtoms(); ++atomIt) {
-    res += GetV3000MolFileAtomLine(*atomIt, conf, queryListAtoms, precision);
+  for (const auto atom : tmol.atoms()) {
+    res += GetV3000MolFileAtomLine(atom, conf, queryListAtoms, precision);
     res += "\n";
   }
   res += "M  V30 END ATOM\n";
@@ -1273,24 +1275,23 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   }
 
   bool coordMagnitudeTooLargeForV2K = false;
-  if(conf) {
-    for(auto &pos : conf->getPositions()) {
-      if( (pos.x >= MAX_V2000_COORD || pos.x <= MIN_V2000_COORD) ||
-	        (pos.y >= MAX_V2000_COORD || pos.y <= MIN_V2000_COORD) ||
-	        (pos.z >= MAX_V2000_COORD || pos.z <= MIN_V2000_COORD) ) {
-	          coordMagnitudeTooLargeForV2K = true;
+  if (conf) {
+    for (auto &pos : conf->getPositions()) {
+      if ((pos.x >= MAX_V2000_COORD || pos.x <= MIN_V2000_COORD) ||
+          (pos.y >= MAX_V2000_COORD || pos.y <= MIN_V2000_COORD) ||
+          (pos.z >= MAX_V2000_COORD || pos.z <= MIN_V2000_COORD)) {
+        coordMagnitudeTooLargeForV2K = true;
       }
     }
   }
 
   if (whichFormat == MolFileFormat::V2000 && coordMagnitudeTooLargeForV2K) {
     throw ValueErrorException(
-			      "V2000 format does not support atom positions <= " +
-			      std::to_string((int)MIN_V2000_COORD) +
-			      " or >= " + std::to_string((int)MAX_V2000_COORD) );
+        "V2000 format does not support atom positions <= " +
+        std::to_string((int)MIN_V2000_COORD) +
+        " or >= " + std::to_string((int)MAX_V2000_COORD));
   }
 
-  
   std::string text;
   if (tmol.getPropIfPresent(common_properties::_Name, text)) {
     res += text;
@@ -1332,7 +1333,8 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   if (whichFormat == MolFileFormat::V3000) {
     isV3000 = true;
   } else if (whichFormat == MolFileFormat::unspecified &&
-             (coordMagnitudeTooLargeForV2K || hasDative || nAtoms > 999 || nBonds > 999 || nSGroups > 999 ||
+             (coordMagnitudeTooLargeForV2K || hasDative || nAtoms > 999 ||
+              nBonds > 999 || nSGroups > 999 ||
               !tmol.getStereoGroups().empty())) {
     isV3000 = true;
   }
@@ -1370,9 +1372,8 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   boost::dynamic_bitset<> queryListAtoms(tmol.getNumAtoms());
   if (!isV3000) {
     // V2000 output.
-    for (ROMol::ConstAtomIterator atomIt = tmol.beginAtoms();
-         atomIt != tmol.endAtoms(); ++atomIt) {
-      res += GetMolFileAtomLine(*atomIt, conf, queryListAtoms);
+    for (const auto atom : tmol.atoms()) {
+      res += GetMolFileAtomLine(atom, conf, queryListAtoms);
       res += "\n";
     }
 

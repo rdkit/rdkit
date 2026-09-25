@@ -24,7 +24,6 @@
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <ForceField/ForceField.h>
-#include <iostream>
 #include <iomanip>
 #include <fstream>
 #include <sstream>
@@ -66,7 +65,7 @@ bool getLineByNum(std::fstream &stream, std::streampos startPos, unsigned int n,
                   std::string &line) {
   std::streampos current = stream.tellg();
   stream.seekg(startPos);
-  bool fail;
+  bool fail = false;
   unsigned int i = 0;
   while ((i <= n) && (!(fail = std::getline(stream, line).rdstate() &
                                std::ifstream::failbit))) {
@@ -74,7 +73,7 @@ bool getLineByNum(std::fstream &stream, std::streampos startPos, unsigned int n,
   }
   stream.seekg(current);
 
-  return (!fail);
+  return !fail;
 }
 
 bool sortBondStretchInstanceVec(BondStretchInstance *a,

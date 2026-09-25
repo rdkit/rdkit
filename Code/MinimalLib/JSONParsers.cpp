@@ -13,6 +13,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/SmilesParse/SmilesJSONParsers.h>
+#include <RDGeneral/JSONHelpers.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -30,16 +31,8 @@ void updatePropertyPickleOptionsFromJSON(unsigned int &propFlags,
     boost::property_tree::read_json(ss, pt);
     const auto nodeIt = pt.find("propertyFlags");
     if (nodeIt != pt.not_found()) {
-      auto propertyFlagsFromJson =
-          (+PicklerOps::PropertyPickleOptions::NoProps)._to_integral();
-      for (const auto *key : PicklerOps::PropertyPickleOptions::_names()) {
-        if (nodeIt->second.get(key, false)) {
-          propertyFlagsFromJson |=
-              PicklerOps::PropertyPickleOptions::_from_string(key)
-                  ._to_integral();
-        }
-      }
-      propFlags = propertyFlagsFromJson;
+      propFlags =
+          flagsFromJson<PicklerOps::PropertyPickleOptions>(nodeIt->second);
     }
   }
 }
@@ -51,15 +44,7 @@ void updateSanitizeFlagsFromJSON(unsigned int &sanitizeFlags,
     boost::property_tree::ptree pt;
     ss.str(details_json);
     boost::property_tree::read_json(ss, pt);
-    auto sanitizeFlagsFromJson =
-        (+MolOps::SanitizeFlags::SANITIZE_NONE)._to_integral();
-    for (const auto *key : MolOps::SanitizeFlags::_names()) {
-      if (pt.get(key, false)) {
-        sanitizeFlagsFromJson |=
-            MolOps::SanitizeFlags::_from_string(key)._to_integral();
-      }
-    }
-    sanitizeFlags = sanitizeFlagsFromJson;
+    sanitizeFlags = flagsFromJson<MolOps::SanitizeFlags>(pt);
   }
 }
 

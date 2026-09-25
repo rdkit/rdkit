@@ -1,4 +1,3 @@
-// $Id$
 //
 // Copyright (c) 2002-2008 greg landrum and rational discovery llc
 //
@@ -8,7 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <iostream>
 #include <cstring>
 #include "base64.h"
 // Encoding table from RFC 2045

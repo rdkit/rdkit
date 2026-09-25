@@ -31,7 +31,8 @@ namespace RDKit {
 const std::vector<std::string> sruSgroupConnectChoices{"hh", "ht", "eu"};
 const std::vector<std::string> marvinBondOrders{"1", "2", "3", "A"};
 const std::vector<std::string> marvinQueryBondsTypes{"SD", "SA", "DA", "Any"};
-const std::vector<std::string> marvinConventionTypes{"cxn:coord"};
+const std::vector<std::string> marvinConventionTypes{"cxn:coord",
+                                                     "cxn:hydrogen"};
 const std::vector<std::string> marvinStereoDictRefTypes{"cml:W", "cml:H"};
 const std::vector<std::string> marvinStereoConventionTypes{"1", "3", "4", "6"};
 

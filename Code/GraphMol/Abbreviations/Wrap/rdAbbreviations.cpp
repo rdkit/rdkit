@@ -69,7 +69,11 @@ BOOST_PYTHON_MODULE(rdAbbreviations) {
                      "the label in a drawing when the bond comes from the west")
       .def_readwrite(
           "mol", &Abbreviations::AbbreviationDefinition::mol,
-          "the query molecule (should have a dummy as the first atom)");
+          "the query molecule (should have a dummy as the first atom if includesXBonds is true)")
+      .def_readwrite("includesXBonds",
+                     &Abbreviations::AbbreviationDefinition::includesXBonds,
+                     "whether or not the abbreviation definition includes "
+                     "bonds to non-abbreviation atoms");
 
   python::def("GetDefaultAbbreviations",
               &Abbreviations::Utils::getDefaultAbbreviations,

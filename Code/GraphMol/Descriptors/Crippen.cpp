@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2004-2012 Greg Landrum and  Rational Discovery LLC
 //
@@ -15,7 +14,6 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include "MolDescriptors.h"
 #include "Crippen.h"
-#include <iostream>
 #include <sstream>
 #include <RDGeneral/StreamOps.h>
 #include <boost/lexical_cast.hpp>

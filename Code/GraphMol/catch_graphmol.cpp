@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2024 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2018-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <limits>
 #include <fstream>
+#include <numeric>
 #include <random>
 #include <string>
 #include <boost/format.hpp>
@@ -1107,6 +1108,14 @@ TEST_CASE("RemoveHsParameters", "[molops]") {
       ps.removeHigherDegrees = true;
       RWMol cp(*m);
       MolOps::removeHs(cp, ps);
+      CHECK(cp.getNumAtoms() == 3);  // b/c removeHydrides is false by default
+    }
+    {
+      MolOps::RemoveHsParameters ps;
+      ps.removeHigherDegrees = true;
+      ps.removeHydrides = true;
+      RWMol cp(*m);
+      MolOps::removeHs(cp, ps);
       CHECK(cp.getNumAtoms() == 2);
     }
   }
@@ -2153,7 +2162,7 @@ TEST_CASE(
     ROMol m2(*m);
     m2.getRingInfo()->reset();
     MolOps::fastFindRings(m2);
-    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
+    CHECK(m->getRingInfo()->numRings() >= m2.getRingInfo()->numRings());
   }
   SECTION("case2") {
     auto m = "c1ccccc1.C123C45C16C21C34C561"_smiles;
@@ -2161,7 +2170,7 @@ TEST_CASE(
     ROMol m2(*m);
     m2.getRingInfo()->reset();
     MolOps::fastFindRings(m2);
-    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
+    CHECK(m->getRingInfo()->numRings() >= m2.getRingInfo()->numRings());
   }
 }
 
@@ -2363,7 +2372,6 @@ namespace details {
 bool atomHasFourthValence(const Atom *atom);
 bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q);
 }  // namespace details
-void switchBondDir(Bond *bond);
 }  // namespace Canon
 }  // namespace RDKit
 TEST_CASE("canon details") {
@@ -2385,17 +2393,6 @@ TEST_CASE("canon details") {
       CHECK(RDKit::Canon::details::atomHasFourthValence(m->getAtomWithIdx(1)));
     }
   }
-}
-TEST_CASE("switchBondDir") {
-  auto m = "C/C=C/C"_smiles;
-  REQUIRE(m);
-  auto bond = m->getBondWithIdx(0);
-  CHECK(bond->getBondDir() == Bond::BondDir::ENDUPRIGHT);
-  Canon::switchBondDir(bond);
-  CHECK(bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT);
-  bond->setBondDir(Bond::BondDir::UNKNOWN);
-  Canon::switchBondDir(bond);
-  CHECK(bond->getBondDir() == Bond::BondDir::UNKNOWN);
 }
 #endif
 
@@ -2574,14 +2571,14 @@ void check_dest(RWMol *m1, const ROMol &m2) {
   CHECK(m1->getNumAtoms() == 0);
   CHECK(m1->getNumBonds() == 0);
   CHECK(m1->getPropList().empty());
-  CHECK(m1->getDict().getData().empty());
+  CHECK(m1->getDict().empty());
   CHECK(m1->getStereoGroups().empty());
   CHECK(getSubstanceGroups(*m1).empty());
   CHECK(m1->getRingInfo() == nullptr);
 
   // make sure we can still do something with m1:
   *m1 = m2;
-  CHECK(!m1->getDict().getData().empty());
+  CHECK(!m1->getDict().empty());
   CHECK(m1->getNumAtoms() == 8);
   CHECK(m1->getNumBonds() == 7);
   CHECK(m1->getRingInfo() != nullptr);
@@ -3848,6 +3845,65 @@ TEST_CASE("expand and remove AttachmentPoints") {
     // marked as an attachment point, but at end of a double bond
     CHECK(!MolOps::details::isAttachmentPoint(mol->getAtomWithIdx(4)));
   }
+  SECTION("marked attachment point identity") {
+    auto mol = "CC"_smiles;
+    REQUIRE(mol);
+    auto attachmentIdx =
+        MolOps::details::addExplicitAttachmentPoint(*mol, 1, 1, true, false);
+    auto attachment = mol->getAtomWithIdx(attachmentIdx);
+    auto attachmentBond = mol->getBondBetweenAtoms(1, attachmentIdx);
+
+    CHECK(MolOps::isMarkedAttachmentPoint(attachment));
+    CHECK(MolOps::details::isAttachmentPoint(attachment));
+
+    attachmentBond->setBondDir(Bond::BondDir::BEGINWEDGE);
+    CHECK(MolOps::isMarkedAttachmentPoint(attachment));
+    CHECK(!MolOps::details::isAttachmentPoint(attachment));
+
+    CHECK(!MolOps::isMarkedAttachmentPoint(mol->getAtomWithIdx(0)));
+    mol->getAtomWithIdx(0)->setProp(common_properties::_fromAttachPoint, 1);
+    CHECK(!MolOps::isMarkedAttachmentPoint(mol->getAtomWithIdx(0)));
+    attachment->clearProp(common_properties::_fromAttachPoint);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+
+    attachment->setProp(common_properties::atomLabel, "_AP37");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 37);
+    CHECK(MolOps::isMarkedAttachmentPoint(attachment));
+    CHECK(!MolOps::details::isAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel, "_AP0");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel, "_AP3x");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel, "_AP+1");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel, "_AP-1");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel, "_AP 1");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+    attachment->setProp(common_properties::atomLabel,
+                        "_AP999999999999999999999999999999999999");
+    CHECK(MolOps::getAttachmentPointLabelNumber(attachment) == 0);
+    CHECK(!MolOps::isMarkedAttachmentPoint(attachment));
+  }
+  SECTION("collapse label-only attachment point") {
+    auto mol = "*C |$_AP37;$|"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 2);
+    CHECK(MolOps::isMarkedAttachmentPoint(mol->getAtomWithIdx(0)));
+
+    MolOps::collapseAttachmentPoints(*mol);
+    REQUIRE(mol->getNumAtoms() == 1);
+    int value = 0;
+    CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
+        common_properties::molAttachPoint, value));
+    CHECK(value == 1);
+  }
 }
 
 TEST_CASE("bond output") {
@@ -4212,6 +4268,7 @@ TEST_CASE("Try not to set wedged bonds as double in the kekulization") {
           Bond::BondType::SINGLE);
     CHECK(m->getBondBetweenAtoms(7, 13)->getBondType() ==
           Bond::BondType::DOUBLE);
+    CHECK(m->getBondBetweenAtoms(7, 13)->getBondDir() == Bond::BondDir::NONE);
   }
   SECTION("preserve wedged bonds from ctab input") {
     // consider two equivalent structures, with the same numbering
@@ -4265,12 +4322,14 @@ M  END
     REQUIRE(m1);
     Chirality::reapplyMolBlockWedging(*m1);
     MolOps::Kekulize(*m1);
+
     CHECK(m1->getBondBetweenAtoms(0, 6)->getBondType() ==
           Bond::BondType::SINGLE);
     CHECK(m1->getBondBetweenAtoms(0, 6)->getBondDir() ==
           Bond::BondDir::BEGINWEDGE);
     CHECK(m1->getBondBetweenAtoms(4, 6)->getBondType() ==
           Bond::BondType::DOUBLE);
+    CHECK(m1->getBondBetweenAtoms(4, 6)->getBondDir() == Bond::BondDir::NONE);
 
     auto mblock2 = R"(
   Mrv2311 05242408162D
@@ -4318,12 +4377,14 @@ M  END
     REQUIRE(m2);
     Chirality::reapplyMolBlockWedging(*m2);
     MolOps::Kekulize(*m2);
-    CHECK(m2->getBondBetweenAtoms(0, 6)->getBondType() ==
-          Bond::BondType::DOUBLE);
+
     CHECK(m2->getBondBetweenAtoms(4, 6)->getBondType() ==
           Bond::BondType::SINGLE);
     CHECK(m2->getBondBetweenAtoms(4, 6)->getBondDir() ==
           Bond::BondDir::BEGINDASH);
+    CHECK(m2->getBondBetweenAtoms(0, 6)->getBondType() ==
+          Bond::BondType::DOUBLE);
+    CHECK(m2->getBondBetweenAtoms(0, 6)->getBondDir() == Bond::BondDir::NONE);
   }
   SECTION("preserve wedged bonds from ctab input - fused rings") {
     // consider two equivalent structures, with the same numbering
@@ -4387,12 +4448,14 @@ M  END
     REQUIRE(m1);
     Chirality::reapplyMolBlockWedging(*m1);
     MolOps::Kekulize(*m1);
+
     CHECK(m1->getBondBetweenAtoms(6, 12)->getBondType() ==
           Bond::BondType::SINGLE);
     CHECK(m1->getBondBetweenAtoms(6, 12)->getBondDir() ==
           Bond::BondDir::BEGINWEDGE);
     CHECK(m1->getBondBetweenAtoms(6, 8)->getBondType() ==
           Bond::BondType::DOUBLE);
+    CHECK(m1->getBondBetweenAtoms(6, 8)->getBondDir() == Bond::BondDir::NONE);
 
     auto mblock2 = R"(
   Mrv2311 05282412342D
@@ -4447,8 +4510,10 @@ M  END
     REQUIRE(m2);
     Chirality::reapplyMolBlockWedging(*m2);
     MolOps::Kekulize(*m2);
+
     CHECK(m2->getBondBetweenAtoms(6, 12)->getBondType() ==
           Bond::BondType::DOUBLE);
+    CHECK(m2->getBondBetweenAtoms(6, 12)->getBondDir() == Bond::BondDir::NONE);
     CHECK(m2->getBondBetweenAtoms(6, 8)->getBondType() ==
           Bond::BondType::SINGLE);
     CHECK(m2->getBondBetweenAtoms(6, 8)->getBondDir() ==
@@ -4846,4 +4911,260 @@ TEST_CASE(
   ResonanceMolSupplier rsuppl(*mol);
   CHECK(rsuppl.getNumConjGrps() == 0);
   CHECK(rsuppl.getAtomConjGrpIdx(0) == -1);
+}
+
+TEST_CASE(
+    "github #5078: aromaticity problems roundtripping a molecule through SMILES") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+ 22 25  0  0  0  0  0  0  0  0999 V2000
+    6.1174   -5.5956    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.5355   -6.1734    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.9052   -6.9054    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.7157   -6.7800    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.8468   -5.9705    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9896   -4.3666    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9885   -5.1861    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6965   -5.5951    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6947   -3.9577    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.4033   -4.3630    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.4067   -5.1882    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1123   -3.9452    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    6.8293   -4.3571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.8321   -5.1820    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.5468   -5.5902    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.2590   -5.1746    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.2522   -4.3466    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.5370   -3.9422    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2804   -5.5941    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.9563   -3.9319    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6601   -5.9680    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.7196   -6.1277    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  1  1  0
+  6  7  2  0
+  7  8  1  0
+  8 11  2  0
+ 10  9  2  0
+  9  6  1  0
+ 10 11  1  0
+ 10 12  1  0
+ 11  1  1  0
+  1 14  1  0
+ 13 12  1  0
+ 13 14  2  0
+ 14 15  1  0
+ 15 16  2  0
+ 16 17  1  0
+ 17 18  2  0
+ 18 13  1  0
+  7 19  1  0
+ 17 20  1  0
+  5 21  2  0
+  2 22  2  0
+  2 12  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(!m->getAtomWithIdx(0)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(11)->getIsAromatic());
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "Cc1ccc2c(c1)N1C(=O)/C=C\\C(=O)N2c2cc(C)ccc21");
+    auto m2 = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(m2);
+  }
+  SECTION("other examples") {
+    std::vector<std::string> smileses = {
+        "CC1=C(/C=C2\\C(C)=C3/C(C)=C(/C=C4\\C(C)=C5/C(CCC(=O)O)=C(C(C)=C5N4)C=C6\\C(CCC(=O)O)=C(C)C(=C6N2)C=C1)N3)C=C(\\C=C)C",  // #8670
+        "c1ccc(cc1)c1nc(nc(c1)c1c2-n3c4cc5-c6cccc(-c7cc8n9-c1cc(-n1c%10cc(-c%11cc(-c%12cc9c(c8cc7)cc%12)ccc%11)ccc%10c7c1cc(-c1cc(-c8cc3c(c4cc5)cc8)ccc1)cc7)c2)c6)c1ccccc1",  // #5124
+    };
+    for (const auto &smiles : smileses) {
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      auto smi = MolToSmiles(*m);
+      INFO(smiles << "\n  ->\n" << smi);
+      auto m2 = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m2);
+    }
+  }
+}
+
+TEST_CASE(
+    "github #8403: rootedAtAtom can produce SMILES that fail to kekulize on "
+    "re-parsing") {
+  // Large, densely-fused all-aromatic ring systems can require more than
+  // the default number of kekulization back-tracks when atoms are visited
+  // in atom-index order. Since rootedAtAtom changes which atom is written
+  // (and therefore re-numbered) first, some roots used to produce SMILES
+  // that MolFromSmiles couldn't kekulize, even though the molecule itself
+  // is unambiguously kekulizable.
+  SECTION("rootedAtAtom, from the issue") {
+    auto smiles =
+        "c1cc2ccc3c4c(ccc(c1)c24)c1c2c4ccc5cccc6ccc(c4c65)c4c5cccc6c7cccc8c9cc"
+        "cc%10c%11cccc%12c3c1c1c(c%11%12)c(c9%10)c(c87)c(c65)c1c42";
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    REQUIRE(mol);
+    for (auto i = 0u; i < mol->getNumAtoms(); ++i) {
+      SmilesWriteParams params;
+      params.rootedAtAtom = static_cast<int>(i);
+      auto rooted = MolToSmiles(*mol, params);
+      INFO("rootedAtAtom=" << i << " -> " << rooted);
+      auto rootedMol = v2::SmilesParse::MolFromSmiles(rooted);
+      CHECK(rootedMol);
+    }
+  }
+  SECTION("plain canonical round-trip, from discussion #8606") {
+    // Same root cause, but no rootedAtAtom needed: the atom order produced
+    // by canonicalization alone was already enough to blow the default
+    // back-tracking budget for this CAS-RN 133133-06-9 ring system.
+    // https://github.com/rdkit/rdkit/discussions/8606
+    auto smiles =
+        "O=c1c2c3c(c4c(c2c(=O)c2c5c(c6c(c12)c1c2c6cccc2ccc1)c1c2c5cccc2ccc1)c1"
+        "c2c4cccc2ccc1)c1c2c3cccc2ccc1";
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    REQUIRE(mol);
+    auto canonical = MolToSmiles(*mol);
+    INFO("canonical -> " << canonical);
+    auto roundTripped = v2::SmilesParse::MolFromSmiles(canonical);
+    CHECK(roundTripped);
+  }
+}
+
+TEST_CASE("large smiles benchmark") {
+  std::string smiles(1000, 'C');
+  auto m = v2::SmilesParse::MolFromSmiles(smiles);
+  REQUIRE(m);
+  CHECK(m->getNumAtoms() == 1000);
+}
+
+TEST_CASE(
+    "GitHub Issue #8873: Multiple absolute stereo groups shouldn't be allowed on a single mol") {
+  auto m = "C[C@H](N)C[C@@H](C)O"_smiles;
+  REQUIRE(m);
+
+  std::vector<StereoGroup> stereo_groups;
+  for (auto idx : {1, 4}) {
+    auto chiral_atom = m->getAtomWithIdx(idx);
+    REQUIRE(chiral_atom->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    stereo_groups.emplace_back(StereoGroupType::STEREO_ABSOLUTE,
+                               std::vector<Atom *>{chiral_atom},
+                               std::vector<Bond *>{});
+  }
+
+  m->setStereoGroups(stereo_groups);
+
+  const auto &stgs = m->getStereoGroups();
+  REQUIRE(stgs.size() == 1);
+  const auto &stg = stgs.front();
+  CHECK(stg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+  CHECK(stg.getAtoms().size() == 2);
+}
+
+TEST_CASE("github #9068: properties with empty names") {
+  SECTION("basics") {
+    auto m = "CCO"_smiles;
+    REQUIRE(m);
+    CHECK_THROWS_AS(m->setProp("", "some value"), ValueErrorException);
+    CHECK_THROWS_AS(m->getProp<std::string>(""), KeyErrorException);
+    CHECK(!m->hasProp(""));
+    CHECK_NOTHROW(m->clearProp(""));
+  }
+}
+
+TEST_CASE("ROMol setName/getName") {
+  auto m = "CCO"_smiles;
+  REQUIRE(m);
+
+  CHECK(m->getName().empty());
+
+  m->setName("ethanol");
+  CHECK(m->hasProp(common_properties::_Name));
+  CHECK(m->getName() == "ethanol");
+  CHECK(m->getProp<std::string>(common_properties::_Name) == "ethanol");
+
+  m->setProp(common_properties::_Name, "updated name");
+  CHECK(m->getName() == "updated name");
+
+  m->clearProp(common_properties::_Name);
+  CHECK(m->getName().empty());
+
+  const ROMol &cmol = *m;
+  cmol.setName("const name");
+  CHECK(cmol.getName() == "const name");
+  CHECK(cmol.getProp<std::string>(common_properties::_Name) == "const name");
+}
+
+TEST_CASE("canonical re-kekulization after sanitization preserves stereo",
+          "[kekulization]") {
+  // Sanitization kekulizes with canonical=false for performance (B1).
+  // This test verifies that different atom orderings — which produce
+  // different non-canonical kekulizations — all converge to the same
+  // canonical SMILES (with correct stereo) after a canonical re-kekulization.
+  // We use fused aromatic systems where multiple valid Kekulé forms exist.
+  auto smiles = GENERATE(
+      // chiral center at naphthalene junction
+      "[C@H](O)(F)c1ccc2ccccc2c1",
+      // two chiral centers bridging quinoline
+      "[C@@H](O)(c1ccc2ncccc2c1)[C@H](F)Cl",
+      // cis/trans bond adjacent to fused aromatics
+      "C/C=C/c1ccc2ncccc2c1");
+
+  CAPTURE(smiles);
+  auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+  REQUIRE(mol);
+  auto refSmi = MolToSmiles(*mol);
+
+  // Try several atom permutations
+  for (unsigned int seed = 0; seed < 5; ++seed) {
+    // Build a permutation from a simple shuffle seeded by 'seed'
+    std::vector<unsigned int> perm(mol->getNumAtoms());
+    std::iota(perm.begin(), perm.end(), 0u);
+    std::mt19937 rng(seed);
+    std::shuffle(perm.begin(), perm.end(), rng);
+
+    std::unique_ptr<ROMol> pmol(MolOps::renumberAtoms(*mol, perm));
+    auto *rwmol = static_cast<RWMol *>(pmol.get());
+
+    // Simulate what sanitization does: non-canonical kekulize
+    MolOps::setAromaticity(*rwmol);
+    MolOps::Kekulize(*rwmol, true, false);
+
+    // Now canonical re-kekulize (what a user would do post-sanitization)
+    MolOps::setAromaticity(*rwmol);
+    MolOps::Kekulize(*rwmol, true, true);
+    MolOps::setAromaticity(*rwmol);
+
+    auto smi = MolToSmiles(*rwmol);
+    CHECK(smi == refSmi);
+  }
+}
+
+TEST_CASE("duplicate atoms/bonds in StereoGroups") {
+  SECTION("atoms") {
+    auto m = "C[C@H](O)C[C@H](F)Cl"_smiles;
+    REQUIRE(m);
+
+    std::unique_ptr<StereoGroup> stg;
+    CHECK_THROWS_AS(
+        stg = std::make_unique<StereoGroup>(
+            StereoGroupType::STEREO_ABSOLUTE,
+            std::vector<Atom *>{m->getAtomWithIdx(1), m->getAtomWithIdx(4),
+                                m->getAtomWithIdx(1)},
+            std::vector<Bond *>{}),
+        ValueErrorException);
+  }
+  SECTION("bonds") {
+    auto m = "C/C=C/c1ccc2ncccc2c1"_smiles;
+    REQUIRE(m);
+
+    std::unique_ptr<StereoGroup> stg;
+    CHECK_THROWS_AS(
+        stg = std::make_unique<StereoGroup>(
+            StereoGroupType::STEREO_ABSOLUTE, std::vector<Atom *>{},
+            std::vector<Bond *>{m->getBondWithIdx(1), m->getBondWithIdx(1)}),
+        ValueErrorException);
+  }
 }

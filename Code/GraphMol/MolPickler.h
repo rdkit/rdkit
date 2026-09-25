@@ -18,11 +18,10 @@
 #include <GraphMol/QueryBond.h>
 #include <RDGeneral/StreamOps.h>
 #include <boost/utility/binary.hpp>
-#include <boost/variant.hpp>
+#include <variant>
 #include <Query/QueryObjects.h>
 
 // Std stuff
-#include <iostream>
 #include <string>
 #include <sstream>
 #include <exception>
@@ -122,7 +121,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     QUERY_RECURSIVE,
     ENDQUERY,
     ATOM_DUMMYLABEL,
-    BEGIN_ATOM_MONOMER,
+    BEGIN_PDB_RESIDUE,
     ATOM_PDB_RESIDUE_SERIALNUMBER,
     ATOM_PDB_RESIDUE_ALTLOC,
     ATOM_PDB_RESIDUE_RESIDUENAME,
@@ -134,7 +133,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     ATOM_PDB_RESIDUE_SECONDARYSTRUCTURE,
     ATOM_PDB_RESIDUE_RESIDUENUMBER,
     ATOM_PDB_RESIDUE_SEGMENTNUMBER,
-    END_ATOM_MONOMER,
+    END_PDB_RESIDUE,
     BEGINATOMPROPS,
     BEGINBONDPROPS,
     BEGINQUERYATOMDATA,
@@ -148,6 +147,13 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     BEGINFINDOTHERORUNKNOWN,
     QUERY_PROPERTY,
     QUERY_PROPERTY_WITH_VALUE,
+    ATOM_PDB_RESIDUE_MONOMERCLASS,
+    BEGIN_ATOM_MONOMER_INFO,
+    ATOM_MONOMER_INFO_RESIDUENAME,
+    ATOM_MONOMER_INFO_RESIDUENUMBER,
+    ATOM_MONOMER_INFO_CHAINID,
+    ATOM_MONOMER_INFO_MONOMERCLASS,
+    END_ATOM_MONOMER_INFO,
     // add new entries above here
     INVALID_TAG = 255
   } Tags;
@@ -259,7 +265,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   //! do the actual work of de-pickling a molecule
   template <typename T>
   static void _depickle(std::istream &ss, ROMol *mol, int version, int numAtoms,
-                        unsigned int propertyFlags);
+                        int numBonds, unsigned int propertyFlags);
 
   //! extract atomic data from a pickle and add the resulting Atom to the
   /// molecule
@@ -312,7 +318,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
 namespace PicklerOps {
 // clang-format off
-using QueryDetails = boost::variant<
+using QueryDetails = std::variant<
     MolPickler::Tags, std::tuple<MolPickler::Tags, int32_t>,
     std::tuple<MolPickler::Tags, int32_t, int32_t>,
     std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>,

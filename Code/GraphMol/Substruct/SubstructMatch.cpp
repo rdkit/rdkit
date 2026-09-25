@@ -18,6 +18,8 @@
 
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
+#include "SubstructDetails.h"
+
 #include <GraphMol/GenericGroups/GenericGroups.h>
 #include <boost/smart_ptr.hpp>
 #include <map>
@@ -113,18 +115,11 @@ bool enhancedStereoIsOK(
 
 }  // namespace
 
-typedef std::map<unsigned int, QueryAtom::QUERYATOM_QUERY *> SUBQUERY_MAP;
-
 typedef struct {
   ResonanceMolSupplier &resMolSupplier;
   const ROMol &query;
   const SubstructMatchParameters &params;
 } ResSubstructMatchHelperArgs_;
-
-void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *q,
-                     const SubstructMatchParameters &params,
-                     SUBQUERY_MAP &subqueryMap,
-                     std::vector<RecursiveStructureQuery *> &locked);
 
 bool insertIfNeeded(std::set<MatchVectType> &matches, const MatchVectType &m) {
   bool shouldInsert = true;
@@ -456,22 +451,41 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
   }
 };
 
-struct RecursiveLocker {
-  std::vector<RecursiveStructureQuery *> locked;
-  RecursiveLocker(const ROMol &query, const bool recursionPossible) {
-    if (recursionPossible) {
-      locked.reserve(query.getNumAtoms());
-    }
+std::vector<RecursiveStructureQuery *> locked;
+RecursiveLocker::RecursiveLocker(const size_t numAtoms,
+                                 const bool recursionPossible) {
+  if (recursionPossible) {
+    locked.reserve(numAtoms);
   }
+}
 
-  ~RecursiveLocker() {
-    for (auto v : locked) {
+RecursiveLocker::~RecursiveLocker() {
+  for (auto v : locked) {
+    if (df_clearOnDestruct) {
       v->clear();
-#ifdef RDK_BUILD_THREADSAFE_SSS
-      v->d_mutex.unlock();
-#endif
     }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    v->d_mutex.unlock();
+#endif
   }
+}
+
+// A minimal container which satisfies the vf2_all() output-sequence interface
+// but only counts matches instead of storing them.
+struct MatchCounter {
+  using value_type = ssPairType;
+
+  void clear() { d_count = 0; }
+  void resize(size_t) { d_count = 0; }
+  void reserve(size_t) {}
+
+  bool empty() const { return d_count == 0; }
+  size_t size() const { return d_count; }
+
+  void push_back(const value_type &) { ++d_count; }
+
+ private:
+  size_t d_count = 0;
 };
 }  // namespace detail
 
@@ -482,11 +496,13 @@ std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const ROMol &query,
     const SubstructMatchParameters &params) {
   std::vector<MatchVectType> matches;
-  if (!mol.getNumAtoms() || !query.getNumAtoms()) {
+  const auto &mNumAtoms = mol.getNumAtoms();
+  const auto &qNumAtoms = query.getNumAtoms();
+  if (!mNumAtoms || !qNumAtoms || qNumAtoms > mNumAtoms) {
     return matches;
   }
 
-  detail::RecursiveLocker locker(query, params.recursionPossible);
+  detail::RecursiveLocker locker(query.getNumAtoms(), params.recursionPossible);
 
   if (params.recursionPossible) {
     detail::SUBQUERY_MAP subqueryMap;
@@ -520,6 +536,34 @@ std::vector<MatchVectType> SubstructMatch(
     }
   }
   return matches;
+}
+
+unsigned int SubstructMatchCount(const ROMol &mol, const ROMol &query,
+                                 const SubstructMatchParameters &params) {
+  if (!mol.getNumAtoms() || !query.getNumAtoms()) {
+    return 0;
+  }
+
+  detail::RecursiveLocker locker(query.getNumAtoms(), params.recursionPossible);
+
+  if (params.recursionPossible) {
+    detail::SUBQUERY_MAP subqueryMap;
+    for (const auto atom : query.atoms()) {
+      if (atom->hasQuery()) {
+        detail::MatchSubqueries(mol, atom->getQuery(), params, subqueryMap,
+                                locker.locked);
+      }
+    }
+  }
+
+  detail::AtomLabelFunctor atomLabeler(query, mol, params);
+  detail::BondLabelFunctor bondLabeler(query, mol, params);
+  MolMatchFinalCheckFunctor matchChecker(query, mol, params);
+
+  detail::MatchCounter counter;
+  boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
+                 bondLabeler, matchChecker, counter, params.maxMatches);
+  return static_cast<unsigned int>(counter.size());
 }
 
 std::vector<MatchVectType> SubstructMatch(
@@ -672,6 +716,7 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
 #endif
     locked.push_back(rsq);
     rsq->clear();
+    rsq->setInitialized(true);
     bool matchDone = false;
     if (rsq->getSerialNumber() &&
         subqueryMap.find(rsq->getSerialNumber()) != subqueryMap.end()) {
@@ -710,8 +755,23 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
        ++childIt) {
     MatchSubqueries(mol, childIt->get(), params, subqueryMap, locked);
   }
-  // std::cout << "<<- back " << (int)query << std::endl;
 }
 
 }  // end of namespace detail
+
+bool AtomCoordsMatchFunctor::operator()(const Atom &queryAtom,
+                                        const Atom &targetAtom) const {
+  if (!queryAtom.getOwningMol().getNumConformers() ||
+      !targetAtom.getOwningMol().getNumConformers()) {
+    return false;
+  }
+  const auto &queryPos = queryAtom.getOwningMol()
+                             .getConformer(d_queryConfId)
+                             .getAtomPos(queryAtom.getIdx());
+  const auto &targetPos = targetAtom.getOwningMol()
+                              .getConformer(d_refConfId)
+                              .getAtomPos(targetAtom.getIdx());
+  return (queryPos - targetPos).lengthSq() <= d_tol2;
+};
+
 }  // namespace RDKit

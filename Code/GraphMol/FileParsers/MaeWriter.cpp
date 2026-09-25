@@ -137,7 +137,7 @@ void copyProperties(
   // since we don't want to export these.
   origin.clearComputedProps();
 
-  for (const auto &prop : origin.getDict().getData()) {
+  for (const auto &prop : origin.getDict()) {
     // Skip the property holding the names of the computed properties
     if (prop.key == detail::computedPropName) {
       continue;
@@ -543,8 +543,8 @@ MaeWriter::MaeWriter(std::ostream *outStream) : dp_ostream{outStream} {
 
 MaeWriter::MaeWriter(std::shared_ptr<std::ostream> outStream)
     : dp_ostream{std::move(outStream)} {
-  PRECONDITION(outStream, "null stream");
-  if (outStream->bad()) {
+  PRECONDITION(dp_ostream, "null stream");
+  if (dp_ostream->bad()) {
     throw FileParseException("Bad output stream");
   }
 }

@@ -15,10 +15,18 @@
 #include <tuple>
 #include <utility>
 
+#ifdef RDK_TEST_MULTITHREADED
+#include <csignal>
+#include <thread>
+#include <chrono>
+#endif
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Substruct/SubstructDetails.h>
+
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolPickler.h>
@@ -907,5 +915,363 @@ TEST_CASE(
     ps.aromaticMatchesSingleOrDouble = true;
     CHECK(!SubstructMatch(*m1, *m2, ps).empty());
     CHECK(!SubstructMatch(*m2, *m1, ps).empty());
+  }
+}
+
+TEST_CASE("extra atom and bond queries") {
+  SECTION("basics") {
+    auto m = "CCCC"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(1)->setFlags(0x3);
+    m->getAtomWithIdx(2)->setFlags(0x5);
+    m->getBondWithIdx(1)->setFlags(0x7);
+
+    auto q = "CC"_smiles;
+    REQUIRE(q);
+    q->getAtomWithIdx(0)->setFlags(0x5);
+    q->getAtomWithIdx(1)->setFlags(0x3);
+    q->getBondWithIdx(0)->setFlags(0x7);
+
+    SubstructMatchParameters ps;
+    auto matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == 3);
+
+    {
+      SubstructMatchParameters ps;
+      auto atomQuery = [](const Atom &queryAtom,
+                          const Atom &targetAtom) -> bool {
+        return queryAtom.getFlags() == targetAtom.getFlags();
+      };
+      ps.extraAtomCheck = atomQuery;
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 1);
+      CHECK(matches[0][0].second == 2);
+      CHECK(matches[0][1].second == 1);
+    }
+    {
+      SubstructMatchParameters ps;
+      auto bondQuery = [](const Bond &query, const Bond &target) -> bool {
+        return query.getFlags() == target.getFlags();
+      };
+      ps.extraBondCheck = bondQuery;
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 1);
+      CHECK(matches[0][0].second == 1);
+      CHECK(matches[0][1].second == 2);
+    }
+  }
+  SECTION("extra atom and bond checks override defaults") {
+    auto m = "CCCC"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(1)->setFlags(0x3);
+    m->getAtomWithIdx(2)->setFlags(0x5);
+    m->getBondWithIdx(1)->setFlags(0x7);
+
+    auto q = "O=C"_smiles;
+    REQUIRE(q);
+    q->getAtomWithIdx(0)->setFlags(0x5);
+    q->getAtomWithIdx(1)->setFlags(0x3);
+    q->getBondWithIdx(0)->setFlags(0x7);
+
+    SubstructMatchParameters ps;
+    auto matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.empty());
+
+    auto atomQuery = [](const Atom &queryAtom, const Atom &targetAtom) -> bool {
+      return queryAtom.getFlags() == targetAtom.getFlags();
+    };
+    auto bondQuery = [](const Bond &query, const Bond &target) -> bool {
+      return query.getFlags() == target.getFlags();
+    };
+    ps.extraAtomCheck = atomQuery;
+    ps.extraBondCheck = bondQuery;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.empty());
+    ps.extraAtomCheckOverridesDefaultCheck = true;
+    ps.extraBondCheckOverridesDefaultCheck = true;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == 1);
+    CHECK(matches[0][0].second == 2);
+    CHECK(matches[0][1].second == 1);
+
+    // either of the options by themselves does not work:
+    ps.extraAtomCheckOverridesDefaultCheck = false;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.empty());
+
+    ps.extraAtomCheckOverridesDefaultCheck = true;
+    ps.extraBondCheckOverridesDefaultCheck = false;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.empty());
+  }
+
+  SECTION("3D") {
+    auto m = "CCCC |(0,0,0;1,0,0;2,0,0;3,0,0)|"_smiles;
+    REQUIRE(m);
+    auto q = "CC |(3,0,0;2,0,0)|"_smiles;
+    REQUIRE(q);
+    {
+      SubstructMatchParameters ps;
+      auto atomQuery = [](const Atom &queryAtom,
+                          const Atom &targetAtom) -> bool {
+        auto qconf = queryAtom.getOwningMol().getConformer();
+        auto tconf = targetAtom.getOwningMol().getConformer();
+        auto qpos = qconf.getAtomPos(queryAtom.getIdx());
+        auto tpos = tconf.getAtomPos(targetAtom.getIdx());
+        auto dist = (qpos - tpos).length();
+        return dist < 0.1;
+      };
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 3);
+
+      ps.extraAtomCheck = atomQuery;
+      matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 1);
+      CHECK(matches[0][0].second == 3);
+      CHECK(matches[0][1].second == 2);
+    }
+  }
+  SECTION("AtomCoordsMatchFunctor") {
+    auto m = "CCCC |(0,0,0;1,0,0;2,0,0;3,0,0)|"_smiles;
+    REQUIRE(m);
+    auto q = "CC |(3,0,0.1;2,0,0)|"_smiles;
+    REQUIRE(q);
+    SubstructMatchParameters ps;
+    AtomCoordsMatchFunctor atomQuery;
+    // I "<heart>" C++ syntax
+    ps.extraAtomCheck =
+        std::bind(&AtomCoordsMatchFunctor::operator(), &atomQuery,
+                  std::placeholders::_1, std::placeholders::_2);
+    {
+      auto matches = SubstructMatch(*m, *q, ps);
+      REQUIRE(matches.empty());
+    }
+    atomQuery.d_tol2 = 0.15 * 0.15;
+    {
+      auto matches = SubstructMatch(*m, *q, ps);
+      REQUIRE(matches.size() == 1);
+      CHECK(matches[0][0].second == 3);
+      CHECK(matches[0][1].second == 2);
+    }
+    {
+      ROMol mcp(*m);
+      mcp.clearConformers();
+      auto matches = SubstructMatch(mcp, *q, ps);
+      CHECK(matches.empty());
+    }
+    {
+      ROMol qcp(*q);
+      qcp.clearConformers();
+      auto matches = SubstructMatch(*m, qcp, ps);
+      CHECK(matches.empty());
+    }
+    {
+      ROMol mcp(*m);
+      mcp.clearConformers();
+      ROMol qcp(*q);
+      qcp.clearConformers();
+      auto matches = SubstructMatch(mcp, qcp, ps);
+      CHECK(matches.empty());
+    }
+    {
+      // specifying conformer ID on the molecule
+      ROMol mcp(*m);
+      Conformer *conf = new Conformer(mcp.getConformer());
+      mcp.getConformer().getAtomPos(3).z += 10;
+      auto cid = mcp.addConformer(conf, true);
+      auto matches = SubstructMatch(mcp, *q, ps);
+      CHECK(matches.empty());
+
+      SubstructMatchParameters ps2;
+      AtomCoordsMatchFunctor atomQuery2(cid, -1, .15);
+      ps2.extraAtomCheck =
+          std::bind(&AtomCoordsMatchFunctor::operator(), &atomQuery2,
+                    std::placeholders::_1, std::placeholders::_2);
+      matches = SubstructMatch(mcp, *q, ps2);
+      REQUIRE(matches.size() == 1);
+      CHECK(matches[0][0].second == 3);
+      CHECK(matches[0][1].second == 2);
+    }
+    {
+      // specifying conformer ID on the query
+      ROMol qcp(*q);
+      Conformer *conf = new Conformer(qcp.getConformer());
+      qcp.getConformer().getAtomPos(0).z += 10;
+      auto cid = qcp.addConformer(conf, true);
+      auto matches = SubstructMatch(*m, qcp, ps);
+      CHECK(matches.empty());
+
+      SubstructMatchParameters ps2;
+      AtomCoordsMatchFunctor atomQuery2(-1, cid, .15);
+      ps2.extraAtomCheck =
+          std::bind(&AtomCoordsMatchFunctor::operator(), &atomQuery2,
+                    std::placeholders::_1, std::placeholders::_2);
+      matches = SubstructMatch(*m, qcp, ps2);
+      REQUIRE(matches.size() == 1);
+      CHECK(matches[0][0].second == 3);
+      CHECK(matches[0][1].second == 2);
+    }
+  }
+}
+TEST_CASE("quick return when the query has more atoms than the molecule") {
+  SECTION("basics") {
+    SubstructMatchParameters ps;
+    bool touched = false;
+    auto atomQuery = [&touched](const Atom &, const Atom &) -> bool {
+      touched = true;
+      return true;
+    };
+    ps.extraAtomCheck = atomQuery;
+    auto mol = "CC"_smiles;
+    REQUIRE(mol);
+    auto qry = "CCC"_smarts;
+    REQUIRE(qry);
+    auto matches = SubstructMatch(*mol, *qry, ps);
+    CHECK(matches.empty());
+    CHECK(!touched);
+  }
+}
+
+#ifdef RDK_TEST_MULTITHREADED
+TEST_CASE("Test early termination of Substructure Matching") {
+  constexpr const char *molBlock = R"(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 38 37 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 O -8.024222 -0.715013 -1.425119 0
+M  V30 2 C -8.103944 2.094831 3.935276 0
+M  V30 3 C -7.855502 5.047772 3.862929 0
+M  V30 4 N -8.022501 3.875095 3.016789 0
+M  V30 5 C -8.285463 4.220999 1.630734 0
+M  V30 6 H -7.696213 4.758063 4.910916 0
+M  V30 7 H -6.986720 5.654843 3.558860 0
+M  V30 8 H -8.741671 5.704396 3.841010 0
+M  V30 9 H -8.409979 3.312855 1.033695 0
+M  V30 10 H -9.200918 4.829527 1.523497 0
+M  V30 11 H -7.459384 4.805200 1.191633 0
+M  V30 12 C -5.244756 2.507112 5.180590 0
+M  V30 13 N -6.403091 1.673744 4.911170 0
+M  V30 14 C -6.258602 0.324076 5.437228 0
+M  V30 15 H -5.397909 3.515043 4.781177 0
+M  V30 16 H -5.048413 2.598612 6.262184 0
+M  V30 17 H -4.329306 2.101112 4.718062 0
+M  V30 18 H -7.142759 -0.286087 5.203700 0
+M  V30 19 H -5.386809 -0.196867 5.007543 0
+M  V30 20 H -6.140076 0.318047 6.533595 0
+M  V30 21 C -7.533190 -0.221904 2.013029 0
+M  V30 22 N -8.527885 0.696166 2.548649 0
+M  V30 23 C -9.877789 0.334620 2.146322 0
+M  V30 24 H -6.526208 0.060613 2.341771 0
+M  V30 25 H -7.709596 -1.262759 2.337075 0
+M  V30 26 H -7.533190 -0.221904 0.910653 0
+M  V30 27 H -10.608744 1.041371 2.555060 0
+M  V30 28 H -9.988912 0.338721 1.049135 0
+M  V30 29 H -10.161435 -0.671969 2.499294 0
+M  V30 30 C -9.660315 1.664325 6.607604 0
+M  V30 31 N -9.643847 2.175405 5.247830 0
+M  V30 32 C -10.887882 2.843906 4.901017 0
+M  V30 33 H -8.719010 1.155320 6.842548 0
+M  V30 34 H -9.794663 2.468761 7.351980 0
+M  V30 35 H -10.479173 0.941165 6.764630 0
+M  V30 36 H -10.839119 3.258557 3.886413 0
+M  V30 37 H -11.750360 2.156219 4.937816 0
+M  V30 38 H -11.111989 3.682293 5.583119 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 4 2
+M  V30 2 1 4 3
+M  V30 3 1 5 4
+M  V30 4 1 6 3
+M  V30 5 1 7 3
+M  V30 6 1 8 3
+M  V30 7 1 9 5
+M  V30 8 1 10 5
+M  V30 9 1 11 5
+M  V30 10 1 13 2
+M  V30 11 1 13 12
+M  V30 12 1 14 13
+M  V30 13 1 15 12
+M  V30 14 1 16 12
+M  V30 15 1 17 12
+M  V30 16 1 18 14
+M  V30 17 1 19 14
+M  V30 18 1 20 14
+M  V30 19 1 22 2
+M  V30 20 1 22 21
+M  V30 21 1 23 22
+M  V30 22 1 24 21
+M  V30 23 1 25 21
+M  V30 24 9 1 26
+M  V30 25 1 26 21
+M  V30 26 1 27 23
+M  V30 27 1 28 23
+M  V30 28 1 29 23
+M  V30 29 1 31 2
+M  V30 30 1 31 30
+M  V30 31 1 32 31
+M  V30 32 1 33 30
+M  V30 33 1 34 30
+M  V30 34 1 35 30
+M  V30 35 1 36 32
+M  V30 36 1 37 32
+M  V30 37 1 38 32
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)";
+
+  v2::FileParsers::MolFileParserParams params{.sanitize = false};
+  auto mol = v2::FileParsers::MolFromMolBlock(molBlock, params);
+  REQUIRE(mol);
+
+  using namespace std::chrono_literals;
+
+  // create one thread for SubstructMatch...
+  std::thread cgThread([&mol]() {
+    // this search takes ~8 seconds on my desktop, so it should
+    // be long enough to allow the interrupt thread to do its thing
+    SubstructMatch(*mol, *mol);
+  });
+  // ... then another one to raise SIGINT
+  std::thread interruptThread([]() {
+    // sleep for a bit to allow for a few iterations, then
+    // trigger the interrupt signal
+    std::this_thread::sleep_for(100ms);
+    std::raise(SIGINT);
+  });
+  cgThread.join();
+  interruptThread.join();
+}
+#endif
+
+TEST_CASE("recursive matcher and query initialization") {
+  auto mol = "CC=C"_smiles;
+  REQUIRE(mol);
+  auto qry = "[C;!$(C=C)]C"_smarts;
+  REQUIRE(qry);
+  CHECK(hasUninitializedRecursiveQuery(*qry->getAtomWithIdx(0)));
+  CHECK(!hasUninitializedRecursiveQuery(*qry->getAtomWithIdx(1)));
+  CHECK(!hasRecursiveQuery(*qry->getAtomWithIdx(1)));
+  SECTION("basics") {
+    // do the substructure match
+    SubstructMatchParameters ps;
+    auto matches = SubstructMatch(*mol, *qry, ps);
+    CHECK(matches.size() == 1);
+    // the recursive query should now be initialized
+    CHECK(!hasUninitializedRecursiveQuery(*qry->getAtomWithIdx(0)));
+  }
+  SECTION("MatchSubqueries initializes the recursive query") {
+    // call MatchSubqueries directly, which should initialize the recursive
+    // query
+    SubstructMatchParameters ps;
+    detail::SUBQUERY_MAP subqueryMap;
+    std::vector<RecursiveStructureQuery *> lockedQueries;
+    detail::MatchSubqueries(*mol, qry->getAtomWithIdx(0)->getQuery(), ps,
+                            subqueryMap, lockedQueries);
+    // the recursive query should now be initialized
+    CHECK(!hasUninitializedRecursiveQuery(*qry->getAtomWithIdx(0)));
   }
 }

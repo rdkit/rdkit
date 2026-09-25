@@ -24,6 +24,8 @@
 #include <RDGeneral/export.h>
 #ifndef AtomFeatRDKIT_H_MARC2020
 #define AtomFeatRDKIT_H_MARC2020
+#include <vector>
+#include <string>
 
 namespace RDKit {
 class ROMol;

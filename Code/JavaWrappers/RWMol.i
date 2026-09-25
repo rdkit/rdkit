@@ -75,6 +75,30 @@
 %include <GraphMol/FileParsers/CDXMLParser.h>
 %include <GraphMol/SmilesParse/SmilesParse.h>
 
+%typemap(javacode) RDKit::RWMol %{
+  // expose mols from MolsFromCDXMLByteArray
+  public static RWMol_Vect MolsFromCDXMLByteArray(
+      byte[] pkl, boolean sanitize, boolean removeHs) {
+    UChar_Vect vec = null;
+    try {
+      vec = new UChar_Vect();
+      vec.reserve(pkl.length);
+      for (int i = 0; i < pkl.length; ++i) {
+        vec.add((byte)pkl[i]);
+      }
+      return RWMol.MolsFromCDXML(vec, sanitize, removeHs);
+    } finally {
+      if (vec != null) {
+        vec.delete();
+      }
+    }
+  }
+  public static RWMol_Vect MolsFromCDXMLByteArray(byte [] pkl) {
+    return MolsFromCDXMLByteArray(pkl, true, true);
+  }
+
+%}
+
 
 %typemap(cscode) RDKit::RWMol %{
   public static RWMol_Vect MolsFromCDXMLByteArray(
@@ -244,8 +268,8 @@ void markUnspecifiedStereoAsUnknown(int confId) {
 }
 
 /* From Kekulize.cpp, MolOps.h */
-void Kekulize(bool markAtomsBonds=true, unsigned int maxBackTracks=100) {
-  RDKit::MolOps::Kekulize(*($self), markAtomsBonds, maxBackTracks);
+void Kekulize(bool markAtomsBonds=true, bool canonical=true, unsigned int maxBackTracks=100) {
+  RDKit::MolOps::Kekulize(*($self), markAtomsBonds, canonical, maxBackTracks);
 }
 
 /* MolOps.h */

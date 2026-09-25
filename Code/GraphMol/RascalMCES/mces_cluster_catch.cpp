@@ -81,7 +81,7 @@ TEST_CASE("ChEMBL 1907596") {
   clusOpts.similarityCutoff = 0.7;
   auto clusters = RDKit::RascalMCES::rascalCluster(mols, clusOpts);
   REQUIRE(clusters.size() == 21);
-  std::vector<size_t> expSizes{342, 71, 64, 33, 23, 11, 10, 6, 6, 5, 5,
+  std::vector<size_t> expSizes{343, 71, 64, 33, 23, 11, 10, 6, 6, 5, 5,
                                4,   3,  3,  3,  3,  3,  2,  2, 2, 14};
   for (size_t i = 0; i < 21; ++i) {
     REQUIRE(clusters[i].size() == expSizes[i]);

@@ -258,6 +258,7 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
       }
       // iterate again and remove all but closest
       boost::tie(nbr, end_nbr) = mol->getAtomNeighbors(atom);
+      mol->beginBatchEdit();
       while (nbr != end_nbr) {
         if (*nbr == best_idx) {
           Bond *bond = mol->getBondBetweenAtoms(i, *nbr);
@@ -267,6 +268,7 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
         }
         ++nbr;
       }
+      mol->commitBatchEdit();
     }
   }
   free(tmp);
@@ -534,9 +536,7 @@ static bool StandardPDBDoubleBond(RWMol *mol, Atom *beg, Atom *end) {
 }
 
 void StandardPDBResidueBondOrders(RWMol *mol) {
-  RWMol::BondIterator bondIt;
-  for (bondIt = mol->beginBonds(); bondIt != mol->endBonds(); ++bondIt) {
-    Bond *bond = *bondIt;
+  for (const auto bond : mol->bonds()) {
     if (bond->getBondType() == Bond::SINGLE) {
       Atom *beg = bond->getBeginAtom();
       Atom *end = bond->getEndAtom();

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 project (jGraphMolJava Java)
 
@@ -125,8 +125,9 @@ SWIG_ADD_LIBRARY(GraphMolWrap TYPE MODULE LANGUAGE java SOURCES GraphMolJava.i )
 # link error if they aren't there.
 
 if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  find_package(EXPAT REQUIRED)
   SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
-      rdkit_base ${RDKit_THREAD_LIBS} ChemDraw expat)
+      rdkit_base ${RDKit_THREAD_LIBS} ChemDraw expatpp EXPAT::EXPAT)
 else ()
   SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
       rdkit_base ${RDKit_THREAD_LIBS})
@@ -184,7 +185,7 @@ LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit
 endif()
 
 if(NOT RDK_BUILD_CHEMDRAW_SUPPORT)
-LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit/ChemDrawTests.java")
+LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit/ChemDrawTest.java")
 endif()
 
 if(NOT RDK_USE_BOOST_IOSTREAMS)
@@ -346,7 +347,7 @@ if (RDK_BUILD_CHEMDRAW_SUPPORT)
        java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
        	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 		org.RDKit.ChemDrawTest)
-endif (RDK_BUILD_INCHI_SUPPORT)
+endif (RDK_BUILD_CHEMDRAW_SUPPORT)
 
 #ADD_TEST(JavaMemoryTests
 #    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}

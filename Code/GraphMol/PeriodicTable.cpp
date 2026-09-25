@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2001-2006 Rational Discovery LLC
 //
@@ -10,6 +9,7 @@
 //
 #include "PeriodicTable.h"
 #include <string>
+#include <atomic>
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <sstream>
@@ -20,6 +20,10 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #endif
 
 namespace RDKit {
+
+namespace {
+std::atomic<PeriodicTable *> ds_rawInstance{nullptr};
+}  // namespace
 
 class std::unique_ptr<PeriodicTable> PeriodicTable::ds_instance = nullptr;
 
@@ -101,10 +105,15 @@ PeriodicTable::PeriodicTable() {
 
 void PeriodicTable::initInstance() {
   ds_instance = std::unique_ptr<PeriodicTable>(new PeriodicTable());
+  ds_rawInstance.store(ds_instance.get(), std::memory_order_release);
 }
 
 PeriodicTable *PeriodicTable::getTable() {
 #ifdef RDK_BUILD_THREADSAFE_SSS
+  auto *raw = ds_rawInstance.load(std::memory_order_acquire);
+  if (raw) {
+    return raw;
+  }
   static std::once_flag pt_init_once;
   std::call_once(pt_init_once, initInstance);
 #else
@@ -112,7 +121,7 @@ PeriodicTable *PeriodicTable::getTable() {
     initInstance();
   }
 #endif
-  return ds_instance.get();
+  return ds_rawInstance.load(std::memory_order_acquire);
 }
 
 }  // namespace RDKit

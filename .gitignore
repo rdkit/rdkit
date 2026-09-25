@@ -76,7 +76,7 @@ __pycache__/
 /External/RingFamilies/RingDecomposerLib/
 /External/YAeHMOP/yaehmop/
 /External/catch/catch/
-/External/rapidjson*/
+/External/rapidjson/rapidjson-*/
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
@@ -114,6 +114,8 @@ __pycache__/
 /Code/GraphMol/FileParsers/test_data/outSmiles_molwriter.csv
 /Code/GraphMol/FileParsers/test_data/testSGroupsSample_V?000.mol
 /Code/GraphMol/FileParsers/test_data/testSubstanceGroupsSample_V?000.mol
+/Code/GraphMol/FileParsers/test_data/atropisomers/*.NEW*
+/Code/GraphMol/MarvinParse/test_data/*.NEW.*
 
 /Code/GraphMol/ForceFieldHelpers/UFF/test_data/Issue62.sdf
 
@@ -131,6 +133,10 @@ __pycache__/
 /Code/GraphMol/test_data/bilastine_trajectory.sdf
 /Code/GraphMol/test_data/prop.pkl
 
+/Data/eht_parms.dat
+
+/External/pubchem_shape/test_data/bulk.pubchem_out.sdf
+
 /Projects/DbCLI/testData/bzr/
 
 /rdkit/sping/tests/testallps.ps
@@ -144,9 +150,19 @@ __pycache__/
 /rdkit/hetero_atom_mutations.csv
 /rdkit/not_changed.csv
 /rdkit/similarityMap1_out.svg
-/rdkit/similarityMap1_out2.svg
+/rdkit/similarityMap1_out*.svg
+/rdkit/github4763.svg
+
+/Testing/
 
 # JS distribution or temp files
 Code/MinimalLib/dist
 MAIN_RDKIT_README*
 node_modules
+
+/.cache
+/Code/GraphMol/MolInteractionFields/Wrap/testData/test4.cube
+/Code/GraphMol/MolInteractionFields/test_data/test3.cube
+/compile_commands.json
+/External/ChemDraw/chemdraw
+/External/AvalonTools/ava-formake-AvalonToolkit*

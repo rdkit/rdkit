@@ -9,7 +9,6 @@
 //
 
 #include <RDGeneral/test.h>
-#include <iostream>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/utils.h>
@@ -28,7 +27,6 @@
 #include <ForceField/MMFF/Params.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <boost/math/special_functions/round.hpp>
 
 using namespace RDKit;
 #ifdef RDK_TEST_MULTITHREADED

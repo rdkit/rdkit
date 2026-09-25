@@ -17,7 +17,6 @@
 
 #include <chrono>
 #include <functional>
-#include <iostream>
 #include <map>
 #include <regex>
 #include <stdexcept>
@@ -823,7 +822,7 @@ void checkTimeout(
         if (clique.size() > maxCliques.front().size()) {
           maxCliques.clear();
         }
-        if (clique.size() >= maxCliques.front().size()) {
+        if (maxCliques.empty() || clique.size() >= maxCliques.front().size()) {
           maxCliques.push_back(clique);
         }
       }

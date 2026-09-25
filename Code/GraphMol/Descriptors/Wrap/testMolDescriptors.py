@@ -1,12 +1,15 @@
-import unittest
+import gc
 from os import environ
 from pathlib import Path
 import re
+import unittest
 
-from rdkit import Chem, DataStructs, RDConfig
-from rdkit.Chem import AllChem, Descriptors
+from rdkit import rdBase
+from rdkit import Chem, DataStructs
+from rdkit.Chem import Descriptors
 from rdkit.Chem import rdMolDescriptors as rdMD
-from rdkit.Geometry import rdGeometry as rdG
+
+from rdkit.Chem import AllChem
 
 haveBCUT = hasattr(rdMD, 'BCUT2D')
 
@@ -531,18 +534,22 @@ class TestCase(unittest.TestCase):
       def __call__(self, mol):
         return mol.GetNumAtoms()
 
+    m = Chem.MolFromSmiles("c1ccccc1")
     numAtoms = NumAtoms()
+    self.assertEqual(6, numAtoms(m))
+
     rdMD.Properties.RegisterProperty(numAtoms)
     props = rdMD.Properties(["CustomNumAtoms"])
+    self.assertTrue("CustomNumAtoms" in rdMD.Properties.GetAvailableProperties())
     self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
 
-    self.assertTrue("CustomNumAtoms" in rdMD.Properties.GetAvailableProperties())
     # check memory
     del numAtoms
+    gc.collect()
+
     self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
     self.assertTrue("CustomNumAtoms" in rdMD.Properties.GetAvailableProperties())
 
-    m = Chem.MolFromSmiles("c1ccccc1")
     properties = rdMD.Properties()
     for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
       print(name, value)
@@ -594,6 +601,15 @@ class TestCase(unittest.TestCase):
     self.assertRaises(ValueError,
                       lambda: rdMD.GetMorganFingerprintAsBitVect(mol, 2, fromAtoms=[10]))
 
+  def testBitInfo(self):
+    m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
+    bi = {}
+    _ = rdMD.GetMorganFingerprintAsBitVect(m, radius=2, bitInfo=bi)
+    self.assertTrue(872 in bi)
+    bi = {}
+    _ = rdMD.GetMorganFingerprintAsBitVect(m, radius=2, fromAtoms=[0, 1, 2], bitInfo=bi)
+    self.assertTrue(1066 in bi)
+
   def testCustomVSA(self):
     mol = Chem.MolFromSmiles("c1ccccc1O")
     peoe_vsa = rdMD.PEOE_VSA_(mol)
@@ -618,8 +634,10 @@ class TestCase(unittest.TestCase):
 
   def testGithub1761(self):
     mol = Chem.MolFromSmiles('CC(F)(Cl)C(F)(Cl)C')
-    self.assertRaises(OverflowError, lambda: rdMD.GetMorganFingerprint(mol, -1))
-    self.assertRaises(OverflowError, lambda: rdMD.GetHashedMorganFingerprint(mol, 0, -1))
+    # nanobind raises TypeError for negative unsigned int args; boost raised OverflowError
+    self.assertRaises((OverflowError, TypeError), lambda: rdMD.GetMorganFingerprint(mol, -1))
+    self.assertRaises((OverflowError, TypeError),
+                      lambda: rdMD.GetHashedMorganFingerprint(mol, 0, -1))
     self.assertRaises(ValueError, lambda: rdMD.GetHashedMorganFingerprint(mol, 0, 0))
 
   @unittest.skipIf(not haveBCUT, "BCUT descriptors not present")
@@ -699,7 +717,8 @@ class TestCase(unittest.TestCase):
       bcut2 = rdMD.BCUT2D(m, "property not existing on the atom")
       self.assertTrue(0, "Failed to handle not existing properties")
     except KeyError as e:
-      self.assertEqual(e.args, ("property not existing on the atom", ))
+      # nanobind wraps the key name with "Key Error: " prefix; boost does not
+      self.assertIn("property not existing on the atom", str(e))
 
     for atom in m.GetAtoms():
       atom.SetProp("bad_prop", "not a double")
@@ -730,46 +749,78 @@ class TestCase(unittest.TestCase):
     rdbase = environ["RDBASE"]
     fname1 = str(Path(rdbase) / 'Code' / 'GraphMol' / 'Descriptors' / 'test_data' / '1mup.pdb')
     mol1 = Chem.MolFromPDBFile(fname1, sanitize=False, removeHs=False)
-
+    radii1 = [Chem.GetPeriodicTable().GetRvdw(atom.GetAtomicNum()) for atom in mol1.GetAtoms()]
     # test default params
-    default = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=False)
+    default = rdMD.DoubleCubicLatticeVolume(mol1, radii1, isProtein=True, includeLigand=False)
 
-    self.assertTrue(abs(default.GetSurfaceArea() - 8330.59) < 0.05)
-    self.assertTrue(abs(default.GetVolume() - 31789.6) < 0.05)
-    self.assertTrue(abs(default.GetVDWVolume() - 15355.3) < 0.05)
-    self.assertTrue(abs(default.GetCompactness() - 1.7166) < 0.05)
-    self.assertTrue(abs(default.GetPackingDensity() - 0.48303) < 0.05)
+    self.assertTrue(abs(default.GetSurfaceArea() - 8306.62) < 0.05)
+    self.assertTrue(abs(default.GetPolarSurfaceArea() - 4652.19) < 0.05)
+    self.assertTrue(abs(default.GetPolarSurfaceArea(includeSandP=True) - 4673.9) < 0.05)
+    self.assertTrue(abs(default.GetVolume() - 29952.3) < 0.05)
+    self.assertTrue(abs(default.GetVDWVolume() - 13541.5) < 0.05)
+    self.assertTrue(abs(default.GetPolarVolume() - 17096) < 0.05)
+    self.assertTrue(abs(default.GetCompactness() - 1.78096) < 0.05)
+    self.assertTrue(abs(default.GetPackingDensity() - 0.452103) < 0.05)
 
     # test set depth and radius
-    depthrad = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=False,
-                                             probeRadius=1.6, depth=6)
+    depthrad = rdMD.DoubleCubicLatticeVolume(mol1, radii1, isProtein=True, includeLigand=False,
+                                             probeRadius=1.6)
 
-    self.assertTrue(abs(depthrad.GetSurfaceArea() - 8186.06) < 0.05)
-    self.assertTrue(abs(depthrad.GetVolume() - 33464.5) < 0.05)
-    self.assertTrue(abs(depthrad.GetVDWVolume() - 15350.7) < 0.05)
-    self.assertTrue(abs(depthrad.GetCompactness() - 1.63005) < 0.05)
-    self.assertTrue(abs(depthrad.GetPackingDensity() - 0.458717) < 0.05)
+    self.assertTrue(abs(depthrad.GetSurfaceArea() - 8112.42) < 0.05)
+    self.assertTrue(abs(depthrad.GetPolarSurfaceArea() - 4656.8) < 0.05)
+    self.assertTrue(abs(depthrad.GetPolarSurfaceArea(includeSandP=True) - 4674.96) < 0.05)
+    self.assertTrue(abs(depthrad.GetVolume() - 31591) < 0.05)
+    self.assertTrue(abs(depthrad.GetVDWVolume() - 13541.5) < 0.05)
+    self.assertTrue(abs(depthrad.GetPolarVolume() - 18402.8) < 0.05)
+    self.assertTrue(abs(depthrad.GetCompactness() - 1.67864) < 0.05)
+    self.assertTrue(abs(depthrad.GetPackingDensity() - 0.428652) < 0.05)
 
     # test include ligand
-    withlig = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=True)
+    withlig = rdMD.DoubleCubicLatticeVolume(mol1, radii1, isProtein=True, includeLigand=True)
 
-    self.assertTrue(abs(withlig.GetSurfaceArea() - 8010.56) < 0.05)
-    self.assertTrue(abs(withlig.GetVolume() - 31228.4) < 0.05)
-    self.assertTrue(abs(withlig.GetVDWVolume() - 15155.7) < 0.05)
-    self.assertTrue(abs(withlig.GetCompactness() - 1.67037) < 0.05)
-    self.assertTrue(abs(withlig.GetPackingDensity() - 0.48532) < 0.05)
+    self.assertTrue(abs(withlig.GetSurfaceArea() - 8206.1) < 0.05)
+    self.assertTrue(abs(withlig.GetPolarSurfaceArea() - 4467.92) < 0.05)
+    self.assertTrue(abs(withlig.GetPolarSurfaceArea(includeSandP=True) - 4481.19) < 0.05)
+    self.assertTrue(abs(withlig.GetVolume() - 30340.1) < 0.05)
+    self.assertTrue(abs(withlig.GetVDWVolume() - 13789.7) < 0.05)
+    self.assertTrue(abs(withlig.GetPolarVolume() - 16507) < 0.05)
+    self.assertTrue(abs(withlig.GetCompactness() - 1.74438) < 0.05)
+    self.assertTrue(abs(withlig.GetPackingDensity() - 0.454504) < 0.05)
 
     fname2 = str(Path(rdbase) / 'Code' / 'GraphMol' / 'Descriptors' / 'test_data' / 'TZL_model.sdf')
     suppl = Chem.SDMolSupplier(fname2)
     for mol in suppl:
       mol2 = mol
+    radii2 = [Chem.GetPeriodicTable().GetRvdw(atom.GetAtomicNum()) for atom in mol2.GetAtoms()]
 
     # test from SDF file with defaults
-    sdf = rdMD.DoubleCubicLatticeVolume(mol2, isProtein=False)
+    for sdf in (rdMD.DoubleCubicLatticeVolume(mol2, radii2, isProtein=False),
+                rdMD.DoubleCubicLatticeVolume(mol2, isProtein=False)):
 
-    self.assertTrue(abs(sdf.GetSurfaceArea() - 296.466) < 0.05)
-    self.assertTrue(abs(sdf.GetVolume() - 411.972) < 0.05)
-    self.assertTrue(abs(sdf.GetVDWVolume() - 139.97) < 0.05)
+      self.assertTrue(abs(sdf.GetSurfaceArea() - 304.239) < 0.05)
+      self.assertTrue(abs(sdf.GetPolarSurfaceArea() - 18.7319) < 0.05)
+      self.assertTrue(abs(sdf.GetPolarSurfaceArea(includeSandP=True) - 64.9764) < 0.05)
+      self.assertTrue(abs(sdf.GetVolume() - 431.35) < 0.05)
+      self.assertTrue(abs(sdf.GetVDWVolume() - 119.296) < 0.05)
+      self.assertTrue(abs(sdf.GetPolarVolume() - 21.35) < 0.05)
+
+      pts = sdf.GetSurfacePoints()
+      self.assertTrue(len(pts) == mol2.GetNumAtoms())
+      for i in range(len(pts)):
+        self.assertTrue(len(pts[i]) > 0)
+      # make sure calling the function again doesn't change the result
+      pts2 = sdf.GetSurfacePoints()
+      self.assertTrue(len(pts2) == mol2.GetNumAtoms())
+      for i in range(len(pts2)):
+        self.assertTrue(len(pts2[i]) == len(pts[i]))
+      # check getting all of the points (including those not on the surface)
+      all_pts = sdf.GetSurfacePoints(allPoints=True)
+      self.assertTrue(len(all_pts) == mol2.GetNumAtoms())
+      for i in range(len(all_pts)):
+        self.assertTrue(len(all_pts[i]) == 320)
+        self.assertTrue(len(all_pts[i]) >= len(pts[i]))
+
+        
 
 
 if __name__ == '__main__':

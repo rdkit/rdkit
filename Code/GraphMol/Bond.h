@@ -12,7 +12,7 @@
 #define RD_BOND_H
 
 // std stuff
-#include <iostream>
+#include <memory>
 #include <utility>
 
 // Ours
@@ -21,6 +21,7 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDProps.h>
 #include <GraphMol/details.h>
+#include <GraphMol/MacroBondInfo.h>
 
 namespace RDKit {
 class ROMol;
@@ -53,7 +54,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
 
   //! the type of Bond
-  typedef enum {
+  enum BondType : std::uint8_t {
     UNSPECIFIED = 0,
     SINGLE,
     DOUBLE,
@@ -77,10 +78,10 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     OTHER,
     ZERO  //!< Zero-order bond (from
     // http://pubs.acs.org/doi/abs/10.1021/ci200488k)
-  } BondType;
+  };
 
   //! the bond's direction (for chirality)
-  typedef enum {
+  enum BondDir : std::uint8_t {
     NONE = 0,    //!< no special style
     BEGINWEDGE,  //!< wedged: narrow at begin
     BEGINDASH,   //!< dashed: narrow at begin
@@ -89,12 +90,12 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     ENDUPRIGHT,    //!<  ditto
     EITHERDOUBLE,  //!< a "crossed" double bond
     UNKNOWN,       //!< intentionally unspecified stereochemistry
-  } BondDir;
+  };
 
   //! the nature of the bond's stereochem (for cis/trans)
-  typedef enum {     // stereochemistry of double bonds
-    STEREONONE = 0,  // no special style
-    STEREOANY,       // intentionally unspecified
+  enum BondStereo : std::uint8_t {  // stereochemistry of double bonds
+    STEREONONE = 0,                 // no special style
+    STEREOANY,                      // intentionally unspecified
     // -- Put any true specifications about this point so
     // that we can do comparisons like if(bond->getStereo()>Bond::STEREOANY)
     STEREOZ,         // Z double bond
@@ -103,7 +104,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     STEREOTRANS,     // trans double bond
     STEREOATROPCW,   //  atropisomer clockwise rotation
     STEREOATROPCCW,  //  atropisomer counter clockwise rotation
-  } BondStereo;
+  };
 
   Bond();
   //! construct with a particular BondType
@@ -125,6 +126,8 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     // the molecule will still be pointing to the original object
     dp_mol = std::exchange(o.dp_mol, nullptr);
     dp_stereoAtoms = std::exchange(o.dp_stereoAtoms, nullptr);
+    dp_macroBondInfo = std::move(o.dp_macroBondInfo);
+    d_flags = std::exchange(o.d_flags, 0);
   }
   Bond &operator=(Bond &&o) noexcept {
     if (this == &o) {
@@ -144,6 +147,8 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     delete dp_stereoAtoms;
     dp_mol = std::exchange(o.dp_mol, nullptr);
     dp_stereoAtoms = std::exchange(o.dp_stereoAtoms, nullptr);
+    dp_macroBondInfo = std::move(o.dp_macroBondInfo);
+    d_flags = std::exchange(o.d_flags, 0);
     return *this;
   }
 
@@ -361,12 +366,27 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     return *dp_stereoAtoms;
   }
 
+  MacroBondInfo *getMacroBondInfo() { return dp_macroBondInfo.get(); }
+  const MacroBondInfo *getMacroBondInfo() const {
+    return dp_macroBondInfo.get();
+  }
+  //! takes ownership of the pointer
+  void setMacroBondInfo(MacroBondInfo *info);
+
   //! calculates any of our lazy \c properties
   /*!
     <b>Notes:</b>
       - requires an owning molecule
   */
   void updatePropertyCache(bool strict = true) { (void)strict; }
+
+  //! Flags that can be used by to store information on bonds.
+  //!   These are not serialized and should be treated as temporary values.
+  //!   No guarantees are made about preserving these flags across library
+  //!   calls.
+  void setFlags(std::uint64_t flags) { d_flags = flags; }
+  std::uint64_t getFlags() const { return d_flags; }
+  std::uint64_t &getFlags() { return d_flags; }
 
  protected:
   //! sets our owning molecule
@@ -375,6 +395,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   /// void setOwningMol(ROMol &other) { setOwningMol(&other); }
   ROMol *dp_mol;
   INT_VECT *dp_stereoAtoms;
+  std::unique_ptr<MacroBondInfo> dp_macroBondInfo;
   atomindex_t d_index;
   atomindex_t d_beginAtomIdx, d_endAtomIdx;
   bool df_isAromatic;
@@ -382,6 +403,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   std::uint8_t d_bondType;
   std::uint8_t d_dirTag;
   std::uint8_t d_stereo;
+  std::uint64_t d_flags = 0;
 
   void initBond();
 };

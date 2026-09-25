@@ -24,7 +24,7 @@ import pickle
 from rdkit import Chem, DataStructs
 from rdkit.Chem.Fingerprints import DbFpSupplier, FingerprintMols
 from rdkit.DataStructs.TopNContainer import TopNContainer
-from rdkit.Dbase import DbModule
+from rdkit.Dbase import DbModule, DbResultSet
 from rdkit.Dbase.DbConnection import DbConnect
 
 try:
@@ -121,6 +121,7 @@ def GetFingerprints(details):
       suppl = _dataSeq(curs, cmd, depickle=not details.noPickle, klass=DataStructs.ExplicitBitVect)
       _dataSeq._conn = conn
       return suppl
+    data = DbResultSet.DbResultSet(curs, conn.cn, cmd)
     return DbFpSupplier.ForwardDbFpSupplier(data, fpColName=details.fpColName)
 
   if details.inFileName:

@@ -18,8 +18,6 @@
 
 #include "QT4SelectItems.H"
 
-#include <iostream>
-
 using namespace std;
 
 namespace DACLIB {

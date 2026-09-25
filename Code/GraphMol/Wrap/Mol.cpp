@@ -24,6 +24,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Substruct/SubstructDetails.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/pyint_api.h>
 #include <boost/python/copy_non_const_reference.hpp>
@@ -121,20 +122,26 @@ void MolDebug(const ROMol &mol, bool useStdout) {
 QueryAtomIterSeq *MolGetAromaticAtoms(const ROMOL_SPTR &mol) {
   auto *qa = new QueryAtom();
   qa->setQuery(makeAtomAromaticQuery());
-  QueryAtomIterSeq *res =
-      new QueryAtomIterSeq(mol, mol->beginQueryAtoms(qa), mol->endQueryAtoms(),
-                           AtomCountFunctor(mol));
+  auto res = new QueryAtomIterSeq(mol, mol->beginQueryAtoms(qa),
+                                  mol->endQueryAtoms(), AtomCountFunctor(mol));
   return res;
 }
 QueryAtomIterSeq *MolGetQueryAtoms(const ROMOL_SPTR &mol, QueryAtom *qa) {
-  QueryAtomIterSeq *res =
-      new QueryAtomIterSeq(mol, mol->beginQueryAtoms(qa), mol->endQueryAtoms(),
-                           AtomCountFunctor(mol));
+  if (qa && hasRecursiveQuery(*qa)) {
+    SubstructMatchParameters params;
+    detail::SUBQUERY_MAP subqueryMap;
+    detail::RecursiveLocker locker;
+    locker.df_clearOnDestruct = false;
+    detail::MatchSubqueries(*mol, qa->getQuery(), params, subqueryMap,
+                            locker.locked);
+  }
+  auto res = new QueryAtomIterSeq(mol, mol->beginQueryAtoms(qa),
+                                  mol->endQueryAtoms(), AtomCountFunctor(mol));
   return res;
 }
 
 ConformerIterSeq *GetMolConformers(const ROMOL_SPTR &mol) {
-  ConformerIterSeq *res =
+  auto res =
       new ConformerIterSeq(mol, mol->beginConformers(), mol->endConformers(),
                            ConformerCountFunctor(mol));
   return res;
@@ -153,23 +160,21 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
 }
 
 namespace {
-class pyobjFunctor {
- public:
-  pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyobjFunctor() = default;
-  bool operator()(const ROMol &m, std::span<const unsigned int> match) {
-    // boost::python doesn't handle std::span, so we need to convert the span to
-    // a vector before calling into python:
-    std::vector<unsigned int> matchVec(match.begin(), match.end());
-    return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(matchVec)));
-  }
-
- private:
-  python::object dp_obj;
-};
 void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
                                  python::object func) {
-  ps.extraFinalCheck = pyobjFunctor(func);
+  ps.extraFinalCheck = pyFinalMatchFunctor(func);
+}
+
+void setExtraAtomCheckFunc(SubstructMatchParameters &ps, python::object func) {
+  ps.extraAtomCheck = pyMatchFunctor<Atom>(func);
+}
+void setExtraAtomCheckFunc2(SubstructMatchParameters &ps,
+                            const AtomCoordsMatchFunctor &ftor) {
+  ps.extraAtomCheck = std::bind(&AtomCoordsMatchFunctor::operator(), &ftor,
+                                std::placeholders::_1, std::placeholders::_2);
+}
+void setExtraBondCheckFunc(SubstructMatchParameters &ps, python::object func) {
+  ps.extraBondCheck = pyMatchFunctor<Bond>(func);
 }
 
 }  // namespace
@@ -297,7 +302,23 @@ struct mol_wrapper {
                 MolPickler::setDefaultPickleProperties, python::args("arg1"),
                 "Set the current global mol pickler options.");
 
-    // REVIEW: There's probably a better place for this definition
+    // REVIEW: There's probably a better place for the next few definitions
+    python::class_<RDKit::AtomCoordsMatchFunctor, boost::noncopyable>(
+        "AtomCoordsMatcher",
+        "Allows using atom coordinates as part of substructure matching",
+        python::init<>(python::args("self")))
+        .def(python::init<int, int, double>(
+            (python::arg("self"), python::arg("refConfId") = -1,
+             python::arg("queryConfId") = -1, python::arg("tol") = 1e-4),
+            "constructor taking reference and query conformer IDs and a distance tolerance"))
+        .def("__call__", &RDKit::AtomCoordsMatchFunctor::operator())
+        .def_readwrite("refConfId", &RDKit::AtomCoordsMatchFunctor::d_refConfId,
+                       "reference conformer ID")
+        .def_readwrite("queryConfId",
+                       &RDKit::AtomCoordsMatchFunctor::d_queryConfId,
+                       "query conformer ID")
+        .def_readwrite("tol2", &RDKit::AtomCoordsMatchFunctor::d_tol2,
+                       "squared distance tolerance");
     python::class_<RDKit::SubstructMatchParameters, boost::noncopyable>(
         "SubstructMatchParameters",
         "Parameters controlling substructure matching")
@@ -360,7 +381,41 @@ struct mol_wrapper {
                with the molecule
            and a vector of atom IDs containing a potential match.
            The function should return true or false indicating whether or not
-           that match should be accepted.)DOC");
+           that match should be accepted.)DOC")
+        .def("setExtraAtomCheckFunc", setExtraAtomCheckFunc,
+             python::with_custodian_and_ward<1, 2>(),
+             python::args("self", "func"),
+             R"DOC(allows you to provide a function that will be called
+           for each atom pair that matches during substructure searching,
+           after all other comparisons have passed.
+           The function should return true or false indicating whether or not
+           that atom-match should be accepted.)DOC")
+        .def(
+            "setExtraAtomCheckFunc", setExtraAtomCheckFunc2,
+            python::with_custodian_and_ward<1, 2>(),
+            python::args("self", "atomCoordsMatcher"),
+            R"DOC(allows you to provide an AtomCoordsMatcher that will be called
+           for each atom pair that matches during substructure searching,
+           after all other comparisons have passed.)DOC")
+        .def_readwrite(
+            "extraAtomCheckOverridesDefaultCheck",
+            &RDKit::SubstructMatchParameters::
+                extraAtomCheckOverridesDefaultCheck,
+            "if set, only the extraAtomCheck will be used to determine whether or not atoms match")
+        .def("setExtraBondCheckFunc", setExtraBondCheckFunc,
+             python::with_custodian_and_ward<1, 2>(),
+             python::args("self", "func"),
+             R"DOC(allows you to provide a function that will be called
+           for each bond pair that matches during substructure searching,
+           after all other comparisons have passed.
+           The function should return true or false indicating whether or not
+           that bond-match should be accepted.)DOC")
+        .def_readwrite(
+            "extraBondCheckOverridesDefaultCheck",
+            &RDKit::SubstructMatchParameters::
+                extraBondCheckOverridesDefaultCheck,
+            "if set, only the extraBondCheck will be used to determine whether or not bonds match")
+        .def("__setattr__", &safeSetattr);
 
     python::class_<ROMol, ROMOL_SPTR, boost::noncopyable>(
         "Mol", molClassDoc.c_str(),
@@ -697,6 +752,16 @@ struct mol_wrapper {
              "assigned.\n\n"
              "  ARGUMENTS:\n"
              "    - key: the name of the property to check for (a string).\n")
+        .def("SetName", &ROMol::setName,
+             (python::arg("self"), python::arg("name")),
+             "Sets the molecule name; this is stored as the _Name property.\n\n"
+             "  ARGUMENTS:\n"
+             "    - name: the molecule name (a string).\n")
+        .def("GetName", &ROMol::getName, python::args("self"),
+             "Returns the molecule name stored as the _Name property.\n\n"
+             "  NOTE:\n"
+             "    - If the _Name property has not been set, an empty string "
+             "will be returned.\n")
         .def(
             "GetProp", GetPyProp<ROMol>,
             (python::arg("self"), python::arg("key"),
@@ -709,6 +774,17 @@ struct mol_wrapper {
             "  NOTE:\n"
             "    - If the property has not been set, a KeyError exception will be raised.\n",
             boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def(
+            "GetProp", GetPyPropOrDefault<ROMol>,
+            (python::arg("self"), python::arg("key"),
+             python::arg("autoConvert") = false, python::arg("default")),
+            "Returns the value of the property.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - autoConvert: if True attempt to convert the property into a python object\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: the property value, or default if the property is not present.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetDoubleProp", GetProp<ROMol, double>,
              python::args("self", "key"),
              "Returns the double value of the property if possible.\n\n"
@@ -719,6 +795,15 @@ struct mol_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def(
+            "GetDoubleProp", GetPropOrDefault<ROMol, double>,
+            (python::arg("self"), python::arg("key"), python::arg("default")),
+            "Returns the double value of the property if possible.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: a double, or default if the property is not present.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetIntProp", GetProp<ROMol, int>, python::args("self", "key"),
              "Returns the integer value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
@@ -728,6 +813,15 @@ struct mol_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def(
+            "GetIntProp", GetPropOrDefault<ROMol, int>,
+            (python::arg("self"), python::arg("key"), python::arg("default")),
+            "Returns the integer value of the property if possible.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: an integer, or default if the property is not present.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetUnsignedProp", GetProp<ROMol, unsigned int>,
              python::args("self", "key"),
              "Returns the unsigned int value of the property if possible.\n\n"
@@ -738,6 +832,15 @@ struct mol_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def(
+            "GetUnsignedProp", GetPropOrDefault<ROMol, unsigned int>,
+            (python::arg("self"), python::arg("key"), python::arg("default")),
+            "Returns the unsigned int value of the property if possible.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: an unsigned integer, or default if the property is not present.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetBoolProp", GetProp<ROMol, bool>, python::args("self", "key"),
              "Returns the Bool value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
@@ -747,6 +850,15 @@ struct mol_wrapper {
              "    - If the property has not been set, a KeyError exception "
              "will be raised.\n",
              boost::python::return_value_policy<return_pyobject_passthrough>())
+        .def(
+            "GetBoolProp", GetPropOrDefault<ROMol, bool>,
+            (python::arg("self"), python::arg("key"), python::arg("default")),
+            "Returns the Bool value of the property if possible.\n\n"
+            "  ARGUMENTS:\n"
+            "    - key: the name of the property to return (a string).\n\n"
+            "    - default: value to return if the property is not present.\n\n"
+            "  RETURNS: a bool, or default if the property is not present.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("ClearProp", MolClearProp<ROMol>, python::args("self", "key"),
              "Removes a property from the molecule.\n\n"
              "  ARGUMENTS:\n"
@@ -797,17 +909,7 @@ struct mol_wrapper {
              (python::arg("self"), python::arg("includePrivate") = false,
               python::arg("includeComputed") = false,
               python::arg("autoConvertStrings") = true),
-             "Returns a dictionary populated with the molecules properties.\n"
-             " n.b. Some properties are not able to be converted to python "
-             "types.\n\n"
-             "  ARGUMENTS:\n"
-             "    - includePrivate: (optional) toggles inclusion of private "
-             "properties in the result set.\n"
-             "                      Defaults to False.\n"
-             "    - includeComputed: (optional) toggles inclusion of computed "
-             "properties in the result set.\n"
-             "                      Defaults to False.\n\n"
-             "  RETURNS: a dictionary\n")
+             getPropsAsDictDocString.c_str())
 
         .def("GetAromaticAtoms", MolGetAromaticAtoms,
              python::return_value_policy<

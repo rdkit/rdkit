@@ -10,7 +10,8 @@ import sys
 
 from rdkit import Chem, rdBase
 from rdkit.Chem.rdfiltercatalog import *
-MatchTypeVect = rdBase.MatchTypeVect
+if hasattr(rdBase, 'MatchTypeVect'):
+  MatchTypeVect = rdBase.MatchTypeVect
 
 class FilterMatcher(PythonFilterMatcher):
   """FilterMatcher - This class allows creation of Python based
@@ -36,7 +37,10 @@ class FilterMatcher(PythonFilterMatcher):
 
   def __init__(self, name="Unamed FilterMatcher"):
     self.name = name
-    PythonFilterMatcher.__init__(self, self)
+    if rdBase._wrapperType == 'boost':
+      PythonFilterMatcher.__init__(self, self)
+    else:
+      PythonFilterMatcher.__init__(self, name)
 
   def HasMatch(self, mol):
     """Return True if the filter matches the molecule"""

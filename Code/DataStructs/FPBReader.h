@@ -18,7 +18,6 @@
      in future releases.
 */
 
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>

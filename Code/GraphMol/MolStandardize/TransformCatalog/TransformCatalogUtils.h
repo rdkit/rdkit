@@ -15,7 +15,6 @@
 #include "TransformCatalogParams.h"
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemReactions/Reaction.h>
-#include <iostream>
 
 namespace RDKit {
 class ROMol;

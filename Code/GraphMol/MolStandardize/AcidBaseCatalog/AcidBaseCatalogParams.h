@@ -16,7 +16,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <string>
 #include <vector>
-#include <iostream>
 
 namespace RDKit {
 class ROMol;

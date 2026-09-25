@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -35,7 +34,6 @@
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <string>
-#include <iostream>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include "GraphMol/ChemReactions/ReactionFingerprints.h"

@@ -21,11 +21,14 @@ ROMol *renumberAtoms(const ROMol &mol,
   unsigned int nAts = mol.getNumAtoms();
   PRECONDITION(newOrder.size() == nAts, "bad newOrder size");
 
-  std::vector<unsigned int> revOrder(nAts);
+  std::vector<unsigned int> revOrder(nAts, nAts);
   for (unsigned int nIdx = 0; nIdx < nAts; ++nIdx) {
     unsigned int oIdx = newOrder[nIdx];
-    if (oIdx > nAts) {
+    if (oIdx >= nAts) {
       throw ValueErrorException("idx value exceeds numAtoms");
+    }
+    if (revOrder[oIdx] != nAts) {
+      throw ValueErrorException("newOrder contains duplicate indices");
     }
     revOrder[oIdx] = nIdx;
   }
@@ -65,9 +68,7 @@ ROMol *renumberAtoms(const ROMol &mol,
   }
 
   // now the bonds:
-  for (ROMol::ConstBondIterator bi = mol.beginBonds(); bi != mol.endBonds();
-       ++bi) {
-    const Bond *oBond = (*bi);
+  for (const auto oBond : mol.bonds()) {
     Bond *nBond = oBond->copy();
     nBond->setBeginAtomIdx(revOrder[oBond->getBeginAtomIdx()]);
     nBond->setEndAtomIdx(revOrder[oBond->getEndAtomIdx()]);

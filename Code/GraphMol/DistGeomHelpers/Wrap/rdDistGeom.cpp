@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,8 +17,10 @@
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
+#include <DistGeom/ChiralSet.h>
 #include <RDGeneral/ControlCHandler.h>
 
+#include <GraphMol/DistGeomHelpers/BoundsMatrixBuilderDetails.h>
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 
@@ -36,11 +38,11 @@ struct PyEmbedParameters
     // the EmbedParameters object doesn't own the memory for the coordMap, so we
     // have to take ownership here.
     d_coordMap.reset(new std::map<int, RDGeom::Point3D>());
-    for (unsigned int i = 0;
-         i < python::extract<unsigned int>(cmap.keys().attr("__len__")());
-         ++i) {
-      (*d_coordMap)[python::extract<int>(cmap.keys()[i])] =
-          python::extract<RDGeom::Point3D>(cmap.values()[i]);
+    const auto items = cmap.items();
+    for (unsigned int i = 0; i < python::len(items); ++i) {
+      const auto item = items[i];
+      (*d_coordMap)[python::extract<int>(item[0])] =
+          python::extract<RDGeom::Point3D>(item[1]);
     }
     coordMap = d_coordMap.get();
   }
@@ -58,7 +60,7 @@ struct PyEmbedParameters
         new std::map<std::pair<unsigned int, unsigned int>, double>);
 
     python::list ks = CPCIdict.keys();
-    unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
+    unsigned int nKeys = python::len(ks);
 
     for (unsigned int i = 0; i < nKeys; ++i) {
       python::tuple id = python::extract<python::tuple>(ks[i]);
@@ -115,7 +117,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
                   bool useMacrocycle14config) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
-  unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
+  unsigned int nKeys = python::len(ks);
   for (unsigned int i = 0; i < nKeys; ++i) {
     unsigned int id = python::extract<unsigned int>(ks[i]);
     pMap[id] = python::extract<RDGeom::Point3D>(coordMap[id]);
@@ -125,17 +127,25 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
     pMapPtr = &pMap;
   }
 
-  bool verbose = printExpTorsionAngles;
-  int numThreads = 1;
-  double pruneRmsThresh = -1.;
-  const double basinThresh = DGeomHelpers::EmbedParameters().basinThresh;
-  bool onlyHeavyAtomsForRMS = false;
-  DGeomHelpers::EmbedParameters params(
-      maxAttempts, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
-      randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
-      basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS, ETversion, nullptr,
-      true, useSmallRingTorsions, useMacrocycleTorsions, useMacrocycle14config);
+  DGeomHelpers::EmbedParameters params{
+      .maxIterations = maxAttempts,
+      .randomSeed = seed,
+      .clearConfs = clearConfs,
+      .useRandomCoords = useRandomCoords,
+      .boxSizeMult = boxSizeMult,
+      .randNegEig = randNegEig,
+      .numZeroFail = numZeroFail,
+      .coordMap = pMapPtr,
+      .optimizerForceTol = forceTol,
+      .ignoreSmoothingFailures = ignoreSmoothingFailures,
+      .enforceChirality = enforceChirality,
+      .useExpTorsionAnglePrefs = useExpTorsionAnglePrefs,
+      .useBasicKnowledge = useBasicKnowledge,
+      .verbose = printExpTorsionAngles,
+      .ETversion = ETversion,
+      .useSmallRingTorsions = useSmallRingTorsions,
+      .useMacrocycleTorsions = useMacrocycleTorsions,
+      .useMacrocycle14config = useMacrocycle14config};
 
   int res;
   {
@@ -173,7 +183,7 @@ INT_VECT EmbedMultipleConfs(
     bool useMacrocycle14config) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
-  unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
+  unsigned int nKeys = python::len(ks);
   for (unsigned int i = 0; i < nKeys; ++i) {
     unsigned int id = python::extract<unsigned int>(ks[i]);
     pMap[id] = python::extract<RDGeom::Point3D>(coordMap[id]);
@@ -182,15 +192,29 @@ INT_VECT EmbedMultipleConfs(
   if (nKeys) {
     pMapPtr = &pMap;
   }
-  bool verbose = printExpTorsionAngles;
-  const double basinThresh = DGeomHelpers::EmbedParameters().basinThresh;
   bool onlyHeavyAtomsForRMS = false;
-  DGeomHelpers::EmbedParameters params(
-      maxAttempts, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
-      randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
-      enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
-      basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS, ETversion, nullptr,
-      true, useSmallRingTorsions, useMacrocycleTorsions, useMacrocycle14config);
+  DGeomHelpers::EmbedParameters params{
+      .maxIterations = maxAttempts,
+      .numThreads = numThreads,
+      .randomSeed = seed,
+      .clearConfs = clearConfs,
+      .useRandomCoords = useRandomCoords,
+      .boxSizeMult = boxSizeMult,
+      .randNegEig = randNegEig,
+      .numZeroFail = numZeroFail,
+      .coordMap = pMapPtr,
+      .optimizerForceTol = forceTol,
+      .ignoreSmoothingFailures = ignoreSmoothingFailures,
+      .enforceChirality = enforceChirality,
+      .useExpTorsionAnglePrefs = useExpTorsionAnglePrefs,
+      .useBasicKnowledge = useBasicKnowledge,
+      .verbose = printExpTorsionAngles,
+      .pruneRmsThresh = pruneRmsThresh,
+      .onlyHeavyAtomsForRMS = onlyHeavyAtomsForRMS,
+      .ETversion = ETversion,
+      .useSmallRingTorsions = useSmallRingTorsions,
+      .useMacrocycleTorsions = useMacrocycleTorsions,
+      .useMacrocycle14config = useMacrocycle14config};
 
   INT_VECT res;
   {
@@ -220,10 +244,12 @@ INT_VECT EmbedMultipleConfs2(ROMol &mol, unsigned int numConfs,
   return res;
 }
 
-PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
-                             bool scaleVDW = false,
-                             bool doTriangleSmoothing = true,
-                             bool useMacrocycle14config = false) {
+PyObject *getMolBoundsMatrix2(ROMol &mol,
+                              const DGeomHelpers::EmbedParameters &params,
+                              bool doTriangleSmoothing = true,
+                              bool scaleVDW = false, bool set15bounds = true,
+                              bool set14bounds = true,
+                              bool set13bounds = true) {
   unsigned int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -231,8 +257,8 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
 
   DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
   DGeomHelpers::initBoundsMat(mat);
-  DGeomHelpers::setTopolBounds(mol, mat, set15bounds, scaleVDW,
-                               useMacrocycle14config);
+  DGeomHelpers::setTopolBounds(mol, mat, params, scaleVDW, set15bounds,
+                               set14bounds, set13bounds);
   if (doTriangleSmoothing) {
     DistGeom::triangleSmoothBounds(mat);
   }
@@ -242,6 +268,20 @@ PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
 
   return PyArray_Return(res);
 }
+
+PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds = true,
+                             bool scaleVDW = false,
+                             bool doTriangleSmoothing = true,
+                             bool useMacrocycle14config = false,
+                             bool forceTransAmides = true,
+                             bool set14bounds = true, bool set13bounds = true) {
+  DGeomHelpers::EmbedParameters params{
+      .useMacrocycle14config = useMacrocycle14config,
+      .forceTransAmides = forceTransAmides};
+  return getMolBoundsMatrix2(mol, params, doTriangleSmoothing, scaleVDW,
+                             set15bounds, set14bounds, set13bounds);
+}
+
 PyEmbedParameters *getETKDG() {  // ET version 1
   return new PyEmbedParameters(DGeomHelpers::ETKDG);
 }
@@ -267,31 +307,72 @@ PyEmbedParameters *getETDG() {
 PyEmbedParameters *getETDGv2() {
   return new PyEmbedParameters(DGeomHelpers::ETDGv2);
 }
+PyEmbedParameters *getDG() { return new PyEmbedParameters(DGeomHelpers::DG); }
+PyEmbedParameters *getETKDGv4() {
+  return new PyEmbedParameters(DGeomHelpers::ETKDGv4);
+}
 
-python::tuple getExpTorsHelper(const RDKit::ROMol &mol, bool useExpTorsions,
-                               bool useSmallRingTorsions,
-                               bool useMacrocycleTorsions,
-                               bool useBasicKnowledge, unsigned int version,
-                               bool verbose) {
-  ForceFields::CrystalFF::CrystalFFDetails details;
-  std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
-                         const ForceFields::CrystalFF::ExpTorsionAngle *>>
-      torsionBonds;
-  ForceFields::CrystalFF::getExperimentalTorsions(
-      mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
-      useMacrocycleTorsions, useBasicKnowledge, version, verbose);
-  python::list result;
-  for (const auto &pr : torsionBonds) {
-    python::dict d;
-    d["bondIndex"] = std::get<0>(pr);
-    d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
-    d["smarts"] = std::get<2>(pr)->smarts;
-    d["V"] = std::get<2>(pr)->V;
-    d["signs"] = std::get<2>(pr)->signs;
-    d["atomIndices"] = std::get<1>(pr);
-    result.append(d);
+python::tuple getExpTorsHelper(const RDKit::ROMol &mol,
+                               const bool useExpTorsions,
+                               const bool useSmallRingTorsions,
+                               const bool useMacrocycleTorsions,
+                               const bool useBasicKnowledge,
+                               const unsigned int version, const bool verbose) {
+  switch (version) {
+    case 1:
+      [[fallthrough]];
+    case 2: {
+      ForceFields::CrystalFF::CrystalFFDetails details;
+      std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                             ForceFields::CrystalFF::TorsionAnglePtrVariant>>
+          torsionBonds;
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      python::list result;
+      for (const auto &pr : torsionBonds) {
+        const auto *angle =
+            std::get<const ForceFields::CrystalFF::ExpTorsionAngle *>(
+                std::get<2>(pr));
+        python::dict d;
+        d["bondIndex"] = std::get<0>(pr);
+        d["torsionIndex"] = angle->torsionIdx;
+        d["smarts"] = angle->smarts;
+        d["V"] = angle->V;
+        d["signs"] = angle->signs;
+        d["atomIndices"] = std::get<1>(pr);
+        result.append(d);
+      }
+      return python::tuple(result);
+    }
+    case 4: {
+      ForceFields::CrystalFF::CrystalFFDetails details;
+      std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                             ForceFields::CrystalFF::TorsionAnglePtrVariant>>
+          torsionBonds;
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      python::list result;
+      for (const auto &pr : torsionBonds) {
+        const auto *angle =
+            std::get<const ForceFields::CrystalFF::GaussianExpTorsionAngle *>(
+                std::get<2>(pr));
+        python::dict d;
+        d["bondIndex"] = std::get<0>(pr);
+        d["torsionIndex"] = angle->torsionIdx;
+        d["smarts"] = angle->smarts;
+        d["positions"] = angle->positions;
+        d["widths"] = angle->widths;
+        d["heights"] = angle->heights;
+        d["atomIndices"] = std::get<1>(pr);
+        result.append(d);
+      }
+      return python::tuple(result);
+    }
+    default:
+      throw std::invalid_argument("ETversion can only be 1, 2 or 4.");
   }
-  return python::tuple(result);
 }
 
 python::tuple getExpTorsHelperWithParams(
@@ -301,6 +382,10 @@ python::tuple getExpTorsHelperWithParams(
                           ps.useBasicKnowledge, ps.ETversion, ps.verbose);
 }
 
+python::str embedParametersToJSONHelper(
+    const DGeomHelpers::EmbedParameters &ps) {
+  return python::str(embedParametersToJSON(ps));
+}
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
@@ -331,7 +416,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
  \n\
  ARGUMENTS:\n\n\
     - mol : the molecule of interest\n\
-    - maxAttempts : the maximum number of attempts to try embedding \n\
+    - maxAttempts : maximum number of embedding attempts to use for a single conformation \n\
     - randomSeed : provide a seed for the random number generator \n\
                    so that the same coordinates can be obtained \n\
                    for a molecule on multiple runs. If -1, the \n\
@@ -364,10 +449,11 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - ETversion : version of the standard torsion definitions to use. NOTE for both\n\
                   ETKDGv2 and ETKDGv3 this should be 2 since ETKDGv3 uses the ETKDGv2\n\
                   definitions for standard torsions\n\
-    - useMacrocycle14config : use the 1-4 distance bounds from ETKDGv3\n\
+    - useMacrocycle14config : This forces amides and esters to be trans in macrocycles.\n\
+                              This does not affect chain amides / esters!\n\
 \n\
  RETURNS:\n\n\
-    ID of the new conformation added to the molecule \n\
+    ID of the new conformation added to the molecule or -1 if the embedding fails.\n\
 \n";
   python::def(
       "EmbedMolecule", RDKit::EmbedMolecule,
@@ -394,7 +480,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
  ARGUMENTS:\n\n\
   - mol : the molecule of interest\n\
   - numConfs : the number of conformers to generate \n\
-  - maxAttempts : the maximum number of attempts to try embedding \n\
+  - maxAttempts : maximum number of embedding attempts to use for a single conformation \n\
   - randomSeed : provide a seed for the random number generator \n\
                  so that the same coordinates can be obtained \n\
                  for a molecule on multiple runs. If -1, the \n\
@@ -436,7 +522,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   - useBasicKnowledge : impose basic knowledge such as flat rings\n\
   - printExpTorsionAngles : print the output from the experimental torsion angles\n\
  RETURNS:\n\n\
-    List of new conformation IDs \n\
+    Iterator which yields new conformation IDs \n\
 \n";
   python::def(
       "EmbedMultipleConfs", RDKit::EmbedMultipleConfs,
@@ -456,6 +542,18 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("ETversion") = 2,
        python::arg("useMacrocycle14config") = true),
       docString.c_str());
+
+  python::enum_<RDKit::DGeomHelpers::InitialEmbeddingMode>(
+      "InitialEmbeddingMode")
+      .value("DG_EMBEDDING",
+             RDKit::DGeomHelpers::InitialEmbeddingMode::DG_EMBEDDING)
+      .value("INTERNAL_COORDINATE_EMBEDDING",
+             RDKit::DGeomHelpers::InitialEmbeddingMode::
+                 INTERNAL_COORDINATE_EMBEDDING)
+      .value("RANDOM_COORDINATE_EMBEDDING",
+             RDKit::DGeomHelpers::InitialEmbeddingMode::
+                 RANDOM_COORDINATE_EMBEDDING)
+      .export_values();
 
   python::enum_<RDKit::DGeomHelpers::EmbedFailureCauses>("EmbedFailureCauses")
       .value("INITIAL_COORDS",
@@ -480,6 +578,55 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
              RDKit::DGeomHelpers::EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO)
       .value("CHECK_CHIRAL_CENTERS2",
              RDKit::DGeomHelpers::EmbedFailureCauses::CHECK_CHIRAL_CENTERS2)
+      .value("EXCEEDED_TIMEOUT",
+             RDKit::DGeomHelpers::EmbedFailureCauses::EXCEEDED_TIMEOUT)
+      .value("MINIMIZATION",
+             RDKit::DGeomHelpers::EmbedFailureCauses::MINIMIZATION)
+      .value("KTERM_VIOLATION",
+             RDKit::DGeomHelpers::EmbedFailureCauses::KTERM_VIOLATION)
+      .value("CLASH", RDKit::DGeomHelpers::EmbedFailureCauses::CLASH)
+      .export_values();
+
+  python::def(
+      "OrderedEmbedFailureCauses",
+      +[](const bool legacyImplementation = true) {
+        using E = RDKit::DGeomHelpers::EmbedFailureCauses;
+        using Ret_T = std::vector<std::pair<E, std::size_t>>;
+        python::list result;
+        Ret_T causes = legacyImplementation
+                           ? Ret_T{{E::INITIAL_COORDS, 0},
+                                   {E::FIRST_MINIMIZATION, 1},
+                                   {E::CHECK_TETRAHEDRAL_CENTERS, 2},
+                                   {E::CHECK_CHIRAL_CENTERS, 3},
+                                   {E::MINIMIZE_FOURTH_DIMENSION, 4},
+                                   {E::ETK_MINIMIZATION, 5},
+                                   {E::LINEAR_DOUBLE_BOND, 8},
+                                   {E::CHECK_CHIRAL_CENTERS2, 10},
+                                   {E::FINAL_CHIRAL_BOUNDS, 6},
+                                   {E::FINAL_CENTER_IN_VOLUME, 7},
+                                   {E::BAD_DOUBLE_BOND_STEREO, 9},
+                                   {E::EXCEEDED_TIMEOUT, 11}}
+                           : Ret_T{{E::INITIAL_COORDS, 0},
+                                   {E::MINIMIZATION, 12},
+                                   {E::KTERM_VIOLATION, 13},
+                                   {E::CHECK_TETRAHEDRAL_CENTERS, 2},
+                                   {E::CHECK_CHIRAL_CENTERS, 3},
+                                   {E::FINAL_CHIRAL_BOUNDS, 6},
+                                   {E::FINAL_CENTER_IN_VOLUME, 7},
+                                   {E::BAD_DOUBLE_BOND_STEREO, 9},
+                                   {E::CLASH, 14},
+                                   {E::LINEAR_DOUBLE_BOND, 9},
+                                   {E::EXCEEDED_TIMEOUT, 11}};
+        for (const auto &c : causes) {
+          result.append(python::make_tuple(c.first, c.second));
+        }
+        return result;
+      },
+      python::arg("legacyImplementation") = true);
+
+  python::enum_<RDKit::DGeomHelpers::EmbedFF>("EmbedFF")
+      .value("UFF", RDKit::DGeomHelpers::EmbedFF::UFF)
+      .value("MMFF", RDKit::DGeomHelpers::EmbedFF::MMFF)
       .export_values();
 
   python::class_<PyEmbedParameters, boost::noncopyable>(
@@ -546,9 +693,12 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite("useMacrocycleTorsions",
                      &PyEmbedParameters::useMacrocycleTorsions,
                      "impose macrocycle torsion angle preferences")
-      .def_readwrite("useMacrocycle14config",
-                     &PyEmbedParameters::useMacrocycle14config,
-                     "use the 1-4 distance bounds from ETKDGv3")
+      .def_readwrite(
+          "useMacrocycle14config", &PyEmbedParameters::useMacrocycle14config,
+          "This forces amides and esters to be trans in macrocycles. This does not affect chain amides / esters!")
+      .def_readwrite("useLegacyImplementation",
+                     &PyEmbedParameters::useLegacyImplementation,
+                     "Whether to use the combined minimization approach")
       .def_readwrite(
           "boundsMatForceScaling", &PyEmbedParameters::boundsMatForceScaling,
           "scale the weights of the atom pair distance restraints relative to "
@@ -566,7 +716,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
            "set the customised pairwise Columb-like interaction to atom pairs."
            "used during structural minimisation stage")
       .def_readwrite("forceTransAmides", &PyEmbedParameters::forceTransAmides,
-                     "constrain amide bonds to be trans")
+                     "This forces chain amides and esters to be trans. "
+                     "This does not affect amides / esters in macrocycles!")
       .def_readwrite(
           "trackFailures", &PyEmbedParameters::trackFailures,
           "keep track of which checks during the embedding process fail")
@@ -580,8 +731,16 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "symmetrizeConjugatedTerminalGroupsForPruning",
           &PyEmbedParameters::symmetrizeConjugatedTerminalGroupsForPruning,
           "symmetrize terminal conjugated groups for RMSD pruning")
+      .def_readwrite(
+          "initialEmbeddingMode", &PyEmbedParameters::initialEmbeddingMode,
+          "Mode for initial embedding: DG_EMBEDDING, INTERNAL_CORRDINATE_EMBEDDING, RANDOM_COORDINATE_EMBEDDING")
+      .def_readwrite("onlyInitialEmbedding",
+                     &PyEmbedParameters::onlyInitialEmbedding,
+                     "Only generates the initial 3D embedding")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap, python::args("self"),
            "sets the coordmap to be used")
+      .def_readwrite("embedForceField", &PyEmbedParameters::embedForceField,
+                     "Force Field to use for ideal 1-2 and 1-3 distances.")
       .def("__setattr__", &safeSetattr);
 
   docString =
@@ -593,7 +752,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   - numConfs : the number of conformers to generate \n\
   - params : an EmbedParameters object \n\
  RETURNS:\n\n\
-    List of new conformation IDs \n\
+    Iterator which yields new conformation IDs \n\
 \n";
   python::def(
       "EmbedMultipleConfs", RDKit::EmbedMultipleConfs2,
@@ -609,7 +768,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - params : an EmbedParameters object \n\
 \n\
  RETURNS:\n\n\
-    ID of the new conformation added to the molecule \n\
+    ID of the new conformation added to the molecule or -1 if the embedding fails. \n\
 \n";
   python::def("EmbedMolecule", RDKit::EmbedMolecule2,
               (python::arg("mol"), python::arg("params")), docString.c_str());
@@ -639,7 +798,14 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   python::def("KDG", RDKit::getKDG,
               "Returns an EmbedParameters object for the KDG method.",
               python::return_value_policy<python::manage_new_object>());
+  python::def("DG", RDKit::getDG,
+              "Returns an EmbedParameters object for plain distance geometry.",
+              python::return_value_policy<python::manage_new_object>());
 
+  python::def("ETKDGv4", RDKit::getETKDGv4,
+              "Returns an EmbedParameters object for the ETKDG method - "
+              "version 4.",
+              python::return_value_policy<python::manage_new_object>());
   docString =
       "Returns the distance bounds matrix for a molecule\n\
  \n\
@@ -647,18 +813,44 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - mol : the molecule of interest\n\
     - set15bounds : set bounds for 1-5 atom distances based on \n\
                     topology (otherwise stop at 1-4s)\n\
-    - scaleVDW : scale down the sum of VDW radii when setting the \n\
-                 lower bounds for atoms less than 5 bonds apart \n\
+    - scaleVDW : ignored \n\
     - doTriangleSmoothing : run triangle smoothing on the bounds \n\
                  matrix before returning it \n\
+    - useMacrocycle14config : use 1-4 distance bound heuristics for macrocycles\n\
+    - forceTransAmides : constrain amide bonds to be trans\n\
+    - set14bounds : set bounds for 1-4 atom distances based on \n\
+                    topology\n\
+    - set13bounds : set bounds for 1-3 atom distances based on \n\
+                    topology\n\
  RETURNS:\n\n\
     the bounds matrix as a Numeric array with lower bounds in \n\
     the lower triangle and upper bounds in the upper triangle\n\
 \n";
-  python::def("GetMoleculeBoundsMatrix", RDKit::getMolBoundsMatrix,
-              (python::arg("mol"), python::arg("set15bounds") = true,
-               python::arg("scaleVDW") = false,
-               python::arg("doTriangleSmoothing") = true,
-               python::arg("useMacrocycle14config") = false),
-              docString.c_str());
+  python::def(
+      "GetMoleculeBoundsMatrix", RDKit::getMolBoundsMatrix,
+      (python::arg("mol"), python::arg("set15bounds") = true,
+       python::arg("scaleVDW") = false,
+       python::arg("doTriangleSmoothing") = true,
+       python::arg("useMacrocycle14config") = false,
+       python::arg("forceTransAmides") = true,
+       python::arg("set14bounds") = true, python::arg("set13bounds") = true),
+      docString.c_str());
+  python::def(
+      "GetMoleculeBoundsMatrix", RDKit::getMolBoundsMatrix2,
+      (python::arg("mol"), python::arg("embedParams"),
+       python::arg("doTriangleSmoothing") = true,
+       python::arg("scaleVDW") = false, python::arg("set15bounds") = true,
+       python::arg("set14bounds") = true, python::arg("set13bounds") = true),
+      docString.c_str());
+
+  docString =
+      "Returns json string containing embedParameters attributes\n\
+  \n\
+  ARGUMENTS:\n\n\
+    - embedParameters : the Params object you want serialized\n\
+  RETURNS:\n\n\
+    The Params object as json string\n\
+  \n";
+  python::def("EmbedParametersToJSON", RDKit::embedParametersToJSONHelper,
+              (python::arg("embedParameters")), docString.c_str());
 }

@@ -122,7 +122,9 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibraryBase {
   /// Each result vector corresponds for a product template.
   virtual std::vector<std::vector<std::string>> nextSmiles();
 
-  //! Get the current position into the reagent vectors
+  //! Get the current position into the reagent vectors as returned by
+  ///  getReagents.  It is not necessarily the index into the input reagents
+  ///  as it is only for the reagents compatible with the reaction.
   ///  Use getState/setState to save/restart the enumeration
   ///  from this position.
   const EnumerationTypes::RGROUPS &getPosition() const;

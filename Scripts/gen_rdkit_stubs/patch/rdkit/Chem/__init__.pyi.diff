@@ -1,0 +1,10 @@
+--- a/rdkit/Chem/__init__.pyi
++++ b/rdkit/Chem/__init__.pyi
+@@ -138,7 +138,7 @@
+         ...
+     def _sizeCalc(self):
+         ...
+-def CanonSmiles(smi, useChiral = 1):
++def CanonSmiles(smi: str, useChiral: int = 1) -> str:
+     """
+     A convenience function for canonicalizing SMILES

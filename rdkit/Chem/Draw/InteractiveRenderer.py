@@ -31,6 +31,7 @@ parentNodeQuery = "div[class*=jp-NotebookPanel-notebook]"
 _enabled_div_uuid = None
 _camelCaseOptToTagRe = re.compile("[A-Z]")
 _opts = "__rnrOpts"
+_rdk_str_rnr_prefix = "rdk-str-rnr-"
 _disabled = "_disabled"
 _defaultDrawOptions = None
 _defaultDrawOptionsDict = None
@@ -83,8 +84,8 @@ def filterDefaultDrawOpts(molDrawOptions):
 def setEnabled(shouldEnable=True, quiet=False):
   """ Enable interactive molecule rendering """
 
-  def _wrapMsgIntoDiv(uuid, msg, quiet):
-    return ('<div '
+  def _wrapMsgIntoDiv(uuid, msg, quiet, script=None):
+    return ((script or "") + '<div '
             'class="lm-Widget p-Widget jp-RenderedText jp-mod-trusted jp-OutputArea-output"'
             f'id="{uuid}">{"" if quiet else msg}</div>')
 
@@ -95,54 +96,66 @@ def setEnabled(shouldEnable=True, quiet=False):
   renderingUnavailableMsg = renderingMsg.format("not available")
   renderingEnabledMsg = renderingMsg.format("enabled")
   renderingDisabledMsg = renderingMsg.format("disabled")
+  checkRenderingAvailable = f"""<script>\
+(() => {{
+  const rdkStrRnr = window.rdkStrRnr || Promise.resolve(null);
+  if (rdkStrRnr) {{
+    rdkStrRnr.then(
+      (Renderer) => {{
+        if (Renderer && Renderer.updateMolDrawDivs) {{
+          setTimeout(() => {{
+            const jsLoader = document.getElementById('{_enabled_div_uuid}') || {{}};
+            jsLoader.innerHTML = '{renderingEnabledMsg}';
+          }}, 10);
+        }} else {{
+          window.rdkStrRnr = null;
+        }}
+      }}
+    ).catch((e) => {{
+      console.error(e.toString());
+    }});
+}})();
+}}</script>"""
   if not shouldEnable:
     _enabled_div_uuid = None
     return display(HTML(_wrapMsgIntoDiv("", renderingDisabledMsg, quiet)))
   if _enabled_div_uuid:
-    return display(HTML(_wrapMsgIntoDiv(_enabled_div_uuid, renderingEnabledMsg, quiet)))
+    return display(HTML(_wrapMsgIntoDiv(_enabled_div_uuid, renderingUnavailableMsg, quiet, script=checkRenderingAvailable)))
   _enabled_div_uuid = str(uuid.uuid1())
   return display(
     HTML(
       _wrapMsgIntoDiv(_enabled_div_uuid, loadingMsg, quiet) + f"""<script type="module">
 const jsLoader = document.getElementById('{_enabled_div_uuid}') || {{}};
-const setError = (e, resolve) => {{
+const setError = (e) => {{
   jsLoader.innerHTML = (
     '{failedToLoadMsg}<br>' +
     e.toString() + '<br>' +
     '{renderingUnavailableMsg}'
   );
-  resolve && resolve();
+  window.rdkStrRnr = null;
 }};
 if (window.rdkStrRnr) {{
   jsLoader.innerHTML = '{renderingEnabledMsg}';
 }} else {{
-  window.rdkStrRnr = new Promise(resolve => {{
+  window.rdkStrRnr = new Promise((resolve) => {{
     try {{
       fetch('{rdkitStructureRendererJsUrl}').then(
-        r => r.text().then(
-          t => import(URL.createObjectURL(new Blob([t], {{ type: 'application/javascript' }}))).then(
+        (r) => r.text().then(
+          (t) => import(URL.createObjectURL(new Blob([t], {{ type: 'application/javascript' }}))).then(
             ({{ default: Renderer }}) => {{
               const res = Renderer.init('{minimalLibJsUrl}');
               return res.then(
-                Renderer => {{
+                (Renderer) => {{
                   jsLoader.innerHTML = '{renderingEnabledMsg}';
                   resolve(Renderer);
                 }}
-              ).catch(
-                e => setError(e, resolve)
-              );
+              ).catch(setError);
             }}
-          ).catch(
-              e => setError(e, resolve)
-          )
-        ).catch(
-          e => setError(e, resolve)
-        )
-      ).catch(
-        e => setError(e, resolve)
-      );
+          ).catch(setError)
+        ).catch(setError)
+      ).catch(setError);
     }} catch(e) {{
-      setError(e, resolve);
+      setError(e);
     }}
   }});
 }}
@@ -231,7 +244,7 @@ def injectHTMLFooterAfterTable(html):
     else:
       tbody = table
     div_list = tbody.getElementsByTagName("div")
-    if any(div.getAttribute("class") == "rdk-str-rnr-mol-container" for div in div_list):
+    if any(div.getAttribute("class") == f"{_rdk_str_rnr_prefix}mol-container" for div in div_list):
       return generateHTMLFooter(doc, table)
   return html
 
@@ -303,20 +316,6 @@ def generateHTMLBody(mol, size, **kwargs):
       b.GetIdx() for b in mol.GetBonds()
       if b.GetBeginAtomIdx() in highlightAtoms and b.GetEndAtomIdx() in highlightAtoms
     ]
-  doc = minidom.Document()
-  unique_id = str(uuid.uuid1())
-  div = doc.createElement("div")
-  for key, value in [
-    ("style", f"margin: auto;"),
-    ("class", "rdk-str-rnr-mol-container"),
-    ("id", f"rdk-str-rnr-mol-{unique_id}"),
-    ("data-mol", toDataMol(mol)),
-    ("data-content", "rdkit/molecule"),
-    ("data-parent-node", parentNodeQuery),
-    ("data-width", str(size[0])),
-    ("data-height", str(size[1])),
-  ]:
-    div.setAttribute(key, value)
   userDrawOpts = filterDefaultDrawOpts(drawOptions)
   molOpts = getOpts(mol)
   molOptsDashed = {}
@@ -330,6 +329,20 @@ def generateHTMLBody(mol, size, **kwargs):
       userDrawOpts.update(value)
     else:
       molOptsDashed[keyDashed] = value
+  doc = minidom.Document()
+  unique_id = str(uuid.uuid1())
+  div = doc.createElement("div")
+  for key, value in [
+    ("style", f"margin: auto;"),
+    ("class", f"{_rdk_str_rnr_prefix}mol-container"),
+    ("id", f"{_rdk_str_rnr_prefix}mol-{unique_id}"),
+    ("data-mol", toDataMol(mol)),
+    ("data-content", "rdkit/molecule"),
+    ("data-parent-node", parentNodeQuery),
+    ("data-width", str(size[0])),
+    ("data-height", str(size[1])),
+  ]:
+    div.setAttribute(key, value)
   if "addAtomIndices" in userDrawOpts:
     addAtomIndices = userDrawOpts["addAtomIndices"]
     if addAtomIndices:

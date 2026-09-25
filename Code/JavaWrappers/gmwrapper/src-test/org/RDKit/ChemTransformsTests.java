@@ -1,6 +1,4 @@
 /* 
- * $Id$
- *
  *  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
  *  All rights reserved.
  * 
@@ -67,6 +65,19 @@ public class ChemTransformsTests extends GraphMolTest {
 		assertEquals( 14,mol.getNumAtoms());
 		assertEquals( 20,nmol.getNumAtoms());
                 assertEquals("[16*]c1ccccc1.[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O",nmol.MolToSmiles(true));
+
+	}
+
+        @Test
+	public void testSubset() {
+	    ROMol mol = RWMol.MolFromSmiles("c1ccccc1CCN");
+	    UInt_Vect vect = new UInt_Vect(mol.getNumAtoms());
+	    for(int i=0;i<6;++i) {
+		  vect.add(i);
+	    }
+	    // atom copy
+	    ROMol sub = RDKFuncs.copyMolSubset(mol, vect);
+	    assertEquals("c1ccccc1", sub.MolToSmiles());
 
 	}
 

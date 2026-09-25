@@ -24,7 +24,6 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/Invariant.h>
 #include <DataStructs/ExplicitBitVect.h>
-#include <iostream>
 #include <fstream>
 #include <cstdio>
 #include "AvalonTools.h"

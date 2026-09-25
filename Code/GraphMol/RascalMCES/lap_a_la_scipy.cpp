@@ -49,7 +49,6 @@ Author: PM Larsen
 */
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
 #include <numeric>
 #include <vector>

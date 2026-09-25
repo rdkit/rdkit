@@ -1,6 +1,4 @@
-# $Id$
-#
-#  Copyright (C) 2004-2006 Rational Discovery LLC
+#  Copyright (C) 2004-2026 Rational Discovery LLC and other RDKit contributors
 #
 #     @@  All Rights Reserved  @@
 #
@@ -8,12 +6,17 @@
 import copy
 import math
 import os
-import sys
 import unittest
 
+import numpy
+
 from rdkit import Chem, RDConfig
-from rdkit.Chem import (ChemicalForceFields, rdDistGeom, rdMolAlign, rdMolDescriptors,
-                        rdMolTransforms)
+from rdkit.Chem import (AllChem, ChemicalForceFields, rdMolAlign, rdMolDescriptors, rdMolTransforms)
+from rdkit.sping.PDF.pdfmetrics import parseAFMfile
+
+
+def getMMFFProps(mol):
+  return ChemicalForceFields.MMFFGetMoleculeProperties(mol)
 
 
 def lstFeq(l1, l2, tol=1.e-4):
@@ -56,6 +59,7 @@ class TestCase(unittest.TestCase):
       self.assertTrue(lstFeq(conf2.GetAtomPosition(i), conf3.GetAtomPosition(i)))
 
     rmsd, trans = rdMolAlign.GetAlignmentTransform(mol2, mol1)
+    self.assertIsInstance(trans, numpy.ndarray)
     self.assertAlmostEqual(rmsd, 0.6579, 4)
 
   def test2AtomMap(self):
@@ -84,13 +88,11 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(rmsd, 0.9513, 4)
 
   def test4AlignConfs(self):
-    mol = Chem.MolFromSmiles('C1CC1CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
-
-    cids = rdDistGeom.EmbedMultipleConfs(mol, 10, 30, 100)
-    #writer = Chem.SDWriter('mol_899.sdf')
-
-    for cid in cids:
-      ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, confId=cid)
+    sdf = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                       'big_aromat.sdf')
+    mol = Chem.MultiConfMolFromSDF(sdf, removeHs=False)
+    for c in mol.GetConformers():
+      ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, c.GetId())
       ff.Initialize()
       more = 1
       while more:
@@ -102,10 +104,10 @@ class TestCase(unittest.TestCase):
     rdMolAlign.AlignMolConformers(mol, aids)
 
     # now test that the atom location of these atom are consistent
-    confs = mol.GetConformers()
     for aid in aids:
       mpos = 0
-      for i, conf in enumerate(confs):
+      for i in range(mol.GetNumConformers()):
+        conf = mol.GetConformer(i)
         if (i == 0):
           mpos = list(conf.GetAtomPosition(aid))
           continue
@@ -136,9 +138,9 @@ class TestCase(unittest.TestCase):
     refMol = molS[refNum]
     cumScore = 0.0
     cumMsd = 0.0
-    refPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
+    refPyMP = getMMFFProps(refMol)
     for prbMol in molS:
-      prbPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
+      prbPyMP = getMMFFProps(prbMol)
       pyO3A = rdMolAlign.GetO3A(prbMol, refMol, prbPyMP, refPyMP)
       cumScore += pyO3A.Score()
       rmsd = pyO3A.Align()
@@ -168,11 +170,9 @@ class TestCase(unittest.TestCase):
 
   def test7MMFFO3A(self):
     " make sure we generate an error if parameters are missing (github issue 158) "
-
-    m1 = Chem.MolFromSmiles('c1ccccc1Cl')
-    rdDistGeom.EmbedMolecule(m1)
-    m2 = Chem.MolFromSmiles('c1ccccc1B(O)O')
-    rdDistGeom.EmbedMolecule(m1)
+    sdf = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                       'aromats.sdf')
+    m1, m2 = tuple(Chem.SDMolSupplier(sdf))
 
     self.assertRaises(ValueError, lambda: rdMolAlign.GetO3A(m1, m2))
     self.assertRaises(ValueError, lambda: rdMolAlign.GetO3A(m2, m1))
@@ -184,9 +184,9 @@ class TestCase(unittest.TestCase):
     #1) the usual way
     #2) forcing the pyridine nitrogen to match with the para
     #   carbon of the phenyl ring
-    m = Chem.MolFromSmiles('n1ccc(cc1)-c1ccccc1')
-    m1 = Chem.AddHs(m)
-    rdDistGeom.EmbedMolecule(m1)
+    sdf = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                       '4_phenylpyridine.sdf')
+    m1 = Chem.MolFromMolFile(sdf, removeHs=False)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m1)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m1, mp)
     ff.Minimize()
@@ -229,8 +229,8 @@ class TestCase(unittest.TestCase):
     prbNum = 32
     refMol = molS[refNum]
     prbMol = molS[prbNum]
-    refPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
-    prbPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
+    refPyMP = getMMFFProps(refMol)
+    prbPyMP = getMMFFProps(prbMol)
     refSIdx = refMol.GetSubstructMatch(Chem.MolFromSmarts('S'))[0]
     prbOIdx = prbMol.GetSubstructMatch(Chem.MolFromSmarts('O'))[0]
     # molW = Chem.SDWriter(alignedSdf)
@@ -298,9 +298,9 @@ class TestCase(unittest.TestCase):
     #1) the usual way
     #2) forcing the pyridine nitrogen to match with the para
     #   carbon of the phenyl ring
-    m = Chem.MolFromSmiles('n1ccc(cc1)-c1ccccc1')
-    m1 = Chem.AddHs(m)
-    rdDistGeom.EmbedMolecule(m1)
+    sdf = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                       '4_phenylpyridine.sdf')
+    m1 = Chem.MolFromMolFile(sdf, removeHs=False)
     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m1)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m1, mp)
     ff.Minimize()
@@ -343,8 +343,8 @@ class TestCase(unittest.TestCase):
     prbNum = 32
     refMol = molS[refNum]
     prbMol = molS[prbNum]
-    refPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
-    prbPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
+    _ = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
+    _ = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
     refSIdx = refMol.GetSubstructMatch(Chem.MolFromSmarts('S'))[0]
     prbOIdx = prbMol.GetSubstructMatch(Chem.MolFromSmarts('O'))[0]
     # molW = Chem.SDWriter(alignedSdf)
@@ -369,21 +369,11 @@ class TestCase(unittest.TestCase):
         O3A code generating incorrect results for multiconformer molecules
       """
 
-    def _multiConfFromSmiles(smiles, nConfs=10, maxIters=500):
-      """Adds hydrogens to molecule and optimises a chosen number of conformers.  Returns the optimised RDKit mol."""
-      idea = Chem.MolFromSmiles(smiles)
-      idea = Chem.AddHs(idea)
-      confs = rdDistGeom.EmbedMultipleConfs(idea, nConfs)
-
-      for conf in confs:
-        opt = ChemicalForceFields.MMFFOptimizeMolecule(idea, confId=conf, maxIters=maxIters)
-      return idea
-
     def _confsToAlignedMolsList(multiConfMol):
       """Input is a multiconformer RDKit mol.  Output is an aligned set of conformers as a list of RDKit mols."""
       rdMolAlign.AlignMolConformers(multiConfMol)
       ms = []
-      cids = [x.GetId() for x in multiConfMol.GetConformers()]
+      cids = [multiConfMol.GetConformer(i).GetId() for i in range(multiConfMol.GetNumConformers())]
       for cid in cids:
         newmol = Chem.Mol(multiConfMol)
         for ocid in cids:
@@ -393,16 +383,18 @@ class TestCase(unittest.TestCase):
         ms.append(newmol)
       return ms
 
-    reference = Chem.MolFromSmiles("c1ccccc1N2CCC(NS(=O)(=O)C(F)(F)F)CC2")
-    reference = Chem.AddHs(reference)
-    rdDistGeom.EmbedMolecule(reference)
-    idea1 = _multiConfFromSmiles("c1ccccc1C2CCCCC2", 10)
+    sdfr = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                        'cyclohexyl_benzene_ref.sdf')
+    sdfi = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                        'cyclohexyl_benzene_idea.sdf')
+    reference = Chem.MolFromMolFile(sdfr, removeHs=False)
+    idea1 = Chem.MultiConfMolFromSDF(sdfi, removeHs=False)
 
     idea1_mols = _confsToAlignedMolsList(idea1)
-    cids = [x.GetId() for x in idea1.GetConformers()]
+    cids = [idea1.GetConformer(i).GetId() for i in range(idea1.GetNumConformers())]
 
-    refParams = ChemicalForceFields.MMFFGetMoleculeProperties(reference)
-    prbParams = ChemicalForceFields.MMFFGetMoleculeProperties(idea1)
+    refParams = getMMFFProps(reference)
+    prbParams = getMMFFProps(idea1)
 
     for i in range(len(cids)):
       o3a1 = rdMolAlign.GetO3A(idea1_mols[i], reference, prbParams, refParams)
@@ -427,8 +419,8 @@ class TestCase(unittest.TestCase):
       prbMol.AddConformer(tm.GetConformer(), True)
     self.assertEqual(prbMol.GetNumConformers(), 50)
 
-    refParams = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
-    prbParams = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
+    refParams = getMMFFProps(refMol)
+    prbParams = getMMFFProps(prbMol)
     cp = Chem.Mol(prbMol)
     o3s = rdMolAlign.GetO3AForProbeConfs(cp, refMol, 1, prbParams, refParams)
     for i in range(prbMol.GetNumConformers()):
@@ -475,18 +467,19 @@ class TestCase(unittest.TestCase):
                        'probe_mol.sdf')
     molS = Chem.SDMolSupplier(sdf, True, False)
     prb = molS[1]
-    prbCopy1 = Chem.Mol(prb)
-    prbCopy2 = Chem.Mol(prb)
-    prbCopy3 = Chem.Mol(prb)
     ref = molS[2]
 
-    rmsdInPlace = rdMolAlign.CalcRMS(prbCopy1, ref)
+    prbCopy = Chem.Mol(prb)
+    rmsdInPlace = rdMolAlign.CalcRMS(prbCopy, ref)
     self.assertAlmostEqual(rmsdInPlace, 2.6026, 3)
     # AlignMol() would return this for the rms: 2.50561
     # But the best rms is: 2.43449
-    rmsd = rdMolAlign.GetBestRMS(prb, ref)
+    prbCopy = Chem.Mol(prb)
+    rmsd = rdMolAlign.GetBestRMS(prbCopy, ref)
     self.assertAlmostEqual(rmsd, 2.43449, 3)
-    rmsdCopy, bestTrans, bestMatch = rdMolAlign.GetBestAlignmentTransform(prbCopy1, ref)
+
+    prbCopy = Chem.Mol(prb)
+    rmsdCopy, bestTrans, bestMatch = rdMolAlign.GetBestAlignmentTransform(prbCopy, ref)
     self.assertEqual(str(type(bestTrans)), "<class 'numpy.ndarray'>")
     self.assertAlmostEqual(rmsd, rmsdCopy, 3)
     self.assertEqual(len(bestMatch), ref.GetNumAtoms())
@@ -504,23 +497,62 @@ class TestCase(unittest.TestCase):
     self.assertGreater(len(matches), 0)
     matchesPruned = tuple(
       tuple(filter(lambda tup: scaffoldIndicesBitSet[tup[1]], match)) for match in matches)
-    rmsdInPlace = rdMolAlign.CalcRMS(prbCopy2, ref, map=matchesPruned)
+
+    prbCopy = Chem.Mol(prb)
+    rmsdInPlace = rdMolAlign.CalcRMS(prbCopy, ref, map=matchesPruned)
     self.assertAlmostEqual(rmsdInPlace, 2.5672, 3)
-    rmsd = rdMolAlign.GetBestRMS(prb, ref, map=matchesPruned)
+
+    prbCopy = Chem.Mol(prb)
+    rmsd = rdMolAlign.GetBestRMS(prbCopy, ref, map=matchesPruned)
     self.assertAlmostEqual(rmsd, 1.14329, 3)
+
+    params = rdMolAlign.BestAlignmentParams()
+    params.map = matchesPruned
+    prbCopy = Chem.Mol(prb)
+    rmsd = rdMolAlign.GetBestRMS(prbCopy, ref, params)
+    self.assertAlmostEqual(rmsd, 1.14329, 3)
+
+    prbCopy = Chem.Mol(prb)
     rmsdCopy, bestTrans, bestMatch = rdMolAlign.GetBestAlignmentTransform(
-      prbCopy2, ref, map=matchesPruned)
+      prbCopy, ref, map=matchesPruned)
     self.assertEqual(str(type(bestTrans)), "<class 'numpy.ndarray'>")
     self.assertAlmostEqual(rmsd, rmsdCopy, 3)
     self.assertEqual(len(bestMatch), len(scaffoldMatch))
+
     weights = [100.0 if bit else 1.0 for bit in scaffoldIndicesBitSet]
-    rmsdInPlace = rdMolAlign.CalcRMS(prbCopy3, ref, map=matches, weights=weights)
+    prbCopy = Chem.Mol(prb)
+    rmsdInPlace = rdMolAlign.CalcRMS(prbCopy, ref, map=matches, weights=weights)
     self.assertAlmostEqual(rmsdInPlace, 17.7959, 3)
-    rmsd = rdMolAlign.GetBestRMS(prb, ref, map=matches, weights=weights)
-    self.assertAlmostEqual(rmsd, 10.9681, 3)
+
+    prbCopy = Chem.Mol(prb)
+    refRmsd = rdMolAlign.GetBestRMS(prbCopy, ref, map=matches, weights=weights)
+    self.assertAlmostEqual(refRmsd, 10.9681, 3)
+
+    params = rdMolAlign.BestAlignmentParams()
+    params.ignoreHs = False
+    prbCopy = Chem.Mol(prb)
+    rmsd = rdMolAlign.GetBestRMS(prbCopy, ref, params)
+    self.assertAlmostEqual(rmsd, 2.43449, 3)
+
+    params = rdMolAlign.BestAlignmentParams()
+    prbCopy = Chem.Mol(prb)
+    rmsd = rdMolAlign.GetBestRMS(prbCopy, ref, params)
+    self.assertAlmostEqual(rmsd, 1.8100, 3)
+
+    prbCopy = Chem.Mol(prb)
     rmsdCopy, bestTrans, bestMatch = rdMolAlign.GetBestAlignmentTransform(
-      prbCopy3, ref, map=matches, weights=weights)
-    self.assertAlmostEqual(rmsd, rmsdCopy, 3)
+      prbCopy, ref, map=matches, weights=weights)
+    self.assertAlmostEqual(refRmsd, rmsdCopy, 3)
+    self.assertEqual(len(bestMatch), ref.GetNumAtoms())
+    self.assertTrue(all(len(tup) == 2 for tup in bestMatch))
+
+    params = rdMolAlign.BestAlignmentParams()
+    params.ignoreHs = False
+    params.map = matches
+    params.weights = weights
+    prbCopy = Chem.Mol(prb)
+    rmsdCopy, bestTrans, bestMatch = rdMolAlign.GetBestAlignmentTransform(prbCopy, ref, params)
+    self.assertAlmostEqual(refRmsd, rmsdCopy, 3)
     self.assertEqual(len(bestMatch), ref.GetNumAtoms())
     self.assertTrue(all(len(tup) == 2 for tup in bestMatch))
 
@@ -547,15 +579,43 @@ class TestCase(unittest.TestCase):
       mol.AddConformer(ms[i].GetConformer(), assignId=True)
 
     nconfs = mol.GetNumConformers()
-    origVals = rdMolAlign.GetAllConformerBestRMS(mol)
+    mcp = Chem.Mol(mol)
+    origVals = rdMolAlign.GetAllConformerBestRMS(mcp)
     self.assertEqual(len(origVals), (nconfs * (nconfs - 1)) // 2)
+    self.assertAlmostEqual(origVals[0], rdMolAlign.GetBestRMS(mcp, mcp, 0, 1), 4)
 
-    self.assertAlmostEqual(origVals[0], rdMolAlign.GetBestRMS(mol, mol, 0, 1))
-
-    newVals = rdMolAlign.GetAllConformerBestRMS(mol, numThreads=4)
+    mcp = Chem.Mol(mol)
+    newVals = rdMolAlign.GetAllConformerBestRMS(mcp, numThreads=4)
     self.assertEqual(len(origVals), len(newVals))
     for ov, nv in zip(origVals, newVals):
       self.assertAlmostEqual(ov, nv)
+
+    mcp = Chem.Mol(mol)
+    params = rdMolAlign.BestAlignmentParams()
+    origVals = rdMolAlign.GetAllConformerBestRMS(mcp, params)
+    self.assertEqual(len(origVals), (nconfs * (nconfs - 1)) // 2)
+    mcp = Chem.Mol(mol)
+    self.assertAlmostEqual(origVals[0], rdMolAlign.GetBestRMS(mcp, mcp, params, 0, 1), 4)
+  
+  def test20GetAllConformerBestRMSToRef(self):
+    reffile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                         'butane_ref.sdf')
+    prbfile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
+                         'butane_prb.sdf')
+    prbMol = Chem.MultiConfMolFromSDF(prbfile)
+    refMol = next(iter(Chem.SDMolSupplier(reffile)))
+    expected = [0.19474, 0.86739, 0.87102, 0.35358, 0.35395]
+    rmsds = rdMolAlign.GetAllConformerBestRMSToRef(prbMol, refMol)
+    self.assertEqual(len(expected), len(rmsds), "Lists have different lengths")
+    for i, (a, b) in enumerate(zip(expected, rmsds)):
+      self.assertAlmostEqual(a, b, delta=0.0001, msg=f"Mismatch at index {i}")
+
+    expected = [ 0.19474, 0.86739, 0.87102, 0.35358, 0.35395, 0.82243, 0.16809, 0.16859, 0.54966, 0.56173]
+    refMol = Chem.MultiConfMolFromSDF(reffile)
+    rmsds = rdMolAlign.GetAllConformerBestRMSToRef(prbMol, refMol)
+    self.assertEqual(len(expected), len(rmsds), "Lists have different lengths")
+    for i, (a, b) in enumerate(zip(expected, rmsds)):
+      self.assertAlmostEqual(a, b, delta=0.0001, msg=f"Mismatch at index {i}")
 
 
 if __name__ == '__main__':

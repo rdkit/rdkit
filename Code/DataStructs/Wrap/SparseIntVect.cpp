@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2007-2008 Greg Landrum
 //
@@ -71,7 +70,7 @@ python::list pyToList(SparseIntVect<IndexType> &vect) {
 template <typename T>
 python::list BulkDice(const T &siv1, python::list sivs, bool returnDistance) {
   python::list res;
-  unsigned int nsivs = python::extract<unsigned int>(sivs.attr("__len__")());
+  unsigned int nsivs = python::len(sivs);
   for (unsigned int i = 0; i < nsivs; ++i) {
     double simVal;
     const T *siv2 = python::extract<T *>(sivs[i])();
@@ -84,7 +83,7 @@ template <typename T>
 python::list BulkTanimoto(const T &siv1, python::list sivs,
                           bool returnDistance) {
   python::list res;
-  unsigned int nsivs = python::extract<unsigned int>(sivs.attr("__len__")());
+  unsigned int nsivs = python::len(sivs);
   for (unsigned int i = 0; i < nsivs; ++i) {
     double simVal;
     const T *siv2 = python::extract<T *>(sivs[i])();
@@ -98,7 +97,7 @@ template <typename T>
 python::list BulkTversky(const T &siv1, python::list sivs, double a, double b,
                          bool returnDistance) {
   python::list res;
-  unsigned int nsivs = python::extract<unsigned int>(sivs.attr("__len__")());
+  unsigned int nsivs = python::len(sivs);
   for (unsigned int i = 0; i < nsivs; ++i) {
     double simVal;
     const T *siv2 = python::extract<T *>(sivs[i])();

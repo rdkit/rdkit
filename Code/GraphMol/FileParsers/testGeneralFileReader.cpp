@@ -16,7 +16,6 @@
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <fstream>
-#include <iostream>
 #include <map>
 #include <memory>
 #include <string>

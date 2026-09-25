@@ -1,4 +1,3 @@
-# $Id$
 # Copyright (C) 2005  Greg Landrum and Rational Discovery LLC
 #
 # This library is free software; you can redistribute it and/or

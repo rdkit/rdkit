@@ -138,9 +138,7 @@ void readFormalChargesFromAttr(std::istream *inStream, RWMol *res) {
 
 void guessFormalCharges(RWMol *res) {
   // FIX: this whole thing has problems with positively charged pyridines et al.
-  for (RWMol::AtomIterator atomIt = res->beginAtoms();
-       atomIt != res->endAtoms(); ++atomIt) {
-    Atom *at = (*atomIt);
+  for (auto at : res->atoms()) {
     // assign only if no formal charge set on that atom and atom is not carbon
     // (the latter
     // might needs changing later on - let's see) and not for query atoms (dummy
@@ -676,12 +674,16 @@ Bond *ParseMol2FileBondLine(const std::string bondLine,
     throw FileParseException("Cannot process mol2 bonds.");
   }
 
+  if (idx1 == 0 || idx2 == 0) {
+    throw FileParseException("Mol2 bond index starts at 1, not 0.");
+  }
+
   // adjust the numbering
   idx1--;
   idx2--;
 
   // if either of both ends of the bond is not an atom in the mol - return NULL
-  if (!(idx1 < idxCorresp.size() || idx2 < idxCorresp.size())) {
+  if (idx1 >= idxCorresp.size() || idx2 >= idxCorresp.size()) {
     throw FileParseException("index mismatch");
   }
 
@@ -951,10 +953,11 @@ std::unique_ptr<RWMol> MolFromMol2DataStream(std::istream &inStream,
     MolOps::cleanUp(*res);
 
     try {
-      // when we sanitize for mol2, we skip the cleanup organometallic step since it's
-      // not really compatible with the semantics of mol2 files
-      constexpr auto sanitizeFlags = MolOps::SanitizeFlags::SANITIZE_ALL ^
-                            MolOps::SanitizeFlags::SANITIZE_CLEANUP_ORGANOMETALLICS;
+      // when we sanitize for mol2, we skip the cleanup organometallic step
+      // since it's not really compatible with the semantics of mol2 files
+      constexpr auto sanitizeFlags =
+          MolOps::SanitizeFlags::SANITIZE_ALL ^
+          MolOps::SanitizeFlags::SANITIZE_CLEANUP_ORGANOMETALLICS;
       if (params.removeHs) {
         // Bond stereo detection must happen before H removal, or
         // else we might be removing stereogenic H atoms in double
@@ -965,7 +968,8 @@ std::unique_ptr<RWMol> MolFromMol2DataStream(std::istream &inStream,
         // rings in bond stereo detection, and another in
         // sanitization's SSSR symmetrization).
         unsigned int failedOp = 0;
-        MolOps::sanitizeMol(*res, failedOp, MolOps::SanitizeFlags::SANITIZE_CLEANUP);
+        MolOps::sanitizeMol(*res, failedOp,
+                            MolOps::SanitizeFlags::SANITIZE_CLEANUP);
         MolOps::detectBondStereochemistry(*res);
         MolOps::RemoveHsParameters rhp;
         bool sanitize = false;

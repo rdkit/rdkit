@@ -11,7 +11,6 @@
 #ifndef __RD_CATALOGENTRY_H__
 #define __RD_CATALOGENTRY_H__
 
-#include <iostream>
 #include <string>
 
 namespace RDCatalog {

@@ -1,5 +1,3 @@
-# $Id$
-#
 # Copyright (C) 2002-2010 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
@@ -10,7 +8,7 @@
 #
 """ functions to match a bunch of fragment descriptors from a file
 
-No user-servicable parts inside.  ;-)
+No user-serviceable parts inside.  ;-)
 
 """
 import os

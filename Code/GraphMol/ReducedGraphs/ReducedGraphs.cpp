@@ -146,10 +146,9 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
   // cache the atom type vectors:
   std::vector<std::vector<int>> tvs;
   tvs.reserve(mol.getNumAtoms());
-  for (ROMol::ConstAtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
-       ++atIt) {
+  for (const auto atom : mol.atoms()) {
     const std::vector<int> &tv =
-        (*atIt)->getProp<std::vector<int>>("_ErGAtomTypes");
+        atom->getProp<std::vector<int>>("_ErGAtomTypes");
     tvs.push_back(tv);
   }
 
@@ -212,16 +211,15 @@ ROMol *generateMolExtendedReducedGraph(
   const int aliphaticFlag = atomTypes->size() - 1;  // the last type
   const int aromaticFlag = atomTypes->size();
 
-  for (ROMol::AtomIterator atIt = res->beginAtoms(); atIt != res->endAtoms();
-       ++atIt) {
+  for (const auto atom : res->atoms()) {
     std::vector<int> tv;
     tv.clear();
     for (unsigned int i = 0; i < atomTypes->size(); ++i) {
-      if ((*atomTypes)[i][(*atIt)->getIdx()]) {
+      if ((*atomTypes)[i][atom->getIdx()]) {
         tv.push_back(i);
       }
     }
-    (*atIt)->setProp("_ErGAtomTypes", tv);
+    atom->setProp("_ErGAtomTypes", tv);
   }
 
   // start by adding dummies at the ring centroids

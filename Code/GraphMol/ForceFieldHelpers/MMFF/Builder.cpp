@@ -6,7 +6,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <iostream>
 #include <cmath>
 
 #include <RDGeneral/Invariant.h>
@@ -53,10 +52,9 @@ void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
 
   auto contrib = std::make_unique<BondStretchContrib>(field);
   bool hasContrib = false;
-  for (ROMol::ConstBondIterator bi = mol.beginBonds(); bi != mol.endBonds();
-       ++bi) {
-    unsigned int idx1 = (*bi)->getBeginAtomIdx();
-    unsigned int idx2 = (*bi)->getEndAtomIdx();
+  for (const auto bond : mol.bonds()) {
+    unsigned int idx1 = bond->getBeginAtomIdx();
+    unsigned int idx2 = bond->getEndAtomIdx();
     unsigned int bondType;
     MMFFBond mmffBondParams;
     if (mmffMolProperties->getMMFFBondStretchParams(mol, idx1, idx2, bondType,
@@ -66,8 +64,8 @@ void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
       if (mmffMolProperties->getMMFFVerbosity()) {
         unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx1);
         unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(idx2);
-        const Atom *iAtom = (*bi)->getBeginAtom();
-        const Atom *jAtom = (*bi)->getEndAtom();
+        const Atom *iAtom = bond->getBeginAtom();
+        const Atom *jAtom = bond->getEndAtom();
         const double dist = field->distance(idx1, idx2);
         const double bondStretchEnergy = MMFF::Utils::calcBondStretchEnergy(
             mmffBondParams.r0, mmffBondParams.kb, dist);
@@ -754,8 +752,7 @@ void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
   std::ostream &oStream = mmffMolProperties->getMMFFOStream();
   INT_VECT fragMapping;
   if (ignoreInterfragInteractions) {
-    std::vector<ROMOL_SPTR> molFrags =
-        MolOps::getMolFrags(mol, true, &fragMapping);
+    MolOps::getMolFrags(mol, fragMapping);
   }
 
   unsigned int nAtoms = mol.getNumAtoms();
@@ -844,8 +841,7 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
   std::ostream &oStream = mmffMolProperties->getMMFFOStream();
   INT_VECT fragMapping;
   if (ignoreInterfragInteractions) {
-    std::vector<ROMOL_SPTR> molFrags =
-        MolOps::getMolFrags(mol, true, &fragMapping);
+    MolOps::getMolFrags(mol, fragMapping);
   }
   unsigned int nAtoms = mol.getNumAtoms();
   double totalEleEnergy = 0.0;
@@ -933,8 +929,7 @@ void addNonbonded(const ROMol &mol, int confId,
 
   INT_VECT fragMapping;
   if (ignoreInterfragInteractions) {
-    std::vector<ROMOL_SPTR> molFrags =
-        MolOps::getMolFrags(mol, true, &fragMapping);
+    MolOps::getMolFrags(mol, fragMapping);
   }
 
   unsigned int nAtoms = mol.getNumAtoms();

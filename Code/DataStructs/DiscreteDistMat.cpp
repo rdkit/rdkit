@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //
@@ -10,7 +9,6 @@
 //
 #include "DiscreteDistMat.h"
 #include "DiscreteValueVect.h"
-#include <iostream>
 #include "DatastructsException.h"
 
 namespace RDKit {

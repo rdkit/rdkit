@@ -1,4 +1,3 @@
-// $Id$
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -327,8 +326,8 @@ void GenerateFP(const RDKit::ROMol &mol, ExplicitBitVect &fp) {
   RDKit::MatchVectType match;
   unsigned int count;
 
-  for (atom = mol.beginAtoms(); atom != mol.endAtoms(); ++atom) {
-    switch ((*atom)->getAtomicNum()) {
+  for (const auto atom : mol.atoms()) {
+    switch (atom->getAtomicNum()) {
       case 3:
       case 11:
       case 19:

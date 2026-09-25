@@ -40,14 +40,14 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
   struct MCS {
     std::vector<const Atom *> Atoms;
     std::vector<const Bond *> Bonds;
-    const ROMol *QueryMolecule;
+    const ROMol *QueryMolecule = nullptr;
     std::vector<Target> Targets;
   };
   unsigned long long To;
   MCSProgressData Stat;
   detail::MCSParametersInternal Parameters;
   // min number of matches
-  unsigned int ThresholdCount;
+  unsigned int ThresholdCount = 0;
   std::vector<const ROMol *> Molecules;
 #ifdef FAST_SUBSTRUCT_CACHE
   // for Morgan code. Value based on current functor and parameters
@@ -61,7 +61,7 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
 #ifdef DUP_SUBSTRUCT_CACHE
   DuplicatedSeedCache DuplicateCache;
 #endif
-  const ROMol *QueryMolecule;
+  const ROMol *QueryMolecule = nullptr;
   unsigned int QueryMoleculeMatchedBonds;
   unsigned int QueryMoleculeMatchedAtoms;
   const Atom *QueryMoleculeSingleMatchedAtom;

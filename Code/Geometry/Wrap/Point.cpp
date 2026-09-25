@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2005 Rational Discovery LLC
 //
@@ -37,7 +36,7 @@ struct PointND_pickle_suite : rdkit_pickle_suite {
     return python::tuple(res);
   }
   static void setstate(RDGeom::PointND &pt, python::tuple state) {
-    unsigned int sz = python::extract<unsigned int>(state.attr("__len__")());
+    unsigned int sz = python::len(state);
     for (unsigned int i = 0; i < sz; ++i) {
       pt[i] = python::extract<double>(state[i]);
     }

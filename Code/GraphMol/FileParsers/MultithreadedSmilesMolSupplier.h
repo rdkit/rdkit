@@ -10,13 +10,18 @@
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #ifndef MULTITHREADED_SMILES_MOL_SUPPLIER
 #define MULTITHREADED_SMILES_MOL_SUPPLIER
+
+#include <iosfwd>
+#include <memory>
+#include <string>
+
 #include "MultithreadedMolSupplier.h"
 namespace RDKit {
 namespace v2 {
 namespace FileParsers {
 //! This class is still a bit experimental and the public API may change
 //! in future releases.
-class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
+class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier final
     : public MultithreadedMolSupplier {
  public:
   explicit MultithreadedSmilesMolSupplier(
@@ -27,34 +32,30 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
       std::istream *inStream, bool takeOwnership = true,
       const Parameters &params = Parameters(),
       const SmilesMolSupplierParams &parseParams = SmilesMolSupplierParams());
-  MultithreadedSmilesMolSupplier();
-  virtual ~MultithreadedSmilesMolSupplier() {close();};
 
-  void init() override {}
-  //! returns df_end
-  bool getEnd() const override;
-  //! reads and processes the title line
-  void processTitleLine();
+  MultithreadedSmilesMolSupplier();
+
+  ~MultithreadedSmilesMolSupplier() final { close(); };
+
+  bool getEOFHitOnRead() const final { return false; }
+
   //! reads next record and returns whether or not EOF was hit
   bool extractNextRecord(std::string &record, unsigned int &lineNum,
-                         unsigned int &index) override;
-  //! parses the record and returns the resulting molecule
-  RWMol *processMoleculeRecord(const std::string &record,
-                               unsigned int lineNum) override;
+                         unsigned int &index) final;
 
- protected:
-  void closeStreams() override;
+  //! parses the record and returns the resulting molecule
+  std::unique_ptr<RWMol> processMoleculeRecord(const std::string &record,
+                                               unsigned int lineNum) final;
 
  private:
   void initFromSettings(
       bool takeOwnership, const Parameters &params,
       const SmilesMolSupplierParams &parseParams = SmilesMolSupplierParams());
 
- private:
-  bool df_end = false;                 //!< have we reached the end of the file?
-  int d_line = 0;                      //!< line number we are currently on
-  STR_VECT d_props;                    //!< vector of property names
-  unsigned int d_currentRecordId = 1;  //!< current record id
+  //! reads and processes the title line
+  void processTitleLine();
+
+  STR_VECT d_props;  //!< vector of property names
   SmilesMolSupplierParams d_parseParams;
 };
 }  // namespace FileParsers
@@ -109,7 +110,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
         inStream, takeOwnership, params, parseParams));
   }
 
-  //! included for the interface, always returns false
   bool getEOFHitOnRead() const {
     if (dp_supplier) {
       return static_cast<ContainedType *>(dp_supplier.get())->getEOFHitOnRead();
@@ -125,6 +125,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
     PRECONDITION(dp_supplier, "no supplier");
     return static_cast<ContainedType *>(dp_supplier.get())->getLastRecordId();
   }
+
   //! returns the text block for the last extracted item
   std::string getLastItemText() const {
     PRECONDITION(dp_supplier, "no supplier");

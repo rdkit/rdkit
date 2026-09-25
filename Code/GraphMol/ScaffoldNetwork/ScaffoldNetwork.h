@@ -16,7 +16,6 @@
 #include <string>
 #include <sstream>
 #include <memory>
-#include <iostream>
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
 #include <RDGeneral/Invariant.h>

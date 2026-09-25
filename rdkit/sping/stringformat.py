@@ -36,11 +36,10 @@ StringFormat XML characters
 #       To add or change greek letter to symbol font mappings only
 #       the greekchars map needs to change.
 
+from html.parser import HTMLParser
 import math
 
-import xmllib
-
-from rdkit.sping.pid import Font
+from rdkit.sping.pid import Font, blue, green, red
 
 #------------------------------------------------------------------------
 # constants
@@ -164,7 +163,7 @@ class StringSegment:
 # Possible future additions: changing color and font
 #       character-by-character
 #------------------------------------------------------------------
-class StringFormatter(xmllib.XMLParser):
+class StringFormatter(HTMLParser):
 
   #----------------------------------------------------------
   # First we will define all of the xml tag handler functions.
@@ -227,7 +226,7 @@ class StringFormatter(xmllib.XMLParser):
   #----------------------------------------------------------------
 
   def __init__(self):
-    xmllib.XMLParser.__init__(self)
+    HTMLParser.__init__(self, convert_charrefs=False)
 
     # initialize list of string segments to empty
     self.segmentlist = []
@@ -256,10 +255,33 @@ class StringFormatter(xmllib.XMLParser):
 
     # flag for greek characters
     self.greek = 0
-    # set up dictionary for greek characters, this is a class variable
-    # should I copy it and then update it?
-    for item in greekchars.keys():
-      self.entitydefs[item] = '<%s/>' % item
+
+  def handle_starttag(self, tag, attributes):
+    handler = self.elements.get(tag)
+    if handler:
+      handler[0](dict(attributes))
+
+  def handle_endtag(self, tag):
+    handler = self.elements.get(tag)
+    if handler:
+      handler[1]()
+
+  def handle_startendtag(self, tag, attributes):
+    self.handle_starttag(tag, attributes)
+    self.handle_endtag(tag)
+
+  def handle_entityref(self, name):
+    if name in greekchars:
+      self.start_greek({}, greekchars[name])
+      self.end_greek()
+    else:
+      entities = {'amp': '&', 'apos': "'", 'gt': '>', 'lt': '<', 'quot': '"'}
+      self.handle_data(entities.get(name, '&%s;' % name))
+
+  def handle_charref(self, name):
+    base = 16 if name.lower().startswith('x') else 10
+    value = name[1:] if base == 16 else name
+    self.handle_data(chr(int(value, base)))
 
   #----------------------------------------------------------------
   #       def syntax_error(self,message):
@@ -393,7 +415,7 @@ def drawString(canvas, s, x, y, font=None, color=None, angle=0):
   #------------------------------------------------------------------------
 
 
-from sping.PDF import PDFCanvas
+from rdkit.sping.PDF import PDFCanvas
 
 
 def test1():

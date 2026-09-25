@@ -1,5 +1,4 @@
 import os.path
-import pickle
 
 from rdkit import Chem, RDConfig
 from rdkit.Chem import Descriptors

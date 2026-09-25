@@ -14,7 +14,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/StreamOps.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
-#include <iostream>
 #include <fstream>
 
 namespace RDKit {

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016-2023 Greg Landrum
+//  Copyright (C) 2016-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,12 +18,12 @@
 #include <GraphMol/MarvinParse/MarvinParser.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
+#include <GraphMol/SmilesParse/SmilesJSONParsers.h>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
 #include "SmartsWrite.h"
 #include <RDGeneral/RDLog.h>
 #include <fstream>
-#include <iostream>
 
 constexpr bool GenerateExpectedFiles = false;
 
@@ -477,15 +477,51 @@ TEST_CASE("enhanced stereo") {
 TEST_CASE("HTML char codes") {
   {
     std::string smiles = R"(CCCC* |$;;;;_AP1$,Sg:n:2:2&#44;6-7:ht|)";
-    SmilesParserParams params;
+    v2::SmilesParse::SmilesParserParams params;
     params.allowCXSMILES = true;
 
-    ROMol *m = SmilesToMol(smiles, params);
+    auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
     REQUIRE(m);
 
     CHECK(m->getNumAtoms() == 5);
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
+  }
+  {
+    auto m = R"CTAB(
+  Mrv2222 05072606252D          
 
-    delete m;
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.31 -1.3337 0 0
+M  V30 2 C 1.54 -0 0 0
+M  V30 3 C -0 -0 0 0
+M  V30 4 C -0.77 1.3337 0 0 ATTCHPT=1
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(1 3) XBONDS=(2 2 3) BRKXYZ=(9 -1.1173 0.0872 0 0.4832 -
+M  V30 1.0112 0 0 0 0) BRKXYZ=(9 0.6341 0.924 0 0.6341 -0.924 0 0 0 0) -
+M  V30 CONNECT=HT LABEL="2,6-7"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 4);
+    m->clearConformers();
+    auto sgs = getSubstanceGroups(*m);
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getProp<std::string>("TYPE") == "SRU");
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi == "CCCC |atomProp:3.molAttchpt.1,Sg:n:2:2&#44;6-7:ht:::|");
   }
 }
 
@@ -1094,8 +1130,7 @@ TEST_CASE("testAtropisomersInCXSmiles") {
     };
 
     for (auto smiTest : smiTests) {
-      printf("Test\n\n %s\n\n", smiTest.fileName.c_str());
-      // RDDepict::preferCoordGen = true;
+      INFO(smiTest.fileName);
       testOneAtropisomers(&smiTest);
     }
   }
@@ -1112,7 +1147,7 @@ TEST_CASE("testAtropisomersInCXSmilesCanon") {
     };
 
     for (auto smiTest : smiTests) {
-      printf("Test\n\n %s\n\n", smiTest.fileName.c_str());
+      INFO(smiTest.fileName);
       testOneAtropisomersCanon(&smiTest);
     }
   }
@@ -1128,7 +1163,7 @@ TEST_CASE("test3DChiral") {
   };
 
   for (auto smiTest : smiTests) {
-    printf("Test\n\n %s\n\n", smiTest.fileName.c_str());
+    INFO(smiTest.fileName);
     // RDDepict::preferCoordGen = true;
     testOne3dChiral(&smiTest);
   }
@@ -1509,7 +1544,7 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     auto m = "[NH3]->[Fe]-[NH2]"_smiles;
     REQUIRE(m);
     auto smi = MolToCXSmarts(*m);
-    CHECK(smi == "[#7H3]-[Fe]-[#7H2] |C:0.0|");
+    CHECK(smi == "[#7]-[Fe]-[#7] |C:0.0|");
   }
   SECTION("two dative bonds") {
     auto m = "[NH3][Fe][NH3]"_smiles;  // auto single->dative conversion
@@ -1521,7 +1556,7 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     auto m = "[NH3][Fe][NH3]"_smiles;  // auto single->dative conversion
     REQUIRE(m);
     auto smi = MolToCXSmarts(*m);
-    CHECK(smi == "[#7H3]-[Fe]-[#7H3] |C:0.0,2.1|");
+    CHECK(smi == "[#7]-[Fe]-[#7] |C:0.0,2.1|");
   }
 }
 
@@ -1658,5 +1693,116 @@ TEST_CASE("Github #8586: MolFromSmiles loses atom maps if cxsmiles is used") {
     CHECK(m->getAtomWithIdx(2)->getPropIfPresent(common_properties::dummyLabel,
                                                  dlabel));
     CHECK(dlabel == "d");
+  }
+}
+
+TEST_CASE("Test CXSmilesFields option parsing from JSON") {
+  SECTION("Empty JSON string preserves current values") {
+    std::uint32_t cxSmilesFields =
+        SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS;
+    unsigned int restoreBondDirs = RestoreBondDirOptionClear;
+    updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, "{}");
+    CHECK(cxSmilesFields == SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    CHECK(restoreBondDirs == RestoreBondDirOptionClear);
+  }
+  SECTION("No CXSmilesFields key preserves current values") {
+    std::uint32_t cxSmilesFields =
+        SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS;
+    unsigned int restoreBondDirs = RestoreBondDirOptionTrue;
+    updateCXSmilesFieldsFromJSON(
+        cxSmilesFields, restoreBondDirs,
+        "{\"restoreBondDirOption\":\"RestoreBondDirOptionClear\"}");
+    CHECK(cxSmilesFields == SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    CHECK(restoreBondDirs == RestoreBondDirOptionClear);
+  }
+  SECTION("Multiple CXSmilesFields keys with true value are ORed together") {
+    std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
+    unsigned int restoreBondDirs = RestoreBondDirOptionClear;
+    updateCXSmilesFieldsFromJSON(
+        cxSmilesFields, restoreBondDirs,
+        "{\"CX_MOLFILE_VALUES\":true,\"CX_COORDS\":true}");
+    CHECK(cxSmilesFields == (SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |
+                             SmilesWrite::CXSmilesFields::CX_COORDS));
+    CHECK(restoreBondDirs == RestoreBondDirOptionClear);
+  }
+  SECTION(
+      "Multiple CXSmilesFields keys with true value are ORed together; adding unrelated false values makes no difference") {
+    std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
+    unsigned int restoreBondDirs = RestoreBondDirOptionClear;
+    updateCXSmilesFieldsFromJSON(
+        cxSmilesFields, restoreBondDirs,
+        "{\"CX_MOLFILE_VALUES\":true,\"CX_COORDS\":true,\"CX_ATOM_PROPS\":false,\"CX_BOND_CFG\":false}");
+    CHECK(cxSmilesFields == (SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |
+                             SmilesWrite::CXSmilesFields::CX_COORDS));
+    CHECK(restoreBondDirs == RestoreBondDirOptionClear);
+  }
+  SECTION(
+      "Multiple CXSmilesFields keys with true value are ORed together, then AND NOTed with ORed false values") {
+    std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
+    unsigned int restoreBondDirs = RestoreBondDirOptionClear;
+    updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs,
+                                 "{\"CX_ALL\":true,\"CX_COORDS\":false}");
+    CHECK(cxSmilesFields == SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    CHECK(restoreBondDirs == RestoreBondDirOptionClear);
+  }
+  SECTION(
+      "Multiple CXSmilesFields keys with true value are ORed together, then AND NOTed with ORed false values; order does not matter") {
+    std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
+    unsigned int restoreBondDirs = RestoreBondDirOptionClear;
+    updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs,
+                                 "{\"CX_COORDS\":false,\"CX_ALL\":true}");
+    CHECK(cxSmilesFields == SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    CHECK(restoreBondDirs == RestoreBondDirOptionClear);
+  }
+}
+
+TEST_CASE("atom maps and dummy labels in CXSMILES") {
+  SECTION("basics") {
+    auto m = "CC[*:1]"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::molAtomMapNumber));
+    CHECK(MolToCXSmiles(*m) == "CC[*:1]");
+    m->getAtomWithIdx(2)->setProp(common_properties::dummyLabel, "R1");
+    CHECK(MolToCXSmiles(*m) == "CC[*:1] |atomProp:2.dummyLabel.R1|");
+  }
+}
+
+TEST_CASE("duplicate atoms in StereoGroup") {
+  SECTION("as reported") {
+    std::string smiles = "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,3|";
+
+    CHECK_THROWS_AS(SmilesToMol(smiles), SmilesParseException);
+  }
+}
+
+TEST_CASE("Github #9231: quoting in CXSMILES") {
+  auto m = "CCCCC"_smiles;
+  REQUIRE(m);
+  SECTION("as reported") {
+    m->getAtomWithIdx(0)->setProp("p1", "1,2");
+    m->getAtomWithIdx(0)->setProp("p2", "0");
+    m->getAtomWithIdx(0)->setProp("p3", "|");
+    m->getAtomWithIdx(0)->setProp("p4,5", "foo");
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi ==
+          "CCCCC |atomProp:0.p1.1&#44;2:0.p2.0:0.p3.&#124;:0.p4&#44;5.foo|");
+    auto nmol = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(nmol);
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p1") == "1,2");
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p2") == "0");
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p3") == "|");
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("p4,5") == "foo");
+  }
+  SECTION("perverse example") {
+    // bp-kelley came up with this beauty. :-)
+    m->getAtomWithIdx(0)->setProp("cxsmiles", "C |atomProp:0.apKa.7.54|");
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi ==
+          "CCCCC |atomProp:0.cxsmiles.C &#124;atomProp&#58;0.apKa.7.54&#124;|");
+    auto nmol = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(nmol);
+    CHECK(m->getAtomWithIdx(0)->getProp<std::string>("cxsmiles") ==
+          "C |atomProp:0.apKa.7.54|");
   }
 }

@@ -13,7 +13,6 @@
 #include "MolCatalogParams.h"
 
 #include <cstdlib>
-#include <iostream>
 #include <fstream>
 
 #include <GraphMol/FileParsers/MolSupplier.h>

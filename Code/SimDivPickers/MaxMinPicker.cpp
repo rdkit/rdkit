@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2007 Rational Discovery LLC
 //

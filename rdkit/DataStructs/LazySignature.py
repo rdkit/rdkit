@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (C) 2005 Rational Discovery LLC
 #   All Rights Reserved
 #

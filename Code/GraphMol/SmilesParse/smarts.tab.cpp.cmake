@@ -75,12 +75,11 @@
 
 
   //
-  //  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
+  //  Copyright (C) 2003-2025 Greg Landrum and other RDKit contributors
   //
   //   @@ All Rights Reserved  @@
   //
 #include <cstring>
-#include <iostream>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -108,6 +107,40 @@ namespace {
   molList->clear();
   molList->resize(0);
  }
+  const std::uint64_t SMARTS_H_MASK = 0x1;
+  const std::uint64_t SMARTS_CHARGE_MASK = 0x2;
+
+  void atom_expr_and_point_query(QueryAtom *atom_expr, QueryAtom *point_query) {
+    atom_expr->expandQuery(point_query->getQuery()->copy(), Queries::COMPOSITE_AND, true);
+    if (atom_expr->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+      atom_expr->setChiralTag(point_query->getChiralTag());
+      int perm;
+      if (point_query->getPropIfPresent(common_properties::_chiralPermutation, perm)) {
+        atom_expr->setProp(common_properties::_chiralPermutation, perm);
+      }
+    }
+    if (point_query->getFlags() & SMARTS_H_MASK) {
+      if (!(atom_expr->getFlags() & SMARTS_H_MASK)) {
+        atom_expr->setNumExplicitHs(point_query->getNumExplicitHs());
+        atom_expr->setNoImplicit(true);
+        atom_expr->getFlags() |= SMARTS_H_MASK;
+      } else if (atom_expr->getNumExplicitHs() != point_query->getNumExplicitHs()) {
+        // conflicting queries...
+        atom_expr->setNumExplicitHs(0);
+        atom_expr->setNoImplicit(true);
+      }
+    }
+    if (point_query->getFlags() & SMARTS_CHARGE_MASK) {
+      if (!(atom_expr->getFlags() & SMARTS_CHARGE_MASK)) {
+        atom_expr->setFormalCharge(point_query->getFormalCharge());
+        atom_expr->getFlags() |= SMARTS_CHARGE_MASK;
+      } else if (atom_expr->getFormalCharge() != point_query->getFormalCharge()) {
+        // conflicting queries...
+        atom_expr->setFormalCharge(0);
+      }
+    }
+  }
+
 }
 void
 yysmarts_error( const char *input,
@@ -197,61 +230,62 @@ enum yysymbol_kind_t
   YYSYMBOL_ATOM_TOKEN = 8,                 /* ATOM_TOKEN  */
   YYSYMBOL_SIMPLE_ATOM_QUERY_TOKEN = 9,    /* SIMPLE_ATOM_QUERY_TOKEN  */
   YYSYMBOL_COMPLEX_ATOM_QUERY_TOKEN = 10,  /* COMPLEX_ATOM_QUERY_TOKEN  */
-  YYSYMBOL_RINGSIZE_ATOM_QUERY_TOKEN = 11, /* RINGSIZE_ATOM_QUERY_TOKEN  */
-  YYSYMBOL_RINGBOND_ATOM_QUERY_TOKEN = 12, /* RINGBOND_ATOM_QUERY_TOKEN  */
-  YYSYMBOL_IMPLICIT_H_ATOM_QUERY_TOKEN = 13, /* IMPLICIT_H_ATOM_QUERY_TOKEN  */
-  YYSYMBOL_HYB_TOKEN = 14,                 /* HYB_TOKEN  */
-  YYSYMBOL_HETERONEIGHBOR_ATOM_QUERY_TOKEN = 15, /* HETERONEIGHBOR_ATOM_QUERY_TOKEN  */
-  YYSYMBOL_ALIPHATIC = 16,                 /* ALIPHATIC  */
-  YYSYMBOL_ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN = 17, /* ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN  */
-  YYSYMBOL_ZERO_TOKEN = 18,                /* ZERO_TOKEN  */
-  YYSYMBOL_NONZERO_DIGIT_TOKEN = 19,       /* NONZERO_DIGIT_TOKEN  */
-  YYSYMBOL_GROUP_OPEN_TOKEN = 20,          /* GROUP_OPEN_TOKEN  */
-  YYSYMBOL_GROUP_CLOSE_TOKEN = 21,         /* GROUP_CLOSE_TOKEN  */
-  YYSYMBOL_SEPARATOR_TOKEN = 22,           /* SEPARATOR_TOKEN  */
-  YYSYMBOL_RANGE_OPEN_TOKEN = 23,          /* RANGE_OPEN_TOKEN  */
-  YYSYMBOL_RANGE_CLOSE_TOKEN = 24,         /* RANGE_CLOSE_TOKEN  */
-  YYSYMBOL_HASH_TOKEN = 25,                /* HASH_TOKEN  */
-  YYSYMBOL_MINUS_TOKEN = 26,               /* MINUS_TOKEN  */
-  YYSYMBOL_PLUS_TOKEN = 27,                /* PLUS_TOKEN  */
-  YYSYMBOL_H_TOKEN = 28,                   /* H_TOKEN  */
-  YYSYMBOL_AT_TOKEN = 29,                  /* AT_TOKEN  */
-  YYSYMBOL_PERCENT_TOKEN = 30,             /* PERCENT_TOKEN  */
-  YYSYMBOL_ATOM_OPEN_TOKEN = 31,           /* ATOM_OPEN_TOKEN  */
-  YYSYMBOL_ATOM_CLOSE_TOKEN = 32,          /* ATOM_CLOSE_TOKEN  */
-  YYSYMBOL_NOT_TOKEN = 33,                 /* NOT_TOKEN  */
-  YYSYMBOL_AND_TOKEN = 34,                 /* AND_TOKEN  */
-  YYSYMBOL_OR_TOKEN = 35,                  /* OR_TOKEN  */
-  YYSYMBOL_SEMI_TOKEN = 36,                /* SEMI_TOKEN  */
-  YYSYMBOL_BEGIN_RECURSE = 37,             /* BEGIN_RECURSE  */
-  YYSYMBOL_END_RECURSE = 38,               /* END_RECURSE  */
-  YYSYMBOL_COLON_TOKEN = 39,               /* COLON_TOKEN  */
-  YYSYMBOL_UNDERSCORE_TOKEN = 40,          /* UNDERSCORE_TOKEN  */
-  YYSYMBOL_BOND_TOKEN = 41,                /* BOND_TOKEN  */
-  YYSYMBOL_CHI_CLASS_TOKEN = 42,           /* CHI_CLASS_TOKEN  */
-  YYSYMBOL_BAD_CHARACTER = 43,             /* BAD_CHARACTER  */
-  YYSYMBOL_EOS_TOKEN = 44,                 /* EOS_TOKEN  */
-  YYSYMBOL_YYACCEPT = 45,                  /* $accept  */
-  YYSYMBOL_meta_start = 46,                /* meta_start  */
-  YYSYMBOL_bad_atom_def = 47,              /* bad_atom_def  */
-  YYSYMBOL_mol = 48,                       /* mol  */
-  YYSYMBOL_atomd = 49,                     /* atomd  */
-  YYSYMBOL_hydrogen_atom = 50,             /* hydrogen_atom  */
-  YYSYMBOL_atom_expr = 51,                 /* atom_expr  */
-  YYSYMBOL_point_query = 52,               /* point_query  */
-  YYSYMBOL_recursive_query = 53,           /* recursive_query  */
-  YYSYMBOL_atom_query = 54,                /* atom_query  */
-  YYSYMBOL_possible_range_query = 55,      /* possible_range_query  */
-  YYSYMBOL_simple_atom = 56,               /* simple_atom  */
-  YYSYMBOL_bond_expr = 57,                 /* bond_expr  */
-  YYSYMBOL_bond_query = 58,                /* bond_query  */
-  YYSYMBOL_bondd = 59,                     /* bondd  */
-  YYSYMBOL_charge_spec = 60,               /* charge_spec  */
-  YYSYMBOL_ring_number = 61,               /* ring_number  */
-  YYSYMBOL_number = 62,                    /* number  */
-  YYSYMBOL_nonzero_number = 63,            /* nonzero_number  */
-  YYSYMBOL_digit = 64,                     /* digit  */
-  YYSYMBOL_branch_open_token = 65          /* branch_open_token  */
+  YYSYMBOL_MIN_RINGSIZE_ATOM_QUERY_TOKEN = 11, /* MIN_RINGSIZE_ATOM_QUERY_TOKEN  */
+  YYSYMBOL_RINGSIZE_ATOM_QUERY_TOKEN = 12, /* RINGSIZE_ATOM_QUERY_TOKEN  */
+  YYSYMBOL_RINGBOND_ATOM_QUERY_TOKEN = 13, /* RINGBOND_ATOM_QUERY_TOKEN  */
+  YYSYMBOL_IMPLICIT_H_ATOM_QUERY_TOKEN = 14, /* IMPLICIT_H_ATOM_QUERY_TOKEN  */
+  YYSYMBOL_HYB_TOKEN = 15,                 /* HYB_TOKEN  */
+  YYSYMBOL_HETERONEIGHBOR_ATOM_QUERY_TOKEN = 16, /* HETERONEIGHBOR_ATOM_QUERY_TOKEN  */
+  YYSYMBOL_ALIPHATIC = 17,                 /* ALIPHATIC  */
+  YYSYMBOL_ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN = 18, /* ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN  */
+  YYSYMBOL_ZERO_TOKEN = 19,                /* ZERO_TOKEN  */
+  YYSYMBOL_NONZERO_DIGIT_TOKEN = 20,       /* NONZERO_DIGIT_TOKEN  */
+  YYSYMBOL_GROUP_OPEN_TOKEN = 21,          /* GROUP_OPEN_TOKEN  */
+  YYSYMBOL_GROUP_CLOSE_TOKEN = 22,         /* GROUP_CLOSE_TOKEN  */
+  YYSYMBOL_SEPARATOR_TOKEN = 23,           /* SEPARATOR_TOKEN  */
+  YYSYMBOL_RANGE_OPEN_TOKEN = 24,          /* RANGE_OPEN_TOKEN  */
+  YYSYMBOL_RANGE_CLOSE_TOKEN = 25,         /* RANGE_CLOSE_TOKEN  */
+  YYSYMBOL_HASH_TOKEN = 26,                /* HASH_TOKEN  */
+  YYSYMBOL_MINUS_TOKEN = 27,               /* MINUS_TOKEN  */
+  YYSYMBOL_PLUS_TOKEN = 28,                /* PLUS_TOKEN  */
+  YYSYMBOL_H_TOKEN = 29,                   /* H_TOKEN  */
+  YYSYMBOL_AT_TOKEN = 30,                  /* AT_TOKEN  */
+  YYSYMBOL_PERCENT_TOKEN = 31,             /* PERCENT_TOKEN  */
+  YYSYMBOL_ATOM_OPEN_TOKEN = 32,           /* ATOM_OPEN_TOKEN  */
+  YYSYMBOL_ATOM_CLOSE_TOKEN = 33,          /* ATOM_CLOSE_TOKEN  */
+  YYSYMBOL_NOT_TOKEN = 34,                 /* NOT_TOKEN  */
+  YYSYMBOL_AND_TOKEN = 35,                 /* AND_TOKEN  */
+  YYSYMBOL_OR_TOKEN = 36,                  /* OR_TOKEN  */
+  YYSYMBOL_SEMI_TOKEN = 37,                /* SEMI_TOKEN  */
+  YYSYMBOL_BEGIN_RECURSE = 38,             /* BEGIN_RECURSE  */
+  YYSYMBOL_END_RECURSE = 39,               /* END_RECURSE  */
+  YYSYMBOL_COLON_TOKEN = 40,               /* COLON_TOKEN  */
+  YYSYMBOL_UNDERSCORE_TOKEN = 41,          /* UNDERSCORE_TOKEN  */
+  YYSYMBOL_BOND_TOKEN = 42,                /* BOND_TOKEN  */
+  YYSYMBOL_CHI_CLASS_TOKEN = 43,           /* CHI_CLASS_TOKEN  */
+  YYSYMBOL_BAD_CHARACTER = 44,             /* BAD_CHARACTER  */
+  YYSYMBOL_EOS_TOKEN = 45,                 /* EOS_TOKEN  */
+  YYSYMBOL_YYACCEPT = 46,                  /* $accept  */
+  YYSYMBOL_meta_start = 47,                /* meta_start  */
+  YYSYMBOL_bad_atom_def = 48,              /* bad_atom_def  */
+  YYSYMBOL_mol = 49,                       /* mol  */
+  YYSYMBOL_atomd = 50,                     /* atomd  */
+  YYSYMBOL_hydrogen_atom = 51,             /* hydrogen_atom  */
+  YYSYMBOL_atom_expr = 52,                 /* atom_expr  */
+  YYSYMBOL_point_query = 53,               /* point_query  */
+  YYSYMBOL_recursive_query = 54,           /* recursive_query  */
+  YYSYMBOL_atom_query = 55,                /* atom_query  */
+  YYSYMBOL_possible_range_query = 56,      /* possible_range_query  */
+  YYSYMBOL_simple_atom = 57,               /* simple_atom  */
+  YYSYMBOL_bond_expr = 58,                 /* bond_expr  */
+  YYSYMBOL_bond_query = 59,                /* bond_query  */
+  YYSYMBOL_bondd = 60,                     /* bondd  */
+  YYSYMBOL_charge_spec = 61,               /* charge_spec  */
+  YYSYMBOL_ring_number = 62,               /* ring_number  */
+  YYSYMBOL_number = 63,                    /* number  */
+  YYSYMBOL_nonzero_number = 64,            /* nonzero_number  */
+  YYSYMBOL_digit = 65,                     /* digit  */
+  YYSYMBOL_branch_open_token = 66          /* branch_open_token  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -577,21 +611,21 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  56
+#define YYFINAL  57
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   599
+#define YYLAST   606
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  45
+#define YYNTOKENS  46
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  21
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  122
+#define YYNRULES  128
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  177
+#define YYNSTATES  189
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   299
+#define YYMAXUTOK   300
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -634,26 +668,27 @@ static const yytype_int8 yytranslate[] =
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39,    40,    41,    42,    43,    44
+      35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
+      45
 };
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   157,   157,   160,   164,   167,   170,   174,   178,   181,
-     187,   192,   195,   203,   204,   205,   206,   214,   223,   237,
-     258,   264,   288,   309,   326,   349,   363,   364,   365,   369,
-     392,   396,   401,   407,   416,   422,   430,   438,   451,   457,
-     464,   470,   493,   496,   502,   503,   507,   524,   548,   549,
-     554,   555,   560,   561,   566,   567,   568,   569,   570,   571,
-     572,   575,   578,   581,   584,   587,   590,   596,   602,   609,
-     617,   625,   631,   637,   643,   649,   655,   662,   669,   670,
-     677,   678,   681,   684,   687,   690,   693,   698,   706,   718,
-     723,   728,   732,   736,   740,   743,   744,   751,   752,   758,
-     764,   770,   775,   782,   783,   784,   785,   786,   787,   791,
-     792,   793,   794,   795,   796,   797,   802,   803,   807,   808,
-     817,   818,   822
+       0,   190,   190,   193,   197,   200,   203,   207,   211,   214,
+     220,   225,   228,   236,   237,   238,   239,   247,   256,   270,
+     291,   297,   321,   342,   359,   382,   396,   397,   398,   402,
+     425,   429,   434,   440,   449,   456,   465,   474,   488,   495,
+     503,   510,   515,   520,   523,   529,   530,   534,   551,   575,
+     576,   581,   582,   587,   588,   593,   594,   595,   596,   597,
+     598,   599,   600,   604,   608,   612,   616,   620,   624,   628,
+     635,   642,   651,   660,   669,   679,   689,   699,   708,   716,
+     723,   729,   735,   742,   756,   757,   764,   765,   769,   773,
+     777,   781,   785,   790,   798,   810,   815,   820,   825,   830,
+     835,   838,   839,   847,   848,   854,   860,   866,   871,   878,
+     879,   880,   881,   882,   883,   887,   888,   889,   890,   891,
+     892,   893,   898,   899,   903,   904,   913,   914,   918
 };
 #endif
 
@@ -672,8 +707,8 @@ static const char *const yytname[] =
   "\"end of file\"", "error", "\"invalid token\"", "START_MOL",
   "START_ATOM", "START_BOND", "AROMATIC_ATOM_TOKEN", "ORGANIC_ATOM_TOKEN",
   "ATOM_TOKEN", "SIMPLE_ATOM_QUERY_TOKEN", "COMPLEX_ATOM_QUERY_TOKEN",
-  "RINGSIZE_ATOM_QUERY_TOKEN", "RINGBOND_ATOM_QUERY_TOKEN",
-  "IMPLICIT_H_ATOM_QUERY_TOKEN", "HYB_TOKEN",
+  "MIN_RINGSIZE_ATOM_QUERY_TOKEN", "RINGSIZE_ATOM_QUERY_TOKEN",
+  "RINGBOND_ATOM_QUERY_TOKEN", "IMPLICIT_H_ATOM_QUERY_TOKEN", "HYB_TOKEN",
   "HETERONEIGHBOR_ATOM_QUERY_TOKEN", "ALIPHATIC",
   "ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN", "ZERO_TOKEN",
   "NONZERO_DIGIT_TOKEN", "GROUP_OPEN_TOKEN", "GROUP_CLOSE_TOKEN",
@@ -696,12 +731,12 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-59)
+#define YYPACT_NINF (-61)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
 
-#define YYTABLE_NINF (-88)
+#define YYTABLE_NINF (-94)
 
 #define yytable_value_is_error(Yyn) \
   0
@@ -710,65 +745,67 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     205,   -41,    27,   186,   100,    23,   -59,   -59,   -59,   -59,
-     408,   498,   -59,   -59,   -59,   -59,   127,   203,   240,   277,
-     -59,   383,   420,   -59,   -59,   154,     3,   347,   154,    -1,
-     223,   260,   445,    27,   260,   154,   -59,   -13,   297,   -59,
-     -59,   -59,    18,    42,   -59,    31,   171,   -59,   -59,   -59,
-     100,   -59,   -59,   135,   100,   -59,   -59,    44,   -59,   -59,
-      95,   149,   -59,   329,   -59,   -59,   -59,   -59,    27,   308,
-     -59,   554,   -59,   -59,   526,   -59,   -59,   -59,   -59,   -59,
-     -59,   -59,   -59,   -59,   -59,   -59,   -59,   -59,   260,   -59,
-     149,   -59,   -59,   470,   -59,   -59,   -59,   445,   445,   445,
-     -59,    25,   -59,   154,   154,   -59,   -59,   -59,   100,   100,
-     100,   -59,   -59,   -59,    43,    30,   -59,   154,    32,   -59,
-     154,   560,   -59,   171,   171,   -59,   -59,   -59,    46,     6,
-     445,   371,   334,   154,    48,   -59,   -59,   -59,    38,   321,
-      60,   -59,   154,    64,   -59,   154,    36,   -59,    99,   -59,
-      89,   107,    82,   -59,    87,   -59,   108,   -59,   154,   -59,
-     225,   171,   -59,   -59,   119,   -59,   -59,   115,   -59,   262,
-     -59,   -59,   -59,   299,   -59,   128,   -59
+      55,   -31,    46,   195,   533,     3,   -61,   -61,   -61,   -61,
+     423,   516,   -61,   -61,   -61,   -61,   250,   288,   360,   397,
+     435,   -61,   478,   481,   -61,   -61,    80,    19,     5,    80,
+       0,   233,   271,   461,    46,   271,    80,   -61,    -9,   309,
+     -61,   -61,   -61,    21,    40,   -61,    64,    92,   -61,   -61,
+     -61,   533,   -61,   -61,   143,   533,   -61,   -61,    42,   -61,
+     -61,   551,   157,   -61,   342,   -61,   -61,   -61,   -61,    46,
+     137,   -61,   545,   -61,   -61,    35,   -61,   -61,   126,   -61,
+     -61,   -61,   -61,   -61,   -61,   -61,   -61,   -61,   -61,   -61,
+     -61,   271,   -61,   157,   -61,   -61,   487,   -61,   -61,   -61,
+     461,   461,   461,   -61,   162,   -61,    80,    80,   -61,   -61,
+     -61,   533,   533,   533,   -61,   -61,   -61,   199,    60,   -61,
+      80,   -13,   -61,    80,   566,   -61,    92,    92,   -61,   -61,
+     -61,    96,    80,    23,    33,   461,   -61,   385,   347,    80,
+      88,   -61,   -61,   -61,    56,   163,    93,   -61,    80,    97,
+     -61,    80,    43,   -61,   117,   -61,   109,   129,   101,   127,
+     211,   -61,   122,   -61,   141,   -61,    80,   -61,   235,   -61,
+     -61,   171,    92,   -61,   -61,   187,   -61,   -61,   183,   -61,
+     273,   -61,   -61,   -61,   -61,   311,   -61,   198,   -61
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
    Performed when YYTABLE does not specify something else to do.  Zero
    means the default is an error.  */
-static const yytype_int8 yydefact[] =
+static const yytype_uint8 yydefact[] =
 {
-       0,     0,     0,     5,     8,     0,    12,    89,    88,    90,
-       0,     2,    17,    27,    26,    50,    54,    57,    58,    59,
-      78,    55,    56,   116,   118,     0,   108,   105,    72,    75,
-       0,     0,     0,     0,     0,    76,     4,     0,    16,    42,
-      44,    45,     0,    48,    73,    79,   117,    99,    98,   101,
-       0,   100,    97,     7,    94,    95,     1,     0,     9,    11,
-      72,     0,    48,    79,   121,   120,   122,    25,     0,     0,
-      18,     0,    21,   109,     0,    60,    63,    64,    65,    61,
-      62,    52,   106,   107,   103,   104,    71,    74,     0,    13,
-      16,    14,    43,     0,    15,    77,     3,     0,     0,     0,
-      41,     0,    51,     0,    69,    49,   119,   102,     0,     0,
-       0,     6,    96,    10,   108,   105,    30,     0,     0,    28,
-       0,    69,    20,     0,     0,    19,    22,    23,     0,    46,
-      38,    39,    40,     0,     0,    53,    70,    91,    92,    93,
-       0,    34,     0,     0,    32,     0,     0,   110,     0,    24,
-       0,     0,     0,    31,     0,    29,     0,    36,     0,   111,
-       0,    47,    66,    67,     0,    35,    33,     0,   112,     0,
-      68,    37,   113,     0,   114,     0,   115
+       0,     0,     0,     5,     8,     0,    12,    95,    94,    96,
+       0,     2,    17,    27,    26,    51,    55,    58,    59,    60,
+      61,    84,    56,    57,   122,   124,     0,   114,   111,    78,
+      81,     0,     0,     0,     0,     0,    82,     4,     0,    16,
+      43,    45,    46,     0,    49,    79,    85,   123,   105,   104,
+     107,     0,   106,   103,     7,   100,   101,     1,     0,     9,
+      11,    78,     0,    49,    85,   127,   126,   128,    25,     0,
+       0,    18,     0,    21,   115,     0,    62,    65,     0,    66,
+      67,    68,    63,    64,    53,   112,   113,   109,   110,    77,
+      80,     0,    13,    16,    14,    44,     0,    15,    83,     3,
+       0,     0,     0,    41,     0,    52,     0,    75,    50,   125,
+     108,     0,     0,     0,     6,   102,    10,   114,   111,    30,
+       0,     0,    28,     0,    75,    20,     0,     0,    19,    22,
+      23,     0,     0,     0,    47,    38,    42,    39,    40,     0,
+       0,    54,    76,    97,    98,    99,     0,    34,     0,     0,
+      32,     0,     0,   116,     0,    24,     0,     0,     0,     0,
+       0,    31,     0,    29,     0,    36,     0,   117,     0,    72,
+      73,     0,    48,    69,    70,     0,    35,    33,     0,   118,
+       0,    74,    71,    37,   119,     0,   120,     0,   121
 };
 
 /* YYPGOTO[NTERM-NUM].  */
-static const yytype_int8 yypgoto[] =
+static const yytype_int16 yypgoto[] =
 {
-     -59,   -59,    11,   118,    16,   -59,     0,    22,   -59,   -59,
-     -59,     2,    28,   -59,    35,   -58,    94,   -10,    37,   -45,
-     -59
+     -61,   -61,     2,   200,    29,   -61,    18,    24,   -61,   -61,
+     -61,    20,    31,   -61,   -40,   -60,   145,   -10,    74,   -45,
+     -61
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     5,    89,    11,    12,    13,    38,    39,    40,    41,
-      42,    62,    71,    54,    55,    44,    72,    45,    46,    73,
-      74
+       0,     5,    92,    11,    12,    13,    39,    40,    41,    42,
+      43,    63,    72,    55,    56,    45,    73,    46,    47,    74,
+      75
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -776,172 +813,175 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
-      63,   106,   118,     6,    14,    43,    75,    76,    77,    78,
-      61,    79,    80,    14,    36,    81,    83,    85,    86,    37,
-      63,    23,    24,    56,    57,    95,   -87,    70,    87,    82,
-      90,    96,    53,     7,     8,    14,     9,     7,     8,   102,
-       9,   101,    91,    23,    24,    94,   150,   105,    23,    24,
-      86,   133,     7,     8,    92,     9,   103,    84,    10,   104,
-     100,    23,    24,   146,   141,   105,    58,    59,   157,    82,
-      14,   142,   108,    14,   152,   158,    14,    10,   147,   148,
-     108,   109,   110,   100,   122,   107,   -26,   125,   113,   112,
-     127,   134,   153,   135,   136,    14,   155,   130,   131,   132,
-      23,    24,   128,   160,    83,    85,   163,   140,    24,    70,
-     143,   136,   100,    23,    24,   169,   106,    64,    65,   165,
-     159,   114,   115,   151,   173,    47,    48,   116,   175,    49,
-      14,   162,   154,    50,   117,   156,   137,   138,   139,    51,
-     166,    52,   164,   170,   149,    23,    24,   171,   167,   176,
-     -80,    93,   100,   100,   100,     7,     8,    15,     9,    16,
-      17,    18,    19,    20,    21,   126,    22,    23,    24,   108,
-     109,   110,    23,    24,    25,    26,    27,    28,    29,   111,
-       0,   119,    32,    97,    98,    99,    33,   161,   120,    64,
-      65,    35,     7,     8,    15,     9,    16,    17,    18,    19,
-      20,    21,     0,    22,    23,    24,     1,     0,     2,     3,
-       4,    25,    26,    27,    28,    29,     0,    30,    31,    32,
-       0,    23,    24,    33,     0,    34,   -83,     0,    35,     7,
-       8,    15,     9,    16,    17,    18,    19,    20,    21,     0,
-      22,    23,    24,    64,    65,     0,   168,     0,    25,    26,
-      27,    60,    29,     0,    88,    31,    32,     0,    23,    24,
-      33,     0,    34,   -84,     0,    35,     7,     8,    15,     9,
-      16,    17,    18,    19,    20,    21,     0,    22,    23,    24,
-      64,    65,     0,   172,     0,    25,    26,    27,    28,    29,
-       0,    88,    31,    32,     0,    23,    24,    33,     0,    34,
-     -85,     0,    35,     7,     8,    15,     9,    16,    17,    18,
-      19,    20,    21,     0,    22,    23,    24,    64,    65,     0,
-     174,     0,    25,    26,    27,    28,    29,   123,   124,     0,
-      32,    97,    98,    99,    33,     7,     8,   102,     9,    35,
-       7,     8,    15,     9,    16,    17,    18,    19,    20,    21,
-       0,    22,    23,    24,   103,   108,   109,   121,     0,    25,
-      26,    27,    28,    29,     0,    23,    24,    32,    97,    98,
-     -86,    33,     0,     0,    84,     0,    35,     7,     8,    15,
-       9,    16,    17,    18,    19,    20,    21,     0,    22,    23,
-      24,     0,     0,     0,     0,     0,    25,    26,    27,    28,
-      29,    23,    24,     0,    32,    97,   -81,     0,    33,     0,
-       0,     0,     0,    35,     7,     8,    15,     9,    16,    17,
-      18,    19,    20,    21,     0,    22,    23,    24,     0,     0,
-       0,     0,     0,    25,    26,    27,    60,    29,    23,    24,
-       0,    32,     0,   -82,     0,    33,     0,     0,     0,     0,
-      35,     7,     8,    15,     9,    16,    17,    18,    19,    20,
-      21,     0,    22,    23,    24,     0,     0,     0,     0,     0,
-      25,    26,    27,    28,    29,     0,     7,     8,    32,     9,
-       0,     0,    33,     0,     0,     0,     0,    35,    64,    65,
-      66,    67,    68,     0,     0,    47,    48,     0,     0,    49,
-      69,    10,     0,    50,     7,     8,     0,     9,   129,    51,
-       0,    52,     0,     0,     0,     0,    64,    65,    66,    67,
-      68,     0,     0,    47,    48,     0,     0,    49,    69,    10,
-       0,    50,     7,     8,     0,     9,     0,    51,     0,    52,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,    47,    48,     0,     0,    49,     0,    10,     0,    50,
-       7,     8,     0,     9,     0,    51,     0,    52,     0,     0,
-       0,     0,    64,    65,     0,     0,     0,     0,    23,    24,
-       0,     0,     0,     0,    69,    10,   114,   115,   108,   109,
-     110,     0,   144,     0,     0,     0,     0,     0,     0,   145
+      64,   121,   109,    57,    58,    37,    76,    77,    79,    80,
+      81,   110,    82,    83,     6,   115,    84,    86,    88,    89,
+     147,    64,    14,    44,    24,    25,    98,   148,    62,   -92,
+      90,    14,    38,    87,    94,    54,    99,    97,    24,    25,
+      71,     7,     8,   -93,     9,   104,    85,    59,    60,    93,
+     157,    89,     7,     8,    14,     9,     1,    95,     2,     3,
+       4,    48,    49,   103,   152,    50,   108,    10,   133,    51,
+       7,     8,   105,     9,   158,    52,   165,    53,    10,    24,
+      25,   153,   154,   166,   108,   -26,   103,   116,    87,    14,
+     106,   111,    14,   107,   140,    14,   141,   142,   125,    24,
+      25,   128,     7,     8,   130,     9,   131,    86,    88,   168,
+     146,    65,    66,   149,   142,   160,    14,   103,   135,   137,
+     138,    25,   156,   180,   136,    71,   161,   109,    10,   159,
+     163,   111,   112,   113,   169,   185,    65,    66,   162,   167,
+     187,   164,   143,   144,   145,    24,    25,   171,    24,    25,
+     175,    14,   173,   132,   170,   176,   178,   126,   127,   103,
+     155,   103,   103,     7,     8,    15,     9,    16,    17,    18,
+      19,    20,    21,    22,   177,    23,    24,    25,   111,   112,
+     113,    24,    25,    26,    27,    28,    29,    30,   114,   139,
+     122,    33,   100,   101,   102,    34,   181,   123,   111,   112,
+      36,     7,     8,    15,     9,    16,    17,    18,    19,    20,
+      21,    22,   182,    23,    24,    25,   183,   129,    24,    25,
+     188,    26,    27,    28,    29,    30,    85,    31,    32,    33,
+      24,    25,   172,    34,    96,    35,   174,     0,    36,     7,
+       8,    15,     9,    16,    17,    18,    19,    20,    21,    22,
+       0,    23,    24,    25,    65,    66,     0,   179,     0,    26,
+      27,    28,    61,    30,     0,    91,    32,    33,     0,    24,
+      25,    34,     0,    35,   -86,     0,    36,     7,     8,    15,
+       9,    16,    17,    18,    19,    20,    21,    22,     0,    23,
+      24,    25,    65,    66,     0,   184,     0,    26,    27,    28,
+      29,    30,     0,    91,    32,    33,     0,    24,    25,    34,
+       0,    35,   -89,     0,    36,     7,     8,    15,     9,    16,
+      17,    18,    19,    20,    21,    22,     0,    23,    24,    25,
+      65,    66,     0,   186,     0,    26,    27,    28,    29,    30,
+       0,     0,     0,    33,   100,   101,   102,    34,     7,     8,
+     105,     9,    36,     7,     8,    15,     9,    16,    17,    18,
+      19,    20,    21,    22,     0,    23,    24,    25,   106,     0,
+       0,   124,     0,    26,    27,    28,    29,    30,     0,    24,
+      25,    33,   100,   101,    78,    34,     0,     0,     0,     0,
+      36,     7,     8,    15,     9,    16,    17,    18,    19,    20,
+      21,    22,     0,    23,    24,    25,     0,     0,     0,     0,
+       0,    26,    27,    28,    29,    30,    24,    25,     0,    33,
+     100,   -90,     0,    34,     0,     0,     0,     0,    36,     7,
+       8,    15,     9,    16,    17,    18,    19,    20,    21,    22,
+       0,    23,    24,    25,     0,     0,     0,     0,     0,    26,
+      27,    28,    61,    30,    24,    25,     0,    33,     0,   -91,
+       0,    34,     0,     0,     0,     0,    36,     7,     8,    15,
+       9,    16,    17,    18,    19,    20,    21,    22,     0,    23,
+      24,    25,     0,     0,     0,     0,     0,    26,    27,    28,
+      29,    30,     0,     7,     8,    33,     9,    24,    25,    34,
+      24,    25,   -87,     0,    36,   -88,    65,    66,    67,    68,
+      69,     0,     0,    48,    49,     0,     0,    50,    70,    10,
+       0,    51,     7,     8,     0,     9,   134,    52,     0,    53,
+       0,     0,     0,     0,     0,    65,    66,    67,    68,    69,
+       0,     0,    48,    49,     0,     0,    50,    70,    10,     0,
+      51,     7,     8,     0,     9,     0,    52,     0,    53,    48,
+      49,     0,     0,    50,    65,    66,     0,    51,     0,     0,
+      24,    25,     0,    52,     0,    53,    70,    10,   117,   118,
+     111,   112,   113,     0,   119,    24,    25,     0,     0,     0,
+       0,   120,     0,   117,   118,     0,     0,     0,     0,   150,
+       0,     0,     0,     0,     0,     0,   151
 };
 
 static const yytype_int16 yycheck[] =
 {
-      10,    46,    60,    44,     2,     3,    16,    17,    18,    19,
-      10,    21,    22,    11,     3,    25,    26,    27,    28,     3,
-      30,    18,    19,     0,     1,    35,    23,    11,    29,    26,
-      30,    44,     4,     6,     7,    33,     9,     6,     7,     8,
-       9,    23,    31,    18,    19,    34,    40,    45,    18,    19,
-      60,    26,     6,     7,    32,     9,    25,    27,    31,    28,
-      38,    18,    19,   121,    32,    63,    43,    44,    32,    26,
-      68,    39,    34,    71,    26,    39,    74,    31,   123,   124,
-      34,    35,    36,    61,    68,    50,    44,    71,    44,    54,
-      74,   101,    32,   103,   104,    93,    32,    97,    98,    99,
-      18,    19,    74,   148,   114,   115,    24,   117,    19,    93,
-     120,   121,    90,    18,    19,   160,   161,    18,    19,    32,
-      21,    26,    27,   133,   169,    25,    26,    32,   173,    29,
-     128,    24,   142,    33,    39,   145,   108,   109,   110,    39,
-      32,    41,   152,    24,   128,    18,    19,    32,   158,    21,
-      23,    33,   130,   131,   132,     6,     7,     8,     9,    10,
-      11,    12,    13,    14,    15,    71,    17,    18,    19,    34,
-      35,    36,    18,    19,    25,    26,    27,    28,    29,    44,
-      -1,    32,    33,    34,    35,    36,    37,   150,    39,    18,
-      19,    42,     6,     7,     8,     9,    10,    11,    12,    13,
-      14,    15,    -1,    17,    18,    19,     1,    -1,     3,     4,
-       5,    25,    26,    27,    28,    29,    -1,    31,    32,    33,
-      -1,    18,    19,    37,    -1,    39,    23,    -1,    42,     6,
-       7,     8,     9,    10,    11,    12,    13,    14,    15,    -1,
-      17,    18,    19,    18,    19,    -1,    21,    -1,    25,    26,
-      27,    28,    29,    -1,    31,    32,    33,    -1,    18,    19,
-      37,    -1,    39,    23,    -1,    42,     6,     7,     8,     9,
-      10,    11,    12,    13,    14,    15,    -1,    17,    18,    19,
-      18,    19,    -1,    21,    -1,    25,    26,    27,    28,    29,
-      -1,    31,    32,    33,    -1,    18,    19,    37,    -1,    39,
-      23,    -1,    42,     6,     7,     8,     9,    10,    11,    12,
-      13,    14,    15,    -1,    17,    18,    19,    18,    19,    -1,
-      21,    -1,    25,    26,    27,    28,    29,    19,    20,    -1,
-      33,    34,    35,    36,    37,     6,     7,     8,     9,    42,
-       6,     7,     8,     9,    10,    11,    12,    13,    14,    15,
-      -1,    17,    18,    19,    25,    34,    35,    28,    -1,    25,
-      26,    27,    28,    29,    -1,    18,    19,    33,    34,    35,
-      23,    37,    -1,    -1,    27,    -1,    42,     6,     7,     8,
-       9,    10,    11,    12,    13,    14,    15,    -1,    17,    18,
-      19,    -1,    -1,    -1,    -1,    -1,    25,    26,    27,    28,
-      29,    18,    19,    -1,    33,    34,    23,    -1,    37,    -1,
-      -1,    -1,    -1,    42,     6,     7,     8,     9,    10,    11,
-      12,    13,    14,    15,    -1,    17,    18,    19,    -1,    -1,
-      -1,    -1,    -1,    25,    26,    27,    28,    29,    18,    19,
-      -1,    33,    -1,    23,    -1,    37,    -1,    -1,    -1,    -1,
-      42,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    -1,    17,    18,    19,    -1,    -1,    -1,    -1,    -1,
-      25,    26,    27,    28,    29,    -1,     6,     7,    33,     9,
-      -1,    -1,    37,    -1,    -1,    -1,    -1,    42,    18,    19,
-      20,    21,    22,    -1,    -1,    25,    26,    -1,    -1,    29,
-      30,    31,    -1,    33,     6,     7,    -1,     9,    38,    39,
-      -1,    41,    -1,    -1,    -1,    -1,    18,    19,    20,    21,
-      22,    -1,    -1,    25,    26,    -1,    -1,    29,    30,    31,
-      -1,    33,     6,     7,    -1,     9,    -1,    39,    -1,    41,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    25,    26,    -1,    -1,    29,    -1,    31,    -1,    33,
-       6,     7,    -1,     9,    -1,    39,    -1,    41,    -1,    -1,
-      -1,    -1,    18,    19,    -1,    -1,    -1,    -1,    18,    19,
-      -1,    -1,    -1,    -1,    30,    31,    26,    27,    34,    35,
-      36,    -1,    32,    -1,    -1,    -1,    -1,    -1,    -1,    39
+      10,    61,    47,     0,     1,     3,    16,    17,    18,    19,
+      20,    51,    22,    23,    45,    55,    26,    27,    28,    29,
+      33,    31,     2,     3,    19,    20,    36,    40,    10,    24,
+      30,    11,     3,    28,    32,     4,    45,    35,    19,    20,
+      11,     6,     7,    24,     9,    24,    27,    44,    45,    31,
+      27,    61,     6,     7,    34,     9,     1,    33,     3,     4,
+       5,    26,    27,    39,   124,    30,    46,    32,    78,    34,
+       6,     7,     8,     9,    41,    40,    33,    42,    32,    19,
+      20,   126,   127,    40,    64,    45,    62,    45,    28,    69,
+      26,    35,    72,    29,   104,    75,   106,   107,    69,    19,
+      20,    72,     6,     7,    75,     9,    75,   117,   118,   154,
+     120,    19,    20,   123,   124,    27,    96,    93,   100,   101,
+     102,    20,   132,   168,   100,    96,    33,   172,    32,   139,
+      33,    35,    36,    37,    25,   180,    19,    20,   148,    22,
+     185,   151,   111,   112,   113,    19,    20,   157,    19,    20,
+     160,   131,    25,    27,    25,    33,   166,    20,    21,   135,
+     131,   137,   138,     6,     7,     8,     9,    10,    11,    12,
+      13,    14,    15,    16,    33,    18,    19,    20,    35,    36,
+      37,    19,    20,    26,    27,    28,    29,    30,    45,    27,
+      33,    34,    35,    36,    37,    38,    25,    40,    35,    36,
+      43,     6,     7,     8,     9,    10,    11,    12,    13,    14,
+      15,    16,    25,    18,    19,    20,    33,    72,    19,    20,
+      22,    26,    27,    28,    29,    30,    27,    32,    33,    34,
+      19,    20,   158,    38,    34,    40,    25,    -1,    43,     6,
+       7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
+      -1,    18,    19,    20,    19,    20,    -1,    22,    -1,    26,
+      27,    28,    29,    30,    -1,    32,    33,    34,    -1,    19,
+      20,    38,    -1,    40,    24,    -1,    43,     6,     7,     8,
+       9,    10,    11,    12,    13,    14,    15,    16,    -1,    18,
+      19,    20,    19,    20,    -1,    22,    -1,    26,    27,    28,
+      29,    30,    -1,    32,    33,    34,    -1,    19,    20,    38,
+      -1,    40,    24,    -1,    43,     6,     7,     8,     9,    10,
+      11,    12,    13,    14,    15,    16,    -1,    18,    19,    20,
+      19,    20,    -1,    22,    -1,    26,    27,    28,    29,    30,
+      -1,    -1,    -1,    34,    35,    36,    37,    38,     6,     7,
+       8,     9,    43,     6,     7,     8,     9,    10,    11,    12,
+      13,    14,    15,    16,    -1,    18,    19,    20,    26,    -1,
+      -1,    29,    -1,    26,    27,    28,    29,    30,    -1,    19,
+      20,    34,    35,    36,    24,    38,    -1,    -1,    -1,    -1,
+      43,     6,     7,     8,     9,    10,    11,    12,    13,    14,
+      15,    16,    -1,    18,    19,    20,    -1,    -1,    -1,    -1,
+      -1,    26,    27,    28,    29,    30,    19,    20,    -1,    34,
+      35,    24,    -1,    38,    -1,    -1,    -1,    -1,    43,     6,
+       7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
+      -1,    18,    19,    20,    -1,    -1,    -1,    -1,    -1,    26,
+      27,    28,    29,    30,    19,    20,    -1,    34,    -1,    24,
+      -1,    38,    -1,    -1,    -1,    -1,    43,     6,     7,     8,
+       9,    10,    11,    12,    13,    14,    15,    16,    -1,    18,
+      19,    20,    -1,    -1,    -1,    -1,    -1,    26,    27,    28,
+      29,    30,    -1,     6,     7,    34,     9,    19,    20,    38,
+      19,    20,    24,    -1,    43,    24,    19,    20,    21,    22,
+      23,    -1,    -1,    26,    27,    -1,    -1,    30,    31,    32,
+      -1,    34,     6,     7,    -1,     9,    39,    40,    -1,    42,
+      -1,    -1,    -1,    -1,    -1,    19,    20,    21,    22,    23,
+      -1,    -1,    26,    27,    -1,    -1,    30,    31,    32,    -1,
+      34,     6,     7,    -1,     9,    -1,    40,    -1,    42,    26,
+      27,    -1,    -1,    30,    19,    20,    -1,    34,    -1,    -1,
+      19,    20,    -1,    40,    -1,    42,    31,    32,    27,    28,
+      35,    36,    37,    -1,    33,    19,    20,    -1,    -1,    -1,
+      -1,    40,    -1,    27,    28,    -1,    -1,    -1,    -1,    33,
+      -1,    -1,    -1,    -1,    -1,    -1,    40
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     1,     3,     4,     5,    46,    44,     6,     7,     9,
-      31,    48,    49,    50,    56,     8,    10,    11,    12,    13,
-      14,    15,    17,    18,    19,    25,    26,    27,    28,    29,
-      31,    32,    33,    37,    39,    42,    47,    49,    51,    52,
-      53,    54,    55,    56,    60,    62,    63,    25,    26,    29,
-      33,    39,    41,    57,    58,    59,     0,     1,    43,    44,
-      28,    51,    56,    62,    18,    19,    20,    21,    22,    30,
-      49,    57,    61,    64,    65,    62,    62,    62,    62,    62,
-      62,    62,    26,    62,    27,    62,    62,    29,    31,    47,
-      51,    47,    52,    48,    47,    62,    44,    34,    35,    36,
-      52,    23,     8,    25,    28,    56,    64,    59,    34,    35,
-      36,    44,    59,    44,    26,    27,    32,    39,    60,    32,
-      39,    28,    49,    19,    20,    49,    61,    49,    57,    38,
-      51,    51,    51,    26,    62,    62,    62,    57,    57,    57,
-      62,    32,    39,    62,    32,    39,    60,    64,    64,    49,
-      40,    62,    26,    32,    62,    32,    62,    32,    39,    21,
-      64,    63,    24,    24,    62,    32,    32,    62,    21,    64,
-      24,    32,    21,    64,    21,    64,    21
+       0,     1,     3,     4,     5,    47,    45,     6,     7,     9,
+      32,    49,    50,    51,    57,     8,    10,    11,    12,    13,
+      14,    15,    16,    18,    19,    20,    26,    27,    28,    29,
+      30,    32,    33,    34,    38,    40,    43,    48,    50,    52,
+      53,    54,    55,    56,    57,    61,    63,    64,    26,    27,
+      30,    34,    40,    42,    58,    59,    60,     0,     1,    44,
+      45,    29,    52,    57,    63,    19,    20,    21,    22,    23,
+      31,    50,    58,    62,    65,    66,    63,    63,    24,    63,
+      63,    63,    63,    63,    63,    27,    63,    28,    63,    63,
+      30,    32,    48,    52,    48,    53,    49,    48,    63,    45,
+      35,    36,    37,    53,    24,     8,    26,    29,    57,    65,
+      60,    35,    36,    37,    45,    60,    45,    27,    28,    33,
+      40,    61,    33,    40,    29,    50,    20,    21,    50,    62,
+      50,    58,    27,    63,    39,    52,    53,    52,    52,    27,
+      63,    63,    63,    58,    58,    58,    63,    33,    40,    63,
+      33,    40,    61,    65,    65,    50,    63,    27,    41,    63,
+      27,    33,    63,    33,    63,    33,    40,    22,    65,    25,
+      25,    63,    64,    25,    25,    63,    33,    33,    63,    22,
+      65,    25,    25,    33,    22,    65,    22,    65,    22
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    45,    46,    46,    46,    46,    46,    46,    46,    46,
-      46,    46,    46,    47,    47,    47,    47,    48,    48,    48,
-      48,    48,    48,    48,    48,    48,    49,    49,    49,    49,
-      50,    50,    50,    50,    50,    50,    50,    50,    51,    51,
-      51,    51,    51,    52,    52,    52,    53,    53,    54,    54,
-      54,    54,    54,    54,    54,    54,    54,    54,    54,    54,
-      54,    54,    54,    54,    54,    54,    54,    54,    54,    54,
-      54,    54,    54,    54,    54,    54,    54,    54,    54,    54,
-      55,    55,    55,    55,    55,    55,    55,    55,    56,    56,
-      56,    57,    57,    57,    57,    58,    58,    59,    59,    59,
-      59,    59,    59,    60,    60,    60,    60,    60,    60,    61,
-      61,    61,    61,    61,    61,    61,    62,    62,    63,    63,
-      64,    64,    65
+       0,    46,    47,    47,    47,    47,    47,    47,    47,    47,
+      47,    47,    47,    48,    48,    48,    48,    49,    49,    49,
+      49,    49,    49,    49,    49,    49,    50,    50,    50,    50,
+      51,    51,    51,    51,    51,    51,    51,    51,    52,    52,
+      52,    52,    52,    52,    53,    53,    53,    54,    54,    55,
+      55,    55,    55,    55,    55,    55,    55,    55,    55,    55,
+      55,    55,    55,    55,    55,    55,    55,    55,    55,    55,
+      55,    55,    55,    55,    55,    55,    55,    55,    55,    55,
+      55,    55,    55,    55,    55,    55,    56,    56,    56,    56,
+      56,    56,    56,    56,    57,    57,    57,    58,    58,    58,
+      58,    59,    59,    60,    60,    60,    60,    60,    60,    61,
+      61,    61,    61,    61,    61,    62,    62,    62,    62,    62,
+      62,    62,    63,    63,    64,    64,    65,    65,    66
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
@@ -951,15 +991,15 @@ static const yytype_int8 yyr2[] =
        3,     2,     2,     2,     2,     2,     1,     1,     2,     3,
        3,     2,     3,     3,     4,     2,     1,     1,     3,     5,
        3,     5,     4,     6,     4,     6,     5,     7,     3,     3,
-       3,     2,     1,     2,     1,     1,     3,     5,     1,     2,
-       1,     2,     2,     3,     1,     1,     1,     1,     1,     1,
-       2,     2,     2,     2,     2,     2,     5,     5,     6,     2,
-       3,     2,     1,     1,     2,     1,     1,     2,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     3,     3,     3,     1,     1,     2,     1,     1,     1,
-       1,     1,     2,     2,     2,     1,     2,     2,     1,     1,
-       3,     4,     5,     6,     7,     8,     1,     1,     1,     2,
-       1,     1,     1
+       3,     2,     3,     1,     2,     1,     1,     3,     5,     1,
+       2,     1,     2,     2,     3,     1,     1,     1,     1,     1,
+       1,     1,     2,     2,     2,     2,     2,     2,     2,     5,
+       5,     6,     5,     5,     6,     2,     3,     2,     1,     1,
+       2,     1,     1,     2,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     3,     3,     3,
+       1,     1,     2,     1,     1,     1,     1,     1,     2,     2,
+       2,     1,     2,     2,     1,     1,     3,     4,     5,     6,
+       7,     8,     1,     1,     1,     2,     1,     1,     1
 };
 
 
@@ -1191,6 +1231,10 @@ yydestruct (const char *yymsg,
         break;
 
     case YYSYMBOL_COMPLEX_ATOM_QUERY_TOKEN: /* COMPLEX_ATOM_QUERY_TOKEN  */
+            { delete ((*yyvaluep).atom); }
+        break;
+
+    case YYSYMBOL_MIN_RINGSIZE_ATOM_QUERY_TOKEN: /* MIN_RINGSIZE_ATOM_QUERY_TOKEN  */
             { delete ((*yyvaluep).atom); }
         break;
 
@@ -1837,6 +1881,7 @@ yyreduce:
                                                        {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setFormalCharge((yyvsp[-1].ival));
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomFormalChargeQuery((yyvsp[-1].ival)),Queries::COMPOSITE_AND,true);
   (yyval.atom)=newQ;
 }
@@ -1846,6 +1891,7 @@ yyreduce:
                                                                           {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setFormalCharge((yyvsp[-3].ival));
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomFormalChargeQuery((yyvsp[-3].ival)),Queries::COMPOSITE_AND,true);
   newQ->setProp(RDKit::common_properties::molAtomMapNumber,(yyvsp[-1].ival));
 
@@ -1858,6 +1904,7 @@ yyreduce:
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setIsotope((yyvsp[-3].ival));
   newQ->setFormalCharge((yyvsp[-1].ival));
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomIsotopeQuery((yyvsp[-3].ival)),Queries::COMPOSITE_AND,true);
   newQ->expandQuery(makeAtomFormalChargeQuery((yyvsp[-1].ival)),Queries::COMPOSITE_AND,true);
   (yyval.atom)=newQ;
@@ -1869,6 +1916,7 @@ yyreduce:
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setIsotope((yyvsp[-5].ival));
   newQ->setFormalCharge((yyvsp[-3].ival));
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   newQ->expandQuery(makeAtomIsotopeQuery((yyvsp[-5].ival)),Queries::COMPOSITE_AND,true);
   newQ->expandQuery(makeAtomFormalChargeQuery((yyvsp[-3].ival)),Queries::COMPOSITE_AND,true);
   newQ->setProp(RDKit::common_properties::molAtomMapNumber,(yyvsp[-1].ival));
@@ -1880,58 +1928,51 @@ yyreduce:
   case 38: /* atom_expr: atom_expr AND_TOKEN atom_expr  */
                                          {
   (yyvsp[-2].atom)->expandQuery((yyvsp[0].atom)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  if((yyvsp[-2].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[-2].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag());
+  if ((yyvsp[-2].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) { (yyvsp[-2].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag()); }
   SmilesParseOps::ClearAtomChemicalProps((yyvsp[-2].atom));
   delete (yyvsp[0].atom);
+  (yyval.atom) = (yyvsp[-2].atom);
 }
     break;
 
   case 39: /* atom_expr: atom_expr OR_TOKEN atom_expr  */
                                {
   (yyvsp[-2].atom)->expandQuery((yyvsp[0].atom)->getQuery()->copy(),Queries::COMPOSITE_OR,true);
-  if((yyvsp[-2].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[-2].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag());
+  if ((yyvsp[-2].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) { (yyvsp[-2].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag()); }
   SmilesParseOps::ClearAtomChemicalProps((yyvsp[-2].atom));
   (yyvsp[-2].atom)->setAtomicNum(0);
   delete (yyvsp[0].atom);
+  (yyval.atom) = (yyvsp[-2].atom);
 }
     break;
 
   case 40: /* atom_expr: atom_expr SEMI_TOKEN atom_expr  */
                                  {
   (yyvsp[-2].atom)->expandQuery((yyvsp[0].atom)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  if((yyvsp[-2].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[-2].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag());
+  if ((yyvsp[-2].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) { (yyvsp[-2].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag()); }
   SmilesParseOps::ClearAtomChemicalProps((yyvsp[-2].atom));
   delete (yyvsp[0].atom);
+  (yyval.atom) = (yyvsp[-2].atom);
 }
     break;
 
   case 41: /* atom_expr: atom_expr point_query  */
                         {
-  (yyvsp[-1].atom)->expandQuery((yyvsp[0].atom)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  if((yyvsp[-1].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[-1].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag());
-  if((yyvsp[0].atom)->getNumExplicitHs()){
-    if(!(yyvsp[-1].atom)->getNumExplicitHs()){
-      (yyvsp[-1].atom)->setNumExplicitHs((yyvsp[0].atom)->getNumExplicitHs());
-      (yyvsp[-1].atom)->setNoImplicit(true);
-    } else if((yyvsp[-1].atom)->getNumExplicitHs()!=(yyvsp[0].atom)->getNumExplicitHs()){
-      // conflicting queries...
-      (yyvsp[-1].atom)->setNumExplicitHs(0);
-      (yyvsp[-1].atom)->setNoImplicit(false);
-    }
-  }
-  if((yyvsp[0].atom)->getFormalCharge()){
-    if(!(yyvsp[-1].atom)->getFormalCharge()){
-      (yyvsp[-1].atom)->setFormalCharge((yyvsp[0].atom)->getFormalCharge());
-    } else if((yyvsp[-1].atom)->getFormalCharge()!=(yyvsp[0].atom)->getFormalCharge()){
-      // conflicting queries...
-      (yyvsp[-1].atom)->setFormalCharge(0);
-    }
-  }
+  atom_expr_and_point_query((yyvsp[-1].atom), (yyvsp[0].atom));
   delete (yyvsp[0].atom);
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
-  case 43: /* point_query: NOT_TOKEN point_query  */
+  case 42: /* atom_expr: atom_expr AND_TOKEN point_query  */
+                                  {
+  atom_expr_and_point_query((yyvsp[-2].atom), (yyvsp[0].atom));
+  delete (yyvsp[0].atom);
+  (yyval.atom) = (yyvsp[-2].atom);
+}
+    break;
+
+  case 44: /* point_query: NOT_TOKEN point_query  */
                                    {
   (yyvsp[0].atom)->getQuery()->setNegation(!((yyvsp[0].atom)->getQuery()->getNegation()));
   (yyvsp[0].atom)->setAtomicNum(0);
@@ -1940,7 +1981,7 @@ yyreduce:
 }
     break;
 
-  case 46: /* recursive_query: BEGIN_RECURSE mol END_RECURSE  */
+  case 47: /* recursive_query: BEGIN_RECURSE mol END_RECURSE  */
                                                {
   // this is a recursive SMARTS expression
   QueryAtom *qA = new QueryAtom();
@@ -1960,7 +2001,7 @@ yyreduce:
 }
     break;
 
-  case 47: /* recursive_query: BEGIN_RECURSE mol END_RECURSE UNDERSCORE_TOKEN nonzero_number  */
+  case 48: /* recursive_query: BEGIN_RECURSE mol END_RECURSE UNDERSCORE_TOKEN nonzero_number  */
                                                                 {
   // UNDOCUMENTED EXTENSION:
   // this is a recursive SMARTS expression with a serial number
@@ -1984,7 +2025,7 @@ yyreduce:
 }
     break;
 
-  case 49: /* atom_query: number simple_atom  */
+  case 50: /* atom_query: number simple_atom  */
                      {
   (yyvsp[0].atom)->setIsotope((yyvsp[-1].ival));
   (yyvsp[0].atom)->expandQuery(makeAtomIsotopeQuery((yyvsp[-1].ival)),Queries::COMPOSITE_AND,true);
@@ -1992,7 +2033,7 @@ yyreduce:
 }
     break;
 
-  case 51: /* atom_query: number ATOM_TOKEN  */
+  case 52: /* atom_query: number ATOM_TOKEN  */
                     {
   (yyvsp[0].atom)->setIsotope((yyvsp[-1].ival));
   (yyvsp[0].atom)->expandQuery(makeAtomIsotopeQuery((yyvsp[-1].ival)),Queries::COMPOSITE_AND,true);
@@ -2000,11 +2041,11 @@ yyreduce:
 }
     break;
 
-  case 52: /* atom_query: HASH_TOKEN number  */
+  case 53: /* atom_query: HASH_TOKEN number  */
                     { (yyval.atom) = new QueryAtom((yyvsp[0].ival)); }
     break;
 
-  case 53: /* atom_query: number HASH_TOKEN number  */
+  case 54: /* atom_query: number HASH_TOKEN number  */
                            {
   (yyval.atom) = new QueryAtom((yyvsp[0].ival));
   (yyval.atom)->setIsotope((yyvsp[-2].ival));
@@ -2012,120 +2053,182 @@ yyreduce:
 }
     break;
 
-  case 60: /* atom_query: COMPLEX_ATOM_QUERY_TOKEN number  */
+  case 62: /* atom_query: COMPLEX_ATOM_QUERY_TOKEN number  */
                                   {
   static_cast<ATOM_EQUALS_QUERY *>((yyvsp[-1].atom)->getQuery())->setVal((yyvsp[0].ival));
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
-  case 61: /* atom_query: HETERONEIGHBOR_ATOM_QUERY_TOKEN number  */
+  case 63: /* atom_query: HETERONEIGHBOR_ATOM_QUERY_TOKEN number  */
                                          {
   (yyvsp[-1].atom)->setQuery(makeAtomNumHeteroatomNbrsQuery((yyvsp[0].ival)));
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
-  case 62: /* atom_query: ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN number  */
+  case 64: /* atom_query: ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN number  */
                                                   {
   (yyvsp[-1].atom)->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery((yyvsp[0].ival)));
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
-  case 63: /* atom_query: RINGSIZE_ATOM_QUERY_TOKEN number  */
-                                   {
+  case 65: /* atom_query: MIN_RINGSIZE_ATOM_QUERY_TOKEN number  */
+                                       {
   (yyvsp[-1].atom)->setQuery(makeAtomMinRingSizeQuery((yyvsp[0].ival)));
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
-  case 64: /* atom_query: RINGBOND_ATOM_QUERY_TOKEN number  */
+  case 66: /* atom_query: RINGSIZE_ATOM_QUERY_TOKEN number  */
+                                   {
+  (yyvsp[-1].atom)->setQuery(makeAtomInRingOfSizeQuery((yyvsp[0].ival)));
+  (yyval.atom) = (yyvsp[-1].atom);
+}
+    break;
+
+  case 67: /* atom_query: RINGBOND_ATOM_QUERY_TOKEN number  */
                                    {
   (yyvsp[-1].atom)->setQuery(makeAtomRingBondCountQuery((yyvsp[0].ival)));
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
-  case 65: /* atom_query: IMPLICIT_H_ATOM_QUERY_TOKEN number  */
+  case 68: /* atom_query: IMPLICIT_H_ATOM_QUERY_TOKEN number  */
                                      {
   (yyvsp[-1].atom)->setQuery(makeAtomImplicitHCountQuery((yyvsp[0].ival)));
+  (yyval.atom) = (yyvsp[-1].atom);
 }
     break;
 
-  case 66: /* atom_query: possible_range_query RANGE_OPEN_TOKEN MINUS_TOKEN number RANGE_CLOSE_TOKEN  */
+  case 69: /* atom_query: possible_range_query RANGE_OPEN_TOKEN MINUS_TOKEN number RANGE_CLOSE_TOKEN  */
                                                                              {
   ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>((yyvsp[-4].atom)->getQuery());
   ATOM_GREATEREQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_GREATEREQUAL_QUERY>((yyvsp[-1].ival),oq->getDataFunc(),
     std::string("greater_")+oq->getDescription());
   (yyvsp[-4].atom)->setQuery(nq);
+  (yyval.atom) = (yyvsp[-4].atom);
 }
     break;
 
-  case 67: /* atom_query: possible_range_query RANGE_OPEN_TOKEN number MINUS_TOKEN RANGE_CLOSE_TOKEN  */
+  case 70: /* atom_query: possible_range_query RANGE_OPEN_TOKEN number MINUS_TOKEN RANGE_CLOSE_TOKEN  */
                                                                              {
   ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>((yyvsp[-4].atom)->getQuery());
   ATOM_LESSEQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_LESSEQUAL_QUERY>((yyvsp[-2].ival),oq->getDataFunc(),
     std::string("less_")+oq->getDescription());
   (yyvsp[-4].atom)->setQuery(nq);
+  (yyval.atom) = (yyvsp[-4].atom);
 }
     break;
 
-  case 68: /* atom_query: possible_range_query RANGE_OPEN_TOKEN number MINUS_TOKEN number RANGE_CLOSE_TOKEN  */
+  case 71: /* atom_query: possible_range_query RANGE_OPEN_TOKEN number MINUS_TOKEN number RANGE_CLOSE_TOKEN  */
                                                                                     {
   ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>((yyvsp[-5].atom)->getQuery());
   ATOM_RANGE_QUERY *nq = makeAtomRangeQuery((yyvsp[-3].ival),(yyvsp[-1].ival),false,false,
     oq->getDataFunc(),
     std::string("range_")+oq->getDescription());
   (yyvsp[-5].atom)->setQuery(nq);
+  (yyval.atom) = (yyvsp[-5].atom);
 }
     break;
 
-  case 69: /* atom_query: number H_TOKEN  */
+  case 72: /* atom_query: RINGSIZE_ATOM_QUERY_TOKEN RANGE_OPEN_TOKEN MINUS_TOKEN number RANGE_CLOSE_TOKEN  */
+                                                                                  {
+  int lv = -1;
+  int uv = (yyvsp[-1].ival);
+  ATOM_GREATEREQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_GREATEREQUAL_QUERY>(uv,[lv,uv](Atom const *at) {
+            return queryAtomIsInRingOfSize(at, lv, uv);
+          },std::string("greater_AtomRingSize"));
+  (yyvsp[-4].atom)->setQuery(nq);
+  (yyval.atom) = (yyvsp[-4].atom);
+}
+    break;
+
+  case 73: /* atom_query: RINGSIZE_ATOM_QUERY_TOKEN RANGE_OPEN_TOKEN number MINUS_TOKEN RANGE_CLOSE_TOKEN  */
+                                                                                  {
+  int lv = (yyvsp[-2].ival);
+  int uv = -1;
+  ATOM_LESSEQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_LESSEQUAL_QUERY>(lv,[lv,uv](Atom const *at) {
+            return queryAtomIsInRingOfSize(at, lv, uv);
+          },std::string("less_AtomRingSize"));
+  (yyvsp[-4].atom)->setQuery(nq);
+  (yyval.atom) = (yyvsp[-4].atom);
+}
+    break;
+
+  case 74: /* atom_query: RINGSIZE_ATOM_QUERY_TOKEN RANGE_OPEN_TOKEN number MINUS_TOKEN number RANGE_CLOSE_TOKEN  */
+                                                                                         {
+  int lv = (yyvsp[-3].ival);
+  int uv = (yyvsp[-1].ival);
+  ATOM_RANGE_QUERY *nq = makeAtomRangeQuery(lv,uv,false,false,[lv,uv](Atom const *at) {
+            return queryAtomIsInRingOfSize(at, lv, uv);
+          },std::string("range_AtomRingSize"));
+  (yyvsp[-5].atom)->setQuery(nq);
+  (yyval.atom) = (yyvsp[-5].atom);
+}
+    break;
+
+  case 75: /* atom_query: number H_TOKEN  */
                  {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomIsotopeQuery((yyvsp[-1].ival)));
   newQ->setIsotope((yyvsp[-1].ival));
   newQ->expandQuery(makeAtomHCountQuery(1),Queries::COMPOSITE_AND,true);
   newQ->setNumExplicitHs(1);
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   (yyval.atom)=newQ;
 }
     break;
 
-  case 70: /* atom_query: number H_TOKEN number  */
+  case 76: /* atom_query: number H_TOKEN number  */
                         {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomIsotopeQuery((yyvsp[-2].ival)));
   newQ->setIsotope((yyvsp[-2].ival));
   newQ->expandQuery(makeAtomHCountQuery((yyvsp[0].ival)),Queries::COMPOSITE_AND,true);
   newQ->setNumExplicitHs((yyvsp[0].ival));
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   (yyval.atom)=newQ;
 }
     break;
 
-  case 71: /* atom_query: H_TOKEN number  */
+  case 77: /* atom_query: H_TOKEN number  */
                  {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery((yyvsp[0].ival)));
   newQ->setNumExplicitHs((yyvsp[0].ival));
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   (yyval.atom)=newQ;
+  
 }
     break;
 
-  case 72: /* atom_query: H_TOKEN  */
+  case 78: /* atom_query: H_TOKEN  */
           {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery(1));
   newQ->setNumExplicitHs(1);
+  newQ->setNoImplicit(true);
+  newQ->getFlags() |= SMARTS_H_MASK;
   (yyval.atom)=newQ;
 }
     break;
 
-  case 73: /* atom_query: charge_spec  */
+  case 79: /* atom_query: charge_spec  */
               {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomFormalChargeQuery((yyvsp[0].ival)));
   newQ->setFormalCharge((yyvsp[0].ival));
+  newQ->getFlags() |= SMARTS_CHARGE_MASK;
   (yyval.atom)=newQ;
 }
     break;
 
-  case 74: /* atom_query: AT_TOKEN AT_TOKEN  */
+  case 80: /* atom_query: AT_TOKEN AT_TOKEN  */
                     {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
@@ -2134,7 +2237,7 @@ yyreduce:
 }
     break;
 
-  case 75: /* atom_query: AT_TOKEN  */
+  case 81: /* atom_query: AT_TOKEN  */
            {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
@@ -2143,7 +2246,7 @@ yyreduce:
 }
     break;
 
-  case 76: /* atom_query: CHI_CLASS_TOKEN  */
+  case 82: /* atom_query: CHI_CLASS_TOKEN  */
                   {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
@@ -2153,8 +2256,15 @@ yyreduce:
 }
     break;
 
-  case 77: /* atom_query: CHI_CLASS_TOKEN number  */
+  case 83: /* atom_query: CHI_CLASS_TOKEN number  */
                          {
+  if((yyvsp[0].ival)==0){
+    yyerror(input,molList,branchPoints,scanner,start_token, current_token_position,
+            "chiral permutation cannot be zero");
+    yyErrorCleanup(molList);
+    YYABORT;
+  }
+
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
   newQ->setChiralTag((yyvsp[-1].chiraltype));
@@ -2163,7 +2273,7 @@ yyreduce:
 }
     break;
 
-  case 79: /* atom_query: number  */
+  case 85: /* atom_query: number  */
          {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomIsotopeQuery((yyvsp[0].ival)));
@@ -2171,37 +2281,42 @@ yyreduce:
 }
     break;
 
-  case 81: /* possible_range_query: HETERONEIGHBOR_ATOM_QUERY_TOKEN  */
+  case 87: /* possible_range_query: HETERONEIGHBOR_ATOM_QUERY_TOKEN  */
                                   {
   (yyvsp[0].atom)->setQuery(makeAtomNumHeteroatomNbrsQuery(0));
+  (yyval.atom) = (yyvsp[0].atom);
 }
     break;
 
-  case 82: /* possible_range_query: ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN  */
+  case 88: /* possible_range_query: ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN  */
                                            {
   (yyvsp[0].atom)->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery(0));
+  (yyval.atom) = (yyvsp[0].atom);
 }
     break;
 
-  case 83: /* possible_range_query: RINGSIZE_ATOM_QUERY_TOKEN  */
-                            {
+  case 89: /* possible_range_query: MIN_RINGSIZE_ATOM_QUERY_TOKEN  */
+                                {
   (yyvsp[0].atom)->setQuery(makeAtomMinRingSizeQuery(5)); // this is going to be ignored anyway
+  (yyval.atom) = (yyvsp[0].atom);
 }
     break;
 
-  case 84: /* possible_range_query: RINGBOND_ATOM_QUERY_TOKEN  */
+  case 90: /* possible_range_query: RINGBOND_ATOM_QUERY_TOKEN  */
                             {
   (yyvsp[0].atom)->setQuery(makeAtomRingBondCountQuery(0));
+  (yyval.atom) = (yyvsp[0].atom);
 }
     break;
 
-  case 85: /* possible_range_query: IMPLICIT_H_ATOM_QUERY_TOKEN  */
+  case 91: /* possible_range_query: IMPLICIT_H_ATOM_QUERY_TOKEN  */
                               {
   (yyvsp[0].atom)->setQuery(makeAtomImplicitHCountQuery(0));
+  (yyval.atom) = (yyvsp[0].atom);
 }
     break;
 
-  case 86: /* possible_range_query: PLUS_TOKEN  */
+  case 92: /* possible_range_query: PLUS_TOKEN  */
              {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomFormalChargeQuery(0));
@@ -2209,7 +2324,7 @@ yyreduce:
 }
     break;
 
-  case 87: /* possible_range_query: MINUS_TOKEN  */
+  case 93: /* possible_range_query: MINUS_TOKEN  */
               {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNegativeFormalChargeQuery(0));
@@ -2217,7 +2332,7 @@ yyreduce:
 }
     break;
 
-  case 88: /* simple_atom: ORGANIC_ATOM_TOKEN  */
+  case 94: /* simple_atom: ORGANIC_ATOM_TOKEN  */
                                    {
   //
   // This construction (and some others) may seem odd, but the
@@ -2232,7 +2347,7 @@ yyreduce:
 }
     break;
 
-  case 89: /* simple_atom: AROMATIC_ATOM_TOKEN  */
+  case 95: /* simple_atom: AROMATIC_ATOM_TOKEN  */
                       {
   (yyval.atom) = new QueryAtom((yyvsp[0].ival));
   (yyval.atom)->setIsAromatic(true);
@@ -2240,35 +2355,39 @@ yyreduce:
 }
     break;
 
-  case 91: /* bond_expr: bond_expr AND_TOKEN bond_expr  */
+  case 97: /* bond_expr: bond_expr AND_TOKEN bond_expr  */
                                         {
   (yyvsp[-2].bond)->expandQuery((yyvsp[0].bond)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete (yyvsp[0].bond);
+  (yyval.bond) = (yyvsp[-2].bond);
 }
     break;
 
-  case 92: /* bond_expr: bond_expr OR_TOKEN bond_expr  */
+  case 98: /* bond_expr: bond_expr OR_TOKEN bond_expr  */
                                {
   (yyvsp[-2].bond)->expandQuery((yyvsp[0].bond)->getQuery()->copy(),Queries::COMPOSITE_OR,true);
   delete (yyvsp[0].bond);
+  (yyval.bond) = (yyvsp[-2].bond);
 }
     break;
 
-  case 93: /* bond_expr: bond_expr SEMI_TOKEN bond_expr  */
+  case 99: /* bond_expr: bond_expr SEMI_TOKEN bond_expr  */
                                  {
   (yyvsp[-2].bond)->expandQuery((yyvsp[0].bond)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete (yyvsp[0].bond);
+  (yyval.bond) = (yyvsp[-2].bond);
 }
     break;
 
-  case 96: /* bond_query: bond_query bondd  */
+  case 102: /* bond_query: bond_query bondd  */
                    {
   (yyvsp[-1].bond)->expandQuery((yyvsp[0].bond)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete (yyvsp[0].bond);
+  (yyval.bond) = (yyvsp[-1].bond);
 }
     break;
 
-  case 98: /* bondd: MINUS_TOKEN  */
+  case 104: /* bondd: MINUS_TOKEN  */
               {
   QueryBond *newB= new QueryBond();
   newB->setBondType(Bond::SINGLE);
@@ -2277,7 +2396,7 @@ yyreduce:
 }
     break;
 
-  case 99: /* bondd: HASH_TOKEN  */
+  case 105: /* bondd: HASH_TOKEN  */
              {
   QueryBond *newB= new QueryBond();
   newB->setBondType(Bond::TRIPLE);
@@ -2286,7 +2405,7 @@ yyreduce:
 }
     break;
 
-  case 100: /* bondd: COLON_TOKEN  */
+  case 106: /* bondd: COLON_TOKEN  */
               {
   QueryBond *newB= new QueryBond();
   newB->setBondType(Bond::AROMATIC);
@@ -2295,7 +2414,7 @@ yyreduce:
 }
     break;
 
-  case 101: /* bondd: AT_TOKEN  */
+  case 107: /* bondd: AT_TOKEN  */
            {
   QueryBond *newB= new QueryBond();
   newB->setQuery(makeBondIsInRingQuery());
@@ -2303,62 +2422,62 @@ yyreduce:
 }
     break;
 
-  case 102: /* bondd: NOT_TOKEN bondd  */
+  case 108: /* bondd: NOT_TOKEN bondd  */
                   {
   (yyvsp[0].bond)->getQuery()->setNegation(!((yyvsp[0].bond)->getQuery()->getNegation()));
   (yyval.bond) = (yyvsp[0].bond);
 }
     break;
 
-  case 103: /* charge_spec: PLUS_TOKEN PLUS_TOKEN  */
+  case 109: /* charge_spec: PLUS_TOKEN PLUS_TOKEN  */
                                    { (yyval.ival)=2; }
     break;
 
-  case 104: /* charge_spec: PLUS_TOKEN number  */
+  case 110: /* charge_spec: PLUS_TOKEN number  */
                     { (yyval.ival)=(yyvsp[0].ival); }
     break;
 
-  case 105: /* charge_spec: PLUS_TOKEN  */
+  case 111: /* charge_spec: PLUS_TOKEN  */
              { (yyval.ival)=1; }
     break;
 
-  case 106: /* charge_spec: MINUS_TOKEN MINUS_TOKEN  */
+  case 112: /* charge_spec: MINUS_TOKEN MINUS_TOKEN  */
                           { (yyval.ival)=-2; }
     break;
 
-  case 107: /* charge_spec: MINUS_TOKEN number  */
+  case 113: /* charge_spec: MINUS_TOKEN number  */
                      { (yyval.ival)=-(yyvsp[0].ival); }
     break;
 
-  case 108: /* charge_spec: MINUS_TOKEN  */
+  case 114: /* charge_spec: MINUS_TOKEN  */
               { (yyval.ival)=-1; }
     break;
 
-  case 110: /* ring_number: PERCENT_TOKEN NONZERO_DIGIT_TOKEN digit  */
+  case 116: /* ring_number: PERCENT_TOKEN NONZERO_DIGIT_TOKEN digit  */
                                           { (yyval.ival) = (yyvsp[-1].ival)*10+(yyvsp[0].ival); }
     break;
 
-  case 111: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit GROUP_CLOSE_TOKEN  */
+  case 117: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit GROUP_CLOSE_TOKEN  */
                                                          { (yyval.ival) = (yyvsp[-1].ival); }
     break;
 
-  case 112: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit GROUP_CLOSE_TOKEN  */
+  case 118: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit GROUP_CLOSE_TOKEN  */
                                                                { (yyval.ival) = (yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
     break;
 
-  case 113: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit GROUP_CLOSE_TOKEN  */
+  case 119: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit GROUP_CLOSE_TOKEN  */
                                                                      { (yyval.ival) = (yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
     break;
 
-  case 114: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit digit GROUP_CLOSE_TOKEN  */
+  case 120: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit digit GROUP_CLOSE_TOKEN  */
                                                                            { (yyval.ival) = (yyvsp[-4].ival)*1000+(yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
     break;
 
-  case 115: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit digit digit GROUP_CLOSE_TOKEN  */
+  case 121: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit digit digit GROUP_CLOSE_TOKEN  */
                                                                                  { (yyval.ival) = (yyvsp[-5].ival)*10000+(yyvsp[-4].ival)*1000+(yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
     break;
 
-  case 119: /* nonzero_number: nonzero_number digit  */
+  case 125: /* nonzero_number: nonzero_number digit  */
                        {
     if((yyvsp[-1].ival) >= std::numeric_limits<std::int32_t>::max()/10 ||
      (yyvsp[-1].ival)*10 >= std::numeric_limits<std::int32_t>::max()-(yyvsp[0].ival) ){
@@ -2368,7 +2487,7 @@ yyreduce:
   (yyval.ival) = (yyvsp[-1].ival)*10 + (yyvsp[0].ival); }
     break;
 
-  case 122: /* branch_open_token: GROUP_OPEN_TOKEN  */
+  case 128: /* branch_open_token: GROUP_OPEN_TOKEN  */
                                     { (yyval.ival) = current_token_position; }
     break;
 

@@ -1,0 +1,37 @@
+--- a/rdkit/Chem/rdchem.pyi
++++ b/rdkit/Chem/rdchem.pyi
+@@ -346,3 +346,3 @@
+     @typing.overload
+-    def GetProp(self, key: str, autoConvert: bool = False, default: typing.Any) -> typing.Any:
++    def GetProp(self, key: str, autoConvert: bool = False, default: typing.Any = ...) -> typing.Any:
+         """
+@@ -1307,3 +1307,3 @@
+     @typing.overload
+-    def GetProp(self, key: str, autoConvert: bool = False, default: typing.Any) -> typing.Any:
++    def GetProp(self, key: str, autoConvert: bool = False, default: typing.Any = ...) -> typing.Any:
+         """
+@@ -1844,3 +1844,3 @@
+     @typing.overload
+-    def GetProp(self, key: str, autoConvert: bool = False, default: typing.Any) -> typing.Any:
++    def GetProp(self, key: str, autoConvert: bool = False, default: typing.Any = ...) -> typing.Any:
+         """
+@@ -2301,3 +2301,3 @@
+         """
+-    def GetAtoms(self):
++    def GetAtoms(self) -> typing.Iterable[Atom]:
+         """
+@@ -2343,3 +2343,3 @@
+         """
+-    def GetBonds(self):
++    def GetBonds(self) -> typing.Iterable[Bond]:
+         """
+@@ -2521,3 +2521,3 @@
+     @typing.overload
+-    def GetProp(self, key: str, autoConvert: bool = False, default: typing.Any) -> typing.Any:
++    def GetProp(self, key: str, autoConvert: bool = False, default: typing.Any = ...) -> typing.Any:
+         """
+@@ -4644,3 +4644,3 @@
+     @typing.overload
+-    def GetProp(self, key: str, autoConvert: bool = False, default: typing.Any) -> typing.Any:
++    def GetProp(self, key: str, autoConvert: bool = False, default: typing.Any = ...) -> typing.Any:
+         """

@@ -1,5 +1,3 @@
-# $Id$
-#
 #  Copyright (c) 2007, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
 #
@@ -30,6 +28,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum, July 2007
+import warnings
+
+warnings.warn("the Projects.DbCLI.CreateDb module is deprecated", DeprecationWarning, stacklevel=2)
+
 _version = "0.13.0"
 
 _description = """

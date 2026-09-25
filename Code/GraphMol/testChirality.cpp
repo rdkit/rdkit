@@ -25,8 +25,6 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 
-#include <iostream>
-
 using namespace RDKit;
 using namespace std;
 

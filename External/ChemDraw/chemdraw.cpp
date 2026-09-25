@@ -31,7 +31,6 @@
 //
 
 #include <string>
-#include <iostream>
 #include <fstream>
 #include <sstream>
 
@@ -54,7 +53,6 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
-#include <GraphMol/Atropisomers.h>
 #include <boost/algorithm/string.hpp>
 #include <filesystem>
 
@@ -87,11 +85,11 @@ void visit_children(
   molzip_params.enforceValenceRules = false;
 
   for (auto frag : node.ContainedObjects()) {
-    CDXDatumID id = (CDXDatumID)frag.second->GetTag();
+    auto id = (CDXDatumID)frag.second->GetTag();
     if (id == kCDXObj_Fragment) {
       std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
       if (!parseFragment(*mol, (CDXFragment &)(*frag.second), pagedata,
-                          missing_frag_id)) {
+                         missing_frag_id, params)) {
         continue;
       }
       unsigned int frag_id = mol->getProp<int>(CDX_FRAG_ID);
@@ -103,6 +101,10 @@ void visit_children(
       }
 
       if (mol->hasProp(NEEDS_FUSE)) {
+        CDXMLSanitizationHint sanitizationHint;
+        const auto hasSanitizationHint =
+            mol->getPropIfPresent<CDXMLSanitizationHint>(
+                CDXML_SANITIZATION_HINTS, sanitizationHint);
         mol->clearProp(NEEDS_FUSE);
         std::unique_ptr<ROMol> fused;
         try {
@@ -114,6 +116,10 @@ void visit_children(
           // perhaps have an option to extract all fragments?
           // mols.push_back(std::move(mol));
           continue;
+        }
+        if (hasSanitizationHint) {
+          fused->setProp<CDXMLSanitizationHint>(CDXML_SANITIZATION_HINTS,
+                                                sanitizationHint);
         }
         fused->setProp<int>(CDX_FRAG_ID, static_cast<int>(frag_id));
         pagedata.mols.emplace_back(dynamic_cast<RWMol *>(fused.release()));
@@ -131,8 +137,7 @@ void visit_children(
 
         if (atm->hasProp(CDX_ATOM_POS)) {
           hasConf = true;
-          const std::vector<double> coord =
-              atm->getProp<std::vector<double>>(CDX_ATOM_POS);
+          const auto coord = atm->getProp<std::vector<double>>(CDX_ATOM_POS);
 
           p.x = coord[0];
           p.y = -1 * coord[1];  // CDXML uses an inverted coordinate
@@ -162,10 +167,6 @@ void visit_children(
         } else {
           MolOps::assignChiralTypesFromBondDirs(*res, confidx, true);
         }
-        Atropisomers::detectAtropisomerChirality(*res,
-                                                 &res->getConformer(confidx));
-      } else {  // no Conformer
-        Atropisomers::detectAtropisomerChirality(*res, nullptr);
       }
 
       // now that atom stereochem has been perceived, the wedging
@@ -185,7 +186,14 @@ void visit_children(
             // rings in bond stereo detection, and another in
             // sanitization's SSSR symmetrization).
             unsigned int failedOp = 0;
-            MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
+            unsigned int sanitizeOps = MolOps::SANITIZE_CLEANUP;
+            CDXMLSanitizationHint sanitizationHint;
+            if (res->getPropIfPresent<CDXMLSanitizationHint>(
+                    CDXML_SANITIZATION_HINTS, sanitizationHint) &&
+                sanitizationHint == CDXMLSanitizationHint::radical) {
+              sanitizeOps |= MolOps::SANITIZE_FINDRADICALS;
+            }
+            MolOps::sanitizeMol(*res, failedOp, sanitizeOps);
             MolOps::detectBondStereochemistry(*res);
             MolOps::removeHs(*res);
           } else {
@@ -204,11 +212,13 @@ void visit_children(
         // Sometimes ChemDraw just marks with R and S, so let's assign
         //  these as long as they were not already determined
         checkChemDrawTetrahedralGeometries(*res);
+        checkChemDrawDoubleBondGeometries(*res);
       } else {
         MolOps::detectBondStereochemistry(*res);
+        checkChemDrawDoubleBondGeometries(*res);
       }
     } else if (id == kCDXObj_ReactionScheme) {  // get the reaction info
-      CDXReactionScheme &scheme = (CDXReactionScheme &)(*frag.second);
+      auto &scheme = (CDXReactionScheme &)(*frag.second);
       pagedata.schemes.emplace_back(scheme);
       /*
       int scheme_id = scheme.GetObjectID();   //frag.second.template
@@ -226,52 +236,53 @@ void visit_children(
       }
       */
     } else if (id == kCDXObj_Group) {
-      CDXGroup &group = (CDXGroup &)(*frag.second);
+      auto &group = (CDXGroup &)(*frag.second);
       group_id = frag.second->GetObjectID();
       visit_children(group, pagedata, missing_frag_id, bondLength, params,
                      group_id);
     } else if (id == kCDXObj_BracketedGroup) {
-      CDXBracketedGroup &bracketgroup = (CDXBracketedGroup &)(*frag.second);
+      auto &bracketgroup = (CDXBracketedGroup &)(*frag.second);
       parseBracket(bracketgroup, pagedata);
     }
   }
 }
 
 CDXFormat sniff_format(std::istream &is) {
-    // Remember the current read position
-    std::streampos start_pos = is.tellg();
-    if (start_pos == -1) {
-        // Some streams (like std::cin) may not support tellg
-      return CDXFormat::AUTO; // here it simply means we failed
-    }
+  // Remember the current read position
+  std::streampos start_pos = is.tellg();
+  if (start_pos == -1) {
+    // Some streams (like std::cin) may not support tellg
+    return CDXFormat::AUTO;  // here it simply means we failed
+  }
 
-    // CDX header consists of:
-    // 8 bytes with the value "VjCD0100" (hex: 56 6A 43 44 30 31 30 30).
-    CDXFormat format = CDXFormat::CDXML;
-    const std::vector<char> header{86, 106, 67, 68, 48, 49, 48, 48};
-    std::vector<char> buf(8);
-    is.read(buf.data(), 8);
-    if (buf == header) {
-      format = CDXFormat::CDX;
-    }
-    
-    // Reset the stream position
-    is.clear(); // clear EOF flag if we hit it
-    is.seekg(start_pos);
-    return format;
+  // CDX header consists of:
+  // 8 bytes with the value "VjCD0100" (hex: 56 6A 43 44 30 31 30 30).
+  CDXFormat format = CDXFormat::CDXML;
+  const std::vector<char> header{86, 106, 67, 68, 48, 49, 48, 48};
+  std::vector<char> buf(8);
+  is.read(buf.data(), 8);
+  if (buf == header) {
+    format = CDXFormat::CDX;
+  }
+
+  // Reset the stream position
+  is.clear();  // clear EOF flag if we hit it
+  is.seekg(start_pos);
+  return format;
 }
-  
+
 std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream,
                                                  CDXFormat format) {
-  if(format == CDXFormat::AUTO) {
+  if (format == CDXFormat::AUTO) {
     format = sniff_format(inStream);
-    if(format == CDXFormat::AUTO) {
-      const std::string msg = " Failed deducing whether the input stream is CDXML or CDX";
+    if (format == CDXFormat::AUTO) {
+      const std::string msg =
+          " Failed deducing whether the input stream is CDXML or CDX";
       BOOST_LOG(rdErrorLog) << msg << std::endl;
       throw FileParseException(msg);
     }
   }
-  
+
   if (format == CDXFormat::CDXML) {
     CDXMLParser parser;
     // populate tree structure pt
@@ -292,16 +303,24 @@ std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream,
   } else {
     CDXistream input(inStream);
     const bool doThrow = true;
-    std::unique_ptr<CDXDocument> doc(CDXReadDocFromStorage(input, doThrow));
-    return doc;
+    // if we aren't opened in binary mode on windows, we are going to have a bad
+    // time...
+    try {
+      std::unique_ptr<CDXDocument> doc(CDXReadDocFromStorage(input, doThrow));
+      return doc;
+    } catch (const std::exception &ex) {
+      throw FileParseException(
+          std::string(ex.what()) +
+          "\nPlease ensure for CDX data streams, the stream is in binary mode.");
+    }
   }
 }
- 
+
 // may raise FileParseException
 std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
     std::istream &inStream, const ChemDrawParserParams &params) {
   std::unique_ptr<CDXDocument> document =
-    streamToCDXDocument(inStream, params.format);
+      streamToCDXDocument(inStream, params.format);
   if (!document) {
     // error
     return std::vector<std::unique_ptr<RWMol>>();
@@ -311,7 +330,7 @@ std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
 
   int missing_frag_id = -1;
   for (auto node : document->ContainedObjects()) {
-    CDXDatumID id = (CDXDatumID)node.second->GetTag();
+    auto id = (CDXDatumID)node.second->GetTag();
     switch (id) {
       case kCDXObj_Page:
         visit_children(*node.second, pagedata, missing_frag_id, bondLength,
@@ -341,9 +360,9 @@ std::unique_ptr<CDXDocument> ChemDrawToDocument(const std::string &filename) {
   std::fstream chemdrawfile(filename);
   std::string ext = std::filesystem::path(filename).extension().string();
   boost::algorithm::to_lower(ext);
-  if (ext == ".cdxml")
+  if (ext == ".cdxml") {
     return streamToCDXDocument(chemdrawfile, CDXFormat::CDXML);
-  else if (ext == ".cdx") {
+  } else if (ext == ".cdx") {
     return streamToCDXDocument(chemdrawfile, CDXFormat::CDX);
   }
   std::string msg =
@@ -351,19 +370,12 @@ std::unique_ptr<CDXDocument> ChemDrawToDocument(const std::string &filename) {
       (std::string)std::filesystem::path(filename).extension().string();
   throw FileParseException(msg.c_str());
 }
-}
+}  // namespace ChemDraw
 
 namespace v2 {
 std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawDataStream(
     std::istream &inStream, const ChemDrawParserParams &params) {
-  auto chemdrawmols = molsFromCDXMLDataStream(inStream, params);
-  std::vector<std::unique_ptr<RWMol>> mols;
-  mols.reserve(chemdrawmols.size());
-  for (auto &mol : chemdrawmols) {
-    RWMol *m = (RWMol *)mol.release();
-    mols.push_back(std::unique_ptr<RWMol>(m));
-  }
-  return mols;
+  return molsFromCDXMLDataStream(inStream, params);
 }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawBlock(
@@ -375,22 +387,22 @@ std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawBlock(
 
 std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawFile(
     const std::string &filename, const ChemDrawParserParams &params) {
-  CDXMLParser parser;
-  std::vector<std::unique_ptr<RWMol>> mols;
+  ChemDrawParserParams realparams{params};
 
-  std::fstream chemdrawfile(filename);  // FIX ME CHECK CDX versus CDXML
+  // Always open in Binary mode
+  std::fstream chemdrawfile(filename, std::ios::in | std::ios::binary);
+
   if (!chemdrawfile) {
     throw BadFileException(filename + " does not exist");
-    return mols;
   }
-  auto chemdrawmols = molsFromCDXMLDataStream(chemdrawfile, params);
 
-  mols.reserve(chemdrawmols.size());
-  for (auto &mol : chemdrawmols) {
-    RWMol *m = (RWMol *)mol.release();
-    mols.push_back(std::unique_ptr<RWMol>(m));
+  // need to reopen in binary mode
+  if (params.format == CDXFormat::AUTO &&
+      sniff_format(chemdrawfile) == CDXFormat::CDX) {
+    realparams.format = CDXFormat::CDX;
   }
-  return mols;
+
+  return molsFromCDXMLDataStream(chemdrawfile, realparams);
 }
-}
+}  // namespace v2
 }  // namespace RDKit

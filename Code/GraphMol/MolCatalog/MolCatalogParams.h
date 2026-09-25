@@ -7,7 +7,6 @@
 
 #include <Catalogs/CatalogParams.h>
 #include <string>
-#include <iostream>
 
 namespace RDKit {
 

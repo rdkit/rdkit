@@ -12,6 +12,7 @@ from collections import \
 
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
 from rdkit import Chem
+from rdkit import rdBase
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
 from rdkit.Chem import rdPartialCharges
@@ -280,7 +281,10 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
     """
 
   def __init__(self, name, version):
-    rdMolDescriptors.PythonPropertyFunctor.__init__(self, self, name, version)
+    if hasattr(rdBase, '_wrapperType') and rdBase._wrapperType == 'nanobind':
+      rdMolDescriptors.PythonPropertyFunctor.__init__(self, name, version)
+    else:
+      rdMolDescriptors.PythonPropertyFunctor.__init__(self, self, name, version)
 
   def __call__(self, mol):
     raise NotImplementedError("Please implement the __call__ method")

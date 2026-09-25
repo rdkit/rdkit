@@ -25,7 +25,6 @@
 #include <sstream>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/FileParseException.h>
-#include <GraphMol/Atropisomers.h>
 
 using boost::property_tree::ptree;
 namespace RDKit {
@@ -623,11 +622,6 @@ void visit_children(
         scaleBonds(*res, *conf, RDKIT_DEPICT_BONDLENGTH, bondLength);
         auto confidx = res->addConformer(conf.release());
         DetectAtomStereoChemistry(*res, &res->getConformer(confidx));
-
-        Atropisomers::detectAtropisomerChirality(*res,
-                                                 &res->getConformer(confidx));
-      } else {  // no Conformer
-        Atropisomers::detectAtropisomerChirality(*res, nullptr);
       }
 
       // now that atom stereochem has been perceived, the wedging
@@ -834,12 +828,21 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
 }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
-
-						  const std::string &cdxml, const CDXMLParserParams &params) {
+    const std::string &cdxml, const CDXMLParserParams &params) {
  
   std::stringstream iss(cdxml);
   return MolsFromCDXMLDataStream(iss, params);
 }
+
+RDKIT_FILEPARSERS_EXPORT std::string MolToCDXMLBlock(
+    const RWMol &,
+    CDXMLFormat ) {
+  std::ostringstream errout;
+  errout << "RDKit build withoutChemDraw writing support. ";
+  throw FileParseException(errout.str());
+  return "";
+}
+  
 }  // namespace CDXMLParser
 }  // namespace v2
 }  // namespace RDKit
@@ -903,6 +906,19 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
     const std::string &cdxml, const CDXMLParserParams &params) {
   std::stringstream iss(cdxml);
   return MolsFromCDXMLDataStream(iss, params);
+}
+
+std::string MolToCDXMLBlock(
+    const RWMol &mol,
+    CDXMLFormat format) {
+  
+    CDXFormat cdx_format = CDXFormat::CDXML;
+
+    if (format == CDXMLFormat::CDX) {
+      cdx_format = CDXFormat::CDX;
+    }
+
+    return MolToChemDrawBlock(mol, cdx_format);
 }
 }
 }

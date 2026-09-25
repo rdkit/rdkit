@@ -55,16 +55,16 @@ _canonArrowhead = None
 
 def _buildCanonArrowhead(headFrac, nSteps, aspect):
   global _canonArrowhead
-  startP = RDGeometry.Point3D(0, 0, headFrac)
+  startP = Geometry.Point3D(0, 0, headFrac)
   _canonArrowhead = [startP]
 
   scale = headFrac * aspect
-  baseV = RDGeometry.Point3D(scale, 0, 0)
+  baseV = Geometry.Point3D(scale, 0, 0)
   _canonArrowhead.append(baseV)
 
   twopi = 2 * math.pi
   for i in range(1, nSteps):
-    v = RDGeometry.Point3D(scale * math.cos(i * twopi), scale * math.sin(i * twopi), 0)
+    v = Geometry.Point3D(scale * math.cos(i * twopi), scale * math.sin(i * twopi), 0)
     _canonArrowhead.append(v)
 
 
@@ -264,6 +264,9 @@ parser.add_option('--writeFeats', '--write', default=False, action='store_true',
                   help='print the feature information to the console')
 parser.add_option('--featMapFile', '--mapFile', default='',
                   help='save a feature map definition to the specified file')
+parser.add_option('--removeHs', default=True, action='store_false',
+                  help='remove hydrogens from the molecules')
+
 parser.add_option('--verbose', default=False, action='store_true', help='be verbose')
 
 if __name__ == '__main__':
@@ -329,13 +332,13 @@ if __name__ == '__main__':
 
     if molN != '-':
       try:
-        ms = Chem.SDMolSupplier(molN)
+        ms = Chem.SDMolSupplier(molN, removeHs=options.removeHs)
       except Exception:
         logger.error(f'Problems reading input file: {molN}')
         ms = []
     else:
       ms = Chem.SDMolSupplier()
-      ms.SetData(sys.stdin.read())
+      ms.SetData(sys.stdin.read(), removeHs=options.removeHs)
 
     for m in ms:
       nm = f'Mol_{i}'

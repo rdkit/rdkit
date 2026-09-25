@@ -10,19 +10,27 @@
 
 #include <RDGeneral/test.h>
 #include <RDGeneral/utils.h>
+
 #include <Geometry/point.h>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include <ForceField/MMFF/Params.h>
-#include <ForceField/MMFF/TorsionAngle.h>
-#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleContribs.h>
-#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/ForceFieldHelpers/FFConvenience.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/PlanarityContribs.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleContribs.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
+
+#include <ForceField/MMFF/Params.h>
+#include <ForceField/MMFF/TorsionAngle.h>
+#include <ForceField/FiniteDifference.h>
 #include <ForceField/ForceField.h>
-#include <iostream>
+
 #include <string>
 #include <cmath>
+#include <iostream>
 
 using namespace RDGeom;
 using namespace RDKit;
@@ -128,19 +136,25 @@ void testTorsionPrefs() {
   TEST_ASSERT(details.expTorsionAngles.size() == 1);
   TEST_ASSERT(details.expTorsionAtoms[0][0] == 0);
   TEST_ASSERT(details.expTorsionAtoms[0][3] == 3);
-  TEST_ASSERT(details.expTorsionAngles[0].first.size() == 6);
-  TEST_ASSERT(details.expTorsionAngles[0].second.size() == 6);
+  TEST_ASSERT(
+      std::get<ForceFields::CrystalFF::CosineExp_T>(details.expTorsionAngles[0])
+          .first.size() == 6);
+  TEST_ASSERT(
+      std::get<ForceFields::CrystalFF::CosineExp_T>(details.expTorsionAngles[0])
+          .second.size() == 6);
 
   std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
-                         const ForceFields::CrystalFF::ExpTorsionAngle *>>
+                         ForceFields::CrystalFF::TorsionAnglePtrVariant>>
       torsionBonds;
   ForceFields::CrystalFF::getExperimentalTorsions(
       *mol, details, torsionBonds, true, false, false, false, 2, false);
   TEST_ASSERT(torsionBonds.size() == 1);
   TEST_ASSERT(std::get<0>(torsionBonds[0]) == 1);
-  TEST_ASSERT(std::get<2>(torsionBonds[0])->smarts ==
-              "[!#1:1][CX4H2:2]!@;-[CX4H2:3][!#1:4]");
-  TEST_ASSERT(std::get<2>(torsionBonds[0])->torsionIdx == 229);
+  const auto *angle0 =
+      std::get<const ForceFields::CrystalFF::ExpTorsionAngle *>(
+          std::get<2>(torsionBonds[0]));
+  TEST_ASSERT(angle0->smarts == "[!#1:1][CX4H2:2]!@;-[CX4H2:3][!#1:4]");
+  TEST_ASSERT(angle0->torsionIdx == 229);
 
   delete mol;
   mol = SmilesToMol("CCCCC");
@@ -212,6 +226,40 @@ void testTorsionPrefsMacrocycles() {
   delete mol;
 }
 
+void testPlanarityContribs() {
+  std::cerr << "--------------------------------------------" << std::endl;
+  std::cerr << "Finite difference Test of Planarity Contribs" << std::endl;
+  std::string mb = R"MOL(  // Starting from a DG benzene Conformer
+     RDKit          3D
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+   -0.0386    0.0113    0.1053 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1602   -0.1902   -0.0318 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7173   -0.8338   -0.0364 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4043    1.0127   -0.0371 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  1  3  1  0
+  1  4  1  0
+M  END
+)MOL";
+  auto ps = v2::FileParsers::MolFileParserParams{.removeHs = false};
+  auto mol = v2::FileParsers::MolFromMolBlock(mb, ps);
+
+  TEST_ASSERT(mol);
+  auto ff = ForceFieldsHelper::createEmptyForceFieldForMol(*mol);
+  ff->initialize();
+  TEST_ASSERT(ff);
+
+  auto c =
+      std::make_unique<ForceFields::CrystalFF::PlanarityContribs>(ff.get());
+  c->addContrib(1, 0, 2, 3, 1.0);
+  ff->contribs().push_back(std::move(c));
+
+  TEST_ASSERT(ff->calcEnergy() > 1.0);
+  const double delta = ForceFields::calcFiniteDifference(*ff);
+  TEST_ASSERT(delta < 1e-6);
+}
+
 int main() {
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
@@ -233,6 +281,10 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Seeing if macrocycle ring torsions are applied\n";
   testTorsionPrefsMacrocycles();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t Finite difference test of PlanarityContribs\n";
+  testPlanarityContribs();
 
   return 0;
 }

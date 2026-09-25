@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/Chirality.h>
+#include <RDGeneral/types.h>
 
 #include "Sp2Bond.h"
 #include "../Sort.h"
@@ -24,8 +25,32 @@ Sp2Bond::Sp2Bond(const CIPMol &mol, Bond *bond, Atom *startAtom, Atom *endAtom,
   CHECK_INVARIANT(d_cfg == Bond::STEREOTRANS || d_cfg == Bond::STEREOCIS,
                   "bad config")
 
+  if (bond->getBondType() != Bond::DOUBLE) {
+    return;
+  }
   auto stereo_atoms = Chirality::findStereoAtoms(bond);
   CHECK_INVARIANT(stereo_atoms.size() == 2, "incorrect number of stereo atoms")
+
+  const auto isValidCarrier = [&mol](Atom *focus, Atom *otherFocus,
+                                     int carrierIdx) {
+    if (carrierIdx < 0 ||
+        static_cast<unsigned int>(carrierIdx) >= mol.getNumAtoms() ||
+        carrierIdx == static_cast<int>(focus->getIdx()) ||
+        carrierIdx == static_cast<int>(otherFocus->getIdx())) {
+      return false;
+    }
+    for (const auto neighbor : mol.getNeighbors(focus)) {
+      if (neighbor->getIdx() == static_cast<unsigned int>(carrierIdx)) {
+        return true;
+      }
+    }
+    return false;
+  };
+  if (stereo_atoms[0] == stereo_atoms[1] ||
+      !isValidCarrier(startAtom, endAtom, stereo_atoms[0]) ||
+      !isValidCarrier(endAtom, startAtom, stereo_atoms[1])) {
+    return;
+  }
 
   std::vector<Atom *> anchors{
       {mol.getAtom(stereo_atoms[0]), mol.getAtom(stereo_atoms[1])}};
@@ -43,6 +68,8 @@ void Sp2Bond::setPrimaryLabel(Descriptor desc) {
       dp_bond->setStereoAtoms(carriers[0]->getIdx(), carriers[1]->getIdx());
       dp_bond->setStereo(d_cfg);
       dp_bond->setProp(common_properties::_CIPCode, to_string(desc));
+      dp_bond->setProp(common_properties::_CIPNeighborOrder, d_ranked_anchors,
+                       true);
       return;
     }
     case Descriptor::R:
@@ -63,6 +90,10 @@ void Sp2Bond::setPrimaryLabel(Descriptor desc) {
   }
 }
 
+bool Sp2Bond::hasPrimaryLabel() const {
+  return dp_bond->hasProp(common_properties::_CIPCode);
+}
+
 Descriptor Sp2Bond::label(const Rules &comp) {
   auto &digraph = getDigraph();
   auto root1 = digraph.getOriginalRoot();
@@ -77,6 +108,10 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
   const auto &focus1 = getFoci()[0];
   const auto &focus2 = getFoci()[1];
 
+  const bool is_constitutional = comp.getNumSubRules() == 3;
+
+  d_ranked_anchors.clear();
+
   const auto &internal = findInternalEdge(root1->getEdges(), focus1, focus2);
   if (internal == nullptr) {
     return Descriptor::UNKNOWN;
@@ -88,6 +123,10 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
   removeInternalEdges(edges1, focus1, focus2);
   removeInternalEdges(edges2, focus1, focus2);
 
+  if (getCarriers().size() != 2 || edges1.empty() || edges2.empty()) {
+    return Descriptor::ns;
+  }
+
   auto carriers = std::vector<Atom *>(getCarriers());
   auto config = d_cfg;
 
@@ -97,11 +136,11 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
 
   digraph.changeRoot(root1);
   const auto &priority1 = comp.sort(root1, edges1);
-  if (!priority1.isUnique()) {
+  if (!priority1.isUnique() && !is_constitutional) {
     return Descriptor::UNKNOWN;
   }
   // swap
-  if (edges1.size() > 1 && carriers[0] == edges1[1]->getEnd()->getAtom()) {
+  if (edges1.size() > 1 && carriers[0] != edges1[0]->getEnd()->getAtom()) {
     if (config == Bond::STEREOCIS) {
       config = Bond::STEREOTRANS;
     } else {
@@ -110,15 +149,36 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
   }
   digraph.changeRoot(root2);
   const auto &priority2 = comp.sort(root2, edges2);
-  if (!priority2.isUnique()) {
+  if (!priority2.isUnique() || !priority1.isUnique()) {
     return Descriptor::UNKNOWN;
   }
   // swap
-  if (edges2.size() > 1 && carriers[1] == edges2[1]->getEnd()->getAtom()) {
+  if (edges2.size() > 1 && carriers[1] != edges2[0]->getEnd()->getAtom()) {
     if (config == Bond::STEREOCIS) {
       config = Bond::STEREOTRANS;
     } else {
       config = Bond::STEREOCIS;
+    }
+  }
+
+  {
+    // At this point, edges1 and edges2 are sorted by priority starting from
+    // this node. Record that now! - they may be resorted after processing
+    // other nodes.
+
+    // As weird as it seems, these may actually be implicit Hs: Rule 2
+    // in the paper on which this code is based states that,
+    // in CIP ranks, H > 1H, so implicit H actually has a higher
+    // priority than 1H (!!!). getAtomIdx() returns Atom::NOATOM
+    // if that is the case.
+    auto carrier1_idx = edges1[0]->getEnd()->getAtomIdx();
+    auto carrier2_idx = edges2[0]->getEnd()->getAtomIdx();
+
+    // Make sure the stereo atoms are in the right order
+    if (edges1[0]->getBeg()->getAtom() == focus1) {
+      d_ranked_anchors.assign({carrier1_idx, carrier2_idx});
+    } else if (edges2[0]->getBeg()->getAtom() == focus1) {
+      d_ranked_anchors.assign({carrier2_idx, carrier1_idx});
     }
   }
 
@@ -135,6 +195,7 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
       return Descriptor::E;
     }
   }
+
   return Descriptor::UNKNOWN;
 }
 

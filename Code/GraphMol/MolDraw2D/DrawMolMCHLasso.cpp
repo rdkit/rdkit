@@ -174,13 +174,6 @@ double getLassoWidth(const DrawMolMCH *dm, int atNum, int lassoNum) {
 }  // namespace
 
 namespace {
-Point2D arcEnd(const DrawShapeArc &arc, double ang) {
-  // angles are in degrees
-  ang *= M_PI / 180.0;
-  return Point2D{arc.points_[0].x + arc.points_[1].x * cos(ang),
-                 arc.points_[0].y + arc.points_[1].x * sin(ang)};
-};
-
 // given 2 points pt1, pt2, assumed to be either side of the line between
 // points at1 and at2, compute the angle of the line from at1 to pt1 and
 // the x-axis and likewise for pt2 and the mid-point of the line between
@@ -625,46 +618,6 @@ void DrawMolMCHLasso::extractAtomArcs(
   }
 }
 
-namespace {
-Point2D *adjustLineEnd(const DrawShapeArc &arc, DrawShapeSimpleLine &line) {
-  Point2D *adjEnd = nullptr;
-  Point2D *fixEnd = nullptr;
-  if ((arc.points_[0] - line.points_[0]).lengthSq() >
-      (arc.points_[0] - line.points_[1]).lengthSq()) {
-    adjEnd = &line.points_[1];
-    fixEnd = &line.points_[0];
-  } else {
-    adjEnd = &line.points_[0];
-    fixEnd = &line.points_[1];
-  }
-  if (fabs((arc.points_[0] - *adjEnd).lengthSq() -
-           arc.points_[1].x * arc.points_[1].x) < 1.0e-4) {
-    return nullptr;
-  }
-  adjustLineEndForEllipse(arc.points_[0], arc.points_[1].x, arc.points_[1].x,
-                          *fixEnd, *adjEnd);
-  return adjEnd;
-}
-
-// Calculate the angles of the 2 points  around the centre, measured from the
-// X axis, guaranteeing a consistent rotation around the z axis i.e. always
-// clockwise or always anti-clockwise.
-void calcAnglesFromXAxis(Point2D &centre, Point2D &end1, Point2D &end2,
-                         double &ang1, double &ang2) {
-  static const Point2D index{1.0, 0.0};
-  Point2D rad1, rad2;
-  rad1 = centre.directionVector(end1);
-  ang1 = 360.0 - rad1.signedAngleTo(index) * 180.0 / M_PI;
-  rad2 = centre.directionVector(end2);
-  ang2 = 360.0 - rad2.signedAngleTo(index) * 180.0 / M_PI;
-  // make sure they're going round in the same direction
-  auto crossZ = rad1.x * rad2.y - rad1.y * rad2.x;
-  if (crossZ > 0.0) {
-    std::swap(ang1, ang2);
-  }
-}
-}  // namespace
-
 // ****************************************************************************
 void DrawMolMCHLasso::orderAtomLines(
     std::vector<std::vector<LinePair>> &atomLines) const {
@@ -712,22 +665,5 @@ void DrawMolMCHLasso::orderAtomLines(
   }
 }
 
-namespace {
-std::pair<Point2D, Point2D> getArcEnds(const DrawShapeArc &arc) {
-  std::pair<Point2D, Point2D> retVal;
-  // for these purposes, it's always a circle, so just use the x
-  // radius
-  retVal.first.x =
-      arc.points_[0].x + arc.points_[1].x * cos(arc.ang1_ * M_PI / 180.0);
-  retVal.first.y =
-      arc.points_[0].y + arc.points_[1].x * sin(arc.ang1_ * M_PI / 180.0);
-  retVal.second.x =
-      arc.points_[0].x + arc.points_[1].x * cos(arc.ang2_ * M_PI / 180.0);
-  retVal.second.y =
-      arc.points_[0].y + arc.points_[1].x * sin(arc.ang2_ * M_PI / 180.0);
-  return retVal;
-}
-
-}  // namespace
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit

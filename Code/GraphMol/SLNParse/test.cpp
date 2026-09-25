@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -33,7 +32,6 @@
 //  Created by Greg Landrum September, 2006
 //
 #include <RDGeneral/test.h>
-#include <iostream>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SLNParse/SLNParse.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -1264,7 +1262,6 @@ void test10() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-
 void test12() {
   RDKit::RWMol *patt, *mol;
   std::vector<RDKit::MatchVectType> mV;
@@ -1424,8 +1421,8 @@ void test13() {
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 8);
   TEST_ASSERT(mol->getRingInfo()->numRings() == 2);
-  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size() == 6);
-  TEST_ASSERT(mol->getRingInfo()->atomRings()[1].size() == 4);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size() == 4);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[1].size() == 6);
 
   delete mol;
   sln = "C[1]H2(CH2(CH2(CH2(C[2]H(CH@1(CH2(CH2@2)))))))";
@@ -1433,8 +1430,8 @@ void test13() {
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 8);
   TEST_ASSERT(mol->getRingInfo()->numRings() == 2);
-  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size() == 6);
-  TEST_ASSERT(mol->getRingInfo()->atomRings()[1].size() == 4);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size() == 4);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[1].size() == 6);
 
   delete mol;
   sln = "C[1](CH2CH2CH(CH2CH2@1)CH2CH2@1)Cl";
@@ -1883,9 +1880,9 @@ int main(int argc, char *argv[]) {
   (void)argv;
   RDLog::InitLogs();
 
-// FIX: need a test for handling Hs in the SLN itself. This should be done for
-// both normal and query SLNs and must be done after the SLN parser handles
-// that case (errr, duh)
+  // FIX: need a test for handling Hs in the SLN itself. This should be done for
+  // both normal and query SLNs and must be done after the SLN parser handles
+  // that case (errr, duh)
   test1();
   test2();
   test3();

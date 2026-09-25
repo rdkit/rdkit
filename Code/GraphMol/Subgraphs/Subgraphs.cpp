@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,7 +14,6 @@
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Exceptions.h>
 
-#include <iostream>
 #include <cstring>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
@@ -127,7 +126,7 @@ void recurseWalkRange(
     unsigned int upperLen,  // the maximum subgraph len we are interested in
     boost::dynamic_bitset<> forbidden,  // bonds that have been covered already
     // we don't want reference passing for forbidden,
-    // it gets altered through the processand we want
+    // it gets altered through the process and we want
     // fresh start every time we buble back up to "FindAllSubGraphs"
     INT_PATH_LIST_MAP &res  // the final list of subgraphs
 ) {
@@ -176,21 +175,13 @@ void recurseWalkRange(
   }
 }
 
-void dumpVIV(VECT_INT_VECT v) {
-  VECT_INT_VECT::iterator i;
-  INT_VECT::iterator j;
-  for (i = v.begin(); i != v.end(); i++) {
-    for (j = i->begin(); j != i->end(); j++) {
-      std::cout << *j << " ";
-    }
-    std::cout << std::endl;
-  }
-}
-
 PATH_LIST
 extendPaths(int *adjMat, unsigned int dim, const PATH_LIST &paths,
-            int allowRingClosures = -1, double *distMat = nullptr) {
+            int allowRingClosures, double *distMat,
+            boost::dynamic_bitset<> *ignoreAtoms) {
   PRECONDITION(adjMat, "no matrix");
+  PRECONDITION(!ignoreAtoms || ignoreAtoms->size() == dim,
+               "bad ignoreAtoms size");
   //
   //  extend each of the currently active paths by adding
   //   a single adjacent index to the end of each
@@ -201,6 +192,9 @@ extendPaths(int *adjMat, unsigned int dim, const PATH_LIST &paths,
     unsigned int endIdx = (*path)[path->size() - 1];
     unsigned int iTab = endIdx * dim;
     for (unsigned int otherIdx = 0; otherIdx < dim; otherIdx++) {
+      if (ignoreAtoms && ignoreAtoms->test(otherIdx)) {
+        continue;
+      }
       if (adjMat[iTab + otherIdx] == 1) {
         if (distMat &&
             distMat[path->front() * dim + otherIdx] - path->size() < -0.001) {
@@ -244,9 +238,12 @@ extendPaths(int *adjMat, unsigned int dim, const PATH_LIST &paths,
 
 INT_PATH_LIST_MAP
 pathFinderHelper(int *adjMat, unsigned int dim, unsigned int minLen,
-                 unsigned int maxLen, int rootedAtAtom, double *distMat) {
+                 unsigned int maxLen, int rootedAtAtom, double *distMat,
+                 boost::dynamic_bitset<> *ignoreAtoms) {
   PRECONDITION(adjMat, "no matrix");
   PRECONDITION(minLen <= maxLen, "bad lengths provided");
+  PRECONDITION(!ignoreAtoms || ignoreAtoms->size() == dim,
+               "bad ignoreAtoms size");
   // finds all paths of length N using an adjacency matrix,
   //  which is constructed elsewhere
   INT_PATH_LIST_MAP res;
@@ -256,11 +253,15 @@ pathFinderHelper(int *adjMat, unsigned int dim, unsigned int minLen,
   if (rootedAtAtom < 0) {
     // start a path at each possible index
     for (unsigned int i = 0; i < dim; i++) {
+      if (ignoreAtoms && ignoreAtoms->test(i)) {
+        continue;
+      }
       PATH_TYPE tPath;
       tPath.push_back(i);
       paths.push_back(tPath);
     }
-  } else if (rootedAtAtom < static_cast<int>(dim)) {
+  } else if (rootedAtAtom < static_cast<int>(dim) &&
+             (!ignoreAtoms || !ignoreAtoms->test(rootedAtAtom))) {
     // only start a path at the atom of interest:
     PATH_TYPE tPath;
     tPath.push_back(rootedAtAtom);
@@ -275,7 +276,7 @@ pathFinderHelper(int *adjMat, unsigned int dim, unsigned int minLen,
     if (length >= minLen) {
       res[length] = paths;
     }
-    paths = extendPaths(adjMat, dim, paths, maxLen, distMat);
+    paths = extendPaths(adjMat, dim, paths, maxLen, distMat, ignoreAtoms);
   }
   res[maxLen] = paths;
 
@@ -284,7 +285,8 @@ pathFinderHelper(int *adjMat, unsigned int dim, unsigned int minLen,
 }  // namespace Subgraphs
 
 PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
-                                    bool useHs, int rootedAtAtom) {
+                                    bool useHs, int rootedAtAtom,
+                                    boost::dynamic_bitset<> *ignoreAtoms) {
   /*********************************************
     FIX: Lots of issues here:
     - pathListType is defined as a container of "pathType", should it be a
@@ -298,7 +300,18 @@ PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
     it return a "list of paths" instead of a "list of list of paths" (see
     "GetPathsUpTolength" in "molgraphs.cpp")
   ****************************************************************************/
+  PRECONDITION(!ignoreAtoms || ignoreAtoms->size() == mol.getNumAtoms(),
+               "bad ignoreAtoms size");
   boost::dynamic_bitset<> forbidden(mol.getNumBonds());
+  // if there are any ignore atoms, mark any bonds involving them as forbidden
+  if (ignoreAtoms) {
+    for (const auto bond : mol.bonds()) {
+      if (ignoreAtoms->test(bond->getBeginAtomIdx()) ||
+          ignoreAtoms->test(bond->getEndAtomIdx())) {
+        forbidden[bond->getIdx()] = 1;
+      }
+    }
+  }
 
   // this should be the only dependence on mol object:
   INT_INT_VECT_MAP nbrs;
@@ -309,22 +322,21 @@ PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
 
   // start paths at each bond:
   for (auto nbi = nbrs.begin(); nbi != nbrs.end(); ++nbi) {
-    // don't come back to this bond in the later subgraphs
     int i = (*nbi).first;
+    if (forbidden[i]) {
+      continue;
+    }
+    auto bi = mol.getBondWithIdx(i);
 
     // if we're only returning paths rooted at a particular atom, check now
     // that this bond involves that atom:
     if (rootedAtAtom >= 0 &&
-        mol.getBondWithIdx(i)->getBeginAtomIdx() !=
-            static_cast<unsigned int>(rootedAtAtom) &&
-        mol.getBondWithIdx(i)->getEndAtomIdx() !=
-            static_cast<unsigned int>(rootedAtAtom)) {
+        bi->getBeginAtomIdx() != static_cast<unsigned int>(rootedAtAtom) &&
+        bi->getEndAtomIdx() != static_cast<unsigned int>(rootedAtAtom)) {
       continue;
     }
 
-    if (forbidden[i]) {
-      continue;
-    }
+    // don't come back to this bond in the later subgraphs
     forbidden[i] = 1;
 
     // start the recursive path building with the current bond
@@ -345,12 +357,22 @@ PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
   return res;
 }
 
-INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol,
-                                                unsigned int lowerLen,
-                                                unsigned int upperLen,
-                                                bool useHs, int rootedAtAtom) {
+INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(
+    const ROMol &mol, unsigned int lowerLen, unsigned int upperLen, bool useHs,
+    int rootedAtAtom, boost::dynamic_bitset<> *ignoreAtoms) {
   PRECONDITION(lowerLen <= upperLen, "");
+  PRECONDITION(!ignoreAtoms || ignoreAtoms->size() == mol.getNumAtoms(),
+               "bad ignoreAtoms size");
   boost::dynamic_bitset<> forbidden(mol.getNumBonds());
+  // if there are any ignore atoms, mark any bonds involving them as forbidden
+  if (ignoreAtoms) {
+    for (const auto bond : mol.bonds()) {
+      if (ignoreAtoms->test(bond->getBeginAtomIdx()) ||
+          ignoreAtoms->test(bond->getEndAtomIdx())) {
+        forbidden[bond->getIdx()] = 1;
+      }
+    }
+  }
 
   INT_INT_VECT_MAP nbrs;
   Subgraphs::getNbrsList(mol, useHs, nbrs);
@@ -365,6 +387,9 @@ INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol,
   // start paths at each bond:
   for (auto nbi = nbrs.begin(); nbi != nbrs.end(); nbi++) {
     int i = (*nbi).first;
+    if (forbidden[i]) {
+      continue;
+    }
 
     // if we're only returning paths rooted at a particular atom, check now
     // that this bond involves that atom:
@@ -377,9 +402,6 @@ INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol,
     }
 
     // don't come back to this bond in the later subgraphs
-    if (forbidden[i]) {
-      continue;
-    }
     forbidden[i] = 1;
 
     // start the recursive path building with the current bond
@@ -402,11 +424,11 @@ INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol,
 }
 
 PATH_LIST findUniqueSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
-                                       bool useHs, bool useBO,
-                                       int rootedAtAtom) {
+                                       bool useHs, bool useBO, int rootedAtAtom,
+                                       boost::dynamic_bitset<> *ignoreAtoms) {
   // start by finding all subgraphs, then uniquify
-  PATH_LIST allSubgraphs =
-      findAllSubgraphsOfLengthN(mol, targetLen, useHs, rootedAtAtom);
+  PATH_LIST allSubgraphs = findAllSubgraphsOfLengthN(mol, targetLen, useHs,
+                                                     rootedAtAtom, ignoreAtoms);
   PATH_LIST res = Subgraphs::uniquifyPaths(mol, allSubgraphs, useBO);
   return res;
 }
@@ -443,7 +465,8 @@ PATH_LIST findUniqueSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
 INT_PATH_LIST_MAP
 findAllPathsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
                           unsigned int upperLen, bool useBonds, bool useHs,
-                          int rootedAtAtom, bool onlyShortestPaths) {
+                          int rootedAtAtom, bool onlyShortestPaths,
+                          boost::dynamic_bitset<> *ignoreAtoms) {
   //
   //  We can't be clever here and just use the bond adjacency matrix
   //  to solve this problem when useBonds is true.  This is because
@@ -464,10 +487,9 @@ findAllPathsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
 
   if (!distMat) {
     // generate the adjacency matrix by hand by looping over the bonds
-    ROMol::ConstBondIterator bondIt;
-    for (bondIt = mol.beginBonds(); bondIt != mol.endBonds(); bondIt++) {
-      Atom *beg = (*bondIt)->getBeginAtom();
-      Atom *end = (*bondIt)->getEndAtom();
+    for (const auto bond : mol.bonds()) {
+      Atom *beg = bond->getBeginAtom();
+      Atom *end = bond->getEndAtom();
       // check for H, which we might be skipping
       if (useHs || (beg->getAtomicNum() != 1 && end->getAtomicNum() != 1)) {
         adjMat[beg->getIdx() * dim + end->getIdx()] = 1;
@@ -495,7 +517,7 @@ findAllPathsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
 
   // find the paths themselves
   INT_PATH_LIST_MAP atomPaths = Subgraphs::pathFinderHelper(
-      adjMat, dim, lowerLen, upperLen, rootedAtAtom, distMat);
+      adjMat, dim, lowerLen, upperLen, rootedAtAtom, distMat, ignoreAtoms);
 
   // clean up the adjacency matrix
   delete[] adjMat;
@@ -550,9 +572,11 @@ findAllPathsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
 }
 PATH_LIST
 findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen, bool useBonds,
-                      bool useHs, int rootedAtAtom, bool onlyShortestPaths) {
+                      bool useHs, int rootedAtAtom, bool onlyShortestPaths,
+                      boost::dynamic_bitset<> *ignoreAtoms) {
   return findAllPathsOfLengthsMtoN(mol, targetLen, targetLen, useBonds, useHs,
-                                   rootedAtAtom, onlyShortestPaths)[targetLen];
+                                   rootedAtAtom, onlyShortestPaths,
+                                   ignoreAtoms)[targetLen];
 }
 
 PATH_TYPE findAtomEnvironmentOfRadiusN(

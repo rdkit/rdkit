@@ -12,7 +12,6 @@
 #ifndef RD_DISTANCECONSTRAINTS_H
 #define RD_DISTANCECONSTRAINTS_H
 #include <vector>
-#include <iostream>
 #include "Contrib.h"
 
 namespace ForceFields {

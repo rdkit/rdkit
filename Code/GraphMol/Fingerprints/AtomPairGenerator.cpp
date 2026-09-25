@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Boran Adas, Google Summer of Code
+//  Copyright (C) 2018-2025 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,6 +14,11 @@
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
 #include <RDGeneral/hash/hash.hpp>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 namespace RDKit {
 namespace AtomPair {
 using namespace AtomPairs;
@@ -27,10 +32,9 @@ std::vector<std::uint32_t> *AtomPairAtomInvGenerator::getAtomInvariants(
     const ROMol &mol) const {
   auto *atomInvariants = new std::vector<std::uint32_t>(mol.getNumAtoms());
 
-  for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();
-       atomItI != mol.endAtoms(); ++atomItI) {
-    (*atomInvariants)[(*atomItI)->getIdx()] =
-        getAtomCode(*atomItI, 0, df_includeChirality) -
+  for (const auto atom : mol.atoms()) {
+    (*atomInvariants)[atom->getIdx()] =
+        getAtomCode(atom, 0, df_includeChirality) -
         (df_topologicalTorsionCorrection ? 2 : 0);
   }
 
@@ -40,6 +44,19 @@ std::vector<std::uint32_t> *AtomPairAtomInvGenerator::getAtomInvariants(
 std::string AtomPairAtomInvGenerator::infoString() const {
   return "AtomPairInvariantGenerator topologicalTorsionCorrection=" +
          std::to_string(df_topologicalTorsionCorrection);
+}
+
+void AtomPairAtomInvGenerator::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "AtomPairAtomInvGenerator");
+  pt.put("includeChirality", df_includeChirality);
+  pt.put("topologicalTorsionCorrection", df_topologicalTorsionCorrection);
+  AtomInvariantsGenerator::toJSON(pt);
+}
+void AtomPairAtomInvGenerator::fromJSON(const boost::property_tree::ptree &pt) {
+  df_includeChirality = pt.get<bool>("includeChirality", df_includeChirality);
+  df_topologicalTorsionCorrection = pt.get<bool>(
+      "topologicalTorsionCorrection", df_topologicalTorsionCorrection);
+  AtomInvariantsGenerator::fromJSON(pt);
 }
 
 AtomPairAtomInvGenerator *AtomPairAtomInvGenerator::clone() const {
@@ -73,10 +90,23 @@ std::string AtomPairArguments::infoString() const {
          " minDistance=" + std::to_string(d_minDistance) +
          " maxDistance=" + std::to_string(d_maxDistance);
 }
+void AtomPairArguments::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "AtomPairArguments");
+  pt.put("use2D", df_use2D);
+  pt.put("minDistance", d_minDistance);
+  pt.put("maxDistance", d_maxDistance);
+  FingerprintArguments::toJSON(pt);
+}
+void AtomPairArguments::fromJSON(const boost::property_tree::ptree &pt) {
+  df_use2D = pt.get<bool>("use2D", df_use2D);
+  d_minDistance = pt.get<unsigned int>("minDistance", d_minDistance);
+  d_maxDistance = pt.get<unsigned int>("maxDistance", d_maxDistance);
+  FingerprintArguments::fromJSON(pt);
+}
 
 template <typename OutputType>
 void AtomPairAtomEnv<OutputType>::updateAdditionalOutput(
-    AdditionalOutput *additionalOutput, size_t bitId) const {
+    AdditionalOutput *additionalOutput, std::uint64_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
   if (additionalOutput->bitInfoMap) {
     (*additionalOutput->bitInfoMap)[bitId].emplace_back(d_atomIdFirst,
@@ -89,6 +119,10 @@ void AtomPairAtomEnv<OutputType>::updateAdditionalOutput(
   if (additionalOutput->atomCounts) {
     additionalOutput->atomCounts->at(d_atomIdFirst)++;
     additionalOutput->atomCounts->at(d_atomIdSecond)++;
+  }
+  if (additionalOutput->atomsPerBit) {
+    (*additionalOutput->atomsPerBit)[bitId].push_back(std::vector<int>{
+        static_cast<int>(d_atomIdFirst), static_cast<int>(d_atomIdSecond)});
   }
 }
 
@@ -165,17 +199,13 @@ AtomPairEnvGenerator<OutputType>::getEnvironments(
     distanceMatrix = MolOps::get3DDistanceMat(mol, confId);
   }
 
-  for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();
-       atomItI != mol.endAtoms(); ++atomItI) {
-    unsigned int i = (*atomItI)->getIdx();
+  for (unsigned int i = 0; i < atomCount; ++i) {
     if (ignoreAtoms && std::find(ignoreAtoms->begin(), ignoreAtoms->end(), i) !=
                            ignoreAtoms->end()) {
       continue;
     }
 
-    for (ROMol::ConstAtomIterator atomItJ = atomItI + 1;
-         atomItJ != mol.endAtoms(); ++atomItJ) {
-      unsigned int j = (*atomItJ)->getIdx();
+    for (unsigned int j = i + 1; j < atomCount; ++j) {
       if (ignoreAtoms && std::find(ignoreAtoms->begin(), ignoreAtoms->end(),
                                    j) != ignoreAtoms->end()) {
         continue;
@@ -204,6 +234,13 @@ AtomPairEnvGenerator<OutputType>::getEnvironments(
 template <typename OutputType>
 std::string AtomPairEnvGenerator<OutputType>::infoString() const {
   return "AtomPairEnvironmentGenerator";
+}
+
+template <typename OutputType>
+void AtomPairEnvGenerator<OutputType>::toJSON(
+    boost::property_tree::ptree &pt) const {
+  pt.put("type", "AtomPairEnvGenerator");
+  AtomEnvironmentGenerator<OutputType>::toJSON(pt);
 }
 
 template <typename OutputType>

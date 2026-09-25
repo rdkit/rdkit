@@ -31,17 +31,29 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/GenericGroups/GenericGroups.h>
+#include <GraphMol/Subset.h>
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
-#include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 
 #include <sstream>
+#include <boost/python/suite/indexing/map_indexing_suite.hpp>
+
 namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
+
+python::tuple computeAtomCIPRanksHelper(ROMol &mol) {
+  UINT_VECT atomRanks;
+  Chirality::assignAtomCIPRanks(mol, atomRanks);
+  python::list res;
+  for (auto rank : atomRanks) {
+    res.append(rank);
+  }
+  return python::tuple(res);
+}
 
 python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyBondIndices,
@@ -56,8 +68,7 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
 
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
   if (pyDummyLabels) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
+    unsigned int nVs = python::len(pyDummyLabels);
     dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       unsigned int v1 = python::extract<unsigned int>(pyDummyLabels[i][0]);
@@ -67,8 +78,7 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
   }
   std::vector<Bond::BondType> *bondTypes = nullptr;
   if (pyBondTypes) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyBondTypes.attr("__len__")());
+    unsigned int nVs = python::len(pyBondTypes);
     if (nVs != bondIndices->size()) {
       throw_value_error("bondTypes shorter than bondIndices");
     }
@@ -129,8 +139,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
   }
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels = nullptr;
   if (pyDummyLabels) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyDummyLabels.attr("__len__")());
+    unsigned int nVs = python::len(pyDummyLabels);
     dummyLabels = new std::vector<std::pair<unsigned int, unsigned int>>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       unsigned int v1 = python::extract<unsigned int>(pyDummyLabels[i][0]);
@@ -140,8 +149,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
   }
   std::vector<Bond::BondType> *bondTypes = nullptr;
   if (pyBondTypes) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyBondTypes.attr("__len__")());
+    unsigned int nVs = python::len(pyBondTypes);
     if (nVs != bondIndices->size()) {
       throw_value_error("bondTypes shorter than bondIndices");
     }
@@ -153,8 +161,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
   std::vector<unsigned int> *cutsPerAtom = nullptr;
   if (pyCutsPerAtom) {
     cutsPerAtom = new std::vector<unsigned int>;
-    unsigned int nAts =
-        python::extract<unsigned int>(pyCutsPerAtom.attr("__len__")());
+    unsigned int nAts = python::len(pyCutsPerAtom);
     if (nAts < mol.getNumAtoms()) {
       throw_value_error("cutsPerAtom shorter than the number of atoms");
     }
@@ -176,8 +183,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
 }
 
 ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
-  if (python::extract<unsigned int>(pyNewOrder.attr("__len__")()) <
-      mol.getNumAtoms()) {
+  if (python::len(pyNewOrder) < mol.getNumAtoms()) {
     throw_value_error("atomCounts shorter than the number of atoms");
   }
   auto newOrder = pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
@@ -210,8 +216,7 @@ python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
                                    bool negateList) {
   std::vector<std::string> *whiteList = nullptr;
   if (pyWhiteList) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyWhiteList.attr("__len__")());
+    unsigned int nVs = python::len(pyWhiteList);
     whiteList = new std::vector<std::string>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
@@ -234,8 +239,7 @@ python::dict splitMolByPDBChainId(const ROMol &mol, python::object pyWhiteList,
                                   bool negateList) {
   std::vector<std::string> *whiteList = nullptr;
   if (pyWhiteList) {
-    unsigned int nVs =
-        python::extract<unsigned int>(pyWhiteList.attr("__len__")());
+    unsigned int nVs = python::len(pyWhiteList);
     whiteList = new std::vector<std::string>(nVs);
     for (unsigned int i = 0; i < nVs; ++i) {
       (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
@@ -285,12 +289,12 @@ python::dict parseQueryDefFileHelper(python::object &input, bool standardize,
 void addRecursiveQueriesHelper(ROMol &mol, python::dict replDict,
                                std::string propName) {
   std::map<std::string, ROMOL_SPTR> replacements;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(replDict.keys().attr("__len__")());
-       ++i) {
-    ROMol *m = python::extract<ROMol *>(replDict.values()[i]);
+  const auto items = replDict.items();
+  for (unsigned int i = 0; i < python::len(items); ++i) {
+    const auto item = items[i];
+    ROMol *m = python::extract<ROMol *>(item[1]);
     ROMOL_SPTR nm(new ROMol(*m));
-    std::string k = python::extract<std::string>(replDict.keys()[i]);
+    std::string k = python::extract<std::string>(item[0]);
     replacements[k] = nm;
   }
   addRecursiveQueries(mol, replacements, propName);
@@ -313,9 +317,10 @@ ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
   return addHs2(orig, params, onlyOnAtoms);
 }
 
-VECT_INT_VECT getSSSR(ROMol &mol, bool includeDativeBonds) {
+VECT_INT_VECT getSSSR(ROMol &mol, bool includeDativeBonds,
+                      bool includeHydrogenBonds) {
   VECT_INT_VECT rings;
-  MolOps::findSSSR(mol, rings, includeDativeBonds);
+  MolOps::findSSSR(mol, rings, includeDativeBonds, includeHydrogenBonds);
   return rings;
 }
 
@@ -395,9 +400,9 @@ void addRecursiveQuery(ROMol &mol, const ROMol &query, unsigned int atomIdx,
   }
 }
 
-void reapplyWedging(ROMol &mol, bool allBondTypes) {
+void reapplyWedging(ROMol &mol, bool allBondTypes, bool verify) {
   auto &wmol = static_cast<RWMol &>(mol);
-  RDKit::Chirality::reapplyMolBlockWedging(wmol, allBondTypes);
+  RDKit::Chirality::reapplyMolBlockWedging(wmol, allBondTypes, verify);
 }
 
 MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
@@ -419,23 +424,15 @@ MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
   return static_cast<MolOps::SanitizeFlags>(operationThatFailed);
 }
 
-RWMol *getEditable(const ROMol &mol) {
-  auto *res = new RWMol(mol, false);
-  return res;
-}
-
-ROMol *getNormal(const RWMol &mol) {
-  auto *res = static_cast<ROMol *>(new RWMol(mol));
-  return res;
-}
-
-void kekulizeMol(ROMol &mol, bool clearAromaticFlags = false) {
+void kekulizeMol(ROMol &mol, bool clearAromaticFlags = false,
+                 bool canonical = true) {
   auto &wmol = static_cast<RWMol &>(mol);
-  MolOps::Kekulize(wmol, clearAromaticFlags);
+  MolOps::Kekulize(wmol, clearAromaticFlags, canonical);
 }
-void kekulizeMolIfPossible(ROMol &mol, bool clearAromaticFlags = false) {
+void kekulizeMolIfPossible(ROMol &mol, bool clearAromaticFlags = false,
+                           bool canonical = true) {
   auto &wmol = static_cast<RWMol &>(mol);
-  MolOps::KekulizeIfPossible(wmol, clearAromaticFlags);
+  MolOps::KekulizeIfPossible(wmol, clearAromaticFlags, canonical);
 }
 
 void cleanupMol(ROMol &mol) {
@@ -488,14 +485,19 @@ void cleanupAtropisomersMol(ROMol &mol) {
   MolOps::cleanupAtropisomers(rwmol);
 }
 
-VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds) {
+VECT_INT_VECT getSymmSSSR(ROMol &mol, bool includeDativeBonds,
+                          bool includeHydrogenBonds,
+                          MolOps::SymmetrizeSSSRAlgorithm algorithm,
+                          bool recalcSSSR) {
   VECT_INT_VECT rings;
-  MolOps::symmetrizeSSSR(mol, rings, includeDativeBonds);
+  MolOps::symmetrizeSSSR(mol, rings, algorithm, recalcSSSR, includeDativeBonds,
+                         includeHydrogenBonds);
   return rings;
 }
 PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
                             bool useAtomWts = false, bool force = false,
                             const char *prefix = nullptr) {
+  rdkit_rdmolops_ensure_numpy();
   int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -514,6 +516,7 @@ PyObject *getDistanceMatrix(ROMol &mol, bool useBO = false,
 PyObject *get3DDistanceMatrix(ROMol &mol, int confId = -1,
                               bool useAtomWts = false, bool force = false,
                               const char *prefix = nullptr) {
+  rdkit_rdmolops_ensure_numpy();
   int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -535,6 +538,7 @@ PyObject *get3DDistanceMatrix(ROMol &mol, int confId = -1,
 
 PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO = false, int emptyVal = 0,
                              bool force = false, const char *prefix = nullptr) {
+  rdkit_rdmolops_ensure_numpy();
   int nats = mol.getNumAtoms();
   npy_intp dims[2];
   dims[0] = nats;
@@ -628,8 +632,7 @@ ExplicitBitVect *wrapLayeredFingerprint(
   std::unique_ptr<std::vector<unsigned int>> atomCountsV;
   if (atomCounts) {
     atomCountsV.reset(new std::vector<unsigned int>);
-    unsigned int nAts =
-        python::extract<unsigned int>(atomCounts.attr("__len__")());
+    unsigned int nAts = python::len(atomCounts);
     if (nAts < mol.getNumAtoms()) {
       throw_value_error("atomCounts shorter than the number of atoms");
     }
@@ -659,8 +662,7 @@ ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol, unsigned int fpSize,
   std::vector<unsigned int> *atomCountsV = nullptr;
   if (atomCounts) {
     atomCountsV = new std::vector<unsigned int>;
-    unsigned int nAts =
-        python::extract<unsigned int>(atomCounts.attr("__len__")());
+    unsigned int nAts = python::len(atomCounts);
     if (nAts < mol.getNumAtoms()) {
       throw_value_error("atomCounts shorter than the number of atoms");
     }
@@ -808,6 +810,24 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
 
   return res;
 }
+PATH_LIST findUniqueSubgraphsOfLengthNHelper(const ROMol &mol,
+                                             unsigned int length, bool useHs,
+                                             bool useBO, int rootedAtAtom) {
+  return findUniqueSubgraphsOfLengthN(mol, length, useHs, useBO, rootedAtAtom);
+}
+
+PATH_LIST findAllSubgraphsOfLengthNHelper(const ROMol &mol, unsigned int length,
+                                          bool useHs, int rootedAtAtom) {
+  return findAllSubgraphsOfLengthN(mol, length, useHs, rootedAtAtom);
+}
+
+PATH_LIST findAllPathsOfLengthNHelper(const ROMol &mol, unsigned int length,
+                                      bool useBonds, bool useHs,
+                                      int rootedAtAtom,
+                                      bool onlyShortestPaths) {
+  return findAllPathsOfLengthN(mol, length, useBonds, useHs, rootedAtAtom,
+                               onlyShortestPaths);
+}
 
 python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
                                                    unsigned int lowerLen,
@@ -859,8 +879,7 @@ ROMol *pathToSubmolHelper(const ROMol &mol, python::object &path, bool useQuery,
                           python::object atomMap) {
   ROMol *result;
   PATH_TYPE pth;
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(path.attr("__len__")()); ++i) {
+  for (unsigned int i = 0; i < python::len(path); ++i) {
     pth.push_back(python::extract<unsigned int>(path[i]));
   }
   std::map<int, int> mapping;
@@ -921,13 +940,14 @@ ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core,
   // convert input to MatchVect
   MatchVectType matchVect;
 
-  unsigned int length = python::extract<unsigned int>(match.attr("__len__")());
-
+  unsigned int length = python::len(match);
   for (unsigned int i = 0; i < length; ++i) {
-    int sz = 1;
-    if (PyObject_HasAttrString(static_cast<python::object>(match[i]).ptr(),
-                               "__len__")) {
-      sz = python::extract<unsigned int>(match[i].attr("__len__")());
+    // This is what boost::python::len() does internally
+    auto pyObj = static_cast<python::object>(match[i]).ptr();
+    unsigned int sz = PyObject_Length(pyObj);
+    if (PyErr_Occurred()) {
+      PyErr_Clear();
+      sz = 1;
     }
 
     int v1, v2;
@@ -973,7 +993,7 @@ void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
 void setAtomSymbols(MolzipParams &p, python::object symbols) {
   p.atomSymbols.clear();
   if (symbols) {
-    unsigned int nVs = python::extract<unsigned int>(symbols.attr("__len__")());
+    unsigned int nVs = python::len(symbols);
     for (unsigned int i = 0; i < nVs; ++i) {
       p.atomSymbols.push_back(python::extract<std::string>(symbols[i]));
     }
@@ -1098,6 +1118,56 @@ python::object findMesoHelper(const ROMol &mol, bool includeIsotopes,
   return python::tuple(res);
 }
 
+ROMol *copyMolSubsetHelper1(const ROMol &mol, python::object pyAtomIndices,
+                            python::object pyBondIndices,
+                            const SubsetOptions &options = SubsetOptions()) {
+  auto atomIndices = pythonObjectToVect<unsigned int>(pyAtomIndices);
+  auto bondIndices = pythonObjectToVect<unsigned int>(pyBondIndices);
+  if (!atomIndices.get()) {
+    atomIndices = std::make_unique<std::vector<unsigned int>>();
+  }
+  if (!bondIndices.get()) {
+    bondIndices = std::make_unique<std::vector<unsigned int>>();
+  }
+
+  return copyMolSubset(mol, *atomIndices, *bondIndices, options).release();
+}
+
+ROMol *copyMolSubsetHelper2(const ROMol &mol, python::object pyAtomIndices,
+                            python::object pyBondIndices, SubsetInfo &info,
+                            const SubsetOptions &options = SubsetOptions()) {
+  auto atomIndices = pythonObjectToVect<unsigned int>(pyAtomIndices);
+  auto bondIndices = pythonObjectToVect<unsigned int>(pyBondIndices);
+  if (!atomIndices.get()) {
+    atomIndices = std::make_unique<std::vector<unsigned int>>();
+  }
+  if (!bondIndices.get()) {
+    bondIndices = std::make_unique<std::vector<unsigned int>>();
+  }
+
+  return copyMolSubset(mol, *atomIndices, *bondIndices, info, options)
+      .release();
+}
+
+ROMol *copyMolSubsetHelper3(const ROMol &mol, python::object path,
+                            const SubsetOptions &options = SubsetOptions()) {
+  auto pathvect = pythonObjectToVect<unsigned int>(path);
+  if (!pathvect.get()) {
+    pathvect = std::make_unique<std::vector<unsigned int>>();
+  }
+  return copyMolSubset(mol, *pathvect, options).release();
+}
+
+ROMol *copyMolSubsetHelper4(const ROMol &mol, python::object path,
+                            SubsetInfo &selectionInfo,
+                            const SubsetOptions &options = SubsetOptions()) {
+  auto pathvect = pythonObjectToVect<unsigned int>(path);
+  if (!pathvect.get()) {
+    pathvect = std::make_unique<std::vector<unsigned int>>();
+  }
+  return copyMolSubset(mol, *pathvect, selectionInfo, options).release();
+}
+
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
@@ -1199,15 +1269,28 @@ struct molops_wrapper {
 \n\
     - mol: the molecule to use.\n\
     - includeDativeBonds: whether or not dative bonds should be included in the ring finding.\n\
+    - includeHydrogenBonds: whether or not hydrogen bonds should be included in the ring finding.\n\
 \n\
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
          The length of this will be equal to NumBonds-NumAtoms+1 for single-fragment molecules.\n\
 \n";
     python::def("GetSSSR", getSSSR,
-                (python::arg("mol"), python::arg("includeDativeBonds") = false),
+                (python::arg("mol"), python::arg("includeDativeBonds") = false,
+                 python::arg("includeHydrogenBonds") = false),
                 docString.c_str());
 
-    // ------------------------------------------------------------------------
+    python::enum_<MolOps::SymmetrizeSSSRAlgorithm>("SymmetrizeSSSRAlgorithm")
+        .value("DEFAULT", MolOps::SymmetrizeSSSRAlgorithm::DEFAULT)
+        .value("LEGACY", MolOps::SymmetrizeSSSRAlgorithm::LEGACY)
+        .value("RDL", MolOps::SymmetrizeSSSRAlgorithm::RDL);
+
+    python::def(
+        "SetUseLegacyRingFinding", MolOps::setUseLegacyRingFinding,
+        python::args("val"),
+        "sets usage of the legacy symmetric SSSR code during sanitization");
+    python::def("GetUseLegacyRingFinding", MolOps::getUseLegacyRingFinding,
+                "returns whether or not the legacy symmetric SSSR code is "
+                "being used during sanitization");
     docString =
         "Get a symmetrized SSSR for a molecule.\n\
 \n\
@@ -1219,12 +1302,19 @@ struct molops_wrapper {
 \n\
     - mol: the molecule to use.\n\
     - includeDativeBonds: whether or not dative bonds should be included in the ring finding.\n\
+    - includeHydrogenBonds: whether or not hydrogen bonds should be included in the ring finding.\n\
+    - algorithm: the algorithm to use for symmetrizing the SSSR.\n\
+    - recalcSSSR: whether or not to recalculate the SSSR before symmetrizing it.\n\
 \n\
   RETURNS: a sequence of sequences containing the rings found as atom ids\n\
 \n";
-    python::def("GetSymmSSSR", getSymmSSSR,
-                (python::arg("mol"), python::arg("includeDativeBonds") = false),
-                docString.c_str());
+    python::def(
+        "GetSymmSSSR", getSymmSSSR,
+        (python::arg("mol"), python::arg("includeDativeBonds") = false,
+         python::arg("includeHydrogenBonds") = false,
+         python::arg("algorithm") = MolOps::SymmetrizeSSSRAlgorithm::DEFAULT,
+         python::arg("recalcSSSR") = true),
+        docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
@@ -1257,10 +1347,22 @@ struct molops_wrapper {
 \n";
     python::def("FastFindRings", MolOps::fastFindRings, docString.c_str(),
                 python::args("mol"));
-#ifdef RDK_USE_URF
+
+    docString =
+        "Generate Unique Ring Families.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use.\n\
+    - includeDativeBonds: whether or not dative bonds should be included in the ring families finding.\n\
+    - includeHydrogenBonds: whether or not hydrogen bonds should be included in the ring families .\n\
+\n\
+  RETURNS: Nothing\n\
+\n";
     python::def("FindRingFamilies", MolOps::findRingFamilies,
-                python::args("mol"), "generate Unique Ring Families");
-#endif
+                (python::args("mol"), python::arg("includeDativeBonds") = false,
+                 python::arg("includeHydrogenBonds") = false),
+                docString.c_str());
 
     // ------------------------------------------------------------------------
     docString = R"DOC(Parameters controlling H addition.)DOC";
@@ -1743,6 +1845,15 @@ to the terminal dummy atoms.\n\
       molecule will be marked non-aromatic following the kekulization.
       Default value is False.
 
+    - canonical: (optional) if true, uses canonical atom ranking so
+      that the kekulization result is independent of the atom ordering in the
+      molecule.  Set to false to skip the ranking step for better performance
+      when deterministic output is not required (e.g. during sanitization).
+      Note, this "canonical" order only really makes sense when the molecule's
+      chemistry is sane, like after sanitization. If stereochemistry hasn't been
+      perceived, the chemistry of the molecule is inconsistent, and
+      "canonical" atom ranks are only a technical artifact.
+
   NOTES:
 
     - The molecule is modified in place.
@@ -1756,27 +1867,43 @@ to the terminal dummy atoms.\n\
 
 )DOC";
     python::def("Kekulize", kekulizeMol,
-                (python::arg("mol"), python::arg("clearAromaticFlags") = false),
+                (python::arg("mol"), python::arg("clearAromaticFlags") = false,
+                 python::arg("canonical") = true),
                 docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
-        "Kekulizes the molecule if possible. Otherwise the molecule is not modified\n\
+        R"DOC(Kekulizes the molecule if possible. Otherwise the molecule is not modified
+
+  ARGUMENTS:
+
+    - mol: the molecule to use
+
+    - clearAromaticFlags: (optional) if this toggle is set, all atoms and bonds in the 
+      molecule will be marked non-aromatic if the kekulization succeds.
+      Default value is False.
+
+    - canonical: (optional) if true  uses canonical atom ranking so
+      that the kekulization result is independent of the atom ordering in the
+      molecule.  Set to false to skip the ranking step for better performance
+      when deterministic output is not required (e.g. during sanitization).
+      Note, this "canonical" order only really makes sense when the molecule's
+      chemistry is sane, like after sanitization. If stereochemistry hasn't been
+      perceived, the chemistry of the molecule is inconsistent, and
+      "canonical" atom ranks are only a technical artifact.
+
 \n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-\n\
-    - clearAromaticFlags: (optional) if this toggle is set, all atoms and bonds in the \n\
-      molecule will be marked non-aromatic if the kekulization succeds.\n\
+    - canonical: (optional) if True, uses canonical atom ranking so that the\n\
+      kekulization result is independent of the atom ordering in the molecule.\n\
       Default value is False.\n\
 \n\
   NOTES:\n\
 \n\
     - The molecule is modified in place.\n\
-\n";
+    )DOC";
     python::def("KekulizeIfPossible", kekulizeMolIfPossible,
-                (python::arg("mol"), python::arg("clearAromaticFlags") = false),
+                (python::arg("mol"), python::arg("clearAromaticFlags") = false,
+                 python::arg("canonical") = true),
                 docString.c_str());
     // ------------------------------------------------------------------------
     docString =
@@ -1972,7 +2099,7 @@ RETURNS:
   but only 2 _paths_ of length 3: (0,1,3),(2,1,3)\n\
 \n";
     python::def(
-        "FindAllSubgraphsOfLengthN", &findAllSubgraphsOfLengthN,
+        "FindAllSubgraphsOfLengthN", &findAllSubgraphsOfLengthNHelper,
         (python::arg("mol"), python::arg("length"),
          python::arg("useHs") = false, python::arg("rootedAtAtom") = -1),
         docString.c_str());
@@ -2010,7 +2137,8 @@ RETURNS:
   RETURNS: a tuple of tuples with bond IDs\n\
 \n\
 \n";
-    python::def("FindUniqueSubgraphsOfLengthN", &findUniqueSubgraphsOfLengthN,
+    python::def("FindUniqueSubgraphsOfLengthN",
+                &findUniqueSubgraphsOfLengthNHelper,
                 (python::arg("mol"), python::arg("length"),
                  python::arg("useHs") = false, python::arg("useBO") = true,
                  python::arg("rootedAtAtom") = -1),
@@ -2055,7 +2183,7 @@ RETURNS:
        has 3 _subgraphs_ of length 3: (0,1,2),(0,1,3),(2,1,3)\n\
        but only 2 _paths_ of length 3: (0,1,3),(2,1,3)\n\
 \n";
-    python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthN,
+    python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthNHelper,
                 (python::arg("mol"), python::arg("length"),
                  python::arg("useBonds") = true, python::arg("useHs") = false,
                  python::arg("rootedAtAtom") = -1,
@@ -2222,6 +2350,12 @@ RETURNS:
                  python::arg("force") = false,
                  python::arg("flagPossibleStereoCenters") = false),
                 docString.c_str());
+
+    python::def("ComputeAtomCIPRanks", computeAtomCIPRanksHelper,
+                (python::arg("mol")),
+                R"DOC(Computes the CIP ranks for the atoms in a molecule.
+  The ranks are stored as an atom property '_CIPRank' and returned as a tuple.
+)DOC");
 
     // ------------------------------------------------------------------------
     docString =
@@ -2605,10 +2739,14 @@ ARGUMENTS:\n\
             - molecule: the molecule to update\n\
             - allBondTypes: reapply the wedging also on bonds other\n\
               than single and aromatic ones\n\
+            - verify: if true, the function will check that the wedges are only\n\
+              applied in sensible places (i.e.single bonds connected to chiral\n\
+              centers or atropisomeric bonds)\n\
         \n\
         \n";
     python::def("ReapplyMolBlockWedging", reapplyWedging,
-                (python::arg("mol"), python::arg("allBondTypes") = true),
+                (python::arg("mol"), python::arg("allBondTypes") = true,
+                 python::arg("verify") = false),
                 docString.c_str());
 
     docString =
@@ -2945,10 +3083,15 @@ Setting this to false allows assembling chemically incorrect fragments.")
             "generateCoordinates", &MolzipParams::generateCoordinates,
             "If true will add depiction coordinates to input molecules and\n\
 zipped molecule (for molzipFragments only)")
+        .def_readwrite(
+            "alignCoordinates", &MolzipParams::alignCoordinates,
+            "if true and the input fragments have coordinates, the fragments\n\
+will be aligned along connection vectors in the output molecule")
         .def("setAtomSymbols", &RDKit::setAtomSymbols,
              python::args("self", "symbols"),
              "Set the atom symbols used to zip mols together when using "
-             "AtomType labeling");
+             "AtomType labeling")
+        .def("__setattr__", &safeSetattr);
 
     docString =
         "molzip: zip molecules together preserving bond and atom stereochemistry.\n\
@@ -3262,13 +3405,42 @@ A note on the flags controlling which atoms/bonds are modified:
 
   Arguments:
    - mol: molecule to be modified
-   - markedOnly: if true, only dummy atoms with the _fromAttachPoint
-     property will be collapsed
+   - markedOnly: if true, only dummy atoms with the _fromAttachPoint property
+     or a valid _AP<n> atom label will be collapsed. The label suffix is not
+     interpreted as an MDL attachment-point position.
 
   In order for a dummy atom to be considered for collapsing it must have:
    - degree 1 with a single or unspecified bond
    - the bond to it can not be wedged
    - either no query or be an AtomNullQuery
+)DOC");
+    python::def(
+        "GetAttachmentPointLabelNumber", MolOps::getAttachmentPointLabelNumber,
+        python::arg("atom"),
+        R"DOC(returns the positive integer from a valid _AP<n> attachment-point label
+
+  The atom must be a degree-one dummy atom. Returns 0 if it does not have a
+  valid numbered attachment-point label. The returned number is a label
+  identifier, not an MDL ATTCHPT position.
+
+  Arguments:
+   - atom: the atom to inspect
+)DOC");
+    python::scope().attr("ATTACHMENT_POINT_LABEL_PREFIX") =
+        std::string(MolOps::attachmentPointLabelPrefix);
+    python::def(
+        "IsMarkedAttachmentPoint", MolOps::isMarkedAttachmentPoint,
+        python::arg("atom"),
+        R"DOC(returns whether an atom is a marked explicit attachment point
+
+  A marked attachment point is a degree-one dummy atom with the
+  _fromAttachPoint property or a valid _AP<n> atom label, where n is a
+  positive decimal integer. This checks attachment-point identity only, not
+  whether the atom can currently be collapsed. In particular, an attachment
+  point connected by a wedged bond is still considered marked.
+
+  Arguments:
+   - atom: the atom to inspect
 )DOC");
     python::def(
         "AddStereoAnnotations", Chirality::addStereoAnnotations,
@@ -3321,6 +3493,98 @@ enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
         "AtomHasConjugatedBond", MolOps::atomHasConjugatedBond,
         (python::arg("atom")),
         "returns whether or not the atom is involved in a conjugated bond");
+
+    python::enum_<RDKit::SubsetMethod>("SubsetMethod")
+        .value("BONDS_BETWEEN_ATOMS", RDKit::SubsetMethod::BONDS_BETWEEN_ATOMS)
+        .value("BONDS", RDKit::SubsetMethod::BONDS);
+
+    python::class_<std::vector<bool>>("BoolVector")
+        .def(python::vector_indexing_suite<std::vector<bool>>());
+
+    python::class_<RDKit::SubsetOptions>("SubsetOptions")
+        .def_readwrite("sanitize", &RDKit::SubsetOptions::sanitize,
+                       "Sanitize the resulting subset")
+        .def_readwrite("clearComputedProps",
+                       &RDKit::SubsetOptions::clearComputedProps,
+                       "clear all computed props on the subsetted molecule")
+        .def_readwrite("copyAsQuery", &RDKit::SubsetOptions::copyAsQuery,
+                       "Return the subset as a query")
+        .def_readwrite("copyCoordinates",
+                       &RDKit::SubsetOptions::copyCoordinates,
+                       "Copy the active coordinates from the molecule")
+        .def_readwrite(
+            "conformerIdx", &RDKit::SubsetOptions::conformerIdx,
+            "What conformer idx to use for the coordinates default is -1")
+        .def_readwrite("method", &RDKit::SubsetOptions::method,
+                       "Subsetting method to use");
+
+    if (!is_python_converter_registered<
+            std::map<unsigned int, unsigned int>>()) {
+      python::class_<std::map<unsigned int, unsigned int>>("UIntUIntMap")
+          .def(python::map_indexing_suite<std::map<unsigned int, unsigned int>,
+                                          true>());
+    }
+
+    python::class_<RDKit::SubsetInfo>("SubsetInfo")
+        .def_readwrite(
+            "atomMapping", &RDKit::SubsetInfo::atomMapping,
+            "mapping from the original atom index to the subset atom index")
+        .def_readwrite(
+            "bondMapping", &RDKit::SubsetInfo::bondMapping,
+            " mapping from the original bond index to the subset bond index");
+
+    docString =
+        "Extract a subgraph from an ROMol. Bonds, atoms, substance groups and \n\
+stereo groups are only extracted to the subgraph if all participant entities \n\
+are contained within the given atoms and bonds. \n\
+\n\
+ARGUMENTS:\n\
+ - mol - starting mol \n\
+ - atoms - indices atoms to extract \n\
+ - bonds - indices bonds to extract \n\
+ - subsetInfo - optional subsetInfo to record the atoms and bonds used \n\
+ - options - optional subset options, note the method is ignored since all the atoms and bonds are sp \n\
+\n";
+
+    python::def(
+        "CopyMolSubset", copyMolSubsetHelper1,
+        (python::arg("mol"), python::arg("atomIndices"),
+         python::arg("bondIndices"), python::arg("options") = SubsetOptions()),
+        docString.c_str(),
+        python::return_value_policy<python::manage_new_object>());
+    python::def("CopyMolSubset", copyMolSubsetHelper2,
+                (python::arg("mol"), python::arg("atomIndices"),
+                 python::arg("bondIndices"), python::arg("subsetInfo"),
+                 python::arg("options") = SubsetOptions()),
+                docString.c_str(),
+                python::return_value_policy<python::manage_new_object>());
+
+    docString =
+        "Extract a subgraph from an ROMol. Bonds, atoms, substance groups and \n\
+stereo groups are only extracted to the subgraph if all participant entities \n\
+are contained within the given atoms and bonds. \n\
+\n\
+ARGUMENTS:\n\
+ - mol - starting mol \n\
+ - path - the indices of atoms or bonds to extract. If an index falls \n\
+          outside of the acceptable indices, it is ignored.yes \n\
+          Use SubsetMethod.BONDS to indicate a bond path and BONDS_BETWEEN_ATOMS \n\
+          to indicate an atom path with any bond that includes atoms in the path. \n\
+ - subsetInfo - optional subsetInfo to record the atoms and bonds used \n\
+ - options - optional subset options, note the method is ignored since all the atoms and bonds are sp \n\
+\n";
+
+    python::def("CopyMolSubset", copyMolSubsetHelper3,
+                (python::arg("mol"), python::arg("path"),
+                 python::arg("options") = SubsetOptions()),
+                "copy a subset of a molecule",
+                python::return_value_policy<python::manage_new_object>());
+    python::def(
+        "CopyMolSubset", copyMolSubsetHelper4,
+        (python::arg("mol"), python::arg("path"), python::arg("subsetInfo"),
+         python::arg("options") = SubsetOptions()),
+        "copy a subset of a molecule",
+        python::return_value_policy<python::manage_new_object>());
   }
 };
 }  // namespace RDKit

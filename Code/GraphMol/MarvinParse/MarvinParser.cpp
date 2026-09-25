@@ -12,7 +12,6 @@
 
 #include <string>
 #include <exception>
-#include <iostream>
 #include <fstream>
 #include <vector>
 #include <sstream>
@@ -26,14 +25,12 @@
 #include "MarvinDefs.h"
 #include <GraphMol/Conformer.h>
 #include <GraphMol/MolOps.h>
-#include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
 
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/SubstanceGroup.h>
 
-#include "MarvinParser.h"
 
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/FileParseException.h>
@@ -294,6 +291,10 @@ class MarvinCMLReader {
       } else if (marvinBondType == "DATIVE") {
         bond = new Bond();
         type = Bond::DATIVE;
+        bType = 1;
+      } else if (marvinBondType == "HYDROGEN") {
+        bond = new Bond();
+        type = Bond::HYDROGEN;
         bType = 1;
       } else if (marvinBondType == "1") {
         type = Bond::SINGLE;
@@ -597,10 +598,9 @@ class MarvinCMLReader {
       mol->clearAllBondBookmarks();
 
       // calculate explicit valence on each atom:
-      for (RWMol::AtomIterator atomIt = mol->beginAtoms();
-           atomIt != mol->endAtoms(); ++atomIt) {
-        (*atomIt)->calcExplicitValence(false);
-        (*atomIt)->calcImplicitValence(false);
+      for (auto atom : mol->atoms()) {
+        atom->calcExplicitValence(false);
+        atom->calcImplicitValence(false);
       }
 
       // update the chirality and stereo-chemistry
@@ -617,14 +617,6 @@ class MarvinCMLReader {
       } else if (conf3d != nullptr) {
         mol->updatePropertyCache(false);
         MolOps::assignChiralTypesFrom3D(*mol, conf3d->getId(), true);
-      }
-
-      if (conf) {
-        Atropisomers::detectAtropisomerChirality(*mol, conf);
-      } else if (conf3d) {
-        Atropisomers::detectAtropisomerChirality(*mol, conf3d);
-      } else {
-        Atropisomers::detectAtropisomerChirality(*mol, nullptr);
       }
 
       ClearSingleBondDirFlags(*mol);

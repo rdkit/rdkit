@@ -14,8 +14,6 @@
 
 #include <fuzzer/FuzzedDataProvider.h>
 
-#include <iostream>
-
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 

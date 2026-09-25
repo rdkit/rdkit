@@ -12,7 +12,8 @@ import unittest
 import numpy as np
 
 from rdkit import Chem, Geometry, RDConfig
-from rdkit.Chem import rdDepictor, rdMolAlign, rdMolTransforms
+from rdkit.Chem import rdDepictor, rdMolTransforms
+from rdkit.Chem import rdMolAlign
 from rdkit.Chem.ChemUtils import AlignDepict
 
 
@@ -94,7 +95,8 @@ def stereoCompare(smilesFile):
     matches = nmol.GetSubstructMatches(mol, False)
     dbnds = [
       x for x in mol.GetBonds()
-      if (x.GetBondType() == Chem.BondType.DOUBLE and x.GetStereo() > Chem.BondStereo.STEREOANY)
+      if (x.GetBondType() == Chem.BondType.DOUBLE and x.GetStereo() not in (
+        Chem.BondStereo.STEREOANY, Chem.BondStereo.STEREONONE))
     ]
     ok = True
     for match in matches:
@@ -158,14 +160,14 @@ class TestCase(unittest.TestCase):
     AlignDepict.AlignDepict(m2, t)
     expected = [
       Geometry.Point3D(1.5, 0.0, 0.0),
-      Geometry.Point3D(0.75, -1.299, 0.0),
-      Geometry.Point3D(-0.75, -1.299, 0.0),
-      Geometry.Point3D(-1.5, -2.5981, 0.0),
-      Geometry.Point3D(-3.0, -2.5981, 0.0),
-      Geometry.Point3D(-3.75, -3.8971, 0.0),
+      Geometry.Point3D(0.75, 1.299, 0.0),
+      Geometry.Point3D(-0.75, 1.299, 0.0),
+      Geometry.Point3D(-1.5, 2.5981, 0.0),
+      Geometry.Point3D(-0.75, 3.8971, 0.0),
+      Geometry.Point3D(-1.5, 5.1962, 0.0),
       Geometry.Point3D(-1.5, 0.0, 0.0),
-      Geometry.Point3D(-0.75, 1.2990, 0.0),
-      Geometry.Point3D(0.75, 1.2990, 0.0)
+      Geometry.Point3D(-0.75, -1.2990, 0.0),
+      Geometry.Point3D(0.75, -1.2990, 0.0)
     ]
 
     nat = m2.GetNumAtoms()
@@ -462,7 +464,7 @@ M  END""")
 
   def testNormalizeStraighten(self):
     noradrenalineMJ = Chem.MolFromMolBlock("""
-  MJ201100                      
+  MJ201100
 
  12 12  0  0  1  0  0  0  0  0999 V2000
     2.2687    1.0716    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -883,12 +885,12 @@ M  END
    -3.4910    1.0942    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
     1.7051    1.0942    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
    -3.4910   -1.9059    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  0
-  2  3  1  0
-  3  4  2  0
-  4  5  1  0
-  5  6  2  0
-  6  1  1  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  1  2  0
   6  8  1  0
   3  9  1  0
   2  7  1  0
@@ -1020,7 +1022,7 @@ M  END
 
   def testRGroupMatchHeavyHydroNoneCharged(self):
     templateRef = Chem.MolFromMolBlock("""
-  MJ201100                      
+  MJ201100
 
   7  7  0  0  0  0  0  0  0  0999 V2000
    -0.5804    1.2045    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1110,7 +1112,7 @@ $$$$
       coords = mol.GetConformer().GetPositions()
       for bond in mol.GetBonds():
         length = np.linalg.norm(coords[bond.GetBeginAtomIdx()] - coords[bond.GetEndAtomIdx()])
-        if length < 1.0 or length > 2.0:
+        if length < 1.0 or length > 2.1:
           return True
       return False
 

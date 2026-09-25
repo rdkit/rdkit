@@ -22,18 +22,12 @@ namespace CIPLabeler {
 
 /**
  * Implementation of a descriptor list that allows descriptors to be added and
- * ignored. The list maintains an integer value throughout which stores the
- * pairing of descriptors and allows easy comparison between descriptor lists in
- * that higher priority descriptor pairing will always have a higher integer
- * value. The integer value can be access via the {@link #getPairing()} method.
+ * ignored.
  *
  * @see Descriptor
  */
 class PairList {
  public:
-  using pairing_t = std::uint64_t;
-  static constexpr int numPairingBits = sizeof(pairing_t) * 8;
-
   static Descriptor ref(Descriptor descriptor) {
     switch (descriptor) {
       case Descriptor::R:
@@ -68,7 +62,12 @@ class PairList {
     addAll(tail.d_descriptors);
   }
 
-  Descriptor getRefDescriptor() const { return ref(d_descriptors[0]); }
+  Descriptor getRefDescriptor() const {
+    if (d_descriptors.empty()) {
+      throw std::runtime_error("Cannot get a reference from an empty PairList");
+    }
+    return ref(d_descriptors[0]);
+  }
 
   /**
    * Adds a descriptor to the descriptor list. If the provided descriptor is
@@ -86,7 +85,7 @@ class PairList {
       case Descriptor::P:
       case Descriptor::seqTrans:
       case Descriptor::seqCis:
-        addAndPair(descriptor);
+        d_descriptors.push_back(ref(descriptor));
         return true;
       default:
         return false;
@@ -106,19 +105,12 @@ class PairList {
     }
   }
 
-  /**
-   * Access a positive integer that represents the like/unlike pairings of
-   * this descriptor list. The like/unlike is represented by set bits in an
-   * integer value and means larger integer values indicates a higher
-   * descriptor pairing preference.
-   *
-   * @return an integer representing the descriptor pairings
-   */
-  pairing_t getPairing() const { return d_pairing; }
-
   int compareTo(const PairList &that) const {
     if (d_descriptors.size() != that.d_descriptors.size()) {
       throw std::runtime_error("Descriptor lists should be the same length!");
+    }
+    if (d_descriptors.empty()) {
+      return 0;
     }
     Descriptor thisRef = d_descriptors[0];
     Descriptor thatRef = that.d_descriptors[0];
@@ -157,25 +149,6 @@ class PairList {
 
  private:
   std::vector<Descriptor> d_descriptors;
-
-  pairing_t d_pairing = 0;
-
-  /**
-   * Adds the descriptor to the descriptor list and stores the pair in an set
-   * bit (64-bit integer).
-   *
-   * @param descriptor the descriptor to add an pair
-   * @return whether the descriptor was added
-   */
-  void addAndPair(Descriptor descriptor) {
-    // if this isn't the first descriptor - check the pairing
-    if (!d_descriptors.empty() && d_descriptors[0] == descriptor) {
-      // set the bit to indicate a pair
-      d_pairing |= static_cast<pairing_t>(1)
-                   << (numPairingBits - 1 - d_descriptors.size());
-    }
-    d_descriptors.push_back(ref(descriptor));
-  }
 };
 
 }  // namespace CIPLabeler

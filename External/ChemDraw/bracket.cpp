@@ -28,7 +28,7 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//#include "node.h"
+// #include "node.h"
 #include "utils.h"
 #include "bracket.h"
 
@@ -36,20 +36,20 @@ namespace RDKit {
 namespace ChemDraw {
 // This is currently unimplemented waiting on full bracket support in the rdkit
 //  or support for expansion inside the RDChemDrawLib
-bool parseBracket(CDXBracketedGroup &bracket, PageData &/*pagedata*/) {
+bool parseBracket(CDXBracketedGroup &bracket, PageData & /*pagedata*/) {
   // Get the contained atoms/bonds in the bracket
   for (auto &attachment : bracket.ContainedObjects()) {
-    CDXDatumID childid = (CDXDatumID)attachment.second->GetTag();
+    auto childid = (CDXDatumID)attachment.second->GetTag();
     if (childid == kCDXObj_BracketAttachment) {
-      CDXBracketAttachment &bracketattachment =
-          (CDXBracketAttachment &)(*attachment.second);
+      auto &bracketattachment = (CDXBracketAttachment &)(*attachment.second);
       for (auto &bracketdata : bracketattachment.ContainedObjects()) {
-        CDXDatumID bracketid = (CDXDatumID)bracketdata.second->GetTag();
+        auto bracketid = (CDXDatumID)bracketdata.second->GetTag();
         if (bracketid == kCDXObj_CrossingBond) {
-          //CDXCrossingBond &crossingbond =
-          //    (CDXCrossingBond &)(*attachment.second);
-          // XX unimplmented crossingbond.m_bondID;       // bond that crosses brackets
-          // XX unimplmented crossingbond.m_innerAtomID;  // atom within brackets
+          // CDXCrossingBond &crossingbond =
+          //     (CDXCrossingBond &)(*attachment.second);
+          //  XX unimplmented crossingbond.m_bondID;       // bond that crosses
+          //  brackets XX unimplmented crossingbond.m_innerAtomID;  // atom
+          //  within brackets
         }
       }
     }
@@ -102,5 +102,5 @@ bool parseBracket(CDXBracketedGroup &bracket, PageData &/*pagedata*/) {
   }
   return true;
 }
-}
+}  // namespace ChemDraw
 }  // namespace RDKit

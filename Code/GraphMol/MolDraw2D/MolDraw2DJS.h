@@ -17,7 +17,6 @@
 #ifndef MOLDRAW2DJS_H
 #define MOLDRAW2DJS_H
 
-#include <iostream>
 #include <sstream>
 #include <emscripten.h>
 #include <emscripten/val.h>

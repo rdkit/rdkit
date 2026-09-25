@@ -41,17 +41,46 @@ namespace RingUtils {
 using namespace RDKit;
 
 void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
-                    boost::dynamic_bitset<> &done, int depth) {
+                    boost::dynamic_bitset<> &done, int /* depth */) {
+  // Use an explicit DFS stack instead of recursion. Large fused systems can
+  // contain thousands of rings, which overflows the comparatively small
+  // default thread stack on Windows.
   auto pos = neighMap.find(curr);
   PRECONDITION(pos != neighMap.end(), "bad argument");
   done[curr] = 1;
   res.push_back(curr);
 
-  const auto &neighs = pos->second;
-  for (int neigh : neighs) {
-    if (!done[neigh]) {
-      pickFusedRings(neigh, neighMap, res, done, depth + 1);
+  // Each entry stores a ring index and the next neighbor to visit. Advancing
+  // neighbors one at a time preserves the preorder traversal of the old
+  // recursive implementation.
+  std::vector<std::pair<int, unsigned>> stack;
+  stack.emplace_back(curr, 0);
+  while (!stack.empty()) {
+    auto &[ringIdx, nextNeighbor] = stack.back();
+    const auto &neighs = neighMap.find(ringIdx)->second;
+    if (nextNeighbor == neighs.size()) {
+      // No more neighbors to visit for this ring
+      stack.pop_back();
+      continue;
     }
+
+    const auto neigh = neighs[nextNeighbor];
+
+    // this advances the "neighbor to visit" index in the current
+    // element in the stack (note that nextNeighbor is a reference,
+    // and that we haven't popped the stack!)
+    ++nextNeighbor;
+
+    if (done[neigh]) {
+      continue;
+    }
+
+    // We haven't seen this ring yet, so add it to the stack
+    pos = neighMap.find(neigh);
+    CHECK_INVARIANT(pos != neighMap.end(), "neighboring ring not found");
+    done[neigh] = 1;
+    res.push_back(neigh);
+    stack.emplace_back(neigh, 0);
   }
 }
 
@@ -71,8 +100,7 @@ bool checkFused(const INT_VECT &rids, INT_INT_VECT_MAP &ringNeighs) {
 
   // then pick a fused system from the remaining (i.e. rids)
   // If the rings in rids are fused we should get back all of them
-  // in fused
-  // if we get a smaller number in fused then rids are not fused
+  // in fused if we get a smaller number in fused then rids are not fused
   pickFusedRings(rids.front(), ringNeighs, fused, done);
 
   CHECK_INVARIANT(fused.size() <= rids.size(), "");
@@ -157,22 +185,11 @@ static void applyHuckelToFused(
     unsigned int maxNumFusedRings, const std::vector<Bond *> &bondsByIdx,
     unsigned int minRingSize = 0);
 
-void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
-                        const VECT_INT_VECT &brings, const INT_VECT &ringIds,
+void markAtomsBondsArom(const VECT_INT_VECT &brings, const INT_VECT &ringIds,
                         std::set<unsigned int> &doneBonds,
                         const std::vector<Bond *> &bondsByIdx) {
-  // first mark the atoms in the rings
-  for (auto ri : ringIds) {
-    const auto &aring = srings[ri];
-
-    // first mark the atoms in the ring
-    for (auto ai : aring) {
-      mol.getAtomWithIdx(ai)->setIsAromatic(true);
-    }
-  }
-
   // mark the bonds
-  // here we want to be more careful. We don't want to mark the fusing bonds
+  // here we want to be careful. We don't want to mark the fusing bonds
   // as aromatic - only the outside bonds in a fused system are marked aromatic.
   // - loop through the rings and count the number of times each bond appears in
   //   all the fused rings.
@@ -185,18 +202,18 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
       ++bndCntr[bi];
     }
   }
-  // now mark bonds that have a count of 1 to be aromatic;
-  // std::cerr << "bring:";
+  // now mark single or double bonds that have a count of 1 and the atoms they
+  // connect as aromatic
   for (const auto &bci : bndCntr) {
-    // std::cerr << " " << bci->first << "(" << bci->second << ")";
     if (bci.second == 1) {
       auto bond = bondsByIdx[bci.first];
-      // Bond *bond = mol.get BondWithIdx(bci->first);
       bond->setIsAromatic(true);
       switch (bond->getBondType()) {
         case Bond::SINGLE:
         case Bond::DOUBLE:
           bond->setBondType(Bond::AROMATIC);
+          bond->getBeginAtom()->setIsAromatic(true);
+          bond->getEndAtom()->setIsAromatic(true);
           break;
         default:
           break;
@@ -204,7 +221,6 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
       doneBonds.insert(bond->getIdx());
     }
   }
-  // std::cerr << std::endl;
 }
 
 void getMinMaxAtomElecs(ElectronDonorType dtype, int &atlw, int &atup) {
@@ -295,7 +311,6 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
     rlw += atlw;
     rup += atup;
   }
-
   if (rup >= 6) {
     for (rie = rlw; rie <= rup; ++rie) {
       if ((rie - 2) % 4 == 0) {
@@ -408,14 +423,14 @@ void applyHuckelToFused(
     }
     if (applyHuckel(mol, unon, edon, minRingSize)) {
       // mark the atoms and bonds in these rings to be aromatic
-      markAtomsBondsArom(mol, srings, brings, curRs, doneBonds, bondsByIdx);
+      markAtomsBondsArom(brings, curRs, doneBonds, bondsByIdx);
 
       // add the ring IDs to the aromatic rings found so far
       // avoid duplicates
       std::copy(curRs.begin(), curRs.end(),
                 std::inserter(aromRings, aromRings.begin()));
     }  // end check huckel rule
-  }  // end while(1)
+  }    // end while(1)
   narom += rdcast<int>(aromRings.size());
 }
 
@@ -803,7 +818,9 @@ int mmff94AromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
         break;
       }
     }
-    if (isAromRing) narom++;
+    if (isAromRing) {
+      narom++;
+    }
   }
 
   return narom;
@@ -849,14 +866,31 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
       }
       aseen[firstIdx] = 1;
 
-      // now that the atom is part of ring check if it can donate
-      // electron or has empty orbitals. Record the donor type
-      // information in 'edon' - we will need it when we get to
-      // the Huckel rule later
-      edon[firstIdx] = getAtomDonorTypeArom(at);
-      acands[firstIdx] = isAtomCandForArom(at, edon[firstIdx]);
+      // Check if this atom can donate electrons or has empty orbitals.
+      ElectronDonorType donorType = getAtomDonorTypeArom(at);
+
+      // Fix: Prevent aliphatic ether oxygens and sulfurs in macrocycles
+      // (>= 9 members, this is what we use as the definition of macrocycle
+      // elsewhere) from being falsely flagged as aromatic. In these large
+      // rings, they act as simple bridges, not pi donors like in small rings
+      // (e.g., furan).
+      if (donorType == TwoElectronDonorType && ringSz >= 9) {
+        if ((at->getAtomicNum() == 8 || at->getAtomicNum() == 16) &&
+            at->getDegree() == 2 && at->getFormalCharge() == 0) {
+          if (std::ranges::none_of(mol.atomBonds(at), [](const Bond *bond) {
+                return bond->getBondType() == Bond::DOUBLE ||
+                       bond->getBondType() == Bond::TRIPLE;
+              })) {
+            donorType = NoElectronDonorType;
+          }
+        }
+      }
+      edon[firstIdx] = donorType;
+      acands[firstIdx] = isAtomCandForArom(at, donorType);
       if (!acands[firstIdx]) {
         allAromatic = false;
+        // we can't break out of the loop over the rest of the ring here because
+        // we still need to set edon and acands for the other atoms in the ring.
       }
     }
     if (allAromatic && !allDummy) {

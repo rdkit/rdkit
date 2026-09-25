@@ -141,20 +141,15 @@ class TestCase(unittest.TestCase):
     self.assertTrue(details.shuffled)
     self.assertFalse(details.randomized)
 
-    try:
-      details = RunDetails()
-      self.setUpGeneralLoad()
-      dataSet = self.d
-      orgActivities = [d[-1] for d in dataSet]
-      DataUtils.RandomizeActivities(dataSet, shuffle=False, runDetails=details)
-      self.assertNotEqual(orgActivities, [d[-1] for d in dataSet])
-      self.assertEqual(sorted(orgActivities), sorted([d[-1] for d in dataSet]))
-      self.assertFalse(details.randomized)
-      self.assertTrue(details.shuffled)
-    except NameError:
-      # This code branch is not working.
-      pass
-
+    details = RunDetails()
+    self.setUpGeneralLoad()
+    dataSet = self.d
+    orgActivities = [d[-1] for d in dataSet]
+    DataUtils.RandomizeActivities(dataSet, shuffle=False, runDetails=details)
+    self.assertNotEqual(orgActivities, [d[-1] for d in dataSet])
+    self.assertNotEqual(sorted(orgActivities), sorted([d[-1] for d in dataSet]))
+    self.assertTrue(details.randomized)
+    self.assertFalse(details.shuffled)
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

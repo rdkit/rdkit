@@ -42,7 +42,6 @@
 #include <cstring>
 #include <ctime>
 #include <string>
-#include <iostream>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/utils.h>
 #include "../RDKitBase.h"

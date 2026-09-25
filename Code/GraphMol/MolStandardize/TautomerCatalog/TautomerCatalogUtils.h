@@ -16,7 +16,6 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/Bond.h>
-#include <iostream>
 #include <utility>
 
 namespace RDKit {

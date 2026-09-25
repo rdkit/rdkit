@@ -12,13 +12,12 @@
 #ifndef RDLOG_H_29JUNE2005
 #define RDLOG_H_29JUNE2005
 
-#if 1
 #include "BoostStartInclude.h"
 #include <boost/iostreams/tee.hpp>
 #include <boost/iostreams/stream.hpp>
 #include "BoostEndInclude.h"
-#include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <cstdint>
 
@@ -121,16 +120,6 @@ RDKIT_RDGENERAL_EXPORT extern RDLogger rdErrorLog;
 RDKIT_RDGENERAL_EXPORT extern RDLogger rdWarningLog;
 RDKIT_RDGENERAL_EXPORT extern RDLogger rdStatusLog;
 
-#else
-#define BOOST_LOG_NO_LIB
-#include <boost/log/log.hpp>
-BOOST_DECLARE_LOG(rdAppLog)
-BOOST_DECLARE_LOG(rdDebugLog)
-BOOST_DECLARE_LOG(rdInfoLog)
-BOOST_DECLARE_LOG(rdErrorLog)
-BOOST_DECLARE_LOG(rdWarningLog)
-BOOST_DECLARE_LOG(rdStatusLog)
-#endif
 namespace RDLog {
 RDKIT_RDGENERAL_EXPORT void InitLogs();
 
@@ -147,6 +136,41 @@ class RDKIT_RDGENERAL_EXPORT LogStateSetter : public boost::noncopyable {
 
  private:
   std::uint64_t d_origState = 0;
+};
+
+//! RAII class to capture messages from a given \c RDLogger.
+//!
+//! The log is enabled when this object is constructed and its original enabled
+//! state is restored when this object is destroyed. The stream destination is
+//! also restored on destruction. Nesting is supported: inner captures shadow
+//! outer ones.
+//!
+//! \b Example:
+//! \code
+//!   RDLog::CaptureLog capture{rdErrorLog};
+//!   functionThatMayFail();
+//!   std::string errs = capture.messages();
+//! \endcode
+class RDKIT_RDGENERAL_EXPORT CaptureLog : public boost::noncopyable {
+ public:
+  explicit CaptureLog(RDLogger log);
+  ~CaptureLog();
+
+  //! Returns all messages captured since construction.
+  std::string messages() const;
+
+ private:
+  RDLogger d_log;
+  std::stringstream d_messages;
+  std::ostream *d_savedDest = nullptr;
+  boost::logging::RDTeeStream *d_savedTeestream = nullptr;
+  bool d_logWasEnabled = true;
+};
+
+//! Convenience subclass of \c CaptureLog that captures \c rdErrorLog.
+class RDKIT_RDGENERAL_EXPORT CaptureErrorLog : public CaptureLog {
+ public:
+  CaptureErrorLog() : CaptureLog(rdErrorLog) {}
 };
 
 inline void deprecationWarning(const std::string &message) {

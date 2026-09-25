@@ -43,6 +43,8 @@ class JSMolBase {
   std::string get_molblock() const { return get_molblock("{}"); }
   std::string get_v3Kmolblock(const std::string &details) const;
   std::string get_v3Kmolblock() const { return get_v3Kmolblock("{}"); }
+  std::string get_v2Kmolblock(const std::string &details) const;
+  std::string get_v2Kmolblock() const { return get_v2Kmolblock("{}"); }
   std::string get_pickle(const std::string &details) const;
   std::string get_pickle() const { return get_pickle(""); };
 #ifdef RDK_BUILD_INCHI_SUPPORT
@@ -55,8 +57,16 @@ class JSMolBase {
     return get_svg(d_defaultWidth, d_defaultHeight);
   }
   std::string get_svg_with_highlights(const std::string &details) const;
-  std::string get_substruct_match(const JSMolBase &q) const;
-  std::string get_substruct_matches(const JSMolBase &q) const;
+  std::string get_substruct_match(const JSMolBase &q,
+                                  const std::string &details) const;
+  std::string get_substruct_match(const JSMolBase &q) const {
+    return get_substruct_match(q, "");
+  };
+  std::string get_substruct_matches(const JSMolBase &q,
+                                    const std::string &details) const;
+  std::string get_substruct_matches(const JSMolBase &q) const {
+    return get_substruct_matches(q, "");
+  };
   std::string get_descriptors() const;
   std::string get_morgan_fp(const std::string &details) const;
   std::string get_morgan_fp() const { return get_morgan_fp("{}"); }

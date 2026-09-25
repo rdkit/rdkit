@@ -13,7 +13,6 @@
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/StreamOps.h>
-#include <iostream>
 #include <fstream>
 
 namespace RDKit {

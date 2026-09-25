@@ -76,9 +76,8 @@ namespace Descriptors {
 
 unsigned int calcLipinskiHBA(const ROMol &mol) {
   unsigned int res = 0;
-  for (ROMol::ConstAtomIterator iter = mol.beginAtoms(); iter != mol.endAtoms();
-       ++iter) {
-    if ((*iter)->getAtomicNum() == 7 || (*iter)->getAtomicNum() == 8) {
+  for (const auto atom : mol.atoms()) {
+    if (atom->getAtomicNum() == 7 || atom->getAtomicNum() == 8) {
       ++res;
     }
   }
@@ -87,10 +86,9 @@ unsigned int calcLipinskiHBA(const ROMol &mol) {
 
 unsigned int calcLipinskiHBD(const ROMol &mol) {
   unsigned int res = 0;
-  for (ROMol::ConstAtomIterator iter = mol.beginAtoms(); iter != mol.endAtoms();
-       ++iter) {
-    if (((*iter)->getAtomicNum() == 7 || (*iter)->getAtomicNum() == 8)) {
-      res += (*iter)->getTotalNumHs(true);
+  for (const auto atom : mol.atoms()) {
+    if (atom->getAtomicNum() == 7 || atom->getAtomicNum() == 8) {
+      res += atom->getTotalNumHs(true);
     }
   }
   return res;
@@ -104,7 +102,7 @@ const NumRotatableBondsOptions DefaultStrictDefinition = NonStrict;
 #endif
 }  // namespace
 
-const std::string NumRotatableBondsVersion = "3.1.0";
+const std::string NumRotatableBondsVersion = "3.2.0";
 unsigned int calcNumRotatableBonds(const ROMol &mol,
                                    NumRotatableBondsOptions strict) {
   if (strict == Default) {
@@ -118,10 +116,10 @@ unsigned int calcNumRotatableBonds(const ROMol &mol,
   } else if (strict == Strict) {
     std::string strict_pattern =
         "[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])("
-        "[CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]="
+        "[CH3])[CH3])&!$([CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]="
         "[N,O,S])&!$([CD3](=[N+])-!@[#7!D1])&!$([#7!D1]-!@[CD3]=[N+])]-,:;!@[!$"
         "(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])(["
-        "CH3])[CH3])]";
+        "CH3])[CH3])&!$([CH3])]";
     pattern_flyweight m(strict_pattern);
     return m.get().countMatches(mol);
   } else {
@@ -198,8 +196,8 @@ SMARTSCOUNTFUNC(NumHBD, "[N&!H0&v3,N&!H0&+1&v4,O&H1&+0,S&H1&+0,n&H1&+0]",
                 "2.0.1");
 SMARTSCOUNTFUNC(NumHBA,
                 "[$([O,S;H1;v2]-[!$(*=[O,N,P,S])]),$([O,S;H0;v2]),$([O,S;-]),$("
-                "[N;v3;!$(N-*=!@[O,N,P,S])]),$([nH0,o,s;+0])]",
-                "2.0.1");
+                "[N;v3;!$(N-*=!@[O,N,P,S])]),$([nH0X2,o,s;+0])]",
+                "2.0.2");
 SMARTSCOUNTFUNC(NumHeteroatoms, "[!#6;!#1]", "1.0.1");
 SMARTSCOUNTFUNC(NumAmideBonds, "C(=[O;!R])N", "1.0.0");
 

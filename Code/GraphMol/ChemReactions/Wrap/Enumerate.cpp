@@ -35,7 +35,6 @@
 #include <GraphMol/ChemReactions/Enumerate/RandomSampleAllBBs.h>
 #include <GraphMol/ChemReactions/Enumerate/EvenSamplePairs.h>
 #include <GraphMol/ChemReactions/Enumerate/Enumerate.h>
-#include <boost/python/stl_iterator.hpp>
 #include <cstdint>
 
 namespace python = boost::python;
@@ -45,10 +44,10 @@ namespace RDKit {
 template <class T>
 std::vector<RDKit::MOL_SPTR_VECT> ConvertToVect(T bbs) {
   std::vector<RDKit::MOL_SPTR_VECT> vect;
-  size_t num_bbs = python::extract<unsigned int>(bbs.attr("__len__")());
+  unsigned int num_bbs = python::len(bbs);
   vect.resize(num_bbs);
-  for (size_t i = 0; i < num_bbs; ++i) {
-    unsigned int len1 = python::extract<unsigned int>(bbs[i].attr("__len__")());
+  for (unsigned int i = 0; i < num_bbs; ++i) {
+    unsigned int len1 = python::len(bbs[i]);
     RDKit::MOL_SPTR_VECT &reacts = vect[i];
     reacts.reserve(len1);
     for (unsigned int j = 0; j < len1; ++j) {
@@ -125,14 +124,6 @@ class EnumerateLibraryWrap : public RDKit::EnumerateLibrary {
       : RDKit::EnumerateLibrary(rxn, ConvertToVect(ob), enumerator, params) {}
 };
 
-namespace {
-template <typename T>
-inline std::vector<T> to_std_vector(const python::object &iterable) {
-  return std::vector<T>(python::stl_input_iterator<T>(iterable),
-                        python::stl_input_iterator<T>());
-}
-}  // namespace
-
 void ToBBS(EnumerationStrategyBase &rgroup, ChemicalReaction &rxn,
            python::list ob) {
   rgroup.initialize(rxn, ConvertToVect(ob));
@@ -170,7 +161,10 @@ struct enumeration_wrapper {
              "Inititialize the library from a binary string")
         .def(
             "GetPosition", &RDKit::EnumerateLibraryBase::getPosition,
-            "Returns the current enumeration position into the reagent vectors",
+            "Returns the current enumeration position into the reagent vectors, as"
+            " returned by GetReagents().  They do not necessarily refer to"
+            " the input reagent sets as they only refer to reagents compatible"
+            " with the reaction.",
             python::return_internal_reference<
                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
             python::args("self"))
@@ -308,11 +302,14 @@ for result in itertools.islice(libary2, 1000):\n\
                           python::optional<const RDKit::EnumerationParams &>>(
             python::args("self", "rxn", "reagents", "enumerator", "params")))
 
-        .def("GetReagents", &RDKit::EnumerateLibrary::getReagents,
-             "Return the reagents used in this library.",
-             python::return_internal_reference<
-                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
-             python::args("self"));
+        .def(
+            "GetReagents", &RDKit::EnumerateLibrary::getReagents,
+            "Return the reagents used in this library.  These are the subset"
+            " of the input reagents that are compatible with the reaction so may"
+            " be smaller than the input reagent sets.",
+            python::return_internal_reference<
+                1, python::with_custodian_and_ward_postcall<0, 1>>(),
+            python::args("self"));
 
     // iterator_wrappers<EnumerateLibrary>().wrap("EnumerateLibraryIterator");
 
@@ -342,7 +339,10 @@ for result in itertools.islice(libary2, 1000):\n\
              "strategy.\n"
              "Note that some strategies are effectively infinite.")
         .def("GetPosition", &EnumerationStrategyBase::getPosition,
-             "Return the current indices into the arrays of reagents",
+             "Return the current indices into the arrays of reagents, as"
+             " returned by GetReagents().  They do not necessarily refer to"
+             " the input reagent sets as they only refer to reagents compatible"
+             " with the reaction.",
              python::return_internal_reference<
                  1, python::with_custodian_and_ward_postcall<0, 1>>(),
              python::args("self"))

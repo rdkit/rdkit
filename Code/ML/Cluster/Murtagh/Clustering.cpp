@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2002-2010 Greg Landrum and Rational Discovery LLC
 //   @@ All Rights Reserved @@
@@ -18,9 +17,9 @@ namespace python = boost::python;
 
 typedef double real;
 
-extern "C" void distdriver_(boost::int64_t *n, boost::int64_t *len, real *dists,
-                            boost::int64_t *toggle, boost::int64_t *ia,
-                            boost::int64_t *ib, real *crit);
+extern "C" int distdriver_(boost::int64_t *n, boost::int64_t *len, real *dists,
+                           boost::int64_t *toggle, boost::int64_t *ia,
+                           boost::int64_t *ib, real *crit);
 
 //
 // Rather than deal with any nonsense like trying to get

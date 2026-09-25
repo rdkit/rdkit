@@ -17,7 +17,6 @@
 #include <GraphMol/PeriodicTable.h>
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 #include <string>
 #include <utility>
 #include <vector>

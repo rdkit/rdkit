@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2006-2008 Greg Landrum
 //
@@ -14,7 +13,6 @@
 #include <RDGeneral/StreamOps.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
-#include <iostream>
 #include <sstream>
 #include <cstdint>
 

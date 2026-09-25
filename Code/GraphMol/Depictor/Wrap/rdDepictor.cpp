@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2010 Rational Discovery LLC
 //
@@ -40,8 +39,7 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
   python::list ks = coordMap.keys();
-  for (unsigned int i = 0;
-       i < python::extract<unsigned int>(ks.attr("__len__")()); i++) {
+  for (unsigned int i = 0; i < python::len(ks); ++i) {
     unsigned int id = python::extract<unsigned int>(ks[i]);
     if (id >= mol.getNumAtoms()) {
       throw_value_error("atom index out of range");
@@ -328,7 +326,8 @@ BOOST_PYTHON_MODULE(rdDepictor) {
           "adjustMolBlockWedging is True")
       .def_readwrite(
           "useRingTemplates", &ConstrainedDepictionParams::useRingTemplates,
-          "use templates to generate coordinates of complex ring systems");
+          "use templates to generate coordinates of complex ring systems")
+      .def("__setattr__", &safeSetattr);
 
   std::string docString;
   docString =

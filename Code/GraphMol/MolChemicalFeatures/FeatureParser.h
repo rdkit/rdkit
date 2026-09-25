@@ -11,7 +11,6 @@
 #ifndef __FEATUREPARSER_H_02122004_1810__
 #define __FEATUREPARSER_H_02122004_1810__
 
-#include <iostream>
 #include <string>
 #include <map>
 #include <utility>

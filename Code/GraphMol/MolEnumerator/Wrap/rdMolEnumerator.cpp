@@ -11,6 +11,8 @@
 #include <RDBoost/python.h>
 #include <GraphMol/MolEnumerator/MolEnumerator.h>
 
+#include <RDBoost/Wrap.h>
+
 namespace python = boost::python;
 using namespace RDKit;
 namespace {
@@ -78,7 +80,8 @@ BOOST_PYTHON_MODULE(rdMolEnumerator) {
                      "seed for the random enumeration (not yet implemented")
       .def("SetEnumerationOperator", &setEnumerationHelper,
            python::args("self", "typ"),
-           "set the operator to be used for enumeration");
+           "set the operator to be used for enumeration")
+      .def("__setattr__", &safeSetattr);
   python::def("Enumerate", &enumerateHelper1,
               (python::arg("mol"), python::arg("maxPerOperation") = 0),
               python::return_value_policy<python::manage_new_object>(),

@@ -3,7 +3,6 @@
 """
 import os
 import random
-import sys
 import unittest
 
 from rdkit import Chem, RDConfig
@@ -13,8 +12,8 @@ from rdkit.Chem import AllChem, TorsionFingerprints
 class TestCase(unittest.TestCase):
 
   def testConformerRMS(self):
-    m1 = Chem.MolFromSmiles('CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
-    cids = AllChem.EmbedMultipleConfs(m1, 2)
+    m1 = Chem.MultiConfMolFromSDF(os.path.join(RDConfig.RDCodeDir, "Chem/test_data/biaryl.sdf"),
+                                  removeHs=False)
 
     m2 = Chem.MolFromSmiles('CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
     m2.AddConformer(m1.GetConformer(id=1))
@@ -32,8 +31,8 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(rms2, 0.0, 4)
 
   def testConformerRMSMatrix(self):
-    m1 = Chem.MolFromSmiles('CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
-    cids = AllChem.EmbedMultipleConfs(m1, 3)
+    m1 = Chem.MultiConfMolFromSDF(os.path.join(RDConfig.RDCodeDir, "Chem/test_data/biaryl.sdf"),
+                                  removeHs=False)
 
     m2 = Chem.MolFromSmiles('CNc(n2)nc(C)cc2Nc(cc34)ccc3[nH]nc4')
     m2.AddConformer(m1.GetConformer(id=0))

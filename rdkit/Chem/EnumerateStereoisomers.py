@@ -91,8 +91,8 @@ def _getFlippers(mol, options):
       elif si.type == Chem.StereoType.Bond_Double:
         bnd = mol.GetBondWithIdx(si.centeredOn)
         if not bnd.GetStereoAtoms():
-          if si.controllingAtoms[0] == Chem.StereoInfo.NOATOM or \
-            si.controllingAtoms[2] == Chem.StereoInfo.NOATOM:
+          if si.controllingAtoms[0] == Chem.Atom.NOATOM or \
+            si.controllingAtoms[2] == Chem.Atom.NOATOM:
             continue
           bnd.SetStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2])
         flippers.append(_BondFlipper(mol.GetBondWithIdx(si.centeredOn)))

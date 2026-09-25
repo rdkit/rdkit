@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,13 +15,9 @@
 #include <vector>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
-#ifdef RDK_USE_URF
 #include <boost/shared_ptr.hpp>
-#endif
 #include <RDGeneral/BoostEndInclude.h>
-#ifdef RDK_USE_URF
 #include <RingDecomposerLib.h>
-#endif
 
 namespace RDKit {
 //! A class to store information about a molecule's rings
@@ -56,7 +52,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       RDKit::FIND_RING_TYPE ringType = FIND_RING_TYPE_OTHER_OR_UNKNOWN);
   RDKit::FIND_RING_TYPE getRingType() const { return df_find_type_type; };
   //! blows out all current data and de-initializes
-  void reset();
+  void reset(bool resetRingFamilies = true);
 
   bool isFindFastOrBetter() const {
     return df_init && (df_find_type_type == FIND_RING_TYPE_FAST ||
@@ -270,7 +266,6 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   std::vector<unsigned int> fusedRingNeighbors(unsigned int ringIdx);
 
-#ifdef RDK_USE_URF
   //! adds a ring family to our data
   /*!
     \param atomIndices the integer indices of the atoms involved in the
@@ -307,6 +302,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       - the object must be initialized before calling this
   */
   const VECT_INT_VECT &atomRingFamilies() const { return d_atomRingFamilies; }
+  VECT_INT_VECT atomRelevantCycles() const;
 
   //! returns our bond ring family vectors
   /*!
@@ -317,13 +313,16 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
 
   //! check if the ring families have been initialized
   bool areRingFamiliesInitialized() const { return dp_urfData != nullptr; }
-#endif
+
+  //! reset ring family information
+  void resetRingFamilies();
 
   //! @}
 
- private:
   //! pre-allocates some memory to save time later
   void preallocate(unsigned int numAtoms, unsigned int numBonds);
+
+ private:
   void initFusedRings();
   bool df_init{false};
   FIND_RING_TYPE df_find_type_type{FIND_RING_TYPE_OTHER_OR_UNKNOWN};
@@ -333,11 +332,10 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   std::vector<boost::dynamic_bitset<>> d_fusedRings;
   std::vector<unsigned int> d_numFusedBonds;
 
-#ifdef RDK_USE_URF
  public:
   boost::shared_ptr<RDL_data> dp_urfData;
-#endif
 };
+
 }  // namespace RDKit
 
 #endif

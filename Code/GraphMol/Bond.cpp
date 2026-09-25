@@ -35,9 +35,12 @@ Bond::Bond(const Bond &other) : RDProps(other) {
   } else {
     dp_stereoAtoms = nullptr;
   }
+  dp_macroBondInfo =
+      other.dp_macroBondInfo ? other.dp_macroBondInfo->copy() : nullptr;
   df_isAromatic = other.df_isAromatic;
   df_isConjugated = other.df_isConjugated;
   d_index = other.d_index;
+  d_flags = other.d_flags;
 }
 
 Bond::~Bond() { delete dp_stereoAtoms; }
@@ -57,10 +60,13 @@ Bond &Bond::operator=(const Bond &other) {
   } else {
     dp_stereoAtoms = nullptr;
   }
+  dp_macroBondInfo =
+      other.dp_macroBondInfo ? other.dp_macroBondInfo->copy() : nullptr;
   df_isAromatic = other.df_isAromatic;
   df_isConjugated = other.df_isConjugated;
   d_index = other.d_index;
   d_props = other.d_props;
+  d_flags = other.d_flags;
 
   return *this;
 }
@@ -75,16 +81,19 @@ void Bond::setOwningMol(ROMol *other) {
   dp_mol = other;
 }
 
+void Bond::setMacroBondInfo(MacroBondInfo *info) {
+  dp_macroBondInfo.reset(info);
+}
+
 unsigned int Bond::getOtherAtomIdx(const unsigned int thisIdx) const {
-  PRECONDITION(d_beginAtomIdx == thisIdx || d_endAtomIdx == thisIdx,
-               "bad index");
   if (d_beginAtomIdx == thisIdx) {
     return d_endAtomIdx;
   } else if (d_endAtomIdx == thisIdx) {
     return d_beginAtomIdx;
   }
-  // we cannot actually get down here
-  return 0;
+  // This "precondition" would check exactly the same that is checked
+  // above, but no need to be redundant, so just throw.
+  POSTCONDITION(false, "bad index");
 }
 
 void Bond::setBeginAtomIdx(unsigned int what) {

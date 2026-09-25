@@ -934,7 +934,7 @@ public class SmilesDetailsTests extends GraphMolTest {
 		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(1).getStereo());
 		refSmi = mol.MolToSmiles(true, false, 0); // (1,0,0);
 
-		assertEquals("C(\\C)=N\\O", refSmi);
+		assertEquals("C(/C)=N/O", refSmi);
 
 		// make sure we can round-trip:
 		mol = RWMol.MolFromSmiles(refSmi);
@@ -1148,7 +1148,7 @@ public class SmilesDetailsTests extends GraphMolTest {
 
 		smi = mol.MolToSmiles(true, false, 1);
 
-		assertEquals("C(\\F)=N/Cl", smi);
+		assertEquals("C(/F)=N\\Cl", smi);
 
 		smi = "C(\\C=C\\F)=C(/Cl)Br";
 		mol = RWMol.MolFromSmiles(smi);

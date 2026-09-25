@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //
@@ -22,7 +21,6 @@
 #include "FragCatalogUtils.h"
 #include "FragFPGenerator.h"
 #include <cstdlib>
-#include <iostream>
 #include <fstream>
 
 #include <GraphMol/Subgraphs/SubgraphUtils.h>

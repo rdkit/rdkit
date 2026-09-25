@@ -392,7 +392,7 @@ def _calculateBeta(mol, distmat, aid1):
   for b in mol.GetBonds():
     nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom())
     nb2 = _getHeavyAtomNeighbors(b.GetEndAtom())
-    if len(nb2) > 1 and len(nb2) > 1:
+    if len(nb1) > 1 and len(nb2) > 1:
       bonds.append(b)
   # get shortest distance
   dmax = 0

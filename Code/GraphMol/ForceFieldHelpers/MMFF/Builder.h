@@ -18,7 +18,6 @@
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
-#include <boost/noncopyable.hpp>
 #include <tuple>
 #include <cstdint>
 
@@ -79,9 +78,11 @@ RDKIT_FORCEFIELDHELPERS_EXPORT ForceFields::ForceField *constructForceField(
     bool ignoreInterfragInteractions = true);
 
 namespace Tools {
-class RDKIT_FORCEFIELDHELPERS_EXPORT DefaultTorsionBondSmarts
-    : private boost::noncopyable {
+class RDKIT_FORCEFIELDHELPERS_EXPORT DefaultTorsionBondSmarts {
  public:
+  DefaultTorsionBondSmarts(const DefaultTorsionBondSmarts &) = delete;
+  DefaultTorsionBondSmarts &operator=(const DefaultTorsionBondSmarts &) =
+      delete;
   static const std::string &string() { return ds_string; }
   static const ROMol *query();
 

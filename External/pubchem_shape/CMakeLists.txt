@@ -37,24 +37,33 @@ if(needDownload)
 endif()
 
 # simple patch for a typo in the pubchem_align library
+# This should no longer be necessary, as it has been fixed upstream.  Maybe take it out?
 file(READ ${PUBCHEMSHAPE_DIR}/shape_neighbor.cpp FILE_CONTENTS)
 string(REPLACE "memcpy( qom, old_quattrans, 7 * sizeof( float ) );" "memcpy( qom, old_quattrans, 7 * sizeof( double ) );" FILE_CONTENTS "${FILE_CONTENTS}")
 file(WRITE ${PUBCHEMSHAPE_DIR}/shape_neighbor.cpp "${FILE_CONTENTS}")
 
 rdkit_library(pubchem_align3d ./pubchem-align3d/shape_functions1.cpp
             ./pubchem-align3d/shape_functions2.cpp ./pubchem-align3d/shape_neighbor.cpp SHARED)
+# The external pubchem-align3d sources do not use RDKit export annotations.
+# Keep their symbols visible when RDKit is built with hidden visibility.
+set_target_properties(pubchem_align3d PROPERTIES CXX_VISIBILITY_PRESET default)
+
 if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
   set_target_properties(pubchem_align3d PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
 
 rdkit_library(PubChemShape PubChemShape.cpp SHARED
- LINK_LIBRARIES pubchem_align3d SmilesParse SubstructMatch)
+ LINK_LIBRARIES pubchem_align3d SmilesParse SubstructMatch MolTransforms)
 target_compile_definitions(PubChemShape PRIVATE RDKIT_PUBCHEMSHAPE_BUILD)
 
 rdkit_headers(PubChemShape.hpp DEST GraphMol)
 
 rdkit_catch_test(shape_test test.cpp LINK_LIBRARIES PubChemShape FileParsers MolAlign MolTransforms)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
 endif()

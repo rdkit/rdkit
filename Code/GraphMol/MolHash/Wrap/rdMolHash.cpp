@@ -56,4 +56,6 @@ BOOST_PYTHON_MODULE(rdMolHash) {
        python::arg("useCxSmiles") = false, python::arg("cxFlagsToSkip") = 0),
       "Generate a hash for a molecule. The func argument determines "
       "which hash is generated.");
+  python::scope().attr("excludeFromTautomerismProp") =
+      MolHash::excludeFromTautomerismProp;
 }

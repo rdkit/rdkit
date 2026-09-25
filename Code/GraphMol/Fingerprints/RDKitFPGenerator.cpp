@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2025 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -26,12 +26,16 @@
 #include <boost/random.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <climits>
-#include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/types.h>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
+
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 namespace RDKitFP {
@@ -40,10 +44,9 @@ std::vector<std::uint32_t> *RDKitFPAtomInvGenerator::getAtomInvariants(
     const ROMol &mol) const {
   auto *result = new std::vector<std::uint32_t>();
   result->reserve(mol.getNumAtoms());
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    unsigned int aHash = ((*atomIt)->getAtomicNum() % 128) << 1 |
-                         static_cast<unsigned int>((*atomIt)->getIsAromatic());
+  for (const auto atom : mol.atoms()) {
+    unsigned int aHash = (atom->getAtomicNum() % 128) << 1 |
+                         static_cast<unsigned int>(atom->getIsAromatic());
     result->push_back(aHash);
   }
   return result;
@@ -51,6 +54,13 @@ std::vector<std::uint32_t> *RDKitFPAtomInvGenerator::getAtomInvariants(
 
 std::string RDKitFPAtomInvGenerator::infoString() const {
   return "RDKitFPAtomInvGenerator";
+}
+
+void RDKitFPAtomInvGenerator::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "RDKitFPAtomInvGenerator");
+}
+void RDKitFPAtomInvGenerator::fromJSON(const boost::property_tree::ptree &) {
+  // no parameters to set
 }
 
 RDKitFPAtomInvGenerator *RDKitFPAtomInvGenerator::clone() const {
@@ -68,6 +78,24 @@ std::string RDKitFPArguments::infoString() const {
          " useHs=" + std::to_string(df_useHs) +
          " branchedPaths=" + std::to_string(df_branchedPaths) +
          " useBondOrder=" + std::to_string(df_useBondOrder);
+}
+
+void RDKitFPArguments::toJSON(boost::property_tree::ptree &pt) const {
+  pt.put("type", "RDKitFPArguments");
+  pt.put("minPath", d_minPath);
+  pt.put("maxPath", d_maxPath);
+  pt.put("useHs", df_useHs);
+  pt.put("branchedPaths", df_branchedPaths);
+  pt.put("useBondOrder", df_useBondOrder);
+  FingerprintArguments::toJSON(pt);
+}
+void RDKitFPArguments::fromJSON(const boost::property_tree::ptree &pt) {
+  d_minPath = pt.get<unsigned int>("minPath", d_minPath);
+  d_maxPath = pt.get<unsigned int>("maxPath", d_maxPath);
+  df_useHs = pt.get<bool>("useHs", df_useHs);
+  df_branchedPaths = pt.get<bool>("branchedPaths", df_branchedPaths);
+  df_useBondOrder = pt.get<bool>("useBondOrder", df_useBondOrder);
+  FingerprintArguments::fromJSON(pt);
 }
 
 RDKitFPArguments::RDKitFPArguments(unsigned int minPath, unsigned int maxPath,
@@ -89,14 +117,21 @@ RDKitFPArguments::RDKitFPArguments(unsigned int minPath, unsigned int maxPath,
 
 template <typename OutputType>
 void RDKitFPAtomEnv<OutputType>::updateAdditionalOutput(
-    AdditionalOutput *additionalOutput, size_t bitId) const {
+    AdditionalOutput *additionalOutput, std::uint64_t bitId) const {
   PRECONDITION(additionalOutput, "bad output pointer");
   if (additionalOutput->bitPaths) {
     (*additionalOutput->bitPaths)[bitId].push_back(d_bondPath);
   }
-  if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
+  if (additionalOutput->atomToBits || additionalOutput->atomCounts ||
+      additionalOutput->atomsPerBit) {
+    if (additionalOutput->atomsPerBit) {
+      (*additionalOutput->atomsPerBit)[bitId].emplace_back();
+    }
     for (size_t i = 0; i < d_atomsInPath.size(); ++i) {
       if (d_atomsInPath[i]) {
+        if (additionalOutput->atomsPerBit) {
+          (*additionalOutput->atomsPerBit)[bitId].back().push_back(i);
+        }
         if (additionalOutput->atomToBits) {
           auto &alist = additionalOutput->atomToBits->at(i);
           if (std::find(alist.begin(), alist.end(), bitId) == alist.end()) {
@@ -129,13 +164,25 @@ std::string RDKitFPEnvGenerator<OutputType>::infoString() const {
 }
 
 template <typename OutputType>
+void RDKitFPEnvGenerator<OutputType>::toJSON(
+    boost::property_tree::ptree &pt) const {
+  pt.put("type", "RDKitFPEnvGenerator");
+  AtomEnvironmentGenerator<OutputType>::toJSON(pt);
+}
+template <typename OutputType>
+void RDKitFPEnvGenerator<OutputType>::fromJSON(
+    const boost::property_tree::ptree &pt) {
+  AtomEnvironmentGenerator<OutputType>::fromJSON(pt);
+};
+
+template <typename OutputType>
 std::vector<AtomEnvironment<OutputType> *>
 RDKitFPEnvGenerator<OutputType>::getEnvironments(
     const ROMol &mol, FingerprintArguments *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *,  // ignoreAtoms
-    const int,                           // confId
-    const AdditionalOutput *,            // additionalOutput
+    const std::vector<std::uint32_t> *ignoreAtoms,
+    const int,                 // confId
+    const AdditionalOutput *,  // additionalOutput
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *,  // bondInvariants
     const bool                           // hashResults
@@ -149,9 +196,18 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
 
   // get all paths
   INT_PATH_LIST_MAP allPaths;
+
+  boost::dynamic_bitset<> ignoreAtomsBitset;
+  if (ignoreAtoms) {
+    ignoreAtomsBitset.resize(mol.getNumAtoms());
+    std::ranges::for_each(*ignoreAtoms, [&](const auto atomIdx) {
+      ignoreAtomsBitset.set(atomIdx);
+    });
+  }
   RDKitFPUtils::enumerateAllPaths(
       mol, allPaths, fromAtoms, fpArguments->df_branchedPaths,
-      fpArguments->df_useHs, fpArguments->d_minPath, fpArguments->d_maxPath);
+      fpArguments->df_useHs, fpArguments->d_minPath, fpArguments->d_maxPath,
+      ignoreAtoms ? &ignoreAtomsBitset : nullptr);
 
   // identify query bonds
   std::vector<short> isQueryBond(mol.getNumBonds(), 0);

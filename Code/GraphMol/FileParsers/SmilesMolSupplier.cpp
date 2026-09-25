@@ -17,7 +17,6 @@
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <cstdlib>
@@ -67,6 +66,10 @@ void SmilesMolSupplier::init() {
   d_line = -1;
   d_molpos.clear();
   d_lineNums.clear();
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
+  d_molCache.clear();
 }
 
 void SmilesMolSupplier::setData(const std::string &text,
@@ -175,11 +178,10 @@ std::unique_ptr<RWMol> SmilesMolSupplier::processLine(std::string inLine) {
       std::string pname, pval;
       if (d_props.size() > col) {
         pname = d_props[col];
-      } else {
+      }
+      if (pname.empty()) {
         pname = "Column_";
-        std::stringstream ss;
-        ss << col;
-        pname += ss.str();
+        pname += std::to_string(col);
       }
 
       pval = recs[col];
@@ -456,6 +458,9 @@ std::unique_ptr<RWMol> SmilesMolSupplier::next() {
 std::unique_ptr<RWMol> SmilesMolSupplier::operator[](unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
 
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  const std::lock_guard<std::mutex> guard(d_readMutex);
+#endif
   // ---------
   // move to the appropriate location in the file:
   // ---------
@@ -466,6 +471,37 @@ std::unique_ptr<RWMol> SmilesMolSupplier::operator[](unsigned int idx) {
   // ---------
   auto res = next();
 
+  return res;
+}
+std::shared_ptr<RWMol> SmilesMolSupplier::getShared(unsigned int idx) {
+  PRECONDITION(dp_inStream, "no stream");
+  if (d_cacheMolecules) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
+    if (d_molCache.size() > idx && d_molCache[idx]) {
+      return d_molCache[idx].value();
+    }
+  }
+  // get the molecule with index idx
+  std::shared_ptr<RWMol> res;
+  {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_readMutex);
+#endif
+    moveTo(idx);
+    res.reset(next().release());
+  }
+  if (d_cacheMolecules) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    const std::lock_guard<std::mutex> guard(d_cacheMutex);
+#endif
+    if (d_molCache.size() <= idx) {
+      constexpr unsigned int molCacheAllocChunkSize = 1000;
+      d_molCache.resize(idx + molCacheAllocChunkSize);
+    }
+    d_molCache[idx] = res;
+  }
   return res;
 }
 

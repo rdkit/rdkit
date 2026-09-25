@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2007-2017 Greg Landrum
+#  Copyright (C) 2007-2026 Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -19,7 +19,7 @@ import unittest
 import numpy as np
 
 from rdkit import Chem
-from rdkit.Chem import AllChem, Descriptors, Descriptors3D, Lipinski, rdMolDescriptors
+from rdkit.Chem import AllChem, Descriptors, Descriptors3D, rdMolDescriptors
 
 
 def load_tests(loader, tests, ignore):
@@ -81,13 +81,8 @@ class TestCase(unittest.TestCase):
       self.assertEqual(actual, expected)
 
   def testMQNDetails(self):
+    # assuming the strict definition of rotatable bonds (default)
     refFile = os.path.join(os.path.dirname(__file__), 'test_data', 'MQNs_regress.pkl')
-    refFile2 = os.path.join(os.path.dirname(__file__), 'test_data', 'MQNs_non_strict_regress.pkl')
-    # figure out which definition we are currently using
-    m = Chem.MolFromSmiles("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C")
-    if Lipinski.NumRotatableBonds(m) == 2:
-      refFile = refFile2
-
     with open(refFile, 'rb') as intf:
       refData = pickle.load(intf)
     fn = os.path.join(os.path.dirname(__file__), 'test_data', 'aromat_regress.txt')
@@ -104,19 +99,12 @@ class TestCase(unittest.TestCase):
       self.assertEqual(mqns, refData[i][1])
 
   def testMQN(self):
-    m = Chem.MolFromSmiles("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C")
-    if Lipinski.NumRotatableBonds(m) == 2:
-      tgt = [
-        42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24061,
-        17820, 1, 9303, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,
-        292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750
-      ]
-    else:
-      tgt = [
-        42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24059,
-        17822, 1, 8314, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,
-        292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750
-      ]
+    # assuming the strict definition of rotatable bonds (default)
+    tgt = [
+      42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24059,
+      17822, 1, 8313, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939, 292,
+      41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750
+    ]
     fn = os.path.join(os.path.dirname(__file__), 'test_data', 'aromat_regress.txt')
     ms = [x for x in Chem.SmilesMolSupplier(fn, delimiter='\t')]
     vs = np.zeros((42, ), np.int32)
@@ -202,17 +190,26 @@ class TestCase(unittest.TestCase):
 
   def testGet3DMolDescriptors(self):
     mol = Chem.MolFromSmiles('CCCO')
-
     # check ValueError raised when no 3D coordinates supplied
     with self.assertRaises(ValueError):
       Descriptors3D.CalcMolDescriptors3D(mol)
 
+    mol = Chem.MolFromSmiles('CCCO |(1.44534,-0.585581,0.158885;0.667797,0.646552,-0.278384;'
+                             '-0.741018,0.544094,0.296045;-1.37212,-0.605065,-0.176546)|')
     # test function returns expected outputs
-    AllChem.EmbedMolecule(mol, randomSeed=0xf00d)
     descs = Descriptors3D.CalcMolDescriptors3D(mol)
     self.assertTrue('InertialShapeFactor' in descs)
-    self.assertAlmostEqual(descs['PMI1'], 20.9582649071385, delta=1e-4)
+    self.assertAlmostEqual(descs['PMI1'], 20.9583, delta=1e-4)
 
+    # test function returns expected outputs
+    refFile = os.path.join(os.path.dirname(__file__), 'test_data', 'descriptors_multiconf.sdf')
+    mol = Chem.MultiConfMolFromSDF(refFile, removeHs=False)
+    descs = Descriptors3D.CalcMolDescriptors3D(mol)
+    self.assertTrue('InertialShapeFactor' in descs)
+    self.assertAlmostEqual(descs['PMI1'], 20.9595, delta=1e-4)
+    descs2 = Descriptors3D.CalcMolDescriptors3D(mol, confId=2)
+    for key in descs:
+      self.assertNotEqual(descs2[key], descs[key])
 
 if __name__ == '__main__':
   unittest.main()

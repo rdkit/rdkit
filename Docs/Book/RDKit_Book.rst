@@ -455,6 +455,7 @@ h          "number of implicit hs"                     >0               Y
 H          "total number of Hs"                        1
 r          "size of smallest SSSR ring"                >0               Y
 R          "number of SSSR rings"                      >0               Y
+k          "size of SSSR ring"                         >0               Y       extension
 v          "total valence"                             1                Y
 x          "number of ring bonds"                      >0               Y
 X          "total degree"                              1                Y
@@ -690,9 +691,9 @@ Ring Finding and SSSR
 As others have ranted about with more energy and eloquence than I intend to, the definition of a molecule's smallest set of smallest rings is not unique.
 In some high symmetry molecules, a “true” SSSR will give results that are unappealing.
 For example, the SSSR for cubane only contains 5 rings, even though there are “obviously” 6. This problem can be fixed by implementing a *small* (instead of *smallest*) set of smallest rings algorithm that returns symmetric results.
-This is the approach that we took with the RDKit.
+This is the approach that we took with the RDKit in :py:func:`rdkit.Chem.GetSymmSSSR`.
 
-Because it is sometimes useful to be able to count how many SSSR rings are present in the molecule, there is a GetSSSR function, but this only returns the SSSR count, not the potentially non-unique set of rings.
+Because it is sometimes useful to know the "true" SSSR rings, there is a :py:func:`rdkit.Chem.GetSSSR` function which returns this potentially non-unique set of rings.
 
 For situations where you just care about knowing whether or not atoms/bonds are in rings, the RDKit provides the function
 :py:func:`rdkit.Chem.rdmolops.FastFindRings`. This does a depth-first traversal of the molecule graph and identifies atoms and bonds that
@@ -1136,8 +1137,8 @@ This also works with multiple implicit Hs: ``C[Pt@SP1H2]Cl`` and ``C[Pt@SP1]([H]
 Missing ligands
 ^^^^^^^^^^^^^^^
 
-Coordination environments with missing ligands are treated as if the missing ligands were at the end of the ligand ordering.
-For example, this invented complex can be presented with the SMILES ``O[Mn@OH1](Cl)(C)(N)F``.
+Internally coordination environments with missing ligands are treated as if the missing ligands were at the end of the ligand ordering.
+However in SMILES they are treated the same as implicit hydrogens. For example, this invented square pyramidal complex can be presented with the SMILES ``O[Mn@OH28](Cl)(C)(N)F`` which is interpreted as: ``O[Mn@OH28](*)(Cl)(C)(N)F``.
 
 .. |nts_missing1| image:: images/nontetstereo_missing1.png
    :align: middle
@@ -1802,12 +1803,13 @@ Here are the steps involved, in order.
      valence states. This step is always performed, but if it is "skipped"
      the test for non-standard valences will not be carried out.
 
-  5. ``symmetrizeSSSR``: calls the symmetrized smallest set of smallest rings
-     algorithm (discussed in the Getting Started document).
 
-  6. ``Kekulize``: converts aromatic rings to their Kekule form. Will raise an
+  5. ``Kekulize``: converts aromatic rings to their Kekule form. Will raise an
      exception if a ring cannot be kekulized or if aromatic bonds are found
      outside of rings.
+
+  6. ``symmetrizeSSSR``: calls the symmetrized smallest set of smallest rings
+     algorithm (discussed in the Getting Started document).
 
   7. ``assignRadicals``: determines the number of radical electrons (if any) on
      each atom.

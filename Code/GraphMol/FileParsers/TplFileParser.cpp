@@ -295,23 +295,4 @@ std::unique_ptr<RWMol> MolFromTPLFile(const std::string &fName,
 }
 }  // namespace FileParsers
 }  // namespace v2
-#if 0  
-
-  RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,
-                            bool sanitize){
-    return MolDataStreamToMol(&inStream,line,sanitize);
-  };
-  //------------------------------------------------
-  //
-  //  Read a molecule from a string
-  //
-  //------------------------------------------------
-  RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize){
-    std::istringstream inStream(molBlock);
-    RWMol *res = nullptr;
-    unsigned int line = 0;
-    return MolDataStreamToMol(inStream, line, sanitize);
-  }
-
-#endif
 }  // namespace RDKit

@@ -36,6 +36,8 @@
 #include <RDGeneral/export.h>
 #ifndef GETAWAYRDKIT_H_SEPT2016
 #define GETAWAYRDKIT_H_SEPT2016
+#include <vector>
+#include <string>
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {

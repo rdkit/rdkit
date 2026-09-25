@@ -52,8 +52,10 @@ TEST_CASE("Round TRIP") {
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/";
   std::string code_path = std::string(getenv("RDBASE"));
 
-  // Eventually this catch test is to see if round tripping mol 3d -> chemdraw returns
-  //  reasonable coords, however chemdraw seems to forget about the original scale
+  // Eventually this catch test is to see if round tripping mol 3d -> chemdraw
+  // returns
+  //  reasonable coords, however chemdraw seems to forget about the original
+  //  scale
   //   and converts to pixel drawing coords, so this test is kind of meaningless
   SECTION("3D structs") {
     auto fname =

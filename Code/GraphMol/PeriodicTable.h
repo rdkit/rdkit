@@ -43,6 +43,8 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
 
    */
   static PeriodicTable *getTable();
+  PeriodicTable(const PeriodicTable &) = delete;
+  PeriodicTable &operator=(const PeriodicTable &) = delete;
 
   ~PeriodicTable() {
     byanum.clear();
@@ -85,7 +87,7 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
     } else if (elementSymbol == "O") {
       anum = 8;
     } else {
-      STR_UINT_MAP::const_iterator iter = byname.find(elementSymbol);
+      auto iter = byname.find(elementSymbol);
       if (iter != byname.end()) {
         anum = iter->second;
       }
@@ -336,7 +338,6 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
 
  private:
   PeriodicTable();
-  PeriodicTable &operator=(const PeriodicTable &);
   static void initInstance();
 
   static class std::unique_ptr<PeriodicTable> ds_instance;

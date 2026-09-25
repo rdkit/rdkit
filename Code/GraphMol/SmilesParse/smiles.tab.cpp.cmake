@@ -74,7 +74,6 @@
 /* First part of user prologue.  */
 
 
-  // $Id$
   //
   //  Copyright (C) 2001-2016 Randal Henne, Greg Landrum and Rational Discovery LLC
   //
@@ -82,7 +81,6 @@
   //
 
 #include <cstring>
-#include <iostream>
 #include <limits>
 #include <string>
 #include <string_view>
@@ -614,14 +612,14 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   138,   138,   141,   145,   148,   152,   156,   159,   165,
-     170,   173,   181,   182,   183,   184,   192,   203,   214,   235,
-     244,   250,   271,   295,   314,   324,   345,   353,   367,   370,
-     371,   377,   378,   384,   392,   393,   394,   395,   396,   397,
-     398,   402,   403,   404,   405,   406,   407,   408,   409,   410,
-     414,   415,   416,   417,   418,   422,   423,   424,   425,   426,
-     427,   431,   432,   436,   437,   438,   439,   440,   441,   442,
-     446,   447,   451,   452,   463,   464
+       0,   137,   137,   140,   144,   147,   151,   155,   158,   164,
+     169,   172,   180,   181,   182,   183,   191,   202,   213,   234,
+     243,   249,   270,   294,   313,   323,   344,   352,   366,   369,
+     370,   376,   377,   383,   391,   392,   393,   394,   395,   396,
+     397,   401,   402,   403,   404,   405,   406,   407,   408,   409,
+     413,   414,   415,   416,   417,   428,   429,   430,   431,   432,
+     433,   437,   438,   442,   443,   444,   445,   446,   447,   448,
+     452,   453,   457,   458,   469,   470
 };
 #endif
 
@@ -1434,7 +1432,7 @@ yyreduce:
   int atomIdx2=mp->addAtom((yyvsp[0].atom),true,true);
   mp->addBond(atomIdx1,atomIdx2,
 	      SmilesParseOps::GetUnspecifiedBondType(mp,a1,mp->getAtomWithIdx(atomIdx2)));
-  mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  ++numBondsParsed;
   //delete $2;
 }
     break;
@@ -1456,7 +1454,7 @@ yyreduce:
     (yyvsp[-1].bond)->setBeginAtomIdx(atomIdx1);
     (yyvsp[-1].bond)->setEndAtomIdx(atomIdx2);
   }
-  (yyvsp[-1].bond)->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  ++numBondsParsed;
   mp->addBond((yyvsp[-1].bond),true);
   //delete $3;
 }
@@ -1468,7 +1466,7 @@ yyreduce:
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom((yyvsp[0].atom),true,true);
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
-  mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  ++numBondsParsed;
   //delete $3;
 }
     break;
@@ -1559,7 +1557,7 @@ yyreduce:
   int atomIdx2=mp->addAtom((yyvsp[0].atom),true,true);
   mp->addBond(atomIdx1,atomIdx2,
 	      SmilesParseOps::GetUnspecifiedBondType(mp,a1,mp->getAtomWithIdx(atomIdx2)));
-  mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  ++numBondsParsed;
   branchPoints.push_back({atomIdx1, (yyvsp[-1].ival)});
 }
     break;
@@ -1581,7 +1579,7 @@ yyreduce:
     (yyvsp[-1].bond)->setBeginAtomIdx(atomIdx1);
     (yyvsp[-1].bond)->setEndAtomIdx(atomIdx2);
   }
-  (yyvsp[-1].bond)->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  ++numBondsParsed;
   mp->addBond((yyvsp[-1].bond),true);
 
   branchPoints.push_back({atomIdx1, (yyvsp[-2].ival)});
@@ -1594,7 +1592,7 @@ yyreduce:
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom((yyvsp[0].atom),true,true);
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
-  mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  ++numBondsParsed;
   branchPoints.push_back({atomIdx1, (yyvsp[-2].ival)});
 }
     break;
@@ -1707,7 +1705,16 @@ yyreduce:
     break;
 
   case 54: /* chiral_element: element CHI_CLASS_TOKEN number  */
-                                 { (yyvsp[-2].atom)->setChiralTag((yyvsp[-1].chiraltype)); (yyvsp[-2].atom)->setProp(common_properties::_chiralPermutation,(yyvsp[0].ival)); }
+                                 { 
+    if((yyvsp[0].ival)==0){
+      yyerror(input,molList,branchPoints,scanner,start_token, current_token_position,
+            "chiral permutation cannot be zero");
+      yyErrorCleanup(molList);
+      delete (yyvsp[-2].atom);
+      YYABORT;
+    }
+    (yyvsp[-2].atom)->setChiralTag((yyvsp[-1].chiraltype)); (yyvsp[-2].atom)->setProp(common_properties::_chiralPermutation,(yyvsp[0].ival)); 
+}
     break;
 
   case 56: /* element: number simple_atom  */

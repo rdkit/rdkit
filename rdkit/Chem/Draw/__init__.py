@@ -12,6 +12,7 @@ import warnings
 from collections import namedtuple
 from importlib.util import find_spec
 from io import BytesIO
+import itertools
 
 import numpy
 from rdkit import Chem
@@ -68,7 +69,7 @@ if _sip_available():
 
 def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
                **kwargs):
-  """Returns a PIL image containing a drawing of the molecule
+  """Returns a PIL image containing a drawing of the molecule.
 
       ARGUMENTS:
 
@@ -83,6 +84,14 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
         - highlightBonds: list of bonds to highlight (default [])
 
         - highlightColor: RGB color as tuple (default [1, 0, 0])
+
+        - legend: optional text drawn as legend (default ''). Position and style
+          are controlled by options (MolDrawOptions): legendPosition (Bottom, Top,
+          Left, Right), legendVerticalText (for Left/Right), legendFontSize,
+          legendFraction. Pass as options=opts or drawOptions=opts.
+
+        - options: rdMolDraw2D.MolDrawOptions instance for drawing options
+          (e.g. legendPosition, legendVerticalText). Single-molecule only.
 
       NOTE:
 
@@ -139,6 +148,22 @@ def MolToFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, im
     outf.close()
 
 
+def MolToSVG(mol, size=(300, 300), kekulize=True, wedgeBonds=True, drawOptions=None, **kwargs):
+  """Returns an SVG string containing a drawing of the molecule.
+
+  Supports the same arguments as MolToImage for highlights and legend.
+  For legend position (Top/Left/Right/Bottom) and vertical text on side legends,
+  pass an rdMolDraw2D.MolDrawOptions instance with legendPosition and
+  legendVerticalText set. Legend position applies to single-molecule drawing;
+  for grid drawing (MolsToGridImage), pass the same drawOptions and the position
+  applies to each cell's legend.
+  """
+  if not mol:
+    raise ValueError('Null molecule provided')
+  return _moltoSVG(mol, size, kwargs.get('highlightAtoms', []), kwargs.get('legend', ''), kekulize,
+                   drawOptions=drawOptions, highlightBonds=kwargs.get('highlightBonds', []))
+
+
 def ShowMol(mol, size=(300, 300), kekulize=True, wedgeBonds=True, title='RDKit Molecule',
             stayInFront=True, **kwargs):
   """ Generates a picture of a molecule and displays it in a Tkinter window
@@ -167,7 +192,6 @@ def _bivariate_normal(X, Y, sigmax=1.0, sigmay=1.0, mux=0.0, muy=0.0, sigmaxy=0.
     This is the implementation from matplotlib:
     https://github.com/matplotlib/matplotlib/blob/81e8154dbba54ac1607b21b22984cabf7a6598fa/lib/matplotlib/mlab.py#L1866
     it was deprecated in v2.2 of matplotlib, so we are including it here.
-
 
     Bivariate Gaussian distribution for equal shape *X*, *Y*.
     See `bivariate normal
@@ -222,7 +246,7 @@ def shouldKekulize(mol, kekulize):
   return kekulize
 
 
-def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **kwargs):
+def _prepareMol(mol, drawOptions, **kwargs):
   if mol.NeedsUpdatePropertyCache():
     mol.UpdatePropertyCache(False)
 
@@ -235,6 +259,11 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
         mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
     except ValueError:  # <- can happen on a kekulization failure
       mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False, wedgeBonds=wedge)
+  return mol
+
+
+def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **kwargs):
+  mol = _prepareMol(mol, drawOptions=drawOptions, **kwargs)
   d2d = rdMolDraw2D.MolDraw2DCairo(sz[0], sz[1])
   if drawOptions is not None:
     d2d.SetDrawOptions(drawOptions)
@@ -243,6 +272,10 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
   # we already prepared the molecule:
   d2d.drawOptions().prepareMolsBeforeDrawing = False
   bondHighlights = kwargs.get('highlightBonds', None)
+  if highlights:
+    if isinstance(highlights[0], (list, tuple)):
+      # multiple highlights
+      highlights = list(itertools.chain.from_iterable(highlights))
   if bondHighlights is not None:
     d2d.DrawMolecule(mol, legend=legend or "", highlightAtoms=highlights or [],
                      highlightBonds=bondHighlights)
@@ -449,23 +482,23 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
       NOTES:
 
             To include a blank cell in the middle of a row, supply None for that entry in molsMatrix.
-            You do not need to do that for empty cells at the end of a row; 
+            You do not need to do that for empty cells at the end of a row;
             this function will automatically pad rows so that all rows are the same length.
-            
+
             This function is useful when each row has some meaning,
-            for example the generation in a mass spectrometry fragmentation tree--refer to 
+            for example the generation in a mass spectrometry fragmentation tree--refer to
             example at https://en.wikipedia.org/wiki/Fragmentation_(mass_spectrometry).
             If you want to display a set molecules where each row does not have any specific meaning,
             use MolsToGridImage instead.
 
             This function nests data structures one additional level beyond the analogous function MolsToGridImage
-            (in which the molecules and legends are non-nested lists, 
-            and the highlight parameters are two-deep nested lists) 
+            (in which the molecules and legends are non-nested lists,
+            and the highlight parameters are two-deep nested lists)
 
       RETURNS:
 
         A grid of molecular images in one of these formats:
-        
+
         - useSVG=False and returnPNG=False (default): A PIL object for a PNG image file
 
         - useSVG=False and returnPNG=True: PNG data
@@ -492,10 +525,10 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
         # Exhaustive example: All parameters are supplied,
         # result will be a drawing containing (where each row of molecules is followed by a row of legends):
         # 1 F-Cl 0              1 F-Cl 0
-        # no highlighting       bond highlighted         
+        # no highlighting       bond highlighted
         # 1 F-Cl 0                                  1 F-Cl 0
         # sodium highlighted                        chloride and bond highlighted
-        legendsMatrix = [["no highlighting", "bond highlighted"], 
+        legendsMatrix = [["no highlighting", "bond highlighted"],
         ["F highlighted", "", "Cl and bond highlighted"]]
         highlightAtomListsMatrix = [[[],[]], [[0], None, [1]]]
         highlightBondListsMatrix = [[[],[0]], [[], None, [0]]]
@@ -503,8 +536,8 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
         dopts = rdMolDraw2D.MolDrawOptions()
         dopts.addAtomIndices = True
 
-        img_binary = MolsMatrixToGridImage(molsMatrix=molsMatrix, subImgSize=(300, 400), 
-        legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix, 
+        img_binary = MolsMatrixToGridImage(molsMatrix=molsMatrix, subImgSize=(300, 400),
+        legendsMatrix=legendsMatrix, highlightAtomListsMatrix=highlightAtomListsMatrix,
         highlightBondListsMatrix=highlightBondListsMatrix, useSVG=False, returnPNG=True, drawOptions=dopts)
         print(img_binary[:20])
         # Prints a binary string: b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x03\x84'
@@ -527,8 +560,6 @@ def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, high
   nRows = len(mols) // molsPerRow
   if len(mols) % molsPerRow:
     nRows += 1
-
-  blocks = [''] * (nRows * molsPerRow)
 
   fullSize = (molsPerRow * subImgSize[0], nRows * subImgSize[1])
 
@@ -937,3 +968,78 @@ def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, useSVG=True,
 def SetComicMode(opts):
   opts.fontFile = os.path.join(RDConfig.RDDataDir, "Fonts", "ComicNeue-Regular.ttf")
   opts.comicMode = True
+
+
+def _getMatchAtomsAndBonds(mol, qry, match):
+  alist = match
+  blist = []
+  if qry is not None:
+    for bnd in qry.GetBonds():
+      b = mol.GetBondBetweenAtoms(alist[bnd.GetBeginAtomIdx()], alist[bnd.GetEndAtomIdx()])
+      blist.append(b.GetIdx())
+  return alist, blist
+
+
+def _addColorsToMap(els, cols, color):
+  for el in els:
+    if el not in cols:
+      cols[el] = []
+    if color not in cols[el]:
+      cols[el].append(color)
+
+
+def DrawMolWithMatches(mol, matches, molSize=(350, 300), qry=None, label='',
+                       options=rdMolDraw2D.MolDrawOptions(), colors=None, doPNG=True, kekulize=True,
+                       confId=-1):
+  ''' Draws a molecule with a set of substructure matches highlighted
+
+      ARGUMENTS:
+
+        - mol: The molecule to draw
+
+        - matches: A list/tuple of lists/tuples of atom indices, each inner tuple representing a substructure match
+
+        - molSize: The size of the image to produce (default (350, 300))
+
+        - qry: The query molecule used to generate the matches (default None)
+                If supplied, bonds between matched atoms will also be highlighted
+
+        - label: A string to place under the molecule (default '')
+
+        - options: A MolDrawOptions object to control the drawing style (default MolDrawOptions())
+
+        - colors: A list/tuple of colors to use for highlighting the different matches
+                  (default None, in which case the default highlight color is used for all matches)
+
+        - doPNG: Whether to return PNG (if true) or SVG (if false) (default true)
+
+        - kekulize: Whether to kekulize the molecule before drawing (default true)
+
+        - confId: The conformer ID to use when drawing (default -1, the default conformer)
+
+      RETURNS:
+        A string containing the image in the requested format (PNG or SVG)
+'''
+  mol = _prepareMol(mol, options, kekulize=kekulize)
+
+  acols = {}
+  bcols = {}
+  h_rads = {}
+  h_lw_mult = {}
+  for i, match in enumerate(matches):
+    alist, blist = _getMatchAtomsAndBonds(mol, qry, match)
+    for ai in alist:
+      h_rads[ai] = options.highlightRadius
+    for bi in blist:
+      h_lw_mult[bi] = options.highlightBondWidthMultiplier
+    _addColorsToMap(alist, acols,
+                    colors[i % len(colors)] if colors is not None else options.getHighlightColour())
+    _addColorsToMap(blist, bcols,
+                    colors[i % len(colors)] if colors is not None else options.getHighlightColour())
+  d = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1]) if doPNG \
+    else rdMolDraw2D.MolDraw2DSVG(molSize[0], molSize[1])
+  d.SetDrawOptions(options)
+  d.drawOptions().prepareMolsBeforeDrawing = False
+  d.DrawMoleculeWithHighlights(mol, label, acols, bcols, h_rads, h_lw_mult, confId=confId)
+  d.FinishDrawing()
+  return d.GetDrawingText()

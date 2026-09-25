@@ -10,6 +10,7 @@
 #include <RDGeneral/export.h>
 #ifndef RD_MULTIFPBREADER_H_APR2016
 #define RD_MULTIFPBREADER_H_APR2016
+#include <RDGeneral/Invariant.h>
 /*! \file MultiFPBReader.h
 
   \brief contains a class for reading and searching collections of FPB files

@@ -10,6 +10,7 @@
 #ifndef __RD_MMFFSTRETCHBEND_H__
 #define __RD_MMFFSTRETCHBEND_H__
 
+#include <cstdint>
 #include <utility>
 #include <vector>
 

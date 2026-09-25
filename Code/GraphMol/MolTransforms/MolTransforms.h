@@ -15,7 +15,10 @@
 #include <Numerics/SymmMatrix.h>
 
 #ifdef RDK_HAS_EIGEN3
-#include <Eigen/Dense>
+// only the Matrix3d/Vector3d typedefs are needed in the declarations below;
+// Eigen/Core provides them and is far lighter than Eigen/Dense. The
+// implementation (MolTransforms.cpp) pulls in Eigen/Dense for the solver.
+#include <Eigen/Core>
 #endif
 
 namespace RDKit {
@@ -110,10 +113,13 @@ computePrincipalAxesAndMomentsFromGyrationMatrix(
   \param normalizeCovar      Normalize the covariance matrix with the number of
   atoms
   \param ignoreHs            Optionally ignore hydrogens
+  \param eigenVals           Optionally return the values for the eigenvalues,
+  sorted in ascending order.  If given, must be big enough to hold 3 values.
 */
 RDKIT_MOLTRANSFORMS_EXPORT RDGeom::Transform3D *computeCanonicalTransform(
     const RDKit::Conformer &conf, const RDGeom::Point3D *center = nullptr,
-    bool normalizeCovar = false, bool ignoreHs = true);
+    bool normalizeCovar = false, bool ignoreHs = true,
+    double *eigenVals = nullptr);
 
 //! Transform the conformation using the specified transformation
 RDKIT_MOLTRANSFORMS_EXPORT void transformConformer(

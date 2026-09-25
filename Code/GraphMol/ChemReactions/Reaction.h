@@ -39,6 +39,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/RDProps.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <string_view>
 #include <vector>
 
 namespace RDKit {
@@ -468,7 +469,7 @@ getReactingAtoms(const ChemicalReaction &rxn, bool mappedAtomsOnly = false);
  */
 RDKIT_CHEMREACTIONS_EXPORT void addRecursiveQueriesToReaction(
     ChemicalReaction &rxn, const std::map<std::string, ROMOL_SPTR> &queries,
-    const std::string &propName,
+    const std::string_view &propName,
     std::vector<std::vector<std::pair<unsigned int, std::string>>>
         *reactantLabels = nullptr);
 

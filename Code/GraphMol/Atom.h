@@ -16,8 +16,8 @@
 #ifndef _RD_ATOM_H
 #define _RD_ATOM_H
 
-// Std stuff
-#include <iostream>
+#include <limits>
+#include <memory>
 
 // ours
 #include <RDGeneral/Invariant.h>
@@ -25,6 +25,7 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDProps.h>
 #include <GraphMol/details.h>
+#include <GraphMol/MacroAtomInfo.h>
 
 namespace RDKit {
 class Atom;
@@ -37,7 +38,6 @@ namespace RDKit {
 class ROMol;
 class RWMol;
 class AtomMonomerInfo;
-
 //! The class for representing atoms
 /*!
 
@@ -81,11 +81,16 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   friend int calculateImplicitValence(const Atom &, bool, bool);
 
  public:
+  // used to mark missing atoms, e.g. in Chirality::StereoInfo
+  // and the _CIPNeighborOrder in CIP labeler
+  inline static constexpr unsigned int NOATOM =
+      std::numeric_limits<unsigned int>::max();
+
   // FIX: grn...
   typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
 
   //! store hybridization
-  typedef enum {
+  enum HybridizationType : std::uint8_t {
     UNSPECIFIED = 0,  //!< hybridization that hasn't been specified
     S,
     SP,
@@ -95,10 +100,10 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     SP3D,
     SP3D2,
     OTHER  //!< unrecognized hybridization
-  } HybridizationType;
+  };
 
   //! store type of chirality
-  typedef enum {
+  enum ChiralType : std::uint8_t {
     CHI_UNSPECIFIED = 0,  //!< chirality that hasn't been specified
     CHI_TETRAHEDRAL_CW,   //!< tetrahedral: clockwise rotation (SMILES \@\@)
     CHI_TETRAHEDRAL_CCW,  //!< tetrahedral: counter-clockwise rotation (SMILES
@@ -109,7 +114,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     CHI_SQUAREPLANAR,     //!< square planar, use permutation flag
     CHI_TRIGONALBIPYRAMIDAL,  //!< trigonal bipyramidal, use permutation flag
     CHI_OCTAHEDRAL            //!< octahedral, use permutation flag
-  } ChiralType;
+  };
 
   enum class ValenceType : std::uint8_t {
     IMPLICIT = 0,
@@ -268,7 +273,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! NOT CALLABLE
   virtual void setQuery(QUERYATOM_QUERY *what);
 
-  //! NOT CALLABLE
+  //! returns nullptr
   virtual QUERYATOM_QUERY *getQuery() const;
   //! NOT CALLABLE
   virtual void expandQuery(
@@ -366,6 +371,13 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! takes ownership of the pointer
   void setMonomerInfo(AtomMonomerInfo *info);
 
+  MacroAtomInfo *getMacroAtomInfo() { return dp_macroAtomInfo.get(); }
+  const MacroAtomInfo *getMacroAtomInfo() const {
+    return dp_macroAtomInfo.get();
+  }
+  //! takes ownership of the pointer
+  void setMacroAtomInfo(MacroAtomInfo *info);
+
   //! Set the atom map Number of the atom
   void setAtomMapNum(int mapno, bool strict = true) {
     PRECONDITION(
@@ -384,6 +396,14 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     getPropIfPresent(common_properties::molAtomMapNumber, mapno);
     return mapno;
   }
+
+  //! Flags that can be used by to store information on atoms.
+  //!   These are not serialized and should be treated as temporary values.
+  //!   No guarantees are made about preserving these flags across library
+  //!   calls.
+  void setFlags(std::uint64_t flags) { d_flags = flags; }
+  std::uint64_t getFlags() const { return d_flags; }
+  std::uint64_t &getFlags() { return d_flags; }
 
  protected:
   //! sets our owning molecule
@@ -406,9 +426,11 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
 
   std::uint16_t d_isotope;
   atomindex_t d_index;
+  std::uint64_t d_flags = 0ul;
 
   ROMol *dp_mol;
   AtomMonomerInfo *dp_monomerInfo;
+  std::unique_ptr<MacroAtomInfo> dp_macroAtomInfo;
   void initAtom();
   void initFromOther(const Atom &other);
 };

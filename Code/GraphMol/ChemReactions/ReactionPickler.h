@@ -14,7 +14,6 @@
 
 #include <GraphMol/MolPickler.h>
 // Std stuff
-#include <iostream>
 #include <string>
 #include <exception>
 #ifdef WIN32

@@ -11,7 +11,6 @@
 #include <catch2/catch_all.hpp>
 #include "BoundsMatrix.h"
 #include "TriangleSmooth.h"
-#include <iostream>
 #include <boost/smart_ptr.hpp>
 #include <cmath>
 #include <Numerics/SymmMatrix.h>

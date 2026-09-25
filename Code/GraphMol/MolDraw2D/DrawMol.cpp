@@ -11,8 +11,8 @@
 //
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
+#include <boost/algorithm/string.hpp>
 
 #include <Geometry/Transform2D.h>
 #include <Geometry/Transform3D.h>
@@ -29,6 +29,7 @@
 #include <GraphMol/MolDraw2D/DrawShape.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <GraphMol/MolDraw2D/MolDraw2DSGroupData.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolEnumerator/LinkNode.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
@@ -221,7 +222,9 @@ void DrawMol::extractAll(double scale) {
   if (drawOptions_.addStereoAnnotation) {
     extractCIPCodes(drawOptions_.showAllCIPCodes);
   }
-  extractStereoGroups(); // always show StereoGroups
+  if (drawOptions_.addStereoGroupAnnotation) {
+    extractStereoGroups();
+  }
   extractBondNotes();
   extractRadicals();
   extractSGroupData();
@@ -374,8 +377,8 @@ void DrawMol::extractAttachments() {
       }
       if (at1->getAtomicNum() == 0 && at1->getDegree() == 1) {
         Point2D &at1_cds = atCds_[at1->getIdx()];
-        const auto &iter_pair = drawMol_->getAtomNeighbors(at1);
-        const Atom *at2 = (*drawMol_)[*iter_pair.first];
+        auto nbrIter = drawMol_->atomNeighbors(at1);
+        const Atom *at2 = *nbrIter.begin();
         Point2D &at2_cds = atCds_[at2->getIdx()];
         Point2D perp = calcPerpendicular(at1_cds, at2_cds);
         Point2D p1 =
@@ -469,13 +472,14 @@ void DrawMol::extractCIPCodes(bool showAllCIPCodes) {
   boost::dynamic_bitset<> maskedAtoms(drawMol_->getNumAtoms());
   boost::dynamic_bitset<> maskedBonds(drawMol_->getNumBonds());
 
-  if(!showAllCIPCodes) { // record atoms and bonds whose codes should be hidden
+  if (!showAllCIPCodes) {  // record atoms and bonds whose codes should be
+                           // hidden
     for (const StereoGroup &group : drawMol_->getStereoGroups()) {
       StereoGroupType stereoGroupType;
 
       stereoGroupType = group.getGroupType();
-      if(stereoGroupType == RDKit::StereoGroupType::STEREO_OR || \
-         stereoGroupType == RDKit::StereoGroupType::STEREO_AND ) {
+      if (stereoGroupType == RDKit::StereoGroupType::STEREO_OR ||
+          stereoGroupType == RDKit::StereoGroupType::STEREO_AND) {
         for (const auto atom : group.getAtoms()) {
           maskedAtoms.set(atom->getIdx());
         }
@@ -490,8 +494,8 @@ void DrawMol::extractCIPCodes(bool showAllCIPCodes) {
     std::string cip;
     if (!maskedAtoms[atom->getIdx()] &&
         atom->getPropIfPresent(common_properties::_CIPCode, cip)) {
-        cip = "(" + cip + ")";
-        DrawAnnotation *annot = new DrawAnnotation(
+      cip = "(" + cip + ")";
+      DrawAnnotation *annot = new DrawAnnotation(
           cip, TextAlignType::MIDDLE, "CIP_Code",
           drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
           drawOptions_.atomNoteColour, textDrawer_);
@@ -517,11 +521,11 @@ void DrawMol::extractCIPCodes(bool showAllCIPCodes) {
       if (!cip.empty()) {
         cip = "(" + cip + ")";
         DrawAnnotation *annot = new DrawAnnotation(
-          cip, TextAlignType::MIDDLE, "CIP_Code",
-          drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-          drawOptions_.bondNoteColour, textDrawer_);
-      calcAnnotationPosition(bond, *annot);
-      annotations_.emplace_back(annot);
+            cip, TextAlignType::MIDDLE, "CIP_Code",
+            drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+            drawOptions_.bondNoteColour, textDrawer_);
+        calcAnnotationPosition(bond, *annot);
+        annotations_.emplace_back(annot);
       }
     }
   }
@@ -535,13 +539,15 @@ void DrawMol::extractStereoGroups() {
 
     switch (group.getGroupType()) {
       case RDKit::StereoGroupType::STEREO_ABSOLUTE:
-        stereoGroupType = "abs";
+        stereoGroupType = drawOptions_.stereoGroupAbsLabel;
         break;
       case RDKit::StereoGroupType::STEREO_OR:
-        stereoGroupType = "or" + std::to_string(++orCount);
+        stereoGroupType =
+            drawOptions_.stereoGroupOrLabel + std::to_string(++orCount);
         break;
       case RDKit::StereoGroupType::STEREO_AND:
-        stereoGroupType = "and" + std::to_string(++andCount);
+        stereoGroupType =
+            drawOptions_.stereoGroupAndLabel + std::to_string(++andCount);
         break;
       default:
         throw ValueErrorException("Unrecognized stereo group type");
@@ -602,95 +608,21 @@ void DrawMol::extractSGroupData() {
   if (!includeAnnotations_) {
     return;
   }
-  const auto &sgs = getSubstanceGroups(*drawMol_);
-  if (sgs.empty()) {
-    return;
-  }
-
-  // details of this transformation are in extractAtomCoords
-  double rot = drawOptions_.rotate * M_PI / 180.0;
-  RDGeom::Transform2D tform;
-  tform.SetTransform(Point2D(0.0, 0.0), rot);
-
-  for (const auto &sg : sgs) {
-    std::string typ;
-    if (sg.getPropIfPresent("TYPE", typ) && typ == "DAT") {
-      std::string text;
-      // it seems like we should be rendering FIELDNAME, but
-      // Marvin Sketch, Biovia Draw, and ChemDraw don't do it
-      // if (sg.getPropIfPresent("FIELDNAME", text)) {
-      //   text += "=";
-      // };
-      if (sg.hasProp("DATAFIELDS")) {
-        STR_VECT dfs = sg.getProp<STR_VECT>("DATAFIELDS");
-        for (const auto &df : dfs) {
-          text += df + "|";
-        }
-        text.pop_back();
-      }
-      if (text.empty()) {
-        continue;
-      }
-      int atomIdx = -1;
-      if (!sg.getAtoms().empty()) {
-        atomIdx = sg.getAtoms()[0];
-      };
-      bool located = false;
-      std::string fieldDisp;
-      Point2D origLoc(0.0, 0.0);
-      if (sg.getPropIfPresent("FIELDDISP", fieldDisp)) {
-        double xp = FileParserUtils::stripSpacesAndCast<double>(
-            fieldDisp.substr(0, 10));
-        double yp = FileParserUtils::stripSpacesAndCast<double>(
-            fieldDisp.substr(10, 10));
-        // we always invert y for the molecule coords
-        origLoc = Point2D{xp, -yp};
-
-        if (fieldDisp[25] == 'R') {
-          if (atomIdx < 0) {
-            // we will warn about this below
-            text = "";
-          } else if (fabs(xp) > 1e-3 || fabs(yp) > 1e-3) {
-            // opposite sign for y
-            origLoc.x += drawMol_->getConformer().getAtomPos(atomIdx).x;
-            origLoc.y -= drawMol_->getConformer().getAtomPos(atomIdx).y;
-            located = true;
-          }
-        } else {
-          if (drawMol_->hasProp("_centroidx")) {
-            Point2D centroid;
-            drawMol_->getProp("_centroidx", centroid.x);
-            drawMol_->getProp("_centroidy", centroid.y);
-            // opposite sign for y
-            origLoc.x += centroid.x;
-            origLoc.y -= centroid.y;
-          }
-          located = true;
-        }
-        tform.TransformPoint(origLoc);
-      }
-
-      if (!text.empty()) {
-        // looks like everybody renders these left justified
-        DrawAnnotation *annot = new DrawAnnotation(
-            text, TextAlignType::START, "note",
-            drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-            drawOptions_.annotationColour, textDrawer_);
-        if (!located) {
-          if (atomIdx >= 0 && !text.empty()) {
-            calcAnnotationPosition(drawMol_->getAtomWithIdx(atomIdx), *annot);
-          }
-        } else {
-          annot->pos_ = origLoc;
-        }
-        annotations_.emplace_back(annot);
-      } else {
-        BOOST_LOG(rdWarningLog)
-            << "FIELDDISP info not found for DAT SGroup which isn't "
-               "associated with an atom. SGroup will not be rendered."
-            << std::endl;
-      }
+  // it seems like we should be rendering FIELDNAME, but
+  // Marvin Sketch, Biovia Draw, and ChemDraw don't do it
+  for (const auto &lbl :
+       MolDraw2D_detail::getSGroupDataLabels(*drawMol_, drawOptions_.rotate)) {
+    // looks like everybody renders these left justified
+    DrawAnnotation *annot =
+        new DrawAnnotation(lbl.text, TextAlignType::START, "note",
+                           drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+                           drawOptions_.annotationColour, textDrawer_);
+    if (lbl.positioned) {
+      annot->pos_ = lbl.pos;
+    } else {
+      calcAnnotationPosition(drawMol_->getAtomWithIdx(lbl.atomIdx), *annot);
     }
+    annotations_.emplace_back(annot);
   }
 }
 
@@ -865,7 +797,12 @@ void DrawMol::extractBrackets() {
       // bracket is largely horizontal or largely vertical.
       const auto &brkShp = *postShapes_.back();
       Point2D longline = brkShp.points_[1] - brkShp.points_[2];
-      longline.normalize();
+      try {
+        longline.normalize();
+      } catch (std::runtime_error &e) {
+        // the bracket had no length so can be ignored.
+        continue;
+      }
       static const double cos45 = 1.0 / sqrt(2.0);
       bool horizontal = fabs(longline.x) > cos45;
       size_t labelBrk = postShapes_.size() - 1;
@@ -1189,8 +1126,25 @@ void DrawMol::calculateScale() {
   partitionForLegend();
 
   if (xRange_ > 1e-4 || yRange_ > 1e-4) {
-    newScale =
-        std::min(double(drawWidth_) / xRange_, double(molHeight_) / yRange_);
+    double widthForScale =
+        molWidth_ > 0 ? double(molWidth_) : double(drawWidth_);
+    const bool sideLegendHoriz =
+        !legend_.empty() &&
+        (drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Left ||
+         drawOptions_.legendPosition ==
+             MolDrawOptions::LegendPosition::Right) &&
+        !drawOptions_.legendVerticalText;
+    if (sideLegendHoriz && molWidth_ > 0) {
+      // Keep a minimum absolute side gap of 8 px so labels do not crowd the
+      // horizontal side legend on small canvases.
+      const double g =
+          std::max(8.0, marginPadding_ * static_cast<double>(drawWidth_));
+      // Require at least ~24 px of drawable molecule width after the gap.
+      if (double(molWidth_) > g + 24.0) {
+        widthForScale = double(molWidth_) - g;
+      }
+    }
+    newScale = std::min(widthForScale / xRange_, double(molHeight_) / yRange_);
     double fix_scale = newScale;
     // after all that, use the fixed scale unless it's too big, in which case
     // scale the drawing down to fit.
@@ -1199,7 +1153,7 @@ void DrawMol::calculateScale() {
       fix_scale = drawOptions_.fixedBondLength;
     }
     if (drawOptions_.fixedScale > 0.0) {
-      fix_scale = double(drawWidth_) * drawOptions_.fixedScale;
+      fix_scale = widthForScale * drawOptions_.fixedScale;
     }
     if (newScale > fix_scale) {
       newScale = fix_scale;
@@ -1216,28 +1170,43 @@ void DrawMol::calculateScale() {
 
 // ****************************************************************************
 void DrawMol::findExtremes() {
-  for (const auto &ps : preShapes_) {
-    ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
-  }
-  for (const auto &bond : bonds_) {
-    bond->findExtremes(xMin_, xMax_, yMin_, yMax_);
-  }
-  for (const auto &atLab : atomLabels_) {
-    if (atLab) {
-      atLab->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  if (drawOptions_.drawingExtentsInclude & DrawElement::PRESHAPES) {
+    for (const auto &ps : preShapes_) {
+      ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
     }
   }
-  for (const auto &hl : highlights_) {
-    hl->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  if (drawOptions_.drawingExtentsInclude & DrawElement::BONDS) {
+    for (const auto &bond : bonds_) {
+      bond->findExtremes(xMin_, xMax_, yMin_, yMax_);
+    }
   }
-  if (includeAnnotations_) {
+  if (drawOptions_.drawingExtentsInclude & DrawElement::ATOMLABELS) {
+    for (const auto &atLab : atomLabels_) {
+      if (atLab) {
+        atLab->findExtremes(xMin_, xMax_, yMin_, yMax_);
+      }
+    }
+  }
+  if (drawOptions_.drawingExtentsInclude & DrawElement::HIGHLIGHTS) {
+    for (const auto &hl : highlights_) {
+      hl->findExtremes(xMin_, xMax_, yMin_, yMax_);
+    }
+  }
+  if (includeAnnotations_ &&
+      (drawOptions_.drawingExtentsInclude & DrawElement::ANNOTATIONS)) {
     for (const auto &a : annotations_) {
       a->findExtremes(xMin_, xMax_, yMin_, yMax_);
     }
   }
-  findRadicalExtremes(radicals_, xMin_, xMax_, yMin_, yMax_);
-  for (const auto &ps : postShapes_) {
-    ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  if (drawOptions_.drawingExtentsInclude & DrawElement::RADICALS) {
+    // radicals are drawn in black, so they can extend the extents
+    // even if the atom is not drawn.
+    findRadicalExtremes(radicals_, xMin_, xMax_, yMin_, yMax_);
+  }
+  if (drawOptions_.drawingExtentsInclude & DrawElement::POSTSHAPES) {
+    for (const auto &ps : postShapes_) {
+      ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
+    }
   }
 
   if (atCds_.empty()) {
@@ -1444,6 +1413,7 @@ void DrawMol::shrinkToFit(bool withPadding) {
   } else {
     legendHeight_ = 0;
     molHeight_ = height_;
+    molWidth_ = drawWidth_;
     drawHeight_ = height_ * (1 - 2 * padding);
   }
 }
@@ -1460,9 +1430,7 @@ std::pair<std::string, OrientType> DrawMol::getAtomSymbolAndOrientation(
 // ****************************************************************************
 std::string getAtomListText(const Atom &atom) {
   PRECONDITION(atom.hasQuery(), "no query");
-  PRECONDITION(atom.getQuery()->getNegation() ||
-                   atom.getQuery()->getDescription() == "AtomOr",
-               "bad query type");
+  PRECONDITION(isAtomListQuery(&atom), "query is not an atom list");
 
   std::string res = "";
   if (atom.getQuery()->getNegation()) {
@@ -1766,19 +1734,251 @@ void DrawMol::calcMeanBondLength() {
 
 // ****************************************************************************
 void DrawMol::partitionForLegend() {
+  legendWidth_ = 0;
+  molWidth_ = drawWidth_;
   if (legend_.empty()) {
     molHeight_ = drawHeight_;
     legendHeight_ = 0;
-  } else {
-    if (!flexiCanvasY_) {
-      legendHeight_ = int(drawOptions_.legendFraction * float(drawHeight_));
-      molHeight_ = drawHeight_ - legendHeight_;
-    } else {
+    return;
+  }
+  switch (drawOptions_.legendPosition) {
+    case MolDrawOptions::LegendPosition::Bottom:
+    case MolDrawOptions::LegendPosition::Top:
+      if (!flexiCanvasY_) {
+        legendHeight_ = int(drawOptions_.legendFraction * float(drawHeight_));
+        molHeight_ = drawHeight_ - legendHeight_;
+      } else {
+        molHeight_ = drawHeight_;
+      }
+      break;
+    case MolDrawOptions::LegendPosition::Left:
+    case MolDrawOptions::LegendPosition::Right:
+      legendWidth_ = int(drawOptions_.legendFraction * float(drawWidth_));
+      if (legendWidth_ <= 0 && drawWidth_ > 0) {
+        legendWidth_ = 1;
+      }
+      molWidth_ = drawWidth_ - legendWidth_;
+      if (molWidth_ < 1) {
+        molWidth_ = drawWidth_;
+        legendWidth_ = 0;
+      }
       molHeight_ = drawHeight_;
-      // the legendHeight_ isn't needed for the flexiCanvas
+      legendHeight_ = 0;
+      break;
+  }
+}
+
+namespace {
+
+void calc_legend_dims(const std::vector<std::string> &legend_bits,
+                      double relFontScale, const DrawColour &legendColour,
+                      DrawText &textDrawer, double &total_width,
+                      double &total_height) {
+  total_width = total_height = 0.0;
+  for (const auto &bit : legend_bits) {
+    double height, width;
+    DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
+                      Point2D(0.0, 0.0), legendColour, textDrawer);
+    da.getDimensions(width, height);
+    total_height += height;
+    total_width = std::max(total_width, width);
+  }
+}
+
+double calc_line_gap(const DrawText &textDrawer, bool vertText,
+                     double relFontScale) {
+  const double font_px = textDrawer.fontSize() * relFontScale;
+  if (vertText) {
+    // Vertical legend text needs more inter-glyph breathing room.
+    // 0.35*font_px was tuned to avoid glyph overlap across common fonts.
+    return std::max(1.0, font_px * 0.35);
+  }
+  // Horizontal legend lines can be tighter; keep a 2 px minimum so short
+  // legends remain readable on small canvases.
+  return std::max(2.0, font_px * 0.15);
+}
+
+std::vector<std::string> split_legend_bits(const std::string &legend,
+                                           bool vertText) {
+  std::vector<std::string> legend_bits;
+  if (vertText) {
+    legend_bits.reserve(legend.size());
+    for (char c : legend) {
+      if (c != '\n') {
+        legend_bits.emplace_back(1, c);
+      }
+    }
+    return legend_bits;
+  }
+  boost::split(legend_bits, legend, boost::is_any_of("\n"));
+  legend_bits.erase(
+      std::remove_if(legend_bits.begin(), legend_bits.end(),
+                     [](const std::string &s) { return s.empty(); }),
+      legend_bits.end());
+  return legend_bits;
+}
+
+void place_bottom_legend(
+    const std::vector<std::string> &legend_bits, double relFontScale,
+    const DrawColour &legendColour, DrawText &textDrawer, double baseX,
+    double baseY, double drawWidth, double drawHeight,
+    std::vector<std::unique_ptr<DrawAnnotation>> &legends) {
+  Point2D loc(baseX + drawWidth / 2.0, baseY + drawHeight);
+  for (const auto &bit : legend_bits) {
+    legends.emplace_back(new DrawAnnotation(bit, TextAlignType::MIDDLE,
+                                            "legend", relFontScale, loc,
+                                            legendColour, textDrawer));
+  }
+  double xmin, xmax, ymin, ymax;
+  double lastAbove = 0.0;
+  for (int i = static_cast<int>(legends.size()) - 1; i >= 0; --i) {
+    xmin = ymin = std::numeric_limits<double>::max();
+    xmax = ymax = std::numeric_limits<double>::lowest();
+    legends[i]->findExtremes(xmin, xmax, ymin, ymax);
+    double thisBelow = legends[i]->pos_.y - ymax;
+    double thisAbove = legends[i]->pos_.y - ymin;
+    if (i == static_cast<int>(legends.size()) - 1) {
+      legends[i]->pos_.y += thisBelow;
+    } else {
+      legends[i]->pos_.y = legends[i + 1]->pos_.y + thisBelow - lastAbove;
+    }
+    lastAbove = thisAbove;
+  }
+}
+
+void place_top_legend(const std::vector<std::string> &legend_bits,
+                      double relFontScale, const DrawColour &legendColour,
+                      DrawText &textDrawer, double baseX, double baseY,
+                      double drawWidth, double drawHeight, int legendHeight,
+                      std::vector<std::unique_ptr<DrawAnnotation>> &legends) {
+  const double gap = calc_line_gap(textDrawer, false, relFontScale);
+  double total_h = 0.0;
+  for (size_t i = 0; i < legend_bits.size(); ++i) {
+    double height, width;
+    DrawAnnotation da(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                      relFontScale, Point2D(0.0, 0.0), legendColour,
+                      textDrawer);
+    da.getDimensions(width, height);
+    total_h += height;
+    if (i + 1 < legend_bits.size()) {
+      total_h += gap;
+    }
+  }
+  const double band_h = legendHeight > 0 ? double(legendHeight) : drawHeight;
+  double y = baseY + (band_h - total_h) / 2.0;
+  for (size_t i = 0; i < legend_bits.size(); ++i) {
+    double height, width;
+    DrawAnnotation da(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                      relFontScale, Point2D(0.0, 0.0), legendColour,
+                      textDrawer);
+    da.getDimensions(width, height);
+    y += height / 2.0;
+    Point2D loc(baseX + drawWidth / 2.0, y);
+    legends.emplace_back(
+        new DrawAnnotation(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                           relFontScale, loc, legendColour, textDrawer));
+    y += height / 2.0;
+    if (i + 1 < legend_bits.size()) {
+      y += gap;
     }
   }
 }
+
+void place_side_legend(const std::vector<std::string> &legend_bits,
+                       double relFontScale, const DrawColour &legendColour,
+                       DrawText &textDrawer, bool vertText, bool is_left,
+                       double baseX, double baseY, int legendWidth,
+                       int molWidth, double drawWidth, double drawHeight,
+                       double marginPadding,
+                       std::vector<std::unique_ptr<DrawAnnotation>> &legends) {
+  if (legend_bits.empty()) {
+    return;
+  }
+  double stripCentreX = 0.0;
+  if (vertText) {
+    stripCentreX = is_left ? baseX + legendWidth / 2.0
+                           : baseX + drawWidth - legendWidth / 2.0;
+  }
+  const double stripCentreY = baseY + drawHeight / 2.0;
+  const double gap = calc_line_gap(textDrawer, vertText, relFontScale);
+  if (!vertText) {
+    double maxLineW = 0.0;
+    for (const auto &bit : legend_bits) {
+      double h = 0.0, w = 0.0;
+      DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
+                        Point2D(0.0, 0.0), legendColour, textDrawer);
+      da.getDimensions(w, h);
+      maxLineW = std::max(maxLineW, w);
+    }
+    const double pad = std::max(8.0, marginPadding * drawWidth);
+    if (is_left) {
+      const double molPanelLeft = baseX + static_cast<double>(legendWidth);
+      stripCentreX = molPanelLeft - pad - maxLineW / 2.0;
+      stripCentreX = std::max(stripCentreX, baseX + maxLineW / 2.0 + 2.0);
+    } else {
+      const double molPanelRight = baseX + static_cast<double>(molWidth);
+      stripCentreX = molPanelRight + pad + maxLineW / 2.0;
+      stripCentreX =
+          std::min(stripCentreX, baseX + drawWidth - maxLineW / 2.0 - 2.0);
+    }
+  }
+  if (vertText) {
+    double max_h = 0.0;
+    for (const auto &bit : legend_bits) {
+      double height, width;
+      DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
+                        Point2D(0.0, 0.0), legendColour, textDrawer);
+      da.getDimensions(width, height);
+      max_h = std::max(max_h, height);
+    }
+    const double total_h =
+        legend_bits.size() * max_h + (legend_bits.size() - 1) * gap;
+    double y = stripCentreY - total_h / 2.0;
+    for (size_t i = 0; i < legend_bits.size(); ++i) {
+      y += max_h / 2.0;
+      Point2D loc(stripCentreX, y);
+      legends.emplace_back(
+          new DrawAnnotation(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                             relFontScale, loc, legendColour, textDrawer));
+      y += max_h / 2.0;
+      if (i + 1 < legend_bits.size()) {
+        y += gap;
+      }
+    }
+  } else {
+    double total_h = 0.0;
+    for (size_t i = 0; i < legend_bits.size(); ++i) {
+      double height, width;
+      DrawAnnotation da(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                        relFontScale, Point2D(0.0, 0.0), legendColour,
+                        textDrawer);
+      da.getDimensions(width, height);
+      total_h += height;
+      if (i + 1 < legend_bits.size()) {
+        total_h += gap;
+      }
+    }
+    double y = stripCentreY - total_h / 2.0;
+    for (size_t i = 0; i < legend_bits.size(); ++i) {
+      double height, width;
+      DrawAnnotation da(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                        relFontScale, Point2D(0.0, 0.0), legendColour,
+                        textDrawer);
+      da.getDimensions(width, height);
+      y += height / 2.0;
+      Point2D loc(stripCentreX, y);
+      legends.emplace_back(
+          new DrawAnnotation(legend_bits[i], TextAlignType::MIDDLE, "legend",
+                             relFontScale, loc, legendColour, textDrawer));
+      y += height / 2.0;
+      if (i + 1 < legend_bits.size()) {
+        y += gap;
+      }
+    }
+  }
+}
+
+}  // namespace
 
 // ****************************************************************************
 // This must be called after calculateScale() because it needs the final
@@ -1789,97 +1989,131 @@ void DrawMol::extractLegend() {
   if (legend_.empty()) {
     return;
   }
-  auto calc_legend_height = [&](const std::vector<std::string> &legend_bits,
-                                double relFontScale, double &total_width,
-                                double &total_height) {
-    total_width = total_height = 0;
-    for (auto &bit : legend_bits) {
-      double height, width;
-      DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
-                        Point2D(0.0, 0.0), drawOptions_.legendColour,
-                        textDrawer_);
-      da.getDimensions(width, height);
-      total_height += height;
-      total_width = std::max(total_width, width);
-    }
-  };
-
-  std::vector<std::string> legend_bits;
-  // split any strings on newlines
-  std::string next_piece;
-  for (auto c : legend_) {
-    if (c == '\n') {
-      if (!next_piece.empty()) {
-        legend_bits.push_back(next_piece);
-      }
-      next_piece = "";
-    } else {
-      next_piece += c;
-    }
-  }
-  if (!next_piece.empty()) {
-    legend_bits.push_back(next_piece);
+  const bool vertText =
+      (drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Left ||
+       drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Right) &&
+      drawOptions_.legendVerticalText;
+  std::vector<std::string> legend_bits = split_legend_bits(legend_, vertText);
+  if (legend_bits.empty()) {
+    return;
   }
 
-  // work out a font scale that allows the pieces to fit, remembering there's
-  // padding round the picture.
   double fsize = textDrawer_.fontSize();
   double relFontScale = drawOptions_.legendFontSize / fsize;
   double total_width, total_height;
-  calc_legend_height(legend_bits, relFontScale, total_width, total_height);
-  if (total_width >= drawWidth_) {
-    if (!flexiCanvasX_) {
-      relFontScale *= double(drawWidth_) / total_width;
-      calc_legend_height(legend_bits, relFontScale, total_width, total_height);
-    } else {
-      width_ = total_width * (1 + 2 * marginPadding_);
-      drawWidth_ = total_width;
-    }
-  }
+  calc_legend_dims(legend_bits, relFontScale, drawOptions_.legendColour,
+                   textDrawer_, total_width, total_height);
 
-  if (!flexiCanvasY_) {
-    auto adjLegHt = drawHeight_ * drawOptions_.legendFraction;
-    // subtract off space for the padding.
-    if (total_height > adjLegHt) {
-      relFontScale *= double(adjLegHt) / total_height;
-      calc_legend_height(legend_bits, relFontScale, total_width, total_height);
-    }
+  double maxWidth = double(drawWidth_);
+  double maxHeight = double(drawHeight_);
+  if (drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Left ||
+      drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Right) {
+    maxWidth = legendWidth_ > 0 ? double(legendWidth_) : double(drawWidth_);
   } else {
-    // a small gap between the legend and the picture looks better,
-    // and make it at least 2 pixels.
-    double extra_padding = total_height * marginPadding_;
-    extra_padding = extra_padding < 2.0 ? 2.0 : extra_padding;
-    legendHeight_ = total_height + extra_padding;
-    drawHeight_ += legendHeight_;
-    height_ += legendHeight_;
+    maxHeight = legendHeight_ > 0 ? double(legendHeight_) : double(drawHeight_);
   }
 
-  Point2D loc(drawWidth_ / 2 + xOffset_ + width_ * marginPadding_,
-              marginPadding_ * height_ + drawHeight_ + yOffset_);
-  for (auto bit : legend_bits) {
-    DrawAnnotation *da =
-        new DrawAnnotation(bit, TextAlignType::MIDDLE, "legend", relFontScale,
-                           loc, drawOptions_.legendColour, textDrawer_);
-    legends_.emplace_back(da);
+  // For horizontal text on the sides (Left/Right, legendVerticalText false),
+  // do not scale down by strip width so the font size matches Top/Bottom.
+  const bool sideHorizontal =
+      (drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Left ||
+       drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Right) &&
+      !vertText;
+  if (total_width > maxWidth && maxWidth > 0 && !flexiCanvasX_ &&
+      !sideHorizontal) {
+    relFontScale *= maxWidth / total_width;
+    calc_legend_dims(legend_bits, relFontScale, drawOptions_.legendColour,
+                     textDrawer_, total_width, total_height);
   }
-  // The letters have different amounts above and below the centre,
-  // which matters when placing them vertically.
-  // Draw them from the bottom up.
-  double xmin, xmax, ymin, ymax;
-  xmin = ymin = std::numeric_limits<double>::max();
-  xmax = ymax = std::numeric_limits<double>::lowest();
-  legends_.back()->findExtremes(xmin, xmax, ymin, ymax);
-  double lastBelow = legends_.back()->pos_.y - ymax;
-  double lastAbove = legends_.back()->pos_.y - ymin;
-  legends_.back()->pos_.y += lastBelow;
-  for (int i = legends_.size() - 2; i >= 0; --i) {
-    xmin = ymin = std::numeric_limits<double>::max();
-    xmax = ymax = std::numeric_limits<double>::lowest();
-    legends_[i]->findExtremes(xmin, xmax, ymin, ymax);
-    double thisBelow = legends_[i]->pos_.y - ymax;
-    double thisAbove = legends_[i]->pos_.y - ymin;
-    legends_[i]->pos_.y = legends_[i + 1]->pos_.y + thisBelow - lastAbove;
-    lastAbove = thisAbove;
+  if (total_height > maxHeight && maxHeight > 0) {
+    if (!flexiCanvasY_) {
+      relFontScale *= maxHeight / total_height;
+      calc_legend_dims(legend_bits, relFontScale, drawOptions_.legendColour,
+                       textDrawer_, total_width, total_height);
+    } else if (drawOptions_.legendPosition ==
+                   MolDrawOptions::LegendPosition::Bottom ||
+               drawOptions_.legendPosition ==
+                   MolDrawOptions::LegendPosition::Top) {
+      double extra_padding = total_height * marginPadding_;
+      extra_padding = std::max(extra_padding, 2.0);
+      legendHeight_ = int(total_height + extra_padding);
+      drawHeight_ += legendHeight_;
+      height_ += legendHeight_;
+      if (drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Top) {
+        molHeight_ = drawHeight_ - legendHeight_;
+      }
+      calc_legend_dims(legend_bits, relFontScale, drawOptions_.legendColour,
+                       textDrawer_, total_width, total_height);
+    }
+  }
+
+  // Horizontal text on the sides should match Top/Bottom size: never shrink
+  // below the default legend font scale (canvas-sized scaling made it tiny).
+  const double initialFontScale = drawOptions_.legendFontSize / fsize;
+  if (sideHorizontal && relFontScale < initialFontScale) {
+    relFontScale = initialFontScale;
+    calc_legend_dims(legend_bits, relFontScale, drawOptions_.legendColour,
+                     textDrawer_, total_width, total_height);
+  }
+
+  // Vertical side legends use uniform line height + gaps; scale so the stack
+  // fits the molecule panel (sum of per-glyph heights can underestimate span).
+  if (vertText &&
+      (drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Left ||
+       drawOptions_.legendPosition == MolDrawOptions::LegendPosition::Right) &&
+      !legend_bits.empty() && drawHeight_ > 0) {
+    const double marginY =
+        std::max(4.0, marginPadding_ * static_cast<double>(height_));
+    const double avail = std::max(1.0, drawHeight_ - 2.0 * marginY);
+    for (int iter = 0; iter < 8; ++iter) {
+      double max_h = 0.0;
+      for (const auto &bit : legend_bits) {
+        double h = 0.0, w = 0.0;
+        DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
+                          Point2D(0.0, 0.0), drawOptions_.legendColour,
+                          textDrawer_);
+        da.getDimensions(w, h);
+        max_h = std::max(max_h, h);
+      }
+      const double gap = calc_line_gap(textDrawer_, vertText, relFontScale);
+      const size_t n = legend_bits.size();
+      const double span = static_cast<double>(n) * max_h +
+                          (n > 1 ? static_cast<double>(n - 1) * gap : 0.0);
+      if (span <= avail || span <= 0.0) {
+        break;
+      }
+      relFontScale *= avail / span;
+      calc_legend_dims(legend_bits, relFontScale, drawOptions_.legendColour,
+                       textDrawer_, total_width, total_height);
+    }
+  }
+
+  const double baseX = xOffset_ + width_ * marginPadding_;
+  const double baseY = marginPadding_ * height_ + yOffset_;
+
+  switch (drawOptions_.legendPosition) {
+    case MolDrawOptions::LegendPosition::Bottom:
+      place_bottom_legend(legend_bits, relFontScale, drawOptions_.legendColour,
+                          textDrawer_, baseX, baseY, drawWidth_, drawHeight_,
+                          legends_);
+      break;
+    case MolDrawOptions::LegendPosition::Top:
+      place_top_legend(legend_bits, relFontScale, drawOptions_.legendColour,
+                       textDrawer_, baseX, baseY, drawWidth_, drawHeight_,
+                       legendHeight_, legends_);
+      break;
+    case MolDrawOptions::LegendPosition::Left:
+      place_side_legend(legend_bits, relFontScale, drawOptions_.legendColour,
+                        textDrawer_, vertText, true, baseX, baseY, legendWidth_,
+                        molWidth_, drawWidth_, drawHeight_, marginPadding_,
+                        legends_);
+      break;
+    case MolDrawOptions::LegendPosition::Right:
+      place_side_legend(legend_bits, relFontScale, drawOptions_.legendColour,
+                        textDrawer_, vertText, false, baseX, baseY,
+                        legendWidth_, molWidth_, drawWidth_, drawHeight_,
+                        marginPadding_, legends_);
+      break;
   }
 }
 
@@ -2163,7 +2397,7 @@ void DrawMol::makeWedgedBond(Bond *bond,
   auto at2 = bond->getEndAtom();
   auto col1 = cols.first;
   auto col2 = cols.second;
-  if (drawOptions_.singleColourWedgeBonds) {
+  if (drawOptions_.singleColourWedgeBonds || drawOptions_.singleColourBonds) {
     col1 = drawOptions_.symbolColour;
     col2 = drawOptions_.symbolColour;
   }
@@ -2348,8 +2582,12 @@ std::pair<DrawColour, DrawColour> DrawMol::getBondColours(Bond *bond) {
     col2 = bondColours_[bond->getIdx()].second;
   } else {
     if (!highlight_bond || drawOptions_.continuousHighlight) {
-      col1 = getColour(bond->getBeginAtomIdx());
-      col2 = getColour(bond->getEndAtomIdx());
+      if (drawOptions_.singleColourBonds) {
+        col1 = col2 = drawOptions_.symbolColour;
+      } else {
+        col1 = getColour(bond->getBeginAtomIdx());
+        col2 = getColour(bond->getEndAtomIdx());
+      }
     } else {
       if (highlightBondMap_.find(bond->getIdx()) != highlightBondMap_.end()) {
         col1 = col2 = highlightBondMap_.find(bond->getIdx())->second;
@@ -2644,20 +2882,18 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
   }
   const Point2D &at_cds = atCds_[atom->getIdx()];
   std::vector<Point2D> bond_vecs;
-  for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(atom))) {
+  for (auto nbr : drawMol_->atomNeighbors(atom)) {
     // If the nbr has the same coords as atom, bond_vec comes out as NaN, NaN
     // (issue 6559), so use a short arbitrary vector instead.
     Point2D bond_vec;
-    if ((at_cds - atCds_[nbr]).lengthSq() < 0.0001) {
-      bond_vec.x = 0.1;
-      bond_vec.y = 0.1;
-    } else {
-      bond_vec = at_cds.directionVector(atCds_[nbr]);
+    try {
+      bond_vec = at_cds.directionVector(atCds_[nbr->getIdx()]);
+    } catch (const std::runtime_error &e) {
+      bond_vec.x = 0.7071;
+      bond_vec.y = 0.7071;
     }
-    bond_vec.normalize();
     bond_vecs.push_back(bond_vec);
   }
-
   Point2D ret_vec;
   if (bond_vecs.size() == 1) {
     if (!atomLabels_[atom->getIdx()]) {
@@ -2693,7 +2929,12 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
         double ang = acos(bond_vecs[i].dotProduct(bond_vecs[j]));
         if (ang < discrim) {
           ret_vec = bond_vecs[i] + bond_vecs[j];
-          ret_vec.normalize();
+          try {
+            ret_vec.normalize();
+          } catch (const std::runtime_error &e) {
+            // normalize throws on zero-length bond.
+            continue;
+          }
           discrim = -1.0;
           break;
         }
@@ -2861,10 +3102,43 @@ void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale,
   trans = Point2D(-xMin_, -yMin_);
   scale = Point2D(scale_, scale_);
   Point2D scaledRanges(scale_ * xRange_, scale_ * yRange_);
-  toCentre = Point2D(
-      (drawWidth_ - scaledRanges.x) / 2.0 + xOffset_ + width_ * marginPadding_,
-      (molHeight_ - scaledRanges.y) / 2.0 + yOffset_ +
-          height_ * marginPadding_);
+  double molW = (molWidth_ > 0) ? double(molWidth_) : double(drawWidth_);
+  double xCentre =
+      (molW - scaledRanges.x) / 2.0 + xOffset_ + width_ * marginPadding_;
+  double yCentre =
+      (molHeight_ - scaledRanges.y) / 2.0 + yOffset_ + height_ * marginPadding_;
+  const double basePanelX = xOffset_ + width_ * marginPadding_;
+  switch (drawOptions_.legendPosition) {
+    case MolDrawOptions::LegendPosition::Bottom:
+      break;
+    case MolDrawOptions::LegendPosition::Top:
+      yCentre += legendHeight_;
+      break;
+    case MolDrawOptions::LegendPosition::Left:
+      if (!legend_.empty() && !drawOptions_.legendVerticalText &&
+          molWidth_ > 0) {
+        // Same minimum side gap used in initDrawMolecule() so scaling and final
+        // placement stay consistent for horizontal side legends.
+        const double g =
+            std::max(8.0, marginPadding_ * static_cast<double>(drawWidth_));
+        // Drawn x spans [toCentre.x, toCentre.x + scaledRanges.x]; leave g past
+        // the legend strip before the molecule.
+        xCentre = basePanelX + double(legendWidth_) + g;
+      } else {
+        xCentre += legendWidth_;
+      }
+      break;
+    case MolDrawOptions::LegendPosition::Right:
+      if (!legend_.empty() && !drawOptions_.legendVerticalText &&
+          molWidth_ > 0) {
+        // Same minimum side gap used on the left side for symmetry.
+        const double g =
+            std::max(8.0, marginPadding_ * static_cast<double>(drawWidth_));
+        xCentre = basePanelX + double(molWidth_) - g - scaledRanges.x;
+      }
+      break;
+  }
+  toCentre = Point2D(xCentre, yCentre);
 }
 
 // ****************************************************************************
@@ -3341,8 +3615,8 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     Point2D l2 = l2s.directionVector(l2f);
     l2f = l2s + l2 * 2.0 * bl;
     Point2D ip;
-    for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(at2))) {
-      auto nbr_cds = atCds_[nbr];
+    for (auto nbr : drawMol_->atomNeighbors(at2)) {
+      auto nbr_cds = atCds_[nbr->getIdx()];
       if (doLinesIntersect(l1s, l1f, at2_cds, nbr_cds, &ip)) {
         l1f = ip;
       }
@@ -3390,15 +3664,15 @@ Point2D DrawMol::doubleBondEnd(unsigned int at1, unsigned int at2,
   v23perp.normalize();
 
   Point2D bis = v21 + v23;
-  if (bis.lengthSq() < 1.0e-6) {
+  try {
+    bis.normalize();
+  } catch (std::exception &e) {
     // if the bonds are colinear, bis comes out as 0, and thus normalizes
     // to NaN which gives a very ugly result (Github #6027).  It's safe
-    // to use v23perp in this case, so long as is on the right side of the
+    // to use v23perp in this case, so long as it is on the right side of the
     // bond, which will be checked on return.
     return (atCds_[at2] - v23perp * offset);
   }
-
-  bis.normalize();
   if (v23perp.dotProduct(bis) < 0.0) {
     v23perp = v23perp * -1.0;
   }
@@ -3753,10 +4027,8 @@ DrawColour DrawMol::getColour(int atom_idx) const {
       const auto *atomPtr = drawMol_->getAtomWithIdx(atom_idx);
       int numBonds = 0, numHighBonds = 0;
       std::unique_ptr<DrawColour> highCol;
-      for (const auto &nbri :
-           boost::make_iterator_range(drawMol_->getAtomBonds(atomPtr))) {
+      for (const auto nbr : drawMol_->atomBonds(atomPtr)) {
         ++numBonds;
-        const auto &nbr = (*drawMol_)[nbri];
         if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
                       nbr->getIdx()) != highlightBonds_.end() ||
             highlightBondMap_.find(nbr->getIdx()) != highlightBondMap_.end()) {
@@ -3812,22 +4084,30 @@ void centerMolForDrawing(RWMol &mol, int confId) {
 
 // ****************************************************************************
 bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
-  if (atom.getDegree() == 2) {
-    Point2D bond_vecs[2];
-    Bond::BondType bts[2];
-    Point2D const &at1_cds = atCds[atom.getIdx()];
-    ROMol const &mol = atom.getOwningMol();
-    int i = 0;
-    for (auto nbr : make_iterator_range(mol.getAtomNeighbors(&atom))) {
-      Point2D bond_vec = at1_cds.directionVector(atCds[nbr]);
-      bond_vec.normalize();
-      bond_vecs[i] = bond_vec;
-      bts[i] = mol.getBondBetweenAtoms(atom.getIdx(), nbr)->getBondType();
-      ++i;
-    }
-    return (bts[0] == bts[1] && bond_vecs[0].dotProduct(bond_vecs[1]) < -0.95);
+  if (atom.getDegree() != 2) {
+    return false;
   }
-  return false;
+  Point2D bond_vecs[2];
+  Bond::BondType bts[2] = {Bond::BondType::UNSPECIFIED,
+                           Bond::BondType::UNSPECIFIED};
+  Point2D const &at1_cds = atCds[atom.getIdx()];
+  ROMol const &mol = atom.getOwningMol();
+  int i = 0;
+  for (const auto nbr : mol.atomNeighbors(&atom)) {
+    const auto nbri = nbr->getIdx();
+    try {
+      Point2D bond_vec = at1_cds.directionVector(atCds[nbri]);
+      bond_vecs[i] = bond_vec;
+    } catch (const std::runtime_error &) {
+      // A zero-length vector throws and can be ignored.
+      // but we still need to get the bond type and increment
+      // the counter
+    }
+    bts[i] =
+        mol.getBondBetweenAtoms(atom.getIdx(), nbr->getIdx())->getBondType();
+    ++i;
+  }
+  return (bts[0] == bts[1] && bond_vecs[0].dotProduct(bond_vecs[1]) < -0.95);
 }
 
 // ****************************************************************************

@@ -74,4 +74,6 @@ if __name__ == "__main__":
             print(str(e))
     finally:
         sys.argv = stored_argv
-    gen_rdkit_stubs.copy_stubs(os.path.join(args.tempdir, *args.module_name.split(".")), args.outer_dirs)
+    src_path = os.path.join(args.tempdir, *args.module_name.split("."))
+    gen_rdkit_stubs.patch_stubs(args.tempdir, src_path)
+    gen_rdkit_stubs.copy_stubs(src_path, args.outer_dirs)

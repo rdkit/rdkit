@@ -1,6 +1,4 @@
-# $Id$
-#
-#  Copyright (C) 2004-2006  Rational Discovery LLC
+#  Copyright (C) 2006-2026 Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -8,6 +6,8 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+
+import math
 
 from rdkit import rdBase
 from rdkit.DataStructs import cDataStructs
@@ -51,5 +51,28 @@ def FoldToTargetDensity(fp, density=0.3, minLength=64):
   return fp
 
 
-ExplicitBitVect.ToBitString = BitVectToText
-SparseBitVect.ToBitString = BitVectToText
+def getNForFlatMatrix(matrix):
+  """Get n for a strict upper- (or lower-) triangular matrix."""
+  return (1 + math.isqrt(1 + 8 * len(matrix))) // 2
+
+
+def getElementFromFlatMatrix(matrix, i, j):
+  """Return element (i,j); diagonal is 0; lower side mirrors upper."""
+  if i == j:
+    return 0.0
+  if i > j:
+    i, j = j, i
+  return matrix[j * (j - 1) // 2 + i]
+
+
+if rdBase._wrapperType == 'nanobind':
+  # nanobind free functions don't work when directly set as class methods,
+  # so we need to call them via a python function
+  def bvtotext(bv):
+    return BitVectToText(bv)
+
+  ExplicitBitVect.ToBitString = bvtotext
+  SparseBitVect.ToBitString = bvtotext
+else:
+  ExplicitBitVect.ToBitString = BitVectToText
+  SparseBitVect.ToBitString = BitVectToText

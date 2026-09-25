@@ -34,13 +34,11 @@
 
 #include <cassert>
 #include "Invariant.h"
-#include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <vector>
 #include <cstdint>
 #include <RDGeneral/BoostStartInclude.h>
-#include <cstdint>
 #include <any>
 #include <boost/utility.hpp>
 #include <boost/lexical_cast.hpp>
@@ -263,6 +261,22 @@ struct RDValue {
   //  be wrapped in a container.
   // The idea is that POD types don't need to be destroyed
   //  and this allows the container optimization possibilities.
+  bool needsCleanup() const {
+    switch (type) {
+      case RDTypeTag::StringTag:
+      case RDTypeTag::AnyTag:
+      case RDTypeTag::VecDoubleTag:
+      case RDTypeTag::VecFloatTag:
+      case RDTypeTag::VecIntTag:
+      case RDTypeTag::VecUnsignedIntTag:
+      case RDTypeTag::VecStringTag:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  // Keep in sync with needsCleanup() above.
   void destroy() {
     switch (type) {
       case RDTypeTag::StringTag:

@@ -28,27 +28,37 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//#include "node.h"
+// #include "node.h"
+#include "chemdraw.h"
 #include "fragment.h"
 #include "utils.h"
 
 namespace RDKit {
 namespace ChemDraw {
+namespace {
+bool shouldHonorNeedsCleanHydrogens(
+    const CDXNode &node, int elemno, const v2::ChemDrawParserParams &params) {
+  return params.sanitize &&
+         params.needsCleanPolicy == v2::NeedsCleanPolicy::TrustSource &&
+         node.m_nodeType == kCDXNodeType_Element && node.m_needsClean &&
+         elemno != 1 && node.m_numHydrogens == 0 &&
+         node.m_radical == kCDXRadical_None;
+}
+}  // namespace
+
 bool parseNode(
     RWMol &mol, unsigned int fragmentId, CDXNode &node, PageData &pagedata,
     std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
-    int &missingFragId, int externalAttachment) {
+    int &missingFragId, const v2::ChemDrawParserParams &params,
+    int externalAttachment) {
   int atom_id = node.GetObjectID();
   int elemno = node.m_elementNum;  // default to carbon
-  // UINT16 max is not addigned?
-  int num_hydrogens =
-      node.m_numHydrogens == kNumHydrogenUnspecified ? 0 : node.m_numHydrogens;
-  bool explicitHs = node.m_numHydrogens != kNumHydrogenUnspecified;
   int charge = 0;
-  if ((node.m_charge & 0x00FFFFFF) == 0)
+  if ((node.m_charge & 0x00FFFFFF) == 0) {
     charge = node.m_charge >> 24;
-  else
+  } else {
     charge = node.m_charge;
+  }
   int atommap = 0;
   int rgroup_num = -1;
   int isotope = node.m_isotope;
@@ -144,25 +154,31 @@ bool parseNode(
       const std::string &text = ((CDXText *)child.second)->GetText().str();
       if (text.size() > 0 && text[0] == 'R') {
         try {
-          if (checkForRGroup)
+          if (checkForRGroup) {
             rgroup_num = text.size() > 1 ? stoi(text.substr(1)) : 0;
-          else
+          } else {
             isotope = text.size() > 1 ? stoi(text.substr(1)) : 0;
+          }
         } catch (const std::invalid_argument &e) {
-          if (rgroup_num)
+          if (rgroup_num) {
             BOOST_LOG(rdWarningLog)
                 << "RGroupError: Invalid argument - Cannot convert '" << text
                 << "' to an integer." << std::endl;
+          }
         } catch (const std::out_of_range &e) {
-          if (rgroup_num)
+          if (rgroup_num) {
             BOOST_LOG(rdWarningLog)
                 << "RGroupError: Out of range - The number '" << text
                 << "' is too large or too small." << std::endl;
+          }
         }
       }
     }
   }
 
+  // AND and OR enhanced stereo have stereogroup numbers in the chemdraw format
+  //  ABSOLUTE does not, we need to store these and add them at the end
+  bool hasStereo = true;
   StereoGroupType grouptype = StereoGroupType::STEREO_ABSOLUTE;
   switch (node.m_enhancedStereoType) {
     case kCDXEnhancedStereo_Absolute:
@@ -175,14 +191,30 @@ bool parseNode(
       grouptype = StereoGroupType::STEREO_OR;
       break;
     default:
+      hasStereo = false;
       break;
   }
 
   CHECK_INVARIANT(atom_id != -1, "Uninitialized atom id in cdxml.");
+  // In the default sanitized mode, treat explicit zero-H counts on NeedsClean
+  // element atoms as advisory and let sanitization recompute hydrogens.
+  // TrustExplicitHydrogens preserves the literal source metadata instead.
+  const bool honorNeedsCleanHydrogens =
+      shouldHonorNeedsCleanHydrogens(node, elemno, params);
+  bool explicitHs =
+      node.m_numHydrogens != kNumHydrogenUnspecified &&
+      !honorNeedsCleanHydrogens;
+  // UINT16 max is not addigned?
+  int num_hydrogens = explicitHs ? node.m_numHydrogens : 0;
   Atom *rd_atom = new Atom(elemno);
   rd_atom->setFormalCharge(charge);
   rd_atom->setNumExplicitHs(num_hydrogens);
   rd_atom->setNoImplicit(explicitHs);
+  if (node.m_abnormalValence) {
+    rd_atom->setNoImplicit(true);
+    mol.setProp<CDXMLSanitizationHint>(CDXML_SANITIZATION_HINTS,
+                                       CDXMLSanitizationHint::radical);
+  }
 
   rd_atom->setIsotope(isotope);
   if (rgroup_num >= 0) {
@@ -199,7 +231,7 @@ bool parseNode(
       rd_atom->setProp<char>(CDX_IMPLICIT_HYDROGEN_STEREO, 'h');
       break;
   }
-  
+
   if (node.m_bondOrdering) {
     // This node may be completely replaced by the fragment
     // i.e. [*:1]C[*:1].C[*:1]C => CCC
@@ -289,7 +321,13 @@ bool parseNode(
     }
   }
 
-  if (node.m_enhancedStereoGroupNum > 0) {
+  if (hasStereo) {
+    if(grouptype ==  StereoGroupType::STEREO_AND || grouptype ==  StereoGroupType::STEREO_OR) {
+      if(node.m_enhancedStereoGroupNum == 0) {
+	std::cerr << "Warning: Enhanced Stereo missing stereogroup number" << std::endl;
+      }
+    }
+    // All ABS stereo gets set to enhancedstereogroupnum 0
     auto key = std::make_pair(node.m_enhancedStereoGroupNum, grouptype);
     auto &stereo = sgroups[key];
     stereo.sgroup = node.m_enhancedStereoGroupNum;
@@ -306,7 +344,7 @@ bool parseNode(
     for (auto fragment : node.ContainedObjects()) {
       if (fragment.second->GetTag() == kCDXObj_Fragment) {
         if (!parseFragment(mol, (CDXFragment &)(*fragment.second), pagedata,
-                           missingFragId, atom_id)) {
+                           missingFragId, params, atom_id)) {
           return false;
         }
         mol.setProp<bool>(NEEDS_FUSE, true);
@@ -319,5 +357,5 @@ bool parseNode(
   }
   return true;
 }
-}
+}  // namespace ChemDraw
 }  // namespace RDKit

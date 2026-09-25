@@ -43,42 +43,44 @@ C:\> activate my-rdkit-env
 
 For more details on building from source with Conda, see the [conda-rdkit repository](https://github.com/rdkit/conda-rdkit).
 
-#### macOS 10.12 (Sierra): Python 3 environment
+#### macOS 15 (Sequoia): Python 3 environment
 
-The following commands will create a development environment for macOS Sierra and Python 3. Download
-Miniconda3-latest-MacOSX-x86_64.sh from [Conda](http://conda.pydata.org/miniconda.html) and run these
-following commands:
-
-```
-bash Miniconda3-latest-MacOSX-x86_64.sh
-conda install numpy matplotlib
-conda install cmake cairo pillow eigen pkg-config
-conda install boost-cpp boost py-boost
-```
-
-Optionally, add the following packages to your environment as useful development tools.
+The following commands has been tested on a Apple M4 chip with MacOS Sequoia (MacOS 15). It is expected to work on other recent macOS versions running on Apple Silicon. For Intel-based macOS systems, please download the according Miniconda installer.
+Download the latest [Miniforge installer](https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh). For Intel-based chipsets, download [here](https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-x86_64.sh) 
 
 ```
-pip install yapf==0.11.1
-pip install coverage==3.7.1
+bash Miniforge3-MacOSX-arm64.sh # or bash ~/Miniforge3-MacOSX-x86_64.sh for Intel-based systems
+conda create -n my-rdkit-env
+conda activate my-rdkit-env
+conda install -c conda-forge compilers libcxx cmake \
+      libboost libboost-devel \
+      libboost-python libboost-python-devel \
+      numpy matplotlib cairo pillow eigen pandas qt
 ```
 
-Then follow the usual build instructions. The `PYTHON_INCLUDE_DIR` must be set in the
-cmake command.
+
+Then follow the usual build instructions. 
 
 ```
-PYROOT=<path to miniconda3>
-cmake -DPYTHON_INCLUDE_DIR=$PYROOT/include/python3.6m  \
-  -DRDK_BUILD_AVALON_SUPPORT=ON \
-  -DRDK_BUILD_CAIRO_SUPPORT=ON \
+git clone https://github.com/rdkit/rdkit.git
+cd rdkit
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release \
+  -DRDK_INSTALL_INTREE=ON \
+  -DRDK_BUILD_CPP_TESTS=ON \
   -DRDK_BUILD_INCHI_SUPPORT=ON \
   ..
+make
+make install
 ```
 
-Once `make` and `make install` completed successfully, use the following command to run the tests:
+This will install RDKit in the current source tree. In case you want to install it in the conda environment, change to `-DRDK_INSTALL_INTREE=OFF` and add  ` -DCMAKE_INSTALL_PREFIX="$CONDA_PREFIX" \`
+to the cmake command.
+
+Then, use the following command to run the tests:
 
 ```
-RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:$PYROOT/lib" PYTHONPATH=$RDBASE ctest
+RDBASE=$PWD/.. PYTHONPATH=$RDBASE LD_LIBRARY_PATH=$RDBASE/lib:$LD_LIBRARY_PATH ctest
 ```
 
 This is required due to the [System Integrity Protection SIP](https://en.wikipedia.org/wiki/System_Integrity_Protection)
@@ -88,22 +90,18 @@ introduced in more recent macOS versions.
 
 The following commands will create a development environment for Linux x86_64 and Python 3.
 
-Start by downloading the latest anaconda installer from [Anaconda](https://www.anaconda.com/download/#linux) and install it. Then, install the required packages:
+Start by downloading the latest [miniforge installer](https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh) and installing it:
 
 ```
-bash Anaconda3-5.2.0-x86_64.sh
-conda install -y cmake cairo pillow eigen pkg-config
-conda install -y boost-cpp boost py-boost
+bash Miniforge3-Linux-x86_64.sh
 ```
 
-Numpy and matplotlib are already part of the base installation of anaconda. Due to the latest boost libraries being currently built with a GLIBC version higher than the default in anaconda, we need to update to a more recent version:
-
+Then create a conda development environment for rdkit:
 ```
-conda install -y gxx_linux-64
+conda create -n rdkit_build -c conda-forge gxx_linux-64 cmake cairo pillow eigen pkg-config boost-cpp boost numpy matplotlib pandas pytest
 ```
 
-At this point, you should be able to clone the RDKit repository to the desired build location, and start the build. Please consider that it is necessary to indicate the path to the numpy headers for RDKit to find them, since anaconda hides them inside the numpy package:
-
+At this point, you should be able to clone the RDKit repository to the desired build location, and start the build:
 ```
 git clone https://github.com/rdkit/rdkit.git
 cd rdkit
@@ -112,8 +110,6 @@ cmake -DPy_ENABLE_SHARED=1 \
   -DRDK_INSTALL_INTREE=ON \
   -DRDK_INSTALL_STATIC_LIBS=OFF \
   -DRDK_BUILD_CPP_TESTS=ON \
-  -DPYTHON_NUMPY_INCLUDE_PATH="$(python -c 'import numpy ; print(numpy.get_include())')" \
-  -DBOOST_ROOT="$CONDA_PREFIX" \
   ..
 ```
 
@@ -125,6 +121,38 @@ The `ctest` build requires that the installation path (the root of the source tr
 RDBASE=$PWD/.. PYTHONPATH=$RDBASE LD_LIBRARY_PATH=$RDBASE/lib:$LD_LIBRARY_PATH ctest
 ```
 
+#### Nanobind or Boost?
+
+There is now the option of building with Boost wrappers or the new nanobind equivalent.  You can only have one at a time and
+the Boost wrappers are built by default.  In order to build the nanobind wrappers, you need to add the nanobind module
+to your conda environment:
+
+```
+conda install -c conda-forge nanobind 
+```
+
+The cmake command needs to be modified to turn off the default Boost build and instead use nanobind:
+
+```
+cmake -DCMAKE_BUILD_TYPE=Release \
+  -DRDK_INSTALL_INTREE=ON \
+  -DRDK_BUILD_CPP_TESTS=ON \
+  -DRDK_BUILD_INCHI_SUPPORT=ON \
+  -DRDK_BUILD_BOOST_PYTHON_WRAPPERS=OFF \
+  -DRDK_BUILD_NANOBIND_WRAPPERS=ON \
+  ..
+```
+
+Then proceed as normal.
+
+#### Long tests
+
+Some of the modules, rdRascalMCES and rdSynthonSpaceSearch for example, have some additional regression tests that take too
+long to run in the CI tests, but are nonetheless valuable.  If you are compiling the RDKit from source because
+you are adding to the C++ layer, you should consider running these as well before pushing a PR.  Probably you wouldn't
+want to run them routinely during your development cycle because they can take a couple of minutes.  To build them use
+the cmake flag `-DRDK_BUILD_LONG_RUNNING_TESTS=ON` and `ctest` should then find them.  To run them manually, look for
+executables `test*LONG_TEST`.
 
 ### Installing and using PostgreSQL and the RDKit PostgreSQL cartridge from a conda environment
 
@@ -202,7 +230,7 @@ Eddie Cao has produced a homebrew formula that can be used to easily build the R
 
 ### Building from Source
 
-Starting with the `2018_03` release, the RDKit core C++ code is written in modern C++; for this release that means C++11.
+Starting with the `2018_03` release, the RDKit core C++ code is written in modern C++ (C++11). Since the release 2025_03, it is moved to C++20.
 This means that the compilers used to build it cannot be completely ancient. Here are the minimum tested versions:
 
 - g++ v4.8: though note that the SLN parser code cannot be built with v4.8. It will automatically be disabled when this older compiler is used.
@@ -212,7 +240,7 @@ This means that the compilers used to build it cannot be completely ancient. Her
 #### Installing prerequisites from source
 
 -   Required packages:
-    - cmake. You need version 3.1 (or more recent). http://www.cmake.org if your linux distribution doesn't have an appropriate package.
+    - cmake. You need version 3.18 (or more recent). http://www.cmake.org if your linux distribution doesn't have an appropriate package.
     - The following are required if you are planning on using the Python wrappers
         -   The python headers. This probably means that you need to install the python-dev package (or whatever it's called) for your linux distribution.
         -   sqlite3. You also need the shared libraries. This may require that you install a sqlite3-dev package.
@@ -310,7 +338,7 @@ The `PYTHON_EXECUTABLE` part is optional if the correct python is the first vers
 You can completely disable building of the python wrappers:
 
 ```
-cmake -DRDK_BUILD_PYTHON_WRAPPERS=OFF ..
+cmake -DRDK_BUILD_BOOST_PYTHON_WRAPPERS=OFF ..
 ```
 
 ##### Recommended extras
@@ -319,6 +347,17 @@ cmake -DRDK_BUILD_PYTHON_WRAPPERS=OFF ..
 - You can enable support for the Avalon toolkit by adding the argument `-DRDK_BUILD_AVALON_SUPPORT=ON` to your cmake command line.
 - If you'd like to be able to generate high-quality PNGs for structure depiction, you should have cairo installed on your system and build the RDKit with cairo support enabled: `-DRDK_BUILD_CAIRO_SUPPORT=ON`
 - If you'd like to be able to use the 3D descriptors, you need to have a copy of eigen3 installed. Most operating systems have an appropriate package.
+
+##### Speeding up the build
+
+Compiling the RDKit from source can take a while. A couple of opt-in options can help:
+
+- **Unity (jumbo) builds.** Add `-DRDK_USE_UNITY_BUILDS=ON` to your cmake command line to have CMake concatenate each library's source files into a few larger translation units, so shared headers are parsed once per batch instead of once per file. This is off by default. A handful of libraries are excluded (see `RDK_UNITY_BUILD_EXCLUDED_LIBRARIES`) where unity builds don't pay off or cause symbol clashes. The effect is platform/compiler dependent and trades higher peak memory per translation unit for fewer of them, so on memory-constrained machines you may need to reduce build parallelism.
+- **Compiler caching.** Installing [`ccache`](https://ccache.dev/) (or [`sccache`](https://github.com/mozilla/sccache)) and pointing cmake at it lets repeated builds reuse previously compiled objects, which is especially helpful when switching branches or rebuilding after small changes:
+
+  ```
+  cmake -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache ..
+  ```
 
 ##### Building the Java wrappers
 
@@ -460,7 +499,7 @@ This section assumes that python is installed in `C:\Python36 that the boost lib
 
 -   Create a directory `C:\RDKit\build` and cd into it
 -   Run cmake. Here's an example basic command line for 64bit windows that will download the InChI and Avalon toolkit sources from the InChI Trust and SourceForge repositories, respectively, and build the PostgreSQL cartridge for the installed version of PostgreSQL:
-  `cmake -DRDK_BUILD_PYTHON_WRAPPERS=ON -DBOOST_ROOT=C:/boost -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_AVALON_SUPPORT=ON -DRDK_BUILD_PGSQL=ON -DPostgreSQL_ROOT="C:\Program Files\PostgreSQL\9.5" -G"Visual Studio 14 2015 Win64" ..`
+  `cmake -DRDK_BUILD_BOOST_PYTHON_WRAPPERS=ON -DBOOST_ROOT=C:/boost -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_AVALON_SUPPORT=ON -DRDK_BUILD_PGSQL=ON -DPostgreSQL_ROOT="C:\Program Files\PostgreSQL\9.5" -G"Visual Studio 14 2015 Win64" ..`
 -   Build the code. Here's an example command line:
   `C:/Windows/Microsoft.NET/Framework64/v4.0.30319/MSBuild.exe /m:4 /p:Configuration=Release INSTALL.vcxproj`
 -   If you have built in PostgreSQL support, you will need to open a shell with administrator privileges, stop the PostgreSQL service, run the `pgsql_install.bat` installation script, then restart the PostgreSQL service (please refer to `%RDBASE%\Code\PgSQL\rdkit\README` for further details):
@@ -483,3 +522,4 @@ This document is copyright (C) 2012-2020 by Greg Landrum
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
 The intent of this license is similar to that of the RDKit itself. In simple words: "Do whatever you want with it, but please give us some credit."
+

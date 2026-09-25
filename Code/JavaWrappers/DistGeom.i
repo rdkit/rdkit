@@ -47,9 +47,12 @@
 
 // This conflicts with definitions in UFF::, so ignore and make it a method on the bounds matrix
 %ignore DistGeom::constructForceField;
+%ignore DistGeom::computeZMatrixCoords;
 
-%include <DistGeom/ChiralSet.h>
+%include <DistGeom/ChiralSet.h> 
 %include <DistGeom/BoundsMatrix.h>
+
+%ignore RDKit::DGeomHelpers::setTopolBounds;
 %include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 %include <DistGeom/DistGeomUtils.h>
 %include <DistGeom/TriangleSmooth.h>

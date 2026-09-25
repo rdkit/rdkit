@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -31,7 +30,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <iostream>
 #include <fstream>
 #include <memory>
 

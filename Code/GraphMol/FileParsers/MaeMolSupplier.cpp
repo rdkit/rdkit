@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include <cstring>
-#include <iostream>
 #include <fstream>
 
 #include <boost/unordered_set.hpp>
@@ -39,7 +38,10 @@ namespace FileParsers {
 namespace {
 
 // Flag for parsing chirality labels
-enum class [[nodiscard]] ChiralityLabelStatus{VALID, INVALID};
+enum class [[nodiscard]] ChiralityLabelStatus {
+  VALID,
+  INVALID
+};
 
 class PDBInfo {
  public:

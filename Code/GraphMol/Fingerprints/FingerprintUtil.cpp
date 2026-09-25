@@ -14,12 +14,10 @@
 #include <RDGeneral/hash/hash.hpp>
 #include <boost/dynamic_bitset.hpp>
 
-#include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
-#include <boost/dynamic_bitset.hpp>
 #include <algorithm>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
@@ -209,32 +207,30 @@ typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
                          boost::flyweights::no_tracking>
     pattern_flyweight;
 void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
-                          std::vector<const ROMol *> *patterns) {
+                          const std::vector<const ROMol *> *patterns) {
   unsigned int nAtoms = mol.getNumAtoms();
   PRECONDITION(invars.size() >= nAtoms, "vector too small");
 
+  auto useLocalPatterns = patterns == nullptr;
   std::vector<const ROMol *> featureMatchers;
-  if (!patterns) {
+  if (useLocalPatterns) {
     featureMatchers.reserve(defaultFeatureSmarts.size());
-    for (std::vector<std::string>::const_iterator smaIt =
-             defaultFeatureSmarts.begin();
-         smaIt != defaultFeatureSmarts.end(); ++smaIt) {
-      const ROMol *matcher = pattern_flyweight(*smaIt).get().getMatcher();
+    for (const auto &smaIt : defaultFeatureSmarts) {
+      const ROMol *matcher = pattern_flyweight(smaIt).get().getMatcher();
       CHECK_INVARIANT(matcher, "bad smarts");
       featureMatchers.push_back(matcher);
     }
-    patterns = &featureMatchers;
   }
   std::fill(invars.begin(), invars.end(), 0);
-  for (unsigned int i = 0; i < patterns->size(); ++i) {
+  auto &queries = (useLocalPatterns ? featureMatchers : *patterns);
+  for (unsigned int i = 0; i < queries.size(); ++i) {
     unsigned int mask = 1 << i;
     std::vector<MatchVectType> matchVect;
     // to maintain thread safety, we have to copy the pattern
     // molecules:
-    SubstructMatch(mol, ROMol(*(*patterns)[i], true), matchVect);
-    for (std::vector<MatchVectType>::const_iterator mvIt = matchVect.begin();
-         mvIt != matchVect.end(); ++mvIt) {
-      for (const auto &mIt : *mvIt) {
+    SubstructMatch(mol, ROMol(*queries[i], true), matchVect);
+    for (const auto &mvIt : matchVect) {
+      for (const auto &mIt : mvIt) {
         invars[mIt.second] |= mask;
       }
     }
@@ -274,10 +270,9 @@ void buildDefaultRDKitFingerprintAtomInvariants(
     const ROMol &mol, std::vector<std::uint32_t> &lAtomInvariants) {
   lAtomInvariants.clear();
   lAtomInvariants.reserve(mol.getNumAtoms());
-  for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    unsigned int aHash = ((*atomIt)->getAtomicNum() % 128) << 1 |
-                         static_cast<unsigned int>((*atomIt)->getIsAromatic());
+  for (const auto atom : mol.atoms()) {
+    unsigned int aHash = (atom->getAtomicNum() % 128) << 1 |
+                         static_cast<unsigned int>(atom->getIsAromatic());
     lAtomInvariants.push_back(aHash);
   }
 }
@@ -285,22 +280,35 @@ void buildDefaultRDKitFingerprintAtomInvariants(
 void enumerateAllPaths(const ROMol &mol, INT_PATH_LIST_MAP &allPaths,
                        const std::vector<std::uint32_t> *fromAtoms,
                        bool branchedPaths, bool useHs, unsigned int minPath,
-                       unsigned int maxPath) {
+                       unsigned int maxPath,
+                       boost::dynamic_bitset<> *ignoreAtoms) {
+  PRECONDITION(!ignoreAtoms || ignoreAtoms->size() == mol.getNumAtoms(),
+               "bad ignoreAtoms size");
   if (!fromAtoms) {
     if (branchedPaths) {
-      allPaths = findAllSubgraphsOfLengthsMtoN(mol, minPath, maxPath, useHs);
+      int rootedAtAtom = -1;
+      allPaths = findAllSubgraphsOfLengthsMtoN(mol, minPath, maxPath, useHs,
+                                               rootedAtAtom, ignoreAtoms);
     } else {
-      allPaths = findAllPathsOfLengthsMtoN(mol, minPath, maxPath, true, useHs);
+      bool useBonds = true;
+      int rootedAtAtom = -1;
+      bool onlyShortestPaths = false;
+      allPaths = findAllPathsOfLengthsMtoN(mol, minPath, maxPath, useBonds,
+                                           useHs, rootedAtAtom,
+                                           onlyShortestPaths, ignoreAtoms);
     }
   } else {
     for (auto aidx : *fromAtoms) {
       INT_PATH_LIST_MAP tPaths;
       if (branchedPaths) {
-        tPaths =
-            findAllSubgraphsOfLengthsMtoN(mol, minPath, maxPath, useHs, aidx);
+        tPaths = findAllSubgraphsOfLengthsMtoN(mol, minPath, maxPath, useHs,
+                                               aidx, ignoreAtoms);
       } else {
+        bool useBonds = true;
+        bool onlyShortestPaths = false;
         tPaths =
-            findAllPathsOfLengthsMtoN(mol, minPath, maxPath, true, useHs, aidx);
+            findAllPathsOfLengthsMtoN(mol, minPath, maxPath, useBonds, useHs,
+                                      aidx, onlyShortestPaths, ignoreAtoms);
       }
       for (INT_PATH_LIST_MAP::const_iterator tpit = tPaths.begin();
            tpit != tPaths.end(); ++tpit) {

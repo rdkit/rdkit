@@ -21,7 +21,6 @@
 #include <GraphMol/MolStandardize/Tautomer.h>
 #include <GraphMol/MolStandardize/Validate.h>
 
-#include <iostream>
 #include <fstream>
 
 using namespace RDKit;
@@ -1754,4 +1753,217 @@ TEST_CASE("Custom Scoring Functions") {
     REQUIRE(MolStandardize::TautomerScoringFunctions::scoreSubstructs(
                 *mol, terms) == 1000);
   }
+}
+TEST_CASE("tautomer canonicalize preserves conformers") {
+  // Regression test: quickCopy during tautomer enumeration drops
+  // conformers.  canonicalize() must restore them from the original
+  // molecule so that downstream code (e.g. InChI generation) that
+  // relies on 2D/3D coordinates works correctly.
+  std::string molblock = R"CTAB(
+  ChemDraw02102613032D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 17 18 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.382449 2.541459 0.000000 0
+M  V30 2 N -1.391616 1.716459 0.000000 0
+M  V30 3 C -2.139845 1.368125 0.000000 0
+M  V30 4 C -2.333490 0.560313 0.000000 0
+M  V30 5 C -1.822449 -0.093386 0.000000 0
+M  V30 6 C -0.992865 -0.099688 0.000000 0
+M  V30 7 C -0.468073 0.540833 0.000000 0
+M  V30 8 C -0.646824 1.348646 0.000000 0
+M  V30 9 O 0.002291 1.857397 0.000000 0
+M  V30 10 N 0.334583 0.349479 0.000000 0
+M  V30 11 C 0.570052 -0.441719 0.000000 0
+M  V30 12 O 0.003437 -1.040990 0.000000 0
+M  V30 13 C 1.372708 -0.633073 0.000000 0
+M  V30 14 C 1.608177 -1.423699 0.000000 0
+M  V30 15 C 2.333490 -1.816147 0.000000 0
+M  V30 16 C 1.941043 -2.541459 0.000000 0
+M  V30 17 C 1.215730 -2.149012 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 8
+M  V30 3 1 2 3
+M  V30 4 1 3 4
+M  V30 5 1 4 5
+M  V30 6 1 5 6
+M  V30 7 1 6 7
+M  V30 8 1 7 8
+M  V30 9 2 8 9
+M  V30 10 1 7 10
+M  V30 11 1 10 11
+M  V30 12 2 11 12
+M  V30 13 1 11 13
+M  V30 14 2 13 14
+M  V30 15 1 14 17
+M  V30 16 1 14 15
+M  V30 17 1 15 16
+M  V30 18 1 16 17
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+  std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+  REQUIRE(mol);
+  REQUIRE(mol->getNumConformers() == 1);
+
+  MolStandardize::CleanupParameters params;
+  params.tautomerRemoveBondStereo = false;
+  params.tautomerRemoveSp3Stereo = false;
+  MolStandardize::TautomerEnumerator te(params);
+  std::unique_ptr<ROMol> canon{te.canonicalize(*mol)};
+  REQUIRE(canon);
+
+  // Conformer must be preserved (quickCopy regression)
+  CHECK(canon->getNumConformers() == 1);
+  if (canon->getNumConformers() > 0) {
+    const auto &origConf = mol->getConformer(0);
+    const auto &canonConf = canon->getConformer(0);
+    CHECK(origConf.getNumAtoms() == canonConf.getNumAtoms());
+    for (unsigned int i = 0; i < origConf.getNumAtoms(); ++i) {
+      auto origPos = origConf.getAtomPos(i);
+      auto canonPos = canonConf.getAtomPos(i);
+      CHECK(origPos.x == Catch::Approx(canonPos.x).epsilon(1e-4));
+      CHECK(origPos.y == Catch::Approx(canonPos.y).epsilon(1e-4));
+    }
+  }
+}
+
+TEST_CASE("tautomer canonicalize clears invalid bond stereo after bond-order changes") {
+  std::string molblock = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 66.546902 -10.607295 0.000000 0
+M  V30 2 C 67.407319 -9.379170 0.000000 0
+M  V30 3 N 68.901071 -9.509378 0.000000 0
+M  V30 4 C 69.532321 -10.864587 0.000000 0
+M  V30 5 O 68.675029 -12.088546 0.000000 0
+M  V30 6 C 71.021905 -10.994795 0.000000 0
+M  V30 7 C 67.180236 -11.966671 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 4 5
+M  V30 2 1 4 6 CFG=1
+M  V30 3 1 3 4
+M  V30 4 2 2 1
+M  V30 5 1 1 7
+M  V30 6 1 3 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+  std::unique_ptr<RWMol> mol(MolBlockToMol(molblock));
+  REQUIRE(mol);
+
+  MolStandardize::CleanupParameters params;
+  params.tautomerRemoveBondStereo = false;
+  MolStandardize::TautomerEnumerator te(params);
+
+  std::unique_ptr<ROMol> canon;
+  REQUIRE_NOTHROW(canon.reset(te.canonicalize(*mol)));
+  REQUIRE(canon);
+  CHECK(MolToSmiles(*canon) == "CCC=NC(C)=O");
+  for (const auto bond : canon->bonds()) {
+    if (bond->getBondType() != Bond::DOUBLE) {
+      continue;
+    }
+    CHECK(bond->getStereo() < Bond::STEREOATROPCW);
+    if (bond->getStereo() > Bond::STEREOANY) {
+      CHECK(bond->getStereoAtoms().size() == 2);
+    }
+  }
+}
+
+TEST_CASE("canonical tautomer keeps stereo on an equal-score tie",
+          "[tautomer][stereo]") {
+  // A transform that destroys and regenerates an sp3 stereocentre puts a
+  // stereo-unspecified twin of an equally-scoring tautomer into the pool. The
+  // tie-break used to be lexicographic on canonical SMILES only, and '[' (0x5B)
+  // sorts after every atom letter, so the twin always won:
+  //   "CC(=O)C(C)O" < "CC(=O)[C@H](C)O"
+  // Both acetoin enantiomers therefore canonicalized to the same achiral SMILES
+  // even with tautomerRemoveSp3Stereo set to false. See GitHub #9518 and #7969.
+  MolStandardize::CleanupParameters params;
+  params.tautomerRemoveSp3Stereo = false;
+  params.tautomerRemoveBondStereo = false;
+  params.tautomerRemoveIsotopicHs = false;
+  MolStandardize::TautomerEnumerator te(params);
+
+  SECTION("acetoin enantiomers stay distinct") {
+    for (const auto &smi :
+         std::vector<std::string>{"CC(=O)[C@H](C)O", "CC(=O)[C@@H](C)O"}) {
+      std::unique_ptr<RWMol> m{SmilesToMol(smi)};
+      REQUIRE(m);
+      const auto expected = MolToSmiles(*m);
+      std::unique_ptr<ROMol> canon{te.canonicalize(*m)};
+      REQUIRE(canon);
+      CHECK(MolToSmiles(*canon) == expected);
+    }
+  }
+
+  SECTION("the two enantiomers do not collapse onto each other") {
+    std::unique_ptr<RWMol> r{SmilesToMol("CC(=O)[C@H](C)O")};
+    std::unique_ptr<RWMol> s{SmilesToMol("CC(=O)[C@@H](C)O")};
+    std::unique_ptr<ROMol> cr{te.canonicalize(*r)};
+    std::unique_ptr<ROMol> cs{te.canonicalize(*s)};
+    CHECK(MolToSmiles(*cr) != MolToSmiles(*cs));
+  }
+
+  SECTION("open-chain D-fructose keeps all three centres") {
+    std::unique_ptr<RWMol> m{
+        SmilesToMol("O=C(CO)[C@@H](O)[C@H](O)[C@H](O)CO")};
+    REQUIRE(m);
+    std::unique_ptr<ROMol> canon{te.canonicalize(*m)};
+    REQUIRE(canon);
+    CHECK(MolToSmiles(*canon) == MolToSmiles(*m));
+  }
+
+  SECTION("result is independent of input atom ordering") {
+    std::unique_ptr<RWMol> m{SmilesToMol("CCC(=O)[C@H](O)CC")};
+    REQUIRE(m);
+    std::unique_ptr<ROMol> ref{te.canonicalize(*m)};
+    const auto refSmi = MolToSmiles(*ref);
+    std::vector<unsigned int> order(m->getNumAtoms());
+    for (unsigned int i = 0; i < order.size(); ++i) {
+      order[i] = (i + 3) % order.size();
+    }
+    std::unique_ptr<ROMol> renumbered{MolOps::renumberAtoms(*m, order)};
+    std::unique_ptr<ROMol> got{te.canonicalize(*renumbered)};
+    CHECK(MolToSmiles(*got) == refSmi);
+  }
+}
+
+TEST_CASE("tautomer canonicalize preserves STEREOANY on ring double bonds") {
+  const std::string rdbase = std::getenv("RDBASE");
+  const auto filename =
+      rdbase + "/Code/GraphMol/MolStandardize/test_data/macrocycle_cfg2.mol";
+  std::unique_ptr<RWMol> mol(MolFileToMol(filename));
+  REQUIRE(mol);
+
+  const auto bondIdx = 2;
+  const auto inputBond = mol->getBondWithIdx(bondIdx);
+  REQUIRE(inputBond);
+  CHECK(inputBond->getBondType() == Bond::DOUBLE);
+  CHECK(inputBond->getStereo() == Bond::STEREOANY);
+  CHECK(mol->getRingInfo()->numBondRings(bondIdx) > 0);
+
+  MolStandardize::CleanupParameters params;
+  params.tautomerRemoveBondStereo = false;
+  params.tautomerRemoveSp3Stereo = false;
+  MolStandardize::TautomerEnumerator te(params);
+  std::unique_ptr<ROMol> canon(te.canonicalize(*mol));
+  REQUIRE(canon);
+
+  const auto canonicalBond = canon->getBondWithIdx(bondIdx);
+  REQUIRE(canonicalBond);
+  CHECK(canonicalBond->getBondType() == Bond::DOUBLE);
+  CHECK(canonicalBond->getStereo() == Bond::STEREOANY);
 }

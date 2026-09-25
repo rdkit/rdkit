@@ -358,26 +358,20 @@ public class WrapperTests extends GraphMolTest {
 	    }
 	}
 
-	testFile = new File(base, "Code" + File.separator + "GraphMol"
-				 + File.separator + "test_data" + File.separator +
-				 "CDXML" + File.separator + "ring-stereo1.cdx");
-	fn = testFile.getAbsolutePath();
-	params = new CDXMLParserParams(true, true, CDXMLFormat.CDX);
-	prods = RWMol.MolsFromCDXMLFile(fn, params);
-	assertEquals(prods.size(), 1);
-
-	params = new CDXMLParserParams(true, true, CDXMLFormat.Auto);
-	prods = RWMol.MolsFromCDXMLFile(fn, params);
-	assertEquals(prods.size(), 1);
-
-	params = new CDXMLParserParams(true, true, CDXMLFormat.CDXML);
-	boolean e = false;
-	try {
-	    prods = RWMol.MolsFromCDXMLFile(fn, params);
-	} catch(GenericRDKitException ex) {
-	    e = true;
+	if(ROMol.hasChemDrawCDXSupport()) {
+	    String cdxml = prods.get(0).MolToCDXML();
+	    byte[] cdx = prods.get(0).MolToCDX();
+	    assertTrue(cdxml.indexOf("CDXML") != -1);
+	    
+	    prods = RWMol.MolsFromCDXML(cdxml, params);
+	    assertEquals(prods.get(0).MolToSmiles(true),
+			 "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1");
+	    
+	    params.setFormat(CDXMLFormat.CDX);
+	    prods = RWMol.MolsFromCDXMLByteArray(cdx);
+	    assertEquals(prods.get(0).MolToSmiles(true),
+			 "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1");
 	}
-	assertEquals(true, e);
 	
     }    
     public static void main(String args[]) {

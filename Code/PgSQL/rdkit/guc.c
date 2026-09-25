@@ -78,7 +78,9 @@ static int rdkit_difference_FP_weight_agents = REACTION_DFP_WEIGHT_AGENTS;
 static int rdkit_difference_FP_weight_nonagents = REACTION_DFP_WEIGHT_NONAGENTS;
 
 static void initRDKitGUC() {
-  if (rdkit_guc_inited) return;
+  if (rdkit_guc_inited) {
+    return;
+  }
 
   DefineCustomRealVariable(
       "rdkit.tanimoto_threshold", "Lower threshold of Tanimoto similarity",
@@ -206,121 +208,167 @@ static void initRDKitGUC() {
 }
 
 double getTanimotoLimit(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
 
   return rdkit_tanimoto_smlar_limit;
 }
 
 double getDiceLimit(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
 
   return rdkit_dice_smlar_limit;
 }
 
 bool getDoChiralSSS(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
 
   return rdkit_do_chiral_sss;
 }
 
 bool getDoEnhancedStereoSSS(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
 
   return rdkit_do_enhanced_stereo_sss;
 }
 
 int getSubstructFpSize(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_sss_fp_size;
 }
 
 int getMorganFpSize(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_morgan_fp_size;
 }
 
 int getFeatMorganFpSize(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_featmorgan_fp_size;
 }
 
 int getLayeredFpSize(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_layered_fp_size;
 }
 
 int getRDKitFpSize(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_rdkit_fp_size;
 }
 
 int getHashedTorsionFpSize(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_hashed_torsion_fp_size;
 }
 
 int getHashedAtomPairFpSize(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_hashed_atompair_fp_size;
 }
 
 int getAvalonFpSize(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_avalon_fp_size;
 }
 
 int getReactionSubstructFpSize(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_reaction_sss_fp_size;
 }
 
 int getReactionDifferenceFpSize(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_reaction_difference_fp_size;
 }
 
 int getReactionSubstructFpType(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_reaction_sss_fp_type;
 }
 
 int getReactionDifferenceFpType(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_reaction_difference_fp_type;
 }
 
 bool getIgnoreReactionAgents(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_ignore_reaction_agents;
 }
 
 double getReactionStructuralFPAgentBitRatio(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_agent_FP_bit_ratio;
 }
 
 bool getMoveUnmappedReactantsToAgents(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_move_unmmapped_reactants_to_agents;
 }
 
 double getThresholdUnmappedReactantAtoms(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_threshold_unmapped_reactant_atoms;
 }
 
 bool getInitReaction(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_init_reaction;
 }
 
 int getReactionDifferenceFPWeightAgents(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_difference_FP_weight_agents;
 }
 
 int getReactionDifferenceFPWeightNonagents(void) {
-  if (!rdkit_guc_inited) initRDKitGUC();
+  if (!rdkit_guc_inited) {
+    initRDKitGUC();
+  }
   return rdkit_difference_FP_weight_nonagents;
 }
 

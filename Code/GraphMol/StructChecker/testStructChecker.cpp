@@ -97,21 +97,25 @@ void doLoadOptionsFromFiles(StructCheckerOptions &options,
   } else {
     testDataDir = dirBase;
   }
-  if (options.Verbose)
+  if (options.Verbose) {
     BOOST_LOG(rdInfoLog) << "testDataDir: " << testDataDir << "\n";
+  }
 
-  if (options.Verbose)
+  if (options.Verbose) {
     BOOST_LOG(rdInfoLog) << "loadGoodAugmentedAtoms checkfgs.chk\n";
+  }
   ok = options.loadGoodAugmentedAtoms(testDataDir + "checkfgs.chk");
   TEST_ASSERT(ok);
 
-  if (options.Verbose)
+  if (options.Verbose) {
     BOOST_LOG(rdInfoLog) << "loadAcidicAugmentedAtoms checkfgs.aci\n";
+  }
   ok = options.loadAcidicAugmentedAtoms(testDataDir + "checkfgs.aci");
   TEST_ASSERT(!strict || ok);
 
-  if (options.Verbose)
+  if (options.Verbose) {
     BOOST_LOG(rdInfoLog) << "loadAugmentedAtomTranslations checkfgs.trn\n";
+  }
   ok = options.loadAugmentedAtomTranslations(testDataDir + "checkfgs.trn");
   TEST_ASSERT(ok);
 
@@ -121,13 +125,15 @@ void doLoadOptionsFromFiles(StructCheckerOptions &options,
 
   //....
 
-  if (options.Verbose)
+  if (options.Verbose) {
     BOOST_LOG(rdInfoLog) << "loadTautomerData tautomer.sdf\n";
+  }
   ok = options.loadTautomerData(testDataDir + "tautomer.sdf");
   TEST_ASSERT(!strict || ok);
 
-  if (options.Verbose)
+  if (options.Verbose) {
     BOOST_LOG(rdInfoLog) << "loadTautomerData tautomer.rdf\n";
+  }
   ok = options.loadTautomerData(testDataDir + "tautomer.rdf");
   TEST_ASSERT(!strict || ok);
 
@@ -535,9 +541,11 @@ void testCheckMatch() {
   //  options.Verbose = true;
   options.setGoodAugmentedAtoms(aa);
 
-  if (!options.GoodAtoms.empty())
-    if (!CheckAtoms(*mol, options.GoodAtoms, options.Verbose))
+  if (!options.GoodAtoms.empty()) {
+    if (!CheckAtoms(*mol, options.GoodAtoms, options.Verbose)) {
       BOOST_LOG(rdInfoLog) << "ATOM_CHECK_FAILED\n";
+    }
+  }
 
   delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;

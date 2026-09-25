@@ -8,10 +8,9 @@
 #  of the RDKit source tree.
 #
 
-import pickle
 import unittest
 
-from rdkit import Chem, RDConfig, rdBase
+from rdkit import Chem, rdBase
 from rdkit.Chem.Scaffolds import rdScaffoldNetwork
 
 rdBase.DisableLog("rdApp.info")

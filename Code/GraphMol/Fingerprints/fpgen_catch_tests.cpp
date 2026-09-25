@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2022 Greg Landrum
+//  Copyright (C) 2022-2025 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -475,4 +475,86 @@ TEST_CASE("github #6679: suspicious value for atom pair code calculation") {
       CHECK((*fp)[pr.second]);
     }
   }
+}
+
+TEST_CASE("atomsPerBit") {
+  auto mol = "c1ccccn1"_smiles;
+  REQUIRE(mol);
+  AdditionalOutput ao;
+  ao.allocateAtomsPerBit();
+  REQUIRE(ao.atomsPerBit);
+  FingerprintFuncArguments args;
+  args.additionalOutput = &ao;
+  SECTION("Morgan") {
+    unsigned radius = 2;
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpg(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(radius));
+    REQUIRE(fpg);
+    auto fp = fpg->getFingerprint(*mol, args);
+    auto &apb = *ao.atomsPerBit;
+    REQUIRE(apb.size() == fp->getNumOnBits());
+    REQUIRE(apb[378].size() == 1);
+    CHECK(apb[378][0] == std::vector<int>({5}));
+    REQUIRE(apb[1155].size() == 2);
+    CHECK(apb[1155][0] == std::vector<int>({3, 1, 2, 4, 5}));
+  }
+  SECTION("RDKit") {
+    unsigned minPath = 1;
+    unsigned maxPath = 5;
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpg(
+        RDKitFP::getRDKitFPGenerator<std::uint64_t>(minPath, maxPath));
+    REQUIRE(fpg);
+    auto fp = fpg->getFingerprint(*mol, args);
+    auto &apb = *ao.atomsPerBit;
+    REQUIRE(apb.size() == fp->getNumOnBits());
+    REQUIRE(apb[104].size() == 2);
+    REQUIRE(apb[104][0] == std::vector<int>({0, 1, 2, 4, 5}));
+  }
+  SECTION("AP") {
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpg(
+        AtomPair::getAtomPairGenerator<std::uint64_t>());
+    REQUIRE(fpg);
+    auto fp = fpg->getFingerprint(*mol, args);
+    auto &apb = *ao.atomsPerBit;
+    REQUIRE(apb.size() == fp->getNumOnBits());
+    REQUIRE(apb[1244].size() == 4);
+    CHECK(apb[1244][0] == std::vector<int>({0, 2}));
+  }
+  SECTION("TT") {
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpg(
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>());
+    REQUIRE(fpg);
+    auto fp = fpg->getFingerprint(*mol, args);
+    auto &apb = *ao.atomsPerBit;
+    REQUIRE(apb.size() == fp->getNumOnBits());
+    REQUIRE(apb[140].size() == 2);
+    REQUIRE(apb[140][0] == std::vector<int>({2, 1, 0, 5}));
+  }
+}
+
+TEST_CASE("RDKit fingerprinter and ignoreAtoms") {
+  auto mol = "CCO"_smiles;
+  REQUIRE(mol);
+  RDKitFP::RDKitFPArguments args;
+  args.d_numBitsPerFeature = 1;
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpg{
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>(args)};
+  REQUIRE(fpg);
+  std::unique_ptr<SparseBitVect> fp1{fpg->getSparseFingerprint(*mol)};
+  CHECK(fp1->getNumOnBits() == 3);
+  std::vector<std::uint32_t> ignoreAtoms = {2};
+  RDKit::FingerprintFuncArguments funcArgs;
+  funcArgs.ignoreAtoms = &ignoreAtoms;
+  std::unique_ptr<SparseBitVect> fp2{
+      fpg->getSparseFingerprint(*mol, funcArgs)};
+  CHECK(fp2->getNumOnBits() == 1);
+  std::vector<int> obl;
+  fp2->getOnBits(obl);
+  REQUIRE(obl.size() == 1);
+  CHECK((*fp1)[obl[0]] == 1);
+  // make sure we continue to ignore the atoms even if they are fromAtoms
+  funcArgs.fromAtoms = &ignoreAtoms;
+  std::unique_ptr<SparseBitVect> fp3{
+      fpg->getSparseFingerprint(*mol, funcArgs)};
+  CHECK(fp3->getNumOnBits() == 0);
 }

@@ -65,16 +65,18 @@ std::map<std::string, std::string> loadLibrary(const std::string inFilename) {
 };
 
 TEST_CASE("Test splits 1") {
-  const std::vector<std::string> smiles{"c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
-                                        "CC(C)OCc1nnc(N2CC(C)CC2)n1C1CCCC1",
-                                        "c1ccccc1Oc1cccc2[nH]ccc12"};
+  const std::vector<std::string> smiles{
+      "c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
+      "CC(C)OCc1nnc(N2CC(C)CC2)n1C1CCCC1", "c1ccccc1Oc1cccc2[nH]ccc12",
+      "COc1ccc2nc([nH]c2c1)[S@](=O)Cc1ncc(C)c(OC)c1C"};
   std::vector<std::vector<size_t>> expCounts{
-      {1, 47, 1020, 0}, {1, 37, 562, 0}, {1, 29, 397, 0}};
+      {1, 47, 1020, 0}, {1, 37, 562, 0}, {1, 29, 397, 0}, {1, 41, 689, 0}};
   for (size_t i = 0; i < smiles.size(); ++i) {
     auto mol = v2::SmilesParse::MolFromSmiles(smiles[i]);
     REQUIRE(mol);
     bool timedOut = false;
-    auto fragments = splitMolecule(*mol, 3, 100000, nullptr, 1, timedOut);
+    auto fragments = splitMolecule(*mol, 3, 100000, nullptr, 1,
+                                   FragSetUniquifyMode::BySmiles, timedOut);
     CHECK(fragments.size() ==
           std::accumulate(expCounts[i].begin(), expCounts[i].end(), size_t(0)));
     // The first fragment set should just be the molecule itself.  There
@@ -83,7 +85,7 @@ TEST_CASE("Test splits 1") {
       const auto numFragSets = std::accumulate(
           fragments.begin(), fragments.end(), static_cast<size_t>(0),
           [&](size_t prevRes,
-              const std::vector<std::unique_ptr<ROMol>> &frags) {
+              const std::vector<std::shared_ptr<ROMol>> &frags) {
             if (frags.size() == j + 1) {
               return prevRes + 1;
             }
@@ -150,6 +152,86 @@ TEST_CASE("S Amide 1") {
     enumSmi.insert(MolToSmiles(*subsLib->getMol(i)));
   }
   CHECK(resSmi == enumSmi);
+
+  resSmi.clear();
+  SearchResultCallback cb =
+      [&resSmi](const std::vector<std::unique_ptr<ROMol>> &r) {
+        for (auto &elem : r) {
+          resSmi.insert(MolToSmiles(*elem));
+        }
+        return false;
+      };
+  synthonspace.substructureSearch(*queryMol, cb, matchParams, params);
+  CHECK(resSmi == enumSmi);
+}
+
+TEST_CASE("Search Callback returns true") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space.txt";
+  std::string enumLibName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_enum.smi";
+
+  auto queryMol = "c1ccccc1"_smiles;
+  SynthonSpace synthonspace;
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
+  SubstructMatchParameters matchParams;
+  SynthonSpaceSearchParams params;
+
+  // set chunk size small so that we get multiple chunks back
+  params.toTryChunkSize = 2;
+  std::set<std::string> cbSmi;
+  bool retval = false;
+  SearchResultCallback cb =
+      [&cbSmi, &retval](const std::vector<std::unique_ptr<ROMol>> &r) {
+        for (auto &elem : r) {
+          CHECK(r.size() == 2);
+          cbSmi.insert(MolToSmiles(*elem));
+        }
+        return retval;
+      };
+  synthonspace.substructureSearch(*queryMol, cb, matchParams, params);
+  CHECK(cbSmi.size() == 6);
+
+  cbSmi.clear();
+  // return true from callback unconditionally, we receive only one chunk
+  retval = true;
+  synthonspace.substructureSearch(*queryMol, cb, matchParams, params);
+  CHECK(cbSmi.size() == 2);
+}
+
+TEST_CASE("Search Callback with small maxHits and smaller toTryChunkSize") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space.txt";
+  std::string enumLibName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_enum.smi";
+
+  auto queryMol = "c1ccccc1"_smiles;
+  SynthonSpace synthonspace;
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
+  SubstructMatchParameters matchParams;
+  SynthonSpaceSearchParams params;
+
+  // set chunk size small so that we get multiple chunks back
+  params.toTryChunkSize = 2;
+  params.maxHits = 4;
+  std::set<std::string> cbSmi;
+  bool retval = false;
+  SearchResultCallback cb =
+      [&cbSmi, &retval](const std::vector<std::unique_ptr<ROMol>> &r) {
+        for (auto &elem : r) {
+          CHECK(r.size() == 2);
+          cbSmi.insert(MolToSmiles(*elem));
+        }
+        return retval;
+      };
+  synthonspace.substructureSearch(*queryMol, cb, matchParams, params);
+  CHECK(cbSmi.size() == 4);
 }
 
 TEST_CASE("S Urea 1") {
@@ -360,6 +442,12 @@ TEST_CASE("DB Writer") {
   std::remove(spaceName);
   // Check it behaves gracefully with a missing file
   CHECK_THROWS(synthonspace.readDBFile(spaceName));
+
+  // And the free function with some cursory checks.
+  convertTextToDBFile(libName, spaceName, cancelled, fpGen.get());
+  SynthonSpace newsynthonspace2;
+  newsynthonspace2.readDBFile(spaceName);
+  CHECK_NOTHROW(irxn = newsynthonspace.getReaction("doebner-miller-quinoline"));
 }
 
 TEST_CASE("S Small query") {
@@ -424,6 +512,7 @@ TEST_CASE("Greg Space Failure") {
 
   SubstructMatchParameters matchParams;
   SynthonSpaceSearchParams params;
+  params.timeOut = 0;
   auto results =
       synthonspace.substructureSearch(*queryMol, matchParams, params);
   CHECK(results.getHitMolecules().size() == 1);
@@ -786,4 +875,191 @@ TEST_CASE("Enhanced Stereochemistry - Github 8650") {
   REQUIRE(synthons.size() == 1);
   REQUIRE(synthons[0].size() == 1);
   CHECK(synthons[0][0].second->getSmiles() == "C[C@H]1CC[C@H](CC1)F |&1:1,4|");
+}
+
+TEST_CASE("Github 9009") {
+  {
+    // Single bond to "extra" aromatic C
+    SynthonSpace space;
+    std::istringstream iss(
+        R"(SMILES	synton_id	synton#	reaction_id	release
+O=c1ccncn1[1*]	192	1	r2	1
+[1*]c1ccccc1	227	2	r2	1
+)");
+    bool cancelled = false;
+    space.readStream(iss, cancelled);
+    auto q1 = "O=c1n([c])cncc1"_smarts;
+    auto res1 = space.substructureSearch(*q1);
+    CHECK(res1.getHitMolecules().size() == 1);
+    auto q2 = "O=c1n([a])cncc1"_smarts;
+    auto res2 = space.substructureSearch(*q2);
+    CHECK(res2.getHitMolecules().size() == 1);
+  }
+  {
+    // Check that aromatic bond works
+    SynthonSpace space;
+    std::istringstream iss(
+        R"(SMILES	synton_id	synton#	reaction_id	release
+[1*]C=CC=C[2*]	192	1	r2	1
+O=C1NC=NC([2*])=C1[1*]	227	2	r2	1
+)");
+    bool cancelled = false;
+    space.readStream(iss, cancelled);
+    auto q3 = "O=c1ncncc1c"_smarts;
+    auto res3 = space.substructureSearch(*q3);
+    CHECK(res3.getHitMolecules().size() == 1);
+  }
+}
+
+TEST_CASE("Github 9007") {
+  auto q1 = "O=c1ncnc([a])c1[a]"_smarts;
+  REQUIRE(q1);
+  auto q2 = "O=c1ncnc([c])c1[c]"_smarts;
+  REQUIRE(q2);
+  {
+    // Basic test. In the original bug, q1 gave hits, q2 didn't.  q1 gave
+    // them for the wrong reason, though.
+    SynthonSpace space;
+    std::istringstream iss(
+        R"(SMILES	synton_id	synton#	reaction_id	release
+[1*]c1nc[nH]c(=O)c1[2*]	1	1	r1	1
+[1*]ccc(c[2*])[N+](=O)[O-]	10	2	r1	1
+[2*]ncc(c[1*])[N+](=O)[O-]	11	2	r1	1
+)");
+    bool cancelled = false;
+    space.readStream(iss, cancelled);
+
+    auto res1 = space.substructureSearch(*q1);
+    CHECK(res1.getHitMolecules().size() == 2);
+    auto res2 = space.substructureSearch(*q2);
+    CHECK(res2.getHitMolecules().size() == 1);
+    // Simpler case of just 1 dangling substituent
+    auto q6 = "O=c1ncncc1c"_smarts;
+    REQUIRE(q6);
+    auto res6 = space.substructureSearch(*q6);
+    CHECK(res6.getHitMolecules().size() == 1);
+    auto q7 = "O=c1ncncc1a"_smarts;
+    REQUIRE(q7);
+    auto res7 = space.substructureSearch(*q7);
+    CHECK(res7.getHitMolecules().size() == 2);
+  }
+  {
+    // More complex case - 1 ring creation, extra substituent
+    SynthonSpace space;
+    std::istringstream iss(
+        R"(SMILES	synton_id	synton#	reaction_id	release
+[1*]C1:C([2*])C(=O)N([3*])C=N1	192	1	r2	1
+[1*]cc(C)cc([2*])Br	227	2	r2	1
+[3*]c1c(Cl)ncnc1Cl	384	3	r2	1
+)");
+    bool cancelled = false;
+    space.readStream(iss, cancelled);
+
+    auto res1 = space.substructureSearch(*q1);
+    CHECK(res1.getHitMolecules().size() == 1);
+    auto res2 = space.substructureSearch(*q2);
+    CHECK(res2.getHitMolecules().size() == 1);
+
+    auto q3 = "O=c1n(c)cnc(c)c1c"_smarts;
+    auto res3 = space.substructureSearch(*q3);
+    CHECK(res3.getHitMolecules().size() == 1);
+  }
+  {
+    // 2 ring creations.
+    SynthonSpace space;
+    std::istringstream iss(
+        R"(SMILES	synton_id	synton#	reaction_id	release
+[1*]C1:C([2*])C(=O)N([3*])C([4*])=N1	1	1	r1	1
+[1*]ccc(c[2*])[N+](=O)[O-]	10	2	r1	1
+[3*]CCCC[4*]	100	3	r1	1
+)");
+    bool cancelled = false;
+    space.readStream(iss, cancelled);
+
+    auto q4 = "O=c1n(C)c(C)nc(c)c(c)1"_smarts;
+    REQUIRE(q4);
+    auto res4 = space.substructureSearch(*q4);
+    CHECK(res4.getHitMolecules().size() == 1);
+    auto q5 = "O=c1n([A])c([A])nc([a])c([a])1"_smarts;
+    REQUIRE(q5);
+    auto res5 = space.substructureSearch(*q5);
+    CHECK(res5.getHitMolecules().size() == 1);
+  }
+}
+
+unsigned int countFileLines(const std::string &filename) {
+  std::ifstream ifs(filename.c_str());
+  ifs.unsetf(std::ios_base::skipws);
+  unsigned int numLines = std::count(std::istream_iterator<char>(ifs),
+                                     std::istream_iterator<char>(), '\n');
+  ifs.close();
+  return numLines;
+}
+
+TEST_CASE("S Write Possible Hits") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  SynthonSpace synthonspace;
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
+  synthonspace.readDBFile(libName);
+
+  SynthonSpaceSearchParams params;
+  SubstructMatchParameters matchParams;
+  params.numThreads = 1;
+  {
+    params.possibleHitsFile = "s_poss_hits_1.txt";
+    params.writePossibleHitsAndStop = true;
+    auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
+    SearchResults results;
+    CHECK_NOTHROW(results = synthonspace.substructureSearch(
+                      *queryMol, matchParams, params));
+    CHECK(results.getHitMolecules().size() == 0);
+    CHECK(results.getMaxNumResults() == 220);
+    CHECK(countFileLines("s_poss_hits_1.txt") == 220);
+    CHECK(results.getHitMolecules().size() == 0);
+
+    auto newResults =
+        synthonspace.substructureSearch(*queryMol, matchParams, params, 0, 110);
+    CHECK(newResults.getHitMolecules().size() == 110);
+    std::remove("s_poss_hits_1.txt");
+  }
+
+  {
+    std::string libName =
+        fName + "/Code/GraphMol/SynthonSpaceSearch/data/extended_query.csv";
+    SynthonSpace synthonspace;
+    bool cancelled = false;
+    synthonspace.readTextFile(libName, cancelled);
+
+    auto queryMol =
+        v2::SmilesParse::MolFromSmarts("[#6]-*.c1nc2cccnc2n1 |m:1:3.10|");
+    REQUIRE(queryMol);
+    auto xrq = GeneralizedSubstruct::createExtendedQueryMol(*queryMol);
+    params.possibleHitsFile = "s_poss_hits_2.txt";
+    params.writePossibleHitsAndStop = true;
+#ifdef RDK_USE_BOOST_SERIALIZATION
+    auto results = synthonspace.substructureSearch(xrq, matchParams, params);
+    CHECK(results.getHitMolecules().size() == 0);
+    CHECK(countFileLines("s_poss_hits_2.txt") == 10);
+
+    auto newResults =
+        synthonspace.substructureSearch(xrq, matchParams, params, 0);
+    CHECK(newResults.getHitMolecules().size() == 10);
+    std::remove("s_poss_hits_2.txt");
+#else
+    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq), Invar::Invariant);
+#endif
+  }
+
+  {
+    // Check it handles a final line with no newline
+    SynthonSpaceSearchParams params1;
+    params1.possibleHitsFile =
+        fName + "/Code/GraphMol/SynthonSpaceSearch/data/s_poss_hits_noeol.txt";
+    auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
+    auto results =
+        synthonspace.substructureSearch(*queryMol, matchParams, params1, 0);
+    CHECK(results.getHitMolecules().size() == 2);
+  }
 }

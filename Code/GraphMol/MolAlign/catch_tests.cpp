@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2022-2023 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2022-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -206,4 +206,123 @@ TEST_CASE("getAllConformerBestRMS") {
       CHECK(rmsds[i] == Catch::Approx(mtrmsds[i]).epsilon(0.00001));
     }
   }
+}
+TEST_CASE("ignoring Hs") {
+  v2::SmilesParse::SmilesParserParams ps;
+  ps.removeHs = false;
+  std::string smi1 = "[H]CC[H] |(0,0,0;1,0,0;2,0,0;3,0,0)|";
+  auto m1 = v2::SmilesParse::MolFromSmiles(smi1, ps);
+  REQUIRE(m1);
+  std::string smi2 = "[H]CC[H] |(0,1,0;1,0,0;2,0,0;3,0,0)|";
+  auto m2 = v2::SmilesParse::MolFromSmiles(smi2, ps);
+  REQUIRE(m2);
+  SECTION("basics") {
+    {
+      auto rmsd = MolAlign::getBestRMS(*m2, *m1);
+      CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.278, 0.001));
+    }
+    {
+      MolAlign::BestAlignmentParams bap;
+      bap.ignoreHs = true;
+      auto rmsd = MolAlign::getBestRMS(*m2, *m1, bap);
+      CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.0, 0.001));
+    }
+  }
+  SECTION("allConformersBestRMS") {
+    ROMol m3(*m1);
+    m3.addConformer(new Conformer(m1->getConformer()), true);
+    m3.addConformer(new Conformer(m2->getConformer()), true);
+    {
+      auto rmsds = MolAlign::getAllConformerBestRMS(m3);
+      REQUIRE(rmsds.size() == 3);
+      CHECK_THAT(rmsds[0], Catch::Matchers::WithinAbs(0.000, 0.001));
+      CHECK_THAT(rmsds[1], Catch::Matchers::WithinAbs(0.278, 0.001));
+      CHECK_THAT(rmsds[2], Catch::Matchers::WithinAbs(0.278, 0.001));
+    }
+    {
+      MolAlign::BestAlignmentParams bap;
+      bap.ignoreHs = true;
+      auto rmsds = MolAlign::getAllConformerBestRMS(m3, bap);
+      REQUIRE(rmsds.size() == 3);
+      CHECK_THAT(rmsds[0], Catch::Matchers::WithinAbs(0.000, 0.001));
+      CHECK_THAT(rmsds[1], Catch::Matchers::WithinAbs(0.000, 0.001));
+      CHECK_THAT(rmsds[2], Catch::Matchers::WithinAbs(0.000, 0.001));
+    }
+  }
+  SECTION("best transform") {
+    RDGeom::Transform3D trans;
+    MatchVectType match;
+    {
+      auto rmsd = MolAlign::getBestAlignmentTransform(*m2, *m1, trans, match);
+      CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.278, 0.001));
+    }
+    {
+      MolAlign::BestAlignmentParams bap;
+      bap.ignoreHs = true;
+      auto rmsd =
+          MolAlign::getBestAlignmentTransform(*m2, *m1, trans, match, bap);
+      CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.0, 0.001));
+    }
+  }
+}
+
+TEST_CASE("Multi mol best conformer rmsd") {
+  const auto loadMultiConformerSDF = [](const std::string &sdfFilePath) {
+    RDKit::SDMolSupplier supplier(sdfFilePath);
+    std::unique_ptr<RDKit::ROMol> mainMol = nullptr;
+    while (!supplier.atEnd()) {
+      RDKit::ROMol *rawMol = supplier.next();
+      std::unique_ptr<RDKit::ROMol> currentMol(rawMol);
+      if (!mainMol) {
+        mainMol = std::move(currentMol);
+      } else if (currentMol->getNumConformers() > 0) {
+        const RDKit::Conformer &conf = currentMol->getConformer();
+        auto *confCopy = new RDKit::Conformer(conf);
+        mainMol->addConformer(confCopy, true);
+      }
+    }
+    return mainMol;
+  };
+  const auto runTest = [](const std::vector<double> &exp, const ROMol &prbMol,
+                          const ROMol &refMol, const int numThreads = 1) {
+    const double margin = 0.001;
+    const std::vector<double> result = MolAlign::getAllConformerBestRMSToRef(
+        prbMol, refMol, {.numThreads = numThreads, .map = {}});
+    REQUIRE_THAT(
+        result, Catch::Matchers::RangeEquals(exp, [margin](double a, double b) {
+          return Catch::Matchers::WithinAbs(b, margin).match(a);
+        }));
+  };
+
+  std::string basePath = getenv("RDBASE");
+  basePath += "/Code/GraphMol/MolAlign/test_data/";
+
+  SECTION("1x5") {
+    const std::vector<double> expected = {0.1947, 0.8673, 0.8710, 0.3535,
+                                          0.3539};
+    RDKit::SDMolSupplier supplier(basePath + "butane_ref.sdf");
+    const auto ref = std::make_unique<RDKit::ROMol>(*supplier.next());
+    const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
+    runTest(expected, *prb, *ref);
+  }
+
+  SECTION("2x5") {
+    const std::vector<double> expected = {0.1947, 0.8673, 0.8710, 0.3535,
+                                          0.3539, 0.8224, 0.1680, 0.1685,
+                                          0.5496, 0.5617};
+    const auto ref = loadMultiConformerSDF(basePath + "butane_ref.sdf");
+    const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
+    runTest(expected, *prb, *ref);
+  }
+#ifdef RDK_TEST_MULTITHREADED
+  SECTION("2x5-multithreaded") {
+    const std::vector<double> expected = {0.1947, 0.8673, 0.8710, 0.3535,
+                                          0.3539, 0.8224, 0.1680, 0.1685,
+                                          0.5496, 0.5617};
+    const auto ref = loadMultiConformerSDF(basePath + "butane_ref.sdf");
+    const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
+    int numThreads = 4;
+    runTest(expected, *prb, *ref, numThreads);
+  }
+#endif
 }

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2016-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,7 +9,6 @@
 //
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/RDKitBase.h>
@@ -17,27 +16,30 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/MolOps.h>
 
-#include <iostream>
-#include <algorithm>
 #include "SmilesWrite.h"
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <GraphMol/MolEnumerator/LinkNode.h>
-#include <GraphMol/Chirality.h>
+
+#include <algorithm>
+#include <array>
 #include <map>
+#include <string_view>
+#include <string>
 
 namespace SmilesParseOps {
 using namespace RDKit;
 
-const std::string cxsmilesindex = "_cxsmilesindex";
-const std::string cxsgTracker = "_sgTracker";
+constexpr std::string_view cxsmilesindex = "_cxsmilesindex";
+constexpr std::string_view cxsgTracker = "_sgTracker";
 
 // FIX: once this can be automated using constexpr, do so
-const std::vector<std::string_view> pseudoatoms{"Pol", "Mod"};
-const std::vector<std::string_view> pseudoatoms_p{"Pol_p", "Mod_p"};
+constexpr std::array<std::string_view, 2> pseudoatoms{"Pol", "Mod"};
+constexpr std::array<std::string_view, 2> pseudoatoms_p{"Pol_p", "Mod_p"};
 
-std::map<std::string, std::string> sgroupTypemap = {
+const std::map<std::string, std::string> sgroupTypemap = {
     {"n", "SRU"},   {"mon", "MON"}, {"mer", "MER"}, {"co", "COP"},
     {"xl", "CRO"},  {"mod", "MOD"}, {"mix", "MIX"}, {"f", "FOR"},
     {"any", "ANY"}, {"gen", "GEN"}, {"c", "COM"},   {"grf", "GRA"},
@@ -100,7 +102,7 @@ void processCXSmilesLabels(RWMol &mol) {
         atom->clearProp(common_properties::atomLabel);
       }
     } else if (atom->getAtomicNum() == 0 && !atom->hasQuery() &&
-               atom->getSymbol() == "*") {
+               !atom->getIsotope() && atom->getSymbol() == "*") {
       addquery(makeAAtomQuery(), "", mol, atom->getIdx());
     }
   }
@@ -122,7 +124,7 @@ bool read_int(Iterator &first, Iterator last, unsigned int &res) {
   if (num.empty()) {
     return false;
   }
-  res = boost::lexical_cast<unsigned int>(num);
+  res = std::atoi(num.c_str());
   return true;
 }
 template <typename Iterator>
@@ -135,7 +137,7 @@ bool read_int_list(Iterator &first, Iterator last,
       ++first;
     }
     if (!num.empty()) {
-      res.push_back(boost::lexical_cast<unsigned int>(num));
+      res.push_back(std::atoi(num.c_str()));
     }
     if (first >= last || *first != sep) {
       break;
@@ -180,7 +182,7 @@ std::string read_text_to(Iterator &first, Iterator last, std::string delims) {
       }
       if (next > first + 2) {
         std::string blk = std::string(first + 2, next);
-        res += (char)(boost::lexical_cast<int>(blk));
+        res += (char)(std::atoi(blk.c_str()));
       }
       first = next + 1;
       start = first;
@@ -307,15 +309,22 @@ void finalizePolymerSGroup(RWMol &mol, SubstanceGroup &sgroup) {
   sgroup.setProp("XBCORR", xbcorr);
 }
 
-Bond *get_bond_with_smiles_idx(const ROMol &mol, unsigned idx) {
+Bond *get_bond_with_smiles_idx(RWMol &mol, unsigned idx) {
+  // SMILES ring-closure bonds are appended after the ordinary bonds. Only
+  // they need an explicit parse-order index; ordinary bond positions can be
+  // recovered by removing the earlier ring-closure slots.
+  unsigned int earlierRingBonds = 0;
   for (auto bnd : mol.bonds()) {
     unsigned int smilesIdx;
-    if (bnd->getPropIfPresent("_cxsmilesBondIdx", smilesIdx) &&
-        smilesIdx == idx) {
-      return bnd;
+    if (bnd->getPropIfPresent("_cxsmilesBondIdx", smilesIdx)) {
+      if (smilesIdx == idx) {
+        return bnd;
+      }
+      earlierRingBonds += smilesIdx < idx;
     }
   }
-  return nullptr;
+  const auto bondIdx = idx - earlierRingBonds;
+  return bondIdx < mol.getNumBonds() ? mol.getBondWithIdx(bondIdx) : nullptr;
 }
 
 }  // end of anonymous namespace
@@ -383,7 +392,7 @@ bool parse_atom_props(Iterator &first, Iterator last, RDKit::RWMol &mol,
       ++first;
     }
   }
-  if (first <= last && *first != '|' && *first != ',') {
+  if ((first > last) || (*first != '|' && *first != ',')) {
     return false;
   }
   if (*first != '|') {
@@ -439,13 +448,13 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
         std::vector<std::string> tokens;
         boost::split(tokens, tkn, boost::is_any_of(std::string(",")));
         if (tokens.size() >= 1 && tokens[0].size()) {
-          pt.x = boost::lexical_cast<double>(tokens[0]);
+          pt.x = std::atof(tokens[0].c_str());
         }
         if (tokens.size() >= 2 && tokens[1].size()) {
-          pt.y = boost::lexical_cast<double>(tokens[1]);
+          pt.y = std::atof(tokens[1].c_str());
         }
         if (tokens.size() >= 3 && tokens[2].size()) {
-          pt.z = boost::lexical_cast<double>(tokens[2]);
+          pt.z = std::atof(tokens[2].c_str());
           is3D = true;
         }
       }
@@ -899,19 +908,20 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
   }
   first += 3;
 
-  std::string typ = read_text_to(first, last, ":");
+  const auto type_code = read_text_to(first, last, ":");
   ++first;
-  if (sgroupTypemap.find(typ) == sgroupTypemap.end()) {
+  const auto type = sgroupTypemap.find(type_code);
+  if (type == sgroupTypemap.end()) {
     return false;
   }
   bool keepSGroup = false;
-  SubstanceGroup sgroup(&mol, sgroupTypemap[typ]);
+  SubstanceGroup sgroup(&mol, type->second);
   sgroup.setProp(cxsmilesindex, nSGroups);
-  if (typ == "alt") {
+  if (type_code == "alt") {
     sgroup.setProp("SUBTYPE", std::string("ALT"));
-  } else if (typ == "ran") {
+  } else if (type_code == "ran") {
     sgroup.setProp("SUBTYPE", std::string("RAN"));
-  } else if (typ == "blk") {
+  } else if (type_code == "blk") {
     sgroup.setProp("SUBTYPE", std::string("BLO"));
   }
 
@@ -1361,6 +1371,13 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
               << "Atom " << aidx << " not found!" << std::endl;
           return false;
         }
+        if (std::ranges::find(atoms, atom) != atoms.end()) {
+          BOOST_LOG(rdWarningLog)
+              << "Atom " << aidx
+              << " appears more than once in stereo group specification!"
+              << std::endl;
+          return false;
+        }
         atoms.push_back(atom);
       }
     } else {
@@ -1611,17 +1628,23 @@ getSortedStereoGroupsAndIndices(
   return {std::move(sgs), std::move(sgAtomIdxs)};
 }
 
-std::string quote_string(const std::string &txt) {
-  // FIX
-  return txt;
+bool is_alphanumeric(char c) {
+  return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') ||
+         (c >= 'a' && c <= 'z');
 }
 
-std::string quote_atomprop_string(const std::string &txt) {
-  // at a bare minimum, . needs to be escaped
+// from:
+// https://docs.chemaxon.com/latest/formats_chemaxon-extended-smiles-and-smarts-cxsmiles-and-cxsmarts.html#escaping
+const std::string sgroupAllowedSpecialChars = "><\"!@#$%()[]./\\?-+*^_~= ";
+const std::string atomPropAllowedSpecialChars = "><\"!@#$%()[]./\\?-+*^_~= ";
+const std::string labelAllowedSpecialChars = "><\"!@#%()[]./\\?-+*^_~=,: ";
+std::string quote_string(const std::string &txt,
+                         std::string allowedSpecialChars) {
   std::string res;
   for (auto c : txt) {
-    if (c == '.') {
-      res += "&#46;";
+    if (!allowedSpecialChars.empty() && !is_alphanumeric(c) &&
+        allowedSpecialChars.find(c) == std::string::npos) {
+      res += "&#" + std::to_string(static_cast<unsigned int>(c)) + ";";
     } else {
       res += c;
     }
@@ -1765,7 +1788,7 @@ std::string get_sgroup_polymer_block(
     if (sg.getPropIfPresent("TYPE", typ) &&
         reverseTypemap.find(typ) != reverseTypemap.end()) {
       sg.setProp("_cxsmilesOutputIndex", sgroupOutputIndex);
-      sgroupOutputIndex++;
+      ++sgroupOutputIndex;
 
       res << "Sg:";
       std::string subtype;
@@ -1791,7 +1814,7 @@ std::string get_sgroup_polymer_block(
       res << ":";
       std::string label;
       if (sg.getPropIfPresent("LABEL", label)) {
-        res << label;
+        res << quote_string(label, sgroupAllowedSpecialChars);
       }
       res << ":";
       std::string connect;
@@ -1820,8 +1843,8 @@ std::string get_sgroup_polymer_block(
         res.seekp(-1, res.cur);
       }
       res << ":";
+      res << ",";  // only add a comma if we wrote something
     }
-    res << ",";
   }
 
   std::string resStr = res.str();
@@ -1853,7 +1876,7 @@ std::string get_sgroup_data_block(const ROMol &mol,
   for (const auto &sg : sgs) {
     if (sg.hasProp("TYPE") && sg.getProp<std::string>("TYPE") == "DAT") {
       sg.setProp("_cxsmilesOutputIndex", sgroupOutputIndex);
-      sgroupOutputIndex++;
+      ++sgroupOutputIndex;
 
       res << "SgD:";
       // we don't attempt to canonicalize the atom order because the user
@@ -1866,13 +1889,13 @@ std::string get_sgroup_data_block(const ROMol &mol,
       res << ":";
       std::string prop;
       if (sg.getPropIfPresent("FIELDNAME", prop) && !prop.empty()) {
-        res << prop;
+        res << quote_string(prop, sgroupAllowedSpecialChars);
       }
       res << ":";
       std::vector<std::string> vprop;
       if (sg.getPropIfPresent("DATAFIELDS", vprop) && !vprop.empty()) {
         for (const auto &pv : vprop) {
-          res << pv << ",";
+          res << quote_string(pv, sgroupAllowedSpecialChars) << ",";
         }
         // remove the extra ",":
         res.seekp(-1, res.cur);
@@ -1883,16 +1906,16 @@ std::string get_sgroup_data_block(const ROMol &mol,
       }
       res << ":";
       if (sg.getPropIfPresent("FIELDINFO", prop) && !prop.empty()) {
-        res << prop;
+        res << quote_string(prop, sgroupAllowedSpecialChars);
       }
       res << ":";
       if (sg.getPropIfPresent("FIELDTAG", prop) && !prop.empty()) {
-        res << prop;
+        res << quote_string(prop, sgroupAllowedSpecialChars);
       }
       res << ":";
       // FIX: do something about the coordinates
+      res << ",";  // only add a comma if we wrote something
     }
-    res << ",";
   }
 
   std::string resStr = res.str();
@@ -1916,20 +1939,22 @@ std::string get_atomlabel_block(const ROMol &mol,
     const auto atom = mol.getAtomWithIdx(idx);
     if (atom->getPropIfPresent(common_properties::_QueryAtomGenericLabel,
                                lbl)) {
-      res += quote_string(lbl + "_p");
+      res += quote_string(lbl + "_p", labelAllowedSpecialChars);
     } else if (!atom->getAtomicNum() &&
                atom->getPropIfPresent(common_properties::dummyLabel, lbl) &&
                std::find(SmilesParseOps::pseudoatoms.begin(),
                          SmilesParseOps::pseudoatoms.end(),
                          lbl) != SmilesParseOps::pseudoatoms.end()) {
-      res += quote_string(lbl + "_p");
+      res += quote_string(lbl + "_p", labelAllowedSpecialChars);
     } else if (!atom->getAtomicNum() &&
                atom->getPropIfPresent(common_properties::_fromAttachPoint,
                                       val) &&
                (val == 1 || val == 2)) {
-      res += quote_string("_AP" + std::to_string(val));
+      res += quote_string(
+          std::string(MolOps::attachmentPointLabelPrefix) + std::to_string(val),
+          labelAllowedSpecialChars);
     } else if (atom->getPropIfPresent(common_properties::atomLabel, lbl)) {
-      res += quote_string(lbl);
+      res += quote_string(lbl, labelAllowedSpecialChars);
     }
   }
   // if we didn't find anything return an empty string
@@ -1942,7 +1967,7 @@ std::string get_atomlabel_block(const ROMol &mol,
 
 std::string get_value_block(const ROMol &mol,
                             const std::vector<unsigned int> &atomOrder,
-                            const std::string &prop) {
+                            const std::string_view &prop) {
   std::string res = "";
   bool first = true;
   for (auto idx : atomOrder) {
@@ -1953,7 +1978,7 @@ std::string get_value_block(const ROMol &mol,
     }
     std::string lbl;
     if (mol.getAtomWithIdx(idx)->getPropIfPresent(prop, lbl)) {
-      res += quote_string(lbl);
+      res += quote_string(lbl, atomPropAllowedSpecialChars);
     }
   }
   return res;
@@ -2024,9 +2049,11 @@ std::string get_coords_block(const ROMol &mol,
 
 std::string get_atom_props_block(const ROMol &mol,
                                  const std::vector<unsigned int> &atomOrder) {
-  std::vector<std::string> skip = {common_properties::atomLabel,
-                                   common_properties::molFileValue,
-                                   common_properties::molParity};
+  constexpr std::array<std::string_view, 7> skip = {
+      common_properties::atomLabel,       common_properties::molFileValue,
+      common_properties::molParity,       common_properties::molAtomMapNumber,
+      common_properties::molStereoCare,   common_properties::molRxnExactChange,
+      common_properties::molInversionFlag};
   std::string res = "";
   unsigned int which = 0;
   for (auto idx : atomOrder) {
@@ -2038,7 +2065,7 @@ std::string get_atom_props_block(const ROMol &mol,
       if (std::find(skip.begin(), skip.end(), pn) == skip.end()) {
         std::string pv = atom->getProp<std::string>(pn);
         if (pn == "dummyLabel" &&
-            (isAttachmentPoint ||
+            (isAttachmentPoint || pv == "*" ||
              std::find(SmilesParseOps::pseudoatoms.begin(),
                        SmilesParseOps::pseudoatoms.end(),
                        pv) != SmilesParseOps::pseudoatoms.end())) {
@@ -2048,9 +2075,9 @@ std::string get_atom_props_block(const ROMol &mol,
         if (res.empty()) {
           res += "atomProp";
         }
-        res +=
-            boost::str(boost::format(":%d.%s.%s") % which %
-                       quote_atomprop_string(pn) % quote_atomprop_string(pv));
+        res += boost::str(boost::format(":%d.%s.%s") % which %
+                          quote_string(pn, atomPropAllowedSpecialChars) %
+                          quote_string(pv, atomPropAllowedSpecialChars));
       }
     }
     ++which;
@@ -2108,7 +2135,7 @@ std::string get_bond_config_block(
             if (!Atropisomers::getAtropisomerAtomsAndBonds(
                     bondNbr, atomAndBondVecs, mol)) {
               throw ValueErrorException("Internal error - should not occur");
-              // should not happend
+              // should not happen
             } else {
               unsigned int swaps = 0;
 
@@ -2126,9 +2153,10 @@ std::string get_bond_config_block(
 
               for (unsigned int bondAtomIndex = 0; bondAtomIndex < 2;
                    ++bondAtomIndex) {
-                if (atomAndBondVecs[bondAtomIndex].first == firstAtom)
+                if (atomAndBondVecs[bondAtomIndex].first == firstAtom) {
                   continue;  // swapped atoms on the side where the wedge bond
                              // is does NOT change the wedge bond
+                }
                 if (atomAndBondVecs[bondAtomIndex].second.size() == 2) {
                   unsigned int firstOtherAtomIdx =
                       atomAndBondVecs[bondAtomIndex]

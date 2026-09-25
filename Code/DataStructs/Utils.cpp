@@ -1,4 +1,3 @@
-// $Id$
 //
 // Copyright (c) 2002-20`0  greg Landrum, Rational Discovery LLC
 //
@@ -11,7 +10,6 @@
 #include "BitVects.h"
 #include "BitVectUtils.h"
 #include <RDGeneral/Invariant.h>
-#include <iostream>
 
 //! Convert a SparseBitVector to an ExplicitBitVector
 ExplicitBitVect *convertToExplicit(const SparseBitVect *sbv) {

@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //
@@ -10,7 +9,6 @@
 //
 #include <RDGeneral/test.h>
 #include <fstream>
-#include <iostream>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/utils.h>

@@ -761,7 +761,9 @@ MarvinAtom::MarvinAtom()
       x3(DBL_MAX),
       y3(DBL_MAX),
       z3(DBL_MAX),
+
       formalCharge(0),
+      isotope(0),
       mrvValence(-1),
       hydrogenCount(-1),
       mrvMap(0),
@@ -961,6 +963,8 @@ const std::string MarvinBond::getBondType() const {
   {
     if (tempConvention == "CXN:COORD") {
       return "DATIVE";
+    } else if (tempConvention == "CXN:HYDROGEN") {
+      return "HYDROGEN";
     } else {
       std::ostringstream err;
       err << "unrecognized convention " << convention << " in MRV File ";
@@ -1242,6 +1246,8 @@ int MarvinMolBase::getExplicitValence(const MarvinAtom &marvinAtom) const {
       // if (bondPtr->atomRefs2[1] == marvinAtom.id) //second atom of dative
       // bond count as 1 (first atom is zero)
       //   resTimes10 += 10;  // really 1 order bond
+    } else if (marvinBondType == "HYDROGEN") {
+      // hydrogen bonds do not add to valence}
     } else if (marvinBondType == "1") {
       resTimes10 += 10;  // really 1 order bond
     } else if (marvinBondType == "2") {
@@ -1439,7 +1445,7 @@ std::string MarvinSruCoModSgroup::role() const { return roleName; }
 
 bool MarvinSruCoModSgroup::hasAtomBondBlocks() const { return false; }
 
-MarvinDataSgroup::MarvinDataSgroup(MarvinMolBase *parentInit) {
+MarvinDataSgroup::MarvinDataSgroup(MarvinMolBase *parentInit) : x(0.0), y(0.0) {
   parent = parentInit;
 }
 
@@ -1740,7 +1746,8 @@ ptree MarvinMultipleSgroup::toPtree() const {
   return out;
 }
 
-MarvinMulticenterSgroup::MarvinMulticenterSgroup(MarvinMolBase *parentInit) {
+MarvinMulticenterSgroup::MarvinMulticenterSgroup(MarvinMolBase *parentInit)
+    : center(nullptr) {
   PRECONDITION(parentInit != nullptr, "parentInit cannot be null");
   parent = parentInit;
 }

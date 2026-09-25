@@ -69,7 +69,6 @@ class Generator(object):
     featFamilies = [
       fam for fam in sigFactory.featFactory.GetFeatureFamilies() if fam not in sigFactory.skipFeats
     ]
-    nFeats = len(featFamilies)
     featMatches = {}
     for fam in featFamilies:
       featMatches[fam] = []
@@ -77,10 +76,7 @@ class Generator(object):
     for feat in feats:
       if feat.GetFamily() not in sigFactory.skipFeats:
         featMatches[feat.GetFamily()].append(feat.GetAtomIds())
-    featMatches = [None] * nFeats
-    for i in range(nFeats):
-      featMatches[i] = sigFactory.featFactory.GetMolFeature()
-    self.pattMatches = pattMatches
+    self.pattMatches = [featMatches[family] for family in featFamilies]
 
   def GetBit(self, idx):
     """ returns a bool indicating whether or not the bit is set

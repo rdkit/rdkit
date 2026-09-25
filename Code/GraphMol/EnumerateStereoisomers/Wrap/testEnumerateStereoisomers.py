@@ -51,6 +51,20 @@ class TestCase(unittest.TestCase):
         smiles.add(Chem.MolToSmiles(iso))
     self.assertEqual(len(smiles), 4)
 
+  def testEnumerateStereoisomersEmbeddingNotRejectingInput(self):
+    mol = Chem.MolFromSmiles('C1C/C=C/CCC[C@H]1C(=O)Nc2ccc(cc2)C[C@@H](C(=O)[O-])[NH3+]')
+    canon_smiles = Chem.MolToSmiles(mol, isomericSmiles=True)
+    smiles = set()
+    opts = rdEnumerateStereoisomers.StereoEnumerationOptions()
+    opts.tryEmbedding=True
+    enum = rdEnumerateStereoisomers.StereoisomerEnumerator(mol, opts)
+    while True:
+        iso = enum.next()
+        if iso is None:
+            break
+        smiles.add(Chem.MolToSmiles(iso, isomericSmiles=True))
+    self.assertEqual(len(smiles), 1)
+    self.assertIn(canon_smiles, smiles)
 
   def testEnumerateStereoisomersWithCrazyNumberOfCenters(self):
     # insanely large numbers of isomers aren't a problem
@@ -70,3 +84,4 @@ class TestCase(unittest.TestCase):
 
 if __name__ == '__main__':
   unittest.main()
+

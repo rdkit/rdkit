@@ -314,7 +314,7 @@ bool DrawShapePolyLine::doesRectClash(const StringRect &rect,
 }
 
 // ****************************************************************************
-DrawShapeSolidWedge::DrawShapeSolidWedge(const std::vector<Point2D> points,
+DrawShapeSolidWedge::DrawShapeSolidWedge(const std::vector<Point2D> &points,
                                          const DrawColour &col1,
                                          const DrawColour &col2,
                                          bool splitBonds,
@@ -465,15 +465,24 @@ void DrawShapeSolidWedge::myDraw(MolDraw2D &drawer) const {
     drawer.setActiveAtmIdx(atom1_, atom2_);
   }
   drawer.setActiveBndIdx(bond_);
-  drawer.drawTriangle(points_[0], points_[1], points_[2], true);
-  if (points_.size() > 3) {
+  if (points_.size() == 3 || points_.size() == 9) {
+    drawer.drawTriangle(points_[0], points_[1], points_[2], true);
+  }
+  if (points_.size() == 6) {
+    // This is a 2 triangle drawing where the wedge goes onto a Y shape, as in
+    // Github 7739 tests in catch_tests.cpp.
+    std::vector<Point2D> quadPoints{points_[0], points_[1], points_[2],
+                                    points_[5]};
+    drawer.drawPolygon(quadPoints, true);
+  } else if (points_.size() == 9) {
+    // This is a conventional 2-colour wedge originally drawn as 3 triangles.
     if (drawer.drawOptions().splitBonds) {
       drawer.setActiveAtmIdx(atom2_);
     }
     drawer.setColour(col2_);
-  }
-  for (unsigned int i = 3; i < points_.size(); i += 3) {
-    drawer.drawTriangle(points_[i], points_[i + 1], points_[i + 2], true);
+    std::vector<Point2D> quadPoints{points_[4], points_[5], points_[6],
+                                    points_[7]};
+    drawer.drawPolygon(quadPoints, true);
   }
 }
 
@@ -541,7 +550,7 @@ void DrawShapeSolidWedge::orderOtherBondVecs() {
 }
 
 // ****************************************************************************
-DrawShapeDashedWedge::DrawShapeDashedWedge(const std::vector<Point2D> points,
+DrawShapeDashedWedge::DrawShapeDashedWedge(const std::vector<Point2D> &points,
                                            const DrawColour &col1,
                                            const DrawColour &col2,
                                            bool oneLessDash, double lineWidth,
@@ -670,7 +679,7 @@ bool DrawShapeDashedWedge::doesRectClash(const StringRect &rect,
 }
 
 // ****************************************************************************
-DrawShapeWavyLine::DrawShapeWavyLine(const std::vector<Point2D> points,
+DrawShapeWavyLine::DrawShapeWavyLine(const std::vector<Point2D> &points,
                                      double lineWidth, bool scaleLineWidth,
                                      const DrawColour &col1,
                                      const DrawColour &col2, double offset,
@@ -708,7 +717,7 @@ bool DrawShapeWavyLine::doesRectClash(const StringRect &rect,
 }
 
 // ****************************************************************************
-DrawShapeArc::DrawShapeArc(const std::vector<Point2D> points, double ang1,
+DrawShapeArc::DrawShapeArc(const std::vector<Point2D> &points, double ang1,
                            double ang2, double lineWidth, bool scaleLineWidth,
                            const DrawColour &col1, bool fill, int atom1)
     : DrawShape(points, lineWidth, scaleLineWidth, col1, fill, atom1),

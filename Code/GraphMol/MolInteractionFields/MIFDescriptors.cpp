@@ -21,7 +21,6 @@
 #include <ForceField/UFF/Nonbonded.h>
 #include <ForceField/UFF/Params.h>
 #include <vector>
-#include <iostream>
 #include <fstream>
 
 #ifndef M_PI

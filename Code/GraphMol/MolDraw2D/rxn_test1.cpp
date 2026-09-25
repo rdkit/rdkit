@@ -28,7 +28,6 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <iterator>
@@ -59,12 +58,12 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
 };
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"rxn_test1_1.svg", 1119603847U},    {"rxn_test1_2.svg", 1280072916U},
+    {"rxn_test1_1.svg", 1119603847U},   {"rxn_test1_2.svg", 1280072916U},
     {"rxn_test1_3.svg", 2600700359U},   {"rxn_test1_4.svg", 3286429351U},
     {"rxn_test1_5.svg", 2222269077U},   {"rxn_test1_6.svg", 3393541140U},
-    {"rxn_test1_7.svg", 2511680934U},    {"rxn_test2_1.svg", 408938601U},
+    {"rxn_test1_7.svg", 2511680934U},   {"rxn_test2_1.svg", 408938601U},
     {"rxn_test2_2_1.svg", 2721276293U}, {"rxn_test2_2_2.svg", 2972357489U},
-    {"rxn_test2_2_3.svg", 223414416U}, {"rxn_test2_2_4.svg", 1685655058U},
+    {"rxn_test2_2_3.svg", 223414416U},  {"rxn_test2_2_4.svg", 1685655058U},
     {"rxn_test3_1.svg", 3042468072U},   {"rxn_test4_1.svg", 3101203372U},
     {"rxn_test4_2.svg", 2942016749U},
 };
@@ -81,12 +80,12 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
 // better because the floats are all output to only 1 decimal place so there
 // is a much smaller chance of different systems producing different files.
 static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
-    {"rxn_test1_1.png", 801892091U},   {"rxn_test1_2.png", 507435337U},
+    {"rxn_test1_1.png", 801892091U},    {"rxn_test1_2.png", 507435337U},
     {"rxn_test1_3.png", 1590809137U},   {"rxn_test1_4.png", 1766700542U},
     {"rxn_test1_5.png", 2552100594U},   {"rxn_test1_6.png", 3791582903U},
-    {"rxn_test1_7.png", 1461397406U},    {"rxn_test2_1.png", 3551633840U},
+    {"rxn_test1_7.png", 1461397406U},   {"rxn_test2_1.png", 3551633840U},
     {"rxn_test2_2_1.png", 1268122583U}, {"rxn_test2_2_2.png", 82821108U},
-    {"rxn_test2_2_3.png", 3828365604U},  {"rxn_test2_2_4.png", 1230108677U},
+    {"rxn_test2_2_3.png", 3828365604U}, {"rxn_test2_2_4.png", 1230108677U},
     {"rxn_test3_1.png", 4189980366U},   {"rxn_test4_1.png", 2745201873U},
     {"rxn_test4_2.png", 3094925886U},
 };

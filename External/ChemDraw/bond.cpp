@@ -28,7 +28,7 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//#include "node.h"
+// #include "node.h"
 #include "utils.h"
 #include "fragment.h"
 
@@ -171,7 +171,9 @@ bool parseBond(RWMol &mol, unsigned int fragmentId, CDXBond &bond,
   unsigned int bondIdx = 0;
   auto startIdx = start_atom->getIdx();
   auto endIdx = end_atom->getIdx();
-  if (swap_bond_ends) std::swap(startIdx, endIdx);
+  if (swap_bond_ends) {
+    std::swap(startIdx, endIdx);
+  }
 
   if (qb) {
     qb->setBeginAtomIdx(startIdx);
@@ -188,6 +190,10 @@ bool parseBond(RWMol &mol, unsigned int fragmentId, CDXBond &bond,
     bnd->getEndAtom()->setIsAromatic(true);
   }
   bnd->setProp(CDX_BOND_ID, bond.GetObjectID());
+  if (order == Bond::BondType::DOUBLE &&
+      (bond.m_CIP == kCDXCIPBond_E || bond.m_CIP == kCDXCIPBond_Z)) {
+    bnd->setProp(CDX_BOND_CIP, bond.m_CIP);
+  }
 
   switch (bond.m_display) {
     case kCDXBondDisplay_WedgedHashBegin:
@@ -223,5 +229,5 @@ bool parseBond(RWMol &mol, unsigned int fragmentId, CDXBond &bond,
   }
   return true;
 }
-}
+}  // namespace ChemDraw
 }  // namespace RDKit

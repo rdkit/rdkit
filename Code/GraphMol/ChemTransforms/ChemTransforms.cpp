@@ -23,8 +23,8 @@
 #include <RDGeneral/BoostEndInclude.h>
 #include <vector>
 #include <algorithm>
-#include <iostream>
 #include <fstream>
+#include <ranges>
 #include <sstream>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/StreamOps.h>
@@ -496,12 +496,16 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
             "atoms has degree > 1 ");
         auto coreNeighborIdx =
             core[*core.getAtomNeighbors(coreAtom).first]->getIdx();
-        auto molNeighborIdx =
-            std::find_if(matchV.cbegin(), matchV.cend(),
-                         [coreNeighborIdx](std::pair<int, int> p) {
-                           return p.first == static_cast<int>(coreNeighborIdx);
-                         })
-                ->second;
+        auto molNeighborMatch =
+            std::ranges::find_if(matchV, [coreNeighborIdx](auto p) {
+              return p.first == static_cast<int>(coreNeighborIdx);
+            });
+        if (molNeighborMatch == matchV.end()) {
+          throw ValueErrorException(
+              "Supplied MatchVect is missing the neighbor of a multiply "
+              "mapped core atom");
+        }
+        auto molNeighborIdx = molNeighborMatch->second;
         if (molNeighborIdx > -1) {
           auto connectingBond =
               mol.getBondBetweenAtoms(mappingInfo.molIndex, molNeighborIdx);
@@ -892,7 +896,7 @@ ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
 
 void addRecursiveQueries(
     ROMol &mol, const std::map<std::string, ROMOL_SPTR> &queries,
-    const std::string &propName,
+    const std::string_view &propName,
     std::vector<std::pair<unsigned int, std::string>> *reactantLabels) {
   std::string delim = ",";
   boost::char_separator<char> sep(delim.c_str());

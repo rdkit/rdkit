@@ -14,7 +14,6 @@
 #include <GraphMol/RDKitBase.h>
 #include "FragmentCatalogParams.h"
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <iostream>
 
 namespace RDKit {
 class ROMol;

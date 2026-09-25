@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
@@ -32,22 +31,16 @@ FragCatParams::FragCatParams(unsigned int lLen, unsigned int uLen,
 
 FragCatParams::FragCatParams(const FragCatParams &other) {
   d_funcGroups.clear();
-  // copy consttructor
+
   d_typeStr = other.getTypeStr();
   d_lowerFragLen = other.getLowerFragLength();
   d_upperFragLen = other.getUpperFragLength();
   d_tolerance = other.getTolerance();
 
-  // std::cout << "In param copier\n";
   const MOL_SPTR_VECT &ofgrps = other.getFuncGroups();
-  // const MOL_PTR_VECT &ofgrps = other.getFuncGroups();
-  MOL_SPTR_VECT::const_iterator fgi;
-  // MOL_PTR_VECT_CI fgi;
-  for (fgi = ofgrps.begin(); fgi != ofgrps.end(); fgi++) {
-    auto *nmol = new ROMol(*(fgi->get()));
-    // ROMol *nmol = new ROMol(*(*fgi));
-    d_funcGroups.push_back(ROMOL_SPTR(nmol));
-    // d_funcGroups.push_back(nmol);
+  for (auto fgi : ofgrps) {
+    auto *nmol = new ROMol(*fgi);
+    d_funcGroups.emplace_back(nmol);
   }
 }
 
@@ -64,7 +57,7 @@ const MOL_SPTR_VECT &FragCatParams::getFuncGroups() const {
 
 const ROMol *FragCatParams::getFuncGroup(unsigned int fid) const {
   URANGE_CHECK(fid, d_funcGroups.size());
-  // return d_funcGroups[fid];
+
   return d_funcGroups[fid].get();
 }
 
