@@ -105,7 +105,7 @@ using TorsionParamVariant = std::variant<CosineExp_T, GaussianExp_T>;
 using TorsionAnglePtrVariant =
     std::variant<const ExpTorsionAngle *, const GaussianExpTorsionAngle *>;
 
-struct RDKIT_FORCEFIELDHELPERS_EXPORT CrystalFFDetails {
+struct CrystalFFDetails {
   TorsionParamKind torsionParamKind{TorsionParamKind::Cosine};
   std::vector<std::vector<int>> expTorsionAtoms;
   std::vector<TorsionParamVariant> expTorsionAngles;
