@@ -15,6 +15,7 @@
 #include <vector>
 #include <numbers>
 #include <algorithm>
+#include <limits>
 #include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
 #include <ForceField/MMFF/Params.h>
