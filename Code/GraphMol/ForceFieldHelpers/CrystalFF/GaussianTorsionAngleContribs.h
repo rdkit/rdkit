@@ -28,6 +28,7 @@ namespace ForceFields {
 namespace CrystalFF {
 
 //! Size of the energies and gradients lookup table
+//! This is used in `torsionPreferences.cpp`.
 constexpr std::size_t lookup_grid_size = 180;
 
 //! A term to capture all torsion constraint potentials.

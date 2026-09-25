@@ -141,6 +141,7 @@ RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
     unsigned int version = 2, bool verbose = false);
 
 //! Populate the lookuptable for the minimizations
+//! The size of the lookup table is defined in `GaussianTorsionAngleContribs.h`!
 RDKIT_FORCEFIELDHELPERS_EXPORT void populateRefTable(CrystalFFDetails &details);
 
 }  // namespace CrystalFF

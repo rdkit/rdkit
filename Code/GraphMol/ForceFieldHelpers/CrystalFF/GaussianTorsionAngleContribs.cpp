@@ -25,9 +25,9 @@ namespace CrystalFF {
 constexpr double twoPI = 2 * std::numbers::pi;
 
 inline double interpolate(const std::vector<double> &table, double phi) {
-  const double norm = phi * (lookup_grid_size - 1) / std::numbers::pi;
+  const double norm = phi * (table.size() - 1) / std::numbers::pi;
   const std::size_t idx =
-      std::min(static_cast<std::size_t>(norm), lookup_grid_size - 2);
+      std::min(static_cast<std::size_t>(norm), table.size() - 2);
   const double t = norm - static_cast<double>(idx);
   return table[idx] * (1.0 - t) + table[idx + 1] * t;
 }
@@ -95,8 +95,8 @@ void GaussianTorsionAngleContribs::addContrib(
   PRECONDITION((idx1 != idx2) && (idx1 != idx3) && (idx1 != idx4) &&
                    (idx2 != idx3) && (idx2 != idx4) && (idx3 != idx4),
                "degenerate points");
-  PRECONDITION(energies.size() == lookup_grid_size, "Energy lookup table needs to match `lookup_grid_size`")
-  PRECONDITION(gradients.size() == lookup_grid_size, "Gradient lookup table needs to match `lookup_grid_size`")
+  PRECONDITION(energies.size() >= 2, "Energy lookup table needs to have at least 2 elements.")
+  PRECONDITION(gradients.size() >= 2, "Gradient lookup table needs to have at least 2 elements.")
   URANGE_CHECK(idx1, dp_forceField->positions().size());
   URANGE_CHECK(idx2, dp_forceField->positions().size());
   URANGE_CHECK(idx3, dp_forceField->positions().size());
