@@ -11,7 +11,7 @@ import os
 import sys
 import unittest
 
-from rdkit import Chem
+from rdkit import Chem, RDConfig
 from rdkit.Chem import rdChemDraw
 
 class TestChemDraw(unittest.TestCase):
@@ -270,8 +270,49 @@ class TestChemDraw(unittest.TestCase):
          E="28"
          BS="N"
         /></fragment></page></CDXML>"""
-    mols = rdChemDraw.MolsFromChemDraw(cdxml)
+    mols = rdChemDraw.MolsFromChemDrawBlock(cdxml)
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
 
+  def test_reactions_without_explicit_import(self):
+    # These return ChemicalReaction objects, which only rdChemReactions
+    # registers. Nothing above imports it, so this is the state a caller is
+    # in after importing rdChemDraw alone.
+    path = os.path.join(RDConfig.RDBaseDir, "Code", "GraphMol", "test_data",
+                        "CDXML", "reaction-with-boc.cdxml")
+    with open(path) as inF:
+      block = inF.read()
 
+    rxns = rdChemDraw.ReactionsFromChemDrawBlock(block)
+    self.assertEqual(len(rxns), 1)
+    self.assertEqual(rxns[0].GetNumReactantTemplates(), 1)
+    self.assertEqual(rxns[0].GetNumProductTemplates(), 1)
+
+    self.assertEqual(len(rdChemDraw.ReactionsFromChemDrawFile(path)), 1)
+
+  def test_cdx_file(self):
+    path = os.path.join(RDConfig.RDBaseDir, "Code", "GraphMol", "test_data", "CDX",
+                        "structure_1.cdx")
+    mols = rdChemDraw.MolsFromChemDrawFile(path)
+    self.assertEqual([Chem.MolToSmiles(m) for m in mols], ["C1CCOC1"])
+
+  def test_explicit_format(self):
+    path = os.path.join(RDConfig.RDBaseDir, "Code", "GraphMol", "test_data", "CDX",
+                        "structure_1.cdx")
+    mols = rdChemDraw.MolsFromChemDrawFile(path, format=rdChemDraw.CDXFormat.CDX)
+    self.assertEqual([Chem.MolToSmiles(m) for m in mols], ["C1CCOC1"])
+
+    cdxml = rdChemDraw.MolToChemDrawBlock(Chem.MolFromSmiles("C1CCOC1"))
+    for fmt in (rdChemDraw.CDXFormat.AUTO, rdChemDraw.CDXFormat.CDXML):
+      mols = rdChemDraw.MolsFromChemDrawBlock(cdxml, format=fmt)
+      self.assertEqual([Chem.MolToSmiles(m) for m in mols], ["C1CCOC1"])
+    # CDXML text does not parse as CDX, and the block reader returns nothing
+    self.assertEqual(
+      len(rdChemDraw.MolsFromChemDrawBlock(cdxml, format=rdChemDraw.CDXFormat.CDX)), 0)
+
+    with self.assertRaises(ValueError):
+      rdChemDraw.MolToChemDrawBlock(Chem.MolFromSmiles("C"), format=rdChemDraw.CDXFormat.AUTO)
+
+
+if __name__ == '__main__':
+  unittest.main()
