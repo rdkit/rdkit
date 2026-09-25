@@ -47,6 +47,36 @@ std::tuple<unsigned int, unsigned int, unsigned int> getDoubleBondPresence(
   }
   return std::make_tuple(hasDouble, hasKnownDouble, hasAnyDouble);
 }
+
+// a wiggly bond drawn at a double bond flags the geometry of that double bond
+// as unknown rather than the configuration at its own narrow end. The writers
+// express that with a crossed double bond instead.
+bool flagsUnknownDoubleBondGeometry(const Bond *bond) {
+  const auto &mol = bond->getOwningMol();
+  for (const auto atom : {bond->getBeginAtom(), bond->getEndAtom()}) {
+    for (const auto nbrBond : mol.atomBonds(atom)) {
+      if (nbrBond->getBondType() == Bond::BondType::DOUBLE &&
+          (nbrBond->getStereo() == Bond::BondStereo::STEREOANY ||
+           nbrBond->getBondDir() == Bond::BondDir::EITHERDOUBLE)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// isAtomPotentialTetrahedralCenter() needs the property cache and ring info,
+// so molecules which have neither (reaction templates, for example) cannot be
+// asked the question.
+bool isPotentialTetrahedralCenter(const ROMol &mol, const Atom *atom) {
+  if (mol.needsUpdatePropertyCache()) {
+    return false;
+  }
+  if (!mol.getRingInfo()->isSssrOrBetter()) {
+    MolOps::findSSSR(mol);
+  }
+  return detail::isAtomPotentialTetrahedralCenter(atom);
+}
 }  // namespace
 
 namespace detail {
@@ -383,23 +413,20 @@ std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
   // the mol file writers just like wedges and dashes are. Claiming them up
   // front also keeps pickBondToWedge() from handing one of them to a
   // neighboring chiral atom, which would silently discard the annotation.
-  // isAtomPotentialTetrahedralCenter() needs the property cache and ring info,
-  // so molecules which have neither (reaction templates, for example) are left
-  // alone.
-  if (!mol.needsUpdatePropertyCache()) {
-    for (const auto bond : mol.bonds()) {
-      if (!detail::isWigglyBond(bond, bond->getBeginAtom())) {
-        continue;
-      }
-      if (!mol.getRingInfo()->isSssrOrBetter()) {
-        MolOps::findSSSR(mol);
-      }
-      if (detail::isAtomPotentialTetrahedralCenter(bond->getBeginAtom())) {
-        wedgeInfo[bond->getIdx()] =
-            std::make_unique<Chirality::WedgeInfoWiggly>(
-                bond->getBeginAtomIdx());
-      }
+  for (const auto bond : mol.bonds()) {
+    if (!detail::isWigglyBond(bond, bond->getBeginAtom())) {
+      continue;
     }
+    // The narrow end of a wiggly bond which flags double bond geometry is an
+    // ordinary substituent, so the two readings only compete when that atom
+    // could itself be a stereocenter. There we keep the tetrahedral reading,
+    // since a crossed double bond cannot carry it.
+    if (flagsUnknownDoubleBondGeometry(bond) &&
+        !isPotentialTetrahedralCenter(mol, bond->getBeginAtom())) {
+      continue;
+    }
+    wedgeInfo[bond->getIdx()] =
+        std::make_unique<Chirality::WedgeInfoWiggly>(bond->getBeginAtomIdx());
   }
 
   std::vector<unsigned int> indices(mol.getNumAtoms());

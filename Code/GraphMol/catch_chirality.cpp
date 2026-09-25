@@ -6848,8 +6848,9 @@ TEST_CASE("wiggly bonds are re-applied after clearSingleBondDirFlags") {
 
 TEST_CASE("wiggly bonds flagging unknown double bond stereo are left alone") {
   // A wiggly bond can also mean "the stereo of the adjacent double bond is
-  // unknown". Its begin atom is not a potential tetrahedral center, so it is
-  // not claimed, and the double bond is written as a crossed bond as before.
+  // unknown". Its narrow end is an ordinary substituent rather than a
+  // potential tetrahedral center, so it is not claimed, and the double bond
+  // is written as a crossed bond as before.
   const std::string molBlock = R"CTAB(
   t
 
@@ -6876,6 +6877,29 @@ M  END
   const auto outBlock = MolToMolBlock(*m);
   CHECK(getMolBlockBondStereo(outBlock, 0, 1) == 0);
   CHECK(getMolBlockBondStereo(outBlock, 1, 2) == 3);
+}
+
+TEST_CASE("wiggly bonds at atoms which cannot be stereocenters are preserved") {
+  // the annotation is wedging information whether or not its narrow end could
+  // carry a tetrahedral configuration, and nothing else in the mol block
+  // expresses it, so dropping it is still a lossy round trip
+  const std::string molBlock = R"CTAB(
+  t
+
+  3  2  0  0  0  0            999 V2000
+   -1.3000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  4
+M  END
+)CTAB";
+  std::unique_ptr<RWMol> m{MolBlockToMol(molBlock)};
+  REQUIRE(m);
+  REQUIRE(!Chirality::detail::isAtomPotentialTetrahedralCenter(
+      m->getAtomWithIdx(1)));
+
+  CHECK(getMolBlockBondStereo(MolToMolBlock(*m), 1, 2) == 4);
 }
 
 TEST_CASE("atropisomer wedging does not steal a wiggly bond") {
@@ -6948,15 +6972,16 @@ M  END
     CHECK(wigglyBond->getBondDir() == Bond::BondDir::UNKNOWN);
   }
   SECTION("wiggly bond on a plain atom at the atropisomer axis") {
-    // atom 6 is not a potential stereocenter, so nothing claims this bond on
-    // its behalf. It is still the atropisomer code's first choice for
-    // expressing the axial stereochemistry, and wedging it would overwrite an
-    // annotation the input deliberately made
+    // atom 6 is not a potential stereocenter, but the annotation is still
+    // wedging information and still has to survive. This bond is also the
+    // atropisomer code's first choice for expressing the axial
+    // stereochemistry, and wedging it would overwrite an annotation the input
+    // deliberately made
     const auto wigglyBond = m->getBondBetweenAtoms(6, 5);
     REQUIRE(wigglyBond);
     wigglyBond->setProp(common_properties::_UnknownStereo, 1);
 
     Chirality::wedgeMolBonds(*m, &m->getConformer());
-    CHECK(wigglyBond->getBondDir() == Bond::BondDir::NONE);
+    CHECK(wigglyBond->getBondDir() == Bond::BondDir::UNKNOWN);
   }
 }
