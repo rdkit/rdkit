@@ -5741,10 +5741,10 @@ void test58MolFileValueRoundTrip() {
 
   rxn = RxnBlockToChemicalReaction(rxnB);
   // check the mol file values
-  for (MOL_SPTR_VECT::const_iterator template_mol =
+  for (MOL_SPTR_VECT::const_iterator templateMol =
            rxn->beginReactantTemplates();
-       template_mol != rxn->endReactantTemplates(); ++template_mol) {
-    const Atom *at = (*template_mol)->getAtomWithIdx(1);
+       templateMol != rxn->endReactantTemplates(); ++templateMol) {
+    const Atom *at = (*templateMol)->getAtomWithIdx(1);
     TEST_ASSERT(at->hasProp(common_properties::molFileValue));
     TEST_ASSERT(at->getProp<std::string>(common_properties::molFileValue) ==
                 "aldehyde");
@@ -5753,10 +5753,10 @@ void test58MolFileValueRoundTrip() {
   ChemicalReaction *rxn2 =
       RxnBlockToChemicalReaction(ChemicalReactionToRxnBlock(*rxn));
 
-  for (MOL_SPTR_VECT::const_iterator template_mol =
+  for (MOL_SPTR_VECT::const_iterator templateMol =
            rxn2->beginReactantTemplates();
-       template_mol != rxn2->endReactantTemplates(); ++template_mol) {
-    const Atom *at = (*template_mol)->getAtomWithIdx(1);
+       templateMol != rxn2->endReactantTemplates(); ++templateMol) {
+    const Atom *at = (*templateMol)->getAtomWithIdx(1);
     TEST_ASSERT(at->hasProp(common_properties::molFileValue));
     TEST_ASSERT(at->getProp<std::string>(common_properties::molFileValue) ==
                 "aldehyde");
