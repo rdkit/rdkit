@@ -18,6 +18,7 @@
 #include <GraphMol/Bond.h> /* for Bond::BondDir enum */
 #include <boost/dynamic_bitset.hpp>
 #include <limits>
+#include <vector>
 
 namespace RDKit {
 class Atom;
@@ -162,6 +163,8 @@ RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialNontetrahedralCenter(
 RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialTetrahedralCenter(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialStereoAtom(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool isBondPotentialStereoBond(const Bond *bond);
+RDKIT_GRAPHMOL_EXPORT std::vector<unsigned int>
+getSymmetricUnspecifiedDoubleBondIndices(const ROMol &mol);
 RDKIT_GRAPHMOL_EXPORT StereoInfo getStereoInfo(const Bond *bond);
 RDKIT_GRAPHMOL_EXPORT StereoInfo getStereoInfo(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool bondAffectsAtomChirality(const Bond *bond,
