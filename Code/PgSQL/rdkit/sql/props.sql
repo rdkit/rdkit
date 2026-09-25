@@ -48,6 +48,9 @@ SELECT mol_numrotatablebonds('CCCC'::mol) mol_numrotatablebonds;
 SELECT mol_numrotatablebonds(mol_from_smiles('c1ccccc1c1ccc(CCC)cc1')) mol_numrotatablebonds;
 SELECT mol_numheavyatoms('CCC'::mol) val;
 SELECT mol_numatoms('CCC'::mol) val;
+-- GitHub Issue 9623 - mol_numatoms()/mol_numheavyatoms() should also accept qmol
+SELECT mol_numheavyatoms('CCC'::qmol) val;
+SELECT mol_numatoms('CCC'::qmol) val;
 SELECT mol_numheteroatoms('CCC'::mol) val;
 SELECT mol_numheteroatoms('CCO'::mol) val;
 SELECT mol_tpsa('CCC'::mol) val;

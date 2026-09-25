@@ -251,6 +251,19 @@ SELECT mol_numatoms('CCC'::mol) val;
   11
 (1 row)
 
+-- GitHub Issue 9623 - mol_numatoms()/mol_numheavyatoms() should also accept qmol
+SELECT mol_numheavyatoms('CCC'::qmol) val;
+ val 
+-----
+   3
+(1 row)
+
+SELECT mol_numatoms('CCC'::qmol) val;
+ val 
+-----
+   3
+(1 row)
+
 SELECT mol_numheteroatoms('CCC'::mol) val;
  val 
 -----
