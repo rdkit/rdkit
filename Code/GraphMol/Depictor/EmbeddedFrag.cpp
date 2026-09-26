@@ -22,6 +22,7 @@
 #include "RDDepictor.h"
 #include <algorithm>
 #include <ranges>
+#include <tuple>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -33,6 +34,64 @@ namespace {
 unsigned int getDepictDegree(const RDKit::Atom *atom) {
   PRECONDITION(atom, "no atom");
   return atom->getDegree();
+}
+
+// A five-atom bridged core is otherwise assembled from three four-membered
+// rings, which can put two of its bridge atoms on top of each other. The
+// corresponding bent template is maintained in rdkit/molecular_templates.
+bool isSmallThreeBridgeSystem(const RDKit::ROMol &mol,
+                              const RDKit::VECT_INT_VECT &rings,
+                              RDKit::INT_VECT &atoms) {
+  if (rings.size() != 3 ||
+      std::any_of(rings.begin(), rings.end(),
+                  [](const auto &ring) { return ring.size() != 4; })) {
+    return false;
+  }
+  RDKit::Union(rings, atoms);
+  if (atoms.size() != 5) {
+    return false;
+  }
+  // Keep the automatic template narrowly scoped to a terminally substituted
+  // K2,3 core with an unsubstituted middle bridge.
+  RDKit::INT_VECT bridgeHeads;
+  unsigned int unsubstitutedBridges = 0;
+  for (auto aid : atoms) {
+    unsigned int ringDegree = 0;
+    unsigned int external = 0;
+    for (auto nbr : mol.atomNeighbors(mol.getAtomWithIdx(aid))) {
+      if (std::find(atoms.begin(), atoms.end(), nbr->getIdx()) != atoms.end()) {
+        ++ringDegree;
+      } else {
+        ++external;
+        if (nbr->getDegree() != 1) {
+          return false;
+        }
+      }
+    }
+    if (ringDegree == 3) {
+      bridgeHeads.push_back(aid);
+    } else if (ringDegree == 2) {
+      unsubstitutedBridges += external == 0;
+    } else {
+      return false;
+    }
+    if (external > 2) {
+      return false;
+    }
+  }
+  return bridgeHeads.size() == 2 && unsubstitutedBridges > 0 &&
+         !mol.getBondBetweenAtoms(bridgeHeads[0], bridgeHeads[1]);
+}
+
+bool isSmallThreeBridgeHead(const RDKit::ROMol &mol, unsigned int aid) {
+  RDKit::VECT_INT_VECT rings;
+  for (const auto &ring : mol.getRingInfo()->atomRings()) {
+    if (std::find(ring.begin(), ring.end(), aid) != ring.end()) {
+      rings.push_back(ring);
+    }
+  }
+  RDKit::INT_VECT atoms;
+  return isSmallThreeBridgeSystem(mol, rings, atoms);
 }
 }  // end of anonymous namespace
 
@@ -59,12 +118,19 @@ EmbeddedFrag::EmbeddedFrag(unsigned int aid, const RDKit::ROMol *mol) {
 
 EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
                            const RDKit::VECT_INT_VECT &fusedRings,
-                           bool useRingTemplates) {
+                           bool useRingTemplates)
+    : EmbeddedFrag(mol, fusedRings, useRingTemplates, true) {}
+
+EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
+                           const RDKit::VECT_INT_VECT &fusedRings,
+                           bool useRingTemplates,
+                           bool allowSmallBridgeTemplate) {
   PRECONDITION(mol, "");
   dp_mol = mol;
   d_eatoms.clear();
   d_attachPts.clear();
-  this->embedFusedRings(fusedRings, useRingTemplates);
+  this->embedFusedRings(fusedRings, useRingTemplates,
+                        allowSmallBridgeTemplate);
   d_done = false;
 }
 
@@ -456,7 +522,8 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
   return true;
 }
 
-bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms) {
+bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
+                                   bool rankSymmetricMatches) {
   CoordinateTemplates &coordinate_templates =
       CoordinateTemplates::getRingSystemTemplates();
 
@@ -491,15 +558,15 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms) {
 
   // find template that this mol matches to, if any
   RDKit::MatchVectType match;
-  std::shared_ptr<RDKit::ROMol> template_mol(nullptr);
-  for (const auto &mol :
+  const RDKit::ROMol *template_mol = nullptr;
+  for (const auto &templateMol :
        coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
-    // To reduce how often we have to do substructure matches, check ring info
-    // and bond count first
+    const auto *mol = templateMol.get();
     if (mol->getNumBonds() != numBonds) {
       continue;
     }
-    // also check if the mol atoms have the same connectivity as the template
+    // The exact ring topology is checked by the substructure match. Here a
+    // degree histogram avoids the match for most unrelated templates.
 #ifdef _MSC_VER
     // MSVC++ doesn't like implicitly capturing constexpr variables, this is a
     // bug
@@ -530,14 +597,40 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms) {
       continue;
     }
     RDKit::SubstructMatchParameters params;
-    params.maxMatches = 1;
-    auto matches = RDKit::SubstructMatch(rs_mol, *mol, params);
-    if (!matches.empty()) {
-      if (checkStereoChemistry(rs_mol, *mol, matches[0])) {
-        match = matches[0];
-        template_mol = mol;
+    // The five-atom core has at most 5! mappings. Keep equivalent mappings
+    // when the ring needs a consistent choice of template orientation.
+    params.maxMatches = rankSymmetricMatches ? 120 : 1;
+    params.uniquify = !rankSymmetricMatches;
+    const auto matches = RDKit::SubstructMatch(rs_mol, *mol, params);
+    for (const auto &candidate : matches) {
+      if (!checkStereoChemistry(rs_mol, *mol, candidate)) {
+        continue;
+      }
+      if (match.empty()) {
+        match = candidate;
+      } else if (rankSymmetricMatches) {
+        // For this symmetric template, consistently put the higher-ranked
+        // peripheral bridge above the lower-ranked one. The center bridge is
+        // chosen by the same rank when more than one has degree two.
+        const auto score = [&](const RDKit::MatchVectType &m) {
+          return std::make_tuple(
+              getAtomDepictRank(rs_mol.getAtomWithIdx(m[0].second)),
+              getAtomDepictRank(rs_mol.getAtomWithIdx(m[2].second)),
+              getAtomDepictRank(rs_mol.getAtomWithIdx(m[1].second)),
+              -static_cast<int>(m[0].second),
+              -static_cast<int>(m[2].second), -static_cast<int>(m[1].second));
+        };
+        if (score(candidate) > score(match)) {
+          match = candidate;
+        }
+      }
+      template_mol = mol;
+      if (!rankSymmetricMatches) {
         break;
       }
+    }
+    if (template_mol) {
+      break;
     }
   }
   if (!template_mol) {
@@ -622,12 +715,19 @@ static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
 //    This is what is provided by the current ring-finding code.
 //
 void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
-                                   bool useRingTemplates) {
+                                   bool useRingTemplates,
+                                   bool allowSmallBridgeTemplate) {
   PRECONDITION(dp_mol, "");
   // Look for a template for the whole system. Failing that simplify the system
   // to a set of core atoms and  look for a template for those. If that fails,
   // start from a single ring. Then add rings one by one
 
+  RDKit::INT_VECT bridgeAtoms;
+  if (allowSmallBridgeTemplate &&
+      isSmallThreeBridgeSystem(*dp_mol, fusedRings, bridgeAtoms) &&
+      matchToTemplate(bridgeAtoms, true)) {
+    return;
+  }
   RDKit::INT_VECT funion;
   // look for a template that matches the entire fused ring system
   // For single rings, only use templates for macrocycles (size > 8)
@@ -980,6 +1080,31 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
       currAngle *= -1;
     } else {
       rtrans.SetTransform(refLoc, currAngle);
+    }
+  }
+
+  // A terminal atom attached to a bridged ring atom can otherwise be placed
+  // between its three already drawn ring neighbors. Point it away from them
+  // at the usual bond length.
+  if (dp_mol->getAtomWithIdx(aid)->getDegree() == 1 && nnbr == 1 &&
+      dp_mol->getRingInfo()->numAtomRings(toAid) == 3 &&
+      isSmallThreeBridgeHead(*dp_mol, toAid)) {
+    RDGeom::Point2D towardNeighbors(0.0, 0.0);
+    unsigned int placedNeighbors = 0;
+    for (const auto nbr :
+         dp_mol->atomNeighbors(dp_mol->getAtomWithIdx(toAid))) {
+      const auto it = d_eatoms.find(nbr->getIdx());
+      if (it == d_eatoms.end()) {
+        continue;
+      }
+      auto direction = it->second.loc - refLoc;
+      direction.normalize();
+      towardNeighbors += direction;
+      ++placedNeighbors;
+    }
+    if (placedNeighbors == 3 && towardNeighbors.lengthSq() > 1.0e-8) {
+      towardNeighbors.normalize();
+      currLoc = refLoc - towardNeighbors * BOND_LEN;
     }
   }
 

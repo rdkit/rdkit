@@ -193,6 +193,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   */
   EmbeddedFrag(const RDKit::ROMol *mol, const RDKit::VECT_INT_VECT &fusedRings,
                bool useRingTemplates);
+  EmbeddedFrag(const RDKit::ROMol *mol, const RDKit::VECT_INT_VECT &fusedRings,
+               bool useRingTemplates, bool allowSmallBridgeTemplate);
 
   //! Initializer for a cis/trans system using the double bond
   /*!
@@ -402,10 +404,11 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
       const double *dmat);
 
   // returns true if fused rings found a template
-  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms);
+  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
+                       bool rankSymmetricMatches = false);
 
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
-                       bool useRingTemplates);
+                       bool useRingTemplates, bool allowSmallBridgeTemplate);
 
   void setupAttachmentPoints();
 
