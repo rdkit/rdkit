@@ -1,10 +1,21 @@
-# Release_2026.09.1
+# Release_2026.09.1b1
 (Changes relative to Release_2026.03.1)
 
 ## Acknowledgements
 (Note: I'm no longer attempting to manually curate names. If you would like to
 see your contribution acknowledged with your name, please set your name in
 GitHub)
+
+reza bagheri alashti, Rody Arantes, Marco Ballarotto, Chris Von Bargen, Kevin
+Boyd, Katharina Buchthal, Kerim Buyukakyuz, Arthur Chan, Michael Cho, David
+Cosgrove, Mike DePaulo, Eloy Félix, Peter Gedeck, Lukas Geiger, Guillaume Godin,
+Huw Jones, Steven Kearnes, Brian Kelley, Jakub Klinkovský, Jimmy Kromann, Niels
+Maeder, John Mayfield, Vedran Miletić, Dan Nealschneider, Dmytro Radchenko,
+Emily Rhodes, Ricardo Rodriguez, Wonseok Shin, Raul Sofia, Vaibhav Srivastava,
+Jon Swain, Pavel Tomanek, Paolo Tosco, Ivan Tubert-Brohman, Riccardo Vianello,
+Inwan Yoo, Nic Zonta, dd, ajeyabsf, m_holmer, zengkaipeng(SII), css, reowszer,
+thomp-j, vwe-ibm, ankar-dav
+
 
 ## Highlights
 
@@ -49,6 +60,403 @@ GitHub)
   returns only points which are actually on the surface. Previously all
   potential surface points for each atom were returned. You can get the old
   result by setting the `allPoints` argument to true.
+
+## New Features and Enhancements:
+  - Legend position
+ (github issue #9023 from PaulC61)
+  - Implement nanobind wrappers for the RDKit
+ (github pull #9030 from greglandrum)
+  - Speed-up tautomer canonicalization, no API changes
+ (github pull #9134 from pechersky)
+  - CIP labeller performance: Don't calculate auxiliary descriptors unnecessarily
+ (github pull #9171 from d-b-w)
+  - Add spiro flipping to 2D coord generation
+ (github pull #9204 from ZontaNicola)
+  - Make RingDecomposerLib a mandatory dependency
+ (github pull #9209 from ricrogz)
+  - Adds SVE to BFGSOpt
+ (github pull #9216 from ajeyabsf)
+  - If templates match, skip ring number check
+ (github pull #9217 from ZontaNicola)
+  - Add some std::ranges support
+ (github pull #9218 from greglandrum)
+  - [bot] Update molecular templates header file
+ (github pull #9234 from github-actions[bot])
+  - Add optional default value to Mol.GetProp() in Python
+ (github issue #9241 from emilyrrhodes)
+  - CIPLabeler performance: Store vector of bonds
+ (github pull #9250 from d-b-w)
+  - Pandastools improvements
+ (github pull #9251 from marcobICR)
+  - Add MMFF Property Getter functions to python interface
+ (github issue #9253 from scal444)
+  - Multi conf gaussian shape
+ (github pull #9265 from DavidACosgrove)
+  - [bot] Update molecular templates header file
+ (github pull #9269 from github-actions[bot])
+  - Adds some features to the C# SWIG wrappers
+ (github pull #9274 from jones-gareth)
+  - Synthon space shape search
+ (github pull #9279 from DavidACosgrove)
+  - Configurable Stereo Group Label Prefixes in MolDrawOptions
+ (github issue #9281 from hdj-elixirsoftware)
+  - MolDrawOptions: Option for Uniform Bond Colour with Coloured Atom Labels
+ (github issue #9282 from hdj-elixirsoftware)
+  - add checked atom and bond iterators
+ (github pull #9290 from greglandrum)
+  - Adds MolToCDXMLBlock to FileParsers
+ (github pull #9291 from bp-kelley)
+  - All-In-One coordinate refinement for ETKDG
+ (github pull #9292 from nmaeder)
+  - add ability to block atoms/bonds from participating in tautomer zones
+ (github pull #9297 from greglandrum)
+  - Improve synthon substructure search performance ~20%
+ (github pull #9305 from d-b-w)
+  - Synthon substructure search 2x performance
+ (github pull #9307 from d-b-w)
+  - Configurable stereo labels in MolDraw2D
+ (github pull #9311 from DavidACosgrove)
+  - Replace combineMols with RWMol::insertMol in SynthonSpaceSearch
+ (github pull #9319 from DavidACosgrove)
+  - Add opt-in unity (jumbo) builds + fix latent missing include guards
+ (github pull #9342 from skearnes)
+  - Make substructure search Ctrl+c interruptible
+ (github pull #9349 from ricrogz)
+  - Adding github action npm package build and publish
+ (github pull #9366 from charnley)
+  - MacroMol core
+ (github pull #9373 from emilyrrhodes)
+  - Add ROMol name accessors
+ (github pull #9384 from i-tub)
+  - Handle Data SGroups with no "fieldname"
+ (github pull #9390 from tadhurst-cdd)
+  - Validate coordinate map entries before distance geometry embedding
+ (github pull #9420 from lyfar)
+  - Speed-up BertzCT, no value changes
+ (github pull #9447 from gratus907)
+  - change source of freetype in docker builds
+ (github pull #9448 from greglandrum)
+  - Install header for SGroup data label API
+ (github pull #9453 from cdvonbargen)
+  - Expose attachment-point labels and identity
+ (github pull #9454 from cdvonbargen)
+  - support ignoreAtoms in RDKitFingerprintGenerators
+ (github pull #9459 from greglandrum)
+  - Angle-based tolerances in bound matrix
+ (github pull #9460 from kabu00002)
+  - ConfGen: Use a better estimate of 1-2 distances when we don't have UFF atom params
+ (github pull #9465 from greglandrum)
+  - Reduce SMILES parser bond property staging
+ (github pull #9476 from scal444)
+  - Reuse Hanoi scratch buffer in canonical ranking
+ (github pull #9478 from scal444)
+  - Use contiguous canonical neighbor storage
+ (github pull #9480 from scal444)
+  - Use boost::small_vector to remove heap allocations in new_canon
+ (github pull #9481 from scal444)
+  - MacroMol Template
+ (github pull #9485 from emilyrrhodes)
+  - MacroMol Local Library
+ (github pull #9486 from emilyrrhodes)
+  - Use insertion sort for canonical neighbors
+ (github pull #9492 from scal444)
+  - Reduce comparisons and branches in bondholder compare
+ (github pull #9497 from scal444)
+  - Cache isAtomConjugCand in markConjAtomBonds
+ (github pull #9498 from scal444)
+  - Make checking in checked iterators stricter to avoid heap-use-after-free problems
+ (github pull #9500 from ricrogz)
+  - Limit hydrogen adjustment to aromatic changes
+ (github pull #9517 from scal444)
+  - Pull topology initialization out of cleanup loop
+ (github pull #9520 from scal444)
+  - Replace string comparison with int comparison in stereo code
+ (github pull #9526 from scal444)
+  - Preserve pubchem-align3d symbols with hidden visibility
+ (github pull #9537 from d-b-w)
+  - Add a colourScheme option to the MolDrawOptions JSON parser
+ (github pull #9545 from SeongsangCHO)
+  - CI: Implement "poor man's caching"
+ (github pull #9547 from ricrogz)
+  - Add configurable link-time optimization modes
+ (github pull #9555 from scal444)
+  - Feat/Get all conformer rmsd to ref mol
+ (github pull #9558 from nmaeder)
+  - Speed up and simplify SmilesWrite
+ (github pull #9565 from lgeiger)
+  - Cdxml querymol
+ (github pull #9567 from bp-kelley)
+  - Update the CI configuration
+ (github pull #9569 from greglandrum)
+  - Internal Coordinate Embedding
+ (github pull #9570 from kabu00002)
+  - Allow blocking atoms from being included in the tautomerization enumeration
+ (github pull #9625 from greglandrum)
+  - Feat/mmff for initial embedding
+ (github pull #9626 from nmaeder)
+  - Feat/etkdgv4
+ (github pull #9633 from nmaeder)
+
+## Documentation:
+  - Add more pyi patches, 2026-03
+ (github pull #9214 from pechersky)
+  - mention AI tools in the contrib guidelines
+ (github pull #9224 from greglandrum)
+  - Docs: fix CosineSimilarity formula and clarify similarity metric names in BitOps.h
+ (github pull #9264 from rezabagher)
+  - `rdchem.pyi` typing issue: non-default parameter following default parameter
+ (github issue #9335 from ankar-dav)
+  - Add stub for rdGaussianShape docs.
+ (github pull #9440 from DavidACosgrove)
+  - Correct comment in Point::signedAngleTo.
+ (github pull #9445 from DavidACosgrove)
+  - Mention Nanobind wrappers in Contribution Docs
+ (github pull #9483 from nmaeder)
+  - Add nanobind instructions to Install.md
+ (github pull #9491 from DavidACosgrove)
+  - docs: fix typo apparant -> apparent
+ (github pull #9544 from vaibhav8a)
+  - Fix spelling in fr_Ar_COO fragment description
+ (github pull #9616 from reowszer)
+
+## Bug Fixes:
+  - Update RDKit_Book.rst
+ (github pull #7946 from johnmay)
+  - assignStereochemistry does not handle Atropisomers
+ (github issue #8108 from ricrogz)
+  - FindEigen3.cmake does not work with Eigen3 5.0
+ (github issue #8896 from lahwaacz)
+  - Incorrect SMARTS matching
+ (github issue #9064 from radchenkods)
+  - Change SSSR finding algorithm (fixes #9064)
+ (github pull #9105 from ricrogz)
+  - Tautomer insensitive hash v2, E/Z and stereocenter-preservation
+ (github pull #9128 from eloyfelix)
+  - Misplaced parentheses in shape code
+ (github pull #9222 from DavidACosgrove)
+  - ignoreAtomMapNumbers=True removes atom map numbers even when canonical=False, contradicting documentation
+ (github issue #9225 from zengkaipeng)
+  - Incorrect UFF Inversion term gradient for P/As/Sb/Bi centers
+ (github issue #9229 from scal444)
+  - Make setDoubleBondNeighborDirections() more consistent
+ (github pull #9239 from ricrogz)
+  - Extended fix for #9101
+ (github pull #9255 from RaulSofia)
+  - Heap-use-after-free in RDKit `cleanupStereoGroups` via duplicate CXSMILES stereo group atom index
+ (github issue #9259 from arthurscchan)
+  - Segfault when calling MolToSmiles on submol
+ (github issue #9270 from ricrogz)
+  - DrawText::setFontScale Atom Font Scaling Issue
+ (github issue #9280 from hdj-elixirsoftware)
+  - PgSQL: preserve toolchain LDFLAGS on macOS
+ (github pull #9285 from skearnes)
+  - Build: tag dev-only install rules with COMPONENT dev
+ (github pull #9287 from skearnes)
+  - Build: tag rdkitpython install rules with COMPONENT python
+ (github pull #9288 from skearnes)
+  - Fix BFGS gradient-convergence denominator for negative energies
+ (github pull #9298 from mooreneural)
+  - Regression in layout of reaction drawings.
+ (github issue #9301 from DavidACosgrove)
+  - Drawing SVG panels only sets background for first one
+ (github issue #9310 from DavidACosgrove)
+  - Fix STEREOANY (wavy bond) loss during InChI roundtrip
+ (github pull #9315 from rodyarantes)
+  - Build: forward-slash Python3_EXECUTABLE when generating rdkit-stubs
+ (github pull #9318 from skearnes)
+  - Some minor changes to GaussianShape
+ (github pull #9321 from DavidACosgrove)
+  - DrawMoleculeWithHighlights: RuntimeError: Cannot normalize a zero length vector
+ (github issue #9324 from vwe-ibm)
+  - CDXML reads of atropisomer don't run AssignStereochem
+ (github issue #9330 from pechersky)
+  - Catch a few more potential zero length vectors.
+ (github pull #9333 from DavidACosgrove)
+  - TautomerEnumerator.Canonicalize() raises pre-condition violation when `SetRemoveBondStereo(False)` on a molecule with atropisomer bond
+ (github issue #9338 from pechersky)
+  - Support ChemDraw abnormal valence import
+ (github pull #9348 from pechersky)
+  - CDXML reading has no support for cleaning NeedsClean atoms
+ (github issue #9354 from pechersky)
+  - CDXML reading doesn't retain Z/E bonds
+ (github issue #9356 from pechersky)
+  - Check OOB causing OSV-2022-1288
+ (github pull #9361 from thomp-j)
+  - rdRGroupDecomposition: error when using both allowMultipleCoresInSameMol and includeTargetMolInResults
+ (github issue #9363 from jonswain)
+  - RuntimeError while extracting a fragment from a molecule that cuts after an E/Z double bond
+ (github issue #9368 from MalteHolmer)
+  - Use the same libexpat as the current python when building
+ (github pull #9369 from bp-kelley)
+  - Remove duplicate experimental torsion entry
+ (github pull #9374 from nmaeder)
+  - fix rendering of mols with multiple highlights from PandasTools
+ (github pull #9377 from greglandrum)
+  - Fix race in MinimalLib test_substruct_library JS test
+ (github pull #9392 from emilyrrhodes)
+  - Aromaticity perception in polycyclic conjugated system
+ (github issue #9398 from nmaeder)
+  - Inconsistent stereochemistry of ring-bonds in BoundsMatrixBuilder
+ (github issue #9403 from kabu00002)
+  - Inconsistent bounds for 1-4 distances of 6-membered rings
+ (github issue #9404 from kabu00002)
+  - RDKit 2026.03.4: testDistGeomHelpers fails
+ (github issue #9406 from pavelToman)
+  - Fix 64-bit fingerprint bit ID truncation in AdditionalOutput on 32-bit targets
+ (github pull #9411 from gedeck)
+  - Rascal FindMCES crash when time out reached and maxFragSeparation set
+ (github issue #9418 from jrobsontull)
+  - Out-of-bounds read in Mol2 bond parser due to incorrect bounds check
+ (github issue #9421 from buyukakyuz)
+  - Fix maeparser warning suppression with GCC
+ (github pull #9429 from vedranmiletic)
+  - fragmentOnBonds: enfore unique bondIndices on input
+ (github pull #9430 from ptosco)
+  - Guard the BCUT2D test with RDK_HAS_EIGEN3
+ (github pull #9432 from vedranmiletic)
+  - Fix/cis-trans amide behaviour
+ (github pull #9434 from nmaeder)
+  - make GaussianShape build without SimDivPickers on big-endian
+ (github pull #9438 from mikedep333)
+  - rdGaussianShape throws exception with 2 LOBSTER compounds
+ (github issue #9441 from DavidACosgrove)
+  - Fix numpy dtype handling in the InfoTheory wrappers
+ (github pull #9443 from gratus907)
+  - Three small bugs
+ (github pull #9444 from vedranmiletic)
+  - Fixes for AI-found critical issues
+ (github pull #9450 from ricrogz)
+  - Fixes for AI-found high impact issues (1/2)
+ (github pull #9451 from ricrogz)
+  - Fixes for AI-found high impact issues (2/2)
+ (github pull #9452 from ricrogz)
+  - Bounds matrix: Extra squish for atoms at non-squish bonds
+ (github issue #9461 from kabu00002)
+  - fixes bug in RandomizeActivities when shuffle is false
+ (github pull #9463 from greglandrum)
+  - CML Writer atom parity problem
+ (github issue #9464 from pemsley)
+  - Fixes for AI-found medium impact issues (C++ code)
+ (github pull #9466 from ricrogz)
+  - Change of behaviour in fragmentOnBonds between 2026.03.4 and master
+ (github issue #9468 from DavidACosgrove)
+  - MMFF Minimization fails to parametrize cyclophosphazene
+ (github issue #9473 from scal444)
+  - support building with boost 1.92.0
+ (github pull #9494 from cho-m)
+  - Fix bug with basic substructure highlighting in the IPythonConsole code
+ (github pull #9495 from greglandrum)
+  - Fix maeparser includes declaration
+ (github pull #9496 from ricrogz)
+  - ROMol Move Constructor Leaks
+ (github issue #9504 from scal444)
+  - CIPLabeler: backport "recent" fixes from https://github.com/SiMolecule/centres
+ (github pull #9516 from ricrogz)
+  - Canonical tautomer tie-break is systematically biased against stereochemistry (acetoin enantiomers merge)
+ (github issue #9518 from guillaume-osmo)
+  - Fix/erronous return in ff contributions
+ (github pull #9523 from nmaeder)
+  - Fix build issue with TBB in debug builds
+ (github pull #9532 from ricrogz)
+  - Fix Ubsan Errors
+ (github pull #9536 from DavidACosgrove)
+  - CIP labeler: fix Mancude calculation
+ (github pull #9561 from ricrogz)
+  - Fix pickling issue when atoms < 256 and bonds > 255
+ (github pull #9563 from ricrogz)
+  - Correctly handle recursive queries in mol.GetAtomsMatchingQuery()
+ (github pull #9564 from greglandrum)
+  - Fix pandas version parsing in PandasPatcher and guard a cairo-only test
+ (github pull #9566 from cdvonbargen)
+  - Fixes for emscripten linking
+ (github pull #9572 from fxcoudert)
+  - Fix a couple of bugs in DCLV GetSurfacePoints() function
+ (github pull #9574 from greglandrum)
+  - CIP labeler: some bug fixing and refactoring
+ (github pull #9577 from ricrogz)
+  - Use available CPU count in testThreads
+ (github pull #9582 from WilleBell)
+  - Tautomerization of macrocycle with in-ring STEREOANY double bond converts to STEREONONE
+ (github issue #9583 from pechersky)
+  - Depiction code doesn't recognize AtomAtomicNum as a list query
+ (github issue #9607 from bp-kelley)
+  - Consider multiple bond breakages in fragmentOnBonds
+ (github pull #9630 from ricrogz)
+
+## Cleanup work:
+  - Normalize rings
+ (github pull #9208 from ricrogz)
+  - Do deprecations for 2026.09 release
+ (github pull #9213 from greglandrum)
+  - Cleanup/get atoms and bonds
+ (github pull #9243 from greglandrum)
+  - Refactor to stop using iterator definitions in types.h
+ (github pull #9275 from ricrogz)
+  - refactor: improve readability and maintainability of AAP similarity code
+ (github pull #9277 from rezabagher)
+  - Clean up `DistGeomHelpers` tests
+ (github pull #9320 from nmaeder)
+  - Fix DistGeomHelpers tests on arm64
+ (github pull #9328 from tadhurst-cdd)
+  - Remove unused imports from python tests
+ (github pull #9336 from nmaeder)
+  - Refactor BoundsMatrixBuilder
+ (github pull #9337 from kabu00002)
+  - Trim heavy includes from public headers (Eigen/Dense, boost/format)
+ (github pull #9341 from skearnes)
+  - Fix latent -Wdeprecated-copy in Seed and SubstructTerm
+ (github pull #9352 from skearnes)
+  - Replace trivial Boost usages with standard-library equivalents
+ (github pull #9371 from skearnes)
+  - Make public C++ headers self-contained
+ (github pull #9372 from skearnes)
+  - Cleanup: Remove SVN leftovers
+ (github pull #9379 from nmaeder)
+  - remove a couple of compiler warnings when compiling with -fhardened
+ (github pull #9385 from greglandrum)
+  - Speedup testDGeomHelpers
+ (github pull #9388 from nmaeder)
+  - Removed redundant code
+ (github pull #9389 from kabu00002)
+  - Fix flaky DiversityPickerTests.test3.
+ (github pull #9395 from emilyrrhodes)
+  - some cleanups of the SimDivPickers tests
+ (github pull #9397 from greglandrum)
+  - make sure embedding runs in tests have RNG seeds set
+ (github pull #9409 from greglandrum)
+  - Refactoring, bug fixes, and cleanup of setTopolBounds()
+ (github pull #9412 from greglandrum)
+  - Fix leaks in 2 tests
+ (github pull #9435 from ricrogz)
+  - Address some "unused-but-set" warnings
+ (github pull #9439 from ricrogz)
+  - Refactor multithread suppliers
+ (github pull #9462 from ricrogz)
+  - Fix harmless test issues found by ASAN
+ (github pull #9506 from scal444)
+  - Restore stereo mode after validation tests
+ (github pull #9507 from scal444)
+  - Enable numpy's "modern" API
+ (github pull #9510 from ricrogz)
+  - CIPLabeler: remove the PairList integer mechanism
+ (github pull #9515 from ricrogz)
+  - Allow RDKit builds with hidden symbol visibility
+ (github pull #9538 from d-b-w)
+  - Fix potential usage of uninitialized values in DrawMol
+ (github pull #9550 from ricrogz)
+  - Some minor clean ups
+ (github pull #9551 from ricrogz)
+  - Modernize a few loops in Forcefield.cpp
+ (github pull #9557 from nmaeder)
+  - Improve finding of expat headers
+ (github pull #9573 from fxcoudert)
+  - Adjust distdriver_() return type
+ (github pull #9576 from fxcoudert)
+  - Add a missing include, remove duplicated geometry tests, and link the contributing guide
+ (github pull #9612 from skearnes)
+  - ensure uint8_t is defined
+ (github pull #9618 from rvianello)
+
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use
