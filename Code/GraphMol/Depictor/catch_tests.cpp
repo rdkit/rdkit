@@ -8,11 +8,13 @@
 //  of the RDKit source tree.
 //
 
+#include <numeric>
 #include <ranges>
 #include <catch2/catch_all.hpp>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/MolOps.h>
 #include "RDDepictor.h"
 #include "DepictUtils.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -2473,6 +2475,137 @@ TEST_CASE("canonical ordering") {
       auto dist = pos.length();
       CHECK(dist > 0.35);
       INFO("i " << i << " " << j);
+    }
+  }
+}
+
+TEST_CASE("bridged stereo depiction avoids overlaps across atom orders") {
+  SmilesParserParams smilesParams;
+  smilesParams.removeHs = false;
+  std::unique_ptr<RWMol> base(
+      SmilesToMol("C1([H])([H])[C@@]2([H])O[C@]1([H])N2[H]", smilesParams));
+  REQUIRE(base);
+  REQUIRE(base->getNumAtoms() == 10);
+  std::vector<std::uint64_t> originalRanks;
+  for (const auto atom : base->atoms()) {
+    originalRanks.push_back(RDDepict::getAtomDepictRank(atom));
+  }
+  // These carbons have the same degree and neighbor-degree sum, but different
+  // neighboring elements.
+  CHECK(originalRanks[0] != originalRanks[3]);
+
+  const std::vector<std::vector<unsigned int>> orders = {
+      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+      {7, 4, 5, 1, 3, 0, 2, 6, 9, 8},
+      {8, 3, 1, 9, 6, 0, 5, 4, 7, 2},
+      {8, 0, 6, 5, 2, 4, 1, 7, 9, 3},
+      {5, 9, 7, 6, 3, 4, 8, 2, 0, 1}};
+  for (const auto &order : orders) {
+    CAPTURE(order);
+    std::unique_ptr<ROMol> mol(MolOps::renumberAtoms(*base, order));
+    RDDepict::Compute2DCoordParameters params;
+    params.forceRDKit = true;
+    RDDepict::compute2DCoords(*mol, params);
+
+    const auto newIndex = [&order](unsigned int oldIndex) {
+      return static_cast<unsigned int>(std::distance(
+          order.begin(), std::find(order.begin(), order.end(), oldIndex)));
+    };
+    for (auto i = 0u; i < base->getNumAtoms(); ++i) {
+      CHECK(RDDepict::getAtomDepictRank(mol->getAtomWithIdx(newIndex(i))) ==
+            originalRanks[i]);
+    }
+    const auto &conf = mol->getConformer();
+    // The carbon and nitrogen bridges must not collapse onto one another:
+    // when they do, their bonds from the stereocenters have nearly the same
+    // direction and cannot be distinguished in the depiction.
+    const auto separation =
+        conf.getAtomPos(newIndex(0)) - conf.getAtomPos(newIndex(8));
+    CHECK(separation.length() > 1.0);
+    for (auto center : {3u, 6u}) {
+      const auto angle = MolTransforms::getAngleDeg(
+          conf, newIndex(0), newIndex(center), newIndex(8));
+      CHECK(angle > 10.0);
+    }
+    // Exporting and reading the drawing must recover both stereocenters.
+    std::unique_ptr<RWMol> restored(
+        MolBlockToMol(MolToMolBlock(*mol), true, false));
+    REQUIRE(restored);
+    CHECK(MolToSmiles(*restored) == MolToSmiles(*mol));
+
+    for (const auto bond : mol->bonds()) {
+      const auto delta = conf.getAtomPos(bond->getBeginAtomIdx()) -
+                         conf.getAtomPos(bond->getEndAtomIdx());
+      CHECK(delta.length() > 1.05);
+      CHECK(delta.length() < 1.95);
+    }
+    for (auto i = 0u; i < mol->getNumAtoms(); ++i) {
+      for (auto j = i + 1; j < mol->getNumAtoms(); ++j) {
+        if (mol->getBondBetweenAtoms(i, j)) {
+          continue;
+        }
+        const auto delta = conf.getAtomPos(i) - conf.getAtomPos(j);
+        // Explicit hydrogens are included: ring atoms and their labels must
+        // remain distinguishable in every ordering.
+        CHECK(delta.length() > 1.0);
+      }
+    }
+    const auto sideOfBond = [&conf](unsigned int a, unsigned int b,
+                                    unsigned int c) {
+      const auto &p = conf.getAtomPos(a);
+      const auto &q = conf.getAtomPos(b);
+      const auto &r = conf.getAtomPos(c);
+      return (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+    };
+    for (const auto first : mol->bonds()) {
+      for (const auto second : mol->bonds()) {
+        if (first->getIdx() >= second->getIdx()) {
+          continue;
+        }
+        const auto a = first->getBeginAtomIdx();
+        const auto b = first->getEndAtomIdx();
+        const auto c = second->getBeginAtomIdx();
+        const auto d = second->getEndAtomIdx();
+        if (a == c || a == d || b == c || b == d) {
+          continue;
+        }
+        // Independent bonds must not cross in the drawing.
+        const bool crosses =
+            sideOfBond(a, b, c) * sideOfBond(a, b, d) < -1.0e-6 &&
+            sideOfBond(c, d, a) * sideOfBond(c, d, b) < -1.0e-6;
+        CHECK_FALSE(crosses);
+      }
+    }
+  }
+}
+
+TEST_CASE("three-bridge depiction handles other ring sizes") {
+  // The first molecule has three one-atom bridges; the second has one
+  // two-atom bridge and uses the usual fused-ring placement.
+  for (const auto &smiles : {"C1C2CC1C2", "C1C2CCC1C2"}) {
+    std::unique_ptr<RWMol> base(SmilesToMol(smiles));
+    REQUIRE(base);
+    for (auto reverse : {false, true}) {
+      std::vector<unsigned int> order(base->getNumAtoms());
+      std::iota(order.begin(), order.end(), 0);
+      if (reverse) {
+        std::reverse(order.begin(), order.end());
+      }
+      CAPTURE(smiles, reverse);
+      std::unique_ptr<ROMol> mol(MolOps::renumberAtoms(*base, order));
+      RDDepict::Compute2DCoordParameters params;
+      params.forceRDKit = true;
+      RDDepict::compute2DCoords(*mol, params);
+      const auto &conf = mol->getConformer();
+      for (auto i = 0u; i < mol->getNumAtoms(); ++i) {
+        for (auto j = i + 1; j < mol->getNumAtoms(); ++j) {
+          if (mol->getBondBetweenAtoms(i, j)) {
+            continue;
+          }
+          const auto delta = conf.getAtomPos(i) - conf.getAtomPos(j);
+          CHECK(delta.length() > 0.75);
+        }
+      }
     }
   }
 }
