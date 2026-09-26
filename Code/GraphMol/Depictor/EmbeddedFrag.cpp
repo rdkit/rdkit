@@ -34,6 +34,117 @@ unsigned int getDepictDegree(const RDKit::Atom *atom) {
   PRECONDITION(atom, "no atom");
   return atom->getDegree();
 }
+
+// A three-bridge system with one atom on each path between the bridgeheads
+// cannot be drawn with all six bonds at their ideal length without stacking
+// two bridge atoms. Put the least substituted bridge in the middle instead.
+RDGeom::INT_POINT2D_MAP getThreeBridgeCoords(
+    const RDKit::ROMol &mol, const RDKit::VECT_INT_VECT &rings) {
+  if (rings.size() != 3 ||
+      std::any_of(rings.begin(), rings.end(),
+                  [](const auto &ring) { return ring.size() != 4; })) {
+    return {};
+  }
+  RDKit::INT_VECT atoms;
+  RDKit::Union(rings, atoms);
+  if (atoms.size() != 5) {
+    return {};
+  }
+
+  RDKit::INT_VECT heads, bridges;
+  for (auto aid : atoms) {
+    auto ringDegree = 0u;
+    for (auto nbr : mol.atomNeighbors(mol.getAtomWithIdx(aid))) {
+      ringDegree += std::find(atoms.begin(), atoms.end(), nbr->getIdx()) !=
+                    atoms.end();
+    }
+    if (ringDegree == 3) {
+      heads.push_back(aid);
+    } else if (ringDegree == 2) {
+      bridges.push_back(aid);
+    } else {
+      return {};
+    }
+  }
+  if (heads.size() != 2 || bridges.size() != 3 ||
+      mol.getBondBetweenAtoms(heads[0], heads[1])) {
+    return {};
+  }
+
+  // Keep this placement to systems whose attachments can be laid out with
+  // the ring. Otherwise the regular fragment merger handles them.
+  for (auto aid : atoms) {
+    const auto ringDegree = std::find(heads.begin(), heads.end(), aid) !=
+                                    heads.end()
+                                ? 3u
+                                : 2u;
+    if (mol.getAtomWithIdx(aid)->getDegree() - ringDegree > 2) {
+      return {};
+    }
+    for (auto nbr : mol.atomNeighbors(mol.getAtomWithIdx(aid))) {
+      if (std::find(atoms.begin(), atoms.end(), nbr->getIdx()) == atoms.end() &&
+          nbr->getDegree() != 1) {
+        return {};
+      }
+    }
+  }
+
+  std::sort(bridges.begin(), bridges.end(), [&](int a, int b) {
+    const auto externalA = mol.getAtomWithIdx(a)->getDegree() - 2;
+    const auto externalB = mol.getAtomWithIdx(b)->getDegree() - 2;
+    if (externalA != externalB) {
+      return externalA < externalB;
+    }
+    const auto rankA = getAtomDepictRank(mol.getAtomWithIdx(a));
+    const auto rankB = getAtomDepictRank(mol.getAtomWithIdx(b));
+    return rankA != rankB ? rankA > rankB : a < b;
+  });
+  if (mol.getAtomWithIdx(bridges[0])->getDegree() != 2) {
+    return {};
+  }
+  std::sort(heads.begin(), heads.end(), [&](int a, int b) {
+    const auto rankA = getAtomDepictRank(mol.getAtomWithIdx(a));
+    const auto rankB = getAtomDepictRank(mol.getAtomWithIdx(b));
+    return rankA != rankB ? rankA > rankB : a < b;
+  });
+
+  // The hexagon apothem gives visible spacing between all three bridges
+  // while keeping the six bridge bonds near their usual length. Bend the
+  // middle path slightly so an unlabeled bridge atom is not mistaken for a
+  // direct bond between the bridgeheads.
+  const double offset = BOND_LEN * std::sqrt(3.0) / 2.0;
+  RDGeom::INT_POINT2D_MAP coords = {
+      {heads[0], {-offset, 0.0}}, {heads[1], {offset, 0.0}},
+      {bridges[0], {0.0, BOND_LEN / 8.0}},
+      {bridges[1], {0.0, offset}},
+      {bridges[2], {0.0, -offset}}};
+  for (auto aid : atoms) {
+    RDKit::INT_VECT external;
+    for (auto nbr : mol.atomNeighbors(mol.getAtomWithIdx(aid))) {
+      if (std::find(atoms.begin(), atoms.end(), nbr->getIdx()) == atoms.end()) {
+        external.push_back(nbr->getIdx());
+      }
+    }
+    if (external.empty()) {
+      continue;
+    }
+    std::sort(external.begin(), external.end());
+    const auto &loc = coords.at(aid);
+    const auto axis = loc - RDGeom::Point2D(0.0, 0.0);
+    // The center bridge has no external neighbors, so this axis is nonzero.
+    const auto direction = axis / axis.length();
+    const RDGeom::Point2D tangent(-direction.y, direction.x);
+    for (size_t i = 0; i < external.size(); ++i) {
+      const auto angle = (static_cast<double>(i) -
+                          (external.size() - 1) / 2.0) *
+                         M_PI / 2.0;
+      coords[external[i]] =
+          loc + (direction * std::cos(angle) + tangent * std::sin(angle)) *
+                    BOND_LEN;
+    }
+  }
+  return coords;
+}
 }  // end of anonymous namespace
 
 EmbeddedFrag::EmbeddedFrag(unsigned int aid, const RDKit::ROMol *mol) {
@@ -640,6 +751,15 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
       // we are done
       return;
     }
+  }
+  const auto bridgeCoords = getThreeBridgeCoords(*dp_mol, fusedRings);
+  if (!bridgeCoords.empty()) {
+    for (const auto &[aid, loc] : bridgeCoords) {
+      d_eatoms.emplace(aid, EmbeddedAtom(aid, loc));
+    }
+    setupNewNeighs();
+    setupAttachmentPoints();
+    return;
   }
   std::vector<RDGeom::INT_POINT2D_MAP> coords;
   coords.reserve(fusedRings.size());
