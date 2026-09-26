@@ -12,8 +12,8 @@ steps:
     conda create --name rdkit_build -c conda-forge --override-channels  $(python) cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
-        numpy pillow eigen=3 pandas=2.0 matplotlib-base=3.8 \
-        qt=5 cairo ccache
+        numpy pillow eigen pandas=2.0 matplotlib-base=3.8 \
+        qt=5 cairo lapack liblapacke "blas=*=openblas" ccache blas-devel pyyaml 
     conda activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict

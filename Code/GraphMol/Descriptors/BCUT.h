@@ -16,6 +16,12 @@
 namespace RDKit {
 class ROMol;
 namespace Descriptors {
+//! Compute the perlman matrix or the original burden matrix
+enum class BCUTOptions {
+  PERLMAN_MATRIX = 0,
+  BURDEN_MATRIX = 1
+};
+
 const std::string BCUT2DVersion = "1.0.0";
 
 //! Implements BCUT descriptors From J. Chem. Inf. Comput. Sci., Vol. 39, No. 1,
@@ -29,8 +35,26 @@ const std::string BCUT2DVersion = "1.0.0";
                       pair.second the lowest
 */
 RDKIT_DESCRIPTORS_EXPORT
-std::pair<double, double> BCUT2D(const ROMol &mol,
-                                 const std::vector<double> &atom_props);
+std::pair<double, double> BCUT2D(
+    const ROMol &mol, const std::vector<double> &atom_props,
+    BCUTOptions opts = BCUTOptions::PERLMAN_MATRIX);
+
+//! Implements BCUT descriptors From J. Chem. Inf. Comput. Sci., Vol. 39, No. 1,
+//! 1999
+//! This is a small optimization when computing a lot of BCUTs on different
+//!  atom properties, the burden matrix is only generated once.
+/*!
+   \param mol         the molecule of interest
+   \param atom_props  A vector of vectors of double for the atom properties to
+   use for the diagonal elements of the BCUT matrix.  Must be equal to the
+   number of atoms in mol.
+   \return            std::vector<std::pair<double,double>> pair.first is the
+   high eval, pair.second the lowest for each atom property used
+*/
+RDKIT_DESCRIPTORS_EXPORT
+std::vector<std::pair<double, double>> BCUT2D(
+    const ROMol &mol, const std::vector<std::vector<double>> &atom_props,
+    BCUTOptions opts = BCUTOptions::PERLMAN_MATRIX);
 
 //! Implements BCUT descriptors From J. Chem. Inf. Comput. Sci., Vol. 39, No. 1,
 //! 1999
@@ -43,8 +67,9 @@ std::pair<double, double> BCUT2D(const ROMol &mol,
                       pair.second the lowest
 */
 RDKIT_DESCRIPTORS_EXPORT
-std::pair<double, double> BCUT2D(const ROMol &mol,
-                                 const std::string &atom_propname);
+std::pair<double, double> BCUT2D(
+    const ROMol &mol, const std::string &atom_propname,
+    BCUTOptions opts = BCUTOptions::PERLMAN_MATRIX);
 
 //! Implements BCUT descriptors From J. Chem. Inf. Comput. Sci., Vol. 39, No. 1,
 //! 1999
@@ -58,7 +83,9 @@ std::pair<double, double> BCUT2D(const ROMol &mol,
   charge low eval, LogP high eval, LogP low eval, MR high eval, MR low eval)
 */
 RDKIT_DESCRIPTORS_EXPORT
-std::vector<double> BCUT2D(const ROMol &m);
+std::vector<double> BCUT2D(const ROMol &m,
+                           BCUTOptions opts = BCUTOptions::PERLMAN_MATRIX);
+
 }  // namespace Descriptors
 }  // namespace RDKit
 

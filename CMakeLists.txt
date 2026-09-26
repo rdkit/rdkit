@@ -98,6 +98,7 @@ option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MMPA "build support for MMPA into MinimalLib" OFF )
 option(RDK_BUILD_LONG_RUNNING_TESTS "build longer running tests" OFF )
+option(RDK_BUILD_OSMORDRED_SUPPORT "Build Osmordred descriptors" ON )
 
 set(RDK_LTO_MODE "OFF" CACHE STRING
     "link-time optimization mode: OFF, THIN, or FULL")
@@ -295,6 +296,11 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
     add_definitions(-DRDK_BUILD_MAEPARSER_SUPPORT)
     include_directories(${RDKit_ExternalDir})
 endif()
+
+if(RDK_BUILD_OSMORDRED_SUPPORT)
+    add_definitions(-DRDK_BUILD_OSMORDRED_SUPPORT)
+endif()
+
 
 if((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR ((NOT MSVC) AND WIN32 AND RDK_INSTALL_STATIC_LIBS))
     add_definitions(-DRDL_WIN_STATIC)

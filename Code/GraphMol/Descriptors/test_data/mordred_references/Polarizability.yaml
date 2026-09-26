@@ -1,0 +1,17 @@
+# PaDEL-descriptor
+- names: [apol78, bpol78]
+  digit: 7
+  results:
+    Hexane: [19.895102, 15.304898]
+    Benzene: [14.560758, 6.559242]
+    Caffeine: [26.75193, 20.10807]
+    # Cyanidin
+    Lycopene: [107.740408, 61.219592]
+    Epicatechin: [40.547102, 17.220898]
+    Limonene: [28.268688, 17.491312]
+    Allicin: [23.82993, 15.31007]
+    Glutathione: [39.947481, 25.356519]
+    Digoxin: [126.062752, 84.335248]
+    Capsaicin: [53.189411, 33.050589]
+    EllagicAcid: [35.056758, 12.307242]
+    Astaxanthin: [108.281236, 58.762764]

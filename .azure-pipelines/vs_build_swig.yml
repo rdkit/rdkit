@@ -15,7 +15,7 @@ steps:
         vs2022_win-64 cmake=3.26 ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        cairo eigen swig=4.2 expat ccache ninja
+        cairo eigen swig=4.2 lapack liblapacke "blas=*=openblas" blas-devel pyyaml  expat ccache ninja
     call activate rdkit_build
     conda config --env --add channels conda-forge
     conda config --env --set channel_priority strict
