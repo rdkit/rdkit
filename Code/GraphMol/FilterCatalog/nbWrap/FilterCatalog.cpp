@@ -8,6 +8,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <stdexcept>
+
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
@@ -41,13 +43,25 @@ namespace RDKit {
 // which is necessary when the C++ copy() method creates a copied instance
 // (e.g. FilterCatalogEntry stores a copy).
 struct FilterMatcherBaseTrampoline : FilterMatcherBase {
-  NB_TRAMPOLINE(FilterMatcherBase, 4);
+  NB_TRAMPOLINE(FilterMatcherBase);
   // Strong reference to the Python object — keeps it alive when the C++
   // side is held in a boost::shared_ptr without a Python wrapper.
   mutable nb::object d_pyObject;
 
+  ~FilterMatcherBaseTrampoline() override {
+    // A C++-owned copy can outlive Python. Detach before the member destructor.
+    auto pyObject = d_pyObject.release();
+    if (nb::detail::cleanup_guard gil{}) {
+      pyObject.dec_ref();
+    }
+  }
+
   bool isValid() const override {
     nb::gil_scoped_acquire gil;
+    if (!gil.is_valid()) {
+      throw std::runtime_error(
+          "Cannot call FilterMatcher.IsValid: Python is shutting down");
+    }
     nb::object pyObj = d_pyObject.is_valid()
                            ? d_pyObject
                            : nb::borrow<nb::object>(nb_trampoline.base());
@@ -56,6 +70,9 @@ struct FilterMatcherBaseTrampoline : FilterMatcherBase {
 
   std::string getName() const override {
     nb::gil_scoped_acquire gil;
+    if (!gil.is_valid()) {
+      return FilterMatcherBase::getName();
+    }
     nb::object pyObj = d_pyObject.is_valid()
                            ? d_pyObject
                            : nb::borrow<nb::object>(nb_trampoline.base());
@@ -68,6 +85,10 @@ struct FilterMatcherBaseTrampoline : FilterMatcherBase {
     // The Python implementation appends FilterMatch objects to vect.
     // We then copy those back into the C++ matchVect.
     nb::gil_scoped_acquire gil;
+    if (!gil.is_valid()) {
+      throw std::runtime_error(
+          "Cannot call FilterMatcher.GetMatches: Python is shutting down");
+    }
     nb::object pyObj = d_pyObject.is_valid()
                            ? d_pyObject
                            : nb::borrow<nb::object>(nb_trampoline.base());
@@ -84,6 +105,10 @@ struct FilterMatcherBaseTrampoline : FilterMatcherBase {
 
   bool hasMatch(const ROMol &mol) const override {
     nb::gil_scoped_acquire gil;
+    if (!gil.is_valid()) {
+      throw std::runtime_error(
+          "Cannot call FilterMatcher.HasMatch: Python is shutting down");
+    }
     nb::object pyObj = d_pyObject.is_valid()
                            ? d_pyObject
                            : nb::borrow<nb::object>(nb_trampoline.base());
@@ -92,6 +117,10 @@ struct FilterMatcherBaseTrampoline : FilterMatcherBase {
 
   boost::shared_ptr<FilterMatcherBase> copy() const override {
     nb::gil_scoped_acquire gil;
+    if (!gil.is_valid()) {
+      throw std::runtime_error(
+          "Cannot copy FilterMatcher: Python is shutting down");
+    }
     // Capture the Python object so the copy keeps it alive.
     nb::object pyObj = d_pyObject.is_valid()
                            ? d_pyObject

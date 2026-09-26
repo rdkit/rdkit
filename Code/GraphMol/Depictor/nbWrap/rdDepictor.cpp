@@ -108,11 +108,11 @@ static nb::tuple generate2DStructureHelper(
   }
   auto matchVect = RDDepict::generateDepictionMatching2DStructure(
       mol, reference, confId, referencePattern, params);
-  nb::list atomMap;
+  nb::tuple_builder atomMap(matchVect.size());
   for (const auto &pair : matchVect) {
-    atomMap.append(nb::make_tuple(pair.first, pair.second));
+    atomMap.put(nb::make_tuple(pair.first, pair.second));
   }
-  return nb::tuple(atomMap);
+  return atomMap.commit();
 }
 
 static nb::tuple generate2DStructureWithParamsHelper(

@@ -128,7 +128,7 @@ the Boost wrappers are built by default.  In order to build the nanobind wrapper
 to your conda environment:
 
 ```
-conda install -c conda-forge nanobind 
+conda install -c conda-forge "nanobind>=3,<4"
 ```
 
 The cmake command needs to be modified to turn off the default Boost build and instead use nanobind:
@@ -522,4 +522,3 @@ This document is copyright (C) 2012-2020 by Greg Landrum
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 
 The intent of this license is similar to that of the RDKit itself. In simple words: "Do whatever you want with it, but please give us some credit."
-
