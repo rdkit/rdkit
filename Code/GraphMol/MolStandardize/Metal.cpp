@@ -15,7 +15,6 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 #include <GraphMol/RDKitQueries.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
 
 using namespace std;

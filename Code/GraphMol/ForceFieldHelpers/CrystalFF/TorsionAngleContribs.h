@@ -43,8 +43,8 @@ struct RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribsParams {
         idx2(idx2),
         idx3(idx3),
         idx4(idx4),
-        forceConstants(forceConstants),
-        signs(signs) {}
+        forceConstants(std::move(forceConstants)),
+        signs(std::move(signs)) {}
 };
 
 class RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribs

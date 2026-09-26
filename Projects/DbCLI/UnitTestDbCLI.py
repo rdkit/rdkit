@@ -360,6 +360,7 @@ class TestCase(unittest.TestCase):
       self.assertTrue(v > 0.7)
     os.unlink('testData/bzr/search.out')
 
+  @unittest.skipIf(sys.platform=="win32", "File removal test skipped on windows")
   def test4CreateOptions(self):
     for fn in ('Compounds.sqlt', 'AtomPairs.sqlt', 'Descriptors.sqlt', 'Fingerprints.sqlt'):
       if os.path.exists(f'testData/bzr/{fn}'):
@@ -495,6 +496,7 @@ class TestCase(unittest.TestCase):
 
     conn = DbConnect('testData/bzr/AtomPairs.sqlt')
     curs = conn.GetCursor()
+    curs.execute('drop table if exists tmp')
     curs.execute('create table tmp as select compound_id,atompairfp,torsionfp from atompairs')
     p = subprocess.Popen((sys.executable, 'SearchDb.py', '--dbDir=testData/bzr', '--molFormat=sdf',
                           '--topN=5', '--outF=testData/bzr/search.out',

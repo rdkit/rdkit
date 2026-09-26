@@ -28,6 +28,9 @@ Tetrahedral::Tetrahedral(const CIPMol &mol, Atom *focus)
   for (auto &nbr : mol.getNeighbors(focus)) {
     carriers.push_back(nbr);
   }
+  if (carriers.size() < 2 || carriers.size() > 4) {
+    return;
+  }
   if (carriers.size() < 4) {
     // Implicit H -- use the central atom instead of a dummy H
     carriers.push_back(focus);
@@ -77,10 +80,6 @@ bool Tetrahedral::hasPrimaryLabel() const {
   return getFocus()->hasProp(common_properties::_CIPCode);
 }
 
-void Tetrahedral::resetPrimaryLabel() const {
-  getFocus()->clearProp(common_properties::_CIPCode);
-}
-
 Descriptor Tetrahedral::label(const Rules &comp) {
   auto &digraph = getDigraph();
 
@@ -104,7 +103,7 @@ Descriptor Tetrahedral::label(Node *node, const Rules &comp) {
   d_ranked_anchors.clear();
 
   // something not right!?! bad creation
-  if (edges.size() < 3) {
+  if (getCarriers().size() != 4 || edges.size() < 3) {
     return Descriptor::ns;
   }
 
@@ -151,6 +150,9 @@ Descriptor Tetrahedral::label(Node *node, const Rules &comp) {
       continue;
     }
 
+    if (idx < 0 || static_cast<size_t>(idx) >= ordered.size()) {
+      throw std::runtime_error("Could not calculate parity! invalid atom index");
+    }
     auto atom = edge->getEnd()->getAtom();
     ordered[idx] = atom;
 

@@ -1940,3 +1940,30 @@ TEST_CASE("canonical tautomer keeps stereo on an equal-score tie",
     CHECK(MolToSmiles(*got) == refSmi);
   }
 }
+
+TEST_CASE("tautomer canonicalize preserves STEREOANY on ring double bonds") {
+  const std::string rdbase = std::getenv("RDBASE");
+  const auto filename =
+      rdbase + "/Code/GraphMol/MolStandardize/test_data/macrocycle_cfg2.mol";
+  std::unique_ptr<RWMol> mol(MolFileToMol(filename));
+  REQUIRE(mol);
+
+  const auto bondIdx = 2;
+  const auto inputBond = mol->getBondWithIdx(bondIdx);
+  REQUIRE(inputBond);
+  CHECK(inputBond->getBondType() == Bond::DOUBLE);
+  CHECK(inputBond->getStereo() == Bond::STEREOANY);
+  CHECK(mol->getRingInfo()->numBondRings(bondIdx) > 0);
+
+  MolStandardize::CleanupParameters params;
+  params.tautomerRemoveBondStereo = false;
+  params.tautomerRemoveSp3Stereo = false;
+  MolStandardize::TautomerEnumerator te(params);
+  std::unique_ptr<ROMol> canon(te.canonicalize(*mol));
+  REQUIRE(canon);
+
+  const auto canonicalBond = canon->getBondWithIdx(bondIdx);
+  REQUIRE(canonicalBond);
+  CHECK(canonicalBond->getBondType() == Bond::DOUBLE);
+  CHECK(canonicalBond->getStereo() == Bond::STEREOANY);
+}

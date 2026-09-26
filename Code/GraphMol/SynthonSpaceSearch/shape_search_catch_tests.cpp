@@ -101,7 +101,6 @@ TEST_CASE("Shape Small test") {
   params.bestHit = true;
   auto queryMol = v2::SmilesParse::MolFromSmiles(querySmi);
   auto results = synthonspace.shapeSearch(*queryMol, params);
-  unsigned int j = 0;
   CHECK(results.getHitMolecules().size() == 3);
   for (const auto &mol : results.getHitMolecules()) {
     // Different machine/compiler combinations give slightly different results
@@ -113,7 +112,6 @@ TEST_CASE("Shape Small test") {
     auto scores = GaussianShape::ScoreMolecule(*queryMol, *mol);
     CHECK_THAT(mol->getProp<double>("Similarity"),
                Catch::Matchers::WithinAbs(scores[0], 0.001));
-    ++j;
   }
 }
 
@@ -165,6 +163,7 @@ TEST_CASE("Shape DB Writer") {
   synthonspace.readTextFile(libName, cancelled);
   CHECK(synthonspace.getNumReactions() == 1);
   ShapeBuildParams shapeBuildParams;
+  shapeBuildParams.timeOut = 0;
   synthonspace.buildSynthonShapes(cancelled, shapeBuildParams);
 
   auto spaceName = std::tmpnam(nullptr);
@@ -180,6 +179,7 @@ TEST_CASE("Shape DB Writer") {
   for (size_t i = 0; i < irxn->getSynthons().size(); ++i) {
     REQUIRE(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
     for (size_t j = 0; j < irxn->getSynthons()[i].size(); ++j) {
+      REQUIRE(irxn->getSynthons()[i][j].second->getShapes());
       REQUIRE(irxn->getSynthons()[i][j]
                   .second->getShapes()
                   ->getShapes()

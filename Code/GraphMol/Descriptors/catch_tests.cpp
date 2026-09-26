@@ -679,8 +679,29 @@ TEST_CASE("DCLV") {
           dclv.getPartialSurfaceArea(partialAtoms2));
     CHECK(dclv.getPartialSurfaceArea(partialAtoms3) == dclv.getSurfaceArea());
   }
-}
 
+  SECTION("Surface points") {
+    std::string sdfName =
+        pathName + "/Code/GraphMol/Descriptors/test_data/ethane.sdf";
+    auto m = v2::FileParsers::MolFromMolFile(sdfName);
+    REQUIRE(m);
+    Descriptors::DoubleCubicLatticeVolume dclv(*m);
+    auto surfacePoints = dclv.getSurfacePoints();
+    CHECK(surfacePoints.size() == m->getNumAtoms());
+    auto allSurfacePoints = dclv.getSurfacePoints(true);
+    CHECK(allSurfacePoints.size() == surfacePoints.size());
+    for (size_t i = 0; i < surfacePoints.size(); ++i) {
+      CHECK(allSurfacePoints[i].size() == 320);
+      CHECK(surfacePoints[i].size() < allSurfacePoints[i].size());
+    }
+    // make sure calling the function again doesn't change the result
+    auto surfacePoints2 = dclv.getSurfacePoints();
+    CHECK(surfacePoints2.size() == m->getNumAtoms());
+    for (size_t i = 0; i < surfacePoints2.size(); ++i) {
+      CHECK(surfacePoints2[i].size() == surfacePoints[i].size());
+    }
+  }
+}
 #ifdef RDK_HAS_EIGEN3
 TEST_CASE("Github #7364: BCUT descriptors failing for moleucles with Hs") {
   SECTION("as reported") {

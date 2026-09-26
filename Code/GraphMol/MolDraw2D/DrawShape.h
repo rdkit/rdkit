@@ -142,7 +142,7 @@ class DrawShapePolyLine : public DrawShape {
 
 class DrawShapeSolidWedge : public DrawShape {
  public:
-  DrawShapeSolidWedge(const std::vector<Point2D> points, const DrawColour &col1,
+  DrawShapeSolidWedge(const std::vector<Point2D> &points, const DrawColour &col1,
                       const DrawColour &col2, bool splitBonds,
                       std::vector<Point2D> &otherBondVecs,
                       double lineWidth = 1.0, int atom1 = -1, int atom2 = -1,
@@ -177,7 +177,7 @@ class DrawShapeDashedWedge : public DrawShape {
   // isn't drawn.  The wedge will be as fat as it would have been with
   // the extra dash.  This is so that bonds coming out of the fat end
   // of the wedge aren't directly incident on a dash.
-  DrawShapeDashedWedge(const std::vector<Point2D> points,
+  DrawShapeDashedWedge(const std::vector<Point2D> &points,
                        const DrawColour &col1, const DrawColour &col2,
                        bool oneLessDash = true, double lineWidth = 1.0,
                        int atom1 = -1, int atom2 = -1, int bond = -1);
@@ -204,7 +204,7 @@ class DrawShapeDashedWedge : public DrawShape {
 
 class DrawShapeWavyLine : public DrawShape {
  public:
-  DrawShapeWavyLine(const std::vector<Point2D> points, double lineWidth = 2.0,
+  DrawShapeWavyLine(const std::vector<Point2D> &points, double lineWidth = 2.0,
                     bool scaleLineWidth = false,
                     const DrawColour &col1 = DrawColour(0, 0, 0),
                     const DrawColour &col2 = DrawColour(0, 0, 0),
@@ -233,7 +233,7 @@ class DrawShapeArc : public DrawShape {
   // between 0 and 360.0.
   // Points should be size 2 - the first entry is the centre, the second
   // gives the x and y radii of the ellipse.
-  DrawShapeArc(const std::vector<Point2D> points, double ang1, double ang2,
+  DrawShapeArc(const std::vector<Point2D> &points, double ang1, double ang2,
                double lineWidth = 2.0, bool scaleLineWidth = false,
                const DrawColour &col1 = DrawColour(0, 0, 0), bool fill = false,
                int atom1 = -1);

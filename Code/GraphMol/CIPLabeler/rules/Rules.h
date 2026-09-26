@@ -23,7 +23,7 @@ class Rules : public SequenceRule {
  public:
   Rules() = delete;
 
-  Rules(std::initializer_list<SequenceRule *> rules) {
+  Rules(std::initializer_list<SequenceRule *>&& rules) {
     for (auto &rule : rules) {
       add(rule);
     }
@@ -35,22 +35,7 @@ class Rules : public SequenceRule {
     }
   }
 
-  void add(SequenceRule *rule) {
-    if (rule == nullptr) {
-      throw std::runtime_error("No sequence rule provided");
-    }
-    d_rules.push_back(rule);
-    rule->setSorter(new Sort(d_rules));
-  }
-
   int getNumSubRules() const { return d_rules.size(); }
-
-  const Sort *getSorter() const override {
-    if (dp_sorter == nullptr) {
-      const_cast<Rules *>(this)->setSorter(new Sort(this));
-    }
-    return dp_sorter.get();
-  }
 
   int compare(const Edge *o1, const Edge *o2) const override {
     // Try using each rules. The rules will expand the search exhaustively
@@ -65,9 +50,8 @@ class Rules : public SequenceRule {
     return 0;
   }
 
-  int getComparision(const Edge *a, const Edge *b, bool deep) const override {
-    (void)deep;
-
+  int getComparision(const Edge *a, const Edge *b,
+                     bool /* unused */) const override {
     // Try using each rules. The rules will expand the search exhaustively
     // to all child substituents
     for (const auto &rule : d_rules) {
@@ -83,6 +67,12 @@ class Rules : public SequenceRule {
   }
 
  private:
+  void add(SequenceRule *rule) {
+    PRECONDITION(rule != nullptr, "null rule provided");
+    d_rules.push_back(rule);
+    rule->setSorter(new Sort(d_rules));
+  }
+
   std::vector<const SequenceRule *> d_rules;
 };
 
