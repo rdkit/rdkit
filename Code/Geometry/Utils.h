@@ -22,8 +22,8 @@ namespace RDGeom {
  *  and the angle between the axes.
  */
 inline double compute13Dist(double d1, double d2, double angle) {
-  double res = d1 * d1 + d2 * d2 - 2 * d1 * d2 * cos(angle);
-  return sqrt(res);
+  double res = d1 * d1 + d2 * d2 - 2 * d1 * d2 * std::cos(angle);
+  return std::sqrt(res);
 }
 
 /*! \brief Compute the 14 distances give the 12 distance and the angles
@@ -50,10 +50,10 @@ inline double compute13Dist(double d1, double d2, double angle) {
 inline double compute14Dist3D(double d1, double d2, double d3, double ang12,
                               double ang23, double torAng) {
   // location of atom1
-  Point3D p1(d1 * cos(ang12), d1 * sin(ang12), 0.0);
+  Point3D p1(d1 * std::cos(ang12), d1 * std::sin(ang12), 0.0);
 
   // location of atom 4 if the rosion angle was 0
-  Point3D p4(d2 - d3 * cos(ang23), d3 * sin(ang23), 0.0);
+  Point3D p4(d2 - d3 * std::cos(ang23), d3 * std::sin(ang23), 0.0);
 
   // now we will rotate p4 about the x-axis by the desired torsion angle
   Transform3D trans;
@@ -73,10 +73,10 @@ inline double compute14Dist3D(double d1, double d2, double d3, double ang12,
  */
 inline double compute14DistCis(double d1, double d2, double d3, double ang12,
                                double ang23) {
-  double dx = d2 - d3 * cos(ang23) - d1 * cos(ang12);
-  double dy = d3 * sin(ang23) - d1 * sin(ang12);
+  double dx = d2 - d3 * std::cos(ang23) - d1 * std::cos(ang12);
+  double dy = d3 * std::sin(ang23) - d1 * std::sin(ang12);
   double res = dx * dx + dy * dy;
-  return sqrt(res);
+  return std::sqrt(res);
 }
 
 /*! \brief Compute the 14 distances give the 12 distance and bond angle
@@ -87,10 +87,10 @@ inline double compute14DistCis(double d1, double d2, double d3, double ang12,
  */
 inline double compute14DistTrans(double d1, double d2, double d3, double ang12,
                                  double ang23) {
-  double dx = d2 - d3 * cos(ang23) - d1 * cos(ang12);
-  double dy = d3 * sin(ang23) + d1 * sin(ang12);
+  double dx = d2 - d3 * std::cos(ang23) - d1 * std::cos(ang12);
+  double dy = d3 * std::sin(ang23) + d1 * std::sin(ang12);
   double res = dx * dx + dy * dy;
-  return sqrt(res);
+  return std::sqrt(res);
 }
 }  // namespace RDGeom
 

@@ -17,6 +17,7 @@
 #include <fstream>
 #include <iomanip>
 
+#include <cmath>
 using namespace RDKit;
 
 namespace {
@@ -43,9 +44,9 @@ void UniformRealValueGrid3D::initGrid(double dimX, double dimY, double dimZ,
   PRECONDITION(dimY > 0.0, "Invalid y-dimension for grid");
   PRECONDITION(dimZ > 0.0, "Invalid z-dimension for grid");
   PRECONDITION(spacing > 0.0, "Invalid spacing for grid");
-  d_numX = static_cast<unsigned int>(floor(dimX / spacing + 0.5));
-  d_numY = static_cast<unsigned int>(floor(dimY / spacing + 0.5));
-  d_numZ = static_cast<unsigned int>(floor(dimZ / spacing + 0.5));
+  d_numX = static_cast<unsigned int>(std::floor(dimX / spacing + 0.5));
+  d_numY = static_cast<unsigned int>(std::floor(dimY / spacing + 0.5));
+  d_numZ = static_cast<unsigned int>(std::floor(dimZ / spacing + 0.5));
   // PRECONDITION((!data)||data->getValueType()==double,"grid data type
   // mismatch");
   PRECONDITION(!data || data->size() == d_numX * d_numY * d_numZ,
@@ -101,9 +102,9 @@ int UniformRealValueGrid3D::getGridPointIndex(
   tPt -= d_offSet;  // d_origin;
   tPt /= d_spacing;
   constexpr double move = 0.5;
-  auto xi = static_cast<int>(floor(tPt.x + move));
-  auto yi = static_cast<int>(floor(tPt.y + move));
-  auto zi = static_cast<int>(floor(tPt.z + move));
+  auto xi = static_cast<int>(std::floor(tPt.x + move));
+  auto yi = static_cast<int>(std::floor(tPt.y + move));
+  auto zi = static_cast<int>(std::floor(tPt.z + move));
 
   if ((xi < 0) || (xi >= static_cast<int>(d_numX))) {
     return -1;
@@ -165,7 +166,7 @@ bool UniformRealValueGrid3D::compareParams(
   if (d_numZ != other.getNumZ()) {
     return false;
   }
-  if (fabs(d_spacing - other.getSpacing()) > SPACING_TOL) {
+  if (std::fabs(d_spacing - other.getSpacing()) > SPACING_TOL) {
     return false;
   }
   auto dOffset = d_offSet;

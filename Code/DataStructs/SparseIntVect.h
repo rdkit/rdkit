@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
+#include <cmath>
 #ifndef __RD_SPARSE_INT_VECT_20070921__
 #define __RD_SPARSE_INT_VECT_20070921__
 
@@ -118,7 +119,7 @@ class SparseIntVect {
       if (!doAbs) {
         res += iter->second;
       } else {
-        res += abs(iter->second);
+        res += std::abs(iter->second);
       }
     }
     return res;
@@ -444,35 +445,35 @@ void calcVectParams(const SparseIntVect<IndexType> &v1,
   typename SparseIntVect<IndexType>::StorageType::const_iterator iter1, iter2;
   iter1 = v1.getNonzeroElements().begin();
   if (iter1 != v1.getNonzeroElements().end()) {
-    v1Sum += abs(iter1->second);
+    v1Sum += std::abs(iter1->second);
   }
   iter2 = v2.getNonzeroElements().begin();
   if (iter2 != v2.getNonzeroElements().end()) {
-    v2Sum += abs(iter2->second);
+    v2Sum += std::abs(iter2->second);
   }
   while (iter1 != v1.getNonzeroElements().end()) {
     while (iter2 != v2.getNonzeroElements().end() &&
            iter2->first < iter1->first) {
       ++iter2;
       if (iter2 != v2.getNonzeroElements().end()) {
-        v2Sum += abs(iter2->second);
+        v2Sum += std::abs(iter2->second);
       }
     }
     if (iter2 != v2.getNonzeroElements().end()) {
       if (iter2->first == iter1->first) {
-        if (abs(iter2->second) < abs(iter1->second)) {
-          andSum += abs(iter2->second);
+        if (std::abs(iter2->second) < std::abs(iter1->second)) {
+          andSum += std::abs(iter2->second);
         } else {
-          andSum += abs(iter1->second);
+          andSum += std::abs(iter1->second);
         }
         ++iter2;
         if (iter2 != v2.getNonzeroElements().end()) {
-          v2Sum += abs(iter2->second);
+          v2Sum += std::abs(iter2->second);
         }
       }
       ++iter1;
       if (iter1 != v1.getNonzeroElements().end()) {
-        v1Sum += abs(iter1->second);
+        v1Sum += std::abs(iter1->second);
       }
     } else {
       break;
@@ -481,14 +482,14 @@ void calcVectParams(const SparseIntVect<IndexType> &v1,
   if (iter1 != v1.getNonzeroElements().end()) {
     ++iter1;
     while (iter1 != v1.getNonzeroElements().end()) {
-      v1Sum += abs(iter1->second);
+      v1Sum += std::abs(iter1->second);
       ++iter1;
     }
   }
   if (iter2 != v2.getNonzeroElements().end()) {
     ++iter2;
     while (iter2 != v2.getNonzeroElements().end()) {
-      v2Sum += abs(iter2->second);
+      v2Sum += std::abs(iter2->second);
       ++iter2;
     }
   }
@@ -508,7 +509,7 @@ double DiceSimilarity(const SparseIntVect<IndexType> &v1,
     v1Sum = v1.getTotalVal(true);
     v2Sum = v2.getTotalVal(true);
     double denom = v1Sum + v2Sum;
-    if (fabs(denom) < 1e-6) {
+    if (std::fabs(denom) < 1e-6) {
       // no need to worry about returnDistance here
       return 0.0;
     }
@@ -526,7 +527,7 @@ double DiceSimilarity(const SparseIntVect<IndexType> &v1,
 
   double denom = v1Sum + v2Sum;
   double sim;
-  if (fabs(denom) < 1e-6) {
+  if (std::fabs(denom) < 1e-6) {
     sim = 0.0;
   } else {
     sim = 2. * numer / denom;
@@ -555,7 +556,7 @@ double TverskySimilarity(const SparseIntVect<IndexType> &v1,
   double denom = a * v1Sum + b * v2Sum + (1 - a - b) * andSum;
   double sim;
 
-  if (fabs(denom) < 1e-6) {
+  if (std::fabs(denom) < 1e-6) {
     sim = 0.0;
   } else {
     sim = andSum / denom;

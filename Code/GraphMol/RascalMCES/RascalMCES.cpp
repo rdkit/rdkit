@@ -41,6 +41,7 @@
 #include <GraphMol/RascalMCES/RascalResult.h>
 #include <GraphMol/RascalMCES/RascalDetails.h>
 
+#include <cmath>
 namespace RDKit {
 namespace RascalMCES {
 class TimedOutException : public std::exception {
@@ -580,7 +581,7 @@ unsigned int calcLowerBound(const ROMol &mol1, const ROMol &mol2,
       ++deltaVg1;
     }
   }
-  double lb = sqrt((mol1.getNumAtoms() + mol1.getNumBonds()) *
+  double lb = std::sqrt((mol1.getNumAtoms() + mol1.getNumBonds()) *
                    (mol2.getNumAtoms() + mol2.getNumBonds()));
   lb = lb * simThresh - mol1.getNumAtoms() + deltaVg1;
   lb = lb < 0 ? 0 : lb;

@@ -27,10 +27,10 @@ double calcAngleForceConstant(double theta0, double bondOrder12,
                               double bondOrder23, const AtomicParams *at1Params,
                               const AtomicParams *at2Params,
                               const AtomicParams *at3Params) {
-  double cosTheta0 = cos(theta0);
+  double cosTheta0 = std::cos(theta0);
   double r12 = calcBondRestLength(bondOrder12, at1Params, at2Params);
   double r23 = calcBondRestLength(bondOrder23, at2Params, at3Params);
-  double r13 = sqrt(r12 * r12 + r23 * r23 - 2. * r12 * r23 * cosTheta0);
+  double r13 = std::sqrt(r12 * r12 + r23 * r23 - 2. * r12 * r23 * cosTheta0);
   double beta = 2. * Params::G / (r12 * r23);
 
   double preFactor = beta * at1Params->Z1 * at3Params->Z1 / int_pow<5>(r13);
@@ -111,8 +111,8 @@ AngleBendContrib::AngleBendContrib(ForceField *owner, unsigned int idx1,
   d_forceConstant = Utils::calcAngleForceConstant(
       d_theta0, bondOrder12, bondOrder23, at1Params, at2Params, at3Params);
   if (order == 0) {
-    double sinTheta0 = sin(d_theta0);
-    double cosTheta0 = cos(d_theta0);
+    double sinTheta0 = std::sin(d_theta0);
+    double cosTheta0 = std::cos(d_theta0);
     d_C2 = 1. / (4. * std::max(sinTheta0 * sinTheta0, 1e-8));
     d_C1 = -4. * d_C2 * cosTheta0;
     d_C0 = d_C2 * (2. * cosTheta0 * cosTheta0 + 1.);
@@ -151,8 +151,8 @@ double AngleBendContrib::getEnergy(double *pos) const {
   // For the sake of efficiency, we only add the penalty if the angle is less
   // than 30 degrees
   if (d_order && d_order < 5 && cosTheta > ANGLE_CORRECTION_THRESHOLD) {
-    auto theta = acos(cosTheta);
-    res += exp(-20.0 * (theta - d_theta0 + 0.25));
+    auto theta = std::acos(cosTheta);
+    res += std::exp(-20.0 * (theta - d_theta0 + 0.25));
   }
 
   return res;
@@ -178,7 +178,7 @@ void AngleBendContrib::getGrad(double *pos, double *grad) const {
   double cosTheta = r[0].dotProduct(r[1]);
   clipToOne(cosTheta);
   double sinThetaSq = 1.0 - cosTheta * cosTheta;
-  double sinTheta = std::max(sqrt(sinThetaSq), 1.0e-8);
+  double sinTheta = std::max(std::sqrt(sinThetaSq), 1.0e-8);
 
   // use the chain rule:
   // dE/dx = dE/dTheta * dTheta/dx
@@ -195,9 +195,9 @@ void AngleBendContrib::getGrad(double *pos, double *grad) const {
   // For the sake of efficiency, we only add the penalty if the angle is less
   // than 30 degrees
   if (d_order && d_order < 5 && cosTheta > ANGLE_CORRECTION_THRESHOLD) {
-    auto theta = acos(cosTheta);
+    auto theta = std::acos(cosTheta);
 
-    auto corr = -20.0 * exp(-20.0 * (theta - d_theta0 + 0.25));
+    auto corr = -20.0 * std::exp(-20.0 * (theta - d_theta0 + 0.25));
     dE_dTheta += corr;
   }
 
@@ -209,7 +209,7 @@ double AngleBendContrib::getEnergyTerm(double cosTheta,
   PRECONDITION(d_order == 0 || d_order == 1 || d_order == 2 || d_order == 3 ||
                    d_order == 4,
                "bad order");
-  // cos(2x) = cos^2(x) - sin^2(x);
+  // std::cos(2x) = cos^2(x) - sin^2(x);
   double cos2Theta = cosTheta * cosTheta - sinThetaSq;
 
   double res = 0.0;
@@ -224,11 +224,11 @@ double AngleBendContrib::getEnergyTerm(double cosTheta,
         res = cos2Theta;
         break;
       case 3:
-        // cos(3x) = cos^3(x) - 3*cos(x)*sin^2(x)
+        // std::cos(3x) = cos^3(x) - 3*std::cos(x)*sin^2(x)
         res = cosTheta * (cosTheta * cosTheta - 3. * sinThetaSq);
         break;
       case 4:
-        // cos(4x) = cos^4(x) - 6*cos^2(x)*sin^2(x)+sin^4(x)
+        // std::cos(4x) = cos^4(x) - 6*cos^2(x)*sin^2(x)+sin^4(x)
         res = int_pow<4>(cosTheta) - 6. * cosTheta * cosTheta * sinThetaSq +
               sinThetaSq * sinThetaSq;
         break;
@@ -251,26 +251,26 @@ double AngleBendContrib::getThetaDeriv(double cosTheta, double sinTheta) const {
     dE_dTheta =
         -1. * d_forceConstant * (d_C1 * sinTheta + 2. * d_C2 * sin2Theta);
   } else {
-    // E = k/n^2 [1-cos(n theta)]
-    // dE = - k/n^2 * d cos(n theta)
+    // E = k/n^2 [1-std::cos(n theta)]
+    // dE = - k/n^2 * d std::cos(n theta)
 
     // these all use:
-    // d cos(ax) = -a sin(ax)
+    // d std::cos(ax) = -a std::sin(ax)
 
     switch (d_order) {
       case 1:
         dE_dTheta = -sinTheta;
         break;
       case 2:
-        // sin(2*x) = 2*cos(x)*sin(x)
+        // std::sin(2*x) = 2*std::cos(x)*std::sin(x)
         dE_dTheta = sin2Theta;
         break;
       case 3:
-        // sin(3*x) = 3*sin(x) - 4*sin^3(x)
+        // std::sin(3*x) = 3*std::sin(x) - 4*sin^3(x)
         dE_dTheta = sinTheta * (3. - 4. * sinTheta * sinTheta);
         break;
       case 4:
-        // sin(4*x) = cos(x)*(4*sin(x) - 8*sin^3(x))
+        // std::sin(4*x) = std::cos(x)*(4*std::sin(x) - 8*sin^3(x))
         dE_dTheta = cosTheta * sinTheta * (4. - 8. * sinTheta * sinTheta);
         break;
     }

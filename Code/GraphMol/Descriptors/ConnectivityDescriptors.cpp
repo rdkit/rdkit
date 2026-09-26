@@ -15,6 +15,7 @@
 #include "MolDescriptors.h"
 #include "ConnectivityDescriptors.h"
 
+#include <cmath>
 namespace RDKit {
 namespace Descriptors {
 namespace detail {
@@ -40,7 +41,7 @@ void hkDeltas(const ROMol &mol, std::vector<double> &deltas, bool force) {
           (n - tbl->getNouterElecs(n) - 1);
     }
     if (deltas[at->getIdx()] != 0.0) {
-      deltas[at->getIdx()] = 1. / sqrt(deltas[at->getIdx()]);
+      deltas[at->getIdx()] = 1. / std::sqrt(deltas[at->getIdx()]);
     }
     ++atBegin;
   }
@@ -60,7 +61,7 @@ void nVals(const ROMol &mol, std::vector<double> &nVs, bool force) {
     const Atom *at = mol[*atBegin];
     double v = tbl->getNouterElecs(at->getAtomicNum()) - at->getTotalNumHs();
     if (v != 0.0) {
-      v = 1. / sqrt(v);
+      v = 1. / std::sqrt(v);
     }
     nVs[at->getIdx()] = v;
     ++atBegin;

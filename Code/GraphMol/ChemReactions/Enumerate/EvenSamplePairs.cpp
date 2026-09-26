@@ -33,6 +33,7 @@
 #include <boost/format.hpp>
 #include <cstdint>
 
+#include <cmath>
 namespace RDKit {
 
 using namespace EnumerationTypes;
@@ -129,7 +130,7 @@ bool EvenSamplePairsStrategy::try_add(boost::uint64_t iseed) {
       boost::uint64_t jj = digits[j] + joffset;
       if (pair_used[ii][jj] > 0) {
         auto numer = (double)pair_used[ii][jj];
-        double denom = sqrt((double)(rgroups[i]) * (double)(rgroups[j]));
+        double denom = std::sqrt((double)(rgroups[i]) * (double)(rgroups[j]));
         islack = (int)(numer / denom);
       }
       joffset += rgroups[j];

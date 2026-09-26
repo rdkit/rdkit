@@ -36,9 +36,9 @@ double get_angle(const ROMol &mol, unsigned int idx1, unsigned int idx2,
   const RDGeom::Point3D r[2] = {pos1 - pos2, pos3 - pos2};
   const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
                                std::max(1.0e-5, r[1].lengthSq())};
-  double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
+  double cosTheta = r[0].dotProduct(r[1]) / std::sqrt(rLengthSq[0] * rLengthSq[1]);
   cosTheta = std::clamp(cosTheta, -1.0, 1.0);
-  return ForceFields::UFF::RAD2DEG * acos(cosTheta);
+  return ForceFields::UFF::RAD2DEG * std::acos(cosTheta);
 }
 }  // namespace
 

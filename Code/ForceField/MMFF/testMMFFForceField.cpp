@@ -31,6 +31,7 @@
 #include "testMMFFForceField.h"
 #include <utility>
 
+#include <cmath>
 #define FCON_TOLERANCE 0.05
 #define ENERGY_TOLERANCE 0.025
 
@@ -608,7 +609,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
                     refBondStretchInstanceVec[j]->jAtomType) ||
                    (rdkBondStretchInstanceVec[j]->ffType !=
                     refBondStretchInstanceVec[j]->ffType) ||
-                   (fabs(rdkBondStretchInstanceVec[j]->kb -
+                   (std::fabs(rdkBondStretchInstanceVec[j]->kb -
                          refBondStretchInstanceVec[j]->kb) > FCON_TOLERANCE));
               if (error) {
                 failed = true;
@@ -633,7 +634,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
               delete rdkBondStretchInstanceVec[j];
               delete refBondStretchInstanceVec[j];
             }
-            error = (fabs(rdkEnergy - refEnergy) > ENERGY_TOLERANCE);
+            error = (std::fabs(rdkEnergy - refEnergy) > ENERGY_TOLERANCE);
             if (error && checkEnergy) {
               failed = true;
               std::stringstream diff;
@@ -764,7 +765,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
                         refAngleBendInstanceVec[j]->kAtomType) ||
                        (rdkAngleBendInstanceVec[j]->ffType !=
                         refAngleBendInstanceVec[j]->ffType) ||
-                       (fabs(rdkAngleBendInstanceVec[j]->ka -
+                       (std::fabs(rdkAngleBendInstanceVec[j]->ka -
                              refAngleBendInstanceVec[j]->ka) > FCON_TOLERANCE));
               if (error) {
                 failed = true;
@@ -789,7 +790,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
               delete rdkAngleBendInstanceVec[j];
               delete refAngleBendInstanceVec[j];
             }
-            error = (fabs(rdkEnergy - refEnergy) > ENERGY_TOLERANCE);
+            error = (std::fabs(rdkEnergy - refEnergy) > ENERGY_TOLERANCE);
             if (error && checkEnergy) {
               failed = true;
               std::stringstream diff;
@@ -925,7 +926,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
                     refStretchBendInstanceVec[j]->kAtomType) ||
                    (rdkStretchBendInstanceVec[j]->ffType !=
                     refStretchBendInstanceVec[j]->ffType) ||
-                   (fabs(rdkStretchBendInstanceVec[j]->kba -
+                   (std::fabs(rdkStretchBendInstanceVec[j]->kba -
                          refStretchBendInstanceVec[j]->kba) > FCON_TOLERANCE));
               if (error) {
                 failed = true;
@@ -950,7 +951,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
               delete rdkStretchBendInstanceVec[j];
               delete refStretchBendInstanceVec[j];
             }
-            error = (fabs(rdkEnergy - refEnergy) > ENERGY_TOLERANCE);
+            error = (std::fabs(rdkEnergy - refEnergy) > ENERGY_TOLERANCE);
             if (error && checkEnergy) {
               failed = true;
               std::stringstream diff;
@@ -1083,7 +1084,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
                         refOopBendInstanceVec[j]->kAtomType) ||
                        (rdkOopBendInstanceVec[j]->lAtomType !=
                         refOopBendInstanceVec[j]->lAtomType) ||
-                       (fabs(rdkOopBendInstanceVec[j]->koop -
+                       (std::fabs(rdkOopBendInstanceVec[j]->koop -
                              refOopBendInstanceVec[j]->koop) > FCON_TOLERANCE));
               if (error) {
                 failed = true;
@@ -1107,7 +1108,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
               delete rdkOopBendInstanceVec[j];
               delete refOopBendInstanceVec[j];
             }
-            error = (fabs(rdkEnergy - refEnergy) > ENERGY_TOLERANCE);
+            error = (std::fabs(rdkEnergy - refEnergy) > ENERGY_TOLERANCE);
             if (error && checkEnergy) {
               failed = true;
               std::stringstream diff;
@@ -1249,11 +1250,11 @@ int mmffValidationSuite(int argc, char *argv[]) {
                         refTorsionInstanceVec[j]->lAtomType) ||
                        (rdkTorsionInstanceVec[j]->ffType !=
                         refTorsionInstanceVec[j]->ffType) ||
-                       (fabs(rdkTorsionInstanceVec[j]->V1 -
+                       (std::fabs(rdkTorsionInstanceVec[j]->V1 -
                              refTorsionInstanceVec[j]->V1) > FCON_TOLERANCE) ||
-                       (fabs(rdkTorsionInstanceVec[j]->V2 -
+                       (std::fabs(rdkTorsionInstanceVec[j]->V2 -
                              refTorsionInstanceVec[j]->V2) > FCON_TOLERANCE) ||
-                       (fabs(rdkTorsionInstanceVec[j]->V3 -
+                       (std::fabs(rdkTorsionInstanceVec[j]->V3 -
                              refTorsionInstanceVec[j]->V3) > FCON_TOLERANCE));
               if (error) {
                 failed = true;
@@ -1281,7 +1282,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
             for (auto &ti : refTorsionInstanceVec) {
               delete ti;
             }
-            error = (fabs(rdkEnergy - refEnergy) > ENERGY_TOLERANCE);
+            error = (std::fabs(rdkEnergy - refEnergy) > ENERGY_TOLERANCE);
             if (error && checkEnergy) {
               failed = true;
               std::stringstream diff;
@@ -1343,7 +1344,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
           }
           std::stringstream rdkEleStringStream(energyString);
           rdkEleStringStream >> skip >> skip >> skip >> skip >> rdkEleEnergy;
-          error = (fabs(rdkEnergy - refVdWEnergy) > ENERGY_TOLERANCE);
+          error = (std::fabs(rdkEnergy - refVdWEnergy) > ENERGY_TOLERANCE);
           if (error && checkEnergy) {
             failed = true;
             std::stringstream diff;
@@ -1354,7 +1355,7 @@ int mmffValidationSuite(int argc, char *argv[]) {
                  << rdkEnergy << "\n";
             errorMsg += diff.str();
           }
-          error = (fabs(rdkEleEnergy - refEleEnergy) > ENERGY_TOLERANCE);
+          error = (std::fabs(rdkEleEnergy - refEleEnergy) > ENERGY_TOLERANCE);
           if (error && checkEnergy) {
             failed = true;
             std::stringstream diff;

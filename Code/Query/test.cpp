@@ -16,11 +16,11 @@
 using namespace std;
 using namespace Queries;
 
-int foofun(double bar) { return int(floor(bar)); };
+int foofun(double bar) { return int(std::floor(bar)); };
 
 bool matchF(int v) { return v == 3; }
 
-int dataF(float v) { return int(floor(v)) * 3; }
+int dataF(float v) { return int(std::floor(v)) * 3; }
 
 bool cmp(int v) { return v < 3; }
 

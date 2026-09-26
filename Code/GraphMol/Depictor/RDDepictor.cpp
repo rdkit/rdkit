@@ -81,7 +81,7 @@ void embedSquarePlanar(const RDKit::ROMol &mol, const RDKit::Atom *atom,
     }
     auto angle =
         RDKit::Chirality::getIdealAngleBetweenLigands(atom, nbrs.front(), nbr);
-    if (fabs(angle - 180) < 0.1) {
+    if (std::fabs(angle - 180) < 0.1) {
       coordMap[nbr->getIdx()] = idealPoints[2];
     } else {
       if (!q2Full) {
@@ -156,14 +156,14 @@ void embedOctahedral(const RDKit::ROMol &mol, const RDKit::Atom *atom,
   for (auto i = 0u; i < nbrs.size(); ++i) {
     bool all90 = true;
     for (auto j = i + 1; j < nbrs.size(); ++j) {
-      if (fabs(RDKit::Chirality::getIdealAngleBetweenLigands(atom, nbrs[i],
+      if (std::fabs(RDKit::Chirality::getIdealAngleBetweenLigands(atom, nbrs[i],
                                                              nbrs[j]) -
                180) < 0.1) {
         axial1 = nbrs[i];
         axial2 = nbrs[j];
         all90 = false;
         break;
-      } else if (fabs(RDKit::Chirality::getIdealAngleBetweenLigands(
+      } else if (std::fabs(RDKit::Chirality::getIdealAngleBetweenLigands(
                           atom, nbrs[i], nbrs[j]) -
                       90) > 0.1) {
         all90 = false;
@@ -399,7 +399,7 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
 
 // we do not use std::copysign as we need a tolerance
 double copySign(double to, double from, double tol) {
-  return (from < -tol ? -fabs(to) : fabs(to));
+  return (from < -tol ? -std::fabs(to) : std::fabs(to));
 }
 
 struct ThetaBin {
@@ -1198,9 +1198,9 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
     auto bv = pos.at(bi) - pos.at(ei);
     bv.x = (bv.x < 0.) ? std::min(-ALMOST_ZERO, bv.x)
                        : std::max(ALMOST_ZERO, bv.x);
-    auto theta = RAD2DEG * atan(bv.y / bv.x);
-    auto d_theta = fmod(-theta, INCR_DEG);
-    if (fabs(d_theta) > HALF_INCR_DEG) {
+    auto theta = RAD2DEG * std::atan(bv.y / bv.x);
+    auto d_theta = std::fmod(-theta, INCR_DEG);
+    if (std::fabs(d_theta) > HALF_INCR_DEG) {
       d_theta -= DepictorLocal::copySign(INCR_DEG, d_theta, ALMOST_ZERO);
     }
     int thetaKey = static_cast<int>(
@@ -1214,7 +1214,7 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
   for (auto &it : thetaBins) {
     auto &thetaBin = it.second;
     thetaBin.d_thetaAvg /= static_cast<double>(thetaBin.thetaValues.size());
-    if (fabs(thetaBin.d_thetaAvg) < fabs(d_thetaSmallest)) {
+    if (std::fabs(thetaBin.d_thetaAvg) < std::fabs(d_thetaSmallest)) {
       d_thetaSmallest = thetaBin.d_thetaAvg;
     }
   }
@@ -1226,7 +1226,7 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
             const auto &bBin = b.second;
             return (aBin.thetaValues.size() < bBin.thetaValues.size() ||
                     (aBin.thetaValues.size() == bBin.thetaValues.size() &&
-                     fabs(aBin.d_thetaAvg) > fabs(bBin.d_thetaAvg)));
+                     std::fabs(aBin.d_thetaAvg) > std::fabs(bBin.d_thetaAvg)));
           })
           ->second;
   double d_thetaMin = minRotationBin.d_thetaAvg;
@@ -1236,7 +1236,7 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
   if (!minimizeRotation) {
     unsigned int count60vs30[2] = {0, 0};
     for (auto theta : minRotationBin.thetaValues) {
-      auto absTheta = fabs(theta + d_thetaMin);
+      auto absTheta = std::fabs(theta + d_thetaMin);
       // Do not count 0 as multiple of 60 degrees
       if (absTheta < ALMOST_ZERO) {
         continue;
@@ -1248,12 +1248,12 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
     if (count60vs30[0] > count60vs30[1]) {
       d_thetaMin -= DepictorLocal::copySign(INCR_DEG, d_thetaMin, ALMOST_ZERO);
     }
-  } else if (fabs(d_thetaSmallest) < ALMOST_ZERO ||
-             (fabs(d_thetaSmallest) < fabs(d_thetaMin) &&
-              fabs(d_thetaMin) > QUARTER_INCR_DEG)) {
+  } else if (std::fabs(d_thetaSmallest) < ALMOST_ZERO ||
+             (std::fabs(d_thetaSmallest) < std::fabs(d_thetaMin) &&
+              std::fabs(d_thetaMin) > QUARTER_INCR_DEG)) {
     d_thetaMin = d_thetaSmallest;
   }
-  if (fabs(d_thetaMin) > ALMOST_ZERO) {
+  if (std::fabs(d_thetaMin) > ALMOST_ZERO) {
     d_thetaMin *= DEG2RAD;
     RDGeom::Transform3D trans;
     trans.SetRotation(d_thetaMin, RDGeom::Z_Axis);
@@ -1309,7 +1309,7 @@ double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
     canonTrans->SetTranslation(-ctd);
   }
   bool isScaleFactorSane = (scaleFactor > SCALE_FACTOR_THRESHOLD);
-  if (isScaleFactorSane && fabs(scaleFactor - 1.0) > SCALE_FACTOR_THRESHOLD) {
+  if (isScaleFactorSane && std::fabs(scaleFactor - 1.0) > SCALE_FACTOR_THRESHOLD) {
     RDGeom::Transform3D trans;
     trans.setVal(0, 0, scaleFactor);
     trans.setVal(1, 1, scaleFactor);

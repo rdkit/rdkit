@@ -51,10 +51,10 @@ void Transform2D::SetTransform(const Point2D &pt, double angle) {
   trans1.SetTranslation(-pt);
   double *data = d_data.get();
   // set the rotation
-  data[0] = cos(angle);
-  data[1] = -sin(angle);
-  data[3] = sin(angle);
-  data[4] = cos(angle);
+  data[0] = std::cos(angle);
+  data[1] = -std::sin(angle);
+  data[3] = std::sin(angle);
+  data[4] = std::cos(angle);
 
   (*this) *= trans1;
 
@@ -87,7 +87,7 @@ void Transform2D::SetTransform(const Point2D &ref1, const Point2D &ref2,
     cval = 1.0;
   }
 
-  double ang = acos(cval);
+  double ang = std::acos(cval);
 
   // figure out if we have to do clock wise or anti clock wise rotation
   double cross = (pvec.x) * (rvec.y) - (pvec.y) * (rvec.x);
@@ -98,10 +98,10 @@ void Transform2D::SetTransform(const Point2D &ref1, const Point2D &ref2,
   this->setToIdentity();
   // set the rotation
   double *data = d_data.get();
-  data[0] = cos(ang);
-  data[1] = -sin(ang);
-  data[3] = sin(ang);
-  data[4] = cos(ang);
+  data[0] = std::cos(ang);
+  data[1] = -std::sin(ang);
+  data[3] = std::sin(ang);
+  data[4] = std::cos(ang);
 
   // apply this rotation to pt1 and compute the translation
   Point2D npt1 = pt1;

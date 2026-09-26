@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <boost/format.hpp>
 
+#include <cmath>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -52,7 +53,7 @@ double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
     } else {
       bij -= bondScaleFacts[0];
     }
-    double dij = std::min(std::max(fabs(Ri - Rj), bij), Ri + Rj);
+    double dij = std::min(std::max(std::fabs(Ri - Rj), bij), Ri + Rj);
     Vi[bond->getBeginAtomIdx()] += Rj * Rj - (Ri - dij) * (Ri - dij) / dij;
     Vi[bond->getEndAtomIdx()] += Ri * Ri - (Rj - dij) * (Rj - dij) / dij;
   }
@@ -62,7 +63,7 @@ double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
     for (unsigned int i = 0; i < nAtoms; ++i) {
       double Ri = rads[i];
       double bij = Ri + Rj;
-      double dij = std::min(std::max(fabs(Ri - Rj), bij), Ri + Rj);
+      double dij = std::min(std::max(std::fabs(Ri - Rj), bij), Ri + Rj);
       Vi[i] += Rj * Rj - (Ri - dij) * (Ri - dij) / dij;
       hContrib += Ri * Ri - (Rj - dij) * (Rj - dij) / dij;
     }
@@ -74,7 +75,7 @@ double getLabuteAtomContribs(const ROMol &mol, std::vector<double> &Vi,
     Vi[i] = M_PI * Ri * (4. * Ri - Vi[i]);
     res += Vi[i];
   }
-  if (includeHs && fabs(hContrib) > 1e-4) {
+  if (includeHs && std::fabs(hContrib) > 1e-4) {
     double Rj = PeriodicTable::getTable()->getRb0(1);
     hContrib = M_PI * Rj * (4. * Rj - hContrib);
     res += hContrib;

@@ -570,7 +570,7 @@ int RascalResult::calcMaxDeltaAtomAtomDistScore() const {
                      d_mol1->getNumAtoms());
       auto d2 = dist(d_atomMatches[i].second, d_atomMatches[j].second,
                      mol2Dists, d_mol2->getNumAtoms());
-      auto deltaDist = abs(d1 - d2);
+      auto deltaDist = std::abs(d1 - d2);
       if (deltaDist > score) {
         score = deltaDist;
       }

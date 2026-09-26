@@ -992,7 +992,7 @@ void ConjElectrons::computeMetrics() {
       2190, 2390, 2600, 670,  890};
   for (ConjAtomMap::const_iterator it = d_conjAtomMap.begin();
        it != d_conjAtomMap.end(); ++it) {
-    d_ceMetrics.d_absFormalCharges += abs(it->second->fc());
+    d_ceMetrics.d_absFormalCharges += std::abs(it->second->fc());
     size_t anIdx = it->second->atom()->getAtomicNum();
     d_ceMetrics.d_wtdFormalCharges +=
         (it->second->fc() * ((anIdx >= en.size()) ? 1000 : en[anIdx]));

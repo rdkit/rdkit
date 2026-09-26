@@ -577,7 +577,7 @@ double DoubleCubicLatticeVolume::getCompactness() {
     getVolume();
   }
 
-  return surfaceArea / cbrt(36.0 * M_PI * totalVolume * totalVolume);
+  return surfaceArea / std::cbrt(36.0 * M_PI * totalVolume * totalVolume);
 }
 
 double DoubleCubicLatticeVolume::getPackingDensity() {

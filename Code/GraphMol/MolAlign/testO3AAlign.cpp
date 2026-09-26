@@ -26,6 +26,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
+#include <cmath>
 using namespace RDKit;
 
 void testMMFFO3A() {
@@ -54,9 +55,9 @@ void testMMFFO3A() {
   cumMsd /= (double)nMol;
   delete refMol;
   // newMol->close();
-  // std::cerr<<cumScore<<","<<sqrt(cumMsd)<<std::endl;
+  // std::cerr<<cumScore<<","<<std::sqrt(cumMsd)<<std::endl;
   TEST_ASSERT(RDKit::feq(cumScore, 6941.8, 1));
-  TEST_ASSERT(RDKit::feq(sqrt(cumMsd), .345, .001));
+  TEST_ASSERT(RDKit::feq(std::sqrt(cumMsd), .345, .001));
 }
 
 void testCrippenO3A() {
@@ -99,9 +100,9 @@ void testCrippenO3A() {
   cumMsd /= (double)nMol;
   delete refMol;
   // newMol->close();
-  // std::cerr<<cumScore<<","<<sqrt(cumMsd)<<std::endl;
+  // std::cerr<<cumScore<<","<<std::sqrt(cumMsd)<<std::endl;
   TEST_ASSERT(RDKit::feq(cumScore, 4918.1, 1));
-  TEST_ASSERT(RDKit::feq(sqrt(cumMsd), .304, .001));
+  TEST_ASSERT(RDKit::feq(std::sqrt(cumMsd), .304, .001));
 }
 
 void testMMFFO3AMolHist() {
@@ -137,9 +138,9 @@ void testMMFFO3AMolHist() {
   cumMsd /= (double)nMol;
   delete refMol;
   // newMol->close();
-  // std::cerr<<cumScore<<","<<sqrt(cumMsd)<<std::endl;
+  // std::cerr<<cumScore<<","<<std::sqrt(cumMsd)<<std::endl;
   TEST_ASSERT(RDKit::feq(cumScore, 6941.8, 1));
-  TEST_ASSERT(RDKit::feq(sqrt(cumMsd), .345, .001));
+  TEST_ASSERT(RDKit::feq(std::sqrt(cumMsd), .345, .001));
 }
 
 void testCrippenO3AMolHist() {
@@ -188,9 +189,9 @@ void testCrippenO3AMolHist() {
   cumMsd /= (double)nMol;
   delete refMol;
   // newMol->close();
-  // std::cerr<<cumScore<<","<<sqrt(cumMsd)<<std::endl;
+  // std::cerr<<cumScore<<","<<std::sqrt(cumMsd)<<std::endl;
   TEST_ASSERT(RDKit::feq(cumScore, 4918.1, 1));
-  TEST_ASSERT(RDKit::feq(sqrt(cumMsd), .304, .001));
+  TEST_ASSERT(RDKit::feq(std::sqrt(cumMsd), .304, .001));
 }
 
 void testMMFFO3AConstraints() {

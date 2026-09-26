@@ -39,8 +39,8 @@ static double Angle(double x1, double y1, double x2, double y2) {
   double cos_alpha, sin_alpha;
   double result;
 
-  l1 = sqrt(x1 * x1 + y1 * y1);
-  l2 = sqrt(x2 * x2 + y2 * y2);
+  l1 = std::sqrt(x1 * x1 + y1 * y1);
+  l2 = std::sqrt(x2 * x2 + y2 * y2);
   if (l1 < 0.00001 || l2 < 0.00001) {
     return (0.0);
   }
@@ -53,7 +53,7 @@ static double Angle(double x1, double y1, double x2, double y2) {
   }
   sin_alpha = (x1 * y2 - x2 * y1) / (l1 * l2);
 
-  result = acos(cos_alpha);
+  result = std::acos(cos_alpha);
   if (sin_alpha < 0.0) {
     result = 2 * PI - result;
   }
@@ -213,7 +213,7 @@ int FixDubious3DMolecule(RWMol &mol) {
               (atomPoint[a0].z - atomPoint[a1].z) *
                   (atomPoint[a0].z - atomPoint[a1].z);
   }
-  length = sqrt(length / mol.getNumBonds());
+  length = std::sqrt(length / mol.getNumBonds());
 
   // check if there is a flat sp3 carbon
   SetupNeighbourhood(mol, neighbour_array);
@@ -442,7 +442,7 @@ static int Atom3Parity(struct stereo_bond_t ligands[3]) {
 
   angle = Angle(ligands[a].x, ligands[a].y, ligands[b].x, ligands[b].y);
 
-  if (angle < ANGLE_EPSILON || fabs(PI - angle) < ANGLE_EPSILON) {
+  if (angle < ANGLE_EPSILON || std::fabs(PI - angle) < ANGLE_EPSILON) {
     // stereo_error = "three attachments: colinearity violation";
     std::cerr << "three attachments colinearity violation" << std::endl;
 
@@ -839,7 +839,7 @@ bool AtomClash(RWMol &mol, double clash_limit) {
               clash_limit * clash_limit * bond_square_median) {
         BOOST_LOG(rdWarningLog)
             << "atom " << j << " "
-            << 100 * sqrt((rr * bb - rb * rb) / (bb * bond_square_median + EPS))
+            << 100 * std::sqrt((rr * bb - rb * rb) / (bb * bond_square_median + EPS))
             << "% of average bond length " << a1 << "-" << a2 << std::endl;
         std::cerr << "clash 2" << std::endl;
         return true;
@@ -958,7 +958,7 @@ int CisTransPerception(const ROMol &mol,
       x34 = points[at2].x - points[j2].x;
       y34 = points[at2].y - points[j2].y;
       sign = (x21 * y23 - x23 * y21) * (x32 * y34 - x34 * y32);
-      if (fabs(sign) < 0.001) {
+      if (std::fabs(sign) < 0.001) {
         continue;
       }
       result++;
