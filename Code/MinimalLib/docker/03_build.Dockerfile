@@ -54,9 +54,13 @@
 
 # Set to follow for JS-handle of exceptions "-fexceptions -sNO_DISABLE_EXCEPTION_CATCHING"
 ARG EXCEPTION_HANDLING="-fwasm-exceptions"
+# WebAssembly SIMD128 (Chrome 91+, Firefox 89+, Safari 16.4+, Node 16.4+);
+# pass --build-arg SIMD_FLAGS= to build without it
+ARG SIMD_FLAGS="-msimd128"
 
 FROM rdkit-minimallib-rdkit-src AS build-stage
 ARG EXCEPTION_HANDLING
+ARG SIMD_FLAGS
 ARG VERSION=0.0.0
 
 LABEL maintainer="Greg Landrum <greg.landrum@t5informatics.com>"
@@ -81,9 +85,9 @@ RUN emcmake cmake -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
   -DFREETYPE_LIBRARY=/opt/freetype/lib/libfreetype.a \
   -DZLIB_INCLUDE_DIR=/opt/zlib/include \
   -DZLIB_LIBRARY=/opt/zlib/lib/libz.a \
-  -DCMAKE_CXX_FLAGS="${EXCEPTION_HANDLING} -O3 -DNDEBUG" \
-  -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING} -O3 -DNDEBUG -DCOMPILE_ANSI_ONLY" \
-  -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING} -s STACK_OVERFLOW_CHECK=1 -s STACK_SIZE=1MB -s USE_PTHREADS=0 -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB -s MODULARIZE=1 --emit-tsd RDKit_minimal.d.ts -s EXPORT_NAME='initRDKitModule'" ..
+  -DCMAKE_CXX_FLAGS="${EXCEPTION_HANDLING} ${SIMD_FLAGS} -O3 -DNDEBUG" \
+  -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING} ${SIMD_FLAGS} -O3 -DNDEBUG -DCOMPILE_ANSI_ONLY" \
+  -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING} ${SIMD_FLAGS} -s STACK_OVERFLOW_CHECK=1 -s STACK_SIZE=1MB -s USE_PTHREADS=0 -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB -s MODULARIZE=1 --emit-tsd RDKit_minimal.d.ts -s EXPORT_NAME='initRDKitModule'" ..
 
 # "patch" to make the InChI code work with emscripten:
 RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak && \
