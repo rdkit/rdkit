@@ -264,6 +264,22 @@ SELECT mol_numatoms('CCC'::qmol) val;
    3
 (1 row)
 
+-- an explicit H query atom is present in the query graph, so numatoms and
+-- numheavyatoms must differ (and, since qmol atoms have no implicit valence
+-- calculated, this also exercises numatoms(qmol) without triggering an
+-- implicit-H precondition failure)
+SELECT mol_numheavyatoms('[H]CC'::qmol) val;
+ val 
+-----
+   2
+(1 row)
+
+SELECT mol_numatoms('[H]CC'::qmol) val;
+ val 
+-----
+   3
+(1 row)
+
 SELECT mol_numheteroatoms('CCC'::mol) val;
  val 
 -----

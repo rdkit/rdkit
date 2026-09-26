@@ -719,6 +719,14 @@ extern "C" int MolNumAtoms(CROMol i) {
   const ROMol *im = (ROMol *)i;
   return im->getNumAtoms(false);
 }
+extern "C" int MolNumAtomsQMol(CROMol i) {
+  // unlike a sanitized mol, a qmol has no implicit valence/H count
+  // calculated, so getNumAtoms(false) (which sums in each atom's implicit
+  // and explicit Hs) would throw a precondition violation; count only the
+  // atoms that are actually present in the query graph instead.
+  const ROMol *im = (ROMol *)i;
+  return im->getNumAtoms(true);
+}
 extern "C" int MolNumHeavyAtoms(CROMol i) {
   const ROMol *im = (ROMol *)i;
   return im->getNumHeavyAtoms();

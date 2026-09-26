@@ -113,8 +113,22 @@ ALTER FUNCTION mol_numaromaticcarbocycles(mol) COST 100;
 ALTER FUNCTION mol_numaromaticheterocycles(mol) COST 100;
 ALTER FUNCTION mol_numaromaticrings(mol) COST 100;
 ALTER FUNCTION mol_numatoms(mol) COST 100;
+
+CREATE OR REPLACE FUNCTION mol_numatoms(qmol)
+RETURNS integer
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_numatoms_qmol'
+LANGUAGE C STRICT IMMUTABLE COST 100;
+
 ALTER FUNCTION mol_numbridgeheadatoms(mol) COST 100;
 ALTER FUNCTION mol_numheavyatoms(mol) COST 100;
+
+CREATE OR REPLACE FUNCTION mol_numheavyatoms(qmol)
+RETURNS integer
+PARALLEL SAFE
+AS 'MODULE_PATHNAME', 'mol_numheavyatoms'
+LANGUAGE C STRICT IMMUTABLE COST 100;
+
 ALTER FUNCTION mol_numheteroatoms(mol) COST 100;
 ALTER FUNCTION mol_numheterocycles(mol) COST 100;
 ALTER FUNCTION mol_numrings(mol) COST 100;

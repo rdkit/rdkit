@@ -51,6 +51,12 @@ SELECT mol_numatoms('CCC'::mol) val;
 -- GitHub Issue 9623 - mol_numatoms()/mol_numheavyatoms() should also accept qmol
 SELECT mol_numheavyatoms('CCC'::qmol) val;
 SELECT mol_numatoms('CCC'::qmol) val;
+-- an explicit H query atom is present in the query graph, so numatoms and
+-- numheavyatoms must differ (and, since qmol atoms have no implicit valence
+-- calculated, this also exercises numatoms(qmol) without triggering an
+-- implicit-H precondition failure)
+SELECT mol_numheavyatoms('[H]CC'::qmol) val;
+SELECT mol_numatoms('[H]CC'::qmol) val;
 SELECT mol_numheteroatoms('CCC'::mol) val;
 SELECT mol_numheteroatoms('CCO'::mol) val;
 SELECT mol_tpsa('CCC'::mol) val;
