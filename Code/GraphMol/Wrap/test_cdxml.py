@@ -380,6 +380,209 @@ class TestCase(unittest.TestCase):
           else:
             mols = Chem.MolsFromCDXMLFile(filename, Chem.CDXMLParserParams(True, True, format))
             if res: assert mols
+
+  def test_cdxml_query_api(self):
+    rdbase = os.environ['RDBASE']
+    filename = os.path.join(rdbase, 'rdkit/Chem/test_data/benzene.cdxml')
+
+    params = Chem.CDXMLParserParams()
+    self.assertFalse(params.parseQueries)
+    self.assertFalse(params.strictQueryParsing)
+
+    params.parseQueries = True
+    params.strictQueryParsing = True
+
+    file_mols = Chem.MolsFromCDXMLFile(filename, params)
+    self.assertEqual(len(file_mols), 1)
+    self.assertEqual(Chem.MolToSmiles(file_mols[0]), 'c1ccccc1')
+
+    with open(filename) as inf:
+      block = inf.read()
+
+    block_mols = Chem.MolsFromCDXML(block, params)
+    self.assertEqual(len(block_mols), 1)
+    self.assertEqual(Chem.MolToSmiles(block_mols[0]), 'c1ccccc1')
+
+  def test_cdxml_bond_queries(self):
+    rdbase = os.environ['RDBASE']
+    query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')
+    cases = [
+      ('anybond', os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/anybond.cdxml'),
+       'file', '[#6]1~[#6]-[#6]-[#6]-[#6]-[#6]-1'),
+      ('single-or-double', os.path.join(query_base, 'furan_sd.cdxml'),
+       'file', '[#8]1:[#6]-,=[#6]:[#6]-,=[#6]:1'),
+      ('single-or-aromatic', os.path.join(query_base, 'furan_sa.cdxml'),
+       'file', '[#8]1:[#6][#6]:[#6][#6]:1'),
+      ('double-or-aromatic', os.path.join(query_base, 'furan_da.cdxml'),
+       'file', '[#8]1:[#6]=,:[#6]:[#6]=,:[#6]:1'),
+      ('ring-topology', os.path.join(query_base, 'CCOC_Rng.cdxml'),
+       'file', '[#8](-[#6]-&@[#6])-[#6]'),
+      ('chain-topology', os.path.join(query_base, 'CCOC_Chn.cdxml'),
+       'file', '[#8](-[#6]-&!@[#6])-[#6]'),
+    ]
+    params = Chem.CDXMLParserParams()
+    params.parseQueries = True
+
+    for _, filename, mode, expected_smarts in cases:
+      if mode == 'file':
+        mols = Chem.MolsFromCDXMLFile(filename, params)
+      else:
+        with open(filename) as inf:
+          mols = Chem.MolsFromCDXML(inf.read(), params)
+
+      self.assertEqual(len(mols), 1)
+      self.assertEqual(Chem.MolToSmarts(mols[0]), expected_smarts)
+
+  def test_cdxml_hydrogen_bond_query(self):
+    rdbase = os.environ['RDBASE']
+    query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')
+    params = Chem.CDXMLParserParams()
+    params.parseQueries = True
+    mols = Chem.MolsFromCDXMLFile(
+      os.path.join(query_base, 'qbond_hydrogen.cdxml'),
+      params)
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(Chem.MolToSmarts(mols[0]), '[#8][#8]')
+    bond = mols[0].GetBondWithIdx(0)
+    self.assertEqual(bond.GetBondType(), Chem.BondType.HYDROGEN)
+    self.assertIn('H:0.0', Chem.MolToCXSmarts(mols[0]))
+
+  def test_cdxml_multiattachment_query(self):
+    rdbase = os.environ['RDBASE']
+    params = Chem.CDXMLParserParams()
+    params.sanitize = False
+    params.parseQueries = True
+    mols = Chem.MolsFromCDXMLFile(
+      os.path.join(rdbase, 'rdkit/Chem/test_data/ferrocene.cdxml'),
+      params)
+    self.assertEqual(len(mols), 1)
+
+    dummy_atoms = [atom for atom in mols[0].GetAtoms() if atom.GetAtomicNum() == 0]
+    self.assertEqual(len(dummy_atoms), 2)
+
+    endpoint_sets = []
+    for bond in mols[0].GetBonds():
+      if not bond.HasProp('_MolFileBondEndPts'):
+        continue
+      self.assertTrue(bond.HasProp('_MolFileBondAttach'))
+      self.assertEqual(bond.GetProp('_MolFileBondAttach'), 'ANY')
+      endpoint_sets.append(bond.GetProp('_MolFileBondEndPts'))
+
+    self.assertEqual(sorted(endpoint_sets), ['(5 1 2 3 4 5)', '(5 6 7 8 9 10)'])
+
+  def test_cdxml_external_connection_fragment_query(self):
+    rdbase = os.environ['RDBASE']
+    params = Chem.CDXMLParserParams()
+    params.parseQueries = True
+    mols = Chem.MolsFromCDXMLFile(
+      os.path.join(rdbase, 'External/ChemDraw/test_data/atom-to-fragment.cdxml'),
+      params)
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(Chem.MolToSmarts(mols[0]), '[#6]-[#6]=[#6]=[#6](-[#6])-[#6]')
+
+  def test_cdxml_spiro_ring_bond_count_query(self):
+    rdbase = os.environ['RDBASE']
+    query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')
+    params = Chem.CDXMLParserParams()
+    params.parseQueries = True
+    mols = Chem.MolsFromCDXMLFile(
+      os.path.join(query_base, 'qrestrict_ringbond_spiro.cdxml'),
+      params)
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(Chem.MolToSmarts(mols[0]), '[#6]1-[#6]-[#7]-[#6&x{4-}]-[#6]-[#6]-1')
+
+    self.assertFalse(Chem.MolFromSmiles('N1CCCCC1').HasSubstructMatch(mols[0]))
+    self.assertFalse(Chem.MolFromSmiles('N1CCC2(CC1)CCCC2').HasSubstructMatch(mols[0]))
+    self.assertTrue(Chem.MolFromSmiles('N1C2(CCCCC2)CCCC1').HasSubstructMatch(mols[0]))
+    self.assertFalse(Chem.MolFromSmiles('N1CCC2CCCCC2C1').HasSubstructMatch(mols[0]))
+
+  def test_cdxml_explicit_hydrogen_minimum_queries(self):
+    rdbase = os.environ['RDBASE']
+    params = Chem.CDXMLParserParams()
+    params.parseQueries = True
+    params.strictQueryParsing = True
+
+    mols = Chem.MolsFromCDXMLFile(
+      os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/query-atoms.cdxml'), params)
+    self.assertEqual(len(mols), 3)
+    self.assertIn('!H0', Chem.MolToSmarts(mols[0]))
+    self.assertTrue(Chem.MolFromSmiles('Cc1ccccc1').HasSubstructMatch(mols[0]))
+    self.assertFalse(Chem.MolFromSmiles('Cc1ccc(C)cc1').HasSubstructMatch(mols[0]))
+
+    mols = Chem.MolsFromCDXMLFile(
+      os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/chirality1.cdxml'), params)
+    self.assertEqual(len(mols), 1)
+    smarts = Chem.MolToSmarts(mols[0])
+    self.assertNotIn('!H0', smarts)
+    self.assertNotIn('!H1', smarts)
+
+  def test_cdxml_atom_restriction_queries(self):
+    rdbase = os.environ['RDBASE']
+    query_base = os.path.join(rdbase, 'Code/GraphMol/test_data/CDXML/queries')
+    smarts_cases = [
+      ('free-sites', os.path.join(query_base, 'qrestrict_freesites_1.cdxml'),
+       '[#6]-[#6]-[!#1&D{1-2}]'),
+      ('implicit-hydrogens', os.path.join(query_base, 'qrestrict_implicit_hs.cdxml'),
+       '[#6]-[#6]-[!#1&h0]'),
+      ('ring-bond-count-as-drawn', os.path.join(query_base, 'qrestrict_ringbond_asdrawn.cdxml'),
+       '[#6]-[#6]-[!#1&x0]'),
+      ('ring-bond-count', os.path.join(query_base, 'qrestrict_ringbond_simple.cdxml'),
+       '[#6]-[#6]-[!#1&x2]'),
+      ('not-list', os.path.join(query_base, 'qatom_notlist.cdxml'),
+       '[#6]-[#6]-[!#6&!#7&!#8]'),
+      ('substituents-exactly', os.path.join(query_base, 'qrestrict_sub_exact_2.cdxml'),
+       '[#6]-[#6]-[!#1&D2]'),
+      ('substituents-up-to', os.path.join(query_base, 'qrestrict_sub_upto_2.cdxml'),
+       '[#6]-[#6]-[!#1&D{0-2}]'),
+      ('unsaturated-bonds', os.path.join(query_base, 'qrestrict_unsat_present.cdxml'),
+       '[#6]-[#6]-[!#1&$(*=,:,#*)]'),
+    ]
+    prop_cases = [
+      ('link-node', os.path.join(query_base, 'qlinknode_1_3.cdxml'),
+       '_molLinkNodes', '1 3 2 2 1 2 3'),
+      ('reaction-stereo', os.path.join(query_base, 'qrestrict_rxnstereo_inversion.cdxml'),
+       'molInversionFlag', 1),
+    ]
+    params = Chem.CDXMLParserParams()
+    params.parseQueries = True
+
+    for _, filename, expected_smarts in smarts_cases:
+      mols = Chem.MolsFromCDXMLFile(filename, params)
+      self.assertEqual(len(mols), 1)
+      self.assertEqual(Chem.MolToSmarts(mols[0]), expected_smarts)
+
+    for _, filename, prop_name, expected_value in prop_cases:
+      mols = Chem.MolsFromCDXMLFile(filename, params)
+      self.assertEqual(len(mols), 1)
+      if prop_name == '_molLinkNodes':
+        self.assertTrue(mols[0].HasProp(prop_name))
+        self.assertEqual(mols[0].GetProp(prop_name), expected_value)
+      else:
+        atom = mols[0].GetAtomWithIdx(2)
+        self.assertTrue(atom.HasProp(prop_name))
+        self.assertEqual(atom.GetIntProp(prop_name), expected_value)
+
+    mols = Chem.MolsFromCDXMLFile(
+      os.path.join(query_base, 'qvarattach.cdxml'),
+      params)
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(mols[0].GetAtomWithIdx(3).GetAtomicNum(), 0)
+    bond = mols[0].GetBondBetweenAtoms(1, 3)
+    self.assertIsNotNone(bond)
+    self.assertTrue(bond.HasProp('_MolFileBondAttach'))
+    self.assertEqual(bond.GetProp('_MolFileBondAttach'), 'ANY')
+    self.assertTrue(bond.HasProp('_MolFileBondEndPts'))
+    self.assertEqual(bond.GetProp('_MolFileBondEndPts'), '(2 1 3)')
+
+    mols = Chem.MolsFromCDXMLFile(
+      os.path.join(query_base, 'qecp_rgroup.cdxml'),
+      params)
+    self.assertEqual(len(mols), 1)
+    self.assertEqual(Chem.MolToSmarts(mols[0]), '[#6]-[*:1]')
+    atom = mols[0].GetAtomWithIdx(1)
+    self.assertEqual(atom.GetAtomMapNum(), 1)
+    self.assertTrue(atom.HasProp('atomLabel'))
+    self.assertEqual(atom.GetProp('atomLabel'), 'R')
           
 
         
