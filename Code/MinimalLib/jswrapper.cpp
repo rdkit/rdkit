@@ -20,9 +20,9 @@
     defined(RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP)
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/ChemTransforms/MolFragmenterJSONParser.h>
+#endif
 #ifdef RDK_BUILD_OSMORDRED_SUPPORT
 #include <GraphMol/Descriptors/Osmordred.h>
-#endif
 #endif
 using namespace RDKit;
 
