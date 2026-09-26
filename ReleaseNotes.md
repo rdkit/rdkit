@@ -7,7 +7,7 @@ see your contribution acknowledged with your name, please set your name in
 GitHub)
 
 reza bagheri alashti, Rody Arantes, Marco Ballarotto, Chris Von Bargen, Kevin
-Boyd, Katharina Buchthal, Kerim Buyukakyuz, Arthur Chan, Michael Cho David
+Boyd, Katharina Buchthal, Kerim Buyukakyuz, Arthur Chan, Michael Cho, David
 Cosgrove, Mike DePaulo, Eloy Félix, Peter Gedeck, Lukas Geiger, Guillaume Godin,
 Huw Jones, Steven Kearnes, Brian Kelley, Jakub Klinkovský, Jimmy Kromann, Niels
 Maeder, John Mayfield, Vedran Miletić, Dan Nealschneider, Dmytro Radchenko,
