@@ -24,6 +24,7 @@
 #include <ranges>
 #include <unordered_map>
 #include <unordered_set>
+#include <boost/functional/hash.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -2595,9 +2596,10 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
   };
   struct CollisionHash {
     std::size_t operator()(const PAIR_I_I &collision) const noexcept {
-      const auto firstHash = std::hash<int>{}(collision.first);
-      const auto secondHash = std::hash<int>{}(collision.second);
-      return firstHash ^ (secondHash << 1);
+      size_t res = 0;
+      boost::hash_combine(res, collision.first);
+      boost::hash_combine(res, collision.second);
+      return res;
     }
   };
   std::unordered_set<PAIR_I_I, CollisionHash> skippedCollisions;
