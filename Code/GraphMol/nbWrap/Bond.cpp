@@ -19,6 +19,7 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <RDBoost/Wrap_nb.h>
 #include <RDGeneral/types.h>
 
 namespace nb = nanobind;
@@ -95,8 +96,15 @@ Note: unlike Atoms, is it currently impossible to construct Bonds from\n\
 Python.\n";
 struct bond_wrapper {
   static void wrap(nb::module_ &m) {
+// Handle support for instance pooling. Availability is checked in the
+// main CMakelists.txt file, via a version check on the nanobind package.
+// Documentation about the pooling feature is available at:
+// https://nanobind.readthedocs.io/en/latest/classes.html#instance-pooling
+#ifdef NANOBIND_POOLED_AVAILABLE
+    nb::class_<Bond>(m, "Bond", nb::pooled())
+#else
     nb::class_<Bond>(m, "Bond")
-
+#endif
         .def("HasOwningMol", &Bond::hasOwningMol,
              "Returns whether or not this instance belongs to a molecule.\n")
         .def("GetOwningMol", &Bond::getOwningMol,

@@ -28,6 +28,7 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Substruct/SubstructDetails.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -121,9 +122,9 @@ void MolDebug(const ROMol &mol, bool useStdout) {
 
 class ReadWriteMol : public RWMol {
  public:
-  ReadWriteMol(){};
+  ReadWriteMol() {};
   ReadWriteMol(const ROMol &m, bool quickCopy = false, int confId = -1)
-      : RWMol(m, quickCopy, confId){};
+      : RWMol(m, quickCopy, confId) {};
 
   void RemoveAtom(unsigned int idx) { removeAtom(idx); };
   void RemoveBond(unsigned int idx1, unsigned int idx2) {
@@ -417,7 +418,15 @@ struct mol_wrapper {
         .def("__getitem__", &QueryAtomIterSeq::operator[],
              nb::rv_policy::reference_internal, "idx"_a);
 
+// Handle support for instance pooling. Availability is checked in the
+// main CMakelists.txt file, via a version check on the nanobind package.
+// Documentation about the pooling feature is available at:
+// https://nanobind.readthedocs.io/en/latest/classes.html#instance-pooling
+#ifdef NANOBIND_POOLED_AVAILABLE
+    nb::class_<ROMol>(m, "Mol", nb::dynamic_attr(), nb::pooled())
+#else
     nb::class_<ROMol>(m, "Mol", nb::dynamic_attr())
+#endif
         .def(nb::new_([]() {
       return new ROMol(); }),
              "Constructor, takes no arguments")
@@ -959,6 +968,13 @@ struct mol_wrapper {
             "GetAtomsMatchingQuery",
             [](const ROMol &self, const QueryAtom *qa) {
       bool ownsQa = false;
+      if(qa && hasRecursiveQuery(*qa)) {
+          SubstructMatchParameters params;
+          detail::SUBQUERY_MAP subqueryMap;
+          detail::RecursiveLocker locker;
+          locker.df_clearOnDestruct = false;
+          detail::MatchSubqueries(self, qa->getQuery(), params, subqueryMap, locker.locked);
+      }
       return QueryAtomIterSeq(self, qa, ownsQa);
             },
             "qa"_a, nb::keep_alive<0, 1>(),
@@ -1030,7 +1046,16 @@ it's probably not of general interest.
 )DOC");
     // ---------------------------------------------------------------------------------------------
 
+// Handle support for instance pooling. Availability is checked in the
+// main CMakelists.txt file, via a version check on the nanobind package.
+// Documentation about the pooling feature is available at:
+// https://nanobind.readthedocs.io/en/latest/classes.html#instance-pooling
+#ifdef NANOBIND_POOLED_AVAILABLE
+    nb::class_<ReadWriteMol, ROMol>(m, "RWMol", nb::dynamic_attr(),
+                                    nb::pooled())
+#else
     nb::class_<ReadWriteMol, ROMol>(m, "RWMol", nb::dynamic_attr())
+#endif
         .def(nb::new_([]() { return new ReadWriteMol(); }),
              "Constructor, takes no arguments")
         .def(nb::new_([](nb::bytes b) {

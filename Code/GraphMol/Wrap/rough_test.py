@@ -8506,6 +8506,27 @@ M  END
     Chem.CollapseAttachmentPoints(mol, markedOnly=False)
     self.assertEqual(mol.GetNumAtoms(), 2)
 
+  def testIsMarkedAttachmentPoint(self):
+    mol = Chem.MolFromSmiles("CC")
+    mol.GetAtomWithIdx(1).SetIntProp("molAttchpt", 1)
+    Chem.ExpandAttachmentPoints(mol)
+    attachment = mol.GetAtomWithIdx(2)
+    self.assertTrue(Chem.IsMarkedAttachmentPoint(attachment))
+
+    bond = mol.GetBondBetweenAtoms(1, 2)
+    bond.SetBondDir(Chem.BondDir.BEGINWEDGE)
+    self.assertTrue(Chem.IsMarkedAttachmentPoint(attachment))
+    self.assertFalse(Chem.IsMarkedAttachmentPoint(mol.GetAtomWithIdx(0)))
+
+    legacy = Chem.MolFromSmiles("*C |$_AP37;$|")
+    self.assertEqual(Chem.ATTACHMENT_POINT_LABEL_PREFIX, "_AP")
+    self.assertEqual(
+      Chem.GetAttachmentPointLabelNumber(legacy.GetAtomWithIdx(0)), 37)
+    self.assertTrue(Chem.IsMarkedAttachmentPoint(legacy.GetAtomWithIdx(0)))
+    Chem.CollapseAttachmentPoints(legacy)
+    self.assertEqual(legacy.GetNumAtoms(), 1)
+    self.assertEqual(legacy.GetAtomWithIdx(0).GetIntProp("molAttchpt"), 1)
+
   def testAddStereoAnnotations(self):
     mol = Chem.MolFromSmiles(
       "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"
@@ -8722,16 +8743,16 @@ M  END
 
   def testLegacyRingFinding(self):
     origVal = Chem.GetUseLegacyRingFinding()
-    Chem.SetUseLegacyRingFinding(False)
+    try:
+      Chem.SetUseLegacyRingFinding(False)
+      m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
+      self.assertEqual(m1.GetRingInfo().NumRings(), 70)
 
-    m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
-    self.assertEqual(m1.GetRingInfo().NumRings(), 70)
-
-    Chem.SetUseLegacyRingFinding(True)
-    m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
-    self.assertEqual(m1.GetRingInfo().NumRings(), 24)
-
-    Chem.SetUseLegacyRingFinding(origVal)
+      Chem.SetUseLegacyRingFinding(True)
+      m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
+      self.assertEqual(m1.GetRingInfo().NumRings(), 24)
+    finally:
+      Chem.SetUseLegacyRingFinding(origVal)
 
     m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
     rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.LEGACY)

@@ -17,7 +17,7 @@
 namespace RDKit {
 namespace CIPLabeler {
 
-SequenceRule::SequenceRule() = default;
+SequenceRule::SequenceRule() : dp_sorter{new Sort(this)} {}
 
 SequenceRule::~SequenceRule() = default;
 
@@ -42,12 +42,7 @@ int SequenceRule::getComparision(const Edge *a, const Edge *b,
   return deep ? recursiveCompare(a, b) : compare(a, b);
 }
 
-const Sort *SequenceRule::getSorter() const {
-  if (dp_sorter == nullptr) {
-    const_cast<SequenceRule *>(this)->setSorter(new Sort(this));
-  }
-  return dp_sorter.get();
-}
+const Sort *SequenceRule::getSorter() const { return dp_sorter.get(); }
 
 int SequenceRule::recursiveCompare(const Edge *a, const Edge *b) const {
   if (!CIPLabeler_detail::decrementRemainingCallCountAndCheck()) {

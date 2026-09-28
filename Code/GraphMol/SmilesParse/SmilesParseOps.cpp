@@ -11,6 +11,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Canon.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/MolOps.h>
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <list>
@@ -640,13 +641,14 @@ void CleanupAfterParsing(RWMol *mol) {
     std::string label;
     if (atom->getAtomicNum() == 0 &&
         atom->getPropIfPresent(common_properties::atomLabel, label)) {
-      // marvinsketch can output higher labels than _AP1 and _AP2, but they
-      // aren't part of the MOL file spec so we don't treat them as attachment
-      // points
-      if (label == "_AP1") {
-        atom->setProp(common_properties::_fromAttachPoint, 1);
-      } else if (label == "_AP2") {
-        atom->setProp(common_properties::_fromAttachPoint, 2);
+      // marvinsketch can output higher labels than _AP1 and _AP2, but those
+      // labels aren't MOL-file ATTCHPT positions, so don't copy their numbers
+      // to _fromAttachPoint
+      const auto attachmentPointNumber =
+          MolOps::getAttachmentPointLabelNumber(atom);
+      if (attachmentPointNumber == 1 || attachmentPointNumber == 2) {
+        atom->setProp(common_properties::_fromAttachPoint,
+                      attachmentPointNumber);
       }
     }
   }

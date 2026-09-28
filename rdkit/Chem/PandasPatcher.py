@@ -88,12 +88,14 @@ except ImportError:
   log.warning("Failed to import pandas")
   raise
 
-try:
-  if tuple(map(int, (pd.__version__.split(".")))) < (2, 1, 0):
-    dataframe_applymap = pd.DataFrame.applymap
-  else:
-    dataframe_applymap = pd.DataFrame.map
-except:
+# pandas 2.1.0 renamed DataFrame.applymap to DataFrame.map. Look it up by name;
+# pd.__version__ is not always parseable as ints (e.g. "2.1.0rc0").
+dataframe_applymap = None
+for map_func_name in ("map", "applymap"):
+  dataframe_applymap = getattr(pd.DataFrame, map_func_name, None)
+  if dataframe_applymap is not None:
+    break
+if dataframe_applymap is None:
   log.warning("Failed to find a suitable map function for data frames")
 
 orig_to_html = getattr(to_html_class, "to_html")

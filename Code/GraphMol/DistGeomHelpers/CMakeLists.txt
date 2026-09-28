@@ -1,10 +1,10 @@
 
-rdkit_library(DistGeomHelpers BoundsMatrixBuilder.cpp Embedder.cpp EmbedderUtils.cpp
+rdkit_library(DistGeomHelpers BoundsMatrixBuilder.cpp Embedder.cpp EmbedderUtils.cpp ZMatrixBuilder.cpp
               LINK_LIBRARIES MolAlign ForceFieldHelpers SubstructMatch GraphMol DistGeometry Alignment
                 )
 target_compile_definitions(DistGeomHelpers PRIVATE RDKIT_DISTGEOMHELPERS_BUILD)
 
-rdkit_headers(BoundsMatrixBuilder.h
+rdkit_headers(BoundsMatrixBuilder.h ZMatrixBuilder.h
               Embedder.h DEST GraphMol/DistGeomHelpers)
 
 rdkit_catch_test(testDistGeomHelpers testDgeomHelpers.cpp

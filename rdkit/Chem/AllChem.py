@@ -111,7 +111,7 @@ def ComputeMolVolume(mol, confId=-1, gridSpacing=0.2, boxMargin=2.0):
     >>> AllChem.EmbedMolecule(mol)
     0
     >>> ComputeMolVolume(mol)
-    20...
+    19...
 
     """
   mol = rdchem.Mol(mol)

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -24,6 +24,7 @@
 #endif
 
 namespace RDKit {
+class Atom;
 class QueryAtom;
 
 //! A general random access iterator
@@ -142,7 +143,7 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtomIterator_ {
  public:
   typedef QueryAtomIterator_<Atom_, Mol_> ThisType;
   QueryAtomIterator_() : _mol(nullptr) {}
-  QueryAtomIterator_(Mol_ *mol, QueryAtom const *what);
+  QueryAtomIterator_(Mol_ *mol, Atom const *what);
   QueryAtomIterator_(Mol_ *mol, int pos);
   ~QueryAtomIterator_();
   QueryAtomIterator_(const ThisType &other);

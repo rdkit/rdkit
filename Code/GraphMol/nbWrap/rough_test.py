@@ -8619,6 +8619,26 @@ M  END
     sg.ClearProp('foo')
     self.assertFalse(sg.HasProp('foo'))
 
+  def testLegacyRingFinding(self):
+    origVal = Chem.GetUseLegacyRingFinding()
+    Chem.SetUseLegacyRingFinding(False)
+
+    try:
+      m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
+      self.assertEqual(m1.GetRingInfo().NumRings(), 70)
+
+      Chem.SetUseLegacyRingFinding(True)
+      m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
+      self.assertEqual(m1.GetRingInfo().NumRings(), 24)
+    finally:
+      Chem.SetUseLegacyRingFinding(origVal)
+
+    m1 = Chem.MolFromSmiles('C1(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C(CC3)CCC3CC(CC3)CCC3CC(CC3)CCC3C1')
+    rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.LEGACY)
+    self.assertEqual(len(rings), 24)
+    rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
+    self.assertEqual(len(rings), 70)
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

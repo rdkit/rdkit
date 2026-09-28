@@ -31,10 +31,8 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Chirality.h>
-#include <GraphMol/Atropisomers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
-#include <GraphMol/Chirality.h>
 
 #include "SmilesParseOps.h"
 #include <RDGeneral/RDLog.h>
@@ -462,9 +460,7 @@ std::unique_ptr<RWMol> MolFromSmiles(const std::string &smiles,
     // these need to be handled the same way they were in mol files
     res->clearProp(SmilesParseOps::detail::_needsDetectAtomStereo);
 
-    if (conf) {
-      MolOps::assignChiralTypesFromBondDirs(*res, conf->getId());
-    }
+    MolOps::assignChiralTypesFromBondDirs(*res, conf ? conf->getId() : 0);
   }
 
   // if we read a 3D conformer, set the stereo:
@@ -472,14 +468,6 @@ std::unique_ptr<RWMol> MolFromSmiles(const std::string &smiles,
   if (!conf && conf3d) {
     res->updatePropertyCache(false);
     MolOps::assignChiralTypesFrom3D(*res, conf3d->getId(), true);
-  }
-
-  if (conf) {
-    Atropisomers::detectAtropisomerChirality(*res, conf);
-  } else if (conf3d) {
-    Atropisomers::detectAtropisomerChirality(*res, conf3d);
-  } else {
-    Atropisomers::detectAtropisomerChirality(*res, nullptr);
   }
 
   if (res && (params.sanitize || params.removeHs)) {

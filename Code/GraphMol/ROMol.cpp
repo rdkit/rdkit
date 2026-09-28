@@ -549,11 +549,10 @@ bool ROMol::hasQuery() const {
   return false;
 }
 
-ROMol::QueryAtomIterator ROMol::beginQueryAtoms(QueryAtom const *what) {
+ROMol::QueryAtomIterator ROMol::beginQueryAtoms(Atom const *what) {
   return QueryAtomIterator(this, what);
 }
-ROMol::ConstQueryAtomIterator ROMol::beginQueryAtoms(
-    QueryAtom const *what) const {
+ROMol::ConstQueryAtomIterator ROMol::beginQueryAtoms(Atom const *what) const {
   return ConstQueryAtomIterator(this, what);
 }
 ROMol::QueryAtomIterator ROMol::endQueryAtoms() {

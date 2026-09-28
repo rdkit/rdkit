@@ -1,131 +1,82 @@
-**IMPORTANT NOTE**:
+# RDKit MinimalLib (RDKit.js)
 
-The NPM release process has now moved to the official repository of [rdkit-js](https://github.com/rdkit/rdkit-js).  
-
-The official [rdkit-js](https://github.com/rdkit/rdkit-js) repository will now be the centralized place for everything built "on top of" the core RDKit MinimalLib source code ([this repository](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib)). Please read [this](https://github.com/rdkit/rdkit-js#introduction) for more context.
-
-# RDKit MinimalLib <!-- omit in toc -->
-
-[![Build Status](https://dev.azure.com/rdkit-js/rdkit-js/_apis/build/status/rdkit.rdkit-js?branchName=master)](https://dev.azure.com/rdkit-js/rdkit-js/_build/latest?definitionId=1&branchName=master)
-[![License](https://img.shields.io/github/license/rdkit/rdkit)](https://github.com/rdkit/rdkit-js/blob/master/LICENSE)
-[![DOI](https://zenodo.org/badge/10009991.svg)](https://zenodo.org/badge/latestdoi/10009991)  
 [![NPM Latest Version](https://img.shields.io/npm/v/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Weekly Downloads](https://img.shields.io/npm/dw/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Monthly Downloads](https://img.shields.io/npm/dm/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Yearly Downloads](https://img.shields.io/npm/dy/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Total Downloads](https://img.shields.io/npm/dt/@rdkit/rdkit?label=total%20downloads)](https://www.npmjs.com/package/@rdkit/rdkit)
 
-## Table of contents <!-- omit in toc -->
+RDKit.js is the official JavaScript distribution of cheminformatics functionality from [RDKit](https://github.com/rdkit/rdkit) -
+a collection of cheminformatics and machine-learning software written in C++.
+A new NPM package is published for every RDKit release.
 
-- [Introduction](#introduction)
-- [Install](#install)
-- [Usage](#usage)
-- [Live demos](#live-demos)
-- [Building the MinimalLib](#building-the-minimallib)
+The core WASM module comes from RDKit's [MinimalLib](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib).
+MinimalLib is a C++ layer that wraps a subset of RDKit's API so it can be compiled to WebAssembly and used from JavaScript.
+The package is built and published directly from RDKit, while keeping JavaScript documentation at [rdkitjs.com](https://rdkitjs.com).
 
-## Introduction
+The package itself consists of three files:
 
-The idea of the MinimalLib is to allow the [RDKit](https://github.com/rdkit/rdkit) to be used from JavaScript so that we can add chemical capabilities to web applications.  
+* `RDKit_minimal.js` - Standard JavaScript wrapper for loading WASM modules
+* `RDKit_minimal.wasm` - The compiled RDKit MinimalLib WASM binary
+* `RDKit_minimal.d.ts` - TypeScript interface generated during compilation.
 
-This initial set of functionality does not cover all of RDKit's functionality, but it is intended to be directly useful.
+That means the package has zero dependencies, and if high-level component JavaScript is needed, it needs to be implemented yourself and won't be included in the general package.
+This is to ensure easy maintenance of the package.
 
-## Install
+## Install RDKit JS
 
-The most popular way of installing the MinimalLib is with NPM.
+You can install it using one of the many (and growing) JavaScript package managers.
 
 ```bash
 npm i @rdkit/rdkit
-# yarn add @rdkit/rdkit
-```  
-
-To build the MinimalLib manually, refer to [this section](#building-the-minimallib).
-
-## Usage  
-
-### Using the RDKit package assets
-
-#### Option 1: Use the npm package distribution files
-
-Once you have the RDKit package installed in your node modules, copy the following distribution files anywhere in your deployed assets.
-
-- `node_modules/@rdkit/rdkit/dist/RDKit_minimal.js`
-- `node_modules/@rdkit/rdkit/dist/RDKit_minimal.wasm`
-
-**NOTE: Both files must be copied at the same location in your deployed assets for the library to work properly.**
-
-#### Option 2: Use the remote distribution files from [unpkg.com](https://unpkg.com/)
-
-- `https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js`
-- `https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.wasm`
-
-#### Option 3: Build your own distribution files
-
-For this method, refer to [Building the MinimalLib](#building-the-minimallib).
-
-### Running RDKit in your JavaScript code
-
-To use RDKit, load the javascript file and instantiate the wasm module inside the `head` tag of your `index.html`, before you run your application code:
-
-```html
-<head>
-    <!-- ...other files and HTML tags... -->
-    <!-- Load the RDKit JS file -->
-    <script src="https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.js"></script>
-
-    <!-- Instantiate the WASM module. The inline script below could live elsewhere inside your application code. -->
-    <script>
-        window.initRDKitModule()
-            .then(function(RDKit) {
-                console.log("RDKit version: " + RDKit.version());
-                window.RDKit = RDKit;
-                /**
-                 * The RDKit module is now loaded.
-                 * You can use it anywhere.
-                 */
-            })
-            .catch(() => {
-                // handle loading errors here...
-            });
-    </script>
-    <!-- ...your application code goes here... -->
-</head>
-
+pnpm i @rdkit/rdkit
+yarn add @rdkit/rdkit
+bun add @rdkit/rdkit
+...
 ```
 
-## Live demos
+Or use a CDN by adding this script tag to your HTML.
 
-If you are using the MinimalLib for the first time, see the getting started examples at https://www.rdkitjs.com/ .
+```html
+<script src="https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js"></script>
+```
 
-### All live demos
+## Getting Started and Loading the WASM module
 
-- RDKit.js website: https://www.rdkitjs.com/
-- RDKit.js usage with React.js: https://react.rdkitjs.com/
-- Legacy examples #1: https://unpkg.com/@rdkit/rdkit/dist/GettingStartedInJS.html
-- Legacy examples #2: https://unpkg.com/@rdkit/rdkit/dist/demo.html
+See [rdkitjs.com](https://rdkitjs.com) for example code, documentation, and demos.
+
+Usually, a trick is needed to make the `.wasm` file available as a standalone file, but it varies from framework to framework.
+We have created examples for Vanilla JS, React, Vue, Angular, Svelte, Next.js, and Node.js.
+However, this is not RDKit-specific; it is generally how you support WASM for those frameworks.
 
 ## Building the MinimalLib
 
-### Building from Github
-
-Make sure you are at the root of the [MinimalLib](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib), and run the following script:
+Go to the [MinimalLib](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib) directory, and run the following script:
 
 ```bash
-scripts/build_rdkitjs.sh <RDKit git release tag name>
-# Example: scripts/build_rdkitjs.sh Release_2025_03_2
+scripts/build_rdkitjs.sh
 ```
 
-This command will take several minutes to complete, and will default to using the `master` branch if no version is provided. Also, checkout the `build_rdkitjs.sh` file to see how things are tied together.
+The script results in a `build` directory with a valid JavaScript module, and includes `RDKit_minimal.{js,wasm,d.ts}`.
+To set the version of the JavaScript module use `NPM_VERSION`, e.g., `export NPM_VERSION=1.2.3`.
+Defaults to `0.0.0`.
 
-### Building from the local source tree
-
-Make sure you are at the root of the [MinimalLib](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib), and run the following script:
+Set `GET_SRC=clone` to swap the local copy for a fresh clone from GitHub.
+This is relevant when you want to pass a release tag (defaults to `master`) and a git URL (defaults to `https://github.com/rdkit/rdkit.git`):
 
 ```bash
-GET_SRC=copy_from_local scripts/build_rdkitjs.sh
+GET_SRC=clone scripts/build_rdkitjs.sh <RDKit git release tag name>
+# Example: GET_SRC=clone scripts/build_rdkitjs.sh Release_2025_03_2
 ```
 
-This command will take several minutes to complete, and will use the local source tree
+The full build will take 20-30 minutes to complete.
 
-### Using the RDKit package assets
+## License
 
-Once you have verified that the distribution files have been properly added in `Code/MinimalLib/dist`, refer to the [Using the RDKit package assets](#using-the-rdkit-package-assets) section for the next steps.
+The binary is compiled directly from RDKit, so the license is unchanged.
+BSD 3-Clause.
+
+## Citation
+
+See [rdkit.com](https://rdkit.com) for citation.
+Note the version installed.

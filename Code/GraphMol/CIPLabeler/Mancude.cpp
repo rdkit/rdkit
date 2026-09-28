@@ -29,6 +29,16 @@ namespace CIPLabeler {
 
 namespace {
 
+enum class Type : uint8_t {
+  Cv4D3,       // =C(X)-
+  Nv3D2,       // =N-
+  Nv4D3Plus,   // =[N+]<
+  Nv2D2Minus,  // -[N-]-
+  Cv3D3Minus,  // -[C(X)-]-
+  Ov3D2Plus,   // -[O+]=
+  Other
+};
+
 // Initialize atom types for ring atoms, looking at connectivity,
 // bond orders, atomic number and charge.
 bool SeedTypes(std::vector<Type> &types, const CIPMol &mol) {
@@ -96,36 +106,65 @@ bool SeedTypes(std::vector<Type> &types, const CIPMol &mol) {
   return result;
 }
 
-// Reset atom types for atoms that have been given a type,
-// but cannot be part of a mancude system (more than one
-// typed neighbor is required for resonance to be possible)
+// Reset (to Type::Other) atom types for atoms that have been
+//  given a type but cannot be part of a mancude system (more
+//  than one typed neighbor is required for resonance to be possible)
 void RelaxTypes(std::vector<Type> &types, const CIPMol &mol) {
   std::list<Atom *> queue;
-  auto counts = std::vector<int>(mol.getNumAtoms());
+  std::vector<int> counts(mol.getNumAtoms(), 0);
   for (auto atom : mol.atoms()) {
     const auto aidx = atom->getIdx();
-    for (const auto &nbr : mol.getNeighbors(atom)) {
+    if (types[aidx] == Type::Other) {
+      // This is already Type::Other, no need to reset it!
+      continue;
+    }
+    for (const auto &bond : mol.getBonds(atom)) {
+      if (!mol.isInRing(bond)) {
+        // No non-ring bonds are Type::Other already
+        continue;
+      }
+      const auto nbr = bond->getOtherAtom(atom);
       if (types[nbr->getIdx()] != Type::Other) {
         ++counts[aidx];
       }
     }
 
-    if (counts[aidx] == 1) {
+    // Atoms that do not have at least two typed neighbors
+    // go to the queue to be reset to Type::Other.
+    if (counts[aidx] <= 1) {
       queue.push_back(atom);
     }
   }
 
-  for (const auto &atom : queue) {
-    const auto aidx = atom->getIdx();
-    if (types[aidx] != Type::Other) {
-      types[aidx] = Type::Other;
+  while (!queue.empty()) {
+    const auto atom = queue.front();
+    queue.pop_front();
 
-      for (auto &nbr : mol.getNeighbors(atom)) {
-        auto nbridx = nbr->getIdx();
-        --counts[nbridx];
-        if (counts[nbridx] == 1) {
-          queue.push_back(nbr);
-        }
+    const auto aidx = atom->getIdx();
+    if (types[aidx] == Type::Other) {
+      // shouldn't happen, we only enqueue
+      // typed atoms
+      continue;
+    }
+
+    // the actual reset
+    types[aidx] = Type::Other;
+
+    // Update the counts for the neighbors, and check
+    // whether they need to be reset too.
+    for (const auto &bond : mol.getBonds(atom)) {
+      if (!mol.isInRing(bond)) {
+        continue;
+      }
+      const auto nbr = bond->getOtherAtom(atom);
+      const auto nbridx = nbr->getIdx();
+      if (types[nbridx] == Type::Other) {
+        continue;
+      }
+
+      --counts[nbridx];
+      if (counts[nbridx] == 1) {
+        queue.push_back(nbr);
       }
     }
   }
@@ -174,9 +213,9 @@ int VisitParts(std::vector<int> &parts, const std::vector<Type> &types,
 
 }  // namespace
 
-std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
+std::vector<FractionalAtomicNum> calcFracAtomNums(const CIPMol &mol) {
   const auto num_atoms = mol.getNumAtoms();
-  std::vector<boost::rational<int>> fractions;
+  std::vector<FractionalAtomicNum> fractions;
   fractions.reserve(num_atoms);
   for (const auto &atom : mol.atoms()) {
     fractions.emplace_back(atom->getAtomicNum(), 1);
@@ -184,89 +223,91 @@ std::vector<boost::rational<int>> calcFracAtomNums(const CIPMol &mol) {
 
   // Mark all atoms which are potentially part of a resonance system.
   auto types = std::vector<Type>(num_atoms, Type::Other);
-  if (SeedTypes(types, mol)) {
-    // Filter out atoms which cannot be resonant because
-    // of not having the proper environment.
-    RelaxTypes(types, mol);
+  if (!SeedTypes(types, mol)) {
+    // No relevant rings.
+    return fractions;
+  }
 
-    // Find resonant systems: parts stores the ids of the
-    // systems each atom is involved in.
-    auto parts = std::vector<int>(num_atoms);
-    int numparts = VisitParts(parts, types, mol);
+  // Filter out atoms which cannot be resonant because
+  // of not having the proper environment.
+  RelaxTypes(types, mol);
 
-    auto resparts = std::vector<int>(numparts);
-    int numres = 0;
+  // Find resonant systems: parts stores the ids of the
+  // systems each atom is involved in.
+  std::vector<int> parts(num_atoms);
+  int numparts = VisitParts(parts, types, mol);
 
-    if (numparts > 0) {
-      for (auto i = 0u; i < num_atoms; ++i) {
-        if (parts[i] == 0) {
-          continue;
-        }
-        auto atom = mol.getAtom(i);
+  if (numparts <= 0) {
+    // No rings (shouldn't happen, we'd seen it before)
+    return fractions;
+  }
 
-        // Find resonant structures caused by relocation of a negative charge.
-        if (types[i] == Type::Cv3D3Minus || types[i] == Type::Nv2D2Minus) {
-          int j = 0;
-          for (; j < numres; ++j) {
-            if (resparts[j] == parts[i]) {
-              break;
-            }
-          }
-          if (j >= numres) {
-            resparts[numres] = parts[i];
-            ++numres;
-          }
-        }
+  // parts are 1-based, so we need to allocate one extra element.
+  // This means that resonant_parts[0] will never be used, and
+  // we can use it as a shortcut to check whether any resonant
+  // systems were found.
+  std::vector<bool> resonant_parts(numparts + 1, false);
 
-        int numerator = 0;
-        int denominator = 0;
-        for (const auto &nbr : mol.getNeighbors(atom)) {
-          if (parts[nbr->getIdx()] == parts[i]) {
-            numerator += nbr->getAtomicNum();
-            ++denominator;
-          }
-        }
+  for (auto i = 0u; i < num_atoms; ++i) {
+    if (parts[i] == 0) {
+      continue;
+    }
+    auto atom = mol.getAtom(i);
 
-        // boost::rational does not accept 0 as denominator.
-        if (denominator == 0) {
-          fractions[i].assign(0, 1);
-        } else {
-          fractions[i].assign(numerator, denominator);
-        }
-      }
+    // Find resonant structures caused by relocation of a negative charge.
+    if (types[i] == Type::Cv3D3Minus || types[i] == Type::Nv2D2Minus) {
+      resonant_parts[parts[i]] = true;
+      resonant_parts[0] = true;
     }
 
-    // If there are any resonant structures due to negative charges,
-    // recalculate the average atomic number considering relocation
-    // of the charge through higher order bonds.
-    if (numres > 0) {
-      for (int j = 0; j < numres; ++j) {
-        int numerator = 0;
-        int denominator = 0;
-        int part = resparts[j];
-        for (auto i = 0u; i < num_atoms; ++i) {
-          if (parts[i] == part) {
-            // boost::rational does not accept 0 as denominator
-            if (denominator == 0) {
-              fractions[i].assign(0, 1);
-            } else {
-              fractions[i].assign(numerator, denominator);
-            }
+    int numerator = 0;
+    int denominator = 0;
+    for (const auto &nbr : mol.getNeighbors(atom)) {
+      if (parts[nbr->getIdx()] == parts[i]) {
+        numerator += nbr->getAtomicNum();
+        ++denominator;
+      }
+    }
+    fractions[i] = FractionalAtomicNum(numerator, denominator);
+  }
 
-            ++denominator;
-            auto atom = mol.getAtom(i);
-            for (auto &bond : mol.getBonds(atom)) {
-              auto nbr = bond->getOtherAtom(atom);
-              int bord = mol.getBondOrder(bond);
-              if (bord > 1 && parts[nbr->getIdx()] == part) {
-                numerator += (bord - 1) * nbr->getAtomicNum();
-              }
-            }
-          }
-        }
+  if (!resonant_parts[0]) {
+    // No resonant systems.
+    return fractions;
+  }
+
+  // If there are any resonant parts due to negative charges,
+  // update the average atomic number considering relocation
+  // of the charge through higher order bonds.
+  std::vector<int> numerators(numparts + 1);
+  std::vector<int> denominators(numparts + 1);
+  for (auto i = 0u; i < num_atoms; ++i) {
+    const auto part = parts[i];
+    if (part == 0 || !resonant_parts[part]) {
+      continue;
+    }
+
+    ++denominators[part];
+    const auto atom = mol.getAtom(i);
+    for (const auto &bond : mol.getBonds(atom)) {
+      const auto nbr = bond->getOtherAtom(atom);
+      const auto bord = mol.getBondOrder(bond);
+      if (bord > 1 && parts[nbr->getIdx()] == part) {
+        numerators[part] += (bord - 1) * nbr->getAtomicNum();
       }
     }
   }
+
+  // Once all the numerators and denominators for the different
+  // resonant parts of the mol have been calculated, distribute
+  // the values to the atoms in the corresponding parts.
+  for (auto i = 0u; i < num_atoms; ++i) {
+    const auto part = parts[i];
+    if (part != 0 && resonant_parts[part] && denominators[part] != 0) {
+      fractions[i] = FractionalAtomicNum(numerators[part], denominators[part]);
+    }
+  }
+
   return fractions;
 }
 

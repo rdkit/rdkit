@@ -22,7 +22,6 @@
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/trim.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/no_tracking.hpp>
@@ -460,7 +459,7 @@ ROMol *fragmentOnBonds(
   for (auto bondIdx : bondIndices) {
     bondsToRemove.push_back(res->getBondWithIdx(bondIdx));
   }
-  std::unordered_set<unsigned int> atomsToUpdate;
+  std::unordered_map<unsigned int, unsigned int> atomsToUpdate;
   res->beginBatchEdit();
   for (unsigned int i = 0; i < bondsToRemove.size(); ++i) {
     const Bond *bond = bondsToRemove[i];
@@ -492,7 +491,7 @@ ROMol *fragmentOnBonds(
         at2->setIsotope(eidx);
       }
       unsigned int idx1 = res->addAtom(at1.release(), false, true);
-      atomsToUpdate.insert(idx1);
+      ++atomsToUpdate[idx1];
       if (bondTypes) {
         bT = (*bondTypes)[i];
       }
@@ -511,7 +510,7 @@ ROMol *fragmentOnBonds(
       }
 
       unsigned int idx2 = res->addAtom(at2.release(), false, true);
-      atomsToUpdate.insert(idx2);
+      ++atomsToUpdate[idx2];
       bondidx = res->addBond(bidx, idx2, bT) - 1;
       // this bond starts at the same atom, so its direction should always be
       // correct:
@@ -560,23 +559,21 @@ ROMol *fragmentOnBonds(
       }
     }
     // keep track of the atoms so that we can adjust H counts later
-    atomsToUpdate.insert(bidx);
-    atomsToUpdate.insert(eidx);
-}
+    ++atomsToUpdate[bidx];
+    ++atomsToUpdate[eidx];
+  }
   res->commitBatchEdit();
   res->clearComputedProps();
-  if (!atomsToUpdate.empty()) {
-    // Adjust H counts on dummies and atoms where bonds were broken.
-    // was github issues 429, 6034
-    std::ranges::for_each(atomsToUpdate, [&](unsigned int idx) {
-      Atom *atom = res->getAtomWithIdx(idx);
-      if (!addDummies &&
-          (atom->getNoImplicit() ||
-           (atom->getIsAromatic() && atom->getAtomicNum() != 6))) {
-        atom->setNumExplicitHs(atom->getNumExplicitHs() + 1);
-      }
-      atom->updatePropertyCache(false);
-    });
+
+  // Adjust H counts on dummies and atoms where bonds were broken.
+  // was github issues 429, 6034
+  for (auto [idx, count] : atomsToUpdate) {
+    Atom *atom = res->getAtomWithIdx(idx);
+    if (!addDummies && (atom->getNoImplicit() ||
+                        (atom->getIsAromatic() && atom->getAtomicNum() != 6))) {
+      atom->setNumExplicitHs(atom->getNumExplicitHs() + count);
+    }
+    atom->updatePropertyCache(false);
   }
 
   return static_cast<ROMol *>(res.release());

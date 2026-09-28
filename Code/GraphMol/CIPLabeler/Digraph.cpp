@@ -26,18 +26,28 @@ namespace {
  * Upper limit on the size of the digraph, stops out of memory error with a
  * more graceful failure. 0=Infinite
  */
-const int MAX_NODE_COUNT = 100000;
+constexpr int MAX_NODE_COUNT = 100000;
 
 /**
  * Used for debugging only, 0=Infinite
  */
-const int MAX_NODE_DIST = 0;
+constexpr int MAX_NODE_DIST = 0;
 }  // namespace
 
-Node &Digraph::addNode(std::vector<char> &&visit, Atom *atom,
-                       boost::rational<int> &&frac, int dist, int flags) {
+Node &Digraph::addNode(std::vector<std::uint32_t> &&visit, Atom *atom,
+                       boost::rational<int> &&frac, int dist, uint8_t flags) {
+  if constexpr (MAX_NODE_COUNT > 0) {
+    if (d_nodes.size() >= MAX_NODE_COUNT) {
+      std::stringstream errmsg;
+      errmsg << "Digraph generation failed: more than " << MAX_NODE_COUNT
+             << " nodes found.";
+      throw TooManyNodesException(errmsg.str());
+    }
+  }
+
   d_nodes.emplace_back(this, std::move(visit), atom, std::move(frac), dist,
                        flags);
+
   return d_nodes.back();
 }
 
@@ -57,7 +67,7 @@ Digraph::Digraph(const CIPMol &mol, Atom *atom, bool atropisomerMode)
     : d_mol{mol} {
   PRECONDITION(atom, "cannot init digraph on a nullptr")
 
-  auto visit = std::vector<char>(d_mol.getNumAtoms());
+  auto visit = std::vector<std::uint32_t>(d_mol.getNumAtoms());
   visit[atom->getIdx()] = 1;
 
   auto dist = 1;
@@ -136,14 +146,10 @@ void Digraph::expand(Node *beg) {
   const auto &prev =
       edges.size() > 0 && !edges[0]->isBeg(beg) ? edges[0]->getBond() : nullptr;
 
-  if (MAX_NODE_DIST > 0 && beg->getDistance() > MAX_NODE_DIST) {
-    return;
-  }
-  if (MAX_NODE_COUNT > 0 && d_nodes.size() >= MAX_NODE_COUNT) {
-    std::stringstream errmsg;
-    errmsg << "Digraph generation failed: more than " << MAX_NODE_COUNT
-           << "nodes found.";
-    throw TooManyNodesException(errmsg.str());
+  if constexpr (MAX_NODE_DIST > 0) {
+    if (beg->getDistance() > MAX_NODE_DIST) {
+      return;
+    }
   }
 
   // create 'explicit' nodes
@@ -161,7 +167,7 @@ void Digraph::expand(Node *beg) {
       // for example >S=O
       if (dp_origin != beg || d_atropisomerMode) {
         if (atom->getFormalCharge() < 0 &&
-            d_mol.getFractionalAtomicNum(atom).denominator() > 1) {
+            d_mol.getFractionalAtomicNum(atom).isAveraged()) {
           end = beg->newBondDuplicateChild(nbrIdx, nbr);
           addEdge(beg, bond, end);
         } else {
@@ -183,7 +189,7 @@ void Digraph::expand(Node *beg) {
       addEdge(beg, bond, end);
 
       if (atom->getFormalCharge() < 0 &&
-          d_mol.getFractionalAtomicNum(atom).denominator() > 1) {
+          d_mol.getFractionalAtomicNum(atom).isAveraged()) {
         end = beg->newBondDuplicateChild(nbrIdx, nbr);
         addEdge(beg, bond, end);
       } else {

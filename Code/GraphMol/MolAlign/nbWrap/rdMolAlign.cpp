@@ -13,6 +13,7 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/stl/optional.h>
 
 #include <ForceField/nbWrap/PyForceField.h>
 #include <GraphMol/GraphMol.h>
@@ -379,6 +380,28 @@ nb::tuple getAllConformerBestRMSParams(ROMol &mol,
   }
   nb::list res;
   for (double v : rmsds) {
+    res.append(v);
+  }
+  return nb::tuple(res);
+}
+
+nb::tuple getAllConformerBestRMSToRef(
+    const ROMol &prbMol, const ROMol &refMol,
+    const std::optional<NbBestAlignmentParams> &nbParams) {
+  MolAlign::BestAlignmentParams params;
+  std::unique_ptr<RDNumeric::DoubleVector> weightsOwner;
+  if (nbParams) {
+    auto [p, owner] = nbParams->toNative();
+    params = p;
+    weightsOwner = std::move(owner);
+  }
+  std::vector<double> rmsds;
+  {
+    nb::gil_scoped_release release;
+    rmsds = MolAlign::getAllConformerBestRMSToRef(prbMol, refMol, params);
+  }
+  nb::list res;
+  for (const double v : rmsds) {
     res.append(v);
   }
   return nb::tuple(res);
@@ -1093,4 +1116,24 @@ ARGUMENTS
 
 RETURNS
 A vector of O3A objects)DOC");
+
+  m.def("GetAllConformerBestRMSToRef", getAllConformerBestRMSToRef, "prbMol"_a,
+        "refMol"_a, "params"_a = nb::none(),
+        R"DOC(Get the RMSD matrix between all conformers of refMol\n\
+and all the conformers of prbMol.
+getBestRMS() is used to calculate the inter-conformer distances
+  This function will attempt to align all permutations of matching atom
+  orders in both molecules, for some molecules it will lead to 'combinatorial' 
+  explosion' especially if hydrogens are present.
+
+ARGUMENTS
+ - prbMol        the probe molecule\n\
+ - refMol        the reference molecule\n\
+ - params     parameters for the matching\n\
+ 
+RETURNS
+ Vector with the RMSD values stored in the order:
+ [(0, 0), (0, 1), (0, 2), (1, 0), (2, 1), ...]
+ where the first idx is a conformerID of the refMol and the second is the
+ confid of the prbMol)DOC");
 }
