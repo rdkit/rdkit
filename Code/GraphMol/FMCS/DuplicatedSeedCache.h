@@ -9,6 +9,7 @@
 //
 #include <RDGeneral/export.h>
 #pragma once
+#include <cstring>
 #include <map>
 #include <vector>
 #include <stdexcept>

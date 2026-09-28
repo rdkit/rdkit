@@ -135,7 +135,7 @@ class RingMembershipSize {
   RingSizeMembershipMap d_ringSizeMembershipMap;
 };
 
-const std::uint32_t RingMembershipSize::IS_AROMATIC_BIT = (1 << 31);
+const std::uint32_t RingMembershipSize::IS_AROMATIC_BIT = (1u << 31);
 
 RingMembershipSize::RingMembershipSize(const ROMol &mol) {
   static const unsigned int MAX_NUM_RINGS = (0xFFFFFFFF >> 1);

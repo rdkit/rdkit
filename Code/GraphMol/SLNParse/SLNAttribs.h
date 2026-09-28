@@ -34,6 +34,10 @@
 #include <RDGeneral/export.h>
 #ifndef __RD_SLNATTRIBS_H__
 #define __RD_SLNATTRIBS_H__
+namespace RDKit {
+class ROMol;
+class RWMol;
+}  // namespace RDKit
 
 #include <string>
 #include <vector>

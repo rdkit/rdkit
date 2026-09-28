@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <array>
 #include <cstdlib>
 #include <optional>
 #include <ranges>
@@ -39,6 +40,20 @@ unsigned count_wedged_bonds(const ROMol &mol) {
     }
   }
   return nWedged;
+}
+
+RWMol makeDummySubstitutedCarbon(
+    const std::array<const char *, 4> &dummyLabels) {
+  RWMol mol;
+  const auto center = mol.addAtom();
+  mol.getAtomWithIdx(center)->setAtomicNum(6);
+  for (const auto label : dummyLabels) {
+    const auto idx = mol.addAtom();
+    mol.getAtomWithIdx(idx)->setProp(common_properties::dummyLabel, label);
+    mol.addBond(center, idx, Bond::BondType::SINGLE);
+  }
+  mol.updatePropertyCache(false);
+  return mol;
 }
 
 TEST_CASE("bond StereoInfo", "[unittest]") {
@@ -473,6 +488,16 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
       std::vector<unsigned> catoms = {0, 2, 3};
       CHECK(stereoInfo[0].controllingAtoms == catoms);
     }
+  }
+  SECTION("dummy labels distinguish controlling atoms") {
+    auto distinct = makeDummySubstitutedCarbon({"A", "B", "C", "D"});
+    auto stereoInfo = Chirality::findPotentialStereo(distinct);
+    REQUIRE(stereoInfo.size() == 1);
+    CHECK(stereoInfo[0].centeredOn == 0);
+
+    auto duplicate = makeDummySubstitutedCarbon({"A", "B", "C", "C"});
+    stereoInfo = Chirality::findPotentialStereo(duplicate);
+    CHECK(stereoInfo.empty());
   }
 }
 
@@ -3302,7 +3327,7 @@ TEST_CASE(
 void testStereoValidationFromMol(std::string molBlock,
                                  std::string expectedSmiles, bool legacyFlag,
                                  bool canonicalFlag = false) {
-  RDKit::Chirality::setUseLegacyStereoPerception(legacyFlag);
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(legacyFlag);
 
   std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock, true, false, false));
   REQUIRE(mol);
@@ -3323,7 +3348,6 @@ void testStereoValidationFromMol(std::string molBlock,
                        RDKit::SmilesWrite::CXSmilesFields::CX_POLYMER;
 
   auto outSmiles = MolToCXSmiles(*mol, smilesWriteParams, flags);
-  RDKit::Chirality::setUseLegacyStereoPerception(false);
 
   CHECK(outSmiles == expectedSmiles);
 }
@@ -6552,4 +6576,128 @@ TEST_CASE(
   auto m = v2::SmilesParse::MolFromSmiles(*canonicalized_smiles.begin());
   REQUIRE(m);
   CHECK(*labels_reference == get_bond_stereo_labels(*m));
+}
+
+TEST_CASE("Github #8108: assignStereochemistry should handle atropisomers",
+          "[chirality][atropisomers]") {
+  // CXSMILES with 2D coordinates and wedge bonds indicating atropisomer
+  // geometry. Both the coordinate variant and the no-coordinate variant use
+  // wD:4.3 (wedge-down from atom 4 to atom 3).
+  const std::string cxsmilesWithCoords =
+      "OC1=C(C)C(N2C3=C(C(C(=O)N)=C2N)C=C(C)C(C)=N3)=C(C)C=C1 "
+      "|(2.0992,3.5589,;2.2694,2.7517,;1.6554,2.2008,;0.8712,2.4571,;"
+      "1.8255,1.3935,;1.0637,0.4452,;0.8122,-0.3353,;-0.0126,-0.3353,;"
+      "-0.264,0.4452,;-1.0482,0.7015,;-1.6621,0.1505,;-1.2182,1.5087,;"
+      "0.3998,0.9266,;0.3998,1.7516,;-0.425,-1.0498,;-0.0126,-1.7642,;"
+      "-0.425,-2.4786,;0.8122,-1.7642,;1.2247,-2.4786,;1.2247,-1.0498,;"
+      "2.6096,1.1372,;2.7797,0.33,;3.2236,1.6882,;3.0535,2.4954,),wD:4.3|";
+  // Same molecule, without 2D coordinates: detection uses bond directions only
+  const std::string cxsmilesWithoutCoords =
+      "OC1=C(C)C(N2C3=C(C(C(=O)N)=C2N)C=C(C)C(C)=N3)=C(C)C=C1 |wD:4.3|";
+
+  auto useLegacy = GENERATE(true, false);
+  CAPTURE(useLegacy);
+  UseLegacyStereoPerceptionFixture fx(useLegacy);
+
+  const auto getAtropBond = [](ROMol &mol) -> Bond * {
+    for (auto *bond : mol.bonds()) {
+      if (bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+          bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+        return bond;
+      }
+    }
+    return nullptr;
+  };
+
+  const auto getOppositeAtropStereo = [](Bond::BondStereo stereo) {
+    return stereo == Bond::BondStereo::STEREOATROPCW
+               ? Bond::BondStereo::STEREOATROPCCW
+               : Bond::BondStereo::STEREOATROPCW;
+  };
+
+  SECTION("assignStereochemistry re-detects atropisomer stereo from an SDF") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/atropisomers/BMS-986142_3d.sdf";
+    auto m = v2::FileParsers::MolFromMolFile(fName);
+    REQUIRE(m);
+    auto *atropBond = m->getBondWithIdx(8);
+    auto correctStereo = atropBond->getStereo();
+    REQUIRE((correctStereo == Bond::BondStereo::STEREOATROPCW ||
+             correctStereo == Bond::BondStereo::STEREOATROPCCW));
+
+    atropBond->setStereo(getOppositeAtropStereo(correctStereo));
+    MolOps::assignStereochemistry(*m, true, true);
+    CHECK(atropBond->getStereo() == correctStereo);
+  }
+
+  SECTION("assignStereochemistry detects atropisomers from CXSMILES") {
+    const auto &cxsmiles =
+        GENERATE_REF(cxsmilesWithCoords, cxsmilesWithoutCoords);
+    CAPTURE(cxsmiles);
+    auto m = v2::SmilesParse::MolFromSmiles(cxsmiles);
+    REQUIRE(m);
+    auto *atropBond = getAtropBond(*m);
+    REQUIRE(atropBond);
+    auto correctStereo = atropBond->getStereo();
+    auto wrongStereo = getOppositeAtropStereo(correctStereo);
+
+    // Missing stereo is detected even when existing tags are preserved.
+    atropBond->setStereo(Bond::BondStereo::STEREONONE);
+    MolOps::assignStereochemistry(*m, false, true);
+    CHECK(atropBond->getStereo() == correctStereo);
+
+    // Existing stereo is preserved with cleanIt=false and replaced with
+    // cleanIt=true.
+    atropBond->setStereo(wrongStereo);
+    MolOps::assignStereochemistry(*m, false, true);
+    CHECK(atropBond->getStereo() == wrongStereo);
+    MolOps::assignStereochemistry(*m, true, true);
+    CHECK(atropBond->getStereo() == correctStereo);
+
+    // assignChiralTypesFromBondDirs follows replaceExistingTags too.
+    atropBond->setStereo(wrongStereo);
+    MolOps::assignChiralTypesFromBondDirs(*m, -1, false);
+    CHECK(atropBond->getStereo() == wrongStereo);
+    MolOps::assignChiralTypesFromBondDirs(*m, -1, true);
+    CHECK(atropBond->getStereo() == correctStereo);
+  }
+
+  SECTION("assignChiralTypesFrom3D honors replaceExistingTags") {
+    std::string rdbase = getenv("RDBASE");
+    auto m = v2::FileParsers::MolFromMolFile(
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/atropisomers/BMS-986142_3d.sdf");
+    REQUIRE(m);
+    auto *atropBond = m->getBondWithIdx(8);
+    auto correctStereo = atropBond->getStereo();
+    REQUIRE((correctStereo == Bond::BondStereo::STEREOATROPCW ||
+             correctStereo == Bond::BondStereo::STEREOATROPCCW));
+    auto wrongStereo = getOppositeAtropStereo(correctStereo);
+
+    atropBond->setStereo(wrongStereo);
+    MolOps::assignChiralTypesFrom3D(*m, -1, false);
+    CHECK(atropBond->getStereo() == wrongStereo);
+    MolOps::assignChiralTypesFrom3D(*m, -1, true);
+    CHECK(atropBond->getStereo() == correctStereo);
+  }
+
+  SECTION("bonds in small rings are not atropisomers") {
+    // The wedge on atom 0 makes both the pyrazole-imide bond 0-1 and the
+    // succinimide ring bond 0-14 look like atropisomer candidates, but a bond
+    // in a five-membered ring cannot rotate. sanitizeMol() would have
+    // discarded it, but detection now happens after sanitization.
+    auto m = v2::SmilesParse::MolFromSmiles(
+        "N1(n2c(C)ccc2Br)C(=O)[C@H](C)[C@H](C)C1=O "
+        "|(-11.1517,1.8306,;-11.1517,3.3708,;-12.4855,4.1411,;-13.8193,3.371,;"
+        "-12.4855,5.6813,;-9.8177,5.6813,;-9.8177,4.1411,;-8.4839,3.371,;"
+        "-12.3975,0.9252,;-13.8622,1.4011,;-11.9217,-0.5394,;-12.8269,-1.7852,;"
+        "-10.3817,-0.5394,;-9.4765,-1.7852,;-9.9059,0.9252,;-8.4413,1.4011,),"
+        "wU:0.8,10.11,12.13|");
+    REQUIRE(m);
+    CHECK(getAtropBond(*m) == m->getBondBetweenAtoms(0, 1));
+    CHECK(m->getBondBetweenAtoms(0, 14)->getStereo() ==
+          Bond::BondStereo::STEREONONE);
+  }
 }

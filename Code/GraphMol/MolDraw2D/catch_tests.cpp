@@ -20,6 +20,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <GraphMol/MolDraw2D/MolDraw2DSGroupData.h>
 #include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/PNGParser.h>
@@ -3580,6 +3581,39 @@ TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
     CHECK(txt.find(">N<") != std::string::npos);
     CHECK(txt.find(">O<") != std::string::npos);
     CHECK(txt.find(">!<") != std::string::npos);
+  }
+}
+
+TEST_CASE("github #9607: Depiction code doesn't recognize all atom lists", "[queries]") {
+ SECTION("support all atom lists when depicting") {
+    auto m1 = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -14.969697 7.242424 0.000000 0
+M  V30 2 [C] -13.670659 7.992424 0.000000 0
+M  V30 3 C -12.371621 7.242424 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+      
+    CHECK(isAtomListQuery(m1->getAtomWithIdx(1)));
+    int panelWidth = -1;
+    int panelHeight = -1;
+    bool noFreeType = true;
+    // shouldn't throw precondition
+    MolDraw2DSVG drawer(300, 300, panelWidth, panelHeight, noFreeType);
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
   }
 }
 
@@ -11673,5 +11707,95 @@ TEST_CASE("Configurable Stereo Labels") {
         std::distance(std::sregex_iterator(text.begin(), text.end(), under),
                       std::sregex_iterator()));
     CHECK(under_count == 0);
+  }
+}
+
+TEST_CASE("colourScheme option from JSON", "[drawing]") {
+  auto m1 = "c1ccccc1CO"_smiles;
+  REQUIRE(m1);
+  SECTION("dark sets the whole colour family, not just the palette") {
+    MolDrawOptions defaults;
+    MolDrawOptions reference;
+    setDarkMode(reference);
+
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(
+        opts, R"({"colourScheme": "dark"})");
+    CHECK(opts.backgroundColour == reference.backgroundColour);
+    CHECK(opts.backgroundColour != defaults.backgroundColour);
+    CHECK(opts.legendColour == reference.legendColour);
+    CHECK(opts.symbolColour == reference.symbolColour);
+    CHECK(opts.annotationColour == reference.annotationColour);
+    CHECK(opts.atomNoteColour == reference.atomNoteColour);
+    CHECK(opts.variableAttachmentColour == reference.variableAttachmentColour);
+    CHECK(opts.atomColourPalette == reference.atomColourPalette);
+
+    MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);
+    drawer.drawOptions() = opts;
+    MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testColourSchemeDark.svg");
+    outs << text;
+    outs.close();
+    // the background rect is drawn with the background colour
+    CHECK(text.find("fill:#000000") != std::string::npos);
+  }
+  SECTION("scheme name is case-insensitive and darkmode is an alias") {
+    MolDrawOptions reference;
+    setDarkMode(reference);
+    for (const auto *json : {R"({"colourScheme": "Dark"})",
+                             R"({"colourScheme": "DARKMODE"})"}) {
+      MolDrawOptions opts;
+      MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
+      CHECK(opts.backgroundColour == reference.backgroundColour);
+      CHECK(opts.atomColourPalette == reference.atomColourPalette);
+    }
+  }
+  SECTION("individual colour options override the scheme") {
+    const DrawColour blue{0.0, 0.0, 1.0, 1.0};
+    MolDrawOptions reference;
+    setDarkMode(reference);
+
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(
+        opts,
+        R"({"colourScheme": "dark", "backgroundColour": [0, 0, 1, 1]})");
+    CHECK(opts.backgroundColour == blue);
+    // everything else still comes from the scheme
+    CHECK(opts.legendColour == reference.legendColour);
+    CHECK(opts.atomColourPalette == reference.atomColourPalette);
+  }
+  SECTION("an explicit palette overrides the one set by the scheme") {
+    ColourPalette bwPalette;
+    assignBWPalette(bwPalette);
+
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(
+        opts, R"({"colourScheme": "dark", "atomColourPalette": "bw"})");
+    CHECK(opts.atomColourPalette == bwPalette);
+    // but the scheme still supplied the background
+    MolDrawOptions reference;
+    setDarkMode(reference);
+    CHECK(opts.backgroundColour == reference.backgroundColour);
+  }
+  SECTION("monochrome") {
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(
+        opts, R"({"colourScheme": "monochrome"})");
+    const DrawColour black{0.0, 0.0, 0.0, 1.0};
+    const DrawColour white{1.0, 1.0, 1.0, 1.0};
+    CHECK(opts.backgroundColour == white);
+    CHECK(opts.symbolColour == black);
+    CHECK(opts.atomColourPalette.size() == 1);
+    CHECK(opts.atomColourPalette.at(-1) == black);
+  }
+  SECTION("an unknown scheme name is ignored") {
+    MolDrawOptions defaults;
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(
+        opts, R"({"colourScheme": "chartreuse"})");
+    CHECK(opts.backgroundColour == defaults.backgroundColour);
+    CHECK(opts.atomColourPalette == defaults.atomColourPalette);
   }
 }

@@ -10,6 +10,8 @@
 #include <RDGeneral/export.h>
 #ifndef RD_CANON_H
 #define RD_CANON_H
+#include <boost/dynamic_bitset.hpp>
+#include <vector>
 
 namespace RDKit {
 class ROMol;

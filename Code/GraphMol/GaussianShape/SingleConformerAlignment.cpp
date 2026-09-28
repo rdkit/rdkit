@@ -147,8 +147,7 @@ void cartToQuatGrads(const double *quat, const double *mol, const int numBPts,
   const auto s = quat[2];
   const auto u = quat[3];
   const auto coef = 1.0 / (q * q + r * r + s * s + u * u);
-  for (int i = 0, j = gradConvOffset, k = 12 * gradConvOffset; i < 3 * numBPts;
-       i += 3, ++j, k += 12) {
+  for (int i = 0, k = 12 * gradConvOffset; i < 3 * numBPts; i += 3, k += 12) {
     const auto x = mol[i];
     const auto y = mol[i + 1];
     const auto z = mol[i + 2];
@@ -573,7 +572,7 @@ void reduceStep(const std::array<double, 7> &grad,
 // code from
 // https://github.com/ncbi/pubchem-align3d/blob/main/shape_neighbor.cpp
 // Original Authors:  Evan Bolton, Leonid Zaslavsky, Paul Thiessen
-bool SingleConformerAlignment::optimise(unsigned int maxIters) {
+bool SingleConformerAlignment::optimise(const unsigned int maxIters) {
   const double maxQuaternionStep = 0.075;   // Maximum step size for quaternion
   const double maxTranslationStep = 0.500;  // Maximum step size for translation
   const double minQuaternionStep =

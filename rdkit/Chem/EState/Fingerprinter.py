@@ -1,6 +1,4 @@
-# # Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
-#  Copyright (C) 2002-2006  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2002-2026  greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -36,7 +34,7 @@ def FingerprintMol(mol):
   counts = numpy.zeros(nPatts, dtype=numpy.int64)
   sums = numpy.zeros(nPatts, dtype=numpy.float64)
   for i, (_, pattern) in enumerate(AtomTypes.esPatterns):
-    matches = mol.GetSubstructMatches(pattern, uniquify=1)
+    matches = mol.GetSubstructMatches(pattern, uniquify=True)
     counts[i] = len(matches)
     for match in matches:
       sums[i] += esIndices[match[0]]

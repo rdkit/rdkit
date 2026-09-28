@@ -386,10 +386,14 @@ int AromaticAtomIterator_<Atom_, Mol_>::_findPrev(int from) {
 //-----------------------------------------
 template <class Atom_, class Mol_>
 QueryAtomIterator_<Atom_, Mol_>::QueryAtomIterator_(Mol_ *mol,
-                                                    QueryAtom const *what) {
+                                                    Atom const *what) {
   PRECONDITION(what, "bad query atom");
+  if (hasUninitializedRecursiveQuery(*what)) {
+    throw ValueErrorException(
+        "QueryAtomIterator does not support uninitialized recursive queries");
+  }
   _mol = mol;
-  _qA = static_cast<QueryAtom *>(what->copy());
+  _qA = new QueryAtom(*what);
   _end = mol->getNumAtoms();
   _pos = _findNext(0);
 };

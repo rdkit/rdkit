@@ -10,6 +10,7 @@
 #include <RDGeneral/export.h>
 #ifndef RD_FFCONVENIENCE_H
 #define RD_FFCONVENIENCE_H
+#include <GraphMol/ROMol.h>
 #include <ForceField/ForceField.h>
 #include <RDGeneral/RDThreads.h>
 

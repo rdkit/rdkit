@@ -16,7 +16,7 @@ fr_methoxy	"Number of methoxy groups -OCH3"	[OX2](-[#6])-[CH3]	O(-[#6])-CH3	"Ali
 fr_oxime	"Number of oxime groups"	[CX3]=[NX2]-[OX2]	C=N-O	
 fr_ester	"Number of esters"	[#6][CX3](=O)[OX2H0][#6]	C(=O)O-C	
 fr_Al_COO	"Number of aliphatic carboxylic acids"	C-C(=O)[O;H1,-]	"C-C(=O)[OH] or C-C(=O)[O-]"	
-fr_Ar_COO	"Number of Aromatic carboxylic acide"	c-C(=O)[O;H1,-]	"c-C(=O)[OH] or c-C(=O)[O-]"	
+fr_Ar_COO	"Number of aromatic carboxylic acids"	c-C(=O)[O;H1,-]	"c-C(=O)[OH] or c-C(=O)[O-]"	
 fr_COO	"Number of carboxylic acids"	[#6]C(=O)[O;H,-1]	"[#6]C(=O)[OH] or [#6]C(=O)[O-]"	
 fr_COO2	"Number of carboxylic acids"	[CX3](=O)[OX1H0-,OX2H1]	"[#6]C(=O)[OH] or [#6]C(=O)[O-]"	
 fr_ketone	"Number of ketones"	[#6][CX3](=O)[#6]

@@ -16,12 +16,12 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/MolOps.h>
 
 #include "SmilesWrite.h"
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <GraphMol/MolEnumerator/LinkNode.h>
-#include <GraphMol/Chirality.h>
 
 #include <algorithm>
 #include <array>
@@ -309,15 +309,22 @@ void finalizePolymerSGroup(RWMol &mol, SubstanceGroup &sgroup) {
   sgroup.setProp("XBCORR", xbcorr);
 }
 
-Bond *get_bond_with_smiles_idx(const ROMol &mol, unsigned idx) {
+Bond *get_bond_with_smiles_idx(RWMol &mol, unsigned idx) {
+  // SMILES ring-closure bonds are appended after the ordinary bonds. Only
+  // they need an explicit parse-order index; ordinary bond positions can be
+  // recovered by removing the earlier ring-closure slots.
+  unsigned int earlierRingBonds = 0;
   for (auto bnd : mol.bonds()) {
     unsigned int smilesIdx;
-    if (bnd->getPropIfPresent("_cxsmilesBondIdx", smilesIdx) &&
-        smilesIdx == idx) {
-      return bnd;
+    if (bnd->getPropIfPresent("_cxsmilesBondIdx", smilesIdx)) {
+      if (smilesIdx == idx) {
+        return bnd;
+      }
+      earlierRingBonds += smilesIdx < idx;
     }
   }
-  return nullptr;
+  const auto bondIdx = idx - earlierRingBonds;
+  return bondIdx < mol.getNumBonds() ? mol.getBondWithIdx(bondIdx) : nullptr;
 }
 
 }  // end of anonymous namespace
@@ -1943,8 +1950,9 @@ std::string get_atomlabel_block(const ROMol &mol,
                atom->getPropIfPresent(common_properties::_fromAttachPoint,
                                       val) &&
                (val == 1 || val == 2)) {
-      res +=
-          quote_string("_AP" + std::to_string(val), labelAllowedSpecialChars);
+      res += quote_string(
+          std::string(MolOps::attachmentPointLabelPrefix) + std::to_string(val),
+          labelAllowedSpecialChars);
     } else if (atom->getPropIfPresent(common_properties::atomLabel, lbl)) {
       res += quote_string(lbl, labelAllowedSpecialChars);
     }

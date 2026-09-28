@@ -9,6 +9,7 @@
 //
 
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <GraphMol/MolDraw2D/MolDraw2DSGroupData.h>
 #include <GraphMol/MolDraw2D/StringRect.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>

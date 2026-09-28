@@ -154,7 +154,7 @@ void RWMol::insertMol(const ROMol &other) {
         newAt->getPropIfPresent(common_properties::_ringStereoAtoms, nAtoms)) {
       for (auto &val : nAtoms) {
         if (val < 0) {
-          val = -1 * (-val + origNumAtoms);
+          val -= rdcast<int>(origNumAtoms);
         } else {
           val += origNumAtoms;
         }

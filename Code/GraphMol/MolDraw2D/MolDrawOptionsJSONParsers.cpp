@@ -124,6 +124,23 @@ void get_legend_position_option(const boost::property_tree::ptree &pt,
   }
 }
 
+void get_colour_scheme_option(const boost::property_tree::ptree &pt,
+                              const char *pnm, MolDrawOptions &opts) {
+  PRECONDITION(pnm && strlen(pnm), "bad property name");
+  if (pt.find(pnm) == pt.not_found()) {
+    return;
+  }
+  const auto &node = pt.get_child(pnm);
+  auto schemeName = node.get_value<std::string>();
+  boost::algorithm::to_lower(schemeName);
+  if (schemeName == "dark" || schemeName == "darkmode") {
+    setDarkMode(opts);
+  } else if (schemeName == "monochrome") {
+    setMonochromeMode(opts, DrawColour{0.0, 0.0, 0.0, 1.0},
+                      DrawColour{1.0, 1.0, 1.0, 1.0});
+  }
+}
+
 void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
                                   const std::string &json) {
   if (json.empty()) {
@@ -193,6 +210,10 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   PT_OPT_GET(useComplexQueryAtomSymbols);
   PT_OPT_GET(bracketsAroundAtomLists);
   PT_OPT_GET(standardColoursForHighlightedAtoms);
+
+  // this sets a whole family of colours at once, so it has to be applied
+  // before the individual colour options, which are allowed to override it
+  get_colour_scheme_option(pt, "colourScheme", opts);
 
   get_colour_option(pt, "highlightColour", opts.highlightColour);
   get_colour_option(pt, "backgroundColour", opts.backgroundColour);

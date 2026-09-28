@@ -22,6 +22,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Rings.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -493,6 +494,31 @@ TEST_CASE("test3") {
   REQUIRE(m->getRingInfo()->numAtomRings(4) == 3);
   REQUIRE(m->getRingInfo()->isAtomInRingOfSize(4, 4));
   delete m;
+}
+
+TEST_CASE("pickFusedRings handles deeply fused systems without recursion") {
+  // Set this to a large number to make sure mols with lots of rings
+  // don't trigger a stack overflow in pickFusedRings.
+  constexpr int numRings = 10000;
+
+  INT_INT_VECT_MAP neighMap;
+  for (int ring = 0; ring < numRings; ++ring) {
+    if (ring) {
+      neighMap[ring].push_back(ring - 1);
+    }
+    if (ring + 1 < numRings) {
+      neighMap[ring].push_back(ring + 1);
+    }
+  }
+
+  INT_VECT fused;
+  boost::dynamic_bitset<> done(numRings);
+  RingUtils::pickFusedRings(0, neighMap, fused, done);
+
+  REQUIRE(fused.size() == numRings);
+  REQUIRE(done.count() == numRings);
+  REQUIRE(fused.front() == 0);
+  REQUIRE(fused.back() == numRings - 1);
 }
 
 TEST_CASE("test4") {
@@ -4928,9 +4954,7 @@ TEST_CASE("Testing github issue 418: removeHs not updating H count") {
     REQUIRE(m->getAtomWithIdx(0)->getNumExplicitHs() == 4);
     delete m;
   }
-  {
-    REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException);
-  }
+  { REQUIRE_THROWS_AS(SmilesToMol("[H]N([H])([H])[H]"), MolSanitizeException); }
 }
 
 TEST_CASE(
@@ -6965,6 +6989,19 @@ TEST_CASE(
     REQUIRE(!failed);
     delete m;
   }
+}
+
+TEST_CASE("adjustHs preserves hydrogens lost during aromaticity perception") {
+  std::unique_ptr<RWMol> mol{
+      SmilesToMol("O=C1NC=CC2=C1C=CC=C2", 0, false)};
+  REQUIRE(mol);
+
+  MolOps::sanitizeMol(*mol);
+
+  const auto nitrogen = mol->getAtomWithIdx(2);
+  CHECK(nitrogen->getIsAromatic());
+  CHECK(nitrogen->getNumExplicitHs() == 1);
+  CHECK(nitrogen->getNumImplicitHs() == 0);
 }
 
 TEST_CASE("Testing Github issue 1622: add MDL aromaticity perception") {

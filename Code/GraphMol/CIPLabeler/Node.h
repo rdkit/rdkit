@@ -10,6 +10,7 @@
 //
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include "Descriptor.h"
@@ -29,45 +30,45 @@ class Node {
   /**
    * Flag indicates whether the node has been expanded.
    */
-  static const int EXPANDED = 0x1;
+  static constexpr uint8_t EXPANDED = 0x1;
 
   /**
    * Flag indicates whether the node was duplicated
    * at a ring closure.
    */
-  static const int RING_DUPLICATE = 0x2;
+  static constexpr uint8_t RING_DUPLICATE = 0x2;
 
   /**
    * Flag indicates whether the node was duplicated
    * at a bond with order &gt; 1.
    */
-  static const int BOND_DUPLICATE = 0x4;
+  static constexpr uint8_t BOND_DUPLICATE = 0x4;
 
   /**
    * Mask to check if a node is duplicated.
    */
 
-  static const int DUPLICATE = RING_DUPLICATE | BOND_DUPLICATE;
+  static constexpr uint8_t DUPLICATE = RING_DUPLICATE | BOND_DUPLICATE;
 
   /**
    * Node was created for an implicit hydrogen,
    * the 'atom' value will be null.
    */
-  static const int IMPL_HYDROGEN = 0x8;
+  static constexpr uint8_t IMPL_HYDROGEN = 0x8;
 
   /**
    * Mask to check if a node is duplicated or created for an implicit H (not a
    * primary node).
    */
-  static const int DUPLICATE_OR_H =
+  static constexpr uint8_t DUPLICATE_OR_H =
       RING_DUPLICATE | BOND_DUPLICATE | IMPL_HYDROGEN;
 
   Node() = delete;
   Node(const Node &) = delete;
   Node &operator=(const Node &) = delete;
 
-  Node(Digraph *g, std::vector<char> &&visit, Atom *atom,
-       boost::rational<int> &&frac, int dist, int flags);
+  Node(Digraph *g, std::vector<std::uint32_t> &&visit, Atom *atom,
+       boost::rational<int> &&frac, int dist, uint8_t flags);
 
   Digraph *getDigraph() const;
 
@@ -87,7 +88,7 @@ class Node {
 
   Descriptor getAux() const;
 
-  bool isSet(int mask) const;
+  bool isSet(uint8_t mask) const;
 
   bool isDuplicate() const;
 
@@ -124,13 +125,13 @@ class Node {
   boost::rational<int> d_atomic_num;
   double d_atomic_mass;
   Descriptor d_aux = Descriptor::NONE;
-  int d_flags = 0x0;
+  uint8_t d_flags = 0x0;
 
   std::vector<Edge *> d_edges;
 
-  std::vector<char> d_visit;
+  std::vector<std::uint32_t> d_visit;
 
-  Node *newTerminalChild(int idx, Atom *atom, int flags) const;
+  Node *newTerminalChild(int idx, Atom *atom, uint8_t flags) const;
 };
 
 }  // namespace CIPLabeler

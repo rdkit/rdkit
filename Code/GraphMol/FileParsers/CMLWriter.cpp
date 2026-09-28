@@ -132,6 +132,14 @@ boost::property_tree::ptree molToPTree(const ROMol &mol, int confId,
         neighbors.push_back(at->getIdx());
       }
 
+      //CML spec requires exactly 4 atomRefs. If there are only 3 
+      // explicit neighbors (e.g., the 4th ligand is an implicit hydrogen), 
+      // the current atom itself should be used as the 4th reference.
+      unsigned int centralAtomIdx = a->getIdx();
+      while (neighbors.size() < 4) {
+        neighbors.push_back(centralAtomIdx);
+      }
+
       auto &atomParity = atom.add("atomParity", parity);
       atomParity.put("<xmlattr>.atomRefs4",
                      boost::format{"%1%%2% %1%%3% %1%%4% %1%%5%"} %

@@ -7,8 +7,7 @@
 #
 import os
 
-from sqlalchemy import (Column, Float, Integer, LargeBinary, String, Text,
-                        create_engine)
+from sqlalchemy import (Column, Float, Integer, LargeBinary, String, Text, create_engine)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -65,7 +64,7 @@ def ProcessMol(session, mol, globalProps, nDone, nameProp='_Name', nameCol='comp
   session.add(cmpd)
 
   if redraw:
-    AllChem.Compute2DCoords(m)
+    AllChem.Compute2DCoords(mol)
 
   if not skipSmiles:
     cmpd.smiles = Chem.MolToSmiles(mol, True)

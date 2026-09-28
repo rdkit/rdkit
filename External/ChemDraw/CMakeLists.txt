@@ -63,7 +63,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   file(GLOB CHEMDRAW_SOURCE "chemdraw/chemdraw/*.cpp")
   rdkit_library(ChemDraw ${CHEMDRAW_SOURCE} SHARED)
   target_compile_definitions(ChemDraw PRIVATE CHEMDRAW_BUILD)
-  target_link_libraries(ChemDraw PRIVATE expatpp)
+  target_link_libraries(ChemDraw PRIVATE expatpp EXPAT::EXPAT)
 
   # export all the symbols for ChemDraw on MSVC
   if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR((NOT MSVC) AND WIN32))
@@ -163,6 +163,13 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     SHARED LINK_LIBRARIES ChemDraw
     CIPLabeler ChemTransforms GraphMol RDGeneral Depictor SubstructMatch SmilesParse)
 
+  # expatpp is an external target without an _static variant. Link it directly
+  # so rdkit_library does not rewrite its name for static builds (including SWIG).
+  target_link_libraries(RDChemDrawLib PRIVATE expatpp)
+  if(TARGET RDChemDrawLib_static)
+    target_link_libraries(RDChemDrawLib_static PRIVATE expatpp)
+  endif()
+
   rdkit_library(RDChemDrawReactionLib
     chemdrawreaction.cpp
 
@@ -228,7 +235,11 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     endif(MSVC)
   endif(RDK_BUILD_CPP_TESTS)
 
-  if(RDK_BUILD_PYTHON_WRAPPERS)
+  if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
-  endif(RDK_BUILD_PYTHON_WRAPPERS)
+  endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
+
+  if(RDK_BUILD_NANOBIND_WRAPPERS)
+    add_subdirectory(nbWrap)
+  endif()
 endif(RDK_BUILD_CHEMDRAW_SUPPORT)

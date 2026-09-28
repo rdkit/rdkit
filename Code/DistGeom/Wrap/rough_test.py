@@ -61,7 +61,7 @@ class TestCase(unittest.TestCase):
     arr = np.array([[0, 1.0, 5.0], [1.0, 0, 1.0], [3.0, 1.0, 0]], float)
     self.assertRaises(ValueError, lambda: DG.EmbedBoundsMatrix(arr))
     #DG.EmbedBoundsMatrix(arr,randomizeOnFailure=0,randomSeed=1)
-    DG.EmbedBoundsMatrix(arr, randomizeOnFailure=1)
+    DG.EmbedBoundsMatrix(arr, randomizeOnFailure=True)
 
   def test6EmbedConstraints(self):
     arr = np.array([[0.0, 1.0, 1.0], [1.0, 0.0, 1.0], [0.99, 1.0, 0.0]], float)

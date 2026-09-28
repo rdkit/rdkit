@@ -115,13 +115,13 @@ def Ipc(mol, avg=False, dMat=None, forceDMat=False):
   """
   if forceDMat or dMat is None:
     if forceDMat:
-      dMat = Chem.GetDistanceMatrix(mol, 0)
+      dMat = Chem.GetDistanceMatrix(mol, False)
       mol._adjMat = dMat
     else:
       try:
         dMat = mol._adjMat
       except AttributeError:
-        dMat = Chem.GetDistanceMatrix(mol, 0)
+        dMat = Chem.GetDistanceMatrix(mol, False)
         mol._adjMat = dMat
 
   adjMat = numpy.equal(dMat, 1)
@@ -318,7 +318,7 @@ def _pyChiNv_(mol, order=2):
                         for hkd in _hkDeltas(mol, skipHs=0)])
   accum = 0.0
   for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
-    accum += numpy.prod(deltas[numpy.array(path)],float)
+    accum += numpy.prod(deltas[numpy.array(path)], dtype=float)
   return accum
 
 
@@ -389,7 +389,7 @@ def _pyChiNn_(mol, order=2):
   deltas = numpy.array([(1. / numpy.sqrt(x) if x else 0.0) for x in nval])
   accum = 0.0
   for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
-    accum += numpy.prod(deltas[numpy.array(path)],float)
+    accum += numpy.prod(deltas[numpy.array(path)], dtype=float)
   return accum
 
 
@@ -450,7 +450,7 @@ ChiNn_ = lambda x, y: rdMolDescriptors.CalcChiNn(x, y)
 ChiNn_.version = rdMolDescriptors._CalcChiNn_version
 
 
-def BalabanJ(mol, dMat=None, forceDMat=0):
+def BalabanJ(mol, dMat=None, forceDMat=False):
   """ Calculate Balaban's J value for a molecule
 
   **Arguments**
@@ -476,9 +476,9 @@ def BalabanJ(mol, dMat=None, forceDMat=0):
   if forceDMat or dMat is None:
     if forceDMat:
       # FIX: should we be using atom weights here or not?
-      dMat = Chem.GetDistanceMatrix(mol, useBO=1, useAtomWts=0, force=1)
+      dMat = Chem.GetDistanceMatrix(mol, useBO=True, useAtomWts=False, force=True)
       mol._balabanMat = dMat
-      adjMat = Chem.GetAdjacencyMatrix(mol, useBO=0, emptyVal=0, force=0, prefix="NoBO")
+      adjMat = Chem.GetAdjacencyMatrix(mol, useBO=False, emptyVal=0, force=False, prefix="NoBO")
       mol._adjMat = adjMat
     else:
       try:
@@ -486,16 +486,17 @@ def BalabanJ(mol, dMat=None, forceDMat=0):
         dMat = mol._balabanMat
       except AttributeError:
         # nope, gotta calculate one
-        dMat = Chem.GetDistanceMatrix(mol, useBO=1, useAtomWts=0, force=0, prefix="Balaban")
+        dMat = Chem.GetDistanceMatrix(mol, useBO=True, useAtomWts=False, force=False,
+                                      prefix="Balaban")
         # now store it
         mol._balabanMat = dMat
       try:
         adjMat = mol._adjMat
       except AttributeError:
-        adjMat = Chem.GetAdjacencyMatrix(mol, useBO=0, emptyVal=0, force=0, prefix="NoBO")
+        adjMat = Chem.GetAdjacencyMatrix(mol, useBO=False, emptyVal=0, force=False, prefix="NoBO")
         mol._adjMat = adjMat
   else:
-    adjMat = Chem.GetAdjacencyMatrix(mol, useBO=0, emptyVal=0, force=0, prefix="NoBO")
+    adjMat = Chem.GetAdjacencyMatrix(mol, useBO=False, emptyVal=0, force=False, prefix="NoBO")
 
   s = _VertexDegrees(dMat)
   q = _NumAdjacencies(mol, dMat)
@@ -535,21 +536,15 @@ def _AssignSymmetryClasses(mol, vdList, bdMat, forceBDMat, numAtoms, cutoff):
 
   """
   if forceBDMat:
-    bdMat = Chem.GetDistanceMatrix(mol, useBO=1, useAtomWts=0, force=1, prefix="Balaban")
+    bdMat = Chem.GetDistanceMatrix(mol, useBO=True, useAtomWts=False, force=True, prefix="Balaban")
     mol._balabanMat = bdMat
 
-  keysSeen = []
+  sortedRows = numpy.sort(bdMat, axis=1)[:numAtoms, :cutoff]
+  rowFmt = '%.4f,' * sortedRows.shape[1]
+  keysSeen = {}
   symList = [0] * numAtoms
-  for i in range(numAtoms):
-    tmpList = bdMat[i].tolist()
-    tmpList.sort()
-    theKey = tuple(['%.4f' % x for x in tmpList[:cutoff]])
-    try:
-      idx = keysSeen.index(theKey)
-    except ValueError:
-      idx = len(keysSeen)
-      keysSeen.append(theKey)
-    symList[i] = idx + 1
+  for i, row in enumerate(sortedRows.tolist()):
+    symList[i] = keysSeen.setdefault(rowFmt % tuple(row), len(keysSeen)) + 1
   return tuple(symList)
 
 
@@ -562,11 +557,6 @@ def _LookUpBondOrder(atom1Id, atom2Id, bondDic):
   else:
     theKey = (atom2Id, atom1Id)
   tmp = bondDic[theKey]
-  if tmp == Chem.BondType.AROMATIC:
-    tmp = 1.5
-  else:
-    tmp = float(tmp)
-  # tmp = int(tmp)
   return tmp
 
 
@@ -597,10 +587,10 @@ def _CreateBondDictEtc(mol, numAtoms):
     if atom1 > atom2:
       atom2, atom1 = atom1, atom2
     if not aBond.GetIsAromatic():
-      bondDict[(atom1, atom2)] = aBond.GetBondType()
+      bondDict[(atom1, atom2)] = aBond.GetBondTypeAsDouble()
     else:
       # mark Kekulized systems as aromatic
-      bondDict[(atom1, atom2)] = Chem.BondType.AROMATIC
+      bondDict[(atom1, atom2)] = 1.5
     if nList[atom1] is None:
       nList[atom1] = [atom2]
     elif atom2 not in nList[atom1]:
@@ -662,17 +652,14 @@ def BertzCT(mol, cutoff=100, dMat=None, forceDMat=1):
   atomTypeDict = {}
   connectionDict = {}
   numAtoms = mol.GetNumAtoms()
-  if forceDMat or dMat is None:
-    if forceDMat:
-      # nope, gotta calculate one
-      dMat = Chem.GetDistanceMatrix(mol, useBO=0, useAtomWts=0, force=1)
+  # dMat is only used when forceDMat is unset; otherwise _AssignSymmetryClasses()
+  # calculates its own Balaban matrix
+  if not forceDMat and dMat is None:
+    try:
+      dMat = mol._adjMat
+    except AttributeError:
+      dMat = Chem.GetDistanceMatrix(mol, useBO=False, useAtomWts=False, force=True)
       mol._adjMat = dMat
-    else:
-      try:
-        dMat = mol._adjMat
-      except AttributeError:
-        dMat = Chem.GetDistanceMatrix(mol, useBO=0, useAtomWts=0, force=1)
-        mol._adjMat = dMat
 
   if numAtoms < 2:
     return 0

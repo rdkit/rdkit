@@ -822,7 +822,7 @@ void checkTimeout(
         if (clique.size() > maxCliques.front().size()) {
           maxCliques.clear();
         }
-        if (clique.size() >= maxCliques.front().size()) {
+        if (maxCliques.empty() || clique.size() >= maxCliques.front().size()) {
           maxCliques.push_back(clique);
         }
       }

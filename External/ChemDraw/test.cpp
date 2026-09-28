@@ -40,6 +40,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BadFileException.h>
@@ -422,6 +423,53 @@ TEST_CASE("CDXML Advanced") {
         CHECK(MolToSmarts(*mol) == expected_smarts[i]);
         CHECK(MolToSmiles(*mol) == expected[i++]);
       }
+    }
+    {
+      auto fname = cdxmlbase + "query-any-labels.cdxml";
+      std::vector<std::string> expected_smarts = {
+          "[#6]-[!#1]",
+          "[#6]-[!#1]",
+          "[#6]-*",
+          "[#6]-*",
+      };
+      auto mols = MolsFromChemDrawFile(fname);
+      REQUIRE(mols.size() == expected_smarts.size());
+      for (size_t i = 0; i < mols.size(); ++i) {
+        CHECK(MolToSmarts(*mols[i]) == expected_smarts[i]);
+      }
+    }
+    {
+      auto fname = cdxmlbase + "query-atoms.cdxml";
+      const bool parseQueries = true;
+      const bool strictQueryParsing = true;
+      auto params = ChemDrawParserParams(true, true, CDXFormat::CDXML, NeedsCleanPolicy::TrustSource,
+					 parseQueries, strictQueryParsing);
+      auto mols = MolsFromChemDrawFile(fname, params);
+      REQUIRE(mols.size() == 3);
+      auto smarts = MolToSmarts(*mols[0]);
+      CHECK(smarts.find("!H0") != std::string::npos);
+      auto monoSubstituted = std::unique_ptr<ROMol>(SmilesToMol("Cc1ccccc1"));
+      auto diSubstituted =
+          std::unique_ptr<ROMol>(SmilesToMol("Cc1ccc(C)cc1"));
+      REQUIRE(monoSubstituted);
+      REQUIRE(diSubstituted);
+      MatchVectType match;
+      CHECK(SubstructMatch(*monoSubstituted, *mols[0], match));
+      match.clear();
+      CHECK(!SubstructMatch(*diSubstituted, *mols[0], match));
+    }
+    {
+      auto fname = cdxmlbase + "chirality1.cdxml";
+      const bool parseQueries = true;
+      const bool strictQueryParsing = true;
+
+      auto params = ChemDrawParserParams(true, true, CDXFormat::CDXML, NeedsCleanPolicy::TrustSource,
+					 parseQueries, strictQueryParsing);
+      auto mols = MolsFromChemDrawFile(fname, params);
+      REQUIRE(mols.size() == 1);
+      auto smarts = MolToSmarts(*mols[0]);
+      CHECK(smarts.find("!H0") == std::string::npos);
+      CHECK(smarts.find("!H1") == std::string::npos);
     }
     {
       auto fname = cdxmlbase + "anybond.cdxml";
@@ -1390,7 +1438,6 @@ TEST_CASE("Round TRIP") {
             continue;
           }
 
-
           auto smi2 = MolToSmiles(*mols[0]);
           if (smi1 != smi2) {
             // std::cerr <<
@@ -1406,23 +1453,27 @@ TEST_CASE("Round TRIP") {
             // std::cerr << "PASS:" << entry.path() << std::endl;
           }
           // CHECK(smi1 == smi2);
-	  SmilesWriteParams ps;
+          SmilesWriteParams ps;
 
-	  unsigned int flags = SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER |
-	                       SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
-	  auto cxsmi1 = MolToCXSmiles(*mol, ps, flags);
-	  auto cxsmi2 = MolToCXSmiles(*mols[0], ps, flags);
-	  if(cxsmi1 != cxsmi2) {
-	    std::cerr << "CXFAIL:" << entry.path() << " (mol)" << cxsmi1
+          unsigned int flags =
+              SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER |
+              SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
+          auto cxsmi1 = MolToCXSmiles(*mol, ps, flags);
+          auto cxsmi2 = MolToCXSmiles(*mols[0], ps, flags);
+          if (cxsmi1 != cxsmi2) {
+            std::cerr << "CXFAIL:" << entry.path() << " (mol)" << cxsmi1
                       << " != (mol-cdxml)" << cxsmi2 << std::endl;
             failed++;
-	    std::cerr << "========================================" << std::endl;
-	    mol->debugMol(std::cerr);
-	    std::cerr << "----------------------------------------" << std::endl;
-	    mols[0]->debugMol(std::cerr);
-	    std::cerr << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-	    std::cerr << cdx << std::endl;
-	  }
+            std::cerr << "========================================"
+                      << std::endl;
+            mol->debugMol(std::cerr);
+            std::cerr << "----------------------------------------"
+                      << std::endl;
+            mols[0]->debugMol(std::cerr);
+            std::cerr << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+                      << std::endl;
+            std::cerr << cdx << std::endl;
+          }
           delete mol;
         }
       }
@@ -1457,8 +1508,8 @@ TEST_CASE("Geometry") {
 TEST_CASE("Bond stereo") {
   std::string path =
       std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/";
-  const auto checkOximeStereoFixture =
-      [&](const std::string &fname, Bond::BondStereo expectedStereo) {
+  const auto checkOximeStereoFixture = [&](const std::string &fname,
+                                           Bond::BondStereo expectedStereo) {
     auto mols = MolsFromChemDrawFile(fname);
     REQUIRE(mols.size() == 1);
 
@@ -1476,7 +1527,7 @@ TEST_CASE("Bond stereo") {
     CHECK(bond->getStereo() == expectedStereo);
     CHECK(bond->getStereoAtoms() == INT_VECT({0, 10}));
 
-    auto roundtrip = MolBlockToMol(MolToV3KMolBlock(mol));
+    auto roundtrip = v2::FileParsers::MolFromMolBlock(MolToV3KMolBlock(mol));
     REQUIRE(roundtrip);
     Bond *roundtripBond = nullptr;
     for (auto candidate : roundtrip->bonds()) {
@@ -1587,9 +1638,10 @@ TEST_CASE("NeedsClean hydrogens") {
     params.needsCleanPolicy = NeedsCleanPolicy::TrustExplicitHydrogens;
     auto trust = MolsFromChemDrawFile(fname);
     auto preserve = MolsFromChemDrawFile(fname, params);
-    REQUIRE(molSmiles(trust) ==
-            std::vector<std::string>{
-                "CC(=O)S[C@H]1CC2=CC(=O)CC[C@@]2(C)[C@@H]2CC[C@]3(C)[C@H](CC[C@]34CCC(=O)O4)[C@@H]12"});
+    REQUIRE(
+        molSmiles(trust) ==
+        std::vector<std::string>{
+            "CC(=O)S[C@H]1CC2=CC(=O)CC[C@@]2(C)[C@@H]2CC[C@]3(C)[C@H](CC[C@]34CCC(=O)O4)[C@@H]12"});
     CHECK(molSmiles(preserve) == molSmiles(trust));
   }
   SECTION(

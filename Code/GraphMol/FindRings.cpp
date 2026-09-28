@@ -1083,11 +1083,11 @@ void legacySymmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
 }
 }  // namespace
 int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
-                   SymmetrizeSSSRAlgorithm algorithm, bool includeDativeBonds,
-                   bool includeHydrogenBonds) {
+                   SymmetrizeSSSRAlgorithm algorithm, bool recalcSSSR,
+                   bool includeDativeBonds, bool includeHydrogenBonds) {
   auto ringInfo = mol.getRingInfo();
   if (ringInfo->isInitialized()) {
-    ringInfo->reset();
+    ringInfo->reset(recalcSSSR);
   }
   ringInfo->initialize(FIND_RING_TYPE_SYMM_SSSR);
 
@@ -1097,8 +1097,10 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
   }
 
   if (algorithm != SymmetrizeSSSRAlgorithm::LEGACY) {
-    ringInfo->preallocate(mol.getNumAtoms(), mol.getNumBonds());
-    findRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
+    if (!ringInfo->areRingFamiliesInitialized()) {
+      ringInfo->preallocate(mol.getNumAtoms(), mol.getNumBonds());
+      findRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
+    }
     res = ringInfo->atomRelevantCycles();
     for (const auto &atomRing : res) {
       INT_VECT bondRing;

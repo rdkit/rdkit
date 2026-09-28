@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2003-2017  Rational Discovery LLC
+#  Copyright (C) 2003-2026  Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -54,7 +54,8 @@ class TestCase(unittest.TestCase):
   def test2SmilesSupplier(self):
     fileN = os.path.join(RDConfig.RDCodeDir, 'VLib', 'NodeLib', 'test_data', 'pgp_20.txt')
 
-    suppl = Chem.SmilesMolSupplier(fileN, delimiter='\t', smilesColumn=2, nameColumn=1, titleLine=1)
+    suppl = Chem.SmilesMolSupplier(fileN, delimiter='\t', smilesColumn=2, nameColumn=1,
+                                   titleLine=True)
     ms = [x for x in suppl]
     self.assertEqual(len(ms), 20)
 
@@ -87,7 +88,7 @@ CCOC,5
       with tempfile.NamedTemporaryFile('w+', suffix='.csv', delete=False) as tmp:
         tmp.write(txt)
       suppl = Chem.SmilesMolSupplier(tmp.name, delimiter=',', smilesColumn=0, nameColumn=1,
-                                     titleLine=0)
+                                     titleLine=False)
       ms = [x for x in suppl]
       suppl = None
       while ms.count(None):

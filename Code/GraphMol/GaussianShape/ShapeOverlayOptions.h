@@ -13,6 +13,7 @@
 
 #ifndef RDKIT_SHAPEOVERLAYOPTIONS_GUARD
 #define RDKIT_SHAPEOVERLAYOPTIONS_GUARD
+#include <ostream>
 
 #include <RDGeneral/export.h>
 

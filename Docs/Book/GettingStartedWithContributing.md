@@ -509,9 +509,11 @@ Documentation for the [C++ API](https://www.rdkit.org/docs/cppapi/) is generated
 
 ### Wrapping the C++ Code for Python
 
-RDKit uses [Boost](https://www.boost.org/) to expose functions from the C++ API to Python. In each sub-directory of `rdkit/Code` is a further sub-directory named `Wrap` containing the files needed to construct the Python bindings. This generally includes:
-- C++ file defining the Python bindings. This will include the required libraries (usually `#include <RDBoost/Wrap.h>`)
-- Python file(s) containing the corresponding unit tests
+RDKit uses [Boost](https://www.boost.org/) and [nanobind](https://github.com/wjakob/nanobind) to expose functions from the C++ API to Python. In each sub-directory of `rdkit/Code` is a further sub-directory named `Wrap` containing the files needed to construct the boost Python bindings. 
+Additionally, there is an accompanying `nbWrap` folder containing the nanobind Python bindings.
+These generally include:
+- C++ file defining the Python bindings. This will include the required libraries (usually `#include <RDBoost/Wrap.h>` / `#include RDBoost/Wrap_nb.h`)
+- Python file(s) containing the corresponding unit tests (in `Wrap`). Note that both the boost and nanobind wrappers use the same tests in the `Wrap` directory. This is important to maintain API compatibility between the different wrappers.
 - CMakeLists.txt file containing build instructions (including the destination of the python code + linked libraries) and calls for the tests
 
 Taking the [Double Cubic Lattice Volume](https://www.rdkit.org/docs/source/rdkit.Chem.rdMolDescriptors.html#rdkit.Chem.rdMolDescriptors.DoubleCubicLatticeVolume) class as an example, in the raw C++ the class is defined as follows:
@@ -581,43 +583,92 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
 };
 ```
 
-In this case as the submission is a descriptor, the Python bindings are added to the existing `rdMolDescriptors.cpp` file as follows:
+In this case as the submission is a descriptor, the boost Python bindings are added to the existing `Wrap/rdMolDescriptors.cpp` file as follows:
 
 ```c++
-docString =
+  docString =
       R"DOC(ARGUMENTS:
       "   - mol: molecule or protein under consideration
+      "   - radii: radii for atoms of input mol (get using GetPeriodicTable or provide custom list)
       "   - isProtein: flag to indicate if the input is a protein (default=False, free ligand).
       "   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=True)
       "   - probeRadius: radius of the solvent probe (default=1.2)
-      "   - depth: control of number of dots per atom (default=4)
-      "   - dotDensity: control of accuracy (default=0)
+      "   - confId: conformer ID to consider (default=-1)
       ")DOC";
-  python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume>(
+
+  python::class_<
+      RDKit::Descriptors::DoubleCubicLatticeVolume,
+      boost::shared_ptr<RDKit::Descriptors::DoubleCubicLatticeVolume>>(
       "DoubleCubicLatticeVolume",
       "Class for the Double Cubic Lattice Volume method",
-      python::init<const RDKit::ROMol &,
-                   python::optional<bool, bool, double, int, int>>(
-          (python::args("self", "mol"), python::args("isProtein") = false,
-           python::args("includeLigand") = true,
-           python::args("probeRadius") = 1.2, python::args("depth") = 4,
-           python::args("dotDensity") = 0),
-          docString.c_str()))
+      python::init<const RDKit::ROMol &, bool, bool, double, int>(
+          (python::arg("mol"), python::arg("isProtein") = false,
+           python::arg("includeLigand") = true,
+           python::arg("probeRadius") = 1.4, python::arg("confId") = -1)))
+      .def("__init__",
+           python::make_constructor(
+               &getDoubleCubicLatticeVolume, python::default_call_policies(),
+               (python::arg("mol"), python::arg("radii"),
+                python::arg("isProtein") = false,
+                python::arg("includeLigand") = true,
+                python::arg("probeRadius") = 1.4, python::arg("confId") = -1)),
+           docString.c_str())
+      .def("GetSurfaceArea",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getSurfaceArea,
+           (python::args("self")),
+           "Get the Surface Area of the Molecule or Protein")
+      .def("GetAtomSurfaceArea",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getAtomSurfaceArea,
+           (python::arg("atom_idx")),
+           "Get the surface area of atom with atom_idx")
+      .def("GetPolarSurfaceArea",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getPolarSurfaceArea,
+           (python::arg("includeSandP") = false,
+            python::arg("includeHs") = false),
+           "Get the Polar Surface Area of the Molecule or Protein")
+  // ...
+```
+and the nanobind Python bindings are added to the existing`npWrap/rdMolDescriptors.cpp` file as follows:
+```c++
+ nb::class_<RDKit::Descriptors::DoubleCubicLatticeVolume>(
+      m, "DoubleCubicLatticeVolume",
+      "Class for the Double Cubic Lattice Volume method")
+      .def(nb::init<const RDKit::ROMol &, bool, bool, double, int>(), "mol"_a,
+           "isProtein"_a = false, "includeLigand"_a = true,
+           "probeRadius"_a = 1.4, "confId"_a = -1)
+      .def(
+          "__init__",
+          [](RDKit::Descriptors::DoubleCubicLatticeVolume *self,
+             const RDKit::ROMol &mol, const nb::list &radii, bool isProtein,
+             bool includeLigand, double probeRadius, int confId) {
+            std::vector<double> radiiAsVector;
+            radiiAsVector.reserve(mol.getNumAtoms());
+            pythonObjectToVect<double>(nb::cast<nb::object>(radii),
+                                       radiiAsVector);
+            new (self) RDKit::Descriptors::DoubleCubicLatticeVolume(
+                mol, std::move(radiiAsVector), isProtein, includeLigand,
+                probeRadius, confId);
+          },
+          "mol"_a, "radii"_a, "isProtein"_a = false, "includeLigand"_a = true,
+          "probeRadius"_a = 1.4, "confId"_a = -1,
+          R"DOC(ARGUMENTS:
+   - mol: molecule or protein under consideration
+   - radii: radii for atoms of input mol (get using GetPeriodicTable or provide custom list)
+   - isProtein: flag to indicate if the input is a protein (default=False, free ligand).
+   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=True)
+   - probeRadius: radius of the solvent probe (default=1.2)
+   - confId: conformer ID to consider (default=-1))DOC")
       .def("GetSurfaceArea",
            &RDKit::Descriptors::DoubleCubicLatticeVolume::getSurfaceArea,
            "Get the Surface Area of the Molecule or Protein")
-      .def("GetVolume",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getVolume,
-           "Get the Total Volume of the Molecule or Protein")
-      .def("GetVDWVolume",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getVDWVolume,
-           "Get the van der Waals Volume of the Molecule or Protein")
-      .def("GetCompactness",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getCompactness,
-           "Get the Compactness of the Protein")
-      .def("GetPackingDensity",
-           &RDKit::Descriptors::DoubleCubicLatticeVolume::getPackingDensity,
-           "Get the PackingDensity of the Protein");
+      .def("GetAtomSurfaceArea",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getAtomSurfaceArea,
+           "atom_idx"_a, "Get the surface area of atom with atom_idx")
+      .def("GetPolarSurfaceArea",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getPolarSurfaceArea,
+           "includeSandP"_a = false, "includeHs"_a = false,
+           "Get the Polar Surface Area of the Molecule or Protein")
+  // ...
 ```
 
 As for the pure Python contributions, the documentation is generated automatically from the docstrings. The tests are written using the `unittest framework` (see the above section for more detail).

@@ -53,7 +53,7 @@ class TestFixtureTemplate {
         m_setter_func{setter_func},
         m_var{std::move(var)} {
     auto evar = std::getenv(m_var.c_str());
-    m_env_var_set = evar == nullptr;
+    m_env_var_set = evar != nullptr;
     m_flag_state = (*m_getter_func)();
   }
 

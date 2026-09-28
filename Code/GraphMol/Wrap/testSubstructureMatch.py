@@ -41,7 +41,7 @@ class TestCase(unittest.TestCase):
 
     matches = mol.GetSubstructMatches(patt, params)
     self.assertEqual(len(matches), 1)
-    self.assertEqual(matches[0], (2, 1))
+    self.assertEqual(tuple(matches[0]), (2, 1))
 
     # override default check
     patt = Chem.MolFromSmiles('CO')
@@ -54,7 +54,7 @@ class TestCase(unittest.TestCase):
     params.extraAtomCheckOverridesDefaultCheck = True
     matches = mol.GetSubstructMatches(patt, params)
     self.assertEqual(len(matches), 1)
-    self.assertEqual(matches[0], (2, 1))
+    self.assertEqual(tuple(matches[0]), (2, 1))
 
   def testExtraBondMatch(self):
     """Test setting extra bond matching functions """
@@ -76,7 +76,7 @@ class TestCase(unittest.TestCase):
 
     matches = mol.GetSubstructMatches(patt, params)
     self.assertEqual(len(matches), 1)
-    self.assertEqual(matches[0], (1, 2))
+    self.assertEqual(tuple(matches[0]), (1, 2))
 
     # override default check
     patt = Chem.MolFromSmiles('C=C')
@@ -88,7 +88,7 @@ class TestCase(unittest.TestCase):
     params.extraBondCheckOverridesDefaultCheck = True
     matches = mol.GetSubstructMatches(patt, params)
     self.assertEqual(len(matches), 1)
-    self.assertEqual(matches[0], (1, 2))
+    self.assertEqual(tuple(matches[0]), (1, 2))
 
   def testCoordsFunctor(self):
     m = Chem.MolFromSmiles('CCCC |(0,0,0;1,0,0;2,0,0;3,0,0)|')
@@ -99,19 +99,19 @@ class TestCase(unittest.TestCase):
     params.setExtraAtomCheckFunc(coordMatcher)
     matches = m.GetSubstructMatches(patt, params)
     self.assertEqual(len(matches), 1)
-    self.assertEqual(matches[0], (3, 2))
+    self.assertEqual(tuple(matches[0]), (3, 2))
 
     # lifetime management 1:
     coordMatcher = None
     matches = m.GetSubstructMatches(patt, params)
     self.assertEqual(len(matches), 1)
-    self.assertEqual(matches[0], (3, 2))
+    self.assertEqual(tuple(matches[0]), (3, 2))
 
     # lifetime management 2:
     params.setExtraAtomCheckFunc(Chem.AtomCoordsMatcher(tol=.11))
     matches = m.GetSubstructMatches(patt, params)
     self.assertEqual(len(matches), 1)
-    self.assertEqual(matches[0], (3, 2))
+    self.assertEqual(tuple(matches[0]), (3, 2))
 
 
 if __name__ == '__main__':

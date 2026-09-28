@@ -300,7 +300,7 @@ void RingInfo::initialize(RDKit::FIND_RING_TYPE ringType) {
   df_init = true;
   df_find_type_type = ringType;
 };
-void RingInfo::reset() {
+void RingInfo::reset(bool doRingFamilies) {
   if (!df_init) {
     return;
   }
@@ -310,7 +310,9 @@ void RingInfo::reset() {
   d_bondMembers.clear();
   d_atomRings.clear();
   d_bondRings.clear();
-  resetRingFamilies();
+  if (doRingFamilies) {
+    resetRingFamilies();
+  }
 }
 void RingInfo::preallocate(unsigned int numAtoms, unsigned int numBonds) {
   d_atomMembers.resize(numAtoms);

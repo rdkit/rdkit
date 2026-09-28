@@ -15,7 +15,7 @@ class SmilesSupplyNode(SupplyNode):
       >>> from rdkit import RDConfig
       >>> fileN = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib',\
                                'test_data','pgp_20.txt')
-      >>> suppl = SmilesSupplyNode(fileN,delim="\\t",smilesColumn=2,nameColumn=1,titleLine=1)
+      >>> suppl = SmilesSupplyNode(fileN,delim="\\t",smilesColumn=2,nameColumn=1,titleLine=True)
       >>> ms = [x for x in suppl]
       >>> len(ms)
       20
@@ -36,12 +36,12 @@ class SmilesSupplyNode(SupplyNode):
 
     """
 
-  def __init__(self, fileName, delim="\t", nameColumn=1, smilesColumn=0, titleLine=0, **kwargs):
+  def __init__(self, fileName, delim="\t", nameColumn=1, smilesColumn=0, titleLine=False, **kwargs):
     SupplyNode.__init__(self, **kwargs)
     self._fileName = fileName
     self._supplier = Chem.SmilesMolSupplier(self._fileName, delimiter=delim,
                                             smilesColumn=smilesColumn, nameColumn=nameColumn,
-                                            titleLine=titleLine)
+                                            titleLine=bool(titleLine))
 
   def reset(self):
     SupplyNode.reset(self)

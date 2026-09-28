@@ -302,7 +302,7 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
 
   void calculateExtremes();
 
-  unsigned int d_activeShape;
+  unsigned int d_activeShape{0};
 
   std::vector<std::vector<double>>
       d_coords;  // The coordinates for the atoms and features,
@@ -312,8 +312,8 @@ class RDKIT_GAUSSIANSHAPE_EXPORT ShapeInput {
   // of the atom.  This is not used if using all_atoms_carbon mode.
   std::vector<int> d_types;  // The feature types.  The size is the same
   // as the number of atoms and features, padded with 0 for the atoms.
-  unsigned int d_numAtoms;                     // The number of atoms
-  unsigned int d_numFeats;                     // The number of features
+  unsigned int d_numAtoms{0};                  // The number of atoms
+  unsigned int d_numFeats{0};                  // The number of features
   std::vector<double> d_selfOverlapShapeVols;  // Shape volume
   std::vector<double> d_selfOverlapColorVols;  // Color volume
   // These are the points at the extremes of the x, y and z axes.

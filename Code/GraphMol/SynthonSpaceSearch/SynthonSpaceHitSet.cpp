@@ -13,7 +13,7 @@
 namespace RDKit::SynthonSpaceSearch {
 SynthonSpaceHitSet::SynthonSpaceHitSet(
     const SynthonSet &reaction, const std::vector<std::vector<size_t>> &stu,
-    const std::vector<std::unique_ptr<ROMol>> &fragSet)
+    const std::vector<std::shared_ptr<ROMol>> &fragSet)
     : d_reaction(&reaction) {
   synthonsToUse.reserve(stu.size());
   const auto &synthons = reaction.getSynthons();
@@ -25,11 +25,7 @@ SynthonSpaceHitSet::SynthonSpaceHitSet(
     }
   }
 
-  frags.reserve(fragSet.size());
-  std::transform(
-      fragSet.begin(), fragSet.end(), std::back_inserter(frags),
-      [](const std::unique_ptr<ROMol> &f) -> ROMol * { return f.get(); });
-
+  frags = fragSet;
   numHits = std::accumulate(
       stu.begin(), stu.end(), size_t(1),
       [](const int prevRes, const std::vector<size_t> &s2) -> size_t {
@@ -39,7 +35,7 @@ SynthonSpaceHitSet::SynthonSpaceHitSet(
 
 SynthonSpaceFPHitSet::SynthonSpaceFPHitSet(
     const SynthonSet &reaction, const std::vector<std::vector<size_t>> &stu,
-    const std::vector<std::unique_ptr<ROMol>> &fragSet)
+    const std::vector<std::shared_ptr<ROMol>> &fragSet)
     : SynthonSpaceHitSet(reaction, stu, fragSet) {
   synthonFPs.reserve(stu.size());
   for (size_t i = 0; i < stu.size(); ++i) {
@@ -52,6 +48,25 @@ SynthonSpaceFPHitSet::SynthonSpaceFPHitSet(
   }
   addFP = reaction.getAddFP().get();
   subtractFP = reaction.getSubtractFP().get();
+}
+
+SynthonSpaceShapeHitSet::SynthonSpaceShapeHitSet(
+    const SynthonSet &reaction, const std::vector<std::vector<size_t>> &stu,
+    const std::vector<std::shared_ptr<ROMol>> &fragSet,
+    const std::vector<SynthonShapeInput *> &fShapes,
+    const std::vector<unsigned int> &sSetOrder)
+    : SynthonSpaceHitSet(reaction, stu, fragSet),
+      fragShapes(fShapes),
+      synthonSetOrder(sSetOrder) {
+  // it may be that there are fewer entries in synthonSetOrder than
+  // there are synthon sets in the SynthonSet.  That occurs if the
+  // fragment set was smaller than the SynthonSet.  Pad it out if so.
+  for (size_t i = 0; i < reaction.getSynthons().size(); ++i) {
+    if (auto it = std::ranges::find(synthonSetOrder, i);
+        it == synthonSetOrder.end()) {
+      synthonSetOrder.emplace_back(i);
+    }
+  }
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

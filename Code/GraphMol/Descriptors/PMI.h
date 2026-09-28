@@ -11,6 +11,7 @@
 #include <RDGeneral/export.h>
 #ifndef PMI_H_SEPT2016
 #define PMI_H_SEPT2016
+#include <string>
 
 #ifdef RDK_BUILD_DESCRIPTORS3D
 namespace RDKit {

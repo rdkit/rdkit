@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2001-2008 greg Landrum and Rational Discovery LLC
+# Copyright (C) 2001-2026 greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -22,10 +22,16 @@ from rdkit import Chem
 from rdkit.Chem import Crippen, rdMolDescriptors, rdPartialCharges
 
 ptable = Chem.GetPeriodicTable()
-bondScaleFacts = [.1, 0, .2, .3]  # aromatic,single,double,triple
+bondScaleFacts = {
+  Chem.BondType.AROMATIC: 0.1,
+  Chem.BondType.SINGLE: 0.0,
+  Chem.BondType.DOUBLE: 0.2,
+  Chem.BondType.TRIPLE: 0.3,
+}
+#bondScaleFacts = [.1, 0, .2, .3]  # aromatic,single,double,triple
 
 
-def _LabuteHelper(mol, includeHs=1, force=0):
+def _LabuteHelper(mol, includeHs=True, force=False):
   """ *Internal Use Only*
     helper function for LabuteASA calculation
     returns an array of atomic contributions to the ASA
@@ -41,14 +47,14 @@ def _LabuteHelper(mol, includeHs=1, force=0):
     else:
       if res:
         return res
-  tpl = rdMolDescriptors._CalcLabuteASAContribs(mol, includeHs)
+  tpl = rdMolDescriptors._CalcLabuteASAContribs(mol, bool(includeHs))
   ats, hs = tpl
   Vi = [hs] + list(ats)
   mol._labuteContribs = Vi
   return Vi
 
 
-def _pyLabuteHelper(mol, includeHs=1, force=0):
+def _pyLabuteHelper(mol, includeHs=True, force=False):
   """ *Internal Use Only*
     helper function for LabuteASA calculation
     returns an array of atomic contributions to the ASA
@@ -85,7 +91,7 @@ def _pyLabuteHelper(mol, includeHs=1, force=0):
     if not bond.GetIsAromatic():
       bij = Ri + Rj - bondScaleFacts[bond.GetBondType()]
     else:
-      bij = Ri + Rj - bondScaleFacts[0]
+      bij = Ri + Rj - bondScaleFacts[Chem.BondType.AROMATIC]
     dij = min(max(abs(Ri - Rj), bij), Ri + Rj)
     Vi[idx1] += Rj * Rj - (Ri - dij)**2 / dij
     Vi[idx2] += Ri * Ri - (Rj - dij)**2 / dij
@@ -115,7 +121,7 @@ def _pyLabuteHelper(mol, includeHs=1, force=0):
 mrBins = [1.29, 1.82, 2.24, 2.45, 2.75, 3.05, 3.63, 3.8, 4.0]
 
 
-def pySMR_VSA_(mol, bins=None, force=1):
+def pySMR_VSA_(mol, bins=None, force=True):
   """ *Internal Use Only*
   """
   if not force:
@@ -154,7 +160,7 @@ SMR_VSA_ = rdMolDescriptors.SMR_VSA_
 logpBins = [-0.4, -0.2, 0, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6]
 
 
-def pySlogP_VSA_(mol, bins=None, force=1):
+def pySlogP_VSA_(mol, bins=None, force=True):
   """ *Internal Use Only*
   """
   if not force:
@@ -189,7 +195,7 @@ SlogP_VSA_ = rdMolDescriptors.SlogP_VSA_
 chgBins = [-.3, -.25, -.20, -.15, -.10, -.05, 0, .05, .10, .15, .20, .25, .30]
 
 
-def pyPEOE_VSA_(mol, bins=None, force=1):
+def pyPEOE_VSA_(mol, bins=None, force=True):
   """ *Internal Use Only*
   """
   if not force:
@@ -237,7 +243,7 @@ PEOE_VSA_ = rdMolDescriptors.PEOE_VSA_
 # install the various VSA descriptors in the namespace
 def _InstallDescriptors():
   for i in range(len(mrBins)):
-    fn = lambda x, y=i: SMR_VSA_(x, force=0)[y]
+    fn = lambda x, y=i: SMR_VSA_(x, force=False)[y]
     if i > 0:
       fn.__doc__ = "MOE MR VSA Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1, mrBins[i - 1],
                                                                         mrBins[i])
@@ -247,14 +253,14 @@ def _InstallDescriptors():
     fn.version = "1.0.1"
     globals()[name] = fn
   i += 1
-  fn = lambda x, y=i: SMR_VSA_(x, force=0)[y]
+  fn = lambda x, y=i: SMR_VSA_(x, force=False)[y]
   fn.__doc__ = "MOE MR VSA Descriptor %d (% 4.2f <= x < inf)" % (i + 1, mrBins[i - 1])
   fn.version = "1.0.1"
   name = "SMR_VSA%d" % (i + 1)
   globals()[name] = fn
 
   for i in range(len(logpBins)):
-    fn = lambda x, y=i: SlogP_VSA_(x, force=0)[y]
+    fn = lambda x, y=i: SlogP_VSA_(x, force=False)[y]
     if i > 0:
       fn.__doc__ = "MOE logP VSA Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1, logpBins[i - 1],
                                                                           logpBins[i])
@@ -264,14 +270,14 @@ def _InstallDescriptors():
     fn.version = "1.0.1"
     globals()[name] = fn
   i += 1
-  fn = lambda x, y=i: SlogP_VSA_(x, force=0)[y]
+  fn = lambda x, y=i: SlogP_VSA_(x, force=False)[y]
   fn.__doc__ = "MOE logP VSA Descriptor %d (% 4.2f <= x < inf)" % (i + 1, logpBins[i - 1])
   fn.version = "1.0.1"
   name = "SlogP_VSA%d" % (i + 1)
   globals()[name] = fn
 
   for i in range(len(chgBins)):
-    fn = lambda x, y=i: PEOE_VSA_(x, force=0)[y]
+    fn = lambda x, y=i: PEOE_VSA_(x, force=False)[y]
     if i > 0:
       fn.__doc__ = "MOE Charge VSA Descriptor %d (% 4.2f <= x < % 4.2f)" % (i + 1, chgBins[i - 1],
                                                                             chgBins[i])
@@ -281,7 +287,7 @@ def _InstallDescriptors():
     fn.version = "1.0.1"
     globals()[name] = fn
   i += 1
-  fn = lambda x, y=i: PEOE_VSA_(x, force=0)[y]
+  fn = lambda x, y=i: PEOE_VSA_(x, force=False)[y]
   fn.version = "1.0.1"
   fn.__doc__ = "MOE Charge VSA Descriptor %d (% 4.2f <= x < inf)" % (i + 1, chgBins[i - 1])
   name = "PEOE_VSA%d" % (i + 1)
@@ -294,7 +300,7 @@ def _InstallDescriptors():
 _InstallDescriptors()
 
 
-def pyLabuteASA(mol, includeHs=1):
+def pyLabuteASA(mol, includeHs=True):
   """ calculates Labute's Approximate Surface Area (ASA from MOE)
 
     Definition from P. Labute's article in the Journal of the Chemical Computing Group

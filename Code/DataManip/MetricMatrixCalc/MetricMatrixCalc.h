@@ -25,7 +25,7 @@ namespace RDDataManip {
  *  Examples of the container include PySequenceHolder which is wrapper around
  *  a python sequence objects like lists and tuples.
  *  Examples of the entryType include a sequence of double, floats, and
- *ExplicitBitVects
+ *  ExplicitBitVects
  *
  */
 template <class vectType, class entryType>
@@ -38,7 +38,7 @@ class MetricMatrixCalc {
 
   /*! \brief Set the metric function
    *
-   * Set the pointer to the mertic funvtion to be used by the metric calculator
+   * Set the pointer to the metric function to be used by the metric calculator
    *
    * ARGUMENTS:
    *
@@ -54,22 +54,20 @@ class MetricMatrixCalc {
    * ARGUMENTS:
    *
    *  descrips - vectType container with a entryType for each item
-   *  nItems - the number of item in the descripts.
-   *           In several cases this argument is irrelvant since vectType
-   *probably supports
-   *           a size() member function, But we would like this interface to
-   *take for example
-   *           a double** and correctly parse the row and columns.
-   *  dim - the dimension of the sequences
-   *  distMat - pointer to an array to write the distance matrix to
-   *            it is assumed that the right sized array has already be
-   *allocated.
+   *  nItems -   the number of item in the descrips.
+   *             In several cases this argument is irrelevant since vectType
+   *             probably supports a size() member function, But we would like
+   *             this interface to take for example a double** and correctly
+   *             parse the row and columns.
+   *  dim     -  the dimension of the sequences
+   *  distMat -  pointer to an array to write the distance matrix to
+   *             it is assumed that the right sized array has already be
+   *             allocated.
    *
    * FIX: we can probably make this function create the correct sized distMat
-   *and return
-   * it to the caller, but when pushing he result out to a python array not sure
-   *how to
-   * avoid copy the entire distance matrix in that case
+   *      and return it to the caller, but when pushing he result out to a
+   *      python array not sure how to avoid copy the entire distance matrix
+   *      in that case
    *
    * RETURNS:
    *
@@ -79,6 +77,7 @@ class MetricMatrixCalc {
   void calcMetricMatrix(const vectType &descripts, unsigned int nItems,
                         unsigned int dim, double *distMat) {
     CHECK_INVARIANT(distMat, "invalid pointer to a distance matix");
+    CHECK_INVARIANT(dp_metricFunc, "metric function has not been set");
 
     for (unsigned int i = 1; i < nItems; i++) {
       unsigned int itab = i * (i - 1) / 2;
@@ -95,10 +94,11 @@ class MetricMatrixCalc {
    * In several cases the last argument 'dim' should be irrelevant,
    * For example when entryType is a bit vector the size is of the vector
    * or the dimension can be obtained by asking the bit vector itself. However
-   * we woul like this interface to support other containers lines double*
-   * in which case the 'dim' value is useful in cumputing the metric.
+   * we would like this interface to support other containers lines double*
+   * in which case the 'dim' value is useful in computing the metric.
    */
-  double (*dp_metricFunc)(const entryType &, const entryType &, unsigned int);
+  double (*dp_metricFunc)(const entryType &, const entryType &,
+                          unsigned int){nullptr};
 };
 };  // namespace RDDataManip
 

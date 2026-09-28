@@ -752,8 +752,7 @@ void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
   std::ostream &oStream = mmffMolProperties->getMMFFOStream();
   INT_VECT fragMapping;
   if (ignoreInterfragInteractions) {
-    std::vector<ROMOL_SPTR> molFrags =
-        MolOps::getMolFrags(mol, true, &fragMapping);
+    MolOps::getMolFrags(mol, fragMapping);
   }
 
   unsigned int nAtoms = mol.getNumAtoms();
@@ -842,8 +841,7 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
   std::ostream &oStream = mmffMolProperties->getMMFFOStream();
   INT_VECT fragMapping;
   if (ignoreInterfragInteractions) {
-    std::vector<ROMOL_SPTR> molFrags =
-        MolOps::getMolFrags(mol, true, &fragMapping);
+    MolOps::getMolFrags(mol, fragMapping);
   }
   unsigned int nAtoms = mol.getNumAtoms();
   double totalEleEnergy = 0.0;
@@ -931,8 +929,7 @@ void addNonbonded(const ROMol &mol, int confId,
 
   INT_VECT fragMapping;
   if (ignoreInterfragInteractions) {
-    std::vector<ROMOL_SPTR> molFrags =
-        MolOps::getMolFrags(mol, true, &fragMapping);
+    MolOps::getMolFrags(mol, fragMapping);
   }
 
   unsigned int nAtoms = mol.getNumAtoms();

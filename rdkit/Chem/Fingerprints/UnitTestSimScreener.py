@@ -35,7 +35,7 @@ class TestCase(unittest.TestCase):
   def test1_TopNScreener(self):
     smis = ['C1CCCCC1', 'C1OCCCC1', 'C1NCCCC1', 'c1ccccc1', 'C1C(C)CCCC1', 'C1C(C)C(C)CCC1']
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(smis), delimiter=",", smilesColumn=0,
-                                           nameColumn=-1, titleLine=0)
+                                           nameColumn=-1, titleLine=False)
     metric = DataStructs.TanimotoSimilarity
     mol = Chem.MolFromSmiles('C1OCCCC1')
     probe = fingerprinter(mol)
@@ -70,7 +70,7 @@ class TestCase(unittest.TestCase):
   def test2_ThresholdScreener(self):
     smis = ['C1CCCCC1', 'C1OCCCC1', 'C1NCCCC1', 'c1ccccc1', 'C1C(C)CCCC1', 'C1C(C)C(C)CCC1']
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(smis), delimiter=",", smilesColumn=0,
-                                           nameColumn=-1, titleLine=0)
+                                           nameColumn=-1, titleLine=False)
 
     metric = DataStructs.TanimotoSimilarity
     probe = fingerprinter(Chem.MolFromSmiles('C1OCCCC1'))
@@ -86,7 +86,7 @@ class TestCase(unittest.TestCase):
   def test3_ThresholdScreener_folding(self):
     smis = ['C1CCCCC1', 'C1OCCCC1', 'C1NCCCC1', 'c1ccccc1', 'C1C(C)CCCC1', 'C1C(C)C(C)CCC1']
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(smis), delimiter=",", smilesColumn=0,
-                                           nameColumn=-1, titleLine=0)
+                                           nameColumn=-1, titleLine=False)
 
     metric = DataStructs.TanimotoSimilarity
     probe = Chem.RDKFingerprint(Chem.MolFromSmiles('C1OCCCC1'), minPath=2, maxPath=7, fpSize=4096)

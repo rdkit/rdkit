@@ -19,8 +19,10 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#ifndef RDKIT_NO_SIMDIVPICKERS
 #include <SimDivPickers/DistPicker.h>
 #include <SimDivPickers/LeaderPicker.h>
+#endif
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
@@ -466,6 +468,24 @@ std::unique_ptr<RWMol> ShapeInput::shapeToMol(const bool includeColors,
     v2::SmilesParse::SmilesParserParams params;
     params.sanitize = false;
     mol = v2::SmilesParse::MolFromSmiles(d_smiles, params);
+    // construction of the shape removes all Hs except isotopes.
+    // do that from the molecule too.
+    // This was #9441
+    MolOps::RemoveHsParameters rhps{.removeDegreeZero = true,
+                                    .removeHigherDegrees = true,
+                                    .removeOnlyHNeighbors = true,
+                                    .removeIsotopes = false,
+                                    .removeDummyNeighbors = true,
+                                    .removeDefiningBondStereo = true,
+                                    .removeWithWedgedBond = true,
+                                    .removeWithQuery = true,
+                                    .removeInSGroups = true,
+                                    .showWarnings = false,
+                                    .removeNonimplicit = true,
+                                    .removeHydrides = true,
+                                    .removeNontetrahedralNeighbors = true};
+    bool sanitize = false;
+    MolOps::removeHs(*mol, rhps, sanitize);
   } else {
     mol.reset(new RWMol());
     for (unsigned int i = 0; i < getNumAtoms(); i++) {
@@ -555,6 +575,7 @@ double ShapeInput::maxPossibleSimilarity(
   }
   return maxSim;
 }
+#ifndef RDKIT_NO_SIMDIVPICKERS
 
 void ShapeInput::pruneShapes(const double simThreshold) {
   if (d_coords.size() < 2 || simThreshold < 0.0) {
@@ -588,6 +609,15 @@ void ShapeInput::pruneShapes(const double simThreshold) {
   selectConformations(picks);
   d_activeShape = 0;
 }
+
+#else
+
+void ShapeInput::pruneShapes(const double) {
+  UNDER_CONSTRUCTION(
+      "pruneShapes not implemented when the SimDivPickers have not been built.");
+}
+
+#endif
 
 namespace {
 double getStandardAtomRadius(const unsigned int atomicNum) {
@@ -1032,6 +1062,10 @@ double maxScore(const double v1, const double v2, const double c1,
   // is v1, and the opposite.
   auto maxPart = [](const double p1, const double p2,
                     const ShapeOverlayOptions &ovlyOpts) -> double {
+    // If either is 0, the maximum overlap must be 0.
+    if (p1 == 0.0 || p2 == 0.0) {
+      return 0.0;
+    }
     if (p1 < p2) {
       return p1 / (ovlyOpts.simBeta * (p2 - p1) + p1);
     }

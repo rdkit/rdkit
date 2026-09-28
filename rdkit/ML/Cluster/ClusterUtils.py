@@ -89,7 +89,7 @@ def FindClusterCentroidFromDists(cluster, dists):
           row, col = pt, other
         else:
           row, col = other, pt
-        dAccum += dists[col * (col - 1) / 2 + row]
+        dAccum += dists[col * (col - 1) // 2 + row]
         if dAccum >= best:
           # minor efficiency hack
           break
@@ -103,7 +103,7 @@ def FindClusterCentroidFromDists(cluster, dists):
         row, col = bestIdx, pt
       else:
         row, col = pt, bestIdx
-      children[i]._distToCenter = dists[col * (col - 1) / 2 + row]
+      children[i]._distToCenter = dists[col * (col - 1) // 2 + row]
     else:
       children[i]._distToCenter = 0.0
     children[i]._clustCenter = bestIdx

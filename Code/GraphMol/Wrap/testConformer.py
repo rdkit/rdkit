@@ -58,7 +58,7 @@ class TestCase(unittest.TestCase):
     conf.SetAtomPosition(1, Point3D(1.0, 0.0, 0.0))
     conf.SetId(2)
 
-    cid = mol.AddConformer(conf, 0)
+    cid = mol.AddConformer(conf, False)
     self.assertTrue(cid == 2)
     conf3 = mol.GetConformer(2)
 
@@ -72,7 +72,7 @@ class TestCase(unittest.TestCase):
     conf2 = mol.GetConformer()
     self.assertTrue(conf2.GetNumAtoms() == 2)
 
-    nmol = Chem.AddHs(mol, 0, 1)
+    nmol = Chem.AddHs(mol, False, True)
     conf3 = nmol.GetConformer()
     self.assertTrue(conf3.GetNumAtoms() == 8)
     self.assertTrue(conf2.GetNumAtoms() == 2)

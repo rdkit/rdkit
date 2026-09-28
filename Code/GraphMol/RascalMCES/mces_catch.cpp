@@ -1559,3 +1559,25 @@ TEST_CASE("Github8645 - memory blows up") {
   REQUIRE(res.size() == 1);
   CHECK(res.front().getBondMatches().size() == 1);
 }
+
+TEST_CASE("Github9418 - maxFragSep crash") {
+  // This isn't the molecule pair in the original report.  That didn't
+  // timeout on my machine.  This pair is from the timeout test in
+  // LONG_TEST_mces_catch.cpp.
+  // The actual result we get here will depend on the speed of the machine
+  // running the test, so just check the key thing which is no crash.
+  auto m1 =
+      "O[C@@H]1CC[C@H](C[C@H]1OC)C[C@@H](C)[C@@H]4CC(=O)[C@H](C)/C=C(\\C)[C@@H](O)[C@@H](OC)C(=O)[C@H](C)C[C@H](C)\\C=C\\C=C\\C=C(/C)[C@@H](OC)C[C@@H]2CC[C@@H](C)[C@@](O)(O2)C(=O)C(=O)N3CCCC[C@H]3C(=O)O4"_smiles;
+  REQUIRE(m1);
+  auto m2 =
+      "CCC1C=C(CC(CC(C2C(CC(C(O2)(C(=O)C(=O)N3CCCCC3C(=O)OC(C(C(CC1=O)O)C)C(=CC4CCC(C(C4)OC)O)C)O)C)OC)OC)C)C"_smiles;
+  REQUIRE(m2);
+
+  RascalOptions opts;
+  opts.timeout = 1;
+  opts.maxBondMatchPairs = 2000;
+  opts.maxFragSeparation = 2;
+  auto res = rascalMCES(*m1, *m2, opts);
+  CHECK(res.size() == 1);
+  check_smarts_ok(*m1, *m2, res.front());
+}

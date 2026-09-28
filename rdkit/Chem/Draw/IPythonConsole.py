@@ -172,9 +172,7 @@ the py3Dmol.view object containing the drawing'''
       m = Chem.RemoveHs(m)
     addMolToView(m, view, confId)
   for i in range(len(mols)):
-    style = {
-          'colorscheme': colors[i % len(colors)]
-        }
+    style = {'colorscheme': colors[i % len(colors)]}
     if drawAs[i] == "sphere":
       style["radius"] = 0.5
     view.setStyle({
@@ -262,7 +260,8 @@ def listToLists(lst):
 def _toPNG(mol):
   if hasattr(mol, '__sssAtoms'):
     highlightAtoms = listToLists(mol.__sssAtoms)
-    return Draw.DrawMolWithMatches(mol, highlightAtoms, molSize=molSize, qry=mol.__sssQry, label='',
+    return Draw.DrawMolWithMatches(mol, highlightAtoms, molSize=molSize,
+                                   qry=getattr(mol, '__sssQry', None), label='',
                                    options=drawOptions, doPNG=True, kekulize=kekulizeStructures)
   else:
     highlightAtoms = []
@@ -276,7 +275,8 @@ def _toSVG(mol):
     return None
   if hasattr(mol, '__sssAtoms'):
     highlightAtoms = listToLists(mol.__sssAtoms)
-    return Draw.DrawMolWithMatches(mol, highlightAtoms, molSize=molSize, qry=mol.__sssQry, label='',
+    return Draw.DrawMolWithMatches(mol, highlightAtoms, molSize=molSize,
+                                   qry=getattr(mol, '__sssQry', None), label='',
                                    options=drawOptions, doPNG=False, kekulize=kekulizeStructures)
   else:
     highlightAtoms = []
@@ -556,4 +556,3 @@ def UninstallIPythonRenderer():
 
 
 InstallIPythonRenderer()
-

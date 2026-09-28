@@ -107,6 +107,8 @@ class list_indexing_suite
     container.erase(beg, end);
   }
 
+  static void clear(Container& container) { container.clear(); }
+
   static size_t size(Container& container) { return container.size(); }
 
   static bool contains(Container& container, key_type const& key) {

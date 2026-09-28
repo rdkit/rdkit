@@ -82,7 +82,7 @@ class FragmentMatcher(object):
       return None
     return mol.GetSubstructMatch(self._onPatt)
 
-  def GetMatches(self, mol, uniquify=1):
+  def GetMatches(self, mol, uniquify=True):
     if self._onPatt is None:
       return None
     return mol.GetSubstructMatches(self._onPatt, uniquify=uniquify)

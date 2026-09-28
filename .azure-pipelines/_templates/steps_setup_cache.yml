@@ -1,0 +1,21 @@
+steps:
+- bash: |
+    echo -e "Branch name : ${BUILD_BRANCH_NAME}"
+    echo -e "CCACHE_DIR=${CCACHE_DIR}"
+    echo -e "CCACHE env vars"
+    export | grep -i ccache
+  displayName: Print cache variables
+- task: Cache@2
+  inputs:
+    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(BUILD_BRANCH_NAME)" | "$(Build.SourceVersion)"'
+    path: $(CCACHE_DIR)
+    cacheHitVar: CACHED_BRANCH_RESTORED
+    restoreKeys: ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(BUILD_BRANCH_NAME)"
+  displayName: "Check cached branch ccache directory"
+- task: Cache@2
+  inputs:
+    key: 'ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "$(BUILD_BRANCH_NAME)" | "$(Build.SourceVersion)"'
+    path: $(CCACHE_DIR)
+    restoreKeys: ccache | "$(Agent.OS)" | "$(System.JobDisplayName)" | "master"
+  displayName: "Check cached master ccache directory"
+  condition: eq(variables.CACHED_BRANCH_RESTORED, 'false')

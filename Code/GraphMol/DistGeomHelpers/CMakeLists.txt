@@ -1,10 +1,10 @@
 
-rdkit_library(DistGeomHelpers BoundsMatrixBuilder.cpp Embedder.cpp EmbedderUtils.cpp
+rdkit_library(DistGeomHelpers BoundsMatrixBuilder.cpp Embedder.cpp EmbedderUtils.cpp ZMatrixBuilder.cpp
               LINK_LIBRARIES MolAlign ForceFieldHelpers SubstructMatch GraphMol DistGeometry Alignment
                 )
 target_compile_definitions(DistGeomHelpers PRIVATE RDKIT_DISTGEOMHELPERS_BUILD)
 
-rdkit_headers(BoundsMatrixBuilder.h
+rdkit_headers(BoundsMatrixBuilder.h ZMatrixBuilder.h
               Embedder.h DEST GraphMol/DistGeomHelpers)
 
 rdkit_catch_test(testDistGeomHelpers testDgeomHelpers.cpp
@@ -18,6 +18,10 @@ rdkit_catch_test(testDgeomHelpersGH3019 testGithub3019.cpp
            LINK_LIBRARIES DistGeomHelpers SmilesParse SHARD_COUNT 2)
 
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
+if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
+endif()
+
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
 endif()
