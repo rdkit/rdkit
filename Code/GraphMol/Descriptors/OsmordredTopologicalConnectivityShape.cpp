@@ -252,33 +252,81 @@ int calcPathsOfLengthN_(const ROMol &mol, int order) {
   return j;
 }
 
-// second code  V2 faster than extractAndClassifyPaths
-int calcPathsOfLengthN(const ROMol &mol, int order) {
-  // Extract and classify subgraphs for the current radius order
-  int j = 0;
-
-  auto paths = findAllPathsOfLengthN(
-      mol, order + 1, false, false, -1,
-      false);  // Atoms indices we need +1 at it is linear path order bonds
-               // equal order+1 atoms paths!!!!
-
-  for (const auto &atomPath : paths) {
-    std::unordered_set<int> visitedAtoms;  // Set to track visited atoms
-    bool isDuplicate = false;
-
-    for (size_t i = 0; i < atomPath.size(); ++i) {
-      if (visitedAtoms.count(atomPath[i])) {
-        isDuplicate = true;
-        break;
-      }
-      visitedAtoms.insert(atomPath[i]);
+namespace {
+// Depth-first extension of the simple path ending at \c atomIdx; see
+// countSimplePaths.
+void extendSimplePaths(
+    const std::vector<std::vector<std::pair<int, double>>> &nbrs, int start,
+    int atomIdx, unsigned int nBonds, double bondProduct,
+    unsigned int maxBonds, std::vector<char> &inPath,
+    std::vector<int> &counts, std::vector<double> *bondProducts) {
+  for (const auto &[nbr, bondOrder] : nbrs[atomIdx]) {
+    if (inPath[nbr]) {
+      continue;
     }
-
-    if (!isDuplicate) {
-      j++;  // Increment true path count and exclude Chain
+    const double product = bondProduct * bondOrder;
+    // each undirected path is seen from both ends; keep one direction
+    if (nbr > start) {
+      ++counts[nBonds + 1];
+      if (bondProducts) {
+        (*bondProducts)[nBonds + 1] += product;
+      }
+    }
+    if (nBonds + 1 < maxBonds) {
+      inPath[nbr] = 1;
+      extendSimplePaths(nbrs, start, nbr, nBonds + 1, product, maxBonds,
+                        inPath, counts, bondProducts);
+      inPath[nbr] = 0;
     }
   }
-  return j;
+}
+
+// Counts the simple paths (no repeated atom) of 1..maxBonds bonds between
+// non-hydrogen atoms, i.e. the atom paths returned by
+// findAllPathsOfLengthN(mol, k + 1, false, false, -1, false) once the ring
+// closures (paths revisiting an atom) are dropped, without materialising
+// them. counts[k] is the number of paths with k bonds; bondProducts[k], if
+// requested, is the sum over those paths of the product of their bond orders.
+void countSimplePaths(const ROMol &mol, unsigned int maxBonds,
+                      std::vector<int> &counts,
+                      std::vector<double> *bondProducts) {
+  const unsigned int nAtoms = mol.getNumAtoms();
+  counts.assign(maxBonds + 1, 0);
+  if (bondProducts) {
+    bondProducts->assign(maxBonds + 1, 0.0);
+  }
+  std::vector<std::vector<std::pair<int, double>>> nbrs(nAtoms);
+  for (const auto bond : mol.bonds()) {
+    const auto *beg = bond->getBeginAtom();
+    const auto *end = bond->getEndAtom();
+    if (beg->getAtomicNum() == 1 || end->getAtomicNum() == 1) {
+      continue;
+    }
+    const double bondOrder = bond->getBondTypeAsDouble();
+    nbrs[beg->getIdx()].emplace_back(end->getIdx(), bondOrder);
+    nbrs[end->getIdx()].emplace_back(beg->getIdx(), bondOrder);
+  }
+  if (maxBonds == 0) {
+    return;
+  }
+  std::vector<char> inPath(nAtoms, 0);
+  for (unsigned int start = 0; start < nAtoms; ++start) {
+    inPath[start] = 1;
+    extendSimplePaths(nbrs, start, start, 0, 1.0, maxBonds, inPath, counts,
+                      bondProducts);
+    inPath[start] = 0;
+  }
+}
+}  // namespace
+
+int calcPathsOfLengthN(const ROMol &mol, int order) {
+  // number of true (atom-unique) linear paths with `order` bonds
+  if (order <= 0) {
+    return 0;
+  }
+  std::vector<int> counts;
+  countSimplePaths(mol, order, counts, nullptr);
+  return counts[order];
 }
 
 // thrid code no need for Iterator ... so very slightly faster then V2
@@ -331,46 +379,6 @@ struct pathHash {
   }
 };
 
-// Calculate path counts and weighted product
-std::pair<int, double> calculatePathCount(const ROMol &mol, int order) {
-  int L = 0;           // Path count
-  double piSum = 0.0;  // Weighted bond product sum
-
-  // Get all paths of the given length
-  auto paths = findAllPathsOfLengthN(
-      mol, order + 1, false, false, -1,
-      false);  // Atoms indices we need +1 at it is linear path order bonds
-               // equal order+1 atoms paths!!!!
-
-  for (const auto &atomPath : paths) {
-    std::unordered_set<int> visitedAtoms;  // Set to track visited atoms
-    bool isDuplicate = false;
-
-    double bondProduct = 1.0;  // Initialize bond product
-
-    for (size_t i = 0; i < atomPath.size(); ++i) {
-      if (visitedAtoms.count(atomPath[i])) {
-        isDuplicate = true;
-        break;
-      }
-      visitedAtoms.insert(atomPath[i]);
-
-      if (i > 0) {
-        const auto *bond =
-            mol.getBondBetweenAtoms(atomPath[i - 1], atomPath[i]);
-        bondProduct *= bond->getBondTypeAsDouble();
-      }
-    }
-
-    if (!isDuplicate) {
-      L++;                   // Increment path count
-      piSum += bondProduct;  // Add bond product to the sum
-    }
-  }
-
-  return {L, piSum};
-}
-
 // Main function to calculate path descriptors
 std::vector<double> calcPathCount(const ROMol &mol) {
   std::vector<double> results(21, 0.0);  // Output vector
@@ -378,8 +386,13 @@ std::vector<double> calcPathCount(const ROMol &mol) {
   double cumulativePiSum =
       static_cast<double>(mol.getNumAtoms());  // Initialize piPC1
 
+  std::vector<int> pathCounts;
+  std::vector<double> bondProducts;
+  countSimplePaths(mol, 10, pathCounts, &bondProducts);
+
   for (int order = 1; order <= 10; ++order) {
-    auto [L, piSum] = calculatePathCount(mol, order);
+    const int L = pathCounts[order];
+    const double piSum = bondProducts[order];
 
     if (order > 1) {
       results[order - 2] = L;  // MPC2-MPC10 in indices 0-8
@@ -1028,35 +1041,28 @@ std::vector<std::vector<double>> calculateAdjacencyMatrixL(const ROMol &mol) {
 }
 
 // All-pairs longest simple path WITHIN one biconnected component (a single ring system,
-// hence small). Same naive backtracking DFS as longestSimplePathL, but confined to the BCC
-// so the exponential cost stays bounded. lsp is keyed by (min,max) global atom index.
-static void allPairsLongestPathBCC(
-    const std::vector<int> &nodes,
-    const std::unordered_map<int, std::vector<std::pair<int, double>>> &adj,
-    std::map<std::pair<int, int>, double> &lsp) {
-  std::unordered_set<int> visited;
-  std::function<void(int, double, std::unordered_map<int, double> &)> dfs =
-      [&](int u, double dist, std::unordered_map<int, double> &result) {
-        visited.insert(u);
-        auto rIt = result.find(u);
-        if (dist > rIt->second) rIt->second = dist;
-        auto aIt = adj.find(u);
-        if (aIt != adj.end())
-          for (const auto &vw : aIt->second)
-            if (visited.find(vw.first) == visited.end())
-              dfs(vw.first, dist + vw.second, result);
-        visited.erase(u);
-      };
+// hence small): naive backtracking DFS from every node, confined to the BCC so the
+// exponential cost stays bounded. adj, visited and the rows of lsp are indexed by global
+// atom index; lsp(s, g) receives the longest s-g path for every pair of block nodes.
+static void allPairsLongestPathBCC(const std::vector<int> &nodes,
+                                   const std::vector<std::vector<int>> &adj,
+                                   std::vector<char> &visited,
+                                   std::vector<std::vector<double>> &lsp) {
+  std::vector<double> result(adj.size(), 0.0);
+  std::function<void(int, double)> dfs = [&](int u, double dist) {
+    visited[u] = 1;
+    if (dist > result[u]) result[u] = dist;
+    for (int v : adj[u]) {
+      if (!visited[v]) dfs(v, dist + 1.0);
+    }
+    visited[u] = 0;
+  };
   for (int s : nodes) {
-    std::unordered_map<int, double> result;
     for (int n : nodes) result[n] = 0.0;
-    visited.clear();
-    dfs(s, 0.0, result);
+    dfs(s, 0.0);
     for (int g : nodes) {
-      auto key = std::make_pair(std::min(s, g), std::max(s, g));
-      double d = result[g];
-      auto f = lsp.find(key);
-      if (f == lsp.end() || d > f->second) lsp[key] = d;
+      lsp[s][g] = std::max(lsp[s][g], result[g]);
+      lsp[g][s] = lsp[s][g];
     }
   }
 }
@@ -1067,6 +1073,7 @@ static void allPairsLongestPathBCC(
 // tree (blocks share exactly one cut atom). Returns an EMPTY matrix if any single ring
 // system is too large to be tractable (circuit rank > 12; a fullerene-like cage, never in
 // real drug/natural-product chemistry), signalling the caller to emit NaN.
+// All path lengths are sums of unit bond lengths, so they are exact in double precision.
 static std::vector<std::vector<double>> computeDetourMatrixBCC(const ROMol &mol) {
   using namespace boost;
   const int N = static_cast<int>(mol.getNumAtoms());
@@ -1094,79 +1101,78 @@ static std::vector<std::vector<double>> computeDetourMatrixBCC(const ROMol &mol)
                                         static_cast<int>(target(*ei, g)));
   }
 
-  struct Block {
-    std::set<int> nodes;
-    std::map<std::pair<int, int>, double> lsp;
-  };
-  std::vector<Block> Q;
+  // Longest paths inside each block. Every pair of nodes of a block gets an entry in
+  // blockLsp (row-major, global indices); pairs in two different blocks are never
+  // read from it.
+  std::vector<std::vector<int>> blockNodes;
+  std::vector<std::vector<double>> blockLsp(N, std::vector<double>(N, 0.0));
+  std::vector<std::vector<int>> adj(N);
+  std::vector<char> visited(N, 0);
+  std::vector<char> inBlock(N, 0);
   for (const auto &edgesInBcc : bccEdges) {
     if (edgesInBcc.empty()) continue;
-    std::set<int> bnodes;
-    std::unordered_map<int, std::vector<std::pair<int, double>>> adj;
-    for (const auto &ab : edgesInBcc) {
-      bnodes.insert(ab.first);
-      bnodes.insert(ab.second);
-      adj[ab.first].emplace_back(ab.second, 1.0);
-      adj[ab.second].emplace_back(ab.first, 1.0);
+    std::vector<int> bnodes;
+    for (const auto &[a, b] : edgesInBcc) {
+      for (int n : {a, b}) {
+        if (!inBlock[n]) {
+          inBlock[n] = 1;
+          bnodes.push_back(n);
+        }
+      }
+      adj[a].push_back(b);
+      adj[b].push_back(a);
     }
+    std::sort(bnodes.begin(), bnodes.end());
     const int rank =
         static_cast<int>(edgesInBcc.size()) - static_cast<int>(bnodes.size()) + 1;
     if (rank > 12) return {};  // intractable single ring system -> caller emits NaN
-    Block blk;
-    blk.nodes = bnodes;
-    std::vector<int> nodeVec(bnodes.begin(), bnodes.end());
-    allPairsLongestPathBCC(nodeVec, adj, blk.lsp);
-    Q.push_back(std::move(blk));
+    allPairsLongestPathBCC(bnodes, adj, visited, blockLsp);
+    for (int n : bnodes) {
+      adj[n].clear();
+      inBlock[n] = 0;
+    }
+    blockNodes.push_back(std::move(bnodes));
   }
-  if (Q.empty()) return std::vector<std::vector<double>>(N, std::vector<double>(N, 0.0));
+  if (blockNodes.empty()) return std::vector<std::vector<double>>(N, std::vector<double>(N, 0.0));
 
-  // Merge blocks along the block-cut tree (Mordred CalcDetour.merge / calc_weight).
-  std::set<int> nodes = Q.back().nodes;
-  std::map<std::pair<int, int>, double> C = Q.back().lsp;
-  Q.pop_back();
-  while (!Q.empty()) {
+  // Merge blocks along the block-cut tree (Mordred CalcDetour.merge / calc_weight): a new
+  // block shares exactly one (cut) atom with the atoms merged so far; paths between an old
+  // atom i and a new atom j go through that atom.
+  std::vector<std::vector<double>> D(N, std::vector<double>(N, 0.0));
+  std::vector<char> merged(N, 0);
+  std::vector<int> nodes = blockNodes.back();
+  for (int i : nodes) {
+    merged[i] = 1;
+    for (int j : nodes) D[i][j] = blockLsp[i][j];
+  }
+  blockNodes.pop_back();
+  while (!blockNodes.empty()) {
     int found = -1, common = -1;
-    for (int i = static_cast<int>(Q.size()) - 1; i >= 0; --i) {
+    for (int i = static_cast<int>(blockNodes.size()) - 1; i >= 0; --i) {
       int inter = -1, nInter = 0;
-      for (int n : Q[i].nodes)
-        if (nodes.count(n)) { inter = n; if (++nInter > 1) break; }
+      for (int n : blockNodes[i])
+        if (merged[n]) { inter = n; if (++nInter > 1) break; }
       if (nInter == 0) continue;
       if (nInter > 1) return {};  // block-cut property violated (shouldn't happen)
       found = i; common = inter; break;
     }
     if (found < 0) return {};  // disconnected (shouldn't happen for a valid molecule)
-    Block blk = std::move(Q[found]);
-    Q.erase(Q.begin() + found);
-    std::set<int> newNodes = nodes;
-    for (int n : blk.nodes) newNodes.insert(n);
-    const auto &lsp = blk.lsp;
-    std::map<std::pair<int, int>, double> newC;
-    for (int i : newNodes)
-      for (int j : newNodes) {
-        if (i > j) continue;
-        auto ij = std::make_pair(i, j);
-        auto cIt = C.find(ij);
-        if (cIt != C.end()) { newC[ij] = cIt->second; continue; }
-        auto lIt = lsp.find(ij);
-        if (lIt != lsp.end()) { newC[ij] = lIt->second; continue; }
-        auto ic = std::make_pair(std::min(i, common), std::max(i, common));
-        auto jc = std::make_pair(std::min(j, common), std::max(j, common));
-        auto cic = C.find(ic);
-        auto ljc = lsp.find(jc);
-        if (cic != C.end() && ljc != lsp.end()) { newC[ij] = cic->second + ljc->second; continue; }
-        auto cjc = C.find(jc);
-        auto lic = lsp.find(ic);
-        if (cjc != C.end() && lic != lsp.end()) { newC[ij] = cjc->second + lic->second; continue; }
-        return {};  // unexpected
+    std::vector<int> block = std::move(blockNodes[found]);
+    blockNodes.erase(blockNodes.begin() + found);
+    for (int j : block) {
+      if (j == common) continue;
+      for (int i : block) D[i][j] = D[j][i] = blockLsp[i][j];
+      for (int i : nodes) {
+        if (i == common) continue;
+        D[i][j] = D[j][i] = D[i][common] + blockLsp[j][common];
       }
-    C = std::move(newC);
-    nodes = std::move(newNodes);
-  }
-
-  std::vector<std::vector<double>> D(N, std::vector<double>(N, 0.0));
-  for (const auto &kv : C) {
-    D[kv.first.first][kv.first.second] = kv.second;
-    D[kv.first.second][kv.first.first] = kv.second;
+    }
+    for (int j : block) {
+      if (!merged[j]) {
+        merged[j] = 1;
+        nodes.push_back(j);
+      }
+    }
   }
   return D;
 }
@@ -1754,34 +1760,6 @@ double getEtaGamma(const Atom &atom) {
   return getCoreCount(atom) / beta;
 }
 
-//  Etacorecount of reference can be merge with next function with an additional
-//  parameter if needed...
-double calculateEtaCoreCountRef(const ROMol &mol, bool averaged) {
-  const ROMol *targetMol = &mol;  // Default to the input molecule
-  // ROMol* molWithHs = nullptr;
-  targetMol = cloneAndModifyMolecule(
-      mol, false,
-      false);  // this is false, false based on the python source code
-
-  // Handle potential failure in cloning
-  if (!targetMol) {
-    // Suppress noisy warnings: return NaN silently
-    delete targetMol;
-    return std::numeric_limits<double>::quiet_NaN();  // Return NaN instead of
-                                                      // crashing
-  }
-
-  double coreCount = 0.0;
-  for (const auto &atom : targetMol->atoms()) {
-    coreCount += getCoreCount(*atom);
-  }
-  if (averaged) {
-    coreCount /= mol.getNumHeavyAtoms();
-  }
-  delete targetMol;
-  return coreCount;
-}
-
 //  Etacorecount
 std::vector<double> calculateEtaCoreCount(const ROMol &mol) {
   double coreCount = 0.0;
@@ -1899,167 +1877,38 @@ std::vector<double> calculateEtaVEMCount(const ROMol &mol) {
   };
 }
 
-// Function to Calculate ETA Composite Index
-double calculateEtaCompositeIndex(const ROMol &mol, bool useReference,
-                                  bool local, bool averaged) {
-  // Fetch molecule (reference or input)
+// Sums of the ETA composite index over the atom pairs of targetMol: over all
+// connected pairs (first) and over bonded pairs only (second), not averaged.
+// distanceMatrix is the topological distance matrix of targetMol; the
+// callers pass the one of the input molecule, which has the same atoms and
+// bonds (targetMol is a kekulized or reference-skeleton copy of it).
+std::pair<double, double> calculateEtaCompositeSums(
+    const ROMol &targetMol, const Eigen::MatrixXd &distanceMatrix) {
+  int numAtoms = targetMol.getNumAtoms();
 
-  const ROMol *targetMol = &mol;  // Default to the input molecule
-  // ROMol* molWithHs = nullptr;
-
-  if (useReference) {
-    targetMol = cloneAndModifyMolecule(
-        mol, false,
-        false);  // this is false, false based on the python source code
-
-    // Handle potential failure in cloning
-    if (!targetMol) {
-      // Suppress noisy warnings: return NaN silently
-      delete targetMol;
-      return std::numeric_limits<double>::quiet_NaN();  // Return NaN instead of
-                                                        // crashing
-    }
-  }
-
-  // Calculate distance matrix
-
-  Eigen::MatrixXd distanceMatrix = calculateDistanceMatrix(*targetMol);
-  int numAtoms = targetMol->getNumAtoms();
-
-  // Define gamma values for each atom
   std::vector<double> gamma(numAtoms, 0.0);
-  for (const auto &atom : targetMol->atoms()) {
+  for (const auto &atom : targetMol.atoms()) {
     gamma[atom->getIdx()] = getEtaGamma(*atom);
   }
 
   // ETA calculation "triangle computation" ie  j = i + 1 trick to go faster
-  double eta = 0.0;
+  double eta = 0.0, etaLocal = 0.0;
   for (int i = 0; i < numAtoms; ++i) {
     for (int j = i + 1; j < numAtoms; ++j) {
-      if (local && distanceMatrix(i, j) != 1.0) continue;
-      if (!local && distanceMatrix(i, j) == 0.0) continue;
-      eta += std::sqrt(gamma[i] * gamma[j] /
-                       (distanceMatrix(i, j) * distanceMatrix(i, j)));
-    }
-  }
-
-  // Averaged value if needed
-  if (averaged) {
-    eta /= numAtoms;
-  }
-  if (useReference) {
-    delete targetMol;
-  }
-  return eta;
-}
-
-std::vector<double> calculateEtaCompositeIndices(const ROMol &mol) {
-  std::vector<double> etaValues(8, 0.0);
-
-  // Define options for different cases
-  std::vector<std::tuple<bool, bool, bool>> options = {
-      {false, false, false},  // ETA_eta
-      {false, false, true},   // AETA_eta
-      {false, true, false},   // ETA_eta_L
-      {false, true, true},    // AETA_eta_L
-      {true, false, false},   // ETA_eta_R
-      {true, false, true},    // AETA_eta_R
-      {true, true, false},    // ETA_eta_RL
-      {true, true, true}      // AETA_eta_RL
-  };
-
-  for (size_t idx = 0; idx < options.size(); ++idx) {
-    bool useReference = std::get<0>(options[idx]);
-    bool local = std::get<1>(options[idx]);
-    bool averaged = std::get<2>(options[idx]);
-
-    // Fetch molecule (reference or input)
-    const ROMol *targetMol = &mol;  // Default to the input molecule
-    if (useReference) {
-      targetMol = cloneAndModifyMolecule(
-          mol, false, false);  // Clone with modifications (why not "True")
-
-      // Handle potential failure in cloning
-      if (!targetMol) {
-        // Suppress noisy warnings: return NaN silently
-        delete targetMol;
-        return std::vector<double>(
-            8, std::numeric_limits<double>::quiet_NaN());  // Return vector with
-                                                           // NaN
+      const double dij = distanceMatrix(i, j);
+      if (dij == 0.0) continue;
+      const double term = std::sqrt(gamma[i] * gamma[j] / (dij * dij));
+      eta += term;
+      if (dij == 1.0) {
+        etaLocal += term;
       }
     }
-
-    // Calculate distance matrix
-    Eigen::MatrixXd distanceMatrix = calculateDistanceMatrix(*targetMol);
-    int numAtoms = targetMol->getNumAtoms();
-
-    // Define gamma values for each atom
-    std::vector<double> gamma(numAtoms, 0.0);
-    for (const auto &atom : targetMol->atoms()) {
-      gamma[atom->getIdx()] = getEtaGamma(*atom);
-    }
-
-    // ETA calculation using the optimized "triangle computation"
-    double eta = 0.0;
-    for (int i = 0; i < numAtoms; ++i) {
-      for (int j = i + 1; j < numAtoms; ++j) {
-        if (local && distanceMatrix(i, j) != 1.0) continue;
-        if (!local && distanceMatrix(i, j) == 0.0) continue;
-
-        eta += std::sqrt(gamma[i] * gamma[j] /
-                         (distanceMatrix(i, j) * distanceMatrix(i, j)));
-      }
-    }
-
-    // Averaged value if required
-    if (averaged) {
-      eta /= numAtoms;
-    }
-
-    etaValues[idx] = eta;
-
-    if (useReference) {
-      delete targetMol;  // Clean up dynamically allocated molecule
-    }
   }
-
-  return etaValues;
+  return {eta, etaLocal};
 }
 
-std::vector<double> calculateEtaFunctionalityIndices(const ROMol &mol) {
-  std::vector<double> etaFunctionalityValues(4, 0.0);
-
-  // Define options for different cases
-  std::vector<std::tuple<bool, bool>> options = {
-      {false, false},  // ETA_eta_F
-      {false, true},   // AETA_eta_F
-      {true, false},   // ETA_eta_FL
-      {true, true}     // AETA_eta_FL
-  };
-
-  for (size_t idx = 0; idx < options.size(); ++idx) {
-    bool local = std::get<0>(options[idx]);
-    bool averaged = std::get<1>(options[idx]);
-
-    // Calculate eta without reference and with reference
-    double eta = calculateEtaCompositeIndex(mol, false, local, false);
-    double etaRef = calculateEtaCompositeIndex(mol, true, local, false);
-
-    // Compute functionality index
-    double etaF = etaRef - eta;
-
-    // Apply averaging if needed
-    if (averaged) {
-      etaF /= mol.getNumAtoms();
-    }
-
-    etaFunctionalityValues[idx] = etaF;
-  }
-
-  return etaFunctionalityValues;
-}
-
-std::vector<double> calculateEtaBranchingIndices(const ROMol &mol) {
+std::vector<double> calculateEtaBranchingIndices(const ROMol &mol,
+                                                 double eta_RL) {
   std::vector<double> etaBranchingValues(4, 0.0);
   int atomCount = mol.getNumAtoms();
 
@@ -2071,8 +1920,6 @@ std::vector<double> calculateEtaBranchingIndices(const ROMol &mol) {
   // Calculate non-local branching term
   double eta_NL =
       (atomCount == 2) ? 1.0 : (std::sqrt(2.0) + 0.5 * (atomCount - 3));
-
-  double eta_RL = calculateEtaCompositeIndex(mol, true, true, false);
 
   // Calculate ring count once
   double ringCount = Descriptors::calcNumRings(mol);
@@ -2288,34 +2135,61 @@ std::vector<double> calcExtendedTopochemicalAtom(const ROMol &mol) {
   results.push_back(EtaVEM[6]);  // ETA_beta_ns_d
   results.push_back(EtaVEM[7]);  // AETA_beta_ns_d
 
+  // The composite, functionality, branching and delta-alpha descriptors all
+  // use the same four ETA sums (input / reference skeleton, all pairs /
+  // bonded pairs); build the reference skeleton and each sum only once.
+  const double nan = std::numeric_limits<double>::quiet_NaN();
+  const double numAtoms = kekulizedMol->getNumAtoms();
+  std::unique_ptr<RWMol> refMol(
+      cloneAndModifyMolecule(*kekulizedMol, false, false));
+  // the kekulized molecule and the reference skeleton have the atoms and
+  // bonds of mol, hence its (cached) topological distance matrix
+  const Eigen::MatrixXd distanceMatrix = calculateDistanceMatrix(mol);
+  const auto [eta, eta_L] =
+      calculateEtaCompositeSums(*kekulizedMol, distanceMatrix);
+  double eta_R = nan, eta_RL = nan;
+  if (refMol) {
+    std::tie(eta_R, eta_RL) =
+        calculateEtaCompositeSums(*refMol, distanceMatrix);
+  }
+
   // ETA Descriptors   ==  "EtaCompositeIndex"
-  std::vector<double> ECI = calculateEtaCompositeIndices(*kekulizedMol);
-  results.push_back(ECI[0]);  // ETA_eta
-  results.push_back(ECI[1]);  // AETA_eta
-  results.push_back(ECI[2]);  // ETA_eta_L
-  results.push_back(ECI[3]);  // AETA_eta_L
-  results.push_back(ECI[4]);  // ETA_eta_R
-  results.push_back(ECI[5]);  // AETA_eta_R
-  results.push_back(ECI[6]);  // ETA_eta_RL
-  results.push_back(ECI[7]);  // AETA_eta_RL
+  if (refMol) {
+    const double numRefAtoms = refMol->getNumAtoms();
+    results.push_back(eta);                  // ETA_eta
+    results.push_back(eta / numAtoms);       // AETA_eta
+    results.push_back(eta_L);                // ETA_eta_L
+    results.push_back(eta_L / numAtoms);     // AETA_eta_L
+    results.push_back(eta_R);                // ETA_eta_R
+    results.push_back(eta_R / numRefAtoms);  // AETA_eta_R
+    results.push_back(eta_RL);               // ETA_eta_RL
+    results.push_back(eta_RL / numRefAtoms);  // AETA_eta_RL
+  } else {
+    results.insert(results.end(), 8, nan);
+  }
 
   // Functionality and Branching EtaFunctionalityIndex not working for
   // heteroatom molecule...
-  std::vector<double> EFI = calculateEtaFunctionalityIndices(*kekulizedMol);
-  results.push_back(EFI[0]);  // ETA_eta_F
-  results.push_back(EFI[1]);  // AETA_eta_F
-  results.push_back(EFI[2]);  // ETA_eta_FL
-  results.push_back(EFI[3]);  // AETA_eta_FL
+  results.push_back(eta_R - eta);                 // ETA_eta_F
+  results.push_back((eta_R - eta) / numAtoms);    // AETA_eta_F
+  results.push_back(eta_RL - eta_L);              // ETA_eta_FL
+  results.push_back((eta_RL - eta_L) / numAtoms);  // AETA_eta_FL
 
   // EtaBranchingIndex  working
-  std::vector<double> EBI = calculateEtaBranchingIndices(*kekulizedMol);
+  std::vector<double> EBI = calculateEtaBranchingIndices(*kekulizedMol, eta_RL);
   results.push_back(EBI[0]);  // ETA_eta_B
   results.push_back(EBI[1]);  // AETA_eta_B
   results.push_back(EBI[2]);  // ETA_eta_BR
   results.push_back(EBI[3]);  // AETA_eta_BR
 
   //"EtaDeltaAlpha" :  dAlpha_A, dAlpha_B  correct
-  double alpha_R = calculateEtaCoreCountRef(*kekulizedMol, false);
+  double alpha_R = nan;
+  if (refMol) {
+    alpha_R = 0.0;
+    for (const auto &atom : refMol->atoms()) {
+      alpha_R += getCoreCount(*atom);
+    }
+  }
   std::vector<double> EDA =
       calculateEtaDeltaAlpha(*kekulizedMol, alpha, alpha_R);
   results.push_back(EDA[0]);

@@ -7,26 +7,26 @@ endif(RDK_BUILD_DESCRIPTORS3D)
 
 if(RDK_BUILD_OSMORDRED_SUPPORT)
  if(NOT RDK_HAS_EIGEN)
-   message(FATAL_ERROR, "-- cannot build OSMORDRED support without eigen")
+   message(FATAL_ERROR "-- cannot build OSMORDRED support without eigen")
  endif(NOT RDK_HAS_EIGEN)
- 
+
  message("-- adding OSMORDRED Descriptors")
- find_package(LAPACK REQUIRED)
- find_package(LAPACKE REQUIRED)
-
- if(NOT LAPACKE_FOUND)
-   message(fatal_error "-- LAPACKE not found")
- endif(NOT LAPACKE_FOUND)
-
  set(OSMORDRED_HDRS Osmordred.h)
  set(OSMORDRED_SOURCES
               Osmordred.cpp
-	      OsmordredHelpers.cpp
+              OsmordredHelpers.cpp
               OsmordredBasicPhyschemCountsRules.cpp
- 	      OsmordredTopologicalConnectivityShape.cpp
-	      OsmordredMatrixAutocorrEStateFragments.cpp)
+              OsmordredTopologicalConnectivityShape.cpp
+              OsmordredMatrixAutocorrEStateFragments.cpp)
 
- include_directories(Descriptors LAPACK::LAPACK LAPACKE::LAPACKE ${LAPACK_INCLUDE_DIRS} ${LAPACKE_INCLUDE_DIRS})
+ # Eigen is the default dense linear algebra backend; LAPACKE is optional.
+ if(RDK_OSMORDRED_USE_LAPACKE)
+   message("-- OSMORDRED using LAPACKE")
+   find_package(LAPACK REQUIRED)
+   find_package(LAPACKE REQUIRED)
+   include_directories(${LAPACK_INCLUDE_DIRS} ${LAPACKE_INCLUDE_DIRS})
+   set(OSMORDRED_LINK_LIBRARIES ${LAPACKE_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+ endif(RDK_OSMORDRED_USE_LAPACKE)
 endif(RDK_BUILD_OSMORDRED_SUPPORT)
 
 
@@ -43,7 +43,10 @@ rdkit_library(Descriptors
               LINK_LIBRARIES DataStructs Fingerprints PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol
                  EigenSolvers RDGeneral)
 target_compile_definitions(Descriptors PRIVATE RDKIT_DESCRIPTORS_BUILD)
-target_link_libraries(Descriptors PUBLIC ${LAPACK_LIBRARIES} ${LAPACKE_LIBRARIES} ${BLAS_LIBRARIES})
+if(RDK_OSMORDRED_USE_LAPACKE)
+  target_compile_definitions(Descriptors PRIVATE RDK_OSMORDRED_USE_LAPACKE)
+  target_link_libraries(Descriptors PUBLIC ${OSMORDRED_LINK_LIBRARIES})
+endif(RDK_OSMORDRED_USE_LAPACKE)
 rdkit_headers(Crippen.h BCUT.h Lipinski.h
               MolDescriptors.h
               MolSurf.h

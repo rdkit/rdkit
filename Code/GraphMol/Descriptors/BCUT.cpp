@@ -108,7 +108,10 @@ std::pair<double, double> BCUT2D(std::unique_ptr<Eigen::MatrixXd> &burden,
   for (unsigned int i = 0; i < atom_props.size(); ++i) {
     (*burden)(i, i) = atom_props[i];
   }
-  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es(*burden);
+  // only the extreme eigenvalues are used; skipping the eigenvectors does not
+  // change the eigenvalues (same tridiagonalisation and QR sweeps)
+  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es(*burden,
+                                                    Eigen::EigenvaluesOnly);
   auto eivals = es.eigenvalues();
   double lowest = eivals(0);
   double highest = eivals(atom_props.size() - 1);

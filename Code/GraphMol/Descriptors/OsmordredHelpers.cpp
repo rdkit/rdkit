@@ -29,8 +29,28 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #include "OsmordredHelpers.h"
+#include <GraphMol/QueryOps.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <stack>
+
+// Dense linear algebra backend. Eigen is the default: it is header-only, so
+// Osmordred builds wherever the RDKit does, including MinimalLib (WASM).
+// Define RDK_OSMORDRED_USE_LAPACKE (cmake -DRDK_OSMORDRED_USE_LAPACKE=ON) to
+// use LAPACKE instead.
+#ifdef RDK_OSMORDRED_USE_LAPACKE
+#if defined(_MSC_VER) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#include <complex>
+#define lapack_complex_float std::complex<float>
+#define lapack_complex_double std::complex<double>
+#endif
+#include <lapacke.h>
+#else
+#include <Eigen/Cholesky>
+#include <Eigen/Eigenvalues>
+#include <Eigen/LU>
+#include <Eigen/SVD>
+#endif
 
 namespace RDKit {
 namespace Descriptors {
@@ -518,59 +538,6 @@ const std::map<int, double> &ionizationEnergyAtomicMap() {
 }
 
 namespace {
-void performDFS(const RDKit::ROMol &mol, int startAtomIdx,
-                const std::vector<int> &path, std::set<int> &visitedNodes,
-                std::set<std::pair<int, int>> &visitedEdges,
-                std::set<int> &degrees, bool &isChain) {
-  std::set<int> pathBonds(path.begin(),
-                          path.end());  // Bonds in the path for quick lookup
-  std::unordered_map<int, std::set<int>>
-      neighbors;  // Neighbors in the subgraph
-
-  // Populate neighbors for the subgraph
-  for (int bondIdx : path) {
-    const auto *bond = mol.getBondWithIdx(bondIdx);
-    int begin = bond->getBeginAtomIdx();
-    int end = bond->getEndAtomIdx();
-    neighbors[begin].insert(end);
-    neighbors[end].insert(begin);
-  }
-
-  // Perform DFS
-  std::stack<int> stack;
-  std::unordered_map<int, int> parent;  // To track parent nodes in DFS
-  stack.push(startAtomIdx);
-  parent[startAtomIdx] = -1;  // Root node has no parent
-
-  while (!stack.empty()) {
-    int node = stack.top();
-    stack.pop();
-
-    if (visitedNodes.count(node)) {
-      continue;
-    }
-
-    visitedNodes.insert(node);
-
-    // Calculate degree for this node based on subgraph neighbors
-    int degree = neighbors[node].size();
-    degrees.insert(degree);  // Add degree to the set
-
-    // Traverse neighbors in the subgraph
-    for (int neighbor : neighbors[node]) {
-      std::pair<int, int> edge = std::minmax(node, neighbor);
-
-      if (!visitedNodes.count(neighbor)) {
-        stack.push(neighbor);
-        parent[neighbor] = node;  // Set parent for the neighbor
-        visitedEdges.insert(edge);
-      } else if (parent[node] != neighbor) {  // Detect back edge
-        isChain = true;                       // Cycle detected
-      }
-    }
-  }
-}
-
 bool allDegreesAreOneOrTwo(const std::set<int> &degrees) {
   return std::all_of(degrees.begin(), degrees.end(),
                      [](int d) { return d == 1 || d == 2; });
@@ -630,6 +597,53 @@ ChiType classifySubgraph(const RDKit::ROMol &mol,
   }
 }
 
+std::vector<std::pair<int, int>> getBondAtoms(const RDKit::ROMol &mol) {
+  std::vector<std::pair<int, int>> bondAtoms(mol.getNumBonds());
+  for (const auto bond : mol.bonds()) {
+    bondAtoms[bond->getIdx()] = {static_cast<int>(bond->getBeginAtomIdx()),
+                                 static_cast<int>(bond->getEndAtomIdx())};
+  }
+  return bondAtoms;
+}
+
+ChiType classifyBondSubgraph(const std::vector<std::pair<int, int>> &bondAtoms,
+                             const std::vector<int> &bondPath,
+                             std::vector<int> &degreeScratch,
+                             std::vector<int> &atoms) {
+  atoms.clear();
+  for (int bondIdx : bondPath) {
+    const auto &[begin, end] = bondAtoms[bondIdx];
+    if (degreeScratch[begin]++ == 0) {
+      atoms.push_back(begin);
+    }
+    if (degreeScratch[end]++ == 0) {
+      atoms.push_back(end);
+    }
+  }
+  bool hasDegreeTwo = false;
+  bool allDegreesOneOrTwo = true;
+  for (int atomIdx : atoms) {
+    const int degree = degreeScratch[atomIdx];
+    hasDegreeTwo |= (degree == 2);
+    allDegreesOneOrTwo &= (degree <= 2);
+    degreeScratch[atomIdx] = 0;
+  }
+  std::sort(atoms.begin(), atoms.end());
+
+  // The subgraphs are connected, so they contain a cycle exactly when they
+  // have at least as many bonds as atoms. Decision tree: Chain first, then
+  // only degrees 1 and 2 => Path, then any degree 2 => PathCluster, else
+  // Cluster.
+  if (!bondPath.empty() && bondPath.size() >= atoms.size()) {
+    return ChiType::Chain;
+  } else if (allDegreesOneOrTwo) {
+    return ChiType::Path;
+  } else if (hasDegreeTwo) {
+    return ChiType::PathCluster;
+  }
+  return ChiType::Cluster;
+}
+
 // Main function to extract and classify subgraphs
 std::vector<std::tuple<std::vector<int>, std::set<int>, ChiType>>
 extractAndClassifyPaths(const RDKit::ROMol &mol, unsigned int targetLength,
@@ -643,38 +657,181 @@ extractAndClassifyPaths(const RDKit::ROMol &mol, unsigned int targetLength,
             // Path ...! maybe we can leverage that except if it is too
             // expensive...
 
+  results.reserve(paths.size());
+  const auto bondAtoms = getBondAtoms(mol);
+  std::vector<int> degreeScratch(mol.getNumAtoms(), 0);
+  std::vector<int> atoms;
   for (const auto &path : paths) {
-    // Prepare sets for DFS traversal
-    std::set<int> visitedNodes;
-    std::set<std::pair<int, int>> visitedEdges;
-    std::set<int> degrees;
-    bool isChain = false;
-
-    // Start DFS from the first bond in the path
-    if (!path.empty()) {
-      int startAtomIdx = mol.getBondWithIdx(path.front())->getBeginAtomIdx();
-      performDFS(mol, startAtomIdx, path, visitedNodes, visitedEdges, degrees,
-                 isChain);
-    }
-
-    // If a cycle is detected, it's a Chain Path by definitin of the isChain
-    // bool flag from DFS code this is a decision tree: Chain first than only 1
-    // and 2 => Path than has 2 => Path Cluster else Cluster!
-    ChiType type;
-    if (isChain) {
-      type = ChiType::Chain;
-    } else if (allDegreesAreOneOrTwo(degrees)) {
-      type = ChiType::Path;
-    } else if (degrees.count(2)) {
-      type = ChiType::PathCluster;
-    } else {
-      type = ChiType::Cluster;
-    }
-    results.emplace_back(path, visitedNodes, type);
+    const ChiType type =
+        classifyBondSubgraph(bondAtoms, path, degreeScratch, atoms);
+    results.emplace_back(path, std::set<int>(atoms.begin(), atoms.end()), type);
   }
   return results;
 }
 
+namespace {
+using AtomQuery = Queries::Query<int, Atom const *, true>;
+
+bool hasRecursiveQuery(const AtomQuery *query) {
+  if (query->getDescription() == "RecursiveStructure") {
+    return true;
+  }
+  for (auto child = query->beginChildren(); child != query->endChildren();
+       ++child) {
+    if (hasRecursiveQuery(child->get())) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Conservative screen: false only if no atom of mol can satisfy the query.
+// Parts without recursive SMARTS are tested with Query::Match, exactly the
+// test the substructure matcher applies; a recursive SMARTS can only be
+// satisfied if its own query molecule passes the screen.
+bool atomQueryMayMatch(const ROMol &mol, const AtomQuery *query) {
+  if (!hasRecursiveQuery(query)) {
+    for (const auto atom : mol.atoms()) {
+      if (query->Match(atom)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  if (query->getNegation()) {
+    return true;
+  }
+  const auto &description = query->getDescription();
+  if (description == "RecursiveStructure") {
+    const auto *queryMol =
+        static_cast<const RecursiveStructureQuery *>(query)->getQueryMol();
+    return !queryMol || queryMolMayMatch(mol, *queryMol);
+  }
+  if (description == "AtomOr") {
+    for (auto child = query->beginChildren(); child != query->endChildren();
+         ++child) {
+      if (atomQueryMayMatch(mol, child->get())) {
+        return true;
+      }
+    }
+    return false;
+  }
+  if (description == "AtomAnd") {
+    for (auto child = query->beginChildren(); child != query->endChildren();
+         ++child) {
+      if (!atomQueryMayMatch(mol, child->get())) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return true;
+}
+}  // namespace
+
+// false only if some atom of queryMol can match no atom of mol, in which case
+// SubstructMatch(mol, queryMol) finds nothing.
+bool queryMolMayMatch(const ROMol &mol, const ROMol &queryMol) {
+  for (const auto queryAtom : queryMol.atoms()) {
+    if (queryAtom->hasQuery()) {
+      if (!atomQueryMayMatch(mol, queryAtom->getQuery())) {
+        return false;
+      }
+    } else {
+      bool found = false;
+      for (const auto atom : mol.atoms()) {
+        if (queryAtom->Match(atom)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+unsigned int countUniqueMatches(const ROMol &mol, const ROMol &queryMol) {
+  if (!queryMolMayMatch(mol, queryMol)) {
+    return 0;
+  }
+  if (queryMol.getNumAtoms() == 1 && queryMol.getNumBonds() == 0) {
+    const Atom *queryAtom = queryMol.getAtomWithIdx(0);
+    if (!queryAtom->hasQuery() || !hasRecursiveQuery(queryAtom->getQuery())) {
+      // every compatible atom is one unique match; the matcher applies the
+      // same Atom::Match test and stops at its default maxMatches
+      const SubstructMatchParameters defaults;
+      unsigned int count = 0;
+      for (const auto atom : mol.atoms()) {
+        if (queryAtom->Match(atom) && ++count == defaults.maxMatches) {
+          break;
+        }
+      }
+      return count;
+    }
+  }
+  std::vector<MatchVectType> matches;
+  SubstructMatch(mol, queryMol, matches, true);  // uniquify = true
+  return matches.size();
+}
+
+const ROMol &OsmordredContext::molWithHs() {
+  if (!d_molWithHs || !d_molWithHsShared) {
+    d_molWithHsShared = d_mol.getRingInfo() &&
+                        d_mol.getRingInfo()->isSssrOrBetter();
+    d_molWithHs.reset(MolOps::addHs(d_mol));
+  }
+  return *d_molWithHs;
+}
+
+#ifndef RDK_OSMORDRED_USE_LAPACKE
+// Same cascade and the same failure criteria as the LAPACKE branch below, so
+// both backends take the same branch for a given matrix:
+//   dposv  -> LLT on the upper triangle, fails on a non-positive pivot
+//   dgesv  -> partial-pivoting LU, fails on an exactly zero pivot of U
+//   dgelss -> minimum-norm least squares, singular values <= rcond * s_max
+//             are treated as zero
+// A (column-major, n x n) is left untouched; B (column-major, n x nrhs) is
+// overwritten with the solution.
+void solveLinearSystem(const ROMol &mol, std::vector<double> &A,
+                       std::vector<double> &B, int n, int nrhs,
+                       bool &success) {
+  success = false;
+  if (n <= 0 || nrhs <= 0) {
+    return;
+  }
+  const Eigen::Map<const Eigen::MatrixXd> a(A.data(), n, n);
+  Eigen::Map<Eigen::MatrixXd> b(B.data(), n, nrhs);
+
+  const Eigen::LLT<Eigen::MatrixXd, Eigen::Upper> llt(a);
+  if (llt.info() == Eigen::Success) {
+    b = llt.solve(b).eval();
+    success = true;
+    return;
+  }
+
+  const Eigen::PartialPivLU<Eigen::MatrixXd> lu(a);
+  if ((lu.matrixLU().diagonal().array() != 0.0).all()) {
+    b = lu.solve(b).eval();
+    success = true;
+    return;
+  }
+
+  Eigen::BDCSVD<Eigen::MatrixXd> svd(a,
+                                     Eigen::ComputeThinU | Eigen::ComputeThinV);
+  svd.setThreshold(1e-15);  // dgelss rcond
+  const Eigen::MatrixXd x = svd.solve(b);
+  if (x.allFinite()) {
+    b = x;
+    success = true;
+    return;
+  }
+  std::cerr << "ERROR: All Eigen solvers failed (LLT, LU, SVD), Smiles:"
+            << RDKit::MolToSmiles(mol) << "\n";
+}
+#else
 void solveLinearSystem(const ROMol &mol, std::vector<double>& A, std::vector<double>& B,
 		       int n, int nrhs, bool& success) {
     int lda = n; // Leading dimension of A
@@ -734,12 +891,13 @@ void solveLinearSystem(const ROMol &mol, std::vector<double>& A, std::vector<dou
             } else {
                 // All solvers failed - this is a true error
                 std::string outputSmiles = RDKit::MolToSmiles(mol);
-                std::cerr << "ERROR: All LAPACK solvers failed (dposv, dgesv, dgelss): info=" 
+                std::cerr << "ERROR: All LAPACK solvers failed (dposv, dgesv, dgelss): info="
                           << info << ", Smiles:" << outputSmiles << "\n";
             }
         }
     }
 }
+#endif  // RDK_OSMORDRED_USE_LAPACKE
 
 ////// Barysz Matrixes Eigen style
 
@@ -867,6 +1025,23 @@ void compute_eigenvalues_and_eigenvectorsL(
   eigenvalues.resize(n);
   eigenvectors = matrix;  // Copy matrix to preserve the original
 
+#ifndef RDK_OSMORDRED_USE_LAPACKE
+  if (n > 0) {
+    Eigen::MatrixXd m(n, n);
+    for (int i = 0; i < n; ++i)
+      for (int j = 0; j < n; ++j) m(i, j) = matrix[i][j];
+    // dsyev('U') reads the upper triangle and Eigen reads the lower one, so
+    // decompose the transpose. Eigenvalues come back ascending in both.
+    const Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(m.transpose());
+    if (solver.info() != Eigen::Success) {
+      throw std::runtime_error("Error in SelfAdjointEigenSolver");
+    }
+    for (int i = 0; i < n; ++i) {
+      eigenvalues[i] = solver.eigenvalues()(i);
+      for (int j = 0; j < n; ++j) eigenvectors[i][j] = solver.eigenvectors()(i, j);
+    }
+  }
+#else
   // Convert the 2D vector to a 1D array in column-major order for LAPACK
   std::vector<double> flatMatrix(n * n);
   for (int i = 0; i < n; ++i)
@@ -882,6 +1057,7 @@ void compute_eigenvalues_and_eigenvectorsL(
   // Reshape the flatMatrix back into eigenvectors
   for (int i = 0; i < n; ++i)
     for (int j = 0; j < n; ++j) eigenvectors[i][j] = flatMatrix[j * n + i];
+#endif  // RDK_OSMORDRED_USE_LAPACKE
 
   // Canonicalize eigenvector signs: force first non-zero entry positive per
   // column
@@ -1059,22 +1235,21 @@ Eigen::MatrixXd floydWarshall(Eigen::MatrixXd &A) {
   return A;
 }
 
-std::vector<std::vector<double>> floydWarshallL(
-    std::vector<std::vector<double>> &matrix) {
-  int n = matrix.size();
+void floydWarshallL(std::vector<std::vector<double>> &matrix) {
+  const size_t n = matrix.size();
+  constexpr double inf = std::numeric_limits<double>::infinity();
 
-  for (int k = 0; k < n; ++k) {
-    for (int i = 0; i < n; ++i) {
-      for (int j = 0; j < n; ++j) {
-        if (matrix[i][k] < std::numeric_limits<double>::infinity() &&
-            matrix[k][j] < std::numeric_limits<double>::infinity()) {
-          matrix[i][j] = std::min(matrix[i][j], matrix[i][k] + matrix[k][j]);
+  for (size_t k = 0; k < n; ++k) {
+    const std::vector<double> &rowK = matrix[k];
+    for (size_t i = 0; i < n; ++i) {
+      std::vector<double> &rowI = matrix[i];
+      for (size_t j = 0; j < n; ++j) {
+        if (rowI[k] < inf && rowK[j] < inf) {
+          rowI[j] = std::min(rowI[j], rowI[k] + rowK[j]);
         }
       }
     }
   }
-
-  return matrix;
 }
 
 }  // namespace Osmordred

@@ -499,7 +499,7 @@ std::vector<std::vector<double>> computeBaryszMatrix0L(
   }
 
   // Apply Floyd-Warshall
-  baryszMatrix = floydWarshallL(baryszMatrix);
+  floydWarshallL(baryszMatrix);
 
   // Update diagonal
   for (unsigned int i = 0; i < numAtoms; ++i) {
@@ -554,12 +554,12 @@ std::vector<double> MatrixDescsL(const ROMol &mol,
 std::vector<double> calcBaryszMatrixDescsL(const ROMol &mol) {
   const PeriodicTable *tbl = PeriodicTable::getTable();
 
-  std::map<int, double> vdwmap = VdWAtomicMap();
-  std::map<int, double> semap = SandersonENAtomicMap();
-  std::map<int, double> pemap = PaulingENAtomicMap();
-  std::map<int, double> aremap = Allred_rocow_ENAtomicMap();
-  std::map<int, double> pmap = Polarizability94AtomicMap();
-  std::map<int, double> imap = ionizationEnergyAtomicMap();
+  const std::map<int, double> &vdwmap = VdWAtomicMap();
+  const std::map<int, double> &semap = SandersonENAtomicMap();
+  const std::map<int, double> &pemap = PaulingENAtomicMap();
+  const std::map<int, double> &aremap = Allred_rocow_ENAtomicMap();
+  const std::map<int, double> &pmap = Polarizability94AtomicMap();
+  const std::map<int, double> &imap = ionizationEnergyAtomicMap();
 
   double zcc = static_cast<double>(tbl->getAtomicNumber("C"));
   double mcc = static_cast<double>(tbl->getAtomicWeight("C"));
@@ -909,9 +909,44 @@ getEStateQueries(bool extended) {
   return extended ? GetesExtQueries() : GetesQueries();
 }
 
+// Unique matches (uniquify = true) of every EState atom-type query on mol, in
+// query order; queries that cannot match (or failed to parse) get no matches.
+std::vector<std::vector<MatchVectType>> computeEStateMatches(
+    const ROMol &mol,
+    const std::vector<std::pair<std::string, std::shared_ptr<RWMol>>>
+        &queries) {
+  std::vector<std::vector<MatchVectType>> matches(queries.size());
+  for (size_t i = 0; i < queries.size(); ++i) {
+    const auto &pattern = queries[i].second;
+    if (pattern && queryMolMayMatch(mol, *pattern)) {
+      SubstructMatch(mol, *pattern, matches[i], true);
+    }
+  }
+  return matches;
+}
+
+// The extended EState matches are used by both the EState and the BEState
+// blocks: compute them once per molecule.
+const std::vector<std::vector<MatchVectType>> &getEStateExtMatches(
+    OsmordredContext &ctx) {
+  if (!ctx.estateExtMatches) {
+    ctx.estateExtMatches =
+        std::make_unique<std::vector<std::vector<MatchVectType>>>(
+            computeEStateMatches(ctx.mol(), GetesExtQueries()));
+  }
+  return *ctx.estateExtMatches;
+}
+
 // Function to calculate EState fingerprints
-std::vector<double> calcEStateDescs(const ROMol &mol, bool extended) {
+std::vector<double> calcEStateDescs(OsmordredContext &ctx, bool extended) {
+  const ROMol &mol = ctx.mol();
   const auto &queries = getEStateQueries(extended);
+  std::vector<std::vector<MatchVectType>> localMatches;
+  if (!extended) {
+    localMatches = computeEStateMatches(mol, queries);
+  }
+  const auto &queryMatches =
+      extended ? getEStateExtMatches(ctx) : localMatches;
   // const std::vector<std::pair<std::string, std::string>> esPat = extended ?
   // esPatternsFromOEState : esPatterns;
   size_t nPatts = queries.size();
@@ -924,12 +959,8 @@ std::vector<double> calcEStateDescs(const ROMol &mol, bool extended) {
   // Calculate EState indices for the molecule
   std::vector<double> esIndices = calcEStateIndices(mol);
 
-  size_t i = 0;
-
-  for (const auto &[name, pattern] : queries) {
-    // Find all substructure matches
-    std::vector<MatchVectType> matches;
-    SubstructMatch(mol, *pattern, matches, true);
+  for (size_t i = 0; i < nPatts; ++i) {
+    const auto &matches = queryMatches[i];
 
     // Update counts, sums, max, and min
     counts[i] = static_cast<int>(matches.size());
@@ -946,8 +977,6 @@ std::vector<double> calcEStateDescs(const ROMol &mol, bool extended) {
       maxValues[i] = 0.0;
       minValues[i] = 0.0;
     }
-
-    ++i;  // Increment the index
   }
 
   // Concatenate counts, sums, maxValues, and minValues into a single vector
@@ -961,6 +990,11 @@ std::vector<double> calcEStateDescs(const ROMol &mol, bool extended) {
                  minValues.end());  // Min values
 
   return results;
+}
+
+std::vector<double> calcEStateDescs(const ROMol &mol, bool extended) {
+  OsmordredContext ctx(mol);
+  return calcEStateDescs(ctx, extended);
 }
 
 std::vector<double> calcHBDHBAtDescs(const ROMol &mol,
@@ -987,7 +1021,7 @@ std::vector<double> calcHBDHBAtDescs(const ROMol &mol,
 
   // Function to find index of a SMARTS pattern in `esQueries`
   auto findIndex = [&](const std::string &smarts) -> int {
-    auto esQueries = GetesQueries();
+    const auto &esQueries = GetesQueries();
     for (size_t i = 0; i < esQueries.size(); ++i) {
       if (esQueries[i].first == smarts) return i;  // Found index
     }
@@ -1003,7 +1037,9 @@ std::vector<double> calcHBDHBAtDescs(const ROMol &mol,
         continue;  // Skip if not found or null pointer
 
       std::vector<MatchVectType> matches;
-      SubstructMatch(mol, *GetesQueries()[idx].second, matches, true);
+      if (queryMolMayMatch(mol, *GetesQueries()[idx].second)) {
+        SubstructMatch(mol, *GetesQueries()[idx].second, matches, true);
+      }
 
       for (const auto &match : matches) {
         int atomIdx = match[0].second;
@@ -1103,7 +1139,7 @@ std::vector<double> calcHBDHBAtDescs(const ROMol &mol,
 // Function to calculate HEState fingerprints + need to add the HBD, wHDBm HBA
 // and wHBA patterns
 std::vector<double> calcHEStateDescs(const ROMol &mol) {
-  auto hsQueries = GetHsQueries();
+  const auto &hsQueries = GetHsQueries();
   size_t nPatts = hsQueries.size();
   std::vector<int> counts(nPatts, 0);
   std::vector<double> sums(nPatts, 0.0);
@@ -1125,7 +1161,9 @@ std::vector<double> calcHEStateDescs(const ROMol &mol) {
     // and the over-count of one anchor with several matching neighbours
     // (e.g. HCHnX, HCsatu). HEState is an osmordred extension (not in Mordred).
     std::vector<MatchVectType> matches;
-    SubstructMatch(mol, *pattern, matches, false);
+    if (queryMolMayMatch(mol, *pattern)) {
+      SubstructMatch(mol, *pattern, matches, false);
+    }
     std::unordered_set<int> anchors;
     for (const auto &match : matches) anchors.insert(match[0].second);
 
@@ -1310,6 +1348,113 @@ std::vector<double> calcChipath(const ROMol &mol) {
   return results;
 }
 
+namespace {
+// Visits the connected subgraphs of 1..maxLen bonds (hydrogens excluded) in
+// exactly the order findAllSubgraphsOfLengthsMtoN(mol, 1, maxLen, false)
+// stores them, per length, but without materialising them: the neighbour
+// lists, the candidate stacks and the forbidden-bond bookkeeping of RDKit's
+// recurseWalkRange are reproduced with reusable buffers instead of copies.
+template <typename Visitor>
+class SubgraphWalker {
+ public:
+  SubgraphWalker(const ROMol &mol, unsigned int maxLen, Visitor &visitor)
+      : d_maxLen(maxLen),
+        d_visitor(visitor),
+        d_nbrs(mol.getNumBonds()),
+        d_forbidden(mol.getNumBonds(), 0),
+        d_cands(maxLen + 1) {
+    // Same content and order as Subgraphs::getNbrsList(mol, false, ...)
+    std::vector<char> hasNbrList(mol.getNumBonds(), 0);
+    for (const auto atom : mol.atoms()) {
+      if (atom->getAtomicNum() == 1) {
+        continue;
+      }
+      for (const auto bond1 : mol.atomBonds(atom)) {
+        if (bond1->getOtherAtom(atom)->getAtomicNum() == 1) {
+          continue;
+        }
+        const int bid1 = bond1->getIdx();
+        hasNbrList[bid1] = 1;
+        for (const auto bond2 : mol.atomBonds(atom)) {
+          const int bid2 = bond2->getIdx();
+          if (bid1 != bid2 && bond2->getOtherAtom(atom)->getAtomicNum() != 1) {
+            d_nbrs[bid1].push_back(bid2);
+          }
+        }
+      }
+    }
+    for (unsigned int bid = 0; bid < mol.getNumBonds(); ++bid) {
+      if (hasNbrList[bid]) {
+        d_roots.push_back(bid);
+      }
+    }
+    d_path.reserve(maxLen);
+  }
+
+  void run() {
+    if (d_maxLen == 0) {
+      return;
+    }
+    for (int root : d_roots) {
+      if (d_forbidden[root]) {
+        continue;
+      }
+      // roots stay forbidden for all later subgraphs
+      d_forbidden[root] = 1;
+      d_path.assign(1, root);
+      d_cands[1] = d_nbrs[root];
+      walk();
+    }
+  }
+
+ private:
+  void walk() {
+    d_visitor(d_path);
+    const unsigned int depth = d_path.size();
+    if (depth >= d_maxLen) {
+      return;
+    }
+    // RDKit passes the forbidden set by value: bonds forbidden at this level
+    // are released when the level returns.
+    std::vector<int> &cands = d_cands[depth];
+    const size_t undoStart = d_undo.size();
+    while (!cands.empty()) {
+      const int next = cands.back();
+      cands.pop_back();
+      if (d_forbidden[next]) {
+        continue;
+      }
+      d_forbidden[next] = 1;
+      d_undo.push_back(next);
+
+      std::vector<int> &childCands = d_cands[depth + 1];
+      childCands.assign(cands.begin(), cands.end());
+      for (int bid : d_nbrs[next]) {
+        if (!d_forbidden[bid]) {
+          childCands.push_back(bid);
+        }
+      }
+      d_path.push_back(next);
+      walk();
+      d_path.pop_back();
+    }
+    for (size_t i = undoStart; i < d_undo.size(); ++i) {
+      d_forbidden[d_undo[i]] = 0;
+    }
+    d_undo.resize(undoStart);
+  }
+
+  const unsigned int d_maxLen;
+  Visitor &d_visitor;
+  std::vector<std::vector<int>> d_nbrs;
+  std::vector<int> d_roots;
+  std::vector<char> d_forbidden;
+  std::vector<std::vector<int>> d_cands;
+  std::vector<int> d_path;
+  std::vector<int> d_undo;
+};
+}  // namespace
+
 std::vector<double> calcAllChiDescriptors(const ROMol &mol) {
   std::vector<double> results(56,
                               0.0);  // Full results vector for all descriptors
@@ -1339,62 +1484,48 @@ std::vector<double> calcAllChiDescriptors(const ROMol &mol) {
   results[40] = path_0_xdv;                      // Total Xp-0dv
   results[48] = path_0_xdv / mol.getNumAtoms();  // Average Xp-0dv
 
-  for (int order = 1; order <= 7; ++order) {
-    auto classifiedPaths = extractAndClassifyPaths(mol, order, false);
-
-    double chain_xd = 0.0, chain_xdv = 0.0;
-    double cluster_xd = 0.0, cluster_xdv = 0.0;
-    double pathcluster_xd = 0.0, pathcluster_xdv = 0.0;
-
-    for (const auto &[bonds, nodes, type] : classifiedPaths) {
-      if (type == ChiType::Chain && order >= 3 && order <= 7) {
-        double cd = 1.0, cdv = 1.0;
-        for (const auto &node : nodes) {
-          const Atom *at = mol.getAtomWithIdx(node);
-          double d = getSigmaElectrons(*at);  // d
-          cd *= d;
-          double dv = getValenceElectrons(*at);  // dv
-          cdv *= dv;
-        }
-        chain_xd += 1.0 / std::sqrt(cd);
-        chain_xdv += 1.0 / std::sqrt(cdv);
-      } else if (type == ChiType::Cluster && order >= 3 && order <= 6) {
-        double cd = 1.0, cdv = 1.0;
-        for (const auto &node : nodes) {
-          const Atom *at = mol.getAtomWithIdx(node);
-          double d = getSigmaElectrons(*at);  // d
-          cd *= d;
-          double dv = getValenceElectrons(*at);  // dv
-          cdv *= dv;
-        }
-        cluster_xd += 1.0 / std::sqrt(cd);
-        cluster_xdv += 1.0 / std::sqrt(cdv);
-      } else if (type == ChiType::PathCluster && order >= 4 && order <= 6) {
-        double cd = 1.0, cdv = 1.0;
-        for (const auto &node : nodes) {
-          const Atom *at = mol.getAtomWithIdx(node);
-          double d = getSigmaElectrons(*at);  // d
-          cd *= d;
-          double dv = getValenceElectrons(*at);  // dv
-          cdv *= dv;
-        }
-        pathcluster_xd += 1.0 / std::sqrt(cd);
-        pathcluster_xdv += 1.0 / std::sqrt(cdv);
-      } else if (type == ChiType::Path) {
-        double cd = 1.0, cdv = 1.0;
-        for (const auto &node : nodes) {
-          const Atom *at = mol.getAtomWithIdx(node);
-          double d = getSigmaElectrons(*at);  // d
-          cd *= d;
-          double dv = getValenceElectrons(*at);  // dv
-          cdv *= dv;
-        }
-        path_node_counts[order] += 1;
-        path_xd[order] += 1.0 / std::sqrt(cd);
-        path_xdv[order] += 1.0 / std::sqrt(cdv);
-      }
+  // One walk over all subgraphs of 1..7 bonds; per length it visits the same
+  // subgraphs in the same order as findAllSubgraphsOfLengthN, so every sum is
+  // accumulated in the original order.
+  std::vector<double> chain_xd(8, 0.0), chain_xdv(8, 0.0);
+  std::vector<double> cluster_xd(8, 0.0), cluster_xdv(8, 0.0);
+  std::vector<double> pathcluster_xd(8, 0.0), pathcluster_xdv(8, 0.0);
+  const auto bondAtoms = getBondAtoms(mol);
+  std::vector<int> degreeScratch(mol.getNumAtoms(), 0);
+  std::vector<int> nodes;
+  auto accumulate = [&](const std::vector<int> &bonds) {
+    const unsigned int order = bonds.size();
+    const ChiType type =
+        classifyBondSubgraph(bondAtoms, bonds, degreeScratch, nodes);
+    double *xd = nullptr, *xdv = nullptr;
+    if (type == ChiType::Chain && order >= 3 && order <= 7) {
+      xd = &chain_xd[order];
+      xdv = &chain_xdv[order];
+    } else if (type == ChiType::Cluster && order >= 3 && order <= 6) {
+      xd = &cluster_xd[order];
+      xdv = &cluster_xdv[order];
+    } else if (type == ChiType::PathCluster && order >= 4 && order <= 6) {
+      xd = &pathcluster_xd[order];
+      xdv = &pathcluster_xdv[order];
+    } else if (type == ChiType::Path) {
+      path_node_counts[order] += 1;
+      xd = &path_xd[order];
+      xdv = &path_xdv[order];
+    } else {
+      return;
     }
+    double cd = 1.0, cdv = 1.0;
+    for (const auto node : nodes) {
+      cd *= sigmaElectrons[node];     // d
+      cdv *= valenceElectrons[node];  // dv
+    }
+    *xd += 1.0 / std::sqrt(cd);
+    *xdv += 1.0 / std::sqrt(cdv);
+  };
+  SubgraphWalker<decltype(accumulate)> walker(mol, 7, accumulate);
+  walker.run();
 
+  for (int order = 1; order <= 7; ++order) {
     // Update total Path values
     if (order <= 7) {
       path_xd_total += path_xd[order];
@@ -1403,20 +1534,20 @@ std::vector<double> calcAllChiDescriptors(const ROMol &mol) {
 
     // Store Chain results (order 3-7)
     if (order >= 3 && order <= 7) {
-      results[order - 3] = chain_xd;
-      results[5 + (order - 3)] = chain_xdv;
+      results[order - 3] = chain_xd[order];
+      results[5 + (order - 3)] = chain_xdv[order];
     }
 
     // Store Cluster results (order 3-6)
     if (order >= 3 && order <= 6) {
-      results[10 + (order - 3)] = cluster_xd;
-      results[14 + (order - 3)] = cluster_xdv;
+      results[10 + (order - 3)] = cluster_xd[order];
+      results[14 + (order - 3)] = cluster_xdv[order];
     }
 
     // Store PathCluster results (order 4-6)
     if (order >= 4 && order <= 6) {
-      results[18 + (order - 4)] = pathcluster_xd;
-      results[21 + (order - 4)] = pathcluster_xdv;
+      results[18 + (order - 4)] = pathcluster_xd[order];
+      results[21 + (order - 4)] = pathcluster_xdv[order];
     }
   }
 
@@ -1435,11 +1566,12 @@ std::vector<double> calcAllChiDescriptors(const ROMol &mol) {
 
 ///////
 // Define the graph as an adjacency list
-using Graph = std::unordered_map<int, std::vector<std::pair<int, double>>>;
+// neighbours (atom index, edge weight) of every atom, in bond order
+using Graph = std::vector<std::vector<std::pair<int, double>>>;
 
 // Build the molecular graph
 Graph buildGraph(const ROMol &mol) {
-  Graph graph;
+  Graph graph(mol.getNumAtoms());
   for (const auto &bond : mol.bonds()) {
     int start = bond->getBeginAtomIdx();
     int end = bond->getEndAtomIdx();
@@ -1454,18 +1586,14 @@ Graph buildGraph(const ROMol &mol) {
 
 // Recursive DFS for atomic ID computation
 double computeAtomicId(const Graph &graph, int atomIdx, double epsilon,
-                       double currentWeight, std::unordered_set<int> &visited,
+                       double currentWeight, std::vector<char> &visited,
                        double limit) {
   double id = 0.0;
 
-  visited.insert(atomIdx);
+  visited[atomIdx] = 1;
 
-  // Graphs can have single atoms
-  auto res = graph.find(atomIdx);
-  if (res == graph.end()) return id;
-
-  for (const auto &[nextAtom, edgeWeight] : res->second) {
-    if (visited.count(nextAtom)) continue;
+  for (const auto &[nextAtom, edgeWeight] : graph[atomIdx]) {
+    if (visited[nextAtom]) continue;
 
     double combinedWeight = currentWeight * edgeWeight;
 
@@ -1477,7 +1605,7 @@ double computeAtomicId(const Graph &graph, int atomIdx, double epsilon,
     }
   }
 
-  visited.erase(atomIdx);  // Backtrack
+  visited[atomIdx] = 0;  // Backtrack
   return id;
 }
 
@@ -1489,8 +1617,8 @@ std::vector<double> computeAtomicIds(const ROMol &mol, double epsilon) {
   Graph graph = buildGraph(mol);
   double limit = 1.0 / (epsilon * epsilon);
 
+  std::vector<char> visited(natoms, 0);
   for (int atomIdx = 0; atomIdx < natoms; ++atomIdx) {
-    std::unordered_set<int> visited;
     double id = computeAtomicId(graph, atomIdx, epsilon, 1.0, visited, limit);
     atomicIds[atomIdx] = 1.0 + id / 2.0;  // Normalize
   }
@@ -1608,7 +1736,8 @@ bool checkGasteigerParameters(const ROMol &mol) {
   return true;
 }
 
-std::vector<double> calcRNCG_RPCG(const ROMol &mol) {
+std::vector<double> calcRNCG_RPCG(OsmordredContext &ctx) {
+  const ROMol &mol = ctx.mol();
   // subclass of CPSA using only 2D descriptors available in Mordred v1
   // v2.0: Check Gasteiger parameters first (on original mol, before adding H)
   if (!checkGasteigerParameters(mol)) {
@@ -1616,7 +1745,7 @@ std::vector<double> calcRNCG_RPCG(const ROMol &mol) {
             std::numeric_limits<double>::quiet_NaN()};
   }
 
-  std::unique_ptr<ROMol> hmol(MolOps::addHs(mol));
+  const ROMol *hmol = &ctx.molWithHs();
 
   double maxpos = 0;
   double maxneg = 0;
@@ -1657,6 +1786,11 @@ std::vector<double> calcRNCG_RPCG(const ROMol &mol) {
   return {maxneg / totalneg, maxpos / totalpos};
 }
 
+std::vector<double> calcRNCG_RPCG(const ROMol &mol) {
+  OsmordredContext ctx(mol);
+  return calcRNCG_RPCG(ctx);
+}
+
 // Function to compute BCUT descriptors for multiple properties
 std::vector<double> calcBCUTs(const ROMol &mol) {
   // v2.0: Check Gasteiger parameters first
@@ -1664,12 +1798,12 @@ std::vector<double> calcBCUTs(const ROMol &mol) {
 
   // Atomic properties to compute
   auto *tbl = PeriodicTable::getTable();
-  std::map<int, double> vdwMap = VdWAtomicMap();
-  std::map<int, double> sandersonENMap = SandersonENAtomicMap();
-  std::map<int, double> paulingENMap = PaulingENAtomicMap();
-  std::map<int, double> allredENMap = Allred_rocow_ENAtomicMap();
-  std::map<int, double> polarizabilityMap = Polarizability94AtomicMap();
-  std::map<int, double> ionizationMap = ionizationEnergyAtomicMap();
+  const std::map<int, double> &vdwMap = VdWAtomicMap();
+  const std::map<int, double> &sandersonENMap = SandersonENAtomicMap();
+  const std::map<int, double> &paulingENMap = PaulingENAtomicMap();
+  const std::map<int, double> &allredENMap = Allred_rocow_ENAtomicMap();
+  const std::map<int, double> &polarizabilityMap = Polarizability94AtomicMap();
+  const std::map<int, double> &ionizationMap = ionizationEnergyAtomicMap();
 
   size_t numAtoms = mol.getNumAtoms();
   std::vector<double> gasteigerCharges(numAtoms, 0.0);
@@ -1714,18 +1848,18 @@ std::vector<double> calcBCUTs(const ROMol &mol) {
     atomicProperties[5][i] =
         tbl->getAtomicWeight(atomNumber);  // Atomic weight (m)
     atomicProperties[6][i] =
-        vdw_volume(vdwMap[atomNumber]);  // Van der Waals volume need vdw_volume
+        vdw_volume(atomicMapValue(vdwMap, atomNumber));  // Van der Waals volume need vdw_volume
                                          // to go from (r) to (v)
     atomicProperties[7][i] =
-        sandersonENMap[atomNumber];  // Sanderson electronegativity (se)
+        atomicMapValue(sandersonENMap, atomNumber);  // Sanderson electronegativity (se)
     atomicProperties[8][i] =
-        paulingENMap[atomNumber];  // Pauling electronegativity (pe)
+        atomicMapValue(paulingENMap, atomNumber);  // Pauling electronegativity (pe)
     atomicProperties[9][i] =
-        allredENMap[atomNumber];  // Allred-Rocow electronegativity (are)
+        atomicMapValue(allredENMap, atomNumber);  // Allred-Rocow electronegativity (are)
     atomicProperties[10][i] =
-        polarizabilityMap[atomNumber];  // Polarizability (p)
+        atomicMapValue(polarizabilityMap, atomNumber);  // Polarizability (p)
     atomicProperties[11][i] =
-        ionizationMap[atomNumber];  // Ionization energy (i)
+        atomicMapValue(ionizationMap, atomNumber);  // Ionization energy (i)
   }
 
   for (auto &result :
@@ -1762,12 +1896,12 @@ std::vector<double> calcAutoCorrelationEigen(const ROMol &mol) {
   unsigned int numAtoms = hmol->getNumAtoms();
 
   // Lookup tables
-  std::map<int, double> vdwmap = VdWAtomicMap();
-  std::map<int, double> semap = SandersonENAtomicMap();
-  std::map<int, double> pemap = PaulingENAtomicMap();
-  std::map<int, double> aremap = Allred_rocow_ENAtomicMap();
-  std::map<int, double> pmap = Polarizability94AtomicMap();
-  std::map<int, double> imap = ionizationEnergyAtomicMap();
+  const std::map<int, double> &vdwmap = VdWAtomicMap();
+  const std::map<int, double> &semap = SandersonENAtomicMap();
+  const std::map<int, double> &pemap = PaulingENAtomicMap();
+  const std::map<int, double> &aremap = Allred_rocow_ENAtomicMap();
+  const std::map<int, double> &pmap = Polarizability94AtomicMap();
+  const std::map<int, double> &imap = ionizationEnergyAtomicMap();
   const auto *tbl = PeriodicTable::getTable();
 
   // Eigen vector for atomic properties
@@ -1792,12 +1926,12 @@ std::vector<double> calcAutoCorrelationEigen(const ROMol &mol) {
     propertyMatrix(2, i) = getIntrinsicState(*atom);
     propertyMatrix(3, i) = static_cast<double>(atomNumber);
     propertyMatrix(4, i) = tbl->getAtomicWeight(atomNumber);
-    propertyMatrix(5, i) = vdw_volume(vdwmap[atomNumber]);
-    propertyMatrix(6, i) = semap[atomNumber];
-    propertyMatrix(7, i) = pemap[atomNumber];
-    propertyMatrix(8, i) = aremap[atomNumber];
-    propertyMatrix(9, i) = pmap[atomNumber];
-    propertyMatrix(10, i) = imap[atomNumber];
+    propertyMatrix(5, i) = vdw_volume(atomicMapValue(vdwmap, atomNumber));
+    propertyMatrix(6, i) = atomicMapValue(semap, atomNumber);
+    propertyMatrix(7, i) = atomicMapValue(pemap, atomNumber);
+    propertyMatrix(8, i) = atomicMapValue(aremap, atomNumber);
+    propertyMatrix(9, i) = atomicMapValue(pmap, atomNumber);
+    propertyMatrix(10, i) = atomicMapValue(imap, atomNumber);
     propertyMatrix(11, i) = gasteigerCharges[i];  // need to change order ...
   }
 
@@ -1931,21 +2065,21 @@ std::vector<double> calcAutoCorrelationEigen(const ROMol &mol) {
 }
 
 // Function to compute the ATS descriptors without Eigen
-std::vector<double> calcAutoCorrelation(const ROMol &mol) {
+std::vector<double> calcAutoCorrelation(OsmordredContext &ctx) {
+  const ROMol &mol = ctx.mol();
   // v2.0: Check Gasteiger parameters first (on original mol, before adding H)
   bool gasteiger_ok = checkGasteigerParameters(mol);
 
-  std::unique_ptr<ROMol> hmol(MolOps::addHs(mol));
-  double *dist = MolOps::getDistanceMat(*hmol, false);  // Topological matrix
+  const ROMol *hmol = &ctx.molWithHs();
   const unsigned int numAtoms = hmol->getNumAtoms();
   const unsigned int numProperties = 12;
   // Lookup tables
-  std::map<int, double> vdwmap = VdWAtomicMap();
-  std::map<int, double> semap = SandersonENAtomicMap();
-  std::map<int, double> pemap = PaulingENAtomicMap();
-  std::map<int, double> aremap = Allred_rocow_ENAtomicMap();
-  std::map<int, double> pmap = Polarizability94AtomicMap();
-  std::map<int, double> imap = ionizationEnergyAtomicMap();
+  const std::map<int, double> &vdwmap = VdWAtomicMap();
+  const std::map<int, double> &semap = SandersonENAtomicMap();
+  const std::map<int, double> &pemap = PaulingENAtomicMap();
+  const std::map<int, double> &aremap = Allred_rocow_ENAtomicMap();
+  const std::map<int, double> &pmap = Polarizability94AtomicMap();
+  const std::map<int, double> &imap = ionizationEnergyAtomicMap();
   const auto *tbl = PeriodicTable::getTable();
   // Property matrix as a vector of vectors
   std::vector<std::vector<double>> propertyMatrix(
@@ -1979,20 +2113,55 @@ std::vector<double> calcAutoCorrelation(const ROMol &mol) {
     propertyMatrix[3][i] = getIntrinsicState(*atom);
     propertyMatrix[4][i] = static_cast<double>(atomNumber);
     propertyMatrix[5][i] = tbl->getAtomicWeight(atomNumber);
-    propertyMatrix[6][i] = vdw_volume(vdwmap[atomNumber]);
-    propertyMatrix[7][i] = semap[atomNumber];
-    propertyMatrix[8][i] = pemap[atomNumber];
-    propertyMatrix[9][i] = aremap[atomNumber];
-    propertyMatrix[10][i] = pmap[atomNumber];
-    propertyMatrix[11][i] = imap[atomNumber];
+    propertyMatrix[6][i] = vdw_volume(atomicMapValue(vdwmap, atomNumber));
+    propertyMatrix[7][i] = atomicMapValue(semap, atomNumber);
+    propertyMatrix[8][i] = atomicMapValue(pemap, atomNumber);
+    propertyMatrix[9][i] = atomicMapValue(aremap, atomNumber);
+    propertyMatrix[10][i] = atomicMapValue(pmap, atomNumber);
+    propertyMatrix[11][i] = atomicMapValue(imap, atomNumber);
   }
 
   // Initialize the topological symetric distance matrix without diagonal
   std::vector<std::vector<double>> distanceMatrix(
       numAtoms, std::vector<double>(numAtoms, 0.0));
-  for (unsigned int i = 0; i < numAtoms; ++i) {
-    for (unsigned int j = i + 1; j < numAtoms; ++j) {
-      distanceMatrix[i][j] = dist[i * numAtoms + j];
+  // hmol keeps the atoms of mol (same indices) and appends hydrogens that are
+  // each bonded to one atom of mol, so d(H, x) = 1 + d(parent(H), x): derive
+  // the (exact, integer) distances from the cached distance matrix of mol
+  // instead of running Floyd-Warshall on the larger H molecule. Only
+  // distances 1..8 are used below.
+  const unsigned int nMolAtoms = mol.getNumAtoms();
+  std::vector<unsigned int> parent(numAtoms);
+  std::vector<double> hops(numAtoms, 0.0);
+  bool pendantHs = numAtoms >= nMolAtoms;
+  for (unsigned int i = 0; i < numAtoms && pendantHs; ++i) {
+    parent[i] = i;
+    if (i >= nMolAtoms) {
+      const Atom *atom = hmol->getAtomWithIdx(i);
+      pendantHs = atom->getDegree() == 1;
+      if (pendantHs) {
+        parent[i] = (*hmol->atomNeighbors(atom).begin())->getIdx();
+        hops[i] = 1.0;
+        pendantHs = parent[i] < nMolAtoms;
+      }
+    }
+  }
+  if (pendantHs) {
+    const double *dist = MolOps::getDistanceMat(mol, false, false, false);
+    for (unsigned int i = 0; i < numAtoms; ++i) {
+      for (unsigned int j = i + 1; j < numAtoms; ++j) {
+        distanceMatrix[i][j] =
+            (parent[i] == parent[j]
+                 ? 0.0
+                 : dist[parent[i] * nMolAtoms + parent[j]]) +
+            hops[i] + hops[j];
+      }
+    }
+  } else {
+    const double *dist = MolOps::getDistanceMat(*hmol, false);
+    for (unsigned int i = 0; i < numAtoms; ++i) {
+      for (unsigned int j = i + 1; j < numAtoms; ++j) {
+        distanceMatrix[i][j] = dist[i * numAtoms + j];
+      }
     }
   }
 
@@ -2048,25 +2217,31 @@ std::vector<double> calcAutoCorrelation(const ROMol &mol) {
     GATS[0][t] = ATSC[0][t] / (numAtoms - 1);
   }
 
-  // Lags 1 to maxLag: pairwise correlations
-  for (int k = 1; k <= maxDistance; ++k) {
-    int maxkVertexPairs = 0;
-    for (unsigned int i = 0; i < numAtoms; ++i) {
-      for (unsigned int j = i + 1; j < numAtoms; ++j) {
-        if (distanceMatrix[i][j] == k) {
-          ++maxkVertexPairs;
-          for (unsigned int t = 0; t < numProperties; ++t) {
-            double diff = propertyMatrix[t][i] - propertyMatrix[t][j];
-            if (t > 0) {
-              ATS_[k][t - 1] += propertyMatrix[t][i] * propertyMatrix[t][j];
-            }
-            ATSC[k][t] += centeredProperties[t][i] * centeredProperties[t][j];
-            GATS[k][t] += diff * diff;
-          }
+  // Lags 1 to maxLag: pairwise correlations. One pass over the atom pairs
+  // accumulates every lag; each lag still sees its pairs in the same (i, j)
+  // order, so every sum is formed in the same order as a pass per lag.
+  std::vector<int> kVertexPairs(maxDistance + 1, 0);
+  for (unsigned int i = 0; i < numAtoms; ++i) {
+    for (unsigned int j = i + 1; j < numAtoms; ++j) {
+      const double dij = distanceMatrix[i][j];
+      if (!(dij >= 1 && dij <= maxDistance) || dij != static_cast<int>(dij)) {
+        continue;
+      }
+      const int k = static_cast<int>(dij);
+      ++kVertexPairs[k];
+      for (unsigned int t = 0; t < numProperties; ++t) {
+        double diff = propertyMatrix[t][i] - propertyMatrix[t][j];
+        if (t > 0) {
+          ATS_[k][t - 1] += propertyMatrix[t][i] * propertyMatrix[t][j];
         }
+        ATSC[k][t] += centeredProperties[t][i] * centeredProperties[t][j];
+        GATS[k][t] += diff * diff;
       }
     }
+  }
 
+  for (int k = 1; k <= maxDistance; ++k) {
+    const int maxkVertexPairs = kVertexPairs[k];
     if (maxkVertexPairs > 0) {
       for (unsigned int t = 0; t < numProperties; ++t) {
         if (t > 0) {
@@ -2112,6 +2287,11 @@ std::vector<double> calcAutoCorrelation(const ROMol &mol) {
   }
 
   return descriptors;
+}
+
+std::vector<double> calcAutoCorrelation(const ROMol &mol) {
+  OsmordredContext ctx(mol);
+  return calcAutoCorrelation(ctx);
 }
 
 std::unordered_set<int> findLinkersWithBFS(
@@ -2184,7 +2364,8 @@ std::unordered_set<int> findLinkersWithBFS(
 }
 
 // Function to calculate the FMF ratio
-double calcFramework(const ROMol &mol) {
+double calcFramework(OsmordredContext &ctx) {
+  const ROMol &mol = ctx.mol();
   const RingInfo &ringInfo = getRings(mol);
   std::unordered_set<int> ringAtoms;
 
@@ -2200,7 +2381,7 @@ double calcFramework(const ROMol &mol) {
   std::unordered_set<int> linkers = findLinkersWithBFS(mol, ringAtoms);
 
   // Total number of atoms (including hydrogens)
-  std::unique_ptr<ROMol> hmol(MolOps::addHs(mol));
+  const ROMol *hmol = &ctx.molWithHs();
   int totalAtoms = hmol->getNumAtoms();
 
   // Number of framework atoms: linkers + ring atoms
@@ -2210,6 +2391,11 @@ double calcFramework(const ROMol &mol) {
   double FMF = static_cast<double>(frameworkAtoms) / totalAtoms;
 
   return FMF;
+}
+
+double calcFramework(const ROMol &mol) {
+  OsmordredContext ctx(mol);
+  return calcFramework(ctx);
 }
 
 // BRStates: Tetko version only organis !
@@ -2291,21 +2477,13 @@ struct BondEStateResult {
 
 // retreive the positional of the
 std::vector<int> NamePosES(
-    const ROMol &mol,
-    const std::vector<std::pair<std::string, std::shared_ptr<RWMol>>>
-        &queries) {
-  size_t nAtoms = mol.getNumAtoms();
+    size_t nAtoms, const std::vector<std::vector<MatchVectType>> &queryMatches) {
   std::vector<int> pos(nAtoms, 0);  // Initialize positions with 0
-  for (unsigned int idx = 0; idx < queries.size(); idx++) {
-    auto entry = queries[idx];
-    if (!entry.second) continue;  // Skip invalid SMARTS patterns
-
-    std::vector<MatchVectType> qmatches;
-    if (SubstructMatch(mol, *entry.second, qmatches, true)) {
-      for (unsigned int i = 0; i < qmatches.size(); ++i) {
-        int atomIdx = qmatches[i][0].second;
-        pos[atomIdx] = idx + 1;
-      }
+  for (unsigned int idx = 0; idx < queryMatches.size(); idx++) {
+    const auto &qmatches = queryMatches[idx];
+    for (unsigned int i = 0; i < qmatches.size(); ++i) {
+      int atomIdx = qmatches[i][0].second;
+      pos[atomIdx] = idx + 1;
     }
   }
 
@@ -2313,7 +2491,8 @@ std::vector<int> NamePosES(
 }
 
 // Tetko version
-BondEStateResult getBEStateFeatures(const ROMol &mol, bool extended) {
+BondEStateResult getBEStateFeatures(OsmordredContext &ctx, bool extended) {
+  const ROMol &mol = ctx.mol();
   size_t nBonds = mol.getNumBonds();
   size_t nAtoms = mol.getNumAtoms();
 
@@ -2329,8 +2508,12 @@ BondEStateResult getBEStateFeatures(const ROMol &mol, bool extended) {
   std::vector<double> Iij(nBonds, 0.0);
   std::vector<std::string> BEScode(nBonds);
 
-  const auto &queries = extended ? GetesExtQueries() : GetesQueries();
-  const std::vector<int> pos = NamePosES(mol, queries);
+  std::vector<std::vector<MatchVectType>> localMatches;
+  if (!extended) {
+    localMatches = computeEStateMatches(mol, GetesQueries());
+  }
+  const std::vector<int> pos =
+      NamePosES(nAtoms, extended ? getEStateExtMatches(ctx) : localMatches);
 
   // Compute bond contributions
   for (size_t t = 0; t < nBonds; ++t) {
@@ -2423,12 +2606,17 @@ BondEStateResult getBEStateFeatures(const ROMol &mol, bool extended) {
   return {SumKeys, BEStotal, SumBES, nBES, minBES, maxBES};
 }
 
+BondEStateResult getBEStateFeatures(const ROMol &mol, bool extended) {
+  OsmordredContext ctx(mol);
+  return getBEStateFeatures(ctx, extended);
+}
+
 // Function to compute Bond E-State fingerprints
-std::vector<double> calcBEStateDescs(const ROMol &mol) {
+std::vector<double> calcBEStateDescs(OsmordredContext &ctx) {
   // Call the function to calculate Bond E-State descriptors using the extended
   // patterns (aka true)
   auto [SumKeys_i, BEStotal_i, SumBES_i, nBES_i, minBES_i, maxBES_i] =
-      getBEStateFeatures(mol, true);
+      getBEStateFeatures(ctx, true);
 
   const auto &orgbondkeys = getOrganicBondKeys();
 
@@ -2495,6 +2683,11 @@ std::vector<double> calcBEStateDescs(const ROMol &mol) {
                             maxBES.end());
 
   return concatenatedResult;
+}
+
+std::vector<double> calcBEStateDescs(const ROMol &mol) {
+  OsmordredContext ctx(mol);
+  return calcBEStateDescs(ctx);
 }
 
 static const std::vector<std::string> AFragments = {
@@ -2634,6 +2827,7 @@ static const std::vector<std::string> BSELFragments = {
     "[OX2]-c:c-[OX2]"};
 
 // Precompile SMARTS patterns for efficiency
+
 static const std::vector<std::shared_ptr<RWMol>> &GetQueriesA() {
   static const std::vector<std::shared_ptr<RWMol>> queriesA = [] {
     std::vector<std::shared_ptr<RWMol>> res;
@@ -2739,21 +2933,18 @@ std::vector<double> calcAbrahams(const ROMol &mol) {
 
   try {
     // Calculate A descriptor
-    auto queriesA = GetQueriesA();
+    // counts of zero still enter every sum as before
+    const auto &queriesA = GetQueriesA();
     for (size_t i = 0; i < queriesA.size(); ++i) {
-      std::vector<MatchVectType> matches;
-      SubstructMatch(mol, *queriesA[i], matches, true);  // uniquify = true
-      retval[0] += matches.size() * coefAFragments[i];
+      const size_t nMatches = countUniqueMatches(mol, *queriesA[i]);
+      retval[0] += nMatches * coefAFragments[i];
     }
 
     // Calculate BSEL descriptors
     int sulphurCount = 0;
-    auto queriesB = GetQueriesB();
+    const auto &queriesB = GetQueriesB();
     for (size_t i = 0; i < queriesB.size(); ++i) {
-      std::vector<MatchVectType> matches;
-      SubstructMatch(mol, *queriesB[i], matches, true);  // uniquify = true
-
-      int uniqueMatches = matches.size();
+      int uniqueMatches = countUniqueMatches(mol, *queriesB[i]);
       if (30 <= i && i <= 34) {
         sulphurCount += uniqueMatches;
       } else if (i == 35) {
@@ -2939,12 +3130,17 @@ std::map<int, std::vector<std::vector<int>>> mordredCN(const ROMol &mol,
 //! RDKit writes these charge-separated, which makes two chemically equivalent
 //! oxygens inequivalent in the graph; see InformationContentOptions.
 std::set<std::pair<int, int>> delocalizedBonds(const ROMol &mol) {
-  static const std::vector<std::string> patterns = {
-      "[N+](=O)[O-]", "[CX3](=O)[O-]", "[SX4](=O)(=O)[O-]"};
+  static const std::vector<std::unique_ptr<ROMol>> queries = [] {
+    std::vector<std::unique_ptr<ROMol>> res;
+    for (const auto &smarts :
+         {"[N+](=O)[O-]", "[CX3](=O)[O-]", "[SX4](=O)(=O)[O-]"}) {
+      res.emplace_back(SmartsToMol(smarts));
+    }
+    return res;
+  }();
   std::set<std::pair<int, int>> out;
-  for (const auto &smarts : patterns) {
-    std::unique_ptr<ROMol> query(SmartsToMol(smarts));
-    if (!query) continue;
+  for (const auto &query : queries) {
+    if (!query || !queryMolMayMatch(mol, *query)) continue;
     std::vector<MatchVectType> matches;
     SubstructMatch(mol, *query, matches, true);
     for (const auto &match : matches) {
@@ -4899,7 +5095,7 @@ static const std::vector<std::string> frags = {
     "[PX5](=[OX1])([OX2H])[OX2H]",
     "[PX6](=[OX1])([OX1-])([OX1-])[OX1-]"};
 
-static const std::vector<std::shared_ptr<RWMol>> GetQueriesFrags() {
+static const std::vector<std::shared_ptr<RWMol>> &GetQueriesFrags() {
   static const std::vector<std::shared_ptr<RWMol>> queriesFrags = [] {
     std::vector<std::shared_ptr<RWMol>> res;
     for (const auto &smi : frags) {
@@ -4916,15 +5112,13 @@ static const std::vector<std::shared_ptr<RWMol>> GetQueriesFrags() {
 }
 
 std::vector<double> calcFrags(const ROMol &mol) {
-  auto queriesFrags = GetQueriesFrags();
+  const auto &queriesFrags = GetQueriesFrags();
   std::vector<double> retval(queriesFrags.size(), 0.0);
 
   try {
     // Calculate A descriptor
     for (size_t i = 0; i < queriesFrags.size(); ++i) {
-      std::vector<MatchVectType> matches;
-      SubstructMatch(mol, *queriesFrags[i], matches, true);  // uniquify = true
-      retval[i] = matches.size();
+      retval[i] = countUniqueMatches(mol, *queriesFrags[i]);
     }
 
   } catch (const std::exception &e) {

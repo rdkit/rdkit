@@ -99,6 +99,7 @@ option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" O
 option(RDK_BUILD_MINIMAL_LIB_MMPA "build support for MMPA into MinimalLib" OFF )
 option(RDK_BUILD_LONG_RUNNING_TESTS "build longer running tests" OFF )
 option(RDK_BUILD_OSMORDRED_SUPPORT "Build Osmordred descriptors" ON )
+option(RDK_OSMORDRED_USE_LAPACKE "Use LAPACKE instead of Eigen for the Osmordred linear algebra" OFF )
 
 set(RDK_LTO_MODE "OFF" CACHE STRING
     "link-time optimization mode: OFF, THIN, or FULL")
