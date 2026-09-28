@@ -13,6 +13,7 @@
 
 // REVIEW: remove extra headers here
 #include <RDGeneral/types.h>
+#include <RDGeneral/hash/hash.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RWMol.h>
 #include <GraphMol/ROMol.h>
@@ -20,7 +21,10 @@
 #include <Geometry/Transform2D.h>
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
+#include <algorithm>
+#include <cstdint>
 #include <queue>
+#include <vector>
 
 namespace RDDepict {
 
@@ -389,14 +393,36 @@ RDKIT_DEPICTOR_EXPORT INT_PAIR_VECT findBondsPairsToPermuteDeg4(
     const RDGeom::Point2D &center, const RDKit::INT_VECT &nbrBids,
     const VECT_C_POINT &nbrLocs);
 
-//! returns the rank of the atom for determining draw order
-inline int getAtomDepictRank(const RDKit::Atom *at) {
+/*!
+  \brief Returns a rank used to determine atom draw order.
+
+  Rank by atomic number (hydrogen last), then degree, then a hash of the
+  sorted neighbor environment. The starting-atom and attachment-ordering
+  callers use the atom index to break remaining ties.
+
+  \param at  the atom of interest
+
+  \return a 64-bit integer representing the atom's rank
+*/
+inline std::uint64_t getAtomDepictRank(const RDKit::Atom *at) {
   const int maxAtNum = 1000;
   const int maxDeg = 100;
   int anum = at->getAtomicNum();
   anum = anum == 1 ? maxAtNum : anum;  // favor non-hydrogen atoms
   int deg = at->getDegree();
-  return maxDeg * anum + deg;
+  std::vector<std::pair<unsigned int, unsigned int>> neighbors;
+  neighbors.reserve(deg);
+  for (const auto nbr : at->getOwningMol().atomNeighbors(at)) {
+    neighbors.emplace_back(nbr->getAtomicNum(), nbr->getDegree());
+  }
+  std::sort(neighbors.begin(), neighbors.end());
+  // Hash the sorted local environment so atom order does not affect this
+  // tie breaker. Keep element and degree as the primary ordering criteria.
+  const auto neighborHash =
+      gboost::hash_range(neighbors.begin(), neighbors.end());
+  constexpr std::uint64_t hashBits = 16;
+  return ((static_cast<std::uint64_t>(maxDeg * anum + deg) << hashBits) |
+          (neighborHash & ((1u << hashBits) - 1)));
 }
 
 RDKIT_DEPICTOR_EXPORT bool hasTerminalRGroupOrQueryHydrogen(

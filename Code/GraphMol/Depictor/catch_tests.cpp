@@ -13,6 +13,7 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/MolOps.h>
 #include "RDDepictor.h"
 #include "DepictUtils.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -23,6 +24,48 @@
 #include <GraphMol/test_fixtures.h>
 
 using namespace RDKit;
+
+TEST_CASE("neighbor-aware ranking keeps bridged atoms distinct across orders") {
+  SmilesParserParams smilesParams;
+  smilesParams.removeHs = false;
+  std::unique_ptr<RWMol> base(
+      SmilesToMol("C1([H])([H])[C@@]2([H])O[C@]1([H])N2[H]", smilesParams));
+  REQUIRE(base);
+  REQUIRE(base->getNumAtoms() == 10);
+
+  // These carbons have the same element and degree, but different neighbors.
+  const auto carbonRank = RDDepict::getAtomDepictRank(base->getAtomWithIdx(0));
+  const auto bridgeheadRank =
+      RDDepict::getAtomDepictRank(base->getAtomWithIdx(3));
+  CHECK(carbonRank != bridgeheadRank);
+
+  const std::vector<std::vector<unsigned int>> orders = {
+      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+      {5, 0, 1, 8, 6, 7, 4, 2, 9, 3},
+      {5, 9, 3, 1, 2, 7, 4, 6, 0, 8}};
+  for (const auto &order : orders) {
+    CAPTURE(order);
+    std::unique_ptr<ROMol> mol(MolOps::renumberAtoms(*base, order));
+    const auto newIndex = [&order](unsigned int original) {
+      return static_cast<unsigned int>(
+          std::distance(order.begin(),
+                        std::find(order.begin(), order.end(), original)));
+    };
+    CHECK(RDDepict::getAtomDepictRank(mol->getAtomWithIdx(newIndex(0))) ==
+          carbonRank);
+    CHECK(RDDepict::getAtomDepictRank(mol->getAtomWithIdx(newIndex(3))) ==
+          bridgeheadRank);
+
+    RDDepict::Compute2DCoordParameters params;
+    params.forceRDKit = true;
+    RDDepict::compute2DCoords(*mol, params);
+    const auto &conf = mol->getConformer();
+    // The ring carbon and N nearly coincide in the old layout for two of
+    // these orders; the neighbor-aware seed-ring choice separates them.
+    CHECK((conf.getAtomPos(newIndex(0)) - conf.getAtomPos(newIndex(8)))
+              .length() > 0.25);
+  }
+}
 
 TEST_CASE(
     "github #4504: overlapping coordinates with 1,1-disubstituted "
