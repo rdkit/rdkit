@@ -941,7 +941,8 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
 
   const auto &nb1 = d_eatoms.at(refAtom.nbr1).loc;
   const auto &nb2 = d_eatoms.at(refAtom.nbr2).loc;
-  if (d_eatoms[toAid].rotDir == 0) {
+  const auto canChooseDirection = refAtom.rotDir == 0;
+  if (canChooseDirection) {
     d_eatoms[toAid].rotDir = rotationDir(refLoc, nb1, nb2, remAngle);
   }
 
@@ -951,13 +952,15 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   rtrans.SetTransform(refLoc, currAngle);
   auto currLoc = nb2;
   rtrans.TransformPoint(currLoc);
-  if (fabs(remAngle) - M_PI < 1e-3) {
+  // Either direction is valid only for an unassigned half-plane. Once a gap
+  // has been selected, reversing would place the atom outside that gap.
+  if (canChooseDirection && std::abs(remAngle - M_PI) < 1e-3) {
     auto currLoc2 = nb2;
     rtrans.SetTransform(refLoc, -currAngle);
     rtrans.TransformPoint(currLoc2);
     if (findNumNeigh(currLoc, 0.5) > findNumNeigh(currLoc2, 0.5)) {
       currLoc = currLoc2;
-      currAngle *= -1;
+      d_eatoms[toAid].rotDir *= -1;
     } else {
       rtrans.SetTransform(refLoc, currAngle);
     }

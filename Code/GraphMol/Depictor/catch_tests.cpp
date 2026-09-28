@@ -2483,6 +2483,47 @@ TEST_CASE("attachments use the exterior gap larger than pi") {
   CHECK(std::abs(pos.y) < 1.e-6);
 }
 
+TEST_CASE("crowding does not reverse a selected attachment gap") {
+  auto halfWidth = GENERATE(M_PI / 2, 5 * M_PI / 9);
+  CAPTURE(halfWidth);
+  auto mol = "P(F)(Cl)(Br)(CC)C"_smiles;
+  REQUIRE(mol);
+  const auto pointAt = [](double angle) {
+    return RDGeom::Point2D(std::cos(angle), std::sin(angle)) *
+           RDDepict::BOND_LEN;
+  };
+  const auto step = (2 * M_PI - 2 * halfWidth) / 3;
+  // The three existing bonds leave a 180- or 160-degree gap. Atom 5 crowds
+  // the first new position, but reversing would leave the selected gap.
+  RDGeom::INT_POINT2D_MAP coords{{0, {0, 0}},
+                                 {1, pointAt(-halfWidth)},
+                                 {2, pointAt(0)},
+                                 {3, pointAt(halfWidth)},
+                                 {5, pointAt(halfWidth + step) * 1.05}};
+  RDDepict::EmbeddedFrag fragment(mol.get(), coords);
+  for (auto atom : {4, 6}) {
+    fragment.addNonRingAtom(atom, 0);
+    const auto expected = pointAt(halfWidth + (atom == 4 ? 1 : 2) * step);
+    CHECK((fragment.GetEmbeddedAtom(atom).loc - expected).length() < 1.e-6);
+  }
+}
+
+TEST_CASE("attachments retain a direction chosen to avoid crowding") {
+  auto mol = "C(F)(Cl)(CC)C"_smiles;
+  REQUIRE(mol);
+  // Two opposite bonds leave either half-plane available. Atom 4 crowds
+  // the right side, so both remaining substituents should go to the left.
+  RDGeom::INT_POINT2D_MAP coords{
+      {0, {0, 0}}, {1, {0, -1.5}}, {2, {0, 1.5}}, {4, {1.3, 0.75}}};
+  RDDepict::EmbeddedFrag fragment(mol.get(), coords);
+  for (auto atom : {3, 5}) {
+    fragment.addNonRingAtom(atom, 0);
+    const RDGeom::Point2D expected(-std::sqrt(3.) * 0.75,
+                                   atom == 3 ? 0.75 : -0.75);
+    CHECK((fragment.GetEmbeddedAtom(atom).loc - expected).length() < 1.e-6);
+  }
+}
+
 TEST_CASE("canonical ordering") {
   auto useLegacy = GENERATE(true, false);
   CAPTURE(useLegacy);
