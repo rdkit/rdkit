@@ -293,10 +293,12 @@ public class AlignTest
     [Fact]
     public void TestO3AMissingMMFFParams()
     {
-        var m1 = RWMol.MolFromSmiles("c1ccccc1Cl");
-        DistanceGeom.EmbedMolecule(m1);
-        var m2 = RWMol.MolFromSmiles("c1ccccc1B(O)O");
-        DistanceGeom.EmbedMolecule(m2);
+        var m1 = RWMol.MolFromSmiles(
+            "c1ccccc1Cl |(0.28,1.10,-0.68;-1.09,1.16,-0.48;-1.82,0.01,-0.20;-1.13,-1.18,-0.39;0.24,-1.19,-0.14;0.98,-0.02,-0.26;2.53,0.12,0.55)|");
+        var m2 = RWMol.MolFromSmiles(
+            "c1ccccc1B(O)O |(-0.53,-1.08,-0.63;-1.82,-1.12,-0.10;-2.35,-0.08,0.65;-1.78,1.17,0.40;-0.50,1.20,-0.14;0.23,0.06,-0.39;1.78,-0.02,-0.15;2.50,1.16,0.36;2.48,-1.30,0.00)|");
+        Assert.Equal(1u, m1.getNumConformers());
+        Assert.Equal(1u, m2.getNumConformers());
         Assert.ThrowsAny<Exception>(() => new O3A(m1, m2));
     }
 }
