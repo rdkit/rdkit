@@ -109,9 +109,9 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
   PRECONDITION(aid < dp_mol->getNumAtoms(), "");
 
   PRECONDITION(doneNbrs.size() >= 3, "");
-  // Only gaps between consecutive bond directions are unoccupied. Pairwise
-  // angles are limited to pi and can instead select an occupied sector when
-  // the free space around a bridgehead is larger than a semicircle.
+  // Consecutive bond directions bound gaps containing no other bond from aid.
+  // Pairwise angles are limited to pi and can instead span existing bonds when
+  // the gap around a bridgehead is larger than a semicircle.
   std::vector<std::pair<double, int>> directions;
   directions.reserve(doneNbrs.size());
   for (auto nbr : doneNbrs) {
@@ -133,8 +133,22 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
   }
   std::sort(anglePairs.begin(), anglePairs.end());
 
-  // Preserve the fused-ring preference for an exterior gap bounded by atoms
-  // belonging to at most one ring. Otherwise use the largest available gap.
+  // more pain, more pain we unfortunately cannot right away pick the largest
+  // angle - it is possible that we pick an angle that is in a fused ring - see
+  // if I can explain this with a diagram
+  //        _     _
+  //       / B   C \                                this space
+  //      /   \ /   \                               intentionally left blank
+  //     |     A     |
+  //     |     |     |
+  //      \    D    /
+  //       \_/   \_/
+  //
+  //  Let's say we are sitting on A with nbrs B, C, D - it is possible that we
+  //  find ang(BAD) to be largest, but a new neighbor in this case will be added
+  //  inside the ring We want to find ang(BAC) instead - which we will this do
+  //  by checking that both our neighbors are not involved in more than one
+  //  ring. Bridged systems - don't even go there
   auto winner = anglePairs.back();
   for (const auto &pr : boost::adaptors::reverse(anglePairs)) {
     if ((dp_mol->getRingInfo()->numAtomRings(pr.second.first) <= 1) &&
