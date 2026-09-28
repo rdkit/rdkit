@@ -74,5 +74,6 @@ rdkit_test(molStandardizeSmallTest test2.cpp LINK_LIBRARIES MolStandardize )
 rdkit_test(molFragmentTest testFragment.cpp LINK_LIBRARIES MolStandardize )
 rdkit_catch_test(molStandardizeCatchTest catch_tests.cpp LINK_LIBRARIES MolStandardize )
 rdkit_catch_test(molStandardizePipelineTest testPipeline.cpp LINK_LIBRARIES MolStandardize)
+rdkit_catch_test(molStandardizeTautomerCatch tautomer_catch.cpp LINK_LIBRARIES MolStandardize)
 
 

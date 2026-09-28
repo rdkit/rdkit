@@ -9,15 +9,27 @@
 //
 
 #include <RDGeneral/export.h>
+#include <memory>
 #ifndef RD_EMBEDDER_H_GUARD
 #define RD_EMBEDDER_H_GUARD
 
+#include <RDGeneral/RDLog.h>
 #include <map>
 #include <utility>
-#include <Geometry/point.h>
+#include <vector>
 #include <GraphMol/ROMol.h>
 #include <boost/shared_ptr.hpp>
-#include <DistGeom/BoundsMatrix.h>
+#include "ZMatrixBuilder.h"
+
+namespace DistGeom {
+class BoundsMatrix;
+class ChiralSet;
+using VECT_CHIRALSET = std::vector<boost::shared_ptr<ChiralSet>>;
+}  // namespace DistGeom
+
+namespace RDGeom {
+class Point3D;
+}
 
 namespace RDKit {
 namespace DGeomHelpers {
@@ -39,6 +51,17 @@ enum EmbedFailureCauses {
   KTERM_VIOLATION = 13,
   CLASH = 14,
   END_OF_ENUM = 15,
+};
+
+enum class InitialEmbeddingMode {
+  DG_EMBEDDING = 0,
+  INTERNAL_COORDINATE_EMBEDDING = 1,
+  RANDOM_COORDINATE_EMBEDDING = 2
+};
+
+enum class EmbedFF : std::uint8_t {
+  UFF = 0,
+  MMFF = 1,
 };
 
 //! Parameter object for controlling embedding
@@ -123,6 +146,7 @@ enum EmbedFailureCauses {
                    of times each embedding check fails
   enableSequentialRandomSeeds    handle the random number seeds so that
                                  conformer generation can be restarted
+  embedFF Force Field to use to determine ideal 1-2 and 1-3 distances.
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations{0};
@@ -151,16 +175,19 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool useMacrocycle14config{false};
   unsigned int timeout{0};
   bool useLegacyImplementation{true};
+  InitialEmbeddingMode initialEmbeddingMode{InitialEmbeddingMode::DG_EMBEDDING};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI{
       nullptr};
   void (*callback)(unsigned int){nullptr};
   bool forceTransAmides{true};
   bool useSymmetryForPruning{true};
   double boundsMatForceScaling{1.0};
+  bool onlyInitialEmbedding{false};
   bool trackFailures{false};
   std::vector<unsigned int> failures{};
   bool enableSequentialRandomSeeds{false};
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
+  EmbedFF embedForceField{EmbedFF::UFF};
 };
 
 //! update parameters from a JSON string
@@ -460,6 +487,70 @@ inline INT_VECT EmbedMultipleConfs(
   return res;
 };
 
+// Overloads for serialization to JSON
+inline std::ostream &operator<<(std::ostream &os,
+                                const InitialEmbeddingMode &mode) {
+  switch (mode) {
+    case InitialEmbeddingMode::DG_EMBEDDING:
+      os << "DG_EMBEDDING";
+      return os;
+    case InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING:
+      os << "INTERNAL_COORDINATE_EMBEDDING";
+      return os;
+    case InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING:
+      os << "RANDOM_COORDINATE_EMBEDDING";
+      return os;
+  }
+  return os;
+}
+
+inline std::istream &operator>>(std::istream &is, InitialEmbeddingMode &mode) {
+  std::string val;
+  if (is >> val) {
+    if (val == "DG_EMBEDDING") {
+      mode = InitialEmbeddingMode::DG_EMBEDDING;
+    } else if (val == "INTERNAL_COORDINATE_EMBEDDING") {
+      mode = InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
+    } else if (val == "RANDOM_COORDINATE_EMBEDDING") {
+      mode = InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING;
+    } else {
+      is.setstate(std::ios::failbit);
+    }
+  }
+  return is;
+}
+// Overload for JSON Serialization.
+inline std::ostream &operator<<(std::ostream &os, const EmbedFF &eff) {
+  switch (eff) {
+    case EmbedFF::MMFF:
+      os << "MMFF";
+      return os;
+    case EmbedFF::UFF:
+      [[fallthrough]];
+    default:
+      os << "UFF";
+      return os;
+  }
+  os << static_cast<int>(eff);
+  return os;
+}
+inline std::istream &operator>>(std::istream &is, EmbedFF &eff) {
+  eff = EmbedFF::UFF;
+
+  std::string val;
+  if (is >> val) {
+    if (val == "MMFF") {
+      eff = EmbedFF::MMFF;
+    } else if (val != "UFF") {
+      BOOST_LOG(rdWarningLog)
+          << "Provided embedForceField " << val
+          << " in JSON is not valid. Choose between UFF and MMFF. Falling back to UFF."
+          << std::endl;
+    }
+  }
+  return is;
+}
+
 //! Parameters corresponding to plain Distance Geometry
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters DG;
 //! Parameters corresponding to Sereina Riniker's KDG approach
@@ -478,6 +569,8 @@ RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv3;
 //! Parameters corresponding improved ETKDG by Wang, Witek, Landrum and Riniker
 //! (10.1021/acs.jcim.0c00025) - the small ring part
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters srETKDGv3;
+
+RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDGv4;
 }  // namespace DGeomHelpers
 }  // namespace RDKit
 

@@ -16,6 +16,9 @@
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
+#include <DistGeom/BoundsMatrix.h>
+#include <Geometry/point.h>
+
 namespace RDKit {
 namespace DGeomHelpers {
 
@@ -24,6 +27,7 @@ namespace DGeomHelpers {
   X(boundsMatForceScaling)                        \
   X(boxSizeMult)                                  \
   X(clearConfs)                                   \
+  X(embedForceField)                              \
   X(embedFragmentsSeparately)                     \
   X(enableSequentialRandomSeeds)                  \
   X(enforceChirality)                             \
@@ -49,7 +53,8 @@ namespace DGeomHelpers {
   X(useRandomCoords)                              \
   X(useSmallRingTorsions)                         \
   X(useSymmetryForPruning)                        \
-  X(verbose)
+  X(verbose)                                      \
+  X(onlyInitialEmbedding)
 
 #define PT_OPT_GET(opt) params.opt = pt.get(#opt, params.opt);
 #define PT_OPT_PUT(opt) pt.put(#opt, params.opt);
@@ -86,12 +91,21 @@ void updateEmbedParametersFromJSON(EmbedParameters &params,
     }
     params.coordMap = cmap;
   }
+
+  if (auto opt = pt.get_optional<std::string>("initialEmbeddingMode")) {
+    std::stringstream valS{*opt};
+    if (!(valS >> params.initialEmbeddingMode)) {
+      throw std::invalid_argument(
+          "Initial embedding option must be either 'DG_EMBEDDING', 'INTERNAL_COORDINATE_EMBEDDING', or 'RANDOM_COORDINATE_EMBEDDING'");
+    }
+  }
 }
 
 std::string embedParametersToJSON(const EmbedParameters &params) {
   boost::property_tree::ptree pt;
 
   EMBED_PARAMS_FIELDS(PT_OPT_PUT)
+  PT_OPT_PUT(initialEmbeddingMode)
 
   if (params.coordMap) {
     boost::property_tree::ptree coordMapPT;
