@@ -168,9 +168,8 @@ RDKit::INT_VECT setNbrOrder(unsigned int aid, const RDKit::INT_VECT &nbrs,
 int pickFirstRingToEmbed(const RDKit::ROMol &mol,
                          const RDKit::VECT_INT_VECT &fusedRings) {
   // Start with the ring with the fewest substituents, then the largest ring.
-  // For ties, prefer the ring with higher-ranked atoms (for example, the
-  // heteroatom bridges in a small bridged system). Equal rank signatures
-  // still retain ring discovery order.
+  // For ties, prefer the ring with higher-ranked atom environments. Equal
+  // rank signatures still retain ring discovery order.
   int res = -1;
   unsigned int maxSize = 0;
   std::vector<std::uint64_t> bestRanks;

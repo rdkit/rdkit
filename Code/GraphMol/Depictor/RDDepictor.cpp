@@ -269,8 +269,7 @@ void embedFusedSystems(const RDKit::ROMol &mol,
     // don't allow ring system templates if >1 atom in this ring system
     // has a user-defined coordinate from coordMap
     bool allowRingTemplates = useRingTemplates;
-    bool allowSmallBridgeTemplate = true;
-    if (coordMap) {
+    if (useRingTemplates && coordMap) {
       boost::dynamic_bitset<> coordMapAtoms(mol.getNumAtoms());
       for (const auto &ring : frings) {
         for (const auto &aid : ring) {
@@ -279,11 +278,9 @@ void embedFusedSystems(const RDKit::ROMol &mol,
           }
         }
       }
-      allowSmallBridgeTemplate = coordMapAtoms.count() < 2;
-      allowRingTemplates = useRingTemplates && allowSmallBridgeTemplate;
+      allowRingTemplates = (coordMapAtoms.count() < 2);
     }
-    EmbeddedFrag efrag(&mol, frings, allowRingTemplates,
-                       allowSmallBridgeTemplate);
+    EmbeddedFrag efrag(&mol, frings, allowRingTemplates);
     efrag.setupNewNeighs();
     efrags.push_back(efrag);
     size_t rix;
