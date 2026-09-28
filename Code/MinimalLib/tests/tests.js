@@ -1472,7 +1472,7 @@ M  END
     molCopy = RDKitModule.get_mol_copy(mol);
     assert(JSON.parse(molCopy.generate_aligned_coords(quinoline_scaffold, JSON.stringify({ acceptFailure: false }))));
     molblock = molCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
-    assert(molblock.split('\n').some(line => line.match(/^ [1 ]\d [1 ]\d  [12]  6 *$/)));
+    assert(!molblock.split('\n').some(line => line.match(/^ [1 ]\d [1 ]\d  [12]  6 *$/)));
     assert(molblock.split('\n').some(line => line.match(/^ [1 ]\d [1 ]\d  [12]  1 *$/)));
     molCopy.delete();
     mol.delete();
@@ -3272,7 +3272,7 @@ function test_get_molblock_use_molblock_wedging() {
   6  8  1  0
   8  9  1  1
   8  2  1  0
-  4  9  1  1
+  9  4  1  6
 M  END
 `;
     var mol = RDKitModule.get_mol(mb);

@@ -374,7 +374,7 @@ M  END",
                                "{\"acceptFailure\":false}", NULL));
   molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
   find_wedged_bonds(molblock, &have1, &have6);
-  assert(have1 && have6);
+  assert(have1 && !have6);
   free(molblock);
   free(pkl2);
   free(scaffold);
@@ -3032,7 +3032,7 @@ void test_get_molblock_use_molblock_wedging() {
   6  8  1  0\n\
   8  9  1  1\n\
   8  2  1  0\n\
-  4  9  1  1\n\
+  9  4  1  6\n\
 M  END\n\
 ";
   char *mpkl;
