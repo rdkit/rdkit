@@ -8,6 +8,7 @@ rdkit_library(DistGeometry
 target_compile_definitions(DistGeometry PRIVATE RDKIT_DISTGEOMETRY_BUILD)
 
 rdkit_headers(BoundsMatrix.h
+              ZMatrix.h
               ChiralSet.h
               ChiralViolationContribs.h
               DistGeomUtils.h
@@ -16,6 +17,9 @@ rdkit_headers(BoundsMatrix.h
               TriangleSmooth.h DEST DistGeom)
 
 rdkit_catch_test(testDistGeom testDistGeom.cpp 
+LINK_LIBRARIES DistGeometry )
+
+rdkit_catch_test(distGeomCatch catch_tests.cpp 
 LINK_LIBRARIES DistGeometry )
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
