@@ -36,6 +36,7 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
                              bool permuteDeg4Nodes = false,
                              double bondLength = -1.0, bool forceRDKit = false,
                              bool useRingTemplates = false,
+                             bool usePathAngleExpansion = true,
                              bool useBranchDepthPrioritization = false) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
@@ -52,21 +53,20 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
     RDDepict::BOND_LEN = bondLength;
   }
 
-  // Use Compute2DCoordParameters struct to pass all parameters
-  RDDepict::Compute2DCoordParameters params;
-  params.coordMap = &cMap;
-  params.canonOrient = canonOrient;
-  params.clearConfs = clearConfs;
-  params.nFlipsPerSample = nFlipsPerSample;
-  params.nSamples = nSamples;
-  params.sampleSeed = sampleSeed;
-  params.permuteDeg4Nodes = permuteDeg4Nodes;
-  params.forceRDKit = forceRDKit;
-  params.useRingTemplates = useRingTemplates;
-  params.useBranchDepthPrioritization = useBranchDepthPrioritization;
+  Compute2DCoordParameters params{
+      .coordMap = cMap.empty() ? nullptr : &cMap,
+      .canonOrient = canonOrient,
+      .clearConfs = clearConfs,
+      .nFlipsPerSample = nFlipsPerSample,
+      .nSamples = nSamples,
+      .sampleSeed = sampleSeed,
+      .permuteDeg4Nodes = permuteDeg4Nodes,
+      .forceRDKit = forceRDKit,
+      .useRingTemplates = useRingTemplates,
+      .usePathAngleExpansion = usePathAngleExpansion,
+      .useBranchDepthPrioritization = useBranchDepthPrioritization};
 
   unsigned int res = RDDepict::compute2DCoords(mol, params);
-
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
   }
@@ -367,6 +367,8 @@ BOOST_PYTHON_MODULE(rdDepictor) {
                   preferCoordGen is set to true\n\
      useRingTemplates - use templates to generate coordinates of complex\n\
                   ring systems\n\
+     usePathAngleExpansion - use path-angle expansion to resolve atom clashes\n\
+                  and bond crossings\n\n\
      useBranchDepthPrioritization - use branch depth scoring to prioritize\n\
                   longer chains over shorter branches in layout (default=false)\n\n\
   RETURNS: \n\n\
@@ -380,6 +382,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("sampleSeed") = 0, python::arg("permuteDeg4Nodes") = false,
        python::arg("bondLength") = -1.0, python::arg("forceRDKit") = false,
        python::arg("useRingTemplates") = false,
+       python::arg("usePathAngleExpansion") = true,
        python::arg("useBranchDepthPrioritization") = false),
       docString.c_str());
 
