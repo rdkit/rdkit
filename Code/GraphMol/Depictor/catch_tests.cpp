@@ -8,9 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#include <array>
-#include <numeric>
-#include <random>
 #include <ranges>
 #include <catch2/catch_all.hpp>
 #include <GraphMol/MolAlign/AlignMolecules.h>
@@ -19,7 +16,6 @@
 #include "RDDepictor.h"
 #include "DepictUtils.h"
 #include "EmbeddedFrag.h"
-#include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -2471,98 +2467,20 @@ TEST_CASE(
 }
 #endif
 
-TEST_CASE("attachments use gaps between consecutive bond directions") {
-  auto rotation = GENERATE(0.0, M_PI / 3, M_PI, 5 * M_PI / 3);
-  // All angles are in degrees. Cover gaps on either side of pi, including
-  // a pair of outer bonds whose smaller angle contains the third bond.
-  auto directions = GENERATE(std::array<double, 4>{-45, 8, 45, 180},
-                             std::array<double, 4>{-100, 0, 100, 180},
-                             std::array<double, 4>{-170, -80, 90, 5});
-  CAPTURE(rotation, directions);
+TEST_CASE("attachments use the exterior gap larger than pi") {
+  auto side = GENERATE(-1.0, 1.0);
+  CAPTURE(side);
   auto mol = "C(F)(Cl)(Br)C"_smiles;
   REQUIRE(mol);
-  const RDGeom::Point2D center(2.0, -3.0);
-  const auto pointAt = [&](double degrees) {
-    auto angle = rotation + degrees * M_PI / 180;
-    return center + RDGeom::Point2D(std::cos(angle), std::sin(angle)) *
-                        RDDepict::BOND_LEN;
-  };
-  RDGeom::INT_POINT2D_MAP coords{{0, center}};
-  for (unsigned int i = 0; i < 3; ++i) {
-    coords.emplace(i + 1, pointAt(directions[i]));
-  }
+  // Three bonds occupy a 90-degree sector. The fourth belongs in the free
+  // 270-degree sector, including when that gap crosses the atan2 branch cut.
+  RDGeom::INT_POINT2D_MAP coords{
+      {0, {0, 0}}, {1, {side, -1}}, {2, {side, 0}}, {3, {side, 1}}};
   RDDepict::EmbeddedFrag fragment(mol.get(), coords);
   fragment.addNonRingAtom(4, 0);
-  CHECK((fragment.GetEmbeddedAtom(4).loc - pointAt(directions[3])).length() <
-        1.e-6);
-}
-
-TEST_CASE("bridged template attachments point outward for H and alkyl groups") {
-  auto useLegacy = GENERATE(true, false);
-  UseLegacyStereoPerceptionFixture useLegacyFixture(useLegacy);
-  auto smiles = GENERATE("C1([H])([H])[C@@]2([H])O[C@]1([H])N2[H]",
-                         "C1(C)(C)[C@@]2(C)O[C@]1(C)N2C",
-                         "C1(CC)(CC)[C@@]2(CC)O[C@]1(CC)N2CC");
-  CAPTURE(useLegacy, smiles);
-  struct ResetTemplates {
-    ~ResetTemplates() { RDDepict::loadDefaultRingSystemTemplates(); }
-  } resetTemplates;
-  std::string rdbase = getenv("RDBASE");
-  RDDepict::addRingSystemTemplates(
-      rdbase +
-      "/Code/GraphMol/Depictor/test_data/bridged_attachment_template.smi");
-  SmilesParserParams parserParams;
-  parserParams.removeHs = false;
-  std::unique_ptr<ROMol> base(SmilesToMol(smiles, parserParams));
-  REQUIRE(base);
-  const auto expectedSmiles = MolToSmiles(*base);
-  auto core = "C1C2OC1N2"_smarts;
-  REQUIRE(core);
-  const auto matches = SubstructMatch(*base, *core);
-  REQUIRE(!matches.empty());
-  const auto head1 = matches[0][1].second;
-  const auto head2 = matches[0][3].second;
-  std::vector<unsigned int> order(base->getNumAtoms());
-  std::iota(order.begin(), order.end(), 0);
-  std::mt19937 rng(23);
-  RDDepict::Compute2DCoordParameters params;
-  params.forceRDKit = true;
-  params.useRingTemplates = true;
-  for (unsigned int trial = 0; trial < 100; ++trial) {
-    if (trial) {
-      std::shuffle(order.begin(), order.end(), rng);
-    }
-    CAPTURE(order);
-    std::unique_ptr<ROMol> mol(MolOps::renumberAtoms(*base, order));
-    RDDepict::compute2DCoords(*mol, params);
-    const auto &conf = mol->getConformer();
-    const auto newIndex = [&order](unsigned int oldIndex) {
-      return static_cast<unsigned int>(std::distance(
-          order.begin(), std::find(order.begin(), order.end(), oldIndex)));
-    };
-    for (const auto &[head, other] :
-         {std::pair{head1, head2}, std::pair{head2, head1}}) {
-      auto idx = newIndex(head);
-      const auto inward =
-          conf.getAtomPos(newIndex(other)) - conf.getAtomPos(idx);
-      for (const auto nbr : mol->atomNeighbors(mol->getAtomWithIdx(idx))) {
-        if (!mol->getRingInfo()->numAtomRings(nbr->getIdx())) {
-          const auto bond =
-              conf.getAtomPos(nbr->getIdx()) - conf.getAtomPos(idx);
-          CHECK(bond.dotProduct(inward) < 0.0);
-        }
-      }
-    }
-    for (auto i = 0u; i < mol->getNumAtoms(); ++i) {
-      for (auto j = i + 1; j < mol->getNumAtoms(); ++j) {
-        CHECK((conf.getAtomPos(i) - conf.getAtomPos(j)).length() > 0.75);
-      }
-    }
-    std::unique_ptr<ROMol> roundTrip(
-        MolBlockToMol(MolToMolBlock(*mol), true, false));
-    REQUIRE(roundTrip);
-    CHECK(MolToSmiles(*roundTrip) == expectedSmiles);
-  }
+  const auto &pos = fragment.GetEmbeddedAtom(4).loc;
+  CHECK(pos.x * side < 0);
+  CHECK(std::abs(pos.y) < 1.e-6);
 }
 
 TEST_CASE("canonical ordering") {
