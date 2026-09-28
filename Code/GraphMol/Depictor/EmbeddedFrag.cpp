@@ -109,43 +109,32 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
   PRECONDITION(aid < dp_mol->getNumAtoms(), "");
 
   PRECONDITION(doneNbrs.size() >= 3, "");
-  // we will find all the inter nbr angles, pick the one with the largest angle
-  // make those neighbors the nbr1 and nbr2 of aid
-  double ang = 0.;
-  std::vector<DOUBLE_INT_PAIR> anglePairs;
-  anglePairs.reserve(doneNbrs.size() * (doneNbrs.size() - 1) / 2);
-  for (auto nbi1 = doneNbrs.begin(); nbi1 != doneNbrs.end(); ++nbi1) {
-    for (auto nbi2 = std::next(nbi1); nbi2 != doneNbrs.end(); ++nbi2) {
-      ang = computeAngle(d_eatoms[aid].loc, d_eatoms[*nbi1].loc,
-                         d_eatoms[*nbi2].loc);
-      auto nbrPair = std::make_pair((*nbi1), (*nbi2));
-      anglePairs.emplace_back(ang, nbrPair);
-    }
+  // Only gaps between consecutive bond directions are unoccupied. Pairwise
+  // angles are limited to pi and can instead select an occupied sector when
+  // the free space around a bridgehead is larger than a semicircle.
+  std::vector<std::pair<double, int>> directions;
+  directions.reserve(doneNbrs.size());
+  for (auto nbr : doneNbrs) {
+    const auto delta = d_eatoms[nbr].loc - d_eatoms[aid].loc;
+    directions.emplace_back(std::atan2(delta.y, delta.x), nbr);
   }
+  std::sort(directions.begin(), directions.end());
 
-  std::ranges::sort(anglePairs, [](const auto &pr1, const auto &pr2) {
-    if (pr1.first == pr2.first) {
-      return pr1.second < pr2.second;
+  std::vector<DOUBLE_INT_PAIR> anglePairs;
+  anglePairs.reserve(directions.size());
+  for (size_t i = 0; i < directions.size(); ++i) {
+    const auto &start = directions[i];
+    const auto &end = directions[(i + 1) % directions.size()];
+    auto angle = end.first - start.first;
+    if (i + 1 == directions.size()) {
+      angle += 2 * M_PI;
     }
-    return pr1.first < pr2.first;
-  });
+    anglePairs.emplace_back(angle, std::make_pair(start.second, end.second));
+  }
+  std::sort(anglePairs.begin(), anglePairs.end());
 
-  // more pain, more pain we unfortunately cannot right away pick the largest
-  // angle - it is possible that we pick an angle that is in a fused ring - see
-  // if I can explain this with a diagram
-  //        _     _
-  //       / B   C \                                this space
-  //      /   \ /   \                               intentionally left blank
-  //     |     A     |
-  //     |     |     |
-  //      \    D    /
-  //       \_/   \_/
-  //
-  //  Let's say we are sitting on A with nbrs B, C, D - it is possible that we
-  //  find ang(BAD) to be largest, but a new neighbor in this case will be added
-  //  inside the ring We want to find ang(BAC) instead - which we will this do
-  //  by checking that both our neighbors are not involved in more than one
-  //  ring. Bridged systems - don't even go there
+  // Preserve the fused-ring preference for an exterior gap bounded by atoms
+  // belonging to at most one ring. Otherwise use the largest available gap.
   auto winner = anglePairs.back();
   for (const auto &pr : boost::adaptors::reverse(anglePairs)) {
     if ((dp_mol->getRingInfo()->numAtomRings(pr.second.first) <= 1) &&
@@ -154,39 +143,13 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
       break;
     }
   }
-  const auto [wnb1, wnb2] = winner.second;
 
-  // now find the smallest angle that contains one of these nbrs
-  int nb2 = -1;
-  int nb1 = -1;
-  for (const auto &anglePair : anglePairs) {
-    const auto nbrPair = anglePair.second;
-    if (wnb1 == nbrPair.first) {
-      nb2 = wnb1;
-      nb1 = nbrPair.second;
-      break;
-    } else if (wnb1 == nbrPair.second) {
-      nb2 = wnb1;
-      nb1 = nbrPair.first;
-      break;
-    } else if (wnb2 == nbrPair.first) {
-      nb2 = wnb2;
-      nb1 = nbrPair.second;
-      break;
-    } else if (wnb2 == nbrPair.second) {
-      nb2 = wnb2;
-      nb1 = nbrPair.first;
-      break;
-    }
-  }
-
-  // now find the rotation between nb1 and nb2
-  auto wAng = winner.first;
-  d_eatoms[aid].rotDir = rotationDir(d_eatoms[aid].loc, d_eatoms[nb1].loc,
-                                     d_eatoms[nb2].loc, wAng);
-  d_eatoms[aid].nbr1 = nb1;
-  d_eatoms[aid].nbr2 = nb2;
-  d_eatoms[aid].angle = 2 * M_PI - wAng;
+  // New neighbors are placed by rotating nbr2 towards nbr1 through the gap.
+  // Its direction is known, including for gaps larger than pi.
+  d_eatoms[aid].rotDir = 1;
+  d_eatoms[aid].nbr1 = winner.second.second;
+  d_eatoms[aid].nbr2 = winner.second.first;
+  d_eatoms[aid].angle = 2 * M_PI - winner.first;
 }
 
 // constructor to embed a cis/trans system
