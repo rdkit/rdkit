@@ -1,8 +1,9 @@
 /*
  *
- *  Copyright (c) 2025, Greg Landrum and T5 Informatics GmbH
- *  All rights reserved.
  *
+ *  Copyright (C) 2026 Xavier Martinez and other RDKit contributors
+ *
+ *   @@ All Rights Reserved @@
  *  This file is part of the RDKit.
  *  The contents are covered by the terms of the BSD license
  *  which is included in the file license.txt, found at the root
