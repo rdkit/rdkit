@@ -805,8 +805,7 @@ void solveLinearSystem(const ROMol &mol, std::vector<double> &A,
     return;
   }
 
-  Eigen::BDCSVD<Eigen::MatrixXd> svd(a,
-                                     Eigen::ComputeThinU | Eigen::ComputeThinV);
+  Eigen::BDCSVD<Eigen::MatrixXd, Eigen::ComputeThinU | Eigen::ComputeThinV> svd(a);
   svd.setThreshold(1e-15);  // dgelss rcond
   const Eigen::MatrixXd x = svd.solve(b);
   if (x.allFinite()) {
