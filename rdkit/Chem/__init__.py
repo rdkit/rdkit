@@ -55,8 +55,7 @@ if rdBase._wrapperType == 'boost':
     def _getRDKitItem(self, i):
       raise NotImplementedError()
 
-    def __init__(self, mol):
-      self._mol = mol
+    def __init__(self):
       self._pos = 0
       self._size = self._sizeCalc()
 
@@ -79,26 +78,24 @@ if rdBase._wrapperType == 'boost':
       return ret
 
     def __iter__(self):
-      for i in range(0, len(self)):
+      for i in range(len(self)):
         self._pos = i
-        yield self[i]
+        if self._sizeCalc() != self._size:
+          raise RuntimeError('size changed during iteration')
+        yield self._getRDKitItem(i)
         self._pos = self._size
 
   class _GetAtomsIterator(_GetRDKitObjIterator):
-
-    def _sizeCalc(self):
-      return self._mol.GetNumAtoms()
-
-    def _getRDKitItem(self, i):
-      return self._mol.GetAtomWithIdx(i)
+    def __init__(self, mol):
+      self._sizeCalc = mol.GetNumAtoms
+      self._getRDKitItem = mol.GetAtomWithIdx
+      super().__init__()
 
   class _GetBondsIterator(_GetRDKitObjIterator):
-
-    def _sizeCalc(self):
-      return self._mol.GetNumBonds()
-
-    def _getRDKitItem(self, i):
-      return self._mol.GetBondWithIdx(i)
+    def __init__(self, mol):
+      self._sizeCalc = mol.GetNumBonds
+      self._getRDKitItem = mol.GetBondWithIdx
+      super().__init__()
 
   rdchem.Mol.GetAtoms = lambda self: _GetAtomsIterator(self)
   rdchem.Mol.GetAtoms.__doc__ = """returns an iterator over the atoms in the molecule"""
