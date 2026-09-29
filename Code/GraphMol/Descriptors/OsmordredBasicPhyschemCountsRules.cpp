@@ -712,7 +712,6 @@ double calcBertzCT(const ROMol &mol) {
 // bondCount
 
 std::vector<int> calcBondCounts(OsmordredContext &ctx) {
-  const ROMol &mol = ctx.mol();
   // Vector to hold bond counts: [Any, Single, Double, Triple, Aromatic,
   // Multiple]
   std::vector<int> bondCounts(9, 0);
@@ -1055,7 +1054,6 @@ const std::unordered_map<int, double> atomContributions = []() {
 // VdwVolumeABC
 // working "Need Hs explicit!"
 double calcVdwVolumeABC(OsmordredContext &ctx) {
-  const ROMol &mol = ctx.mol();
   const ROMol *hmol = &ctx.molWithHs();
 
   // Nb is the number of bonds
@@ -1517,7 +1515,6 @@ std::vector<int> calcLipinskiGhose(const ROMol &mol) {
 }
 
 double calcMcGowanVolume(OsmordredContext &ctx) {
-  const ROMol &mol = ctx.mol();
   // In Padel code this is /100 in order to match the Polarisability equation
   double res = 0.;
   const ROMol *hmol = &ctx.molWithHs();
@@ -1659,7 +1656,6 @@ double calcSchultz(const ROMol &mol) {
 
 // Combined function for calculating both atomic and bond polarizability
 std::vector<double> calcPolarizability(OsmordredContext &ctx) {
-  const ROMol &mol = ctx.mol();
   double atomicPol = 0.0;
   double bondPol = 0.0;
   const auto &polmap = Polarizability94AtomicMap();
@@ -1778,7 +1774,6 @@ std::vector<std::vector<int>> findRings(const ROMol &mol) {
 // i    ionization_potentials[a.GetAtomicNum()]
 
 std::vector<double> calcConstitutional(OsmordredContext &ctx) {
-  const ROMol &mol = ctx.mol();
   double SZ = 0.;
   double Sm = 0.;
   double Sv = 0.;
