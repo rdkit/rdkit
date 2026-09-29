@@ -19,14 +19,6 @@ if(RDK_BUILD_OSMORDRED_SUPPORT)
               OsmordredTopologicalConnectivityShape.cpp
               OsmordredMatrixAutocorrEStateFragments.cpp)
 
- # Eigen is the default dense linear algebra backend; LAPACKE is optional.
- if(RDK_OSMORDRED_USE_LAPACKE)
-   message("-- OSMORDRED using LAPACKE")
-   find_package(LAPACK REQUIRED)
-   find_package(LAPACKE REQUIRED)
-   include_directories(${LAPACK_INCLUDE_DIRS} ${LAPACKE_INCLUDE_DIRS})
-   set(OSMORDRED_LINK_LIBRARIES ${LAPACKE_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
- endif(RDK_OSMORDRED_USE_LAPACKE)
 endif(RDK_BUILD_OSMORDRED_SUPPORT)
 
 

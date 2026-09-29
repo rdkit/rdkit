@@ -34,23 +34,10 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <stack>
 
-// Dense linear algebra backend. Eigen is the default: it is header-only, so
-// Osmordred builds wherever the RDKit does, including MinimalLib (WASM).
-// Define RDK_OSMORDRED_USE_LAPACKE (cmake -DRDK_OSMORDRED_USE_LAPACKE=ON) to
-// use LAPACKE instead.
-#ifdef RDK_OSMORDRED_USE_LAPACKE
-#if defined(_MSC_VER) && !defined(__clang__) && !defined(__INTEL_COMPILER)
-#include <complex>
-#define lapack_complex_float std::complex<float>
-#define lapack_complex_double std::complex<double>
-#endif
-#include <lapacke.h>
-#else
 #include <Eigen/Cholesky>
 #include <Eigen/Eigenvalues>
 #include <Eigen/LU>
 #include <Eigen/SVD>
-#endif
 
 namespace RDKit {
 namespace Descriptors {
@@ -786,7 +773,6 @@ const ROMol &OsmordredContext::molWithHs() {
   return *d_molWithHs;
 }
 
-#ifndef RDK_OSMORDRED_USE_LAPACKE
 // Same cascade and the same failure criteria as the LAPACKE branch below, so
 // both backends take the same branch for a given matrix:
 //   dposv  -> LLT on the upper triangle, fails on a non-positive pivot
@@ -831,73 +817,6 @@ void solveLinearSystem(const ROMol &mol, std::vector<double> &A,
   std::cerr << "ERROR: All Eigen solvers failed (LLT, LU, SVD), Smiles:"
             << RDKit::MolToSmiles(mol) << "\n";
 }
-#else
-void solveLinearSystem(const ROMol &mol, std::vector<double>& A, std::vector<double>& B,
-		       int n, int nrhs, bool& success) {
-    int lda = n; // Leading dimension of A
-    int ldb = n; // Leading dimension of B
-    int info;
-
-    success = false; // Initialize success flag
-
-    // CRITICAL FIX v2.0: Save original RHS before any LAPACK calls modify B
-    // LAPACK routines modify B in-place, even when they fail!
-    std::vector<double> B_original = B;
-
-    // First, try dposv (Cholesky factorization for positive definite matrices)
-    std::vector<double> A_copy = A; // Copy A because LAPACK modifies it
-    info = LAPACKE_dposv(LAPACK_COL_MAJOR, 'U', n, nrhs, A_copy.data(), lda, B.data(), ldb);
-
-    if (info == 0) {
-        success = true;
-        return;
-    } else {
-        // dposv failed; fall back to dgesv (LU factorization)
-        // CRITICAL FIX v2.0: Restore original RHS before calling dgesv
-        // dposv modified B even though it failed!
-        B = B_original;
-        
-        std::vector<int> ipiv(n); // Pivot array for dgesv
-        A_copy = A; // Reset A because it was modified by dposv
-        info = LAPACKE_dgesv(LAPACK_COL_MAJOR, n, nrhs, A_copy.data(), lda, ipiv.data(), B.data(), ldb);
-
-        if (info == 0) {
-            success = true;
-            return;
-        } else {
-            // dgesv failed (singular matrix); fall back to dgelss (pseudo-inverse via SVD)
-            // CRITICAL FIX v2.0: Added dgelss fallback for singular matrices
-            // This provides a minimum-norm least-squares solution when exact solution doesn't exist
-            B = B_original; // Restore original RHS values
-            
-            std::vector<double> A_copy2 = A; // Fresh copy for dgelss
-            std::vector<double> B_copy = B; // Copy B because dgelss modifies it
-            
-            // Allocate workspace for dgelss
-            std::vector<double> s(n); // Singular values
-            int rank; // Rank of matrix
-            double rcond = 1e-15; // Condition number threshold
-            
-            // dgelss computes least-squares solution: min ||Ax - b||_2
-            info = LAPACKE_dgelss(LAPACK_COL_MAJOR, n, n, nrhs,
-                                   A_copy2.data(), lda, B_copy.data(), ldb,
-                                   s.data(), rcond, &rank);
-            
-            if (info == 0) {
-                // dgelss succeeded - copy solution back to B
-                B = B_copy;
-                success = true;
-                return;
-            } else {
-                // All solvers failed - this is a true error
-                std::string outputSmiles = RDKit::MolToSmiles(mol);
-                std::cerr << "ERROR: All LAPACK solvers failed (dposv, dgesv, dgelss): info="
-                          << info << ", Smiles:" << outputSmiles << "\n";
-            }
-        }
-    }
-}
-#endif  // RDK_OSMORDRED_USE_LAPACKE
 
 ////// Barysz Matrixes Eigen style
 
@@ -1025,7 +944,6 @@ void compute_eigenvalues_and_eigenvectorsL(
   eigenvalues.resize(n);
   eigenvectors = matrix;  // Copy matrix to preserve the original
 
-#ifndef RDK_OSMORDRED_USE_LAPACKE
   if (n > 0) {
     Eigen::MatrixXd m(n, n);
     for (int i = 0; i < n; ++i)
@@ -1041,23 +959,6 @@ void compute_eigenvalues_and_eigenvectorsL(
       for (int j = 0; j < n; ++j) eigenvectors[i][j] = solver.eigenvectors()(i, j);
     }
   }
-#else
-  // Convert the 2D vector to a 1D array in column-major order for LAPACK
-  std::vector<double> flatMatrix(n * n);
-  for (int i = 0; i < n; ++i)
-    for (int j = 0; j < n; ++j) flatMatrix[j * n + i] = eigenvectors[i][j];
-
-  // Call LAPACKE_dsyev to compute eigenvalues and eigenvectors
-  int info = LAPACKE_dsyev(LAPACK_COL_MAJOR, 'V', 'U', n, flatMatrix.data(), n,
-                           eigenvalues.data());
-  if (info != 0) {
-    throw std::runtime_error("Error in LAPACKE_dsyev: " + std::to_string(info));
-  }
-
-  // Reshape the flatMatrix back into eigenvectors
-  for (int i = 0; i < n; ++i)
-    for (int j = 0; j < n; ++j) eigenvectors[i][j] = flatMatrix[j * n + i];
-#endif  // RDK_OSMORDRED_USE_LAPACKE
 
   // Canonicalize eigenvector signs: force first non-zero entry positive per
   // column
