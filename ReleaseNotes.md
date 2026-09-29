@@ -49,6 +49,9 @@ GitHub)
   returns only points which are actually on the surface. Previously all
   potential surface points for each atom were returned. You can get the old
   result by setting the `allPoints` argument to true.
+- The PostgreSQL cartridge functions `mol_numatoms()` and `mol_numheavyatoms()`
+  now also have `qmol` overloads, so calls with an untyped literal, e.g.
+  `mol_numatoms('CCC')`, are ambiguous. Add an explicit cast (`::mol` or `::qmol`).
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use
