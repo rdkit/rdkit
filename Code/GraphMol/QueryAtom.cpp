@@ -103,12 +103,18 @@ bool getAtomInterval(const QueryAtom::QUERYATOM_QUERY *q, int &lo, int &hi) {
   }
   auto *gt = dynamic_cast<const ATOM_GREATER_QUERY *>(q);
   if (gt) {
+    if (gt->getVal() == std::numeric_limits<int>::min()) {
+      return false;
+    }
     lo = std::numeric_limits<int>::min();
     hi = gt->getVal() - 1;
     return true;
   }
   auto *lt = dynamic_cast<const ATOM_LESS_QUERY *>(q);
   if (lt) {
+    if (lt->getVal() == std::numeric_limits<int>::max()) {
+      return false;
+    }
     lo = lt->getVal() + 1;
     hi = std::numeric_limits<int>::max();
     return true;
