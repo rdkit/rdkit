@@ -417,7 +417,7 @@ Range queries
 -------------
 Ranges of values can be provided for many query types that expect numeric values.
 The query types that currently support range queries are:
-``D``, ``h``, ``r``, ``R``, ``v``, ``x``, ``X``, ``z``, ``Z``, ``+``, ``-``
+``D``, ``h``, ``r``, ``R``, ``v``, ``x``, ``X``, ``z``, ``Z``, ``+``, ``-``, ``@``
 
 Here are some examples:
   - ``D{2-4}`` matches atoms that have between 2 and 4 (inclusive) explicit connections.
@@ -478,21 +478,22 @@ Z          "number of aliphatic heteroatom neighbors"  >0               Y       
 Bonds
 ^^^^^
 
-=========  ====================  ===================
-Primitive        Property               Notes
-=========  ====================  ===================
-""         "single or aromatic"  "unspecified bonds"
+=========  =========================  ==========================
+Primitive  Property                   Notes
+=========  =========================  ==========================
+""         "single or aromatic"       "unspecified bonds"
 \-         single
 =          double
 #          triple
 :          aromatic
 ~          "any bond"
 @          "ring bond"
+@{n}       "bond in exactly n rings"  "extension; range support"
 /          "directional"
 \\         "directional"
-->         "dative right"        extension
-<-         "dative left"         extension
-=========  ====================  ===================
+->         "dative right"             extension
+<-         "dative left"              extension
+=========  =========================  ==========================
 
 Hs in SMARTS
 ^^^^^^^^^^^^

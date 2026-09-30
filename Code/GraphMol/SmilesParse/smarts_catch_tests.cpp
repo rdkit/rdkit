@@ -171,3 +171,84 @@ TEST_CASE("k SMARTS extensions") {
     }
   }
 }
+
+TEST_CASE("@{n} SMARTS bond ring count") {
+  SECTION("parsing and writing") {
+    auto q = "*@{0}*"_smarts;
+    REQUIRE(q);
+    CHECK(MolToSmarts(*q) == "*@{0}*");
+
+    auto q2 = "*!@*"_smarts;
+    REQUIRE(q2);
+    CHECK(MolToSmarts(*q2) == "*!@*");
+
+    auto q3 = "*@{2}*"_smarts;
+    REQUIRE(q3);
+    CHECK(MolToSmarts(*q3) == "*@{2}*");
+
+    auto q4 = "*@{2-}*"_smarts;
+    REQUIRE(q4);
+    CHECK(MolToSmarts(*q4) == "*@{2-}*");
+
+    auto q5 = "*@{-2}*"_smarts;
+    REQUIRE(q5);
+    CHECK(MolToSmarts(*q5) == "*@{-2}*");
+
+    auto q6 = "*@{1-3}*"_smarts;
+    REQUIRE(q6);
+    CHECK(MolToSmarts(*q6) == "*@{1-3}*");
+  }
+
+  SECTION("matching") {
+    auto naph = "c1ccc2ccccc2c1"_smiles;
+    REQUIRE(naph);
+    auto q = "*@{2}*"_smarts;
+    REQUIRE(q);
+    std::vector<MatchVectType> matches;
+    CHECK(SubstructMatch(*naph, *q, matches));
+    CHECK(matches.size() == 1);
+
+    auto bip = "c1ccc2c(c1)c1ccccc12"_smiles;
+    REQUIRE(bip);
+    auto q2 = "*@{2}*"_smarts;
+    REQUIRE(q2);
+    matches.clear();
+    CHECK(SubstructMatch(*bip, *q2, matches));
+    CHECK(matches.size() == 2);
+
+    auto cub = "C12C3C4C1C5C2C3C45"_smiles;
+    REQUIRE(cub);
+    auto q3 = "*@{2}*"_smarts;
+    REQUIRE(q3);
+    matches.clear();
+    CHECK(SubstructMatch(*cub, *q3, matches));
+    CHECK(matches.size() == 12);
+
+    auto cyc = "C1CCCCC1"_smiles;
+    REQUIRE(cyc);
+    auto q4 = "*@{1}*"_smarts;
+    REQUIRE(q4);
+    matches.clear();
+    CHECK(SubstructMatch(*cyc, *q4, matches));
+    CHECK(matches.size() == 6);
+
+    auto eth = "CC"_smiles;
+    REQUIRE(eth);
+    auto q5 = "*@{0}*"_smarts;
+    REQUIRE(q5);
+    matches.clear();
+    CHECK(SubstructMatch(*eth, *q5, matches));
+    CHECK(matches.size() == 1);
+  }
+
+  SECTION("ranges") {
+    std::string smiles = "c1ccc2ccccc2c1";
+    std::vector<std::pair<std::string, size_t>> smartses = {
+        {"*@{1}*", 10},  {"*@{2}*", 1},   {"*@{2-}*", 1},  {"*@{1-2}*", 11},
+        {"*@{-1}*", 10}, {"*@{-2}*", 11}, {"*!@{2}*", 10},
+    };
+    for (const auto &[sma, val] : smartses) {
+      checkMatches(sma, smiles, val, 2);
+    }
+  }
+}
