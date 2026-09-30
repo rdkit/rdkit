@@ -53,7 +53,6 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
-#include <GraphMol/Atropisomers.h>
 #include <boost/algorithm/string.hpp>
 #include <filesystem>
 
@@ -168,10 +167,6 @@ void visit_children(
         } else {
           MolOps::assignChiralTypesFromBondDirs(*res, confidx, true);
         }
-        Atropisomers::detectAtropisomerChirality(*res,
-                                                 &res->getConformer(confidx));
-      } else {  // no Conformer
-        Atropisomers::detectAtropisomerChirality(*res, nullptr);
       }
 
       // now that atom stereochem has been perceived, the wedging
@@ -200,6 +195,9 @@ void visit_children(
             }
             MolOps::sanitizeMol(*res, failedOp, sanitizeOps);
             MolOps::detectBondStereochemistry(*res);
+            if (params.parseQueries && MolOps::hasQueryHs(*res).first) {
+              MolOps::mergeQueryHs(*res);
+            }
             MolOps::removeHs(*res);
           } else {
             MolOps::sanitizeMol(*res);
@@ -331,6 +329,8 @@ std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
     return std::vector<std::unique_ptr<RWMol>>();
   }
   PageData pagedata;
+  pagedata.parseQueries = params.parseQueries;
+  pagedata.strictQueryParsing = params.strictQueryParsing;
   auto bondLength = document->m_bondLength;
 
   int missing_frag_id = -1;

@@ -20,6 +20,9 @@
 #include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
+#include <ForceField/UFF/BondStretch.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <Geometry/Utils.h>
@@ -27,16 +30,20 @@
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
 #include "BoundsMatrixBuilderDetails.h"
+#include "catch2/catch_test_macros.hpp"
 #include <tuple>
 #include <map>
 #include <limits>
+#include <numbers>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <DistGeom/ZMatrixUtils.h>
+#include <DistGeom/ZMatrix.h>
+#include "ZMatrixBuilder.h"
 
 #ifdef RDK_TEST_MULTITHREADED
 #include <csignal>
 #include <thread>
-#include <chrono>
 #endif
 
 using namespace RDKit;
@@ -157,7 +164,7 @@ void compareConfs(const ROMol *m, const ROMol *expected, int molConfId = -1,
 }
 }  // namespace
 
-TEST_CASE("update parameters from JSON") {
+TEST_CASE("updateParamsFromJSON") {
   const auto getPath = [](const std::string file, const bool legacy) {
     std::string rdbase = getenv("RDBASE");
     std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
@@ -228,6 +235,67 @@ TEST_CASE("update parameters from JSON") {
     auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
     CHECK(v1.angleTo(v2) == Catch::Approx(M_PI / 2).margin(0.15));
   }
+  SECTION("IC Embedding inital") {
+    std::string fname = getPath("torsion.initial.ic.mol", true);
+    std::string smiles = "n1cccc(C)c1ON";
+    std::string json = R"JSON({"randomSeed":42,
+    "useExpTorsionAnglePrefs":true,
+    "useBasicKnowledge":true,
+    "initialEmbeddingMode":"INTERNAL_COORDINATE_EMBEDDING",
+    "onlyInitialEmbedding":true,
+    "ETversion":2,"useLegacyImplementation":)JSON" +
+                       std::string(legacyETKDG ? "true" : "false") + "}";
+    runTest(smiles, fname, json);
+  }
+  SECTION("IC Embedding simple initial") {
+    std::string fname = getPath("simple_torsion.initial.ic.mol", legacyETKDG);
+    std::string smiles = "OCCC";
+    std::string json = R"JSON({"randomSeed":42,
+    "useExpTorsionAnglePrefs":true,
+    "useBasicKnowledge":true,
+    "initialEmbeddingMode":"INTERNAL_COORDINATE_EMBEDDING",
+    "onlyInitialEmbedding":true,
+    "ETversion":2,"useLegacyImplementation":)JSON" +
+                       std::string(legacyETKDG ? "true" : "false") + "}";
+    runTest(smiles, fname, json);
+  }
+  SECTION("IC Embedding") {
+    std::string fname = getPath("torsion.ETKDG.ic.mol", legacyETKDG);
+    std::string smiles = "n1cccc(C)c1ON";
+    std::string json = R"JSON({"randomSeed":42,
+    "useExpTorsionAnglePrefs":true,
+    "useBasicKnowledge":true,
+    "initialEmbeddingMode":"INTERNAL_COORDINATE_EMBEDDING",
+    "ETversion":2,"useLegacyImplementation":)JSON" +
+                       std::string(legacyETKDG ? "true" : "false") + "}";
+    runTest(smiles, fname, json);
+  }
+  SECTION("IC Embedding simple initial") {
+    std::string fname = getPath("simple_torsion.ETKDG.ic.mol", legacyETKDG);
+    std::string smiles = "OCCC";
+    std::string json = R"JSON({"randomSeed":42,
+    "useExpTorsionAnglePrefs":true,
+    "useBasicKnowledge":true,
+    "initialEmbeddingMode":"INTERNAL_COORDINATE_EMBEDDING",
+    "ETversion":2,"useLegacyImplementation":)JSON" +
+                       std::string(legacyETKDG ? "true" : "false") + "}";
+    runTest(smiles, fname, json);
+
+    SECTION("set embedForceField") {
+      DGeomHelpers::EmbedParameters params;
+      std::string json = R"JSON({"embedForceField":"UFF"})JSON";
+      DGeomHelpers::updateEmbedParametersFromJSON(params, json);
+      CHECK(params.embedForceField == DGeomHelpers::EmbedFF::UFF);
+
+      json = R"JSON({"embedForceField":"MMFF"})JSON";
+      DGeomHelpers::updateEmbedParametersFromJSON(params, json);
+      CHECK(params.embedForceField == DGeomHelpers::EmbedFF::MMFF);
+
+      json = R"JSON({"embedForceField":"FAULTYFF"})JSON";
+      DGeomHelpers::updateEmbedParametersFromJSON(params, json);
+      CHECK(params.embedForceField == DGeomHelpers::EmbedFF::UFF);
+    }
+  }
 }
 
 TEST_CASE("EmbedParameters to JSON") {
@@ -235,7 +303,7 @@ TEST_CASE("EmbedParameters to JSON") {
     auto ps = DGeomHelpers::KDG;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false"})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedForceField":"UFF","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","onlyInitialEmbedding":"false","initialEmbeddingMode":"DG_EMBEDDING"})JSON";
     CHECK(json == goal);
   }
   SECTION("With CoordMap") {
@@ -246,7 +314,7 @@ TEST_CASE("EmbedParameters to JSON") {
     ps.coordMap = coordMap;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","coordMap":{"3":["1.100000","2.200000","3.300000"]}})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedForceField":"UFF","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","onlyInitialEmbedding":"false","initialEmbeddingMode":"DG_EMBEDDING","coordMap":{"3":["1.100000","2.200000","3.300000"]}})JSON";
     CHECK(json == goal);
     delete coordMap;
   }
@@ -265,7 +333,7 @@ TEST_CASE("EmbedParameters to JSON") {
     ps.boundsMat = mat;
     auto json = DGeomHelpers::embedParametersToJSON(ps);
     std::string goal =
-        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6536523290585412"],["0.98025420400136154","1.5809872790648758","0"]]})JSON";
+        R"JSON({"basinThresh":"5","boundsMatForceScaling":"1","boxSizeMult":"2","clearConfs":"true","embedForceField":"UFF","embedFragmentsSeparately":"true","enableSequentialRandomSeeds":"false","enforceChirality":"true","ETversion":"1","forceTransAmides":"true","ignoreSmoothingFailures":"false","maxIterations":"0","numThreads":"1","numZeroFail":"1","onlyHeavyAtomsForRMS":"true","optimizerForceTol":"0.001","pruneRmsThresh":"-1","randNegEig":"true","randomSeed":"-1","symmetrizeConjugatedTerminalGroupsForPruning":"true","timeout":"0","trackFailures":"false","useBasicKnowledge":"true","useExpTorsionAnglePrefs":"false","useLegacyImplementation":"true","useMacrocycle14config":"false","useMacrocycleTorsions":"false","useRandomCoords":"false","useSmallRingTorsions":"false","useSymmetryForPruning":"true","verbose":"false","onlyInitialEmbedding":"false","initialEmbeddingMode":"DG_EMBEDDING","boundsMatrix":[["0","1.0002542040013616","1.0002542040013616"],["0.98025420400136154","0","1.6536523290585412"],["0.98025420400136154","1.5809872790648758","0"]]})JSON";
     CHECK(json == goal);
   }
   SECTION("Round trip") {
@@ -275,6 +343,17 @@ TEST_CASE("EmbedParameters to JSON") {
     DGeomHelpers::updateEmbedParametersFromJSON(ps2, json);
     auto json2 = DGeomHelpers::embedParametersToJSON(ps2);
     CHECK(json == json2);
+  }
+  SECTION("EmbedForceField") {
+    auto ps = DGeomHelpers::ETKDGv3;
+    auto json = DGeomHelpers::embedParametersToJSON(ps);
+    CHECK_THAT(
+        json, Catch::Matchers::ContainsSubstring(R"("embedForceField":"UFF")"));
+
+    ps.embedForceField = DGeomHelpers::EmbedFF::MMFF;
+    json = DGeomHelpers::embedParametersToJSON(ps);
+    CHECK_THAT(json, Catch::Matchers::ContainsSubstring(
+                         R"("embedForceField":"MMFF")"));
   }
 }
 
@@ -392,8 +471,8 @@ TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
     }
 
     {
-      // note that things aren't quite as nice here since we don't actually have
-      // TBP UFF parameters
+      // note that things aren't quite as nice here since we don't actually
+      // have TBP UFF parameters
       auto m = "Cl[Pt@TB1]([35Cl])([36Cl])([37Cl])[38Cl]"_smiles;
       REQUIRE(m);
       CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
@@ -1457,12 +1536,12 @@ TEST_CASE("Torsion of non-sulfide *S-S*") {
       double bl3 = (bm->getUpperBound(2, 3) + bm->getLowerBound(2, 3)) / 2;
 
       // 1-3 to angle
-      // double distAngl12 = (bm->getUpperBound(0, 3) + bm->getLowerBound(0, 3))
-      // / 2; double distAngl23 = (bm->getUpperBound(2, 5) +
+      // double distAngl12 = (bm->getUpperBound(0, 3) + bm->getLowerBound(0,
+      // 3)) / 2; double distAngl23 = (bm->getUpperBound(2, 5) +
       // bm->getLowerBound(2, 5)) / 2;
 
-      // std::cout << std::pow(bl1, 2) + std::pow(bl2, 2) - std::pow(distAngl12,
-      // 2) << "; " << 2*bl1*bl2 << std::endl;
+      // std::cout << std::pow(bl1, 2) + std::pow(bl2, 2) -
+      // std::pow(distAngl12, 2) << "; " << 2*bl1*bl2 << std::endl;
 
       // TODO change this
       double ba12 =
@@ -1855,8 +1934,8 @@ TEST_CASE("Github9403: Bug: Overwritten stereo information in rings") {
     bnd->setStereo(Bond::BondStereo::STEREOTRANS);
 
     DGeomHelpers::setTopolBounds(*mol, bm);
-    // trans should be allowed but NOT cis for 0-5 and the other way araound for
-    // 0-4
+    // trans should be allowed but NOT cis for 0-5 and the other way araound
+    // for 0-4
     CHECK(bm->getLowerBound(0, 5) > bm->getUpperBound(0, 4));
     CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <= 1.1);
     CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <= 1.1);
@@ -1873,8 +1952,8 @@ TEST_CASE("Github9403: Bug: Overwritten stereo information in rings") {
 
     DGeomHelpers::setTopolBounds(*mol, bm);
 
-    // trans should be allowed but NOT cis for 0-5 and the other way araound for
-    // 0-4
+    // trans should be allowed but NOT cis for 0-5 and the other way araound
+    // for 0-4
     CHECK(bm->getLowerBound(0, 5) > bm->getUpperBound(0, 4));
     CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <= 1.1);
     CHECK(bm->getUpperBound(0, 5) - bm->getLowerBound(0, 5) <= 1.1);
@@ -1921,7 +2000,8 @@ TEST_CASE("Github #9404: competing 1-4s in six membered rings") {
 
     DGeomHelpers::setTopolBounds(*mol, bm);
 
-    // the 1-4 between atoms 0 and 3 must allow both CIS and TRANS configuration
+    // the 1-4 between atoms 0 and 3 must allow both CIS and TRANS
+    // configuration
     CHECK(bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3) > 0.2);
   }
   SECTION("Fused rings overlapping") {
@@ -2342,12 +2422,13 @@ TEST_CASE("Github #9461") {
   DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
   DGeomHelpers::setTopolBounds(*mol, bm);
 
-  CHECK_THAT(bm->getUpperBound(0, 1) - bm->getLowerBound(0, 1), Catch::Matchers::WithinAbs(0.02, 1e-4));
+  CHECK_THAT(bm->getUpperBound(0, 1) - bm->getLowerBound(0, 1),
+             Catch::Matchers::WithinAbs(0.02, 1e-4));
 }
 
 TEST_CASE("TransAmideKTerm") {
-  /* Embed 10 confs of a molecule using the provided parameters and returns true
-  if all torsions around i,j,k,l are closer to +/-180 than to 0
+  /* Embed 10 confs of a molecule using the provided parameters and returns
+  true if all torsions around i,j,k,l are closer to +/-180 than to 0
   */
   auto allTrans = [](RWMol &mol, DGeomHelpers::EmbedParameters &ps,
                      const std::size_t i, const std::size_t j,
@@ -2412,5 +2493,515 @@ TEST_CASE("TransAmideKTerm") {
       ps.useMacrocycle14config = false;
       THEN("Expect some cis") { CHECK(not allTrans(*mol, ps, 1, 3, 5, 6)); }
     }
+  }
+}
+
+namespace {
+
+enum class Level {
+  BOND_REF = 0,
+  ANGLE_REF = 1,
+  FULL
+};
+
+void checkRowReferences(const DistGeom::ZMatrix::ZMatrixRow row,
+                        const Level level, ROMol &mol,
+                        DGeomHelpers::InternalCoordinates &coords) {
+  Bond *bnd1, *bnd2, *bnd3;
+  switch (level) {
+    case Level::FULL:
+      CHECK(row.internal.torsionRef.has_value() !=
+            row.torsionDependence.has_value());  // either way not both
+      CHECK(row.internal.angleRef);
+      CHECK(row.internal.bondRef);  // need them for bnd3
+      bnd3 = row.internal.torsionRef
+                 ? mol.getBondBetweenAtoms(row.internal.torsionRef.value(),
+                                           row.internal.angleRef.value())
+                 : mol.getBondBetweenAtoms(row.torsionDependence->reference,
+                                           row.internal.bondRef.value());
+      CHECK(bnd3);
+      [[fallthrough]];
+    case Level::ANGLE_REF:
+      CHECK(row.internal.angleRef);
+      CHECK(row.internal.bondRef);
+      bnd2 = mol.getBondBetweenAtoms(row.internal.angleRef.value(),
+                                     row.internal.bondRef.value());
+      CHECK(bnd2);
+      [[fallthrough]];
+    case Level::BOND_REF:
+      CHECK(row.internal.bondRef);
+      bnd1 = mol.getBondBetweenAtoms(row.internal.bondRef.value(), row.atomIdx);
+      CHECK(bnd1);
+  }
+  switch (level) {
+    case Level::FULL:
+      CHECK((row.internal.torsionRef && row.internal.torsion) !=
+            row.torsionDependence.has_value());
+      if (row.torsionDependence) {
+        double expected =
+            2.0 * M_PI /
+            static_cast<double>(
+                mol.getAtomWithIdx(row.internal.bondRef.value())->getDegree() -
+                1u);  // per definition something that is a bond ref within a
+                      // torsion must have a degree of >= 2
+        CHECK_THAT(row.torsionDependence->offset,
+                   Catch::Matchers::WithinAbs(expected, 1.e-6));
+      } else {
+        const DistGeom::TorsionCandidates &expected =
+            coords.torsionRange
+                .find(DGeomHelpers::getUnifiedId(bnd1->getIdx(), bnd2->getIdx(),
+                                                 bnd3->getIdx(),
+                                                 mol.getNumBonds()))
+                ->second;
+        CHECK(DistGeom::equal(row.internal.torsion.value(), expected));
+      }
+      [[fallthrough]];
+    case Level::ANGLE_REF:
+      CHECK(row.internal.angle);
+      CHECK_THAT(row.internal.angle.value(),
+                 Catch::Matchers::WithinAbs(
+                     coords.angles[DGeomHelpers::getUnifiedId(
+                         bnd1->getIdx(), bnd2->getIdx(), mol.getNumBonds())],
+                     1.e-6));
+      [[fallthrough]];
+    case Level::BOND_REF:
+      CHECK(row.internal.length);
+      CHECK_THAT(
+          row.internal.length.value(),
+          Catch::Matchers::WithinAbs(coords.lengths[bnd1->getIdx()], 1.e-6));
+  }
+};
+
+void checkRowEmbedding(DistGeom::ZMatrix::ZMatrixRow row, Level level,
+                       ROMol &mol) {
+  switch (level) {
+    case Level::FULL:
+      if (row.torsionDependence) {
+        double inproperTor = MolTransforms::getDihedralRad(
+            mol.getConformer(), row.atomIdx, row.internal.bondRef.value(),
+            row.internal.angleRef.value(), row.torsionDependence->reference);
+        // to account for circular approximity
+        CHECK(DistGeom::quantize(inproperTor, 1.e4) ==
+              DistGeom::quantize(row.torsionDependence->offset, 1.e4));
+      } else {
+        double torsion = MolTransforms::getDihedralRad(
+            mol.getConformer(), row.atomIdx, row.internal.bondRef.value(),
+            row.internal.angleRef.value(), row.internal.torsionRef.value());
+        CHECK(DistGeom::contains(row.internal.torsion.value(), torsion));
+      }
+      [[fallthrough]];
+    case Level::ANGLE_REF:
+      CHECK_THAT(MolTransforms::getAngleRad(mol.getConformer(), row.atomIdx,
+                                            row.internal.bondRef.value(),
+                                            row.internal.angleRef.value()),
+                 Catch::Matchers::WithinAbs(row.internal.angle.value(), 1.e-4));
+      [[fallthrough]];
+    case Level::BOND_REF:
+      CHECK_THAT(
+          MolTransforms::getBondLength(mol.getConformer(), row.atomIdx,
+                                       row.internal.bondRef.value()),
+          Catch::Matchers::WithinAbs(row.internal.length.value(), 1.e-4));
+  }
+};
+
+std::unique_ptr<ROMol> embedInitialCoordinates(std::string smiles,
+                                               unsigned int numConfs,
+                                               bool addHs = true) {
+  std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
+  REQUIRE(mol);
+  if (addHs) {
+    MolOps::addHs(*mol);
+  }
+  auto params = DGeomHelpers::ETKDGv3;
+  params.initialEmbeddingMode =
+      DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
+  params.onlyInitialEmbedding = true;
+  params.randomSeed = 0xf00d;
+
+  INT_VECT res;
+  DGeomHelpers::EmbedMultipleConfs(*mol, res, numConfs, params);
+  CHECK(mol->getNumConformers() == numConfs);
+  return mol;
+};
+
+unsigned int num12violations(const DistGeom::BoundsMatPtr bm,
+                             const ROMol &mol) {
+  unsigned int numViolations = 0;
+  for (auto bnd : mol.bonds()) {
+    unsigned int aid1 = bnd->getBeginAtomIdx(), aid2 = bnd->getEndAtomIdx();
+    double embeddedLength =
+        MolTransforms::getBondLength(mol.getConformer(), aid1, aid2);
+    if (embeddedLength > bm->getUpperBound(aid1, aid2) ||
+        embeddedLength < bm->getLowerBound(aid1, aid2)) {
+      numViolations++;
+    }
+  }
+  return numViolations;
+};
+unsigned int num13violations(const DistGeom::BoundsMatPtr bm, const double *dm,
+                             const ROMol &mol) {
+  unsigned int numViolations = 0;
+  for (auto aid1 : std::views::iota(0u, mol.getNumAtoms() - 1u)) {
+    for (auto aid3 : std::views::iota(aid1 + 1u, mol.getNumAtoms())) {
+      auto pid =
+          std::max(aid1, aid3) * mol.getNumAtoms() + std::min(aid1, aid3);
+      if (dm[pid] < 1.9 || dm[pid] > 2.1) {
+        continue;
+      }
+      auto pos1 = mol.getConformer().getAtomPos(aid1);
+      auto pos3 = mol.getConformer().getAtomPos(aid3);
+      double embeddedDist = (pos1 - pos3).length();
+      if (embeddedDist > bm->getUpperBound(aid1, aid3) ||
+          embeddedDist < bm->getLowerBound(aid1, aid3)) {
+        numViolations++;
+      }
+    }
+  }
+  return numViolations;
+};
+
+}  // namespace
+
+TEST_CASE("Z-Matrix Builder Basics") {
+  const auto smiles = GENERATE("CCC", "CC(C)CO", "CCOC(=O)N", "O=CN(F)S",
+                               "CC#CC",                          // acyclic
+                               "C1CC1", "C1CCCCC1", "c1ccccc1",  // cyclic
+                               "C1CC2CCC1SS2C"                   // fused
+  );
+  std::unique_ptr<RWMol> mol{SmilesToMol(smiles)};
+  REQUIRE(mol);
+  auto rInfo = mol->getRingInfo();
+
+  MolOps::addHs(*mol);
+  DGeomHelpers::InternalCoordinates coords(mol->getNumBonds());
+
+  DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+  DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+
+  auto params = DGeomHelpers::DG;
+  params.initialEmbeddingMode =
+      DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
+  params.onlyInitialEmbedding = true;
+  params.randomSeed = 0xC0FFEE;
+  DGeomHelpers::setTopolBounds(*mol, bm, params, false, false, true, true,
+                               nullptr, RDKit::DGeomHelpers::EmbedFF::UFF,
+                               &coords);
+
+  DistGeom::ZMatrix zmat(mol->getNumAtoms());
+
+  DGeomHelpers::setMoleculeDFS(*mol, zmat, coords);
+
+  SECTION("Starting policy") {
+    CHECK(mol->getAtomWithIdx(zmat[0].atomIdx)->getDegree() == 1);
+    auto rinfo = mol->getRingInfo();
+    // for testing mols there is a bond that is not attached to a ring ->
+    // should be used as starting point
+    bool hasNonRingHeavyAtm =
+        std::ranges::any_of(mol->atoms(), [rInfo](const Atom *atom) {
+          return atom->getAtomicNum() > 1 &&
+                 rInfo->minAtomRingSize(atom->getIdx()) == 0;
+        });
+    if (hasNonRingHeavyAtm) {
+      CHECK(rinfo->minAtomRingSize(zmat[1].atomIdx) == 0);
+    }
+  }
+
+  SECTION("Internal coordinates -> Z-matrix") {
+    checkRowReferences(zmat[1], Level::BOND_REF, *mol, coords);
+    checkRowReferences(zmat[2], Level::ANGLE_REF, *mol, coords);
+    for (const auto &row : zmat | std::views::drop(3)) {
+      checkRowReferences(row, Level::FULL, *mol, coords);
+    }
+  }
+
+  SECTION("Z-matrix -> 3D coordinates") {
+    CHECK(DGeomHelpers::EmbedMolecule(*mol, params) == 0);
+    checkRowEmbedding(zmat[1], Level::BOND_REF, *mol);
+    checkRowEmbedding(zmat[2], Level::ANGLE_REF, *mol);
+    for (const auto &row : zmat | std::views::drop(3)) {
+      checkRowEmbedding(row, Level::FULL, *mol);
+    }
+  }
+}
+
+TEST_CASE("Bounds violations - internal coordinate embedding") {
+  SECTION("Tiny") {
+    // here we are explicitly not adding Hs since we are testing the cases for
+    // 1, 2, and 3 atoms
+    const auto smiles = GENERATE("C", "CC", "CCC");
+    auto mol = embedInitialCoordinates(smiles, 1, false);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    auto distMat = MolOps::getDistanceMat(*mol);
+
+    CHECK(num12violations(bm, *mol) == 0);
+    CHECK(num13violations(bm, distMat, *mol) == 0);
+  }
+
+  SECTION("Acyclic") {
+    const auto smiles =
+        GENERATE("C", "CC", "CCC", "CC(C)CO", "CCOC(=O)N", "O=CN(F)S");
+    auto mol = embedInitialCoordinates(smiles, 1);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    auto distMat = MolOps::getDistanceMat(*mol);
+
+    CHECK(num12violations(bm, *mol) == 0);
+    CHECK(num13violations(bm, distMat, *mol) == 0);
+  }
+
+  SECTION("Rigid") {
+    const auto smiles =
+        GENERATE("C=C", "c1ccccc1", "O=CNc3ncc2c(cnc1nccnc12)n3");
+    auto mol = embedInitialCoordinates(smiles, 1);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    for (auto i : std::views::iota(0u, mol->getNumAtoms() - 1u)) {
+      auto posI = mol->getConformer().getAtomPos(i);
+      for (auto j : std::views::iota(i + 1, mol->getNumAtoms())) {
+        auto posJ = mol->getConformer().getAtomPos(j);
+        double embeddedDist = (posI - posJ).length();
+        CHECK(embeddedDist <= bm->getUpperBound(i, j) + 0.05);
+        CHECK(embeddedDist >= bm->getLowerBound(i, j) - 0.05);
+      }
+    }
+  }
+
+  SECTION("Ring closures (simple)") {
+    const auto smiles = GENERATE("O1ON1C", "CN1OCCCO1", "CN1OCSCCCCCCCO1");
+    auto mol = embedInitialCoordinates(smiles, 1);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    auto distMat = MolOps::getDistanceMat(*mol);
+
+    CHECK(num12violations(bm, *mol) <= 1);
+    // we made sure with the topology that for the ringclosure bond, only one
+    // substituent is affected thus at most 2 1-3-bounds violations
+    CHECK(num13violations(bm, distMat, *mol) <= 3);
+  }
+
+  SECTION("Ring closures (fused)") {
+    const auto smiles = GENERATE("CN1ON2ON(O1)O2");
+    auto mol = embedInitialCoordinates(smiles, 1);
+
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    auto distMat = MolOps::getDistanceMat(*mol);
+
+    CHECK(num12violations(bm, *mol) <= 2);
+    // we made sure with the topology that for the ringclosure bond, only one
+    // substituent is affected thus at most 4 1-3-bounds violations
+    CHECK(num13violations(bm, distMat, *mol) <= 6);
+  }
+}
+
+TEST_CASE("Constraint torsions (initial embedding (IC))") {
+  SECTION("Inproper torsion NN") {
+    const auto mol = embedInitialCoordinates("NN", 1);
+    const auto inproperTor =
+        MolTransforms::getDihedralDeg(mol->getConformer(), 2, 0, 1, 3);
+    CHECK_THAT(std::fabs(inproperTor),
+               Catch::Matchers::WithinAbs(180.0, 1.e-4));
+  }
+  SECTION("Inproper torsion CC") {
+    const auto mol = embedInitialCoordinates("CC", 1);
+    auto inproperTor =
+        MolTransforms::getDihedralDeg(mol->getConformer(), 2, 0, 1, 3);
+    CHECK_THAT(std::fabs(inproperTor), Catch::Matchers::WithinAbs(120, 1.e-1));
+    inproperTor =
+        MolTransforms::getDihedralDeg(mol->getConformer(), 2, 0, 1, 4);
+    CHECK_THAT(std::fabs(inproperTor), Catch::Matchers::WithinAbs(120, 1.e-1));
+    inproperTor =
+        MolTransforms::getDihedralDeg(mol->getConformer(), 3, 0, 1, 4);
+    CHECK_THAT(std::fabs(inproperTor), Catch::Matchers::WithinAbs(120, 1.e-1));
+  }
+  SECTION("Constraint torsion C=C") {
+    const auto mol = embedInitialCoordinates("C=C", 100);
+    unsigned int numCis = 0, numTrans = 0;
+    for (unsigned int confId : std::views::iota(0, 100)) {
+      const auto torsion =
+          MolTransforms::getDihedralDeg(mol->getConformer(confId), 2, 0, 1, 4);
+      const auto torsion2 =
+          MolTransforms::getDihedralDeg(mol->getConformer(confId), 2, 0, 1, 5);
+      if (std::fabs(torsion) < 90) {
+        CHECK_THAT(std::fabs(torsion), Catch::Matchers::WithinAbs(0.0, 1.e-4));
+        CHECK_THAT(std::fabs(torsion2),
+                   Catch::Matchers::WithinAbs(180.0, 1.e-4));
+        numCis++;
+      } else {
+        CHECK_THAT(std::fabs(torsion),
+                   Catch::Matchers::WithinAbs(180.0, 1.e-4));
+        CHECK_THAT(std::fabs(torsion2), Catch::Matchers::WithinAbs(0.0, 1.e-4));
+        numTrans++;
+      }
+    }
+    CHECK(numCis > 0);
+    CHECK(numTrans > 0);
+  }
+
+  SECTION("Constraint torsion SS") {
+    const auto mol = embedInitialCoordinates("SS", 1);
+    const auto torsion =
+        MolTransforms::getDihedralDeg(mol->getConformer(), 2, 0, 1, 3);
+    CHECK_THAT(std::fabs(torsion), Catch::Matchers::WithinAbs(90, 1.e-4));
+  }
+  SECTION("Constraint torsion rings") {
+    const auto mol = embedInitialCoordinates("C1CCCC1", 1);
+    const auto &conf = mol->getConformer();
+    unsigned int numConstrainedTorsions = 0;
+    for (unsigned int i = 0; i < 5; ++i) {
+      const auto torsion = MolTransforms::getDihedralDeg(
+          conf, i, (i + 1) % 5, (i + 2) % 5, (i + 3) % 5);
+      if (std::fabs(torsion) < 90 + 1.e-4) {
+        ++numConstrainedTorsions;
+      }
+    }
+    CHECK(numConstrainedTorsions >= 4);
+  }
+  SECTION("Unconstraint torsion in large rings") {
+    const auto mol =
+        embedInitialCoordinates("C1CCCCCCCCCCCCCCCCCCCCCCCCCCCCC1", 1);
+    const auto &conf = mol->getConformer();
+    const auto numRingAtoms = mol->getNumHeavyAtoms();
+    bool hasUnconstrainedTorsion = false;
+    for (unsigned int i = 0; i < numRingAtoms; ++i) {
+      const auto torsion = MolTransforms::getDihedralDeg(
+          conf, i, (i + 1) % numRingAtoms, (i + 2) % numRingAtoms,
+          (i + 3) % numRingAtoms);
+      if (std::fabs(torsion) > 120.0) {
+        hasUnconstrainedTorsion = true;
+        break;
+      }
+    }
+    CHECK(hasUnconstrainedTorsion);
+  }
+  SECTION("Constraint torsion in aromats") {
+    const auto mol = embedInitialCoordinates("c1ccccc1", 1);
+    const auto &conf = mol->getConformer();
+    constexpr unsigned int numRingAtoms = 6;
+    for (unsigned int i = 0; i < numRingAtoms; ++i) {
+      CHECK_THAT(MolTransforms::getAngleDeg(conf, i, (i + 1) % numRingAtoms,
+                                            (i + 2) % numRingAtoms),
+                 Catch::Matchers::WithinAbs(120.0, 1.e-6));
+      CHECK_THAT(MolTransforms::getDihedralDeg(conf, i, (i + 1) % numRingAtoms,
+                                               (i + 2) % numRingAtoms,
+                                               (i + 3) % numRingAtoms),
+                 Catch::Matchers::WithinAbs(0.0, 1.e-4));
+    }
+  }
+}
+
+TEST_CASE("Z-Matrix Chirality") {
+  SECTION("tetrahedral stereochemistry") {
+    const auto smiles = GENERATE("F[C@H](Cl)Br", "F[C@@H](Cl)Br");
+    std::unique_ptr<ROMol> mol = embedInitialCoordinates(smiles, 1);
+
+    const auto center = mol->getAtomWithIdx(1);
+    REQUIRE(center->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    const auto &conf = mol->getConformer();
+    std::vector<const Atom *> neighbors;
+    for (const auto neighbor : mol->atomNeighbors(center)) {
+      neighbors.push_back(neighbor);
+    }
+    REQUIRE(neighbors.size() == 4);
+    if (center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+      std::swap(neighbors[0], neighbors[1]);
+    }
+    const auto p0 = conf.getAtomPos(neighbors[0]->getIdx()) -
+                    conf.getAtomPos(center->getIdx());
+    const auto p1 = conf.getAtomPos(neighbors[1]->getIdx()) -
+                    conf.getAtomPos(center->getIdx());
+    const auto p2 = conf.getAtomPos(neighbors[2]->getIdx()) -
+                    conf.getAtomPos(center->getIdx());
+    CHECK(p0.dotProduct(p1.crossProduct(p2)) > 0);
+  }
+  SECTION("tetrahedral stereochemistry [rings]") {
+    const auto smiles = GENERATE("CC1C[C@@H](Br)CCC1", "CC1C[C@H](Br)CCC1");
+    std::unique_ptr<ROMol> mol = embedInitialCoordinates(smiles, 1);
+
+    const auto center = mol->getAtomWithIdx(3);
+    REQUIRE(center->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    const auto &conf = mol->getConformer();
+    std::vector<const Atom *> neighbors;
+    for (const auto neighbor : mol->atomNeighbors(center)) {
+      neighbors.push_back(neighbor);
+    }
+    REQUIRE(neighbors.size() == 4);
+    if (center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+      std::swap(neighbors[0], neighbors[1]);
+    }
+    const auto p0 = conf.getAtomPos(neighbors[0]->getIdx()) -
+                    conf.getAtomPos(center->getIdx());
+    const auto p1 = conf.getAtomPos(neighbors[1]->getIdx()) -
+                    conf.getAtomPos(center->getIdx());
+    const auto p2 = conf.getAtomPos(neighbors[2]->getIdx()) -
+                    conf.getAtomPos(center->getIdx());
+    CHECK(p0.dotProduct(p1.crossProduct(p2)) > 0);
+  }
+}
+TEST_CASE("MMFFBounds") {
+  SECTION("Correct 12/13") {
+    auto mol = "CCC"_smiles;
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr mmat;
+    mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+    DGeomHelpers::initBoundsMat(mmat);
+    DGeomHelpers::setTopolBounds(*mol, mmat, true, false, false, true, true,
+                                 true, DGeomHelpers::EmbedFF::MMFF);
+    auto params = MMFF::MMFFMolProperties(*mol);
+    SECTION("Bonds") {
+      MMFF::MMFFBond bondProps;
+      unsigned int bOrder = mol->getBondBetweenAtoms(0, 1)->getBondType();
+      params.getMMFFBondStretchParams(*mol, 0, 1, bOrder, bondProps);
+      CHECK(mmat->getUpperBound(0, 1) == bondProps.r0 + 0.01);
+      CHECK(mmat->getLowerBound(0, 1) == bondProps.r0 - 0.01);
+    }
+    SECTION("Angles") {
+      MMFF::MMFFBond bondProps;
+      unsigned int bOrder = mol->getBondBetweenAtoms(0, 1)->getBondType();
+      params.getMMFFBondStretchParams(*mol, 0, 1, bOrder, bondProps);
+      double r0 = bondProps.r0;
+      unsigned int angleType;
+      MMFF::MMFFAngle aProp;
+      params.getMMFFAngleBendParams(*mol, 0, 1, 2, angleType, aProp);
+      double ubr = r0 + 0.01;
+      double lbr = r0 - 0.01;
+      double ub = std::sqrt(
+          2 * ubr * ubr *
+          (1 - std::cos(aProp.theta0 * std::numbers::pi / 180.0 + 0.035)));
+      double lb = std::sqrt(
+          2 * lbr * lbr *
+          (1 - std::cos(aProp.theta0 * std::numbers::pi / 180.0 - 0.035)));
+      CHECK(mmat->getUpperBound(0, 2) == ub);
+      CHECK(mmat->getLowerBound(0, 2) == lb);
+    }
+  }
+  SECTION("Fallback to UFF if fails") {
+    auto mol = "CCB"_smiles;
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr mmat;
+    mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+    DGeomHelpers::initBoundsMat(mmat);
+    DGeomHelpers::setTopolBounds(*mol, mmat, true, false, false, true, true,
+                                 true, DGeomHelpers::EmbedFF::MMFF);
+    auto [params, s] = UFF::getAtomTypes(*mol);
+    auto bOrder = mol->getBondBetweenAtoms(0, 1)->getBondTypeAsDouble();
+    double r0 = ForceFields::UFF::Utils::calcBondRestLength(bOrder, params[0],
+                                                            params[1]);
+    CHECK(mmat->getUpperBound(0, 1) == r0 + 0.01);
+    CHECK(mmat->getLowerBound(0, 1) == r0 - 0.01);
   }
 }

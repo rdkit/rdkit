@@ -37,7 +37,6 @@
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
-#include <RDGeneral/LocaleSwitcher.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>

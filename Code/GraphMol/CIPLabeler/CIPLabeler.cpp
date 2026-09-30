@@ -10,12 +10,14 @@
 //
 #include <algorithm>
 #include <memory>
+#include <sstream>
 
 #include <boost/algorithm/string.hpp>
 
 #include "GraphMol/Chirality.h"
 #include "GraphMol/RDKitBase.h"
 #include <RDGeneral/ControlCHandler.h>
+#include <RDGeneral/Exceptions.h>
 
 #include "CIPLabeler.h"
 #include "CIPMol.h"
@@ -39,6 +41,13 @@ namespace CIPLabeler {
 
 namespace {
 
+struct ConfigEntry {
+  std::unique_ptr<Configuration> config;
+  bool selected = false;
+};
+
+using ConfigList = std::vector<ConfigEntry>;
+
 // constitutional rules
 const Rules constitutional_rules({new Rule1a, new Rule1b, new Rule2});
 
@@ -46,24 +55,29 @@ const Rules constitutional_rules({new Rule1a, new Rule1b, new Rule2});
 const Rules all_rules({new Rule1a, new Rule1b, new Rule2, new Rule3, new Rule4a,
                        new Rule4b, new Rule4c, new Rule5New, new Rule6});
 
-std::vector<std::unique_ptr<Configuration>> findConfigs(
-    CIPMol &mol, const boost::dynamic_bitset<> &atoms,
-    const boost::dynamic_bitset<> &bonds) {
-  std::vector<std::unique_ptr<Configuration>> configs;
+bool isSelected(const boost::dynamic_bitset<> &selection, unsigned int index) {
+  return !selection.empty() && selection.test(index);
+}
 
-  for (auto index = atoms.find_first(); index != boost::dynamic_bitset<>::npos;
-       index = atoms.find_next(index)) {
+ConfigList findConfigs(CIPMol &mol, const boost::dynamic_bitset<> &atoms,
+                       const boost::dynamic_bitset<> &bonds) {
+  ConfigList configs;
+
+  // All configurations are required here, including unselected ones: they may
+  // provide auxiliary descriptors needed to label a selected configuration.
+  for (unsigned int index = 0; index < mol.getNumAtoms(); ++index) {
     auto atom = mol.getAtom(index);
     auto chiraltag = atom->getChiralTag();
     if (chiraltag == Atom::CHI_TETRAHEDRAL_CW ||
         chiraltag == Atom::CHI_TETRAHEDRAL_CCW) {
-      std::unique_ptr<Tetrahedral> cfg{new Tetrahedral(mol, atom)};
-      configs.push_back(std::move(cfg));
+      auto cfg = std::make_unique<Tetrahedral>(mol, atom);
+      if (cfg->getCarriers().size() == 4) {
+        configs.push_back({std::move(cfg), isSelected(atoms, index)});
+      }
     }
   }
 
-  for (auto index = bonds.find_first(); index != boost::dynamic_bitset<>::npos;
-       index = bonds.find_next(index)) {
+  for (unsigned int index = 0; index < mol.getNumBonds(); ++index) {
     auto bond = mol.getBond(index);
 
     auto bond_cfg = bond->getStereo();
@@ -80,16 +94,26 @@ std::vector<std::unique_ptr<Configuration>> findConfigs(
     switch (bond_cfg) {
       case Bond::STEREOTRANS:
       case Bond::STEREOCIS: {
-        std::unique_ptr<Sp2Bond> cfg(new Sp2Bond(
-            mol, bond, bond->getBeginAtom(), bond->getEndAtom(), bond_cfg));
-        configs.push_back(std::move(cfg));
+        if (bond->getBondType() != Bond::DOUBLE) {
+          break;
+        }
+        auto cfg = std::make_unique<Sp2Bond>(mol, bond, bond->getBeginAtom(),
+                                             bond->getEndAtom(), bond_cfg);
+        if (cfg->getCarriers().size() == 2) {
+          configs.push_back({std::move(cfg), isSelected(bonds, index)});
+        }
       } break;
 
       case Bond::STEREOATROPCCW:
       case Bond::STEREOATROPCW: {
-        std::unique_ptr<AtropisomerBond> cfgAtrop(new AtropisomerBond(
-            mol, bond, bond->getBeginAtom(), bond->getEndAtom(), bond_cfg));
-        configs.push_back(std::move(cfgAtrop));
+        if (bond->getBondType() != Bond::SINGLE) {
+          break;
+        }
+        auto cfg = std::make_unique<AtropisomerBond>(
+            mol, bond, bond->getBeginAtom(), bond->getEndAtom(), bond_cfg);
+        if (cfg->getCarriers().size() == 2) {
+          configs.push_back({std::move(cfg), isSelected(bonds, index)});
+        }
       } break;
 
       default:
@@ -100,17 +124,16 @@ std::vector<std::unique_ptr<Configuration>> findConfigs(
   return configs;
 }
 
-bool labelAux(std::vector<std::unique_ptr<Configuration>> &configs,
-              const Rules &rules,
-              const std::unique_ptr<Configuration> &center) {
+bool labelAux(ConfigList &configs, const Rules &rules, ConfigEntry &center) {
   using Node_Cfg_Pair = std::pair<Node *, Configuration *>;
   std::vector<Node_Cfg_Pair> aux;
 
-  auto &digraph = center->getDigraph();
-  for (const auto &config : configs) {
-    if (config == center) {
+  auto &digraph = center.config->getDigraph();
+  for (const auto &entry : configs) {
+    if (entry.config.get() == center.config.get()) {
       continue;
     }
+    const auto &config = entry.config;
     // FIXME: specific to each descriptor
     const auto &foci = config->getFoci();
 
@@ -141,7 +164,10 @@ bool labelAux(std::vector<std::unique_ptr<Configuration>> &configs,
   auto farthest = [](const Node_Cfg_Pair &a, const Node_Cfg_Pair &b) {
     return a.first->getDistance() > b.first->getDistance();
   };
-  std::sort(aux.begin(), aux.end(), farthest);
+
+  // this sorting is stable in the original code, so use
+  // stable sorting here too, despite it doesn't seem to be relevant
+  std::stable_sort(aux.begin(), aux.end(), farthest);
 
   // Using a boost::unordered_map because it is more performant
   // than the STL version.
@@ -159,7 +185,9 @@ bool labelAux(std::vector<std::unique_ptr<Configuration>> &configs,
     }
     const auto &config = e.second;
     auto label = config->label(node, digraph, rules);
-    queue.emplace(node, label);
+    // Also match the original code: a later configuration at this distance
+    // "wins" if multiple configurations map to the same digraph node.
+    queue[node] = label;
   }
 
   for (const auto &e : queue) {
@@ -169,25 +197,85 @@ bool labelAux(std::vector<std::unique_ptr<Configuration>> &configs,
   return true;
 }
 
-thread_local unsigned int remainingCallCount = 0;
-
 // The chiral centers in current rdkit examples that can be resolved using only
 // the constitutional rules average about 8 iterations (the highest count is
 // 1039, in one of the examples in the CIP validation suite). We use 2000 as
 // threshold to allow some margin.
 constexpr unsigned int constitutionalRuleTimeout = 2000;
 
-void label(std::vector<std::unique_ptr<Configuration>> &configs,
-           unsigned int maxRecursiveIterations) {
+struct IterationBudget {
+  void reset(unsigned int maxRecursiveIterations) {
+    hasGlobalLimit = maxRecursiveIterations != 0;
+    remainingGlobal = maxRecursiveIterations;
+    inPreliminaryPass = false;
+    remainingPreliminary = 0;
+  }
+
+  void beginPreliminaryPass() {
+    inPreliminaryPass = true;
+    remainingPreliminary = constitutionalRuleTimeout;
+  }
+
+  void endPreliminaryPass() {
+    inPreliminaryPass = false;
+    remainingPreliminary = 0;
+  }
+
+  bool consume() {
+    if ((inPreliminaryPass && remainingPreliminary == 0) ||
+        (hasGlobalLimit && remainingGlobal == 0)) {
+      return false;
+    }
+    if (inPreliminaryPass) {
+      --remainingPreliminary;
+    }
+    if (hasGlobalLimit) {
+      --remainingGlobal;
+    }
+    return true;
+  }
+
+  bool hasGlobalLimit = false;
+  unsigned int remainingGlobal = 0;
+  bool inPreliminaryPass = false;
+  unsigned int remainingPreliminary = 0;
+};
+
+thread_local IterationBudget iterationBudget;
+
+class ScopedIterationBudget {
+ public:
+  explicit ScopedIterationBudget(unsigned int maxRecursiveIterations)
+      : d_previous{iterationBudget} {
+    iterationBudget.reset(maxRecursiveIterations);
+  }
+
+  ~ScopedIterationBudget() { iterationBudget = d_previous; }
+
+ private:
+  IterationBudget d_previous;
+};
+
+class ScopedPreliminaryBudget {
+ public:
+  ScopedPreliminaryBudget() { iterationBudget.beginPreliminaryPass(); }
+  ~ScopedPreliminaryBudget() { iterationBudget.endPreliminaryPass(); }
+};
+
+void label(ConfigList &configs, unsigned int maxRecursiveIterations) {
+  const ScopedIterationBudget callBudget(maxRecursiveIterations);
+
   // First, if the specified number of iterations allows it, run all centers
   // through a fast pass with the constitutional rules allow easy stuff to be
   // resolved.
-  for (auto &conf : configs) {
-    // Make sure this stereo center has no label
-    conf->resetPrimaryLabel();
+  for (auto &entry : configs) {
+    if (!entry.selected) {
+      continue;
+    }
+    auto &conf = entry.config;
 
-    remainingCallCount = constitutionalRuleTimeout;
     try {
+      const ScopedPreliminaryBudget preliminaryBudget;
       auto desc = conf->label(constitutional_rules);
       if (desc != Descriptor::UNKNOWN) {
         conf->setPrimaryLabel(desc);
@@ -196,16 +284,12 @@ void label(std::vector<std::unique_ptr<Configuration>> &configs,
     }
   }
 
-  // Now, retry everything that hasn't been solved with a more generous
-  // threshold
-  if (maxRecursiveIterations != 0) {
-    remainingCallCount = maxRecursiveIterations;
-  } else {
-    remainingCallCount = UINT_MAX;  // really big - will never be hit
-  }
-
   // try again on everything that hasn't been resolved yet
-  for (const auto &conf : configs) {
+  for (auto &entry : configs) {
+    if (!entry.selected) {
+      continue;
+    }
+    auto &conf = entry.config;
     if (conf->hasPrimaryLabel()) {
       // already resolved!
       continue;
@@ -215,7 +299,7 @@ void label(std::vector<std::unique_ptr<Configuration>> &configs,
     if (desc != Descriptor::UNKNOWN) {
       conf->setPrimaryLabel(desc);
     } else {
-      if (labelAux(configs, all_rules, conf)) {
+      if (labelAux(configs, all_rules, entry)) {
         desc = conf->label(all_rules);
 
         if (desc != Descriptor::UNKNOWN) {
@@ -226,15 +310,54 @@ void label(std::vector<std::unique_ptr<Configuration>> &configs,
   }
 }
 
+template <typename T>
+void clearCIPProperties(T *object) {
+  object->clearProp(common_properties::_CIPCode);
+  object->clearProp(common_properties::_CIPNeighborOrder);
+}
+
+void clearSelectedCIPProperties(ROMol &mol,
+                                const boost::dynamic_bitset<> &atoms,
+                                const boost::dynamic_bitset<> &bonds,
+                                bool fullSelection) {
+  mol.clearProp(common_properties::_CIPComputed);
+
+  if (fullSelection) {
+    for (auto atom : mol.atoms()) {
+      clearCIPProperties(atom);
+    }
+    for (auto bond : mol.bonds()) {
+      clearCIPProperties(bond);
+    }
+    return;
+  }
+
+  for (auto index = atoms.find_first(); index != boost::dynamic_bitset<>::npos;
+       index = atoms.find_next(index)) {
+    clearCIPProperties(mol.getAtomWithIdx(index));
+  }
+  for (auto index = bonds.find_first(); index != boost::dynamic_bitset<>::npos;
+       index = bonds.find_next(index)) {
+    clearCIPProperties(mol.getBondWithIdx(index));
+  }
+}
+
 }  // namespace
 
 void assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
                      const boost::dynamic_bitset<> &bonds,
                      unsigned int maxRecursiveIterations) {
+  PRECONDITION(atoms.size() == mol.getNumAtoms(),
+               "Atoms bitset size does not match number of atoms")
+  PRECONDITION(bonds.size() == mol.getNumBonds(),
+               "Bonds bitset size does not match number of bonds")
+
   ControlCHandler hdlr;
 
-  // reset the mark, for the case that this fails
-  mol.clearProp(common_properties::_CIPComputed);
+  const bool fullSelection = atoms.all() && bonds.all();
+
+  clearSelectedCIPProperties(mol, atoms, bonds, fullSelection);
+
   CIPMol cipmol{mol};
   auto configs = findConfigs(cipmol, atoms, bonds);
 
@@ -248,8 +371,10 @@ void assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
     return;
   }
 
-  const bool computed = true;
-  mol.setProp(common_properties::_CIPComputed, true, computed);
+  if (fullSelection) {
+    constexpr bool computed = true;
+    mol.setProp(common_properties::_CIPComputed, true, computed);
+  }
 }
 
 void assignCIPLabels(ROMol &mol, unsigned int maxRecursiveIterations) {
@@ -265,7 +390,7 @@ void assignCIPLabels(ROMol &mol, unsigned int maxRecursiveIterations) {
 namespace CIPLabeler_detail {
 
 bool decrementRemainingCallCountAndCheck() {
-  return (--CIPLabeler::remainingCallCount) > 0;
+  return CIPLabeler::iterationBudget.consume();
 }
 
 }  // namespace CIPLabeler_detail

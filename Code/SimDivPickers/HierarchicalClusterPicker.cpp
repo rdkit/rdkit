@@ -12,9 +12,9 @@
 #include <RDGeneral/types.h>
 
 typedef double real;
-extern "C" void distdriver_(long int *n, long int *len, real *dists,
-                            long int *toggle, long int *ia, long int *ib,
-                            real *crit);
+extern "C" int distdriver_(long int *n, long int *len, real *dists,
+                           long int *toggle, long int *ia, long int *ib,
+                           real *crit);
 
 namespace RDPickers {
 

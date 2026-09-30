@@ -13,11 +13,11 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilderDetails.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/GaussianTorsionAngleContribs.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
 #include <boost/dynamic_bitset.hpp>
-#include <sstream>
 #include <RDGeneral/StreamOps.h>
 
 #include <boost/lexical_cast.hpp>
@@ -27,12 +27,29 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
 
+#include <sstream>
+#include <numbers>
+#include <vector>
+#include <algorithm>
+#include <iterator>
+#include <ranges>
+
 namespace ForceFields {
 namespace CrystalFF {
 using namespace RDKit;
 
 // the "macrocycle" patterns for ETKDGv3 use a minimum ring size of 9
 constexpr unsigned int MIN_MACROCYCLE_SIZE = 9;
+
+// parameters for ETKDGv4
+const std::vector<double> AROMATIC_HEIGHTS = {2.305};
+const std::vector<double> AROMATIC_POSITIONS = {0.0};
+const std::vector<double> TRANS_POSITION = {std::numbers::pi_v<double>};
+const std::vector<double> CIS_POSITION = {0.0};
+const std::vector<double> AROMATIC_WIDTHS = {0.251};
+constexpr std::size_t AMIDE_TRANS_IDX = 2000;
+constexpr std::size_t AMIDE_CIS_IDX = 2001;
+constexpr std::size_t AROM_TORSION_IDX = 2002;
 
 /* SMARTS patterns for experimental torsion angle preferences
  * Version 1 taken from J. Med. Chem. 56, 1026-2028 (2013)
@@ -44,34 +61,57 @@ constexpr unsigned int MIN_MACROCYCLE_SIZE = 9;
  *
  * format: [SMARTS, s1, V1, s2, V2, s3, V3, s4, V4, s5, V5, s6, V6]
  */
-#include "torsionPreferences_v1.in"
-#include "torsionPreferences_v2.in"
-#include "torsionPreferences_smallrings.in"
-#include "torsionPreferences_macrocycles.in"
+#include "torsionData/torsionPreferences_v1.in"
+#include "torsionData/torsionPreferences_v2.in"
+#include "torsionData/torsionPreferences_smallrings.in"
+#include "torsionData/torsionPreferences_macrocycles.in"
+
+#include "torsionData/gaussTorsionPreferences_v4.h"
+#include "torsionData/gaussTorsionPreferences_v4_macrocycles.h"
+#include "torsionData/gaussTorsionPreferences_v4_smallrings.h"
 
 // class to store the experimental torsion angles
+template <TorsionAngleType T>
 class ExpTorsionAngleCollection {
  public:
-  typedef std::vector<ExpTorsionAngle> ParamsVect;
-  static const ExpTorsionAngleCollection *getParams(
+  typedef std::vector<T> ParamsVect;
+  static const ExpTorsionAngleCollection<T> *getParams(
       unsigned int version, bool useSmallRingTorsions,
-      bool useMacrocycleTorsions, const std::string &paramData = "");
+      bool useMacrocycleTorsions, const std::string &paramData = "")
+    requires std::is_same_v<T, ExpTorsionAngle>;
+  static const ExpTorsionAngleCollection<T> *getParams(
+      unsigned int version, bool useSmallRingTorsions,
+      bool useMacrocycleTorsions, const GaussianTorsionAngleRaw &paramData = {})
+    requires std::is_same_v<T, GaussianExpTorsionAngle>;
   ParamsVect::const_iterator begin() const { return d_params.begin(); };
   ParamsVect::const_iterator end() const { return d_params.end(); };
   ExpTorsionAngleCollection(const std::string &paramData);
+  ExpTorsionAngleCollection(const std::string &paramData)
+    requires std::is_same_v<T, ExpTorsionAngle>;
+  ExpTorsionAngleCollection(const GaussianTorsionAngleRaw &paramData)
+    requires std::is_same_v<T, GaussianExpTorsionAngle>;
 
  private:
   ParamsVect d_params;  //!< the parameters
 };
 
-typedef boost::flyweight<
-    boost::flyweights::key_value<std::string, ExpTorsionAngleCollection>,
-    boost::flyweights::no_tracking>
-    param_flyweight;
+using param_flyweight = boost::flyweight<
+    boost::flyweights::key_value<std::string,
+                                 ExpTorsionAngleCollection<ExpTorsionAngle>>,
+    boost::flyweights::no_tracking>;
 
-const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
+using GaussianParamFlyweight =
+    boost::flyweight<boost::flyweights::key_value<
+                         GaussianTorsionAngleRaw,
+                         ExpTorsionAngleCollection<GaussianExpTorsionAngle>>,
+                     boost::flyweights::no_tracking>;
+
+template <TorsionAngleType T>
+const ExpTorsionAngleCollection<T> *ExpTorsionAngleCollection<T>::getParams(
     unsigned int version, bool useSmallRingTorsions, bool useMacrocycleTorsions,
-    const std::string &paramData) {
+    const std::string &paramData)
+  requires std::is_same_v<T, ExpTorsionAngle>
+{
   std::string params;
   if (paramData.empty()) {
     switch (version) {
@@ -99,8 +139,50 @@ const ExpTorsionAngleCollection *ExpTorsionAngleCollection::getParams(
   return &(param_flyweight(params).get());
 }
 
-ExpTorsionAngleCollection::ExpTorsionAngleCollection(
-    const std::string &paramData) {
+template <TorsionAngleType T>
+const ExpTorsionAngleCollection<T> *ExpTorsionAngleCollection<T>::getParams(
+    unsigned int version, bool useSmallRingTorsions, bool useMacrocycleTorsions,
+    const GaussianTorsionAngleRaw &paramData)
+  requires std::is_same_v<T, GaussianExpTorsionAngle>
+{
+  if (version != 4) {
+    throw ValueErrorException(
+        "Currently, only ETVersions 4 is supported together with the Gaussian fit functional form.");
+  }
+  if (!paramData.empty()) {
+    return &(GaussianParamFlyweight(paramData).get());
+  }
+  namespace GT = GaussTorsions::V4;
+  auto data = GT::Regular;
+  if (useSmallRingTorsions) {
+    std::ranges::copy(GaussTorsions::SmallRings, std::back_inserter(data));
+  }
+  if (useMacrocycleTorsions) {
+    std::ranges::copy(GT::MacroCycles, std::back_inserter(data));
+  }
+  return &(GaussianParamFlyweight(data).get());
+}
+
+template <TorsionAngleType T>
+void addPattern(T &angle) {
+  angle.dp_pattern.reset(SmartsToMol(angle.smarts));
+  // get the atom indices for atom 1, 2, 3, 4 in the pattern
+  for (unsigned int i = 0; i < (angle.dp_pattern.get())->getNumAtoms(); ++i) {
+    Atom const *atom = (angle.dp_pattern.get())->getAtomWithIdx(i);
+    int num;
+    if (atom->getPropIfPresent("molAtomMapNumber", num)) {
+      if (num > 0 && num < 5) {
+        angle.idx[num - 1] = i;
+      }
+    }
+  }
+}
+
+template <TorsionAngleType T>
+ExpTorsionAngleCollection<T>::ExpTorsionAngleCollection(
+    const std::string &paramData)
+  requires std::is_same_v<T, ExpTorsionAngle>
+{
   boost::char_separator<char> tabSep(" ", "", boost::drop_empty_tokens);
   std::istringstream inStream(paramData);
 
@@ -120,18 +202,7 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
         angle.V.push_back(boost::lexical_cast<double>(*token));
         ++token;
       }
-      angle.dp_pattern.reset(SmartsToMol(angle.smarts));
-      // get the atom indices for atom 1, 2, 3, 4 in the pattern
-      for (std::size_t i = 0; i < (angle.dp_pattern.get())->getNumAtoms();
-           ++i) {
-        Atom const *atom = (angle.dp_pattern.get())->getAtomWithIdx(i);
-        int num;
-        if (atom->getPropIfPresent("molAtomMapNumber", num)) {
-          if (num > 0 && num < 5) {
-            angle.idx[num - 1] = i;
-          }
-        }
-      }
+      addPattern(angle);
       d_params.push_back(std::move(angle));
     }
     inLine = RDKit::getLine(inStream);
@@ -140,12 +211,37 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
   //    << d_params[d_params.size()-1].smarts << std::endl;
 }
 
-void getExperimentalTorsions(
+template <TorsionAngleType T>
+ExpTorsionAngleCollection<T>::ExpTorsionAngleCollection(
+    const GaussianTorsionAngleRaw &paramData)
+  requires std::is_same_v<T, GaussianExpTorsionAngle>
+{
+  for (std::size_t i = 0; i < paramData.size(); ++i) {
+    auto &param = paramData[i];
+    GaussianExpTorsionAngle angle;
+    angle.torsionIdx = i;
+    angle.smarts = std::get<0>(param);
+    angle.heights = std::get<1>(param);
+    angle.positions = std::get<2>(param);
+    angle.widths = std::get<3>(param);
+    addPattern(angle);
+    d_params.push_back(std::move(angle));
+  }
+}
+
+// The matching logic below is identical for the cosine-series and the
+// Gaussian-fit torsion parameters, only the concrete SMARTS-pattern entry
+// type (and the values pushed into details.expTorsionAngles) differ, so the
+// implementation stays templated internally and is selected at runtime
+// based on details.torsionParamKind.
+template <TorsionAngleType Angle_T>
+void getExperimentalTorsionsImpl(
     const RDKit::ROMol &mol, CrystalFFDetails &details,
     std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
-                           const ExpTorsionAngle *>> &torsionBonds,
+                           TorsionAnglePtrVariant>> &torsionBonds,
     bool useExpTorsions, bool useSmallRingTorsions, bool useMacrocycleTorsions,
     bool useBasicKnowledge, unsigned int version, bool verbose) {
+  constexpr bool isGaussian = std::is_same_v<Angle_T, GaussianExpTorsionAngle>;
   torsionBonds.clear();
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
@@ -159,6 +255,7 @@ void getExperimentalTorsions(
   details.expTorsionAtoms.clear();
   details.expTorsionAngles.clear();
   details.improperAtoms.clear();
+  details.torsionIdx.clear();
 
   unsigned int aid1, aid2, aid3, aid4;
   unsigned int bid2;
@@ -208,11 +305,11 @@ void getExperimentalTorsions(
   if (useBasicKnowledge) {
     // torsions for forced trans amides / esters
     auto is_forced_cis_or_trans = [](const auto &config) {
-      if (!config.type.isForced) {
+      if (!config.value.isForced) {
         return false;
       }
-      return config.type.type == DGeomHelpers::TorsionType::TRANS ||
-             config.type.type == DGeomHelpers::TorsionType::CIS;
+      return config.value.type == DGeomHelpers::TorsionType::TRANS ||
+             config.value.type == DGeomHelpers::TorsionType::CIS;
     };
     for (const auto &config :
          details.path14Configs | std::views::filter(is_forced_cis_or_trans)) {
@@ -235,26 +332,36 @@ void getExperimentalTorsions(
           details.constrainedAtoms[l]) {
         continue;
       }
+      const bool isCis = config.value.type == DGeomHelpers::TorsionType::CIS;
       details.expTorsionAtoms.push_back(
           {static_cast<int>(i), static_cast<int>(j), static_cast<int>(k),
            static_cast<int>(l)});
-      std::vector<double> V(6, 0.0);
-      std::vector<int> signs(6, 1);
+      const bool isAIO =
+          std::fabs(details.forceConsts.etTermScaling - 1.0) > 1e-3;
+      details.torsionIdx.push_back(isCis ? AMIDE_CIS_IDX : AMIDE_TRANS_IDX);
+      if constexpr (!isGaussian) {
+        std::vector<double> V(6, 0.0);
+        std::vector<int> signs(6, 1);
 
-      V[0] = 75.0;
-      if (std::fabs(details.forceConsts.etTermScaling - 1.0) > 1e-3) {
-        V[0] = 4.0;
+        V[0] = 75.0;
+        if (isAIO) {
+          V[0] = 4.0;
+        }
+        if (isCis) {
+          signs[0] = -1;
+        }
+        details.expTorsionAngles.push_back(CosineExp_T{signs, V});
+      } else {
+        details.expTorsionAngles.push_back(GaussianExp_T{
+            AROMATIC_HEIGHTS, isCis ? CIS_POSITION : TRANS_POSITION,
+            AROMATIC_WIDTHS, isAIO ? 0.05 : 1.0});
       }
-      if (config.type.type == DGeomHelpers::TorsionType::CIS) {
-        signs[0] = -1;
-      }
-      details.expTorsionAngles.emplace_back(signs, V);
     }
-  }  // if useBasicKnowledge
 
+  }  // if useBasicKnowledge
   if (useExpTorsions) {
     // we set the torsion angles with experimental data
-    const auto *params = ExpTorsionAngleCollection::getParams(
+    const auto *params = ExpTorsionAngleCollection<Angle_T>::getParams(
         version, useSmallRingTorsions, useMacrocycleTorsions);
     CHECK_INVARIANT(params, "no parameters available");
     // loop over patterns
@@ -295,29 +402,41 @@ void getExperimentalTorsions(
         atoms[2] = aid3;
         atoms[3] = aid4;
         details.expTorsionAtoms.push_back(atoms);
-        std::vector<double> V{param.V};
-        if (details.forceConsts.etTermScaling != 1.0) {
-          for (double &v : V) {
-            v *= details.forceConsts.etTermScaling;
+        details.torsionIdx.push_back(param.torsionIdx);
+        if constexpr (!isGaussian) {
+          std::vector<double> vals(param.V);
+          for (auto &val : vals) {
+            val *= details.forceConsts.etTermScaling;
+          }
+          details.expTorsionAngles.push_back(CosineExp_T{param.signs, vals});
+          if (verbose) {
+            // using the stringstream seems redundant, but we don't want the
+            // extra formatting provided by the logger after every entry;
+            std::stringstream sstr;
+            sstr << param.smarts << ": " << aid1 << " " << aid2 << " " << aid3
+                 << " " << aid4 << ", [";
+            for (unsigned int i = 0; i < param.V.size() - 1; ++i) {
+              sstr << "(" << param.signs[i] << " " << param.V[i] << "), ";
+            }
+            sstr << "(" << param.signs.back() << " " << param.V.back() << ")] ";
+            BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
+          }
+        } else {
+          details.expTorsionAngles.push_back(
+              GaussianExp_T{param.heights, param.positions, param.widths,
+                            details.forceConsts.etTermScaling});
+          if (verbose) {
+            // using the stringstream seems redundant, but we don't want the
+            // extra formatting provided by the logger after every entry;
+            std::stringstream sstr;
+            sstr << param.smarts << ": " << aid1 << " " << aid2 << " " << aid3
+                 << " " << aid4 << ", [";
+            BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
           }
         }
-        details.expTorsionAngles.emplace_back(param.signs, V);
-
-        if (verbose) {
-          // using the stringstream seems redundant, but we don't want the
-          // extra formatting provided by the logger after every entry;
-          std::stringstream sstr;
-          sstr << param.smarts << ": " << aid1 << " " << aid2 << " " << aid3
-               << " " << aid4 << ", [";
-          for (unsigned int i = 0; i < param.V.size() - 1; ++i) {
-            sstr << "(" << param.signs[i] << " " << param.V[i] << "), ";
-          }
-          sstr << "(" << param.signs.back() << " " << param.V.back() << ")] ";
-          BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
-        }
-      }  // end loop over matches
-    }    // end loop over patterns
-  }      // end if experimentalTorsions
+      }  // if not donePaths
+    }  // end loop over matches
+  }  // end loop over patterns
   if (useBasicKnowledge) {
     boost::dynamic_bitset<> doneAtoms(na);
 
@@ -395,12 +514,21 @@ void getExperimentalTorsions(
           atoms[2] = aid3;
           atoms[3] = aid4;
           details.expTorsionAtoms.push_back(atoms);
+          details.torsionIdx.push_back(AROM_TORSION_IDX);
 
-          std::vector<int> signs(6, 1);
-          signs[1] = -1;  // MMFF sign for m = 2
-          std::vector<double> fconsts(6, 0.0);
-          fconsts[1] = details.forceConsts.kTermTorsion;
-          details.expTorsionAngles.emplace_back(signs, fconsts);
+          if constexpr (!isGaussian) {
+            std::vector<int> signs(6, 1);
+            signs[1] = -1;  // MMFF sign for m = 2
+            std::vector<double> fconsts(6, 0.0);
+            fconsts[1] = details.forceConsts
+                             .kTermTorsion;  // 7.0 is MMFF force constants
+                                             // for aromatic rings
+            details.expTorsionAngles.push_back(CosineExp_T{signs, fconsts});
+          } else {
+            details.expTorsionAngles.push_back(GaussianExp_T{
+                AROMATIC_HEIGHTS, AROMATIC_POSITIONS, AROMATIC_WIDTHS,
+                details.forceConsts.kTermTorsion});
+          }
           /*if (verbose) {
             std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 <<
           " " << aid4 << std::endl;
@@ -408,21 +536,94 @@ void getExperimentalTorsions(
         }
 
       }  // loop over atoms in ring
-    }    // loop over rings
+    }  // loop over rings
+  }  // end function
+}
+
+void getExperimentalTorsions(
+    const RDKit::ROMol &mol, CrystalFFDetails &details,
+    std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                           TorsionAnglePtrVariant>> &torsionBonds,
+    bool useExpTorsions, bool useSmallRingTorsions, bool useMacrocycleTorsions,
+    bool useBasicKnowledge, unsigned int version, bool verbose) {
+  details.torsionParamKind =
+      version == 4 ? TorsionParamKind::Gaussian : TorsionParamKind::Cosine;
+  if (details.torsionParamKind == TorsionParamKind::Gaussian) {
+    getExperimentalTorsionsImpl<GaussianExpTorsionAngle>(
+        mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+        useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+  } else {
+    getExperimentalTorsionsImpl<ExpTorsionAngle>(
+        mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+        useMacrocycleTorsions, useBasicKnowledge, version, verbose);
   }
-}  // end function
+}
 
 void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
                              bool useExpTorsions, bool useSmallRingTorsions,
                              bool useMacrocycleTorsions, bool useBasicKnowledge,
                              unsigned int version, bool verbose) {
   std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
-                         const ExpTorsionAngle *>>
+                         TorsionAnglePtrVariant>>
       torsionBonds;
   getExperimentalTorsions(mol, details, torsionBonds, useExpTorsions,
                           useSmallRingTorsions, useMacrocycleTorsions,
                           useBasicKnowledge, version, verbose);
 }
+
+void populateRefTable(CrystalFFDetails &details) {
+  // Deduplicate torsion patterns to compute lookup tables (energies & gradients) 
+  // only once per unique pattern, while preserving evaluation order from `getExperimentalTorsions`.
+  // Keeping the order intact is crucial, since otherwise this would break the
+  // way trans amides are currently handled.
+
+  // Sort and deduplicate the original torsion indices.
+  std::vector<std::size_t> sorted = details.torsionIdx;
+  std::ranges::sort(sorted);
+
+  auto [first, last] = std::ranges::unique(sorted);
+  sorted.erase(first, last);
+
+  // Map each original torsion index in `details.torsionIdx` 
+  // to its 0-based rank inside `sorted`.
+  std::ranges::transform(
+      details.torsionIdx, details.torsionIdx.begin(), [&sorted](int x) {
+        return std::ranges::distance(sorted.begin(),
+                                     std::ranges::lower_bound(sorted, x));
+      });
+
+  details.phiToEnergy.resize(sorted.size(),
+                             std::vector<double>(lookup_grid_size));
+  details.phiToGrad.resize(sorted.size(),
+                           std::vector<double>(lookup_grid_size));
+
+  for (std::size_t torsionIdx = 0; torsionIdx < sorted.size(); ++torsionIdx) {
+    // Find the first matching occurrence of `torsionIdx` to locate its parameters
+    // inside `expTorsionAngles`.
+    auto it = std::ranges::find(details.torsionIdx, torsionIdx);
+    std::size_t termIdx = std::distance(details.torsionIdx.begin(), it);
+
+    // Unpack Gaussian parameters for energy/gradient evaluation.
+    const auto &gaussianParams =
+        std::get<GaussianExp_T>(details.expTorsionAngles[termIdx]);
+    auto &heights = std::get<0>(gaussianParams);
+    auto &positions = std::get<1>(gaussianParams);
+    auto &widths = std::get<2>(gaussianParams);
+
+    // Evaluate energy and gradient across the grid range [0, pi].
+    for (std::size_t gridPoint = 0; gridPoint < lookup_grid_size; ++gridPoint) {
+      const double phi = gridPoint * std::numbers::pi / (lookup_grid_size - 1);
+      details.phiToEnergy[torsionIdx][gridPoint] =
+          getEnergy(heights, positions, widths, phi);
+      details.phiToGrad[torsionIdx][gridPoint] =
+          getdEdPhi(heights, positions, widths, phi);
+    }
+  }
+}
+
+// Some explicit instantiations
+template class ExpTorsionAngleCollection<ExpTorsionAngle>;
+template class ExpTorsionAngleCollection<GaussianExpTorsionAngle>;
 
 }  // namespace CrystalFF
 }  // namespace ForceFields

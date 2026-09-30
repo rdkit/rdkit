@@ -113,3 +113,6 @@ add_pytest(pyCDXMLTest
 
 add_pytest(pySubsetTest
          ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/test_subset.py)
+
+add_pytest(pySubstructTest
+         ${CMAKE_CURRENT_SOURCE_DIR}/../Wrap/test_substruct.py)

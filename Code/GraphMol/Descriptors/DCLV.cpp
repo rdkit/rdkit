@@ -361,6 +361,10 @@ bool DoubleCubicLatticeVolume::testPoint(
 double DoubleCubicLatticeVolume::getAtomSurfaceArea(unsigned int atomIdx) {
   // surface area for single atom
 
+  // clear our current surface points, if there are any
+  if (surfacePoints.find(atomIdx) != surfacePoints.end()) {
+    surfacePoints[atomIdx].clear();
+  }
   const auto rad = radii_[atomIdx];
   if (rad == 0.0) {
     return 0.0;  // don't include if radius = 0, masked atom
@@ -380,10 +384,10 @@ double DoubleCubicLatticeVolume::getAtomSurfaceArea(unsigned int atomIdx) {
     const Point3D &dots =
         Point3D(standardDots[i][0], standardDots[i][1], standardDots[i][2]);
     const auto vect = pos + dots * factor;
-    surfacePoints[atomIdx].push_back(vect);
-
     if (testPoint(vect, probeRadius, nbr)) {
       atomSurfaceArea += dotArea;
+      // save the surface point
+      surfacePoints[atomIdx].push_back(vect);
     }
   }
   atomSurfaceArea *= ((4.0 * M_PI) * (factor * factor)) / standardArea;
@@ -434,28 +438,36 @@ double DoubleCubicLatticeVolume::getPolarSurfaceArea(bool includeSandP,
 }
 
 std::map<unsigned int, std::vector<RDGeom::Point3D>> &
-DoubleCubicLatticeVolume::getSurfacePoints() {
-  if (!surfacePoints.empty()) {
+DoubleCubicLatticeVolume::getSurfacePoints(bool allPoints) {
+  if (!allPoints && !surfacePoints.empty()) {
     return surfacePoints;
+  }
+  if (allPoints && !allSurfacePoints.empty()) {
+    return allSurfacePoints;
   }
 
   for (const auto atom : mol.atoms()) {
     const auto atomIdx = atom->getIdx();
-    if (radii_[atomIdx] != 0.0) {
-      const Point3D &pos = positions[atomIdx];
-      const double factor = radii_[atomIdx] + probeRadius;
+    if (allPoints) {
+      allSurfacePoints[atomIdx].clear();
+      if (radii_[atomIdx] != 0.0) {
+        const Point3D &pos = positions[atomIdx];
+        const double factor = radii_[atomIdx] + probeRadius;
 
-      // standard dots has fixed NUMDOTS entries
-      // using precomputed dots in DCLV_dots.h
-      for (int i = 0; i < NUMDOTS; i++) {
-        const Point3D &dots =
-            Point3D(standardDots[i][0], standardDots[i][1], standardDots[i][2]);
-        const auto vect = pos + dots * factor;
-        surfacePoints[atomIdx].push_back(vect);
+        // standard dots has fixed NUMDOTS entries
+        // using precomputed dots in DCLV_dots.h
+        for (int i = 0; i < NUMDOTS; i++) {
+          const Point3D &dots = Point3D(standardDots[i][0], standardDots[i][1],
+                                        standardDots[i][2]);
+          const auto vect = pos + dots * factor;
+          allSurfacePoints[atomIdx].push_back(vect);
+        }
       }
+    } else {
+      getAtomSurfaceArea(atomIdx);
     }
   }
-  return surfacePoints;
+  return allPoints ? allSurfacePoints : surfacePoints;
 }
 
 double DoubleCubicLatticeVolume::getAtomVolume(unsigned int atomIdx,

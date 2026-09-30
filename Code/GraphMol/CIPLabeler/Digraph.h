@@ -17,6 +17,7 @@
 //
 #pragma once
 
+#include <cstdint>
 #include <list>
 #include <vector>
 
@@ -52,6 +53,8 @@ class Digraph {
   Digraph &operator=(const Digraph &) = delete;
 
   Digraph(const CIPMol &mol, Atom *atom, bool atropsomerMode = false);
+  Digraph(CIPMol &&mol, Atom *atom, bool atropsomerMode = false) = delete;
+  Digraph(const CIPMol &&mol, Atom *atom, bool atropsomerMode = false) = delete;
 
   const CIPMol &getMol() const;
 
@@ -91,8 +94,8 @@ class Digraph {
 
   void expand(Node *beg);
 
-  Node &addNode(std::vector<char> &&visit, Atom *atom,
-                boost::rational<int> &&frac, int dist, int flags);
+  Node &addNode(std::vector<std::uint32_t> &&visit, Atom *atom,
+                boost::rational<int> &&frac, int dist, uint8_t flags);
 
   // Has `atom` been seen yet?
   bool seenAtom(Atom *atom) const;
