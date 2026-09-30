@@ -236,7 +236,7 @@ class ReadWriteMol : public RWMol {
             python::object traceback) {
     RDUNUSED_PARAM(exc_val);
     RDUNUSED_PARAM(traceback);
-    if (exc_type != python::object()) {
+    if (!exc_type.is_none()) {
       // exception thrown, abort the edits
       rollbackBatchEdit();
     } else {
