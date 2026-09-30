@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_WRAP_CONTEXTMGR_H
 #define RD_WRAP_CONTEXTMGR_H
 //! Template functions for supporting python context managers
 
-#include <RDBoost/python.h>
+#include "RDBoost/python.h"
 namespace python = boost::python;
 
 namespace RDKit {

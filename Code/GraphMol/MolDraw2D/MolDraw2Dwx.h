@@ -10,11 +10,11 @@
 // This is a concrete class derived from MolDraw2D that uses RDKit to draw a
 // molecule into a wxDC
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef MOLDRAW2DWX_H
 #define MOLDRAW2DWX_H
 
-#include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include "GraphMol/MolDraw2D/MolDraw2D.h"
 #include <wx/dc.h>
 #include <wx/font.h>
 #include <wx/pen.h>

@@ -21,7 +21,7 @@
 //
 // Created by Guillaume Godin 2020
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef AtomFeatRDKIT_H_MARC2020
 #define AtomFeatRDKIT_H_MARC2020
 #include <vector>

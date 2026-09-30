@@ -15,10 +15,10 @@
 #ifndef SYNTHONSPACESHAPESEARCHER_H
 #define SYNTHONSPACESHAPESEARCHER_H
 
-#include <RDGeneral/export.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonShapeInput.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonShapeInput.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h"
 
 namespace RDKit::SynthonSpaceSearch {
 

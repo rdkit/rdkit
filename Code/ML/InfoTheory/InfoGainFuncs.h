@@ -2,11 +2,11 @@
 //  Copyright (C) 2003 Rational Discovery LLC
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef INFOGAINFUNC_H
 #define INFOGAINFUNC_H
 
-#include <RDGeneral/types.h>
+#include "RDGeneral/types.h"
 
 namespace RDInfoTheory {
 

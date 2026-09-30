@@ -15,11 +15,11 @@
   This stuff is used by the PeriodicTable interface
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_ATOMIC_DATA_H
 #define __RD_ATOMIC_DATA_H
 
-#include <RDGeneral/types.h>
+#include "RDGeneral/types.h"
 #include <map>
 
 namespace RDKit {

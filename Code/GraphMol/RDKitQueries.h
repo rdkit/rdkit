@@ -13,13 +13,13 @@
   \brief pulls in the \c RDKit Query functionality
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RDKIT_QUERIES_H
 #define _RDKIT_QUERIES_H
 
-#include <Query/QueryObjects.h>
-#include <GraphMol/QueryAtom.h>
-#include <GraphMol/QueryBond.h>
-#include <GraphMol/QueryOps.h>
+#include "Query/QueryObjects.h"
+#include "GraphMol/QueryAtom.h"
+#include "GraphMol/QueryBond.h"
+#include "GraphMol/QueryOps.h"
 
 #endif

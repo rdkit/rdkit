@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_DEPICTOR_H_
 #define _RD_DEPICTOR_H_
 #include <string>
@@ -15,9 +15,9 @@
 #include <windows.h>
 #endif
 
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/FileParsers/FileParsers.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/FileParsers/FileParsers.h"
+#include "GraphMol/SmilesParse/SmilesWrite.h"
 
 namespace RDKit {
 #ifdef WIN32_DLLBUILD

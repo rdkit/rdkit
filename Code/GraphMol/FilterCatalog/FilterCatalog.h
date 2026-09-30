@@ -29,12 +29,12 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_FILTER_CATALOG_PARAMS_
 #define _RD_FILTER_CATALOG_PARAMS_
 
-#include <Catalogs/Catalog.h>
-#include <Catalogs/CatalogParams.h>
+#include "Catalogs/Catalog.h"
+#include "Catalogs/CatalogParams.h"
 #include "FilterCatalogEntry.h"
 
 namespace RDKit {

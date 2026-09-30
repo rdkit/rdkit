@@ -7,11 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MATRIX_H
 #define RD_MATRIX_H
 
-#include <RDGeneral/Invariant.h>
+#include "RDGeneral/Invariant.h"
 #include "Vector.h"
 #include <iomanip>
 #include <cstring>

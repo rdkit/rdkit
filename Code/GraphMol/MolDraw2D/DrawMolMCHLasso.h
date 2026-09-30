@@ -10,7 +10,7 @@
 #ifndef DRAWMOLMCHLASSO_H
 #define DRAWMOLMCHLASSO_H
 
-#include <GraphMol/MolDraw2D/DrawMolMCH.h>
+#include "GraphMol/MolDraw2D/DrawMolMCH.h"
 
 namespace RDKit {
 namespace MolDraw2D_detail {

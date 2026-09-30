@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 #pragma once
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_SHAPE_ENCODER_H_20050125_0800
 #define RD_SHAPE_ENCODER_H_20050125_0800
 

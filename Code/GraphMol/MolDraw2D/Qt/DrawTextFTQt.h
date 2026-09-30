@@ -12,8 +12,8 @@
 #ifndef RDKIT_DRAWTEXTFTQT_H
 #define RDKIT_DRAWTEXTFTQT_H
 
-#include <RDGeneral/export.h>
-#include <GraphMol/MolDraw2D/DrawTextFT.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/MolDraw2D/DrawTextFT.h"
 #include "DrawTextQt.h"
 
 class QPainter;

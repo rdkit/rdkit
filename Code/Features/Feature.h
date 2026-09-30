@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __FEATURE_H_30112004_1121__
 #define __FEATURE_H_30112004_1121__
 
 #include <vector>
-#include <Geometry/point.h>
+#include "Geometry/point.h"
 
 namespace RDFeatures {
 template <typename FAMILYMARKER, typename TYPEMARKER = FAMILYMARKER,

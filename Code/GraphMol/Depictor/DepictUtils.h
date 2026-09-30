@@ -7,19 +7,19 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_DEPICT_UTILS_H
 #define RD_DEPICT_UTILS_H
 
 // REVIEW: remove extra headers here
-#include <RDGeneral/types.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/RWMol.h>
-#include <GraphMol/ROMol.h>
-#include <GraphMol/Substruct/SubstructUtils.h>
-#include <Geometry/Transform2D.h>
-#include <Geometry/Transform3D.h>
-#include <Geometry/point.h>
+#include "RDGeneral/types.h"
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/RWMol.h"
+#include "GraphMol/ROMol.h"
+#include "GraphMol/Substruct/SubstructUtils.h"
+#include "Geometry/Transform2D.h"
+#include "Geometry/Transform3D.h"
+#include "Geometry/point.h"
 #include <queue>
 
 namespace RDDepict {

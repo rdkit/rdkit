@@ -13,7 +13,7 @@
 
 */
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MOLBUNDLE_AUG2017
 #define RD_MOLBUNDLE_AUG2017
 
@@ -21,24 +21,24 @@
 #include <vector>
 
 // boost stuff
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/smart_ptr.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/split_member.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/archive_exception.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 #endif
 
 // our stuff
-#include <RDGeneral/Exceptions.h>
-#include <GraphMol/MolPickler.h>
+#include "RDGeneral/Exceptions.h"
+#include "GraphMol/MolPickler.h"
 
 namespace RDKit {
 class ROMol;

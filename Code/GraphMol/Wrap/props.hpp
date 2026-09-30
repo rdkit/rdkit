@@ -31,10 +31,10 @@
 #ifndef RD_WRAPPED_PROPS_H
 #define RD_WRAPPED_PROPS_H
 
-#include <RDBoost/python.h>
-#include <RDBoost/pyint_api.h>
-#include <RDBoost/Wrap.h>
-#include <RDGeneral/Dict.h>
+#include "RDBoost/python.h"
+#include "RDBoost/pyint_api.h"
+#include "RDBoost/Wrap.h"
+#include "RDGeneral/Dict.h"
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
 

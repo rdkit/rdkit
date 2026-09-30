@@ -7,11 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RDFRAGCAT_INCL_
 #define _RDFRAGCAT_INCL_
 
 #define PY_ARRAY_UNIQUE_SYMBOL rdfragcat_array_API
-#include <RDBoost/Wrap.h>
+#include "RDBoost/Wrap.h"
 
 #endif

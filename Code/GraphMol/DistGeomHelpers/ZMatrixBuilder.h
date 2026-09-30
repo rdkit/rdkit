@@ -8,11 +8,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_Z_MATRIX_BUILDER_H
 #define RD_Z_MATRIX_BUILDER_H
 
-#include <DistGeom/ZMatrix.h>
+#include "DistGeom/ZMatrix.h"
 #include <boost/unordered/unordered_flat_map.hpp>
 
 namespace RDKit {

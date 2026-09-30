@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_FPBREADER_H_DEC2015
 #define RD_FPBREADER_H_DEC2015
 /*! \file FPBReader.h
@@ -21,8 +21,8 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <RDGeneral/BadFileException.h>
-#include <DataStructs/ExplicitBitVect.h>
+#include "RDGeneral/BadFileException.h"
+#include "DataStructs/ExplicitBitVect.h"
 
 #include <cstdint>
 #include <boost/shared_ptr.hpp>

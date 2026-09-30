@@ -16,8 +16,8 @@
 #ifndef RDKIT_DRAWMOLMCH_H
 #define RDKIT_DRAWMOLMCH_H
 
-#include <GraphMol/MolDraw2D/AtomSymbol.h>
-#include <GraphMol/MolDraw2D/DrawMol.h>
+#include "GraphMol/MolDraw2D/AtomSymbol.h"
+#include "GraphMol/MolDraw2D/DrawMol.h"
 
 namespace RDKit {
 namespace MolDraw2D_detail {

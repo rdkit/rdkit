@@ -12,14 +12,14 @@
 // correspond between the molecules, and also a SMARTS pattern
 // defining the MCES.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 
 #ifndef RASCALRESULT_H
 #define RASCALRESULT_H
 
 #include <vector>
 
-#include <GraphMol/ROMol.h>
+#include "GraphMol/ROMol.h"
 
 namespace RDKit {
 

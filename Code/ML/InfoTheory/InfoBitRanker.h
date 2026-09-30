@@ -7,12 +7,12 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_INFORANKER_H_
 #define _RD_INFORANKER_H_
 
-#include <RDGeneral/types.h>
-#include <DataStructs/BitVects.h>
+#include "RDGeneral/types.h"
+#include "DataStructs/BitVects.h"
 
 /*! \brief Class used to rank bits based on a specified measure of information
  *

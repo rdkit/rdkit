@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_ALIGNMOLECULES_H
 #define RD_ALIGNMOLECULES_H
 
-#include <Geometry/Transform3D.h>
-#include <Numerics/Vector.h>
+#include "Geometry/Transform3D.h"
+#include "Numerics/Vector.h"
 #include <vector>
 
 namespace RDKit {

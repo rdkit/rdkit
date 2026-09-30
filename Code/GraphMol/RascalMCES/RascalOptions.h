@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <string>
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 
 #ifndef RASCALOPTIONS_H
 #define RASCALOPTIONS_H

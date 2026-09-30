@@ -7,11 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_UFFUTILS_H
 #define RD_UFFUTILS_H
 #include <tuple>
-#include <Geometry/point.h>
+#include "Geometry/point.h"
 
 namespace ForceFields {
 namespace UFF {

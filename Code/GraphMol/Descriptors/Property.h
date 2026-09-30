@@ -29,18 +29,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDKIT_PROPERTIES_H
 #define RDKIT_PROPERTIES_H
 
-#include <GraphMol/RDKitBase.h>
+#include "GraphMol/RDKitBase.h"
 #include <string>
 #include <utility>
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/shared_ptr.hpp>
-#include <RDGeneral/BoostEndInclude.h>
-#include <Query/Query.h>
-#include <RDGeneral/Exceptions.h>
+#include "RDGeneral/BoostEndInclude.h"
+#include "Query/Query.h"
+#include "RDGeneral/Exceptions.h"
 
 namespace RDKit {
 namespace Descriptors {

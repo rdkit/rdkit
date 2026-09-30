@@ -8,12 +8,12 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_ATOMPAIRGEN_H_2018_06
 #define RD_ATOMPAIRGEN_H_2018_06
 
-#include <GraphMol/Fingerprints/FingerprintGenerator.h>
-#include <GraphMol/Fingerprints/FingerprintUtil.h>
+#include "GraphMol/Fingerprints/FingerprintGenerator.h"
+#include "GraphMol/Fingerprints/FingerprintUtil.h"
 
 namespace RDKit {
 namespace AtomPair {

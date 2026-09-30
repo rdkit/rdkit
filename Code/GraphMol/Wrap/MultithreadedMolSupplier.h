@@ -10,11 +10,11 @@
 #ifndef RD_WRAP_MTMOLSUPPLIER_H
 #define RD_WRAP_MTMOLSUPPLIER_H
 
-#include <GraphMol/RDKitBase.h>
-#include <RDBoost/python.h>
-#include <RDBoost/python_streambuf.h>
-#include <RDGeneral/FileParseException.h>
-#include <RDGeneral/export.h>
+#include "GraphMol/RDKitBase.h"
+#include "RDBoost/python.h"
+#include "RDBoost/python_streambuf.h"
+#include "RDGeneral/FileParseException.h"
+#include "RDGeneral/export.h"
 
 namespace RDKit {
 //! Note that this returns a pointer to the supplier itself, so be careful

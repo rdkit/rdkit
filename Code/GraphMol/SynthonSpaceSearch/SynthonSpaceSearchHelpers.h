@@ -13,14 +13,14 @@
 
 #include <functional>
 
-#include <GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonShapeInput.h>
+#include "GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonShapeInput.h"
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 #endif
 
 namespace RDKit::SynthonSpaceSearch {

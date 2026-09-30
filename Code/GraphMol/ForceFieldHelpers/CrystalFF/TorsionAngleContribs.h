@@ -8,10 +8,10 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_TORSIONANGLECONTRIBS_H
 #define RD_TORSIONANGLECONTRIBS_H
-#include <ForceField/Contrib.h>
+#include "ForceField/Contrib.h"
 #include <vector>
 
 namespace RDGeom {

@@ -8,14 +8,14 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDKITMOLDRAW2DSGROUPDATA_H
 #define RDKITMOLDRAW2DSGROUPDATA_H
 
 #include <string>
 #include <vector>
 
-#include <Geometry/point.h>
+#include "Geometry/point.h"
 
 namespace RDKit {
 

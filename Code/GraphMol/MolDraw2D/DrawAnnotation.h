@@ -16,9 +16,9 @@
 #ifndef RDKIT_DRAWANNOTATION_H
 #define RDKIT_DRAWANNOTATION_H
 
-#include <Geometry/point.h>
-#include <GraphMol/MolDraw2D/DrawText.h>
-#include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
+#include "Geometry/point.h"
+#include "GraphMol/MolDraw2D/DrawText.h"
+#include "GraphMol/MolDraw2D/MolDraw2DHelpers.h"
 
 namespace RDKit {
 

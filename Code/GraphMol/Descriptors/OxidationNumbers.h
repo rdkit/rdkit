@@ -15,7 +15,7 @@
 // and therefore also subject to the MIT licence as detailed at
 // https://github.com/syngenta/linchemin/blob/f44fda38e856eaa876483c94284ee6788d2c27f4/LICENSE
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 
 #ifndef RD_OXIDATION_NUMBERS_MAR2023
 #define RD_OXIDATION_NUMBERS_MAR2023

@@ -10,7 +10,7 @@
  *  http://amalfi.dis.unina.it/graph/db/vflib-2.0/doc/vflib.html
  *
  */
-#include <RDGeneral/ControlCHandler.h>
+#include "RDGeneral/ControlCHandler.h"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <vector>

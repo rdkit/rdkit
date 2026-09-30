@@ -8,13 +8,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_EXPLICITBITVECTS_H__
 #define __RD_EXPLICITBITVECTS_H__
 
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/dynamic_bitset.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 #include "BitVect.h"
 
 //! a class for bit vectors that are densely occupied

@@ -6,10 +6,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_MMFFBONDSTRETCH_H__
 #define __RD_MMFFBONDSTRETCH_H__
-#include <ForceField/Contrib.h>
+#include "ForceField/Contrib.h"
 
 #include <vector>
 

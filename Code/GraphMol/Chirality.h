@@ -10,12 +10,12 @@
 /*! \file Chirality.h
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_CHIRALITY_20AUG2008_H
 #define RD_CHIRALITY_20AUG2008_H
-#include <RDGeneral/types.h>
-#include <GraphMol/Atom.h> /* for Atom:ChiralType enum */
-#include <GraphMol/Bond.h> /* for Bond::BondDir enum */
+#include "RDGeneral/types.h"
+#include "GraphMol/Atom.h" /* for Atom:ChiralType enum */
+#include "GraphMol/Bond.h" /* for Bond::BondDir enum */
 #include <boost/dynamic_bitset.hpp>
 #include <limits>
 

@@ -14,7 +14,7 @@
   in client code.
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_LIPINSKI_H__
 #define __RD_LIPINSKI_H__
 #include "RegisterDescriptor.h"

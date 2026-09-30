@@ -8,13 +8,13 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_POWER_EIGENSOLVER_H
 #define _RD_POWER_EIGENSOLVER_H
 
-#include <Numerics/Vector.h>
-#include <Numerics/Matrix.h>
-#include <Numerics/SymmMatrix.h>
+#include "Numerics/Vector.h"
+#include "Numerics/Matrix.h"
+#include "Numerics/SymmMatrix.h"
 
 namespace RDNumeric {
 namespace EigenSolvers {

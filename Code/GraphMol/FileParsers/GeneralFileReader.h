@@ -9,8 +9,8 @@
 //
 #ifndef GENERAL_FILE_READER_H
 #define GENERAL_FILE_READER_H
-#include <RDGeneral/BadFileException.h>
-#include <RDStreams/streams.h>
+#include "RDGeneral/BadFileException.h"
+#include "RDStreams/streams.h"
 
 #include <boost/algorithm/string.hpp>
 #include <memory>

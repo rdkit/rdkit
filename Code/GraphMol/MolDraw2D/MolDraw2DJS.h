@@ -13,7 +13,7 @@
 // the JS canvas. This requires emscripten and is only intended for the RDKit
 // Javascript builds
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef MOLDRAW2DJS_H
 #define MOLDRAW2DJS_H
 
@@ -21,7 +21,7 @@
 #include <emscripten.h>
 #include <emscripten/val.h>
 
-#include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include "GraphMol/MolDraw2D/MolDraw2D.h"
 
 // ****************************************************************************
 

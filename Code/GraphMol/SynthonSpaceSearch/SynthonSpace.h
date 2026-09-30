@@ -34,13 +34,13 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include <RDGeneral/export.h>
-#include <GraphMol/Fingerprints/FingerprintGenerator.h>
-#include <GraphMol/GeneralizedSubstruct/XQMol.h>
-#include <GraphMol/MolStandardize/Tautomer.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
-#include <GraphMol/SynthonSpaceSearch/SearchResults.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearchHelpers.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/Fingerprints/FingerprintGenerator.h"
+#include "GraphMol/GeneralizedSubstruct/XQMol.h"
+#include "GraphMol/MolStandardize/Tautomer.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonSet.h"
+#include "GraphMol/SynthonSpaceSearch/SearchResults.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonSpaceSearchHelpers.h"
 
 namespace RDKit {
 class ROMol;

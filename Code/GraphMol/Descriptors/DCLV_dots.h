@@ -12,7 +12,7 @@
 // set of standard dots for computing the DCLV values
 // based on a 320 faced polyhedron
 #pragma once
-#include <Geometry/point.h>
+#include "Geometry/point.h"
 
 #define NUMDOTS 320
 

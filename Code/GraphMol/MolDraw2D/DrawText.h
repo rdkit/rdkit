@@ -19,10 +19,10 @@
 #include <string>
 #include <vector>
 
-#include <RDGeneral/export.h>
-#include <Geometry/point.h>
-#include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
-#include <GraphMol/MolDraw2D/StringRect.h>
+#include "RDGeneral/export.h"
+#include "Geometry/point.h"
+#include "GraphMol/MolDraw2D/MolDraw2DHelpers.h"
+#include "GraphMol/MolDraw2D/StringRect.h"
 
 using RDGeom::Point2D;
 

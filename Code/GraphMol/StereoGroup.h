@@ -14,7 +14,7 @@
 
 */
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_StereoGroup_092018
 #define RD_StereoGroup_092018
 #include <ostream>

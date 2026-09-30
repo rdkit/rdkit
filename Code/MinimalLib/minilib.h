@@ -9,16 +9,16 @@
 //  of the RDKit source tree.
 //
 #include <string>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/SubstructLibrary/SubstructLibrary.h>
-#include <GraphMol/ChemReactions/Reaction.h>
-#include <GraphMol/ChemReactions/ReactionParser.h>
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/SubstructLibrary/SubstructLibrary.h"
+#include "GraphMol/ChemReactions/Reaction.h"
+#include "GraphMol/ChemReactions/ReactionParser.h"
 
 #ifdef RDK_BUILD_MINIMAL_LIB_MMPA
-#include <GraphMol/MMPA/MMPA.h>
+#include "GraphMol/MMPA/MMPA.h"
 #endif
 #ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP
-#include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
+#include "GraphMol/RGroupDecomposition/RGroupDecomp.h"
 #endif
 
 class JSMolList;

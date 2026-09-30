@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_SUBSTRUCTMATCH_H
 #define RD_SUBSTRUCTMATCH_H
 
@@ -26,7 +26,7 @@
 #define RDK_INTERNAL_BITSET_HAS_HASH
 #endif
 
-#include <GraphMol/StereoGroup.h>
+#include "GraphMol/StereoGroup.h"
 
 namespace RDKit {
 class ROMol;

@@ -7,14 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_REDUCEDGRAPHS_H_
 #define _RD_REDUCEDGRAPHS_H_
 
 #include <vector>
 #include <cstdint>
 #include <boost/dynamic_bitset.hpp>
-#include <Numerics/Vector.h>
+#include "Numerics/Vector.h"
 
 namespace RDKit {
 class ROMol;

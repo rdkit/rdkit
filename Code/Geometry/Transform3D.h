@@ -7,13 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_TRANSFORM3D_H__
 #define __RD_TRANSFORM3D_H__
 
 #include "Transform.h"
 
-#include <Numerics/SquareMatrix.h>
+#include "Numerics/SquareMatrix.h"
 
 namespace RDGeom {
 class Point3D;

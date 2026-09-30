@@ -15,7 +15,7 @@
 
 #include <cairo.h>
 
-#include <GraphMol/MolDraw2D/DrawTextFT.h>
+#include "GraphMol/MolDraw2D/DrawTextFT.h"
 
 namespace RDKit {
 namespace MolDraw2D_detail {

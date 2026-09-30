@@ -33,13 +33,13 @@
 #define RDK_SUBSTRUCT_LIBRARY_SERIALIZATION
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/archive/archive_exception.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(RDKit::MolHolderBase)
 BOOST_SERIALIZATION_ASSUME_ABSTRACT(RDKit::FPHolderBase)

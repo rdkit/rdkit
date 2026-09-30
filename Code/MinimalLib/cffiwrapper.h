@@ -9,7 +9,7 @@
 //
 #pragma once
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifdef RDKIT_RDKITCFFI_BUILD
 #define RDKIT_RDKITCFFI_EXPORT RDKIT_EXPORT_API
 #else

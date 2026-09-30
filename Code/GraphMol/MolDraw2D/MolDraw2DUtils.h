@@ -8,11 +8,11 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef MOLDRAW2DUTILS_H
 #define MOLDRAW2DUTILS_H
-#include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
-#include <GraphMol/RWMol.h>
+#include "GraphMol/MolDraw2D/MolDraw2DHelpers.h"
+#include "GraphMol/RWMol.h"
 
 #include <tuple>
 

@@ -7,16 +7,16 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_PNGPARSER_H
 #define RD_PNGPARSER_H
 
-#include <RDGeneral/types.h>
-#include <RDGeneral/BadFileException.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/MolPickler.h>
+#include "RDGeneral/types.h"
+#include "RDGeneral/BadFileException.h"
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/SmilesParse/SmilesParse.h"
+#include "GraphMol/SmilesParse/SmilesWrite.h"
+#include "GraphMol/MolPickler.h"
 
 #include <boost/format.hpp>
 

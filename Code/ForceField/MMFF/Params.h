@@ -8,12 +8,12 @@
 //  of the RDKit source tree.
 //
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MMFFPARAMS_H
 #define RD_MMFFPARAMS_H
 
 #include <memory>
-#include <RDGeneral/Invariant.h>
+#include "RDGeneral/Invariant.h"
 #include <cmath>
 #include <string>
 #include <vector>

@@ -21,9 +21,9 @@
 #include <list>
 #include <vector>
 
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/rational.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
 #include "TooManyNodesException.h"
 

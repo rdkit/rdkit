@@ -8,11 +8,11 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_MOLWRITERS_H_
 #define _RD_MOLWRITERS_H_
 
-#include <RDGeneral/types.h>
+#include "RDGeneral/types.h"
 
 #include <memory>
 #include <string>
@@ -22,7 +22,7 @@
 #include <maeparser/Writer.hpp>
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
 
-#include <GraphMol/ROMol.h>
+#include "GraphMol/ROMol.h"
 
 namespace RDKit {
 

@@ -4,7 +4,7 @@
 #include <limits>
 #include <vector>
 
-#include <GraphMol/ROMol.h>
+#include "GraphMol/ROMol.h"
 
 namespace bench_common {
 

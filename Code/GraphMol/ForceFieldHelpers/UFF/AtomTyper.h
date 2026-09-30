@@ -7,13 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_UFFATOMTYPER_H__
 #define _RD_UFFATOMTYPER_H__
 
 #include <vector>
 #include <string>
-#include <ForceField/UFF/Params.h>
+#include "ForceField/UFF/Params.h"
 
 namespace ForceFields {
 namespace UFF {

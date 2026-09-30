@@ -7,14 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_WRAP_H_
 #define _RD_WRAP_H_
 
-#include <RDGeneral/Invariant.h>
+#include "RDGeneral/Invariant.h"
 
-#include <Numerics/Vector.h>
-#include <RDGeneral/BoostStartInclude.h>
+#include "Numerics/Vector.h"
+#include "RDGeneral/BoostStartInclude.h"
 //
 // Generic Wrapper utility functionality
 //
@@ -24,14 +24,14 @@
 
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "list_indexing_suite.hpp"
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 #include <memory>
 #include <cstdint>
 
 #include <list>
 #include <string_view>
 #include <vector>
-#include <RDGeneral/Exceptions.h>
+#include "RDGeneral/Exceptions.h"
 
 namespace python = boost::python;
 

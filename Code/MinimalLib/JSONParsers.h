@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include <GraphMol/FileParsers/PNGParser.h>
-#include <GraphMol/MolOps.h>
+#include "GraphMol/FileParsers/PNGParser.h"
+#include "GraphMol/MolOps.h"
 
 namespace RDKit {
 namespace MinimalLib {

@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_CORRMATGENERATOR_H_
 #define _RD_CORRMATGENERATOR_H_
 
-#include <RDGeneral/types.h>
-#include <DataStructs/BitVects.h>
+#include "RDGeneral/types.h"
+#include "DataStructs/BitVects.h"
 #include <boost/dynamic_bitset.hpp>
 
 namespace RDInfoTheory {

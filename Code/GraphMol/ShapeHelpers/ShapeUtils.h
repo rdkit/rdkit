@@ -9,10 +9,10 @@
 //
 #pragma once
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_SHAPE_UTILS_H_20050128
 #define RD_SHAPE_UTILS_H_20050128
-#include <DataStructs/DiscreteValueVect.h>
+#include "DataStructs/DiscreteValueVect.h"
 #include <vector>
 
 namespace RDGeom {

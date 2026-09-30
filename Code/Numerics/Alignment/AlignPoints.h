@@ -7,13 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_ALIGN_POINTS_H
 #define RD_ALIGN_POINTS_H
 
-#include <Geometry/point.h>
-#include <Geometry/Transform3D.h>
-#include <Numerics/Vector.h>
+#include "Geometry/point.h"
+#include "Geometry/Transform3D.h"
+#include "Numerics/Vector.h"
 
 namespace RDNumeric {
 

@@ -7,14 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_FOURTHDIMCONTRIBS_H
 #define RD_FOURTHDIMCONTRIBS_H
 
 #include <vector>
-#include <RDGeneral/Invariant.h>
-#include <ForceField/Contrib.h>
-#include <ForceField/ForceField.h>
+#include "RDGeneral/Invariant.h"
+#include "ForceField/Contrib.h"
+#include "ForceField/ForceField.h"
 
 namespace DistGeom {
 

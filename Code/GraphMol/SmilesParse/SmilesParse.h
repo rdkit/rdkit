@@ -7,11 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_SMILESPARSE_H
 #define RD_SMILESPARSE_H
 
-#include <GraphMol/SanitException.h>
+#include "GraphMol/SanitException.h"
 #include <string>
 #include <exception>
 #include <map>

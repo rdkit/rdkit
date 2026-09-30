@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_SCAFFOLDNETWORK_H
 #define RD_SCAFFOLDNETWORK_H
 
@@ -18,14 +18,14 @@
 #include <memory>
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
-#include <RDGeneral/Invariant.h>
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/Invariant.h"
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/version.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 #endif
 
 namespace RDKit {

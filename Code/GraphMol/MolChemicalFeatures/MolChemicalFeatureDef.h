@@ -7,15 +7,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __CHEMICALFEATUREDEF_H_02122004_1750__
 #define __CHEMICALFEATUREDEF_H_02122004_1750__
 
 #include <string>
 #include <vector>
 #include <list>
-#include <GraphMol/ROMol.h>
-#include <RDGeneral/Exceptions.h>
+#include "GraphMol/ROMol.h"
+#include "RDGeneral/Exceptions.h"
 
 #include <boost/shared_ptr.hpp>
 namespace RDKit {

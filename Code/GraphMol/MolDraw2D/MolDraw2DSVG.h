@@ -12,12 +12,12 @@
 // This is a concrete class derived from MolDraw2D that uses RDKit to draw a
 // molecule into an SVG file
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef MOLDRAW2DSVG_H
 #define MOLDRAW2DSVG_H
 
 #include <sstream>
-#include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include "GraphMol/MolDraw2D/MolDraw2D.h"
 
 // ****************************************************************************
 

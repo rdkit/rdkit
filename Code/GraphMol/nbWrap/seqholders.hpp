@@ -8,8 +8,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/QueryAtom.h>
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/QueryAtom.h"
 
 namespace RDKit {
 

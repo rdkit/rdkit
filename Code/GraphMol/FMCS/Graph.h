@@ -9,11 +9,11 @@
 //
 
 // graph topology in terms of indices in source molecule
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #pragma once
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/graph/adjacency_list.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
 namespace RDKit {
 namespace FMCS {

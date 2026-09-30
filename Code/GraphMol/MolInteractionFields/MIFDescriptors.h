@@ -8,7 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDMIF_DESCRIPTORS_H
 #define RDMIF_DESCRIPTORS_H
 /*! \file MIFDescriptors.h
@@ -20,13 +20,13 @@
 */
 
 #include <vector>
-#include <Geometry/point.h>
-#include <Geometry/UniformRealValueGrid3D.h>
-#include <ForceField/MMFF/Nonbonded.h>
-#include <ForceField/UFF/Nonbonded.h>
-#include <ForceField/UFF/Params.h>
-#include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
-#include <GraphMol/RDKitBase.h>
+#include "Geometry/point.h"
+#include "Geometry/UniformRealValueGrid3D.h"
+#include "ForceField/MMFF/Nonbonded.h"
+#include "ForceField/UFF/Nonbonded.h"
+#include "ForceField/UFF/Params.h"
+#include "GraphMol/ForceFieldHelpers/UFF/AtomTyper.h"
+#include "GraphMol/RDKitBase.h"
 
 namespace RDMIF {
 //! \brief constructs a UniformRealValueGrid3D which fits to the molecule mol

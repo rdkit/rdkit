@@ -9,10 +9,10 @@
 //
 #include <string_view>
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_SMILESPARSEOPS_H
 #define RD_SMILESPARSEOPS_H
-#include <GraphMol/Bond.h>
+#include "GraphMol/Bond.h"
 
 namespace RDKit {
 class RWMol;

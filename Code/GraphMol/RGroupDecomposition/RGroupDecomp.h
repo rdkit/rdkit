@@ -8,13 +8,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDKIT_RGROUPDECOMP_H
 #define RDKIT_RGROUPDECOMP_H
 
 #include "../RDKitBase.h"
 #include "RGroupDecompParams.h"
-#include <GraphMol/Substruct/SubstructMatch.h>
+#include "GraphMol/Substruct/SubstructMatch.h"
 #include <chrono>
 
 namespace RDKit {

@@ -12,20 +12,20 @@
 //  The license is here:
 //    http://cctbx.svn.sourceforge.net/viewvc/cctbx/trunk/boost_adaptbx/LICENSE_2_0.txt?revision=5148
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef BOOST_ADAPTBX_PYTHON_STREAMBUF_H
 #define BOOST_ADAPTBX_PYTHON_STREAMBUF_H
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/python/object.hpp>
 #include <boost/python/str.hpp>
 #include <boost/python/extract.hpp>
 
 #include <optional>
 #include <boost/utility/typed_in_place_factory.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
-#include <RDGeneral/Invariant.h>
-#include <RDGeneral/Exceptions.h>
+#include "RDGeneral/Invariant.h"
+#include "RDGeneral/Exceptions.h"
 
 #include <streambuf>
 

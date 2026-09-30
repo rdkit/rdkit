@@ -7,15 +7,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_TAUTOMER_CATALOG_UTILS_H
 #define RD_TAUTOMER_CATALOG_UTILS_H
 
-#include <GraphMol/RDKitBase.h>
+#include "GraphMol/RDKitBase.h"
 #include "TautomerCatalogParams.h"
-#include <GraphMol/Substruct/SubstructMatch.h>
-#include <GraphMol/ChemReactions/Reaction.h>
-#include <GraphMol/Bond.h>
+#include "GraphMol/Substruct/SubstructMatch.h"
+#include "GraphMol/ChemReactions/Reaction.h"
+#include "GraphMol/Bond.h"
 #include <utility>
 
 namespace RDKit {

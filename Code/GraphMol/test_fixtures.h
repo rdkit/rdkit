@@ -13,8 +13,8 @@
 #include <cstdlib>
 #include <string>
 
-#include <GraphMol/Chirality.h>
-#include <GraphMol/MolOps.h>
+#include "GraphMol/Chirality.h"
+#include "GraphMol/MolOps.h"
 
 // Extend catch2 (if available) with macros that add messages
 // to the (failed) test output, so we have a replacement for

@@ -15,9 +15,9 @@
 
 #include <string>
 
-#include <RDGeneral/export.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonShapeInput.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearchHelpers.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonShapeInput.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonSpaceSearchHelpers.h"
 
 class ExplicitBitVect;
 

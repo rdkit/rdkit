@@ -15,16 +15,16 @@
 #ifndef RD_ENUMERATESTEREOISOMERS_H
 #define RD_ENUMERATESTEREOISOMERS_H
 
-#include <GraphMol/EnumerateStereoisomers/Flippers.h>
+#include "GraphMol/EnumerateStereoisomers/Flippers.h"
 
 #include <random>
 #include <unordered_set>
 
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
 
-#include <RDGeneral/export.h>
-#include <GraphMol/ROMol.h>
-#include <GraphMol/RWMol.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/ROMol.h"
+#include "GraphMol/RWMol.h"
 
 namespace RDKit {
 namespace EnumerateStereoisomers {

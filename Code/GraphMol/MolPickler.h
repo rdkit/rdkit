@@ -7,19 +7,19 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MOLPICKLE_H
 #define RD_MOLPICKLE_H
 
-#include <Geometry/point.h>
-#include <GraphMol/Atom.h>
-#include <GraphMol/QueryAtom.h>
-#include <GraphMol/Bond.h>
-#include <GraphMol/QueryBond.h>
-#include <RDGeneral/StreamOps.h>
+#include "Geometry/point.h"
+#include "GraphMol/Atom.h"
+#include "GraphMol/QueryAtom.h"
+#include "GraphMol/Bond.h"
+#include "GraphMol/QueryBond.h"
+#include "RDGeneral/StreamOps.h"
 #include <boost/utility/binary.hpp>
 #include <variant>
-#include <Query/QueryObjects.h>
+#include "Query/QueryObjects.h"
 
 // Std stuff
 #include <string>
@@ -29,7 +29,7 @@
 #include <ios>
 #endif
 #include <cstdint>
-#include <RDGeneral/BetterEnums.h>
+#include "RDGeneral/BetterEnums.h"
 
 namespace RDKit {
 class ROMol;

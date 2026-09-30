@@ -12,7 +12,7 @@
   \brief Defines Monomer information classes
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MONOMERINFO_H
 #define RD_MONOMERINFO_H
 

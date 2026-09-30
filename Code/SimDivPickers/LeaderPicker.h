@@ -11,12 +11,12 @@
 #ifndef RD_LEADERPICKER_H
 #define RD_LEADERPICKER_H
 
-#include <RDGeneral/types.h>
-#include <RDGeneral/utils.h>
-#include <RDGeneral/Invariant.h>
-#include <RDGeneral/RDLog.h>
-#include <RDGeneral/Exceptions.h>
-#include <RDGeneral/RDThreads.h>
+#include "RDGeneral/types.h"
+#include "RDGeneral/utils.h"
+#include "RDGeneral/Invariant.h"
+#include "RDGeneral/RDLog.h"
+#include "RDGeneral/Exceptions.h"
+#include "RDGeneral/RDThreads.h"
 #include <cstdlib>
 #include "DistPicker.h"
 

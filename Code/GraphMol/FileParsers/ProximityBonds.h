@@ -7,10 +7,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_PROXIMITYBONDS_H_
 #define _RD_PROXIMITYBONDS_H_
-#include <GraphMol/RWMol.h>
+#include "GraphMol/RWMol.h"
 
 namespace RDKit {
 static const unsigned int ctdIGNORE_H_H_CONTACTS = 0x1;

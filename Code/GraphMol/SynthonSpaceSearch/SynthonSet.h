@@ -17,10 +17,10 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include <RDGeneral/export.h>
-#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
-#include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/SynthonSpaceSearch/Synthon.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/Fingerprints/RDKitFPGenerator.h"
+#include "GraphMol/Fingerprints/Fingerprints.h"
+#include "GraphMol/SynthonSpaceSearch/Synthon.h"
 
 namespace RDKit {
 class ROMol;

@@ -7,17 +7,17 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
-#include <ForceField/ForceField.h>
-#include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
-#include <ForceField/MMFF/Params.h>
-#include <GraphMol/Trajectory/Snapshot.h>
+#include "RDGeneral/export.h"
+#include "ForceField/ForceField.h"
+#include "GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h"
+#include "ForceField/MMFF/Params.h"
+#include "GraphMol/Trajectory/Snapshot.h"
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <memory>
 #include <vector>
 #include <algorithm>
-#include <Geometry/point.h>
+#include "Geometry/point.h"
 
 namespace nb = nanobind;
 using namespace nb::literals;

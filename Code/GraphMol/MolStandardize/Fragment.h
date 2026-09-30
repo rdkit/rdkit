@@ -7,14 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_FRAGMENT_REMOVER_H
 #define RD_FRAGMENT_REMOVER_H
 
-#include <Catalogs/Catalog.h>
-#include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogEntry.h>
-#include <GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogParams.h>
-#include <GraphMol/MolStandardize/MolStandardize.h>
+#include "Catalogs/Catalog.h"
+#include "GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogEntry.h"
+#include "GraphMol/MolStandardize/FragmentCatalog/FragmentCatalogParams.h"
+#include "GraphMol/MolStandardize/MolStandardize.h"
 
 namespace RDKit {
 class ROMol;

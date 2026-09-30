@@ -15,7 +15,7 @@
 #ifndef RDKIT_STRINGRECT_H
 #define RDKIT_STRINGRECT_H
 
-#include <Geometry/point.h>
+#include "Geometry/point.h"
 
 namespace RDKit {
 namespace MolDraw2D_detail {

@@ -8,14 +8,14 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDKIT_RASCAL_DETAILS_H
 #define RDKIT_RASCAL_DETAILS_H
 
 #include <map>
 
-#include <GraphMol/RascalMCES/RascalOptions.h>
-#include <GraphMol/RascalMCES/RascalResult.h>
+#include "GraphMol/RascalMCES/RascalOptions.h"
+#include "GraphMol/RascalMCES/RascalResult.h"
 namespace RDKit {
 class ROMol;
 

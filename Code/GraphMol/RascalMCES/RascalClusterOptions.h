@@ -14,7 +14,7 @@
 // https://match.pmf.kg.ac.rs/electronic_versions/Match48/match48_197-207.pdf
 // https://eprints.whiterose.ac.uk/77598/
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 
 #ifndef RASCALCLUSTEROPTIONS_H
 #define RASCALCLUSTEROPTIONS_H

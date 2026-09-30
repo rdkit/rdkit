@@ -15,7 +15,7 @@
   from molecules. It's exposed here so that it can be tested.
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_FEATTREEUTILS_H_
 #define _RD_FEATTREEUTILS_H_
 

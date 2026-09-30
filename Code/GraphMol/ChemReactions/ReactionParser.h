@@ -32,10 +32,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_REACTIONPARSER_H_21Aug2006
 #define RD_REACTIONPARSER_H_21Aug2006
-#include <GraphMol/ChemReactions/Reaction.h>
+#include "GraphMol/ChemReactions/Reaction.h"
 
 #include <string>
 #include <fstream>
@@ -43,10 +43,10 @@
 #include <sstream>
 #include <utility>
 #include <boost/format.hpp>
-#include <RDGeneral/BadFileException.h>
-#include <RDGeneral/FileParseException.h>
-#include <GraphMol/FileParsers/FileParsers.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include "RDGeneral/BadFileException.h"
+#include "RDGeneral/FileParseException.h"
+#include "GraphMol/FileParsers/FileParsers.h"
+#include "GraphMol/SmilesParse/SmilesWrite.h"
 
 namespace RDKit {
 class ROMol;

@@ -8,21 +8,21 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_FINGERPRINTUTIL_H_2018_07
 #define RD_FINGERPRINTUTIL_H_2018_07
 
-#include <GraphMol/RDKitBase.h>
-#include <DataStructs/SparseIntVect.h>
-#include <DataStructs/BitVects.h>
+#include "GraphMol/RDKitBase.h"
+#include "DataStructs/SparseIntVect.h"
+#include "DataStructs/BitVects.h"
 #include <cstdint>
 #include <tuple>
 #include <vector>
 #include <map>
-#include <DataStructs/ExplicitBitVect.h>
+#include "DataStructs/ExplicitBitVect.h"
 #include <boost/dynamic_bitset.hpp>
 
-#include <GraphMol/Subgraphs/Subgraphs.h>
+#include "GraphMol/Subgraphs/Subgraphs.h"
 
 namespace RDKit {
 namespace AtomPairs {

@@ -7,13 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_BOUNDS_MATRIX_H
 #define RD_BOUNDS_MATRIX_H
 
-#include <RDGeneral/Invariant.h>
+#include "RDGeneral/Invariant.h"
 #include <boost/smart_ptr.hpp>
-#include <Numerics/SquareMatrix.h>
+#include "Numerics/SquareMatrix.h"
 
 namespace DistGeom {
 //! Class to store the distance bound

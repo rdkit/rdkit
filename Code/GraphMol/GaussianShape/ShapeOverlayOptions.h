@@ -15,7 +15,7 @@
 #define RDKIT_SHAPEOVERLAYOPTIONS_GUARD
 #include <ostream>
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 
 namespace RDKit {
 namespace GaussianShape {

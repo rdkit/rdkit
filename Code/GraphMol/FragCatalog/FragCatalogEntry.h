@@ -7,18 +7,18 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_FRAGCATALOGENTRY_H_
 #define _RD_FRAGCATALOGENTRY_H_
 
 #include "FragCatParams.h"
-#include <RDGeneral/utils.h>
-#include <Catalogs/CatalogEntry.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/Subgraphs/Subgraphs.h>
-#include <GraphMol/Subgraphs/SubgraphUtils.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
+#include "RDGeneral/utils.h"
+#include "Catalogs/CatalogEntry.h"
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/Subgraphs/Subgraphs.h"
+#include "GraphMol/Subgraphs/SubgraphUtils.h"
+#include "GraphMol/SmilesParse/SmilesWrite.h"
+#include "GraphMol/Substruct/SubstructMatch.h"
 #include <map>
 #include <sstream>
 #include <string_view>

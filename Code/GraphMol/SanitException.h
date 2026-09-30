@@ -8,14 +8,14 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_SANITEXCEPTION_H
 #define RD_SANITEXCEPTION_H
 
-#include <RDGeneral/types.h>
-#include <GraphMol/GraphMol.h>
-#include <GraphMol/Atom.h>
-#include <GraphMol/Bond.h>
+#include "RDGeneral/types.h"
+#include "GraphMol/GraphMol.h"
+#include "GraphMol/Atom.h"
+#include "GraphMol/Bond.h"
 
 #include <string>
 #include <utility>

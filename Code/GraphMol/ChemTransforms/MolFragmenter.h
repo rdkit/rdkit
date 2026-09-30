@@ -7,13 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_MOLFRAGMENTER_H__
 #define _RD_MOLFRAGMENTER_H__
 
 #include <istream>
-#include <GraphMol/ROMol.h>
-#include <RDGeneral/BetterEnums.h>
+#include "GraphMol/ROMol.h"
+#include "RDGeneral/BetterEnums.h"
 
 namespace RDKit {
 namespace MolFragmenter {

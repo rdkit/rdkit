@@ -17,8 +17,8 @@
 
 #include <vector>
 
-#include <Geometry/point.h>
-#include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
+#include "Geometry/point.h"
+#include "GraphMol/MolDraw2D/MolDraw2DHelpers.h"
 
 namespace RDKit {
 

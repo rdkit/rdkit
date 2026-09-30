@@ -20,8 +20,8 @@
 
 #include <string>
 
-#include <GraphMol/MolDraw2D/DrawText.h>
-#include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
+#include "GraphMol/MolDraw2D/DrawText.h"
+#include "GraphMol/MolDraw2D/MolDraw2DHelpers.h"
 
 namespace RDKit {
 

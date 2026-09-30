@@ -7,14 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_QUERYATOM_H
 #define RD_QUERYATOM_H
 
 #include <utility>
 #include "Atom.h"
-#include <Query/QueryObjects.h>
-#include <GraphMol/QueryOps.h>
+#include "Query/QueryObjects.h"
+#include "GraphMol/QueryOps.h"
 
 namespace RDKit {
 

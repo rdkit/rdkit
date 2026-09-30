@@ -11,7 +11,7 @@
 #define RDKIT_PICKERHELPERS_H
 
 #include <vector>
-#include <DataStructs/BitOps.h>
+#include "DataStructs/BitOps.h"
 #include <nanobind/nanobind.h>
 
 namespace nb = nanobind;

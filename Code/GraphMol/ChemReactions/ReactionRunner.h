@@ -32,12 +32,12 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_REACTION_RUNNER_H
 #define RD_REACTION_RUNNER_H
 
-#include <GraphMol/ChemReactions/Reaction.h>
-#include <GraphMol/ROMol.h>
+#include "GraphMol/ChemReactions/Reaction.h"
+#include "GraphMol/ROMol.h"
 
 namespace RDKit {
 //! Runs the reaction on a set of reactants

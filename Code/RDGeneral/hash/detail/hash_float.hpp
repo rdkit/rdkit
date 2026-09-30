@@ -18,8 +18,8 @@
 #endif
 #endif
 
-#include <RDGeneral/hash/hash_fwd.hpp>
-#include <RDGeneral/hash/detail/float_functions.hpp>
+#include "RDGeneral/hash/hash_fwd.hpp"
+#include "RDGeneral/hash/detail/float_functions.hpp"
 #include <boost/integer/static_log2.hpp>
 #include <cstdint>
 #include <boost/limits.hpp>

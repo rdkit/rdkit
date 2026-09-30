@@ -9,9 +9,9 @@
 //
 #ifndef RDK_SSSFACTORY
 #define RDK_SSSFACTORY
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #include "SubstructLibrary.h"
-#include <GraphMol/FileParsers/MolSupplier.h>
+#include "GraphMol/FileParsers/MolSupplier.h"
 
 namespace RDKit {
 //! Create pattern fingerprints for the given substructure library

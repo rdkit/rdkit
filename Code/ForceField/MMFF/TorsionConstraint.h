@@ -7,10 +7,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MMFFTORSIONCONSTRAINT_H
 #define RD_MMFFTORSIONCONSTRAINT_H
-#include <ForceField/TorsionConstraint.h>
+#include "ForceField/TorsionConstraint.h"
 
 namespace ForceFields {
 namespace MMFF {

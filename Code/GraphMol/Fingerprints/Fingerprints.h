@@ -7,13 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_FINGERPRINTS_H
 #define RD_FINGERPRINTS_H
 
 #include <vector>
 #include <cstdint>
-#include <DataStructs/SparseIntVect.h>
+#include "DataStructs/SparseIntVect.h"
 
 class ExplicitBitVect;
 namespace RDKit {

@@ -1,9 +1,9 @@
 
-#include <RDGeneral/export.h>
-#include <GraphMol/Atom.h>
-#include <GraphMol/GraphMol.h>
-#include <GraphMol/Fingerprints/MorganFingerprints.h>
-#include <DataStructs/BitVects.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/Atom.h"
+#include "GraphMol/GraphMol.h"
+#include "GraphMol/Fingerprints/MorganFingerprints.h"
+#include "DataStructs/BitVects.h"
 #include <vector>
 
 RDKit::SparseIntVect<std::uint32_t> *getFeatureFingerprint(

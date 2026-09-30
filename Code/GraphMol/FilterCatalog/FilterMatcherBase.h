@@ -29,21 +29,21 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_FILTER_MATCHER_BASE_H__
 #define __RD_FILTER_MATCHER_BASE_H__
 #include <utility>
 
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/Substruct/SubstructMatch.h"
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/assume_abstract.hpp>
 #include <boost/enable_shared_from_this.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 #endif  // RDK_USE_BOOST_SERIALIZATION
 
 namespace RDKit {

@@ -14,8 +14,8 @@
 #include <unordered_map>
 #include <functional>
 #include <boost/unordered/unordered_flat_set.hpp>
-#include <RDGeneral/export.h>
-#include <GraphMol/ROMol.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/ROMol.h"
 
 namespace RDKit::SynthonSpaceSearch {
 

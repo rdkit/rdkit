@@ -16,8 +16,8 @@
 #ifndef RDKIT_DRAWTEXTNOTFT_H
 #define RDKIT_DRAWTEXTNOTFT_H
 
-#include <RDGeneral/export.h>
-#include <GraphMol/MolDraw2D/DrawText.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/MolDraw2D/DrawText.h"
 
 namespace RDKit {
 namespace MolDraw2D_detail {

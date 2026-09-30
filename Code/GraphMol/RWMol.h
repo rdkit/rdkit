@@ -13,7 +13,7 @@
 
 */
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 
 #ifndef RD_RWMOL_H
 #define RD_RWMOL_H

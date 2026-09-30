@@ -10,13 +10,13 @@
 #include <vector>
 #include <list>
 #include <unordered_map>
-#include <Geometry/point.h>
+#include "Geometry/point.h"
 #include <cmath>
 
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
 namespace conrec {
 struct ConrecSegment {

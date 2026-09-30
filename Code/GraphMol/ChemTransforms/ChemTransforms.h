@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_CHEMTRANSFORMS_H__
 #define _RD_CHEMTRANSFORMS_H__
 
@@ -15,7 +15,7 @@
 #include <string_view>
 #include <vector>
 
-#include <GraphMol/Substruct/SubstructMatch.h>
+#include "GraphMol/Substruct/SubstructMatch.h"
 #include "MolFragmenter.h"
 
 namespace RDKit {

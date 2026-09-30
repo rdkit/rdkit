@@ -29,24 +29,24 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_FILTER_CATALOG_H__
 #define __RD_FILTER_CATALOG_H__
 #include <string_view>
 #include <utility>
 
-#include <RDGeneral/types.h>  // For Dict
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
-#include <Catalogs/CatalogEntry.h>
+#include "RDGeneral/types.h"  // For Dict
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/Substruct/SubstructMatch.h"
+#include "Catalogs/CatalogEntry.h"
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/shared_ptr.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 #endif
 
 #include "FilterMatchers.h"

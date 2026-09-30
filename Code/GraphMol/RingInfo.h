@@ -7,16 +7,16 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_RINGINFO_H
 #define RD_RINGINFO_H
 
 #include <map>
 #include <vector>
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/dynamic_bitset.hpp>
 #include <boost/shared_ptr.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 #include <RingDecomposerLib.h>
 
 namespace RDKit {

@@ -11,7 +11,7 @@
 //! \file Rings.h
 //! \brief utility functionality for working with ring systems
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDRINGS_H
 #define RDRINGS_H
 

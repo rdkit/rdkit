@@ -16,11 +16,11 @@
 #include <list>
 #include <cmath>
 
-#include <GraphMol/GraphMol.h>
-#include <GraphMol/MolOps.h>
-#include <Geometry/point.h>
-#include <GraphMol/RDKitBase.h>
-#include <RDGeneral/export.h>
+#include "GraphMol/GraphMol.h"
+#include "GraphMol/MolOps.h"
+#include "Geometry/point.h"
+#include "GraphMol/RDKitBase.h"
+#include "RDGeneral/export.h"
 #include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {

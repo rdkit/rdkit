@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_DISTVIOLATIONCONTRIBS_H
 #define RD_DISTVIOLATIONCONTRIBS_H
 
 #include <vector>
-#include <ForceField/Contrib.h>
+#include "ForceField/Contrib.h"
 
 namespace DistGeom {
 

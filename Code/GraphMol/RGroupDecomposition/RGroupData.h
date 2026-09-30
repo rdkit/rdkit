@@ -12,7 +12,7 @@
 
 #include "../RDKitBase.h"
 #include "RGroupUtils.h"
-#include <DataStructs/ExplicitBitVect.h>
+#include "DataStructs/ExplicitBitVect.h"
 #include <set>
 #include <vector>
 

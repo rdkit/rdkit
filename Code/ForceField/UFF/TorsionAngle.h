@@ -7,15 +7,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_TORSIONANGLE_H__
 #define __RD_TORSIONANGLE_H__
 
-#include <ForceField/Contrib.h>
-#include <Geometry/point.h>
+#include "ForceField/Contrib.h"
+#include "Geometry/point.h"
 
 // we need this so that we get the hybridizations:
-#include <GraphMol/Atom.h>
+#include "GraphMol/Atom.h"
 
 namespace RDGeom {
 class Point3D;

@@ -21,17 +21,17 @@
 // library-specific drawing code such as drawing lines, writing strings
 // etc.
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDKITMOLDRAW2D_H
 #define RDKITMOLDRAW2D_H
 
 #include <vector>
 
-#include <Geometry/point.h>
-#include <Geometry/Transform2D.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/ChemReactions/Reaction.h>
-#include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
+#include "Geometry/point.h"
+#include "Geometry/Transform2D.h"
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/ChemReactions/Reaction.h"
+#include "GraphMol/MolDraw2D/MolDraw2DHelpers.h"
 
 // ****************************************************************************
 using RDGeom::Point2D;

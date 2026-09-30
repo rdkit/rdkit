@@ -7,11 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_DISTPICKER_H
 #define _RD_DISTPICKER_H
 
-#include <RDGeneral/types.h>
+#include "RDGeneral/types.h"
 
 namespace RDPickers {
 

@@ -23,8 +23,8 @@
 #include FT_BBOX_H
 #include FT_OUTLINE_H
 
-#include <RDGeneral/export.h>
-#include <GraphMol/MolDraw2D/DrawText.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/MolDraw2D/DrawText.h"
 
 namespace RDKit {
 

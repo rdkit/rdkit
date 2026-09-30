@@ -11,7 +11,7 @@
 #define RDKIT_PICKERHELPERS_H
 
 #include <vector>
-#include <DataStructs/BitOps.h>
+#include "DataStructs/BitOps.h"
 
 // NOTE: TANIMOTO and DICE provably return the same results for the diversity
 // picking this is still here just in case we ever later want to support other

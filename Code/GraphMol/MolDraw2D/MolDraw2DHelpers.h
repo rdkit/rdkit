@@ -14,8 +14,8 @@
 #ifndef RDKIT_MOLDRAW2DHELPERS_H
 #define RDKIT_MOLDRAW2DHELPERS_H
 
-#include <Geometry/point.h>
-#include <RDGeneral/BetterEnums.h>
+#include "Geometry/point.h"
+#include "RDGeneral/BetterEnums.h"
 
 using RDGeom::Point2D;
 

@@ -25,7 +25,7 @@
       has 3 _subgraphs_ of length 3: (0,1,2),(0,1,3),(2,1,3)
       but only 2 _paths_ of length 3: (0,1,3),(2,1,3)
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_SUBGRAPHS_H
 #define RD_SUBGRAPHS_H
 

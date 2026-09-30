@@ -8,12 +8,12 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_CATALOG_H
 #define RD_CATALOG_H
 
 // Boost graph stuff
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/version.hpp>
@@ -22,11 +22,11 @@
 #else
 #include <boost/property_map.hpp>
 #endif
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
 // for some typedefs
-#include <RDGeneral/types.h>
-#include <RDGeneral/StreamOps.h>
+#include "RDGeneral/types.h"
+#include "RDGeneral/StreamOps.h"
 
 namespace RDCatalog {
 const int versionMajor = 1;
