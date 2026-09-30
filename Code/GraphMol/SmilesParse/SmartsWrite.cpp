@@ -664,10 +664,9 @@ std::string _recurseBondSmarts(const Bond *bond,
   std::string csmarts1, csmarts2;
 
   if ((dsc1 != "BondOr") && (dsc1 != "BondAnd")) {
-    // child1 is  simple node get the smarts directly
-    const auto *tchild = static_cast<const BOND_EQUALS_QUERY *>(child1);
-    csmarts1 = getBondSmartsSimple(bond, tchild, atomToLeftIdx, params);
-    bool nneg = (negate) ^ (tchild->getNegation());
+    // child1 is a simple node, get the smarts directly
+    csmarts1 = getBondSmartsSimple(bond, child1, atomToLeftIdx, params);
+    bool nneg = (negate) ^ (child1->getNegation());
     if (nneg) {
       csmarts1 = "!" + csmarts1;
     }
@@ -681,17 +680,16 @@ std::string _recurseBondSmarts(const Bond *bond,
   // now deal with the second child
   if ((dsc2 != "BondOr") && (dsc2 != "BondAnd")) {
     // child 2 is a simple node
-    const auto *tchild = static_cast<const BOND_EQUALS_QUERY *>(child2);
-    csmarts2 = getBondSmartsSimple(bond, tchild, atomToLeftIdx, params);
-    bool nneg = (negate) ^ (tchild->getNegation());
+    csmarts2 = getBondSmartsSimple(bond, child2, atomToLeftIdx, params);
+    bool nneg = (negate) ^ (child2->getNegation());
     if (nneg) {
       csmarts2 = "!" + csmarts2;
     }
   } else {
     // child two is a composite node - recurse
     bool nneg = (negate) ^ (child2->getNegation());
-    csmarts1 = _recurseBondSmarts(bond, child2, nneg, atomToLeftIdx,
-                                  child2Features, params);
+    csmarts2 = _recurseBondSmarts(bond, child2, nneg, atomToLeftIdx,
+                                   child2Features, params);
   }
 
   // ok if we have a negation and we have to change the underlying logic,

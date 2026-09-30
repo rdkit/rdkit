@@ -251,4 +251,76 @@ TEST_CASE("@{n} SMARTS bond ring count") {
       checkMatches(sma, smiles, val, 2);
     }
   }
+
+  SECTION("composite bond range round-trip") {
+    // @{1-2} combined with another bond primitive must not trigger an invalid
+    // static_cast. The composite-bond path in _recurseBondSmarts passes the
+    // raw QUERYBOND_QUERY * to getBondSmartsSimple, which does its own
+    // dynamic_cast to BOND_RANGE_QUERY.
+    auto q = "*@{1-2}&-*"_smarts;
+    REQUIRE(q);
+    CHECK(MolToSmarts(*q) == "*@{1-2}&-*");
+
+    // Test less and greater forms in composite bonds too
+    auto q2 = "*@{-2}&-*"_smarts;
+    REQUIRE(q2);
+    CHECK(MolToSmarts(*q2) == "*@{-2}&-*");
+
+    auto q3 = "*@{3-}&-*"_smarts;
+    REQUIRE(q3);
+    CHECK(MolToSmarts(*q3) == "*@{3-}&-*");
+  }
+
+  SECTION("bond range query-query matching") {
+    // QueryMatch does subset matching: pattern (q1) matches target (q2)
+    // when the set of bonds matched by q1 is a subset of those matched by q2.
+    SubstructMatchParameters params;
+    params.useQueryQueryMatches = true;
+
+    // Same range matches itself
+    auto q1 = "*@{1-2}*"_smarts;
+    REQUIRE(q1);
+    auto q2 = "*@{1-2}*"_smarts;
+    REQUIRE(q2);
+    auto qb1 = static_cast<QueryBond *>(q1->getBondWithIdx(0));
+    auto qb2 = static_cast<QueryBond *>(q2->getBondWithIdx(0));
+    CHECK(qb1->QueryMatch(qb2));
+
+    // Disjoint ranges do not match
+    auto q3 = "*@{3-4}*"_smarts;
+    REQUIRE(q3);
+    auto qb3 = static_cast<QueryBond *>(q3->getBondWithIdx(0));
+    CHECK(!qb1->QueryMatch(qb3));
+
+    // Equality @{2} is subset of range @{1-3}
+    auto qEq = "*@{2}*"_smarts;
+    REQUIRE(qEq);
+    auto qRange = "*@{1-3}*"_smarts;
+    REQUIRE(qRange);
+    auto qbEq = static_cast<QueryBond *>(qEq->getBondWithIdx(0));
+    auto qbRange = static_cast<QueryBond *>(qRange->getBondWithIdx(0));
+    CHECK(qbEq->QueryMatch(qbRange)); // pattern @{2} ⊆ target @{1-3} -> match
+    CHECK(!qbRange->QueryMatch(qbEq)); // pattern @{1-3} ⊄ target @{2} -> no match
+
+    // Range @{2-3} is subset of @{1-3}
+    auto qSub = "*@{2-3}*"_smarts;
+    REQUIRE(qSub);
+    auto qbSub = static_cast<QueryBond *>(qSub->getBondWithIdx(0));
+    CHECK(qbSub->QueryMatch(qbRange)); // pattern @{2-3} ⊆ target @{1-3} -> match
+    CHECK(!qbRange->QueryMatch(qbSub)); // pattern @{1-3} ⊄ target @{2-3} -> no match
+
+    // Equality @{4} is not subset of @{1-3}
+    auto qEq4 = "*@{4}*"_smarts;
+    REQUIRE(qEq4);
+    auto qbEq4 = static_cast<QueryBond *>(qEq4->getBondWithIdx(0));
+    CHECK(!qbEq4->QueryMatch(qbRange)); // pattern @{4} ⊄ target @{1-3} -> no match
+
+    // Substruct match with query-query matching
+    {
+      auto matches = SubstructMatch(*qRange, *qEq, params);
+      CHECK(matches.size() == 1); // pattern @{2} ⊆ target @{1-3}
+      matches = SubstructMatch(*qEq, *qRange, params);
+      CHECK(matches.empty()); // pattern @{1-3} ⊄ target @{2}
+    }
+  }
 }

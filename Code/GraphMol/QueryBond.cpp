@@ -9,6 +9,7 @@
 //
 #include <GraphMol/QueryBond.h>
 #include <Query/NullQueryAlgebra.h>
+#include <boost/algorithm/string/predicate.hpp>
 
 namespace RDKit {
 
@@ -189,10 +190,43 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
         break;
       }
     }
-  } else if (std::find(&equalityQueries[0], &equalityQueries[nQueries], d1) !=
-             &equalityQueries[nQueries]) {
-    res = localMatch(static_cast<BOND_EQUALS_QUERY const *>(q1),
-                     static_cast<BOND_EQUALS_QUERY const *>(q2));
+  } else {
+    // Strip prefix to get base description
+    auto stripPrefix = [](const std::string &s) -> std::string {
+      if (boost::starts_with(s, "range_")) return s.substr(6);
+      if (boost::starts_with(s, "less_")) return s.substr(5);
+      if (boost::starts_with(s, "greater_")) return s.substr(8);
+      return s;
+    };
+    std::string bd1 = stripPrefix(d1);
+    std::string bd2 = stripPrefix(d2);
+    if (bd1 == bd2 &&
+        std::find(&equalityQueries[0], &equalityQueries[nQueries], bd1) !=
+            &equalityQueries[nQueries]) {
+      auto *r1 = dynamic_cast<const BOND_RANGE_QUERY *>(q1);
+      auto *r2 = dynamic_cast<const BOND_RANGE_QUERY *>(q2);
+      auto *e1 = dynamic_cast<const BOND_EQUALS_QUERY *>(q1);
+      auto *e2 = dynamic_cast<const BOND_EQUALS_QUERY *>(q2);
+      // Both range: q1 (pattern) subset of q2 (target)
+      if (r1 && r2) {
+        res = (r2->getLower() <= r1->getLower() &&
+               r1->getUpper() <= r2->getUpper());
+      }
+      // q1 (equality) subset of q2 (range)
+      if (r2 && e1 && !r1) {
+        res = (r2->getLower() <= e1->getVal() &&
+               e1->getVal() <= r2->getUpper());
+      }
+      // q1 (range) subset of q2 (equality): only if both bounds == the value
+      if (r1 && e2 && !r2) {
+        res = (r1->getLower() == e2->getVal() &&
+               r1->getUpper() == e2->getVal());
+      }
+      // Both equality
+      if (e1 && e2 && !r1 && !r2) {
+        res = localMatch(e1, e2);
+      }
+    }
   }
   return res;
 }
