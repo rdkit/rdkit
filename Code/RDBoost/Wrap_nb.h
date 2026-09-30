@@ -7,20 +7,20 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_WRAP_NB_H
 #define RD_WRAP_NB_H
 
-#include <RDGeneral/Invariant.h>
+#include "RDGeneral/Invariant.h"
 
-#include <Numerics/Vector.h>
+#include "Numerics/Vector.h"
 #include <memory>
 #include <cstdint>
 
 #include <list>
 #include <string_view>
 #include <vector>
-#include <RDGeneral/Exceptions.h>
+#include "RDGeneral/Exceptions.h"
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>

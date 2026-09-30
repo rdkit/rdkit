@@ -14,8 +14,8 @@
 #ifndef SYNTHONSPACEFINGERPRINTSEARCHER_H
 #define SYNTHONSPACEFINGERPRINTSEARCHER_H
 
-#include <RDGeneral/export.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h"
 
 namespace RDKit::SynthonSpaceSearch {
 

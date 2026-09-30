@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/ScaffoldNetwork/ScaffoldNetwork.h>
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/ScaffoldNetwork/ScaffoldNetwork.h"
 
 // declarations of stuff we want to test that isn't in the public API
 namespace RDKit {

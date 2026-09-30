@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDKIT_SUBSTRUCT_METHODS_H
 #define RDKIT_SUBSTRUCT_METHODS_H
 #include <boost/python.hpp>
-#include <RDBoost/Wrap.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
+#include "RDBoost/Wrap.h"
+#include "GraphMol/Substruct/SubstructMatch.h"
 
 namespace RDKit {
 

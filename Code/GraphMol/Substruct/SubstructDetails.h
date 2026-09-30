@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_SUBSTRUCTDETAILS_H
 #define RD_SUBSTRUCTDETAILS_H
 
@@ -15,7 +15,7 @@
 #include <vector>
 #include <map>
 
-#include <GraphMol/QueryAtom.h>
+#include "GraphMol/QueryAtom.h"
 
 namespace RDKit {
 class ROMol;

@@ -12,7 +12,7 @@
 
 */
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #include <string>
 #include <memory>
 

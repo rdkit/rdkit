@@ -6,8 +6,8 @@
 #ifndef _SEQS_HPP_
 #define _SEQS_HPP_
 
-#include <GraphMol/RDKitBase.h>
-#include <RDBoost/python.h>
+#include "GraphMol/RDKitBase.h"
+#include "RDBoost/python.h"
 #include <utility>
 namespace python = boost::python;
 

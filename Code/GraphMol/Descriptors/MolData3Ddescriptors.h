@@ -30,11 +30,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef MOLDATA3DDESCRIPTORS_2017
 #define MOLDATA3DDESCRIPTORS_2017
 
-#include <GraphMol/RDKitBase.h>
+#include "GraphMol/RDKitBase.h"
 #include "Data3Ddescriptors.h"
 
 class RDKIT_DESCRIPTORS_EXPORT MolData3Ddescriptors {

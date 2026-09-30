@@ -8,13 +8,13 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDDEPICTOR_H
 #define RDDEPICTOR_H
 
-#include <GraphMol/Substruct/SubstructMatch.h>
-#include <RDGeneral/types.h>
-#include <Geometry/point.h>
+#include "GraphMol/Substruct/SubstructMatch.h"
+#include "RDGeneral/types.h"
+#include "Geometry/point.h"
 #include <boost/smart_ptr.hpp>
 
 namespace RDKit {

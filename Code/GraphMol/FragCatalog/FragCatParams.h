@@ -7,11 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_FRAG_CAT_PARAMS_H_
 #define _RD_FRAG_CAT_PARAMS_H_
 
-#include <Catalogs/CatalogParams.h>
+#include "Catalogs/CatalogParams.h"
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>

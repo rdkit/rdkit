@@ -7,15 +7,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_FRAGMENT_CATALOG_ENTRY_H__
 #define __RD_FRAGMENT_CATALOG_ENTRY_H__
 
-#include <Catalogs/CatalogEntry.h>
-#include <GraphMol/Subgraphs/Subgraphs.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
+#include "Catalogs/CatalogEntry.h"
+#include "GraphMol/Subgraphs/Subgraphs.h"
+#include "GraphMol/Substruct/SubstructMatch.h"
 #include "FragmentCatalogParams.h"
-#include <GraphMol/RDKitBase.h>
+#include "GraphMol/RDKitBase.h"
 
 namespace RDKit {
 namespace MolStandardize {

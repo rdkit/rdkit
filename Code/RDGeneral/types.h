@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_TYPES_H
 #define RD_TYPES_H
 
@@ -40,9 +40,9 @@
 
 #include <cstring>
 #include <any>
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/lexical_cast.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
 namespace RDKit {
 

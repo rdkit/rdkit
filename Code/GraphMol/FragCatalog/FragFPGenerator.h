@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_FRAG_FP_GENERATOR_H_
 #define _RD_FRAG_FP_GENERATOR_H_
 
 #include <vector>
-#include <Catalogs/Catalog.h>
+#include "Catalogs/Catalog.h"
 #include "FragCatalogEntry.h"
 #include "FragCatParams.h"
 

@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MOL_OPS_H
 #define RD_MOL_OPS_H
 
@@ -15,14 +15,14 @@
 #include <map>
 #include <list>
 #include <string_view>
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <RDGeneral/BoostEndInclude.h>
-#include <RDGeneral/types.h>
-#include <RDGeneral/BetterEnums.h>
+#include "RDGeneral/BoostEndInclude.h"
+#include "RDGeneral/types.h"
+#include "RDGeneral/BetterEnums.h"
 #include "SanitException.h"
-#include <RDGeneral/FileParseException.h>
+#include "RDGeneral/FileParseException.h"
 
 RDKIT_GRAPHMOL_EXPORT extern const int ci_LOCAL_INF;
 namespace RDKit {

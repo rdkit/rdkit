@@ -7,14 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __FREECHEMICALFEATURE_H_13012005_1023__
 #define __FREECHEMICALFEATURE_H_13012005_1023__
 
 #include <utility>
 
-#include <Geometry/point.h>
-#include <ChemicalFeatures/ChemicalFeature.h>
+#include "Geometry/point.h"
+#include "ChemicalFeatures/ChemicalFeature.h"
 
 namespace ChemicalFeatures {
 

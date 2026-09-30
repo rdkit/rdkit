@@ -7,11 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_CRYSTALFF_OOP_H
 #define RD_CRYSTALFF_OOP_H
-#include <ForceField/Contrib.h>
-#include <ForceField/ForceField.h>
+#include "ForceField/Contrib.h"
+#include "ForceField/ForceField.h"
 #include <vector>
 #include <cstddef>
 

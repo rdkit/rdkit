@@ -12,7 +12,7 @@
   \brief Defines the Dict class
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_DICT_H_012020
 #define RD_DICT_H_012020
 
@@ -21,9 +21,9 @@
 #include <vector>
 #include "RDValue.h"
 #include "Exceptions.h"
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/lexical_cast.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
 namespace RDKit {
 typedef std::vector<std::string> STR_VECT;

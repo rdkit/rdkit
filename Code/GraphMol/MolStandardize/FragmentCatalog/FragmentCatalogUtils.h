@@ -7,13 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_FRAGMENT_CATALOG_UTILS_H
 #define RD_FRAGMENT_CATALOG_UTILS_H
 
-#include <GraphMol/RDKitBase.h>
+#include "GraphMol/RDKitBase.h"
 #include "FragmentCatalogParams.h"
-#include <GraphMol/Substruct/SubstructMatch.h>
+#include "GraphMol/Substruct/SubstructMatch.h"
 
 namespace RDKit {
 class ROMol;

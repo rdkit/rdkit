@@ -7,11 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_TORSIONANGLEM6_H
 #define RD_TORSIONANGLEM6_H
 
-#include <ForceField/Contrib.h>
+#include "ForceField/Contrib.h"
 #include <tuple>
 #include <vector>
 

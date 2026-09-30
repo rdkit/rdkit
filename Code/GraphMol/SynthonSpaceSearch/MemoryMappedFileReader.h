@@ -13,7 +13,7 @@
 
 #include <string>
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 
 namespace RDKit::SynthonSpaceSearch::details
 {

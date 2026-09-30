@@ -28,7 +28,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDKIT_RDVALUE_TAGGED_UNION_H
 #define RDKIT_RDVALUE_TAGGED_UNION_H
 
@@ -38,13 +38,13 @@
 #include <sstream>
 #include <vector>
 #include <cstdint>
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <any>
 #include <boost/utility.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/type_traits/is_floating_point.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 #include "LocaleSwitcher.h"
 
 #define RDVALUE_HASBOOL

@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_GREATEREQUALQUERY_H
 #define RD_GREATEREQUALQUERY_H
 #include "Query.h"

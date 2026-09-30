@@ -11,7 +11,7 @@
 #ifndef RGROUP_CORE
 #define RGROUP_CORE
 
-#include <GraphMol/SmilesParse/SmartsWrite.h>
+#include "GraphMol/SmilesParse/SmartsWrite.h"
 #include "../RDKitBase.h"
 #include "RGroupUtils.h"
 #include "GraphMol/Substruct/SubstructMatch.h"

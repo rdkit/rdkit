@@ -30,8 +30,8 @@
 //
 #ifndef RDKIT_DATASTRUCTS_STREAMOPS
 #define RDKIT_DATASTRUCTS_STREAMOPS
-#include <RDGeneral/StreamOps.h>
-#include <DataStructs/ExplicitBitVect.h>
+#include "RDGeneral/StreamOps.h"
+#include "DataStructs/ExplicitBitVect.h"
 #include <typeinfo>
 #include <any>
 

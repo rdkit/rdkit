@@ -7,13 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_PERIODIC_TABLE_H
 #define _RD_PERIODIC_TABLE_H
 
 #include <map>
 #include <vector>
-#include <RDGeneral/types.h>
+#include "RDGeneral/types.h"
 #include "atomic_data.h"
 
 namespace RDKit {

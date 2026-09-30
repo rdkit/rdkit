@@ -8,15 +8,15 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDKITMOLDRAW2DDETAILS_H
 #define RDKITMOLDRAW2DDETAILS_H
 
 #include <vector>
 
-#include <Geometry/point.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include "Geometry/point.h"
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/MolDraw2D/MolDraw2D.h"
 
 #include <tuple>
 #include <boost/format.hpp>

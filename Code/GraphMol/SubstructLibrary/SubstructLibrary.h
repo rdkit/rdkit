@@ -34,19 +34,19 @@
 #define RDK_SUBSTRUCT_LIBRARY
 #include <utility>
 
-#include <RDGeneral/export.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/MolPickler.h>
-#include <GraphMol/MolBundle.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
-#include <DataStructs/ExplicitBitVect.h>
-#include <DataStructs/BitOps.h>
-#include <GraphMol/MolOps.h>
-#include <GraphMol/TautomerQuery/TautomerQuery.h>
-#include <GraphMol/GeneralizedSubstruct/XQMol.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/MolPickler.h"
+#include "GraphMol/MolBundle.h"
+#include "GraphMol/SmilesParse/SmilesParse.h"
+#include "GraphMol/SmilesParse/SmilesWrite.h"
+#include "GraphMol/Fingerprints/Fingerprints.h"
+#include "GraphMol/Substruct/SubstructMatch.h"
+#include "DataStructs/ExplicitBitVect.h"
+#include "DataStructs/BitOps.h"
+#include "GraphMol/MolOps.h"
+#include "GraphMol/TautomerQuery/TautomerQuery.h"
+#include "GraphMol/GeneralizedSubstruct/XQMol.h"
 
 #include <algorithm>
 #include <string>

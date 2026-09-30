@@ -9,8 +9,8 @@
 //
 #ifndef RD_MOLSTANDARDIZE_PIPELINE_H
 #define RD_MOLSTANDARDIZE_PIPELINE_H
-#include <RDGeneral/export.h>
-#include <GraphMol/RWMol.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/RWMol.h"
 #include <memory>
 #include <string>
 #include <utility>

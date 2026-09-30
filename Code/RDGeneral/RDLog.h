@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDLOG_H_29JUNE2005
 #define RDLOG_H_29JUNE2005
 

@@ -28,11 +28,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RDFILTERCAT_INCL_
 #define _RDFILTERCAT_INCL_
 
 #define PY_ARRAY_UNIQUE_SYMBOL rdfiltercat_array_API
-#include <RDBoost/Wrap.h>
+#include "RDBoost/Wrap.h"
 
 #endif

@@ -12,13 +12,13 @@
         \brief Defines the CleanupParameters and some convenience functions.
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MOLSTANDARDIZE_H
 #define RD_MOLSTANDARDIZE_H
 
 #include <string>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/MolStandardize/Metal.h>
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/MolStandardize/Metal.h"
 
 namespace RDKit {
 class RWMol;

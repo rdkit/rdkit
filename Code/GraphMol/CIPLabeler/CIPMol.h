@@ -12,7 +12,7 @@
 
 #include <memory>
 
-#include <GraphMol/RDKitBase.h>
+#include "GraphMol/RDKitBase.h"
 
 #include "Descriptor.h"
 #include "Mancude.h"

@@ -12,15 +12,15 @@
         \brief Defines the Reionizer class and Uncharger class.
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_CHARGE_H
 #define RD_CHARGE_H
 #include <utility>
 
 #include "MolStandardize.h"
-#include <Catalogs/Catalog.h>
-#include <GraphMol/MolStandardize/AcidBaseCatalog/AcidBaseCatalogEntry.h>
-#include <GraphMol/MolStandardize/AcidBaseCatalog/AcidBaseCatalogParams.h>
+#include "Catalogs/Catalog.h"
+#include "GraphMol/MolStandardize/AcidBaseCatalog/AcidBaseCatalogEntry.h"
+#include "GraphMol/MolStandardize/AcidBaseCatalog/AcidBaseCatalogParams.h"
 
 namespace RDKit {
 class RWMol;

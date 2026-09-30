@@ -10,8 +10,8 @@
 #ifndef RGROUP_UTILS
 #define RGROUP_UTILS
 
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/ChemTransforms/MolFragmenter.h>
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/ChemTransforms/MolFragmenter.h"
 #include "RGroupDecomp.h"
 
 #include <map>

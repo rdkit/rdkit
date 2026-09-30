@@ -11,10 +11,10 @@
 #ifndef RD_MACROMOLTEMPLATE_H
 #define RD_MACROMOLTEMPLATE_H
 
-#include <RDGeneral/export.h>
-#include <GraphMol/MacroAtomInfo.h>
-#include <GraphMol/RWMol.h>
-#include <GraphMol/SubstanceGroup.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/MacroAtomInfo.h"
+#include "GraphMol/RWMol.h"
+#include "GraphMol/SubstanceGroup.h"
 
 #include <map>
 #include <memory>

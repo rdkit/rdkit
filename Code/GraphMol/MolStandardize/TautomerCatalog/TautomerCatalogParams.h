@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_TAUTOMER_CATALOG_PARAMS_H
 #define RD_TAUTOMER_CATALOG_PARAMS_H
 
-#include <Catalogs/CatalogParams.h>
-#include <GraphMol/RDKitBase.h>
+#include "Catalogs/CatalogParams.h"
+#include "GraphMol/RDKitBase.h"
 #include <string>
 #include <vector>
 

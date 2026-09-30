@@ -29,20 +29,20 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_FILTER_MATCHER_H__
 #define __RD_FILTER_MATCHER_H__
 #include <utility>
 
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/Substruct/SubstructMatch.h"
 #include "FilterMatcherBase.h"
-#include <GraphMol/MolPickler.h>
+#include "GraphMol/MolPickler.h"
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/serialization/shared_ptr.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 #endif
 
 namespace RDKit {

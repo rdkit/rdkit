@@ -7,13 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_FRAGMENT_CATALOG_PARAMS_H
 #define RD_FRAGMENT_CATALOG_PARAMS_H
 
-#include <Catalogs/CatalogParams.h>
+#include "Catalogs/CatalogParams.h"
 #include "FragmentCatalogUtils.h"
-#include <GraphMol/RDKitBase.h>
+#include "GraphMol/RDKitBase.h"
 #include <string>
 #include <vector>
 

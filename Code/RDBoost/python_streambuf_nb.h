@@ -12,13 +12,13 @@
 //  The license is here:
 //    http://cctbx.svn.sourceforge.net/viewvc/cctbx/trunk/boost_adaptbx/LICENSE_2_0.txt?revision=5148
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 
 #ifndef BOOST_ADAPTBX_PYTHON_STREAMBUF_H
 #define BOOST_ADAPTBX_PYTHON_STREAMBUF_H
 
-#include <RDGeneral/Invariant.h>
-#include <RDGeneral/Exceptions.h>
+#include "RDGeneral/Invariant.h"
+#include "RDGeneral/Exceptions.h"
 #include <optional>
 #include <nanobind/nanobind.h>
 namespace nb = nanobind;

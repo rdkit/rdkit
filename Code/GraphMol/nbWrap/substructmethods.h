@@ -7,14 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDKIT_SUBSTRUCT_METHODS_H
 #define RDKIT_SUBSTRUCT_METHODS_H
-#include <RDBoost/Wrap_nb.h>
+#include "RDBoost/Wrap_nb.h"
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/tuple.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
+#include "GraphMol/Substruct/SubstructMatch.h"
 
 namespace RDKit {
 

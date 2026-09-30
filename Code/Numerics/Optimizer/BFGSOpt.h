@@ -10,10 +10,10 @@
 #ifndef RD_BFGSOPT_H
 #define RD_BFGSOPT_H
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #include <cmath>
-#include <RDGeneral/Invariant.h>
-#include <GraphMol/Trajectory/Snapshot.h>
+#include "RDGeneral/Invariant.h"
+#include "GraphMol/Trajectory/Snapshot.h"
 #include <cstring>
 #include <vector>
 #include <algorithm>

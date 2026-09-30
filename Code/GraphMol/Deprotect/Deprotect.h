@@ -11,9 +11,9 @@
 #ifndef RDK_DEPROTECT_LIBRARY
 #define RDK_DEPROTECT_LIBRARY
 
-#include <RDGeneral/export.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/ChemReactions/Reaction.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/ChemReactions/Reaction.h"
 #include <string>
 #include <memory>
 

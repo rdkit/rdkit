@@ -12,11 +12,11 @@
         \brief Defines the MetalDisconnector class.
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_METAL_H
 #define RD_METAL_H
 
-#include <GraphMol/ROMol.h>
+#include "GraphMol/ROMol.h"
 
 namespace RDKit {
 class RWMol;

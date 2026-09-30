@@ -7,14 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_WRAPHELPERS_H__
 #define __RD_WRAPHELPERS_H__
 
-#include <DataStructs/BitVects.h>
-#include <DataStructs/BitOps.h>
-#include <RDBoost/Wrap.h>
-#include <DataStructs/base64.h>
+#include "DataStructs/BitVects.h"
+#include "DataStructs/BitOps.h"
+#include "RDBoost/Wrap.h"
+#include "DataStructs/base64.h"
 
 namespace python = boost::python;
 

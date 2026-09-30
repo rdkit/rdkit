@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef HANOISORT_H
 #define HANOISORT_H
 

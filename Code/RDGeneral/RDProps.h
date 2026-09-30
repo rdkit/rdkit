@@ -6,7 +6,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDKIT_RDPROPS_H
 #define RDKIT_RDPROPS_H
 #include "Dict.h"

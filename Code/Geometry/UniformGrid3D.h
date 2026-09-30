@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef UNIFORMGRID3D_H_20050124_1703
 #define UNIFORMGRID3D_H_20050124_1703
 
 #include "point.h"
-#include <DataStructs/DiscreteValueVect.h>
+#include "DataStructs/DiscreteValueVect.h"
 #include "Grid3D.h"
 
 namespace RDGeom {

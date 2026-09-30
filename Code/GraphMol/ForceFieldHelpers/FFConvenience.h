@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_FFCONVENIENCE_H
 #define RD_FFCONVENIENCE_H
-#include <GraphMol/ROMol.h>
-#include <ForceField/ForceField.h>
-#include <RDGeneral/RDThreads.h>
+#include "GraphMol/ROMol.h"
+#include "ForceField/ForceField.h"
+#include "RDGeneral/RDThreads.h"
 
 namespace RDKit {
 class ROMol;

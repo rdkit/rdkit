@@ -9,7 +9,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_TORSIONCONSTRAINT_H
 #define RD_TORSIONCONSTRAINT_H
 #include "Contrib.h"

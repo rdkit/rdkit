@@ -14,22 +14,22 @@
 
 */
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RDKIT_BASE_H
 #define _RDKIT_BASE_H
 
-#include <RDGeneral/Invariant.h>
+#include "RDGeneral/Invariant.h"
 
-#include <GraphMol/Atom.h>
-#include <GraphMol/Bond.h>
-#include <GraphMol/Conformer.h>
-#include <GraphMol/GraphMol.h>
-#include <GraphMol/MolOps.h>
-#include <GraphMol/RingInfo.h>
-#include <GraphMol/AtomIterators.h>
-#include <GraphMol/BondIterators.h>
-#include <GraphMol/PeriodicTable.h>
-#include <GraphMol/SanitException.h>
-#include <GraphMol/StereoGroup.h>
+#include "GraphMol/Atom.h"
+#include "GraphMol/Bond.h"
+#include "GraphMol/Conformer.h"
+#include "GraphMol/GraphMol.h"
+#include "GraphMol/MolOps.h"
+#include "GraphMol/RingInfo.h"
+#include "GraphMol/AtomIterators.h"
+#include "GraphMol/BondIterators.h"
+#include "GraphMol/PeriodicTable.h"
+#include "GraphMol/SanitException.h"
+#include "GraphMol/StereoGroup.h"
 
 #endif

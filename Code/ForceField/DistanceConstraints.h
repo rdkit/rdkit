@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_DISTANCECONSTRAINTS_H
 #define RD_DISTANCECONSTRAINTS_H
 #include <vector>

@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_MOLTRANSFORMS_H_
 #define _RD_MOLTRANSFORMS_H_
 
-#include <Geometry/point.h>
-#include <Numerics/SymmMatrix.h>
+#include "Geometry/point.h"
+#include "Numerics/SymmMatrix.h"
 
 #ifdef RDK_HAS_EIGEN3
 // only the Matrix3d/Vector3d typedefs are needed in the declarations below;

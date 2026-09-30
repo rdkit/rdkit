@@ -16,7 +16,7 @@
 #include <iosfwd>
 #include <emscripten.h>
 #include <emscripten/val.h>
-#include <GraphMol/MolDraw2D/DrawTextFT.h>
+#include "GraphMol/MolDraw2D/DrawTextFT.h"
 
 namespace RDKit {
 class MolDraw2DJS;

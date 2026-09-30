@@ -8,12 +8,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef UNIFORMREALVALUEGRID3D_H_20140403
 #define UNIFORMREALVALUEGRID3D_H_20140403
 
-#include <DataStructs/RealValueVect.h>
-#include <Geometry/point.h>
+#include "DataStructs/RealValueVect.h"
+#include "Geometry/point.h"
 #include "Grid3D.h"
 
 namespace RDGeom {

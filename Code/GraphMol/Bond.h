@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_BOND_H
 #define RD_BOND_H
 
@@ -16,12 +16,12 @@
 #include <utility>
 
 // Ours
-#include <RDGeneral/Invariant.h>
-#include <Query/QueryObjects.h>
-#include <RDGeneral/types.h>
-#include <RDGeneral/RDProps.h>
-#include <GraphMol/details.h>
-#include <GraphMol/MacroBondInfo.h>
+#include "RDGeneral/Invariant.h"
+#include "Query/QueryObjects.h"
+#include "RDGeneral/types.h"
+#include "RDGeneral/RDProps.h"
+#include "GraphMol/details.h"
+#include "GraphMol/MacroBondInfo.h"
 
 namespace RDKit {
 class ROMol;

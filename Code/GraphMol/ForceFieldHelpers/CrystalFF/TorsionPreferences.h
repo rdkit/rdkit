@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_TORSIONPREFERENCES_H_
 #define _RD_TORSIONPREFERENCES_H_
 #include <vector>
@@ -17,8 +17,8 @@
 #include <tuple>
 #include <variant>
 #include <boost/dynamic_bitset.hpp>
-#include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
-#include <GraphMol/DistGeomHelpers/ZMatrixBuilder.h>
+#include "GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h"
+#include "GraphMol/DistGeomHelpers/ZMatrixBuilder.h"
 
 namespace RDKit {
 class ROMol;

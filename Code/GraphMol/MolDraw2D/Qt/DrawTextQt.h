@@ -10,8 +10,8 @@
 #ifndef RDKIT_DRAWTEXTQT_H
 #define RDKIT_DRAWTEXTQT_H
 
-#include <RDGeneral/export.h>
-#include <GraphMol/MolDraw2D/DrawTextNotFT.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/MolDraw2D/DrawTextNotFT.h"
 
 class QPainter;
 

@@ -12,8 +12,8 @@
 #ifndef RD_Z_MATRIX_UTILS_H
 #define RD_Z_MATRIX_UTILS_H
 
-#include <RDGeneral/Invariant.h>
-#include <Numerics/SquareMatrix.h>
+#include "RDGeneral/Invariant.h"
+#include "Numerics/SquareMatrix.h"
 #include <variant>
 #include <unordered_set>
 #include <cmath>

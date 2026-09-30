@@ -35,12 +35,12 @@
   \brief Contains the USR descriptor. Use MolDescriptors.h in client code.
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_USR_H__
 #define __RD_USR_H__
 
-#include <Geometry/point.h>
-#include <Numerics/Vector.h>
+#include "Geometry/point.h"
+#include "Numerics/Vector.h"
 
 namespace RDKit {
 class ROMol;

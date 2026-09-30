@@ -7,14 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_FORCEFIELD_H__
 #define __RD_FORCEFIELD_H__
 
 #include <vector>
 #include <boost/smart_ptr.hpp>
-#include <Geometry/point.h>
-#include <GraphMol/Trajectory/Snapshot.h>
+#include "Geometry/point.h"
+#include "GraphMol/Trajectory/Snapshot.h"
 
 namespace RDKit {
 namespace ForceFieldsHelper {

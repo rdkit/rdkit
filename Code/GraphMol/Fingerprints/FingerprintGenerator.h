@@ -8,13 +8,13 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_FINGERPRINTGEN_H_2018_05
 #define RD_FINGERPRINTGEN_H_2018_05
 
-#include <DataStructs/SparseIntVect.h>
-#include <DataStructs/ExplicitBitVect.h>
-#include <DataStructs/SparseBitVect.h>
+#include "DataStructs/SparseIntVect.h"
+#include "DataStructs/ExplicitBitVect.h"
+#include "DataStructs/SparseBitVect.h"
 #include <utility>
 #include <vector>
 #include <memory>

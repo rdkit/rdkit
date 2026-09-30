@@ -11,7 +11,7 @@
 #ifndef RD_NULLQUERYALGEBRA_H
 #define RD_NULLQUERYALGEBRA_H
 
-#include <GraphMol/QueryOps.h>
+#include "GraphMol/QueryOps.h"
 
 namespace RDKit {
 namespace {

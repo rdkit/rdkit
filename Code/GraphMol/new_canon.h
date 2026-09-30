@@ -12,16 +12,16 @@
 #ifndef RD_NEW_CANON_H
 #define RD_NEW_CANON_H
 
-#include <RDGeneral/export.h>
-#include <RDGeneral/hanoiSort.h>
-#include <GraphMol/ROMol.h>
-#include <GraphMol/RingInfo.h>
-#include <GraphMol/StereoGroup.h>
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/export.h"
+#include "RDGeneral/hanoiSort.h"
+#include "GraphMol/ROMol.h"
+#include "GraphMol/RingInfo.h"
+#include "GraphMol/StereoGroup.h"
+#include "RDGeneral/BoostStartInclude.h"
 #include <cstdint>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/container/small_vector.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 #include <cstring>
 #include <cassert>
 #include <compare>

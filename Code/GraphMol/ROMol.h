@@ -14,7 +14,7 @@
 
 */
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_ROMOL_H
 #define RD_ROMOL_H
 
@@ -27,7 +27,7 @@
 #include <limits>
 
 // boost stuff
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -35,11 +35,11 @@
 #ifdef RDK_USE_BOOST_SERIALIZATION
 #include <boost/serialization/split_member.hpp>
 #endif
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
 // our stuff
-#include <RDGeneral/types.h>
-#include <RDGeneral/RDProps.h>
+#include "RDGeneral/types.h"
+#include "RDGeneral/RDProps.h"
 #include "Atom.h"
 #include "Bond.h"
 #include "Conformer.h"

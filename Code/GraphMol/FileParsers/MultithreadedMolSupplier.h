@@ -11,13 +11,13 @@
 #ifndef MULTITHREADED_MOL_SUPPLIER
 #define MULTITHREADED_MOL_SUPPLIER
 
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <RDGeneral/BadFileException.h>
-#include <RDGeneral/ConcurrentQueue.h>
-#include <RDGeneral/FileParseException.h>
-#include <RDGeneral/RDLog.h>
-#include <RDGeneral/RDThreads.h>
-#include <RDGeneral/StreamOps.h>
+#include "GraphMol/SmilesParse/SmilesParse.h"
+#include "RDGeneral/BadFileException.h"
+#include "RDGeneral/ConcurrentQueue.h"
+#include "RDGeneral/FileParseException.h"
+#include "RDGeneral/RDLog.h"
+#include "RDGeneral/RDThreads.h"
+#include "RDGeneral/StreamOps.h"
 
 #include "FileParsers.h"
 #include "MolSupplier.h"

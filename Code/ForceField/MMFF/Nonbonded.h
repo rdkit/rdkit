@@ -6,12 +6,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_MMFFNONBONDED_H__
 #define __RD_MMFFNONBONDED_H__
-#include <ForceField/Contrib.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
+#include "ForceField/Contrib.h"
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h"
 
 namespace ForceFields {
 namespace MMFF {

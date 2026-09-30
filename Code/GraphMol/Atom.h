@@ -12,7 +12,7 @@
   \brief Defines the Atom class and associated typedefs
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_ATOM_H
 #define _RD_ATOM_H
 
@@ -20,12 +20,12 @@
 #include <memory>
 
 // ours
-#include <RDGeneral/Invariant.h>
-#include <Query/QueryObjects.h>
-#include <RDGeneral/types.h>
-#include <RDGeneral/RDProps.h>
-#include <GraphMol/details.h>
-#include <GraphMol/MacroAtomInfo.h>
+#include "RDGeneral/Invariant.h"
+#include "Query/QueryObjects.h"
+#include "RDGeneral/types.h"
+#include "RDGeneral/RDProps.h"
+#include "GraphMol/details.h"
+#include "GraphMol/MacroAtomInfo.h"
 
 namespace RDKit {
 class Atom;

@@ -7,10 +7,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_UFFPOSITIONCONSTRAINT_H
 #define RD_UFFPOSITIONCONSTRAINT_H
-#include <ForceField/PositionConstraint.h>
+#include "ForceField/PositionConstraint.h"
 
 namespace ForceFields {
 namespace UFF {

@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_TAUTOMER_H
 #define RD_TAUTOMER_H
 
@@ -16,12 +16,12 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <Catalogs/Catalog.h>
-#include <GraphMol/ROMol.h>
-#include <GraphMol/MolStandardize/MolStandardize.h>
-#include <GraphMol/MolStandardize/TautomerCatalog/TautomerCatalogEntry.h>
-#include <GraphMol/MolStandardize/TautomerCatalog/TautomerCatalogParams.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include "Catalogs/Catalog.h"
+#include "GraphMol/ROMol.h"
+#include "GraphMol/MolStandardize/MolStandardize.h"
+#include "GraphMol/MolStandardize/TautomerCatalog/TautomerCatalogEntry.h"
+#include "GraphMol/MolStandardize/TautomerCatalog/TautomerCatalogParams.h"
+#include "GraphMol/SmilesParse/SmilesWrite.h"
 #include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {

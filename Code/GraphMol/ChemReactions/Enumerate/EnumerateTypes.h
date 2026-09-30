@@ -29,11 +29,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef ENUMERATETYPES_H
 #define ENUMERATETYPES_H
 
-#include <GraphMol/RDKitBase.h>
+#include "GraphMol/RDKitBase.h"
 
 namespace RDKit {
 namespace EnumerationTypes {

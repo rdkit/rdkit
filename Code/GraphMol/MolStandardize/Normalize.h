@@ -12,14 +12,14 @@
         \brief Defines the Normalizer class.
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_NORMALIZE_H
 #define RD_NORMALIZE_H
 
-#include <Catalogs/Catalog.h>
-#include <GraphMol/MolStandardize/TransformCatalog/TransformCatalogEntry.h>
-#include <GraphMol/MolStandardize/TransformCatalog/TransformCatalogParams.h>
-#include <GraphMol/MolStandardize/MolStandardize.h>
+#include "Catalogs/Catalog.h"
+#include "GraphMol/MolStandardize/TransformCatalog/TransformCatalogEntry.h"
+#include "GraphMol/MolStandardize/TransformCatalog/TransformCatalogParams.h"
+#include "GraphMol/MolStandardize/MolStandardize.h"
 
 namespace RDKit {
 class RWMol;

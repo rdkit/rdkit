@@ -13,16 +13,16 @@
   \brief Defines the SubstanceGroup class
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_SGROUP_H
 #define _RD_SGROUP_H
 
 #include <utility>
 #include <unordered_map>
 
-#include <Geometry/point.h>
-#include <RDGeneral/types.h>
-#include <RDGeneral/RDProps.h>
+#include "Geometry/point.h"
+#include "RDGeneral/types.h"
+#include "RDGeneral/RDProps.h"
 #include <boost/smart_ptr.hpp>
 
 namespace RDKit {

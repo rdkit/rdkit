@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MOL_FILE_STEREOCHEM_H
 #define RD_MOL_FILE_STEREOCHEM_H
 
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/Chirality.h>
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/Chirality.h"
 
 namespace RDKit {
 //! deprecated, please use MolOps::assignChiralTypesFromBondDirs instead

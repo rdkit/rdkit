@@ -7,17 +7,17 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MOLPROCESSING_H
 #define RD_MOLPROCESSING_H
 
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
-#include <DataStructs/BitVects.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/FileParsers/GeneralFileReader.h>
-#include <GraphMol/Fingerprints/FingerprintGenerator.h>
-#include <GraphMol/Fingerprints/MorganGenerator.h>
+#include "DataStructs/BitVects.h"
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/FileParsers/GeneralFileReader.h"
+#include "GraphMol/Fingerprints/FingerprintGenerator.h"
+#include "GraphMol/Fingerprints/MorganGenerator.h"
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <thread>

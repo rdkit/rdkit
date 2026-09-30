@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_GASTEIGERPARAMS_H
 #define _RD_GASTEIGERPARAMS_H
 
-#include <RDGeneral/types.h>
-#include <RDGeneral/Exceptions.h>
+#include "RDGeneral/types.h"
+#include "RDGeneral/Exceptions.h"
 #include <string>
 #include <map>
 

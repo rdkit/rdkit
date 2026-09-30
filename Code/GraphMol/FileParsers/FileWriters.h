@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_FILEWRITERS_H
 #define RD_FILEWRITERS_H
 
-#include <RDGeneral/types.h>
-#include <GraphMol/RDKitBase.h>
+#include "RDGeneral/types.h"
+#include "GraphMol/RDKitBase.h"
 #include <string>
 
 namespace RDKit {

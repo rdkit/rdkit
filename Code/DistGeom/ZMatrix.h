@@ -8,13 +8,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #include <cstddef>
 #ifndef RD_Z_MATRIX_H
 #define RD_Z_MATRIX_H
 
-#include <Numerics/SquareMatrix.h>
-#include <RDGeneral/Invariant.h>
+#include "Numerics/SquareMatrix.h"
+#include "RDGeneral/Invariant.h"
 #include <iterator>
 #include <optional>
 #include <variant>

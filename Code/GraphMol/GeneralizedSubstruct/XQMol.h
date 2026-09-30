@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef XQMOL_H_MAY2023
 #define XQMOL_H_MAY2023
 
@@ -16,15 +16,15 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/core/noncopyable.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/MolOps.h>
-#include <GraphMol/MolBundle.h>
-#include <GraphMol/TautomerQuery/TautomerQuery.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/MolOps.h"
+#include "GraphMol/MolBundle.h"
+#include "GraphMol/TautomerQuery/TautomerQuery.h"
+#include "GraphMol/Substruct/SubstructMatch.h"
 
 namespace RDKit {
 namespace GeneralizedSubstruct {

@@ -8,15 +8,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MAXMINPICKER_H
 #define RD_MAXMINPICKER_H
 
-#include <RDGeneral/types.h>
-#include <RDGeneral/utils.h>
-#include <RDGeneral/Invariant.h>
-#include <RDGeneral/RDLog.h>
-#include <RDGeneral/Exceptions.h>
+#include "RDGeneral/types.h"
+#include "RDGeneral/utils.h"
+#include "RDGeneral/Invariant.h"
+#include "RDGeneral/RDLog.h"
+#include "RDGeneral/Exceptions.h"
 #include <cstdlib>
 #include "DistPicker.h"
 #include <boost/random.hpp>

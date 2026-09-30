@@ -1,10 +1,10 @@
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #include <list>
 #include <map>
-#include <DataStructs/BitOps.h>
-#include <DataStructs/ExplicitBitVect.h>
-#include <SimDivPickers/MaxMinPicker.h>
-#include <RDGeneral/Exceptions.h>
+#include "DataStructs/BitOps.h"
+#include "DataStructs/ExplicitBitVect.h"
+#include "SimDivPickers/MaxMinPicker.h"
+#include "RDGeneral/Exceptions.h"
 
 namespace {
 class taniFunctor {

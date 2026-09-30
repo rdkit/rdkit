@@ -11,13 +11,13 @@
 /*! \file MHFP.h
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MHFPFPS_H
 #define RD_MHFPFPS_H
 #include <string>
 #include <vector>
-#include <GraphMol/ROMol.h>
-#include <DataStructs/ExplicitBitVect.h>
+#include "GraphMol/ROMol.h"
+#include "DataStructs/ExplicitBitVect.h"
 
 class SparseBitVect;
 namespace RDKit {

@@ -14,8 +14,8 @@
 #ifndef SYNTHONSPACESUBSTRUCTURESEARCHER_H
 #define SYNTHONSPACESUBSTRUCTURESEARCHER_H
 
-#include <RDGeneral/export.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h"
 
 namespace RDKit::SynthonSpaceSearch {
 

@@ -11,9 +11,9 @@
 #ifndef RD_DEPICTOR_TEMPLATES_H
 #define RD_DEPICTOR_TEMPLATES_H
 
-#include <GraphMol/ROMol.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/MolOps.h>
+#include "GraphMol/ROMol.h"
+#include "GraphMol/SmilesParse/SmilesParse.h"
+#include "GraphMol/MolOps.h"
 
 #include "TemplateSmarts.h"
 

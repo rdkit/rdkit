@@ -12,7 +12,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 
-#include <RDGeneral/Dict.h>
+#include "RDGeneral/Dict.h"
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
 

@@ -8,13 +8,13 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 
 #ifndef RD_MARVINPARSER_H
 #define RD_MARVINPARSER_H
 
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/ChemReactions/Reaction.h>
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/ChemReactions/Reaction.h"
 
 #include <string>
 

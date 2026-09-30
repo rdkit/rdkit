@@ -29,14 +29,14 @@
   includeChirality is true.
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_ATOMPAIRS_H__
 #define __RD_ATOMPAIRS_H__
 
-#include <DataStructs/SparseIntVect.h>
-#include <DataStructs/BitVects.h>
+#include "DataStructs/SparseIntVect.h"
+#include "DataStructs/BitVects.h"
 #include <cstdint>
-#include <GraphMol/Fingerprints/FingerprintUtil.h>
+#include "GraphMol/Fingerprints/FingerprintUtil.h"
 namespace RDKit {
 class Atom;
 

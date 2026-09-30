@@ -3,17 +3,17 @@
 
 #include "Geometry/Transform3D.h"
 
-#include <GraphMol/ROMol.h>
+#include "GraphMol/ROMol.h"
 #include <map>
 #include <vector>
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/vector.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 #endif
 
 //! The input for the pubchem shape alignment code

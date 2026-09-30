@@ -7,10 +7,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <GraphMol/MolDraw2D/MolDraw2D.h>
-#include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
-#include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
-#include <GraphMol/Chirality.h>
+#include "GraphMol/MolDraw2D/MolDraw2D.h"
+#include "GraphMol/MolDraw2D/MolDraw2DHelpers.h"
+#include "GraphMol/MolDraw2D/MolDraw2DUtils.h"
+#include "GraphMol/Chirality.h"
 #include <boost/json.hpp>
 #include <string>
 #include <vector>

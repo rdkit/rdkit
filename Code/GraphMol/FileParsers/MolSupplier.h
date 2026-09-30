@@ -7,11 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MOLSUPPLIER_H
 #define RD_MOLSUPPLIER_H
 
-#include <RDGeneral/types.h>
+#include "RDGeneral/types.h"
 
 #include <string>
 #include <string_view>
@@ -20,10 +20,10 @@
 #include <vector>
 #include <fstream>
 #include <iterator>
-#include <GraphMol/ROMol.h>
-#include <RDGeneral/BadFileException.h>
+#include "GraphMol/ROMol.h"
+#include "RDGeneral/BadFileException.h"
 #include "FileParsers.h"
-#include <GraphMol/SmilesParse/SmilesParse.h>
+#include "GraphMol/SmilesParse/SmilesParse.h"
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif

@@ -13,8 +13,8 @@
 #define RDKIT_RGROUPDECOMPPARAMS_H
 
 #include "../RDKitBase.h"
-#include <GraphMol/Substruct/SubstructMatch.h>
-#include <RDGeneral/BetterEnums.h>
+#include "GraphMol/Substruct/SubstructMatch.h"
+#include "RDGeneral/BetterEnums.h"
 
 namespace RDKit {
 

@@ -7,18 +7,18 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_O3AALIGNMOLECULES_H_
 #define _RD_O3AALIGNMOLECULES_H_
 
-#include <RDGeneral/Invariant.h>
-#include <Geometry/Transform3D.h>
-#include <Geometry/point.h>
-#include <Numerics/Vector.h>
-#include <GraphMol/ROMol.h>
-#include <GraphMol/Conformer.h>
-#include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
-#include <GraphMol/MolAlign/AlignMolecules.h>
+#include "RDGeneral/Invariant.h"
+#include "Geometry/Transform3D.h"
+#include "Geometry/point.h"
+#include "Numerics/Vector.h"
+#include "GraphMol/ROMol.h"
+#include "GraphMol/Conformer.h"
+#include "GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h"
+#include "GraphMol/MolAlign/AlignMolecules.h"
 #include <vector>
 #include <cmath>
 #include <boost/shared_ptr.hpp>

@@ -33,7 +33,7 @@
 //
 // Created by Guillaume GODIN
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef WHIMRDKIT_H_SEPT2016
 #define WHIMRDKIT_H_SEPT2016
 #include <vector>

@@ -29,12 +29,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDKIT_SANITIZERXN_H
 #define RDKIT_SANITIZERXN_H
 
 #include "Reaction.h"
-#include <GraphMol/MolOps.h>
+#include "GraphMol/MolOps.h"
 #include <string>
 #include <exception>
 #include <utility>

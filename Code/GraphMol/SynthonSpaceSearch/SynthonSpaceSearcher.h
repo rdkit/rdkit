@@ -21,11 +21,11 @@
 #include <mutex>
 #include <random>
 
-#include <RDGeneral/export.h>
-#include <GraphMol/ROMol.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
-#include <GraphMol/SynthonSpaceSearch/SearchResults.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/ROMol.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonSpace.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h"
+#include "GraphMol/SynthonSpaceSearch/SearchResults.h"
 
 using Clock = std::chrono::steady_clock;
 using TimePoint = std::chrono::time_point<Clock>;

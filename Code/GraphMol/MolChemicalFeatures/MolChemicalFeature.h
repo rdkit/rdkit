@@ -7,15 +7,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __MOLCHEMICALFEATURE_H_11012005_1404__
 #define __MOLCHEMICALFEATURE_H_11012005_1404__
 
 #include <string>
 #include <vector>
 #include <map>
-#include <Geometry/point.h>
-#include <ChemicalFeatures/ChemicalFeature.h>
+#include "Geometry/point.h"
+#include "ChemicalFeatures/ChemicalFeature.h"
 
 namespace RDKit {
 class ROMol;

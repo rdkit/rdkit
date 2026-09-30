@@ -7,14 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_FRAG_CAT_GENERATOR_H
 #define RD_FRAG_CAT_GENERATOR_H
 
-#include <Catalogs/Catalog.h>
+#include "Catalogs/Catalog.h"
 #include "FragCatalogEntry.h"
 #include "FragCatParams.h"
-#include <GraphMol/Subgraphs/Subgraphs.h>
+#include "GraphMol/Subgraphs/Subgraphs.h"
 
 namespace RDKit {
 class ROMol;

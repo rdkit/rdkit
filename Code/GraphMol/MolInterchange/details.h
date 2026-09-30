@@ -7,12 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MOLINTERCHANGEDETAILS_H_FEB2018
 #define RD_MOLINTERCHANGEDETAILS_H_FEB2018
-#include <GraphMol/Atom.h>
-#include <GraphMol/Bond.h>
-#include <GraphMol/StereoGroup.h>
+#include "GraphMol/Atom.h"
+#include "GraphMol/Bond.h"
+#include "GraphMol/StereoGroup.h"
 namespace RDKit {
 namespace MolInterchange {
 constexpr int currentMolJSONVersion = 10;

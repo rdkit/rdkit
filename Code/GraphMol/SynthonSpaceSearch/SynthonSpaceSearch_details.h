@@ -15,10 +15,10 @@
 #include <limits>
 #include <vector>
 
-#include <GraphMol/DistGeomHelpers/Embedder.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
-#include <RDGeneral/export.h>
-#include <DataStructs/ExplicitBitVect.h>
+#include "GraphMol/DistGeomHelpers/Embedder.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h"
+#include "RDGeneral/export.h"
+#include "DataStructs/ExplicitBitVect.h"
 
 using Clock = std::chrono::steady_clock;
 using TimePoint = std::chrono::time_point<Clock>;

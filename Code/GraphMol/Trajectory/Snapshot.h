@@ -8,11 +8,11 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_SNAPSHOT_H__
 #define __RD_SNAPSHOT_H__
 #include <utility>
-#include <Geometry/point.h>
+#include "Geometry/point.h"
 #include <boost/shared_array.hpp>
 
 namespace RDKit {

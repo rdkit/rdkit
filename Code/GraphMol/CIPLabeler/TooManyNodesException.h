@@ -13,7 +13,7 @@
 #include <stdexcept>
 #include <string>
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 
 namespace RDKit {
 namespace CIPLabeler {

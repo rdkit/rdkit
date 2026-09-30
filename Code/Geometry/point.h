@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_POINT_H
 #define RD_POINT_H
 #include <cmath>
@@ -19,8 +19,8 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#include <RDGeneral/Invariant.h>
-#include <Numerics/Vector.h>
+#include "RDGeneral/Invariant.h"
+#include "Numerics/Vector.h"
 #include <boost/smart_ptr.hpp>
 
 namespace RDGeom {

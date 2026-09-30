@@ -31,18 +31,18 @@
 //
 // Created by Greg Landrum, September 2006
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_SLNPARSEOPS_H__
 #define __RD_SLNPARSEOPS_H__
 
 #include <vector>
-#include <GraphMol/SLNParse/SLNParse.h>
-#include <GraphMol/SLNParse/SLNAttribs.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/RDKitQueries.h>
-#include <RDGeneral/BoostStartInclude.h>
+#include "GraphMol/SLNParse/SLNParse.h"
+#include "GraphMol/SLNParse/SLNAttribs.h"
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/RDKitQueries.h"
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/lexical_cast.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
 namespace RDKit {
 namespace SLNParse {

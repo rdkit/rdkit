@@ -8,17 +8,17 @@
 //  of the RDKit source tree.
 //
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_UTILS_H
 #define RD_UTILS_H
 
 #include <cstdlib>
 
 #include "types.h"
-#include <RDGeneral/Invariant.h>
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/Invariant.h"
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/random.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
 #ifdef _WIN32
 inline int setenv(const char *name, const char *value, int) {

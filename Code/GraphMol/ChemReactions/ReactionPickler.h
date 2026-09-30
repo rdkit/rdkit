@@ -8,11 +8,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_RXNPICKLE_H_2JUNE2009
 #define RD_RXNPICKLE_H_2JUNE2009
 
-#include <GraphMol/MolPickler.h>
+#include "GraphMol/MolPickler.h"
 // Std stuff
 #include <string>
 #include <exception>

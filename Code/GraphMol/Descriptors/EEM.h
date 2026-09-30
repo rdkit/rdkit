@@ -28,7 +28,7 @@
 
 #ifndef EEMRDKIT_H_SEPT2017
 #define EEMRDKIT_H_SEPT2017
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #include <vector>
 #include <string>
 

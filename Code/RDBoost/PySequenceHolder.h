@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_PYSEQUENCEHOLDER_H_
 #define _RD_PYSEQUENCEHOLDER_H_
 
@@ -16,7 +16,7 @@
 // Defines a class to hold sequences passed in from Python
 //
 #include "Wrap.h"
-#include <RDGeneral/Invariant.h>
+#include "RDGeneral/Invariant.h"
 
 namespace python = boost::python;
 

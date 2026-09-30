@@ -16,11 +16,11 @@
 #include <array>
 #include <vector>
 
-#include <GraphMol/RWMol.h>
-#include <RDGeneral/export.h>
-#include <Geometry/Transform3D.h>
+#include "GraphMol/RWMol.h"
+#include "RDGeneral/export.h"
+#include "Geometry/Transform3D.h"
 
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/dynamic_bitset.hpp>
 #ifdef RDK_USE_BOOST_SERIALIZATION
 #include <boost/archive/text_oarchive.hpp>
@@ -29,9 +29,9 @@
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/unique_ptr.hpp>
 #endif
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
-#include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
+#include "GraphMol/GaussianShape/ShapeOverlayOptions.h"
 
 // The code below was provided by Claude (Sonnet 4.6).
 // If first tried to get me to use boost/serialization/dynamic_bitset.hpp

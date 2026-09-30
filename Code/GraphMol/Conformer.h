@@ -7,14 +7,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_CONFORMER_H
 #define _RD_CONFORMER_H
 
-#include <Geometry/point.h>
-#include <RDGeneral/types.h>
+#include "Geometry/point.h"
+#include "RDGeneral/types.h"
 #include <boost/smart_ptr.hpp>
-#include <RDGeneral/RDProps.h>
+#include "RDGeneral/RDProps.h"
 #include <cmath>
 #include <limits>
 #include <utility>

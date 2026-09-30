@@ -14,10 +14,10 @@
 #ifndef SYNTHONSPACERASCALSEARCHER_H
 #define SYNTHONSPACERASCALSEARCHER_H
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 
-#include <GraphMol/RascalMCES/RascalOptions.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
+#include "GraphMol/RascalMCES/RascalOptions.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h"
 
 namespace RDKit::RascalMCES {
 struct RascalOptions;

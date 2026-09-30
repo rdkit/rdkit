@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_SMILESWRITE_H_012020
 #define RD_SMILESWRITE_H_012020
 
@@ -16,7 +16,7 @@
 #include <memory>
 #include <cstdint>
 #include <limits>
-#include <RDGeneral/BetterEnums.h>
+#include "RDGeneral/BetterEnums.h"
 
 #include <boost/shared_ptr.hpp>
 

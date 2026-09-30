@@ -30,11 +30,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_REACTION_UTILS_H
 #define __RD_REACTION_UTILS_H
 
-#include <GraphMol/ChemReactions/Reaction.h>
+#include "GraphMol/ChemReactions/Reaction.h"
 
 namespace RDKit {
 

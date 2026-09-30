@@ -7,10 +7,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MULTIFPBREADER_H_APR2016
 #define RD_MULTIFPBREADER_H_APR2016
-#include <RDGeneral/Invariant.h>
+#include "RDGeneral/Invariant.h"
 /*! \file MultiFPBReader.h
 
   \brief contains a class for reading and searching collections of FPB files
@@ -19,9 +19,9 @@
      in future releases.
 */
 
-#include <RDGeneral/Exceptions.h>
-#include <DataStructs/ExplicitBitVect.h>
-#include <DataStructs/FPBReader.h>
+#include "RDGeneral/Exceptions.h"
+#include "DataStructs/ExplicitBitVect.h"
+#include "DataStructs/FPBReader.h"
 #include <tuple>
 
 namespace RDKit {

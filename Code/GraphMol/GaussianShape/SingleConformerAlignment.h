@@ -20,13 +20,13 @@
 
 #include <array>
 
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/dynamic_bitset.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
-#include <RDGeneral/export.h>
-#include <GraphMol/MolTransforms/MolTransforms.h>
-#include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/MolTransforms/MolTransforms.h"
+#include "GraphMol/GaussianShape/ShapeOverlayOptions.h"
 
 namespace RDKit {
 namespace GaussianShape {

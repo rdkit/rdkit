@@ -7,18 +7,18 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef _RD_DISTGEOMUTILS_H_
 #define _RD_DISTGEOMUTILS_H_
 
 #include "BoundsMatrix.h"
 #include "ZMatrix.h"
-#include <Numerics/SymmMatrix.h>
+#include "Numerics/SymmMatrix.h"
 #include <map>
-#include <Geometry/point.h>
-#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
+#include "Geometry/point.h"
+#include "GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h"
 #include "ChiralSet.h"
-#include <RDGeneral/utils.h>
+#include "RDGeneral/utils.h"
 #include <boost/dynamic_bitset.hpp>
 
 namespace ForceFields {

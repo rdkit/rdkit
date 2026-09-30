@@ -32,13 +32,13 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_REACTION_H_17Aug2006
 #define RD_REACTION_H_17Aug2006
 
-#include <GraphMol/RDKitBase.h>
-#include <RDGeneral/RDProps.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
+#include "GraphMol/RDKitBase.h"
+#include "RDGeneral/RDProps.h"
+#include "GraphMol/Substruct/SubstructMatch.h"
 #include <string_view>
 #include <vector>
 

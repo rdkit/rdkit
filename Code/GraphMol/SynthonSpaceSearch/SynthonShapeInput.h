@@ -12,11 +12,11 @@
 #ifndef RDKIT_SYNTHONSHAPEINPUT_H
 #define RDKIT_SYNTHONSHAPEINPUT_H
 
-#include <GraphMol/RWMol.h>
-#include <GraphMol/GaussianShape/ShapeInput.h>
-#include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
+#include "GraphMol/RWMol.h"
+#include "GraphMol/GaussianShape/ShapeInput.h"
+#include "GraphMol/GaussianShape/ShapeOverlayOptions.h"
 
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #ifdef RDK_USE_BOOST_SERIALIZATION
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -25,7 +25,7 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/split_member.hpp>
 #endif
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
 namespace RDKit {
 namespace SynthonSpaceSearch {

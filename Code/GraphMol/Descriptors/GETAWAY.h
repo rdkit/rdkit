@@ -33,7 +33,7 @@
 //
 // Created by Guillaume Godin 2016
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef GETAWAYRDKIT_H_SEPT2016
 #define GETAWAYRDKIT_H_SEPT2016
 #include <vector>

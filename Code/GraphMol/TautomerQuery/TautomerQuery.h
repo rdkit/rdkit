@@ -8,24 +8,24 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 
 #ifndef RDKIT_TAUTOMERQUERY_H
 #define RDKIT_TAUTOMERQUERY_H
 
-#include <GraphMol/ROMol.h>
-#include <GraphMol/MolPickler.h>
+#include "GraphMol/ROMol.h"
+#include "GraphMol/MolPickler.h"
 #include <vector>
 #include <span>
-#include <GraphMol/Substruct/SubstructMatch.h>
-#include <DataStructs/ExplicitBitVect.h>
+#include "GraphMol/Substruct/SubstructMatch.h"
+#include "DataStructs/ExplicitBitVect.h"
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/split_member.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 #endif
 
 namespace RDKit {

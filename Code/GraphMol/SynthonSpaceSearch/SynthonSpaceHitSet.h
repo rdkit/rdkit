@@ -15,9 +15,9 @@
 #include <string>
 #include <vector>
 
-#include <RDGeneral/export.h>
-#include <GraphMol/ROMol.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/ROMol.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonSet.h"
 
 namespace RDKit::SynthonSpaceSearch {
 // Holds the information about a set of hits.  The molecules can be built

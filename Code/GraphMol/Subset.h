@@ -11,7 +11,7 @@
 #define RD_SUBSET_H
 #include <map>
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #include <boost/dynamic_bitset.hpp>
 
 #include <memory>

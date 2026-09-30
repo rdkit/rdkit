@@ -15,7 +15,7 @@
 
 #include <iosfwd>
 
-#include <GraphMol/MolDraw2D/DrawTextFT.h>
+#include "GraphMol/MolDraw2D/DrawTextFT.h"
 
 namespace RDKit {
 

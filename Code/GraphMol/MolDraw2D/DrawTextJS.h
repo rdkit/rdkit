@@ -20,7 +20,7 @@
 
 #include <emscripten.h>
 #include <emscripten/val.h>
-#include <GraphMol/MolDraw2D/DrawTextNotFT.h>
+#include "GraphMol/MolDraw2D/DrawTextNotFT.h"
 
 namespace RDKit {
 namespace MolDraw2D_detail {

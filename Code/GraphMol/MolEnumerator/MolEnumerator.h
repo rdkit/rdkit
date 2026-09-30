@@ -10,9 +10,9 @@
 #ifndef RDKIT_MOLENUMERATOR_H
 #define RDKIT_MOLENUMERATOR_H
 
-#include <RDGeneral/export.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/MolBundle.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/MolBundle.h"
 
 #include <vector>
 #include <map>

@@ -39,16 +39,16 @@
 /*! \file MorganFingerprints.h
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_MORGANFPS_H__
 #define __RD_MORGANFPS_H__
 
 #include <vector>
 #include <map>
-#include <DataStructs/SparseIntVect.h>
-#include <DataStructs/ExplicitBitVect.h>
+#include "DataStructs/SparseIntVect.h"
+#include "DataStructs/ExplicitBitVect.h"
 #include <cstdint>
-#include <GraphMol/Fingerprints/FingerprintUtil.h>
+#include "GraphMol/Fingerprints/FingerprintUtil.h"
 
 namespace RDKit {
 class ROMol;

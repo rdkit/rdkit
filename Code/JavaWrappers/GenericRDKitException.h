@@ -9,7 +9,7 @@
 
 // A generic exception (to cause a corresponding one to be created in Java)
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #include <exception>
 #include <string>
 

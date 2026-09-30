@@ -6,7 +6,7 @@
 #define _TEMPLENUM_H_
 #include <exception>
 #include <vector>
-#include <GraphMol/RDKitBase.h>
+#include "GraphMol/RDKitBase.h"
 
 namespace TemplateEnum {
 using namespace RDKit;

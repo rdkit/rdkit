@@ -16,10 +16,10 @@
 #ifndef RDKIT_GAUSSIANSHAPE_GUARD
 #define RDKIT_GAUSSIANSHAPE_GUARD
 
-#include <RDGeneral/export.h>
-#include <Geometry/Transform3D.h>
-#include <GraphMol/GaussianShape/ShapeInput.h>
-#include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
+#include "RDGeneral/export.h"
+#include "Geometry/Transform3D.h"
+#include "GraphMol/GaussianShape/ShapeInput.h"
+#include "GraphMol/GaussianShape/ShapeOverlayOptions.h"
 
 namespace RDKit {
 class ROMol;

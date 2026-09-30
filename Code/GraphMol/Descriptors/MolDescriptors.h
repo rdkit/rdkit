@@ -8,16 +8,16 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MOLDESCRIPTORS_H
 #define RD_MOLDESCRIPTORS_H
 
-#include <GraphMol/Descriptors/Crippen.h>
-#include <GraphMol/Descriptors/MolSurf.h>
-#include <GraphMol/Descriptors/Lipinski.h>
-#include <GraphMol/Descriptors/ConnectivityDescriptors.h>
-#include <GraphMol/Descriptors/MQN.h>
-#include <GraphMol/Descriptors/AUTOCORR2D.h>
+#include "GraphMol/Descriptors/Crippen.h"
+#include "GraphMol/Descriptors/MolSurf.h"
+#include "GraphMol/Descriptors/Lipinski.h"
+#include "GraphMol/Descriptors/ConnectivityDescriptors.h"
+#include "GraphMol/Descriptors/MQN.h"
+#include "GraphMol/Descriptors/AUTOCORR2D.h"
 
 namespace RDKit {
 class ROMol;

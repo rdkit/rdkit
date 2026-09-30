@@ -11,11 +11,11 @@
 #ifndef FLIPPERS_H
 #define FLIPPERS_H
 
-#include <RDGeneral/export.h>
-#include <GraphMol/Atom.h>
-#include <GraphMol/Bond.h>
-#include <GraphMol/Chirality.h>
-#include <GraphMol/StereoGroup.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/Atom.h"
+#include "GraphMol/Bond.h"
+#include "GraphMol/Chirality.h"
+#include "GraphMol/StereoGroup.h"
 
 namespace RDKit {
 namespace EnumerateStereoisomers {

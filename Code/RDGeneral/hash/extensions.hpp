@@ -14,7 +14,7 @@
 #pragma once
 #endif
 
-#include <RDGeneral/hash/hash_fwd.hpp>
+#include "RDGeneral/hash/hash_fwd.hpp"
 
 namespace gboost {
 

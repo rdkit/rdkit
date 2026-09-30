@@ -12,16 +12,16 @@
 /*!
     \brief Includes a bunch of functionality for handling Atom and Bond queries.
 */
-#include <RDGeneral/export.h>
-#include <RDGeneral/Dict.h>
+#include "RDGeneral/export.h"
+#include "RDGeneral/Dict.h"
 #ifndef RD_QUERY_OPS_H
 #define RD_QUERY_OPS_H
 
-#include <GraphMol/RDKitBase.h>
-#include <Query/QueryObjects.h>
-#include <Query/Query.h>
-#include <DataStructs/BitVects.h>
-#include <DataStructs/BitOps.h>
+#include "GraphMol/RDKitBase.h"
+#include "Query/QueryObjects.h"
+#include "Query/Query.h"
+#include "DataStructs/BitVects.h"
+#include "DataStructs/BitOps.h"
 #include <functional>
 
 #include <limits>

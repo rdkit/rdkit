@@ -29,7 +29,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef ENUMERATION_STRATEGY_H
 #define ENUMERATION_STRATEGY_H
 
@@ -37,7 +37,7 @@
 #include "../Reaction.h"
 #include <utility>
 #include <vector>
-#include <RDGeneral/BoostStartInclude.h>
+#include "RDGeneral/BoostStartInclude.h"
 #include <cstdint>
 #ifdef RDK_USE_BOOST_SERIALIZATION
 #include <boost/serialization/assume_abstract.hpp>
@@ -47,9 +47,9 @@
 #include <boost/serialization/extended_type_info.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #endif
-#include <RDGeneral/BoostEndInclude.h>
+#include "RDGeneral/BoostEndInclude.h"
 
-#include <GraphMol/RDKitBase.h>
+#include "GraphMol/RDKitBase.h"
 
 namespace RDKit {
 

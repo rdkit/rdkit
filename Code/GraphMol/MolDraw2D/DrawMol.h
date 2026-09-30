@@ -20,11 +20,11 @@
 #include <string>
 #include <vector>
 
-#include <Geometry/point.h>
-#include <GraphMol/MolDraw2D/AtomSymbol.h>
-#include <GraphMol/MolDraw2D/DrawAnnotation.h>
-#include <GraphMol/MolDraw2D/DrawShape.h>
-#include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
+#include "Geometry/point.h"
+#include "GraphMol/MolDraw2D/AtomSymbol.h"
+#include "GraphMol/MolDraw2D/DrawAnnotation.h"
+#include "GraphMol/MolDraw2D/DrawShape.h"
+#include "GraphMol/MolDraw2D/MolDraw2DHelpers.h"
 
 namespace RDKit {
 

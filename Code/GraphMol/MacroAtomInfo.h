@@ -15,7 +15,7 @@
 #ifndef RD_MACROATOMINFO_H
 #define RD_MACROATOMINFO_H
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 
 #include <memory>
 #include <string>

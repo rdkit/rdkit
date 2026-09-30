@@ -8,11 +8,11 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RDTHREADS_H_2015
 #define RDTHREADS_H_2015
 
-#include <RDGeneral/Invariant.h>
+#include "RDGeneral/Invariant.h"
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <thread>

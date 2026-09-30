@@ -14,13 +14,13 @@
    DisallowedAtomsValidation.
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_VALIDATE_H
 #define RD_VALIDATE_H
 
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/ROMol.h>
-#include <GraphMol/Atom.h>
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/ROMol.h"
+#include "GraphMol/Atom.h"
 #include <exception>
 #include <string>
 #include <utility>

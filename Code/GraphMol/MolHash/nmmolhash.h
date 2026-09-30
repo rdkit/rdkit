@@ -12,7 +12,7 @@
 // This file will disappear in a future release; please don't include it
 // directly. Use MolHash.h instead.
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef NMS_MOLHASH_H
 #define NMS_MOLHASH_H
 

@@ -12,7 +12,7 @@
   \brief Defines bond-level macro bond information
 
 */
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef RD_MACROBONDINFO_H
 #define RD_MACROBONDINFO_H
 

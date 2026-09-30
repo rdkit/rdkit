@@ -7,16 +7,16 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #ifndef __RD_SPARSE_INT_VECT_20070921__
 #define __RD_SPARSE_INT_VECT_20070921__
 
 #include <map>
 #include <string>
-#include <RDGeneral/Invariant.h>
+#include "RDGeneral/Invariant.h"
 #include <sstream>
-#include <RDGeneral/Exceptions.h>
-#include <RDGeneral/StreamOps.h>
+#include "RDGeneral/Exceptions.h"
+#include "RDGeneral/StreamOps.h"
 #include <cstdint>
 #include <limits>
 
