@@ -50,9 +50,7 @@ void testGitHubIssue485() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
+int main() {
   testGitHubIssue485();
   return 0;
 }
