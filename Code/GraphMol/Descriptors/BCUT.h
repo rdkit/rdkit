@@ -59,6 +59,18 @@ std::pair<double, double> BCUT2D(const ROMol &mol,
 */
 RDKIT_DESCRIPTORS_EXPORT
 std::vector<double> BCUT2D(const ROMol &m);
+
+RDKIT_DESCRIPTORS_EXPORT
+std::pair<double, double> BCUT2D_MW(const ROMol &m);
+
+RDKIT_DESCRIPTORS_EXPORT
+std::pair<double, double> BCUT2D_CHG(const ROMol &m);
+
+RDKIT_DESCRIPTORS_EXPORT
+std::pair<double, double> BCUT2D_LOGP(const ROMol &m);
+
+RDKIT_DESCRIPTORS_EXPORT
+std::pair<double, double> BCUT2D_MR(const ROMol &m);
 }  // namespace Descriptors
 }  // namespace RDKit
 
