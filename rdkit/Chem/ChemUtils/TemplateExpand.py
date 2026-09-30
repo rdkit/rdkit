@@ -11,11 +11,11 @@ logger.setLevel(logging.INFO)
 import sys
 
 from rdkit import Chem
-from rdkit.Chem import AllChem, Crippen
+from rdkit.Chem import AllChem
 from rdkit.Chem.ChemUtils.AlignDepict import AlignDepict
 
 _version = "0.8.0"
-_greet = "This is TemplateExpand version %s" % _version
+_greet = f"This is TemplateExpand version {_version}"
 
 _usage = """
 Usage: TemplateExpand [options] template <sidechains>
@@ -43,7 +43,7 @@ Usage: TemplateExpand [options] template <sidechains>
                          will not be generated unless the --redraw argument is also
                          provided
 
-   --smilesFileTemplate: extract the template(s) from a SMILES file instead of 
+   --smilesFileTemplate: extract the template(s) from a SMILES file instead of
                          expecting SMILES on the command line.
 
    --redraw:             generate a new depiction for the molecular template(s)
@@ -54,16 +54,16 @@ Usage: TemplateExpand [options] template <sidechains>
                          pattern to each sidechain. If this is not provided, the first
                          match (not canonically defined) will be used.
 
-   --force:              by default, the program prompts the user if the library is 
-                         going to contain more than 1000 compounds. This argument 
+   --force:              by default, the program prompts the user if the library is
+                         going to contain more than 1000 compounds. This argument
                          disables the prompt.
-   
-   --templateSmarts="smarts":  provides a space-delimited list containing the SMARTS 
+
+   --templateSmarts="smarts":  provides a space-delimited list containing the SMARTS
                                patterns to be used to recognize attachment points in
                                the template
-             
+
    --autoNames:          when set this toggle causes the resulting compounds to be named
-                         based on there sequence id in the file, e.g. 
+                         based on there sequence id in the file, e.g.
                          "TemplateEnum: Mol_1", "TemplateEnum: Mol_2", etc.
                          otherwise the names of the template and building blocks (from
                          the input files) will be combined to form a name for each
@@ -413,8 +413,8 @@ if __name__ == '__main__':
         logger.error('could not construct supplier from SD file: %s' % dat, exc_info=True)
         suppl = []
     else:
-      tmpF = file(dat, 'r')
-      inL = tmpF.readline()
+      with open(dat, 'r') as tmpF:
+        inL = tmpF.readline()
       if len(inL.split(' ')) < 2:
         nmCol = -1
       else:
@@ -446,7 +446,7 @@ if __name__ == '__main__':
 
   if outF and outF != "-":
     try:
-      outF = file(outF, 'w+')
+      outF = open(outF, 'w+')
     except IOError:
       logger.error('could not open file %s for writing' % (outF), exc_info=True)
   else:

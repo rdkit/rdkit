@@ -1178,11 +1178,6 @@ def GetAllPharmacophoreMatches(matches, bounds, pcophore, useDownsampling=0, pro
       if verbose:
         print('  ..CoarseScreen: Pass')
 
-      if verbose:
-        print('pre update:')
-        for row in bm:
-          print(' ', ' '.join(['% 4.2f' % x for x in row]))
-
       bm = UpdatePharmacophoreBounds(bounds.copy(), atomMatch, pcophore)
       if verbose:
         print('pre downsample:')
