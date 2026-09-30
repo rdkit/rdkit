@@ -10,6 +10,8 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryOps.h>
 #include <Query/NullQueryAlgebra.h>
+#include <boost/algorithm/string/predicate.hpp>
+#include <limits>
 
 namespace RDKit {
 
@@ -72,6 +74,37 @@ bool localMatch(ATOM_EQUALS_QUERY const *q1, ATOM_EQUALS_QUERY const *q2) {
     return q1->getVal() != q2->getVal();
   }
 }
+
+// Extract interval [lo, hi] from an atom query. Returns false if the query
+// type doesn't support interval extraction.
+bool getAtomInterval(const QueryAtom::QUERYATOM_QUERY *q, int &lo, int &hi) {
+  auto *r = dynamic_cast<const ATOM_RANGE_QUERY *>(q);
+  if (r) {
+    lo = r->getLower();
+    hi = r->getUpper();
+    return true;
+  }
+  auto *le = dynamic_cast<const ATOM_LESSEQUAL_QUERY *>(q);
+  if (le) {
+    lo = std::numeric_limits<int>::min();
+    hi = le->getVal();
+    return true;
+  }
+  auto *ge = dynamic_cast<const ATOM_GREATEREQUAL_QUERY *>(q);
+  if (ge) {
+    lo = ge->getVal();
+    hi = std::numeric_limits<int>::max();
+    return true;
+  }
+  auto *e = dynamic_cast<const ATOM_EQUALS_QUERY *>(q);
+  if (e) {
+    lo = e->getVal();
+    hi = e->getVal();
+    return true;
+  }
+  return false;
+}
+
 bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
                   QueryAtom::QUERYATOM_QUERY const *q2) {
   PRECONDITION(q1, "no q1");
@@ -165,13 +198,27 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
         break;
       }
     }
-  } else if (d1 == d2) {
-    if (std::find(&equalityQueries[0], &equalityQueries[nQueries], d1) !=
-        &equalityQueries[nQueries]) {
-      res = localMatch(static_cast<ATOM_EQUALS_QUERY const *>(q1),
-                       static_cast<ATOM_EQUALS_QUERY const *>(q2));
-    }
   } else {
+    // Strip prefix to get base description
+    auto stripPrefix = [](const std::string &s) -> std::string {
+      if (boost::starts_with(s, "range_")) return s.substr(6);
+      if (boost::starts_with(s, "less_")) return s.substr(5);
+      if (boost::starts_with(s, "greater_")) return s.substr(8);
+      return s;
+    };
+    std::string bd1 = stripPrefix(d1);
+    std::string bd2 = stripPrefix(d2);
+    if (bd1 == bd2 && std::find(&equalityQueries[0], &equalityQueries[nQueries],
+                                bd1) != &equalityQueries[nQueries]) {
+      int lo1 = 0, hi1 = 0, lo2 = 0, hi2 = 0;
+      if (getAtomInterval(q1, lo1, hi1) && getAtomInterval(q2, lo2, hi2)) {
+        if (q1->getNegation() == q2->getNegation()) {
+          res = (lo2 <= lo1 && hi1 <= hi2);
+        } else {
+          res = (hi1 < lo2 || lo1 > hi2);
+        }
+      }
+    }
   }
   return res;
 }

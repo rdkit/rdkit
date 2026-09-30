@@ -313,7 +313,25 @@ TEST_CASE("@{n} SMARTS bond ring count") {
     auto qEq4 = "*@{4}*"_smarts;
     REQUIRE(qEq4);
     auto qbEq4 = static_cast<QueryBond *>(qEq4->getBondWithIdx(0));
-    CHECK(!qbEq4->QueryMatch(qbRange)); // pattern @{4} ⊄ target @{1-3} -> no match
+    CHECK(!qbEq4->QueryMatch(qbRange)); // pattern @{4} ⊄ target @{1-3}
+
+    // Negation: @{2} vs !@{1-3} -> intervals overlap, negations differ -> no match
+    auto qNegRange = "*!@{1-3}*"_smarts;
+    REQUIRE(qNegRange);
+    auto qbNegRange = static_cast<QueryBond *>(qNegRange->getBondWithIdx(0));
+    CHECK(!qbEq->QueryMatch(qbNegRange)); // @{2} overlaps !@{1-3} -> no match
+
+    // Negation: @{4} vs !@{1-3} -> intervals disjoint, negations differ -> match
+    CHECK(qbEq4->QueryMatch(qbNegRange)); // @{4} disjoint from !@{1-3} -> match
+
+    // Negation: !@{1-3} vs !@{1-2} -> same negation, target ⊆ pattern -> no match
+    auto qNegRange2 = "*!@{1-2}*"_smarts;
+    REQUIRE(qNegRange2);
+    auto qbNegRange2 = static_cast<QueryBond *>(qNegRange2->getBondWithIdx(0));
+    CHECK(!qbNegRange->QueryMatch(qbNegRange2)); // !@{1-3} ⊄ !@{1-2}
+
+    // Negation: !@{1-2} vs !@{1-3} -> same negation, pattern ⊆ target -> match
+    CHECK(qbNegRange2->QueryMatch(qbNegRange)); // !@{1-2} ⊆ !@{1-3}
 
     // Substruct match with query-query matching
     {
@@ -321,6 +339,70 @@ TEST_CASE("@{n} SMARTS bond ring count") {
       CHECK(matches.size() == 1); // pattern @{2} ⊆ target @{1-3}
       matches = SubstructMatch(*qEq, *qRange, params);
       CHECK(matches.empty()); // pattern @{1-3} ⊄ target @{2}
+    }
+  }
+
+  SECTION("atom range query-query matching") {
+    SubstructMatchParameters params;
+    params.useQueryQueryMatches = true;
+
+    // Same range matches itself
+    auto q1 = "[R{1-2}]"_smarts;
+    REQUIRE(q1);
+    auto q2 = "[R{1-2}]"_smarts;
+    REQUIRE(q2);
+    auto qa1 = static_cast<QueryAtom *>(q1->getAtomWithIdx(0));
+    auto qa2 = static_cast<QueryAtom *>(q2->getAtomWithIdx(0));
+    CHECK(qa1->QueryMatch(qa2));
+
+    // Disjoint ranges do not match
+    auto q3 = "[R{3-4}]"_smarts;
+    REQUIRE(q3);
+    auto qa3 = static_cast<QueryAtom *>(q3->getAtomWithIdx(0));
+    CHECK(!qa1->QueryMatch(qa3));
+
+    // Equality R2 is subset of range R{1-3}
+    auto qEq = "[R2]"_smarts;
+    REQUIRE(qEq);
+    auto qRange = "[R{1-3}]"_smarts;
+    REQUIRE(qRange);
+    auto qaEq = static_cast<QueryAtom *>(qEq->getAtomWithIdx(0));
+    auto qaRange = static_cast<QueryAtom *>(qRange->getAtomWithIdx(0));
+    CHECK(qaEq->QueryMatch(qaRange)); // pattern R2 ⊆ target R{1-3}
+    CHECK(!qaRange->QueryMatch(qaEq)); // pattern R{1-3} ⊄ target R2
+
+    // Ring size ranges
+    auto q8 = "[r{5-6}]"_smarts;
+    REQUIRE(q8);
+    auto q9 = "[r{5-6}]"_smarts;
+    REQUIRE(q9);
+    auto qa8 = static_cast<QueryAtom *>(q8->getAtomWithIdx(0));
+    auto qa9 = static_cast<QueryAtom *>(q9->getAtomWithIdx(0));
+    CHECK(qa8->QueryMatch(qa9));
+
+    auto q10 = "[r{4-5}]"_smarts;
+    REQUIRE(q10);
+    auto qa10 = static_cast<QueryAtom *>(q10->getAtomWithIdx(0));
+    CHECK(!qa8->QueryMatch(qa10)); // r{5-6} ⊄ r{4-5}
+
+    // Negation: R2 vs !R{1-3} -> intervals overlap, negations differ -> no match
+    auto qNegRange = "[!R{1-3}]"_smarts;
+    REQUIRE(qNegRange);
+    auto qaNegRange = static_cast<QueryAtom *>(qNegRange->getAtomWithIdx(0));
+    CHECK(!qaEq->QueryMatch(qaNegRange)); // R2 overlaps !R{1-3} -> no match
+
+    // Negation: R4 vs !R{1-3} -> intervals disjoint, negations differ -> match
+    auto qEq4 = "[R4]"_smarts;
+    REQUIRE(qEq4);
+    auto qaEq4 = static_cast<QueryAtom *>(qEq4->getAtomWithIdx(0));
+    CHECK(qaEq4->QueryMatch(qaNegRange)); // R4 disjoint from !R{1-3} -> match
+
+    // Substruct match with query-query matching
+    {
+      auto matches = SubstructMatch(*qRange, *qEq, params);
+      CHECK(matches.size() == 1);
+      matches = SubstructMatch(*qEq, *qRange, params);
+      CHECK(matches.empty());
     }
   }
 }

@@ -10,6 +10,7 @@
 #include <GraphMol/QueryBond.h>
 #include <Query/NullQueryAlgebra.h>
 #include <boost/algorithm/string/predicate.hpp>
+#include <limits>
 
 namespace RDKit {
 
@@ -114,6 +115,47 @@ bool localMatch(BOND_EQUALS_QUERY const *q1, BOND_EQUALS_QUERY const *q2) {
   }
 }
 
+// Extract interval [lo, hi] from a bond query. Returns false if the query
+// type doesn't support interval extraction. Uses INT_MIN/INT_MAX for open
+// ends.
+bool getBondInterval(const QueryBond::QUERYBOND_QUERY *q, int &lo, int &hi) {
+  auto *r = dynamic_cast<const BOND_RANGE_QUERY *>(q);
+  if (r) {
+    lo = r->getLower();
+    hi = r->getUpper();
+    return true;
+  }
+  auto *le = dynamic_cast<const BOND_LESSEQUAL_QUERY *>(q);
+  if (le) {
+    lo = std::numeric_limits<int>::min();
+    hi = le->getVal();
+    return true;
+  }
+  auto *ge = dynamic_cast<const BOND_GREATEREQUAL_QUERY *>(q);
+  if (ge) {
+    lo = ge->getVal();
+    hi = std::numeric_limits<int>::max();
+    return true;
+  }
+  auto *e = dynamic_cast<const BOND_EQUALS_QUERY *>(q);
+  if (e) {
+    lo = e->getVal();
+    hi = e->getVal();
+    return true;
+  }
+  return false;
+}
+
+// Check if interval [aLo, aHi] is a subset of [bLo, bHi]
+bool intervalSubset(int aLo, int aHi, int bLo, int bHi) {
+  return bLo <= aLo && aHi <= bHi;
+}
+
+// Check if intervals [aLo, aHi] and [bLo, bHi] are disjoint
+bool intervalDisjoint(int aLo, int aHi, int bLo, int bHi) {
+  return aHi < bLo || aLo > bHi;
+}
+
 bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
                   QueryBond::QUERYBOND_QUERY const *q2) {
   PRECONDITION(q1, "no q1");
@@ -203,28 +245,15 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
     if (bd1 == bd2 &&
         std::find(&equalityQueries[0], &equalityQueries[nQueries], bd1) !=
             &equalityQueries[nQueries]) {
-      auto *r1 = dynamic_cast<const BOND_RANGE_QUERY *>(q1);
-      auto *r2 = dynamic_cast<const BOND_RANGE_QUERY *>(q2);
-      auto *e1 = dynamic_cast<const BOND_EQUALS_QUERY *>(q1);
-      auto *e2 = dynamic_cast<const BOND_EQUALS_QUERY *>(q2);
-      // Both range: q1 (pattern) subset of q2 (target)
-      if (r1 && r2) {
-        res = (r2->getLower() <= r1->getLower() &&
-               r1->getUpper() <= r2->getUpper());
-      }
-      // q1 (equality) subset of q2 (range)
-      if (r2 && e1 && !r1) {
-        res = (r2->getLower() <= e1->getVal() &&
-               e1->getVal() <= r2->getUpper());
-      }
-      // q1 (range) subset of q2 (equality): only if both bounds == the value
-      if (r1 && e2 && !r2) {
-        res = (r1->getLower() == e2->getVal() &&
-               r1->getUpper() == e2->getVal());
-      }
-      // Both equality
-      if (e1 && e2 && !r1 && !r2) {
-        res = localMatch(e1, e2);
+      int lo1 = 0, hi1 = 0, lo2 = 0, hi2 = 0;
+      if (getBondInterval(q1, lo1, hi1) && getBondInterval(q2, lo2, hi2)) {
+        if (q1->getNegation() == q2->getNegation()) {
+          // Same negation: pattern interval must be subset of target interval
+          res = intervalSubset(lo1, hi1, lo2, hi2);
+        } else {
+          // Different negation: intervals must be disjoint
+          res = intervalDisjoint(lo1, hi1, lo2, hi2);
+        }
       }
     }
   }
