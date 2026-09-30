@@ -116,8 +116,8 @@ bool localMatch(BOND_EQUALS_QUERY const *q1, BOND_EQUALS_QUERY const *q2) {
 }
 
 // Extract interval [lo, hi] from a bond query. Returns false if the query
-// type doesn't support interval extraction. Uses INT_MIN/INT_MAX for open
-// ends.
+// type doesn't support interval extraction. GreaterEqualQuery(N) means
+// N >= bond → [MIN,N]. LessEqualQuery(N) means N <= bond → [N,MAX].
 bool getBondInterval(const QueryBond::QUERYBOND_QUERY *q, int &lo, int &hi) {
   auto *r = dynamic_cast<const BOND_RANGE_QUERY *>(q);
   if (r) {
@@ -127,14 +127,14 @@ bool getBondInterval(const QueryBond::QUERYBOND_QUERY *q, int &lo, int &hi) {
   }
   auto *le = dynamic_cast<const BOND_LESSEQUAL_QUERY *>(q);
   if (le) {
-    lo = std::numeric_limits<int>::min();
-    hi = le->getVal();
+    lo = le->getVal();
+    hi = std::numeric_limits<int>::max();
     return true;
   }
   auto *ge = dynamic_cast<const BOND_GREATEREQUAL_QUERY *>(q);
   if (ge) {
-    lo = ge->getVal();
-    hi = std::numeric_limits<int>::max();
+    lo = std::numeric_limits<int>::min();
+    hi = ge->getVal();
     return true;
   }
   auto *e = dynamic_cast<const BOND_EQUALS_QUERY *>(q);
@@ -144,16 +144,6 @@ bool getBondInterval(const QueryBond::QUERYBOND_QUERY *q, int &lo, int &hi) {
     return true;
   }
   return false;
-}
-
-// Check if interval [aLo, aHi] is a subset of [bLo, bHi]
-bool intervalSubset(int aLo, int aHi, int bLo, int bHi) {
-  return bLo <= aLo && aHi <= bHi;
-}
-
-// Check if intervals [aLo, aHi] and [bLo, bHi] are disjoint
-bool intervalDisjoint(int aLo, int aHi, int bLo, int bHi) {
-  return aHi < bLo || aLo > bHi;
 }
 
 bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
@@ -242,17 +232,40 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
     };
     std::string bd1 = stripPrefix(d1);
     std::string bd2 = stripPrefix(d2);
-    if (bd1 == bd2 &&
-        std::find(&equalityQueries[0], &equalityQueries[nQueries], bd1) !=
-            &equalityQueries[nQueries]) {
+    if (bd1 == bd2 && std::find(&equalityQueries[0], &equalityQueries[nQueries],
+                                bd1) != &equalityQueries[nQueries]) {
       int lo1 = 0, hi1 = 0, lo2 = 0, hi2 = 0;
       if (getBondInterval(q1, lo1, hi1) && getBondInterval(q2, lo2, hi2)) {
         if (q1->getNegation() == q2->getNegation()) {
-          // Same negation: pattern interval must be subset of target interval
-          res = intervalSubset(lo1, hi1, lo2, hi2);
+          if (!q1->getNegation()) {
+            // Both positive: pattern interval must be subset of target interval
+            res = lo2 <= lo1 && hi1 <= hi2;
+          } else {
+            // Both negated: accepted sets are complements; pattern accepted
+            // set ⊆ target accepted set iff target excluded range ⊆ pattern
+            // excluded range
+            res = lo1 <= lo2 && hi2 <= hi1;
+          }
         } else {
-          // Different negation: intervals must be disjoint
-          res = intervalDisjoint(lo1, hi1, lo2, hi2);
+          if (q1->getNegation()) {
+            // Pattern negated, target positive: complement of pattern's
+            // excluded range must fit inside target. Complement has up to
+            // two pieces: [MIN, lo1-1] and [hi1+1, MAX].
+            {
+              bool resLeft = true, resRight = true;
+              if (lo1 > std::numeric_limits<int>::min()) {
+                resLeft = lo2 <= std::numeric_limits<int>::min() && lo1 - 1 <= hi2;
+              }
+              if (hi1 < std::numeric_limits<int>::max()) {
+                resRight = lo2 <= hi1 + 1 && std::numeric_limits<int>::max() <= hi2;
+              }
+              res = resLeft && resRight;
+            }
+          } else {
+            // Pattern positive, target negated: pattern interval must lie
+            // entirely outside target's excluded range
+            res = hi1 < lo2 || lo1 > hi2;
+          }
         }
       }
     }

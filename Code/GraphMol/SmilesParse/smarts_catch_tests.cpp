@@ -324,14 +324,79 @@ TEST_CASE("@{n} SMARTS bond ring count") {
     // Negation: @{4} vs !@{1-3} -> intervals disjoint, negations differ -> match
     CHECK(qbEq4->QueryMatch(qbNegRange)); // @{4} disjoint from !@{1-3} -> match
 
-    // Negation: !@{1-3} vs !@{1-2} -> same negation, target ⊆ pattern -> no match
+    // Negation: !@{1-3} vs !@{1-2} -> both negated, target excluded [1,2] ⊆
+    // pattern excluded [1,3] -> match
     auto qNegRange2 = "*!@{1-2}*"_smarts;
     REQUIRE(qNegRange2);
     auto qbNegRange2 = static_cast<QueryBond *>(qNegRange2->getBondWithIdx(0));
-    CHECK(!qbNegRange->QueryMatch(qbNegRange2)); // !@{1-3} ⊄ !@{1-2}
+    CHECK(qbNegRange->QueryMatch(qbNegRange2)); // !@{1-3} ⊆ !@{1-2}
 
-    // Negation: !@{1-2} vs !@{1-3} -> same negation, pattern ⊆ target -> match
-    CHECK(qbNegRange2->QueryMatch(qbNegRange)); // !@{1-2} ⊆ !@{1-3}
+    // Negation: !@{1-2} vs !@{1-3} -> both negated, target excluded [1,3] ⊄
+    // pattern excluded [1,2] -> no match
+    CHECK(!qbNegRange2->QueryMatch(qbNegRange)); // !@{1-2} ⊄ !@{1-3}
+
+    // --- Open-ended ranges ---
+    // @{-N} is LessEqualQuery(N) with interval [INT_MIN, N]
+    // @{N-} is GreaterEqualQuery(N) with interval [N, INT_MAX]
+
+    // Case 1: both positive, LessEqualQuery (@{-N})
+    auto qLE3 = "*@{-3}*"_smarts; // LessEqualQuery(3) → [MIN, 3]
+    REQUIRE(qLE3);
+    auto qLE5 = "*@{-5}*"_smarts; // LessEqualQuery(5) → [MIN, 5]
+    REQUIRE(qLE5);
+    auto qbLE3 = static_cast<QueryBond *>(qLE3->getBondWithIdx(0));
+    auto qbLE5 = static_cast<QueryBond *>(qLE5->getBondWithIdx(0));
+    auto qEq3 = "*@{3}*"_smarts;
+    REQUIRE(qEq3);
+    auto qbEq3 = static_cast<QueryBond *>(qEq3->getBondWithIdx(0));
+    CHECK(qbEq3->QueryMatch(qbLE3)); // @{3} ⊆ @{-3} [3,3] ⊆ [MIN,3]
+    CHECK(qbLE3->QueryMatch(qbLE5)); // @{-3} ⊆ @{-5} [MIN,3] ⊆ [MIN,5]
+    CHECK(!qbLE5->QueryMatch(qbLE3)); // @{-5} ⊄ @{-3} [MIN,5] ⊄ [MIN,3]
+
+    // Case 1: both positive, GreaterEqualQuery (@{N-})
+    auto qGE2 = "*@{2-}*"_smarts; // GreaterEqualQuery(2) → [2, MAX]
+    REQUIRE(qGE2);
+    auto qGE3 = "*@{3-}*"_smarts; // GreaterEqualQuery(3) → [3, MAX]
+    REQUIRE(qGE3);
+    auto qbGE2 = static_cast<QueryBond *>(qGE2->getBondWithIdx(0));
+    auto qbGE3 = static_cast<QueryBond *>(qGE3->getBondWithIdx(0));
+    CHECK(qbGE3->QueryMatch(qbGE2)); // @{3-} ⊆ @{2-} [3,MAX] ⊆ [2,MAX]
+    CHECK(!qbGE2->QueryMatch(qbGE3)); // @{2-} ⊄ @{3-} [2,MAX] ⊄ [3,MAX]
+
+    // Case 1: cross-type LessEqual vs GreaterEqual
+    CHECK(!qbLE3->QueryMatch(qbGE2)); // @{-3} ⊄ @{2-} [MIN,3] ⊄ [2,MAX]
+    CHECK(!qbGE2->QueryMatch(qbLE3)); // @{2-} ⊄ @{-3} [2,MAX] ⊄ [MIN,3]
+
+    // Case 2: both negated, open-ended
+    auto qNegLE3 = "*!@{-3}*"_smarts; // !LessEqualQuery(3), excludes [MIN,3]
+    REQUIRE(qNegLE3);
+    auto qNegLE5 = "*!@{-5}*"_smarts; // !LessEqualQuery(5), excludes [MIN,5]
+    REQUIRE(qNegLE5);
+    auto qbNegLE3 = static_cast<QueryBond *>(qNegLE3->getBondWithIdx(0));
+    auto qbNegLE5 = static_cast<QueryBond *>(qNegLE5->getBondWithIdx(0));
+    CHECK(!qbNegLE3->QueryMatch(qbNegLE5)); // !@{-3} ⊄ !@{-5} target excl [MIN,5] ⊄ pattern excl [MIN,3]
+    CHECK(qbNegLE5->QueryMatch(qbNegLE3)); // !@{-5} ⊆ !@{-3} target excl [MIN,3] ⊆ pattern excl [MIN,5]
+
+    // Case 3: pattern negated, target positive (complement must fit)
+    CHECK(qbNegLE3->QueryMatch(qbGE2)); // !@{-3} ⊆ @{2-} complement [4,MAX] ⊆ [2,MAX]
+    CHECK(!qbNegLE3->QueryMatch(qbLE5)); // !@{-3} ⊄ @{-5} complement [4,MAX] ⊄ [MIN,5]
+    auto qNegGE2 = "*!@{2-}*"_smarts; // !GreaterEqualQuery(2), excludes [2,MAX]
+    REQUIRE(qNegGE2);
+    auto qbNegGE2 = static_cast<QueryBond *>(qNegGE2->getBondWithIdx(0));
+    CHECK(qbNegGE2->QueryMatch(qbLE3)); // !@{2-} ⊆ @{-3} complement [MIN,1] ⊆ [MIN,3]
+    auto qLE4 = "*@{-4}*"_smarts; // LessEqualQuery(4) → [MIN, 4]
+    REQUIRE(qLE4);
+    auto qbLE4 = static_cast<QueryBond *>(qLE4->getBondWithIdx(0));
+    CHECK(qbNegGE2->QueryMatch(qbLE4)); // !@{2-} ⊆ @{-4} complement [MIN,1] ⊆ [MIN,4]
+
+    // Case 4: pattern positive, target negated (disjoint)
+    CHECK(!qbGE2->QueryMatch(qbNegLE5)); // @{2-} NOT disjoint from !@{-5} [2,MAX] overlaps [MIN,5]
+    CHECK(!qbLE3->QueryMatch(qbNegGE2)); // @{-3} NOT disjoint from !@{2-} [MIN,3] overlaps [2,MAX]
+    auto qNegGE1 = "*!@{1-}*"_smarts; // !GreaterEqualQuery(1), excludes [1,MAX]
+    REQUIRE(qNegGE1);
+    auto qbNegGE1 = static_cast<QueryBond *>(qNegGE1->getBondWithIdx(0));
+    CHECK(!qbGE2->QueryMatch(qbNegGE1)); // @{2-} NOT disjoint from !@{1-} [2,MAX] overlaps [1,MAX]
+    CHECK(!qbLE3->QueryMatch(qbNegLE5)); // @{-3} NOT disjoint from !@{-5} [MIN,3] overlaps [MIN,5]
 
     // Substruct match with query-query matching
     {
@@ -396,6 +461,85 @@ TEST_CASE("@{n} SMARTS bond ring count") {
     REQUIRE(qEq4);
     auto qaEq4 = static_cast<QueryAtom *>(qEq4->getAtomWithIdx(0));
     CHECK(qaEq4->QueryMatch(qaNegRange)); // R4 disjoint from !R{1-3} -> match
+
+    // --- Open-ended ranges ---
+    // R{-N} is LessEqualQuery(N) with interval [INT_MIN, N]
+    // R{N-} is GreaterEqualQuery(N) with interval [N, INT_MAX]
+
+    // Case 1: both positive, LessEqualQuery (R{-N})
+    auto qLE3 = "[R{-3}]"_smarts; // LessEqualQuery(3) → [MIN, 3]
+    REQUIRE(qLE3);
+    auto qLE5 = "[R{-5}]"_smarts; // LessEqualQuery(5) → [MIN, 5]
+    REQUIRE(qLE5);
+    auto qaLE3 = static_cast<QueryAtom *>(qLE3->getAtomWithIdx(0));
+    auto qaLE5 = static_cast<QueryAtom *>(qLE5->getAtomWithIdx(0));
+    CHECK(qaLE3->QueryMatch(qaLE5)); // R{-3} ⊆ R{-5} [MIN,3] ⊆ [MIN,5]
+    CHECK(!qaLE5->QueryMatch(qaLE3)); // R{-5} ⊄ R{-3} [MIN,5] ⊄ [MIN,3]
+
+    // Case 1: both positive, GreaterEqualQuery (R{N-})
+    auto qGE2 = "[R{2-}]"_smarts; // GreaterEqualQuery(2) → [2, MAX]
+    REQUIRE(qGE2);
+    auto qGE3 = "[R{3-}]"_smarts; // GreaterEqualQuery(3) → [3, MAX]
+    REQUIRE(qGE3);
+    auto qaGE2 = static_cast<QueryAtom *>(qGE2->getAtomWithIdx(0));
+    auto qaGE3 = static_cast<QueryAtom *>(qGE3->getAtomWithIdx(0));
+    CHECK(qaGE3->QueryMatch(qaGE2)); // R{3-} ⊆ R{2-} [3,MAX] ⊆ [2,MAX]
+    CHECK(!qaGE2->QueryMatch(qaGE3)); // R{2-} ⊄ R{3-} [2,MAX] ⊄ [3,MAX]
+
+    // Case 1: cross-type LessEqual vs GreaterEqual
+    CHECK(!qaLE3->QueryMatch(qaGE2)); // R{-3} ⊄ R{2-} [MIN,3] ⊄ [2,MAX]
+    CHECK(!qaGE2->QueryMatch(qaLE3)); // R{2-} ⊄ R{-3} [2,MAX] ⊄ [MIN,3]
+
+    // Case 2: both negated
+    auto qNegR13 = "[!R{1-3}]"_smarts;
+    REQUIRE(qNegR13);
+    auto qNegR12 = "[!R{1-2}]"_smarts;
+    REQUIRE(qNegR12);
+    auto qaNegR13 = static_cast<QueryAtom *>(qNegR13->getAtomWithIdx(0));
+    auto qaNegR12 = static_cast<QueryAtom *>(qNegR12->getAtomWithIdx(0));
+    CHECK(qaNegR13->QueryMatch(qaNegR12)); // !R{1-3} ⊆ !R{1-2}
+    CHECK(!qaNegR12->QueryMatch(qaNegR13)); // !R{1-2} ⊄ !R{1-3}
+
+    // Case 2: both negated, open-ended
+    auto qNegLE3 = "[!R{-3}]"_smarts; // !LessEqualQuery(3), excludes [MIN,3]
+    REQUIRE(qNegLE3);
+    auto qNegLE5 = "[!R{-5}]"_smarts; // !LessEqualQuery(5), excludes [MIN,5]
+    REQUIRE(qNegLE5);
+    auto qaNegLE3 = static_cast<QueryAtom *>(qNegLE3->getAtomWithIdx(0));
+    auto qaNegLE5 = static_cast<QueryAtom *>(qNegLE5->getAtomWithIdx(0));
+    CHECK(!qaNegLE3->QueryMatch(qaNegLE5)); // !R{-3} ⊄ !R{-5} target excl [MIN,5] ⊄ pattern excl [MIN,3]
+    CHECK(qaNegLE5->QueryMatch(qaNegLE3)); // !R{-5} ⊆ !R{-3} target excl [MIN,3] ⊆ pattern excl [MIN,5]
+
+    // Case 3: pattern negated, target positive (complement must fit)
+    auto qNegR1 = "[!R1]"_smarts;
+    REQUIRE(qNegR1);
+    auto qaNegR1 = static_cast<QueryAtom *>(qNegR1->getAtomWithIdx(0));
+    CHECK(!qaNegR1->QueryMatch(qa3)); // !R1 ⊄ R{3-4} two pieces can't fit
+    CHECK(qaNegLE3->QueryMatch(qaGE2)); // !R{-3} ⊆ R{2-} complement [4,MAX] ⊆ [2,MAX]
+    CHECK(!qaNegLE3->QueryMatch(qaLE5)); // !R{-3} ⊄ R{-5} complement [4,MAX] ⊄ [MIN,5]
+    auto qNegGE2 = "[!R{2-}]"_smarts; // !GreaterEqualQuery(2), excludes [2,MAX]
+    REQUIRE(qNegGE2);
+    auto qaNegGE2 = static_cast<QueryAtom *>(qNegGE2->getAtomWithIdx(0));
+    CHECK(qaNegGE2->QueryMatch(qaLE3)); // !R{2-} ⊆ R{-3} complement [MIN,1] ⊆ [MIN,3]
+    auto qLE4 = "[R{-4}]"_smarts; // LessEqualQuery(4) → [MIN, 4]
+    REQUIRE(qLE4);
+    auto qaLE4 = static_cast<QueryAtom *>(qLE4->getAtomWithIdx(0));
+    CHECK(qaNegGE2->QueryMatch(qaLE4)); // !R{2-} ⊆ R{-4} complement [MIN,1] ⊆ [MIN,4]
+
+    // Case 4: pattern positive, target negated (disjoint)
+    CHECK(qa3->QueryMatch(qaNegR1)); // R{3-4} disjoint from !R1
+    auto qR1 = "[R1]"_smarts;
+    REQUIRE(qR1);
+    auto qaR1 = static_cast<QueryAtom *>(qR1->getAtomWithIdx(0));
+    CHECK(!qaR1->QueryMatch(qaNegR1)); // R1 NOT disjoint from !R1
+    CHECK(!qaR1->QueryMatch(qaNegLE3)); // R1 NOT disjoint from !R{-3} [1,1] overlaps [MIN,3]
+    CHECK(!qaLE3->QueryMatch(qaNegGE2)); // R{-3} NOT disjoint from !R{2-} [MIN,3] overlaps [2,MAX]
+    CHECK(!qaGE2->QueryMatch(qaNegLE3)); // R{2-} NOT disjoint from !R{-3} [2,MAX] overlaps [MIN,3]
+    auto qNegLE2 = "[!R{-2}]"_smarts; // !LessEqualQuery(2), excludes [MIN,2]
+    REQUIRE(qNegLE2);
+    auto qaNegLE2 = static_cast<QueryAtom *>(qNegLE2->getAtomWithIdx(0));
+    CHECK(!qaGE2->QueryMatch(qaNegLE2)); // R{2-} NOT disjoint from !R{-2} touch at 2
+    CHECK(!qaLE3->QueryMatch(qaNegLE5)); // R{-3} NOT disjoint from !R{-5} [MIN,3] overlaps [MIN,5]
 
     // Substruct match with query-query matching
     {

@@ -76,7 +76,12 @@ bool localMatch(ATOM_EQUALS_QUERY const *q1, ATOM_EQUALS_QUERY const *q2) {
 }
 
 // Extract interval [lo, hi] from an atom query. Returns false if the query
-// type doesn't support interval extraction.
+// type doesn't support interval extraction. Uses INT_MIN/INT_MAX for open
+// ends. GreaterEqualQuery(N) means N >= atom → atom <= N → [MIN,N].
+// LessEqualQuery(N) means N <= atom → atom >= N → [N,MAX]. GreaterQuery(N)
+// means N > atom → atom < N → [MIN,N-1]. LessQuery(N) means N < atom →
+// atom > N → [N+1,MAX]. LessEqualQuery inherits from LessQuery,
+// GreaterEqualQuery from GreaterQuery — check more derived types first.
 bool getAtomInterval(const QueryAtom::QUERYATOM_QUERY *q, int &lo, int &hi) {
   auto *r = dynamic_cast<const ATOM_RANGE_QUERY *>(q);
   if (r) {
@@ -86,13 +91,25 @@ bool getAtomInterval(const QueryAtom::QUERYATOM_QUERY *q, int &lo, int &hi) {
   }
   auto *le = dynamic_cast<const ATOM_LESSEQUAL_QUERY *>(q);
   if (le) {
-    lo = std::numeric_limits<int>::min();
-    hi = le->getVal();
+    lo = le->getVal();
+    hi = std::numeric_limits<int>::max();
     return true;
   }
   auto *ge = dynamic_cast<const ATOM_GREATEREQUAL_QUERY *>(q);
   if (ge) {
-    lo = ge->getVal();
+    lo = std::numeric_limits<int>::min();
+    hi = ge->getVal();
+    return true;
+  }
+  auto *gt = dynamic_cast<const ATOM_GREATER_QUERY *>(q);
+  if (gt) {
+    lo = std::numeric_limits<int>::min();
+    hi = gt->getVal() - 1;
+    return true;
+  }
+  auto *lt = dynamic_cast<const ATOM_LESS_QUERY *>(q);
+  if (lt) {
+    lo = lt->getVal() + 1;
     hi = std::numeric_limits<int>::max();
     return true;
   }
@@ -213,9 +230,35 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
       int lo1 = 0, hi1 = 0, lo2 = 0, hi2 = 0;
       if (getAtomInterval(q1, lo1, hi1) && getAtomInterval(q2, lo2, hi2)) {
         if (q1->getNegation() == q2->getNegation()) {
-          res = (lo2 <= lo1 && hi1 <= hi2);
+          if (!q1->getNegation()) {
+            // Both positive: pattern interval must be subset of target interval
+            res = lo2 <= lo1 && hi1 <= hi2;
+          } else {
+            // Both negated: accepted sets are complements; pattern accepted
+            // set ⊆ target accepted set iff target excluded range ⊆ pattern
+            // excluded range
+            res = lo1 <= lo2 && hi2 <= hi1;
+          }
         } else {
-          res = (hi1 < lo2 || lo1 > hi2);
+          if (q1->getNegation()) {
+            // Pattern negated, target positive: complement of pattern's
+            // excluded range must fit inside target. Complement has up to
+            // two pieces: [MIN, lo1-1] and [hi1+1, MAX].
+            {
+              bool resLeft = true, resRight = true;
+              if (lo1 > std::numeric_limits<int>::min()) {
+                resLeft = lo2 <= std::numeric_limits<int>::min() && lo1 - 1 <= hi2;
+              }
+              if (hi1 < std::numeric_limits<int>::max()) {
+                resRight = lo2 <= hi1 + 1 && std::numeric_limits<int>::max() <= hi2;
+              }
+              res = resLeft && resRight;
+            }
+          } else {
+            // Pattern positive, target negated: pattern interval must lie
+            // entirely outside target's excluded range
+            res = hi1 < lo2 || lo1 > hi2;
+          }
         }
       }
     }
