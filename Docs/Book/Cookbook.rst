@@ -1403,10 +1403,10 @@ This is useful for identifying ring-fusion bonds in polycyclic systems.
    from rdkit import Chem
    from rdkit.Chem.Draw import IPythonConsole
    from rdkit.Chem import Draw
-    phen = Chem.MolFromSmiles("C1C=CC=C2C3C=CC=CC=3C=CC=12")
-    # Match bonds shared by exactly 2 rings (the two fusion bonds in phenanthrene)
-    pat = Chem.MolFromSmarts("*@{2}*")
-    print(phen.GetSubstructMatches(pat))
+   phen = Chem.MolFromSmiles("C1C=CC=C2C3C=CC=CC=3C=CC=12")
+   # Match bonds shared by exactly 2 rings (the two fusion bonds in phenanthrene)
+   pat = Chem.MolFromSmarts("*@{2}*")
+   print(phen.GetSubstructMatches(pat))
 
 .. testoutput::
 
