@@ -8,11 +8,11 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/RDLog.h>
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
-#include <GraphMol/MolTransforms/MolTransforms.h>
-#include <Geometry/Transform3D.h>
+#include "RDGeneral/RDLog.h"
+#include "GraphMol/RDKitBase.h"
+#include "GraphMol/Substruct/SubstructMatch.h"
+#include "GraphMol/MolTransforms/MolTransforms.h"
+#include "Geometry/Transform3D.h"
 #include <cstdlib>
 
 #include "coordgen/sketcherMinimizer.h"

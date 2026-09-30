@@ -32,8 +32,8 @@
 #ifndef RDKIT_FREESASA_H
 #define RDKIT_FREESASA_H
 
-#include <RDGeneral/export.h>
-#include <GraphMol/RDKitBase.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/RDKitBase.h"
 
 namespace RDKit {
 namespace common_properties {

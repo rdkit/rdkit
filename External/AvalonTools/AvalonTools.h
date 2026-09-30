@@ -6,10 +6,10 @@
 #define __AVALONTOOLS_H__
 #include <string>
 
-#include <RDGeneral/export.h>
-#include <GraphMol/RDKitBase.h>
-#include <DataStructs/ExplicitBitVect.h>
-#include <DataStructs/SparseIntVect.h>
+#include "RDGeneral/export.h"
+#include "GraphMol/RDKitBase.h"
+#include "DataStructs/ExplicitBitVect.h"
+#include "DataStructs/SparseIntVect.h"
 #include <vector>
 #include <boost/cstdint.hpp>
 
