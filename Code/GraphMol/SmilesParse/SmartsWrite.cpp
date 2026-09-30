@@ -421,11 +421,56 @@ std::string getBondSmartsSimple(const Bond *bond,
   auto *equery = dynamic_cast<const BOND_EQUALS_QUERY *>(bquery);
 
   std::string descrip = bquery->getDescription();
+  enum class BondMods : std::uint8_t {
+    NONE,
+    RANGE,
+    LESS,
+    GREATER
+  };
+  BondMods bmods = BondMods::NONE;
+  if (boost::starts_with(descrip, "range_")) {
+    bmods = BondMods::RANGE;
+    descrip = descrip.substr(6);
+  } else if (boost::starts_with(descrip, "less_")) {
+    bmods = BondMods::LESS;
+    descrip = descrip.substr(5);
+  } else if (boost::starts_with(descrip, "greater_")) {
+    bmods = BondMods::GREATER;
+    descrip = descrip.substr(8);
+  }
   std::string res = "";
   if (descrip == "BondNull") {
     res += "~";
   } else if (descrip == "BondInRing") {
     res += "@";
+  } else if (descrip == "BondInNRings") {
+    res += "@";
+    if (bmods == BondMods::NONE) {
+      if (equery && equery->getVal() >= 0) {
+        res += "{" + std::to_string(equery->getVal()) + "}";
+      }
+    } else {
+      res += "{";
+      switch (bmods) {
+        case BondMods::LESS:
+          res += std::to_string(equery->getVal()) + "-";
+          break;
+        case BondMods::RANGE: {
+          const auto *rquery =
+              dynamic_cast<const BOND_RANGE_QUERY *>(bquery);
+          CHECK_INVARIANT(rquery, "query could not be converted to range query");
+          res += std::to_string(rquery->getLower()) + "-" +
+                 std::to_string(rquery->getUpper());
+          break;
+        }
+        case BondMods::GREATER:
+          res += "-" + std::to_string(equery->getVal());
+          break;
+        default:
+          break;
+      }
+      res += "}";
+    }
   } else if (descrip == "SingleOrAromaticBond") {
     auto dir = bond->getBondDir();
     switch (dir) {
@@ -619,10 +664,9 @@ std::string _recurseBondSmarts(const Bond *bond,
   std::string csmarts1, csmarts2;
 
   if ((dsc1 != "BondOr") && (dsc1 != "BondAnd")) {
-    // child1 is  simple node get the smarts directly
-    const auto *tchild = static_cast<const BOND_EQUALS_QUERY *>(child1);
-    csmarts1 = getBondSmartsSimple(bond, tchild, atomToLeftIdx, params);
-    bool nneg = (negate) ^ (tchild->getNegation());
+    // child1 is a simple node, get the smarts directly
+    csmarts1 = getBondSmartsSimple(bond, child1, atomToLeftIdx, params);
+    bool nneg = (negate) ^ (child1->getNegation());
     if (nneg) {
       csmarts1 = "!" + csmarts1;
     }
@@ -636,17 +680,16 @@ std::string _recurseBondSmarts(const Bond *bond,
   // now deal with the second child
   if ((dsc2 != "BondOr") && (dsc2 != "BondAnd")) {
     // child 2 is a simple node
-    const auto *tchild = static_cast<const BOND_EQUALS_QUERY *>(child2);
-    csmarts2 = getBondSmartsSimple(bond, tchild, atomToLeftIdx, params);
-    bool nneg = (negate) ^ (tchild->getNegation());
+    csmarts2 = getBondSmartsSimple(bond, child2, atomToLeftIdx, params);
+    bool nneg = (negate) ^ (child2->getNegation());
     if (nneg) {
       csmarts2 = "!" + csmarts2;
     }
   } else {
     // child two is a composite node - recurse
     bool nneg = (negate) ^ (child2->getNegation());
-    csmarts1 = _recurseBondSmarts(bond, child2, nneg, atomToLeftIdx,
-                                  child2Features, params);
+    csmarts2 = _recurseBondSmarts(bond, child2, nneg, atomToLeftIdx,
+                                   child2Features, params);
   }
 
   // ok if we have a negation and we have to change the underlying logic,

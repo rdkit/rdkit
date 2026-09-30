@@ -1140,6 +1140,13 @@ void finalizeQueryFromDescription(
 void finalizeQueryFromDescription(
     Queries::Query<int, Bond const *, true> *query, Bond const *) {
   std::string descr = query->getDescription();
+  if (boost::starts_with(descr, "range_")) {
+    descr = descr.substr(6);
+  } else if (boost::starts_with(descr, "less_")) {
+    descr = descr.substr(5);
+  } else if (boost::starts_with(descr, "greater_")) {
+    descr = descr.substr(8);
+  }
   Queries::Query<int, Bond const *, true> *tmpQuery;
   if (descr == "BondRingSize") {
     tmpQuery = makeBondInRingOfSizeQuery(
