@@ -36,7 +36,7 @@
 #include <typeinfo>
 #include <exception>
 #include <charconv>
-#include <regex>
+#include <ctre.hpp>
 #include <sstream>
 #include <locale>
 #include <cstdlib>
@@ -44,9 +44,6 @@
 #include <string_view>
 
 using namespace RDKit::SGroupParsing;
-using std::regex;
-using std::regex_match;
-using std::smatch;
 
 namespace RDKit {
 
@@ -194,10 +191,6 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
   // M  V30 MDLV30/STEABS ATOMS=(2 2 3)
   // M  V30 MDLV30/STEREL1 ATOMS=(1 12)
   // M  V30 MDLV30/STERAC1 ATOMS=(1 12)
-  const regex stereo_label(
-      R"regex(MDLV30/STE(...)([0-9]*) +ATOMS=\(([0-9]+) +(.*)\) *)regex");
-
-  smatch match;
   std::vector<StereoGroup> groups;
 
   // Read the collection until the end
@@ -206,11 +199,13 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
   unsigned abs_group_seen = 0;
   while (!startsWith(tempStr, "END", 3)) {
     // If this line in the collection is part of a stereo group
-    if (regex_match(tempStr, match, stereo_label)) {
+    if (const auto match = ctre::match<
+            R"regex(MDLV30/STE(...)([0-9]*) +ATOMS=\(([0-9]+) +(.*)\) *)regex">(
+            tempStr)) {
       StereoGroupType grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
       unsigned groupid = 0;
 
-      if (match[1] == "ABS") {
+      if (match.get<1>().to_view() == "ABS") {
         grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
         // Warn only one per mol about multiple ABS groups
         if (abs_group_seen == 1) {
@@ -224,12 +219,12 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
           }
         }
         ++abs_group_seen;
-      } else if (match[1] == "REL") {
+      } else if (match.get<1>().to_view() == "REL") {
         grouptype = RDKit::StereoGroupType::STEREO_OR;
-        groupid = FileParserUtils::toUnsigned(match[2], true);
-      } else if (match[1] == "RAC") {
+        groupid = FileParserUtils::toUnsigned(match.get<2>().to_view(), true);
+      } else if (match.get<1>().to_view() == "RAC") {
         grouptype = RDKit::StereoGroupType::STEREO_AND;
-        groupid = FileParserUtils::toUnsigned(match[2], true);
+        groupid = FileParserUtils::toUnsigned(match.get<2>().to_view(), true);
       } else {
         std::ostringstream errout;
         errout << "Unrecognized stereogroup type : '" << tempStr << "' on line"
@@ -237,9 +232,10 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
         throw FileParseException(errout.str());
       }
 
-      const unsigned int count = FileParserUtils::toUnsigned(match[3], true);
+      const unsigned int count =
+          FileParserUtils::toUnsigned(match.get<3>().to_view(), true);
       std::vector<Atom *> atoms;
-      std::stringstream ss(match[4]);
+      std::stringstream ss(match.get<4>().to_string());
       unsigned int index;
       for (size_t i = 0; i < count; ++i) {
         ss >> index;

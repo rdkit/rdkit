@@ -15,11 +15,14 @@
 // for example, it uses a different fingerprint for the initial synthon
 // screening.
 
+#include <array>
 #include <cmath>
 #include <numeric>
 #include <random>
-#include <regex>
+#include <string_view>
 #include <unordered_map>
+
+#include <ctre.hpp>
 
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/MolPickler.h>
@@ -433,14 +436,21 @@ void SynthonSet::buildConnectorRegions() {
 void SynthonSet::assignConnectorsUsed() {
   // Find instances of "[1*]", "[1*:1]", "[2*]", "[2*:2]" etc.
   // and set d_connectors accordingly.
-  static std::vector<std::regex> connRegexs;
-  if (connRegexs.empty()) {
-    for (size_t i = 0; i < MAX_CONNECTOR_NUM; ++i) {
-      connRegexs.emplace_back(R"(\[)" + std::to_string(i + 1) + R"(\*\])");
-      connRegexs.emplace_back(R"(\[)" + std::to_string(i + 1) + R"(\*\:)" +
-                              std::to_string(i + 1) + R"(\])");
-    }
-  }
+  static_assert(MAX_CONNECTOR_NUM == 4);
+  static constexpr std::array<bool (*)(std::string_view), MAX_CONNECTOR_NUM>
+      connectorMatchers{
+          [](std::string_view smiles) -> bool {
+            return ctre::search<R"(\[1\*(?::1)?\])">(smiles);
+          },
+          [](std::string_view smiles) -> bool {
+            return ctre::search<R"(\[2\*(?::2)?\])">(smiles);
+          },
+          [](std::string_view smiles) -> bool {
+            return ctre::search<R"(\[3\*(?::3)?\])">(smiles);
+          },
+          [](std::string_view smiles) -> bool {
+            return ctre::search<R"(\[4\*(?::4)?\])">(smiles);
+          }};
   d_connectors.resize(MAX_CONNECTOR_NUM + 1, false);
   d_synthConnPatts.clear();
   for (const auto &synthSet : d_synthons) {
@@ -450,8 +460,7 @@ void SynthonSet::assignConnectorsUsed() {
     d_synthConnPatts.back().resize(MAX_CONNECTOR_NUM + 1, false);
     const auto &reag = synthSet.front();
     for (size_t i = 0; i < MAX_CONNECTOR_NUM; ++i) {
-      if (std::regex_search(reag.second->getSmiles(), connRegexs[2 * i]) ||
-          std::regex_search(reag.second->getSmiles(), connRegexs[2 * i + 1])) {
+      if (connectorMatchers[i](reag.second->getSmiles())) {
         d_connectors.set(i + 1);
         d_synthConnPatts.back().set(i + 1);
       }
