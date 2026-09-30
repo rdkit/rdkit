@@ -223,6 +223,9 @@ RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
                                                const StereoType &s);
 
 struct RDKIT_GRAPHMOL_EXPORT BondWedgingParameters {
+  bool wedgeAttachmentPointBonds =
+      true;  //!< If false, bonds to atoms with the _fromAttachPoint property
+             //!< will not be wedged
   bool wedgeTwoBondsIfPossible =
       false;  //!< If this is enabled then two bonds will be wedged at chiral
               //!< centers subject to the following constraints:
@@ -298,6 +301,11 @@ RDKIT_GRAPHMOL_EXPORT int pickBondToWedge(
     const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
         &resSoFar,
     int noNbrs);
+RDKIT_GRAPHMOL_EXPORT int pickBondToWedge(
+    const Atom *atom, const ROMol &mol, const INT_VECT &nChiralNbrs,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &resSoFar,
+    int noNbrs, const BondWedgingParameters &params);
 
 //! If useCXSmilesOrdering is true, the stereo will be assigned relative to the
 /// lowest-numbered neighbor of each double bond atom.
