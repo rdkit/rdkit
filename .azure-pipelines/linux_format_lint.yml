@@ -1,0 +1,59 @@
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    sudo chown -R ${USER} ${CONDA}
+    conda config --set always_yes yes --set changeps1 no
+    conda update -q conda
+    conda config --set channel_priority strict
+    conda config --add channels conda-forge
+    conda config --set solver libmamba
+    conda info -a
+    conda create --name rdkit_format -c conda-forge --override-channels \
+        python=$(python_version) \
+        yapf=$(yapf_version) \
+        pycodestyle=$(pycodestyle_version) \
+        clang-format=$(clang_format_version)
+    conda activate rdkit_format
+    conda config --env --add channels conda-forge
+    conda config --env --set channel_priority strict
+  displayName: Setup lint environment
+  
+
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_format
+    PY_FILES=$(git diff --name-only --diff-filter=ACMRTUXB origin/master | grep -E '\.py$' || true)
+
+    if [ -n "$PY_FILES" ]; then
+      echo -e "Checking the following Python files:\n$PY_FILES\n"
+      
+      echo "--- Running YAPF ---"
+      YAPF_DIFF=$(yapf --diff $PY_FILES)
+      if [ -n "$YAPF_DIFF" ]; then
+        echo "$YAPF_DIFF"
+        echo "ERROR: yapf found formatting violations. See diff above."
+        exit 1
+      else
+        echo "YAPF formatting is clean."
+      fi
+      
+      echo -e "\n--- Running Pycodestyle (pep8) ---"
+      pycodestyle $PY_FILES
+      
+    else
+      echo "No Python files were modified."
+    fi
+  displayName: "Check Python Formatting (YAPF & pycodestyle)"
+
+- bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_format
+    CPP_FILES=$(git diff --name-only --diff-filter=ACMRTUXB origin/master | \
+        grep -E '\.(c|h|cpp|hpp|cc|cxx)$')
+
+    if [ -n "$CPP_FILES" ]; then
+      echo -e "Checking the following C/C++ files:\n$CPP_FILES\n"
+      clang-format --dry-run --Werror $CPP_FILES
+    else
+      echo "No C/C++ files were modified."
+    fi
+  displayName: "Check Formatting of C/C++ files (clang-format)"
