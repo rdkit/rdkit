@@ -152,7 +152,7 @@ bool TransformAugmentedAtoms(
     atomInRing[a1] = atomInRing[a2] = false;  // init
   }
 
-  const RingInfo::VECT_INT_VECT &rings = mol.getRingInfo()->bondRings();
+  const auto rings = mol.getRingInfo()->bondRings();
   for (const auto &ring : rings) {
     for (int j : ring) {
       bondInRing[j] = true;
@@ -531,7 +531,7 @@ static void RingState(const ROMol &mol, std::vector<unsigned> &atom_status,
   }
   // for each bond compute amount of rings that contains the bond
   const RDKit::RingInfo &ringInfo = *mol.getRingInfo();
-  const VECT_INT_VECT &bondRings = ringInfo.bondRings();
+  const auto bondRings = ringInfo.bondRings();
   for (const auto &ring : bondRings) {
     for (unsigned i = 0; i < ring.size(); i++) {
       bond_status[i]++;

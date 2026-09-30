@@ -21,41 +21,32 @@ using namespace nb::literals;
 
 namespace {
 using namespace RDKit;
+nb::tuple spanToTuple(std::span<const int> values) {
+  nb::list result;
+  for (const auto value : values) {
+    result.append(value);
+  }
+  return nb::tuple(result);
+}
 nb::tuple atomRings(const RingInfo *self) {
   nb::list res;
-  for (const auto &ring : self->atomRings()) {
-    nb::list ringAsList;
-    for (const auto idx : ring) {
-      ringAsList.append(idx);
-    }
-    res.append(nb::tuple(ringAsList));
+  for (const auto ring : self->atomRings()) {
+    res.append(spanToTuple(ring));
   }
   return nb::tuple(res);
 }
 nb::tuple bondRings(const RingInfo *self) {
   nb::list res;
-  for (const auto &ring : self->bondRings()) {
-    nb::list ringAsList;
-    for (const auto idx : ring) {
-      ringAsList.append(idx);
-    }
-    res.append(nb::tuple(ringAsList));
+  for (const auto ring : self->bondRings()) {
+    res.append(spanToTuple(ring));
   }
   return nb::tuple(res);
 }
 nb::tuple atomMembers(const RingInfo *self, unsigned int idx) {
-  nb::list res;
-  for (const auto v : self->atomMembers(idx)) {
-    res.append(v);
-  }
-  return nb::tuple(res);
+  return spanToTuple(self->atomMembers(idx));
 }
 nb::tuple bondMembers(const RingInfo *self, unsigned int idx) {
-  nb::list res;
-  for (const auto v : self->bondMembers(idx)) {
-    res.append(v);
-  }
-  return nb::tuple(res);
+  return spanToTuple(self->bondMembers(idx));
 }
 nb::tuple atomRingSizes(const RingInfo *self, unsigned int idx) {
   nb::list res;

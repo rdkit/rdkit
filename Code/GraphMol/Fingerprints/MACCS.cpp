@@ -910,10 +910,9 @@ void GenerateFP(const RDKit::ROMol &mol, ExplicitBitVect &fp) {
   unsigned int nArom = 0;
   for (unsigned int i = 0; i < ringcount; i++) {
     bool isArom = true;
-    const std::vector<int> *ring = &info->bondRings()[i];
-    std::vector<int>::const_iterator iter;
-    for (iter = ring->begin(); iter != ring->end(); ++iter) {
-      if (!mol.getBondWithIdx(*iter)->getIsAromatic()) {
+    const auto ring = info->bondRings()[i];
+    for (const auto bondIdx : ring) {
+      if (!mol.getBondWithIdx(bondIdx)->getIsAromatic()) {
         isArom = false;
         break;
       }
