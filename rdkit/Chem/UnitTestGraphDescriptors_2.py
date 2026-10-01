@@ -14,6 +14,8 @@ import math
 import os.path
 import unittest
 
+import numpy
+
 from rdkit import Chem, RDConfig
 from rdkit.Chem import Graphs, GraphDescriptors
 
@@ -541,6 +543,34 @@ class TestCase_python(unittest.TestCase):
       self.assertAlmostEqual(
         abs(cp[-1]), 1.0, delta=1e-6,
         msg='n=%d: |constant term| should be 1, got %g' % (n, cp[-1]))
+
+  def testCharacteristicPolynomialCoefficients(self):
+    # For a path graph the whole coefficient vector is known in closed form:
+    #   det(xI - A) = sum_k (-1)**k * binom(n-k, k) * x**(n-2k)
+    # so every coefficient is checked, not only the constant term.
+    from math import comb
+    for n in (8, 20, 60):
+      m = Chem.MolFromSmiles('C' * n)
+      got = Graphs.CharacteristicPolynomial(m, Chem.GetAdjacencyMatrix(m))
+      want = numpy.zeros(n + 1)
+      for k in range(n // 2 + 1):
+        want[2 * k] = (-1)**k * comb(n - k, k)
+      scale = max(abs(want).max(), 1.0)
+      self.assertTrue(
+        numpy.allclose(got, want, rtol=0, atol=1e-9 * scale),
+        msg='n=%d: worst coefficient error %g (scale %g)' % (
+          n, abs(numpy.asarray(got) - want).max(), scale))
+
+  def testCharacteristicPolynomialAsymmetricMatrix(self):
+    # eigvalsh reads one triangle only, so a near-symmetric matrix must NOT take that path.
+    m = Chem.MolFromSmiles('CCC')
+    a = numpy.array(Chem.GetAdjacencyMatrix(m), dtype=float)
+    a[0, 1] += 1e-7
+    got = Graphs.CharacteristicPolynomial(m, a)
+    # compare against the polynomial of exactly this matrix, via its own eigenvalues
+    want = numpy.poly(numpy.linalg.eigvals(a)).real
+    self.assertTrue(numpy.allclose(got, want, atol=1e-10),
+                    msg='asymmetric input: got %s, expected %s' % (got, want))
 
   def testAvgIpcIsMonotonicAndBounded(self):
     # AvgIpc is a Shannon entropy over the n+1 coefficients, so it is bounded by log2(n+1)
