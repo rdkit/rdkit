@@ -70,11 +70,14 @@ python::object MolsFromChemDrawBlockHelper(
     const std::string &filename, bool sanitize, bool removeHs,
     RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
         RDKit::v2::NeedsCleanPolicy::TrustSource,
+    bool parseQueries = false, bool strictQueryParsing = false,
     RDKit::v2::CDXFormat format = RDKit::v2::CDXFormat::AUTO) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
     mols = RDKit::v2::MolsFromChemDrawBlock(
-        filename, {sanitize, removeHs, format, needsCleanPolicy});
+        filename,
+        {sanitize, removeHs, format, needsCleanPolicy, parseQueries,
+         strictQueryParsing});
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
@@ -95,9 +98,12 @@ python::tuple MolsFromChemDrawFileHelper(
     python::object cdxml, bool sanitize, bool removeHs,
     RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
         RDKit::v2::NeedsCleanPolicy::TrustSource,
+    bool parseQueries = false, bool strictQueryParsing = false,
     RDKit::v2::CDXFormat format = RDKit::v2::CDXFormat::AUTO) {
   auto mols = RDKit::v2::MolsFromChemDrawFile(
-      pyObjectToString(cdxml), {sanitize, removeHs, format, needsCleanPolicy});
+      pyObjectToString(cdxml),
+      {sanitize, removeHs, format, needsCleanPolicy, parseQueries,
+       strictQueryParsing});
   python::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
@@ -199,6 +205,8 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
       (python::arg("filename"), python::arg("sanitize") = true,
        python::arg("removeHs") = true,
        python::arg("needsCleanPolicy") = v2::NeedsCleanPolicy::TrustSource,
+       python::arg("parseQueries") = false,
+       python::arg("strictQueryParsing") = false,
        python::arg("format") = v2::CDXFormat::AUTO),
       docString.c_str());
 
@@ -234,6 +242,8 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
       (python::arg("block"), python::arg("sanitize") = true,
        python::arg("removeHs") = true,
        python::arg("needsCleanPolicy") = v2::NeedsCleanPolicy::TrustSource,
+       python::arg("parseQueries") = false,
+       python::arg("strictQueryParsing") = false,
        python::arg("format") = v2::CDXFormat::AUTO),
       docString.c_str());
 
