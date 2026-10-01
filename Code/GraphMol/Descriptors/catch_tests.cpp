@@ -664,6 +664,11 @@ TEST_CASE("DCLV") {
                       Invar::Invariant);
     }
   }
+  SECTION("empty molecule") {
+    RWMol m;
+    m.addConformer(new Conformer(0), true);
+    CHECK_THROWS_AS(Descriptors::DoubleCubicLatticeVolume(m), Invar::Invariant);
+  }
   SECTION("Partial Test") {
     std::string sdfName =
         pathName + "/Code/GraphMol/Descriptors/test_data/ethane.sdf";

@@ -833,6 +833,12 @@ class TestCase(unittest.TestCase):
         with self.assertRaises(RuntimeError):
           rdMD.DoubleCubicLatticeVolume(mol, bad)
 
+  def testDCLVEmptyMolecule(self):
+    mol = Chem.RWMol()
+    mol.AddConformer(Chem.Conformer(0), assignId=True)
+    with self.assertRaises(RuntimeError):
+      rdMD.DoubleCubicLatticeVolume(mol)
+
 
 if __name__ == '__main__':
   unittest.main()
