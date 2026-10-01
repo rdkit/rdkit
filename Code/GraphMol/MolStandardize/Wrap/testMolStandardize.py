@@ -330,6 +330,31 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(msg999), 1)
     self.assertEqual("""INFO: [FragmentValidation] 1,2-dichloroethane is present""", msg999[0])
 
+  def testAtomValidationsFromIterables(self):
+    mol = Chem.MolFromSmiles("CC(=O)CF")
+
+    class Atoms:
+      """Builds a new atom each time it is indexed, and defines only __getitem__."""
+
+      def __init__(self, atomic_numbers):
+        self.atomic_numbers = atomic_numbers
+
+      def __getitem__(self, i):
+        return Atom(self.atomic_numbers[i])
+
+    # Each atom below is referenced only by the generator or sequence that yields it.
+    for label, make in (('generator', lambda numbers: (Atom(n) for n in numbers)),
+                        ('sequence', Atoms)):
+      with self.subTest(argument=label):
+        self.assertEqual(
+          list(rdMolStandardize.AllowedAtomsValidation(make([6, 7, 8])).validate(mol)),
+          ["INFO: [AllowedAtomsValidation] Atom F is not in allowedAtoms list"])
+        self.assertEqual(
+          list(rdMolStandardize.DisallowedAtomsValidation(make([9, 17, 35])).validate(mol)),
+          ["INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list"])
+        with self.assertRaises(ValueError):
+          rdMolStandardize.AllowedAtomsValidation(make([]))
+
   def test10NormalizeFromData(self):
     data = """//	Name	SMIRKS
 Nitro to N+(O-)=O	[N,P,As,Sb;X3:1](=[O,S,Se,Te:2])=[O,S,Se,Te:3]>>[*+1:1]([*-1:2])=[*:3]

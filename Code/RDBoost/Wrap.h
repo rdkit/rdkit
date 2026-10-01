@@ -170,6 +170,12 @@ void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
   }
 }
 
+//! Returns iter(obj). python::stl_input_iterator calls obj.__iter__() directly,
+//! so it rejects a sequence that defines only __getitem__ unless given this.
+inline python::object pythonIterator(const python::object &obj) {
+  return python::object(python::handle<>(PyObject_GetIter(obj.ptr())));
+}
+
 RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(
     const python::object &obj, boost::dynamic_bitset<>::size_type maxV);
 

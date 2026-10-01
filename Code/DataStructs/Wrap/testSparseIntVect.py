@@ -242,16 +242,27 @@ class TestCase(unittest.TestCase):
     self.assertEqual(l, l3)
 
   def test8BulkFromIterables(self):
-    vs = []
-    for i in range(6):
+
+    def vect(i):
       v = ds.IntSparseIntVect(10)
       v[i] = i + 1
       v[(i + 3) % 10] = 2
-      vs.append(v)
+      return v
+
+    class Vects:
+      """Builds a new vector each time it is indexed, and defines only __getitem__."""
+
+      def __getitem__(self, i):
+        if i >= 5:
+          raise IndexError(i)
+        return vect(i + 1)
+
+    vs = [vect(i) for i in range(6)]
     expected = [list(ds.BulkDiceSimilarity(vs[0], vs[1:])),
                 list(ds.BulkTanimotoSimilarity(vs[0], vs[1:])),
                 list(ds.BulkTverskySimilarity(vs[0], vs[1:], 0.5, 0.5))]
-    for label, make in (('tuple', lambda: tuple(vs[1:])), ('generator', lambda: iter(vs[1:]))):
+    for label, make in (('tuple', lambda: tuple(vs[1:])), ('generator', lambda: iter(vs[1:])),
+                        ('sequence', Vects)):
       with self.subTest(argument=label):
         self.assertEqual([
           list(ds.BulkDiceSimilarity(vs[0], make())),

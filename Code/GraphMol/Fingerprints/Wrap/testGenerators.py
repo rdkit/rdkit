@@ -443,12 +443,20 @@ class TestCase(unittest.TestCase):
     mols = [Chem.MolFromSmiles(smi) for smi in smiles]
     expected = [fp.ToBitString() for fp in g.GetFingerprints(mols)]
     bulkExpected = [fp.ToBitString() for fp in rdFingerprintGenerator.GetFPs(mols)]
-    # Each molecule below is referenced only by the generator or supplier that yields it; the
-    # supplier builds a new molecule each time it is indexed.
+
+    class Mols:
+      """Builds a new molecule each time it is indexed, and defines only __getitem__."""
+
+      def __getitem__(self, i):
+        return Chem.MolFromSmiles(smiles[i])
+
+    # Each molecule below is referenced only by the generator, supplier or sequence that yields
+    # it; the supplier and the sequence build a new molecule each time they are indexed.
     for label, make in (
       ('generator', lambda: (Chem.MolFromSmiles(smi) for smi in smiles)),
       ('supplier',
        lambda: Chem.SmilesMolSupplierFromText('\n'.join(smiles), nameColumn=-1, titleLine=False)),
+      ('sequence', Mols),
     ):
       with self.subTest(argument=label):
         self.assertEqual([fp.ToBitString() for fp in g.GetFingerprints(make())], expected)

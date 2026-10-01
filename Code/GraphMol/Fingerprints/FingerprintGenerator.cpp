@@ -844,147 +844,62 @@ ExplicitBitVect *getFP(const ROMol &mol, FPType fPType) {
   return (*getFPBulk(tempVect, fPType))[0];
 }
 
+std::unique_ptr<FingerprintGenerator<std::uint64_t>> makeFPGenerator(
+    FPType fPType) {
+  switch (fPType) {
+    case FPType::AtomPairFP:
+      return std::unique_ptr<FingerprintGenerator<std::uint64_t>>(
+          AtomPair::getAtomPairGenerator<std::uint64_t>());
+    case FPType::MorganFP:
+      return std::unique_ptr<FingerprintGenerator<std::uint64_t>>(
+          MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+    case FPType::RDKitFP:
+      return std::unique_ptr<FingerprintGenerator<std::uint64_t>>(
+          RDKitFP::getRDKitFPGenerator<std::uint64_t>());
+    case FPType::TopologicalTorsionFP:
+      return std::unique_ptr<FingerprintGenerator<std::uint64_t>>(
+          TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>());
+  }
+  throw UnimplementedFPException("Fingerprint type not implemented");
+}
+
 std::vector<SparseIntVect<std::uint64_t> *> *getSparseCountFPBulk(
     const std::vector<const ROMol *> molVector, FPType fPType) {
-  FingerprintGenerator<std::uint64_t> *generator = nullptr;
-  switch (fPType) {
-    case FPType::AtomPairFP: {
-      generator = AtomPair::getAtomPairGenerator<std::uint64_t>();
-      break;
-    }
-    case FPType::MorganFP: {
-      generator = MorganFingerprint::getMorganGenerator<std::uint64_t>(2);
-      break;
-    }
-    case FPType::RDKitFP: {
-      generator = RDKitFP::getRDKitFPGenerator<std::uint64_t>();
-      break;
-    }
-    case FPType::TopologicalTorsionFP: {
-      generator =
-          TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>();
-      break;
-    }
-    default: {
-      throw UnimplementedFPException(
-          "Fingerprint type not implemented for getSparseCountFP");
-    }
-  }
+  auto generator = makeFPGenerator(fPType);
   auto *res = new std::vector<SparseIntVect<std::uint64_t> *>();
-
   for (const auto *mol : molVector) {
     res->push_back(generator->getSparseCountFingerprint(*mol));
   }
-
-  delete generator;
   return res;
 }
 
 std::vector<SparseBitVect *> *getSparseFPBulk(
     const std::vector<const ROMol *> molVector, FPType fPType) {
-  FingerprintGenerator<std::uint64_t> *generator = nullptr;
-  switch (fPType) {
-    case FPType::AtomPairFP: {
-      generator = AtomPair::getAtomPairGenerator<std::uint64_t>();
-      break;
-    }
-    case FPType::MorganFP: {
-      generator = MorganFingerprint::getMorganGenerator<std::uint64_t>(2);
-      break;
-    }
-    case FPType::RDKitFP: {
-      generator = RDKitFP::getRDKitFPGenerator<std::uint64_t>();
-      break;
-    }
-    case FPType::TopologicalTorsionFP: {
-      generator =
-          TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>();
-      break;
-    }
-    default: {
-      throw UnimplementedFPException(
-          "Fingerprint type not implemented for getSparseFP");
-    }
-  }
+  auto generator = makeFPGenerator(fPType);
   auto *res = new std::vector<SparseBitVect *>();
-
   for (const auto *mol : molVector) {
     res->push_back(generator->getSparseFingerprint(*mol));
   }
-
-  delete generator;
   return res;
 }
 
 std::vector<SparseIntVect<std::uint32_t> *> *getCountFPBulk(
     const std::vector<const ROMol *> molVector, FPType fPType) {
-  FingerprintGenerator<std::uint64_t> *generator = nullptr;
-  switch (fPType) {
-    case FPType::AtomPairFP: {
-      generator = AtomPair::getAtomPairGenerator<std::uint64_t>();
-      break;
-    }
-    case FPType::MorganFP: {
-      generator = MorganFingerprint::getMorganGenerator<std::uint64_t>(2);
-      break;
-    }
-    case FPType::RDKitFP: {
-      generator = RDKitFP::getRDKitFPGenerator<std::uint64_t>();
-      break;
-    }
-    case FPType::TopologicalTorsionFP: {
-      generator =
-          TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>();
-      break;
-    }
-    default: {
-      throw UnimplementedFPException(
-          "Fingerprint type not implemented for getCountFP");
-    }
-  }
+  auto generator = makeFPGenerator(fPType);
   auto *res = new std::vector<SparseIntVect<std::uint32_t> *>();
-
   for (const auto *mol : molVector) {
     res->push_back(generator->getCountFingerprint(*mol));
   }
-
-  delete generator;
   return res;
 }
 
 std::vector<ExplicitBitVect *> *getFPBulk(
     const std::vector<const ROMol *> molVector, FPType fPType) {
-  FingerprintGenerator<std::uint64_t> *generator = nullptr;
-  switch (fPType) {
-    case FPType::AtomPairFP: {
-      generator = AtomPair::getAtomPairGenerator<std::uint64_t>();
-      break;
-    }
-    case FPType::MorganFP: {
-      generator = MorganFingerprint::getMorganGenerator<std::uint64_t>(2);
-      break;
-    }
-    case FPType::RDKitFP: {
-      generator = RDKitFP::getRDKitFPGenerator<std::uint64_t>();
-      break;
-    }
-    case FPType::TopologicalTorsionFP: {
-      generator =
-          TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>();
-      break;
-    }
-    default: {
-      throw UnimplementedFPException(
-          "Fingerprint type not implemented for getFP");
-    }
-  }
+  auto generator = makeFPGenerator(fPType);
   auto *res = new std::vector<ExplicitBitVect *>();
-
   for (const auto *mol : molVector) {
     res->push_back(generator->getFingerprint(*mol));
   }
-
-  delete generator;
   return res;
 }
 

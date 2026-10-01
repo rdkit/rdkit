@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <RDBoost/python.h>
+#include <RDBoost/Wrap.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <cstdint>
 #include <RDGeneral/BoostEndInclude.h>
@@ -70,12 +71,12 @@ python::list pyToList(SparseIntVect<IndexType> &vect) {
 template <typename T>
 python::list BulkDice(const T &siv1, python::object sivs, bool returnDistance) {
   python::list res;
-  // A list accepts any iterable and keeps each item alive while it is used.
-  python::list items(sivs);
-  unsigned int nsivs = python::len(items);
-  for (unsigned int i = 0; i < nsivs; ++i) {
+  for (python::stl_input_iterator<python::object> it(pythonIterator(sivs)), end;
+       it != end; ++it) {
+    // A generator may hold no other reference to the vector.
+    python::object item = *it;
     double simVal;
-    const T *siv2 = python::extract<T *>(items[i])();
+    const T *siv2 = python::extract<T *>(item)();
     simVal = DiceSimilarity(siv1, *siv2, returnDistance);
     res.append(simVal);
   }
@@ -85,12 +86,12 @@ template <typename T>
 python::list BulkTanimoto(const T &siv1, python::object sivs,
                           bool returnDistance) {
   python::list res;
-  // A list accepts any iterable and keeps each item alive while it is used.
-  python::list items(sivs);
-  unsigned int nsivs = python::len(items);
-  for (unsigned int i = 0; i < nsivs; ++i) {
+  for (python::stl_input_iterator<python::object> it(pythonIterator(sivs)), end;
+       it != end; ++it) {
+    // A generator may hold no other reference to the vector.
+    python::object item = *it;
     double simVal;
-    const T *siv2 = python::extract<T *>(items[i])();
+    const T *siv2 = python::extract<T *>(item)();
     simVal = TanimotoSimilarity(siv1, *siv2, returnDistance);
     res.append(simVal);
   }
@@ -101,12 +102,12 @@ template <typename T>
 python::list BulkTversky(const T &siv1, python::object sivs, double a, double b,
                          bool returnDistance) {
   python::list res;
-  // A list accepts any iterable and keeps each item alive while it is used.
-  python::list items(sivs);
-  unsigned int nsivs = python::len(items);
-  for (unsigned int i = 0; i < nsivs; ++i) {
+  for (python::stl_input_iterator<python::object> it(pythonIterator(sivs)), end;
+       it != end; ++it) {
+    // A generator may hold no other reference to the vector.
+    python::object item = *it;
     double simVal;
-    const T *siv2 = python::extract<T *>(items[i])();
+    const T *siv2 = python::extract<T *>(item)();
     simVal = TverskySimilarity(siv1, *siv2, a, b, returnDistance);
     res.append(simVal);
   }
