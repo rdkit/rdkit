@@ -10,11 +10,12 @@
 
 """
 
+import math
 import os.path
 import unittest
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem import GraphDescriptors
+from rdkit.Chem import Graphs, GraphDescriptors
 
 doLong = False
 _THREE_RING = Chem.MolFromSmarts('*1~*~*~1')
@@ -528,6 +529,30 @@ class TestCase_python(unittest.TestCase):
       pyVal = pyFunc(mol)
       assert feq(cVal, pyVal,
                  1e-4), 'line %d, mol %s (c = %f, py = %f)' % (lineNum, smi, cVal, pyVal)
+
+
+  def testCharacteristicPolynomialLargeGraphs(self):
+    # The characteristic polynomial of a path graph has |constant term| = |det(A)| = 1.
+    # The Le Verrier-Faddeev-Frame recursion previously used here lost every significant
+    # digit above roughly 80 atoms and returned -1.97e26 here at n=120.
+    for n in (20, 60, 120, 200):
+      m = Chem.MolFromSmiles('C' * n)
+      cp = Graphs.CharacteristicPolynomial(m, Chem.GetAdjacencyMatrix(m))
+      self.assertAlmostEqual(
+        abs(cp[-1]), 1.0, delta=1e-6,
+        msg='n=%d: |constant term| should be 1, got %g' % (n, cp[-1]))
+
+  def testAvgIpcIsMonotonicAndBounded(self):
+    # AvgIpc is a Shannon entropy over the n+1 coefficients, so it is bounded by log2(n+1)
+    # and cannot decrease as a chain is extended. It previously started decreasing near
+    # n=110, reaching 1.40 at n=120 where the true value is 3.76.
+    prev = 0.0
+    for n in range(20, 141, 20):
+      m = Chem.MolFromSmiles('C' * n)
+      v = GraphDescriptors.AvgIpc(m, forceDMat=1)
+      self.assertGreater(v, prev, 'AvgIpc decreased at n=%d (%g <= %g)' % (n, v, prev))
+      self.assertLess(v, math.log2(n + 1), 'AvgIpc exceeds its log2(n+1) bound at n=%d' % n)
+      prev = v
 
 
 if __name__ == '__main__':
