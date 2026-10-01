@@ -1002,11 +1002,13 @@ M  END
     rgd = RGroupDecomposition(Chem.MolFromSmiles(smi) for smi in cores)
     self.assertEqual(decompose(rgd), expected)
 
-    coreMols = [Chem.MolFromSmiles(smi) for smi in cores]
+  def testNoneCoresAndMols(self):
+    cores = [Chem.MolFromSmiles(smi) for smi in ('c1ccccc1[*:1]', 'c1ccncc1[*:1]')]
+    mols = [Chem.MolFromSmiles(smi) for smi in ('c1ccccc1O', 'c1ccncc1N')]
     with self.assertRaisesRegex(ValueError, 'cores must not contain None'):
-      RGroupDecomposition(coreMols + [None])
+      RGroupDecomposition(cores + [None])
     with self.assertRaisesRegex(ValueError, 'mols must not contain None'):
-      RGroupDecompose(coreMols, mols + [None])
+      RGroupDecompose(cores, mols + [None])
 
 
 if __name__ == '__main__':
