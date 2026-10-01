@@ -548,13 +548,19 @@ class TestCase_python(unittest.TestCase):
     # For a path graph the whole coefficient vector is known in closed form:
     #   det(xI - A) = sum_k (-1)**k * binom(n-k, k) * x**(n-2k)
     # so every coefficient is checked, not only the constant term.
-    from math import comb
+    def binom(n, k):
+      # math.comb is Python 3.8+; this is exact in integer arithmetic on any version.
+      r = 1
+      for i in range(k):
+        r = r * (n - i) // (i + 1)
+      return r
+
     for n in (8, 20, 60):
       m = Chem.MolFromSmiles('C' * n)
       got = Graphs.CharacteristicPolynomial(m, Chem.GetAdjacencyMatrix(m))
       want = numpy.zeros(n + 1)
       for k in range(n // 2 + 1):
-        want[2 * k] = (-1)**k * comb(n - k, k)
+        want[2 * k] = (-1)**k * binom(n - k, k)
       scale = max(abs(want).max(), 1.0)
       self.assertTrue(
         numpy.allclose(got, want, rtol=0, atol=1e-9 * scale),
