@@ -75,18 +75,18 @@ bool localMatch(ATOM_EQUALS_QUERY const *q1, ATOM_EQUALS_QUERY const *q2) {
   }
 }
 
-// Extract interval [lo, hi] from an atom query. Returns false if the query
-// type doesn't support interval extraction. Uses INT_MIN/INT_MAX for open
-// ends. GreaterEqualQuery(N) means N >= atom → atom <= N → [MIN,N].
-// LessEqualQuery(N) means N <= atom → atom >= N → [N,MAX]. GreaterQuery(N)
-// means N > atom → atom < N → [MIN,N-1]. LessQuery(N) means N < atom →
-// atom > N → [N+1,MAX]. LessEqualQuery inherits from LessQuery,
-// GreaterEqualQuery from GreaterQuery — check more derived types first.
 bool getAtomInterval(const QueryAtom::QUERYATOM_QUERY *q, int &lo, int &hi) {
   auto *r = dynamic_cast<const ATOM_RANGE_QUERY *>(q);
   if (r) {
     lo = r->getLower();
     hi = r->getUpper();
+    auto ends = r->getEndsOpen();
+    if (ends.first && lo < std::numeric_limits<int>::max()) {
+      lo++;
+    }
+    if (ends.second && hi > std::numeric_limits<int>::min()) {
+      hi--;
+    }
     return true;
   }
   auto *le = dynamic_cast<const ATOM_LESSEQUAL_QUERY *>(q);
@@ -234,7 +234,9 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
     if (bd1 == bd2 && std::find(&equalityQueries[0], &equalityQueries[nQueries],
                                 bd1) != &equalityQueries[nQueries]) {
       int lo1 = 0, hi1 = 0, lo2 = 0, hi2 = 0;
-      if (getAtomInterval(q1, lo1, hi1) && getAtomInterval(q2, lo2, hi2)) {
+      bool hasI1 = getAtomInterval(q1, lo1, hi1);
+      bool hasI2 = getAtomInterval(q2, lo2, hi2);
+      if (hasI1 && hasI2) {
         if (q1->getNegation() == q2->getNegation()) {
           if (!q1->getNegation()) {
             // Both positive: pattern interval must be subset of target interval
@@ -253,10 +255,12 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
             {
               bool resLeft = true, resRight = true;
               if (lo1 > std::numeric_limits<int>::min()) {
-                resLeft = lo2 <= std::numeric_limits<int>::min() && lo1 - 1 <= hi2;
+                resLeft =
+                    lo2 <= std::numeric_limits<int>::min() && lo1 - 1 <= hi2;
               }
               if (hi1 < std::numeric_limits<int>::max()) {
-                resRight = lo2 <= hi1 + 1 && std::numeric_limits<int>::max() <= hi2;
+                resRight =
+                    lo2 <= hi1 + 1 && std::numeric_limits<int>::max() <= hi2;
               }
               res = resLeft && resRight;
             }
@@ -264,6 +268,39 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
             // Pattern positive, target negated: pattern interval must lie
             // entirely outside target's excluded range
             res = hi1 < lo2 || lo1 > hi2;
+          }
+        }
+      } else {
+        // One or both queries have empty interval (e.g. GreaterQuery(INT_MIN)
+        // or LessQuery(INT_MAX)). Empty interval means the query matches no
+        // values; its negation matches all values.
+        if (!hasI1 && !hasI2) {
+          // Both empty: pattern accepted set ⊆ target accepted set
+          // Empty ⊆ empty → true; All ⊆ All → true; Empty ⊆ All → true;
+          // All ⊆ Empty → false
+          if (q1->getNegation() && !q2->getNegation()) {
+            res = false;
+          } else {
+            res = true;
+          }
+        } else if (!hasI1) {
+          // Pattern has empty interval
+          if (q1->getNegation()) {
+            // Pattern matches everything → only matches if target also
+            // matches everything
+            res = q2->getNegation();
+          } else {
+            // Pattern matches nothing → empty ⊆ anything
+            res = true;
+          }
+        } else {
+          // Target has empty interval
+          if (q2->getNegation()) {
+            // Target matches everything → anything ⊆ everything
+            res = true;
+          } else {
+            // Target matches nothing → only empty pattern matches
+            res = !q1->getNegation();
           }
         }
       }

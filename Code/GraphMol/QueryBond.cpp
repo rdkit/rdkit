@@ -123,6 +123,13 @@ bool getBondInterval(const QueryBond::QUERYBOND_QUERY *q, int &lo, int &hi) {
   if (r) {
     lo = r->getLower();
     hi = r->getUpper();
+    auto ends = r->getEndsOpen();
+    if (ends.first && lo < std::numeric_limits<int>::max()) {
+      lo++;
+    }
+    if (ends.second && hi > std::numeric_limits<int>::min()) {
+      hi--;
+    }
     return true;
   }
   auto *le = dynamic_cast<const BOND_LESSEQUAL_QUERY *>(q);
@@ -234,8 +241,10 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
     std::string bd2 = stripPrefix(d2);
     if (bd1 == bd2 && std::find(&equalityQueries[0], &equalityQueries[nQueries],
                                 bd1) != &equalityQueries[nQueries]) {
-      int lo1 = 0, hi1 = 0, lo2 = 0, hi2 = 0;
-      if (getBondInterval(q1, lo1, hi1) && getBondInterval(q2, lo2, hi2)) {
+       int lo1 = 0, hi1 = 0, lo2 = 0, hi2 = 0;
+       bool hasI1 = getBondInterval(q1, lo1, hi1);
+       bool hasI2 = getBondInterval(q2, lo2, hi2);
+       if (hasI1 && hasI2) {
         if (q1->getNegation() == q2->getNegation()) {
           if (!q1->getNegation()) {
             // Both positive: pattern interval must be subset of target interval
@@ -265,6 +274,39 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
             // Pattern positive, target negated: pattern interval must lie
             // entirely outside target's excluded range
             res = hi1 < lo2 || lo1 > hi2;
+          }
+        }
+      } else {
+        // One or both queries have empty interval (e.g. GreaterQuery(INT_MIN)
+        // or LessQuery(INT_MAX)). Empty interval means the query matches no
+        // values; its negation matches all values.
+        if (!hasI1 && !hasI2) {
+          // Both empty: pattern accepted set ⊆ target accepted set
+          // Empty ⊆ empty → true; All ⊆ All → true; Empty ⊆ All → true;
+          // All ⊆ Empty → false
+          if (q1->getNegation() && !q2->getNegation()) {
+            res = false;
+          } else {
+            res = true;
+          }
+        } else if (!hasI1) {
+          // Pattern has empty interval
+          if (q1->getNegation()) {
+            // Pattern matches everything → only matches if target also
+            // matches everything
+            res = q2->getNegation();
+          } else {
+            // Pattern matches nothing → empty ⊆ anything
+            res = true;
+          }
+        } else {
+          // Target has empty interval
+          if (q2->getNegation()) {
+            // Target matches everything → anything ⊆ everything
+            res = true;
+          } else {
+            // Target matches nothing → only empty pattern matches
+            res = !q1->getNegation();
           }
         }
       }
