@@ -1002,6 +1002,12 @@ M  END
     rgd = RGroupDecomposition(Chem.MolFromSmiles(smi) for smi in cores)
     self.assertEqual(decompose(rgd), expected)
 
+    coreMols = [Chem.MolFromSmiles(smi) for smi in cores]
+    with self.assertRaisesRegex(ValueError, 'cores must not contain None'):
+      RGroupDecomposition(coreMols + [None])
+    with self.assertRaisesRegex(ValueError, 'mols must not contain None'):
+      RGroupDecompose(coreMols, mols + [None])
+
 
 if __name__ == '__main__':
   rdBase.DisableLog("rdApp.debug")

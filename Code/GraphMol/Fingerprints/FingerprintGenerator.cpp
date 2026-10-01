@@ -825,23 +825,19 @@ template RDKIT_FINGERPRINTS_EXPORT
 
 SparseIntVect<std::uint64_t> *getSparseCountFP(const ROMol &mol,
                                                FPType fPType) {
-  std::vector<const ROMol *> tempVect(1, &mol);
-  return (*getSparseCountFPBulk(tempVect, fPType))[0];
+  return makeFPGenerator(fPType)->getSparseCountFingerprint(mol);
 }
 
 SparseBitVect *getSparseFP(const ROMol &mol, FPType fPType) {
-  std::vector<const ROMol *> tempVect(1, &mol);
-  return (*getSparseFPBulk(tempVect, fPType))[0];
+  return makeFPGenerator(fPType)->getSparseFingerprint(mol);
 }
 
 SparseIntVect<std::uint32_t> *getCountFP(const ROMol &mol, FPType fPType) {
-  std::vector<const ROMol *> tempVect(1, &mol);
-  return (*getCountFPBulk(tempVect, fPType))[0];
+  return makeFPGenerator(fPType)->getCountFingerprint(mol);
 }
 
 ExplicitBitVect *getFP(const ROMol &mol, FPType fPType) {
-  std::vector<const ROMol *> tempVect(1, &mol);
-  return (*getFPBulk(tempVect, fPType))[0];
+  return makeFPGenerator(fPType)->getFingerprint(mol);
 }
 
 std::unique_ptr<FingerprintGenerator<std::uint64_t>> makeFPGenerator(

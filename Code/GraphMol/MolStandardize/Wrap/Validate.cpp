@@ -59,7 +59,8 @@ MolStandardize::MolVSValidation *getMolVSValidation(
   return new MolStandardize::MolVSValidation(vs);
 }
 
-//! Copies each atom of \c atoms as it is read, holding one at a time.
+//! Copies each atom of \c atoms as it is read, holding one at a time. None
+//! gives an empty vector.
 std::vector<std::shared_ptr<Atom>> copyAtoms(const python::object &atoms) {
   std::vector<std::shared_ptr<Atom>> res;
   if (!atoms) {
@@ -71,7 +72,7 @@ std::vector<std::shared_ptr<Atom>> copyAtoms(const python::object &atoms) {
     // A generator may hold no other reference to the atom.
     python::object item = *it;
     res.push_back(
-        std::shared_ptr<Atom>(python::extract<Atom *>(item)()->copy()));
+        std::shared_ptr<Atom>(python::extract<const Atom &>(item)().copy()));
   }
   return res;
 }

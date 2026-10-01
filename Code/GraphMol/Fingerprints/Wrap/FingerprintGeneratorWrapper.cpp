@@ -348,7 +348,7 @@ python::list fingerprintEach(const python::object &py_molVect,
        it != end; ++it) {
     // A generator or supplier may hold no other reference to the molecule.
     python::object item = *it;
-    const ROMol *mol = python::extract<const ROMol *>(item);
+    const ROMol *mol = &python::extract<const ROMol &>(item)();
     result.append(boost::shared_ptr<ResultType>(compute(*mol)));
   }
   return result;

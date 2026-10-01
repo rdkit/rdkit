@@ -112,7 +112,7 @@ RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, python::object objs,
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
     items[i] = objs[i];
-    bvs[i] = python::extract<const ExplicitBitVect *>(items[i]);
+    bvs[i] = &python::extract<const ExplicitBitVect &>(items[i])();
   }
   pyBVFunctor<ExplicitBitVect> functor(bvs, TANIMOTO);
 
@@ -131,7 +131,7 @@ python::tuple LazyVectorMaxMinPicksWithThreshold(
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
     items[i] = objs[i];
-    bvs[i] = python::extract<const ExplicitBitVect *>(items[i]);
+    bvs[i] = &python::extract<const ExplicitBitVect &>(items[i])();
   }
   pyBVFunctor<ExplicitBitVect> functor(bvs, TANIMOTO);
 

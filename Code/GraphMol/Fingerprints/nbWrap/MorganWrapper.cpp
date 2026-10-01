@@ -128,7 +128,7 @@ RETURNS: AtomInvariantsGenerator
         nb::list items(py_patterns);
         std::vector<const ROMol *> patterns;
         for (auto item : items) {
-          patterns.push_back(nb::cast<const ROMol *>(item));
+          patterns.push_back(&nb::cast<const ROMol &>(item));
         }
         return new MorganFingerprint::MorganFeatureAtomInvGenerator(&patterns);
       },

@@ -76,7 +76,7 @@ python::list BulkDice(const T &siv1, python::object sivs, bool returnDistance) {
     // A generator may hold no other reference to the vector.
     python::object item = *it;
     double simVal;
-    const T *siv2 = python::extract<T *>(item)();
+    const T *siv2 = &python::extract<const T &>(item)();
     simVal = DiceSimilarity(siv1, *siv2, returnDistance);
     res.append(simVal);
   }
@@ -91,7 +91,7 @@ python::list BulkTanimoto(const T &siv1, python::object sivs,
     // A generator may hold no other reference to the vector.
     python::object item = *it;
     double simVal;
-    const T *siv2 = python::extract<T *>(item)();
+    const T *siv2 = &python::extract<const T &>(item)();
     simVal = TanimotoSimilarity(siv1, *siv2, returnDistance);
     res.append(simVal);
   }
@@ -107,7 +107,7 @@ python::list BulkTversky(const T &siv1, python::object sivs, double a, double b,
     // A generator may hold no other reference to the vector.
     python::object item = *it;
     double simVal;
-    const T *siv2 = python::extract<T *>(item)();
+    const T *siv2 = &python::extract<const T &>(item)();
     simVal = TverskySimilarity(siv1, *siv2, a, b, returnDistance);
     res.append(simVal);
   }

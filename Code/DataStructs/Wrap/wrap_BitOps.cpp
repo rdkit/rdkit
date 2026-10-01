@@ -55,11 +55,11 @@ python::list NeighborWrapper(python::object queries, python::object bvs,
        it != end; ++it) {
     // A generator may hold no other reference to the query.
     python::object query = *it;
-    const T *bv1 = python::extract<const T *>(query)();
+    const T *bv1 = &python::extract<const T &>(query)();
     double closest = -1;
-    unsigned nbr;
+    unsigned nbr = 0;
     for (unsigned int j = 0; j < nbvs; ++j) {
-      const T *bv2 = python::extract<const T *>(bvItems[j])();
+      const T *bv2 = &python::extract<const T &>(bvItems[j])();
       auto sim = metric(*bv1, *bv2);
       if (sim > closest) {
         closest = sim;
@@ -80,7 +80,7 @@ python::list BulkWrapper(const T *bv1, python::object bvs,
        it != end; ++it) {
     // A generator may hold no other reference to the vector.
     python::object item = *it;
-    const T *bv2 = python::extract<const T *>(item)();
+    const T *bv2 = &python::extract<const T &>(item)();
     auto sim = metric(*bv1, *bv2);
     if (returnDistance) {
       sim = 1.0 - sim;
@@ -99,7 +99,7 @@ python::list BulkWrapper(const T *bv1, python::object bvs, double a, double b,
        it != end; ++it) {
     // A generator may hold no other reference to the vector.
     python::object item = *it;
-    const T *bv2 = python::extract<T *>(item)();
+    const T *bv2 = &python::extract<const T &>(item)();
     auto sim = metric(*bv1, *bv2, a, b);
     if (returnDistance) {
       sim = 1.0 - sim;

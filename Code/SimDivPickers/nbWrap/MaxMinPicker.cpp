@@ -99,7 +99,7 @@ RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, nb::object objs,
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
     items[i] = objs[i];
-    bvs[i] = nb::cast<const ExplicitBitVect *>(items[i]);
+    bvs[i] = &nb::cast<const ExplicitBitVect &>(items[i]);
   }
   pyBVFunctor<ExplicitBitVect> functor(bvs, TANIMOTO);
 
@@ -118,7 +118,7 @@ std::tuple<RDKit::INT_VECT, double> LazyVectorMaxMinPicksWithThreshold(
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
     items[i] = objs[i];
-    bvs[i] = nb::cast<const ExplicitBitVect *>(items[i]);
+    bvs[i] = &nb::cast<const ExplicitBitVect &>(items[i]);
   }
   pyBVFunctor<ExplicitBitVect> functor(bvs, TANIMOTO);
 

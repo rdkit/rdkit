@@ -436,6 +436,12 @@ class TestCase(unittest.TestCase):
       Chem.MolFromSmarts(sma) for sma in smarts)
     g = rdFingerprintGenerator.GetMorganGenerator(radius=2, atomInvariantsGenerator=invGen)
     self.assertEqual(g.GetSparseCountFingerprint(m).GetNonzeroElements(), expected)
+    # nanobind raises RuntimeError for a None pattern. Boost ignores the patterns (#9601), so
+    # this only checks that it does not crash.
+    try:
+      rdFingerprintGenerator.GetMorganFeatureAtomInvGen([Chem.MolFromSmarts(smarts[0]), None])
+    except RuntimeError:
+      pass
 
   def testFingerprintsFromIterables(self):
     smiles = ['c1ccccc1O', 'c1ccccc1N', 'CCOC(=O)C', 'CC(C)CC(=O)O']
@@ -462,6 +468,9 @@ class TestCase(unittest.TestCase):
         self.assertEqual([fp.ToBitString() for fp in g.GetFingerprints(make())], expected)
         self.assertEqual([fp.ToBitString() for fp in rdFingerprintGenerator.GetFPs(make())],
                          bulkExpected)
+    # Boost raises TypeError for a None element and nanobind RuntimeError.
+    with self.assertRaises((TypeError, RuntimeError)):
+      rdFingerprintGenerator.GetFPs(mols + [None])
 
 
 if __name__ == '__main__':

@@ -269,6 +269,12 @@ class TestCase(unittest.TestCase):
           list(ds.BulkTanimotoSimilarity(vs[0], make())),
           list(ds.BulkTverskySimilarity(vs[0], make(), 0.5, 0.5))
         ], expected)
+    # Boost raises TypeError for a None element and nanobind RuntimeError.
+    for bulk in (ds.BulkDiceSimilarity, ds.BulkTanimotoSimilarity):
+      with self.assertRaises((TypeError, RuntimeError)):
+        bulk(vs[0], vs[1:] + [None])
+    with self.assertRaises((TypeError, RuntimeError)):
+      ds.BulkTverskySimilarity(vs[0], vs[1:] + [None], 0.5, 0.5)
 
 
 if __name__ == '__main__':

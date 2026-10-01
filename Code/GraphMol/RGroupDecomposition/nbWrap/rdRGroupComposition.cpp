@@ -63,7 +63,7 @@ class RGroupDecompositionHelper {
       for (nb::handle h : nb::iter(cores)) {
         auto sptr = nb::cast<ROMOL_SPTR>(h);
         if (!sptr) {
-          throw nb::value_error("reaction called with None reactants");
+          throw nb::value_error("cores must not contain None");
         }
         coreMols.push_back(sptr);
       }
@@ -167,7 +167,7 @@ nb::object RGroupDecomp(nb::object cores, nb::object mols,
   for (nb::handle h : nb::iter(mols)) {
     auto *mol_ptr = nb::cast<ROMol *>(h);
     if (!mol_ptr) {
-      throw nb::value_error("reaction called with None reactants");
+      throw nb::value_error("mols must not contain None");
     }
     ROMOL_SPTR sptr(mol_ptr, [](ROMol *) {});
     if (decomp.Add(*sptr) == -1) {

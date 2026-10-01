@@ -50,7 +50,7 @@ RDKit::INT_VECT LazyVectorLeaderPicks(LeaderPicker *picker, python::object objs,
   std::vector<const ExplicitBitVect *> bvs(poolSize);
   for (int i = 0; i < poolSize; ++i) {
     items[i] = objs[i];
-    bvs[i] = python::extract<const ExplicitBitVect *>(items[i]);
+    bvs[i] = &python::extract<const ExplicitBitVect &>(items[i])();
   }
   pyBVFunctor<ExplicitBitVect> functor(bvs, TANIMOTO);
   RDKit::INT_VECT res;

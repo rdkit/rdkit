@@ -336,6 +336,19 @@ class TestCase(unittest.TestCase):
     self.assertEqual(list(picker.LazyBitVectorPick(fps, len(fps), 0.8)),
                      list(picker.LazyBitVectorPick(bvs, len(bvs), 0.8)))
 
+  def testLazyBitVectorPickWithNone(self):
+    bv = DataStructs.ExplicitBitVect(2048)
+    bv.SetBit(1)
+    pool = [bv, None, bv]
+    # Boost raises TypeError for a None element and nanobind RuntimeError.
+    with self.assertRaises((TypeError, RuntimeError)):
+      rdSimDivPickers.MaxMinPicker().LazyBitVectorPick(pool, len(pool), 2, seed=42)
+    with self.assertRaises((TypeError, RuntimeError)):
+      rdSimDivPickers.MaxMinPicker().LazyBitVectorPickWithThreshold(pool, len(pool), 2, 0.5,
+                                                                    seed=42)
+    with self.assertRaises((TypeError, RuntimeError)):
+      rdSimDivPickers.LeaderPicker().LazyBitVectorPick(pool, len(pool), 0.8)
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -371,6 +371,14 @@ class TestCase(unittest.TestCase):
         self.assertEqual(list(DataStructs.BulkTanimotoSimilarity(queries[0], make(5))), tanimoto)
         self.assertEqual(list(DataStructs.BulkTverskySimilarity(queries[0], make(5), 0.5, 0.5)),
                          tversky)
+    self.assertEqual(DataStructs.TanimotoSimilarityNeighbors(queries, []), [(0, -1.0), (0, -1.0)])
+    # Boost raises TypeError for a None element and nanobind RuntimeError.
+    for call in (lambda: DataStructs.TanimotoSimilarityNeighbors(queries, bvs + [None]),
+                 lambda: DataStructs.TanimotoSimilarityNeighbors(queries + [None], bvs),
+                 lambda: DataStructs.BulkTanimotoSimilarity(queries[0], bvs + [None]),
+                 lambda: DataStructs.BulkTverskySimilarity(queries[0], bvs + [None], 0.5, 0.5)):
+      with self.assertRaises((TypeError, RuntimeError)):
+        call()
 
 
 if __name__ == '__main__':

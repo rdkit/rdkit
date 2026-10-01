@@ -67,7 +67,7 @@ class RGroupDecompositionHelper {
       python::stl_input_iterator<ROMOL_SPTR> iter(cores), end;
       while (iter != end) {
         if (!*iter) {
-          throw_value_error("reaction called with None reactants");
+          throw_value_error("cores must not contain None");
         }
         coreMols.push_back(*iter);
         ++iter;
@@ -169,7 +169,7 @@ python::object RGroupDecomp(python::object cores, python::object mols,
   unsigned int idx = 0;
   while (iter != end) {
     if (!*iter) {
-      throw_value_error("reaction called with None reactants");
+      throw_value_error("mols must not contain None");
     }
     if (decomp.Add(*(*iter)) == -1) {
       unmatched.append(idx);

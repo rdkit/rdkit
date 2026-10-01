@@ -354,6 +354,12 @@ class TestCase(unittest.TestCase):
           ["INFO: [DisallowedAtomsValidation] Atom F is in disallowedAtoms list"])
         with self.assertRaises(ValueError):
           rdMolStandardize.AllowedAtomsValidation(make([]))
+    # Boost raises TypeError for a None element and nanobind RuntimeError.
+    for validation in (rdMolStandardize.AllowedAtomsValidation,
+                       rdMolStandardize.DisallowedAtomsValidation):
+      with self.subTest(validation=validation.__name__):
+        with self.assertRaises((TypeError, RuntimeError)):
+          validation([Atom(6), None])
 
   def test10NormalizeFromData(self):
     data = """//	Name	SMIRKS
