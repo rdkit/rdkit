@@ -355,7 +355,7 @@ void getRingPatternsParityRelations(
     std::set<std::pair<unsigned int, unsigned int>> &opposite) {
   // Do not do the extra work of deduplicating the matches, since
   // we already deduplicate the parities
-  static SubstructMatchParameters p;
+  SubstructMatchParameters p;
   p.uniquify = false;
 
   same.clear();
