@@ -49,8 +49,10 @@ def CharacteristicPolynomial(mol, mat=None):
     A = mat
   A = numpy.asarray(A, dtype=float)
   # A molecular adjacency matrix is symmetric, and eigvalsh is backward stable for that case.
-  # The general branch is kept because this function accepts an arbitrary matrix.
-  if A.shape[0] == A.shape[1] and numpy.allclose(A, A.T):
+  # The test must be EXACT: eigvalsh reads only one triangle, so a merely near-symmetric matrix
+  # would silently get the polynomial of its symmetrised version instead of its own. The general
+  # branch is kept because this function accepts an arbitrary matrix.
+  if A.shape[0] == A.shape[1] and numpy.array_equal(A, A.T):
     roots = numpy.linalg.eigvalsh(A)
     res = numpy.array([1.0])
   else:
