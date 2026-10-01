@@ -353,7 +353,10 @@ void getRingPatternsParityRelations(
     const RDKit::ROMol &mol,
     std::set<std::pair<unsigned int, unsigned int>> &same,
     std::set<std::pair<unsigned int, unsigned int>> &opposite) {
-  using namespace RDKit;
+  // Do not do the extra work of deduplicating the matches, since
+  // we already deduplicate the parities
+  static SubstructMatchParameters p;
+  p.uniquify = false;
 
   same.clear();
   opposite.clear();
@@ -361,9 +364,11 @@ void getRingPatternsParityRelations(
   std::vector<int> forwardMapping;
   std::vector<int> reverseMapping;
   for (const auto &pattern : getPatterns()) {
-    // The match is a substructure, so it is not unlikely
-    // that the vector is left with some -1 values
-    auto matches = SubstructMatch(mol, pattern);
+    // The SubstructMatch is limited to 1000 matches, so we might miss
+    // some matches. If this happens, and we miss some parity paris,
+    // we might see some stereoisomers that would have been filtered
+    // out, but no isomers that shouldn't be discarded will be lost
+    auto matches = SubstructMatch(mol, pattern, p);
     if (matches.empty()) {
       continue;
     }
@@ -372,10 +377,12 @@ void getRingPatternsParityRelations(
     reverseMapping.resize(mol.getNumAtoms());      // mol -> pattern
 
     for (const auto &match : matches) {
+      // The match is a substructure, so it is not unlikely
+      // that the reverse map is left with some -1 values
+      std::ranges::fill(reverseMapping, -1);
+
       // No need to reset forwardMapping: all the pattern atoms
       // must be matched, so the mapping will be completely overwritten
-      // in the loop below
-      std::ranges::fill(reverseMapping, -1);
       for (auto [qIdx, molIdx] : match) {
         forwardMapping[qIdx] = molIdx;
         reverseMapping[molIdx] = qIdx;
