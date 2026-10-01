@@ -127,18 +127,23 @@ void StereoisomerEnumerator::buildFlippers() {
 }
 
 bool StereoisomerEnumerator::passesRingPatternsCheck() const {
-  // We already matched the input mol against the patterns,
-  // so we know that i and j are (pseudo)chiral. Now, check
-  // if the current parities are compatible with the pattern
   for (auto [i, j] : d_pattern_same_parity) {
-    if (d_mol.getAtomWithIdx(i)->getChiralTag() !=
-        d_mol.getAtomWithIdx(j)->getChiralTag()) {
+    auto atomIParity = d_mol.getAtomWithIdx(i)->getChiralTag();
+    auto atomJParity = d_mol.getAtomWithIdx(j)->getChiralTag();
+    if ((atomIParity == Atom::CHI_TETRAHEDRAL_CW &&
+         atomJParity == Atom::CHI_TETRAHEDRAL_CCW) ||
+        (atomIParity == Atom::CHI_TETRAHEDRAL_CCW &&
+         atomJParity == Atom::CHI_TETRAHEDRAL_CW)) {
       return false;
     }
   }
   for (auto [i, j] : d_pattern_opposite_parity) {
-    if (d_mol.getAtomWithIdx(i)->getChiralTag() ==
-        d_mol.getAtomWithIdx(j)->getChiralTag()) {
+    auto atomIParity = d_mol.getAtomWithIdx(i)->getChiralTag();
+    auto atomJParity = d_mol.getAtomWithIdx(j)->getChiralTag();
+    if ((atomIParity == Atom::CHI_TETRAHEDRAL_CW &&
+         atomJParity == Atom::CHI_TETRAHEDRAL_CW) ||
+        (atomIParity == Atom::CHI_TETRAHEDRAL_CCW &&
+         atomJParity == Atom::CHI_TETRAHEDRAL_CCW)) {
       return false;
     }
   }
