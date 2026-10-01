@@ -127,26 +127,12 @@ bool StereoisomerEnumerator::passesRingPatternsCheck() const {
   // so we know that i and j are (pseudo)chiral. Now, check
   // if the current parities are compatible with the pattern
   for (auto [i, j] : d_pattern_same_parity) {
-    for (auto x : {i, j}) {
-      if (d_mol.getAtomWithIdx(x)->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-          d_mol.getAtomWithIdx(x)->getChiralTag() !=
-              Atom::CHI_TETRAHEDRAL_CCW) {
-        throw std::logic_error("Atom is not CW/CCW as expected");
-      }
-    }
     if (d_mol.getAtomWithIdx(i)->getChiralTag() !=
         d_mol.getAtomWithIdx(j)->getChiralTag()) {
       return false;
     }
   }
   for (auto [i, j] : d_pattern_opposite_parity) {
-    for (auto x : {i, j}) {
-      if (d_mol.getAtomWithIdx(x)->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-          d_mol.getAtomWithIdx(x)->getChiralTag() !=
-              Atom::CHI_TETRAHEDRAL_CCW) {
-        throw std::logic_error("Atom is not CW/CCW as expected");
-      }
-    }
     if (d_mol.getAtomWithIdx(i)->getChiralTag() ==
         d_mol.getAtomWithIdx(j)->getChiralTag()) {
       return false;

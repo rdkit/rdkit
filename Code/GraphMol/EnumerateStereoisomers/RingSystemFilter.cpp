@@ -20,6 +20,10 @@
 
 #include "RingSystemFilter.h"
 
+// Enable this for additional checks when adding
+// new patterns
+// #define DEBUG_NEW_PATTERNS 1
+
 using namespace RDKit;
 
 namespace {
@@ -301,9 +305,11 @@ bool isParitySwapped(const RDKit::ROMol &mol, const RDKit::ROMol &pattern,
     patternBndIndices.push_back(-1);
   }
 
+#ifdef DEBUG_NEW_PATTERNS
   if (patternBndIndices.size() != 4) {
     throw std::logic_error("unexpected number of neighbors");
   }
+#endif
 
   // Now build the mol reference
   BondIdxVector molBndIndices;
@@ -327,9 +333,11 @@ bool isParitySwapped(const RDKit::ROMol &mol, const RDKit::ROMol &pattern,
     molBndIndices.push_back(-1);
   }
 
+#ifdef DEBUG_NEW_PATTERNS
   if (molBndIndices.size() != 4) {
     throw std::logic_error("unexpected number of neighbors");
   }
+#endif
 
   int nSwaps =
       RDKit::countSwapsToInterconvert(patternBndIndices, molBndIndices);
