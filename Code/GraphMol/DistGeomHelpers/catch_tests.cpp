@@ -35,6 +35,7 @@
 #include <map>
 #include <limits>
 #include <numbers>
+#include <cmath>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <DistGeom/ZMatrixUtils.h>
@@ -44,7 +45,6 @@
 #ifdef RDK_TEST_MULTITHREADED
 #include <csignal>
 #include <thread>
-#include <cmath>
 #endif
 
 using namespace RDKit;
