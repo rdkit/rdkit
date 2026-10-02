@@ -12,13 +12,14 @@
 #ifndef __RD_SNAPSHOT_H__
 #define __RD_SNAPSHOT_H__
 #include <utility>
+#include <boost/graph/graph_selectors.hpp>
 #include <Geometry/point.h>
 #include <boost/shared_array.hpp>
 
 namespace RDKit {
 class Snapshot;
 class Trajectory;
-typedef std::vector<Snapshot> SnapshotVect;
+using SnapshotVect = std::vector<Snapshot>;
 }  // namespace RDKit
 
 namespace RDKit {
