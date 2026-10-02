@@ -573,6 +573,16 @@ void testQueryQueryMatches() {
   }
 
   {
+    // order==2 vs >3 tol=1 (interval [MIN,1]) → false
+    QueryBond b1(Bond::DOUBLE), b2;
+    auto *q = makeBondSimpleQuery<BOND_GREATER_QUERY>(3, queryBondOrder,
+                                                      "greater_BondOrder");
+    q->setTol(1);
+    b2.setQuery(q);
+    TEST_ASSERT(!b1.QueryMatch(&b2));
+  }
+
+  {
     // !<INT_MAX (ALL) vs !=2 → false
     QueryBond b1, b2(Bond::DOUBLE);
     b1.setQuery(makeBondSimpleQuery<BOND_LESS_QUERY>(

@@ -78,6 +78,7 @@ bool localMatch(ATOM_EQUALS_QUERY const *q1, ATOM_EQUALS_QUERY const *q2) {
 bool getAtomInterval(const QueryAtom::QUERYATOM_QUERY *q, int &lo, int &hi) {
   auto *r = dynamic_cast<const ATOM_RANGE_QUERY *>(q);
   if (r) {
+    if (r->getTol() != 0) return false;
     lo = r->getLower();
     hi = r->getUpper();
     auto ends = r->getEndsOpen();
@@ -93,18 +94,21 @@ bool getAtomInterval(const QueryAtom::QUERYATOM_QUERY *q, int &lo, int &hi) {
   }
   auto *le = dynamic_cast<const ATOM_LESSEQUAL_QUERY *>(q);
   if (le) {
+    if (le->getTol() != 0) return false;
     lo = le->getVal();
     hi = std::numeric_limits<int>::max();
     return true;
   }
   auto *ge = dynamic_cast<const ATOM_GREATEREQUAL_QUERY *>(q);
   if (ge) {
+    if (ge->getTol() != 0) return false;
     lo = std::numeric_limits<int>::min();
     hi = ge->getVal();
     return true;
   }
   auto *gt = dynamic_cast<const ATOM_GREATER_QUERY *>(q);
   if (gt) {
+    if (gt->getTol() != 0) return false;
     if (gt->getVal() == std::numeric_limits<int>::min()) {
       return false;
     }
@@ -114,6 +118,7 @@ bool getAtomInterval(const QueryAtom::QUERYATOM_QUERY *q, int &lo, int &hi) {
   }
   auto *lt = dynamic_cast<const ATOM_LESS_QUERY *>(q);
   if (lt) {
+    if (lt->getTol() != 0) return false;
     if (lt->getVal() == std::numeric_limits<int>::max()) {
       return false;
     }
@@ -123,6 +128,7 @@ bool getAtomInterval(const QueryAtom::QUERYATOM_QUERY *q, int &lo, int &hi) {
   }
   auto *e = dynamic_cast<const ATOM_EQUALS_QUERY *>(q);
   if (e) {
+    if (e->getTol() != 0) return false;
     lo = e->getVal();
     hi = e->getVal();
     return true;
