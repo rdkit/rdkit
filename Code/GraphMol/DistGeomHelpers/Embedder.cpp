@@ -1869,16 +1869,16 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   }
 
   if (params.optimizeConfWithId.has_value()) {
-    if (molFrags.size() > 1) {
-      BOOST_LOG(rdWarningLog)
-          << "Seeded conformer generation (via the optimizeConfWithId argument) "
-             "does not work with molecules that have multiple fragments."
-          << std::endl;
-      return;
-    }
     if (!detail::hasConformerWithId(mol, params.optimizeConfWithId.value())) {
       throw ValueErrorException(
           "`optimizeConfWithId` is provided but the molecule does not have a conformer with the provided Id!");
+    }
+    if (molFrags.size() > 1) {
+      BOOST_LOG(rdWarningLog)
+          << "Seeded conformer generation (via the optimizeConfWithId argument) "
+             "does not work with molecules that have multiple fragments. Aborting."
+          << std::endl;
+      return;
     }
     numConfs = 1;
   }
