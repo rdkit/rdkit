@@ -124,13 +124,15 @@ bool getBondInterval(const QueryBond::QUERYBOND_QUERY *q, int &lo, int &hi) {
     lo = r->getLower();
     hi = r->getUpper();
     auto ends = r->getEndsOpen();
-    if (ends.first && lo < std::numeric_limits<int>::max()) {
+    if (ends.first) {
+      if (lo >= std::numeric_limits<int>::max()) return false;
       lo++;
     }
-    if (ends.second && hi > std::numeric_limits<int>::min()) {
+    if (ends.second) {
+      if (hi <= std::numeric_limits<int>::min()) return false;
       hi--;
     }
-    return true;
+    if (lo > hi) return false;
   }
   auto *le = dynamic_cast<const BOND_LESSEQUAL_QUERY *>(q);
   if (le) {
@@ -241,10 +243,10 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
     std::string bd2 = stripPrefix(d2);
     if (bd1 == bd2 && std::find(&equalityQueries[0], &equalityQueries[nQueries],
                                 bd1) != &equalityQueries[nQueries]) {
-       int lo1 = 0, hi1 = 0, lo2 = 0, hi2 = 0;
-       bool hasI1 = getBondInterval(q1, lo1, hi1);
-       bool hasI2 = getBondInterval(q2, lo2, hi2);
-       if (hasI1 && hasI2) {
+      int lo1 = 0, hi1 = 0, lo2 = 0, hi2 = 0;
+      bool hasI1 = getBondInterval(q1, lo1, hi1);
+      bool hasI2 = getBondInterval(q2, lo2, hi2);
+      if (hasI1 && hasI2) {
         if (q1->getNegation() == q2->getNegation()) {
           if (!q1->getNegation()) {
             // Both positive: pattern interval must be subset of target interval
@@ -263,10 +265,12 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
             {
               bool resLeft = true, resRight = true;
               if (lo1 > std::numeric_limits<int>::min()) {
-                resLeft = lo2 <= std::numeric_limits<int>::min() && lo1 - 1 <= hi2;
+                resLeft =
+                    lo2 <= std::numeric_limits<int>::min() && lo1 - 1 <= hi2;
               }
               if (hi1 < std::numeric_limits<int>::max()) {
-                resRight = lo2 <= hi1 + 1 && std::numeric_limits<int>::max() <= hi2;
+                resRight =
+                    lo2 <= hi1 + 1 && std::numeric_limits<int>::max() <= hi2;
               }
               res = resLeft && resRight;
             }
@@ -290,24 +294,12 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
             res = true;
           }
         } else if (!hasI1) {
-          // Pattern has empty interval
-          if (q1->getNegation()) {
-            // Pattern matches everything → only matches if target also
-            // matches everything
-            res = q2->getNegation();
-          } else {
-            // Pattern matches nothing → empty ⊆ anything
-            res = true;
-          }
+          // Pattern is NONE or ALL; target is a proper subset → only NONE
+          // matches.
+          res = !q1->getNegation();
         } else {
-          // Target has empty interval
-          if (q2->getNegation()) {
-            // Target matches everything → anything ⊆ everything
-            res = true;
-          } else {
-            // Target matches nothing → only empty pattern matches
-            res = !q1->getNegation();
-          }
+          // Target is NONE or ALL; pattern is nonempty → only ALL matches.
+          res = q2->getNegation();
         }
       }
     }

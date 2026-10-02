@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <limits>
 
 using namespace RDKit;
 using namespace std;
@@ -505,6 +506,100 @@ void testQueryQueryMatches() {
                    Queries::COMPOSITE_OR);
     TEST_ASSERT(a1.QueryMatch(&a2));
     TEST_ASSERT(a2.QueryMatch(&a1));
+  }
+
+  // Empty-interval and open-range edge cases
+  {
+    // ==8 vs >INT_MIN (empty target) → false
+    QueryAtom a1(8), a2;
+    a2.setQuery(makeAtomNumQuery<ATOM_GREATER_QUERY>(
+        std::numeric_limits<int>::min(), "greater_AtomAtomicNum"));
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+  }
+
+  {
+    // !<INT_MAX (ALL) vs !=5 → false
+    QueryAtom a1, a2(5);
+    a1.setQuery(makeAtomNumQuery<ATOM_LESS_QUERY>(
+        std::numeric_limits<int>::max(), "less_AtomAtomicNum"));
+    a1.getQuery()->setNegation(true);
+    a2.getQuery()->setNegation(true);
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+  }
+
+  {
+    // !=10 vs !(5,5,open) (ALL) → true
+    QueryAtom a1, a2;
+    a1.setQuery(makeAtomNumQuery(10));
+    a1.getQuery()->setNegation(true);
+    a2.setQuery(makeAtomRangeQuery(5, 5, true, true, queryAtomNum,
+                                   "range_AtomAtomicNum"));
+    a2.getQuery()->setNegation(true);
+    TEST_ASSERT(a1.QueryMatch(&a2));
+  }
+
+  {
+    // (5,5,open) (NONE) vs ==8 → true
+    QueryAtom a1, a2(8);
+    a1.setQuery(makeAtomRangeQuery(5, 5, true, true, queryAtomNum,
+                                   "range_AtomAtomicNum"));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+  }
+
+  {
+    // (INT_MAX,INT_MAX,open) (NONE) vs ==1 → true
+    QueryAtom a1, a2(1);
+    a1.setQuery(makeAtomRangeQuery(std::numeric_limits<int>::max(),
+                                   std::numeric_limits<int>::max(), true, true,
+                                   queryAtomNum, "range_AtomAtomicNum"));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+  }
+
+  // Bond: same edge cases
+  {
+    // order==2 vs >INT_MIN (empty target) → false
+    QueryBond b1(Bond::DOUBLE), b2;
+    b2.setQuery(makeBondSimpleQuery<BOND_GREATER_QUERY>(
+        std::numeric_limits<int>::min(), queryBondOrder, "greater_BondOrder"));
+    TEST_ASSERT(!b1.QueryMatch(&b2));
+  }
+
+  {
+    // !<INT_MAX (ALL) vs !=2 → false
+    QueryBond b1, b2(Bond::DOUBLE);
+    b1.setQuery(makeBondSimpleQuery<BOND_LESS_QUERY>(
+        std::numeric_limits<int>::max(), queryBondOrder, "less_BondOrder"));
+    b1.getQuery()->setNegation(true);
+    b2.getQuery()->setNegation(true);
+    TEST_ASSERT(!b1.QueryMatch(&b2));
+  }
+
+  {
+    // !=2 vs !(1,1,open) (ALL) → true
+    QueryBond b1, b2;
+    b1.setQuery(makeBondOrderEqualsQuery(Bond::DOUBLE));
+    b1.getQuery()->setNegation(true);
+    b2.setQuery(makeBondRangeQuery(1, 1, true, true, queryBondOrder,
+                                   "range_BondOrder"));
+    b2.getQuery()->setNegation(true);
+    TEST_ASSERT(b1.QueryMatch(&b2));
+  }
+
+  {
+    // (1,1,open) (NONE) vs ==2 → true
+    QueryBond b1, b2(Bond::DOUBLE);
+    b1.setQuery(makeBondRangeQuery(1, 1, true, true, queryBondOrder,
+                                   "range_BondOrder"));
+    TEST_ASSERT(b1.QueryMatch(&b2));
+  }
+
+  {
+    // (INT_MAX,INT_MAX,open) (NONE) vs ==1 → true
+    QueryBond b1, b2(Bond::SINGLE);
+    b1.setQuery(makeBondRangeQuery(std::numeric_limits<int>::max(),
+                                   std::numeric_limits<int>::max(), true, true,
+                                   queryBondOrder, "range_BondOrder"));
+    TEST_ASSERT(b1.QueryMatch(&b2));
   }
 
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;

@@ -81,13 +81,15 @@ bool getAtomInterval(const QueryAtom::QUERYATOM_QUERY *q, int &lo, int &hi) {
     lo = r->getLower();
     hi = r->getUpper();
     auto ends = r->getEndsOpen();
-    if (ends.first && lo < std::numeric_limits<int>::max()) {
+    if (ends.first) {
+      if (lo >= std::numeric_limits<int>::max()) return false;
       lo++;
     }
-    if (ends.second && hi > std::numeric_limits<int>::min()) {
+    if (ends.second) {
+      if (hi <= std::numeric_limits<int>::min()) return false;
       hi--;
     }
-    return true;
+    if (lo > hi) return false;
   }
   auto *le = dynamic_cast<const ATOM_LESSEQUAL_QUERY *>(q);
   if (le) {
@@ -284,24 +286,12 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
             res = true;
           }
         } else if (!hasI1) {
-          // Pattern has empty interval
-          if (q1->getNegation()) {
-            // Pattern matches everything → only matches if target also
-            // matches everything
-            res = q2->getNegation();
-          } else {
-            // Pattern matches nothing → empty ⊆ anything
-            res = true;
-          }
+          // Pattern is NONE or ALL; target is a proper subset → only NONE
+          // matches.
+          res = !q1->getNegation();
         } else {
-          // Target has empty interval
-          if (q2->getNegation()) {
-            // Target matches everything → anything ⊆ everything
-            res = true;
-          } else {
-            // Target matches nothing → only empty pattern matches
-            res = !q1->getNegation();
-          }
+          // Target is NONE or ALL; pattern is nonempty → only ALL matches.
+          res = q2->getNegation();
         }
       }
     }
