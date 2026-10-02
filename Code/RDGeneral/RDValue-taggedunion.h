@@ -352,7 +352,7 @@ inline void copy_rdvalue(RDValue &dest, const RDValue &src) {
 
 #ifdef RDK_32BIT_BUILD
 // avoid register pressure and spilling on 32 bit systems
-using RDvalue_cast_t = const RDValue &;
+using RDValue_cast_t = const RDValue &;
 #else
 using RDValue_cast_t = RDValue;
 #endif
