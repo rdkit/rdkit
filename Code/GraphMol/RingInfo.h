@@ -24,7 +24,7 @@ namespace RDKit {
 /*!
 
  */
-using FIND_RING_TYPE = enum {
+enum FIND_RING_TYPE {
   FIND_RING_TYPE_FAST,
   FIND_RING_TYPE_SSSR,
   FIND_RING_TYPE_SYMM_SSSR,

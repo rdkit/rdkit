@@ -33,7 +33,7 @@
 #include "XOrQuery.h"
 
 namespace Queries {
-using CompositeQueryType = enum {
+enum CompositeQueryType {
   COMPOSITE_AND,
   COMPOSITE_OR,
   COMPOSITE_XOR
