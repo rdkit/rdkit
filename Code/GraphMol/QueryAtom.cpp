@@ -89,19 +89,15 @@ bool getAtomInterval(const QueryAtom::QUERYATOM_QUERY *q, int &lo, int &hi) {
 
   auto *r = dynamic_cast<const ATOM_RANGE_QUERY *>(q);
   if (r) {
-    int tol = r->getTol();
-    lo = subSafe(r->getLower(), tol);
-    hi = addSafe(r->getUpper(), tol);
+    long long tol = r->getTol();
     auto ends = r->getEndsOpen();
-    if (ends.first) {
-      if (lo >= std::numeric_limits<int>::max()) return false;
-      lo++;
-    }
-    if (ends.second) {
-      if (hi <= std::numeric_limits<int>::min()) return false;
-      hi--;
-    }
-    if (lo > hi) return false;
+    long long l = (long long)r->getLower() + (ends.first ? tol + 1 : -tol);
+    long long h = (long long)r->getUpper() + (ends.second ? -tol - 1 : tol);
+    if (l > h || l > (long long)std::numeric_limits<int>::max() ||
+        h < (long long)std::numeric_limits<int>::min())
+      return false;
+    lo = (int)std::max(l, (long long)std::numeric_limits<int>::min());
+    hi = (int)std::min(h, (long long)std::numeric_limits<int>::max());
     return true;
   }
   auto *le = dynamic_cast<const ATOM_LESSEQUAL_QUERY *>(q);

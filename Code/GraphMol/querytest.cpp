@@ -655,6 +655,64 @@ void testQueryQueryMatches() {
     TEST_ASSERT(b1.QueryMatch(&b2));
   }
 
+  // Open-range tolerance: open lower pushes inward by +tol, open upper pulls
+  // inward by -tol
+  {
+    // atom (3,7,open) tol=1 → accepted (4,6) → interval [5,5]
+    // vs ==5 → true
+    QueryAtom a1, a2(5);
+    auto *q = makeAtomRangeQuery(3, 7, true, true, queryAtomNum,
+                                 "range_AtomAtomicNum");
+    q->setTol(1);
+    a1.setQuery(q);
+    TEST_ASSERT(a1.QueryMatch(&a2));
+  }
+
+  {
+    // atom (3,7,open) tol=1 → accepted (4,6) → interval [5,5]
+    // vs ==4 → false (4 not in [5,5])
+    QueryAtom a1, a2(4);
+    auto *q = makeAtomRangeQuery(3, 7, true, true, queryAtomNum,
+                                 "range_AtomAtomicNum");
+    q->setTol(1);
+    a1.setQuery(q);
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+  }
+
+  {
+    // atom (3,7,open-closed) tol=1 → accepted (4,8] → interval [5,8]
+    // ==5 ⊆ [5,8] → true
+    QueryAtom a1, a2(5);
+    auto *q = makeAtomRangeQuery(3, 7, true, false, queryAtomNum,
+                                 "range_AtomAtomicNum");
+    q->setTol(1);
+    a1.setQuery(q);
+    TEST_ASSERT(a2.QueryMatch(&a1));
+  }
+
+  {
+    // atom (3,7,closed-open) tol=1 → accepted [2,6) → interval [2,5]
+    // ==2 ⊆ [2,5] → true
+    QueryAtom a1, a2(2);
+    auto *q = makeAtomRangeQuery(3, 7, false, true, queryAtomNum,
+                                 "range_AtomAtomicNum");
+    q->setTol(1);
+    a1.setQuery(q);
+    TEST_ASSERT(a2.QueryMatch(&a1));
+  }
+
+  {
+    // bond (2,6,open) tol=2 → accepted (4,3) → empty → NONE
+    // vs ==5 → true (NONE ⊆ anything)
+    QueryBond b1, b2;
+    b2.setBondType(Bond::QUINTUPLE);
+    auto *q =
+        makeBondRangeQuery(2, 6, true, true, queryBondOrder, "range_BondOrder");
+    q->setTol(2);
+    b1.setQuery(q);
+    TEST_ASSERT(b1.QueryMatch(&b2));
+  }
+
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
