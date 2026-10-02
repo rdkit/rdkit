@@ -12,11 +12,12 @@
 
 #include <RDGeneral/Invariant.h>
 #include <Numerics/Optimizer/BFGSOpt.h>
+#include <cmath>
 
 namespace RDKit {
 namespace ForceFieldsHelper {
 void normalizeAngleDeg(double &angleDeg) {
-  angleDeg = fmod(angleDeg, 360.0);
+  angleDeg = std::fmod(angleDeg, 360.0);
   if (angleDeg < -180.0) {
     angleDeg += 360.0;
   } else if (angleDeg > 180.0) {
@@ -122,8 +123,8 @@ class calcGradient {
     for (unsigned int i = 0;
          i < mp_ffHolder->numPoints() * mp_ffHolder->dimension(); i++) {
       grad[i] *= gradScale;
-      if (fabs(grad[i]) > maxGrad) {
-        maxGrad = fabs(grad[i]);
+      if (std::fabs(grad[i]) > maxGrad) {
+        maxGrad = std::fabs(grad[i]);
       }
     }
     // this is a continuation of the same hack to avoid
@@ -197,7 +198,7 @@ double ForceField::distance(unsigned int i, unsigned int j, double *pos) {
         res += tmp * tmp;
       }
     }
-    res = sqrt(res);
+    res = std::sqrt(res);
   }
   return res;
 }
@@ -231,7 +232,7 @@ double ForceField::distance2(unsigned int i, unsigned int j,
   return res;
 }
 double ForceField::distance(unsigned int i, unsigned int j, double *pos) const {
-  auto res = sqrt(distance2(i, j, pos));
+  auto res = std::sqrt(distance2(i, j, pos));
   return res;
 }
 

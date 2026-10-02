@@ -42,7 +42,7 @@ double calcAngleForceConstant(const MMFFAngle *mmffAngleParams) {
 
 double calcAngleBendEnergy(const double theta0, const double ka, bool isLinear,
                            const double cosTheta) {
-  double angle = RAD2DEG * acos(cosTheta) - theta0;
+  double angle = RAD2DEG * std::acos(cosTheta) - theta0;
   double const cb = -0.006981317;
   double const c2 = MDYNE_A_TO_KCAL_MOL * DEG2RAD * DEG2RAD;
   double res = 0.0;
@@ -160,13 +160,13 @@ void AngleBendContrib::getGrad(double *pos, double *grad) const {
     clipToOne(cosTheta);
     double sinThetaSq = 1.0 - cosTheta * cosTheta;
     double sinTheta =
-        std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
+        std::max(((sinThetaSq > 0.0) ? std::sqrt(sinThetaSq) : 0.0), 1.0e-8);
 
     // use the chain rule:
     // dE/dx = dE/dTheta * dTheta/dx
 
     // dE/dTheta is independent of cartesians:
-    double angleTerm = RAD2DEG * acos(cosTheta) - d_theta0[i];
+    double angleTerm = RAD2DEG * std::acos(cosTheta) - d_theta0[i];
     double const cb = -0.006981317;
     double const c2 = MDYNE_A_TO_KCAL_MOL * DEG2RAD * DEG2RAD;
 

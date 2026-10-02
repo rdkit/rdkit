@@ -40,8 +40,8 @@ bool isInGroup6(int num) {
 // used locally, implement equation 17 of the UFF paper.
 double equation17(double bondOrder23, const AtomicParams *at2Params,
                   const AtomicParams *at3Params) {
-  return 5. * sqrt(at2Params->U1 * at3Params->U1) *
-         (1. + 4.18 * log(bondOrder23));
+  return 5. * std::sqrt(at2Params->U1 * at3Params->U1) *
+         (1. + 4.18 * std::log(bondOrder23));
 }
 
 void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t, double *d,
@@ -125,7 +125,7 @@ void TorsionAngleContrib::calcTorsionParams(double bondOrder23, int atNum2,
 
   if (hyb2 == RDKit::Atom::SP3 && hyb3 == RDKit::Atom::SP3) {
     // general case:
-    d_forceConstant = sqrt(at2Params->V1 * at3Params->V1);
+    d_forceConstant = std::sqrt(at2Params->V1 * at3Params->V1);
     d_order = 3;
     d_cosTerm = -1;  // phi0=60
 
@@ -139,7 +139,7 @@ void TorsionAngleContrib::calcTorsionParams(double bondOrder23, int atNum2,
       if (atNum3 == 8) {
         V3 = 2.0;
       }
-      d_forceConstant = sqrt(V2 * V3);
+      d_forceConstant = std::sqrt(V2 * V3);
       d_order = 2;
       d_cosTerm = -1;  // phi0=90
     }
@@ -233,7 +233,7 @@ void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
   RDKit::ForceFieldsHelper::computeDihedral(
       pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, nullptr, &cosPhi, r, t, d);
   double sinPhiSq = 1.0 - cosPhi * cosPhi;
-  double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
+  double sinPhi = ((sinPhiSq > 0.0) ? std::sqrt(sinPhiSq) : 0.0);
 
   // dE/dPhi is independent of cartesians:
   double dE_dPhi = getThetaDeriv(cosPhi, sinPhi);
