@@ -31,8 +31,8 @@ double calcBondRestLength(double bondOrder, const AtomicParams *end1Params,
 
   // O'Keefe and Breese electronegativity correction:
   double Xi = end1Params->GMP_Xi, Xj = end2Params->GMP_Xi;
-  double rEN = ri * rj * (std::sqrt(Xi) - std::sqrt(Xj)) * (std::sqrt(Xi) - std::sqrt(Xj)) /
-               (Xi * ri + Xj * rj);
+  double rEN = ri * rj * (std::sqrt(Xi) - std::sqrt(Xj)) *
+               (std::sqrt(Xi) - std::sqrt(Xj)) / (Xi * ri + Xj * rj);
 
   double res = ri + rj + rBO - rEN;
   return res;

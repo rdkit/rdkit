@@ -86,11 +86,10 @@ AngleBendContrib::AngleBendContrib(ForceField *owner) {
   dp_forceField = owner;
 }
 
-void AngleBendContrib::addTerm(unsigned int idx1,
-                               unsigned int idx2,
-                               unsigned int idx3,
-                               const ForceFields::MMFF::MMFFAngle *mmffAngleParams,
-                               const ForceFields::MMFF::MMFFProp *mmffPropParamsCentralAtom) {
+void AngleBendContrib::addTerm(
+    unsigned int idx1, unsigned int idx2, unsigned int idx3,
+    const ForceFields::MMFF::MMFFAngle *mmffAngleParams,
+    const ForceFields::MMFF::MMFFProp *mmffPropParamsCentralAtom) {
   URANGE_CHECK(idx1, dp_forceField->positions().size());
   URANGE_CHECK(idx2, dp_forceField->positions().size());
   URANGE_CHECK(idx3, dp_forceField->positions().size());
@@ -103,7 +102,6 @@ void AngleBendContrib::addTerm(unsigned int idx1,
   d_theta0.push_back(mmffAngleParams->theta0);
   d_ka.push_back(mmffAngleParams->ka);
 }
-
 
 double AngleBendContrib::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
@@ -139,7 +137,7 @@ void AngleBendContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(grad, "bad vector");
 
   const int numTerms = d_at1Idxs.size();
-  for (int i =0; i < numTerms; i++) {
+  for (int i = 0; i < numTerms; i++) {
     const int d_at1Idx = d_at1Idxs[i];
     const int d_at2Idx = d_at2Idxs[i];
     const int d_at3Idx = d_at3Idxs[i];
@@ -170,9 +168,10 @@ void AngleBendContrib::getGrad(double *pos, double *grad) const {
     double const cb = -0.006981317;
     double const c2 = MDYNE_A_TO_KCAL_MOL * DEG2RAD * DEG2RAD;
 
-    double dE_dTheta = (d_isLinear[i] ? -MDYNE_A_TO_KCAL_MOL * d_ka[i] * sinTheta
-                                   : RAD2DEG * c2 * d_ka[i] * angleTerm *
-                                         (1.0 + 1.5 * cb * angleTerm));
+    double dE_dTheta =
+        (d_isLinear[i] ? -MDYNE_A_TO_KCAL_MOL * d_ka[i] * sinTheta
+                       : RAD2DEG * c2 * d_ka[i] * angleTerm *
+                             (1.0 + 1.5 * cb * angleTerm));
 
     Utils::calcAngleBendGrad(r, dist, g, dE_dTheta, cosTheta, sinTheta);
   }

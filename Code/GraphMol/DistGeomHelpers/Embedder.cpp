@@ -334,7 +334,8 @@ bool _boundsFulfilled(const std::vector<std::size_t> &atoms,
           ((d2 > ub) && (std::fabs(d2 - ub) > 0.1 * ub))) {
 #ifdef DEBUG_EMBEDDING
         std::cerr << a1 << " " << a2 << ":" << d2 << " " << lb << " " << ub
-                  << " " << std::fabs(d2 - lb) << " " << std::fabs(d2 - ub) << std::endl;
+                  << " " << std::fabs(d2 - lb) << " " << std::fabs(d2 - ub)
+                  << std::endl;
 #endif
         return false;
       }
@@ -1949,7 +1950,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     MolOps::assignStereochemistry(*piece);
     DistGeom::VECT_CHIRALSET chiralCenters;
     DistGeom::VECT_CHIRALSET tetrahedralCarbons;
-    EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons, coordMap);
+    EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons,
+                                 coordMap);
 
     DistGeom::ZMatPtr zmat = std::make_shared<DistGeom::ZMatrix>(nAtoms);
     if (params.initialEmbeddingMode ==

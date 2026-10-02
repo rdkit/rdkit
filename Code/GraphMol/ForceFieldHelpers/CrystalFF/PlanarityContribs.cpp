@@ -118,7 +118,8 @@ void PlanarityContribs::getGrad(double *pos, double *grad) const {
     double sinChi = rJL.dotProduct(n);
     sinChi = std::clamp(sinChi, -1.0, 1.0);
     double cosChiSq = 1.0 - sinChi * sinChi;
-    double cosChi = std::max(((cosChiSq > 0.0) ? std::sqrt(cosChiSq) : 0.0), 1.0e-8);
+    double cosChi =
+        std::max(((cosChiSq > 0.0) ? std::sqrt(cosChiSq) : 0.0), 1.0e-8);
     double chi = std::asin(sinChi) * 180 / std::numbers::pi;
     double cosTheta = rJI.dotProduct(rJK);
     cosTheta = std::clamp(cosTheta, -1.0, 1.0);

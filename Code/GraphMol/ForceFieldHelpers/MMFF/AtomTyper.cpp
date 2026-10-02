@@ -2410,10 +2410,9 @@ MMFFMolProperties::MMFFMolProperties(ROMol &mol, const std::string &mmffVariant,
 
 // returns the MMFF angle type of the angle formed
 // by atoms with indexes idx1, idx2, idx3
-unsigned int MMFFMolProperties::getMMFFAngleType(const ROMol &mol,
-                                                 const unsigned int idx1,
-                                                 const unsigned int idx2,
-                                                 const unsigned int idx3) const {
+unsigned int MMFFMolProperties::getMMFFAngleType(
+    const ROMol &mol, const unsigned int idx1, const unsigned int idx2,
+    const unsigned int idx3) const {
   PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
 
   // ftp://ftp.wiley.com/public/journals/jcc/suppmat/17/553/MMFF-III_AppendixA.html
@@ -2575,8 +2574,8 @@ MMFFMolProperties::getMMFFTorsionType(const ROMol &mol, const unsigned int idx1,
 // tabulated parameters could not be found. The returned
 // pointer to a MMFFBond object must be freed by the caller
 const ForceFields::MMFF::MMFFBond *
-MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &,
-                                                         const Bond *bond) const {
+MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(
+    const ROMol &, const Bond *bond) const {
   PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
 
   const MMFFBond *mmffBndkParams;
@@ -2703,11 +2702,12 @@ MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &,
       }
 #endif
   // equation (18) - MMFF.V, page 625
-  mmffBondParams->r0 = (r0_i[0] + r0_i[1] -
-                        c * std::pow(std::fabs(mmffAtomCovRadPauEleParams[0]->chi -
-                                     mmffAtomCovRadPauEleParams[1]->chi),
-                                n) -
-                        delta);
+  mmffBondParams->r0 =
+      (r0_i[0] + r0_i[1] -
+       c * std::pow(std::fabs(mmffAtomCovRadPauEleParams[0]->chi -
+                              mmffAtomCovRadPauEleParams[1]->chi),
+                    n) -
+       delta);
   if (mmffBndkParams) {
     // equation (19) - MMFF.V, page 625
     double coeff = mmffBndkParams->r0 / mmffBondParams->r0;
@@ -2721,9 +2721,9 @@ MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams(const ROMol &,
     // equation (8), page 5
     mmffHerschbachLaurieParams = (*mmffHerschbachLaurie)(
         getPeriodicTableRowHL(atomicNum1), getPeriodicTableRowHL(atomicNum2));
-    mmffBondParams->kb =
-        std::pow(10.0, -(mmffBondParams->r0 - mmffHerschbachLaurieParams->a_ij) /
-                      mmffHerschbachLaurieParams->d_ij);
+    mmffBondParams->kb = std::pow(
+        10.0, -(mmffBondParams->r0 - mmffHerschbachLaurieParams->a_ij) /
+                  mmffHerschbachLaurieParams->d_ij);
   }
 
   return (const ForceFields::MMFF::MMFFBond *)mmffBondParams;
@@ -3668,10 +3668,12 @@ bool MMFFMolProperties::getMMFFTorsionParams(
   return res;
 }
 
-bool MMFFMolProperties::getMMFFOopBendParams(
-    const ROMol &mol, const unsigned int idx1, const unsigned int idx2,
-    const unsigned int idx3, const unsigned int idx4,
-    MMFFOop &mmffOopBendParams) const {
+bool MMFFMolProperties::getMMFFOopBendParams(const ROMol &mol,
+                                             const unsigned int idx1,
+                                             const unsigned int idx2,
+                                             const unsigned int idx3,
+                                             const unsigned int idx4,
+                                             MMFFOop &mmffOopBendParams) const {
   bool res = false;
   if (isValid() && mol.getBondBetweenAtoms(idx1, idx2) &&
       mol.getBondBetweenAtoms(idx2, idx3) &&
@@ -3697,9 +3699,9 @@ bool MMFFMolProperties::getMMFFOopBendParams(
   return res;
 }
 
-bool MMFFMolProperties::getMMFFVdWParams(const unsigned int idx1,
-                                         const unsigned int idx2,
-                                         MMFFVdWRijstarEps &mmffVdWParams) const {
+bool MMFFMolProperties::getMMFFVdWParams(
+    const unsigned int idx1, const unsigned int idx2,
+    MMFFVdWRijstarEps &mmffVdWParams) const {
   bool res = false;
   if (isValid()) {
     const MMFFVdWCollection *mmffVdW = DefaultParameters::getMMFFVdW();

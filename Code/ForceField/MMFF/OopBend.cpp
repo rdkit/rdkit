@@ -50,10 +50,8 @@ OopBendContrib::OopBendContrib(ForceField *owner) {
   dp_forceField = owner;
 }
 
-void OopBendContrib::addTerm(unsigned int idx1,
-                             unsigned int idx2,
-                             unsigned int idx3,
-                             unsigned int idx4,
+void OopBendContrib::addTerm(unsigned int idx1, unsigned int idx2,
+                             unsigned int idx3, unsigned int idx4,
                              const ForceFields::MMFF::MMFFOop *mmffOopParams) {
   PRECONDITION(mmffOopParams, "no OOP parameters");
   PRECONDITION((idx1 != idx2) && (idx1 != idx3) && (idx1 != idx4) &&
@@ -92,24 +90,25 @@ double OopBendContrib::getEnergy(double *pos) const {
     RDGeom::Point3D p4(pos[3 * d_at4Idx], pos[3 * d_at4Idx + 1],
                        pos[3 * d_at4Idx + 2]);
 
-    totalEnergy += Utils::calcOopBendEnergy(Utils::calcOopChi(p1, p2, p3, p4), d_koop[i]);
+    totalEnergy +=
+        Utils::calcOopBendEnergy(Utils::calcOopChi(p1, p2, p3, p4), d_koop[i]);
   }
   return totalEnergy;
 }
 
-void OopBendContrib::getGrad(double* pos, double* grad) const {
+void OopBendContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(pos, "bad vector");
   PRECONDITION(grad, "bad vector");
   PRECONDITION(dp_forceField, "no owner");
 
   const int numTerms = d_at1Idxs.size();
-  for (int i =0; i < numTerms; i++) {
+  for (int i = 0; i < numTerms; i++) {
     getSingleGrad(pos, grad, i);
   }
 }
 
-void OopBendContrib::getSingleGrad(double *pos, double *grad, unsigned int termIdx) const {
-
+void OopBendContrib::getSingleGrad(double *pos, double *grad,
+                                   unsigned int termIdx) const {
   const int d_at1Idx = d_at1Idxs[termIdx];
   const int d_at2Idx = d_at2Idxs[termIdx];
   const int d_at3Idx = d_at3Idxs[termIdx];
@@ -147,7 +146,8 @@ void OopBendContrib::getSingleGrad(double *pos, double *grad, unsigned int termI
   double sinChi = rJL.dotProduct(n);
   clipToOne(sinChi);
   double cosChiSq = 1.0 - sinChi * sinChi;
-  double cosChi = std::max(((cosChiSq > 0.0) ? std::sqrt(cosChiSq) : 0.0), 1.0e-8);
+  double cosChi =
+      std::max(((cosChiSq > 0.0) ? std::sqrt(cosChiSq) : 0.0), 1.0e-8);
   double chi = RAD2DEG * std::asin(sinChi);
   double cosTheta = rJI.dotProduct(rJK);
   clipToOne(cosTheta);

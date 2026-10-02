@@ -13,7 +13,6 @@
 #include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/Invariant.h>
 
-
 #include <cmath>
 
 #ifndef M_PI

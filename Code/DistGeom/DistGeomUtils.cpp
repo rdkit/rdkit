@@ -793,7 +793,8 @@ void addDistanceTerms(
       const double l = mmat.getLowerBound(i, j);
       const double u = mmat.getUpperBound(i, j);
       const auto dist = distMat[i * numAtoms + j];
-      const bool is1213 = (std::fabs(dist - 1.0) < 1e-4 || std::fabs(dist - 2.0) < 1e-4);
+      const bool is1213 =
+          (std::fabs(dist - 1.0) < 1e-4 || std::fabs(dist - 2.0) < 1e-4);
       double w = forceConst;
       w *= boundsMatForceScaling;
       if (extraWeights) {
