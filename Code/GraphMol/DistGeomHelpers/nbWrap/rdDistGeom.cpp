@@ -11,6 +11,7 @@
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/stl/optional.h>
 
 #include <RDBoost/Wrap_nb.h>
 
@@ -61,11 +62,6 @@ struct PyEmbedParameters : public RDKit::DGeomHelpers::EmbedParameters {
       unsigned int b = nb::cast<unsigned int>(id[1]);
       (*CPCI)[{a, b}] = nb::cast<double>(item.second);
     }
-  }
-
-  void setConfToOptimize(const nb::object &pyConf){
-    RDKit::Conformer &conf = nb::cast<RDKit::Conformer&>(pyConf);
-    this->confToOptimize=&conf;
   }
 
   void setBoundsMatrix(
@@ -655,7 +651,9 @@ used during structural minimisation stage)DOC")
               "symmetrize terminal conjugated groups for RMSD pruning")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap,
            "sets the coordmap to be used")
-      .def("SetConfToOptimize", &PyEmbedParameters::setConfToOptimize, "If a Conformer is provided, this conformer is minimized in place with the ETKDG Force Field.")
+      .def_rw(
+          "optimizeConfWithId", &PyEmbedParameters::optimizeConfWithId,
+          "If provided, the Conformer with this ID in the molecule (if present) is optimized with the ETKDG force field in place.")
       .def_rw("embedForceField", &PyEmbedParameters::embedForceField,
               "Force Field to use for ideal 1-2 and 1-3 distances.")
       .def("__setattr__", &safeSetattr);

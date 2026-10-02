@@ -948,7 +948,7 @@ class TestCase(unittest.TestCase):
     # make sure our signal handler is once again active:
     self.assertEqual(signal.getsignal(signal.SIGINT), handler)
 
-  def testConfToOptimize(self):
+  def testoptimizeConfWithId(self):
     mol = Chem.MolFromSmiles("c1ccccc1[C@@H](Cl)CCC(O)CC")
     mol = Chem.AddHs(mol)
     ps = rdDistGeom.ETDGv2()
@@ -956,7 +956,7 @@ class TestCase(unittest.TestCase):
     rdDistGeom.EmbedMolecule(mol, ps)
     mol2 = Chem.Mol(mol)
     ps = rdDistGeom.ETKDGv2()
-    ps.SetConfToOptimize(mol2.GetConformer())
+    ps.optimizeConfWithId = 0
     rdDistGeom.EmbedMolecule(mol2, ps)
     rmsd = rdMolAlign.GetBestRMS(Chem.RemoveHs(mol),Chem.RemoveHs(mol2))
     self.assertGreater(rmsd, .22)

@@ -2497,7 +2497,7 @@ TEST_CASE("TransAmideKTerm") {
   }
 }
 
-TEST_CASE("confToOptimize"){
+TEST_CASE("optimizeConfWithId") {
   auto mol = "c1ccccc1[C@@H](Cl)CCC(O)CC"_smiles;
   MolOps::addHs(*mol);
   auto psdg = DGeomHelpers::ETDGv2;
@@ -2507,10 +2507,10 @@ TEST_CASE("confToOptimize"){
   mol->addConformer(conf, true);
   auto psetkdg = DGeomHelpers::ETKDGv2;
   psetkdg.useLegacyImplementation = false;
-  psetkdg.confToOptimize = &mol->getConformer(1);
+  psetkdg.optimizeConfWithId = 1;
   DGeomHelpers::EmbedMolecule(*mol, psetkdg);
   MolOps::removeHs(*mol);
-  const double rmsd = MolAlign::getBestRMS(*mol,*mol, 0,1);
+  const double rmsd = MolAlign::getBestRMS(*mol, *mol, 0, 1);
   CHECK(rmsd < 0.24);
   CHECK(rmsd > 0.22);
 }

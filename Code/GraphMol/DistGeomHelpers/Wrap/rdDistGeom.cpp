@@ -101,10 +101,6 @@ struct PyEmbedParameters
         new DistGeom::BoundsMatrix(nrows, sdata));
   }
 
-  void setConfToOptimize(const python::object &pyConf){
-    RDKit::Conformer& conf = boost::python::extract<RDKit::Conformer&>(pyConf);
-    this->confToOptimize = &conf;
-  }
  private:
   std::unique_ptr<std::map<int, RDGeom::Point3D>> d_coordMap;
 };
@@ -744,7 +740,18 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                      "Only generates the initial 3D embedding")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap, python::args("self"),
            "sets the coordmap to be used")
-      .def("SetConfToOptimize", &PyEmbedParameters::setConfToOptimize,python::args("self"),  "If a Conformer is provided, this conformer is minimized in place with the ETKDG Force Field.")
+      .add_property(
+          "optimizeConfWithId",
+          +[](const PyEmbedParameters &s) -> python::object {
+            return s.optimizeConfWithId ? python::object(*s.optimizeConfWithId)
+                                        : python::object();
+          },
+          +[](PyEmbedParameters &s, python::object v) {
+            s.optimizeConfWithId =
+                v.is_none() ? std::nullopt
+                            : std::optional(python::extract<unsigned int>(v)());
+          },
+          "If provided, the Conformer with this ID in the molecule (if present) is optimized with the ETKDG force field in place.")
       .def_readwrite("embedForceField", &PyEmbedParameters::embedForceField,
                      "Force Field to use for ideal 1-2 and 1-3 distances.")
       .def("__setattr__", &safeSetattr);

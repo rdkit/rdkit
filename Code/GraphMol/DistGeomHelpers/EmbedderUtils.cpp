@@ -18,6 +18,7 @@
 
 #include <DistGeom/BoundsMatrix.h>
 #include <Geometry/point.h>
+#include <string>
 
 namespace RDKit {
 namespace DGeomHelpers {
@@ -99,6 +100,10 @@ void updateEmbedParametersFromJSON(EmbedParameters &params,
           "Initial embedding option must be either 'DG_EMBEDDING', 'INTERNAL_COORDINATE_EMBEDDING', or 'RANDOM_COORDINATE_EMBEDDING'");
     }
   }
+
+  if (auto opt = pt.get_optional<unsigned int>("optimizeConfWithId")) {
+    params.optimizeConfWithId = *opt;
+  }
 }
 
 std::string embedParametersToJSON(const EmbedParameters &params) {
@@ -106,6 +111,11 @@ std::string embedParametersToJSON(const EmbedParameters &params) {
 
   EMBED_PARAMS_FIELDS(PT_OPT_PUT)
   PT_OPT_PUT(initialEmbeddingMode)
+
+  if (params.optimizeConfWithId.has_value()) {
+    pt.put("optimizeConfWithId",
+           std::to_string(params.optimizeConfWithId.value()));
+  }
 
   if (params.coordMap) {
     boost::property_tree::ptree coordMapPT;
