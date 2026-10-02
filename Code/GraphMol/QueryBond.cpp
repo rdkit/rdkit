@@ -146,6 +146,20 @@ bool getBondInterval(const QueryBond::QUERYBOND_QUERY *q, int &lo, int &hi) {
     hi = ge->getVal();
     return true;
   }
+  auto *gt = dynamic_cast<const BOND_GREATER_QUERY *>(q);
+  if (gt) {
+    if (gt->getVal() == std::numeric_limits<int>::min()) return false;
+    lo = std::numeric_limits<int>::min();
+    hi = gt->getVal() - 1;
+    return true;
+  }
+  auto *lt = dynamic_cast<const BOND_LESS_QUERY *>(q);
+  if (lt) {
+    if (lt->getVal() == std::numeric_limits<int>::max()) return false;
+    lo = lt->getVal() + 1;
+    hi = std::numeric_limits<int>::max();
+    return true;
+  }
   auto *e = dynamic_cast<const BOND_EQUALS_QUERY *>(q);
   if (e) {
     lo = e->getVal();
