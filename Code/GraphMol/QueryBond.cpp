@@ -119,11 +119,22 @@ bool localMatch(BOND_EQUALS_QUERY const *q1, BOND_EQUALS_QUERY const *q2) {
 // type doesn't support interval extraction. GreaterEqualQuery(N) means
 // N >= bond → [MIN,N]. LessEqualQuery(N) means N <= bond → [N,MAX].
 bool getBondInterval(const QueryBond::QUERYBOND_QUERY *q, int &lo, int &hi) {
+  auto addSafe = [](int a, int b) {
+    if (b > 0 && a > std::numeric_limits<int>::max() - b)
+      return std::numeric_limits<int>::max();
+    return a + b;
+  };
+  auto subSafe = [](int a, int b) {
+    if (b > 0 && a < std::numeric_limits<int>::min() + b)
+      return std::numeric_limits<int>::min();
+    return a - b;
+  };
+
   auto *r = dynamic_cast<const BOND_RANGE_QUERY *>(q);
   if (r) {
-    if (r->getTol() != 0) return false;
-    lo = r->getLower();
-    hi = r->getUpper();
+    int tol = r->getTol();
+    lo = subSafe(r->getLower(), tol);
+    hi = addSafe(r->getUpper(), tol);
     auto ends = r->getEndsOpen();
     if (ends.first) {
       if (lo >= std::numeric_limits<int>::max()) return false;
@@ -134,42 +145,43 @@ bool getBondInterval(const QueryBond::QUERYBOND_QUERY *q, int &lo, int &hi) {
       hi--;
     }
     if (lo > hi) return false;
+    return true;
   }
   auto *le = dynamic_cast<const BOND_LESSEQUAL_QUERY *>(q);
   if (le) {
-    if (le->getTol() != 0) return false;
-    lo = le->getVal();
+    int tol = le->getTol();
+    lo = subSafe(le->getVal(), tol);
     hi = std::numeric_limits<int>::max();
     return true;
   }
   auto *ge = dynamic_cast<const BOND_GREATEREQUAL_QUERY *>(q);
   if (ge) {
-    if (ge->getTol() != 0) return false;
+    int tol = ge->getTol();
     lo = std::numeric_limits<int>::min();
-    hi = ge->getVal();
+    hi = addSafe(ge->getVal(), tol);
     return true;
   }
   auto *gt = dynamic_cast<const BOND_GREATER_QUERY *>(q);
   if (gt) {
-    if (gt->getTol() != 0) return false;
-    if (gt->getVal() == std::numeric_limits<int>::min()) return false;
+    int tol = gt->getTol();
+    if (gt->getVal() <= std::numeric_limits<int>::min() + tol) return false;
     lo = std::numeric_limits<int>::min();
-    hi = gt->getVal() - 1;
+    hi = subSafe(gt->getVal(), tol) - 1;
     return true;
   }
   auto *lt = dynamic_cast<const BOND_LESS_QUERY *>(q);
   if (lt) {
-    if (lt->getTol() != 0) return false;
-    if (lt->getVal() == std::numeric_limits<int>::max()) return false;
-    lo = lt->getVal() + 1;
+    int tol = lt->getTol();
+    if (lt->getVal() >= std::numeric_limits<int>::max() - tol) return false;
+    lo = addSafe(lt->getVal(), tol) + 1;
     hi = std::numeric_limits<int>::max();
     return true;
   }
   auto *e = dynamic_cast<const BOND_EQUALS_QUERY *>(q);
   if (e) {
-    if (e->getTol() != 0) return false;
-    lo = e->getVal();
-    hi = e->getVal();
+    int tol = e->getTol();
+    lo = subSafe(e->getVal(), tol);
+    hi = addSafe(e->getVal(), tol);
     return true;
   }
   return false;

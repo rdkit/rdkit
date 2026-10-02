@@ -583,6 +583,41 @@ void testQueryQueryMatches() {
   }
 
   {
+    // order==2 vs ==2 tol=1 (interval [1,3]) → true
+    QueryBond b1(Bond::DOUBLE), b2;
+    auto *q = makeBondOrderEqualsQuery(Bond::DOUBLE);
+    q->setTol(1);
+    b2.setQuery(q);
+    TEST_ASSERT(b1.QueryMatch(&b2));
+  }
+
+  {
+    // order==2 vs >4 tol=1 (interval [MIN,2]) → true
+    QueryBond b1(Bond::DOUBLE), b2;
+    auto *q = makeBondSimpleQuery<BOND_GREATER_QUERY>(4, queryBondOrder,
+                                                      "greater_BondOrder");
+    q->setTol(1);
+    b2.setQuery(q);
+    TEST_ASSERT(b1.QueryMatch(&b2));
+  }
+
+  {
+    // range(1,3,closed) vs ==2 → false (superset ⊄ singleton)
+    QueryBond b1, b2(Bond::DOUBLE);
+    b1.setQuery(makeBondRangeQuery(1, 3, false, false, queryBondOrder,
+                                   "range_BondOrder"));
+    TEST_ASSERT(!b1.QueryMatch(&b2));
+  }
+
+  {
+    // ==2 vs range(1,3,closed) → true (singleton ⊆ range)
+    QueryBond b1(Bond::DOUBLE), b2;
+    b2.setQuery(makeBondRangeQuery(1, 3, false, false, queryBondOrder,
+                                   "range_BondOrder"));
+    TEST_ASSERT(b1.QueryMatch(&b2));
+  }
+
+  {
     // !<INT_MAX (ALL) vs !=2 → false
     QueryBond b1, b2(Bond::DOUBLE);
     b1.setQuery(makeBondSimpleQuery<BOND_LESS_QUERY>(
