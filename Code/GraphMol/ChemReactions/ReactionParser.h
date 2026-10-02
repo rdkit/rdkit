@@ -62,7 +62,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
       : _msg(std::move(msg)) {}
   //! get the error message
   const char *what() const noexcept override { return _msg.c_str(); }
-  ~ChemicalReactionParserException() noexcept override = default;
+  ~ChemicalReactionParserException() noexcept override;
 
  private:
   std::string _msg;
