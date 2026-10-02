@@ -661,8 +661,10 @@ There are additional operators defined in the cartridge, but these are used for 
 -   mol\_fractioncsp3(mol) : returns the fraction of carbons that are sp3 hybridized (*available from 2013\_03 release*).
 -   mol\_hba(mol) : returns the number of Lipinski H-bond acceptors (i.e. number of Os and Ns) for a molecule.
 -   mol\_hbd(mol) : returns the number of Lipinski H-bond donors (i.e. number of Os and Ns that have at least one H) for a molecule.
--   mol\_numatoms(mol or qmol) : for a mol, returns the total number of atoms, including implicit hydrogens; for a qmol, counts only atoms present in the query graph. Untyped literals need an explicit cast (`::mol` or `::qmol`).
--   mol\_numheavyatoms(mol or qmol) : returns the number of heavy atoms in a molecule. Untyped literals need an explicit cast (`::mol` or `::qmol`).
+-   mol\_numatoms(mol) : returns the total number of atoms in a molecule.
+-   mol\_numheavyatoms(mol) : returns the number of heavy atoms in a molecule.
+-   qmol\_numatoms(qmol) : returns the number of atoms present in the query graph of a query molecule (implicit hydrogens are not counted).
+-   qmol\_numheavyatoms(qmol) : returns the number of heavy atoms in a query molecule.
 -   mol\_numrotatablebonds(mol) : returns the number of rotatable bonds in a molecule (*available from Q1 2011 (2011\_03) release*).
 -   mol\_numheteroatoms(mol) : returns the number of heteroatoms in a molecule (*available from Q1 2011 (2011\_03) release*).
 -   mol\_numrings(mol) : returns the number of rings in a molecule (*available from Q1 2011 (2011\_03) release*).
