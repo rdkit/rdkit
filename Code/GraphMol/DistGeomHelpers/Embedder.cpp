@@ -1836,12 +1836,6 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         "torsion-angle preferences (ETversion) supported");
   }
 
-  if (params.optimizeConfWithId.has_value() &&
-      !detail::hasConformerWithId(mol, params.optimizeConfWithId.value())) {
-    throw ValueErrorException(
-        "`optimizeConfWithId` is provided but the molecule does not have a conformer with the provided Id!");
-  }
-
   if (MolOps::needsHs(mol)) {
     BOOST_LOG(rdWarningLog)
         << "Molecule does not have explicit Hs. Consider calling AddHs()"
@@ -1874,12 +1868,19 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     coordMap = nullptr;
   }
 
-  if (molFrags.size() > 1 && params.optimizeConfWithId) {
-    BOOST_LOG(rdWarningLog)
-        << "Seeded conformer generation (via the optimizeConfWithId argument) "
-           "does not work with molecules that have multiple fragments."
-        << std::endl;
-    return;
+  if (params.optimizeConfWithId.has_value()) {
+    if (molFrags.size() > 1) {
+      BOOST_LOG(rdWarningLog)
+          << "Seeded conformer generation (via the optimizeConfWithId argument) "
+             "does not work with molecules that have multiple fragments."
+          << std::endl;
+      return;
+    }
+    if (!detail::hasConformerWithId(mol, params.optimizeConfWithId.value())) {
+      throw ValueErrorException(
+          "`optimizeConfWithId` is provided but the molecule does not have a conformer with the provided Id!");
+    }
+    numConfs = 1;
   }
 
   // initialize the conformers we're going to be creating:
