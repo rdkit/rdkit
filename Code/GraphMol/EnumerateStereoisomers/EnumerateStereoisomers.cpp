@@ -67,7 +67,7 @@ StereoisomerEnumerator::StereoisomerEnumerator(
     // Skip finding patterns only if we know there are no rings
     // in the mol (maybe we haven't found them yet?)
     if (auto ri = mol.getRingInfo();
-        !ri || !ri->isInitialized() || !ri->atomRings().empty())
+        !ri || !ri->isInitialized() || ri->atomRings().size() > 1)
       getRingPatternsParityRelations(mol, d_pattern_same_parity,
                                      d_pattern_opposite_parity);
   }
