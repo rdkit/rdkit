@@ -160,7 +160,7 @@ bool getBondInterval(const QueryBond::QUERYBOND_QUERY *q, int &lo, int &hi) {
   auto *gt = dynamic_cast<const BOND_GREATER_QUERY *>(q);
   if (gt) {
     int tol = gt->getTol();
-    if (gt->getVal() <= std::numeric_limits<int>::min() + tol) return false;
+    if ((long long)gt->getVal() - tol <= (long long)std::numeric_limits<int>::min()) return false;
     lo = std::numeric_limits<int>::min();
     hi = subSafe(gt->getVal(), tol) - 1;
     return true;
@@ -168,7 +168,7 @@ bool getBondInterval(const QueryBond::QUERYBOND_QUERY *q, int &lo, int &hi) {
   auto *lt = dynamic_cast<const BOND_LESS_QUERY *>(q);
   if (lt) {
     int tol = lt->getTol();
-    if (lt->getVal() >= std::numeric_limits<int>::max() - tol) return false;
+    if ((long long)lt->getVal() + tol >= (long long)std::numeric_limits<int>::max()) return false;
     lo = addSafe(lt->getVal(), tol) + 1;
     hi = std::numeric_limits<int>::max();
     return true;
