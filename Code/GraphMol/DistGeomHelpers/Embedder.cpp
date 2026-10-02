@@ -1836,6 +1836,12 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         "torsion-angle preferences (ETversion) supported");
   }
 
+  if (params.optimizeConfWithId.has_value() &&
+      !detail::hasConformerWithId(mol, params.optimizeConfWithId.value())) {
+    throw ValueErrorException(
+        "`optimizeConfWithId` is provided but the molecule does not have a conformer with the provided Id!");
+  }
+
   if (MolOps::needsHs(mol)) {
     BOOST_LOG(rdWarningLog)
         << "Molecule does not have explicit Hs. Consider calling AddHs()"
@@ -1850,14 +1856,6 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 
   INT_VECT fragMapping;
   std::vector<ROMOL_SPTR> molFrags;
-
-  if (molFrags.size() > 1 && params.optimizeConfWithId) {
-    BOOST_LOG(rdWarningLog)
-        << "Seeded conformer generation (via the optimizeConfWithId argument) "
-           "does not work with molecules that have multiple fragments."
-        << std::endl;
-    return;
-  }
 
   if (params.embedFragmentsSeparately) {
     molFrags = MolOps::getMolFrags(mol, true, &fragMapping);
@@ -1874,6 +1872,14 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
            "does not work with molecules that have multiple fragments."
         << std::endl;
     coordMap = nullptr;
+  }
+
+  if (molFrags.size() > 1 && params.optimizeConfWithId) {
+    BOOST_LOG(rdWarningLog)
+        << "Seeded conformer generation (via the optimizeConfWithId argument) "
+           "does not work with molecules that have multiple fragments."
+        << std::endl;
+    return;
   }
 
   // initialize the conformers we're going to be creating:
