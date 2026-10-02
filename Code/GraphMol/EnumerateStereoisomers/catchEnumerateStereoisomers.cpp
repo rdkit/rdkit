@@ -233,6 +233,32 @@ TEST_CASE("Unassigned") {
     StereoisomerEnumerator enu3(*m2, opts);
     CHECK(enu3.getStereoisomerCount() == 16);
   }
+
+  SECTION("no flippers") {
+    // This is one of the "impossible" cases from above.
+    // All stereo centers are specified and "onlyUnassigned"
+    // is enabled, so no "flippers" are available
+    auto m2 = R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)"_smiles;
+    REQUIRE(m2);
+
+    StereoEnumerationOptions opts;
+    opts.onlyUnassigned = true;
+    opts.useRingSystemFilter = GENERATE(false, true);
+    CAPTURE(opts.useRingSystemFilter);
+
+    StereoisomerEnumerator enu2(*m2, opts);
+
+    std::unordered_set<std::string> got;
+    while (auto isomer = enu2.next()) {
+      got.insert(MolToSmiles(*isomer));
+    }
+
+    CHECK(got.size() == (opts.useRingSystemFilter ? 0 : 1));
+
+    // getStereoisomerCount() doesn't know whether stereoisomers
+    // are 3D possible or not
+    CHECK(enu2.getStereoisomerCount() == 1);
+  }
 }
 
 TEST_CASE("Subset") {

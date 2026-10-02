@@ -83,6 +83,9 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::next() {
   }
   if (d_flippers.empty()) {
     ++d_numReturned;
+    if (d_options.useRingSystemFilter && !passesRingPatternsCheck()) {
+      return std::unique_ptr<ROMol>();
+    }
     return std::make_unique<ROMol>(d_mol);
   } else {
     auto isomer = generateRandomIsomer();
