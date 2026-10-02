@@ -78,12 +78,12 @@ void _registerDescriptors() {
   REGISTER_DESCRIPTOR(CrippenMR, calcMR);
   REGISTER_DESCRIPTOR(chi0v, calcChi0v);
   REGISTER_DESCRIPTOR(chi1v, calcChi1v);
-  REGISTER_DESCRIPTOR(chi2v, calcChi3v);
+  REGISTER_DESCRIPTOR(chi2v, calcChi2v);
   REGISTER_DESCRIPTOR(chi3v, calcChi3v);
   REGISTER_DESCRIPTOR(chi4v, calcChi4v);
   REGISTER_DESCRIPTOR(chi0n, calcChi0n);
   REGISTER_DESCRIPTOR(chi1n, calcChi1n);
-  REGISTER_DESCRIPTOR(chi2n, calcChi3n);
+  REGISTER_DESCRIPTOR(chi2n, calcChi2n);
   REGISTER_DESCRIPTOR(chi3n, calcChi3n);
   REGISTER_DESCRIPTOR(chi4n, calcChi4n);
   REGISTER_DESCRIPTOR(hallKierAlpha, calcHallKierAlpha);

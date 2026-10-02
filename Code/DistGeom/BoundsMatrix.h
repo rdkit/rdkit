@@ -13,7 +13,6 @@
 
 #include <RDGeneral/Invariant.h>
 #include <boost/smart_ptr.hpp>
-#include <iomanip>
 #include <Numerics/SquareMatrix.h>
 
 namespace DistGeom {
