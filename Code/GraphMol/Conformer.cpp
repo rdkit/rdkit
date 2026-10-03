@@ -12,6 +12,8 @@
 
 namespace RDKit {
 
+ConformerException::~ConformerException() noexcept = default;
+
 void Conformer::setOwningMol(ROMol *mol) {
   PRECONDITION(mol, "");
   dp_mol = mol;
