@@ -10,6 +10,7 @@
 
 #include <RDGeneral/export.h>
 #include <memory>
+#include <optional>
 #ifndef RD_EMBEDDER_H_GUARD
 #define RD_EMBEDDER_H_GUARD
 
@@ -18,6 +19,7 @@
 #include <utility>
 #include <vector>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/Conformer.h>
 #include <boost/shared_ptr.hpp>
 #include "ZMatrixBuilder.h"
 
@@ -146,7 +148,9 @@ enum class EmbedFF : std::uint8_t {
                    of times each embedding check fails
   enableSequentialRandomSeeds    handle the random number seeds so that
                                  conformer generation can be restarted
-  embedFF Force Field to use to determine ideal 1-2 and 1-3 distances.
+  optimizeConfWithId If provided, this conformer in the molecule (if present) is
+  refined with the ETKDG force field. embedFF Force Field to use to determine
+  ideal 1-2 and 1-3 distances.
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations{0};
@@ -187,6 +191,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   std::vector<unsigned int> failures{};
   bool enableSequentialRandomSeeds{false};
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
+  std::optional<unsigned int> optimizeConfWithId{std::nullopt};
   EmbedFF embedForceField{EmbedFF::UFF};
 };
 

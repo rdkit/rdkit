@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Conformer.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -2494,6 +2495,24 @@ TEST_CASE("TransAmideKTerm") {
       THEN("Expect some cis") { CHECK(not allTrans(*mol, ps, 1, 3, 5, 6)); }
     }
   }
+}
+
+TEST_CASE("optimizeConfWithId") {
+  auto mol = "c1ccccc1[C@@H](Cl)CCC(O)CC"_smiles;
+  MolOps::addHs(*mol);
+  auto psdg = DGeomHelpers::ETDGv2;
+  psdg.randomSeed = 0xc0ffee;
+  DGeomHelpers::EmbedMolecule(*mol, psdg);
+  auto *conf = new Conformer(mol->getConformer());
+  mol->addConformer(conf, true);
+  auto psetkdg = DGeomHelpers::ETKDGv2;
+  psetkdg.useLegacyImplementation = false;
+  psetkdg.optimizeConfWithId = 1;
+  DGeomHelpers::EmbedMolecule(*mol, psetkdg);
+  MolOps::removeHs(*mol);
+  const double rmsd = MolAlign::getBestRMS(*mol, *mol, 0, 1);
+  CHECK(rmsd < 0.24);
+  CHECK(rmsd > 0.22);
 }
 
 namespace {
