@@ -336,11 +336,13 @@ M  END",
   assert(pkl2);
   assert(pkl2_size > 0);
   molblock = get_molblock(pkl2, pkl2_size, NULL);
-  assert(strstr(molblock, "4  3  1  6"));
+  assert(strstr(molblock, "4  9  1  1"));
+  assert(strstr(molblock, "8  9  1  1"));
   assert(!strstr(molblock, "H  "));
   free(molblock);
   molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
-  assert(!strstr(molblock, "4  3  1  6"));
+  assert(strstr(molblock, "4  9  1  1"));
+  assert(strstr(molblock, "8  9  1  1"));
   assert(strstr(molblock, "6  7  1  1"));
   assert(!strstr(molblock, "H  "));
   free(molblock);
@@ -359,7 +361,6 @@ M  END",
   molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
   find_wedged_bonds(molblock, &have1, &have6);
   assert(!have1 && have6);
-  assert(!strstr(molblock, "4  3  1  6"));
   assert(strstr(molblock, "6  7  1  6"));
   assert(!strstr(molblock, "H  "));
   free(molblock);
@@ -373,7 +374,7 @@ M  END",
                                "{\"acceptFailure\":false}", NULL));
   molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
   find_wedged_bonds(molblock, &have1, &have6);
-  assert(have1 && have6);
+  assert(have1 && !have6);
   free(molblock);
   free(pkl2);
   free(scaffold);
@@ -2857,7 +2858,7 @@ M  END\n\
     ptr_end = strstr(ptr, "|");
     assert(ptr_end);
     *ptr_end = '\0';
-    assert(!strcmp(ptr, "wD:3.9,wU:1.0,5.4,6.7"));
+    assert(!strcmp(ptr, "wU:1.0,3.3,5.4,6.7"));
     free(canonical_cxsmiles);
   }
   canonical_cxsmiles =
@@ -3031,7 +3032,7 @@ void test_get_molblock_use_molblock_wedging() {
   6  8  1  0\n\
   8  9  1  1\n\
   8  2  1  0\n\
-  4  9  1  1\n\
+  9  4  1  6\n\
 M  END\n\
 ";
   char *mpkl;

@@ -1564,6 +1564,100 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
   }
 }
 
+TEST_CASE("SHARED-12489: prefer wedging inner ring bonds",
+          "[wedging][regression]") {
+  const auto add2DConformer =
+      [](ROMol &mol, const std::vector<RDGeom::Point3D> &positions) {
+        REQUIRE(positions.size() == mol.getNumAtoms());
+        auto conf = std::make_unique<Conformer>(mol.getNumAtoms());
+        for (unsigned int atomIdx = 0; atomIdx < positions.size(); ++atomIdx) {
+          conf->setAtomPos(atomIdx, positions[atomIdx]);
+        }
+        conf->set3D(false);
+        mol.addConformer(conf.release(), true);
+      };
+  const auto getWedgeBondIndices = [](const ROMol &mol) {
+    const auto wedgeBonds = Chirality::pickBondsToWedge(mol);
+    std::vector<int> result;
+    result.reserve(wedgeBonds.size());
+    for (const auto &wedgeBond : wedgeBonds) {
+      result.push_back(wedgeBond.first);
+    }
+    return result;
+  };
+
+  SECTION("bridged system with regular and irregular outer rings") {
+    const std::vector<RDGeom::Point3D> regularOuterRing = {
+        {0.0, 2.8400034005593087, 0.0},
+        {0.0, 1.42, 0.0},
+        {1.22976, 0.71, 0.0},
+        {1.22976, -0.71, 0.0},
+        {0.0, -1.42, 0.0},
+        {-1.22976, -0.71, 0.0},
+        {-1.22976, 0.71, 0.0},
+        {0.0, 0.21, 0.0},
+    };
+    const std::vector<RDGeom::Point3D> irregularOuterRing = {
+        {0.0, 2.8400034005593087, 0.0},
+        {0.0, 1.42, 0.0},
+        {1.4, 0.6, 0.0},
+        {1.2, -0.9, 0.0},
+        {-0.1, -1.5, 0.0},
+        {-1.3, -0.6, 0.0},
+        {-1.1, 0.8, 0.0},
+        {0.0, 0.2, 0.0},
+    };
+
+    for (const auto &positions : {regularOuterRing, irregularOuterRing}) {
+      auto mol = "CN1[C@@H]2CCC[C@H]1C2"_smiles;
+      REQUIRE(mol);
+      add2DConformer(*mol, positions);
+
+      // Bonds 6 and 8 are the bridge inside the outer polygon.
+      CHECK(getWedgeBondIndices(*mol) == std::vector<int>{6, 8});
+
+      Chirality::wedgeMolBonds(*mol, &mol->getConformer());
+      CHECK(mol->getBondWithIdx(6)->getBondDir() == Bond::BEGINWEDGE);
+      CHECK(mol->getBondWithIdx(8)->getBondDir() == Bond::BEGINWEDGE);
+    }
+  }
+
+  SECTION("a bridge with one interior atom is sufficient") {
+    auto mol = "N[C@@H]1C[C@@H]2C[C@H]1[C@@H](O)C2"_smiles;
+    REQUIRE(mol);
+    add2DConformer(*mol, {{1.42, 2.45952, 0.0},
+                          {0.71, 1.22976, 0.0},
+                          {-0.71, 1.22976, 0.0},
+                          {-1.42, 0.0, 0.0},
+                          {0.0, 0.5, 0.0},
+                          {1.42, 0.0, 0.0},
+                          {0.71, -1.22976, 0.0},
+                          {1.42, -2.45952, 0.0},
+                          {-0.71, -1.22976, 0.0}});
+
+    // Ring bonds 3 and 4 meet at the sole interior bridge atom. Bonds 0 and 6
+    // point to the external amino and hydroxy substituents.
+    CHECK(getWedgeBondIndices(*mol) == std::vector<int>{0, 3, 4, 6});
+  }
+
+  SECTION("a one-bond fused junction retains perimeter wedging") {
+    auto mol = "FC1C[C@@H]2CC(Cl)[C@H]12"_smiles;
+    REQUIRE(mol);
+    add2DConformer(*mol, {{2.56066, 0.0, 0.0},
+                          {1.06066, 0.0, 0.0},
+                          {0.0, 1.06066, 0.0},
+                          {-1.06066, 0.0, 0.0},
+                          {-2.12132, -1.06066, 0.0},
+                          {-1.06066, -2.12132, 0.0},
+                          {-1.06066, -3.62132, 0.0},
+                          {0.0, -1.06066, 0.0}});
+
+    // Bond 8 is the shared fusion bond. With no interior bridge atom, retain
+    // the established choice of perimeter bonds 2 and 6.
+    CHECK(getWedgeBondIndices(*mol) == std::vector<int>{2, 6});
+  }
+}
+
 TEST_CASE("addWavyBondsForStereoAny()") {
   SECTION("simplest") {
     auto mol = "CC=CC"_smiles;
