@@ -45,6 +45,14 @@ else:
   rdCoordGen.SetDefaultTemplateFileDir(templDir)
 
 if rdBase._wrapperType == 'boost':
+  from rdkit import __vect__iter__
+  from rdkit.Chem import rdmolops
+
+  rdchem.StereoGroup_vect.__iter__ = __vect__iter__
+  for name, object in vars(rdmolops).items():
+    if name.startswith('_vect') and hasattr(object, '__iter__'):
+      object.__iter__ = __vect__iter__
+
   # Github Issue #6208: boost::python iterators are slower than they should
   # (cause is that boost::python throws exceptions as actual C++ exceptions)
   class _GetRDKitObjIterator:
