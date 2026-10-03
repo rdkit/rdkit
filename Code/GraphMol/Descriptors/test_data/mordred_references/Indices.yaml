@@ -1,0 +1,111 @@
+- names: ECIndex
+  results:
+    Hexane: 38
+    Benzene: 36
+    Caffeine: 137
+    Cyanidin: 353
+    Lycopene: 1834
+    Epicatechin: 353
+    Limonene: 88
+    Allicin: 83
+    Glutathione: 347
+    Digoxin: 2628
+    Capsaicin: 515
+    EllagicAcid: 328
+    Astaxanthin: 1932
+
+- names: Zagreb1
+  results:
+    Hexane: 18
+    Benzene: 24
+    Caffeine: 76
+    Cyanidin: 114
+    Lycopene: 170
+    Epicatechin: 114
+    Limonene: 46
+    Allicin: 32
+    Glutathione: 86
+    Digoxin: 320
+    Capsaicin: 98
+    EllagicAcid: 130
+    Astaxanthin: 218
+
+- names: [Zagreb1, Zagreb2]
+  results:
+    MethylCyclopropane: [18, 19]
+
+- names: [mZagreb1, mZagreb2]
+  digit: 2
+  results:
+    MethylCyclopropane: [1.61, 0.92]
+
+- names: [WPath, WPol]
+  results:
+    Hexane: [35, 3]
+    Benzene: [27, 3]
+    Caffeine: [258, 25]
+    Cyanidin: [894, 36]
+    Lycopene: [8904, 43]
+    Epicatechin: [894, 36]
+    Limonene: [120, 11]
+    Allicin: [108, 7]
+    Glutathione: [969, 24]
+    Digoxin: [14940, 113]
+    Capsaicin: [1411, 26]
+    EllagicAcid: [851, 48]
+    Astaxanthin: [10234, 69]
+
+- names: DetourIndex
+  results:
+    Benzene: 63
+
+
+- names: [Radius, Diameter]
+  results:
+    Hexane: [3, 5]
+    Benzene: [3, 3]
+    Caffeine: [4, 6]
+    Cyanidin: [5, 10]
+    Lycopene: [16, 31]
+    Epicatechin: [5, 10]
+    Limonene: [3, 6]
+    Allicin: [4, 7]
+    Glutathione: [6, 12]
+    Digoxin: [14, 28]
+    Capsaicin: [8, 15]
+    EllagicAcid: [5, 9]
+    Astaxanthin: [14, 27]
+
+- names: [TopoShapeIndex, PetitjeanIndex]
+  digit: 7
+  results:
+    Hexane: [0.666666667, 0.4]
+    Benzene: [0, 0]
+    Caffeine: [0.5, 0.333333333]
+    Cyanidin: [1, 0.5]
+    Lycopene: [0.9375, 0.483870968]
+    Epicatechin: [1, 0.5]
+    Limonene: [1, 0.5]
+    Allicin: [0.75, 0.428571429]
+    Glutathione: [1, 0.5]
+    Digoxin: [1, 0.5]
+    Capsaicin: [0.875, 0.466666667]
+    EllagicAcid: [0.8, 0.444444444]
+    Astaxanthin: [0.928571429, 0.481481481]
+
+- names: [Kier1, Kier2, Kier3]
+  digit: 7
+  results:
+    Hexane: [6, 5, 5.333333333]
+    Benzene: [4.166666667, 2.222222222, 1.333333333]
+    Caffeine: [10.51555556, 3.538752363, 1.454545455]
+    Cyanidin: [15.87901701, 6.24567474, 3.2]
+    Lycopene: [40, 26.61436673, 28.89561925]
+    Epicatechin: [15.87901701, 6.24567474, 3.2]
+    Limonene: [8.1, 3.408284024, 2.285714286]
+    Allicin: [9, 6.125, 5.87755102]
+    Glutathione: [20, 10.6875, 9.5625]
+    Digoxin: [41.72216441, 15.79404415, 7.344499774]
+    Capsaicin: [20.04545455, 11.52263374, 9.03686088]
+    EllagicAcid: [15.5232, 5.25, 2.111111111]
+    Astaxanthin: [40.17580247, 18.51855469, 12.8576]

@@ -5,6 +5,22 @@ if(RDK_BUILD_DESCRIPTORS3D)
 
 endif(RDK_BUILD_DESCRIPTORS3D)
 
+if(RDK_BUILD_OSMORDRED_SUPPORT)
+ if(NOT RDK_HAS_EIGEN)
+   message(FATAL_ERROR "-- cannot build OSMORDRED support without eigen")
+ endif(NOT RDK_HAS_EIGEN)
+
+ message("-- adding OSMORDRED Descriptors")
+ set(OSMORDRED_HDRS Osmordred.h)
+ set(OSMORDRED_SOURCES
+              Osmordred.cpp
+              OsmordredHelpers.cpp
+              OsmordredBasicPhyschemCountsRules.cpp
+              OsmordredTopologicalConnectivityShape.cpp
+              OsmordredMatrixAutocorrEStateFragments.cpp)
+
+endif(RDK_BUILD_OSMORDRED_SUPPORT)
+
 
 rdkit_library(Descriptors
               Crippen.cpp BCUT.cpp MolDescriptors.cpp MolSurf.cpp Lipinski.cpp ConnectivityDescriptors.cpp
@@ -14,11 +30,15 @@ rdkit_library(Descriptors
               USRDescriptor.cpp AtomFeat.cpp
               OxidationNumbers.cpp
               DCLV.cpp
+	      ${OSMORDRED_SOURCES}
               ${DESC3D_SOURCES}
-              LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol
+              LINK_LIBRARIES DataStructs Fingerprints PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol
                  EigenSolvers RDGeneral)
 target_compile_definitions(Descriptors PRIVATE RDKIT_DESCRIPTORS_BUILD)
-
+if(RDK_OSMORDRED_USE_LAPACKE)
+  target_compile_definitions(Descriptors PRIVATE RDK_OSMORDRED_USE_LAPACKE)
+  target_link_libraries(Descriptors PUBLIC ${OSMORDRED_LINK_LIBRARIES})
+endif(RDK_OSMORDRED_USE_LAPACKE)
 rdkit_headers(Crippen.h BCUT.h Lipinski.h
               MolDescriptors.h
               MolSurf.h
@@ -29,6 +49,7 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
               USRDescriptor.h AtomFeat.h
               OxidationNumbers.h
               DCLV.h
+	      ${OSMORDRED_HDRS}
               ${DESC3D_HDRS}
               DEST GraphMol/Descriptors)
 
@@ -71,8 +92,12 @@ endif(RDK_BUILD_DESCRIPTORS3D)
 
 rdkit_catch_test(descriptorsTestCatch catch_tests.cpp LINK_LIBRARIES Descriptors SmilesParse FileParsers)
 
+if(RDK_BUILD_OSMORDRED_SUPPORT)
+ rdkit_catch_test(testOsmordred test_osmordred.cpp LINK_LIBRARIES Descriptors SmilesParse FileParsers)
+endif(RDK_BUILD_OSMORDRED_SUPPORT)
+
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-add_subdirectory(Wrap)
+  add_subdirectory(Wrap)
 endif()
 
 if(RDK_BUILD_NANOBIND_WRAPPERS)
