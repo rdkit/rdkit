@@ -38,6 +38,10 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 
+#include <algorithm>
+#include <set>
+#include <sstream>
+
 #include <GraphMol/ChemReactions/Enumerate/CartesianProduct.h>
 #include <GraphMol/ChemReactions/Enumerate/EvenSamplePairs.h>
 #include <GraphMol/ChemReactions/Enumerate/RandomSample.h>
@@ -162,6 +166,446 @@ const char *smiresults[] = {
     "C=CCNC(=S)NCc1ncc(Cl)cc1Br",   "CC=CCNC(=S)NCc1ncc(Cl)cc1Br",
     "C=CCNC(=S)NCCc1ncc(Cl)cc1Br",  "CC=CCNC(=S)NCCc1ncc(Cl)cc1Br",
     "C=CCNC(=S)NCCCc1ncc(Cl)cc1Br", "CC=CCNC(=S)NCCCc1ncc(Cl)cc1Br"};
+
+namespace {
+ChemicalReaction *makeEnumerationCacheRxn() {
+  return RxnSmartsToChemicalReaction(
+      "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);"
+      "!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:"
+      "2]");
+}
+
+EnumerationTypes::BBS makeEnumerationCacheBbs() {
+  EnumerationTypes::BBS bbs;
+  bbs.resize(2);
+
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("CC=CCN=C=S")));
+
+  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
+  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCCc1ncc(Cl)cc1Br")));
+  bbs[1].push_back(
+      boost::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
+  return bbs;
+}
+
+EnumerationTypes::BBS makeEnumerationCacheBbsWithNonMatches() {
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("CC")));
+  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("Clc1ccccc1")));
+  return bbs;
+}
+
+EnumerationTypes::BBS makeEnumerationCacheBbsWithProtectedAtoms() {
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbsWithNonMatches();
+  bbs[0][0]->getAtomWithIdx(0)->setProp(common_properties::_protected, 1);
+  bbs[1][0]->getAtomWithIdx(0)->setProp(common_properties::_protected, 1);
+  return bbs;
+}
+
+std::vector<std::multiset<std::string>> collectReagentSmiles(
+    const EnumerationTypes::BBS &bbs) {
+  std::vector<std::multiset<std::string>> results;
+  results.resize(bbs.size());
+  for (size_t i = 0; i < bbs.size(); ++i) {
+    for (const auto &mol : bbs[i]) {
+      results[i].insert(MolToSmiles(*mol, true));
+    }
+  }
+  return results;
+}
+
+std::multiset<std::string> collectEnumerationSmiles(EnumerateLibrary &en) {
+  std::multiset<std::string> results;
+  for (; (bool)en;) {
+    std::vector<std::vector<std::string>> smiles = en.nextSmiles();
+    for (const auto &productSet : smiles) {
+      TEST_ASSERT(productSet.size() == 1);
+      results.insert(productSet[0]);
+    }
+  }
+  return results;
+}
+
+std::vector<std::string> collectEnumerationSequence(EnumerateLibrary &en) {
+  std::vector<std::string> results;
+  for (; (bool)en;) {
+    std::vector<std::vector<std::string>> smiles = en.nextSmiles();
+    for (const auto &productSet : smiles) {
+      TEST_ASSERT(productSet.size() == 1);
+      results.push_back(productSet[0]);
+    }
+  }
+  return results;
+}
+
+std::set<std::string> collectUniqueSmiles(const std::vector<std::string> &seq) {
+  return std::set<std::string>(seq.begin(), seq.end());
+}
+
+ChemicalReaction *makeSymmetricDedupeRxn() {
+  return RxnSmartsToChemicalReaction("[N;H2:1]>>[N:1]C(=O)C");
+}
+
+EnumerationTypes::BBS makeSymmetricDedupBbs() {
+  EnumerationTypes::BBS bbs;
+  bbs.resize(1);
+
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCCN")));
+  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("CCN")));
+  return bbs;
+}
+
+std::multiset<std::string> collectDirectProductSmiles(
+    const ChemicalReaction &rxn, const EnumerationTypes::BBS &bbs) {
+  std::multiset<std::string> results;
+  for (size_t i = 0; i < bbs[0].size(); ++i) {
+    for (size_t j = 0; j < bbs[1].size(); ++j) {
+      MOL_SPTR_VECT reactants;
+      reactants.push_back(bbs[0][i]);
+      reactants.push_back(bbs[1][j]);
+      std::vector<MOL_SPTR_VECT> products = rxn.runReactants(reactants);
+      TEST_ASSERT(products.size() == 1);
+      TEST_ASSERT(products[0].size() == 1);
+      results.insert(MolToSmiles(*products[0][0], true));
+    }
+  }
+  return results;
+}
+}  // namespace
+
+void testEnumerationCacheOutputUnchanged() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerateLibrary cached(*rxn, bbs);
+  EnumerateLibrary viaLibrary(*rxn, bbs);
+
+  // drive the non-cached baseline from the library's filtered reagents so the
+  // comparison stays valid even if removeNonmatchingReagents drops a reagent
+  const std::multiset<std::string> expected =
+      collectDirectProductSmiles(*rxn, cached.getReagents());
+  const std::multiset<std::string> cachedResults = collectEnumerationSmiles(cached);
+  const std::multiset<std::string> viaLibraryResults =
+      collectEnumerationSmiles(viaLibrary);
+
+  TEST_ASSERT(cachedResults == expected);
+  TEST_ASSERT(viaLibraryResults == expected);
+}
+
+void testPrefilterResultsUnchanged() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbsWithNonMatches();
+
+  EnumerationParams params;
+  EnumerationTypes::BBS baseline = removeNonmatchingReagents(*rxn, bbs, params);
+  EnumerateLibrary library(*rxn, bbs, params);
+
+  TEST_ASSERT(collectReagentSmiles(library.getReagents()) ==
+              collectReagentSmiles(baseline));
+
+  params.reagentMaxMatchCount = 1;
+  baseline = removeNonmatchingReagents(*rxn, bbs, params);
+  EnumerateLibrary cappedLibrary(*rxn, bbs, params);
+  TEST_ASSERT(collectReagentSmiles(cappedLibrary.getReagents()) ==
+              collectReagentSmiles(baseline));
+}
+
+void testPrefilterPrimesSharedCache() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbsWithNonMatches();
+
+  EnumerationParams params;
+  params.cacheMode = ReactantCacheMode::MatchOnly;
+  EnumerateLibrary library(*rxn, bbs, params);
+  const EnumerationTypes::BBS &filtered = library.getReagents();
+  size_t expectedCacheSize = 0;
+  for (const auto &pool : filtered) {
+    expectedCacheSize += pool.size();
+  }
+
+  TEST_ASSERT(library.getMatchCacheSize() == expectedCacheSize);
+}
+
+void testPrefilterFullEnumerationOutputUnchanged() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbsWithNonMatches();
+
+  EnumerateLibrary library(*rxn, bbs);
+  const std::multiset<std::string> expected =
+      collectDirectProductSmiles(*rxn, library.getReagents());
+  const std::multiset<std::string> actual = collectEnumerationSmiles(library);
+
+  TEST_ASSERT(actual == expected);
+}
+
+void testPrefilterProtectedAtomFallback() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbsWithProtectedAtoms();
+
+  EnumerationParams params;
+  params.cacheMode = ReactantCacheMode::MatchOnly;
+  EnumerationTypes::BBS baseline = removeNonmatchingReagents(*rxn, bbs, params);
+  EnumerateLibrary library(*rxn, bbs, params);
+
+  // removal behavior must be identical to the 3-arg baseline even when some
+  // reagents carry a _protected atom (those take the countMatches fallback)
+  TEST_ASSERT(collectReagentSmiles(library.getReagents()) ==
+              collectReagentSmiles(baseline));
+
+  // reagents carrying a _protected atom are not primed into the shared cache;
+  // only the protected-free survivors take the fast path
+  size_t nonProtectedSurvivors = 0;
+  for (const auto &pool : library.getReagents()) {
+    for (const auto &mol : pool) {
+      bool hasProtected = false;
+      for (const auto atom : mol->atoms()) {
+        if (atom->hasProp(common_properties::_protected)) {
+          hasProtected = true;
+          break;
+        }
+      }
+      if (!hasProtected) {
+        ++nonProtectedSurvivors;
+      }
+    }
+  }
+  TEST_ASSERT(library.getMatchCacheSize() == nonProtectedSurvivors);
+}
+
+void testEnumerationCacheReuseAcrossReset() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerateLibrary en(*rxn, bbs);
+  const std::vector<std::string> firstPass = collectEnumerationSequence(en);
+
+  en.reset();
+
+  const std::vector<std::string> secondPass = collectEnumerationSequence(en);
+  TEST_ASSERT(firstPass == secondPass);
+}
+
+void testDedupOutputUnchangedWhenDisabled() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeSymmetricDedupeRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeSymmetricDedupBbs();
+
+  EnumerationParams params;
+  params.dedupeSymmetricMatches = false;
+
+  EnumerateLibrary explicitOff(*rxn, bbs, params);
+  EnumerateLibrary defaultOff(*rxn, bbs);
+
+  const std::vector<std::string> explicitOffSequence =
+      collectEnumerationSequence(explicitOff);
+  const std::vector<std::string> defaultOffSequence =
+      collectEnumerationSequence(defaultOff);
+
+  TEST_ASSERT(explicitOffSequence == defaultOffSequence);
+  TEST_ASSERT(collectUniqueSmiles(defaultOffSequence).size() <
+              defaultOffSequence.size());
+}
+
+void testDedupCollapsesSymmetricReagent() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeSymmetricDedupeRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeSymmetricDedupBbs();
+
+  EnumerationParams offParams;
+  offParams.dedupeSymmetricMatches = false;
+  EnumerateLibrary offLibrary(*rxn, bbs, offParams);
+  const std::vector<std::string> offSequence =
+      collectEnumerationSequence(offLibrary);
+
+  EnumerationParams onParams;
+  onParams.dedupeSymmetricMatches = true;
+  EnumerateLibrary onLibrary(*rxn, bbs, onParams);
+  const std::vector<std::string> onSequence =
+      collectEnumerationSequence(onLibrary);
+
+  TEST_ASSERT(offSequence.size() > onSequence.size());
+  TEST_ASSERT(collectUniqueSmiles(offSequence) ==
+              collectUniqueSmiles(onSequence));
+}
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+void testDedupFlagSerialized() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeSymmetricDedupeRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeSymmetricDedupBbs();
+
+  EnumerationParams params;
+  params.dedupeSymmetricMatches = true;
+  EnumerateLibrary en(*rxn, bbs, params);
+  const std::vector<std::string> baseline = collectEnumerationSequence(en);
+
+  en.reset();
+  std::string serialized = en.Serialize();
+  EnumerateLibrary reloaded(serialized);
+
+  TEST_ASSERT(reloaded.getDedupeSymmetricMatches());
+  const std::vector<std::string> reloadedSequence =
+      collectEnumerationSequence(reloaded);
+  TEST_ASSERT(reloadedSequence == baseline);
+}
+#else
+void testDedupFlagSerialized() {}
+#endif
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+void testEnumerationCacheNotSerialized() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerateLibrary en(*rxn, bbs);
+  const std::vector<std::string> baseline = collectEnumerationSequence(en);
+
+  en.reset();
+  std::string serialized = en.Serialize();
+  EnumerateLibrary reloaded(serialized);
+
+  const std::vector<std::string> reloadedSequence = collectEnumerationSequence(reloaded);
+  TEST_ASSERT(reloadedSequence == baseline);
+}
+#else
+void testEnumerationCacheNotSerialized() {}
+#endif
+
+void testGraftCacheOutputUnchanged() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerationParams graftParams;
+  graftParams.cacheMode = ReactantCacheMode::Full;
+
+  EnumerateLibrary grafted(*rxn, bbs, graftParams);
+  EnumerateLibrary defaultOff(*rxn, bbs);
+
+  // the non-cached baseline is driven from the library's filtered reagents so
+  // the comparison stays valid even if removeNonmatchingReagents drops one
+  const std::multiset<std::string> expected =
+      collectDirectProductSmiles(*rxn, grafted.getReagents());
+  const std::multiset<std::string> graftedResults =
+      collectEnumerationSmiles(grafted);
+  const std::multiset<std::string> defaultResults =
+      collectEnumerationSmiles(defaultOff);
+
+  TEST_ASSERT(grafted.getCacheMode() == ReactantCacheMode::Full);
+  TEST_ASSERT(defaultOff.getCacheMode() == ReactantCacheMode::None);
+  TEST_ASSERT(graftedResults == expected);
+  TEST_ASSERT(defaultResults == expected);
+}
+
+void testGraftCachePopulatedAndReused() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerationParams graftParams;
+  graftParams.cacheMode = ReactantCacheMode::Full;
+  EnumerateLibrary library(*rxn, bbs, graftParams);
+
+  // every reagent matches its template exactly once, so the populated graft
+  // cache holds one graft per reagent (= the sum of the filtered pool sizes),
+  // even though the Cartesian product produces many more product sets.
+  size_t expectedGrafts = 0;
+  size_t productCount = 1;
+  for (const auto &pool : library.getReagents()) {
+    expectedGrafts += pool.size();
+    productCount *= pool.size();
+  }
+
+  TEST_ASSERT(library.getGraftCacheSize() == 0);
+  const std::multiset<std::string> products = collectEnumerationSmiles(library);
+
+  TEST_ASSERT(products.size() == productCount);
+  TEST_ASSERT(expectedGrafts < productCount);
+  TEST_ASSERT(library.getGraftCacheSize() == expectedGrafts);
+}
+
+void testGraftCacheReuseAcrossReset() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerationParams graftParams;
+  graftParams.cacheMode = ReactantCacheMode::Full;
+  EnumerateLibrary en(*rxn, bbs, graftParams);
+
+  const std::vector<std::string> firstPass = collectEnumerationSequence(en);
+  const size_t graftsAfterFirstPass = en.getGraftCacheSize();
+  TEST_ASSERT(graftsAfterFirstPass > 0);
+
+  en.reset();
+
+  const std::vector<std::string> secondPass = collectEnumerationSequence(en);
+  // the second pass replays the cached grafts; output is identical and no new
+  // grafts are extracted.
+  TEST_ASSERT(firstPass == secondPass);
+  TEST_ASSERT(en.getGraftCacheSize() == graftsAfterFirstPass);
+}
+
+void testGraftCachePreservedOnCopy() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerationParams graftParams;
+  graftParams.cacheMode = ReactantCacheMode::Full;
+  EnumerateLibrary en(*rxn, bbs, graftParams);
+
+  const std::vector<std::string> baseline = collectEnumerationSequence(en);
+  const size_t populatedGrafts = en.getGraftCacheSize();
+  TEST_ASSERT(populatedGrafts > 0);
+
+  // reset before copying so the copy's initial enumerator is the start; the
+  // populated graft cache is carried into the copy verbatim
+  en.reset();
+  EnumerateLibrary copy(en);
+  TEST_ASSERT(copy.getCacheMode() == ReactantCacheMode::Full);
+  TEST_ASSERT(copy.getGraftCacheSize() == populatedGrafts);
+
+  const std::vector<std::string> copySequence = collectEnumerationSequence(copy);
+  TEST_ASSERT(copySequence == baseline);
+  TEST_ASSERT(copy.getGraftCacheSize() == populatedGrafts);
+}
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+void testGraftCacheNotSerialized() {
+  boost::scoped_ptr<ChemicalReaction> rxn(makeEnumerationCacheRxn());
+  rxn->initReactantMatchers();
+  EnumerationTypes::BBS bbs = makeEnumerationCacheBbs();
+
+  EnumerationParams graftParams;
+  graftParams.cacheMode = ReactantCacheMode::Full;
+  EnumerateLibrary en(*rxn, bbs, graftParams);
+  const std::vector<std::string> baseline = collectEnumerationSequence(en);
+  TEST_ASSERT(en.getGraftCacheSize() > 0);
+
+  en.reset();
+  std::string serialized = en.Serialize();
+  EnumerateLibrary reloaded(serialized);
+
+  // the flag survives serialization but the populated cache does not
+  TEST_ASSERT(reloaded.getCacheMode() == ReactantCacheMode::Full);
+  TEST_ASSERT(reloaded.getGraftCacheSize() == 0);
+
+  const std::vector<std::string> reloadedSequence =
+      collectEnumerationSequence(reloaded);
+  TEST_ASSERT(reloadedSequence == baseline);
+}
+#else
+void testGraftCacheNotSerialized() {}
+#endif
 
 void testEnumerations() {
   EnumerationTypes::BBS bbs;
@@ -381,6 +825,21 @@ void testGithub1657() {}
 int main() {
   RDLog::InitLogs();
 #if 1
+  testPrefilterResultsUnchanged();
+  testPrefilterPrimesSharedCache();
+  testPrefilterFullEnumerationOutputUnchanged();
+  testPrefilterProtectedAtomFallback();
+  testEnumerationCacheOutputUnchanged();
+  testEnumerationCacheReuseAcrossReset();
+  testDedupOutputUnchangedWhenDisabled();
+  testDedupCollapsesSymmetricReagent();
+  testDedupFlagSerialized();
+  testEnumerationCacheNotSerialized();
+  testGraftCacheOutputUnchanged();
+  testGraftCachePopulatedAndReused();
+  testGraftCacheReuseAcrossReset();
+  testGraftCachePreservedOnCopy();
+  testGraftCacheNotSerialized();
   testSamplers();
   testEvenSamplers();
   testEnumerations();
