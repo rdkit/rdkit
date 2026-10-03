@@ -58,13 +58,18 @@ AtomInvariantsGenerator *getMorganAtomInvGen(const bool includeRingMembership) {
 
 AtomInvariantsGenerator *getMorganFeatureAtomInvGen(
     python::object &py_patterns) {
-  python::extract<std::vector<const ROMol *>> patternsE(py_patterns);
-  if (patternsE.check()) {
-    const auto &patterns = patternsE();
-    return new MorganFingerprint::MorganFeatureAtomInvGenerator(&patterns);
-  } else {
+  if (py_patterns.is_none()) {
     return new MorganFingerprint::MorganFeatureAtomInvGenerator(nullptr);
   }
+  // The generator copies each pattern, so these references only have to last
+  // until it returns.
+  python::list items(py_patterns);
+  std::vector<const ROMol *> patterns;
+  patterns.reserve(python::len(items));
+  for (unsigned int i = 0; i < python::len(items); ++i) {
+    patterns.push_back(python::extract<const ROMol *>(items[i])());
+  }
+  return new MorganFingerprint::MorganFeatureAtomInvGenerator(&patterns);
 }
 
 BondInvariantsGenerator *getMorganBondInvGen(const bool useBondTypes,

@@ -22,6 +22,7 @@
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
+#include <GraphMol/Fingerprints/FingerprintUtil.h>
 
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -557,4 +558,33 @@ TEST_CASE("RDKit fingerprinter and ignoreAtoms") {
   std::unique_ptr<SparseBitVect> fp3{
       fpg->getSparseFingerprint(*mol, funcArgs)};
   CHECK(fp3->getNumOnBits() == 0);
+}
+
+TEST_CASE("Morgan feature invariants take at most 32 patterns") {
+  auto mol = "OCCN"_smiles;
+  REQUIRE(mol);
+  std::vector<std::unique_ptr<ROMol>> owned;
+  std::vector<const ROMol *> patterns;
+  for (unsigned int i = 0; i < 32; ++i) {
+    owned.emplace_back(SmartsToMol("[OX2]"));
+    REQUIRE(owned.back());
+    patterns.push_back(owned.back().get());
+  }
+  std::vector<std::uint32_t> invars(mol->getNumAtoms());
+
+  SECTION("32 patterns fill the invariant") {
+    MorganFingerprints::getFeatureInvariants(*mol, invars, &patterns);
+    CHECK(invars[0] == 0xffffffffu);
+    CHECK(invars[3] == 0u);
+  }
+  SECTION("33 are rejected") {
+    owned.emplace_back(SmartsToMol("[OX2]"));
+    patterns.push_back(owned.back().get());
+    CHECK_THROWS_AS(MorganFingerprints::getFeatureInvariants(*mol, invars,
+                                                             &patterns),
+                    ValueErrorException);
+    CHECK_THROWS_AS(
+        MorganFingerprint::MorganFeatureAtomInvGenerator(&patterns),
+        ValueErrorException);
+  }
 }

@@ -29,6 +29,7 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/random.hpp>
@@ -210,6 +211,11 @@ void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
                           const std::vector<const ROMol *> *patterns) {
   unsigned int nAtoms = mol.getNumAtoms();
   PRECONDITION(invars.size() >= nAtoms, "vector too small");
+  // Each pattern is one bit of a 32-bit invariant.
+  if (patterns && patterns->size() > 32) {
+    throw ValueErrorException(
+        "getFeatureInvariants() takes at most 32 patterns");
+  }
 
   auto useLocalPatterns = patterns == nullptr;
   std::vector<const ROMol *> featureMatchers;
@@ -224,7 +230,7 @@ void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
   std::fill(invars.begin(), invars.end(), 0);
   auto &queries = (useLocalPatterns ? featureMatchers : *patterns);
   for (unsigned int i = 0; i < queries.size(); ++i) {
-    unsigned int mask = 1 << i;
+    std::uint32_t mask = 1u << i;
     std::vector<MatchVectType> matchVect;
     // to maintain thread safety, we have to copy the pattern
     // molecules:
