@@ -1,4 +1,4 @@
-# Release_2026.09.1b1
+# Release_2026.09.1
 (Changes relative to Release_2026.03.1)
 
 ## Acknowledgements
@@ -14,10 +14,22 @@ Maeder, John Mayfield, Vedran Miletić, Dan Nealschneider, Dmytro Radchenko,
 Emily Rhodes, Ricardo Rodriguez, Wonseok Shin, Raul Sofia, Vaibhav Srivastava,
 Jon Swain, Pavel Tomanek, Paolo Tosco, Ivan Tubert-Brohman, Riccardo Vianello,
 Inwan Yoo, Nic Zonta, dd, ajeyabsf, m_holmer, zengkaipeng(SII), css, reowszer,
-thomp-j, vwe-ibm, ankar-dav
+thomp-j, vwe-ibm, ankar-dav, dpdoughe
 
 
 ## Highlights
+- This release includes a number of improvements to the RDKit's conformer
+  generator, including beta versions of ETKDGv4 and a new strategy for selecting
+  initial coordinates. These are not yet used by default, but we encourage people
+  to try them out - try the `rdDistGeom.ETKDGv4` parameters object and/or
+  setting `initialEmbeddingMode` to `rdDistGeom.INTERNAL_COORDINATE_EMBEDDING` -
+  and are looking for feedback.
+- We've created a new set of Python wrappers based on nanobind instead of
+  Boost::Python. The new wrappers, still in beta, are significantly faster. We
+  will be doing conda-forge builds of the new wrappers and would greatly
+  appreciate feedback from the community.
+- It's now possible to do shape-based searches in synthon spaces.
+
 
 ## Backwards incompatible changes:
 - The C++ canonicalization helpers `Canon::initCanonAtoms()` and
@@ -126,6 +138,8 @@ thomp-j, vwe-ibm, ankar-dav
  (github pull #9366 from charnley)
   - MacroMol core
  (github pull #9373 from emilyrrhodes)
+  - add new clash resolution approach: open angles of the clashing chain
+ (github pull #9378 from ZontaNicola)
   - Add ROMol name accessors
  (github pull #9384 from i-tub)
   - Handle Data SGroups with no "fieldname"
@@ -196,6 +210,10 @@ thomp-j, vwe-ibm, ankar-dav
  (github pull #9626 from nmaeder)
   - Feat/etkdgv4
  (github pull #9633 from nmaeder)
+  - Feature/add mol numatoms mol numheavyatoms support for qmol in postgresql cartridge
+ (github pull #9640 from dpdoughe)
+  - Fix inward substituent placement in 2D layouts
+ (github pull #9650 from d-b-w)
 
 ## Documentation:
   - Add more pyi patches, 2026-03
@@ -384,6 +402,8 @@ thomp-j, vwe-ibm, ankar-dav
  (github pull #9630 from ricrogz)
 
 ## Cleanup work:
+  - style: renormalize EOL
+ (github pull #8056 from e-kwsm)
   - Normalize rings
  (github pull #9208 from ricrogz)
   - Do deprecations for 2026.09 release
