@@ -708,6 +708,27 @@ RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomIsBridgeheadQuery();
 //! returns a Query for matching bond orders
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(
     Bond::BondType what);
+
+template <class T>
+T *makeBondSimpleQuery(int what, std::function<int(Bond const *)> func,
+                       const std::string &description = "Bond Simple") {
+  T *res = new T;
+  res->setVal(what);
+  res->setDataFunc(func);
+  res->setDescription(description);
+  return res;
+}
+
+static inline BOND_RANGE_QUERY *makeBondRangeQuery(
+    int lower, int upper, bool lowerOpen, bool upperOpen,
+    std::function<int(Bond const *)> func,
+    const std::string &description = "Bond Range") {
+  BOND_RANGE_QUERY *res = new BOND_RANGE_QUERY(lower, upper);
+  res->setDataFunc(func);
+  res->setDescription(description);
+  res->setEndsOpen(lowerOpen, upperOpen);
+  return res;
+}
 //! returns a Query for unspecified SMARTS bonds
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrAromaticBondQuery();
 //! returns a Query for double|aromatic bonds

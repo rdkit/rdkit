@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <limits>
 
 using namespace RDKit;
 using namespace std;
@@ -505,6 +506,211 @@ void testQueryQueryMatches() {
                    Queries::COMPOSITE_OR);
     TEST_ASSERT(a1.QueryMatch(&a2));
     TEST_ASSERT(a2.QueryMatch(&a1));
+  }
+
+  // Empty-interval and open-range edge cases
+  {
+    // ==8 vs >INT_MIN (empty target) → false
+    QueryAtom a1(8), a2;
+    a2.setQuery(makeAtomNumQuery<ATOM_GREATER_QUERY>(
+        std::numeric_limits<int>::min(), "greater_AtomAtomicNum"));
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+  }
+
+  {
+    // !<INT_MAX (ALL) vs !=5 → false
+    QueryAtom a1, a2(5);
+    a1.setQuery(makeAtomNumQuery<ATOM_LESS_QUERY>(
+        std::numeric_limits<int>::max(), "less_AtomAtomicNum"));
+    a1.getQuery()->setNegation(true);
+    a2.getQuery()->setNegation(true);
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+  }
+
+  {
+    // !=10 vs !(5,5,open) (ALL) → true
+    QueryAtom a1, a2;
+    a1.setQuery(makeAtomNumQuery(10));
+    a1.getQuery()->setNegation(true);
+    a2.setQuery(makeAtomRangeQuery(5, 5, true, true, queryAtomNum,
+                                   "range_AtomAtomicNum"));
+    a2.getQuery()->setNegation(true);
+    TEST_ASSERT(a1.QueryMatch(&a2));
+  }
+
+  {
+    // (5,5,open) (NONE) vs ==8 → true
+    QueryAtom a1, a2(8);
+    a1.setQuery(makeAtomRangeQuery(5, 5, true, true, queryAtomNum,
+                                   "range_AtomAtomicNum"));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+  }
+
+  {
+    // (INT_MAX,INT_MAX,open) (NONE) vs ==1 → true
+    QueryAtom a1, a2(1);
+    a1.setQuery(makeAtomRangeQuery(std::numeric_limits<int>::max(),
+                                   std::numeric_limits<int>::max(), true, true,
+                                   queryAtomNum, "range_AtomAtomicNum"));
+    TEST_ASSERT(a1.QueryMatch(&a2));
+  }
+
+  // Bond: same edge cases
+  {
+    // order==2 vs >INT_MIN (empty target) → false
+    QueryBond b1(Bond::DOUBLE), b2;
+    b2.setQuery(makeBondSimpleQuery<BOND_GREATER_QUERY>(
+        std::numeric_limits<int>::min(), queryBondOrder, "greater_BondOrder"));
+    TEST_ASSERT(!b1.QueryMatch(&b2));
+  }
+
+  {
+    // order==2 vs >3 (interval [MIN,2]) → true
+    QueryBond b1(Bond::DOUBLE), b2;
+    b2.setQuery(makeBondSimpleQuery<BOND_GREATER_QUERY>(3, queryBondOrder,
+                                                        "greater_BondOrder"));
+    TEST_ASSERT(b1.QueryMatch(&b2));
+  }
+
+  {
+    // order==2 vs >3 tol=1 (interval [MIN,1]) → false
+    QueryBond b1(Bond::DOUBLE), b2;
+    auto *q = makeBondSimpleQuery<BOND_GREATER_QUERY>(3, queryBondOrder,
+                                                      "greater_BondOrder");
+    q->setTol(1);
+    b2.setQuery(q);
+    TEST_ASSERT(!b1.QueryMatch(&b2));
+  }
+
+  {
+    // order==2 vs ==2 tol=1 (interval [1,3]) → true
+    QueryBond b1(Bond::DOUBLE), b2;
+    auto *q = makeBondOrderEqualsQuery(Bond::DOUBLE);
+    q->setTol(1);
+    b2.setQuery(q);
+    TEST_ASSERT(b1.QueryMatch(&b2));
+  }
+
+  {
+    // order==2 vs >4 tol=1 (interval [MIN,2]) → true
+    QueryBond b1(Bond::DOUBLE), b2;
+    auto *q = makeBondSimpleQuery<BOND_GREATER_QUERY>(4, queryBondOrder,
+                                                      "greater_BondOrder");
+    q->setTol(1);
+    b2.setQuery(q);
+    TEST_ASSERT(b1.QueryMatch(&b2));
+  }
+
+  {
+    // range(1,3,closed) vs ==2 → false (superset ⊄ singleton)
+    QueryBond b1, b2(Bond::DOUBLE);
+    b1.setQuery(makeBondRangeQuery(1, 3, false, false, queryBondOrder,
+                                   "range_BondOrder"));
+    TEST_ASSERT(!b1.QueryMatch(&b2));
+  }
+
+  {
+    // ==2 vs range(1,3,closed) → true (singleton ⊆ range)
+    QueryBond b1(Bond::DOUBLE), b2;
+    b2.setQuery(makeBondRangeQuery(1, 3, false, false, queryBondOrder,
+                                   "range_BondOrder"));
+    TEST_ASSERT(b1.QueryMatch(&b2));
+  }
+
+  {
+    // !<INT_MAX (ALL) vs !=2 → false
+    QueryBond b1, b2(Bond::DOUBLE);
+    b1.setQuery(makeBondSimpleQuery<BOND_LESS_QUERY>(
+        std::numeric_limits<int>::max(), queryBondOrder, "less_BondOrder"));
+    b1.getQuery()->setNegation(true);
+    b2.getQuery()->setNegation(true);
+    TEST_ASSERT(!b1.QueryMatch(&b2));
+  }
+
+  {
+    // !=2 vs !(1,1,open) (ALL) → true
+    QueryBond b1, b2;
+    b1.setQuery(makeBondOrderEqualsQuery(Bond::DOUBLE));
+    b1.getQuery()->setNegation(true);
+    b2.setQuery(makeBondRangeQuery(1, 1, true, true, queryBondOrder,
+                                   "range_BondOrder"));
+    b2.getQuery()->setNegation(true);
+    TEST_ASSERT(b1.QueryMatch(&b2));
+  }
+
+  {
+    // (1,1,open) (NONE) vs ==2 → true
+    QueryBond b1, b2(Bond::DOUBLE);
+    b1.setQuery(makeBondRangeQuery(1, 1, true, true, queryBondOrder,
+                                   "range_BondOrder"));
+    TEST_ASSERT(b1.QueryMatch(&b2));
+  }
+
+  {
+    // (INT_MAX,INT_MAX,open) (NONE) vs ==1 → true
+    QueryBond b1, b2(Bond::SINGLE);
+    b1.setQuery(makeBondRangeQuery(std::numeric_limits<int>::max(),
+                                   std::numeric_limits<int>::max(), true, true,
+                                   queryBondOrder, "range_BondOrder"));
+    TEST_ASSERT(b1.QueryMatch(&b2));
+  }
+
+  // Open-range tolerance: open lower pushes inward by +tol, open upper pulls
+  // inward by -tol
+  {
+    // atom (3,7,open) tol=1 → accepted (4,6) → interval [5,5]
+    // vs ==5 → true
+    QueryAtom a1, a2(5);
+    auto *q = makeAtomRangeQuery(3, 7, true, true, queryAtomNum,
+                                 "range_AtomAtomicNum");
+    q->setTol(1);
+    a1.setQuery(q);
+    TEST_ASSERT(a1.QueryMatch(&a2));
+  }
+
+  {
+    // atom (3,7,open) tol=1 → accepted (4,6) → interval [5,5]
+    // vs ==4 → false (4 not in [5,5])
+    QueryAtom a1, a2(4);
+    auto *q = makeAtomRangeQuery(3, 7, true, true, queryAtomNum,
+                                 "range_AtomAtomicNum");
+    q->setTol(1);
+    a1.setQuery(q);
+    TEST_ASSERT(!a1.QueryMatch(&a2));
+  }
+
+  {
+    // atom (3,7,open-closed) tol=1 → accepted (4,8] → interval [5,8]
+    // ==5 ⊆ [5,8] → true
+    QueryAtom a1, a2(5);
+    auto *q = makeAtomRangeQuery(3, 7, true, false, queryAtomNum,
+                                 "range_AtomAtomicNum");
+    q->setTol(1);
+    a1.setQuery(q);
+    TEST_ASSERT(a2.QueryMatch(&a1));
+  }
+
+  {
+    // atom (3,7,closed-open) tol=1 → accepted [2,6) → interval [2,5]
+    // ==2 ⊆ [2,5] → true
+    QueryAtom a1, a2(2);
+    auto *q = makeAtomRangeQuery(3, 7, false, true, queryAtomNum,
+                                 "range_AtomAtomicNum");
+    q->setTol(1);
+    a1.setQuery(q);
+    TEST_ASSERT(a2.QueryMatch(&a1));
+  }
+
+  {
+    // bond (2,6,open) tol=2 → accepted (4,3) → empty → NONE
+    // vs ==5 → true (NONE ⊆ anything)
+    QueryBond b1, b2;
+    b2.setBondType(Bond::QUINTUPLE);
+    auto *q =
+        makeBondRangeQuery(2, 6, true, true, queryBondOrder, "range_BondOrder");
+    q->setTol(2);
+    b1.setQuery(q);
+    TEST_ASSERT(b1.QueryMatch(&b2));
   }
 
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;

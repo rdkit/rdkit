@@ -2288,3 +2288,36 @@ TEST_CASE("Github #6015: react_idx property") {
               "react_atom_idx") == 2);
   }
 }
+
+TEST_CASE("reaction SMARTS with @{n} bond ring count") {
+  SECTION("parses") {
+    auto rxn = "[C:1]@{2}[C:2]>>[C:1]([O])[C:2]"_rxnsmarts;
+    CHECK(rxn != nullptr);
+  }
+  SECTION("dehydrogenates bicyclodecane fusion bond") {
+    auto rxn = "[C:1]@{2}[C:2]>>[C:1]([O])[C:2]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    ROMOL_SPTR bcd("C1CCC2CCCCC2C1"_smiles.release());
+    REQUIRE(bcd);
+    MOL_SPTR_VECT reactants = {bcd};
+    auto products = rxn->runReactants(reactants);
+    CHECK(products.size() == 2);
+    CHECK(products[0].size() == 1);
+    CHECK(products[0][0]->getNumAtoms() == 11);
+  }
+  SECTION("cleaves bicyclodecane fusion bond") {
+    auto rxn = "[C:1]@{2}[C:2]>>([C:1].[C:2])"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    ROMOL_SPTR bcd("C1CCC2CCCCC2C1"_smiles.release());
+    REQUIRE(bcd);
+    MOL_SPTR_VECT reactants = {bcd};
+    auto products = rxn->runReactants(reactants);
+    CHECK(products.size() == 2);
+    CHECK(products[0][0]->getNumAtoms() == 10);
+    MolOps::sanitizeMol(*(static_cast<RWMol *>(products[0][0].get())));
+    CHECK(products[0][0]->getRingInfo()->numRings() == 1);
+    CHECK(products[0][0]->getRingInfo()->atomRings()[0].size() == 10);
+  }
+}

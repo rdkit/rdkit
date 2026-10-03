@@ -868,6 +868,29 @@ bondd: BOND_TOKEN
   newB->setQuery(makeBondIsInRingQuery());
   $$ = newB;
 }
+| AT_TOKEN RANGE_OPEN_TOKEN number RANGE_CLOSE_TOKEN {
+  QueryBond *newB = new QueryBond();
+  newB->setQuery(makeBondInNRingsQuery($3));
+  $$ = newB;
+}
+| AT_TOKEN RANGE_OPEN_TOKEN MINUS_TOKEN number RANGE_CLOSE_TOKEN {
+  QueryBond *newB = new QueryBond();
+  newB->setQuery(makeBondSimpleQuery<BOND_GREATEREQUAL_QUERY>(
+      $4, queryIsBondInNRings, "greater_BondInNRings"));
+  $$ = newB;
+}
+| AT_TOKEN RANGE_OPEN_TOKEN number MINUS_TOKEN RANGE_CLOSE_TOKEN {
+  QueryBond *newB = new QueryBond();
+  newB->setQuery(makeBondSimpleQuery<BOND_LESSEQUAL_QUERY>(
+      $3, queryIsBondInNRings, "less_BondInNRings"));
+  $$ = newB;
+}
+| AT_TOKEN RANGE_OPEN_TOKEN number MINUS_TOKEN number RANGE_CLOSE_TOKEN {
+  QueryBond *newB = new QueryBond();
+  newB->setQuery(makeBondRangeQuery($3, $5, false, false,
+      queryIsBondInNRings, "range_BondInNRings"));
+  $$ = newB;
+}
 | NOT_TOKEN bondd {
   $2->getQuery()->setNegation(!($2->getQuery()->getNegation()));
   $$ = $2;
