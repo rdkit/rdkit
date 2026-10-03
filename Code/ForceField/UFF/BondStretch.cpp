@@ -27,12 +27,12 @@ double calcBondRestLength(double bondOrder, const AtomicParams *end1Params,
   double ri = end1Params->r1, rj = end2Params->r1;
 
   // this is the pauling correction:
-  double rBO = -Params::lambda * (ri + rj) * log(bondOrder);
+  double rBO = -Params::lambda * (ri + rj) * std::log(bondOrder);
 
   // O'Keefe and Breese electronegativity correction:
   double Xi = end1Params->GMP_Xi, Xj = end2Params->GMP_Xi;
-  double rEN = ri * rj * (sqrt(Xi) - sqrt(Xj)) * (sqrt(Xi) - sqrt(Xj)) /
-               (Xi * ri + Xj * rj);
+  double rEN = ri * rj * (std::sqrt(Xi) - std::sqrt(Xj)) *
+               (std::sqrt(Xi) - std::sqrt(Xj)) / (Xi * ri + Xj * rj);
 
   double res = ri + rj + rBO - rEN;
   return res;

@@ -13,7 +13,6 @@
 #include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/Invariant.h>
 
-
 #include <cmath>
 
 #ifndef M_PI
@@ -45,7 +44,7 @@ double TorsionConstraintContrib::computeDihedralTerm(double dihedral) const {
     RDKit::ForceFieldsHelper::normalizeAngleDeg(dihedralMinTarget);
     double dihedralMaxTarget = dihedral - d_maxDihedralDeg;
     RDKit::ForceFieldsHelper::normalizeAngleDeg(dihedralMaxTarget);
-    if (fabs(dihedralMinTarget) < fabs(dihedralMaxTarget)) {
+    if (std::fabs(dihedralMinTarget) < std::fabs(dihedralMaxTarget)) {
       dihedralTarget = d_minDihedralDeg;
     } else {
       dihedralTarget = d_maxDihedralDeg;

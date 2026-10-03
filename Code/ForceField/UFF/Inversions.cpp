@@ -30,7 +30,7 @@ double computeEnergy(const RDGeom::Point3D &p1, const RDGeom::Point3D &p2,
                      const InversionContribsParams &contrib) {
   const double cosY = Utils::calculateCosY(p1, p2, p3, p4);
   const double sinYSq = 1.0 - cosY * cosY;
-  const double sinY = ((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0);
+  const double sinY = ((sinYSq > 0.0) ? std::sqrt(sinYSq) : 0.0);
   // cos(2 * W) = 2 * cos(W) * cos(W) - 1 = 2 * sin(W) * sin(W) - 1
   const double cos2W = 2.0 * sinY * sinY - 1.0;
   return contrib.forceConstant *
@@ -136,11 +136,11 @@ void InversionContribs::getGrad(double *pos, double *grad) const {
     double cosY = n.dotProduct(rJL);
     cosY = std::clamp(cosY, -1.0, 1.0);
     const double sinYSq = 1.0 - cosY * cosY;
-    const double sinY = std::max(sqrt(sinYSq), 1.0e-8);
+    const double sinY = std::max(std::sqrt(sinYSq), 1.0e-8);
     double cosTheta = rJI.dotProduct(rJK);
     cosTheta = std::clamp(cosTheta, -1.0, 1.0);
     const double sinThetaSq = 1.0 - cosTheta * cosTheta;
-    const double sinTheta = std::max(sqrt(sinThetaSq), 1.0e-8);
+    const double sinTheta = std::max(std::sqrt(sinThetaSq), 1.0e-8);
     // sin(2 * W) = 2 * sin(W) * cos(W) = 2 * cos(Y) * sin(Y)
     const double dE_dW = -contrib.forceConstant *
                          (contrib.C1 * cosY + 4.0 * contrib.C2 * cosY * sinY);

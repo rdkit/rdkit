@@ -57,11 +57,11 @@ void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t, double *d,
   // -------
   // dTheta/dx is trickier:
   const double dCos_dT[6] = {1.0 / d[0] * (t[1].x - cosPhi * t[0].x),
-                       1.0 / d[0] * (t[1].y - cosPhi * t[0].y),
-                       1.0 / d[0] * (t[1].z - cosPhi * t[0].z),
-                       1.0 / d[1] * (t[0].x - cosPhi * t[1].x),
-                       1.0 / d[1] * (t[0].y - cosPhi * t[1].y),
-                       1.0 / d[1] * (t[0].z - cosPhi * t[1].z)};
+                             1.0 / d[0] * (t[1].y - cosPhi * t[0].y),
+                             1.0 / d[0] * (t[1].z - cosPhi * t[0].z),
+                             1.0 / d[1] * (t[0].x - cosPhi * t[1].x),
+                             1.0 / d[1] * (t[0].y - cosPhi * t[1].y),
+                             1.0 / d[1] * (t[0].z - cosPhi * t[1].z)};
 
   g[0][0] += sinTerm * (dCos_dT[2] * r[1].y - dCos_dT[1] * r[1].z);
   g[0][1] += sinTerm * (dCos_dT[0] * r[1].z - dCos_dT[2] * r[1].x);
@@ -169,7 +169,7 @@ void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
     RDKit::ForceFieldsHelper::computeDihedral(
         pos, at1Idx, at2Idx, at3Idx, at4Idx, nullptr, &cosPhi, r, t, d);
     double sinPhiSq = 1.0 - cosPhi * cosPhi;
-    double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
+    double sinPhi = ((sinPhiSq > 0.0) ? std::sqrt(sinPhiSq) : 0.0);
     double sin2Phi = 2.0 * sinPhi * cosPhi;
     double sin3Phi = 3.0 * sinPhi - 4.0 * sinPhi * sinPhiSq;
     // dE/dPhi is independent of cartesians:

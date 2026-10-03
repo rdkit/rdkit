@@ -1025,7 +1025,7 @@ void testGitHubIssue62() {
       sdfWriter->write(*mol);
       double e = field->calcEnergy();
       BOOST_LOG(rdErrorLog) << molName << " " << e << std::endl;
-      TEST_ASSERT(fabs(e - energyValues[i]) < 1.);
+      TEST_ASSERT(std::fabs(e - energyValues[i]) < 1.);
       delete field;
     }
     sdfWriter->close();
@@ -1107,6 +1107,7 @@ void runblock_uff(const std::vector<ROMol *> &mols,
 }  // namespace
 #include <thread>
 #include <future>
+#include <cmath>
 void testUFFMultiThread() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test UFF multithreading" << std::endl;
