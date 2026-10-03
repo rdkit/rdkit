@@ -19,6 +19,7 @@
 #include <GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h>
 #include <GraphMol/EnumerateStereoisomers/Flippers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include "RingSystemFilter.h"
 
 namespace RDKit {
 namespace EnumerateStereoisomers {
@@ -61,6 +62,15 @@ StereoisomerEnumerator::StereoisomerEnumerator(
   } else {
     d_randGen.reset(new std::mt19937(d_options.randomSeed));
   }
+
+  if (d_options.useRingSystemFilter) {
+    // Skip finding patterns only if we know there are no rings
+    // in the mol (maybe we haven't found them yet?)
+    if (auto ri = mol.getRingInfo();
+        !ri || !ri->isInitialized() || ri->atomRings().size() > 1)
+      getRingPatternsParityRelations(mol, d_pattern_same_parity,
+                                     d_pattern_opposite_parity);
+  }
 }
 
 std::uint64_t StereoisomerEnumerator::getStereoisomerCount() const {
@@ -74,8 +84,7 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::next() {
   if (d_flippers.empty()) {
     ++d_numReturned;
     return std::make_unique<ROMol>(d_mol);
-  }
-  else {
+  } else {
     auto isomer = generateRandomIsomer();
     ++d_numReturned;
     return isomer;
@@ -117,6 +126,30 @@ void StereoisomerEnumerator::buildFlippers() {
   }
 }
 
+bool StereoisomerEnumerator::passesRingPatternsCheck() const {
+  for (auto [i, j] : d_pattern_same_parity) {
+    auto atomIParity = d_mol.getAtomWithIdx(i)->getChiralTag();
+    auto atomJParity = d_mol.getAtomWithIdx(j)->getChiralTag();
+    if ((atomIParity == Atom::CHI_TETRAHEDRAL_CW &&
+         atomJParity == Atom::CHI_TETRAHEDRAL_CCW) ||
+        (atomIParity == Atom::CHI_TETRAHEDRAL_CCW &&
+         atomJParity == Atom::CHI_TETRAHEDRAL_CW)) {
+      return false;
+    }
+  }
+  for (auto [i, j] : d_pattern_opposite_parity) {
+    auto atomIParity = d_mol.getAtomWithIdx(i)->getChiralTag();
+    auto atomJParity = d_mol.getAtomWithIdx(j)->getChiralTag();
+    if ((atomIParity == Atom::CHI_TETRAHEDRAL_CW &&
+         atomJParity == Atom::CHI_TETRAHEDRAL_CW) ||
+        (atomIParity == Atom::CHI_TETRAHEDRAL_CCW &&
+         atomJParity == Atom::CHI_TETRAHEDRAL_CCW)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
   boost::dynamic_bitset<> nextConfig{d_flippers.size()};
   while (d_seen.size() < d_totalPoss) {
@@ -129,6 +162,13 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
       for (size_t i = 0; i < d_flippers.size(); i++) {
         d_flippers[i]->flip(nextConfig[i]);
       }
+
+      // Check whether this isomer is valid, according to the patterns
+      // we're using
+      if (d_options.useRingSystemFilter && !passesRingPatternsCheck()) {
+        continue;
+      }
+
       // We don't need StereoGroups any more so remove them.
       std::unique_ptr<ROMol> isomer;
       if (!d_mol.getStereoGroups().empty()) {
@@ -194,4 +234,3 @@ bool StereoisomerEnumerator::embeddable(ROMol &isomer) {
 
 }  // namespace EnumerateStereoisomers
 }  // namespace RDKit
-

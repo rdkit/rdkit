@@ -24,13 +24,33 @@
 using namespace RDKit;
 using namespace RDKit::EnumerateStereoisomers;
 
-TEST_CASE("Simple test") {
+TEST_CASE("Base tests") {
   auto m1 = "BrC=CC1OC(C2)(F)C2(Cl)C1"_smiles;
   REQUIRE(m1);
-  {
-    StereoisomerEnumerator enu(*m1);
+
+  // using the patterns and/or embedding results in the same
+  // stereoisomers being returned (the patterns enforce that
+  // we only return viable conformers without having to generate
+  // them )
+  const static std::unordered_set<std::string> expected{
+      R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
+      R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
+      R"(F[C@@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2)",
+      R"(F[C@@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2)",
+      R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
+      R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
+      R"(F[C@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2)",
+      R"(F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2)",
+  };
+
+  SECTION("Base test, no patterns") {
+    // ring system patterns are enabled by default
+    StereoEnumerationOptions opts;
+    opts.useRingSystemFilter = false;
+
+    StereoisomerEnumerator enu(*m1, opts);
     CHECK(enu.getStereoisomerCount() == 16);
-    const static std::unordered_set<std::string> expected{
+    const static std::unordered_set<std::string> expectedNoPatterns{
         R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
         R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
         R"(F[C@@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2)",
@@ -52,51 +72,58 @@ TEST_CASE("Simple test") {
     while (auto isomer = enu.next()) {
       got.insert(MolToSmiles(*isomer));
     }
+    CHECK(got == expectedNoPatterns);
+  }
+
+  SECTION("Base test, with ring system patterns (default cfg)") {
+    StereoisomerEnumerator enu(*m1);
+
+    // 8 of these 16 stereoisomers are geometrically impossible
+    // in 3D space
+    CHECK(enu.getStereoisomerCount() == 16);
+
+    std::unordered_set<std::string> got;
+    while (auto isomer = enu.next()) {
+      got.insert(MolToSmiles(*isomer));
+    }
     CHECK(got == expected);
   }
-}
 
-TEST_CASE("Embedding") {
-  auto m1 = "BrC=CC1OC(C2)(F)C2(Cl)C1"_smiles;
-  REQUIRE(m1);
+  SECTION("Embedding") {
+    auto m1 = "BrC=CC1OC(C2)(F)C2(Cl)C1"_smiles;
+    REQUIRE(m1);
 
-  StereoEnumerationOptions opts;
-  opts.tryEmbedding = true;
-  StereoisomerEnumerator enu1(*m1, opts);
-  const static std::unordered_set<std::string> expected{
-      R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
-      R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
-      R"(F[C@@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2)",
-      R"(F[C@@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2)",
-      R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
-      R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
-      R"(F[C@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2)",
-      R"(F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2)",
-  };
-  std::unordered_set<std::string> got;
-  while (auto isomer = enu1.next()) {
-    got.insert(MolToSmiles(*isomer));
+    StereoEnumerationOptions opts;
+    opts.tryEmbedding = true;
+    opts.useRingSystemFilter = GENERATE(false, true);
+    CAPTURE(opts.useRingSystemFilter);
+    StereoisomerEnumerator enu1(*m1, opts);
+
+    std::unordered_set<std::string> got;
+    while (auto isomer = enu1.next()) {
+      got.insert(MolToSmiles(*isomer));
+    }
+    CHECK(got == expected);
+
+    // Check we get the right number even with maxIsomers.
+    opts.maxIsomers = 8;
+    StereoisomerEnumerator enu2(*m1, opts);
+    got.clear();
+    while (auto isomer = enu2.next()) {
+      got.insert(MolToSmiles(*isomer));
+    }
+    CHECK(got == expected);
+
+    // Check no infinite loop when maxIsomers greater than
+    // possible.
+    opts.maxIsomers = 1024;
+    StereoisomerEnumerator enu3(*m1, opts);
+    got.clear();
+    while (auto isomer = enu3.next()) {
+      got.insert(MolToSmiles(*isomer));
+    }
+    CHECK(got == expected);
   }
-  CHECK(got == expected);
-
-  // Check we get the right number even with maxIsomers.
-  opts.maxIsomers = 8;
-  StereoisomerEnumerator enu2(*m1, opts);
-  got.clear();
-  while (auto isomer = enu2.next()) {
-    got.insert(MolToSmiles(*isomer));
-  }
-  CHECK(got == expected);
-
-  // Check no infinite loop when maxIsomers greater than
-  // possible.
-  opts.maxIsomers = 1024;
-  StereoisomerEnumerator enu3(*m1, opts);
-  got.clear();
-  while (auto isomer = enu3.next()) {
-    got.insert(MolToSmiles(*isomer));
-  }
-  CHECK(got == expected);
 }
 
 TEST_CASE("Unique") {
@@ -125,60 +152,87 @@ TEST_CASE("Unique") {
 }
 
 TEST_CASE("Unassigned") {
-  auto m1 = "C/C(F)=C/[C@@H](C)Cl"_smiles;
-  REQUIRE(m1);
-  StereoEnumerationOptions opts;
-  StereoisomerEnumerator enu1(*m1, opts);
-  CHECK(enu1.getStereoisomerCount() == 1);
-  std::unordered_set<std::string> expected{"C/C(F)=C/[C@@H](C)Cl"};
-  std::unordered_set<std::string> got;
-  while (auto isomer = enu1.next()) {
-    got.insert(MolToSmiles(*isomer));
-    CHECK(!isomer->hasProp("_MolFileChiralFlag"));
-  }
-  CHECK(got == expected);
+  SECTION("default") {
+    auto m1 = "C/C(F)=C/[C@@H](C)Cl"_smiles;
+    REQUIRE(m1);
 
-  // Enumerate bond stereo only
-  auto m4 = "CC(F)=C[C@@H](C)Cl"_smiles;
-  REQUIRE(m4);
-  StereoisomerEnumerator enu4(*m4, opts);
-  CHECK(enu4.getStereoisomerCount() == 2);
-  got.clear();
-  while (auto isomer = enu4.next()) {
-    std::string prop;
-    CHECK(isomer->getPropIfPresent<std::string>("_MolFileChiralFlag", prop));
-    CHECK(prop == "1");
-    got.insert(MolToSmiles(*isomer));
-  }
-  expected = std::unordered_set<std::string>{
-      R"(C/C(F)=C/[C@@H](C)Cl)",
-      R"(C/C(F)=C\[C@@H](C)Cl)",
-  };
-  CHECK(got == expected);
+    StereoEnumerationOptions opts;
+    StereoisomerEnumerator enu1(*m1, opts);
 
-  auto m2 = "BrC=C[C@H]1OC(C2)(F)C2(Cl)C1"_smiles;
-  REQUIRE(m2);
-  StereoisomerEnumerator enu2(*m2, opts);
-  CHECK(enu2.getStereoisomerCount() == 8);
-  expected = std::unordered_set<std::string>{
-      R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
-      R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
-      R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
-      R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
-      R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
-      R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
-      R"(F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
-      R"(F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
-  };
-  got.clear();
-  while (auto isomer = enu2.next()) {
-    got.insert(MolToSmiles(*isomer));
-  }
-  CHECK(got == expected);
+    CHECK(enu1.getStereoisomerCount() == 1);
 
-  opts.onlyUnassigned = false;
-  StereoisomerEnumerator enu3(*m2, opts);
-  CHECK(enu3.getStereoisomerCount() == 16);
+    std::unordered_set<std::string> expected{"C/C(F)=C/[C@@H](C)Cl"};
+
+    std::unordered_set<std::string> got;
+    while (auto isomer = enu1.next()) {
+      got.insert(MolToSmiles(*isomer));
+      CHECK(!isomer->hasProp("_MolFileChiralFlag"));
+    }
+    CHECK(got == expected);
+  }
+
+  SECTION("Enumerate bond stereo only") {
+    auto m4 = "CC(F)=C[C@@H](C)Cl"_smiles;
+    REQUIRE(m4);
+
+    StereoEnumerationOptions opts;
+    StereoisomerEnumerator enu4(*m4, opts);
+
+    CHECK(enu4.getStereoisomerCount() == 2);
+
+    std::unordered_set<std::string> got;
+    while (auto isomer = enu4.next()) {
+      std::string prop;
+      CHECK(isomer->getPropIfPresent<std::string>("_MolFileChiralFlag", prop));
+      CHECK(prop == "1");
+      got.insert(MolToSmiles(*isomer));
+    }
+    std::unordered_set<std::string> expected{
+        R"(C/C(F)=C/[C@@H](C)Cl)",
+        R"(C/C(F)=C\[C@@H](C)Cl)",
+    };
+    CHECK(got == expected);
+  }
+
+  SECTION("Unassigned only") {
+    auto m2 = "BrC=C[C@H]1OC(C2)(F)C2(Cl)C1"_smiles;
+    REQUIRE(m2);
+
+    StereoEnumerationOptions opts;
+    opts.useRingSystemFilter = GENERATE(false, true);
+    CAPTURE(opts.useRingSystemFilter);
+
+    StereoisomerEnumerator enu2(*m2, opts);
+
+    CHECK(enu2.getStereoisomerCount() == 8);
+
+    std::unordered_set<std::string> expected{
+        R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
+        R"(F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
+        R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
+        R"(F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
+    };
+    if (opts.useRingSystemFilter == false) {
+      // These are geometrically impossible in 3D space.
+      // Using the ring system patterns prevents them
+      // from being returned (same as if we use embedding)
+      expected.insert({
+          R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2)",
+          R"(F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2)",
+          R"(F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
+          R"(F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
+      });
+    }
+    std::unordered_set<std::string> got;
+    while (auto isomer = enu2.next()) {
+      got.insert(MolToSmiles(*isomer));
+    }
+    CHECK(got == expected);
+
+    opts.onlyUnassigned = false;
+    StereoisomerEnumerator enu3(*m2, opts);
+    CHECK(enu3.getStereoisomerCount() == 16);
+  }
 }
 
 TEST_CASE("Subset") {
@@ -413,7 +467,13 @@ TEST_CASE("Issue 7516") {
 
   auto m3 = "O=C(NC1CC2[NH+](C(C1)CC2)Cc3ccccc3)N"_smiles;
   REQUIRE(m2);
-  StereoisomerEnumerator enu3(*m3);
+
+  // This issue was reported before we added the ring system
+  // patterns, which suppress some invalid conformers here
+  StereoEnumerationOptions opts;
+  opts.useRingSystemFilter = false;
+
+  StereoisomerEnumerator enu3(*m3, opts);
   got.clear();
   while (auto isomer = enu3.next()) {
     got.insert(MolToSmiles(*isomer));
@@ -552,4 +612,90 @@ TEST_CASE("wiggly bonds and EnumerateStereoisomers") {
     CHECK(std::find(got.begin(), got.end(), "C[C@](F)(Cl)Br") != got.end());
     CHECK(std::find(got.begin(), got.end(), "C[C@@](F)(Cl)Br") != got.end());
   }
+}
+
+TEST_CASE("Ring system patterns") {
+  const auto enumerate = [](const char *smiles, bool useRingSystemFilter,
+                            bool tryEmbedding) {
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    REQUIRE(mol);
+
+    StereoEnumerationOptions opts;
+    opts.useRingSystemFilter = useRingSystemFilter;
+    opts.tryEmbedding = tryEmbedding;
+
+    StereoisomerEnumerator enu(*mol, opts);
+    std::unordered_set<std::string> result;
+    while (auto isomer = enu.next()) {
+      result.insert(MolToSmiles(*isomer));
+    }
+    return result;
+  };
+
+  const auto checkResults = [&enumerate](const char *smiles) {
+    const auto noPatterns = enumerate(smiles, false, false);
+    const auto withPatterns = enumerate(smiles, true, false);
+
+    REQUIRE(!noPatterns.empty());
+
+    // It is totally possible that we have a mol for which
+    // no possible 3D conformations exist, but all the cases
+    // in the test do have some possible conformation.
+    REQUIRE(!withPatterns.empty());
+
+    CHECK(noPatterns.size() > withPatterns.size());
+    for (const auto &isomer : withPatterns) {
+      CHECK(noPatterns.contains(isomer));
+    }
+  };
+
+  SECTION("Norbornane") { checkResults("CC12CCC(CC3=CCC(C(N)=O)CC3)(CC1)C2"); }
+
+  SECTION("adamantane") {
+    checkResults("CCCCCCCc1nnc(NC(=O)C23CC4CC(C2)CC(C3)C4)s1");
+  }
+
+  SECTION("C5_O") { checkResults("C1CC1C1C2CC2C2CC21"); }
+
+  SECTION("331-bicyclononane") {
+    checkResults("CCCC12CN3CC(CCC)(CN(C1)C3c1cc(Br)ccc1O)C2O");
+  }
+
+  SECTION("2,2,2-bicyclooctane") {
+    checkResults(
+        "CCOC(=O)C1=CC2C3C(=O)N(c4ccc(I)cc4)C(=O)C3C1C1C(=O)N(c3ccc(I)cc3)C(=O)C21");
+  }
+
+  SECTION("14-bicyclohept-1,4-dione") { checkResults("C1C2C3CC3C3CC3C12"); }
+
+  SECTION("misc_1") { checkResults("CN1C2(CC2)C2C(C3CC2C2(CC2)C32CC2)C12CC2"); }
+
+  SECTION("2,2,2-bicyclooctane") { checkResults("CC12CCC(N)(CC1)CC2"); }
+
+  SECTION("2,3,3-bicyclodecane") { checkResults("C1CC2CC3CCC3C1CC1CCC21"); }
+
+  SECTION("2,2,3-bicyclononane") { checkResults("C1CC2CCC(C1)CC2"); }
+
+  SECTION("1,1,3-bicycloheptane") { checkResults("CCCC1C(C)C(C)C2CC1C2C"); }
+
+  SECTION("misc_2") {
+    checkResults(
+        "CCOc1ccc(N2C(=O)C3C4C=CC(C3C2=O)C2C(=O)N(c3ccc(OCC)cc3)C(=O)C42)cc1");
+  }
+
+  SECTION("misc_3") { checkResults("C1C2CC3CC4CC3CC2CC14"); }
+
+  SECTION("misc_4") { checkResults("C1CC2C3CCC2C1C3"); }
+
+  SECTION("fused_5-5_membered_rings") {
+    checkResults("O=C(O)c1nnn(C2COC3C2OCC3n2nnc(C(=O)O)c2C(=O)O)c1C(=O)O");
+  }
+
+  SECTION("cyclopropacyclohexane") {
+    checkResults("O=C(O)C12C3CCCC1C32c1ccccc1");
+  }
+
+  SECTION("cyclopropacyclooctane") { checkResults("C1C2C1C1CC1C1CC1C1CC21"); }
+
+  SECTION("421-bicyclononane") { checkResults("C1CC2CC1C1CCC2C1"); }
 }

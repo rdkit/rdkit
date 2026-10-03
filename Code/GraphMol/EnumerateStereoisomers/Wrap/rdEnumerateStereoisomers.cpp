@@ -101,6 +101,12 @@ BOOST_PYTHON_MODULE(rdEnumerateStereoisomers) {
           "randomSeed",
           &EnumerateStereoisomers::StereoEnumerationOptions::randomSeed,
           "Seed for random number generator.  Default=-1 means no seed.")
+      .def_readwrite(
+          "useRingSystemFilter",
+          &EnumerateStereoisomers::StereoEnumerationOptions::
+              useRingSystemFilter,
+          "filter out stereoisomers containing ring systems that are known to be"
+          " impossible in 3D space.  Default=True.")
       .def("__setattr__", &safeSetattr);
 
   docString = "Stereoisomer enumerator.";
