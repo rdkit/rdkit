@@ -48,7 +48,8 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   /*!
 
     \param mol: input molecule or protein
-    \param radii: radii for atoms of input mol, empty for default values
+    \param radii: radii for atoms of input mol, one per atom, or empty for
+    default values
     \param isProtein: flag to calculate burried surface area of a protein ligand
     complex [default=false, free ligand]
     \param includeLigand: flag to trigger

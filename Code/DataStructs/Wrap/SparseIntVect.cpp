@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <RDBoost/python.h>
+#include <RDBoost/Wrap.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <cstdint>
 #include <RDGeneral/BoostEndInclude.h>
@@ -68,25 +69,29 @@ python::list pyToList(SparseIntVect<IndexType> &vect) {
 }
 
 template <typename T>
-python::list BulkDice(const T &siv1, python::list sivs, bool returnDistance) {
+python::list BulkDice(const T &siv1, python::object sivs, bool returnDistance) {
   python::list res;
-  unsigned int nsivs = python::len(sivs);
-  for (unsigned int i = 0; i < nsivs; ++i) {
+  for (python::stl_input_iterator<python::object> it(pythonIterator(sivs)), end;
+       it != end; ++it) {
+    // A generator may hold no other reference to the vector.
+    python::object item = *it;
     double simVal;
-    const T *siv2 = python::extract<T *>(sivs[i])();
+    const T *siv2 = &python::extract<const T &>(item)();
     simVal = DiceSimilarity(siv1, *siv2, returnDistance);
     res.append(simVal);
   }
   return res;
 }
 template <typename T>
-python::list BulkTanimoto(const T &siv1, python::list sivs,
+python::list BulkTanimoto(const T &siv1, python::object sivs,
                           bool returnDistance) {
   python::list res;
-  unsigned int nsivs = python::len(sivs);
-  for (unsigned int i = 0; i < nsivs; ++i) {
+  for (python::stl_input_iterator<python::object> it(pythonIterator(sivs)), end;
+       it != end; ++it) {
+    // A generator may hold no other reference to the vector.
+    python::object item = *it;
     double simVal;
-    const T *siv2 = python::extract<T *>(sivs[i])();
+    const T *siv2 = &python::extract<const T &>(item)();
     simVal = TanimotoSimilarity(siv1, *siv2, returnDistance);
     res.append(simVal);
   }
@@ -94,13 +99,15 @@ python::list BulkTanimoto(const T &siv1, python::list sivs,
 }
 
 template <typename T>
-python::list BulkTversky(const T &siv1, python::list sivs, double a, double b,
+python::list BulkTversky(const T &siv1, python::object sivs, double a, double b,
                          bool returnDistance) {
   python::list res;
-  unsigned int nsivs = python::len(sivs);
-  for (unsigned int i = 0; i < nsivs; ++i) {
+  for (python::stl_input_iterator<python::object> it(pythonIterator(sivs)), end;
+       it != end; ++it) {
+    // A generator may hold no other reference to the vector.
+    python::object item = *it;
     double simVal;
-    const T *siv2 = python::extract<T *>(sivs[i])();
+    const T *siv2 = &python::extract<const T &>(item)();
     simVal = TverskySimilarity(siv1, *siv2, a, b, returnDistance);
     res.append(simVal);
   }

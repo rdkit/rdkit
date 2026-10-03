@@ -27,6 +27,7 @@
 #include <GraphMol/FilterCatalog/FunctionalGroupHierarchy.h>
 
 #include <RDBoost/Wrap_nb.h>
+#include <RDBoost/boost_shared_ptr.h>
 #include <nanobind/stl/shared_ptr.h>
 
 #include <RDGeneral/Exceptions.h>
@@ -82,7 +83,7 @@ nb::tuple RunReactants(ChemicalReaction *self, nb::object reactants,
     if (mol_obj.is_none()) {
       throw nb::value_error("reaction called with None reactants");
     }
-    reacts[i] = ROMOL_SPTR(&nb::cast<ROMol &>(mol_obj), [](ROMol *) {});
+    reacts[i] = nb::cast<ROMOL_SPTR>(mol_obj);
   }
   std::vector<MOL_SPTR_VECT> mols;
   {

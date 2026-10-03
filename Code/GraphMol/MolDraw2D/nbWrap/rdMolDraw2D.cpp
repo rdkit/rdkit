@@ -305,8 +305,13 @@ void drawMoleculesHelper2(MolDraw2D &self, nb::object pmols,
                           nb::object highlight_bond_map,
                           nb::object highlight_atom_radii, nb::object pconfIds,
                           nb::object plegends) {
+  if (pmols.is_none()) {
+    return;
+  }
+  // mols point into these; a generator releases each item as it advances.
+  nb::list items(pmols);
   std::unique_ptr<std::vector<ROMol *>> mols =
-      pythonObjectToVect<ROMol *>(pmols);
+      pythonObjectToVect<ROMol *>(items);
   if (mols == nullptr || !mols->size()) {
     return;
   }

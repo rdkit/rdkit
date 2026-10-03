@@ -168,8 +168,10 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
 
 template <typename ReturnType, typename FuncType>
 nb::tuple mtgetFingerprints(FuncType func, nb::object mols, int numThreads) {
+  // tmols point into these; a generator releases each item as it advances.
+  nb::list items(mols);
   std::vector<const ROMol *> tmols;
-  for (auto item : mols) {
+  for (auto item : items) {
     tmols.push_back(nb::cast<const ROMol *>(item));
   }
 
@@ -279,66 +281,49 @@ nb::object getNumPyCountFingerprint(
   return nb::steal<nb::object>(arr);
 }
 
-const std::vector<const ROMol *> convertPyArgumentsForBulk(
-    nb::object py_molVect) {
-  std::vector<const ROMol *> molVect;
-  if (!py_molVect.is_none()) {
-    for (auto item : py_molVect) {
-      molVect.push_back(nb::cast<const ROMol *>(item));
-    }
+//! Fingerprints each molecule of \c py_molVect as it is read, holding one
+//! molecule at a time. None gives an empty list.
+template <typename Compute>
+nb::list fingerprintEach(nb::handle py_molVect, Compute compute) {
+  nb::list result;
+  if (py_molVect.is_none()) {
+    return result;
   }
-  return molVect;
+  // The loop holds each molecule until it advances; a generator or supplier
+  // may hold no other reference to it.
+  for (nb::handle item : py_molVect) {
+    result.append(nb::cast(compute(nb::cast<const ROMol &>(item)),
+                           nb::rv_policy::take_ownership));
+  }
+  return result;
 }
 
 nb::list getSparseCountFPBulkPy(nb::object py_molVect, FPType fPType) {
-  const auto molVect = convertPyArgumentsForBulk(py_molVect);
-  auto tempResult = getSparseCountFPBulk(molVect, fPType);
-  nb::list result;
-
-  for (auto &it : *tempResult) {
-    result.append(nb::cast(it, nb::rv_policy::take_ownership));
-  }
-  delete tempResult;
-  return result;
+  auto generator = makeFPGenerator(fPType);
+  return fingerprintEach(py_molVect, [&generator](const ROMol &mol) {
+    return generator->getSparseCountFingerprint(mol);
+  });
 }
 
 nb::list getSparseFPBulkPy(nb::object py_molVect, FPType fpType) {
-  const std::vector<const ROMol *> molVect =
-      convertPyArgumentsForBulk(py_molVect);
-  auto tempResult = getSparseFPBulk(molVect, fpType);
-  nb::list result;
-
-  for (auto &it : *tempResult) {
-    result.append(nb::cast(it, nb::rv_policy::take_ownership));
-  }
-  delete tempResult;
-  return result;
+  auto generator = makeFPGenerator(fpType);
+  return fingerprintEach(py_molVect, [&generator](const ROMol &mol) {
+    return generator->getSparseFingerprint(mol);
+  });
 }
 
 nb::list getCountFPBulkPy(nb::object py_molVect, FPType fPType) {
-  const std::vector<const ROMol *> molVect =
-      convertPyArgumentsForBulk(py_molVect);
-  auto tempResult = getCountFPBulk(molVect, fPType);
-  nb::list result;
-
-  for (auto &it : *tempResult) {
-    result.append(nb::cast(it, nb::rv_policy::take_ownership));
-  }
-  delete tempResult;
-  return result;
+  auto generator = makeFPGenerator(fPType);
+  return fingerprintEach(py_molVect, [&generator](const ROMol &mol) {
+    return generator->getCountFingerprint(mol);
+  });
 }
 
 nb::list getFPBulkPy(nb::object py_molVect, FPType fPType) {
-  const std::vector<const ROMol *> molVect =
-      convertPyArgumentsForBulk(py_molVect);
-  auto tempResult = getFPBulk(molVect, fPType);
-  nb::list result;
-
-  for (auto &it : *tempResult) {
-    result.append(nb::cast(it, nb::rv_policy::take_ownership));
-  }
-  delete tempResult;
-  return result;
+  auto generator = makeFPGenerator(fPType);
+  return fingerprintEach(py_molVect, [&generator](const ROMol &mol) {
+    return generator->getFingerprint(mol);
+  });
 }
 
 nb::object getAtomCountsHelper(const AdditionalOutput &ao) {

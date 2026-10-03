@@ -52,6 +52,13 @@ class TestCase(unittest.TestCase):
     json = rdMolInterchange.MolsToJSON(ms, ps)
     self.assertNotIn('stereoGroups', json)
 
+  def testMolsToJSONFromGenerator(self):
+    smiles = ['c1ccccc1O', 'CCOC(=O)C', 'C[C@H](N)O']
+    expected = rdMolInterchange.MolsToJSON([Chem.MolFromSmiles(smi) for smi in smiles])
+    # Each molecule is referenced only by the generator that yields it.
+    json = rdMolInterchange.MolsToJSON(Chem.MolFromSmiles(smi) for smi in smiles)
+    self.assertEqual(json, expected)
+
 
 if __name__ == '__main__':
   unittest.main()

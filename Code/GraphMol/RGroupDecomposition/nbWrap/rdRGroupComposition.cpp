@@ -41,6 +41,7 @@
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 #include <GraphMol/RGroupDecomposition/RGroupUtils.h>
 #include <RDBoost/Wrap_nb.h>
+#include <RDBoost/boost_shared_ptr.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -60,11 +61,10 @@ class RGroupDecompositionHelper {
     } catch (const nb::cast_error &) {
       MOL_SPTR_VECT coreMols;
       for (nb::handle h : nb::iter(cores)) {
-        auto *mol_ptr = nb::cast<ROMol *>(h);
-        if (!mol_ptr) {
-          throw nb::value_error("reaction called with None reactants");
+        auto sptr = nb::cast<ROMOL_SPTR>(h);
+        if (!sptr) {
+          throw nb::value_error("cores must not contain None");
         }
-        ROMOL_SPTR sptr(mol_ptr, [](ROMol *) {});
         coreMols.push_back(sptr);
       }
       decomp.reset(new RGroupDecomposition(coreMols, params));
@@ -167,7 +167,7 @@ nb::object RGroupDecomp(nb::object cores, nb::object mols,
   for (nb::handle h : nb::iter(mols)) {
     auto *mol_ptr = nb::cast<ROMol *>(h);
     if (!mol_ptr) {
-      throw nb::value_error("reaction called with None reactants");
+      throw nb::value_error("mols must not contain None");
     }
     ROMOL_SPTR sptr(mol_ptr, [](ROMol *) {});
     if (decomp.Add(*sptr) == -1) {

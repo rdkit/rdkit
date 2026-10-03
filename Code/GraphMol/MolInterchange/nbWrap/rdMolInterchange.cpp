@@ -68,8 +68,11 @@ RETURNS:
       "MolsToJSON",
       [](nb::object mols_obj,
          const RDKit::MolInterchange::JSONWriteParameters &params) {
+        // mols point into these; a generator releases each item as it
+        // advances.
+        nb::list items(mols_obj);
         std::vector<const RDKit::ROMol *> mols;
-        for (nb::handle h : nb::iter(mols_obj)) {
+        for (nb::handle h : items) {
           mols.push_back(nb::cast<const RDKit::ROMol *>(h));
         }
         return RDKit::MolInterchange::MolsToJSONData(mols, params);

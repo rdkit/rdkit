@@ -239,7 +239,8 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(
   /*!
 
     \param mol: input molecule or protein
-    \param radii: radii for atoms of input mol
+    \param radii: radii for atoms of input mol, one per atom, or empty for
+    default values
     \param isProtein: flag to calculate burried surface area of a protein ligand
     complex [default=false, free ligand]
     \param includeLigand: flag to trigger
@@ -252,6 +253,7 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(
     object
   */
 
+  PRECONDITION(mol.getNumAtoms(), "Empty molecule");
   if (radii_.empty()) {
     const auto *tbl = PeriodicTable::getTable();
     radii_.reserve(mol.getNumAtoms());
@@ -259,6 +261,8 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(
       radii_.push_back(tbl->getRvdw(atom->getAtomicNum()));
     }
   }
+  PRECONDITION(radii_.size() == mol.getNumAtoms(),
+               "radii must be empty or have one entry per atom");
 
   positions = mol.getConformer(confId).getPositions();
   maxRadius = *std::max_element(radii_.begin(), radii_.end());

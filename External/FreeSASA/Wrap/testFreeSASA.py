@@ -252,18 +252,18 @@ class TestCase(unittest.TestCase):
     shrakerupley = 5000.340175
 
     sasa = rdFreeSASA.CalcSASA(mol, radii=radii)
-    self.assertTrue((sasa - leeRichards) < 1e-5)
+    self.assertTrue(abs(sasa - leeRichards) < 1e-5)
 
     opts = rdFreeSASA.SASAOpts(rdFreeSASA.ShrakeRupley, rdFreeSASA.Protor)
     sasa = rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
-    self.assertTrue((sasa - shrakerupley) < 1e-5)
+    self.assertTrue(abs(sasa - shrakerupley) < 1e-5)
 
     apolar = rdFreeSASA.CalcSASA(mol, radii, query=rdFreeSASA.MakeFreeSasaAPolarAtomQuery(),
                                  opts=opts)
     polar = rdFreeSASA.CalcSASA(mol, radii, query=rdFreeSASA.MakeFreeSasaPolarAtomQuery(),
                                 opts=opts)
 
-    self.assertTrue((polar + apolar - 5000.340175) < 1e-5)
+    self.assertTrue(abs(polar + apolar - 5000.340175) < 1e-5)
 
   def test_opts(self):
     fname = os.path.join(os.environ["RDBASE"], "External", "FreeSASA", "test_data", "1d3z.pdb")
@@ -288,6 +288,15 @@ class TestCase(unittest.TestCase):
       opts.algorithm = alg
       sasa = rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
       self.assertTrue(abs(sasa - res) < 1e-5)
+
+  def test_radii_length(self):
+    fname = os.path.join(os.environ["RDBASE"], "External", "FreeSASA", "test_data", "1d3z.pdb")
+    mol = Chem.MolFromPDBFile(fname)
+    radii = list(rdFreeSASA.classifyAtoms(mol))
+    for bad in (radii[:10], [], radii + [1.0]):
+      with self.subTest(length=len(bad)):
+        with self.assertRaises(RuntimeError):
+          rdFreeSASA.CalcSASA(mol, bad)
 
 
 if __name__ == '__main__':
