@@ -6,7 +6,7 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
-reza bagheri alashti, Rody Arantes, Marco Ballarotto, Chris Von Bargettn, Kevin
+reza bagheri alashti, Rody Arantes, Marco Ballarotto, Chris Von Bargen, Kevin
 Boyd, Katharina Buchthal, Kerim Buyukakyuz, Arthur Chan, Michael Cho, David
 Cosgrove, Mike DePaulo, Eloy Félix, Peter Gedeck, Lukas Geiger, Guillaume Godin,
 Huw Jones, Steven Kearnes, Brian Kelley, Jakub Klinkovský, Jimmy Kromann, Niels
@@ -20,7 +20,7 @@ thomp-j, vwe-ibm, ankar-dav, dpdoughe
 ## Highlights
 - This release includes a number of improvements to the RDKit's conformer
   generator, including beta versions of ETKDGv4 and a new strategy for selecting
-  inital coordinates. These are not yet used by default, but we encourage people
+  initial coordinates. These are not yet used by default, but we encourage people
   to try them out - try the `rdDistGeom.ETKDGv4` parameters object and/or
   setting `initialEmbeddingMode` to `rdDistGeom.INTERNAL_COORDINATE_EMBEDDING` -
   and are looking for feedback.
@@ -29,6 +29,7 @@ thomp-j, vwe-ibm, ankar-dav, dpdoughe
   will be doing conda-forge builds of the new wrappers and would greatly
   appreciate feedback from the community.
 - It's now possible to do shape-based searches in synthon spaces.
+
 
 ## Backwards incompatible changes:
 - The C++ canonicalization helpers `Canon::initCanonAtoms()` and
