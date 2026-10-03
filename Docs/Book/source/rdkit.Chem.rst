@@ -34,6 +34,7 @@ Submodules
    rdkit.Chem.BuildFragmentCatalog
    rdkit.Chem.ChemicalFeatures
    rdkit.Chem.ChemicalForceFields
+   rdkit.Chem.CoordinationDepict
    rdkit.Chem.Crippen
    rdkit.Chem.Descriptors
    rdkit.Chem.Descriptors3D
