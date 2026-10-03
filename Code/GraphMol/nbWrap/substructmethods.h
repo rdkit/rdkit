@@ -10,8 +10,11 @@
 #include <RDGeneral/export.h>
 #ifndef RDKIT_SUBSTRUCT_METHODS_H
 #define RDKIT_SUBSTRUCT_METHODS_H
+#include <functional>
+#include <stdexcept>
 #include <RDBoost/Wrap_nb.h>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/function.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/tuple.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -20,9 +23,12 @@ namespace RDKit {
 
 template <typename T, typename U>
 class pyMatchFunctor {
+  using PythonMatchFunction = std::function<bool(nb::handle, nb::handle)>;
+
  public:
-  pyMatchFunctor(nb::object obj) : dp_callable(nb::borrow<nb::callable>(obj)) {
-    if (!dp_callable.is_valid()) {
+  pyMatchFunctor(nb::object obj)
+      : dp_callable(nb::cast<PythonMatchFunction>(obj)) {
+    if (!dp_callable) {
       throw std::runtime_error("Matcher object is not callable");
     }
 
@@ -35,8 +41,11 @@ class pyMatchFunctor {
   ~pyMatchFunctor() = default;
 
   bool operator()(const T &a1, const U &a2) const {
-    // grab the GIL
-    PyGILStateHolder h;
+    nb::gil_scoped_acquire gil;
+    if (!gil.is_valid()) {
+      throw std::runtime_error(
+          "Cannot call substructure match callback: Python is shutting down");
+    }
 
     if constexpr (std::is_same_v<T, ROMol> &&
                   std::is_same_v<U, std::span<const unsigned int>>) {
@@ -44,7 +53,7 @@ class pyMatchFunctor {
       // a vector before calling into python. This might be dependent
       // on the nanobind version.
       std::vector<unsigned int> matchVec(a2.begin(), a2.end());
-      return nb::cast<bool>(dp_callable(&a1, matchVec));
+      return dp_callable(nb::cast(&a1), nb::cast(matchVec));
     } else {
       if constexpr (std::is_same_v<T, Atom> && std::is_same_v<U, Atom>) {
         // If the callable is a subclass of AtomCoordsMatchFunctor,
@@ -60,14 +69,14 @@ class pyMatchFunctor {
       // it seems there are copies made along the way. If we pass
       // Atom or Bond references, they seem to lose Mol ownership
       // info, resulting in an exception during the fn call.
-      return nb::cast<bool>(dp_callable(&a1, &a2));
+      return dp_callable(nb::cast(&a1), nb::cast(&a2));
     }
   }
 
  private:
   // The callable is borrowed, so ownership of the Python function
   // is shared with instances.
-  nb::callable dp_callable;
+  PythonMatchFunction dp_callable;
 
   // This function is guaranteed to exist for the lifetime of the callable.
   AtomCoordsMatchFunctor *dp_coordsMatchedFunc = nullptr;

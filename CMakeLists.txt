@@ -369,7 +369,7 @@ if(RDK_BUILD_NANOBIND_WRAPPERS)
     message(FATAL_ERROR "RDK_BUILD_BOOST_PYTHON_WRAPPERS and RDK_BUILD_NANOBIND_WRAPPERS are mutually exclusive.")
   endif()
 
-  find_package(Python 3.9 COMPONENTS Interpreter ${DEV_MODULE} NumPy REQUIRED)
+  find_package(Python 3.10 COMPONENTS Interpreter ${DEV_MODULE} NumPy REQUIRED)
   target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
   target_compile_definitions(rdkit_py_base INTERFACE "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
 
@@ -377,11 +377,7 @@ if(RDK_BUILD_NANOBIND_WRAPPERS)
   execute_process(
     COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
     OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
-  find_package(nanobind 2 CONFIG REQUIRED)
-
-  if(nanobind_VERSION GREATER_EQUAL 2.13.0)
-    target_compile_definitions(rdkit_py_base INTERFACE "-DNANOBIND_POOLED_AVAILABLE")
-  endif()
+  find_package(nanobind 3 CONFIG REQUIRED)
 
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
@@ -554,7 +550,7 @@ if(RDK_BUILD_DESCRIPTORS3D)
   #else()
   #  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
   #endif()
-  
+
 endif()
 
 if(TARGET Eigen3::Eigen)

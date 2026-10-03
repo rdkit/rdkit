@@ -85,11 +85,11 @@ class RGroupDecompositionHelper {
     }
     if (!matches.is_none() && nb::isinstance<nb::list>(matches)) {
       for (const auto &match : matchVect) {
-        nb::list atomMap;
+        nb::tuple_builder atomMap(match.size());
         for (const auto &pair : match) {
-          atomMap.append(nb::make_tuple(pair.first, pair.second));
+          atomMap.put(nb::make_tuple(pair.first, pair.second));
         }
-        matches.attr("append")(nb::tuple(atomMap));
+        matches.attr("append")(atomMap.commit());
       }
     }
     return coreIdx;

@@ -95,11 +95,11 @@ nb::tuple getCStatesHelper(const SubstanceGroup &self) {
 }
 
 nb::tuple getBracketsHelper(const SubstanceGroup &self) {
-  nb::list res;
+  nb::tuple_builder res(self.getBrackets().size());
   for (const auto &brk : self.getBrackets()) {
-    res.append(nb::make_tuple(brk[0], brk[1], brk[2]));
+    res.put(nb::make_tuple(brk[0], brk[1], brk[2]));
   }
-  return nb::tuple(res);
+  return res.commit();
 }
 
 nb::tuple getAttachPointsHelper(const SubstanceGroup &self) {

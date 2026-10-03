@@ -403,19 +403,16 @@ nb::object PreprocessReaction(ChemicalReaction &reaction, nb::dict queryDict,
     preprocessReaction(reaction, nWarn, nError, labels, queries, propName);
   }
 
-  nb::list reactantLabels;
-  for (auto &label : labels) {
-    nb::list tmpLabels;
-    for (auto &j : label) {
-      nb::list tmpPair;
-      tmpPair.append(j.first);
-      tmpPair.append(j.second);
-      tmpLabels.append(nb::tuple(tmpPair));
+  nb::tuple_builder reactantLabels(labels.size());
+  for (const auto &label : labels) {
+    nb::tuple_builder tmpLabels(label.size());
+    for (const auto &j : label) {
+      tmpLabels.put(nb::make_tuple(j.first, j.second));
     }
-    reactantLabels.append(nb::tuple(tmpLabels));
+    reactantLabels.put(tmpLabels.commit());
   }
   return nb::make_tuple(nWarn, nError, nReactants, nProducts,
-                        nb::tuple(reactantLabels));
+                        reactantLabels.commit());
 }
 
 RxnOps::SanitizeRxnFlags sanitizeReaction(

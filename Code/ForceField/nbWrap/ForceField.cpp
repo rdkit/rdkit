@@ -145,13 +145,13 @@ double PyForceField::calcEnergyWithPos(nb::object pos) {
 nb::tuple PyForceField::positions() {
   PRECONDITION(this->field, "no force field");
   const RDGeom::PointPtrVect &p = this->field->positions();
-  nb::list coordList;
+  nb::tuple_builder coords(p.size() * 3);
   for (const auto pptr : p) {
     for (size_t j = 0; j < 3; ++j) {
-      coordList.append((*pptr)[j]);
+      coords.put((*pptr)[j]);
     }
   }
-  return nb::tuple(coordList);
+  return coords.commit();
 }
 
 nb::tuple PyForceField::calcGradWithPos(nb::object pos) {
@@ -173,11 +173,11 @@ nb::tuple PyForceField::calcGradWithPos(nb::object pos) {
   } else {
     this->field->calcGrad(g.data());
   }
-  nb::list gradList;
-  for (size_t i = 0; i < s; ++i) {
-    gradList.append(g[i]);
+  nb::tuple_builder grad(s);
+  for (double value : g) {
+    grad.put(value);
   }
-  return nb::tuple(gradList);
+  return grad.commit();
 }
 
 nb::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq,
@@ -187,11 +187,11 @@ nb::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq,
   RDKit::SnapshotVect snapshotVect;
   int resInt = this->field->minimize(snapshotFreq, &snapshotVect, maxIts,
                                      forceTol, energyTol);
-  nb::list l;
+  nb::list_builder snapshots(snapshotVect.size());
   for (const auto &it : snapshotVect) {
-    l.append(nb::cast(new RDKit::Snapshot(it), nb::rv_policy::take_ownership));
+    snapshots.put(nb::cast(it, nb::rv_policy::copy));
   }
-  return nb::make_tuple(resInt, l);
+  return nb::make_tuple(resInt, snapshots.commit());
 }
 
 NB_MODULE(rdForceField, m) {
@@ -317,14 +317,13 @@ while the list contains Snapshot objects.)DOC")
           "GetMMFFBondStretchParams",
           [](const RDKit::MMFF::MMFFMolProperties &self,
              const RDKit::ROMol &mol, const unsigned int idx1,
-             const unsigned int idx2) {
+             const unsigned int idx2) -> nb::object {
             unsigned int bondType;
             ForceFields::MMFF::MMFFBond mmffBondStretchParams;
             if (self.getMMFFBondStretchParams(mol, idx1, idx2, bondType,
                                               mmffBondStretchParams)) {
-              return nb::cast(nb::make_tuple((int)bondType,
-                                             mmffBondStretchParams.kb,
-                                             mmffBondStretchParams.r0));
+              return nb::make_tuple((int)bondType, mmffBondStretchParams.kb,
+                                    mmffBondStretchParams.r0);
             }
             return nb::none();
           },
@@ -336,14 +335,13 @@ while the list contains Snapshot objects.)DOC")
           "GetMMFFAngleBendParams",
           [](const RDKit::MMFF::MMFFMolProperties &self,
              const RDKit::ROMol &mol, const unsigned int idx1,
-             const unsigned int idx2, const unsigned int idx3) {
+             const unsigned int idx2, const unsigned int idx3) -> nb::object {
             unsigned int angleType;
             ForceFields::MMFF::MMFFAngle mmffAngleBendParams;
             if (self.getMMFFAngleBendParams(mol, idx1, idx2, idx3, angleType,
                                             mmffAngleBendParams)) {
-              return nb::cast(nb::make_tuple((int)angleType,
-                                             mmffAngleBendParams.ka,
-                                             mmffAngleBendParams.theta0));
+              return nb::make_tuple((int)angleType, mmffAngleBendParams.ka,
+                                    mmffAngleBendParams.theta0);
             }
             return nb::none();
           },
@@ -355,7 +353,7 @@ while the list contains Snapshot objects.)DOC")
           "GetMMFFStretchBendParams",
           [](const RDKit::MMFF::MMFFMolProperties &self,
              const RDKit::ROMol &mol, const unsigned int idx1,
-             const unsigned int idx2, const unsigned int idx3) {
+             const unsigned int idx2, const unsigned int idx3) -> nb::object {
             unsigned int stretchBendType;
             ForceFields::MMFF::MMFFStbn mmffStretchBendParams;
             ForceFields::MMFF::MMFFBond mmffBondStretchParams[2];
@@ -364,9 +362,9 @@ while the list contains Snapshot objects.)DOC")
                     mol, idx1, idx2, idx3, stretchBendType,
                     mmffStretchBendParams, mmffBondStretchParams,
                     mmffAngleBendParams)) {
-              return nb::cast(nb::make_tuple((int)stretchBendType,
-                                             mmffStretchBendParams.kbaIJK,
-                                             mmffStretchBendParams.kbaKJI));
+              return nb::make_tuple((int)stretchBendType,
+                                    mmffStretchBendParams.kbaIJK,
+                                    mmffStretchBendParams.kbaKJI);
             }
             return nb::none();
           },
@@ -379,14 +377,13 @@ while the list contains Snapshot objects.)DOC")
           [](const RDKit::MMFF::MMFFMolProperties &self,
              const RDKit::ROMol &mol, const unsigned int idx1,
              const unsigned int idx2, const unsigned int idx3,
-             const unsigned int idx4) {
+             const unsigned int idx4) -> nb::object {
             unsigned int torType;
             ForceFields::MMFF::MMFFTor mmffTorsionParams;
             if (self.getMMFFTorsionParams(mol, idx1, idx2, idx3, idx4, torType,
                                           mmffTorsionParams)) {
-              return nb::cast(nb::make_tuple((int)torType, mmffTorsionParams.V1,
-                                             mmffTorsionParams.V2,
-                                             mmffTorsionParams.V3));
+              return nb::make_tuple((int)torType, mmffTorsionParams.V1,
+                                    mmffTorsionParams.V2, mmffTorsionParams.V3);
             }
             return nb::none();
           },
@@ -399,7 +396,7 @@ while the list contains Snapshot objects.)DOC")
           [](const RDKit::MMFF::MMFFMolProperties &self,
              const RDKit::ROMol &mol, const unsigned int idx1,
              const unsigned int idx2, const unsigned int idx3,
-             const unsigned int idx4) {
+             const unsigned int idx4) -> nb::object {
             ForceFields::MMFF::MMFFOop mmffOopBendParams;
             if (self.getMMFFOopBendParams(mol, idx1, idx2, idx3, idx4,
                                           mmffOopBendParams)) {
@@ -413,13 +410,14 @@ while the list contains Snapshot objects.)DOC")
       .def(
           "GetMMFFVdWParams",
           [](const RDKit::MMFF::MMFFMolProperties &self,
-             const unsigned int idx1, const unsigned int idx2) {
+             const unsigned int idx1,
+             const unsigned int idx2) -> nb::object {
             ForceFields::MMFF::MMFFVdWRijstarEps mmffVdWParams;
             if (self.getMMFFVdWParams(idx1, idx2, mmffVdWParams)) {
-              return nb::cast(nb::make_tuple(mmffVdWParams.R_ij_starUnscaled,
-                                             mmffVdWParams.epsilonUnscaled,
-                                             mmffVdWParams.R_ij_star,
-                                             mmffVdWParams.epsilon));
+              return nb::make_tuple(mmffVdWParams.R_ij_starUnscaled,
+                                    mmffVdWParams.epsilonUnscaled,
+                                    mmffVdWParams.R_ij_star,
+                                    mmffVdWParams.epsilon);
             }
             return nb::none();
           },

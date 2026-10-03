@@ -9,11 +9,13 @@
 //
 
 #include <csignal>
+#include <functional>
 #include <stdexcept>
 #include <utility>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/filesystem.h>
+#include <nanobind/stl/function.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/unique_ptr.h>
@@ -381,13 +383,23 @@ void buildShapes_helper(
   }
 }
 
-void setUserConfGen_helper(SynthonSpaceSearch::ShapeBuildParams &ps,
-                           nb::object func) {
+// The nanobind std::function caster guards callback copies and destruction,
+// which can run without the GIL or after Python has shut down.
+using PythonConformerGenerator =
+    std::function<nb::object(const std::string &, unsigned int)>;
+
+template <typename Params>
+void setUserConfGen_helper(Params &ps, nb::object func) {
   ps.userConformerGenerator =
-      [func = std::move(func)](
+      [func = nb::cast<PythonConformerGenerator>(func)](
           const std::string &smiles,
           unsigned int numConformers) -> std::unique_ptr<RWMol> {
     nb::gil_scoped_acquire gil;
+    if (!gil.is_valid()) {
+      // The caller dereferences the generated molecule, so nullptr is unsafe.
+      throw std::runtime_error(
+          "Cannot call conformer generator: Python is shutting down");
+    }
     auto res = func(smiles, numConformers);
     if (res.is_none()) {
       return nullptr;
@@ -400,24 +412,6 @@ void setUserConfGen_helper(SynthonSpaceSearch::ShapeBuildParams &ps,
   };
 }
 
-void setUserConfGen_helper2(SynthonSpaceSearch::SynthonSpaceSearchParams &ps,
-                            nb::object func) {
-  ps.userConformerGenerator =
-      [func = std::move(func)](
-          const std::string &smiles,
-          unsigned int numConformers) -> std::unique_ptr<RWMol> {
-    nb::gil_scoped_acquire gil;
-    auto res = func(smiles, numConformers);
-    if (res.is_none()) {
-      return nullptr;
-    }
-    auto *m = nb::cast<ROMol *>(res);
-    if (!m) {
-      return nullptr;
-    }
-    return std::make_unique<RWMol>(*m);
-  };
-}
 
 }  // namespace
 
@@ -614,7 +608,8 @@ use 7 threads.  Default=1.)DOC")
               "If True, creates the possibleHitsFile and stops without doing"
               " the final building and checking.  Default is False.")
       .def(
-          "setUserConformerGenerator", &setUserConfGen_helper2,
+          "setUserConformerGenerator",
+                    &setUserConfGen_helper<SynthonSpaceSearch::SynthonSpaceSearchParams>,
           nb::keep_alive<1, 2>(), "func"_a,
           R"DOC(Allows you to provide a function that will be called instead of the default
  conformer generator to generate conformers for the synthons.  The function should
@@ -674,7 +669,8 @@ use 7 threads.  Default=1.)DOC")
           "If an interim file has been given, every this many shapes write a"
           " new version of the file.  Default=1000.")
       .def(
-          "setUserConformerGenerator", &setUserConfGen_helper,
+          "setUserConformerGenerator",
+                    &setUserConfGen_helper<SynthonSpaceSearch::ShapeBuildParams>,
           nb::keep_alive<1, 2>(), "func"_a,
           R"DOC(Allows you to provide a function that will be called instead of the default
  conformer generator to generate conformers for the synthons.  The function should
