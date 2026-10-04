@@ -13,7 +13,7 @@
 #include <fstream>
 #include <functional>
 #include <memory>
-#include <regex>
+#include <ctre.hpp>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -37,8 +37,6 @@ using namespace RDKit::FileParsers::schrodinger;
 namespace RDKit {
 
 namespace {
-
-static const std::regex MMCT_PROP_REGEX("[birs]_[^_ ]+_.+");
 
 template <typename T>
 std::shared_ptr<mae::IndexedProperty<T>> getIndexedProperty(
@@ -153,7 +151,7 @@ void copyProperties(
     switch (prop.val.getTag()) {
       case RDTypeTag::BoolTag: {
         auto propName = prop.key;
-        if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
+        if (!ctre::match<R"([birs]_[^_ ]+_.+)">(prop.key)) {
           propName.insert(0, "b_rdkit_");
         }
 
@@ -166,7 +164,7 @@ void copyProperties(
         auto propName = prop.key;
         if (prop.key == common_properties::_MolFileRLabel) {
           propName = MAE_RGROUP_LABEL;
-        } else if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
+        } else if (!ctre::match<R"([birs]_[^_ ]+_.+)">(prop.key)) {
           propName.insert(0, "i_rdkit_");
         }
 
@@ -177,7 +175,7 @@ void copyProperties(
       case RDTypeTag::DoubleTag:
       case RDTypeTag::FloatTag: {
         auto propName = prop.key;
-        if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
+        if (!ctre::match<R"([birs]_[^_ ]+_.+)">(prop.key)) {
           propName.insert(0, "r_rdkit_");
         }
 
@@ -187,7 +185,7 @@ void copyProperties(
 
       case RDTypeTag::StringTag: {
         auto propName = prop.key;
-        if (!std::regex_match(prop.key, MMCT_PROP_REGEX)) {
+        if (!ctre::match<R"([birs]_[^_ ]+_.+)">(prop.key)) {
           propName.insert(0, "s_rdkit_");
         }
 

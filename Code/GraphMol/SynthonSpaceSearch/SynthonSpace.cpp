@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <fstream>
 #include <random>
+#include <RDGeneral/CTRE.h>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -361,12 +362,6 @@ SearchResults SynthonSpace::shapeSearch(const ROMol &query,
 }
 
 namespace {
-std::vector<std::string> splitLine(const std::string &str,
-                                   const std::regex &regexz) {
-  return {std::sregex_token_iterator(str.begin(), str.end(), regexz, -1),
-          std::sregex_token_iterator()};
-}
-
 // The Enamine/Chemspace files come with the connection points on the
 // synthons marked with [U], [Np], [Pu], [Am].  These need to be converted
 // to dummy atoms with isotope labels (1, 2, 3, 4 respectively) which can
@@ -393,8 +388,7 @@ int deduceFormat(const std::string &line) {
                                "release"},
       std::vector<std::string>{"SMILES", "synton_id", "synton_role",
                                "reaction_id"}};
-  static const std::regex regext("\\t");
-  auto lineParts = splitLine(line, regext);
+  auto lineParts = ctre_utils::split<R"(\t)">(line);
   for (size_t i = 0; i < firstLineOpts.size(); ++i) {
     if (lineParts == firstLineOpts[i]) {
       return static_cast<int>(i + 6);
@@ -402,16 +396,14 @@ int deduceFormat(const std::string &line) {
   }
 
   // This includes tabs, obvs, but they should already have been detected.
-  static const std::regex regexws("\\s+");
-  lineParts = splitLine(line, regexws);
+  lineParts = ctre_utils::split<R"(\s+)">(line);
   for (size_t i = 0; i < firstLineOpts.size(); ++i) {
     if (lineParts == firstLineOpts[i]) {
       return static_cast<int>(i);
     }
   }
 
-  static const std::regex regexc(",+");
-  lineParts = splitLine(line, regexc);
+  lineParts = ctre_utils::split<R"(,+)">(line);
   for (size_t i = 0; i < firstLineOpts.size(); ++i) {
     if (lineParts == firstLineOpts[i]) {
       return static_cast<int>(i + firstLineOpts.size());
@@ -423,10 +415,6 @@ int deduceFormat(const std::string &line) {
 std::vector<std::string> readSynthonLine(std::istream &is, int &lineNum,
                                          int &format,
                                          const std::string &fileName) {
-  static const std::regex regext("\\t+");
-  static const std::regex regexws("\\s+");
-  static const std::regex regexc(",+");
-
   std::vector<std::string> nextSynthon;
   auto nextLine = getLine(is);
   ++lineNum;
@@ -441,11 +429,11 @@ std::vector<std::string> readSynthonLine(std::istream &is, int &lineNum,
     return nextSynthon;
   }
   if (format < 3) {
-    nextSynthon = splitLine(nextLine, regexws);
+    nextSynthon = ctre_utils::split<R"(\s+)">(nextLine);
   } else if (format > 3 && format < 6) {
-    nextSynthon = splitLine(nextLine, regexc);
+    nextSynthon = ctre_utils::split<R"(,+)">(nextLine);
   } else if (format > 5) {
-    nextSynthon = splitLine(nextLine, regext);
+    nextSynthon = ctre_utils::split<R"(\t+)">(nextLine);
   }
   if (nextSynthon.size() < 4) {
     throw std::runtime_error("Bad format for SynthonSpace file " + fileName +

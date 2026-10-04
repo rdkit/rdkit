@@ -15,7 +15,6 @@
 #include <list>
 #include <memory>
 #include <ranges>
-#include <regex>
 #include <sstream>
 #include <thread>
 #include <vector>
