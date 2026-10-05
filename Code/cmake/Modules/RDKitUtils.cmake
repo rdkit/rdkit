@@ -1,4 +1,6 @@
-include(CatchShardTests)
+if(RDK_BUILD_CPP_TESTS)
+  include(CatchShardTests)
+endif()
 
 include(BoostUtils)
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
