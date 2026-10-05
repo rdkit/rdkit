@@ -26,7 +26,6 @@
 #include <RDGeneral/export.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RWMol.h>
-#include "RDGeneral/hash/hash.hpp"
 
 namespace RDKit {
 namespace EnumerateStereoisomers {

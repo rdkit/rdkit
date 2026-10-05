@@ -10,6 +10,7 @@
 
 #include <ranges>
 #include <unordered_set>
+#include <vector>
 
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Chirality.h>

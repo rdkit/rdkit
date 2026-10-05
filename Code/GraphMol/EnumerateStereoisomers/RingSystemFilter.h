@@ -11,6 +11,7 @@
 
 #include <set>
 #include <utility>
+#include <vector>
 
 namespace RDKit {
 class ROMol;
