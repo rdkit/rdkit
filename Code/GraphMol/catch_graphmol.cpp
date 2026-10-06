@@ -5153,6 +5153,41 @@ TEST_CASE("canonical re-kekulization after sanitization preserves stereo",
   }
 }
 
+TEST_CASE("github #9629: renumberAtoms drops ring families and ring type") {
+  auto m = "C1CCN2CCCC2C1"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
+
+  // identity renumbering must preserve everything about ring info
+  std::vector<unsigned int> perm(m->getNumAtoms());
+  std::iota(perm.begin(), perm.end(), 0u);
+  std::unique_ptr<ROMol> nmol(MolOps::renumberAtoms(*m, perm));
+  REQUIRE(nmol->getRingInfo()->isInitialized());
+  CHECK(nmol->getRingInfo()->getRingType() ==
+        m->getRingInfo()->getRingType());
+  CHECK(nmol->getRingInfo()->areRingFamiliesInitialized());
+  CHECK(nmol->getRingInfo()->numRingFamilies() ==
+        m->getRingInfo()->numRingFamilies());
+
+  // the reported symptom: the perceived stereo-center count changed.
+  // Mirror what Descriptors::numAtomStereoCenters() does internally
+  auto countPossible = [](const ROMol &mol) {
+    RWMol tmol(mol);
+    constexpr bool cleanIt = true;
+    constexpr bool force = true;
+    constexpr bool flagPossible = true;
+    MolOps::assignStereochemistry(tmol, cleanIt, force, flagPossible);
+    unsigned int res = 0;
+    for (const auto &atom : tmol.atoms()) {
+      if (atom->hasProp(common_properties::_ChiralityPossible)) {
+        ++res;
+      }
+    }
+    return res;
+  };
+  CHECK(countPossible(*nmol) == countPossible(*m));
+}
+
 TEST_CASE("duplicate atoms/bonds in StereoGroups") {
   SECTION("atoms") {
     auto m = "C[C@H](O)C[C@H](F)Cl"_smiles;

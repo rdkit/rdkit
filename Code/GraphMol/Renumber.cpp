@@ -96,7 +96,7 @@ ROMol *renumberAtoms(const ROMol &mol,
   if (oRings && oRings->isInitialized()) {
     RingInfo *nRings = res->getRingInfo();
     nRings->reset();
-    nRings->initialize();
+    nRings->initialize(oRings->getRingType());
     VECT_INT_VECT newAtomRings;
     VECT_INT_VECT newBondRings;
     newAtomRings.reserve(oRings->numRings());
@@ -111,6 +111,13 @@ ROMol *renumberAtoms(const ROMol &mol,
       newBondRings.emplace_back(oldBondRing.begin(), oldBondRing.end());
     }
     nRings->addRings(newAtomRings, newBondRings);
+    // the ring families were computed from the original indexing, so
+    // recompute them on the renumbered graph rather than copying;
+    // stereo perception needs them for fused/bridged systems
+    // (github #9629)
+    if (oRings->areRingFamiliesInitialized()) {
+      findRingFamilies(*res);
+    }
   }
 
   if (mol.getStereoGroups().size()) {
