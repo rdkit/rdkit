@@ -2257,12 +2257,11 @@ void detectAtropisomersPostSanitization(ROMol &mol, bool cleanIt) {
   }
   bool removedAny = false;
   for (auto bond : mol.bonds()) {
-    // bonds in macrocycles (rings with 9 or more members) are left alone,
-    // since they can link actual atropisomeric portions
+    // Match the atrop-specific ring cutoff in MolOps::cleanupAtropisomers().
     if ((bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
          bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) &&
         ri->numBondRings(bond->getIdx()) > 0 &&
-        ri->minBondRingSize(bond->getIdx()) < 9) {
+        ri->minBondRingSize(bond->getIdx()) < 8) {
       bond->setStereo(Bond::BondStereo::STEREONONE);
       removedAny = true;
     }

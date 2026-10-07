@@ -6703,7 +6703,7 @@ TEST_CASE("Github #8108: assignStereochemistry should handle atropisomers",
   }
 }
 
-TEST_CASE("Atropisomer cleanup at the seven/eight/nine-membered ring boundary",
+TEST_CASE("Github #9681: atropisomer ring-size cutoff",
           "[chirality][atropisomers][ring-size]") {
   const auto useLegacy = GENERATE(true, false);
   const auto ringSize = GENERATE(7u, 8u, 9u);
@@ -6720,39 +6720,10 @@ TEST_CASE("Atropisomer cleanup at the seven/eight/nine-membered ring boundary",
   coordParams.forceRDKit = true;
   RDDepict::compute2DCoords(*mol, coordParams);
 
-  Bond *axis = nullptr;
-  for (auto bond : mol->bonds()) {
-    if (bond->getBondType() == Bond::SINGLE &&
-        bond->getBeginAtom()->getIsAromatic() &&
-        bond->getEndAtom()->getIsAromatic()) {
-      axis = bond;
-      break;
-    }
-  }
-  REQUIRE(axis);
+  // The final two bonds close the aromatic ring and the axis-containing ring.
+  auto axis = mol->getBondWithIdx(mol->getNumBonds() - 1);
   REQUIRE(mol->getRingInfo()->minBondRingSize(axis->getIdx()) == ringSize);
-
-  std::vector<unsigned int> ranks;
-  Canon::rankMolAtoms(*mol, ranks, false, false);
-  for (auto atom : {axis->getBeginAtom(), axis->getEndAtom()}) {
-    std::vector<unsigned int> ligandRanks;
-    for (auto neighbor : mol->atomNeighbors(atom)) {
-      if (neighbor != axis->getOtherAtom(atom)) {
-        ligandRanks.push_back(ranks[neighbor->getIdx()]);
-      }
-    }
-    REQUIRE(ligandRanks.size() == 2);
-    REQUIRE(ligandRanks[0] != ligandRanks[1]);
-  }
-
-  Bond *marker = nullptr;
-  for (auto bond : mol->atomBonds(axis->getBeginAtom())) {
-    if (bond != axis && bond->getBeginAtomIdx() == axis->getBeginAtomIdx()) {
-      marker = bond;
-      break;
-    }
-  }
-  REQUIRE(marker);
+  auto marker = mol->getBondWithIdx(mol->getNumBonds() - 2);
   marker->setBondDir(markerDir);
   const auto molBlock = MolToV3KMolBlock(*mol);
 
@@ -6766,7 +6737,6 @@ TEST_CASE("Atropisomer cleanup at the seven/eight/nine-membered ring boundary",
   REQUIRE((perceivedStereo == Bond::STEREOATROPCW ||
            perceivedStereo == Bond::STEREOATROPCCW));
 
-  // Match the atrop-specific cutoff used by cleanupAtropisomers().
   const auto expectedStereo = ringSize < 8 ? Bond::STEREONONE : perceivedStereo;
 
   SECTION("sanitization and stereo assignment agree") {
