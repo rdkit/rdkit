@@ -179,6 +179,9 @@ double ForceField::distance(unsigned int i, unsigned int j, double *pos) {
   }
   unsigned int idx = i + j * (j + 1) / 2;
   CHECK_INVARIANT(idx < d_matSize, "Bad index");
+  if (df_distMatNeedsReset) {
+    this->initDistanceMatrix();
+  }
   double &res = dp_distMat[idx];
   if (res < 0.0) {
     // we need to calculate this distance:
@@ -311,7 +314,9 @@ double ForceField::calcEnergy(double *pos) {
   PRECONDITION(pos, "bad position vector");
   double res = 0.0;
 
-  this->initDistanceMatrix();
+  // the cached distances are no longer valid, they will be cleared the next
+  // time they are needed
+  df_distMatNeedsReset = true;
   if (d_contribs.empty()) {
     return res;
   }
@@ -406,5 +411,6 @@ void ForceField::initDistanceMatrix() {
   for (unsigned int i = 0; i < d_numPoints * (d_numPoints + 1) / 2; i++) {
     dp_distMat[i] = -1.0;
   }
+  df_distMatNeedsReset = false;
 }
 }  // namespace ForceFields
