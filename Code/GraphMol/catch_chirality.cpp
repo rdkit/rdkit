@@ -6846,11 +6846,10 @@ TEST_CASE("wiggly bonds are re-applied after clearSingleBondDirFlags") {
   CHECK(wigglyBond->getBondDir() == Bond::BondDir::UNKNOWN);
 }
 
-TEST_CASE("wiggly bonds flagging unknown double bond stereo are left alone") {
+TEST_CASE("wiggly bonds flagging unknown double bond stereo are preserved") {
   // A wiggly bond can also mean "the stereo of the adjacent double bond is
-  // unknown". Its narrow end is an ordinary substituent rather than a
-  // potential tetrahedral center, so it is not claimed, and the double bond
-  // is written as a crossed bond as before.
+  // unknown". It is claimed like any other wiggly bond, and the double bond is
+  // still written as a crossed bond as before.
   const std::string molBlock = R"CTAB(
   t
 
@@ -6871,11 +6870,11 @@ M  END
 
   const auto wedgeBonds =
       Chirality::pickBondsToWedge(*m, nullptr, &m->getConformer());
-  CHECK(wedgeBonds.find(m->getBondBetweenAtoms(0, 1)->getIdx()) ==
+  CHECK(wedgeBonds.find(m->getBondBetweenAtoms(0, 1)->getIdx()) !=
         wedgeBonds.end());
 
   const auto outBlock = MolToMolBlock(*m);
-  CHECK(getMolBlockBondStereo(outBlock, 0, 1) == 0);
+  CHECK(getMolBlockBondStereo(outBlock, 0, 1) == 4);
   CHECK(getMolBlockBondStereo(outBlock, 1, 2) == 3);
 }
 
