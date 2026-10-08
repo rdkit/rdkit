@@ -15,6 +15,7 @@
 #include <RDGeneral/export.h>
 #include <RDGeneral/hanoiSort.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/RingInfo.h>
 #include <GraphMol/StereoGroup.h>
 #include <RDGeneral/BoostStartInclude.h>
@@ -277,6 +278,38 @@ namespace {
 unsigned int getChiralRank(const ROMol *dp_mol, canon_atom *dp_atoms,
                            unsigned int i) {
   unsigned int res = 0;
+  const auto center = dp_atoms[i].atom;
+  if (center->getChiralTag() == Atom::CHI_ALLENE) {
+    center->getPropIfPresent(common_properties::_chiralPermutation, res);
+    const auto terminals = Chirality::getAlleneTerminalAtoms(center);
+    if (!res || res > 2 || terminals.size() != 2) {
+      return 0;
+    }
+    for (const auto terminal : terminals) {
+      std::vector<int> ligandRanks;
+      for (const auto bond : dp_mol->atomBonds(terminal)) {
+        if (bond->getBondType() != Bond::DOUBLE) {
+          const auto ligand = bond->getOtherAtom(terminal);
+          ligandRanks.push_back(
+              ligand->getAtomicNum() == 1 && !ligand->getIsotope()
+                  ? -1
+                  : static_cast<int>(dp_atoms[ligand->getIdx()].index));
+        }
+      }
+      if (ligandRanks.size() == 1) {
+        ligandRanks.push_back(-1);
+      } else if (ligandRanks.front() == -1) {
+        std::reverse(ligandRanks.begin(), ligandRanks.end());
+      }
+      if (ligandRanks[0] == ligandRanks[1]) {
+        return 0;
+      }
+      if (ligandRanks[0] > ligandRanks[1]) {
+        res = 3 - res;
+      }
+    }
+    return res;
+  }
   std::vector<unsigned int> perm;
   perm.reserve(dp_atoms[i].atom->getDegree());
   for (const auto nbr : dp_mol->atomNeighbors(dp_atoms[i].atom)) {

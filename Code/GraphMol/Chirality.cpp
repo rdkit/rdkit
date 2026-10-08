@@ -2423,6 +2423,7 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
 
     for (auto atom : mol.atoms()) {
       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+          atom->getChiralTag() != Atom::CHI_ALLENE &&
           !Chirality::hasNonTetrahedralStereo(atom) &&
           !atom->hasProp(common_properties::_CIPCode) &&
           (!possibleSpecialCases[atom->getIdx()] ||
@@ -3053,8 +3054,41 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
 void cleanupChirality(RWMol &mol) {
   unsigned int degree, perm;
   bool needCleanupStereoGroups = false;
+  std::vector<unsigned int> alleneRanks;
   for (auto atom : mol.atoms()) {
     switch (atom->getChiralTag()) {
+      case Atom::CHI_ALLENE: {
+        const auto terminals = Chirality::getAlleneTerminalAtoms(atom);
+        bool valid = terminals.size() == 2 && !atom->getTotalNumHs();
+        if (valid && alleneRanks.empty()) {
+          Canon::rankMolAtoms(mol, alleneRanks, false, true, true, false);
+        }
+        for (const auto terminal : terminals) {
+          if (!valid || terminal->getTotalDegree() != 3) {
+            valid = false;
+            break;
+          }
+          std::vector<unsigned int> ligands;
+          for (const auto bond : mol.atomBonds(terminal)) {
+            if (bond->getBondType() != Bond::DOUBLE) {
+              const auto ligand = bond->getOtherAtom(terminal);
+              ligands.push_back(alleneRanks[ligand->getIdx()]);
+              if (terminal->getTotalNumHs() && is_regular_h(*ligand)) {
+                valid = false;
+              }
+            }
+          }
+          if (ligands.size() == 2 && ligands[0] == ligands[1]) {
+            valid = false;
+          }
+        }
+        if (!valid) {
+          atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+          atom->clearProp(common_properties::_chiralPermutation);
+          needCleanupStereoGroups = true;
+        }
+        break;
+      }
       case Atom::CHI_TETRAHEDRAL_CW:
       case Atom::CHI_TETRAHEDRAL_CCW:
         if (atom->getHybridization() != Atom::SP3) {

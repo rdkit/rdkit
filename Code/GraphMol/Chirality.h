@@ -179,6 +179,11 @@ RDKIT_GRAPHMOL_EXPORT INT_VECT findStereoAtoms(const Bond *bond);
 //! \name Non-tetrahedral stereochemistry
 //! @{
 RDKIT_GRAPHMOL_EXPORT bool hasNonTetrahedralStereo(const Atom *center);
+RDKIT_GRAPHMOL_EXPORT std::vector<const Atom *> getAlleneTerminalAtoms(
+    const Atom *center);
+RDKIT_GRAPHMOL_EXPORT unsigned int getAllenePermutation(
+    const Atom *center, const std::vector<INT_LIST> &bondOrders,
+    unsigned int firstAtom = Atom::NOATOM);
 RDKIT_GRAPHMOL_EXPORT Bond *getChiralAcrossBond(const Atom *center,
                                                 const Bond *qry);
 RDKIT_GRAPHMOL_EXPORT Bond *getChiralAcrossBond(const Atom *center,

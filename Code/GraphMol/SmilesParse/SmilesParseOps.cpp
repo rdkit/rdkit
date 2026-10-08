@@ -53,6 +53,13 @@ void CheckRingClosureBranchStatus(RDKit::Atom *atom, RDKit::RWMol *mp) {
   //   4) [C@@](Cl)(F)(I)1.Br1  (reverse)
   PRECONDITION(atom, "bad atom");
   PRECONDITION(mp, "bad mol");
+  if (atom->getAtomicNum() == 6 && !atom->hasQuery()) {
+    for (const auto bond : mp->atomBonds(atom)) {
+      if (bond->getBondType() == Bond::DOUBLE) {
+        return;
+      }
+    }
+  }
   if (atom->getIdx() != mp->getNumAtoms(true) - 1 &&
       (atom->getDegree() == 1 ||
        (atom->getDegree() == 2 && atom->getIdx() != 0) ||
@@ -277,8 +284,21 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
   for (auto atom : mol->atoms()) {
     Atom::ChiralType chiralType = atom->getChiralTag();
-    if (chiralType == Atom::CHI_TETRAHEDRAL_CW ||
-        chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
+    if (chiralType == Atom::CHI_ALLENE && !atom->hasQuery()) {
+      std::vector<INT_LIST> bondOrders;
+      unsigned int firstAtom = Atom::NOATOM;
+      for (const auto terminal : Chirality::getAlleneTerminalAtoms(atom)) {
+        bondOrders.emplace_back();
+        GetBondOrdering(bondOrders.back(), mol, terminal);
+        if (terminal->hasProp(common_properties::_SmilesStart)) {
+          firstAtom = terminal->getIdx();
+        }
+      }
+      atom->setProp(
+          common_properties::_chiralPermutation,
+          Chirality::getAllenePermutation(atom, bondOrders, firstAtom));
+    } else if (chiralType == Atom::CHI_TETRAHEDRAL_CW ||
+               chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
       INT_LIST bondOrdering;
       unsigned int numClosures = GetBondOrdering(bondOrdering, mol, atom);
 
@@ -416,6 +436,14 @@ bool checkChiralPermutation(int chiralTag, int permutation) {
 void CheckChiralitySpecifications(RDKit::RWMol *mol, bool strict) {
   PRECONDITION(mol, "no molecule");
   for (const auto atom : mol->atoms()) {
+    if (!atom->hasQuery() &&
+        (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
+         atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) &&
+        !Chirality::getAlleneTerminalAtoms(atom).empty()) {
+      atom->setProp(common_properties::_chiralPermutation,
+                    atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ? 1 : 2);
+      atom->setChiralTag(Atom::CHI_ALLENE);
+    }
     int permutation;
     if (atom->getChiralTag() > RDKit::Atom::ChiralType::CHI_OTHER &&
         permutationLimits.find(atom->getChiralTag()) !=
