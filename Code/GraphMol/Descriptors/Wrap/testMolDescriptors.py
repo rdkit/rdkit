@@ -4,6 +4,8 @@ from pathlib import Path
 import re
 import unittest
 
+import numpy as np
+
 from rdkit import rdBase
 from rdkit import Chem, DataStructs
 from rdkit.Chem import Descriptors
@@ -496,6 +498,89 @@ class TestCase(unittest.TestCase):
       self.assertEqual(v1, v4)
       self.assertEqual(v2, v5)
       self.assertEqual(v3, v6)
+
+  def _batchSmiles(self):
+    return [
+      'c1ccccc1C(=O)O', 'CCO', 'C1CC1CC', 'OC(=O)CCN', 'c1ccncc1Cl',
+      'CC(C)(C)OC(=O)N[C@@H](Cc1ccccc1)C(=O)O', 'C', 'O=S(=O)(N)c1ccccc1'
+    ]
+
+  def _batchMols(self):
+    return [Chem.MolFromSmiles(smi) for smi in self._batchSmiles()]
+
+  def testComputeProperties(self):
+    names = ['exactmw', 'tpsa', 'CrippenClogP', 'labuteASA', 'NumHBA', 'chi3v']
+    props = rdMD.Properties(names)
+    # computed on separate molecules so cached values can't leak into the batch
+    ref = np.array([list(props.ComputeProperties(m)) for m in self._batchMols()])
+    for numThreads in (1, 2, 4, 0, -1, 100):
+      res = props.ComputeProperties(self._batchMols(), numThreads=numThreads)
+      self.assertIsInstance(res, np.ndarray)
+      self.assertEqual(res.dtype, np.float64)
+      self.assertEqual(res.shape, (len(self._batchSmiles()), len(names)))
+      self.assertTrue(res.flags['C_CONTIGUOUS'])
+      np.testing.assert_array_equal(res, ref)
+
+    np.testing.assert_array_equal(props.ComputeProperties(tuple(self._batchMols())), ref)
+    np.testing.assert_array_equal(props.ComputeProperties(m for m in self._batchMols()), ref)
+
+    reversedProps = rdMD.Properties(list(reversed(names)))
+    np.testing.assert_array_equal(
+      reversedProps.ComputeProperties(self._batchMols(), numThreads=2), ref[:, ::-1])
+
+  def testComputePropertiesForMolsEdgeCases(self):
+    names = ['NumHeavyAtoms', 'tpsa']
+    props = rdMD.Properties(names)
+    ref = np.array([list(props.ComputeProperties(m)) for m in self._batchMols()])
+
+    mols = self._batchMols()
+    res = props.ComputeProperties([None] + mols + [None], numThreads=4)
+    self.assertEqual(res.shape, (len(mols) + 2, len(names)))
+    self.assertTrue(np.isnan(res[0]).all())
+    self.assertTrue(np.isnan(res[-1]).all())
+    np.testing.assert_array_equal(res[1:-1], ref)
+
+    self.assertEqual(props.ComputeProperties([]).shape, (0, len(names)))
+    self.assertEqual(rdMD.Properties([]).ComputeProperties(mols).shape, (len(mols), 0))
+
+    res = props.ComputeProperties(self._batchMols() * 10, numThreads=4)
+    np.testing.assert_array_equal(res, np.tile(ref, (10, 1)))
+
+    with self.assertRaises(TypeError):
+      props.ComputeProperties(['CCO'])
+    # a single Mol goes to the single-molecule overload, not the batch one
+    np.testing.assert_array_equal(props.ComputeProperties(mols[0]), ref[0])
+
+    # failures in C++ calculators become NaN instead of raising
+    m = Chem.MolFromSmiles('CCO', sanitize=False)
+    hbdProps = rdMD.Properties(['NumHeavyAtoms', 'lipinskiHBD'])
+    with self.assertRaises(RuntimeError):
+      hbdProps.ComputeProperties(m)
+    res = hbdProps.ComputeProperties([m])
+    self.assertEqual(res[0, 0], 3)
+    self.assertTrue(np.isnan(res[0, 1]))
+
+  def testComputePropertiesForMolsPythonProperty(self):
+
+    class BatchTestNumAtoms(Descriptors.PropertyFunctor):
+
+      def __init__(self):
+        Descriptors.PropertyFunctor.__init__(self, 'BatchTestNumAtoms', '1.0.0')
+
+      def __call__(self, mol):
+        if mol.HasProp('_batchTestFail'):
+          raise ValueError('batch test failure')
+        return mol.GetNumAtoms()
+
+    rdMD.Properties.RegisterProperty(BatchTestNumAtoms())
+    props = rdMD.Properties(['BatchTestNumAtoms', 'exactmw'])
+    mols = self._batchMols()
+    ref = np.array([list(props.ComputeProperties(m)) for m in self._batchMols()])
+    np.testing.assert_array_equal(props.ComputeProperties(mols, numThreads=4), ref)
+
+    mols[2].SetProp('_batchTestFail', '1')
+    with self.assertRaisesRegex(ValueError, 'batch test failure'):
+      props.ComputeProperties(mols, numThreads=4)
 
   def testProperties(self):
     props = rdMD.Properties()

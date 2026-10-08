@@ -23,6 +23,10 @@
 #include <GraphMol/Descriptors/BCUT.h>
 #ifdef RDK_BUILD_DESCRIPTORS3D
 #include <GraphMol/Descriptors/GETAWAY.h>
+#include <GraphMol/Descriptors/Property.h>
+#include <cmath>
+#include <fstream>
+#include <new>
 #endif
 
 using namespace RDKit;
@@ -789,3 +793,282 @@ TEST_CASE("DCLV polar contributions with H-H bonds") {
           dclv.getPartialVolume(polarAtoms));
   }
 }
+
+namespace {
+// lets tests use arbitrary functors without touching the global registry
+class PropertiesFromFunctors : public Descriptors::Properties {
+ public:
+  PropertiesFromFunctors(
+      std::vector<boost::shared_ptr<Descriptors::PropertyFunctor>> props) {
+    m_properties = std::move(props);
+  }
+};
+
+struct FailingProperty : public Descriptors::PropertyFunctor {
+  FailingProperty() : PropertyFunctor("FailOnSingleAtom", "1.0.0") {}
+  double operator()(const ROMol &mol) const override {
+    if (mol.getNumAtoms() == 1) {
+      throw ValueErrorException("single atom");
+    }
+    return mol.getNumAtoms();
+  }
+};
+
+struct BadAllocProperty : public Descriptors::PropertyFunctor {
+  BadAllocProperty() : PropertyFunctor("BadAlloc", "1.0.0") {}
+  double operator()(const ROMol &) const override { throw std::bad_alloc(); }
+};
+
+bool sameRow(const std::vector<double> &a, const std::vector<double> &b) {
+  if (a.size() != b.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < a.size(); ++i) {
+    if (std::isnan(a[i]) != std::isnan(b[i]) ||
+        (!std::isnan(a[i]) && a[i] != b[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+const std::vector<std::string> batchSmiles{
+    "c1ccccc1C(=O)O",
+    "CCO",
+    "C1CC1CC",
+    "OC(=O)CCN",
+    "c1ccncc1Cl",
+    "CC(C)(C)OC(=O)N[C@@H](Cc1ccccc1)C(=O)O",
+    "C",
+    "O=S(=O)(N)c1ccccc1"};
+
+std::vector<std::unique_ptr<RWMol>> parseBatch() {
+  std::vector<std::unique_ptr<RWMol>> res;
+  for (const auto &smi : batchSmiles) {
+    res.emplace_back(SmilesToMol(smi));
+    REQUIRE(res.back());
+  }
+  return res;
+}
+
+std::vector<const ROMol *> asPtrs(
+    const std::vector<std::unique_ptr<RWMol>> &ms) {
+  std::vector<const ROMol *> res;
+  for (const auto &m : ms) {
+    res.push_back(m.get());
+  }
+  return res;
+}
+}  // namespace
+
+TEST_CASE("Properties::computePropertiesForMols", "[2D][Properties]") {
+  Descriptors::Properties props;  // all registered properties
+  // the reference values are computed on molecules which are not reused, so
+  // cached results cannot leak into the batch calculations
+  std::vector<std::vector<double>> ref;
+  {
+    auto refMols = parseBatch();
+    for (const auto &m : refMols) {
+      ref.push_back(props.computeProperties(*m));
+    }
+  }
+
+  SECTION("matches computeProperties") {
+    for (int numThreads : {1, 2, 4, 0, -1, 100}) {
+      INFO("numThreads: " << numThreads);
+      auto ms = parseBatch();
+      auto res = props.computePropertiesForMols(asPtrs(ms), numThreads);
+      REQUIRE(res.size() == ref.size());
+      for (size_t i = 0; i < res.size(); ++i) {
+        CHECK(sameRow(res[i], ref[i]));
+      }
+    }
+  }
+  SECTION("column order follows the property names") {
+    Descriptors::Properties p1(std::vector<std::string>{"tpsa", "exactmw"});
+    Descriptors::Properties p2(std::vector<std::string>{"exactmw", "tpsa"});
+    auto ms = parseBatch();
+    auto r1 = p1.computePropertiesForMols(asPtrs(ms), 2);
+    auto r2 = p2.computePropertiesForMols(asPtrs(ms), 2);
+    for (size_t i = 0; i < ms.size(); ++i) {
+      CHECK(r1[i][0] == r2[i][1]);
+      CHECK(r1[i][1] == r2[i][0]);
+    }
+  }
+  SECTION("null molecules") {
+    for (int numThreads : {1, 4}) {
+      auto ms = parseBatch();
+      auto ptrs = asPtrs(ms);
+      ptrs.insert(ptrs.begin(), nullptr);
+      ptrs.insert(ptrs.begin() + 4, nullptr);
+      ptrs.push_back(nullptr);
+      auto res = props.computePropertiesForMols(ptrs, numThreads);
+      REQUIRE(res.size() == ptrs.size());
+      size_t refIdx = 0;
+      for (size_t i = 0; i < ptrs.size(); ++i) {
+        REQUIRE(res[i].size() == ref[0].size());
+        if (!ptrs[i]) {
+          for (auto v : res[i]) {
+            CHECK(std::isnan(v));
+          }
+        } else {
+          CHECK(sameRow(res[i], ref[refIdx++]));
+        }
+      }
+    }
+  }
+  SECTION("empty input and no properties") {
+    for (int numThreads : {1, 4, 0}) {
+      CHECK(props.computePropertiesForMols({}, numThreads).empty());
+    }
+    Descriptors::Properties none(std::vector<std::string>{});
+    auto ms = parseBatch();
+    auto res = none.computePropertiesForMols(asPtrs(ms), 4);
+    REQUIRE(res.size() == ms.size());
+    for (const auto &row : res) {
+      CHECK(row.empty());
+    }
+  }
+  SECTION("repeated molecules") {
+    // 3 threads: with a stride that doesn't divide the number of distinct
+    // molecules, repeats would be handed to different threads
+    for (int numThreads : {1, 3, 4}) {
+      auto ms = parseBatch();
+      std::vector<const ROMol *> ptrs;
+      for (unsigned int rep = 0; rep < 16; ++rep) {
+        for (const auto &m : ms) {
+          ptrs.push_back(m.get());
+        }
+      }
+      auto res = props.computePropertiesForMols(ptrs, numThreads);
+      REQUIRE(res.size() == ptrs.size());
+      for (size_t i = 0; i < res.size(); ++i) {
+        CHECK(sameRow(res[i], ref[i % ms.size()]));
+      }
+    }
+  }
+  SECTION("a single molecule repeated") {
+    for (int numThreads : {1, 4}) {
+      auto ms = parseBatch();
+      std::vector<const ROMol *> ptrs(64, ms[5].get());
+      auto res = props.computePropertiesForMols(ptrs, numThreads);
+      REQUIRE(res.size() == ptrs.size());
+      for (const auto &row : res) {
+        CHECK(sameRow(row, ref[5]));
+      }
+    }
+  }
+  SECTION("calculation failures produce NaN") {
+    PropertiesFromFunctors failing(
+        {boost::shared_ptr<Descriptors::PropertyFunctor>(new FailingProperty),
+         Descriptors::Properties::getProperty("NumHeavyAtoms")});
+    auto m1 = "C"_smiles;
+    auto m2 = "CC"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m2);
+    for (int numThreads : {1, 4}) {
+      auto res =
+          failing.computePropertiesForMols({m1.get(), m2.get()}, numThreads);
+      REQUIRE(res.size() == 2);
+      CHECK(std::isnan(res[0][0]));
+      CHECK(res[0][1] == 1);
+      CHECK(res[1][0] == 2);
+      CHECK(res[1][1] == 2);
+    }
+  }
+  SECTION("other exceptions are propagated") {
+    PropertiesFromFunctors badAlloc(
+        {boost::shared_ptr<Descriptors::PropertyFunctor>(
+            new BadAllocProperty)});
+    auto ms = parseBatch();
+    for (int numThreads : {1, 4}) {
+      CHECK_THROWS_AS(badAlloc.computePropertiesForMols(asPtrs(ms), numThreads),
+                      std::bad_alloc);
+    }
+  }
+}
+
+TEST_CASE("computePropertiesForMols TPSA reference values",
+          "[2D][Properties]") {
+  std::string fName = std::getenv("RDBASE");
+  fName += "/Data/NCI/first_200.tpsa.csv";
+  std::ifstream inf(fName);
+  REQUIRE(inf.good());
+  std::vector<std::unique_ptr<RWMol>> mols;
+  std::vector<double> expected;
+  std::string line;
+  while (std::getline(inf, line)) {
+    if (line.empty() || line[0] == '#') {
+      continue;
+    }
+    auto comma = line.find(',');
+    REQUIRE(comma != std::string::npos);
+    mols.emplace_back(SmilesToMol(line.substr(0, comma)));
+    REQUIRE(mols.back());
+    expected.push_back(std::stod(line.substr(comma + 1)));
+  }
+  REQUIRE(!mols.empty());
+  Descriptors::Properties props(std::vector<std::string>{"tpsa"});
+  auto res = props.computePropertiesForMols(asPtrs(mols), 4);
+  REQUIRE(res.size() == expected.size());
+  for (size_t i = 0; i < res.size(); ++i) {
+    CHECK_THAT(res[i][0], Catch::Matchers::WithinAbs(expected[i], 1e-4));
+  }
+}
+
+#ifdef RDK_TEST_MULTITHREADED
+TEST_CASE("computePropertiesForMols parallel vs serial", "[2D][Properties]") {
+  std::string fName = std::getenv("RDBASE");
+  fName += "/Data/NCI/first_200.props.sdf";
+  auto loadMols = [&fName]() {
+    std::vector<std::unique_ptr<RWMol>> res;
+    SDMolSupplier suppl(fName);
+    while (!suppl.atEnd()) {
+      std::unique_ptr<ROMol> m;
+      try {
+        m.reset(suppl.next());
+      } catch (...) {
+      }
+      res.emplace_back(m ? new RWMol(*m) : nullptr);
+    }
+    return res;
+  };
+  Descriptors::Properties props;
+  auto names = props.getPropertyNames();
+  auto refMols = loadMols();
+  auto ref = props.computePropertiesForMols(asPtrs(refMols), 1);
+
+  // properties which are also stored as SD tags in the input file
+  const std::vector<std::pair<std::string, std::string>> tags{
+      {"NumHBD", "NUM_HDONORS"},
+      {"NumHBA", "NUM_HACCEPTORS"},
+      {"lipinskiHBD", "NUM_LIPINSKIHDONORS"},
+      {"lipinskiHBA", "NUM_LIPINSKIHACCEPTORS"},
+      {"NumRings", "NUM_RINGS"},
+      {"NumHeteroatoms", "NUM_HETEROATOMS"}};
+  for (const auto &[propName, tag] : tags) {
+    auto col = std::find(names.begin(), names.end(), propName) - names.begin();
+    REQUIRE(col < static_cast<long>(names.size()));
+    for (size_t i = 0; i < refMols.size(); ++i) {
+      if (refMols[i] && refMols[i]->hasProp(tag)) {
+        CHECK(ref[i][col] == std::stoi(refMols[i]->getProp<std::string>(tag)));
+      }
+    }
+  }
+
+  for (int numThreads : {2, 4, 0}) {
+    INFO("numThreads: " << numThreads);
+    auto ms = loadMols();
+    auto res = props.computePropertiesForMols(asPtrs(ms), numThreads);
+    REQUIRE(res.size() == ref.size());
+    for (size_t i = 0; i < res.size(); ++i) {
+      CHECK(sameRow(res[i], ref[i]));
+    }
+    // a second run uses the values cached on the molecules
+    auto again = props.computePropertiesForMols(asPtrs(ms), numThreads);
+    for (size_t i = 0; i < res.size(); ++i) {
+      CHECK(sameRow(again[i], res[i]));
+    }
+  }
+}
+#endif

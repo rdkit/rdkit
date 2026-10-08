@@ -84,6 +84,31 @@ class RDKIT_DESCRIPTORS_EXPORT Properties {
   std::vector<std::string> getPropertyNames() const;
   std::vector<double> computeProperties(const RDKit::ROMol &mol,
                                         bool annotate = false) const;
+  //! Computes the properties for each molecule in \c mols, optionally in
+  //! parallel
+  /*!
+    \param mols        the molecules. Null pointers are allowed; the
+                       corresponding rows are filled with NaN.
+    \param numThreads  the number of threads to use. If this is <= 0, the
+                       number of hardware threads plus this value is used (see
+                       getNumThreadsToUse()). Has no effect if the RDKit was
+                       built without thread support.
+
+    \return one row per molecule; row \c i contains the values
+            computeProperties(*mols[i]) returns, in getPropertyNames() order.
+
+    Notes:
+      - if calculating a value throws a std::exception (other than
+        std::bad_alloc) the value is set to NaN. Any other exception is
+        rethrown once all worker threads have finished.
+      - each distinct molecule is processed only once, by a single thread, so
+        molecules may appear more than once in \c mols
+      - property calculators may cache results on the molecules, so the
+        molecules must not be modified or used by other threads while this
+        function is running
+  */
+  std::vector<std::vector<double>> computePropertiesForMols(
+      const std::vector<const RDKit::ROMol *> &mols, int numThreads = 1) const;
   void annotateProperties(RDKit::ROMol &mol) const;
 
   //! Register a property function - takes ownership

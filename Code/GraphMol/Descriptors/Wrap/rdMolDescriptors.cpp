@@ -9,7 +9,9 @@
 //
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
+#define PY_ARRAY_UNIQUE_SYMBOL rdmoldescriptors_array_API
 #include <RDBoost/Wrap.h>
+#include <RDBoost/import_array.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/GraphMol.h>
 
@@ -36,6 +38,7 @@
 #include <GraphMol/Descriptors/MolDescriptors3D.h>
 #endif
 
+#include <algorithm>
 #include <vector>
 
 namespace python = boost::python;
@@ -888,6 +891,8 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
       : PropertyFunctor(name, version), self(self) {}
 
   double operator()(const RDKit::ROMol &mol) const override {
+    // make sure we hold the GIL, in case we're called from a C++ thread
+    PyGILStateHolder h;
     return python::call_method<double>(self, "__call__", boost::ref(mol));
   }
 };
@@ -902,6 +907,62 @@ int registerPropertyHelper(python::object o) {
   python::incref(o.ptr());
   python::extract<boost::shared_ptr<PythonPropertyFunctor>> ptr(o);
   return RDKit::Descriptors::Properties::registerProperty(ptr());
+}
+
+bool hasPythonProperties(const RDKit::Descriptors::Properties &self) {
+  for (const auto &name : self.getPropertyNames()) {
+    auto prop = RDKit::Descriptors::Properties::getProperty(name);
+    if (dynamic_cast<const PythonPropertyFunctor *>(prop.get())) {
+      return true;
+    }
+  }
+  return false;
+}
+
+PyObject *computePropertiesForMolsHelper(
+    const RDKit::Descriptors::Properties &self, python::object pymols,
+    int numThreads) {
+  // keep references to the python objects so that the molecules stay alive
+  // while we work without the GIL
+  if (!PyObject_HasAttrString(pymols.ptr(), "__iter__")) {
+    PyErr_SetString(PyExc_TypeError,
+                    "mols should be an iterable of Mol objects");
+    python::throw_error_already_set();
+  }
+  std::vector<python::object> keepAlive;
+  std::vector<const RDKit::ROMol *> mols;
+  python::stl_input_iterator<python::object> beg(pymols), end;
+  for (; beg != end; ++beg) {
+    python::object obj = *beg;
+    if (obj.is_none()) {
+      mols.push_back(nullptr);
+    } else {
+      mols.push_back(python::extract<const RDKit::ROMol *>(obj)());
+    }
+    keepAlive.push_back(obj);
+  }
+
+  std::vector<std::vector<double>> rows;
+  if (hasPythonProperties(self)) {
+    // python-based properties need the GIL, there's no benefit to threading
+    rows = self.computePropertiesForMols(mols, 1);
+  } else {
+    NOGIL gil;
+    rows = self.computePropertiesForMols(mols, numThreads);
+  }
+
+  npy_intp dims[2] = {static_cast<npy_intp>(mols.size()),
+                      static_cast<npy_intp>(self.getPropertyNames().size())};
+  auto *arr =
+      reinterpret_cast<PyArrayObject *>(PyArray_SimpleNew(2, dims, NPY_DOUBLE));
+  if (!arr) {
+    python::throw_error_already_set();
+  }
+  auto *data = static_cast<double *>(PyArray_DATA(arr));
+  for (const auto &row : rows) {
+    data = std::copy(row.begin(), row.end(), data);
+  }
+  return PyArray_Return(arr);
 }
 
 boost::shared_ptr<RDKit::Descriptors::DoubleCubicLatticeVolume>
@@ -961,6 +1022,7 @@ python::dict getSurfacePointsHelper(
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
+  rdkit_import_array();
   python::scope().attr("__doc__") =
       "Module containing functions to compute molecular descriptors";
 
@@ -1631,6 +1693,9 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "for name, value in zip(properties.GetPropertyNames(), "
       "properties.ComputeProperties(mol)):\n"
       "  print(name, value)\n\n"
+      "To compute properties for many molecules at once (returns a numpy "
+      "array with one row per molecule)\n"
+      "values = properties.ComputeProperties(mols, numThreads=4)\n\n"
       "";
 
   python::class_<RDKit::Descriptors::Properties,
@@ -1642,6 +1707,26 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
            &RDKit::Descriptors::Properties::getPropertyNames,
            python::args("self"),
            "Return the property names computed by this instance")
+      .def("ComputeProperties", computePropertiesForMolsHelper,
+           ((python::arg("self"), python::arg("mols")),
+            python::arg("numThreads") = 1),
+           R"DOC(Compute the properties for a sequence of molecules.
+
+  ARGUMENTS:
+    - mols: an iterable of molecules. None entries are allowed and produce
+      a row of NaNs.
+    - numThreads: the number of threads to use, only has an effect if the
+      RDKit was built with multi-thread support. If this is zero, the max
+      supported by the system will be used. If it is negative, that number
+      is subtracted from the max supported by the system.
+      Python-defined properties are always computed on the calling thread.
+
+  RETURNS:
+    a numpy array of floats with shape (len(mols), len(GetPropertyNames())).
+    Row i contains the values ComputeProperties(mols[i]) returns. Values that
+    cannot be computed are NaN; exceptions raised by Python-defined
+    properties are propagated.
+)DOC")
       .def("ComputeProperties",
            &RDKit::Descriptors::Properties::computeProperties,
            ((python::arg("self"), python::arg("mol")),
