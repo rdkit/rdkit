@@ -2904,7 +2904,7 @@ TEST_CASE("Constraint torsions (initial embedding (IC))") {
   }
 }
 
-TEST_CASE("Issue xxx") {
+TEST_CASE("Issue 9694") {
   const auto smiles = "CSSC";
   auto mol = embedInitialCoordinates(smiles, 100);
   unsigned int numPos = 0;
