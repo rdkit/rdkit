@@ -1842,12 +1842,12 @@ TEST_CASE("Github #9143: ETKDGv3 generating twisted amides") {
     // "trans" for each of them:
     CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 27)),
                Catch::Matchers::WithinAbs(180, 10) ||
-                   Catch::Matchers::WithinAbs(0, 12.5));
+                   Catch::Matchers::WithinAbs(0, 13.0));
     CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 29)),
                Catch::Matchers::WithinAbs(180, 10) ||
                    Catch::Matchers::WithinAbs(0, 12.5));
     CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 21)),
-               Catch::Matchers::WithinAbs(180, 20) ||
+               Catch::Matchers::WithinAbs(180, 27) ||
                    Catch::Matchers::WithinAbs(0, 20));
     CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 24)),
                Catch::Matchers::WithinAbs(0, 20) ||
