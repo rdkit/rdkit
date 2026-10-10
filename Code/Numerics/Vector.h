@@ -29,7 +29,7 @@ namespace RDNumeric {
 template <class TYPE>
 class Vector {
  public:
-  typedef std::shared_ptr<TYPE[]> DATA_SPTR;
+  using DATA_SPTR = std::shared_ptr<TYPE[]>;
 
   //! Initialize with only a size.
   constexpr explicit Vector(unsigned int N) {
@@ -293,7 +293,7 @@ class Vector {
   Vector<TYPE> &operator=(const Vector<TYPE> &other);
 };
 
-typedef Vector<double> DoubleVector;
+using DoubleVector = Vector<double>;
 
 //! returns the algebraic tanimoto similarity [defn' from JCIM 46:587-96 (2006)]
 template <typename T>
