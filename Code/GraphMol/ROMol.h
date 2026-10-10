@@ -522,12 +522,12 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   /*!
     \param other     the molecule to be copied
     \param quickCopy (optional) if this is true, the resulting ROMol will not
-         copy any of the properties or bookmarks and conformers from \c other.
+         copy any of the properties or bookmarks and conformers from \c other,
+          and \c confId is ignored.
     This can
          make the copy substantially faster (thus the name).
-    \param confId (optional) if this is >=0, the resulting ROMol will contain
-    only
-         the specified conformer from \c other.
+    \param confId (optional) if this is >=0 and \c quickCopy is false, the
+    resulting ROMol will contain only the specified conformer from \c other.
   */
   ROMol(const ROMol &other, bool quickCopy = false, int confId = -1)
       : RDProps() {
