@@ -2904,6 +2904,21 @@ TEST_CASE("Constraint torsions (initial embedding (IC))") {
   }
 }
 
+TEST_CASE("Issue 9694") {
+  const auto smiles = "CSSC";
+  auto mol = embedInitialCoordinates(smiles, 100);
+  unsigned int numPos = 0;
+  for (unsigned int i = 0; i < mol->getNumConformers(); ++i) {
+    const auto &conf = mol->getConformer(i);
+    auto torsion = MolTransforms::getDihedralDeg(conf, 0, 1, 2, 3);
+    CHECK_THAT(std::abs(torsion), Catch::Matchers::WithinAbs(90.0, 1.e-1));
+    numPos += (torsion > 0u);
+  }
+  unsigned int numNeg = mol->getNumConformers() - numPos;
+  CHECK(numPos);
+  CHECK(numNeg);
+}
+
 TEST_CASE("Z-Matrix Chirality") {
   SECTION("tetrahedral stereochemistry") {
     const auto smiles = GENERATE("F[C@H](Cl)Br", "F[C@@H](Cl)Br");
