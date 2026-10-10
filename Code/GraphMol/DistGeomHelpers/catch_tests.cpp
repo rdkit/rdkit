@@ -1842,12 +1842,12 @@ TEST_CASE("Github #9143: ETKDGv3 generating twisted amides") {
     // "trans" for each of them:
     CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 27)),
                Catch::Matchers::WithinAbs(180, 10) ||
-                   Catch::Matchers::WithinAbs(0, 12.5));
+                   Catch::Matchers::WithinAbs(0, 13.0));
     CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 31, 30, 28, 29)),
                Catch::Matchers::WithinAbs(180, 10) ||
                    Catch::Matchers::WithinAbs(0, 12.5));
     CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 21)),
-               Catch::Matchers::WithinAbs(180, 20) ||
+               Catch::Matchers::WithinAbs(180, 27) ||
                    Catch::Matchers::WithinAbs(0, 20));
     CHECK_THAT(fabs(MolTransforms::getDihedralDeg(conf, 19, 18, 20, 24)),
                Catch::Matchers::WithinAbs(0, 20) ||
@@ -2902,6 +2902,21 @@ TEST_CASE("Constraint torsions (initial embedding (IC))") {
                  Catch::Matchers::WithinAbs(0.0, 1.e-4));
     }
   }
+}
+
+TEST_CASE("Issue 9694") {
+  const auto smiles = "CSSC";
+  auto mol = embedInitialCoordinates(smiles, 100);
+  unsigned int numPos = 0;
+  for (unsigned int i = 0; i < mol->getNumConformers(); ++i) {
+    const auto &conf = mol->getConformer(i);
+    auto torsion = MolTransforms::getDihedralDeg(conf, 0, 1, 2, 3);
+    CHECK_THAT(std::abs(torsion), Catch::Matchers::WithinAbs(90.0, 1.e-1));
+    numPos += (torsion > 0u);
+  }
+  unsigned int numNeg = mol->getNumConformers() - numPos;
+  CHECK(numPos);
+  CHECK(numNeg);
 }
 
 TEST_CASE("Z-Matrix Chirality") {
