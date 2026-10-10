@@ -457,7 +457,7 @@ You can also request individual bonds or atoms:
 
   >>> m.GetAtomWithIdx(0).GetSymbol()
   'C'
-  >>> m.GetAtomWithIdx(0).GetExplicitValence()
+  >>> m.GetAtomWithIdx(0).GetValence(Chem.ValenceType.EXPLICIT)
   2
   >>> m.GetBondWithIdx(0).GetBeginAtomIdx()
   0
@@ -3485,7 +3485,9 @@ Possible Hits File
 As an alternative to an incremental search, there is the facility to write a possible hits file containing
 all the likely synthon combinations that have been assembled in the first stage of the search.  At this point
 the search can be stopped if desired:
+
 .. code-block:: python
+
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.possibleHitsFile = "possible_hits.txt"
     params.writePossibleHitsAndStop = True
@@ -3498,7 +3500,9 @@ Each of the searcher objects has an API point to read designated lines of this f
 verification of it as a hit.  In the example below, the first 100 lines of the possible hits file are read and
 checked using the RASCAL searcher.  It makes sense if the parameters used are the same as those used to create
 the possible hits file, but that is not enforced.
+
 .. code-block:: python
+
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.possibleHitsFile = "r_poss_hits_a.txt"
     rascalOpts = rdRascalMCES.RascalOptions()

@@ -2153,7 +2153,7 @@ use GetTotalNumHs(); the total number of Hs for each atom is one:
     from rdkit import Chem
     pyrrole = Chem.MolFromSmiles('C1=CNC=C1')
     for atom in pyrrole.GetAtoms():
-       print(atom.GetSymbol(), atom.GetExplicitValence(), atom.GetTotalNumHs())
+       print(atom.GetSymbol(), atom.GetValence(Chem.ValenceType.EXPLICIT), atom.GetTotalNumHs())
 
 .. testoutput::
 
@@ -2176,7 +2176,7 @@ in the SMILES, it becomes an "explicit" hydrogen as far as atom.GetNumExplicitHs
 .. testcode::
 
    for atom in pyrrole.GetAtoms():
-       print(atom.GetSymbol(), atom.GetExplicitValence(), atom.GetNumImplicitHs(), atom.GetNumExplicitHs(), atom.GetTotalNumHs())
+       print(atom.GetSymbol(), atom.GetValence(Chem.ValenceType.EXPLICIT), atom.GetNumImplicitHs(), atom.GetNumExplicitHs(), atom.GetTotalNumHs())
 
 .. testoutput::
 
@@ -2189,7 +2189,7 @@ in the SMILES, it becomes an "explicit" hydrogen as far as atom.GetNumExplicitHs
 .. testcode::
    
     for atom in mol1.GetAtoms():
-       print(atom.GetSymbol(), atom.GetExplicitValence(), atom.GetNumImplicitHs(), atom.GetNumExplicitHs(), atom.GetTotalNumHs())
+       print(atom.GetSymbol(), atom.GetValence(Chem.ValenceType.EXPLICIT), atom.GetNumImplicitHs(), atom.GetNumExplicitHs(), atom.GetTotalNumHs())
 
 .. testoutput::
 
@@ -2202,7 +2202,7 @@ in the SMILES, it becomes an "explicit" hydrogen as far as atom.GetNumExplicitHs
 .. testcode::
     
     for atom in mol2.GetAtoms():
-       print(atom.GetSymbol(), atom.GetExplicitValence(), atom.GetNumImplicitHs(), atom.GetNumExplicitHs(), atom.GetTotalNumHs())
+       print(atom.GetSymbol(), atom.GetValence(Chem.ValenceType.EXPLICIT), atom.GetNumImplicitHs(), atom.GetNumExplicitHs(), atom.GetTotalNumHs())
 
 .. testoutput::
 
@@ -2285,7 +2285,7 @@ Organometallics with Dative Bonds
         for metal in metals:
             for nbr in metal.GetNeighbors():
                 if nbr.GetAtomicNum() in fromAtoms and \
-                   nbr.GetExplicitValence()>pt.GetDefaultValence(nbr.GetAtomicNum()) and \
+                   nbr.GetValence(Chem.ValenceType.EXPLICIT)>pt.GetDefaultValence(nbr.GetAtomicNum()) and \
                    rwmol.GetBondBetweenAtoms(nbr.GetIdx(),metal.GetIdx()).GetBondType() == Chem.BondType.SINGLE:
                     rwmol.RemoveBond(nbr.GetIdx(),metal.GetIdx())
                     rwmol.AddBond(nbr.GetIdx(),metal.GetIdx(),Chem.BondType.DATIVE)
