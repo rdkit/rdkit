@@ -10,6 +10,8 @@
 """ unit testing code for IPython/Jupyter integration
 """
 import unittest
+import warnings
+from unittest import mock
 
 from rdkit import Chem
 from rdkit.Chem import Draw
@@ -106,6 +108,52 @@ class TestCase(unittest.TestCase):
     self.assertIn('publicprop', html)
     self.assertIn('prop-1', html)
     self.assertNotIn('prop-8', html)
+
+  @unittest.skipIf(IPythonConsole is None, 'IPython not available')
+  def testCairolessRenderingFallsBackToSVG(self):
+    old_use_svg = IPythonConsole.ipython_useSVG
+    old_show_properties = IPythonConsole.ipython_showProperties
+    try:
+      IPythonConsole.ipython_useSVG = False
+      IPythonConsole.ipython_showProperties = True
+      self.mol.SetProp('publicprop', 'ppropval')
+      with mock.patch.object(IPythonConsole, '_hasCairoRenderer', return_value=False):
+        self.assertTrue(IPythonConsole._useSVG())
+        with mock.patch.object(IPythonConsole.Draw, '_moltoimg', return_value=b'png'):
+          self.assertEqual(IPythonConsole._toPNG(self.mol), b'png')
+        self.assertIsNotNone(IPythonConsole._toSVG(self.mol))
+        html = IPythonConsole._toHTML(self.mol)
+      self.assertIn('<svg', html)
+      self.assertIn('publicprop', html)
+    finally:
+      IPythonConsole.ipython_useSVG = old_use_svg
+      IPythonConsole.ipython_showProperties = old_show_properties
+
+  @unittest.skipIf(IPythonConsole is None, 'IPython not available')
+  def testExplicitPNGWithoutCairoFallsBackToSVGQuietly(self):
+    bitInfo = {}
+    Chem.RDKFingerprint(self.mol, bitInfo=bitInfo)
+    bitId = next(iter(bitInfo))
+    drawingCalls = (
+      (Draw.MolsToGridImage, ([self.mol],)),
+      (Draw.DrawRDKitBit, (self.mol, bitId, bitInfo)),
+      (Draw.DrawRDKitBits, ([(self.mol, bitId, bitInfo)],)),
+    )
+    with mock.patch.object(IPythonConsole, '_hasCairoRenderer', return_value=False):
+      for fn, args in drawingCalls:
+        with self.subTest(function=fn.__name__):
+          with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter('always')
+            self.assertIsInstance(fn(*args, useSVG=False), SVG)
+            self.assertIsInstance(fn(*args), SVG)
+            self.assertIsInstance(fn(*args, useSVG=True), SVG)
+          self.assertEqual(caught, [])
+      with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter('always')
+        self.assertIsNone(IPythonConsole._toPNGRepr(self.mol))
+        self.assertIsNone(IPythonConsole._toReactionPNGRepr(None))
+        self.assertIsNone(IPythonConsole._toMolBundlePNGRepr(None))
+      self.assertEqual(caught, [])
 
   @unittest.skipIf(IPythonConsole is None, 'IPython not available')
   def testMolsMatrixToGridImage(self):
