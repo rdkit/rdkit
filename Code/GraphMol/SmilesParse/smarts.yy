@@ -538,6 +538,9 @@ recursive_query: BEGIN_RECURSE mol END_RECURSE {
   RWMol *molP = (*molList)[$2];
   // close any rings in the molecule:
   SmilesParseOps::CloseMolRings(molP,0);
+  SmilesParseOps::CheckChiralitySpecifications(molP,true);
+  SmilesParseOps::SetUnspecifiedBondTypes(molP);
+  SmilesParseOps::AdjustAtomChiralityFlags(molP);
 
   //molP->debugMol(std::cout);
   qA->setQuery(new RecursiveStructureQuery(molP));
@@ -559,6 +562,9 @@ recursive_query: BEGIN_RECURSE mol END_RECURSE {
   RWMol *molP = (*molList)[$2];
   // close any rings in the molecule:
   SmilesParseOps::CloseMolRings(molP,0);
+  SmilesParseOps::CheckChiralitySpecifications(molP,true);
+  SmilesParseOps::SetUnspecifiedBondTypes(molP);
+  SmilesParseOps::AdjustAtomChiralityFlags(molP);
 
   //molP->debugMol(std::cout);
   qA->setQuery(new RecursiveStructureQuery(molP,$5));
