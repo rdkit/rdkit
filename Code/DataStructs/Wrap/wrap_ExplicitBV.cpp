@@ -104,6 +104,8 @@ struct EBV_wrapper {
         .def("GetOnBits", (IntVect(*)(const EBV &))GetOnBits,
              python::args("self"),
              "Returns a tuple containing IDs of the on bits.\n")
+        .def("ToBitString", BitVectToText<EBV>, python::args("self"),
+             "Returns a string of zeros and ones representing the bit vector.")
         .def("ToBinary", (python::object(*)(const EBV &))BVToBinary,
              python::args("self"),
              "Returns an internal binary representation of the vector.\n")
