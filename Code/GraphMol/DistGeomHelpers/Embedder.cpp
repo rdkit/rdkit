@@ -2081,12 +2081,14 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     if (params.optimizeConfWithId.has_value()) {
       if (!confsOk[ci]) {
         BOOST_LOG(rdWarningLog) << REFINEMENT_FAILED_MSG << std::endl;
+        res.push_back(-1);
         return;
       }
       auto &dest = mol.getConformer(*params.optimizeConfWithId);
       for (std::size_t i = 0; i < mol.getNumAtoms(); ++i) {
         dest.setAtomPos(i, conf->getAtomPos(i));
       }
+      res.push_back(*params.optimizeConfWithId);
       return;
     }
     if (confsOk[ci]) {
