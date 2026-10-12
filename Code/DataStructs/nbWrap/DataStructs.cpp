@@ -36,8 +36,8 @@ void convertToNumpyArray(const T &v, nb::object destArray) {
     throw nb::value_error("Expecting a Numeric array object");
   }
   auto *destP = reinterpret_cast<PyArrayObject *>(destArray.ptr());
-  npy_intp ndims[1] = {static_cast<npy_intp>(v.size())};
-  PyArray_Dims dims{ndims, 1};
+  npy_intp size = static_cast<npy_intp>(v.size());
+  PyArray_Dims dims{&size, 1};
   PyObject *resized = PyArray_Resize(destP, &dims, 0, NPY_ANYORDER);
   if (!resized) {
     throw nb::python_error();
