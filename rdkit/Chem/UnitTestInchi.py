@@ -37,9 +37,10 @@ import pickle
 import re
 import unittest
 
-from rdkit import RDConfig, RDLogger
-from rdkit.Chem import (INCHI_AVAILABLE, ForwardSDMolSupplier, MolFromMolBlock, MolFromSmiles,
-                        MolToMolBlock, MolToSmiles, SanitizeMol, rdDepictor)
+from rdkit import Chem, RDConfig, RDLogger
+from rdkit.Chem import (INCHI_AVAILABLE, CanonicalRankAtoms, ForwardSDMolSupplier,
+                        MolFromMolBlock, MolFromMolFile, MolFromSmiles, MolToMolBlock,
+                        MolToSmiles, SanitizeMol, rdDepictor)
 
 if INCHI_AVAILABLE:
   from rdkit.Chem import (InchiReadWriteError, InchiToInchiKey, MolBlockToInchi, MolFromInchi,
@@ -80,6 +81,19 @@ def inchiDiff(inchi1, inchi2):
 @unittest.skipUnless(INCHI_AVAILABLE, 'Inchi support not available')
 class RegressionTest(unittest.TestCase):
 
+  def _loadSymmetricYlidene(self):
+    path = os.path.join(RDConfig.RDCodeDir, 'Chem/test_data', 'symmetric_ylidene.sdf')
+    mol = MolFromMolFile(path)
+    self.assertIsNotNone(mol)
+    cc_double_bonds = [
+      bond for bond in mol.GetBonds()
+      if bond.GetBondType() == Chem.BondType.DOUBLE and
+      bond.GetBeginAtom().GetAtomicNum() == 6 and
+      bond.GetEndAtom().GetAtomicNum() == 6
+    ]
+    self.assertEqual(len(cc_double_bonds), 1)
+    return mol, cc_double_bonds[0]
+
   def testPrechloricAcid(self):
     examples = (
       ('OCl(=O)(=O)=O', 'InChI=1S/ClHO4/c2-1(3,4)5/h(H,2,3,4,5)'),
@@ -94,6 +108,63 @@ class RegressionTest(unittest.TestCase):
       m = MolFromSmiles(smiles)
       inchi = MolToInchi(m)
       self.assertEqual(inchi, expected)
+
+  def testSymmetricYlideneDoesNotInventDoubleBondStereo(self):
+    mol, double_bond = self._loadSymmetricYlidene()
+    ranks = CanonicalRankAtoms(mol, breakTies=False)
+    begin = double_bond.GetBeginAtom()
+    end = double_bond.GetEndAtom()
+    for endpoint, other in ((begin, end), (end, begin)):
+      side_atoms = [neighbor for neighbor in endpoint.GetNeighbors()
+                    if neighbor.GetIdx() != other.GetIdx()]
+      if len(side_atoms) == 2:
+        self.assertEqual(ranks[side_atoms[0].GetIdx()], ranks[side_atoms[1].GetIdx()])
+        break
+    else:
+      self.fail('symmetric ring endpoint not found')
+    self.assertNotIn('/b', MolToInchi(mol))
+
+  def testSymmetricYlidene3DDoesNotInventDoubleBondStereo(self):
+    mol, _ = self._loadSymmetricYlidene()
+    conformer = mol.GetConformer()
+    conformer.Set3D(True)
+    self.assertTrue(conformer.Is3D())
+    for atom in mol.GetAtoms():
+      position = conformer.GetAtomPosition(atom.GetIdx())
+      conformer.SetAtomPosition(atom.GetIdx(), (position.x, position.y, position.x / 10.0))
+    self.assertNotIn('/b', MolToInchi(mol))
+
+  def testAsymmetricDoubleBondRetainsCoordinateStereo(self):
+    # Generate coordinates deliberately: this checks that the fix is limited
+    # to graph-symmetric, non-stereogenic double bonds.
+    asymmetric = MolFromSmiles('CC=CC')
+    rdDepictor.Compute2DCoords(asymmetric)
+    self.assertIn('/b', MolToInchi(asymmetric))
+
+  def testMappedAndUnmappedAsymmetricDoubleBondHaveSameInchi(self):
+    mol = MolFromSmiles('CC=CC')
+    rdDepictor.Compute2DCoords(mol)
+    mapped = Chem.Mol(mol)
+    for atom_idx, atom in enumerate(mapped.GetAtoms(), 1):
+      atom.SetAtomMapNum(atom_idx)
+    self.assertEqual(MolToInchi(mol), MolToInchi(mapped))
+
+  def testMappedAndUnmappedSymmetricYlideneHaveSameInchi(self):
+    mol, _ = self._loadSymmetricYlidene()
+    mapped = Chem.Mol(mol)
+    for atom_idx, atom in enumerate(mapped.GetAtoms(), 1):
+      atom.SetAtomMapNum(atom_idx)
+    inchi = MolToInchi(mol)
+    self.assertNotIn('/b', inchi)
+    self.assertEqual(inchi, MolToInchi(mapped))
+
+  def testAsymmetricallyMappedCCl3HasSameInchi(self):
+    unmapped = MolFromSmiles('CC(Cl)(Cl)Cl')
+    mapped = MolFromSmiles('CC([Cl:1])([Cl:2])[Cl:3]')
+    self.assertEqual(len(Chem.FindMolChiralCenters(mapped, includeUnassigned=True)), 1)
+    inchi = MolToInchi(unmapped)
+    self.assertNotIn('/t', inchi)
+    self.assertEqual(inchi, MolToInchi(mapped))
 
 
 @unittest.skipUnless(INCHI_AVAILABLE, 'Inchi support not available')
@@ -255,9 +326,9 @@ class TestCase(unittest.TestCase):
           same += 1
       fmt = "\n{0}InChI read Summary: {1} identical, {2} variance, {3} reasonable variance{4}"
       print(fmt.format(COLOR_GREEN, same, diff, reasonable, COLOR_RESET))
-      self.assertEqual(same, 693)
+      self.assertEqual(same, 812)
       self.assertEqual(diff, 0)
-      self.assertEqual(reasonable, 488)
+      self.assertEqual(reasonable, 369)
 
   def test2InchiOptions(self):
     m = MolFromSmiles("CC=C(N)C")
