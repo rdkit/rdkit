@@ -2257,11 +2257,10 @@ void detectAtropisomersPostSanitization(ROMol &mol, bool cleanIt) {
   }
   bool removedAny = false;
   for (auto bond : mol.bonds()) {
-    // Match the atrop-specific ring cutoff in MolOps::cleanupAtropisomers().
     if ((bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
          bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) &&
         ri->numBondRings(bond->getIdx()) > 0 &&
-        ri->minBondRingSize(bond->getIdx()) < 8) {
+        ri->minBondRingSize(bond->getIdx()) < minRingSizeForAtropisomerStereo) {
       bond->setStereo(Bond::BondStereo::STEREONONE);
       removedAny = true;
     }
