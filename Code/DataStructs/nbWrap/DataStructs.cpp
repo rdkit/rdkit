@@ -42,7 +42,7 @@ void convertToNumpyArray(const T &v, nb::object destArray) {
   if (!resized) {
     throw nb::python_error();
   }
-  auto resizeResult = nb::steal<nb::object>(resized);
+  Py_DECREF(resized);
   for (unsigned int i = 0; i < v.size(); ++i) {
     nb::object item = nb::cast(+v[i]);
     if (PyArray_SETITEM(destP,
