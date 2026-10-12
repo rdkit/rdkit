@@ -63,6 +63,8 @@
 namespace {
 constexpr const char *INTERRUPT_MESSAGE =
     "Interrupted, cancelling conformer generation";
+constexpr const char *REFINEMENT_FAILED_MSG =
+    "Failed to refine the conformer with the provided id, cancelling";
 constexpr double M_PI_2 = 1.57079632679489661923;
 constexpr double ERROR_TOL = 0.00001;
 // these tolerances, all to detect and filter out bogus conformations, are a
@@ -1531,8 +1533,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }  // if block - heavy atom check
-  }  // for loop over atoms
+    }    // if block - heavy atom check
+  }      // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -2078,7 +2080,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     auto &conf = confs[ci];
     if (params.optimizeConfWithId.has_value()) {
       if (!confsOk[ci]) {
-        // TODO: Log that it failed and conf is not changed:
+        BOOST_LOG(rdWarningLog) << REFINEMENT_FAILED_MSG << std::endl;
         return;
       }
       auto &dest = mol.getConformer(*params.optimizeConfWithId);
