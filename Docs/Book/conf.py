@@ -218,3 +218,23 @@ autoclass_content = "both"
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [('index', 'rdkit', u'RDKit Documentation', [u'Greg Landrum'], 1)]
+
+myst_heading_anchors = 3
+
+
+# derived from: https://github.com/wjakob/nanobind/discussions/707#discussioncomment-13540168
+def setup(app):
+  import inspect
+  from sphinx.util import inspect as sphinx_inspect
+
+  # Sphinx inspects all objects in the module and tries to resolve their type
+  # (attribute, function, class, module, etc.) by using its own functions in
+  # `sphinx.util.inspect`. These functions misidentify certain nanobind
+  # objects. We monkey patch those functions here.
+  def mpatch_isfunction(object):
+    ob = sphinx_inspect.unpartial(object)
+    if hasattr(ob, '__name__') and "nb_func" in type(ob).__name__:
+      return True
+    return inspect.isfunction(object)
+
+  sphinx_inspect.isfunction = mpatch_isfunction
