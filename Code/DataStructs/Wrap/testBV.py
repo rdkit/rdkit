@@ -322,17 +322,17 @@ class TestCase(unittest.TestCase):
       self.assertFalse(ffp[3])
 
   def test16ToText(self):
-    bv1 = DataStructs.SparseBitVect(64)
-    obits = range(0, 64, 3)
+    for cls in [DataStructs.ExplicitBitVect, DataStructs.SparseBitVect]:
+      bv1 = cls(64)
+      obits = range(0, 64, 3)
 
-    for bit in obits:
-      bv1.SetBit(bit)
+      for bit in obits:
+        bv1.SetBit(bit)
 
-    self.assertEqual(DataStructs.BitVectToText(bv1),
-                     '1001001001001001001001001001001001001001001001001001001001001001')
-
-    self.assertEqual(bv1.ToBitString(),
-                     '1001001001001001001001001001001001001001001001001001001001001001')
+      text = DataStructs.BitVectToText(bv1)
+      self.assertEqual(text,
+                       '1001001001001001001001001001001001001001001001001001001001001001')
+      self.assertEqual(bv1.ToBitString(), text)
 
 
 if __name__ == '__main__':

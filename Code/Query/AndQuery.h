@@ -21,7 +21,7 @@ template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
 class RDKIT_QUERY_EXPORT AndQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
-  typedef Query<MatchFuncArgType, DataFuncArgType, needsConversion> BASE;
+  using BASE = Query<MatchFuncArgType, DataFuncArgType, needsConversion>;
   AndQuery() { this->df_negate = false; }
 
   bool Match(const DataFuncArgType what) const override {
