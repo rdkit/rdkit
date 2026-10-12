@@ -64,15 +64,17 @@ struct RingSystemInfo {
 // two rings share adjacent bonds: their common atom is an interior bridge atom.
 bool ringsSharePathWithInteriorAtom(
     const ROMol &mol, const INT_VECT &firstRing, const INT_VECT &secondRing) {
-  std::vector<unsigned int> sharedBondDegree(mol.getNumAtoms());
+  // Count only bonds that belong to both rings. Two such bonds incident on the
+  // same atom are consecutive and make that atom interior to the shared path.
+  std::vector<unsigned int> numIncidentSharedBonds(mol.getNumAtoms());
   for (const auto bondIdx : firstRing) {
     if (std::find(secondRing.begin(), secondRing.end(), bondIdx) ==
         secondRing.end()) {
       continue;
     }
     const auto bond = mol.getBondWithIdx(bondIdx);
-    if (++sharedBondDegree[bond->getBeginAtomIdx()] > 1 ||
-        ++sharedBondDegree[bond->getEndAtomIdx()] > 1) {
+    if (++numIncidentSharedBonds[bond->getBeginAtomIdx()] > 1 ||
+        ++numIncidentSharedBonds[bond->getEndAtomIdx()] > 1) {
       return true;
     }
   }
@@ -86,21 +88,23 @@ std::vector<unsigned int> getFusedRingSystem(RingInfo &ringInfo,
   const auto &bondRings = ringInfo.bondRings();
   boost::dynamic_bitset<> visitedRings(bondRings.size());
   std::vector<unsigned int> ringsToVisit;
+  const auto addRingToVisit = [&](unsigned int ringIdx) {
+    if (!visitedRings[ringIdx]) {
+      visitedRings.set(ringIdx);
+      ringsToVisit.push_back(ringIdx);
+    }
+  };
   for (const auto ringIdx : ringInfo.bondMembers(bondIdx)) {
-    ringsToVisit.push_back(ringIdx);
+    addRingToVisit(ringIdx);
   }
 
   std::vector<unsigned int> result;
   while (!ringsToVisit.empty()) {
     const auto ringIdx = ringsToVisit.back();
     ringsToVisit.pop_back();
-    if (visitedRings[ringIdx]) {
-      continue;
-    }
-    visitedRings.set(ringIdx);
     result.push_back(ringIdx);
     for (const auto neighborIdx : ringInfo.fusedRingNeighbors(ringIdx)) {
-      ringsToVisit.push_back(neighborIdx);
+      addRingToVisit(neighborIdx);
     }
   }
   return result;
@@ -137,7 +141,7 @@ RDGeom::Point3D getRingSystemCenter(
       ringAtoms.set(atomIdx);
     }
   }
-  PRECONDITION(ringAtoms.any(), "a ring system must contain atoms");
+  CHECK_INVARIANT(ringAtoms.any(), "a ring system must contain atoms");
 
   RDGeom::Point3D center;
   for (auto atomIdx = ringAtoms.find_first();
