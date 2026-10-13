@@ -171,6 +171,17 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getAtomNonzeroDegree(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool has_protium_neighbor(const ROMol &mol,
                                                 const Atom *atom);
 
+//! \returns whether \c bond carries an explicit "stereochemistry is unknown"
+//! annotation. Both spellings are recognized: a direction of
+//! Bond::BondDir::UNKNOWN, and the _UnknownStereo property that
+//! clearSingleBondDirFlags() leaves behind in its place.
+RDKIT_GRAPHMOL_EXPORT bool hasUnknownStereoAnnotation(const Bond *bond);
+
+//! \returns whether \c bond is a wiggly bond marking the stereochemistry at
+//! \c atom as explicitly unknown, i.e. a single bond which begins at \c atom
+//! and which hasUnknownStereoAnnotation().
+RDKIT_GRAPHMOL_EXPORT bool isWigglyBond(const Bond *bond, const Atom *atom);
+
 }  // namespace detail
 /// @endcond
 
@@ -235,6 +246,7 @@ struct RDKIT_GRAPHMOL_EXPORT BondWedgingParameters {
 enum class WedgeInfoType {
   WedgeInfoTypeChiral,
   WedgeInfoTypeAtropisomer,
+  WedgeInfoTypeWiggly,
 };
 
 class WedgeInfoBase {
@@ -280,6 +292,19 @@ class WedgeInfoAtropisomer : public WedgeInfoBase {
   }
 
   Bond::BondDir getDir() const override { return dir; }
+};
+
+//! a wiggly (squiggle) bond marking the stereochemistry at idx as explicitly
+//! unknown
+class WedgeInfoWiggly : public WedgeInfoBase {
+ public:
+  WedgeInfoWiggly(int atomId) : WedgeInfoBase(atomId){};
+  ~WedgeInfoWiggly() override {}
+
+  WedgeInfoType getType() const override {
+    return Chirality::WedgeInfoType::WedgeInfoTypeWiggly;
+  }
+  Bond::BondDir getDir() const override { return Bond::BondDir::UNKNOWN; }
 };
 
 namespace detail {
