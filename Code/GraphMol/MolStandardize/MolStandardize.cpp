@@ -140,7 +140,7 @@ void standardizeMultipleMolsInPlace(FuncType sfunc, std::vector<RWMol *> &mols,
 #ifdef RDK_BUILD_THREADSAFE_SSS
   else {
     auto func = [&](unsigned int tidx) {
-      for (auto mi = tidx; mi < mols.size(); mi += numThreads) {
+      for (auto mi = tidx; mi < mols.size(); mi += numThreadsToUse) {
         sfunc(*mols[mi], params);
       }
     };

@@ -1967,3 +1967,48 @@ TEST_CASE("tautomer canonicalize preserves STEREOANY on ring double bonds") {
   CHECK(canonicalBond->getBondType() == Bond::DOUBLE);
   CHECK(canonicalBond->getStereo() == Bond::STEREOANY);
 }
+
+TEST_CASE(
+    "multithreaded InPlace functions with numThreads <= 0 or > number of molecules") {
+  const std::vector<std::string> smis{
+      "C[N+](C)=C\\C=C\\[O-]",   "CS(C)=O",         "[Na]OC(=O)c1ccccc1",
+      "C[N+](=O)[O-]",           "Oc1ncccc1",       "CC(=O)[O-].[Na+]",
+      "C1=CC=CC=C1[N+](=O)[O-]", "O=C([O-])CC(=O)O"};
+  auto makeMols = [&smis]() {
+    std::vector<std::unique_ptr<RWMol>> res;
+    for (const auto &smi : smis) {
+      res.emplace_back(SmilesToMol(smi));
+      REQUIRE(res.back());
+    }
+    return res;
+  };
+  auto ptrs = [](std::vector<std::unique_ptr<RWMol>> &ms) {
+    std::vector<RWMol *> res;
+    for (auto &m : ms) {
+      res.push_back(m.get());
+    }
+    return res;
+  };
+  auto ref = makeMols();
+  auto refPtrs = ptrs(ref);
+  MolStandardize::cleanupInPlace(refPtrs, 1);
+  auto refNorm = makeMols();
+  auto refNormPtrs = ptrs(refNorm);
+  MolStandardize::normalizeInPlace(refNormPtrs, 1);
+
+  for (int numThreads : {0, -1, 2, static_cast<int>(smis.size()) + 5}) {
+    INFO("numThreads: " << numThreads);
+    auto ms = makeMols();
+    auto msPtrs = ptrs(ms);
+    MolStandardize::cleanupInPlace(msPtrs, numThreads);
+    for (auto i = 0u; i < ms.size(); ++i) {
+      CHECK(MolToSmiles(*ms[i]) == MolToSmiles(*ref[i]));
+    }
+    auto ns = makeMols();
+    auto nsPtrs = ptrs(ns);
+    MolStandardize::normalizeInPlace(nsPtrs, numThreads);
+    for (auto i = 0u; i < ns.size(); ++i) {
+      CHECK(MolToSmiles(*ns[i]) == MolToSmiles(*refNorm[i]));
+    }
+  }
+}
