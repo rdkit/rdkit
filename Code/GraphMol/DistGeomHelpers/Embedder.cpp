@@ -1850,6 +1850,24 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING;
   }
 
+  // initialize the conformers we're going to be creating:
+  std::vector<std::unique_ptr<Conformer>> confs;
+  if (params.optimizeConfWithId.has_value()) {
+    confs.reserve(1);
+    confs.emplace_back(
+        new Conformer(mol.getConformer(*params.optimizeConfWithId)));
+
+  } else {
+    if (params.clearConfs) {
+      res.clear();
+      mol.clearConformers();
+    }
+    confs.reserve(numConfs);
+    for (unsigned int i = 0; i < numConfs; ++i) {
+      confs.emplace_back(new Conformer(mol.getNumAtoms()));
+    }
+  }
+
   INT_VECT fragMapping;
   std::vector<ROMOL_SPTR> molFrags;
 
@@ -1880,27 +1898,10 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
           << "Seeded conformer generation (via the optimizeConfWithId argument) "
              "does not work with molecules that have multiple fragments. Aborting."
           << std::endl;
+      res.push_back(-1);
       return;
     }
     numConfs = 1;
-  }
-
-  // initialize the conformers we're going to be creating:
-  std::vector<std::unique_ptr<Conformer>> confs;
-  if (params.optimizeConfWithId.has_value()) {
-    confs.reserve(1);
-    confs.emplace_back(
-        new Conformer(mol.getConformer(*params.optimizeConfWithId)));
-
-  } else {
-    if (params.clearConfs) {
-      res.clear();
-      mol.clearConformers();
-    }
-    confs.reserve(numConfs);
-    for (unsigned int i = 0; i < numConfs; ++i) {
-      confs.emplace_back(new Conformer(mol.getNumAtoms()));
-    }
   }
 
   boost::dynamic_bitset<> confsOk(numConfs);
