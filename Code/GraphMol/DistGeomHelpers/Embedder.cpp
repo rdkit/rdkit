@@ -44,7 +44,6 @@
 #include <memory>
 #include <vector>
 #include <chrono>  // for time-related functions
-#include <variant>
 #include <array>
 #include <algorithm>
 #include <memory>
@@ -65,6 +64,8 @@ constexpr const char *INTERRUPT_MESSAGE =
     "Interrupted, cancelling conformer generation";
 constexpr const char *REFINEMENT_FAILED_MSG =
     "Failed to refine the conformer with the provided id, cancelling";
+constexpr const char *RANDOM_COORDS_WARNING =
+    "optimizeConfWithId and coordMap are provided, initialEmbeddingMode is overwritten to RANDOM_COORDINATE_EMBEDDING";
 constexpr double M_PI_2 = 1.57079632679489661923;
 constexpr double ERROR_TOL = 0.00001;
 // these tolerances, all to detect and filter out bogus conformations, are a
@@ -480,6 +481,24 @@ bool generateInitialCoords(RDGeom::PointPtrVect *positions,
   }
   return gotCoords;
 }
+
+bool setInitialCoords(RDGeom::PointPtrVect *positions,
+                      const EmbedParameters &embedParams) {
+  if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
+    for (const auto &v : *embedParams.coordMap) {
+      auto p = positions->at(v.first);
+      for (unsigned int ci = 0; ci < v.second.dimension(); ++ci) {
+        (*p)[ci] = v.second[ci];
+      }
+      // zero out any higher dimensional components:
+      for (unsigned int ci = v.second.dimension(); ci < p->dimension(); ++ci) {
+        (*p)[ci] = 0.0;
+      }
+    }
+  }
+  return true;
+}
+
 bool firstMinimization(RDGeom::PointPtrVect *positions,
                        const detail::EmbedArgs &eargs,
                        const EmbedParameters &embedParams) {
@@ -973,7 +992,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
       return false;
     }
     gotCoords = embedParams.optimizeConfWithId.has_value()
-                    ? true
+                    ? EmbeddingOps::setInitialCoords(positions, embedParams)
                     : EmbeddingOps::generateInitialCoords(
                           positions, eargs, embedParams, distMat, rng);
 
@@ -1143,19 +1162,20 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
     }
 
     // Get Initial positions
-    if (!embedParams.optimizeConfWithId.has_value()) {
-      gotCoords = EmbeddingOps::generateInitialCoords(
-          positions, eargs, embedParams, distMat, rng);
 
-      if (!gotCoords) {
-        if (embedParams.trackFailures) {
+    gotCoords = embedParams.optimizeConfWithId
+                    ? EmbeddingOps::setInitialCoords(positions, embedParams)
+                    : EmbeddingOps::generateInitialCoords(
+                          positions, eargs, embedParams, distMat, rng);
+
+    if (!gotCoords) {
+      if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
-          std::lock_guard<std::mutex> lock(GetFailMutex());
+        std::lock_guard<std::mutex> lock(GetFailMutex());
 #endif
-          embedParams.failures[EmbedFailureCauses::INITIAL_COORDS]++;
-        }
-        continue;
+        embedParams.failures[EmbedFailureCauses::INITIAL_COORDS]++;
       }
+      continue;
     }
 
     // check ctrl-C
@@ -1533,8 +1553,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -1902,6 +1922,14 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       return;
     }
     numConfs = 1;
+    // If a coordmap is provided, we need to set random coords to true,
+    // otherwise the mechanism is not activated.
+    if (coordMap) {
+      BOOST_LOG(rdWarningLog) << RANDOM_COORDS_WARNING << std::endl;
+      params.useRandomCoords = true;
+      params.initialEmbeddingMode =
+          InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING;
+    }
   }
 
   boost::dynamic_bitset<> confsOk(numConfs);

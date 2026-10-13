@@ -2537,6 +2537,26 @@ TEST_CASE("optimizeConfWithId") {
     CHECK(rmsd < 0.24);
     CHECK(rmsd > 0.22);
   }
+  SECTION("providing coord map") {
+    std::map<int, RDGeom::Point3D> coordmap;
+    std::array<int, 4> indices = {6, 7, 8, 9};
+    for (const auto i : indices) {
+      coordmap[i] = mol->getConformer(0).getAtomPos(i);
+    }
+    psetkdg.coordMap = &coordmap;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, psetkdg);
+    CHECK(cid == psetkdg.optimizeConfWithId);
+    MolOps::removeHs(*mol);
+    const double rmsd = MolAlign::getBestRMS(*mol, *mol, 0, 1);
+    CHECK(rmsd > 0.22);
+    const auto &conf2 = mol->getConformer(1);
+    for (const auto i : indices) {
+      auto pos = conf2.getAtomPos(i);
+      CHECK(pos.x == coordmap[i].x);
+      CHECK(pos.y == coordmap[i].y);
+      CHECK(pos.z == coordmap[i].z);
+    }
+  }
   SECTION("multi frags should fail") {
     auto mol = "CCC.CCC"_smiles;
     MolOps::addHs(*mol);
