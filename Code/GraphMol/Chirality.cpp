@@ -40,7 +40,7 @@ bool shouldDetectDoubleBondStereo(const Bond *bond) {
   const RingInfo *ri = bond->getOwningMol().getRingInfo();
   return (!ri->numBondRings(bond->getIdx()) ||
           ri->minBondRingSize(bond->getIdx()) >=
-              Chirality::minRingSizeForDoubleBondStereo);
+              Chirality::minRingSizeForDoubleBondOrAtropisomerStereo);
 }
 
 bool is_regular_h(const Atom &atom) {
@@ -2260,7 +2260,7 @@ void detectAtropisomersPostSanitization(ROMol &mol, bool cleanIt) {
     if ((bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
          bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) &&
         ri->numBondRings(bond->getIdx()) > 0 &&
-        ri->minBondRingSize(bond->getIdx()) < minRingSizeForAtropisomerStereo) {
+        ri->minBondRingSize(bond->getIdx()) < minRingSizeForDoubleBondOrAtropisomerStereo) {
       bond->setStereo(Bond::BondStereo::STEREONONE);
       removedAny = true;
     }

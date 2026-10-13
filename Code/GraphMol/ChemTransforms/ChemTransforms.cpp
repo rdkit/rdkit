@@ -426,7 +426,7 @@ void setSubMolBrokenRingStereo(RWMol &mol,
              bond->getBondType() == Bond::BondType::DOUBLE) &&
             bond->getStereo() == Bond::BondStereo::STEREONONE &&
             mol.getRingInfo()->minBondRingSize(bond->getIdx()) <
-                Chirality::minRingSizeForDoubleBondStereo &&
+                Chirality::minRingSizeForDoubleBondOrAtropisomerStereo &&
             !removedAtoms[bond->getBeginAtomIdx()] &&
             !removedAtoms[bond->getEndAtomIdx()]) {
           // find the two neighboring bonds which are in the ring or to the
