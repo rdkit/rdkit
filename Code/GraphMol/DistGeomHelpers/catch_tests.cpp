@@ -2499,7 +2499,9 @@ TEST_CASE("TransAmideKTerm") {
 
 TEST_CASE("optimizeConfWithId") {
   auto mol = "c1ccccc1[C@@H](Cl)CCC(O)CC"_smiles;
+  REQUIRE(mol);
   MolOps::addHs(*mol);
+  REQUIRE(mol);
   auto psdg = DGeomHelpers::ETDGv2;
   psdg.randomSeed = 0xc0ffee;
   DGeomHelpers::EmbedMolecule(*mol, psdg);
@@ -2508,11 +2510,50 @@ TEST_CASE("optimizeConfWithId") {
   auto psetkdg = DGeomHelpers::ETKDGv2;
   psetkdg.useLegacyImplementation = false;
   psetkdg.optimizeConfWithId = 1;
-  DGeomHelpers::EmbedMolecule(*mol, psetkdg);
-  MolOps::removeHs(*mol);
-  const double rmsd = MolAlign::getBestRMS(*mol, *mol, 0, 1);
-  CHECK(rmsd < 0.24);
-  CHECK(rmsd > 0.22);
+  SECTION("Using EmbedMolecule") {
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, psetkdg);
+    CHECK(cid == psetkdg.optimizeConfWithId);
+    MolOps::removeHs(*mol);
+    const double rmsd = MolAlign::getBestRMS(*mol, *mol, 0, 1);
+    CHECK(rmsd < 0.24);
+    CHECK(rmsd > 0.22);
+  }
+  SECTION("Using EmbedMultipleConfs") {
+    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, psetkdg);
+    CHECK(cids.size() == 1);
+    CHECK(cids[0] == psetkdg.optimizeConfWithId);
+    MolOps::removeHs(*mol);
+    const double rmsd = MolAlign::getBestRMS(*mol, *mol, 0, 1);
+    CHECK(rmsd < 0.24);
+    CHECK(rmsd > 0.22);
+  }
+  SECTION("Using EmbedMultipleConfs with Vect") {
+    std::vector<int> cids;
+    DGeomHelpers::EmbedMultipleConfs(*mol, cids, 10, psetkdg);
+    CHECK(cids.size() == 1);
+    CHECK(cids[0] == psetkdg.optimizeConfWithId);
+    MolOps::removeHs(*mol);
+    const double rmsd = MolAlign::getBestRMS(*mol, *mol, 0, 1);
+    CHECK(rmsd < 0.24);
+    CHECK(rmsd > 0.22);
+  }
+  SECTION("multi frags should fail") {
+    auto mol = "CCC.CCC"_smiles;
+    MolOps::addHs(*mol);
+    auto psdg = DGeomHelpers::ETDGv2;
+    psdg.randomSeed = 0xc0ffee;
+    DGeomHelpers::EmbedMolecule(*mol, psdg);
+    auto *conf = new Conformer(mol->getConformer());
+    mol->addConformer(conf, true);
+    auto psetkdg = DGeomHelpers::ETKDGv2;
+    psetkdg.useLegacyImplementation = false;
+    psetkdg.optimizeConfWithId = 1;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, psetkdg);
+    CHECK(cid == -1);
+    MolOps::removeHs(*mol);
+    const double rmsd = MolAlign::getBestRMS(*mol, *mol, 0, 1);
+    CHECK(rmsd < 1e-5);
+  }
 }
 
 namespace {
