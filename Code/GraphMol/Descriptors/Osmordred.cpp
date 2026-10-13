@@ -178,7 +178,7 @@ std::vector<double> calcOsmordred(const ROMol &mol, const OsmordredOptions &opts
       mol));                    // addNames("VertexAdjacencyInformation", 1);
   append(calcWalkCounts(mol));  // addNames("WalkCount", 21);
   append(calcWeight(ctx));      // addNames("Weight", 2);
-  appendInt(calcWienerIndex(mol));        // addNames("WienerIndex", 2);
+  append(calcWienerIndex(mol));        // addNames("WienerIndex", 2);
   append(calcZagrebIndex(mol));           // addNames("ZagrebIndex", 4);
   append1(calcPol(ctx));                   // addNames("Pol", 1);
   append1(calcMR(ctx));                    // addNames("MR", 1);

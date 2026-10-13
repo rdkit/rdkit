@@ -200,7 +200,7 @@ RDKIT_DESCRIPTORS_EXPORT double calcBalabanJ(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT double calcBertzCT(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT double calcVertexAdjacencyInformation(
     const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcWienerIndex(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcWienerIndex(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcTopologicalIndex(
     const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcCarbonTypes(const ROMol &mol);

@@ -973,9 +973,8 @@ std::vector<double> calcWeight(const ROMol &mol) {
 
 // Wiener Index
 // working!
-std::vector<int> calcWienerIndex(const ROMol &mol) {
-  std::vector<int> WI(2, 0);
-
+std::vector<double> calcWienerIndex(const ROMol &mol) {
+  std::vector<double> WI(2, 0);
   double *distances = MolOps::getDistanceMat(
       mol, false, false, false);  // no need for "Bond order"
   unsigned int numAtoms = mol.getNumAtoms();
@@ -990,8 +989,8 @@ std::vector<int> calcWienerIndex(const ROMol &mol) {
   }
   // must return the half part (of the Distance matrix!) or only compute half
   // matrix... to speed up!!!!
-  WI[0] = static_cast<int>(WI[0] * 0.5);
-  WI[1] = static_cast<int>(WI[1] * 0.5);
+  WI[0]*=0.5;
+  WI[1]*=0.5;
 
   return WI;
 }
