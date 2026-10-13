@@ -2342,7 +2342,7 @@ std::string get_ringbond_cistrans_block(
     auto idx = bondOrder[i];
     if (!rinfo->numBondRings(idx) ||
         rinfo->minBondRingSize(idx) <
-            Chirality::minRingSizeForDoubleBondOrAtropisomerStereo) {
+            Chirality::minRingSizeForDoubleBondStereo) {
       // we only do ring bonds of a minimum size
       continue;
     }

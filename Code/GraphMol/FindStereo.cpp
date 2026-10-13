@@ -397,7 +397,7 @@ bool isBondPotentialStereoBond(const Bond *bond) {
     // check rings
     const auto ri = bond->getOwningMol().getRingInfo();
     for (const auto &bring : ri->bondRings()) {
-      if (bring.size() < minRingSizeForDoubleBondOrAtropisomerStereo &&
+      if (bring.size() < minRingSizeForDoubleBondStereo &&
           std::find(bring.begin(), bring.end(), bond->getIdx()) !=
               bring.end()) {
         return false;
