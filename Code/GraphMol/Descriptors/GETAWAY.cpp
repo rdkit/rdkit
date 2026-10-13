@@ -363,12 +363,13 @@ void getGETAWAYDescCustom(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
 
   // Visit only the distances that occur: atoms in different fragments are 1e8
   // apart, so looping over every integer up to the maximum would not finish.
-  std::set<double> distances{0.0};
+  std::set<int> distances{0};
   for (int j = 0; j < numAtoms - 1; ++j) {
-    distances.insert(dist + j * numAtoms + j + 1, dist + (j + 1) * numAtoms);
+    for (int k = j + 1; k < numAtoms; ++k) {
+      distances.insert(static_cast<int>(dist[j * numAtoms + k]));
+    }
   }
-  for (const double distance : distances) {
-    const int i = static_cast<int>(distance);
+  for (const int i : distances) {
     if (i == 0) {
       Bi = H.diagonal().asDiagonal();
     }
@@ -643,12 +644,13 @@ void getGETAWAYDesc(MatrixXd H, MatrixXd R, MatrixXd Adj, int numAtoms,
 
   // Visit only the distances that occur: atoms in different fragments are 1e8
   // apart, so looping over every integer up to the maximum would not finish.
-  std::set<double> distances{0.0};
+  std::set<int> distances{0};
   for (int j = 0; j < numAtoms - 1; ++j) {
-    distances.insert(dist + j * numAtoms + j + 1, dist + (j + 1) * numAtoms);
+    for (int k = j + 1; k < numAtoms; ++k) {
+      distances.insert(static_cast<int>(dist[j * numAtoms + k]));
+    }
   }
-  for (const double distance : distances) {
-    const int i = static_cast<int>(distance);
+  for (const int i : distances) {
     if (i == 0) {
       Bi = H.diagonal().asDiagonal();
     }
