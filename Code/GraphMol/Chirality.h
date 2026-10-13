@@ -27,11 +27,10 @@ class Conformer;
 
 namespace Chirality {
 
-//! double bond stereo will be ignored/removed for rings smaller than this:
+//! double bond stereo will be ignored/removed for rings smaller than this,
+//! and also atropisomer stereo will be removed for rings smaller than this,
+//! the general logic is that these rings become large enough to contain stereo info
 constexpr unsigned int minRingSizeForDoubleBondStereo = 8;
-
-//! atropisomer stereo will be removed for rings smaller than this:
-constexpr unsigned int minRingSizeForAtropisomerStereo = 8;
 
 constexpr auto nonTetrahedralStereoEnvVar = "RDK_ENABLE_NONTETRAHEDRAL_STEREO";
 constexpr auto useLegacyStereoEnvVar = "RDK_USE_LEGACY_STEREO_PERCEPTION";

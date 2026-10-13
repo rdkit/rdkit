@@ -554,7 +554,7 @@ bool checkBond(RWMol &mol, Bond *bond, MolOps::Hybridizations &hybs) {
       // because they can be linking actual atropisomeric portions
       (ri->numBondRings(bond->getIdx()) > 0 &&
        ri->minBondRingSize(bond->getIdx()) <
-           Chirality::minRingSizeForAtropisomerStereo)) {
+           Chirality::minRingSizeForDoubleBondStereo )) {
     bond->setStereo(Bond::BondStereo::STEREONONE);
     return true;
   }
