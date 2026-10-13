@@ -241,17 +241,17 @@ nb::object getNumPyFingerprint(const FingerprintGenerator<OutputType> *fpGen,
                      py_atomInvs, py_bondInvs, py_additionalOutput)};
 
   npy_intp size[1] = {static_cast<npy_intp>(ebv->size())};
-  PyObject *arr = PyArray_ZEROS(1, size, NPY_UINT8, 0);
-  PyObject *one = PyLong_FromLong(1);
-  for (auto i = 0u; i < ebv->size(); ++i) {
-    if ((*ebv)[i]) {
-      PyArray_SETITEM(
-          (PyArrayObject *)arr,
-          static_cast<char *>(PyArray_GETPTR1((PyArrayObject *)arr, i)), one);
-    }
+  PyObject *raw = PyArray_ZEROS(1, size, NPY_UINT8, 0);
+  if (!raw) {
+    throw nb::python_error();
   }
-  Py_DECREF(one);
-  return nb::steal<nb::object>(arr);
+  auto arr = nb::steal<nb::object>(raw);
+  auto *array = reinterpret_cast<PyArrayObject *>(arr.ptr());
+  auto *data = static_cast<std::uint8_t *>(PyArray_DATA(array));
+  for (auto i = 0u; i < ebv->size(); ++i) {
+    data[i] = (*ebv)[i] ? 1 : 0;
+  }
+  return arr;
 }
 
 template <typename OutputType>
@@ -265,18 +265,17 @@ nb::object getNumPyCountFingerprint(
                           py_atomInvs, py_bondInvs, py_additionalOutput)};
 
   npy_intp size[1] = {static_cast<npy_intp>(fp->size())};
-  PyObject *arr = PyArray_ZEROS(1, size, NPY_UINT32, 0);
-  for (auto i = 0u; i < fp->size(); ++i) {
-    auto v = (*fp)[i];
-    if (v) {
-      PyObject *val = PyLong_FromLong(v);
-      PyArray_SETITEM(
-          (PyArrayObject *)arr,
-          static_cast<char *>(PyArray_GETPTR1((PyArrayObject *)arr, i)), val);
-      Py_DECREF(val);
-    }
+  PyObject *raw = PyArray_ZEROS(1, size, NPY_UINT32, 0);
+  if (!raw) {
+    throw nb::python_error();
   }
-  return nb::steal<nb::object>(arr);
+  auto arr = nb::steal<nb::object>(raw);
+  auto *array = reinterpret_cast<PyArrayObject *>(arr.ptr());
+  auto *data = static_cast<std::uint32_t *>(PyArray_DATA(array));
+  for (const auto &[index, value] : fp->getNonzeroElements()) {
+    data[index] = value;
+  }
+  return arr;
 }
 
 const std::vector<const ROMol *> convertPyArgumentsForBulk(

@@ -232,6 +232,23 @@ class TestCase(unittest.TestCase):
       for i in range(iv.GetLength()):
         self.assertEqual(iv[i], arr[i])
 
+  def test10ToNumpyResize(self):
+    import numpy
+    bv = DataStructs.ExplicitBitVect(4)
+    bv.SetBit(1)
+    for dtype in (numpy.int32, numpy.float64, object):
+      arr = numpy.zeros((0, ), dtype=dtype)
+      DataStructs.ConvertToNumpyArray(bv, arr)
+      numpy.testing.assert_array_equal(arr, [0, 1, 0, 0])
+      if dtype is object:
+        self.assertTrue(all(type(value) is int for value in arr))
+
+    for dtype in ('U5', 'S5'):
+      arr = numpy.zeros((0, ), dtype=dtype)
+      DataStructs.ConvertToNumpyArray(bv, arr)
+      expected = numpy.array(['0', '1', '0', '0'], dtype=dtype)
+      numpy.testing.assert_array_equal(arr, expected)
+
   def test11BulkNeighbors(self):
     nbits = 2048
     bvs = []
