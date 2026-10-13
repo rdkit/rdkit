@@ -146,9 +146,9 @@ if(NOT MSVC AND RDK_OPTIMIZE_POPCNT)
   endif()
 endif()
 
-# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
-# detect it.
-string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
+# CMAKE_CXX_COMPILER_ID covers clang regardless of the executable's name
+# (e.g. FreeBSD's cc and c++ are clang, and package-installed compilers may
+# be named clang23/clang++23).
 # Detect emcc
 string(REGEX MATCH "Emscripten" CMAKE_COMPILER_IS_EMCC "${CMAKE_SYSTEM_NAME}")
 
@@ -319,8 +319,7 @@ endif()
 if(MINGW)
   target_compile_definitions(rdkit_base INTERFACE "-DBOOST_SYSTEM_NO_DEPRECATED")
 endif(MINGW)
-# fallback on match to "Clang" where CMAKE_C_COMPILER=/usr/bin/cc
-if (CMAKE_COMPILER_IS_CLANG OR CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_COMPILER_IS_EMCC)
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_COMPILER_IS_EMCC)
   if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 15)
     target_compile_definitions(rdkit_base INTERFACE -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_NO_CXX98_FUNCTION_BASE -D_HAS_AUTO_PTR_ETC=0)
     target_compile_options(rdkit_base INTERFACE -Wno-deprecated-builtins -Wno-deprecated-non-prototype -Wno-unused-parameter)
