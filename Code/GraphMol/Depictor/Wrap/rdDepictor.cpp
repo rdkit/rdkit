@@ -37,7 +37,7 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
                              double bondLength = -1.0, bool forceRDKit = false,
                              bool useRingTemplates = false,
                              bool usePathAngleExpansion = true,
-                             bool useBranchDepthPrioritization = false) {
+                             bool useBranchDepthPrioritization = true) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
   python::list ks = coordMap.keys();
@@ -78,7 +78,7 @@ unsigned int Compute2DCoordsMimicDistmat(
     bool clearConfs, double weightDistMat, unsigned int nFlipsPerSample,
     unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes,
     double bondLength = -1.0, bool forceRDKit = false,
-    bool useBranchDepthPrioritization = false) {
+    bool useBranchDepthPrioritization = true) {
   PyObject *distMatPtr = distMat.ptr();
   if (!PyArray_Check(distMatPtr)) {
     throw_value_error("Argument isn't an array");
@@ -372,7 +372,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
      useBranchDepthPrioritization - prefer deeper acyclic branches while\n\
                   building the initial zig-zag layout. This tends to keep the\n\
                   longest path visually continuous. Random flip sampling is\n\
-                  skipped when enabled. (default=false)\n\n\
+                  skipped when enabled. (default=true)\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(
@@ -385,7 +385,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("bondLength") = -1.0, python::arg("forceRDKit") = false,
        python::arg("useRingTemplates") = false,
        python::arg("usePathAngleExpansion") = true,
-       python::arg("useBranchDepthPrioritization") = false),
+       python::arg("useBranchDepthPrioritization") = true),
       docString.c_str());
 
   docString =
@@ -417,7 +417,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
      useBranchDepthPrioritization - prefer deeper acyclic branches while\n\
                   building the initial zig-zag layout. nFlipsPerSample and\n\
                   nSample are ignored when enabled so random flips do not undo\n\
-                  that ordering. (default=false)\n\n\
+                  that ordering. (default=true)\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(
@@ -428,7 +428,7 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("nSample") = 100, python::arg("sampleSeed") = 100,
        python::arg("permuteDeg4Nodes") = true, python::arg("bondLength") = -1.0,
        python::arg("forceRDKit") = false,
-       python::arg("useBranchDepthPrioritization") = false),
+       python::arg("useBranchDepthPrioritization") = true),
       docString.c_str());
 
   docString =

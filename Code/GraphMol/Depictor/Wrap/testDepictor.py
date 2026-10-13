@@ -153,17 +153,26 @@ class TestCase(unittest.TestCase):
     self.assertTrue(ok)
 
   def testBranchDepthPrioritizationKeyword(self):
-    """Both Python wrappers expose the optional branch-depth layout mode.
+    """The default enables branch-depth layout and the opt-out is accepted.
 
     This is an API smoke test rather than a geometry-quality test: it catches a
-    wrapper that omits the keyword or fails to forward it to the C++ parameter
-    object, and confirms that coordinate generation returns a complete
-    conformer when the mode is enabled.
+    wrapper that omits the keyword or has a stale default, and confirms that
+    both the default and explicit historical mode generate complete conformers.
     """
-    mol = Chem.MolFromSmiles('CCCC(CC)CCCC')
-    conf_id = rdDepictor.Compute2DCoords(mol, useBranchDepthPrioritization=True)
-    self.assertEqual(conf_id, 0)
-    self.assertEqual(mol.GetConformer(conf_id).GetNumAtoms(), mol.GetNumAtoms())
+    default_mol = Chem.MolFromSmiles('CCCC(CC)CCCC')
+    enabled_mol = Chem.Mol(default_mol)
+    disabled_mol = Chem.Mol(default_mol)
+    rdDepictor.Compute2DCoords(default_mol)
+    rdDepictor.Compute2DCoords(enabled_mol, useBranchDepthPrioritization=True)
+    rdDepictor.Compute2DCoords(disabled_mol, useBranchDepthPrioritization=False)
+
+    default_conf = default_mol.GetConformer()
+    enabled_conf = enabled_mol.GetConformer()
+    for atom_idx in range(default_mol.GetNumAtoms()):
+      self.assertTrue(ptEq(default_conf.GetAtomPosition(atom_idx),
+                           enabled_conf.GetAtomPosition(atom_idx)))
+    self.assertEqual(disabled_mol.GetConformer().GetNumAtoms(),
+                     disabled_mol.GetNumAtoms())
 
   def test3IssueSF1526844(self):
     t = Chem.MolFromSmiles('c1nc(N)ccc1')
@@ -198,8 +207,10 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 'test_data/7UPJ_xtal.mol'))
 
-    # default mode
-    rdDepictor.Compute2DCoords(mol, canonOrient=False)
+    # These reference coordinates exercise the historical sampling path, which
+    # is intentionally skipped by branch-depth prioritization.
+    rdDepictor.Compute2DCoords(
+      mol, canonOrient=False, useBranchDepthPrioritization=False)
     self.assertTrue(
       compareCoords(
         mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
@@ -207,7 +218,8 @@ class TestCase(unittest.TestCase):
 
     # spread the structure as much as possible by sampling
     rdDepictor.Compute2DCoords(mol, canonOrient=False, nFlipsPerSample=3, nSample=100,
-                               sampleSeed=100, permuteDeg4Nodes=1)
+                               sampleSeed=100, permuteDeg4Nodes=1,
+                               useBranchDepthPrioritization=False)
     self.assertTrue(
       compareCoords(
         mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
@@ -226,14 +238,18 @@ class TestCase(unittest.TestCase):
     dmat3D = getDistMat(mol)
 
     # now mimic the coordinate with a very small weight
-    rdDepictor.Compute2DCoordsMimicDistmat(mol, dmat3D, weightDistMat=0.001)
+    rdDepictor.Compute2DCoordsMimicDistmat(
+      mol, dmat3D, weightDistMat=0.001,
+      useBranchDepthPrioritization=False)
     self.assertTrue(
       compareCoords(
         mol,
         os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 'test_data/7UPJ_mimic3D_1.mol')))
 
     # now mimic the coordinate with a very small weight
-    rdDepictor.Compute2DCoordsMimicDistmat(mol, dmat3D, weightDistMat=0.003)
+    rdDepictor.Compute2DCoordsMimicDistmat(
+      mol, dmat3D, weightDistMat=0.003,
+      useBranchDepthPrioritization=False)
     self.assertTrue(
       compareCoords(
         mol,

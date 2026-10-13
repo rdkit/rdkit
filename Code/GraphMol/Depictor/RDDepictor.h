@@ -92,11 +92,12 @@ struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
                                   //!< generating initial coordinates
   bool usePathAngleExpansion = true;  //!< use path angle expansion for
                                        //!< collision resolution
-  bool useBranchDepthPrioritization = false;
+  bool useBranchDepthPrioritization = true;
   //!< Prefer deeper acyclic branches while constructing the initial zig-zag
   //!< layout. This tends to draw the longest path as a visually continuous
   //!< chain. Random flip sampling is skipped when enabled because it can undo
-  //!< the selected branch order. Disabled by default for backward compatibility.
+  //!< the selected branch order. Enabled by default; set this to false to
+  //!< retain the historical rank-based branch ordering.
 };
 
 //! \brief Generate 2D coordinates (a depiction) for a molecule
@@ -218,7 +219,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoordsMimicDistMat(
     bool canonOrient = true, bool clearConfs = true, double weightDistMat = 0.5,
     unsigned int nFlipsPerSample = 3, unsigned int nSamples = 100,
     int sampleSeed = 25, bool permuteDeg4Nodes = true, bool forceRDKit = false,
-    bool useBranchDepthPrioritization = false);
+    bool useBranchDepthPrioritization = true);
 
 struct RDKIT_DEPICTOR_EXPORT ConstrainedDepictionParams {
   //! if false (default), a DepictException is thrown if the molecule
