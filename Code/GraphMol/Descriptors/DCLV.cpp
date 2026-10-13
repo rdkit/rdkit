@@ -105,8 +105,11 @@ static bool includeAsPolar(const Atom *atm, const ROMol &mol, bool includeSandP,
       if (!includeHs) {
         return false;
       } else {
+        // a hydrogen is polar if it is attached to a polar heavy atom; don't
+        // recurse through hydrogens (H-H bonds would recurse forever)
         for (const auto nbr : mol.atomNeighbors(atm)) {
-          if (includeAsPolar(nbr, mol, includeSandP, includeHs)) {
+          if (nbr->getAtomicNum() != 1 &&
+              includeAsPolar(nbr, mol, includeSandP, false)) {
             return true;
           }
         }
