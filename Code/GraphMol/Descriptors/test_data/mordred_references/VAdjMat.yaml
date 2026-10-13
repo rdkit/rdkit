@@ -1,0 +1,26 @@
+# moe-2014.09
+- names: VAdjMat
+  digit: 6
+  results:
+    Hexane: 3.321928
+    Benzene: 3.5849626
+    Caffeine: 4.9068904
+    Cyanidin: 5.523562
+    Lycopene: 6.2854023
+    Epicatechin: 5.523562
+    Limonene: 4.321928
+    Allicin: 4
+    Glutathione: 5.2479277
+    Digoxin: 6.9541965
+    Capsaicin: 5.4594316
+    EllagicAcid: 5.643856
+    Astaxanthin: 6.4918532
+    DMSO: 2.5849626
+    DiethylThioketone: 3.321928
+    VinylsulfonicAcid: 3.321928
+    Thiophene: 3.321928
+    Triethoxyphosphine: 4.1699252
+    MethylphosphonicAcid: 3
+    MethylCyclopropane: 3
+    Acetonitrile: 2
+    Histidine: 4.4594316

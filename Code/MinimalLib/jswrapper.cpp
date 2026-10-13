@@ -21,6 +21,9 @@
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/ChemTransforms/MolFragmenterJSONParser.h>
 #endif
+#ifdef RDK_BUILD_OSMORDRED_SUPPORT
+#include <GraphMol/Descriptors/Osmordred.h>
+#endif
 using namespace RDKit;
 
 namespace {
@@ -337,6 +340,27 @@ emscripten::val get_maccs_fp_as_uint8array(const JSMolBase &self) {
   return binary_string_to_uint8array(fp);
 }
 
+#ifdef RDK_BUILD_OSMORDRED_SUPPORT
+emscripten::val get_osmordred(const JSMolBase &self) {
+  const auto vec = Descriptors::Osmordred::calcOsmordred(self.get());
+  auto res = emscripten::val::global("Float64Array").new_(vec.size());
+  if (!vec.empty()) {
+    emscripten::val view(emscripten::typed_memory_view(vec.size(), vec.data()));
+    res.call<void>("set", view);
+  }
+  return res;
+}
+
+emscripten::val get_osmordred_names() {
+  auto res = emscripten::val::array();
+  for (const auto &name :
+       Descriptors::Osmordred::getOsmordredDescriptorNames()) {
+    res.call<void>("push", name);
+  }
+  return res;
+}
+#endif
+
 emscripten::val get_frags_helper(const JSMolBase &self,
                                  const std::string &details) {
   auto res = self.get_frags(details);
@@ -630,6 +654,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<val(const JSMolBase &, const std::string &)>(
                     get_atom_pair_fp_as_uint8array))
       .function("get_maccs_fp_as_uint8array", &get_maccs_fp_as_uint8array)
+#ifdef RDK_BUILD_OSMORDRED_SUPPORT
+      .function("get_osmordred", &get_osmordred)
+#endif
       .function("get_frags(details)",
                 select_overload<val(const JSMolBase &, const std::string &)>(
                     get_frags_helper),
@@ -872,6 +899,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("clear_buffer", &JSLog::clear_buffer);
 
   function("version", &version);
+#ifdef RDK_BUILD_OSMORDRED_SUPPORT
+  function("get_osmordred_names", &get_osmordred_names);
+#endif
   function("prefer_coordgen(prefer)", &prefer_coordgen);
   function("use_legacy_stereo_perception(value)", &use_legacy_stereo_perception);
   function("allow_non_tetrahedral_chirality(value)", &allow_non_tetrahedral_chirality);

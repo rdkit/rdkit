@@ -1,0 +1,46 @@
+# e-dragon: TPSA(NO)
+- names: TopoPSA(NO)
+  digit: 7
+  results:
+    Hexane: 0
+    Benzene: 0
+    Caffeine: 61.82
+    Cyanidin: 112.45
+    Lycopene: 0
+    Epicatechin: 110.38
+    Limonene: 0
+    Allicin: 17.07
+    Glutathione: 158.82
+    Digoxin: 203.06
+    Capsaicin: 58.56
+    EllagicAcid: 141.34
+    Astaxanthin: 74.6
+    DMSO: 17.07
+    DiethylThioketone: 0
+    VinylsulfonicAcid: 54.37
+    Thiophene: 0
+    Triethoxyphosphine: 27.69
+    MethylphosphonicAcid: 57.53
+
+- names: TopoPSA
+  digit: 7
+  results:
+    Hexane: 0
+    Benzene: 0
+    Caffeine: 61.82
+    Cyanidin: 112.45
+    Lycopene: 0
+    Epicatechin: 110.38
+    Limonene: 0
+    Allicin: 61.58
+    Glutathione: 197.62
+    Digoxin: 203.06
+    Capsaicin: 58.56
+    EllagicAcid: 141.34
+    Astaxanthin: 74.6
+    DMSO: 36.28
+    DiethylThioketone: 32.09
+    VinylsulfonicAcid: 62.75
+    Thiophene: 28.24
+    Triethoxyphosphine: 41.28
+    MethylphosphonicAcid: 67.34

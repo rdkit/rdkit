@@ -1,0 +1,16 @@
+- names: VMcGowan
+  digit: 7
+  results:
+    Hexane: 95.4
+    Benzene: 71.64
+    Caffeine: 136.32
+    # Cyanidin
+    Lycopene: 518.56
+    Epicatechin: 199.05
+    Limonene: 132.3
+    Allicin: 125.37
+    Glutathione: 216.07
+    Digoxin: 575.25
+    Capsaicin: 259.71
+    EllagicAcid: 177.24
+    Astaxanthin: 520.32

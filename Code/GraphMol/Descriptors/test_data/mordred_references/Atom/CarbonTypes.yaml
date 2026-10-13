@@ -1,0 +1,34 @@
+# PaDEL-descriptor
+- names: [C1SP1, C2SP1, C1SP2, C2SP2, C3SP2, C1SP3, C2SP3, C3SP3, C4SP3]
+  results:
+    Hexane: [0, 0, 0, 0, 0, 2, 4, 0, 0]
+    Benzene: [0, 0, 0, 6, 0, 0, 0, 0, 0]
+    Caffeine: [0, 0, 2, 1, 0, 0, 0, 0, 0]
+    # Cyanidin
+    Lycopene: [0, 0, 0, 18, 8, 10, 4, 0, 0]
+    Epicatechin: [0, 0, 0, 10, 2, 0, 3, 0, 0]
+    Limonene: [0, 0, 1, 1, 2, 2, 3, 1, 0]
+    Allicin: [0, 0, 2, 2, 0, 2, 0, 0, 0]
+    Glutathione: [0, 0, 4, 0, 0, 2, 4, 0, 0]
+    Digoxin: [0, 0, 1, 1, 1, 9, 22, 5, 2]
+    Capsaicin: [0, 0, 1, 7, 1, 3, 4, 1, 0]
+    EllagicAcid: [0, 0, 2, 8, 4, 0, 0, 0, 0]
+    Astaxanthin: [0, 0, 0, 16, 8, 10, 4, 0, 2]
+
+# PaDEL-descriptor
+- names: HybRatio
+  digit: 7
+  results:
+    Hexane: 1
+    Benzene: 0
+    Caffeine: 0.375
+    # Cyanidin
+    Lycopene: 0.35
+    Epicatechin: 0.2
+    Limonene: 0.6
+    Allicin: 0.333333333
+    Glutathione: 0.6
+    Digoxin: 0.926829268
+    Capsaicin: 0.5
+    EllagicAcid: 0
+    Astaxanthin: 0.4

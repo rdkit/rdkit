@@ -1,0 +1,16 @@
+- names: fMF
+  digit: 7
+  results:
+    Hexane: 0
+    Benzene: 0.5
+    Caffeine: 0.375
+    # Cyanidin
+    Lycopene: 0
+    Epicatechin: 0.457142857
+    Limonene: 0.230769231
+    Allicin: 0
+    Glutathione: 0
+    Digoxin: 0.361344538
+    Capsaicin: 0.12244898
+    EllagicAcid: 0.571428571
+    Astaxanthin: 0.3125
