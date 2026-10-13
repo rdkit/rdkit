@@ -1003,12 +1003,6 @@ Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
   return mol->getAtomWithIdx(idx);
 }
 
-enum class RangeQueryType : char {
-  EQUAL,
-  LESS,
-  GREATER,
-  RANGE
-};
 void finalizeAtomRingSizeQuery(Queries::Query<int, Atom const *, true> *query,
                                RangeQueryType qtype) {
   switch (qtype) {
@@ -1048,18 +1042,7 @@ void finalizeAtomRingSizeQuery(Queries::Query<int, Atom const *, true> *query,
 void finalizeQueryFromDescription(
     Queries::Query<int, Atom const *, true> *query, Atom const *) {
   std::string descr = query->getDescription();
-
-  RangeQueryType qtype = RangeQueryType::EQUAL;
-  if (boost::starts_with(descr, "range_")) {
-    descr = descr.substr(6);
-    qtype = RangeQueryType::RANGE;
-  } else if (boost::starts_with(descr, "less_")) {
-    descr = descr.substr(5);
-    qtype = RangeQueryType::LESS;
-  } else if (boost::starts_with(descr, "greater_")) {
-    descr = descr.substr(8);
-    qtype = RangeQueryType::GREATER;
-  }
+  RangeQueryType qtype = parseRangeQueryType(descr);
 
   if (descr == "AtomRingBondCount") {
     query->setDataFunc(queryAtomRingBondCount);
@@ -1140,13 +1123,7 @@ void finalizeQueryFromDescription(
 void finalizeQueryFromDescription(
     Queries::Query<int, Bond const *, true> *query, Bond const *) {
   std::string descr = query->getDescription();
-  if (boost::starts_with(descr, "range_")) {
-    descr = descr.substr(6);
-  } else if (boost::starts_with(descr, "less_")) {
-    descr = descr.substr(5);
-  } else if (boost::starts_with(descr, "greater_")) {
-    descr = descr.substr(8);
-  }
+  parseRangeQueryType(descr);
   Queries::Query<int, Bond const *, true> *tmpQuery;
   if (descr == "BondRingSize") {
     tmpQuery = makeBondInRingOfSizeQuery(

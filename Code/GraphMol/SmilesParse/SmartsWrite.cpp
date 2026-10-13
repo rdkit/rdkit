@@ -111,23 +111,7 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
 
   std::string descrip = query->getDescription();
   bool hasVal = false;
-  enum class Modifiers : std::uint8_t {
-    NONE,
-    RANGE,
-    LESS,
-    GREATER
-  };
-  Modifiers mods = Modifiers::NONE;
-  if (boost::starts_with(descrip, "range_")) {
-    mods = Modifiers::RANGE;
-    descrip = descrip.substr(6);
-  } else if (boost::starts_with(descrip, "less_")) {
-    mods = Modifiers::LESS;
-    descrip = descrip.substr(5);
-  } else if (boost::starts_with(descrip, "greater_")) {
-    mods = Modifiers::GREATER;
-    descrip = descrip.substr(8);
-  }
+  QueryOps::RangeQueryType mods = QueryOps::parseRangeQueryType(descrip);
   std::stringstream res;
   if (descrip == "AtomImplicitHCount") {
     res << "h";
@@ -187,7 +171,7 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     needParen = true;
   } else if (descrip == "AtomInNRings") {
     res << "R";
-    if (mods == Modifiers::NONE && equery && equery->getVal() >= 0) {
+    if (mods == QueryOps::RangeQueryType::EQUAL && equery && equery->getVal() >= 0) {
       hasVal = true;
     }
     needParen = true;
@@ -213,7 +197,7 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     } else {
       res << "+";
     }
-    if (mods == Modifiers::NONE && abs(val) != 1) {
+    if (mods == QueryOps::RangeQueryType::EQUAL && abs(val) != 1) {
       res << abs(val);
     }
     needParen = true;
@@ -224,7 +208,7 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     } else {
       res << "-";
     }
-    if (mods == Modifiers::NONE && abs(val) != 1) {
+    if (mods == QueryOps::RangeQueryType::EQUAL && abs(val) != 1) {
       res << abs(val);
     }
     needParen = true;
@@ -292,20 +276,19 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
     res << "*";
   }
 
-  if (mods != Modifiers::NONE) {
+  if (mods != QueryOps::RangeQueryType::EQUAL) {
     res << "{";
-    const ATOM_RANGE_QUERY *rquery = nullptr;
     switch (mods) {
-      case Modifiers::LESS:
+      case QueryOps::RangeQueryType::LESS:
         res << equery->getVal() << "-";
         break;
-      case Modifiers::RANGE:
-        rquery = dynamic_cast<const ATOM_RANGE_QUERY *>(query);
+      case QueryOps::RangeQueryType::RANGE: {
+        const auto *rquery = dynamic_cast<const ATOM_RANGE_QUERY *>(query);
         CHECK_INVARIANT(rquery, "query could not be converted to range query");
-        res << ((const ATOM_RANGE_QUERY *)query)->getLower() << "-"
-            << ((const ATOM_RANGE_QUERY *)query)->getUpper();
+        res << rquery->getLower() << "-" << rquery->getUpper();
         break;
-      case Modifiers::GREATER:
+      }
+      case QueryOps::RangeQueryType::GREATER:
         res << "-" << equery->getVal();
         break;
       default:
@@ -421,23 +404,7 @@ std::string getBondSmartsSimple(const Bond *bond,
   auto *equery = dynamic_cast<const BOND_EQUALS_QUERY *>(bquery);
 
   std::string descrip = bquery->getDescription();
-  enum class BondMods : std::uint8_t {
-    NONE,
-    RANGE,
-    LESS,
-    GREATER
-  };
-  BondMods bmods = BondMods::NONE;
-  if (boost::starts_with(descrip, "range_")) {
-    bmods = BondMods::RANGE;
-    descrip = descrip.substr(6);
-  } else if (boost::starts_with(descrip, "less_")) {
-    bmods = BondMods::LESS;
-    descrip = descrip.substr(5);
-  } else if (boost::starts_with(descrip, "greater_")) {
-    bmods = BondMods::GREATER;
-    descrip = descrip.substr(8);
-  }
+  QueryOps::RangeQueryType bmods = QueryOps::parseRangeQueryType(descrip);
   std::string res = "";
   if (descrip == "BondNull") {
     res += "~";
@@ -445,17 +412,17 @@ std::string getBondSmartsSimple(const Bond *bond,
     res += "@";
   } else if (descrip == "BondInNRings") {
     res += "@";
-    if (bmods == BondMods::NONE) {
+    if (bmods == QueryOps::RangeQueryType::EQUAL) {
       if (equery && equery->getVal() >= 0) {
         res += "{" + std::to_string(equery->getVal()) + "}";
       }
     } else {
       res += "{";
       switch (bmods) {
-        case BondMods::LESS:
+        case QueryOps::RangeQueryType::LESS:
           res += std::to_string(equery->getVal()) + "-";
           break;
-        case BondMods::RANGE: {
+        case QueryOps::RangeQueryType::RANGE: {
           const auto *rquery =
               dynamic_cast<const BOND_RANGE_QUERY *>(bquery);
           CHECK_INVARIANT(rquery, "query could not be converted to range query");
@@ -463,7 +430,7 @@ std::string getBondSmartsSimple(const Bond *bond,
                  std::to_string(rquery->getUpper());
           break;
         }
-        case BondMods::GREATER:
+        case QueryOps::RangeQueryType::GREATER:
           res += "-" + std::to_string(equery->getVal());
           break;
         default:

@@ -22,9 +22,10 @@
 #include <Query/Query.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
+#include <algorithm>
 #include <functional>
-
 #include <limits>
+#include <string_view>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
@@ -1226,6 +1227,239 @@ inline bool hasComplexBondTypeQuery(const Bond &bond) {
 }
 
 RDKIT_GRAPHMOL_EXPORT bool isMetal(const Atom &atom);
+
+template <typename EqQuery>
+bool localMatch(EqQuery const *q1, EqQuery const *q2) {
+  if (q1->getNegation() == q2->getNegation()) {
+    return q1->getVal() == q2->getVal();
+  } else {
+    return q1->getVal() != q2->getVal();
+  }
+}
+
+enum class RangeQueryType : char {
+  EQUAL,
+  LESS,
+  GREATER,
+  RANGE
+};
+
+inline int addSafe(int a, int b) {
+  if (b > 0 && a > std::numeric_limits<int>::max() - b)
+    return std::numeric_limits<int>::max();
+  return a + b;
+}
+
+inline int subSafe(int a, int b) {
+  if (b > 0 && a < std::numeric_limits<int>::min() + b)
+    return std::numeric_limits<int>::min();
+  return a - b;
+}
+
+inline std::string stripPrefix(std::string_view s) {
+  if (s.starts_with("range_")) return std::string(s.substr(6));
+  if (s.starts_with("less_")) return std::string(s.substr(5));
+  if (s.starts_with("greater_")) return std::string(s.substr(8));
+  return std::string(s);
+}
+
+inline RangeQueryType parseRangeQueryType(std::string &descr) {
+  if (descr.starts_with("range_")) {
+    descr = descr.substr(6);
+    return RangeQueryType::RANGE;
+  } else if (descr.starts_with("less_")) {
+    descr = descr.substr(5);
+    return RangeQueryType::LESS;
+  } else if (descr.starts_with("greater_")) {
+    descr = descr.substr(8);
+    return RangeQueryType::GREATER;
+  }
+  return RangeQueryType::EQUAL;
+}
+
+inline bool checkIntervalSubset(int lo1, int hi1, bool neg1, int lo2, int hi2,
+                                bool neg2, bool hasI1, bool hasI2) {
+  if (hasI1 && hasI2) {
+    if (neg1 == neg2) {
+      if (!neg1) {
+        return lo2 <= lo1 && hi1 <= hi2;
+      } else {
+        return lo1 <= lo2 && hi2 <= hi1;
+      }
+    } else {
+      if (neg1) {
+        bool resLeft = true, resRight = true;
+        if (lo1 > std::numeric_limits<int>::min()) {
+          resLeft = lo2 <= std::numeric_limits<int>::min() && lo1 - 1 <= hi2;
+        }
+        if (hi1 < std::numeric_limits<int>::max()) {
+          resRight = lo2 <= hi1 + 1 && std::numeric_limits<int>::max() <= hi2;
+        }
+        return resLeft && resRight;
+      } else {
+        return hi1 < lo2 || lo1 > hi2;
+      }
+    }
+  } else {
+    if (!hasI1 && !hasI2) {
+      if (neg1 && !neg2) {
+        return false;
+      }
+      return true;
+    } else if (!hasI1) {
+      return !neg1;
+    } else {
+      return neg2;
+    }
+  }
+}
+
+template <typename Traits>
+bool getInterval(typename Traits::BaseQuery const *q, int &lo, int &hi) {
+  auto *r = dynamic_cast<const typename Traits::RangeQuery *>(q);
+  if (r) {
+    long long tol = r->getTol();
+    auto ends = r->getEndsOpen();
+    long long l = (long long)r->getLower() + (ends.first ? tol + 1 : -tol);
+    long long h = (long long)r->getUpper() + (ends.second ? -tol - 1 : tol);
+    if (l > h || l > (long long)std::numeric_limits<int>::max() ||
+        h < (long long)std::numeric_limits<int>::min())
+      return false;
+    lo = (int)std::max(l, (long long)std::numeric_limits<int>::min());
+    hi = (int)std::min(h, (long long)std::numeric_limits<int>::max());
+    return true;
+  }
+  auto *le = dynamic_cast<const typename Traits::LeQuery *>(q);
+  if (le) {
+    int tol = le->getTol();
+    lo = subSafe(le->getVal(), tol);
+    hi = std::numeric_limits<int>::max();
+    return true;
+  }
+  auto *ge = dynamic_cast<const typename Traits::GeQuery *>(q);
+  if (ge) {
+    int tol = ge->getTol();
+    lo = std::numeric_limits<int>::min();
+    hi = addSafe(ge->getVal(), tol);
+    return true;
+  }
+  auto *gt = dynamic_cast<const typename Traits::GtQuery *>(q);
+  if (gt) {
+    int tol = gt->getTol();
+    if ((long long)gt->getVal() - tol <=
+        (long long)std::numeric_limits<int>::min())
+      return false;
+    lo = std::numeric_limits<int>::min();
+    hi = subSafe(gt->getVal(), tol) - 1;
+    return true;
+  }
+  auto *lt = dynamic_cast<const typename Traits::LtQuery *>(q);
+  if (lt) {
+    int tol = lt->getTol();
+    if ((long long)lt->getVal() + tol >=
+        (long long)std::numeric_limits<int>::max())
+      return false;
+    lo = addSafe(lt->getVal(), tol) + 1;
+    hi = std::numeric_limits<int>::max();
+    return true;
+  }
+  auto *e = dynamic_cast<const typename Traits::EqQuery *>(q);
+  if (e) {
+    int tol = e->getTol();
+    lo = subSafe(e->getVal(), tol);
+    hi = addSafe(e->getVal(), tol);
+    return true;
+  }
+  return false;
+}
+
+template <typename Traits>
+bool queriesMatch(typename Traits::BaseQuery const *q1,
+                  typename Traits::BaseQuery const *q2) {
+  PRECONDITION(q1, "no q1");
+  PRECONDITION(q2, "no q2");
+
+  bool res = false;
+  std::string d1 = q1->getDescription();
+  std::string d2 = q2->getDescription();
+  if (d1 == Traits::NullDesc || d2 == Traits::NullDesc) {
+    res = true;
+  } else if (d1 == Traits::OrDesc) {
+    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
+         ++iter1) {
+      if (d2 == Traits::OrDesc) {
+        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+             ++iter2) {
+          if (queriesMatch<Traits>(iter1->get(), iter2->get())) {
+            res = true;
+            break;
+          }
+        }
+      } else {
+        if (queriesMatch<Traits>(iter1->get(), q2)) {
+          res = true;
+        }
+      }
+      if (res) {
+        break;
+      }
+    }
+  } else if (d1 == Traits::AndDesc) {
+    res = true;
+    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
+         ++iter1) {
+      bool matched = false;
+      if (d2 == Traits::AndDesc) {
+        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+             ++iter2) {
+          if (queriesMatch<Traits>(iter1->get(), iter2->get())) {
+            matched = true;
+            break;
+          }
+        }
+      } else {
+        matched = queriesMatch<Traits>(iter1->get(), q2);
+      }
+      if (!matched) {
+        res = false;
+        break;
+      }
+    }
+  } else if (d2 == Traits::OrDesc) {
+    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+         ++iter2) {
+      if (queriesMatch<Traits>(q1, iter2->get())) {
+        res = true;
+        break;
+      }
+    }
+  } else if (d2 == Traits::AndDesc) {
+    res = true;
+    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+         ++iter2) {
+      if (!queriesMatch<Traits>(q1, iter2->get())) {
+        res = false;
+        break;
+      }
+    }
+  } else if (d1 == d2 && Traits::isEqualityQuery(d1)) {
+    res = localMatch<typename Traits::EqQuery>(
+        dynamic_cast<typename Traits::EqQuery const *>(q1),
+        dynamic_cast<typename Traits::EqQuery const *>(q2));
+  } else {
+    std::string bd1 = stripPrefix(d1);
+    std::string bd2 = stripPrefix(d2);
+    if (bd1 == bd2 && Traits::isEqualityQuery(bd1)) {
+      int lo1 = 0, hi1 = 0, lo2 = 0, hi2 = 0;
+      bool hasI1 = getInterval<Traits>(q1, lo1, hi1);
+      bool hasI2 = getInterval<Traits>(q2, lo2, hi2);
+      res = checkIntervalSubset(lo1, hi1, q1->getNegation(), lo2, hi2,
+                                q2->getNegation(), hasI1, hasI2);
+    }
+  }
+  return res;
+}
+
 }  // namespace QueryOps
 }  // namespace RDKit
 #endif

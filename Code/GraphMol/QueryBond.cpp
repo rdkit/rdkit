@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/QueryBond.h>
+#include <GraphMol/QueryOps.h>
 #include <Query/NullQueryAlgebra.h>
-#include <boost/algorithm/string/predicate.hpp>
 #include <limits>
 
 namespace RDKit {
@@ -107,233 +107,25 @@ void QueryBond::expandQuery(QUERYBOND_QUERY *what,
 }
 
 namespace {
-bool localMatch(BOND_EQUALS_QUERY const *q1, BOND_EQUALS_QUERY const *q2) {
-  if (q1->getNegation() == q2->getNegation()) {
-    return q1->getVal() == q2->getVal();
-  } else {
-    return q1->getVal() != q2->getVal();
+struct BondQueryTraits {
+  using BaseQuery = QueryBond::QUERYBOND_QUERY;
+  using RangeQuery = BOND_RANGE_QUERY;
+  using LeQuery = BOND_LESSEQUAL_QUERY;
+  using GeQuery = BOND_GREATEREQUAL_QUERY;
+  using GtQuery = BOND_GREATER_QUERY;
+  using LtQuery = BOND_LESS_QUERY;
+  using EqQuery = BOND_EQUALS_QUERY;
+  static constexpr std::string_view NullDesc = "BondNull";
+  static constexpr std::string_view OrDesc = "BondOr";
+  static constexpr std::string_view AndDesc = "BondAnd";
+  static bool isEqualityQuery(std::string_view s) {
+    static const std::string queries[] = {
+        "BondRingSize", "BondMinRingSize", "BondOrder",
+        "BondDir",      "BondInRing",      "BondInNRings"};
+    return std::find(std::begin(queries), std::end(queries), s) !=
+           std::end(queries);
   }
-}
-
-// Extract interval [lo, hi] from a bond query. Returns false if the query
-// type doesn't support interval extraction. GreaterEqualQuery(N) means
-// N >= bond → [MIN,N]. LessEqualQuery(N) means N <= bond → [N,MAX].
-bool getBondInterval(const QueryBond::QUERYBOND_QUERY *q, int &lo, int &hi) {
-  auto addSafe = [](int a, int b) {
-    if (b > 0 && a > std::numeric_limits<int>::max() - b)
-      return std::numeric_limits<int>::max();
-    return a + b;
-  };
-  auto subSafe = [](int a, int b) {
-    if (b > 0 && a < std::numeric_limits<int>::min() + b)
-      return std::numeric_limits<int>::min();
-    return a - b;
-  };
-
-  auto *r = dynamic_cast<const BOND_RANGE_QUERY *>(q);
-  if (r) {
-    long long tol = r->getTol();
-    auto ends = r->getEndsOpen();
-    long long l = (long long)r->getLower() + (ends.first ? tol + 1 : -tol);
-    long long h = (long long)r->getUpper() + (ends.second ? -tol - 1 : tol);
-    if (l > h || l > (long long)std::numeric_limits<int>::max() ||
-        h < (long long)std::numeric_limits<int>::min())
-      return false;
-    lo = (int)std::max(l, (long long)std::numeric_limits<int>::min());
-    hi = (int)std::min(h, (long long)std::numeric_limits<int>::max());
-    return true;
-  }
-  auto *le = dynamic_cast<const BOND_LESSEQUAL_QUERY *>(q);
-  if (le) {
-    int tol = le->getTol();
-    lo = subSafe(le->getVal(), tol);
-    hi = std::numeric_limits<int>::max();
-    return true;
-  }
-  auto *ge = dynamic_cast<const BOND_GREATEREQUAL_QUERY *>(q);
-  if (ge) {
-    int tol = ge->getTol();
-    lo = std::numeric_limits<int>::min();
-    hi = addSafe(ge->getVal(), tol);
-    return true;
-  }
-  auto *gt = dynamic_cast<const BOND_GREATER_QUERY *>(q);
-  if (gt) {
-    int tol = gt->getTol();
-    if ((long long)gt->getVal() - tol <= (long long)std::numeric_limits<int>::min()) return false;
-    lo = std::numeric_limits<int>::min();
-    hi = subSafe(gt->getVal(), tol) - 1;
-    return true;
-  }
-  auto *lt = dynamic_cast<const BOND_LESS_QUERY *>(q);
-  if (lt) {
-    int tol = lt->getTol();
-    if ((long long)lt->getVal() + tol >= (long long)std::numeric_limits<int>::max()) return false;
-    lo = addSafe(lt->getVal(), tol) + 1;
-    hi = std::numeric_limits<int>::max();
-    return true;
-  }
-  auto *e = dynamic_cast<const BOND_EQUALS_QUERY *>(q);
-  if (e) {
-    int tol = e->getTol();
-    lo = subSafe(e->getVal(), tol);
-    hi = addSafe(e->getVal(), tol);
-    return true;
-  }
-  return false;
-}
-
-bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
-                  QueryBond::QUERYBOND_QUERY const *q2) {
-  PRECONDITION(q1, "no q1");
-  PRECONDITION(q2, "no q2");
-
-  static const unsigned int nQueries = 6;
-  static std::string equalityQueries[nQueries] = {
-      "BondRingSize", "BondMinRingSize", "BondOrder",
-      "BondDir",      "BondInRing",      "BondInNRings"};
-
-  bool res = false;
-  std::string d1 = q1->getDescription();
-  std::string d2 = q2->getDescription();
-  if (d1 == "BondNull" || d2 == "BondNull") {
-    res = true;
-  } else if (d1 == "BondOr") {
-    // FIX: handle negation on BondOr and BondAnd
-    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
-         ++iter1) {
-      if (d2 == "BondOr") {
-        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
-             ++iter2) {
-          if (queriesMatch(iter1->get(), iter2->get())) {
-            res = true;
-            break;
-          }
-        }
-      } else {
-        if (queriesMatch(iter1->get(), q2)) {
-          res = true;
-        }
-      }
-      if (res) {
-        break;
-      }
-    }
-  } else if (d1 == "BondAnd") {
-    res = true;
-    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
-         ++iter1) {
-      bool matched = false;
-      if (d2 == "BondAnd") {
-        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
-             ++iter2) {
-          if (queriesMatch(iter1->get(), iter2->get())) {
-            matched = true;
-            break;
-          }
-        }
-      } else {
-        matched = queriesMatch(iter1->get(), q2);
-      }
-      if (!matched) {
-        res = false;
-        break;
-      }
-    }
-    // FIX : handle BondXOr
-  } else if (d2 == "BondOr") {
-    // FIX: handle negation on BondOr and BondAnd
-    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
-         ++iter2) {
-      if (queriesMatch(q1, iter2->get())) {
-        res = true;
-        break;
-      }
-    }
-  } else if (d2 == "BondAnd") {
-    res = true;
-    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
-         ++iter2) {
-      if (queriesMatch(q1, iter2->get())) {
-        res = false;
-        break;
-      }
-    }
-  } else {
-    // Strip prefix to get base description
-    auto stripPrefix = [](const std::string &s) -> std::string {
-      if (boost::starts_with(s, "range_")) return s.substr(6);
-      if (boost::starts_with(s, "less_")) return s.substr(5);
-      if (boost::starts_with(s, "greater_")) return s.substr(8);
-      return s;
-    };
-    std::string bd1 = stripPrefix(d1);
-    std::string bd2 = stripPrefix(d2);
-    if (bd1 == bd2 && std::find(&equalityQueries[0], &equalityQueries[nQueries],
-                                bd1) != &equalityQueries[nQueries]) {
-      int lo1 = 0, hi1 = 0, lo2 = 0, hi2 = 0;
-      bool hasI1 = getBondInterval(q1, lo1, hi1);
-      bool hasI2 = getBondInterval(q2, lo2, hi2);
-      if (hasI1 && hasI2) {
-        if (q1->getNegation() == q2->getNegation()) {
-          if (!q1->getNegation()) {
-            // Both positive: pattern interval must be subset of target interval
-            res = lo2 <= lo1 && hi1 <= hi2;
-          } else {
-            // Both negated: accepted sets are complements; pattern accepted
-            // set ⊆ target accepted set iff target excluded range ⊆ pattern
-            // excluded range
-            res = lo1 <= lo2 && hi2 <= hi1;
-          }
-        } else {
-          if (q1->getNegation()) {
-            // Pattern negated, target positive: complement of pattern's
-            // excluded range must fit inside target. Complement has up to
-            // two pieces: [MIN, lo1-1] and [hi1+1, MAX].
-            {
-              bool resLeft = true, resRight = true;
-              if (lo1 > std::numeric_limits<int>::min()) {
-                resLeft =
-                    lo2 <= std::numeric_limits<int>::min() && lo1 - 1 <= hi2;
-              }
-              if (hi1 < std::numeric_limits<int>::max()) {
-                resRight =
-                    lo2 <= hi1 + 1 && std::numeric_limits<int>::max() <= hi2;
-              }
-              res = resLeft && resRight;
-            }
-          } else {
-            // Pattern positive, target negated: pattern interval must lie
-            // entirely outside target's excluded range
-            res = hi1 < lo2 || lo1 > hi2;
-          }
-        }
-      } else {
-        // One or both queries have empty interval (e.g. GreaterQuery(INT_MIN)
-        // or LessQuery(INT_MAX)). Empty interval means the query matches no
-        // values; its negation matches all values.
-        if (!hasI1 && !hasI2) {
-          // Both empty: pattern accepted set ⊆ target accepted set
-          // Empty ⊆ empty → true; All ⊆ All → true; Empty ⊆ All → true;
-          // All ⊆ Empty → false
-          if (q1->getNegation() && !q2->getNegation()) {
-            res = false;
-          } else {
-            res = true;
-          }
-        } else if (!hasI1) {
-          // Pattern is NONE or ALL; target is a proper subset → only NONE
-          // matches.
-          res = !q1->getNegation();
-        } else {
-          // Target is NONE or ALL; pattern is nonempty → only ALL matches.
-          res = q2->getNegation();
-        }
-      }
-    }
-  }
-  return res;
-}
+};
 }  // namespace
 
 bool QueryBond::Match(Bond const *what) const {
@@ -347,7 +139,7 @@ bool QueryBond::QueryMatch(QueryBond const *what) const {
   if (!what->hasQuery()) {
     return dp_query->Match(what);
   } else {
-    return queriesMatch(dp_query, what->getQuery());
+    return QueryOps::queriesMatch<BondQueryTraits>(dp_query, what->getQuery());
   }
 }
 
