@@ -451,13 +451,14 @@ void computeInitialCoords(RDKit::ROMol &mol,
   // deal with any cis/trans systems
   DepictorLocal::embedCisTransSystems(mol, efrags);
 
-  // Precompute branch depths for layout prioritization (if enabled)
+  // The map is shared by all fragments during initial embedding. It is kept in
+  // this scope so each fragment's non-owning pointer remains valid until
+  // computeInitialCoords() has finished.
   BRANCH_DEPTH_MAP branchDepths;
   const BRANCH_DEPTH_MAP *branchDepthsPtr = nullptr;
   if (useBranchDepthPrioritization) {
     branchDepths = computeBranchDepths(mol);
     branchDepthsPtr = &branchDepths;
-    // Pass branch depths to all existing fragments
     for (auto &efrag : efrags) {
       efrag.setBranchDepths(branchDepthsPtr);
     }
@@ -618,9 +619,9 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
                        params.useBranchDepthPrioritization);
 
 #if 1
-  // perform random sampling here to improve the density
-  // BUT: disable when branch depth prioritization is enabled, as random flipping
-  // would break the carefully constructed zigzag chains
+  // Random sampling improves density, but its flips can undo the branch order
+  // selected above. Branch-depth mode therefore keeps its deterministic
+  // initial zig-zag instead of running the sampler.
   for (auto &eri : efrags) {
     // either sample the 2D space by randomly flipping rotatable
     // bonds in the structure or flip only bonds along the shortest

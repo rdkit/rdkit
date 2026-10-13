@@ -369,8 +369,10 @@ BOOST_PYTHON_MODULE(rdDepictor) {
                   ring systems\n\
      usePathAngleExpansion - use path-angle expansion to resolve atom clashes\n\
                   and bond crossings\n\n\
-     useBranchDepthPrioritization - use branch depth scoring to prioritize\n\
-                  longer chains over shorter branches in layout (default=false)\n\n\
+     useBranchDepthPrioritization - prefer deeper acyclic branches while\n\
+                  building the initial zig-zag layout. This tends to keep the\n\
+                  longest path visually continuous. Random flip sampling is\n\
+                  skipped when enabled. (default=false)\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(
@@ -412,8 +414,10 @@ BOOST_PYTHON_MODULE(rdDepictor) {
      bondLength - change the default bond length for depiction \n\
      forceRDKit - use RDKit to generate coordinates even if \n\
                   preferCoordGen is set to true\n\
-     useBranchDepthPrioritization - use branch depth scoring to prioritize\n\
-                  longer chains over shorter branches in layout (default=false)\n\n\
+     useBranchDepthPrioritization - prefer deeper acyclic branches while\n\
+                  building the initial zig-zag layout. nFlipsPerSample and\n\
+                  nSample are ignored when enabled so random flips do not undo\n\
+                  that ordering. (default=false)\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(

@@ -136,14 +136,15 @@ int findPlacedNbr(unsigned int aid, const RDKit::INT_VECT &nbrs,
   return ref;
 }
 
-unsigned int countBranchSize(unsigned int aid, unsigned int nbr,
+unsigned int countBranchSize(unsigned int centerAtomIdx,
+                             unsigned int branchAtomIdx,
                              const RDKit::ROMol &mol) {
-  // Count every atom reachable through nbr without crossing back through aid.
-  // This deliberately includes rings because degree-4 ordering is about visual
-  // footprint, not just acyclic chain depth.
+  // Count every atom reachable through the branch without crossing back
+  // through the center. This deliberately includes rings because degree-4
+  // ordering is about visual footprint, not just acyclic chain depth.
   boost::dynamic_bitset<> visited(mol.getNumAtoms());
-  visited.set(aid);
-  RDKit::INT_VECT stack{static_cast<int>(nbr)};
+  visited.set(centerAtomIdx);
+  RDKit::INT_VECT stack{static_cast<int>(branchAtomIdx)};
   unsigned int branchSize = 0;
 
   while (!stack.empty()) {

@@ -52,8 +52,9 @@ typedef std::priority_queue<PAIR_I_I, VECT_PII, gtIIPair> PR_QUEUE;
 typedef std::pair<double, PAIR_I_I> PAIR_D_I_I;
 typedef std::list<PAIR_D_I_I> LIST_PAIR_DII;
 
-//! Branch depth scoring for layout prioritization
+//! Directed edge used to look up the branch reached from a central atom.
 typedef std::pair<unsigned int, unsigned int> ATOM_NBR_PAIR;
+//! Longest acyclic distance reachable through each directed atom-neighbor edge.
 typedef std::map<ATOM_NBR_PAIR, unsigned int> BRANCH_DEPTH_MAP;
 
 //! Some utility functions used in generating 2D coordinates
@@ -149,8 +150,9 @@ RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrder(unsigned int aid,
                                                   const RDKit::INT_VECT &nbrs,
                                                   const RDKit::ROMol &mol);
 
-//! Like setNbrOrder(), but use branch size as the primary ordering criterion
-/// for extended branch prioritization.
+//! Order degree-4 neighbors by the size of the branch reached through each one.
+/// Atom rank remains the stable tie-break. The returned order uses the same
+/// opposite/side slot convention as setNbrOrder().
 RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrderByBranchSize(
     unsigned int aid, const RDKit::INT_VECT &nbrs, const RDKit::ROMol &mol);
 
@@ -204,14 +206,17 @@ RDKIT_DEPICTOR_EXPORT T rankAtomsByRank(const RDKit::ROMol &mol,
                                         const T &commAtms,
                                         bool ascending = true);
 
-//! Compute branch depths for all atom-neighbor pairs
+//! Compute directed acyclic branch depths for every atom-neighbor pair.
 /*!
-  For each atom and each of its neighbors, measures the longest acyclic path
-  reachable in that direction (excluding ring atoms).
+  A score answers: "starting at atomIdx and leaving through neighborIdx, how
+  many non-ring atoms can the longest outward path contain?" The traversal
+  cannot return through atomIdx and terminates at ring atoms. This makes the
+  score useful for choosing the main zig-zag chain during initial embedding
+  without treating an already embedded ring system as part of that chain.
 
   \param mol  molecule of interest
 
-  \return map from (atomIdx, neighborIdx) to branch path depth
+  \return map from the directed pair (atomIdx, neighborIdx) to path depth
 */
 RDKIT_DEPICTOR_EXPORT BRANCH_DEPTH_MAP computeBranchDepths(
     const RDKit::ROMol &mol);

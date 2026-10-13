@@ -92,9 +92,11 @@ struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
                                   //!< generating initial coordinates
   bool usePathAngleExpansion = true;  //!< use path angle expansion for
                                        //!< collision resolution
-  bool useBranchDepthPrioritization = false;  //!< use branch depth scoring to
-                                               //!< prioritize longer chains over
-                                               //!< shorter branches in layout
+  bool useBranchDepthPrioritization = false;
+  //!< Prefer deeper acyclic branches while constructing the initial zig-zag
+  //!< layout. This tends to draw the longest path as a visually continuous
+  //!< chain. Random flip sampling is skipped when enabled because it can undo
+  //!< the selected branch order. Disabled by default for backward compatibility.
 };
 
 //! \brief Generate 2D coordinates (a depiction) for a molecule
@@ -202,8 +204,9 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
   \param forceRDKit - use RDKit to generate coordinates even if
         preferCoordGen is set to true
 
-  \param useBranchDepthPrioritization - use branch depth scoring to prioritize
-        longer chains over shorter branches in the initial layout
+  \param useBranchDepthPrioritization - prefer deeper acyclic branches while
+        constructing the initial zig-zag layout. When true, nFlipsPerSample and
+        nSamples are ignored so random flips do not undo the branch ordering.
 
   \return ID of the conformation added to the molecule containing the
   2D coordinates

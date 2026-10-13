@@ -48,7 +48,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
         ccw(true),
         rotDir(0),
         d_density(-1.0),
-        d_distanceFromStart(0),
+        d_distanceFromSeed(0),
         df_fixed(false) {
     loc = pos;
   }
@@ -69,8 +69,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
     ccw = other.ccw;
     neighs = other.neighs;
     d_density = other.d_density;
-    d_distanceFromStart = other.d_distanceFromStart;
-    d_isBalancedBifurcation = other.d_isBalancedBifurcation;
+    d_distanceFromSeed = other.d_distanceFromSeed;
+    d_isBalancedBranchPoint = other.d_isBalancedBranchPoint;
     df_fixed = other.df_fixed;
     return *this;
   }
@@ -133,11 +133,15 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
   // - initialized to -1.0
   double d_density{-1.0};
 
-  //! distance from the initial embedded atom/ring (for chain detection)
-  unsigned int d_distanceFromStart{0};
+  //! Number of acyclic bonds from the atom or ring that seeded this fragment.
+  /// Used only by branch-depth prioritization to decide whether an unembedded
+  /// branch is long enough to continue the current chain.
+  unsigned int d_distanceFromSeed{0};
 
-  //! true if this atom is at a balanced bifurcation (both neighbors are chain continuations)
-  bool d_isBalancedBifurcation{false};
+  //! Whether two unembedded neighbors both continue beyond the path already
+  /// drawn. Their zig-zag phases are coordinated so the two branches form one
+  /// visually continuous chain through this atom.
+  bool d_isBalancedBranchPoint{false};
 
   //! if set this atom is fixed: further operations on the fragment may not
   //! move it.
@@ -361,11 +365,16 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
                                         double mimicDmatWt = 0.0,
                                         bool permuteDeg4Nodes = false);
 
-  //! Remove collisions in a structure by flipping rotatable bonds and spiro centers
-  //! along the shortest path between two colliding atoms
+  //! Remove collisions by flipping rotatable bonds and spiro centers along the
+  /// shortest path between two colliding atoms. The search is deliberately
+  /// bounded: it stops when no move helps or when repeated density-only moves
+  /// fail to reduce the collision count.
   void removeCollisionsBondAndSpiroFlip();
-  
-  [[deprecated("please use removeCollisionsBondAndSpiroFlip()")]] void removeCollisionsBondFlip() { removeCollisionsBondAndSpiroFlip(); };
+
+  [[deprecated("please use removeCollisionsBondAndSpiroFlip()")]]
+  void removeCollisionsBondFlip() {
+    removeCollisionsBondAndSpiroFlip();
+  }
 
   //! Remove collision by opening angles at the offending atoms
   void removeCollisionsOpenAngles();
@@ -403,23 +412,34 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
  private:
   double totalDensity();
 
-  // Check if subtree starting from atomId (excluding parentId) contains ring atoms
-  bool subtreeHasRing(unsigned int atomId, unsigned int parentId) const;
+  //! Find collisions, stopping once collisionCountLimit has been exceeded.
+  /// A zero limit requests the complete collision list. A nonzero limit may
+  /// return limit + 1 entries: callers use that extra entry to reject a trial
+  /// move without scanning the rest of a crowded structure.
+  std::vector<PAIR_I_I> findCollisions(const double *dmat, bool includeBonds,
+                                       bool includeBondedAtoms,
+                                       unsigned int collisionCountLimit);
+
+  //! Return whether the unembedded subtree reached through atomIdx contains a
+  /// ring. parentIdx prevents immediately walking back toward the branch point.
+  bool subtreeHasRing(unsigned int atomIdx, unsigned int parentIdx) const;
 
   // Helper methods for collision resolution
   bool tryResolvingCollisionWithBondFlip(
-      const std::pair<unsigned int, unsigned int> &cAids,
-      unsigned int ncols,
-      double prevDensity,
+      const std::pair<unsigned int, unsigned int> &collidingAtoms,
+      unsigned int collisionCount,
+      double previousDensity,
       std::map<int, unsigned int> &doneBonds,
+      std::vector<PAIR_I_I> &acceptedCollisions,
       const double *dmat);
 
   bool tryResolvingCollisionWithSpiroFlip(
-      const std::pair<unsigned int, unsigned int> &cAids,
-      unsigned int ncols,
-      double prevDensity,
+      const std::pair<unsigned int, unsigned int> &collidingAtoms,
+      unsigned int collisionCount,
+      double previousDensity,
       std::map<int, unsigned int> &doneSpiros,
       const boost::dynamic_bitset<> &spiroCenters,
+      std::vector<PAIR_I_I> &acceptedCollisions,
       const double *dmat);
 
   // Helper methods for path angle expansion collision resolution
@@ -625,11 +645,14 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   // pointer to the owning molecule
   const RDKit::ROMol *dp_mol = nullptr;
 
-  // optional branch depth map for layout prioritization
+  // Optional, non-owning branch-depth data. computeInitialCoords() owns the map
+  // and keeps it alive for the full lifetime of every fragment that points to
+  // it.
   const BRANCH_DEPTH_MAP *dp_branchDepths = nullptr;
 
  public:
-  //! Set branch depth map for layout prioritization
+  //! Supply directed branch-depth scores used while embedding new neighbors.
+  /// Passing nullptr preserves the historical rank-based layout.
   void setBranchDepths(const BRANCH_DEPTH_MAP *depthMap) {
     dp_branchDepths = depthMap;
   }

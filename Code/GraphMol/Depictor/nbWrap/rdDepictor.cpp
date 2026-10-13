@@ -45,7 +45,8 @@ static unsigned int compute2DCoordsHelper(RDKit::ROMol &mol, bool canonOrient,
                                           int permuteDeg4Nodes, double bondLength,
                                           bool forceRDKit,
                                           bool useRingTemplates,
-                                          bool usePathAngleExpansion) {
+                                          bool usePathAngleExpansion,
+                                          bool useBranchDepthPrioritization) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
   for (auto item : coordMap) {
@@ -69,7 +70,8 @@ static unsigned int compute2DCoordsHelper(RDKit::ROMol &mol, bool canonOrient,
       .permuteDeg4Nodes = static_cast<bool>(permuteDeg4Nodes),
       .forceRDKit = forceRDKit,
       .useRingTemplates = useRingTemplates,
-      .usePathAngleExpansion = usePathAngleExpansion};
+      .usePathAngleExpansion = usePathAngleExpansion,
+      .useBranchDepthPrioritization = useBranchDepthPrioritization};
   unsigned int res = RDDepict::compute2DCoords(mol, params);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
@@ -82,7 +84,7 @@ static unsigned int compute2DCoordsMimicDistmatHelper(
     nb::ndarray<nb::numpy, double, nb::ndim<1>> distMat, bool canonOrient,
     bool clearConfs, double weightDistMat, unsigned int nFlipsPerSample,
     unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes,
-    double bondLength, bool forceRDKit) {
+    double bondLength, bool forceRDKit, bool useBranchDepthPrioritization) {
   unsigned int na = mol.getNumAtoms();
   unsigned int nitems = na * (na - 1) / 2;
 
@@ -102,7 +104,8 @@ static unsigned int compute2DCoordsMimicDistmatHelper(
   }
   unsigned int res = RDDepict::compute2DCoordsMimicDistMat(
       mol, &dmat, canonOrient, clearConfs, weightDistMat, nFlipsPerSample,
-      nSamples, sampleSeed, permuteDeg4Nodes, forceRDKit);
+      nSamples, sampleSeed, permuteDeg4Nodes, forceRDKit,
+      useBranchDepthPrioritization);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
   }
@@ -327,6 +330,7 @@ adjustMolBlockWedging is True)DOC")
       "sampleSeed"_a = 0, "permuteDeg4Nodes"_a = 0, "bondLength"_a = -1.0,
       "forceRDKit"_a = false, "useRingTemplates"_a = false,
       "usePathAngleExpansion"_a = true,
+      "useBranchDepthPrioritization"_a = false,
       R"DOC(Compute 2D coordinates for a molecule.
   The resulting coordinates are stored on each atom of the molecule
 
@@ -352,6 +356,10 @@ adjustMolBlockWedging is True)DOC")
                   ring systems
      usePathAngleExpansion - use path-angle expansion to resolve atom clashes
                   and bond crossings
+     useBranchDepthPrioritization - prefer deeper acyclic branches while
+                  building the initial zig-zag layout. This tends to keep the
+                  longest path visually continuous. Random flip sampling is
+                  skipped when enabled. (default=False)
 
   RETURNS:
 
@@ -362,7 +370,7 @@ adjustMolBlockWedging is True)DOC")
       "mol"_a, "distMat"_a, "canonOrient"_a = false, "clearConfs"_a = true,
       "weightDistMat"_a = 0.5, "nFlipsPerSample"_a = 3, "nSample"_a = 100,
       "sampleSeed"_a = 100, "permuteDeg4Nodes"_a = true, "bondLength"_a = -1.0,
-      "forceRDKit"_a = false,
+      "forceRDKit"_a = false, "useBranchDepthPrioritization"_a = false,
       R"DOC(Compute 2D coordinates for a molecule such
   that the inter-atom distances mimic those in a user-provided
   distance matrix.
@@ -390,6 +398,10 @@ adjustMolBlockWedging is True)DOC")
      bondLength - change the default bond length for depiction
      forceRDKit - use RDKit to generate coordinates even if
                   preferCoordGen is set to true
+     useBranchDepthPrioritization - prefer deeper acyclic branches while
+                  building the initial zig-zag layout. nFlipsPerSample and
+                  nSample are ignored when enabled so random flips do not undo
+                  that ordering. (default=False)
 
   RETURNS:
 

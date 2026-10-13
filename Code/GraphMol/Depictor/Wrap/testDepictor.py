@@ -152,6 +152,19 @@ class TestCase(unittest.TestCase):
       ok = 1
     self.assertTrue(ok)
 
+  def testBranchDepthPrioritizationKeyword(self):
+    """Both Python wrappers expose the optional branch-depth layout mode.
+
+    This is an API smoke test rather than a geometry-quality test: it catches a
+    wrapper that omits the keyword or fails to forward it to the C++ parameter
+    object, and confirms that coordinate generation returns a complete
+    conformer when the mode is enabled.
+    """
+    mol = Chem.MolFromSmiles('CCCC(CC)CCCC')
+    conf_id = rdDepictor.Compute2DCoords(mol, useBranchDepthPrioritization=True)
+    self.assertEqual(conf_id, 0)
+    self.assertEqual(mol.GetConformer(conf_id).GetNumAtoms(), mol.GetNumAtoms())
+
   def test3IssueSF1526844(self):
     t = Chem.MolFromSmiles('c1nc(N)ccc1')
     rdDepictor.Compute2DCoords(t, canonOrient=False)
