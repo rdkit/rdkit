@@ -759,3 +759,33 @@ TEST_CASE("Github #7264: GETAWAY descriptors are non-deterministic") {
   }
 }
 #endif
+
+TEST_CASE("DCLV polar contributions with H-H bonds") {
+  v2::SmilesParse::SmilesParserParams ps;
+  ps.removeHs = false;
+  SECTION("hydrogen molecule") {
+    auto m = v2::SmilesParse::MolFromSmiles("[H][H] |(0,0,0;0.74,0,0)|", ps);
+    REQUIRE(m);
+    Descriptors::DoubleCubicLatticeVolume dclv(*m);
+    CHECK(dclv.getPolarSurfaceArea(false, true) == 0.0);
+    CHECK(dclv.getPolarVolume(false, true) == 0.0);
+    CHECK(dclv.getPolarSurfaceArea(true, true) == 0.0);
+    CHECK(dclv.getPolarVolume(true, true) == 0.0);
+  }
+  SECTION("polar hydrogens are still included") {
+    // methanol: the polar atoms are O (4) and the H attached to it (5)
+    auto m = v2::SmilesParse::MolFromSmiles(
+        "[H]C([H])([H])O[H] |(-0.36,1.03,0;0,0,0;-0.36,-0.51,0.89;-0.36,-0.51,-0.89;1.43,0,0;1.75,-0.91,0)|",
+        ps);
+    REQUIRE(m);
+    Descriptors::DoubleCubicLatticeVolume dclv(*m);
+    boost::dynamic_bitset<> polarAtoms(m->getNumAtoms());
+    polarAtoms.set(4);
+    polarAtoms.set(5);
+    CHECK(dclv.getPolarSurfaceArea(false, true) > 0.0);
+    CHECK(dclv.getPolarSurfaceArea(false, true) ==
+          dclv.getPartialSurfaceArea(polarAtoms));
+    CHECK(dclv.getPolarVolume(false, true) ==
+          dclv.getPartialVolume(polarAtoms));
+  }
+}
