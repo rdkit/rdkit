@@ -23,6 +23,7 @@
 #include <GraphMol/new_canon.h>
 #include <GraphMol/test_fixtures.h>
 
+#include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
@@ -6834,5 +6835,61 @@ TEST_CASE("Github #8108: assignStereochemistry should handle atropisomers",
     CHECK(getAtropBond(*m) == m->getBondBetweenAtoms(0, 1));
     CHECK(m->getBondBetweenAtoms(0, 14)->getStereo() ==
           Bond::BondStereo::STEREONONE);
+  }
+}
+
+TEST_CASE("Github #9681: atropisomer ring-size cutoff",
+          "[chirality][atropisomers][ring-size]") {
+  const auto useLegacy = GENERATE(true, false);
+  const auto ringSize = GENERATE(7u, 8u, 9u);
+  const auto markerDir = GENERATE(Bond::BEGINWEDGE, Bond::BEGINDASH);
+  CAPTURE(useLegacy, ringSize, markerDir);
+  UseLegacyStereoPerceptionFixture fx(useLegacy);
+
+  const auto smiles =
+      "Cc1ccc2c(c1)" + std::string(ringSize - 4, 'C') + "c1ccc(F)cc1-2";
+  auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+  REQUIRE(mol);
+  RDDepict::Compute2DCoordParameters coordParams;
+  coordParams.canonOrient = true;
+  coordParams.forceRDKit = true;
+  RDDepict::compute2DCoords(*mol, coordParams);
+
+  // The final two bonds close the aromatic ring and the axis-containing ring.
+  auto axis = mol->getBondWithIdx(mol->getNumBonds() - 1);
+  REQUIRE(mol->getRingInfo()->minBondRingSize(axis->getIdx()) == ringSize);
+  auto marker = mol->getBondWithIdx(mol->getNumBonds() - 2);
+  marker->setBondDir(markerDir);
+  const auto molBlock = MolToV3KMolBlock(*mol);
+
+  v2::FileParsers::MolFileParserParams rawParams;
+  rawParams.sanitize = false;
+  rawParams.removeHs = false;
+  auto raw = v2::FileParsers::MolFromMolBlock(molBlock, rawParams);
+  REQUIRE(raw);
+  auto rawAxis = raw->getBondWithIdx(axis->getIdx());
+  const auto perceivedStereo = rawAxis->getStereo();
+  REQUIRE((perceivedStereo == Bond::STEREOATROPCW ||
+           perceivedStereo == Bond::STEREOATROPCCW));
+
+  const auto expectedStereo = ringSize < 8 ? Bond::STEREONONE : perceivedStereo;
+
+  SECTION("sanitization and stereo assignment agree") {
+    const auto cleanIt = GENERATE(true, false);
+    CAPTURE(cleanIt);
+    MolOps::sanitizeMol(*raw);
+    CHECK(rawAxis->getStereo() == expectedStereo);
+    MolOps::assignStereochemistry(*raw, cleanIt, true, true);
+    CHECK(rawAxis->getStereo() == expectedStereo);
+  }
+
+  SECTION("sanitized molblock parsing") {
+    v2::FileParsers::MolFileParserParams params;
+    params.removeHs = GENERATE(true, false);
+    CAPTURE(params.removeHs);
+    auto parsed = v2::FileParsers::MolFromMolBlock(molBlock, params);
+    REQUIRE(parsed);
+    CHECK(parsed->getBondWithIdx(axis->getIdx())->getStereo() ==
+          expectedStereo);
   }
 }
