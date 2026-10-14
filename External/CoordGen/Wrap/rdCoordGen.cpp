@@ -33,7 +33,7 @@ void SetCoordMap(CoordGen::CoordGenParams *self, python::dict &coordMap) {
 }
 void addCoordsHelper(ROMol &mol, python::object &params) {
   CoordGen::CoordGenParams *ps = nullptr;
-  if (params != python::object()) {
+  if (!params.is_none()) {
     ps = python::extract<CoordGen::CoordGenParams *>(params);
   }
   CoordGen::addCoords(mol, ps);
