@@ -65,13 +65,17 @@ function test_basics() {
         assert(molFromInchi !== null);
         assert.equal(molFromInchi.get_smiles(),"C[C@H](N)C(=O)O");
         molFromInchi.delete();
+        // the caller's sanitization options apply to InChI input too
+        molFromInchi = RDKitModule.get_mol("InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H", JSON.stringify({setAromaticity: false}));
+        assert(molFromInchi !== null);
+        assert.equal(molFromInchi.get_smiles(),"OC1=CC=CC=C1");
+        molFromInchi.delete();
+        molFromInchi = RDKitModule.get_mol("InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H", JSON.stringify({sanitize: false}));
+        assert(molFromInchi !== null);
+        assert.equal(molFromInchi.get_num_atoms(),7);
+        molFromInchi.delete();
         // an invalid InChI returns null rather than throwing
-        var badInchi = null;
-        try {
-            badInchi = RDKitModule.get_mol("InChI=1S/not-an-inchi");
-        } catch {
-            badInchi = null;
-        }
+        var badInchi = RDKitModule.get_mol("InChI=1S/not-an-inchi");
         assert(badInchi === null);
     }
 

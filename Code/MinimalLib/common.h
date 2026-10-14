@@ -169,14 +169,13 @@ RWMol *mol_from_input(const std::string &input,
       }
 #ifdef RDK_BUILD_INCHI_SUPPORT
     } else if (haveInchi) {
-      // InChI is converted by the InChI library, which needs a sanitized
-      // molecule to assign the structure; the sanitization below is then a
-      // no-op unless the caller asked for partial sanitization.
+      // Parsed without sanitization or H removal, like the other formats:
+      // removeHs, sanitize (including partial sanitization) and
+      // setAromaticity are applied below, as the caller asked.
       ExtraInchiReturnValues rv;
       auto start = input.find_first_not_of(" \t\r\n");
       auto end = input.find_last_not_of(" \t\r\n");
-      res = InchiToMol(input.substr(start, end - start + 1), rv, true,
-                       removeHs);
+      res = InchiToMol(input.substr(start, end - start + 1), rv, false, false);
 #endif
     } else {
       SmilesParserParams ps;
