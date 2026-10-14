@@ -12,7 +12,7 @@ if(MSVC)
 ADD_DEFINITIONS("/D YY_NO_UNISTD_H")
 endif()
 
-if(CMAKE_COMPILER_IS_CLANG AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 15)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 15)
 # the output from bison triggers some warnings we can safely ignore with clang 16+
 set_source_files_properties(smarts.tab.cpp smiles.tab.cpp PROPERTIES COMPILE_OPTIONS "-Wno-unused-but-set-variable")
 endif()

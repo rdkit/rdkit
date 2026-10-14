@@ -281,7 +281,7 @@ The RDKit docs support inclusion of Sphinx doctests to allow the result of a cod
 
 #### Build the Documentation
 
-To preview your changes to the RDKit documentation, build the docs locally. First set up your development environment by following the instructions in [Building RDKit for Development](#building-rdkit-for-development). Then run `doxygen` before changing to the directory `Docs/Book`:
+To preview your changes to the RDKit documentation, build the docs locally. First set up your development environment by following the instructions in [Building RDKit for Development](#building-rdkit-for-development-1). Then run `doxygen` before changing to the directory `Docs/Book`:
   ```
   # run doxygen
   cd $RDBASE/Code/ && doxygen doxygen/doxygen.config
@@ -432,7 +432,7 @@ Where relevant, example useage can also be added to the [Getting Started with Py
 
 ### A note on Modern C++
 
-In order to continue to allow the code to be built on older systems, the RDKit is currently using a subset of what's available in modern C++ compilers. The latest language standard supported by the RDKit is C++17; the expectation is that it should be possible to build the RDKit with g++ v8.0.
+In order to continue to allow the code to be built on older systems, the RDKit is currently using a subset of what's available in modern C++ compilers. The latest language standard supported by the RDKit is C++20; the expectation is that it should be possible to build the RDKit with g++ v11.0.
 
 ### Building RDKit for Development
 
