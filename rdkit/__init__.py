@@ -1,6 +1,28 @@
 import logging
 import sys
 
+import os
+
+# We used to be able to just set PATH on Windows to find the RDKit DLLs when
+# they aren't in a standard location. (This is only necessary when you build the
+# code and install it in a non-standard location). 
+# 
+# Starting with python 3.15 this no longer works, so we have to use
+# os.add_dll_directory. This has been around since python 3.8, so we don't need
+# to worry about doing a version check here. 
+# 
+# If the environment variable RDLIBDIR is set we'll look there, otherwize we
+# look in $RDBASE/lib
+if sys.platform == "win32":
+  try:
+    from . import rdBase
+  except ImportError:
+    if 'RDLIBDIR' in os.environ:
+      os.add_dll_directory(os.environ['RDLIBDIR'])
+    elif 'RDBASE' in os.environ:
+      os.add_dll_directory(os.path.join(os.environ['RDBASE'], "lib"))
+
+
 # Need to import rdBase to properly wrap exceptions
 # otherwise they will leak memory
 from . import rdBase
