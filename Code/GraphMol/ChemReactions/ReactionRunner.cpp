@@ -676,7 +676,8 @@ void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
       continue;
     } else if (pBond->hasProp(_UnknownStereoRxnBond)) {
       pBond->setStereo(Bond::BondStereo::STEREONONE);
-      pBond->clearProp(_UnknownStereoRxnBond);
+      // Keep the mark until all reactants have been processed so that a later
+      // reactant cannot restore stereochemistry destroyed by the template.
       continue;
     }
 
@@ -1529,6 +1530,12 @@ generateOneProductSet(const ChemicalReaction &rxn,
       addReactantAtomsAndBonds(rxn, product, reactants.at(reactantId),
                                reactantsMatch.at(reactantId), *iter, conf,
                                reactantId);
+    }
+
+    for (auto bond : product->bonds()) {
+      if (bond->hasProp(_UnknownStereoRxnBond)) {
+        bond->clearProp(_UnknownStereoRxnBond);
+      }
     }
 
     if (doConfs) {
