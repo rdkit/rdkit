@@ -758,6 +758,42 @@ TEST_CASE("Github #7264: GETAWAY descriptors are non-deterministic") {
     }
   }
 }
+
+TEST_CASE("GETAWAY on molecules with several fragments") {
+  // Atoms in different fragments are a very large topological distance apart;
+  // they only contribute to the totals, which therefore match those of the
+  // connected molecule with the same atoms and coordinates.
+  // Covers the default path (HTu, HATSu, RTu) and the custom atom property
+  // path (HTc, HATSTc, RTc).
+  struct Case {
+    std::string propName;
+    size_t numValues;
+    std::vector<size_t> totals;
+  };
+  const auto tc = GENERATE(Case{"", 273, {13, 23, 155}},
+                           Case{"customProp", 45, {13, 23, 35}});
+  INFO("customAtomPropName: '" << tc.propName << "'");
+  const std::string coords =
+      " |(-1.2,0.1,0.3;0.2,-0.4,0.1;1.1,0.6,-0.3;2.4,0.2,0.4)|";
+  auto salt = v2::SmilesParse::MolFromSmiles("CCO.C" + coords);
+  auto connected = v2::SmilesParse::MolFromSmiles("CCOC" + coords);
+  REQUIRE(salt);
+  REQUIRE(connected);
+  for (auto mol : {salt.get(), connected.get()}) {
+    for (auto atom : mol->atoms()) {
+      atom->setProp("customProp", static_cast<double>(atom->getAtomicNum()));
+    }
+  }
+  std::vector<double> saltRes, connectedRes;
+  Descriptors::GETAWAY(*salt, saltRes, -1, 2, tc.propName);
+  Descriptors::GETAWAY(*connected, connectedRes, -1, 2, tc.propName);
+  REQUIRE(saltRes.size() == tc.numValues);
+  REQUIRE(connectedRes.size() == tc.numValues);
+  for (const auto idx : tc.totals) {
+    INFO(idx);
+    CHECK(saltRes[idx] == connectedRes[idx]);
+  }
+}
 #endif
 
 TEST_CASE("DCLV polar contributions with H-H bonds") {
