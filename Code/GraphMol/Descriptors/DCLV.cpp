@@ -167,6 +167,8 @@ struct State {
       atomNeighbours.clear();
       const auto atm_idx = atom->getIdx();
       if (radii_[atm_idx] == 0.0) {
+        // keep one list per atom: the lists are indexed by atom index
+        nbrs.emplace_back();
         continue;
       }
       const Point3D &pos = positions[atm_idx];
@@ -282,16 +284,16 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(
 
   for (const auto atom : mol.atoms()) {
     const unsigned int atomIdx = atom->getIdx();
-    numAtoms++;
 
     if (isProtein) {
       if (checkExcludedAtoms(atom, includeLigand)) {
         radii_[atomIdx] = 0.0;
-        numAtoms--;
       }
     }
 
     if (radii_[atomIdx] != 0.0) {
+      // only atoms with nonzero radius contribute to the centre of gravity
+      numAtoms++;
       const Point3D position = positions[atomIdx];
       // get sum over centres
       cXYZ.x += position.x;

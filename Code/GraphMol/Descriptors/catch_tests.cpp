@@ -796,6 +796,31 @@ TEST_CASE("GETAWAY on molecules with several fragments") {
 }
 #endif
 
+TEST_CASE("DCLV ignores dummy atoms") {
+  v2::SmilesParse::SmilesParserParams ps;
+  ps.removeHs = false;
+  auto checkSame = [&ps](const std::string &smi, const std::string &refSmi) {
+    INFO(smi << " vs " << refSmi);
+    auto m = v2::SmilesParse::MolFromSmiles(smi, ps);
+    REQUIRE(m);
+    auto ref = v2::SmilesParse::MolFromSmiles(refSmi, ps);
+    REQUIRE(ref);
+    Descriptors::DoubleCubicLatticeVolume dclv(*m);
+    Descriptors::DoubleCubicLatticeVolume refDclv(*ref);
+    CHECK(dclv.getSurfaceArea() == refDclv.getSurfaceArea());
+    CHECK(dclv.getVolume() == refDclv.getVolume());
+    CHECK(dclv.getVDWVolume() == refDclv.getVDWVolume());
+    CHECK(dclv.getCompactness() == refDclv.getCompactness());
+    CHECK(dclv.getPackingDensity() == refDclv.getPackingDensity());
+  };
+  SECTION("leading dummy") { checkSame("*C |(1.5,0,0;0,0,0)|", "C |(0,0,0)|"); }
+  SECTION("trailing dummy") {
+    checkSame("C* |(0,0,0;1.5,0,0)|", "C |(0,0,0)|");
+    checkSame("CCO* |(0,0,0;1.5,0,0;2,1.3,0;8,8,8)|",
+              "CCO |(0,0,0;1.5,0,0;2,1.3,0)|");
+  }
+}
+
 TEST_CASE("DCLV polar contributions with H-H bonds") {
   v2::SmilesParse::SmilesParserParams ps;
   ps.removeHs = false;
