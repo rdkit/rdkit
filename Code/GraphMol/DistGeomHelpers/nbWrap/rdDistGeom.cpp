@@ -661,7 +661,9 @@ used during structural minimisation stage)DOC")
   m.def("EmbedMultipleConfs", &RDKit::EmbedMultipleConfs2, "mol"_a,
         "numConfs"_a, "params"_a,
         R"DOC(Use distance geometry to obtain multiple sets of
-coordinates for a molecule
+coordinates for a molecule.
+Be aware that this function can alter the EmbedParameters object, caution 
+is advised when reusing EmbedParameters objects for different embedding runs.
 
 ARGUMENTS:
 
@@ -676,7 +678,9 @@ RETURNS:
 
   m.def("EmbedMolecule", &RDKit::EmbedMolecule2, "mol"_a, "params"_a,
         R"DOC(Use distance geometry to obtain initial
-coordinates for a molecule
+coordinates for a molecule.
+Be aware that this function can alter the EmbedParameters object, caution 
+is advised when reusing EmbedParameters objects for different embedding runs.
 
 ARGUMENTS:
 

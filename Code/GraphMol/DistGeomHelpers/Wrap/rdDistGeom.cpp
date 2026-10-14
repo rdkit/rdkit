@@ -759,6 +759,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\
+ Be aware that this function can alter the EmbedParameters object, caution \n\
+ is advised when reusing EmbedParameters objects for different embedding runs.\n\
  \n\
  ARGUMENTS:\n\n\
   - mol : the molecule of interest\n\
@@ -775,6 +777,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   docString =
       "Use distance geometry to obtain intial \n\
  coordinates for a molecule\n\n\
+ Be aware that this function can alter the EmbedParameters object, caution \n\
+ is advised when reusing EmbedParameters objects for different embedding runs.\n\
  \n\
  ARGUMENTS:\n\n\
     - mol : the molecule of interest\n\

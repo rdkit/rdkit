@@ -19,7 +19,6 @@
 #include <utility>
 #include <vector>
 #include <GraphMol/ROMol.h>
-#include <GraphMol/Conformer.h>
 #include <boost/shared_ptr.hpp>
 #include "ZMatrixBuilder.h"
 
@@ -148,9 +147,9 @@ enum class EmbedFF : std::uint8_t {
                    of times each embedding check fails
   enableSequentialRandomSeeds    handle the random number seeds so that
                                  conformer generation can be restarted
-  optimizeConfWithId If provided, this conformer in the molecule (if present) is
-  refined with the ETKDG force field. embedFF Force Field to use to determine
-  ideal 1-2 and 1-3 distances.
+  embedFF   Force Field to use to determine ideal 1-2 and 1-3 distances.
+  optimizeConfWithId  If provided, this conformer in the molecule (if present)
+                      is refined with the ETKDG force field.
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations{0};
@@ -191,8 +190,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   std::vector<unsigned int> failures{};
   bool enableSequentialRandomSeeds{false};
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
-  std::optional<unsigned int> optimizeConfWithId{std::nullopt};
   EmbedFF embedForceField{EmbedFF::UFF};
+  std::optional<unsigned int> optimizeConfWithId{std::nullopt};
 };
 
 //! update parameters from a JSON string
@@ -204,9 +203,15 @@ RDKIT_DISTGEOMHELPERS_EXPORT std::string embedParametersToJSON(
     const EmbedParameters &params);
 
 //! Embed multiple conformations for a molecule
+/// Be aware that this function can alter the EmbedParameters object, caution
+/// is advised when reusing EmbedParameters objects for different embedding runs.
 RDKIT_DISTGEOMHELPERS_EXPORT void EmbedMultipleConfs(ROMol &mol, INT_VECT &res,
                                                      unsigned int numConfs,
                                                      EmbedParameters &params);
+
+//! Embed multiple conformations for a molecule
+/// Be aware that this function can alter the EmbedParameters object, caution
+/// is advised when reusing EmbedParameters objects for different embedding runs.
 inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
                                    EmbedParameters &params) {
   INT_VECT res;
@@ -216,6 +221,8 @@ inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
 
 //! Compute an embedding (in 3D) for the specified molecule using Distance
 /// Geometry
+/// Be aware that this function can alter the EmbedParameters object, caution
+/// is advised when reusing EmbedParameters objects for different embedding runs.
 inline int EmbedMolecule(ROMol &mol, EmbedParameters &params) {
   INT_VECT confIds;
   EmbedMultipleConfs(mol, confIds, 1, params);

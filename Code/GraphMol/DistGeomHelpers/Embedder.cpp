@@ -62,10 +62,6 @@
 namespace {
 constexpr const char *INTERRUPT_MESSAGE =
     "Interrupted, cancelling conformer generation";
-constexpr const char *REFINEMENT_FAILED_MSG =
-    "Failed to refine the conformer with the provided id, cancelling";
-constexpr const char *RANDOM_COORDS_WARNING =
-    "optimizeConfWithId and coordMap are provided, initialEmbeddingMode is overwritten to RANDOM_COORDINATE_EMBEDDING";
 constexpr double M_PI_2 = 1.57079632679489661923;
 constexpr double ERROR_TOL = 0.00001;
 // these tolerances, all to detect and filter out bogus conformations, are a
@@ -1553,8 +1549,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }  // if block - heavy atom check
-  }  // for loop over atoms
+    }    // if block - heavy atom check
+  }      // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -1752,7 +1748,7 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
 
     // copy the coordinates into the correct conformer
     if (gotCoords) {
-      auto conf = (*eargs->confs)[ci].get();
+      auto &conf = (*eargs->confs)[ci];
       unsigned int fragAtomIdx = 0;
       for (unsigned int i = 0; i < conf->getNumAtoms(); ++i) {
         if (!eargs->fragMapping ||
@@ -1819,16 +1815,6 @@ std::vector<std::vector<unsigned int>> getMolSelfMatches(
   return res;
 }
 
-bool hasConformerWithId(const ROMol &mol, unsigned int confId) {
-  for (auto confi = mol.beginConformers(); confi != mol.endConformers();
-       ++confi) {
-    if ((*confi)->getId() == confId) {
-      return true;
-    }
-  }
-  return false;
-}
-
 }  // end of namespace detail
 
 void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
@@ -1873,7 +1859,6 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   // initialize the conformers we're going to be creating:
   std::vector<std::unique_ptr<Conformer>> confs;
   if (params.optimizeConfWithId.has_value()) {
-    confs.reserve(1);
     confs.emplace_back(
         new Conformer(mol.getConformer(*params.optimizeConfWithId)));
 
@@ -1909,10 +1894,6 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   }
 
   if (params.optimizeConfWithId.has_value()) {
-    if (!detail::hasConformerWithId(mol, params.optimizeConfWithId.value())) {
-      throw ValueErrorException(
-          "`optimizeConfWithId` is provided but the molecule does not have a conformer with the provided Id!");
-    }
     if (molFrags.size() > 1) {
       BOOST_LOG(rdWarningLog)
           << "Seeded conformer generation (via the optimizeConfWithId argument) "
@@ -1925,7 +1906,10 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     // If a coordmap is provided, we need to set random coords to true,
     // otherwise the mechanism is not activated.
     if (coordMap) {
-      BOOST_LOG(rdWarningLog) << RANDOM_COORDS_WARNING << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "optimizeConfWithId and coordMap are provided, "
+             "initialEmbeddingMode is overwritten to RANDOM_COORDINATE_EMBEDDING"
+          << std::endl;
       params.useRandomCoords = true;
       params.initialEmbeddingMode =
           InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING;
@@ -2109,7 +2093,9 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     auto &conf = confs[ci];
     if (params.optimizeConfWithId.has_value()) {
       if (!confsOk[ci]) {
-        BOOST_LOG(rdWarningLog) << REFINEMENT_FAILED_MSG << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "Failed to refine the conformer with the provided id, cancelling"
+            << std::endl;
         res.push_back(-1);
         return;
       }
