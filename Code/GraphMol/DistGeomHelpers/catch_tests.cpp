@@ -14,6 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Conformer.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -2493,6 +2494,85 @@ TEST_CASE("TransAmideKTerm") {
       ps.useMacrocycle14config = false;
       THEN("Expect some cis") { CHECK(not allTrans(*mol, ps, 1, 3, 5, 6)); }
     }
+  }
+}
+
+TEST_CASE("optimizeConfWithId") {
+  auto mol = "c1ccccc1[C@@H](Cl)CCC(O)CC"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  REQUIRE(mol);
+  auto psdg = DGeomHelpers::ETDGv2;
+  psdg.randomSeed = 0xc0ffee;
+  DGeomHelpers::EmbedMolecule(*mol, psdg);
+  auto *conf = new Conformer(mol->getConformer());
+  mol->addConformer(conf, true);
+  auto psetkdg = DGeomHelpers::ETKDGv2;
+  psetkdg.useLegacyImplementation = false;
+  psetkdg.optimizeConfWithId = 1;
+  SECTION("Using EmbedMolecule") {
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, psetkdg);
+    CHECK(cid == psetkdg.optimizeConfWithId);
+    MolOps::removeHs(*mol);
+    const double rmsd = MolAlign::getBestRMS(*mol, *mol, 0, 1);
+    CHECK(rmsd < 0.24);
+    CHECK(rmsd > 0.22);
+  }
+  SECTION("Using EmbedMultipleConfs") {
+    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, psetkdg);
+    CHECK(cids.size() == 1);
+    CHECK(cids[0] == psetkdg.optimizeConfWithId);
+    MolOps::removeHs(*mol);
+    const double rmsd = MolAlign::getBestRMS(*mol, *mol, 0, 1);
+    CHECK(rmsd < 0.24);
+    CHECK(rmsd > 0.22);
+  }
+  SECTION("Using EmbedMultipleConfs with Vect") {
+    std::vector<int> cids;
+    DGeomHelpers::EmbedMultipleConfs(*mol, cids, 10, psetkdg);
+    CHECK(cids.size() == 1);
+    CHECK(cids[0] == psetkdg.optimizeConfWithId);
+    MolOps::removeHs(*mol);
+    const double rmsd = MolAlign::getBestRMS(*mol, *mol, 0, 1);
+    CHECK(rmsd < 0.24);
+    CHECK(rmsd > 0.22);
+  }
+  SECTION("providing coord map") {
+    std::map<int, RDGeom::Point3D> coordmap;
+    std::array<int, 4> indices = {6, 7, 8, 9};
+    for (const auto i : indices) {
+      coordmap[i] = mol->getConformer(0).getAtomPos(i);
+    }
+    psetkdg.coordMap = &coordmap;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, psetkdg);
+    CHECK(cid == psetkdg.optimizeConfWithId);
+    MolOps::removeHs(*mol);
+    const double rmsd = MolAlign::getBestRMS(*mol, *mol, 0, 1);
+    CHECK(rmsd > 0.22);
+    const auto &conf2 = mol->getConformer(1);
+    for (const auto i : indices) {
+      auto pos = conf2.getAtomPos(i);
+      CHECK(pos.x == coordmap[i].x);
+      CHECK(pos.y == coordmap[i].y);
+      CHECK(pos.z == coordmap[i].z);
+    }
+  }
+  SECTION("multi frags should fail") {
+    auto mol = "CCC.CCC"_smiles;
+    MolOps::addHs(*mol);
+    auto psdg = DGeomHelpers::ETDGv2;
+    psdg.randomSeed = 0xc0ffee;
+    DGeomHelpers::EmbedMolecule(*mol, psdg);
+    auto *conf = new Conformer(mol->getConformer());
+    mol->addConformer(conf, true);
+    auto psetkdg = DGeomHelpers::ETKDGv2;
+    psetkdg.useLegacyImplementation = false;
+    psetkdg.optimizeConfWithId = 1;
+    auto cid = DGeomHelpers::EmbedMolecule(*mol, psetkdg);
+    CHECK(cid == -1);
+    MolOps::removeHs(*mol);
+    const double rmsd = MolAlign::getBestRMS(*mol, *mol, 0, 1);
+    CHECK(rmsd < 1e-5);
   }
 }
 
