@@ -332,7 +332,7 @@ namespace {
 double kappaHelper(double (*fn)(const RDKit::ROMol &, std::vector<double> *),
                    const RDKit::ROMol &mol, python::object atomContribs) {
   std::vector<double> *lContribs = nullptr;
-  if (atomContribs != python::object()) {
+  if (!atomContribs.is_none()) {
     // make sure the optional argument actually was a list
     python::list typecheck = python::extract<python::list>(atomContribs);
 
@@ -391,7 +391,7 @@ MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius, int nBits,
     }
   }
   RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = nullptr;
-  if (bitInfo != python::object()) {
+  if (!bitInfo.is_none()) {
     // make sure the optional argument actually was a dictionary
     python::dict typecheck = python::extract<python::dict>(bitInfo);
     bitInfoMap = new RDKit::MorganFingerprints::BitInfoMap();
@@ -525,7 +525,7 @@ GetMorganFingerprintBV(const RDKit::ROMol &mol, unsigned int radius,
   std::unique_ptr<std::vector<std::uint32_t>> froms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
   RDKit::MorganFingerprints::BitInfoMap *bitInfoMap = nullptr;
-  if (bitInfo != python::object()) {
+  if (!bitInfo.is_none()) {
     // make sure the optional argument actually was a dictionary
     python::dict typecheck = python::extract<python::dict>(bitInfo);
     bitInfoMap = new RDKit::MorganFingerprints::BitInfoMap();
@@ -615,7 +615,7 @@ python::list GetUSRDistributions(python::object coords, python::object points) {
   std::vector<RDGeom::Point3D> pts(4);
   std::vector<std::vector<double>> distances(4);
   RDKit::Descriptors::calcUSRDistributions(c, distances, pts);
-  if (points != python::object()) {
+  if (!points.is_none()) {
     // make sure the optional argument actually was a list
     python::list tmpPts = python::extract<python::list>(points);
     for (const auto &p : pts) {
@@ -733,7 +733,7 @@ python::list GetUSRCAT(const RDKit::ROMol &mol, python::object atomSelections,
   // check if there is an atom selection provided
   std::vector<std::vector<unsigned int>> atomIds;
   unsigned int sizeDescriptor = 60;
-  if (atomSelections != python::object()) {
+  if (!atomSelections.is_none()) {
     // make sure the optional argument actually was a list
     python::list typecheck = python::extract<python::list>(atomSelections);
     unsigned int numSel = python::len(atomSelections);
@@ -855,8 +855,8 @@ python::list CalcMQNs(const RDKit::ROMol &mol, bool force) {
 unsigned int numSpiroAtoms(const RDKit::ROMol &mol, python::object pyatoms) {
   std::vector<unsigned int> ats;
   unsigned int res = RDKit::Descriptors::calcNumSpiroAtoms(
-      mol, pyatoms != python::object() ? &ats : nullptr);
-  if (pyatoms != python::object()) {
+      mol, !pyatoms.is_none() ? &ats : nullptr);
+  if (!pyatoms.is_none()) {
     python::list pyres = python::extract<python::list>(pyatoms);
     for (const auto d : ats) {
       pyres.append(d);
@@ -868,8 +868,8 @@ unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol,
                                 python::object pyatoms) {
   std::vector<unsigned int> ats;
   unsigned int res = RDKit::Descriptors::calcNumBridgeheadAtoms(
-      mol, pyatoms != python::object() ? &ats : nullptr);
-  if (pyatoms != python::object()) {
+      mol, !pyatoms.is_none() ? &ats : nullptr);
+  if (!pyatoms.is_none()) {
     python::list pyres = python::extract<python::list>(pyatoms);
     for (const auto d : ats) {
       pyres.append(d);

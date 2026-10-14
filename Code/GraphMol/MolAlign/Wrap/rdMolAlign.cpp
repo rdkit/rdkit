@@ -38,7 +38,7 @@ struct pyBestAlignmentParams : public BestAlignmentParams {
             maxMatches_, symmetrizeTerminalGroups_,    ignoreHs_,
             numThreads_, std::vector<MatchVectType>(), nullptr} {
     unsigned int nAtms = 0;
-    if (map_ != python::object()) {
+    if (!map_.is_none()) {
       map = translateAtomMapSeq(map_);
       if (!map.empty()) {
         nAtms = map.front().size();
@@ -59,7 +59,7 @@ struct pyBestAlignmentParams : public BestAlignmentParams {
 namespace {
 void setMapFromPyObject(MolAlign::pyBestAlignmentParams &params,
                         python::object mapObj) {
-  if (mapObj != python::object()) {
+  if (!mapObj.is_none()) {
     params.map = translateAtomMapSeq(mapObj);
   }
 }
@@ -77,7 +77,7 @@ python::tuple getAtomMap(MolAlign::pyBestAlignmentParams &params) {
 }
 void setWeightsFromPyObject(MolAlign::pyBestAlignmentParams &params,
                             python::object weightsObj) {
-  if (weightsObj != python::object()) {
+  if (!weightsObj.is_none()) {
     params.wtsVec.reset(translateDoubleSeq(weightsObj));
     if (params.wtsVec) {
       if (!params.map.empty() &&
@@ -108,7 +108,7 @@ void alignMolConfs(ROMol &mol, python::object atomIds, python::object confIds,
   std::unique_ptr<std::vector<unsigned int>> aIds(translateIntSeq(atomIds));
   std::unique_ptr<std::vector<unsigned int>> cIds(translateIntSeq(confIds));
   std::unique_ptr<std::vector<double>> RMSvector;
-  if (RMSlist != python::object()) {
+  if (!RMSlist.is_none()) {
     RMSvector.reset(new std::vector<double>());
   }
   {
@@ -318,7 +318,7 @@ double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
                bool symmetrizeTerminalGroups,
                python::object weights = python::list()) {
   std::vector<MatchVectType> aMapVec;
-  if (map != python::object()) {
+  if (!map.is_none()) {
     aMapVec = translateAtomMapSeq(map);
   }
   std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
@@ -405,7 +405,7 @@ PyO3A *getMMFFO3A(ROMol &prbMol, ROMol &refMol, python::object prbProps,
   std::unique_ptr<MMFF::MMFFMolProperties> refMolProps;
   MMFF::MMFFMolProperties *refMolPropsPtr = nullptr;
 
-  if (prbProps != python::object()) {
+  if (!prbProps.is_none()) {
     ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties =
         python::extract<ForceFields::PyMMFFMolProperties *>(prbProps);
     prbMolPropsPtr = prbPyMMFFMolProperties->mmffMolProperties.get();
@@ -416,7 +416,7 @@ PyO3A *getMMFFO3A(ROMol &prbMol, ROMol &refMol, python::object prbProps,
     }
     prbMolPropsPtr = prbMolProps.get();
   }
-  if (refProps != python::object()) {
+  if (!refProps.is_none()) {
     ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties =
         python::extract<ForceFields::PyMMFFMolProperties *>(refProps);
     refMolPropsPtr = refPyMMFFMolProperties->mmffMolProperties.get();
@@ -473,7 +473,7 @@ python::tuple getMMFFO3AForConfs(
   std::unique_ptr<MMFF::MMFFMolProperties> refMolProps;
   MMFF::MMFFMolProperties *refMolPropsPtr = nullptr;
 
-  if (prbProps != python::object()) {
+  if (!prbProps.is_none()) {
     ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties =
         python::extract<ForceFields::PyMMFFMolProperties *>(prbProps);
     prbMolPropsPtr = prbPyMMFFMolProperties->mmffMolProperties.get();
@@ -484,7 +484,7 @@ python::tuple getMMFFO3AForConfs(
     }
     prbMolPropsPtr = prbMolProps.get();
   }
-  if (refProps != python::object()) {
+  if (!refProps.is_none()) {
     ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties =
         python::extract<ForceFields::PyMMFFMolProperties *>(refProps);
     refMolPropsPtr = refPyMMFFMolProperties->mmffMolProperties.get();
