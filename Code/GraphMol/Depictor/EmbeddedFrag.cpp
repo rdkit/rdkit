@@ -383,7 +383,6 @@ void EmbeddedFrag::setBranchDepths(const BRANCH_DEPTH_MAP *depthMap) {
   // from a ring, supplied-coordinate fragment, or single-atom seed uses the
   // same branch ordering as atoms discovered later during expansion.
   setupNewNeighs();
-  setupAttachmentPoints();
 }
 
 int EmbeddedFrag::findNeighbor(

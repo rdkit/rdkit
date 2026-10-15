@@ -240,6 +240,33 @@ class TestCase(unittest.TestCase):
                sampled_conf.GetAtomPosition(atom_idx))
       for atom_idx in range(unsampled.GetNumAtoms())))
 
+  def testBranchDepthPrioritizationPreservesDoubleBondStereo(self):
+    """Refreshing branch order must retain cis/trans attachment directions."""
+    def substituents_are_on_same_side(smiles):
+      mol = Chem.MolFromSmiles(smiles)
+      rdDepictor.Compute2DCoords(
+        mol, canonOrient=False, useBranchDepthPrioritization=True)
+      double_bond = next(
+        bond for bond in mol.GetBonds()
+        if bond.GetBondType() == Chem.BondType.DOUBLE)
+      begin_idx = double_bond.GetBeginAtomIdx()
+      end_idx = double_bond.GetEndAtomIdx()
+      begin_substituent, end_substituent = double_bond.GetStereoAtoms()
+      conf = mol.GetConformer()
+      begin = conf.GetAtomPosition(begin_idx)
+      end = conf.GetAtomPosition(end_idx)
+      double_bond_vector = end - begin
+      begin_vector = conf.GetAtomPosition(begin_substituent) - begin
+      end_vector = conf.GetAtomPosition(end_substituent) - end
+      begin_cross = (double_bond_vector.x * begin_vector.y -
+                     double_bond_vector.y * begin_vector.x)
+      end_cross = (double_bond_vector.x * end_vector.y -
+                   double_bond_vector.y * end_vector.x)
+      return begin_cross * end_cross > 0
+
+    self.assertTrue(substituents_are_on_same_side(r'C/C=C\C'))
+    self.assertFalse(substituents_are_on_same_side(r'C/C=C/C'))
+
   def testBranchDepthPrioritizationHonorsDistanceMatrix(self):
     """Distance-matrix sampling remains active with branch ordering enabled."""
     smiles = 'CCCCCCCC'
