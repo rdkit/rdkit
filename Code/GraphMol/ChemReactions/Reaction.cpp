@@ -33,6 +33,7 @@
 //
 
 #include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/QueryOps.h>
@@ -45,6 +46,10 @@
 #include "GraphMol/ChemReactions/ReactionRunner.h"
 
 namespace RDKit {
+
+ChemicalReactionException::~ChemicalReactionException() noexcept = default;
+ChemicalReactionParserException::~ChemicalReactionParserException() noexcept =
+    default;
 
 std::vector<MOL_SPTR_VECT> ChemicalReaction::runReactants(
     const MOL_SPTR_VECT reactants, unsigned int maxProducts) const {
