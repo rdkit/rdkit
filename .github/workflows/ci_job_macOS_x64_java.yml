@@ -3,16 +3,6 @@ name: macOS_x64_java
 on:
   workflow_call:
 
-env:
-  CCACHE_DIR: ${{ github.workspace }}/.ccache
-  CCACHE_BASEDIR: ${{ github.workspace }}
-  CCACHE_STATSLOG: ${{ github.workspace }}/ccache_current_build_stats.log
-  CCACHE_NOHASHDIR: "yes"
-  CCACHE_NAMESPACE: ${{ github.job }}
-  CCACHE_MAXSIZE: 1G
-  CCACHE_SLOPPINESS: time_macros
-  BUILD_BRANCH_NAME: ${{ github.event_name == 'pull_request' && format('pr/{0}/{1}', github.event.pull_request.number, github.head_ref) || github.ref_name }}
-
 jobs:
   macOS_x64_java:
     runs-on: macos-14
@@ -24,6 +14,8 @@ jobs:
       CONDA: /tmp/miniforge
     steps:
       - uses: actions/checkout@v4
+      - name: Set up CI environment
+        uses: ./.github/actions/ci-env
       - name: Install conda
         run: |
           wget https://github.com/conda-forge/miniforge/releases/download/26.5.3-0/Miniforge3-26.5.3-0-MacOSX-x86_64.sh

@@ -3,16 +3,6 @@ name: Windows_VS2022_x64_dll
 on:
   workflow_call:
 
-env:
-  CCACHE_DIR: ${{ github.workspace }}/.ccache
-  CCACHE_BASEDIR: ${{ github.workspace }}
-  CCACHE_STATSLOG: ${{ github.workspace }}/ccache_current_build_stats.log
-  CCACHE_NOHASHDIR: "yes"
-  CCACHE_NAMESPACE: ${{ github.job }}
-  CCACHE_MAXSIZE: 1G
-  CCACHE_SLOPPINESS: time_macros
-  BUILD_BRANCH_NAME: ${{ github.event_name == 'pull_request' && format('pr/{0}/{1}', github.event.pull_request.number, github.head_ref) || github.ref_name }}
-
 jobs:
   Windows_VS2022_x64_dll:
     runs-on: windows-2022
@@ -25,6 +15,8 @@ jobs:
         shell: cmd
     steps:
       - uses: actions/checkout@v4
+      - name: Set up CI environment
+        uses: ./.github/actions/ci-env
       - name: Setup build environment
         shell: pwsh
         run: echo "$env:CONDA\Scripts" >> $env:GITHUB_PATH

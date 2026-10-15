@@ -3,16 +3,6 @@ name: Ubuntu_x64_nb
 on:
   workflow_call:
 
-env:
-  CCACHE_DIR: ${{ github.workspace }}/.ccache
-  CCACHE_BASEDIR: ${{ github.workspace }}
-  CCACHE_STATSLOG: ${{ github.workspace }}/ccache_current_build_stats.log
-  CCACHE_NOHASHDIR: "yes"
-  CCACHE_NAMESPACE: ${{ github.job }}
-  CCACHE_MAXSIZE: 1G
-  CCACHE_SLOPPINESS: time_macros
-  BUILD_BRANCH_NAME: ${{ github.event_name == 'pull_request' && format('pr/{0}/{1}', github.event.pull_request.number, github.head_ref) || github.ref_name }}
-
 jobs:
   Ubuntu_x64_nb:
     runs-on: ubuntu-latest
@@ -22,6 +12,8 @@ jobs:
       BOOST_VERSION: "1.92"
     steps:
       - uses: actions/checkout@v4
+      - name: Set up CI environment
+        uses: ./.github/actions/ci-env
       - name: Setup build environment (no Qt due to versioning problems)
         run: |
           sudo apt-get install g++ wget make libgl1-mesa-dev mesa-common-dev
