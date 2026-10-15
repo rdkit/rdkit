@@ -20,7 +20,6 @@ Subpackages
     rdkit.Chem.SimpleEnum
     rdkit.Chem.Subshape
     rdkit.Chem.Suppliers
-    rdkit.Chem.fmcs
 
 Submodules
 ----------
