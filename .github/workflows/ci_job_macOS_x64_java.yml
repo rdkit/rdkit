@@ -20,6 +20,13 @@ jobs:
         run: |
           wget https://github.com/conda-forge/miniforge/releases/download/26.5.3-0/Miniforge3-26.5.3-0-MacOSX-x86_64.sh
           bash Miniforge3-26.5.3-0-MacOSX-x86_64.sh -b -p ${CONDA}
+      - name: Remove homebrew
+        run: |
+          echo "Removing homebrew to avoid conflicts."
+          curl -fsSL https://raw.githubusercontent.com/Homebrew/install/main/uninstall.sh > ~/uninstall_homebrew.sh
+          chmod +x ~/uninstall_homebrew.sh
+          ~/uninstall_homebrew.sh -fq
+          rm ~/uninstall_homebrew.sh
       - name: Setup build environment
         run: |
           source ${CONDA}/etc/profile.d/conda.sh
