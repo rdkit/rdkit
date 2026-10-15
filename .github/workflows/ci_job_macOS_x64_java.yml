@@ -39,7 +39,7 @@ jobs:
               libcxx cmake \
               libboost=${BOOST_VERSION} \
               libboost-devel=${BOOST_VERSION} \
-              cairo eigen swig make ccache
+              cairo eigen swig make ccache freetype
           conda activate rdkit_build
           conda config --env --add channels conda-forge
           conda config --env --set channel_priority strict
