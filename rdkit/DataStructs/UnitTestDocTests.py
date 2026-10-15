@@ -82,8 +82,9 @@ class TestCaseAdditional(unittest.TestCase):
     self.assertEqual(len(fp), 256)
     fp2 = DataStructs.FoldToTargetDensity(fp, density=0.1)
     self.assertEqual(len(fp2), 64)
-    fp2 = DataStructs.FoldToTargetDensity(fp, density=0.1, minLength=64)
-    self.assertEqual(len(fp2), 64)
+    fp2 = DataStructs.FoldToTargetDensity(fp, density=0.1, minLength=128)
+    self.assertEqual(len(fp2), 128)
+    self.assertGreater(0.1, fp2.GetNumOnBits() / len(fp2))
 
 
 if __name__ == '__main__':  # pragma: nocover
