@@ -26,7 +26,7 @@ jobs:
           echo "Removing homebrew to avoid conflicts."
           curl -fsSL https://raw.githubusercontent.com/Homebrew/install/main/uninstall.sh > ~/uninstall_homebrew.sh
           chmod +x ~/uninstall_homebrew.sh
-          ~/uninstall_homebrew.sh -fq
+          ~/uninstall_homebrew.sh -f -q
           rm ~/uninstall_homebrew.sh
       - name: Setup build environment
         run: |
