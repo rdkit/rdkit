@@ -11,9 +11,7 @@ import doctest
 import unittest
 
 from rdkit import Chem, DataStructs
-from rdkit.Chem.Fingerprints.FingerprintMols import FingerprinterDetails
-from rdkit.DataStructs import (BitUtils, FingerprintSimilarity, LazySignature,
-                               VectCollection)
+from rdkit.DataStructs import (BitUtils, FingerprintSimilarity, LazySignature, VectCollection)
 
 
 def load_tests(loader, tests, ignore):
@@ -63,26 +61,24 @@ class TestCaseAdditional(unittest.TestCase):
     self.assertEqual(obj[8], 'cached')
 
   def test__init__(self):
-    from rdkit.Chem.Fingerprints import FingerprintMols
+    from rdkit.Chem import rdFingerprintGenerator
+    fpg = rdFingerprintGenerator.GetRDKitFPGenerator()
     ms = [Chem.MolFromSmiles('CCOC'), Chem.MolFromSmiles('CCO'), Chem.MolFromSmiles('COC')]
-    fps = [FingerprintMols.FingerprintMol(x) for x in ms]
+    fps = [fpg.GetFingerprint(x) for x in ms]
     self.assertAlmostEqual(FingerprintSimilarity(fps[0], fps[1]), 0.6, places=2)
 
-    details = FingerprinterDetails()
-    fpArgs = details.__dict__
     fps = []
     for i, x in enumerate(ms, 1):
-      fpArgs['fpSize'] = 16 * i
-      fps.append(FingerprintMols.FingerprintMol(x, **fpArgs))
+      fpg = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=16 * i)
+      fps.append(fpg.GetFingerprint(x))
     self.assertAlmostEqual(FingerprintSimilarity(fps[0], fps[1]), 0.555, places=2)
     self.assertAlmostEqual(FingerprintSimilarity(fps[1], fps[0]), 0.555, places=2)
 
-    fpArgs['fpSize'] = 1024
-    fpArgs['tgtDensity'] = 0.8
-    fp = FingerprintMols.FingerprintMol(ms[0], **fpArgs)
-    self.assertEqual(len(fp), 64)
-    fp = DataStructs.FoldToTargetDensity(fp, density=0.1, minLength=2)
-    self.assertEqual(len(fp), 4)
+    # here we have to use the older interface:
+    fp = Chem.RDKFingerprint(ms[0], fpSize=1024, tgtDensity=0.02)
+    self.assertEqual(len(fp), 256)
+    fp = DataStructs.FoldToTargetDensity(fp, density=0.1)
+    self.assertEqual(len(fp), 128)
 
 
 if __name__ == '__main__':  # pragma: nocover
