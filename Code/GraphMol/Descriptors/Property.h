@@ -70,6 +70,12 @@ struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
   const std::string getName() const { return propName; }
   //! Return the properties version
   const std::string getVersion() const { return propVersion; }
+
+  //! Return true if this functor evaluates Python code. Python-defined
+  //! functors are always evaluated on the calling thread, and exceptions they
+  //! raise are rethrown rather than turned into NaN. The answer must not
+  //! change for the lifetime of the functor.
+  virtual bool isPythonDefined() const { return false; }
 };
 
 //! Holds a collection of properties for computation purposes
@@ -99,8 +105,12 @@ class RDKIT_DESCRIPTORS_EXPORT Properties {
 
     Notes:
       - if calculating a value throws a std::exception (other than
-        std::bad_alloc) the value is set to NaN. Any other exception is
-        rethrown once all worker threads have finished.
+        std::bad_alloc) the value is set to NaN, unless the property is
+        Python-defined (see PropertyFunctor::isPythonDefined()). Exceptions
+        from Python-defined properties and std::bad_alloc are rethrown once all
+        worker threads have finished.
+      - if any property is Python-defined, the molecules are processed on the
+        calling thread, whatever \c numThreads is.
       - each distinct molecule is processed only once, by a single thread, so
         molecules may appear more than once in \c mols
       - property calculators may cache results on the molecules, so the
@@ -109,6 +119,8 @@ class RDKIT_DESCRIPTORS_EXPORT Properties {
   */
   std::vector<std::vector<double>> computePropertiesForMols(
       const std::vector<const RDKit::ROMol *> &mols, int numThreads = 1) const;
+  //! Return true if any property in this instance is Python-defined
+  bool hasPythonProperties() const;
   void annotateProperties(RDKit::ROMol &mol) const;
 
   //! Register a property function - takes ownership

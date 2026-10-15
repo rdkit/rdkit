@@ -528,7 +528,7 @@ class TestCase(unittest.TestCase):
     np.testing.assert_array_equal(
       reversedProps.ComputeProperties(self._batchMols(), numThreads=2), ref[:, ::-1])
 
-  def testComputePropertiesForMolsEdgeCases(self):
+  def testComputePropertiesBatchEdgeCases(self):
     names = ['NumHeavyAtoms', 'tpsa']
     props = rdMD.Properties(names)
     ref = np.array([list(props.ComputeProperties(m)) for m in self._batchMols()])
@@ -551,6 +551,24 @@ class TestCase(unittest.TestCase):
     # a single Mol goes to the single-molecule overload, not the batch one
     np.testing.assert_array_equal(props.ComputeProperties(mols[0]), ref[0])
 
+    # any iterable is accepted, including a sequence with only __getitem__
+    class OldStyleSeq:
+
+      def __init__(self, items):
+        self._items = items
+
+      def __getitem__(self, i):
+        return self._items[i]
+
+    self.assertFalse(hasattr(OldStyleSeq, '__iter__'))
+    np.testing.assert_array_equal(props.ComputeProperties(OldStyleSeq(self._batchMols())), ref)
+
+    # non-iterable input is a TypeError
+    with self.assertRaises(TypeError):
+      props.ComputeProperties(42)
+    with self.assertRaises(TypeError):
+      props.ComputeProperties(None)
+
     # failures in C++ calculators become NaN instead of raising
     m = Chem.MolFromSmiles('CCO', sanitize=False)
     hbdProps = rdMD.Properties(['NumHeavyAtoms', 'lipinskiHBD'])
@@ -560,7 +578,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(res[0, 0], 3)
     self.assertTrue(np.isnan(res[0, 1]))
 
-  def testComputePropertiesForMolsPythonProperty(self):
+  def testComputePropertiesBatchPythonProperty(self):
 
     class BatchTestNumAtoms(Descriptors.PropertyFunctor):
 
@@ -581,6 +599,22 @@ class TestCase(unittest.TestCase):
     mols[2].SetProp('_batchTestFail', '1')
     with self.assertRaisesRegex(ValueError, 'batch test failure'):
       props.ComputeProperties(mols, numThreads=4)
+
+    # mixed set: a failing C++ calculator gives NaN, the Python property is kept
+    mixed = rdMD.Properties(['BatchTestNumAtoms', 'lipinskiHBD'])
+    unsanitized = Chem.MolFromSmiles('CCO', sanitize=False)
+    for numThreads in (1, 4):
+      res = mixed.ComputeProperties([unsanitized], numThreads=numThreads)
+      self.assertEqual(res.shape, (1, 2))
+      self.assertEqual(res[0, 0], 3)
+      self.assertTrue(np.isnan(res[0, 1]))
+
+    # mixed set: a raising Python property still propagates past a failing C++ one
+    failing = self._batchMols()
+    failing[2].SetProp('_batchTestFail', '1')
+    failing.append(Chem.MolFromSmiles('CCO', sanitize=False))
+    with self.assertRaisesRegex(ValueError, 'batch test failure'):
+      mixed.ComputeProperties(failing, numThreads=4)
 
   def testProperties(self):
     props = rdMD.Properties()

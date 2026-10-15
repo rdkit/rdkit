@@ -895,6 +895,8 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
     PyGILStateHolder h;
     return python::call_method<double>(self, "__call__", boost::ref(mol));
   }
+
+  bool isPythonDefined() const override { return true; }
 };
 
 int registerPropertyHelper(python::object o) {
@@ -909,31 +911,30 @@ int registerPropertyHelper(python::object o) {
   return RDKit::Descriptors::Properties::registerProperty(ptr());
 }
 
-bool hasPythonProperties(const RDKit::Descriptors::Properties &self) {
-  for (const auto &name : self.getPropertyNames()) {
-    auto prop = RDKit::Descriptors::Properties::getProperty(name);
-    if (dynamic_cast<const PythonPropertyFunctor *>(prop.get())) {
-      return true;
-    }
-  }
-  return false;
-}
-
 PyObject *computePropertiesForMolsHelper(
     const RDKit::Descriptors::Properties &self, python::object pymols,
     int numThreads) {
-  // keep references to the python objects so that the molecules stay alive
-  // while we work without the GIL
-  if (!PyObject_HasAttrString(pymols.ptr(), "__iter__")) {
-    PyErr_SetString(PyExc_TypeError,
-                    "mols should be an iterable of Mol objects");
+  // Iterate with the iterator protocol. boost::python::stl_input_iterator
+  // would require __iter__, which rejects valid __getitem__-only sequences.
+  // A null iterator means the input is not iterable: the TypeError set by
+  // PyObject_GetIter is what gets raised.
+  python::handle<> iter(python::allow_null(PyObject_GetIter(pymols.ptr())));
+  if (!iter) {
     python::throw_error_already_set();
   }
+  // keep references to the python objects so that the molecules stay alive
+  // while we work without the GIL
   std::vector<python::object> keepAlive;
   std::vector<const RDKit::ROMol *> mols;
-  python::stl_input_iterator<python::object> beg(pymols), end;
-  for (; beg != end; ++beg) {
-    python::object obj = *beg;
+  while (true) {
+    python::handle<> itemHandle(python::allow_null(PyIter_Next(iter.get())));
+    if (!itemHandle) {
+      if (PyErr_Occurred()) {
+        python::throw_error_already_set();
+      }
+      break;
+    }
+    python::object obj(itemHandle);
     if (obj.is_none()) {
       mols.push_back(nullptr);
     } else {
@@ -943,7 +944,7 @@ PyObject *computePropertiesForMolsHelper(
   }
 
   std::vector<std::vector<double>> rows;
-  if (hasPythonProperties(self)) {
+  if (self.hasPythonProperties()) {
     // python-based properties need the GIL, there's no benefit to threading
     rows = self.computePropertiesForMols(mols, 1);
   } else {

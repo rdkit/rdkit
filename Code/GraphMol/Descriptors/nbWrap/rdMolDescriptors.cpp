@@ -49,11 +49,9 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
-#include <limits>
 #include <memory>
 #include <optional>
 #include <ranges>
-#include <unordered_map>
 #include <vector>
 
 namespace nb = nanobind;
@@ -890,24 +888,13 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
   double operator()(const RDKit::ROMol &mol) const override {
     NB_OVERRIDE_NAME("__call__", operator(), mol);
   }
-};
 
-bool hasPythonProperties(const RDKit::Descriptors::Properties &self) {
-  for (const auto &name : self.getPropertyNames()) {
-    auto prop = RDKit::Descriptors::Properties::getProperty(name);
-    if (dynamic_cast<const PythonPropertyFunctor *>(prop.get())) {
-      return true;
-    }
-  }
-  return false;
-}
+  bool isPythonDefined() const override { return true; }
+};
 
 nb::ndarray<nb::numpy, double, nb::ndim<2>> computePropertiesForMolsHelper(
     const RDKit::Descriptors::Properties &self, nb::object pymols,
     int numThreads) {
-  if (!PyObject_HasAttrString(pymols.ptr(), "__iter__")) {
-    throw nb::type_error("mols should be an iterable of Mol objects");
-  }
   // keep the Python objects alive while the C++ work runs without the GIL
   std::vector<nb::object> keepAlive;
   std::vector<const RDKit::ROMol *> mols;
@@ -927,28 +914,9 @@ nb::ndarray<nb::numpy, double, nb::ndim<2>> computePropertiesForMolsHelper(
   std::vector<std::vector<double>> rows;
   const size_t nRows = mols.size();
   const size_t nCols = self.getPropertyNames().size();
-  if (hasPythonProperties(self)) {
-    // Python-defined properties need the GIL, so there is no threading.
-    // Compute through the single-molecule path: it has no per-property
-    // catch, so a nanobind::python_error raised by a functor reaches the
-    // nanobind boundary and restores the original Python exception. The
-    // C++ batch path would catch it as a std::exception and return NaN.
-    // Distinct molecules are computed once, like the C++ batch path.
-    const double nan = std::numeric_limits<double>::quiet_NaN();
-    rows.assign(nRows, std::vector<double>(nCols, nan));
-    std::unordered_map<const RDKit::ROMol *, size_t> firstSeen;
-    firstSeen.reserve(nRows);
-    for (size_t i = 0; i < nRows; ++i) {
-      if (!mols[i]) {
-        continue;
-      }
-      auto [it, inserted] = firstSeen.emplace(mols[i], i);
-      if (inserted) {
-        rows[i] = self.computeProperties(*mols[i], false);
-      } else {
-        rows[i] = rows[it->second];
-      }
-    }
+  if (self.hasPythonProperties()) {
+    // python-based properties need the GIL, there's no benefit to threading
+    rows = self.computePropertiesForMols(mols, 1);
   } else {
     nb::gil_scoped_release release;
     rows = self.computePropertiesForMols(mols, numThreads);
@@ -1586,7 +1554,10 @@ for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperti
 To compute a subset
 properties = rdMolDescriptors.Properties(['exactmw', 'lipinskiHBA'])
 for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(mol)):
-  print(name, value))DOC")
+  print(name, value)
+
+To compute properties for many molecules at once (returns a numpy array with one row per molecule)
+values = properties.ComputeProperties(mols, numThreads=4))DOC")
       .def(nb::init<>())
       .def(nb::init<const std::vector<std::string> &>(), "propNames"_a)
       .def("GetPropertyNames",

@@ -198,15 +198,31 @@ void computePropertyRow(
     } catch (const std::bad_alloc &) {
       throw;
     } catch (const std::exception &) {
+      // Python-defined properties raise exceptions that must reach the caller
+      // (the wrapper restores the original Python error); only C++ calculator
+      // failures are turned into NaN.
+      if (props[j]->isPythonDefined()) {
+        throw;
+      }
       row[j] = std::numeric_limits<double>::quiet_NaN();
     }
   }
 }
 }  // namespace
 
+bool Properties::hasPythonProperties() const {
+  return std::any_of(m_properties.begin(), m_properties.end(),
+                     [](const auto &prop) { return prop->isPythonDefined(); });
+}
+
 std::vector<std::vector<double>> Properties::computePropertiesForMols(
     const std::vector<const RDKit::ROMol *> &mols, int numThreads) const {
   const auto nan = std::numeric_limits<double>::quiet_NaN();
+  // Python-defined properties must run on the calling thread (they need the
+  // GIL), so the clamp is applied once here, before any task is spawned.
+  if (hasPythonProperties()) {
+    numThreads = 1;
+  }
   std::vector<std::vector<double>> res(
       mols.size(), std::vector<double>(m_properties.size(), nan));
 
