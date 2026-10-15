@@ -14,7 +14,6 @@ Subpackages
     rdkit.Chem.Features
     rdkit.Chem.Fingerprints
     rdkit.Chem.Fraggle
-    rdkit.Chem.MolDb
     rdkit.Chem.MolKey
     rdkit.Chem.Pharm2D
     rdkit.Chem.Pharm3D
