@@ -1,5 +1,6 @@
 import doctest
 import os
+import pickle
 import unittest
 
 from rdkit import Chem
@@ -130,6 +131,13 @@ class TestCase(unittest.TestCase):
     assert q
 
     assert list(list(x) for x in m.GetSubstructMatches(q)) == [[1, 2]]
+
+  def test_strippedMolIsPicklable(self):
+    remover = SaltRemover(defnData="[Cl,Br]")
+    stripped = remover.StripMolWithDeleted(Chem.MolFromSmiles('CN(C)C.Cl'))
+    mol, deleted = pickle.loads(pickle.dumps(stripped))
+    self.assertEqual(Chem.MolToSmiles(mol), 'CN(C)C')
+    self.assertEqual([Chem.MolToSmarts(m) for m in deleted], ['[Cl,Br]'])
 
 
 if __name__ == '__main__':  # pragma: nocover
