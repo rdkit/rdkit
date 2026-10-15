@@ -38,7 +38,8 @@ jobs:
           call conda config --env --add channels conda-forge
           call conda config --env --set channel_priority strict
       - name: Restore ccache
-        uses: actions/cache@v4
+        id: cache-restore
+        uses: actions/cache/restore@v6
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ runner.os }}-${{ github.job }}-${{ env.BUILD_BRANCH_NAME }}-${{ github.sha }}
@@ -82,6 +83,13 @@ jobs:
           call activate rdkit_build
           cd build
           cmake --build . --config Release --target install
+      - name: Store ccache
+        uses: actions/cache/save@v6
+        # Always store the cache after build, unless it already exists
+        if: always() && steps.cache-restore.outputs.cache-hit != 'true'
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ runner.os }}-${{ github.job }}-${{ env.BUILD_BRANCH_NAME }}-${{ github.sha }}
       - name: Show ccache stats
         run: |
           call activate rdkit_build
