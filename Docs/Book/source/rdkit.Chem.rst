@@ -55,7 +55,6 @@ Submodules
    rdkit.Chem.MolSurf
    rdkit.Chem.PandasTools
    rdkit.Chem.PeriodicTable
-   rdkit.Chem.PropertyMol
    rdkit.Chem.PyMol
    rdkit.Chem.QED
    rdkit.Chem.Randomize
