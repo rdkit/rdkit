@@ -190,7 +190,7 @@ def FingerprintsFromDetails(details, reportFreq=10):
     else:
       while 1:
         try:
-          m = s.next()
+          m = next(s)
         except StopIteration:
           break
         if m:
