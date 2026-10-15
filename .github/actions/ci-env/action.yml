@@ -15,7 +15,7 @@ runs:
           echo "CCACHE_STATSLOG=${WORKSPACE}/ccache_current_build_stats.log"
           echo "CCACHE_NOHASHDIR=yes"
           echo "CCACHE_NAMESPACE=${JOB}"
-          echo "CCACHE_MAXSIZE=1G"
+          echo "CCACHE_MAXSIZE=500M"
           echo "CCACHE_SLOPPINESS=time_macros"
           echo "BUILD_BRANCH_NAME=${BRANCH}"
         } >> "$GITHUB_ENV"
