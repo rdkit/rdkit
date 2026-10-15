@@ -1775,7 +1775,7 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
     inchiAtoms[i].num_bonds = 0;
 
     // coordinates
-    if (!m->getNumConformers()) {
+    if (!m->getNumConformers() || !m->getConformer().is3D()) {
       inchiAtoms[i].x = 0;
       inchiAtoms[i].y = 0;
       inchiAtoms[i].z = 0;
