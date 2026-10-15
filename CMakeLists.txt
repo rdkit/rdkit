@@ -693,13 +693,6 @@ if(NOT RDK_INSTALL_INTREE)
       PATTERN ".svn" EXCLUDE
       )
   if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-    install(DIRECTORY Projects DESTINATION
-        ${RDKit_ShareDir}
-        COMPONENT extras
-        PATTERN ".svn" EXCLUDE
-        PATTERN "test_list*" EXCLUDE
-        PATTERN "CMake*" EXCLUDE
-        )
     if(RDK_INSTALL_PYTHON_TESTS)
       install(DIRECTORY Scripts DESTINATION
         ${RDKit_ShareDir}
@@ -749,13 +742,11 @@ add_subdirectory(External)
 add_subdirectory(Code)
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-  add_subdirectory(Projects)
   add_subdirectory(rdkit)
   add_subdirectory(rdkit-stubs)
 endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
 if(RDK_BUILD_NANOBIND_WRAPPERS)
-  add_subdirectory(Projects)
   add_subdirectory(rdkit)
   #add_subdirectory(rdkit-stubs)
 endif(RDK_BUILD_NANOBIND_WRAPPERS)
