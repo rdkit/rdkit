@@ -15,7 +15,6 @@
 
 #include <catch2/catch_all.hpp>
 
-
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/Chirality.h>
@@ -6089,7 +6088,7 @@ TEST_CASE("findMesoCenters") {
             {"C1[C@H](F)C[C@H]1C[C@H]1C[C@H](N)C1", {{1, 4}, {6, 8}}},
             // not sure if this next one is right:
             {"N[C@H]1[C@H](F)[C@@H](N)[C@@H]1F", {{1, 4}, {2, 6}}},
-        };
+    };
     for (auto &[smi, expected] : cases) {
       INFO(smi);
       auto m = v2::SmilesParse::MolFromSmiles(smi);
@@ -6651,6 +6650,22 @@ M  END
     auto smi = MolToSmiles(*mol);
     auto smimb = MolToSmiles(*mol2);
     CHECK(smi == smimb);
+  }
+}
+TEST_CASE("potential stereo and Hs") {
+  SECTION("basics") {
+    auto m = "FC(Cl)(Br)C([2H])CC"_smiles;
+    REQUIRE(m);
+    // m->debugMol(std::cerr);
+    // MolOps::addHs(*m);
+    CHECK(Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m->getAtomWithIdx(1)));
+    CHECK(Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m->getAtomWithIdx(4)));
+    CHECK(!Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m->getAtomWithIdx(6)));
+    CHECK(!Chirality::detail::isAtomPotentialTetrahedralCenter(
+        m->getAtomWithIdx(7)));
   }
 }
 

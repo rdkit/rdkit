@@ -173,6 +173,8 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getAtomNonzeroDegree(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool has_protium_neighbor(const ROMol &mol,
                                                 const Atom *atom);
 
+inline constexpr std::string_view _PotentialStereo = "_PotentialStereo";
+
 }  // namespace detail
 /// @endcond
 
@@ -241,8 +243,8 @@ enum class WedgeInfoType {
 
 class WedgeInfoBase {
  public:
-  WedgeInfoBase(int idxInit) : idx(idxInit){};
-  virtual ~WedgeInfoBase(){};
+  WedgeInfoBase(int idxInit) : idx(idxInit) {};
+  virtual ~WedgeInfoBase() {};
 
   virtual WedgeInfoType getType() const = 0;
   virtual Bond::BondDir getDir() const = 0;
@@ -255,7 +257,7 @@ class WedgeInfoBase {
 
 class WedgeInfoChiral : public WedgeInfoBase {
  public:
-  WedgeInfoChiral(int atomId) : WedgeInfoBase(atomId){};
+  WedgeInfoChiral(int atomId) : WedgeInfoBase(atomId) {};
   ~WedgeInfoChiral() override {}
 
   WedgeInfoType getType() const override {

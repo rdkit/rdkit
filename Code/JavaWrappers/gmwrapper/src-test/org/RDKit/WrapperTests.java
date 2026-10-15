@@ -359,6 +359,26 @@ public class WrapperTests extends GraphMolTest {
 	}
 
 	if(ROMol.hasChemDrawCDXSupport()) {
+        testFile = new File(base, "Code" + File.separator + "GraphMol"
+                    + File.separator + "test_data" + File.separator +
+                    "CDXML" + File.separator + "ring-stereo1.cdx");
+        fn = testFile.getAbsolutePath();
+        params = new CDXMLParserParams();
+        params.setFormat(CDXMLFormat.CDX);
+        prods = RWMol.MolsFromCDXMLFile(fn, params);
+        assertEquals(prods.size(), 1);
+
+        params.setFormat(CDXMLFormat.Auto);
+        prods = RWMol.MolsFromCDXMLFile(fn, params);
+        assertEquals(prods.size(), 1);
+
+        params.setFormat(CDXMLFormat.CDXML);
+        boolean e = false;
+        try {
+            prods = RWMol.MolsFromCDXMLFile(fn, params);
+        } catch(GenericRDKitException ex) {
+            e = true;
+        }
 	    String cdxml = prods.get(0).MolToCDXML();
 	    byte[] cdx = prods.get(0).MolToCDX();
 	    assertTrue(cdxml.indexOf("CDXML") != -1);

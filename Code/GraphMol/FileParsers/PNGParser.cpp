@@ -353,20 +353,25 @@ std::string addMolToPNGStream(const ROMol &mol, std::istream &iStream,
   return addMetadataToPNGStream(iStream, metadata);
 };
 
-ROMol *PNGStreamToMol(std::istream &inStream,
-                      const SmilesParserParams &params) {
-  ROMol *res = nullptr;
+namespace v2 {
+namespace FileParsers {
+std::unique_ptr<ROMol> MolFromPNGStream(
+    std::istream &inStream, const v2::SmilesParse::SmilesParserParams &params) {
+  std::unique_ptr<ROMol> res;
   auto metadata = PNGStreamToMetadata(inStream);
   bool formatFound = false;
   for (const auto &[key, value] : metadata) {
     if (boost::starts_with(key, PNGData::pklTag)) {
-      res = new ROMol(value);
+      res.reset(new ROMol(value));
       formatFound = true;
     } else if (boost::starts_with(key, PNGData::smilesTag)) {
-      res = SmilesToMol(value, params);
+      res = v2::SmilesParse::MolFromSmiles(value, params);
       formatFound = true;
     } else if (boost::starts_with(key, PNGData::molTag)) {
-      res = MolBlockToMol(value, params.sanitize, params.removeHs);
+      v2::FileParsers::MolFileParserParams molFileParams;
+      molFileParams.sanitize = params.sanitize;
+      molFileParams.removeHs = params.removeHs;
+      res = v2::FileParsers::MolFromMolBlock(value, molFileParams);
       formatFound = true;
     }
     if (formatFound) {
@@ -379,9 +384,9 @@ ROMol *PNGStreamToMol(std::istream &inStream,
   return res;
 }
 
-std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
+std::vector<std::unique_ptr<ROMol>> MolsFromPNGStream(
     std::istream &inStream, const std::string &tagToUse,
-    const SmilesParserParams &params) {
+    const v2::SmilesParse::SmilesParserParams &params) {
   std::vector<std::unique_ptr<ROMol>> res;
   auto metadata = PNGStreamToMetadata(inStream);
   for (const auto &[key, value] : metadata) {
@@ -391,12 +396,17 @@ std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
     if (boost::starts_with(key, PNGData::pklTag)) {
       res.emplace_back(new ROMol(value));
     } else if (boost::starts_with(key, PNGData::smilesTag)) {
-      res.emplace_back(SmilesToMol(value, params));
+      res.emplace_back(v2::SmilesParse::MolFromSmiles(value, params));
     } else if (boost::starts_with(key, PNGData::molTag)) {
-      res.emplace_back(MolBlockToMol(value, params.sanitize, params.removeHs));
+      v2::FileParsers::MolFileParserParams molFileParams;
+      molFileParams.sanitize = params.sanitize;
+      molFileParams.removeHs = params.removeHs;
+      res.emplace_back(v2::FileParsers::MolFromMolBlock(value, molFileParams));
     }
   }
   return res;
 }
 
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit

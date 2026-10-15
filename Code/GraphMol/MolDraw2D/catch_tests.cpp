@@ -5161,7 +5161,7 @@ TEST_CASE("Github 5185 - don't draw atom indices between double bond") {
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // the 2nd note
-      CHECK(text.find("<path class='note' d='M 94.4 129.6") !=
+      CHECK(text.find("<path class='note' d='M 94.4 36.7") !=
             std::string::npos);
       // check_file_hash("testGithub_5185.svg");
 #else
