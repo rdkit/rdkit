@@ -35,7 +35,7 @@ def _getAllTriangles(pts, orderedTraversal=False):
         kStart = j + 1
       else:
         kStart = 0
-      for k in range(j + 1, len(pts)):
+      for k in range(kStart, len(pts)):
         if k == i or k == j:
           continue
         yield (i, j, k)
