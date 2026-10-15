@@ -8,7 +8,7 @@ jobs:
     runs-on: macos-14
     timeout-minutes: 90
     env:
-      COMPILER: clangxx_osx-64=18.1
+      COMPILER: clangxx_osx-arm64=18.1
       BOOST_VERSION: "1.91"
       TARGET_PLATFORM: "14"
       CONDA: /tmp/miniforge
@@ -18,8 +18,8 @@ jobs:
         uses: ./.github/actions/ci-env
       - name: Install conda
         run: |
-          wget https://github.com/conda-forge/miniforge/releases/download/26.5.3-0/Miniforge3-26.5.3-0-MacOSX-x86_64.sh
-          bash Miniforge3-26.5.3-0-MacOSX-x86_64.sh -b -p ${CONDA}
+          wget https://github.com/conda-forge/miniforge/releases/download/26.5.3-0/Miniforge3-26.5.3-0-MacOSX-arm64.sh
+          bash Miniforge3-26.5.3-0-MacOSX-arm64.sh -b -p ${CONDA}
       - name: Remove homebrew
         run: |
           echo "Removing homebrew to avoid conflicts."
