@@ -579,6 +579,10 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   params.permuteDeg4Nodes = permuteDeg4Nodes;
   params.forceRDKit = forceRDKit;
   params.useRingTemplates = useRingTemplates;
+  // This overload predates branch-depth prioritization. Preserve its layout
+  // and sampling behavior; callers that want the new mode use the parameter
+  // object overload.
+  params.useBranchDepthPrioritization = false;
   return compute2DCoords(mol, params);
 }
 
@@ -619,15 +623,14 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
                        params.useBranchDepthPrioritization);
 
 #if 1
-  // Random sampling improves density, but its flips can undo the branch order
-  // selected above. Branch-depth mode therefore keeps its deterministic
-  // initial zig-zag instead of running the sampler.
+  // Explicit sampling settings take precedence over branch ordering. With the
+  // default zero samples, branch-depth mode keeps its deterministic initial
+  // zig-zag and uses targeted collision repair instead.
   for (auto &eri : efrags) {
     // either sample the 2D space by randomly flipping rotatable
     // bonds in the structure or flip only bonds along the shortest
     // path between colliding atoms - don't do both
-    if (!params.useBranchDepthPrioritization && (params.nSamples > 0) &&
-        (params.nFlipsPerSample > 0)) {
+    if ((params.nSamples > 0) && (params.nFlipsPerSample > 0)) {
       eri.randomSampleFlipsAndPermutations(
           params.nFlipsPerSample, params.nSamples, params.sampleSeed, nullptr,
           0.0, params.permuteDeg4Nodes);
@@ -731,14 +734,13 @@ unsigned int compute2DCoordsMimicDistMat(
   computeInitialCoords(mol, nullptr, efrags, false,
                        useBranchDepthPrioritization);
 
-  // Random flips break branch-depth-prioritized zig-zags, so keep the existing
-  // distance-matrix sampling behavior only when that layout mode is disabled.
+  // This API promises to optimize against dmat. Branch-depth prioritization
+  // only changes the initial coordinates; the requested distance-based search
+  // must still run and may alter that initial branch ordering.
   for (auto &eri : efrags) {
-    if (!useBranchDepthPrioritization) {
-      eri.randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples,
-                                           sampleSeed, dmat, weightDistMat,
-                                           permuteDeg4Nodes);
-    }
+    eri.randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples, sampleSeed,
+                                         dmat, weightDistMat,
+                                         permuteDeg4Nodes);
   }
   if (canonOrient && efrags.size()) {
     // canonicalize the orientation of the fragment so that the

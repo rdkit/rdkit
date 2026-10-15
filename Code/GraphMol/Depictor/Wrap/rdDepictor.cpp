@@ -371,8 +371,8 @@ BOOST_PYTHON_MODULE(rdDepictor) {
                   and bond crossings\n\n\
      useBranchDepthPrioritization - prefer deeper acyclic branches while\n\
                   building the initial zig-zag layout. This tends to keep the\n\
-                  longest path visually continuous. Random flip sampling is\n\
-                  skipped when enabled. (default=true)\n\n\
+                  longest path visually continuous. Explicit random sampling\n\
+                  still runs and may change that layout. (default=true)\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(
@@ -415,9 +415,9 @@ BOOST_PYTHON_MODULE(rdDepictor) {
      forceRDKit - use RDKit to generate coordinates even if \n\
                   preferCoordGen is set to true\n\
      useBranchDepthPrioritization - prefer deeper acyclic branches while\n\
-                  building the initial zig-zag layout. nFlipsPerSample and\n\
-                  nSample are ignored when enabled so random flips do not undo\n\
-                  that ordering. (default=true)\n\n\
+                  building the initial zig-zag layout. Distance-matrix\n\
+                  sampling still runs and may change that ordering.\n\
+                  (default=true)\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(

@@ -653,9 +653,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
  public:
   //! Supply directed branch-depth scores used while embedding new neighbors.
   /// Passing nullptr preserves the historical rank-based layout.
-  void setBranchDepths(const BRANCH_DEPTH_MAP *depthMap) {
-    dp_branchDepths = depthMap;
-  }
+  void setBranchDepths(const BRANCH_DEPTH_MAP *depthMap);
 };
 }  // namespace RDDepict
 

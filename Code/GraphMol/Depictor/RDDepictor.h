@@ -95,9 +95,9 @@ struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
   bool useBranchDepthPrioritization = true;
   //!< Prefer deeper acyclic branches while constructing the initial zig-zag
   //!< layout. This tends to draw the longest path as a visually continuous
-  //!< chain. Random flip sampling is skipped when enabled because it can undo
-  //!< the selected branch order. Enabled by default; set this to false to
-  //!< retain the historical rank-based branch ordering.
+  //!< chain. Enabled by default; set this to false to retain the historical
+  //!< rank-based branch ordering. Explicit random-sampling settings take
+  //!< precedence and may change the prioritized layout.
 };
 
 //! \brief Generate 2D coordinates (a depiction) for a molecule
@@ -206,8 +206,8 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
         preferCoordGen is set to true
 
   \param useBranchDepthPrioritization - prefer deeper acyclic branches while
-        constructing the initial zig-zag layout. When true, nFlipsPerSample and
-        nSamples are ignored so random flips do not undo the branch ordering.
+        constructing the initial zig-zag layout. Explicit random-sampling
+        settings still run and may change the prioritized layout.
 
   \return ID of the conformation added to the molecule containing the
   2D coordinates

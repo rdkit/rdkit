@@ -174,6 +174,93 @@ class TestCase(unittest.TestCase):
     self.assertEqual(disabled_mol.GetConformer().GetNumAtoms(),
                      disabled_mol.GetNumAtoms())
 
+  def testBranchDepthPrioritizationGeometry(self):
+    """Prioritized branches are applied at the initial attachment point."""
+    coord_map = {
+      0: Geometry.Point2D(0.0, 0.0),
+      1: Geometry.Point2D(1.5, 0.0),
+    }
+
+    # At a degree-three junction, the deeper branch is assigned the preferred
+    # zig-zag side even though the supplied coordinates seeded the fragment.
+    mol = Chem.MolFromSmiles('CC(C)CCCC')
+    rdDepictor.Compute2DCoords(
+      mol, canonOrient=False, coordMap=coord_map,
+      useBranchDepthPrioritization=True)
+    conf = mol.GetConformer()
+    self.assertGreater(conf.GetAtomPosition(2).y,
+                       conf.GetAtomPosition(3).y)
+
+    # Two equally deep continuations occupy opposite sides of a balanced
+    # degree-four junction, while the short branch continues straight.
+    mol = Chem.MolFromSmiles('CC(CC)(CC)C')
+    rdDepictor.Compute2DCoords(
+      mol, canonOrient=False, coordMap=coord_map,
+      useBranchDepthPrioritization=True)
+    conf = mol.GetConformer()
+    center = conf.GetAtomPosition(1)
+    self.assertAlmostEqual(conf.GetAtomPosition(2).x, center.x, 6)
+    self.assertAlmostEqual(conf.GetAtomPosition(4).x, center.x, 6)
+    self.assertLess(conf.GetAtomPosition(2).y, center.y)
+    self.assertGreater(conf.GetAtomPosition(4).y, center.y)
+    self.assertAlmostEqual(conf.GetAtomPosition(6).y, center.y, 6)
+    self.assertGreater(conf.GetAtomPosition(6).x, center.x)
+
+    # With unequal degree-four branches, the two deepest branches take the
+    # opposing side positions and the shortest branch remains straight.
+    mol = Chem.MolFromSmiles('CC(C)(CC)CCCC')
+    rdDepictor.Compute2DCoords(
+      mol, canonOrient=False, coordMap=coord_map,
+      useBranchDepthPrioritization=True)
+    conf = mol.GetConformer()
+    center = conf.GetAtomPosition(1)
+    self.assertAlmostEqual(conf.GetAtomPosition(3).x, center.x, 6)
+    self.assertAlmostEqual(conf.GetAtomPosition(5).x, center.x, 6)
+    self.assertLess(conf.GetAtomPosition(3).y, center.y)
+    self.assertGreater(conf.GetAtomPosition(5).y, center.y)
+    self.assertAlmostEqual(conf.GetAtomPosition(2).y, center.y, 6)
+    self.assertGreater(conf.GetAtomPosition(2).x, center.x)
+
+  def testBranchDepthPrioritizationHonorsSampling(self):
+    """Explicit sampling still takes precedence over the initial ordering."""
+    file_name = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol',
+                             'Depictor', 'test_data', '7UPJ_xtal.mol')
+    unsampled = Chem.MolFromMolFile(file_name)
+    sampled = Chem.Mol(unsampled)
+    rdDepictor.Compute2DCoords(
+      unsampled, canonOrient=False, useBranchDepthPrioritization=True)
+    rdDepictor.Compute2DCoords(
+      sampled, canonOrient=False, nFlipsPerSample=3, nSample=100,
+      sampleSeed=100, permuteDeg4Nodes=True,
+      useBranchDepthPrioritization=True)
+    unsampled_conf = unsampled.GetConformer()
+    sampled_conf = sampled.GetConformer()
+    self.assertTrue(any(
+      not ptEq(unsampled_conf.GetAtomPosition(atom_idx),
+               sampled_conf.GetAtomPosition(atom_idx))
+      for atom_idx in range(unsampled.GetNumAtoms())))
+
+  def testBranchDepthPrioritizationHonorsDistanceMatrix(self):
+    """Distance-matrix sampling remains active with branch ordering enabled."""
+    smiles = 'CCCCCCCC'
+    atom_count = Chem.MolFromSmiles(smiles).GetNumAtoms()
+    matrix_size = atom_count * (atom_count - 1) // 2
+
+    endpoint_distances = []
+    for requested_distance in (1.0, 10.0):
+      mol = Chem.MolFromSmiles(smiles)
+      distance_matrix = np.full(matrix_size, requested_distance)
+      rdDepictor.Compute2DCoordsMimicDistmat(
+        mol, distance_matrix, canonOrient=False, weightDistMat=1.0,
+        nFlipsPerSample=3, nSample=100, sampleSeed=42,
+        useBranchDepthPrioritization=True)
+      conf = mol.GetConformer()
+      endpoint_distances.append(
+        (conf.GetAtomPosition(0) -
+         conf.GetAtomPosition(atom_count - 1)).Length())
+
+    self.assertLess(endpoint_distances[0], endpoint_distances[1])
+
   def test3IssueSF1526844(self):
     t = Chem.MolFromSmiles('c1nc(N)ccc1')
     rdDepictor.Compute2DCoords(t, canonOrient=False)
@@ -207,8 +294,8 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 'test_data/7UPJ_xtal.mol'))
 
-    # These reference coordinates exercise the historical sampling path, which
-    # is intentionally skipped by branch-depth prioritization.
+    # These reference coordinates were generated with the historical
+    # rank-based initial ordering, so request that ordering explicitly.
     rdDepictor.Compute2DCoords(
       mol, canonOrient=False, useBranchDepthPrioritization=False)
     self.assertTrue(

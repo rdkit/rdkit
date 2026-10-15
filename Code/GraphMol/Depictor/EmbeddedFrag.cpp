@@ -376,6 +376,16 @@ void EmbeddedFrag::setupNewNeighs() {  // const RDKit::ROMol *mol) {
   d_attachPts = rankAtomsByRank(*dp_mol, d_attachPts);
 }
 
+void EmbeddedFrag::setBranchDepths(const BRANCH_DEPTH_MAP *depthMap) {
+  dp_branchDepths = depthMap;
+  // Fragments prepare their neighbor lists in their constructors. Refresh
+  // those lists after installing the depth map so that the first expansion
+  // from a ring, supplied-coordinate fragment, or single-atom seed uses the
+  // same branch ordering as atoms discovered later during expansion.
+  setupNewNeighs();
+  setupAttachmentPoints();
+}
+
 int EmbeddedFrag::findNeighbor(
     unsigned int aid) {  //, const RDKit::ROMol *mol) {
   PRECONDITION(dp_mol, "");

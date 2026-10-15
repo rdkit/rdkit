@@ -358,8 +358,8 @@ adjustMolBlockWedging is True)DOC")
                   and bond crossings
      useBranchDepthPrioritization - prefer deeper acyclic branches while
                   building the initial zig-zag layout. This tends to keep the
-                  longest path visually continuous. Random flip sampling is
-                  skipped when enabled. (default=True)
+                  longest path visually continuous. Explicit random sampling
+                  still runs and may change that layout. (default=True)
 
   RETURNS:
 
@@ -399,9 +399,9 @@ adjustMolBlockWedging is True)DOC")
      forceRDKit - use RDKit to generate coordinates even if
                   preferCoordGen is set to true
      useBranchDepthPrioritization - prefer deeper acyclic branches while
-                  building the initial zig-zag layout. nFlipsPerSample and
-                  nSample are ignored when enabled so random flips do not undo
-                  that ordering. (default=True)
+                  building the initial zig-zag layout. Distance-matrix
+                  sampling still runs and may change that ordering.
+                  (default=True)
 
   RETURNS:
 
