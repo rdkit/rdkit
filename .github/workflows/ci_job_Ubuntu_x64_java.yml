@@ -10,7 +10,7 @@ jobs:
     env:
       BOOST_VERSION: "1.92.0"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up CI environment
         uses: ./.github/actions/ci-env
       - name: Setup build environment

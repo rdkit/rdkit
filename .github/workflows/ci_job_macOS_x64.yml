@@ -14,7 +14,7 @@ jobs:
       PYTHON: python=3.14
       CONDA: /tmp/miniforge
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up CI environment
         uses: ./.github/actions/ci-env
       - name: Install conda
