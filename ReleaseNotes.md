@@ -1,3 +1,29 @@
+# Release_2026.09.2
+(Changes relative to Release_2026.09.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+## Highlights
+
+## Backwards incompatible changes:
+- `RingInfo` now stores its rings in flat, contiguous arrays, and most of its
+  C++ methods that returned references to `std::vector`s now return
+  non-owning `std::span`s or span-based views. Specifically,
+  `RingInfo::atomRings()` and `RingInfo::bondRings()` now return a
+  `RingInfo::RingsView` instead of `const VECT_INT_VECT &`, and
+  `RingInfo::atomMembers()` and `RingInfo::bondMembers()` now return
+  `std::span<const int>` instead of `const INT_VECT &`. These views are
+  invalidated when the `RingInfo` is modified. `RingInfo::addRing()` now takes
+  `std::span<const int>` arguments. The Python, Java, and C# APIs are unchanged.
+
+## Code removed in this release:
+
+## Deprecated code (to be removed in a future release):
+
+
 # Release_2026.09.1
 (Changes relative to Release_2026.03.1)
 
