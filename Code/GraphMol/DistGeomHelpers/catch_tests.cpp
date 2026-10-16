@@ -3230,6 +3230,8 @@ M  END)CTAB"_ctab;
 
   CHECK_THAT(mmat->getUpperBound(21, 8),
              Catch::Matchers::WithinAbs(mmat->getUpperBound(22, 36), 5.e-1));
+  CHECK(mmat->getUpperBound(21, 8) > 3.5);  // TRANS
+  CHECK(mmat->getUpperBound(22, 8) < 3.0);  // CIS
   CHECK_THAT(mmat->getUpperBound(22, 8),
              Catch::Matchers::WithinAbs(mmat->getUpperBound(21, 36), 5.e-1));
   CHECK_THAT(mmat->getLowerBound(21, 8),
