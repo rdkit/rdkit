@@ -820,33 +820,49 @@ struct FailingProperty : public Descriptors::PropertyFunctor {
 
 struct BadAllocProperty : public Descriptors::PropertyFunctor {
   BadAllocProperty() : PropertyFunctor("BadAlloc", "1.0.0") {}
+  // bad_alloc is rethrown whatever the failure mode says
+  Descriptors::PropertyFailureMode failureMode() const override {
+    return Descriptors::PropertyFailureMode::DEFAULT_ZERO;
+  }
   double operator()(const ROMol &) const override { throw std::bad_alloc(); }
 };
 
-// stands in for a Python-defined property: flagged as Python-defined and
-// throws, so the exception must reach the caller
-struct PythonLikeProperty : public Descriptors::PropertyFunctor {
-  PythonLikeProperty() : PropertyFunctor("PythonLikeFail", "1.0.0") {}
-  bool isPythonDefined() const override { return true; }
+// always throws, with THROW failure mode, so the exception must reach the
+// caller
+struct ThrowModeProperty : public Descriptors::PropertyFunctor {
+  ThrowModeProperty() : PropertyFunctor("ThrowMode", "1.0.0") {}
+  Descriptors::PropertyFailureMode failureMode() const override {
+    return Descriptors::PropertyFailureMode::THROW;
+  }
   double operator()(const ROMol &) const override {
-    throw ValueErrorException("python-like failure");
+    throw ValueErrorException("throw mode failure");
   }
 };
 
-// records the id of the thread each call runs on; isPython sets the
-// Python-defined flag without calling any Python code
+// like FailingProperty, but failures give 0.0
+struct ZeroModeProperty : public Descriptors::PropertyFunctor {
+  ZeroModeProperty() : PropertyFunctor("ZeroMode", "1.0.0") {}
+  Descriptors::PropertyFailureMode failureMode() const override {
+    return Descriptors::PropertyFailureMode::DEFAULT_ZERO;
+  }
+  double operator()(const ROMol &mol) const override {
+    if (mol.getNumAtoms() == 1) {
+      throw ValueErrorException("single atom");
+    }
+    return mol.getNumAtoms();
+  }
+};
+
+// records the id of the thread each call runs on
 struct ThreadRecordingProperty : public Descriptors::PropertyFunctor {
-  bool d_isPython;
   std::shared_ptr<std::mutex> d_mutex;
   std::shared_ptr<std::vector<std::thread::id>> d_ids;
-  ThreadRecordingProperty(const std::string &name, bool isPython,
+  ThreadRecordingProperty(const std::string &name,
                           std::shared_ptr<std::mutex> mutex,
                           std::shared_ptr<std::vector<std::thread::id>> ids)
       : PropertyFunctor(name, "1.0.0"),
-        d_isPython(isPython),
         d_mutex(std::move(mutex)),
         d_ids(std::move(ids)) {}
-  bool isPythonDefined() const override { return d_isPython; }
   double operator()(const ROMol &mol) const override {
     {
       std::lock_guard<std::mutex> lock(*d_mutex);
@@ -1035,50 +1051,68 @@ TEST_CASE("Properties::computePropertiesForMols", "[2D][Properties]") {
   }
 }
 
-TEST_CASE("computePropertiesForMols python-defined properties",
-          "[2D][Properties]") {
+TEST_CASE("computePropertiesForMols failure modes", "[2D][Properties]") {
   // constructing a Properties registers the built-in descriptors
   Descriptors::Properties warm;
   auto ms = parseBatch();
   auto ptrs = asPtrs(ms);
 
-  SECTION("detection follows the instance") {
-    PropertiesFromFunctors mixed(
-        {boost::shared_ptr<Descriptors::PropertyFunctor>(
-             new PythonLikeProperty()),
-         Descriptors::Properties::getProperty("NumHeavyAtoms")});
-    CHECK(mixed.hasPythonProperties());
-    PropertiesFromFunctors native(
-        {boost::shared_ptr<Descriptors::PropertyFunctor>(new FailingProperty()),
-         Descriptors::Properties::getProperty("NumHeavyAtoms")});
-    CHECK(!native.hasPythonProperties());
-  }
-
-  SECTION("python-defined exceptions propagate") {
-    PropertiesFromFunctors mixed(
-        {boost::shared_ptr<Descriptors::PropertyFunctor>(
-             new PythonLikeProperty()),
+  SECTION("THROW-mode exceptions propagate") {
+    PropertiesFromFunctors p(
+        {boost::shared_ptr<Descriptors::PropertyFunctor>(new ThrowModeProperty),
          Descriptors::Properties::getProperty("NumHeavyAtoms")});
     for (int numThreads : {1, 4}) {
       INFO("numThreads: " << numThreads);
-      REQUIRE_THROWS_AS(mixed.computePropertiesForMols(ptrs, numThreads),
+      REQUIRE_THROWS_AS(p.computePropertiesForMols(ptrs, numThreads),
                         ValueErrorException);
     }
   }
 
-  SECTION("python-defined properties stay on the calling thread") {
-    // eight distinct molecules and four requested threads: without the core
-    // clamp, workers would run the functor on other threads
-    auto mutex = std::make_shared<std::mutex>();
-    auto ids = std::make_shared<std::vector<std::thread::id>>();
+  SECTION("DEFAULT_ZERO gives 0, DEFAULT_NAN gives NaN") {
     PropertiesFromFunctors p(
-        {boost::shared_ptr<Descriptors::PropertyFunctor>(
-             new ThreadRecordingProperty("PyRecordCaller", true, mutex, ids)),
+        {boost::shared_ptr<Descriptors::PropertyFunctor>(new ZeroModeProperty),
+         boost::shared_ptr<Descriptors::PropertyFunctor>(new FailingProperty),
          Descriptors::Properties::getProperty("NumHeavyAtoms")});
-    p.computePropertiesForMols(ptrs, 4);
-    REQUIRE(ids->size() == ptrs.size());
-    for (const auto &id : *ids) {
-      CHECK(id == std::this_thread::get_id());
+    auto m1 = "C"_smiles;
+    auto m2 = "CC"_smiles;
+    REQUIRE(m1);
+    REQUIRE(m2);
+    for (int numThreads : {1, 4}) {
+      INFO("numThreads: " << numThreads);
+      auto res = p.computePropertiesForMols({m1.get(), m2.get()}, numThreads);
+      REQUIRE(res.size() == 2);
+      CHECK(res[0][0] == 0.0);
+      CHECK(std::isnan(res[0][1]));
+      CHECK(res[0][2] == 1);
+      CHECK(res[1][0] == 2);
+      CHECK(res[1][1] == 2);
+      CHECK(res[1][2] == 2);
+    }
+  }
+
+  SECTION("bad_alloc ignores the failure mode") {
+    PropertiesFromFunctors p({boost::shared_ptr<Descriptors::PropertyFunctor>(
+        new BadAllocProperty)});
+    for (int numThreads : {1, 4}) {
+      INFO("numThreads: " << numThreads);
+      CHECK_THROWS_AS(p.computePropertiesForMols(ptrs, numThreads),
+                      std::bad_alloc);
+    }
+  }
+
+  SECTION("getProperties returns the instance's functors") {
+    std::vector<boost::shared_ptr<Descriptors::PropertyFunctor>> functors{
+        boost::shared_ptr<Descriptors::PropertyFunctor>(new ThrowModeProperty),
+        Descriptors::Properties::getProperty("NumHeavyAtoms"),
+        boost::shared_ptr<Descriptors::PropertyFunctor>(new ZeroModeProperty)};
+    PropertiesFromFunctors p(functors);
+    const auto &got = p.getProperties();
+    REQUIRE(got.size() == functors.size());
+    auto names = p.getPropertyNames();
+    REQUIRE(names.size() == functors.size());
+    for (size_t i = 0; i < got.size(); ++i) {
+      CHECK(got[i] == functors[i]);
+      CHECK(names[i] == got[i]->getName());
     }
   }
 
@@ -1087,7 +1121,7 @@ TEST_CASE("computePropertiesForMols python-defined properties",
     auto mutex = std::make_shared<std::mutex>();
     auto ids = std::make_shared<std::vector<std::thread::id>>();
     PropertiesFromFunctors p({boost::shared_ptr<Descriptors::PropertyFunctor>(
-        new ThreadRecordingProperty("NativeRecord", false, mutex, ids))});
+        new ThreadRecordingProperty("NativeRecord", mutex, ids))});
     p.computePropertiesForMols(ptrs, 4);
     REQUIRE(ids->size() == ptrs.size());
     bool sawOtherThread = false;
@@ -1100,22 +1134,19 @@ TEST_CASE("computePropertiesForMols python-defined properties",
 
   SECTION("registry replacement does not change an existing instance") {
     RegistryRestore restore;
-    auto mutex = std::make_shared<std::mutex>();
-    auto ids = std::make_shared<std::vector<std::thread::id>>();
-    Descriptors::Properties::registerProperty(
-        boost::shared_ptr<Descriptors::PropertyFunctor>(
-            new ThreadRecordingProperty("PythonLikeRegistryProbe", true, mutex,
-                                        ids)));
+    boost::shared_ptr<Descriptors::PropertyFunctor> original(
+        new ThrowModeProperty);
+    Descriptors::Properties::registerProperty(original);
     Descriptors::Properties instance(
-        std::vector<std::string>{"PythonLikeRegistryProbe"});
-    // same name, now a native functor
-    Descriptors::Properties::registerProperty(
-        boost::shared_ptr<Descriptors::PropertyFunctor>(
-            new ThreadRecordingProperty("PythonLikeRegistryProbe", false, mutex,
-                                        ids)));
-    CHECK(instance.hasPythonProperties());
-    CHECK(!Descriptors::Properties::getProperty("PythonLikeRegistryProbe")
-               ->isPythonDefined());
+        std::vector<std::string>{original->getName()});
+    // same name, different functor
+    boost::shared_ptr<Descriptors::PropertyFunctor> replacement(
+        new ThrowModeProperty);
+    Descriptors::Properties::registerProperty(replacement);
+    REQUIRE(instance.getProperties().size() == 1);
+    CHECK(instance.getProperties()[0] == original);
+    CHECK(Descriptors::Properties::getProperty(original->getName()) ==
+          replacement);
   }
 }
 

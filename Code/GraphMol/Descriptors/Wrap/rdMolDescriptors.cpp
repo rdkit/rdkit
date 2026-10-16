@@ -896,8 +896,20 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
     return python::call_method<double>(self, "__call__", boost::ref(mol));
   }
 
-  bool isPythonDefined() const override { return true; }
+  // exceptions from Python callbacks must reach the caller
+  RDKit::Descriptors::PropertyFailureMode failureMode() const override {
+    return RDKit::Descriptors::PropertyFailureMode::THROW;
+  }
 };
+
+// The Python callbacks need the GIL and their exceptions must be restored on
+// the calling thread, so batches containing them are not run on workers
+bool hasPythonProperties(const RDKit::Descriptors::Properties &props) {
+  const auto &functors = props.getProperties();
+  return std::any_of(functors.begin(), functors.end(), [](const auto &f) {
+    return dynamic_cast<const PythonPropertyFunctor *>(f.get()) != nullptr;
+  });
+}
 
 int registerPropertyHelper(python::object o) {
   // We increase the refcount to make sure the original Python object
@@ -944,8 +956,8 @@ PyObject *computePropertiesForMolsHelper(
   }
 
   std::vector<std::vector<double>> rows;
-  if (self.hasPythonProperties()) {
-    // python-based properties need the GIL, there's no benefit to threading
+  if (hasPythonProperties(self)) {
+    // Python callbacks need the GIL, so there's no benefit to threading
     rows = self.computePropertiesForMols(mols, 1);
   } else {
     NOGIL gil;

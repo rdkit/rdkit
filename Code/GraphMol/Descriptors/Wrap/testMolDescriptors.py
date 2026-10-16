@@ -2,6 +2,7 @@ import gc
 from os import environ
 from pathlib import Path
 import re
+import threading
 import unittest
 
 import numpy as np
@@ -580,12 +581,15 @@ class TestCase(unittest.TestCase):
 
   def testComputePropertiesBatchPythonProperty(self):
 
+    callerIds = []
+
     class BatchTestNumAtoms(Descriptors.PropertyFunctor):
 
       def __init__(self):
         Descriptors.PropertyFunctor.__init__(self, 'BatchTestNumAtoms', '1.0.0')
 
       def __call__(self, mol):
+        callerIds.append(threading.get_ident())
         if mol.HasProp('_batchTestFail'):
           raise ValueError('batch test failure')
         return mol.GetNumAtoms()
@@ -594,7 +598,11 @@ class TestCase(unittest.TestCase):
     props = rdMD.Properties(['BatchTestNumAtoms', 'exactmw'])
     mols = self._batchMols()
     ref = np.array([list(props.ComputeProperties(m)) for m in self._batchMols()])
+    callerIds.clear()
     np.testing.assert_array_equal(props.ComputeProperties(mols, numThreads=4), ref)
+    # Python properties run on the calling thread whatever numThreads is
+    self.assertEqual(len(callerIds), len(mols))
+    self.assertEqual(set(callerIds), {threading.get_ident()})
 
     mols[2].SetProp('_batchTestFail', '1')
     with self.assertRaisesRegex(ValueError, 'batch test failure'):

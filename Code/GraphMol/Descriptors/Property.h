@@ -44,6 +44,14 @@
 
 namespace RDKit {
 namespace Descriptors {
+//! What computePropertiesForMols() does when a property's calculation
+//! throws a std::exception (std::bad_alloc is always rethrown)
+enum class PropertyFailureMode {
+  THROW,         //!< rethrow to the caller once all workers have finished
+  DEFAULT_ZERO,  //!< use 0.0 for that value
+  DEFAULT_NAN    //!< use NaN for that value
+};
+
 struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
   // Registry of property functions
   //  See REGISTER_DESCRIPTOR
@@ -71,11 +79,13 @@ struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
   //! Return the properties version
   const std::string getVersion() const { return propVersion; }
 
-  //! Return true if this functor evaluates Python code. Python-defined
-  //! functors are always evaluated on the calling thread, and exceptions they
-  //! raise are rethrown rather than turned into NaN. The answer must not
-  //! change for the lifetime of the functor.
-  virtual bool isPythonDefined() const { return false; }
+  //! What computePropertiesForMols() does if this property throws a
+  //! std::exception. Only the batch path uses this; computeProperties() does
+  //! not catch exceptions. The answer must not change for the lifetime of the
+  //! functor.
+  virtual PropertyFailureMode failureMode() const {
+    return PropertyFailureMode::DEFAULT_NAN;
+  }
 };
 
 //! Holds a collection of properties for computation purposes
@@ -104,13 +114,13 @@ class RDKIT_DESCRIPTORS_EXPORT Properties {
             computeProperties(*mols[i]) returns, in getPropertyNames() order.
 
     Notes:
-      - if calculating a value throws a std::exception (other than
-        std::bad_alloc) the value is set to NaN, unless the property is
-        Python-defined (see PropertyFunctor::isPythonDefined()). Exceptions
-        from Python-defined properties and std::bad_alloc are rethrown once all
-        worker threads have finished.
-      - if any property is Python-defined, the molecules are processed on the
-        calling thread, whatever \c numThreads is.
+      - if calculating a value throws a std::exception, the property's
+        failureMode() decides the result: the value is set to 0.0 or NaN, or
+        the exception is rethrown. std::bad_alloc is always rethrown.
+        Rethrown exceptions reach the caller once all worker threads have
+        finished.
+      - properties that must run on the calling thread (e.g. Python
+        callbacks) need \c numThreads = 1; the Python wrappers arrange this.
       - each distinct molecule is processed only once, by a single thread, so
         molecules may appear more than once in \c mols
       - property calculators may cache results on the molecules, so the
@@ -119,8 +129,10 @@ class RDKIT_DESCRIPTORS_EXPORT Properties {
   */
   std::vector<std::vector<double>> computePropertiesForMols(
       const std::vector<const RDKit::ROMol *> &mols, int numThreads = 1) const;
-  //! Return true if any property in this instance is Python-defined
-  bool hasPythonProperties() const;
+  //! The functors this instance computes, in getPropertyNames() order
+  const std::vector<boost::shared_ptr<PropertyFunctor>> &getProperties() const {
+    return m_properties;
+  }
   void annotateProperties(RDKit::ROMol &mol) const;
 
   //! Register a property function - takes ownership
