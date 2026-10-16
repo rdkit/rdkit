@@ -59,7 +59,7 @@ nb::tuple bitsetToTuple(const boost::dynamic_bitset<T> &bs) {
 
 struct TautomerEnumeratorCallbackTrampoline
     : public MolStandardize::TautomerEnumeratorCallback {
-  NB_TRAMPOLINE(MolStandardize::TautomerEnumeratorCallback, 1);
+  NB_TRAMPOLINE(MolStandardize::TautomerEnumeratorCallback);
 
   bool operator()(
       const ROMol &mol,
@@ -128,17 +128,13 @@ void setCallbackHelper(MolStandardize::TautomerEnumerator &te,
   // Verify that the Python subclass has a properly overridden __call__:
   // - it must be defined in the immediate class dict (not just inherited)
   // - it must be callable
-  nb::handle cls(PyObject_Type(callback.ptr()));
-  nb::object cls_dict = cls.attr("__dict__");
-  cls.dec_ref();
-
-  if (!cls_dict.is_valid() ||
-      !nb::cast<bool>(cls_dict.attr("__contains__")("__call__"))) {
+  nb::dict cls_dict = nb::type_dict(callback.type());
+  if (!cls_dict.is_valid() || !cls_dict.contains("__call__")) {
     throw nb::attribute_error(
         "TautomerEnumeratorCallback subclass must override __call__");
   }
 
-  nb::object call_attr = cls_dict.attr("__getitem__")("__call__");
+  nb::object call_attr = cls_dict["__call__"];
   if (!PyCallable_Check(call_attr.ptr())) {
     throw nb::attribute_error(
         "TautomerEnumeratorCallback.__call__ must be callable");
