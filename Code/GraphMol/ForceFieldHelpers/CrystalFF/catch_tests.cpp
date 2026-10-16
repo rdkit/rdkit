@@ -16,12 +16,15 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
 
+#include <ForceField/FiniteDifference.h>
 #include <ForceField/ForceField.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/MolOps.h>
 
 #include "GaussianTorsionAngleContribs.h"
+#include "TorsionAngleContribs.h"
+#include "TorsionAngleM6.h"
 #include "TorsionPreferences.h"
 
 using namespace RDKit;
@@ -380,4 +383,51 @@ TEST_CASE("GaussianTorsionContribsLookupTable") {
     CHECK_THAT(gradients_c[0], Catch::Matchers::WithinAbs(0.0, 1e-10));
     CHECK_THAT(gradients_a[0], Catch::Matchers::WithinAbs(0.0, 1e-10));
   }
+}
+
+namespace {
+// four points with a torsion angle of phi (in degrees) about the x axis
+std::vector<RDGeom::Point3D> torsionPoints(double phi) {
+  phi *= PI / 180.0;
+  return {{0.0, 1.5, 0.0},
+          {0.0, 0.0, 0.0},
+          {1.5, 0.0, 0.0},
+          {1.5, 1.5 * std::cos(phi), 1.5 * std::sin(phi)}};
+}
+
+void checkTorsionGradients(bool useM6Contrib) {
+  // only the 5-fold term, only the 6-fold term, and all six terms with
+  // mixed signs
+  const std::vector<std::pair<std::vector<double>, std::vector<int>>> params{
+      {{0.0, 0.0, 0.0, 0.0, 1.0, 0.0}, {1, 1, 1, 1, 1, 1}},
+      {{0.0, 0.0, 0.0, 0.0, 0.0, 1.0}, {1, 1, 1, 1, 1, 1}},
+      {{2.0, 0.5, 1.0, 0.7, 0.3, 0.8}, {1, -1, 1, -1, -1, 1}}};
+  for (const auto &[V, signs] : params) {
+    for (const auto phi : {15.0, 50.0, 85.0, 120.0, 165.0}) {
+      auto points = torsionPoints(phi);
+      ForceFields::ForceField ff;
+      for (auto &point : points) {
+        ff.positions().push_back(&point);
+      }
+      if (useM6Contrib) {
+        ff.contribs().emplace_back(
+            new ForceFields::CrystalFF::TorsionAngleContribM6(&ff, 0, 1, 2, 3,
+                                                              V, signs));
+      } else {
+        auto contrib = new ForceFields::CrystalFF::TorsionAngleContribs(&ff);
+        contrib->addContrib(0, 1, 2, 3, V, signs);
+        ff.contribs().emplace_back(contrib);
+      }
+      ff.initialize();
+      INFO("V: " << V[0] << " " << V[1] << " " << V[2] << " " << V[3] << " "
+                 << V[4] << " " << V[5] << ", phi: " << phi);
+      CHECK(ForceFields::calcFiniteDifference(ff) < 1e-6);
+    }
+  }
+}
+}  // namespace
+
+TEST_CASE("github #8715: torsion gradients match finite differences") {
+  SECTION("TorsionAngleContribM6") { checkTorsionGradients(true); }
+  SECTION("TorsionAngleContribs") { checkTorsionGradients(false); }
 }
