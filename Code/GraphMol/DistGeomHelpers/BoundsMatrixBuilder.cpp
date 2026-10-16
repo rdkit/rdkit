@@ -827,7 +827,9 @@ Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
   if (stype > Bond::STEREOANY && bnd->getStereoAtoms().size() >= 2) {
     const auto &stAtoms = bnd->getStereoAtoms();
     if ((static_cast<unsigned int>(stAtoms[0]) != aid1) ^
-        (static_cast<unsigned int>(stAtoms[1]) != aid4)) {
+            (static_cast<unsigned int>(stAtoms[1]) != aid4) ||
+        (static_cast<unsigned int>(stAtoms[0]) != aid4) ^
+            (static_cast<unsigned int>(stAtoms[1]) != aid1)) {
       switch (stype) {
         case Bond::STEREOZ:
           stype = Bond::STEREOE;
