@@ -26,7 +26,9 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   test_big_endian(WORDS_BIGENDIAN)
 
   include(CheckCXXCompilerFlag)
-  find_package(EXPAT)
+  # ChemDraw, expatpp, RDChemDrawLib and RDChemDrawReactionLib all link
+  # EXPAT::EXPAT, so fail here with a clear message if expat is missing.
+  find_package(EXPAT REQUIRED)
 
 
   if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
@@ -51,8 +53,10 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     add_definitions("-DPLATFORM_LITTLEENDIAN")
   endif(WORDS_BIGENDIAN)
 
-  # we don't want to install expat, this is statically linked in to the ChemDraw lib
-  # however, we don't want to install it so use the undocumented EXCLUDE_FROM_ALL
+  # expatpp (the C++ wrapper) is a static library linked into the ChemDraw libs;
+  # we don't want to install it so use the undocumented EXCLUDE_FROM_ALL.
+  # expat itself is not bundled: it is whatever EXPAT::EXPAT resolves to,
+  # typically the shared system libexpat, which is then a runtime dependency.
   add_subdirectory(chemdraw/expatpp EXCLUDE_FROM_ALL)
 
   include_directories(
@@ -63,7 +67,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   file(GLOB CHEMDRAW_SOURCE "chemdraw/chemdraw/*.cpp")
   rdkit_library(ChemDraw ${CHEMDRAW_SOURCE} SHARED)
   target_compile_definitions(ChemDraw PRIVATE CHEMDRAW_BUILD)
-  target_link_libraries(ChemDraw PRIVATE expatpp)
+  target_link_libraries(ChemDraw PRIVATE expatpp EXPAT::EXPAT)
 
   # export all the symbols for ChemDraw on MSVC
   if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR((NOT MSVC) AND WIN32))
@@ -162,6 +166,13 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     # ${EXPAT_SRC}
     SHARED LINK_LIBRARIES ChemDraw
     CIPLabeler ChemTransforms GraphMol RDGeneral Depictor SubstructMatch SmilesParse)
+
+  # expatpp is an external target without an _static variant. Link it directly
+  # so rdkit_library does not rewrite its name for static builds (including SWIG).
+  target_link_libraries(RDChemDrawLib PRIVATE expatpp)
+  if(TARGET RDChemDrawLib_static)
+    target_link_libraries(RDChemDrawLib_static PRIVATE expatpp)
+  endif()
 
   rdkit_library(RDChemDrawReactionLib
     chemdrawreaction.cpp

@@ -256,8 +256,6 @@ def GetAtomicWeightsForFingerprintGenerator(refMol, probeMol, fpg, useCounts=Fal
 
   baseSimilarity = metric(refFP, probeFP)
 
-  dmat = Chem.GetDistanceMatrix(probeMol)
-
   atomsPerBit = probeAo.GetAtomsPerBit()
   atomFps = [copy.deepcopy(probeFP) for i in range(probeMol.GetNumAtoms())]
   for bit, entries in atomsPerBit.items():

@@ -115,7 +115,7 @@
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
       return $null;
     }
-    catch (std::exception &e) {
+    catch (std::exception &) {
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, "error");
       return $null;
     }
@@ -209,6 +209,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../RWMol.i"
 %include "../Bond.i"
 %include "../BondIterators.i"
+%include "../Alignment.i"
 %include "../Atom.i"
 %include "../AtomIterators.i"
 %include "../AtomPairs.i"

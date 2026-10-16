@@ -99,7 +99,12 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
     } else if (x.bondStereo > y.bondStereo) {
       return 1;
     }
-    auto scdiv = x.nbrSymClass / div - y.nbrSymClass / div;
+    int scdiv;
+    if (div != 1) {
+      scdiv = x.nbrSymClass / div - y.nbrSymClass / div;
+    } else {
+      scdiv = x.nbrSymClass - y.nbrSymClass;
+    }
     if (scdiv) {
       return scdiv;
     }
@@ -836,8 +841,7 @@ template <typename CompareFunc>
 void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
                int mode, std::vector<int> &order, std::vector<int> &count,
                int &activeset, std::vector<int> &next,
-               std::vector<int> &changed,
-               std::vector<char> &touchedPartitions,
+               std::vector<int> &changed, std::vector<char> &touchedPartitions,
                std::vector<int> *hanoiTemp = nullptr) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
@@ -945,8 +949,7 @@ void initFragmentCanonAtoms(const ROMol &mol,
                             const std::vector<std::string> *bondSymbols,
                             const boost::dynamic_bitset<> &atomsInPlay,
                             const boost::dynamic_bitset<> &bondsInPlay,
-                            std::span<int> neighborIds,
-                            bool needsInit);
+                            std::span<int> neighborIds, bool needsInit);
 template <typename T>
 void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
                      bool useSpecial = false, bool useChirality = false,

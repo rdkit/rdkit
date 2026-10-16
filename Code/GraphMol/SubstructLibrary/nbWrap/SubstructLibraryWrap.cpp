@@ -584,47 +584,35 @@ void wrap_substructlibrary(nb::module_ &m) {
       }))
       .def(nb::new_([](std::string pkl) { return new SubstructLibrary(pkl); }))
       .def(nb::new_([](nb::handle mols_h) {
-             MolHolderBase *mols = nb::cast<MolHolderBase *>(mols_h);
              return new SubstructLibrary(
-                 nb::detail::shared_from_python<MolHolderBase>(mols, mols_h));
+                 nb::cast<boost::shared_ptr<MolHolderBase>>(mols_h));
            }),
            "molecules"_a)
       .def(nb::new_([](nb::handle mols_h, nb::handle second) {
              // The second arg can be fingerprints (FPHolderBase) or keys
              // (KeyHolderBase) or None.
-             MolHolderBase *mols = nb::cast<MolHolderBase *>(mols_h);
-             boost::shared_ptr<MolHolderBase> molPtr =
-                 nb::detail::shared_from_python<MolHolderBase>(mols, mols_h);
+             auto molPtr = nb::cast<boost::shared_ptr<MolHolderBase>>(mols_h);
              if (second.is_none()) {
                return new SubstructLibrary(molPtr);
              } else if (nb::isinstance<FPHolderBase>(second)) {
-               FPHolderBase *fps = nb::cast<FPHolderBase *>(second);
-               return new SubstructLibrary(
-                   molPtr,
-                   nb::detail::shared_from_python<FPHolderBase>(fps, second));
+               auto fps = nb::cast<boost::shared_ptr<FPHolderBase>>(second);
+               return new SubstructLibrary(molPtr, fps);
              } else {
-               KeyHolderBase *keys = nb::cast<KeyHolderBase *>(second);
-               return new SubstructLibrary(
-                   molPtr,
-                   nb::detail::shared_from_python<KeyHolderBase>(keys, second));
+               auto keys = nb::cast<boost::shared_ptr<KeyHolderBase>>(second);
+               return new SubstructLibrary(molPtr, keys);
              }
            }),
            "molecules"_a, "fingerprints_or_keys"_a.none())
       .def(nb::new_([](nb::handle mols_h, nb::handle fps_h, nb::handle keys_h) {
-             MolHolderBase *mols = nb::cast<MolHolderBase *>(mols_h);
-             boost::shared_ptr<MolHolderBase> molPtr =
-                 nb::detail::shared_from_python<MolHolderBase>(mols, mols_h);
+             auto molPtr = nb::cast<boost::shared_ptr<MolHolderBase>>(mols_h);
+
              boost::shared_ptr<FPHolderBase> fpHolder;
              if (!fps_h.is_none()) {
-               FPHolderBase *fps = nb::cast<FPHolderBase *>(fps_h);
-               fpHolder =
-                   nb::detail::shared_from_python<FPHolderBase>(fps, fps_h);
+               fpHolder = nb::cast<boost::shared_ptr<FPHolderBase>>(fps_h);
              }
              boost::shared_ptr<KeyHolderBase> keyHolder;
              if (!keys_h.is_none()) {
-               KeyHolderBase *keys = nb::cast<KeyHolderBase *>(keys_h);
-               keyHolder =
-                   nb::detail::shared_from_python<KeyHolderBase>(keys, keys_h);
+               keyHolder = nb::cast<boost::shared_ptr<KeyHolderBase>>(keys_h);
              }
              return new SubstructLibrary(molPtr, fpHolder, keyHolder);
            }),

@@ -39,7 +39,6 @@
 #include <vector>
 #include <cstdint>
 #include <RDGeneral/BoostStartInclude.h>
-#include <cstdint>
 #include <any>
 #include <boost/utility.hpp>
 #include <boost/lexical_cast.hpp>
@@ -308,8 +307,7 @@ struct RDValue {
   }
 
   static  // Given a type and an RDAnyValue - delete the appropriate structure
-      inline void
-      cleanup_rdvalue(RDValue &rdvalue) {
+      inline void cleanup_rdvalue(RDValue &rdvalue) {
     rdvalue.destroy();
   }
 };
@@ -354,9 +352,9 @@ inline void copy_rdvalue(RDValue &dest, const RDValue &src) {
 
 #ifdef RDK_32BIT_BUILD
 // avoid register pressure and spilling on 32 bit systems
-typedef const RDValue &RDValue_cast_t;
+using RDValue_cast_t = const RDValue &;
 #else
-typedef RDValue RDValue_cast_t;
+using RDValue_cast_t = RDValue;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////////

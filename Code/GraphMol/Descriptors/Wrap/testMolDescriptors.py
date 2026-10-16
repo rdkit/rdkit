@@ -1,7 +1,8 @@
-import unittest
+import gc
 from os import environ
 from pathlib import Path
 import re
+import unittest
 
 from rdkit import rdBase
 from rdkit import Chem, DataStructs
@@ -523,71 +524,49 @@ class TestCase(unittest.TestCase):
     except KeyError:
       pass
 
+  def testPropertiesMatchCalculators(self):
+    # Each registered property must be wired to the calculator of the same name. chi2v and chi2n
+    # were registered against calcChi3v/calcChi3n; nothing compared the two APIs, so the two names
+    # silently returned the chi3 values.
+    names = ['chi%d%s' % (i, v) for i in range(5) for v in 'nv']
+    names += ['kappa1', 'kappa2', 'kappa3']
+    # A halogenated molecule keeps the n and v variants apart. On a plain hydrocarbon several of
+    # the chi values coincide, which is enough to hide a mis-registration.
+    m = Chem.MolFromSmiles('BrCC(CBr)CBr')
+    props = rdMD.Properties(names)
+    computed = dict(zip(props.GetPropertyNames(), props.ComputeProperties(m)))
+    for name in names:
+      calculator = getattr(rdMD, 'Calc' + name[0].upper() + name[1:])
+      self.assertAlmostEqual(computed[name], calculator(m), 10,
+                             'Properties["%s"] does not match Calc%s%s' %
+                             (name, name[0].upper(), name[1:]))
+
   def testPythonDescriptorFunctor(self):
 
-    if hasattr(rdBase, '_wrapperType') and rdBase._wrapperType == 'nanobind':
-
-      def numAtoms(mol):
-        return mol.GetNumAtoms()
-
-      class NumAtoms(rdMD.PythonPropertyFunctor):
-
-        def __init__(self):
-          rdMD.PythonPropertyFunctor.__init__(self, numAtoms, "CustomNumAtoms", "1.0.0")
-    else:
-
-      class NumAtoms(Descriptors.PropertyFunctor):
-
-        def __init__(self):
-          Descriptors.PropertyFunctor.__init__(self, "CustomNumAtoms", "1.0.0")
-
-        def __call__(self, mol):
-          return mol.GetNumAtoms()
-
-    numAtoms = NumAtoms()
-    # numAtoms2 = NumAtoms()
-    rdMD.Properties.RegisterProperty(numAtoms)
-    props = rdMD.Properties(["CustomNumAtoms"])
-    self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
-
-    self.assertTrue("CustomNumAtoms" in rdMD.Properties.GetAvailableProperties())
-    # check memory
-    del numAtoms
-    self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
-    self.assertTrue("CustomNumAtoms" in rdMD.Properties.GetAvailableProperties())
-
-    m = Chem.MolFromSmiles("c1ccccc1")
-    properties = rdMD.Properties()
-    for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
-      print(name, value)
-
-    properties = rdMD.Properties(['exactmw', 'lipinskiHBA'])
-    for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
-      print(name, value)
-
-  def testPythonDescriptorFunctor2(self):
-    ''' NOTE: this test causes leak warnings in the nanobind wrappers '''
-
-    class NumAtoms2(Descriptors.PropertyFunctor):
+    class NumAtoms(Descriptors.PropertyFunctor):
 
       def __init__(self):
-        Descriptors.PropertyFunctor.__init__(self, "CustomNumAtoms2", "1.0.0")
+        Descriptors.PropertyFunctor.__init__(self, "CustomNumAtoms", "1.0.0")
 
       def __call__(self, mol):
         return mol.GetNumAtoms()
 
-    numAtoms2 = NumAtoms2()
-    # numAtoms2 = NumAtoms()
-    rdMD.Properties.RegisterProperty(numAtoms2)
-    props = rdMD.Properties(["CustomNumAtoms2"])
-    self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
-
-    self.assertTrue("CustomNumAtoms2" in rdMD.Properties.GetAvailableProperties())
-    # check memory
-    self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
-    self.assertTrue("CustomNumAtoms2" in rdMD.Properties.GetAvailableProperties())
-
     m = Chem.MolFromSmiles("c1ccccc1")
+    numAtoms = NumAtoms()
+    self.assertEqual(6, numAtoms(m))
+
+    rdMD.Properties.RegisterProperty(numAtoms)
+    props = rdMD.Properties(["CustomNumAtoms"])
+    self.assertTrue("CustomNumAtoms" in rdMD.Properties.GetAvailableProperties())
+    self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
+
+    # check memory
+    del numAtoms
+    gc.collect()
+
+    self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
+    self.assertTrue("CustomNumAtoms" in rdMD.Properties.GetAvailableProperties())
+
     properties = rdMD.Properties()
     for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
       print(name, value)
@@ -595,8 +574,6 @@ class TestCase(unittest.TestCase):
     properties = rdMD.Properties(['exactmw', 'lipinskiHBA'])
     for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(m)):
       print(name, value)
-    import gc
-    gc.collect()
 
   def testPropertyRanges(self):
     query = rdMD.MakePropertyRangeQuery("exactmw", 0, 1000)
@@ -843,6 +820,24 @@ class TestCase(unittest.TestCase):
       self.assertTrue(abs(sdf.GetVolume() - 431.35) < 0.05)
       self.assertTrue(abs(sdf.GetVDWVolume() - 119.296) < 0.05)
       self.assertTrue(abs(sdf.GetPolarVolume() - 21.35) < 0.05)
+
+      pts = sdf.GetSurfacePoints()
+      self.assertTrue(len(pts) == mol2.GetNumAtoms())
+      for i in range(len(pts)):
+        self.assertTrue(len(pts[i]) > 0)
+      # make sure calling the function again doesn't change the result
+      pts2 = sdf.GetSurfacePoints()
+      self.assertTrue(len(pts2) == mol2.GetNumAtoms())
+      for i in range(len(pts2)):
+        self.assertTrue(len(pts2[i]) == len(pts[i]))
+      # check getting all of the points (including those not on the surface)
+      all_pts = sdf.GetSurfacePoints(allPoints=True)
+      self.assertTrue(len(all_pts) == mol2.GetNumAtoms())
+      for i in range(len(all_pts)):
+        self.assertTrue(len(all_pts[i]) == 320)
+        self.assertTrue(len(all_pts[i]) >= len(pts[i]))
+
+        
 
 
 if __name__ == '__main__':

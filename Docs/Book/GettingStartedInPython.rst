@@ -331,19 +331,19 @@ molecule before generating the conformer. This is essential to get good structur
   cyclobutane
        RDKit          3D
   <BLANKLINE>
-   12 12  0  0  0  0  0  0  0  0999 V2000
-      1.0257    0.2442   -0.0991 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -0.2041    0.9236    0.4320 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -1.0443   -0.2424   -0.0253 C   0  0  0  0  0  0  0  0  0  0  0  0
-      0.2102   -0.9939   -0.3417 C   0  0  0  0  0  0  0  0  0  0  0  0
-      1.4192    0.7683   -0.9787 H   0  0  0  0  0  0  0  0  0  0  0  0
-      1.8181    0.1486    0.6820 H   0  0  0  0  0  0  0  0  0  0  0  0
-     -0.1697    1.0826    1.5236 H   0  0  0  0  0  0  0  0  0  0  0  0
-     -0.5360    1.8377   -0.1050 H   0  0  0  0  0  0  0  0  0  0  0  0
-     -1.6809   -0.0600   -0.8987 H   0  0  0  0  0  0  0  0  0  0  0  0
-     -1.6510   -0.6193    0.8225 H   0  0  0  0  0  0  0  0  0  0  0  0
-      0.4659   -1.7768    0.3858 H   0  0  0  0  0  0  0  0  0  0  0  0
-      0.3467   -1.3126   -1.3975 H   0  0  0  0  0  0  0  0  0  0  0  0
+    12 12  0  0  0  0  0  0  0  0999 V2000
+      1.0248    0.3041   -0.0998 C   0  0  0  0  0  0  0  0  0  0  0  0
+      -0.2411    0.9181    0.4409 C   0  0  0  0  0  0  0  0  0  0  0  0
+      -1.0337   -0.3015   -0.0127 C   0  0  0  0  0  0  0  0  0  0  0  0
+      0.2593   -0.9705   -0.3871 C   0  0  0  0  0  0  0  0  0  0  0  0
+      1.4161    0.8403   -0.9765 H   0  0  0  0  0  0  0  0  0  0  0  0
+      1.7864    0.2002    0.6974 H   0  0  0  0  0  0  0  0  0  0  0  0
+      -0.2401    1.0872    1.5327 H   0  0  0  0  0  0  0  0  0  0  0  0
+      -0.6297    1.7982   -0.1185 H   0  0  0  0  0  0  0  0  0  0  0  0
+      -1.7062   -0.1231   -0.8647 H   0  0  0  0  0  0  0  0  0  0  0  0
+      -1.5552   -0.7284    0.8705 H   0  0  0  0  0  0  0  0  0  0  0  0
+      0.5419   -1.7520    0.3599 H   0  0  0  0  0  0  0  0  0  0  0  0
+      0.3773   -1.2724   -1.4421 H   0  0  0  0  0  0  0  0  0  0  0  0
     1  2  1  0
     2  3  1  0
     3  4  1  0
@@ -370,10 +370,10 @@ If we don't want the Hs in our later analysis, they are easy to remove:
         RDKit          3D
   <BLANKLINE>
     4  4  0  0  0  0  0  0  0  0999 V2000
-      1.0257    0.2442   -0.0991 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -0.2041    0.9236    0.4320 C   0  0  0  0  0  0  0  0  0  0  0  0
-     -1.0443   -0.2424   -0.0253 C   0  0  0  0  0  0  0  0  0  0  0  0
-      0.2102   -0.9939   -0.3417 C   0  0  0  0  0  0  0  0  0  0  0  0
+      1.0248    0.3041   -0.0998 C   0  0  0  0  0  0  0  0  0  0  0  0
+      -0.2411    0.9181    0.4409 C   0  0  0  0  0  0  0  0  0  0  0  0
+      -1.0337   -0.3015   -0.0127 C   0  0  0  0  0  0  0  0  0  0  0  0
+      0.2593   -0.9705   -0.3871 C   0  0  0  0  0  0  0  0  0  0  0  0
     1  2  1  0
     2  3  1  0
     3  4  1  0
@@ -457,7 +457,7 @@ You can also request individual bonds or atoms:
 
   >>> m.GetAtomWithIdx(0).GetSymbol()
   'C'
-  >>> m.GetAtomWithIdx(0).GetExplicitValence()
+  >>> m.GetAtomWithIdx(0).GetValence(Chem.ValenceType.EXPLICIT)
   2
   >>> m.GetBondWithIdx(0).GetBeginAtomIdx()
   0
@@ -3485,7 +3485,9 @@ Possible Hits File
 As an alternative to an incremental search, there is the facility to write a possible hits file containing
 all the likely synthon combinations that have been assembled in the first stage of the search.  At this point
 the search can be stopped if desired:
+
 .. code-block:: python
+
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.possibleHitsFile = "possible_hits.txt"
     params.writePossibleHitsAndStop = True
@@ -3498,7 +3500,9 @@ Each of the searcher objects has an API point to read designated lines of this f
 verification of it as a hit.  In the example below, the first 100 lines of the possible hits file are read and
 checked using the RASCAL searcher.  It makes sense if the parameters used are the same as those used to create
 the possible hits file, but that is not enforced.
+
 .. code-block:: python
+
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.possibleHitsFile = "r_poss_hits_a.txt"
     rascalOpts = rdRascalMCES.RascalOptions()

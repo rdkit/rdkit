@@ -14,12 +14,10 @@
 #include <RDGeneral/hash/hash.hpp>
 #include <boost/dynamic_bitset.hpp>
 
-#include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
-#include <boost/dynamic_bitset.hpp>
 #include <algorithm>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>

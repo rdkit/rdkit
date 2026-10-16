@@ -182,7 +182,7 @@ std::unique_ptr<ChemicalReaction> parseReaction(
   // split and strip:
   auto sidx = text.find_first_of(" \t");
   if (sidx != std::string::npos && sidx != 0) {
-    text = text.substr(0, sidx);
+    text.resize(sidx);
   }
 
   // re-find the '>' characters so that we can split on them

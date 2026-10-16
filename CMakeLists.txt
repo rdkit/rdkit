@@ -99,6 +99,41 @@ option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" O
 option(RDK_BUILD_MINIMAL_LIB_MMPA "build support for MMPA into MinimalLib" OFF )
 option(RDK_BUILD_LONG_RUNNING_TESTS "build longer running tests" OFF )
 
+set(RDK_LTO_MODE "OFF" CACHE STRING
+    "link-time optimization mode: OFF, THIN, or FULL")
+set_property(CACHE RDK_LTO_MODE PROPERTY STRINGS OFF THIN FULL)
+set(RDK_LTO_JOBS "auto" CACHE STRING
+    "GCC full-LTO parallelism: auto or a positive integer")
+
+string(TOUPPER "${RDK_LTO_MODE}" RDK_LTO_MODE_UPPER)
+if(NOT RDK_LTO_MODE_UPPER MATCHES "^(OFF|THIN|FULL)$")
+  message(FATAL_ERROR
+      "RDK_LTO_MODE must be one of OFF, THIN, or FULL: ${RDK_LTO_MODE}")
+endif()
+
+if(NOT RDK_LTO_MODE_UPPER STREQUAL "OFF")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    string(TOLOWER "${RDK_LTO_MODE_UPPER}" RDK_LTO_MODE_LOWER)
+    set(RDK_LTO_FLAG "-flto=${RDK_LTO_MODE_LOWER}")
+    add_compile_options("${RDK_LTO_FLAG}")
+    add_link_options("${RDK_LTO_FLAG}")
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(RDK_LTO_MODE_UPPER STREQUAL "THIN")
+      message(FATAL_ERROR "GCC does not support ThinLTO; use RDK_LTO_MODE=FULL")
+    endif()
+    if(NOT RDK_LTO_JOBS MATCHES "^(auto|[1-9][0-9]*)$")
+      message(FATAL_ERROR
+          "RDK_LTO_JOBS must be auto or a positive integer: ${RDK_LTO_JOBS}")
+    endif()
+    set(RDK_LTO_FLAG "-flto=${RDK_LTO_JOBS}")
+    add_compile_options("${RDK_LTO_FLAG}")
+    add_link_options("${RDK_LTO_FLAG}")
+  else()
+    message(FATAL_ERROR
+        "RDK_LTO_MODE=${RDK_LTO_MODE} requires Clang or GCC")
+  endif()
+endif()
+
 set(RDK_BOOST_VERSION "1.81.0")
 
 if(NOT MSVC AND RDK_OPTIMIZE_POPCNT)
@@ -111,9 +146,9 @@ if(NOT MSVC AND RDK_OPTIMIZE_POPCNT)
   endif()
 endif()
 
-# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
-# detect it.
-string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
+# CMAKE_CXX_COMPILER_ID covers clang regardless of the executable's name
+# (e.g. FreeBSD's cc and c++ are clang, and package-installed compilers may
+# be named clang23/clang++23).
 # Detect emcc
 string(REGEX MATCH "Emscripten" CMAKE_COMPILER_IS_EMCC "${CMAKE_SYSTEM_NAME}")
 
@@ -135,7 +170,7 @@ if(RDK_SWIG_STATIC AND RDK_BUILD_SWIG_WRAPPERS)
     set(RDK_INSTALL_STATIC_LIBS ON CACHE BOOL "install the rdkit static libraries" FORCE)
   endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
-if ((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR (WIN32 AND RDK_INSTALL_STATIC_LIBS) OR RDK_BUILD_MINIMAL_LIB)
+if ((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR (WIN32 AND RDK_INSTALL_STATIC_LIBS) OR EMSCRIPTEN OR RDK_BUILD_MINIMAL_LIB)
   set(RDK_BUILD_STATIC_LIBS_ONLY ON)
 else()
   set(RDK_BUILD_STATIC_LIBS_ONLY OFF)
@@ -174,7 +209,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 set(RDKit_Year "2026")
 set(RDKit_Month "09")
 set(RDKit_Revision "1")
-set(RDKit_RevisionModifier "pre")
+set(RDKit_RevisionModifier "")
 set(RDKit_ABI "1")
 
 # we need an integer version of the month later, so remove the zero padding
@@ -186,17 +221,19 @@ set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
 set(RDKit_DataDir "${CMAKE_CURRENT_SOURCE_DIR}/Data")
 
 #include catch
-find_package(Catch2 3 QUIET)
-if(NOT Catch2_FOUND)
-  Include(FetchContent)
+if(RDK_BUILD_CPP_TESTS)
+  find_package(Catch2 3 QUIET)
+  if(NOT Catch2_FOUND)
+    Include(FetchContent)
 
-  FetchContent_Declare(
-    Catch2
-    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG        v3.4.0 # or a later release
-  )
+    FetchContent_Declare(
+      Catch2
+      GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+      GIT_TAG        v3.4.0 # or a later release
+    )
 
-  FetchContent_MakeAvailable(Catch2)
+    FetchContent_MakeAvailable(Catch2)
+  endif()
 endif()
 
 # make sure we have better_enums
@@ -284,8 +321,7 @@ endif()
 if(MINGW)
   target_compile_definitions(rdkit_base INTERFACE "-DBOOST_SYSTEM_NO_DEPRECATED")
 endif(MINGW)
-# fallback on match to "Clang" where CMAKE_C_COMPILER=/usr/bin/cc
-if (CMAKE_COMPILER_IS_CLANG OR CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_COMPILER_IS_EMCC)
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_COMPILER_IS_EMCC)
   if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 15)
     target_compile_definitions(rdkit_base INTERFACE -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_NO_CXX98_FUNCTION_BASE -D_HAS_AUTO_PTR_ETC=0)
     target_compile_options(rdkit_base INTERFACE -Wno-deprecated-builtins -Wno-deprecated-non-prototype -Wno-unused-parameter)
@@ -343,6 +379,11 @@ if(RDK_BUILD_NANOBIND_WRAPPERS)
     COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
     OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE nanobind_ROOT)
   find_package(nanobind 2 CONFIG REQUIRED)
+
+  if(nanobind_VERSION GREATER_EQUAL 2.13.0)
+    target_compile_definitions(rdkit_py_base INTERFACE "-DNANOBIND_POOLED_AVAILABLE")
+  endif()
+
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
   else(RDK_INSTALL_INTREE)
@@ -403,7 +444,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
   #-------
   # pull in python:
-  find_package(Python COMPONENTS Interpreter Development.Module NumPy)
+  find_package(Python COMPONENTS Interpreter Development.Module Development.Embed NumPy)
   target_include_directories(rdkit_py_base INTERFACE ${Python_INCLUDE_DIRS})
   target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
   target_compile_definitions(rdkit_py_base INTERFACE "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
@@ -465,7 +506,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
   endif(RDK_INSTALL_INTREE)
 
-  if(NOT WIN32)
+  if(NOT WIN32 AND NOT EMSCRIPTEN)
     # See https://bugs.python.org/msg277944
     # The "command to create shared modules". Used as variable in the "Makefile (and similar) templates to build python modules"
     # for both in-python and third party modules. Initialized to hold the value which works for third party modules to link
@@ -499,12 +540,22 @@ else(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   find_package(Boost ${RDK_BOOST_VERSION} REQUIRED CONFIG)
 endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
-find_package(Eigen3)
+find_package(Eigen3 NO_MODULE)
 if(RDK_BUILD_DESCRIPTORS3D)
-  if(NOT EIGEN3_FOUND)
+  # once External/Eigen is removed, remove this block (to the next comment)
+  if(NOT TARGET Eigen3::Eigen)
     add_subdirectory(External/Eigen)
   endif()
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
+
+  # once External/Eigen is removed, uncomment below here
+  #if(NOT TARGET Eigen3::Eigen)
+  #  message("eigen not found, disabling Descriptors3D")
+  #  set(RDK_BUILD_DESCRIPTORS3D OFF CACHE BOOL "Build 3D descriptors" FORCE)
+  #else()
+  #  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
+  #endif()
+  
 endif()
 
 if(TARGET Eigen3::Eigen)

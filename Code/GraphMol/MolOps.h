@@ -14,6 +14,7 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <string_view>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -30,9 +31,9 @@ class RWMol;
 class Atom;
 class Bond;
 class Conformer;
-typedef std::vector<double> INVAR_VECT;
-typedef INVAR_VECT::iterator INVAR_VECT_I;
-typedef INVAR_VECT::const_iterator INVAR_VECT_CI;
+using INVAR_VECT = std::vector<double>;
+using INVAR_VECT_I = INVAR_VECT::iterator;
+using INVAR_VECT_CI = INVAR_VECT::const_iterator;
 
 //! \brief Groups a variety of molecular query and transformation operations.
 namespace MolOps {
@@ -394,7 +395,7 @@ RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
 */
 RDKIT_GRAPHMOL_EXPORT std::pair<bool, bool> hasQueryHs(const ROMol &mol);
 
-typedef enum {
+enum AdjustQueryWhichFlags {
   ADJUST_IGNORENONE = 0x0,
   ADJUST_IGNORECHAINS = 0x1,
   ADJUST_IGNORERINGS = 0x4,
@@ -402,7 +403,7 @@ typedef enum {
   ADJUST_IGNORENONDUMMIES = 0x8,
   ADJUST_IGNOREMAPPED = 0x10,
   ADJUST_IGNOREALL = 0xFFFFFFF
-} AdjustQueryWhichFlags;
+};
 
 //! Parameters controlling the behavior of MolOps::adjustQueryProperties
 /*!
@@ -612,14 +613,14 @@ does not consider the outer envelope of fused rings)
 - \c AROMATICIT_MMFF94 the aromaticity model used by the MMFF94 force field
 - \c AROMATICITY_CUSTOM uses a caller-provided function
 */
-typedef enum {
+enum AromaticityModel {
   AROMATICITY_DEFAULT = 0x0,  ///< future proofing
   AROMATICITY_RDKIT = 0x1,
   AROMATICITY_SIMPLE = 0x2,
   AROMATICITY_MDL = 0x4,
   AROMATICITY_MMFF94 = 0x8,
   AROMATICITY_CUSTOM = 0xFFFFFFF  ///< use a function
-} AromaticityModel;
+};
 
 //! sets the aromaticity model for a molecule to MMFF94
 RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RWMol &mol);
@@ -1385,7 +1386,8 @@ RDKIT_GRAPHMOL_EXPORT void expandAttachmentPoints(RWMol &mol,
  *
  * @param mol the molecule of interest
  * @param markedOnly if true, only dummy atoms with the _fromAttachPoint
- *    property will be collapsed
+ *    property or a valid _AP<n> atom label will be collapsed. The numeric
+ *    suffix of an atom label is an identifier, not an MDL ATTCHPT position.
  *
  * In order for a dummy atom to be considered for collapsing it must have:
  * - degree 1 with a single or unspecified bond
@@ -1395,6 +1397,34 @@ RDKIT_GRAPHMOL_EXPORT void expandAttachmentPoints(RWMol &mol,
  */
 RDKIT_GRAPHMOL_EXPORT void collapseAttachmentPoints(RWMol &mol,
                                                     bool markedOnly = true);
+
+//! prefix used for numbered explicit attachment-point atom labels
+inline constexpr std::string_view attachmentPointLabelPrefix = "_AP";
+
+//! returns the positive integer from a valid _AP<n> attachment-point label
+/*!
+ * The atom must be a degree-one dummy atom whose atomLabel consists of
+ * attachmentPointLabelPrefix followed by a positive decimal integer. Returns
+ * 0 if the atom does not have a valid numbered attachment-point label.
+ *
+ * This number is a label identifier, not an MDL ATTCHPT position.
+ *
+ * @param atom the atom to inspect
+ */
+RDKIT_GRAPHMOL_EXPORT unsigned int getAttachmentPointLabelNumber(
+    const Atom *atom);
+
+//! returns whether an atom is a marked explicit attachment point
+/*!
+ * A marked explicit attachment point is a degree-one dummy atom with the
+ * _fromAttachPoint property or a valid _AP<n> atom label, where n is a
+ * positive decimal integer. This checks attachment-point identity only; it
+ * does not check whether the atom can currently be collapsed. In particular,
+ * an attachment point connected by a wedged bond is still considered marked.
+ *
+ * @param atom the atom to inspect
+ */
+RDKIT_GRAPHMOL_EXPORT bool isMarkedAttachmentPoint(const Atom *atom);
 
 namespace details {
 //! attachment points encoded as attachPt properties are added to the graph as
@@ -1415,12 +1445,11 @@ RDKIT_GRAPHMOL_EXPORT unsigned int addExplicitAttachmentPoint(
     RWMol &mol, unsigned int atomIdx, unsigned int val, bool addAsQuery = true,
     bool addCoords = true);
 
-//! returns whether or not an atom is an attachment point
+//! returns whether an atom is eligible to be collapsed as an attachment point
 /*!
  *
- * @param mol the molecule of interest
- * @param markedOnly if true, only dummy atoms with the _fromAttachPoint
- *    property will be collapsed
+ * @param atom the atom to inspect
+ * @param markedOnly if true, only marked attachment points will be collapsed
  *
  * In order for a dummy atom to be considered for collapsing it must have:
  * - degree 1 with a single or unspecified bond

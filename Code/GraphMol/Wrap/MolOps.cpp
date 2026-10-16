@@ -35,7 +35,6 @@
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
-#include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 
 #include <sstream>
@@ -425,16 +424,6 @@ MolOps::SanitizeFlags sanitizeMol(ROMol &mol, boost::uint64_t sanitizeOps,
   return static_cast<MolOps::SanitizeFlags>(operationThatFailed);
 }
 
-RWMol *getEditable(const ROMol &mol) {
-  auto *res = new RWMol(mol, false);
-  return res;
-}
-
-ROMol *getNormal(const RWMol &mol) {
-  auto *res = static_cast<ROMol *>(new RWMol(mol));
-  return res;
-}
-
 void kekulizeMol(ROMol &mol, bool clearAromaticFlags = false,
                  bool canonical = true) {
   auto &wmol = static_cast<RWMol &>(mol);
@@ -600,8 +589,8 @@ python::tuple GetMolFragsWithMapping(
     auto &fragsList = reinterpret_cast<python::list &>(frags);
     auto &fragsMolAtomMappingList =
         reinterpret_cast<python::list &>(fragsMolAtomMapping);
-    bool hasFrags = fragsList != python::object();
-    bool hasFragsMolAtomMapping = fragsMolAtomMappingList != python::object();
+    bool hasFrags = !fragsList.is_none();
+    bool hasFragsMolAtomMapping = !fragsMolAtomMappingList.is_none();
     molFrags =
         hasFrags || hasFragsMolAtomMapping
             ? MolOps::getMolFrags(
@@ -719,10 +708,10 @@ ExplicitBitVect *wrapRDKFingerprintMol(
   std::vector<std::vector<std::uint32_t>> *lAtomBits = nullptr;
   std::map<std::uint32_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
   // if(!(atomBits.is_none())){
-  if (atomBits != python::object()) {
+  if (!atomBits.is_none()) {
     lAtomBits = new std::vector<std::vector<std::uint32_t>>(mol.getNumAtoms());
   }
-  if (bitInfo != python::object()) {
+  if (!bitInfo.is_none()) {
     lBitInfo = new std::map<std::uint32_t, std::vector<std::vector<int>>>;
   }
   ExplicitBitVect *res;
@@ -776,11 +765,11 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
   std::map<boost::uint64_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
 
   // if(!(atomBits.is_none())){
-  if (atomBits != python::object()) {
+  if (!atomBits.is_none()) {
     lAtomBits =
         new std::vector<std::vector<boost::uint64_t>>(mol.getNumAtoms());
   }
-  if (bitInfo != python::object()) {
+  if (!bitInfo.is_none()) {
     lBitInfo = new std::map<boost::uint64_t, std::vector<std::vector<int>>>;
   }
 
@@ -869,7 +858,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol,
                                              bool useHs, bool enforceSize,
                                              python::object atomMap) {
   PATH_TYPE path;
-  if (atomMap == python::object()) {
+  if (atomMap.is_none()) {
     path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
                                         enforceSize);
   } else {
@@ -895,7 +884,7 @@ ROMol *pathToSubmolHelper(const ROMol &mol, python::object &path, bool useQuery,
   }
   std::map<int, int> mapping;
   result = Subgraphs::pathToSubmol(mol, pth, useQuery, mapping);
-  if (atomMap != python::object()) {
+  if (!atomMap.is_none()) {
     // make sure the optional argument actually was a dictionary
     python::dict typecheck = python::extract<python::dict>(atomMap);
     atomMap.attr("clear")();
@@ -909,7 +898,7 @@ ROMol *pathToSubmolHelper(const ROMol &mol, python::object &path, bool useQuery,
 
 ROMol *adjustQueryPropertiesHelper(const ROMol &mol, python::object pyparams) {
   MolOps::AdjustQueryParameters params;
-  if (pyparams != python::object()) {
+  if (!pyparams.is_none()) {
     params = python::extract<MolOps::AdjustQueryParameters>(pyparams);
   }
   return MolOps::adjustQueryProperties(mol, &params);
@@ -918,7 +907,7 @@ ROMol *adjustQueryPropertiesHelper(const ROMol &mol, python::object pyparams) {
 ROMol *adjustQueryPropertiesWithGenericGroupsHelper(const ROMol &mol,
                                                     python::object pyparams) {
   MolOps::AdjustQueryParameters params;
-  if (pyparams != python::object()) {
+  if (!pyparams.is_none()) {
     params = python::extract<MolOps::AdjustQueryParameters>(pyparams);
   }
   return GenericGroups::adjustQueryPropertiesWithGenericGroups(mol, &params);
@@ -3416,13 +3405,42 @@ A note on the flags controlling which atoms/bonds are modified:
 
   Arguments:
    - mol: molecule to be modified
-   - markedOnly: if true, only dummy atoms with the _fromAttachPoint
-     property will be collapsed
+   - markedOnly: if true, only dummy atoms with the _fromAttachPoint property
+     or a valid _AP<n> atom label will be collapsed. The label suffix is not
+     interpreted as an MDL attachment-point position.
 
   In order for a dummy atom to be considered for collapsing it must have:
    - degree 1 with a single or unspecified bond
    - the bond to it can not be wedged
    - either no query or be an AtomNullQuery
+)DOC");
+    python::def(
+        "GetAttachmentPointLabelNumber", MolOps::getAttachmentPointLabelNumber,
+        python::arg("atom"),
+        R"DOC(returns the positive integer from a valid _AP<n> attachment-point label
+
+  The atom must be a degree-one dummy atom. Returns 0 if it does not have a
+  valid numbered attachment-point label. The returned number is a label
+  identifier, not an MDL ATTCHPT position.
+
+  Arguments:
+   - atom: the atom to inspect
+)DOC");
+    python::scope().attr("ATTACHMENT_POINT_LABEL_PREFIX") =
+        std::string(MolOps::attachmentPointLabelPrefix);
+    python::def(
+        "IsMarkedAttachmentPoint", MolOps::isMarkedAttachmentPoint,
+        python::arg("atom"),
+        R"DOC(returns whether an atom is a marked explicit attachment point
+
+  A marked attachment point is a degree-one dummy atom with the
+  _fromAttachPoint property or a valid _AP<n> atom label, where n is a
+  positive decimal integer. This checks attachment-point identity only, not
+  whether the atom can currently be collapsed. In particular, an attachment
+  point connected by a wedged bond is still considered marked.
+
+  Arguments:
+   - atom: the atom to inspect
 )DOC");
     python::def(
         "AddStereoAnnotations", Chirality::addStereoAnnotations,

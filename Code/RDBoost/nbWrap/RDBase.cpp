@@ -7,18 +7,20 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <fstream>
-#include <RDBoost/Wrap_nb.h>
-#include <RDBoost/python_streambuf_nb.h>
-#include <RDGeneral/versions.h>
-#include <RDGeneral/Invariant.h>
+#include <array>
 #include <cstdlib>
+#include <fstream>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/operators.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/string.h>
 
+#include <RDBoost/Wrap_nb.h>
+#include <RDBoost/python_capsule_nb.h>
+#include <RDBoost/python_streambuf_nb.h>
+#include <RDGeneral/versions.h>
+#include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 
 namespace nb = nanobind;
@@ -54,7 +56,7 @@ struct PyLogStream : std::ostream, std::streambuf {
   static thread_local std::string buffer;
   PyObject *logfn = nullptr;
 
-  PyLogStream(std::string level) : std::ostream(this) {
+  PyLogStream(const std::string &level) : std::ostream(this) {
     PyObject *module = PyImport_ImportModule("logging");
     PyObject *logger = nullptr;
 
@@ -74,13 +76,10 @@ struct PyLogStream : std::ostream, std::streambuf {
   }
 
   ~PyLogStream() override {
-#if PY_VERSION_HEX < 0x30d0000
-    if (!_Py_IsFinalizing()) {
-#else
-    if (!Py_IsFinalizing()) {
-#endif
-      Py_XDECREF(logfn);
+    if (!nb::is_alive()) {
+      return;
     }
+    Py_XDECREF(logfn);
   }
 
   int overflow(int c) override {
@@ -109,15 +108,61 @@ thread_local std::string PyErrStream::buffer;
 thread_local std::string PyLogStream::buffer;
 
 void LogToPythonLogger() {
-  static PyLogStream debug("debug");
-  static PyLogStream info("info");
-  static PyLogStream warning("warning");
-  static PyLogStream error("error");
+  using logger_array_t = std::array<std::shared_ptr<logging::rdLogger>, 4>;
 
-  rdDebugLog = std::make_shared<logging::rdLogger>(&debug);
-  rdInfoLog = std::make_shared<logging::rdLogger>(&info);
-  rdWarningLog = std::make_shared<logging::rdLogger>(&warning);
-  rdErrorLog = std::make_shared<logging::rdLogger>(&error);
+  constexpr const char *rdkLoggerCapsule = "__rdkit_loggers__";
+
+  auto capsuleData = getCapsulePtr(rdkLoggerCapsule);
+  if (capsuleData) {
+    // We already created the loggers, so just reenable them
+    auto loggers = static_cast<logger_array_t *>(capsuleData);
+
+    rdDebugLog = (*loggers)[0];
+    rdInfoLog = (*loggers)[1];
+    rdWarningLog = (*loggers)[2];
+    rdErrorLog = (*loggers)[3];
+
+  } else {
+    // Create the loggers and store them in a capsule that will
+    // destroy them when Python is shutting down, and also allows
+    // us to retrieve them later if we need to reenable them.
+
+    auto makeLogger = [](const char *level) {
+      return std::make_shared<logging::rdLogger>(new PyLogStream(level), true);
+    };
+
+    auto cleanUpFn = [](void *ptr) noexcept {
+      // Reset log endpoints to stdout/stderr before destroying
+      // the current loggers
+      RDLog::InitLogs();
+
+      auto loggers = static_cast<logger_array_t *>(ptr);
+      if (!loggers) {
+        return;
+      }
+
+      // By this point, this should be the only instance
+      // of the loggers shared_ptrs, but reset them to make
+      // sure the streams are destroyed.
+      for (auto logger : *loggers) {
+        logger.reset();
+      }
+
+      delete loggers;
+    };
+
+    rdDebugLog = makeLogger("debug");
+    rdInfoLog = makeLogger("info");
+    rdWarningLog = makeLogger("warning");
+    rdErrorLog = makeLogger("error");
+
+    auto logStreamV =
+        new logger_array_t{rdDebugLog, rdInfoLog, rdWarningLog, rdErrorLog};
+
+    // Store the loggers in a capsule so we can retrieve them later
+    nb::capsule loggerCapsule(logStreamV, cleanUpFn);
+    installCapsule(loggerCapsule, rdkLoggerCapsule);
+  }
 }
 
 void LogToPythonStderr() {
@@ -232,113 +277,12 @@ struct PyCaptureErrorLog : boost::noncopyable {
 namespace {
 
 void seedRNG(unsigned int seed) { std::srand(seed); }
-#if 0
-/// Simple Boost.Python custom converter from pathlib.Path to std::string
-template <typename T = std::string>
-struct path_converter {
-  path_converter() {
-    python::converter::registry::push_back(&path_converter::convertible,
-                                           &path_converter::construct,
-                                           boost::python::type_id<T>());
-  }
-
-  /// Check PyObject is a pathlib.Path
-  static void *convertible(PyObject *object) {
-    // paranoia
-    if (object == nullptr) {
-      return nullptr;
-    }
-    python::object boost_object(python::handle<>(python::borrowed(object)));
-
-    std::string object_classname = boost::python::extract<std::string>(
-        boost_object.attr("__class__").attr("__name__"));
-    // pathlib.Path is always specialized to the below derived classes
-    if (object_classname == "WindowsPath" || object_classname == "PosixPath") {
-      return object;
-    }
-
-    return nullptr;
-  }
-
-  /// Construct a std::string from pathlib.Path using its own __str__ attribute
-  static void construct(
-      PyObject *object,
-      boost::python::converter::rvalue_from_python_stage1_data *data) {
-    void *storage =
-        ((boost::python::converter::rvalue_from_python_storage<T> *)data)
-            ->storage.bytes;
-    python::object boost_object{python::handle<>{python::borrowed(object)}};
-    new (storage)
-        T{boost::python::extract<std::string>{boost_object.attr("__str__")()}};
-    data->convertible = storage;
-  }
-};
-
-/// Convert a Python str to a std::string_view
-template <typename T = std::string_view>
-struct string_view_from_python_converter {
-  string_view_from_python_converter() {
-    python::converter::registry::push_back(
-        &string_view_from_python_converter::convertible,
-        &string_view_from_python_converter::construct, python::type_id<T>());
-  }
-
-  /// Check PyObject is a str
-  static void *convertible(PyObject *object) {
-    if (object != nullptr && PyUnicode_Check(object)) {
-      return object;
-    }
-    return nullptr;
-  }
-
-  /// Construct a std::string_view from the internal string of the PyObject.
-  /// This shouldn´t fail, as we block the Python thread until the C++ code
-  /// returns, so the PyObject and the internal string should remain valid.
-  static void construct(
-      PyObject *object,
-      python::converter::rvalue_from_python_stage1_data *data) {
-    const char *tmp = PyUnicode_AsUTF8(object);
-
-    void *storage = ((python::converter::rvalue_from_python_storage<T> *)data)
-                        ->storage.bytes;
-    new (storage) T{tmp};
-    data->convertible = storage;
-  }
-};
-
-struct string_view_to_python_converter {
-  static PyObject *convert(const std::string_view &s) {
-    return python::incref(python::str(s.data(), s.size()).ptr());
-  }
-};
-#endif
 
 }  // namespace
 
 NB_MODULE(rdBase, m) {
   m.doc() = "Module containing basic definitions for wrapped C++ code";
   RDLog::InitLogs();
-  // RegisterVectorConverter<int>();
-  // RegisterVectorConverter<unsigned>();
-  // RegisterVectorConverter<size_t>("UnsignedLong_Vect");
-  // RegisterVectorConverter<boost::uint64_t>("VectSizeT");
-
-  // RegisterVectorConverter<double>();
-  // RegisterVectorConverter<std::string>(1);
-  // RegisterVectorConverter<std::vector<int>>();
-  // RegisterVectorConverter<std::vector<unsigned>>();
-  // RegisterVectorConverter<std::vector<double>>();
-  // RegisterVectorConverter<std::vector<std::string>>("VectorOfStringVectors");
-
-  // RegisterVectorConverter<std::pair<int, int>>("MatchTypeVect");
-
-  // path_converter();
-  // string_view_from_python_converter();
-
-  // RegisterListConverter<int>();
-  // RegisterListConverter<std::vector<int>>();
-  // RegisterListConverter<std::vector<unsigned int>>();
-
   nb::exception<IndexErrorException>(m, "IndexErrorException",
                                      PyExc_IndexError);
   nb::exception<ValueErrorException>(m, "ValueErrorException",
@@ -361,12 +305,6 @@ NB_MODULE(rdBase, m) {
         }
       });
 #endif
-
-  // boost::python::to_python_converter<std::string_view,
-  //                                    string_view_to_python_converter>();
-
-  // python::def("_version", _version,
-  //             "Deprecated, use the constant rdkitVersion instead");
 
   m.attr("rdkitVersion") = RDKit::rdkitVersion;
   m.attr("boostVersion") = RDKit::boostVersion;

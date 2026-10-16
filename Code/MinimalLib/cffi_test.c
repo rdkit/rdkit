@@ -336,11 +336,13 @@ M  END",
   assert(pkl2);
   assert(pkl2_size > 0);
   molblock = get_molblock(pkl2, pkl2_size, NULL);
-  assert(strstr(molblock, "4  3  1  6"));
+  assert(strstr(molblock, "4  9  1  1"));
+  assert(strstr(molblock, "8  9  1  1"));
   assert(!strstr(molblock, "H  "));
   free(molblock);
   molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
-  assert(!strstr(molblock, "4  3  1  6"));
+  assert(strstr(molblock, "4  9  1  1"));
+  assert(strstr(molblock, "8  9  1  1"));
   assert(strstr(molblock, "6  7  1  1"));
   assert(!strstr(molblock, "H  "));
   free(molblock);
@@ -359,7 +361,6 @@ M  END",
   molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
   find_wedged_bonds(molblock, &have1, &have6);
   assert(!have1 && have6);
-  assert(!strstr(molblock, "4  3  1  6"));
   assert(strstr(molblock, "6  7  1  6"));
   assert(!strstr(molblock, "H  "));
   free(molblock);
@@ -373,7 +374,7 @@ M  END",
                                "{\"acceptFailure\":false}", NULL));
   molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
   find_wedged_bonds(molblock, &have1, &have6);
-  assert(have1 && have6);
+  assert(have1 && !have6);
   free(molblock);
   free(pkl2);
   free(scaffold);
@@ -2857,7 +2858,7 @@ M  END\n\
     ptr_end = strstr(ptr, "|");
     assert(ptr_end);
     *ptr_end = '\0';
-    assert(!strcmp(ptr, "wD:3.9,wU:1.0,5.4,6.7"));
+    assert(!strcmp(ptr, "wU:1.0,3.3,5.4,6.7"));
     free(canonical_cxsmiles);
   }
   canonical_cxsmiles =
@@ -3024,14 +3025,14 @@ void test_get_molblock_use_molblock_wedging() {
     2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
   2  1  1  1\n\
   2  3  1  0\n\
-  4  3  1  0\n\
+  4  3  1  6\n\
   4  5  1  0\n\
   6  5  1  0\n\
   6  7  1  1\n\
   6  8  1  0\n\
   8  9  1  1\n\
   8  2  1  0\n\
-  4  9  1  1\n\
+  4  9  1  0\n\
 M  END\n\
 ";
   char *mpkl;
@@ -3042,11 +3043,26 @@ M  END\n\
   char *mb_orig_wedging;
   mpkl = get_mol(mb, &mpkl_size, "");
   assert(mpkl && mpkl_size);
+  char *stereo_smiles = get_smiles(mpkl, mpkl_size, NULL);
+  assert(stereo_smiles);
+  assert(!strcmp(stereo_smiles,
+                 "N[C@H]1C[C@H]2C[C@@H]1[C@H](O)C2"));
+  free(stereo_smiles);
   mpkl_copy = malloc(mpkl_size);
   assert(mpkl_copy);
   memcpy(mpkl_copy, mpkl, mpkl_size);
   mb_rdkit_wedging = get_molblock(mpkl, mpkl_size, NULL);
   assert(strcmp(mb, mb_rdkit_wedging));
+  assert(strstr(mb_rdkit_wedging, "  4  9  1  1") ||
+         strstr(mb_rdkit_wedging, "  4  9  1  6"));
+  assert(strstr(mb_rdkit_wedging, "  8  9  1  1") ||
+         strstr(mb_rdkit_wedging, "  8  9  1  6"));
+  assert(strstr(mb_rdkit_wedging, "  4  3  1  0"));
+  assert(strstr(mb_rdkit_wedging, "  8  2  1  0"));
+  assert(!strstr(mb_rdkit_wedging, "  9  4  1  1") &&
+         !strstr(mb_rdkit_wedging, "  9  4  1  6"));
+  assert(!strstr(mb_rdkit_wedging, "  9  8  1  1") &&
+         !strstr(mb_rdkit_wedging, "  9  8  1  6"));
   mb_orig_wedging =
       get_molblock(mpkl, mpkl_size, "{\"useMolBlockWedging\":true}");
   assert(!memcmp(mpkl, mpkl_copy, mpkl_size));

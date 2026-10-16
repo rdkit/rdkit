@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -24,13 +24,14 @@
 #endif
 
 namespace RDKit {
+class Atom;
 class QueryAtom;
 
 //! A general random access iterator
 template <class Atom_, class Mol_>
 class RDKIT_GRAPHMOL_EXPORT AtomIterator_ {
  public:
-  typedef AtomIterator_<Atom_, Mol_> ThisType;
+  using ThisType = AtomIterator_<Atom_, Mol_>;
   AtomIterator_() : _mol(nullptr) {}
   AtomIterator_(Mol_ *mol);
   AtomIterator_(Mol_ *mol, int pos);
@@ -73,7 +74,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomIterator_ {
 template <class Atom_, class Mol_>
 class RDKIT_GRAPHMOL_EXPORT HeteroatomIterator_ {
  public:
-  typedef HeteroatomIterator_<Atom_, Mol_> ThisType;
+  using ThisType = HeteroatomIterator_<Atom_, Mol_>;
   HeteroatomIterator_() : _mol(nullptr) {}
   HeteroatomIterator_(Mol_ *mol);
   HeteroatomIterator_(Mol_ *mol, int pos);
@@ -107,7 +108,7 @@ class RDKIT_GRAPHMOL_EXPORT HeteroatomIterator_ {
 template <class Atom_, class Mol_>
 class RDKIT_GRAPHMOL_EXPORT AromaticAtomIterator_ {
  public:
-  typedef AromaticAtomIterator_<Atom_, Mol_> ThisType;
+  using ThisType = AromaticAtomIterator_<Atom_, Mol_>;
   AromaticAtomIterator_() : _mol(nullptr) {}
   AromaticAtomIterator_(Mol_ *mol);
   AromaticAtomIterator_(Mol_ *mol, int pos);
@@ -140,9 +141,9 @@ class RDKIT_GRAPHMOL_EXPORT AromaticAtomIterator_ {
 template <class Atom_, class Mol_>
 class RDKIT_GRAPHMOL_EXPORT QueryAtomIterator_ {
  public:
-  typedef QueryAtomIterator_<Atom_, Mol_> ThisType;
+  using ThisType = QueryAtomIterator_<Atom_, Mol_>;
   QueryAtomIterator_() : _mol(nullptr) {}
-  QueryAtomIterator_(Mol_ *mol, QueryAtom const *what);
+  QueryAtomIterator_(Mol_ *mol, Atom const *what);
   QueryAtomIterator_(Mol_ *mol, int pos);
   ~QueryAtomIterator_();
   QueryAtomIterator_(const ThisType &other);
@@ -174,7 +175,7 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtomIterator_ {
 template <class Atom_, class Mol_>
 class RDKIT_GRAPHMOL_EXPORT MatchingAtomIterator_ {
  public:
-  typedef MatchingAtomIterator_<Atom_, Mol_> ThisType;
+  using ThisType = MatchingAtomIterator_<Atom_, Mol_>;
   MatchingAtomIterator_() : _mol(nullptr), _qF(nullptr) {}
   MatchingAtomIterator_(Mol_ *mol, bool (*fn)(Atom_ *));
   MatchingAtomIterator_(Mol_ *mol, int pos);

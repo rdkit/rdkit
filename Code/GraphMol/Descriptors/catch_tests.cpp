@@ -23,6 +23,7 @@
 #include <GraphMol/Descriptors/BCUT.h>
 #ifdef RDK_BUILD_DESCRIPTORS3D
 #include <GraphMol/Descriptors/GETAWAY.h>
+#include <GraphMol/Descriptors/EEM.h>
 #endif
 
 using namespace RDKit;
@@ -679,8 +680,29 @@ TEST_CASE("DCLV") {
           dclv.getPartialSurfaceArea(partialAtoms2));
     CHECK(dclv.getPartialSurfaceArea(partialAtoms3) == dclv.getSurfaceArea());
   }
-}
 
+  SECTION("Surface points") {
+    std::string sdfName =
+        pathName + "/Code/GraphMol/Descriptors/test_data/ethane.sdf";
+    auto m = v2::FileParsers::MolFromMolFile(sdfName);
+    REQUIRE(m);
+    Descriptors::DoubleCubicLatticeVolume dclv(*m);
+    auto surfacePoints = dclv.getSurfacePoints();
+    CHECK(surfacePoints.size() == m->getNumAtoms());
+    auto allSurfacePoints = dclv.getSurfacePoints(true);
+    CHECK(allSurfacePoints.size() == surfacePoints.size());
+    for (size_t i = 0; i < surfacePoints.size(); ++i) {
+      CHECK(allSurfacePoints[i].size() == 320);
+      CHECK(surfacePoints[i].size() < allSurfacePoints[i].size());
+    }
+    // make sure calling the function again doesn't change the result
+    auto surfacePoints2 = dclv.getSurfacePoints();
+    CHECK(surfacePoints2.size() == m->getNumAtoms());
+    for (size_t i = 0; i < surfacePoints2.size(); ++i) {
+      CHECK(surfacePoints2[i].size() == surfacePoints[i].size());
+    }
+  }
+}
 #ifdef RDK_HAS_EIGEN3
 TEST_CASE("Github #7364: BCUT descriptors failing for moleucles with Hs") {
   SECTION("as reported") {
@@ -737,4 +759,129 @@ TEST_CASE("Github #7264: GETAWAY descriptors are non-deterministic") {
     }
   }
 }
+
+TEST_CASE("GETAWAY on molecules with several fragments") {
+  // Atoms in different fragments are a very large topological distance apart;
+  // they only contribute to the totals, which therefore match those of the
+  // connected molecule with the same atoms and coordinates.
+  // Covers the default path (HTu, HATSu, RTu) and the custom atom property
+  // path (HTc, HATSTc, RTc).
+  struct Case {
+    std::string propName;
+    size_t numValues;
+    std::vector<size_t> totals;
+  };
+  const auto tc = GENERATE(Case{"", 273, {13, 23, 155}},
+                           Case{"customProp", 45, {13, 23, 35}});
+  INFO("customAtomPropName: '" << tc.propName << "'");
+  const std::string coords =
+      " |(-1.2,0.1,0.3;0.2,-0.4,0.1;1.1,0.6,-0.3;2.4,0.2,0.4)|";
+  auto salt = v2::SmilesParse::MolFromSmiles("CCO.C" + coords);
+  auto connected = v2::SmilesParse::MolFromSmiles("CCOC" + coords);
+  REQUIRE(salt);
+  REQUIRE(connected);
+  for (auto mol : {salt.get(), connected.get()}) {
+    for (auto atom : mol->atoms()) {
+      atom->setProp("customProp", static_cast<double>(atom->getAtomicNum()));
+    }
+  }
+  std::vector<double> saltRes, connectedRes;
+  Descriptors::GETAWAY(*salt, saltRes, -1, 2, tc.propName);
+  Descriptors::GETAWAY(*connected, connectedRes, -1, 2, tc.propName);
+  REQUIRE(saltRes.size() == tc.numValues);
+  REQUIRE(connectedRes.size() == tc.numValues);
+  for (const auto idx : tc.totals) {
+    INFO(idx);
+    CHECK(saltRes[idx] == connectedRes[idx]);
+  }
+}
 #endif
+
+#ifdef RDK_BUILD_DESCRIPTORS3D
+TEST_CASE("EEM charges of charged molecules sum to the formal charge") {
+  v2::SmilesParse::SmilesParserParams ps;
+  ps.removeHs = false;
+  SECTION("hydroxide") {
+    auto m = v2::SmilesParse::MolFromSmiles("[O-][H] |(0,0,0;0.97,0,0)|", ps);
+    REQUIRE(m);
+    REQUIRE(m->getNumAtoms() == 2);
+    std::vector<double> charges;
+    Descriptors::EEM(*m, charges, -1);
+    REQUIRE(charges.size() == 2);
+    CHECK(charges[0] == Catch::Approx(-1.0632).margin(1e-4));
+    CHECK(charges[1] == Catch::Approx(0.0632).margin(1e-4));
+  }
+  SECTION("sum of charges") {
+    const std::vector<std::string> smis = {
+        "[O-][H] |(0,0,0;0.97,0,0)|",
+        "[H][O+]([H])[H] |(0.94,0,0;0,0,0;-0.31,0.89,0;-0.31,-0.44,0.77)|",
+        "[H]C([H])([H])C(=O)[O-] |(-1.06,-0.98,0.31;-0.49,-0.06,0.28;-0.69,0.48,1.21;-0.83,0.55,-0.56;0.99,-0.30,0.17;1.70,0.71,0.09;1.40,-1.48,0.17)|"};
+    for (const auto &smi : smis) {
+      INFO(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi, ps);
+      REQUIRE(m);
+      std::vector<double> charges;
+      Descriptors::EEM(*m, charges, -1);
+      double sum = 0.0;
+      for (auto q : charges) {
+        sum += q;
+      }
+      CHECK(sum == Catch::Approx(MolOps::getFormalCharge(*m)).margin(1e-8));
+    }
+  }
+}
+#endif
+TEST_CASE("DCLV ignores dummy atoms") {
+  v2::SmilesParse::SmilesParserParams ps;
+  ps.removeHs = false;
+  auto checkSame = [&ps](const std::string &smi, const std::string &refSmi) {
+    INFO(smi << " vs " << refSmi);
+    auto m = v2::SmilesParse::MolFromSmiles(smi, ps);
+    REQUIRE(m);
+    auto ref = v2::SmilesParse::MolFromSmiles(refSmi, ps);
+    REQUIRE(ref);
+    Descriptors::DoubleCubicLatticeVolume dclv(*m);
+    Descriptors::DoubleCubicLatticeVolume refDclv(*ref);
+    CHECK(dclv.getSurfaceArea() == refDclv.getSurfaceArea());
+    CHECK(dclv.getVolume() == refDclv.getVolume());
+    CHECK(dclv.getVDWVolume() == refDclv.getVDWVolume());
+    CHECK(dclv.getCompactness() == refDclv.getCompactness());
+    CHECK(dclv.getPackingDensity() == refDclv.getPackingDensity());
+  };
+  SECTION("leading dummy") { checkSame("*C |(1.5,0,0;0,0,0)|", "C |(0,0,0)|"); }
+  SECTION("trailing dummy") {
+    checkSame("C* |(0,0,0;1.5,0,0)|", "C |(0,0,0)|");
+    checkSame("CCO* |(0,0,0;1.5,0,0;2,1.3,0;8,8,8)|",
+              "CCO |(0,0,0;1.5,0,0;2,1.3,0)|");
+  }
+}
+
+TEST_CASE("DCLV polar contributions with H-H bonds") {
+  v2::SmilesParse::SmilesParserParams ps;
+  ps.removeHs = false;
+  SECTION("hydrogen molecule") {
+    auto m = v2::SmilesParse::MolFromSmiles("[H][H] |(0,0,0;0.74,0,0)|", ps);
+    REQUIRE(m);
+    Descriptors::DoubleCubicLatticeVolume dclv(*m);
+    CHECK(dclv.getPolarSurfaceArea(false, true) == 0.0);
+    CHECK(dclv.getPolarVolume(false, true) == 0.0);
+    CHECK(dclv.getPolarSurfaceArea(true, true) == 0.0);
+    CHECK(dclv.getPolarVolume(true, true) == 0.0);
+  }
+  SECTION("polar hydrogens are still included") {
+    // methanol: the polar atoms are O (4) and the H attached to it (5)
+    auto m = v2::SmilesParse::MolFromSmiles(
+        "[H]C([H])([H])O[H] |(-0.36,1.03,0;0,0,0;-0.36,-0.51,0.89;-0.36,-0.51,-0.89;1.43,0,0;1.75,-0.91,0)|",
+        ps);
+    REQUIRE(m);
+    Descriptors::DoubleCubicLatticeVolume dclv(*m);
+    boost::dynamic_bitset<> polarAtoms(m->getNumAtoms());
+    polarAtoms.set(4);
+    polarAtoms.set(5);
+    CHECK(dclv.getPolarSurfaceArea(false, true) > 0.0);
+    CHECK(dclv.getPolarSurfaceArea(false, true) ==
+          dclv.getPartialSurfaceArea(polarAtoms));
+    CHECK(dclv.getPolarVolume(false, true) ==
+          dclv.getPartialVolume(polarAtoms));
+  }
+}

@@ -22,6 +22,61 @@ bool isMacroAtom(const Atom *atom) {
 }
 }  // namespace
 
+MacroMol::MacroMol()
+    : dp_localTemplateLibrary(
+          std::make_unique<MacroMolTemplateLibrary>()) {}
+
+MacroMol::MacroMol(
+    std::unique_ptr<MacroMolTemplateLibrary> localTemplateLibrary)
+    : dp_localTemplateLibrary(std::move(localTemplateLibrary)) {
+  PRECONDITION(dp_localTemplateLibrary, "local template library is null");
+}
+
+MacroMol::MacroMol(const MacroMol &other)
+    : RWMol(other),
+      dp_localTemplateLibrary(std::make_unique<MacroMolTemplateLibrary>(
+          *other.dp_localTemplateLibrary)) {}
+
+MacroMol &MacroMol::operator=(const MacroMol &other) {
+  if (this != &other) {
+    auto localTemplateLibrary = std::make_unique<MacroMolTemplateLibrary>(
+        *other.dp_localTemplateLibrary);
+    RWMol::operator=(other);
+    dp_localTemplateLibrary = std::move(localTemplateLibrary);
+  }
+  return *this;
+}
+
+void MacroMol::setLocalTemplateLibrary(
+    std::unique_ptr<MacroMolTemplateLibrary> newTemplateLibrary) {
+  PRECONDITION(newTemplateLibrary, "local template library is null");
+  dp_localTemplateLibrary = std::move(newTemplateLibrary);
+}
+
+MacroMolTemplateLibrary &MacroMol::getLocalTemplateLibrary() {
+  return *dp_localTemplateLibrary;
+}
+
+const MacroMolTemplateLibrary &MacroMol::getLocalTemplateLibrary() const {
+  return *dp_localTemplateLibrary;
+}
+
+bool MacroMol::checkLocalTemplateReferences() const {
+  for (const auto *atom : atoms()) {
+    const auto *macroAtomInfo = atom->getMacroAtomInfo();
+    if (!macroAtomInfo) {
+      continue;
+    }
+    const auto monomerClass = macroAtomInfo->getMonomerClass();
+    const auto &symbol = macroAtomInfo->getSymbol();
+    if (!dp_localTemplateLibrary->getBySymbol(monomerClass, symbol) &&
+        !dp_localTemplateLibrary->getByName(monomerClass, symbol)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 unsigned int MacroMol::addMacroAtom(std::string symbol,
                                     MonomerClass monomerClass) {
   auto atom = new Atom(0);

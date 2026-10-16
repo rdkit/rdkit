@@ -12,9 +12,10 @@
 #define RD_TAUTOMER_H
 
 #include <boost/function.hpp>
+#include <iterator>
+#include <memory>
 #include <string>
 #include <utility>
-#include <iterator>
 #include <Catalogs/Catalog.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolStandardize/MolStandardize.h>
@@ -56,8 +57,7 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
   RWMol connectivityMatcher;
 
   SubstructTerm(std::string aname, std::string asmarts, int ascore,
-                std::vector<int> reqElements = {},
-                std::string connSmarts = "");
+                std::vector<int> reqElements = {}, std::string connSmarts = "");
   SubstructTerm(const SubstructTerm &rhs) = default;
   SubstructTerm &operator=(const SubstructTerm &rhs) = default;
 
@@ -68,8 +68,8 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
 
 //! getDefaultTautomerSubstructs returns the SubstructTerms used in scoring
 /// tautomer forms.  See SubstructTerm for details.
-RDKIT_MOLSTANDARDIZE_EXPORT const std::vector<SubstructTerm>
-    &getDefaultTautomerScoreSubstructs();
+RDKIT_MOLSTANDARDIZE_EXPORT const std::vector<SubstructTerm> &
+getDefaultTautomerScoreSubstructs();
 
 //! Score the rings of the current tautomer
 /// Aromatic rings score 100, all carbon aromatic rings score 250
@@ -96,8 +96,8 @@ RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(
 ///      doesn't match (since tautomerization doesn't create/destroy bonds)
 /// Returns indices into the terms vector for relevant terms.
 RDKIT_MOLSTANDARDIZE_EXPORT std::vector<size_t> getRelevantSubstructTermIndices(
-    const ROMol &mol,
-    const std::vector<SubstructTerm> &terms = getDefaultTautomerScoreSubstructs());
+    const ROMol &mol, const std::vector<SubstructTerm> &terms =
+                          getDefaultTautomerScoreSubstructs());
 
 //! Score substructures using only the terms at the specified indices.
 /// Uses specialized matchers for simple patterns (C=O, N=O, P=O, methyl, etc.)
@@ -149,17 +149,18 @@ namespace detail {
 inline unsigned int countSpecifiedStereo(const ROMol &mol) {
   unsigned int nSpecified = 0;
   for (const auto atom : mol.atoms()) {
-    // CHI_UNSPECIFIED is the only "none" value on the atom side; ChiralType has no
-    // analogue of STEREOANY, so a simple inequality is right here.
+    // CHI_UNSPECIFIED is the only "none" value on the atom side; ChiralType has
+    // no analogue of STEREOANY, so a simple inequality is right here.
     if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
       ++nSpecified;
     }
   }
   for (const auto bond : mol.bonds()) {
-    // STEREOANY is *intentionally unspecified*, not retained stereochemistry, and
-    // getClearedTautomerBondStereo() assigns it to cleared acyclic double bonds, so
-    // counting it would let a tautomer win a tie on unknown stereo. The enum is
-    // ordered so that "> STEREOANY" is the idiomatic test; see Bond.h.
+    // STEREOANY is *intentionally unspecified*, not retained stereochemistry,
+    // and getClearedTautomerBondStereo() assigns it to cleared acyclic double
+    // bonds, so counting it would let a tautomer win a tie on unknown stereo.
+    // The enum is ordered so that "> STEREOANY" is the idiomatic test; see
+    // Bond.h.
     if (bond->getStereo() > Bond::STEREOANY) {
       ++nSpecified;
     }
@@ -438,6 +439,10 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   void setCallback(TautomerEnumeratorCallback *callback) {
     d_callback.reset(callback);
   }
+  void setCallback(std::shared_ptr<TautomerEnumeratorCallback> callback) {
+    d_callback = callback;
+  }
+
   /*! \return pointer to an instance of a class derived from
       TautomerEnumeratorCallback.
       DO NOT delete the instance as ownership of the pointer is transferred
@@ -447,18 +452,22 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
 
   //! returns a \c TautomerEnumeratorResult structure for the input molecule
   /*!
-    The enumeration rules are inspired by the publication:
-    M. Sitzmann et al., “Tautomerism in Large Databases.”, JCAMD 24:521 (2010)
+    The enumeration rules are inspired by the publication: M. Sitzmann et al.,
+    “Tautomerism in Large Databases.”, JCAMD 24:521 (2010)
     https://doi.org/10.1007/s10822-010-9346-4
 
     \param mol: the molecule to be enumerated
 
-    Note: the definitions used here are that the atoms modified during
-    tautomerization are the atoms at the beginning and end of each tautomer
-    transform (the H "donor" and H "acceptor" in the transform) and the bonds
-    modified during transformation are any bonds whose order is changed during
-    the tautomer transform (these are the bonds between the "donor" and the
-    "acceptor")
+    Notes:
+      - the definitions used here are that the atoms modified during
+        tautomerization are the atoms at the beginning and end of each tautomer
+        transform (the H "donor" and H "acceptor" in the transform) and the
+        bonds modified during transformation are any bonds whose order is
+        changed during the tautomer transform (these are the bonds between the
+        "donor" and the "acceptor")
+      - if any atoms in the molecule have the common_properties::_protected
+        property set, they will not be considered for tautomerization. Any
+        transformations involving these atoms will be skipped.
 
   */
   TautomerEnumeratorResult enumerate(const ROMol &mol) const;
