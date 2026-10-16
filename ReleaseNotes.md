@@ -55,6 +55,11 @@ GitHub)
   component the preceding `rdkit_library()` call happened to leave set).
   Packagers who install components selectively need to include `python` to keep
   these files.
+- `RDKit_HAS_PYTHON_WRAPPERS` in `rdkit-config.cmake` is now `ON` only when the
+  `rdkitpython` package config is installed beside it, instead of recording
+  whether the Boost.Python wrappers were built. The two agree for a full
+  install; they differ when the `dev` and `python` components are packaged
+  separately.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use
