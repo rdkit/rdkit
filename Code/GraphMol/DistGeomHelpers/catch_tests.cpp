@@ -3101,7 +3101,7 @@ TEST_CASE("MMFFBounds") {
   }
 }
 
-TEST_CASE("Issue - TODO") {
+TEST_CASE("Issue - 9719") {
   auto mol = R"CTAB(
      RDKit          3D
 
