@@ -28,6 +28,8 @@ set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
 add_library(rdkit_base INTERFACE)
+# The headers need this standard too, so projects linking the exported targets get it.
+target_compile_features(rdkit_base INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "if this is OFF, no python wrappers will be built" ON )
@@ -792,6 +794,14 @@ install(FILES
     ${RDKit_BINARY_DIR}/rdkit-config-version.cmake
     DESTINATION ${RDKit_LibDir}/cmake/rdkit
     COMPONENT dev)
+
+# MolDraw2D links Cairo::Cairo, which only this find module defines.
+if(RDK_BUILD_CAIRO_SUPPORT)
+  install(FILES
+      ${RDKit_SOURCE_DIR}/Code/cmake/Modules/FindCairo.cmake
+      DESTINATION ${RDKit_LibDir}/cmake/rdkit
+      COMPONENT dev)
+endif()
 
 # then manage the targets for the python bindings
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)

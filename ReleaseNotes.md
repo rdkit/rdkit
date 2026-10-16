@@ -60,6 +60,13 @@ GitHub)
   whether the Boost.Python wrappers were built. The two agree for a full
   install; they differ when the `dev` and `python` components are packaged
   separately.
+- The installed CMake package now carries its own requirements: the exported
+  targets require C++20, and `rdkit-config.cmake` finds Freetype, Cairo, and
+  EXPAT when RDKit was built with them, instead of `RDKit::MolDraw2D` recording
+  absolute paths from the build machine. Projects using
+  `find_package(RDKit)` need those packages to be findable.
+  `rdkitpython-config.cmake` also finds the Python version it was built
+  against; it previously asked for an empty one and always failed.
 
 ## Code removed in this release:
 - The version of hanoiSort() that takes raw pointers has been removed. Please use
