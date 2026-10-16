@@ -150,8 +150,8 @@ std::unique_ptr<double[]> getEEMMatrix(double *dist3D, unsigned int n,
   }
   /* Fill last column & row */
   for (unsigned int i = 0; i < n; i++) {
-    EEM[n * (n + 1) + i] = 1.0;   // column
-    EEM[i * (n + 1) + n] = -1.0;  // row
+    EEM[n * (n + 1) + i] = 1.0;   // row
+    EEM[i * (n + 1) + n] = -1.0;  // column
   }
   return std::unique_ptr<double[]>(EEM);
 }
@@ -205,7 +205,9 @@ void calculate_charges(ROMol mol, double *dist3D, unsigned int numAtoms,
   std::unique_ptr<double[]> A = getEEMMatrix(dist3D, numAtoms, EEMatoms);
   std::unique_ptr<double[]> b = getBVector(mol, numAtoms, EEMatoms);
 
-  MatrixXd AM = Map<MatrixXd>(A.get(), numAtoms + 1, numAtoms + 1);
+  // getEEMMatrix() fills A in row-major order
+  MatrixXd AM = Map<Matrix<double, Dynamic, Dynamic, RowMajor>>(
+      A.get(), numAtoms + 1, numAtoms + 1);
   VectorXd bv = Map<VectorXd>(b.get(), numAtoms + 1);
   VectorXd Res(numAtoms + 1);
 
