@@ -1,0 +1,72 @@
+[
+    {
+        "SYMBOL": "Sar",
+        "POLYMER_TYPE": "PEPTIDE",
+        "NATURAL_ANALOG": "G",
+        "CORE_SMILES": "*N(C)CC(*)=O |$_R1;;;;;_R2;$|",
+        "RGROUPS": {
+            "R1": "*[H] |$_R1;$|",
+            "R2": "*O |$_R2;$|"
+        },
+        "NAME": "Sarcosine",
+        "MONOMER_TYPE": "Backbone",
+        "AUTHOR": "RDKit",
+        "PDBCODE": "SAR"
+    },
+    {
+        "SYMBOL": "BalOMe",
+        "POLYMER_TYPE": "PEPTIDE",
+        "NATURAL_ANALOG": "A",
+        "CORE_SMILES": "*NCCC(*)=O |$_R1;;;;;_R2;$|",
+        "RGROUPS": {
+            "R1": "*[H] |$_R1;$|",
+            "R2": "*OC |$_R2;;$|"
+        },
+        "NAME": "beta-Alanine methyl ester",
+        "MONOMER_TYPE": "Backbone",
+        "AUTHOR": "RDKit",
+        "PDBCODE": "BAM"
+    },
+    {
+        "SYMBOL": "GlyHE1",
+        "POLYMER_TYPE": "PEPTIDE",
+        "NATURAL_ANALOG": "G",
+        "CORE_SMILES": "*NCC(*)=O |$_R1;;;;_R2;$|",
+        "RGROUPS": {
+            "R1": "*[H] |$_R1;$|",
+            "R2": "C[C@H](*)O |$;;_R2;$|"
+        },
+        "NAME": "Glycine 1-hydroxyethyl ketone",
+        "MONOMER_TYPE": "Backbone",
+        "AUTHOR": "RDKit",
+        "PDBCODE": "HE1"
+    },
+    {
+        "SYMBOL": "GlyHE2",
+        "POLYMER_TYPE": "PEPTIDE",
+        "NATURAL_ANALOG": "G",
+        "CORE_SMILES": "*NCC(*)=O |$_R1;;;;_R2;$|",
+        "RGROUPS": {
+            "R1": "*[H] |$_R1;$|",
+            "R2": "*[C@@H](C)O |$_R2;;;$|"
+        },
+        "NAME": "Glycine 1-hydroxyethyl ketone (alternate SMILES)",
+        "MONOMER_TYPE": "Backbone",
+        "AUTHOR": "RDKit",
+        "PDBCODE": "HE2"
+    },
+    {
+        "SYMBOL": "GlyPRP",
+        "POLYMER_TYPE": "PEPTIDE",
+        "NATURAL_ANALOG": "G",
+        "CORE_SMILES": "*NCC(*)=O |$_R1;;;;_R2;$|",
+        "RGROUPS": {
+            "R1": "*[H] |$_R1;$|",
+            "R2": "*/C=C/C |$_R2;;;$|"
+        },
+        "NAME": "Glycine trans-propenyl ketone",
+        "MONOMER_TYPE": "Backbone",
+        "AUTHOR": "RDKit",
+        "PDBCODE": "PRP"
+    }
+]

@@ -208,8 +208,8 @@ void MacroMolTemplateLibrary::addTemplate(
     std::unique_ptr<MacroMolTemplate> macroMolTemplate) {
   PRECONDITION(macroMolTemplate, "cannot add a null MacroMolTemplate");
 
-  const MacroMolTemplateKey nameKey{
-      macroMolTemplate->getMonomerClass(), macroMolTemplate->getName()};
+  const MacroMolTemplateKey nameKey{macroMolTemplate->getMonomerClass(),
+                                    macroMolTemplate->getName()};
   if (byName.find(nameKey) != byName.end()) {
     throw ValueErrorException(
         "MacroMolTemplateLibrary already contains an entry with the same "
@@ -245,6 +245,16 @@ const MacroMolTemplate *MacroMolTemplateLibrary::getBySymbol(
     return it->second;
   }
   return nullptr;
+}
+
+std::vector<const MacroMolTemplate *> MacroMolTemplateLibrary::getTemplates()
+    const {
+  std::vector<const MacroMolTemplate *> templates;
+  templates.reserve(byName.size());
+  for (const auto &entry : byName) {
+    templates.push_back(entry.second.get());
+  }
+  return templates;
 }
 
 }  // namespace RDKit

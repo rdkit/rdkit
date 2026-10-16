@@ -27,8 +27,8 @@ namespace RDKit {
 //! Describes the atoms removed at one MacroMol template attachment point.
 struct RDKIT_GRAPHMOL_EXPORT MacroMolLeavingGroup {
   MacroMolLeavingGroup(std::vector<unsigned int> atomIdxs,
-                       unsigned int attachAtomIdx,
-                       unsigned int leavingAtomIdx, int attachPoint)
+                       unsigned int attachAtomIdx, unsigned int leavingAtomIdx,
+                       int attachPoint)
       : atomIdxs(std::move(atomIdxs)),
         attachAtomIdx(attachAtomIdx),
         leavingAtomIdx(leavingAtomIdx),
@@ -83,10 +83,9 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplate final {
  private:
   friend class MacroMolTemplateBuilder;
 
-  MacroMolTemplate(RWMol mol, MonomerClass monomerClass,
-                   std::string name, std::string symbol,
-                   std::string originalData, std::string subclass,
-                   std::vector<unsigned int> mainAtomIdxs,
+  MacroMolTemplate(RWMol mol, MonomerClass monomerClass, std::string name,
+                   std::string symbol, std::string originalData,
+                   std::string subclass, std::vector<unsigned int> mainAtomIdxs,
                    std::vector<MacroMolLeavingGroup> leavingGroups,
                    unsigned int mainSgroupIdx)
       : d_mol(std::move(mol)),
@@ -138,8 +137,7 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateBuilder {
   //! Defines the atoms retained as the main monomer group.
   MacroMolTemplateBuilder &setMainGroup(std::vector<unsigned int> &&atomIdxs);
   //! Adds a leaving group and its attachment-point definition.
-  MacroMolTemplateBuilder &addLeavingGroup(
-      MacroMolLeavingGroup &&leavingGroup);
+  MacroMolTemplateBuilder &addLeavingGroup(MacroMolLeavingGroup &&leavingGroup);
   //! Sets the optional SCSR subclass.
   MacroMolTemplateBuilder &setSubclass(std::string subclass);
   //! Validates the complete definition and returns an immutable template.
@@ -170,11 +168,13 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateLibrary {
   void addTemplate(std::unique_ptr<MacroMolTemplate> macroMolTemplate);
 
   //! Returns a matching template, or nullptr if none has been added.
-  const MacroMolTemplate *getByName(
-      MonomerClass monomerClass, const std::string &name) const;
+  const MacroMolTemplate *getByName(MonomerClass monomerClass,
+                                    const std::string &name) const;
   //! Returns a matching template, or nullptr if none has been added.
-  const MacroMolTemplate *getBySymbol(
-      MonomerClass monomerClass, const std::string &symbol) const;
+  const MacroMolTemplate *getBySymbol(MonomerClass monomerClass,
+                                      const std::string &symbol) const;
+  //! Returns non-owning views of all templates in key order.
+  std::vector<const MacroMolTemplate *> getTemplates() const;
 
  private:
   using MacroMolTemplateKey = std::pair<MonomerClass, std::string>;
