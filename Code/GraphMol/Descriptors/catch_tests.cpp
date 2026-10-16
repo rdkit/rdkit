@@ -23,6 +23,7 @@
 #include <GraphMol/Descriptors/BCUT.h>
 #ifdef RDK_BUILD_DESCRIPTORS3D
 #include <GraphMol/Descriptors/GETAWAY.h>
+#include <GraphMol/Descriptors/EEM.h>
 #endif
 
 using namespace RDKit;
@@ -796,6 +797,40 @@ TEST_CASE("GETAWAY on molecules with several fragments") {
 }
 #endif
 
+#ifdef RDK_BUILD_DESCRIPTORS3D
+TEST_CASE("EEM charges of charged molecules sum to the formal charge") {
+  v2::SmilesParse::SmilesParserParams ps;
+  ps.removeHs = false;
+  SECTION("hydroxide") {
+    auto m = v2::SmilesParse::MolFromSmiles("[O-][H] |(0,0,0;0.97,0,0)|", ps);
+    REQUIRE(m);
+    REQUIRE(m->getNumAtoms() == 2);
+    std::vector<double> charges;
+    Descriptors::EEM(*m, charges, -1);
+    REQUIRE(charges.size() == 2);
+    CHECK(charges[0] == Catch::Approx(-1.0632).margin(1e-4));
+    CHECK(charges[1] == Catch::Approx(0.0632).margin(1e-4));
+  }
+  SECTION("sum of charges") {
+    const std::vector<std::string> smis = {
+        "[O-][H] |(0,0,0;0.97,0,0)|",
+        "[H][O+]([H])[H] |(0.94,0,0;0,0,0;-0.31,0.89,0;-0.31,-0.44,0.77)|",
+        "[H]C([H])([H])C(=O)[O-] |(-1.06,-0.98,0.31;-0.49,-0.06,0.28;-0.69,0.48,1.21;-0.83,0.55,-0.56;0.99,-0.30,0.17;1.70,0.71,0.09;1.40,-1.48,0.17)|"};
+    for (const auto &smi : smis) {
+      INFO(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi, ps);
+      REQUIRE(m);
+      std::vector<double> charges;
+      Descriptors::EEM(*m, charges, -1);
+      double sum = 0.0;
+      for (auto q : charges) {
+        sum += q;
+      }
+      CHECK(sum == Catch::Approx(MolOps::getFormalCharge(*m)).margin(1e-8));
+    }
+  }
+}
+#endif
 TEST_CASE("DCLV ignores dummy atoms") {
   v2::SmilesParse::SmilesParserParams ps;
   ps.removeHs = false;

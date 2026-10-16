@@ -33,6 +33,7 @@
 #include <GraphMol/Chirality.h>
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <RDGeneral/Exceptions.h>
 
 #include "ChemDrawStartInclude.h"
 #include "chemdraw/CDXStdObjects.h"
@@ -67,6 +68,10 @@ bool needsExplicitHs(const Atom *atom) {
 }  // namespace
 
 std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
+  if (format == CDXFormat::AUTO) {
+    throw ValueErrorException(
+        "MolToChemDrawBlock needs CDXFormat::CDX or CDXFormat::CDXML");
+  }
   RWMol trmol(mol);
   MolOps::Kekulize(trmol);
   if (!trmol.getNumConformers()) {

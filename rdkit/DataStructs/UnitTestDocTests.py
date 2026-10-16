@@ -77,7 +77,7 @@ class TestCaseAdditional(unittest.TestCase):
     # here we have to use the older interface:
     fp = Chem.RDKFingerprint(ms[0], fpSize=1024, tgtDensity=0.02)
     self.assertEqual(len(fp), 256)
-    fp = DataStructs.FoldToTargetDensity(fp, density=0.1)
+    fp = DataStructs.FoldToTargetDensity(fp, density=0.1, minLength=128)
     self.assertEqual(len(fp), 128)
 
 
