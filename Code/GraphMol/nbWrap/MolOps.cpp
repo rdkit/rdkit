@@ -37,13 +37,10 @@
 #include <GraphMol/Subset.h>
 #include <RDBoost/Wrap_nb.h>
 #include <nanobind/stl/string.h>
-#include <nanobind/stl/vector.h>
-#include <nanobind/stl/map.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/bind_vector.h>
 #include <nanobind/stl/bind_map.h>
-#include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 
 #include <sstream>
@@ -209,8 +206,8 @@ ROMol *fragmentOnBondsHelper(
 
 ROMol *renumberAtomsHelper(const ROMol &mol,
                            const PyIterableOf<unsigned int> &pyNewOrder) {
-  // The size is taken from the converted vector rather than the argument, so
-  // that any iterable works and not only the ones that support len().
+  // Measured after conversion, so that iterables without len(), such as
+  // generators, work too.
   auto newOrder = pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
   if (!newOrder) {
     throw ValueErrorException("newOrder argument must be non-empty");

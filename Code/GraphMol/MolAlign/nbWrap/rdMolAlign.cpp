@@ -24,7 +24,6 @@
 #include <GraphMol/Descriptors/Crippen.h>
 #include <Geometry/Transform3D.h>
 #include <Numerics/Vector.h>
-#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;

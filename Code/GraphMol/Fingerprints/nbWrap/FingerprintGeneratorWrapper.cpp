@@ -18,7 +18,6 @@
 #include <numpy/npy_common.h>
 #include <numpy/ndarrayobject.h>
 #include <RDBoost/import_array.h>
-#include <RDBoost/Wrap_nb.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/nbWrap/AtomPairWrapper.cpp>
@@ -162,10 +161,6 @@ ExplicitBitVect *getFingerprint(
 
   return result.release();
 }
-
-//! A tuple whose elements are all of type \c T.
-
-//! A list whose elements are all of type \c T.
 
 //! A one-dimensional NumPy array with element type \c T.
 template <typename T>

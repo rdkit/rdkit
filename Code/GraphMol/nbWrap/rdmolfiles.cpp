@@ -39,7 +39,6 @@
 
 #include <RDBoost/Wrap_nb.h>
 #include <RDGeneral/Exceptions.h>
-#include <RDGeneral/BadFileException.h>
 #include <GraphMol/SanitException.h>
 #include <string.h>
 

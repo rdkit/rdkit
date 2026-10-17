@@ -8824,7 +8824,7 @@ M  END
 
   def testSupplierAndWriterFilenamesAcceptPathLike(self):
     # Suppliers and writers take a filename as str, bytes or os.PathLike, and
-    # the ones with a file-object overload still accept a file object.
+    # the ones with a file-object overload also accept a file object.
     mol = Chem.MolFromSmiles('CCO')
     with tempfile.TemporaryDirectory() as tmpDir:
       sdf = os.path.join(tmpDir, 'mols.sdf')

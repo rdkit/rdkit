@@ -71,8 +71,8 @@ SubstanceGroup *addMolSubstanceGroup(ROMol &mol, const SubstanceGroup &sgroup) {
 
 void addBracketHelper(SubstanceGroup &self,
                       const PyIterableOf<RDGeom::Point3D> &pts) {
-  // The size is taken from the converted vector rather than the argument, so
-  // that any iterable works and not only the ones that support len().
+  // Measured after conversion, so that iterables without len(), such as
+  // generators, work too.
   auto ptVec = pythonObjectToVect<RDGeom::Point3D>(pts);
   if (!ptVec) {
     throw ValueErrorException(
