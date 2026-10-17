@@ -23,6 +23,12 @@
   need those packages to be findable. `rdkitpython-config.cmake` requires the
   Python minor version the wrappers were built for; it previously asked for an
   empty version and always failed.
+- `RDKit::rdkit_py_base` in the `rdkitpython` package links `Python::Module`
+  and `Python::NumPy` instead of recording the build machine's Python and NumPy
+  paths. With a shared Python on Linux and macOS, `RDBoost` and the Boost.Python
+  wrappers no longer link libpython; the interpreter that loads them supplies
+  the Python symbols. A program that embeds Python and links `RDKit::RDBoost`
+  needs to link `Python::Python` itself.
 
 # Release_2026.09.1
 (Changes relative to Release_2026.03.1)
