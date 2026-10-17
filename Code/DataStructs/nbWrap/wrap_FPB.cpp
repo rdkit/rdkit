@@ -12,6 +12,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/vector.h>
 #include <RDBoost/Wrap_nb.h>
 
@@ -158,8 +159,11 @@ struct FPB_wrapper {
     change in future releases.
 )DOC";
     nb::class_<FPBReader>(m, "FPBReader", FPBReaderClassDoc.c_str())
-        .def(nb::init<const std::string &, bool>(), "filename"_a,
-             "lazy"_a = false, R"DOC(docstring)DOC")
+        .def(
+            "__init__",
+            [](FPBReader *self, const std::filesystem::path &filename,
+               bool lazy) { new (self) FPBReader(filename.string(), lazy); },
+            "filename"_a, "lazy"_a = false, R"DOC(docstring)DOC")
         .def("Init", &FPBReader::init,
              R"DOC(Read the fingerprints from the file. This can take a while.
 )DOC")

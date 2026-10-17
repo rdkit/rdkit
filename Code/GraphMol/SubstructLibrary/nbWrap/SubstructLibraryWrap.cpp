@@ -10,6 +10,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 #include <RDBoost/boost_shared_ptr.h>
@@ -520,14 +521,24 @@ void wrap_substructlibrary(nb::module_ &m) {
   nb::class_<CachedSmilesMolHolder, MolHolderBase>(m, "CachedSmilesMolHolder",
                                                    CachedSmilesMolHolderDoc)
       .def(nb::init<>())
-      .def("AddSmiles", &CachedSmilesMolHolder::addSmiles, "smiles"_a,
+      .def(
+          "AddSmiles",
+          [](CachedSmilesMolHolder &self, const StringOrBytes &smiles) {
+            return self.addSmiles(pyObjectToString(smiles));
+          },
+          "smiles"_a,
            "Add a trusted smiles string to the molecule holder, no checking "
            "is done on the input data");
 
   nb::class_<CachedTrustedSmilesMolHolder, MolHolderBase>(
       m, "CachedTrustedSmilesMolHolder", CachedTrustedSmilesMolHolderDoc)
       .def(nb::init<>())
-      .def("AddSmiles", &CachedTrustedSmilesMolHolder::addSmiles, "smiles"_a,
+      .def(
+          "AddSmiles",
+          [](CachedTrustedSmilesMolHolder &self, const StringOrBytes &smiles) {
+            return self.addSmiles(pyObjectToString(smiles));
+          },
+          "smiles"_a,
            "Add a trusted smiles string to the molecule holder, no checking "
            "is done on the input data");
 

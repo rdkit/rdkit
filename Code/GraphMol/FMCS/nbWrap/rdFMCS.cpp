@@ -11,6 +11,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap_nb.h>
 #include <GraphMol/FMCS/FMCS.h>
@@ -508,7 +509,8 @@ MCSResult *FindMCSWrapper(const PySequenceOf<ROMol> &mols, bool maximizeBonds,
                           bool matchValences, bool ringMatchesRingOnly,
                           bool completeRingsOnly, bool matchChiralTag,
                           AtomComparator atomComp, BondComparator bondComp,
-                          RingComparator ringComp, std::string seedSmarts) {
+                          RingComparator ringComp,
+                          const StringOrBytes &seedSmarts) {
   std::vector<ROMOL_SPTR> ms;
   unsigned int nElems = nb::len(mols);
   ms.resize(nElems);
@@ -525,7 +527,7 @@ MCSResult *FindMCSWrapper(const PySequenceOf<ROMol> &mols, bool maximizeBonds,
   p.MaximizeBonds = maximizeBonds;
   p.Timeout = timeout;
   p.Verbose = verbose;
-  p.InitialSeed = seedSmarts;
+  p.InitialSeed = pyObjectToString(seedSmarts);
   p.AtomCompareParameters.MatchValences = matchValences;
   p.AtomCompareParameters.MatchChiralTag = matchChiralTag;
   p.AtomCompareParameters.RingMatchesRingOnly = ringMatchesRingOnly;

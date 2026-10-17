@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/map.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
@@ -451,12 +452,12 @@ nb::bytes addReactionToPNGStringHelper(const ChemicalReaction &rxn,
 }
 
 nb::bytes addReactionToPNGFileHelper(const ChemicalReaction &rxn,
-                                     nb::object fname, bool includePkl,
-                                     bool includeSmiles, bool includeSmarts,
-                                     bool includeRxn) {
-  std::string cstr = nb::cast<std::string>(fname);
-  auto res = addChemicalReactionToPNGFile(rxn, cstr, includePkl, includeSmiles,
-                                          includeSmarts, includeRxn);
+                                     const std::filesystem::path &fname,
+                                     bool includePkl, bool includeSmiles,
+                                     bool includeSmarts, bool includeRxn) {
+  auto res = addChemicalReactionToPNGFile(rxn, fname.string(), includePkl,
+                                          includeSmiles, includeSmarts,
+                                          includeRxn);
   return nb::bytes(res.c_str(), res.length());
 }
 
@@ -903,20 +904,28 @@ of the replacements argument.)DOC",
 
   m.def(
       "ReactionFromRxnFile",
-      [](const std::string &filename, bool sanitize, bool removeHs,
+      [](const std::filesystem::path &filename, bool sanitize, bool removeHs,
          bool strictParsing) -> Nullable<RDKit::ChemicalReaction *> {
-        return RDKit::RxnFileToChemicalReaction(filename, sanitize, removeHs,
-                                                strictParsing);
+        return RDKit::RxnFileToChemicalReaction(filename.string(), sanitize,
+                                                removeHs, strictParsing);
       },
       "filename"_a, "sanitize"_a = false, "removeHs"_a = false,
       "strictParsing"_a = true,
       "construct a ChemicalReaction from an MDL rxn file",
       nb::rv_policy::take_ownership);
 
-  m.def("ReactionFromRxnBlock", RDKit::RxnBlockToChemicalReaction, "rxnblock"_a,
-        "sanitize"_a = false, "removeHs"_a = false, "strictParsing"_a = true,
-        "construct a ChemicalReaction from a string in MDL rxn format",
-        nb::rv_policy::take_ownership);
+  m.def(
+      "ReactionFromRxnBlock",
+      [](const StringOrBytes &rxnblock, bool sanitize, bool removeHs,
+         bool strictParsing) {
+        return RDKit::RxnBlockToChemicalReaction(pyObjectToString(rxnblock),
+                                                 sanitize, removeHs,
+                                                 strictParsing);
+      },
+      "rxnblock"_a, "sanitize"_a = false, "removeHs"_a = false,
+      "strictParsing"_a = true,
+      "construct a ChemicalReaction from a string in MDL rxn format",
+      nb::rv_policy::take_ownership);
 
   m.def("ReactionFromMrvFile", RDKit::ReactionFromMrvFile, "filename"_a,
         "sanitize"_a = false, "removeHs"_a = false,
@@ -928,11 +937,21 @@ of the replacements argument.)DOC",
         "construct a ChemicalReaction from a string in Marvin (mrv) format",
         nb::rv_policy::take_ownership);
 
-  m.def("MrvFileIsReaction", RDKit::MrvFileIsReaction, "filename"_a,
-        "returns whether or not an MRV file contains reaction data");
+  m.def(
+      "MrvFileIsReaction",
+      [](const std::filesystem::path &filename) {
+        return RDKit::MrvFileIsReaction(filename.string());
+      },
+      "filename"_a,
+      "returns whether or not an MRV file contains reaction data");
 
-  m.def("MrvBlockIsReaction", RDKit::MrvBlockIsReaction, "mrvData"_a,
-        "returns whether or not an MRV block contains reaction data");
+  m.def(
+      "MrvBlockIsReaction",
+      [](const StringOrBytes &mrvData) {
+        return RDKit::MrvBlockIsReaction(pyObjectToString(mrvData));
+      },
+      "mrvData"_a,
+      "returns whether or not an MRV block contains reaction data");
 
   m.def("ReactionsFromCDXMLFile", RDKit::ReactionsFromCDXMLFile, "filename"_a,
         "sanitize"_a = false, "removeHs"_a = false,
@@ -950,18 +969,28 @@ of the replacements argument.)DOC",
         "prettyPrint"_a = false,
         "construct a string in Marvin (MRV) rxn format for a ChemicalReaction");
 
-  m.def("ReactionToMrvFile", RDKit::ChemicalReactionToMrvFile, "reaction"_a,
-        "filename"_a, "prettyPrint"_a = false,
-        "write a Marvin (MRV) rxn file for a ChemicalReaction");
+  m.def(
+      "ReactionToMrvFile",
+      [](const RDKit::ChemicalReaction &reaction,
+         const std::filesystem::path &filename, bool prettyPrint) {
+        RDKit::ChemicalReactionToMrvFile(reaction, filename.string(),
+                                         prettyPrint);
+      },
+      "reaction"_a, "filename"_a, "prettyPrint"_a = false,
+      "write a Marvin (MRV) rxn file for a ChemicalReaction");
 
   m.def("ReactionToV3KRxnBlock", RDKit::ChemicalReactionToV3KRxnBlock,
         "reaction"_a, "separateAgents"_a = false,
         "construct a string in MDL v3000 rxn format for a ChemicalReaction");
 
 #ifdef RDK_USE_BOOST_IOSTREAMS
-  m.def("ReactionFromPNGFile", RDKit::PNGFileToChemicalReaction, "fname"_a,
-        "construct a ChemicalReaction from metadata in a PNG file",
-        nb::rv_policy::take_ownership);
+  m.def(
+      "ReactionFromPNGFile",
+      [](const std::filesystem::path &fname) {
+        return RDKit::PNGFileToChemicalReaction(fname.string());
+      },
+      "fname"_a, "construct a ChemicalReaction from metadata in a PNG file",
+      nb::rv_policy::take_ownership);
   m.def(
       "ReactionFromPNGString",
       [](nb::bytes data) {

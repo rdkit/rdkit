@@ -11,6 +11,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <RDBoost/Wrap_nb.h>
 #include <GraphMol/Fingerprints/MHFP.h>
@@ -52,11 +53,11 @@ NB_MODULE(rdMHFPFingerprint, m) {
           "vec"_a, "Creates a MHFP vector from a list of unsigned integers.")
       .def(
           "CreateShinglingFromSmiles",
-          [](MHFPEncoder *enc, std::string smiles, unsigned char radius,
-             bool rings, bool isomeric, bool kekulize,
+          [](MHFPEncoder *enc, const StringOrBytes &smiles,
+             unsigned char radius, bool rings, bool isomeric, bool kekulize,
              unsigned char min_radius) {
-            return enc->CreateShingling(smiles, radius, rings, isomeric,
-                                        kekulize, min_radius);
+            return enc->CreateShingling(pyObjectToString(smiles), radius, rings,
+                                        isomeric, kekulize, min_radius);
           },
           "smiles"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
           "kekulize"_a = true, "min_radius"_a = 1,
@@ -75,10 +76,11 @@ NB_MODULE(rdMHFPFingerprint, m) {
           R"DOC(Creates a shingling (a list of circular n-grams / substructures) from a RDKit Mol instance.)DOC")
       .def(
           "EncodeSmiles",
-          [](MHFPEncoder *enc, std::string smiles, unsigned char radius,
-             bool rings, bool isomeric, bool kekulize,
+          [](MHFPEncoder *enc, const StringOrBytes &smiles,
+             unsigned char radius, bool rings, bool isomeric, bool kekulize,
              unsigned char min_radius) {
-            return enc->Encode(smiles, radius, rings, isomeric, kekulize,
+            auto text = pyObjectToString(smiles);
+            return enc->Encode(text, radius, rings, isomeric, kekulize,
                                min_radius);
           },
           "smiles"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
@@ -137,10 +139,11 @@ NB_MODULE(rdMHFPFingerprint, m) {
           "Creates a MHFP vector from a list of RDKit Mol instances.")
       .def(
           "EncodeSECFPSmiles",
-          [](MHFPEncoder *enc, std::string smiles, unsigned char radius,
-             bool rings, bool isomeric, bool kekulize, unsigned char min_radius,
-             size_t length) {
-            return enc->EncodeSECFP(smiles, radius, rings, isomeric, kekulize,
+          [](MHFPEncoder *enc, const StringOrBytes &smiles,
+             unsigned char radius, bool rings, bool isomeric, bool kekulize,
+             unsigned char min_radius, size_t length) {
+            auto text = pyObjectToString(smiles);
+            return enc->EncodeSECFP(text, radius, rings, isomeric, kekulize,
                                     min_radius, length);
           },
           "smiles"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,

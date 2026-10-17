@@ -10,6 +10,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 
 #include <optional>
 #include <GraphMol/RDKitBase.h>
@@ -510,10 +511,15 @@ NB_MODULE(rdMolStandardize, m) {
       .def("__setattr__", &safeSetattr, nb::arg("name"),
            nb::arg("value").none());
 
-  m.def("UpdateParamsFromJSON",
-        &RDKit::MolStandardize::updateCleanupParamsFromJSON, "params"_a,
-        "json"_a,
-        "updates the cleanup parameters from the provided JSON string");
+  m.def(
+      "UpdateParamsFromJSON",
+      [](RDKit::MolStandardize::CleanupParameters &params,
+         const StringOrBytes &json) {
+        RDKit::MolStandardize::updateCleanupParamsFromJSON(
+            params, pyObjectToString(json));
+      },
+      "params"_a, "json"_a,
+      "updates the cleanup parameters from the provided JSON string");
 
   m.def("Cleanup", cleanupHelper, nb::arg("mol").none(),
         "params"_a = nb::none(), "Standardizes a molecule",
@@ -522,8 +528,13 @@ NB_MODULE(rdMolStandardize, m) {
         "params"_a = nb::none(), "Standardizes a molecule in place");
   m.def("CleanupInPlace", mtcleanupInPlaceHelper, "mols"_a, "numThreads"_a,
         "params"_a = nb::none(), "Standardizes multiple molecules in place");
-  m.def("StandardizeSmiles", RDKit::MolStandardize::standardizeSmiles,
-        "smiles"_a, "Convenience function for standardizing a SMILES");
+  m.def(
+      "StandardizeSmiles",
+      [](const StringOrBytes &smiles) {
+        return RDKit::MolStandardize::standardizeSmiles(
+            pyObjectToString(smiles));
+      },
+      "smiles"_a, "Convenience function for standardizing a SMILES");
   m.def(
       "TautomerParent", tautomerParentHelper, nb::arg("mol").none(),
       "params"_a = nb::none(), "skipStandardize"_a = false,

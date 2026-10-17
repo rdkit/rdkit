@@ -13,6 +13,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/operators.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 
@@ -70,7 +71,8 @@ nb::bytes BVToBinary(const EBV &bv) {
   return nb::bytes(res.c_str(), res.length());
 }
 
-void InitFromBase64(EBV &self, const std::string &inD) {
+void InitFromBase64(EBV &self, const StringOrBytes &text) {
+  const auto inD = pyObjectToString(text);
   self.initFromText(inD.c_str(), inD.length(), true);
 }
 

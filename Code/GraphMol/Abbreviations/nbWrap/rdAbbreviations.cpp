@@ -10,6 +10,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap_nb.h>
@@ -51,7 +52,13 @@ NB_MODULE(rdAbbreviations, m) {
   m.def("GetDefaultLinkers", &Abbreviations::Utils::getDefaultLinkers,
         "returns a list of the default linker definitions");
   m.def(
-      "ParseAbbreviations", &Abbreviations::Utils::parseAbbreviations,
+      "ParseAbbreviations",
+      [](const StringOrBytes &text, bool removeExtraDummies,
+         bool allowConnectionToDummies) {
+        return Abbreviations::Utils::parseAbbreviations(
+            pyObjectToString(text), removeExtraDummies,
+            allowConnectionToDummies);
+      },
       nb::arg("text"), nb::arg("removeExtraDummies") = false,
       nb::arg("allowConnectionToDummies") = false,
       R"DOC(Returns a set of abbreviation definitions from a string.
@@ -71,7 +78,12 @@ Use dummies in the SMARTS to indicate attachment points. The assumption
 is that the first atom is a dummy (one will be added if this is not
 true) and that the second atom is the surrogate for the rest of
 the group.)DOC");
-  m.def("ParseLinkers", &Abbreviations::Utils::parseLinkers, nb::arg("text"),
+  m.def(
+      "ParseLinkers",
+      [](const StringOrBytes &text) {
+        return Abbreviations::Utils::parseLinkers(pyObjectToString(text));
+      },
+      nb::arg("text"),
         "Returns a set of linker definitions from a string. Equivalent to "
         "calling ParseAbbreviations(text, True True).");
   m.def(

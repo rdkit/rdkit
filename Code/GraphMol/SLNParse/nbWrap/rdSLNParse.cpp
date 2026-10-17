@@ -35,6 +35,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 
 #include <GraphMol/SLNParse/SLNParse.h>
 #include <RDGeneral/Exceptions.h>
@@ -55,10 +56,10 @@ NB_MODULE(rdSLNParse, m) {
 
   m.def(
       "MolFromSLN",
-      [](std::string sln, bool sanitize,
+      [](const StringOrBytes &sln, bool sanitize,
          bool debugParser) -> Nullable<RDKit::ROMol *> {
         return static_cast<RDKit::ROMol *>(
-            RDKit::SLNToMol(sln, sanitize, debugParser));
+            RDKit::SLNToMol(pyObjectToString(sln), sanitize, debugParser));
       },
       "SLN"_a, "sanitize"_a = true, "debugParser"_a = false,
       nb::rv_policy::take_ownership,
@@ -81,10 +82,10 @@ NB_MODULE(rdSLNParse, m) {
 
   m.def(
       "MolFromQuerySLN",
-      [](std::string sln, bool mergeHs,
+      [](const StringOrBytes &sln, bool mergeHs,
          bool debugParser) -> Nullable<RDKit::ROMol *> {
         return static_cast<RDKit::ROMol *>(
-            RDKit::SLNQueryToMol(sln, mergeHs, debugParser));
+            RDKit::SLNQueryToMol(pyObjectToString(sln), mergeHs, debugParser));
       },
       "SLN"_a, "mergeHs"_a = true, "debugParser"_a = false,
       nb::rv_policy::take_ownership,

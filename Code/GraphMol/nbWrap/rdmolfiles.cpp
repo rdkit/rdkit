@@ -804,9 +804,9 @@ nb::object translateMetadataToDict(
 }
 
 }  // namespace
-nb::object MetadataFromPNGFile(nb::object fname, bool asList) {
-  std::string cstr = nb::cast<std::string>(fname);
-  auto metadata = PNGFileToMetadata(cstr);
+nb::object MetadataFromPNGFile(const std::filesystem::path &fname,
+                               bool asList) {
+  auto metadata = PNGFileToMetadata(fname.string());
   if (asList) {
     return translateMetadataToList(metadata);
   }
@@ -1317,10 +1317,13 @@ NB_MODULE(rdmolfiles, m) {
       - confId: (optional) selects which conformation to output (-1 =
       default)
   )DOC";
-  m.def("MolToMolFile",
-        (void (*)(const ROMol &, const std::string &, const MolWriterParams &,
-                  int))RDKit::MolToMolFile,
-        "mol"_a, "filename"_a, "params"_a, "confId"_a = -1, docString.c_str());
+  m.def(
+      "MolToMolFile",
+      [](const ROMol &mol, const std::filesystem::path &filename,
+         const MolWriterParams &params, int confId) {
+        RDKit::MolToMolFile(mol, filename.string(), params, confId);
+      },
+      "mol"_a, "filename"_a, "params"_a, "confId"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Writes a Mol file for a molecule
@@ -1339,11 +1342,15 @@ NB_MODULE(rdmolfiles, m) {
       automatically with
         more than 999 atoms or bonds)
   )DOC";
-  m.def("MolToMolFile",
-        (void (*)(const ROMol &, const std::string &, bool, int, bool,
-                  bool))RDKit::MolToMolFile,
-        "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
-        "kekulize"_a = true, "forceV3000"_a = false, docString.c_str());
+  m.def(
+      "MolToMolFile",
+      [](const ROMol &mol, const std::filesystem::path &filename,
+         bool includeStereo, int confId, bool kekulize, bool forceV3000) {
+        RDKit::MolToMolFile(mol, filename.string(), includeStereo, confId,
+                            kekulize, forceV3000);
+      },
+      "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
+      "kekulize"_a = true, "forceV3000"_a = false, docString.c_str());
 
   docString =
       R"DOC(Writes a V3000 Mol file for a molecule
@@ -1355,11 +1362,14 @@ NB_MODULE(rdmolfiles, m) {
       - confId: (optional) selects which conformation to output (-1 =
       default)
   )DOC";
-  m.def("MolToV3KMolFile",
-        (void (*)(const ROMol &, const std::string &, const MolWriterParams &,
-                  int))RDKit::MolToV3KMolFile,
-        "mol"_a, "filename"_a, "params"_a = true, "confId"_a = -1,
-        docString.c_str());
+  m.def(
+      "MolToV3KMolFile",
+      [](const ROMol &mol, const std::filesystem::path &filename,
+         const MolWriterParams &params, int confId) {
+        RDKit::MolToV3KMolFile(mol, filename.string(), params, confId);
+      },
+      "mol"_a, "filename"_a, "params"_a = true, "confId"_a = -1,
+      docString.c_str());
 
   docString =
       R"DOC(Writes a V3000 Mol file for a molecule
@@ -1375,11 +1385,15 @@ NB_MODULE(rdmolfiles, m) {
       it's written,
         as suggested by the MDL spec.
   )DOC";
-  m.def("MolToV3KMolFile",
-        (void (*)(const ROMol &, const std::string &, bool, int,
-                  bool))RDKit::MolToV3KMolFile,
-        "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
-        "kekulize"_a = true, docString.c_str());
+  m.def(
+      "MolToV3KMolFile",
+      [](const ROMol &mol, const std::filesystem::path &filename,
+         bool includeStereo, int confId, bool kekulize) {
+        RDKit::MolToV3KMolFile(mol, filename.string(), includeStereo, confId,
+                               kekulize);
+      },
+      "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
+      "kekulize"_a = true, docString.c_str());
   //
 
   docString =
@@ -1449,11 +1463,15 @@ NB_MODULE(rdmolfiles, m) {
        it's written.
        - prettyPrint: (optional) makes the output more human readable.
   )DOC";
-  m.def("MolToMrvFile",
-        (void (*)(const ROMol &, const std::string &, bool, int, bool,
-                  bool))RDKit::MolToMrvFile,
-        "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
-        "kekulize"_a = true, "prettyPrint"_a = false, docString.c_str());
+  m.def(
+      "MolToMrvFile",
+      [](const ROMol &mol, const std::filesystem::path &filename,
+         bool includeStereo, int confId, bool kekulize, bool prettyPrint) {
+        RDKit::MolToMrvFile(mol, filename.string(), includeStereo, confId,
+                            kekulize, prettyPrint);
+      },
+      "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
+      "kekulize"_a = true, "prettyPrint"_a = false, docString.c_str());
 
   docString =
       R"DOC(Writes a Marvin (MRV) file for a molecule
@@ -1465,10 +1483,13 @@ NB_MODULE(rdmolfiles, m) {
       - confId: (optional) selects which conformation to output (-1 =
       default)
   )DOC";
-  m.def("MolToMrvFile",
-        (void (*)(const ROMol &, const std::string &, const MrvWriterParams &,
-                  int))RDKit::MolToMrvFile,
-        "mol"_a, "filename"_a, "params"_a, "confId"_a = -1, docString.c_str());
+  m.def(
+      "MolToMrvFile",
+      [](const ROMol &mol, const std::filesystem::path &filename,
+         const MrvWriterParams &params, int confId) {
+        RDKit::MolToMrvFile(mol, filename.string(), params, confId);
+      },
+      "mol"_a, "filename"_a, "params"_a, "confId"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Writes a CML block for a molecule
@@ -1492,8 +1513,14 @@ NB_MODULE(rdmolfiles, m) {
       - kekulize: (optional) triggers kekulization of the molecule before
       it's written
   )DOC";
-  m.def("MolToCMLFile", RDKit::MolToCMLFile, "mol"_a, "filename"_a,
-        "confId"_a = -1, "kekulize"_a = true, docString.c_str());
+  m.def(
+      "MolToCMLFile",
+      [](const ROMol &mol, const std::filesystem::path &filename, int confId,
+         bool kekulize) {
+        RDKit::MolToCMLFile(mol, filename.string(), confId, kekulize);
+      },
+      "mol"_a, "filename"_a, "confId"_a = -1, "kekulize"_a = true,
+      docString.c_str());
 
   docString =
       R"DOC(Returns a XYZ block for a molecule
@@ -1521,8 +1548,14 @@ NB_MODULE(rdmolfiles, m) {
       default)
       - precision: precision of the coordinates
   )DOC";
-  m.def("MolToXYZFile", RDKit::MolToXYZFile, "mol"_a, "filename"_a,
-        "confId"_a = -1, "precision"_a = 6, docString.c_str());
+  m.def(
+      "MolToXYZFile",
+      [](const ROMol &mol, const std::filesystem::path &filename, int confId,
+         unsigned int precision) {
+        RDKit::MolToXYZFile(mol, filename.string(), confId, precision);
+      },
+      "mol"_a, "filename"_a, "confId"_a = -1, "precision"_a = 6,
+      docString.c_str());
 
   nb::class_<RDKit::SmilesParserParams>(m, "SmilesParserParams",
                                         "Parameters controlling SMILES parsing")
@@ -1614,16 +1647,16 @@ NB_MODULE(rdmolfiles, m) {
   docString = R"DOC(Construct an atom from a SMILES string)DOC";
   m.def(
       "AtomFromSmiles",
-      [](const std::string &text) -> Nullable<Atom *> {
-        return SmilesToAtom(text);
+      [](const StringOrBytes &text) -> Nullable<Atom *> {
+        return SmilesToAtom(pyObjectToString(text));
       },
       "SMILES"_a, docString.c_str(), nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct a bond from a SMILES string)DOC";
   m.def(
       "BondFromSmiles",
-      [](const std::string &text) -> Nullable<Bond *> {
-        return SmilesToBond(text);
+      [](const StringOrBytes &text) -> Nullable<Bond *> {
+        return SmilesToBond(pyObjectToString(text));
       },
       "SMILES"_a, docString.c_str(), nb::rv_policy::take_ownership);
 
@@ -1654,16 +1687,16 @@ NB_MODULE(rdmolfiles, m) {
   docString = R"DOC(Construct an atom from a SMARTS string)DOC";
   m.def(
       "AtomFromSmarts",
-      [](const std::string &text) -> Nullable<Atom *> {
-        return SmartsToAtom(text);
+      [](const StringOrBytes &text) -> Nullable<Atom *> {
+        return SmartsToAtom(pyObjectToString(text));
       },
       "SMARTS"_a, docString.c_str(), nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct a bond from a SMARTS string)DOC";
   m.def(
       "BondFromSmarts",
-      [](const std::string &text) -> Nullable<Bond *> {
-        return SmartsToBond(text);
+      [](const StringOrBytes &text) -> Nullable<Bond *> {
+        return SmartsToBond(pyObjectToString(text));
       },
       "SMARTS"_a, docString.c_str(), nb::rv_policy::take_ownership);
 
@@ -2120,9 +2153,15 @@ NB_MODULE(rdmolfiles, m) {
         This should be set to True when writing TPLs to be read by
         the CombiCode.
   )DOC";
-  m.def("MolToTPLFile", RDKit::MolToTPLFile, "mol"_a, "fileName"_a,
-        "partialChargeProp"_a = "_GasteigerCharge",
-        "writeFirstConfTwice"_a = false, docString.c_str());
+  m.def(
+      "MolToTPLFile",
+      [](const ROMol &mol, const std::filesystem::path &fileName,
+         const std::string &partialChargeProp, bool writeFirstConfTwice) {
+        RDKit::MolToTPLFile(mol, fileName.string(), partialChargeProp,
+                            writeFirstConfTwice);
+      },
+      "mol"_a, "fileName"_a, "partialChargeProp"_a = "_GasteigerCharge",
+      "writeFirstConfTwice"_a = false, docString.c_str());
 
   docString =
       R"DOC(Returns the Tpl block for a molecule.
@@ -2237,8 +2276,14 @@ NB_MODULE(rdmolfiles, m) {
               - flavor & 16 : Write MASTER record
               - flavor & 32 : Write TER record
   )DOC";
-  m.def("MolToPDBFile", RDKit::MolToPDBFile, "mol"_a, "filename"_a,
-        "confId"_a = -1, "flavor"_a = 0, docString.c_str());
+  m.def(
+      "MolToPDBFile",
+      [](const ROMol &mol, const std::filesystem::path &filename, int confId,
+         unsigned int flavor) {
+        RDKit::MolToPDBFile(mol, filename.string(), confId, flavor);
+      },
+      "mol"_a, "filename"_a, "confId"_a = -1, "flavor"_a = 0,
+      docString.c_str());
 
   docString =
       R"DOC(Construct a molecule from a sequence string (currently

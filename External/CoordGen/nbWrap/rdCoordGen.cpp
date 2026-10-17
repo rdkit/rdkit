@@ -10,6 +10,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/optional.h>
 
 #include <GraphMol/RDKitBase.h>
@@ -42,8 +43,8 @@ void SetTemplateMol(CoordGen::CoordGenParams *self, const ROMol *templ) {
   self->templateMol = templ;
 }
 
-void SetDefaultTemplateFileDir(const std::string &dir) {
-  CoordGen::defaultParams.templateFileDir = dir;
+void SetDefaultTemplateFileDir(const std::filesystem::path &dir) {
+  CoordGen::defaultParams.templateFileDir = dir.string();
 }
 
 }  // end of anonymous namespace

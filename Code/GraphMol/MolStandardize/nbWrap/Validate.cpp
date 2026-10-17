@@ -9,6 +9,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/trampoline.h>
@@ -88,10 +89,10 @@ MolStandardize::DisallowedAtomsValidation *getDisallowedAtomsValidation(
   return new MolStandardize::DisallowedAtomsValidation(satoms);
 }
 
-PyListOf<std::string> standardizeSmilesHelper(const std::string &smiles) {
+PyListOf<std::string> standardizeSmilesHelper(const StringOrBytes &smiles) {
   PyListOf<std::string> res;
   std::vector<MolStandardize::ValidationErrorInfo> errout =
-      MolStandardize::validateSmiles(smiles);
+      MolStandardize::validateSmiles(pyObjectToString(smiles));
   for (const auto &msg : errout) {
     res.append(msg);
   }

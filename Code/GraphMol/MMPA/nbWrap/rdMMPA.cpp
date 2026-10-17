@@ -9,6 +9,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <RDBoost/Wrap_nb.h>
 #include <RDBoost/boost_shared_ptr.h>
@@ -53,10 +54,11 @@ PyTupleOf<nb::tuple> buildFragmentResults(
 PyTupleOf<nb::tuple> fragmentMolHelper(const RDKit::ROMol &mol,
                                        unsigned int maxCuts,
                                        unsigned int maxCutBonds,
-                                       const std::string &pattern,
+                                       const StringOrBytes &pattern,
                                        bool resultsAsMols) {
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
-  bool ok = RDKit::MMPA::fragmentMol(mol, tres, maxCuts, maxCutBonds, pattern);
+  bool ok = RDKit::MMPA::fragmentMol(mol, tres, maxCuts, maxCutBonds,
+                                     pyObjectToString(pattern));
   if (!ok) {
     return PyTupleOf<nb::tuple>(nb::tuple());
   }
@@ -65,10 +67,11 @@ PyTupleOf<nb::tuple> fragmentMolHelper(const RDKit::ROMol &mol,
 
 PyTupleOf<nb::tuple> fragmentMolHelper2(
     const RDKit::ROMol &mol, unsigned int minCuts, unsigned int maxCuts,
-    unsigned int maxCutBonds, const std::string &pattern, bool resultsAsMols) {
+    unsigned int maxCutBonds, const StringOrBytes &pattern,
+    bool resultsAsMols) {
   std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, minCuts, maxCuts, maxCutBonds,
-                                     pattern);
+                                     pyObjectToString(pattern));
   if (!ok) {
     return PyTupleOf<nb::tuple>(nb::tuple());
   }

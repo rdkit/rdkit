@@ -15,6 +15,7 @@
 #include <nanobind/operators.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 
 #include <RDBoost/Wrap_nb.h>
 #include <RDBoost/python_capsule_nb.h>
@@ -199,7 +200,8 @@ void DisableLog(std::string spec) { logging::disable_logs(spec); }
 
 std::string LogStatus() { return logging::log_status(); }
 
-void AttachFileToLog(std::string spec, std::string filename, int delay = 100) {
+void AttachFileToLog(std::string spec, const std::filesystem::path &filename,
+                     int delay = 100) {
   (void)spec;
   (void)filename;
   (void)delay;

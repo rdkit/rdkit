@@ -10,6 +10,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/ndarray.h>
 
 #include <GraphMol/GraphMol.h>
@@ -220,7 +221,10 @@ NB_MODULE(rdDepictor, m) {
   );
 
   m.def(
-      "SetRingSystemTemplates", RDDepict::setRingSystemTemplates,
+      "SetRingSystemTemplates",
+      [](const std::filesystem::path &templatePath) {
+        RDDepict::setRingSystemTemplates(templatePath.string());
+      },
       "templatePath"_a,
       R"DOC(Loads the ring system templates from the specified file to be
 used in 2D coordinate generation. Each template must be a single
@@ -229,7 +233,10 @@ be a single ring system. Throws a DepictException if any templates
 are invalid.)DOC");
 
   m.def(
-      "AddRingSystemTemplates", RDDepict::addRingSystemTemplates,
+      "AddRingSystemTemplates",
+      [](const std::filesystem::path &templatePath) {
+        RDDepict::addRingSystemTemplates(templatePath.string());
+      },
       "templatePath"_a,
       R"DOC(Adds the ring system templates from the specified file to be
 used in 2D coordinate generation. If there are duplicates, the most

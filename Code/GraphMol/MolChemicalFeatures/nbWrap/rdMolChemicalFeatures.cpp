@@ -11,6 +11,8 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
+#include <RDBoost/Wrap_nb.h>
+#include <nanobind/stl/variant.h>
 
 #include <fstream>
 #include <sstream>
@@ -41,8 +43,8 @@ MolChemicalFeatureFactory *buildFeatFactory(
 }
 
 MolChemicalFeatureFactory *buildFeatFactoryFromString(
-    const std::string &fdefString) {
-  std::istringstream inStream(fdefString);
+    const StringOrBytes &fdefString) {
+  std::istringstream inStream(pyObjectToString(fdefString));
   return buildFeatureFactory(static_cast<std::istream &>(inStream));
 }
 }  // namespace

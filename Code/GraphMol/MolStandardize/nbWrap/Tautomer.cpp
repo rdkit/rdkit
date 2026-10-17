@@ -10,6 +10,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/bind_vector.h>
 #include <nanobind/trampoline.h>
@@ -494,8 +495,14 @@ regardless of what the input tautomer or atom ordering were.)DOC")
       "Sets the score of this particular tautomer substructure, higher scores "
       "are more preferable\n"
       "Aromatic rings score 100, all carbon aromatic rings score 250")
-      .def(nb::init<std::string, std::string, int>(), "name"_a, "smarts"_a,
-           "score"_a)
+      .def(
+          "__init__",
+          [](MolStandardize::TautomerScoringFunctions::SubstructTerm *self,
+             const std::string &name, const StringOrBytes &smarts, int score) {
+            new (self) MolStandardize::TautomerScoringFunctions::SubstructTerm(
+                name, pyObjectToString(smarts), score);
+          },
+          "name"_a, "smarts"_a, "score"_a)
       .def_ro("name",
               &MolStandardize::TautomerScoringFunctions::SubstructTerm::name)
       .def_ro("smarts",
