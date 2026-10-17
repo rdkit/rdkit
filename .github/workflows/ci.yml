@@ -34,7 +34,9 @@ env:
   CCACHE_NOHASHDIR: "yes"
   CCACHE_MAXSIZE: 1G
   CCACHE_SLOPPINESS: time_macros
-  BUILD_BRANCH_NAME: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}
+  # The branch whose cache a run restores: the pushed branch, or a pull
+  # request's base branch.
+  BUILD_BRANCH_NAME: ${{ github.base_ref || github.ref_name }}
 
 jobs:
   Ubuntu_x64_minimallib_build:
@@ -84,8 +86,8 @@ jobs:
           conda config --env --add channels conda-forge
           conda config --env --set channel_priority strict
           conda install -c conda-forge --override-channels pytest nbval "ipykernel>=6.0"
-      # Mirrors .azure-pipelines/_templates/steps_setup_cache.yml: restore this
-      # branch's latest cache, else master's; save under this commit on success.
+      # Mirrors .azure-pipelines/_templates/steps_setup_cache.yml: restore the
+      # branch's latest cache, else master's.
       - &set-cache-variables
         name: Set cache variables
         shell: bash
@@ -98,7 +100,8 @@ jobs:
           export | grep -i ccache
       - &restore-ccache
         name: Restore ccache
-        uses: actions/cache@v6
+        id: restore-ccache
+        uses: actions/cache/restore@v6
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ runner.os }}-${{ github.job }}-${{ env.BUILD_BRANCH_NAME }}-${{ github.sha }}
@@ -164,15 +167,6 @@ jobs:
           ccache --show-log-stats
           echo "Global stats:"
           ccache -s
-      # Drop entries this build did not use, so each saved cache holds one
-      # build's working set.
-      - &trim-ccache
-        name: Trim ccache to this build's entries
-        run: |
-          source "${CONDA}/etc/profile.d/conda.sh"
-          conda activate rdkit_build
-          ccache --evict-older-than "$(( $(date +%s) - CCACHE_JOB_START ))s"
-          ccache -s
       - name: Run tests
         run: |
           source "${CONDA}/etc/profile.d/conda.sh"
@@ -218,6 +212,24 @@ jobs:
           export QT_QPA_PLATFORM='offscreen'
           cd Docs/Book
           make doctest
+      # Only pushes save a cache, so the repository's Actions cache holds one
+      # snapshot per job and branch rather than one per pull request. Entries
+      # this build did not use are dropped first.
+      - &trim-ccache
+        name: Trim ccache to this build's entries
+        if: github.event_name == 'push'
+        run: |
+          source "${CONDA}/etc/profile.d/conda.sh"
+          conda activate rdkit_build
+          ccache --evict-older-than "$(( $(date +%s) - CCACHE_JOB_START ))s"
+          ccache -s
+      - &save-ccache
+        name: Save ccache
+        if: github.event_name == 'push' && steps.restore-ccache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ steps.restore-ccache.outputs.cache-primary-key }}
       - &upload-test-results
         name: Upload CTest results
         if: ${{ !cancelled() }}
@@ -305,7 +317,6 @@ jobs:
           fi
       - *build
       - *show-ccache-stats
-      - *trim-ccache
       - name: Run tests
         run: |
           source "${CONDA}/etc/profile.d/conda.sh"
@@ -339,6 +350,8 @@ jobs:
           export QT_QPA_PLATFORM='offscreen'
           cd Docs/Book
           make doctest
+      - *trim-ccache
+      - *save-ccache
       - *upload-test-results
 
   Ubuntu_x64_nb:
@@ -407,7 +420,6 @@ jobs:
           -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
       - *build
       - *show-ccache-stats
-      - *trim-ccache
       - name: Run tests
         run: |
           source "${CONDA}/etc/profile.d/conda.sh"
@@ -419,6 +431,8 @@ jobs:
           export QT_QPA_PLATFORM='offscreen'
           cd build
           ctest -j "$(nproc)" --output-on-failure -T Test
+      - *trim-ccache
+      - *save-ccache
       - *upload-test-results
 
   # Azure's macOS agents are x86_64; macos-15-intel keeps the same osx-64
@@ -516,7 +530,6 @@ jobs:
           cd build
           make -j "$(sysctl -n hw.ncpu)" install
       - *show-ccache-stats
-      - *trim-ccache
       - &macos-run-tests
         name: Run tests
         run: |
@@ -530,6 +543,8 @@ jobs:
           export QT_QPA_PLATFORM='offscreen'
           cd build
           ctest -j "$(sysctl -n hw.ncpu)" --output-on-failure -T Test
+      - *trim-ccache
+      - *save-ccache
       - *upload-test-results
 
   macOS_x64_java:
@@ -598,8 +613,9 @@ jobs:
           -DRDK_TEST_MULTITHREADED=ON
       - *macos-build
       - *show-ccache-stats
-      - *trim-ccache
       - *macos-run-tests
+      - *trim-ccache
+      - *save-ccache
       - *upload-test-results
 
   Windows_VS2022_x64:
@@ -684,12 +700,6 @@ jobs:
           ccache --show-log-stats
           echo Global stats:
           ccache -s
-      - &windows-trim-ccache
-        name: Trim ccache to this build's entries
-        run: |
-          call activate rdkit_build
-          powershell -NoProfile -Command "ccache --evict-older-than ('{0}s' -f ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - $env:CCACHE_JOB_START))"
-          ccache -s
       - &windows-run-tests
         name: Run tests
         run: |
@@ -717,6 +727,14 @@ jobs:
           set PATH=%RDBASE%\lib;%PATH%
           cd Docs/Book
           make doctest
+      - &windows-trim-ccache
+        name: Trim ccache to this build's entries
+        if: github.event_name == 'push'
+        run: |
+          call activate rdkit_build
+          powershell -NoProfile -Command "ccache --evict-older-than ('{0}s' -f ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - $env:CCACHE_JOB_START))"
+          ccache -s
+      - *save-ccache
       - *upload-test-results
 
   Windows_VS2022_x64_dll:
@@ -785,9 +803,10 @@ jobs:
           -DCMAKE_LIBRARY_PATH="%CONDA_PREFIX%/Library/lib
       - *windows-build
       - *windows-show-ccache-stats
-      - *windows-trim-ccache
       - *windows-run-tests
       - *windows-run-sharded-tests
+      - *windows-trim-ccache
+      - *save-ccache
       - *upload-test-results
 
   Ubuntu_x64_cartridge:
@@ -850,7 +869,6 @@ jobs:
           make -j "$(nproc)" install
           sudo sh ./Code/PgSQL/rdkit/pgsql_install.sh
       - *show-ccache-stats
-      - *trim-ccache
       - name: Run tests
         run: |
           source "${CONDA}/etc/profile.d/conda.sh"
@@ -862,6 +880,8 @@ jobs:
             cat ./Code/PgSQL/rdkit/regression.diffs
             exit 1
           fi
+      - *trim-ccache
+      - *save-ccache
 
   Ubuntu_x64_limitexternaldependencies:
     runs-on: ubuntu-latest
@@ -925,7 +945,6 @@ jobs:
           -DRDK_TEST_MULTITHREADED=OFF
       - *build
       - *show-ccache-stats
-      - *trim-ccache
       - name: Run tests
         run: |
           source "${CONDA}/etc/profile.d/conda.sh"
@@ -937,6 +956,8 @@ jobs:
           export QT_QPA_PLATFORM='offscreen'
           cd build
           ctest -j "$(nproc)" --output-on-failure -T Test
+      - *trim-ccache
+      - *save-ccache
       - *upload-test-results
 
   Ubuntu_x64_java:
@@ -992,7 +1013,6 @@ jobs:
           -DRDK_TEST_MULTITHREADED=ON
       - *build
       - *show-ccache-stats
-      - *trim-ccache
       - name: Run tests
         run: |
           source "${CONDA}/etc/profile.d/conda.sh"
@@ -1004,6 +1024,8 @@ jobs:
           export QT_QPA_PLATFORM='offscreen'
           cd build
           ctest -j "$(nproc)" --output-on-failure -T Test
+      - *trim-ccache
+      - *save-ccache
       - *upload-test-results
 
   Windows_VS2022_x64_swig:
@@ -1071,7 +1093,6 @@ jobs:
           -DRDK_TEST_MULTITHREADED=ON
       - *windows-build
       - *windows-show-ccache-stats
-      - *windows-trim-ccache
       - name: Run tests
         run: |
           call activate rdkit_build
@@ -1080,4 +1101,6 @@ jobs:
           set PATH=%RDBASE%\lib;%PATH%
           cd build
           ctest -R CSharpTests -C Release -T test --output-on-failure --verbose
+      - *windows-trim-ccache
+      - *save-ccache
       - *upload-test-results
