@@ -30,6 +30,7 @@
 #
 
 import copy
+import gc
 import itertools
 import os
 import sys
@@ -644,26 +645,47 @@ class TestCase(unittest.TestCase):
     self.assertTrue(len(en.GetReagents()[1]) == 1)
     self.assertTrue(len(en.GetReagents()[2]) == 1)
 
-  def testLibraryKeepsReagents(self):
-    rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]')
-    acids = ['CC(=O)O', 'CCC(=O)O']
-    amines = ['NC', 'NCC']
-    expected = sorted(
-      Chem.MolToSmiles(
-        rxn.RunReactants((Chem.MolFromSmiles(acid), Chem.MolFromSmiles(amine)))[0][0])
-      for acid in acids for amine in amines)
-    # The library holds the only references to the reagents.
-    reagents = [[Chem.MolFromSmiles(smi) for smi in smiles] for smiles in (acids, amines)]
-    en = rdChemReactions.EnumerateLibrary(rxn, reagents)
-    del reagents
-    products = sorted(Chem.MolToSmiles(mol) for prods in en for mols in prods for mol in mols)
-    self.assertEqual(products, expected)
+  def testEnumerateLibraryKeepsTemporaryReagentsAlive(self):
+    log("testEnumerateLibraryKeepsTemporaryReagentsAlive")
+    rxn = rdChemReactions.ReactionFromSmarts(
+      '[C:1](=[O:2])[OH].[N;!H0:3]>>[C:1](=[O:2])[N:3]')
+    library = rdChemReactions.EnumerateLibrary(
+      rxn, [[Chem.MolFromSmiles('CC(=O)O')],
+            [Chem.MolFromSmiles('NCCCCCC'), Chem.MolFromSmiles('NC1CC1')]])
+    gc.collect()
+    # reuse the memory of any reagent that was (wrongly) freed
+    filler = [Chem.MolFromSmiles('c1ccc(-c2ccccc2)cc1') for _ in range(2000)]
+
+    self.assertEqual([[Chem.MolToSmiles(m) for m in pool] for pool in library.GetReagents()],
+                     [['CC(=O)O'], ['CCCCCCN', 'NC1CC1']])
+    products = [Chem.MolToSmiles(prods[0][0]) for prods in library]
+    self.assertEqual(products, ['CCCCCCNC(C)=O', 'CC(=O)NC1CC1'])
+    del filler
+
+  def testEnumerateLibraryReleasesReagents(self):
+    log("testEnumerateLibraryReleasesReagents")
+    rxn = rdChemReactions.ReactionFromSmarts(
+      '[C:1](=[O:2])[OH].[N;!H0:3]>>[C:1](=[O:2])[N:3]')
+    acid = Chem.MolFromSmiles('CC(=O)O')
+    amine = Chem.MolFromSmiles('NCC')
+    unmatched = Chem.MolFromSmiles('CCC')
+    mols = (acid, amine, unmatched)
+    refcounts = lambda: [sys.getrefcount(m) for m in mols]
+    before = refcounts()
+
+    library = rdChemReactions.EnumerateLibrary(rxn, [[acid], [amine, unmatched]])
+    # reagents rejected by the reaction are not kept
+    self.assertEqual(refcounts()[2], before[2])
+    self.assertEqual(len(list(library)), 1)
+
+    del library
+    gc.collect()
+    self.assertEqual(refcounts(), before)
 
   def testNoneReagent(self):
     rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]')
     with self.assertRaises(ValueError):
       rdChemReactions.EnumerateLibrary(rxn, [[Chem.MolFromSmiles('CC(=O)O')], [None]])
-
 
 if __name__ == '__main__':
   unittest.main()

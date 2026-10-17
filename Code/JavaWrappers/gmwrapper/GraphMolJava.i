@@ -178,6 +178,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../RWMol.i"
 %include "../Bond.i"
 %include "../BondIterators.i"
+%include "../Alignment.i"
 %include "../Atom.i"
 %include "../AtomIterators.i"
 %include "../AtomPairs.i"

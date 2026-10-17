@@ -210,7 +210,7 @@ void RemoveUnmappedReactantTemplates(ChemicalReaction *self,
                                      double thresholdUnmappedAtoms,
                                      bool moveToAgentTemplates,
                                      python::object targetList) {
-  if (targetList == python::object()) {
+  if (targetList.is_none()) {
     self->removeUnmappedReactantTemplates(thresholdUnmappedAtoms,
                                           moveToAgentTemplates);
   } else {
@@ -230,7 +230,7 @@ void RemoveUnmappedProductTemplates(ChemicalReaction *self,
                                     double thresholdUnmappedAtoms,
                                     bool moveToAgentTemplates,
                                     python::object targetList) {
-  if (targetList == python::object()) {
+  if (targetList.is_none()) {
     self->removeUnmappedProductTemplates(thresholdUnmappedAtoms,
                                          moveToAgentTemplates);
   } else {
@@ -247,7 +247,7 @@ void RemoveUnmappedProductTemplates(ChemicalReaction *self,
 }
 
 void RemoveAgentTemplates(ChemicalReaction &self, python::object targetList) {
-  if (targetList == python::object()) {
+  if (targetList.is_none()) {
     self.removeAgentTemplates();
   } else {
     MOL_SPTR_VECT tmp;
