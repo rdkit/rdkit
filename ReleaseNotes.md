@@ -1,3 +1,41 @@
+# Release_2027.03.1
+(Changes relative to Release_2026.09.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+## Highlights
+
+## Backwards incompatible changes:
+- `GetMorganFeatureAtomInvGen()` now uses the `patterns` it is given. The
+  Boost.Python wrapper could not convert a list or a tuple of molecules, so it
+  silently used the default feature definitions instead; fingerprints from a
+  generator built with `patterns` change accordingly.
+- `getFeatureInvariants()` and `MorganFeatureAtomInvGenerator`
+  (`GetMorganFeatureAtomInvGen()` from Python) now raise a `ValueError` for more
+  than 32 patterns or for a null (`None`) pattern. Each pattern is one bit of a
+  32-bit invariant, and the patterns past the 32nd were shifted out of it.
+- Reading a `MorganFeatureAtomInvGenerator` from JSON now raises a `ValueError`
+  for more than 32 patterns or for a pattern SMARTS that does not parse. An
+  unparseable pattern was dropped, which moved every later pattern to another
+  bit.
+- Creating a reader from a Python file object with no `read` attribute now
+  raises `ValueError`. Such an object was accepted before, and reading from it
+  returned no molecules.
+
+## New Features and Enhancements:
+
+## Bug Fixes:
+
+## Cleanup work:
+
+## Code removed in this release:
+
+## Deprecated code (to be removed in a future release):
+
+
 # Release_2026.09.1
 (Changes relative to Release_2026.03.1)
 
@@ -72,17 +110,6 @@ thomp-j, vwe-ibm, ankar-dav, dpdoughe
   returns only points which are actually on the surface. Previously all
   potential surface points for each atom were returned. You can get the old
   result by setting the `allPoints` argument to true.
-- `GetMorganFeatureAtomInvGen()` now uses the `patterns` it is given. The
-  Boost.Python wrapper could not convert a list or a tuple of molecules, so it
-  silently used the default feature definitions instead; fingerprints from a
-  generator built with `patterns` change accordingly.
-- `getFeatureInvariants()` and `MorganFeatureAtomInvGenerator`
-  (`GetMorganFeatureAtomInvGen()` from Python) now raise a `ValueError` for more
-  than 32 patterns. Each pattern is one bit of a 32-bit invariant, and the
-  patterns past the 32nd were shifted out of it.
-- Creating a reader from a Python file object with no `read` attribute now
-  raises `ValueError`. Such an object was accepted before, and reading from it
-  returned no molecules.
 
 ## New Features and Enhancements:
   - Legend position
