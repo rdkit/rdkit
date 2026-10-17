@@ -7,6 +7,10 @@
   (previously `dev`), and the shared `nanobind` library (previously whichever
   component the preceding `rdkit_library()` call left set). Packagers who
   install components selectively need to include `python` to keep these files.
+- The bundled ChemDraw, maeparser, coordgen, InChI, and RingDecomposerLib
+  libraries are installed only in the `runtime` component (`dev` for static
+  builds); each previously also had an untagged copy in CMake's `Unspecified`
+  component.
 - `RDKit_HAS_PYTHON_WRAPPERS` in `rdkit-config.cmake` is now `ON` only when the
   `rdkitpython` package config is installed beside it, instead of recording
   whether the Boost.Python wrappers were built. The two agree for a full
