@@ -43,12 +43,12 @@ endif()
 # Find the RDKit dependencies
 include(CMakeFindDependencyMacro)
 
-find_dependency(Threads REQUIRED)
+find_dependency(Threads)
 
-find_dependency(Boost @Boost_VERSION_STRING@ COMPONENTS ${RDKit_USE_BOOST_COMPONENTS})
+find_dependency(Boost @Boost_VERSION_STRING@ CONFIG COMPONENTS ${RDKit_USE_BOOST_COMPONENTS})
 
 if(RDKit_HAS_DESCRIPTORS3D)
-    find_dependency(Eigen3 REQUIRED NO_MODULE)
+    find_dependency(Eigen3 NO_MODULE)
 endif()
 
 # The exported targets name these imported targets in their link interfaces.
@@ -56,9 +56,18 @@ if(RDKit_HAS_FREETYPE_SUPPORT)
     find_dependency(Freetype)
 endif()
 if(RDKit_HAS_CAIRO_SUPPORT)
+    # Search with the FindCairo.cmake installed beside this file, and restore the
+    # caller's module path before reporting whether Cairo was found.
+    set(_RDKit_module_path "${CMAKE_MODULE_PATH}")
     list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
-    find_dependency(Cairo)
-    list(POP_FRONT CMAKE_MODULE_PATH)
+    find_package(Cairo QUIET)
+    set(CMAKE_MODULE_PATH "${_RDKit_module_path}")
+    unset(_RDKit_module_path)
+    if(NOT Cairo_FOUND)
+        set(RDKit_NOT_FOUND_MESSAGE "RDKit was built with Cairo support, but Cairo was not found")
+        set(RDKit_FOUND FALSE)
+        return()
+    endif()
 endif()
 if(RDKit_HAS_CHEMDRAW_SUPPORT)
     find_dependency(EXPAT)
