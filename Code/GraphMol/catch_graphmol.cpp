@@ -5168,3 +5168,17 @@ TEST_CASE("duplicate atoms/bonds in StereoGroups") {
         ValueErrorException);
   }
 }
+
+TEST_CASE("getTotalNumHs() and query atoms") {
+  SECTION("basics") {
+    auto m = "C[CH][CH]"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(2)->setNoImplicit(false);
+    CHECK(m->getAtomWithIdx(0)->getTotalNumHs(false) == 0);
+    CHECK(m->getAtomWithIdx(1)->getTotalNumHs(false) == 1);
+    CHECK_THROWS_AS(
+        m->getAtomWithIdx(2)->getValence(Atom::ValenceType::IMPLICIT),
+        std::runtime_error);
+    CHECK(m->getAtomWithIdx(2)->getTotalNumHs(false) == 1);
+  }
+}
