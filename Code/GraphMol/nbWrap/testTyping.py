@@ -11,8 +11,14 @@ import unittest
 
 from rdkit import Chem, DataStructs, rdBase
 from rdkit.Chem import (rdChemReactions, rdEnumerateStereoisomers, rdFMCS, rdMolDescriptors,
-                        rdSubstructLibrary, rdSynthonSpaceSearch)
+                        rdSubstructLibrary)
 from rdkit.Chem.MolStandardize import rdMolStandardize
+
+# Built only with RDK_BUILD_THREADSAFE_SSS.
+try:
+  from rdkit.Chem import rdSynthonSpaceSearch
+except ImportError:
+  rdSynthonSpaceSearch = None
 
 
 def signature_annotations(signature):
@@ -63,10 +69,6 @@ class TestSignatures(unittest.TestCase):
       (DataStructs.BulkTanimotoSimilarity, 1, 'bvList',
        'collections.abc.Iterable[rdkit.DataStructs.cDataStructs.ExplicitBitVect]'),
       (Chem.MolAddRecursiveQueries, 0, 'queries', 'dict[str, rdkit.Chem.rdchem.Mol]'),
-      (rdSynthonSpaceSearch.SynthonSpace.SubstructureSearchIncremental, 0, 'callback',
-       'collections.abc.Callable[[list[rdkit.Chem.rdchem.Mol]], bool | None]'),
-      (rdSynthonSpaceSearch.ShapeBuildParams.setUserConformerGenerator, 0, 'func',
-       'collections.abc.Callable[[str, int], rdkit.Chem.rdchem.Mol | None]'),
       (rdMolStandardize.TautomerEnumerator.Canonicalize, 1, 'scoreFunc',
        'collections.abc.Callable[[rdkit.Chem.rdchem.Mol], int]'),
       (rdMolStandardize.CleanupInPlace, 1, 'mols',
@@ -79,6 +81,13 @@ class TestSignatures(unittest.TestCase):
       (rdMolDescriptors.CalcHallKierAlpha, 0, 'atomContribs', 'list[typing.Any] | None'),
       (rdMolDescriptors._CalcCrippenContribs, 0, 'atomTypeLabels', 'list[typing.Any] | None'),
     ]
+    if rdSynthonSpaceSearch is not None:
+      cases += [
+        (rdSynthonSpaceSearch.SynthonSpace.SubstructureSearchIncremental, 0, 'callback',
+         'collections.abc.Callable[[list[rdkit.Chem.rdchem.Mol]], bool | None]'),
+        (rdSynthonSpaceSearch.ShapeBuildParams.setUserConformerGenerator, 0, 'func',
+         'collections.abc.Callable[[str, int], rdkit.Chem.rdchem.Mol | None]'),
+      ]
     for func, overload, parameter, expected in cases:
       with self.subTest(func=func.__name__, parameter=parameter):
         self.assertEqual(parameter_annotations(func)[overload][parameter], expected)
@@ -114,28 +123,29 @@ class TestSignatures(unittest.TestCase):
     self.assertIsNone(rdFMCS.FindMCS([Chem.MolFromSmiles('C'), Chem.MolFromSmiles('N')]).queryMol)
 
   def testSignaturesNameTypesFromOtherModules(self):
-    # A fresh interpreter loads only the modules these two import themselves.
-    code = ('import json\n'
-            'from rdkit.Chem import rdMolProcessing, rdSynthonSpaceSearch\n'
-            'functions = [rdMolProcessing.GetFingerprintsForMolsInFile,\n'
-            '             rdSynthonSpaceSearch.SynthonSpace.FingerprintSearch,\n'
-            '             rdSynthonSpaceSearch.SynthonSpace.RascalSearch]\n'
-            'print(json.dumps([[sig for sig, _, _ in f.__nb_signature__] for f in functions]))\n')
-    output = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True,
-                            check=True).stdout
-    processing, fingerprint, rascal = json.loads(output)
-    for signature in processing + fingerprint + rascal:
-      # An unregistered type is rendered as its C++ name, such as RDKit::RascalMCES::RascalOptions.
-      self.assertNotIn('::', signature)
-    self.assertEqual(
-      signature_annotations(processing[1])['generator'],
-      'rdkit.Chem.rdFingerprintGenerator.FingerprintGenerator64 | None')
-    self.assertEqual(
-      signature_annotations(fingerprint[0])['fingerprintGenerator'],
-      'rdkit.Chem.rdFingerprintGenerator.FingerprintGenerator64')
-    self.assertEqual(
-      signature_annotations(rascal[0])['rascalOptions'], 'rdkit.Chem.rdRascalMCES.RascalOptions')
-
+    cases = [('rdMolProcessing', 'GetFingerprintsForMolsInFile', 1, 'generator',
+              'rdkit.Chem.rdFingerprintGenerator.FingerprintGenerator64 | None')]
+    if rdSynthonSpaceSearch is not None:
+      cases += [
+        ('rdSynthonSpaceSearch', 'SynthonSpace.FingerprintSearch', 0, 'fingerprintGenerator',
+         'rdkit.Chem.rdFingerprintGenerator.FingerprintGenerator64'),
+        ('rdSynthonSpaceSearch', 'SynthonSpace.RascalSearch', 0, 'rascalOptions',
+         'rdkit.Chem.rdRascalMCES.RascalOptions'),
+      ]
+    for module, func, overload, parameter, expected in cases:
+      with self.subTest(func=func):
+        # A fresh interpreter loads only the modules this one imports itself.
+        code = ('import json\n'
+                f'from rdkit.Chem import {module}\n'
+                f'print(json.dumps([sig for sig, _, _ in {module}.{func}.__nb_signature__]))\n')
+        output = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True,
+                                check=True).stdout
+        signatures = json.loads(output)
+        for signature in signatures:
+          # An unregistered type is rendered as its C++ name, such as
+          # RDKit::RascalMCES::RascalOptions.
+          self.assertNotIn('::', signature)
+        self.assertEqual(signature_annotations(signatures[overload])[parameter], expected)
 
 if __name__ == '__main__':
   unittest.main()
