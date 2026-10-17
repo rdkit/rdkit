@@ -20,7 +20,7 @@ GitHub)
 - The python package ML.MLUtils has been removed.
 - The python package Chem.MolDb has been removed.
 - The python package Chem.Fingerprints has been removed.
-- The python package Chem.fmcs has been removed. The C++ implementation in
+- The python packages Chem.MCS and Chem.fmcs have been removed. The C++ implementation in
   Chem.rdFMCS is more advanced and is being maintained.
 
 
