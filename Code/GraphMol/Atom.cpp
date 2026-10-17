@@ -229,8 +229,7 @@ Atom &Atom::operator=(const Atom &other) {
   return *this;
 }
 
-// Defined here rather than in the header because AtomMonomerInfo is
-// incomplete there.
+// Defined out of line because AtomMonomerInfo is incomplete in Atom.h.
 Atom::Atom(Atom &&other) noexcept = default;
 Atom &Atom::operator=(Atom &&other) noexcept = default;
 

@@ -5188,6 +5188,21 @@ class CountedMonomerInfo : public AtomMonomerInfo {
   }
 };
 int CountedMonomerInfo::live = 0;
+
+// Counts live instances so tests can see QueryAtom and QueryBond free the
+// query they replace. It is never matched against.
+template <typename QueryType>
+class CountedQuery : public QueryType {
+ public:
+  static int live;
+  CountedQuery() { ++live; }
+  ~CountedQuery() override { --live; }
+  QueryType *copy() const override { return new CountedQuery(); }
+};
+template <typename QueryType>
+int CountedQuery<QueryType>::live = 0;
+using CountedAtomQuery = CountedQuery<QueryAtom::QUERYATOM_QUERY>;
+using CountedBondQuery = CountedQuery<QueryBond::QUERYBOND_QUERY>;
 }  // namespace
 
 TEST_CASE("Atom special members own the monomer info") {
@@ -5260,6 +5275,50 @@ TEST_CASE("QueryAtom and QueryBond move members") {
   }
 }
 
+TEST_CASE("QueryAtom and QueryBond assignment frees the replaced query") {
+  CountedAtomQuery::live = 0;
+  CountedBondQuery::live = 0;
+  SECTION("QueryAtom move assignment") {
+    QueryAtom source;
+    source.setQuery(new CountedAtomQuery());
+    QueryAtom dest;
+    dest.setQuery(new CountedAtomQuery());
+    REQUIRE(CountedAtomQuery::live == 2);
+    dest = std::move(source);
+    CHECK(CountedAtomQuery::live == 1);
+  }
+  SECTION("QueryBond move assignment") {
+    QueryBond source;
+    source.setQuery(new CountedBondQuery());
+    QueryBond dest;
+    dest.setQuery(new CountedBondQuery());
+    REQUIRE(CountedBondQuery::live == 2);
+    dest = std::move(source);
+    CHECK(CountedBondQuery::live == 1);
+  }
+  SECTION("QueryBond copy assignment") {
+    QueryBond source;
+    source.setQuery(new CountedBondQuery());
+    QueryBond dest;
+    dest.setQuery(new CountedBondQuery());
+    REQUIRE(CountedBondQuery::live == 2);
+    dest = source;
+    CHECK(CountedBondQuery::live == 2);
+    CHECK(dest.getQuery() != source.getQuery());
+  }
+  SECTION("QueryBond self-assignment") {
+    QueryBond bond;
+    bond.setQuery(new CountedBondQuery());
+    const auto query = bond.getQuery();
+    auto &alias = bond;
+    bond = alias;
+    CHECK(bond.getQuery() == query);
+    CHECK(CountedBondQuery::live == 1);
+  }
+  CHECK(CountedAtomQuery::live == 0);
+  CHECK(CountedBondQuery::live == 0);
+}
+
 TEST_CASE("Bond copy assignment matches copy construction") {
   auto m = "C/C=C/C"_smiles;
   REQUIRE(m);
@@ -5278,8 +5337,11 @@ TEST_CASE("replaceBond updates StereoGroups") {
   auto m = "CC=CC"_smiles;
   REQUIRE(m);
   std::vector<StereoGroup> groups;
+  const unsigned readId = 3;
+  const unsigned writeId = 5;
   groups.emplace_back(StereoGroupType::STEREO_AND, std::vector<Atom *>{},
-                      std::vector<Bond *>{m->getBondWithIdx(1)});
+                      std::vector<Bond *>{m->getBondWithIdx(1)}, readId);
+  groups.back().setWriteId(writeId);
   m->setStereoGroups(std::move(groups));
   Bond replacement(Bond::DOUBLE);
   m->replaceBond(1, &replacement);
@@ -5287,6 +5349,8 @@ TEST_CASE("replaceBond updates StereoGroups") {
   REQUIRE(stereoGroups.size() == 1);
   REQUIRE(stereoGroups[0].getBonds().size() == 1);
   CHECK(stereoGroups[0].getBonds()[0] == m->getBondWithIdx(1));
+  CHECK(stereoGroups[0].getReadId() == readId);
+  CHECK(stereoGroups[0].getWriteId() == writeId);
 }
 
 TEST_CASE("getConformer error names the missing conformer id") {
