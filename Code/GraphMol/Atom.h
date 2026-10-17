@@ -131,8 +131,8 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   Atom &operator=(const Atom &other);
   // NOTE: the move methods are somewhat fraught for atoms associated with
   // molecules since the molecule will still be pointing to the original object
-  Atom(Atom &&other) = default;
-  Atom &operator=(Atom &&other) = default;
+  Atom(Atom &&other) noexcept;
+  Atom &operator=(Atom &&other) noexcept;
 
   virtual ~Atom();
 
@@ -366,8 +366,10 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   */
   int calcImplicitValence(bool strict = true);
 
-  AtomMonomerInfo *getMonomerInfo() { return dp_monomerInfo; }
-  const AtomMonomerInfo *getMonomerInfo() const { return dp_monomerInfo; }
+  AtomMonomerInfo *getMonomerInfo() { return dp_monomerInfo.get(); }
+  const AtomMonomerInfo *getMonomerInfo() const {
+    return dp_monomerInfo.get();
+  }
   //! takes ownership of the pointer
   void setMonomerInfo(AtomMonomerInfo *info);
 
@@ -429,7 +431,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   std::uint64_t d_flags = 0ul;
 
   ROMol *dp_mol;
-  AtomMonomerInfo *dp_monomerInfo;
+  std::unique_ptr<AtomMonomerInfo> dp_monomerInfo;
   std::unique_ptr<MacroAtomInfo> dp_macroAtomInfo;
   void initAtom();
   void initFromOther(const Atom &other);

@@ -99,10 +99,7 @@ class ReadOnlySeq {
   const ROMol &_mol;
 
  public:
-  ~ReadOnlySeq() {
-    std::cerr << "\n**** delete ReadOnlySeq ****" << this << std::endl;
-  }
-  // ~ReadOnlySeq() = default;
+  ~ReadOnlySeq() = default;
   ReadOnlySeq(
       const ROMol &mol, T1 start, T1 end, T3 lenFunc,
       Mapper mapper = [](T1 it) { return *it; })
@@ -113,9 +110,7 @@ class ReadOnlySeq {
         _lenFunc(lenFunc),
         _origLen(lenFunc()),
         _mapper(mapper),
-        _mol(mol) {
-    std::cerr << "\n**** new ReadOnlySeq ****" << this << std::endl;
-  }
+        _mol(mol) {}
   ReadOnlySeq(const ReadOnlySeq<T1, T2, T3, Mapper> &other)
       : _start(other._start),
         _end(other._end),
@@ -124,15 +119,10 @@ class ReadOnlySeq {
         _lenFunc(other._lenFunc),
         _origLen(other._origLen),
         _mapper(other._mapper),
-        _mol(other._mol) {
-    std::cerr << "\n**** new ReadOnlySeq2 ****" << this << std::endl;
-  }
+        _mol(other._mol) {}
   T1 begin() { return _start; }
   T1 end() { return _end; }
-  void reset() {
-    // std::cerr << "**** reset ****" << this<< std::endl;
-    _pos = _start;
-  }
+  void reset() { _pos = _start; }
   ReadOnlySeq<T1, T2, T3> *__iter__() {
     std::cerr << "**** ITER ****" << this << std::endl;
     reset();

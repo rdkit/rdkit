@@ -5168,3 +5168,272 @@ TEST_CASE("duplicate atoms/bonds in StereoGroups") {
         ValueErrorException);
   }
 }
+
+namespace {
+// Counts live instances so tests can see Atom copy, transfer, and free its
+// monomer info.
+class CountedMonomerInfo : public AtomMonomerInfo {
+ public:
+  static int live;
+  CountedMonomerInfo() : AtomMonomerInfo(AtomMonomerInfo::OTHER, "counted") {
+    ++live;
+  }
+  CountedMonomerInfo(const CountedMonomerInfo &other)
+      : AtomMonomerInfo(other) {
+    ++live;
+  }
+  ~CountedMonomerInfo() override { --live; }
+  AtomMonomerInfo *copy() const override {
+    return new CountedMonomerInfo(*this);
+  }
+};
+int CountedMonomerInfo::live = 0;
+
+// Counts live instances so tests can see QueryAtom and QueryBond free the
+// query they replace. It is never matched against.
+template <typename QueryType>
+class CountedQuery : public QueryType {
+ public:
+  static int live;
+  CountedQuery() { ++live; }
+  ~CountedQuery() override { --live; }
+  QueryType *copy() const override { return new CountedQuery(); }
+};
+template <typename QueryType>
+int CountedQuery<QueryType>::live = 0;
+using CountedAtomQuery = CountedQuery<QueryAtom::QUERYATOM_QUERY>;
+using CountedBondQuery = CountedQuery<QueryBond::QUERYBOND_QUERY>;
+
+// Its copy() throws, so tests can see an assignment survive a failed copy.
+template <typename QueryType>
+class ThrowingCopyQuery : public QueryType {
+ public:
+  QueryType *copy() const override {
+    throw std::runtime_error("copy failed");
+  }
+};
+}  // namespace
+
+TEST_CASE("Atom special members own the monomer info") {
+  CountedMonomerInfo::live = 0;
+  SECTION("move construction") {
+    Atom source(6);
+    source.setMonomerInfo(new CountedMonomerInfo());
+    Atom dest(std::move(source));
+    CHECK(source.getMonomerInfo() == nullptr);
+    REQUIRE(dest.getMonomerInfo() != nullptr);
+    CHECK(dest.getMonomerInfo()->getName() == "counted");
+    CHECK(CountedMonomerInfo::live == 1);
+  }
+  SECTION("move assignment") {
+    Atom source(6);
+    source.setMonomerInfo(new CountedMonomerInfo());
+    Atom dest(7);
+    dest.setMonomerInfo(new CountedMonomerInfo());
+    REQUIRE(CountedMonomerInfo::live == 2);
+    dest = std::move(source);
+    CHECK(source.getMonomerInfo() == nullptr);
+    CHECK(dest.getMonomerInfo() != nullptr);
+    CHECK(dest.getAtomicNum() == 6);
+    CHECK(CountedMonomerInfo::live == 1);
+  }
+  SECTION("copy assignment") {
+    Atom source(6);
+    source.setMonomerInfo(new CountedMonomerInfo());
+    Atom dest(7);
+    dest.setMonomerInfo(new CountedMonomerInfo());
+    dest = source;
+    CHECK(dest.getMonomerInfo() != nullptr);
+    CHECK(dest.getMonomerInfo() != source.getMonomerInfo());
+    CHECK(CountedMonomerInfo::live == 2);
+  }
+  CHECK(CountedMonomerInfo::live == 0);
+}
+
+TEST_CASE("QueryAtom and QueryBond move members") {
+  SECTION("QueryAtom move assignment") {
+    QueryAtom source(6);
+    QueryAtom dest(7);
+    dest = std::move(source);
+    CHECK(!source.hasQuery());
+    REQUIRE(dest.hasQuery());
+    CHECK(dest.getAtomicNum() == 6);
+    Atom carbon(6);
+    Atom nitrogen(7);
+    CHECK(dest.Match(&carbon));
+    CHECK(!dest.Match(&nitrogen));
+  }
+  SECTION("QueryBond move construction") {
+    QueryBond source(Bond::DOUBLE);
+    QueryBond dest(std::move(source));
+    CHECK(!source.hasQuery());
+    REQUIRE(dest.hasQuery());
+    CHECK(dest.getBondType() == Bond::DOUBLE);
+  }
+  SECTION("QueryBond move assignment") {
+    QueryBond source(Bond::DOUBLE);
+    QueryBond dest(Bond::SINGLE);
+    dest = std::move(source);
+    CHECK(!source.hasQuery());
+    REQUIRE(dest.hasQuery());
+    CHECK(dest.getBondType() == Bond::DOUBLE);
+    Bond doubleBond(Bond::DOUBLE);
+    Bond singleBond(Bond::SINGLE);
+    CHECK(dest.Match(&doubleBond));
+    CHECK(!dest.Match(&singleBond));
+  }
+}
+
+TEST_CASE("QueryAtom and QueryBond assignment frees the replaced query") {
+  CountedAtomQuery::live = 0;
+  CountedBondQuery::live = 0;
+  SECTION("QueryAtom move assignment") {
+    QueryAtom source;
+    source.setQuery(new CountedAtomQuery());
+    QueryAtom dest;
+    dest.setQuery(new CountedAtomQuery());
+    REQUIRE(CountedAtomQuery::live == 2);
+    dest = std::move(source);
+    CHECK(CountedAtomQuery::live == 1);
+  }
+  SECTION("QueryBond move assignment") {
+    QueryBond source;
+    source.setQuery(new CountedBondQuery());
+    QueryBond dest;
+    dest.setQuery(new CountedBondQuery());
+    REQUIRE(CountedBondQuery::live == 2);
+    dest = std::move(source);
+    CHECK(CountedBondQuery::live == 1);
+  }
+  SECTION("QueryBond copy assignment") {
+    QueryBond source;
+    source.setQuery(new CountedBondQuery());
+    QueryBond dest;
+    dest.setQuery(new CountedBondQuery());
+    REQUIRE(CountedBondQuery::live == 2);
+    dest = source;
+    CHECK(CountedBondQuery::live == 2);
+    CHECK(dest.getQuery() != source.getQuery());
+  }
+  SECTION("QueryBond self-assignment") {
+    QueryBond bond;
+    bond.setQuery(new CountedBondQuery());
+    const auto query = bond.getQuery();
+    auto &alias = bond;
+    bond = alias;
+    CHECK(bond.getQuery() == query);
+    CHECK(CountedBondQuery::live == 1);
+  }
+  CHECK(CountedAtomQuery::live == 0);
+  CHECK(CountedBondQuery::live == 0);
+}
+
+TEST_CASE("Query copy assignment survives a failed copy") {
+  CountedAtomQuery::live = 0;
+  CountedBondQuery::live = 0;
+  SECTION("QueryAtom") {
+    QueryAtom source;
+    source.setQuery(new ThrowingCopyQuery<QueryAtom::QUERYATOM_QUERY>());
+    QueryAtom dest;
+    dest.setQuery(new CountedAtomQuery());
+    const auto original = dest.getQuery();
+    CHECK_THROWS_WITH(dest = source, "copy failed");
+    CHECK(dest.getQuery() == original);
+    CHECK(CountedAtomQuery::live == 1);
+  }
+  SECTION("QueryBond") {
+    QueryBond source;
+    source.setQuery(new ThrowingCopyQuery<QueryBond::QUERYBOND_QUERY>());
+    QueryBond dest;
+    dest.setQuery(new CountedBondQuery());
+    const auto original = dest.getQuery();
+    CHECK_THROWS_WITH(dest = source, "copy failed");
+    CHECK(dest.getQuery() == original);
+    CHECK(CountedBondQuery::live == 1);
+  }
+  CHECK(CountedAtomQuery::live == 0);
+  CHECK(CountedBondQuery::live == 0);
+}
+
+TEST_CASE("Bond copy assignment matches copy construction") {
+  auto m = "C/C=C/C"_smiles;
+  REQUIRE(m);
+  const auto source = m->getBondWithIdx(1);
+  REQUIRE(source->getStereo() == Bond::STEREOE);
+  Bond copied(*source);
+  Bond assigned;
+  assigned = *source;
+  CHECK(assigned.getStereo() == copied.getStereo());
+  CHECK(assigned.getStereoAtoms() == copied.getStereoAtoms());
+  CHECK(!copied.hasOwningMol());
+  CHECK(!assigned.hasOwningMol());
+}
+
+TEST_CASE("replaceBond updates StereoGroups") {
+  auto m = "CC=CC"_smiles;
+  REQUIRE(m);
+  std::vector<StereoGroup> groups;
+  const unsigned readId = 3;
+  const unsigned writeId = 5;
+  groups.emplace_back(StereoGroupType::STEREO_AND, std::vector<Atom *>{},
+                      std::vector<Bond *>{m->getBondWithIdx(1)}, readId);
+  groups.back().setWriteId(writeId);
+  m->setStereoGroups(std::move(groups));
+  Bond replacement(Bond::DOUBLE);
+  m->replaceBond(1, &replacement);
+  const auto &stereoGroups = m->getStereoGroups();
+  REQUIRE(stereoGroups.size() == 1);
+  REQUIRE(stereoGroups[0].getBonds().size() == 1);
+  CHECK(stereoGroups[0].getBonds()[0] == m->getBondWithIdx(1));
+  CHECK(stereoGroups[0].getReadId() == readId);
+  CHECK(stereoGroups[0].getWriteId() == writeId);
+}
+
+TEST_CASE("replaceAtom keeps StereoGroup ids") {
+  auto m = "C[C@H](F)Cl"_smiles;
+  REQUIRE(m);
+  std::vector<StereoGroup> groups;
+  const unsigned readId = 3;
+  const unsigned writeId = 5;
+  groups.emplace_back(StereoGroupType::STEREO_AND,
+                      std::vector<Atom *>{m->getAtomWithIdx(1)},
+                      std::vector<Bond *>{}, readId);
+  groups.back().setWriteId(writeId);
+  m->setStereoGroups(std::move(groups));
+  Atom replacement(6);
+  m->replaceAtom(1, &replacement);
+  const auto &stereoGroups = m->getStereoGroups();
+  REQUIRE(stereoGroups.size() == 1);
+  REQUIRE(stereoGroups[0].getAtoms().size() == 1);
+  CHECK(stereoGroups[0].getAtoms()[0] == m->getAtomWithIdx(1));
+  CHECK(stereoGroups[0].getReadId() == readId);
+  CHECK(stereoGroups[0].getWriteId() == writeId);
+}
+
+TEST_CASE("getConformer error names the missing conformer id") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  m->addConformer(new Conformer(m->getNumAtoms()), true);
+  CHECK_THROWS_WITH(m->getConformer(42),
+                    Catch::Matchers::ContainsSubstring("ID: 42"));
+}
+
+TEST_CASE("RWMol from a pickle honors the property flags") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  m->setProp("molProp", 42);
+  m->getAtomWithIdx(0)->setProp("atomProp", 7);
+  const unsigned int flags = PicklerOps::PropertyPickleOptions::AllProps;
+  std::string pickle;
+  MolPickler::pickleMol(*m, pickle, flags);
+  SECTION("RWMol") {
+    RWMol unpickled(pickle, flags);
+    CHECK(unpickled.getProp<int>("molProp") == 42);
+    CHECK(unpickled.getAtomWithIdx(0)->getProp<int>("atomProp") == 7);
+  }
+  SECTION("ROMol") {
+    ROMol unpickled(pickle, flags);
+    CHECK(unpickled.getProp<int>("molProp") == 42);
+    CHECK(unpickled.getAtomWithIdx(0)->getProp<int>("atomProp") == 7);
+  }
+}
