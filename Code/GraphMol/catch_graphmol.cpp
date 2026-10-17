@@ -5168,3 +5168,151 @@ TEST_CASE("duplicate atoms/bonds in StereoGroups") {
         ValueErrorException);
   }
 }
+
+namespace {
+// Counts live instances so tests can see Atom copy, transfer, and free its
+// monomer info.
+class CountedMonomerInfo : public AtomMonomerInfo {
+ public:
+  static int live;
+  CountedMonomerInfo() : AtomMonomerInfo(AtomMonomerInfo::OTHER, "counted") {
+    ++live;
+  }
+  CountedMonomerInfo(const CountedMonomerInfo &other)
+      : AtomMonomerInfo(other) {
+    ++live;
+  }
+  ~CountedMonomerInfo() override { --live; }
+  AtomMonomerInfo *copy() const override {
+    return new CountedMonomerInfo(*this);
+  }
+};
+int CountedMonomerInfo::live = 0;
+}  // namespace
+
+TEST_CASE("Atom special members own the monomer info") {
+  CountedMonomerInfo::live = 0;
+  SECTION("move construction") {
+    Atom source(6);
+    source.setMonomerInfo(new CountedMonomerInfo());
+    Atom dest(std::move(source));
+    CHECK(source.getMonomerInfo() == nullptr);
+    REQUIRE(dest.getMonomerInfo() != nullptr);
+    CHECK(dest.getMonomerInfo()->getName() == "counted");
+    CHECK(CountedMonomerInfo::live == 1);
+  }
+  SECTION("move assignment") {
+    Atom source(6);
+    source.setMonomerInfo(new CountedMonomerInfo());
+    Atom dest(7);
+    dest.setMonomerInfo(new CountedMonomerInfo());
+    REQUIRE(CountedMonomerInfo::live == 2);
+    dest = std::move(source);
+    CHECK(source.getMonomerInfo() == nullptr);
+    CHECK(dest.getMonomerInfo() != nullptr);
+    CHECK(dest.getAtomicNum() == 6);
+    CHECK(CountedMonomerInfo::live == 1);
+  }
+  SECTION("copy assignment") {
+    Atom source(6);
+    source.setMonomerInfo(new CountedMonomerInfo());
+    Atom dest(7);
+    dest.setMonomerInfo(new CountedMonomerInfo());
+    dest = source;
+    CHECK(dest.getMonomerInfo() != nullptr);
+    CHECK(dest.getMonomerInfo() != source.getMonomerInfo());
+    CHECK(CountedMonomerInfo::live == 2);
+  }
+  CHECK(CountedMonomerInfo::live == 0);
+}
+
+TEST_CASE("QueryAtom and QueryBond move members") {
+  SECTION("QueryAtom move assignment") {
+    QueryAtom source(6);
+    QueryAtom dest(7);
+    dest = std::move(source);
+    CHECK(!source.hasQuery());
+    REQUIRE(dest.hasQuery());
+    CHECK(dest.getAtomicNum() == 6);
+    Atom carbon(6);
+    Atom nitrogen(7);
+    CHECK(dest.Match(&carbon));
+    CHECK(!dest.Match(&nitrogen));
+  }
+  SECTION("QueryBond move construction") {
+    QueryBond source(Bond::DOUBLE);
+    QueryBond dest(std::move(source));
+    CHECK(!source.hasQuery());
+    REQUIRE(dest.hasQuery());
+    CHECK(dest.getBondType() == Bond::DOUBLE);
+  }
+  SECTION("QueryBond move assignment") {
+    QueryBond source(Bond::DOUBLE);
+    QueryBond dest(Bond::SINGLE);
+    dest = std::move(source);
+    CHECK(!source.hasQuery());
+    REQUIRE(dest.hasQuery());
+    CHECK(dest.getBondType() == Bond::DOUBLE);
+    Bond doubleBond(Bond::DOUBLE);
+    Bond singleBond(Bond::SINGLE);
+    CHECK(dest.Match(&doubleBond));
+    CHECK(!dest.Match(&singleBond));
+  }
+}
+
+TEST_CASE("Bond copy assignment matches copy construction") {
+  auto m = "C/C=C/C"_smiles;
+  REQUIRE(m);
+  const auto source = m->getBondWithIdx(1);
+  REQUIRE(source->getStereo() == Bond::STEREOE);
+  Bond copied(*source);
+  Bond assigned;
+  assigned = *source;
+  CHECK(assigned.getStereo() == copied.getStereo());
+  CHECK(assigned.getStereoAtoms() == copied.getStereoAtoms());
+  CHECK(!copied.hasOwningMol());
+  CHECK(!assigned.hasOwningMol());
+}
+
+TEST_CASE("replaceBond updates StereoGroups") {
+  auto m = "CC=CC"_smiles;
+  REQUIRE(m);
+  std::vector<StereoGroup> groups;
+  groups.emplace_back(StereoGroupType::STEREO_AND, std::vector<Atom *>{},
+                      std::vector<Bond *>{m->getBondWithIdx(1)});
+  m->setStereoGroups(std::move(groups));
+  Bond replacement(Bond::DOUBLE);
+  m->replaceBond(1, &replacement);
+  const auto &stereoGroups = m->getStereoGroups();
+  REQUIRE(stereoGroups.size() == 1);
+  REQUIRE(stereoGroups[0].getBonds().size() == 1);
+  CHECK(stereoGroups[0].getBonds()[0] == m->getBondWithIdx(1));
+}
+
+TEST_CASE("getConformer error names the missing conformer id") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  m->addConformer(new Conformer(m->getNumAtoms()), true);
+  CHECK_THROWS_WITH(m->getConformer(42),
+                    Catch::Matchers::ContainsSubstring("ID: 42"));
+}
+
+TEST_CASE("RWMol from a pickle honors the property flags") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  m->setProp("molProp", 42);
+  m->getAtomWithIdx(0)->setProp("atomProp", 7);
+  const unsigned int flags = PicklerOps::PropertyPickleOptions::AllProps;
+  std::string pickle;
+  MolPickler::pickleMol(*m, pickle, flags);
+  SECTION("RWMol") {
+    RWMol unpickled(pickle, flags);
+    CHECK(unpickled.getProp<int>("molProp") == 42);
+    CHECK(unpickled.getAtomWithIdx(0)->getProp<int>("atomProp") == 7);
+  }
+  SECTION("ROMol") {
+    ROMol unpickled(pickle, flags);
+    CHECK(unpickled.getProp<int>("molProp") == 42);
+    CHECK(unpickled.getAtomWithIdx(0)->getProp<int>("atomProp") == 7);
+  }
+}

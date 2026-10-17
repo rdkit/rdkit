@@ -8762,6 +8762,17 @@ M  END
     rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
     self.assertEqual(len(rings), 70)
 
+  def testRWMolFromPickleKeepsProperties(self):
+    m = Chem.MolFromSmiles('CC')
+    m.SetIntProp('molProp', 42)
+    m.GetAtomWithIdx(0).SetIntProp('atomProp', 7)
+    flags = Chem.PropertyPickleOptions.AllProps
+    pkl = m.ToBinary(flags)
+    for cls in (Chem.Mol, Chem.RWMol):
+      unpickled = cls(pkl, flags)
+      self.assertEqual(unpickled.GetIntProp('molProp'), 42)
+      self.assertEqual(unpickled.GetAtomWithIdx(0).GetIntProp('atomProp'), 7)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

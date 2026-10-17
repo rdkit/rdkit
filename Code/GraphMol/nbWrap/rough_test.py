@@ -8651,6 +8651,57 @@ M  END
     rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
     self.assertEqual(len(rings), 70)
 
+  def testRWMolFromPickleKeepsProperties(self):
+    m = Chem.MolFromSmiles('CC')
+    m.SetIntProp('molProp', 42)
+    m.GetAtomWithIdx(0).SetIntProp('atomProp', 7)
+    flags = Chem.PropertyPickleOptions.AllProps
+    pkl = m.ToBinary(flags)
+    for cls in (Chem.Mol, Chem.RWMol):
+      unpickled = cls(pkl, flags)
+      self.assertEqual(unpickled.GetIntProp('molProp'), 42)
+      self.assertEqual(unpickled.GetAtomWithIdx(0).GetIntProp('atomProp'), 7)
+
+  def testSanitExceptionGetType(self):
+    m = Chem.MolFromSmiles('C(C)(C)(C)(C)C', sanitize=False)
+    with self.assertRaisesRegex(Chem.AtomValenceException,
+                                'Explicit valence for atom # 0 C') as ctx:
+      Chem.SanitizeMol(m)
+    self.assertEqual(ctx.exception.GetType(), 'AtomValenceException')
+    self.assertEqual(ctx.exception.cause.GetType(), 'AtomValenceException')
+
+    m = Chem.MolFromSmiles('c1cccc1', sanitize=False)
+    with self.assertRaisesRegex(Chem.KekulizeException, "Can't kekulize mol") as ctx:
+      Chem.SanitizeMol(m)
+    self.assertEqual(ctx.exception.GetType(), 'KekulizeException')
+
+  def testSetNoImplicitKeyword(self):
+    atom = Chem.Atom(6)
+    atom.SetNoImplicit(what=True)
+    self.assertTrue(atom.GetNoImplicit())
+    self.assertIn('disallows', Chem.Atom.SetNoImplicit.__doc__)
+
+  def testAddRingRejectsNone(self):
+    ringInfo = Chem.MolFromSmiles('CC').GetRingInfo()
+    for atomIds, bondIds in ((None, None), (None, []), ([], None)):
+      with self.assertRaisesRegex(TypeError, 'incompatible function arguments'):
+        ringInfo.AddRing(atomIds, bondIds)
+
+  def testExpandQueryWritesNothingToStderr(self):
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    sys.stderr.flush()
+    savedStderr = os.dup(2)
+    with tempfile.TemporaryFile() as captured:
+      os.dup2(captured.fileno(), 2)
+      try:
+        qa.ExpandQuery(rdqueries.AtomNumEqualsQueryAtom(6, negate=True))
+      finally:
+        os.dup2(savedStderr, 2)
+        os.close(savedStderr)
+      captured.seek(0)
+      self.assertEqual(captured.read(), b'')
+
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

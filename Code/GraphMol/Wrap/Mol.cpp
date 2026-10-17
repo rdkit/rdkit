@@ -184,6 +184,9 @@ class ReadWriteMol : public RWMol {
   ReadWriteMol() {};
   ReadWriteMol(const ROMol &m, bool quickCopy = false, int confId = -1)
       : RWMol(m, quickCopy, confId) {};
+  explicit ReadWriteMol(const std::string &binStr) : RWMol(binStr) {}
+  ReadWriteMol(const std::string &binStr, unsigned int propertyFlags)
+      : RWMol(binStr, propertyFlags) {}
 
   void RemoveAtom(unsigned int idx) { removeAtom(idx); };
   void RemoveBond(unsigned int idx1, unsigned int idx2) {

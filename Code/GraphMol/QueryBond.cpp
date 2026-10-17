@@ -26,10 +26,14 @@ QueryBond::~QueryBond() {
 };
 
 QueryBond &QueryBond::operator=(const QueryBond &other) {
+  if (this == &other) {
+    return *this;
+  }
   // FIX: should we copy molecule ownership?  I don't think so.
   // FIX: how to deal with atom indices?
   dp_mol = nullptr;
   d_bondType = other.d_bondType;
+  delete dp_query;
   if (other.dp_query) {
     dp_query = other.dp_query->copy();
   } else {
