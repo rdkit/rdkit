@@ -852,4 +852,21 @@ TEST_CASE("github #9468") {
       CHECK(splitMol->getAtomWithIdx(1)->getTotalNumHs() == 1);
     }
   }
+  SECTION("breaking multiple bonds with NoImplicit") {
+    // The brackets are totally redundant here, but they are required
+    // to trigger the issue
+    auto mol = "C[C](C)(C)C"_smiles;
+    REQUIRE(mol);
+    std::vector<unsigned int> bonds{0, 1};
+    {
+      bool addDummies = false;
+      std::unique_ptr<ROMol> splitMol(
+          MolFragmenter::fragmentOnBonds(*mol, bonds, addDummies));
+      REQUIRE(splitMol);
+
+      auto atom = splitMol->getAtomWithIdx(1);
+      CHECK(atom->getTotalNumHs() == 2);
+      CHECK(atom->getNoImplicit() == true);
+    }
+  }
 }

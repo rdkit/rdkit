@@ -11,11 +11,13 @@
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/stl/optional.h>
 
 #include <RDBoost/Wrap_nb.h>
 
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/TriangleSmooth.h>
+#include <DistGeom/ChiralSet.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 
 #include <GraphMol/GraphMol.h>
@@ -241,32 +243,68 @@ static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
                              set15bounds, set14bounds, set13bounds);
 }
 
-static nb::list getExpTorsHelper(const ROMol &mol, bool useExpTorsions,
-                                 bool useSmallRingTorsions,
-                                 bool useMacrocycleTorsions,
-                                 bool useBasicKnowledge, unsigned int version,
-                                 bool verbose) {
-  ForceFields::CrystalFF::CrystalFFDetails details;
-  std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
-                         const ForceFields::CrystalFF::ExpTorsionAngle *>>
-      torsionBonds;
-  ForceFields::CrystalFF::getExperimentalTorsions(
-      mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
-      useMacrocycleTorsions, useBasicKnowledge, version, verbose);
-  nb::list result;
-  for (const auto &pr : torsionBonds) {
-    nb::dict d;
-    d["bondIndex"] = std::get<0>(pr);
-    d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
-    d["smarts"] = std::get<2>(pr)->smarts;
-    d["V"] = std::get<2>(pr)->V;
-    d["signs"] = std::get<2>(pr)->signs;
-    d["atomIndices"] = std::get<1>(pr);
-    result.append(d);
+static nb::tuple getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
+                                  const bool useSmallRingTorsions,
+                                  const bool useMacrocycleTorsions,
+                                  const bool useBasicKnowledge,
+                                  const unsigned int version,
+                                  const bool verbose) {
+  switch (version) {
+    case 1:
+      [[fallthrough]];
+    case 2: {
+      ForceFields::CrystalFF::CrystalFFDetails details;
+      std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                             ForceFields::CrystalFF::TorsionAnglePtrVariant>>
+          torsionBonds;
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      nb::list result;
+      for (const auto &pr : torsionBonds) {
+        const auto *angle =
+            std::get<const ForceFields::CrystalFF::ExpTorsionAngle *>(
+                std::get<2>(pr));
+        nb::dict d;
+        d["bondIndex"] = std::get<0>(pr);
+        d["torsionIndex"] = angle->torsionIdx;
+        d["smarts"] = angle->smarts;
+        d["V"] = angle->V;
+        d["signs"] = angle->signs;
+        d["atomIndices"] = std::get<1>(pr);
+        result.append(d);
+      }
+      return nb::tuple(result);
+    }
+    case 4: {
+      ForceFields::CrystalFF::CrystalFFDetails details;
+      std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                             ForceFields::CrystalFF::TorsionAnglePtrVariant>>
+          torsionBonds;
+      ForceFields::CrystalFF::getExperimentalTorsions(
+          mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+          useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+      nb::list result;
+      for (const auto &pr : torsionBonds) {
+        const auto *angle =
+            std::get<const ForceFields::CrystalFF::GaussianExpTorsionAngle *>(
+                std::get<2>(pr));
+        nb::dict d;
+        d["bondIndex"] = std::get<0>(pr);
+        d["torsionIndex"] = angle->torsionIdx;
+        d["smarts"] = angle->smarts;
+        d["positions"] = angle->positions;
+        d["widths"] = angle->widths;
+        d["heights"] = angle->heights;
+        d["atomIndices"] = std::get<1>(pr);
+        result.append(d);
+      }
+      return nb::tuple(result);
+    }
+    default:
+      throw std::invalid_argument("ETversion needs to be either 1, 2 or 4.");
   }
-  return result;
 }
-
 }  // namespace RDKit
 
 NB_MODULE(rdDistGeom, m) {
@@ -456,6 +494,18 @@ RETURNS:
       .value("CLASH", RDKit::DGeomHelpers::EmbedFailureCauses::CLASH)
       .export_values();
 
+  nb::enum_<RDKit::DGeomHelpers::InitialEmbeddingMode>(
+      m, "InitialEmbeddingMode", nb::is_arithmetic())
+      .value("DG_EMBEDDING",
+             RDKit::DGeomHelpers::InitialEmbeddingMode::DG_EMBEDDING)
+      .value("INTERNAL_COORDINATE_EMBEDDING",
+             RDKit::DGeomHelpers::InitialEmbeddingMode::
+                 INTERNAL_COORDINATE_EMBEDDING)
+      .value("RANDOM_COORDINATE_EMBEDDING",
+             RDKit::DGeomHelpers::InitialEmbeddingMode::
+                 RANDOM_COORDINATE_EMBEDDING)
+      .export_values();
+
   m.def(
       "OrderedEmbedFailureCauses",
       +[](const bool legacyImplementation = true) {
@@ -492,6 +542,11 @@ RETURNS:
         return result;
       },
       "legacyImplementation"_a = true);
+
+  nb::enum_<RDKit::DGeomHelpers::EmbedFF>(m, "EmbedFF")
+      .value("UFF", RDKit::DGeomHelpers::EmbedFF::UFF)
+      .value("MMFF", RDKit::DGeomHelpers::EmbedFF::MMFF)
+      .export_values();
 
   nb::class_<PyEmbedParameters>(m, "EmbedParameters",
                                 "Parameters controlling embedding")
@@ -555,9 +610,15 @@ conformations that are at least this far apart from each other)DOC")
               &PyEmbedParameters::useMacrocycle14config,
               "This forces amides and esters to be trans in macrocycles. "
               "This does not affect chain amides / esters!")
+      .def_rw(
+          "onlyInitialEmbedding", &PyEmbedParameters::onlyInitialEmbedding,
+          "If true, only the initial 3D embedding is generated (default=false)")
       .def_rw("useLegacyImplementation",
               &PyEmbedParameters::useLegacyImplementation,
               "whether to use the combined minimization approach")
+      .def_rw(
+          "initialEmbeddingMode", &PyEmbedParameters::initialEmbeddingMode,
+          "Mode for initial embedding: DG_EMBEDDING, INTERNAL_CORRDINATE_EMBEDDING, RANDOM_COORDINATE_EMBEDDING")
       .def_rw(
           "boundsMatForceScaling", &PyEmbedParameters::boundsMatForceScaling,
           R"DOC(scale the weights of the atom pair distance restraints relative to
@@ -590,12 +651,19 @@ used during structural minimisation stage)DOC")
               "symmetrize terminal conjugated groups for RMSD pruning")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap,
            "sets the coordmap to be used")
+      .def_rw(
+          "optimizeConfWithId", &PyEmbedParameters::optimizeConfWithId,
+          "If provided, the Conformer with this ID in the molecule (if present) is optimized with the ETKDG force field in place.")
+      .def_rw("embedForceField", &PyEmbedParameters::embedForceField,
+              "Force Field to use for ideal 1-2 and 1-3 distances.")
       .def("__setattr__", &safeSetattr);
 
   m.def("EmbedMultipleConfs", &RDKit::EmbedMultipleConfs2, "mol"_a,
         "numConfs"_a, "params"_a,
         R"DOC(Use distance geometry to obtain multiple sets of
-coordinates for a molecule
+coordinates for a molecule.
+Be aware that this function can alter the EmbedParameters object, caution 
+is advised when reusing EmbedParameters objects for different embedding runs.
 
 ARGUMENTS:
 
@@ -610,7 +678,9 @@ RETURNS:
 
   m.def("EmbedMolecule", &RDKit::EmbedMolecule2, "mol"_a, "params"_a,
         R"DOC(Use distance geometry to obtain initial
-coordinates for a molecule
+coordinates for a molecule.
+Be aware that this function can alter the EmbedParameters object, caution 
+is advised when reusing EmbedParameters objects for different embedding runs.
 
 ARGUMENTS:
 
@@ -651,6 +721,11 @@ version 3 (macrocycles).)DOC");
   m.def(
       "DG", []() { return PyEmbedParameters(RDKit::DGeomHelpers::DG); },
       "Returns an EmbedParameters object for plain distance geometry.");
+
+  m.def(
+      "ETKDGv4",
+      []() { return PyEmbedParameters(RDKit::DGeomHelpers::ETKDGv4); },
+      "Returns an EmbedParameters object for the ETKDG method - version 4.");
 
   m.def("GetMoleculeBoundsMatrix", &RDKit::getMolBoundsMatrix, "mol"_a,
         "set15bounds"_a = true, "scaleVDW"_a = false,

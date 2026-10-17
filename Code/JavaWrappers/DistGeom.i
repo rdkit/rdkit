@@ -47,6 +47,7 @@
 
 // This conflicts with definitions in UFF::, so ignore and make it a method on the bounds matrix
 %ignore DistGeom::constructForceField;
+%ignore DistGeom::computeZMatrixCoords;
 
 %include <DistGeom/ChiralSet.h> 
 %include <DistGeom/BoundsMatrix.h>

@@ -38,7 +38,9 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     const ROMol &mol, DistGeom::BoundsMatPtr mmat,
     const EmbedParameters &params, bool scaleVDW = false,
     bool set15bounds = true, bool set14bounds = true, bool set13bounds = true,
-    PATH14_VECT *paths14 = nullptr);
+    PATH14_VECT *paths14 = nullptr,
+    const EmbedFF embedForceField = EmbedFF::UFF,
+    InternalCoordinates *internalCoords = nullptr);
 
 //! Set upper and lower distance bounds between atoms in a molecule based on
 /// topology
@@ -65,11 +67,12 @@ inline void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                            bool set15bounds = true, bool scaleVDW = false,
                            bool useMacrocycle14config = false,
                            bool forceTransAmides = true,
-                           bool set14bounds = true, bool set13bounds = true) {
+                           bool set14bounds = true, bool set13bounds = true,
+                           const EmbedFF embedForceField = EmbedFF::UFF) {
   EmbedParameters params{.useMacrocycle14config = useMacrocycle14config,
                          .forceTransAmides = forceTransAmides};
   setTopolBounds(mol, mmat, params, scaleVDW, set15bounds, set14bounds,
-                 set13bounds);
+                 set13bounds, nullptr, embedForceField);
 }
 
 /* ! \overload */
@@ -78,7 +81,9 @@ RDKIT_DISTGEOMHELPERS_EXPORT void setTopolBounds(
     std::vector<std::pair<int, int>> &bonds,
     std::vector<std::vector<int>> &angles, const EmbedParameters &params,
     bool scaleVDW = false, bool set15bounds = true, bool set14bounds = true,
-    bool set13bounds = true, PATH14_VECT *paths14 = nullptr);
+    bool set13bounds = true, PATH14_VECT *paths14 = nullptr,
+    const EmbedFF embedForceField = EmbedFF::UFF,
+    InternalCoordinates *internalCoords = nullptr);
 /*! \overload for experimental torsion angle preferences
  */
 inline void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
@@ -87,11 +92,12 @@ inline void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
                            bool set15bounds = true, bool scaleVDW = false,
                            bool useMacrocycle14config = false,
                            bool forceTransAmides = true,
-                           bool set14bounds = true, bool set13bounds = true) {
+                           bool set14bounds = true, bool set13bounds = true,
+                           const EmbedFF embedForceField = EmbedFF::UFF) {
   EmbedParameters params{.useMacrocycle14config = useMacrocycle14config,
                          .forceTransAmides = forceTransAmides};
   setTopolBounds(mol, mmat, bonds, angles, params, scaleVDW, set15bounds,
-                 set14bounds, set13bounds);
+                 set14bounds, set13bounds, nullptr, embedForceField);
 }
 
 //! generate the vectors of bonds and angles used by (ET)KDG

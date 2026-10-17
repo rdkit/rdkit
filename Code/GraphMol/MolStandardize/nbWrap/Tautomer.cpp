@@ -363,12 +363,16 @@ The enumeration rules are inspired by the publication:
 M. Sitzmann et al., "Tautomerism in Large Databases.", JCAMD 24:521 (2010)
 https://doi.org/10.1007/s10822-010-9346-4
 
-Note: the definitions used here are that the atoms modified during
-tautomerization are the atoms at the beginning and end of each tautomer
-transform (the H "donor" and H "acceptor" in the transform) and the bonds
-modified during transformation are any bonds whose order is changed during
-the tautomer transform (these are the bonds between the "donor" and the
-"acceptor").)DOC")
+Note: 
+- the definitions used here are that the atoms modified during
+  tautomerization are the atoms at the beginning and end of each tautomer
+  transform (the H "donor" and H "acceptor" in the transform) and the bonds
+  modified during transformation are any bonds whose order is changed during
+  the tautomer transform (these are the bonds between the "donor" and the 
+  "acceptor").   
+- if any atoms in the molecule have the "_protected" property set, they
+  will not be considered for tautomerization. Any transformations
+  involving these atoms will be skipped.)DOC")
       .def("Canonicalize", &canonicalizeHelper, "mol"_a,
            nb::rv_policy::take_ownership,
            R"DOC(Returns the canonical tautomer for a molecule.

@@ -277,14 +277,15 @@ GetDefaultTautomerSubstructsHelper() {
   }
   return terms;
 }
-  
 
 }  // namespace
 
-// This indicates that the scoreSubstructs takes a minimum of 1 argument and a maximum of 2
-// so we can call it ScoreSubstructs(mol) or ScoreSubstructs(mol, terms)
-BOOST_PYTHON_FUNCTION_OVERLOADS(scoreSubstructs_overloads,
-				RDKit::MolStandardize::TautomerScoringFunctions::scoreSubstructs, 1, 2)
+// This indicates that the scoreSubstructs takes a minimum of 1 argument and a
+// maximum of 2 so we can call it ScoreSubstructs(mol) or ScoreSubstructs(mol,
+// terms)
+BOOST_PYTHON_FUNCTION_OVERLOADS(
+    scoreSubstructs_overloads,
+    RDKit::MolStandardize::TautomerScoringFunctions::scoreSubstructs, 1, 2)
 
 struct tautomer_wrapper {
   static void wrap() {
@@ -394,12 +395,16 @@ struct tautomer_wrapper {
   M. Sitzmann et al., “Tautomerism in Large Databases.”, JCAMD 24:521 (2010)
   https://doi.org/10.1007/s10822-010-9346-4
   
-  Note: the definitions used here are that the atoms modified during
-  tautomerization are the atoms at the beginning and end of each tautomer
-  transform (the H "donor" and H "acceptor" in the transform) and the bonds
-  modified during transformation are any bonds whose order is changed during
-  the tautomer transform (these are the bonds between the "donor" and the
-  "acceptor").)DOC")
+  Note: 
+  - the definitions used here are that the atoms modified during
+    tautomerization are the atoms at the beginning and end of each tautomer
+    transform (the H "donor" and H "acceptor" in the transform) and the bonds
+    modified during transformation are any bonds whose order is changed during
+    the tautomer transform (these are the bonds between the "donor" and the 
+    "acceptor").   
+  - if any atoms in the molecule have the "_protected" property set, they
+    will not be considered for tautomerization. Any transformations
+    involving these atoms will be skipped.)DOC")
         .def("Canonicalize", &canonicalizeHelper,
              (python::arg("self"), python::arg("mol")),
              python::return_value_policy<python::manage_new_object>(),
@@ -545,13 +550,13 @@ struct tautomer_wrapper {
         "SubstructTermVector")
         .def(python::vector_indexing_suite<std::vector<
                  MolStandardize::TautomerScoringFunctions::SubstructTerm>>());
-    
-    docString = "scores the tautomer substructures";
-    python::def("ScoreSubstructs", &MolStandardize::TautomerScoringFunctions::scoreSubstructs,
-		scoreSubstructs_overloads((python::arg("mol"), python::arg("terms")),
-					  docString.c_str())
-		);
 
+    docString = "scores the tautomer substructures";
+    python::def(
+        "ScoreSubstructs",
+        &MolStandardize::TautomerScoringFunctions::scoreSubstructs,
+        scoreSubstructs_overloads((python::arg("mol"), python::arg("terms")),
+                                  docString.c_str()));
 
     python::def("GetDefaultTautomerScoreSubstructs",
                 GetDefaultTautomerSubstructsHelper,
