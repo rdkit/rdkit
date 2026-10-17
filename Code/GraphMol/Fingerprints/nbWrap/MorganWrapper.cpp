@@ -134,9 +134,10 @@ RETURNS: AtomInvariantsGenerator
 
 ARGUMENTS:
     - patterns: if provided should contain the queries used to assign
-      atom-types. if not provided, feature definitions adapted from
-      reference: Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998) will
-      be used for Donor, Acceptor, Aromatic, Halogen, Basic, Acidic.
+      atom-types, at most 32 of them. if not provided, feature definitions
+      adapted from reference: Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54
+      (1998) will be used for Donor, Acceptor, Aromatic, Halogen, Basic,
+      Acidic.
 
 RETURNS: AtomInvariantsGenerator
 )DOC",
