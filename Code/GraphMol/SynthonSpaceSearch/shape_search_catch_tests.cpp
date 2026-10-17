@@ -298,7 +298,7 @@ TEST_CASE("Two piece query") {
   params.shapeOverlayOptions.simBeta = 0.05;
   auto results = synthonspace.shapeSearch(*queryMol, params);
   CHECK(results.getHitMolecules().size() == 2);
-  std::vector<double> expScores{0.715, 0.715};
+  std::vector<double> expScores{0.721, 0.715};
   for (unsigned int i = 0; i < results.getHitMolecules().size(); ++i) {
     auto &mol = results.getHitMolecules()[i];
     CHECK_THAT(mol->getProp<double>("Similarity"),

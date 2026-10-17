@@ -13,7 +13,7 @@
 
 #include <GraphMol/MolProcessing/MolProcessing.h>
 #include <GraphMol/FileParsers/GeneralFileReader.h>
-#include <RDBoost/Wrap.h>
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -77,12 +77,14 @@ NB_MODULE(rdMolProcessing, m) {
       .def_rw("confId3D", &GeneralMolSupplier::SupplierOptions::confId3D,
               "used for TDT files");
 
-  m.def("GetFingerprintsForMolsInFile", getFingerprintsHelper<std::uint32_t>,
-        "filename"_a, "generator"_a = nb::none(),
-        "options"_a = GeneralMolSupplier::SupplierOptions(),
-        "returns the fingerprints for the molecules in a file (32 bit version)");
-  m.def("GetFingerprintsForMolsInFile", getFingerprintsHelper<std::uint64_t>,
-        "filename"_a, "generator"_a = nb::none(),
-        "options"_a = GeneralMolSupplier::SupplierOptions(),
-        "returns the fingerprints for the molecules in a file (64 bit version)");
+  m.def(
+      "GetFingerprintsForMolsInFile", getFingerprintsHelper<std::uint32_t>,
+      "filename"_a, "generator"_a = nb::none(),
+      "options"_a = GeneralMolSupplier::SupplierOptions(),
+      "returns the fingerprints for the molecules in a file (32 bit version)");
+  m.def(
+      "GetFingerprintsForMolsInFile", getFingerprintsHelper<std::uint64_t>,
+      "filename"_a, "generator"_a = nb::none(),
+      "options"_a = GeneralMolSupplier::SupplierOptions(),
+      "returns the fingerprints for the molecules in a file (64 bit version)");
 }

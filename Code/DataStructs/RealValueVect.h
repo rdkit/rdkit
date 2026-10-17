@@ -15,6 +15,7 @@
 #include <boost/smart_ptr.hpp>
 #include <string>
 #include <cstring>
+#include <vector>
 
 namespace RDGeom {
 class UniformRealValueGrid3D;

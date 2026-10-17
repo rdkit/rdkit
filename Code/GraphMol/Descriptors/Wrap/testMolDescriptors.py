@@ -524,6 +524,23 @@ class TestCase(unittest.TestCase):
     except KeyError:
       pass
 
+  def testPropertiesMatchCalculators(self):
+    # Each registered property must be wired to the calculator of the same name. chi2v and chi2n
+    # were registered against calcChi3v/calcChi3n; nothing compared the two APIs, so the two names
+    # silently returned the chi3 values.
+    names = ['chi%d%s' % (i, v) for i in range(5) for v in 'nv']
+    names += ['kappa1', 'kappa2', 'kappa3']
+    # A halogenated molecule keeps the n and v variants apart. On a plain hydrocarbon several of
+    # the chi values coincide, which is enough to hide a mis-registration.
+    m = Chem.MolFromSmiles('BrCC(CBr)CBr')
+    props = rdMD.Properties(names)
+    computed = dict(zip(props.GetPropertyNames(), props.ComputeProperties(m)))
+    for name in names:
+      calculator = getattr(rdMD, 'Calc' + name[0].upper() + name[1:])
+      self.assertAlmostEqual(computed[name], calculator(m), 10,
+                             'Properties["%s"] does not match Calc%s%s' %
+                             (name, name[0].upper(), name[1:]))
+
   def testPythonDescriptorFunctor(self):
 
     class NumAtoms(Descriptors.PropertyFunctor):

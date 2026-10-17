@@ -283,7 +283,7 @@ class PyGILStateHolder {
 //  on destruction - grab the lock
 //  no entry into the python interpreter can be performed
 //   between releasing and grabbing the lock
-class RDKIT_RDBOOST_EXPORT RDUNUSED NOGIL {
+class RDUNUSED NOGIL {
  public:
   inline NOGIL() { m_thread_state = PyEval_SaveThread(); }
 

@@ -49,7 +49,7 @@ PyObject *computePrincAxesMomentsHelper(
   std::vector<double> *weightsVecPtr = nullptr;
   std::vector<double> weightsVec;
   size_t i;
-  if (weights != python::object()) {
+  if (!weights.is_none()) {
     size_t numElements = python::len(weights);
     if (numElements != conf.getNumAtoms()) {
       throw ValueErrorException(
