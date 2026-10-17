@@ -46,8 +46,6 @@ struct chirality_wrapper {
     nb::class_<Chirality::StereoInfo>(
         m, "StereoInfo", R"DOC(Class describing stereochemistry)DOC")
         .def(nb::init<>())
-        .def_ro_static("NOATOM", &Atom::NOATOM,
-                       R"DOC(marker for unspecified int values)DOC")
         .def_rw("type", &Chirality::StereoInfo::type,
                 R"DOC(the type of stereo)DOC")
         .def_rw("specified", &Chirality::StereoInfo::specified,

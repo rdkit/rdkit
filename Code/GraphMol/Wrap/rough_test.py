@@ -8584,16 +8584,17 @@ M  END
       self.assertEqual(unpickled.GetAtomWithIdx(0).GetIntProp('atomProp'), 7)
 
   def testMolToV3KMolFile(self):
-    m = Chem.MolFromSmiles('CCO')
-    expected = Chem.MolToV3KMolBlock(m)
+    m = Chem.MolFromSmiles('C[C@H](F)Cl')
+    params = Chem.MolWriterParams()
+    params.includeStereo = False
     with tempfile.TemporaryDirectory() as tmpDir:
       fName = os.path.join(tmpDir, 'out.mol')
       Chem.MolToV3KMolFile(m, fName)
       with open(fName) as inf:
-        self.assertEqual(inf.read(), expected)
-      Chem.MolToV3KMolFile(m, fName, Chem.MolWriterParams())
+        self.assertEqual(inf.read(), Chem.MolToV3KMolBlock(m))
+      Chem.MolToV3KMolFile(m, fName, params)
       with open(fName) as inf:
-        self.assertEqual(inf.read(), expected)
+        self.assertEqual(inf.read(), Chem.MolToV3KMolBlock(m, includeStereo=False))
 
   def testDefaultConstructors(self):
     params = Chem.MolWriterParams()
@@ -8604,6 +8605,9 @@ M  END
     info = Chem.StereoInfo()
     self.assertEqual(info.type, Chem.StereoType.Unspecified)
     self.assertEqual(info.centeredOn, Chem.Atom.NOATOM)
+
+  def testStereoInfoHasNoNOATOM(self):
+    self.assertFalse(hasattr(Chem.StereoInfo, 'NOATOM'))
 
 
 if __name__ == '__main__':

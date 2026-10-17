@@ -534,7 +534,7 @@ struct filtercat_wrapper {
             python::args("self", "catalogs")))
         .def("Serialize", &FilterCatalog_Serialize, python::args("self"))
         .def("AddEntry", &filter_catalog_add_entry,
-             (python::args("entry"), python::args("updateFPLength") = false),
+             python::args("self", "entry"),
              "Add a FilterCatalogEntry to the catalog")
         .def("RemoveEntry", &FilterCatalogRemoveEntry,
              python::args("self", "obj"),
