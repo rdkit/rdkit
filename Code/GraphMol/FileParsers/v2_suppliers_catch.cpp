@@ -85,6 +85,18 @@ TEST_CASE("SmilesMolSupplier") {
       REQUIRE(mol);
     }
   }
+  SECTION("length does not end iteration") {
+    std::istringstream inStream("c1ccccc1O\nc1ccccc1N\nCCO\n");
+    FileParsers::SmilesMolSupplierParams params;
+    params.titleLine = false;
+    params.nameColumn = -1;
+    FileParsers::SmilesMolSupplier smsup(&inStream, false, params);
+    CHECK(smsup.length() == 3);
+    CHECK(!smsup.atEnd());
+    auto mol = smsup.next();
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 7);
+  }
 }
 
 TEST_CASE("TDTMolSupplier") {

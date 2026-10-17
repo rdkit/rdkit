@@ -132,6 +132,8 @@ double internalCalcSASA(const ROMol &mol, const std::vector<double> &radii,
                         int confIdx, const SASAOpts &opts) {
   PRECONDITION(mol.getNumConformers(), "No conformers in molecule");
   PRECONDITION(mol.getNumAtoms(), "Empty molecule");
+  PRECONDITION(radii.size() == mol.getNumAtoms(),
+               "radii must have exactly one entry per atom");
 
   freesasa_parameters params = freesasa_default_parameters;
   params.n_threads = 1;
