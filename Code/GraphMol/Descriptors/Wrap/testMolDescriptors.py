@@ -847,13 +847,13 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(rdMD.DoubleCubicLatticeVolume(mol, []).GetSurfaceArea(), expected)
     for bad in ([1.7], [1.7, 1.7, 1.7]):
       with self.subTest(length=len(bad)):
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, 'radii must be empty or have one entry per atom'):
           rdMD.DoubleCubicLatticeVolume(mol, bad)
 
   def testDCLVEmptyMolecule(self):
     mol = Chem.RWMol()
     mol.AddConformer(Chem.Conformer(0), assignId=True)
-    with self.assertRaises(RuntimeError):
+    with self.assertRaisesRegex(RuntimeError, 'Empty molecule'):
       rdMD.DoubleCubicLatticeVolume(mol)
 
 

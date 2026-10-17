@@ -341,12 +341,12 @@ class TestCase(unittest.TestCase):
     bv.SetBit(1)
     pool = [bv, None, bv]
     # Boost raises TypeError for a None element and nanobind RuntimeError.
-    with self.assertRaises((TypeError, RuntimeError)):
+    with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad_cast'):
       rdSimDivPickers.MaxMinPicker().LazyBitVectorPick(pool, len(pool), 2, seed=42)
-    with self.assertRaises((TypeError, RuntimeError)):
+    with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad_cast'):
       rdSimDivPickers.MaxMinPicker().LazyBitVectorPickWithThreshold(pool, len(pool), 2, 0.5,
                                                                     seed=42)
-    with self.assertRaises((TypeError, RuntimeError)):
+    with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad_cast'):
       rdSimDivPickers.LeaderPicker().LazyBitVectorPick(pool, len(pool), 0.8)
 
 

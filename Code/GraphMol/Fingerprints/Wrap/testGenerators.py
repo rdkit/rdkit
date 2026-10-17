@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from rdkit import Chem, DataStructs
+from rdkit import Chem, DataStructs, rdBase
 from rdkit.Chem import rdFingerprintGenerator
 
 
@@ -438,12 +438,13 @@ class TestCase(unittest.TestCase):
       Chem.MolFromSmarts(sma) for sma in smarts)
     g = rdFingerprintGenerator.GetMorganGenerator(radius=2, atomInvariantsGenerator=invGen)
     self.assertEqual(g.GetSparseCountFingerprint(m).GetNonzeroElements(), expected)
-    # nanobind raises RuntimeError for a None pattern. Boost ignores the patterns (#9601), so
-    # this only checks that it does not crash.
-    try:
-      rdFingerprintGenerator.GetMorganFeatureAtomInvGen([Chem.MolFromSmarts(smarts[0]), None])
-    except RuntimeError:
-      pass
+    patterns = [Chem.MolFromSmarts(smarts[0]), None]
+    if rdBase._wrapperType == 'nanobind':
+      with self.assertRaisesRegex(RuntimeError, 'bad_cast'):
+        rdFingerprintGenerator.GetMorganFeatureAtomInvGen(patterns)
+    else:
+      # Boost ignores the patterns (#9601), so this only checks that it does not crash.
+      rdFingerprintGenerator.GetMorganFeatureAtomInvGen(patterns)
 
   def testFingerprintsFromIterables(self):
     smiles = ['c1ccccc1O', 'c1ccccc1N', 'CCOC(=O)C', 'CC(C)CC(=O)O']
@@ -471,7 +472,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual([fp.ToBitString() for fp in rdFingerprintGenerator.GetFPs(make())],
                          bulkExpected)
     # Boost raises TypeError for a None element and nanobind RuntimeError.
-    with self.assertRaises((TypeError, RuntimeError)):
+    with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad_cast'):
       rdFingerprintGenerator.GetFPs(mols + [None])
 
 

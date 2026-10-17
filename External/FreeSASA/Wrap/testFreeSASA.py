@@ -295,7 +295,7 @@ class TestCase(unittest.TestCase):
     radii = list(rdFreeSASA.classifyAtoms(mol))
     for bad in (radii[:10], [], radii + [1.0]):
       with self.subTest(length=len(bad)):
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, 'radii must have exactly one entry per atom'):
           rdFreeSASA.CalcSASA(mol, bad)
 
 

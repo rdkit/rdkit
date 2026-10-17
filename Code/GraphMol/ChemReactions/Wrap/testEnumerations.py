@@ -684,7 +684,7 @@ class TestCase(unittest.TestCase):
 
   def testNoneReagent(self):
     rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]')
-    with self.assertRaises(ValueError):
+    with self.assertRaisesRegex(ValueError, 'reaction called with None reactants'):
       rdChemReactions.EnumerateLibrary(rxn, [[Chem.MolFromSmiles('CC(=O)O')], [None]])
 
 if __name__ == '__main__':
