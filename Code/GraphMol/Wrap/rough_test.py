@@ -8609,6 +8609,17 @@ M  END
   def testStereoInfoHasNoNOATOM(self):
     self.assertFalse(hasattr(Chem.StereoInfo, 'NOATOM'))
 
+  def testEnumValuesAreNotModuleAttributes(self):
+    for enumType, names in (
+        (Chem.StereoType, ('Unspecified', 'Atom_Tetrahedral', 'Bond_Double')),
+        (Chem.StereoSpecified, ('Specified', 'Unknown')),
+        (Chem.StereoDescriptor, ('NoValue', 'Tet_CW', 'Bond_Cis')),
+        (Chem.AtomMonomerType, ('UNKNOWN', 'PDBRESIDUE', 'OTHER')),
+    ):
+      for name in names:
+        self.assertTrue(hasattr(enumType, name))
+        self.assertFalse(hasattr(Chem, name))
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
