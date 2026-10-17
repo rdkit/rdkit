@@ -114,13 +114,17 @@ RDKIT_FINGERPRINTS_EXPORT void getConnectivityInvariants(
     bool includeRingMembership = true);
 const std::string morganConnectivityInvariantVersion = "1.0.0";
 
+//! the most patterns getFeatureInvariants() takes: one per bit of the 32-bit
+//! invariant
+constexpr unsigned int maxFeatureInvariantPatterns = 32;
+
 //! returns the feature invariants for a molecule
 /*!
 
   \param mol:    the molecule to be considered
   \param invars : used to return the results
   \param patterns: if provided should contain the queries used to assign
-  atom-types, at most 32 of them, since each one is a bit of an invariant.
+  atom-types, at most maxFeatureInvariantPatterns of them, none of them null.
                    if not provided, feature definitions adapted from reference:
                    Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
                    will be used for Donor, Acceptor, Aromatic, Halogen, Basic,

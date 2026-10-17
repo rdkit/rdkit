@@ -211,10 +211,16 @@ void getFeatureInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
                           const std::vector<const ROMol *> *patterns) {
   unsigned int nAtoms = mol.getNumAtoms();
   PRECONDITION(invars.size() >= nAtoms, "vector too small");
-  // Each pattern is one bit of a 32-bit invariant.
-  if (patterns && patterns->size() > 32) {
-    throw ValueErrorException(
-        "getFeatureInvariants() takes at most 32 patterns");
+  if (patterns) {
+    if (patterns->size() > maxFeatureInvariantPatterns) {
+      throw ValueErrorException("getFeatureInvariants() takes at most " +
+                                std::to_string(maxFeatureInvariantPatterns) +
+                                " patterns");
+    }
+    if (std::find(patterns->begin(), patterns->end(), nullptr) !=
+        patterns->end()) {
+      throw ValueErrorException("getFeatureInvariants() got a null pattern");
+    }
   }
 
   auto useLocalPatterns = patterns == nullptr;

@@ -22,6 +22,8 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <tuple>
+#include <algorithm>
+#include <memory>
 
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
 #include <GraphMol/Chirality.h>
@@ -68,13 +70,25 @@ MorganAtomInvGenerator *MorganAtomInvGenerator::clone() const {
   return new MorganAtomInvGenerator(df_includeRingMembership);
 }
 
+namespace {
+// getFeatureInvariants() checks this too, but only once the generator is used.
+void checkFeaturePatternCount(std::size_t count) {
+  if (count > maxFeatureInvariantPatterns) {
+    throw ValueErrorException("MorganFeatureAtomInvGenerator takes at most " +
+                              std::to_string(maxFeatureInvariantPatterns) +
+                              " patterns");
+  }
+}
+}  // namespace
+
 MorganFeatureAtomInvGenerator::MorganFeatureAtomInvGenerator(
     const std::vector<const ROMol *> *patterns) {
   if (patterns) {
-    // getFeatureInvariants() gives each pattern one bit of a 32-bit invariant.
-    if (patterns->size() > 32) {
+    checkFeaturePatternCount(patterns->size());
+    if (std::find(patterns->begin(), patterns->end(), nullptr) !=
+        patterns->end()) {
       throw ValueErrorException(
-          "MorganFeatureAtomInvGenerator takes at most 32 patterns");
+          "MorganFeatureAtomInvGenerator got a null pattern");
     }
     dp_patterns = new std::vector<const ROMol *>;
     dp_patterns->reserve(patterns->size());
@@ -119,15 +133,23 @@ void MorganFeatureAtomInvGenerator::toJSON(
 void MorganFeatureAtomInvGenerator::fromJSON(
     const boost::property_tree::ptree &pt) {
   if (pt.get_child_optional("patternSMARTS")) {
-    const auto &patternsNode = pt.get_child("patternSMARTS");
+    // A pattern dropped here would move every later one to another bit.
+    std::vector<std::unique_ptr<ROMol>> patterns;
+    for (const auto &patternNode : pt.get_child("patternSMARTS")) {
+      std::string smarts = patternNode.second.get_value<std::string>();
+      patterns.emplace_back(SmartsToMol(smarts));
+      if (!patterns.back()) {
+        throw ValueErrorException(
+            "MorganFeatureAtomInvGenerator could not parse pattern SMARTS " +
+            smarts);
+      }
+    }
+    checkFeaturePatternCount(patterns.size());
     cleanUpPatterns();
     dp_patterns = new std::vector<const ROMol *>();
-    for (const auto &patternNode : patternsNode) {
-      std::string smarts = patternNode.second.get_value<std::string>();
-      ROMol *patternMol = SmartsToMol(smarts);
-      if (patternMol) {
-        dp_patterns->push_back(patternMol);
-      }
+    dp_patterns->reserve(patterns.size());
+    for (auto &pattern : patterns) {
+      dp_patterns->push_back(pattern.release());
     }
   }
   AtomInvariantsGenerator::fromJSON(pt);

@@ -102,7 +102,7 @@ class TestCase(unittest.TestCase):
     default = rdFingerprintGenerator.GetMorganGenerator(
       radius=2, atomInvariantsGenerator=rdFingerprintGenerator.GetMorganFeatureAtomInvGen())
     pattern = Chem.MolFromSmarts('[OX2]')
-    for patterns in ([pattern], (pattern, )):
+    for patterns in ([pattern], (pattern, ), (p for p in [pattern])):
       with self.subTest(kind=type(patterns).__name__):
         # The patterns replace the default feature definitions.
         invGen = rdFingerprintGenerator.GetMorganFeatureAtomInvGen(patterns)
@@ -114,8 +114,13 @@ class TestCase(unittest.TestCase):
     pattern = Chem.MolFromSmarts('[OX2]')
     # Each pattern is one bit of a 32-bit atom invariant.
     rdFingerprintGenerator.GetMorganFeatureAtomInvGen([pattern] * 32)
-    with self.assertRaises(ValueError):
+    with self.assertRaisesRegex(ValueError, 'takes at most 32 patterns'):
       rdFingerprintGenerator.GetMorganFeatureAtomInvGen([pattern] * 33)
+
+  def testMorganFeatureAtomInvGenNonePattern(self):
+    pattern = Chem.MolFromSmarts('[OX2]')
+    with self.assertRaisesRegex(ValueError, 'null pattern'):
+      rdFingerprintGenerator.GetMorganFeatureAtomInvGen([pattern, None])
 
   def testRDKitFPGenerator(self):
     m = Chem.MolFromSmiles('CCCCC')

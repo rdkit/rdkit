@@ -561,6 +561,7 @@ TEST_CASE("RDKit fingerprinter and ignoreAtoms") {
 }
 
 TEST_CASE("Morgan feature invariants take at most 32 patterns") {
+  using Catch::Matchers::ContainsSubstring;
   auto mol = "OCCN"_smiles;
   REQUIRE(mol);
   std::vector<std::unique_ptr<ROMol>> owned;
@@ -580,11 +581,54 @@ TEST_CASE("Morgan feature invariants take at most 32 patterns") {
   SECTION("33 are rejected") {
     owned.emplace_back(SmartsToMol("[OX2]"));
     patterns.push_back(owned.back().get());
-    CHECK_THROWS_AS(MorganFingerprints::getFeatureInvariants(*mol, invars,
-                                                             &patterns),
-                    ValueErrorException);
-    CHECK_THROWS_AS(
+    CHECK_THROWS_WITH(
+        MorganFingerprints::getFeatureInvariants(*mol, invars, &patterns),
+        ContainsSubstring("getFeatureInvariants() takes at most 32"));
+    CHECK_THROWS_WITH(
         MorganFingerprint::MorganFeatureAtomInvGenerator(&patterns),
-        ValueErrorException);
+        ContainsSubstring("MorganFeatureAtomInvGenerator takes at most 32"));
+  }
+  SECTION("a null pattern is rejected") {
+    patterns[1] = nullptr;
+    CHECK_THROWS_WITH(
+        MorganFingerprints::getFeatureInvariants(*mol, invars, &patterns),
+        ContainsSubstring("getFeatureInvariants() got a null pattern"));
+    CHECK_THROWS_WITH(
+        MorganFingerprint::MorganFeatureAtomInvGenerator(&patterns),
+        ContainsSubstring("MorganFeatureAtomInvGenerator got a null pattern"));
+  }
+}
+
+TEST_CASE("Morgan feature patterns are checked when read from JSON") {
+  using Catch::Matchers::ContainsSubstring;
+  auto pattern = "[OX2]"_smarts;
+  REQUIRE(pattern);
+  std::vector<const ROMol *> patterns(32, pattern.get());
+  MorganFingerprint::MorganFeatureAtomInvGenerator atomInvGen(&patterns);
+  MorganFingerprint::MorganArguments args;
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+      MorganFingerprint::getMorganGenerator<std::uint64_t>(args, &atomInvGen));
+  REQUIRE(fpGenerator);
+  auto json = generatorToJSON(*fpGenerator);
+  const std::string arrayStart = R"("patternSMARTS":[)";
+  auto arrayPos = json.find(arrayStart);
+  REQUIRE(arrayPos != std::string::npos);
+  arrayPos += arrayStart.size();
+  REQUIRE(generatorFromJSON(json));
+
+  SECTION("33 patterns") {
+    json.insert(arrayPos, R"("[OX2]",)");
+    CHECK_THROWS_WITH(
+        generatorFromJSON(json),
+        ContainsSubstring("MorganFeatureAtomInvGenerator takes at most 32"));
+  }
+  SECTION("a pattern that does not parse") {
+    // Replace the first pattern rather than adding one, so the count stays
+    // within the limit.
+    auto end = json.find(',', arrayPos);
+    REQUIRE(end != std::string::npos);
+    json.replace(arrayPos, end - arrayPos, R"("C(")");
+    CHECK_THROWS_WITH(generatorFromJSON(json),
+                      ContainsSubstring("could not parse pattern SMARTS C("));
   }
 }
