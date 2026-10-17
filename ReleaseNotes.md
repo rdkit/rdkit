@@ -1,3 +1,25 @@
+# Release_2027.03.1
+(Changes relative to Release_2026.09.1)
+
+## Backwards incompatible changes:
+- Python-coupled artifacts are now installed into the `python` cmake component:
+  the `Scripts` directory (previously `data`), the `RDBoost/` wrapper headers
+  (previously `dev`), and the shared `nanobind` library (previously whichever
+  component the preceding `rdkit_library()` call left set). Packagers who
+  install components selectively need to include `python` to keep these files.
+- `RDKit_HAS_PYTHON_WRAPPERS` in `rdkit-config.cmake` is now `ON` only when the
+  `rdkitpython` package config is installed beside it, instead of recording
+  whether the Boost.Python wrappers were built. The two agree for a full
+  install and differ when the `dev` and `python` components are packaged
+  separately.
+- The installed CMake package now carries its own requirements: the exported
+  targets require C++20, and `rdkit-config.cmake` finds Freetype, Cairo, and
+  EXPAT when RDKit was built with them, instead of `RDKit::MolDraw2D` recording
+  absolute paths from the build machine. Projects using `find_package(RDKit)`
+  need those packages to be findable. `rdkitpython-config.cmake` requires the
+  Python minor version the wrappers were built for; it previously asked for an
+  empty version and always failed.
+
 # Release_2026.09.1
 (Changes relative to Release_2026.03.1)
 
@@ -72,24 +94,6 @@ thomp-j, vwe-ibm, ankar-dav, dpdoughe
   returns only points which are actually on the surface. Previously all
   potential surface points for each atom were returned. You can get the old
   result by setting the `allPoints` argument to true.
-- Python-coupled artifacts are now installed into the `python` cmake component:
-  the `Scripts` directory (previously `data`), the `RDBoost/` wrapper headers
-  (previously `dev`), and the shared `nanobind` library (previously whichever
-  component the preceding `rdkit_library()` call happened to leave set).
-  Packagers who install components selectively need to include `python` to keep
-  these files.
-- `RDKit_HAS_PYTHON_WRAPPERS` in `rdkit-config.cmake` is now `ON` only when the
-  `rdkitpython` package config is installed beside it, instead of recording
-  whether the Boost.Python wrappers were built. The two agree for a full
-  install; they differ when the `dev` and `python` components are packaged
-  separately.
-- The installed CMake package now carries its own requirements: the exported
-  targets require C++20, and `rdkit-config.cmake` finds Freetype, Cairo, and
-  EXPAT when RDKit was built with them, instead of `RDKit::MolDraw2D` recording
-  absolute paths from the build machine. Projects using
-  `find_package(RDKit)` need those packages to be findable.
-  `rdkitpython-config.cmake` also finds the Python version it was built
-  against; it previously asked for an empty one and always failed.
 
 ## New Features and Enhancements:
   - Legend position
