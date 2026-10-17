@@ -19,7 +19,57 @@ variables:
 
 
 jobs:
+# Marking a draft PR ready for review queues a new PR build with no new
+# commits, and the pr trigger has no setting to ignore that event. The other
+# jobs skip a PR build whose head commit already has a passing build.
+- job: Check_earlier_builds
+  timeoutInMinutes: 5
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - checkout: none
+  - bash: |
+      python3 - <<'EOF'
+      import json
+      import os
+      import urllib.parse
+      import urllib.request
+
+      collection = os.environ["SYSTEM_COLLECTIONURI"]
+      project = os.environ["SYSTEM_TEAMPROJECTID"]
+      commit = os.environ.get("SYSTEM_PULLREQUEST_SOURCECOMMITID", "")
+      query = urllib.parse.urlencode({
+          "definitions": os.environ["SYSTEM_DEFINITIONID"],
+          "branchName": os.environ["BUILD_SOURCEBRANCH"],
+          "reasonFilter": "pullRequest",
+          "statusFilter": "completed",
+          "resultFilter": "succeeded",
+          "api-version": "7.1",
+      })
+      passed = "false"
+      try:
+          url = f"{collection}{project}/_apis/build/builds?{query}"
+          with urllib.request.urlopen(url, timeout=30) as response:
+              builds = json.load(response)["value"]
+          for build in builds:
+              if commit and build.get("triggerInfo", {}).get("pr.sourceSha") == commit:
+                  passed = "true"
+                  print(f"{commit} already passed in "
+                        f"{collection}{project}/_build/results?buildId={build['id']}")
+                  break
+          else:
+              print(f"No passing build of {commit} yet")
+      except Exception as error:
+          # Fail open: an unreachable API runs the full build.
+          print(f"##vso[task.logissue type=warning]Could not list earlier builds: {error}")
+      print(f"##vso[task.setvariable variable=passed;isOutput=true]{passed}")
+      EOF
+    name: earlier
+    displayName: Look for a passing build of this PR commit
+    condition: eq(variables['Build.Reason'], 'PullRequest')
 - job: Ubuntu_x64_minimallib_build
+  dependsOn: Check_earlier_builds
+  condition: and(succeeded(), ne(dependencies.Check_earlier_builds.outputs['earlier.passed'], 'true'))
   timeoutInMinutes: 120
   pool:
     vmImage: ubuntu-latest
@@ -34,6 +84,8 @@ jobs:
         GET_SRC=copy
         COMPOSE_BAKE=false
 - job: Ubuntu_x64_base # more or less the oldest version of what we support
+  dependsOn: Check_earlier_builds
+  condition: and(succeeded(), ne(dependencies.Check_earlier_builds.outputs['earlier.passed'], 'true'))
   timeoutInMinutes: 120
   pool:
     vmImage: ubuntu-22.04
@@ -47,6 +99,8 @@ jobs:
   steps:
   - template: .azure-pipelines/linux_build.yml
 - job: Ubuntu_x64_new # up to date version of things
+  dependsOn: Check_earlier_builds
+  condition: and(succeeded(), ne(dependencies.Check_earlier_builds.outputs['earlier.passed'], 'true'))
   timeoutInMinutes: 120
   pool:
     vmImage: ubuntu-latest
@@ -58,6 +112,8 @@ jobs:
   steps:
   - template: .azure-pipelines/linux_build_new.yml
 - job: Ubuntu_x64_nb
+  dependsOn: Check_earlier_builds
+  condition: and(succeeded(), ne(dependencies.Check_earlier_builds.outputs['earlier.passed'], 'true'))
   timeoutInMinutes: 120
   pool:
     vmImage: ubuntu-latest
@@ -68,6 +124,8 @@ jobs:
   steps:
   - template: .azure-pipelines/linux_build_nb.yml
 - job: macOS_x64
+  dependsOn: Check_earlier_builds
+  condition: and(succeeded(), ne(dependencies.Check_earlier_builds.outputs['earlier.passed'], 'true'))
   timeoutInMinutes: 120
   pool:
     vmImage: macos-14
@@ -80,6 +138,8 @@ jobs:
   steps:
   - template: .azure-pipelines/mac_build.yml
 - job: macOS_x64_java
+  dependsOn: Check_earlier_builds
+  condition: and(succeeded(), ne(dependencies.Check_earlier_builds.outputs['earlier.passed'], 'true'))
   timeoutInMinutes: 90
   pool:
     vmImage: macos-14
@@ -91,6 +151,8 @@ jobs:
   steps:
   - template: .azure-pipelines/mac_build_java.yml
 - job: Windows_VS2022_x64
+  dependsOn: Check_earlier_builds
+  condition: and(succeeded(), ne(dependencies.Check_earlier_builds.outputs['earlier.passed'], 'true'))
   timeoutInMinutes: 150
   pool:
     vmImage: windows-2022
@@ -101,6 +163,8 @@ jobs:
   steps:
   - template: .azure-pipelines/vs_build.yml
 - job: Windows_VS2022_x64_dll
+  dependsOn: Check_earlier_builds
+  condition: and(succeeded(), ne(dependencies.Check_earlier_builds.outputs['earlier.passed'], 'true'))
   timeoutInMinutes: 120
   pool:
     vmImage: windows-2022
@@ -111,6 +175,8 @@ jobs:
   steps:
   - template: .azure-pipelines/vs_build_dll.yml
 - job: Ubuntu_x64_cartridge
+  dependsOn: Check_earlier_builds
+  condition: and(succeeded(), ne(dependencies.Check_earlier_builds.outputs['earlier.passed'], 'true'))
   timeoutInMinutes: 90
   pool:
     vmImage: ubuntu-latest
@@ -121,6 +187,8 @@ jobs:
   steps:
   - template: .azure-pipelines/linux_build_cartridge.yml
 - job: Ubuntu_x64_limitexternaldependencies
+  dependsOn: Check_earlier_builds
+  condition: and(succeeded(), ne(dependencies.Check_earlier_builds.outputs['earlier.passed'], 'true'))
   timeoutInMinutes: 90
   pool:
     vmImage: ubuntu-latest
@@ -132,6 +200,8 @@ jobs:
   steps:
   - template: .azure-pipelines/linux_build_limitexternal.yml
 - job: Ubuntu_x64_java
+  dependsOn: Check_earlier_builds
+  condition: and(succeeded(), ne(dependencies.Check_earlier_builds.outputs['earlier.passed'], 'true'))
   timeoutInMinutes: 90
   pool:
     vmImage: ubuntu-latest
@@ -142,6 +212,8 @@ jobs:
   steps:
   - template: .azure-pipelines/linux_build_java.yml
 - job: Windows_VS2022_x64_swig
+  dependsOn: Check_earlier_builds
+  condition: and(succeeded(), ne(dependencies.Check_earlier_builds.outputs['earlier.passed'], 'true'))
   timeoutInMinutes: 90
   pool:
     vmImage: windows-2022
