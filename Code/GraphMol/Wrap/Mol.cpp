@@ -685,8 +685,7 @@ struct mol_wrapper {
         .def("HasSubstructMatch",
              (bool (*)(const ROMol &m, const MolBundle &query,
                        const SubstructMatchParameters &))helpHasSubstructMatch,
-             (python::arg("self"), python::arg("query"),
-              python::arg("params") = true))
+             (python::arg("self"), python::arg("query"), python::arg("params")))
         .def("GetSubstructMatch",
              (PyObject * (*)(const ROMol &m, const MolBundle &query,
                              const SubstructMatchParameters &))

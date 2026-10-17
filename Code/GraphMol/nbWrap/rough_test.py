@@ -8098,13 +8098,18 @@ M  END
     self.assertTrue(smi == smi2)
 
   def test_picklingWithAddedAttribs(self):
-    m = Chem.MolFromSmiles("C")
-    m.foo = 1
-    m.SetIntProp("bar", 2)
-    pkl = pickle.dumps(m)
-    nm = pickle.loads(pkl)
-    self.assertEqual(nm.GetIntProp("bar"), 2)
-    self.assertEqual(nm.foo, 1)
+    props = Chem.GetDefaultPickleProperties()
+    try:
+      Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
+      m = Chem.MolFromSmiles("C")
+      m.foo = 1
+      m.SetIntProp("bar", 2)
+      pkl = pickle.dumps(m)
+      nm = pickle.loads(pkl)
+      self.assertEqual(nm.GetIntProp("bar"), 2)
+      self.assertEqual(nm.foo, 1)
+    finally:
+      Chem.SetDefaultPickleProperties(props)
 
   def testGithubIssue6306(self):
     # test of unpickling
@@ -8700,6 +8705,28 @@ M  END
         os.close(savedStderr)
       captured.seek(0)
       self.assertEqual(captured.read(), b'')
+
+  def testMolToV3KMolFile(self):
+    m = Chem.MolFromSmiles('CCO')
+    expected = Chem.MolToV3KMolBlock(m)
+    with tempfile.TemporaryDirectory() as tmpDir:
+      fName = os.path.join(tmpDir, 'out.mol')
+      Chem.MolToV3KMolFile(m, fName)
+      with open(fName) as inf:
+        self.assertEqual(inf.read(), expected)
+      Chem.MolToV3KMolFile(m, fName, Chem.MolWriterParams())
+      with open(fName) as inf:
+        self.assertEqual(inf.read(), expected)
+
+  def testDefaultConstructors(self):
+    params = Chem.MolWriterParams()
+    self.assertTrue(params.includeStereo)
+    self.assertTrue(params.kekulize)
+    self.assertFalse(params.forceV3000)
+    self.assertFalse(Chem.BondWedgingParameters().wedgeTwoBondsIfPossible)
+    info = Chem.StereoInfo()
+    self.assertEqual(info.type, Chem.StereoType.Unspecified)
+    self.assertEqual(info.centeredOn, Chem.Atom.NOATOM)
 
 
 if __name__ == '__main__':

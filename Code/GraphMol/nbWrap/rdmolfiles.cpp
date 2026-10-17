@@ -1184,6 +1184,7 @@ NB_MODULE(rdmolfiles, m) {
 
   nb::class_<RDKit::MolWriterParams>(m, "MolWriterParams",
                                      "Parameters controlling Mol writing")
+      .def(nb::init<>())
       .def_rw("includeStereo", &RDKit::MolWriterParams::includeStereo,
               "toggles inclusion of stereochemistry information (default=True)")
       .def_rw(
@@ -1413,8 +1414,7 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToV3KMolFile",
         (void (*)(const ROMol &, const std::string &, const MolWriterParams &,
                   int))RDKit::MolToV3KMolFile,
-        "mol"_a, "filename"_a, "params"_a = true, "confId"_a = -1,
-        docString.c_str());
+        "mol"_a, "filename"_a, "params"_a, "confId"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Writes a V3000 Mol file for a molecule
