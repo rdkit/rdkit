@@ -1606,7 +1606,7 @@ void testBulkTorsions() {
   BOOST_LOG(rdErrorLog) << "    Test Bulk Topological Torsions." << std::endl;
 
   std::string fName = getenv("RDBASE");
-  fName += "/Projects/DbCLI/testData/pubchem.200.sdf";
+  fName += "/Code/GraphMol/Fingerprints/testData/pubchem.200.sdf";
   SDMolSupplier suppl(fName);
   while (!suppl.atEnd()) {
     ROMol *mol = suppl.next();

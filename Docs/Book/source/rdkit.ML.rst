@@ -10,7 +10,6 @@ Subpackages
     rdkit.ML.Data
     rdkit.ML.Descriptors
     rdkit.ML.InfoTheory
-    rdkit.ML.MLUtils
     rdkit.ML.SLT
     rdkit.ML.Scoring
 

@@ -542,19 +542,12 @@ endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
 find_package(Eigen3 NO_MODULE)
 if(RDK_BUILD_DESCRIPTORS3D)
-  # once External/Eigen is removed, remove this block (to the next comment)
   if(NOT TARGET Eigen3::Eigen)
-    add_subdirectory(External/Eigen)
+    message("eigen not found, disabling Descriptors3D")
+    set(RDK_BUILD_DESCRIPTORS3D OFF CACHE BOOL "Build 3D descriptors" FORCE)
+  else()
+    target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
   endif()
-  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
-
-  # once External/Eigen is removed, uncomment below here
-  #if(NOT TARGET Eigen3::Eigen)
-  #  message("eigen not found, disabling Descriptors3D")
-  #  set(RDK_BUILD_DESCRIPTORS3D OFF CACHE BOOL "Build 3D descriptors" FORCE)
-  #else()
-  #  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
-  #endif()
   
 endif()
 
@@ -693,13 +686,6 @@ if(NOT RDK_INSTALL_INTREE)
       PATTERN ".svn" EXCLUDE
       )
   if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-    install(DIRECTORY Projects DESTINATION
-        ${RDKit_ShareDir}
-        COMPONENT extras
-        PATTERN ".svn" EXCLUDE
-        PATTERN "test_list*" EXCLUDE
-        PATTERN "CMake*" EXCLUDE
-        )
     if(RDK_INSTALL_PYTHON_TESTS)
       install(DIRECTORY Scripts DESTINATION
         ${RDKit_ShareDir}
@@ -749,13 +735,11 @@ add_subdirectory(External)
 add_subdirectory(Code)
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
-  add_subdirectory(Projects)
   add_subdirectory(rdkit)
   add_subdirectory(rdkit-stubs)
 endif(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
 if(RDK_BUILD_NANOBIND_WRAPPERS)
-  add_subdirectory(Projects)
   add_subdirectory(rdkit)
   #add_subdirectory(rdkit-stubs)
 endif(RDK_BUILD_NANOBIND_WRAPPERS)
