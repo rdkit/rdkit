@@ -55,7 +55,6 @@ endif()
 if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32 AND (NOT RDK_INSTALL_STATIC_LIBS)))
     target_compile_definitions(RingDecomposerLib PRIVATE RDKIT_URFLIB_BUILD)
 endif()
-install(TARGETS RingDecomposerLib DESTINATION ${RDKit_LibDir})
 rdkit_headers(${URFLIB_DIR}/RingDecomposerLib.h DEST "")
 
 
