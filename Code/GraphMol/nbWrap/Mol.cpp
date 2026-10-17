@@ -189,9 +189,6 @@ class ReadWriteMol : public RWMol {
     // so just return false;
     return false;
   }
-
- private:
-  std::shared_ptr<RWMol> dp_mol;
 };
 
 constexpr const char *molClassDoc = R"DOC(The Molecule class.

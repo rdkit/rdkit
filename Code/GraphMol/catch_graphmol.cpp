@@ -5353,6 +5353,27 @@ TEST_CASE("replaceBond updates StereoGroups") {
   CHECK(stereoGroups[0].getWriteId() == writeId);
 }
 
+TEST_CASE("replaceAtom keeps StereoGroup ids") {
+  auto m = "C[C@H](F)Cl"_smiles;
+  REQUIRE(m);
+  std::vector<StereoGroup> groups;
+  const unsigned readId = 3;
+  const unsigned writeId = 5;
+  groups.emplace_back(StereoGroupType::STEREO_AND,
+                      std::vector<Atom *>{m->getAtomWithIdx(1)},
+                      std::vector<Bond *>{}, readId);
+  groups.back().setWriteId(writeId);
+  m->setStereoGroups(std::move(groups));
+  Atom replacement(6);
+  m->replaceAtom(1, &replacement);
+  const auto &stereoGroups = m->getStereoGroups();
+  REQUIRE(stereoGroups.size() == 1);
+  REQUIRE(stereoGroups[0].getAtoms().size() == 1);
+  CHECK(stereoGroups[0].getAtoms()[0] == m->getAtomWithIdx(1));
+  CHECK(stereoGroups[0].getReadId() == readId);
+  CHECK(stereoGroups[0].getWriteId() == writeId);
+}
+
 TEST_CASE("getConformer error names the missing conformer id") {
   auto m = "CC"_smiles;
   REQUIRE(m);
