@@ -50,7 +50,8 @@ NB_MODULE(rdFreeSASA, m) {
       .def_rw("algorithm", &FreeSASA::SASAOpts::algorithm)
       .def_rw("classifier", &FreeSASA::SASAOpts::classifier)
       .def_rw("probeRadius", &FreeSASA::SASAOpts::probeRadius)
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def(
       "classifyAtoms",
@@ -79,8 +80,9 @@ RETURNS:
 
   m.def(
       "CalcSASA",
-      [](const RDKit::ROMol &mol, nb::object radii, int confIdx,
-         const RDKit::Atom *query, const FreeSASA::SASAOpts &opts) {
+      [](const RDKit::ROMol &mol, const PySequenceOf<double> &radii,
+         int confIdx, const RDKit::Atom *query,
+         const FreeSASA::SASAOpts &opts) {
         const RDKit::QueryAtom *atom = nullptr;
         if (query) {
           atom = dynamic_cast<const RDKit::QueryAtom *>(query);
@@ -95,8 +97,8 @@ RETURNS:
         }
         return FreeSASA::calcSASA(mol, vradii, confIdx, atom, opts);
       },
-      "mol"_a, "radii"_a, "confIdx"_a = -1,
-      "query"_a = nb::none(), "opts"_a = FreeSASA::SASAOpts(),
+      "mol"_a, "radii"_a, "confIdx"_a = -1, "query"_a = nb::none(),
+      "opts"_a = FreeSASA::SASAOpts(),
       R"DOC(Compute the Solvent Accessible Surface Area using the FreeSASA library
 ARGUMENTS:
   - mol: The molecule to compute.

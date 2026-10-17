@@ -232,12 +232,6 @@ NOTE: the direction of comparison is reversed relative to the C++ API)DOC",    \
 exists in the atom.)DOC",
           nb::rv_policy::take_ownership);
 
-    m.def("HasPropQueryBond", HasPropQueryBond, "propname"_a,
-          "negate"_a = false,
-          R"DOC(Returns a QueryBond that matches when the property 'propname'
-exists in the bond.)DOC",
-          nb::rv_policy::take_ownership);
-
     m.def("HasIntPropWithValueQueryAtom",
           PropQueryWithTol<Atom, QueryAtom, int>, "propname"_a, "val"_a,
           "negate"_a = false, "tolerance"_a = 0,

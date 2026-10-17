@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import tempfile
 import unittest
 import copy
 from rdkit import RDConfig
@@ -345,6 +346,12 @@ class TestCase(unittest.TestCase):
     hOH = hbondOH(pt.x, pt.y, pt.z, 1000)
     hO = hbondO(pt.x, pt.y, pt.z, 1000)
     self.assertTrue(feq(min(hOH, hO), hyd))
+
+  def test8WriteToCubeFileArgumentTypes(self):
+    grd = geom.UniformRealValueGrid3D(5.0, 5.0, 5.0, 1.0, geom.Point3D(0.0, 0.0, 0.0))
+    with tempfile.TemporaryDirectory() as tmp:
+      with self.assertRaises(TypeError):
+        rdMIF.WriteToCubeFile(grd, os.path.join(tmp, 'grid.cube'), 5)
 
 
 if __name__ == '__main__':

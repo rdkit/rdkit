@@ -8,7 +8,9 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/ndarray.h>
 
 #include <GraphMol/GraphMol.h>
@@ -24,10 +26,7 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 static std::unique_ptr<RDKit::MatchVectType> translateAtomMap(
-    const nb::object &atomMap) {
-  if (atomMap.is_none()) {
-    return nullptr;
-  }
+    const PyIterableOf<PySequenceOf<int>> &atomMap) {
   auto res = std::make_unique<RDKit::MatchVectType>();
   for (auto item : atomMap) {
     auto pair = nb::cast<nb::sequence>(item);
@@ -38,14 +37,12 @@ static std::unique_ptr<RDKit::MatchVectType> translateAtomMap(
   return res;
 }
 
-static unsigned int compute2DCoordsHelper(RDKit::ROMol &mol, bool canonOrient,
-                                          bool clearConfs, nb::dict coordMap,
-                                          unsigned int nFlipsPerSample,
-                                          unsigned int nSamples, int sampleSeed,
-                                          int permuteDeg4Nodes, double bondLength,
-                                          bool forceRDKit,
-                                          bool useRingTemplates,
-                                          bool usePathAngleExpansion) {
+static unsigned int compute2DCoordsHelper(
+    RDKit::ROMol &mol, bool canonOrient, bool clearConfs,
+    const PyDictOf<unsigned int, RDGeom::Point2D> &coordMap,
+    unsigned int nFlipsPerSample, unsigned int nSamples, int sampleSeed,
+    int permuteDeg4Nodes, double bondLength, bool forceRDKit,
+    bool useRingTemplates, bool usePathAngleExpansion) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
   for (auto item : coordMap) {
@@ -111,13 +108,9 @@ static unsigned int compute2DCoordsMimicDistmatHelper(
 
 static nb::tuple generate2DStructureHelper(
     RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId,
-    const nb::object &refPatt, const ConstrainedDepictionParams &params) {
-  RDKit::ROMol *referencePattern = nullptr;
-  if (!refPatt.is_none()) {
-    referencePattern = nb::cast<RDKit::ROMol *>(refPatt);
-  }
+    const RDKit::ROMol *refPatt, const ConstrainedDepictionParams &params) {
   auto matchVect = RDDepict::generateDepictionMatching2DStructure(
-      mol, reference, confId, referencePattern, params);
+      mol, reference, confId, refPatt, params);
   nb::list atomMap;
   for (const auto &pair : matchVect) {
     atomMap.append(nb::make_tuple(pair.first, pair.second));
@@ -127,17 +120,16 @@ static nb::tuple generate2DStructureHelper(
 
 static nb::tuple generate2DStructureWithParamsHelper(
     RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId,
-    const nb::object &refPatt, const nb::object &pyParams) {
-  ConstrainedDepictionParams params;
-  if (!pyParams.is_none()) {
-    params = nb::cast<ConstrainedDepictionParams>(pyParams);
-  }
+    const RDKit::ROMol *refPatt,
+    const std::optional<ConstrainedDepictionParams> &pyParams) {
+  ConstrainedDepictionParams params =
+      pyParams.value_or(ConstrainedDepictionParams());
   return generate2DStructureHelper(mol, reference, confId, refPatt, params);
 }
 
 static void generate2DStructureAtomMapHelper(
     RDKit::ROMol &mol, const RDKit::ROMol &reference,
-    const nb::object &atomMap, int confId,
+    const PyIterableOf<PySequenceOf<int>> &atomMap, int confId,
     const ConstrainedDepictionParams &params) {
   std::unique_ptr<RDKit::MatchVectType> matchVect(translateAtomMap(atomMap));
   RDDepict::generateDepictionMatching2DStructure(mol, reference, *matchVect,
@@ -146,34 +138,27 @@ static void generate2DStructureAtomMapHelper(
 
 static void generate2DStructureAtomMapWithParamsHelper(
     RDKit::ROMol &mol, const RDKit::ROMol &reference,
-    const nb::object &atomMap, int confId, const nb::object &pyParams) {
-  ConstrainedDepictionParams params;
-  if (!pyParams.is_none()) {
-    params = nb::cast<ConstrainedDepictionParams>(pyParams);
-  }
+    const PyIterableOf<PySequenceOf<int>> &atomMap, int confId,
+    const std::optional<ConstrainedDepictionParams> &pyParams) {
+  ConstrainedDepictionParams params =
+      pyParams.value_or(ConstrainedDepictionParams());
   generate2DStructureAtomMapHelper(mol, reference, atomMap, confId, params);
 }
 
 static void generate2DStructureAtomMapForceRDKitHelper(
     RDKit::ROMol &mol, const RDKit::ROMol &reference,
-    const nb::object &atomMap, int confId, bool forceRDKit) {
+    const PyIterableOf<PySequenceOf<int>> &atomMap, int confId,
+    bool forceRDKit) {
   ConstrainedDepictionParams params;
   params.forceRDKit = forceRDKit;
   generate2DStructureAtomMapHelper(mol, reference, atomMap, confId, params);
 }
 
-static void generateDepictionMatching3DStructureHelper(RDKit::ROMol &mol,
-                                                 RDKit::ROMol &reference,
-                                                 int confId,
-                                                 nb::object refPatt,
-                                                 bool acceptFailure,
-                                                 bool forceRDKit) {
-  RDKit::ROMol *referencePattern = nullptr;
-  if (!refPatt.is_none()) {
-    referencePattern = nb::cast<RDKit::ROMol *>(refPatt);
-  }
+static void generateDepictionMatching3DStructureHelper(
+    RDKit::ROMol &mol, RDKit::ROMol &reference, int confId,
+    RDKit::ROMol *refPatt, bool acceptFailure, bool forceRDKit) {
   RDDepict::generateDepictionMatching3DStructure(
-      mol, reference, confId, referencePattern, acceptFailure, forceRDKit);
+      mol, reference, confId, refPatt, acceptFailure, forceRDKit);
 }
 
 static bool isCoordGenSupportAvailable() {
@@ -236,7 +221,10 @@ NB_MODULE(rdDepictor, m) {
   );
 
   m.def(
-      "SetRingSystemTemplates", RDDepict::setRingSystemTemplates,
+      "SetRingSystemTemplates",
+      [](const std::filesystem::path &templatePath) {
+        RDDepict::setRingSystemTemplates(templatePath.string());
+      },
       "templatePath"_a,
       R"DOC(Loads the ring system templates from the specified file to be
 used in 2D coordinate generation. Each template must be a single
@@ -245,7 +233,10 @@ be a single ring system. Throws a DepictException if any templates
 are invalid.)DOC");
 
   m.def(
-      "AddRingSystemTemplates", RDDepict::addRingSystemTemplates,
+      "AddRingSystemTemplates",
+      [](const std::filesystem::path &templatePath) {
+        RDDepict::addRingSystemTemplates(templatePath.string());
+      },
       "templatePath"_a,
       R"DOC(Adds the ring system templates from the specified file to be
 used in 2D coordinate generation. If there are duplicates, the most
@@ -318,7 +309,8 @@ adjustMolBlockWedging is True)DOC")
       .def_rw(
           "useRingTemplates", &ConstrainedDepictionParams::useRingTemplates,
           "use templates to generate coordinates of complex ring systems")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def(
       "Compute2DCoords", compute2DCoordsHelper,
@@ -452,7 +444,7 @@ adjustMolBlockWedging is True)DOC")
   m.def(
       "GenerateDepictionMatching2DStructure",
       [](RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId,
-         const nb::object &refPatt, bool acceptFailure, bool forceRDKit,
+         const RDKit::ROMol *refPatt, bool acceptFailure, bool forceRDKit,
          bool allowRGroups) {
         ConstrainedDepictionParams params;
         params.acceptFailure = acceptFailure;

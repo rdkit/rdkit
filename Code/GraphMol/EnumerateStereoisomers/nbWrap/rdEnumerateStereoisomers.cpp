@@ -12,6 +12,7 @@
 #include <nanobind/stl/unique_ptr.h>
 
 #include <GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h>
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -70,7 +71,9 @@ results (and execution time) it's important to keep an eye on this.)DOC")
              new (self) StereoisomerEnumerator(mol, options, verbose);
            },
            "mol"_a, "options"_a, "verbose"_a = false)
-      .def("next", &StereoisomerEnumerator::next,
+      .def("next",
+           [](StereoisomerEnumerator &self)
+               -> Nullable<std::unique_ptr<ROMol>> { return self.next(); },
            "Get next isomer in the sequence, or None if at the end.")
       .def("GetStereoisomerCount", &StereoisomerEnumerator::getStereoisomerCount,
            "Get the number of stereoisomers.");

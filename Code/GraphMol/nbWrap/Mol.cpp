@@ -88,17 +88,23 @@ bool HasSubstructMatchStr(nb::bytes pkl, const ROMol &query,
 
 namespace {
 
-void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
-                                 nb::object func) {
+void setSubstructMatchFinalCheck(
+    SubstructMatchParameters &ps,
+    const nb::typed<nb::callable,
+                    bool(const ROMol &, std::vector<unsigned int>)> &func) {
   ps.extraFinalCheck =
       pyMatchFunctor<ROMol, std::span<const unsigned int>>(func);
 }
 
-void setExtraAtomCheckFunc(SubstructMatchParameters &ps, nb::object func) {
+void setExtraAtomCheckFunc(
+    SubstructMatchParameters &ps,
+    const nb::typed<nb::callable, bool(const Atom &, const Atom &)> &func) {
   ps.extraAtomCheck = pyMatchFunctor<Atom, Atom>(func);
 }
 
-void setExtraBondCheckFunc(SubstructMatchParameters &ps, nb::object func) {
+void setExtraBondCheckFunc(
+    SubstructMatchParameters &ps,
+    const nb::typed<nb::callable, bool(const Bond &, const Bond &)> &func) {
   ps.extraBondCheck = pyMatchFunctor<Bond, Bond>(func);
 }
 
@@ -148,7 +154,7 @@ class ReadWriteMol : public RWMol {
     PRECONDITION(bond, "bad bond");
     replaceBond(idx, bond, preserveProps, keepSGroups);
   };
-  void SetStereoGroups(nb::list &stereo_groups) {
+  void SetStereoGroups(const PyIterableOf<StereoGroup> &stereo_groups) {
     std::vector<StereoGroup> groups;
     pythonObjectToVect<StereoGroup>(stereo_groups, groups);
     for (const auto &group : groups) {
@@ -337,7 +343,8 @@ struct mol_wrapper {
             &RDKit::SubstructMatchParameters::
                 extraBondCheckOverridesDefaultCheck,
             "if set, only the extraBondCheck will be used to determine whether or not bonds match")
-        .def("__setattr__", &safeSetattr);
+        .def("__setattr__", &safeSetattr, nb::arg("name"),
+             nb::arg("value").none());
 
     nb::class_<AtomSeqHolder<>>(m, "_AtomSeqHolder1",
                                 "A sequence-like holder of a molecule's atoms")
@@ -538,8 +545,10 @@ struct mol_wrapper {
         .def("RemoveConformer", &ROMol::removeConformer, "id"_a,
              "Remove the conformer with the specified ID")
         .def("GetBondBetweenAtoms",
-             (Bond * (ROMol::*)(unsigned int, unsigned int)) &
-                 ROMol::getBondBetweenAtoms,
+             [](ROMol &self, unsigned int idx1,
+                unsigned int idx2) -> Nullable<Bond *> {
+              return self.getBondBetweenAtoms(idx1, idx2);
+             },
              nb::rv_policy::reference_internal, "idx1"_a, "idx2"_a,
              R"DOC(Returns the bond between two atoms, if there is one.
 

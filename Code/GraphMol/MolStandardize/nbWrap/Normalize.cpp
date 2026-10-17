@@ -9,6 +9,8 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Normalize.h>
@@ -29,8 +31,9 @@ void normalizeInPlaceHelper(MolStandardize::Normalizer &self, ROMol &mol) {
 }
 
 MolStandardize::Normalizer *normalizerFromDataAndParams(
-    const std::string &data, const MolStandardize::CleanupParameters &params) {
-  std::istringstream sstr(data);
+    const StringOrBytes &data,
+    const MolStandardize::CleanupParameters &params) {
+  std::istringstream sstr(pyObjectToString(data));
   return new MolStandardize::Normalizer(sstr, params.maxRestarts);
 }
 
@@ -39,8 +42,15 @@ MolStandardize::Normalizer *normalizerFromDataAndParams(
 void wrap_normalize(nb::module_ &m) {
   nb::class_<MolStandardize::Normalizer>(m, "Normalizer")
       .def(nb::init<>())
-      .def(nb::init<std::string, unsigned int>(), "normalizeFilename"_a,
-           "maxRestarts"_a)
+      .def(
+          "__init__",
+          [](MolStandardize::Normalizer *self,
+             const std::filesystem::path &normalizeFilename,
+             unsigned int maxRestarts) {
+            new (self) MolStandardize::Normalizer(normalizeFilename.string(),
+                                                  maxRestarts);
+          },
+          "normalizeFilename"_a, "maxRestarts"_a)
       .def("normalize", &normalizeHelper, "mol"_a, "",
            nb::rv_policy::take_ownership)
       .def("normalizeInPlace", &normalizeInPlaceHelper, "mol"_a,

@@ -10,6 +10,9 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
+#include <nanobind/stl/variant.h>
+#include <RDBoost/Wrap_nb.h>
 #include <nanobind/stl/vector.h>
 
 #include <optional>
@@ -37,10 +40,10 @@ void reionizeInPlaceHelper(MolStandardize::Reionizer &self, ROMol &mol) {
 }
 
 MolStandardize::Reionizer *reionizerFromData(
-    const std::string &data,
+    const StringOrBytes &data,
     const std::optional<std::vector<MolStandardize::ChargeCorrection>>
         &chargeCorrections) {
-  std::istringstream sstr(data);
+  std::istringstream sstr(pyObjectToString(data));
   return new MolStandardize::Reionizer(
       sstr, chargeCorrections.value_or(
                 std::vector<MolStandardize::ChargeCorrection>()));
@@ -54,8 +57,14 @@ void unchargeInPlaceHelper(MolStandardize::Uncharger &self, ROMol &mol) {
 
 void wrap_charge(nb::module_ &m) {
   nb::class_<MolStandardize::ChargeCorrection>(m, "ChargeCorrection")
-      .def(nb::init<std::string, std::string, int>(), "name"_a, "smarts"_a,
-           "charge"_a)
+      .def(
+          "__init__",
+          [](MolStandardize::ChargeCorrection *self, const std::string &name,
+             const StringOrBytes &smarts, int charge) {
+            new (self) MolStandardize::ChargeCorrection(
+                name, pyObjectToString(smarts), charge);
+          },
+          "name"_a, "smarts"_a, "charge"_a)
       .def_rw("Name", &MolStandardize::ChargeCorrection::Name)
       .def_rw("Smarts", &MolStandardize::ChargeCorrection::Smarts)
       .def_rw("Charge", &MolStandardize::ChargeCorrection::Charge);
@@ -64,10 +73,21 @@ void wrap_charge(nb::module_ &m) {
 
   nb::class_<MolStandardize::Reionizer>(m, "Reionizer")
       .def(nb::init<>())
-      .def(nb::init<std::string>(), "acidbaseFile"_a)
-      .def(nb::init<std::string,
-                    std::vector<MolStandardize::ChargeCorrection>>(),
-           "acidbaseFile"_a, "ccs"_a)
+      .def(
+          "__init__",
+          [](MolStandardize::Reionizer *self,
+             const std::filesystem::path &acidbaseFile) {
+            new (self) MolStandardize::Reionizer(acidbaseFile.string());
+          },
+          "acidbaseFile"_a)
+      .def(
+          "__init__",
+          [](MolStandardize::Reionizer *self,
+             const std::filesystem::path &acidbaseFile,
+             const std::vector<MolStandardize::ChargeCorrection> &ccs) {
+            new (self) MolStandardize::Reionizer(acidbaseFile.string(), ccs);
+          },
+          "acidbaseFile"_a, "ccs"_a)
       .def("reionize", &reionizeHelper, "mol"_a, "",
            nb::rv_policy::take_ownership)
       .def("reionizeInPlace", reionizeInPlaceHelper, "mol"_a,

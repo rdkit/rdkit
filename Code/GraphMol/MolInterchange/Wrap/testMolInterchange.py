@@ -15,10 +15,11 @@ class TestCase(unittest.TestCase):
       m = Chem.MolFromSmiles(smi)
       csmi = Chem.MolToSmiles(m)
       json = rdMolInterchange.MolToJSON(m)
-      nms = rdMolInterchange.JSONToMols(json)
-      self.assertEqual(len(nms), 1)
-      smi2 = Chem.MolToSmiles(nms[0])
-      self.assertEqual(csmi, smi2)
+      for text in (json, json.encode()):
+        nms = rdMolInterchange.JSONToMols(text)
+        self.assertEqual(len(nms), 1)
+        smi2 = Chem.MolToSmiles(nms[0])
+        self.assertEqual(csmi, smi2)
     ms = [Chem.MolFromSmiles(smi) for smi in smis]
     json = rdMolInterchange.MolsToJSON(ms)
     nms = rdMolInterchange.JSONToMols(json)

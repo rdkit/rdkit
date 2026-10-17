@@ -14,7 +14,10 @@ import gzip
 import importlib.util
 import logging
 import os
+import pathlib
 import pickle
+import re
+import shutil
 import sys
 import tempfile
 import unittest
@@ -26,10 +29,30 @@ import numpy as np
 
 # import rdkit.Chem.rdDepictor
 from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
+from rdkit.Chem import rdMIF
 from rdkit.Chem import rdqueries
 
 from rdkit.Chem import rdChemReactions
+from rdkit.Chem import (rdAbbreviations, rdDepictor, rdDeprotect, rdfiltercatalog, rdFMCS,
+                        rdfragcatalog, rdGeneralizedSubstruct, rdMHFPFingerprint, rdMMPA,
+                        rdMolChemicalFeatures, rdSubstructLibrary, rdTautomerQuery)
+from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem.Scaffolds import MurckoScaffold
+from rdkit.Geometry import Point3D, rdGeometry
+
+# Optional modules, absent when their support is not built.
+try:
+  from rdkit.Chem import rdCoordGen
+except ImportError:
+  rdCoordGen = None
+try:
+  from rdkit.Chem import rdinchi
+except ImportError:
+  rdinchi = None
+try:
+  from rdkit.Chem import rdSLNParse
+except ImportError:
+  rdSLNParse = None
 
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
@@ -8650,6 +8673,432 @@ M  END
     self.assertEqual(len(rings), 24)
     rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
     self.assertEqual(len(rings), 70)
+
+  def testTextParsersAcceptStrOrBytes(self):
+    molBlock = Chem.MolToMolBlock(Chem.MolFromSmiles('CCO'))
+    with open(
+        os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                     'benzene.mol2')) as inF:
+      mol2Block = inF.read()
+    cases = [
+      (Chem.MolFromSmiles, 'CCO'),
+      (Chem.MolFromSmarts, '[#6]'),
+      (Chem.MolFromMolBlock, molBlock),
+      (Chem.MolFromSequence, 'AAA'),
+      (Chem.MolFromMol2Block, mol2Block),
+    ]
+    for parser, text in cases:
+      with self.subTest(parser=parser.__name__):
+        self.assertIsNotNone(parser(text))
+        self.assertIsNotNone(parser(text.encode()))
+        with self.assertRaises(TypeError):
+          parser(42)
+
+  def testSupplierTextAcceptsStrOrBytes(self):
+    smiText = 'CCO ethanol\nCCC propane\n'
+    tdtText = '$SMI<CCO>\n|\n'
+    for text in (smiText, smiText.encode()):
+      with self.subTest(kind=type(text).__name__):
+        suppl = Chem.SmilesMolSupplierFromText(text, titleLine=False)
+        self.assertEqual([Chem.MolToSmiles(mol) for mol in suppl], ['CCO', 'CCC'])
+        suppl = Chem.SmilesMolSupplier()
+        suppl.SetData(text, titleLine=False)
+        self.assertEqual([Chem.MolToSmiles(mol) for mol in suppl], ['CCO', 'CCC'])
+    for text in (tdtText, tdtText.encode()):
+      with self.subTest(kind=type(text).__name__):
+        suppl = Chem.TDTMolSupplier()
+        suppl.SetData(text)
+        self.assertEqual([Chem.MolToSmiles(mol) for mol in suppl], ['CCO'])
+    if hasattr(Chem, 'MaeMolSupplier'):
+      # this block has no m_atom table, so reading it raises
+      maeBlock = 'f_m_ct {\n  s_m_title\n  :::\n  \n  }\n}'
+      for text in (maeBlock, maeBlock.encode()):
+        with self.subTest(kind=type(text).__name__, supplier='Mae'):
+          with Chem.MaeMolSupplier() as suppl:
+            suppl.SetData(text)
+            self.assertRaisesRegex(RuntimeError, r'Indexed block not found: m_atom',
+                                   lambda: next(suppl))
+
+  def testSequenceParamsAcceptAnyIterable(self):
+    m = Chem.RWMol(Chem.MolFromSmiles('C[C@H](F)Cl'))
+    group = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m,
+                                          (i for i in [1]))
+    self.assertEqual(len(group.GetAtoms()), 1)
+    for bad in (42, None):
+      with self.subTest(value=bad):
+        with self.assertRaises(TypeError):
+          Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_OR, m, bad)
+
+  def testLengthCheckedParamsAcceptGenerators(self):
+    # These two validate a length, and a generator is iterable but has no
+    # len(), so the length has to come from the converted vector.
+    m = Chem.MolFromSmiles('CCO')
+    order = list(range(m.GetNumAtoms()))
+    self.assertEqual(Chem.MolToSmiles(Chem.RenumberAtoms(m, (i for i in order))),
+                     Chem.MolToSmiles(Chem.RenumberAtoms(m, order)))
+    with self.assertRaises(ValueError):
+      Chem.RenumberAtoms(m, [0])
+    with self.assertRaises(ValueError):
+      Chem.RenumberAtoms(m, [0, 1, 99])
+
+    pts = [Point3D(0, 0, 0), Point3D(1, 0, 0)]
+    sgroup = Chem.CreateMolSubstanceGroup(Chem.RWMol(m), 'SRU')
+    sgroup.AddBracket(p for p in pts)
+    self.assertEqual(len(sgroup.GetBrackets()), 1)
+    with self.assertRaises(ValueError):
+      sgroup.AddBracket(p for p in pts[:1])
+
+  def testMolOpsContainerParams(self):
+    m = Chem.MolFromSmiles('CCO')
+
+    # molzipFragments takes None for an empty list, as the Boost wrappers do
+    self.assertIsNone(Chem.molzipFragments(None))
+    self.assertIsNone(Chem.molzipFragments([]))
+
+    atomMap = {}
+    self.assertEqual(len(Chem.FindAtomEnvironmentOfRadiusN(m, 1, 0, atomMap=atomMap)), 1)
+    self.assertEqual(atomMap, {0: 0, 1: 1})
+    with self.assertRaises(TypeError):
+      Chem.FindAtomEnvironmentOfRadiusN(m, 1, 0, atomMap=[])
+    with self.assertRaises(TypeError):
+      Chem.SetDoubleBondNeighborDirections(m, 5)
+
+    # Output arguments are filled in place, so they must be a list or dict.
+    frags = []
+    Chem.GetMolFrags(Chem.MolFromSmiles('CC.O'), asMols=True, frags=frags)
+    self.assertEqual(frags, [0, 0, 1])
+    with self.assertRaises(TypeError):
+      Chem.GetMolFrags(m, asMols=True, frags=())
+    with self.assertRaises(TypeError):
+      Chem.RDKFingerprint(m, bitInfo=[])
+
+    self.assertEqual(Chem.PathToSubmol(m, (0, 1)).GetNumAtoms(), 3)
+    peptide = Chem.MolFromSequence('AG')
+    self.assertEqual(sorted(Chem.SplitMolByPDBResidues(peptide, whiteList=('ALA', ))), ['ALA'])
+
+    a = Chem.MolFromSmiles("[C@H]([Xe])(F)([V])")
+    b = Chem.MolFromSmiles("[Xe]N.[V]I")
+    p = Chem.MolzipParams()
+    p.label = Chem.MolzipLabel.AtomType
+    p.setAtomSymbols(("Xe", "V"))
+    self.assertEqual(Chem.MolToSmiles(Chem.molzip(a, b, p)), "N[C@@H](F)I")
+    p.setAtomSymbols(None)
+    self.assertNotEqual(Chem.MolToSmiles(Chem.molzip(a, b, p)), "N[C@@H](F)I")
+
+  def testExceptionsUseStandardTypes(self):
+    # assertRaises alone would not pin this down, since a subclass satisfies
+    # it too; the point is that the type is the builtin itself.
+    m = Chem.MolFromSmiles('CCO')
+    with self.assertRaises(ValueError) as caught:
+      Chem.RenumberAtoms(m, [0])
+    self.assertIs(type(caught.exception), ValueError)
+
+    v = DataStructs.RealValueVect(30)
+    with self.assertRaises(IndexError) as caught:
+      v[40]
+    self.assertIs(type(caught.exception), IndexError)
+    self.assertEqual(caught.exception.args, (40, ))
+
+    self.assertFalse(hasattr(rdBase, 'ValueErrorException'))
+    self.assertFalse(hasattr(rdBase, 'IndexErrorException'))
+
+    # rdMIF is imported at the top of this file, so these checks also cover
+    # the state after importing it: a module registering its own Python type
+    # for these C++ exceptions would replace the builtins everywhere.
+    self.assertFalse(hasattr(rdMIF, 'MIFValueError'))
+    self.assertFalse(hasattr(rdMIF, 'MIFIndexError'))
+
+  def testFunctionsAreRegisteredOnce(self):
+    # A name bound twice to the same function has two overloads with the same signature.
+    for fn in (Chem.MolFromMolBlock, Chem.MolFromMolFile, rdqueries.HasPropQueryBond):
+      with self.subTest(fn=fn.__name__):
+        self.assertEqual(len(fn.__nb_signature__), 1)
+
+  def testSetNoImplicitArgumentAndDocstring(self):
+    atom = Chem.MolFromSmiles('CC').GetAtomWithIdx(0)
+    atom.SetNoImplicit(what=True)
+    self.assertTrue(atom.GetNoImplicit())
+    self.assertIn('disallows', Chem.Atom.SetNoImplicit.__doc__)
+
+  def testMrvWriterParams(self):
+    mol = Chem.MolFromSmiles('C[C@H](F)Cl')
+    params = Chem.MrvWriterParams()
+    self.assertEqual(Chem.MolToMrvBlock(mol, params), Chem.MolToMrvBlock(mol))
+    params.includeStereo = False
+    params.prettyPrint = True
+    self.assertEqual(Chem.MolToMrvBlock(mol, params),
+                     Chem.MolToMrvBlock(mol, includeStereo=False, prettyPrint=True))
+    self.assertNotEqual(Chem.MolToMrvBlock(mol, params), Chem.MolToMrvBlock(mol))
+
+  def testFilenameParamsAcceptPathLike(self):
+    # Filename arguments take str, bytes and os.PathLike.
+    mol = Chem.MolFromSmiles('CCO')
+    with tempfile.TemporaryDirectory() as tmpDir:
+      path = os.path.join(tmpDir, 'mol.mol')
+      with open(path, 'w') as outF:
+        outF.write(Chem.MolToMolBlock(mol))
+      for arg in (path, path.encode(), pathlib.Path(path)):
+        with self.subTest(kind=type(arg).__name__):
+          self.assertIsNotNone(Chem.MolFromMolFile(arg))
+
+  def testSupplierAndWriterFilenamesAcceptPathLike(self):
+    # Suppliers and writers take a filename as str, bytes or os.PathLike, and
+    # the ones with a file-object overload also accept a file object.
+    mol = Chem.MolFromSmiles('CCO')
+    with tempfile.TemporaryDirectory() as tmpDir:
+      sdf = os.path.join(tmpDir, 'mols.sdf')
+      for arg in (sdf, sdf.encode(), pathlib.Path(sdf)):
+        with self.subTest(kind=type(arg).__name__):
+          with Chem.SDWriter(arg) as writer:
+            writer.write(mol)
+          self.assertEqual(len(Chem.SDMolSupplier(arg)), 1)
+          self.assertEqual(len(list(Chem.ForwardSDMolSupplier(arg))), 1)
+
+      with open(sdf, 'rb') as inF:
+        self.assertEqual(len(list(Chem.ForwardSDMolSupplier(inF))), 1)
+    out = StringIO()
+    with Chem.SDWriter(out) as writer:
+      writer.write(mol)
+    self.assertIn('$$$$', out.getvalue())
+
+  def testTextArgumentsAcceptStrOrBytes(self):
+    # Each call gets the same text as str and as bytes and must give the same answer.
+    mol = Chem.MolFromSmiles('c1ccccc1CO')
+    rdDepictor.Compute2DCoords(mol)
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1][OH]>>[C:1]N')
+    xqm = rdGeneralizedSubstruct.CreateExtendedQueryMol(Chem.MolFromSmiles('COC'))
+    encoder = rdMHFPFingerprint.MHFPEncoder()
+    fdef = 'DefineFeature HDonor1 [N,O;!H0]\n  Family HBondDonor\n  Weights 1.0\nEndFeature\n'
+    daylightFP = '.b+HHa.EgU6+ibEIr89.CpX0g8FZiXH+R0+Ps.mr6tg.2'
+    bitVects = [DataStructs.ExplicitBitVect(16), DataStructs.SparseBitVect(16)]
+    for bv in bitVects:
+      bv.SetBitsFromList([1, 5])
+
+    def updateParams(text):
+      params = rdMolStandardize.CleanupParameters()
+      rdMolStandardize.UpdateParamsFromJSON(params, text)
+      return params.maxTautomers
+
+    def initFromJSON(text):
+      query = rdGeneralizedSubstruct.CreateExtendedQueryMol(Chem.MolFromSmiles('C'))
+      query.InitFromJSON(text)
+      return query.ToJSON()
+
+    def addSmiles(holderType, text):
+      holder = holderType()
+      holder.AddSmiles(text)
+      return Chem.MolToSmiles(holder.GetMol(0))
+
+    def setPattern(text):
+      matcher = rdfiltercatalog.SmartsMatcher('carbon')
+      matcher.SetPattern(text)
+      return matcher.HasMatch(mol)
+
+    def fromDaylight(bvType, text):
+      bv = bvType(256)
+      DataStructs.InitFromDaylightString(bv, text)
+      return list(bv.GetOnBits())
+
+    def fromBase64(bv, text):
+      result = type(bv)(16)
+      result.FromBase64(text)
+      return list(result.GetOnBits())
+
+    cases = [
+      ('AtomFromSmiles', lambda t: Chem.AtomFromSmiles(t).GetSymbol(), 'N'),
+      ('AtomFromSmarts', lambda t: Chem.AtomFromSmarts(t).GetSmarts(), '[#7]'),
+      ('BondFromSmiles', lambda t: Chem.BondFromSmiles(t).GetBondType(), '='),
+      ('BondFromSmarts', lambda t: Chem.BondFromSmarts(t).GetSmarts(), '-,='),
+      ('ReactionFromRxnBlock',
+       lambda t: rdChemReactions.ReactionToSmarts(rdChemReactions.ReactionFromRxnBlock(t)),
+       rdChemReactions.ReactionToRxnBlock(rxn)),
+      ('MrvBlockIsReaction', rdChemReactions.MrvBlockIsReaction,
+       rdChemReactions.ReactionToMrvBlock(rxn)),
+      ('StandardizeSmiles', rdMolStandardize.StandardizeSmiles, '[Na]OC(=O)c1ccccc1'),
+      ('ValidateSmiles', rdMolStandardize.ValidateSmiles, 'ClCCCl.c1ccccc1O'),
+      ('UpdateParamsFromJSON', updateParams, '{"maxTautomers": 5}'),
+      ('ChargeCorrection', lambda t: rdMolStandardize.ChargeCorrection('Na', t, 1).Smarts,
+       '[Na;X0+0]'),
+      ('SubstructTerm', lambda t: rdMolStandardize.SubstructTerm('C=O', t, 2).smarts,
+       '[#6]=,:[#8]'),
+      ('Pipeline.run', lambda t: rdMolStandardize.Pipeline().run(t).outputMolData,
+       Chem.MolToMolBlock(mol)),
+      ('ParseAbbreviations',
+       lambda t: [a.label for a in rdAbbreviations.ParseAbbreviations(t)], 'CO2Et    C(=O)OCC\n'),
+      ('ParseLinkers', lambda t: [a.label for a in rdAbbreviations.ParseLinkers(t)],
+       'PEG3  *OCCOCCOCC* PEG3\n'),
+      ('DeprotectData',
+       lambda t: rdDeprotect.DeprotectData('amine', t, 'Boc', 'Boc').reaction_smarts,
+       'CC(C)(C)OC(=O)[N;H0,H1:1]>>[N:1]'),
+      ('FindMCS',
+       lambda t: rdFMCS.FindMCS([mol, Chem.MolFromSmiles('c1ccccc1CCO')], seedSmarts=t).
+       smartsString, 'c1ccccc1'),
+      ('InitFromJSON', initFromJSON, xqm.ToJSON()),
+      ('CreateShinglingFromSmiles', encoder.CreateShinglingFromSmiles, 'c1ccccc1CO'),
+      ('EncodeSmiles', encoder.EncodeSmiles, 'c1ccccc1CO'),
+      ('EncodeSECFPSmiles', lambda t: encoder.EncodeSECFPSmiles(t).ToBitString(), 'c1ccccc1CO'),
+      ('FragmentMol', lambda t: len(rdMMPA.FragmentMol(mol, pattern=t)),
+       '[#6+0;!$(*=,#[!#6])]!@!=!#[*]'),
+      ('BuildFeatureFactoryFromString',
+       lambda t: rdMolChemicalFeatures.BuildFeatureFactoryFromString(t).GetNumFeatureDefs(),
+       fdef),
+      ('CachedSmilesMolHolder.AddSmiles',
+       lambda t: addSmiles(rdSubstructLibrary.CachedSmilesMolHolder, t), 'c1ccccc1CO'),
+      ('CachedTrustedSmilesMolHolder.AddSmiles',
+       lambda t: addSmiles(rdSubstructLibrary.CachedTrustedSmilesMolHolder, t), 'c1ccccc1CO'),
+      ('SmartsMatcher', lambda t: rdfiltercatalog.SmartsMatcher('carbon', t, 1).HasMatch(mol),
+       '[#6]'),
+      ('SmartsMatcher.SetPattern', setPattern, '[#6]'),
+      ('CreateFromBitString', lambda t: DataStructs.CreateFromBitString(t).ToBitString(), '0101'),
+      ('CreateFromFPSText', lambda t: DataStructs.CreateFromFPSText(t).ToBitString(), '0f'),
+      ('InitFromDaylightString', lambda t: fromDaylight(DataStructs.ExplicitBitVect, t),
+       daylightFP),
+      ('InitFromDaylightString', lambda t: fromDaylight(DataStructs.SparseBitVect, t),
+       daylightFP),
+    ]
+    cases += [('FromBase64', lambda t, bv=bv: fromBase64(bv, t), bv.ToBase64())
+              for bv in bitVects]
+    if rdSLNParse is not None:
+      cases += [
+        ('MolFromSLN', lambda t: rdSLNParse.MolFromSLN(t).GetNumAtoms(), 'CH3CH2OH'),
+        ('MolFromQuerySLN', lambda t: rdSLNParse.MolFromQuerySLN(t).GetNumAtoms(), 'CH3CH2OH'),
+      ]
+    if rdinchi is not None:
+      inchi = 'InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3'
+      cases += [
+        ('InchiToMol', lambda t: Chem.MolToSmiles(rdinchi.InchiToMol(t, True, True)[0]), inchi),
+        ('InchiToInchiKey', rdinchi.InchiToInchiKey, inchi),
+        ('MolBlockToInchi', lambda t: rdinchi.MolBlockToInchi(t, '')[0],
+         Chem.MolToMolBlock(Chem.MolFromSmiles('CCO'))),
+      ]
+    for name, call, text in cases:
+      with self.subTest(name=name, text=text[:20]):
+        self.assertEqual(call(text.encode()), call(text))
+
+  def testFilenameArgumentsAcceptBytesAndPathLike(self):
+    # Each check takes a function that turns a str filename into the kind under test.
+    mol = Chem.MolFromSmiles('OCC')
+    rdDepictor.Compute2DCoords(mol)
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1][OH]>>[C:1]N')
+    standardizeData = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize',
+                                   'test_data')
+    pngFile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'ChemReactions', 'testData',
+                           'reaction1.smarts.png')
+    fpbFile = os.path.join(RDConfig.RDBaseDir, 'Code', 'DataStructs', 'testData',
+                           'zim.head100.fpb')
+    tmpDir = tempfile.mkdtemp()
+    self.addCleanup(shutil.rmtree, tmpDir)
+    rxnFile = os.path.join(tmpDir, 'rxn.rxn')
+    with open(rxnFile, 'w') as outF:
+      outF.write(rdChemReactions.ReactionToRxnBlock(rxn))
+    mrvFile = os.path.join(tmpDir, 'rxn.mrv')
+    rdChemReactions.ReactionToMrvFile(rxn, mrvFile)
+    templateFile = os.path.join(tmpDir, 'templates.smi')
+    with open(templateFile, 'w') as outF:
+      outF.write('C1CCC2CCCCC2C1 |(1.5,0,;0.75,1.3,;-0.75,1.3,;-1.5,0,;-2.25,1.3,;'
+                 '-3.75,1.3,;-4.5,0,;-3.75,-1.3,;-2.25,-1.3,;-0.75,-1.3,)|\n')
+
+    def checkWriter(writer, toBlock):
+
+      def check(kind):
+        path = os.path.join(tmpDir, writer.__name__)
+        writer(mol, kind(path))
+        with open(path) as inF:
+          self.assertEqual(inF.read(), toBlock(mol))
+
+      return check
+
+    def checkReactionToMrvFile(kind):
+      path = os.path.join(tmpDir, 'written.mrv')
+      rdChemReactions.ReactionToMrvFile(rxn, kind(path))
+      self.assertTrue(rdChemReactions.MrvFileIsReaction(path))
+
+    def checkRingSystemTemplates(setter):
+
+      def check(kind):
+        try:
+          setter(kind(templateFile))
+        finally:
+          rdDepictor.LoadDefaultRingSystemTemplates()
+
+      return check
+
+    def checkSetDefaultTemplateFileDir(kind):
+      try:
+        rdCoordGen.SetDefaultTemplateFileDir(kind(tmpDir))
+      finally:
+        rdCoordGen.SetDefaultTemplateFileDir('')
+
+    def checkFPBReader(kind):
+      reader = DataStructs.FPBReader(kind(fpbFile))
+      reader.Init()
+      self.assertEqual(len(reader), 100)
+
+    def checkWriteGridToFile(kind):
+      path = os.path.join(tmpDir, 'grid.grd')
+      rdGeometry.WriteGridToFile(rdGeometry.UniformGrid3D(5.0, 5.0, 5.0), kind(path))
+      self.assertGreater(os.path.getsize(path), 0)
+
+    standardizeFile = lambda name, kind: kind(os.path.join(standardizeData, name))
+    cases = [(writer.__name__, checkWriter(writer, toBlock)) for writer, toBlock in [
+      (Chem.MolToMolFile, Chem.MolToMolBlock),
+      (Chem.MolToV3KMolFile, Chem.MolToV3KMolBlock),
+      (Chem.MolToMrvFile, Chem.MolToMrvBlock),
+      (Chem.MolToCMLFile, Chem.MolToCMLBlock),
+      (Chem.MolToXYZFile, Chem.MolToXYZBlock),
+      (Chem.MolToPDBFile, Chem.MolToPDBBlock),
+      (Chem.MolToTPLFile, Chem.MolToTPLBlock),
+    ]]
+    cases += [
+      ('ReactionFromRxnFile', lambda kind: self.assertEqual(
+        rdChemReactions.ReactionToSmarts(rdChemReactions.ReactionFromRxnFile(kind(rxnFile))),
+        rdChemReactions.ReactionToSmarts(rdChemReactions.ReactionFromRxnFile(rxnFile)))),
+      ('ReactionToMrvFile', checkReactionToMrvFile),
+      ('MrvFileIsReaction',
+       lambda kind: self.assertTrue(rdChemReactions.MrvFileIsReaction(kind(mrvFile)))),
+      ('ReactionFromPNGFile', lambda kind: self.assertEqual(
+        rdChemReactions.ReactionFromPNGFile(kind(pngFile)).GetNumReactantTemplates(), 2)),
+      ('ReactionMetadataToPNGFile', lambda kind: self.assertTrue(
+        rdChemReactions.ReactionMetadataToPNGFile(rxn, kind(pngFile)))),
+      ('MetadataFromPNGFile',
+       lambda kind: self.assertTrue(Chem.MetadataFromPNGFile(kind(pngFile)))),
+      ('Reionizer',
+       lambda kind: rdMolStandardize.Reionizer(standardizeFile('acid_base_pairs2.txt', kind))),
+      ('FragmentRemover', lambda kind: self.assertEqual(
+        Chem.MolToSmiles(
+          rdMolStandardize.FragmentRemover(standardizeFile('fragmentPatterns.txt', kind)).remove(
+            Chem.MolFromSmiles('CCO.Cl'))), 'CCO')),
+      ('Normalizer', lambda kind: self.assertEqual(
+        Chem.MolToSmiles(
+          rdMolStandardize.Normalizer(standardizeFile('normalizations.txt', kind), 200).normalize(
+            Chem.MolFromSmiles('C[N+](C)=C[O-]'))), 'CN(C)C=O')),
+      ('TautomerQuery', lambda kind: self.assertEqual(
+        rdTautomerQuery.TautomerQuery(
+          Chem.MolFromSmiles('O=C1CCCCC1'), standardizeFile('tautomerTransforms.in', kind)).
+        GetTemplateMolecule().GetNumAtoms(), 7)),
+      ('FragCatParams', lambda kind: self.assertGreater(
+        rdfragcatalog.FragCatParams(1, 6, kind(os.path.join(RDConfig.RDDataDir,
+                                                             'FunctionalGroups.txt'))).
+        GetNumFuncGroups(), 0)),
+      ('SetRingSystemTemplates', checkRingSystemTemplates(rdDepictor.SetRingSystemTemplates)),
+      ('AddRingSystemTemplates', checkRingSystemTemplates(rdDepictor.AddRingSystemTemplates)),
+      ('FPBReader', checkFPBReader),
+      ('WriteGridToFile', checkWriteGridToFile),
+      ('AttachFileToLog', lambda kind: rdBase.AttachFileToLog(
+        'rdApp.debug', kind(os.path.join(tmpDir, 'log.txt')))),
+    ]
+    if rdCoordGen is not None:
+      cases.append(('SetDefaultTemplateFileDir', checkSetDefaultTemplateFileDir))
+    for name, check in cases:
+      for kind in (os.fsencode, pathlib.Path):
+        with self.subTest(name=name, kind=kind.__name__):
+          check(kind)
+
+  def testSupplierRejectsObjectWithoutRead(self):
+    for bad in (42, object()):
+      with self.subTest(arg=type(bad).__name__):
+        with self.assertRaises(ValueError):
+          Chem.ForwardSDMolSupplier(bad)
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
