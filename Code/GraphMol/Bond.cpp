@@ -49,6 +49,9 @@ Bond &Bond::operator=(const Bond &other) {
   if (this == &other) {
     return *this;
   }
+  // copy first so a throwing copy leaves dp_stereoAtoms intact
+  std::unique_ptr<INT_VECT> stereoAtoms(
+      other.dp_stereoAtoms ? new INT_VECT(*other.dp_stereoAtoms) : nullptr);
   // NOTE: we do *not* copy ownership!
   dp_mol = nullptr;
   d_bondType = other.d_bondType;
@@ -57,11 +60,7 @@ Bond &Bond::operator=(const Bond &other) {
   d_dirTag = other.d_dirTag;
   d_stereo = other.d_stereo;
   delete dp_stereoAtoms;
-  if (other.dp_stereoAtoms) {
-    dp_stereoAtoms = new INT_VECT(*other.dp_stereoAtoms);
-  } else {
-    dp_stereoAtoms = nullptr;
-  }
+  dp_stereoAtoms = stereoAtoms.release();
   dp_macroBondInfo =
       other.dp_macroBondInfo ? other.dp_macroBondInfo->copy() : nullptr;
   df_isAromatic = other.df_isAromatic;

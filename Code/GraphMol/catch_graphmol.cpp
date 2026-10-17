@@ -5203,6 +5203,15 @@ template <typename QueryType>
 int CountedQuery<QueryType>::live = 0;
 using CountedAtomQuery = CountedQuery<QueryAtom::QUERYATOM_QUERY>;
 using CountedBondQuery = CountedQuery<QueryBond::QUERYBOND_QUERY>;
+
+// Its copy() throws, so tests can see an assignment survive a failed copy.
+template <typename QueryType>
+class ThrowingCopyQuery : public QueryType {
+ public:
+  QueryType *copy() const override {
+    throw std::runtime_error("copy failed");
+  }
+};
 }  // namespace
 
 TEST_CASE("Atom special members own the monomer info") {
@@ -5313,6 +5322,33 @@ TEST_CASE("QueryAtom and QueryBond assignment frees the replaced query") {
     auto &alias = bond;
     bond = alias;
     CHECK(bond.getQuery() == query);
+    CHECK(CountedBondQuery::live == 1);
+  }
+  CHECK(CountedAtomQuery::live == 0);
+  CHECK(CountedBondQuery::live == 0);
+}
+
+TEST_CASE("Query copy assignment survives a failed copy") {
+  CountedAtomQuery::live = 0;
+  CountedBondQuery::live = 0;
+  SECTION("QueryAtom") {
+    QueryAtom source;
+    source.setQuery(new ThrowingCopyQuery<QueryAtom::QUERYATOM_QUERY>());
+    QueryAtom dest;
+    dest.setQuery(new CountedAtomQuery());
+    const auto original = dest.getQuery();
+    CHECK_THROWS_WITH(dest = source, "copy failed");
+    CHECK(dest.getQuery() == original);
+    CHECK(CountedAtomQuery::live == 1);
+  }
+  SECTION("QueryBond") {
+    QueryBond source;
+    source.setQuery(new ThrowingCopyQuery<QueryBond::QUERYBOND_QUERY>());
+    QueryBond dest;
+    dest.setQuery(new CountedBondQuery());
+    const auto original = dest.getQuery();
+    CHECK_THROWS_WITH(dest = source, "copy failed");
+    CHECK(dest.getQuery() == original);
     CHECK(CountedBondQuery::live == 1);
   }
   CHECK(CountedAtomQuery::live == 0);

@@ -29,16 +29,15 @@ QueryBond &QueryBond::operator=(const QueryBond &other) {
   if (this == &other) {
     return *this;
   }
+  // copy first so a throwing copy leaves dp_query intact
+  std::unique_ptr<QUERYBOND_QUERY> query(
+      other.dp_query ? other.dp_query->copy() : nullptr);
   // FIX: should we copy molecule ownership?  I don't think so.
   // FIX: how to deal with atom indices?
   dp_mol = nullptr;
   d_bondType = other.d_bondType;
   delete dp_query;
-  if (other.dp_query) {
-    dp_query = other.dp_query->copy();
-  } else {
-    dp_query = nullptr;
-  }
+  dp_query = query.release();
   d_props = other.d_props;
   return *this;
 }

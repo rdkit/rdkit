@@ -63,13 +63,12 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
     if (this == &other) {
       return *this;
     }
+    // copy first so a throwing copy leaves dp_query intact
+    std::unique_ptr<QUERYATOM_QUERY> query(
+        other.dp_query ? other.dp_query->copy() : nullptr);
     Atom::operator=(other);
     delete dp_query;
-    if (other.dp_query) {
-      dp_query = other.dp_query->copy();
-    } else {
-      dp_query = nullptr;
-    }
+    dp_query = query.release();
     return *this;
   }
 
