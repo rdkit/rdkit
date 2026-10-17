@@ -64,8 +64,10 @@ if(RDKit_HAS_CAIRO_SUPPORT)
     set(CMAKE_MODULE_PATH "${_RDKit_module_path}")
     unset(_RDKit_module_path)
     if(NOT Cairo_FOUND)
-        set(RDKit_NOT_FOUND_MESSAGE "RDKit was built with Cairo support, but Cairo was not found")
-        set(RDKit_FOUND FALSE)
+        # find_package checks the result under the name the caller spelled,
+        # which may be rdkit as well as RDKit.
+        set(${CMAKE_FIND_PACKAGE_NAME}_NOT_FOUND_MESSAGE "RDKit was built with Cairo support, but Cairo was not found")
+        set(${CMAKE_FIND_PACKAGE_NAME}_FOUND FALSE)
         return()
     endif()
 endif()
