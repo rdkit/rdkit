@@ -1,3 +1,35 @@
+# Release_2027.03.1
+(Changes relative to Release_2026.09.1)
+
+## Backwards incompatible changes:
+- Python-coupled artifacts are now installed into the `python` cmake component:
+  the `Scripts` directory (previously `data`), the `RDBoost/` wrapper headers
+  (previously `dev`), and the shared `nanobind` library (previously whichever
+  component the preceding `rdkit_library()` call left set). Packagers who
+  install components selectively need to include `python` to keep these files.
+- The bundled ChemDraw, maeparser, coordgen, InChI, and RingDecomposerLib
+  libraries are installed only in the `runtime` component (`dev` for static
+  builds); each previously also had an untagged copy in CMake's `Unspecified`
+  component.
+- `RDKit_HAS_PYTHON_WRAPPERS` in `rdkit-config.cmake` is now `ON` only when the
+  `rdkitpython` package config is installed beside it, instead of recording
+  whether the Boost.Python wrappers were built. The two agree for a full
+  install and differ when the `dev` and `python` components are packaged
+  separately.
+- The installed CMake package now carries its own requirements: the exported
+  targets require C++20, and `rdkit-config.cmake` finds Freetype, Cairo, and
+  EXPAT when RDKit was built with them, instead of `RDKit::MolDraw2D` recording
+  absolute paths from the build machine. Projects using `find_package(RDKit)`
+  need those packages to be findable. `rdkitpython-config.cmake` requires the
+  Python minor version the wrappers were built for; it previously asked for an
+  empty version and always failed.
+- `RDKit::rdkit_py_base` in the `rdkitpython` package links `Python::Module`
+  and `Python::NumPy` instead of recording the build machine's Python and NumPy
+  paths. With a shared Python on Linux and macOS, `RDBoost` and the Boost.Python
+  wrappers no longer link libpython; the interpreter that loads them supplies
+  the Python symbols. A program that embeds Python and links `RDKit::RDBoost`
+  needs to link `Python::Python` itself.
+
 # Release_2026.09.1
 (Changes relative to Release_2026.03.1)
 
