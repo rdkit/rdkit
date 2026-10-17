@@ -20,8 +20,9 @@ variables:
 
 jobs:
 # Marking a draft PR ready for review queues a new PR build with no new
-# commits, and the pr trigger has no setting to ignore that event. The other
-# jobs skip a PR build whose head commit already has a passing build.
+# commits, and the pr trigger has no setting to ignore that event. The build
+# jobs skip when this PR's head commit already has a passing build. The check
+# fails open: if it errors, the build jobs run.
 - job: Check_earlier_builds
   timeoutInMinutes: 5
   pool:
@@ -52,7 +53,7 @@ jobs:
           with urllib.request.urlopen(url, timeout=30) as response:
               builds = json.load(response)["value"]
           for build in builds:
-              if commit and build.get("triggerInfo", {}).get("pr.sourceSha") == commit:
+              if build.get("triggerInfo", {}).get("pr.sourceSha") == commit:
                   passed = "true"
                   print(f"{commit} already passed in "
                         f"{collection}{project}/_build/results?buildId={build['id']}")
@@ -60,13 +61,13 @@ jobs:
           else:
               print(f"No passing build of {commit} yet")
       except Exception as error:
-          # Fail open: an unreachable API runs the full build.
           print(f"##vso[task.logissue type=warning]Could not list earlier builds: {error}")
       print(f"##vso[task.setvariable variable=passed;isOutput=true]{passed}")
       EOF
     name: earlier
     displayName: Look for a passing build of this PR commit
     condition: eq(variables['Build.Reason'], 'PullRequest')
+    continueOnError: true
 - job: Ubuntu_x64_minimallib_build
   dependsOn: Check_earlier_builds
   condition: and(succeeded(), ne(dependencies.Check_earlier_builds.outputs['earlier.passed'], 'true'))
