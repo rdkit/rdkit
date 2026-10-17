@@ -358,7 +358,7 @@ class TestCase(unittest.TestCase):
     for validation in (rdMolStandardize.AllowedAtomsValidation,
                        rdMolStandardize.DisallowedAtomsValidation):
       with self.subTest(validation=validation.__name__):
-        with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad_cast'):
+        with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad[ _]cast'):
           validation([Atom(6), None])
 
   def test10NormalizeFromData(self):

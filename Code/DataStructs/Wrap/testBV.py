@@ -394,7 +394,7 @@ class TestCase(unittest.TestCase):
                  lambda: DataStructs.TanimotoSimilarityNeighbors(queries + [None], bvs),
                  lambda: DataStructs.BulkTanimotoSimilarity(queries[0], bvs + [None]),
                  lambda: DataStructs.BulkTverskySimilarity(queries[0], bvs + [None], 0.5, 0.5)):
-      with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad_cast'):
+      with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad[ _]cast'):
         call()
 
 

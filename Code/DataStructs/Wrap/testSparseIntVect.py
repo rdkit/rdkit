@@ -271,9 +271,9 @@ class TestCase(unittest.TestCase):
         ], expected)
     # Boost raises TypeError for a None element and nanobind RuntimeError.
     for bulk in (ds.BulkDiceSimilarity, ds.BulkTanimotoSimilarity):
-      with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad_cast'):
+      with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad[ _]cast'):
         bulk(vs[0], vs[1:] + [None])
-    with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad_cast'):
+    with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad[ _]cast'):
       ds.BulkTverskySimilarity(vs[0], vs[1:] + [None], 0.5, 0.5)
 
 

@@ -440,7 +440,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(g.GetSparseCountFingerprint(m).GetNonzeroElements(), expected)
     patterns = [Chem.MolFromSmarts(smarts[0]), None]
     if rdBase._wrapperType == 'nanobind':
-      with self.assertRaisesRegex(RuntimeError, 'bad_cast'):
+      with self.assertRaisesRegex(RuntimeError, 'bad[ _]cast'):
         rdFingerprintGenerator.GetMorganFeatureAtomInvGen(patterns)
     else:
       # Boost ignores the patterns (#9601), so this only checks that it does not crash.
@@ -472,7 +472,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual([fp.ToBitString() for fp in rdFingerprintGenerator.GetFPs(make())],
                          bulkExpected)
     # Boost raises TypeError for a None element and nanobind RuntimeError.
-    with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad_cast'):
+    with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad[ _]cast'):
       rdFingerprintGenerator.GetFPs(mols + [None])
 
 
