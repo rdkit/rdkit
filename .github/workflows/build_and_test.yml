@@ -1,0 +1,42 @@
+name: Build and test
+
+on:
+  push:
+    branches:
+      - master
+      - "Release_*"
+      - "dev/**"
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # reusable workflows in subdirectories are not supported,
+  # so prefix jobs with "ci_job_". We use workflows, and not actions
+  # so that the individual steps are visible in the GH Actions section.
+  Ubuntu_x64_minimallib_build:
+    uses: ./.github/workflows/ci_job_Ubuntu_x64_minimallib_build.yml
+  Ubuntu_x64_base:
+    uses: ./.github/workflows/ci_job_Ubuntu_x64_base.yml
+  Ubuntu_x64_new:
+    uses: ./.github/workflows/ci_job_Ubuntu_x64_new.yml
+  Ubuntu_x64_nb:
+    uses: ./.github/workflows/ci_job_Ubuntu_x64_nb.yml
+  Ubuntu_x64_cartridge:
+    uses: ./.github/workflows/ci_job_Ubuntu_x64_cartridge.yml
+  Ubuntu_x64_limitexternaldependencies:
+    uses: ./.github/workflows/ci_job_Ubuntu_x64_limitexternaldependencies.yml
+  Ubuntu_x64_java:
+    uses: ./.github/workflows/ci_job_Ubuntu_x64_java.yml
+  macOS_x64:
+    uses: ./.github/workflows/ci_job_macOS_x64.yml
+  macOS_x64_java:
+    uses: ./.github/workflows/ci_job_macOS_x64_java.yml
+  Windows_VS2022_x64:
+    uses: ./.github/workflows/ci_job_Windows_VS2022_x64.yml
+  Windows_VS2022_x64_dll:
+    uses: ./.github/workflows/ci_job_Windows_VS2022_x64_dll.yml
+  Windows_VS2022_x64_swig:
+    uses: ./.github/workflows/ci_job_Windows_VS2022_x64_swig.yml
