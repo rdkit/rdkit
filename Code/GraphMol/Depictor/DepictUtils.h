@@ -32,6 +32,11 @@ RDKIT_DEPICTOR_EXPORT extern unsigned int MAX_COLL_ITERS;
 RDKIT_DEPICTOR_EXPORT extern double HETEROATOM_COLL_SCALE;
 RDKIT_DEPICTOR_EXPORT extern unsigned int NUM_BONDS_FLIPS;
 
+// Path angle expansion parameters
+RDKIT_DEPICTOR_EXPORT extern double ANGLE_EXPANSION_INCREMENT;
+RDKIT_DEPICTOR_EXPORT extern double MAX_ANGLE_EXPANSION;
+RDKIT_DEPICTOR_EXPORT extern unsigned int MAX_ANGLE_EXPANSION_ITERS;
+
 typedef std::vector<const RDGeom::Point2D *> VECT_C_POINT;
 
 typedef std::pair<int, int> PAIR_I_I;

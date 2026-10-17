@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <DataStructs/BitOps.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/base64.h>
 #include <nanobind/nanobind.h>
@@ -164,6 +165,8 @@ struct SBV_wrapper {
         .def("GetOnBits", GetOnBits,
              R"DOC(Returns a tuple containing IDs of the on bits.
 )DOC")
+        .def("ToBitString", BitVectToText<SBV>,
+             R"DOC(Returns a string of zeros and ones representing the bit vector.)DOC")
         .def("ToBinary", BVToBinary,
              R"DOC(Returns an internal binary representation of the vector.
 )DOC")

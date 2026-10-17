@@ -78,12 +78,13 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper1(
     const std::optional<SubstructMatchParameters> &py_smParams,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
+  const auto smParams = py_smParams.value_or(SubstructMatchParameters());
+  const auto params =
+      py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams());
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.substructureSearch(
-        query, py_smParams.value_or(SubstructMatchParameters()),
-        py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
+    results = self.substructureSearch(query, smParams, params);
   }
   if (results.getCancelled()) {
     throwCancelled("SubstructureSearch cancelled");
@@ -97,12 +98,13 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper2(
     const std::optional<SubstructMatchParameters> &py_smParams,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
+  const auto smParams = py_smParams.value_or(SubstructMatchParameters());
+  const auto params =
+      py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams());
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.substructureSearch(
-        query, py_smParams.value_or(SubstructMatchParameters()),
-        py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
+    results = self.substructureSearch(query, smParams, params);
   }
   if (results.getCancelled()) {
     throwCancelled("SubstructureSearch cancelled");
@@ -154,13 +156,14 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper4(
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params,
     std::uint64_t startLine, std::uint64_t finishLine) {
+  const auto smParams = py_smParams.value_or(SubstructMatchParameters());
+  const auto params =
+      py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams());
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.substructureSearch(
-        query, py_smParams.value_or(SubstructMatchParameters()),
-        py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()),
-        startLine, finishLine);
+    results = self.substructureSearch(query, smParams, params, startLine,
+                                      finishLine);
   }
   if (results.getCancelled()) {
     throwCancelled("SubstructureSearch cancelled");
@@ -175,13 +178,14 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper5(
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params,
     std::uint64_t startLine, std::uint64_t finishLine) {
+  const auto smParams = py_smParams.value_or(SubstructMatchParameters());
+  const auto params =
+      py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams());
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.substructureSearch(
-        query, py_smParams.value_or(SubstructMatchParameters()),
-        py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()),
-        startLine, finishLine);
+    results = self.substructureSearch(query, smParams, params, startLine,
+                                      finishLine);
   }
   if (results.getCancelled()) {
     throwCancelled("SubstructureSearch cancelled");
@@ -194,12 +198,12 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     const FingerprintGenerator<std::uint64_t> &fingerprintGenerator,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
+  const auto params =
+      py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams());
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.fingerprintSearch(
-        query, fingerprintGenerator,
-        py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
+    results = self.fingerprintSearch(query, fingerprintGenerator, params);
   }
   if (results.getCancelled()) {
     throwCancelled("FingerprintSearch cancelled");
@@ -225,13 +229,13 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper3(
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params,
     std::uint64_t startLine, std::uint64_t finishLine) {
+  const auto params =
+      py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams());
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.fingerprintSearch(
-        query, fingerprintGenerator,
-        py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()),
-        startLine, finishLine);
+    results = self.fingerprintSearch(query, fingerprintGenerator, params,
+                                     startLine, finishLine);
   }
   if (results.getCancelled()) {
     throwCancelled("FingerprintSearch cancelled");
@@ -244,12 +248,12 @@ SynthonSpaceSearch::SearchResults rascalSearch_helper(
     const RascalMCES::RascalOptions &rascalOptions,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
+  const auto params =
+      py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams());
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.rascalSearch(
-        query, rascalOptions,
-        py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
+    results = self.rascalSearch(query, rascalOptions, params);
   }
   if (results.getCancelled()) {
     throwCancelled("RascalSearch cancelled");
@@ -275,13 +279,13 @@ SynthonSpaceSearch::SearchResults rascalSearch_helper3(
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params,
     std::uint64_t startLine, std::uint64_t finishLine) {
+  const auto params =
+      py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams());
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.rascalSearch(
-        query, rascalOptions,
-        py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()),
-        startLine, finishLine);
+    results = self.rascalSearch(query, rascalOptions, params, startLine,
+                               finishLine);
   }
   if (results.getCancelled()) {
     throwCancelled("RascalSearch cancelled");
@@ -293,12 +297,12 @@ SynthonSpaceSearch::SearchResults shapeSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const std::optional<SynthonSpaceSearch::SynthonSpaceSearchParams>
         &py_params) {
+  const auto params =
+      py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams());
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.shapeSearch(
-        query,
-        py_params.value_or(SynthonSpaceSearch::SynthonSpaceSearchParams()));
+    results = self.shapeSearch(query, params);
   }
   if (results.getCancelled()) {
     throwCancelled("ShapeSearch cancelled");

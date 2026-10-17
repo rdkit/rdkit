@@ -34,7 +34,9 @@
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/shared_ptr.h>
+#include <nanobind/stl/pair.h>
 #include <chrono>
+#include <utility>
 
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -105,10 +107,10 @@ class RGroupDecompositionHelper {
     return decomp->process();
   }
 
-  nb::tuple ProcessAndScore() {
+  std::pair<bool, double> ProcessAndScore() {
     NOGIL gil;
     auto result = decomp->processAndScore();
-    return nb::make_tuple(result.success, result.score);
+    return {result.success, result.score};
   }
 
   nb::list GetRGroupLabels() {

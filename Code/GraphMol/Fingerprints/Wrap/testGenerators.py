@@ -277,12 +277,14 @@ class TestCase(unittest.TestCase):
       oarr = np.zeros((bv.GetNumBits(), ), 'u1')
       DataStructs.ConvertToNumpyArray(bv, oarr)
       arr = gen.GetFingerprintAsNumPy(m)
+      self.assertEqual(arr.dtype, np.dtype("uint8"))
       np.testing.assert_array_equal(oarr, arr)
 
       fp = gen.GetCountFingerprint(m)
       oarr = np.zeros((fp.GetLength(), ), 'u4')
       DataStructs.ConvertToNumpyArray(fp, oarr)
       arr = gen.GetCountFingerprintAsNumPy(m)
+      self.assertEqual(arr.dtype, np.dtype("uint32"))
       np.testing.assert_array_equal(oarr, arr)
 
   def testMorganRedundantEnvironments(self):
