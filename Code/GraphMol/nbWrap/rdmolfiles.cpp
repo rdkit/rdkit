@@ -1368,8 +1368,7 @@ NB_MODULE(rdmolfiles, m) {
          const MolWriterParams &params, int confId) {
         RDKit::MolToV3KMolFile(mol, filename.string(), params, confId);
       },
-      "mol"_a, "filename"_a, "params"_a = true, "confId"_a = -1,
-      docString.c_str());
+      "mol"_a, "filename"_a, "params"_a, "confId"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Writes a V3000 Mol file for a molecule
