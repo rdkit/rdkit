@@ -151,6 +151,20 @@ jobs:
   steps:
   - template: .azure-pipelines/vs_build_swig.yml
 
+- job: Ubuntu_format_lint
+  timeoutInMinutes: 10
+  pool:
+    vmImage: ubuntu-latest
+  variables:
+    python_version: 3.14
+    clang_format_version: 21.1.0
+    yapf_version: 0.43.0
+    pycodestyle_version: 2.14.0
+  steps:
+  - checkout: self
+    fetchDepth: 0 
+  - template: .azure-pipelines/linux_format_lint.yml
+
 # - job: Ubuntu_18_04_x64_fuzzer
 #  timeoutInMinutes: 90
 #  pool:
