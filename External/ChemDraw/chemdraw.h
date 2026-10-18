@@ -51,38 +51,14 @@ enum class NeedsCleanPolicy {
 };
 
 struct RDKIT_RDCHEMDRAWLIB_EXPORT ChemDrawParserParams {
-  bool sanitize;
-  bool removeHs;
-  CDXFormat format;
-  NeedsCleanPolicy needsCleanPolicy;
-  bool parseQueries;
-  bool strictQueryParsing;
-  
-  ChemDrawParserParams()
-            : sanitize(true),
-                removeHs(true),
-                format(CDXFormat::AUTO),
-		needsCleanPolicy(NeedsCleanPolicy::TrustSource),
-		parseQueries(false),
-		strictQueryParsing(false) {}
-		
-  ChemDrawParserParams(bool sanitize, bool removeHs, CDXFormat format)
-            : sanitize(sanitize),
-                removeHs(removeHs),
-                format(format),
-		needsCleanPolicy(NeedsCleanPolicy::TrustSource),
-		parseQueries(false),
-		strictQueryParsing(false) {}
-
-  ChemDrawParserParams(bool sanitize, bool removeHs, CDXFormat format,
-		       NeedsCleanPolicy policy,
-		       bool parseQueries, bool strictQueryParsing)
-            : sanitize(sanitize),
-                removeHs(removeHs),
-                format(format),
-		needsCleanPolicy(policy),
-		parseQueries(parseQueries),
-		strictQueryParsing(strictQueryParsing) {}
+  bool sanitize = true;
+  bool removeHs = true;
+  CDXFormat format = CDXFormat::AUTO;
+  NeedsCleanPolicy needsCleanPolicy{NeedsCleanPolicy::TrustSource};
+  bool parseQueries{false};
+  bool strictQueryParsing{false};
+  bool flagPossible{false}; /**< whether to flag possible chiral centers in the
+                                result molecule */
 };
 
 std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT

@@ -1,3 +1,16 @@
+# Release_2027.03.1
+(Changes relative to Release_2026.09.1)
+
+
+## Backwards incompatible changes:
+- The molecule parsers no longer flag possible chiral centers by default. You
+  can change this behavior in the various parse parameter objects.
+- The non-default constructors for CDXMLParserParams and ChemDrawParserParams
+  have been removed. Please use standard struct initialization (C++) or create
+  an object an change the elements you want to have non-default values (C++ or
+  in the SWIG wrappers)
+
+
 # Release_2026.09.1
 (Changes relative to Release_2026.03.1)
 

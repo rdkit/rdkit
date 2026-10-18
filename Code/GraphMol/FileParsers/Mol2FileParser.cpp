@@ -998,7 +998,8 @@ std::unique_ptr<RWMol> MolFromMol2DataStream(std::istream &inStream,
     }
 
     res->updatePropertyCache(false);
-    MolOps::assignStereochemistry(*res, true, true);
+    bool cleanIt = true, force = true;
+    MolOps::assignStereochemistry(*res, cleanIt, force, params.flagPossible);
   }
 
   return res;

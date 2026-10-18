@@ -139,8 +139,6 @@ M  END
 
     CHECK(mol->getAtomWithIdx(0)->getProp<int>(common_properties::molParity) ==
           2);
-    CHECK(mol->getAtomWithIdx(0)->getProp<int>(
-              common_properties::_ChiralityPossible) == 1);
     mol->getAtomWithIdx(0)->setProp(common_properties::_CIPCode,
                                     std::string("S"));
     mol->getAtomWithIdx(1)->setProp(common_properties::molAtomMapNumber, 1);
@@ -158,8 +156,6 @@ M  END
     RWMol mol2(pkl);
     CHECK(mol2.getAtomWithIdx(0)->getProp<int>(common_properties::molParity) ==
           2);
-    CHECK(mol2.getAtomWithIdx(0)->getProp<int>(
-              common_properties::_ChiralityPossible) == 1);
     CHECK(mol2.getAtomWithIdx(0)->getProp<std::string>(
               common_properties::_CIPCode) == "S");
 

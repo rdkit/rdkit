@@ -514,11 +514,11 @@ std::vector<int> CanonicalRankAtomsInFragment(
 }
 
 ROMol *MolFromSmilesHelper(nb::object ismiles,
-                           const SmilesParserParams &params) {
+                           const v2::SmilesParse::SmilesParserParams &params) {
   std::string smiles = pyObjectToString(ismiles);
 
   try {
-    return SmilesToMol(smiles, params);
+    return v2::SmilesParse::MolFromSmiles(smiles, params).release();
   } catch (...) {
     return nullptr;
   }
@@ -549,14 +549,14 @@ nb::list MolToRandomSmilesHelper(const ROMol &mol, unsigned int numSmiles,
 }
 
 ROMol *MolFromPNGFile(const std::string &filename,
-                      SmilesParserParams *pyParams) {
-  SmilesParserParams params;
+                      v2::SmilesParse::SmilesParserParams *pyParams) {
+  v2::SmilesParse::SmilesParserParams params;
   if (pyParams) {
     params = *pyParams;
   }
   ROMol *newM = nullptr;
   try {
-    newM = PNGFileToMol(filename, params);
+    newM = v2::FileParsers::MolFromPNGFile(filename, params).release();
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -567,11 +567,14 @@ ROMol *MolFromPNGFile(const std::string &filename,
   return newM;
 }
 
-ROMol *MolFromPNGString(nb::bytes png, SmilesParserParams *params) {
+ROMol *MolFromPNGString(nb::bytes png,
+                        v2::SmilesParse::SmilesParserParams *params) {
   ROMol *newM = nullptr;
   try {
     std::string pngStr(static_cast<const char *>(png.data()), png.size());
-    newM = PNGStringToMol(pngStr, params ? *params : SmilesParserParams());
+    newM = v2::FileParsers::MolFromPNGString(
+               pngStr, params ? *params : v2::SmilesParse::SmilesParserParams())
+               .release();
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
@@ -656,11 +659,12 @@ nb::bytes addMetadataToPNGStringHelper(nb::dict pymetadata, nb::bytes png) {
 }
 
 nb::object MolsFromPNGFile(const std::string &filename, const std::string &tag,
-                           SmilesParserParams *params) {
+                           v2::SmilesParse::SmilesParserParams *params) {
   std::vector<std::unique_ptr<ROMol>> mols;
   try {
-    mols =
-        PNGFileToMols(filename, tag, params ? *params : SmilesParserParams());
+    mols = v2::FileParsers::MolsFromPNGFile(
+        filename, tag,
+        params ? *params : v2::SmilesParse::SmilesParserParams());
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -678,10 +682,10 @@ nb::object MolsFromPNGFile(const std::string &filename, const std::string &tag,
 }
 
 nb::tuple MolsFromPNGString(nb::bytes png, const std::string &tag,
-                            SmilesParserParams *params) {
+                            v2::SmilesParse::SmilesParserParams *params) {
   std::string pngStr(static_cast<const char *>(png.data()), png.size());
-  auto mols =
-      PNGStringToMols(pngStr, tag, params ? *params : SmilesParserParams());
+  auto mols = v2::FileParsers::MolsFromPNGString(
+      pngStr, tag, params ? *params : v2::SmilesParse::SmilesParserParams());
   nb::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
@@ -1567,24 +1571,31 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolToXYZFile", RDKit::MolToXYZFile, "mol"_a, "filename"_a,
         "confId"_a = -1, "precision"_a = 6, docString.c_str());
 
-  nb::class_<RDKit::SmilesParserParams>(m, "SmilesParserParams",
-                                        "Parameters controlling SMILES parsing")
+  nb::class_<RDKit::v2::SmilesParse::SmilesParserParams>(
+      m, "SmilesParserParams", "Parameters controlling SMILES parsing")
       .def(nb::init<>())
-      .def_rw("debugParse", &RDKit::SmilesParserParams::debugParse,
+      .def_rw("debugParse",
+              &RDKit::v2::SmilesParse::SmilesParserParams::debugParse,
               "controls the amount of debugging information produced")
-      .def_rw("parseName", &RDKit::SmilesParserParams::parseName,
+      .def_rw("parseName",
+              &RDKit::v2::SmilesParse::SmilesParserParams::parseName,
               "controls whether or not the molecule name is also parsed")
-      .def_rw("allowCXSMILES", &RDKit::SmilesParserParams::allowCXSMILES,
+      .def_rw("allowCXSMILES",
+              &RDKit::v2::SmilesParse::SmilesParserParams::allowCXSMILES,
               "controls whether or not the CXSMILES extensions are parsed")
-      .def_rw("strictCXSMILES", &RDKit::SmilesParserParams::strictCXSMILES,
+      .def_rw("strictCXSMILES",
+              &RDKit::v2::SmilesParse::SmilesParserParams::strictCXSMILES,
               "controls whether or not problems in CXSMILES parsing "
               "causes molecule parsing to fail")
-      .def_rw("sanitize", &RDKit::SmilesParserParams::sanitize,
+      .def_rw("sanitize", &RDKit::v2::SmilesParse::SmilesParserParams::sanitize,
               "controls whether or not the molecule is sanitized before "
               "being returned")
-      .def_rw("removeHs", &RDKit::SmilesParserParams::removeHs,
+      .def_rw("removeHs", &RDKit::v2::SmilesParse::SmilesParserParams::removeHs,
               "controls whether or not Hs are removed before the "
               "molecule is returned")
+      .def_rw("flagPossible",
+              &RDKit::v2::SmilesParse::SmilesParserParams::flagPossible,
+              "controls whether or not to flag possible chiral centers")
       .def("__setattr__", &safeSetattr);
   nb::class_<RDKit::SmartsParserParams>(m, "SmartsParserParams",
                                         "Parameters controlling SMARTS parsing")
@@ -2634,9 +2645,10 @@ NB_MODULE(rdmolfiles, m) {
       m, "CDXMLParserParams",
       "Parameters controlling conversion of a CDXML document to molecules")
       .def(nb::init<>(), "Construct a default CDXMLFormat")
-      .def(nb::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat, bool, bool>(),
-	   "sanitize"_a, "removeHs"_a, "format"_a,
-	   "parseQueries"_a=false, "strictQueryParsing"_a=false)
+      .def(nb::init<bool, bool, RDKit::v2::CDXMLParser::CDXMLFormat, bool,
+                    bool>(),
+           "sanitize"_a, "removeHs"_a, "format"_a, "parseQueries"_a = false,
+           "strictQueryParsing"_a = false)
       .def_rw("sanitize", &RDKit::v2::CDXMLParser::CDXMLParserParams::sanitize,
               "controls whether or not the molecule is sanitized before "
               "being returned")
@@ -2647,14 +2659,14 @@ NB_MODULE(rdmolfiles, m) {
           "format", &RDKit::v2::CDXMLParser::CDXMLParserParams::format,
           "ChemDraw format One of Auto, CDXML, CDX.  For data streams, Auto defaults to CDXML")
       .def_rw(
-        "parseQueries",
-        &RDKit::v2::CDXMLParser::CDXMLParserParams::parseQueries,
-        "controls whether CDXML query constructs are preserved as query atoms and bonds")
+          "parseQueries",
+          &RDKit::v2::CDXMLParser::CDXMLParserParams::parseQueries,
+          "controls whether CDXML query constructs are preserved as query atoms and bonds")
       .def_rw(
-        "strictQueryParsing",
-        &RDKit::v2::CDXMLParser::CDXMLParserParams::strictQueryParsing,
-        "controls whether unsupported CDXML query constructs raise instead of warning")
-    
+          "strictQueryParsing",
+          &RDKit::v2::CDXMLParser::CDXMLParserParams::strictQueryParsing,
+          "controls whether unsupported CDXML query constructs raise instead of warning")
+
       .def("__setattr__", &safeSetattr);
 
   docString =

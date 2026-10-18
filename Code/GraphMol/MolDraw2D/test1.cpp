@@ -4251,7 +4251,7 @@ void testGithub3305() {
     outs.flush();
     outs.close();
 #if DO_TEST_ASSERT
-    TEST_ASSERT(text.find("stroke-width:4.2px") != std::string::npos);
+    TEST_ASSERT(text.find("stroke-width:4.1px") != std::string::npos);
 #endif
     check_file_hash(nameBase + "3.svg");
   }
@@ -4284,6 +4284,9 @@ void testGithub3305() {
   {
     auto m = "CCOC(=O)Nc1ccc(SCC2COC(Cn3ccnc3)(c3ccc(Cl)cc3Cl)O2)cc1"_smiles;
     TEST_ASSERT(m);
+    // the coordinates below need to atom ordering provided by the legacy CIP
+    // labels
+    Chirality::assignLegacyCIPLabels(*m);
     RDDepict::compute2DCoords(*m);
     Chirality::wedgeMolBonds(*m, &(m->getConformer()));
 

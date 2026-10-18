@@ -3695,6 +3695,13 @@ CAS<~>
     self.assertEqual(l, ())
     qa = rdqueries.MissingChiralTagQueryAtom()
     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, ())
+    Chem.FindPotentialStereo(m)
+    qa = rdqueries.HasChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, ())
+    qa = rdqueries.MissingChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
     self.assertEqual(l, (1, ))
 
     m = Chem.MolFromSmiles('CNCON')
@@ -4537,9 +4544,7 @@ $$$$
     m = Chem.MolFromSmiles('c1ccccc1C(C)C')
     for atom in m.GetAtoms():
       d = atom.GetPropsAsDict()
-      self.assertEqual(set(d.keys()), set(['_CIPRank', '__computedProps']))
-      self.assertEqual(type(d['_CIPRank']), int)
-      self.assertEqual(list(d['__computedProps']), ['_CIPRank'])
+      self.assertEqual(d,{})
 
     m = Chem.MolFromSmiles('c1ccccc1')
     self.assertEqual(Chem.ComputeAtomCIPRanks(m), (0, 0, 0, 0, 0, 0))

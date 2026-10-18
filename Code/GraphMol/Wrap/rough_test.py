@@ -3618,13 +3618,20 @@ CAS<~>
     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
     self.assertEqual(l, (2, ))
 
-    m = Chem.MolFromSmiles('F[C@H](Cl)C')
+    m = Chem.MolFromSmiles('F[CH](Cl)C')
     qa = rdqueries.HasChiralTagQueryAtom()
     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
-    self.assertEqual(l, (1, ))
+    self.assertEqual(l, ())
     qa = rdqueries.MissingChiralTagQueryAtom()
     l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
     self.assertEqual(l, ())
+    Chem.FindPotentialStereo(m)
+    qa = rdqueries.HasChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, ())
+    qa = rdqueries.MissingChiralTagQueryAtom()
+    l = tuple([x.GetIdx() for x in m.GetAtomsMatchingQuery(qa)])
+    self.assertEqual(l, (1, ))
 
     m = Chem.MolFromSmiles('F[CH](Cl)C')
     qa = rdqueries.HasChiralTagQueryAtom()
@@ -8522,8 +8529,7 @@ M  END
 
     legacy = Chem.MolFromSmiles("*C |$_AP37;$|")
     self.assertEqual(Chem.ATTACHMENT_POINT_LABEL_PREFIX, "_AP")
-    self.assertEqual(
-      Chem.GetAttachmentPointLabelNumber(legacy.GetAtomWithIdx(0)), 37)
+    self.assertEqual(Chem.GetAttachmentPointLabelNumber(legacy.GetAtomWithIdx(0)), 37)
     self.assertTrue(Chem.IsMarkedAttachmentPoint(legacy.GetAtomWithIdx(0)))
     Chem.CollapseAttachmentPoints(legacy)
     self.assertEqual(legacy.GetNumAtoms(), 1)

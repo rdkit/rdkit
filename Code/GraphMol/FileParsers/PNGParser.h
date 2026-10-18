@@ -112,6 +112,8 @@ inline std::string addMetadataToPNGFile(
 //! \name molecules to/from PNG
 //! @{
 
+namespace v2 {
+namespace FileParsers {
 //! \brief constructs an ROMol from the metadata in a PNG stream
 /*!
 
@@ -123,9 +125,95 @@ Throws a \c FileParseException if no suitable tag is found.
 The caller is responsible for the returned pointer.
 
  */
-RDKIT_FILEPARSERS_EXPORT ROMol *PNGStreamToMol(
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<ROMol> MolFromPNGStream(
+    std::istream &inStream, const v2::SmilesParse::SmilesParserParams &params =
+                                v2::SmilesParse::SmilesParserParams());
+//! \brief constructs an ROMol from the metadata in a PNG file.
+//! See \c MolFromPNGStream() for more details.
+inline std::unique_ptr<ROMol> MolFromPNGFile(
+    const std::string &fname,
+    const v2::SmilesParse::SmilesParserParams &params =
+        v2::SmilesParse::SmilesParserParams()) {
+  std::ifstream inStream(fname.c_str(), std::ios::binary);
+  if (!inStream || (inStream.bad())) {
+    throw BadFileException((boost::format("Bad input file %s") % fname).str());
+  }
+  return MolFromPNGStream(inStream, params);
+}
+//! \brief constructs an ROMol from the metadata in a PNG string.
+//! See \c MolFromPNGStream() for more details.
+inline std::unique_ptr<ROMol> MolFromPNGString(
+    const std::string &data, const v2::SmilesParse::SmilesParserParams &params =
+                                 v2::SmilesParse::SmilesParserParams()) {
+  std::stringstream inStream(data);
+  return MolFromPNGStream(inStream, params);
+}
+
+//! \brief constructs a vector of ROMol from the metadata in a PNG stream
+/*!
+
+Looks through the metadata in the PNG to find tags that start with tagToUse
+(must be one of the tags in \c RDKit::PNGData). The molecules constructed from
+these data are returned.
+
+ */
+RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<ROMol>> MolsFromPNGStream(
+    std::istream &inStream, const std::string &tagToUse = PNGData::pklTag,
+    const v2::SmilesParse::SmilesParserParams &params =
+        v2::SmilesParse::SmilesParserParams());
+//! \brief constructs a vector of ROMol from the metadata in a PNG file.
+//! See \c MolsFromPNGStream() for more details.
+inline std::vector<std::unique_ptr<ROMol>> MolsFromPNGFile(
+    const std::string &fname, const std::string &tagToUse = PNGData::pklTag,
+    const v2::SmilesParse::SmilesParserParams &params =
+        v2::SmilesParse::SmilesParserParams()) {
+  std::ifstream inStream(fname.c_str(), std::ios::binary);
+  if (!inStream || (inStream.bad())) {
+    throw BadFileException((boost::format("Bad input file %s") % fname).str());
+  }
+  return MolsFromPNGStream(inStream, tagToUse, params);
+}
+//! \brief constructs a vector of ROMol from the metadata in a PNG string.
+//! See \c MolsFromPNGStream() for more details.
+inline std::vector<std::unique_ptr<ROMol>> MolsFromPNGString(
+    const std::string &data, const std::string &tagToUse = PNGData::pklTag,
+    const v2::SmilesParse::SmilesParserParams &params =
+        v2::SmilesParse::SmilesParserParams()) {
+  std::stringstream inStream(data);
+  return MolsFromPNGStream(inStream, tagToUse, params);
+}
+}  // namespace FileParsers
+}  // namespace v2
+
+inline namespace v1 {
+//! \brief constructs an ROMol from the metadata in a PNG stream
+/*!
+
+Looks through the metadata in the PNG to find the first tag that matches one of
+the tags in \c RDKit::PNGData. A molecule is constructed from this chunk.
+
+Throws a \c FileParseException if no suitable tag is found.
+
+The caller is responsible for the returned pointer.
+
+ */
+inline ROMol *PNGStreamToMol(
     std::istream &inStream,
-    const SmilesParserParams &params = SmilesParserParams());
+    const SmilesParserParams &ps = SmilesParserParams()) {
+  v2::SmilesParse::SmilesParserParams v2ps;
+  v2ps.debugParse = ps.debugParse;
+  v2ps.sanitize = ps.sanitize;
+
+  if (ps.replacements) {
+    v2ps.replacements = *ps.replacements;
+  }
+  v2ps.allowCXSMILES = ps.allowCXSMILES;
+  v2ps.strictCXSMILES = ps.strictCXSMILES;
+  v2ps.parseName = ps.parseName;
+  v2ps.removeHs = ps.removeHs;
+  v2ps.skipCleanup = ps.skipCleanup;
+  return v2::FileParsers::MolFromPNGStream(inStream, v2ps).release();
+};
 //! \brief constructs an ROMol from the metadata in a PNG file.
 //! See \c PNGStreamToMol() for more details.
 inline ROMol *PNGFileToMol(
@@ -154,9 +242,22 @@ Looks through the metadata in the PNG to find tags that start with tagToUse
 these data are returned.
 
  */
-RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
+inline std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
     std::istream &inStream, const std::string &tagToUse = PNGData::pklTag,
-    const SmilesParserParams &params = SmilesParserParams());
+    const SmilesParserParams &params = SmilesParserParams()) {
+  v2::SmilesParse::SmilesParserParams v2ps;
+  v2ps.debugParse = params.debugParse;
+  v2ps.sanitize = params.sanitize;
+  if (params.replacements) {
+    v2ps.replacements = *params.replacements;
+  }
+  v2ps.allowCXSMILES = params.allowCXSMILES;
+  v2ps.strictCXSMILES = params.strictCXSMILES;
+  v2ps.parseName = params.parseName;
+  v2ps.removeHs = params.removeHs;
+  v2ps.skipCleanup = params.skipCleanup;
+  return v2::FileParsers::MolsFromPNGStream(inStream, tagToUse, v2ps);
+};
 //! \brief constructs a vector of ROMol from the metadata in a PNG file.
 //! See \c PNGStreamToMols() for more details.
 inline std::vector<std::unique_ptr<ROMol>> PNGFileToMols(
@@ -176,6 +277,8 @@ inline std::vector<std::unique_ptr<ROMol>> PNGStringToMols(
   std::stringstream inStream(data);
   return PNGStreamToMols(inStream, tagToUse, params);
 }
+
+}  // namespace v1
 
 //! \brief adds metadata for an ROMol to the data from a PNG stream.
 //! The modified PNG data is returned.

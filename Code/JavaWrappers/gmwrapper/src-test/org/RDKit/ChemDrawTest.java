@@ -68,11 +68,12 @@ public class ChemDrawTest extends GraphMolTest {
 				 + File.separator + "test_data" + File.separator +
 				 "CDXML" + File.separator + "ring-stereo1.cdx");
 	fn = testFile.getAbsolutePath();
-	params = new ChemDrawParserParams(true, true, CDXFormat.CDX);
+	params = new ChemDrawParserParams();
+	params.setFormat(CDXFormat.CDX);
 	prods = RDKFuncs.MolsFromChemDrawFile(fn, params);
 	assertEquals(prods.size(), 1);
 
-	params = new ChemDrawParserParams(true, true, CDXFormat.CDXML);
+	params.setFormat(CDXFormat.CDXML);
 	boolean e = false;
 	try {
 	    prods = RDKFuncs.MolsFromChemDrawFile(fn, params);

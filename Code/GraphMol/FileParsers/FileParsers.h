@@ -52,6 +52,8 @@ struct RDKIT_FILEPARSERS_EXPORT MolFileParserParams {
   bool expandAttachmentPoints =
       false; /**< toggle conversion of attachment points into dummy atoms */
   bool parsingSCSRMol = false; /**< if true, we are parsing a SCSR mol file */
+  bool flagPossible = false; /**< whether to flag possible chiral centers in the
+                                  result molecule */
 };
 enum class SCSRTemplateNames {
   AsEntered,     //<! use the name of the temlate as entered in the SCSR Mol
@@ -270,6 +272,8 @@ struct Mol2ParserParams {
   Mol2Type variant = Mol2Type::CORINA; /**< the atom type definitions to use */
   bool cleanupSubstructures =
       true; /**< toggles recognition and cleanup of common substructures */
+  bool flagPossible = false; /**< whether to flag possible chiral centers in the
+                              result molecule */
 };
 
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMol2DataStream(

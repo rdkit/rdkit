@@ -459,6 +459,7 @@ struct SmilesMolSupplierParams {
       true,   // removeHs
       false,  // skipCleanup
       false,  // debugParse
+      false,  // flagPossible
       {}      // replacements
   };
 };
@@ -553,6 +554,7 @@ struct TDTMolSupplierParams {
       true,   // removeHs
       false,  // skipCleanup
       false,  // debugParse
+      false,  // flagPossible
       {}      // replacements
   };
 };

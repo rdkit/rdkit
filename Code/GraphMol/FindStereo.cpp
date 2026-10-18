@@ -546,11 +546,10 @@ bool areStereobondControllingAtomsDupes(
 }  // namespace
 
 namespace {
-void initAtomInfo(
-    ROMol &mol, bool flagPossible, bool cleanIt,
-    boost::dynamic_bitset<> &knownAtoms,
-    std::vector<Canon::AtomCompareCode> &atomCompareCodes,
-    boost::dynamic_bitset<> &possibleAtoms) {
+void initAtomInfo(ROMol &mol, bool flagPossible, bool cleanIt,
+                  boost::dynamic_bitset<> &knownAtoms,
+                  std::vector<Canon::AtomCompareCode> &atomCompareCodes,
+                  boost::dynamic_bitset<> &possibleAtoms) {
   std::vector<std::string> uniqueSymbols;
   std::vector<std::uint32_t> symbolIds(mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
@@ -567,10 +566,10 @@ void initAtomInfo(
   }
   std::vector<std::uint32_t> symbolOrder(uniqueSymbols.size());
   std::iota(symbolOrder.begin(), symbolOrder.end(), 0);
-  std::ranges::sort(
-      symbolOrder, {}, [&uniqueSymbols](auto symbolId) -> const std::string & {
-        return uniqueSymbols[symbolId];
-      });
+  std::ranges::sort(symbolOrder, {},
+                    [&uniqueSymbols](auto symbolId) -> const std::string & {
+                      return uniqueSymbols[symbolId];
+                    });
   std::vector<std::uint32_t> symbolRanks(uniqueSymbols.size());
   for (std::uint32_t rank = 0; rank < symbolOrder.size(); ++rank) {
     symbolRanks[symbolOrder[rank]] = rank;
@@ -798,14 +797,14 @@ void flagRingStereo(ROMol &mol,
   }
 }
 
-bool updateAtoms(
-    ROMol &mol, const std::vector<unsigned int> &aranks,
-    std::vector<Canon::AtomCompareCode> &atomCompareCodes,
-    boost::dynamic_bitset<> &possibleAtoms, boost::dynamic_bitset<> &knownAtoms,
-    boost::dynamic_bitset<> &fixedAtoms,
-    std::vector<unsigned int> &possibleRingStereoAtoms,
-    std::vector<unsigned int> &possibleRingStereoBonds,
-    std::vector<StereoInfo> &sinfos) {
+bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
+                 std::vector<Canon::AtomCompareCode> &atomCompareCodes,
+                 boost::dynamic_bitset<> &possibleAtoms,
+                 boost::dynamic_bitset<> &knownAtoms,
+                 boost::dynamic_bitset<> &fixedAtoms,
+                 std::vector<unsigned int> &possibleRingStereoAtoms,
+                 std::vector<unsigned int> &possibleRingStereoBonds,
+                 std::vector<StereoInfo> &sinfos) {
   bool needAnotherRound = false;
   for (const auto atom : mol.atoms()) {
     auto aidx = atom->getIdx();
@@ -1269,7 +1268,16 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
     mol.updatePropertyCache(false);
   }
   std::vector<StereoInfo> res = runCleanup(mol, findPossible, cleanIt);
-  mol.setProp("_potentialStereo", res, true);
+  mol.setProp(detail::_PotentialStereo, res, true);
+  if (findPossible) {
+    for (const auto &stereoInfo : res) {
+      if (stereoInfo.type == StereoType::Atom_Tetrahedral &&
+          stereoInfo.specified == StereoSpecified::Unspecified) {
+        mol.getAtomWithIdx(stereoInfo.centeredOn)
+            ->setProp(common_properties::_ChiralityPossible, true, true);
+      }
+    }
+  }
   return res;
 }
 
@@ -1277,7 +1285,8 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
 // doesn't modify the molecule if cleanIt is false:
 std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
   bool cleanIt = false;
-  return findPotentialStereo(const_cast<ROMol &>(mol), cleanIt);
+  bool findPossible = true;
+  return findPotentialStereo(const_cast<ROMol &>(mol), cleanIt, findPossible);
 }
 
 }  // namespace Chirality
