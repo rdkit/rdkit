@@ -16,3 +16,12 @@
 #include "BadFileException.h"
 #include "Exceptions.h"
 #include "FileParseException.h"
+
+IndexErrorException::~IndexErrorException() noexcept = default;
+ValueErrorException::~ValueErrorException() noexcept = default;
+KeyErrorException::~KeyErrorException() noexcept = default;
+
+namespace RDKit {
+BadFileException::~BadFileException() noexcept = default;
+FileParseException::~FileParseException() noexcept = default;
+}  // namespace RDKit
