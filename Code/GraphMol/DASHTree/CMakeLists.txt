@@ -14,6 +14,10 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   add_subdirectory(Wrap)
 endif()
 
+if(RDK_BUILD_NANOBIND_WRAPPERS)
+  add_subdirectory(nbWrap)
+endif()
+
 else()
 message("The DASHTree module needs boost::iostreams and a little-endian host, so not building.")
 endif()
