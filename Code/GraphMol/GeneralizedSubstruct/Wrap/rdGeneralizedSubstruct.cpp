@@ -94,7 +94,7 @@ ExtendedQueryMol *createExtendedQueryMolHelper(
     const RWMol &wmol = dynamic_cast<const RWMol&>(mol);
     return new ExtendedQueryMol(createExtendedQueryMol(
 	wmol, doEnumeration, doTautomers, adjustQueryProperties, *ps));
-  } except (std::bad_cast) {
+  } catch (const std::bad_cast &) {
     RWMol wmol(mol);
     return new ExtendedQueryMol(createExtendedQueryMol(
 	wmol, doEnumeration, doTautomers, adjustQueryProperties, *ps));    
