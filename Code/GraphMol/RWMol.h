@@ -43,7 +43,8 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     \param confId if this is >=0, the resulting ROMol will contain only
          the specified conformer from \c other.
   */
-  explicit RWMol(const ROMol &other, bool quickCopy = false, int confId = -1)
+  /*explicit* - this will eventually become explicit turn on for development */
+  RWMol(const ROMol &other, bool quickCopy = false, int confId = -1)
       : ROMol(other, quickCopy, confId) {}
   RWMol(const RWMol &other) : ROMol(other) {}
   RWMol &operator=(const RWMol &);
