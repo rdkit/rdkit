@@ -11,33 +11,20 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <limits>
 
 #include <GraphMol/ROMol.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/Exceptions.h>
+#include <RDGeneral/RDLog.h>
 
 #include "DASHTreeImpl.h"
 
 namespace RDKit {
 namespace DASH {
 
-using namespace detail;
-
 namespace {
-
-//! reads through a mapped range so later accesses do not fault
-void touchRange(const void *data, std::size_t nBytes) {
-  const auto *p = static_cast<const volatile unsigned char *>(data);
-  unsigned char sink = 0;
-  for (std::size_t i = 0; i < nBytes; i += 4096) {
-    sink ^= p[i];
-  }
-  if (nBytes) {
-    sink ^= p[nBytes - 1];
-  }
-  (void)sink;
-}
 
 //! bytes one value of \p dtype occupies, or 0 if it is not a type we know
 std::size_t dtypeWidth(std::uint8_t dtype) {
@@ -54,22 +41,27 @@ std::size_t dtypeWidth(std::uint8_t dtype) {
   }
 }
 
-//! reads a NUL-padded fixed-width name out of the property directory
+//! reads a NUL-padded fixed-width name from the property directory
 std::string propertyEntryName(const char *entry) {
-  char buf[dashPropertyNameLen + 1];
-  std::memcpy(buf, entry, dashPropertyNameLen);
-  buf[dashPropertyNameLen] = '\0';
-  return std::string(buf);
+  // a name of the full width carries no terminator, so never read beyond it
+  return std::string(entry,
+                     std::find(entry, entry + dashPropertyNameLen, '\0'));
 }
+
+//! Bound on the embeddings one descent keeps alive. Atoms that look alike
+//! multiply them: a dozen at most for drug-like molecules, about a hundred for
+//! tetraphenylmethane. Embeddings past the bound are dropped, the one place
+//! where the atom order could still reach the result.
+constexpr std::size_t maxEmbeddings = 256;
 
 }  // namespace
 
 // ---------------------------------------------------------------------------
-//  DASHTree::Impl -- mapping the container
+//  DASHTree::Impl, the mapped container
 // ---------------------------------------------------------------------------
 
 DASHTree::Impl::Impl(const std::string &filename,
-                     const std::vector<std::string> &properties, bool prefetch)
+                     const std::vector<std::string> &properties)
     : d_filename(filename) {
   try {
     d_map.open(filename);
@@ -82,8 +74,7 @@ DASHTree::Impl::Impl(const std::string &filename,
   }
   const std::size_t size = d_map.size();
   if (size < dashHeaderSize) {
-    throw ValueErrorException("'" + filename +
-                              "' is too short to be a DASH tree");
+    throw BadFileException("'" + filename + "' is too short to be a DASH tree");
   }
   const char *base = d_map.data();
   std::memcpy(&d_header, base, sizeof(d_header));
@@ -99,14 +90,15 @@ DASHTree::Impl::Impl(const std::string &filename,
   if (d_header.version != dashFormatVersion) {
     throw ValueErrorException(
         "'" + filename + "' is DASH container version " +
-        std::to_string(d_header.version) + "; this build reads version " +
+        std::to_string(d_header.version) + ". This build reads version " +
         std::to_string(dashFormatVersion) +
         (d_header.version > dashFormatVersion
              ? ". Please rebuild with a more recent version of the RDKit."
-             : ". Please re-run tools/dash_convert.py to regenerate it."));
+             : ". Please regenerate it with python -m rdkit.Chem.DASHTree.convert."));
   }
   if (d_header.fileSize != size) {
-    throw ValueErrorException("'" + filename + "' is truncated: the header says " +
+    throw ValueErrorException("'" + filename +
+                              "' is truncated: the header says " +
                               std::to_string(d_header.fileSize) +
                               " bytes, the file is " + std::to_string(size));
   }
@@ -114,7 +106,7 @@ DASHTree::Impl::Impl(const std::string &filename,
     throw ValueErrorException("'" + filename + "' contains no tree");
   }
 
-  // Every array must lie inside the file and be aligned for its type: the
+  // Every array must lie inside the file and be aligned for its type. The
   // arrays are read in place, so a bad offset would be an out-of-bounds or
   // misaligned load rather than a parse error.
   auto resolve = [&](std::uint64_t offset, std::uint64_t nBytes,
@@ -140,37 +132,34 @@ DASHTree::Impl::Impl(const std::string &filename,
               alignof(NodeRecord), "the node records"));
   d_nodeAttn = reinterpret_cast<const float *>(
       resolve(d_header.offNodeAttn, nNodes * 4ull, 4, "the attentions"));
-  if (d_header.offNodeSourceId) {
-    d_nodeSourceId = reinterpret_cast<const std::uint32_t *>(
-        resolve(d_header.offNodeSourceId, nNodes * 4ull, 4, "the source ids"));
-  }
   resolve(d_header.offPropertyDir,
           d_header.numProperties * (std::uint64_t)dashPropertyEntrySize, 8,
           "the property directory");
 
-  if (d_header.maxChildren > 255) {
-    throw ValueErrorException("'" + filename +
-                              "' is corrupt: it claims a node with more than "
-                              "255 children");
-  }
-  // A tree whose keys the reader cannot express would silently never match, so
-  // refuse it rather than return wrong numbers.
-  if (d_header.maxAtomType > maxKeyAtomType ||
-      d_header.maxConAtom > maxKeyConAtom ||
-      d_header.maxConType > maxKeyConType) {
-    throw ValueErrorException(
-        "'" + filename +
-        "' uses match keys outside the range this build can encode");
-  }
-  // the roots must ascend: a branch owns every id up to the next root, which
-  // is what lets a node be addressed by branch and offset
+  // the roots must ascend from 0. A branch owns every id up to the next root,
+  // so a node can be addressed by branch and offset.
   for (std::uint32_t b = 0; b < d_header.numBranches; ++b) {
     if (d_branchRoot[b] >= nNodes ||
-        (b && d_branchRoot[b] <= d_branchRoot[b - 1])) {
+        (b ? d_branchRoot[b] <= d_branchRoot[b - 1] : d_branchRoot[b] != 0)) {
       throw ValueErrorException(
           "'" + filename +
           "' is corrupt: branch roots out of range or out of order");
     }
+  }
+  // the atom-feature table has one class per branch
+  if (d_header.numFeatures != d_header.numBranches) {
+    throw ValueErrorException(
+        "'" + filename + "' is corrupt: " +
+        std::to_string(d_header.numFeatures) + " atom-feature classes for " +
+        std::to_string(d_header.numBranches) + " branches");
+  }
+  const auto *featureTable = reinterpret_cast<const AtomFeature *>(resolve(
+      d_header.offFeatureTable, d_header.numFeatures * sizeof(AtomFeature),
+      alignof(AtomFeature), "the atom-feature table"));
+  try {
+    d_features = AtomFeatureLookup(featureTable, d_header.numFeatures);
+  } catch (const ValueErrorException &e) {
+    throw ValueErrorException("'" + filename + "': " + e.what());
   }
 
   // resolve the requested property columns
@@ -179,6 +168,7 @@ DASHTree::Impl::Impl(const std::string &filename,
     const char *entry =
         base + d_header.offPropertyDir + i * dashPropertyEntrySize;
     const std::string name = propertyEntryName(entry);
+    d_allPropertyNames.push_back(name);
     if (!wantAll && std::find(properties.begin(), properties.end(), name) ==
                         properties.end()) {
       continue;
@@ -195,11 +185,11 @@ DASHTree::Impl::Impl(const std::string &filename,
                                 std::to_string(dtype));
     }
     PropertyColumn column;
-    column.name = name;
     column.dtype = static_cast<PropertyDType>(dtype);
     column.data = resolve(offset, nNodes * width, width,
                           ("property '" + name + "'").c_str());
     d_properties.push_back(column);
+    d_propertyNames.push_back(name);
   }
   for (const auto &want : properties) {
     if (propertyIndex(want) < 0) {
@@ -208,22 +198,14 @@ DASHTree::Impl::Impl(const std::string &filename,
         have += (have.empty() ? "" : ", ") + name;
       }
       throw ValueErrorException("'" + filename + "' has no property '" + want +
-                                "'; it has: " + have);
-    }
-  }
-
-  if (prefetch) {
-    touchRange(d_node, nNodes * sizeof(NodeRecord));
-    touchRange(d_nodeAttn, nNodes * 4ull);
-    for (const auto &column : d_properties) {
-      touchRange(column.data, nNodes * dtypeWidth(column.dtype));
+                                "'. It has: " + have);
     }
   }
 }
 
 int DASHTree::Impl::propertyIndex(const std::string &name) const {
-  for (std::size_t i = 0; i < d_properties.size(); ++i) {
-    if (d_properties[i].name == name) {
+  for (std::size_t i = 0; i < d_propertyNames.size(); ++i) {
+    if (d_propertyNames[i] == name) {
       return static_cast<int>(i);
     }
   }
@@ -234,57 +216,70 @@ const PropertyColumn &DASHTree::Impl::property(const std::string &name) const {
   const int idx = propertyIndex(name);
   if (idx < 0) {
     std::string have;
-    for (const auto &column : d_properties) {
-      have += (have.empty() ? "" : ", ") + column.name;
+    for (const auto &resolved : d_propertyNames) {
+      have += (have.empty() ? "" : ", ") + resolved;
     }
-    throw ValueErrorException("property '" + name +
-                              "' was not loaded from this DASH tree; loaded: " +
-                              (have.empty() ? "(none)" : have));
+    throw ValueErrorException(
+        "property '" + name +
+        "' was not resolved when this DASH tree was opened. Resolved: " +
+        (have.empty() ? "(none)" : have));
   }
   return d_properties[idx];
 }
 
-std::vector<std::string> DASHTree::Impl::allPropertyNames() const {
-  std::vector<std::string> names;
-  const char *base = d_map.data();
-  for (std::uint32_t i = 0; i < d_header.numProperties; ++i) {
-    names.push_back(propertyEntryName(base + d_header.offPropertyDir +
-                                      i * dashPropertyEntrySize));
-  }
-  return names;
+void DASHTree::Impl::throwCorruptChildren(std::uint32_t node) const {
+  throw ValueErrorException(
+      "'" + d_filename + "' is corrupt: the children of node " +
+      std::to_string(node) + " lie outside its branch, or not after it");
 }
 
 // ---------------------------------------------------------------------------
-//  MolMatcher -- the descent
+//  MolMatcher, the descent
 // ---------------------------------------------------------------------------
 
 void MolMatcher::setMolecule(const ROMol &mol) {
   // The feature tuple needs the implicit-valence cache. RDKit would throw from
-  // deep inside getTotalNumHs; say so here instead, and say it once rather than
+  // deep inside getTotalNumHs. Say so here instead, and say it once rather than
   // from N threads.
   if (mol.needsUpdatePropertyCache()) {
     throw ValueErrorException(
-        "DASH needs the molecule's property cache: call "
-        "updatePropertyCache() (or sanitize the molecule) first");
+        "DASH needs the molecule's property cache. Call "
+        "updatePropertyCache() or sanitize the molecule first");
+  }
+  // only sanitization sets the conjugation flags the atom classes read, and it
+  // always initializes the ring info, so the ring info is a proxy for it
+  if (!mol.getRingInfo()->isInitialized()) {
+    BOOST_LOG(rdWarningLog) << "DASH: the molecule is not sanitized, so its "
+                               "atoms may be misclassified"
+                            << std::endl;
   }
 
   d_numAtoms = mol.getNumAtoms();
   d_feature.resize(d_numAtoms);
   d_nbrStart.assign(d_numAtoms + 1, 0);
-  d_seen.assign(d_numAtoms, 0);
-  d_generation = 0;
 
   for (unsigned int i = 0; i < d_numAtoms; ++i) {
     const Atom *atom = mol.getAtomWithIdx(i);
-    const int feature = atomFeatureIndex(atom);
+    // hydrogens carry charges of their own and the tree matches them as atoms,
+    // so DASH would assign wrong values to a molecule with implicit ones
+    if (atom->getTotalNumHs(false)) {
+      throw ValueErrorException(
+          "DASH needs explicit hydrogens, but atom " + std::to_string(i) +
+          " (" + atom->getSymbol() + ") has " +
+          std::to_string(atom->getTotalNumHs(false)) +
+          " that are not atoms of the molecule. Add them first with Chem.AddHs "
+          "or MolOps::addHs");
+    }
+    const int feature = d_tree.d_features.index(atom);
     if (feature < 0) {
       throw ValueErrorException(
-          "DASH cannot assign atom " + std::to_string(i) + " (" +
+          "DASH cannot assign values to atom " + std::to_string(i) + " (" +
           atom->getSymbol() + ", degree " + std::to_string(atom->getDegree()) +
           ", charge " + std::to_string(atom->getFormalCharge()) + ", " +
           std::to_string(atom->getTotalNumHs(true)) +
-          " H): its atom type is not one of the " +
-          std::to_string(numAtomFeatures) + " the DASH trees cover");
+          " H): it is in none of the " +
+          std::to_string(d_tree.d_features.size()) +
+          " atom-feature classes of this tree");
     }
     d_feature[i] = feature;
     d_nbrStart[i + 1] = atom->getDegree();
@@ -295,49 +290,124 @@ void MolMatcher::setMolecule(const ROMol &mol) {
   d_nbrAtom.resize(d_nbrStart[d_numAtoms]);
   d_nbrKey.resize(d_nbrStart[d_numAtoms]);
 
-  // The neighbour list is walked in RDKit's own order, which the match depends
-  // on: where two candidates carry the same key, the earlier one is bound.
+  // The neighbour list is walked in RDKit's own order. That order decides which
+  // candidate legacyTieBreaking binds, which embeddings the maxEmbeddings bound
+  // drops, and which of several equivalent matches getMatchedSubstructure()
+  // reports.
   for (unsigned int i = 0; i < d_numAtoms; ++i) {
     const Atom *atom = mol.getAtomWithIdx(i);
     std::uint32_t at = d_nbrStart[i];
-    for (const auto nbr : mol.atomNeighbors(atom)) {
-      const unsigned int nbrIdx = nbr->getIdx();
+    for (const auto bond : mol.atomBonds(atom)) {
+      const unsigned int nbrIdx = bond->getOtherAtomIdx(i);
       d_nbrAtom[at] = nbrIdx;
-      // the key of the *neighbour*, attached to atom i by the bond between them
+      // the key of the *neighbour*, attached to atom i by the bond between
+      // them. DASH's bond descriptor is 4 if conjugated, else the bond order.
       d_nbrKey[at] = packPartialMatchKey(
-          d_feature[nbrIdx], dashBondType(mol.getBondBetweenAtoms(nbrIdx, i)));
+          d_feature[nbrIdx],
+          bond->getIsConjugated() ? 4 : static_cast<int>(bond->getBondType()));
       ++at;
     }
   }
 }
 
-// The nesting here IS the algorithm, and getting it the wrong way round is not
-// a small error: the first child *in tree order* that matches any live
-// candidate wins, and among the candidates carrying that child's key the
-// earliest one is bound. Iterating candidates on the outside -- the natural
-// shape if you were tempted to sort the children by key and binary-search --
-// picks a different node for the great majority of atoms.
-bool MolMatcher::pickChild(std::uint32_t node, std::uint32_t &childNode,
-                           std::uint32_t &childAtom) {
-  const NodeRecord &record = d_tree.d_node[node];
-  const std::uint32_t first = record.firstChild;
-  const std::uint32_t last = first + record.numChildren;
-  const std::size_t nCand = d_candKey.size();
+// The next node is the first child, in tree order, that any live embedding can
+// extend to. The tree's builder created a node's children in order of
+// attention, highest first, so that is the best-attended continuation. Every
+// candidate with the child's key is bound, each in its own copy of the
+// embedding. Atoms that look alike so far stay in play until the tree
+// distinguishes them. Examples are the two CH2 next to an isoindoline NH and
+// the ortho carbons of a ring. So below the maxEmbeddings bound the result does
+// not depend on the atom order, and symmetry-equivalent atoms get the same
+// value. With legacyTieBreaking only the first candidate is bound, as the
+// DASH-tree python package does.
+//
+// The nesting matters: children outside, candidates inside. A loop with the
+// candidates on the outside picks a different node for the great majority of
+// atoms. That loop is the natural shape if you sort the children by key and
+// binary-search them.
+bool MolMatcher::step(bool legacyTieBreaking) {
+  const auto [first, last] = d_tree.children(d_path.back(), d_branchEnd);
+  std::uint64_t filter = 0;
+  for (std::size_t i = 0; i < d_numLive; ++i) {
+    filter |= d_live[i].candFilter;
+  }
   for (std::uint32_t child = first; child < last; ++child) {
     const std::uint16_t key = d_tree.d_node[child].key;
-    // one test throws out most children before the candidate scan
-    if (!((d_candFilter >> (key & 63u)) & 1u)) {
+    // one test rejects most children before the candidate scan
+    if (!((filter >> (key & 63u)) & 1u)) {
       continue;
     }
-    for (std::size_t c = 0; c < nCand; ++c) {
-      if (d_candKey[c] == key) {
-        childNode = child;
-        childAtom = d_candAtom[c];
-        return true;
-      }
+    findMatches(key, legacyTieBreaking);
+    if (!d_matches.empty()) {
+      d_path.push_back(child);
+      advance();
+      return true;
     }
   }
   return false;
+}
+
+void MolMatcher::findMatches(std::uint16_t key, bool legacyTieBreaking) {
+  d_matches.clear();
+  for (std::uint32_t i = 0; i < d_numLive; ++i) {
+    const Embedding &embedding = d_live[i];
+    bool terminalFound = false;
+    for (std::uint32_t c = 0; c < embedding.candKey.size(); ++c) {
+      if (embedding.candKey[c] != key) {
+        continue;
+      }
+      // Degree-one candidates with the same key are attached to the same atom
+      // by the same bond, so they are interchangeable and one is enough.
+      const std::uint32_t atom = embedding.candAtom[c];
+      const bool terminal = d_nbrStart[atom + 1] - d_nbrStart[atom] == 1;
+      if (terminal && terminalFound) {
+        continue;
+      }
+      terminalFound |= terminal;
+      d_matches.emplace_back(i, c);
+      if (legacyTieBreaking || d_matches.size() == maxEmbeddings) {
+        return;
+      }
+    }
+  }
+}
+
+void MolMatcher::advance() {
+  const std::size_t numMatches = d_matches.size();
+  if (numMatches == 1) {
+    // in the usual case one embedding continues, extended in place
+    const std::uint32_t from = d_matches[0].first;
+    if (from) {
+      std::swap(d_live[0], d_live[from]);
+    }
+    extend(d_live[0], d_matches[0].second);
+    d_numLive = 1;
+    return;
+  }
+  if (d_next.size() < numMatches) {
+    d_next.resize(numMatches);
+  }
+  for (std::size_t m = 0; m < numMatches; ++m) {
+    const std::uint32_t from = d_matches[m].first;
+    // the last match of an embedding moves it, and earlier ones copy it
+    if (m + 1 < numMatches && d_matches[m + 1].first == from) {
+      d_next[m] = d_live[from];
+    } else {
+      std::swap(d_next[m], d_live[from]);
+    }
+    extend(d_next[m], d_matches[m].second);
+  }
+  std::swap(d_live, d_next);
+  d_numLive = numMatches;
+}
+
+void MolMatcher::extend(Embedding &embedding, std::uint32_t cand) const {
+  embedding.atoms.push_back(embedding.candAtom[cand]);
+  // The consumed candidate stays seen, but its key is retired so it cannot be
+  // bound twice.
+  embedding.candKey[cand] = noMatchKey;
+  addCandidates(embedding,
+                static_cast<std::uint32_t>(embedding.atoms.size() - 1));
 }
 
 std::uint32_t MolMatcher::match(unsigned int atomIdx,
@@ -345,93 +415,65 @@ std::uint32_t MolMatcher::match(unsigned int atomIdx,
   PRECONDITION(atomIdx < d_numAtoms, "atom index out of range");
   const std::uint32_t branch = static_cast<std::uint32_t>(d_feature[atomIdx]);
   const std::uint32_t root = d_tree.d_branchRoot[branch];
+  d_branchEnd = d_tree.branchEnd(branch);
 
   d_path.clear();
   d_path.push_back(root);
-  d_subgraph.clear();
-  d_candKey.clear();
-  d_candAtom.clear();
-  d_candFilter = 0;
-  ++d_generation;
+  d_numLive = 1;
+  Embedding &start = d_live[0];
+  start.atoms.clear();
+  start.candKey.clear();
+  start.candAtom.clear();
+  start.seen.assign((d_numAtoms + 63) / 64, 0);
+  start.candFilter = 0;
 
-  // signed, so the hydrogen decrement below behaves the way the reference
-  // implementation's does when a caller passes 0 or 1
-  int maxDepth = static_cast<int>(params.maxDepth);
+  unsigned int maxDepth = params.maxDepth;
 
-  if (getAtomFeatureTable()[branch].atomicNum == 1) {
+  if (d_tree.d_features.feature(branch).atomicNum == 1) {
     // Hydrogens are only ever matched implicitly, through the numHs component
-    // of their heavy neighbour's feature: the descent starts at the heavy atom
-    // and spends one level getting there, without accumulating its attention.
-    // The sole hydrogen feature class has degree one, so an H that got past
-    // setMolecule has exactly one neighbour and it is not itself an H.
+    // of their heavy neighbour's feature. The descent starts at the heavy atom.
+    // The step to it uses one level and adds nothing to the attention sum.
+    // Every hydrogen class has degree one, because AtomFeatureLookup refuses a
+    // table where one does not. So an H that setMolecule accepted has exactly
+    // one neighbour.
     const std::uint32_t nbrLo = d_nbrStart[atomIdx];
     CHECK_INVARIANT(d_nbrStart[atomIdx + 1] - nbrLo == 1,
                     "hydrogen of unexpected degree");
     const std::uint32_t heavy = d_nbrAtom[nbrLo];
-    const std::uint16_t heavyKey = packMatchKey(d_feature[heavy], -1, -1);
-    d_candKey.push_back(heavyKey);
-    d_candAtom.push_back(heavy);
-    d_candFilter |= 1ull << (heavyKey & 63u);
-
-    std::uint32_t childNode, childAtom;
-    if (!pickChild(root, childNode, childAtom)) {
+    const std::uint16_t heavyKey = packPartialMatchKey(d_feature[heavy], -1);
+    start.see(heavy);
+    start.candKey.push_back(heavyKey);
+    start.candAtom.push_back(heavy);
+    start.candFilter |= 1ull << (heavyKey & 63u);
+    if (!step(params.legacyTieBreaking)) {
       // no node in the tree describes this hydrogen's environment
       d_path.clear();
       return branch;
     }
-    d_path.push_back(childNode);
-    d_subgraph.push_back(heavy);
-    d_seen[heavy] = d_generation;
-    --maxDepth;
-
-    d_candKey.clear();
-    d_candAtom.clear();
-    d_candFilter = 0;
+    maxDepth = std::max(maxDepth, 1u) - 1;
   } else {
-    d_subgraph.push_back(atomIdx);
-    d_seen[atomIdx] = d_generation;
+    start.see(atomIdx);
+    start.atoms.push_back(atomIdx);
+    addCandidates(start, 0);
   }
 
-  if (maxDepth <= 1) {
-    return branch;
-  }
-
-  // Candidates are maintained incrementally rather than rebuilt at every level.
-  // That is order-identical to a rebuild: an atom's position in the matched
-  // subgraph never changes once it joins, candidates are emitted grouped by
-  // that position, and the newest atom always has the highest one -- so its
-  // neighbours belong at the end of the list either way.
-  addCandidates(0);
-
-  // The stop flag in each node record is the answer to "is the attention
-  // accumulated down to here past the threshold?", precomputed by the
-  // converter for the threshold recorded in the header. When the caller wants
-  // that threshold and no increment cutoff -- the default, and what every
-  // published use does -- the descent never reads the attentions at all, and
-  // their 37.8 MB never enters memory. Any other setting takes the slow path.
+  // The stop flag holds the threshold test precomputed for the header's
+  // default threshold, so with that threshold and no increment cutoff the
+  // descent never reads, or pages in, the attention column.
   const bool useStopFlag =
       params.attentionThreshold == d_tree.d_header.defaultAttentionThreshold &&
       params.attentionIncrementThreshold <= 0.0;
 
   double cumulativeAttention = 0.0;
-  for (int depth = 1; depth < maxDepth; ++depth) {
-    std::uint32_t childNode, childAtom;
-    if (!pickChild(d_path.back(), childNode, childAtom)) {
+  for (unsigned int depth = 1; depth < maxDepth; ++depth) {
+    if (!step(params.legacyTieBreaking)) {
       break;
     }
-    d_path.push_back(childNode);
-    const std::uint32_t position =
-        static_cast<std::uint32_t>(d_subgraph.size());
-    d_subgraph.push_back(childAtom);
-    // The consumed candidate keeps its "seen" stamp -- it is in the subgraph
-    // now, so it stays ineligible -- but its key is retired so it cannot be
-    // bound twice.
-    retireCandidate(childAtom);
-    addCandidates(position);
+    const std::uint32_t childNode = d_path.back();
 
-    // Both tests are strict and both come after the step has been taken, so
-    // the node that crosses the threshold stays on the path and is the first
-    // one the property walk reads.
+    // Both tests are strict and both come after the step. So the node that
+    // crosses the threshold stays on the path and is the first one the
+    // property walk reads.
     if (useStopFlag) {
       if (d_tree.d_node[childNode].flags & nodeFlagStop) {
         break;
@@ -450,30 +492,26 @@ std::uint32_t MolMatcher::match(unsigned int atomIdx,
   return branch;
 }
 
-void MolMatcher::addCandidates(std::uint32_t position) {
-  const std::uint32_t atomIdx = d_subgraph[position];
+// Candidates are maintained incrementally rather than rebuilt at every level.
+// That is order-identical to a rebuild. An atom's position in the matched
+// subgraph never changes once it joins, and candidates are emitted grouped by
+// that position. The newest atom always has the highest one, so its neighbours
+// belong at the end of the list either way.
+void MolMatcher::addCandidates(Embedding &embedding,
+                               std::uint32_t position) const {
+  const std::uint32_t atomIdx = embedding.atoms[position];
   const std::uint32_t lo = d_nbrStart[atomIdx];
   const std::uint32_t hi = d_nbrStart[atomIdx + 1];
   for (std::uint32_t n = lo; n < hi; ++n) {
     const std::uint32_t nbr = d_nbrAtom[n];
-    if (d_seen[nbr] == d_generation) {
+    if (embedding.see(nbr)) {
       continue;
     }
-    d_seen[nbr] = d_generation;
     const std::uint16_t key =
         withConAtom(d_nbrKey[n], static_cast<int>(position));
-    d_candKey.push_back(key);
-    d_candAtom.push_back(nbr);
-    d_candFilter |= 1ull << (key & 63u);
-  }
-}
-
-void MolMatcher::retireCandidate(std::uint32_t atomIdx) {
-  for (std::size_t c = 0; c < d_candAtom.size(); ++c) {
-    if (d_candAtom[c] == atomIdx && d_candKey[c] != noMatchKey) {
-      d_candKey[c] = noMatchKey;
-      return;
-    }
+    embedding.candKey.push_back(key);
+    embedding.candAtom.push_back(nbr);
+    embedding.candFilter |= 1ull << (key & 63u);
   }
 }
 
@@ -488,82 +526,69 @@ double MolMatcher::pathValue(const PropertyColumn &column) const {
 }
 
 // ---------------------------------------------------------------------------
-//  DASHTree -- the public surface
+//  DASHTree, the public API
 // ---------------------------------------------------------------------------
 
 DASHTree::DASHTree(const std::string &filename,
-                   const std::vector<std::string> &properties, bool prefetch)
-    : d_impl(new Impl(filename, properties, prefetch)) {}
+                   const std::vector<std::string> &properties)
+    : d_impl(std::make_unique<Impl>(filename, properties)) {}
 
 DASHTree::~DASHTree() = default;
+DASHTree::DASHTree(DASHTree &&) noexcept = default;
+DASHTree &DASHTree::operator=(DASHTree &&) noexcept = default;
 
-unsigned int DASHTree::numBranches() const {
+unsigned int DASHTree::getNumBranches() const {
   return d_impl->d_header.numBranches;
 }
 
-std::uint64_t DASHTree::numNodes() const { return d_impl->d_header.numNodes; }
-
-std::uint64_t DASHTree::mappedSize() const { return d_impl->d_map.size(); }
-
-const std::string &DASHTree::filename() const { return d_impl->d_filename; }
-
-bool DASHTree::hasSourceNodeIds() const {
-  return d_impl->d_nodeSourceId != nullptr;
-}
-
-std::vector<std::string> DASHTree::propertyNames() const {
-  std::vector<std::string> names;
-  names.reserve(d_impl->d_properties.size());
-  for (const auto &column : d_impl->d_properties) {
-    names.push_back(column.name);
+const AtomFeature &DASHTree::getAtomFeature(unsigned int index) const {
+  if (index >= d_impl->d_features.size()) {
+    throw IndexErrorException(static_cast<int>(index));
   }
-  return names;
+  return d_impl->d_features.feature(index);
 }
 
-std::vector<std::string> DASHTree::availablePropertyNames() const {
+int DASHTree::getAtomFeatureIndex(const Atom *atom) const {
+  return d_impl->d_features.index(atom);
+}
+
+unsigned int DASHTree::getNumNodes() const { return d_impl->d_header.numNodes; }
+
+const std::string &DASHTree::getFilename() const { return d_impl->d_filename; }
+
+const std::vector<std::string> &DASHTree::getPropertyNames() const {
+  return d_impl->d_propertyNames;
+}
+
+const std::vector<std::string> &DASHTree::getAvailablePropertyNames() const {
   return d_impl->allPropertyNames();
 }
 
-bool DASHTree::hasProperty(const std::string &name) const {
-  return d_impl->propertyIndex(name) >= 0;
-}
-
-void DASHTree::getAtomNodePath(const ROMol &mol, unsigned int atomIdx,
-                               std::vector<std::uint32_t> &nodePath,
-                               const DASHParams &params,
-                               bool sourceNodeIds) const {
+std::vector<std::uint32_t> DASHTree::getAtomNodePath(
+    const ROMol &mol, unsigned int atomIdx, const DASHParams &params) const {
   if (atomIdx >= mol.getNumAtoms()) {
-    throw ValueErrorException("atom index " + std::to_string(atomIdx) +
-                              " is out of range");
-  }
-  if (sourceNodeIds && !d_impl->d_nodeSourceId) {
-    throw ValueErrorException(
-        "'" + d_impl->d_filename +
-        "' carries no source node ids; re-run tools/dash_convert.py without "
-        "--no-source-ids to compare paths against the python implementation");
+    throw IndexErrorException(static_cast<int>(atomIdx));
   }
   MolMatcher matcher(*d_impl);
   matcher.setMolecule(mol);
   const std::uint32_t branch = matcher.match(atomIdx, params);
 
-  // Led by the branch index, so this reads like the node paths the python
-  // implementation reports. The node ids themselves are the container's own
-  // breadth-first numbering unless the caller asks for the source numbering.
-  nodePath.clear();
+  // The branch index comes first, so this reads like the node paths the python
+  // implementation reports. The node ids are counted from the branch root.
+  std::vector<std::uint32_t> nodePath;
   nodePath.push_back(branch);
   const std::uint32_t root = d_impl->d_branchRoot[branch];
   for (const auto node : matcher.path()) {
-    nodePath.push_back(sourceNodeIds ? d_impl->d_nodeSourceId[node]
-                                     : node - root);
+    nodePath.push_back(node - root);
   }
+  return nodePath;
 }
 
 double DASHTree::getAtomProperty(const ROMol &mol, unsigned int atomIdx,
                                  const std::string &property,
                                  const DASHParams &params) const {
   if (atomIdx >= mol.getNumAtoms()) {
-    throw ValueErrorException("atom index " + std::to_string(atomIdx) +
-                              " is out of range");
+    throw IndexErrorException(static_cast<int>(atomIdx));
   }
   const PropertyColumn &column = d_impl->property(property);
   MolMatcher matcher(*d_impl);
@@ -572,17 +597,10 @@ double DASHTree::getAtomProperty(const ROMol &mol, unsigned int atomIdx,
   return matcher.pathValue(column);
 }
 
-void DASHTree::getMolProperty(const ROMol &mol, const std::string &property,
-                              std::vector<double> &res,
-                              const DASHParams &params) const {
-  const PropertyColumn &column = d_impl->property(property);
-  MolMatcher matcher(*d_impl);
-  matcher.setMolecule(mol);
-  res.resize(mol.getNumAtoms());
-  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    matcher.match(i, params);
-    res[i] = matcher.pathValue(column);
-  }
+std::vector<double> DASHTree::getMolProperty(const ROMol &mol,
+                                             const std::string &property,
+                                             const DASHParams &params) const {
+  return std::move(getMolPropertyBatch({&mol}, property, params)[0]);
 }
 
 // ---------------------------------------------------------------------------
@@ -597,37 +615,28 @@ DASHTreeNode DASHTree::getNode(unsigned int branch,
                                std::uint32_t nodeId) const {
   const std::uint32_t nBranches = d_impl->d_header.numBranches;
   if (branch >= nBranches) {
-    throw ValueErrorException("branch " + std::to_string(branch) +
-                              " is out of range; the tree has " +
-                              std::to_string(nBranches));
+    throw IndexErrorException(static_cast<int>(branch));
   }
   // branches tile the node array in order, so one owns every id up to the
   // next root
   const std::uint32_t root = d_impl->d_branchRoot[branch];
-  const std::uint32_t end = branch + 1 < nBranches
-                                ? d_impl->d_branchRoot[branch + 1]
-                                : d_impl->d_header.numNodes;
+  const std::uint32_t end = d_impl->branchEnd(branch);
   if (nodeId >= end - root) {
-    throw ValueErrorException("node " + std::to_string(nodeId) +
-                              " is out of range; branch " +
-                              std::to_string(branch) + " has " +
-                              std::to_string(end - root) + " nodes");
+    throw IndexErrorException(static_cast<int>(nodeId));
   }
   return DASHTreeNode(*d_impl, root + nodeId);
 }
 
-void DASHTree::getMatchedSubstructure(const ROMol &mol, unsigned int atomIdx,
-                                      std::vector<unsigned int> &atoms,
-                                      const DASHParams &params) const {
+std::vector<unsigned int> DASHTree::getMatchedSubstructure(
+    const ROMol &mol, unsigned int atomIdx, const DASHParams &params) const {
   if (atomIdx >= mol.getNumAtoms()) {
-    throw ValueErrorException("atom index " + std::to_string(atomIdx) +
-                              " is out of range");
+    throw IndexErrorException(static_cast<int>(atomIdx));
   }
   MolMatcher matcher(*d_impl);
   matcher.setMolecule(mol);
   matcher.match(atomIdx, params);
   const auto &subgraph = matcher.subgraph();
-  atoms.assign(subgraph.begin(), subgraph.end());
+  return std::vector<unsigned int>(subgraph.begin(), subgraph.end());
 }
 
 // ---------------------------------------------------------------------------
@@ -654,19 +663,7 @@ std::uint16_t DASHTreeNode::getKey() const {
   return dp_impl->d_node[d_abs].key;
 }
 
-int DASHTreeNode::getAtomFeatureIndex() const {
-  return keyAtomType(getKey());
-}
-
-const AtomFeature &DASHTreeNode::getFeature() const {
-  const int index = getAtomFeatureIndex();
-  if (index >= static_cast<int>(numAtomFeatures)) {
-    throw ValueErrorException("node " + std::to_string(getId()) +
-                              " names atom feature " + std::to_string(index) +
-                              ", which does not exist");
-  }
-  return getAtomFeatureTable()[index];
-}
+int DASHTreeNode::getAtomFeatureIndex() const { return keyAtomType(getKey()); }
 
 int DASHTreeNode::getConAtom() const { return keyConAtom(getKey()); }
 
@@ -677,20 +674,18 @@ unsigned int DASHTreeNode::getNumChildren() const {
 }
 
 DASHTreeNode DASHTreeNode::getChild(unsigned int i) const {
-  const NodeRecord &record = dp_impl->d_node[d_abs];
-  if (i >= record.numChildren) {
-    throw ValueErrorException(
-        "node " + std::to_string(getId()) + " of branch " +
-        std::to_string(getBranch()) + " has " +
-        std::to_string(record.numChildren) + " children, no child " +
-        std::to_string(i));
+  const unsigned int branch = getBranch();
+  const auto [first, last] =
+      dp_impl->children(d_abs, dp_impl->branchEnd(branch));
+  if (i >= last - first) {
+    throw IndexErrorException(static_cast<int>(i));
   }
-  return DASHTreeNode(*dp_impl, record.firstChild + i);
+  return DASHTreeNode(*dp_impl, first + i);
 }
 
-float DASHTreeNode::getAttention() const { return dp_impl->d_nodeAttn[d_abs]; }
+double DASHTreeNode::getAttention() const { return dp_impl->d_nodeAttn[d_abs]; }
 
-bool DASHTreeNode::stops() const {
+bool DASHTreeNode::isStopNode() const {
   return dp_impl->d_node[d_abs].flags & nodeFlagStop;
 }
 
