@@ -2433,6 +2433,8 @@ auto allTrans = [](RWMol &mol, DGeomHelpers::EmbedParameters &ps,
                    const std::size_t k, const std::size_t l) {
   auto cids = DGeomHelpers::EmbedMultipleConfs(mol, 10, ps);
 
+  REQUIRE(cids.size() > 0);
+
   for (const auto cid : cids) {
     auto conf = mol.getConformer(cid);
     auto tors = MolTransforms::getDihedralDeg(conf, i, j, k, l);
@@ -2446,6 +2448,8 @@ auto allCis = [](RWMol &mol, DGeomHelpers::EmbedParameters &ps,
                  const std::size_t i, const std::size_t j, const std::size_t k,
                  const std::size_t l) {
   auto cids = DGeomHelpers::EmbedMultipleConfs(mol, 10, ps);
+
+  REQUIRE(cids.size() > 0);
 
   for (const auto cid : cids) {
     auto conf = mol.getConformer(cid);
