@@ -957,7 +957,6 @@ bool _checkNhChChNh(const Atom *atm1, const Atom *atm2, const Atom *atm3,
 bool _checkAmideEster14(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
                         const Atom *, const Atom *atm2, const Atom *atm3,
                         const Atom *atm4) {
-  // TODO do this also for the others
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
   unsigned int a4Num = atm4->getAtomicNum();
@@ -993,7 +992,13 @@ bool _checkMacrocycleAllInSameRingAmideEster14(const ROMol &mol, const Bond *,
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
 
-  if (a3Num != 6) {
+  bool a3hasCarbonNeighbor =
+      std::ranges::any_of(mol.atomNeighbors(atm3), [](const auto *a) {
+        unsigned int num = a->getAtomicNum();
+        return num == 6;
+      });
+
+  if (a3Num != 6 || (a2Num == 7 && !a3hasCarbonNeighbor)) {
     return false;
   }
 
