@@ -35,7 +35,7 @@ namespace {
 // Targeted flips are a best-effort cleanup step, not an exhaustive optimizer.
 // A small, fixed pass limit prevents pathological structures from spending
 // disproportionate time moving the same clashes around.
-constexpr unsigned int MAX_TARGETED_COLLISION_PASSES = 6;
+constexpr unsigned int MAX_TARGETED_COLLISION_PASSES = 5;
 
 // A nearby ring often represents a visually important branch even though the
 // acyclic depth calculation intentionally stops when it reaches that ring.
