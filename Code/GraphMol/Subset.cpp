@@ -326,7 +326,7 @@ static void getSubsetInfo(SubsetInfo &selection_info, const RDKit::ROMol &mol,
   }
 }
 
-void copyCoords(RDKit::RWMol &copy, const RDKit::RWMol &mol,
+void copyCoords(RDKit::RWMol &copy, const RDKit::ROMol &mol,
                 SubsetInfo &subset_info) {
   if (mol.getNumConformers()) {
     // copy coordinates over:
