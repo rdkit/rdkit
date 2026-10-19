@@ -13,21 +13,17 @@
 #include <algorithm>
 #include <atomic>
 #include <cmath>
-#include <memory>
-#include <numeric>
 
-#include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/RDThreads.h>
 #include <GraphMol/Atom.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/ROMol.h>
 
 #include "DASHTreeImpl.h"
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
-#include <exception>
-#include <mutex>
-#include <thread>
+#include <future>
 #endif
 
 namespace RDKit {
@@ -60,32 +56,27 @@ double compensatedSum(const std::vector<double> &values) {
   return sum + compensation;
 }
 
-//! \brief spreads the difference to the molecule's formal charge over the atoms
+//! \brief spreads the difference to a molecule-wide target over the atoms
 /*!
-  The tree stores each atom's charge independently, so the raw values do not
-  quite add up to the molecule's charge. SYMMETRIC hands every atom the same
-  share of the difference; STD_WEIGHTED gives more of it to the atoms the tree
-  is least certain about, which is the published default.
+  The tree stores each atom's value independently, so the raw values do not
+  quite add up to what the molecule as a whole should carry -- its formal
+  charge, for partial charges. SYMMETRIC hands every atom the same share of the
+  difference; STD_WEIGHTED gives more of it to the atoms the tree is least
+  certain about, which is the published default for charges.
 */
-void normalizeCharges(const ROMol &mol, const std::vector<double> &rawValues,
-                      const std::vector<double> &stds,
-                      ChargeNormalization normalization,
-                      std::vector<double> &res) {
+void normalizeValues(double target, const std::vector<double> &rawValues,
+                     const std::vector<double> &stds,
+                     Normalization normalization, std::vector<double> &res) {
   const std::size_t nAtoms = rawValues.size();
-  if (normalization == ChargeNormalization::NONE || nAtoms == 0) {
+  if (normalization == Normalization::NONE || nAtoms == 0) {
     res = rawValues;
     return;
   }
   res.resize(nAtoms);
 
-  const double treeTotal = compensatedSum(rawValues);
-  int molTotal = 0;
-  for (const auto atom : mol.atoms()) {
-    molTotal += atom->getFormalCharge();
-  }
-  const double deficit = molTotal - treeTotal;
+  const double deficit = target - compensatedSum(rawValues);
 
-  if (normalization == ChargeNormalization::SYMMETRIC) {
+  if (normalization == Normalization::SYMMETRIC) {
     const double share = deficit / static_cast<double>(nAtoms);
     for (std::size_t i = 0; i < nAtoms; ++i) {
       res[i] = rawValues[i] + share;
@@ -99,13 +90,38 @@ void normalizeCharges(const ROMol &mol, const std::vector<double> &rawValues,
   }
 }
 
-//! the per-molecule charge assignment, shared by every entry point
-void assignCharges(MolMatcher &matcher, const ROMol &mol,
-                   const PropertyColumn &valueColumn,
-                   const PropertyColumn &stdColumn,
-                   const ChargeOptions &options, std::vector<double> &res,
-                   std::vector<double> &rawValues, std::vector<double> &stds,
-                   std::vector<unsigned int> &matchDepths) {
+void checkOptions(const NormalizationOptions &options) {
+  if (options.normalization == Normalization::STD_WEIGHTED &&
+      !(options.defaultStdValue > 0.0)) {
+    throw ValueErrorException(
+        "defaultStdValue must be positive: it stands in for a missing "
+        "deviation, and STD_WEIGHTED divides by the sum of the deviations");
+  }
+}
+
+//! \brief the deviation column \p options asks for
+/*!
+  STD_WEIGHTED cannot do without it; the other normalisations report it when
+  it was resolved and fall back to \c defaultStdValue when it does not, so a
+  column without a deviation column of its own can still be normalised.
+*/
+const PropertyColumn *stdColumnFor(const DASHTree::Impl &impl,
+                                   const NormalizationOptions &options) {
+  if (options.normalization == Normalization::STD_WEIGHTED ||
+      impl.propertyIndex(options.stdProperty) >= 0) {
+    return &impl.property(options.stdProperty);
+  }
+  return nullptr;
+}
+
+//! the per-molecule normalised assignment, shared by every entry point
+void assignNormalized(MolMatcher &matcher, const ROMol &mol, double target,
+                      const PropertyColumn &valueColumn,
+                      const PropertyColumn *stdColumn,
+                      const NormalizationOptions &options,
+                      std::vector<double> &res, std::vector<double> &rawValues,
+                      std::vector<double> &stds,
+                      std::vector<unsigned int> &matchDepths) {
   const unsigned int nAtoms = mol.getNumAtoms();
   matcher.setMolecule(mol);
   rawValues.resize(nAtoms);
@@ -128,114 +144,97 @@ void assignCharges(MolMatcher &matcher, const ROMol &mol,
           std::to_string(atom->getFormalCharge()) +
           "): its atom type is in the tree but carries no data");
     }
-    const double deviation = matcher.pathValue(stdColumn);
     // a zero deviation would give the atom no share of the normalisation, and
     // a missing one (NaN) would poison the whole molecule
+    const double deviation =
+        stdColumn ? matcher.pathValue(*stdColumn) : options.defaultStdValue;
     stds[i] = (deviation > 0.0) ? deviation : options.defaultStdValue;
     matchDepths[i] = static_cast<unsigned int>(matcher.path().size());
   }
-  normalizeCharges(mol, rawValues, stds, options.normalization, res);
+  normalizeValues(target, rawValues, stds, options.normalization, res);
 }
 
-// ---------------------------------------------------------------------------
-//  Work is handed out one molecule at a time through an atomic counter rather
-//  than sliced up in advance: real batches vary in molecule size by an order of
-//  magnitude, and a fixed slicing leaves threads idle at the end of the run.
-//  Each thread keeps one matcher for the whole batch, so the per-molecule
-//  tables are the only thing reallocated, and writes straight into its own slot
-//  of the result, so nothing has to be merged afterwards.
-// ---------------------------------------------------------------------------
-
-//! \brief runs \c work(threadIdx, i) over [0, \p n) on \p nThreads threads
+//! \brief runs \c work(matcher, mol, i) over the molecules of \p mols,
+//! skipping null entries
 /*!
-  Stops early on a Ctrl-C while a ControlCHandler is installed, as the python
-  wrappers do around a batch, raising KeyboardInterrupt once they have the GIL
-  back.
+  Molecules are handed out one at a time through an atomic counter, so a batch
+  of unequal molecules still balances across the threads. Each thread keeps one
+  matcher for the whole batch.
 */
 template <typename Work>
-void forEachIndex(std::size_t n, unsigned int nThreads, Work work) {
-  if (nThreads <= 1 || n <= 1) {
-    for (std::size_t i = 0; i < n; ++i) {
-      if (ControlCHandler::getGotSignal()) {
-        return;
+void forEachMol(const DASHTree::Impl &tree,
+                const std::vector<const ROMol *> &mols, int numThreads,
+                Work work) {
+  std::atomic<std::size_t> next(0);
+  auto run = [&]() {
+    MolMatcher matcher(tree);
+    try {
+      for (std::size_t i = next++; i < mols.size(); i = next++) {
+        if (mols[i]) {
+          work(matcher, *mols[i], i);
+        }
       }
-      work(0u, i);
+    } catch (...) {
+      next = mols.size();  // the other threads stop at their current molecule
+      throw;
+    }
+  };
+  const auto nThreads =
+      std::min<std::size_t>(mols.size(), getNumThreadsToUse(numThreads));
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  if (nThreads > 1) {
+    std::vector<std::future<void>> tasks;
+    tasks.reserve(nThreads);
+    for (std::size_t t = 0; t < nThreads; ++t) {
+      tasks.emplace_back(std::async(std::launch::async, run));
+    }
+    for (auto &task : tasks) {
+      task.get();
     }
     return;
   }
-#ifdef RDK_BUILD_THREADSAFE_SSS
-  std::atomic<std::size_t> next(0);
-  std::vector<std::thread> threads;
-  threads.reserve(nThreads);
-  std::exception_ptr failure;
-  std::mutex failureMutex;
-  for (unsigned int t = 0; t < nThreads; ++t) {
-    threads.emplace_back([&, t]() {
-      try {
-        for (;;) {
-          const std::size_t i = next.fetch_add(1);
-          if (i >= n || ControlCHandler::getGotSignal()) {
-            break;
-          }
-          work(t, i);
-        }
-      } catch (...) {
-        const std::lock_guard<std::mutex> lock(failureMutex);
-        if (!failure) {
-          failure = std::current_exception();
-        }
-      }
-    });
-  }
-  for (auto &thread : threads) {
-    thread.join();
-  }
-  if (failure) {
-    std::rethrow_exception(failure);
-  }
 #else
-  for (std::size_t i = 0; i < n; ++i) {
-    work(0u, i);
-  }
+  RDUNUSED_PARAM(nThreads);
 #endif
-}
-
-//! how many threads to actually spawn: never more than there is work for
-unsigned int resolveThreadCount(int numThreads, std::size_t nWork) {
-  const unsigned int wanted = getNumThreadsToUse(numThreads);
-  return static_cast<unsigned int>(
-      std::min<std::size_t>(wanted, std::max<std::size_t>(nWork, 1)));
-}
-
-//! one reusable matcher per thread
-std::vector<std::unique_ptr<MolMatcher>> makeMatchers(
-    const DASHTree::Impl &tree, unsigned int nThreads) {
-  std::vector<std::unique_ptr<MolMatcher>> matchers(nThreads);
-  for (auto &matcher : matchers) {
-    matcher = std::make_unique<MolMatcher>(tree);
-  }
-  return matchers;
+  run();
 }
 
 }  // namespace
+
+void DASHTree::getNormalizedMolProperty(
+    const ROMol &mol, double target, std::vector<double> &res,
+    std::vector<double> &rawValues, std::vector<double> &stds,
+    std::vector<unsigned int> &matchDepths,
+    const NormalizationOptions &options) const {
+  checkOptions(options);
+  const PropertyColumn &valueColumn = d_impl->property(options.valueProperty);
+  const PropertyColumn *stdColumn = stdColumnFor(*d_impl, options);
+  MolMatcher matcher(*d_impl);
+  assignNormalized(matcher, mol, target, valueColumn, stdColumn, options, res,
+                   rawValues, stds, matchDepths);
+}
+
+void DASHTree::getNormalizedMolProperty(
+    const ROMol &mol, double target, std::vector<double> &res,
+    const NormalizationOptions &options) const {
+  std::vector<double> rawValues, stds;
+  std::vector<unsigned int> matchDepths;
+  getNormalizedMolProperty(mol, target, res, rawValues, stds, matchDepths,
+                           options);
+}
 
 void DASHTree::getPartialCharges(const ROMol &mol, std::vector<double> &res,
                                  std::vector<double> &rawValues,
                                  std::vector<double> &stds,
                                  std::vector<unsigned int> &matchDepths,
-                                 const ChargeOptions &options) const {
-  const PropertyColumn &valueColumn = d_impl->property(options.valueProperty);
-  const PropertyColumn &stdColumn = d_impl->property(options.stdProperty);
-  MolMatcher matcher(*d_impl);
-  assignCharges(matcher, mol, valueColumn, stdColumn, options, res, rawValues,
-                stds, matchDepths);
+                                 const NormalizationOptions &options) const {
+  getNormalizedMolProperty(mol, MolOps::getFormalCharge(mol), res, rawValues,
+                           stds, matchDepths, options);
 }
 
 void DASHTree::getPartialCharges(const ROMol &mol, std::vector<double> &res,
-                                 const ChargeOptions &options) const {
-  std::vector<double> rawValues, stds;
-  std::vector<unsigned int> matchDepths;
-  getPartialCharges(mol, res, rawValues, stds, matchDepths, options);
+                                 const NormalizationOptions &options) const {
+  getNormalizedMolProperty(mol, MolOps::getFormalCharge(mol), res, options);
 }
 
 void DASHTree::getMolPropertyBatch(const std::vector<const ROMol *> &mols,
@@ -246,44 +245,52 @@ void DASHTree::getMolPropertyBatch(const std::vector<const ROMol *> &mols,
   const PropertyColumn &column = d_impl->property(property);
   res.clear();
   res.resize(mols.size());
+  forEachMol(*d_impl, mols, numThreads,
+             [&](MolMatcher &matcher, const ROMol &mol, std::size_t i) {
+               matcher.setMolecule(mol);
+               res[i].resize(mol.getNumAtoms());
+               for (unsigned int a = 0; a < mol.getNumAtoms(); ++a) {
+                 matcher.match(a, params);
+                 res[i][a] = matcher.pathValue(column);
+               }
+             });
+}
 
-  const unsigned int nThreads = resolveThreadCount(numThreads, mols.size());
-  auto matchers = makeMatchers(*d_impl, nThreads);
-  forEachIndex(mols.size(), nThreads, [&](unsigned int t, std::size_t i) {
-    if (!mols[i]) {
-      return;
-    }
-    MolMatcher &matcher = *matchers[t];
-    const ROMol &mol = *mols[i];
-    matcher.setMolecule(mol);
-    res[i].resize(mol.getNumAtoms());
-    for (unsigned int a = 0; a < mol.getNumAtoms(); ++a) {
-      matcher.match(a, params);
-      res[i][a] = matcher.pathValue(column);
-    }
-  });
+void DASHTree::getNormalizedMolPropertyBatch(
+    const std::vector<const ROMol *> &mols, const std::vector<double> &targets,
+    std::vector<std::vector<double>> &res, const NormalizationOptions &options,
+    int numThreads) const {
+  if (targets.size() != mols.size()) {
+    throw ValueErrorException(
+        "one target per molecule: " + std::to_string(targets.size()) +
+        " targets for " + std::to_string(mols.size()) + " molecules");
+  }
+  checkOptions(options);
+  const PropertyColumn &valueColumn = d_impl->property(options.valueProperty);
+  const PropertyColumn *stdColumn = stdColumnFor(*d_impl, options);
+  res.clear();
+  res.resize(mols.size());
+  forEachMol(*d_impl, mols, numThreads,
+             [&](MolMatcher &matcher, const ROMol &mol, std::size_t i) {
+               std::vector<double> rawValues, stds;
+               std::vector<unsigned int> matchDepths;
+               assignNormalized(matcher, mol, targets[i], valueColumn,
+                                stdColumn, options, res[i], rawValues, stds,
+                                matchDepths);
+             });
 }
 
 void DASHTree::getPartialChargesBatch(const std::vector<const ROMol *> &mols,
                                       std::vector<std::vector<double>> &res,
-                                      const ChargeOptions &options,
+                                      const NormalizationOptions &options,
                                       int numThreads) const {
-  const PropertyColumn &valueColumn = d_impl->property(options.valueProperty);
-  const PropertyColumn &stdColumn = d_impl->property(options.stdProperty);
-  res.clear();
-  res.resize(mols.size());
-
-  const unsigned int nThreads = resolveThreadCount(numThreads, mols.size());
-  auto matchers = makeMatchers(*d_impl, nThreads);
-  std::vector<std::vector<double>> rawScratch(nThreads), stdScratch(nThreads);
-  std::vector<std::vector<unsigned int>> depthScratch(nThreads);
-  forEachIndex(mols.size(), nThreads, [&](unsigned int t, std::size_t i) {
-    if (!mols[i]) {
-      return;
+  std::vector<double> targets(mols.size(), 0.0);
+  for (std::size_t i = 0; i < mols.size(); ++i) {
+    if (mols[i]) {
+      targets[i] = MolOps::getFormalCharge(*mols[i]);
     }
-    assignCharges(*matchers[t], *mols[i], valueColumn, stdColumn, options,
-                  res[i], rawScratch[t], stdScratch[t], depthScratch[t]);
-  });
+  }
+  getNormalizedMolPropertyBatch(mols, targets, res, options, numThreads);
 }
 
 }  // namespace DASH

@@ -19,6 +19,7 @@
 #include <cstring>
 #include <limits>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <RDGeneral/BoostStartInclude.h>
@@ -27,27 +28,29 @@
 
 #include <RDGeneral/Invariant.h>
 
-#include "AtomFeatures.h"
+#include "MatchKey.h"
 #include "DASHTree.h"
 
 namespace RDKit {
 namespace DASH {
 namespace detail {
 
-const char *const dashMagic = "DASHTREE";
-const std::size_t dashMagicLen = 8;
-const std::size_t dashHeaderSize = 128;
-const std::size_t dashPropertyEntrySize = 48;
-const std::size_t dashPropertyNameLen = 32;
+constexpr char dashMagic[] = "DASHTREE";
+constexpr std::size_t dashMagicLen = 8;
+constexpr std::uint32_t dashFormatVersion = 3;
+constexpr std::size_t dashHeaderSize = 128;
+constexpr std::size_t dashPropertyEntrySize = 48;
+constexpr std::size_t dashPropertyNameLen = 32;
 
-//! written into the header so a byte-swapped read is caught rather than acted on
-const std::uint32_t dashEndianId = 0xDEADBEEF;
+//! written into the header so a byte-swapped read is caught rather than acted
+//! on
+constexpr std::uint32_t dashEndianId = 0xDEADBEEF;
 
 //! \brief storage type of a property column
 /*!
   A column keeps whatever width its source needs and no more. The published
-  trees use all four: the MBIS charges and their deviations are float16, the
-  subtree sizes int32, and the DASH-properties columns (AM1BCC, DFTD4, ...)
+  trees use three of them: the MBIS charges and their deviations are float16,
+  the subtree sizes int32, and the DASH-properties columns (AM1BCC, DFTD4, ...)
   genuine float64 that does not survive narrowing.
 */
 enum PropertyDType : std::uint8_t {
@@ -57,8 +60,11 @@ enum PropertyDType : std::uint8_t {
   DTYPE_FLOAT64 = 4
 };
 
+//! an int32 column's NaN: what it stores for a node without a value
+constexpr std::int32_t missingInt32 = std::numeric_limits<std::int32_t>::min();
+
 //! bit 0 of NodeRecord::flags: the descent stops here at the default threshold
-const std::uint8_t nodeFlagStop = 0x01;
+constexpr std::uint8_t nodeFlagStop = 0x01;
 
 //! \brief one tree node
 /*!
@@ -68,10 +74,10 @@ const std::uint8_t nodeFlagStop = 0x01;
   array a general graph would need.
 */
 struct NodeRecord {
-  std::uint16_t key;           //!< packed match key, see AtomFeatures.h
-  std::uint8_t numChildren;    //!< at most 47 in the published trees
-  std::uint8_t flags;          //!< see nodeFlagStop
-  std::uint32_t firstChild;    //!< node id of the first child
+  std::uint16_t key;         //!< packed match key, see MatchKey.h
+  std::uint8_t numChildren;  //!< at most 47 in the published trees
+  std::uint8_t flags;        //!< see nodeFlagStop
+  std::uint32_t firstChild;  //!< node id of the first child
 };
 
 static_assert(sizeof(NodeRecord) == 8, "NodeRecord must stay 8 bytes");
@@ -91,12 +97,14 @@ struct DASHHeader {
   std::uint64_t offBranchRoot;
   std::uint64_t offNodeRecord;
   std::uint64_t offNodeAttn;
-  std::uint64_t offNodeSourceId;  //!< 0 when the file carries no source ids
+  std::uint64_t reserved;  //!< written as 0, ignored
   std::uint64_t offPropertyDir;
   std::uint64_t fileSize;
   std::int16_t maxAtomType;
   std::int16_t maxConAtom;
   std::int16_t maxConType;
+  std::uint16_t numFeatures;      //!< rows of the atom-feature table
+  std::uint64_t offFeatureTable;  //!< numFeatures AtomFeature records
 };
 
 static_assert(offsetof(DASHHeader, version) == 8, "DASH header layout");
@@ -105,6 +113,9 @@ static_assert(offsetof(DASHHeader, defaultAttentionThreshold) == 32,
 static_assert(offsetof(DASHHeader, offBranchRoot) == 40, "DASH header layout");
 static_assert(offsetof(DASHHeader, fileSize) == 80, "DASH header layout");
 static_assert(offsetof(DASHHeader, maxAtomType) == 88, "DASH header layout");
+static_assert(offsetof(DASHHeader, numFeatures) == 94, "DASH header layout");
+static_assert(offsetof(DASHHeader, offFeatureTable) == 96,
+              "DASH header layout");
 static_assert(sizeof(DASHHeader) <= dashHeaderSize, "DASH header too big");
 
 //! \brief decodes one IEEE-754 binary16 value
@@ -155,8 +166,12 @@ struct PropertyColumn {
         return decodeFloat16(static_cast<const std::uint16_t *>(data)[node]);
       case DTYPE_FLOAT32:
         return static_cast<const float *>(data)[node];
-      case DTYPE_INT32:
-        return static_cast<const std::int32_t *>(data)[node];
+      case DTYPE_INT32: {
+        const std::int32_t value =
+            static_cast<const std::int32_t *>(data)[node];
+        return value == missingInt32 ? std::numeric_limits<double>::quiet_NaN()
+                                     : value;
+      }
       case DTYPE_FLOAT64:
         return static_cast<const double *>(data)[node];
     }
@@ -166,11 +181,39 @@ struct PropertyColumn {
 
 }  // namespace detail
 
+//! \brief classifies atoms against the feature table of one tree
+/*!
+  O(1): a direct-lookup table over the 14 bits the five components fit into
+  (Z <= 63, degree <= 7, charge -1..2, numHs <= 3), built once when the tree is
+  mapped. A table holding a tuple outside that budget is refused.
+*/
+class AtomFeatureLookup {
+ public:
+  AtomFeatureLookup() = default;
+  //! \throws ValueErrorException if a tuple cannot be encoded or occurs twice
+  AtomFeatureLookup(const AtomFeature *features, unsigned int numFeatures);
+
+  unsigned int size() const { return d_numFeatures; }
+  //! \pre index < size()
+  const AtomFeature &feature(unsigned int index) const {
+    return d_features[index];
+  }
+  //! branch index of a tuple, or -1 if the table has no such class
+  int index(unsigned int atomicNum, unsigned int degree, int formalCharge,
+            bool conjugated, unsigned int numHs) const;
+  //! branch index of an atom in a molecule, or -1
+  int index(const Atom *atom) const;
+
+ private:
+  const AtomFeature *d_features = nullptr;
+  unsigned int d_numFeatures = 0;
+  std::vector<std::int16_t> d_index;
+};
+
 //! \brief the mapped container
 class DASHTree::Impl {
  public:
-  Impl(const std::string &filename, const std::vector<std::string> &properties,
-       bool prefetch);
+  Impl(const std::string &filename, const std::vector<std::string> &properties);
 
   //! index of a resolved column, or -1
   int propertyIndex(const std::string &name) const;
@@ -179,14 +222,39 @@ class DASHTree::Impl {
   //! names of every column the file holds, resolved or not
   std::vector<std::string> allPropertyNames() const;
 
+  //! one past the last node id \p branch owns
+  std::uint32_t branchEnd(std::uint32_t branch) const {
+    return branch + 1 < d_header.numBranches ? d_branchRoot[branch + 1]
+                                             : d_header.numNodes;
+  }
+  //! \brief the child id range of \p node, which must lie after it and before
+  //! \p end, the end of its branch
+  /*!
+    Checked where a descent uses it rather than at load, which would fault in
+    every record of a tree mapped so that only the visited ones are read.
+    \throws ValueErrorException if the file is corrupt
+  */
+  std::pair<std::uint32_t, std::uint32_t> children(std::uint32_t node,
+                                                   std::uint32_t end) const {
+    const detail::NodeRecord &record = d_node[node];
+    const std::uint64_t last =
+        static_cast<std::uint64_t>(record.firstChild) + record.numChildren;
+    if (record.numChildren && (record.firstChild <= node || last > end)) {
+      throwCorruptChildren(node);
+    }
+    return {record.firstChild, static_cast<std::uint32_t>(last)};
+  }
+  [[noreturn]] void throwCorruptChildren(std::uint32_t node) const;
+
   std::string d_filename;
   boost::iostreams::mapped_file_source d_map;
   detail::DASHHeader d_header;
 
-  const std::uint32_t *d_branchRoot = nullptr;      //!< numBranches
-  const detail::NodeRecord *d_node = nullptr;       //!< numNodes
-  const float *d_nodeAttn = nullptr;                //!< numNodes
-  const std::uint32_t *d_nodeSourceId = nullptr;    //!< numNodes, may be null
+  const std::uint32_t *d_branchRoot = nullptr;  //!< numBranches
+  const detail::NodeRecord *d_node = nullptr;   //!< numNodes
+  const float *d_nodeAttn = nullptr;            //!< numNodes
+  //! the tree's atom-feature classes, read from its table
+  AtomFeatureLookup d_features;
 
   std::vector<detail::PropertyColumn> d_properties;
 };
@@ -201,7 +269,7 @@ class DASHTree::Impl {
 */
 class MolMatcher {
  public:
-  explicit MolMatcher(const DASHTree::Impl &tree) : d_tree(tree) {}
+  explicit MolMatcher(const DASHTree::Impl &tree) : d_tree(tree), d_live(1) {}
 
   //! \brief prepares for \p mol: feature classes, neighbour lists, partial keys
   /*!
@@ -221,8 +289,9 @@ class MolMatcher {
 
   //! node ids of the last match, root first
   const std::vector<std::uint32_t> &path() const { return d_path; }
-  //! molecule atoms of the last match, in the order the descent added them
-  const std::vector<std::uint32_t> &subgraph() const { return d_subgraph; }
+  //! molecule atoms of the last match, in the order the descent added them;
+  //! where atoms tied all the way down, one of the equivalent matches
+  const std::vector<std::uint32_t> &subgraph() const { return d_live[0].atoms; }
 
   //! \brief the deepest value on the last match's path, NaN if there is none
   /*!
@@ -234,16 +303,40 @@ class MolMatcher {
   unsigned int numAtoms() const { return d_numAtoms; }
 
  private:
-  //! first child of \p node whose key matches a live candidate
-  bool pickChild(std::uint32_t node, std::uint32_t &childNode,
-                 std::uint32_t &childAtom);
-  //! appends the not-yet-seen neighbours of the subgraph atom at \p position
-  void addCandidates(std::uint32_t position);
-  //! retires the candidate for \p atomIdx, which has just joined the subgraph
-  void retireCandidate(std::uint32_t atomIdx);
+  //! one way of laying the path matched so far onto the molecule
+  struct Embedding {
+    std::vector<std::uint32_t> atoms;     //!< matched atoms, insertion order
+    std::vector<std::uint16_t> candKey;   //!< noMatchKey once consumed
+    std::vector<std::uint32_t> candAtom;  //!< atoms that could join next
+    //! one bit per molecule atom: matched, or already a candidate
+    std::vector<std::uint64_t> seen;
+    //! bloom filter over the live candidate keys; rejects most children in
+    //! one test
+    std::uint64_t candFilter = 0;
+
+    //! marks \p atom seen; returns whether it already was
+    bool see(std::uint32_t atom) {
+      const std::uint64_t bit = 1ull << (atom & 63u);
+      const bool was = seen[atom >> 6] & bit;
+      seen[atom >> 6] |= bit;
+      return was;
+    }
+  };
+
+  //! descends one level; false if no child of the last node matches
+  bool step(bool legacyTieBreaking);
+  //! fills d_matches with the live candidates carrying \p key
+  void findMatches(std::uint16_t key, bool legacyTieBreaking);
+  //! makes one embedding of the next level per entry of d_matches
+  void advance();
+  //! binds candidate \p cand of \p embedding
+  void extend(Embedding &embedding, std::uint32_t cand) const;
+  //! appends the not-yet-seen neighbours of the atom matched at \p position
+  void addCandidates(Embedding &embedding, std::uint32_t position) const;
 
   const DASHTree::Impl &d_tree;
   unsigned int d_numAtoms = 0;
+  std::uint32_t d_branchEnd = 0;  //!< of the branch being descended
 
   // per-molecule tables
   std::vector<std::int32_t> d_feature;    //!< branch index per atom
@@ -251,15 +344,15 @@ class MolMatcher {
   std::vector<std::uint32_t> d_nbrAtom;   //!< 2 * numBonds
   std::vector<std::uint16_t> d_nbrKey;    //!< 2 * numBonds, partial match keys
 
-  // per-atom scratch
+  // per-atom scratch: the embeddings still alive, the first d_numLive of
+  // d_live; the next level's are built in d_next. The unused ones keep their
+  // buffers for reuse.
   std::vector<std::uint32_t> d_path;
-  std::vector<std::uint32_t> d_subgraph;  //!< matched atoms, insertion order
-  std::vector<std::uint16_t> d_candKey;   //!< noMatchKey once consumed
-  std::vector<std::uint32_t> d_candAtom;
-  std::vector<std::uint32_t> d_seen;      //!< generation stamps, O(1) to clear
-  std::uint32_t d_generation = 0;
-  //! bloom filter over the live candidate keys; rejects most children in one test
-  std::uint64_t d_candFilter = 0;
+  std::vector<Embedding> d_live;
+  std::vector<Embedding> d_next;
+  std::size_t d_numLive = 1;
+  //! (embedding, candidate) pairs that take the next node
+  std::vector<std::pair<std::uint32_t, std::uint32_t>> d_matches;
 };
 
 }  // namespace DASH
