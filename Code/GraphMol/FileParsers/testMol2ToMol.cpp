@@ -400,6 +400,47 @@ void testDisableCleanup(std::string rdbase) {
   BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
 }
 
+void testGithub9634(std::string rdbase) {
+  BOOST_LOG(rdInfoLog) << "-----------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "-- testing GitHub issue #9634: UNITY_ATOM_ATTR without "
+                          "formal charges --"
+                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "-----------------------------------" << std::endl;
+
+  {
+    // a UNITY_ATOM_ATTR section holding only MMFF94 partial charges must not
+    // suppress substructure cleanup and formal-charge guessing
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/github9634.mol2";
+    std::unique_ptr<RWMol> mol(Mol2FileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getFormalCharge() == 1);
+  }
+  {
+    // the same file without the section behaves identically
+    std::string fName =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/github9634_truncated.mol2";
+    std::unique_ptr<RWMol> mol(Mol2FileToMol(fName));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getFormalCharge() == 1);
+  }
+  {
+    // a section that does set a formal charge via AtomExpr is authoritative,
+    // even when it sets an explicit zero, and suppresses the guesser (which
+    // would otherwise assign +1 here and allow sanitization)
+    std::string fName =
+        rdbase +
+        "/Code/GraphMol/FileParsers/test_data/github9634_atomexpr.mol2";
+    std::unique_ptr<RWMol> mol(Mol2FileToMol(fName, false));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getFormalCharge() == 0);
+  }
+  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "-- DONE                           --" << std::endl;
+  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+}
+
 // FIX still missing chirality by 3D structure
 //  still missing input std::string
 
@@ -416,6 +457,7 @@ int main(int argc, char *argv[]) {
   testIssue114(rdbase);
   testGithub438(rdbase);
   testDisableCleanup(rdbase);
+  testGithub9634(rdbase);
 
   return 0;
 }

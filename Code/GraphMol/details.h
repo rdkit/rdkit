@@ -11,5 +11,5 @@
 #include <cstdint>
 
 namespace RDKit {
-typedef std::uint32_t atomindex_t;
+using atomindex_t = std::uint32_t;
 }

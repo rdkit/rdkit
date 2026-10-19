@@ -8,6 +8,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <iterator>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
 
@@ -32,10 +34,15 @@ struct AtomSeqHolder {
   typename IterT::CXXAtomIter begin() { return iter.begin(); }
   typename IterT::CXXAtomIter end() { return iter.end(); }
   Atom *operator[](int idx) {
+    if (idx < 0) {
+      idx += static_cast<int>(iter.size());
+    }
     if (idx < 0 || static_cast<size_t>(idx) >= iter.size()) {
       throw IndexErrorException(idx);
     }
-    return mol->getAtomWithIdx(idx);
+    auto pos = iter.begin();
+    std::advance(pos, idx);
+    return *pos;
   }
 };
 
@@ -49,10 +56,15 @@ struct BondSeqHolder {
   typename IterT::CXXBondIter begin() { return iter.begin(); }
   typename IterT::CXXBondIter end() { return iter.end(); }
   Bond *operator[](int idx) {
+    if (idx < 0) {
+      idx += static_cast<int>(iter.size());
+    }
     if (idx < 0 || static_cast<size_t>(idx) >= iter.size()) {
       throw IndexErrorException(idx);
     }
-    return mol->getBondWithIdx(idx);
+    auto pos = iter.begin();
+    std::advance(pos, idx);
+    return *pos;
   }
 };
 

@@ -11,6 +11,7 @@
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/stl/optional.h>
 
 #include <RDBoost/Wrap_nb.h>
 
@@ -650,6 +651,9 @@ used during structural minimisation stage)DOC")
               "symmetrize terminal conjugated groups for RMSD pruning")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap,
            "sets the coordmap to be used")
+      .def_rw(
+          "optimizeConfWithId", &PyEmbedParameters::optimizeConfWithId,
+          "If provided, the Conformer with this ID in the molecule (if present) is optimized with the ETKDG force field in place.")
       .def_rw("embedForceField", &PyEmbedParameters::embedForceField,
               "Force Field to use for ideal 1-2 and 1-3 distances.")
       .def("__setattr__", &safeSetattr);
@@ -657,7 +661,9 @@ used during structural minimisation stage)DOC")
   m.def("EmbedMultipleConfs", &RDKit::EmbedMultipleConfs2, "mol"_a,
         "numConfs"_a, "params"_a,
         R"DOC(Use distance geometry to obtain multiple sets of
-coordinates for a molecule
+coordinates for a molecule.
+Be aware that this function can alter the EmbedParameters object, caution 
+is advised when reusing EmbedParameters objects for different embedding runs.
 
 ARGUMENTS:
 
@@ -672,7 +678,9 @@ RETURNS:
 
   m.def("EmbedMolecule", &RDKit::EmbedMolecule2, "mol"_a, "params"_a,
         R"DOC(Use distance geometry to obtain initial
-coordinates for a molecule
+coordinates for a molecule.
+Be aware that this function can alter the EmbedParameters object, caution 
+is advised when reusing EmbedParameters objects for different embedding runs.
 
 ARGUMENTS:
 
