@@ -12,9 +12,7 @@ Subpackages
     rdkit.Chem.EState
     rdkit.Chem.FeatMaps
     rdkit.Chem.Features
-    rdkit.Chem.Fingerprints
     rdkit.Chem.Fraggle
-    rdkit.Chem.MolDb
     rdkit.Chem.MolKey
     rdkit.Chem.Pharm2D
     rdkit.Chem.Pharm3D
@@ -22,7 +20,6 @@ Subpackages
     rdkit.Chem.SimpleEnum
     rdkit.Chem.Subshape
     rdkit.Chem.Suppliers
-    rdkit.Chem.fmcs
 
 Submodules
 ----------
@@ -55,7 +52,6 @@ Submodules
    rdkit.Chem.MolSurf
    rdkit.Chem.PandasTools
    rdkit.Chem.PeriodicTable
-   rdkit.Chem.PropertyMol
    rdkit.Chem.PyMol
    rdkit.Chem.QED
    rdkit.Chem.Randomize
