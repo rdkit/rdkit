@@ -620,29 +620,34 @@ TEST_CASE("testIssue355") {
   }
 
   SECTION("2") {
-    const std::string smi = "CNC(=O)CNC";
+    // There are a certain amount of structures that are cis, if the central
+    // carbon is not connected to another carbon, we changed our definition of
+    // what we consider as an amide. Thus the cases 2 and 3 are no longer forced
+    // to be trans
+    const std::string smi = "CNC(=O)NC";
     const auto bm = _getBoundsMatrix(smi);
     CHECK(bm->getLowerBound(0, 3) < 3.0);
-    CHECK(bm->getUpperBound(0, 3) < 3.0);
+    CHECK(bm->getUpperBound(0, 3) >
+          3.0);  // can be cis or trans => allow full range
     CHECK(bm->getUpperBound(0, 4) > 3.2);
-    CHECK(bm->getLowerBound(0, 4) > 3.2);
+    CHECK(bm->getLowerBound(0, 4) < 3.2);
     CHECK(bm->getLowerBound(5, 3) < 3.0);
-    CHECK(bm->getUpperBound(5, 3) < 3.0);
+    CHECK(bm->getUpperBound(5, 3) > 3.0);
     CHECK(bm->getUpperBound(5, 1) > 3.2);
-    CHECK(bm->getLowerBound(5, 1) > 3.2);
+    CHECK(bm->getLowerBound(5, 1) < 3.2);
   }
 
   SECTION("3") {
-    const std::string smi = "CNC(=O)CNc1ccccc1";
+    const std::string smi = "CNC(=O)Nc1ccccc1";
     const auto bm = _getBoundsMatrix(smi);
     CHECK(bm->getLowerBound(0, 3) < 3.0);
-    CHECK(bm->getUpperBound(0, 3) < 3.0);
+    CHECK(bm->getUpperBound(0, 3) > 3.0);
     CHECK(bm->getUpperBound(0, 4) > 3.2);
-    CHECK(bm->getLowerBound(0, 4) > 3.2);
+    CHECK(bm->getLowerBound(0, 4) < 3.2);
     CHECK(bm->getLowerBound(5, 3) < 3.0);
-    CHECK(bm->getUpperBound(5, 3) < 3.0);
+    CHECK(bm->getUpperBound(5, 3) > 3.0);
     CHECK(bm->getUpperBound(5, 1) > 3.2);
-    CHECK(bm->getLowerBound(5, 1) > 3.2);
+    CHECK(bm->getLowerBound(5, 1) < 3.2);
   }
 }
 
