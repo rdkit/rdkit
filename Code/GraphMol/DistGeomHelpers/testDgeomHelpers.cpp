@@ -620,7 +620,7 @@ TEST_CASE("testIssue355") {
   }
 
   SECTION("2") {
-    const std::string smi = "CNC(=O)NC";
+    const std::string smi = "CNC(=O)CNC";
     const auto bm = _getBoundsMatrix(smi);
     CHECK(bm->getLowerBound(0, 3) < 3.0);
     CHECK(bm->getUpperBound(0, 3) < 3.0);
@@ -633,7 +633,7 @@ TEST_CASE("testIssue355") {
   }
 
   SECTION("3") {
-    const std::string smi = "CNC(=O)Nc1ccccc1";
+    const std::string smi = "CNC(=O)CNc1ccccc1";
     const auto bm = _getBoundsMatrix(smi);
     CHECK(bm->getLowerBound(0, 3) < 3.0);
     CHECK(bm->getUpperBound(0, 3) < 3.0);
