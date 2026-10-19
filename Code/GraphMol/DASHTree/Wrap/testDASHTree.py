@@ -9,10 +9,10 @@
 #
 """Tests for rdkit.Chem.rdDASHTree.
 
-Most run against test_data/dash_test_tree.dash, a synthetic tree written by
-rdkit/Chem/DASHTree/UnitTestDASHTree.py that knows ethanol and nothing else:
-its values are made up, so what it exercises is the machinery -- the descent,
-the property fallback, the stop flag, the normalisations, the node API.
+TestSyntheticTree runs against test_data/dash_test_tree.dash, a synthetic tree
+written by rdkit/Chem/DASHTree/UnitTestDASHTree.py that knows ethanol and nothing
+else. Its values are arbitrary, so it tests the machinery: the descent, the
+property fallback, the stop flag, the normalizations and the node API.
 TestReferenceAgreement compares against the full published tree, which is not
 in the repository, and runs only if DASH_TREE_FILE names it. The other tests use
 the pruned tree in Data/DASHTree.
@@ -33,6 +33,7 @@ FIXTURE = os.path.join(TEST_DATA_DIR, 'dash_test_tree.dash')
 M, P, O, H = 0, 1, 2, 3
 FEATURES = [(6, 4, 0, False, 3), (6, 4, 0, False, 2), (8, 2, 0, False, 1), (1, 1, 0, False, 0)]
 
+INITIAL_TEST_TREE = os.path.join(RDConfig.RDDataDir, 'DASHTree', 'initial_test.dash')
 PUBLISHED_TREE = os.environ.get('DASH_TREE_FILE')
 
 
@@ -208,6 +209,98 @@ class TestSyntheticTree(unittest.TestCase):
     # a node keeps the tree it came from alive, here a temporary
     orphan = rdDASHTree.DASHTree(FIXTURE, ['result']).GetRoot(O)[1]
     self.assertAlmostEqual(orphan.GetValue('result'), -0.99)
+
+
+class TestTies(unittest.TestCase):
+  """Atoms that fit the same node, on the pruned tree in Data/DASHTree."""
+
+  @classmethod
+  def setUpClass(cls):
+    cls.tree = rdDASHTree.DASHTree(INITIAL_TEST_TREE, ['result', 'std'])
+    cls.legacy = rdDASHTree.DASHParams()
+    cls.legacy.legacyTieBreaking = True
+
+  def classValues(self, mol):
+    """raw values by symmetry class, which any atom order agrees on"""
+    values = self.tree.GetMolProperty(mol, 'result')
+    classes = {}
+    for atom, rank in enumerate(Chem.CanonicalRankAtoms(mol, breakTies=False)):
+      classes.setdefault(rank, []).append(values[atom])
+    return {rank: sorted(v) for rank, v in classes.items()}
+
+  def testAtomOrderDoesNotMatter(self):
+    params = Chem.SmilesParserParams()
+    params.removeHs = False
+    sdf = os.path.join(TEST_DATA_DIR, 'dash_ref_mols.sdf')
+    for mol in list(Chem.SDMolSupplier(sdf, removeHs=False))[:20]:
+      expected = self.classValues(mol)
+      for smiles in Chem.MolToRandomSmilesVect(mol, 3, randomSeed=42):
+        self.assertEqual(self.classValues(Chem.MolFromSmiles(smiles, params)), expected, smiles)
+
+  def testTheBetterAttendedChildWins(self):
+    # the legacy descents of the two SMILES take different children of one node.
+    # Both now take the earlier child, which has the higher attention
+    first, second = (molWithHs(s) for s in ('Nc1ccc2CNCc2c1', 'Nc1ccc2c(c1)CNC2'))
+    paths = [
+      self.tree.GetAtomNodePath(first, 6, self.legacy),
+      self.tree.GetAtomNodePath(second, 8, self.legacy)
+    ]
+    level = next(i for i, (a, b) in enumerate(zip(*paths)) if a != b)
+    earlier, later = sorted(paths, key=lambda path: path[level])
+    self.assertGreaterEqual(
+      self.tree.GetNode(earlier[0], earlier[level]).GetAttention(),
+      self.tree.GetNode(later[0], later[level]).GetAttention())
+    self.assertEqual(self.tree.GetAtomNodePath(first, 6), earlier)
+    self.assertEqual(self.tree.GetAtomNodePath(second, 8), earlier)
+
+
+class TestDASHTree(unittest.TestCase):
+
+  @classmethod
+  def setUpClass(cls):
+    cls.tree = rdDASHTree.DASHTree(INITIAL_TEST_TREE, ['result', 'std'])
+
+  def testIntrospection(self):
+    self.assertEqual(sorted(self.tree.GetPropertyNames()), ['result', 'std'])
+    self.assertIn('result', self.tree.GetAvailablePropertyNames())
+    self.assertEqual(self.tree.GetFilename(), INITIAL_TEST_TREE)
+
+  def testAtomWithNoDataIsRefused(self):
+    # this bridging [N+] classifies into a branch that holds one node with no value
+    mol = molWithHs('COC(=O)C1=CO[C@@H](C)[C@H]2C=[N+]3CCc4c([nH]c5ccccc45)[C@@H]3C[C@H]12')
+    with self.assertRaises(ValueError):
+      self.tree.GetPartialCharges(mol)
+    self.assertTrue(math.isnan(self.tree.GetAtomProperty(mol, 11, 'result')))
+
+
+class TestBatch(unittest.TestCase):
+
+  @classmethod
+  def setUpClass(cls):
+    cls.tree = rdDASHTree.DASHTree(INITIAL_TEST_TREE, ['result', 'std'])
+    cls.mols = [
+      molWithHs(s)
+      for s in ('CCO', 'CC(=O)Nc1ccc(O)cc1', 'CC(C)Cc1ccc(cc1)C(C)C(=O)O',
+                'CN1C=NC2=C1C(=O)N(C)C(=O)N2C', 'CC(=O)Oc1ccccc1C(=O)O', 'c1ccc2c(c1)[nH]c1ccccc12',
+                'OC(=O)CCc1c[nH]c2ccccc12', 'CN(C)CCOC(c1ccccc1)c1ccccc1')
+    ]
+
+  def testEveryThreadCountAgrees(self):
+    single = [self.tree.GetPartialCharges(m) for m in self.mols]
+    for numThreads in (1, 4, 0, -1):
+      batch = self.tree.GetPartialChargesBatch(self.mols, rdDASHTree.NormalizationOptions(),
+                                               numThreads)
+      self.assertEqual(batch, single, msg=str(numThreads))
+
+  def testEmptyBatch(self):
+    self.assertEqual(
+      len(self.tree.GetPartialChargesBatch([], rdDASHTree.NormalizationOptions(), 4)), 0)
+
+  def testPropertyBatch(self):
+    batch = self.tree.GetMolPropertyBatch(self.mols, 'result', rdDASHTree.DASHParams(), 4)
+    self.assertEqual(len(batch), len(self.mols))
+    for row, mol in zip(batch, self.mols):
+      self.assertEqual(row, self.tree.GetMolProperty(mol, 'result'))
 
 
 @needsPublishedTree

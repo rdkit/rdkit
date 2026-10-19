@@ -26,11 +26,13 @@
    - M. Lehner et al., <i>J. Chem. Phys.</i> <b>2024</b>, 161, 074103
      (DOI 10.1063/5.0218154)
 
-  The tree itself is a data file, not part of the library: construct a DASHTree
-  with the path to a \c .dash container, which \c python -m
-  rdkit.Chem.DASHTree.convert writes from a legacy tree of the DASH-tree python
-  package. The file is memory mapped, so construction costs microseconds and
-  only the pages a query actually visits are ever read.
+  The tree itself is a data file, not part of the library. Construct a DASHTree
+  with the path to a \c .dash container. The command \c python -m
+  rdkit.Chem.DASHTree.convert writes one from a legacy tree of the DASH-tree
+  python package. The build downloads a pruned tree, initial_test, to
+  $RDBASE/Data/DASHTree/initial_test.dash. The file is memory mapped, so
+  construction costs microseconds and only the pages a query visits are ever
+  read.
 
   Which properties a tree carries depends on the file. When you construct the
   object, name the ones you want. Only those are resolved:

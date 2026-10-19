@@ -7,19 +7,21 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-"""Opening a DASH tree, and reading what it matched.
+"""Open a DASH tree and read what it matched.
 
-A full tree is a few hundred megabytes of published data, so it is not
-distributed with RDKit. GetDASHTree() opens a local container, or fetches one
-from a URL once into a cache directory and opens it from there. Given nothing,
-it uses $RDKIT_DASH_TREE.
+A full tree is a few hundred megabytes of published data, so RDKit does not
+distribute it. GetDASHTree() opens a local container, or downloads one from a URL
+once into a cache directory and opens it from there. It also knows trees by
+name (availableTrees). Without a source, it uses $RDKIT_DASH_TREE, or the
+pruned tree initial_test if that variable is not set.
 
-The container has to be in RDKit's own '.dash' format: python -m
-rdkit.Chem.DASHTree.convert writes one from a legacy tree.
+The container must be in RDKit's own '.dash' format. Use python -m
+rdkit.Chem.DASHTree.convert to write one from a legacy tree, and python -m
+rdkit.Chem.DASHTree.prune to make one smaller.
 
-The rest turns the nodes a match descended through back into the substructure
-they stand for: NodePathToSmarts() writes it as a pattern, and
-GetAtomMatchSmarts() does the match and the writing in one call.
+NodePathToSmarts() writes the substructure that a node path describes as
+SMARTS. GetAtomMatchSmarts() matches one atom and writes that match as SMARTS
+in one call.
 """
 
 import hashlib
@@ -31,7 +33,18 @@ from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
+from rdkit import RDConfig
 from rdkit.Chem import rdDASHTree
+
+#: the trees GetDASHTree() knows by name: the MBIS charge tree pruned at
+#: 0.01 e, 0.02 e and 0.1 e. The build downloads initial_test into
+#: Data/DASHTree. Code/GraphMol/DASHTree/README.md says how far each is from the
+#: full tree
+availableTrees = {
+  "initial_test": "https://github.com/MTLehner/dash-trees/raw/v1/initial_test.dash",
+  "mbis_pruned_0.01": "https://github.com/MTLehner/dash-trees/raw/v2/mbis_pruned_0.01.dash",
+  "mbis_pruned_0.1": "https://github.com/MTLehner/dash-trees/raw/v2/mbis_pruned_0.1.dash",
+}
 
 
 def _cacheDir():
@@ -78,9 +91,11 @@ def GetDASHTree(source=None, properties=None, cacheDir=None):
   """Opens a DASH tree, and downloads it first if it is not on disk.
 
     ARGUMENTS:
-      - source: path to a '.dash' container, or an http(s) URL of one.
-        Defaults to $RDKIT_DASH_TREE.
-      - properties: the property columns to resolve, None meaning every
+      - source: a name from availableTrees, a path to a '.dash' container, or
+        an http(s) URL of one. Defaults to $RDKIT_DASH_TREE, then
+        'initial_test'. A named tree comes from Data/DASHTree if the build
+        put it there. Otherwise GetDASHTree downloads it.
+      - properties: the property columns to resolve. None means every
         column the file has.
       - cacheDir: the directory for downloads. Defaults to $RDKIT_DASH_DIR
         or a per-user cache directory.
@@ -88,10 +103,11 @@ def GetDASHTree(source=None, properties=None, cacheDir=None):
     RETURNS: an rdDASHTree.DASHTree
     """
   if source is None:
-    source = os.environ.get("RDKIT_DASH_TREE")
-  if not source:
-    raise ValueError("no DASH tree given: pass a container or set RDKIT_DASH_TREE")
-  # a windows path has a single letter scheme, so test for the ones we serve
+    source = os.environ.get("RDKIT_DASH_TREE") or "initial_test"
+  if source in availableTrees:
+    local = os.path.join(RDConfig.RDDataDir, "DASHTree", f"{source}.dash")
+    source = local if os.path.isfile(local) else availableTrees[source]
+  # a windows path has a single-letter scheme, so test for http and https only
   if urlparse(str(source)).scheme in ("http", "https"):
     source = _fetch(str(source), cacheDir or _cacheDir())
   return rdDASHTree.DASHTree(str(source), properties)
