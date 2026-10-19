@@ -43,7 +43,7 @@ const char *moduleDoc =
     "Module containing DASH: per-atom properties and partial charges from a\n"
     "Dynamic Attention-based Substructure Hierarchy.\n\n"
     "DASHTree(path) opens a .dash container; rdkit.Chem.DASHTree has\n"
-    "GetDASHTree() and the convert tool.\n\n"
+    "GetDASHTree() and the convert and prune tools.\n\n"
     "NOTE: This functionality is experimental and the API and/or results may "
     "change in future releases.\n\n"
     "References:\n"

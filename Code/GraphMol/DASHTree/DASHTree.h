@@ -29,8 +29,10 @@
   The tree itself is a data file, not part of the library: construct a DASHTree
   with the path to a \c .dash container, which \c python -m
   rdkit.Chem.DASHTree.convert writes from a legacy tree of the DASH-tree python
-  package. The file is memory mapped, so construction costs microseconds and
-  only the pages a query actually visits are ever read.
+  package; the RDKit ships a pruned one as
+  $RDBASE/Data/DASHTree/default_pruned.dash. The file is memory mapped, so
+  construction costs microseconds and only the pages a query actually visits are
+  ever read.
 
   Which properties a tree carries is a property of the file. Name the ones you
   want when you construct the object and only those are resolved:

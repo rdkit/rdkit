@@ -12,10 +12,12 @@
 A full tree is a few hundred megabytes of published data, so it is not
 distributed with RDKit. GetDASHTree() opens a local container, or fetches one
 from a URL once into a cache directory and opens it from there. Given nothing,
-it uses $RDKIT_DASH_TREE.
+it uses $RDKIT_DASH_TREE, and otherwise the pruned tree in Data/DASHTree, whose
+charges stay within a few hundredths of an electron of the full tree's.
 
 The container has to be in RDKit's own '.dash' format: python -m
-rdkit.Chem.DASHTree.convert writes one from a legacy tree.
+rdkit.Chem.DASHTree.convert writes one from a legacy tree, and python -m
+rdkit.Chem.DASHTree.prune makes one smaller.
 
 The rest turns the nodes a match descended through back into the substructure
 they stand for: NodePathToSmarts() writes it as a pattern, and
@@ -29,7 +31,13 @@ from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
+from rdkit import RDConfig
 from rdkit.Chem import rdDASHTree
+
+#: the pruned default tree that ships with the RDKit, used when nothing else is
+#: configured; Code/GraphMol/DASHTree/README.md says what it is and how far it
+#: is from the full tree
+bundledTreePath = os.path.join(RDConfig.RDDataDir, "DASHTree", "default_pruned.dash")
 
 
 def _cacheDir():
@@ -68,7 +76,8 @@ def GetDASHTree(source=None, properties=None, cacheDir=None):
 
     ARGUMENTS:
       - source: path to a '.dash' container, or an http(s) URL of one.
-        Defaults to $RDKIT_DASH_TREE.
+        Defaults to $RDKIT_DASH_TREE, then the pruned tree shipped in
+        Data/DASHTree.
       - properties: the property columns to resolve, None meaning every
         column the file has.
       - cacheDir: where downloads are kept, defaulting to $RDKIT_DASH_DIR
@@ -77,9 +86,7 @@ def GetDASHTree(source=None, properties=None, cacheDir=None):
     RETURNS: an rdDASHTree.DASHTree
     """
   if source is None:
-    source = os.environ.get("RDKIT_DASH_TREE")
-  if not source:
-    raise ValueError("no DASH tree given: pass a container or set RDKIT_DASH_TREE")
+    source = os.environ.get("RDKIT_DASH_TREE") or bundledTreePath
   # a windows path has a single letter scheme, so test for the ones we serve
   if urlparse(str(source)).scheme in ("http", "https"):
     source = _fetch(str(source), cacheDir or _cacheDir())

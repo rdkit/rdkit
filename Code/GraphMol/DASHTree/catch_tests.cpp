@@ -78,6 +78,47 @@ TEST_CASE("DASH packed match key", "[DASHTree]") {
   CHECK(DASH::keyConType(DASH::packMatchKey(27, -1, -1)) == -1);
 }
 
+TEST_CASE("DASH assignment", "[DASHTree]") {
+  CHECK_THROWS_AS(DASH::DASHTree("no_such_file_at_all.dash"), BadFileException);
+
+  const char *rdbase = std::getenv("RDBASE");
+  REQUIRE(rdbase != nullptr);
+  DASH::DASHTree tree(
+      std::string(rdbase) + "/Data/DASHTree/default_pruned.dash",
+      {"result", "std"});
+
+  std::vector<std::unique_ptr<ROMol>> mols;
+  std::vector<const ROMol *> ptrs;
+  for (const auto *smiles : {"CCO", "CC(=O)[O-]", "CC(=O)Nc1ccc(O)cc1"}) {
+    mols.push_back(molWithHs(smiles));
+    ptrs.push_back(mols.back().get());
+  }
+
+  // the charges of a molecule have to add back up to what it started with
+  for (const auto *mol : ptrs) {
+    std::vector<double> charges;
+    tree.getPartialCharges(*mol, charges);
+    REQUIRE(charges.size() == mol->getNumAtoms());
+    double total = 0.0;
+    for (const auto charge : charges) {
+      total += charge;
+    }
+    CHECK_THAT(total, Catch::Matchers::WithinAbs(MolOps::getFormalCharge(*mol),
+                                                 1e-12));
+  }
+
+  // and threading may not change an answer
+  std::vector<double> single;
+  tree.getPartialCharges(*ptrs.back(), single);
+  for (const int numThreads : {1, 0}) {  // 0 means every core
+    std::vector<std::vector<double>> batch;
+    tree.getPartialChargesBatch(ptrs, batch, DASH::NormalizationOptions(),
+                                numThreads);
+    REQUIRE(batch.size() == ptrs.size());
+    CHECK(batch.back() == single);
+  }
+}
+
 TEST_CASE("DASH integration on the synthetic tree", "[DASHTree]") {
   // test_data/dash_test_tree.dash is written by
   // rdkit/Chem/DASHTree/UnitTestDASHTree.py
@@ -278,3 +319,33 @@ TEST_CASE("DASH corrupt containers", "[DASHTree]") {
   std::filesystem::remove(path);
 }
 
+TEST_CASE("DASH atoms that fit the same node", "[DASHTree]") {
+  // On the pruned tree in Data/DASHTree. Pyridine's meta carbons look alike
+  // all the way down; the two CH2 next to 5-aminoisoindoline's ring NH look
+  // alike for five levels. The legacy rule takes the first in atom order.
+  const char *rdbase = std::getenv("RDBASE");
+  REQUIRE(rdbase != nullptr);
+  DASH::DASHTree tree(
+      std::string(rdbase) + "/Data/DASHTree/default_pruned.dash",
+      {"result", "std"});
+  DASH::NormalizationOptions legacy;
+  legacy.params.legacyTieBreaking = true;
+
+  std::vector<double> charges;
+  auto pyridine = molWithHs("c1ccncc1");
+  tree.getPartialCharges(*pyridine, charges);
+  CHECK(charges[1] == charges[5]);
+  tree.getPartialCharges(*pyridine, charges, legacy);
+  CHECK(charges[1] != charges[5]);
+
+  // the ring NH is atom 6 of one SMILES and atom 8 of the other
+  auto first = molWithHs("Nc1ccc2CNCc2c1");
+  auto second = molWithHs("Nc1ccc2c(c1)CNC2");
+  std::vector<std::uint32_t> firstPath, secondPath;
+  tree.getAtomNodePath(*first, 6, firstPath);
+  tree.getAtomNodePath(*second, 8, secondPath);
+  CHECK(firstPath == secondPath);
+  tree.getAtomNodePath(*first, 6, firstPath, legacy.params);
+  tree.getAtomNodePath(*second, 8, secondPath, legacy.params);
+  CHECK(firstPath != secondPath);
+}

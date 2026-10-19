@@ -12,7 +12,8 @@
 Most run against test_data/dash_test_tree.dash, a synthetic tree written by
 rdkit/Chem/DASHTree/UnitTestDASHTree.py that knows ethanol and nothing else:
 its values are made up, so what it exercises is the machinery -- the descent,
-the property fallback, the stop flag, the normalisations, the node API.
+the property fallback, the stop flag, the normalisations, the node API. The
+tests that need real chemistry use the pruned tree in Data/DASHTree.
 TestReferenceAgreement compares against the full published tree, which is not
 in the repository, and runs only if DASH_TREE_FILE names it.
 """
@@ -32,6 +33,7 @@ FIXTURE = os.path.join(TEST_DATA_DIR, 'dash_test_tree.dash')
 M, P, O, H = 0, 1, 2, 3
 FEATURES = [(6, 4, 0, False, 3), (6, 4, 0, False, 2), (8, 2, 0, False, 1), (1, 1, 0, False, 0)]
 
+SHIPPED_TREE = os.path.join(RDConfig.RDDataDir, 'DASHTree', 'default_pruned.dash')
 PUBLISHED_TREE = os.environ.get('DASH_TREE_FILE')
 
 
@@ -180,6 +182,167 @@ class TestSyntheticTree(unittest.TestCase):
     # a node keeps the tree it came from alive, here a temporary
     orphan = rdDASHTree.DASHTree(FIXTURE, ['result']).GetRoot(O)[1]
     self.assertAlmostEqual(orphan.GetValue('result'), -0.99)
+
+
+class TestTies(unittest.TestCase):
+  """Atoms that fit the same node, on the pruned tree in Data/DASHTree."""
+
+  @classmethod
+  def setUpClass(cls):
+    cls.tree = rdDASHTree.DASHTree(SHIPPED_TREE, ['result', 'std'])
+    cls.legacy = rdDASHTree.DASHParams()
+    cls.legacy.legacyTieBreaking = True
+
+  def classValues(self, mol, params=None):
+    """raw values by symmetry class, which any atom order agrees on"""
+    values = self.tree.GetMolProperty(mol, 'result', params or rdDASHTree.DASHParams())
+    classes = {}
+    for atom, rank in enumerate(Chem.CanonicalRankAtoms(mol, breakTies=False)):
+      classes.setdefault(rank, []).append(values[atom])
+    return {rank: sorted(v) for rank, v in classes.items()}
+
+  def testAtomOrderDoesNotMatter(self):
+    # the two CH2 next to 5-aminoisoindoline's ring NH look alike for five
+    # levels, and under the legacy rule the SMILES decides which comes first
+    first, second = (molWithHs(s) for s in ('Nc1ccc2CNCc2c1', 'Nc1ccc2c(c1)CNC2'))
+    self.assertEqual(self.classValues(first), self.classValues(second))
+    self.assertNotEqual(self.classValues(first, self.legacy), self.classValues(second, self.legacy))
+    params = Chem.SmilesParserParams()
+    params.removeHs = False
+    sdf = os.path.join(TEST_DATA_DIR, 'dash_ref_mols.sdf')
+    for mol in list(Chem.SDMolSupplier(sdf, removeHs=False))[:20]:
+      expected = self.classValues(mol)
+      for smiles in Chem.MolToRandomSmilesVect(mol, 3, randomSeed=42):
+        self.assertEqual(self.classValues(Chem.MolFromSmiles(smiles, params)), expected, smiles)
+
+  def testTheBetterAttendedChildWins(self):
+    # the legacy descents of the two SMILES part at two children of one node;
+    # both now take the earlier child, which has the higher attention
+    first, second = (molWithHs(s) for s in ('Nc1ccc2CNCc2c1', 'Nc1ccc2c(c1)CNC2'))
+    paths = [
+      list(self.tree.GetAtomNodePath(first, 6, self.legacy)),
+      list(self.tree.GetAtomNodePath(second, 8, self.legacy))
+    ]
+    level = next(i for i, (a, b) in enumerate(zip(*paths)) if a != b)
+    earlier, later = sorted(paths, key=lambda path: path[level])
+    self.assertGreaterEqual(
+      self.tree.GetNode(earlier[0], earlier[level]).GetAttention(),
+      self.tree.GetNode(later[0], later[level]).GetAttention())
+    self.assertEqual(list(self.tree.GetAtomNodePath(first, 6)), earlier)
+    self.assertEqual(list(self.tree.GetAtomNodePath(second, 8)), earlier)
+
+
+class TestDASHTree(unittest.TestCase):
+
+  @classmethod
+  def setUpClass(cls):
+    cls.tree = rdDASHTree.DASHTree(SHIPPED_TREE, ['result', 'std'])
+
+  def testIntrospection(self):
+    self.assertGreater(self.tree.GetNumNodes(), 0)
+    self.assertEqual(sorted(self.tree.GetPropertyNames()), ['result', 'std'])
+    self.assertIn('result', self.tree.GetAvailablePropertyNames())
+    self.assertEqual(self.tree.GetFilename(), SHIPPED_TREE)
+
+  def testUnnormalisedIsRaw(self):
+    mol = molWithHs('CC(=O)Nc1ccc(O)cc1')
+    options = rdDASHTree.NormalizationOptions()
+    options.normalization = rdDASHTree.Normalization.NONE
+    details = self.tree.GetPartialChargesDetails(mol, options)
+    self.assertEqual(list(details['charges']), list(details['raw']))
+    self.assertEqual(list(details['raw']), list(self.tree.GetMolProperty(mol, 'result')))
+    self.assertTrue(all(s > 0 for s in details['std']))
+    self.assertTrue(all(2 <= d <= 17 for d in details['matchDepth']))
+
+  def testSymmetryEquivalentAtoms(self):
+    charges = self.tree.GetPartialCharges(molWithHs('c1ccccc1'))
+    self.assertEqual(len(set(charges[:6])), 1)
+    self.assertEqual(len(set(charges[6:])), 1)
+
+  def testMaxDepth(self):
+    mol = molWithHs('CC(C)Cc1ccc(cc1)C(C)C(=O)O')
+    previous = 0
+    for maxDepth in (0, 1, 2, 3, 5, 16):
+      params = rdDASHTree.DASHParams()
+      params.maxDepth = maxDepth
+      deepest = 0
+      for i in range(mol.GetNumAtoms()):
+        path = self.tree.GetAtomNodePath(mol, i, params)
+        # a hydrogen spends its first node reaching the heavy atom, so two
+        # nodes are always possible however small maxDepth is
+        self.assertLessEqual(len(path), 1 + max(2, maxDepth))
+        deepest = max(deepest, len(path))
+      self.assertGreaterEqual(deepest, previous)
+      previous = deepest
+
+  def testStopFlagAgreesWithTheAttentions(self):
+    # the default path takes a precomputed flag; nudging the threshold off its
+    # default forces the arithmetic, and the two must agree
+    for smiles in ('CC(C)Cc1ccc(cc1)C(C)C(=O)O', 'CN(C)CCOC(c1ccccc1)c1ccccc1'):
+      mol = molWithHs(smiles)
+      slow = rdDASHTree.NormalizationOptions()
+      slow.params.attentionThreshold = 10.000000001
+      self.assertEqual(list(self.tree.GetPartialCharges(mol)),
+                       list(self.tree.GetPartialCharges(mol, slow)))
+
+  def testAtomWithNoDataIsRefused(self):
+    # this bridging [N+] classifies into a branch holding one node with no value
+    mol = molWithHs('COC(=O)C1=CO[C@@H](C)[C@H]2C=[N+]3CCc4c([nH]c5ccccc45)[C@@H]3C[C@H]12')
+    with self.assertRaises(ValueError):
+      self.tree.GetPartialCharges(mol)
+    self.assertTrue(math.isnan(self.tree.GetAtomProperty(mol, 11, 'result')))
+
+  def testStalePropertyCacheIsRefused(self):
+    mol = Chem.RWMol()
+    mol.AddAtom(Chem.Atom(6))
+    mol.AddAtom(Chem.Atom(8))
+    mol.AddBond(0, 1, Chem.BondType.SINGLE)
+    with self.assertRaises(ValueError):
+      self.tree.GetPartialCharges(mol)
+
+  def testOutOfRangeAtomIndex(self):
+    mol = molWithHs('CCO')
+    with self.assertRaises(IndexError):
+      self.tree.GetAtomNodePath(mol, mol.GetNumAtoms())
+    with self.assertRaises(IndexError):
+      self.tree.GetAtomProperty(mol, mol.GetNumAtoms(), 'result')
+    with self.assertRaises(IndexError):
+      self.tree.GetMatchedSubstructure(mol, mol.GetNumAtoms())
+
+
+class TestBatch(unittest.TestCase):
+
+  @classmethod
+  def setUpClass(cls):
+    cls.tree = rdDASHTree.DASHTree(SHIPPED_TREE, ['result', 'std'])
+    cls.mols = [
+      molWithHs(s)
+      for s in ('CCO', 'CC(=O)Nc1ccc(O)cc1', 'CC(C)Cc1ccc(cc1)C(C)C(=O)O',
+                'CN1C=NC2=C1C(=O)N(C)C(=O)N2C', 'CC(=O)Oc1ccccc1C(=O)O', 'c1ccc2c(c1)[nH]c1ccccc12',
+                'OC(=O)CCc1c[nH]c2ccccc12', 'CN(C)CCOC(c1ccccc1)c1ccccc1')
+    ]
+
+  def testEveryThreadCountAgrees(self):
+    single = [list(self.tree.GetPartialCharges(m)) for m in self.mols]
+    for numThreads in (1, 2, 4, 8, 0, -1):
+      batch = self.tree.GetPartialChargesBatch(self.mols, rdDASHTree.NormalizationOptions(),
+                                               numThreads)
+      self.assertEqual([list(r) for r in batch], single, msg=str(numThreads))
+
+  def testEmptyBatch(self):
+    self.assertEqual(
+      len(self.tree.GetPartialChargesBatch([], rdDASHTree.NormalizationOptions(), 4)), 0)
+
+  def testPropertyBatch(self):
+    batch = self.tree.GetMolPropertyBatch(self.mols, 'result', rdDASHTree.DASHParams(), 4)
+    self.assertEqual(len(batch), len(self.mols))
+    for row, mol in zip(batch, self.mols):
+      self.assertEqual(list(row), list(self.tree.GetMolProperty(mol, 'result')))
+
+  def testAcceptsAnyPythonSequence(self):
+    asTuple = self.tree.GetPartialChargesBatch(tuple(self.mols))
+    asList = self.tree.GetPartialChargesBatch(self.mols)
+    self.assertEqual([list(r) for r in asTuple], [list(r) for r in asList])
 
 
 @needsPublishedTree
