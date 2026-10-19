@@ -8,6 +8,7 @@ Subpackages
 
     rdkit.Chem.AtomPairs
     rdkit.Chem.ChemUtils
+    rdkit.Chem.DASHTree
     rdkit.Chem.Draw
     rdkit.Chem.EState
     rdkit.Chem.FeatMaps
@@ -75,6 +76,7 @@ Submodules
    rdkit.Chem.rdchem
    rdkit.Chem.rdCIPLabeler
    rdkit.Chem.rdCoordGen
+   rdkit.Chem.rdDASHTree
    rdkit.Chem.rdDepictor
    rdkit.Chem.rdDeprotect
    rdkit.Chem.rdDetermineBonds
