@@ -1516,7 +1516,7 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 }
 
 std::string MolToCDXMLBlock(
-    const RWMol &mol,
+    const ROMol &mol,
     CDXMLFormat format) {
 
   CDXFormat cdx_format = CDXFormat::CDXML;

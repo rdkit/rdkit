@@ -96,7 +96,7 @@ namespace {
 // is necessary for this and seemed to leave the molecule in an odd state
 // that didn't play well with extractAtoms.
 std::unique_ptr<RWMol> extractSubset(
-    const RWMol &mol, const std::vector<unsigned int> &atomsToKeep) {
+    const ROMol &mol, const std::vector<unsigned int> &atomsToKeep) {
   auto retMol = std::make_unique<RWMol>(mol);
   boost::dynamic_bitset<> keepAtoms(mol.getNumAtoms());
   for (const auto atk : atomsToKeep) {

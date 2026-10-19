@@ -414,7 +414,14 @@ void addMol(const T &imol, bj::object &rjMol, const bj::object &atomDefaults,
   try {
     MolOps::Kekulize(mol, false);
   } catch (const KekulizeException &) {
-    mol = imol;
+    try {
+      const RWMol &m = dynamic_cast<const RWMol&>(imol);
+      mol = m;
+    } catch (const std::bad_cast& e) {
+      // This is effectively dead code, but allows us to change RWMol/ROMol
+      //  in the future by calling the constructor explicitly
+      mol = RWMol(imol);
+    }
     if (mol.needsUpdatePropertyCache()) {
       mol.updatePropertyCache(false);
     }
