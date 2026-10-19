@@ -3001,7 +3001,7 @@ TEST_CASE("Constraint torsions (initial embedding (IC))") {
   }
 }
 
-TEST_CASE("Issue xxx") {
+TEST_CASE("PR #9730") {
   SECTION("carbamide") {
     auto mol = "NC(=O)NC"_smiles;
     MolOps::addHs(*mol);
@@ -3018,8 +3018,8 @@ TEST_CASE("Issue xxx") {
     CHECK(!allCis(*mol, ps, 0, 1, 3, 4));
   }
 
-  SECTION("TODO") {
-    // esters shou
+  SECTION("Esters") {
+    // esters should be still forced to be trans
     auto mol = "NC(=O)OC"_smiles;
     MolOps::addHs(*mol);
     DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
