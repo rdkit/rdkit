@@ -11,8 +11,10 @@ on:
 permissions:
   contents: read
 
+# PR CI runs should be cancelled when new commits are pushed, while
+# for the master branch we want the CI to always run on each commit.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
