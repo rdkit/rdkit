@@ -92,9 +92,9 @@ jobs:
           source ${CONDA}/etc/profile.d/conda.sh
           conda activate rdkit_build
           cd build
-          sh ./Code/PgSQL/rdkit/pgsql_regress.sh
-          if [ -e ./Code/PgSQL/rdkit/regression.diffs ]
-          then
+          sh ./Code/PgSQL/rdkit/pgsql_regress.sh || status=$?
+          if [ -e ./Code/PgSQL/rdkit/regression.diffs ]; then
             cat ./Code/PgSQL/rdkit/regression.diffs
             exit 1
           fi
+          exit ${status:-0}
