@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/QueryBond.h>
+#include <GraphMol/QueryOps.h>
 #include <Query/NullQueryAlgebra.h>
-#include <boost/algorithm/string/predicate.hpp>
 
 namespace RDKit {
 
@@ -106,120 +106,21 @@ void QueryBond::expandQuery(QUERYBOND_QUERY *what,
 }
 
 namespace {
-bool localMatch(BOND_EQUALS_QUERY const *q1, BOND_EQUALS_QUERY const *q2) {
-  if (q1->getNegation() == q2->getNegation()) {
-    return q1->getVal() == q2->getVal();
-  } else {
-    return q1->getVal() != q2->getVal();
+struct BondQueryTraits {
+  using BaseQuery = QueryBond::QUERYBOND_QUERY;
+  using RangeQuery = BOND_RANGE_QUERY;
+  using EqQuery = BOND_EQUALS_QUERY;
+  static constexpr std::string_view NullDesc = "BondNull";
+  static constexpr std::string_view OrDesc = "BondOr";
+  static constexpr std::string_view AndDesc = "BondAnd";
+  static bool isEqualityQuery(std::string_view s) {
+    static const std::string queries[] = {
+        "BondRingSize", "BondMinRingSize", "BondOrder",
+        "BondDir",      "BondInRing",      "BondInNRings"};
+    return std::find(std::begin(queries), std::end(queries), s) !=
+           std::end(queries);
   }
-}
-
-bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
-                  QueryBond::QUERYBOND_QUERY const *q2) {
-  PRECONDITION(q1, "no q1");
-  PRECONDITION(q2, "no q2");
-
-  static const unsigned int nQueries = 6;
-  static std::string equalityQueries[nQueries] = {
-      "BondRingSize", "BondMinRingSize", "BondOrder",
-      "BondDir",      "BondInRing",      "BondInNRings"};
-
-  bool res = false;
-  std::string d1 = q1->getDescription();
-  std::string d2 = q2->getDescription();
-  if (d1 == "BondNull" || d2 == "BondNull") {
-    res = true;
-  } else if (d1 == "BondOr") {
-    // FIX: handle negation on BondOr and BondAnd
-    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
-         ++iter1) {
-      if (d2 == "BondOr") {
-        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
-             ++iter2) {
-          if (queriesMatch(iter1->get(), iter2->get())) {
-            res = true;
-            break;
-          }
-        }
-      } else {
-        if (queriesMatch(iter1->get(), q2)) {
-          res = true;
-        }
-      }
-      if (res) {
-        break;
-      }
-    }
-  } else if (d1 == "BondAnd") {
-    res = true;
-    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
-         ++iter1) {
-      bool matched = false;
-      if (d2 == "BondAnd") {
-        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
-             ++iter2) {
-          if (queriesMatch(iter1->get(), iter2->get())) {
-            matched = true;
-            break;
-          }
-        }
-      } else {
-        matched = queriesMatch(iter1->get(), q2);
-      }
-      if (!matched) {
-        res = false;
-        break;
-      }
-    }
-    // FIX : handle BondXOr
-  } else if (d2 == "BondOr") {
-    // FIX: handle negation on BondOr and BondAnd
-    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
-         ++iter2) {
-      if (queriesMatch(q1, iter2->get())) {
-        res = true;
-        break;
-      }
-    }
-  } else if (d2 == "BondAnd") {
-    res = true;
-    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
-         ++iter2) {
-      if (queriesMatch(q1, iter2->get())) {
-        res = false;
-        break;
-      }
-    }
-  } else {
-    // Strip prefix to get base description
-    auto stripPrefix = [](const std::string &s) -> std::string {
-      if (boost::starts_with(s, "range_")) return s.substr(6);
-      if (boost::starts_with(s, "less_")) return s.substr(5);
-      if (boost::starts_with(s, "greater_")) return s.substr(8);
-      return s;
-    };
-    std::string bd1 = stripPrefix(d1);
-    std::string bd2 = stripPrefix(d2);
-    if (bd1 == bd2 &&
-        std::find(&equalityQueries[0], &equalityQueries[nQueries], bd1) !=
-            &equalityQueries[nQueries]) {
-      auto *e1 = dynamic_cast<const BOND_EQUALS_QUERY *>(q1);
-      auto *e2 = dynamic_cast<const BOND_EQUALS_QUERY *>(q2);
-      if (e1 && e2) {
-        res = localMatch(e1, e2);
-      } else {
-        // Both range-type: exact equality of bounds
-        auto *r1 = dynamic_cast<const BOND_RANGE_QUERY *>(q1);
-        auto *r2 = dynamic_cast<const BOND_RANGE_QUERY *>(q2);
-        if (r1 && r2) {
-          res = (r1->getLower() == r2->getLower() &&
-                 r1->getUpper() == r2->getUpper());
-        }
-      }
-    }
-  }
-  return res;
-}
+};
 }  // namespace
 
 bool QueryBond::Match(Bond const *what) const {
@@ -233,7 +134,7 @@ bool QueryBond::QueryMatch(QueryBond const *what) const {
   if (!what->hasQuery()) {
     return dp_query->Match(what);
   } else {
-    return queriesMatch(dp_query, what->getQuery());
+    return QueryOps::queriesMatch<BondQueryTraits>(dp_query, what->getQuery());
   }
 }
 
