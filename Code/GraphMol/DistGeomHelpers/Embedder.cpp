@@ -1549,8 +1549,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -2016,6 +2016,9 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING) {
       setMoleculeDFS(*piece.get(), *zmat, *etkdgDetails->internalCoords);
       correctChiralCenters(*piece.get(), *zmat);
+      if (params.verbose) {
+        std::cout << (*zmat);
+      }
     }
 
     // find double bonds

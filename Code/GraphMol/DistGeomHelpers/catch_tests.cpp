@@ -3295,3 +3295,27 @@ M  END)CTAB"_ctab;
   CHECK_THAT(mmat->getLowerBound(22, 8),
              Catch::Matchers::WithinAbs(mmat->getLowerBound(21, 36), 5.e-1));
 }
+
+TEST_CASE("Issue - xxx") {
+  auto mol = "c12ccccc1CCCCCCCCCCCCCCCC2"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DistGeom::BoundsMatPtr mmat;
+  mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+  DGeomHelpers::initBoundsMat(mmat);
+  DGeomHelpers::setTopolBounds(*mol, mmat);
+
+  // 1-0-5-4 should be CIS
+  // 21-0-5-6 should be CIS
+  // 21-0-5-4 TRANS
+  // 1-0-5-4 TRANS
+
+  CHECK_THAT(mmat->getUpperBound(21, 6),
+             Catch::Matchers::WithinAbs(mmat->getUpperBound(1, 4), 25.e-2));
+  CHECK_THAT(mmat->getUpperBound(1, 6),
+             Catch::Matchers::WithinAbs(mmat->getUpperBound(21, 4), 25.e-2));
+  CHECK(mmat->getUpperBound(21, 4) > 3.5);  // TRANS
+  CHECK(mmat->getUpperBound(21, 6) < 3.0);  // CIS
+  CHECK(mmat->getLowerBound(21, 4) > 3.5);  // TRANS
+  CHECK(mmat->getLowerBound(21, 6) < 3.0);  // CIS
+}
