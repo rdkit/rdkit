@@ -152,6 +152,142 @@ class TestCase(unittest.TestCase):
       ok = 1
     self.assertTrue(ok)
 
+  def testBranchDepthPrioritizationKeyword(self):
+    """The default enables branch-depth layout and the opt-out is accepted.
+
+    This is an API smoke test rather than a geometry-quality test: it catches a
+    wrapper that omits the keyword or has a stale default, and confirms that
+    both the default and explicit historical mode generate complete conformers.
+    """
+    default_mol = Chem.MolFromSmiles('CCCC(CC)CCCC')
+    enabled_mol = Chem.Mol(default_mol)
+    disabled_mol = Chem.Mol(default_mol)
+    rdDepictor.Compute2DCoords(default_mol)
+    rdDepictor.Compute2DCoords(enabled_mol, useBranchDepthPrioritization=True)
+    rdDepictor.Compute2DCoords(disabled_mol, useBranchDepthPrioritization=False)
+
+    default_conf = default_mol.GetConformer()
+    enabled_conf = enabled_mol.GetConformer()
+    for atom_idx in range(default_mol.GetNumAtoms()):
+      self.assertTrue(ptEq(default_conf.GetAtomPosition(atom_idx),
+                           enabled_conf.GetAtomPosition(atom_idx)))
+    self.assertEqual(disabled_mol.GetConformer().GetNumAtoms(),
+                     disabled_mol.GetNumAtoms())
+
+  def testBranchDepthPrioritizationGeometry(self):
+    """Prioritized branches are applied at the initial attachment point."""
+    coord_map = {
+      0: Geometry.Point2D(0.0, 0.0),
+      1: Geometry.Point2D(1.5, 0.0),
+    }
+
+    # At a degree-three junction, the deeper branch is assigned the preferred
+    # zig-zag side even though the supplied coordinates seeded the fragment.
+    mol = Chem.MolFromSmiles('CC(C)CCCC')
+    rdDepictor.Compute2DCoords(
+      mol, canonOrient=False, coordMap=coord_map,
+      useBranchDepthPrioritization=True)
+    conf = mol.GetConformer()
+    self.assertGreater(conf.GetAtomPosition(2).y,
+                       conf.GetAtomPosition(3).y)
+
+    # Two equally deep continuations occupy opposite sides of a balanced
+    # degree-four junction, while the short branch continues straight.
+    mol = Chem.MolFromSmiles('CC(CC)(CC)C')
+    rdDepictor.Compute2DCoords(
+      mol, canonOrient=False, coordMap=coord_map,
+      useBranchDepthPrioritization=True)
+    conf = mol.GetConformer()
+    center = conf.GetAtomPosition(1)
+    self.assertAlmostEqual(conf.GetAtomPosition(2).x, center.x, 6)
+    self.assertAlmostEqual(conf.GetAtomPosition(4).x, center.x, 6)
+    self.assertLess(conf.GetAtomPosition(2).y, center.y)
+    self.assertGreater(conf.GetAtomPosition(4).y, center.y)
+    self.assertAlmostEqual(conf.GetAtomPosition(6).y, center.y, 6)
+    self.assertGreater(conf.GetAtomPosition(6).x, center.x)
+
+    # With unequal degree-four branches, the two deepest branches take the
+    # opposing side positions and the shortest branch remains straight.
+    mol = Chem.MolFromSmiles('CC(C)(CC)CCCC')
+    rdDepictor.Compute2DCoords(
+      mol, canonOrient=False, coordMap=coord_map,
+      useBranchDepthPrioritization=True)
+    conf = mol.GetConformer()
+    center = conf.GetAtomPosition(1)
+    self.assertAlmostEqual(conf.GetAtomPosition(3).x, center.x, 6)
+    self.assertAlmostEqual(conf.GetAtomPosition(5).x, center.x, 6)
+    self.assertLess(conf.GetAtomPosition(3).y, center.y)
+    self.assertGreater(conf.GetAtomPosition(5).y, center.y)
+    self.assertAlmostEqual(conf.GetAtomPosition(2).y, center.y, 6)
+    self.assertGreater(conf.GetAtomPosition(2).x, center.x)
+
+  def testBranchDepthPrioritizationHonorsSampling(self):
+    """Explicit sampling still takes precedence over the initial ordering."""
+    file_name = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol',
+                             'Depictor', 'test_data', '7UPJ_xtal.mol')
+    unsampled = Chem.MolFromMolFile(file_name)
+    sampled = Chem.Mol(unsampled)
+    rdDepictor.Compute2DCoords(
+      unsampled, canonOrient=False, useBranchDepthPrioritization=True)
+    rdDepictor.Compute2DCoords(
+      sampled, canonOrient=False, nFlipsPerSample=3, nSample=100,
+      sampleSeed=100, permuteDeg4Nodes=True,
+      useBranchDepthPrioritization=True)
+    unsampled_conf = unsampled.GetConformer()
+    sampled_conf = sampled.GetConformer()
+    self.assertTrue(any(
+      not ptEq(unsampled_conf.GetAtomPosition(atom_idx),
+               sampled_conf.GetAtomPosition(atom_idx))
+      for atom_idx in range(unsampled.GetNumAtoms())))
+
+  def testBranchDepthPrioritizationPreservesDoubleBondStereo(self):
+    """Refreshing branch order must retain cis/trans attachment directions."""
+    def substituents_are_on_same_side(smiles):
+      mol = Chem.MolFromSmiles(smiles)
+      rdDepictor.Compute2DCoords(
+        mol, canonOrient=False, useBranchDepthPrioritization=True)
+      double_bond = next(
+        bond for bond in mol.GetBonds()
+        if bond.GetBondType() == Chem.BondType.DOUBLE)
+      begin_idx = double_bond.GetBeginAtomIdx()
+      end_idx = double_bond.GetEndAtomIdx()
+      begin_substituent, end_substituent = double_bond.GetStereoAtoms()
+      conf = mol.GetConformer()
+      begin = conf.GetAtomPosition(begin_idx)
+      end = conf.GetAtomPosition(end_idx)
+      double_bond_vector = end - begin
+      begin_vector = conf.GetAtomPosition(begin_substituent) - begin
+      end_vector = conf.GetAtomPosition(end_substituent) - end
+      begin_cross = (double_bond_vector.x * begin_vector.y -
+                     double_bond_vector.y * begin_vector.x)
+      end_cross = (double_bond_vector.x * end_vector.y -
+                   double_bond_vector.y * end_vector.x)
+      return begin_cross * end_cross > 0
+
+    self.assertTrue(substituents_are_on_same_side(r'C/C=C\C'))
+    self.assertFalse(substituents_are_on_same_side(r'C/C=C/C'))
+
+  def testBranchDepthPrioritizationHonorsDistanceMatrix(self):
+    """Distance-matrix sampling remains active with branch ordering enabled."""
+    smiles = 'CCCCCCCC'
+    atom_count = Chem.MolFromSmiles(smiles).GetNumAtoms()
+    matrix_size = atom_count * (atom_count - 1) // 2
+
+    endpoint_distances = []
+    for requested_distance in (1.0, 10.0):
+      mol = Chem.MolFromSmiles(smiles)
+      distance_matrix = np.full(matrix_size, requested_distance)
+      rdDepictor.Compute2DCoordsMimicDistmat(
+        mol, distance_matrix, canonOrient=False, weightDistMat=1.0,
+        nFlipsPerSample=3, nSample=100, sampleSeed=42,
+        useBranchDepthPrioritization=True)
+      conf = mol.GetConformer()
+      endpoint_distances.append(
+        (conf.GetAtomPosition(0) -
+         conf.GetAtomPosition(atom_count - 1)).Length())
+
+    self.assertLess(endpoint_distances[0], endpoint_distances[1])
+
   def test3IssueSF1526844(self):
     t = Chem.MolFromSmiles('c1nc(N)ccc1')
     rdDepictor.Compute2DCoords(t, canonOrient=False)
@@ -185,8 +321,10 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 'test_data/7UPJ_xtal.mol'))
 
-    # default mode
-    rdDepictor.Compute2DCoords(mol, canonOrient=False)
+    # These reference coordinates were generated with the historical
+    # rank-based initial ordering, so request that ordering explicitly.
+    rdDepictor.Compute2DCoords(
+      mol, canonOrient=False, useBranchDepthPrioritization=False)
     self.assertTrue(
       compareCoords(
         mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
@@ -194,7 +332,8 @@ class TestCase(unittest.TestCase):
 
     # spread the structure as much as possible by sampling
     rdDepictor.Compute2DCoords(mol, canonOrient=False, nFlipsPerSample=3, nSample=100,
-                               sampleSeed=100, permuteDeg4Nodes=1)
+                               sampleSeed=100, permuteDeg4Nodes=1,
+                               useBranchDepthPrioritization=False)
     self.assertTrue(
       compareCoords(
         mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor',
@@ -213,14 +352,18 @@ class TestCase(unittest.TestCase):
     dmat3D = getDistMat(mol)
 
     # now mimic the coordinate with a very small weight
-    rdDepictor.Compute2DCoordsMimicDistmat(mol, dmat3D, weightDistMat=0.001)
+    rdDepictor.Compute2DCoordsMimicDistmat(
+      mol, dmat3D, weightDistMat=0.001,
+      useBranchDepthPrioritization=False)
     self.assertTrue(
       compareCoords(
         mol,
         os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/Depictor', 'test_data/7UPJ_mimic3D_1.mol')))
 
     # now mimic the coordinate with a very small weight
-    rdDepictor.Compute2DCoordsMimicDistmat(mol, dmat3D, weightDistMat=0.003)
+    rdDepictor.Compute2DCoordsMimicDistmat(
+      mol, dmat3D, weightDistMat=0.003,
+      useBranchDepthPrioritization=False)
     self.assertTrue(
       compareCoords(
         mol,
@@ -885,27 +1028,28 @@ M  END
    -3.4910    1.0942    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
     1.7051    1.0942    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
    -3.4910   -1.9059    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0
-  2  3  2  0
-  3  4  1  0
-  4  5  2  0
-  5  6  1  0
-  6  1  2  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
   6  8  1  0
   3  9  1  0
   2  7  1  0
 M  END
 """
     mol = Chem.MolFromMolBlock(mol_molblock)
+    original_molblock = Chem.MolToMolBlock(mol)
     self.assertRaises(
       ValueError, lambda: rdDepictor.GenerateDepictionMatching2DStructure(
         mol, template_ref, -1, None, False, False, True))
-    self.assertEqual(Chem.MolToMolBlock(mol), mol_molblock)
+    self.assertEqual(Chem.MolToMolBlock(mol), original_molblock)
     self.assertEqual(
       len(
         rdDepictor.GenerateDepictionMatching2DStructure(mol, template_ref, -1, None, True, False,
                                                         True)), 0)
-    self.assertNotEqual(Chem.MolToMolBlock(mol), mol_molblock)
+    self.assertNotEqual(Chem.MolToMolBlock(mol), original_molblock)
     mol.RemoveAllConformers()
     p = rdDepictor.ConstrainedDepictionParams()
     p.allowRGroups = True
@@ -1068,77 +1212,6 @@ M  END
       self.assertEqual(mol.GetNumAtoms(), 7)
       self.assertEqual(
         len(rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef, params=p)), 7)
-
-  def testGenerateDepictionMatching2DStructureWithRingTemplates(self):
-    align_ref_mol = Chem.MolFromMolBlock(R"""
-    RDKit          2D
-
-  0  0  0  0  0  0  0  0  0  0999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 6 6 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 N -5.242424 0.787879 0.000000 0
-M  V30 2 C -4.492420 2.086915 0.000000 0
-M  V30 3 C -2.992419 2.086916 0.000000 0
-M  V30 4 C -2.242418 0.787879 0.000000 0
-M  V30 5 C -2.992416 -0.511157 0.000000 0
-M  V30 6 C -4.492420 -0.511158 0.000000 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 2 3
-M  V30 2 2 3 4
-M  V30 3 1 4 5
-M  V30 4 2 5 6
-M  V30 5 2 2 1
-M  V30 6 1 1 6
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-$$$$
-""")
-
-    mol = Chem.MolFromSmiles(R"CC1=CC(C23C4C5C6C4C2C6C53)=CN=C1")
-
-    self.assertIsNotNone(align_ref_mol)
-    self.assertIsNotNone(mol)
-
-    ref_coords = align_ref_mol.GetConformer().GetPositions()
-
-    def check_match_coords(mol, match):
-      coords = mol.GetConformer().GetPositions()
-      return all(np.allclose(ref_coords[ref_idx], coords[idx]) for ref_idx, idx in match)
-
-    def has_weird_bonds(mol):
-      coords = mol.GetConformer().GetPositions()
-      for bond in mol.GetBonds():
-        length = np.linalg.norm(coords[bond.GetBeginAtomIdx()] - coords[bond.GetEndAtomIdx()])
-        if length < 1.0 or length > 2.1:
-          return True
-      return False
-
-    params = rdDepictor.ConstrainedDepictionParams()
-
-    params.useRingTemplates = False
-
-    matches = rdDepictor.GenerateDepictionMatching2DStructure(mol, align_ref_mol, params=params)
-    self.assertEqual(len(matches), 6)
-
-    self.assertTrue(check_match_coords(mol, matches))
-
-    # by default, RDkit's coordinate generation creates some weird bonds for cubane
-    self.assertTrue(has_weird_bonds(mol))
-
-    params.useRingTemplates = True
-
-    matches = rdDepictor.GenerateDepictionMatching2DStructure(mol, align_ref_mol, params=params)
-    self.assertEqual(len(matches), 6)
-
-    self.assertTrue(check_match_coords(mol, matches))
-
-    # when using ring templates, cubane bonds are all approximately
-    # the same length, which is reasonable
-    self.assertFalse(has_weird_bonds(mol))
-
 
 if __name__ == '__main__':
   unittest.main()

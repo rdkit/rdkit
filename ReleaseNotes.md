@@ -74,6 +74,13 @@ thomp-j, vwe-ibm, ankar-dav, dpdoughe
   result by setting the `allPoints` argument to true.
 
 ## New Features and Enhancements:
+  - Add branch-depth prioritization to RDKit 2D coordinate generation.
+    The new `useBranchDepthPrioritization` option prefers deeper acyclic
+    branches while building zig-zag chains. It is enabled by default in the
+    parameter-object and Python APIs; set it to false to restore rank-based
+    branch ordering. The legacy C++ overload keeps its historical behavior.
+    Explicit random sampling, including distance-matrix sampling, still runs
+    and may change the prioritized initial layout.
   - Legend position
  (github issue #9023 from PaulC61)
   - Implement nanobind wrappers for the RDKit
