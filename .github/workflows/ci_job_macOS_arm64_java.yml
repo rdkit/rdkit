@@ -16,17 +16,8 @@ jobs:
       - uses: actions/checkout@v7
       - name: Set up CI environment
         uses: ./.github/actions/ci-env
-      - name: Install conda
-        run: |
-          wget https://github.com/conda-forge/miniforge/releases/download/26.5.3-0/Miniforge3-26.5.3-0-MacOSX-arm64.sh
-          bash Miniforge3-26.5.3-0-MacOSX-arm64.sh -b -p ${CONDA}
-      - name: Remove homebrew
-        run: |
-          echo "Removing homebrew to avoid conflicts."
-          curl -fsSL https://raw.githubusercontent.com/Homebrew/install/main/uninstall.sh > ~/uninstall_homebrew.sh
-          chmod +x ~/uninstall_homebrew.sh
-          ~/uninstall_homebrew.sh -f -q
-          rm ~/uninstall_homebrew.sh
+      - name: Set up macOS package management
+        uses: ./.github/actions/setup-macos-package-management
       - name: Setup build environment
         run: |
           source ${CONDA}/etc/profile.d/conda.sh

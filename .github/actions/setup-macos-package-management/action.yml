@@ -1,0 +1,18 @@
+name: Set up macOS package management
+description: Manage macOS packages by installing Miniforge and removing Homebrew.
+runs:
+  using: composite
+  steps:
+    - name: Install conda
+      shell: bash
+      run: |
+        wget https://github.com/conda-forge/miniforge/releases/download/26.5.3-0/Miniforge3-26.5.3-0-MacOSX-arm64.sh
+        bash Miniforge3-26.5.3-0-MacOSX-arm64.sh -b -p ${CONDA}
+    - name: Remove homebrew
+      shell: bash
+      run: |
+        echo "Removing homebrew to avoid conflicts."
+        curl -fsSL https://raw.githubusercontent.com/Homebrew/install/be041513824fd2666a0e93cf5c3b0ca3bb0eb4b6/uninstall.sh > ~/uninstall_homebrew.sh
+        chmod +x ~/uninstall_homebrew.sh
+        ~/uninstall_homebrew.sh -f -q
+        rm ~/uninstall_homebrew.sh
