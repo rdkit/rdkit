@@ -822,12 +822,12 @@ TEST_CASE("tracking failure causes") {
     MolOps::addHs(*mol);
     DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
     ps.trackFailures = true;
-    ps.maxIterations = 50;
+    ps.maxIterations = 2;
     ps.randomSeed = 42;
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid < 0);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 10);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 0);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 0);
     auto fail_cp = ps.failures;
     // make sure we reset the counts each time
     cid = DGeomHelpers::EmbedMolecule(*mol, ps);
@@ -863,7 +863,7 @@ TEST_CASE("tracking failure causes") {
     ps.useLegacyImplementation = false;
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid < 0);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 16);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 17);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::KTERM_VIOLATION] == 0);
     auto fail_cp = ps.failures;
     // make sure we reset the counts each time

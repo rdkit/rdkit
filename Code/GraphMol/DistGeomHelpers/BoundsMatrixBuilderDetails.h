@@ -37,12 +37,7 @@ enum class TorsionType {
 enum class Type14 {
   IN_CHAIN,
   IN_RING,
-  TWO_IN_SAME_RING,
-  TWO_IN_DIFF_RING,
-  SHARE_RING_BOND,
-  MACROCYCLE_TWO_IN_SAME_RING,
-  MACROCYCLE_ALL_IN_SAME_RING,
-  PRE_SET
+  MACROCYCLE_ALL_IN_SAME_RING
 };
 
 struct TorsionValue {
@@ -78,7 +73,6 @@ struct Path14Configuration {
   unsigned int bid1, bid2, bid3;
   unsigned int aid1, aid2, aid3, aid4;
   TorsionValue value;
-  Type14 type14;
   std::size_t rSize = 0;
 
   DistGeom::TorsionCandidates toTorsionRange() const {
