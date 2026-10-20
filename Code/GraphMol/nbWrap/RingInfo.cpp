@@ -21,42 +21,32 @@ using namespace nb::literals;
 
 namespace {
 using namespace RDKit;
-
+PyTupleOf<int> spanToTuple(std::span<const int> values) {
+  nb::list result;
+  for (const auto value : values) {
+    result.append(value);
+  }
+  return PyTupleOf<int>(nb::tuple(result));
+}
 PyTupleOf<PyTupleOf<int>> atomRings(const RingInfo *self) {
   nb::list res;
-  for (const auto &ring : self->atomRings()) {
-    nb::list ringAsList;
-    for (const auto idx : ring) {
-      ringAsList.append(idx);
-    }
-    res.append(nb::tuple(ringAsList));
+  for (const auto ring : self->atomRings()) {
+    res.append(spanToTuple(ring));
   }
   return PyTupleOf<PyTupleOf<int>>(nb::tuple(res));
 }
 PyTupleOf<PyTupleOf<int>> bondRings(const RingInfo *self) {
   nb::list res;
-  for (const auto &ring : self->bondRings()) {
-    nb::list ringAsList;
-    for (const auto idx : ring) {
-      ringAsList.append(idx);
-    }
-    res.append(nb::tuple(ringAsList));
+  for (const auto ring : self->bondRings()) {
+    res.append(spanToTuple(ring));
   }
   return PyTupleOf<PyTupleOf<int>>(nb::tuple(res));
 }
 PyTupleOf<int> atomMembers(const RingInfo *self, unsigned int idx) {
-  nb::list res;
-  for (const auto v : self->atomMembers(idx)) {
-    res.append(v);
-  }
-  return PyTupleOf<int>(nb::tuple(res));
+  return spanToTuple(self->atomMembers(idx));
 }
 PyTupleOf<int> bondMembers(const RingInfo *self, unsigned int idx) {
-  nb::list res;
-  for (const auto v : self->bondMembers(idx)) {
-    res.append(v);
-  }
-  return PyTupleOf<int>(nb::tuple(res));
+  return spanToTuple(self->bondMembers(idx));
 }
 PyTupleOf<int> atomRingSizes(const RingInfo *self, unsigned int idx) {
   nb::list res;
