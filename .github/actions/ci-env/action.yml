@@ -18,4 +18,5 @@ runs:
           echo "CCACHE_MAXSIZE=500M"
           echo "CCACHE_SLOPPINESS=time_macros"
           echo "BUILD_BRANCH_NAME=${BRANCH}"
+          echo "JOB_START_TIMESTAMP=$(date +%s)"
         } >> "$GITHUB_ENV"
