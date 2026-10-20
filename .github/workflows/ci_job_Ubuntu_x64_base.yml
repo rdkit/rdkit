@@ -39,13 +39,7 @@ jobs:
           conda install -c conda-forge --override-channels pytest nbval "ipykernel>=6.0"
       - name: Restore ccache
         id: cache-restore
-        uses: actions/cache/restore@v6
-        with:
-          path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ runner.os }}-${{ github.job }}-${{ env.BUILD_BRANCH_NAME }}-${{ github.sha }}
-          restore-keys: |
-            ccache-${{ runner.os }}-${{ github.job }}-${{ env.BUILD_BRANCH_NAME }}
-            ccache-${{ runner.os }}-${{ github.job }}-master
+        uses: ./.github/actions/restore-ccache
       - name: Configure build (Run CMake)
         run: |
           source ${CONDA}/etc/profile.d/conda.sh
@@ -97,12 +91,10 @@ jobs:
           cd build
           make -j $(nproc) install
       - name: Store ccache
-        uses: actions/cache/save@v6
-        # Always store the cache after build, unless it already exists
-        if: always() && steps.cache-restore.outputs.cache-hit != 'true'
+        uses: ./.github/actions/store-ccache
+        if: always()
         with:
-          path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ runner.os }}-${{ github.job }}-${{ env.BUILD_BRANCH_NAME }}-${{ github.sha }}
+          cache-hit: ${{ steps.cache-restore.outputs.cache-hit }}
       - name: Show ccache stats
         run: |
           source ${CONDA}/etc/profile.d/conda.sh

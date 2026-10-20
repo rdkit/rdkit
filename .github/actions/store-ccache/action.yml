@@ -1,0 +1,15 @@
+name: Store ccache
+description: Save the shared ccache cache for a CI job when no exact cache was restored.
+inputs:
+  cache-hit:
+    description: Whether the exact ccache cache was restored.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Store ccache
+      uses: actions/cache/save@v6
+      if: always() && inputs.cache-hit != 'true'
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: ccache-${{ runner.os }}-${{ github.job }}-${{ env.BUILD_BRANCH_NAME }}-${{ github.sha }}
