@@ -1183,9 +1183,9 @@ TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
   }
 }
 
-void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
-                   unsigned int bid3, ComputedData &accumData,
-                   std::size_t rSize) {
+Path14Configuration _record14Path(const ROMol &mol, unsigned int bid1,
+                                  unsigned int bid2, unsigned int bid3,
+                                  ComputedData &accumData, std::size_t rSize) {
   const unsigned int aid2 = accumData.bondAdj->getVal(bid1, bid2);
   const unsigned int aid3 = accumData.bondAdj->getVal(bid2, bid3);
 
@@ -1195,7 +1195,7 @@ void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
   Atom::HybridizationType ahyb3 = atm3->getHybridization();
 
   const unsigned int aid1 = mol.getBondWithIdx(bid1)->getOtherAtomIdx(aid2);
-  const unsigned int aid4 = mol.getBondWithIdx(bid2)->getOtherAtomIdx(aid3);
+  const unsigned int aid4 = mol.getBondWithIdx(bid3)->getOtherAtomIdx(aid3);
 
   unsigned int nb = mol.getNumBonds();
   Path14Configuration path14 = {
@@ -1208,6 +1208,7 @@ void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
     path14.value = {.type = TorsionType::FLEXIBLE};
   }
   accumData.paths14.push_back(path14);
+  return path14;
 }
 
 // this is adapted from `_checkAmideEster14`, with only changing
@@ -1444,6 +1445,10 @@ std::optional<Path14Configuration> _collect14Bounds(
   auto [baL12, baU12] = getAngleRange(ba12, tol12);
   auto [baL23, baU23] = getAngleRange(ba23, tol23);
 
+  // std::cout << aid1 << ";" << atm2->getIdx() << ";" << atm3->getIdx() << ";"
+  //           << aid4 << ": " << int(type) << ";" << int(torsionValue.type)
+  //           << std::endl;
+
   switch (torsionValue.type) {
     case TorsionType::CIS:
       dl = RDGeom::compute14DistCis(blL1, blL2, blL3, baL12, baL23) +
@@ -1552,8 +1557,8 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
       ringBondPairs.set(pid);
       donePaths.set(id);
 
+      std::optional<Path14Configuration> path;
       if (rSize > 5) {
-        std::optional<Path14Configuration> path;
         if (useMacrocycle14config && rSize >= minMacrocycleRingSize) {
           path = _collect14Bounds(
               mol, mol.getBondWithIdx(bid1), mol.getBondWithIdx(bid2),
@@ -1569,57 +1574,71 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
               distMatrix, {.ringSize = rSize}, collectedBounds, collectAll);
           cisRingBondPairs.set(pid, rSize <= 8);
         }
-        if (path && (path->value.type == TorsionType::CIS ||
-                     path->value.type == TorsionType::TRANS)) {
-          Bond *b4 = nullptr, *b5 = nullptr;
-          for (const auto bnd : mol.atomBonds(mol.getAtomWithIdx(path->aid3))) {
-            if (static_cast<int>(bnd->getIdx()) != bid2 &&
-                bnd->getIdx() !=
-                    mol.getBondBetweenAtoms(path->aid3, path->aid4)->getIdx()) {
-              b5 = bnd;
-              break;
-            }
-          }
-          for (const auto bnd : mol.atomBonds(mol.getAtomWithIdx(path->aid2))) {
-            if (static_cast<int>(bnd->getIdx()) != bid2 &&
-                bnd->getIdx() !=
-                    mol.getBondBetweenAtoms(path->aid2, path->aid1)->getIdx()) {
-              b4 = bnd;
-              break;
-            }
-          }
-          TorsionType otherT = path->value.type == TorsionType::CIS
-                                   ? TorsionType::TRANS
-                                   : TorsionType::CIS;
-          if (b4 != nullptr && b5 != nullptr) {
-            _collect14Bounds(mol, b4,
-                             mol.getBondBetweenAtoms(path->aid2, path->aid3),
-                             b5, Type14::PRE_SET, accumData, mmat, distMatrix,
-                             {.val = path->value}, collectedBounds, collectAll);
-          }
-          auto val2 = path->value;
-          val2.type = otherT;
-
-          if (b4 != nullptr) {
-            _collect14Bounds(mol, b4,
-                             mol.getBondBetweenAtoms(path->aid2, path->aid3),
-                             mol.getBondBetweenAtoms(path->aid3, path->aid4),
-                             Type14::PRE_SET, accumData, mmat, distMatrix,
-                             {.val = val2}, collectedBounds, collectAll);
-          }
-
-          if (b5 != nullptr) {
-            _collect14Bounds(mol,
-                             mol.getBondBetweenAtoms(path->aid1, path->aid2),
-                             mol.getBondBetweenAtoms(path->aid2, path->aid3),
-                             b5, Type14::PRE_SET, accumData, mmat, distMatrix,
-                             {.val = val2}, collectedBounds, collectAll);
-          }
-        }
 
       } else {
-        _record14Path(mol, bid1, bid2, bid3, accumData, rSize);
+        path = _record14Path(mol, bid1, bid2, bid3, accumData, rSize);
         cisRingBondPairs.set(pid);
+      }
+      if (path && (path->value.type == TorsionType::CIS ||
+                   path->value.type == TorsionType::TRANS)) {
+        Bond *b4 = nullptr, *b5 = nullptr;
+        for (const auto bnd : mol.atomBonds(mol.getAtomWithIdx(path->aid3))) {
+          if (static_cast<int>(bnd->getIdx()) != bid2 &&
+              bnd->getIdx() !=
+                  mol.getBondBetweenAtoms(path->aid3, path->aid4)->getIdx()) {
+            b5 = bnd;
+            break;
+          }
+        }
+        for (const auto bnd : mol.atomBonds(mol.getAtomWithIdx(path->aid2))) {
+          if (static_cast<int>(bnd->getIdx()) != bid2 &&
+              bnd->getIdx() !=
+                  mol.getBondBetweenAtoms(path->aid2, path->aid1)->getIdx()) {
+            b4 = bnd;
+            break;
+          }
+        }
+        TorsionType otherT = path->value.type == TorsionType::CIS
+                                 ? TorsionType::TRANS
+                                 : TorsionType::CIS;
+        if (b4 != nullptr && b5 != nullptr) {
+          _collect14Bounds(mol, b4,
+                           mol.getBondBetweenAtoms(path->aid2, path->aid3), b5,
+                           Type14::PRE_SET, accumData, mmat, distMatrix,
+                           {.val = path->value}, collectedBounds, collectAll);
+          auto id = getUnifiedId(
+              b4->getIdx(),
+              mol.getBondBetweenAtoms(path->aid2, path->aid3)->getIdx(),
+              b5->getIdx(), nb);
+          donePaths.set(id);
+        }
+        auto val2 = path->value;
+        val2.type = otherT;
+
+        if (b4 != nullptr) {
+          _collect14Bounds(mol, b4,
+                           mol.getBondBetweenAtoms(path->aid2, path->aid3),
+                           mol.getBondBetweenAtoms(path->aid3, path->aid4),
+                           Type14::PRE_SET, accumData, mmat, distMatrix,
+                           {.val = val2}, collectedBounds, collectAll);
+          auto id = getUnifiedId(
+              b4->getIdx(),
+              mol.getBondBetweenAtoms(path->aid2, path->aid3)->getIdx(),
+              mol.getBondBetweenAtoms(path->aid3, path->aid4)->getIdx(), nb);
+          donePaths.set(id);
+        }
+
+        if (b5 != nullptr) {
+          _collect14Bounds(mol, mol.getBondBetweenAtoms(path->aid1, path->aid2),
+                           mol.getBondBetweenAtoms(path->aid2, path->aid3), b5,
+                           Type14::PRE_SET, accumData, mmat, distMatrix,
+                           {.val = val2}, collectedBounds, collectAll);
+          auto id = getUnifiedId(
+              mol.getBondBetweenAtoms(path->aid1, path->aid2)->getIdx(),
+              mol.getBondBetweenAtoms(path->aid2, path->aid3)->getIdx(),
+              b5->getIdx(), nb);
+          donePaths.set(id);
+        }
       }
 
       bid1 = bid2;
@@ -1638,58 +1657,63 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
             auto id = getUnifiedId(bid1, bid2, bid3, nb);
             if (!donePaths[id]) {
               // we haven't dealt with this path before
-              auto pid1 = getUnifiedId(bid1, bid2, nb);
-              auto pid2 = getUnifiedId(bid2, bid3, nb);
+              // auto pid1 = getUnifiedId(bid1, bid2, nb);
+              // auto pid2 = getUnifiedId(bid2, bid3, nb);
 
-              if (ringBondPairs[pid1] || ringBondPairs[pid2]) {
-                // either (bid1, bid2) or (bid2, bid3) are in the
-                // same ring (note all three cannot be in the same
-                // ring; we dealt with that before)
-                // if (useMacrocycle14config &&
-                //     bidIsMacrocycle.find(bid2) != bidIsMacrocycle.end()) {
-                //   _collect14Bounds(mol, bnd1, bond, bnd3,
-                //                    Type14::MACROCYCLE_TWO_IN_SAME_RING,
-                //                    accumData, mmat, distMatrix, {},
-                //                    collectedBounds, collectAll);
-                // } else {
-                //   _collect14Bounds(mol, bnd1, bond, bnd3,
-                //                    Type14::TWO_IN_SAME_RING, accumData, mmat,
-                //                    distMatrix,
-                //                    {.preferTrans = cisRingBondPairs[pid1] ||
-                //                                    cisRingBondPairs[pid2]},
-                //                    collectedBounds, collectAll);
-                // }
-              } else if (((rinfo->numBondRings(bid1) > 0) &&
-                          (rinfo->numBondRings(bid2) > 0)) ||
-                         ((rinfo->numBondRings(bid2) > 0) &&
-                          (rinfo->numBondRings(bid3) > 0))) {
-                // (bid1, bid2) or (bid2, bid3) are ring bonds but
-                // belong to different rings.  Note that the third
-                // bond will not belong to either of these two
-                // rings (if it does, we would have taken care of
-                // it in the previous if block); i.e. if bid1 and
-                // bid2 are ring bonds that belong to ring r1 and
-                // r2, then bid3 is either an external bond or
-                // belongs to a third ring r3.
-                // _collect14Bounds(mol, bnd1, bond, bnd3,
-                //                  Type14::TWO_IN_DIFF_RING, accumData, mmat,
-                //                  distMatrix, {}, collectedBounds,
-                //                  collectAll);
-              } else if (rinfo->numBondRings(bid2) > 0) {
-                // the middle bond is a ring bond and the other
-                // two do not belong to the same ring or are
-                // non-ring bonds
-                // _collect14Bounds(mol, bnd1, bond, bnd3,
-                // Type14::SHARE_RING_BOND,
-                //                  accumData, mmat, distMatrix, {},
-                //                  collectedBounds, collectAll);
-              } else {
-                // middle bond not a ring
-                _collect14Bounds(mol, bnd1, bond, bnd3, Type14::IN_CHAIN,
-                                 accumData, mmat, distMatrix,
-                                 {.forceTransAmides = forceTransAmides},
-                                 collectedBounds, collectAll);
-              }
+              // if (ringBondPairs[pid1] || ringBondPairs[pid2]) {
+              //   // either (bid1, bid2) or (bid2, bid3) are in the
+              //   // same ring (note all three cannot be in the same
+              //   // ring; we dealt with that before)
+              //   if (useMacrocycle14config &&
+              //       bidIsMacrocycle.find(bid2) != bidIsMacrocycle.end()) {
+              //     _collect14Bounds(mol, bnd1, bond, bnd3,
+              //                      Type14::MACROCYCLE_TWO_IN_SAME_RING,
+              //                      accumData, mmat, distMatrix, {},
+              //                      collectedBounds, collectAll);
+              //   } else {
+              //     _collect14Bounds(mol, bnd1, bond, bnd3,
+              //                      Type14::TWO_IN_SAME_RING, accumData, mmat,
+              //                      distMatrix,
+              //                      {.preferTrans = cisRingBondPairs[pid1] ||
+              //                                      cisRingBondPairs[pid2]},
+              //                      collectedBounds, collectAll);
+              //   }
+              // } else if (((rinfo->numBondRings(bid1) > 0) &&
+              //             (rinfo->numBondRings(bid2) > 0)) ||
+              //            ((rinfo->numBondRings(bid2) > 0) &&
+              //             (rinfo->numBondRings(bid3) > 0))) {
+              //   // (bid1, bid2) or (bid2, bid3) are ring bonds but
+              //   // belong to different rings.  Note that the third
+              //   // bond will not belong to either of these two
+              //   // rings (if it does, we would have taken care of
+              //   // it in the previous if block); i.e. if bid1 and
+              //   // bid2 are ring bonds that belong to ring r1 and
+              //   // r2, then bid3 is either an external bond or
+              //   // belongs to a third ring r3.
+              //   _collect14Bounds(mol, bnd1, bond, bnd3,
+              //                    Type14::TWO_IN_DIFF_RING, accumData, mmat,
+              //                    distMatrix, {}, collectedBounds,
+              //                    collectAll);
+              // } else
+              // if (rinfo->numBondRings(bid2) > 0) {
+              //   // the middle bond is a ring bond and the other
+              //   // two do not belong to the same ring or are
+              //   // non-ring bonds
+              //   _collect14Bounds(mol, bnd1, bond, bnd3,
+              //   Type14::SHARE_RING_BOND,
+              //                    accumData, mmat, distMatrix, {},
+              //                    collectedBounds, collectAll);
+              // } else {
+              // middle bond not a ring
+              _collect14Bounds(
+                  mol, bnd1, bond, bnd3, Type14::IN_CHAIN, accumData, mmat,
+                  distMatrix,
+                  {.forceTransAmides =
+                       bidIsMacrocycle.find(bid2) != bidIsMacrocycle.end()
+                           ? useMacrocycle14config
+                           : forceTransAmides},
+                  collectedBounds, collectAll);
+              // }
             }
           }
         }
