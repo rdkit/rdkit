@@ -1236,6 +1236,27 @@ bool localMatch(EqQuery const *q1, EqQuery const *q2) {
   }
 }
 
+enum class RangeQueryType : char {
+  EQUAL,
+  LESS,
+  GREATER,
+  RANGE
+};
+
+inline RangeQueryType parseRangeQueryType(std::string &descr) {
+  if (descr.starts_with("range_")) {
+    descr = descr.substr(6);
+    return RangeQueryType::RANGE;
+  } else if (descr.starts_with("less_")) {
+    descr = descr.substr(5);
+    return RangeQueryType::LESS;
+  } else if (descr.starts_with("greater_")) {
+    descr = descr.substr(8);
+    return RangeQueryType::GREATER;
+  }
+  return RangeQueryType::EQUAL;
+}
+
 template <typename Traits>
 bool queriesMatch(typename Traits::BaseQuery const *q1,
                   typename Traits::BaseQuery const *q2) {
@@ -1248,7 +1269,6 @@ bool queriesMatch(typename Traits::BaseQuery const *q1,
   if (d1 == Traits::NullDesc || d2 == Traits::NullDesc) {
     res = true;
   } else if (d1 == Traits::OrDesc) {
-    // FIX: handle negation on Or and And
     for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
          ++iter1) {
       if (d2 == Traits::OrDesc) {
@@ -1290,7 +1310,6 @@ bool queriesMatch(typename Traits::BaseQuery const *q1,
       }
     }
   } else if (d2 == Traits::OrDesc) {
-    // FIX: handle negation on Or and And
     for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
          ++iter2) {
       if (queriesMatch<Traits>(q1, iter2->get())) {
@@ -1307,23 +1326,21 @@ bool queriesMatch(typename Traits::BaseQuery const *q1,
         break;
       }
     }
+  } else if (d1 == d2 && Traits::isEqualityQuery(d1)) {
+    res = localMatch<typename Traits::EqQuery>(
+        dynamic_cast<typename Traits::EqQuery const *>(q1),
+        dynamic_cast<typename Traits::EqQuery const *>(q2));
   } else {
-    // Strip prefix to get base description
-    auto stripPrefix = [](const std::string &s) -> std::string {
-      if (s.rfind("range_", 0) == 0) return s.substr(6);
-      if (s.rfind("less_", 0) == 0) return s.substr(5);
-      if (s.rfind("greater_", 0) == 0) return s.substr(8);
-      return s;
-    };
-    std::string bd1 = stripPrefix(d1);
-    std::string bd2 = stripPrefix(d2);
+    std::string bd1 = d1;
+    std::string bd2 = d2;
+    parseRangeQueryType(bd1);
+    parseRangeQueryType(bd2);
     if (bd1 == bd2 && Traits::isEqualityQuery(bd1)) {
       auto *e1 = dynamic_cast<const typename Traits::EqQuery *>(q1);
       auto *e2 = dynamic_cast<const typename Traits::EqQuery *>(q2);
       if (e1 && e2) {
         res = localMatch<typename Traits::EqQuery>(e1, e2);
       } else {
-        // Both range-type: exact equality of bounds
         auto *r1 = dynamic_cast<const typename Traits::RangeQuery *>(q1);
         auto *r2 = dynamic_cast<const typename Traits::RangeQuery *>(q2);
         if (r1 && r2) {
