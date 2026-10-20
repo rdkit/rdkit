@@ -60,7 +60,6 @@ struct Optional14Info {
   bool useMacrocycle14Config = false;
   std::size_t ringSize = 0;
   std::size_t preferTrans = false;
-  std::optional<TorsionValue> val = {};
 };
 
 enum DistType {
