@@ -946,6 +946,13 @@ bool _checkNhChChNh(const Atom *atm1, const Atom *atm2, const Atom *atm3,
   return false;
 }
 
+inline bool _atomHasCarbonNeighbors(const ROMol &mol, const Atom *atm) {
+  return std::ranges::any_of(mol.atomNeighbors(atm), [](const auto *a) {
+    unsigned int num = a->getAtomicNum();
+    return num == 6;
+  });
+}
+
 // here we look for something like this:
 // It's an amide or ester:
 //
@@ -960,15 +967,10 @@ bool _checkAmideEster14(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
   unsigned int a4Num = atm4->getAtomicNum();
-  bool a3hasCarbonNeighbor =
-      std::ranges::any_of(mol.atomNeighbors(atm3), [](const auto *a) {
-        unsigned int num = a->getAtomicNum();
-        return num == 6;
-      });
   return a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
          (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
          (a2Num == 8 || (a2Num == 7 && atm2->getTotalNumHs(true) == 1)) &&
-         (a3hasCarbonNeighbor || a2Num == 8);
+         (_atomHasCarbonNeighbors(mol, atm3) || a2Num == 8);
 }
 
 // checking for amide/ester when all three bonds are
@@ -992,13 +994,7 @@ bool _checkMacrocycleAllInSameRingAmideEster14(const ROMol &mol, const Bond *,
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
 
-  bool a3hasCarbonNeighbor =
-      std::ranges::any_of(mol.atomNeighbors(atm3), [](const auto *a) {
-        unsigned int num = a->getAtomicNum();
-        return num == 6;
-      });
-
-  if (a3Num != 6 || (a2Num == 7 && !a3hasCarbonNeighbor)) {
+  if (a3Num != 6 || (a2Num == 7 && !_atomHasCarbonNeighbors(mol, atm3))) {
     return false;
   }
 
@@ -1060,12 +1056,7 @@ bool _checkAmideEster15(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
     if ((bnd1->getBondType() == Bond::SINGLE)) {
       if ((atm3->getAtomicNum() == 6) &&
           (bnd3->getBondType() == Bond::SINGLE) && _isCarbonyl(mol, atm3)) {
-        bool a3hasCarbonNeighbor =
-            std::ranges::any_of(mol.atomNeighbors(atm3), [](const auto *a) {
-              unsigned int num = a->getAtomicNum();
-              return num == 6;
-            });
-        return a3hasCarbonNeighbor || a2Num == 8;
+        return _atomHasCarbonNeighbors(mol, atm3) || a2Num == 8;
       }
     }
   }
