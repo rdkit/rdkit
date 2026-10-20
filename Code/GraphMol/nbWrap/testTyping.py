@@ -65,7 +65,6 @@ class TestSignatures(unittest.TestCase):
       (Chem.rdchem.CreateStereoGroup, 0, 'atomIds', 'collections.abc.Iterable[int]'),
       (Chem.SubstructMatchParameters.setExtraAtomCheckFunc, 0, 'func',
        'collections.abc.Callable[[rdkit.Chem.rdchem.Atom, rdkit.Chem.rdchem.Atom], bool]'),
-      (Chem.AddMetadataToPNGString, 0, 'metadata', 'dict[str, str]'),
       (DataStructs.BulkTanimotoSimilarity, 1, 'bvList',
        'collections.abc.Iterable[rdkit.DataStructs.cDataStructs.ExplicitBitVect]'),
       (Chem.MolAddRecursiveQueries, 0, 'queries', 'dict[str, rdkit.Chem.rdchem.Mol]'),
@@ -81,6 +80,9 @@ class TestSignatures(unittest.TestCase):
       (rdMolDescriptors.CalcHallKierAlpha, 0, 'atomContribs', 'list[typing.Any] | None'),
       (rdMolDescriptors._CalcCrippenContribs, 0, 'atomTypeLabels', 'list[typing.Any] | None'),
     ]
+    # The PNG functions are built only with RDK_USE_BOOST_IOSTREAMS.
+    if hasattr(Chem, 'MolFromPNGFile'):
+      cases.append((Chem.AddMetadataToPNGString, 0, 'metadata', 'dict[str, str]'))
     if rdSynthonSpaceSearch is not None:
       cases += [
         (rdSynthonSpaceSearch.SynthonSpace.SubstructureSearchIncremental, 0, 'callback',

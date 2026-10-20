@@ -9056,12 +9056,6 @@ M  END
       ('ReactionToMrvFile', checkReactionToMrvFile),
       ('MrvFileIsReaction',
        lambda kind: self.assertTrue(rdChemReactions.MrvFileIsReaction(kind(mrvFile)))),
-      ('ReactionFromPNGFile', lambda kind: self.assertEqual(
-        rdChemReactions.ReactionFromPNGFile(kind(pngFile)).GetNumReactantTemplates(), 2)),
-      ('ReactionMetadataToPNGFile', lambda kind: self.assertTrue(
-        rdChemReactions.ReactionMetadataToPNGFile(rxn, kind(pngFile)))),
-      ('MetadataFromPNGFile',
-       lambda kind: self.assertTrue(Chem.MetadataFromPNGFile(kind(pngFile)))),
       ('Reionizer',
        lambda kind: rdMolStandardize.Reionizer(standardizeFile('acid_base_pairs2.txt', kind))),
       ('FragmentRemover', lambda kind: self.assertEqual(
@@ -9087,6 +9081,16 @@ M  END
       ('AttachFileToLog', lambda kind: rdBase.AttachFileToLog(
         'rdApp.debug', kind(os.path.join(tmpDir, 'log.txt')))),
     ]
+    # The PNG functions are built only with RDK_USE_BOOST_IOSTREAMS.
+    if hasattr(Chem, 'MolFromPNGFile'):
+      cases += [
+        ('ReactionFromPNGFile', lambda kind: self.assertEqual(
+          rdChemReactions.ReactionFromPNGFile(kind(pngFile)).GetNumReactantTemplates(), 2)),
+        ('ReactionMetadataToPNGFile', lambda kind: self.assertTrue(
+          rdChemReactions.ReactionMetadataToPNGFile(rxn, kind(pngFile)))),
+        ('MetadataFromPNGFile',
+         lambda kind: self.assertTrue(Chem.MetadataFromPNGFile(kind(pngFile)))),
+      ]
     if rdCoordGen is not None:
       cases.append(('SetDefaultTemplateFileDir', checkSetDefaultTemplateFileDir))
     for name, check in cases:
