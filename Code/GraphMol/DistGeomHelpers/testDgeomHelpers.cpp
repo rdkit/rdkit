@@ -620,10 +620,8 @@ TEST_CASE("testIssue355") {
   }
 
   SECTION("2") {
-    // There are a certain amount of structures that are cis, if the central
-    // carbon is not connected to another carbon, we changed our definition of
-    // what we consider as an amide. Thus the cases 2 and 3 are no longer forced
-    // to be trans
+    // If the central carbon is not bonded to another carbon, it's no longer considered
+    // to be an aminde. Thus cases 2 and 3 are no longer forced to be trans
     const std::string smi = "CNC(=O)NC";
     const auto bm = _getBoundsMatrix(smi);
     CHECK(bm->getLowerBound(0, 3) < 3.0);
