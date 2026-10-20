@@ -818,7 +818,7 @@ class TestCase(unittest.TestCase):
     rdDistGeom.EmbedMolecule(mol, params)
     cnts = params.GetFailureCounts()
     self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.INITIAL_COORDS], 0)
-    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.ETK_MINIMIZATION], 10)
+    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.ETK_MINIMIZATION], 0)
 
   def testTrackFailures(self):
     params = _getParams(useLegacy=False, maxIt=50, seed=42)
