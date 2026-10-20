@@ -90,15 +90,9 @@ ExtendedQueryMol *createExtendedQueryMolHelper(
     ps = &defaults;
   }
   // try to prevent a copy if necessary
-  try {
-    const RWMol &wmol = dynamic_cast<const RWMol&>(mol);
-    return new ExtendedQueryMol(createExtendedQueryMol(
-	wmol, doEnumeration, doTautomers, adjustQueryProperties, *ps));
-  } catch (const std::bad_cast &) {
-    RWMol wmol(mol);
-    return new ExtendedQueryMol(createExtendedQueryMol(
-	wmol, doEnumeration, doTautomers, adjustQueryProperties, *ps));    
-  }
+  const RWMol &wmol = static_cast<const RWMol&>(mol);
+  return new ExtendedQueryMol(createExtendedQueryMol(
+      wmol, doEnumeration, doTautomers, adjustQueryProperties, *ps));
 }
 
 }  // namespace

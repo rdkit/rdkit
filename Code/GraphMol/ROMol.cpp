@@ -12,6 +12,7 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include "ROMol.h"
+#include "RWMol.h"
 #include "Atom.h"
 #include "QueryAtom.h"
 #include "Bond.h"

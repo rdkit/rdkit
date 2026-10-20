@@ -186,7 +186,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>
   }
 
   // all ROMols are RWMols, but if this changes, this code will crash
-  std::unique_ptr<RWMol> fragmentedMol(dynamic_cast<RWMol*>(
+  std::unique_ptr<RWMol> fragmentedMol(static_cast<RWMol*>(
       MolFragmenter::fragmentOnBonds(mol, bondIndices, true, &dummyLabels)));
 
   for (auto ai = mol.getNumAtoms(); ai < fragmentedMol->getNumAtoms(); ++ai) {

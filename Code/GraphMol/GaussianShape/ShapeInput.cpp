@@ -144,7 +144,7 @@ ShapeInput::ShapeInput(const ROMol &mol, const int confId,
   d_smiles = MolToSmiles(*tmpMol);
   std::vector<unsigned int> atOrder;
   tmpMol->getProp(common_properties::_smilesAtomOutputOrder, atOrder);
-  tmpMol.reset(dynamic_cast<RWMol *>(MolOps::renumberAtoms(*tmpMol, atOrder)));
+  tmpMol.reset(static_cast<RWMol *>(MolOps::renumberAtoms(*tmpMol, atOrder)));
 
   if (!tmpMol->getRingInfo()->isInitialized()) {
     // Query molecules don't seem to have the ring info generated on creation.

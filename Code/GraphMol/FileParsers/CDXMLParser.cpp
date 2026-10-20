@@ -1191,7 +1191,7 @@ void visit_children(
           continue;
         }
         fused->setProp<int>(CDXML_FRAG_ID, static_cast<int>(frag_id));
-        mols.emplace_back(dynamic_cast<RWMol *>(fused.release()));
+        mols.emplace_back(static_cast<RWMol *>(fused.release()));
       } else {
         mols.push_back(std::move(mol));
       }
