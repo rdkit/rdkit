@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <string>
 #include <vector>
 
 #include <GraphMol/ROMol.h>
@@ -28,7 +29,20 @@ constexpr const char *SAMPLES[] = {
     "Br.COc1ccc(/N=C/C=C2/OC(C)(C)OC(c3ccccc3)=C2)cc1",
 };
 
+enum class Dataset {
+  Canonical,
+  Rings_2,
+  Rings_3,
+  Rings_4,
+  Rings_5,
+  Rings_6,
+};
+
+const char *dataset_name(Dataset dataset);
+const std::vector<std::string> &dataset_smiles(Dataset dataset);
+
 std::vector<RDKit::ROMol> load_samples();
+std::vector<RDKit::ROMol> load_samples(Dataset dataset, bool sanitize = true);
 
 constexpr uint64_t nth_random(uint64_t n) noexcept {
   // https://xoshiro.di.unimi.it/splitmix64.c
