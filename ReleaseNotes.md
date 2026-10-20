@@ -9,6 +9,15 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes:
+- `RingInfo` now stores its rings in flat, contiguous arrays, and most of its
+  C++ methods that returned references to `std::vector`s now return
+  non-owning `std::span`s or span-based views. Specifically,
+  `RingInfo::atomRings()` and `RingInfo::bondRings()` now return a
+  `RingInfo::RingsView` instead of `const VECT_INT_VECT &`, and
+  `RingInfo::atomMembers()` and `RingInfo::bondMembers()` now return
+  `std::span<const int>` instead of `const INT_VECT &`. These views are
+  invalidated when the `RingInfo` is modified. `RingInfo::addRing()` now takes
+  `std::span<const int>` arguments. The Python, Java, and C# APIs are unchanged.
 - `GetMorganFeatureAtomInvGen()` now uses the `patterns` it is given. The
   Boost.Python wrapper could not convert a list or a tuple of molecules, so it
   silently used the default feature definitions instead; fingerprints from a
@@ -24,12 +33,6 @@ GitHub)
 - Creating a reader from a Python file object with no `read` attribute now
   raises `ValueError`. Such an object was accepted before, and reading from it
   returned no molecules.
-
-## New Features and Enhancements:
-
-## Bug Fixes:
-
-## Cleanup work:
 
 ## Code removed in this release:
 
