@@ -67,7 +67,7 @@ jobs:
     number_of_cores: nproc
   steps:
   - template: .azure-pipelines/linux_build_nb.yml
-- job: macOS_x64
+- job: macOS_arm64
   timeoutInMinutes: 120
   pool:
     vmImage: macos-14
@@ -79,7 +79,7 @@ jobs:
     python: python=3.14
   steps:
   - template: .azure-pipelines/mac_build.yml
-- job: macOS_x64_java
+- job: macOS_arm64_java
   timeoutInMinutes: 90
   pool:
     vmImage: macos-14
