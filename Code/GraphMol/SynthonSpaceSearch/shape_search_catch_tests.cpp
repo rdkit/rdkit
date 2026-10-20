@@ -500,7 +500,7 @@ TEST_CASE("Excluded volume") {
   SynthonSpace synthonSpace;
   auto results = synthonSpace.shapeSearch(*comb_4aji_4aj1, params, 0, 2);
   auto nres = results.getHitMolecules().size();
-  CHECK(nres == 2 || nres == 1);
+  CHECK((nres == 2 || nres == 1));
 }
 
 TEST_CASE("Shape Write possible hits") {
