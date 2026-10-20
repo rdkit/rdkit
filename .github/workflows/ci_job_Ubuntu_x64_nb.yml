@@ -77,9 +77,9 @@ jobs:
           conda activate rdkit_build
           cd build
           make -j $(nproc) install
-      - name: Store ccache
+      - name: Trim and store ccache
         uses: ./.github/actions/store-ccache
-        if: always()
+        if: ${{ success() && steps.cache-restore.outputs.cache-hit != 'true' }}
         with:
           cache-hit: ${{ steps.cache-restore.outputs.cache-hit }}
       - name: Show ccache stats

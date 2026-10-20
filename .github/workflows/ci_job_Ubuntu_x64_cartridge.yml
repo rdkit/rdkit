@@ -66,9 +66,9 @@ jobs:
           cd build
           make -j $(nproc) install
           sudo sh ./Code/PgSQL/rdkit/pgsql_install.sh
-      - name: Store ccache
+      - name: Trim and store ccache
         uses: ./.github/actions/store-ccache
-        if: always()
+        if: ${{ success() && steps.cache-restore.outputs.cache-hit != 'true' }}
         with:
           cache-hit: ${{ steps.cache-restore.outputs.cache-hit }}
       - name: Show ccache stats

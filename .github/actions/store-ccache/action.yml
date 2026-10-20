@@ -1,15 +1,17 @@
-name: Store ccache
-description: Save the shared ccache cache for a CI job when no exact cache was restored.
-inputs:
-  cache-hit:
-    description: Whether the exact ccache cache was restored.
-    required: true
+name: Trim and store ccache
+description: Trim and save the shared ccache cache for a CI job when no exact cache was restored.
 runs:
   using: composite
   steps:
-    - name: Store ccache
+    # in ci-env:  echo "CCACHE_JOB_START=$(date +%s)"
+    - name: Trim ccache to this build's entries
+      shell: bash
+      run: |
+        source ${CONDA}/etc/profile.d/conda.sh
+        conda activate rdkit_build
+        ccache --evict-older-than "$(( $(date +%s) - CCACHE_JOB_START ))s"
+    - name: Trim and store ccache
       uses: actions/cache/save@v6
-      if: always() && inputs.cache-hit != 'true'
       with:
         path: ${{ env.CCACHE_DIR }}
         key: ccache-${{ runner.os }}-${{ github.job }}-${{ env.BUILD_BRANCH_NAME }}-${{ github.sha }}
