@@ -954,21 +954,14 @@ bool _checkNhChChNh(const Atom *atm1, const Atom *atm2, const Atom *atm3,
 //    1   3
 //     \ / \                                         T.S.I.Left Blank
 //      2   5  <- 2 is an oxygen/nitrogen
-bool _checkAmideEster14(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
-                        const Atom *, const Atom *atm2, const Atom *atm3,
-                        const Atom *atm4) {
+bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *,
+                        const Atom *atm2, const Atom *atm3, const Atom *atm4) {
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
   unsigned int a4Num = atm4->getAtomicNum();
-  bool a3hasCarbonNeighbor =
-      std::ranges::any_of(mol.atomNeighbors(atm3), [](const auto *a) {
-        unsigned int num = a->getAtomicNum();
-        return num == 6;
-      });
   return a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
          (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
-         (a2Num == 8 || (a2Num == 7 && atm2->getTotalNumHs(true) == 1)) &&
-         (a3hasCarbonNeighbor || a2Num == 8);
+         (a2Num == 8 || (a2Num == 7 && atm2->getTotalNumHs(true) == 1));
 }
 
 // checking for amide/ester when all three bonds are
@@ -992,13 +985,7 @@ bool _checkMacrocycleAllInSameRingAmideEster14(const ROMol &mol, const Bond *,
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
 
-  bool a3hasCarbonNeighbor =
-      std::ranges::any_of(mol.atomNeighbors(atm3), [](const auto *a) {
-        unsigned int num = a->getAtomicNum();
-        return num == 6;
-      });
-
-  if (a3Num != 6 || (a2Num == 7 && !a3hasCarbonNeighbor)) {
+  if (a3Num != 6) {
     return false;
   }
 
@@ -1060,12 +1047,7 @@ bool _checkAmideEster15(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
     if ((bnd1->getBondType() == Bond::SINGLE)) {
       if ((atm3->getAtomicNum() == 6) &&
           (bnd3->getBondType() == Bond::SINGLE) && _isCarbonyl(mol, atm3)) {
-        bool a3hasCarbonNeighbor =
-            std::ranges::any_of(mol.atomNeighbors(atm3), [](const auto *a) {
-              unsigned int num = a->getAtomicNum();
-              return num == 6;
-            });
-        return a3hasCarbonNeighbor || a2Num == 8;
+        return true;
       }
     }
   }
@@ -1105,8 +1087,8 @@ TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
         // this is *S-S* situation
         return {TorsionType::CUSTOM, M_PI / 2.0};
       }
-      if ((_checkAmideEster14(mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
-          (_checkAmideEster14(mol, bnd3, bnd1, atm4, atm3, atm2, atm1))) {
+      if ((_checkAmideEster14(bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
+          (_checkAmideEster14(bnd3, bnd1, atm4, atm3, atm2, atm1))) {
         if (forceTransAmides) {
           // It's an amide or ester:
           //
