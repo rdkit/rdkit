@@ -7,7 +7,7 @@ runs:
       env:
         WORKSPACE: ${{ github.workspace }}
         JOB: ${{ github.job }}
-        BRANCH: ${{ github.event_name == 'pull_request' && format('pr/{0}/{1}', github.event.pull_request.number, github.head_ref) || github.ref_name }}
+        BRANCH: ${{ github.event_name == 'pull_request' && format('pr/{0}', github.event.pull_request.number) || github.ref_name }}
       run: |
         {
           echo "CCACHE_DIR=${WORKSPACE}/.ccache"
