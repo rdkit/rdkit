@@ -1559,6 +1559,9 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
       std::optional<Path14Configuration> path;
       if (rSize > 5) {
+        if (rSize >= minMacrocycleRingSize) {
+          bidIsMacrocycle.insert(bid2);
+        }
         if (useMacrocycle14config && rSize >= minMacrocycleRingSize) {
           path = _collect14Bounds(
               mol, mol.getBondWithIdx(bid1), mol.getBondWithIdx(bid2),
@@ -1566,7 +1569,6 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
               accumData, mmat, distMatrix,
               {.useMacrocycle14Config = useMacrocycle14config}, collectedBounds,
               collectAll);
-          bidIsMacrocycle.insert(bid2);
         } else {
           path = _collect14Bounds(
               mol, mol.getBondWithIdx(bid1), mol.getBondWithIdx(bid2),
