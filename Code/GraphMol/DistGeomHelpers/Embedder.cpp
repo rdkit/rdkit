@@ -177,8 +177,8 @@ struct EmbedArgs {
   unsigned int fragIdx;
   DistGeom::BoundsMatPtr mmat;
   DistGeom::ZMatPtr zmat;
-  DistGeom::VECT_CHIRALSET const *chiralCenters;
-  DistGeom::VECT_CHIRALSET const *tetrahedralCarbons;
+  std::vector<std::shared_ptr<DistGeom::ChiralSet>> const *chiralCenters;
+  std::vector<std::shared_ptr<DistGeom::ChiralSet>> const *tetrahedralCarbons;
   std::vector<std::tuple<unsigned int, unsigned int, unsigned int>> const
       *doubleBondEnds;
   std::vector<std::pair<std::vector<unsigned int>, int>> const
@@ -1467,9 +1467,11 @@ bool setupInitialBoundsMatrix(
   return true;
 }
 
-void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
-                    DistGeom::VECT_CHIRALSET &tetrahedralCenters,
-                    const std::map<int, RDGeom::Point3D> *coordMap) {
+void findChiralSets(
+    const ROMol &mol,
+    std::vector<std::shared_ptr<DistGeom::ChiralSet>> &chiralCenters,
+    std::vector<std::shared_ptr<DistGeom::ChiralSet>> &tetrahedralCenters,
+    const std::map<int, RDGeom::Point3D> *coordMap) {
   for (const auto &atom : mol.atoms()) {
     if (atom->getAtomicNum() != 1) {  // skip hydrogens
       Atom::ChiralType chiralType = atom->getChiralTag();
@@ -1521,17 +1523,13 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
         // volume
         if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
           // positive chiral volume
-          auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1],
-                                               nbrs[2], nbrs[3], volLowerBound,
-                                               volUpperBound, structureFlags);
-          DistGeom::ChiralSetPtr cptr(cset);
-          chiralCenters.push_back(cptr);
+          chiralCenters.push_back(std::make_shared<DistGeom::ChiralSet>(
+              atom->getIdx(), nbrs[0], nbrs[1], nbrs[2], nbrs[3], volLowerBound,
+              volUpperBound, structureFlags));
         } else if (chiralType == Atom::CHI_TETRAHEDRAL_CW) {
-          auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1],
-                                               nbrs[2], nbrs[3], -volUpperBound,
-                                               -volLowerBound, structureFlags);
-          DistGeom::ChiralSetPtr cptr(cset);
-          chiralCenters.push_back(cptr);
+          chiralCenters.push_back(std::make_shared<DistGeom::ChiralSet>(
+              atom->getIdx(), nbrs[0], nbrs[1], nbrs[2], nbrs[3],
+              -volUpperBound, -volLowerBound, structureFlags));
         } else {
           if ((coordMap && coordMap->find(atom->getIdx()) != coordMap->end()) ||
               (mol.getRingInfo()->isInitialized() &&
@@ -1541,16 +1539,14 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
             // the coordMap
             // there's no sense doing 3-rings because those are a nightmare
           } else {
-            auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0],
-                                                 nbrs[1], nbrs[2], nbrs[3], 0.0,
-                                                 0.0, structureFlags);
-            DistGeom::ChiralSetPtr cptr(cset);
-            tetrahedralCenters.push_back(cptr);
+            tetrahedralCenters.push_back(std::make_shared<DistGeom::ChiralSet>(
+                atom->getIdx(), nbrs[0], nbrs[1], nbrs[2], nbrs[3], 0.0, 0.0,
+                structureFlags));
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -2006,10 +2002,15 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 
     // find all the chiral centers in the molecule
     MolOps::assignStereochemistry(*piece);
-    DistGeom::VECT_CHIRALSET chiralCenters;
-    DistGeom::VECT_CHIRALSET tetrahedralCarbons;
+    std::vector<std::shared_ptr<DistGeom::ChiralSet>> chiralCenters;
+    std::vector<std::shared_ptr<DistGeom::ChiralSet>> tetrahedralCarbons;
     EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons,
                                  coordMap);
+    if (!params.additionalChiralSets.empty()) {
+      chiralCenters.insert(chiralCenters.end(),
+                           params.additionalChiralSets.begin(),
+                           params.additionalChiralSets.end());
+    }
 
     DistGeom::ZMatPtr zmat = std::make_shared<DistGeom::ZMatrix>(nAtoms);
     if (params.initialEmbeddingMode ==

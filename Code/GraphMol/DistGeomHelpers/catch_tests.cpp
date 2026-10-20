@@ -28,6 +28,7 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <Geometry/Utils.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <DistGeom/ChiralSet.h>
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
 #include "BoundsMatrixBuilderDetails.h"
@@ -3238,4 +3239,41 @@ M  END)CTAB"_ctab;
              Catch::Matchers::WithinAbs(mmat->getLowerBound(22, 36), 5.e-1));
   CHECK_THAT(mmat->getLowerBound(22, 8),
              Catch::Matchers::WithinAbs(mmat->getLowerBound(21, 36), 5.e-1));
+}
+
+TEST_CASE("providing additional chiral sets while embedding") {
+  SECTION("basics") {
+    auto m1 = "I[C@](Cl)(Br)F"_smiles;
+    REQUIRE(m1);
+    auto m2 = "I[C](Cl)(Br)F"_smiles;
+    REQUIRE(m2);
+    auto m3 = "I[C](Cl)(Br)F"_smiles;
+    REQUIRE(m3);
+
+    auto params = DGeomHelpers::ETKDGv4;
+    params.randomSeed = 0xf00d;
+    params.enforceChirality = true;
+
+    DGeomHelpers::EmbedMolecule(*m1, params);
+    MolOps::assignStereochemistryFrom3D(*m1);
+
+    // values used in the code:
+    double chiralVolumeMin = 5.0;
+    double chiralVolumeMax = 100.0;
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
+    DGeomHelpers::EmbedMolecule(*m2, params);
+    MolOps::assignStereochemistryFrom3D(*m2);
+
+    // Swap to a negative chiral volume:
+    params.additionalChiralSets.clear();
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, -chiralVolumeMax, -chiralVolumeMin));
+    DGeomHelpers::EmbedMolecule(*m3, params);
+    MolOps::assignStereochemistryFrom3D(*m3);
+
+    CHECK(m1->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    CHECK(m2->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    CHECK(m3->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+  }
 }

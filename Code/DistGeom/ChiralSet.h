@@ -12,7 +12,7 @@
 #define __RD_CHIRAL_SET_H__
 
 #include <RDGeneral/Invariant.h>
-#include <boost/smart_ptr.hpp>
+#include <memory>
 #include <vector>
 
 namespace DistGeom {
@@ -59,7 +59,7 @@ class RDKIT_DISTGEOMETRY_EXPORT ChiralSet {
   inline double getLowerVolumeBound() const { return d_volumeLowerBound; }
 };
 
-using ChiralSetPtr = boost::shared_ptr<ChiralSet>;
+using ChiralSetPtr = std::shared_ptr<ChiralSet>;
 using VECT_CHIRALSET = std::vector<ChiralSetPtr>;
 }  // namespace DistGeom
 
