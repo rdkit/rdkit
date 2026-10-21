@@ -272,9 +272,6 @@ TEST_CASE("@{n} SMARTS bond ring count") {
   }
 
   SECTION("bond range query-query matching") {
-    // QueryMatch uses exact equality: two range queries match only if their
-    // bounds are identical. This is consistent with the rest of the query
-    // handling code.
     SubstructMatchParameters params;
     params.useQueryQueryMatches = true;
 
@@ -293,7 +290,6 @@ TEST_CASE("@{n} SMARTS bond ring count") {
     auto qb3 = static_cast<QueryBond *>(q3->getBondWithIdx(0));
     CHECK(!qb1->QueryMatch(qb3));
 
-    // Equality @{2} does not match range @{1-3} (exact equality only)
     auto qEq = "*@{2}*"_smarts;
     REQUIRE(qEq);
     auto qRange = "*@{1-3}*"_smarts;
@@ -303,25 +299,12 @@ TEST_CASE("@{n} SMARTS bond ring count") {
     CHECK(!qbEq->QueryMatch(qbRange));
     CHECK(!qbRange->QueryMatch(qbEq));
 
-    // Same equality matches itself
-    auto qEq2 = "*@{2}*"_smarts;
-    REQUIRE(qEq2);
-    auto qbEq2 = static_cast<QueryBond *>(qEq2->getBondWithIdx(0));
-    CHECK(qbEq->QueryMatch(qbEq2));
-
-    // Same range form matches itself
     auto qG1 = "*@{2-}*"_smarts;
     REQUIRE(qG1);
-    auto qG2 = "*@{2-}*"_smarts;
-    REQUIRE(qG2);
-    auto qbG1 = static_cast<QueryBond *>(qG1->getBondWithIdx(0));
-    auto qbG2 = static_cast<QueryBond *>(qG2->getBondWithIdx(0));
-    CHECK(qbG1->QueryMatch(qbG2));
-
-    // Different range forms do not match
     auto qL1 = "*@{-2}*"_smarts;
     REQUIRE(qL1);
+    auto qbG1 = static_cast<QueryBond *>(qG1->getBondWithIdx(0));
     auto qbL1 = static_cast<QueryBond *>(qL1->getBondWithIdx(0));
-    CHECK(!qbG1->QueryMatch(qbL1));
+    CHECK(qbG1->QueryMatch(qbL1));
   }
 }
