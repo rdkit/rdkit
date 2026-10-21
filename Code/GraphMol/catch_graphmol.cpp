@@ -5168,3 +5168,36 @@ TEST_CASE("duplicate atoms/bonds in StereoGroups") {
         ValueErrorException);
   }
 }
+
+TEST_CASE(
+    "GitHub #9735: Valence checks for aromatic atoms allows them to be hypervalent") {
+  auto runCheck = [](const char *smiles) {
+    const v2::SmilesParse::SmilesParserParams p{.sanitize = false,
+                                                .replacements = {}};
+
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles, p);
+    REQUIRE(mol);
+
+    auto failures = MolOps::detectChemistryProblems(*mol);
+    REQUIRE(failures.size() == 1);
+
+    REQUIRE(failures[0]->getType() == "AtomValenceException");
+    auto valenceFailure =
+        dynamic_cast<AtomValenceException *>(failures[0].get());
+    REQUIRE(valenceFailure);
+
+    REQUIRE(valenceFailure->getAtomIdx() == 4);
+  };
+
+  SECTION("aliphatic pentavalent carbon") {
+    // the [C] atom is pentavalent, and parsing the SMILES fails
+    // sanitization at the valence checks in SANITIZE_PROPERTIES
+    runCheck("Oc1cc2=[C](=O)c(cccn2)n1");
+  }
+
+  SECTION("aromatic pentavalent carbon") {
+    // ... but when the atom is aromatic, the valence check doesn't
+    // catch the pentavalent carbon (this is the reported issue)
+    runCheck("Oc1cc2=[c](=O)c(cccn2)n1");
+  }
+}
