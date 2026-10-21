@@ -1440,7 +1440,7 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 }
 
 RDKIT_FILEPARSERS_EXPORT std::string MolToCDXMLBlock(
-    const RWMol &,
+    const ROMol &,
     CDXMLFormat) {
   std::ostringstream errout;
   errout << "RDKit build withoutChemDraw writing support. ";
