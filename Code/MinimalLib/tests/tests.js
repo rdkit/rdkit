@@ -49,6 +49,35 @@ function test_basics() {
         assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi("-FixedH")),"ISWSIDIOOBJBQZ-UHFFFAOYNA-N");
         assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi()),"ISWSIDIOOBJBQZ-UHFFFAOYSA-N");
     }
+    if (typeof Object.getPrototypeOf(mol).get_inchi === 'function') {
+        // get_mol reads InChI, with or without surrounding whitespace
+        var molFromInchi = RDKitModule.get_mol("InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
+        assert(molFromInchi !== null);
+        assert.equal(molFromInchi.get_smiles(),"Oc1ccccc1");
+        assert.equal(molFromInchi.get_num_atoms(),7);
+        molFromInchi.delete();
+        molFromInchi = RDKitModule.get_mol("  InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H\n");
+        assert(molFromInchi !== null);
+        assert.equal(molFromInchi.get_smiles(),"Oc1ccccc1");
+        molFromInchi.delete();
+        // stereochemistry survives the round trip (L-alanine)
+        molFromInchi = RDKitModule.get_mol("InChI=1S/C3H7NO2/c1-2(4)3(5)6/h2H,4H2,1H3,(H,5,6)/t2-/m0/s1");
+        assert(molFromInchi !== null);
+        assert.equal(molFromInchi.get_smiles(),"C[C@H](N)C(=O)O");
+        molFromInchi.delete();
+        // the caller's sanitization options apply to InChI input too
+        molFromInchi = RDKitModule.get_mol("InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H", JSON.stringify({setAromaticity: false}));
+        assert(molFromInchi !== null);
+        assert.equal(molFromInchi.get_smiles(),"OC1=CC=CC=C1");
+        molFromInchi.delete();
+        molFromInchi = RDKitModule.get_mol("InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H", JSON.stringify({sanitize: false}));
+        assert(molFromInchi !== null);
+        assert.equal(molFromInchi.get_num_atoms(),7);
+        molFromInchi.delete();
+        // an invalid InChI returns null rather than throwing
+        var badInchi = RDKitModule.get_mol("InChI=1S/not-an-inchi");
+        assert(badInchi === null);
+    }
 
     var mb = mol.get_molblock();
     assert(mb.search("M  END")>0);

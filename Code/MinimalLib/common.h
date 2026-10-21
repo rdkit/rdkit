@@ -54,6 +54,9 @@
 #include <GraphMol/ChemReactions/SanitizeRxn.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/RGroupDecomposition/RGroupUtils.h>
+#ifdef RDK_BUILD_INCHI_SUPPORT
+#include <INCHI-API/inchi.h>
+#endif
 #include <RDGeneral/RDLog.h>
 #include "common_defs.h"
 #include "JSONParsers.h"
@@ -93,16 +96,21 @@ RWMol *mol_from_input(const std::string &input,
                       const std::string &details_json = "") {
   auto haveMolBlock = false;
   auto haveRDKitJson = false;
+  auto haveInchi = false;
   if (input.find("M  END") != std::string::npos) {
     haveMolBlock = true;
   } else if (input.find("commonchem") != std::string::npos ||
              input.find("rdkitjson") != std::string::npos) {
     haveRDKitJson = true;
+  } else if (input.find_first_not_of(" \t\r\n") != std::string::npos &&
+             input.compare(input.find_first_not_of(" \t\r\n"), 6,
+                           "InChI=") == 0) {
+    haveInchi = true;
   }
-  auto haveSmiles = (!haveMolBlock && !haveRDKitJson);
+  auto haveSmiles = (!haveMolBlock && !haveRDKitJson && !haveInchi);
   bool sanitize = true;
   bool kekulize = true;
-  bool removeHs = haveSmiles;
+  bool removeHs = haveSmiles || haveInchi;
   bool mergeQueryHs = false;
   bool setAromaticity = true;
   bool fastFindRings = true;
@@ -159,6 +167,16 @@ RWMol *mol_from_input(const std::string &input,
       if (!molVect.empty()) {
         res = new RWMol(*molVect[0]);
       }
+#ifdef RDK_BUILD_INCHI_SUPPORT
+    } else if (haveInchi) {
+      // Parsed without sanitization or H removal, like the other formats:
+      // removeHs, sanitize (including partial sanitization) and
+      // setAromaticity are applied below, as the caller asked.
+      ExtraInchiReturnValues rv;
+      auto start = input.find_first_not_of(" \t\r\n");
+      auto end = input.find_last_not_of(" \t\r\n");
+      res = InchiToMol(input.substr(start, end - start + 1), rv, false, false);
+#endif
     } else {
       SmilesParserParams ps;
       ps.sanitize = false;
