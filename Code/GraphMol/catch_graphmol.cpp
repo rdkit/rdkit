@@ -5171,7 +5171,7 @@ TEST_CASE("duplicate atoms/bonds in StereoGroups") {
 
 TEST_CASE(
     "GitHub #9735: Valence checks for aromatic atoms allows them to be hypervalent") {
-  auto runCheck = [](const char *smiles) {
+  auto runCheck = [](const char *smiles, bool expectKekulizeError = false) {
     const v2::SmilesParse::SmilesParserParams p{.sanitize = false,
                                                 .replacements = {}};
 
@@ -5179,7 +5179,8 @@ TEST_CASE(
     REQUIRE(mol);
 
     auto failures = MolOps::detectChemistryProblems(*mol);
-    REQUIRE(failures.size() == 1);
+
+    REQUIRE(failures.size() == (expectKekulizeError ? 2 : 1));
 
     REQUIRE(failures[0]->getType() == "AtomValenceException");
     auto valenceFailure =
@@ -5187,6 +5188,10 @@ TEST_CASE(
     REQUIRE(valenceFailure);
 
     REQUIRE(valenceFailure->getAtomIdx() == 4);
+
+    if (expectKekulizeError) {
+      REQUIRE(failures[1]->getType() == "KekulizeException");
+    }
   };
 
   SECTION("aliphatic pentavalent carbon") {
@@ -5199,5 +5204,18 @@ TEST_CASE(
     // ... but when the atom is aromatic, the valence check doesn't
     // catch the pentavalent carbon (this is the reported issue)
     runCheck("Oc1cc2=[c](=O)c(cccn2)n1");
+  }
+
+  SECTION("hypervalent aromatic with explicit Hs") {
+    // using [cH2] would not trigger the valence error,
+    // since the valence check would consider the case where both
+    // ring bonds are kekulized to single bonds, but kekulization
+    // will fail (the ring can't be aromatic if these bonds are both
+    // single).
+    // With [cH3], both the valence and the kekulization checks
+    // will fail.
+
+    bool expectKekulizeError = true;
+    runCheck("c1ccc[cH3]c1", expectKekulizeError);
   }
 }

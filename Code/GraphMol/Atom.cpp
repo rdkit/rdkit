@@ -351,19 +351,18 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
   const auto *periodicTable = PeriodicTable::getTable();
   // FIX: contributions of bonds to valence are being done at best
   // approximately
-  double accum = 0;
+  double accum = atom.getNumExplicitHs();
 
   // this only makes sense for aromatic atoms: we use it to calculate
   // the minimum possible bond order for the atom, which is met when
   // all incoming aromatic bonds are considered to have a bond order
   // of 1.0 (i.e. when the mol is kekulized, they are kekulized to single bonds)
-  double minAccum = 0;
+  double minAccum = atom.getNumExplicitHs();
   for (const auto bnd : atom.getOwningMol().atomBonds(&atom)) {
     auto contrib = bnd->getValenceContrib(&atom);
     accum += contrib;
     minAccum += (bnd->getIsAromatic() ? 1.0 : contrib);
   }
-  accum += atom.getNumExplicitHs();
 
   const auto &ovalens = periodicTable->getValenceList(atom.getAtomicNum());
   // if we start with an atom that doesn't have specified valences, we stick
