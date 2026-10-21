@@ -2911,6 +2911,8 @@ TEST_CASE("Github #5849: aromatic tag allows bad valences to pass") {
   SECTION("edge cases atoms") {
     std::vector<std::string> smis = {
         "c1c(ccc2NC(CN=c(c21)=C)=O)O",     // exocyclic double bond
+        "Cc1(C)=NCCCc1",                   // a hexavalent C atom
+        "Cc1(C)nCCCC=1",                   // a hexavalent C atom
         "c1c(ccc2NC(Cn=c(c21)(C)C)=O)O",   // even more bogus aromatic atoms
         "c1c(ccc2NC(CN=c(c21)(:c)C)=O)O",  // even more bogus aromatic atoms
     };
@@ -2922,8 +2924,6 @@ TEST_CASE("Github #5849: aromatic tag allows bad valences to pass") {
   SECTION("edge cases kekulization") {
     std::vector<std::string> smis = {
         "c12ccccc1=NCCC2",  // adjacent to an actual aromatic ring
-        "Cc1(C)=NCCCc1",    // two bogus aromatic atoms
-        "Cc1(C)nCCCC=1",    // two bogus aromatic atoms
         "Cc1(C)nCCCc1",     // three bogus aromatic atoms
         "Cc:1(C):nCCCc:1",  // three bogus aromatic atoms
     };
