@@ -3240,7 +3240,7 @@ M  END)CTAB"_ctab;
              Catch::Matchers::WithinAbs(mmat->getLowerBound(21, 36), 5.e-1));
 }
 
-TEST_CASE("Issue - xxx") {
+TEST_CASE("Inconsistent stereo bonds (see PR #9734)") {
   auto mol = "c12ccccc1CCCCCCCCCCCCCCCC2"_smiles;
   REQUIRE(mol);
   MolOps::addHs(*mol);
