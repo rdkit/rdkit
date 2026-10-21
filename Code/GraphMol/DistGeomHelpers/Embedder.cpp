@@ -2017,7 +2017,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       setMoleculeDFS(*piece.get(), *zmat, *etkdgDetails->internalCoords);
       correctChiralCenters(*piece.get(), *zmat);
       if (params.verbose) {
-        std::cout << (*zmat);
+        BOOST_LOG(rdInfoLog) << (*zmat);
       }
     }
 
