@@ -5,7 +5,7 @@ on:
 
 jobs:
   macOS_arm64_java:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 90
     env:
       COMPILER: clangxx_osx-arm64=18.1
