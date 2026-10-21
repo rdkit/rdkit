@@ -877,47 +877,6 @@ TorsionValue _getInRing14Type(const Bond *bnd2, const Atom *atm1,
   return {TorsionType::FLEXIBLE};
 }
 
-TorsionValue _getTwoInSameRing14Type(const Bond *bnd2, const Atom *atm1,
-                                     const Atom *atm2, const Atom *atm3,
-                                     const Atom *atm4, bool preferTrans) {
-  Atom::HybridizationType ahyb3 = atm3->getHybridization();
-  Atom::HybridizationType ahyb2 = atm2->getHybridization();
-  Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
-
-  if ((preferTrans && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
-       (stype != Bond::STEREOZ && stype != Bond::STEREOCIS)) ||
-      stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
-    // here we will assume 180 degrees: basically flat ring with an external
-    // substituent
-    return {TorsionType::TRANS};
-  } else if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
-    return {TorsionType::CIS};
-  } else if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2)) {
-    return {TorsionType::CISTRANS};
-  } else {
-    // here we will assume anything is possible
-    return {TorsionType::FLEXIBLE};
-  }
-}
-
-TorsionValue _getTwoInDiffRing14Type(const Bond *bnd2, const Atom *atm1,
-                                     const Atom *atm2, const Atom *atm3,
-                                     const Atom *atm4) {
-  // this turns out to be very similar to all bonds in the same ring
-  // situation.
-  // There is probably some fine tuning that can be done when the atoms a2
-  // and a3 are not sp2 hybridized, but we will not worry about that now;
-  // simple use 0-180 deg for non-sp2 cases.
-  return _getInRing14Type(bnd2, atm1, atm2, atm3, atm4, 0);  // ff
-}
-
-TorsionValue _getShareRingBond14Type(const Bond *bnd2, const Atom *atm1,
-                                     const Atom *atm2, const Atom *atm3,
-                                     const Atom *atm4) {
-  // once this turns out to be similar to bonds in the same ring
-  return _getInRing14Type(bnd2, atm1, atm2, atm3, atm4, 0);  // ff
-}
-
 bool _checkH2NX3H1OX2(const Atom *atm) {
   if ((atm->getAtomicNum() == 6) && (atm->getTotalNumHs(true) == 2)) {
     // CH2
@@ -1218,35 +1177,6 @@ bool _checkMacrocycleTwoInSameRingAmideEster14(
   return a1Num != 1 && a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
          (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
          (a2Num == 8 || a2Num == 7);
-}
-
-TorsionValue _getMacrocycleTwoInSameRing14Type(
-    const Bond *bnd1, const Bond *bnd2, const Bond *bnd3, const Atom *atm1,
-    const Atom *atm2, const Atom *atm3, const Atom *atm4,
-    const bool useMacrocycle14Config) {
-  Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
-  if ((_checkMacrocycleTwoInSameRingAmideEster14(bnd1, bnd3, atm1, atm2, atm3,
-                                                 atm4)) ||
-      (_checkMacrocycleTwoInSameRingAmideEster14(bnd3, bnd1, atm4, atm3, atm2,
-                                                 atm1))) {
-    if (useMacrocycle14Config) {
-      return {.type = TorsionType::CIS, .isForced = true};
-    } else {
-      return {.type = TorsionType::CISTRANS};
-    }
-  }
-  if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
-    return {TorsionType::CIS};
-  } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
-    return {TorsionType::TRANS};
-  }
-  if (atm2->getHybridization() == Atom::SP2 &&
-      atm3->getHybridization() == Atom::SP2) {
-    return {TorsionType::CISTRANS};
-  } else {
-    // here we will assume anything is possible
-    return {TorsionType::FLEXIBLE};
-  }
 }
 
 TorsionValue _getMacrocycleAllInSameRing14Type(
